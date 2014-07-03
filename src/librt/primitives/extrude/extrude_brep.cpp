@@ -1,7 +1,7 @@
 /*                    E X T R U D E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,23 +35,37 @@ extern "C" {
 }
 
 
-/**
- * R T _ E X T R U D E _ B R E P
- */
 extern "C" void
 rt_extrude_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
-    RT_INIT_DB_INTERNAL(tmp_internal);
+    struct rt_db_internal *tmp_internal;
     struct rt_extrude_internal *eip;
+
+    BU_ALLOC(tmp_internal, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(tmp_internal);
+
     eip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(eip);
-    tmp_internal->idb_ptr = (genptr_t)eip->skt;
+
+    // Create a sketch whose shape is according to eip->skt,
+    // and position is according to eip->V, eip->u_vec and eip->v_vec.
+    // Then convert the sketch to BREP.
+    struct rt_sketch_internal sketch;
+    sketch = *(eip->skt);
+    VMOVE(sketch.V, eip->V);
+    VMOVE(sketch.u_vec, eip->u_vec);
+    VMOVE(sketch.v_vec, eip->v_vec);
+    tmp_internal->idb_ptr = (void *)(&sketch);
     rt_sketch_brep(b, tmp_internal, tol);
-    const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->V), ON_3dPoint(eip->h));
+
+    // Create the extrude path and make the extrude primitive.
+    vect_t endpoint;
+    VADD2(endpoint, eip->V, eip->h);
+    const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->V), ON_3dPoint(endpoint));
     ON_Brep& brep = *(*b);
     ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
     bu_free(tmp_internal, "free temporary rt_db_internal");
+    delete extrudepath;
 }
 
 

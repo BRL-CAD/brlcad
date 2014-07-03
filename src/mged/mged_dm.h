@@ -1,7 +1,7 @@
 /*			M G E D _ D M . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,19 +17,20 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged_dm.h
+/** @file mged/mged_dm.h
  *
  * Header file for communication with the display manager.
  *
  */
 
-#ifndef SEEN_MGED_DM_H
-#define SEEN_MGED_DM_H
+#ifndef MGED_MGED_DM_H
+#define MGED_MGED_DM_H
 
 #include "common.h"
 
 #include "dm.h"	/* struct dm */
-#include "dm_xvars.h"
+#include "dm/dm_xvars.h"
+#include "dm/dm-Null.h"
 
 #include "fb.h" /* FBIO */
 #include "pkg.h" /* struct pkg_conn */
@@ -605,7 +606,7 @@ extern struct w_dm which_dm[];  /* defined in attach.c */
 #define DM_PLOT_INDEX 0
 #define DM_PS_INDEX 1
 
-#endif /* SEEN_MGED_DM_H */
+#endif /* MGED_MGED_DM_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                   V I E W P O I N T - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file viewpoint-g.c
+/** @file conv/viewpoint-g.c
  *
  * Converter from Viewpoint Datalabs coor/elem format to BRL-CAD
  * format.  Will assign vertex normals if they are present in the
@@ -38,6 +38,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -60,7 +61,7 @@ struct viewpoint_verts
 
 #define MAX_LINE_SIZE 256 /* max input line length from elements file */
 
-static char *tok_sep=" "; /* seperator used in input files */
+static char *tok_sep=" "; /* separator used in input files */
 static char *usage="viewpoint-g [-t tol] -c coord_file_name -e elements_file_name -o output_file_name";
 
 int
@@ -92,6 +93,8 @@ main(int argc, char **argv)
     struct faceuse *fu;
     struct wmember reg_head;
 
+    bu_setprogname(argv[0]);
+
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
@@ -106,7 +109,7 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE,  usage);
 
     /* get command line arguments */
-    while ((c = bu_getopt(argc, argv, "t:c:e:o:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "t:c:e:o:")) != -1) {
 	switch (c) {
 	    case 't': /* tolerance */
 		tol.dist = atof(bu_optarg);
@@ -228,7 +231,7 @@ main(int argc, char **argv)
 
 		/* check the list to see if this name is already there */
 		for (i=0; i<BU_PTBL_END(&names); i++) {
-		    if (!strcmp((char *)BU_PTBL_GET(&names, i), name)) {
+		    if (BU_STR_EQUAL((char *)BU_PTBL_GET(&names, i), name)) {
 			/* found it, so go back and read the next line */
 			found = 1;
 			break;
@@ -290,7 +293,7 @@ main(int argc, char **argv)
 
 	    /* skip elements with the wrong name */
 	    name = NULL;
-	    while (name == NULL || strcmp(name, curr_name)) {
+	    while (name == NULL || !BU_STR_EQUAL(name, curr_name)) {
 		/* check for enf of file */
 		if (bu_fgets(line, MAX_LINE_SIZE, elems) == NULL) {
 		    eof = 1;
@@ -323,7 +326,7 @@ main(int argc, char **argv)
 	    }
 	}
 
-	(void)nmg_model_vertex_fuse(m, &tol);
+	(void)nmg_vertex_fuse(&m->magic, &tol);
 
 	/* calculate plane equations for faces */
 	NMG_CK_SHELL(s);

@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file grid.c
+/** @file libdm/grid.c
  *
  * Routines to implement MGED's snap to grid capability.
  *
@@ -52,8 +52,8 @@ dm_draw_grid(struct dm *dmp, struct ged_grid_state *ggsp, struct ged_view *gvp, 
     fastf_t 		inv_grid_res_v;
     fastf_t 		inv_aspect;
 
-    if (NEAR_ZERO(ggsp->ggs_res_h, (fastf_t)SMALL_FASTF) ||
-	NEAR_ZERO(ggsp->ggs_res_v, (fastf_t)SMALL_FASTF))
+    if (ZERO(ggsp->ggs_res_h) ||
+	ZERO(ggsp->ggs_res_v))
 	return;
 
     inv_grid_res_h= 1.0 / (ggsp->ggs_res_h * base2local);

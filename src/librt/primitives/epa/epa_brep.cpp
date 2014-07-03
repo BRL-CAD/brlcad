@@ -1,7 +1,7 @@
 /*                    E P A _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file epa_brep.cpp
  *
- * Convert a Right Parabolic Cylinder to b-rep form
+ * Convert an Elliptical Paraboloid to b-rep form
  *
  */
 
@@ -30,9 +30,6 @@
 #include "brep.h"
 
 
-/**
- * R T _ E P A _ B R E P
- */
 extern "C" void
 rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
@@ -41,11 +38,6 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(eip);
-
-    *b = ON_Brep::New();
-
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
 
     point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
@@ -63,20 +55,20 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     plane1_origin = ON_3dPoint(p1_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    const ON_Plane* epa_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane epa_bottom_plane = ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
 
     //  Next, create an ellipse in the plane corresponding to the edge of the epa.
 
-    ON_Ellipse* ellipse1 = new ON_Ellipse(*epa_bottom_plane, eip->epa_r1, eip->epa_r2);
-    ON_NurbsCurve* ellcurve1 = ON_NurbsCurve::New();
-    ellipse1->GetNurbForm((*ellcurve1));
-    ellcurve1->SetDomain(0.0, 1.0);
+    ON_Ellipse ellipse1 = ON_Ellipse(epa_bottom_plane, eip->epa_r1, eip->epa_r2);
+    ON_NurbsCurve ellcurve1;
+    ellipse1.GetNurbForm(ellcurve1);
+    ellcurve1.SetDomain(0.0, 1.0);
 
     // Generate the bottom cap
     ON_SimpleArray<ON_Curve*> boundary;
-    boundary.Append(ON_Curve::Cast(ellcurve1));
+    boundary.Append(ON_Curve::Cast(&ellcurve1));
     ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = (*epa_bottom_plane);
+    bp->m_plane = epa_bottom_plane;
     bp->SetDomain(0, -100.0, 100.0);
     bp->SetDomain(1, -100.0, 100.0);
     bp->SetExtents(0, bp->Domain(0));
@@ -176,9 +168,6 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     epacurvedsurf->SetCV(8, 1, pt26);
     ON_4dPoint pt27 = ON_4dPoint(0, r2, 0, 1);
     epacurvedsurf->SetCV(8, 2, pt27);
-
-    bu_log("Valid nurbs surface: %d\n", epacurvedsurf->IsValid(dump));
-    epacurvedsurf->Dump(*dump);
 
     (*b)->m_S.Append(epacurvedsurf);
     int surfindex = (*b)->m_S.Count();

@@ -1,7 +1,7 @@
 /*                  P O I N T S _ P A R S E . Y
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,15 +24,13 @@
  * one point per line.  This is the format output, for example, by
  * the ArcSecond Vulcan scanner.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 %{
 /*                  P O I N T S _ P A R S E . Y
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,8 +53,6 @@
  * one point per line.  This is the format output, for example, by
  * the ArcSecond Vulcan scanner.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"
@@ -72,8 +68,15 @@
 #  define YYDEBUG 0
 #endif
 #ifndef YYMAXDEPTH
-#  define YYMAXDEPTH 0
+#  define YYMAXDEPTH 1 /* >0 to quell size_t always true warning */
 #endif
+#ifndef YYENABLE_NLS
+#  define YYENABLE_NLS 0
+#endif
+#ifndef YYLTYPE_IS_TRIVIAL
+#  define YYLTYPE_IS_TRIVIAL 0
+#endif
+
 
 extern FILE *yyin;
 extern int yylex();
@@ -209,9 +212,9 @@ int
 yyerror(char *msg)
 {
     if (get_column() == 0) {
-	printf("\nERROR: Unexpected end of line reached on line %ld, column %ld  (file offset %ld)\n", get_lines(), strlen(previous_linebuffer)+1, get_bytes());
+	printf("\nERROR: Unexpected end of line reached on line %ld, column %ld  (file offset %ld)\n", get_lines(), (long int)strlen(previous_linebuffer)+1, get_bytes());
 	printf("%s\n%*s\n", previous_linebuffer, (int)strlen(previous_linebuffer)+1, "^");
-	fprintf(stderr, "ERROR: Unexpected end of line reached on line %ld, column %ld  (file offset %ld)\n", get_lines(), strlen(previous_linebuffer)+1, get_bytes());
+	fprintf(stderr, "ERROR: Unexpected end of line reached on line %ld, column %ld  (file offset %ld)\n", get_lines(), (long int)strlen(previous_linebuffer)+1, get_bytes());
     } else {
 	printf("\nERROR: Unexpected input on line %ld, column %ld  (file offset %ld)\n", get_lines()+1, get_column()-1, get_bytes());
 	printf("%s\n%*s\n", linebuffer, (int)get_column()-1, "^");

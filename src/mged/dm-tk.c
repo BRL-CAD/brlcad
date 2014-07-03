@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-tk.c
+/** @file mged/dm-tk.c
  *
  * Routines specific to MGED's use of LIBDM's Tk display manager.
  *
@@ -37,8 +37,8 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "dm_xvars.h"
-#include "dm-tk.h"
+#include "dm/dm_xvars.h"
+#include "dm/dm-tk.h"
 #include "fbio.h"
 
 #include "./mged.h"
@@ -49,13 +49,15 @@ extern int _tk_open_existing();	/* XXX TJM will be defined in libfb/if_tk.c */
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
 static int tk_dm(int argc, const char *argv[]);
-static void dirty_hook(void);
-static void zclip_hook(void);
+
+/* local sp_hook functions */
+static void dirty_hook(const struct bu_structparse *, const char *, void *, const char *);
+static void zclip_hook(const struct bu_structparse *, const char *, void *, const char *);
 
 static Tk_GenericProc tk_doevent;
 
 struct bu_structparse tk_vparse[] = {
-    {"%f",  1, "bound",		 DM_O(dm_bound),	dirty_hook, NULL, NULL},
+    {"%g",  1, "bound",		 DM_O(dm_bound),	dirty_hook, NULL, NULL},
     {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook, NULL, NULL},
     {"%d",  1, "zclip",		 DM_O(dm_zclip),	zclip_hook, NULL, NULL},
     {"%d",  1, "debug",		 DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
@@ -68,7 +70,7 @@ tk_dm_init(struct dm_list *o_dm_list,
 	   int argc,
 	   const char *argv[])
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     dm_var_init(o_dm_list);
 
@@ -85,9 +87,8 @@ tk_dm_init(struct dm_list *o_dm_list,
 
     eventHandler = tk_doevent;
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-    (void)DM_CONFIGURE_WIN(dmp);
+    (void)DM_CONFIGURE_WIN(dmp, 0);
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -129,10 +130,8 @@ tk_doevent(ClientData UNUSED(clientData), XEvent *eventPtr)
 static int
 tk_dm(int argc, const char *argv[])
 {
-    if (!strcmp(argv[0], "set")) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
+    if (BU_STR_EQUAL(argv[0], "set")) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	if (argc < 2) {
 	    /* Bare set command, print out current settings */
@@ -140,9 +139,8 @@ tk_dm(int argc, const char *argv[])
 	} else if (argc == 2) {
 	    bu_vls_struct_item_named(&vls, tk_vparse, argv[1], (const char *)dmp, COMMA);
 	} else {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	    bu_vls_putc(&tmp_vls, '\"');
@@ -168,10 +166,13 @@ dirty_hook(void)
 
 
 static void
-zclip_hook(void)
+zclip_hook(const struct bu_structparse *sdp,
+	   const char *name,
+	   void *base,
+	   const char *value)
 {
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook();
+    dirty_hook(sdp, name, base, value);
 }
 /*
  * Local Variables:

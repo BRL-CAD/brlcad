@@ -1,7 +1,7 @@
 /*                         S L A V E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 #  include <getopt.h>
 #endif
 
-#include "libtie/tie.h"
+#include "tie.h"
 #include "adrt.h"
 #include "camera.h"
 #include "adrt.h"
@@ -100,7 +100,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	case ADRT_WORK_INIT:
 	{
 	    render_camera_init (&adrt_workspace_list[wid].camera, adrt_slave_threads);
-	    if( slave_load (&adrt_workspace_list[wid].tie, (void *)work->data, wlen-ind) != 0 )
+	    if ( slave_load (&adrt_workspace_list[wid].tie, (void *)work->data, wlen-ind) != 0 )
 		bu_exit (1, "Failed to load geometry. Going into a flaming tailspin\n");
 	    tie_prep (&adrt_workspace_list[wid].tie);
 	    render_camera_prep (&adrt_workspace_list[wid].camera);
@@ -114,9 +114,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 	case ADRT_WORK_STATUS:
 	{
-	    double loadavg = -1.0;
-
 #ifdef HAVE_GETLOADAVG
+	    double loadavg = -1.0;
 	    getloadavg (&loadavg, 1);
 	    printf ("load average: %f\n", loadavg);
 #endif
@@ -175,9 +174,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    ind += sizeof (TIE_3);
 	    TCOPY(TIE_3, work->data, ind, ray.dir.v, 0);
 	    ind += sizeof (TIE_3);
-#if 0
-	    printf ("pos: %.3f %.3f %.3f ... dir %.3f %.3f %.3f\n", ray.pos.v[0], ray.pos.v[1], ray.pos.v[2], ray.dir.v[0], ray.dir.v[1], ray.dir.v[2]);
-#endif
+
 	    /* Fire the shot */
 	    ray.depth = 0;
 	    render_util_shotline_list (&adrt_workspace_list[wid].tie, &ray, &mesg, &dlen);
@@ -325,23 +322,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 			break;
 
 		    case RENDER_METHOD_CUT:
-#if 0
-		    {
-			TIE_3 shot_pos, shot_dir;
-
-			/* Extract shot position and direction */
-			TCOPY(TIE_3, work->data, ind, &shot_pos, 0);
-			ind += sizeof (TIE_3);
-
-			TCOPY(TIE_3, work->data, ind, &shot_dir, 0);
-			ind += sizeof (TIE_3);
-
-			render_cut_init(&adrt_workspace_list[wid].camera.render, shot_pos, shot_dir);
-		    }
-#else
 			render_cut_init(&adrt_workspace_list[wid].camera.render, (char *)work->data + ind);
-#endif
-		    break;
+			break;
 
 		    case RENDER_METHOD_SPALL:
 		    {
@@ -411,7 +393,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	static int      adrt_slave_completed = 0;
 	static time_t	adrt_slave_startsec = 0;
 
-	if(adrt_slave_startsec == 0) adrt_slave_startsec = time(NULL);
+	if (adrt_slave_startsec == 0)
+	    adrt_slave_startsec = time(NULL);
 
 	gettimeofday(&tv, NULL);
 	printf("\t[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\n",
@@ -439,74 +422,6 @@ adrt_slave(int port, char *host, int threads)
 /*  slave_last_frame = 0; */
 }
 
-#if 0
-void adrt_slave_mesg(void *mesg, unsigned int mesg_len)
-{
-    short		op;
-    TIE_3		foo;
-
-    memcpy(&op, mesg, sizeof(short));
-
-    switch (op) {
-	case ADRT_WORK_SHOTLINE:
-	{
-	    int i, n, num, ind;
-	    char name[256];
-	    unsigned char c;
-
-	    /* Reset all meshes hit flag */
-	    for (i = 0; i < db.mesh_num; i++)
-		db.mesh_list[i]->flags &= MESH_SELECT;
-
-	    /* Read the data */
-	    ind = sizeof(short);
-	    memcpy(&num, &((unsigned char *)mesg)[ind], sizeof(int));
-
-	    ind += sizeof(int);
-
-	    for (i = 0; i < num; i++) {
-		memcpy(&c, &((unsigned char *)mesg)[ind], 1);
-		ind += 1;
-
-		memcpy(name, &((unsigned char *)mesg)[ind], c);
-		ind += c;
-
-		/* set hit flag */
-		for (n = 0; n < db.mesh_num; n++) {
-		    if (!strcmp(db.mesh_list[n]->name, name)) {
-			db.mesh_list[n]->flags |= MESH_HIT;
-			continue;
-		    }
-		}
-	    }
-	}
-	break;
-
-#if 0 /* this isn't in the new version */
-	case ISST_OP_SELECT:
-	{
-	    uint8_t c, t;
-	    char string[256];
-	    uint32_t n;
-
-	    /* select or deslect */
-	    memcpy(&t, &((uint8_t *)mesg)[2], 1);
-	    /* string */
-	    memcpy(&c, &((uint8_t *)mesg)[3], 1);
-	    memcpy(string, &((uint8_t *)mesg)[4], c);
-
-	    /* set select flag */
-	    for (n = 0; n < db.mesh_num; n++)
-		if (strstr(db.mesh_list[n]->name, string) || c == 1)
-		    db.mesh_list[n]->flags = (db.mesh_list[n]->flags & MESH_SELECT) | t<<1;
-	}
-	break;
-#endif ISST_OP_SELECT
-	default:
-	    break;
-    }
-}
-#endif
 
 #ifdef HAVE_GETOPT_LONG
 static struct option longopts[] =
@@ -533,8 +448,8 @@ static void info(int sig)
 
 static void help()
 {
-    printf("%s\n", ADRT_VER_DETAIL);
-    printf("%s", "usage: adrt_slave [options] [host]\n\
+    fprintf(stderr,"%s\n", ADRT_VER_DETAIL);
+    fprintf(stderr,"%s", "Usage: adrt_slave [options] [host]\n\
   -v\t\tdisplay version\n\
   -h\t\tdisplay help\n\
   -p\t\tport number\n\
@@ -542,7 +457,8 @@ static void help()
 }
 
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     int		port = 0, c = 0, threads = 0;
     char		host[64], temp[64];
@@ -568,23 +484,26 @@ int main(int argc, char **argv)
 #ifdef HAVE_GETOPT_LONG
 	    getopt_long(argc, argv, shortopts, longopts, NULL)
 #else
-	    getopt(argc, argv, shortopts)
+	    bu_getopt(argc, argv, shortopts)
 #endif
 	       )!= -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'h':
 		help();
 		return EXIT_SUCCESS;
 
 	    case 'p':
-		port = atoi(optarg);
+		port = atoi(bu_optarg);
 		break;
 
 	    case 't':
-		strncpy(temp, optarg, 4);
+		bu_strlcpy(temp, bu_optarg, 5);
 		threads = atoi(temp);
-		if (threads < 0) threads = 0;
-		if (threads > 32) threads = 32;
+		if (threads < 0)
+			threads = 0;
+		else if (threads > 32)
+			threads = 32;
 		break;
 
 	    case 'v':
@@ -597,13 +516,11 @@ int main(int argc, char **argv)
 	}
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= bu_optind;
+    argv += bu_optind;
 
-    if (argc) {
-	strncpy(host, argv[0], 64-1);
-	host[64-1] = '\0'; /* sanity */
-    }
+    if (argc)
+	bu_strlcpy(host, argv[0], 64);
 
     if (!host[0]) {
 	if (!port)

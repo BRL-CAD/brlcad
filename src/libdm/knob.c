@@ -1,7 +1,7 @@
 /*                          K N O B . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file knob.c
+/** @file libdm/knob.c
  *
  * Utilities for dealing with knobs.
  *
@@ -33,21 +33,14 @@
 
 #ifdef IR_KNOBS
 
-int dm_limit();  /* provides knob dead spot */
-int dm_unlimit();  /* */
-fastf_t dm_wrap(); /* wrap given value to new value in the range (-1.0, 1.0) */
-
 /*
- *                      D M _ L I M I T
- *
  * Because the dials are so sensitive, setting them exactly to
  * zero is very difficult.  This function can be used to extend the
  * location of "zero" into "the dead zone".
  */
 
 int
-dm_limit(i)
-    int i;
+dm_limit(int i)
 {
     if ( i > NOISE )
 	return i-NOISE;
@@ -57,13 +50,10 @@ dm_limit(i)
 }
 
 /*
- *			D M _ U N L I M I T
- *
  * This function reverses the effects of dm_limit.
  */
 int
-dm_unlimit(i)
-    int i;
+dm_unlimit(int i)
 {
     if ( i > 0 )
 	return i + NOISE;
@@ -72,16 +62,12 @@ dm_unlimit(i)
     return 0;
 }
 
-/*			D M _ W R A P
- *
+/*
  * Wrap the given value "f" to a new value in the range (-1.0, 1.0).
- * The value of f is assumed to be in the range (-2.0, 2.0).
  */
 fastf_t
-dm_wrap(f)
-    fastf_t f;
+dm_wrap(fastf_t f)
 {
-#if 1
     int i;
     fastf_t tmp_f;
 
@@ -109,13 +95,6 @@ dm_wrap(f)
     }
 
     return f;
-#else
-    if (f > 1.0)
-	return f - 2.0;
-    if (f < -1.0)
-	return f + 2.0;
-    return f;
-#endif
 }
 #endif
 

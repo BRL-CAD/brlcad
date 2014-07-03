@@ -2,7 +2,7 @@
 #                    N E W S 2 T R A C K E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2006-2010 United States Government as represented by
+# Copyright (c) 2006-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -166,7 +166,7 @@ days ( ) {
 	12) _dys=334 ;;
     esac
 
-    echo "`expr \( $_yer \* 365 \) \+ $_dys \+ $_day`"
+    expr \( $_yer \* 365 \) \+ $_dys \+ $_day
     return 0;
 }
 
@@ -342,7 +342,7 @@ if [ $VERBOSE -gt 2 ] ; then
     printf "\t$_stmp/${PROJECT}.log\n"
 fi
 echo "$_log" > "$_stmp/${PROJECT}.log"
-if [ $VERBOSE -gt 3 ] ; then 
+if [ $VERBOSE -gt 3 ] ; then
     echo "begin svn log NEWS output:"
     echo "$_log"
     echo "end of svn log NEWS output"
@@ -368,7 +368,7 @@ for _revision in $_revisions ; do
     if [ $(($_today - $_added)) -gt $CLOSED ] ; then
 	break;
     fi
-    
+
     [ $VERBOSE -gt 2 ] && echo "$_revision was added $(($_today - $_added)) days ago"
 
     # use the revision as the itemID

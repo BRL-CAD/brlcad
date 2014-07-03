@@ -1,7 +1,7 @@
 /*                       E D M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file edmater.c
+/** @file libged/edmater.c
  *
  * The edmater command.
  *
@@ -31,6 +31,7 @@
 #   include <unistd.h>
 #endif
 
+#include "bu/getopt.h"
 #include "./ged_private.h"
 
 int
@@ -43,7 +44,6 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "comb(s)";
     char tmpfil[MAXPATHLEN];
     const char *editstring = NULL;
-    
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -51,10 +51,10 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;
     /* First, grab the editstring off of the argv list */
-    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
 	switch (c) {
 	    case 'E' :
-	    	editstring = bu_optarg;
+		editstring = bu_optarg;
 		break;
 	    default :
 		break;
@@ -66,11 +66,11 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
 
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -86,13 +86,13 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
 
     av[i] = NULL;
 
+    (void)fclose(fp);
+
     if (ged_wmater(gedp, argc, av) == TCL_ERROR) {
-	(void)unlink(tmpfil);
-	bu_free((genptr_t)av, "f_edmater: av");
+	bu_file_delete(tmpfil);
+	bu_free((void *)av, "f_edmater: av");
 	return TCL_ERROR;
     }
-
-    (void)fclose(fp);
 
     if (_ged_editit(editstring, tmpfil)) {
 	av[0] = "rmater";
@@ -102,8 +102,8 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
 	status = TCL_ERROR;
     }
 
-    (void)unlink(tmpfil);
-    bu_free((genptr_t)av, "ged_edmater: av");
+    bu_file_delete(tmpfil);
+    bu_free((void *)av, "ged_edmater: av");
 
     return status;
 }

@@ -1,7 +1,7 @@
 /*             S U R F A C E I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  */
 /** @{ */
-/** @file surfaceintersect.cpp
+/** @file proc-db/surfaceintersect.cpp
  *
  * This code was originally written by Joe Doliner: jdoliner@gmail.com
  */
@@ -35,12 +35,11 @@
 /**
  * ClosestValue
  *
- * @brief returns the value that is closest to the given value but in the given interval
+ * @brief returns the value that is closest to the given value but in
+ * the given interval
  */
-double ClosestValue(
-    double value,
-    ON_Interval interval
-    )
+double
+ClosestValue(double value, ON_Interval interval)
 {
     if (interval.Includes(value, true)) {
 	return value;
@@ -57,12 +56,8 @@ double ClosestValue(
  *
  * @brief updates s and t using an X, Y, Z vector
  */
-void Push(
-    const ON_Surface *surf,
-    double *s,
-    double *t,
-    ON_3dVector vec
-    )
+void
+Push(const ON_Surface *surf, double *s, double *t, ON_3dVector vec)
 {
     ON_3dVector ds, dt;
     ON_3dPoint value;
@@ -80,7 +75,8 @@ void Push(
  * @brief advances s1, s2, t1, t2 along the curve of intersection of
  * the two surfaces by a distance of step size.
  */
-void Step(
+void
+Step(
     const ON_Surface *surf1,
     const ON_Surface *surf2,
     double *s1,
@@ -109,7 +105,8 @@ void Step(
  * about and find a closer * point returns the new distance between
  * the points.
  */
-double Jiggle(
+double
+Jiggle(
     const ON_Surface *surf1,
     const ON_Surface *surf2,
     double *s1,
@@ -138,10 +135,8 @@ double Jiggle(
  * @brief Split's a trim at a point, and replaces the references to
  * that trim with the pieces
  */
-void SplitTrim(
-    ON_BrepTrim *trim,
-    double t
-    )
+void
+SplitTrim(ON_BrepTrim *trim, double t)
 {
     ON_Curve *left, *right;
     bool rv = trim->Split(t, left, right);
@@ -162,10 +157,8 @@ void SplitTrim(
  * @brief after slicing a loop up in to pieces, this destroys the loop
  * itself and drops the pieces into an array
  */
-void ShatterLoop(
-    ON_BrepLoop *loop,
-    ON_SimpleArray<ON_Curve*> curves
-    )
+void
+ShatterLoop(ON_BrepLoop *loop, ON_SimpleArray<ON_Curve*> curves)
 {
     int i;
     for (i = 0; i < loop->TrimCount(); i++) {
@@ -180,13 +173,11 @@ void ShatterLoop(
 /**
  * Compare_X_Parameter
  *
- * @Compares two ON_X_EVENTS by the value of the parameter of the
+ * @brief Compares two ON_X_EVENTS by the value of the parameter of the
  * first curve.
  */
-int Compare_X_Parameter(
-    const ON_X_EVENT *a,
-    const ON_X_EVENT *b
-    )
+int
+Compare_X_Parameter(const ON_X_EVENT *a, const ON_X_EVENT *b)
 {
     if (a->m_a[0] < b->m_a[0]) {
 	return -1;
@@ -201,17 +192,15 @@ int Compare_X_Parameter(
 /**
  * Curve_Compare_start
  *
- * @Compares the start points of the curve profiles
+ * @brief Compares the start points of the curve profiles
  */
-int Curve_Compare_start(
-    ON_Curve *const *a,
-    ON_Curve *const *b
-    )
+int
+Curve_Compare_start(ON_Curve *const *a, ON_Curve *const *b)
 {
     ON_3dVector A = ON_2dVector((*a)->PointAtStart().x, (*a)->PointAtStart().y);
     ON_3dVector B = ON_2dVector((*b)->PointAtStart().x, (*b)->PointAtStart().y);
 
-    if (V2APPROXEQUAL(A, B, 1e-9)) {
+    if (V2NEAR_EQUAL(A, B, 1e-9)) {
 	return 0;
     } else if (A.x < B.x) {
 	return -1;
@@ -231,16 +220,14 @@ int Curve_Compare_start(
 /**
  * Curve_Compare_end
  *
- * @Compares the end points of the curve profiles
+ * @brief Compares the end points of the curve profiles
  */
-int Curve_Compare_end(
-    const ON_Curve **a,
-    const ON_Curve **b
-    )
+int
+Curve_Compare_end(const ON_Curve **a, const ON_Curve **b)
 {
     ON_3dVector A = ON_2dVector((*a)->PointAtEnd().x, (*a)->PointAtEnd().y);
     ON_3dVector B = ON_2dVector((*b)->PointAtEnd().x, (*b)->PointAtEnd().y);
-    if (V2APPROXEQUAL(A, B, 1e-9)) {
+    if (V2NEAR_EQUAL(A, B, 1e-9)) {
 	return 0;
     } else if (A.x < B.x) {
 	return -1;
@@ -260,9 +247,9 @@ int Curve_Compare_end(
 /**
  * Face_X_Event::Face_X_Event
  *
- * @brief create a new unintialized Face_X_Event
+ * @brief create a new uninitialized Face_X_Event
  */
-Face_X_Event::Face_X_Event()
+Face_X_Event::Face_X_Event() : face1(NULL), face2(NULL), curve1(NULL), curve2(NULL)
 {}
 
 
@@ -271,17 +258,12 @@ Face_X_Event::Face_X_Event()
  *
  * @brief create a new Face_X_Event using a set of given values
  */
-Face_X_Event::Face_X_Event(
-    ON_BrepFace *face1,
-    ON_BrepFace *face2,
-    ON_Curve *curve1,
-    ON_Curve *curve2
-    )
+Face_X_Event::Face_X_Event(ON_BrepFace *f1, ON_BrepFace *f2, ON_Curve *c1, ON_Curve *c2)
 {
-    this->face1 = face1;
-    this->face2 = face2;
-    this->curve1 = curve1;
-    this->curve2 = curve2;
+    this->face1 = f1;
+    this->face2 = f2;
+    this->curve1 = c1;
+    this->curve2 = c2;
     this->loop_flags1.SetCapacity(face1->LoopCount());
     this->loop_flags1.SetCount(face1->LoopCount());
     this->loop_flags2.SetCapacity(face2->LoopCount());
@@ -290,29 +272,18 @@ Face_X_Event::Face_X_Event(
 
 
 /**
- * ON_X_EVENT::ON_X_EVENT
- *
- * @brief create a new ON_X_EVENT This is implemented in
- * opennurbs_x.cpp:19, not sure why the compiler is failing to see it
- */
-ON_X_EVENT::ON_X_EVENT()
-{
-    memset(this, 0, sizeof(*this));
-}
-
-
-/**
  * Face_X_Event::Render_Curves
  *
- * @Renders the Curves in the Face_X_Event as the different curves
- * it is segmented in to This assumes the convention that to the left
- * of a curve is below.
+ * @brief Renders the Curves in the Face_X_Event as the different
+ * curves it is segmented in to This assumes the convention that to
+ * the left of a curve is below.
  */
-int Face_X_Event::Render_Curves()
+int
+Face_X_Event::Render_Curves()
 {
     /* the curve can be active or inactive in either face */
     bool active1 = false, active2 = false;
-    double last;
+    double last = 0.0;
     int i;
 
     /* Now we step through the X events activating and deactivating
@@ -322,7 +293,7 @@ int Face_X_Event::Render_Curves()
     for (i = 0; i < x.Count(); i++) {
 	ON_X_EVENT event = x[i];
 	if (active1 && active2) {
-	    /* to be deactived the curve must pass from below a curve to above it */
+	    /* to be deactivated the curve must pass from below a curve to above it */
 	    if (event.m_dirA[0] == event.from_below_dir && event.m_dirA[1] == event.to_above_dir) {
 		ON_Curve *new_curve1 = curve1->Duplicate();
 		ON_Curve *new_curve2 = curve2->Duplicate();
@@ -367,17 +338,20 @@ int Face_X_Event::Render_Curves()
     return 0; /* XXX - unused */
 }
 
+
 /**
  * CurveCurveIntersect
  *
- * @brief Intersect 2 curves appending ON_X_EVENTS to the array x for the intersections
- * returns the number of ON_X_EVENTS appended
+ * @brief Intersect 2 curves appending ON_X_EVENTS to the array x for
+ * the intersections returns the number of ON_X_EVENTS appended
  *
- * This is not a great implementation of this function it's limited in that it will only find
- * point intersections, not overlaps. Overlaps, will come out as long strings of points, and
- * will probably take a long time to compute.
+ * This is not a great implementation of this function; it's limited in
+ * that it will only find point intersections, not overlaps. Overlaps
+ * will come out as long strings of points, and will probably take a
+ * long time to compute.
  */
-int CurveCurveIntersect(
+int
+CurveCurveIntersect(
     const ON_Curve *curve1,
     const ON_Curve *curve2,
     ON_SimpleArray<ON_X_EVENT>& x,
@@ -427,10 +401,12 @@ int CurveCurveIntersect(
 /**
  * SetCurveSurveIntersectionDir
  *
- * @brief Sets the Dir fields on an intersection event, this function is 
- *  'below' a curve refers to the portion to the right of the curve wrt N
+ * @brief Sets the Dir fields on an intersection event, this function
+ * is 'below' a curve refers to the portion to the right of the curve
+ * wrt N
  */
-bool SetCurveCurveIntersectionDir(
+bool
+SetCurveCurveIntersectionDir(
     ON_3dVector N,
     int xcount,
     ON_X_EVENT* xevent,
@@ -475,10 +451,11 @@ bool SetCurveCurveIntersectionDir(
  * Face_X_Event::Get_ON_X_Events()
  *
  * @brief Gets all of the intersections between either of the new
- * curves and the trims of the faces, stores them in the x field
- * in the class
+ * curves and the trims of the faces, stores them in the x field in
+ * the class
  */
-int Face_X_Event::Get_ON_X_Events(double tol)
+int
+Face_X_Event::Get_ON_X_Events(double tol)
 {
     ON_SimpleArray<ON_X_EVENT> out;
     x.Empty();
@@ -531,7 +508,8 @@ int Face_X_Event::Get_ON_X_Events(double tol)
  *
  * Note: destroys the arrays it's given.
  */
-int MakeLoops(
+int
+MakeLoops(
     ON_BrepFace *face,
     ON_SimpleArray<ON_Curve*>& new_trims,
     ON_SimpleArray<ON_Curve*>& old_trims,
@@ -549,7 +527,7 @@ int MakeLoops(
 
 	loop.Append(*new_trims.First());
 	new_trims.Remove(0);
-	while (!V2APPROXEQUAL((*loop.First())->PointAtStart(), (*loop.Last())->PointAtEnd(), tol)) {
+	while (!V2NEAR_EQUAL((*loop.First())->PointAtStart(), (*loop.Last())->PointAtEnd(), tol)) {
 
 	    /* bit hacky, makes a curve we can use to search for the
 	     * arrays for matching trims
@@ -599,25 +577,24 @@ int MakeLoops(
     return 0;/* XXX - unused */
 }
 
+
 /**
  * IsClosed
  *
- * @check if a 2dPointarrray is closed. To be closed an array must have
- * >2 points in it, have the first and last points within tol of one
- * another and have at least one point not within tol of either of
- * them.
+ * @brief check if a 2dPointarrray is closed. To be closed an array
+ * must have >2 points in it, have the first and last points within
+ * tol of one another and have at least one point not within tol of
+ * either of them.
  */
-bool IsClosed(
-    const ON_2dPointArray l,
-    double tol
-    )
+bool
+IsClosed(const ON_2dPointArray l, double tol)
 {
     if (l.Count() < 3) {
 	return false;
-    } else if (V2APPROXEQUAL(l[0], l[l.Count() - 1], tol)) {
+    } else if (V2NEAR_EQUAL(l[0], l[l.Count() - 1], tol)) {
 	int i;
 	for (i = 1; i < l.Count() - 1; i++) {
-	    if (!V2APPROXEQUAL(l[0], l[i], tol) && !V2APPROXEQUAL(l[l.Count() - 1], l[i], tol)) {
+	    if (!V2NEAR_EQUAL(l[0], l[i], tol) && !V2NEAR_EQUAL(l[l.Count() - 1], l[i], tol)) {
 		return true;
 	    }
 	}
@@ -634,7 +611,8 @@ bool IsClosed(
  * @brief walks the intersection between 2 brepfaces, returns lines
  * segmented by the trimming curves
  */
-void WalkIntersection(
+void
+WalkIntersection(
     const ON_Surface *surf1,
     const ON_Surface *surf2,
     double s1,
@@ -702,10 +680,11 @@ void WalkIntersection(
 /**
  * GetStartPointsInternal
  *
- * @brief Subdibivides the surface recursively to zoom in on
+ * @brief Subdivides the surface recursively to zoom in on
  * intersection points internal to the surfaces.
  */
-bool GetStartPointsInternal(
+bool
+GetStartPointsInternal(
     const ON_Surface *surf1,
     const ON_Surface *surf2,
     ON_2dPointArray& start_points1,
@@ -743,7 +722,7 @@ bool GetStartPointsInternal(
 	return_value = false;
 	for (i = 0; i < 4; i++) {
 	    for (j = 0; j < 4; j++) {
-		return_value = return_value && GetStartPointsInternal(Parts1[i], Parts2[j], start_points1, start_points2, tol);
+		return_value &= GetStartPointsInternal(Parts1[i], Parts2[j], start_points1, start_points2, tol);
 	    }
 	}
     }
@@ -756,7 +735,8 @@ bool GetStartPointsInternal(
  *
  * @brief Find starting points that are on the edges of the surfaces
  */
-bool GetStartPointsEdges(
+bool
+GetStartPointsEdges(
     const ON_Surface *surf1,
     const ON_Surface *surf2,
     ON_2dPointArray& start_points1,
@@ -813,7 +793,7 @@ bool GetStartPointsEdges(
 			    out[curve].Append(ON_2dPoint(x[i].m_a[0], intervals[(1 - dir) + (2 * curve)].Min()));
 			}
 		    }
-		    out[1 - curve].Append(ON_2dPoint(x[i].m_b[0], x[i].m_b[1])); 
+		    out[1 - curve].Append(ON_2dPoint(x[i].m_b[0], x[i].m_b[1]));
 		}
 	    }
 	}
@@ -828,7 +808,8 @@ bool GetStartPointsEdges(
  * @brief finds the intersection curves of two faces and returns them
  * as Face_X_Events.
  */
-int FaceFaceIntersect(
+int
+FaceFaceIntersect(
     ON_BrepFace *face1,
     ON_BrepFace *face2,
     double stepsize,
@@ -881,10 +862,10 @@ int FaceFaceIntersect(
  * @brief calls SurfaceSurfaceIntersect on the {m_S}X{m_S} then
  * intersects the results with the trim curves of the brepfaces.
  */
-bool BrepBrepIntersect(
+bool
+BrepBrepIntersect(
     ON_Brep *brep1,
     ON_Brep *brep2,
-    ON_Brep **out,
     double stepsize,
     double tol
     )
@@ -932,7 +913,7 @@ bool BrepBrepIntersect(
     }
 
     /* first we intersect all of the Faces and record the
-     * intersectiosn in Face_X_Events.
+     * intersections in Face_X_Events.
      */
     ON_ClassArray<Face_X_Event> x;
     for (i = 0; i < brep1->m_F.Count(); i++) {
@@ -997,6 +978,7 @@ bool BrepBrepIntersect(
     return false;
 }
 
+
 namespace si {
 
     enum {
@@ -1014,24 +996,6 @@ namespace si {
 using namespace si;
 
 
-ON_Curve*
-TwistedCubeEdgeCurve(const ON_3dPoint& from, const ON_3dPoint& to)
-{
-    // creates a 3d line segment to be used as a 3d curve in an ON_Brep
-    ON_Curve* c3d = new ON_LineCurve(from, to);
-    c3d->SetDomain(0.0, 1.0); // XXX is this UV bounds?
-    return c3d;
-}
-
-void
-MakeTwistedCubeEdge(ON_Brep& brep, int from, int to, int curve)
-{
-    ON_BrepVertex& v0 = brep.m_V[from];
-    ON_BrepVertex& v1 = brep.m_V[to];
-    ON_BrepEdge& edge = brep.NewEdge(v0, v1, curve);
-    edge.m_tolerance = 0.0; // exact!
-}
-
 void
 MakeTwistedCubeEdges1(ON_Brep& brep)
 {
@@ -1041,8 +1005,9 @@ MakeTwistedCubeEdges1(ON_Brep& brep)
     MakeTwistedCubeEdge(brep, A, D, AD);
 }
 
+
 void
-MakeTwistedCubeEdges2(ON_Brep& brep) 
+MakeTwistedCubeEdges2(ON_Brep& brep)
 {
     MakeTwistedCubeEdge(brep, E, F, EF);
     MakeTwistedCubeEdge(brep, F, G, FG);
@@ -1050,163 +1015,6 @@ MakeTwistedCubeEdges2(ON_Brep& brep)
     MakeTwistedCubeEdge(brep, E, si::H, EH);
 }
 
-ON_Surface*
-TwistedCubeSideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
-{
-    ON_NurbsSurface* pNurbsSurface = new ON_NurbsSurface(3, // dimension
-							 0, // not rational
-							 2, // u order
-							 2, // v order,
-							 2, // number of control vertices in u
-							 2 // number of control verts in v
-	);
-    pNurbsSurface->SetCV(0, 0, SW);
-    pNurbsSurface->SetCV(1, 0, SE);
-    pNurbsSurface->SetCV(1, 1, NE);
-    pNurbsSurface->SetCV(0, 1, NW);
-    // u knots
-    pNurbsSurface->SetKnot(0, 0, 0.0);
-    pNurbsSurface->SetKnot(0, 1, 1.0);
-    // v knots
-    pNurbsSurface->SetKnot(1, 0, 0.0);
-    pNurbsSurface->SetKnot(1, 1, 1.0);
-
-    return pNurbsSurface;
-}
-
-ON_Curve*
-TwistedCubeTrimmingCurve(const ON_Surface& s,
-			 int side // 0 = SW to SE, 1 = SE to NE, 2 = NE to NW, 3 = NW, SW
-    )
-{
-    // a trimming curve is a 2d curve whose image lies in the surface's
-    // domain. The "active" portion of the surface is to the left of the
-    // trimming curve (looking down the orientation of the curve). An
-    // outer trimming loop consists of a simple closed curve running
-    // counter-clockwise around the region it trims
-
-    ON_2dPoint from, to;
-    double u0, u1, v0, v1;
-    s.GetDomain(0, &u0, &u1);
-    s.GetDomain(1, &v0, &v1);
-
-    switch (side) {
-	case 0:
-	    from.x = u0; from.y = v0;
-	    to.x   = u1; to.y   = v0;
-	    break;
-	case 1:
-	    from.x = u1; from.y = v0;
-	    to.x   = u1; to.y   = v1;
-	    break;
-	case 2:
-	    from.x = u1; from.y = v1;
-	    to.x   = u0; to.y   = v1;
-	    break;
-	case 3:
-	    from.x = u0; from.y = v1;
-	    to.x   = u0; to.y   = v0;
-	    break;
-	default:
-	    return NULL;
-    }
-    ON_Curve* c2d = new ON_LineCurve(from, to);
-    c2d->SetDomain(0.0, 1.0);
-    return c2d;
-}
-
-
-int // return value not used?
-MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
-			    ON_BrepFace& face,
-			    int v0, int v1, int v2, int v3, // indices of corner vertices
-			    int e0, int eo0, // edge index + orientation w.r.t surface trim
-			    int e1, int eo1,
-			    int e2, int eo2,
-			    int e3, int eo3)
-{
-    // get a reference to the surface
-    const ON_Surface& srf = *brep.m_S[face.m_si];
-
-    ON_BrepLoop& loop = brep.NewLoop(ON_BrepLoop::outer, face);
-
-    // create the trimming curves running counter-clockwise around the
-    // surface's domain, start at the south side
-    ON_Curve* c2;
-    int c2i, ei = 0, bRev3d = 0;
-    ON_2dPoint q;
-
-    // flags for isoparametric curves
-    ON_Surface::ISO iso = ON_Surface::not_iso;
-
-    for (int side = 0; side < 4; side++) {
-	// side: 0=south, 1=east, 2=north, 3=west
-	c2 = TwistedCubeTrimmingCurve(srf, side);
-	c2i = brep.m_C2.Count();
-	brep.m_C2.Append(c2);
-
-	switch (side) {
-	    case 0:
-		ei = e0;
-		bRev3d = (eo0 == -1);
-		iso = ON_Surface::S_iso;
-		break;
-	    case 1:
-		ei = e1;
-		bRev3d = (eo1 == -1);
-		iso = ON_Surface::E_iso;
-		break;
-	    case 2:
-		ei = e2;
-		bRev3d = (eo2 == -1);
-		iso = ON_Surface::N_iso;
-		break;
-	    case 3:
-		ei = e3;
-		bRev3d = (eo3 == -1);
-		iso = ON_Surface::W_iso;
-		break;
-	}
-
-	ON_BrepTrim& trim = brep.NewTrim(brep.m_E[ei], bRev3d, loop, c2i);
-	trim.m_iso = iso;
-
-	// the type gives metadata on the trim type in this case, "mated"
-	// means the trim is connected to an edge, is part of an
-	// outer/inner/slit loop, no other trim from the same edge is
-	// connected to the edge, and at least one trim from a different
-	// loop is connected to the edge
-	trim.m_type = ON_BrepTrim::mated; // i.e. this b-rep is closed, so
-	// all trims have mates
-
-	// not convinced these shouldn't be set with a member function
-	trim.m_tolerance[0] = 0.0; // exact
-	trim.m_tolerance[1] = 0.0; //
-    }
-    return loop.m_loop_index;
-}
-
-void
-MakeTwistedCubeFace(ON_Brep& brep,
-		    int surf,
-		    int orientation,
-		    int v0, int v1, int v2, int v3, // the indices of corner vertices
-		    int e0, int eo0, // edge index + orientation
-		    int e1, int eo1,
-		    int e2, int eo2,
-		    int e3, int eo3)
-{
-    ON_BrepFace& face = brep.NewFace(surf);
-    MakeTwistedCubeTrimmingLoop(brep,
-				face,
-				v0, v1, v2, v3,
-				e0, eo0,
-				e1, eo1,
-				e2, eo2,
-				e3, eo3);
-    // should the normal be reversed?
-    face.m_bRev = (orientation == -1);
-}
 
 void
 MakeTwistedCubeFaces1(ON_Brep& brep)
@@ -1221,6 +1029,7 @@ MakeTwistedCubeFaces1(ON_Brep& brep)
 			AD, -1);
 }
 
+
 void
 MakeTwistedCubeFaces2(ON_Brep& brep)
 {
@@ -1233,6 +1042,7 @@ MakeTwistedCubeFaces2(ON_Brep& brep)
 			GH, -1,
 			FG, -1);
 }
+
 
 ON_Brep*
 MakeTwistedSquare1(ON_TextLog& error_log)
@@ -1271,7 +1081,7 @@ MakeTwistedSquare1(ON_TextLog& error_log)
     // create the faces
     MakeTwistedCubeFaces1(*brep);
 
-    if (!brep->IsValid()) {
+    if (brep && !brep->IsValid()) {
 	error_log.Print("Twisted cube b-rep is not valid!\n");
 	delete brep;
 	brep = NULL;
@@ -1318,7 +1128,7 @@ MakeTwistedSquare2(ON_TextLog& error_log)
     // create the faces
     MakeTwistedCubeFaces2(*brep);
 
-    if (!brep->IsValid()) {
+    if (brep && !brep->IsValid()) {
 	error_log.Print("Twisted cube b-rep is not valid!\n");
 	delete brep;
 	brep = NULL;
@@ -1328,25 +1138,8 @@ MakeTwistedSquare2(ON_TextLog& error_log)
 }
 
 
-void
-printPoints(struct rt_brep_internal* bi)
-{
-    ON_TextLog tl(stdout);
-    ON_Brep* brep = bi->brep;
-
-    if (brep) {
-	const int count = brep->m_V.Count();
-	for (int i = 0; i < count; i++) {
-	    ON_BrepVertex& bv = brep->m_V[i];
-	    bv.Dump(tl);
-	}
-    } else {
-	bu_log("brep was NULL!\n");
-    }
-}
-
-
-int main()
+int
+main()
 {
     ON_3dPointArray pts1, pts2;
     pts1.Append(ON_3dPoint(1.0, 1.0, 0.0));
@@ -1365,10 +1158,10 @@ int main()
 
     brep1.Create(surf1);
     brep2.Create(surf2);
-    ON_Brep *out;
-    BrepBrepIntersect(&brep1, &brep2, &out, 1e-3, 1e-9);
+    BrepBrepIntersect(&brep1, &brep2, 1e-3, 1e-9);
     return 0;
 }
+
 
 /** @} */
 /*

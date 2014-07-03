@@ -1,7 +1,7 @@
 /*                         A S C I I . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ascii.h
+/** @file lgt/ascii.h
  *	Author:		Gary S. Moss
  */
+
+#ifndef LGT_ASCII_H
+#define LGT_ASCII_H
+
 #define NUL		'\000'
 #define SOH		'\001'
 #define	STX		'\002'
@@ -47,6 +51,8 @@
 #define DEL		'\177'
 
 #define Ctrl(chr)	((int)chr&037)
+
+#endif /* LGT_ASCII_H */
 
 /*
  * Local Variables:

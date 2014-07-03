@@ -1,7 +1,7 @@
 /*                    M K B U I L D I N G . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,18 +17,18 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mkbuilding.c
+/** @file proc-db/mkbuilding.c
  *
  * application entry point for mkbuilding proc-db
  *
  */
 
-#include "common.h"
 #include "mkbuilding.h"
 
 void mkbdlg_usage(void)
 {
     fprintf(stderr, "Usage: mkbuilding db_file.g\n");
+    fprintf(stderr, "      (if db_file.g is omitted, 'mkbuilding.g' is assumed)\n");
 }
 
 
@@ -39,6 +39,15 @@ main(int ac, char *av[])
     point_t p1, p2;
 
     if (ac < 2) {
+	mkbdlg_usage();
+	fprintf(stderr, "       Program continues running:\n");
+	av[1]="mkbuilding.g";
+    }
+
+/* Try to disallow file names starting with - . */
+    if (av[1][0] == '-') {
+	if (av[1][1] != 'h' && av[1][1] !='?')
+	    fprintf(stderr,"mkbuilding accepts no options except h or ? for help\n");
 	mkbdlg_usage();
 	return 1;
     }

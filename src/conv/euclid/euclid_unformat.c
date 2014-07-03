@@ -1,7 +1,7 @@
 /*               E U C L I D _ U N F O R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,13 +53,17 @@ main(int argc, char *argv[])
 
     printf( "$03" );
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+    if (argc != 1) {
+	if (argc > 1)
+	    bu_log("Unexpected parameter [%s]\n", argv[1]);
+
+	bu_log("Usage: %s < inputfile]\n  Primary input lines are as follows:\n    face# #npts face_type e ident a\n", argv[0]);
+    }
+
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-#endif
 
-    while ( bu_fgets( str, sizeof(str), stdin ) )
-    {
+    while ( bu_fgets( str, sizeof(str), stdin ) ) {
 	sscanf( str, "%d %d %d %d %d %f", &face_no, &npts, &face_type, &e, &ident, &a );
 
 	if ( ident > 0 )
@@ -69,20 +73,17 @@ main(int argc, char *argv[])
 	    break;
 
 	sscanf( str, "%f %f %f %f", &a, &b, &c, &d );
-	QSET( pl, a, b, c, d )
+	QSET( pl, a, b, c, d );
 
-	    if ( npts > 2 )
-		printf( "%10d%3d%7.0f%5d%5d", old_id, face_type, 0.0, 1, npts );
+	if ( npts > 2 )
+	    printf( "%10d%3d%7.0f%5d%5d", old_id, face_type, 0.0, 1, npts );
 
-	for ( i=0; i<npts; i++ )
-	{
-	    if ( i >= MAX_PTS )
-	    {
+	for ( i=0; i<npts; i++ ) {
+	    if ( i >= MAX_PTS ) {
 		fprintf( stderr, "Too many points, MAX is %d\n", MAX_PTS );
 		return 1;
 	    }
-	    if ( !bu_fgets( str, sizeof(str), stdin ) )
-	    {
+	    if ( !bu_fgets( str, sizeof(str), stdin ) ) {
 		fprintf( stderr, "Unexpected EOF\n" );
 		break;
 	    }

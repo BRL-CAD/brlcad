@@ -1,7 +1,7 @@
 /*                          F O N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup vlist */
-/** @{ */
-/** @file font.c
- *
- */
 
 #include "common.h"
 
@@ -29,28 +24,14 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/malloc.h"
+#include "bu/list.h"
+#include "bu/log.h"
 #include "vmath.h"
-#include "bu.h"
 #include "bn.h"
 #include "vectfont.h"
 
-/* References tp_xxx symbols from libbn/vectfont.c */
 
-/**
- *			B N _ V L I S T _ 3 S T R I N G
- *@brief
- * Convert a string to a vlist.
- *
- *  'scale' is the width, in mm, of one character.
- *
- * @param vhead
- * @param free_hd source of free vlists
- * @param string  string of chars to be plotted
- * @param origin	 lower left corner of 1st char
- * @param rot	 Transform matrix (WARNING: may xlate)
- * @param scale    scale factor to change 1x1 char sz
- *
- */
 void
 bn_vlist_3string(struct bu_list *vhead,
 		 struct bu_list *free_hd, /* source of free vlists */
@@ -58,8 +39,6 @@ bn_vlist_3string(struct bu_list *vhead,
 		 const vect_t origin,	/* lower left corner of 1st char */
 		 const mat_t rot,	/* Transform matrix (WARNING: may xlate) */
 		 double scale)    	/* scale factor to change 1x1 char sz */
-
-
 {
     register unsigned char *cp;
     double	offset;			/* offset of char from given x, y */
@@ -77,7 +56,7 @@ bn_vlist_3string(struct bu_list *vhead,
      *  The text is located in a local coordinate system with the
      *  lower left corner of the first character at (0, 0, 0), with
      *  the text proceeding onward towards +X.
-     *  We need to rotate the text around it's local (0, 0, 0),
+     *  We need to rotate the text around its local (0, 0, 0),
      *  and then translate to the user's designated "origin".
      *  If the user provided translation or
      *  scaling in his matrix, it will *also* be applied.
@@ -129,23 +108,6 @@ bn_vlist_3string(struct bu_list *vhead,
 }
 
 
-/**
- *			B N _ V L I S T _ 2 S T R I N G
- * @brief
- * Convert string to vlist in 2D
- *
- *  A simpler interface, for those cases where the text lies
- *  in the X-Y plane.
- *
- * @param vhead
- * @param free_hd	source of free vlists
- * @param string	string of chars to be plotted
- * @param x		lower left corner of 1st char
- * @param y		lower left corner of 1st char
- * @param scale		scale factor to change 1x1 char sz
- * @param theta 	degrees ccw from X-axis
- *
- */
 void
 bn_vlist_2string(struct bu_list *vhead,
 		 struct bu_list *free_hd,
@@ -162,7 +124,7 @@ bn_vlist_2string(struct bu_list *vhead,
     VSET( p, x, y, 0 );
     bn_vlist_3string( vhead, free_hd, string, p, mat, scale );
 }
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

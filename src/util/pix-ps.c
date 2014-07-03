@@ -1,7 +1,7 @@
 /*                        P I X - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-ps.c
+/** @file util/pix-ps.c
  *
  * Convert an RGB (pix) file to an 24-bit color PostScript image.
  *
@@ -54,7 +54,7 @@ static FILE *infp;
 
 
 static char usage[] = "\
-Usage: pix-ps [-e] [-c|-l] [-L] [-h]\n\
+Usage: pix-ps [-e] [-c|-l] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.pix]\n";
 
@@ -63,7 +63,7 @@ void
 prolog(FILE *fp, char *name, size_t w, size_t h)
 
 
-    /* in points */
+/* in points */
 {
     time_t ltime;
 
@@ -82,7 +82,7 @@ prolog(FILE *fp, char *name, size_t w, size_t h)
 	fputs("%%Creator: BRL-CAD pix-ps\n", fp);
 	fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime));
     }
-    fprintf(fp, "%%%%BoundingBox: 0 0 %ld %ld\n", w, h);
+    fprintf(fp, "%%%%BoundingBox: 0 0 %lu %lu\n", (unsigned long)w, (unsigned long)h);
     fputs("%%EndComments\n\n", fp);
 
     if (!encapsulated && landscape) {
@@ -91,15 +91,15 @@ prolog(FILE *fp, char *name, size_t w, size_t h)
 	pagewidth = pageheight;
 	pageheight = tmp;
 	fprintf(fp, "90 rotate\n");
-	fprintf(fp, "0 -%ld translate\n", pageheight);
+	fprintf(fp, "0 -%lu translate\n", (unsigned long)pageheight);
     }
     if (!encapsulated && center) {
 	size_t xtrans, ytrans;
 	xtrans = (pagewidth - w)/2.0;
 	ytrans = (pageheight - h)/2.0;
-	fprintf(fp, "%ld %ld translate\n", xtrans, ytrans);
+	fprintf(fp, "%lu %lu translate\n", (unsigned long)xtrans, (unsigned long)ytrans);
     }
-    fprintf(fp, "%ld %ld scale\n\n", (unsigned long)w, (unsigned long)h);
+    fprintf(fp, "%lu %lu scale\n\n", (unsigned long)w, (unsigned long)h);
 }
 
 
@@ -119,7 +119,7 @@ postlog(FILE *fp)
 void
 hexout(FILE *fp, int byte)
 
-    /* 0 <= byte <= 255 */
+/* 0 <= byte <= 255 */
 {
     int high, low;
     static int symbol[16] = { '0', '1', '2', '3', '4', '5', '6',
@@ -132,21 +132,18 @@ hexout(FILE *fp, int byte)
     putc(symbol[low], fp);
 }
 
+char Stdin[] = "[stdin]";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ehclLs:w:n:S:W:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "eclLs:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'e':
 		/* Encapsulated PostScript */
 		encapsulated++;
-		break;
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
 		break;
 	    case 'c':
 		center = 1;
@@ -186,25 +183,31 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "[stdin]";
+	file_name = Stdin;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pix-ps: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "pix-ps: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	/*fileinput++;*/
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pix-ps: excess argument(s) ignored\n");
+	fprintf(stderr, "pix-ps: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
 
+void
+printusage(void)
+{
+	(void)fputs(usage, stderr);
+	bu_exit (1, NULL);
+}
 
 int
 main(int argc, char **argv)
@@ -214,12 +217,12 @@ main(int argc, char **argv)
     size_t scans_per_patch, bytes_per_patch;
     size_t y;
 
-    outwidth = outheight = DEFAULT_SIZE;
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
+	printusage();
+    if (!get_args(argc, argv))
+	printusage();
 
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
-    }
+    outwidth = outheight = DEFAULT_SIZE;
 
     if (encapsulated) {
 	xpoints = width;
@@ -243,10 +246,10 @@ main(int argc, char **argv)
 
 	/* start a patch */
 	fprintf(ofp, "save\n");
-	fprintf(ofp, "%ld %ld 8 [%ld 0 0 %ld 0 %ld] {<\n ",
-		width, scans_per_patch,		/* patch size */
-		width, height,			/* total size = 1.0 */
-		-y);				/* patch y origin */
+	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %ld] {<\n ",
+		(unsigned long)width, (unsigned long)scans_per_patch,		/* patch size */
+		(unsigned long)width, (unsigned long)height,			/* total size = 1.0 */
+		-(long)y);				/* patch y origin */
 
 	/* data */
 	num = 0;

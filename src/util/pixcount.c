@@ -1,7 +1,7 @@
 /*                      P I X C O U N T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixcount.c
+/** @file util/pixcount.c
  *
  * Sort the pixels of an input stream by color value.
  *
@@ -33,11 +33,11 @@
 
 
 struct pixel {
-    long p_magic;
+    uint32_t p_magic;
     unsigned char *p_color;
     int p_count;
 };
-#define PIXEL_NULL ((struct pixel *) 0)
+#define PIXEL_NULL ((struct pixel *)0)
 #define PIXEL_MAGIC 0x7078656c
 
 
@@ -47,28 +47,23 @@ struct pixel {
 int pixel_size = 3;		/* Bytes/pixel */
 FILE *outfp = NULL;		/* output file */
 
-static const char usage[] = "\
-Usage: 'pixcount [-# bytes_per_pixel]\n\
-		 [infile.pix [outfile]]'\n";
-#define OPT_STRING "#:?"
+static const char usage[]     = "Usage: pixcount [-# bytes_per_pixel] [infile.pix [outfile]]\n";
+static const char optstring[] = "#:?";
 
-
-static void print_usage (void)
+static
+void print_usage(void)
 {
     bu_exit(1, "%s", usage);
 }
 
 
-/*
- * M K _ P I X E L ()
- *
- */
-struct pixel *mk_pixel (unsigned char *color)
+struct pixel *
+mk_pixel(unsigned char *color)
 {
     int i;
     struct pixel *pp;
 
-    pp = (struct pixel *) bu_malloc(sizeof(struct pixel), "pixel");
+    BU_ALLOC(pp, struct pixel);
 
     pp->p_magic = PIXEL_MAGIC;
     pp->p_color = (unsigned char *)
@@ -82,25 +77,19 @@ struct pixel *mk_pixel (unsigned char *color)
 }
 
 
-/*
- * F R E E _ P I X E L ()
- *
- */
-void free_pixel (struct pixel *pp)
+void
+free_pixel(struct pixel *pp)
 {
     BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
-    bu_free((genptr_t) pp, "pixel");
+    bu_free((void *)pp, "pixel");
 }
 
 
-/*
- * P R I N T _ P I X E L ()
- *
- */
-void print_pixel (void *p, int UNUSED(depth))
+void
+print_pixel(void *p, int UNUSED(depth))
 {
     int i;
-    struct pixel *pp = (struct pixel *) p;
+    struct pixel *pp = (struct pixel *)p;
 
     BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
 
@@ -111,14 +100,13 @@ void print_pixel (void *p, int UNUSED(depth))
 
 
 /*
- * C O M P A R E _ P I X E L S ()
- *
  * The comparison callback for the red-black tree
  */
-int compare_pixels (void *v1, void *v2)
+int
+compare_pixels(void *v1, void *v2)
 {
-    struct pixel *p1 = (struct pixel *) v1;
-    struct pixel *p2 = (struct pixel *) v2;
+    struct pixel *p1 = (struct pixel *)v1;
+    struct pixel *p2 = (struct pixel *)v2;
     int i;
 
     BU_CKMAG(p1, PIXEL_MAGIC, "pixel");
@@ -134,21 +122,12 @@ int compare_pixels (void *v1, void *v2)
 }
 
 
-/*
- * L O O K U P _ P I X E L ()
- */
-struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
+struct pixel *
+lookup_pixel(struct bu_rb_tree *palette, unsigned char *color)
 {
-    int rc;	/* Return code from bu_rb_insert() */
-    struct pixel *qpp;	/* The query */
-    struct pixel *pp;	/* Value to return */
-
-#if 0
-    bu_log("lookup_pixel(");
-    for (i = 0; i < pixel_size; ++i)
-	bu_log("%3d ", color[i]);
-    bu_log(")...");
-#endif
+    int rc = 0;	/* Return code from bu_rb_insert() */
+    struct pixel *qpp = NULL;	/* The query */
+    struct pixel *pp = NULL;	/* Value to return */
 
     /*
      * Prepare the palette query
@@ -161,18 +140,12 @@ struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
      * then we have our pixel.
      * Otherwise, we must create a new pixel.
      */
-    switch (rc = bu_rb_insert(palette, (void *) qpp)) {
+    switch (rc = bu_rb_insert(palette, (void *)qpp)) {
 	case -1:
-#if 0
-	    bu_log(" already existed\n");
-#endif
-	    pp = (struct pixel *) bu_rb_curr1(palette);
+	    pp = (struct pixel *)bu_rb_curr1(palette);
 	    free_pixel(qpp);
 	    break;
 	case 0:
-#if 0
-	    bu_log(" newly added\n");
-#endif
 	    pp = qpp;
 	    break;
 	default:
@@ -184,9 +157,9 @@ struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
 
 
 int
-main (int argc, char **argv)
+main(int argc, char **argv)
 {
-    bu_rb_tree *palette;	/* Pixel palette */
+    struct bu_rb_tree *palette;	/* Pixel palette */
     char *inf_name;	/* name of input stream */
     char *outf_name;	/* " " output " */
     unsigned char *buf;		/* the current input pixel */
@@ -197,7 +170,7 @@ main (int argc, char **argv)
     /*
      * Process the command line
      */
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, optstring)) != -1)
 	switch (ch) {
 	    case '#':
 		if (sscanf(bu_optarg, "%d", &pixel_size) != 1) {
@@ -211,11 +184,9 @@ main (int argc, char **argv)
 	}
     switch (argc - bu_optind) {
 	case 0:
-	    inf_name = "stdin";
 	    infp = stdin;
 	    /* Break intentionally missing */
 	case 1:
-	    outf_name = "stdout";
 	    outfp = stdout;
 	    /* Break intentionally missing */
 	case 2:
@@ -248,7 +219,7 @@ main (int argc, char **argv)
 	}
     }
 
-    palette = bu_rb_create1("Pixel palette", compare_pixels);
+    palette = bu_rb_create1("Pixel palette", (int (*)(void))compare_pixels);
     bu_rb_uniq_on1(palette);
 
     /*
@@ -257,15 +228,15 @@ main (int argc, char **argv)
     buf = (unsigned char *)
 	bu_malloc(pixel_size * sizeof(unsigned char),
 		  "pixel buffer");
-    while (fread((void *) buf, pixel_size * sizeof(unsigned char), 1, infp) == 1) {
+    while (fread((void *)buf, pixel_size * sizeof(unsigned char), 1, infp) == 1) {
 	pp = lookup_pixel(palette, buf);
 	BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
 
 	++(pp->p_count);
     }
-    bu_free((genptr_t) buf, "pixel buffer");
+    bu_free((void *)buf, "pixel buffer");
 
-    bu_rb_walk1(palette, print_pixel, INORDER);
+    bu_rb_walk1(palette, (void (*)(void))print_pixel, BU_RB_WALK_INORDER);
 
     return 0;
 }

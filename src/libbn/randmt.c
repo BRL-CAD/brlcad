@@ -1,4 +1,4 @@
-/*                          R A N D . C
+/*                      R A N D M T . C
  * BRL-CAD
  *
  * A C-program for MT19937: Real number version
@@ -31,7 +31,8 @@
  * matumoto@math.keio.ac.jp
  */
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 
 /* Period parameters */
@@ -52,22 +53,20 @@
 
 #define MERSENNE_MAGIC 0x4D54524E
 
-static struct _internal_state_s {
+struct _internal_state_s {
     uint32_t magic;
     int mti;		/* state index */
     uint32_t mt[N];	/* state vector */
-} global_state_static = { MERSENNE_MAGIC, N+1, {0} };
+};
 
-static struct _internal_state_s *global_state = &global_state_static;
+static struct _internal_state_s global_state = { MERSENNE_MAGIC, N+1, {0} };
 
 void *
-bn_randmt_state_create()
+bn_randmt_state_create(void)
 {
     struct _internal_state_s *is;
 
-    is = bu_malloc(sizeof(struct _internal_state_s), "Mersenne Twister state");
-    if(is == NULL)
-	return NULL;
+    BU_ALLOC(is, struct _internal_state_s);
     is->magic = MERSENNE_MAGIC;
     is->mti = N+1;
     return (void *)is;
@@ -142,20 +141,14 @@ bn_randmt_state_deserialize(struct _internal_state_s *UNUSED(is), struct bu_vls 
 }
 
 void
-bn_rand_mt_state_set_global(struct _internal_state_s *is)
-{
-    global_state = is;
-}
-
-void
 bn_randmt_seed(unsigned long seed)
 {
-    bn_randmt_state_seed(global_state, (uint32_t)seed);
+    bn_randmt_state_seed(&global_state, (uint32_t)seed);
 }
 
-double bn_randmt()
+double bn_randmt(void)
 {
-    return bn_randmt_state(global_state);
+    return bn_randmt_state(&global_state);
 }
 
 /*

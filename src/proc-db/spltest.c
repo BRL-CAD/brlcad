@@ -1,7 +1,7 @@
 /*                       S P L T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file spltest.c
+/** @file proc-db/spltest.c
  * spltest.c
  *
  * Simple spline test.
@@ -39,7 +39,7 @@
 #define SSET(_fp, _srf, _col, _row, _val) { \
 	_fp = &_srf->ctl_points[((_col*_srf->s_size[1])+_row)*3]; \
 	VMOVE(_fp, _val); \
-}
+    }
 
 
 void
@@ -48,7 +48,7 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
     int i;
     int ki;
     int cur_kv;
-    int interior_pts = 0;
+    int interior_pts = 2;
     fastf_t *fp = NULL;
     struct face_g_snurb *srf = NULL;
 
@@ -86,10 +86,14 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
     SSET(fp, srf, 0, 1, b);
     SSET(fp, srf, 1, 0, d);
     SSET(fp, srf, 1, 1, c);
-    
+
     s->srfs[s->nsrf++] = srf;
 }
 
+void
+printusage(char *argv[]) {
+	bu_log("Usage: %s [filename, default to spltest.g]\n", argv[0]);
+}
 
 int
 main(int argc, char *argv[])
@@ -97,18 +101,25 @@ main(int argc, char *argv[])
     point_t a, b, c, d;
     struct rt_wdb *fp;
     struct rt_nurb_internal *si;
-    char *filename;
+    char *filename = "spltest.g";
+    int helpflag;
 
     if (argc < 1 || argc > 2) {
-	bu_exit(1, "Usage: %s [spltest.g]", argv[0]);
+    	printusage(argv);
+	bu_exit(1,NULL);
     }
 
-    if (argc == 2) {
-	filename = argv[1];
-    } else {
-	filename = "spltest.g";
+    helpflag = (argc == 2 && ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")));
+    if (argc == 1 || helpflag) {
+    	printusage(argv);
+	if (helpflag)
+		bu_exit(1,NULL);
+	bu_log("       Program continues running:\n");
     }
-	
+
+    if (argc == 2)
+	filename = argv[1];
+
     if ((fp = wdb_fopen(filename)) == NULL) {
 	perror("unable to open geometry database for writing");
 	bu_exit(1, "unable to open new database [%s]\n", filename);
@@ -121,18 +132,20 @@ main(int argc, char *argv[])
     VSET(c, 10, 10,  10);
     VSET(d,  0, 10,  0);
 
-    si = (struct rt_nurb_internal *)bu_malloc(sizeof(struct rt_nurb_internal), "spltest rt_nurb_internal");
+    BU_ALLOC(si, struct rt_nurb_internal);
     si->magic = RT_NURB_INTERNAL_MAGIC;
     si->nsrf = 0;
     si->srfs = (struct face_g_snurb **)bu_malloc(sizeof(struct face_g_snurb *)*100, "allocate snurb ptrs");
 
     make_face(si, a, b, c, d, 2);
-    
+
     /* wdb_export */
-    mk_export_fwrite(fp, "spltest", (genptr_t)si, ID_BSPLINE);
+    mk_export_fwrite(fp, "spltest", (void *)si, ID_BSPLINE);
+    bu_log("Saving file %s\n",filename);
 
     return 0;
 }
+
 
 /*
  * Local Variables:

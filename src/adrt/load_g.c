@@ -1,7 +1,7 @@
 /*                        L O A D _ G . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+
 
 #include "gcv.h"
 
@@ -47,14 +47,13 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-#include "libtie/tie.h"
+#include "tie.h"
 #include "adrt.h"
 #include "adrt_struct.h"
 
 
-
 static struct bn_tol tol;		/* calculation tolerance */
-static tie_t *cur_tie;
+static struct tie_s *cur_tie;
 static struct db_i *dbip;
 TIE_3 **tribuf;
 
@@ -64,7 +63,7 @@ struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
     struct adrt_mesh_s **meshes;
 };
-static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite};
+static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite, NULL};
 
 
 /* load the region into the tie image */
@@ -90,15 +89,11 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd))
 	{
 	    struct loopuse *lu;
-	    vect_t facet_normal;
 
 	    NMG_CK_FACEUSE(fu);
 
 	    if (fu->orientation != OT_SAME)
 		continue;
-
-	    /* Grab the face normal and save it for all the vertex loops */
-	    NMG_GET_FU_NORMAL(facet_normal, fu);
 
 	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd))
 	    {
@@ -126,7 +121,7 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 		}
 		if (vert_count > 3)
 		{
-		    bu_log("lu x%p has %d vertices!\n", lu, vert_count);
+		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle");
 		}
 		else if (vert_count < 3)
@@ -142,7 +137,7 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 }
 
 int
-nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, genptr_t client_data)
+nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, void *UNUSED(client_data))
 {
     /*
      * if it's a simple single bot region, just eat the bots and return -1.
@@ -150,53 +145,57 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
      */
     struct directory *dir;
     struct rt_db_internal intern;
-    struct rt_bot_internal *bot;
     struct adrt_mesh_s *mesh;
     unsigned char rgb[3] = { 0xc0, 0xc0, 0xc0 };
 
     RT_CHECK_COMB(rci);
 
     /* abort cases, no fast loading. */
-    if(rci->tree == NULL)
+    if (rci->tree == NULL)
 	return 0;
     RT_CK_TREE(rci->tree);
-    if( rci->tree->tr_op != OP_DB_LEAF )
+    if ( rci->tree->tr_op != OP_DB_LEAF )
 	return 0;
-    dir = db_lookup(dbip, rci->tree->tr_l.tl_name, 1);
-    if(dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
+    if ((dir = db_lookup(dbip, rci->tree->tr_l.tl_name, 1)) == NULL) {
+	printf("Lookup failed: %s\n", rci->tree->tr_l.tl_name);
 	return 0;
-    if(rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    }
+    if (dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
+	return 0;
+    if (rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	printf("Failed to load\n");
 	return 0;
     }
-    
-    if(dir->d_minor_type == ID_NMG)
+
+    if (dir->d_minor_type == ID_NMG)
 	return 0;
 
-    BU_GETSTRUCT(mesh, adrt_mesh_s);
+    /* FIXME: where is this released? */
+    BU_ALLOC(mesh, struct adrt_mesh_s);
 
     BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
     mesh->texture = NULL;
     mesh->flags = 0;
-    mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
+
+    BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = ts->ts_gmater;
 
     rt_comb_get_color(rgb, rci);
     VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
 
-    strncpy(mesh->name, db_path_to_string(path), 255);
+    bu_strlcpy(mesh->name, db_path_to_string(path), sizeof(mesh->name));
 
-    if(intern.idb_minor_type == ID_NMG) {
+    if (intern.idb_minor_type == ID_NMG) {
 	nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
 	return -1;
     } else if (intern.idb_minor_type == ID_BOT) {
-	struct rt_bot_internal *bot = intern.idb_ptr;
-	int i;
+	size_t i;
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
 
 	RT_BOT_CK_MAGIC(bot);
 
-	for(i=0;i<bot->num_faces;i++)
+	for (i=0;i<bot->num_faces;i++)
 	{
 	    VSCALE((*tribuf[0]).v, (bot->vertices+3*bot->faces[3*i+0]), 1.0/1000.0);
 	    VSCALE((*tribuf[1]).v, (bot->vertices+3*bot->faces[3*i+1]), 1.0/1000.0);
@@ -207,16 +206,15 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 	return -1;
     }
 
-    bu_log("Strange, %d is not %d or %d\n", ID_BOT, ID_NMG);
+    bu_log("Strange, %d is not %d or %d\n", intern.idb_minor_type, ID_BOT, ID_NMG);
     return 0;
 }
 
 
 static void
-nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3])
+nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int material_id, float color[3])
 {
     struct model *m;
-    struct shell *s;
     struct adrt_mesh_s *mesh;
 
     NMG_CK_REGION(r);
@@ -228,31 +226,30 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
     /* triangulate model */
     nmg_triangulate_model(m, &tol);
 
-    BU_GETSTRUCT(mesh, adrt_mesh_s);
+    /* FIXME: where is this released? */
+    BU_ALLOC(mesh, struct adrt_mesh_s);
 
     BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
     mesh->texture = NULL;
     mesh->flags = 0;
-    mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
+
+    BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = material_id;
 
     VMOVE(mesh->attributes->color.v, color);
-    strncpy(mesh->name, db_path_to_string(pathp), 255);
+    bu_strlcpy(mesh->name, db_path_to_string(pathp), sizeof(mesh->name));
 
     nmg_to_adrt_internal(mesh, r);
 }
 
 
 int
-load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
+load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
 {
-    int c;
-    double percent;
     struct model *the_model;
-    struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
+    struct rt_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
-    TIE_3 max;
 
     cur_tie = tie;	/* blehhh, global... need locking. */
 
@@ -261,7 +258,7 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mes
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
 
-    /* Set up tesselation tolerance defaults */
+    /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
@@ -273,7 +270,7 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mes
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-5;
+    tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
     tie_check_degenerate = 0;
@@ -282,14 +279,14 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mes
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /*
      * these should probably encode so the result can be passed back to client
      */
-    if ((dbip = db_open(db, "r")) == DBI_NULL) {
+    if ((dbip = db_open(db, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(db);
-	bu_log("Unable to open geometry file (%s)\n", db);
+	bu_log("Unable to open geometry database file (%s)\n", db);
 	return -1;
     }
     if (db_dirbuild(dbip)) {
@@ -302,7 +299,8 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mes
 
     tie_init(cur_tie, 4096, TIE_KDTREE_FAST);
 
-    BU_GETSTRUCT(*meshes, adrt_mesh_s);
+    /* FIXME: where is this released? */
+    BU_ALLOC(*meshes, struct adrt_mesh_s);
     BU_LIST_INIT(&((*meshes)->l));
 
     gcvwriter.meshes = meshes;
@@ -313,14 +311,14 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mes
     tribuf[2] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle tribuffer");
 
     (void) db_walk_tree(dbip,
-			argc,			/* number of toplevel regions */			
+			argc,			/* number of toplevel regions */
 			argv,			/* region names */
 			1,			/* ncpu */
 			&tree_state,		/* initial tree state */
 			nmg_to_adrt_regstart,	/* region start function */
 			gcv_region_end,		/* region end function */
 			nmg_booltree_leaf_tess,	/* leaf func */
-			(genptr_t)&gcvwriter);	/* client data */
+			(void *)&gcvwriter);	/* client data */
 
     /* Release dynamic storage */
     nmg_km(the_model);

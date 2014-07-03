@@ -1,7 +1,7 @@
 /*                      I F _ S T A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "bu/log.h"
+#include "bu/str.h"
 #include "fb.h"
 
 
@@ -44,16 +46,16 @@ struct stkinfo {
 #define SIL(ptr) ((ptr)->u1.p)		/* left hand side version */
 
 HIDDEN int
-stk_open(FBIO *ifp, char *file, int width, int height)
+stk_open(FBIO *ifp, const char *file, int width, int height)
 {
     int i;
-    char *cp;
+    const char *cp;
     char devbuf[80];
 
     FB_CK_FBIO(ifp);
 
     /* Check for /dev/stack */
-    if (strncmp(file, ifp->if_name, strlen("/dev/stack")) != 0) {
+    if (bu_strncmp(file, ifp->if_name, strlen("/dev/stack")) != 0) {
 	fb_log("stack_dopen: Bad device %s\n", file);
 	return -1;
     }
@@ -70,7 +72,7 @@ stk_open(FBIO *ifp, char *file, int width, int height)
     /* special check for a possibly user confusing case */
     if (*cp == '\0') {
 	fb_log("stack_dopen: No devices specified\n");
-	fb_log("Usage: /dev/stack device_one; device_two; [etc]\n");
+	fb_log("Usage: /dev/stack device_one; device_two; ...\n");
 	return -1;
     }
 
@@ -140,7 +142,7 @@ stk_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 stk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     register FBIO **ip = SI(ifp)->if_list;
@@ -149,11 +151,11 @@ stk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	fb_read((*ip), x, y, pixelp, count);
     }
 
-    return (int)count;
+    return count;
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 stk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     register FBIO **ip = SI(ifp)->if_list;
@@ -163,13 +165,11 @@ stk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	ip++;
     }
 
-    return (int)count;
+    return count;
 }
 
 
 /*
- * S T K _ R E A D R E C T
- *
  * Read only from the first source on the stack.
  */
 HIDDEN int
@@ -186,8 +186,6 @@ stk_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
 
 
 /*
- * S T K _ W R I T E R E C T
- *
  * Write to all destinations on the stack
  */
 HIDDEN int
@@ -205,8 +203,6 @@ stk_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 
 
 /*
- * S T K _ B W R E A D R E C T
- *
  * Read only from the first source on the stack.
  */
 HIDDEN int
@@ -223,8 +219,6 @@ stk_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned ch
 
 
 /*
- * S T K _ B W W R I T E R E C T
- *
  * Write to all destinations on the stack
  */
 HIDDEN int
@@ -385,7 +379,7 @@ stk_help(FBIO *ifp)
     int i;
 
     fb_log("Device: /dev/stack\n");
-    fb_log("Usage: /dev/stack device_one; device_two; [etc]\n");
+    fb_log("Usage: /dev/stack device_one; device_two; ...\n");
 
     i = 0;
     while (*ip != (FBIO *)NULL) {

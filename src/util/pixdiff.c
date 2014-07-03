@@ -1,7 +1,7 @@
 /*                       P I X D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixdiff.c
+/** @file util/pixdiff.c
  *
  * Compute the difference between two .pix files.  To establish
  * context, a half-intensity monochrome image is produced when there
@@ -50,13 +50,13 @@ main(int argc, char *argv[])
 	bu_exit(1, "Usage: pixdiff f1.pix f2.pix >file.pix\n");
     }
 
-    if (strcmp(argv[1], "-") == 0)
+    if (BU_STR_EQUAL(argv[1], "-"))
 	f1 = stdin;
     else if ((f1 = fopen(argv[1], "r")) == NULL) {
 	perror(argv[1]);
 	return 1;
     }
-    if (strcmp(argv[2], "-") == 0)
+    if (BU_STR_EQUAL(argv[2], "-"))
 	f2 = stdin;
     else if ((f2 = fopen(argv[2], "r")) == NULL) {
 	perror(argv[2]);

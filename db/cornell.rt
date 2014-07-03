@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# Example render script that sets up a prototypical view for the
+# Cornell box.  Alas, rt view scripts loaded into MGED only restore
+# orientation and not view positioning so an extra repositioning step
+# is required.
+###
+
+echo "************************ NOTICE ******************************"
+echo "To restore the originally intended view in MGED, run loadview"
+echo "on this script followed by: view center 278 -150 2500"
+echo "************************ NOTICE ******************************"
+
+rt -M -p55 \
+ $*\
+ cornell.g\
+ 'all.g' \
+ <<EOF
+viewsize 6.000000000000000e+03;
+orientation 0.000000000000000e+00 9.961946980917455e-01 8.715574274765824e-02 0.000000000000000e+00;
+eye_pt 2.780000000000000e+02 3.709445330007912e+02 -4.544232590366239e+02;
+start 0; clean;
+end;
+
+EOF

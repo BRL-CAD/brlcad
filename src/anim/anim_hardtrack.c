@@ -1,7 +1,7 @@
 /*                A N I M _ H A R D T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "anim.h"
 
 
-#define OPT_STR "b:d:f:i:l:pr:w:sg:m:c"
+#define OPT_STR "b:d:f:i:l:pr:w:sg:m:ch?"
 
 #define NW num_wheels
 #define NEXT(i)	(i+1)%NW
@@ -111,6 +111,11 @@ int get_circumf;	/* flag: just return circumference of track */
 vect_t centroid, rcentroid;	/* alternate centroid and its reverse */
 mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_hardtrack [-l num_linkslinkname] [-w wheelname] [options] wheelfile in.table out.script\n");
+}
 
 int
 get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
@@ -145,14 +150,17 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 int
 get_args(int argc, char **argv)
 {
-    fastf_t yaw, pch, rll;
+    /* intentionally double for scan */
+    double yaw, pch, rll;
+    double scan[3];
+
     int c, i;
     axes = cent = links_placed = print_wheel = print_link = 0;
     get_circumf = 0;
     print_mode = TRACK_ANIM;
     bu_strlcpy(link_cmd, "rarc", sizeof(link_cmd));
     bu_strlcpy(wheel_cmd, "lmul", sizeof(wheel_cmd));
-    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	i=0;
 	switch (c) {
 	    case 'b':
@@ -167,9 +175,10 @@ get_args(int argc, char **argv)
 		break;
 	    case 'd':
 		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[0]);
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[1]);
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[2]);
+		VMOVE(centroid, scan);
 		bu_optind += 3;
 		VREVERSE(rcentroid, centroid);
 		cent = 1;
@@ -178,13 +187,15 @@ get_args(int argc, char **argv)
 		sscanf(bu_optarg, "%d", &first_frame);
 		break;
 	    case 'i':
-		sscanf(bu_optarg, "%lf", &init_dist);
+		sscanf(bu_optarg, "%lf", &scan[0]);
+		init_dist = scan[0];
 		break;
 	    case 'p':
 		links_placed = 1;
 		break;
 	    case 'r':
-		sscanf(bu_optarg, "%lf", &radius);
+		sscanf(bu_optarg, "%lf", &scan[0]);
+		radius = scan[0];
 		break;
 	    case 'w':
 		wheel_nindex = bu_optind - 1;
@@ -222,7 +233,7 @@ get_args(int argc, char **argv)
 		get_circumf = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
+		/* getopt already reported any unknown option */
 		return 0;
 	}
     }
@@ -235,8 +246,9 @@ int
 track_prep(void)
 {
     int i;
-    fastf_t phi, costheta, link_angle, arc_angle;
-    vect_t difference, link_cent;
+    fastf_t phi, costheta, arc_angle;
+    fastf_t link_angle = 0.0;
+    vect_t difference, link_cent = VINIT_ZERO;
 
     /* first loop - get inter axle slopes and start/end angles */
     for (i=0;i<NW;i++) {
@@ -248,7 +260,7 @@ track_prep(void)
 	costheta = (x[PREV(i)].w.rad - x[i].w.rad)/x[i].s.len;/*cosine of special angle*/
 	x[PREV(i)].w.ang1 = phi + acos(costheta);
 	while (x[PREV(i)].w.ang1 < 0.0)
-	    x[PREV(i)].w.ang1 += 2.0*M_PI;
+	    x[PREV(i)].w.ang1 += M_2PI;
 	x[i].w.ang0 = x[PREV(i)].w.ang1;
     }
 
@@ -256,7 +268,7 @@ track_prep(void)
     for (i=0;i<NW;i++) {
 	arc_angle = x[i].w.ang0 - x[i].w.ang1;
 	while (arc_angle < 0.0)
-	    arc_angle += 2.0*M_PI;
+	    arc_angle += M_2PI;
 	if (arc_angle > M_PI) {
 	    /* concave */
 	    x[i].w.ang0 = 0.5*(x[i].w.ang0 + x[i].w.ang1);
@@ -303,32 +315,48 @@ track_prep(void)
 int
 main(int argc, char *argv[])
 {
-    int val, frame, go, i, count;
-    fastf_t y_rot, distance, yaw, pitch, roll;
-    vect_t p1, p2, p3, dir, dir2, wheel_now, wheel_prev;
-    vect_t zero, position, vdelta, temp, to_track, to_front;
-    mat_t mat_v, wmat, mat_x;
-    FILE *stream;
-    int last_frame;
+    FILE *stream = NULL;
+    fastf_t distance = 0.0;
+    fastf_t pitch = 0.0;
+    fastf_t roll = 0.0;
+    fastf_t y_rot = 0.0;
+    fastf_t yaw = 0.0;
+    int count = 0;
+    int frame = 0;
+    int go = 0;
+    int i = 0;
+    int last_frame = 0;
+    int val = 0;
+    mat_t mat_v = MAT_INIT_IDN;
+    mat_t mat_x = MAT_INIT_IDN;
+    mat_t wmat = MAT_INIT_IDN;
+    vect_t dir = VINIT_ZERO;
+    vect_t dir2 = VINIT_ZERO;
+    vect_t p1 = VINIT_ZERO;
+    vect_t p2 = VINIT_ZERO;
+    vect_t p3 = VINIT_ZERO;
+    vect_t position = VINIT_ZERO;
+    vect_t temp = VINIT_ZERO;
+    vect_t to_front = VINIT_ZERO;
+    vect_t to_track = VINIT_ZERO;
+    vect_t vdelta = VINIT_ZERO;
+    vect_t wheel_now = VINIT_ZERO;
+    vect_t wheel_prev = VINIT_ZERO;
+    vect_t zero = VINIT_ZERO;
 
-    VSETALL(zero, 0.0);
-    VSETALL(to_track, 0.0);
-    VSETALL(centroid, 0.0);
-    VSETALL(rcentroid, 0.0);
-    VSETALL(wheel_now, 0.0);
-    VSETALL(wheel_prev, 0.0);
-    init_dist = y_rot = radius= 0.0;
-    first_frame = num_wheels = steer = axes = cent = links_placed=0;
-    num_wheels = num_links = last_frame = 0;
-    MAT_IDN(mat_v);
-    MAT_IDN(mat_x);
-    MAT_IDN(wmat);
+    init_dist = radius= 0.0;
+    first_frame = num_wheels = steer = axes = cent = links_placed = num_links = 0;
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	usage();
+	return 0;
+    }
+
     if (!get_args(argc, argv)) {
-	fprintf(stderr, "anim_hardtrack: argument error.");
-	return -1;
+	usage();
+	return 0;
     }
 
     if (axes || cent) {
@@ -340,11 +368,11 @@ main(int argc, char *argv[])
     /* get track information from specified file */
 
     if (!(stream = fopen(*(argv+bu_optind), "rb"))) {
-	fprintf(stderr, "Anim_hardtrack: Could not open file %s.\n", *(argv+bu_optind));
+	fprintf(stderr, "anim_hardtrack: Could not open file %s.\n", *(argv+bu_optind));
 	return 0;
     }
-    num_wheels = -1;
-    if (!NEAR_ZERO(radius, SMALL_FASTF)) {
+
+    if (!ZERO(radius)) {
 	while (!feof(stream)) {
 	    count = fscanf(stream, "%*f %*f %*f");
 	    if (count != 3)
@@ -365,17 +393,20 @@ main(int argc, char *argv[])
     x = (struct all *) bu_calloc(num_wheels, sizeof(struct all), "struct all");
     /*read rest of track info */
     for (i=0;i<NW;i++) {
-	count = fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
+	double scan[3];
+
+	count = fscanf(stream, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
 	if (count != 3)
 	    break;
-	if (!NEAR_ZERO(radius, SMALL_FASTF))
+	if (!ZERO(radius))
 	    x[i].w.rad = radius;
 	else {
-	    count = fscanf(stream, "%lf", & x[i].w.rad);
+	    count = fscanf(stream, "%lf", &scan[0]);
+	    x[i].w.rad = scan[0]; /* double to fastf_t */
 	    if (count != 1)
 		break;
 	}
-	MAT4X3PNT(x[i].w.pos, m_rev_axes, temp);
+	MAT4X3PNT(x[i].w.pos, m_rev_axes, scan);
 	if (i==0)
 	    track_y = x[0].w.pos[1];
 	else
@@ -395,7 +426,7 @@ main(int argc, char *argv[])
     VSET(to_front, 1.0, 0.0, 0.0);
 
     if ((!print_link)&&(!print_wheel)) {
-	fprintf(stderr, "anim_hardtrack: no ouput requested. Use -l or -w.\n");
+	fprintf(stderr, "anim_hardtrack: no output requested. Use -l or -w.\n");
 	bu_exit(0, NULL);
     }
     /* main loop */
@@ -405,17 +436,26 @@ main(int argc, char *argv[])
     else
 	frame = first_frame-1;
     for (val = 3; val > 2; frame++) {
+	double scan[3];
+
 	go = 1;
 	/*p2 is current position. p3 is next;p1 is previous*/
 	VMOVE(p1, p2);
 	VMOVE(p2, p3);
 	count = scanf("%*f");/*time stamp*/
-	val = scanf("%lf %lf %lf", p3, p3+1, p3 + 2);
+	val = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+	VMOVE(p3, scan); /* double to fastf_t */
 	if (!steer) {
-	    count = scanf("%lf %lf %lf", &yaw, &pitch, &roll);
+	    count = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
 	    if (count != 3) {
 		bu_exit(2, "Unexpected/Missing raw, pitch, roll value(s)!  Read %d values.\n", count);
 	    }
+
+	    /* double to fastf_t */
+	    yaw = scan[0];
+	    pitch = scan[1];
+	    roll = scan[2];
+
 	    anim_dy_p_r2mat(mat_v, yaw, pitch, roll);
 	    anim_add_trans(mat_v, p3, rcentroid);
 	} else {

@@ -1,7 +1,7 @@
 /*                        B W D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwdiff.c
+/** @file util/bwdiff.c
  *
  * Take the difference between two BW files.
  * Output is: (file1-file2)/2 + 127
@@ -49,20 +49,19 @@ int mode = DIFF;
 int backgnd = 0;
 unsigned char ibuf1[512], ibuf2[512], obuf[512];
 
-static const char usage[] = "\
-Usage: bwdiff [-b -m -g -l -e -n] file1.bw file2.bw (- stdin, . skip)\n";
+static const char usage[] =
+    "Usage: bwdiff [-b -m -g -l -e -n] file1.bw file2.bw > diff.bw\n\t(use - for stdin, . for /dev/null)\n";
 
 void
 open_file(FILE **fp, char *name)
 {
     /* check for special names */
-    if (strcmp(name, "-") == 0)
+    if (BU_STR_EQUAL(name, "-"))
 	*fp = stdin;
-    else if (strcmp(name, ".") == 0)
+    else if (BU_STR_EQUAL(name, "."))
 	*fp = fopen("/dev/null", "r");
     else if ((*fp = fopen(name, "r")) == NULL)
 	bu_exit(2, "bwdiff: Can't open \"%s\"\n", name);
-    return;
 }
 
 
@@ -74,17 +73,17 @@ main(int argc, char **argv)
     size_t ret;
 
     while (argc > 3) {
-	if (strcmp(argv[1], "-m") == 0) {
+	if (BU_STR_EQUAL(argv[1], "-m")) {
 	    mode = MAG;
-	} else if (strcmp(argv[1], "-g") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-g")) {
 	    mode = GREATER;
-	} else if (strcmp(argv[1], "-l") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-l")) {
 	    mode = LESS;
-	} else if (strcmp(argv[1], "-e") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-e")) {
 	    mode = EQUAL;
-	} else if (strcmp(argv[1], "-n") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-n")) {
 	    mode = NEQ;
-	} else if (strcmp(argv[1], "-b") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-b")) {
 	    backgnd++;
 	} else
 	    break;

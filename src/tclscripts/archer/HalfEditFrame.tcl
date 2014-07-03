@@ -1,7 +1,7 @@
 #               H A L F E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2010 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -37,6 +37,8 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
     }
 
@@ -45,6 +47,13 @@
 	variable mNy ""
 	variable mNz ""
 	variable mD ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmNx ""
+	variable cmNy ""
+	variable cmNz ""
+	variable cmD ""
 
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
@@ -96,21 +105,21 @@
 	    -textvariable [::itcl::scope mNx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add halfNyE {
 	::ttk::entry $parent.halfNyE \
 	    -textvariable [::itcl::scope mNy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add halfNzE {
 	::ttk::entry $parent.halfNzE \
 	    -textvariable [::itcl::scope mNz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add halfNUnitsL {
 	::ttk::label $parent.halfNUnitsL \
@@ -125,12 +134,24 @@
 	::ttk::entry $parent.halfDE \
 	    -textvariable [::itcl::scope mD] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add halfDUnitsL {
 	::ttk::label $parent.halfDUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
+    } {}
+
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
     } {}
 
     set row 0
@@ -163,6 +184,22 @@
 	-row $row \
 	-column 4 \
 	-sticky nsew
+
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1
@@ -199,6 +236,8 @@
     set mD [bu_get_value_by_keyword d $gdata]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmNx == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
 }
 
 ::itcl::body HalfEditFrame::updateGeometry {} {
@@ -211,10 +250,26 @@
 	N [list $mNx $mNy $mNz] \
 	d $mD
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
+
+::itcl::body HalfEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmNx $mNx
+    set cmNy $mNy
+    set cmNz $mNz
+    set cmD  $mD
+}
+
+::itcl::body HalfEditFrame::revertGeometry {} {
+    set mNx $cmNx
+    set mNy $cmNy
+    set mNz $cmNz
+    set mD  $cmD
+
+    updateGeometry
+}
+
 
 ::itcl::body HalfEditFrame::createGeometry {obj} {
     if {![GeometryEditFrame::createGeometry $obj]} {

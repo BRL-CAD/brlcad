@@ -1,7 +1,7 @@
 /*                       V I E W R A D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewrad.c
+/** @file rt/viewrad.c
  *
  * Ray Tracing program RTRAD bottom half.
  *
@@ -25,22 +25,18 @@
  * a GIFT/SRIM format Radar file.  It tracks specular direction
  * reflections.
  *
- * Author -
- * Phillip Dykstra
- * From viewpp.c and viewray.c by
- * Michael John Muuss
- *
  */
 
 #include "common.h"
 
 #include <stdio.h>
 #include <string.h>
+
 #include "vmath.h"
 #include "raytrace.h"
 
 /* private */
-#include "rtprivate.h"
+#include "./rtuif.h"
 #include "./rad.h"
 
 
@@ -70,21 +66,25 @@ int numreflect = DEFAULTREFLECT;	/* max number of reflections */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"%d", 1, "maxreflect", bu_byteoffset(numreflect), BU_STRUCTPARSE_FUNC_NULL},
-    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "maxreflect", bu_byteoffset(numreflect), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 const char title[] = "RTRAD";
-const char usage[] = "\
-Usage:  rtrad [options] model.g objects... >file.rad\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees\n\
- -e Elev	Elevation in degrees\n\
- -M		Read matrix, cmds on stdin\n\
- -o file.rad	Output file name, else stdout\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.rad\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees\n");
+    bu_log(" -e Elev	Elevation in degrees\n");
+    bu_log(" -M		Read matrix, cmds on stdin\n");
+    bu_log(" -o file.rad	Output file name, else stdout\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
+
 
 static struct xray firstray;
 
@@ -105,15 +105,11 @@ static int radmiss(struct application *ap);
 
 
 /*
- * V I E W _ I N I T
- *
  * Called at the start of a run.
  * Returns 1 if framebuffer should be opened, else 0.
  */
-int view_init(register struct application *ap,
-	      char *file,
-	      char *obj,
-	      int minus_o)
+int
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
     ap->a_hit = radhit;
     ap->a_miss = radmiss;
@@ -134,6 +130,7 @@ writephysrec(FILE *fp)
     long length;
     static int totbuf = 0;
     int buf = 0;
+    size_t ret;
 
     /* Pad out the record if not full */
     memset((char *)&skiprec, 0, sizeof(skiprec));
@@ -145,12 +142,18 @@ writephysrec(FILE *fp)
     }
 
     length = sizeof(physrec);
-    fwrite(&length, sizeof(length), 1, fp);
+    ret = fwrite(&length, sizeof(length), 1, fp);
+    if (ret < 1)
+	perror("fwrite");
+
     if (fwrite(physrec, sizeof(physrec), 1, fp) != 1) {
 	bu_log("writephysrec: error writing physical record\n");
 	return 0;
     }
-    fwrite(&length, sizeof(length), 1, fp);
+
+    ret = fwrite(&length, sizeof(length), 1, fp);
+    if (ret < 1)
+	perror("fwrite");
 
     memset((char *)physrec, 0, sizeof(physrec));	/* paranoia */
     precindex = 0;
@@ -188,7 +191,7 @@ writerec(union radrec *rp, FILE *fp)
 
 /* beginning of a frame */
 void
-view_2init(struct application *ap)
+view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 {
     extern double azimuth, elevation;
     vect_t temp, aimpt;
@@ -212,12 +215,12 @@ view_2init(struct application *ap)
     r.h.id = 1;
     r.h.iview = 1;
     r.h.miview = - r.h.iview;
-    VSET(temp, 0.0, 0.0, -1.414);	/* Point we are looking at */
+    VSET(temp, 0.0, 0.0, -M_SQRT2);	/* Point we are looking at */
     MAT4X3PNT(aimpt, view2model, temp);
     r.h.cx = aimpt[0];		/* aimpoint */
     r.h.cy = aimpt[1];
     r.h.cz = aimpt[2];
-    r.h.back = 1.414*viewsize/2.0;	/* backoff */
+    r.h.back = M_SQRT1_2*viewsize;	/* backoff */
     r.h.e = elevation;
     r.h.a = azimuth;
     r.h.vert = viewsize;
@@ -235,17 +238,26 @@ view_2init(struct application *ap)
 }
 
 /* end of each pixel */
-void view_pixel(void) {}
+void view_pixel(struct application *UNUSED(ap))
+{
+}
 
 /* end of each line */
-void view_eol(void) {}
+void view_eol(struct application *UNUSED(ap))
+{
+}
 
-void view_setup(void) {}
-void view_cleanup(void) {}
+void view_setup(struct rt_i *UNUSED(rtip))
+{
+}
+
+void view_cleanup(struct rt_i *UNUSED(rtip))
+{
+}
 
 /* end of a frame */
 void
-view_end(void)
+view_end(struct application *UNUSED(ap))
 {
     /* flush any partial output record */
     if (precindex > 0) {
@@ -257,7 +269,7 @@ view_end(void)
 }
 
 static int
-radhit(register struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
+radhit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
     register struct partition *pp;
     register struct hit *hitp;
@@ -350,7 +362,7 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 }
 
 static int
-radmiss(struct application *ap)
+radmiss(struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -361,7 +373,7 @@ radmiss(struct application *ap)
  * of the first ray in a chain.  Called via isvisible on a hit.
  */
 static int
-hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
+hiteye(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
     register struct partition *pp;
     register struct hit *hitp;
@@ -406,7 +418,7 @@ hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
  * Called via isvisible on a miss.
  */
 static int
-hittrue(struct application *ap)
+hittrue(struct application *UNUSED(ap))
 {
     return 1;
 }

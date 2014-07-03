@@ -9,13 +9,555 @@ first and are grouped by release.  Each release also includes optional
 descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
+
 ----------------------------------------------------------------------
---- 2010-12-XX  Release 7.18.2                                     ---
+--- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* fix submodel primitive crash - Cliff Yapp, Sean Morrison
+* support non-.g file import in Archer's file open dialog - Cliff Yapp
+* added brep support to g2asc and asc2g - Cliff Yapp
+* fixed a CPU affinity locking bug on Linux platforms - Sean Morrison
+* fixed mged -c crash running view-modifying commands - Sean Morrison
+* improved kill, killall, killtree documentation - Sean Morrison
+* added killtree -f force flag to kill unconditionally - Sean Morrison
+* killtree now defaults to skipping referenced objects - Sean Morrison
+* nirt -h option is now help, old -h is -H - Carl Moore
+* implemented preliminary NURBS geometry Boolean evaluation
+	- Wu Jianbang, Nick Reed, Cliff Yapp
+* improved step-g assembly hierarchy import support - Keith Bowman
+* fixed rtweight when using the -G grid spacing option - Sean Morrison
+* fixed memory leaks in a number of pix utilities - Cezar Elnazi
+* improved NURBS ray tracing & tessellation robustness - Keith Bowman
+* improved step-g NURBS geometry import robustness - Keith Bowman
+* added -v verbose output option to MGED 'search' command - Cliff Yapp
+* fixed g_lint and pixcount red-black tree memory leaks - Tom Browder
+* fixed crash of extrude with special case bezier curves - huskmate13
+* improved performance of 'terrain' & numerous shaders - Sean Morrison
+* new manual pages for rtexample and brep_simple - Shardul Chiplunkar
+* added key binding to reopen/focus mged command window - Emory Huff
+* added menu option to restore mged command window - Cezar Elnazli
+* search command now recognizes hyp and metaball types - Cliff Yapp
+* added -depth option to MGED 'search' command - Cliff Yapp
+* improved 'search' with 'flat' search path modifier - Cliff Yapp
+* improved 'search' with above/equal/below depth limits - Cliff Yapp
+* added comb -S option to stop when object already exists - Cliff Yapp
+* improved comb command documentation with many examples - Cliff Yapp
+
+
+----------------------------------------------------------------------
+--- 2014-02-05  Release 7.24.2                                     ---
+----------------------------------------------------------------------
+
+This patch release includes a plethora of significant bug fixes and
+improvements to BRL-CAD including fixing ADRT/TIE fast triangle ray
+tracing on 32-bit platforms, fixing an issue in our FASTGEN converter
+that affected the import of very complex geometry models, upgrading
+one of our third-party dependencies (libpng) in response to a
+vulnerability report, and improving the 'comb' and 'search' commands
+with new options for restructuring and searching geometry.
+Enhancements continue to be made to our boundary representation (BREP)
+NURBS infrastructure in support of hybrid representation modeling and
+improved geometry interchange with other CAD systems.
+
+* improved rcodes output to inform user what changed - Cliff Yapp
+* fixed inside command for ellipsoid primitives - Cliff Yapp
+* restored suppressed mged output after some commands - Cliff Yapp
+* added rtwizard -s square image size option - Cliff Yapp
+* documented image size options in rtwizard man page - Cliff Yapp
+* added view center specification dialog to rtwizard - Cliff Yapp
+* increased rtwizard window size for button visibility - Cliff Yapp
+* image conversion -R/-G/-B options now require weight - Mohit Daga
+* improved option consistency for image processing tools - Mohit Daga
+* improved pipe ray tracing grazing hit behavior - Keith Bowman
+* upgraded libpng, now at version 1.6.10 - Erik Greenwald, Cliff Yapp
+* improved solid NURBS geometry ray tracing behavior - Keith Bowman
+* fix z-clipping bug in MGED's X display manager - Cliff Yapp
+* added attribute sorting option to the 'attr' command - Tom Browder
+* changed 'bwfilter' tool offset option from -o to -O - Mohit Daga
+* gattributes section 5 man page renamed to attributes - Tom Browder
+* changed 'benchmark' defaults: 2% deviation, 5 frames - Sean Morrison
+* improved bwrect to handle redirected input and output - Mohit Daga
+* upgraded boost to version 1.55.0 - Tom Browder
+* fixed TIE mesh raytrace crashes on 32-bit platforms - Sean Morrison
+* fixed pixscale and bwscale to not output ioctl error - Mohit Daga
+* improved fast4-g import of numerous region groups - Richard Weiss
+* fixed archer hidden line edit getting redrawn as shaded - Nick Reed
+* fixed adrt/TIE polygonal mesh memory management bug - Richard Weiss
+* fixed fast4-g importer parsing of blank input lines - Richard Weiss
+* added -o flag to 'bb' command for oriented bounding box - Cliff Yapp
+* allow search to see hidden combs with the -a flag - Cliff Yapp
+* added comb -l lift option to change region designation - Cliff Yapp
+* improved NURBS ray tracing grazing hit behavior - Keith Bowman
+* print current grid information in gqa output - Cliff Yapp
+* added -f option for flattening combs to 'comb' command - Cliff Yapp
+* added support for -bool operation filtering in search - Cliff Yapp
+* added new g-raw geometry converter - Jon Engbert, Daniel Roßberg
+* improved g-stl usage and documentation - Jon Engbert
+* added -c and -r region flag options to the comb command - Cliff Yapp
+* added -p/-P point/line plot options to 'burst' tool - Sean Morrison
+* added -w wrapping option to the 'comb' command - Cliff Yapp
+* archer respects LIBRT_BOT_MINTIE environment variable - Bob Parker
+* new 'cchannel' procedural geometry tool for C-Channel - Emory Huff
+* improved 'comb' command error messages - Talwinder Saini
+* pl -> plot3 rename for utilities and docs - Tom Browder, Cliff Yapp
+* exposed 'coil' command within mged & archer - Alexandrus, Cliff Yapp
+* added centroid reporting to 'analyze' command output - Csaba Nagy
+* added arb8 centroid 'analyze' command reporting - Silviu Ungureanu
+* pipe centroid, volume, & surface area analyze reporting - Csaba Nagy
+* added ebm centroid 'analyze' command reporting - Michael Huang
+* improved help option consistency across numerous tools - Carl Moore
+
+
+----------------------------------------------------------------------
+--- 2013-06-13  Release 7.24.0                                     ---
+----------------------------------------------------------------------
+
+This major update to BRL-CAD comes after nearly a full year of
+development.  This is the alpha release unveiling of Archer/MGED, a
+preliminary interface update to BRL-CAD's graphical geometry editor.
+As alpha software, this new MGED prototype aims to provide functional
+feature parity with the antecedent MGED interface while introducing
+various changes.  Included is an integrated graphical tree view, a
+single window framework, drag-and-drop geometry editing, information
+panels, shortcut buttons, improved polygonal mesh and 2D sketch
+editing, level-of-detail wireframes, NURBS shaded display support, and
+much more.  Prior to upcoming beta testing where the emphasis will
+predominantly be on stability and usability, this alpha status
+solicits feedback from the community on capability and features.
+
+This release also includes various improvements to BRL-CAD's ray
+tracing infrastructure including CPU thread affinity locking for
+faster performance, more consistent grazing hit behavior, expanded
+volume and surface area calculations, numerous bug fixes, and more
+robust NURBS evaluation.  Following BRL-CAD's interface deprecation
+policy (see CHANGES file), the Jove text editor is no longer being
+bundled.  Numerous converters receive robustness improvements
+including the STEP, Patch, and 3DM importers.
+
+* improved gqa performance on parallel SMP hardware - Richard Weiss
+* fixed bounding box size calculation for pipe geometry - Bob Parker
+* improved help option consistency across numerous tools - Carl Moore
+* 'idents' command no longer reports negative booleans - Keith Bowman
+* improved support for NURBS with big uv-domain changes - Keith Bowman
+* improved ray tracing behavior for grazing rays - Keith Bowman
+* improved robustness of the step-g geometry importer - Nick Reed
+* fixed search command bombing on v4 database file - Sean Morrison
+* fixed graphics window z-clipping bug in mged - Bob Parker
+* fixed mged lesson 15 toy truck 'inside' ordering bug - Sean Morrison
+* fixed uninstallable Linux RPM package on Fedora 18 - Jordi Sayol
+* improved Mac, BSD, & Windows ray tracing performance - Sean Morrison
+* improved Linux ray tracing via cpu thread affinity - Akshay Kashyap
+* fixed nirt high object count failure on Windows - Richard Weiss
+* added plate mode BoT support to 'bot_merge' command - Richard Weiss
+* jove removed, see jove.emacs for compatibility bindings - Cliff Yapp
+* added gqa -q quiet option to suppress 'was not hit' - Richard Weiss
+* level-of-detail mged configuration dialog, under Tools - Nick Reed
+* added level-of-detail wireframe support to mged/archer - Nick Reed
+* initial NURBS shaded display and tessellation support - Keith Bowman
+* fixed patch-g -f input file permissions failure - Sean Morrison
+* improved large file support for the patch-g importer - Sean Morrison
+* upgraded libpng to version 1.5.12 - Cliff Yapp
+* openNURBS updated to version 5.0 (2012-10-24) - Richard Weiss
+* improved BoT mesh editing interface in archer - Bob Parker
+* fixed crash when running screengrab in archer - Nick Reed
+* fixed memory leak when working with pipe primitives - Daniel Roßberg
+* fixed asc2g and mged empty revolve object crashes - Sean Morrison
+* improved Linux support for multiple hardware displays - Bob Parker
+* fixed crash when parsing invalid shader parameters - Cliff Yapp
+* fixed mged 'dbupgrade' -permissions error on windows - Sean Morrison
+* fixed infinite loop raytracing subtracted lights - Sean Morrison
+* added hyp centroid and volume output to 'analyze' - Aaron Keesing
+* added support for wireframe drawing of 'hyp' labels - Bob Parker
+* fixed random number SMP bug affecting rt and adrt - Sean Morrison
+* added support for editing 2D sketch objects in archer - Bob Parker
+* fixed File->New deprecation error in archer - Sean Morrison
+* improved Linux platform application and file icons - Jordi Sayol
+* modified gqa to report all missed regions - Richard Weiss
+* added epa surface area and volume to analyze command - Chris Dueck
+* added arbn surface area and volume to analyze command  - Chris Dueck
+* added eto surface area and volume to analyze command  - Chris Dueck
+* quell pix-png gAMA chunk warning defaulting to unset - Sean Morrison
+* fixed mged interactive object translation keypoint bug - Bob Parker
+* fixed corrupted tessellation pipe export bug - Richard Weiss
+* fixed memory leak in bot_condense - Chris Dueck
+* output from g-var no longer prints 'fwrite' messages - Sean Morrison
+* fixed gqa to not report overlap regions as zero hits - Richard Weiss
+* fixed crash in step-g tool importing AP214 entities - Sean Morrison
+* improved 3dm-g output and invalid geometry support - Sean Morrison
+* fixed crash revolving empty sketch objects - Sean Morrison
+* fixed TIE raytracing bugs shotlining plate-mode BoTs - Sean Morrison
+* g_diff gives non-zero return code if .g files differ - Sean Morrison
+* fixed typographical errors in numerous tools and docs - Carl Moore
+* fixed TIE perpendicular face mesh evaluation failure - Richard Weiss
+* added -b option to set tpkg network packet size - Andrei Popescu
+* added manual page for existing mged reid command - Richard Weiss
+* added manual page for bot_sync, bot_flip, bot_split - Richard Weiss
+* added manual page for running rtarea within mged - Richard Weiss
+* improved documentation consistency and authorship info - Tom Browder
+* new mouse-input unpushed matrix edit option in archer - Bob Parker
+* fixed bug during pipe editing with working units set - Bob Parker
+* added experimental 'bot_fuse' command to heal BoTs - Richard Weiss
+
+
+----------------------------------------------------------------------
+--- 2012-06-25  Release 7.22.0                                     ---
+----------------------------------------------------------------------
+
+After many months of development, this release includes hundreds of
+fixes for source code defects, logic and memory management bugs,
+potential security vulnerabilities, and numerous other issues reported
+by Coverity Static Analysis.  While having participated in the
+Coverity Scan Initiative since inception in 2006, this release marks a
+completion milestone with the review and resolution of all reported
+issues, more than 2100 overall.  Every defect was inspected, code
+modifications were peer-reviewed, critical features were tested, and
+user-visible changes were documented.  Along with other on-going
+improvement efforts such as treating all compiler-generated warnings
+as errors, time and attention continues to be put forth towards
+improving BRL-CAD's maintainability and source code quality.
+
+Development of BREP/NURBS representation support within BRL-CAD
+continues to mature with this release including ray tracing
+improvements, tighter bounding boxes for better performance, progress
+converting from traditional implicit+CSG representations to NURBS+CSG,
+wireframe improvements, and a thorough verification and validation
+(V&V) review for analysis suitability.  The V&V review compared
+BRL-CAD's primitives in implicit, polygonal mesh, and NURBS form
+evaluating more than a dozen separate tests looking for differences in
+rendering, curvature, presented areas, volume, and more.  The review
+identified a couple minor issues that were inspected and fixed but
+successfully demonstrated the viability of using our BREP/NURBS
+implementation for geometric representation and analysis purposes.
+
+This release introduces numerous major feature developments including
+the initial implementation of a new physics simulation capability, a
+new ambient occlusion rendering mode, and the integration of rtwizard
+into Archer.  The simulation system was developed by Abhijit Nandy
+under the European Space Agency's 2011 Summer of Code in Space (SOCIS)
+program; and it allows BRL-CAD geometry objects to dynamically
+interact with each other (e.g., collision detection, friction) or with
+the environment (e.g., gravity).  Ambient occlusion is a shading
+method that helps add considerable realism and feature definition to
+renderings, enabled within rt using the "set ambSamples=128" command.
+The rtwizard rendering interface was extended to work as a
+command-line tool (useful for scripting) and was integrated within
+Archer as the underlying rendering interface.
+
+Conversion support continues to be a development priority with
+significant importer enhancements for the STEP, OBJ, COMGEOM, FASTGEN,
+and RAW file formats.  The STEP importer in particular receives
+several updates, support for importing assembly hierarchies, and is in
+the process of being fully ported to Windows.  This release also fixes
+more than 40 user-visible bugs including a significant database
+corruption issue.  A database corruption issue was discovered and
+fixed affecting 64-bit big endian platforms (e.g., IBM Power Series
+supercomputers) when writing out ebm, dsp, vol, and hf primitives.
+
+BRL-CAD's documentation continues to be extended, improved, and
+translated due to the sustained efforts of several contributors.
+Manual page documentation is now available on Windows through the
+'brlman' command and within MGED.  Several utilities and commands that
+previously had no documentation now have manual pages; many others
+received corrections and improvements.  The introductory article
+"About BRL-CAD" is now available in Russian, Italian, and Armenian.
+
+* numerous manual page corrections and improvements - Tom Browder
+* integration of rtwizard traits into archer - Bob Parker, Cliff Yapp
+* new asc2dsp prep tool for displacement map data files - Tom Browder
+* fixed a problem with rt writing pix files on Windows - Bob Parker
+* added new raw-g raw triangle mesh to BoT importer - Daniel Roßberg
+* added Windows man page support (using html) to brlman - Cliff Yapp
+* added support for section numbers to brlman script - Cliff Yapp
+* new manual pages for asc2dsp, dsp, asc2pix, and asc2g - Tom Browder
+* fixed bug creating binary uniform (binunif) objects - Sean Morrison
+* fixed memory corruption bug reading v4 geometry - Sean Morrison
+* fixed bug where small raytraces were being rotated - Erik Greenwald
+* ios-icon.sh script added for generating IOS icons - Erik Greenwald
+* support for implicit to boundary representation geometry conversion
+	- Cliff Yapp, Wu Jianbang, Sean Morrison
+* added rtwizard support for writing out .png images
+	- Bob Parker, Cliff Yapp, Richard Weiss
+* fixed region demotion bug in the mged 'red' command - Richard Weiss
+* added implicit conversion support to 'brep' command - Wu Jianbang
+* improved NURBS raytracing grazing hit & edge behavior - Keith Bowman
+* added initial documentation for make_pnts command - Richard Weiss
+* fixed gqa crash when specified objects didn't exist - Richard Weiss
+* rtedge and rtwizard support multiple occlusion objects - Bob Parker
+* fixed mged matrix edit bug selecting the last matrix - Bob Parker
+* added 'lc' command to mged for listing region codes - Richard Weiss
+* fixed rtedge/rtwizard edge overlay rendering bug - Bob Parker
+* fixed 'open: Permission denied' rtedge output file bug - Cliff Yapp
+* upgraded libpng to 1.5.10 - Cliff Yapp
+* fixed various memory leaks in the comgeom-g geometry importer
+	- Tom Browder, Nick Reed
+* fixed comgeom-g bug importing ars primitive objects - Tom Browder
+* added new command-line invocation support to rtwizard - Cliff Yapp
+* fixed BoT mesh hit offset and vanish TIE render bugs - Keith Bowman
+* improved nurbs raytracing when shooting from inside - Keith Bowman
+* added 'draw'/'e' -m1 option for shading BoTs in mged - Richard Weiss
+* expanded docs on mged listeval and 'l' list commands - Richard Weiss
+* removed obsolete 'syn' multi sine synthesis tool - Sean Morrison
+* fixed memory corruption in vegetation generator tool - Sean Morrison
+* fixed ARS bounding box size affecting overlap handling - Cliff Yapp
+* fixed bug in fast4-g importer handling HOLE/WALL cards - Nick Reed
+* fixed field truncation bug in comgeom-g importer - Tom Browder
+* fixed log file clobber bug in the benchmark suite - Cliff Yapp
+* enabled new 'select' command for use within mged - Richard Weiss
+* added preliminary object 'select' command to archer - Bob Parker
+* improved support for the Intel C/C++ compiler (icc) - Sean Morrison
+* now sorting top level object alphabetically in rtwizard - Cliff Yapp
+* "About BRL-CAD" article translation to Russian - Ilya
+* "About BRL-CAD" article translation to Armenian - Karen Mgebrova
+* "About BRL-CAD" article translation to Italian
+	- Unknown Contributor, Tom Browder
+* improved handling of rgb/color attributes by adjust cmd - Cliff Yapp
+* added initial support for step-g import of assemblies - Keith Bowman
+* added a basic SWIG spec file - Erik Greenwald
+* fixed referenced object highlighting in archer treeview - Bob Parker
+* fixed error handling input reading failure in burst - Sean Morrison
+* fixed memory double-freeing issue in shp-g - Erik Greenwald
+* added optional scaling parameter to autoview command - Sean Morrison
+* fixed extrude object bug rendering at near right angles - Bob Parker
+* added -h option to nirt to suppress header printing - Cliff Yapp
+* fixed nirt attribute reporting for specified attributes - Cliff Yapp
+* fixed ebm/dsp/vol/hf corruption on 64-bit big endian - Sean Morrison
+* fixed step-g importer memory management issues - Keith Bowman
+* improved tab-completion behavior for mged and archer - Sean Morrison
+* fixed pervasive string handling memory leak - Tom Browder
+* improved table output formatting for 'analyze' command - Tom Browder
+* improved rtweight portability and density file parsing - Tom Browder
+* fixed crash in anim_cascade animation tool - Nick Reed
+* fixed bug in gif2fb processing non-interlaced images - Sean Morrison
+* fixed crash in coil when using -S and -l options - Cliff Yapp
+* fixed mged 'make_pnts' command resource contention bug - Nick Reed
+* fixed nirt memory leak and scriptfile off-by-one bug - Sean Morrison
+* d2-c now handles the imaginary part correctly - Erik Greenwald
+* fixed raytracer crash if output file creation fails - Erik Greenwald
+* restored mged BoT editing interface functionality - Tom Browder
+* fixed mged 'solids' and 'regions' command crashes - Tom Browder
+* fixed orientation bug in mged 'ypr' rotation command - Nick Reed
+* fixed mged bug setting color via Combination Editor - Nicholas Reed
+* fixed numerous xyz/ypr orientation bugs in anim tools - Nick Reed
+* improved tessellation of pipe bends for conversion - Richard Weiss
+* fixed keypoint vertex bug when editing extrude objects - Nick Reed
+* fixed eto error converting hyp objects with asc2g tool - Nick Reed
+# fixed mged bug processing edcodes command arguments - Bob Parker
+* various improvements to NMG polygonal mesh processing robustness
+	- Nick Reed, Sean Morrison, Richard Weiss
+* improved bad face handling within the obj-g importer - Nick Reed
+* fixed crash during rt -c "ae 35 25" view change - Bob Parker
+* added -r BoT orientation option on the obj-g importer - Nick Reed
+* added ambient occlusion shading method to rt - Lee Butler
+* fixed attribute handling bug affecting v4 geometry - Daniel Roßberg
+* reid command now reports the highest region ID set - Carl Moore
+* batch script shortcuts now set PATH on Windows - Sean Morrison
+* fixed g-obj error when exporting facets - Christopher Pitts
+* added 'l' list command to archer so 'g' expands args - Bob Parker
+* added length parameter documentation for 'coil' command - Cliff Yapp
+* improved performance of boolean evaluations - Richard Weiss
+* added support for braces around shader parameters - Nick Reed
+* improved boolean evaluation converting to polygons - Richard Weiss
+* ported the obj-g geometry importer to Windows - Nicholas Reed
+* improved import robustness and parsing of OBJ geometry files
+	- Nicholas Reed, Richard Weiss, Mike Tegtmeyer
+* added new physics 'simulate' command to mged/archer - Abhijit Nandy
+* improved archer bot selection utility with sorted names - Bob Parker
+* added 'bb' bounding box command usage within mged - Tom Browder
+
+
+----------------------------------------------------------------------
+--- 2011-10-30  Release 7.20.4                                     ---
+----------------------------------------------------------------------
+
+* added lighting model visualization options for archer - Bob Parker
+* reid command now takes optional -n "incr by" value - Erik Greenwald
+* reid command now returns the last region ID set - Erik Greenwald
+* improved nirt support for non-UNIX-style text files - Sean Morrison
+* added new relos thickness reassignment command to mged - Carl Moore
+* support for loading archer plugins with spaces in name - Bob Parker
+* added 'exists' object detection command to mged/archer - Cliff Yapp
+* added archer BoT split/flip/sync surface cleanup panel - Bob Parker
+* added new g-dot exporter for hierarchy visualization - Sean Morrison
+* improved g-vrml successful exporting and reporting - Richard Weiss
+* added -b BoT dump and -e evaluation option to g-vrml - Richard Weiss
+* improved obj-g polygonal import - Nicholas Reed, Richard Weiss
+* fixed mged crash after killing an illuminated object - Abhijit Nandy
+* tightened default polygonal mesh export tolerance - Sean Morrison
+* converted introductory Tcl/Tk presentation to Docbook - Tom Browder
+* initial support in archer for editing pipe primitives - Bob Parker
+* fixed NURBS raytracing crash due to invalid geometry - Sean Morrison
+* fixed memory leak when saving BoT geometry - Nicholas Reed
+* improved mged object name globbing support - Sean Morrison
+* improved bounding box for rpc, epa, ehy, hyp primitives - Cliff Yapp
+* improved handling of degenerate face facetization - Richard Weiss
+* add support for .png file output in rtwizard - Cliff Yapp
+* improved rtwizard's invocation of rt - Cliff Yapp
+* added object path and keep options to conversion.sh - Tom Browder
+* 'keep' command includes sketch when keeping revolve - Sean Morrison
+* fixed mged 'mater' command inheritance setting bug - Richard Weiss
+* fixed mged crash removing comb members during edit - Richard Weiss
+* modified archer startup to not require html documentation files
+	- Cliff Yapp, Brandon Hinesley
+* improved mged/archer/bwish run-time path behavior on Windows
+	- Cliff Yapp, Bob Parker
+* upgraded libpng to version 1.5.4 - Cliff Yapp
+* improved performance of step-g importer - Zach Easterbrook
+* fixed browsing mged html help pages on Windows - Bob Parker
+* restored mged 'rt' command output to console window - Sean Morrison
+* fixed infinite loop bug plotting NURBS wireframes - Sean Morrison
+* added new 'ringworld' procedural geometry generator - Erik Greenwald
+* fixed mged Manual page item in help menu - Brandon Hinesley
+
+
+----------------------------------------------------------------------
+--- 2011-07-01  Release 7.20.2                                     ---
+----------------------------------------------------------------------
+
+* improved fusing of coplanar faces (tessellation) - Richard Weiss
+* fixed rtwizard issues with unknown units and freezing - Bob Parker
+* fixed problem with mater command setting color - Cliff Yapp
+* fixed crash rendering scenes with all invalid lights - Sean Morrison
+* improved reliability of ARS tessellation/conversion - Richard Weiss
+* improved tessellation performance and reliability - Richard Weiss
+* replaced 'erase_all' command with 'erase -r' - Brandon Hinesley
+* improved 'ls' command error reporting in archer - Brandon Hinesley
+* fixed related object highlighting in archer's tree view - Cliff Yapp
+* added closedb command to archer - Brandon Hinesley
+* improved behavior of opendb command in archer - Brandon Hinesley
+* improved archer/mged manual page browser behavior - Brandon Hinesley
+* added man documentation command to archer - Brandon Hinesley
+* improved File->New dialog in mged - Brandon Hinesley
+* all cmake files now included in dist - Erik Greenwald, Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2011-05-27  Release 7.20.0                                     ---
+----------------------------------------------------------------------
+
+This release marks the introduction of a new CMake build system for
+BRL-CAD.  CMake is cross-platform build system infrastructure capable
+of generating native build system logic for a wide variety of
+operating systems and compilation environments.  Cliff Yapp has been
+diligently working on this adaptation for a number of months in order
+to simplify the task of maintaining BRL-CAD on multiple platforms.
+
+Previously, two separate build systems were being maintained: one
+system (GNU Autotools) for Linux, UNIX, and BSD platforms (including
+Mac OS X); and another separate system (Microsoft Visual Studio) for
+Windows.  The new build system supports all platforms (including
+Windows) from the same build logic.  This eliminates the need to
+manually update multiple build systems and improves BRL-CAD
+cross-platform maintainability.
+
+* fixed mged/archer graphics window glitches on Windows - Bob Parker
+* improved 'attr' command to work with read-only .g files - Cliff Yapp
+* cross-platform 64-bit ISST (cmake-only) - Cliff Yapp, Erik Greenwald
+* fixed mged zoom out mouse binding on Linux/*BSD - Cliff Yapp
+* fixed step-g importer bug interpolating cubic curves - Keith Bowman
+* improved step-g importer ellipse and conic support - Keith Bowman
+* improved multiple path handling for search command - Cliff Yapp
+* fixed segment splitting tessellation conversion bug - Richard Weiss
+* fixed crash during facetization of large models - Richard Weiss
+* fixed asc2g bug importing color and other attributes - Bob Parker
+* added -q "quiet lookup" option to the 'ls' command - Cliff Yapp
+* fixed numerous 'red' command text edit bugs and robustness issues
+	- Cliff Yapp, Sean Morrison
+* modification of LIBRT spatial partition traversal ordering
+	- Sean Morrison, Keith Bowman
+* new LIBRT_BOT_MINTIE environment variable override - Erik Greenwald
+* changed search output order to shallow followed by deep - Cliff Yapp
+* added search support for '.' object list search results - Cliff Yapp
+* red -f flag to force overwriting pre-existing combs - Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2011-04-12  Release 7.18.4                                     ---
+----------------------------------------------------------------------
+
+After considerable development, this release includes the preliminary
+integration of our high-performance Triangle Intersection Engine (TIE)
+with BRL-CAD's LIBRT raytrace library.  TIE uses specialized
+acceleration techniques for faster raytracing of triangle mesh models.
+TIE was experimentally developed over several years as part of
+BRL-CAD's Advanced Distributed Ray Tracer (ADRT) tool suite.  As this
+is the initial integration, TIE is available but presently disabled by
+default.  The engine optimization is configurably integrated with
+LIBRT mesh (BoT) raytracing and optionally enabled via settings
+available in RT and MGED.  Initial testing of "real-world" models shows
+average improvements around 20-60% while individual meshes with high
+(1M+) face counts are rendering more than 2000% faster than before.
+
+Also included in this release is the development of a new "shp-g"
+geometry importer for Shapefile data.  Shapefiles are a common file
+format for storing geospatial vector data commonly used by geographic
+information systems (GIS) software.  Shapefiles may be imported as 2D
+sketch geometry that can be extruded to a 3D representation.
+
+* fixed units conversion bug with mged 'title' command - Bob Parker
+* fixed memory management crash in the dem-g importer - Richard Weiss
+* fixed edcolors so it retains and accepts colors again  - Cliff Yapp
+* support for applying matrix edits to revolve primitives - Dongxu Li
+* fixed mged 'red' command bug on Windows - Sean Morrison, Cliff Yapp
+* support matrices over halfspaces within combinations - Sean Morrison
+* fixed archer and rtwizard startup failure bug on Mac - Sean Morrison
+* fixed bug starting up the Combination Editor in mged - Sean Morrison
+* mged 'mater' command interactive prompting restored - Sean Morrison
+* added pix2fb and fb2pix screenshot commands to archer - Bob Parker
+* fixed bug running nirt on a Windows command terminal - Bob Parker
+* improved wireframe updating when editing within mged - Sean Morrison
+* added -T bot_mintie BoT optimization options to nirt - Sean Morrison
+* fixed Windows display manager bug when drawing strings - Bob Parker
+* mged command-click zoom binding for one button mice - Sean Morrison
+* removed 'txyz-pl' utility tool in favor of 'xyz-pl' - Sean Morrison
+* new shp-g importer for Esri Shapefile geometry files - Sean Morrison
+* new 'rt_bot_mintie' option for triggering TIE BoTs  - Erik Greenwald
+* integrated optimized TIE BoT raytracing with LIBRT - Erik Greenwald
+
+
+----------------------------------------------------------------------
+--- 2011-02-09  Release 7.18.2                                     ---
+----------------------------------------------------------------------
+
+This release provides initial support for reading some older
+(platform-dependent) v4 geometry database files regardless of their
+originating platform.  Binary-incompatible v4 geometry database files
+can be opened read-only within MGED where geometry can be inspected,
+drawn, exported via the "keep" command, and updated to the newer
+(platform-independent) v5 geometry database file format via the
+"dbupgrade" command.  In order to override the otherwise automatic
+binary-incompatible v4 detection, MGED's "opendb" command provides a
+new -f flip option and all applications can override behavior with a
+LIBRT_V4FLIP environment variable.
+
+Also introduced with this release are numerous binary platform
+integration and usability enhancements for Debian, Ubuntu, Fedora, and
+other Linux platforms.  Included in Jordi Sayol's efforts are new
+desktop icons, new menu items, mime-type association, and more.
+
+* improved Fedora platform support with new menus, icons - Jordi Sayol
+* fixed nirt units command reporting all units as invalid - Cliff Yapp
+* dbupgrade support for binary-incompatible v4 files - Sean Morrison
+* new opendb -f endianness flip option for corrupt v4 - Sean Morrison
+* new mime-type geometry association for Debian platform - Jordi Sayol
+* improved Debian platform support with new menus, icons - Jordi Sayol
+* improved mged 'ls' command support for v4 databases - Sean Morrison
+* dbconcat supports title, units, & color table import - John Anderson
+* 'tree -a' command lists object attributes - Tom Browder
+* fixed Mac build failure running asc2g before install - Sean Morrison
+* fixed g_diff color table difference false positive - Sean Morrison
+* fixed asc2g color table bug parsing 'color' lines - Sean Morrison
+* 'attr show' command displays attributes sorted by name - Tom Browder
+* fixed ted command to work using new editor support - Cliff Yapp
+* fixed mged text editor invocation bug when editor wasn't installed
+	- Sean Morrison, Daniel Roßberg, Cliff Yapp
+* support for comment lines at beginning of .asc files - John Anderson
+* disabled adrt_master and adrt_slave tools - Erik Greenwald
+* ported pixblend image processing tool to Windows - Erik Greenwald
 * upgraded libpng to version 1.4.5 - Cliff Yapp
 * upgraded zlib to version 1.2.5 - Cliff Yapp
 * removed shell execution ! command from vdeck - Cliff Yapp
+
 
 ----------------------------------------------------------------------
 --- 2010-12-07  Release 7.18.0                                     ---
@@ -25,7 +567,7 @@ This release includes the initial release of a new Bag of Triangle
 (BoT) editing interface for MGED and Archer.  Nicholas Reed developed
 the new graphical user interface (GUI) in order to consolidate the
 numerous BoT editing commands and processing steps into one unified
-easy-to-use interface.  The new GUI grealy simplifies BoT processing
+easy-to-use interface.  The new GUI greatly simplifies BoT processing
 steps and can save modelers considerable time.
 
 * ported benchmark suite to Windows (requires 'sh') - Erik Greenwald
@@ -61,7 +603,7 @@ steps and can save modelers considerable time.
 --- 2010-08-04  Release 7.16.10                                    ---
 ----------------------------------------------------------------------
 
-The release concludes a phenomenal effort by Jesica Guidice who
+The release concludes a phenomenal effort by Jesica Giudice who
 meticulously translated approximately 150 pages of MGED tutorial
 documentation from English to Spanish.  The 16 tutorials are now fully
 converted and work continues on the technical side to develop
@@ -158,7 +700,7 @@ alpha release status as BRL-CAD's next generation geometry editor.
 * integration of mged authorship dedication into archer - Bob Parker
 * improved behavior of mged initialization options - Bob Parker
 * 3dm-g importer improvements for hierarchical layering - Keith Bowman
-* fixed namspace initialization failure in rtwizard - Bob Parker
+* fixed namespace initialization failure in rtwizard - Bob Parker
 * removed the pcd-pix image conversion tool - Sean Morrison
 * fixed coil tool -S option, now takes 6 parameters - Cliff Yapp
 * fixed g-egg coordinate and polygon format bugs - Erik Greenwald
@@ -176,7 +718,7 @@ alpha release status as BRL-CAD's next generation geometry editor.
 Considerable effort continues towards improving BRL-CAD's
 documentation.  Janine Gettier has now converted the documentation for
 approximately 200 of MGED's commands into the Docbook XML format.
-Jesica Guidice has translated 4 of MGED's 16 introductory tutorials to
+Jesica Giudice has translated 4 of MGED's 16 introductory tutorials to
 Spanish.  Cliff Yapp continues to work extensively with both to get
 their efforts integrated so that HTML and PDF documentation are
 cleanly generated.
@@ -250,7 +792,7 @@ undo support and graphical editing, are expanded upon.
 
 * initial step-g geometry importer - Keith Bowman
 * added '-u' flag to 3dm-g - uses UUID for import names - Cliff Yapp
-* improved fb-png and pix-png defaut gamma correction - Sean Morrison
+* improved fb-png and pix-png default gamma correction - Sean Morrison
 * added a '-g' gamma correction option to pix-png - Sean Morrison
 * added mged '-a' option for attaching display manager - Sean Morrison
 * increased maximum size of framebuffer windows - Sean Morrison
@@ -503,7 +1045,7 @@ invalid geometry is now more robust.
 * fixed mged 'dbconcat' hang when not specifying an affix - Bob Parker
 * fixed primitive selection solid_illum bug in mged - Bob Parker
 * fix bug in tire tool's geometry causing 'nicks' in tread - C. Yapp
-* increased raytrace performace of pipe primitive - John Anderson
+* increased raytrace performance of pipe primitive - John Anderson
 * fixed bugs handling invalid extrude objects - Sean Morrison
 * fixed dependency bug in library pkg-config files - Sean Morrison
 * platform installers now use a more consistent naming convention
@@ -615,7 +1157,7 @@ continuous active development.
 * fixed browser-based mged help on Mac OS X - Sean Morrison
 * added rest of BRL-CAD's geometry converters for Windows - Bob Parker
 * added more missing framebuffer tools to Windows port - Bob Parker
-* rtwizard enhancments for ghosting and display - Bob Parker
+* rtwizard enhancements for ghosting and display - Bob Parker
 * mged reports failure if ray-tracer returns non-zero - Sean Morrison
 * improved mged corrupt geometry file handling - Sean Morrison
 * improved dbconcat object suffix and prefix options - Sean Morrison
@@ -804,7 +1346,7 @@ for more details.
 
 * support for handling larger hierarchies in archer - Doug Howard
 * added distance measurement tool to archer - Bob Parker
-* added component selection capabilites to archer - Bob Parker
+* added component selection capabilities to archer - Bob Parker
 * new script to extract gforge task items - Lee Butler, Sean Morrison
 * substantial additions and mods to source documentation - Lee Butler
 * added scripts to facetize all regions in a database - Lee Butler
@@ -904,7 +1446,7 @@ tested further.
 Other noteworthy enhancements provided in this release include new
 sample applications that demonstrate the capabilities of the libpkg
 networking library, in-memory geometry database processing, reshooting
-of rays from analysis codes for testing pursposes, and the librt root
+of rays from analysis codes for testing purposes, and the librt root
 solver.  For analysts and modelers alike, the MGED modeler also
 acquires a few new commands including reid and remat that respectively
 assist with the assignment of region and material identifiers.
@@ -955,7 +1497,7 @@ of BRL-CAD over the past 20 years.
 * updated g_qa manual page documentation - Lee Butler
 * early termination grid spacing limit bug in g_qa fixed - Lee Butler
 * fixed Jove sandbox installation issue - Sean Morrison
-* fixed adrt/isst client crash bug - Mike Caruso, Razak Arunaugun
+* fixed adrt/isst client crash bug - Mike Caruso, Razak Arunaogun
 * fixed modified env(PATH) startup issue in mged - Sean Morrison
 * fixed benchmark tool default resource location bug - Sean Morrison
 * added another text alignment handler to dxf-g - John Anderson
@@ -976,7 +1518,7 @@ creation commands read point data sets in a simple text file format,
 recognizing categories and collections of points.  Using
 point-acquisition devices such as X-Station Vulcan advanced surveying
 systems from Arc Second Inc., points may be collected and used in MGED
-to factilitate the generation of geometry models.  Collection
+to facilitate the generation of geometry models.  Collection
 techniques are recognized for polygonal plates, cylinders, spheres,
 point clouds, and more.
 
@@ -1080,7 +1622,7 @@ toolset includes a master job manager, a slave compute daemon for
 network distributed processing, and a client for observing job
 progress.
 
-Driven by user requests, the 'rtarea' command now reports signifcantly
+Driven by user requests, the 'rtarea' command now reports significantly
 more information than before including area details for all assemblies
 and regions being rendered.  Both the presented and exposed areas are
 now computed too, including details on how many regions/assemblies are
@@ -1681,7 +2223,7 @@ features are:
 mged:
     - A dedication page has been added in memory of Mike Muuss
     - Solids are now referred to as Primitive Shapes or "prims" in
-        much of the user interface
+	much of the user interface
     - The 'make' command now properly distinguishes between "ell" and
       "ell1"
     - 'autoview' command added for resetting the view size and center
@@ -1932,14 +2474,14 @@ As BRL-CAD continues to be developed and evolves, various application
 programming interfaces (APIs), headers, and data types necessarily
 change to fulfill development requirements and to not allow the APIs
 to become overly complicated with unnecessary or undesired complexity.
-As these changes are forseen, features will be sometimes marked as
+As these changes are foreseen, features will be sometimes marked as
 deprecated and will usually be made obsolete at some point in the
 future.  For those situations, developers using the BRL-CAD libraries
 may need to update to new API features in order to link with newer
 versions of BRL-CAD.
 
-See the doc/deprecation.txt file for a transcript of features that are
-deprecated or have already become obsolete.
+See the CHANGES file for a transcript of features that are deprecated
+or have already become obsolete.
 
 ---
 See doc/history.txt for more historic information on BRL-CAD.  There
@@ -1949,9 +2491,11 @@ Subversion revision control on Sourceforge.
 
 NEWS items should be formatted to column 70 (default M-q in Emacs),
 include credits to all significant contributors, and be descriptively
-succient.  NEWS items should be ONE LINE per user-visible change with
+succinct.  NEWS items should be ONE LINE per user-visible change with
 the description not exceeding column 70.  Multiple contributors may be
-listed on the same or following line.
+listed on the same or following line, separated by commas.  Items
+should be written in plain English using the past tense or as a
+verbless clause.
 
 // Local Variables:
 // mode: Text

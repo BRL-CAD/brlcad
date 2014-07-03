@@ -1,7 +1,7 @@
 /*                    P C P A R S E R . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,14 +24,32 @@
  * EBNF Parser generation using boost:Spirit
  *
  */
-#ifndef __PCPARSER_H__
-#define __PCPARSER_H__
+#ifndef LIBPC_PCPARSER_H
+#define LIBPC_PCPARSER_H
 
 #include "common.h"
 
 #include <string>
 #include <iostream>
-#include <boost/spirit.hpp>	/* deprecated header */
+
+/* for g++ to quell warnings */
+#if HAVE_GCC_DIAG_PRAGMAS
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
+#include <boost/spirit/include/classic.hpp>	/* deprecated header */
+
+#if HAVE_GCC_DIAG_PRAGMAS
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 
 #include "pcVCSet.h"
 #include "pcGenerator.h"
@@ -45,35 +63,36 @@
  * Grammar for the expression used for representing the constraint
  *
  */
-class Variable_grammar : public boost::spirit::grammar<Variable_grammar>
+class Variable_grammar : public boost::spirit::classic::grammar<Variable_grammar>
 {
 private:
     VCSet &vcset;
 public:
     Variable_grammar(VCSet &vcset);
     virtual ~Variable_grammar();
+
     template<typename ScannerT>
     struct definition
     {
-        boost::spirit::rule<ScannerT> variable;
+	boost::spirit::classic::rule<ScannerT> variable;
 	/*boost::spirit::rule<ScannerT> expression;*/
 	definition(Variable_grammar const &self) {
 	    /*expression
 	      =    boost::spirit::real_p[varvalue(self.pcparser)]
 	      ;*/
 	    variable
-	        =    *(boost::spirit::alnum_p)[Generators::varname(self.vcset)]
+		=    *(boost::spirit::classic::alnum_p)[Generators::varname(self.vcset)]
 		    >> '='
-		    >>boost::spirit::real_p[Generators::varvalue(self.vcset)]
+		    >>boost::spirit::classic::real_p[Generators::varvalue(self.vcset)]
 		/* expression*/
 		;
 	}
-	boost::spirit::rule<ScannerT> const& start() { return variable;}
+	boost::spirit::classic::rule<ScannerT> const& start() { return variable;}
     };
 };
 
 
-class Constraint_grammar : public boost::spirit::grammar<Constraint_grammar>
+class Constraint_grammar : public boost::spirit::classic::grammar<Constraint_grammar>
 {
 private:
     VCSet &vcset;
@@ -83,38 +102,38 @@ public:
     template<typename ScannerT>
     struct definition
     {
-        boost::spirit::rule<ScannerT> variable;
-	boost::spirit::rule<ScannerT> term;
-	boost::spirit::rule<ScannerT> operat;
-	boost::spirit::rule<ScannerT> expression;
-	boost::spirit::rule<ScannerT> eq;
-	boost::spirit::rule<ScannerT> constraint;
+	boost::spirit::classic::rule<ScannerT> variable;
+	boost::spirit::classic::rule<ScannerT> term;
+	boost::spirit::classic::rule<ScannerT> operat;
+	boost::spirit::classic::rule<ScannerT> expression;
+	boost::spirit::classic::rule<ScannerT> eq;
+	boost::spirit::classic::rule<ScannerT> constraint;
 	definition(Constraint_grammar const &self) {
 	    variable
-	        =    boost::spirit::alnum_p
+		=    boost::spirit::classic::alnum_p
 		;
 	    term
-	        =    boost::spirit::real_p
+		=    boost::spirit::classic::real_p
 		|    variable
 		;
 	    eq
-	        =    '<'
+		=    '<'
 		|    '='
 		|    '>'
 		;
-            expression
-	        =    term
+	    expression
+		=    term
 		    >> *(operat >> term)
 		;
 	    constraint
-	        =    '('
+		=    '('
 		    >> expression
 		    >> eq
 		    >> expression
 		    >> ')'
 		;
 	}
-	boost::spirit::rule<ScannerT> const& start() { return constraint;}
+	boost::spirit::classic::rule<ScannerT> const& start() { return constraint;}
     };
 };
 
@@ -140,7 +159,7 @@ public:
     virtual ~Parser();
     void parse(struct pc_pc_set *pcs);
     //void pushChar(char c) { name.push_back(c); }
-    //void setValue(double v) { value = v; } 
+    //void setValue(double v) { value = v; }
     void display() { std::cout<< "Result of Parsing:" << name << " = " << value << std::endl; }
 };
 

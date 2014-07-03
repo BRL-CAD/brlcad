@@ -1,7 +1,7 @@
 /*                       T E R R A I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file terrain.c
+/** @file util/terrain.c
  *
  * generate pseudo-terrain
  *
@@ -52,18 +52,20 @@ char *options = "w:n:s:L:H:O:S:V:D:f:co:v";
 
 int do_convert = 1;
 char *progname = "(noname)";
-size_t xdim = 256;
-size_t ydim = 256;
+size_t xdim = 512;
+size_t ydim = 512;
 
 double fbm_lacunarity = 2.1753974;		/* noise_lacunarity */
 double fbm_h = 1.0;
 double fbm_octaves = 7.0;
 double fbm_size = 1.0;
-vect_t fbm_vscale = {0.0125, 0.0125, 0.0125};
-vect_t fbm_delta = {1000.0, 1000.0, 1000.0};
 double fbm_offset = 1.0;
-int quiet = 0;
 
+/* intentionally double for scan */
+double fbm_vscale[3] = {0.0125, 0.0125, 0.0125};
+double fbm_delta[3] = {1000.0, 1000.0, 1000.0};
+
+int quiet = 0;
 int debug;
 
 /* transform a point in integer X, Y, Z space to appropriate noise space */
@@ -77,16 +79,17 @@ xform(point_t t, point_t pt)
 
 
 /*
- * U S A G E --- tell user how to invoke this program, then exit
+ * Tell user how to invoke this program, then exit
  */
 void
 usage(char *s)
 {
-    if (s) (void)fputs(s, stderr);
+    if (s)
+	bu_log("%s", s);
 
-    (void) fprintf(stderr, "Usage: %s [ flags ] > outfile]\nFlags:\n%s\n",
-		   progname,
-		   "\t-w #\t\tnumber of postings in X direction\n\
+    bu_log("Usage: %s [ flags ] > outfile]\nFlags:\n%s\n",
+	   progname,
+	   "\t-w #\t\tnumber of postings in X direction\n\
 \t-n #\t\tnumber of postings in Y direction\n\
 \t-s #\t\tnumber of postings in X, Y direction\n\
 \t-L #\t\tNoise Lacunarity\n\
@@ -103,9 +106,6 @@ usage(char *s)
 
 
 /***********************************************************************
- *
- * func_fbm
- *
  * Fractional Brownian motion noise
  */
 void
@@ -119,9 +119,9 @@ func_fbm(unsigned short *buf)
     if (debug) bu_log("fbm\n");
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -135,10 +135,9 @@ func_fbm(unsigned short *buf)
 	}
     }
 }
+
+
 /***********************************************************************
- *
- * func_turb
- *
  * Turbulence noise
  */
 void
@@ -152,9 +151,9 @@ func_turb(unsigned short *buf)
     if (debug) bu_log("turb\n");
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -172,13 +171,10 @@ func_turb(unsigned short *buf)
 
 
 /***********************************************************************
- *
- * func_turb_up
- *
  * Upside-down turbulence noise
  */
 void
-func_turb_up(short *buf)
+func_turb_up(unsigned short *buf)
 {
     point_t pt;
     size_t x, y;
@@ -188,9 +184,9 @@ func_turb_up(short *buf)
     if (debug) bu_log("1.0 - turb\n");
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -209,13 +205,10 @@ func_turb_up(short *buf)
 
 
 /***********************************************************************
- *
- * func_multi
- *
  * Multi-fractal
  */
 void
-func_multi(short *buf)
+func_multi(unsigned short *buf)
 {
     point_t pt;
     size_t x, y;
@@ -226,12 +219,12 @@ func_multi(short *buf)
     if (debug) bu_log("multi\n");
 
     min_V = 10.0;
-    max_V =  -10.0;
+    max_V = -10.0;
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -255,10 +248,9 @@ func_multi(short *buf)
     if (debug) bu_log("min_V: %g   max_V: %g\n", min_V, max_V);
 
 }
+
+
 /***********************************************************************
- *
- * func_ridged
- *
  * Ridged multi-fractal
  */
 void
@@ -276,9 +268,9 @@ func_ridged(unsigned short *buf)
     hi = -10.0;
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -401,8 +393,10 @@ lunar2(point_t point, double h, double lacunarity, double octaves)
 
     return 1.0 - result;
 }
+
+
 /***********************************************************************
- * This one's got detail on the peaks
+ * This one has detail on the peaks
  */
 double
 land(point_t point, double h, double lacunarity, double octaves)
@@ -432,10 +426,11 @@ land(point_t point, double h, double lacunarity, double octaves)
 
     return 1.0 - result;
 }
+
+
 /***********************************************************************
- * This one's got detail on the peaks and in the valleys, but not on the
- * slopes
- *
+ * This one has detail on the peaks and in the valleys, but not on the
+ * slopes.
  */
 double
 lee(point_t point, double h, double lacunarity, double octaves)
@@ -468,9 +463,6 @@ lee(point_t point, double h, double lacunarity, double octaves)
 
 
 /***********************************************************************
- *
- * func_lee
- *
  * Ridged multi-fractal
  */
 void
@@ -488,9 +480,9 @@ func_lee(unsigned short *buf)
     hi = -10.0;
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -511,9 +503,6 @@ func_lee(unsigned short *buf)
 
 
 /***********************************************************************
- *
- * func_lee
- *
  * Ridged multi-fractal
  */
 void
@@ -531,9 +520,9 @@ func_lunar(unsigned short *buf)
     hi = -10.0;
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -560,20 +549,14 @@ func_lunar(unsigned short *buf)
 }
 
 
-/* function to call to generate the terrain.  Default noise pattern is fBm */
-void (*terrain_func)() = func_fbm;
-
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
 int
-parse_args(int ac, char **av)
+parse_args(int ac, char **av, void (**terrain_func)(unsigned short *))
 {
     int c;
     char *strrchr(const char *, int);
     double v;
 
-    if (! (progname=strrchr(*av, '/')))
+    if (! (progname = strrchr(*av, '/')))
 	progname = *av;
     else
 	++progname;
@@ -582,96 +565,138 @@ parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != EOF)
+    while ((c = bu_getopt(ac, av, options)) != -1) {
 	switch (c) {
-	    case 'v': debug = !debug; break;
-	    case 'c': do_convert = !do_convert; break;
-	    case 'w': if ((c=atoi(bu_optarg)) > 0) xdim = c;
+	    case 'v':
+		debug = !debug;
 		break;
-	    case 'n': if ((c=atoi(bu_optarg)) > 0) ydim = c;
+	    case 'c':
+		do_convert = !do_convert;
 		break;
-	    case 'q' : quiet = !quiet; break;
-	    case 's': if ((c=atoi(bu_optarg)) > 0) xdim = ydim = c;
+	    case 'w':
+		if ((c = atoi(bu_optarg)) > 0)
+		    xdim = c;
 		break;
-	    case 'L': if ((v=atof(bu_optarg)) > 0.0) fbm_lacunarity = v;
+	    case 'n':
+		if ((c = atoi(bu_optarg)) > 0)
+		    ydim = c;
 		break;
-	    case 'H': if ((v=atof(bu_optarg)) > 0.0) fbm_h = v;
+	    case 'q' :
+		quiet = !quiet;
 		break;
-	    case 'O': if ((v=atof(bu_optarg)) > 0.0) fbm_octaves = v;
+	    case 's':
+		if ((c = atoi(bu_optarg)) > 0)
+		    xdim = ydim = c;
+		break;
+	    case 'L':
+		if ((v = atof(bu_optarg)) > 0.0)
+		    fbm_lacunarity = v;
+		break;
+	    case 'H':
+		if ((v = atof(bu_optarg)) > 0.0)
+		    fbm_h = v;
+		break;
+	    case 'O':
+		if ((v = atof(bu_optarg)) > 0.0)
+		    fbm_octaves = v;
 		break;
 
-	    case 'S': if ((v=atof(bu_optarg)) > 0.0) { VSETALL(fbm_vscale, v); }
+	    case 'S':
+		if ((v = atof(bu_optarg)) > 0.0)
+		    VSETALL(fbm_vscale, v);
 		break;
 
-	    case 'V': sscanf(bu_optarg, "%lg, %lg, %lg",
-			     &fbm_vscale[0], &fbm_vscale[1], &fbm_vscale[2]);
+	    case 'V':
+		sscanf(bu_optarg, "%lg, %lg, %lg",
+		       &fbm_vscale[0], &fbm_vscale[1], &fbm_vscale[2]);
 		break;
-	    case 'D': sscanf(bu_optarg, "%lg, %lg, %lg",
-			     &fbm_delta[0], &fbm_delta[1], &fbm_delta[2]);
+	    case 'D':
+		sscanf(bu_optarg, "%lg, %lg, %lg",
+		       &fbm_delta[0], &fbm_delta[1], &fbm_delta[2]);
 		break;
-	    case 'o': fbm_offset = atof(bu_optarg);
+	    case 'o':
+		fbm_offset = atof(bu_optarg);
 		break;
 	    case 'f':
 		switch (*bu_optarg) {
-		    case 'L': terrain_func = func_lunar;
+		    case 'L':
+			*terrain_func = &func_lunar;
 			break;
-		    case 'l': terrain_func = func_lee;
+		    case 'l':
+			*terrain_func = &func_lee;
 			break;
-		    case 'f': terrain_func = func_fbm;
+		    case 'f':
+			*terrain_func = &func_fbm;
 			break;
-		    case 't': terrain_func = func_turb;
+		    case 't':
+			*terrain_func = &func_turb;
 			break;
-		    case 'T': terrain_func = func_turb_up;
+		    case 'T':
+			*terrain_func = &func_turb_up;
 			break;
-		    case 'm': terrain_func = func_multi;
+		    case 'm':
+			*terrain_func = &func_multi;
 			break;
-		    case 'r': terrain_func = func_ridged;
+		    case 'r':
+			*terrain_func = &func_ridged;
 			break;
 		    default:
 			fprintf(stderr,
-				"Unknown noise terrain_function: \"%s\"\n",
+				"Unknown terrain noise function: \"%s\"\n",
 				bu_optarg);
 			bu_exit (-1, NULL);
 			break;
 		}
 		break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage("Bad or help flag specified\n"); break;
+	    case '?':
+	    case 'h':
+	    default :
+		usage("Bad or help flag specified\n");
+		break;
 	}
+    }
 
     return bu_optind;
 }
 
 
 /*
- * M A I N
- *
- * Call parse_args to handle command line arguments, then
- * produce the noise field selected.  Write out binary in network order.
+ * Call parse_args to handle command line arguments, then produce the
+ * noise field selected.  Write out binary in network order.
  */
 int
-main(int ac, char **av)
+main(int ac, char *av[])
 {
     int arg_count;
     unsigned short *buf;
     int in_cookie, out_cookie;
     int count;
+    size_t ret;
 
-    arg_count = parse_args(ac, av);
+    /* function to call to generate the terrain.  Default noise pattern is fbm */
+    void (*terrain_func)(unsigned short *);
 
-    if (arg_count+1 < ac) usage("Excess arguments on cmd line\n");
+    terrain_func = NULL;
+    arg_count = parse_args(ac, av, &terrain_func);
 
-    if (isatty(fileno(stdout))) usage("Redirect standard output\n");
+    if (!terrain_func)
+	terrain_func = &func_fbm;
+
+    if (arg_count + 1 < ac)
+	usage("Excess arguments on command line\n");
+
+    if (isatty(fileno(stdout)))
+	usage("Redirect standard output\n");
 
     if (arg_count < ac)
-	fprintf(stderr, "Excess command line arguments ignored\n");
+	bu_log("Excess command line arguments ignored\n");
 
-    count = xdim*ydim;
-    buf = bu_malloc(sizeof(*buf) * count, "buf");
+    count = xdim * ydim;
+    buf = (unsigned short *)bu_malloc(sizeof(*buf) * count, "buf");
 
-    if (! terrain_func) {
-	if (debug) bu_log("terrain func not specified\n");
+    if (!terrain_func) {
+	if (debug)
+	    bu_log("terrain function not specified\n");
 	return 10;
     }
 
@@ -691,7 +716,11 @@ main(int ac, char **av)
 	}
     }
 
-    fwrite(buf, sizeof(*buf), count, stdout);
+    ret = fwrite(buf, sizeof(*buf), count, stdout);
+    if (ret < (size_t)count)
+	perror("fwrite");
+    bu_free(buf, "buf");
+
     return 0;
 }
 

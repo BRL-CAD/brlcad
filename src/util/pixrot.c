@@ -1,7 +1,7 @@
 /*                        P I X R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixrot.c
+/** @file util/pixrot.c
  *
  * Rotate, Invert, and/or Reverse the pixels in a RGB (.pix) file.
  *
@@ -28,7 +28,7 @@
  *
  * This is a generalization of bwrot and can in fact handle "pixels"
  * of any size.  Thus this routine could be used to say, rotate a
- * matix of floating point values, etc.
+ * matrix of floating point values, etc.
  *
  */
 
@@ -48,7 +48,7 @@ Usage: pixrot [-f -b -r -i -#bytes] [-s squaresize]\n\
 /* 4 times bigger than typ. screen */
 /*#define MAXBUFBYTES (1280*1024*3*4) */
 #define MAXBUFBYTES (12288*16384*2)
-int buflines, scanbytes;
+ssize_t buflines, scanbytes;
 int firsty = -1;	/* first "y" scanline in buffer */
 int lasty = -1;	/* last "y" scanline in buffer */
 unsigned char *buffer;
@@ -68,12 +68,14 @@ void reverse_buffer(void);
 static char *file_name;
 FILE *ifp, *ofp;
 
+static char hyphen[] = "-";
+
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "fbrih#:s:w:n:S:W:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "fbri#:s:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'f':
 		minus90++;
@@ -89,10 +91,6 @@ get_args(int argc, char **argv)
 		break;
 	    case '#':
 		pixbytes = atoi(bu_optarg);
-		break;
-	    case 'h':
-		/* high-res */
-		nxin = nyin = 1024;
 		break;
 	    case 'S':
 	    case 's':
@@ -113,7 +111,7 @@ get_args(int argc, char **argv)
 	}
     }
 
-    /* XXX - backward compatability hack */
+    /* XXX - backward compatibility hack */
     if (bu_optind+2 == argc) {
 	nxin = atoi(argv[bu_optind++]);
 	nyin = atoi(argv[bu_optind++]);
@@ -121,7 +119,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	ifp = stdin;
     } else {
 	file_name = argv[bu_optind];
@@ -142,7 +140,7 @@ int
 main(int argc, char **argv)
 {
     int x, y, j;
-    long outbyte, outplace;
+    off_t outbyte, outplace;
     size_t ret;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
@@ -157,8 +155,8 @@ main(int argc, char **argv)
 	bu_exit(2, "pixrot: I'm not compiled to do a scanline that long!\n");
     }
     if (buflines > nyin) buflines = nyin;
-    buffer = malloc(buflines * scanbytes);
-    obuf = (nyin > nxin) ? malloc(nyin * pixbytes) : malloc(nxin * pixbytes);
+    buffer = (unsigned char *)malloc(buflines * scanbytes);
+    obuf = (nyin > nxin) ? (unsigned char *)malloc(nyin * pixbytes) : (unsigned char *)malloc(nxin * pixbytes);
     if (buffer == (unsigned char *)0 || obuf == (unsigned char *)0) {
 	bu_exit(3, "pixrot: malloc failed\n");
     }
@@ -190,7 +188,7 @@ main(int argc, char **argv)
 		xout = (nyin - 1) - lasty;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
+		    if (bu_fseek(ofp, outbyte, 0) < 0) {
 			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n");
 		    }
 		    outplace = outbyte;
@@ -215,7 +213,7 @@ main(int argc, char **argv)
 		xout = yin;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
+		    if (bu_fseek(ofp, outbyte, 0) < 0) {
 			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n");
 		    }
 		    outplace = outbyte;
@@ -232,7 +230,7 @@ main(int argc, char **argv)
 		yout = (nyin - 1) - y;
 		outbyte = yout * scanbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
+		    if (bu_fseek(ofp, outbyte, 0) < 0) {
 			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n");
 		    }
 		    outplace = outbyte;

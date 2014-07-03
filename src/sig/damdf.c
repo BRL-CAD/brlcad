@@ -1,7 +1,7 @@
 /*                         D A M D F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
  */
 /** @file damdf.c
  *
- *  Average Magnitude Difference Function
- *  (Experimental: for pitch extraction)
+ * Average Magnitude Difference Function
+ * (Experimental: for pitch extraction)
  *
  */
 
@@ -32,53 +32,60 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu.h"
 
-#define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */
-double	data[BSIZE];		/* Input buffer */
-double	r[BSIZE];
 
-static const char usage[] = "\
-Usage: damdf [window_size (512)] < doubles\n";
 
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
-    int	i, j, n, L;
-    double *dp1, *dp2;
-    double	d;
+    static const char usage[] = "Usage: damdf [window_size (512)] < doubles >outputfile\n";
 
-    if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-	bu_exit(1, "%s", usage );
+#define BSIZE 2048		/* Must be AT LEAST 2*Points in spectrum */
+    double data[BSIZE];		/* Input buffer */
+    double r[BSIZE];
+
+    int i, j, n, L;
+    double *dp1, *dp2;
+    double d;
+    size_t ret;
+
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	bu_exit(1, "%s", usage);
     }
 
     L = (argc > 1) ? atoi(argv[1]) : 512;
 
-    while ( !feof( stdin ) ) {
-	n = fread( data, sizeof(*data), L, stdin );
-	if ( n <= 0 )
+    while (!feof(stdin)) {
+	n = fread(data, sizeof(*data), L, stdin);
+	if (n <= 0)
 	    break;
-	if ( n < L )
+	if (n < L)
 	    memset((char *)&data[n], 0, (L-n)*sizeof(*data));
 
-	for ( i = 0; i < L; i++ ) {
+	for (i = 0; i < L; i++) {
 	    r[i] = 0;
 	    dp1 = &data[0];
 	    dp2 = &data[i];
-	    for ( j = L-i; j > 0; j-- ) {
+	    for (j = L-i; j > 0; j--) {
 		d = *dp1++ - *dp2++;
-		if ( d > 0 )
+		if (d > 0)
 		    r[i] += d;
 		else
 		    r[i] -= d;
 	    }
 	}
-	for ( i = 0; i < L; i++ ) {
+	for (i = 0; i < L; i++) {
 	    r[i] = 1024 - r[i];
 	}
-	fwrite( r, sizeof(*r), L, stdout );
+	ret = fwrite(r, sizeof(*r), L, stdout);
+	if (ret != (size_t)L)
+	    perror("fwrite");
     }
 
     return 0;
 }
+
 
 /*
  * Local Variables:

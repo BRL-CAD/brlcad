@@ -1,7 +1,7 @@
 /*                       P Y R A M I D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pyramid.c
+/** @file proc-db/pyramid.c
  *
  * Program to generate recursive 3-d pyramids (arb4).
- * Inspired by the SigGraph paper of Glasser.
+ * Inspired by the SigGraph paper of Glassner.
  *
  */
 
@@ -48,25 +48,24 @@ main(int argc, char **argv)
 {
     int depth;
 
-    if (argc != 2) {
-	fprintf(stderr, "Usage:  pyramid recursion\n");
+    if (argc != 2 || BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
+	fprintf(stderr, "Usage: pyramid recursion\n      (the argument is of type integer)\n");
 	return 1;
     }
     depth = atoi(argv[1]);
-    sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
+    sin60 = sin(60.0 * DEG2RAD);
 
     outfp = wdb_fopen("pyramid.g");
+    printf("Creating file pyramid.g\n");
 
     mk_id(outfp, "3-D Pyramids");
 
     do_leaf("leaf");
-#if 0
-    do_pleaf("polyleaf");
-#endif
     do_tree("tree", "leaf", depth);
 
     return 0;
 }
+
 
 /* Make a leaf node out of an ARB4 */
 void
@@ -82,56 +81,6 @@ do_leaf(char *name)
     mk_arb4(outfp, name, &pt[0][X]);
 }
 
-#if 0
-/* Make a leaf node out of 4 polygons */
-void
-do_pleaf(name)
-    char *name;
-{
-    point_t pt[4];
-    fastf_t verts[5][3];
-    fastf_t norms[5][3];
-    point_t centroid;
-    int i;
-
-    VSET(pt[0], 0, 0, 0);
-    VSET(pt[1], 100, 0, 0);
-    VSET(pt[2], 50, 100*sin60, 0);
-    VSET(pt[3], 50, 100*sin60/3, 100*sin60);
-
-    VMOVE(centroid, pt[0]);
-    for (i=1; i<4; i++) {
-	VADD2(centroid, centroid, pt[i]);
-    }
-    VSCALE(centroid, centroid, 0.25);
-
-    mk_polysolid(outfp, name);
-
-    VMOVE(verts[0], pt[0]);
-    VMOVE(verts[1], pt[1]);
-    VMOVE(verts[2], pt[2]);
-    pnorms(norms, verts, centroid, 3);
-    mk_poly(outfp, 3, verts, norms);
-
-    VMOVE(verts[0], pt[0]);
-    VMOVE(verts[1], pt[1]);
-    VMOVE(verts[2], pt[3]);
-    pnorms(norms, verts, centroid, 3);
-    mk_poly(outfp, 3, verts, norms);
-
-    VMOVE(verts[0], pt[0]);
-    VMOVE(verts[1], pt[2]);
-    VMOVE(verts[2], pt[3]);
-    pnorms(norms, verts, centroid, 3);
-    mk_poly(outfp, 3, verts, norms);
-
-    VMOVE(verts[0], pt[1]);
-    VMOVE(verts[1], pt[2]);
-    VMOVE(verts[2], pt[3]);
-    pnorms(norms, verts, centroid, 3);
-    mk_poly(outfp, 3, verts, norms);
-}
-#endif
 
 /*
  * Find the single outward pointing normal for a facet.
@@ -161,6 +110,7 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts)
 	VMOVE(norms[i], n);
     }
 }
+
 
 void
 do_tree(char *name, char *lname, int level)
@@ -210,6 +160,7 @@ do_tree(char *name, char *lname, int level)
 	do_tree(nm, lname, level-1);
     }
 }
+
 
 /*
  * Local Variables:

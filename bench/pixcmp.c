@@ -1,7 +1,7 @@
 /*                        P I X C M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,13 +56,14 @@ usage(const char *name)
     if (!name) {
 	name = unknown;
     }
+    /* this must be split, ISO C90 has a max static string length of 509 */
     bu_log("Usage: %s [OPTIONS] FILE1 [FILE2 [SKIP1 [SKIP2]]]\n%s", name,
 	   "Compare two PIX image files pixel by pixel.\n\n"
 	   "  -l   List pixel numbers and values for all pixels that differ.\n"
 	   "  -b   Output and process by bytes instead of pixels.\n"
 	   "  -i SKIP\n"
-	   "       Skip the first SKIP pixels of input (for FILE1 and FILE2)\n"
-	   "  -i SKIP1:SKIP2\n"
+	   "       Skip the first SKIP pixels of input (for FILE1 and FILE2)\n");
+    bu_log("  -i SKIP1:SKIP2\n"
 	   "       Skip the first SKIP1 pixels in FILE1 and SKIP2 pixels in FILE2.\n"
 	   "  -s   Silent output.  Only return an exit status.\n\n"
 	   "If FILE is `-' or is missing, then input is read from standard input.\n"
@@ -73,7 +74,7 @@ usage(const char *name)
 
 
 HIDDEN void
-handle_i_opt(const char *arg, long *skip1, long *skip2)
+handle_i_opt(const char *arg, off_t *skip1, off_t *skip2)
 {
     const char *endptr = arg;
     if ((arg == NULL) || ((skip1 == NULL) && (skip2 == NULL))) {
@@ -94,7 +95,7 @@ handle_i_opt(const char *arg, long *skip1, long *skip2)
 	if (skip2) {
 	    *skip2 = strtol(arg, NULL, 10);
 	}
-	if (skip1) {
+	if (skip1 && skip2) {
 	    *skip1 = *skip2;
 	}
     } else if (endptr[0] == ':') {
@@ -126,13 +127,13 @@ main(int argc, char *argv[])
     int list_pixel_values = 0;
     int print_bytes = 0;
     int silent = 0;
-    long f1_skip = 0;
-    long f2_skip = 0;
+    off_t f1_skip = 0;
+    off_t f2_skip = 0;
 
     long int bytes = 0;
 
     /* process opts */
-    while ((c = bu_getopt(argc, argv, "lbi:s")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "lbi:s")) != -1) {
 	switch (c) {
 	    case 'l':
 		list_pixel_values = 1;
@@ -185,13 +186,13 @@ main(int argc, char *argv[])
 
     /* printf("Skip from FILE1: %ld and from FILE2: %ld\n", f1_skip, f2_skip); */
 
-    if (strcmp(argv[0], "-") == 0) {
+    if (BU_STR_EQUAL(argv[0], "-")) {
 	f1 = stdin;
     } else if ((f1 = fopen(argv[0], "rb")) == NULL) {
 	perror(argv[0]);
 	exit(FILE_ERROR);
     }
-    if ((argc < 2) || (strcmp(argv[1], "-") == 0)) {
+    if ((argc < 2) || BU_STR_EQUAL(argv[1], "-")) {
 	f2 = stdin;
     } else if ((f2 = fopen(argv[1], "rb")) == NULL) {
 	perror(argv[1]);
@@ -204,8 +205,8 @@ main(int argc, char *argv[])
     }
 
     /* skip requested pixels/bytes in FILE1 */
-    if (f1_skip && fseek(f1, f1_skip, SEEK_SET)) {
-	bu_log("ERROR: Unable to seek %ld %s%s in FILE1\n",
+    if (f1_skip && bu_fseek(f1, f1_skip, SEEK_SET)) {
+	bu_log("ERROR: Unable to seek %zd %s%s in FILE1\n",
 	       f1_skip,
 	       print_bytes?"byte":"pixel",
 	       f1_skip==1?"":"s");
@@ -214,8 +215,8 @@ main(int argc, char *argv[])
     }
 
     /* skip requested pixels in FILE2 */
-    if (f2_skip && fseek(f2, f2_skip, SEEK_SET)) {
-	bu_log("ERROR: Unable to seek %ld %s%s in FILE2\n",
+    if (f2_skip && bu_fseek(f2, f2_skip, SEEK_SET)) {
+	bu_log("ERROR: Unable to seek %zd %s%s in FILE2\n",
 	       f1_skip,
 	       print_bytes?"byte":"pixel",
 	       f1_skip==1?"":"s");

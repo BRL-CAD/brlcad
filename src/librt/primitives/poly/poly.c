@@ -1,7 +1,7 @@
 /*                            P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file poly/poly.c
+/** @file primitives/poly/poly.c
  *
  * Intersect a ray with a Polygonal Object that has no explicit
  * topology.  It is assumed that the solid has no holes.
@@ -39,6 +39,8 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#include "../../librt_private.h"
+
 
 #define TRI_NULL ((struct tri_specific *)0)
 
@@ -46,10 +48,44 @@ HIDDEN int rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, 
 
 /* Describe algorithm here */
 
+/**
+ * Calculate the bounding RPP for a poly
+ */
+int
+rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
+{
+    struct rt_pg_internal *pgp;
+    size_t i;
+    size_t p;
+
+    pgp = (struct rt_pg_internal *)ip->idb_ptr;
+    RT_PG_CK_MAGIC(pgp);
+
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
+    for (p = 0; p < pgp->npoly; p++) {
+	vect_t work[3];
+
+	VMOVE(work[0], &pgp->poly[p].verts[0*3]);
+	VMINMAX((*min), (*max), work[0]);
+	VMOVE(work[1], &pgp->poly[p].verts[1*3]);
+	VMINMAX((*min), (*max), work[1]);
+
+	for (i=2; i < pgp->poly[p].npts; i++) {
+	    VMOVE(work[2], &pgp->poly[p].verts[i*3]);
+	    VMINMAX((*min), (*max), work[2]);
+
+	    /* Chop off a triangle, and continue */
+	    VMOVE(work[1], work[2]);
+	}
+    }
+
+    return 0;		/* OK */
+}
+
 
 /**
- * R T _ P G _ P R E P
- *
  * This routine is used to prepare a list of planar faces for
  * being shot at by the triangle routines.
  *
@@ -62,23 +98,22 @@ int
 rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_pg_internal *pgp;
-    int i;
+    size_t i;
     size_t p;
 
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
+    if (rt_pg_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
+
     for (p = 0; p < pgp->npoly; p++) {
 	vect_t work[3];
 
 	VMOVE(work[0], &pgp->poly[p].verts[0*3]);
-	VMINMAX(stp->st_min, stp->st_max, work[0]);
 	VMOVE(work[1], &pgp->poly[p].verts[1*3]);
-	VMINMAX(stp->st_min, stp->st_max, work[1]);
 
 	for (i=2; i < pgp->poly[p].npts; i++) {
 	    VMOVE(work[2], &pgp->poly[p].verts[i*3]);
-	    VMINMAX(stp->st_min, stp->st_max, work[2]);
 
 	    /* output a face */
 	    (void)rt_pgface(stp,
@@ -88,7 +123,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    VMOVE(work[1], work[2]);
 	}
     }
-    if (stp->st_specific == (genptr_t)0) {
+    if (stp->st_specific == (void *)0) {
 	bu_log("pg(%s):  no faces\n", stp->st_name);
 	return -1;		/* BAD */
     }
@@ -114,14 +149,12 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 
 /**
- * R T _ P G F A C E
- *
  * This function is called with pointers to 3 points,
  * and is used to prepare PG faces.
  * ap, bp, cp point to vect_t points.
  *
  * Return -
- * 0 if the 3 points didn't form a plane (eg, colinear, etc).
+ * 0 if the 3 points didn't form a plane (e.g., collinear, etc.).
  * # pts (3) if a valid plane resulted.
  */
 HIDDEN int
@@ -131,7 +164,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
     vect_t work;
     fastf_t m1, m2, m3, m4;
 
-    BU_GETSTRUCT(trip, tri_specific);
+    BU_GET(trip, struct tri_specific);
     VMOVE(trip->tri_A, ap);
     VSUB2(trip->tri_BA, bp, ap);
     VSUB2(trip->tri_CA, cp, ap);
@@ -145,7 +178,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
     m4 = MAGNITUDE(trip->tri_wn);
     if (m1 < tol->dist || m2 < tol->dist ||
 	m3 < tol->dist || m4 < tol->dist) {
-	bu_free((char *)trip, "getstruct tri_specific");
+	BU_PUT(trip, struct tri_specific);
 	if (RT_G_DEBUG & DEBUG_ARB8)
 	    bu_log("pg(%s): degenerate facet\n", stp->st_name);
 	return 0;			/* BAD */
@@ -160,14 +193,11 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
 
     /* Add this face onto the linked list for this solid */
     trip->tri_forw = (struct tri_specific *)stp->st_specific;
-    stp->st_specific = (genptr_t)trip;
+    stp->st_specific = (void *)trip;
     return 3;				/* OK */
 }
 
 
-/**
- * R T _ P G _ P R I N T
- */
 void
 rt_pg_print(const struct soltab *stp)
 {
@@ -192,8 +222,6 @@ rt_pg_print(const struct soltab *stp)
 
 
 /**
- * R T _ P G _ S H O T
- *
  * Function -
  * Shoot a ray at a polygonal object.
  *
@@ -209,7 +237,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 #define MAXHITS 128		/* # surfaces hit, must be even */
     struct hit hits[MAXHITS];
     struct hit *hp;
-    int nhits;
+    size_t nhits;
 
     nhits = 0;
     hp = &hits[0];
@@ -230,7 +258,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	dn = VDOT(trip->tri_wn, rp->r_dir);
 
 	/*
-	 * If ray lies directly along the face, (ie, dot product
+	 * If ray lies directly along the face, (i.e., dot product
 	 * is zero), drop this face.
 	 */
 	abs_dn = dn >= 0.0 ? dn : (-dn);
@@ -269,7 +297,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	VMOVE(hp->hit_normal, trip->tri_N);
 	hp->hit_surfno = trip->tri_surfno;
 	if (++nhits >= MAXHITS) {
-	    bu_log("rt_pg_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
+	    bu_log("rt_pg_shot(%s): too many hits (%zu)\n", stp->st_name, nhits);
 	    break;
 	}
 	hp++;
@@ -291,7 +319,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
        in the hit list. */
 
     {
-	int i, j;
+	size_t i, j;
 
 	for (i=0; i<nhits-1; i++) {
 	    fastf_t dist;
@@ -314,7 +342,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	nhits = 0;
 
     if (nhits&1) {
-	int i;
+	size_t i;
 	static int nerrors = 0;		/* message counter */
 	/*
 	 * If this condition exists, it is almost certainly due to
@@ -326,7 +354,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	 */
 
 	if (nerrors++ < 6) {
-	    bu_log("rt_pg_shot(%s): WARNING %d hits:\n", stp->st_name, nhits);
+	    bu_log("rt_pg_shot(%s): WARNING %zu hits:\n", stp->st_name, nhits);
 	    bu_log("\tray start = (%g %g %g) ray dir = (%g %g %g)\n",
 		   V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
 	    for (i=0; i < nhits; i++) {
@@ -342,7 +370,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 
 	if (nhits > 2) {
 	    fastf_t dot1, dot2;
-	    int j;
+	    size_t j;
 
 	    /* likely an extra hit,
 	     * look for consecutive entrances or exits */
@@ -353,7 +381,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		dot1 = dot2;
 		dot2 = VDOT(rp->r_dir, hits[i].hit_normal);
 		if (dot1 > 0.0 && dot2 > 0.0) {
-		    /* two consectutive exits,
+		    /* two consecutive exits,
 		     * manufacture an entrance at same distance
 		     * as second exit.
 		     */
@@ -365,7 +393,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		    nhits++;
 		    bu_log("\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name);
 		} else if (dot1 < 0.0 && dot2 < 0.0) {
-		    /* two consectutive entrances,
+		    /* two consecutive entrances,
 		     * manufacture an exit between them.
 		     */
 
@@ -402,7 +430,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     /* nhits is even, build segments */
     {
 	struct seg *segp;
-	int i;
+	size_t i;
 	for (i=0; i < nhits; i += 2) {
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
@@ -415,9 +443,6 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 }
 
 
-/**
- * R T _ P G _ F R E E
- */
 void
 rt_pg_free(struct soltab *stp)
 {
@@ -427,15 +452,12 @@ rt_pg_free(struct soltab *stp)
     while (trip != TRI_NULL) {
 	struct tri_specific *nexttri = trip->tri_forw;
 
-	bu_free((char *)trip, "pg tri_specific");
+	BU_PUT(trip, struct tri_specific);
 	trip = nexttri;
     }
 }
 
 
-/**
- * R T _ P G _ N O R M
- */
 void
 rt_pg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
@@ -449,9 +471,6 @@ rt_pg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 }
 
 
-/**
- * R T _ P G _ U V
- */
 void
 rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
@@ -467,23 +486,10 @@ rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
 }
 
 
-/**
- * R T _ P G _ C L A S S
- */
 int
-rt_pg_class(void)
+rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-    return 0;
-}
-
-
-/**
- * R T _ P G _ P L O T
- */
-int
-rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
-{
-    int i;
+    size_t i;
     size_t p;	/* current polygon number */
     struct rt_pg_internal *pgp;
 
@@ -508,14 +514,12 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 
 
 /**
- * R T _ P G _ P L O T _ P O L Y
- *
  * Convert to vlist, draw as polygons.
  */
 int
 rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
-    int i;
+    size_t i;
     size_t p;	/* current polygon number */
     struct rt_pg_internal *pgp;
 
@@ -547,9 +551,6 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 }
 
 
-/**
- * R T _ P G _ C U R V E
- */
 void
 rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
@@ -563,13 +564,10 @@ rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-/**
- * R T _ P G _ T E S S
- */
 int
 rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
-    int i;
+    size_t i;
     struct shell *s;
     struct vertex **verts;	/* dynamic array of pointers */
     struct vertex ***vertp;/* dynamic array of ptrs to pointers */
@@ -604,7 +602,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 
 	/* Construct the face.  Verts should be in CCW order */
 	if ((fu = nmg_cmface(s, vertp, pp->npts)) == (struct faceuse *)0) {
-	    bu_log("rt_pg_tess() nmg_cmface failed, skipping face %d\n",
+	    bu_log("rt_pg_tess() nmg_cmface failed, skipping face %zu\n",
 		   p);
 	}
 
@@ -638,8 +636,6 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 
 
 /**
- * R T _ P G _ I M P O R T
- *
  * Read all the polygons in as a complex dynamic structure.
  * The caller is responsible for freeing the dynamic memory.
  * (vid rt_pg_ifree).
@@ -649,7 +645,7 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 {
     struct rt_pg_internal *pgp;
     union record *rp;
-    int i;
+    size_t i;
     size_t rno;		/* current record number */
     size_t p;		/* current polygon index */
 
@@ -665,8 +661,9 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_POLY;
-    ip->idb_meth = &rt_functab[ID_POLY];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_pg_internal), "rt_pg_internal");
+    ip->idb_meth = &OBJ[ID_POLY];
+    BU_ALLOC(ip->idb_ptr, struct rt_pg_internal);
+
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     pgp->magic = RT_PG_INTERNAL_MAGIC;
 
@@ -692,21 +689,28 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	    return -1;
 	}
 	pp->npts = rp[rno].q.q_count;
-	pp->verts = (fastf_t *)bu_malloc(
-	    pp->npts * 3 * sizeof(fastf_t), "pg verts[]");
-	pp->norms = (fastf_t *)bu_malloc(
-	    pp->npts * 3 * sizeof(fastf_t), "pg norms[]");
+	pp->verts = (fastf_t *)bu_malloc(pp->npts * 3 * sizeof(fastf_t), "pg verts[]");
+	pp->norms = (fastf_t *)bu_malloc(pp->npts * 3 * sizeof(fastf_t), "pg norms[]");
 	for (i=0; i < pp->npts; i++) {
+	    point_t pnt;
+	    vect_t vec;
+
+	    if (dbip->dbi_version < 0) {
+		flip_fastf_float(pnt, rp[rno].q.q_verts[i], 1, 1);
+		flip_fastf_float(vec, rp[rno].q.q_norms[i], 1, 1);
+	    } else {
+		VMOVE(pnt, rp[rno].q.q_verts[i]);
+		VMOVE(vec, rp[rno].q.q_norms[i]);
+	    }
+
 	    /* Note:  side effect of importing dbfloat_t */
-	    MAT4X3PNT(&pp->verts[i*3], mat,
-		      rp[rno].q.q_verts[i]);
-	    MAT4X3VEC(&pp->norms[i*3], mat,
-		      rp[rno].q.q_norms[i]);
+	    MAT4X3PNT(&pp->verts[i*3], mat, pnt);
+	    MAT4X3VEC(&pp->norms[i*3], mat, vec);
 	}
 	if (pp->npts > pgp->max_npts) pgp->max_npts = pp->npts;
     }
     if (pgp->max_npts < 3) {
-	bu_log("rt_pg_import4: polysolid with all polygons of less than %d vertices!\n", pgp->max_npts);
+	bu_log("rt_pg_import4: polysolid with all polygons of less than %zu vertices!\n", pgp->max_npts);
 	/* XXX free storage */
 	return -1;
     }
@@ -715,8 +719,6 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 
 /**
- * R T _ P G _ E X P O R T
- *
  * The name will be added by the caller.
  * Generally, only libwdb will set conv2mm != 1.0
  */
@@ -725,7 +727,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 {
     struct rt_pg_internal *pgp;
     union record *rec;
-    int i;
+    size_t i;
     size_t rno;		/* current record number */
     size_t p;		/* current polygon index */
 
@@ -738,7 +740,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = (1 + pgp->npoly) * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "pg external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "pg external");
     rec = (union record *)ep->ext_buf;
 
     rec[0].p.p_id = ID_P_HEAD;
@@ -749,7 +751,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	rno = p+1;
 	pp = &pgp->poly[p];
 	if (pp->npts < 3 || pp->npts > 5) {
-	    bu_log("rt_pg_export4:  unable to support npts=%d\n",
+	    bu_log("rt_pg_export4:  unable to support npts=%zu\n",
 		   pp->npts);
 	    return -1;
 	}
@@ -763,6 +765,10 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	    VMOVE(rec[rno].q.q_norms[i], &pp->norms[i*3]);
 	}
     }
+
+    bu_log("DEPRECATED:  The 'poly' primitive is no longer supported.  Use the 'bot' or 'nmg' polygonal mesh instead.\n");
+    bu_log("\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n");
+
     return 0;
 }
 
@@ -790,7 +796,7 @@ rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
     if (ip) RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
 
-    bu_log("As of release 6.0 the polysolid is superceded by the BOT primitive.\n");
+    bu_log("DEPRECATED:  The 'poly' primitive is no longer supported.  Use the 'bot' or 'nmg' polygonal mesh instead.\n");
     bu_log("\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n");
     /* The rt_pg_to_bot() routine can also be used. */
     return -1;
@@ -798,8 +804,6 @@ rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
 
 
 /**
- * R T _ P G _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -807,11 +811,9 @@ rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
 int
 rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    int j;
-    struct rt_pg_internal *pgp =
-	(struct rt_pg_internal *)ip->idb_ptr;
-    char buf[256];
-    size_t i;
+    size_t i, j;
+    struct rt_pg_internal *pgp = (struct rt_pg_internal *)ip->idb_ptr;
+    char buf[256] = {0};
 
     RT_PG_CK_MAGIC(pgp);
     bu_vls_strcat(str, "polygon solid with no topology (POLY)\n");
@@ -820,8 +822,7 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 	    (long int)pgp->npoly);
     bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\tMost complex face has %d vertices\n",
-	    pgp->max_npts);
+    sprintf(buf, "\tMost complex face has %lu vertices\n", (long unsigned)pgp->max_npts);
     bu_vls_strcat(str, buf);
 
     if (pgp->npoly) {
@@ -839,8 +840,7 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 	fastf_t *v = pgp->poly[i].verts;
 	fastf_t *n = pgp->poly[i].norms;
 
-	sprintf(buf, "\tPolygon %lu: (%d pts)\n",
-		(long unsigned int)i, pgp->poly[i].npts);
+	sprintf(buf, "\tPolygon %lu: (%lu pts)\n", (long unsigned)i, (long unsigned)pgp->poly[i].npts);
 	bu_vls_strcat(str, buf);
 	for (j=0; j < pgp->poly[i].npts; j++) {
 	    sprintf(buf, "\t\tV (%g, %g, %g)\n\t\t N (%g, %g, %g)\n",
@@ -861,8 +861,6 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 
 
 /**
- * R T _ P G _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -888,16 +886,11 @@ rt_pg_ifree(struct rt_db_internal *ip)
     pgp->magic = 0;			/* sanity */
     pgp->npoly = 0;
     bu_free((char *)pgp, "pg ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
-/**
- * R T _ P G _ P A R A M S
- *
- */
 int
-rt_pg_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_pg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
@@ -905,8 +898,6 @@ rt_pg_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 
 
 /**
- * R T _ P G _ T O _ B O T
- *
  * Convert in-memory form of a polysolid (pg) to a bag of triangles (BoT)
  * There is no record in the V5 database for a polysolid.
  *
@@ -924,7 +915,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
     size_t max_pts;
     size_t max_tri;
     size_t p;
-    int i;
+    size_t i;
 
     RT_CK_DB_INTERNAL(ip);
     BN_CK_TOL(tol);
@@ -938,7 +929,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     RT_PG_CK_MAGIC(ip_pg);
 
-    ip_bot = (struct rt_bot_internal *)bu_malloc(sizeof(struct rt_bot_internal), "BOT internal");
+    BU_ALLOC(ip_bot, struct rt_bot_internal);
     ip_bot->magic = RT_BOT_INTERNAL_MAGIC;
     ip_bot->mode = RT_BOT_SOLID;
     ip_bot->orientation = RT_BOT_CCW;
@@ -964,7 +955,8 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 	vect_t work[3], tmp;
 	struct tri_specific trip;
 	fastf_t m1, m2, m3, m4;
-	int first, v0=0, v2=0;
+	size_t v0=0, v2=0;
+	int first;
 
 	first = 1;
 	VMOVE(work[0], &ip_pg->poly[p].verts[0*3]);
@@ -1014,14 +1006,14 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 	}
     }
 
-    rt_bot_vertex_fuse(ip_bot);
+    rt_bot_vertex_fuse(ip_bot, tol);
     rt_bot_face_fuse(ip_bot);
 
     rt_db_free_internal(ip);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BOT;
-    ip->idb_meth = &rt_functab[ID_BOT];
+    ip->idb_meth = &OBJ[ID_BOT];
     ip->idb_ptr = ip_bot;
 
     return 0;

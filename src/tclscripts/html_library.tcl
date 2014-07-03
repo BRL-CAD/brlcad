@@ -438,7 +438,7 @@ proc HMtag_img {win param text} {
 # if we have a clickable image, arrange for a callback
 
 proc HMgot_image {win image_error} {
-    # if we're in a frame turn on geometry propogation
+    # if we're in a frame turn on geometry propagation
     if {[winfo name $win] == "label"} {
 	pack propagate [winfo parent $win] 1
     }
@@ -472,7 +472,7 @@ proc HMlink_setup {win href} {
 
 # generic link-hit callback
 # This gets called upon button hits on hypertext links
-# Applications are expected to supply ther own HMlink_callback routine
+# Applications are expected to supply their own HMlink_callback routine
 #   win:   The name of the text widget to render into
 #   x,y:   The cursor position at the "click"
 
@@ -492,7 +492,7 @@ proc HMlink_hit {win x y} {
 
 # extract a value from parameter list (this needs a re-do)
 # returns "1" if the keyword is found, "0" otherwise
-#   param:  A parameter list.  It should alredy have been processed to
+#   param:  A parameter list.  It should already have been processed to
 #           remove any entity references
 #   key:    The parameter name
 #   val:    The variable to put the value into (use key as default)
@@ -505,7 +505,7 @@ proc HMextract_param {param key {val ""}} {
 	upvar $val result
     }
 
-    # look for name=value combinations.  Either (') or (") are valid delimeters
+    # look for name=value combinations.  Either (') or (") are valid delimiters
     if {
 	[regsub -nocase [format {.*%s *= *"([^"]*).*} $key] $param {\1} value] ||
 [regsub -nocase [format {.*%s *= *'([^']*).*} $key] $param {\1} value] ||

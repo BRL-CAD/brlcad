@@ -1,7 +1,7 @@
 /*                 BRLCADWrapper.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,46 +17,58 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BRLCADWrapper.h
+/** @file step/BRLCADWrapper.h
  *
  * Class definition for C++ wrapper to BRL-CAD database functions.
  *
  */
 
-#ifndef BRLCADWRAPPER_H_
-#define BRLCADWRAPPER_H_
+#ifndef CONV_STEP_BRLCADWRAPPER_H
+#define CONV_STEP_BRLCADWRAPPER_H
 
 #include "common.h"
 
 #include <string>
+#include <map>
 
 extern "C" {
-/* brlcad headers */
+    /* brlcad headers */
 #include <bu.h>
 #include <wdb.h>
+#include <raytrace.h>
 }
 
 
 class ON_Brep;
 
-class BRLCADWrapper {
- private:
+typedef std::map<std::string, struct bu_list *> MAP_OF_BU_LIST_HEADS;
+
+class BRLCADWrapper
+{
+private:
     std::string filename;
     struct rt_wdb *outfp;
+    struct db_i *dbip;
     static int sol_reg_cnt;
 
- public:
+public:
     BRLCADWrapper();
     virtual ~BRLCADWrapper();
-    bool OpenFile(const char *filename);
+    bool load(std::string &filename);
+    bool OpenFile(std::string &filename);
     bool WriteHeader();
     bool WriteSphere(double *center, double radius);
-    bool WriteBrep(std::string name, ON_Brep *brep);
+    bool WriteBrep(std::string name, ON_Brep *brep, mat_t &mat);
+    bool WriteCombs();
+    bool AddMember(const std::string &combname,const std::string &member,mat_t mat);
+    std::string GetBRLCADName(std::string &name);
+    static void getRandomColor(unsigned char *rgb);
+    struct db_i * GetDBIP();
     bool Close();
 };
 
 
-#endif /* BRLCADWRAPPER_H_ */
+#endif /* CONV_STEP_BRLCADWRAPPER_H */
 
 /*
  * Local Variables:

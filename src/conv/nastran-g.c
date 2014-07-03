@@ -1,7 +1,7 @@
 /*                     N A S T R A N - G . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file nastran-g.c
+/** @file conv/nastran-g.c
  *
  * Code to convert a NASTRAN finite element model to BRL-CAD.
  *
@@ -39,6 +39,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "bu.h"
+
+#define COMMA ','
 
 
 struct coord_sys
@@ -104,8 +106,8 @@ static char *output_file = "nastran.g";
 static struct rt_wdb *fpout;		/* brlcad output file */
 static FILE *fpin;			/* NASTRAN input file */
 static FILE *fptmp;			/* temporary version of NASTRAN input */
-static char *Usage="Usage:\n\t%s [-p] [-xX lvl] [-t tol.dist] [-i NASTRAN_file] -o BRL-CAD_file\n";
-static long start_off;
+static char *Usage="Usage: %s [-xX lvl] [-t tol.dist] [-n] [-m] [-i NASTRAN_file] -o BRL-CAD_file\n";
+static off_t start_off;
 static char *delims=", \t";
 static struct coord_sys coord_head;	/* head of linked list of coordinate systems */
 static struct pbar pbar_head;		/* head of linked list of PBAR's */
@@ -151,7 +153,7 @@ reset_input(void)
     for (i=0; i < 20; i++)
 	prev_rec[i][0] = '\0';
 
-    fseek(fpin, start_off, SEEK_SET);
+    bu_fseek(fpin, start_off, SEEK_SET);
     line_count = bulk_data_start_line;
 
     tmp = bu_fgets(next_line, MAX_LINE_SIZE, fpin);
@@ -174,13 +176,13 @@ write_fields(void)
     for (i=0; i<NO_OF_FIELDS; i++) {
 	/* eliminate trailing blanks */
 	j = strlen(curr_rec[i]) - 1;
-	while (j && (isspace(curr_rec[i][j]) || curr_rec[i][j] == '\012' || curr_rec[i][j] == '\015'))
+	while (j && (isspace((int)curr_rec[i][j]) || curr_rec[i][j] == '\012' || curr_rec[i][j] == '\015'))
 	    j--;
 	curr_rec[i][++j] = '\0';
 
 	/* skip leading blanks */
 	j = 0;
-	while (curr_rec[i][j] != '\0' && isspace(curr_rec[i][j]))
+	while (curr_rec[i][j] != '\0' && isspace((int)curr_rec[i][j]))
 	    j++;
 	fprintf(fptmp, "%s, ", &curr_rec[i][j]);
     }
@@ -194,9 +196,9 @@ do_silly_nastran_shortcuts(void)
     int field_no;
 
     for (field_no=0; field_no < NO_OF_FIELDS; field_no++) {
-	if (!strcmp(curr_rec[field_no], "=")) {
+	if (BU_STR_EQUAL(curr_rec[field_no], "=")) {
 	    bu_strlcpy(curr_rec[field_no], prev_rec[field_no], FIELD_LENGTH);
-	} else if (!strcmp(curr_rec[field_no], "==")) {
+	} else if (BU_STR_EQUAL(curr_rec[field_no], "==")) {
 	    while (field_no < NO_OF_FIELDS) {
 		bu_strlcpy(curr_rec[field_no], prev_rec[field_no], FIELD_LENGTH);
 		field_no++;
@@ -228,7 +230,7 @@ HIDDEN void
 get_large_field_input(FILE *fp, int write_flag)
 {
     char **tmp_rec;
-    int field_no;
+    size_t field_no;
     size_t card_len;
     size_t last_field;
     size_t i;
@@ -255,13 +257,13 @@ get_large_field_input(FILE *fp, int write_flag)
 
     /* remove the newline from the end of the last field */
     i = strlen(curr_rec[last_field-1]) - 1;
-    while (isspace(curr_rec[last_field-1][i]) || curr_rec[last_field-1][i] == '\012' || curr_rec[last_field-1][i] == '\015')
+    while (isspace((int)curr_rec[last_field-1][i]) || curr_rec[last_field-1][i] == '\012' || curr_rec[last_field-1][i] == '\015')
 	i--;
     curr_rec[last_field-1][++i] = '\0';
 
     if (next_line[0] == '*') {
 	if (!get_next_record(fp, 0, 0)) {
-	    bu_exit(1, "unexpected end of INPUT at line #%d\n", line_count);
+	    bu_exit(1, "unexpected end of INPUT at line #%ld\n", line_count);
 	}
 
 	card_len = strlen(line);
@@ -286,7 +288,7 @@ HIDDEN void
 get_small_field_input(FILE *fp, int write_flag)
 {
     char **tmp_rec;
-    int field_no;
+    size_t field_no;
     size_t card_len;
     size_t last_field;
 
@@ -312,7 +314,7 @@ get_small_field_input(FILE *fp, int write_flag)
 
     if (next_line[0] == '+') {
 	if (!get_next_record(fp, 0, 0)) {
-	    bu_exit(1, "unexpected end of INPUT at line #%d\n", line_count);
+	    bu_exit(1, "unexpected end of INPUT at line #%ld\n", line_count);
 	}
 
 	card_len = strlen(line);
@@ -337,19 +339,19 @@ HIDDEN void
 get_free_form_input(FILE *fp, int write_flag)
 {
     char **tmp_rec;
-    int field_no;
+    size_t field_no;
     int i, j;
 
     i = (-1);
-    while (isspace(line[++i]));
-    if (line[i] == '=' && isdigit(line[i+1])) {
+    while (isspace((int)line[++i]));
+    if (line[i] == '=' && isdigit((int)line[i+1])) {
 	int count;
 
 	count = atoi(&line[i+1]);
 
 	i = (-1);
-	while (isspace(prev_line[++i]));
-	if (prev_line[i] == '=' && isdigit(prev_line[i+1])) {
+	while (isspace((int)prev_line[++i]));
+	if (prev_line[i] == '=' && isdigit((int)prev_line[i+1])) {
 	    bu_log("Cannot use consecutive replication cards:\n");
 	    bu_log("%s", prev_line);
 	    bu_log("%s", line);
@@ -372,31 +374,31 @@ get_free_form_input(FILE *fp, int write_flag)
 	field_no = (-1);
 	i = 0;
 	while (++field_no < NO_OF_FIELDS && line[i] != '\0') {
-	    while (line[i] != '\0' && isspace(line[i]))
+	    while (line[i] != '\0' && isspace((int)line[i]))
 		i++;
 	    j = (-1);
-	    while (line[i] != '\0' && line[i] != ',' && !isspace(line[i]))
+	    while (line[i] != '\0' && line[i] != COMMA && !isspace((int)line[i]))
 		curr_rec[field_no][++j] = line[i++];
 	    curr_rec[field_no][++j] = '\0';
-	    if (line[i] == ',')
+	    if (line[i] == COMMA)
 		i++;
 	}
 
 	if (strchr(curr_rec[9], '+')) {
 	    /* continuation card */
 	    if (!get_next_record(fp, 0, 0)) {
-		bu_exit(1, "unexpected end of INPUT at line #%d\n", line_count);
+		bu_exit(1, "unexpected end of INPUT at line #%ld\n", line_count);
 	    }
 
 	    i = 0;
 	    while (++field_no < NO_OF_FIELDS && line[i] != '\0') {
-		while (line[i] != '\0' && isspace(line[i]))
+		while (line[i] != '\0' && isspace((int)line[i]))
 		    i++;
 		j = (-1);
-		while (line[i] != '\0' && line[i] != ',' && !isspace(line[i]))
+		while (line[i] != '\0' && line[i] != COMMA && !isspace((int)line[i]))
 		    curr_rec[field_no][++j] = line[i++];
 		curr_rec[field_no][++j] = '\0';
-		if (line[i] == ',')
+		if (line[i] == COMMA)
 		    i++;
 	    }
 	}
@@ -430,8 +432,8 @@ get_next_record(FILE *fp, int call_input, int write_flag)
     /* Convert to all UPPER case */
     i = (-1);
     while (prev_line[++i] != '\0') {
-	if (isalpha(prev_line[i]))
-	    prev_line[i] = toupper(prev_line[i]);
+	if (isalpha((int)prev_line[i]))
+	    prev_line[i] = toupper((int)prev_line[i]);
     }
 
     if (tmp == (char *)NULL) {
@@ -461,7 +463,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
 	return 1;
 
     /* check which format is being used */
-    tmp = strchr(line, ',');
+    tmp = strchr(line, COMMA);
     if (tmp && tmp - line < 10)
 	form = FREE_FIELD;
     else {
@@ -470,7 +472,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
 	    form = FREE_FIELD;
     }
 
-    /* if this is FREE_FIELD, call approporiate processor */
+    /* if this is FREE_FIELD, call appropriate processor */
     if (form == FREE_FIELD) {
 	get_free_form_input(fp, write_flag);
 	return 1;
@@ -478,7 +480,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
 
     /* not FREE_FIELD, check for LARGE_FIELD */
     i = (-1);
-    while (++i < 8 && (isalpha(line[i]) || isspace(line[i])));
+    while (++i < 8 && (isalpha((int)line[i]) || isspace((int)line[i])));
     if (i < 8 && line[i] == '*')
 	form = LARGE_FIELD;
 
@@ -525,6 +527,9 @@ convert_cs(struct coord_sys *cs)
 {
     struct coord_sys *cs2;
     point_t tmp_orig, tmp_pt1, tmp_pt2;
+    VSETALL(tmp_orig, 0.0);
+    VSETALL(tmp_pt1, 0.0);
+    VSETALL(tmp_pt2, 0.0);
 
     if (!cs->rid)
 	return 0;
@@ -573,8 +578,8 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 
     switch (cs->type) {
 	case CORD_CYL:
-	    c1 = pt[X] * cos(pt[Y] * bn_degtorad);
-	    c2 = pt[X] * sin(pt[Y] * bn_degtorad);
+	    c1 = pt[X] * cos(pt[Y] * DEG2RAD);
+	    c2 = pt[X] * sin(pt[Y] * DEG2RAD);
 	    VJOIN3(tmp_pt, cs->origin, c1, cs->v1, c2, cs->v2, pt[Z], cs->v3);
 	    VMOVE(out_pt, tmp_pt);
 	    break;
@@ -585,10 +590,10 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 	    break;
 
 	case CORD_SPH:
-	    c4 = pt[X] * sin(pt[Y] * bn_degtorad);
-	    c1 = c4 * cos(pt[Z] * bn_degtorad);
-	    c2 = c4 * sin(pt[Z] * bn_degtorad);
-	    c3 = pt[X] * cos(pt[Y] * bn_degtorad);
+	    c4 = pt[X] * sin(pt[Y] * DEG2RAD);
+	    c1 = c4 * cos(pt[Z] * DEG2RAD);
+	    c2 = c4 * sin(pt[Z] * DEG2RAD);
+	    c3 = pt[X] * cos(pt[Y] * DEG2RAD);
 	    VJOIN3(tmp_pt, cs->origin, c1, cs->v1, c2, cs->v2, c3, cs->v3);
 	    VMOVE(out_pt, tmp_pt);
 	    break;
@@ -609,29 +614,31 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
  */
 
 HIDDEN int
-convert_grid(int index)
+convert_grid(int idx)
 {
     struct coord_sys *cs;
     point_t tmp_pt;
+    VSETALL(tmp_pt, 0.0);
 
-    if (!g_pts[index].cid)
+
+    if (!g_pts[idx].cid)
 	return 0;
 
     for (BU_LIST_FOR(cs, coord_sys, &coord_head.l)) {
-	if (cs->cid != g_pts[index].cid)
+	if (cs->cid != g_pts[idx].cid)
 	    continue;
 	break;
     }
 
     if (BU_LIST_IS_HEAD(&cs->l, &coord_head.l)) {
-	bu_exit(1, "No coordinate system defined for grid point #%d!\n", g_pts[index].gid);
+	bu_exit(1, "No coordinate system defined for grid point #%d!\n", g_pts[idx].gid);
     }
 
-    if (convert_pt(g_pts[index].pt, cs, tmp_pt))
+    if (convert_pt(g_pts[idx].pt, cs, tmp_pt))
 	return 1;
 
-    VMOVE(g_pts[index].pt, tmp_pt);
-    g_pts[index].cid = 0;
+    VMOVE(g_pts[idx].pt, tmp_pt);
+    g_pts[idx].cid = 0;
 
     return 0;
 }
@@ -718,14 +725,14 @@ get_coord_sys(void)
 	return;
     }
 
-    ptr = strtok(line, delims);
+    (void)strtok(line, delims);
     ptr = strtok((char *)NULL, delims);
     if (!ptr) {
 	log_line("Incomplete coordinate system definition");
 	return;
     }
 
-    BU_GETSTRUCT(cs, coord_sys);
+    BU_ALLOC(cs, struct coord_sys);
 
     switch (form) {
 	case 1:
@@ -748,7 +755,7 @@ get_coord_sys(void)
 	    if (!strlen(curr_rec[5]))
 		break;
 
-	    BU_GETSTRUCT(cs, coord_sys);
+	    BU_ALLOC(cs, struct coord_sys);
 	    cs->type = type;
 	    cs->cid = atoi(curr_rec[5]);
 	    gid = atoi(curr_rec[6]);
@@ -835,15 +842,15 @@ HIDDEN int
 get_pid_index(int pid)
 {
     struct pshell *psh;
-    int index=0;
+    int idx=0;
 
     if (pid == 0)
 	return 0;
 
     for (BU_LIST_FOR(psh, pshell, &pshell_head.l)) {
-	index++;
+	idx++;
 	if (psh->pid == pid)
-	    return index;
+	    return idx;
     }
 
     return 0;
@@ -1080,7 +1087,7 @@ get_cbar(void)
     VSCALE(pt1, pt1, conv[units]);
     VSCALE(pt2, pt2, conv[units]);
 
-    radius = sqrt(pb->area/bn_pi);
+    radius = sqrt(pb->area/M_PI);
     radius = radius * conv[units];
 
     VSUB2(height, pt2, pt1);
@@ -1098,11 +1105,17 @@ main(int argc, char **argv)
     int c;
     int i;
     struct pshell *psh;
-    struct pbar *pb;
+    struct pbar *pbp;
     struct wmember head;
     struct wmember all_head;
     char *nastran_file = "Converted from NASTRAN file (stdin)";
 
+    bu_setprogname(argv[0]);
+/*
+    if (argc < 2) {
+	bu_exit(1, Usage, argv[0]);
+    }
+*/
     fpin = stdin;
 
     units = INCHES;
@@ -1114,21 +1127,22 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:m")) != EOF) {
+    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:mh?")) != -1) {
 	switch (c) {
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		bu_printb("librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 't':		/* calculational tolerance */
 		tol.dist = atof(bu_optarg);
 		tol.dist_sq = tol.dist * tol.dist;
+		break;
 	    case 'n':
 		polysolids = 0;
 		break;
@@ -1136,16 +1150,18 @@ main(int argc, char **argv)
 		units = MM;
 		break;
 	    case 'i':
-		nastran_file = bu_optarg;
 		fpin = fopen(bu_optarg, "rb");
 		if (fpin == (FILE *)NULL) {
 		    bu_log("Cannot open NASTRAN file (%s) for reading!\n", bu_optarg);
 		    bu_exit(1, Usage, argv[0]);
 		}
+		nastran_file = bu_optarg;
 		break;
 	    case 'o':
 		output_file = bu_optarg;
 		break;
+	    default:
+		bu_exit(1, Usage, argv[0]);
 	}
     }
 
@@ -1174,10 +1190,10 @@ main(int argc, char **argv)
     bulk_data_start_line = 0;
     while (bu_fgets(line, MAX_LINE_SIZE, fpin)) {
 	bulk_data_start_line++;
-	if (strncmp(line, "BEGIN BULK", 10))
+	if (bu_strncmp(line, "BEGIN BULK", 10))
 	    continue;
 
-	start_off = ftell(fpin);
+	start_off = bu_ftell(fpin);
 	break;
     }
 
@@ -1203,9 +1219,9 @@ main(int argc, char **argv)
     nmg_model = (struct model *)NULL;
 
     /* count grid points */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (bu_fgets(line, MAX_LINE_SIZE, fptmp)) {
-	if (!strncmp(line, "GRID", 4))
+	if (!bu_strncmp(line, "GRID", 4))
 	    grid_count++;
     }
     if (!grid_count) {
@@ -1213,15 +1229,15 @@ main(int argc, char **argv)
     }
 
     /* get default values and properties */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
-	if (!strncmp(curr_rec[0], "BAROR", 5)) {
+	if (!bu_strncmp(curr_rec[0], "BAROR", 5)) {
 	    /* get BAR defaults */
 	    bar_def_pid = atoi(curr_rec[2]);
-	} else if (!strncmp(curr_rec[0], "PBAR", 4)) {
+	} else if (!bu_strncmp(curr_rec[0], "PBAR", 4)) {
 	    struct pbar *pb;
 
-	    BU_GETSTRUCT(pb, pbar);
+	    BU_ALLOC(pb, struct pbar);
 
 	    pb->pid = atoi(curr_rec[1]);
 	    pb->mid = atoi(curr_rec[2]);
@@ -1230,8 +1246,8 @@ main(int argc, char **argv)
 	    BU_LIST_INIT(&pb->head.l);
 
 	    BU_LIST_INSERT(&pbar_head.l, &pb->l);
-	} else if (!strncmp(curr_rec[0], "PSHELL", 6)) {
-	    BU_GETSTRUCT(psh, pshell);
+	} else if (!bu_strncmp(curr_rec[0], "PSHELL", 6)) {
+	    BU_ALLOC(psh, struct pshell);
 
 	    psh->s = (struct shell *)NULL;
 	    psh->pid = atoi(curr_rec[1]);
@@ -1246,13 +1262,13 @@ main(int argc, char **argv)
     g_pts = (struct grid_point *)bu_calloc(grid_count, sizeof(struct grid_point), "grid points");
 
     /* get all grid points */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	int gid;
 	int cid;
 	double tmp[3];
 
-	if (strncmp(curr_rec[0], "GRID", 4))
+	if (bu_strncmp(curr_rec[0], "GRID", 4))
 	    continue;
 
 	gid = atoi(curr_rec[1]);
@@ -1264,36 +1280,20 @@ main(int argc, char **argv)
 
 	g_pts[grid_used].gid = gid;
 	g_pts[grid_used].cid = cid;
-	g_pts[grid_used].v = (struct vertex **)bu_calloc(pshell_count + 1, sizeof(struct vertex *), "g_pts vertex array");;
+	g_pts[grid_used].v = (struct vertex **)bu_calloc(pshell_count + 1, sizeof(struct vertex *), "g_pts vertex array");
 	VMOVE(g_pts[grid_used].pt, tmp);
 	grid_used++;
     }
 
 
     /* find coordinate systems */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
-	if (strncmp(curr_rec[0], "CORD", 4))
+	if (bu_strncmp(curr_rec[0], "CORD", 4))
 	    continue;
 
 	get_coord_sys();
     }
-#if 0
-    bu_log("Original grid:\n");
-    for (i=0; i<grid_used; i++) {
-	bu_log("Grid point: gid=%d, cid=%d, (%g %g %g)\n", g_pts[i].gid,
-	       g_pts[i].cid, V3ARGS(g_pts[i].pt));
-    }
-
-    bu_log("\nOriginal coordinate systems:\n");
-    for (BU_LIST_FOR(cs, coord_sys, &coord_head.l)) {
-	bu_log("cid=%d, type=%c, rid=%d\n", cs->cid, cs->type, cs->rid);
-	bu_log("\torigin=(%g %g %g)\n", V3ARGS(cs->origin));
-	bu_log("\tv1=(%g %g %g)\n", V3ARGS(cs->v1));
-	bu_log("\tv2=(%g %g %g)\n", V3ARGS(cs->v2));
-	bu_log("\tv3=(%g %g %g)\n", V3ARGS(cs->v3));
-    }
-#endif
     /* convert everything to BRL-CAD coordinate system */
     i = 0;
     while (convert_all_cs() || convert_all_pts()) {
@@ -1303,35 +1303,18 @@ main(int argc, char **argv)
 	}
     }
 
-#if 0
-    bu_log("Converted grid:\n");
-    for (i=0; i<grid_used; i++) {
-	bu_log("Grid point: gid=%d, cid=%d, (%g %g %g)\n", g_pts[i].gid,
-	       g_pts[i].cid, V3ARGS(g_pts[i].pt));
-    }
-
-    bu_log("\nConverted coordinate systems:\n");
-    for (BU_LIST_FOR(cs, coord_sys, &coord_head.l)) {
-	bu_log("cid=%d, type=%c, rid=%d\n", cs->cid, cs->type, cs->rid);
-	bu_log("\torigin=(%g %g %g)\n", V3ARGS(cs->origin));
-	bu_log("\tv1=(%g %g %g)\n", V3ARGS(cs->v1));
-	bu_log("\tv2=(%g %g %g)\n", V3ARGS(cs->v2));
-	bu_log("\tv3=(%g %g %g)\n", V3ARGS(cs->v3));
-    }
-#endif
-
     mk_id(fpout, nastran_file);
 
     /* get elements */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
-	if (!strncmp(curr_rec[0], "CBAR", 4))
+	if (!bu_strncmp(curr_rec[0], "CBAR", 4))
 	    get_cbar();
-	else if (!strncmp(curr_rec[0], "CROD", 4))
+	else if (!bu_strncmp(curr_rec[0], "CROD", 4))
 	    get_cbar();
-	else if (!strncmp(curr_rec[0], "CTRIA3", 6))
+	else if (!bu_strncmp(curr_rec[0], "CTRIA3", 6))
 	    get_ctria3();
-	else if (!strncmp(curr_rec[0], "CQUAD4", 6))
+	else if (!bu_strncmp(curr_rec[0], "CQUAD4", 6))
 	    get_cquad4();
     }
 
@@ -1372,14 +1355,14 @@ main(int argc, char **argv)
     }
 
     BU_LIST_INIT(&head.l);
-    for (BU_LIST_FOR(pb, pbar, &pbar_head.l)) {
+    for (BU_LIST_FOR(pbp, pbar, &pbar_head.l)) {
 	char name[NAMESIZE+1];
 
-	if (BU_LIST_IS_EMPTY(&pb->head.l))
+	if (BU_LIST_IS_EMPTY(&pbp->head.l))
 	    continue;
 
-	sprintf(name, "pbar_group.%d", pb->pid);
-	mk_lfcomb(fpout, name, &pb->head, 0);
+	sprintf(name, "pbar_group.%d", pbp->pid);
+	mk_lfcomb(fpout, name, &pbp->head, 0);
 
 	mk_addmember(name, &head.l, NULL, WMOP_UNION);
     }

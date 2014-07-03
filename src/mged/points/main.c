@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,11 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main.c
- *
- * Author -
- *   Christopher Sean Morrison
- */
+
+#include "common.h"
 
 #include <stdio.h>
 
@@ -31,17 +28,13 @@
 extern FILE *yyin;
 extern int yyparse (void);
 
+#include "tcl.h"
+ClientData *cdata = NULL;
+Tcl_Interp *twerp = NULL;
 
-#if 0
-int main(int argc, char *argv[])
-#else
 
-#  include "tcl.h"
-    ClientData *cdata;
-    Tcl_Interp *twerp;
-
-    int parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
-#endif
+int
+parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     long int datapoints;
 
@@ -92,6 +85,15 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+
+#ifdef COMPILE_STANDALONE
+int
+main(int argc, char *argv[]) {
+    return parse_point_file(cdata, twerp, argc, argv);
+}
+#endif
+
 
 /*
  * Local Variables:

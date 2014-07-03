@@ -1,7 +1,7 @@
 /*                          L O W P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lowp.c
+/** @file util/lowp.c
  *
  * Read 3 .pix files, and do a 3D low-pass filter on them.
  *
@@ -32,6 +32,7 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+#include "bio.h"
 
 #include "bu.h"
 
@@ -44,37 +45,61 @@ unsigned char *in1, *in2, *in3;
 /* Output line */
 unsigned char out1[MAX_LINE*3] = {0};
 
-static int nlines;		/* Number of input lines */
+static int nlines = 512;		/* Number of input lines */
 static int pix_line;		/* Number of pixels/line */
+int readval = 0;
 
 char usage[] = "Usage: lowp file1.pix file2.pix file3.pix [width] > out.pix\n";
 
 int infd1, infd2, infd3;		/* input fd's */
 
+static void
+check_readval(unsigned char *in, int infd)
+{
+    readval = read(infd, in, scanbytes);
+    if (readval != scanbytes) {
+	if (readval < 0) {
+	    perror("lowp READ ERROR");
+	}
+	bu_exit (0, NULL);
+    }
+}
 int
 main(int argc, char **argv)
 {
     int x, y;
-    int readval;
+    ssize_t ret;
+    char *ifname;
 
     if (argc < 2) {
 	fprintf(stderr, "%s", usage);
 	bu_exit (1, NULL);
     }
 
-    nlines = 512;
-    if ((infd1 = open(argv[1], 0)) < 0) {
-	perror(argv[1]);
+    ifname = bu_realpath(argv[1], NULL);
+    if ((infd1 = open(ifname, 0)) < 0) {
+	perror(ifname);
+	bu_free(ifname, "ifname alloc from bu_realpath");
 	bu_exit (3, NULL);
     }
-    if ((infd2 = open(argv[2], 0)) < 0) {
-	perror(argv[2]);
+    bu_free(ifname, "ifname alloc from bu_realpath");
+
+    ifname = bu_realpath(argv[2], NULL);
+    if ((infd2 = open(ifname, 0)) < 0) {
+	perror(ifname);
+	bu_free(ifname, "ifname alloc from bu_realpath");
 	bu_exit (3, NULL);
     }
-    if ((infd3 = open(argv[3], 0)) < 0) {
-	perror(argv[3]);
+    bu_free(ifname, "ifname alloc from bu_realpath");
+
+    ifname = bu_realpath(argv[3], NULL);
+    if ((infd3 = open(ifname, 0)) < 0) {
+	perror(ifname);
+	bu_free(ifname, "ifname alloc from bu_realpath");
 	bu_exit (3, NULL);
     }
+    bu_free(ifname, "ifname alloc from bu_realpath");
+
     if (argc == 5) {
 	nlines = atoi(argv[4]);
     }
@@ -85,31 +110,15 @@ main(int argc, char **argv)
     in2 = (unsigned char *) bu_malloc(scanbytes, "lowp in2");
     in3 = (unsigned char *) bu_malloc(scanbytes, "lowp in3");
 
-    readval = read(infd1, in1, scanbytes);
-    if (readval != scanbytes) {
-	if (readval < 0) {
-	    perror("lowp READ ERROR");
-	}
-	bu_exit (0, NULL);
-    }
-    readval = read(infd3, in3, scanbytes);
-    if (readval != scanbytes) {
-	if (readval < 0) {
-	    perror("lowp READ ERROR");
-	}
-	bu_exit (0, NULL);
-    }
-    readval = read(infd3, in3, scanbytes);
-    if (readval != scanbytes) {
-	if (readval < 0) {
-	    perror("lowp READ ERROR");
-	}
-	bu_exit (0, NULL);
-    }
+    check_readval(in1, infd1);
+    check_readval(in2, infd2);
+    check_readval(in3, infd3);
 
     /* First and last are black */
     memset(out1, 0, pix_line*3);
-    write(1, out1, pix_line*3);
+    ret = write(1, out1, pix_line*3);
+    if (ret < 0)
+	perror("write");
 
     for (y=1; y < nlines-2; y++) {
 	static unsigned char *op;
@@ -140,12 +149,16 @@ main(int argc, char **argv)
 		     c[ i-3]    + c[ i  ]*3  + c[ i+3]
 		) / 84;
 	}
-	write(1, out1, pix_line*3);
+	ret = write(1, out1, pix_line*3);
+	if (ret < 0)
+	    perror("write");
     }
 
     /* First and last are black */
     memset(out1, 0, pix_line*3);
-    write(1, out1, pix_line*3);
+    ret = write(1, out1, pix_line*3);
+    if (ret < 0)
+	perror("write");
 
     return 0;
 }

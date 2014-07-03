@@ -1,7 +1,7 @@
 /*                         S T A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,17 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file stack.c
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
 
 #include "./iges_struct.h"
 
-#define	STKBLK	100	/* Allocation block size */
+#define STKBLK 100	/* Allocation block size */
 
 static union tree **stk;
 static int jtop, stklen;
@@ -38,40 +31,37 @@ Initstack()
 
     jtop = (-1);
     stklen = STKBLK;
-    stk = (union tree **)bu_malloc( stklen*sizeof( union tree * ), "Initstack: stk" );
-    if ( stk == NULL )
-    {
-	bu_log( "Cannot allocate stack space\n" );
-	perror( "Initstack" );
-	bu_exit( 1, NULL );
+    stk = (union tree **)bu_malloc(stklen*sizeof(union tree *), "Initstack: stk");
+    if (stk == NULL) {
+	bu_log("Cannot allocate stack space\n");
+	perror("Initstack");
+	bu_exit(1, NULL);
     }
 }
 
-/*  This function pushes a pointer onto the stack. */
+
+/* This function pushes a pointer onto the stack. */
 
 void
-Push(ptr)
-    union tree *ptr;
+Push(union tree *ptr)
 {
 
     jtop++;
-    if ( jtop == stklen )
-    {
+    if (jtop == stklen) {
 	stklen += STKBLK;
-	stk = (union tree **)bu_realloc( (char *)stk, stklen*sizeof( union tree *),
-					 "Push: stk" );
-	if ( stk == NULL )
-	{
-	    bu_log( "Cannot reallocate stack space\n" );
-	    perror( "Push" );
-	    bu_exit( 1, NULL );
+	stk = (union tree **)bu_realloc((char *)stk, stklen*sizeof(union tree *),
+					"Push: stk");
+	if (stk == NULL) {
+	    bu_log("Cannot reallocate stack space\n");
+	    perror("Push");
+	    bu_exit(1, NULL);
 	}
     }
     stk[jtop] = ptr;
 }
 
 
-/*  This function pops the top of the stack. */
+/* This function pops the top of the stack. */
 
 
 union tree *
@@ -79,10 +69,9 @@ Pop()
 {
     union tree *ptr;
 
-    if ( jtop == (-1) )
-	ptr=NULL;
-    else
-    {
+    if (jtop == (-1))
+	ptr = NULL;
+    else {
 	ptr = stk[jtop];
 	jtop--;
     }
@@ -90,12 +79,14 @@ Pop()
     return ptr;
 }
 
+
 void
 Freestack()
 {
     jtop = (-1);
     return;
 }
+
 
 /*
  * Local Variables:

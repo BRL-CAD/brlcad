@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file mater.c
+/** @file librt/mater.c
  *
  * Code to deal with establishing and maintaining the tables which map
  * region ID codes into worthwhile material information (colors and
@@ -42,20 +42,17 @@
 
 /*
  * It is expected that entries on this mater list will be sorted in
- * strictly ascending order, with no overlaps (ie, monotonicly
+ * strictly ascending order, with no overlaps (i.e., monotonically
  * increasing).
  */
 static struct mater *material_head = MATER_NULL;
 
 
-/**
- * R T _ P R _ M A T E R
- */
 void
 rt_pr_mater(register const struct mater *mp)
 {
-    (void)bu_log("%5d..%d\t", mp->mt_low, mp->mt_high);
-    (void)bu_log("%d, %d, %d\t", mp->mt_r, mp->mt_g, mp->mt_b);
+    bu_log("%5d..%d\t", mp->mt_low, mp->mt_high);
+    bu_log("%d, %d, %d\t", mp->mt_r, mp->mt_g, mp->mt_b);
 }
 
 
@@ -64,7 +61,7 @@ _rt_check_overlap(struct mater *newp)
 {
     struct mater *zot;
 
-    /* Check for overlap, ie, redefinition of following colors */
+    /* Check for overlap, i.e., redefinition of following colors */
     while (newp->mt_forw != MATER_NULL &&
 	   newp->mt_high >= newp->mt_forw->mt_low)
     {
@@ -72,7 +69,7 @@ _rt_check_overlap(struct mater *newp)
 	    /* Drop this mater struct */
 	    zot = newp->mt_forw;
 	    newp->mt_forw = zot->mt_forw;
-	    bu_log("dropping overlaping region-id based material property entry:\n");
+	    bu_log("dropping overlapping region-id based material property entry:\n");
 	    rt_pr_mater(zot);
 	    bu_free((char *)zot, "getstruct mater");
 	    continue;
@@ -91,8 +88,6 @@ _rt_check_overlap(struct mater *newp)
 
 
 /**
- * R T _ I N S E R T _ C O L O R
- *
  * While any additional database records are created and written here,
  * it is the responsibility of the caller to color_putrec(newp) if
  * needed.
@@ -130,7 +125,7 @@ rt_insert_color(struct mater *newp)
 	if (mp->mt_low < newp->mt_low && mp->mt_high > newp->mt_high) {
 	    /* New range entirely contained in old range; split */
 	    bu_log("Splitting region-id based material property entry into 3 ranges\n");
-	    BU_GETSTRUCT(zot, mater);
+	    BU_ALLOC(zot, struct mater);
 	    *zot = *mp;		/* struct copy */
 	    zot->mt_daddr = MATER_NO_ADDR;
 	    /* zot->mt_high = mp->mt_high; */
@@ -146,7 +141,7 @@ rt_insert_color(struct mater *newp)
 	    return;
 	}
 	if (mp->mt_high > newp->mt_low) {
-	    /* Overlap to the left: Shorten preceeding entry */
+	    /* Overlap to the left: Shorten preceding entry */
 	    bu_log("Shortening region-id based material property entry lhs range, from:\n");
 	    rt_pr_mater(mp);
 	    bu_log("to:\n");
@@ -176,8 +171,6 @@ rt_insert_color(struct mater *newp)
 
 
 /**
- * R T _ C O L O R _ A D D R E C
- *
  * Called from db_scan() when initially scanning database.
  */
 void
@@ -185,7 +178,7 @@ rt_color_addrec(int low, int hi, int r, int g, int b, off_t addr)
 {
     register struct mater *mp;
 
-    BU_GETSTRUCT(mp, mater);
+    BU_ALLOC(mp, struct mater);
     mp->mt_low = low;
     mp->mt_high = hi;
     mp->mt_r = r;
@@ -197,8 +190,6 @@ rt_color_addrec(int low, int hi, int r, int g, int b, off_t addr)
 
 
 /**
- * R T _ R E G I O N _ C O L O R _ M A P
- *
  * If the GIFT regionid of this region falls into a mapped area of
  * regionid-driven color override.
  */
@@ -216,20 +207,17 @@ rt_region_color_map(register struct region *regp)
 	    regp->reg_regionid >= mp->mt_low) {
 	    regp->reg_mater.ma_color_valid = 1;
 	    regp->reg_mater.ma_color[0] =
-		(((double)mp->mt_r)+0.5)*bn_inv255;
+		(((double)mp->mt_r)+0.5) / 255.0;
 	    regp->reg_mater.ma_color[1] =
-		(((double)mp->mt_g)+0.5)*bn_inv255;
+		(((double)mp->mt_g)+0.5) / 255.0;
 	    regp->reg_mater.ma_color[2] =
-		(((double)mp->mt_b)+0.5)*bn_inv255;
+		(((double)mp->mt_b)+0.5) / 255.0;
 	    return;
 	}
     }
 }
 
 
-/**
- * r t _ v l s _ c o l o r _ m a p
- */
 void
 rt_vls_color_map(struct bu_vls *str)
 {
@@ -250,20 +238,16 @@ rt_vls_color_map(struct bu_vls *str)
 
 
 /**
- * r t _ m a t e r i a l _ h e a d
- *
  * returns the material linked list head node
  */
 struct mater *
-rt_material_head()
+rt_material_head(void)
 {
     return material_head;
 }
 
 
 /**
- * r t _ n e w _ m a t e r i a l _ h e a d
- *
  * set the material linked list head node
  */
 void
@@ -274,12 +258,10 @@ rt_new_material_head(struct mater *newmat)
 
 
 /**
- * r t _ d u p _ m a t e r i a l _ h e a d
- *
  * returns a copy of the material linked list head node
  */
 struct mater *
-rt_dup_material_head()
+rt_dup_material_head(void)
 {
     register struct mater *mp = NULL;
     register struct mater *newmp = NULL;
@@ -288,7 +270,7 @@ rt_dup_material_head()
 
     mp = material_head;
     while (mp != MATER_NULL) {
-	BU_GETSTRUCT(newmater, mater);
+	BU_ALLOC(newmater, struct mater);
 	*newmater = *mp; /* struct copy */
 	newmater->mt_forw = MATER_NULL;
 
@@ -307,8 +289,6 @@ rt_dup_material_head()
 
 
 /**
- * R T _ C O L O R _ F R E E
- *
  * Really should be db_color_free().  Called from db_close().
  */
 void

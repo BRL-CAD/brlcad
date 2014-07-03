@@ -1,7 +1,7 @@
 /*                          R T I F . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtif.c
+/** @file mged/rtif.c
  *
  * Routines to interface to RT, and RT-style command files
  *
@@ -57,8 +57,6 @@
 
 
 /**
- * C M D _ R T
- *
  * rt, rtarea, rtweight, rtcheck, and rtedge all use this.
  */
 int
@@ -75,10 +73,10 @@ cmd_rt(ClientData UNUSED(clientData),
 
     /* skip past _mged_ */
     if (argv[0][0] == '_' && argv[0][1] == 'm' &&
-	strncmp(argv[0], "_mged_", 6) == 0)
+	bu_strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
-    if (!strcmp(argv[0], "rtcheck"))
+    if (BU_STR_EQUAL(argv[0], "rtcheck"))
 	doRtcheck = 1;
     else
 	doRtcheck = 0;
@@ -90,7 +88,7 @@ cmd_rt(ClientData UNUSED(clientData),
     else
 	ret = ged_rt(gedp, argc, (const char **)argv);
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK)
@@ -101,8 +99,6 @@ cmd_rt(ClientData UNUSED(clientData),
 
 
 /**
- * C M D _ R R T
- *
  * Invoke any program with the current view & stuff, just like
  * an "rt" command (above).
  * Typically used to invoke a remote RT (hence the name).
@@ -116,9 +112,8 @@ cmd_rrt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     CHECK_DBI_NULL;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help rrt");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -131,7 +126,7 @@ cmd_rrt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     Tcl_DStringInit(&ds);
 
     ret = ged_rrt(gedp, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK)
@@ -142,8 +137,6 @@ cmd_rrt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 
 /**
- * R T _ R E A D
- *
  * Read in one view in the old RT format.
  */
 HIDDEN int
@@ -170,9 +163,7 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
 
 
 /**
- * F _ R M A T S
- *
- * Load view matrixes from a file.  rmats filename [mode]
+ * Load view matrices from a file.  rmats filename [mode]
  *
  * Modes:
  * -1 put eye in viewcenter (default)
@@ -182,26 +173,27 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
 int
 f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    FILE *fp;
-    struct directory *dp;
-    struct solid *sp;
-    vect_t eye_model;
-    vect_t xlate;
-    vect_t sav_center;
-    vect_t sav_start;
-    int mode;
-    fastf_t scale;
+    FILE *fp = NULL;
+    fastf_t scale = 0.0;
     mat_t rot;
-    struct bn_vlist *vp;
+    struct bn_vlist *vp = NULL;
+    struct directory *dp = NULL;
+    struct ged_display_list *gdlp = NULL;
+    struct ged_display_list *next_gdlp = NULL;
+    vect_t eye_model = VINIT_ZERO;
+    vect_t sav_center = VINIT_ZERO;
+    vect_t sav_start = VINIT_ZERO;
+    vect_t xlate = VINIT_ZERO;
+
+    /* static due to setjmp */
+    static int mode = 0;
+    static struct solid *sp;
 
     CHECK_DBI_NULL;
 
     if (argc < 2 || 3 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help rmats");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -223,13 +215,13 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	mode = atoi(argv[2]);
     switch (mode) {
 	case 1:
-	    if ((dp = db_lookup(dbip, "EYE", LOOKUP_NOISY)) == DIR_NULL) {
+	    if ((dp = db_lookup(dbip, "EYE", LOOKUP_NOISY)) == RT_DIR_NULL) {
 		mode = -1;
 		break;
 	    }
 
-	    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 		next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 		FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -251,19 +243,16 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	    Tcl_AppendResult(interp, "default mode:  eyepoint at (0, 0, 1) viewspace\n", (char *)NULL);
 	    break;
 	case 0:
-	    Tcl_AppendResult(interp, "rotation supressed, center is eyepoint\n", (char *)NULL);
+	    Tcl_AppendResult(interp, "rotation suppressed, center is eyepoint\n", (char *)NULL);
 	    break;
     }
- work:
-#if 0
-    /* If user hits ^C, this will stop, but will leave hanging filedes */
-    (void)signal(SIGINT, cur_sigint);
-#else
+work:
+    /* FIXME: this isn't portable or seem well thought-out */
     if (setjmp(jmp_env) == 0)
 	(void)signal(SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
-#endif
+
     while (!feof(fp) &&
 	   rt_read(fp, &scale, eye_model, rot) >= 0) {
 	switch (mode) {
@@ -302,12 +291,17 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 			switch (*cmd) {
 			    case BN_VLIST_POLY_START:
 			    case BN_VLIST_POLY_VERTNORM:
+			    case BN_VLIST_TRI_START:
+			    case BN_VLIST_TRI_VERTNORM:
 				break;
 			    case BN_VLIST_LINE_MOVE:
 			    case BN_VLIST_LINE_DRAW:
 			    case BN_VLIST_POLY_MOVE:
 			    case BN_VLIST_POLY_DRAW:
 			    case BN_VLIST_POLY_END:
+			    case BN_VLIST_TRI_MOVE:
+			    case BN_VLIST_TRI_DRAW:
+			    case BN_VLIST_TRI_END:
 				VADD2(*pt, *pt, xlate);
 				break;
 			}
@@ -318,6 +312,7 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	view_state->vs_flag = 1;
 	refresh();	/* Draw new display */
     }
+
     if (mode == 1) {
 	VMOVE(sp->s_center, sav_center);
 	if (BU_LIST_NON_EMPTY(&(sp->s_vlist))) {
@@ -332,12 +327,17 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 		    switch (*cmd) {
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
+			case BN_VLIST_TRI_START:
+			case BN_VLIST_TRI_VERTNORM:
 			    break;
 			case BN_VLIST_LINE_MOVE:
 			case BN_VLIST_LINE_DRAW:
 			case BN_VLIST_POLY_MOVE:
 			case BN_VLIST_POLY_DRAW:
 			case BN_VLIST_POLY_END:
+			case BN_VLIST_TRI_MOVE:
+			case BN_VLIST_TRI_DRAW:
+			case BN_VLIST_TRI_END:
 			    VADD2(*pt, *pt, xlate);
 			    break;
 		    }
@@ -355,8 +355,6 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 
 /**
- * F _ N I R T
- *
  * Invoke nirt with the current view & stuff
  */
 int
@@ -369,7 +367,7 @@ f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 
     /* skip past _mged_ */
     if (argv[0][0] == '_' && argv[0][1] == 'm' &&
-	strncmp(argv[0], "_mged_", 6) == 0)
+	bu_strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
     Tcl_DStringInit(&ds);
@@ -391,7 +389,7 @@ f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	ret = ged_nirt(gedp, argc, (const char **)argv);
     }
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK)
@@ -411,14 +409,14 @@ f_vnirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     /* skip past _mged_ */
     if (argv[0][0] == '_' && argv[0][1] == 'm' &&
-	strncmp(argv[0], "_mged_", 6) == 0)
+	bu_strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
     Tcl_DStringInit(&ds);
 
     ret = ged_vnirt(gedp, argc, (const char **)argv);
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK)

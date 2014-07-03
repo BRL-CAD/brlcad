@@ -1,7 +1,7 @@
 /*                       P R O C E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,12 +18,10 @@
  * information.
  *
  */
-/** @file process.c
+/** @file points/process.c
  *
  * Data structures for the comma-separated value point file parser.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"
@@ -63,7 +61,7 @@ extern Tcl_Interp *twerp;
 
 #define PRINT_ARRAY 0
 #if PRINT_ARRAY
-static int 
+static int
 print_array(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -81,24 +79,21 @@ print_array(point_line_t **plta, int count) {
 #endif
 
 /* FIXME: not verified in the least bit */
-static int 
+static int
 create_cyl(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
     const char *result;
 
-    struct bu_vls vls;
-    struct bu_vls vls2;
-
-    bu_vls_init(&vls);
-    bu_vls_init(&vls2);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_vls vls2 = BU_VLS_INIT_ZERO;
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "cylinder { %V }", &vls);
+    bu_vls_printf(&vls2, "cylinder { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -115,24 +110,21 @@ create_cyl(point_line_t **plta, int count) {
 }
 
 /* FIXME: takes a list of points, not triplets */
-static int 
+static int
 create_sphere(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
     const char *result;
 
-    struct bu_vls vls;
-    struct bu_vls vls2;
-
-    bu_vls_init(&vls);
-    bu_vls_init(&vls2);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_vls vls2 = BU_VLS_INIT_ZERO;
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
-	if (plt && plt->type) 
+	if (plt && plt->type)
 	    bu_vls_printf(&vls, " %f %f %f  ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "sph { %V }", &vls);
+    bu_vls_printf(&vls2, "sph { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -141,14 +133,14 @@ create_sphere(point_line_t **plta, int count) {
     result = Tcl_GetStringResult(twerp);
     if (result && result[0] != '\0')
 	bu_log("create_cylinder failure: %s\n", result);
-    else 
+    else
 	bu_log("create_cylinder created\n");
 #endif
 
     return 1;
 }
 
-void 
+void
 process_value(point_line_t *plt, double value) {
     if (!plt) {
 	printf("WARNING: Unexpected call to process_value with a NULL point structure\n");
@@ -165,7 +157,7 @@ process_value(point_line_t *plt, double value) {
     return;
 }
 
-void 
+void
 process_type(point_line_t *plt, const char *type, int code) {
     if (!plt) {
 	printf("WARNING: Unexpected call to process_value with a NULL point structure\n");
@@ -173,12 +165,12 @@ process_type(point_line_t *plt, const char *type, int code) {
     }
 
     plt->type = type;
-    plt->code = code;;
+    plt->code = code;
 
     return;
 }
 
-void 
+void
 process_point(point_line_t *plt) {
     static int code_state = INT32_MAX;
     static int points = 0;
@@ -196,7 +188,7 @@ process_point(point_line_t *plt) {
 	    printf("END OF BLOCK %d\n", code_state);
 
 	    /* finish up this batch */
-	    bu_free((genptr_t)plta, "end point_line_t group");
+	    bu_free((void *)plta, "end point_line_t group");
 	    plta = NULL;
 	}
 
@@ -217,7 +209,7 @@ process_point(point_line_t *plt) {
     points++;
 }
 
-int 
+int
 condense_points(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -228,7 +220,7 @@ condense_points(point_line_t **plta, int count) {
 	return 0;
     }
 
-    for (i=0; i < count; i++) {
+    for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 
 	if (plt && plt->type) {
@@ -250,7 +242,7 @@ condense_points(point_line_t **plta, int count) {
     return valid_count;
 }
 
-int 
+int
 delete_points(point_line_t **plta, int count, double tolerance) {
     int i;
     point_line_t *plt = NULL;
@@ -273,7 +265,7 @@ delete_points(point_line_t **plta, int count, double tolerance) {
     /*    INITIALIZE_POINT_LINE_T(average_plt); */
     previous_plt = &(*plta)[0];
 
-    for (i=1; i < count; i++) {
+    for (i = 1; i < count; i++) {
 	plt = &(*plta)[i];
 
 	if (DIST_PT_PT(previous_plt->val, plt->val) < tolerance) {
@@ -324,7 +316,7 @@ delete_points(point_line_t **plta, int count, double tolerance) {
 #endif
 
 
-#if 0
+#if PRINT_ARRAY
     bu_log("--- BEFORE ---\n");
     print_array(plta, count);
 #endif
@@ -332,7 +324,7 @@ delete_points(point_line_t **plta, int count, double tolerance) {
     /* resort the list, put nulls at the end */
     count = condense_points(plta, count);
 
-#if 0
+#if PRINT_ARRAY
     bu_log("--- AFTER ---\n");
     print_array(plta, count);
 #endif
@@ -344,7 +336,7 @@ delete_points(point_line_t **plta, int count, double tolerance) {
  * handle a group of points of a particular type, with potentially
  * multiple sets delimited by triplicate points.
  */
-void 
+void
 process_multi_group(point_line_t **plta, int count, double tolerance) {
     int i;
     point_line_t *plt = NULL;
@@ -390,7 +382,7 @@ process_multi_group(point_line_t **plta, int count, double tolerance) {
 	/* if this is the first point of a group, allocate and initialize */
 	if (!prev_plt) {
 	    prev_plt = &(*plta)[i];
-	    pltg = (point_line_t *) bu_malloc(sizeof(point_line_t), "begin point_line_t subgroup");
+	    BU_ALLOC(pltg, point_line_t);
 	    COPY_POINT_LINE_T(*pltg, *prev_plt);
 	    marker = 0;
 	    continue;
@@ -407,7 +399,7 @@ process_multi_group(point_line_t **plta, int count, double tolerance) {
 	    }
 
 	    if (process_group(&pltg, points+1)) {
-		bu_free((genptr_t)pltg, "end subgroup: point_line_t");
+		bu_free((void *)pltg, "end subgroup: point_line_t");
 		pltg = NULL;
 		prev_plt = NULL;
 		points = 0;
@@ -453,7 +445,7 @@ process_multi_group(point_line_t **plta, int count, double tolerance) {
        but we're at the end of this group */
     if (points > 0) {
 	if (process_group(&pltg, points+1)) {
-	    bu_free((genptr_t)pltg, "end point_line_t subgroup");
+	    bu_free((void *)pltg, "end point_line_t subgroup");
 	    pltg = NULL;
 	    prev_plt = NULL;
 	    points = 0;
@@ -466,17 +458,14 @@ process_multi_group(point_line_t **plta, int count, double tolerance) {
 
 }
 
-int 
+int
 create_plate(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
     const char *result;
 
-    struct bu_vls vls;
-    struct bu_vls vls2;
-
-    bu_vls_init(&vls);
-    bu_vls_init(&vls2);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_vls vls2 = BU_VLS_INIT_ZERO;
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
@@ -484,7 +473,7 @@ create_plate(point_line_t **plta, int count) {
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
 	}
     }
-    bu_vls_printf(&vls2, "plate { %V }", &vls);
+    bu_vls_printf(&vls2, "plate { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -500,17 +489,14 @@ create_plate(point_line_t **plta, int count) {
     return 1;
 }
 
-int 
+int
 create_arb(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
     const char *result;
 
-    struct bu_vls vls;
-    struct bu_vls vls2;
-
-    bu_vls_init(&vls);
-    bu_vls_init(&vls2);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_vls vls2 = BU_VLS_INIT_ZERO;
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
@@ -518,7 +504,7 @@ create_arb(point_line_t **plta, int count) {
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
 	}
     }
-    bu_vls_printf(&vls2, "arb { %V }", &vls);
+    bu_vls_printf(&vls2, "arb { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -534,24 +520,21 @@ create_arb(point_line_t **plta, int count) {
     return 1;
 }
 
-int 
+int
 create_cylinder(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
     const char *result;
 
-    struct bu_vls vls;
-    struct bu_vls vls2;
-
-    bu_vls_init(&vls);
-    bu_vls_init(&vls2);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_vls vls2 = BU_VLS_INIT_ZERO;
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "cyls { %V }", &vls);
+    bu_vls_printf(&vls2, "cyls { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -567,24 +550,21 @@ create_cylinder(point_line_t **plta, int count) {
     return 1;
 }
 
-int 
+int
 create_pipe(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
     const char *result;
 
-    struct bu_vls vls;
-    struct bu_vls vls2;
-
-    bu_vls_init(&vls);
-    bu_vls_init(&vls2);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_vls vls2 = BU_VLS_INIT_ZERO;
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "pipe { %V }", &vls);
+    bu_vls_printf(&vls2, "pipe { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -593,31 +573,28 @@ create_pipe(point_line_t **plta, int count) {
     result = Tcl_GetStringResult(twerp);
     if (result && result[0] != '\0')
 	bu_log("create_pipe failure: %s\n", result);
-    else 
+    else
 	bu_log("create_pipe created\n");
 #endif
 
     return 1;
 }
 
-int 
+int
 create_points(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
     const char *result;
 
-    struct bu_vls vls;
-    struct bu_vls vls2;
-
-    bu_vls_init(&vls);
-    bu_vls_init(&vls2);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_vls vls2 = BU_VLS_INIT_ZERO;
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
-	if (plt && plt->type) 
+	if (plt && plt->type)
 	    bu_vls_printf(&vls, " %f %f %f  ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "points { %V }", &vls);
+    bu_vls_printf(&vls2, "points { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -626,14 +603,14 @@ create_points(point_line_t **plta, int count) {
     result = Tcl_GetStringResult(twerp);
     if (result && result[0] != '\0')
 	bu_log("create_points failure: %s\n", result);
-    else 
+    else
 	bu_log("create_points created\n");
 #endif
 
     return 1;
 }
 
-/** 
+/**
  * wrapper func to validate the block of points being processed and to
  * call the appropriate handler.
  */

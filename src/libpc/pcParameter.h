@@ -1,7 +1,7 @@
 /*                       P C P A R A M E T E R . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  * Parameter Class abstraction over the Variable class
  *
  */
-#ifndef __PCPARAMETER_H__
-#define __PCPARAMETER_H__
+#ifndef LIBPC_PCPARAMETER_H
+#define LIBPC_PCPARAMETER_H
 
 #include "common.h"
 
@@ -35,6 +35,7 @@
 #include <list>
 
 class VCSet;
+
 
 class Parameter
 {
@@ -54,17 +55,17 @@ public:
 
     iterator erase(iterator location);
     iterator erase(iterator begin, iterator end);
-    
+
     /** Data access methods */
     std::string getName() const;
     int getType() const;
     Varlist::size_type getSize() { return Variables.size(); }
     bool isConst();
-    
+
     /** Data modification methods */
     void setType(int n) { type = n; }
     void setConst(bool t);
- 
+
     /** Display method */
     void display() const;
 
@@ -74,6 +75,10 @@ protected:
     std::string name;
     Varlist Variables;
 };
+
+
+extern Parameter::iterator makeIterator(Parameter::Varlist::iterator i);
+extern Parameter::const_iterator makeIterator(Parameter::Varlist::const_iterator i);
 
 
 class Vector : public Parameter

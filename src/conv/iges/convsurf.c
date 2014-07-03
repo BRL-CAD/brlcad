@@ -1,7 +1,7 @@
 /*                      C O N V S U R F . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,16 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file convsurf.c
+/** @file iges/convsurf.c
  *
  * This routine loops through all the directory entries and calls
  * appropriate routines to convert solid entities to BRL-CAD
  * equivalents.
- *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
  *
  */
 
@@ -38,41 +33,39 @@ void
 Convsurfs()
 {
 
-    int i, totsurfs=0, convsurf=0;
+    int i, totsurfs = 0, convsurf = 0;
     struct face_g_snurb **surfs;
     struct face_g_snurb *srf;
 
-    bu_log( "\n\nConverting NURB entities:\n" );
+    bu_log("\n\nConverting NURB entities:\n");
 
     /* First count the number of surfaces */
-    for ( i=0; i<totentities; i++ )
-    {
-	if ( dir[i]->type == 128 )
+    for (i = 0; i < totentities; i++) {
+	if (dir[i]->type == 128)
 	    totsurfs ++;
     }
 
-    surfs = (struct face_g_snurb **)bu_calloc( totsurfs+1, sizeof( struct face_g_snurb *), "surfs" );
+    surfs = (struct face_g_snurb **)bu_calloc(totsurfs+1, sizeof(struct face_g_snurb *), "surfs");
 
-    for ( i=0; i<totentities; i++ )
-    {
-	if ( dir[i]->type == 128 ) {
-	    if ( spline( i, &srf ) )
+    for (i = 0; i < totentities; i++) {
+	if (dir[i]->type == 128) {
+	    if (spline(i, &srf))
 		surfs[convsurf++] = srf;
 	}
     }
 
-    if ( totsurfs )
-    {
-	if ( curr_file->obj_name )
-	    mk_bspline( fdout, curr_file->obj_name, surfs );
+    if (totsurfs) {
+	if (!BU_STR_EMPTY(curr_file->obj_name))
+	    mk_bspline(fdout, curr_file->obj_name, surfs);
 	else
-	    mk_bspline( fdout, "nurb.s", surfs );
+	    mk_bspline(fdout, "nurb.s", surfs);
     }
 
-    bu_log( "Converted %d NURBS successfully out of %d total NURBS\n", convsurf, totsurfs );
-    if ( convsurf )
-	bu_log( "\tCaution: All NURBS are assumed to be part of the same solid\n" );
+    bu_log("Converted %d NURBS successfully out of %d total NURBS\n", convsurf, totsurfs);
+    if (convsurf)
+	bu_log("\tCaution: All NURBS are assumed to be part of the same solid\n");
 }
+
 
 /*
  * Local Variables:

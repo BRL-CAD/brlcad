@@ -1,7 +1,7 @@
 /*                         D P E A K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,47 +31,78 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu.h"
+#include "vmath.h"
 
-#define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */
-double	data[BSIZE];		/* Input buffer */
+struct peaks {
+    int sample;
+    double value;
+};
 
-int	numpeaks;
-struct	peaks {
-    int	sample;
-    double	value;
-} peaks[BSIZE];
 
-static const char usage[] = "\
-Usage: dpeak [window_size (512)] < doubles\n";
-
-void	dumpmax(void);
-
-int main(int argc, char **argv)
+static void
+dumpmax(int numpeaks, struct peaks *peaks)
 {
-    int	i, n, L;
-    double	last1, last2;
+    int i, n;
+    struct peaks max;
+    double d;
+    size_t ret;
 
-    if ( isatty(fileno(stdin)) /*|| isatty(fileno(stdout))*/ ) {
-	bu_exit(1, "%s", usage );
+#define NUMPEAKS 1
+    for (n = 0; n < NUMPEAKS; n++) {
+	max.value = -1000000;
+	max.sample = -1;
+	for (i = 0; i < numpeaks; i++) {
+	    if (peaks[i].value > max.value) {
+		max = peaks[i];
+		peaks[i].value = -1000000;
+	    }
+	}
+/*
+  printf("Sample %3d: %f\n", max.sample, max.value);
+*/
+	d = max.sample;
+	ret = fwrite(&d, sizeof(d), 1, stdout);
+	if (ret != 1)
+	    perror("fwrite");
+    }
+}
+
+
+int
+main(int argc, char **argv)
+{
+    static const char usage[] = "Usage: dpeak [window_size (512)] < doubles\n";
+
+#define BSIZE 2048		/* Must be AT LEAST 2*Points in spectrum */
+    struct peaks peaks[BSIZE];
+    double data[BSIZE];		/* Input buffer */
+
+    int i, n, L;
+    double last1, last2;
+    int numpeaks;
+
+    if (isatty(fileno(stdin)) /*|| isatty(fileno(stdout))*/) {
+	bu_exit(1, "%s", usage);
     }
 
     L = (argc > 1) ? atoi(argv[1]) : 512;
 
-    while ( !feof( stdin ) ) {
-	n = fread( data, sizeof(*data), L, stdin );
-	if ( n <= 0 )
+    while (!feof(stdin)) {
+	n = fread(data, sizeof(*data), L, stdin);
+	if (n <= 0)
 	    break;
-	if ( n < L )
+	if (n < L)
 	    memset((char *)&data[n], 0, (L-n)*sizeof(*data));
 
 	last2 = last1 = 0;
 	numpeaks = 0;
-	for ( i = 0; i < L; i++ ) {
-	    if ( data[i] == last1 )
+	for (i = 0; i < L; i++) {
+	    if (EQUAL(data[i], last1))
 		continue;
-	    if ( (data[i] < last1) && (last2 < last1) && i > 5 ) {
+	    if ((data[i] < last1) && (last2 < last1) && i > 5) {
 		/* PEAK */
-		/*printf("sample %d, value = %f\n", i-1, last1 );*/
+		/*printf("sample %d, value = %f\n", i-1, last1);*/
 		peaks[numpeaks].sample = i-1;
 		peaks[numpeaks].value = last1;
 		numpeaks++;
@@ -79,37 +110,12 @@ int main(int argc, char **argv)
 	    last2 = last1;
 	    last1 = data[i];
 	}
-	dumpmax();
+	dumpmax(numpeaks, peaks);
     }
 
     return 0;
 }
 
-#define	NUMPEAKS 1
-
-void
-dumpmax(void)
-{
-    int	i, n;
-    struct	peaks max;
-    double	d;
-
-    for ( n = 0; n < NUMPEAKS; n++ ) {
-	max.value = -1000000;
-	max.sample = -1;
-	for ( i = 0; i < numpeaks; i++ ) {
-	    if ( peaks[i].value > max.value ) {
-		max = peaks[i];
-		peaks[i].value = -1000000;
-	    }
-	}
-/*
-  printf( "Sample %3d: %f\n", max.sample, max.value );
-*/
-	d = max.sample;
-	fwrite(&d, sizeof(d), 1, stdout);
-    }
-}
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                          M E N U . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file menu.c
+/** @file mged/menu.c
  *
  */
 
@@ -46,9 +46,8 @@ cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
     int index;
 
     if (argc > 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel mmenu_get");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -74,13 +73,12 @@ cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 	    Tcl_AppendElement(interp, mptr->menu_string);
     } else {
 	struct menu_item **m;
-	struct bu_vls result;
+	struct bu_vls result = BU_VLS_INIT_ZERO;
 	int status;
 
-	bu_vls_init(&result);
 	bu_vls_strcat(&result, "list");
 	for (m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++)
-	    bu_vls_printf(&result, " [%s %d]", argv[0], m-menu_state->ms_menus);
+	    bu_vls_printf(&result, " [%s %ld]", argv[0], m-menu_state->ms_menus);
 
 	status = Tcl_Eval(interp, bu_vls_addr(&result));
 	bu_vls_free(&result);
@@ -93,8 +91,6 @@ cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 
 
 /*
- * M M E N U _ I N I T
- *
  * Clear global data
  */
 void
@@ -107,24 +103,19 @@ mmenu_init(void)
 }
 
 
-/*
- * M M E N U _ S E T
- */
-
 void
 mmenu_set(int index, struct menu_item *value)
 {
     struct dm_list *dlp;
 
     Tcl_DString ds_menu;
-    struct bu_vls menu_string;
+    struct bu_vls menu_string = BU_VLS_INIT_ZERO;
 
     menu_state->ms_menus[index] = value;  /* Change the menu internally */
 
-    bu_vls_init(&menu_string);
     Tcl_DStringInit(&ds_menu);
 
-    bu_vls_printf(&menu_string, "mmenu_set %V %d ", &curr_cmd_list->cl_name, index);
+    bu_vls_printf(&menu_string, "mmenu_set %s %d ", bu_vls_addr(&curr_cmd_list->cl_name), index);
 
     (void)Tcl_Eval(INTERP, bu_vls_addr(&menu_string));
 
@@ -202,8 +193,6 @@ mged_highlight_menu_item(struct menu_item *mptr, int y)
 
 
 /*
- * M M E N U _ D I S P L A Y
- *
  * Draw one or more menus onto the display.
  * If "menu_state->ms_flag" is non-zero, then the last selected
  * menu item will be indicated with an arrow.
@@ -286,8 +275,6 @@ mmenu_display(int y_top)
 
 
 /*
- * M M E N U _ S E L E C T
- *
  * Called with Y coordinate of pen in menu area.
  *
  * Returns:

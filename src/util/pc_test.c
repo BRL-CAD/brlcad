@@ -1,7 +1,7 @@
 /*                   	P C _ T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pc_test.c
+/** @file util/pc_test.c
  *
  * Simple test file for checking various aspects of libpc through the
  * initial development phase
@@ -44,7 +44,6 @@
 int
 main(int argc, char **argv)
 {
-    int ret;
     struct rt_wdb *fp;
     struct directory *dp;
     struct rt_db_internal ip;
@@ -96,22 +95,24 @@ main(int argc, char **argv)
     rad = 153.2;
     mk_sph(fp, solnam, cent, rad);
 
-    if ((dp = db_lookup(fp->dbip, solnam, LOOKUP_QUIET)) == DIR_NULL)
+    dp = db_lookup(fp->dbip, solnam, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
 	return 2;
     /*rt_db_get_internal(&intern, dp, fp->dbip, NULL, &rt_uniresource);*/
 
 
     mk_constraint(fp, "Constraint", 0);
-    if ((dp = db_lookup(fp->dbip, "Constraint", LOOKUP_QUIET)) == DIR_NULL)
+    dp = db_lookup(fp->dbip, "Constraint", LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
 	return 3;
     wdb_import(fp, &ip, solnam, (matp_t)NULL);
     ip.idb_meth->ft_params(&pcs, &ip);
-    
+
     /* Todo: Free pcs parametric set */
 
     wdb_close(fp);
 
-    return ret;
+    return 0;
 }
 
 

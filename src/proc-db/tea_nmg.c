@@ -1,7 +1,7 @@
 /*                       T E A _ N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tea_nmg.c
+/** @file proc-db/tea_nmg.c
  *
  * Convert the Utah Teapot description from the IEEE CG&A database to
  * the BRL-CAD t-NURBS NMG format. (Note that this has the closed
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <stdio.h>		/* Direct the output to stdout */
 
+#include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nmg.h"
 #include "nurb.h"		/* BRL-CAD Spline data structures */
@@ -51,9 +52,6 @@ static struct bn_tol tol;
 void
 dump_patch(int (*patch)[4])
 {
-    /* Vertex data of teapot */
-    extern dt ducks[DUCK_COUNT];
-
     struct vertex *verts[4];
     struct faceuse *fu;
     struct loopuse *lu;
@@ -153,12 +151,7 @@ dump_patch(int (*patch)[4])
     lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
     NMG_CK_LOOPUSE(lu);
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-#if 0
-	nmg_edge_g_cnurb(eu, 2, 0, (fastf_t *)NULL, 2 ,
-			 pt_type, (fastf_t *)NULL);
-#else
 	nmg_edge_g_cnurb_plinear(eu);
-#endif
     }
     nmg_face_bb(fu->f_p, &tol);
 }
@@ -167,39 +160,43 @@ dump_patch(int (*patch)[4])
 int
 main(int argc, char **argv)
 {
-    /* Patch data of teapot */
-    extern pt patches[PATCH_COUNT];
-
     struct nmgregion *r;
     char *id_name = "BRL-CAD t-NURBS NMG Example";
     char *tea_name = "UtahTeapot";
-    char *uplot_name = "teapot.pl";
+    char *uplot_name = "teapot.plot3";
     struct bu_list vhead;
     FILE *fp;
     int i;
     struct rt_wdb *outfp;
 
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    BU_LIST_INIT(&rt_g.rtg_vlfree);
+    RTG.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
 
-    outfp = wdb_fopen("tea_nmg.g");
-
-    rt_g.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
-
-    while ((i=bu_getopt(argc, argv, "d")) != EOF) {
+    while ((i=bu_getopt(argc, argv, "dh?")) != -1) {
 	switch (i) {
-	    case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
-	    default	:
-		(void)fprintf(stderr,
-			      "Usage: %s [-d] > database.g\n", *argv);
+	    case 'd':
+		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
+		 break;
+	    default:
+		fprintf(stderr,"Usage: %s [-d]\n", *argv);
 		return -1;
 	}
     }
+
+    if (argc == 1) {
+	fprintf(stderr,"Usage: %s [-d]\n", *argv);
+    	bu_log("       Program continues running:\n");
+    }
+
+
+    BU_LIST_INIT(&RTG.rtg_vlfree);
+
+    outfp = wdb_fopen("tea_nmg.g");
 
     mk_id(outfp, id_name);
 
@@ -231,7 +228,7 @@ main(int argc, char **argv)
 
     /* Make a UNIX plot file from this vlist */
     if ((fp=fopen(uplot_name, "w")) == NULL) {
-	bu_log("Cannot open plot file: %s\n", uplot_name);
+	bu_log("Cannot open plot3 file: %s\n", uplot_name);
 	perror("teapot_nmg");
     } else {
 	rt_vlist_to_uplot(fp, &vhead);
@@ -239,6 +236,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

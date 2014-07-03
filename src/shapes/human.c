@@ -1,7 +1,7 @@
 /*                          H U M A N . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file human.c
+/** @file shapes/human.c
  *
  * Generator for human models based on height, and other stuff eventually
  *
@@ -54,12 +54,15 @@ int main(int ac, char *av[])
     ret = ged_human(&ged, ac, (const char **)av);
     bu_log("Finished Building\n");
     wdb_close(db_fp);
-   
-    if (ret) {
-	bu_exit(1, "%s", bu_vls_addr(&ged.ged_result_str));
-    }
-    return 0;
 
+    if (ret) {
+	bu_file_delete(filename);
+	bu_log("%s", bu_vls_addr(ged.ged_result_str));
+    }
+
+    /* release our ged instance memory */
+    ged_free(&ged);
+    return ret;
 }
 
 

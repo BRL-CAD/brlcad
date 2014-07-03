@@ -1,7 +1,7 @@
 /*                      P I X B L E N D . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixblend.c
+/** @file util/pixblend.c
  *
  * Given two streams of data, typically pix(5) or bw(5) images,
  * generate an output stream of the same size, where the value of
@@ -39,6 +39,7 @@
 #  include <sys/time.h>
 #endif
 #include <string.h>
+#include <time.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -65,9 +66,7 @@ Usage: pixblend [-{r|i} value] [-s [seed]] file1.pix file2.pix > out.pix\n";
 int
 timeseed(void)
 {
-    struct timeval tv;
-    gettimeofday(&tv, (struct timezone *)NULL);
-    return (int)tv.tv_usec;
+    return time(0);
 }
 
 
@@ -76,7 +75,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "r:i:Ss:g:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "r:i:Ss:g:")) != -1) {
 	switch (c) {
 	    case 'r':
 		if (iflg)
@@ -121,29 +120,29 @@ get_args(int argc, char **argv)
 	return 0;
 
     f1_name = argv[bu_optind++];
-    if (strcmp(f1_name, "-") == 0)
+    if (BU_STR_EQUAL(f1_name, "-"))
 	f1 = stdin;
     else if ((f1 = fopen(f1_name, "r")) == NULL) {
 	perror(f1_name);
-	(void)fprintf(stderr,
-		      "pixblend: cannot open \"%s\" for reading\n",
-		      f1_name);
+	fprintf(stderr,
+		"pixblend: cannot open \"%s\" for reading\n",
+		f1_name);
 	return 0;
     }
 
     f2_name = argv[bu_optind++];
-    if (strcmp(f2_name, "-") == 0)
+    if (BU_STR_EQUAL(f2_name, "-"))
 	f2 = stdin;
     else if ((f2 = fopen(f2_name, "r")) == NULL) {
 	perror(f2_name);
-	(void)fprintf(stderr,
-		      "pixblend: cannot open \"%s\" for reading\n",
-		      f2_name);
+	fprintf(stderr,
+		"pixblend: cannot open \"%s\" for reading\n",
+		f2_name);
 	return 0;
     }
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "pixblend: excess argument(s) ignored\n");
+	fprintf(stderr, "pixblend: excess argument(s) ignored\n");
 
     /* Adjust value upwards if glitterize option is used */
     value += gvalue * (1 - value);
@@ -160,6 +159,7 @@ main(int argc, char **argv)
     int gthreshold = 0;
 #endif
     int c = 0;
+    size_t ret;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
@@ -180,7 +180,7 @@ main(int argc, char **argv)
     }
 
     if (rflg) {
-#ifdef HAVE_SRAND48
+#ifdef HAVE_DRAND48
 	srand48((long)seed);
 #else
 	threshold = (int) (value * 65536.0);
@@ -199,7 +199,7 @@ main(int argc, char **argv)
     while (1) {
 	unsigned char *cb1, *cb2;	/* current input buf ptrs */
 	unsigned char *cb3; 	/* current output buf ptr */
-	int r1, r2, len, todo;
+	size_t r1, r2, len, todo;
 
 	++c;
 	r1 = fread(b1, 1, CHUNK, f1);
@@ -234,11 +234,10 @@ main(int argc, char **argv)
 		} else {
 #ifdef HAVE_DRAND48
 		    double d;
-		    extern double drand48(void);
 		    d = drand48();
 		    if (d >= value)
 #else
-		    int r;
+			int r;
 		    r = random() & 0xffff;
 		    if (r >= threshold)
 #endif
@@ -254,12 +253,12 @@ main(int argc, char **argv)
 			    r >= gthreshold
 #endif
 			    ) {
-				cb3[0] = cb2[0];
-				cb3[1] = cb2[1];
-				cb3[2] = cb2[2];
-			    } else {
-				cb3[0] = cb3[1] = cb3[2] = 255;
-			    }
+			    cb3[0] = cb2[0];
+			    cb3[1] = cb2[1];
+			    cb3[2] = cb2[2];
+			} else {
+			    cb3[0] = cb3[1] = cb3[2] = 255;
+			}
 		    }
 		    cb1 += 3;
 		    cb2 += 3;
@@ -268,11 +267,14 @@ main(int argc, char **argv)
 		}
 	    }
 	}
-	fwrite(b3, 1, len, stdout);
+	ret = fwrite(b3, 1, len, stdout);
+	if (ret < len)
+	    perror("fwrite");
     }
 
     return 0;
 }
+
 
 /*
  * Local Variables:

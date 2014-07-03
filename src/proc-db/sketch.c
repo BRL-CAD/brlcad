@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2010 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sketch.c
+/** @file proc-db/sketch.c
  *
  * Program to generate test sketches
  *
@@ -41,12 +41,20 @@ struct rt_wdb *outfp;
 int
 main(int argc, char **argv)
 {
-    struct rt_sketch_internal *skt;
-    struct bezier_seg *bsg;
-    struct line_seg *lsg;
-    struct carc_seg *csg;
-    point_t V;
-    vect_t u_vec, v_vec;
+    struct rt_sketch_internal skt;
+
+    /* examples of the different segment types */
+    struct bezier_seg bsg;
+    struct line_seg lsg[4];
+    struct carc_seg csg;
+
+    /* position of the sketch */
+    point_t V = {10.0, 20.0, 30.0};
+
+    /* define the parameter space */
+    vect_t u_vec = {1.0, 0.0, 0.0}, v_vec = {0.0, 1.0, 0.0};
+
+    /* vertices used by this sketch */
     point2d_t verts[] = {
 	{ 250, 0 },	/* 0 */
 	{ 500, 0 },	/* 1 */
@@ -59,79 +67,85 @@ main(int argc, char **argv)
 	{ 125, 0 },	/* 8 */
 	{ 200, 200 }	/* 9 */
     };
-    int i;
+
+    /* overall segments */
+    int reverse[6] = {0, 0, 0, 0, 0, 0};
+    void *segments[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+
+    /* bezier */
+    int ctrl_points[5] = {0, 0, 0, 0, 0};
+
+    bu_log("Usage: %s\n",argv[0]);
+    if (argc > 1) {
+	if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
+	    bu_exit(1, NULL);
+	bu_log("Warning - ignored unsupported argument \"%s\"\n",argv[1]);
+    } else
+	bu_log("       Program continues running:\n");
+
 
     VSET(V, 10, 20, 30);
     VSET(u_vec, 1, 0, 0);
     VSET(v_vec, 0, 1, 0);
 
-    skt = (struct rt_sketch_internal *)bu_calloc(1, sizeof(struct rt_sketch_internal), "sketch");
-    skt->magic = RT_SKETCH_INTERNAL_MAGIC;
-    VMOVE(skt->V, V);
-    VMOVE(skt->u_vec, u_vec);
-    VMOVE(skt->v_vec, v_vec);
-    skt->vert_count = 10;
-    skt->verts = (point2d_t *)bu_calloc(skt->vert_count, sizeof(point2d_t), "verts");
-    for (i=0; i<skt->vert_count; i++) {
-	V2MOVE(skt->verts[i], verts[i]);
-    }
+    skt.magic = RT_SKETCH_INTERNAL_MAGIC;
+    VMOVE(skt.V, V);
+    VMOVE(skt.u_vec, u_vec);
+    VMOVE(skt.v_vec, v_vec);
+    skt.vert_count = 10;
+    skt.verts = verts;
 
-    skt->skt_curve.seg_count = 6;
-    skt->skt_curve.reverse = (int *)bu_calloc(skt->skt_curve.seg_count, sizeof(int), "sketch: reverse");
+    skt.curve.count = 6;
+    skt.curve.reverse = reverse;
+    skt.curve.segment = segments;
 
-    skt->skt_curve.segments = (genptr_t *)bu_calloc(skt->skt_curve.seg_count, sizeof(genptr_t), "segs");
-    bsg = (struct bezier_seg *)bu_malloc(sizeof(struct bezier_seg), "sketch: bsg");
-    bsg->magic = CURVE_BEZIER_MAGIC;
-    bsg->degree = 4;
-    bsg->ctl_points = (int *)bu_calloc(bsg->degree+1, sizeof(int), "sketch: bsg->ctl_points");
-    bsg->ctl_points[0] = 4;
-    bsg->ctl_points[1] = 7;
-    bsg->ctl_points[2] = 9;
-    bsg->ctl_points[3] = 8;
-    bsg->ctl_points[4] = 0;
-    skt->skt_curve.segments[0] = (genptr_t)bsg;
+    bsg.magic = CURVE_BEZIER_MAGIC;
+    bsg.degree = 4;
+    bsg.ctl_points = ctrl_points;
+    bsg.ctl_points[0] = 4;
+    bsg.ctl_points[1] = 7;
+    bsg.ctl_points[2] = 9;
+    bsg.ctl_points[3] = 8;
+    bsg.ctl_points[4] = 0;
+    skt.curve.segment[0] = (void *)&bsg;
 
-    lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
-    lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = 0;
-    lsg->end = 1;
+    lsg[0].magic = CURVE_LSEG_MAGIC;
+    lsg[0].start = 0;
+    lsg[0].end = 1;
+    skt.curve.segment[1] = (void *)&lsg[0];
 
-    skt->skt_curve.segments[1] = (genptr_t)lsg;
+    lsg[1].magic = CURVE_LSEG_MAGIC;
+    lsg[1].start = 1;
+    lsg[1].end = 2;
+    skt.curve.segment[2] = (void *)&lsg[1];
 
-    lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
-    lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = 1;
-    lsg->end = 2;
+    lsg[2].magic = CURVE_LSEG_MAGIC;
+    lsg[2].start = 2;
+    lsg[2].end = 3;
+    skt.curve.segment[3] = (void *)&lsg[2];
 
-    skt->skt_curve.segments[2] = (genptr_t)lsg;
+    lsg[3].magic = CURVE_LSEG_MAGIC;
+    lsg[3].start = 3;
+    lsg[3].end = 4;
+    skt.curve.segment[4] = (void *)&lsg[3];
 
-    lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
-    lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = 2;
-    lsg->end = 3;
+    csg.magic = CURVE_CARC_MAGIC;
+    csg.radius = -1.0;
+    csg.start = 6;
+    csg.end = 5;
+    skt.curve.segment[5] = (void *)&csg;
 
-    skt->skt_curve.segments[3] = (genptr_t)lsg;
-
-    lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
-    lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = 3;
-    lsg->end = 4;
-
-    skt->skt_curve.segments[4] = (genptr_t)lsg;
-
-    csg = (struct carc_seg *)bu_malloc(sizeof(struct carc_seg), "sketch: csg");
-    csg->magic = CURVE_CARC_MAGIC;
-    csg->radius = -1.0;
-    csg->start = 6;
-    csg->end = 5;
-
-    skt->skt_curve.segments[5] = (genptr_t)csg;
-
+    /* write the sketch out */
     outfp = wdb_fopen("sketch.g");
     mk_id(outfp, "sketch test");
-    mk_sketch(outfp, "test_sketch", skt);
+    mk_sketch(outfp, "test_sketch", &skt);
+
+    /* cleanup */
+    wdb_close(outfp);
+
     return 0;
 }
+
 
 /*
  * Local Variables:

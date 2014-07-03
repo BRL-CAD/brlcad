@@ -1,7 +1,8 @@
-/* BRL-CAD	G 4 - G 5 . C
+/*                         G 4 - G 5 . C
+ * BRL-CAD
  *
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +19,7 @@
  * information.
  *
  */
-/** @file g4-g5.c
+/** @file conv/g4-g5.c
  *               g4-g5: program to convert version 4 databases to version 5
  *
  *               Imports version 4 database objects and writes out the equivalent v5 database
@@ -58,6 +59,8 @@ main(int argc, char **argv)
     struct bn_tol tol;
     char name[17];
 
+    bu_setprogname(argv[0]);
+
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
@@ -74,7 +77,7 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    if ( (dbip = db_open( argv[1], "r" )) == DBI_NULL )  {
+    if ( (dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL )  {
 	perror( argv[1] );
 	return 2;
     }
@@ -84,8 +87,8 @@ main(int argc, char **argv)
 	return 3;
     }
 
-    if ( dbip->dbi_version != 4 ) {
-	bu_log( "Input database must be a version 4 datbase!!!!\n" );
+    if ( db_version(dbip) != 4 ) {
+	bu_log( "Input database must be a version 4 database!!!!\n" );
 	return 4;
     }
 

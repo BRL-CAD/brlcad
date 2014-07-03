@@ -1,7 +1,7 @@
 /*                        V E C T O R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup plot */
 /** @{ */
-/** @file vector.c
+/** @file libbn/vector.c
  *
  */
 
@@ -30,11 +30,9 @@
 
 #include "vmath.h"
 #include "plot3.h"
-#include "bu.h"
 #include "bn.h"
 
 /**
- * T P _ 3 V E C T O R
  *@brief
  * Draw a vector between points "from" and "to", with the option of
  * having an arrowhead on either or both ends.
@@ -66,7 +64,7 @@ tp_3vector(FILE *plotfp, fastf_t *from, fastf_t *to, double fromheadfract, doubl
     bn_vec_ortho(c1, diff);
     VCROSS(c2, c1, diff);
 
-    if (!NEAR_ZERO(fromheadfract, SMALL_FASTF)) {
+    if (!ZERO(fromheadfract)) {
 	hooklen = fromheadfract*len;
 	VSCALE(backup, diff, -hooklen);
 
@@ -79,7 +77,7 @@ tp_3vector(FILE *plotfp, fastf_t *from, fastf_t *to, double fromheadfract, doubl
 	VADD3(tip, from, h2, backup);
 	pdv_3move(plotfp, tip);
     }
-    if (!NEAR_ZERO(toheadfract, SMALL_FASTF)) {
+    if (!ZERO(toheadfract)) {
 	hooklen = toheadfract*len;
 	VSCALE(backup, diff, -hooklen);
 
@@ -93,7 +91,7 @@ tp_3vector(FILE *plotfp, fastf_t *from, fastf_t *to, double fromheadfract, doubl
 	pdv_3move(plotfp, tip);
     }
     /* Be certain "pen" is left at "to" position */
-    if (!NEAR_ZERO(fromheadfract, SMALL_FASTF) || !NEAR_ZERO(toheadfract, SMALL_FASTF))
+    if (!ZERO(fromheadfract) || !ZERO(toheadfract))
 	pdv_3cont(plotfp, to);
 
 }

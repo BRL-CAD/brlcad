@@ -1,7 +1,7 @@
 /*                     V I E W R A N G E . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2010 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewrange.c
+/** @file rt/viewrange.c
  *
  *  RT-View-Module for visualizing range data.  The output is a
  *  UNIX-Plot file.  Direction vectors are preserved so that
@@ -38,8 +38,8 @@
 #include "plot3.h"
 
 /* private */
+#include "./rtuif.h"
 #include "./ext.h"
-#include "rtprivate.h"
 
 
 #define CELLNULL ( (struct cell *) 0)
@@ -56,22 +56,25 @@ struct cell	*cellp;
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 
 const char title[] = "RT Range Plot";
-const char usage[] = "\
-Usage:  rtrange [options] model.g objects... >file.ray\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -o model.g	Specify output file (default=stdout)\n\
- -U #		Set use_air boolean to # (default=0)\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.ray\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
+    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
+    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -o model.g	Specify output file (default=stdout)\n");
+    bu_log(" -U #		Set use_air boolean to # (default=0)\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
 
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
@@ -79,8 +82,6 @@ int	raymiss(register struct application *ap);
 
 
 /*
- *  			V I E W _ I N I T
- *
  *  This routine is called by main().  It initializes the entire run, i.e.,
  *  it does things such as opening files, etc., which must be done before
  *  any other computations take place.  It is called only once per run.
@@ -89,7 +90,7 @@ int	raymiss(register struct application *ap);
  */
 
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
 
     ap->a_hit = rayhit;
@@ -102,8 +103,6 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 }
 
 /*
- *			V I E W _ 2 I N I T
- *
  *  A null-function.
  *  View_2init is called by do_frame(), which in turn is called by
  *  main() in rt.c.  This routine is called once per frame.  Static
@@ -111,11 +110,11 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *  boxes, for example, need to be computed once per frame.
  *  Never preclude a new and nifty animation: rule: if it's a variable, it can
  *  change from frame to frame ( frame/picture width; angle between surface
- *  normals triggering shading.... etc).
+ *  normals triggering shading.... etc.).
  */
 
 void
-view_2init(struct application *ap)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
     if ( outfp == NULL )
 	bu_exit(EXIT_FAILURE, "outfp is NULL\n");
@@ -131,20 +130,14 @@ view_2init(struct application *ap)
     }
 
 
-    /* malloc() a buffer that has room for as many struct cell 's
-     * as the incoming file is wide (width).
-     * Rather than using malloc(), though, bu_malloc() is used.  This
-     * has the advantage of inbuild error-checking and automatic aborting
-     * if there is no memory.  Also, bu_malloc() takes a string as its
-     * final parameter: this tells the user exactly where memory ran out.
+    /* allocate a buffer that has room with as many struct cell as the
+     * incoming file is wide (width).
      */
-
 
     cellp = (struct cell *)bu_malloc(sizeof(struct cell) * width,
 				     "cell buffer" );
 
-
-    /* Obtain the maximun distance within the model to use as the
+    /* Obtain the maximum distance within the model to use as the
      * background distance.  Also get the coordinates of the model's
      * bounding box and feed them to
      * pdv_3space.  This will allow the image to appear in the plot
@@ -153,7 +146,7 @@ view_2init(struct application *ap)
 
     pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
 
-    /* Find the max dist fron emantion plane to end of model
+    /* Find the max dist from emanation plane to end of model
      * space.  This can be twice the radius of the bounding
      * sphere.
      */
@@ -163,8 +156,6 @@ view_2init(struct application *ap)
 
 
 /*
- *			R A Y M I S S
- *
  *  This function is called by rt_shootray(), which is called by
  *  do_frame(). Records coordinates where a miss is detected.
  */
@@ -176,7 +167,7 @@ raymiss(register struct application *ap)
     struct	cell	*posp;		/* store the current cell position */
 
     /* Getting defensive.... just in case. */
-    if (ap->a_x > width)  {
+    if ((size_t)ap->a_x > width)  {
 	bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
     }
 
@@ -191,24 +182,20 @@ raymiss(register struct application *ap)
 }
 
 /*
- *			V I E W _ P I X E L
- *
  *  This routine is called from do_run(), and in this case does nothing.
  */
 
 void
-view_pixel(void)
+view_pixel(struct application *UNUSED(ap))
 {
     return;
 }
 
-void view_setup(void) {}
-void view_cleanup(void) {}
+void view_setup(struct rt_i *UNUSED(rtip)) {}
+void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 
 /*
- *			R A Y H I T
- *
  *  Rayhit() is called by rt_shootray() when a hit is detected.  It
  *  computes the hit distance, the distance traveled by the
  *  ray, and the direction vector.
@@ -216,7 +203,7 @@ void view_cleanup(void) {}
  */
 
 int
-rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segp)
+rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp = PartHeadp->pt_forw;
     struct	cell	*posp;		/* stores current cell position */
@@ -227,7 +214,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 
     /* Getting defensive.... just in case. */
-    if (ap->a_x > width)  {
+    if ((size_t)ap->a_x > width)  {
 	bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
     }
 
@@ -255,18 +242,17 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 }
 
 /*
- *			V I E W _ E O L
- *
  *  View_eol() is called by rt_shootray() in do_run().
  *  This routine is called by worker.c whenever there is a full scanline.
  *  worker.c figures out what is a full scanline.  Whenever there
  *  is a full buffer in memory, the hit distances ar plotted.
  */
 
-void	view_eol(struct application *ap)
+void
+view_eol(struct application *UNUSED(ap))
 {
     struct cell	*posp;
-    int		i;
+    size_t i;
     int		cont;		/* continue flag */
 
     posp = &(cellp[0]);
@@ -283,7 +269,7 @@ void	view_eol(struct application *ap)
     pdv_3move( outfp, posp->c_hit );
 
     for ( i = 0; i < width-1; i++, posp++ )  {
-	if ( posp->c_dist == (posp+1)->c_dist )  {
+	if (EQUAL(posp->c_dist, (posp+1)->c_dist))  {
 	    cont = 1;
 	    continue;
 	} else  {
@@ -304,13 +290,11 @@ void	view_eol(struct application *ap)
 
 
 /*
- *			V I E W _ E N D
- *
  *  View_end() is called by rt_shootray in do_run().
  */
 
 void
-view_end(struct application *ap)
+view_end(struct application *UNUSED(ap))
 {
 
     fflush(outfp);

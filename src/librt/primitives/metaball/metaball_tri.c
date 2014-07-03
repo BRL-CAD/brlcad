@@ -1,7 +1,7 @@
-/*			M B _ T R I . C
+/*                    M E T A B A L L _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,9 +19,9 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file metaball.c
+/** @file primitives/metaball/metaball_tri.c
  *
- * Tesselation/facetization routines for the metaball primitive.
+ * Tessellation/facetization routines for the metaball primitive.
  *
  * Here be magic.
  *
@@ -60,8 +60,6 @@
 #include "metaball.h"
 
 /**
- * R T _ M E T A B A L L _ T E S S
- *
  * Tessellate a metaball.
  */
 int
@@ -71,19 +69,21 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     fastf_t mtol, radius;
     point_t center, min, max;
     fastf_t i, j, k, finalstep = +INFINITY;
-    struct bu_vls times;
+    struct bu_vls times = BU_VLS_INIT_ZERO;
     struct wdb_metaballpt *mbpt;
     struct shell *s;
     int numtri = 0;
 
-    if (r) *r = NULL;
-    if (m) NMG_CK_MODEL(m);
+    if (r == NULL || m == NULL)
+	return -1;
+    *r = NULL;
+
+    NMG_CK_MODEL(m);
 
     RT_CK_DB_INTERNAL(ip);
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
 
-    bu_vls_init(&times);
     rt_prep_timer();
 
     /* since this geometry isn't necessarily prepped, we have to figure out the
@@ -93,15 +93,15 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     finalstep /= (fastf_t)1e5;
 
     radius = rt_metaball_get_bounding_sphere(&center, mb->threshold, mb);
-    if(radius < 0) {	/* no control points */
-	bu_log("Attempting to tesselate metaball with no control points");
+    if (radius < 0) {	/* no control points */
+	bu_log("Attempting to tessellate metaball with no control points");
 	return -1;
     }
-    rt_metaball_set_bbox(center, radius, &min, &max);
+    rt_metaball_bbox(ip, &min, &max, tol);
 
     /* TODO: get better sampling tolerance, unless this is "good enough" */
     mtol = ttol->abs;
-    V_MAX(mtol, ttol->rel * radius);
+    V_MAX(mtol, ttol->rel * radius * 10);
     V_MAX(mtol, tol->dist);
 
     *r = nmg_mrsv(m);	/* new empty nmg */
@@ -111,9 +111,9 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
      * caching 4 point values, more by actually marching or doing active
      * refinement. This is the simplest pattern for now.
      */
-    for (i = min[X]; i<max[X]; i+=mtol)
-	for (j = min[Y]; j<max[Y]; j+=mtol)
-	    for (k = min[Z]; k<max[Z]; k+=mtol) {
+    for (i = min[X]; i < max[X]; i += mtol)
+	for (j = min[Y]; j < max[Y]; j += mtol)
+	    for (k = min[Z]; k < max[Z]; k += mtol) {
 		point_t p[8];
 		int pv = 0;
 
@@ -134,12 +134,10 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		    int rval;
 
 		    /* compute the edge values (if needed) */
-#define MEH(a,b,c) if(!(pv&(1<<b)&&pv&(1<<c))) { \
+#define MEH(a,b,c) if (!(pv&(1<<b)&&pv&(1<<c))) { \
     rt_metaball_find_intersection(edges+a, mb, (const point_t *)(p+b), (const point_t *)(p+c), mtol, finalstep); \
 }
-#if 0
-    rt_metaball_norm_internal(n+a, p+a, mb); }
-#endif
+
 		    /* magic numbers! an edge, then the two attached vertices.
 		     * For edge/vertex mapping, refer to the awesome ascii art
 		     * at the beginning of this file. */
@@ -159,7 +157,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
 		    rval = nmg_mc_realize_cube(s, pv, (point_t *)edges, tol);
 		    numtri += rval;
-		    if(rval < 0) {
+		    if (rval < 0) {
 			bu_log("Error attempting to realize a cube O.o\n");
 			return rval;
 		    }
@@ -172,7 +170,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     nmg_model_fuse(m, tol);
 
     rt_get_timer(&times, NULL);
-    bu_log("metaball tesselate (%d triangles): %s\n", numtri, bu_vls_addr(&times));
+    bu_log("metaball tessellate (%d triangles): %s\n", numtri, bu_vls_addr(&times));
 
     return 0;
 }

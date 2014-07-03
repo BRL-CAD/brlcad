@@ -1,7 +1,7 @@
 /*                         S T L - G . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2010 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,12 +30,16 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include "bio.h"
+#include "bin.h"
 
+#include "bu/cv.h"
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -46,7 +50,6 @@ static struct vert_root *tree_root;
 static struct wmember all_head;
 static char *input_file;	/* name of the input file */
 static char *brlcad_file;	/* name of output file */
-static struct bu_vls ret_name;	/* unique name built by Build_unique_name() */
 static char *forced_name=NULL;	/* name specified on command line */
 static int solid_count=0;	/* count of solids converted */
 static struct bn_tol tol;	/* Tolerance structure */
@@ -55,19 +58,6 @@ static int const_id=-1;		/* Constant ident number (assigned to all regions if no
 static int mat_code=1;		/* default material code */
 static int debug=0;		/* Debug flag */
 static int binary=0;		/* flag indicating input is binary format */
-
-static char *usage="%s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n\
-	where input.stl is a STereoLithography file\n\
-	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
-	The -b option specifies that the input file is in the binary STL format (default is ASCII). \n\
-	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n\
-	The -N option specifies a name to use for the object.\n\
-	The -d option prints additional debugging information.\n\
-	The -i option sets the initial region ident number (default is 1000).\n\
-	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n\
-	The -m option sets the integer material code for all the parts (default is 1).\n\
-	The -t option specifies the minumim distance between two distinct vertices (mm).\n\
-	The -x option specifies an RT debug flags (see raytrace.h).\n";
 static FILE *fd_in;		/* input file */
 static struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
 static float conv_factor=1.0;	/* conversion factor from model units to mm */
@@ -80,6 +70,25 @@ static int bot_fcurr=0;		/* current bot face */
 #define BOT_FBLOCK 128
 
 #define MAX_LINE_SIZE 512
+
+
+static void
+usage(const char *argv0)
+{
+    bu_log("Usage: %s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n", argv0);
+    bu_log("	where input.stl is a STereoLithography file\n");
+    bu_log("	and output.g is the name of a BRL-CAD database file to receive the conversion.\n");
+    bu_log("	The -d option prints additional debugging information.\n");
+    bu_log("	The -b option specifies that the input file is in the binary STL format (default is ASCII). \n");
+    bu_log("	The -t option specifies the minimum distance between two distinct vertices (mm).\n");
+    bu_log("	The -N option specifies a name to use for the object.\n");
+    bu_log("	The -i option sets the initial region ident number (default is 1000).\n");
+    bu_log("	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n");
+    bu_log("	The -m option sets the integer material code for all the parts (default is 1).\n");
+    bu_log("	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n");
+    bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
+}
+
 
 void
 Add_face(int face[3])
@@ -107,14 +116,14 @@ mk_unique_brlcad_name(struct bu_vls *name)
     c = bu_vls_addr(name);
 
     while (*c != '\0') {
-	if (*c == '/' || !isprint(*c)) {
+	if (*c == '/' || !isprint((int)*c)) {
 	    *c = '_';
 	}
 	c++;
     }
 
     len = bu_vls_strlen(name);
-    while (db_lookup(fd_out->dbip, bu_vls_addr(name), LOOKUP_QUIET) != DIR_NULL) {
+    while (db_lookup(fd_out->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
 	char suff[10];
 
 	bu_vls_trunc(name, len);
@@ -128,14 +137,13 @@ static void
 Convert_part_ascii(char line[MAX_LINE_SIZE])
 {
     char line1[MAX_LINE_SIZE];
-    struct bu_vls solid_name;
-    struct bu_vls region_name;
+    struct bu_vls solid_name = BU_VLS_INIT_ZERO;
+    struct bu_vls region_name = BU_VLS_INIT_ZERO;
 
     int start;
     int i;
     int face_count=0;
     int degenerate_count=0;
-    int small_count=0;
     float colr[3]={0.5, 0.5, 0.5};
     unsigned char color[3]={ 128, 128, 128 };
     struct wmember head;
@@ -143,10 +151,10 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     int solid_in_region=0;
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_prmem("At start of Conv_prt():\n");
+	bu_prmem("At start of Convert_part_ascii():\n");
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at start of Convet_part:\n");
+	bu_log("Barrier check at start of Convert_part_ascii:\n");
 	if (bu_mem_barriercheck())
 	    bu_exit(EXIT_FAILURE, "Barrier check failed!\n");
     }
@@ -157,17 +165,16 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 
     start = (-1);
     /* skip leading blanks */
-    while (isspace(line[++start]) && line[start] != '\0');
-    if (strncmp(&line[start], "solid", 5) && strncmp(&line[start], "SOLID", 5)) {
+    while (isspace((int)line[++start]) && line[start] != '\0');
+    if (bu_strncmp(&line[start], "solid", 5) && bu_strncmp(&line[start], "SOLID", 5)) {
 	bu_log("Convert_part_ascii: Called for non-part\n%s\n", line);
 	return;
     }
 
     /* skip blanks before name */
     start += 4;
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
 
-    bu_vls_init(&region_name);
     if (forced_name) {
 	bu_vls_strcpy(&region_name, forced_name);
     } else if (line[start] != '\0') {
@@ -178,7 +185,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	bu_vls_trimspace(&region_name);
 	ptr = bu_vls_addr(&region_name);
 	while (*ptr != '\0') {
-	    if (isspace(*ptr)) {
+	    if (isspace((int)*ptr)) {
 		bu_vls_trunc(&region_name, ptr - bu_vls_addr(&region_name));
 		break;
 	    }
@@ -212,7 +219,6 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     bu_log("Converting Part: %s\n", bu_vls_addr(&region_name));
 
     solid_count++;
-    bu_vls_init(&solid_name);
     bu_vls_strcpy(&solid_name, "s.");
     bu_vls_vlscat(&solid_name, &region_name);
     mk_unique_brlcad_name(&solid_name);
@@ -224,27 +230,27 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 
     while (bu_fgets(line1, MAX_LINE_SIZE, fd_in) != NULL) {
 	start = (-1);
-	while (isspace(line1[++start]));
-	if (!strncmp(&line1[start], "endsolid", 8) || !strncmp(&line1[start], "ENDSOLID", 8)) {
+	while (isspace((int)line1[++start]));
+	if (!bu_strncmp(&line1[start], "endsolid", 8) || !bu_strncmp(&line1[start], "ENDSOLID", 8)) {
 	    break;
-	} else if (!strncmp(&line1[start], "color", 5) || !strncmp(&line1[start], "COLOR", 5)) {
+	} else if (!bu_strncmp(&line1[start], "color", 5) || !bu_strncmp(&line1[start], "COLOR", 5)) {
 	    sscanf(&line1[start+5], "%f%f%f", &colr[0], &colr[1], &colr[2]);
 	    for (i=0; i<3; i++)
 		color[i] = (int)(colr[i] * 255.0);
-	} else if (!strncmp(&line1[start], "normal", 6) || !strncmp(&line1[start], "NORMAL", 6)) {
+	} else if (!bu_strncmp(&line1[start], "normal", 6) || !bu_strncmp(&line1[start], "NORMAL", 6)) {
 	    float x, y, z;
 
 	    start += 6;
 	    sscanf(&line1[start], "%f%f%f", &x, &y, &z);
 	    VSET(normal, x, y, z);
-	} else if (!strncmp(&line1[start], "facet", 5) || !strncmp(&line1[start], "FACET", 5)) {
+	} else if (!bu_strncmp(&line1[start], "facet", 5) || !bu_strncmp(&line1[start], "FACET", 5)) {
 	    VSET(normal, 0.0, 0.0, 0.0);
 
 	    start += 4;
-	    while (line1[++start] && isspace(line1[start]));
+	    while (line1[++start] && isspace((int)line1[start]));
 
 	    if (line1[start]) {
-		if (!strncmp(&line1[start], "normal", 6) || !strncmp(&line1[start], "NORMAL", 6)) {
+		if (!bu_strncmp(&line1[start], "normal", 6) || !bu_strncmp(&line1[start], "NORMAL", 6)) {
 		    float x, y, z;
 
 		    start += 6;
@@ -252,21 +258,21 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 		    VSET(normal, x, y, z);
 		}
 	    }
-	} else if (!strncmp(&line1[start], "outer loop", 10) || !strncmp(&line1[start], "OUTER LOOP", 10)) {
+	} else if (!bu_strncmp(&line1[start], "outer loop", 10) || !bu_strncmp(&line1[start], "OUTER LOOP", 10)) {
 	    int endloop=0;
 	    int vert_no=0;
-	    int tmp_face[3];
+	    int tmp_face[3] = {0, 0, 0};
 
 	    while (!endloop) {
 		if (bu_fgets(line1, MAX_LINE_SIZE, fd_in) == NULL)
 		    bu_exit(EXIT_FAILURE, "Unexpected EOF while reading a loop in a part!\n");
 
 		start = (-1);
-		while (isspace(line1[++start]));
+		while (isspace((int)line1[++start]));
 
-		if (!strncmp(&line1[start], "endloop", 7) || !strncmp(&line1[start], "ENDLOOP", 7))
+		if (!bu_strncmp(&line1[start], "endloop", 7) || !bu_strncmp(&line1[start], "ENDLOOP", 7))
 		    endloop = 1;
-		else if (!strncmp(&line1[start], "vertex", 6) || !strncmp(&line1[start], "VERTEX", 6)) {
+		else if (!bu_strncmp(&line1[start], "vertex", 6) || !bu_strncmp(&line1[start], "VERTEX", 6)) {
 		    double x, y, z;
 
 		    sscanf(&line1[start+6], "%lf%lf%lf", &x, &y, &z);
@@ -324,8 +330,6 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	bu_log("\t%s has no solid parts, ignoring\n", bu_vls_addr(&region_name));
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	if (small_count)
-	    bu_log("\t%d faces were too small\n", small_count);
 	bu_vls_free(&region_name);
 	bu_vls_free(&solid_name);
 
@@ -333,8 +337,6 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     } else {
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	if (small_count)
-	    bu_log("\t%d faces were too small\n", small_count);
     }
 
     mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree_root->curr_vert, bot_fcurr,
@@ -394,15 +396,13 @@ Convert_part_binary()
     vect_t normal;
     int tmp_face[3];
     struct wmember head;
-    struct bu_vls solid_name;
-    struct bu_vls region_name;
+    struct bu_vls solid_name = BU_VLS_INIT_ZERO;
+    struct bu_vls region_name = BU_VLS_INIT_ZERO;
     int face_count=0;
     int degenerate_count=0;
-    int small_count=0;
+    size_t ret;
 
     solid_count++;
-    bu_vls_init(&solid_name);
-    bu_vls_init(&region_name);
     if (forced_name) {
 	bu_vls_strcpy(&solid_name, "s.");
 	bu_vls_strcat(&solid_name, forced_name);
@@ -414,15 +414,17 @@ Convert_part_binary()
     bu_log("\tUsing solid name: %s\n", bu_vls_addr(&solid_name));
 
 
-    fread(buf, 4, 1, fd_in);
+    ret = fread(buf, 4, 1, fd_in);
+    if (ret != 1)
+	perror("fread");
 
     /* swap bytes to convert from Little-endian to network order (big-endian) */
     lswap((unsigned int *)buf);
 
     /* now use our network to native host format conversion tools */
-    num_facets = bu_glong(buf);
+    num_facets = ntohl(*(uint32_t *)buf);
 
-    bu_log("\t%d facets\n", num_facets);
+    bu_log("\t%ld facets\n", num_facets);
     while (fread(buf, 48, 1, fd_in)) {
 	int i;
 	double pt[3];
@@ -433,10 +435,12 @@ Convert_part_binary()
 	}
 
 	/* now use our network to native host format conversion tools */
-	ntohf((unsigned char *)flts, buf, 12);
+	bu_cv_ntohf((unsigned char *)flts, buf, 12);
 
 	/* unused attribute byte count */
-	fread(buf, 2, 1, fd_in);
+	ret = fread(buf, 2, 1, fd_in);
+	if (ret != 1)
+	    perror("fread");
 
 	VMOVE(normal, flts);
 	VSCALE(pt, &flts[3], conv_factor);
@@ -480,14 +484,10 @@ Convert_part_binary()
 	bu_log("\tpart has no solid parts, ignoring\n");
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	if (small_count)
-	    bu_log("\t%d faces were too small\n", small_count);
 	return;
     } else {
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	if (small_count)
-	    bu_log("\t%d faces were too small\n", small_count);
     }
 
     mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
@@ -547,10 +547,10 @@ Convert_input()
     } else {
 	while (bu_fgets(line, MAX_LINE_SIZE, fd_in) != NULL) {
 	    int start = 0;
-	    while (line[start] != '\0' && isspace(line[start])) {
+	    while (line[start] != '\0' && isspace((int)line[start])) {
 		start++;
 	    }
-	    if (!strncmp(&line[start], "solid", 5) || !strncmp(&line[start], "SOLID", 5))
+	    if (!bu_strncmp(&line[start], "solid", 5) || !bu_strncmp(&line[start], "SOLID", 5))
 		Convert_part_ascii(line);
 	    else
 		bu_log("Unrecognized line:\n%s\n", line);
@@ -559,9 +559,6 @@ Convert_input()
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -569,25 +566,26 @@ main(int argc, char *argv[])
 
     tol.magic = BN_TOL_MAGIC;
 
-    /* this value selected as a resaonable compromise between eliminating
+    /* this value selected as a reasonable compromise between eliminating
      * needed faces and keeping degenerate faces
      */
-    tol.dist = 0.005;	/* default, same as MGED, RT, ... */
+    tol.dist = 0.0005;	/* default, same as MGED, RT, ... */
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    bu_vls_init(&ret_name);
 
     forced_name = NULL;
 
     conv_factor = 1.0;	/* default */
 
-    if (argc < 2)
-	bu_exit(1, usage, argv[0]);
+    if (argc < 2) {
+	usage(argv[0]);
+	bu_exit(1, NULL);
+    }
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != EOF) {
+    /* Don't need to account for -h and -? ("default" takes care of them).  */
+    while ((c = bu_getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != -1) {
 	double tmp;
 
 	switch (c) {
@@ -606,7 +604,7 @@ main(int argc, char *argv[])
 		break;
 	    case 'c':	/* convert from units */
 		conv_factor = bu_units_conversion(bu_optarg);
-		if (NEAR_ZERO(conv_factor, SMALL_FASTF)) {
+		if (ZERO(conv_factor)) {
 		    bu_log("Illegal units: (%s)\n", bu_optarg);
 		    bu_exit(EXIT_FAILURE, "Illegal units!\n");
 		}
@@ -623,7 +621,7 @@ main(int argc, char *argv[])
 		const_id = atoi(bu_optarg);
 		if (const_id < 0) {
 		    bu_log("Illegal value for '-I' option, must be zero or greater!\n");
-		    bu_log(usage, argv[0]);
+		    usage(argv[0]);
 		    bu_exit(EXIT_FAILURE, "Illegal value for option '-I'\n");
 		}
 		break;
@@ -634,12 +632,13 @@ main(int argc, char *argv[])
 		debug = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		usage(argv[0]);
+		bu_exit(1, NULL);
 		break;
 	}
     }
@@ -664,7 +663,7 @@ main(int argc, char *argv[])
 
     BU_LIST_INIT(&all_head.l);
 
-    /* create a tree sructure to hold the input vertices */
+    /* create a tree structure to hold the input vertices */
     tree_root = create_vert_tree();
 
     Convert_input();

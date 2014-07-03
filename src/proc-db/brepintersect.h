@@ -1,7 +1,7 @@
 /*                         B R E P I N T E R S E C T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file brepintersect.h
+/** @file proc-db/brepintersect.h
  *
  */
+
+#ifndef PROC_DB_BREPINTERSECT_H
+#define PROC_DB_BREPINTERSECT_H
 
 #include "common.h"
 
@@ -55,7 +58,7 @@ int SegmentTriangleIntersect(
     const ON_3dPoint& c,
     const ON_3dPoint& p,
     const ON_3dPoint& q,
-    ON_3dPoint out[2], 
+    ON_3dPoint out[2],
     double tol
     );
 
@@ -73,6 +76,7 @@ int TriangleBrepIntersect(
     double tol
     );
 
+#endif /* PROC_DB_BREPINTERSECT_H */
 
 /** @} */
 /*

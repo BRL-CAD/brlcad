@@ -1,7 +1,7 @@
 /*                          R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,16 +18,11 @@
  * information.
  *
  */
-/** @file read.c
+/** @file comgeom/read.c
  *
  * This module contains all of the routines necessary to read in
  * a COMGEOM input file, and put the information into internal form.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Original Version -
- *	March 17, 1980
  */
 
 #include "common.h"
@@ -39,79 +34,75 @@
 
 #include "bu.h"
 
-extern FILE	*infp;
+extern FILE *infp;
 
 extern char name_it[16];		/* argv[3] */
 
-void	namecvt(int n, char **cp, int c);
+void namecvt(int n, char **cp, int c);
 
-/*
- *			G E T L I N E
- */
 int
 get_line(char *cp, int buflen, char *title)
 {
-    int	c;
-    int	count = buflen;
+    int c;
+    int count = buflen;
 
-    while ( (c = fgetc(infp)) == '\n' ) /* Skip blank lines.		*/
+    while ((c = fgetc(infp)) == '\n') /* Skip blank lines.		*/
 	;
-    while ( c != EOF && c != '\n' )  {
+    while (c != EOF && c != '\n') {
 	*cp++ = c;
 	count--;
-	if ( count <= 0 )  {
+	if (count <= 0) {
 	    printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
 		   (unsigned long)cp, buflen, title);
 	    break;
 	}
 	c = fgetc(infp);
     }
-    if ( c == EOF )
-	return	EOF;
-    while ( count-- > 0 )
+    if (c == EOF)
+	return EOF;
+    while (count-- > 0)
 	*cp++ = 0;
-    return	c;
+    return c;
 }
 
-/*
- *			G E T I N T
- */
+
 int
 getint(char *cp, int start, size_t len)
 {
-    char	buf[128];
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    int result;
 
-    if (len > sizeof(buf))
-	len = sizeof(buf);
+    bu_vls_strncpy(&vls, cp+start, len);
+    result = atoi(vls.vls_str);
+    bu_vls_free(&vls);
 
-    bu_strlcpy( buf, cp+start, len );
-    return atoi(buf);
+    return result;
 }
 
-/*
- *			G E T D O U B L E
- */
+
 double
 getdouble(char *cp, int start, size_t len)
 {
-    char	buf[128];
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    double result;
 
-    if (len > sizeof(buf))
-	len = sizeof(buf);
+    bu_vls_strncpy(&vls, cp+start, len);
+    result = atof(vls.vls_str);
+    bu_vls_free(&vls);
 
-    bu_strlcpy( buf, cp+start, len );
-    return atof(buf);
+    return result;
 }
 
-/*		N A M E C V T	 */
+
 void
 namecvt(int n, char **cp, int c)
 {
     char str[16];
 
-    sprintf( str, "%c%d%.13s", (char)c, n, name_it );
-    *cp = bu_strdup( str );
+    sprintf(str, "%c%d%.13s", (char)c, n, name_it);
+    *cp = bu_strdup(str);
 }
+
 
 /*
  * Local Variables:

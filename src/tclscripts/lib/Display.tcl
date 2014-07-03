@@ -1,7 +1,7 @@
 #                     D I S P L A Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2010 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used.
+# Use the Ged widget instead.
+#####################################################################
+
 #
 # Description -
 #	The Display class inherits from View and Dm. This
@@ -237,6 +243,9 @@
 ########################### Public/Interface Methods ###########################
 
 ::itcl::body Display::constructor {args} {
+
+    puts "DEPRECATION WARNING: The Display widget should no longer be used.  Use the Ged widget instead."
+
     attach_view
     doBindings
     handle_configure

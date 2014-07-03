@@ -1,7 +1,7 @@
 /*                         S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file size.c
+/** @file libged/size.c
  *
  * The size command.
  *
@@ -36,7 +36,8 @@
 int
 ged_size(struct ged *gedp, int argc, const char *argv[])
 {
-    fastf_t size;
+    /* intentionally double for scan */
+    double size;
     static const char *usage = "[s]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -44,21 +45,22 @@ ged_size(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get view size */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%g",
+	bu_vls_printf(gedp->ged_result_str, "%g",
 		      gedp->ged_gvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local);
 	return GED_OK;
     }
 
     /* set view size */
     if (argc == 2) {
-	if (sscanf(argv[1], "%lf", &size) != 1 ||
-	    size <= 0 ||
-	    NEAR_ZERO(size, SMALL_FASTF)) {
-	    bu_vls_printf(&gedp->ged_result_str, "bad size - %s", argv[1]);
+	if (sscanf(argv[1], "%lf", &size) != 1
+	    || size <= 0
+	    || ZERO(size))
+	{
+	    bu_vls_printf(gedp->ged_result_str, "bad size - %s", argv[1]);
 	    return GED_ERROR;
 	}
 
@@ -72,7 +74,7 @@ ged_size(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 

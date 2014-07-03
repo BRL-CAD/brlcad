@@ -1,7 +1,7 @@
 /*                    R E G T A B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,15 +27,24 @@
  *	IABG mbH (Germany)
  */
 
+/* interface header */
+#include "regtab.h"
+
 #include <map>
 #include <iostream>
 
-#include "regtab.h"
 #include "glob.h"
 
 
-
 static std::map<std::string, Region*> regionTable;
+
+Region::Region(int nr, const char* description)
+  : compnr(nr), material(0), desc(description), addCreated(false), excludeCreated(false)
+{
+    WMEMBER_INIT(&head);
+    WMEMBER_INIT(&addHead);
+    WMEMBER_INIT(&excludeHead);
+}
 
 
 int readMaterials(FILE *fp)
@@ -44,14 +53,14 @@ int readMaterials(FILE *fp)
    char name[20];
    int mat;
 
-   if (fgets(title, LINELEN, fp) == NULL)
+   if (bu_fgets(title, LINELEN, fp) == NULL)
       return 1;
 
    char descr[LINELEN];
-   while (fscanf(fp, "%s%d%[^\n]", &name, &mat, &descr) != EOF)
+   while (fscanf(fp, "%s%d%[^\n]", name, &mat, descr) != EOF)
    {
       if (name[0] == '-')
-         continue;
+	 continue;
 
       Region *regionp;
 
@@ -78,7 +87,7 @@ static Region *getRegion(int compnr)
 
    if (regionTable.find(key) == regionTable.end()) {
       std::cout << "WARNING: region " << key
-                << " not in material list" << std::endl;
+		<< " not in material list" << std::endl;
       char unknown[] = "UNKNOWN";
       if (regionTable.find(unknown) == regionTable.end()) {
 	regionp = new Region(atoi(unknown), unknown);
@@ -119,17 +128,17 @@ void createRegions(struct rt_wdb* wdbp)
     struct wmember tophead;
     BU_LIST_INIT(&tophead.l);
 
-    for(std::map<std::string, Region*>::iterator it = regionTable.begin();
-        it != regionTable.end();
-        ++it) {
-        Region* regionp = it->second;
+    for (std::map<std::string, Region*>::iterator it = regionTable.begin();
+	it != regionTable.end();
+	++it) {
+	Region* regionp = it->second;
 
-        std::cout << regionp->getDescription() << std::endl;
+	std::cout << regionp->getDescription() << std::endl;
 
-        if ((regionp->getMaterial() != 0) && (regionp->nonEmpty()))
-            regionp->push(wdbp, &tophead);
-        else
-            std::cout << "Empty region: " << regionp->getCompNr() << (regionp->referred() ? " (referred)" : " (unreferred)") << std::endl;
+	if ((regionp->getMaterial() != 0) && (regionp->nonEmpty()))
+	    regionp->push(wdbp, &tophead);
+	else
+	    std::cout << "Empty region: " << regionp->getCompNr() << (regionp->referred() ? " (referred)" : " (unreferred)") << std::endl;
     }
 
     mk_lfcomb(wdbp, "g_all", &tophead, 0);

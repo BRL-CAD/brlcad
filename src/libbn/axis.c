@@ -1,7 +1,7 @@
 /*                          A X I S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,27 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup axis */
-/** @{ */
-/** @file axis.c
- *
- * @brief
- *	This routine is used to generate an axis for a graph.
- * It draws an axis with a linear scale, places tic marks every inch,
- * labels the tics, and uses the supplied title for the axis.
- *
- *	The strategy behind this routine is to split the axis
- * into SEGMENTS, which run from one tick to the next.  The
- * origin of the first segment (x, y), the origin of the bottom
- * of the first tick (xbott, ybott), and the origin of the first
- * tick label (xnum, ynum) are computed along with the delta x
- * and delta y (xincr, yincr) which describes the interval to
- * the start of the next tick.
- *
- * Originally written on August 01, 1978
- *
- */
-/** @} */
 
 #include "common.h"
 
@@ -45,21 +24,22 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/log.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "plot3.h"
+
 
 #define	TICK_YLEN	(char_width)	/**< @brief tick is 1 character height */
 #define	NUM_YOFF	(3*char_width)	/**< @brief numbers offset from line */
 #define	TITLE_YOFF	(5*char_width)	/**< @brief title offset from line */
 
+
 void
-/**
- *
- */
-tp_3axis(FILE *fp,
+tp_3axis(FILE *fp,		/**< output file */
 	 char *string,		/**< label for axis */
-	 fastf_t *origin,
-	 fastf_t *rot,
+	 fastf_t *origin,	/**< simple 3d point */
+	 fastf_t *rot,		/**< rotation angle */
 	 double length,		/**< length of axis */
 	 int ccw,    		/**< 0=clockwise, !0=counter clockwise (ccw) */
 	 int ndigits,		/**< # digits wide */
@@ -91,7 +71,7 @@ tp_3axis(FILE *fp,
     else
 	ccw = 1;			/* clockwise */
 
-    if (NEAR_ZERO(tick_separation, SMALL)) tick_separation = 1;
+    if (ZERO(tick_separation)) tick_separation = 1;
 
     /*
      *  The point "origin" will be the center of the axis rotation.
@@ -199,7 +179,7 @@ PL_FORTRAN(f3axis, F3AXIS)(FILE **fp,
 	     *ndigits, *label_start, *label_incr,
 	     *tick_separation, *char_width);
 }
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

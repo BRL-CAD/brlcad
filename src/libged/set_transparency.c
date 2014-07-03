@@ -1,7 +1,7 @@
 /*                         S E T _ T R A N S P A R E N C Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file set_transparency.c
+/** @file libged/set_transparency.c
  *
  * The set_transparency command.
  *
@@ -36,7 +36,7 @@
  * Set the transparency of the specified object
  *
  * Usage:
- *        set_transparency obj tr
+ * set_transparency obj tr
  *
  */
 int
@@ -45,10 +45,13 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
     struct solid *sp;
-    int i;
+    size_t i;
     struct directory **dpp;
     struct directory **tmp_dpp;
-    fastf_t transparency;
+
+    /* intentionally double for scan */
+    double transparency;
+
     static const char *usage = "node tval";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -56,22 +59,22 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
 
     if (argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &transparency) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "dgo_set_transparency: bad transparency - %s\n", argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "dgo_set_transparency: bad transparency - %s\n", argv[2]);
 	return GED_ERROR;
     }
 
@@ -79,30 +82,33 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i = 0, tmp_dpp = dpp;
-		 i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+		 i < sp->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
 		 ++i, ++tmp_dpp) {
 		if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
 		    break;
 	    }
 
-	    if (*tmp_dpp != DIR_NULL)
+	    if (*tmp_dpp != RT_DIR_NULL)
 		continue;
 
 	    /* found a match */
 	    sp->s_transparency = transparency;
+
+	    if (gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+		(*gedp->ged_create_vlist_callback)(sp);
 	}
 
 	gdlp = next_gdlp;
     }
 
     if (dpp != (struct directory **)NULL)
-	bu_free((genptr_t)dpp, "ged_set_transparency: directory pointers");
+	bu_free((void *)dpp, "ged_set_transparency: directory pointers");
 
     return GED_OK;
 }

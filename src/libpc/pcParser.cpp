@@ -1,7 +1,7 @@
 /*                    P C P A R S E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ Constraint_grammar::~Constraint_grammar()
 
 /* Parser Class */
 
-Parser::Parser(VCSet &vcs): vcset(vcs), var_gram(NULL), con_gram(NULL)
+Parser::Parser(VCSet &vcs): name(""), value(0.0), vcset(vcs), var_gram(NULL), con_gram(NULL)
 {
     var_gram = new Variable_grammar(vcset);
     con_gram = new Constraint_grammar(vcset);
@@ -61,9 +61,9 @@ Parser::Parser(VCSet &vcs): vcset(vcs), var_gram(NULL), con_gram(NULL)
 Parser::~Parser()
 {
     if (var_gram)
-        delete var_gram;
+	delete var_gram;
     if (con_gram)
-        delete con_gram;
+	delete con_gram;
 }
 
 
@@ -76,10 +76,10 @@ void Parser::parse(struct pc_pc_set *pcs)
 	name.clear();
 	//std::cout<<"Parameter expression Input: "<<(char *) bu_vls_addr(&(par->name))<<std::endl;
 	if (par->ctype == PC_DB_BYEXPR) {
-	    boost::spirit::parse_info<> p_info = \
-		boost::spirit::parse(\
+	    boost::spirit::classic::parse_info<> p_info = \
+		boost::spirit::classic::parse(\
 				     (char *) bu_vls_addr(&(par->data.expression)), \
-				     *var_gram, boost::spirit::space_p);
+				     *var_gram, boost::spirit::classic::space_p);
 	    if (p_info.full) {
 		//vcset.pushVar();
 	    } else {
@@ -96,14 +96,14 @@ void Parser::parse(struct pc_pc_set *pcs)
     }
     while (BU_LIST_WHILE(con, pc_constrnt, &(pcs->cs->l))) {
 	if (con->ctype == PC_DB_BYEXPR) {
-	    bu_vls_free(&(con->data.expression)); 
+	    bu_vls_free(&(con->data.expression));
 	} else if (con->ctype == PC_DB_BYSTRUCT) {
 	    //std::cout << "Constraint by Struct -> \n";
 	    vcset.addConstraint(con);
 	    bu_free(con->args, "free argument array");
 	}
-	/*boost::spirit::parse((char *) bu_vls_addr(&(con->name)), *con_gram, boost::spirit::space_p);*/
-        bu_vls_free(&(con->name));
+	/*boost::spirit::classic::parse((char *) bu_vls_addr(&(con->name)), *con_gram, boost::spirit::space_p);*/
+	bu_vls_free(&(con->name));
 	BU_LIST_DEQUEUE(&(con->l));
 	bu_free(con, "free constraint");
     }

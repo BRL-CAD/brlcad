@@ -1,7 +1,7 @@
 /*                  N U R B _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_example.c
+/** @file librt/nurb_example.c
  *
  */
 /** @} */
@@ -41,7 +41,7 @@ fastf_t grid[10][10][3];
 fastf_t ngrid[10][10][3];
 
 
-/* Interpoate the data using b-splines */
+/* Interpolate the data using b-splines */
 void
 interpolate_data()
 {
@@ -50,18 +50,6 @@ interpolate_data()
     struct knot_vector new_kv;
 
     rt_nurb_sinterp(&srf, 4, (const fastf_t *)grid, 10, 10);
-
-#if 0
-    /* Draw control mesh in blue */
-    pl_color(stdout, 145, 145, 255);
-    rt_nurb_plot_snurb(stdout, &srf);
-#endif
-
-#if 0
-    rt_nurb_reverse_srf(&srf);
-    rt_nurb_kvnorm(&srf.u);
-    rt_nurb_kvnorm(&srf.v);
-#endif
 
     /* lets take a look at it.  Refine to 100 points in both directions. */
     rt_nurb_kvknot(&new_kv, srf.order[0], 0.0, 1.0, 100, (struct resource *)NULL);
@@ -83,7 +71,7 @@ main(int argc, char *argv[])
     int i, j;
 
     if (argc > 1)
-	printf("Usage: %s\n", argv[0]);
+	fprintf(stderr,"Usage: %s\n", argv[0]);
 
     hscale = 2.5;
 

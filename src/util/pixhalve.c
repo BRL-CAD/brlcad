@@ -1,7 +1,7 @@
 /*                      P I X H A L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixhalve.c
+/** @file util/pixhalve.c
  *
  * Reduce the resolution of a .pix file by one half in each direction,
  * using a 5x5 pyramid filter.
@@ -61,7 +61,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ahs:w:n:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ahs:w:n:")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
@@ -98,34 +98,32 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
-	    (void)fprintf(stderr,
-			  "pixhalve: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "pixhalve: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	fileinput++;
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixhalve: excess argument(s) ignored\n");
+	fprintf(stderr, "pixhalve: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
 
 
 /*
- * S E P A R A T E
- *
- * Unpack RGB byte tripples into three separate arrays of integers.
+ * Unpack RGB byte triples into three separate arrays of integers.
  * The first and last pixels are replicated twice, to handle border effects.
  *
  * Updated version:  the outputs are Y U V values, not R G B.
  */
 static void
 separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num)
-    /* Y */
-    /* U */
-    /* V */
+/* Y */
+/* U */
+/* V */
 
 
 {
@@ -169,10 +167,8 @@ separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num)
 
 
 /*
- * C O M B I N E
- *
  * Combine three separate arrays of integers into a buffer of
- * RGB byte tripples
+ * RGB byte triples
  */
 static void
 combine(unsigned char *cp, int *rip, int *gip, int *bip, long int num)
@@ -205,8 +201,6 @@ combine(unsigned char *cp, int *rip, int *gip, int *bip, long int num)
 
 
 /*
- * R I P P L E
- *
  * Ripple all the scanlines down by one.
  *
  * Barrel shift all the pointers down, with [0] going back to the top.
@@ -225,8 +219,6 @@ ripple(int **array, int num)
 
 
 /*
- * F I L T E R 5
- *
  * Apply a 5x5 image pyramid to the input scanline, taking every other
  * input position to make an output.
  *
@@ -277,8 +269,6 @@ filter5(int *op, int **lines, int num)
 
 
 /*
- * F I L T E R 3
- *
  * Apply a 3x3 image pyramid to the input scanline, taking every other
  * input position to make an output.
  *
@@ -338,7 +328,7 @@ main(int argc, char *argv[])
 
     /* autosize input? */
     if (fileinput && autosize) {
-	unsigned long int w, h;
+	size_t w, h;
 	if (fb_common_file_size(&w, &h, file_name, 3)) {
 	    file_width = (long)w;
 	} else {
@@ -348,8 +338,8 @@ main(int argc, char *argv[])
     out_width = file_width/2;
 
     /* Allocate 1-scanline input & output buffers */
-    inbuf = bu_malloc(3*file_width+8, "inbuf");
-    outbuf = bu_malloc(3*(out_width+2)+8, "outbuf");
+    inbuf = (unsigned char *)bu_malloc(3*file_width+8, "inbuf");
+    outbuf = (unsigned char *)bu_malloc(3*(out_width+2)+8, "outbuf");
 
     /* Allocate 5 integer arrays for each color */
     /* each width+2 elements wide */

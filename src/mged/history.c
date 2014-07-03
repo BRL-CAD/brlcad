@@ -1,7 +1,7 @@
 /*                       H I S T O R Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file history.c
+/** @file mged/history.c
  *
  */
 
@@ -50,8 +50,6 @@ int journal_delay = 0;
 void history_journalize(struct mged_hist *hptr);
 
 /*
- * H I S T O R Y _ R E C O R D
- *
  * Stores the given command with start and finish times in the
  * history vls'es.
  */
@@ -65,11 +63,11 @@ history_record(
 {
     struct mged_hist *new_hist;
 
-    if (strcmp(bu_vls_addr(cmdp), "\n") == 0)
+    if (BU_STR_EQUAL(bu_vls_addr(cmdp), "\n"))
 	return;
 
-    new_hist = (struct mged_hist *)bu_malloc(sizeof(struct mged_hist),
-					     "mged history");
+    BU_ALLOC(new_hist, struct mged_hist);
+
     bu_vls_init(&(new_hist->mh_command));
     bu_vls_vlscat(&(new_hist->mh_command), cmdp);
     new_hist->mh_start = *start;
@@ -129,8 +127,6 @@ history_journalize(struct mged_hist *hptr)
 
 
 /*
- * F _ J O U R N A L
- *
  * Opens the journal file, so each command and the time since the previous
  * one will be recorded.  Or, if called with no arguments, closes the
  * journal file.
@@ -139,13 +135,13 @@ history_journalize(struct mged_hist *hptr)
 int
 f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    if (argc < 1 || 3 < argc) {
-	struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
+    if (argc < 1 || 3 < argc) {
 	bu_vls_printf(&vls, "help journal");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -166,12 +162,10 @@ f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     if (argc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help journal");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -188,8 +182,6 @@ f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 
 /*
- * F _ H I S T O R Y
- *
  * Prints out the command history, either to bu_log or to a file.
  */
 
@@ -199,29 +191,30 @@ f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     FILE *fp;
     int with_delays = 0;
     struct mged_hist *hp, *hp_prev;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct timeval tvdiff;
 
     if (argc < 1 || 4 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help history");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
     fp = NULL;
     while (argc >= 2) {
-	if (strcmp(argv[1], "-delays") == 0)
+	if (BU_STR_EQUAL(argv[1], "-delays"))
 	    with_delays = 1;
-	else if (strcmp(argv[1], "-outfile") == 0) {
+	else if (BU_STR_EQUAL(argv[1], "-outfile")) {
 	    if (fp != NULL) {
 		Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
 				 (char *)NULL);
+		fclose(fp);
 		return TCL_ERROR;
-	    } else if (argc < 3 || strcmp(argv[2], "-delays") == 0) {
+	    } else if (argc < 3 || BU_STR_EQUAL(argv[2], "-delays")) {
 		Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
 		return TCL_ERROR;
 	    } else {
@@ -240,7 +233,6 @@ f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	++argv;
     }
 
-    bu_vls_init(&str);
     for (BU_LIST_FOR(hp, mged_hist, &(mged_hist_head.l))) {
 	bu_vls_trunc(&str, 0);
 	hp_prev = BU_LIST_PREV(mged_hist, &(hp->l));
@@ -267,8 +259,6 @@ f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 }
 
 
-/* H I S T O R Y _ P R E V
- */
 struct bu_vls *
 history_prev(const char *pat)
 {
@@ -290,8 +280,6 @@ history_prev(const char *pat)
 }
 
 
-/* H I S T O R Y _ C U R
- */
 struct bu_vls *
 history_cur(void)
 {
@@ -302,8 +290,6 @@ history_cur(void)
 }
 
 
-/* H I S T O R Y _ N E X T
- */
 struct bu_vls *
 history_next(const char *pat)
 {
@@ -334,9 +320,7 @@ int
 cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct bu_vls *vp;
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
 	bu_vls_printf(&vls, "helpdevel hist");
@@ -345,7 +329,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "add") == 0) {
+    if (BU_STR_EQUAL(argv[1], "add")) {
 	struct timeval zero;
 
 	if (argc != 3) {
@@ -369,7 +353,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "next") == 0) {
+    if (BU_STR_EQUAL(argv[1], "next")) {
 	if (argc == 2) {
 	    vp = history_next((const char *)NULL);
 	    if (vp == NULL)
@@ -390,7 +374,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "prev") == 0) {
+    if (BU_STR_EQUAL(argv[1], "prev")) {
 	if (argc == 2) {
 	    vp = history_prev((const char *)NULL);
 	    if (vp == NULL)
@@ -412,7 +396,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "cur") == 0) {
+    if (BU_STR_EQUAL(argv[1], "cur")) {
 	if (argc != 2) {
 	    bu_vls_printf(&vls, "helpdevel hist");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));

@@ -1,7 +1,7 @@
 /*                    R E V O L V E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ extern "C" {
 }
 
 
-void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
+void FindLoops(ON_Brep **b, const ON_Line* revaxis, const fastf_t ang) {
     ON_3dPoint ptmatch, ptterminate, pstart, pend;
 
     int *curvearray;
@@ -72,11 +72,11 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
 	    for (int i = 0; i < allsegments.Count(); i++) {
 		pstart = (*b)->m_C3[i]->PointAtStart();
 		pend = (*b)->m_C3[i]->PointAtEnd();
-		if (ON_NearZero(ptmatch.DistanceTo(pstart), ON_ZERO_TOLERANCE) && (curvearray[i] == -1)) {
+		if (NEAR_ZERO(ptmatch.DistanceTo(pstart), ON_ZERO_TOLERANCE) && (curvearray[i] == -1)) {
 		    curvecount = i;
 		    ptmatch = pend;
 		    i = allsegments.Count();
-		    if (ON_NearZero(pend.DistanceTo(ptterminate), ON_ZERO_TOLERANCE)) {
+		    if (NEAR_ZERO(pend.DistanceTo(ptterminate), ON_ZERO_TOLERANCE)) {
 			loop_complete = 1;
 			loopcount++;
 		    }
@@ -98,93 +98,85 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
     double maxdist = 0.0;
     int largest_loop_index = 0;
     for (int i = 0; i <= loopcount ; i++) {
-	ON_BoundingBox *lbbox = new ON_BoundingBox();
+	ON_BoundingBox lbbox;
 	for (int j = 0; j < (*b)->m_C3.Count(); j++) {
 	    if (curvearray[j] == i) {
 		ON_Curve *currcurve = (*b)->m_C3[j];
-		currcurve->GetBoundingBox(*lbbox, true);
+		currcurve->GetBoundingBox(lbbox, true);
 	    }
 	}
 	point_t minpt, maxpt;
 	double currdist;
-	VSET(minpt, lbbox->m_min[0], lbbox->m_min[1], lbbox->m_min[2]);
-	VSET(maxpt, lbbox->m_max[0], lbbox->m_max[1], lbbox->m_max[2]);
+	VSET(minpt, lbbox.m_min[0], lbbox.m_min[1], lbbox.m_min[2]);
+	VSET(maxpt, lbbox.m_max[0], lbbox.m_max[1], lbbox.m_max[2]);
 	currdist = DIST_PT_PT(minpt, maxpt);
-	bu_log("currdist: %f\n", currdist);
 	if (currdist > maxdist) {
 	    maxdist = currdist;
 	    largest_loop_index = i;
 	}
     }
-    bu_log("largest_loop_index = %d\n", largest_loop_index);
-
-    bu_log("curve_array[%d, %d, %d, %d, %d, %d]\n", curvearray[0], curvearray[1], curvearray[2], curvearray[3], curvearray[4], curvearray[5]);
-
 
     for (int i = 0; i < loopcount ; i++) {
-	bu_log("loopcount: %d\n", i);
-	ON_PolyCurve* poly_curve = NULL;
+	ON_PolyCurve* poly_curve = new ON_PolyCurve();
 	for (int j = 0; j < allsegments.Count(); j++) {
 	    if (curvearray[j] == i) {
-		if (!poly_curve) {
-		    poly_curve = new ON_PolyCurve();
-		    poly_curve->Append(allsegments[j]);
-		} else {
-		    poly_curve->Append(allsegments[j]);
-		}
+		 poly_curve->Append(allsegments[j]);
 	    }
 	}
+
 	ON_NurbsCurve *revcurve = ON_NurbsCurve::New();
 	poly_curve->GetNurbForm(*revcurve);
 	ON_RevSurface* revsurf = ON_RevSurface::New();
 	revsurf->m_curve = revcurve;
 	revsurf->m_axis = *revaxis;
+	revsurf->m_angle = ON_Interval(0, ang);
 	ON_BrepFace *face = (*b)->NewFace(*revsurf);
+
 	if (i == largest_loop_index) {
 	    (*b)->FlipFace(*face);
 	}
     }
+
+    bu_free(curvearray, "sketch edge list");
 }
 
 
-/**
- * R T _ R E V O L V E _ B R E P
- */
 extern "C" void
-rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
-    RT_INIT_DB_INTERNAL(tmp_internal);
+    struct rt_db_internal *tmp_internal;
     struct rt_revolve_internal *rip;
     struct rt_sketch_internal *eip;
 
+    BU_ALLOC(tmp_internal, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(tmp_internal);
+
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
-    eip = rip->sk;
+    eip = rip->skt;
     RT_SKETCH_CK_MAGIC(eip);
-
-    *b = ON_Brep::New();
 
     ON_3dPoint plane_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
 
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
+    bool full_revolve = true;
+    if (rip->ang < 2*ON_PI && rip->ang > 0)
+	full_revolve = false;
 
     //  Find plane in 3 space corresponding to the sketch.
 
-    plane_origin = ON_3dPoint(eip->V);
+    vect_t startpoint;
+    VADD2(startpoint, rip->v3d, rip->r);
+    plane_origin = ON_3dPoint(startpoint);
     plane_x_dir = ON_3dVector(eip->u_vec);
     plane_y_dir = ON_3dVector(eip->v_vec);
-    const ON_Plane* sketch_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane sketch_plane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
 
     //  For the brep, need the list of 3D vertex points.  In sketch, they
     //  are stored as 2D coordinates, so use the sketch_plane to define 3 space
     //  points for the vertices.
-    for (int i = 0; i < eip->vert_count; i++) {
-	(*b)->NewVertex(sketch_plane->PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
-	int vertind = (*b)->m_V.Count() - 1;
-	(*b)->m_V[vertind].Dump(*dump);
+    for (size_t i = 0; i < eip->vert_count; i++) {
+	(*b)->NewVertex(sketch_plane.PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
     }
 
     // Create the brep elements corresponding to the sketch lines, curves
@@ -195,9 +187,9 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     struct line_seg *lsg;
     struct carc_seg *csg;
     struct bezier_seg *bsg;
-    long *lng;
-    for (int i = 0; i < (&eip->skt_curve)->seg_count; i++) {
-	lng = (long *)(&eip->skt_curve)->segments[i];
+    uint32_t *lng;
+    for (size_t i = 0; i < (&eip->curve)->count; i++) {
+	lng = (uint32_t *)(&eip->curve)->segment[i];
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC: {
 		lsg = (struct line_seg *)lng;
@@ -211,8 +203,9 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 		if (csg->radius < 0) { {
 		    ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
 		    ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
-		    ON_Circle* c3dcirc = new ON_Circle(cntrpt, cntrpt.DistanceTo(edgept));
-		    ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)*c3dcirc);
+		    ON_Plane cplane = ON_Plane(cntrpt, plane_x_dir, plane_y_dir);
+		    ON_Circle c3dcirc = ON_Circle(cplane, cntrpt.DistanceTo(edgept));
+		    ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)c3dcirc);
 		    c3d->SetDomain(0.0, 1.0);
 		    (*b)->m_C3.Append(c3d);
 		}
@@ -224,13 +217,13 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		{
-		    ON_3dPointArray *bezpoints = new ON_3dPointArray(bsg->degree + 1);
+		    ON_3dPointArray bezpoints = ON_3dPointArray(bsg->degree + 1);
 		    for (int j = 0; j < bsg->degree + 1; j++) {
-			bezpoints->Append((*b)->m_V[bsg->ctl_points[j]].Point());
+			bezpoints.Append((*b)->m_V[bsg->ctl_points[j]].Point());
 		    }
-		    ON_BezierCurve* bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints);
+		    ON_BezierCurve bez3d = ON_BezierCurve((const ON_3dPointArray)bezpoints);
 		    ON_NurbsCurve* beznurb3d = ON_NurbsCurve::New();
-		    bez3d->GetNurbForm(*beznurb3d);
+		    bez3d.GetNurbForm(*beznurb3d);
 		    beznurb3d->SetDomain(0.0, 1.0);
 		    (*b)->m_C3.Append(beznurb3d);
 		}
@@ -241,11 +234,74 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	}
     }
 
+    vect_t endpoint;
+    VADD2(endpoint, rip->v3d, rip->axis3d);
+    const ON_Line& revaxis = ON_Line(ON_3dPoint(rip->v3d), ON_3dPoint(endpoint));
 
-    const ON_Line& revaxis = ON_Line(ON_3dPoint(rip->v3d), ON_3dPoint(rip->axis3d));
+    FindLoops(b, &revaxis, rip->ang);
 
-    FindLoops(b, &revaxis);
+    // Create the two boundary surfaces, if it's not a full revolution
+    if (!full_revolve) {
+	// First, deduce the transformation matrices to calculate the position of the end surface
+	// The transformation matrices are to rotate an arbitrary point around an arbitrary axis
+	// Let the point A = (x, y, z), the rotation axis is p1p2 = (x2,y2,z2)-(x1,y1,z1) = (a,b,c)
+	// Then T1 is to translate p1 to the origin
+	// Rx is to rotate p1p2 around the X axis to the plane XOZ
+	// Ry is to rotate p1p2 around the Y axis to be coincident to Z axis
+	// Rz is to rotate A with the angle around Z axis (the new p1p2)
+	// RxInv, RyInv, T1Inv are the inverse transformation of Rx, Ry, T1, respectively.
+	// The whole transformation is A' = A*T1*Rx*Ry*Rz*Ry*Inv*Rx*Inv = A*R
+	vect_t end_plane_origin, end_plane_x_dir, end_plane_y_dir;
+	mat_t R;
+	MAT_IDN(R);
+	mat_t T1, Rx, Ry, Rz, RxInv, RyInv, T1Inv;
+	MAT_IDN(T1);
+	VSET(&T1[12], -rip->v3d[0], -rip->v3d[1], -rip->v3d[2]);
+	MAT_IDN(Rx);
+	fastf_t v = sqrt(rip->axis3d[1]*rip->axis3d[1]+rip->axis3d[2]*rip->axis3d[2]);
+	VSET(&Rx[4], 0, rip->axis3d[2]/v, rip->axis3d[1]/v);
+	VSET(&Rx[8], 0, -rip->axis3d[1]/v, rip->axis3d[2]/v);
+	MAT_IDN(Ry);
+	fastf_t u = MAGNITUDE(rip->axis3d);
+	VSET(&Ry[0], v/u, 0, -rip->axis3d[0]/u);
+	VSET(&Ry[8], rip->axis3d[0]/u, 0, v/u);
+	MAT_IDN(Rz);
+	fastf_t C, S;
+	C = cos(rip->ang);
+	S = sin(rip->ang);
+	VSET(&Rz[0], C, S, 0);
+	VSET(&Rz[4], -S, C, 0);
+	bn_mat_inv(RxInv, Rx);
+	bn_mat_inv(RyInv, Ry);
+	bn_mat_inv(T1Inv, T1);
+	mat_t temp;
+	bn_mat_mul4(temp, T1, Rx, Ry, Rz);
+	bn_mat_mul4(R, temp, RyInv, RxInv, T1Inv);
+	VEC3X3MAT(end_plane_origin, plane_origin, R);
+	VADD2(end_plane_origin, end_plane_origin, &R[12]);
+	VEC3X3MAT(end_plane_x_dir, plane_x_dir, R);
+	VEC3X3MAT(end_plane_y_dir, plane_y_dir, R);
 
+	// Create the start and end surface with rt_sketch_brep()
+	struct rt_sketch_internal sketch;
+	sketch = *(rip->skt);
+	ON_Brep *b1 = ON_Brep::New();
+	VMOVE(sketch.V, plane_origin);
+	VMOVE(sketch.u_vec, plane_x_dir);
+	VMOVE(sketch.v_vec, plane_y_dir);
+	tmp_internal->idb_ptr = (void *)(&sketch);
+	rt_sketch_brep(&b1, tmp_internal, tol);
+	(*b)->Append(*b1->Duplicate());
+
+	ON_Brep *b2 = ON_Brep::New();
+	VMOVE(sketch.V, end_plane_origin);
+	VMOVE(sketch.u_vec, end_plane_x_dir);
+	VMOVE(sketch.v_vec, end_plane_y_dir);
+	tmp_internal->idb_ptr = (void *)(&sketch);
+	rt_sketch_brep(&b2, tmp_internal, tol);
+	(*b)->Append(*b2->Duplicate());
+	(*b)->FlipFace((*b)->m_F[(*b)->m_F.Count()-1]);
+    }
     bu_free(tmp_internal, "free temporary rt_db_internal");
 }
 

@@ -1,7 +1,7 @@
 /*                    O B J _ T E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2010 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 
 #include "common.h"
 
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 
@@ -44,7 +44,7 @@ rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (id < 0)
 	return -2;
 
-    ft = &rt_functab[id];
+    ft = &OBJ[id];
     if (!ft)
 	return -3;
     if (!ft->ft_tessellate)

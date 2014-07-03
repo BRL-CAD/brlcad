@@ -1,7 +1,7 @@
 /*                       C H G T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file chgtree.c
+/** @file mged/chgtree.c
  *
  * This module contains functions which change the tree structure
  * of the model, and delete solids or combinations or combination elements.
@@ -67,19 +67,18 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     CHECK_READ_ONLY;
 
     if (argc < 3 || 3 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help cpi");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
-    if ((proto = db_lookup(dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((proto = db_lookup(dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
-    if (db_lookup(dbip,  argv[2], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(dbip,  argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
 	aexists(argv[2]);
 	return TCL_ERROR;
     }
@@ -99,10 +98,10 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     /* translate to end of "original" cylinder */
     VADD2(tgc_ip->v, tgc_ip->v, tgc_ip->h);
 
-    /* no interuprts */
+    /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    if ((dp = db_diradd(dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == DIR_NULL) {
+    if ((dp = db_diradd(dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == RT_DIR_NULL) {
 	TCL_ALLOC_ERR_return;
     }
 
@@ -136,9 +135,6 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 }
 
 
-/**
- * F I N D _ S O L I D _ W I T H _ P A T H
- */
 struct solid *
 find_solid_with_path(struct db_full_path *pathp)
 {
@@ -150,8 +146,8 @@ find_solid_with_path(struct db_full_path *pathp)
 
     RT_CK_FULL_PATH(pathp);
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -167,9 +163,8 @@ find_solid_with_path(struct db_full_path *pathp)
     }
 
     if (count > 1) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "find_solid_with_path() found %d matches\n", count);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
@@ -180,8 +175,6 @@ find_solid_with_path(struct db_full_path *pathp)
 
 
 /**
- * C M D _ O E D
- *
  * Transition from VIEW state to OBJECT EDIT state in a single
  * command, rather than requiring "press oill", "ill leaf", "matpick
  * a/b".
@@ -206,9 +199,8 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     CHECK_DBI_NULL;
 
     if (argc < 3 || 3 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help oed");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -220,8 +212,8 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
@@ -283,7 +275,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     (void)chg_state(ST_O_PICK, ST_O_PATH, "internal change of state");
 
     /* Select the matrix */
-    sprintf(number, "%d", lhs.fp_len);
+    sprintf(number, "%lu", (long unsigned)lhs.fp_len);
     new_argv[0] = "matpick";
     new_argv[1] = number;
     new_argv[2] = NULL;

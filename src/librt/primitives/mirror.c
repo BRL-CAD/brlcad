@@ -1,7 +1,7 @@
 /*                        M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mirror.c
+/** @file primitives/mirror.c
  *
  * Routine(s) to mirror objects.
  *
@@ -32,7 +32,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "bn.h"
-#include "bu.h"
+
 #include "vmath.h"
 #include "nurb.h"
 
@@ -40,7 +40,7 @@
 /* FIXME: temporary until all mirror functions are migrated and the
  * functab is utilized.
  */
-#define RT_DECLARE_MIRROR(name) BU_EXTERN(int rt_##name##_mirror, (struct rt_db_internal *ip, const plane_t plane))
+#define RT_DECLARE_MIRROR(name) extern int rt_##name##_mirror(struct rt_db_internal *ip, const plane_t plane)
 
 RT_DECLARE_MIRROR(tor);
 RT_DECLARE_MIRROR(tgc);
@@ -101,13 +101,13 @@ rt_mirror(struct db_i *dbip,
 {
     int id;
     int err;
-    static fastf_t tol_dist_sq = 0.005 * 0.005;
+    static fastf_t tol_dist_sq = 0.0005 * 0.0005;
     plane_t plane;
 
     RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
 
-    if (!NEAR_ZERO(MAGSQ(mirror_dir) - 1.0, tol_dist_sq)) {
+    if (!NEAR_EQUAL(MAGSQ(mirror_dir), 1.0, tol_dist_sq)) {
 	bu_log("ERROR: mirror direction is invalid\n");
 	return NULL;
     }

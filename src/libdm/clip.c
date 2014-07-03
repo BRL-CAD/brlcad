@@ -1,7 +1,7 @@
 /*                          C L I P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file clip.c
+/** @file libdm/clip.c
  *
  * Authors - clip() was started on 14 October 81, Based on the
  * clipping routine in "Principles of Computer Graphics" by Newman and
@@ -120,9 +120,7 @@ clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 
 
 /**
- * V C L I P
- *
- * Clip a ray against a rectangular parallelpiped (RPP) that has faces
+ * Clip a ray against a rectangular parallelepiped (RPP) that has faces
  * parallel to the coordinate planes (a clipping RPP).  The RPP is
  * defined by a minimum point and a maximum point.
  *

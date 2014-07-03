@@ -1,7 +1,7 @@
 /*                         L O A D . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,18 +25,19 @@
 # define TIE_PRECISION 0
 #endif
 
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "libtie/tie.h"
+#include "tie.h"
 #include "load.h"
 
 uint32_t slave_load_mesh_num;
 adrt_mesh_t *slave_load_mesh_list;
 
 void
-slave_load_free ()
+slave_load_free()
 {
 #if 0
     int i;
@@ -57,10 +58,8 @@ slave_load_free ()
 }
 
 int
-slave_load_region (tie_t *tie, char *data)
+slave_load_region(struct tie_s *UNUSED(tie), char *UNUSED(data))
 {
-    tie = NULL;
-    data = NULL;
     /*
      * data contains a region name and the triangle soup.
      * Meant to be called several times, with slave_load_kdtree called at the
@@ -70,10 +69,8 @@ slave_load_region (tie_t *tie, char *data)
 }
 
 int
-slave_load_kdtree (tie_t *tie, char *data)
+slave_load_kdtree(struct tie_s *UNUSED(tie), char *UNUSED(data))
 {
-    tie = NULL;
-    data = NULL;
     /* after slave_load_region calls have filled in all the geometry, this loads
      * a tree or requests a tree generation if data is NULL
      */
@@ -81,7 +78,7 @@ slave_load_kdtree (tie_t *tie, char *data)
 }
 
 int
-slave_load (tie_t *tie, void *data, uint32_t dlen)
+slave_load(struct tie_s *tie, void *data)
 {
     char *meh = (char *)data;
 
@@ -93,7 +90,9 @@ slave_load (tie_t *tie, void *data, uint32_t dlen)
 	case ADRT_LOAD_FORMAT_G:	/* given a filename and 1 toplevel region, recursively load from a .g file */
 	    {
 		const char *db = NULL; /* FIXME */
-		const char *ugh[2] = { (char *)(meh + 1 + sizeof(int)), NULL };
+		const char *ugh[2];
+		ugh[0] = (char *)(meh + 1 + sizeof(int));
+		ugh[1] = NULL;
 		return load_g ( tie, db, *(int *)(meh + 1), ugh, NULL);
 	    }
 	case ADRT_LOAD_FORMAT_REG:	/* special magic for catching data on the pipe */

@@ -2,7 +2,7 @@
 #                       H E A D E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 #
 #   sh/header.sh BSD configure.ac
 #
-#   find . -type f -name Makefile.am -not -regex '.*src/other.*' -exec sh/header.sh BSD {} \;
+#   find . -type f -name CMakeLists.txt -not -regex '.*src/other.*' -exec sh/header.sh BSD {} \;
 #
 #   find src/lib* -type f \( -name \*.c -or -name \*.h \) -exec sh/header.sh LGPL {} \;
 #
@@ -126,8 +126,8 @@ fi
 ########################
 # figure out file type #
 ########################
-# wrap is whether or not in needs to be incased in /* */
-# commentprefix is the comment character to prefex each line
+# wrap is whether or not it needs to be encased in /* */
+# commentprefix is the comment character to prefix each line
 ###
 case $FILE in
     *.sh )
@@ -254,6 +254,11 @@ case $FILE in
 	echo "$FILE is an Emacs Lisp file"
 	wrap=0
 	commentprefix=";;"
+	;;
+    *.cmake )
+	echo "$FILE is a CMake build file"
+	wrap=0
+	commentprefix="#"
 	;;
     *.[0-9] )
 	echo "$FILE is a manual page"
@@ -388,24 +393,24 @@ $c"
 
 if [ "x$COPY" = "x" ] ; then
     if [ "x$LICE" = "xPD" ] ; then
-        block="${block}
+	block="${block}
 $c Published in $copyright by the United States Government.
 $c This work is in the public domain.
 $c"
     else
-        block="${block}
+	block="${block}
 $c Copyright (c) $copyright United States Government as represented by
 $c the U.S. Army Research Laboratory.
 $c"
     fi
 else
     if [ "x$LICE" = "xPD" ] ; then
-        block="${block}
+	block="${block}
 $c Published in $copyright by $COPY
 $c This work is in the public domain.
 $c"
     else
-        block="${block}
+	block="${block}
 $c Copyright (c) $copyright $COPY
 $c"
     fi
@@ -447,7 +452,7 @@ $c SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     xBDL)
 	block="${block}
 $c Redistribution and use in source (Docbook format) and 'compiled'
-$c forms (PDF, PostScript, HTML, RTF, etc), with or without
+$c forms (PDF, PostScript, HTML, RTF, etc.), with or without
 $c modification, are permitted provided that the following conditions
 $c are met:
 $c
@@ -465,7 +470,7 @@ $c 3. The name of the author may not be used to endorse or promote
 $c products derived from this documentation without specific prior
 $c written permission.
 $c
-$c THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
+$c THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR \`\`AS IS'' AND ANY
 $c EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 $c IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 $c PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -496,6 +501,8 @@ $c information.
 "
 	;;
     xPD)
+	block="${block}
+"
 	echo "Public domain specified, no license applies."
 	;;
     *)
@@ -547,9 +554,9 @@ mv -f $FILE ${FILE}.backup
 
 closeit=0
 skip=1
-lineone="`cat ${FILE}.backup | head -n 1`"
-linetwo="`cat ${FILE}.backup | head -n 2 | tail -n 1`"
-linethree="`cat ${FILE}.backup | head -n 3 | tail -n 1`"
+lineone="`head -n 1 ${FILE}.backup`"
+linetwo="`head -n 2 ${FILE}.backup | tail -n 1`"
+linethree="`head -n 3 ${FILE}.backup | tail -n 1`"
 case "x$lineone" in
     "x/*"*${title})
 	echo "Found C comment start with file header"
@@ -714,7 +721,7 @@ case "x$lineone" in
 	echo "found batch command"
 	skip=0
 	;;
-    x\REM*)
+    xREM*)
 	echo "found batch comment"
 	skip=0
 	;;

@@ -1,7 +1,7 @@
-/*                          Q R A Y . H
+/*                      W D B _ Q R A Y . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,15 +19,15 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file qray.h
+/** @file libged/wdb_qray.h
  *
  * Private header file for "Query Ray" variables.
  *
  */
 /** @} */
 
-#ifndef SEEN_QRAY_H
-#define SEEN_QRAY_H
+#ifndef LIBGED_WDB_QRAY_H
+#define LIBGED_WDB_QRAY_H
 
 #define DG_QRAY_TEXT(_dgop) ((_dgop)->dgo_qray_effects == 't' || (_dgop)->dgo_qray_effects == 'b')
 #define DG_QRAY_GRAPHICS(_dgop) ((_dgop)->dgo_qray_effects == 'g' || (_dgop)->dgo_qray_effects == 'b')
@@ -47,6 +47,7 @@ struct dg_qray_fmt_data {
     char *fmt;
 };
 
+
 struct dg_qray_dataList {
     struct bu_list l;
     fastf_t x_in;
@@ -54,6 +55,7 @@ struct dg_qray_dataList {
     fastf_t z_in;
     fastf_t los;
 };
+
 
 #endif
 

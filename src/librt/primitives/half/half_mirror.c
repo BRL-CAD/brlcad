@@ -1,7 +1,7 @@
 /*                   H A L F _ M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file half_mirror.c
+/** @file primitives/half/half_mirror.c
  *
  * mirror support
  *
@@ -30,8 +30,6 @@
 
 
 /**
- * R T _ H A L F _ M I R R O R
- *
  * Given a pointer to an internal GED database object, mirror the
  * object's values about the given transformation matrix.
  */
@@ -52,7 +50,7 @@ rt_half_mirror(struct rt_db_internal *ip, register const plane_t plane)
     vect_t n1;
     vect_t n2;
 
-    static fastf_t tol_dist_sq = 0.005 * 0.005;
+    static fastf_t tol_dist_sq = 0.0005 * 0.0005;
     static point_t origin = {0.0, 0.0, 0.0};
 
     RT_CK_DB_INTERNAL(ip);
@@ -97,7 +95,7 @@ rt_half_mirror(struct rt_db_internal *ip, register const plane_t plane)
     bn_mat_arb_rot(rmat, origin, n2, ang*2);
     MAT4X3VEC(half->eqn, rmat, n1);
 
-    if (!NEAR_ZERO(VDOT(n1, half->eqn) - 1.0, tol_dist_sq)) {
+    if (!NEAR_EQUAL(VDOT(n1, half->eqn), 1.0, tol_dist_sq)) {
 	point_t ptA;
 	point_t ptB;
 	point_t ptC;

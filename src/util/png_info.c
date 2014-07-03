@@ -1,7 +1,7 @@
 /*                      P N G _ I N F O . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file png_info.c
+/** @file util/png_info.c
  *
  * Display info about a PNG (Portable Network Graphics) format file
  *
@@ -25,20 +25,22 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "png.h"
+#include <zlib.h>
+#include <png.h>
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "zlib.h"
 
-static char *usage="Usage:\n\t%s png__file\n";
 
 int
 main(int argc, char **argv)
 {
+    static char *usage="Usage:\n\t%s png__file\n";
+
     int i;
     FILE *fp_in = NULL;
     png_structp png_p;
@@ -62,7 +64,7 @@ main(int argc, char **argv)
 
     if (argc != 2) {
 	bu_log(usage, argv[0]);
-	bu_exit(EXIT_FAILURE, "Incorrect numer of arguments!!\n");
+	bu_exit(EXIT_FAILURE, "Incorrect number of arguments!!\n");
     } else {
 	if ((fp_in = fopen(argv[1], "rb")) == NULL) {
 	    perror(argv[1]);
@@ -134,17 +136,17 @@ main(int argc, char **argv)
 
     if (png_get_oFFs(png_p, info_p, &xoff, &yoff, &unit_type)) {
 	if (unit_type == PNG_OFFSET_PIXEL)
-	    bu_log("X Offset: %d pixels\nY Offset: %d pixels\n", xoff, yoff);
+	    bu_log("X Offset: %d pixels\nY Offset: %d pixels\n", (int)xoff, (int)yoff);
 	else if (unit_type == PNG_OFFSET_MICROMETER)
-	    bu_log("X Offset: %d um\nY Offset: %d um\n", xoff, yoff);
+	    bu_log("X Offset: %d um\nY Offset: %d um\n", (int)xoff, (int)yoff);
     }
 
     if (png_get_pHYs(png_p, info_p, &xres, &yres, &unit_type)) {
 	if (unit_type == PNG_RESOLUTION_UNKNOWN)
 	    bu_log("Aspect ratio: %g (width/height)\n", (double)xres/(double)yres);
 	else if (unit_type == PNG_RESOLUTION_METER)
-	    bu_log("pixel density:\n\t%d pixels/m hroizontal\n\t%d pixels/m vertical\n",
-		   xres, yres);
+	    bu_log("pixel density:\n\t%d pixels/m horizontal\n\t%d pixels/m vertical\n",
+		   (int)xres, (int)yres);
     }
 
     if (png_get_interlace_type(png_p, info_p) == PNG_INTERLACE_NONE)

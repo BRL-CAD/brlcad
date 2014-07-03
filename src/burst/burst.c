@@ -1,7 +1,7 @@
 /*                         B U R S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file burst.c
+/** @file burst/burst.c
  *
  */
 
@@ -119,14 +119,23 @@ setupSigs(void)
 static int
 parsArgv(int argc, char **argv)
 {
+    const char optstring[] = "bpPh?";
+
     int c;
-/* Parse options.						*/
-    while ((c = bu_getopt(argc, argv, "b")) != EOF) {
+
+    /* Parse options.						*/
+    while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    case 'b' :
 		tty = 0;
 		break;
-	    case '?' :
+	    case 'p' :
+		plotline = 0;
+		break;
+	    case 'P' :
+		plotline = 1;
+		break;
+	    default:
 		return 0;
 	}
     }
@@ -155,7 +164,7 @@ readBatchInput(FILE *fp)
 		brst_log(" ");
 	    brst_log("^\n");
 	} else
-	    if (strcmp(cmdname, CMD_COMMENT) == 0) {
+	    if (BU_STR_EQUAL(cmdname, CMD_COMMENT)) {
 		/* special handling for comments */
 		cmdptr = cmdbuf;
 		cmdbuf[strlen(cmdbuf)-1] = '\0'; /* clobber newline */
@@ -171,6 +180,11 @@ readBatchInput(FILE *fp)
     return;
 }
 
+static const char usage[] =
+    "Usage: burst [-b] [-p|-P]\n"
+    "\tThe -b option suppresses the screen display (for batch jobs).\n"
+    "\tThe -p/-P options specifies whether to plot points or lines."
+;
 
 /*
   int main(int argc, char *argv[])
@@ -184,8 +198,8 @@ main(int argc, char *argv[])
     if (!tmpfp) {
 	bu_exit(EXIT_FAILURE, "ERROR: Unable to create temporary file.\n");
     }
-    if (! parsArgv(argc, argv)) {
-	prntUsage();
+    if (!parsArgv(argc, argv)) {
+	(void)fprintf(stderr, "%s\n", usage);
 	return EXIT_FAILURE;
     }
 
@@ -222,7 +236,7 @@ exitCleanly(int code)
     if (tty)
 	closeUi(); /* keep screen straight */
     (void) fclose(tmpfp);
-    if (unlink(tmpfname) == -1)
+    if (!bu_file_delete(tmpfname))
 	locPerror(tmpfname);
     exit(code);
 }

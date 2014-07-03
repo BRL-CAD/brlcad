@@ -1,7 +1,7 @@
 /*                     R E G I O N F I X . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,15 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file regionfix.c
- *
- * Subroutines for adjusting old GIFT-style region-IDs, to take into
- * account the presence of instancing.
- *
- */
-/** @} */
+
 
 #include "common.h"
 
@@ -40,15 +32,6 @@
 #include "raytrace.h"
 
 
-/**
- * R T_ R E G I O N F I X
- *
- * Apply any deltas to reg_regionid values to allow old applications
- * that use the reg_regionid number to distinguish between different
- * instances of the same prototype region.
- *
- * Called once, from rt_prep(), before raytracing begins.
- */
 void
 rt_regionfix(struct rt_i *rtip)
 {
@@ -61,7 +44,7 @@ rt_regionfix(struct rt_i *rtip)
     int ret;
     int oldid;
     int newid;
-    struct bu_vls name;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
 
     RT_CK_RTI(rtip);
 
@@ -69,7 +52,6 @@ rt_regionfix(struct rt_i *rtip)
      * rt_prep() was called, then use that.  Otherwise, replace ".g"
      * suffix on database name with ".regexp".
      */
-    bu_vls_init(&name);
     file = rtip->rti_region_fix_file;
     if (file == (char *)NULL) {
 	bu_vls_strcpy(&name, rtip->rti_dbip->dbi_filename);
@@ -102,9 +84,9 @@ rt_regionfix(struct rt_i *rtip)
 	}
 
 	*tabp++ = '\0';
-	while (*tabp && isspace(*tabp)) tabp++;
+	while (*tabp && isspace((int)*tabp)) tabp++;
 	if ((ret = regcomp(&re_space, line, 0)) != 0) {
-	    bu_log("%s: line %d, regcomp error '%d'\n", file, line, ret);
+	    bu_log("%s: line %d, regcomp error '%d'\n", file, linenum, ret);
 	    continue;		/* just ignore it */
 	}
 
@@ -133,7 +115,7 @@ rt_regionfix(struct rt_i *rtip)
 	     *          current instance (use) count.
 	     */
 	    oldid = rp->reg_regionid;
-	    if (strcmp(tabp, "+uses") == 0) {
+	    if (BU_STR_EQUAL(tabp, "+uses")) {
 		newid = oldid + rp->reg_instnum;
 	    } else if (*tabp == '+') {
 		newid = oldid + atoi(tabp+1);
@@ -142,7 +124,7 @@ rt_regionfix(struct rt_i *rtip)
 		if (newid == 0) bu_log("%s, line %d Warning:  new id = 0\n", file, linenum);
 	    }
 	    if (RT_G_DEBUG&DEBUG_INSTANCE) {
-		bu_log("%s instance %d:  region id changed from %d to %d\n",
+		bu_log("%s instance %ld:  region id changed from %d to %d\n",
 		       rp->reg_name, rp->reg_instnum,
 		       oldid, newid);
 	    }

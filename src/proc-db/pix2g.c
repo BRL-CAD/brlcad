@@ -1,7 +1,7 @@
 /*                         P I X 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix2g.c
+/** @file proc-db/pix2g.c
  *
  * Generates geometry from a pixmap file.
  *
@@ -40,6 +40,7 @@
 /* workers acquire semaphore number 0 on smp machines */
 #define P2G_WORKER RT_SEM_LAST
 #define P2G_INIT_COUNT P2G_WORKER+1
+#define MAXSIZE 256
 int done=0;
 int ncpu=1;
 
@@ -66,14 +67,15 @@ struct bu_mapped_file *image;
 
 void usage(void)
 {
-    fprintf(stderr, "Usage: %s image_file.pix db_file.g [pixelWidth [pixelHeight [cellSize [objectSize]]]\n", progname);
+    fprintf(stderr, "Usage: %s image_file.pix db_file.g [pixelWidth [pixelHeight [cellSize [objectSize]]]]\n", progname);
     bu_exit(-1, NULL);
 }
 
-void computeScanline(int pid, genptr_t arg) {
+
+void computeScanline(int UNUSED(pid), void *UNUSED(arg)) {
     int i=0;
     /* working pixel component value */
-    unsigned char *value = image->buf;
+    unsigned char *value = (unsigned char *)image->buf;
 
     /* struct wmember *allScanlineList = (struct wmember *)arg;*/
     fflush(stdout);
@@ -81,7 +83,7 @@ void computeScanline(int pid, genptr_t arg) {
 
     while (i < height) {
 	int j;
-	char scratch[256]="";
+	char scratch[MAXSIZE]="";
 	struct wmember scanlineList;
 	BU_LIST_INIT(&scanlineList.l);
 
@@ -106,7 +108,7 @@ void computeScanline(int pid, genptr_t arg) {
 	}
 
 	for (j=0; j<width; j++) {
-	    /* char solidName[256]="";*/
+	    /* char solidName[MAXSIZE]="";*/
 	    unsigned int r, g, b;
 	    unsigned char rgb[3];
 	    point_t p1;
@@ -164,25 +166,33 @@ void computeScanline(int pid, genptr_t arg) {
 
 }
 
+
 int
 main(int ac, char *av[])
 {
-    char imageFileName[256]="";
-    char databaseFileName[256]="";
-    char scratch[256]="";
+    char imageFileName[MAXSIZE]="";
+    char databaseFileName[MAXSIZE]="";
+    char scratch[MAXSIZE]="";
     point_t origin;
 
     progname = *av;
 
     if (ac < 3) usage();
 
-    snprintf(imageFileName, 256, "%s", av[1]);
-    snprintf(databaseFileName, 256, "%s", av[2]);
+    snprintf(imageFileName, MAXSIZE, "%s", av[1]);
+    snprintf(databaseFileName, MAXSIZE, "%s", av[2]);
 
-    if (ac > 3) width=(int)atoi(av[3]);
-    if (ac > 4) height=(int)atoi(av[4]);
-    if (ac > 5) cellSize=(double)atof(av[5]);
-    if (ac > 6) objectSize=(double)atof(av[6]);
+    if (ac > 3) {
+	width=(int)atoi(av[3]);
+	if (ac > 4) {
+	    height=(int)atoi(av[4]);
+	    if (ac > 5) {
+		cellSize=(double)atof(av[5]);
+		if (ac > 6)
+		    objectSize=(double)atof(av[6]);
+	    }
+	}
+    }
 
     /* bu_log("{%s} {%s} {%s} {%s} {%s} {%s} {%s}\n", av[0], av[1], av[2], av[3], av[4], av[5], av[6]); */
 
@@ -199,18 +209,19 @@ main(int ac, char *av[])
     }
 
     bu_log("Loading image %s from file...", imageFileName);
-    if (image->buflen < width * height * 3) {
-	bu_log("\nWARNING: %s needs %d bytes, file only contains %ld bytes\n", imageFileName, width*height*3, image->buflen);
-    } else if (image->buflen > width* height * 3) {
+
+    if (image->buflen < (size_t)width * (size_t)height * 3)
+	bu_log("\nWARNING: %s needs %d bytes, file only contains %zu bytes\n", imageFileName, width*height*3, image->buflen);
+    else if (image->buflen > (size_t)width* (size_t)height * 3)
 	bu_log("\nWarning: Image file size is larger than specified texture size\n");
-    }
+
     bu_log("...done loading image\n");
 
-    bu_log("Image size is %dx%d (%ld bytes)\n", width, height, image->buflen);
+    bu_log("Image size is %dx%d (%zu bytes)\n", width, height, image->buflen);
     bu_log("Objects are %f with %f spacing\n", objectSize, cellSize);
 
 
-    snprintf(scratch, 256, "%s Geometry Image", imageFileName);
+    snprintf(scratch, MAXSIZE, "%s Geometry Image", imageFileName);
     mk_id(db_fp, scratch); /* create the database header record */
 
     /* make a region that is the union of these two objects
@@ -228,9 +239,8 @@ main(int ac, char *av[])
 
     ncpu=bu_avail_cpus();
 
-    if (ncpu > 1) {
+    if (ncpu > 1)
 	bu_log("Found %d cpu\'s!  Sweet.\n", ncpu);
-    }
 
     /* the first critical section semaphore is for coordinating work, the
      * second for writing out the final record and cleaning up.
@@ -267,6 +277,7 @@ main(int ac, char *av[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

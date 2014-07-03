@@ -1,7 +1,7 @@
 /*                         D A U T O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,60 +29,64 @@
 
 #include "common.h"
 
+#include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include <string.h>
 #include "bio.h"
 
 #include "bu.h"
 
-double	*data;			/* Input buffer */
-double	*r;			/* autocor output */
-double	*weight;		/* weights to unbias estimation */
 
-static const char usage[] = "\
-Usage: dauto [window_size (512)] < doubles\n";
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
-    int	i, j, n, L;
-    double *dp1, *dp2;
+    static const char usage[] = "Usage: dauto [window_size (512)] < doubles >outputfile\n";
 
-    if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-	bu_exit(1, "%s", usage );
+    double *data;			/* Input buffer */
+    double *r;			/* autocor output */
+    double *weight;		/* weights to unbias estimation */
+
+    int i, j, n, L;
+    double *dp1, *dp2;
+    size_t ret;
+
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	bu_exit(1, "%s", usage);
     }
 
     L = (argc > 1) ? atoi(argv[1]) : 512;
-    data = (double *)bu_calloc( L, sizeof(double), "data" );
-    r = (double *)bu_calloc( L, sizeof(double), "r" );
-    weight = (double *)bu_calloc( L, sizeof(double), "weight" );
+    data = (double *)bu_calloc(L, sizeof(double), "data");
+    r = (double *)bu_calloc(L, sizeof(double), "r");
+    weight = (double *)bu_calloc(L, sizeof(double), "weight");
 
-    for ( i = 0; i < L; i++ ) {
+    for (i = 0; i < L; i++) {
 	weight[i] = 1.0 / (double)(L-i);
     }
 
-    while ( !feof( stdin ) ) {
-	n = fread( data, sizeof(*data), L, stdin );
-	if ( n <= 0 )
+    while (!feof(stdin)) {
+	n = fread(data, sizeof(*data), L, stdin);
+	if (n <= 0)
 	    break;
-	if ( n < L )
+	if (n < L)
 	    memset((char *)&data[n], 0, (L-n)*sizeof(*data));
 
-	for ( i = 0; i < L; i++ ) {
+	for (i = 0; i < L; i++) {
 	    r[i] = 0;
 	    dp1 = &data[0];
 	    dp2 = &data[i];
-	    for ( j = L-i; j > 0; j-- ) {
+	    for (j = L-i; j > 0; j--) {
 		r[i] += *dp1++ * *dp2++;
 	    }
 	}
 
 	/* unbias the estimation */
-	for ( i = 0; i < L; i++ ) {
+	for (i = 0; i < L; i++) {
 	    r[i] *= weight[i];
 	}
 
-	fwrite( r, sizeof(*r), L, stdout );
+	ret = fwrite(r, sizeof(*r), L, stdout);
+	if (ret != (size_t)L)
+	    perror("fwrite");
     }
 
     bu_free(data, "data");
@@ -91,6 +95,7 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

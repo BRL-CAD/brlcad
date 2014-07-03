@@ -1,7 +1,7 @@
 /*                      V I E W X R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewxray.c
+/** @file rt/viewxray.c
  *
  *  Ray Tracing program RTXRAY bottom half.
  *
@@ -35,10 +35,15 @@
 #include "common.h"
 
 #include <stdio.h>
+
+#include "bu/parallel.h"
 #include "vmath.h"
+#include "icv.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "rtprivate.h"
+
+#include "./rtuif.h"
+#include "./ext.h"
 
 
 /* lighting models */
@@ -50,34 +55,37 @@ extern	FBIO	*fbp;
 extern	FILE	*outfp;
 extern	fastf_t	viewsize;
 extern	int	lightmodel;
-extern	int	width, height;
 
-static	unsigned char *scanbuf;
-static	int pixsize = 0;		/* bytes per pixel in scanbuf */
-static	double	contrast_boost = 2.0;
+unsigned char *scanbuf;
+static int pixsize = 0;		/* bytes per pixel in scanbuf */
+static double	contrast_boost = 2.0;
 
 static int xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 static int xraymiss(register struct application *ap);
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
+static char *floatfilename=NULL;
+const char floatfileext[] = ".los";
 
 const char title[] = "RT X-Ray";
-const char usage[] = "\
-Usage: rtxray [options] model.g objects... >stuff\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -o file.bw	Output file name, else frame buffer\n\
- -A #		Contrast boost (default 2.0), may clip if > 1\n\
- -x #		Set librt debug flags\n\
- -l 0		line buffered B&W X-Rays (default)\n\
- -l 1		Floating point X-Rays (path lengths in doubles)\n\
-";
+void
+usage(const char *argv0)
+{
+    bu_log("Usage: %s [options] model.g objects... >stuff\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
+    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
+    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -o file.bw	Output file name, else frame buffer\n");
+    bu_log(" -A #		Contrast boost (default 2.0), may clip if > 1\n");
+    bu_log(" -x #		Set librt debug flags\n");
+    bu_log(" -l 0		line buffered B&W X-Rays (default)\n");
+    bu_log(" -l 1		Floating point X-Rays (path lengths in doubles)\n");
+}
 
 
 /*
@@ -85,7 +93,7 @@ Options:\n\
  *  Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o, int minus_F)
+view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj), int minus_o, int minus_F)
 {
     /*
      * We need to work to get the output pixels and scanlines
@@ -95,23 +103,27 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
      * XXX this hack-around causes a need for more careful
      * semaphore acquisition since it may block
      */
-    if (rt_g.rtg_parallel) {
-	rt_g.rtg_parallel = 0;
+    if (RTG.rtg_parallel) {
+	RTG.rtg_parallel = 0;
 	bu_log("rtxray: Can't do parallel yet, using one CPU\n");
     }
 
-    if ( lightmodel == LGT_BW ) {
-	if ( minus_o )
-	    pixsize = 1;		/* BW file */
-	else
-	    pixsize = 3;		/* Frame buffer */
+    if (lightmodel == LGT_BW) {
+	pixsize = 3; /* use frame buffer size with icv */
+	scanbuf = (unsigned char *)bu_malloc( width*pixsize, "scanline buffer" );
     } else {
 	/* XXX - Floating output uses no buffer */
 	pixsize = 0;
-    }
-    if ( pixsize ) {
-	scanbuf = (unsigned char *)
-	    bu_malloc( width*pixsize, "scanline buffer" );
+	/* force change of 'outputfile' to short circuit libicv for LGT_FLOAT outputs, adds '.los' extension */
+	if (outputfile) {
+	    char buf[BUFSIZ];
+	    int format = icv_guess_file_format(outputfile, buf);
+	    if (format != ICV_IMAGE_UNKNOWN) {
+		bu_strlcpy(buf, outputfile, BUFSIZ);
+		bu_strlcat(buf, floatfileext, BUFSIZ);
+		outputfile = floatfilename = bu_strdup(buf);
+	    }
+	}
     }
 
     if ( minus_F || (!minus_o && !minus_F) ) {
@@ -129,7 +141,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
 
 /* beginning of a frame */
 void
-view_2init(struct application *ap, char *framename)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
     /*
      *  This is a dangerous hack to allow us to use -A #
@@ -148,81 +160,76 @@ view_2init(struct application *ap, char *framename)
 
 /* end of each pixel */
 void
-view_pixel(register struct application *ap)
+view_pixel(struct application *UNUSED(ap))
 {
 }
 
 /* end of each line */
 void
-view_eol(register struct application *ap)
+view_eol(struct application *ap)
 {
-    int i;
-    unsigned char *buf = (unsigned char *)NULL;
+    size_t i;
 
     if ( lightmodel == LGT_BW ) {
-	if ( outfp != NULL ) {
-	    if (rt_g.rtg_parallel) {
+
+	if (bif != NULL) {
+	    if (RTG.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
-	    fwrite( scanbuf, pixsize, width, outfp );
-	    if (rt_g.rtg_parallel) {
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    /* TODO : Add double type data to maintain resolution */
+	    icv_writeline(bif, ap->a_y, scanbuf, ICV_DATA_UCHAR);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	    if (RTG.rtg_parallel) {
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	    }
-	    if ( fbp != FBIO_NULL ) {
-		if (!buf) {
-		    buf = (unsigned char *)bu_malloc(sizeof(RGBpixel)*width, "allocating temporary buffer in viewxray");
-		}
-
-		/* fb_write only accepts RGBpixel arrays, so convert it */
-		for (i=0; i < width; i++) {
-		    buf[i*3+RED] = scanbuf[i];
-		    buf[i*3+GRN] = scanbuf[i];
-		    buf[i*3+BLU] = scanbuf[i];
-		}
-
-		if (rt_g.rtg_parallel) {
-		    bu_semaphore_acquire( BU_SEM_SYSCALL );
-		}
-		fb_write( fbp, 0, ap->a_y, buf, width );
-		if (rt_g.rtg_parallel) {
-		    bu_semaphore_release( BU_SEM_SYSCALL );
-		}
-
-		if (buf) {
-		    bu_free(buf, "releasing temporary buffer in viewxray");
-		}
-	    }
-	} else {
-	    if (rt_g.rtg_parallel) {
+	} else if ( outfp != NULL ) {
+	    if (RTG.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
-	    fb_write( fbp, 0, ap->a_y, scanbuf, width );
-	    if (rt_g.rtg_parallel) {
+	    i = fwrite( scanbuf, pixsize, width, outfp );
+	    if (i < width) {
+		perror("fwrite");
+	    }
+	    if (RTG.rtg_parallel) {
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	    }
 	}
+	if ( fbp != FBIO_NULL ) {
+	    if (RTG.rtg_parallel) {
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
+	    }
+	    fb_write( fbp, 0, ap->a_y, scanbuf, width );
+	    if (RTG.rtg_parallel) {
+		bu_semaphore_release( BU_SEM_SYSCALL );
+	    }
+	}
+
+	if (bif == NULL && fbp == FBIO_NULL && outfp == NULL)
+	    bu_log("rtxray: strange, no end of line actions taken.\n");
     }
 }
 
-void	view_setup(void) {}
+void	view_setup(struct rt_i *UNUSED(rtip)) {}
 /* end of a frame, called after rt_clean() */
-void	view_cleanup(void) {}
+void	view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 /* end of each frame */
 void
-view_end(void)
+view_end(struct application *UNUSED(ap))
 {
 
 }
 
 static int
-xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
+xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp;
     register struct hit *hitp;
     fastf_t	totdist;
     fastf_t	fvalue;
     unsigned char value;
+    size_t ret;
 
     for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 	if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -265,7 +272,9 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
     switch ( lightmodel ) {
 	case LGT_FLOAT:
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    fwrite( &totdist, sizeof(totdist), 1, outfp );
+	    ret = fwrite( &totdist, sizeof(totdist), 1, outfp );
+	    if (ret < 1)
+		perror("fwrite");
 	    bu_semaphore_release( BU_SEM_SYSCALL );
 	    break;
 	case LGT_BW:
@@ -291,7 +300,8 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 static int
 xraymiss(register struct application *ap)
 {
-    static	double	zero = 0;
+    static double zero = 0;
+    size_t ret;
 
     switch ( lightmodel ) {
 	case LGT_BW:
@@ -307,7 +317,9 @@ xraymiss(register struct application *ap)
 	    break;
 	case LGT_FLOAT:
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    fwrite( &zero, sizeof(zero), 1, outfp );
+	    ret = fwrite( &zero, sizeof(zero), 1, outfp );
+	    if (ret < 1)
+		perror("fwrite");
 	    bu_semaphore_release( BU_SEM_SYSCALL );
 	    break;
 	default:

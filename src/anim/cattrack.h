@@ -1,7 +1,7 @@
 /*                      C A T T R A C K . H
  * BRL-CAD
  *
- * Copyright (c) 2010 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,13 +23,17 @@
  *
  */
 
+#ifndef ANIM_CATTRACK_H
+#define ANIM_CATTRACK_H
+
 #include "common.h"
 
 #include "bu.h"
 
+__BEGIN_DECLS
 
 /**
- * get x value of a point which is a given distance along caternary
+ * get x value of a point which is a given distance along catenary
  * curve:  x(s) = arcsinh(a*s-sinh(a*c))/a + c
  *
  * Left to calling routine to avoid dividing by zero.
@@ -38,25 +42,25 @@ fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s);
 
 
 /**
- * calculate the arclength parameter of a caternary curve
+ * calculate the arclength parameter of a catenary curve
  * corresponding to the given value of x.
  *
  * s(x) = (sinh(a(x-c))+sinh(ac))/a
  *
- * Left to calling routime to avoid dividing by zero.
+ * Left to calling routine to avoid dividing by zero.
  */
 fastf_t hyper_get_s(fastf_t a, fastf_t c, fastf_t x);
 
 
 /**
- * calculate point on the caternary curve: z(x) = cosh(a*(x-c))/a + b
+ * calculate point on the catenary curve: z(x) = cosh(a*(x-c))/a + b
  * Left to calling routine to avoid dividing by zero.
  */
 fastf_t hyper_get_z(fastf_t a, fastf_t b, fastf_t c, fastf_t x);
 
 
 /**
- * calculate angle corresponding to the slope of caternary curve:
+ * calculate angle corresponding to the slope of catenary curve:
  * z'(x) = sinh(a*(x-c))
  */
 fastf_t hyper_get_ang(fastf_t a, fastf_t c, fastf_t x);
@@ -82,6 +86,9 @@ fastf_t hyper_get_ang(fastf_t a, fastf_t c, fastf_t x);
  */
 int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one, fastf_t r_zero, fastf_t r_one);
 
+__END_DECLS
+
+#endif /* ANIM_CATTRACK_H */
 
 /*
  * Local Variables:

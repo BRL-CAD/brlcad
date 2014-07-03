@@ -1,7 +1,7 @@
 /*                       D B _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2010 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,17 +36,20 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "bn.h"
 #include "db.h"
 #include "mater.h"
 #include "raytrace.h"
+
+#include "../librt_private.h"
 
 
 #define STAT_ROT 1
@@ -56,8 +59,6 @@
 
 
 /**
- * D B _ C O M B _ M A T _ C A T E G O R I Z E
- *
  * Describe with a bit vector the effects this matrix will have.
  */
 static int
@@ -67,39 +68,34 @@ db_comb_mat_categorize(const fastf_t *matp)
 
     if (!matp) return 0;
 
-    if (!NEAR_ZERO(matp[0] - 1.0, SMALL_FASTF)
-	|| !NEAR_ZERO(matp[5] - 1.0, SMALL_FASTF)
-	|| !NEAR_ZERO(matp[10] - 1.0, SMALL_FASTF))
+    if (!ZERO(matp[0] - 1.0)
+	|| !ZERO(matp[5] - 1.0)
+	|| !ZERO(matp[10] - 1.0))
     {
 	status |= STAT_ROT;
     }
 
-    if (!NEAR_ZERO(matp[MDX], SMALL_FASTF)
-	|| !NEAR_ZERO(matp[MDY], SMALL_FASTF)
-	|| !NEAR_ZERO(matp[MDZ], SMALL_FASTF))
+    if (!ZERO(matp[MDX])
+	|| !ZERO(matp[MDY])
+	|| !ZERO(matp[MDZ]))
     {
 	status |= STAT_XLATE;
     }
 
-    if (!NEAR_ZERO(matp[12], SMALL_FASTF)
-	|| !NEAR_ZERO(matp[13], SMALL_FASTF)
-	|| !NEAR_ZERO(matp[14], SMALL_FASTF))
+    if (!ZERO(matp[12])
+	|| !ZERO(matp[13])
+	|| !ZERO(matp[14]))
     {
 	status |= STAT_PERSP;
     }
 
-    if (!NEAR_ZERO(matp[15], SMALL_FASTF))
+    if (!ZERO(matp[15]))
 	status |= STAT_SCALE;
 
     return status;
 }
 
 
-/**
- * D B _ T R E E _ N L E A V E S
- *
- * Return count of number of leaf nodes in this tree.
- */
 size_t
 db_tree_nleaves(const union tree *tp)
 {
@@ -139,21 +135,6 @@ db_tree_nleaves(const union tree *tp)
 }
 
 
-/**
- * D B _ F L A T T E N _ T R E E
- *
- * Take a binary tree in "V4-ready" layout (non-unions pushed below unions,
- * left-heavy), and flatten it into an array layout, ready for conversion
- * back to the GIFT-inspired V4 database format.
- *
- * This is done using the db_non_union_push() routine.
- *
- * If argument 'free' is non-zero, then
- * the non-leaf nodes are freed along the way, to prevent memory leaks.
- * In this case, the caller's copy of 'tp' will be invalid upon return.
- *
- * When invoked at the very top of the tree, the op argument must be OP_UNION.
- */
 struct rt_tree_array *
 db_flatten_tree(
     struct rt_tree_array *rt_tree_array,
@@ -195,11 +176,6 @@ db_flatten_tree(
 }
 
 
-/**
- * R T _ C O M B _ I M P O R T 4
- *
- * Import a combination record from a V4 database into internal form.
- */
 int
 rt_comb_import4(
     struct rt_db_internal *ip,
@@ -232,9 +208,9 @@ rt_comb_import4(
     else
 	rt_tree_array = (struct rt_tree_array *)NULL;
 
-    for (j=0; j<node_count; j++) {
+    for (j = 0; j < node_count; j++) {
 	if (rp[j+1].u_id != ID_MEMB) {
-	    bu_free((genptr_t)rt_tree_array, "rt_comb_import4: rt_tree_array");
+	    bu_free((void *)rt_tree_array, "rt_comb_import4: rt_tree_array");
 	    bu_log("rt_comb_import4(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id);
 	    return -1;
 	}
@@ -262,16 +238,15 @@ rt_comb_import4(
 
 	    RT_GET_TREE(tp, resp);
 	    rt_tree_array[j].tl_tree = tp;
-	    tp->tr_l.magic = RT_TREE_MAGIC;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 
 	    /* bu_strlcpy not safe here, buffer size mismatch */
-	    strncpy(namebuf, rp[j+1].M.m_instname, NAMESIZE);
-	    namebuf[NAMESIZE] = '\0'; /* sanity */
+	    memset(namebuf, 0, NAMESIZE+1);
+	    memcpy(namebuf, rp[j+1].M.m_instname, sizeof(rp[j+1].M.m_instname));
 
 	    tp->tr_l.tl_name = bu_strdup(namebuf);
 
-	    rt_mat_dbmat(diskmat, rp[j+1].M.m_mat);
+	    flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, dbip->dbi_version < 0 ? 1 : 0);
 
 	    /* Verify that rotation part is pure rotation */
 	    if (fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 ||
@@ -286,9 +261,9 @@ rt_comb_import4(
 	    }
 
 	    /* Verify that perspective isn't used as a modeling transform */
-	    if (!NEAR_ZERO(diskmat[12], SMALL_FASTF)
-		|| !NEAR_ZERO(diskmat[13], SMALL_FASTF)
-		|| !NEAR_ZERO(diskmat[14], SMALL_FASTF))
+	    if (!ZERO(diskmat[12])
+		|| !ZERO(diskmat[13])
+		|| !ZERO(diskmat[14]))
 	    {
 		bu_log("ERROR: %s/%s has perspective transform\n", rp[0].c.c_name, namebuf);
 	    }
@@ -317,17 +292,18 @@ rt_comb_import4(
     else
 	tree = (union tree *)NULL;
 
-    RT_INIT_DB_INTERNAL(ip);
+    RT_DB_INTERNAL_INIT(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_COMBINATION;
-    ip->idb_meth = &rt_functab[ID_COMBINATION];
-    comb = (struct rt_comb_internal *)bu_malloc(sizeof(struct rt_comb_internal), "rt_comb_import4: rt_comb_internal");
-    ip->idb_ptr = (genptr_t)comb;
-    comb->magic = RT_COMB_MAGIC;
-    bu_vls_init(&comb->shader);
-    bu_vls_init(&comb->material);
+    ip->idb_meth = &OBJ[ID_COMBINATION];
+
+    BU_ALLOC(comb, struct rt_comb_internal);
+    RT_COMB_INTERNAL_INIT(comb);
+
     comb->tree = tree;
-    comb->temperature = -1;
+
+    ip->idb_ptr = (void *)comb;
+
     switch (rp[0].c.c_flags) {
 	case DBV4_NON_REGION_NULL:
 	case DBV4_NON_REGION:
@@ -352,10 +328,17 @@ rt_comb_import4(
     }
 
     if (comb->region_flag) {
-	comb->region_id = rp[0].c.c_regionid;
-	comb->aircode = rp[0].c.c_aircode;
-	comb->GIFTmater = rp[0].c.c_material;
-	comb->los = rp[0].c.c_los;
+	if (dbip->dbi_version < 0) {
+	    comb->region_id = flip_short(rp[0].c.c_regionid);
+	    comb->aircode = flip_short(rp[0].c.c_aircode);
+	    comb->GIFTmater = flip_short(rp[0].c.c_material);
+	    comb->los = flip_short(rp[0].c.c_los);
+	} else {
+	    comb->region_id = rp[0].c.c_regionid;
+	    comb->aircode = rp[0].c.c_aircode;
+	    comb->GIFTmater = rp[0].c.c_material;
+	    comb->los = rp[0].c.c_los;
+	}
     } else {
 	/* set some reasonable defaults */
 	comb->region_id = 0;
@@ -371,21 +354,27 @@ rt_comb_import4(
 	comb->rgb[2] = rp[0].c.c_rgb[2];
     }
     if (rp[0].c.c_matname[0] != '\0') {
-	char shader_str[94];
+#define MAX_SS 128
+	char shader_str[MAX_SS];
 
-	memset(shader_str, 0, 94);
+	memset(shader_str, 0, MAX_SS);
 
 	/* copy shader info to a static string */
-	strncpy(shader_str,  rp[0].c.c_matname, 32);
-	shader_str[32] = '\0'; /* c_matname is a buffer, bu_strlcpy not safe here */
 
-	strcat(shader_str, " ");
+	/* write shader name.  c_matname is a buffer, bu_strlcpy not
+	 * safe here.
+	 */
+	memcpy(shader_str, rp[0].c.c_matname, sizeof(rp[0].c.c_matname));
 
-	/* c_matparm is a buffer, bu_strlcpy not safe here */
-	strncat(shader_str, rp[0].c.c_matparm, 32);
+	bu_strlcat(shader_str, " ", MAX_SS);
+
+	/* write shader parameters.  c_matparm is a buffer, bu_strlcpy
+	 * not safe here.
+	 */
+	memcpy(shader_str+strlen(shader_str), rp[0].c.c_matparm, sizeof(rp[0].c.c_matparm));
 
 	/* convert to TCL format and place into comb->shader */
-	if (bu_shader_to_tcl_list(shader_str, &comb->shader)) {
+	if (bu_shader_to_list(shader_str, &comb->shader)) {
 	    bu_log("rt_comb_import4: Error: Cannot convert following shader to TCL format:\n");
 	    bu_log("\t%s\n", shader_str);
 	    bu_vls_free(&comb->shader);
@@ -398,17 +387,14 @@ rt_comb_import4(
     comb->inherit = (rp[0].c.c_inherit == DB_INH_HIGHER) ? 1 : 0;
     /* Automatic material table lookup here? */
     if (comb->region_flag)
-	bu_vls_printf(&comb->material, "gift%d", comb->GIFTmater);
+	bu_vls_printf(&comb->material, "gift%ld", comb->GIFTmater);
 
-    if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
+    if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
 
     return 0;
 }
 
 
-/**
- * R T _ C O M B _ E X P O R T 4
- */
 int
 rt_comb_export4(
     struct bu_external *ep,
@@ -425,7 +411,7 @@ rt_comb_export4(
     union record *rp;
     size_t j;
     char *endp;
-    struct bu_vls tmp_vls;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
@@ -460,9 +446,9 @@ rt_comb_export4(
     }
 
     /* Reformat the data into the necessary V4 granules */
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = sizeof(union record) * (1 + node_count);
-    ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "v4 comb external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "v4 comb external");
     rp = (union record *)ep->ext_buf;
 
     /* Convert the member records */
@@ -487,11 +473,12 @@ rt_comb_export4(
 	}
 
 	NAMEMOVE(tp->tr_l.tl_name, rp[j+1].M.m_instname);
+	rp[j+1].M.m_instname[NAMESIZE-1] = '\0'; /* sanity */
 
 	if (tp->tr_l.tl_mat) {
-	    rt_dbmat_mat(rp[j+1].M.m_mat, tp->tr_l.tl_mat);
+	    flip_dbmat_mat(rp[j+1].M.m_mat, tp->tr_l.tl_mat);
 	} else {
-	    rt_dbmat_mat(rp[j+1].M.m_mat, bn_mat_identity);
+	    flip_dbmat_mat(rp[j+1].M.m_mat, bn_mat_identity);
 	}
 	db_free_tree(tp, resp);
     }
@@ -525,8 +512,6 @@ rt_comb_export4(
 	rp[0].c.c_rgb[1] = comb->rgb[1];
 	rp[0].c.c_rgb[2] = comb->rgb[2];
     }
-
-    bu_vls_init(&tmp_vls);
 
     /* convert TCL list format shader to keyword=value format */
     if (bu_shader_to_key_eq(bu_vls_addr(&comb->shader), &tmp_vls)) {
@@ -580,12 +565,6 @@ rt_comb_export4(
 }
 
 
-/**
- * D B _ T R E E _ F L A T T E N _ D E S C R I B E
- *
- * Produce a GIFT-compatible listing, one "member" per line,
- * regardless of the structure of the tree we've been given.
- */
 void
 db_tree_flatten_describe(
     struct bu_vls *vls,
@@ -692,14 +671,11 @@ db_tree_flatten_describe(
 	bu_vls_printf(vls, "\n");
     }
 
-    if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
+    if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
     db_free_tree(ntp, resp);
 }
 
 
-/**
- * D B _ T R E E _ D E S C R I B E
- */
 void
 db_tree_describe(
     struct bu_vls *vls,
@@ -803,9 +779,6 @@ db_tree_describe(
 }
 
 
-/**
- * D B _ C O M B _ D E S C R I B E
- */
 void
 db_comb_describe(
     struct bu_vls *str,
@@ -819,7 +792,7 @@ db_comb_describe(
 
     if (comb->region_flag) {
 	bu_vls_printf(str,
-		      "REGION id=%d (air=%d, los=%d, GIFTmater=%d) ",
+		      "REGION id=%ld (air=%ld, los=%ld, GIFTmater=%ld) ",
 		      comb->region_id,
 		      comb->aircode,
 		      comb->los,
@@ -866,8 +839,6 @@ db_comb_describe(
 
 
 /**
- * R T _ C O M B _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this combination.
  */
 void
@@ -881,23 +852,13 @@ rt_comb_ifree(struct rt_db_internal *ip)
     if (comb) {
 	/* If tree hasn't been stolen, release it */
 	db_free_tree(comb->tree, &rt_uniresource);
-	comb->tree = NULL;
-
-	bu_vls_free(&comb->shader);
-	bu_vls_free(&comb->material);
-
-	comb->magic = 0;			/* sanity */
-	bu_free((genptr_t)comb, "comb ifree");
+	RT_FREE_COMB_INTERNAL(comb);
+	bu_free((void *)comb, "comb ifree");
     }
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
-/**
- * R T _ C O M B _ D E S C R I B E
- *
- * rt_functab[ID_COMBINATION].ft_describe() method
- */
 int
 rt_comb_describe(
     struct bu_vls *str,
@@ -921,15 +882,6 @@ rt_comb_describe(
 }
 
 
-/*==================== END g_comb.c / table.c interface ========== */
-
-/**
- * D B _ W R A P _ V 4 _ E X T E R N A L
- *
- * As the v4 database does not really have the notion of "wrapping",
- * this function writes the object name into the
- * proper place (a standard location in all granules).
- */
 void
 db_wrap_v4_external(struct bu_external *op, const char *name)
 {
@@ -939,22 +891,10 @@ db_wrap_v4_external(struct bu_external *op, const char *name)
 
     rec = (union record *)op->ext_buf;
     NAMEMOVE(name, rec->s.s_name);
+    rec->s.s_name[NAMESIZE-1] = '\0';
 }
 
 
-/* Some export support routines */
-
-/**
- * D B _ C K _ L E F T _ H E A V Y _ T R E E
- *
- * Support routine for db_ck_v4gift_tree().
- * Ensure that the tree below 'tp' is left-heavy, i.e. that there are
- * nothing but solids on the right side of any binary operations.
- *
- * Returns -
- * -1 ERROR
- * 0 OK
- */
 int
 db_ck_left_heavy_tree(
     const union tree *tp,
@@ -984,21 +924,6 @@ db_ck_left_heavy_tree(
 }
 
 
-/**
- * D B _ C K _ V 4 G I F T _ T R E E
- *
- * Look a gift-tree in the mouth.
- * Ensure that this boolean tree conforms to the GIFT convention that
- * union operations must bind the loosest.
- * There are two stages to this check:
- * 1) Ensure that if unions are present they are all at the root of tree,
- * 2) Ensure non-union children of union nodes are all left-heavy
- * (nothing but solid nodes permitted on rhs of binary operators).
- *
- * Returns -
- * -1 ERROR
- * 0 OK
- */
 int
 db_ck_v4gift_tree(const union tree *tp)
 {
@@ -1026,15 +951,6 @@ db_ck_v4gift_tree(const union tree *tp)
 }
 
 
-/**
- * D B _ M K B O O L _ T R E E
- *
- * Given a rt_tree_array array, build a tree of "union tree" nodes
- * appropriately connected together.  Every element of the
- * rt_tree_array array used is replaced with a TREE_NULL.
- * Elements which are already TREE_NULL are ignored.
- * Returns a pointer to the top of the tree.
- */
 union tree *
 db_mkbool_tree(
     struct rt_tree_array *rt_tree_array,
@@ -1054,7 +970,7 @@ db_mkbool_tree(
 	return TREE_NULL;
 
     /* Count number of non-null sub-trees to do */
-    for (i=howfar, inuse=0, tlp=rt_tree_array; i>0; i--, tlp++) {
+    for (i = howfar, inuse = 0, tlp = rt_tree_array; i > 0; i--, tlp++) {
 	if (tlp->tl_tree == TREE_NULL)
 	    continue;
 	if (inuse++ == 0)
@@ -1086,7 +1002,6 @@ db_mkbool_tree(
 	    continue;
 
 	RT_GET_TREE(xtp, resp);
-	xtp->magic = RT_TREE_MAGIC;
 	xtp->tr_b.tb_left = curtree;
 	xtp->tr_b.tb_right = tlp->tl_tree;
 	xtp->tr_b.tb_regionp = (struct region *)0;
@@ -1098,9 +1013,6 @@ db_mkbool_tree(
 }
 
 
-/**
- * D B _ M K G I F T _ T R E E
- */
 union tree *
 db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource *resp)
 {
@@ -1162,13 +1074,6 @@ db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource
 }
 
 
-/**
- * r t _ c o m b _ g e t _ c o l o r
- *
- * fills in rgb with the color for a given comb combination
- *
- * returns truthfully if a color could be got
- */
 int
 rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb)
 {
@@ -1199,6 +1104,62 @@ rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb)
     return 0;
 }
 
+int
+db_comb_mvall(struct directory *dp, struct db_i *dbip, const char *old_name, const char *new_name, struct bu_ptbl *stack)
+{
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    union tree *comb_leaf;
+    int done=0;
+    int changed=0;
+
+    /* Make sure the stack bu_ptbl is ready */
+    bu_ptbl_reset(stack);
+
+    if (!(dp->d_flags & RT_DIR_COMB)) return 0;
+
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    comb_leaf = comb->tree;
+
+    if (comb_leaf) {
+	while (!done) {
+	    while (comb_leaf->tr_op != OP_DB_LEAF) {
+		bu_ptbl_ins(stack, (long *)comb_leaf);
+		comb_leaf = comb_leaf->tr_b.tb_left;
+	    }
+
+	    if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, old_name)) {
+		bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
+		comb_leaf->tr_l.tl_name = bu_strdup(new_name);
+		changed = 1;
+	    }
+
+	    if (BU_PTBL_END(stack) < 1) {
+		done = 1;
+		break;
+	    }
+	    comb_leaf = (union tree *)BU_PTBL_GET(stack, BU_PTBL_END(stack)-1);
+	    if (comb_leaf->tr_op != OP_DB_LEAF) {
+		bu_ptbl_rm(stack, (long *)comb_leaf);
+		comb_leaf = comb_leaf->tr_b.tb_right;
+	    }
+	}
+    }
+
+    if (changed) {
+	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource)) {
+	    rt_db_free_internal(&intern);
+	    return 2;
+	}
+    }
+
+    rt_db_free_internal(&intern);
+
+    /* success */
+    return 1;
+}
 
 /** @} */
 /*

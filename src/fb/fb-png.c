@@ -1,7 +1,7 @@
 /*                        F B - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,16 +29,11 @@
 
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
+#include "bin.h"
 
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
-#include "png.h"
 #include "bu.h"
 #include "fb.h"
 
@@ -66,14 +61,10 @@ get_args(int argc, char **argv)
     int c;
     char *file_name;
 
-    while ((c = bu_getopt(argc, argv, "chiF:s:w:n:g:#:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ciF:s:w:n:g:#:h?")) != -1) {
 	switch (c) {
 	    case 'c':
 		crunch = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		screen_height = screen_width = 1024;
 		break;
 	    case 'i':
 		inverse = 1;
@@ -116,7 +107,7 @@ get_args(int argc, char **argv)
 	    bu_log("fb-png: cannot open \"%s\" for writing\n", file_name);
 	    return 0;
 	}
-	(void)bu_fchmod(outfp, 0444);
+	(void)bu_fchmod(fileno(outfp), 0444);
     }
 
     if (argc > ++bu_optind)
@@ -141,7 +132,7 @@ main(int argc, char **argv)
     png_infop info_p;
 
     char usage[] = "\
-Usage: fb-png [-h -i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
+Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 	[-s squaresize] [-w width] [-n height] [file.png]\n";
 
     screen_height = screen_width = 512;		/* Defaults */
@@ -194,7 +185,7 @@ Usage: fb-png [-h -i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 		 PNG_FILTER_TYPE_DEFAULT);
 
     /* default to no gamma correction */
-    if (!(out_gamma < 0.0))
+    if (out_gamma > 0.0)
 	png_set_gAMA(png_p, info_p, out_gamma);
 
     png_write_info(png_p, info_p);

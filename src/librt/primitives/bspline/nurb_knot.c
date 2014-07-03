@@ -1,7 +1,7 @@
 /*                     N U R B _ K N O T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_knot.c
+/** @file primitives/bspline/nurb_knot.c
  *
  * Various knot vector routines.
  *
@@ -93,8 +93,8 @@ rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num
 
     check.k_size = num - n;
     if (check.k_size <= 0) {
-	bu_log("rt_nurb_kvmult(new_kv=x%x, kv=x%x, num=%d, val=%g)\n",
-	       new_kv, kv, num, val);
+	bu_log("rt_nurb_kvmult(new_kv=%p, kv=%p, num=%d, val=%g)\n",
+	       (void *)new_kv, (void *)kv, num, val);
 	rt_nurb_pr_kv(kv);
 	bu_bomb("rt_nurb_kvmult\n");
     }
@@ -185,7 +185,7 @@ rt_nurb_kvcheck(fastf_t val, register const struct knot_vector *kv)
     register int i;
 
     for (i = 0; i < kv->k_size; i++) {
-	if (NEAR_ZERO(val - kv->knots[i], SMALL_FASTF))
+	if (ZERO(val - kv->knots[i]))
 	    kv_num++;
     }
 
@@ -255,7 +255,7 @@ rt_nurb_kvnorm(register struct knot_vector *kv)
     register int i;
 
     upper = kv->knots[kv->k_size - 1];
-    if (NEAR_ZERO(upper, SMALL))
+    if (ZERO(upper))
 	upper = 0;
     else
 	upper = 1 / upper;
@@ -293,9 +293,9 @@ rt_nurb_knot_index(const struct knot_vector *kv, fastf_t k_value, int order)
 	    return - 1;
     }
 
-    if (NEAR_ZERO(k_value - kv->knots[ kv->k_size - order + 1], SMALL_FASTF))
+    if (ZERO(k_value - kv->knots[ kv->k_size - order + 1]))
 	k_index = kv->k_size - order - 1;
-    else if (NEAR_ZERO(k_value - kv->knots[ order - 1], SMALL_FASTF))
+    else if (ZERO(k_value - kv->knots[ order - 1]))
 	k_index = order - 1;
     else {
 	k_index = 0;

@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2010 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewedge.c
+/** @file rt/viewedge.c
  *
  * Ray Tracing program RTEDGE bottom half.
  *
@@ -35,7 +35,7 @@
  * cell at an awkward gridding.
  *
  * TODO: horribly inefficient at the moment with the current
- * book-keeping with 2x as much work occuring as necessary on default
+ * book-keeping with 2x as much work occurring as necessary on default
  * renders due to double-firing of the "below" row.  antialiasing
  * makes it even worse with entire subgrids being refired (although
  * they should all at least be unique).
@@ -91,10 +91,11 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
 #include "fb.h"
 #include "bu.h"
+#include "icv.h"
 
+#include "./rtuif.h"
 #include "./ext.h"
 
 
@@ -158,7 +159,7 @@ color bgcolor = {0, 0, 0};
  *
  * detect_ids -> detect boundaries region id codes.
  * detect_regions -> detect region boundaries.
- * detect_distance -> detect noticable differences in hit distance.
+ * detect_distance -> detect noticeable differences in hit distance.
  * detect_normals -> detect rapid change in surface normals
  */
 int detect_ids = 1;
@@ -226,74 +227,76 @@ static int antialias = 0;
 static int both_sides = 0;
 
 
-struct bu_vls occlusion_objects;
+struct bu_vls occlusion_objects = BU_VLS_INIT_ZERO;
 struct rt_i *occlusion_rtip = NULL;
 struct application **occlusion_apps;
 
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"%d", 1, "detect_regions", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "dr", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "detect_distance", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "dd", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "detect_normals", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "dn", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "detect_ids", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "di", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 3, "foreground", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 3, "fg", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 3, "background", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 3, "bg", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "overlay", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "ov", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "blend", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "bl", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "region_color", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "rc", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
-    {"%V", 1, "occlusion_objects", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL},
-    {"%V", 1, "oo", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "om", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
-    {"%f", 1, "max_dist", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL},
-    {"%f", 1, "md", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "antialias", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "aa", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "both_sides", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "bs", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL},
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "detect_regions", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "dr", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_distance", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "dd", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_normals", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "dn", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_ids", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "di", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 3, "foreground", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 3, "fg", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 3, "background", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 3, "bg", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "overlay", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "ov", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "blend", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "bl", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "region_color", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "rc", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%V", 1, "occlusion_objects", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%V", 1, "oo", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "om", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "max_dist", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "md", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "antialias", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "aa", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "both_sides", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "bs", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 const char title[] = "RT Hidden-Line Renderer";
-const char usage[] = "\
-Usage:  rtedge [options] model.g objects... >file.pix\n\
-Options:\n\
- -r		Report overlaps (default)\n\
- -R		Do not report overlaps\n\
- -M		Read matrix+commands on stdin\n\
- -o model.pix	Output .pix format file (default is window)\n\
- -s #		Square grid size in pixels (default is 512)\n\
- -w # -n #	Grid size width (w) and height (n) in pixels\n\
- -a # -e #	Azimuth (a) and elevation (e) in degrees\n\
- -V #		View (pixel) aspect ratio (width/height)\n\
- -p #		Perspective angle, degrees side to side\n\
- -P #		Set number of processors\n\
- -T #/#		Tolerance: distance/angular\n\
- -l #		Set lighting model rendering style\n\
- -U #		Use air if # is greater than 0\n\
- -x #		librt debug flags\n\
- -N #		NMG debug flags\n\
- -X #		rt debug flags\n\
- -c		Auxillary commands (see man page)\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.pix\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -r		Report overlaps (default)\n");
+    bu_log(" -R		Do not report overlaps\n");
+    bu_log(" -M		Read matrix+commands on stdin\n");
+    bu_log(" -o model.pix	Output .pix format file (default is window)\n");
+    bu_log(" -s #		Square grid size in pixels (default is 512)\n");
+    bu_log(" -w # -n #	Grid size width (w) and height (n) in pixels\n");
+    bu_log(" -a # -e #	Azimuth (a) and elevation (e) in degrees\n");
+    bu_log(" -V #		View (pixel) aspect ratio (width/height)\n");
+    bu_log(" -p #		Perspective angle, degrees side to side\n");
+    bu_log(" -P #		Set number of processors\n");
+    bu_log(" -T #/#		Tolerance: distance/angular\n");
+    bu_log(" -l #		Set lighting model rendering style\n");
+    bu_log(" -U #		Use air if # is greater than 0\n");
+    bu_log(" -x #		librt debug flags\n");
+    bu_log(" -N #		NMG debug flags\n");
+    bu_log(" -X #		rt debug flags\n");
+    bu_log(" -c		Auxiliary commands (see man page)\n");
+}
 
 
 int handle_main_ray(struct application *ap, register struct partition *PartHeadp, struct seg *segp);
 int diffpixel(RGBpixel a, RGBpixel b);
 
-static int occlusion_hit(struct application *ap, struct partition *pt,
-			 struct seg *segp)
+static int occlusion_hit(struct application *ap, struct partition *pt, struct seg *UNUSED(segp))
 {
     struct hit *hitp = pt->pt_forw->pt_inhit;
 
@@ -347,9 +350,6 @@ static int occludes(struct application *ap, struct cell *here)
 }
 
 
-/**
- * R A Y H I T
- */
 int rayhit(struct application *ap, register struct partition *pt,
 	   struct seg *segp)
 {
@@ -358,9 +358,6 @@ int rayhit(struct application *ap, register struct partition *pt,
 }
 
 
-/**
- * R A Y M I S S
- */
 int raymiss(struct application *ap)
 {
     handle_main_ray(ap, NULL, NULL);
@@ -414,7 +411,7 @@ void choose_color(RGBpixel col, double intensity, struct cell *me,
  * Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_F)
+view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, int minus_F)
 {
     /*
      * Allocate a scanline for each processor.
@@ -448,9 +445,19 @@ view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_
 	}
 
 
-	if ((dbip = db_open(file, "r")) == DBI_NULL)
-	    bu_exit(EXIT_FAILURE, "rtedge: could not open database.\n");
+	if ((dbip = db_open(file, DB_OPEN_READONLY)) == DBI_NULL)
+	    bu_exit(EXIT_FAILURE, "rtedge: could not open geometry database file %s.\n", file);
 	RT_CK_DBI(dbip);
+
+#if 0
+	/* FIXME: calling this when db_open()'s mapped file doesn't
+	 * fail will cause duplicate directory entries.  need to make
+	 * sure db_dirbuild rebuilds from scratch or only updates
+	 * existing entries when they exist.
+	 */
+	if (db_dirbuild(dbip) < 0)
+	    bu_exit(EXIT_FAILURE, "rtedge: could not read database.\n");
+#endif
 
 	occlusion_rtip = rt_new_rti(dbip); /* clones dbip */
 
@@ -471,18 +478,17 @@ view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_
 
 	rt_prep(occlusion_rtip);
 
-	bu_log("rtedge: occlustion prep done.\n");
+	bu_log("rtedge: occlusion prep done.\n");
 
 	/*
 	 * Create a set of application structures for the occlusion
 	 * geometry. Need one per cpu, the upper half does the per-
 	 * thread allocation in worker, but that's off limits.
 	 */
-	occlusion_apps = bu_calloc(npsw, sizeof(struct application *),
-				   "occlusion application structure array");
+	occlusion_apps = (struct application **)bu_calloc(npsw, sizeof(struct application *),
+							  "occlusion application structure array");
 	for (i=0; i<npsw; ++i) {
-	    occlusion_apps[i] = bu_malloc(sizeof(struct application), "occlusion_application structure");
-
+	    BU_ALLOC(occlusion_apps[i], struct application);
 	    RT_APPLICATION_INIT(occlusion_apps[i]);
 
 	    occlusion_apps[i]->a_rt_i = occlusion_rtip;
@@ -540,11 +546,11 @@ view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_
 	 * Output is to a file stream.  Do not allow parallel
 	 * processing since we can't seek to the rows.
 	 */
-	rt_g.rtg_parallel = 0;
+	RTG.rtg_parallel = 0;
 	bu_log("view_init: deactivating parallelism due to -o option.\n");
 	/*
 	 * The overlay and blend cannot be used in -o mode.  Note that
-	 * the overlay directive takes precendence, they can't be used
+	 * the overlay directive takes precedence, they can't be used
 	 * together.
 	 */
 	overlay = 0;
@@ -565,12 +571,9 @@ view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_
  * beginning of a frame
  */
 void
-view_2init(struct application *ap)
+view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 {
     int i;
-
-    if (outputfile)
-	bif = bu_image_save_open(outputfile, BU_IMAGE_AUTO, width, height, 3);
 
     /*
      * Per_processor_chuck specifies the number of pixels rendered per
@@ -606,7 +609,7 @@ view_2init(struct application *ap)
      */
     for (i = 0; i < npsw; ++i) {
 	if (saved[i] == NULL)
-	    saved[i] = (struct cell *) bu_calloc(1, sizeof(struct cell), "saved cell info");
+	    BU_ALLOC(saved[i], struct cell);
 	if (writeable[i] == NULL)
 	    writeable[i] = (unsigned char *) bu_calloc(1, per_processor_chunk, "writeable pixel flag buffer");
 	if (scanline[i] == NULL)
@@ -639,7 +642,7 @@ view_2init(struct application *ap)
 /**
  * end of each pixel
  */
-void view_pixel(struct application *ap)
+void view_pixel(struct application *UNUSED(ap))
 {
 }
 
@@ -687,7 +690,7 @@ view_eol(struct application *ap)
 	    bu_exit(EXIT_FAILURE, "rtedge: error reading from framebuffer.\n");
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	for (i=0; i<per_processor_chunk; ++i) {
+	for (i = 0; i < per_processor_chunk; ++i) {
 	    /*
 	     * Is this pixel an edge?
 	     */
@@ -808,7 +811,8 @@ view_eol(struct application *ap)
 	 * Write to a file.
 	 */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	bu_image_save_writeline(bif, ap->a_y, scanline[cpu]);
+	/* TODO : Add double type data to maintain resolution */
+	icv_writeline(bif, ap->a_y, scanline[cpu],  ICV_DATA_UCHAR);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (fbp == FBIO_NULL && outputfile == NULL)
@@ -819,7 +823,7 @@ view_eol(struct application *ap)
 }
 
 
-void view_setup(void)
+void view_setup(struct rt_i *UNUSED(rtip))
 {
 }
 
@@ -827,7 +831,7 @@ void view_setup(void)
 /**
  * end of a frame, called after rt_clean()
  */
-void view_cleanup(void)
+void view_cleanup(struct rt_i *UNUSED(rtip))
 {
 }
 
@@ -835,18 +839,12 @@ void view_cleanup(void)
 /**
  * end of each frame
  */
-void view_end(void) { 
-    if (bif)
-	bu_image_save_close(bif); 
-    bif = NULL;
+void view_end(struct application *UNUSED(ap))
+{
 }
 
 
-/**
- * R A Y H I T 2
- */
-int rayhit2(struct application *ap, register struct partition *pt,
-	    struct seg *segp)
+int rayhit2(struct application *ap, register struct partition *pt, struct seg *UNUSED(segp))
 {
     struct partition *pp = pt->pt_forw;
     struct hit *hitp = pt->pt_forw->pt_inhit;
@@ -865,9 +863,6 @@ int rayhit2(struct application *ap, register struct partition *pt,
 }
 
 
-/**
- * R A Y M I S S 2
- */
 static int
 raymiss2(register struct application *ap)
 {
@@ -896,7 +891,7 @@ is_edge(double *intensity, struct application *ap, const struct cell *here,
  * this edge cell.
  */
 static void
-get_intensity(double *intensity, struct application *ap, const struct cell *here, const struct cell *left, const struct cell *below, const struct cell *right, const struct cell *above)
+get_intensity(double *intensity, struct application *ap, const struct cell *UNUSED(here), const struct cell *left, const struct cell *below, const struct cell *right, const struct cell *above)
 {
     vect_t dy, dx, dy3, dx3;
     struct application aaap;
@@ -940,17 +935,6 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
     VSCALE(dy3, dy_model, 0.375);
     VSCALE(dx3, dx_model, 0.375);
 
-#if 0
-    fprintf(stderr, "\n(X, Y) = (%d, %d)\n", ap->a_x, ap->a_y);
-    VPRINT("dy_model", dy_model);
-    VPRINT("dx_model", dx_model);
-    VPRINT("dy", dy);
-    VPRINT("dx", dx);
-    VPRINT("dy3", dy3);
-    VPRINT("dx3", dx3);
-    VPRINT("PT", ap->a_ray.r_pt);
-#endif
-
     /* setup */
     aaap.a_hit = rayhit2;
     aaap.a_miss = raymiss2;
@@ -960,7 +944,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
     aaap.a_logoverlap = ap->a_logoverlap;
 
     /* Above Left */
-    aaap.a_uptr = (genptr_t)AL;
+    aaap.a_uptr = (void *)AL;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -971,7 +955,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
 #endif
 
     /* Above Right */
-    aaap.a_uptr = (genptr_t)AR;
+    aaap.a_uptr = (void *)AR;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -982,7 +966,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
 #endif
 
     /* Top Left */
-    aaap.a_uptr = (genptr_t)TL;
+    aaap.a_uptr = (void *)TL;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -993,7 +977,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
 #endif
 
     /* Upper Left */
-    aaap.a_uptr = (genptr_t)UL;
+    aaap.a_uptr = (void *)UL;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1004,7 +988,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
 #endif
 
     /* Upper Right */
-    aaap.a_uptr = (genptr_t)UR;
+    aaap.a_uptr = (void *)UR;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1015,7 +999,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
 #endif
 
     /* Top Right */
-    aaap.a_uptr = (genptr_t)TR;
+    aaap.a_uptr = (void *)TR;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1026,7 +1010,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
 #endif
 
     /* Bottom Left */
-    aaap.a_uptr = (genptr_t)BL;
+    aaap.a_uptr = (void *)BL;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1037,7 +1021,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
 #endif
 
     /* Lower Left */
-    aaap.a_uptr = (genptr_t)LL;
+    aaap.a_uptr = (void *)LL;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1048,7 +1032,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
 #endif
 
     /* Lower Right */
-    aaap.a_uptr = (genptr_t)LR;
+    aaap.a_uptr = (void *)LR;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1059,7 +1043,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
 #endif
 
     /* Bottom Right */
-    aaap.a_uptr = (genptr_t)BR;
+    aaap.a_uptr = (void *)BR;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1070,7 +1054,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
 #endif
 
     /* Debajo Left */
-    aaap.a_uptr = (genptr_t)DL;
+    aaap.a_uptr = (void *)DL;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1081,7 +1065,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
 #endif
 
     /* Debajo Right */
-    aaap.a_uptr = (genptr_t)DR;
+    aaap.a_uptr = (void *)DR;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1206,10 +1190,6 @@ is_edge(double *intensity, struct application *ap, const struct cell *here,
 }
 
 
-/**
- * H A N D L E _ M A I N _ R A Y
- *
- */
 int
 handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 		struct seg *segp)
@@ -1279,7 +1259,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 
     VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* below */
     VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-    a2.a_uptr = (genptr_t)&below;
+    a2.a_uptr = (void *)&below;
     rt_shootray(&a2);
 
     if (ap->a_x == 0) {
@@ -1291,7 +1271,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 	 */
 	VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* left */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&left;
+	a2.a_uptr = (void *)&left;
 	rt_shootray(&a2);
     } else {
 	left.c_ishit = saved[cpu]->c_ishit;
@@ -1306,12 +1286,12 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     if (both_sides) {
 	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* above */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&above;
+	a2.a_uptr = (void *)&above;
 	rt_shootray(&a2);
- 
+
 	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* right */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&right;
+	a2.a_uptr = (void *)&right;
 	rt_shootray(&a2);
     }
 
@@ -1330,8 +1310,8 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
      * check on edges as well since right side and top edges are
      * actually misses.
      */
-    if (occlusion_mode != OCCLUSION_MODE_NONE) 
-	if (me.c_ishit || edge) 
+    if (occlusion_mode != OCCLUSION_MODE_NONE)
+	if (me.c_ishit || edge)
 	    oc = occludes(ap, &me);
 
     /*
@@ -1399,7 +1379,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 
 
 void application_init(void) {
-    bu_vls_init(&occlusion_objects);
+    bu_vls_trunc(&occlusion_objects, 0);
 }
 
 

@@ -1,7 +1,7 @@
 /*                        H A M W I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
  */
 /** @file hamwin.c
  *
- *  Apply a Hamming Window to the given samples.
- *  Precomputes the window function.
+ * Apply a Hamming Window to the given samples.
+ * Precomputes the window function.
  */
 
 #include "common.h"
@@ -33,73 +33,31 @@
 #include "vmath.h"
 #include "bn.h"
 
-int init_hamwintab( int size );
 
-static int	_init_length = 0;	/* Internal: last initialized size */
-static int	maxinitlen = 0;
-static double	*hamwintab = NULL;
+static int _init_length = 0;	/* Internal: last initialized size */
+static double *hamwintab = NULL;
 
-void
-hamwin(double *data, int length)
-{
-    int	i;
 
-    /* Check for window table initialization */
-    if ( length != _init_length ) {
-	if ( init_hamwintab( length ) == 0 ) {
-	    /* Can't do requested size */
-	    return;
-	}
-    }
-
-    /* Do window - could use pointers here... */
-    for ( i = 0; i < length; i++ ) {
-	data[i] *= hamwintab[i];
-    }
-}
-
-/*
- * Complex Data Version.
+/* Internal routine to initialize the hamming window table
+ * of a given length.
+ * Returns zero on failure.
  */
-void
-chamwin(bn_complex_t *data, int length)
-{
-    int	i;
-
-    /* Check for window table initialization */
-    if ( length != _init_length ) {
-	if ( init_hamwintab( length ) == 0 ) {
-	    /* Can't do requested size */
-	    return;
-	}
-    }
-
-    /* Do window - could use pointers here... */
-    for ( i = 0; i < length; i++ ) {
-	data[i].re *= hamwintab[i];
-    }
-}
-
-/*
- *		I N I T _ H A M W I N T A B
- *
- *  Internal routine to initialize the hamming window table
- *  of a given length.
- *  Returns zero on failure.
- */
-int
+static int
 init_hamwintab(int size)
 {
-    int	i;
-    double	theta;
+    static int maxinitlen = 0;
 
-    if ( size > maxinitlen ) {
-	if ( hamwintab != NULL ) {
-	    free( hamwintab );
+    int i;
+    double theta;
+
+    if (size > maxinitlen) {
+	if (hamwintab != NULL) {
+	    bu_free(hamwintab, "free hamwintab");
 	    maxinitlen = 0;
 	}
-	if ( (hamwintab = (double *)malloc(size*sizeof(double))) == NULL ) {
-	    fprintf( stderr, "coswin: couldn't malloc space for %d elements\n", size );
+	hamwintab = (double *)bu_malloc(size*sizeof(double), "alloc hamwintab");
+	if (!hamwintab) {
+	    fprintf(stderr, "coswin: couldn't malloc space for %d elements\n", size);
 	    return 0;
 	}
 	maxinitlen = size;
@@ -110,9 +68,9 @@ init_hamwintab(int size)
     /*
      * Size is okay.  Set up tables.
      */
-    for ( i = 0; i < size; i++ ) {
-	theta = 2 * M_PI * i / (double)(size);
-	hamwintab[ i ] = 0.54 - 0.46 * cos( theta );
+    for (i = 0; i < size; i++) {
+	theta = M_2PI * i / (double)(size);
+	hamwintab[ i ] = 0.54 - 0.46 * cos(theta);
     }
 
     /*
@@ -121,6 +79,50 @@ init_hamwintab(int size)
     _init_length = size;
     return 1;
 }
+
+
+void
+hamwin(double *data, int length)
+{
+    int i;
+
+    /* Check for window table initialization */
+    if (length != _init_length) {
+	if (init_hamwintab(length) == 0) {
+	    /* Can't do requested size */
+	    return;
+	}
+    }
+
+    /* Do window - could use pointers here... */
+    for (i = 0; i < length; i++) {
+	data[i] *= hamwintab[i];
+    }
+}
+
+
+/*
+ * Complex Data Version.
+ */
+void
+chamwin(bn_complex_t *data, int length)
+{
+    int i;
+
+    /* Check for window table initialization */
+    if (length != _init_length) {
+	if (init_hamwintab(length) == 0) {
+	    /* Can't do requested size */
+	    return;
+	}
+    }
+
+    /* Do window - could use pointers here... */
+    for (i = 0; i < length; i++) {
+	data[i].re *= hamwintab[i];
+    }
+}
+
 
 /*
  * Local Variables:

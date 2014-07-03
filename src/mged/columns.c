@@ -1,7 +1,7 @@
 /*                       C O L U M N S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file columns.c
+/** @file mged/columns.c
  *
  * A set of routines for printing columns of data.
  *
@@ -42,9 +42,6 @@ static int col_len;		/* length of previous name */
 #define TERMINAL_WIDTH 80 /* XXX */
 #define COLUMNS ((TERMINAL_WIDTH + NAMESIZE - 1) / NAMESIZE)
 
-/*
- * V L S _ C O L _ I T E M
- */
 void
 vls_col_item(
     struct bu_vls *str,
@@ -73,8 +70,6 @@ vls_col_item(
 }
 
 
-/*
- */
 void
 vls_col_eol(struct bu_vls *str)
 {
@@ -86,19 +81,17 @@ vls_col_eol(struct bu_vls *str)
 
 
 /*
- * C M P D I R N A M E
- *
  * Given two pointers to pointers to directory entries, do a string compare
  * on the respective names and return that value.
  */
 int
-cmpdirname(const genptr_t a, const genptr_t b)
+cmpdirname(const void *a, const void *b)
 {
     struct directory **dp1, **dp2;
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
-    return strcmp((*dp1)->d_namep, (*dp2)->d_namep);
+    return bu_strcmp((*dp1)->d_namep, (*dp2)->d_namep);
 }
 
 

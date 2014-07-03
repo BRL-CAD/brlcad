@@ -1,7 +1,7 @@
 /*                    A T T R I B U T E S . C
  * BRL-CAD
  *
- * Copyright (c) 2010 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,34 +22,19 @@
 
 #include <string.h>
 
-#include "bu.h"
+#include "bu/debug.h"
 #include "raytrace.h"
 
 
-/**
- * D B 5 _ I M P O R T _ A T T R I B U T E S
- *
- * Convert the on-disk encoding into a handy easy-to-use
- * bu_attribute_value_set structure.
- *
- * Take advantage of the readonly_min/readonly_max capability so that
- * we don't have to bu_strdup() each string, but can simply point to
- * it in the provided buffer *ap.  Important implication: don't free
- * *ap until you're done with this avs.
- *
- * The upshot of this is that bu_avs_add() and bu_avs_remove() can be
- * safely used with this *avs.
- *
- * Returns -
- * >0 count of attributes successfully imported
- * -1 Error, mal-formed input
- */
 int
 db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_external *ap)
 {
     const char *cp;
     const char *ep;
     int count = 0;
+#if defined(USE_BINARY_ATTRIBUTES)
+    int bcount = 0; /* for the subset of binary attributes */
+#endif
 
     BU_CK_EXTERNAL(ap);
 
@@ -59,7 +44,8 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
     cp = (const char *)ap->ext_buf;
     ep = (const char *)ap->ext_buf+ap->ext_nbytes;
 
-    /* Null "name" string indicates end of attribute list */
+    /* Null "name" string (a pair of NULLs) indicates end of attribute
+     * list (for the original ASCII-valued attributes) */
     while (*cp != '\0') {
 	if (cp >= ep) {
 	    bu_log("db5_import_attributes() ran off end of buffer, database is probably corrupted\n");
@@ -69,8 +55,40 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	cp += strlen(cp)+1;	/* next name */
 	count++;
     }
+#if defined(USE_BINARY_ATTRIBUTES)
+    /* Do we have binary attributes?  If so, they are after the last
+     * ASCII attribute. */
+    if (ep > (cp+1)) {
+	/* Count binary attrs. */
+	/* format is: <ascii name> NULL <binary length [network order, must be decoded]> <bytes...> */
+	size_t abinlen;
+	cp += 2; /* We are now at the first byte of the first binary attribute... */
+	while (cp != ep) {
+	    ++bcount
+	    cp += strlen(cp)+1;	/* name */
+	    /* The next value is an unsigned integer of variable width
+	     * (a_width: DB5HDR_WIDTHCODE_x) so how do we get its
+	     * width?  We now have a new member of struct bu_external:
+	     * 'unsigned char intwid'.  Note that the integer
+	     * is in network order and must be properly decoded for
+	     * the local architecture.
+	     */
+	    cp += db5_decode_length(&abinlen, cp, ap->intwid);
+	    /* account for the abinlen bytes */
+	    cp += abinlen;
+	}
+	/* now cp should be at the end */
+	count += bcount;
+    } else {
+	/* step to the end for the sanity check */
+	++cp;
+    }
+    /* Ensure we're exactly at the end */
+    BU_ASSERT_PTR(cp, ==, ep);
+#else
     /* Ensure we're exactly at the end */
     BU_ASSERT_PTR(cp+1, ==, ep);
+#endif
 
     /* not really needed for AVS_ADD since bu_avs_add will
      * incrementally allocate as it needs it. but one alloc is better
@@ -78,16 +96,13 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
      */
     bu_avs_init(avs, count, "db5_import_attributes");
 
-    /* Second pass -- populate attributes.  Peek inside struct for non AVS_ADD. */
+    /* Second pass -- populate attributes. */
 
-/* Use AVS_ADD to copy the values from the external buffer instead of
- * using them directly without copying.  This presumes ap will not get
- * free'd before we're done with the avs.  Preference should be to
- * leave AVS_ADD undefined for performance reasons.
- */
-#define AVS_ADD 1
+    /* Copy the values from the external buffer instead of using them
+     * directly without copying.  This presumes ap will not get free'd
+     * before we're done with the avs.
+     */
 
-#if AVS_ADD
     cp = (const char *)ap->ext_buf;
     while (*cp != '\0') {
 	const char *name = cp;  /* name */
@@ -95,30 +110,34 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	bu_avs_add(avs, name, cp);
 	cp += strlen(cp)+1; /* next name */
     }
+#if defined(USE_BINARY_ATTRIBUTES)
+    /* Do we have binary attributes?  If so, they are after the last
+     * ASCII attribute. */
+    if (ep > (cp+1)) {
+	/* Count binary attrs. */
+	/* format is: <ascii name> NULL <binary length [network order, must be decoded]> <bytes...> */
+	size_t abinlen;
+	cp += 2; /* We are now at the first byte of the first binary attribute... */
+	while (cp != ep) {
+	    const char *name = cp;  /* name */
+	    cp += strlen(cp)+1;	/* name */
+	    cp += db5_decode_length(&abinlen, cp, ap->intwid);
+	    /* now decode for the abinlen bytes */
+	    decode_binary_attribute(const size_t len, const char *cp)
+	    decod
+	    cp += abinlen;
+	}
+	/* now cp should be at the end */
+    } else {
+	/* step to the end for the sanity check */
+	++cp;
+    }
+    /* Ensure we're exactly at the end */
+    BU_ASSERT_PTR(cp, ==, ep);
 #else
-    /* Conserve malloc/free activity -- use strings in input buffer */
-    /* Signal region of memory that input comes from */
-    cp = (const char *)ap->ext_buf;
-    app = avs->avp;
-    while (*cp != '\0') {
-	app->name = cp;  /* name */
-	cp += strlen(cp)+1;
-	app->value = cp;  /* value */
-	cp += strlen(cp)+1;
-	app++;
-	avs->count++;
-    }
-
-    /* expand the readonly section if necessary */
-    if ((!avs->readonly_min) || ((genptr_t)avs->readonly_min > (genptr_t)ap->ext_buf)) {
-	avs->readonly_min = (genptr_t)ap->ext_buf;
-    }
-    if ((!avs->readonly_max) || ((genptr_t)avs->readonly_max < (genptr_t)(avs->readonly_min + ap->ext_nbytes))) {
-	avs->readonly_max = (genptr_t)avs->readonly_min + ap->ext_nbytes;
-    }
+    BU_ASSERT_PTR(cp+1, ==, ep);
 #endif
 
-    BU_ASSERT_PTR(cp+1, ==, ep);
     BU_ASSERT_LONG(avs->count, <=, avs->max);
     BU_ASSERT_LONG((size_t)avs->count, ==, (size_t)count);
 
@@ -129,18 +148,6 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 }
 
 
-/**
- * D B 5 _ E X P O R T _ A T T R I B U T E S
- *
- * Encode the attribute-value pair information into the external
- * on-disk format.
- *
- * The on-disk encoding is:
- *
- * name1 NULL value1 NULL ... nameN NULL valueN NULL NULL
- *
- * 'ext' is initialized on behalf of the caller.
- */
 void
 db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_set *avs)
 {
@@ -150,7 +157,7 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     size_t i;
 
     BU_CK_AVS(avs);
-    BU_INIT_EXTERNAL(ext);
+    BU_EXTERNAL_INIT(ext);
 
     if (avs->count <= 0) {
 	return;
@@ -184,7 +191,7 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     }
 
     ext->ext_nbytes = need;
-    ext->ext_buf = bu_calloc(1, need, "external attributes");
+    ext->ext_buf = (uint8_t*)bu_calloc(1, need, "external attributes");
 
     /* Second pass -- store in external form */
     cp = (char *)ext->ext_buf;
@@ -214,19 +221,6 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
 }
 
 
-/**
- * D B 5 _ R E P L A C E _ A T T R I B U T E S
- *
- * Replace the attributes of a given database object.
- *
- * For efficiency, this is done without looking at the object body at
- * all.  Contents of the bu_attribute_value_set are freed, but not the
- * struct itself.
- *
- * Returns -
- * 0 on success
- * <0 on error
- */
 int
 db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp, struct db_i *dbip)
 {
@@ -241,8 +235,8 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
     RT_CK_DBI(dbip);
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db5_replace_attributes(%s) dbip=x%x\n",
-	       dp->d_namep, dbip);
+	bu_log("db5_replace_attributes(%s) dbip=%p\n",
+	       dp->d_namep, (void *)dbip);
 	bu_avs_print(avsp, "new attributes");
     }
 
@@ -265,7 +259,7 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
     }
 
     db5_export_attributes(&attr, avsp);
-    BU_INIT_EXTERNAL(&ext2);
+    BU_EXTERNAL_INIT(&ext2);
     db5_export_object3(&ext2,
 		       raw.h_dli,
 		       dp->d_namep,
@@ -289,20 +283,6 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
 }
 
 
-/**
- * D B 5 _ U P D A T E _ A T T R I B U T E S
- *
- * Update an arbitrary number of attributes on a given database
- * object.  For efficiency, this is done without looking at the object
- * body at all.
- *
- * Contents of the bu_attribute_value_set are freed, but not the
- * struct itself.
- *
- * Returns -
- * 0 on success
- * <0 on error
- */
 int
 db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp, struct db_i *dbip)
 {
@@ -318,8 +298,8 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
     RT_CK_DBI(dbip);
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db5_update_attributes(%s) dbip=x%x\n",
-	       dp->d_namep, dbip);
+	bu_log("db5_update_attributes(%s) dbip=%p\n",
+	       dp->d_namep, (void *)dbip);
 	bu_avs_print(avsp, "new attributes");
     }
 
@@ -357,7 +337,7 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
     bu_avs_merge(&old_avs, avsp);
 
     db5_export_attributes(&attr, &old_avs);
-    BU_INIT_EXTERNAL(&ext2);
+    BU_EXTERNAL_INIT(&ext2);
     db5_export_object3(&ext2,
 		       raw.h_dli,
 		       dp->d_namep,
@@ -383,15 +363,6 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 }
 
 
-/**
- * D B 5 _ U P D A T E _ A T T R I B U T E
- *
- * A convenience routine to update the value of a single attribute.
- *
- * Returns -
- * 0 on success
- * <0 on error
- */
 int
 db5_update_attribute(const char *obj_name, const char *name, const char *value, struct db_i *dbip)
 {
@@ -399,7 +370,7 @@ db5_update_attribute(const char *obj_name, const char *name, const char *value, 
     struct bu_attribute_value_set avs;
 
     RT_CK_DBI(dbip);
-    if ((dp = db_lookup(dbip, obj_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(dbip, obj_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return -1;
 
     bu_avs_init(&avs, 2, "db5_update_attribute");
@@ -409,29 +380,17 @@ db5_update_attribute(const char *obj_name, const char *name, const char *value, 
 }
 
 
-/**
- * D B 5 _ U P D A T E _ I D E N T
- *
- * Update the _GLOBAL object, which in v5 serves the place of the
- * "ident" header record in v4 as the place to stash global
- * information.  Since every database will have one of these things,
- * it's no problem to update it.
- *
- * Returns -
- * 0 Success
- * -1 Fatal Error
- */
 int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 {
     struct bu_attribute_value_set avs;
     struct directory *dp;
-    struct bu_vls units;
+    struct bu_vls units = BU_VLS_INIT_ZERO;
     int ret;
     char *old_title = NULL;
 
     RT_CK_DBI(dbip);
 
-    if ((dp = db_lookup(dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp = db_lookup(dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	struct bu_external global;
 	unsigned char minor_type=0;
 
@@ -445,7 +404,7 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 			   DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
 			   DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
 
-	dp = db_diradd(dbip, DB5_GLOBAL_OBJECT_NAME, RT_DIR_PHONY_ADDR, 0, 0, (genptr_t)&minor_type);
+	dp = db_diradd(dbip, DB5_GLOBAL_OBJECT_NAME, RT_DIR_PHONY_ADDR, 0, 0, (void *)&minor_type);
 	dp->d_major_type = DB5_MAJORTYPE_ATTRIBUTE_ONLY;
 	if (db_put_external(&global, dp, dbip) < 0) {
 	    bu_log("db5_update_ident() unable to create replacement %s object!\n", DB5_GLOBAL_OBJECT_NAME);
@@ -455,7 +414,6 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 	bu_free_external(&global);
     }
 
-    bu_vls_init(&units);
     bu_vls_printf(&units, "%.25e", local2mm);
 
     bu_avs_init(&avs, 4, "db5_update_ident");
@@ -480,34 +438,11 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 }
 
 
-/**
- * D B 5 _ F W R I T E _ I D E N T
- *
- * Create a header for a v5 database.
- *
- * This routine has the same calling sequence as db_fwrite_ident()
- * which makes a v4 database header.
- *
- * In the v5 database, two database objects must be created to match
- * the semantics of what was in the v4 header:
- *
- * First, a database header object.
- *
- * Second, create a specially named attribute-only object which
- * contains the attributes "title=" and "units=".
- *
- * This routine should only be used by db_create().  Everyone else
- * should use db5_update_ident().
- *
- * Returns -
- * 0 Success
- * -1 Fatal Error
- */
 int
 db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
 {
     struct bu_attribute_value_set avs;
-    struct bu_vls units;
+    struct bu_vls units = BU_VLS_INIT_ZERO;
     struct bu_external out;
     struct bu_external attr;
     int result;
@@ -531,7 +466,6 @@ db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
     }
 
     /* Second, create the attribute-only object */
-    bu_vls_init(&units);
     bu_vls_printf(&units, "%.25e", local2mm);
 
     bu_avs_init(&avs, 4, "db5_fwrite_ident");
@@ -556,6 +490,13 @@ db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
     return 0;
 }
 
+
+#if defined(USE_BINARY_ATTRIBUTES)
+void
+decode_binary_attribute(const size_t len, const char *cp)
+{
+}
+#endif
 
 /*
  * Local Variables:

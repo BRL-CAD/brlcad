@@ -1,7 +1,7 @@
 #                   R T C O N T R O L . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2010 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -45,6 +45,9 @@
     itk_option define -fb_enabled fb_enabled FB_Enabled 0
     itk_option define -fb_enabled_callback fb_enabled_callback FB_Enabled_Callback ""
     itk_option define -fb_mode_callback fb_mode_callback FB_Mode_Callback ""
+    itk_option define -do_rtedge do_rtedge Do_Rtedge 0
+    itk_option define -do_rtedge_overlay do_rtedge_overlay Do_Rtedge_Overlay 0
+    itk_option define -overlay_fg_color overlay_fg_color Overlay_Fg_Color "128 128 128"
 
     constructor {args} {}
 
@@ -66,7 +69,7 @@
 	method toggleFbMode {}
 	method toggleFB {}
 	method updateControlPanel {}
-    }    
+    }
 
     protected {
 	variable pmGlobalPhotonsEntry 16384
@@ -357,6 +360,12 @@
 
 ############################### Configuration Options ###############################
 
+::itcl::configbody RtControl::color {\
+    set rtColor $itk_option(-color)
+    set bg [eval ::cadwidgets::Ged::rgb_to_tk $rtColor]
+    $itk_component(bgcolorpatchL) configure -background $bg
+}
+
 ::itcl::configbody RtControl::nproc {
     if {![regexp "^\[0-9\]+$" $itk_option(-nproc)]} {
 	error "Bad value - $itk_option(-nproc)"
@@ -399,7 +408,7 @@
     wm geometry $itk_component(hull) $win_geom
     wm deiconify $itk_component(hull)
 
-    set_size 
+    set_size
 }
 
 ::itcl::body RtControl::activate_adv {} {
@@ -428,8 +437,8 @@
     set win_geom_adv [wm geometry $itk_component(adv)]
     wm withdraw $itk_component(adv)
 
-    bind $itk_component(hull) <Visibility> $saveVisibilityBinding 
-    bind $itk_component(hull) <FocusOut> $saveFocusOutBinding 
+    bind $itk_component(hull) <Visibility> $saveVisibilityBinding
+    bind $itk_component(hull) <FocusOut> $saveFocusOutBinding
     raise $itk_component(hull)
 }
 
@@ -471,13 +480,8 @@
 
     set cooked_dest [get_cooked_dest]
 
-    if {$tcl_platform(platform) == "windows"} {
-	set fbclear [bu_brlcad_root "bin/fbclear.exe"]
-	regsub -all {\\} $fbclear {/} fbclear
-    } else {
-	set fbclear [bu_brlcad_root "bin/fbclear"]
-    }
-    set result [catch {eval exec $fbclear -F $cooked_dest $rtColor &} rt_error]
+    set fbclear [file join [bu_brlcad_root "bin"] fbclear]
+    set result [catch {eval exec "\"$fbclear\"" -F $cooked_dest $rtColor &} rt_error]
 
     if {$result} {
 	error $rt_error
@@ -489,10 +493,45 @@
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
-    if {$isaMged} {
-	set rt_cmd "$itk_option(-mged) component $rtActivePane rt -F [get_cooked_dest]"
+    if {$itk_option(-do_rtedge)} {
+	set rt_cmd_name "rtedge"
     } else {
-	set rt_cmd "$itk_option(-mged) pane_rt $rtActivePane -F [get_cooked_dest]"
+	set rt_cmd_name "rt"
+    }
+
+    if {$isaMged} {
+	set rt_cmd "$itk_option(-mged) component $rtActivePane $rt_cmd_name -F [get_cooked_dest]"
+    } else {
+	# isaGed must be true
+	set rt_cmd "$itk_option(-mged) pane_$rt_cmd_name $rtActivePane -F [get_cooked_dest]"
+
+	if {[$itk_option(-mged) rect draw]} {
+	    set pos [$itk_option(-mged) rect pos]
+	    set dim [$itk_option(-mged) rect dim]
+
+	    set xmin [lindex $pos 0]
+	    set ymin [lindex $pos 1]
+	    set width [lindex $dim 0]
+	    set height [lindex $dim 1]
+
+	    if {$width != 0 && $height != 0} {
+		if {$width > 0} {
+		    set xmax [expr $xmin + $width]
+		} else {
+		    set xmax $xmin
+		    set xmin [expr $xmax + $width]
+		}
+
+		if {$height > 0} {
+		    set ymax [expr $ymin + $height]
+		} else {
+		    set ymax $ymin
+		    set ymin [expr $ymax + $height]
+		}
+
+		append rt_cmd " -j $xmin,$ymin,$xmax,$ymax"
+	    }
+	}
     }
 
     if {$rtSize != ""} {
@@ -513,7 +552,23 @@
 	}
     }
 
-    append rt_cmd " -C[lindex $rtColor 0]/[lindex $rtColor 1]/[lindex $rtColor 2]"
+    if {$itk_option(-do_rtedge)} {
+	set r [lindex $itk_option(-overlay_fg_color) 0]
+	set g [lindex $itk_option(-overlay_fg_color) 1]
+	set b [lindex $itk_option(-overlay_fg_color) 2]
+	append rt_cmd " -c \"set fg=$r/$g/$b\""
+
+	if {$itk_option(-do_rtedge_overlay)} {
+	    append rt_cmd " -c \"set ov=1\""
+	} else {
+	    set r [lindex $rtColor 0]
+	    set g [lindex $rtColor 1]
+	    set b [lindex $rtColor 2]
+	    append rt_cmd " -c \"set bg=$r/$g/$b\""
+	}
+    } else {
+	append rt_cmd " -C[lindex $rtColor 0]/[lindex $rtColor 1]/[lindex $rtColor 2]"
+    }
 
     if {$itk_option(-nproc) != ""} {
 	append rt_cmd " -P$itk_option(-nproc)"
@@ -651,7 +706,7 @@
     if {$itk_option(-fb_enabled)} {
 	set itk_option(-fb_enabled) 0
     } else {
-	set_size 
+	set_size
 	set itk_option(-fb_enabled) 1
     }
 
@@ -964,7 +1019,7 @@
     }
 
     set rtPrevColor $rtColor
-    
+
     set bg [eval ::cadwidgets::Ged::rgb_to_tk $rtColor]
     $itk_component(bgcolorpatchL) configure -background $bg
 }

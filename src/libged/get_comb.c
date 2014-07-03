@@ -1,7 +1,7 @@
 /*                         G E T _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file skel.c
+/** @file libged/get_comb.c
  *
  * The skel command.
  *
@@ -37,13 +37,12 @@ int
 ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    struct rt_db_internal	intern;
+    struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    struct rt_tree_array	*rt_tree_array;
+    struct rt_tree_array *rt_tree_array;
     size_t i;
     size_t node_count;
     size_t actual_count;
-    struct bu_vls vls;
     static const char *usage = "comb";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -51,31 +50,30 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    bu_vls_init(&vls);
 
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
 
-    if (dp != DIR_NULL) {
-	if (!(dp->d_flags & DIR_COMB)) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s is not a combination, so cannot be edited this way\n", argv[1]);
+    if (dp != RT_DIR_NULL) {
+	if (!(dp->d_flags & RT_DIR_COMB)) {
+	    bu_vls_printf(gedp->ged_result_str, "%s is not a combination, so cannot be edited this way\n", argv[1]);
 	    return GED_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
+	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	    return GED_ERROR;
 	}
 
@@ -84,7 +82,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 	if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	    db_non_union_push(comb->tree, &rt_uniresource);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for editing\n");
+		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for editing\n");
 		return GED_ERROR;
 	    }
 	}
@@ -106,28 +104,28 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 	    actual_count = 0;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
 	if (comb->region_flag) {
-	    bu_vls_printf(&gedp->ged_result_str, " Yes %ld %ld %ld %ld",
+	    bu_vls_printf(gedp->ged_result_str, " Yes %ld %ld %ld %ld",
 			  comb->region_id, comb->aircode, comb->GIFTmater, comb->los);
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, " No");
+	    bu_vls_printf(gedp->ged_result_str, " No");
 	}
 
 	if (comb->rgb_valid) {
-	    bu_vls_printf(&gedp->ged_result_str, " {%d %d %d}", V3ARGS(comb->rgb));
+	    bu_vls_printf(gedp->ged_result_str, " {%d %d %d}", V3ARGS(comb->rgb));
 	} else
-	    bu_vls_printf(&gedp->ged_result_str, " {}");
+	    bu_vls_printf(gedp->ged_result_str, " {}");
 
-	bu_vls_printf(&gedp->ged_result_str, " {%s}", bu_vls_addr(&comb->shader));
+	bu_vls_printf(gedp->ged_result_str, " {%s}", bu_vls_addr(&comb->shader));
 
 	if (comb->inherit)
-	    bu_vls_printf(&gedp->ged_result_str, " Yes");
+	    bu_vls_printf(gedp->ged_result_str, " Yes");
 	else
-	    bu_vls_printf(&gedp->ged_result_str, " No");
+	    bu_vls_printf(gedp->ged_result_str, " No");
 
 
-	bu_vls_printf(&gedp->ged_result_str, " {");
+	bu_vls_printf(gedp->ged_result_str, " {");
 	for (i = 0; i < actual_count; i++) {
 	    char op;
 
@@ -142,19 +140,19 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 		    op = '-';
 		    break;
 		default:
-		    bu_vls_printf(&gedp->ged_result_str, "\nIllegal op code in tree\n");
+		    bu_vls_printf(gedp->ged_result_str, "\nIllegal op code in tree\n");
 		    return GED_ERROR;
 	    }
 
-	    bu_vls_printf(&gedp->ged_result_str, " %c %s\t", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
-	    _ged_vls_print_matrix(&gedp->ged_result_str, rt_tree_array[i].tl_tree->tr_l.tl_mat);
-	    bu_vls_printf(&gedp->ged_result_str, "\n");
+	    bu_vls_printf(gedp->ged_result_str, " %c %s\t", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
+	    _ged_vls_print_matrix(gedp->ged_result_str, rt_tree_array[i].tl_tree->tr_l.tl_mat);
+	    bu_vls_printf(gedp->ged_result_str, "\n");
 	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "}");
+	bu_vls_printf(gedp->ged_result_str, "}");
     } else {
-	bu_vls_printf(&gedp->ged_result_str, "%s Yes %d %d %d %d {} {} No {}",
+	bu_vls_printf(gedp->ged_result_str, "%s Yes %d %d %d %d {} {} No {}",
 		      argv[1],
 		      gedp->ged_wdbp->wdb_item_default,
 		      gedp->ged_wdbp->wdb_air_default,
@@ -164,6 +162,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 void
 _ged_vls_print_matrix(struct bu_vls *vls, matp_t matrix)
@@ -178,10 +177,10 @@ _ged_vls_print_matrix(struct bu_vls *vls, matp_t matrix)
     if (bn_mat_is_identity(matrix))
 	return;
 
-    for (k=0; k<16; k++) {
+    for (k = 0; k < 16; k++) {
 	sprintf(buf, "%g", matrix[k]);
 	tmp = atof(buf);
-	if (NEAR_ZERO(tmp - matrix[k], SMALL_FASTF))
+	if (ZERO(tmp - matrix[k]))
 	    bu_vls_printf(vls, " %g", matrix[k]);
 	else
 	    bu_vls_printf(vls, " %.12e", matrix[k]);

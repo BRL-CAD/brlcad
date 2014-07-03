@@ -1,7 +1,7 @@
-/*			G _ M E T A B A L L . H
+/*                        M E T A B A L L . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,10 +18,15 @@
  * information.
  */
 
-void rt_metaball_set_bbox(point_t center, fastf_t radius, point_t *min, point_t *max);
+#ifndef LIBRT_PRIMITIVES_METABALL_METABALL_H
+#define LIBRT_PRIMITIVES_METABALL_METABALL_H
+
+int rt_metaball_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol);
 fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_metaball_internal *mb);
 int rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_internal *mb, const point_t *a, const point_t *b, fastf_t step, const fastf_t finalstep);
 void rt_metaball_norm_internal(vect_t *n, point_t *p, struct rt_metaball_internal *mb);
+
+#endif /* LIBRT_PRIMITIVES_METABALL_METABALL_H */
 
 /*
  * Local Variables:

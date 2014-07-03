@@ -1,7 +1,7 @@
 /*                           S P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file sph.c
+/** @file primitives/sph/sph.c
  *
  * Intersect a ray with a Sphere.
  * Special case of the Generalized Ellipsoid
@@ -67,10 +67,7 @@ struct sph_specific {
     mat_t sph_SoR;	/* Rotate and scale for UV mapping */
 };
 
-
 /**
- * R T _ S P H _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation matrix,
  * determine if this is a valid sphere, and if so, precompute various
  * terms of the formula.
@@ -80,7 +77,7 @@ struct sph_specific {
  * !0 Error in description
  *
  * Implicit return -
- * A struct sph_specific is created, and it's address is stored in
+ * A struct sph_specific is created, and its address is stored in
  * stp->st_specific for use by rt_sph_shot().
  * If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
  */
@@ -107,8 +104,8 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* Validate that |A|, |B|, and |C| are nearly equal */
-    if (fabs(magsq_a - magsq_b) > 0.0001
-	|| fabs(magsq_a - magsq_c) > 0.0001) {
+    if (!NEAR_EQUAL(magsq_a, magsq_b, rtip->rti_tol.dist_sq)
+	|| !NEAR_EQUAL(magsq_a, magsq_c, rtip->rti_tol.dist_sq)) {
 	return 1;		/* ELL, not SPH */
     }
 
@@ -141,11 +138,11 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * This ELL is really an SPH
      */
     stp->st_id = ID_SPH;		/* "fix" soltab ID */
-    stp->st_meth = &rt_functab[ID_SPH];
+    stp->st_meth = &OBJ[ID_SPH];
 
     /* Solid is OK, compute constant terms now */
-    BU_GETSTRUCT(sph, sph_specific);
-    stp->st_specific = (genptr_t)sph;
+    BU_GET(sph, struct sph_specific);
+    stp->st_specific = (void *)sph;
 
     VMOVE(sph->sph_V, eip->v);
 
@@ -169,20 +166,11 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = stp->st_bradius = sph->sph_rad;
 
     /* Compute bounding RPP */
-    stp->st_min[X] = sph->sph_V[X] - sph->sph_rad;
-    stp->st_max[X] = sph->sph_V[X] + sph->sph_rad;
-    stp->st_min[Y] = sph->sph_V[Y] - sph->sph_rad;
-    stp->st_max[Y] = sph->sph_V[Y] + sph->sph_rad;
-    stp->st_min[Z] = sph->sph_V[Z] - sph->sph_rad;
-    stp->st_max[Z] = sph->sph_V[Z] + sph->sph_rad;
-
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
     return 0;			/* OK */
 }
 
 
-/**
- * R T _ S P H _ P R I N T
- */
 void
 rt_sph_print(register const struct soltab *stp)
 {
@@ -198,8 +186,6 @@ rt_sph_print(register const struct soltab *stp)
 
 
 /**
- * R T _ S P H _ S H O T
- *
  * Intersect a ray with a sphere.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -225,7 +211,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	(struct sph_specific *)stp->st_specific;
     register struct seg *segp;
 
-    vect_t ov;		/* ray orgin to center (V - P) */
+    vect_t ov;		/* ray origin to center (V - P) */
     fastf_t magsq_ov;	/* length squared of ov */
     fastf_t b;		/* second term of quadratic eqn */
     fastf_t root;		/* root of radical */
@@ -265,8 +251,6 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define RT_SPH_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
- * R T _ S P H _ V S H O T
- *
  * This is the Becker vectorized version
  */
 void
@@ -280,7 +264,7 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     register struct sph_specific *sph;
     register int i;
 
-    vect_t ov;		/* ray orgin to center (V - P) */
+    vect_t ov;		/* ray origin to center (V - P) */
     fastf_t magsq_ov;	/* length squared of ov */
     fastf_t b;		/* second term of quadratic eqn */
     fastf_t root;		/* root of radical */
@@ -326,8 +310,6 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 
 /**
- * R T _ S P H _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -343,8 +325,6 @@ rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ S P H _ C U R V E
- *
  * Return the curvature of the sphere.
  */
 void
@@ -361,8 +341,6 @@ rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 
 /**
- * R T _ S P H _ U V
- *
  * For a hit on the surface of an SPH, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -386,7 +364,7 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     /* Assert that pprime has unit length */
 
     /* U is azimuth, atan() range: -pi to +pi */
-    uvp->uv_u = bn_atan2(pprime[Y], pprime[X]) * bn_inv2pi;
+    uvp->uv_u = bn_atan2(pprime[Y], pprime[X]) * M_1_2PI;
     if (uvp->uv_u < 0)
 	uvp->uv_u += 1.0;
     /*
@@ -395,118 +373,36 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
      */
     uvp->uv_v = bn_atan2(pprime[Z],
 			 sqrt(pprime[X] * pprime[X] + pprime[Y] * pprime[Y])) *
-	bn_invpi + 0.5;
+	M_1_PI + 0.5;
 
     /* approximation: r / (circumference, 2 * pi * aradius) */
     r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
     uvp->uv_du = uvp->uv_dv =
-	bn_inv2pi * r / stp->st_aradius;
+	M_1_2PI * r / stp->st_aradius;
 }
 
 
-/**
- * R T _ S P H _ F R E E
- */
 void
 rt_sph_free(register struct soltab *stp)
 {
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
 
-    bu_free((char *)sph, "sph_specific");
+    BU_PUT(sph, struct sph_specific);
 }
 
 
 int
-rt_sph_class(void)
+rt_sph_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    return 0;
-}
-
-
-/**
- * R T _ S P H _ P A R A M S
- *
- */
-int
-rt_sph_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
-{
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
 }
 
 
-/* ELL versions of the plot and tess functions are used */
+/* ELL versions are used for many of the callbacks */
 
-
-#if 0
-/**
- * R T _ S P H _ I M P O R T 5
- *
- * Import a sphere from the v5 database format to the internal
- * structure.  Apply modeling transformations as well.
- */
-int
-rt_sph_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
-{
-    struct rt_sph_internal *sip;
-    fastf_t vec[3+1];
-
-    BU_CK_EXTERNAL(ep);
-
-    RT_CK_DB_INTERNAL(ip);
-    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    ip->idb_type = ID_SPH;
-    ip->idb_meth = &rt_functab[ID_SPH];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_sph_internal), "rt_sph_internal");
-
-    sip = (struct rt_sph_internal *)ip->idb_ptr;
-    sip->magic = RT_SPH_INTERNAL_MAGIC;
-
-    /* Convert from database to internal format */
-    htond(vec, ep->ext_buf, 3+1);
-
-    /* Apply modeling transformations */
-    MAT4X3PNT(sip->v, mat, &vec[0*3]);
-    MAT4XSCALOR(sip->r, mat, vec[1*3]);
-
-    return 0;		/* OK */
-}
-
-
-/**
- * R T _ S P H _ E X P O R T 5
- */
-int
-rt_sph_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
-{
-    struct rt_sph_internal *tip;
-    union record *rec;
-
-    RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_ELL) return -1;
-    tip = (struct rt_sph_internal *)ip->idb_ptr;
-    RT_ELL_CK_MAGIC(tip);
-
-    BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "sph external");
-    rec = (union record *)ep->ext_buf;
-
-    rec->s.s_id = ID_SOLID;
-    rec->s.s_type = GENELL;
-
-    /* NOTE: This also converts to dbfloat_t */
-    VSCALE(&rec->s.s_values[0], tip->v, local2mm);
-    VSCALE(&rec->s.s_values[3], tip->a, local2mm);
-    VSCALE(&rec->s.s_values[6], tip->b, local2mm);
-    VSCALE(&rec->s.s_values[9], tip->c, local2mm);
-
-    return 0;
-}
-#endif
 
 /*
  * Local Variables:

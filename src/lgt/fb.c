@@ -1,7 +1,7 @@
 /*                            F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fb.c
+/** @file lgt/fb.c
  *	Author:		Gary S. Moss
  */
 
@@ -38,11 +38,10 @@ int		zoom;	/* Current zoom factor of frame buffer.		*/
 int		fb_Setup(char *file, int size);
 void		fb_Zoom_Window(void);
 
-/*	f b _ S e t u p ( )						*/
 int
 fb_Setup(char *file, int size)
 {
-    if ( strcmp( file, "/dev/remote" ) == 0 )
+    if ( BU_STR_EQUAL( file, "/dev/remote" ) )
 	file = "/dev/debug";
     prnt_Event( "Opening device..." );
 
@@ -58,7 +57,6 @@ fb_Setup(char *file, int size)
     return	1;
 }
 
-/*	f b _ Z o o m _ W i n d o w ( )					*/
 void
 fb_Zoom_Window(void)
 {

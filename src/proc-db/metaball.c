@@ -1,7 +1,7 @@
 /*                      M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file metaball.c
+/** @file proc-db/metaball.c
  *
  * This is an example of how to programmatically create and combine
  * metaball primitives together.
@@ -40,6 +40,7 @@
 #  include <unistd.h>
 #endif
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -48,7 +49,7 @@
 
 /**
  * Creates one metaball object with 'count' random points using
- * LIBWDB's mk_metaball() interface.  
+ * LIBWDB's mk_metaball() interface.
  */
 static void
 make_meatballs(struct rt_wdb *fp, const char *name, long count)
@@ -120,7 +121,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
      * manually fill in with points from the other metaballs being
      * joined together.
      */
-    BU_GETSTRUCT(newmp, rt_metaball_internal);
+    BU_ALLOC(newmp, struct rt_metaball_internal);
     newmp->magic = RT_METABALL_INTERNAL_MAGIC;
     newmp->threshold = 1.0;
     newmp->method = 1;
@@ -138,6 +139,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 	dp = db_lookup(dbip, av[i], 1);
 	if (!dp) {
 	    bu_log("Unable to find %s\n", av[i]);
+	    continue;
 	}
 
 	/* load the existing database object */
@@ -150,7 +152,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 	mp = (struct rt_metaball_internal *)dir.idb_ptr;
 	RT_METABALL_CK_MAGIC(mp);
 
-	/* iterate over each point in that database objct and add it
+	/* iterate over each point in that database object and add it
 	 * to our new metaball.
 	 */
 	for (BU_LIST_FOR(mpt, wdb_metaballpt, &mp->metaball_ctrl_head)) {
@@ -183,16 +185,15 @@ make_spaghetti(const char *filename, const char *name, long count)
 
     /* get a write-only handle */
     fp = wdb_fopen(filename);
-    if (fp == RT_WDB_NULL) {
+    if (fp == RT_WDB_NULL)
 	bu_exit(EXIT_FAILURE, "ERROR: unable to open file for writing.\n");
-    }
 
     mk_id(fp, title);
 
     /* just to make things interesting, make varying sized sets */
-    some = (long)ceil((double)count * (1.0 / 111.0));
-    more = (long)ceil((double)count * (10.0 / 111.0));
-    many = (long)ceil((double)count * (100.0 / 111.0));
+    some = lrint(ceil((double)count * (1.0 / 111.0)));
+    more = lrint(ceil((double)count * (10.0 / 111.0)));
+    many = lrint(ceil((double)count * (100.0 / 111.0)));
 
     /* create individual metaballs with random points using LIBWDB */
     make_meatballs(fp, balls[0], some);
@@ -207,7 +208,7 @@ make_spaghetti(const char *filename, const char *name, long count)
     wdb_close(fp);
 
     /* done with the write-only, now begins read/write */
-    dbip = db_open(filename, "rw");
+    dbip = db_open(filename, DB_OPEN_READWRITE);
     if (dbip == DBI_NULL) {
 	perror("ERROR");
 	bu_exit(EXIT_FAILURE, "Failed to open geometry file [%s].  Aborting.\n", filename);
@@ -227,35 +228,38 @@ make_spaghetti(const char *filename, const char *name, long count)
 int
 main(int argc, char *argv[])
 {
-    static const char usage[] = "Usage:\n%s [-h] [-o outfile] [-n count]\n\n  -h      \tShow help\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default 555)\n\n";
+    static const char usage[] = "Usage:\n%s [-o outfile] [-n count]\n\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default %d)\n\n";
+    static const int COUNTMAX = 555;
 
     char outfile[MAXPATHLEN] = "metaball.g";
-    int optc = 0;
-    long count = 555;
+    int optc;
+    long count = COUNTMAX;
 
-    while ((optc = bu_getopt(argc, argv, "Hho:n:")) != -1) {
+    if (argc == 1) {
+	fprintf(stderr,usage, *argv, COUNTMAX);
+    	fprintf(stderr,"       Program continues running:\n");
+    }
+
+    while ((optc = bu_getopt(argc, argv, "o:n:h?")) != -1) {
+        if (bu_optopt == '?') optc='h';
 	switch (optc) {
 	    case 'o':
-		snprintf(outfile, MAXPATHLEN, "%s", bu_optarg);;
+		snprintf(outfile, MAXPATHLEN, "%s", bu_optarg);
 		break;
 	    case 'n':
 		count = atoi(bu_optarg);
 		break;
-	    case 'h' :
-	    case 'H' :
-	    case '?' :
-		printf(usage, *argv);
+	    default:
+		fprintf(stderr,usage, *argv, COUNTMAX);
 		return optc == '?' ? EXIT_FAILURE : EXIT_SUCCESS;
 	}
     }
 
-    if (count <= 0) {
+    if (count <= 0)
 	bu_exit(EXIT_FAILURE, "ERROR: count must be greater than zero");
-    }
 
-    if (bu_file_exists(outfile)) {
+    if (bu_file_exists(outfile, NULL))
 	bu_exit(EXIT_FAILURE, "ERROR: %s already exists.  Remove file and try again.", outfile);
-    }
 
     bu_log("Writing metaballs out to [%s]\n", outfile);
 
@@ -266,6 +270,7 @@ main(int argc, char *argv[])
 
     return EXIT_SUCCESS;
 }
+
 
 /*
  * Local Variables:

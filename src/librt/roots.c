@@ -1,7 +1,7 @@
 /*                         R O O T S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,14 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file roots.c
- *
- * Find the roots of a polynomial
- *
- */
-/** @} */
+
 
 #include "common.h"
 
@@ -32,7 +25,7 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -42,8 +35,6 @@ static const bn_poly_t bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
 
 /**
- * R T _ P O L Y _ E V A L _ W _ 2 D E R I V A T I V E S
- *
  * Evaluates p(Z), p'(Z), and p''(Z) for any Z (real or complex).
  * Given an equation of the form:
  *
@@ -66,7 +57,7 @@ rt_poly_eval_w_2derivatives(register bn_complex_t *cZ, register bn_poly_t *eqn, 
 /* input */
 /* outputs */
 {
-    register int n;
+    register size_t n;
     register int m;
 
     bn_cx_cons(b, eqn->cf[0], 0.0);
@@ -89,8 +80,6 @@ rt_poly_eval_w_2derivatives(register bn_complex_t *cZ, register bn_poly_t *eqn, 
 
 
 /**
- * R T _ P O L Y _ F I N D R O O T
- *
  * Calculates one root of a polynomial (p(Z)) using Laguerre's
  * method.  This is an iterative technique which has very good global
  * convergence properties.  The formulas for this method are
@@ -131,10 +120,10 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	bn_cx_scal(&T, (double)(eqn->dgr*n));
 	bn_cx_sub(&cH, &T);
 
-	/* Calculate the next iteration for Laguerre's method.
-	 * Test to see whether addition or subtraction gives the
-	 * larger denominator for the next 'Z', and use the
-	 * appropriate value in the formula.
+	/* Calculate the next iteration for Laguerre's method.  Test
+	 * to see whether addition or subtraction gives the larger
+	 * denominator for the next 'Z', and use the appropriate value
+	 * in the formula.
 	 */
 	bn_cx_sqrt(&cH, &cH);
 	p1_H = p1;
@@ -149,16 +138,13 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	    bn_cx_sub(nxZ, &p0);
 	}
 
-	/* Use proportional convergence test to allow very small
-	 * roots and avoid wasting time on large roots.
-	 * The original version used bn_cx_ampl(), which requires
-	 * a square root.  Using bn_cx_amplsq() saves lots of cycles,
-	 * but changes loop termination conditions somewhat.
+	/* Use proportional convergence test to allow very small roots
+	 * and avoid wasting time on large roots.  The original
+	 * version used bn_cx_ampl(), which requires a square root.
+	 * Using bn_cx_amplsq() saves lots of cycles, but changes loop
+	 * termination conditions somewhat.
 	 *
 	 * diff is |p0|**2.  nxZ = Z - p0.
-	 *
-	 * SGI XNS IRIS 3.5 compiler fails if following 2 assignments
-	 * are imbedded in the IF statement, as before.
 	 */
 	b = bn_cx_amplsq(nxZ);
 	diff = bn_cx_amplsq(&p0);
@@ -166,7 +152,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	if (b < diff)
 	    continue;
 
-	if (NEAR_ZERO(diff, SMALL_FASTF))
+	if (ZERO(diff))
 	    return i; /* OK -- can't do better */
 
 	/* FIXME: figure out why SMALL_FASTF is too sensitive, why
@@ -188,8 +174,6 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 
 
 /**
- * R T _ P O L Y _ C H E C K R O O T S
- *
  * Evaluates p(Z) for any Z (real or complex).  In this case, test all
  * "nroots" entries of roots[] to ensure that they are roots (zeros)
  * of this polynomial.
@@ -213,7 +197,7 @@ rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nr
 {
     register fastf_t er, ei;		/* "epoly" */
     register fastf_t zr, zi;		/* Z value to evaluate at */
-    register int n;
+    register size_t n;
     int m;
 
     for (m=0; m < nroots; ++m) {
@@ -246,8 +230,6 @@ rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nr
 
 
 /**
- * R T _ P O L Y _ D E F L A T E
- *
  * Deflates a polynomial by a given root.
  */
 void
@@ -260,7 +242,7 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
      * root, Quadratic for a complex root (since they come in con-
      * jugate pairs).
      */
-    if (NEAR_ZERO(root->im, SMALL)) {
+    if (ZERO(root->im)) {
 	/* root is real */
 	divisor.dgr = 1;
 	divisor.cf[0] = 1;
@@ -281,29 +263,18 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
 }
 
 
-/**
- * R T _ P O L Y _ R O O T S
- *
- * WARNING: The polynomial given as input is destroyed by this
- * routine.  The caller must save it if it is important!
- *
- * NOTE : This routine is written for polynomials with real
- * coefficients ONLY.  To use with complex coefficients, the Complex
- * Math library should be used throughout.  Some changes in the
- * algorithm will also be required.
- */
 int
 rt_poly_roots(register bn_poly_t *eqn,	/* equation to be solved */
 	      register bn_complex_t roots[], /* space to put roots found */
 	      const char *name) /* name of the primitive being checked */
 {
-    register int n;		/* number of roots found */
+    register size_t n;		/* number of roots found */
     fastf_t factor;		/* scaling factor for copy */
 
     /* Remove leading coefficients which are too close to zero,
      * to prevent the polynomial factoring from blowing up, below.
      */
-    while (NEAR_ZERO(eqn->cf[0], SMALL)) {
+    while (ZERO(eqn->cf[0])) {
 	for (n=0; n <= eqn->dgr; n++) {
 	    eqn->cf[n] = eqn->cf[n+1];
 	}
@@ -321,7 +292,7 @@ rt_poly_roots(register bn_poly_t *eqn,	/* equation to be solved */
     /* A trailing coefficient of zero indicates that zero
      * is a root of the equation.
      */
-    while (NEAR_ZERO(eqn->cf[eqn->dgr], SMALL)) {
+    while (ZERO(eqn->cf[eqn->dgr])) {
 	roots[n].re = roots[n].im = 0.0;
 	--eqn->dgr;
 	++n;

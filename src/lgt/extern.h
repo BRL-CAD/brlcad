@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file extern.h
+/** @file lgt/extern.h
  *
  */
+
+#ifndef LGT_EXTERN_H
+#define LGT_EXTERN_H
 
 #include "common.h"
 
@@ -39,15 +42,18 @@ extern int lgt_Edit_Db_Entry();
 extern int lgt_Print_Db();
 extern int pars_Argv();
 
+void cons_Vector(double *vec, double azim, double elev);
+void render_Model(int frame);
+void render_Scan(int cpu, void *data);
+
 extern void append_Octp();
 extern void close_Output_Device();
-extern void cons_Vector();
 extern void delete_OcList();
 extern void display_Temps();
 extern void do_line();
 extern void exit_Neatly();
 extern void fb_Zoom_Window();
-extern void grid_Rotate();
+extern void grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, fastf_t *des_H, fastf_t *des_V);
 extern void init_Status();
 extern void loc_Perror();
 extern void note_IRmapping();
@@ -65,7 +71,6 @@ extern void prnt_Title();
 extern void prnt_Trie();
 extern void prnt_Usage();
 extern void prnt3vec();
-extern void render_Model();
 extern void ring_Bell();
 extern void set_IRmapping();
 extern void setGridSize();
@@ -146,8 +151,6 @@ extern int query_region;
 extern int report_overlaps;
 extern int reverse_video;
 extern int save_view_flag;
-extern int sgi_console;
-extern int sgi_usemouse;
 extern int shadowing;
 extern int tracking_cursor;
 extern int tty;
@@ -156,7 +159,7 @@ extern int user_interrupt;
 extern int x_fb_origin, y_fb_origin;
 extern int zoom;
 
-extern struct vfont font;
+extern struct vfont_file font;
 
 extern unsigned char arrowcursor[];
 extern unsigned char menucursor[];
@@ -174,14 +177,7 @@ extern struct rt_i *rt_ip;
 #define XSCR2MEM(_x)	(_x)
 #define YSCR2MEM(_y)	(_y)
 
-#ifdef sgi
-extern int win_active;
-#define	SGI_XCVT( v_ ) (((v_) - xwin) / (fbiop->if_width/grid_sz))
-#define SGI_YCVT( v_ ) (((v_) - ywin) / (fbiop->if_width/grid_sz))
-#else
-#define	SGI_XCVT( v_ ) (v_)
-#define SGI_YCVT( v_ ) (v_)
-#endif
+#endif /* LGT_EXTERN_H */
 
 /*
  * Local Variables:

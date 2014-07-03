@@ -1,7 +1,7 @@
 /*                      S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,12 +19,12 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file superell.c
+/** @file primitives/superell/superell.c
  *
  * Intersect a ray with a Superquadratic Ellipsoid.
  *
- * NOTICE: this primitive is incomplete and should beconsidered
- * experimental.  this primitive will exhibit several
+ * NOTICE: this primitive is incomplete and should be considered
+ * experimental.  This primitive will exhibit several
  * instabilities in the existing root solver method.
  *
  */
@@ -38,21 +38,23 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "nurb.h"
+
+#include "../../librt_private.h"
 
 
 const struct bu_structparse rt_superell_parse[] = {
-    { "%f", 3, "V", bu_offsetof(struct rt_superell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A", bu_offsetof(struct rt_superell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "B", bu_offsetof(struct rt_superell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "C", bu_offsetof(struct rt_superell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 1, "n", bu_offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 1, "e", bu_offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V", bu_offsetofarray(struct rt_superell_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A", bu_offsetofarray(struct rt_superell_internal, a, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "B", bu_offsetofarray(struct rt_superell_internal, b, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "C", bu_offsetofarray(struct rt_superell_internal, c, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%g", 1, "n", bu_offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%g", 1, "e", bu_offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -119,7 +121,7 @@ const struct bu_structparse rt_superell_parse[] = {
  * NORMALS.  Given the point W on the superellipsoid, what is the
  * vector normal to the tangent plane at that point?
  *
- * Map W onto the unit sphere, ie:  W' = S(R(W - V)).
+ * Map W onto the unit sphere, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit sphere at W' has a normal vector of the same value(!).
  * N' = W'
@@ -163,15 +165,81 @@ struct superell_specific {
     double superell_invmsBu; /* 1.0 / |Bu|^2 */
     double superell_invmsCu; /* 1.0 / |Cu|^2 */
     vect_t superell_invsq;
-    mat_t superell_SoR; /* matrix for local cordinate system, Scale(Rotate(V))*/
+    mat_t superell_SoR; /* matrix for local coordinate system, Scale(Rotate(V))*/
     mat_t superell_invRSSR; /* invR(Scale(Scale(Rot(V)))) */
     mat_t superell_invR; /* transposed rotation matrix */
 };
 #define SUPERELL_NULL ((struct superell_specific *)0)
 
 /**
- * R T _ S U P E R E L L _ P R E P
- *
+ * Calculate a bounding RPP for a superell
+ */
+int
+rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+
+    struct rt_superell_internal *eip;
+    fastf_t magsq_a, magsq_b, magsq_c;
+    vect_t Au, Bu, Cu;
+    mat_t R;
+    vect_t w1, w2, P;	/* used for bounding RPP */
+    fastf_t f;
+
+    eip = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(eip);
+
+    magsq_a = MAGSQ(eip->a);
+    magsq_b = MAGSQ(eip->b);
+    magsq_c = MAGSQ(eip->c);
+
+
+    /* Create unit length versions of A, B, C */
+    f = 1.0/sqrt(magsq_a);
+    VSCALE(Au, eip->a, f);
+    f = 1.0/sqrt(magsq_b);
+    VSCALE(Bu, eip->b, f);
+    f = 1.0/sqrt(magsq_c);
+    VSCALE(Cu, eip->c, f);
+
+    MAT_IDN(R);
+    VMOVE(&R[0], Au);
+    VMOVE(&R[4], Bu);
+    VMOVE(&R[8], Cu);
+
+    /* Compute bounding RPP */
+    VSET(w1, magsq_a, magsq_b, magsq_c);
+
+    /* X */
+    VSET(P, 1.0, 0, 0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
+    f = sqrt(f);
+    (*min)[X] = eip->v[X] - f;	/* V.P +/- f */
+    (*max)[X] = eip->v[X] + f;
+
+    /* Y */
+    VSET(P, 0, 1.0, 0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
+    f = sqrt(f);
+    (*min)[Y] = eip->v[Y] - f;	/* V.P +/- f */
+    (*max)[Y] = eip->v[Y] + f;
+
+    /* Z */
+    VSET(P, 0, 0, 1.0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
+    f = sqrt(f);
+    (*min)[Z] = eip->v[Z] - f;	/* V.P +/- f */
+    (*max)[Z] = eip->v[Z] + f;
+
+    return 0;
+}
+
+
+/**
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid superellipsoid, and if so,
  * precompute various terms of the formula.
@@ -180,7 +248,7 @@ struct superell_specific {
  * 0 SUPERELL is OK
  * !0 Error in description
  *
- * Implicit return - A struct superell_specific is created, and it's
+ * Implicit return - A struct superell_specific is created, and its
  * address is stored in stp->st_specific for use by rt_superell_shot()
  */
 int
@@ -192,7 +260,6 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     fastf_t magsq_a, magsq_b, magsq_c;
     mat_t R, TEMP;
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
-    vect_t w1, w2, P;	/* used for bounding RPP */
     fastf_t f;
 
     eip = (struct rt_superell_internal *)ip->idb_ptr;
@@ -246,8 +313,8 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     /* Solid is OK, compute constant terms now */
 
-    BU_GETSTRUCT(superell, superell_specific);
-    stp->st_specific = (genptr_t)superell;
+    BU_GET(superell, struct superell_specific);
+    stp->st_specific = (void *)superell;
 
     superell->superell_n = eip->n;
     superell->superell_e = eip->e;
@@ -296,42 +363,12 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     stp->st_aradius = stp->st_bradius = sqrt(f);
 
     /* Compute bounding RPP */
-    VSET(w1, magsq_a, magsq_b, magsq_c);
-
-    /* X */
-    VSET(P, 1.0, 0, 0);		/* bounding plane normal */
-    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
-    VELMUL(w2, w2, w2);		/* square each term */
-    f = VDOT(w1, w2);
-    f = sqrt(f);
-    stp->st_min[X] = superell->superell_V[X] - f;	/* V.P +/- f */
-    stp->st_max[X] = superell->superell_V[X] + f;
-
-    /* Y */
-    VSET(P, 0, 1.0, 0);		/* bounding plane normal */
-    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
-    VELMUL(w2, w2, w2);		/* square each term */
-    f = VDOT(w1, w2);
-    f = sqrt(f);
-    stp->st_min[Y] = superell->superell_V[Y] - f;	/* V.P +/- f */
-    stp->st_max[Y] = superell->superell_V[Y] + f;
-
-    /* Z */
-    VSET(P, 0, 0, 1.0);		/* bounding plane normal */
-    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
-    VELMUL(w2, w2, w2);		/* square each term */
-    f = VDOT(w1, w2);
-    f = sqrt(f);
-    stp->st_min[Z] = superell->superell_V[Z] - f;	/* V.P +/- f */
-    stp->st_max[Z] = superell->superell_V[Z] + f;
+    if (rt_superell_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     return 0;			/* OK */
 }
 
 
-/**
- * R T _ S U P E R E L L _ P R I N T
- */
 void
 rt_superell_print(const struct soltab *stp)
 {
@@ -348,8 +385,6 @@ rt_superell_print(const struct soltab *stp)
  */
 
 /**
- * R T _ S U P E R E L L _ S H O T
- *
  * Intersect a ray with an superellipsoid, where all constant terms
  * have been precomputed by rt_superell_prep().  If an intersection
  * occurs, a struct seg will be acquired and filled in.
@@ -391,11 +426,11 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     MAT4X3VEC(newShotDir, superell->superell_SoR, rp->r_dir);
     VUNITIZE(newShotDir);
 
-    /* normalize distance from the superell.  substitues a corrected ray
+    /* normalize distance from the superell.  substitutes a corrected ray
      * point, which contains a translation along the ray direction to the
      * closest approach to vertex of the superell.  Translating the ray
      * along the direction of the ray to the closest point near the
-     * primitives center vertex.  New ray origin is hence, normalized.
+     * primitive's center vertex.  New ray origin is hence, normalized.
      */
     VSCALE(normalizedShotPoint, newShotDir,
 	   VDOT(newShotPoint, newShotDir));
@@ -488,7 +523,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     }
 
     if (counter > 0) {
-	bu_log("rt_superell_shot():  realroot in %d out %d\n", realRoot[1], realRoot[0]);
+	bu_log("rt_superell_shot():  realroot in %f out %f\n", realRoot[1], realRoot[0]);
 	counter--;
     }
 
@@ -526,8 +561,6 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 
 
 /**
- * R T _ S U P E R E L L _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -550,8 +583,6 @@ rt_superell_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ S U P E R E L L _ C U R V E
- *
  * Return the curvature of the superellipsoid.
  */
 void
@@ -568,8 +599,6 @@ rt_superell_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ S U P E R E L L _ U V
- *
  * For a hit on the surface of an SUPERELL, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  * u = azimuth
@@ -589,29 +618,17 @@ rt_superell_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
 }
 
 
-/**
- * R T _ S U P E R E L L _ F R E E
- */
 void
 rt_superell_free(struct soltab *stp)
 {
     struct superell_specific *superell =
 	(struct superell_specific *)stp->st_specific;
 
-    bu_free((char *)superell, "superell_specific");
-}
-
-
-int
-rt_superell_class(void)
-{
-    return 0;
+    BU_PUT(superell, struct superell_specific);
 }
 
 
 /**
- * R T _ S U P E R E L L _ 1 6 P T S
- *
  * Also used by the TGC code
  */
 #define SUPERELLOUT(n) ov+(n-1)*3
@@ -623,16 +640,16 @@ rt_superell_16pts(fastf_t *ov,
 {
     static fastf_t c, d, e, f, g, h;
 
-    e = h = .92388;			/* cos(22.5) */
-    c = d = .707107;		/* cos(45) */
-    g = f = .382683;		/* cos(67.5) */
+    e = h = .92388;		/* cos(22.5 degrees) */
+    c = d = M_SQRT1_2;		/* cos(45 degrees) */
+    g = f = .382683;		/* cos(67.5 degrees) */
 
     /*
      * For angle theta, compute surface point as
      *
      * V + cos(theta) * A + sin(theta) * B
      *
-     * note that sin(theta) is cos(90-theta).
+     * note that sin(theta) is cos(90-theta); arguments in degrees.
      */
 
     VADD2(SUPERELLOUT(1), V, A);
@@ -654,11 +671,8 @@ rt_superell_16pts(fastf_t *ov,
 }
 
 
-/**
- * R T _ S U P E R E L L _ P L O T
- */
 int
-rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     int i;
     struct rt_superell_internal *eip;
@@ -713,8 +727,6 @@ struct superell_vert_strip {
 
 
 /**
- * R T _ S U P E R E L L _ T E S S
- *
  * Tesssuperellate an superellipsoid.
  *
  * The strategy is based upon the approach of Jon Leech 3/24/89, from
@@ -756,8 +768,6 @@ rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
 
 /**
- * R T _ S U P E R E L L _ I M P O R T
- *
  * Import an superellipsoid/sphere from the database format to the
  * internal structure.  Apply modeling transformations as wsuperell.
  */
@@ -781,13 +791,14 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUPERELL;
-    ip->idb_meth = &rt_functab[ID_SUPERELL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_superell_internal), "rt_superell_internal");
+    ip->idb_meth = &OBJ[ID_SUPERELL];
+    BU_ALLOC(ip->idb_ptr, struct rt_superell_internal);
+
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    rt_fastf_float(vec, rp->s.s_values, 4);
+    flip_fastf_float(vec, rp->s.s_values, 4, dbip->dbi_version < 0 ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -795,16 +806,19 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     MAT4X3VEC(eip->a, mat, &vec[1*3]);
     MAT4X3VEC(eip->b, mat, &vec[2*3]);
     MAT4X3VEC(eip->c, mat, &vec[3*3]);
-    eip->n = rp->s.s_values[12];
-    eip->e = rp->s.s_values[13];
+
+    if (dbip->dbi_version < 0) {
+	eip->n = flip_dbfloat(rp->s.s_values[12]);
+	eip->e = flip_dbfloat(rp->s.s_values[13]);
+    } else {
+	eip->n = rp->s.s_values[12];
+	eip->e = rp->s.s_values[13];
+    }
 
     return 0;		/* OK */
 }
 
 
-/**
- * R T _ S U P E R E L L _ E X P O R T
- */
 int
 rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -820,7 +834,7 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "superell external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "superell external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -842,8 +856,6 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
 
 /**
- * R T _ S U P E R E L L _ I M P O R T 5
- *
  * Import an superellipsoid/sphere from the database format to the
  * internal structure.  Apply modeling transformations as wsuperell.
  */
@@ -851,7 +863,9 @@ int
 rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
-    fastf_t vec[ELEMENTS_PER_VECT*4 + 2];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4 + 2];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -862,14 +876,14 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUPERELL;
-    ip->idb_meth = &rt_functab[ID_SUPERELL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_superell_internal), "rt_superell_internal");
+    ip->idb_meth = &OBJ[ID_SUPERELL];
+    BU_ALLOC(ip->idb_ptr, struct rt_superell_internal);
 
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 2);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 2);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -885,8 +899,6 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
 
 /**
- * R T _ S U P E R E L L _ E X P O R T 5
- *
  * The external format is:
  * V point
  * A vector
@@ -897,7 +909,9 @@ int
 rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
-    fastf_t vec[ELEMENTS_PER_VECT*4 + 2];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4 + 2];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -908,7 +922,7 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 2);
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "superell external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "superell external");
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0*ELEMENTS_PER_VECT], eip->v, local2mm);
@@ -920,15 +934,13 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     vec[4*ELEMENTS_PER_VECT + 1] = eip->e;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 + 2);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 + 2);
 
     return 0;
 }
 
 
 /**
- * R T _ S U P E R E L L _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -999,8 +1011,6 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 
 
 /**
- * R T _ S U P E R E L L _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1010,13 +1020,14 @@ rt_superell_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "superell ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
 /* The U parameter runs south to north.  In order to orient loop CCW,
  * need to start with 0, 1-->0, 0 transition at the south pole.
  */
+/* unused var:
 static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
     0, 1, 0,
     0, 0, 0,
@@ -1024,19 +1035,227 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
     1, 1, 0,
     0, 1, 0
 };
+*/
 
-
-/**
- * R T _ S U P E R E L L _ P A R A M S
- *
- */
 int
-rt_superell_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+
+/**
+ * Computes the volume of a superellipsoid
+ *
+ * Volume equation from http://lrv.fri.uni-lj.si/~franc/SRSbook/geometry.pdf
+ * which also includes a derivation on page 32.
+ */
+void
+rt_superell_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+#ifdef HAVE_TGAMMA
+    struct rt_superell_internal *sip;
+    double mag_a, mag_b, mag_c;
+#endif
+
+    if (volume == NULL || ip == NULL) {
+	return;
+    }
+
+#ifdef HAVE_TGAMMA
+    RT_CK_DB_INTERNAL(ip);
+    sip = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(sip);
+
+    mag_a = MAGNITUDE(sip->a);
+    mag_b = MAGNITUDE(sip->b);
+    mag_c = MAGNITUDE(sip->c);
+
+    *volume = 2.0 * mag_a * mag_b * mag_c * sip->e * sip->n * (tgamma(sip->n/2.0 + 1.0) * tgamma(sip->n) / tgamma(3.0 * sip->n/2.0 + 1.0)) * (tgamma(sip->e / 2.0) * tgamma(sip->e / 2.0) / tgamma(sip->e));
+#endif
+}
+
+
+static fastf_t
+superell_surf_area_box(vect_t mags)
+{
+    return 8 * (mags[0] * mags[1] + mags[0] * mags[2] + mags[1] * mags[2]);
+}
+
+
+static fastf_t
+sign(fastf_t x)
+{
+    if (x > 0) {
+	return 1.0;
+    } else if (x < 0) {
+	return -1.0;
+    } else {
+	return 0.0;
+    }
+}
+
+
+/* This is the c auxiliary function for superell_xyz_from_uv.
+ * See http://en.wikipedia.org/wiki/Superellipsoid for more
+ * information.
+ */
+static fastf_t
+superell_c(fastf_t w, fastf_t m)
+{
+    return sign(cos(w)) * pow(fabs(cos(w)), m);
+}
+
+
+/* This is the s auxiliary function for superell_xyz_from_uv.
+ * See http://en.wikipedia.org/wiki/Superellipsoid for more
+ * information.
+ */
+static fastf_t
+superell_s(fastf_t w, fastf_t m)
+{
+    return sign(sin(w)) * pow(fabs(sin(w)), m);
+}
+
+
+/* This calculates the xyz coordinates of a set of uv coordinates on
+ * a superellipsoid, using the algorithm detailed in these places:
+ *
+ * http://en.wikipedia.org/wiki/Superellipsoid
+ * http://paulbourke.net/geometry/superellipse/
+ *
+ * Since this code is called inside a loop through v-values inside a
+ * loop through u-values, superell_c(u, sip->e) and superell_s(u,
+ * sip->e) can be precomputed, which results in a significant
+ * performance gain; for this reason, the function takes there values
+ * and not he original u-value.
+ */
+static void
+superell_xyz_from_uv(point_t pt, fastf_t u, fastf_t v, vect_t mags, const struct rt_superell_internal *sip)
+{
+    pt[X] = mags[0] * superell_c(v, sip->n) * superell_c(u, sip->e);
+    pt[Y] = mags[1] * superell_c(v, sip->n) * superell_s(u, sip->e);
+    pt[Z] = mags[2] * superell_s(v, sip->n);
+}
+
+
+/* This attempts to find the surface area by subdividing the uv plane
+ * into squares, and finding the approximate surface area of each
+ * square.
+ */
+static fastf_t
+superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, fastf_t side_length)
+{
+    fastf_t area = 0;
+    fastf_t u, v;
+
+    /* There are M_PI / side_length + 1 values because both ends have
+       to be stored */
+    int row_length = sizeof(point_t) * (M_PI / side_length + 1);
+
+    point_t *row1 = (point_t *)bu_malloc(row_length, "superell_surf_area_general");
+    point_t *row2 = (point_t *)bu_malloc(row_length, "superell_surf_area_general");
+
+    int idx = 0;
+
+
+    /* This function keeps a moving window of two rows at any time,
+     * and calculates the area of space between those two rows. It
+     * calculates the first row outside of the loop so that at each
+     * iteration it only has to calculate the second. Following
+     * standard definitions of u and v, u ranges from -pi to pi, and v
+     * ranges from -pi/2 to pi/2. Using an extra index variable allows
+     * the code to compute the index into the array very efficiently.
+     */
+    for (v = -M_PI_2; v < M_PI_2; v += side_length, idx++) {
+	superell_xyz_from_uv(row1[idx], -M_PI, v, mags, sip);
+    }
+
+
+    /* This starts at -M_PI + side_length because the first row is
+     * computed outside the loop, which allows the loop to always
+     * calculate the second row of the pair.
+     */
+    for (u = -M_PI + side_length; u < M_PI; u += side_length) {
+	idx = 0;
+	for (v = -M_PI_2; v < M_PI_2; v += side_length, idx++) {
+	    superell_xyz_from_uv(row2[idx], u + side_length, v, mags, sip);
+	}
+
+	idx = 0;
+
+	/* This ends at -M_PI / 2 - side_length because if it kept
+	 * going it would overflow the array, since it always looks at
+	 * the square to the right of its current index.
+	 */
+	for (v = - M_PI_2; v < M_PI_2 - side_length; v += side_length, idx++) {
+	    area +=
+		bn_dist_pt3_pt3(row1[idx], row1[idx + 1]) *
+		bn_dist_pt3_pt3(row1[idx], row2[idx]);
+	}
+
+	memcpy(row1, row2, row_length);
+    }
+
+    bu_free(row1, "superell_surf_area_general");
+    bu_free(row2, "superell_surf_area_general");
+
+    return area;
+}
+
+
+void
+rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_superell_internal *sip;
+    vect_t mags;
+
+    RT_CK_DB_INTERNAL(ip);
+    sip = (struct rt_superell_internal *)ip->idb_ptr;
+
+    mags[0] = MAGNITUDE(sip->a);
+    mags[1] = MAGNITUDE(sip->b);
+    mags[2] = MAGNITUDE(sip->c);
+
+    /* The parametric representation does not work correctly at n = e
+     * = 0, so this uses a special calculation for boxes.
+     */
+    if ((NEAR_EQUAL(sip->e, 0, BN_TOL_DIST)) && NEAR_EQUAL(sip->n, 0, BN_TOL_DIST)) {
+	*area = superell_surf_area_box(mags);
+    } else {
+	/* This number specifies the initial precision used. The
+	 * precision is roughly the number of chunks that the uv-space
+	 * is divided into during the approximation; the larger the
+	 * number the higher the accuracy and the lower the
+	 * performance.
+	 */
+	int precision = 1024;
+
+	fastf_t previous_area = 0;
+	fastf_t current_area = superell_surf_area_general(sip, mags, M_PI / precision);
+	while (!(NEAR_EQUAL(current_area, previous_area, BN_TOL_DIST))) {
+	    /* The precision is multiplied by a constant on each round
+	     * through the loop to make sure that the precision
+	     * continues to increase until a satisfactory value is
+	     * found. If this value is very small, this approximation
+	     * will likely converge fairly quickly and with lower
+	     * accuracy: the smaller the distance between the inputs
+	     * the more likely that the outputs will be within
+	     * BN_TOL_DIST. A large value will result in slow
+	     * convergence, but in high accuracy: when the values are
+	     * finally within BN_TOL_DIST of each other the
+	     * approximation must be very good, because a large
+	     * increase in input precision resulted in a small
+	     * increase in accuracy.
+	     */
+	    precision *= 2;
+	    previous_area = current_area;
+	    current_area = superell_surf_area_general(sip, mags, M_PI / precision);
+	}
+	*area = current_area;
+    }
 }
 
 

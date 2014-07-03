@@ -1,7 +1,7 @@
 /*                    V E G E T A T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,17 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vegetation.h
+/** @file proc-db/vegetation.h
  *
- * This is the header file to the program that generages geometry
+ * This is the header file to the program that generates geometry
  * that resembles or approximates a plant.  More specifically,
  * the generator is geared towards generating trees and shrubbery.
  * The plants are generated based on specification of growth
  * parameters such as growth and branching rates.
  *
  */
-#ifndef __VEGETATION_H__
-#define __VEGETATION_H__
+#ifndef PROC_DB_VEGETATION_H
+#define PROC_DB_VEGETATION_H
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #define _CRT_RAND_S
@@ -63,20 +63,20 @@ typedef struct growthSegment {
 
 /* not really a list (it is a container), but close enough */
 typedef struct segmentList {
-    unsigned int capacity;
-    unsigned int count;
+    size_t capacity;
+    size_t count;
     growthSegment_t **segment;
 } segmentList_t;
 #define INIT_GROWTHSEGMENTLIST_T(_i) { (_i)->capacity = 0; (_i)->count = 0; (_i)->segment=NULL; }
 
 
 typedef struct structure {
-    int subStructureCapacity;
-    int subStructureCount;
+    size_t subStructureCapacity;
+    size_t subStructureCount;
     struct structure **subStructure;
     unsigned int age;
-    int segmentCapacity;
-    int segmentCount;
+    size_t segmentCapacity;
+    size_t segmentCount;
     growthSegment_t **segment;
 } structure_t;
 #define INIT_STRUCTURE_T(_i) { (_i)->subStructureCapacity = 0; (_i)->subStructureCount = 0; (_i)->subStructure=NULL; (_i)->age=0; (_i)->segmentCapacity=0; (_i)->segmentCount=0; (_i)->segment=NULL; }
@@ -85,10 +85,8 @@ typedef struct structure {
 #define TRUE 1
 #define FALSE 0
 
-typedef unsigned char bool;
-
 typedef struct growthPoint {
-    bool alive;
+    char alive;
     unsigned int growthEnergy;
     int growthEnergyDelta; /* amount growth energy changes per age */
     double length;
@@ -104,8 +102,8 @@ typedef struct growthPoint {
 
 /* XXX not really a list -- it is a container object for a list */
 typedef struct growthPointList {
-    unsigned int capacity;
-    unsigned int count;
+    size_t capacity;
+    size_t count;
     growthPoint_t **point;
 } growthPointList_t;
 #define INIT_GROWTHPOINTLIST_T(_i) { (_i)->capacity = 0; (_i)->count = 0; (_i)->point=NULL; }
@@ -131,7 +129,7 @@ typedef struct characteristic {
     unsigned int maxBranchingAge; /* segments older than this cannot branch */
 
     unsigned int regrowthAttempts; /* how many times to keep trying to grow when blocked */
-    unsigned int growthEnergy; /* how much it groes per timestep (and potentially branches) */
+    unsigned int growthEnergy; /* how much it grows per timestep (and potentially branches) */
 
     vect_t branchMinVariation;
     vect_t branchMaxVariation;
@@ -150,7 +148,7 @@ typedef struct characteristic {
 typedef struct plant {
     /* static plant properties */
     point_t position;
-    double radius; /* inital base trunk radius */
+    double radius; /* initial base trunk radius */
     vect_t direction; /* general initial growth direction */
 
     /* variable plant properties */
@@ -161,7 +159,7 @@ typedef struct plant {
     structure_t *structure;
     growthPointList_t *growth;
 
-    unsigned long segmentCount;
+    size_t segmentCount;
 } plant_t;
 #define INIT_PLANT_T(_i) { VSETALL((_i)->position, 0.0); (_i)->radius=0.0; VSET((_i)->direction, 0.0, 0.0, 1.0); (_i)->characteristic = NULL; (_i)->age=0; (_i)->structure = NULL; (_i)->growth = NULL; (_i)->segmentCount = 0; }
 
@@ -179,7 +177,7 @@ typedef struct outputCounter {
 #define INIT_OUTPUTCOUNTER_T(_i) { (_i)->primitives=0; (_i)->combinations=0; BU_LIST_INIT(&((_i)->combination).l); sprintf((_i)->name, "XXX"); BU_LIST_INIT(&((_i)->region).l); snprintf((_i)->plantName, MAX_STRING_LENGTH, "plant.r"); }
 
 
-#endif /* __VEGETATION_H__ */
+#endif /* PROC_DB_VEGETATION_H */
 
 /*
  * Local Variables:

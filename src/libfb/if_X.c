@@ -1,7 +1,7 @@
 /*                          I F _ X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,14 +45,17 @@
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX
 #endif
-#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 
+#define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
 #include "bio.h"
 
+#include "bu/color.h"
+#include "bu/file.h"
+#include "bu/str.h"
 #include "fb.h"
 
 #define TMP_FILE "/tmp/x.cmap"
@@ -120,7 +123,7 @@ static struct modeflags {
     char c;
     long mask;
     long value;
-    char *help;
+    const char *help;
 } modeflags[] = {
     { 'l',	MODE_1MASK, MODE_1LINGERING,
       "Lingering window" },
@@ -163,7 +166,7 @@ static unsigned char primary[10] = {
 };
 
 
-/* Arrays containing the indicies of the primary colors and grey values
+/* Arrays containing the indices of the primary colors and grey values
  * in the color map
  */
 static unsigned short redvec[16] = {
@@ -246,12 +249,12 @@ x_print_display_info(Display *dpy)
 
     switch (visual->class) {
 	case DirectColor:
-	    printf("DirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
+	    printf("DirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 	    printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
 		   visual->green_mask, visual->blue_mask);
 	    break;
 	case TrueColor:
-	    printf("TrueColor: Fixed RGB maps, pixel RGB subfield indicies\n");
+	    printf("TrueColor: Fixed RGB maps, pixel RGB subfield indices\n");
 	    printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
 		   visual->green_mask, visual->blue_mask);
 	    break;
@@ -268,8 +271,7 @@ x_print_display_info(Display *dpy)
 	    printf("StaticGray: Fixed map (R=G=B), single index\n");
 	    break;
 	default:
-	    printf("Unknown visual class %d\n",
-		   visual->class);
+	    printf("Unknown visual class %d\n", visual->class);
 	    break;
     }
     printf("Map Entries: %d\n", visual->map_entries);
@@ -526,7 +528,7 @@ x_setup(FBIO *ifp, int width, int height)
 
 
 HIDDEN int
-X_open_fb(FBIO *ifp, char *file, int width, int height)
+X_open_fb(FBIO *ifp, const char *file, int width, int height)
 {
     int fd;
     int mode;
@@ -544,13 +546,13 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
     mode = MODE_1LINGERING;
 
     if (file != NULL) {
-	register char *cp;
+	const char *cp;
 	char modebuf[80];
 	char *mp;
 	int alpha;
 	struct modeflags *mfp;
 
-	if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
+	if (bu_strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
 	    /* How did this happen?? */
 	    mode = 0;
 	} else {
@@ -558,9 +560,9 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
 	    alpha = 0;
 	    mp = &modebuf[0];
 	    cp = &file[6];
-	    while (*cp != '\0' && !isspace(*cp)) {
+	    while (*cp != '\0' && !isspace((int)(*cp))) {
 		*mp++ = *cp;	/* copy it to buffer */
-		if (isdigit(*cp)) {
+		if (isdigit((int)(*cp))) {
 		    cp++;
 		    continue;
 		}
@@ -640,10 +642,13 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
     }
     if ((bitbuf = (unsigned char *)calloc(1, (width*height)/8)) == NULL) {
 	fb_log("X_open_fb: bitbuf malloc failed\n");
+	free(bytebuf);
 	return -1;
     }
     if ((scanbuf = (unsigned char *)calloc(1, width)) == NULL) {
 	fb_log("X_open_fb: scanbuf malloc failed\n");
+	free(bytebuf);
+	free(bitbuf);
 	return -1;
     }
     XI(ifp)->bytebuf = bytebuf;
@@ -688,7 +693,7 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
 
     /* Make the Display connection available for selecting on */
 
-    ifp->if_selfd = XI(ifp)->dpy->fd;
+    ifp->if_selfd = ConnectionNumber(XI(ifp)->dpy);
 
     return 0;
 }
@@ -699,11 +704,6 @@ static int alive = 1;
 HIDDEN
 int x_linger(FBIO *ifp)
 {
-#if 0
-    if (fork() != 0)
-	return 1;	/* release the parent */
-#endif
-
     XSelectInput(XI(ifp)->dpy, XI(ifp)->win,
 		 ExposureMask|ButtonPressMask);
 
@@ -771,7 +771,7 @@ X_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     unsigned char *bytebuf = XI(ifp)->bytebuf;
@@ -784,7 +784,7 @@ X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
     /* return 24bit store if available */
     if (XI(ifp)->mem) {
 	memcpy(pixelp, &(XI(ifp)->mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]), count*sizeof(RGBpixel));
-	return (int)count;
+	return count;
     }
 
     /* 1st -> 4th quadrant */
@@ -797,7 +797,7 @@ X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	*pixelp++ = *cp;
 	*pixelp++ = *cp++;
     }
-    return (int)count;
+    return count;
 }
 
 
@@ -915,7 +915,7 @@ slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
     int sxlen, sylen;	/* screen pixels in x, y */
     int ix, iy;		/* image x, y */
     int sy;		/* screen x, y */
-    int x, y;		/* dummys */
+    int x, y;		/* dummies */
     /* window height, width, and center */
     struct {
 	int width;
@@ -951,10 +951,6 @@ slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
 	iy = ymin + y/ifp->if_yzoom;
 	for (x = 0; x < sxlen; x++) {
 	    ix = xmin + x/ifp->if_xzoom;
-#if 0
-	    sx = sxmin + x;
-	    printf("S(%3d, %3d) <- I(%3d, %3d)\n", sx, sy, ix, iy);
-#endif
 	    pp = (RGBpixel *)&(XI(ifp)->mem[(iy*ifp->if_width+ix)*3]);
 	    scanbuf[x][RED] = (*pp)[RED];
 	    scanbuf[x][GRN] = (*pp)[GRN];
@@ -1104,12 +1100,12 @@ done:
  * Decompose a write of more than one scanline into multiple single
  * scanline writes.
  */
-HIDDEN int
+HIDDEN ssize_t
 X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t maxcount;
     size_t todo;
-    int num;
+    size_t num;
 
     /* check origin bounds */
     if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
@@ -1130,7 +1126,7 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	if (x + todo > (size_t)ifp->if_width)
 	    num = ifp->if_width - x;
 	else
-	    num = (int)todo;
+	    num = todo;
 	if (X_scanwrite(ifp, x, y, pixelp, num, 1) == 0)
 	    return 0;
 	x = 0;
@@ -1138,7 +1134,7 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	todo -= num;
 	pixelp += num;
     }
-    return (int)count;
+    return count;
 }
 
 
@@ -1167,13 +1163,16 @@ X_wmap(FBIO *ifp, const ColorMap *cmp)
     /* Hack to save it into a file - this may go away */
     if (is_linear) {
 	/* no file => linear map */
-	(void) unlink(TMP_FILE);
+	bu_file_delete(TMP_FILE);
     } else {
 	/* save map for later */
 	i=creat(TMP_FILE, 0666);
 	if (i >= 0) {
-	    int ret;
+	    ssize_t ret;
 	    ret = write(i, cmp, sizeof(*cmp));
+	    if (ret != sizeof(*cmp)) {
+		perror("write");
+	    }
 	    close(i);
 	} else {
 	    fprintf(stderr, "if_X: couldn't save color map\n");
@@ -1184,8 +1183,9 @@ X_wmap(FBIO *ifp, const ColorMap *cmp)
     if (XI(ifp)->depth != 8)
 	return 0;	/* no X colormap allocated - XXX */
 
-    /* If MODE_2_8BIT, load it in the real window colormap */
-    if ((XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT) {
+    /* If MODE_2_8BIT, load it in the real window colormap.  If
+     * is_linear is true, cmp will not be populated - do nothing. */
+    if ((XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT && !is_linear) {
 	for (i = 0; i < 256; i++) {
 	    /* Both sides expect 16-bit left-justified maps */
 	    color_defs[i].pixel = i;
@@ -1379,14 +1379,14 @@ x_make_cursor(FBIO *ifp)
     XSetWindowAttributes xswa;
 
     if (ifp) {
-	FB_CK_FBIO(ifp);
-    }
+      FB_CK_FBIO(ifp);
 
-    xswa.save_under = True;
-    XI(ifp)->curswin = XCreateWindow(XI(ifp)->dpy, XI(ifp)->win,
-				     ifp->if_xcenter, ifp->if_ycenter, 1, 1, 3,
-				     CopyFromParent, InputOutput, CopyFromParent,
-				     CWSaveUnder, &xswa);
+      xswa.save_under = True;
+      XI(ifp)->curswin = XCreateWindow(XI(ifp)->dpy, XI(ifp)->win,
+	  ifp->if_xcenter, ifp->if_ycenter, 1, 1, 3,
+	  CopyFromParent, InputOutput, CopyFromParent,
+	  CWSaveUnder, &xswa);
+    }
     return 0;
 }
 
@@ -1535,11 +1535,7 @@ Monochrome(unsigned char *bitbuf, unsigned char *bytebuf, int width, int height,
     register unsigned char *mbuffer, mvalue;   /* monochrome bitmap buffer */
     register unsigned char *mpbuffer;          /* monochrome byte buffer */
     register int row, col, bit;
-#if 1
     static unsigned char MSB[8] = { 0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1 };
-#else
-    static unsigned char LSB[8] = { 1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80 };
-#endif
     register unsigned char *bits = MSB;	/*XXX - for RT, Sun, etc.  */
 
     error1 = (int *)malloc((unsigned)(width+1) * sizeof(int));
@@ -1625,8 +1621,6 @@ X_help(FBIO *ifp)
 
 
 /*
- * c o n v R G B
- *
  * convert a single RGBpixel to its corresponding entry in the Sun
  * colormap.
  */
@@ -1659,9 +1653,7 @@ HIDDEN unsigned char convRGB(register const unsigned char *v)
 
 
 /*
- * G E N M A P
- *
- * initialize the Sun harware colormap
+ * initialize the Sun hardware colormap
  */
 HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap)
 {
@@ -1750,6 +1742,11 @@ FBIO X_interface = {
     {0}  /* u6 */
 };
 
+/* Because class is actually used to access a struct
+ * entry in this file, preserve our redefinition
+ * of class for the benefit of avoiding C++ name
+ * collisions until the end of this file */
+#undef class
 
 #else
 

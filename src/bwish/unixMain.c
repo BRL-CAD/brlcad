@@ -1,7 +1,7 @@
 /*                          U N I X M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file unixMain.c
+/** @file bwish/unixMain.c
  *
  * This file provides the main() function for
  * BWISH and BTCLSH on Unix platforms.

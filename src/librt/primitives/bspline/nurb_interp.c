@@ -1,7 +1,7 @@
 /*                   N U R B _ I N T E R P . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,9 +19,9 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_interp.c
+/** @file primitives/bspline/nurb_interp.c
  *
- * Interpolatopn routines for fitting NURB curves and and surfaces to
+ * Interpolation routines for fitting NURB curves and and surfaces to
  * existing data.
  *
  */
@@ -75,8 +75,6 @@ rt_nurb_interp_mat(fastf_t *imat, struct knot_vector *knots, fastf_t *nodes, int
 
 
 /**
- * R T _ N U R B _ C I N T E R P
- *
  * main routine for interpolation of curves
  */
 void
@@ -102,7 +100,7 @@ rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
     crv->pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, 0);
 
     /* First set up Curve data structs */
-    /* For now we will assume that all paramerizations are uniform */
+    /* For now we will assume that all parameterizations are uniform */
 
     rt_nurb_kvknot(&crv->k, order, 0.0, 1.0, (n - order), (struct resource *)NULL);
 
@@ -137,8 +135,6 @@ rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
 
 
 /**
- * R T _ N U R B _ S I N T E R P
- *
  * Interpolate the 2-D grid of data values and fit a B-spline surface
  * to it.
  *
@@ -171,11 +167,11 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
     srf->dir = 0;
     srf->s_size[0] = xmax;
     srf->s_size[1] = ymax;
-    srf->l.magic = RT_SNURB_MAGIC;
+    srf->l.magic = NMG_FACE_G_SNURB_MAGIC;
     srf->pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
 
     /* the U knot vector replates to the points in a row therefore you
-     * want to determin how many cols there are similar for the V knot
+     * want to determine how many cols there are similar for the V knot
      * vector
      */
 
@@ -195,7 +191,7 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
 
     /* Interpolate the data across the rows, fitting a curve to each. */
     for (y = 0; y < ymax; y++) {
-	crv[y].l.magic = RT_CNURB_MAGIC;
+	crv[y].l.magic = NMG_EDGE_G_CNURB_MAGIC;
 	/* Build curve from from (0, y) to (xmax-1, y) */
 	rt_nurb_cinterp(&crv[y], order, &NVAL(0, y), xmax);
     }
@@ -212,7 +208,7 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
 	}
 
 	/* Interpolate the curve interpolates, giving rows of a surface */
-	ncrv.l.magic = RT_CNURB_MAGIC;
+	ncrv.l.magic = NMG_EDGE_G_CNURB_MAGIC;
 	rt_nurb_cinterp(&ncrv, order, tmp, ymax);
 
 	/* Move new curve interpolations into snurb ctl_points[] */

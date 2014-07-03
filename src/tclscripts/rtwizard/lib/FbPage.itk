@@ -1,7 +1,7 @@
 #                      F B P A G E . I T K
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -135,7 +135,7 @@ namespace eval RtWizard {
 	    variable fbFile
 
 	    variable width
-	    variable heigh
+	    variable height
 
 	    variable widthIndex
 	    variable heightIndex
@@ -436,9 +436,16 @@ namespace eval RtWizard {
 	if { [string match $mode "toFile"] && \
 		 [string length $fbFile] > 0 && \
 		 [string match $screenOnly "false"] } {
-	    return $fbFile
+	    # Will be generating a file - need in-memory fb
+	    set port 0
+	    while { ! [catch {exec [file join [bu_brlcad_root bin] fbclear] -F $port } error ] } {
+		if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $fbserv_port is already in use."}
+		incr port
+	    }
+	    catch {exec [file join [bu_brlcad_root bin] fbserv] -w $width -n $height $port /dev/mem &} pid
+	    return "$port $pid $fbFile"
 	}
-	set binpath [bu_brlcad_root bin]
+	set binpath [bu_brlcad_root "bin"]
 	#
 	# Create an on-screen buffer
 	#
@@ -448,9 +455,9 @@ namespace eval RtWizard {
 	#
 	#
 	if {$tcl_platform(platform) == "windows"} {
-	    set fbType "/dev/wgl"
+	    set fbType "/dev/wglsp"
 	} else {
-	    set fbType "/dev/X"
+	    set fbType "/dev/oglsp"
 	}
 	#
 	#
@@ -468,7 +475,7 @@ namespace eval RtWizard {
 	exec "$binpath/fbclear" -F $port 0 0 0
 	set lastPort $port
 
-	return $port
+	return "$port"
     }
 
     #--------------------#

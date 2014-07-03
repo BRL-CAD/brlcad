@@ -1,7 +1,7 @@
 /*                      P O L Y - B O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2010 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file poly-bot.c
+/** @file conv/poly-bot.c
  *
  * Program to convert all the polysolids in a BRL-CAD model (in a .g
  * file) to BOT solids
@@ -31,6 +31,7 @@
 #include <math.h>
 #include <string.h>
 #include "bio.h"
+#include "bin.h"
 
 #include "vmath.h"
 #include "nmg.h"
@@ -65,6 +66,8 @@ main(int argc, char **argv)
     int num_rec;
     int first=1;
 
+    bu_setprogname(argv[0]);
+
     ifp = stdin;
     ofp = stdout;
 
@@ -87,11 +90,9 @@ main(int argc, char **argv)
 	if (ifp == NULL || ofp == NULL) {
 	    bu_exit(1, "poly-bot: can't open files.");
 	}
-#if defined(_WIN32) && !defined(__CYGWIN__)
     } else {
 	setmode(fileno(ifp), O_BINARY);
 	setmode(fileno(ofp), O_BINARY);
-#endif
     }
     if (isatty(fileno(ifp))) {
 	bu_exit(1, "%s", usage);
@@ -111,7 +112,7 @@ main(int argc, char **argv)
 		continue;
 
 	    case DBID_SKETCH:
-		num_rec = bu_glong( (const unsigned char *)&record.skt.skt_count );
+		num_rec = ntohl(*(uint32_t *)&record.skt.skt_count);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -124,20 +125,20 @@ main(int argc, char **argv)
 		}
 		break;
 	    case DBID_EXTR:
-		num_rec = bu_glong( (const unsigned char *)&record.extr.ex_count );
+		num_rec = ntohl(*(uint32_t *)&record.extr.ex_count);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
 		for ( i=0; i<num_rec; i++ )
 		{
 		    if ( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
-			bu_exit(1, "Unexpected EOF encountered while copying an EXTUSION\n" );
+			bu_exit(1, "Unexpected EOF encountered while copying an EXTRUSION\n" );
 		    if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 			bu_exit(1, "Write failed!\n" );
 		}
 		break;
 	    case DBID_NMG:
-		num_rec = bu_glong( (const unsigned char *)&record.nmg.N_count );
+		num_rec = ntohl(*(uint32_t *)&record.nmg.N_count);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -150,7 +151,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case DBID_PIPE:
-		num_rec = bu_glong( (const unsigned char *)&record.pwr.pwr_count );
+		num_rec = ntohl(*(uint32_t *)&record.pwr.pwr_count);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -163,7 +164,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case DBID_ARBN:
-		num_rec = bu_glong( (const unsigned char *)&record.n.n_grans );
+		num_rec = ntohl(*(uint32_t *)&record.n.n_grans);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -205,7 +206,7 @@ main(int argc, char **argv)
 		bots++;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
-		num_rec = bu_glong( (const unsigned char *)&record.bot.bot_nrec );
+		num_rec = ntohl(*(uint32_t *)&record.bot.bot_nrec);
 		for ( i=0; i<num_rec; i++ )
 		{
 		    if ( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
@@ -235,10 +236,10 @@ main(int argc, char **argv)
 		    }
 		    poly[curr_poly++] = record;	/* struct copy */
 		}
-		BU_INIT_EXTERNAL( &ext );
+		BU_EXTERNAL_INIT( &ext );
 		ext.ext_nbytes = curr_poly * sizeof( union record );
-		ext.ext_buf = (char *)poly;
-		if ( rt_functab[ID_POLY].ft_import4( &intern, &ext, bn_mat_identity, (struct db_i *)NULL, &rt_uniresource ) )
+		ext.ext_buf = (uint8_t *)poly;
+		if ( OBJ[ID_POLY].ft_import4( &intern, &ext, bn_mat_identity, (struct db_i *)NULL, &rt_uniresource ) )
 		{
 		    bu_exit(1, "Import failed for polysolid %s\n", poly[0].p.p_name );
 		}
@@ -248,8 +249,8 @@ main(int argc, char **argv)
 		    bu_exit(1, "Unable to convert polysolid %s\n", poly[0].p.p_name );
 		}
 
-		BU_INIT_EXTERNAL( &ext2 );
-		if ( rt_functab[ID_POLY].ft_export4( &ext2, &intern, 1.0, (struct db_i *)NULL, &rt_uniresource ) < 0 )  {
+		BU_EXTERNAL_INIT( &ext2 );
+		if ( OBJ[ID_POLY].ft_export4( &ext2, &intern, 1.0, (struct db_i *)NULL, &rt_uniresource ) < 0 )  {
 		    bu_exit(1, "Unable to export v4 BoT %s\n", poly[0].p.p_name );
 		}
 		rt_db_free_internal(&intern);

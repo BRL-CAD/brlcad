@@ -1,7 +1,7 @@
 /*                        U S E P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file usepen.c
+/** @file mged/usepen.c
  *
  */
 
@@ -46,8 +46,6 @@ int ipathpos = 0;	/* path index of illuminated element */
 
 
 /*
- * I L L U M I N A T E
- *
  * All solids except for the illuminated one have s_iflag set to DOWN.
  * The illuminated one has s_iflag set to UP, and also has the global
  * variable "illump" pointing at it.
@@ -66,8 +64,8 @@ illuminate(int y) {
      */
     count = ((fastf_t)y + GED_MAX) * curr_dm_list->dml_ndrawn / GED_RANGE;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -92,8 +90,6 @@ illuminate(int y) {
 
 
 /*
- * A I L L
- *
  * advance illump or ipathpos
  */
 int
@@ -103,9 +99,8 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     struct solid *sp;
 
     if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel aip");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -121,7 +116,7 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     if (STATE == ST_O_PATH) {
 	if (argc == 1 || *argv[1] == 'f') {
 	    ++ipathpos;
-	    if (ipathpos >= illump->s_fullpath.fp_len)
+	    if ((size_t)ipathpos >= illump->s_fullpath.fp_len)
 		ipathpos = 0;
 	} else if (*argv[1] == 'b') {
 	    --ipathpos;
@@ -138,8 +133,8 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	if (argc == 1 || *argv[1] == 'f') {
 	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->gdl_headSolid)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_NEXT_IS_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+		if (BU_LIST_NEXT_IS_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay))
+		    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 		else
 		    gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
@@ -150,8 +145,8 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	} else if (*argv[1] == 'b') {
 	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->gdl_headSolid)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_PREV_IS_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+		if (BU_LIST_PREV_IS_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay))
+		    gdlp = BU_LIST_PREV(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 		else
 		    gdlp = BU_LIST_PLAST(ged_display_list, gdlp);
 
@@ -174,8 +169,6 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
 
 /*
- * W R T _ V I E W
- *
  * Given a model-space transformation matrix "change", return a matrix
  * which applies the change with-respect-to the view center.
  */
@@ -195,8 +188,6 @@ wrt_view(mat_t out, const mat_t change, const mat_t in)
 
 
 /*
- * W R T _ P O I N T
- *
  * Given a model-space transformation matrix "change", return a matrix
  * which applies the change with-respect-to "point".
  */
@@ -215,8 +206,6 @@ wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point)
 
 
 /*
- * F _ M A T P I C K
- *
  * When in O_PATH state, select the arc which contains the matrix
  * which is going to be "object edited".  The choice is recorded in
  * variable "ipathpos".
@@ -234,31 +223,26 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     struct ged_display_list *next_gdlp;
     struct solid *sp;
     char *cp;
-    int j;
+    size_t j;
     int illum_only = 0;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     CHECK_DBI_NULL;
 
     if (argc < 2 || 3 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help matpick");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
-    if (!strcmp("-n", argv[1])) {
+    if (BU_STR_EQUAL("-n", argv[1])) {
 	illum_only = 1;
 	--argc;
 	++argv;
     }
 
     if (argc != 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help matpick");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -270,10 +254,10 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     if ((cp = strchr(argv[1], '/')) != NULL) {
 	struct directory *d0, *d1;
-	if ((d1 = db_lookup(dbip, cp+1, LOOKUP_NOISY)) == DIR_NULL)
+	if ((d1 = db_lookup(dbip, cp+1, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return TCL_ERROR;
 	*cp = '\0';		/* modifies argv[1] */
-	if ((d0 = db_lookup(dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL)
+	if ((d0 = db_lookup(dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return TCL_ERROR;
 	/* Find arc on illump path which runs from d0 to d1 */
 	for (j=1; j < illump->s_fullpath.fp_len; j++) {
@@ -289,23 +273,23 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     } else {
 	ipathpos = atoi(argv[1]);
 	if (ipathpos < 0) ipathpos = 0;
-	else if (ipathpos >= illump->s_fullpath.fp_len)
+	else if ((size_t)ipathpos >= illump->s_fullpath.fp_len)
 	    ipathpos = illump->s_fullpath.fp_len-1;
     }
  got:
     /* Include all solids with same tree top */
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    for (j = 0; j <= ipathpos; j++) {
+	    for (j = 0; j <= (size_t)ipathpos; j++) {
 		if (DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
 		    DB_FULL_PATH_GET(&illump->s_fullpath, j))
 		    break;
 	    }
 	    /* Only accept if top of tree is identical */
-	    if (j == ipathpos+1)
+	    if (j == (size_t)ipathpos+1)
 		sp->s_iflag = UP;
 	    else
 		sp->s_iflag = DOWN;
@@ -328,8 +312,6 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 
 /*
- * F _ M O U S E
- *
  * X and Y are expected to be in -2048 <= x, y <= +2047 range.  The
  * "up" flag is 1 on the not-pressed to pressed transition, and 0 on
  * the pressed to not-pressed transition.
@@ -372,12 +354,12 @@ f_mouse(
     int ypos;
 
     if (argc < 4 || 4 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help M");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 

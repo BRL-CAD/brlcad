@@ -1,7 +1,7 @@
 /*                      C O N T O U R S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file contours.c
+/** @file proc-db/contours.c
  *
  * Program to read "Brain Mapping Project" data and plot it.
  *
@@ -33,19 +33,31 @@
 
 int x, y, z;
 int npts;
-char name[128];
+char name[128] = {0};
 
 int
 main(int argc, char *argv[])
 {
     int i;
 
+    if (argc > 0)
+	bu_log("Usage: %s\n\n", argv[0]);
+
     pl_3space(stdout, -32768,  -32768,  -32768, 32767, 32767, 32767);
     while (!feof(stdin)) {
-	if (scanf("%d %d %128s", &npts, &z, name) != 3)  break;
+	if (scanf("%d %d %128s", &npts, &z, name) != 3) break;
+	if (npts < 0) {
+	    bu_log("%s: Negative # of pts\n", argv[0]);
+	    return -1;
+	}
+	if (npts >= INT_MAX) {
+	    bu_log("%s: Too many points\n", argv[0]);
+	    return -1;
+	}
+
 	for (i=0; i<npts; i++) {
 	    if (scanf("%d %d", &x, &y) != 2)
-		fprintf(stderr, "bad xy\n");
+		fprintf(stderr, "%s: bad xy\n", argv[0]);
 	    if (i==0)
 		pl_3move(stdout, x, y, z);
 	    else
@@ -56,6 +68,7 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

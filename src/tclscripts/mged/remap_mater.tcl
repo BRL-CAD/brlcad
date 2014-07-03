@@ -1,7 +1,7 @@
 #                 R E M A P _ M A T E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2005-2010 United States Government as represented by
+# Copyright (c) 2005-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -66,17 +66,6 @@
 ###
 
 
-# make sure the mged commands we need actually exist
-set extern_commands [list db]
-foreach cmd $extern_commands {
-    catch {auto_load $cmd} val
-    if {[expr [string compare [info command $cmd] $cmd] != 0]} {
-	puts stderr "[info script]: Application fails to provide command '$cmd'"
-	return
-    }
-}
-
-
 #
 # An ugly little kludge to allow modern versions of Tcl to use the
 # "string is digit" construct, while providing older versions a
@@ -101,6 +90,16 @@ proc string_is_digit_strict {s} {
 
 
 proc remap_mater {file_name {silent 0}} {
+
+    # make sure the mged commands we need actually exist
+    set extern_commands [list db]
+    foreach cmd $extern_commands {
+	catch {auto_load $cmd} val
+	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
+	    puts stderr "[info script]: Application fails to provide command '$cmd'"
+	    return
+	}
+    }
 
     #
     # Read in the spec file and build the mapping

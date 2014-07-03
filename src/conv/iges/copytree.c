@@ -1,7 +1,7 @@
 /*                      C O P Y T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,44 +17,39 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file copytree.c
+/** @file iges/copytree.c
  *
  * This routine copies a tree rooted at "root" by recursion the
  * "parent" field of the root of the new tree is filed by the "parent"
  * argument.
  *
- * Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
  */
 
 #include "./iges_struct.h"
 
-struct node *Copytree( root, parent )
-    struct node *root, *parent;
+struct node *Copytree(struct node *root, struct node *parent)
 {
 
     struct node *ptr;
 
-    if ( root == NULL )
+    if (root == NULL)
 	return (struct node *)NULL;
 
 
-    ptr = (struct node *)bu_malloc( sizeof( struct node ), "Copytree: ptr" );
+    BU_ALLOC(ptr, struct node);
 
     *ptr = (*root);
     ptr->parent = parent;
 
-    if ( root->left != NULL )
-	ptr->left = Copytree( root->left, ptr );
+    if (root->left != NULL)
+	ptr->left = Copytree(root->left, ptr);
 
-    if ( root->right != NULL )
-	ptr->right = Copytree( root->right, ptr );
+    if (root->right != NULL)
+	ptr->right = Copytree(root->right, ptr);
 
     return ptr;
 }
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                      S S A M P - B W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ssamp-bw.c
+/** @file rttherm/ssamp-bw.c
  *
  * Program to convert spectral sample data into a single-channel
- * monocrome image.
+ * monochrome image.
  *
  */
 
@@ -35,6 +35,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "spectrum.h"
+#include "optical.h"
 
 
 int verbose = 0;
@@ -43,10 +44,8 @@ int width = 64;
 int height = 64;
 int nwave = 2;
 
-char *datafile_basename = "mtherm";
+char *datafile_basename = NULL;
 char spectrum_name[100];
-
-extern struct bn_table *spectrum;	/* spectrum table from liboptical */
 
 struct bn_tabdata *data;		/* a big array */
 
@@ -70,15 +69,12 @@ Usage: ssamp-bw [-s squarefilesize] [-w file_width] [-n file_height]\n\
 		file.ssamp\n";
 
 
-/*
- * G E T _ A R G S
- */
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vs:w:n:l:u:m:M:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "vs:w:n:l:u:m:M:")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
@@ -116,9 +112,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * F I N D _ M I N M A X
- */
 void
 find_minmax(void)
 {
@@ -139,9 +132,6 @@ find_minmax(void)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -155,21 +145,32 @@ main(int argc, char **argv)
 
     if (verbose) bu_debug = BU_DEBUG_COREDUMP;
 
-    datafile_basename = argv[bu_optind];
+    datafile_basename = bu_realpath(argv[bu_optind], NULL);
+    if (BU_STR_EQUAL(datafile_basename, ""))
+	datafile_basename = bu_strdup("ssamp-bw");
 
     /* Read spectrum definition */
     snprintf(spectrum_name, 100, "%s.spect", datafile_basename);
+    if (!bu_file_exists(spectrum_name, NULL)) {
+	bu_free(datafile_basename, "datafile_basename realpath");
+	bu_exit(EXIT_FAILURE, "Spectrum file [%s] does not exist\n", spectrum_name);
+    }
+
     spectrum = (struct bn_table *)bn_table_read(spectrum_name);
     if (spectrum == NULL) {
+	bu_free(datafile_basename, "datafile_basename realpath");
 	bu_exit(EXIT_FAILURE, "ssamp-bw: Unable to read spectrum\n");
     }
     BN_CK_TABLE(spectrum);
-    if (verbose) bu_log("%s defines %d spectral samples\n", datafile_basename, spectrum->nx);
+    if (verbose) bu_log("%s defines %zu spectral samples\n", datafile_basename, spectrum->nx);
     nwave = spectrum->nx;	/* shared with Tcl */
 
     /* Allocate and read 2-D spectral samples array */
     data = bn_tabdata_binary_read(datafile_basename, width*height, spectrum);
-    if (!data) bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
+    bu_free(datafile_basename, "datafile_basename realpath");
+    if (!data) {
+	bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
+    }
 
     if (lower_wavelen <= 0) lower_wavelen = spectrum->x[0];
     if (upper_wavelen <= 0) upper_wavelen = spectrum->x[spectrum->nx];
@@ -182,8 +183,8 @@ main(int argc, char **argv)
 	bn_pr_tabdata("filter", filt);
     }
 
-    /* Convert each of the spectral sample curves into scalor values */
-    pixels = bu_malloc(sizeof(fastf_t) * width * height, "fastf_t pixels");
+    /* Convert each of the spectral sample curves into scalar values */
+    pixels = (fastf_t *)bu_malloc(sizeof(fastf_t) * width * height, "fastf_t pixels");
 
     for (i = width*height-1; i >= 0; i--) {
 	struct bn_tabdata *sp;

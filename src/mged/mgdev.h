@@ -1,7 +1,7 @@
 /*                         M G D E V . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mgdev.h
+/** @file mged/mgdev.h
  *
  * This file contains definitions for building displaylists for the Megatek,
  * and will ordinarily be included in all user programs which use the Megatek.
@@ -35,6 +35,9 @@
 /*
  * Special Addresses in MEGATEK display list
  */
+#ifndef MGED_MGDEV_H
+#define MGED_MGDEV_H
+
 #define MDL_CONTROL	0x0000FFF1L	/* Graphics Engine control */
 #define MDL_COLORMAP	0x0000FEC0L	/* Color Lookup Table */
 #define MDL_LIST_START	0x00000001L	/* display list START address */
@@ -107,10 +110,12 @@
 #define MGP_FSCD 0x18		/* Function Switch & Control Dials */
 #define MGP_IPCU 0x34		/* Intel. Peripheral Control Unit */
 #define MGP_PICK 0x10		/* Pick Module */
-#define MGP_PRINT 0x08		/* Rasterizor Print Function */
+#define MGP_PRINT 0x08		/* Rasterizer Print Function */
 #define MGP_PLOT 0x09		/*   "  Plot */
 #define MGP_SPEC 0x0A		/*   "  Special Function */
 #define MGP_COPY 0x0B		/*   "  Screen Copy Function */
+
+#endif /* MGED_MGDEV_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                       O P T I O N S . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2010 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file options.c
+/** @file libdm/options.c
  *
  * Option processing routines.
  *
@@ -41,7 +41,7 @@ dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char *
 
     bu_optind = 0;	 /* re-init bu_getopt */
     bu_opterr = 0;
-    while ((c = bu_getopt(argc, argv, "N:S:W:s:d:i:n:t:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "N:S:W:s:d:i:n:t:")) != -1) {
 	switch (c) {
 	    case 'N':
 		dmp->dm_height = atoi(bu_optarg);

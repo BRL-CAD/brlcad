@@ -1,7 +1,7 @@
 /*                           U L P . C
  * BRL-CAD
  *
- * Copyright (c) 2010 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,14 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ulp.c
+/** @file libbn/ulp.c
+ *
+ * NOTE: This is a work-in-progress and not yet published API to be
+ * used anywhere.  DO NOT USE.
  *
  * Routines useful for performing comparisons and dynamically
  * calculating floating point limits including the Unit in the Last
  * Place (ULP).
  *
  * In this context, ULP is the distance to the next normalized
- * floating point value larger that a given input value.
+ * floating point value larger than a given input value.
  *
  * TODO: handle NaN, +-Inf, underflow, overflow, non-IEEE, float.h
  *
@@ -37,88 +40,134 @@
 
 #include "common.h"
 
-#include <float.h>
+#include <math.h>
+#include <limits.h>
+#ifdef HAVE_FLOAT_H
+#  include <float.h>
+#endif
 
+/* #define HAVE_IEEE754 1 */
 
 double
-bn_epsilon()
+bn_epsilon(void)
 {
 #if defined(DBL_EPSILON)
     return DBL_EPSILON;
 #elif defined(HAVE_IEEE754)
     static const double val = 1.0;
-    register long long next = *(long long*)&val + 1;
+    long long next = *(long long*)&val + 1;
     return val - *(double *)&next;
 #else
     /* must be volatile to avoid long registers */
     volatile double tol = 1.0;
-    while (1.0 + (tol * 0.5) != 1.0) {
+    while (1.0 + (tol * 0.5) > 1.0) {
 	tol *= 0.5;
     }
+    return tol;
 #endif
 }
 
 
 float
-bn_epsilonf()
+bn_epsilonf(void)
 {
 #if defined(FLT_EPSILON)
     return FLT_EPSILON;
 #elif defined(HAVE_IEEE754)
     static const float val = 1.0;
-    register long next = *(long*)&val + 1;
+    long next = *(long*)&val + 1;
     return val - *(float *)&next;
 #else
     /* must be volatile to avoid long registers */
     volatile float tol = 1.0f;
-    while (1.0f + (tol * 0.5f) != 1.0f) {
+    while (1.0f + (tol * 0.5f) > 1.0f) {
 	tol *= 0.5f;
     }
+    return tol;
 #endif
 }
 
 
 double
-bn_dbl_min()
+bn_dbl_min(void)
 {
-    register long long val = (1LL<<52);
+    long long val = (1LL<<52);
     return *(double *)&val;
 }
 
 
 double
-bn_dbl_max()
+bn_dbl_max(void)
 {
+#if defined(DBL_MAX)
+	return DBL_MAX;
+#elif defined(INFINITY)
     static const double val = INFINITY;
-    register long long next = *(long long*)&val - 1;
+    long long next = *(long long*)&val - 1;
     return *(double *)&next;
+#else
+	return 1.0/bn_dbl_min();
+#endif
 }
 
 
 double
-bn_flt_min()
+bn_flt_min(void)
 {
-    register long val = (1LL<<23);
+    long val = (1LL<<23);
     return *(float *)&val;
 }
 
 
 double
-bn_flt_max()
+bn_flt_max(void)
 {
+#if defined(FLT_MAX)
+	return FLT_MAX;
+#elif defined(INFINITY)
     static const float val = INFINITY;
-    register long next = *(long*)&val - 1;
+    long next = *(long*)&val - 1;
     return *(float *)&next;
+#else
+	return 1.0/bn_flt_min();
+#endif
+}
+
+
+double
+bn_flt_min_sqrt(void)
+{
+    return sqrt(bn_flt_min());
+}
+
+
+double
+bn_flt_max_sqrt(void)
+{
+    return sqrt(bn_flt_max());
+}
+
+
+double
+bn_dbl_min_sqrt(void)
+{
+    return sqrt(bn_dbl_min());
+}
+
+
+double
+bn_dbl_max_sqrt(void)
+{
+    return sqrt(bn_dbl_max());
 }
 
 
 double
 bn_ulp(double val)
 {
-    double next;
-    register long long up, dn, idx;
+    long long up, dn;
 
-    if (isnan(val) || !isfinite(val))
+    if (isnan(val) || isinf(val))
 	return val;
 
     if (val >=0) {

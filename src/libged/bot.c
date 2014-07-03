@@ -1,7 +1,7 @@
 /*                         B O T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot.c
+/** @file libged/bot.c
  *
  * Bot command for simple bot primitive operations.
  *
@@ -45,7 +45,6 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     const char *sub;
     const char *arg;
     const char *primitive = argv[argc - 1];
-    char prop = '\0';
     size_t len;
     fastf_t tmp;
     fastf_t propVal;
@@ -56,11 +55,11 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_ERROR;
     }
 
@@ -69,7 +68,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     GED_DB_GET_INTERNAL(gedp, &intern,  bot_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!", cmd, primitive);
+	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!", cmd, primitive);
 	return GED_ERROR;
     }
 
@@ -81,35 +80,36 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     arg = argv[2];
     len = strlen(sub);
 
-    if (strncmp(sub, "get", len) == 0) {
+    if (bu_strncmp(sub, "get", len) == 0) {
 
 	propVal = rt_bot_propget(bot, arg);
 
 	/* print result string */
-	if (propVal != -1) {
+	if (!EQUAL(propVal, -1.0)) {
 
 	    tmp = (int) propVal;
 
 	    /* int result */
-	    if (propVal == tmp) {
-		bu_vls_printf(&gedp->ged_result_str, "%d", (int) propVal);
+	    if (EQUAL(propVal, tmp)) {
+		bu_vls_printf(gedp->ged_result_str, "%d", (int) propVal);
 	    }
-	    
+
 	    /* float result */
 	    else {
-		bu_vls_printf(&gedp->ged_result_str, "%f", propVal);
+		bu_vls_printf(gedp->ged_result_str, "%f", propVal);
 	    }
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a valid argument!", sub, arg);
+	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a valid argument!", sub, arg);
 	    return GED_ERROR;
 	}
     } else {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
+	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
 	return GED_ERROR;
     }
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

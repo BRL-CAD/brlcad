@@ -1,7 +1,7 @@
 /*                     B O T - B L D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,8 @@
 
 
 /* declarations to support use of bu_getopt() */
-char *options = "hd:";
+char *options = "dh?";
+char *subsetoptions = "d";
 
 char *progname = "(noname)";
 #define DEBUG_NAMES 1
@@ -49,26 +50,24 @@ char *progname = "(noname)";
 long debug = 0;
 int verbose = 0;
 
-/*
- *	U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(char *s)
+
+void
+usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s [ -%s ] [<] infile [> outfile]\n",
-		   progname, options);
+    (void) fprintf(stderr, "Usage: %s [-%s] [<] geom.g [> file.dxf] [bot1 bot2 bot3...]\n",
+		   progname, subsetoptions);
     bu_exit(1, NULL);
 }
 
-/*
- *	P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char *av[])
+
+int
+parse_args(int ac, char *av[])
 {
     int  c;
 
-    if (  ! (progname=strrchr(*av, '/'))  )
+    if (! (progname=strrchr(*av, '/')))
 	progname = *av;
     else
 	++progname;
@@ -77,14 +76,15 @@ int parse_args(int ac, char *av[])
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != EOF)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+	if (bu_optopt == '?')
+	    c='h';
 	switch (c) {
 	    case 'd'	: debug = strtol(bu_optarg, NULL, 16); break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage("Bad or help flag specified\n"); break;
+	    case 'h'	: usage(""); break;
+	    default	: usage("Bad flag specified\n"); break;
 	}
-
+    }
     return bu_optind;
 }
 
@@ -110,19 +110,20 @@ static int tbl[19][8] = {
     { 1, 2, 5, 4,	0, 1, 3, 2}
 };
 
+
 /*
  *	Compare two successive triangles to see if they are coplanar and
- *	share two verticies.
+ *	share two vertices.
  *
  */
 int
-tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
+tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
 {
     int *vnum = &bot->faces[faceidx*3];  /* get the individual face */
     point_t A, B, C, N1, N2;
     vect_t vAB, vAC;
     fastf_t *v = bot->vertices;
-    int i, tmp;
+    long unsigned int i, tmp;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -133,18 +134,17 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
     if (debug&DEBUG_QUAD) {
 	fprintf(stderr, "tris_are_planar_quad()\n");
 	for (i=0; i < 6;i++) {
-	    fprintf(stderr, "%d: %d   %7g %7g %7g\n", i, vnum[i],
+	    fprintf(stderr, "%lu: %d   %7g %7g %7g\n", i, vnum[i],
 		    V3ARGS(&v[3* vnum[i]]));
 	}
     }
     /* compare the surface normals */
 
-    /* if the first vertex is greater than the number of verticies
+    /* if the first vertex is greater than the number of vertices
      * this is probably a bogus face, and something bad has happened
      */
-    if (vnum[0] > bot->num_vertices-1) {
-	fprintf(stderr, "Bounds error %d > %d\n",
-		vnum[0], bot->num_vertices-1);	abort();
+    if ((size_t)vnum[0] > bot->num_vertices-1) {
+	bu_exit(1, "ERROR: Invalid %lu > %lu bounds.  Something bad has happened.\n", (long unsigned int)vnum[0], (long unsigned int)bot->num_vertices-1);
     }
 
 
@@ -175,7 +175,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
     }
 
     /* if the normals are out of tolerance, simply give up */
-    if (!VNEAR_EQUAL(N1, N2, 0.005)) {
+    if (!VNEAR_EQUAL(N1, N2, 0.0005)) {
 	if (debug&DEBUG_QUAD)
 	    fprintf(stderr, "normals don't match  %g %g %g   %g %g %g\n",
 		    V3ARGS(N1), V3ARGS(N2));
@@ -184,12 +184,12 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
     }
 
     if (debug&DEBUG_QUAD) {
-	fprintf(stderr, "numv %d\n", bot->num_vertices);
-	fprintf(stderr, "possible quad %d %d %d  %d %d %d\n",
-		vnum[0], vnum[1], vnum[2], vnum[3], vnum[4], vnum[5]);
+	fprintf(stderr, "numv %lu\n", (long unsigned int)bot->num_vertices);
+	fprintf(stderr, "possible quad %lu %lu %lu  %lu %lu %lu\n",
+		(long unsigned int)vnum[0], (long unsigned int)vnum[1], (long unsigned int)vnum[2], (long unsigned int)vnum[3], (long unsigned int)vnum[4], (long unsigned int)vnum[5]);
     }
 
-    /* find adjacent/matching verticies */
+    /* find adjacent/matching vertices */
 
     for (i=0; i < 18; i++) {
 	int *t;
@@ -198,8 +198,8 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
 
 	if (vnum[t[0]] == vnum[t[2]] && vnum[t[1]] == vnum[t[3]]) {
 	    if (debug&DEBUG_QUAD)
-		fprintf(stderr, "matched %d,%d and %d,%d,  (%d/%d %d/%d)\n",
-			vnum[t[0]], vnum[t[2]], vnum[t[1]], vnum[t[3]],
+		fprintf(stderr, "matched %lu, %lu and %lu, %lu,  (%d/%d %d/%d)\n",
+			(long unsigned int)vnum[t[0]], (long unsigned int)vnum[t[2]], (long unsigned int)vnum[t[1]], (long unsigned int)vnum[t[3]],
 			t[0], t[2], t[1], t[3]);
 
 	    vidx[0] = vnum[t[4]];
@@ -209,7 +209,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
 	    if (debug&DEBUG_QUAD) {
 		fprintf(stderr, "%d %d %d %d\n", V4ARGS(vidx));
 		for (tmp=0; tmp < 4; tmp++)
-		    fprintf(stderr, "%d vidx:%d %7g %7g %7g\n", tmp, vidx[tmp],
+		    fprintf(stderr, "%lu vidx:%d %7g %7g %7g\n", tmp, vidx[tmp],
 			    V3ARGS(&v[3*vidx[tmp]]));
 	    }
 	    return 1;
@@ -218,10 +218,10 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
     /* No match, so we print both triangles */
     return 0;
 }
-int count_quad_faces(struct rt_bot_internal *bot)
+size_t count_quad_faces(struct rt_bot_internal *bot)
 {
-    int i;
-    int count = 0;
+    size_t i;
+    size_t count = 0;
     int vidx[4];
 
     for (i=0; i < bot->num_faces; i++) {
@@ -230,7 +230,7 @@ int count_quad_faces(struct rt_bot_internal *bot)
     }
 
     if (debug&DEBUG_STATS)
-	fprintf(stderr, "%d quads\n", count);
+	fprintf(stderr, "%lu quads\n", (long unsigned int)count);
     return count;
 }
 
@@ -238,15 +238,15 @@ int count_quad_faces(struct rt_bot_internal *bot)
 void write_dxf(struct rt_bot_internal *bot, char *name)
 
 {
-    int num_vertices;
+    size_t num_vertices;
     fastf_t *vertices;
-    int num_faces;
+    size_t num_faces;
     int *faces;
 
-    FILE		*FH;
-    int		i;
-    char		Value[32];
-    int quads;
+    FILE *FH;
+    char Value[32];
+    size_t i;
+    size_t quads;
     int vidx[4];
 
     num_vertices = bot->num_vertices;
@@ -285,20 +285,20 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fprintf(FH, "254\n");
     fprintf(FH, "70\n");
     fprintf(FH, "64\n");
-    fprintf(FH, "71\n"); /* number of verticies */
+    fprintf(FH, "71\n"); /* number of vertices */
 
-    fprintf(FH, "%d\n", num_vertices);
+    fprintf(FH, "%lu\n", (long unsigned int)num_vertices);
 
     quads = count_quad_faces(bot);
 
     fprintf(FH, "72\n"); /* number of faces */
-    fprintf(FH, "%d\n", num_faces-quads);
+    fprintf(FH, "%lu\n", (long unsigned int)num_faces-quads);
     fprintf(FH, "0\n");
 
 
     if (debug&DEBUG_STATS)
-	fprintf(stderr, "writing %d verticies\n", num_vertices);
-    for (i= 0; i < num_vertices; i++) {
+	fprintf(stderr, "writing %lu vertices\n", (long unsigned int)num_vertices);
+    for (i=0; i < num_vertices; i++) {
 	fprintf(FH, "VERTEX\n");
 	fprintf(FH, "8\n");
 	fprintf(FH, "Meshes\n");
@@ -317,8 +317,8 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     }
 
     if (debug&DEBUG_STATS)
-	fprintf(stderr, "writing %d faces (- %d for quads)\n", num_faces, quads);
-    for (i= 0; i < num_faces; i++) {
+	fprintf(stderr, "writing %lu faces (- %lu for quads)\n", (long unsigned int)num_faces, (long unsigned int)quads);
+    for (i=0; i < num_faces; i++) {
 	fprintf(FH, "VERTEX\n");
 	fprintf(FH, "8\n");
 	fprintf(FH, "Meshes\n");
@@ -334,7 +334,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 	fprintf(FH, "254\n");
 	fprintf(FH, "10\n0.0\n20\n0.0\n30\n0.0\n"); /* WCS origin */
 	fprintf(FH, "70\n128\n");/* line type pattern is continuous */
-	if (  tris_are_planar_quad(bot, i, vidx) ) {
+	if (tris_are_planar_quad(bot, i, vidx)) {
 	    fprintf(FH, "71\n%d\n", vidx[0]+1); /* vertex 1 */
 	    fprintf(FH, "72\n%d\n", vidx[1]+1); /* vertex 2 */
 	    fprintf(FH, "73\n%d\n", vidx[2]+1); /* vertex 3 */
@@ -388,12 +388,15 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fclose(FH);
 }
 
+
 int
-r_start(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, const struct rt_comb_internal *UNUSED(combp), genptr_t client_data )
+r_start(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, const struct rt_comb_internal *UNUSED(combp), void *client_data)
 {
-    int i;
     if (debug&DEBUG_NAMES) {
-	bu_log("r_start %d ", ((struct rt_bot_internal *)client_data)->num_vertices);
+	size_t i;
+
+	bu_log("r_start %zu ", ((struct rt_bot_internal *)client_data)->num_vertices);
+
 	for (i=0; i < pathp->fp_len; i++) {
 	    if (pathp->fp_len - (i+1)) {
 		bu_log("%s/", pathp->fp_names[i]->d_namep);
@@ -405,12 +408,15 @@ r_start(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, co
     return 0;
 }
 
+
 union tree *
-r_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, union tree * curtree, genptr_t client_data)
+r_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, union tree * curtree, void *client_data)
 {
-    int i;
     if (debug&DEBUG_NAMES) {
-	bu_log("r_end %d ", ((struct rt_bot_internal *)client_data)->num_vertices);
+	size_t i;
+
+	bu_log("r_end %zu ", ((struct rt_bot_internal *)client_data)->num_vertices);
+
 	for (i=0; i < pathp->fp_len; i++) {
 	    if (pathp->fp_len - (i+1)) {
 		bu_log("%s/", pathp->fp_names[i]->d_namep);
@@ -423,22 +429,23 @@ r_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, unio
     return curtree;
 }
 
+
 void add_bots(struct rt_bot_internal *bot_dest,
 	      struct rt_bot_internal *bot_src)
 {
-    int i = bot_dest->num_vertices + bot_src->num_vertices;
-    int sz = sizeof(fastf_t) * 3;
+    size_t i = bot_dest->num_vertices + bot_src->num_vertices;
+    size_t sz = sizeof(fastf_t) * 3;
     int *ptr;
-    int limit;
+    size_t limit;
 
     if (debug&DEBUG_BOTS)
-	bu_log("adding bots v:%d f:%d  v:%d f:%d\n",
+	bu_log("adding bots v:%zu f:%zu  v:%zu f:%zu\n",
 	       bot_dest->num_vertices, bot_dest->num_faces,
 	       bot_src->num_vertices, bot_src->num_faces);
 
     /* allocate space for extra vertices */
     bot_dest->vertices =
-	bu_realloc(bot_dest->vertices, i * sz, "new vertices");
+	(fastf_t *)bu_realloc(bot_dest->vertices, i * sz, "new vertices");
 
     /* copy new vertices */
     memcpy(&bot_dest->vertices[bot_dest->num_vertices],
@@ -448,7 +455,7 @@ void add_bots(struct rt_bot_internal *bot_dest,
     /* allocate space for new faces */
     i = bot_dest->num_faces + bot_src->num_faces;
     sz = sizeof(int) * 3;
-    bot_dest->faces = bu_realloc(bot_dest->faces, i * sz, "new faces");
+    bot_dest->faces = (int *)bu_realloc(bot_dest->faces, i * sz, "new faces");
 
     /* copy new faces, making sure that we update the vertex indices to
      * point to their new locations
@@ -462,17 +469,18 @@ void add_bots(struct rt_bot_internal *bot_dest,
     bot_dest->num_faces += bot_src->num_faces;
 
     if (debug&DEBUG_BOTS)
-	bu_log("...new bot v:%d f:%d\n",
+	bu_log("...new bot v:%zu f:%zu\n",
 	       bot_dest->num_vertices, bot_dest->num_faces);
 }
 
+
 union tree *
-l_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, struct rt_db_internal * ip, genptr_t client_data)
+l_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, struct rt_db_internal * ip, void *client_data)
 {
-    int i;
     struct rt_bot_internal *bot;
 
     if (debug&DEBUG_NAMES) {
+	size_t i;
 	for (i=0; i < pathp->fp_len; i++) {
 	    if (pathp->fp_len - (i+1)) {
 		bu_log("%s/", pathp->fp_names[i]->d_namep);
@@ -491,16 +499,15 @@ l_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, str
     if (debug&DEBUG_NAMES)
 	bu_log("\n");
 
-    bot = ip->idb_ptr;
+    bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
     add_bots((struct rt_bot_internal *)client_data, bot);
     return (union tree *)NULL;
 }
 
+
 /*
- *	M A I N
- *
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
@@ -516,11 +523,11 @@ int main(int ac, char *av[])
     arg_count = parse_args(ac, av);
 
     if ((ac - arg_count) < 1) {
-	fprintf(stderr, "usage: %s geom.g [file.dxf] [bot1 bot2 bot3...]\n", progname);
+	usage("");
 	return 1;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if ((rtip=rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf)))==RTI_NULL) {
 	fprintf(stderr, "rtexample: rt_dirbuild failure\n");
@@ -533,7 +540,7 @@ int main(int ac, char *av[])
     if (arg_count < ac) {
 	struct directory *dirp;
 
-	for (; arg_count < ac; arg_count++ ) {
+	for (; arg_count < ac; arg_count++) {
 	    printf("current: %s\n", av[arg_count]);
 
 	    if (!rt_db_lookup_internal(rtip->rti_dbip, av[arg_count],
@@ -558,7 +565,7 @@ int main(int ac, char *av[])
 		struct rt_bot_internal my_bot;
 
 		my_bot.vertices = (fastf_t *)NULL;
-		my_bot.faces = (int *)NULL;
+		my_bot.faces = NULL;
 		my_bot.num_vertices = 0;
 		my_bot.num_faces = 0;
 		my_bot.magic = RT_BOT_INTERNAL_MAGIC;
@@ -566,8 +573,11 @@ int main(int ac, char *av[])
 
 		sub_av = &dirp->d_namep;
 
-		db_walk_tree(rtip->rti_dbip, 1, (const char **)sub_av, 1,
-			     &init_state, r_start, r_end, l_func, &my_bot);
+		if (db_walk_tree(rtip->rti_dbip, 1, (const char **)sub_av, 1,
+			     &init_state, r_start, r_end, l_func, &my_bot) < 0) {
+		  fprintf(stderr, "db_walk_tree failed on %s\n", *sub_av);
+		  continue;
+		}
 
 		RT_BOT_CK_MAGIC(&my_bot);
 		write_dxf(&my_bot, av[arg_count]);
@@ -576,40 +586,40 @@ int main(int ac, char *av[])
 	}
     } else {
 	mat_t mat;
-	int i;
+	int ret;
 
 	MAT_IDN(mat);
 
 	/* dump all the bots */
-	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
+	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip) {
 
 	    /* we only dump BOT primitives, so skip some obvious exceptions */
 	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
-	if (dp->d_flags & DIR_COMB) continue;
+	    if (dp->d_flags & RT_DIR_COMB) continue;
 
-	if (debug&DEBUG_NAMES)
-	    fprintf(stderr, "%s\n", dp->d_namep);
-
-	/* get the internal form */
-	i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat, &rt_uniresource);
-
-	if (i < 0) {
-	    fprintf(stderr, "rt_get_internal failure %d on %s\n", i, dp->d_namep);
-	    continue;
-	}
-
-	if (i != ID_BOT) {
 	    if (debug&DEBUG_NAMES)
-		fprintf(stderr, "skipping \"%s\" (not a BOT)\n", dp->d_namep);
-	    continue;
-	}
+		fprintf(stderr, "%s\n", dp->d_namep);
 
-	bot = (struct rt_bot_internal *)intern.idb_ptr;
+	    /* get the internal form */
+	    ret=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat, &rt_uniresource);
 
-	write_dxf(bot, dp->d_namep);
-
-	FOR_ALL_DIRECTORY_END
+	    if (ret < 0) {
+		fprintf(stderr, "rt_get_internal failure %d on %s\n", ret, dp->d_namep);
+		continue;
 	    }
+
+	    if (ret != ID_BOT) {
+		if (debug&DEBUG_NAMES)
+		    fprintf(stderr, "skipping \"%s\" (not a BOT)\n", dp->d_namep);
+		continue;
+	    }
+
+	    bot = (struct rt_bot_internal *)intern.idb_ptr;
+
+	    write_dxf(bot, dp->d_namep);
+
+	} FOR_ALL_DIRECTORY_END;
+    }
     return 0;
 }
 

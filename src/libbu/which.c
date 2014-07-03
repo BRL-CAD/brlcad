@@ -1,7 +1,7 @@
 /*                         W H I C H . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2010 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,10 @@
 #include <string.h>
 
 /* common headers */
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 
 /* how big should PATH from getenv ever be */
@@ -45,6 +48,7 @@ bu_which(const char *cmd)
 
     char *directory = NULL;
     char *position = NULL;
+    char curr_dir[] = ".";
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("bu_which: [%s]\n", cmd);
@@ -60,14 +64,16 @@ bu_which(const char *cmd)
 
     /* check for full/relative path match */
     bu_strlcpy(bu_which_result, cmd, MAXPATHLEN);
-    if (strcmp(bu_which_result, cmd) != 0) {
+    if (!BU_STR_EQUAL(bu_which_result, cmd)) {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("command [%s] is too long\n", cmd);
 	}
 	return NULL;
     }
 
-    if (bu_file_exists(bu_which_result) && strchr(bu_which_result, BU_DIR_SEPARATOR)) {
+    if (bu_file_exists(bu_which_result, NULL) && strchr(bu_which_result, BU_DIR_SEPARATOR)) {
+	if (bu_which_result[0] == '\0')
+	    return NULL; /* never return empty */
 	return bu_which_result;
     }
 
@@ -77,10 +83,10 @@ bu_which(const char *cmd)
 	bu_strlcpy(PATH, gotpath, MAXPATHENV);
 
 	/* make sure it fit, we have a problem if it did not */
-	if (strcmp(PATH, gotpath) != 0) {
+	if (!BU_STR_EQUAL(PATH, gotpath)) {
 	    position = strrchr(PATH, BU_PATH_SEPARATOR);
 	    if (position) {
-		position = '\0';
+		position = NULL;
 	    } else {
 		/* too much and no separator? wtf. */
 		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
@@ -105,16 +111,19 @@ bu_which(const char *cmd)
     do {
 	position = strchr(directory, BU_PATH_SEPARATOR);
 	if (position) {
+	    /* 'directory' can't be const because we have to change a character here: */
 	    *position = '\0';
 	}
 
 	/* empty means use current dir */
 	if (strlen(directory) == 0) {
-	    directory = ".";
+	    directory = curr_dir; /* "."; */
 	}
 
 	snprintf(bu_which_result, MAXPATHLEN, "%s/%s", directory, cmd);
-	if (bu_file_exists(bu_which_result)) {
+	if (bu_file_exists(bu_which_result, NULL)) {
+	    if (bu_which_result[0] == '\0')
+		return NULL; /* never return empty */
 	    return bu_which_result;
 	}
 

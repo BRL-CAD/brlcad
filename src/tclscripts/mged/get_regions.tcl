@@ -1,7 +1,7 @@
 #                 G E T _ R E G I O N S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2005-2010 United States Government as represented by
+# Copyright (c) 2005-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -22,17 +22,17 @@
 # list all regions at or under a given hierarchy node
 #
 
-set extern_commands [list db]
-foreach cmd $extern_commands {
-    catch {auto_load $cmd} val
-    if {[expr [string compare [info command $cmd] $cmd] != 0]} {
-	puts stderr "[info script]: Application fails to provide command '$cmd'"
-	return
-    }
-}
-
-
 proc get_regions { args } {
+
+    set extern_commands [list db]
+    foreach cmd $extern_commands {
+	catch {auto_load $cmd} val
+	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
+	    puts stderr "[info script]: Application fails to provide command '$cmd'"
+	    return
+	}
+    }
+
     if { [llength $args] != 1 } {
 	puts "Usage: get_regions object"
 	return ""

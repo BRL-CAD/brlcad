@@ -1,7 +1,7 @@
 /*                         D B I P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dbip.c
+/** @file libged/dbip.c
  *
  * The dbip command.
  *
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -40,10 +40,10 @@ ged_dbip(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
@@ -52,7 +52,7 @@ ged_dbip(struct ged *gedp, int argc, const char *argv[])
      */
 
     /* oh my gawd, no you didn't.. this code needs to die. */
-    bu_vls_printf(&gedp->ged_result_str, "%p", gedp->ged_wdbp->dbip);
+    bu_vls_printf(gedp->ged_result_str, "%p", (void *)gedp->ged_wdbp->dbip);
 
     return GED_OK;
 }

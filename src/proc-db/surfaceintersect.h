@@ -1,14 +1,14 @@
-/*                   B R E P I N T E R S E C T . H
+/*              S U R F A C E I N T E R S E C T . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
- * This program is free software; you can redistribute it and/or
+ * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
+ * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
@@ -17,12 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @{ */
-/** @file brepintersect.h
- *
- */
 
-#include "common.h"  
+#ifndef PROC_DB_SURFACEINTERSECT_H
+#define PROC_DB_SURFACEINTERSECT_H
+
+#include "common.h"
 
 /* common interface headers */
 #include "raytrace.h"
@@ -32,12 +31,13 @@
 #include "bu.h"
 #include "vmath.h"
 #include "opennurbs_array.h"
+#include "twistedcube.h"
 
 
 /**
  * Canonical_start, Canonical_end
  *
- * @brief conanical domain for ON_Curves
+ * @brief canonical domain for ON_Curves
  */
 #define Canonical_start (0.0)
 #define Canonical_end (1.0)
@@ -48,7 +48,7 @@
  * @brief analogous to ON_X_EVENT but between ON_BrepFaces
  */
 class Face_X_Event{
- public:
+public:
     ON_BrepFace *face1;
     ON_BrepFace *face2;
     ON_Curve *curve1;
@@ -65,8 +65,8 @@ class Face_X_Event{
     int Render_Curves();
 };
 
+#endif /* PROC_DB_SURFACEINTERSECT_H */
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

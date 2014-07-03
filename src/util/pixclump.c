@@ -1,7 +1,7 @@
 /*                      P I X C L U M P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixclump.c
+/** @file util/pixclump.c
  *
  * Quantize the color values in a PIX(5) stream to a set of specified
  * values
@@ -85,12 +85,12 @@ static void print_debug_usage (void)
 static void add_to_table (unsigned char *rgb)
 {
     /*
-     * Ensure that the color table can accomodate the new entry
+     * Ensure that the color table can accommodate the new entry
      */
     if (next_color == color_tbl_size) {
 	color_tbl_size *= 2;
 	color_tbl = (unsigned char (*)[3])
-	    bu_realloc((genptr_t) color_tbl,
+	    bu_realloc((void *) color_tbl,
 		       color_tbl_size * 3 * sizeof(unsigned char),
 		       "color table");
     }
@@ -105,12 +105,11 @@ static void fill_table (char *f_name)
     FILE *fp;
     int line_nm;
     unsigned char rgb[3];
-    struct bu_vls v;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
 
     if ((fp = fopen(f_name, "r")) == NULL)
 	bu_exit(1, "Cannot open color file '%s'\n", bu_optarg);
 
-    bu_vls_init(&v);
     for (line_nm = 1; bu_vls_gets(&v, fp) != -1;
 	 ++line_nm, bu_vls_trunc(&v, 0))
     {
@@ -118,10 +117,13 @@ static void fill_table (char *f_name)
 	    ;
 	if ((*bp == '#') || (*bp == '\0'))
 	    continue;
-	if (! bu_str_to_rgb(bp, rgb))
+	if (! bu_str_to_rgb(bp, rgb)) {
+	    fclose(fp);
 	    bu_exit(1, "Illegal color: '%s' on line %d of file '%s'\n", bp, line_nm, f_name);
+	}
 	add_to_table(rgb);
     }
+    fclose(fp);
 }
 
 
@@ -138,22 +140,16 @@ static void print_table (void)
 
 
 /*
- * C O L O R _ D I F F ()
- *
  * Returns the square of the Euclidean distance in RGB space
  * between a specified pixel (R/G/B triple) and a specified
  * entry in the color table.
  */
 static int color_diff (unsigned char *pix, int i)
 {
-    unsigned char *cte;	/* The specified entry in the color table */
-
-    cte = color_tbl[i];
-
     return (
-	(pix[RED] - cte[RED]) * (pix[RED] - cte[RED]) +
-	(pix[GRN] - cte[GRN]) * (pix[GRN] - cte[GRN]) +
-	(pix[BLU] - cte[BLU]) * (pix[BLU] - cte[BLU])
+	(pix[RED] - color_tbl[i][RED]) * (pix[RED] - color_tbl[i][RED]) +
+	(pix[GRN] - color_tbl[i][GRN]) * (pix[GRN] - color_tbl[i][GRN]) +
+	(pix[BLU] - color_tbl[i][BLU]) * (pix[BLU] - color_tbl[i][BLU])
 	);
 }
 
@@ -185,7 +181,7 @@ main (int argc, char **argv)
     /*
      * Process the command line
      */
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (ch) {
 	    case 'c':
 		if (! bu_str_to_rgb(bu_optarg, rgb)) {
@@ -211,7 +207,6 @@ main (int argc, char **argv)
 	}
     switch (argc - bu_optind) {
 	case 0:
-	    inf_name = "stdin";
 	    infp = stdin;
 	    /* Break intentionally missing */
 	case 1:
@@ -280,7 +275,7 @@ main (int argc, char **argv)
 		       color_tbl[best_color][GRN],
 		       color_tbl[best_color][BLU]);
 	}
-	if (fwrite((genptr_t) color_tbl[best_color],
+	if (fwrite((void *) color_tbl[best_color],
 		   3 * sizeof(unsigned char), 1, outfp) != 1)
 	    bu_exit(1, "pixclump:  Error writing pixel to file '%s'\n", outf_name);
     }

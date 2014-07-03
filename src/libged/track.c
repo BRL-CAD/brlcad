@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file track.c
+/** @file libged/track.c
  *
  * Adds "tracks" to the data file given the required info
  *
@@ -40,7 +40,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"
@@ -74,11 +74,11 @@ static void track_mk_freemembers();
 static int track_mk_comb();
 
 
-/*	==== I T O A ()
+/*
  * convert integer to ascii wd format
  */
 static void
-itoa(struct ged *gedp,
+itoa(struct bu_vls *log_str,
      int n,
      char s[],
      int w) {
@@ -93,7 +93,7 @@ itoa(struct ged *gedp,
      */
     for (j = i; j < w; j++) s[j] = ' ';
     if (i > w)
-	bu_vls_printf(&gedp->ged_result_str, "itoa: field length too small\n");
+	bu_vls_printf(log_str, "itoa: field length too small\n");
     s[w] = '\0';
     /* reverse the array
      */
@@ -106,22 +106,21 @@ itoa(struct ged *gedp,
 
 
 static void
-crname(struct ged *gedp,
+crname(struct bu_vls *log_str,
        char name[],
        int pos,
        int maxlen)
 {
     char temp[4];
 
-    itoa(gedp, pos, temp, 1);
+    itoa(log_str, pos, temp, 1);
     bu_strlcat(name, temp, maxlen);
-
-    return;
 }
 
 
 static void
-crregion(struct ged *gedp,
+crregion(struct bu_vls *log_str,
+	 struct rt_wdb *wdbp,
 	 char region[],
 	 char op[],
 	 int members[],
@@ -132,18 +131,21 @@ crregion(struct ged *gedp,
     int i;
     struct bu_list head;
 
+    if (wdbp->dbip == DBI_NULL)
+	return;
+
     BU_LIST_INIT(&head);
 
-    for (i=0; i<number; i++) {
+    for (i = 0; i < number; i++) {
 	solidname[grpname_len + extraTypeChars] = '\0';
-	crname(gedp, solidname, members[i], maxlen);
-	if (db_lookup(gedp->ged_wdbp->dbip, solidname, LOOKUP_QUIET) == DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "region: %s will skip member: %s\n", region, solidname);
+	crname(log_str, solidname, members[i], maxlen);
+	if (db_lookup(wdbp->dbip, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    bu_vls_printf(log_str, "region: %s will skip member: %s\n", region, solidname);
 	    continue;
 	}
 	track_mk_addmember(solidname, &head, NULL, op[i]);
     }
-    (void)track_mk_comb(gedp->ged_wdbp, region, &head,
+    (void)track_mk_comb(wdbp, region, &head,
 			1, NULL, NULL, NULL,
 			500+Trackpos+i, 0, mat_default, los_default,
 			0, 1, 1);
@@ -152,11 +154,13 @@ crregion(struct ged *gedp,
 
 /*
  *
- * Adds track given "wheel" info
+ * Adds track given "wheel" info. This only needs a logging VLS and a
+ * database, so it can be used as a replacement for wdb_track_cmd when
+ * no struct ged is available.
  *
  */
 int
-ged_track(struct ged *gedp, int argc, const char *argv[])
+_ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[])
 {
     fastf_t fw[3], lw[3], iw[3], dw[3], tr[3];
     char *solname = NULL;
@@ -170,25 +174,6 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     int edit_result = GED_OK;
     struct bu_list head;
     int len;
-    static const char *usage = "basename rX1 rX2 rZ rR dX dZ dR iX iZ iR minX minY th";
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc != 15) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
 
     BU_LIST_INIT(&head);
 
@@ -200,111 +185,111 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     grpname = bu_strdup(argv[arg]);
     grpname_len = (int)strlen(grpname);
     len = grpname_len + 1 + extraChars;
-    solname = bu_malloc(len, "solid name");
-    regname = bu_malloc(len, "region name");
-    sol.s_name = bu_malloc(len, "sol.s_name");
+    solname = (char *)bu_malloc(len, "solid name");
+    regname = (char *)bu_malloc(len, "region name");
+    sol.s_name = (char *)bu_malloc(len, "sol.s_name");
 
     /* first road wheel X */
     ++arg;
-    fw[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    fw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     /* last road wheel X */
     ++arg;
-    lw[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    lw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     if (fw[0] <= lw[0]) {
-	bu_vls_printf(&gedp->ged_result_str, "First wheel after last wheel - STOP\n");
+	bu_vls_printf(log_str, "First wheel after last wheel - STOP\n");
 	edit_result = GED_ERROR;
 	goto end;
     }
 
     /* road wheel Z */
     ++arg;
-    fw[1] = lw[1] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    fw[1] = lw[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     /* roadwheel radius */
     ++arg;
-    fw[2] = lw[2] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    fw[2] = lw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     if (fw[2] <= 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Radius <= 0 - STOP\n");
+	bu_vls_printf(log_str, "Radius <= 0 - STOP\n");
 	edit_result = GED_ERROR;
 	goto end;
     }
 
     /* drive sprocket X */
     ++arg;
-    dw[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    dw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     if (dw[0] >= lw[0]) {
-	bu_vls_printf(&gedp->ged_result_str, "DRIVE wheel not in the rear - STOP \n");
+	bu_vls_printf(log_str, "DRIVE wheel not in the rear - STOP \n");
 	edit_result = GED_ERROR;
 	goto end;
     }
 
     /* drive sprocket Z */
     ++arg;
-    dw[1] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    dw[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     /* drive sprocket radius */
     ++arg;
-    dw[2] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    dw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     if (dw[2] <= 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Radius <= 0 - STOP\n");
+	bu_vls_printf(log_str, "Radius <= 0 - STOP\n");
 	edit_result = GED_ERROR;
 	goto end;
     }
 
     /* idler wheel X */
     ++arg;
-    iw[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    iw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     if (iw[0] <= fw[0]) {
-	bu_vls_printf(&gedp->ged_result_str, "IDLER wheel not in the front - STOP \n");
+	bu_vls_printf(log_str, "IDLER wheel not in the front - STOP \n");
 	edit_result = GED_ERROR;
 	goto end;
     }
 
     /* idler wheel Z */
     ++arg;
-    iw[1] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    iw[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     /* idler wheel radius */
     ++arg;
-    iw[2] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    iw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     if (iw[2] <= 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Radius <= 0 - STOP\n");
+	bu_vls_printf(log_str, "Radius <= 0 - STOP\n");
 	edit_result = GED_ERROR;
 	goto end;
     }
 
     /* track MIN Y */
     ++arg;
-    tr[2] = tr[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    tr[2] = tr[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     /* track MAX Y */
     ++arg;
-    tr[1] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    tr[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
-    if (tr[0] == tr[1]) {
-	bu_vls_printf(&gedp->ged_result_str, "MIN == MAX ... STOP\n");
+    if (EQUAL(tr[0], tr[1])) {
+	bu_vls_printf(log_str, "MIN == MAX ... STOP\n");
 	edit_result = GED_ERROR;
 	goto end;
     }
     if (tr[0] > tr[1]) {
-	bu_vls_printf(&gedp->ged_result_str, "MIN > MAX .... will switch\n");
+	bu_vls_printf(log_str, "MIN > MAX .... will switch\n");
 	tr[1] = tr[0];
 	tr[0] = tr[2];
     }
 
     /* track thickness */
     ++arg;
-    tr[2] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    tr[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     if (tr[2] <= 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Track thickness <= 0 - STOP\n");
+	bu_vls_printf(log_str, "Track thickness <= 0 - STOP\n");
 	edit_result = GED_ERROR;
 	goto end;
     }
@@ -342,13 +327,13 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
  * grpname.s.0->9 and grpname.r.0->9
  */
 
-    for (i=0; i<10; i++) {
-	crname(gedp, solname, i, len);
-	crname(gedp, regname, i, len);
-	if ((db_lookup(gedp->ged_wdbp->dbip, solname, LOOKUP_QUIET) != DIR_NULL) ||
-	    (db_lookup(gedp->ged_wdbp->dbip, regname, LOOKUP_QUIET) != DIR_NULL)) {
+    for (i = 0; i < 10; i++) {
+	crname(log_str, solname, i, len);
+	crname(log_str, regname, i, len);
+	if ((db_lookup(wdbp->dbip, solname, LOOKUP_QUIET) != RT_DIR_NULL) ||
+	    (db_lookup(wdbp->dbip, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
 	    /* name already exists */
-	    bu_vls_printf(&gedp->ged_result_str, "Track: naming error -- STOP\n");
+	    bu_vls_printf(log_str, "Track: naming error -- STOP\n");
 	    edit_result = GED_ERROR;
 	    goto end;
 	}
@@ -358,31 +343,31 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* find the front track slope to the idler */
-    for (i=0; i<24; i++)
+    for (i = 0; i < 24; i++)
 	sol.s_values[i] = 0.0;
 
     /* add the solids */
     /* solid 0 */
-    slope(gedp, fw, iw, tr);
+    slope(log_str, fw, iw, tr);
     VMOVE(temp2, &sol.s_values[0]);
-    crname(gedp, solname, 0, len);
+    crname(log_str, solname, 0, len);
     bu_strlcpy(sol.s_name, solname, len);
 
     sol.s_type = ID_ARB8;
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(log_str, wdbp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
 
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* solid 1 */
     /* find track around idler */
-    for (i=0; i<24; i++)
+    for (i = 0; i < 24; i++)
 	sol.s_values[i] = 0.0;
     sol.s_type = ID_TGC;
     trcurve(iw, tr);
-    crname(gedp, solname, 1, len);
+    crname(log_str, solname, 1, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(log_str, wdbp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
     /* idler dummy rcc */
@@ -391,45 +376,45 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     VMOVE(&sol.s_values[12], &sol.s_values[6]);
     VMOVE(&sol.s_values[15], &sol.s_values[9]);
     /* solid 2 */
-    crname(gedp, solname, 2, len);
+    crname(log_str, solname, 2, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(log_str, wdbp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* solid 3 */
     /* find idler track dummy arb8 */
-    for (i=0; i<24; i++)
+    for (i = 0; i < 24; i++)
 	sol.s_values[i] = 0.0;
-    crname(gedp, solname, 3, len);
+    crname(log_str, solname, 3, len);
     bu_strlcpy(sol.s_name, solname, len);
     sol.s_type = ID_ARB8;
     crdummy(iw, tr, 1);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(log_str, wdbp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* solid 4 */
     /* track slope to drive */
-    for (i=0; i<24; i++)
+    for (i = 0; i < 24; i++)
 	sol.s_values[i] = 0.0;
-    slope(gedp, lw, dw, tr);
+    slope(log_str, lw, dw, tr);
     VMOVE(temp1, &sol.s_values[0]);
-    crname(gedp, solname, 4, len);
+    crname(log_str, solname, 4, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(log_str, wdbp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* solid 5 */
     /* track around drive */
-    for (i=0; i<24; i++)
+    for (i = 0; i < 24; i++)
 	sol.s_values[i] = 0.0;
     sol.s_type = ID_TGC;
     trcurve(dw, tr);
-    crname(gedp, solname, 5, len);
+    crname(log_str, solname, 5, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(log_str, wdbp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -439,21 +424,21 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     sol.s_values[11] = dw[2];
     VMOVE(&sol.s_values[12], &sol.s_values[6]);
     VMOVE(&sol.s_values[15], &sol.s_values[9]);
-    crname(gedp, solname, 6, len);
+    crname(log_str, solname, 6, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(log_str, wdbp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* solid 7 */
     /* drive dummy arb8 */
-    for (i=0; i<24; i++)
+    for (i = 0; i < 24; i++)
 	sol.s_values[i] = 0.0;
-    crname(gedp, solname, 7, len);
+    crname(log_str, solname, 7, len);
     bu_strlcpy(sol.s_name, solname, len);
     sol.s_type = ID_ARB8;
     crdummy(dw, tr, 2);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(log_str, wdbp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -461,9 +446,9 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     /* track bottom */
     temp1[1] = temp2[1] = tr[0];
     bottom(temp1, temp2, tr);
-    crname(gedp, solname, 8, len);
+    crname(log_str, solname, 8, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(log_str, wdbp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -475,9 +460,9 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     temp2[0] = iw[0];
     temp2[2] = iw[1] + iw[2];
     top(temp1, temp2, tr);
-    crname(gedp, solname, 9, len);
+    crname(log_str, solname, 9, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(log_str, wdbp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -492,75 +477,75 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     /* region 1 */
     memb[0] = 0;
     memb[1] = 3;
-    crname(gedp, regname, 0, len);
-    crregion(gedp, regname, oper, memb, 2, solname, len);
+    crname(log_str, regname, 0, len);
+    crregion(log_str, wdbp, regname, oper, memb, 2, solname, len);
     solname[grpname_len + extraTypeChars] = '\0';
     regname[grpname_len + extraTypeChars] = '\0';
 
     /* region 1 */
-    crname(gedp, regname, 1, len);
+    crname(log_str, regname, 1, len);
     memb[0] = 1;
     memb[1] = 2;
     memb[2] = 3;
-    crregion(gedp, regname, oper, memb, 3, solname, len);
+    crregion(log_str, wdbp, regname, oper, memb, 3, solname, len);
     solname[grpname_len + extraTypeChars] = '\0';
     regname[grpname_len + extraTypeChars] = '\0';
 
     /* region 4 */
-    crname(gedp, regname, 4, len);
+    crname(log_str, regname, 4, len);
     memb[0] = 4;
     memb[1] = 7;
-    crregion(gedp, regname, oper, memb, 2, solname, len);
+    crregion(log_str, wdbp, regname, oper, memb, 2, solname, len);
     solname[grpname_len + extraTypeChars] = '\0';
     regname[grpname_len + extraTypeChars] = '\0';
 
     /* region 5 */
-    crname(gedp, regname, 5, len);
+    crname(log_str, regname, 5, len);
     memb[0] = 5;
     memb[1] = 6;
     memb[2] = 7;
-    crregion(gedp, regname, oper, memb, 3, solname, len);
+    crregion(log_str, wdbp, regname, oper, memb, 3, solname, len);
     solname[grpname_len + extraTypeChars] = '\0';
     regname[grpname_len + extraTypeChars] = '\0';
 
     /* region 8 */
-    crname(gedp, regname, 8, len);
+    crname(log_str, regname, 8, len);
     memb[0] = 8;
     memb[1] = 0;
     memb[2] = 4;
     oper[2] = WMOP_SUBTRACT;
-    crregion(gedp, regname, oper, memb, 3, solname, len);
+    crregion(log_str, wdbp, regname, oper, memb, 3, solname, len);
     solname[grpname_len + extraTypeChars] = '\0';
     regname[grpname_len + extraTypeChars] = '\0';
 
     /* region 9 */
-    crname(gedp, regname, 9, len);
+    crname(log_str, regname, 9, len);
     memb[0] = 9;
     memb[1] = 3;
     memb[2] = 7;
-    crregion(gedp, regname, oper, memb, 3, solname, len);
+    crregion(log_str, wdbp, regname, oper, memb, 3, solname, len);
     solname[grpname_len + extraTypeChars] = '\0';
     regname[grpname_len + extraTypeChars] = '\0';
 
     /* group all the track regions */
-    for (i=0; i<10; i++) {
+    for (i = 0; i < 10; i++) {
 	if (i == 2 || i == 3 || i == 6 || i == 7)
 	    continue;
 	regname[grpname_len + extraTypeChars] = '\0';
-	crname(gedp, regname, i, len);
-	if (db_lookup(gedp->ged_wdbp->dbip, regname, LOOKUP_QUIET) == DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "group: %s will skip member: %s\n", grpname, regname);
+	crname(log_str, regname, i, len);
+	if (db_lookup(wdbp->dbip, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    bu_vls_printf(log_str, "group: %s will skip member: %s\n", grpname, regname);
 	    continue;
 	}
 	track_mk_addmember(regname, &head, NULL, WMOP_UNION);
     }
 
     /* Add them all at once */
-    if (track_mk_comb(gedp->ged_wdbp, grpname, &head,
+    if (track_mk_comb(wdbp, grpname, &head,
 		      0, NULL, NULL, NULL,
 		      0, 0, 0, 0,
 		      0, 1, 1) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "An error has occured while adding '%s' to the database.\n", grpname);
+	bu_vls_printf(log_str, "An error has occurred while adding '%s' to the database.\n", grpname);
     }
 
     Trackpos += 10;
@@ -568,111 +553,138 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     mat_default = mat;
     los_default = los;
 
-    bu_free((genptr_t)solname, "solid name");
-    bu_free((genptr_t)regname, "region name");
-    bu_free((genptr_t)grpname, "group name");
-    bu_free((genptr_t)sol.s_name, "sol.s_name");
+    bu_free((void *)solname, "solid name");
+    bu_free((void *)regname, "region name");
+    bu_free((void *)grpname, "group name");
+    bu_free((void *)sol.s_name, "sol.s_name");
 
     return edit_result;
 
- end:
-    bu_free((genptr_t)solname, "solid name");
-    bu_free((genptr_t)regname, "region name");
-    bu_free((genptr_t)grpname, "group name");
-    bu_free((genptr_t)sol.s_name, "sol.s_name");
+end:
+    bu_free((void *)solname, "solid name");
+    bu_free((void *)regname, "region name");
+    bu_free((void *)grpname, "group name");
+    bu_free((void *)sol.s_name, "sol.s_name");
 
     return edit_result;
 }
 
 
+/*
+ *
+ * Adds track given "wheel" info.
+ *
+ */
+int
+ged_track(struct ged *gedp, int argc, const char *argv[])
+{
+    static const char *usage = "basename rX1 rX2 rZ rR dX dZ dR iX iZ iR minX minY th";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 15) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    return _ged_track(gedp->ged_result_str, gedp->ged_wdbp, argv);
+}
+
 static int
-wrobj(struct ged *gedp,
-      char name[],
-      int flags) {
+wrobj(struct bu_vls *log_str,
+      struct rt_wdb *wdbp,
+      const char name[],
+      int flags)
+{
     struct directory *tdp;
     struct rt_db_internal intern;
     int i;
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return 0;
+    if (wdbp->dbip == DBI_NULL)
+	return GED_OK;
 
-    if (db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET) != DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "track naming error: %s already exists\n", name);
-	return GED_ERROR;
+    if (db_lookup(wdbp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(log_str, "track naming error: %s already exists\n", name);
+	return -1;
     }
 
-    if (flags != DIR_SOLID) {
-	bu_vls_printf(&gedp->ged_result_str, "wrobj can only write solids, aborting\n");
-	return GED_ERROR;
+    if (flags != RT_DIR_SOLID) {
+	bu_vls_printf(log_str, "wrobj can only write solids, aborting\n");
+	return -1;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
-    switch (sol.s_type)
-    {
-	case ID_ARB8:
-	    {
-		struct rt_arb_internal *arb;
+    RT_DB_INTERNAL_INIT(&intern);
+    switch (sol.s_type) {
+	case ID_ARB8: {
+	    struct rt_arb_internal *arb;
 
-		BU_GETSTRUCT(arb, rt_arb_internal);
+	    BU_ALLOC(arb, struct rt_arb_internal);
 
-		arb->magic = RT_ARB_INTERNAL_MAGIC;
+	    arb->magic = RT_ARB_INTERNAL_MAGIC;
 
-		VMOVE(arb->pt[0], &sol.s_values[0]);
-		for (i=1; i<8; i++)
-		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
+	    VMOVE(arb->pt[0], &sol.s_values[0]);
+	    for (i = 1; i < 8; i++)
+		VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0]);
 
-			intern.idb_ptr = (genptr_t)arb;
-		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		intern.idb_type = ID_ARB8;
-		intern.idb_meth = &rt_functab[ID_ARB8];
-	    }
+	    intern.idb_ptr = (void *)arb;
+	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    intern.idb_type = ID_ARB8;
+	    intern.idb_meth = &OBJ[ID_ARB8];
+	}
 	    break;
-	case ID_TGC:
-	    {
-		struct rt_tgc_internal *tgc;
+	case ID_TGC: {
+	    struct rt_tgc_internal *tgc;
 
-		BU_GETSTRUCT(tgc, rt_tgc_internal);
+	    BU_ALLOC(tgc, struct rt_tgc_internal);
 
-		tgc->magic = RT_TGC_INTERNAL_MAGIC;
+	    tgc->magic = RT_TGC_INTERNAL_MAGIC;
 
-		VMOVE(tgc->v, &sol.s_values[0]);
-		VMOVE(tgc->h, &sol.s_values[3]);
-		VMOVE(tgc->a, &sol.s_values[6]);
-		VMOVE(tgc->b, &sol.s_values[9]);
-		VMOVE(tgc->c, &sol.s_values[12]);
-		VMOVE(tgc->d, &sol.s_values[15]);
+	    VMOVE(tgc->v, &sol.s_values[0]);
+	    VMOVE(tgc->h, &sol.s_values[3]);
+	    VMOVE(tgc->a, &sol.s_values[6]);
+	    VMOVE(tgc->b, &sol.s_values[9]);
+	    VMOVE(tgc->c, &sol.s_values[12]);
+	    VMOVE(tgc->d, &sol.s_values[15]);
 
-		intern.idb_ptr = (genptr_t)tgc;
-		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		intern.idb_type = ID_TGC;
-		intern.idb_meth = &rt_functab[ID_TGC];
-	    }
+	    intern.idb_ptr = (void *)tgc;
+	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    intern.idb_type = ID_TGC;
+	    intern.idb_meth = &OBJ[ID_TGC];
+	}
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "Unrecognized solid type in 'wrobj', aborting\n");
+	    bu_vls_printf(log_str, "Unrecognized solid type in 'wrobj', aborting\n");
 	    return GED_ERROR;
     }
 
-    tdp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type);
-    if (tdp == DIR_NULL) {
+    if ((tdp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
-	bu_vls_printf(&gedp->ged_result_str, "Cannot add '%s' to directory, aborting\n", name);
+	bu_vls_printf(log_str, "Cannot add '%s' to directory, aborting\n", name);
 	return GED_ERROR;
     }
 
-    if (rt_db_put_internal(tdp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(tdp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
-	bu_vls_printf(&gedp->ged_result_str, "wrobj(gedp, %s):  write error\n", name);
-	bu_vls_printf(&gedp->ged_result_str, "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety, \nyou should exit now, and resolve the I/O problem, before continuing.\n");
-
+	bu_vls_printf(log_str, "write error\n");
+	bu_vls_printf(log_str, "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety, \nyou should exit now, and resolve the I/O problem, before continuing.\n");
 	return GED_ERROR;
     }
-    return 0;
+    return GED_OK;
 }
 
-
 static void
-tancir(struct ged *gedp,
+tancir(struct bu_vls *log_str,
        fastf_t cir1[],
        fastf_t cir2[]) {
     static fastf_t mag;
@@ -687,7 +699,7 @@ tancir(struct ged *gedp,
     if (mag > 1.0e-20 || mag < -1.0e-20) {
 	f = 1.0/mag;
     } else {
-	bu_vls_printf(&gedp->ged_result_str, "tancir():  0-length vector!\n");
+	bu_vls_printf(log_str, "tancir():  0-length vector!\n");
 	return;
     }
     VSCALE(work, work, f);
@@ -710,7 +722,7 @@ tancir(struct ged *gedp,
 
 
 static void
-slope(struct ged *gedp,
+slope(struct bu_vls *log_str,
       fastf_t wh1[],
       fastf_t wh2[],
       fastf_t t[]) {
@@ -723,22 +735,22 @@ slope(struct ged *gedp,
     switchs = 0;
     if (wh1[2] < wh2[2]) {
 	switchs++;
-	for (i=0; i<3; i++) {
+	for (i = 0; i < 3; i++) {
 	    temp = wh1[i];
 	    wh1[i] = wh2[i];
 	    wh2[i] = temp;
 	}
     }
-    tancir(gedp, wh1, wh2);
+    tancir(log_str, wh1, wh2);
     if (switchs) {
-	for (i=0; i<3; i++) {
+	for (i = 0; i < 3; i++) {
 	    temp = wh1[i];
 	    wh1[i] = wh2[i];
 	    wh2[i] = temp;
 	}
     }
     if (plano[1] <= plant[1]) {
-	for (i=0; i<2; i++) {
+	for (i = 0; i < 2; i++) {
 	    temp = plano[i];
 	    plano[i] = plant[i];
 	    plant[i] = temp;
@@ -771,7 +783,7 @@ slope(struct ged *gedp,
     work[0] = work[2] = 0.0;
     work[1] = t[1] - t[0];
     VMOVE(&sol.s_values[12], work);
-    for (i=3; i<=9; i+=3) {
+    for (i = 3; i <= 9; i += 3) {
 	j = i + 12;
 	VADD2(&sol.s_values[j], &sol.s_values[i], work);
     }
@@ -789,7 +801,7 @@ crdummy(fastf_t w[3], fastf_t t[3], int flag)
 
     vec[1] = 0.0;
     if (plano[1] <= plant[1]) {
-	for (i=0; i<2; i++) {
+	for (i = 0; i < 2; i++) {
 	    temp = plano[i];
 	    plano[i] = plant[i];
 	    plant[i] = temp;
@@ -813,7 +825,7 @@ crdummy(fastf_t w[3], fastf_t t[3], int flag)
     vec[2] = 0.0;
     vec[1] = t[1] - t[0] + 2.0;
     VMOVE(&sol.s_values[12], vec);
-    for (i=3; i<=9; i+=3) {
+    for (i = 3; i <=9; i += 3) {
 	j = i + 12;
 	VADD2(&sol.s_values[j], &sol.s_values[i], vec);
     }
@@ -855,7 +867,7 @@ bottom(vect_t vec1, vect_t vec2, fastf_t t[])
     tvec[1] = t[1] - t[0];
     VMOVE(&sol.s_values[12], tvec);
 
-    for (i=3; i<=9; i+=3) {
+    for (i = 3; i <=9; i += 3) {
 	j = i + 12;
 	VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
     }
@@ -888,7 +900,7 @@ top(vect_t vec1, vect_t vec2, fastf_t t[])
     VADD2(&sol.s_values[6], &sol.s_values[3], &sol.s_values[9]);
     VMOVE(&sol.s_values[12], tvec);
 
-    for (i=3; i<=9; i+=3) {
+    for (i = 3; i <= 9; i += 3) {
 	j = i + 12;
 	VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
     }
@@ -901,8 +913,6 @@ top(vect_t vec1, vect_t vec2, fastf_t t[])
  */
 
 /*
- * M K _ T R E E _ P U R E
- *
  * Given a list of wmember structures, build a tree that performs
  * the boolean operations in the given sequence.
  * No GIFT semantics or precedence is provided.
@@ -918,8 +928,8 @@ track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 	WDB_CK_WMEMBER(wp);
 
-	BU_GETUNION(leafp, tree);
-	leafp->tr_l.magic = RT_TREE_MAGIC;
+	BU_ALLOC(leafp, union tree);
+	RT_TREE_INIT(leafp);
 	leafp->tr_l.tl_op = OP_DB_LEAF;
 	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
 	if (!bn_mat_is_identity(wp->wm_mat)) {
@@ -931,8 +941,8 @@ track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	    continue;
 	}
 	/* Build a left-heavy tree */
-	BU_GETUNION(nodep, tree);
-	nodep->tr_b.magic = RT_TREE_MAGIC;
+	BU_ALLOC(nodep, union tree);
+	RT_TREE_INIT(nodep);
 	switch (wp->wm_op) {
 	    case WMOP_UNION:
 		nodep->tr_b.tb_op = OP_UNION;
@@ -954,8 +964,6 @@ track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 
 /*
- * M K _ T R E E _ G I F T
- *
  * Add some nodes to a new or existing combination's tree,
  * with GIFT precedence and semantics.
  *
@@ -1022,9 +1030,9 @@ track_mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	}
 
 	/* make new leaf node, and insert at end of array */
-	BU_GETUNION(tp, tree);
+	BU_ALLOC(tp, union tree);
+	RT_TREE_INIT(tp);
 	tree_list[node_count++].tl_tree = tp;
-	tp->tr_l.magic = RT_TREE_MAGIC;
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(wp->wm_name);
 	if (!bn_mat_is_identity(wp->wm_mat)) {
@@ -1045,8 +1053,6 @@ track_mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 
 /*
- * M K _ A D D M E M B E R
- *
  * Obtain dynamic storage for a new wmember structure, fill in the
  * name, default the operation and matrix, and add to doubly linked
  * list.  In typical use, a one-line call is sufficient.  To change
@@ -1065,7 +1071,7 @@ track_mk_addmember(
 {
     struct wmember *wp;
 
-    BU_GETSTRUCT(wp, wmember);
+    BU_GET(wp, struct wmember);
     wp->l.magic = WMEMBER_MAGIC;
     wp->wm_name = bu_strdup(name);
     switch (op) {
@@ -1092,9 +1098,6 @@ track_mk_addmember(
 }
 
 
-/*
- * M K _ F R E E M E M B E R S
- */
 static void
 track_mk_freemembers(struct bu_list *headp)
 {
@@ -1104,14 +1107,12 @@ track_mk_freemembers(struct bu_list *headp)
 	WDB_CK_WMEMBER(wp);
 	BU_LIST_DEQUEUE(&wp->l);
 	bu_free((char *)wp->wm_name, "wm_name");
-	bu_free((char *)wp, "wmember");
+	BU_PUT(wp, struct wmember);
     }
 }
 
 
 /*
- * M K _ C O M B
- *
  * Make a combination, where the
  * members are described by a linked list of wmember structs.
  *
@@ -1146,7 +1147,7 @@ track_mk_comb(
 
     RT_CK_WDB(wdbp);
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (append_ok &&
 	wdb_import(wdbp, &intern, combname, (matp_t)NULL) >= 0) {
@@ -1157,15 +1158,13 @@ track_mk_comb(
 	fresh_combination = 0;
     } else {
 	/* Create a fresh new object for export */
-	BU_GETSTRUCT(comb, rt_comb_internal);
-	comb->magic = RT_COMB_MAGIC;
-	bu_vls_init(&comb->shader);
-	bu_vls_init(&comb->material);
+	BU_ALLOC(comb, struct rt_comb_internal);
+	RT_COMB_INTERNAL_INIT(comb);
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_ptr = (genptr_t)comb;
-	intern.idb_meth = &rt_functab[ID_COMBINATION];
+	intern.idb_ptr = (void *)comb;
+	intern.idb_meth = &OBJ[ID_COMBINATION];
 
 	fresh_combination = 1;
     }
@@ -1206,10 +1205,9 @@ track_mk_comb(
 	    if (strchr(shaderargs, '=') != NULL &&
 		strchr(shaderargs, '{') == NULL)
 	    {
-		struct bu_vls old;
-		bu_vls_init(&old);
+		struct bu_vls old = BU_VLS_INIT_ZERO;
 		bu_vls_vlscatzap(&old, &comb->shader);
-		if (bu_shader_to_tcl_list(bu_vls_addr(&old), &comb->shader))
+		if (bu_shader_to_list(bu_vls_addr(&old), &comb->shader))
 		    bu_log("Unable to convert shader string '%s %s'\n", shadername, shaderargs);
 		bu_vls_free(&old);
 	    }

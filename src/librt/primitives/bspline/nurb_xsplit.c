@@ -1,7 +1,7 @@
 /*                   N U R B _ X S P L I T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_xsplit.c
+/** @file primitives/bspline/nurb_xsplit.c
  *
  * Subdivide a nurb surface by inserting a multiple knot of of the
  * surface order in a given direction and return the resulting

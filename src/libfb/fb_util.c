@@ -1,7 +1,7 @@
 /*                       F B _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,8 +35,6 @@
 
 
 /*
- * F B _ S I M _ V I E W
- *
  * A routine to simulate the effect of fb_view() by simply
  * storing this information into the FBIO structure.
  */
@@ -55,8 +53,6 @@ fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 /*
- * F B _ S I M _ G E T V I E W
- *
  * A routine to simulate the effect of fb_getview() by simply
  * reading this information from the FBIO structure.
  */
@@ -75,8 +71,6 @@ fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 /*
- * F B _ S I M _ C U R S O R
- *
  * A routine to simulate the effect of fb_cursor() by simply
  * storing this information into the FBIO structure.
  */
@@ -94,8 +88,6 @@ fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
 
 
 /*
- * F B _ S I M _ G E T C U R S O R
- *
  * A routine to simulate the effect of fb_getcursor() by simply
  * reading this information from the FBIO structure.
  */
@@ -143,13 +135,14 @@ fb_window(FBIO *ifp, int x, int y)
     int xzoom, yzoom;
 
     if (ifp) {
-	FB_CK_FBIO(ifp);
+      FB_CK_FBIO(ifp);
+      fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
+      xcenter = x;
+      ycenter = y;
+      return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
+    } else {
+      return 0;
     }
-
-    fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
-    xcenter = x;
-    ycenter = y;
-    return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
 }
 
 
@@ -160,13 +153,15 @@ fb_zoom(FBIO *ifp, int x, int y)
     int xzoom, yzoom;
 
     if (ifp) {
-	FB_CK_FBIO(ifp);
-    }
+      FB_CK_FBIO(ifp);
 
-    fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
-    xzoom = x;
-    yzoom = y;
-    return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
+      fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
+      xzoom = x;
+      yzoom = y;
+      return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
+    } else {
+      return 0;
+    }
 }
 
 

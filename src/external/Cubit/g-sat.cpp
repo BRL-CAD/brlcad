@@ -1,7 +1,7 @@
-/*                         G - S A T . C
+/*                       G - S A T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-sat.cxx
+/** @file g-sat.cpp
  *
  * C++ code for converting BRL-CAD models to the ACIS SAT format for
  * importing into CUBIT.  This code assumes that your receiving format
@@ -77,7 +77,7 @@ int verbose = 0;
 
 static  db_i		*dbip;
 
-static  rt_tess_tol     ttol;   /* tesselation tolerance in mm */
+static  rt_tess_tol     ttol;   /* tessellation tolerance in mm */
 static  bn_tol          tol;    /* calculation tolerance */
 
 // Global map for bodies names in the CGM global list
@@ -94,9 +94,9 @@ int get_body_id( string body_name );
 
 void usage( char* s);
 int parse_args( int ac, char *av[]);
-int region_start ( db_tree_state *tsp,  db_full_path *pathp, const  rt_comb_internal * combp, genptr_t client_data );
-tree *region_end ( db_tree_state *tsp,  db_full_path *pathp, tree *curtree, genptr_t client_data );
-tree *primitive_func( db_tree_state *tsp,  db_full_path *pathp, rt_db_internal *ip, genptr_t client_data);
+int region_start ( db_tree_state *tsp,  db_full_path *pathp, const  rt_comb_internal * combp, void *client_data );
+tree *region_end ( db_tree_state *tsp,  db_full_path *pathp, tree *curtree, void *client_data );
+tree *primitive_func( db_tree_state *tsp,  db_full_path *pathp, rt_db_internal *ip, void *client_data);
 void describe_tree( tree *tree,  bu_vls *str);
 void output_triangles( nmgregion *r, model *m, shell *s);
 bool make_bot( nmgregion *r, model *m, shell *s);
@@ -105,18 +105,12 @@ tree *booltree_evaluate(tree *tp, resource *resp);
 string infix_to_postfix(string str);
 void tokenize(const string& str, vector<string>& tokens, const string& delimiters);
 
-/* declarations to support use of getopt() system call */
-extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
 
 char *usage_msg = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 char *options = "t:a:n:o:r:vx:X:";
 char *prog_name = NULL;
 char *output_file = NULL;
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -140,9 +134,9 @@ main(int argc, char *argv[])
 
     /* calculational tolerances mostly used by NMG routines */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
-    tol.perp =1e-6;
+    tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
     /* Defaults, updated by command line options. */
@@ -191,7 +185,7 @@ main(int argc, char *argv[])
 
     /* Open BRL-CAD database */
     /* Scan all the records in the database and build a directory */
-    rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf));
+    rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf));
 
     if ( rtip == RTI_NULL) {
 	usage( "rt_dirbuild failure\n" );
@@ -205,23 +199,23 @@ main(int argc, char *argv[])
     init_state.ts_ttol = &ttol;
     bu_avs_init(&init_state.ts_attrs, 1, "avs in tree_state");
 
-    optind++;
+    bu_optind++;
 
     /* Walk the trees named on the command line
      * outputting combinations and primitives
      */
     int walk_tree_status;
-    for ( i = optind ; i < argc ; i++ ) {
+    for ( i = bu_optind ; i < argc ; i++ ) {
 	struct directory *dp;
 
 	dp = db_lookup( rtip->rti_dbip, argv[i], LOOKUP_QUIET );
-	if ( dp == DIR_NULL ) {
+	if ( dp == RT_DIR_NULL ) {
 	    bu_log( "Cannot find %s\n", argv[i] );
 	    continue;
 	}
 
 	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
-		     &init_state ,region_start, region_end, primitive_func, (genptr_t) &user_data);
+		     &init_state ,region_start, region_end, primitive_func, (void *) &user_data);
     }
 
     // *************************************************************************************
@@ -337,17 +331,13 @@ main(int argc, char *argv[])
     CGMApp::instance()->shutdown();
 
     cout << "Number of primitives processed: " << g_body_cnt << endl;
-    cout << "GOT HERE!" << endl;
-    abort(); /* !!! should not need this */
 
     return 0;
 }
 
 
-/*
- *      U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(char *s)
+void
+usage(char *s)
 {
     if ( s ) {
 	fputs( s, stderr );
@@ -357,10 +347,8 @@ void usage(char *s)
 }
 
 
-/*
- *      P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args( int ac, char **av )
+int
+parse_args( int ac, char **av )
 {
     int  c;
 
@@ -369,31 +357,31 @@ int parse_args( int ac, char **av )
     else
 	++prog_name;
 
-    /* Turn off getopt's error messages */
-    opterr = 0;
+    /* Turn off bu_getopt error messages */
+    bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ( (c = getopt( ac, av, options ) ) != EOF ) {
+    while ( (c = bu_getopt( ac, av, options ) ) != EOF ) {
 
 	switch (c) {
 	    case 't':               /* calculational tolerance */
-		tol.dist = atof( optarg );
+		tol.dist = atof( bu_optarg );
 		tol.dist_sq = tol.dist * tol.dist;
 	    case 'o':               /* Output file name */
 		/* grab output file name */
-		output_file = optarg;
+		output_file = bu_optarg;
 		break;
 	    case 'v':               /* verbosity */
 		verbose++;
 		break;
 	    case 'x':               /* librt debug flag */
-		sscanf( optarg, "%x", &rt_g.debug );
+		sscanf( bu_optarg, "%x", &RTG.debug );
 		bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    case 'X':               /* NMG debug flag */
-		sscanf( optarg, "%x", &rt_g.NMG_debug );
-		bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+		sscanf( bu_optarg, "%x", &RTG.NMG_debug );
+		bu_printb( "librt RTG.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    default:
@@ -403,15 +391,13 @@ int parse_args( int ac, char **av )
 
     }
 
-    return optind;
+    return bu_optind;
 }
 
 
 /**
- *      R E G I O N _ S T A R T
- *
  * @brief This routine is called when a region is first encountered in the
- * heirarchy when processing a tree
+ * hierarchy when processing a tree
  *
  *      @param tsp tree state (for parsing the tree)
  *      @param pathp A listing of all the nodes traversed to get to this node in the database
@@ -423,11 +409,11 @@ int
 region_start ( db_tree_state *tsp,
 	       db_full_path *pathp,
 	       const  rt_comb_internal *combp,
-	       genptr_t client_data )
+	       void *client_data )
 {
     rt_comb_internal *comb;
     directory *dp;
-    bu_vls str;
+    bu_vls str = BU_VLS_INIT_ZERO;
     ostringstream ostr;
     string infix, postfix;
 
@@ -442,8 +428,6 @@ region_start ( db_tree_state *tsp,
     /* here is where the conversion should be done */
     cout << "* Here is where the conversion should be done *" << endl;
     printf( "Write this region (name=%s) as a part in your format:\n", dp->d_namep );
-
-    bu_vls_init( &str );
 
     describe_tree( combp->tree, &str );
 
@@ -462,9 +446,6 @@ region_start ( db_tree_state *tsp,
 
 
 /**
- *      R E G I O N _ E N D
- *
- *
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
  *      @param tsp
@@ -483,7 +464,7 @@ tree *
 region_end ( db_tree_state *tsp,
 	     db_full_path *pathp,
 	     tree *curtree,
-	     genptr_t client_data )
+	     void *client_data )
 {
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -502,7 +483,8 @@ void
 describe_tree(  tree *tree,
 		bu_vls *str)
 {
-    bu_vls left, right;
+    bu_vls left = BU_VLS_INIT_ZERO;
+    bu_vls right = BU_VLS_INIT_ZERO;
     char *union_op = " u ";
     char *subtract_op = " - ";
     char *intersect_op = " + ";
@@ -511,7 +493,7 @@ describe_tree(  tree *tree,
 
     BU_CK_VLS(str);
 
-    if( !tree )
+    if ( !tree )
     {
 	/* this tree has no members */
 	bu_vls_strcat( str, "{empty}" );
@@ -525,7 +507,7 @@ describe_tree(  tree *tree,
      * the first four are the most common types, and are typically
      * the only ones found in a BRL-CAD database.
      */
-    switch( tree->tr_op )
+    switch ( tree->tr_op )
     {
 	case OP_DB_LEAF:	/* leaf node, this is a member */
 	    /* Note: tree->tr_l.tl_mat is a pointer to a
@@ -545,8 +527,6 @@ describe_tree(  tree *tree,
 	case OP_XOR:		/* exclusive "or" operator node */
 	    op = xor_op;
     binary:				/* common for all binary nodes */
-	    bu_vls_init( &left );
-	    bu_vls_init( &right );
 	    describe_tree( tree->tr_b.tb_left, &left );
 	    describe_tree( tree->tr_b.tb_right, &right );
 	    bu_vls_putc( str, '(' );
@@ -585,7 +565,7 @@ tree *
 primitive_func( db_tree_state *tsp,
 		db_full_path *pathp,
 		rt_db_internal *ip,
-		genptr_t client_data)
+		void *client_data)
 {
     const double NEARZERO = 0.0001;
 
@@ -608,8 +588,8 @@ primitive_func( db_tree_state *tsp,
     }
 
     /* handle each type of primitive (see h/rtgeom.h) */
-    if( ip->idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
-	switch( ip->idb_minor_type )
+    if ( ip->idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
+	switch ( ip->idb_minor_type )
 	{
 	    /* most commonly used primitives */
 	    case ID_TOR:	/* torus */
@@ -832,7 +812,7 @@ primitive_func( db_tree_state *tsp,
 
 		if (debug&DEBUG_NAMES) {
 		    printf( "Write this ARB (name=%s) in your format:\n", dp->d_namep );
-		    for( i=0 ; i<8 ; i++ ) {
+		    for ( i=0 ; i<8 ; i++ ) {
 			printf( "\tpoint #%d: (%g %g %g)\n", i, V3ARGS( arb->pt[i] ) );
 		    }
 		}
@@ -1060,7 +1040,7 @@ primitive_func( db_tree_state *tsp,
 
 		NMG_CK_MODEL(m);
 
-		if (rt_functab[ip->idb_type].ft_tessellate(&r, m, ip, tsp->ts_ttol, tsp->ts_tol) != 0) {
+		if (OBJ[ip->idb_type].ft_tessellate(&r, m, ip, tsp->ts_ttol, tsp->ts_tol) != 0) {
 		    bu_exit(1, "Failed to tessellate!\n");
 		}
 
@@ -1084,7 +1064,7 @@ primitive_func( db_tree_state *tsp,
 	}
     }
     else {
-	switch( ip->idb_major_type ) {
+	switch ( ip->idb_major_type ) {
 	    case DB5_MAJORTYPE_BINARY_UNIF:
 	    {
 		/* not actually a primitive, just a block of storage for data
@@ -1113,34 +1093,34 @@ output_triangles( nmgregion *r,
 {
     vertex *v;
 
-    for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 	faceuse *fu;
 
 	NMG_CK_SHELL( s );
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
 	    loopuse *lu;
 	    vect_t facet_normal;
 
 	    NMG_CK_FACEUSE( fu );
 
-	    if( fu->orientation != OT_SAME )
+	    if ( fu->orientation != OT_SAME )
 		continue;
 
 	    /* Grab the face normal if needed */
 	    NMG_GET_FU_NORMAL( facet_normal, fu);
 
-	    for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
 		edgeuse *eu;
 
 		NMG_CK_LOOPUSE( lu );
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		    continue;
 
 		/* loop through the edges in this loop (facet) */
 		printf( "\tfacet:\n" );
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
 		    NMG_CK_EDGEUSE( eu );
 
 		    v = eu->vu_p->v_p;
@@ -1174,37 +1154,37 @@ make_bot( nmgregion *r,
     point_t bot_cp;
 
     // initialize  bot_min and bot_max
-    VSETALL( bot_min, MAX_FASTF );
-    VSETALL( bot_max, -MAX_FASTF );
+    VSETALL( bot_min, INFINITY );
+    VSETALL( bot_max, -INFINITY );
 
-    for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 	faceuse *fu;
 
 	NMG_CK_SHELL( s );
 
-	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
 	    loopuse *lu;
 	    vect_t facet_normal;
 
 	    NMG_CK_FACEUSE( fu );
 
-	    if( fu->orientation != OT_SAME )
+	    if ( fu->orientation != OT_SAME )
 		continue;
 
 	    /* Grab the face normal if needed */
 	    NMG_GET_FU_NORMAL( facet_normal, fu);
 
-	    for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
 		edgeuse *eu;
 
 		NMG_CK_LOOPUSE( lu );
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		    continue;
 
 		/* loop through the edges in this loop (facet) */
 		// printf( "\tfacet:\n" );
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
 		    NMG_CK_EDGEUSE( eu );
 
 		    v = eu->vu_p->v_p;
@@ -1248,17 +1228,17 @@ make_bot( nmgregion *r,
 	}
 	else {
 	    cout << "make_bot did not made a Body! Substituted bounding box instead of Body." << endl;
-	    
+
 	    double bb_width = fabs(bot_max[0] - bot_min[0]);
 	    double bb_depth = fabs(bot_max[1] - bot_min[1]);
 	    double bb_height = fabs(bot_max[2] - bot_min[2]);
-	    
+
 	    gmt->brick(bb_width, bb_depth, bb_height);
-	    
+
 	    VSUB2SCALE(bot_cp, bot_max, bot_min, 0.5);
 	    VADD2(bot_cp, bot_cp, bot_min);
 	    CubitVector bbox_cp( V3ARGS(bot_cp) );
-	    
+
 	    status = gqt->translate(gqt->get_last_body(), bbox_cp);
 	}
     }
@@ -1307,7 +1287,7 @@ booltree_evaluate( tree *tp, resource *resp )
 
     RT_CK_TREE(tp);
 
-    switch(tp->tr_op) {
+    switch (tp->tr_op) {
 	case OP_NOP:
 	    return 0;
 	case OP_DB_LEAF:
@@ -1329,14 +1309,14 @@ booltree_evaluate( tree *tp, resource *resp )
 	    bu_log("booltree_evaluate: bad op %d\n", tp->tr_op);
 	    return 0;
     }
-    /* Handle a boolean operation node.  First get it's leaves. */
+    /* Handle a boolean operation node.  First get its leaves. */
     tl = booltree_evaluate(tp->tr_b.tb_left, resp);
     tr = booltree_evaluate(tp->tr_b.tb_right, resp);
 
     if (tl == 0 || !tl->tr_d.td_r) {
 	if (tr == 0 || !tr->tr_d.td_r)
 	    return 0;
-	if( op == ADD )
+	if ( op == ADD )
 	    return tr;
 	/* For sub and intersect, if lhs is 0, result is null */
 	//db_free_tree(tr);
@@ -1347,7 +1327,7 @@ booltree_evaluate( tree *tp, resource *resp )
     if (tr == 0 || !tr->tr_d.td_r) {
 	if (tl == 0 || !tl->tr_d.td_r)
 	    return 0;
-	if( op == ISECT )  {
+	if ( op == ISECT )  {
 	    db_free_tree(tl, resp);
 	    tp->tr_b.tb_left = TREE_NULL;
 	    tp->tr_op = OP_NOP;
@@ -1356,8 +1336,8 @@ booltree_evaluate( tree *tp, resource *resp )
 	/* For sub and add, if rhs is 0, result is lhs */
 	return tl;
     }
-    if( tl->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad left tree\n");
-    if( tr->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad right tree\n");
+    if ( tl->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad left tree\n");
+    if ( tr->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad right tree\n");
 
     bu_log(" {%s}%s{%s}\n", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
     cout << "******" << tl->tr_d.td_name << op_str << tr->tr_d.td_name << "***********" << endl;

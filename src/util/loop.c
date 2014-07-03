@@ -1,7 +1,7 @@
 /*                          L O O P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file loop.c
+/** @file util/loop.c
  *
  * Simple program to output integers or floats or chars between
  * "start" and "finish", inclusive.  Default is an increment of +1 if
@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <math.h>
 
 #include "bu.h"
@@ -47,35 +48,57 @@
 #define REAL 1
 #define CHAR 2
 
+void
+usage()
+{
+	bu_log("Usage: loop [-c] start finish [incr]\n       -c used for character (char) looping\n");
+}
 
 int
 main(int argc, char *argv[])
 {
     int status = INTEGER;
 
-    int i;
-    int start,  finish, incr;
+    long int i;
+    long int start,  finish;
+    long int incr;
 
     double d;
     double dstart, dfinish, dincr;
 
-    char c;
-    char cstart, cfinish;
-    int cincr;
+    unsigned long int c;
+    unsigned long int cstart, cfinish;
+    long int cincr;
+
+    int oneone;
 
     if (argc < 3 || argc > 5) {
-	bu_exit(9, "Usage:  loop [-c|-n] start finish [incr] \n -n is the default option\n");
+	usage();
+	return 9;
     }
 
-    /* Check if -c is present in comandline argument*/
+    /* Check if -c is present in commandline argument*/
 
-    if (argv[1][0] == '-' && argv[1][1]) status = CHAR;
+    if (argv[1][0] == '-') {
+	oneone = argv[1][1];
+	if (oneone < 0)
+	    oneone = 0;
+	else if (oneone > CHAR_MAX)
+	    oneone = CHAR_MAX;
+
+	if (oneone == 'c') {
+	    status = CHAR;
+	} else if ((oneone != '.') && !isdigit(oneone)) {
+	    usage();
+	    return 9;
+	}
+    }
 
     /* determine if any arguments are real */
     for (i = 1; i < argc; i++) {
 	double dval = atof(argv[i]);
-	int ival = atoi(argv[i]);
-	if (!NEAR_ZERO(dval - (double)ival, SMALL_FASTF)) {
+	long int ival = strtol(argv[i], NULL, 0);
+	if (!ZERO(dval - (double)ival)) {
 	    status = REAL;
 	    break;
 	}
@@ -83,29 +106,47 @@ main(int argc, char *argv[])
 
     if (status == REAL) {
 	dstart  = atof(argv[1]);
-	dfinish = atof(argv[2]);
+	if ((dstart < -DBL_MAX) || (dstart > DBL_MAX)) {
+	    bu_log("'start' out of range of double.\n");
+	    return 1;
+	}
 
-	if (argc == 4)
+	dfinish = atof(argv[2]);
+	if ((dfinish < -DBL_MAX) || (dfinish > DBL_MAX)) {
+	    bu_log("'finish' out of range of double.\n");
+	    return 1;
+	}
+
+	if (argc == 4) {
 	    dincr = atof(argv[3]);
-	else {
+	    if ((dincr < -DBL_MAX) || (dincr > DBL_MAX)) {
+		bu_log("'incr' out of range of double.\n");
+		return 1;
+	    }
+	} else {
 	    if (dstart > dfinish)
 		dincr = -1.0;
 	    else
 		dincr =  1.0;
 	}
 
-	if (dincr >= 0.0)
+	if (dincr > 0.0)
 	    for (d = dstart; d <= dfinish; d += dincr)
 		printf("%g\n", d);
-	else
+	else if (dincr < 0.0)
 	    for (d = dstart; d >= dfinish; d += dincr)
 		printf("%g\n", d);
+	else {
+	    bu_log("loop 'incr' can not be zero.\n");
+	    return 1;
+	}
+
     } else if (status == INTEGER) {
 	/* print out integer output */
 	char *cp;
 	char fmt_string[50];
 
-	int field_width = 0;
+	int field_width;
 
 	int zeros      = 0;  /* leading zeros for output */
 	int zeros_arg1 = 0;  /* leading zeros in arg[1]  */
@@ -151,42 +192,78 @@ main(int argc, char *argv[])
 	    bu_strlcpy(fmt_string, "%d\n", sizeof(fmt_string));
 	fmt_string[50-1] = '\0'; /* sanity */
 
-	start  = atoi(argv[1]);
-	finish = atoi(argv[2]);
+	start  = strtol(argv[1], NULL, 0);
+	if ((start < INT_MIN) || (start > INT_MAX)) {
+	    bu_log("'start' out of range of signed integer.\n");
+	    return 1;
+	}
 
-	if (argc == 4)
-	    incr = atoi(argv[3]);
-	else {
+	finish = strtol(argv[2], NULL, 0);
+	if ((finish < INT_MIN) || (finish > INT_MAX)) {
+	    bu_log("'finish' out of range of signed integer.\n");
+	    return 1;
+	}
+
+	if (argc == 4) {
+	    incr = strtol(argv[3], NULL, 0);
+	    if ((incr < INT_MIN) || (incr > INT_MAX)) {
+		bu_log("'incr' out of range of signed integer.\n");
+		return 1;
+	    }
+	} else {
 	    if (start > finish)
 		incr = -1;
 	    else
 		incr =  1;
 	}
 
-	if (incr >= 0)
+	if (incr > 0)
 	    for (i = start; i <= finish; i += incr)
 		printf(fmt_string, i);
-	else
+	else if (incr < 0)
 	    for (i = start; i >= finish; i += incr)
 		printf(fmt_string, i);
+	else {
+	    bu_log("loop 'incr' can not be zero.\n");
+	    return 9;
+	}
     } else {
+	if (argc < 4) {
+	    usage();
+	    return 9;
+	}
 	/* print out character output */
 	cstart = argv[2][0];
 	cfinish = argv[3][0];
-	
-	if (argc == 5) cincr = atoi(argv[4]);
-	else {
+
+	/* reserve the max value so we can bounds check */
+	if (cstart > ULONG_MAX-1)
+	    cstart = ULONG_MAX-1;
+	if (cfinish > ULONG_MAX-1)
+	    cfinish = ULONG_MAX-1;
+
+	if (argc == 5) {
+	    cincr = strtol(argv[4], NULL, 0);
+	    if ((cincr < -UCHAR_MAX) || (cincr > UCHAR_MAX)) {
+		bu_log("'incr' out of range of char.\n");
+		return 1;
+	    }
+	} else {
 	    if (cstart > cfinish)
 		cincr = -1;
 	    else
 		cincr = 1;
 	}
-	if (cincr >= 0)
-	    for (c=cstart; c <= cfinish; c += cincr)
-		printf("%c\n", c);
-	else
-	    for (c=cstart; c >= cfinish; c +=cincr)
-		printf("%c\n", c);
+	if (cincr > 0)
+	    for (c = cstart;  c <= cfinish; c += cincr)
+		printf("%c\n", (char)c);
+	else if (cincr < 0)
+	    for (c = cstart; c >= cfinish; c += cincr)
+		printf("%c\n", (char)c);
+	else {
+	    bu_log("loop 'incr' can not be zero.\n");
+	    return 1;
+	}
     }
 
     return 0;

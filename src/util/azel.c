@@ -1,7 +1,7 @@
 /*                          A Z E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file azel.c
+/** @file util/azel.c
  *
  * This program reads data for points in Euclidean 3-space
  * and prints out the same data, having transformed the coordinates
@@ -58,15 +58,16 @@
 #include "bu.h"
 
 
-#define OPT_STRING "a:c:e:ipr?"	/* For bu_getopt(3) */
+#define OPT_STRING "a:c:e:iprh?"	/* For bu_getopt(3) */
 #define fpeek(f) ungetc(fgetc(f), f)
 
+char usage[]="Usage: azel [-a azim] [-e elev] [-c celsiz] [-{ip}r] [infile [outfile]]";
 
 /* ======================================================================== */
 void
 PrintUsage (void)
 {
-    bu_exit(1, "Usage:  'azel [-a azim] [-e elev] [-c celsiz] [-{ip}r] [infile [outfile]]'\n");
+    bu_exit(1, "%s\n", usage);
 }
 
 
@@ -74,11 +75,11 @@ PrintUsage (void)
 void
 GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
 
-    /* File from which to read */
-    /* Where to store coordinate */
-    /* Name of coordinate */
-    /* How far in input? */
-    /* What input stream? */
+/* File from which to read */
+/* Where to store coordinate */
+/* Name of coordinate */
+/* How far in input? */
+/* What input stream? */
 
 {
     int Ch;
@@ -103,11 +104,16 @@ GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
 }
 
 
+char Stdin[]  = "stdin";
+char Stdout[] = "stdout";
+
 int
 main (int argc, char **argv)
 {
-    char *inFname = "stdin"; /* Name of input source */
-    char *outFname = "stdout";  /* Name of output destination */
+    char dhv[] = "DHV";
+    char xyz[] = "XYZ";
+    char *inFname  = Stdin; /* Name of input source */
+    char *outFname = Stdout;  /* Name of output destination */
     char *Label;             /* Names of input coordinates */
     char Tail[4096] = {0};   /* Rest of input line beyond coords */
     FILE *inPtr = stdin;     /* Pointer to input */
@@ -141,8 +147,13 @@ main (int argc, char **argv)
     int Ch;                 /* Input character */
     int i;                  /* Dummy variable for loop indexing */
 
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
+	fprintf(stderr, "%s\n", usage);
+	fprintf(stderr, "       Program continues running:\n");
+    }
+
     /* Handle command-line options */
-    while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (Ch) {
 	    case 'a':
 		if (sscanf(bu_optarg, "%lf", &Azim) != 1) {
@@ -175,8 +186,6 @@ main (int argc, char **argv)
 		Round = 1;
 		break;
 	    default:
-		fprintf(stderr, "Bad option '-%c'\n", Ch);
-	    case '?':
 		PrintUsage();
 	}
 
@@ -230,7 +239,7 @@ main (int argc, char **argv)
     }
 
 /* * * * * Filter Data * * * * */
-    Label = Invert ? "DHV" : "XYZ";
+    Label = Invert ? dhv : xyz;
 
     while ((Ch = fpeek(inPtr)) != EOF) {
 /* Read U1, V1, and W1 of next point in input frame of reference */

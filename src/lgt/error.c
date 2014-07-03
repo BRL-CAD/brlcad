@@ -1,7 +1,7 @@
 /*                         E R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,18 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file error.c
+/** @file lgt/error.c
  *
  *  Ray Tracing library and Framebuffer library, error handling routines.
  *
- *  Functions -
- *	bu_bomb		Called upon fatal RT library error.
- *	bu_log		Called to log RT library events.
- *	fb_log		Called to log FB library events.
- *
- *	Idea originated by Mike John Muuss
- *
- *	Author:		Gary S. Moss
  */
 
 #include "common.h"
@@ -42,13 +34,12 @@
 #include "bu.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
 #include "./screen.h"
 /*
- *  		B U _ B O M B
- *
  *  Abort the LIBRT library
  */
 int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
@@ -62,7 +53,7 @@ bu_bomb(const char *str)
     prnt_Timer( "DUMP" );
     if ( pix_buffered == B_PAGE )
 	(void) fb_flush( fbiop ); /* Write out buffered image.	*/
-    (void) abort();			  /* Should dump.		*/
+    bu_exit(1, NULL);
 }
 
 void
@@ -72,7 +63,7 @@ fb_log( const char *fmt, ... )
     /* We use the same lock as malloc.  Sys-call or mem lock, really */
     bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
     va_start( ap, fmt );
-    if ( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) ) {
+    if ( tty && (err_file[0] == '\0' || BU_STR_EQUAL( err_file, "/dev/tty" )) ) {
 	/* Only move cursor and scroll if newline is output.	*/
 	static int	newline = 1;
 	if ( CS != NULL ) {
@@ -95,7 +86,7 @@ fb_log( const char *fmt, ... )
 	    } else
 		(void) vfprintf( stdout, fmt, ap );
 	(void) fflush( stdout );
-	/* End of line detected by existance of a newline.	*/
+	/* End of line detected by existence of a newline.	*/
 	newline = fmt[strlen( fmt )-1] == '\n';
 	hmredraw();
     } else {

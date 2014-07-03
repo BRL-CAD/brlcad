@@ -1,7 +1,7 @@
 /*                        W I N D O W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file window.c
+/** @file shapes/window.c
  *
  * Program to make a window using libwdb.  The objects will be in
  * millimeters.  The windows are composed of two arb8s and four
@@ -38,15 +38,19 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+static const char explain[]   = "This program constructs a window with all\n\
+edges and corners rounded.\n";
 
 int
 main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26];		/* Mged file create. */
-    double hgt, wid, dpt;	/* Height, width, & depth of handle. */
-    double rds;			/* Radius of the corner of window. */
+    char filemged[26] = {0};	/* Mged file create. */
+    double hgt = 0.0;		/* Height, width, & depth of handle. */
+    double wid = 0.0;
+    double dpt;
+    double rds = 0.0;		/* Radius of the corner of window. */
     point_t pts[8];		/* Eight points of arb8. */
     point_t bs;			/* Base of rcc. */
     vect_t ht;			/* Height of rcc. */
@@ -57,12 +61,13 @@ main(int argc, char **argv)
     char solnam[8];		/* Solid name. */
     char regnam[8];		/* Region name. */
     char grpnam[5];		/* Group name. */
-    int numwin;			/* Number of windows to be created (<=26). */
+    int numwin = 0;		/* Number of windows to be created (<=26). */
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
 
     int i, j, k;		/* Loop counters. */
+    int ret;
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';
@@ -92,28 +97,60 @@ main(int argc, char **argv)
 	/* START # 3 */
 
 	/* Print info about the window. */
-	(void)printf("\nThe windows are composed of 2 arb8s and 4 cylinders.\n");
-	(void)printf("The front of the window is centered at (0, 0, 0) and\n");
-	(void)printf("extends in the negative x-direction the depth of the\n");
-	(void)printf("window.\n\n");
+	printf("\n%s\n",explain);
+	printf("The windows are composed of 2 arb8s and 4 cylinders.\n");
+	printf("The front of the window is centered at (0, 0, 0) and\n");
+	printf("extends in the negative x-direction the depth of the\n");
+	printf("window.\n\n");
 
 	/* Find name of mged file to be created. */
-	(void)printf("Enter the mged file to be created (25 char max).\n\t");
+	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%26s", filemged);
+	ret = scanf("%26s", filemged);
+	if (ret == 0)
+	    perror("scanf");
+	if (BU_STR_EQUAL(filemged, ""))
+	    bu_strlcpy(filemged, "window.g", sizeof(filemged));
 
 	/* Find the number of windows to create. */
-	(void)printf("Enter the number of windows to create (26 max).\n\t");
+	printf("Enter the number of windows to create (26 max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%d", &numwin);
+	ret = scanf("%d", &numwin);
+	if (ret == 0) {
+	    perror("scanf");
+	    numwin = 1;
+	}
+	else if (numwin < 1)
+	    numwin = 1;
+	else if (numwin > 26)
+	    numwin = 26;
 
 	/* Find the dimensions of the windows. */
-	(void)printf("Enter the height, width, and depth of the window.\n\t");
+	printf("Enter the height, width, and depth of the window.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%lf %lf %lf", &hgt, &wid, &dpt);
-	(void)printf("Enter the radius of the corner.\n\t");
+	ret = scanf("%lf %lf %lf", &hgt, &wid, &dpt);
+	if (ret == 0) {
+	    perror("scanf");
+	    hgt = 1618.0; /* golden ratio */
+	    wid = 1000.0;
+	    dpt = 100.0;
+	}
+	if (hgt < SMALL_FASTF)
+	    hgt = SMALL_FASTF;
+	if (wid < SMALL_FASTF)
+	    wid = SMALL_FASTF;
+	if (dpt < SMALL_FASTF)
+	    dpt = SMALL_FASTF;
+
+	printf("Enter the radius of the corner.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%lf", &rds);
+	ret = scanf("%lf", &rds);
+	if (ret == 0) {
+	    perror("scanf");
+	    rds = 5.0;
+	}
+	if (rds < SMALL_FASTF)
+	    rds = SMALL_FASTF;
 
     }							/* END # 3 */
 
@@ -121,9 +158,10 @@ main(int argc, char **argv)
     else {
 	/* START # 4 */
 	/* List options. */
+	/* -h or -? help page */
 	/* -fname - name = mged file name. */
 	/* -n# - # = number of windows. */
-	/* -h# - # = height of window in mm. */
+	/* -H# - # = height of window in mm. */
 	/* -w# - # = width of window in mm. */
 	/* -d# - # = depth of window in mm. */
 	/* -r# - # = radius of window corner in mm. */
@@ -132,6 +170,13 @@ main(int argc, char **argv)
 	    /* START # 5 */
 	    /* Put argument in temporary character string. */
 	    temp = argv[i];
+
+	    if (temp[1] == 'h' || temp[1] == '?') {
+	    	fprintf(stderr,"%s",explain);
+		fprintf(stderr,"Usage: window -fname [-f mged_file_name] [-n #_of_windows] [-H window_height]\n");
+		fprintf(stderr,"       [-w window_width] [-d window_depth] [-r radius_of_corners]");
+		bu_exit(2,     "       (units of mm)\n");
+	    }
 
 	    /* -f - mged file. */
 	    if (temp[1] == 'f') {
@@ -161,28 +206,28 @@ main(int argc, char **argv)
 		}					/* END # 9 */
 		temp1[k] = '\0';
 		if (temp[1] == 'n') {
-		    (void)sscanf(temp1, "%d", &numwin);
+		    sscanf(temp1, "%d", &numwin);
 		    if (numwin > 26) numwin = 26;
-		} else if (temp[1] == 'h') {
-		    (void)sscanf(temp1, "%lf", &hgt);
+		} else if (temp[1] == 'H') {
+		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {
-		    (void)sscanf(temp1, "%lf", &wid);
+		    sscanf(temp1, "%lf", &wid);
 		} else if (temp[1] == 'd') {
-		    (void)sscanf(temp1, "%lf", &dpt);
+		    sscanf(temp1, "%lf", &dpt);
 		} else if (temp[1] == 'r') {
-		    (void)sscanf(temp1, "%lf", &rds);
+		    sscanf(temp1, "%lf", &rds);
 		}
 	    }						/* END # 8 */
 	}						/* END # 5 */
     }							/* END # 4 */
 
     /* Print out all info. */
-    (void)printf("\nmged file:  %s\n", filemged);
-    (void)printf("height of window:  %f mm\n", hgt);
-    (void)printf("width of window:  %f mm\n", wid);
-    (void)printf("depth of window:  %f mm\n", dpt);
-    (void)printf("radius of corner:  %f mm\n", rds);
-    (void)printf("number of windows:  %d\n\n", numwin);
+    printf("\nmged file:  %s\n", filemged);
+    printf("height of window:  %f mm\n", hgt);
+    printf("width of window:  %f mm\n", wid);
+    printf("depth of window:  %f mm\n", dpt);
+    printf("radius of corner:  %f mm\n", rds);
+    printf("number of windows:  %d\n\n", numwin);
     (void)fflush(stdout);
 
     /* Open mged file. */
@@ -194,61 +239,61 @@ main(int argc, char **argv)
     for (i=0; i<numwin; i++) {
 	/* START # 2 */
 	/* Create first arb8. */
-	pts[0][0] = (fastf_t)0.;
-	pts[0][1] = (fastf_t) (wid / 2. - rds);
-	pts[0][2] = (fastf_t) (hgt / 2.);
-	pts[1][0] = (fastf_t)0.;
-	pts[1][1] = (fastf_t) (wid / 2. - rds);
-	pts[1][2] = (fastf_t) ((-hgt) / 2.);
-	pts[2][0] = (fastf_t)0.;
-	pts[2][1] = (fastf_t) (rds - wid / 2.);
-	pts[2][2] = (fastf_t) ((-hgt) / 2.);
-	pts[3][0] = (fastf_t)0.;
-	pts[3][1] = (fastf_t) (rds - wid / 2.);
-	pts[3][2] = (fastf_t) (hgt / 2.);
+	pts[0][0] = (fastf_t)0.0;
+	pts[0][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[0][2] = (fastf_t) (hgt / 2.0);
+	pts[1][0] = (fastf_t)0.0;
+	pts[1][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[1][2] = (fastf_t) ((-hgt) / 2.0);
+	pts[2][0] = (fastf_t)0.0;
+	pts[2][1] = (fastf_t) (rds - wid / 2.0);
+	pts[2][2] = (fastf_t) ((-hgt) / 2.0);
+	pts[3][0] = (fastf_t)0.0;
+	pts[3][1] = (fastf_t) (rds - wid / 2.0);
+	pts[3][2] = (fastf_t) (hgt / 2.0);
 	pts[4][0] = (fastf_t)(-dpt);
-	pts[4][1] = (fastf_t) (wid / 2. - rds);
-	pts[4][2] = (fastf_t) (hgt / 2.);
+	pts[4][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[4][2] = (fastf_t) (hgt / 2.0);
 	pts[5][0] = (fastf_t)(-dpt);
-	pts[5][1] = (fastf_t) (wid / 2. - rds);
-	pts[5][2] = (fastf_t) ((-hgt) / 2.);
+	pts[5][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[5][2] = (fastf_t) ((-hgt) / 2.0);
 	pts[6][0] = (fastf_t)(-dpt);
-	pts[6][1] = (fastf_t) (rds - wid / 2.);
-	pts[6][2] = (fastf_t) ((-hgt) / 2.);
+	pts[6][1] = (fastf_t) (rds - wid / 2.0);
+	pts[6][2] = (fastf_t) ((-hgt) / 2.0);
 	pts[7][0] = (fastf_t)(-dpt);
-	pts[7][1] = (fastf_t) (rds - wid / 2.);
-	pts[7][2] = (fastf_t) (hgt / 2.);
+	pts[7][1] = (fastf_t) (rds - wid / 2.0);
+	pts[7][2] = (fastf_t) (hgt / 2.0);
 	solnam[5] = 97 + i;
 	solnam[6] = '1';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/* Create second arb8. */
-	pts[0][1] = (fastf_t) (wid / 2.);
-	pts[0][2] = (fastf_t) (hgt / 2. - rds);
-	pts[1][1] = (fastf_t) (wid / 2.);
-	pts[1][2] = (fastf_t) (rds - hgt / 2.);
-	pts[2][1] = (fastf_t) ((-wid) / 2.);
-	pts[2][2] = (fastf_t) (rds - hgt / 2.);
-	pts[3][1] = (fastf_t) ((-wid) / 2.);
-	pts[3][2] = (fastf_t) (hgt / 2. - rds);
-	pts[4][1] = (fastf_t) (wid / 2.);
-	pts[4][2] = (fastf_t) (hgt / 2. - rds);
-	pts[5][1] = (fastf_t) (wid / 2.);
-	pts[5][2] = (fastf_t) (rds - hgt / 2.);
-	pts[6][1] = (fastf_t) ((-wid) / 2.);
-	pts[6][2] = (fastf_t) (rds - hgt / 2.);
-	pts[7][1] = (fastf_t) ((-wid) / 2.);
-	pts[7][2] = (fastf_t) (hgt / 2. - rds);
+	pts[0][1] = (fastf_t) (wid / 2.0);
+	pts[0][2] = (fastf_t) (hgt / 2.0 - rds);
+	pts[1][1] = (fastf_t) (wid / 2.0);
+	pts[1][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[2][1] = (fastf_t) ((-wid) / 2.0);
+	pts[2][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[3][1] = (fastf_t) ((-wid) / 2.0);
+	pts[3][2] = (fastf_t) (hgt / 2.0 - rds);
+	pts[4][1] = (fastf_t) (wid / 2.0);
+	pts[4][2] = (fastf_t) (hgt / 2.0 - rds);
+	pts[5][1] = (fastf_t) (wid / 2.0);
+	pts[5][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[6][1] = (fastf_t) ((-wid) / 2.0);
+	pts[6][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[7][1] = (fastf_t) ((-wid) / 2.0);
+	pts[7][2] = (fastf_t) (hgt / 2.0 - rds);
 	solnam[6] = '2';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/* Create cylinder 1. */
-	bs[0] = (fastf_t)0.;
-	bs[1] = (fastf_t) (wid / 2. - rds);
-	bs[2] = (fastf_t) (hgt / 2. - rds);
+	bs[0] = (fastf_t)0.0;
+	bs[1] = (fastf_t) (wid / 2.0 - rds);
+	bs[2] = (fastf_t) (hgt / 2.0 - rds);
 	ht[0] = (fastf_t)(-dpt);
-	ht[1] = (fastf_t)0.;
-	ht[2] = (fastf_t)0.;
+	ht[1] = (fastf_t)0.0;
+	ht[2] = (fastf_t)0.0;
 	rad = (fastf_t)rds;
 	solnam[6] = '3';
 	mk_rcc(fpw, solnam, bs, ht, rad);

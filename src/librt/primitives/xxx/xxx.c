@@ -1,7 +1,7 @@
 /*                           X X X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file xxx.c
+/** @file primitives/xxx/xxx.c
  *
  * Intersect a ray with an 'xxx' primitive object.
  *
@@ -28,27 +28,29 @@
  * Design disk record
  *
  * define rt_xxx_internal --- parameters for solid
- * define xxx_specific --- raytracing form, possibly w/precomuted terms
+ * define xxx_specific --- raytracing form, possibly w/precomputed terms
  * define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
  *
  * code import/export4/describe/print/ifree/plot/prep/shot/curve/uv/tess
  *
  * edit db.h add solidrec s_type define
  * edit rtgeom.h to add rt_xxx_internal
- * edit magic.h to add RT_XXX_INTERNAL_MAGIC
+ * edit bu/magic.h to add RT_XXX_INTERNAL_MAGIC
  * edit table.c:
  *	RT_DECLARE_INTERFACE()
  *	struct rt_functab entry
  *	rt_id_solid()
  * edit raytrace.h to make ID_XXX, increment ID_MAXIMUM
  * edit db_scan.c to add the new solid to db_scan()
- * edit Makefile.am to add g_xxx.c to compile
+ * edit CMakeLists.txt to add g_xxx.c to compile
  *
  * go to src/libwdb and create mk_xxx() routine
  * go to src/conv and edit g2asc.c and asc2g.c to support the new solid
  * go to src/librt and edit tcl.c to add the new solid to
  *	rt_solid_type_lookup[]
- *	also add the interface table and to rt_id_solid() in table.c
+ *	also add the interface table and to rt_id_solid() in table.c;
+ *	you MUST add the appropriate RTFUNCTAB_FUNC_X_CAST macro
+ *	for each function rt_xxx_X you add (see entire list in raytrace.h)
  * go to src/mged and create the edit support
  *
  */
@@ -70,8 +72,6 @@
 
 
 /**
- * R T _ X X X _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid XXX, and if so, precompute
  * various terms of the formula.
@@ -81,7 +81,7 @@
  * !0 Error in description
  *
  * Implicit return -
- * A struct xxx_specific is created, and it's address is stored in
+ * A struct xxx_specific is created, and its address is stored in
  * stp->st_specific for use by xxx_shot().
  */
 int
@@ -100,9 +100,6 @@ rt_xxx_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ X X X _ P R I N T
- */
 void
 rt_xxx_print(const struct soltab *stp)
 {
@@ -116,8 +113,6 @@ rt_xxx_print(const struct soltab *stp)
 
 
 /**
- * R T _ X X X _ S H O T
- *
  * Intersect a ray with a xxx.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -163,8 +158,6 @@ rt_xxx_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ X X X _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -182,8 +175,6 @@ rt_xxx_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ X X X _ C U R V E
- *
  * Return the curvature of the xxx.
  */
 void
@@ -204,8 +195,6 @@ rt_xxx_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ X X X _ U V
- *
  * For a hit on the surface of an xxx, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
 
@@ -226,9 +215,6 @@ rt_xxx_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ X X X _ F R E E
- */
 void
 rt_xxx_free(struct soltab *stp)
 {
@@ -243,11 +229,8 @@ rt_xxx_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ X X X _ P L O T
- */
 int
-rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_xxx_internal *xxx_ip;
 
@@ -261,8 +244,6 @@ rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /**
- * R T _ X X X _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -283,8 +264,6 @@ rt_xxx_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ X X X _ I M P O R T 5
- *
  * Import an XXX from the database format to the internal format.
  * Note that the data read will be in network order.  This means
  * Big-Endian integers and IEEE doubles for floating point.
@@ -295,7 +274,9 @@ int
 rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_xxx_internal *xxx_ip;
-    fastf_t vv[ELEMENTS_PER_VECT*1];
+
+    /* must be double for import and export */
+    double vv[ELEMENTS_PER_VECT*1];
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -306,8 +287,9 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_XXX;
-    ip->idb_meth = &rt_functab[ID_XXX];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_xxx_internal), "rt_xxx_internal");
+    ip->idb_meth = &OBJ[ID_XXX];
+    BU_ALLOC(ip->idb_ptr, struct rt_xxx_internal);
+
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
 
@@ -315,7 +297,7 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
      * conversion from network data (Big Endian ints, IEEE double
      * floating point) to host local data representations.
      */
-    ntohd((unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*1);
+    bu_cv_ntohd((unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*1);
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
@@ -326,8 +308,6 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
 
 
 /**
- * R T _ X X X _ E X P O R T 5
- *
  * Export an XXX from internal form to external format.  Note that
  * this means converting all integers to Big-Endian format and
  * floating point data to IEEE double.
@@ -338,7 +318,9 @@ int
 rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_xxx_internal *xxx_ip;
-    fastf_t vec[ELEMENTS_PER_VECT];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT];
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_XXX) return -1;
@@ -348,8 +330,7 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "xxx external");
-
+    ep->ext_buf = (void *)bu_calloc(1, ep->ext_nbytes, "xxx external");
 
     /* Since libwdb users may want to operate in units other than mm,
      * we offer the opportunity to scale the solid (to get it into mm)
@@ -358,15 +339,13 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(vec, xxx_ip->v, local2mm);
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*1);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT);
 
     return 0;
 }
 
 
 /**
- * R T _ X X X _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -395,8 +374,6 @@ rt_xxx_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ X X X _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -412,7 +389,7 @@ rt_xxx_ifree(struct rt_db_internal *ip)
     xxx_ip->magic = 0;			/* sanity */
 
     bu_free((char *)xxx_ip, "xxx ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

@@ -1,7 +1,7 @@
 /*                     P A R S E _ F M T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file parse_fmt.c
+/** @file nirt/parse_fmt.c
  *
  * Parse the output formatter
  *
@@ -132,7 +132,7 @@ extern char *ocname[];
 
 
 void
-format_output (const char* buffer, com_table* ctp)
+format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
 {
     const char* bp = buffer;	/* was + 1; */
     int fmt_type = FMT_NONE;
@@ -145,7 +145,7 @@ format_output (const char* buffer, com_table* ctp)
     /* Handle no args, arg=='?', and obvious bad arg */
     if (*bp != '\0')
 	++bp;
-    while (isspace(*bp))
+    while (isspace((int)*bp))
 	++bp;
     switch (*bp) {
 	case 'r':
@@ -173,7 +173,7 @@ format_output (const char* buffer, com_table* ctp)
 	    --bp;
 	    break;
     }
-    while (isspace(*++bp))
+    while (isspace((int)*++bp))
 	;
 
     switch (*bp) {
@@ -190,11 +190,11 @@ format_output (const char* buffer, com_table* ctp)
 	    }
 	    break;
 	default:
-	    if (strncmp(bp, "default", 7) == 0) {
+	    if (bu_strncmp(bp, "default", 7) == 0) {
 		use_defaults = 1;
 		break;
 	    }
-	    fprintf(stderr, "Error: Illegal format specifiation: '%s'\n", buffer);
+	    fprintf(stderr, "Error: Illegal format specification: '%s'\n", buffer);
 	    /* fall through here */
 	case '?':
 	    com_usage(ctp);
@@ -216,7 +216,7 @@ format_output (const char* buffer, com_table* ctp)
 
 
 /**
- * uoutspect is the user's output specification (format & args).
+ * uoutspec is the user's output specification (format & args).
  * outcom_type is the type of output command
  */
 void
@@ -232,7 +232,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
     outitem *prev_oip = OUTITEM_NULL;
     outval *vtp;
 
-    mycopy = uos = bu_malloc(strlen(uoutspec)+1, "uos");
+    mycopy = uos = (char *)bu_malloc(strlen(uoutspec)+1, "uos");
     bu_strlcpy(uos, uoutspec, strlen(uoutspec)+1);
 
     /* Break up the format specification into pieces,
@@ -250,7 +250,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
     while (*uos != '"') {
 	nm_cs = 0;
 	/* Allocate storage for the next item in the output list */
-	oip = (outitem *) bu_malloc(sizeof(outitem), "output item");
+	BU_ALLOC(oip, outitem);
 	oip->next = OUTITEM_NULL;
 
 	for (up = uos; *uos != '"'; ++uos) {
@@ -273,7 +273,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	 * needs an output item or not (i.e. whether it
 	 * contains 1 conversion spec vs. none)
 	 */
-	oip->format = bu_malloc(uos - up + 1, "format");
+	oip->format = (char *)bu_malloc(uos - up + 1, "format");
 	of = oip->format;
 	while (up != uos) {
 	    if (*up == '\\') {
@@ -307,7 +307,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
     }
 
     /* Skip any garbage beyond the close quote */
-    for (up = ++uos; (! isspace(*uos)) && (*uos != '\0'); ++uos)
+    for (up = ++uos; (! isspace((int)*uos)) && (*uos != '\0'); ++uos)
 	;
 
     if (up != uos) {
@@ -322,7 +322,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	if (oip->code_nm == 0)
 	    continue;		/* outitem's format has no conversion spec */
 
-	while (isspace(*uos))
+	while (isspace((int)*uos))
 	    ++uos;
 	if (*uos == '\0') {
 	    fprintf(stderr,
@@ -330,7 +330,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	    bu_free(mycopy, "Copy of user's output spec");
 	    return;
 	}
-	for (up = uos; (! isspace(*uos)) && (*uos != '\0'); ++uos)
+	for (up = uos; (! isspace((int)*uos)) && (*uos != '\0'); ++uos)
 	    ;
 
 	if (*uos != '\0')
@@ -338,7 +338,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 
 	oip->code_nm = 0;
 	for (vtp = (outval *)(ValTab + 1); vtp->name; ++vtp) {
-	    if (strcmp(vtp->name, up) == 0) {
+	    if (BU_STR_EQUAL(vtp->name, up)) {
 		oip->code_nm = vtp->code_nm;
 		break;
 	    }
@@ -351,7 +351,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	}
     }
 
-    while (isspace(*uos))
+    while (isspace((int)*uos))
 	++uos;
 
     if (*uos != '\0') {
@@ -458,7 +458,7 @@ report(int outcom_type)
 
 
 void
-print_item (char *buffer, com_table *ctp)
+print_item (char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     char *bp = buffer;
     char *bp0;
@@ -469,7 +469,7 @@ print_item (char *buffer, com_table *ctp)
     if (*bp != '\0')
 	++bp;
 
-    while (isspace(*bp))
+    while (isspace((int)*bp))
 	++bp;
 
     switch (*bp) {
@@ -481,17 +481,17 @@ print_item (char *buffer, com_table *ctp)
 
     /* Read in the list of objects to output */
     while (*bp != '\0') {
-	while (isspace(*bp))
+	while (isspace((int)*bp))
 	    ++bp;
 
-	for (bp0 = bp; (! isspace(*bp)) && (*bp != '\0'); ++bp)
+	for (bp0 = bp; (! isspace((int)*bp)) && (*bp != '\0'); ++bp)
 	    ;
 
 	if (*bp != '\0')
 	    *bp++ = '\0';
 
 	for (vtp = (outval *)(ValTab + 1); vtp->name; ++vtp) {
-	    if (strcmp(vtp->name, bp0) == 0) {
+	    if (BU_STR_EQUAL(vtp->name, bp0)) {
 		switch (vtp->type) {
 		    case OIT_INT:
 			printf("%d\n", vtp->value.ival);
@@ -534,7 +534,7 @@ fopenrc(void)
     if ((fPtr = fopen(DEF_RCF_NAME, "rb")) == NULL) {
 	if ((home = getenv("HOME")) != NULL) {
 	    len = strlen(home) + strlen(DEF_RCF_NAME) + 2;
-	    rc_file_name = bu_malloc(len, "rc_file_name");
+	    rc_file_name = (char *)bu_malloc(len, "rc_file_name");
 	    snprintf(rc_file_name, len, "%s/%s", home, DEF_RCF_NAME);
 	    fPtr = fopen(rc_file_name, "rb");
 	}
@@ -567,11 +567,11 @@ check_conv_spec(outitem *oip)
 	/* Skip optional crud */
 	if (*cp == '-')
 	    ++cp;
-	while (isdigit(*cp))
+	while (isdigit((int)*cp))
 	    ++cp;
 	if (*cp == '.')
 	    ++cp;
-	while (isdigit(*cp))
+	while (isdigit((int)*cp))
 	    ++cp;
 
 	oi_type = ValTab[oip->code_nm].type;
@@ -636,7 +636,7 @@ check_conv_spec(outitem *oip)
 
 
 void
-direct_output(const char *buffer, com_table *ctp)
+direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     size_t i = 0;      /* current position on the *buffer */
     size_t j = 0;      /* position of last non-whitespace char in the *buffer */
@@ -644,7 +644,7 @@ direct_output(const char *buffer, com_table *ctp)
     static char *new_dest;
     static FILE *(*openfunc)() = 0;
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
 
     if (*(buffer+i) == '\0') {
@@ -656,12 +656,12 @@ direct_output(const char *buffer, com_table *ctp)
 	return;
     }
 
-    if (strcmp(buffer + i, "?") == 0) {
+    if (BU_STR_EQUAL(buffer + i, "?")) {
 	com_usage(ctp);
 	return;
     }
 
-    if (strcmp(buffer + i, "default") == 0) {
+    if (BU_STR_EQUAL(buffer + i, "default")) {
 	newf = stdout;
 	new_dest = def_dest_string;
 	openfunc = 0;
@@ -679,12 +679,12 @@ direct_output(const char *buffer, com_table *ctp)
 	}
 	/*Find last non-whitespace character*/
 	j = strlen(buffer);
-	while (isspace(*(buffer+j-1))) j--;
+	while (isspace((int)*(buffer+j-1))) j--;
 
-	new_dest = bu_malloc(strlen(buffer + i)+1, "new_dest");
+	new_dest = (char *)bu_malloc(strlen(buffer + i)+1, "new_dest");
 
 	snprintf(new_dest, j-i+1, "%s", buffer + i);
-	if (bu_file_exists(new_dest)) {
+	if (bu_file_exists(new_dest, NULL)) {
 	    fprintf(stderr, "File %s already exists.\n", new_dest);
 	    return;
 	}
@@ -716,12 +716,12 @@ direct_output(const char *buffer, com_table *ctp)
 
 
 void
-state_file(const char *buffer, com_table *ctp)
+state_file(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     int i = 0;      /* current position on the *buffer */
     static char *new_name;
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
 
     if (*(buffer+i) == '\0') {
@@ -730,15 +730,15 @@ state_file(const char *buffer, com_table *ctp)
 	return;
     }
 
-    if (strcmp(buffer + i, "?") == 0) {
+    if (BU_STR_EQUAL(buffer + i, "?")) {
 	com_usage(ctp);
 	return;
     }
 
-    if (strcmp(buffer + i, "default") == 0) {
+    if (BU_STR_EQUAL(buffer + i, "default")) {
 	new_name = def_sf_name;
     } else {
-	new_name = bu_malloc(strlen(buffer + i)+1, "new_state_filename");
+	new_name = (char *)bu_malloc(strlen(buffer + i)+1, "new_state_filename");
 	snprintf(new_name, strlen(buffer+i), "%s", buffer + i);
     }
 
@@ -752,17 +752,13 @@ state_file(const char *buffer, com_table *ctp)
 
 
 void
-dump_state(const char *buffer, com_table *ctp)
+dump_state(const char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 {
     char *c;
     static const char fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o', 'g'};
     FILE *sfPtr;
     int f;
     outitem *oip;		/* Pointer into list of output items */
-
-    /* quellage */
-    buffer = buffer;
-    ctp = ctp;
 
     if ((sfPtr = fopen(sf_name, "wb")) == NULL) {
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);
@@ -775,7 +771,7 @@ dump_state(const char *buffer, com_table *ctp)
     fprintf(sfPtr, "dir %g %g %g\n", direct(X), direct(Y), direct(Z));
     fprintf(sfPtr, "useair %d\n", ap.a_rt_i->useair);
     fprintf(sfPtr, "units %s\n", local_u_name);
-    if (strcmp(dest_string, "stdout") == 0)
+    if (BU_STR_EQUAL(dest_string, "stdout"))
 	fputs("dest default\n", sfPtr);
     else
 	fprintf(sfPtr, "dest %s\n", dest_string);
@@ -804,20 +800,16 @@ dump_state(const char *buffer, com_table *ctp)
 
 
 void
-load_state(char *buffer, com_table *ctp)
+load_state(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 {
     FILE *sfPtr;
-
-    /* quellage */
-    buffer = buffer;
-    ctp = ctp;
 
     if ((sfPtr = fopen(sf_name, "rb")) == NULL) {
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);
 	return;
     }
     bu_log("Loading NIRT state from file '%s'...", sf_name);
-    interact(READING_FILE, sfPtr);
+    interact(READING_FILE, sfPtr, rtip);
     bu_log("\n");
     fclose(sfPtr);
 }

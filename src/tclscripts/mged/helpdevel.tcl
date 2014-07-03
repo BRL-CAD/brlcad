@@ -1,7 +1,7 @@
 #                   H E L P D E V E L . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -24,10 +24,6 @@
 #
 #==============================================================================
 
-# This command causes helplib.tcl to get read in.
-helplib
-
-
 set mged_helpdevel_data(aip)		{{[fb]}	{advance illumination pointer or path position forward or backward}}
 set mged_helpdevel_data(cmd_win)	{{cmd}	{routine for maintaining command windows}}
 set mged_helpdevel_data(collaborate)	{{join id | quit id | show}	{routine for maintaining the collaborative session}}
@@ -44,8 +40,8 @@ set mged_helpdevel_data(grid2model_lu)	{{gx gy}	{given a point in grid coordinat
 set mged_helpdevel_data(grid2view_lu)	{{gx gy}	{given a point in grid coordinates (local units),
     convert it to view coordinates (local units).}}
 set mged_helpdevel_data(gui_destroy)	{{id}	{destroy display/command window pair}}
-set mged_helpdevel_data(hist)	{{command}	{routine for maintaining command history}}
-set mged_helpdevel_data(make_name)	$helplib_data(wdb_make_name)
+set mged_helpdevel_data(hist)		{{command}	{routine for maintaining command history}}
+set mged_helpdevel_data(make_name)	{{template | -s [num]}	{make an object name not occurring in the database}}
 set mged_helpdevel_data(mged_update)	{{non_blocking}	{handle outstanding events and refresh}}
 set mged_helpdevel_data(mged_wait)	{{}	{see tkwait}}
 set mged_helpdevel_data(mmenu_get)	{{[index]}	{get menu corresponding to index}}

@@ -1,7 +1,7 @@
 /*                       P I X T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixtest.c
+/** @file rttherm/pixtest.c
  *
  * This is a tool for testing the spectral conversion routines and the
  * underlying libraries.  Take an RGB .pix file, convert it to
@@ -38,19 +38,20 @@
 #include "spectrum.h"
 
 
+extern void make_ntsc_xyz2rgb(mat_t xyz2rgb);
+extern void
+spect_curve_to_xyz(point_t xyz,
+		   const struct bn_tabdata *tabp,
+		   const struct bn_tabdata *cie_x,
+		   const struct bn_tabdata *cie_y,
+		   const struct bn_tabdata *cie_z);
+
 extern struct bn_table *spectrum;
 struct bn_tabdata *curve;
 
-#if 0
-/* Not many samples in visible part of spectrum */
-int nsamp = 100;
-double min_nm = 380;
-double max_nm = 12000;
-#else
 int nsamp = 20;
 double min_nm = 340;
 double max_nm = 760;
-#endif
 
 struct bn_tabdata *cie_x;
 struct bn_tabdata *cie_y;
@@ -65,12 +66,16 @@ main(int ac, char **av)
     float src[3];
     point_t dest;
     point_t xyz;
+    size_t ret;
+
+    if (ac > 1)
+	bu_log("Usage: %s\n", av[0]);
 
     spectrum = bn_table_make_uniform(nsamp, min_nm, max_nm);
     BN_GET_TABDATA(curve, spectrum);
 
     rt_spect_make_CIE_XYZ(&cie_x, &cie_y, &cie_z, spectrum);
-    rt_make_ntsc_xyz2rgb(xyz2rgb);
+    make_ntsc_xyz2rgb(xyz2rgb);
 
     for (;;) {
 	if (fread(rgb, 1, 3, stdin) != 3) break;
@@ -80,7 +85,7 @@ main(int ac, char **av)
 
 	rt_spect_reflectance_rgb(curve, src);
 
-	rt_spect_curve_to_xyz(xyz, curve, cie_x, cie_y, cie_z);
+	spect_curve_to_xyz(xyz, curve, cie_x, cie_y, cie_z);
 
 	MAT3X3VEC(dest, xyz2rgb, xyz);
 
@@ -99,8 +104,12 @@ main(int ac, char **av)
 
 	VSCALE(rgb, dest, 255.0);
 
-	fwrite(rgb, 1, 3, stdout);
+	ret = fwrite(rgb, 1, 3, stdout);
+	if (ret != 3)
+	    perror("fwrite");
     }
+
+    return 0;
 }
 
 

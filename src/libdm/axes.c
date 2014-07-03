@@ -1,7 +1,7 @@
 /*                          A X E S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,11 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file axes.c
+/** @file libdm/axes.c
  *
  * Functions -
  *	draw_axes	Common axes drawing routine that draws axes at the
- *			specifed point and orientation.
+ *			specified point and orientation.
  *
  */
 
@@ -39,7 +39,7 @@
 
 void
 dm_draw_data_axes(struct dm *dmp,
-		  fastf_t UNUSED(viewSize), /* in mm */
+		  fastf_t sf,
 		  struct ged_data_axes_state *gdasp)
 {
     int i, j;
@@ -54,13 +54,27 @@ dm_draw_data_axes(struct dm *dmp,
     if (npoints < 1)
 	return;
 
-    points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
-
-    /* FIXME: should be using viewSize */
-    halfAxesSize = gdasp->gdas_size * 0.5;
-
     /* set color */
     DM_SET_FGCOLOR(dmp, gdasp->gdas_color[0], gdasp->gdas_color[1], gdasp->gdas_color[2], 1, 1.0);
+
+#if defined(IF_OGL) || defined(IF_WGL)
+    if (gdasp->gdas_draw > 1) {
+	if (dmp->dm_light)
+	    glDisable(GL_LIGHTING);
+
+	glPointSize(gdasp->gdas_size);
+	DM_DRAW_POINTS_3D(dmp, gdasp->gdas_num_points, gdasp->gdas_points);
+	glPointSize(1);
+
+	if (dmp->dm_light)
+	    glEnable(GL_LIGHTING);
+
+	return;
+    }
+#endif
+
+    points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
+    halfAxesSize = gdasp->gdas_size * 0.5 * sf;
 
     /* set linewidth */
     DM_SET_LINE_ATTR(dmp, gdasp->gdas_line_width, 0);  /* solid lines */
@@ -91,8 +105,8 @@ dm_draw_data_axes(struct dm *dmp,
 	VMOVE(points[j], ptB);
     }
 
-    DM_DRAW_LINES_3D(dmp, npoints, points);
-    bu_free((genptr_t)points, "data axes points");
+    DM_DRAW_LINES_3D(dmp, npoints, points, 0);
+    bu_free((void *)points, "data axes points");
 
     /* Restore the line attributes */
     DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);

@@ -1,7 +1,7 @@
 #                       O P E N W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2010 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -52,9 +52,9 @@ if {![info exists mged_default(tran_factor)]} {
     set mged_default(tran_factor) 0.01
 }
 
-set mged_default(html_dir) [file normalize [bu_brlcad_data "html/manuals/mged"]]
+set mged_default(html_dir) [file normalize [file join [bu_brlcad_data "html"] manuals mged]]
 if {![file exists $mged_default(html_dir)]} {
-    set mged_default(html_dir) [file normalize [bu_brlcad_data "doc/html/manuals/mged"]]
+    set mged_default(html_dir) [file normalize [file join [bu_brlcad_data "doc"] html manuals mged]]
 }
 
 if {[info exists env(MGED_HTML_DIR)]} {
@@ -64,7 +64,11 @@ if {[info exists env(MGED_HTML_DIR)]} {
 }
 
 if {![info exists mged_default(web_browser)]} {
-    set mged_default(web_browser) /usr/bin/netscape
+    if { ($::tcl_platform(platform) == "windows") && [file exists "C:/Program Files/Internet Explorer/iexplore.exe"] } {
+	set mged_default(web_browser) "C:/Program Files/Internet Explorer/iexplore.exe"
+    } else {
+	set mged_default(web_browser) /usr/bin/netscape
+    }
 }
 
 if {![info exists mged_color_scheme]} {
@@ -203,7 +207,7 @@ if {![info exists mged_browser]} {
 	set mged_browser $mged_default(web_browser)
     } else {
 	if { ($::tcl_platform(os) == "Windows NT") && [file exists "C:/Program Files/Internet Explorer/iexplore.exe"] } {
-	    set mged_default(web_browser) "C:/Program Files/Internet Explorer/iexplore.exe"
+	    set mged_browser "C:/Program Files/Internet Explorer/iexplore.exe"
 	} elseif {[info exists env(PATH)]} {
 	    set pathlist [split $env(PATH) :]
 	    foreach path $pathlist {
@@ -249,12 +253,14 @@ bind Frame <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Listbox <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Scale <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 
-# This causes cad_dialog to use mged_wait instead of tkwait
-set ::tk::Priv(wait_cmd) mged_wait
+if {[namespace exists ::tk]} {
+    # This causes cad_dialog to use mged_wait instead of tkwait
+    set ::tk::Priv(wait_cmd) mged_wait
 
-# Used throughout the GUI as the dialog window name.
-# This helps prevent window clutter.
-set ::tk::Priv(cad_dialog) .mged_dialog
+    # Used throughout the GUI as the dialog window name.
+    # This helps prevent window clutter.
+    set ::tk::Priv(cad_dialog) .mged_dialog
+}
 
 proc gui { args } {
     global tmp_hoc
@@ -276,7 +282,7 @@ proc gui { args } {
     # list of commands for use in tab expansion
     set mged_cmds [?]
 
-    # configure the stdout chanel for this platform
+    # configure the stdout channel for this platform
     # this is supposedly done automatically by Tcl, but not
     switch $::tcl_platform(platform) {
 	"macintosh" -
@@ -1655,7 +1661,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	-menu .$id.menubar.modes.axes
     .$id.menubar.modes add separator
     .$id.menubar.modes add cascade -label "Display Manager" -underline 1\
-        -menu .$id.menubar.modes.dmtype
+	-menu .$id.menubar.modes.dmtype
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,multi_pane)\
 	-label "Multipane" -underline 0 -command "setmv $id"
     hoc_register_menu_data "Modes" "Multipane" "Multipane"\
@@ -1718,7 +1724,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	{ { summary "Toggle the use of display lists. This currently affects
 	only Ogl display managers. When using display lists the
 	screen update time is significantly faster. This is especially
-	noticable when running MGED remotely. Use of display lists
+	noticeable when running MGED remotely. Use of display lists
 	is encouraged unless the geometry being viewed is bigger
 	than the Ogl server can handle (i.e. the server runs out
 	of available memory for storing display lists). When this
@@ -1726,7 +1732,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	If huge pieces of geometry need to be viewed, consider
 	toggling off display lists. Note that using display lists
 	while viewing geometry of any significant size will incur
-	noticable compute time up front to create the display lists."} }
+	noticeable compute time up front to create the display lists."} }
 
     menu .$id.menubar.modes.axes -title "Axes" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
@@ -1769,44 +1775,50 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     set have_dm [dm valid ogl]
     if {$have_dm == "ogl"} {
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
-        -label "OpenGL" -underline 0\
-        -command "dmtype set ogl"
+	-label "OpenGL" -underline 0\
+	-command "dmtype set ogl"
     }
     set have_dm [dm valid wgl]
     if {$have_dm == "wgl"} {
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
-        -label "Windows OpenGL" -underline 0\
-        -command "dmtype set wgl"
+	-label "Windows OpenGL" -underline 0\
+	-command "dmtype set wgl"
     }
     set have_dm [dm valid X]
     if {$have_dm == "X"} {
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
-        -label "X Windows" -underline 0\
-        -command "dmtype set X"
+	-label "X Windows" -underline 0\
+	-command "dmtype set X"
     }
     set have_dm [dm valid glx]
     if {$have_dm == "glx"} {
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
-        -label "GLX" -underline 0\
-        -command "dmtype set glx"
+	-label "GLX" -underline 0\
+	-command "dmtype set glx"
     }
     set have_dm [dm valid rtgl]
     if {$have_dm == "rtgl"} {
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
-        -label "Ray Traced" -underline 0\
-        -command "dmtype set rtgl"
+	-label "Ray Traced" -underline 0\
+	-command "dmtype set rtgl"
     }
     set have_dm [dm valid tk]
     if {$have_dm == "tk"} {
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
-        -label "Tk" -underline 0\
-        -command "dmtype set tk"
+	-label "Tk" -underline 0\
+	-command "dmtype set tk"
+    }
+    set have_dm [dm valid qt]
+    if {$have_dm == "qt"} {
+    .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
+	-label "Qt" -underline 0\
+	-command "dmtype set qt"
     }
     hoc_register_menu_data "Modes" "Display Manager" "Display Manager"\
 	{ { summary "Change the display manager being used to render wireframe and/or
-        shaded displays of BRL-CAD models." }
+	shaded displays of BRL-CAD models." }
 	    { see_also "dmtype" } }
-   
+
 
     menu .$id.menubar.misc -title "Misc" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
@@ -1849,7 +1861,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	modify the state of the drawing window) will apply only to the
 	drawing window wherein the user typed. This feature is provided
 	to lessen the need to use the mouse." } }
-    if {$mged_gui($id,dtype) == "ogl"} {
+    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "wgl"} {
 	.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 	    -variable mged_gui($id,depthcue) -label "Depth Cueing" -underline 0\
 	    -command "mged_apply $id \"dm set depthcue \$mged_gui($id,depthcue)\""
@@ -1932,6 +1944,11 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     hoc_register_menu_data "Tools" "Geometry Browser" "Geometry Browser"\
 	{ { summary "Tool for browsing the geometry in a database." } }
 
+    .$id.menubar.tools add command -label "LOD Configuration" -underline 0\
+	-command "lodconfig"
+    hoc_register_menu_data "Tools" "LOD5 Configuration" "LOD Configuration"\
+	{ { summary "A tool for configuring Level of Detail drawing." } }
+
     .$id.menubar.tools add command -label "Overlap Tool" -underline 0\
 	-command "overlap_tool $id"
     hoc_register_menu_data "Tools" "Overlap Tool" "Overlap Tool"\
@@ -1942,7 +1959,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     .$id.menubar.tools add separator
 
     .$id.menubar.tools add command -label "Upgrade Database..." -underline 1\
-	-command "dbupgrade"
+	-command "call_dbupgrade $id"
     hoc_register_menu_data "Tools" "Upgrade Database..." "Upgrade Database..."\
 	{ { summary "Upgrade to the current database format." }
 	    { see_also dbupgrade } }
@@ -1951,12 +1968,12 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     .$id.menubar.tools add separator
 
-    .$id.menubar.tools add command -label "Command Window" -underline 6\
-	-command "raise .$id"
+    .$id.menubar.tools add command -label "Command Window (c)" -underline 16\
+	-command "open_cmd_win $id"
     hoc_register_menu_data "Tools" "Command Window" "Command Window"\
 	{ { summary "Raise the command window." } }
     .$id.menubar.tools add command -label "Graphics Window" -underline 7\
-	-command "raise $mged_gui($id,top)"
+	-command "set mged_gui($id,show_dm) 1; wm deiconify $mged_gui($id,top); raise $mged_gui($id,top)"
     hoc_register_menu_data "Tools" "Graphics Window" "Graphics Window"\
 	{ { summary "Raise the geometry window." } }
 
@@ -1970,7 +1987,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     hoc_register_menu_data "Help" "About MGED" "About MGED"\
 	{ { summary "Information about MGED" } }
    .$id.menubar.help add command -label "Command Manual Pages" -underline 0\
-	-command "man Introduction"
+	-command "man"
     .$id.menubar.help add command -label "Shift Grips" -underline 0\
 	-command "hoc_dialog .$id.menubar.help \"Help,Shift Grips\""
     hoc_register_menu_data "Help" "Shift Grips" "Shift Grips"\
@@ -2132,7 +2149,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
 	bind .$id.t <Enter> "focus .$id.t; break"
     } else {
-	# some platforms should not be forced window activiation
+	# some platforms should not be forced window activation
 	focus .$id.t
     }
 
@@ -2151,7 +2168,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	in previous releases. The other command interpretation
 	mode (Tcl Evaluation) passes the command line directly to
 	the Tcl interpreter. Look under File/Preferences/
-	Special_Characters to change the interpetation mode.
+	Special_Characters to change the interpretation mode.
 
 	The command window also supports cut and paste as well
 	as text scrolling. The default bindings for these operations
@@ -2257,7 +2274,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     }
 
     #==============================================================================
-    # PHASE 5: Creation of other auxilary windows
+    # PHASE 5: Creation of other auxiliary windows
     #==============================================================================
     mview_build_menubar $id
 
@@ -2285,6 +2302,10 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     update_mged_vars $id
     set mged_gui($id,qray_effects) [qray effects]
 
+    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "wgl"} {
+	mged_apply_local $id "dm set zbuffer $mged_default(zbuffer)"
+    }
+
     # reset current_cmd_list so that its cur_hist gets updated
     cmd_win set $save_id
 
@@ -2310,7 +2331,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     # set geometry (i.e. size and position) according to mged_default(ggeom)
     wm geometry $mged_gui($id,top) $mged_default(ggeom)
 
-    wm protocol $mged_gui($id,top) WM_DELETE_WINDOW "gui_destroy $id"
+    wm protocol $mged_gui($id,top) WM_DELETE_WINDOW "dm_win_hide $id"
+    wm protocol .$id WM_DELETE_WINDOW "cmd_win_hide $id"
 
     if { $comb } {
 	if { !$mged_gui($id,show_dm) } {
@@ -2327,36 +2349,59 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     }
 }
 
+proc cmd_win_hide args {
+    global mged_gui
+
+    set id [lindex $args 0]
+    set mged_gui($id,show_cmd) 0
+    wm state .$id withdrawn
+
+    gui_destroy $id
+}
+
+proc dm_win_hide args {
+    global mged_gui
+
+    set id [lindex $args 0]
+    set mged_gui($id,show_dm) 0
+    wm state $mged_gui($id,dmc) withdrawn
+
+    gui_destroy $id
+}
+
 proc gui_destroy args {
     global mged_gui
     global mged_players
     global mged_collaborators
 
     if { [llength $args] != 1 } {
-	return [help gui_destroy]
+        return [help gui_destroy]
     }
 
     set id [lindex $args 0]
 
-    set i [lsearch -exact $mged_players $id]
-    if { $i == -1 } {
-	return "gui_destroy: bad id - $id"
+    if { $mged_gui($id,show_dm) == 0 && $mged_gui($id,show_cmd) == 0 } {
+
+        set i [lsearch -exact $mged_players $id]
+        if { $i == -1 } {
+            return "gui_destroy: bad id - $id"
+        }
+        set mged_players [lreplace $mged_players $i $i]
+
+        if { [lsearch -exact $mged_collaborators $id] != -1 } {
+            collaborate quit $id
+        }
+
+        set mged_gui($id,multi_pane) 0
+        set mged_gui($id,show_edit_info) 0
+
+        releasemv $id
+        catch { cmd_win close $id }
+        catch { destroy .mmenu$id }
+        catch { destroy .sliders$id }
+        catch { destroy $mged_gui($id,top) }
+        catch { destroy .$id }
     }
-    set mged_players [lreplace $mged_players $i $i]
-
-    if { [lsearch -exact $mged_collaborators $id] != -1 } {
-	collaborate quit $id
-    }
-
-    set mged_gui($id,multi_pane) 0
-    set mged_gui($id,show_edit_info) 0
-
-    releasemv $id
-    catch { cmd_win close $id }
-    catch { destroy .mmenu$id }
-    catch { destroy .sliders$id }
-    catch { destroy $mged_gui($id,top) }
-    catch { destroy .$id }
 }
 
 proc reconfig_gui_default { id } {
@@ -2639,6 +2684,12 @@ proc set_cmd_win { id } {
 	    setmv $id
 	}
     }
+}
+
+proc open_cmd_win {id} {
+    set mged_gui($id,show_cmd) 1
+    wm deiconify .$id
+    raise .$id
 }
 
 proc set_dm_win { id } {
@@ -3178,6 +3229,16 @@ proc mged_draw_grid {id} {
     # Note - the internal grid_draw cannot be set to 1 if a database
     #				 is not currently open (i.e. dbip == DBI_NULL).
     set mged_gui($id,grid_draw) [rset grid draw]
+}
+
+proc call_dbupgrade {id} {
+    catch {dbupgrade} msg
+
+    if {$msg != ""} {
+	# Calling with .$id instead of .$id.t to fool it into
+	# adding the msg text
+	distribute_text .$id dbupgrade $msg
+    }
 }
 
 # Local Variables:

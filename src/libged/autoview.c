@@ -1,7 +1,7 @@
 /*                         A U T O V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file autoview.c
+/** @file libged/autoview.c
  *
  * The autoview command.
  *
@@ -35,7 +35,7 @@
  * Auto-adjust the view so that all displayed geometry is in view
  *
  * Usage:
- *        autoview
+ * autoview
  *
  */
 int
@@ -43,13 +43,16 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    struct solid	*sp;
+    struct solid *sp;
     int is_empty = 1;
-    vect_t		min, max;
-    vect_t		minus, plus;
-    vect_t		center;
-    vect_t		radial;
-    vect_t		sqrt_small;
+    vect_t min, max;
+    vect_t minus, plus;
+    vect_t center;
+    vect_t radial;
+    vect_t sqrt_small;
+
+    /* less than or near zero uses default, 0.5 model scale == 2.0 view factor */
+    fastf_t factor = -1.0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -57,19 +60,38 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+    if (argc > 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s [scale]", argv[0]);
 	return GED_ERROR;
+    }
+
+    /* parse the optional scale argument */
+    if (argc > 1) {
+	double scale = 0.0;
+	int ret = sscanf(argv[1], "%lf", &scale);
+	if (ret != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: Expecting floating point scale value after %s\n", argv[0]);
+	    return GED_ERROR;
+	}
+	if (scale > 0.0) {
+	    factor = 1.0 / scale;
+	}
+    }
+
+    /* set the default if unset or insane */
+    if (factor < SQRT_SMALL_FASTF) {
+	factor = 2.0; /* 2 is half the view */
     }
 
     VSETALL(min,  INFINITY);
     VSETALL(max, -INFINITY);
     VSETALL(sqrt_small, SQRT_SMALL_FASTF);
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    /* calculate the bounding for of all solids being displayed */
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
@@ -91,7 +113,7 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     if (is_empty) {
 	/* Nothing is in view */
 	VSETALL(center, 0.0);
-	VSETALL(radial, 1000.0);	/* 1 meter */
+	VSETALL(radial, 1000.0);
     } else {
 	VADD2SCALE(center, max, min, 0.5);
 	VSUB2(radial, max, center);
@@ -110,7 +132,7 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     V_MAX(gedp->ged_gvp->gv_scale, radial[Y]);
     V_MAX(gedp->ged_gvp->gv_scale, radial[Z]);
 
-    gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
+    gedp->ged_gvp->gv_size = factor * gedp->ged_gvp->gv_scale;
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
     ged_view_update(gedp->ged_gvp);
 

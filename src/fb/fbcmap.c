@@ -1,7 +1,7 @@
 /*                        F B C M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -584,18 +584,13 @@ unsigned char utah9[256*3] = {
 };
 
 
-/* p a r s _ A r g v ()
- */
 static int
 pars_Argv(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hF:s:S:w:W:n:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "F:s:S:w:W:n:N:h?")) != -1) {
 	switch (c) {
-	    case 'h' :
-		scr_width = scr_height = 1024;
-		break;
 	    case 'F':
 		framebuffer = bu_optarg;
 		break;
@@ -612,7 +607,7 @@ pars_Argv(int argc, char **argv)
 	    case 'N':
 		scr_height = atoi(bu_optarg);
 		break;
-	    case '?' :
+	    default :
 		return 0;
 	}
     }
@@ -625,7 +620,7 @@ pars_Argv(int argc, char **argv)
 static void
 usage()
 {
-    (void) fprintf(stderr, "Usage : fbcmap [-h] [-F framebuffer]\n");
+    (void) fprintf(stderr, "Usage: fbcmap [-F framebuffer]\n");
     (void) fprintf(stderr, "	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");
     (void) fprintf(stderr, "	[map_number]\n");
     (void) fprintf(stderr,
@@ -646,8 +641,8 @@ usage()
     (void) fprintf(stderr, "Color map #10, solid black.\n");
     (void) fprintf(stderr, "Color map #11, solid white.\n");
     (void) fprintf(stderr, "Color map #12, 18%% neutral grey.\n");
+    bu_exit(1, NULL);
 }
-
 
 int
 main(int argc, char **argv)
@@ -658,10 +653,10 @@ main(int argc, char **argv)
     ColorMap *cp = &cmap;
     FBIO *fbp;
 
-    if (! pars_Argv(argc, argv)) {
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	usage();
-	return 1;
-    }
+    if (! pars_Argv(argc, argv))
+	usage();
 
     if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL)
 	return 1;
@@ -688,7 +683,7 @@ main(int argc, char **argv)
 			   "Color map #2, corrected for POLAROID 809/891 film.\n");
 	    /* First entry black */
 #define BOOST(point, bias) \
-	((int)((bias)+((float)(point)/256.*(255-(bias)))))
+	    ((int)((bias)+((float)(point)/256.*(255-(bias)))))
 	    for (i = 1; i < 256; i++) {
 		fudge = BOOST(i, 70);
 		cp->cm_red[i] = fudge << 8;		/* B */

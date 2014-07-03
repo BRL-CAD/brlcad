@@ -1,7 +1,7 @@
 /*                     G - T A N K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,22 +35,28 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 static const char usage[] = "Usage:\n\
-	%s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code] [-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n\
+	%s [-v] [-xX lvl] [-P dummy_arg] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code]\n\
+	[-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n";
+static const char usage2[] = "\
 		v - verbose\n\
 		x - librt debug level\n\
 		X - NMG debug level\n\
-		a - absolute tolerance for tesselation\n\
-		r - relative tolerance for tesselation\n\
-		n - surface normal tolerance for tesselation\n\
+		P - enable core dumps (dummy argument is currently-disabled # of processors)\n\
+		a - absolute tolerance for tessellation\n\
+		r - relative tolerance for tessellation\n\
+		n - surface normal tolerance for tessellation\n\
 		s - surroundings code to use in tankill file\n\
 		i - assign new idents sequentially and output ident list\n\
 		o - TANKILL output file\n";
@@ -104,7 +110,7 @@ insert_id(int id)
 
 /* routine used in tree walker to select regions with the current ident number */
 static int
-select_region(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     if ( tsp->ts_regionid == curr_id )
 	return 0;
@@ -114,7 +120,7 @@ select_region(struct db_tree_state *tsp, const struct db_full_path *pathp, const
 
 /* routine used in tree walker to collect region ident numbers */
 static int
-get_reg_id(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     insert_id( tsp->ts_regionid );
     return -1;
@@ -122,7 +128,7 @@ get_reg_id(struct db_tree_state *tsp, const struct db_full_path *pathp, const st
 
 /* stubs to warn of the unexpected */
 static union tree *
-region_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, union tree *UNUSED(curtree), void *UNUSED(client_data))
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -132,7 +138,7 @@ region_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, union t
 }
 
 static union tree *
-leaf_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *UNUSED(ip), void *UNUSED(client_data))
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -141,161 +147,6 @@ leaf_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
     return (union tree *)NULL;
 }
 
-#if 0
-/* Routine to identify external/void shells
- *	Marks external shells with a +1 in the flags array
- *	Marks void shells with a -1 in the flags array
- */
-static void
-nmg_find_void_shells( r, flags, ttol )
-    const struct nmgregion *r;
-    const struct bn_tol *ttol;
-    long *flags;
-{
-    struct model *m;
-    struct shell *s;
-
-    NMG_CK_REGION( r );
-
-    m = r->m_p;
-    NMG_CK_MODEL( m );
-
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-    {
-	struct face *f;
-	struct faceuse *fu;
-	vect_t normal;
-	int dir;
-
-	f = nmg_find_top_face( s, &dir, flags );
-	fu = f->fu_p;
-	if ( fu->orientation != OT_SAME )
-	    fu = fu->fumate_p;
-	if ( fu->orientation != OT_SAME )
-	    bu_exit(1, "nmg_find_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
-
-	NMG_GET_FU_NORMAL( normal, fu );
-	if ( normal[dir] > 0.0 )
-	{
-	    NMG_INDEX_ASSIGN( flags, s, 1 )	/* external shell */
-		}
-	else
-	{
-	    NMG_INDEX_ASSIGN( flags, s, -1 )	/* void shell */
-		}
-    }
-}
-
-static void
-nmg_assoc_void_shells( r, flags, ttol )
-    struct nmgregion *r;
-    long *flags;
-    const struct bn_tol *ttol;
-{
-    struct shell *s;
-    struct faceuse *fu;
-    struct loopuse *lu;
-    struct edgeuse *eu;
-    int ext_shell_id=1;
-
-    NMG_CK_REGION( r );
-
-    if ( !r->ra_p )
-	nmg_region_a( r, ttol );
-
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-    {
-
-	NMG_CK_SHELL( s );
-	if ( !s->sa_p )
-	    nmg_shell_a( s, ttol );
-
-	if ( NMG_INDEX_GET( flags, s ) == 1 )
-	{
-	    struct shell *void_s;
-
-	    /* identify this external shell */
-	    NMG_INDEX_ASSIGN( flags, s, ++ext_shell_id );
-
-	    /* found an external shell, look for voids */
-	    for ( BU_LIST_FOR( void_s, shell, &r->s_hd ) )
-	    {
-		int wrong_void=0;
-
-		if ( void_s == s )
-		    continue;
-
-		NMG_CK_SHELL( s );
-		if ( !s->sa_p )
-		    nmg_shell_a( s, ttol );
-
-		if ( NMG_INDEX_GET( flags, void_s ) == (-1) )
-		{
-		    struct shell *test_s;
-		    int breakout=0;
-		    int not_in_this_shell=0;
-
-		    /* this is a void shell
-		     * but does it belong with external shell s */
-		    if ( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt, void_s->sa_p->max_pt, s->sa_p->min_pt, s->sa_p->max_pt ) )
-			continue;
-
-		    for ( BU_LIST_FOR( fu, faceuse, &void_s->fu_hd ) )
-		    {
-			for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-			{
-			    if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-				continue;
-			    for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
-			    {
-				int class;
-
-				class = nmg_class_pt_s( eu->vu_p->v_p->vg_p->coord, s, 1, ttol );
-
-				if ( class == NMG_CLASS_AoutB )
-				{
-				    breakout = 1;
-				    not_in_this_shell = 1;
-				    break;
-				}
-				else if ( class == NMG_CLASS_AinB )
-				{
-				    breakout = 1;
-				    break;
-				}
-			    }
-			    if ( breakout )
-				break;
-			}
-			if ( breakout )
-			    break;
-		    }
-
-		    if ( not_in_this_shell )
-			continue;
-
-		    /* Make sure there are no other external shells between these two */
-		    for ( BU_LIST_FOR( test_s, shell, &r->s_hd ) )
-		    {
-			if ( NMG_INDEX_GET( flags, test_s ) > 1 )
-			{
-
-			    if ( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt, void_s->sa_p->max_pt, test_s->sa_p->min_pt, test_s->sa_p->max_pt ) )
-				continue;
-			}
-		    }
-		    if ( wrong_void )
-			continue;
-
-		    /* This void shell belongs with shell s
-		     * mark it with the negative of external shells flag id */
-		    NMG_INDEX_ASSIGN( flags, void_s, (-NMG_INDEX_GET( flags, s )) );
-		}
-	    }
-	}
-    }
-}
-#endif
 
 /*	Routine to write an nmgregion in the TANKILL format */
 static void
@@ -329,96 +180,11 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 	    return;
 	}
     }
-#if 0
-
-    /* First make sure that each shell is broken down into maximally connected shells
-     * and while we're at it, split touching loops
-     */
-    bu_ptbl_init( &shells, 64, " &shells ");
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-    {
-	NMG_CK_SHELL( s );
-	bu_ptbl_ins( &shells, (long *)s );
-	nmg_s_split_touchingloops( s, &tol );
-    }
-
-    for ( i=0; i<BU_PTBL_END( &shells ); i++ )
-    {
-	s = (struct shell *)BU_PTBL_GET( &shells, i );
-	(void)nmg_decompose_shell( s, &tol );
-    }
-
-    bu_ptbl_free( &shells );
-
-    /* Now triangulate the entire model */
-    nmg_triangulate_model( r->m_p, &tol );
-
-    /* FIXME: temporary fix for OT_UNSPEC loops */
-    for ( BU_LIST_FOR( r, nmgregion, &l->r_hd ) )
-    {
-	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-	{
-	    struct faceuse *fu;
-
-	    for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
-	    {
-		struct loopuse *lu;
-
-		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-		{
-		    if ( lu->orientation == OT_UNSPEC )
-			lu->orientation = OT_SAME;
-		}
-	    }
-	}
-    }
-
-    r = BU_LIST_FIRST( nmgregion, &the_model->r_hd );
-
-    /* Need a flag array to insure that no loops are missed */
-    flags = (long *)bu_calloc( (*tsp->ts_m)->maxindex, sizeof( long ), "g-tankill: flags" );
-
-    /* Worry about external/void shells here
-     * void shells should be merged back into their respective external shells
-     * first mark all shells as external or void
-     */
-    nmg_find_void_shells( r, flags, &tol );
-
-    /* Now asociate void shells with their respective external shells */
-    nmg_assoc_void_shells( r, flags, &tol );
-
-    /* Now merge external shell with all its void shells */
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-    {
-	if ( NMG_INDEX_GET( flags, s ) > 1 )
-	{
-	    struct shell *s2;
-
-	    s2 = BU_LIST_FIRST( shell, &r->s_hd );
-	    while ( BU_LIST_NOT_HEAD( s2, &r->s_hd ) )
-	    {
-		if ( NMG_INDEX_GET( flags, s2 ) == (-NMG_INDEX_GET( flags, s ) ) )
-		{
-		    struct shell *s_next;
-
-		    s_next = BU_LIST_PNEXT( shell, s2 );
-		    nmg_js( s, s2, &tol );
-		    s2 = s_next;
-		}
-		else
-		    s2 = BU_LIST_PNEXT( shell, s2 );
-	    }
-	}
-	else if ( NMG_INDEX_GET( flags, s ) > (-2) )
-	    bu_log( "Shell x%x is incorrectly marked as %d\n", s, NMG_INDEX_GET( flags, s ) );
-    }
-#else
     /* Now triangulate the entire model */
     nmg_triangulate_model( m, &tol );
 
     /* Need a flag array to insure that no loops are missed */
     flags = (long *)bu_calloc( m->maxindex, sizeof( long ), "g-tankill: flags" );
-#endif
 
     /* Output each shell as a TANKILL object */
     bu_ptbl_init( &vertices, 64, " &vertices ");
@@ -585,11 +351,11 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 
 	/* Now write the data out */
 	if ( fp_id )	/* Use id count instead of actual id */
-	    fprintf( fp_out, "%ul %d %d           " ,
-		     BU_PTBL_END( &vertices ), id_counter, surr_code );
+	    fprintf( fp_out, "%lu %d %d           " ,
+		     (unsigned long)BU_PTBL_END( &vertices ), id_counter, surr_code );
 	else
-	    fprintf( fp_out, "%ul %d %d           " ,
-		     BU_PTBL_END( &vertices ), tsp->ts_regionid, surr_code );
+	    fprintf( fp_out, "%lu %d %d           " ,
+		     (unsigned long)BU_PTBL_END( &vertices ), tsp->ts_regionid, surr_code );
 	for ( i=0; i<BU_PTBL_END( &vertices ); i++ )
 	{
 	    struct vertex *v;
@@ -618,20 +384,26 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 		 tsp->ts_mater.ma_shader );
     }
 
- outt:	bu_free( (char *)flags, "g-tankill: flags" );
+outt:	bu_free( (char *)flags, "g-tankill: flags" );
     bu_ptbl_free( &vertices );
 }
 
-/*
- *			M A I N
- */
+
+static void
+printusage(const char *arg) {
+	fprintf(stderr,usage,arg);
+	bu_exit(1, usage2);
+}
+
 int
 main(int argc, char **argv)
 {
+
     int		j;
     int	c;
     double		percent;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
 
     the_model = nmg_mm();
@@ -655,17 +427,16 @@ main(int argc, char **argv)
 
     /* For visualization purposes, in the debug plot files */
     {
-	extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
 	/* WTF: This value is specific to the Bradley */
 	nmg_eue_dist = 2.0;
     }
 
     rt_init_resource( &rt_uniresource, 0, NULL );
 
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:i:n:o:r:s:vx:P:X:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a:i:n:o:r:s:vx:P:X:h?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -695,27 +466,25 @@ main(int argc, char **argv)
 		bu_debug = BU_DEBUG_COREDUMP;	/* to get core dumps */
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-		NMG_debug = rt_g.NMG_debug;
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
-		break;
+		printusage(argv[0]);
 	}
     }
 
-    if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
-    }
+    if (bu_optind+1 >= argc)
+	printusage(argv[0]);
 
     /* Open BRL-CAD database */
-    if ((dbip = db_open( argv[bu_optind], "r")) == DBI_NULL)
+    if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL)
     {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
+	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind] );
     }
     if ( db_dirbuild( dbip ) ) {
 	bu_exit(1, "db_dirbuild failed\n" );
@@ -723,9 +492,7 @@ main(int argc, char **argv)
 
     if (out_file == NULL) {
 	fp_out = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp_out), O_BINARY);
-#endif
     } else {
 	if ((fp_out = fopen( out_file, "wb")) == NULL)
 	{
@@ -754,7 +521,7 @@ main(int argc, char **argv)
 		       get_reg_id,			/* put id in table */
 		       region_stub,			/* do nothing */
 		       leaf_stub,
-		       (genptr_t)NULL );			/* do nothing */
+		       (void *)NULL );			/* do nothing */
 
     /* TANKILL only allows up to 2000 distinct component codes */
     if ( ident_count > 2000 )
@@ -788,7 +555,7 @@ main(int argc, char **argv)
 			   select_region,			/* selects regions with curr_id */
 			   do_region_end,			/* calls Write_tankill_region */
 			   nmg_booltree_leaf_tess,
-			   (genptr_t)NULL);	/* in librt/nmg_bool.c */
+			   (void *)NULL);	/* in librt/nmg_bool.c */
     }
 
     percent = 0;
@@ -805,14 +572,98 @@ main(int argc, char **argv)
     return 0;
 }
 
+
+static void
+process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp)
+{
+    if (!BU_SETJUMP) {
+	/* try */
+
+	/* Write the region to the TANKILL file */
+	Write_tankill_region( r, tsp, pathp );
+
+    } else {
+	/* catch */
+
+	char *sofar;
+
+	sofar = db_path_to_string(pathp);
+	bu_log( "FAILED in triangulator: %s\n", sofar );
+	bu_free( (char *)sofar, "sofar" );
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before bombing out.
+	 */
+	RTG.NMG_debug = NMG_debug;	/* restore mode */
+
+	/* Release any intersector 2d tables */
+	nmg_isect2d_final_cleanup();
+
+	/* Get rid of (m)any other intermediate structures */
+	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	    nmg_km(*tsp->ts_m);
+	} else {
+	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	}
+
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+    }  BU_UNSETJUMP;
+}
+
+
+static union tree *
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+{
+    union tree *ret_tree = TREE_NULL;
+
+    /* Begin bomb protection */
+    if ( !BU_SETJUMP ) {
+	/* try */
+
+	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+
+    } else  {
+	/* catch */
+	char *name = db_path_to_string( pathp );
+
+	/* Error, bail out */
+	bu_log( "conversion of %s FAILED!\n", name );
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before before bombing out.
+	 */
+	RTG.NMG_debug = NMG_debug;/* restore mode */
+
+	/* Release any intersector 2d tables */
+	nmg_isect2d_final_cleanup();
+
+	/* Release the tree memory & input regions */
+	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
+
+	/* Get rid of (m)any other intermediate structures */
+	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	    nmg_km(*tsp->ts_m);
+	} else {
+	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	}
+
+	bu_free( name, "db_path_to_string" );
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+    } BU_UNSETJUMP;/* Relinquish the protection */
+
+    return ret_tree;
+}
+
+
 /*
- *			D O _ R E G I O N _ E N D
- *
  *  Called from db_walk_tree().
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -838,51 +689,15 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     regions_tried++;
 
-    /* Begin bomb protection */
-    if ( BU_SETJUMP )
-    {
-	char *sofar;
-
-	/* Error, bail out */
-	BU_UNSETJUMP;		/* Relinquish the protection */
-
-	sofar = db_path_to_string(pathp);
-	bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
-	bu_free( (char *)sofar, "sofar" );
-
-	/* Sometimes the NMG library adds debugging bits when
-	 * it detects an internal error, before before bombing out.
-	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-	/* Release any intersector 2d tables */
-	nmg_isect2d_final_cleanup();
-
-	/* Get rid of (m)any other intermediate structures */
-	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
-	{
-	    nmg_km(*tsp->ts_m);
-	}
-	else
-	{
-	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-	}
-
-	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
-	goto out;
-    }
-    (void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-    /* librt/nmg_bool.c */
-    ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+    ret_tree = process_boolean(curtree, tsp, pathp);
 
     if ( ret_tree )
 	r = ret_tree->tr_d.td_r;
     else
 	r = (struct nmgregion *)NULL;
 
-    BU_UNSETJUMP;		/* Relinquish the protection */
     regions_converted++;
+
     if (r != (struct nmgregion *)NULL)
     {
 	struct shell *s;
@@ -915,52 +730,16 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
 	if ( !empty_region && !empty_model )
 	{
-	    if ( BU_SETJUMP )
-	    {
-		char *sofar;
-
-		BU_UNSETJUMP;
-
-		sofar = db_path_to_string(pathp);
-		bu_log( "FAILED in triangulator: %s\n", sofar );
-		bu_free( (char *)sofar, "sofar" );
-
-		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before before bombing out.
-		 */
-		rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-		/* Release any intersector 2d tables */
-		nmg_isect2d_final_cleanup();
-
-		/* Get rid of (m)any other intermediate structures */
-		if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
-		{
-		    nmg_km(*tsp->ts_m);
-		}
-		else
-		{
-		    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-		}
-
-		/* Now, make a new, clean model structure for next pass. */
-		*tsp->ts_m = nmg_mm();
-		goto out;
-	    }
-
-	    /* Write the region to the TANKILL file */
-	    Write_tankill_region( r, tsp, pathp );
+	    process_triangulation(r, pathp, tsp);
 
 	    regions_written++;
 
-	    BU_UNSETJUMP;
 	}
 
 	if ( !empty_model )
 	    nmg_kr( r );
     }
 
- out:
     /*
      *  Dispose of original tree, so that all associated dynamic
      *  memory is released now, not at the end of all regions.
@@ -969,8 +748,8 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-    BU_GETUNION(curtree, tree);
-    curtree->magic = RT_TREE_MAGIC;
+    BU_ALLOC(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
 }

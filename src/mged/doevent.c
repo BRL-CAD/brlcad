@@ -1,7 +1,7 @@
 /*                       D O E V E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file doevent.c
+/** @file mged/doevent.c
  *
  * X event handling routines for MGED.
  *
@@ -50,7 +50,7 @@
 #include "vmath.h"
 #include "mater.h"
 #include "ged.h"
-#include "dm_xvars.h"
+#include "dm/dm_xvars.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -146,7 +146,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     if (eventPtr->type == ConfigureNotify) {
 	XConfigureEvent *conf = (XConfigureEvent *)eventPtr;
 
-	DM_CONFIGURE_WIN(dmp);
+	DM_CONFIGURE_WIN(dmp, 0);
 	rect_image2view();
 	dirty = 1;
 
@@ -198,7 +198,11 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 }
 #else
 int
+#if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
+doEvent(ClientData UNUSED(clientData), void *UNUSED(eventPtr)) {
+#else
 doEvent(ClientData clientData, void *eventPtr) {
+#endif
     return TCL_OK;
 }
 #endif /* HAVE_X11_XLIB_H */
@@ -228,7 +232,7 @@ common_dbtext(char *str)
 HIDDEN void
 motion_event_handler(XMotionEvent *xmotion)
 {
-    struct bu_vls cmd;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
     int save_edflag = -1;
     int mx, my;
     int dx, dy;
@@ -238,8 +242,6 @@ motion_event_handler(XMotionEvent *xmotion)
 
     if (dbip == DBI_NULL)
 	return;
-
-    bu_vls_init(&cmd);
 
     mx = xmotion->x;
     my = xmotion->y;
@@ -268,7 +270,15 @@ motion_event_handler(XMotionEvent *xmotion)
 		 * differences caused by floating point fuzz.
 		 */
 		rect_image2view();
-		rb_set_dirty_flag();
+
+		{
+		    /* need dummy values for func signature--they are unused in the func */
+		    const struct bu_structparse *sdp = 0;
+		    const char name[] = "name";
+		    void *base = 0;
+		    const char value[] = "value";
+		    rb_set_dirty_flag(sdp, name, base, value);
+		}
 
 		goto handled;
 	    } else if (doMotion)
@@ -744,7 +754,7 @@ HIDDEN void
 dials_event_handler(XDeviceMotionEvent *dmep)
 {
     static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    struct bu_vls cmd;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
     int save_edflag = -1;
     int setting;
     fastf_t f;
@@ -756,8 +766,6 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 	common_dbtext((adc_state->adc_draw ? kn1_knobs:kn2_knobs)[dmep->first_axis]);
 	return;
     }
-
-    bu_vls_init(&cmd);
 
     switch (DIAL0 + dmep->first_axis) {
 	case DIAL0:
@@ -1413,7 +1421,7 @@ HIDDEN void
 buttons_event_handler(XDeviceButtonEvent *dbep, int press)
 {
     if (press) {
-	struct bu_vls cmd;
+	struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
 	if (dbep->button == 1) {
 	    button0 = 1;
@@ -1426,10 +1434,8 @@ buttons_event_handler(XDeviceButtonEvent *dbep, int press)
 	} else if (dbep->button == 4) {
 	    set_knob_offset();
 
-	    bu_vls_init(&cmd);
 	    bu_vls_strcat(&cmd, "knob zero\n");
 	} else {
-	    bu_vls_init(&cmd);
 	    bu_vls_printf(&cmd, "press %s\n",
 			  label_button(bmap[dbep->button - 1]));
 	}

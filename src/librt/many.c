@@ -1,7 +1,7 @@
 /*                          M A N Y . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2010 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file many.c
+/** @file librt/many.c
  *
  * Wrapper routines to help fire multiple rays in parallel, without
  * exposing the caller to the details of running in parallel.
@@ -33,7 +33,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -41,21 +42,19 @@
 
 /* For communication between interface routine and each of the threads */
 struct rt_many_internal {
-    long			magic;
-    long			cur_index;		/* semaphored */
-    long			max_index;
+    uint32_t magic;
+    long cur_index;		/* semaphored */
+    long max_index;
     const struct application *proto_ap;
-    struct resource		*resources;
-    int			(*callback) BU_ARGS((struct application *, int index));
-    int			stop_worker;
-    int			sem_chunk;
+    struct resource *resources;
+    int (*callback)(struct application *, int index);
+    int stop_worker;
+    int sem_chunk;
 };
-#define RT_MANY_INTERNAL_MAGIC	0x526d6970	/* Rmip */
-#define RT_CK_RMI(_p)	BU_CKMAG(_p, RT_MANY_INTERNAL_MAGIC, "rt_many_internal")
+#define RT_MANY_INTERNAL_MAGIC 0x526d6970	/* Rmip */
+#define RT_CK_RMI(_p) BU_CKMAG(_p, RT_MANY_INTERNAL_MAGIC, "rt_many_internal")
 
 /**
- * R T _ S H O O T _ M A N Y _ R A Y S _ W O R K E R
- *
  * Internal helper routine for rt_shoot_many_rays().
  *
  * Runs in PARALLEL, one instance per thread.
@@ -64,7 +63,7 @@ struct rt_many_internal {
  * multiple pixel block may be removed from the work queue at once.
  */
 void
-rt_shoot_many_rays_worker(int cpu, genptr_t arg)
+rt_shoot_many_rays_worker(int cpu, void *arg)
 {
     struct application app;
     struct rt_many_internal *rmip = (struct rt_many_internal *)arg;
@@ -82,10 +81,10 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
     app.a_resource = &rmip->resources[cpu];
 
     while (1) {
-	register long	index;
-	register long	lim;
+	register long index;
+	register long lim;
 
-	if (rmip->stop_worker)  break;
+	if (rmip->stop_worker) break;
 
 	bu_semaphore_acquire(RT_SEM_WORKER);
 	index = rmip->cur_index;
@@ -94,7 +93,7 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 
 	lim = index + rmip->sem_chunk;
 	for (; index < lim; index++) {
-	    if (index >= rmip->max_index)  return;
+	    if (index >= rmip->max_index) return;
 
 	    /*
 	     * a_x is set here to get differentiated LIBRT debugging
@@ -116,8 +115,6 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 
 
 /**
- * R T _ S H O O T _ M A N Y _ R A Y S
- *
  * A convenience routine for application developers who wish to fire a
  * large but fixed number of rays in parallel, without wanting to
  * create a parallel "self dispatcher" routine of their own.
@@ -134,15 +131,16 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
  * formal return codes, and the return code from rt_shootray(), are
  * ignored.
  *
- * a_x is changed by this wrapper, and may be overridden by the callback.
+ * a_x is changed by this wrapper, and may be overridden by the
+ * callback.
  *
  * Note that the cost of spawning threads is sufficiently expensive
  * that 'nrays' should be at least dozens or hundreds to get a real
  * benefit from parallelism.
  *
  * Return codes expected from the callback() -
- *	-1	End processing before all nrays have been fired.
- *	 0	Normal return, proceed with firing the ray.
+ * -1 End processing before all nrays have been fired.
+ * 0 Normal return, proceed with firing the ray.
  *
  * Note that bu_parallel() is not re-entrant, so you can't have an
  * a_hit() routine which is already running in parallel call into this
@@ -154,8 +152,8 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 void
 rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct application *, int), int ncpus, long int nrays, struct resource *resources)
 {
-    struct rt_many_internal	rmi;
-    int	i;
+    struct rt_many_internal rmi;
+    int i;
 
     RT_CK_APPLICATION(proto_ap);
     for (i=0; i < ncpus; i++) {
@@ -171,13 +169,14 @@ rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct a
     rmi.callback = callback;
     rmi.sem_chunk = ncpus;
 
-    if (!rt_g.rtg_parallel || ncpus <= 1) {
+    if (!RTG.rtg_parallel || ncpus <= 1) {
 	/* The 1-cpu case is supported for testing & generality. */
-	rt_shoot_many_rays_worker(0, (genptr_t)&rmi);
+	rt_shoot_many_rays_worker(0, (void *)&rmi);
     } else {
-	bu_parallel(rt_shoot_many_rays_worker, ncpus, (genptr_t)&rmi);
+	bu_parallel(rt_shoot_many_rays_worker, ncpus, (void *)&rmi);
     }
 }
+
 
 /*
  * Local Variables:

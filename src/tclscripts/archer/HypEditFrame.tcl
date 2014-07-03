@@ -1,7 +1,7 @@
 #                H Y P E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2010 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -36,6 +36,8 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
     }
@@ -59,6 +61,20 @@
 	variable mAz ""
 	variable mB ""
 	variable mC ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmVx ""
+	variable cmVy ""
+	variable cmVz ""
+	variable cmHx ""
+	variable cmHy ""
+	variable cmHz ""
+	variable cmAx ""
+	variable cmAy ""
+	variable cmAz ""
+	variable cmB ""
+	variable cmC ""
 
 	# Methods used by the constructor.
 	# Override methods in GeometryEditFrame.
@@ -113,6 +129,8 @@
     set mC [bu_get_value_by_keyword bnr $gdata]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmVx == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
 }
 
 ::itcl::body HypEditFrame::updateGeometry {} {
@@ -128,9 +146,38 @@
 	b $mB \
 	bnr $mC
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
+}
+
+::itcl::body HypEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmVx $mVx
+    set cmVy $mVy
+    set cmVz $mVz
+    set cmHx $mHx
+    set cmHy $mHy
+    set cmHz $mHz
+    set cmAx $mAx
+    set cmAy $mAy
+    set cmAz $mAz
+    set cmB  $mB
+    set cmC  $mC
+}
+
+::itcl::body HypEditFrame::revertGeometry {} {
+    set mVx $cmVx
+    set mVy $cmVy
+    set mVz $cmVz
+    set mHx $cmHx
+    set mHy $cmHy
+    set mHz $cmHz
+    set mAx $cmAx
+    set mAy $cmAy
+    set mAz $cmAz
+    set mB  $cmB
+    set mC  $cmC
+
+    updateGeometry
 }
 
 ::itcl::body HypEditFrame::createGeometry {obj} {
@@ -142,7 +189,7 @@
 	V [list $mCenterX $mCenterY $mCenterZ] \
 	H [list 0 0 $mDelta] \
 	A [list 0 [expr {$mDelta * 0.5}] 0] \
-	b [expr {$mDelta * 0.25} \
+	b [expr {$mDelta * 0.25}] \
 	bnr [expr {$mDelta * 0.1}]
 }
 
@@ -227,19 +274,19 @@
 	::ttk::entry $parent.hypVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypVyE {
 	::ttk::entry $parent.hypVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypVzE {
 	::ttk::entry $parent.hypVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypVUnitsL {
 	::ttk::label $parent.hypVUnitsL \
@@ -256,21 +303,21 @@
 	    -textvariable [::itcl::scope mHx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypHyE {
 	::ttk::entry $parent.hypHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypHzE {
 	::ttk::entry $parent.hypHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypHUnitsL {
 	::ttk::label $parent.hypHUnitsL \
@@ -286,21 +333,21 @@
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypAyE {
 	::ttk::entry $parent.hypAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypAzE {
 	::ttk::entry $parent.hypAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypAUnitsL {
 	::ttk::label $parent.hypAUnitsL \
@@ -316,7 +363,7 @@
 	::ttk::entry $parent.hypBE \
 	    -textvariable [::itcl::scope mB] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypBUnitsL {
 	::ttk::label $parent.hypBVUnitsL \
@@ -332,12 +379,24 @@
 	::ttk::entry $parent.hypCE \
 	    -textvariable [::itcl::scope mC] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypCUnitsL {
 	::ttk::label $parent.hypCUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
+    } {}
+
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
     } {}
 
     set row 0
@@ -394,6 +453,22 @@
 	-row $row \
 	-column 4 \
 	-sticky nsew
+
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1
@@ -415,7 +490,7 @@
 
 ::itcl::body HypEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-
+    set row 0
     set alist [list H set Set HV set Set A set Set B set Set C set Set H rot Rotate]
     foreach {attribute op opLabel} $alist {
 	itk_component add $op$attribute {
@@ -426,9 +501,8 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component($op$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component($op$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
 }
 
@@ -531,6 +605,11 @@
 	    set mEditCommand protate
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 h
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

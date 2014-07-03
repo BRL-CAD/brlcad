@@ -1,7 +1,7 @@
 /*                          C A D A P P I N I T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file cadAppInit.c
+/** @file bwish/cadAppInit.c
  *
  * This file initializes Itcl/Itk and various BRL-CAD libraries.
  *
@@ -26,9 +26,7 @@
 
 #include "common.h"
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  include <winsock2.h>
-#endif
+#include "bin.h"
 #include "bio.h"
 
 #include "itcl.h"
@@ -59,6 +57,11 @@ Cad_AppInit(Tcl_Interp *interp)
     tclcad_auto_path(interp);
 
 /* Initialize [incr Tcl] */
+    /* NOTE: Calling "package require Itcl" here is apparently
+     * insufficient without other changes elsewhere.  The Combination
+     * Editor in mged fails with an iwidgets class already loaded
+     * error if we don't perform Itcl_Init() here.
+     */
     if (Itcl_Init(interp) == TCL_ERROR) {
 	bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
@@ -163,9 +166,12 @@ Cad_AppInit(Tcl_Interp *interp)
 
     /* Initialize libtclcad's GED Object */
     if (Go_Init(interp) == TCL_ERROR) {
-	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	bu_log("Go_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
+
+    /* Initialize command history object */
+    Cho_Init(interp);
 
     return TCL_OK;
 }

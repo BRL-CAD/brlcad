@@ -1,7 +1,7 @@
 /*                     A L I A S - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file alias-pix.c
+/** @file util/alias-pix.c
  *
- * Convert ALIAS(tm) PIX format image files to BRL PIX fomat files.
+ * Convert ALIAS(tm) PIX format image files to BRL PIX format files.
  *
  */
 
@@ -31,8 +31,8 @@
 
 #include "bu.h"
 
-
-char *progname = "(noname)";
+char noname[] = "(noname)";
+char *progname = noname;
 
 
 void usage(void)

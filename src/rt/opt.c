@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file opt.c
+/** @file rt/opt.c
  *
  * Option handling for Ray Tracing main program.
  *
@@ -31,12 +31,16 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "./ext.h"
 
-#include "rtprivate.h"
+#include "./rtuif.h"
+#include "./ext.h"
 
 
 /* Note: struct parsing requires no space after the commas.  take care
@@ -53,7 +57,7 @@ size_t		height = 0;		/* # of lines in Y */
 
 /***** Variables shared with viewing model *** */
 int		doubles_out = 0;	/* u_char or double .pix output file */
-double		azimuth = 0.0, elevation = 0.0;
+fastf_t		azimuth = 0.0, elevation = 0.0;
 int		lightmodel = 0;		/* Select lighting model */
 int		rpt_overlap = 1;	/* report overlapping region names */
 int		default_background = 1; /* Default is black */
@@ -80,18 +84,22 @@ fastf_t		cell_width = (fastf_t)0.0;		/* model space grid cell width */
 fastf_t		cell_height = (fastf_t)0.0;	/* model space grid cell height */
 int		cell_newsize = 0;		/* new grid cell size */
 point_t		eye_model = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};		/* model-space location of eye */
-fastf_t         eye_backoff = (fastf_t)1.414;	/* dist from eye to center */
+fastf_t         eye_backoff = (fastf_t)M_SQRT2;	/* dist from eye to center */
 mat_t		Viewrotscale = { (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
 fastf_t		viewsize = (fastf_t)0.0;
 int		incr_mode = 0;		/* !0 for incremental resolution */
-int		incr_level = 0;		/* current incremental level */
+int             full_incr_mode = 0;     /* !0 for fully incremental resolution */
+size_t		incr_level = 0;		/* current incremental level */
 size_t		incr_nlevel = 0;	/* number of levels */
+size_t          full_incr_sample = 0;    /* current fully incremental sample */
+size_t          full_incr_nsamples = 0;  /* number of samples in the fully incremental mode */
 int		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 int		transpose_grid = 0;     /* reverse the order of grid traversal */
+int             random_mode = 0;        /* Mode to shoot rays at random directions */
 /***** end variables shared with worker() *****/
 
 /***** Photon Mapping Variables *****/
@@ -107,6 +115,7 @@ int		pix_end = 0;		/* pixel to end at */
 int		nobjs = 0;		/* Number of cmd-line treetops */
 char		**objtab = (char **)NULL;	/* array of treetop strings */
 int		matflag = 0;		/* read matrix from stdin */
+int		orientflag = 0;		/* 1 means orientation has been set */
 int		desiredframe = 0;	/* frame to start at */
 int		finalframe = -1;	/* frame to halt at */
 int		curframe = 0;		/* current frame number,
@@ -152,7 +161,18 @@ fastf_t		rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
 char		*framebuffer = (char *)NULL;		/* desired framebuffer */
 
 int		space_partition = 	/*space partitioning algorithm to use*/
+
+/* TODO: need a run-time mechanism for toggling spatial partitioning
+ * methods.  Use this compile-time switch to toggle between different
+ * spatial partitioning methods.
+ */
+#ifdef USE_NUGRID
+/* Non-uniform grid/mesh discretized spatial partitioning */
+RT_PART_NUGRID;
+#else
+/* Non-uniform Binary Spatial Partitioning (BSP) tree */
 RT_PART_NUBSPT;
+#endif
 int		nugrid_dimlimit = 0;	/* limit to each dimension of
 					   the nugrid */
 double		nu_gfactor = RT_NU_GFACTOR_DEFAULT;
@@ -162,13 +182,12 @@ double		nu_gfactor = RT_NU_GFACTOR_DEFAULT;
 
 extern struct command_tab	rt_cmdtab[];
 
-/*
- *			G E T _ A R G S
- */
-int get_args( int argc, register char **argv )
+int
+get_args(int argc, const char *argv[])
 {
     register int c;
     register int i;
+    char *env_str;
 
     bu_optind = 1;		/* restart */
 
@@ -176,7 +195,7 @@ int get_args( int argc, register char **argv )
 #define GETOPT_STR	\
 	".:,:@:a:b:c:d:e:f:g:h:ij:k:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:"
 
-    while ( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
+    while ( (c=bu_getopt( argc, (char * const *)argv, GETOPT_STR )) != -1 )  {
 	switch ( c )  {
 	    case 'q':
 		i = atoi(bu_optarg);
@@ -226,17 +245,18 @@ int get_args( int argc, register char **argv )
 	    case 'k':      /* define cutting plane */
 	    {
 		fastf_t f;
+		double scan[4];
 
 		do_kut_plane = 1;
-		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg",
-			   &kut_plane[X], &kut_plane[Y], &kut_plane[Z], &kut_plane[H]);
-		if( i != 4 ) {
+		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", &scan[0], &scan[1], &scan[2], &scan[3]);
+		if ( i != 4 ) {
 		    bu_exit( EXIT_FAILURE, "ERROR: bad cutting plane\n" );
 		}
+		HMOVE(kut_plane, scan); /* double to fastf_t */
 
 		/* verify that normal has unit length */
 		f = MAGNITUDE( kut_plane );
-		if( f <= SMALL ) {
+		if ( f <= SMALL ) {
 		    bu_exit( EXIT_FAILURE, "Bad normal for cutting plane, length=%g\n", f );
 		}
 		f = 1.0 /f;
@@ -258,7 +278,6 @@ int get_args( int argc, register char **argv )
 		break;
 	    case 'C':
 	    {
-		char		buf[128];
 		int		r, g, b;
 		register char	*cp = bu_optarg;
 
@@ -288,10 +307,11 @@ int get_args( int argc, register char **argv )
 		else
 		    background[2] = b / 255.0;
 #else
-		sprintf(buf, "set background=%f/%f/%f",
-			r/255., g/255., b/255. );
-		(void)rt_do_cmd( (struct rt_i *)0, buf,
-				 rt_cmdtab );
+		{
+		    char buf[128] = {0};
+		    sprintf(buf, "set background=%f/%f/%f", r/255.0, g/255.0, b/255.0);
+		    (void)rt_do_cmd((struct rt_i *)0, buf, rt_cmdtab);
+		}
 #endif
 	    }
 	    break;
@@ -345,8 +365,8 @@ int get_args( int argc, register char **argv )
 		finalframe = atoi( bu_optarg );
 		break;
 	    case 'N':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		bu_log("NMG_debug=0x%x\n", rt_g.NMG_debug);
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		bu_log("NMG_debug=0x%x\n", RTG.NMG_debug);
 		break;
 	    case 'M':
 		matflag = 1;
@@ -355,7 +375,7 @@ int get_args( int argc, register char **argv )
 		AmbientIntensity = atof( bu_optarg );
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rdebug );
@@ -464,18 +484,18 @@ int get_args( int argc, register char **argv )
 		}
 		break;
 	    case 'u':
-	    	if (strcmp(bu_optarg,"model") == 0) {
-	    		model_units = 1;
-	    		default_units = 0;
-	    	} else {
-	    		units = bu_units_conversion(bu_optarg);
-	    		if (units <= 0.0) {
-	    			units = 1.0;
-	    			default_units = 1;
-	    			bu_log("WARNING: bad units, using default (%s)\n", bu_units_string(units));
-	    		} else {
-	    			default_units = 0;
-	    		}
+		if (BU_STR_EQUAL(bu_optarg,"model")) {
+			model_units = 1;
+			default_units = 0;
+		} else {
+			units = bu_units_conversion(bu_optarg);
+			if (units <= 0.0) {
+				units = 1.0;
+				default_units = 1;
+				bu_log("WARNING: bad units, using default (%s)\n", bu_units_string(units));
+			} else {
+				default_units = 0;
+			}
 			}
 		break;
 	    case 'v': /* Set level of "non-debug" debugging output */
@@ -528,7 +548,7 @@ int get_args( int argc, register char **argv )
 		break;
 	    case 'B':
 		/*  Remove all intentional random effects
-		 *  (dither, etc) for benchmarking purposes.
+		 *  (dither, etc.) for benchmarking purposes.
 		 */
 		benchmark = 1;
 		bn_mathtab_constant();
@@ -543,7 +563,8 @@ int get_args( int argc, register char **argv )
 		/* set expected playback rate in frames-per-second.
 		 * This actually gets stored as the delta-t per frame.
 		 */
-		if ( (frame_delta_t=atof( bu_optarg )) == 0.0) {
+		frame_delta_t = atof(bu_optarg);
+		if (ZERO(frame_delta_t)) {
 		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0\n",
 			    bu_optarg);
 		    frame_delta_t = 30.0;
@@ -562,7 +583,7 @@ int get_args( int argc, register char **argv )
 			|| *cp == '.' )  cp++;
 		while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 		yy = atof(cp);
-		if ( yy == 0.0f )
+		if ( ZERO(yy) )
 		    aspect = xx;
 		else
 		    aspect = xx/yy;
@@ -596,9 +617,6 @@ int get_args( int argc, register char **argv )
 		}
 	    }
 	    break;
-	    case EOF:
-		fprintf(stderr, "ERROR: unknown option %c\n", c);
-		return 0;	/* BAD */
 	    default:		/* '?' */
 		fprintf(stderr, "ERROR: bad option specified\n");
 		return 0;	/* BAD */
@@ -611,7 +629,7 @@ int get_args( int argc, register char **argv )
     }
 
     /* Compat */
-    if (RT_G_DEBUG || R_DEBUG || rt_g.NMG_debug )
+    if (RT_G_DEBUG || R_DEBUG || RTG.NMG_debug )
 	bu_debug |= BU_DEBUG_COREDUMP;
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL)
@@ -625,6 +643,21 @@ int get_args( int argc, register char **argv )
 
     if (R_DEBUG & RDEBUG_RTMEM_END)
 	bu_debug |= BU_DEBUG_MEM_CHECK;
+
+    /* TODO: add options instead of reading from ENV */
+    env_str = getenv("LIBRT_RAND_MODE");
+    if (env_str != NULL && atoi(env_str) == 1) {
+	random_mode = 1;
+	bu_log("random mode\n");
+    }
+    /* TODO: Read from command line */
+    /* Read from ENV with we're going to use the experimental mode */
+    env_str = getenv("LIBRT_EXP_MODE");
+    if (env_str != NULL && atoi(env_str) == 1) {
+	full_incr_mode = 1;
+	full_incr_nsamples = 10;
+	bu_log("multi-sample mode\n");
+    }
 
     return 1;			/* OK */
 }

@@ -1,7 +1,7 @@
 /*                          A R B S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,8 +56,8 @@ char *p_rfin[] = {
 };
 
 
-/* F _ R F A R B () :	finds arb8 given.....
- *
+/*
+ * Finds arb8 given:
  * 1. one point
  * 2. 2 coordinates of 3 other points
  * 3. rot and fallback angles
@@ -80,12 +80,12 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     CHECK_READ_ONLY;
 
     if (argc < 1 || 27 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help rfarb");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -94,7 +94,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name for this arb: ", (char *)NULL);
 	return TCL_ERROR;
     }
-    if (db_lookup(dbip, argv[1], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, argv[1], ":  already exists\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -128,18 +128,18 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     for (i=0; i<3; i++) {
 	if (argc < 8+3*i) {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "POINT %d...\n", i+2);
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), MORE_ARGS_STR,
 			     "Enter coordinate to solve for (x, y, or z): ", (char *)NULL);
+
 	    return TCL_ERROR;
 	}
 
 	switch (argv[7+3*i][0]) {
 	    case 'x':
-		if (NEAR_ZERO(norm[0], SMALL_FASTF)) {
+		if (ZERO(norm[0])) {
 		    Tcl_AppendResult(interp, "X not unique in this face\n", (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -160,7 +160,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		break;
 
 	    case 'y':
-		if (NEAR_ZERO(norm[1], SMALL_FASTF)) {
+		if (ZERO(norm[1])) {
 		    Tcl_AppendResult(interp, "Y not unique in this face\n", (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -181,7 +181,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		break;
 
 	    case 'z':
-		if (NEAR_ZERO(norm[2], SMALL_FASTF)) {
+		if (ZERO(norm[2])) {
 		    Tcl_AppendResult(interp, "Z not unique in this face\n", (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -213,17 +213,18 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
     thick = atof(argv[7+3*3]);
-    if (NEAR_ZERO(thick, SMALL_FASTF)) {
+    if (ZERO(thick)) {
 	Tcl_AppendResult(interp, "thickness = 0.0\n", (char *)NULL);
 	return TCL_ERROR;
     }
     thick *= local2base;
 
-    RT_INIT_DB_INTERNAL(&internal);
+    RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;
-    internal.idb_meth = &rt_functab[ID_ARB8];
-    internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
+    internal.idb_meth = &OBJ[ID_ARB8];
+    BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
+
     aip = (struct rt_arb_internal *)internal.idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
@@ -276,10 +277,10 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	VJOIN1(aip->pt[i+4], aip->pt[i], thick, norm);
     }
 
-    /* no interuprts */
+    /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    if ((dp = db_diradd(dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL) {
+    if ((dp = db_diradd(dbip, argv[1], -1L, 0, RT_DIR_SOLID, (void *)&internal.idb_type)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to the directory\n", (char *)NULL);
 	return TCL_ERROR;
     }

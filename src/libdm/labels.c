@@ -1,7 +1,7 @@
 /*                          L A B E L S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -216,15 +216,15 @@ dm_label_primitive(struct rt_wdb *wdbp,
 
 	    RT_ARS_CK_MAGIC(ars);
 
-	    MAT4X3PNT(pos_view, xform, ars->curves[0])
+	    MAT4X3PNT(pos_view, xform, ars->curves[0]);
 
-		if (ars_crv >= 0 && ars_col >= 0) {
-		    point_t ars_pt;
+	    if (ars_crv >= 0 && ars_col >= 0) {
+		point_t ars_pt;
 
-		    VMOVE(work, &ars->curves[ars_crv][ars_col*3]);
-		    MAT4X3PNT(ars_pt, xform, work);
-		    POINT_LABEL_STR(ars_pt, "pt");
-		}
+		VMOVE(work, &ars->curves[ars_crv][ars_col*3]);
+		MAT4X3PNT(ars_pt, xform, work);
+		POINT_LABEL_STR(ars_pt, "pt");
+	    }
 	}
 	    POINT_LABEL(pos_view, 'V');
 
@@ -268,29 +268,6 @@ dm_label_primitive(struct rt_wdb *wdbp,
 
 	    break;
 	case DB5_MINORTYPE_BRLCAD_NMG:
-	    /*XXX Needs work */
-#if 0
-	    /* New way only */
-	    {
-#ifndef NO_MAGIC_CHECKING
-		struct model *m =
-		    (struct model *) ip->idb_ptr;
-		NMG_CK_MODEL(m);
-#endif
-
-		if (es_eu) {
-		    point_t cent;
-		    NMG_CK_EDGEUSE(es_eu);
-		    VADD2SCALE(cent,
-			       es_eu->vu_p->v_p->vg_p->coord,
-			       es_eu->eumate_p->vu_p->v_p->vg_p->coord,
-			       0.5);
-		    MAT4X3PNT(pos_view, xform, cent);
-		    POINT_LABEL_STR(pos_view, " eu");
-		}
-	    }
-#endif
-
 	    break;
 	case DB5_MINORTYPE_BRLCAD_EBM:
 	    break;
@@ -299,25 +276,6 @@ dm_label_primitive(struct rt_wdb *wdbp,
 	case DB5_MINORTYPE_BRLCAD_ARBN:
 	    break;
 	case DB5_MINORTYPE_BRLCAD_PIPE:
-	    /*XXX Needs work */
-#if 0
-	    {
-#ifndef NO_MAGIC_CHECKING
-		struct rt_pipe_internal *pipe =
-		    (struct rt_pipe_internal *)ip->idb_ptr;
-
-		RT_PIPE_CK_MAGIC(pipe);
-#endif
-
-		if (es_pipept) {
-		    BU_CKMAG(es_pipept, WDB_PIPESEG_MAGIC, "wdb_pipept");
-
-		    MAT4X3PNT(pos_view, xform, es_pipept->pp_coord);
-		    POINT_LABEL_STR(pos_view, "pt");
-		}
-	    }
-#endif
-
 	    break;
 	case DB5_MINORTYPE_BRLCAD_PARTICLE: {
 	    struct rt_part_internal *part =
@@ -513,6 +471,33 @@ dm_label_primitive(struct rt_wdb *wdbp,
 	}
 
 	    break;
+	case DB5_MINORTYPE_BRLCAD_HYP: {
+	    struct rt_hyp_internal *hyp =
+		(struct rt_hyp_internal *)ip->idb_ptr;
+	    vect_t vB;
+
+	    RT_HYP_CK_MAGIC(hyp);
+
+	    MAT4X3PNT(pos_view, xform, hyp->hyp_Vi);
+	    POINT_LABEL(pos_view, 'V');
+
+	    VADD2(work, hyp->hyp_Vi, hyp->hyp_Hi);
+	    MAT4X3PNT(pos_view, xform, work);
+	    POINT_LABEL(pos_view, 'H');
+
+	    VADD2(work, hyp->hyp_Vi, hyp->hyp_A);
+	    MAT4X3PNT(pos_view, xform, work);
+	    POINT_LABEL(pos_view, 'A');
+
+	    VCROSS(vB, hyp->hyp_A, hyp->hyp_Hi);
+	    VUNITIZE(vB);
+	    VSCALE(vB, vB, hyp->hyp_b);
+	    VADD2(work, hyp->hyp_Vi, vB);
+	    MAT4X3PNT(pos_view, xform, work);
+	    POINT_LABEL(pos_view, 'B');
+	}
+
+	    break;
 	case DB5_MINORTYPE_BRLCAD_GRIP:
 	    break;
 	case DB5_MINORTYPE_BRLCAD_JOINT:
@@ -559,10 +544,10 @@ dm_label_primitive(struct rt_wdb *wdbp,
 int
 dm_draw_labels(struct dm *dmp,
 	       struct rt_wdb *wdbp,
-	       char *name,
+	       const char *name,
 	       mat_t viewmat,
 	       int *labelsColor,
-	       int (*labelsHook)(),
+	       int (*LabelsHook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData),
 	       ClientData labelsHookClientdata)
 {
 #define MAX_PL 8+1
@@ -570,12 +555,11 @@ dm_draw_labels(struct dm *dmp,
     struct rt_db_internal intern;
     struct directory *dp;
     int i;
-    int id;
     struct db_tree_state ts;
     struct db_full_path path;
 
-    if (labelsHook != (int (*)())0)
-	return labelsHook(dmp, wdbp, name,
+    if (LabelsHook != (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0)
+	return LabelsHook(dmp, wdbp, name,
 			  viewmat, labelsColor,
 			  labelsHookClientdata);
 
@@ -589,12 +573,17 @@ dm_draw_labels(struct dm *dmp,
     ts.ts_resp = &rt_uniresource;
     MAT_IDN(ts.ts_mat);
 
-    if (db_follow_path_for_state(&ts, &path, name, 1))
+    if (db_follow_path_for_state(&ts, &path, name, 0)) {
+	db_free_full_path(&path);
 	return BRLCAD_OK;
+    }
 
     dp = DB_FULL_PATH_CUR_DIR(&path);
 
-    id = rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat, &rt_uniresource);
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat, &rt_uniresource) < 0) {
+	db_free_full_path(&path);
+	return BRLCAD_ERROR;
+    }
 
     dm_label_primitive(wdbp, pl, MAX_PL, viewmat, &intern);
 

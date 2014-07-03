@@ -21,4 +21,3 @@ is not embedded. So both files must be copied with the proe-brl.dll
 to their place in the Proe hierarchy. I believe it's possible to
 embed both files in the dll. I can see how to embed the manifest, but
 am not sure about the config file.
-

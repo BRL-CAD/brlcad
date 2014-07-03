@@ -1,7 +1,7 @@
 /*                         M O V E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file move.c
+/** @file libged/move.c
  *
  * The move command.
  *
@@ -29,7 +29,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -38,8 +38,8 @@ int
 ged_move(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
-    struct directory	*dp;
-    struct rt_db_internal		intern;
+    struct directory *dp;
+    struct rt_db_internal intern;
     static const char *usage = "from to";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -47,60 +47,58 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: already exists", argv[2]);
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: already exists", argv[2]);
 	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return GED_ERROR;
     }
 
-    /*  Change object name in the in-memory directory. */
+    /* Change object name in the in-memory directory. */
     if (db_rename(gedp->ged_wdbp->dbip, dp, argv[2]) < 0) {
 	rt_db_free_internal(&intern);
-	bu_vls_printf(&gedp->ged_result_str, "error in db_rename to %s, aborting", argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "error in db_rename to %s, aborting", argv[2]);
 	return GED_ERROR;
     }
 
     /* Re-write to the database.  New name is applied on the way out. */
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	return GED_ERROR;
     }
 
     /* Change object name if it matches the first element in the display list path. */
-    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
 	int first = 1;
 	int found = 0;
-	struct bu_vls new_path;
-	char *dup = strdup(bu_vls_addr(&gdlp->gdl_path));
-	char *tok = strtok(dup, "/");
-
-	bu_vls_init(&new_path);
+	struct bu_vls new_path = BU_VLS_INIT_ZERO;
+	char *dupstr = strdup(bu_vls_addr(&gdlp->gdl_path));
+	char *tok = strtok(dupstr, "/");
 
 	while (tok) {
 	    if (first) {
 		first = 0;
 
-		if (!strcmp(tok, argv[1])) {
+		if (BU_STR_EQUAL(tok, argv[1])) {
 		    found = 1;
 		    bu_vls_printf(&new_path, "%s", argv[2]);
 		} else
@@ -113,10 +111,10 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 
 	if (found) {
 	    bu_vls_free(&gdlp->gdl_path);
-	    bu_vls_printf(&gdlp->gdl_path, "%V", &new_path);
+	    bu_vls_printf(&gdlp->gdl_path, "%s", bu_vls_addr(&new_path));
 	}
 
-	free((void *)dup);
+	free((void *)dupstr);
 	bu_vls_free(&new_path);
     }
 

@@ -1,7 +1,7 @@
 /*                    R E A D - R T L O G . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2010 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file read-rtlog.c
+/** @file rt/read-rtlog.c
  *
  * This is a program will read an RT log file.  It is meant to be used
  * by any other program that needs to read an RT log file to extract
@@ -43,10 +43,8 @@ extern int verbose;
 
 
 /**
- * R E A D _ R T _ F I L E
- *
  * Read an RT program's log file line by line until it either finds
- * view, orientation, eye_postion, and size of the model, or it hits
+ * view, orientation, eye_position, and size of the model, or it hits
  * the end of file.  When a colon is found, sscanf() retrieves the
  * necessary information.  It takes a file pointer, file name, and a
  * matrix pointer as parameters.  It returns 0 okay or < 0 failure.
@@ -55,11 +53,11 @@ int
 read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 {
     FILE *fp;
-    fastf_t azimuth;		/* part of the view */
-    fastf_t elevation;		/* part of the view */
+    fastf_t azimuth = 0.0;	/* part of the view */
+    fastf_t elevation = 0.0;	/* part of the view */
     quat_t orientation;		/* orientation */
-    point_t eye_pos;
-    fastf_t m_size;		/* size of model in mm */
+    point_t eye_pos = VINIT_ZERO;
+    fastf_t m_size = 0.0;	/* size of model in mm */
     char *ret;			/* return code for fgets */
     char string[BUFF_LEN];	/* temporary buffer */
     char *arg_ptr;		/* place holder */
@@ -70,6 +68,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
     int seen_orientation;
     int seen_eye_pos;
     int seen_size;
+    double scan[4] = HINIT_ZERO;
 
     mat_t rotate, xlate;
 
@@ -107,7 +106,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	if (ret == NULL) {
 	    /* There are two times when NULL might be seen:
 	     * at the end of the file (handled above) and
-	     * when the process dies horriblely and unexpectedly.
+	     * when the process dies horribly and unexpectedly.
 	     */
 
 	    if (feof(infp))
@@ -118,16 +117,17 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	     */
 	    fprintf(stderr, "read_rt_file: read failure on file %s\n",
 		    name);
+	    fclose(fp);
 	    return -1;
 	}
 
 	/* Check the first for a colon in the buffer.  If there is
-	 * one, replace it with a NULL, and set a pointer to the
-	 * next space.  Then feed the buffer to
-	 * strcmp see whether it is the view, the orientation,
-	 * the eye_position, or the size.  If it is, then sscanf()
-	 * the needed information into the appropriate variables.
-	 * If the keyword is not found, go back for another line.
+	 * one, replace it with a NULL, and set a pointer to the next
+	 * space.  Then feed the buffer to BU_STR_EQUAL to see whether
+	 * it is the view, the orientation, the eye_position, or the
+	 * size.  If it is, then sscanf() the needed information into
+	 * the appropriate variables.  If the keyword is not found, go
+	 * back for another line.
 	 *
 	 * Set arg_ptr to NULL so it can be used as a flag to verify
 	 * finding a colon in the input buffer.
@@ -179,41 +179,48 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	 * Also, if loading a whole array of characters
 	 * with %s, then the name of the array can be used for the
 	 * destination.  However, if the characters are loaded
-	 * individually into the subsripted spots with %c (or equiv),
+	 * individually into the subscripted spots with %c (or equiv),
 	 * the address of the location must be provided: &eye_pos[0].
 	 */
 
-	if (strcmp(string, "View") == 0) {
-	    num = sscanf(arg_ptr, "%lf %9s %lf", &azimuth, forget_it, &elevation);
+	if (BU_STR_EQUAL(string, "View")) {
+	    num = sscanf(arg_ptr, "%lf %9s %lf", &scan[X], forget_it, &scan[Y]);
+	    /* double to fastf_t */
+	    azimuth = scan[X];
+	    elevation = scan[Y];
 	    if (num != 3) {
 		fprintf(stderr, "View= %.6f %s %.6f elevation\n", azimuth, forget_it, elevation);
+		fclose(fp);
 		return -1;
 	    }
 	    seen_view = 1;
-	} else if (strcmp(string, "Orientation") == 0) {
-	    num = sscanf(arg_ptr, "%lf, %lf, %lf, %lf",
-			 &orientation[0], &orientation[1], &orientation[2],
-			 &orientation[3]);
+	} else if (BU_STR_EQUAL(string, "Orientation")) {
+	    num = sscanf(arg_ptr, "%lf, %lf, %lf, %lf", &scan[X], &scan[Y], &scan[Z], &scan[W]);
+	    HMOVE(orientation, scan); /* double to fastf_t */
 
 	    if (num != 4) {
 		fprintf(stderr, "Orientation= %.6f, %.6f, %.6f, %.6f\n",
 			V4ARGS(orientation));
+		fclose(fp);
 		return -1;
 	    }
 	    seen_orientation = 1;
-	} else if (strcmp(string, "Eye_pos") == 0) {
-	    num = sscanf(arg_ptr, "%lf, %lf, %lf", &eye_pos[0],
-			 &eye_pos[1], &eye_pos[2]);
+	} else if (BU_STR_EQUAL(string, "Eye_pos")) {
+	    num = sscanf(arg_ptr, "%lf, %lf, %lf", &scan[X], &scan[Y], &scan[Z]);
+	    VMOVE(eye_pos, scan); /* double to fastf_t */
 	    if (num != 3) {
 		fprintf(stderr, "Eye_pos= %.6f, %.6f, %.6f\n",
 			V3ARGS(eye_pos));
+		fclose(fp);
 		return -1;
 	    }
 	    seen_eye_pos = 1;
-	} else if (strcmp(string, "Size") == 0) {
-	    num = sscanf(arg_ptr, "%lf", &m_size);
+	} else if (BU_STR_EQUAL(string, "Size")) {
+	    num = sscanf(arg_ptr, "%lf", &scan[X]);
+	    m_size = scan[X];
 	    if (num != 1) {
 		fprintf(stderr, "Size=%.6f\n", m_size);
+		fclose(fp);
 		return -1;
 	    }
 	    seen_size = 1;
@@ -224,21 +231,25 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 
     if (seen_view != 1) {
 	fprintf(stderr, "View not read for %s!\n", name);
+	fclose(fp);
 	return -1;
     }
 
     if (seen_orientation != 1) {
 	fprintf(stderr, "Orientation not read for %s!\n", name);
+	fclose(fp);
 	return -1;
     }
 
     if (seen_eye_pos != 1) {
 	fprintf(stderr, "Eye_pos not read for %s!\n", name);
+	fclose(fp);
 	return -1;
     }
 
     if (seen_size != 1) {
 	fprintf(stderr, "Size not read for %s!\n", name);
+	fclose(fp);
 	return -1;
     }
 

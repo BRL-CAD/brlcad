@@ -1,7 +1,7 @@
 /*                       M A K E D I R . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file makedir.c
+/** @file iges/makedir.c
  *
  * Routine to read the directory section of an IGES file.  and store
  * needed info in the 'directory' structures.  dir[n] is the structure
@@ -35,7 +35,7 @@ void
 Makedir()
 {
 
-    int found, i, saverec, entcount=(-1), paramptr=0, paramguess=0;
+    int found, i, saverec, entcount = (-1), paramptr = 0, paramguess = 0;
     char str[9];
 
     str[8] = '\0';
@@ -124,10 +124,10 @@ Makedir()
 	Readcols(str, 8);	/* read form number */
 	dir[entcount]->form = atoi(str);
 
-	/* Look for entity type in list and incrememt that count */
+	/* Look for entity type in list and increment that count */
 
 	found = 0;
-	for (i=0; i<ntypes; i++) {
+	for (i = 0; i < ntypes; i++) {
 	    if (typecount[i].type == dir[entcount]->type) {
 		typecount[i].count++;
 		found = 1;
@@ -148,7 +148,7 @@ Makedir()
 		       dir[entcount]->direct, dir[entcount]->name);
 		dir[entcount]->rot = NULL;
 	    } else {
-		dir[entcount]->rot = (mat_t *)bu_malloc(sizeof(mat_t), "Makedir:matrix");
+		BU_ALLOC(dir[entcount]->rot, mat_t);
 		Readmatrix(dir[entcount]->param, *dir[entcount]->rot);
 	    }
 	} else /* set to NULL */
@@ -157,10 +157,10 @@ Makedir()
 	Readrec(saverec); /* restore previous record */
     }
 
- out:
+out:
     bu_log("\t%d\n\n", entcount+1);
     if (paramguess)
-	bu_log("Some entities did not have proper parameter pointers, so a resonable guess was made\n");
+	bu_log("Some entities did not have proper parameter pointers, so a reasonable guess was made\n");
 }
 
 

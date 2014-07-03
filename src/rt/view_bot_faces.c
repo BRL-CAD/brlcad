@@ -1,7 +1,7 @@
 /*                V I E W _ B O T _ F A C E S . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2010 United States Government as represented by
+ * Copyright (c) 2003-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_bot_faces.c
+/** @file rt/view_bot_faces.c
  *
  * Ray Tracing program view module to find visible bot faces
  *
@@ -38,11 +38,13 @@
 #  include <sys/stat.h>
 #endif
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./ext.h"
 #include "plot3.h"
-#include "rtprivate.h"
+
+#include "./rtuif.h"
+#include "./ext.h"
 
 
 extern char *outputfile;		/* output file name */
@@ -60,32 +62,33 @@ static Tcl_HashTable bots;		/* hash table with a bot_face_list entry for each BO
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 const char title[] = "RT BoT Faces";
-const char usage[] = "\
-Usage:  rt_bot_faces [options] model.g objects... >file.ray\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -g #		Grid cell width in millimeters (conflicts with -s)\n\
- -G #		Grid cell height in millimeters (conflicts with -s)\n\
- -J #		Jitter.  Default is off.  Any non-zero number is on\n\
- -o bot_faces_file	Specify output file, list of bot_faces hit (default=stdout)\n\
- -U #		Set use_air boolean to # (default=1)\n\
- -c \"set save_overlaps=1\"     Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n\
- -c \"set rt_cline_radius=radius\"      Additional radius to be added to CLINE solids\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.ray\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
+    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
+    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -g #		Grid cell width in millimeters (conflicts with -s)\n");
+    bu_log(" -G #		Grid cell height in millimeters (conflicts with -s)\n");
+    bu_log(" -J #		Jitter.  Default is off.  Any non-zero number is on\n");
+    bu_log(" -o bot_faces_file	Specify output file, list of bot_faces hit (default=stdout)\n");
+    bu_log(" -U #		Set use_air boolean to # (default=1)\n");
+    bu_log(" -c \"set save_overlaps=1\"     Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n");
+    bu_log(" -c \"set rt_cline_radius=radius\"      Additional radius to be added to CLINE solids\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
 
 
 /*
- * R A Y H I T
- *
  * Rayhit() is called by rt_shootray() when the ray hits one or more objects.
  */
 int
@@ -112,7 +115,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     bu_semaphore_acquire(BU_SEM_LISTS);
     entry = Tcl_CreateHashEntry(&bots, pp->pt_inseg->seg_stp->st_dp->d_namep, &newPtr);
     if (newPtr) {
-	faces = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "faces");
+	BU_ALLOC(faces, struct bu_ptbl);
 	bu_ptbl_init(faces, 128, "faces");
 	Tcl_SetHashValue(entry, (char *)faces);
     } else {
@@ -127,8 +130,6 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 
 
 /*
- * R A Y M I S S
- *
  * Null function -- handle a miss
  * This function is called by rt_shootray(), which is called by
  * do_frame().
@@ -141,13 +142,11 @@ raymiss(struct application *UNUSED(ap))
 
 
 /*
- * V I E W _ I N I T
- *
  * This routine is called by main().
  */
 
 int
-view_init(struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
     /* report air regions */
     use_air = 1;
@@ -172,8 +171,6 @@ view_init(struct application *ap, char *file, char *obj, int minus_o)
 
 
 /*
- * V I E W _ 2 I N I T
- *
  * View_2init is called by do_frame(), which in turn is called by
  * main() in rt.c.
  *
@@ -200,28 +197,27 @@ view_2init(struct application *ap, char *framename)
 
 	/* File exists, with partial results */
 	while (bu_fgets(line, RT_MAXLINE, outfp)) {
-	    if (!strncmp(line, "BOT:", 4)) {
+	    if (!bu_strncmp(line, "BOT:", 4)) {
 		struct directory *dp;
 
 		/* found a BOT entry, addit to the hash table */
 		i = 4;
-		while (line[i] != '\0' && isspace(line[i])) i++;
+		while (line[i] != '\0' && isspace((int)line[i])) i++;
 		if (line[i] == '\0') {
 		    bu_log("Unexpected EOF found in partial results (%s)\n", outputfile);
 		    bu_exit(EXIT_FAILURE, "Unexpected EOF");
 		}
 		j = i;
-		while (line[j] != '\0' && !isspace(line[j])) j++;
+		while (line[j] != '\0' && !isspace((int)line[j])) j++;
 		line[j] = '\0';
-		if ((dp=db_lookup(ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == DIR_NULL) {
+		if ((dp=db_lookup(ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == RT_DIR_NULL) {
 		    bot_name = bu_strdup(&line[i]);
 		} else {
 		    bot_name = dp->d_namep;
 		}
 		entry = Tcl_CreateHashEntry(&bots, bot_name, &newPtr);
 		if (newPtr) {
-		    faces = (struct bu_ptbl *)bu_calloc(1, sizeof(struct bu_ptbl),
-							"bot_faces");
+		    BU_ALLOC(faces, struct bu_ptbl);
 		    bu_ptbl_init(faces, 128, "bot faces");
 		    Tcl_SetHashValue(entry, (char *)faces);
 		} else {
@@ -246,36 +242,30 @@ view_2init(struct application *ap, char *framename)
 
 
 /*
- * V I E W _ P I X E L
- *
  * This routine is called from do_run(), and in this case does nothing.
  */
 void
-view_pixel()
+view_pixel(struct application *UNUSED(ap))
 {
     return;
 }
 
 
 /*
- * V I E W _ E O L
- *
  * View_eol() is called by rt_shootray() in do_run().  In this case,
  * it does nothing.
  */
-void view_eol()
+void view_eol(struct application *UNUSED(ap))
 {
 }
 
 
 /*
- * V I E W _ E N D
- *
  * View_end() is called by rt_shootray in do_run().
  *
  */
 void
-view_end()
+view_end(struct application *UNUSED(ap))
 {
     Tcl_HashEntry *entry;
     Tcl_HashSearch search;
@@ -287,12 +277,12 @@ view_end()
     entry = Tcl_FirstHashEntry(&bots, &search);
 
     while (entry) {
-	int i;
+	size_t i;
 
-	fprintf(outfp, "BOT: %s\n", Tcl_GetHashKey(&bots, entry));
+	fprintf(outfp, "BOT: %s\n", (char *)Tcl_GetHashKey(&bots, entry));
 	faces = (struct bu_ptbl *)Tcl_GetHashValue(entry);
 	for (i=0; i<BU_PTBL_LEN(faces); i++) {
-	    fprintf(outfp, "\t%llu\n", (long)BU_PTBL_GET(faces, i));
+	    fprintf(outfp, "\t%lu\n", (unsigned long)BU_PTBL_GET(faces, i));
 	}
 	entry = Tcl_NextHashEntry(&search);
     }
@@ -301,9 +291,15 @@ view_end()
 }
 
 
-void view_setup() {}
-void view_cleanup() {}
-void application_init () {}
+void view_setup(struct rt_i *UNUSED(rtip))
+{
+}
+void view_cleanup(struct rt_i *UNUSED(rtip))
+{
+}
+void application_init()
+{
+}
 
 /*
  * Local Variables:

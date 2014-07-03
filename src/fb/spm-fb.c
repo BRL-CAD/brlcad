@@ -1,7 +1,7 @@
 /*                        S P M - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hF:sS:W:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "hF:sS:W:N:")) != -1) {
 	switch (c) {
 	    case 'h':
 		/* high-res */
@@ -94,19 +94,17 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "spm-fb: excess argument(s) ignored\n");
+	fprintf(stderr, "spm-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
 
 
 /*
- * S P M _ F B
- *
  * Displays a sphere map on a framebuffer.
  */
 void
-spm_fb(spm_map_t *mapp)
+spm_fb(bn_spm_map_t *mapp)
 {
     int j;
 
@@ -125,12 +123,10 @@ spm_fb(spm_map_t *mapp)
 
 
 /*
- * S P M _ S Q U A R E
- *
  * Display a square sphere map on a framebuffer.
  */
 void
-spm_square(spm_map_t *mapp)
+spm_square(bn_spm_map_t *mapp)
 {
     int x, y;
     unsigned char *scanline;
@@ -139,22 +135,20 @@ spm_square(spm_map_t *mapp)
 
     for (y = 0; y < scr_height; y++) {
 	for (x = 0; x < scr_width; x++) {
-	    spm_read(mapp, &scanline[x],
-		     (double)x/(double)scr_width,
-		     (double)y/(double)scr_height);
+	    bn_spm_read(mapp, &scanline[x],
+			(double)x/(double)scr_width,
+			(double)y/(double)scr_height);
 	}
 	if (fb_write(fbp, 0, y, scanline, scr_width) != scr_width) break;
     }
+    free(scanline);
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
-    spm_map_t *mp;
+    bn_spm_map_t *mp;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -166,18 +160,18 @@ main(int argc, char **argv)
     scr_width = fb_getwidth(fbp);
     scr_height = fb_getheight(fbp);
 
-    mp = spm_init(vsize, sizeof(RGBpixel));
-    if (mp == SPM_NULL || fbp == FBIO_NULL)
+    mp = bn_spm_init(vsize, sizeof(RGBpixel));
+    if (mp == BN_SPM_MAP_NULL || fbp == FBIO_NULL)
 	bu_exit(1, NULL);
 
-    spm_load(mp, file_name);
+    bn_spm_load(mp, file_name);
 
     if (square)
 	spm_square(mp);
     else
 	spm_fb(mp);
 
-    spm_free(mp);
+    bn_spm_free(mp);
     fb_close(fbp);
     return 0;
 }

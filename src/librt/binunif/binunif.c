@@ -1,7 +1,7 @@
-/*                    B I N A R Y _ O B J . C
+/*                       B I N U N I F . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2010 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file binary_obj.c
+/** @file binunif.c
  *
  * Routines for writing binary objects to a BRL-CAD database
  * Assumes that some of the structure of such databases are known
@@ -44,7 +44,7 @@
 
 #include "bio.h"
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"
@@ -86,15 +86,11 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     }
 
     /* create the rt_binunif internal form */
-    BU_GETSTRUCT(bip, rt_binunif_internal);
+    BU_ALLOC(bip, struct rt_binunif_internal);
     bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
     bip->type = minor_type;
 
-    if (item_length != 0) {
-	num_items = (size_t)(st.st_size / item_length);
-    } else {
-	num_items = 0;
-    }
+    num_items = (size_t)(st.st_size / item_length);
 
     /* maybe only a partial file read */
     if (max_count > 0 && max_count < num_items) {
@@ -114,11 +110,11 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     bu_close_mapped_file(bu_fd);
 
     /* create the rt_internal form */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = major_type;
     intern.idb_minor_type = minor_type;
-    intern.idb_ptr = (genptr_t)bip;
-    intern.idb_meth = &rt_functab[ID_BINUNIF];
+    intern.idb_ptr = (void *)bip;
+    intern.idb_meth = &OBJ[ID_BINUNIF];
 
     /* create body portion of external form */
     ret = -1;
@@ -126,7 +122,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, wdbp->dbip, wdbp->wdb_resp);
     }
     if (ret != 0) {
-	bu_log("Error while attemptimg to export %s\n", obj_name);
+	bu_log("Error while attempting to export %s\n", obj_name);
 	rt_db_free_internal(&intern);
 	return -1;
     }
@@ -150,8 +146,8 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 
     /* add this (phony until written) object to the directory */
     if ((dp=db_diradd5(wdbp->dbip, obj_name, RT_DIR_PHONY_ADDR, major_type,
-		       minor_type, 0, 0, NULL)) == DIR_NULL) {
-	bu_log("Error while attemptimg to add new name (%s) to the database",
+		       minor_type, 0, 0, NULL)) == RT_DIR_NULL) {
+	bu_log("Error while attempting to add new name (%s) to the database",
 	       obj_name);
 	bu_free_external(&bin_ext);
 	return -1;

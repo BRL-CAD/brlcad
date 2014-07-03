@@ -1,7 +1,7 @@
 /*                        S Y M B O L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,9 +19,9 @@
  */
 /** @addtogroup plot */
 /** @{ */
-/** @file symbol.c
+/** @file libbn/symbol.c
  *
- *	Terminal Independant Graphics Display Package.
+ *	Terminal Independent Graphics Display Package.
  *		Mike Muuss  July 31, 1978
  *
  *	This routine is used to plot a string of ASCII symbols
@@ -42,13 +42,11 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/str.h"
 #include "vmath.h"
 #include "plot3.h"
 #include "vectfont.h"
 
-/*
- *			T P _ 3 S Y M B O L
- */
 void
 tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 
@@ -73,7 +71,7 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
      *  The text is located in a local coordinate system with the
      *  lower left corner of the first character at (0, 0, 0), with
      *  the text proceeding onward towards +X.
-     *  We need to rotate the text around it's local (0, 0, 0),
+     *  We need to rotate the text around its local (0, 0, 0),
      *  and then translate to the user's designated "origin".
      *  If the user provided translation or
      *  scaling in his matrix, it will *also* be applied.
@@ -124,9 +122,6 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 }
 
 
-/*
- *			T P _ 2 S Y M B O L
- */
 void
 tp_2symbol(FILE *fp, char *string, double x, double y, double scale, double theta)
 

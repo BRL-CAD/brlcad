@@ -1,7 +1,7 @@
 /*                         O R I E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file orient.c
+/** @file libged/orient.c
  *
  * The orient command.
  *
@@ -44,33 +44,37 @@ ged_orient(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2 && argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* set view orientation */
     if (argc == 2) {
 	if (bn_decode_quat(quat, argv[1]) != 4) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
     } else {
 	int i;
 
-	for (i = 1; i < 5; ++i)
-	    if (sscanf(argv[i], "%lf", &quat[i-1]) != 1) {
-		bu_vls_printf(&gedp->ged_result_str, "ged_orient: bad value - %s\n", argv[i-1]);
+	for (i = 1; i < 5; ++i) {
+	    double scan;
+	    if (sscanf(argv[i], "%lf", &scan) != 1) {
+		bu_vls_printf(gedp->ged_result_str, "ged_orient: bad value - %s\n", argv[i-1]);
 		return GED_ERROR;
 	    }
+	    /* convert from double to fastf_t */
+	    quat[i-1] = scan;
+	}
     }
 
     quat_quat2mat(gedp->ged_gvp->gv_rotation, quat);

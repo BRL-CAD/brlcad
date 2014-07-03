@@ -1,7 +1,7 @@
 /*                   P O I N T S _ S C A N . L
  * BRL-CAD
  *
- * Copyright (c) 2005-2010 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 /*                   P O I N T S _ S C A N . L
  * BRL-CAD
  *
- * Copyright (c) 2005-2010 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -80,6 +80,12 @@ extern YYSTYPE yylval;
 static int first_token = 1;
 char previous_linebuffer[YYLMAX+1] = {0};
 char linebuffer[YYLMAX+1] = {0};
+
+/* flex is being stupid.  need to check fwrite() return value to quell warning. */
+#ifndef ECHO
+#  define ECHO  if (fwrite( yytext, yyleng, 1, yyout ) != 1) perror("fwrite")
+#endif
+
 
 %}
 

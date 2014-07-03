@@ -1,7 +1,7 @@
 /*                          B O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,11 +26,27 @@
 #include <stdarg.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
+
+/**
+ * list of callbacks to call during bu_bomb.
+ */
+struct bu_hook_list bomb_hook_list = {
+    {
+	BU_LIST_HEAD_MAGIC,
+	&bomb_hook_list.l,
+	&bomb_hook_list.l
+    },
+    NULL,
+    ((void *)0)
+};
 
 
 /* failsafe storage to help ensure graceful shutdown */
-static char *_bu_bomb_failsafe = NULL;
+static char *bomb_failsafe = NULL;
 
 /* used for tty printing */
 static int fd = -1;
@@ -42,11 +58,11 @@ static char tracefile[512] = {0};
 
 /* release memory on application exit */
 static void
-_free_bu_bomb_failsafe(void)
+_freebomb_failsafe(void)
 {
-    if (_bu_bomb_failsafe) {
-	free(_bu_bomb_failsafe);
-	_bu_bomb_failsafe = NULL;
+    if (bomb_failsafe) {
+	free(bomb_failsafe);
+	bomb_failsafe = NULL;
     }
 }
 
@@ -54,13 +70,20 @@ _free_bu_bomb_failsafe(void)
 int
 bu_bomb_failsafe_init(void)
 {
-    if (_bu_bomb_failsafe) {
+    if (bomb_failsafe) {
 	return 1;
     }
     /* cannot use bu_*alloc here */
-    _bu_bomb_failsafe = (char *)malloc(65536);
-    atexit(_free_bu_bomb_failsafe);
+    bomb_failsafe = (char *)malloc(65536);
+    atexit(_freebomb_failsafe);
     return 1;
+}
+
+
+void
+bu_bomb_add_hook(bu_hook_t func, void *clientdata)
+{
+    bu_hook_add(&bomb_hook_list, func, clientdata);
 }
 
 
@@ -80,11 +103,11 @@ bu_bomb(const char *str)
     }
 
     /* release the failsafe allocation to help get through to the end */
-    _free_bu_bomb_failsafe();
+    _freebomb_failsafe();
 
     /* MGED would like to be able to additional logging, do callbacks. */
-    if (BU_LIST_NON_EMPTY(&bu_bomb_hook_list.l)) {
-	bu_call_hook(&bu_bomb_hook_list, (genptr_t)str);
+    if (BU_LIST_NON_EMPTY(&bomb_hook_list.l)) {
+	bu_hook_call(&bomb_hook_list, (void *)str);
     }
 
     if (bu_setjmp_valid) {
@@ -101,16 +124,24 @@ bu_bomb(const char *str)
 #ifdef HAVE_UNISTD_H
     /*
      * No application level error handling,
-     * go to extra pains to ensure that user gets to see this message.
+     * Go to extra pains to ensure that user gets to see this message.
      * For example, mged hijacks output sent to stderr.
      */
     {
 	fd = open("/dev/tty", 1);
 	if (LIKELY(fd > 0)) {
 	    if (str && (strlen(str) > 0)) {
-		int ret;
-		ret = write(fd, str, strlen(str));
+		size_t len;
+		ssize_t ret;
+
+		len = strlen(str);
+		ret = write(fd, str, len);
+		if (ret != (ssize_t)len)
+		    perror("write failed");
+
 		ret = write(fd, "\n", 1);
+		if (ret != 1)
+		    perror("write failed");
 	    }
 	    close(fd);
 	}
@@ -120,14 +151,14 @@ bu_bomb(const char *str)
 #if defined(DEBUG)
     /* save a backtrace, should hopefully have debug symbols */
     {
-	/* if the file already exists, there's probably another thread
-	 * writing out a report for the current process. acquire a
+	/* If the file already exists, there's probably another thread
+	 * writing out a report for the current process. Acquire a
 	 * mapped file semaphore so we only have one thread writing to
 	 * the file at a time (can't just use BU_SEM_SYSCALL).
 	 */
 	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
-	if (LIKELY(!bu_file_exists(tracefile))) {
+	if (LIKELY(!bu_file_exists(tracefile, NULL))) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    fputs("Saving stack trace to ", stderr);
 	    fputs(tracefile, stderr);
@@ -155,8 +186,10 @@ bu_bomb(const char *str)
 
 	fd = open("/dev/tty", 1);
 	if (LIKELY(fd > 0)) {
-	    int ret;
+	    ssize_t ret;
 	    ret = write(fd, "Causing intentional core dump due to debug flag\n", 48);
+	    if (ret != 48)
+		perror("write failed");
 	    close(fd);
 	}
 	abort();	/* should dump if ulimit is non-zero */
@@ -171,11 +204,9 @@ bu_exit(int status, const char *fmt, ...)
 {
     if (LIKELY(fmt && strlen(fmt) > 0)) {
 	va_list ap;
-	struct bu_vls message;
+	struct bu_vls message = BU_VLS_INIT_ZERO;
 
 	va_start(ap, fmt);
-
-	bu_vls_init(&message);
 
 	bu_vls_vprintf(&message, fmt, ap);
 

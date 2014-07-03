@@ -1,7 +1,7 @@
 /*                           R E G . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2010 United States Government as represented by
+ * Copyright (c) 1987-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file reg.c
+/** @file libwdb/reg.c
  *
  * Library for writing MGED databases from arbitrary procedures.
  *
@@ -41,8 +41,6 @@
 #include "wdb.h"
 
 /**
- * M K _ T R E E _ P U R E
- *
  * Given a list of wmember structures, build a tree that performs the
  * boolean operations in the given sequence.  No GIFT semantics or
  * precedence is provided.  For that, use mk_tree_gift().
@@ -57,8 +55,8 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 	WDB_CK_WMEMBER(wp);
 
-	BU_GETUNION(leafp, tree);
-	leafp->tr_l.magic = RT_TREE_MAGIC;
+	BU_ALLOC(leafp, union tree);
+	RT_TREE_INIT(leafp);
 	leafp->tr_l.tl_op = OP_DB_LEAF;
 	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
 	if (!bn_mat_is_identity(wp->wm_mat)) {
@@ -70,8 +68,8 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	    continue;
 	}
 	/* Build a left-heavy tree */
-	BU_GETUNION(nodep, tree);
-	nodep->tr_b.magic = RT_TREE_MAGIC;
+	BU_ALLOC(nodep, union tree);
+	RT_TREE_INIT(nodep);
 	switch (wp->wm_op) {
 	    case WMOP_UNION:
 		nodep->tr_b.tb_op = OP_UNION;
@@ -93,8 +91,6 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 
 /**
- * M K _ T R E E _ G I F T
- *
  * Add some nodes to a new or existing combination's tree, with GIFT
  * precedence and semantics.
  *
@@ -161,9 +157,9 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	}
 
 	/* make new leaf node, and insert at end of array */
-	BU_GETUNION(tp, tree);
+	BU_ALLOC(tp, union tree);
+	RT_TREE_INIT(tp);
 	tree_list[node_count++].tl_tree = tp;
-	tp->tr_l.magic = RT_TREE_MAGIC;
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(wp->wm_name);
 	if (!bn_mat_is_identity(wp->wm_mat)) {
@@ -183,18 +179,6 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 }
 
 
-/**
- * M K _ A D D M E M B E R
- *
- * Obtain dynamic storage for a new wmember structure, fill in the
- * name, default the operation and matrix, and add to doubly linked
- * list.  In typical use, a one-line call is sufficient.  To change
- * the defaults, catch the pointer that is returned, and adjust the
- * structure to taste.
- *
- * The caller is responsible for initializing the header structures
- * forward and backward links.
- */
 struct wmember *
 mk_addmember(
     const char *name,
@@ -204,7 +188,7 @@ mk_addmember(
 {
     struct wmember *wp;
 
-    BU_GETSTRUCT(wp, wmember);
+    BU_ALLOC(wp, struct wmember);
     wp->l.magic = WMEMBER_MAGIC;
     wp->wm_name = bu_strdup(name);
     switch (op) {
@@ -230,10 +214,6 @@ mk_addmember(
     return wp;
 }
 
-
-/**
- * M K _ F R E E M E M B E R S
- */
 void
 mk_freemembers(struct bu_list *headp)
 {
@@ -248,36 +228,22 @@ mk_freemembers(struct bu_list *headp)
 }
 
 
-/**
- * M K _ C O M B
- *
- * Make a combination, where the members are described by a linked
- * list of wmember structs.
- *
- * The linked list is freed when it has been output.
- *
- * Has many operating modes.
- *
- * Returns -
- * -1 ERROR
- * 0 OK
- */
 int
 mk_comb(
     struct rt_wdb *wdbp,
     const char *combname,
-    struct bu_list *headp,	/* Made by mk_addmember() */
-    int region_kind,		/* 1 => region.  'P' and 'V' for FASTGEN */
-    const char *shadername,	/* shader name, or NULL */
-    const char *shaderargs,	/* shader args, or NULL */
-    const unsigned char *rgb,	/* NULL => no color */
-    int id,			/* region_id */
-    int air,			/* aircode */
-    int material,		/* GIFTmater */
+    struct bu_list *headp,
+    int region_kind,
+    const char *shadername,
+    const char *shaderargs,
+    const unsigned char *rgb,
+    int id,
+    int air,
+    int material,
     int los,
     int inherit,
-    int append_ok,		/* 0 = obj must not exit */
-    int gift_semantics)		/* 0 = pure, 1 = gift */
+    int append_ok,
+    int gift_semantics)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -285,7 +251,7 @@ mk_comb(
 
     RT_CK_WDB(wdbp);
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (append_ok &&
 	wdb_import(wdbp, &intern, combname, (matp_t)NULL) >= 0) {
@@ -296,15 +262,13 @@ mk_comb(
 	fresh_combination = 0;
     } else {
 	/* Create a fresh new object for export */
-	BU_GETSTRUCT(comb, rt_comb_internal);
-	comb->magic = RT_COMB_MAGIC;
-	bu_vls_init(&comb->shader);
-	bu_vls_init(&comb->material);
+	BU_ALLOC(comb, struct rt_comb_internal);
+	RT_COMB_INTERNAL_INIT(comb);
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_ptr = (genptr_t)comb;
-	intern.idb_meth = &rt_functab[ID_COMBINATION];
+	intern.idb_ptr = (void *)comb;
+	intern.idb_meth = &OBJ[ID_COMBINATION];
 
 	fresh_combination = 1;
     }
@@ -342,12 +306,13 @@ mk_comb(
 	    bu_vls_strcat(&comb->shader, " ");
 	    bu_vls_strcat(&comb->shader, shaderargs);
 	    /* Convert to Tcl form if necessary.  Use heuristics */
-	    if (strchr(shaderargs, '=') != NULL &&
-		strchr(shaderargs, '{') == NULL) {
-		struct bu_vls old;
-		bu_vls_init(&old);
+	    if (strchr(shaderargs, '=') != NULL
+		&& strchr(shaderargs, '{') == NULL)
+	    {
+		struct bu_vls old = BU_VLS_INIT_ZERO;
+
 		bu_vls_vlscatzap(&old, &comb->shader);
-		if (bu_shader_to_tcl_list(bu_vls_addr(&old), &comb->shader))
+		if (bu_shader_to_list(bu_vls_addr(&old), &comb->shader))
 		    bu_log("Unable to convert shader string '%s %s'\n", shadername, shaderargs);
 		bu_vls_free(&old);
 	    }
@@ -373,11 +338,6 @@ mk_comb(
 }
 
 
-/**
- * M K _ C O M B 1
- *
- * Convenience interface to make a combination with a single member.
- */
 int
 mk_comb1(struct rt_wdb *wdbp,
 	 const char *combname,
@@ -395,13 +355,6 @@ mk_comb1(struct rt_wdb *wdbp,
 		   0, 0, 0);
 }
 
-
-/**
- * M K _ R E G I O N 1
- *
- * Convenience routine to make a region with shader and rgb possibly
- * set.
- */
 int
 mk_region1(
     struct rt_wdb *wdbp,

@@ -1,7 +1,7 @@
 /*                         D I R 2 A E. C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dir2ae.c
+/** @file libged/dir2ae.c
  *
  * The dir2ae command.
  *
@@ -38,6 +38,7 @@ ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
 {
     fastf_t az, el;
     vect_t dir;
+    double scan[3];
     int iflag;
     static const char *usage = "[-i] x y z";
 
@@ -45,11 +46,11 @@ ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -61,26 +62,28 @@ ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
 	iflag = 0;
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[1], "%lf", &dir[X]) != 1 ||
-	sscanf(argv[2], "%lf", &dir[Y]) != 1 ||
-	sscanf(argv[3], "%lf", &dir[Z]) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (sscanf(argv[1], "%lf", &scan[X]) != 1 ||
+	sscanf(argv[2], "%lf", &scan[Y]) != 1 ||
+	sscanf(argv[3], "%lf", &scan[Z]) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
-
+    /* convert from double to fastf_t */
+    VMOVE(dir, scan);
     AZEL_FROM_V3DIR(az, el, dir);
 
     if (iflag)
 	VSCALE(dir, dir, -1);
 
-    bu_vls_printf(&gedp->ged_result_str, "%lf %lf", az, el);
+    bu_vls_printf(gedp->ged_result_str, "%lf %lf", az, el);
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

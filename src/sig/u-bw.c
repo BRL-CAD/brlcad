@@ -1,7 +1,7 @@
 /*                          U - B W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,41 +28,44 @@
 #include "bio.h"
 
 
-unsigned short ibuf[512];
-unsigned char obuf[512];
-
-int main(int ac, char **av)
+int
+main(int ac, char *av[])
 {
-    int num, i;
+    unsigned short ibuf[512];
+    unsigned char obuf[512];
+
+    size_t num, i;
 
     if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	(void)fprintf(stderr, "Usage: %s < u_shorts > bwfile\n",
-		      *av);
+	fprintf(stderr, "Usage: %s < u_shorts > bwfile\n",
+		*av);
 	return -1;
     }
 
-    if (ac > 1 && *av[1] == '-' && *av[2] == 'l')
-	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0 ) {
+    if (ac > 1 && *av[1] == '-' && *av[2] == 'l') {
+	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0) {
 	    for (i=0; i < num; i++)
 		obuf[i] = (unsigned char)ibuf[i];
 
 	    if (fwrite(&obuf[0], sizeof(*obuf), num, stdout)!=num) {
-		(void)fprintf(stderr, "%s: error writing output\n", *av);
+		fprintf(stderr, "%s: error writing output\n", *av);
 		return -1;
 	    }
 	}
-    else
-	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0 ) {
+    } else {
+	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0) {
 	    for (i=0; i < num; i++)
 		obuf[i] = (unsigned char)(ibuf[i] >> 8);
 
 	    if (fwrite(&obuf[0], sizeof(*obuf), num, stdout)!=num) {
-		(void)fprintf(stderr, "%s: error writing output\n", *av);
+		fprintf(stderr, "%s: error writing output\n", *av);
 		return -1;
 	    }
 	}
+    }
     return 0;
 }
+
 
 /*
  * Local Variables:

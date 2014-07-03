@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2010 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,28 +17,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup mat */
 /** @{ */
-/** @file mat.c
- *
- * @brief
- * 4 x 4 Matrix manipulation functions...
- *
- * Matrix array elements have the following positions in the matrix:
- @code
- *			|  0  1  2  3 |		| 0 |
- *	[ 0 1 2 3 ]	|  4  5  6  7 |		| 1 |
- *			|  8  9 10 11 |		| 2 |
- *			| 12 13 14 15 |		| 3 |
- *
- * preVector (vect_t) Matrix (mat_t) postVector (vect_t)
- @endcode
+/** @file libbn/mat.c
  *
  * TODO: need a better way to control tolerancing, either via
  * additional tolerance parameters or perhaps providing a global
  * tolerance state interface.
  */
-/** @} */
+
 
 #include "common.h"
 
@@ -46,22 +34,17 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "bn.h"
 
 
-const mat_t bn_mat_identity = {
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0,
-    0.0, 0.0, 0.0, 1.0
-};
+const mat_t bn_mat_identity = MAT_INIT_IDN;
 
 
-/**
- *
- */
 void
 bn_mat_print_guts(const char *title,
 		  const mat_t m,
@@ -92,23 +75,17 @@ bn_mat_print_guts(const char *title,
 }
 
 
-/**
- * B N _ M A T _ P R I N T
- */
 void
 bn_mat_print(const char *title,
 	     const mat_t m)
 {
-    char obuf[1024];	/* sprintf may be non-PARALLEL */
+    char obuf[1024];	/* snprintf may be non-PARALLEL */
 
     bn_mat_print_guts(title, m, obuf, 1024);
     bu_log("%s\n", obuf);
 }
 
 
-/**
- * B N _ M A T _ P R I N T _ V L S
- */
 void
 bn_mat_print_vls(const char *title,
 		 const mat_t m,
@@ -121,35 +98,21 @@ bn_mat_print_vls(const char *title,
 }
 
 
-/**
- * B N _ A T A N 2
- *
- * A wrapper for the system atan2().  On the Silicon Graphics, and
- * perhaps on others, x==0 incorrectly returns infinity.
- */
 double
 bn_atan2(double y, double x)
 {
     if (x > -1.0e-20 && x < 1.0e-20) {
 	/* X is equal to zero, check Y */
 	if (y < -1.0e-20)
-	    return -3.14159265358979323/2;
+	    return -M_PI_2;
 	if (y > 1.0e-20)
-	    return 3.14159265358979323/2;
+	    return M_PI_2;
 	return 0.0;
     }
     return atan2(y, x);
 }
 
 
-/**
- * B N _ M A T _ M U L
- *
- * Multiply matrix "a" by "b" and store the result in "o".
- *
- * This is different from multiplying "b" by "a" (most of the time!)
- * Also, "o" must not be the same as either of the inputs.
- */
 void
 bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
 {
@@ -175,14 +138,6 @@ bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
 }
 
 
-/**
- * B N _ M A T _ M U L 2
- *
- * o = i * o
- *
- * A convenience wrapper for bn_mat_mul() to update a matrix in place.
- * The arugment ordering is confusing either way.
- */
 void
 bn_mat_mul2(register const mat_t i, register mat_t o)
 {
@@ -193,14 +148,6 @@ bn_mat_mul2(register const mat_t i, register mat_t o)
 }
 
 
-/**
- * B N _ M A T _ M U L 3
- *
- * o = a * b * c
- *
- * The output matrix may be the same as 'b' or 'c', but may not be
- * 'a'.
- */
 void
 bn_mat_mul3(mat_t o, const mat_t a, const mat_t b, const mat_t c)
 {
@@ -211,13 +158,6 @@ bn_mat_mul3(mat_t o, const mat_t a, const mat_t b, const mat_t c)
 }
 
 
-/**
- * B N _ M A T _ M U L 4
- *
- * o = a * b * c * d
- *
- * The output matrix may be the same as any input matrix.
- */
 void
 bn_mat_mul4(mat_t ao, const mat_t a, const mat_t b, const mat_t c, const mat_t d)
 {
@@ -229,13 +169,6 @@ bn_mat_mul4(mat_t ao, const mat_t a, const mat_t b, const mat_t c, const mat_t d
 }
 
 
-/**
- * B N _ M A T X V E C
- *
- * Multiply the matrix "im" by the vector "iv" and store the result in
- * the vector "ov".  Note this is post-multiply, and operates on
- * 4-tuples.  Use MAT4X3VEC() to operate on 3-tuples.
- */
 void
 bn_matXvec(register vect_t ov, register const mat_t im, register const vect_t iv)
 {
@@ -254,14 +187,6 @@ bn_matXvec(register vect_t ov, register const mat_t im, register const vect_t iv
 }
 
 
-/**
- * B N _ M A T _ I N V
- *
- * The matrix pointed at by "input" is inverted and stored in the area
- * pointed at by "output".
- *
- * Calls bu_bomb if matrix is singular.
- */
 void
 bn_mat_inv(register mat_t output, const mat_t input)
 {
@@ -277,19 +202,6 @@ bn_mat_inv(register mat_t output, const mat_t input)
 }
 
 
-/**
- * B N _ M A T _ I N V E R S E
- *
- * The matrix pointed at by "input" is inverted and stored in the area
- * pointed at by "output".
- *
- * Invert a 4-by-4 matrix using Algorithm 120 from ACM.  This is a
- * modified Gauss-Jordan alogorithm Note: Inversion is done in place,
- * with 3 work vectors
- *
- * @return 1 if OK.
- * @return 0 if matrix is singular.
- */
 int
 bn_mat_inverse(register mat_t output, const mat_t input)
 {
@@ -321,7 +233,7 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 	    }
 	}
 
-	if (NEAR_ZERO(y, SQRT_SMALL_FASTF)) {
+	if (ZERO(y)) {
 	    /* SINGULAR */
 	    return 0;
 	}
@@ -375,12 +287,6 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 }
 
 
-/**
- * B N _ V T O H _ M O V E
- *
- * Takes a pointer to a [x, y, z] vector, and a pointer to space for a
- * homogeneous vector [x, y, z, w], and builds [x, y, z, 1].
- */
 void
 bn_vtoh_move(register vect_t h, register const vect_t v)
 {
@@ -389,24 +295,15 @@ bn_vtoh_move(register vect_t h, register const vect_t v)
 }
 
 
-/**
- * B N _ H T O V _ M O V E
- *
- * Takes a pointer to [x, y, z, w], and converts it to an ordinary
- * vector [x/w, y/w, z/w].  Optimization for the case of w==1 is
- * performed.
- *
- * FIXME: make tolerance configurable
- */
 void
 bn_htov_move(register vect_t v, register const vect_t h)
 {
     register fastf_t inv;
 
-    if (NEAR_ZERO(h[3] - 1.0, SMALL_FASTF)) {
+    if (ZERO(h[3] - 1.0)) {
 	VMOVE(v, h);
     } else {
-	if (NEAR_ZERO(h[W], SMALL_FASTF)) {
+	if (ZERO(h[W])) {
 	    bu_log("bn_htov_move: divide by %f!\n", h[W]);
 	    return;
 	}
@@ -416,9 +313,6 @@ bn_htov_move(register vect_t v, register const vect_t h)
 }
 
 
-/**
- * B N _ M A T _ T R N
- */
 void
 bn_mat_trn(mat_t om, register const mat_t im)
 {
@@ -426,23 +320,14 @@ bn_mat_trn(mat_t om, register const mat_t im)
 }
 
 
-/**
- * B N _ M A T _ A E
- *
- * Compute a 4x4 rotation matrix given Azimuth and Elevation.
- *
- * Azimuth is +X, Elevation is +Z, both in degrees.
- *
- * Formula due to Doug Gwyn, BRL.
- */
 void
 bn_mat_ae(register fastf_t *m, double azimuth, double elev)
 {
     double sin_az, sin_el;
     double cos_az, cos_el;
 
-    azimuth *= bn_degtorad;
-    elev *= bn_degtorad;
+    azimuth *= DEG2RAD;
+    elev *= DEG2RAD;
 
     sin_az = sin(azimuth);
     cos_az = cos(azimuth);
@@ -469,37 +354,22 @@ bn_mat_ae(register fastf_t *m, double azimuth, double elev)
 }
 
 
-/**
- * B N _ A E _ V E C
- *
- * Find the azimuth and elevation angles that correspond to the
- * direction (not including twist) given by a direction vector.
- */
 void
 bn_ae_vec(fastf_t *azp, fastf_t *elp, const vect_t v)
 {
     register fastf_t az;
 
-    if ((az = bn_atan2(v[Y], v[X]) * bn_radtodeg) < 0) {
+    if ((az = bn_atan2(v[Y], v[X]) * RAD2DEG) < 0) {
 	*azp = 360 + az;
     } else if (az >= 360) {
 	*azp = az - 360;
     } else {
 	*azp = az;
     }
-    *elp = bn_atan2(v[Z], hypot(v[X], v[Y])) * bn_radtodeg;
+    *elp = bn_atan2(v[Z], hypot(v[X], v[Y])) * RAD2DEG;
 }
 
 
-/**
- * B N _ A E T _ V E C
- *
- * Find the azimuth, elevation, and twist from two vectors.  Vec_ae is
- * in the direction of view (+z in mged view) and vec_twist points to
- * the viewers right (+x in mged view).  Accuracy (degrees) is used to
- * stabilze flutter between equivalent extremes of atan2(), and to
- * snap twist to zero when elevation is near +/- 90
- */
 void
 bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *vec_twist, fastf_t accuracy)
 {
@@ -509,15 +379,15 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
     /* Get az and el as usual */
     bn_ae_vec(az, el, vec_ae);
 
-    /* stabilize fluctuation bewteen 0 and 360
+    /* stabilize fluctuation between 0 and 360
      * change azimuth near 360 to 0 */
-    if (NEAR_ZERO(*az - 360.0, accuracy))
+    if (NEAR_EQUAL(*az, 360.0, accuracy))
 	*az = 0.0;
 
     /* if elevation is +/-90 set twist to zero and calculate azimuth */
-    if (NEAR_ZERO(*el - 90.0, accuracy) || NEAR_ZERO(*el + 90.0, accuracy)) {
+    if (NEAR_EQUAL(*el, 90.0, accuracy) || NEAR_ZERO(*el + 90.0, accuracy)) {
 	*twist = 0.0;
-	*az = bn_atan2(-vec_twist[X], vec_twist[Y]) * bn_radtodeg;
+	*az = bn_atan2(-vec_twist[X], vec_twist[Y]) * RAD2DEG;
     } else {
 	/* Calculate twist from vec_twist */
 	VSET(z_dir, 0, 0, 1);
@@ -526,20 +396,15 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 	VCROSS(ninety_twist, vec_ae, zero_twist);
 	VUNITIZE(ninety_twist);
 
-	*twist = bn_atan2(VDOT(vec_twist, ninety_twist), VDOT(vec_twist, zero_twist)) * bn_radtodeg;
+	*twist = bn_atan2(VDOT(vec_twist, ninety_twist), VDOT(vec_twist, zero_twist)) * RAD2DEG;
 
 	/* stabilize flutter between +/- 180 */
-	if (NEAR_ZERO(*twist + 180.0, accuracy))
+	if (NEAR_EQUAL(*twist, -180.0, accuracy))
 	    *twist = 180.0;
     }
 }
 
 
-/**
- * B N _ V E C _ A E
- *
- * Find a unit vector from the origin given azimuth and elevation.
- */
 void
 bn_vec_ae(vect_t vect, fastf_t az, fastf_t el)
 {
@@ -552,11 +417,6 @@ bn_vec_ae(vect_t vect, fastf_t az, fastf_t el)
 }
 
 
-/**
- * B N _ V E C _ A E D
- *
- * Find a vector from the origin given azimuth, elevation, and distance.
- */
 void
 bn_vec_aed(vect_t vect, fastf_t az, fastf_t el, fastf_t distance)
 {
@@ -569,18 +429,6 @@ bn_vec_aed(vect_t vect, fastf_t az, fastf_t el, fastf_t distance)
 }
 
 
-/**
- * B N _ M A T _ A N G L E S
- *
- * This routine builds a Homogeneous rotation matrix, given alpha,
- * beta, and gamma as angles of rotation, in degrees.
- *
- * Alpha is angle of rotation about the X axis, and is done third.
- * Beta is angle of rotation about the Y axis, and is done second.
- * Gamma is angle of rotation about Z axis, and is done first.
- *
- * FIXME: make tolerance configurable
- */
 void
 bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double ggamma_in)
 {
@@ -593,29 +441,29 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
 	return;
     }
 
-    alpha = alpha_in * bn_degtorad;
-    beta = beta_in * bn_degtorad;
-    ggamma = ggamma_in * bn_degtorad;
+    alpha = alpha_in * DEG2RAD;
+    beta = beta_in * DEG2RAD;
+    ggamma = ggamma_in * DEG2RAD;
 
     calpha = cos(alpha);
     cbeta = cos(beta);
     cgamma = cos(ggamma);
 
-    /* sine of "180*bn_degtorad" will not be exactly zero and will
+    /* sine of "180*DEG2RAD" will not be exactly zero and will
      * result in errors when some codes try to convert this back to
      * azimuth and elevation.  do_frame() uses this technique!!!
      */
-    if (NEAR_ZERO(alpha_in - 180.0, SMALL_FASTF))
+    if (ZERO(alpha_in - 180.0))
 	salpha = 0.0;
     else
 	salpha = sin(alpha);
 
-    if (NEAR_ZERO(beta_in - 180.0, SMALL_FASTF))
+    if (ZERO(beta_in - 180.0))
 	sbeta = 0.0;
     else
 	sbeta = sin(beta);
 
-    if (NEAR_ZERO(ggamma_in - 180.0, SMALL_FASTF))
+    if (ZERO(ggamma_in - 180.0))
 	sgamma = 0.0;
     else
 	sgamma = sin(ggamma);
@@ -639,18 +487,6 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
 }
 
 
-/**
- * B N _ M A T _ A N G L E S _ R A D
- *
- * This routine builds a Homogeneous rotation matrix, given alpha,
- * beta, and gamma as angles of rotation, in radians.
- *
- * Alpha is angle of rotation about the X axis, and is done third.
- * Beta is angle of rotation about the Y axis, and is done second.
- * Gamma is angle of rotation about Z axis, and is done first.
- *
- * FIXME: make tolerance configurable
- */
 void
 bn_mat_angles_rad(register mat_t mat,
 		  double alpha,
@@ -660,7 +496,7 @@ bn_mat_angles_rad(register mat_t mat,
     double calpha, cbeta, cgamma;
     double salpha, sbeta, sgamma;
 
-    if (NEAR_ZERO(alpha, SMALL_FASTF) && NEAR_ZERO(beta, SMALL_FASTF) && NEAR_ZERO(ggamma, SMALL_FASTF)) {
+    if (ZERO(alpha) && ZERO(beta) && ZERO(ggamma)) {
 	MAT_IDN(mat);
 	return;
     }
@@ -692,16 +528,6 @@ bn_mat_angles_rad(register mat_t mat,
 }
 
 
-/**
- * B N _ E I G E N 2 X 2
- *
- * Find the eigenvalues and eigenvectors of a symmetric 2x2 matrix.
- * (a b)
- * (b c)
- *
- * The eigenvalue with the smallest absolute value is returned in
- * val1, with its eigenvector in vec1.
- */
 void
 bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t a, fastf_t b, fastf_t c)
 {
@@ -746,55 +572,35 @@ bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t 
 }
 
 
-/**
- * B N _ V E C _ P E R P
- *
- * Given a vector, create another vector which is perpendicular to it.
- * The output vector will have unit length only if the input vector
- * did.
- *
- * FIXME: make tolerance configurable
- */
 void
-bn_vec_perp(vect_t new, const vect_t old)
+bn_vec_perp(vect_t new_vec, const vect_t old_vec)
 {
     register int i;
-    vect_t another;	/* Another vector, different */
+    vect_t another_vec;	/* Another vector, different */
 
     i = X;
-    if (fabs(old[Y])<fabs(old[i])) i=Y;
-    if (fabs(old[Z])<fabs(old[i])) i=Z;
-    VSETALL(another, 0);
-    another[i] = 1.0;
-    if (NEAR_ZERO(old[X], SMALL_FASTF) && NEAR_ZERO(old[Y], SMALL_FASTF) && NEAR_ZERO(old[Z], SMALL_FASTF)) {
-	VMOVE(new, another);
+    if (fabs(old_vec[Y])<fabs(old_vec[i])) i=Y;
+    if (fabs(old_vec[Z])<fabs(old_vec[i])) i=Z;
+    VSETALL(another_vec, 0);
+    another_vec[i] = 1.0;
+    if (ZERO(old_vec[X]) && ZERO(old_vec[Y]) && ZERO(old_vec[Z])) {
+	VMOVE(new_vec, another_vec);
     } else {
-	VCROSS(new, another, old);
+	VCROSS(new_vec, another_vec, old_vec);
     }
 }
 
 
-/**
- * B N _ M A T _ F R O M T O
- *
- * Given two vectors, compute a rotation matrix that will transform
- * space by the angle between the two.  There are many candidate
- * matricies.
- *
- * The input 'from' and 'to' vectors need not be unit length.
- * MAT4X3VEC(to, m, from) is the identity that is created.
- *
- * FIXME: make tolerance configurable
- */
 void
-bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
+bn_mat_fromto(mat_t m, const fastf_t *from, const fastf_t *to, const struct bn_tol *tol)
 {
     vect_t test_to;
     vect_t unit_from, unit_to;
     fastf_t dot;
+    point_t origin = VINIT_ZERO;
 
     /**
-     * The method used here is from Graphics Gems, A. Glasner, ed.
+     * The method used here is from Graphics Gems, A. Glassner, ed.
      * page 531, "The Use of Coordinate Frames in Computer Graphics",
      * by Ken Turkowski, Example 6.
      */
@@ -814,15 +620,14 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
      * needed, because the cross product isn't defined.  asin(0.00001)
      * = 0.0005729 degrees (1/2000 degree)
      */
-    dot = VDOT(unit_from, unit_to);
-    if (dot > 1.0 - 0.00001) {
-	/* dot == 1, return identity matrix */
-	MAT_IDN(m);
-	return;
-    }
-    if (dot < -1.0 + 0.00001) {
-	/* dot == -1, select random perpendicular N vector */
-	bn_vec_perp(N, unit_from);
+    if (bn_lseg3_lseg3_parallel(origin, from, origin, to, tol)) {
+	dot = VDOT(from, to);
+	if (dot > SMALL_FASTF) {
+	    MAT_IDN(m);
+	    return;
+	} else {
+	    bn_vec_perp(N, unit_from);
+	}
     } else {
 	VCROSS(N, unit_from, unit_to);
 	VUNITIZE(N);			/* should be unnecessary */
@@ -851,22 +656,14 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
 
     /* Verify that it worked */
     MAT4X3VEC(test_to, m, unit_from);
-    dot = VDOT(unit_to, test_to);
-    if (dot < 0.98 || dot > 1.02) {
+    if (UNLIKELY(!bn_lseg3_lseg3_parallel(origin, unit_to, origin, test_to, tol))) {
+	dot = VDOT(unit_to, test_to);
 	bu_log("bn_mat_fromto() ERROR!  from (%g, %g, %g) to (%g, %g, %g) went to (%g, %g, %g), dot=%g?\n",
-	       V3ARGS(from),
-	       V3ARGS(to),
-	       V3ARGS(test_to), dot);
+	       V3ARGS(from), V3ARGS(to), V3ARGS(test_to), dot);
     }
 }
 
 
-/**
- * B N _ M A T _ X R O T
- *
- * Given the sin and cos of an X rotation angle, produce the rotation
- * matrix.
- */
 void
 bn_mat_xrot(fastf_t *m, double sinx, double cosx)
 {
@@ -890,12 +687,6 @@ bn_mat_xrot(fastf_t *m, double sinx, double cosx)
 }
 
 
-/**
- * B N _ M A T _ Y R O T
- *
- * Given the sin and cos of a Y rotation angle, produce the rotation
- * matrix.
- */
 void
 bn_mat_yrot(fastf_t *m, double siny, double cosy)
 {
@@ -919,12 +710,6 @@ bn_mat_yrot(fastf_t *m, double siny, double cosy)
 }
 
 
-/**
- * B N _ M A T _ Z R O T
- *
- * Given the sin and cos of a Z rotation angle, produce the rotation
- * matrix.
- */
 void
 bn_mat_zrot(fastf_t *m, double sinz, double cosz)
 {
@@ -948,28 +733,6 @@ bn_mat_zrot(fastf_t *m, double sinz, double cosz)
 }
 
 
-/**
- * B N _ M A T _ L O O K A T
- *
- * Given a direction vector D of unit length, product a matrix which
- * rotates that vector D onto the -Z axis.  This matrix will be
- * suitable for use as a "model2view" matrix.
- *
- * XXX This routine will fail if the vector is already more or less
- * aligned with the Z axis.
- *
- * This is done in several steps.
- *
- @code
- 1) Rotate D about Z to match +X axis.  Azimuth adjustment.
- 2) Rotate D about Y to match -Y axis.  Elevation adjustment.
- 3) Rotate D about Z to make projection of X axis again point
- in the +X direction.  Twist adjustment.
- 4) Optionally, flip sign on Y axis if original Z becomes inverted.
- This can be nice for static frames, but is astonishing when
- used in animation.
- @endcode
-*/
 void
 bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
 {
@@ -1025,15 +788,6 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
 }
 
 
-/**
- * B N _ V E C _ O R T H O
- *
- * Given a vector, create another vector which is perpendicular to it,
- * and with unit length.  This algorithm taken from Gift's arvec.f; a
- * faster algorithm may be possible.
- *
- * FIXME: make tolerance configurable
- */
 void
 bn_vec_ortho(register vect_t out, register const vect_t in)
 {
@@ -1041,8 +795,8 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     register fastf_t f;
     register int i;
 
-    if (NEAR_ZERO(MAGSQ(in), SQRT_SMALL_FASTF)) {
-	bu_log("bn_vec_ortho(): zero magnitude input vector %lf %lf %lf\n", V3ARGS(in));
+    if (UNLIKELY(NEAR_ZERO(MAGSQ(in), SQRT_SMALL_FASTF))) {
+	bu_log("bn_vec_ortho(): zero magnitude input vector %g %g %g\n", V3ARGS(in));
 	VSETALL(out, 0);
 	return;
     }
@@ -1064,8 +818,8 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
 	k = Y;
     }
     f = hypot(in[j], in[k]);
-    if (NEAR_ZERO(f, SMALL_FASTF)) {
-	bu_log("bn_vec_ortho(): zero hypot on %lf %lf %lf\n", V3ARGS(in));
+    if (UNLIKELY(ZERO(f))) {
+	bu_log("bn_vec_ortho(): zero hypot on %g %g %g\n", V3ARGS(in));
 	VSETALL(out, 0);
 	return;
     }
@@ -1078,16 +832,6 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
 }
 
 
-/**
- * B N _ M A T _ S C A L E _ A B O U T _ P T
- *
- * Build a matrix to scale uniformly around a given point.
- *
- * @return -1 if scale is too small.
- * @return  0 if OK.
- *
- * FIXME: make tolerance configurable
- */
 int
 bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
 {
@@ -1099,7 +843,7 @@ bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
     MAT_DELTAS_VEC_NEG(xlate, pt);
 
     MAT_IDN(s);
-    if (NEAR_ZERO(scale, SMALL)) {
+    if (ZERO(scale)) {
 	MAT_ZERO(mat);
 	return -1;			/* ERROR */
     }
@@ -1113,12 +857,6 @@ bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
 }
 
 
-/**
- * B N _ M A T _ X F O R M _ A B O U T _ P T
- *
- * Build a matrix to apply arbitary 4x4 transformation around a given
- * point.
- */
 void
 bn_mat_xform_about_pt(mat_t mat, const mat_t xform, const point_t pt)
 {
@@ -1135,12 +873,6 @@ bn_mat_xform_about_pt(mat_t mat, const mat_t xform, const point_t pt)
 }
 
 
-/**
- * B N _ M A T _ I S _ E Q U A L
- *
- * @return 0 When matrices are not equal
- * @return 1 When matricies are equal
- */
 int
 bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
 {
@@ -1186,19 +918,6 @@ bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
 }
 
 
-/**
- * B N _ M A T _ I S _ I D E N T I T Y
- *
- * This routine is intended for detecting identity matricies read in
- * from ascii or binary files, where the numbers are pure ones or
- * zeros.  This routine is *not* intended for tolerance-based
- * "near-zero" comparisons; as such, it shouldn't be used on matrices
- * which are the result of calculation.
- *
- *
- * @return 0 non-identity
- * @return 1 a perfect identity matrix
- */
 int
 bn_mat_is_identity(const mat_t m)
 {
@@ -1206,15 +925,6 @@ bn_mat_is_identity(const mat_t m)
 }
 
 
-/**
- * B N _ M A T _ A R B _ R O T
- *
- * Construct a transformation matrix for rotation about an arbitrary
- * axis.  The axis is defined by a point (pt) and a unit direction
- * vector (dir).  The angle of rotation is "ang"
- *
- * FIXME: make tolerance configurable
- */
 void
 bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
 {
@@ -1223,7 +933,7 @@ bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
     double n1_sq, n2_sq, n3_sq;
     double n1_n2, n1_n3, n2_n3;
 
-    if (NEAR_ZERO(ang, SMALL_FASTF)) {
+    if (ZERO(ang)) {
 	MAT_IDN(m);
 	return;
     }
@@ -1270,34 +980,18 @@ bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
 }
 
 
-/**
- * B N _ M A T _ D U P
- *
- * Return a pointer to a copy of the matrix in dynamically allocated
- * memory.
- */
 matp_t
 bn_mat_dup(const mat_t in)
 {
-    matp_t out;
+    mat_t *out;
 
-    out = (matp_t) bu_malloc(sizeof(mat_t), "bn_mat_dup");
-    memcpy((char *)out, (const char *)in, sizeof(mat_t));
-    return out;
+    BU_ALLOC(out, mat_t);
+    MAT_COPY(*out, in);
+
+    return (matp_t)out;
 }
 
 
-/**
- * B N _ M A T _ C K
- *
- * Check to ensure that a rotation matrix preserves axis
- * perpendicularily.  Note that not all matricies are rotation
- * matricies.
- *
- *
- * @return -1 FAIL
- * @return  0 OK
- */
 int
 bn_mat_ck(const char *title, const mat_t m)
 {
@@ -1319,8 +1013,8 @@ bn_mat_ck(const char *title, const mat_t m)
     fz = VDOT(A, C);
 
     /* NOTE: this tolerance cannot be any more tight than 0.00001 due
-     * to default calculation tolernacing used by models.  Matrices
-     * exported to disk outside of tolerance and will fail import if
+     * to default calculation tolerancing used by models.  Matrices
+     * exported to disk outside of tolerance will fail import if
      * set too restrictive.
      */
     if (!NEAR_ZERO(fx, 0.00001)
@@ -1343,12 +1037,6 @@ bn_mat_ck(const char *title, const mat_t m)
 }
 
 
-/**
- * B N _ M A T _ D E T 3
- *
- * Calculates the determinant of the 3X3 "rotation" part of the passed
- * matrix.
- */
 fastf_t
 bn_mat_det3(const mat_t m)
 {
@@ -1362,11 +1050,6 @@ bn_mat_det3(const mat_t m)
 }
 
 
-/**
- * B N _ M A T _ D E T E R M I N A N T
- *
- * Calculates the determinant of the 4X4 matrix
- */
 fastf_t
 bn_mat_determinant(const mat_t m)
 {
@@ -1396,11 +1079,6 @@ bn_mat_determinant(const mat_t m)
 }
 
 
-/**
- * B N _ M A T _ I S _ N O N _ U N I F
- *
- * FIXME: make tolerance configurable
- */
 int
 bn_mat_is_non_unif (const mat_t m)
 {
@@ -1416,22 +1094,15 @@ bn_mat_is_non_unif (const mat_t m)
 	return 1;
     }
 
-    if (!NEAR_ZERO(m[12], SMALL_FASTF) || !NEAR_ZERO(m[13], SMALL_FASTF) || !NEAR_ZERO(m[14], SMALL_FASTF))
+    if (!ZERO(m[12]) || !ZERO(m[13]) || !ZERO(m[14]))
 	return 2;
 
     return 0;
 }
 
 
-/**
- * B N _ W R T _ P O I N T _ D I R E C
- *
- * Given a model-space transformation matrix "change",
- * return a matrix which applies the change with-respect-to
- * given "point" and "direc".
- */
 void
-bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc)
+bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc, const struct bn_tol *tol)
 {
     static mat_t t1;
     static mat_t pt_to_origin, origin_to_pt;
@@ -1448,7 +1119,7 @@ bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t 
 
     /* build "direc to zaxis" matrix */
     VSET(zaxis, 0.0, 0.0, 1.0);
-    bn_mat_fromto(d_to_zaxis, direc, zaxis);
+    bn_mat_fromto(d_to_zaxis, direc, zaxis, tol);
 
     /* build "zaxis to direc" matrix */
     bn_mat_inv(zaxis_to_d, d_to_zaxis);

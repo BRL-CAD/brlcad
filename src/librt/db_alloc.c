@@ -1,7 +1,7 @@
 /*                      D B _ A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup db4 */
 /** @{ */
-/** @file db_alloc.c
+/** @file librt/db_alloc.c
  *
  * v4 granule allocation routines
  *
@@ -37,8 +37,6 @@
 
 
 /**
- * D B _ A L L O C
- *
  * Find a block of database storage of "count" granules.
  *
  * Returns:
@@ -53,8 +51,8 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_alloc(%s) x%x, x%x, count=%d\n",
-				    dp->d_namep, dbip, dp, count);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_alloc(%s) %p, %p, count=%zu\n",
+				    dp->d_namep, (void *)dbip, (void *)dp, count);
     if (count <= 0) {
 	bu_log("db_alloc(0)\n");
 	return -1;
@@ -105,8 +103,6 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 
 
 /**
- * D B _ D E L R E C
- *
  * Delete a specific record from database entry
  * No longer supported.
  */
@@ -116,8 +112,8 @@ db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_delrec(%s) x%x, x%x, recnum=%d\n",
-				    dp->d_namep, dbip, dp, recnum);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_delrec(%s) %p, %p, recnum=%d\n",
+				    dp->d_namep, (void *)dbip, (void *)dp, recnum);
 
     bu_log("ERROR db_delrec() is no longer supported.  Use combination import/export routines.\n");
     return -1;
@@ -125,10 +121,8 @@ db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
 
 
 /**
- * D B _ D E L E T E
- *
  * Delete the indicated database record(s).
- * Arrange to write "free storage" database markers in it's place,
+ * Arrange to write "free storage" database markers in its place,
  * positively erasing what had been there before.
  *
  * Returns:
@@ -142,8 +136,8 @@ db_delete(struct db_i *dbip, struct directory *dp)
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_delete(%s) x%x, x%x\n",
-				    dp->d_namep, dbip, dp);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_delete(%s) %p, %p\n",
+				    dp->d_namep, (void *)dbip, (void *)dp);
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	bu_free(dp->d_un.ptr, "db_delete d_un.ptr");
@@ -152,10 +146,10 @@ db_delete(struct db_i *dbip, struct directory *dp)
 	return 0;
     }
 
-    if (dbip->dbi_version == 4) {
+    if (db_version(dbip) == 4) {
 	i = db_zapper(dbip, dp, 0);
 	rt_memfree(&(dbip->dbi_freep), (unsigned)dp->d_len, dp->d_addr/(sizeof(union record)));
-    } else if (dbip->dbi_version == 5) {
+    } else if (db_version(dbip) == 5) {
 	i = db5_write_free(dbip, dp, dp->d_len);
 	rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
     } else {
@@ -169,8 +163,6 @@ db_delete(struct db_i *dbip, struct directory *dp)
 
 
 /**
- * D B _ Z A P P E R
- *
  * Using a single call to db_put(), write multiple zeroed records out,
  * all with u_id field set to ID_FREE.
  * This will zap all records from "start" to the end of this entry.
@@ -189,8 +181,8 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_zapper(%s) x%x, x%x, start=%d\n",
-				    dp->d_namep, dbip, dp, start);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_zapper(%s) %p, %p, start=%zu\n",
+				    dp->d_namep, (void *)dbip, (void *)dp, start);
 
     if (dp->d_flags & RT_DIR_INMEM) bu_bomb("db_zapper() called on RT_DIR_INMEM object\n");
 
@@ -214,6 +206,61 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
     bu_free((char *)rp, "db_zapper buf");
     return ret;
 }
+
+
+void
+db_alloc_directory_block(struct resource *resp)
+{
+    struct directory *dp;
+    size_t bytes;
+
+    RT_CK_RESOURCE(resp);
+    BU_CK_PTBL(&resp->re_directory_blocks);
+
+    BU_ASSERT_PTR(resp->re_directory_hd, ==, NULL);
+
+    /* Get a BIG block */
+    bytes = (size_t)bu_malloc_len_roundup(1024*sizeof(struct directory));
+    dp = (struct directory *)bu_calloc(1, bytes, "re_directory_blocks from db_alloc_directory_block() " BU_FLSTR);
+
+    /* Record storage for later */
+    bu_ptbl_ins(&resp->re_directory_blocks, (long *)dp);
+
+    while (bytes >= sizeof(struct directory)) {
+	dp->d_magic = RT_DIR_MAGIC;
+	dp->d_forw = resp->re_directory_hd;
+	resp->re_directory_hd = dp;
+	dp++;
+	bytes -= sizeof(struct directory);
+    }
+}
+
+
+void
+rt_alloc_seg_block(register struct resource *res)
+{
+    register struct seg *sp;
+    size_t bytes;
+
+    RT_CK_RESOURCE(res);
+
+    if (!BU_LIST_IS_INITIALIZED(&res->re_seg)) {
+	BU_LIST_INIT(&(res->re_seg));
+	bu_ptbl_init(&res->re_seg_blocks, 64, "re_seg_blocks ptbl");
+    }
+    bytes = bu_malloc_len_roundup(64*sizeof(struct seg));
+    sp = (struct seg *)bu_malloc(bytes, "rt_alloc_seg_block()");
+    bu_ptbl_ins(&res->re_seg_blocks, (long *)sp);
+    while (bytes >= sizeof(struct seg)) {
+	sp->l.magic = RT_SEG_MAGIC;
+	BU_LIST_INSERT(&(res->re_seg), &(sp->l));
+	res->re_seglen++;
+	sp++;
+	bytes -= sizeof(struct seg);
+    }
+}
+
+
 /** @} */
 
 /*

@@ -1,7 +1,7 @@
 /*                       F B L A B E L . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,8 +33,8 @@
 
 #include "bu.h"
 #include "fb.h"
-#include "vfont-if.h"
 #include "pkg.h"
+
 
 #define FONTBUFSZ 200
 
@@ -44,7 +44,7 @@ static char *font1 = NULL;
 FBIO *fbp;
 
 static char usage[] = "\
-Usage: fblabel [-h -c -a] [-F framebuffer] [-C r/g/b]\n\
+Usage: fblabel [-c -a] [-F framebuffer] [-C r/g/b]\n\
 	[-S scr_squaresize] [-W scr_width] [-N scr_height]\n\
 	[-f fontstring] xpos ypos textstring\n";
 
@@ -63,9 +63,8 @@ static RGBpixel pixcolor;
 static int xpos;
 static int ypos;
 static char *textstring;
-static int debug;
-static int alias_off;
-
+static int debug = 0;
+static int alias_off = 0;
 
 /*
  * squash - Filter super-sampled image for one scan line
@@ -113,7 +112,7 @@ squash(int *buf0, int *buf1, int *buf2, float *ret_buf, int n)
 }
 
 
-/* b i t x ()
+/*
    Extract a bit field from a bit string.
 */
 int
@@ -129,8 +128,7 @@ bitx(char *bitstring, int posn)
 }
 
 
-/* f i l l _ b u f ()
- *
+/*
  Fills in the buffer by reading a row of a bitmap from the character
  font file.  The file pointer is assumed to be in the correct
  position.
@@ -290,17 +288,13 @@ get_args(int argc, char **argv)
     pixcolor[GRN]  = 255;
     pixcolor[BLU]  = 255;
 
-    while ((c = bu_getopt(argc, argv, "adhcF:f:r:g:b:C:s:S:w:W:n:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "adcF:f:r:g:b:C:s:S:w:W:n:N:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		alias_off = 1;
 		break;
 	    case 'd':
 		debug = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		scr_height = scr_width = 1024;
 		break;
 	    case 's':
 	    case 'S':
@@ -337,7 +331,7 @@ get_args(int argc, char **argv)
 		}
 	    }
 		break;
-		/* backword compatability */
+		/* backward compatibility */
 	    case 'r':
 		pixcolor[RED] = atoi(bu_optarg);
 		break;
@@ -357,10 +351,10 @@ get_args(int argc, char **argv)
     xpos = atoi(argv[bu_optind++]);
     ypos = atoi(argv[bu_optind++]);
     textstring = argv[bu_optind++];
-    if (debug) (void)fprintf(stderr, "fblabel %d %d %s\n", xpos, ypos, textstring);
+    if (debug) fprintf(stderr, "fblabel %d %d %s\n", xpos, ypos, textstring);
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "fblabel: excess argument(s) ignored\n");
+	fprintf(stderr, "fblabel: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -370,6 +364,8 @@ int
 main(int argc, char **argv)
 {
     struct vfont *vfp;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	fputs(usage, stderr);
@@ -394,6 +390,8 @@ main(int argc, char **argv)
     do_line(vfp, textstring);
 
     fb_close(fbp);
+    vfont_free(vfp);
+
     return 0;
 }
 

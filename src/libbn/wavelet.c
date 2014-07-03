@@ -1,7 +1,7 @@
 /*                       W A V E L E T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,16 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup wavelet */
 /** @{ */
-/** @file wavelet.c
+/** @file libbn/wavelet.c
  *
  * @brief
  *  This is a standard wavelet library that takes a given data buffer of some data
  *  type and then performs a wavelet transform on that data.
  *
  * The transform
- *  operations available are to either decompose or reconstruct a signal into it's
+ *  operations available are to either decompose or reconstruct a signal into its
  *  corresponding wavelet form based on the haar wavelet.
  *
  *  Wavelet decompose/reconstruct operations
@@ -81,7 +82,7 @@
  *
  *  Rather than define all of these routines explicitly, we define
  *  2 macros "decompose" and "reconstruct" which embody the structure of
- *  the function (which is common to all of them).  We then instatiate
+ *  the function (which is common to all of them).  We then instantiate
  *  these macros once for each of the data types.  It's ugly, but it
  *  assures that a change to the structure of one operation type
  *  (decompose or reconstruct) occurs for all data types.
@@ -145,12 +146,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "bn.h"
 
 /**
- * This source file uses C-styple "templates" where functions specific
+ * This source file uses C-style "templates" where functions specific
  * to a set of specified data types are automatically
  * declared/provided via one single macro implementation.
  */
@@ -218,7 +220,7 @@
 	}								\
 									\
 	if (do_free)							\
-	    bu_free( (genptr_t)tbuffer, "1d wavelet buffer");		\
+	    bu_free( (void *)tbuffer, "1d wavelet buffer");		\
     }
 
 
@@ -291,7 +293,7 @@
 	}								\
 									\
 	if (do_free)							\
-	    bu_free( (genptr_t)tbuffer,					\
+	    bu_free( (void *)tbuffer,					\
 		     "1d wavelet reconstruct tmp buffer");		\
     }
 
@@ -483,7 +485,7 @@ make_wlt_haar_1d_reconstruct(long)
 		/* reconstruct row y */					\
 									\
 		/* copy "average" row to tbuf and set pointer to	\
-		 * begining of "detail"					\
+		 * beginning of "detail"				\
 		 */							\
 		d = img_size * channels;				\
 		row_start = y*row_len;					\

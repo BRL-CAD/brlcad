@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,43 +17,43 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged.h
+/** @file mged/mged.h
  *
  * This file contains all of the definitions local to MGED
  *
  * V E R Y   I M P O R T A N T   N O T I C E ! ! !
  *
  * Many people in the computer graphics field use post-multiplication,
- * (thanks to Newman and Sproull) with row vectors, ie:
+ * (thanks to Newman and Sproull) with row vectors, i.e.:
  *
  *	view_vec = model_vec * T
  *
  * However, in the GED system, the more traditional representation of
  * column vectors is used (ref: Gwyn).  Therefore, when transforming a
- * vector by a matrix, pre-multiplication is used, ie:
+ * vector by a matrix, pre-multiplication is used, i.e.:
  *
  *	view_vec = model2view_mat * model_vec
  *
- * Furthermore, additional transformations are multiplied on the left, ie:
+ * Furthermore, additional transformations are multiplied on the left, i.e.:
  *
  *	vec'  =  T1 * vec
  *	vec'' =  T2 * T1 * vec  =  T2 * vec'
  *
  * The most notable implication of this is the location of the
- * "delta" (translation) values in the matrix, ie:
+ * "delta" (translation) values in the matrix, i.e.:
  *
- *       x'     (R0   R1   R2   Dx) x
- *       y' =  (R4   R5   R6   Dy)  *  y
- *       z'    (R8   R9   R10  Dz) z
- *       w'     (0    0    0   1/s) w
+ *       x'     (R0   R1   R2   Dx)     (x)
+ *       y' =   (R4   R5   R6   Dy)  X  (y)
+ *       z'     (R8   R9   R10  Dz)     (z)
+ *       w'     (0    0    0   1/s)     (w)
  *
  * This of course requires that the rotation portion be computed
  * using somewhat different formulas (see buildHrot for both kinds).
  *
  */
 
-#ifndef __MGED_H__
-#define __MGED_H__
+#ifndef MGED_MGED_H
+#define MGED_MGED_H
 
 #include "common.h"
 
@@ -63,6 +63,7 @@
 #include <time.h>
 
 #include "tcl.h"
+#include "bu/parallel.h"
 #include "wdb.h"
 #include "dg.h"
 
@@ -109,7 +110,7 @@ extern double mged_rel_tol; /* rel surface tolerance */
 extern double mged_nrm_tol; /* surface normal tolerance */
 
 extern struct bn_tol mged_tol;  /* calculation tolerance */
-extern struct rt_tess_tol mged_ttol; /* XXX needs to replace mged_abs_tol, et.al. */
+extern struct rt_tess_tol mged_ttol; /* XXX needs to replace mged_abs_tol, et al. */
 
 
 /* default region codes defined in mover.c */
@@ -219,17 +220,17 @@ extern struct directory **dir_getspace();
 extern void ellipse();
 
 /* mged.c */
-extern void mged_view_callback(struct ged_view *gvp, genptr_t clientData);
+extern void mged_view_callback(struct ged_view *gvp, void *clientData);
 
 /* buttons.c */
-BU_EXTERN(void button, (int bnum));
-BU_EXTERN(void press, (char *str));
-BU_EXTERN(char *label_button, (int bnum));
-BU_EXTERN(int not_state, (int desired, char *str));
-BU_EXTERN(int chg_state, (int from, int to, char *str));
-BU_EXTERN(void state_err, (char *str));
+extern void button(int bnum);
+extern void press(char *str);
+extern char *label_button(int bnum);
+extern int not_state(int desired, char *str);
+extern int chg_state(int from, int to, char *str);
+extern void state_err(char *str);
 
-BU_EXTERN(int invoke_db_wrapper, (Tcl_Interp *interpreter, int argc, const char *argv[]));
+extern int invoke_db_wrapper(Tcl_Interp *interpreter, int argc, const char *argv[]);
 
 /* history.c */
 void history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status); /* Either CMD_OK or CMD_BAD */
@@ -273,26 +274,26 @@ extern char *state_str[]; /* identifying strings */
 
 /* Cloned mged macros for use in Tcl/Tk */
 #define TCL_READ_ERR {\
-	  Tcl_AppendResult(INTERP, "Database read error, aborting\n", (char *)NULL);\
-	}
+	Tcl_AppendResult(INTERP, "Database read error, aborting\n", (char *)NULL);\
+    }
 
 #define TCL_READ_ERR_return {\
-	  TCL_READ_ERR;\
-	  return TCL_ERROR;\
-	}
+	TCL_READ_ERR;\
+	return TCL_ERROR;\
+    }
 
 #define TCL_WRITE_ERR { \
-	  Tcl_AppendResult(INTERP, "Database write error, aborting.\n", (char *)NULL);\
-	  TCL_ERROR_RECOVERY_SUGGESTION; }
+	Tcl_AppendResult(INTERP, "Database write error, aborting.\n", (char *)NULL);\
+	TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_WRITE_ERR_return { \
-	  TCL_WRITE_ERR; \
-	  return TCL_ERROR; }
+	TCL_WRITE_ERR; \
+	return TCL_ERROR; }
 
 #define TCL_ALLOC_ERR { \
-	  Tcl_AppendResult(INTERP, "\
-An error has occured while adding a new object to the database.\n", (char *)NULL); \
-	  TCL_ERROR_RECOVERY_SUGGESTION; }
+	Tcl_AppendResult(INTERP, "\
+An error has occurred while adding a new object to the database.\n", (char *)NULL); \
+	TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_ALLOC_ERR_return { \
 	TCL_ALLOC_ERR; \
@@ -301,7 +302,7 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 /* For errors from db_delete() or db_dirdelete() */
 #define TCL_DELETE_ERR(_name) { \
 	Tcl_AppendResult(INTERP, "An error has occurred while deleting '", _name, \
-	"' from the database.\n", (char *)NULL);\
+			 "' from the database.\n", (char *)NULL);\
 	TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_DELETE_ERR_return(_name) {  \
@@ -310,7 +311,7 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 
 /* A verbose message to attempt to soothe and advise the user */
 #define TCL_ERROR_RECOVERY_SUGGESTION\
-	Tcl_AppendResult(INTERP, "\
+    Tcl_AppendResult(INTERP, "\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
@@ -327,7 +328,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
  */
 /* For errors from db_get() or db_getmrec() */
 #define READ_ERR { \
-	(void)printf("Database read error, aborting\n"); }
+	printf("Database read error, aborting\n"); }
 
 #define READ_ERR_return { \
 	READ_ERR; \
@@ -335,7 +336,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 
 /* For errors from db_put() */
 #define WRITE_ERR { \
-	(void)printf("Database write error, aborting.\n"); \
+	printf("Database write error, aborting.\n"); \
 	ERROR_RECOVERY_SUGGESTION; }
 
 #define WRITE_ERR_return { \
@@ -344,8 +345,8 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 
 /* For errors from db_diradd() or db_alloc() */
 #define ALLOC_ERR { \
-	(void)printf("\
-An error has occured while adding a new object to the database.\n"); \
+	printf("\
+An error has occurred while adding a new object to the database.\n"); \
 	ERROR_RECOVERY_SUGGESTION; }
 
 #define ALLOC_ERR_return { \
@@ -354,7 +355,7 @@ An error has occured while adding a new object to the database.\n"); \
 
 /* For errors from db_delete() or db_dirdelete() */
 #define DELETE_ERR(_name) { \
-	(void)printf("\
+	printf("\
 An error has occurred while deleting '%s' from the database.\n", _name); \
 	ERROR_RECOVERY_SUGGESTION; }
 
@@ -364,24 +365,24 @@ An error has occurred while deleting '%s' from the database.\n", _name); \
 
 /* A verbose message to attempt to soothe and advise the user */
 #define ERROR_RECOVERY_SUGGESTION	\
-	(void)printf("\
+    printf("\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 /* Check if database pointer is NULL */
 #define CHECK_DBI_NULL \
-	if (dbip == DBI_NULL) { \
-		Tcl_AppendResult(INTERP, "A database is not open!\n", (char *)NULL); \
-		return TCL_ERROR; \
-	}
+    if (dbip == DBI_NULL) { \
+	Tcl_AppendResult(INTERP, "A database is not open!\n", (char *)NULL); \
+	return TCL_ERROR; \
+    }
 
 /* Check if the database is read only, and if so return TCL_ERROR */
 #define CHECK_READ_ONLY	\
-	if (dbip->dbi_read_only) { \
-		Tcl_AppendResult(INTERP, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
-		return TCL_ERROR; \
-	}
+    if (dbip->dbi_read_only) { \
+	Tcl_AppendResult(INTERP, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
+	return TCL_ERROR; \
+    }
 
 
 #define FUNTAB_UNLIMITED -1
@@ -444,6 +445,9 @@ int is_dm_null(void);
 int mged_attach(struct w_dm *wp, int argc, const char *argv[]);
 void mged_link_vars(struct dm_list *p);
 void mged_slider_free_vls(struct dm_list *p);
+int gui_setup(const char *dstr);
+int gui_output(void *clientData, void *str);
+
 
 /* buttons.c */
 void btn_head_menu(int i, int menu, int item);
@@ -474,9 +478,9 @@ int mged_cmd(int argc, const char *argv[], struct funtab in_functions[]);
 void mged_print_result(int status);
 
 /* color_scheme.c */
-void cs_set_bg(void);
-void cs_update(void);
-void cs_set_dirty_flag(void);
+void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *);
+void cs_update(const struct bu_structparse *, const char *, void *, const char *);
+void cs_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *);
 
 /* columns.c */
 void vls_col_item(struct bu_vls *str, const char *cp);
@@ -504,20 +508,19 @@ int cmd_killtree(
 void cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
 int drawtrees(int argc, const char *argv[], int kind);
 int invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy);
-void pathHmat(struct solid *sp, matp_t matp, int depth);
 int replot_modified_solid(struct solid *sp, struct rt_db_internal *ip, const mat_t mat);
 int replot_original_solid(struct solid *sp);
 void add_solid_path_to_result(Tcl_Interp *interpreter, struct solid *sp);
+int redraw_visible_objects(void);
 
 /* dozoom.c */
 void createDList(struct solid *sp);
 void createDLists(struct bu_list *hdlp);
-void createDListALL(struct solid *sp);
+void createDListAll(struct solid *sp);
 void freeDListsAll(unsigned int dlist, int range);
 
 /* edarb.c */
 int editarb(vect_t pos_model);
-int mv_edge(vect_t thru, int bp1, int bp2, int end1, int end2, const vect_t dir);
 extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */
@@ -569,10 +572,10 @@ void zoom_rect_area(void);
 void paint_rect_area(void);
 void rt_rect_area(void);
 void draw_rect(void);
-void set_rect(void);
+void set_rect(const struct bu_structparse *, const char *, void *, const char *);
 void rect_view2image(void);
 void rect_image2view(void);
-void rb_set_dirty_flag(void);
+void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *);
 
 
 /* track.c */
@@ -580,7 +583,7 @@ int wrobj(char name[], int flags);
 
 /* edsol.c */
 extern int inpara;	/* parameter input from keyboard flag */
-void vls_solid(struct bu_vls *vp, const struct rt_db_internal *ip, const mat_t mat);
+void vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
 void transform_editing_solid(
     struct rt_db_internal *os,		/* output solid */
     const mat_t mat,
@@ -620,7 +623,7 @@ int epain(struct rt_db_internal *ip, fastf_t thick[2]);
 int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
 
 /* set.c */
-extern void set_scroll_private(void);
+extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *);
 extern void mged_variable_setup(Tcl_Interp *interpreter);
 
 /* scroll.c */
@@ -654,7 +657,8 @@ void color_soltab(void);
 /* utility1.c */
 int editit(const char *command, const char *tempfile);
 
-#endif  /* __GED_H__ */
+
+#endif  /* MGED_MGED_H */
 
 /*
  * Local Variables:

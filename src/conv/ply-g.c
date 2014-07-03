@@ -1,7 +1,7 @@
 /*                         P L Y - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file ply-g.c
+/** @file conv/ply-g.c
  *
  */
 
@@ -231,7 +231,8 @@ get_double( int type )
     unsigned int val_uint;
     float val_float;
     double val_double;
-    double val;
+    double val = 0.0;
+    double ret = 0.0;
 
     if ( ply_file_type == PLY_ASCII ) {
 	switch ( type ) {
@@ -296,12 +297,8 @@ get_double( int type )
 		    buf2[0] = buf1[0];
 		    break;
 		case 2:
-#if 1
 		    buf2[0] = buf1[1];
 		    buf2[1] = buf1[0];
-#else
-		    swab( buf1, buf2, 2 );
-#endif
 		    break;
 		case 4:
 		    lswap4( (unsigned int *)buf1, (unsigned int *)buf2 );
@@ -345,7 +342,9 @@ get_double( int type )
 	}
     }
 
-    return val*scale_factor;
+    /* casts for coverity overflow clarity */
+    ret = (double)val * (double)scale_factor;
+    return ret;
 }
 
 int
@@ -355,8 +354,7 @@ get_int( int type )
     int val_int;
     unsigned int val_uint;
     double val_double;
-    int val;
-
+    int val = 0;
 
     if ( ply_file_type == PLY_ASCII ) {
 	switch ( type ) {
@@ -381,7 +379,7 @@ get_int( int type )
 		if ( fscanf( ply_fp, "%lf", &val_double ) != 1 ) {
 		    bu_exit(1, "ERROR parsing data\n" );
 		}
-		val = val_double;
+		val = lrint(floor(val_double));
 		break;
 	}
     } else {
@@ -396,12 +394,8 @@ get_int( int type )
 		    buf2[0] = buf1[0];
 		    break;
 		case 2:
-#if 1
 		    buf2[0] = buf1[1];
 		    buf2[1] = buf1[0];
-#else
-		    swab( buf1, buf2, 2 );
-#endif
 		    break;
 		case 4:
 		    lswap4( (unsigned int *)buf1, (unsigned int *)buf2 );
@@ -458,7 +452,7 @@ new_element(char *str)
 	bu_log( "Creating a new element structure\n" );
     }
 
-    ptr = (struct element *)bu_calloc( 1, sizeof( struct element ), "element" );
+    BU_ALLOC(ptr, struct element);
 
     if ( root ) {
 	struct element *ptr2;
@@ -483,10 +477,10 @@ new_element(char *str)
 	return (struct element *)NULL;
     }
 
-    if ( !strncmp( c, "vertex", 6 ) ) {
+    if ( !bu_strncmp( c, "vertex", 6 ) ) {
 	/* this is a vertex element */
 	ptr->type = ELEMENT_VERTEX;
-    } else if ( !strncmp( c, "face", 4 ) ) {
+    } else if ( !bu_strncmp( c, "face", 4 ) ) {
 	/* this ia a face element */
 	ptr->type = ELEMENT_FACE;
     } else {
@@ -514,14 +508,14 @@ get_property( struct element *ptr )
     int i;
 
     if ( !ptr->props ) {
-	ptr->props = (struct prop *)bu_calloc( 1, sizeof( struct prop ), "property" );
+	BU_ALLOC(ptr->props, struct prop);
 	p = ptr->props;
     } else {
 	p = ptr->props;
 	while ( p->next ) {
 	    p = p->next;
 	}
-	p->next = (struct prop *)bu_calloc( 1, sizeof( struct prop ), "property" );
+	BU_ALLOC(p->next, struct prop);
 	p = p->next;
     }
 
@@ -529,7 +523,7 @@ get_property( struct element *ptr )
 
     c = strtok( tmp_buf, " \t" );
     if ( c ) {
-	if ( strcmp( c, "property" ) ) {
+	if ( !BU_STR_EQUAL( c, "property" ) ) {
 	    bu_exit(1, "get_property called for non-property, line = %s\n", line );
 	}
     } else {
@@ -541,7 +535,7 @@ get_property( struct element *ptr )
 	bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
     }
 
-    if ( !strcmp( c, "list" ) ) {
+    if ( BU_STR_EQUAL( c, "list" ) ) {
 	if ( verbose ) {
 	    bu_log( "\tfound a list\n" );
 	}
@@ -554,7 +548,7 @@ get_property( struct element *ptr )
 	}
 	i = 0;
 	while ( types[i] ) {
-	    if ( !strcmp( c, types[i] ) || !strcmp( c, types2[i] ) ) {
+	    if ( BU_STR_EQUAL( c, types[i] ) || BU_STR_EQUAL( c, types2[i] ) ) {
 		p->index_type = i;
 		break;
 	    }
@@ -572,7 +566,7 @@ get_property( struct element *ptr )
 	}
 	i = 0;
 	while ( types[i] ) {
-	    if ( !strcmp( c, types[i] ) || !strcmp( c, types2[i] ) ) {
+	    if ( BU_STR_EQUAL( c, types[i] ) || BU_STR_EQUAL( c, types2[i] ) ) {
 		p->list_type = i;
 		break;
 	    }
@@ -588,7 +582,7 @@ get_property( struct element *ptr )
     } else {
 	i = 0;
 	while ( types[i] ) {
-	    if ( !strcmp( c, types[i] ) || !strcmp( c, types2[i] ) ) {
+	    if ( BU_STR_EQUAL( c, types[i] ) || BU_STR_EQUAL( c, types2[i] ) ) {
 		p->type = i;
 		break;
 	    }
@@ -615,6 +609,7 @@ get_property( struct element *ptr )
 int
 read_ply_header()
 {
+    struct element *elem_ptr = NULL;
 
     if ( verbose ) {
 	bu_log( "Reading header...\n" );
@@ -623,17 +618,16 @@ read_ply_header()
 	bu_log( "Unexpected EOF in input file!\n" );
 	return 1;
     }
-    if ( strncmp( line, "ply", 3 ) ) {
+    if ( bu_strncmp( line, "ply", 3 ) ) {
 	bu_log( "Input file does not appear to be a PLY file!\n" );
 	return 1;
     }
     while ( bu_fgets( line, MAX_LINE_SIZE, ply_fp ) ) {
-	struct element *elem_ptr;
 	size_t len;
 
 	len = strlen( line );
 	len--;
-	while ( len && isspace( line[len] ) ) {
+	while ( len && isspace( (int)line[len] ) ) {
 	    line[len] = '\0';
 	    len--;
 	}
@@ -642,26 +636,26 @@ read_ply_header()
 	    bu_log( "Processing line:%s\n", line );
 	}
 
-	if ( !strncmp( line, "end_header", 10 ) ) {
+	if ( !bu_strncmp( line, "end_header", 10 ) ) {
 	    if ( verbose ) {
 		bu_log( "Found end of header\n" );
 	    }
 	    break;
 	}
 
-	if ( !strncmp( line, "comment", 7 ) ) {
+	if ( !bu_strncmp( line, "comment", 7 ) ) {
 	    /* comment */
 	    bu_log( "%s\n", line );
 	    continue;
 	}
 
-	if ( !strncmp( line, "format", 6 ) ) {
+	if ( !bu_strncmp( line, "format", 6 ) ) {
 	    /* format specification */
-	    if ( !strncmp( &line[7], "ascii", 5 ) ) {
+	    if ( !bu_strncmp( &line[7], "ascii", 5 ) ) {
 		ply_file_type = PLY_ASCII;
-	    } else if ( !strncmp( &line[7], "binary_big_endian", 17 ) ) {
+	    } else if ( !bu_strncmp( &line[7], "binary_big_endian", 17 ) ) {
 		ply_file_type = PLY_BIN_BIG_ENDIAN;
-	    } else if ( !strncmp( &line[7], "binary_little_endian", 20 ) ) {
+	    } else if ( !bu_strncmp( &line[7], "binary_little_endian", 20 ) ) {
 		ply_file_type = PLY_BIN_LITTLE_ENDIAN;
 	    } else {
 		bu_log( "Unrecognized PLY format:%s\n", line );
@@ -681,13 +675,13 @@ read_ply_header()
 			break;
 		}
 	    }
-	} else if ( !strncmp( line, "element", 7 ) ) {
+	} else if ( !bu_strncmp( line, "element", 7 ) ) {
 	    /* found an element description */
 	    if ( verbose ) {
 		bu_log( "Found an element\n" );
 	    }
 	    elem_ptr = new_element( &line[8] );
-	} else if ( !strncmp( line, "property", 8 ) ) {
+	} else if ( !bu_strncmp( line, "property", 8 ) ) {
 	    if ( !elem_ptr ) {
 		bu_log( "Encountered \"property\" before \"element\"\n" );
 		return 1;
@@ -716,11 +710,11 @@ read_ply_data( struct rt_bot_internal *bot )
 		    cur_vertex++;
 		    p = elem_ptr->props;
 		    while ( p ) {
-			if ( !strcmp( p->name, "x" ) ) {
+			if ( BU_STR_EQUAL( p->name, "x" ) ) {
 			    bot->vertices[cur_vertex*3] = get_double(p->type );
-			} else if ( !strcmp( p->name, "y" ) ) {
+			} else if ( BU_STR_EQUAL( p->name, "y" ) ) {
 			    bot->vertices[cur_vertex*3+1] = get_double(p->type );
-			} else if ( !strcmp( p->name, "z" ) ) {
+			} else if ( BU_STR_EQUAL( p->name, "z" ) ) {
 			    bot->vertices[cur_vertex*3+2] = get_double(p->type );
 			} else {
 			    skip( p->type );
@@ -741,6 +735,10 @@ read_ply_data( struct rt_bot_internal *bot )
 
 			    if ( vcount < 3 || vcount > 4) {
 				bu_log( "ignoring face with %d vertices\n", vcount );
+				if (vcount < 0)
+				    vcount = 0;
+				if (vcount > 100)
+				    vcount = 100;
 				for ( idx=0; idx < vcount; idx++ ) {
 				    skip( p->list_type );
 				}
@@ -784,8 +782,10 @@ main( int argc, char *argv[] )
     struct element *elem_ptr;
     int c;
 
+    bu_setprogname(argv[0]);
+
     /* get command line arguments */
-    while ((c = bu_getopt(argc, argv, "dvs:")) != EOF)
+    while ((c = bu_getopt(argc, argv, "dvs:")) != -1)
     {
 	switch ( c )
 	{
@@ -844,7 +844,7 @@ main( int argc, char *argv[] )
     }
 
     /* malloc BOT storage */
-    bot = (struct rt_bot_internal *)bu_calloc( 1, sizeof( struct rt_bot_internal ), "BOT" );
+    BU_ALLOC(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SURFACE;
     bot->orientation = RT_BOT_UNORIENTED;
@@ -874,7 +874,7 @@ main( int argc, char *argv[] )
 
     read_ply_data( bot );
 
-    wdb_export( out_fp, "ply_bot", (genptr_t)bot, ID_BOT, 1.0 );
+    wdb_export( out_fp, "ply_bot", (void *)bot, ID_BOT, 1.0 );
 
     return 0;
 }

@@ -1,7 +1,7 @@
 /*                     A N I M _ S O R T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,20 +29,26 @@
 
 #include "common.h"
 
-#include <stdio.h>
+#include "bio.h"
 #include <string.h>
 #include <stdlib.h>
 
 #include "bu.h"
 
 
-#define OPT_STR "ci"
+#define OPT_STR "cih?"
 
 #define MAXLEN 50 /*maximum length of lines to be read */
 #define MAXLINES 30		/* maximum length of lines to be stored*/
 
 int suppressed;		/* flag: suppress printing of 'clean;' commands */
 int incremental;	/* flag: order for incremental time resolution */
+
+static void
+usage(void)
+{
+    fprintf(stderr,"Usage: anim_sort [-ic] < mixed.script > ordered.script\n");
+}
 
 
 int get_args(int argc, char **argv)
@@ -51,7 +57,7 @@ int get_args(int argc, char **argv)
     int c;
     suppressed = 0;
 
-    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	switch (c) {
 	    case 'c':
 		suppressed = 1;
@@ -60,7 +66,6 @@ int get_args(int argc, char **argv)
 		incremental = 1;
 		break;
 	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
 		return 0;
 	}
     }
@@ -73,20 +78,26 @@ main(int argc, char *argv[])
 {
     int length, frame_number, number, success, maxnum;
     int first_frame, spread, reserve;
-    long last_pos;
+    off_t last_pos;
     char line[MAXLEN];
     char pbuffer[MAXLEN*MAXLINES];
 
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	usage();
+	return 0;
+    }
 
-    if (!get_args(argc, argv))
-	fprintf(stderr, "Get_args error\n");
+    if (!get_args(argc, argv)) {
+	usage();
+	return 0;
+    }
 
-    /* copy any lines preceeding the first "start" command */
-    last_pos = ftell(stdin);
+    /* copy any lines preceding the first "start" command */
+    last_pos = bu_ftell(stdin);
     while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
-	if (strncmp(line, "start", 5)) {
+	if (bu_strncmp(line, "start", 5)) {
 	    printf("%s", line);
-	    last_pos = ftell(stdin);
+	    last_pos = bu_ftell(stdin);
 	} else
 	    break;
     }
@@ -97,7 +108,7 @@ main(int argc, char *argv[])
     /* find the highest frame number in the file */
     maxnum = 0;
     while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
-	if (!strncmp(line, "start", 5)) {
+	if (!bu_strncmp(line, "start", 5)) {
 	    sscanf(strpbrk(line, "0123456789"), "%d", &number);
 	    maxnum = (maxnum>number)?maxnum:number;
 	}
@@ -116,9 +127,9 @@ main(int argc, char *argv[])
 	number = -1;
 	success = 0; /* tells whether or not any frames have been found which have the current frame number*/
 	if (incremental) {
-	    fseek(stdin, 0L, 0);
+	    bu_fseek(stdin, 0, 0);
 	} else {
-	    fseek(stdin, last_pos, 0);
+	    bu_fseek(stdin, last_pos, 0);
 	}
 
 	reserve = MAXLEN*MAXLINES;
@@ -130,7 +141,7 @@ main(int argc, char *argv[])
 
 	    /*read to next "start" command*/
 	    while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
-		if (!strncmp(line, "start", 5)) {
+		if (!bu_strncmp(line, "start", 5)) {
 		    sscanf(strpbrk(line, "0123456789"), "%d", &number);
 		    break;
 		}
@@ -141,18 +152,18 @@ main(int argc, char *argv[])
 		    printf("%s", line);
 		    if (!suppressed) printf("clean;\n");
 		    success = 1;
-		    last_pos = ftell(stdin);
+		    last_pos = bu_ftell(stdin);
 		}
 		/* print contents until next "end" */
 		while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
-		    if (!strncmp(line, "end;", 4))
+		    if (!bu_strncmp(line, "end;", 4))
 			break;
-		    else if (strncmp(line, "clean", 5))
+		    else if (bu_strncmp(line, "clean", 5))
 			printf("%s", line);
 		}
 		/* save contents until next "start" */
 		while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
-		    if (!strncmp(line, "start", 5))
+		    if (!bu_strncmp(line, "start", 5))
 			break;
 		    else {
 			reserve -= strlen(line);

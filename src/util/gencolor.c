@@ -1,7 +1,7 @@
 /*                      G E N C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gencolor.c
+/** @file util/gencolor.c
  *
  * Output a pattern of bytes either forever or the requested
  * number of times.  It gets the byte values either from the
@@ -37,27 +37,36 @@
 
 #define MAX_BYTES (128*1024)
 
-static const char Usage[] = "usage: gencolor [-r#] [val1 .. valN] > output_file\n";
+static const char Usage[] = "Usage: gencolor [-r#] [val1 .. valN] > output_file\n";
 
 int bytes_in_buf, copies_per_buf;
 
 unsigned char buf[MAX_BYTES];
+
+void
+printusage(int i)
+{
+    bu_log("%s\n", Usage);
+    bu_log("  (No whitespace immediately after -r , and must redirect output)\n");
+    bu_exit(i, NULL);
+}
 
 
 int
 main(int argc, char **argv)
 {
     int i, len, times;
-    long count;
+    int32_t count;
     unsigned char *bp;
 
-    if (argc < 1 || isatty(fileno(stdout))) {
-	bu_exit(1, "%s", Usage);
-    }
+    if (argc == 1 || isatty(fileno(stdout)))
+	printusage(1);
 
     count = -1;
-    if (argc > 1 && strncmp(argv[1], "-r", 2) == 0) {
+    if (argc > 1 && bu_strncmp(argv[1], "-r", 2) == 0) {
 	count = atoi(&argv[1][2]);
+	if (count > INT32_MAX)
+	    count = INT32_MAX;
 	argv++;
 	argc--;
     }
@@ -74,9 +83,8 @@ main(int argc, char **argv)
     } else if (!isatty(fileno(stdin))) {
 	/* get values from stdin */
 	len = fread((char *)buf, 1, MAX_BYTES, stdin);
-	if (len <= 0) {
-	    bu_exit(2, "%s", Usage);
-	}
+	if (len <= 0)
+	    printusage(2);
     } else {
 	/* assume black */
 	buf[0] = 0;

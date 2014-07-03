@@ -1,7 +1,8 @@
+#!/bin/sh
 #                      L I B R A R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2010 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,8 +39,8 @@
 ARGS="$*"
 ARG0="$0"
 ARG1="$1"
-NAME_OF_THIS=`basename $ARG0`
-PATH_TO_THIS=`dirname $ARG0`
+NAME_OF_THIS=`basename "$ARG0"`
+PATH_TO_THIS=`dirname "$ARG0"`
 THIS="$PATH_TO_THIS/$NAME_OF_THIS"
 export ARGS ARG0 ARG1 NAME_OF_THIS PATH_TO_THIS THIS
 
@@ -50,7 +51,7 @@ export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 ensearch ( ) {
     ensearch_file="$1"
-    ensearch_dirs="../src $ARG1/src $PATH_TO_THIS/../src"
+    ensearch_dirs="$ARG1/src \"$PATH_TO_THIS/../src\" ../src/$1 $ARG1/src/$1 \"$PATH_TO_THIS/../src/$1\" ../bin ../src ../src/util ../src/conv ../src/conv/iges ../src/conv/vdeck ../src/gtools ../src/rt ../bench"
 
     if test "x$ensearch_file" = "x" ; then
 	# nothing to do
@@ -61,7 +62,7 @@ ensearch ( ) {
 
     for dir in $ensearch_dirs ; do
 	ensearch_binary="$dir/$ensearch_file"
-	echo "Searching for $ensearch_binary" 1>&2
+	#echo "Searching for $ensearch_binary" 1>&2
 	if test -f "$ensearch_binary" ; then
 	    echo "$ensearch_binary"
 

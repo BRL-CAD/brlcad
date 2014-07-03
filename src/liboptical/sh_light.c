@@ -1,7 +1,7 @@
 /*                      S H _ L I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_light.c
+/** @file liboptical/sh_light.c
  *
  * Implement simple isotropic light sources as a material property.
  *
@@ -30,36 +30,35 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "plot3.h"
 #include "light.h"
 #include "photonmap.h"
 
 #ifdef RT_MULTISPECTRAL
 #  include "spectrum.h"
-extern const struct bn_table *spectrum;
 #endif
 
 
-#define LIGHT_O(m)	bu_offsetof(struct light_specific, m)
-#define LIGHT_OA(m)	bu_offsetofarray(struct light_specific, m)
+#define LIGHT_O(m) bu_offsetof(struct light_specific, m)
 
 
 /** Heads linked list of lights */
 struct light_specific LightHead;
 
-
+/* local sp_hook functions */
 /* for light_print_tab and light_parse callbacks */
-HIDDEN void aim_set(const struct bu_structparse *sdp, const char *name, const char *base, char *value);
-HIDDEN void light_cvt_visible(const struct bu_structparse *sdp, const char *name, char *base, const char *value);
-HIDDEN void light_pt_set(const struct bu_structparse *sdp, const char *name, char *base, const char *value);
+HIDDEN void aim_set(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void light_cvt_visible(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void light_pt_set(const struct bu_structparse *, const char *, void *, const char *);
 
-HIDDEN int light_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void light_print(register struct region *rp, char *dp);
-HIDDEN void light_free(char *cp);
+HIDDEN int light_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int light_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void light_print(register struct region *rp, void *dp);
+HIDDEN void light_free(void *cp);
 
 
 /** callback registration table for this shader in optical_shader_init() */
@@ -68,52 +67,55 @@ struct mfuncs light_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
+
 /** for printing out light values */
 struct bu_structparse light_print_tab[] = {
-    {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set },
-    {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "target",	LIGHT_O(lt_target),	aim_set, NULL, NULL },
+    {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
 
 /** for actually parsing light values */
 struct bu_structparse light_parse[] = {
 
-    {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "b",		LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "inten",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "b",		LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "inten",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "a",		LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "a",		LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "f",		LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "f",		LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set },
-    {"%f",	3, "t",		LIGHT_OA(lt_target),	aim_set },
-    {"%f",	3, "aim",	LIGHT_OA(lt_target),	aim_set },
+    {"%f",	3, "target",	LIGHT_O(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "t",		LIGHT_O(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "aim",	LIGHT_O(lt_target),	aim_set, NULL, NULL },
 
-    {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "s",		LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "s",		LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "i",		LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "i",		LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%d",	1, "visible",	LIGHT_O(lt_visible),	light_cvt_visible },
-    {"%d",	1, "v",		LIGHT_O(lt_visible),	light_cvt_visible },
+    {"%d",	1, "visible",	LIGHT_O(lt_visible),	light_cvt_visible, NULL, NULL },
+    {"%d",	1, "v",		LIGHT_O(lt_visible),	light_cvt_visible, NULL, NULL },
 
-    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible },
+    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible, NULL, NULL },
 
-    {"%f",	3, "pt",	LIGHT_OA(lt_parse_pt), light_pt_set },
-    {"%f",	6, "pn",	LIGHT_OA(lt_parse_pt), light_pt_set },
+    {"%f",	3, "pt",	LIGHT_O(lt_parse_pt), light_pt_set, NULL, NULL },
+    {"%f",	6, "pn",	LIGHT_O(lt_parse_pt), light_pt_set, NULL, NULL },
 
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
 
 /**
  * This is a container for all the stuff that must be carried around
@@ -138,13 +140,14 @@ struct light_obs_stuff {
 
 
 /**
- * A I M _ S E T
- *
  * This routine is called by bu_struct_parse() if the "aim" qualifier
  * is encountered, and causes lt_exaim to be set.
  */
 HIDDEN void
-aim_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
+aim_set(const struct bu_structparse *UNUSED(sdp),
+	const char *UNUSED(name),
+	void *base,
+	const char *UNUSED(value))
 {
     register struct light_specific *lsp = (struct light_specific *)base;
     if (rdebug & RDEBUG_LIGHT) {
@@ -160,29 +163,30 @@ aim_set (const struct bu_structparse *sdp, const char *name, const char *base, c
  * Convert "visible" flag to "invisible" variable
  */
 HIDDEN void
-light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+light_cvt_visible(const struct bu_structparse *sdp,
+		  const char *name,
+		  void *base,
+		  const char *UNUSED(value))
+/* structure description */
+/* struct member name */
+/* beginning of structure */
+/* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
 
     if (rdebug & RDEBUG_LIGHT) {
-	bu_log("light_cvt_visible(%s, %d)\n", name, sdp->sp_offset);
-	bu_log("visible: %d invisible: %d\n",
+	bu_log("light_cvt_visible(%s, %zu)\n", name, sdp->sp_offset);
+	bu_log("visible: %lu invisible: %lu\n",
 	       LIGHT_O(lt_visible),
 	       LIGHT_O(lt_invisible));
     }
-    switch (sdp->sp_offset) {
-	case LIGHT_O(lt_invisible):
-	    lsp->lt_visible = !lsp->lt_invisible;
-	    break;
-	case LIGHT_O(lt_visible):
-	    lsp->lt_invisible = !lsp->lt_visible;
-	    break;
+    if (sdp->sp_offset == LIGHT_O(lt_invisible)) {
+	lsp->lt_visible = !lsp->lt_invisible;
+    } else if (sdp->sp_offset == LIGHT_O(lt_visible)) {
+	lsp->lt_invisible = !lsp->lt_visible;
     }
 }
+
 
 /**
  * ensure that there are sufficient light samples, allocate more if
@@ -213,19 +217,22 @@ light_pt_allocate(register struct light_specific *lsp)
  * (for points and points with normals respectively)
  */
 HIDDEN void
-light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+light_pt_set(const struct bu_structparse *sdp,
+	     const char *name,
+	     void *base,
+	     const char *UNUSED(value))
+/* structure description */
+/* struct member name */
+/* beginning of structure */
+/* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
-    fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
+    fastf_t *p = (fastf_t *)((char *)base + sdp->sp_offset);
 
-    if (! strcmp("pt", name)) {
+    if (BU_STR_EQUAL("pt", name)) {
 	/* user just specified point, set normal to zeros */
 	p[3] = p[4] = p[5] = 0.0;
-    } else if (strcmp("pn", name)) {
+    } else if (!BU_STR_EQUAL("pn", name)) {
 	bu_log("*********** unknown option in light_pt_set %s:%d\n", __FILE__, __LINE__);
 	return;
     }
@@ -240,9 +247,7 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
 
 
 /**
- * L I G H T _ R E N D E R
- *
- * If we have a direct view of the light, return it's color.  A cosine
+ * If we have a direct view of the light, return its color.  A cosine
  * term is needed in the shading of the light source, to make it have
  * dimension and shape.  However, just a simple cosine of the angle
  * between the normal and the direction vector leads to a pretty dim
@@ -251,7 +256,7 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
  * away.
  */
 HIDDEN int
-light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+light_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct light_specific *lsp = (struct light_specific *)dp;
     register fastf_t f;
@@ -275,11 +280,6 @@ light_render(struct application *ap, struct partition *pp, struct shadework *swp
     if (swp->sw_temperature > 0) {
 	rt_spect_black_body(swp->msw_color, swp->sw_temperature, 5);
 	bn_tabdata_scale(swp->msw_color, swp->msw_color, f);
-	if (rdebug & RDEBUG_LIGHT) {
-	    bu_log("light %s xy=%d, %d temp=%g\n",
-		   pp->pt_regionp->reg_name, ap->a_x, ap->a_y,
-		   swp->sw_temperature);
-	}
     } else {
 	bn_tabdata_scale(swp->msw_color, lsp->lt_spectrum, f);
     }
@@ -288,6 +288,13 @@ light_render(struct application *ap, struct partition *pp, struct shadework *swp
 	VSCALE(swp->sw_color, lsp->lt_color, f);
     }
 #endif
+
+    if (rdebug & RDEBUG_LIGHT) {
+	bu_log("light %s xy=%d, %d temp=%g\n",
+	       pp->pt_regionp->reg_name, ap->a_x, ap->a_y,
+	       swp->sw_temperature);
+    }
+
     return 1;
 }
 
@@ -303,7 +310,7 @@ ray_setup(struct application *ap,
 	  point_t span)
 {
     int face;
-    point_t pt;
+    point_t pt = VINIT_ZERO;
     static int idx = 0;
 
     /* pick a face of the bounding RPP at which we will start the ray */
@@ -363,7 +370,7 @@ ray_setup(struct application *ap,
  * add the hit point(s) to the list of points on the light.
  */
 static int
-light_gen_sample_pts_hit(register struct application *ap, struct partition *PartHeadp, struct seg *sp)
+light_gen_sample_pts_hit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(sp))
 {
     struct light_specific *lsp = (struct light_specific *)ap->a_uptr;
     struct soltab *stp;
@@ -467,15 +474,13 @@ light_gen_sample_pts_hit(register struct application *ap, struct partition *Part
  * light, then do nothing.
  */
 static int
-light_gen_sample_pts_miss(register struct application *ap)
+light_gen_sample_pts_miss(register struct application *UNUSED(ap))
 {
     return 0;
 }
 
 
 /**
- * L I G H T _ G E N _ S A M P L E _ P T S
- *
  * Generate a set of sample points on the surface of the light with
  * surface normals.  calling during shader init to generate samples
  * for all lights.
@@ -502,10 +507,11 @@ light_gen_sample_pts(struct application *upap,
     ap.a_hit = light_gen_sample_pts_hit;
     ap.a_miss = light_gen_sample_pts_miss;
     ap.a_logoverlap = upap->a_logoverlap;
-    ap.a_uptr = (genptr_t)lsp;
+    ap.a_uptr = (void *)lsp;
 
-    /* get the bounding box of the light source */
-    rt_bound_tree(lsp->lt_rp->reg_treetop, tree_min, tree_max);
+    /* get the bounding box of the light source
+     * Return if we can't get the bounding tree dimensions */
+    if (rt_bound_tree(lsp->lt_rp->reg_treetop, tree_min, tree_max) < 0) return;
 
     if (rdebug & RDEBUG_LIGHT) {
 	bu_log("\tlight bb (%g %g %g), (%g %g %g)\n",
@@ -541,7 +547,7 @@ light_gen_sample_pts(struct application *upap,
 
 	bu_log("\t%d light sample points\n", lsp->lt_pt_count);
 
-	for (l=0; l < lsp->lt_pt_count; l++, lpt++) {
+	for (l = 0; l < lsp->lt_pt_count; l++, lpt++) {
 
 	    VJOIN1(p, lpt->lp_pt, 100.0, lpt->lp_norm);
 
@@ -552,21 +558,15 @@ light_gen_sample_pts(struct application *upap,
 }
 
 
-/**
- * L I G H T _ P R I N T
- */
 HIDDEN void
-light_print(register struct region *rp, char *dp)
+light_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, light_print_tab, (char *)dp);
 }
 
 
-/**
- * L I G H T _ F R E E
- */
 void
-light_free(char *cp)
+light_free(void *cp)
 {
     register struct light_specific *lsp = (struct light_specific *)cp;
 
@@ -580,21 +580,15 @@ light_free(char *cp)
 	bu_free(lsp->lt_sample_pts, "free light samples array");
     }
     lsp->l.magic = 0;	/* sanity */
-    bu_free((char *)lsp, "light_specific");
+    bu_free(lsp, "struct light_specific");
 }
 
 
 /**
- * L I G H T _ S E T U P
- *
  * Called once for each light-emitting region.
  */
 HIDDEN int
-light_setup(register struct region *rp,
-	    struct bu_vls *matparm,
-	    genptr_t *dpp,
-	    struct mfuncs *mfp,
-	    struct rt_i *rtip)
+light_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct light_specific *lsp;
     register struct soltab *stp;
@@ -602,9 +596,10 @@ light_setup(register struct region *rp,
     fastf_t f;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(lsp, light_specific);
 
-    BU_LIST_MAGIC_SET(&(lsp->l), LIGHT_MAGIC);
+    BU_ALLOC(lsp, struct light_specific);
+    BU_LIST_INIT_MAGIC(&(lsp->l), LIGHT_MAGIC);
+
     lsp->lt_intensity = 1.0;	/* Lumens */
     lsp->lt_fraction = -1.0;	/* Recomputed later */
     lsp->lt_visible = 1;	/* explicitly modeled */
@@ -619,12 +614,12 @@ light_setup(register struct region *rp,
     lsp->lt_name = bu_strdup(rp->reg_name);
 
     if (bu_struct_parse(matparm, light_parse, (char *)lsp) < 0) {
-	light_free((char *)lsp);
+	light_free((void *)lsp);
 	return -1;
     }
 
-    if (lsp->lt_angle > 180)  lsp->lt_angle = 180;
-    lsp->lt_cosangle = cos((double) lsp->lt_angle * 0.0174532925199433);
+    if (lsp->lt_angle > 180) lsp->lt_angle = 180;
+    lsp->lt_cosangle = cos((double) lsp->lt_angle * DEG2RAD);
 
     /* Determine position and size */
     if (rp->reg_treetop->tr_op == OP_SOLID) {
@@ -664,7 +659,7 @@ light_setup(register struct region *rp,
 	stp = tp->tr_a.tu_stp;
     }
 
-    /* Light is aimed down -Z in it's local coordinate system */
+    /* Light is aimed down -Z in its local coordinate system */
     {
 	register matp_t matp;
 	if ((matp = stp->st_matp) == (matp_t)0)
@@ -672,8 +667,7 @@ light_setup(register struct region *rp,
 	if (lsp->lt_exaim) {
 	    VSUB2 (work, lsp->lt_target, lsp->lt_pos);
 	    VUNITIZE (work);
-	}
-	else VSET(work, 0, 0, -1);
+	} else VSET(work, 0, 0, -1);
 	MAT4X3VEC(lsp->lt_aim, matp, work);
 	VUNITIZE(lsp->lt_aim);
     }
@@ -717,7 +711,7 @@ light_setup(register struct region *rp,
     }
 
     /* Add to linked list of lights */
-    if (BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+    if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	BU_LIST_INIT(&(LightHead.l));
     }
     BU_LIST_INSERT(&(LightHead.l), &(lsp->l));
@@ -729,14 +723,12 @@ light_setup(register struct region *rp,
 	return 2;	/* don't show light, destroy it later */
     }
 
-    *dpp = (genptr_t)lsp;	/* Associate lsp with reg_udata */
+    *dpp = lsp;	/* Associate lsp with reg_udata */
     return 1;
 }
 
 
 /**
- * L I G H T _ I N I T
- *
  * Special routine called by view_2init() to determine the relative
  * intensities of each light source.
  *
@@ -745,7 +737,7 @@ light_setup(register struct region *rp,
  * light source in the model, and assume that the energy from multiple
  * lights will not shine on a single location in such a way as to add
  * up to an overload condition.  We then account for the effect of
- * ambient light, because it always adds it's contribution.  Even here
+ * ambient light, because it always adds its contribution.  Even here
  * we only expect 50% of the ambient intensity, to keep the pictures
  * reasonably bright.
  */
@@ -756,14 +748,14 @@ light_init(struct application *ap)
     register int nlights = 0;
     register fastf_t inten = 0.0;
 
-    if (BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+    if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	BU_LIST_INIT(&(LightHead.l));
     }
 
 
     for (BU_LIST_FOR(lsp, light_specific, &(LightHead.l))) {
 	nlights++;
-	if (lsp->lt_fraction > 0)  continue;	/* overridden */
+	if (lsp->lt_fraction > 0) continue;	/* overridden */
 	if (lsp->lt_intensity <= 0)
 	    lsp->lt_intensity = 1;		/* keep non-neg */
 	if (lsp->lt_intensity > inten)
@@ -777,7 +769,7 @@ light_init(struct application *ap)
 
     for (BU_LIST_FOR(lsp, light_specific, &(LightHead.l))) {
 	RT_CK_LIGHT(lsp);
-	if (lsp->lt_fraction > 0)  continue;	/* overridden */
+	if (lsp->lt_fraction > 0) continue;	/* overridden */
 #ifdef RT_MULTISPECTRAL
 	lsp->lt_fraction = 1.0;	/* always use honest intensity values */
 #else
@@ -834,8 +826,6 @@ light_init(struct application *ap)
 
 
 /**
- * L I G H T _ C L E A N U P
- *
  * Called from view_end().  Take care of releasing storage for any
  * lights which will not be cleaned up by mlib_free(): implicitly
  * created lights, because they have no associated region, and
@@ -846,7 +836,7 @@ light_cleanup(void)
 {
     register struct light_specific *lsp, *zaplsp;
 
-    if (BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+    if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	BU_LIST_INIT(&(LightHead.l));
 	return;
     }
@@ -858,14 +848,12 @@ light_cleanup(void)
 	}
 	zaplsp = lsp;
 	lsp = BU_LIST_PREV(light_specific, &(lsp->l));
-	light_free((genptr_t)zaplsp);
+	light_free((void *)zaplsp);
     }
 }
 
 
 /**
- * L I G H T _ H I T
- *
  * A light visibility test ray hit something.  Determine what this
  * means.
  *
@@ -1097,11 +1085,10 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     }
 
     /* if the region we hit is a light source be generous */
-#if 1
     {
-	struct light_specific *lsp;
-	for (BU_LIST_FOR(lsp, light_specific, &(LightHead.l))) {
-	    if (lsp->lt_rp == regp) {
+	struct light_specific *lspi;
+	for (BU_LIST_FOR(lspi, light_specific, &(LightHead.l))) {
+	    if (lspi->lt_rp == regp) {
 #ifdef RT_MULTISPECTRAL
 		bn_tabdata_copy(ap->a_spectrum, ms_filter_color);
 #else
@@ -1114,8 +1101,8 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	    }
 	}
     }
-#endif
-    /* or something futher away than a finite invisible light */
+
+    /* or something further away than a finite invisible light */
     if (lsp->lt_invisible && !(lsp->lt_infinite)) {
 	vect_t tolight;
 	VSUB2(tolight, lsp->lt_pos, ap->a_ray.r_pt);
@@ -1230,13 +1217,13 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     VELMUL(ap->a_color, sub_ap.a_color, filter_color);
 #endif
     reason = "after filtering";
- out:
+out:
 
 #ifdef RT_MULTISPECTRAL
     if (ms_filter_color) bn_tabdata_free(ms_filter_color);
-    if (sw.msw_color)  bn_tabdata_free(sw.msw_color);
+    if (sw.msw_color) bn_tabdata_free(sw.msw_color);
     if (sw.msw_basecolor) bn_tabdata_free(sw.msw_basecolor);
-    if (sub_ap.a_spectrum)  bn_tabdata_free(sub_ap.a_spectrum);
+    if (sub_ap.a_spectrum) bn_tabdata_free(sub_ap.a_spectrum);
     if (rdebug & RDEBUG_LIGHT) {
 	bu_log("light vis=%d %s %s %s  ",
 	       light_visible,
@@ -1257,8 +1244,6 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
 
 /**
- * L I G H T _ M I S S
- *
  * If there is no explicit light solid in the model, we will always
  * "miss" the light, so return light_visible = TRUE.
  */
@@ -1292,8 +1277,6 @@ light_miss(register struct application *ap)
 #define VF_BACKFACE 2
 
 /**
- * l i g h t _ v i s
- *
  * Compute 1 light visibility ray from a hit point to the light.
  * Called by light_obs() to determine light visibility.
  */
@@ -1317,8 +1300,6 @@ light_vis(struct light_obs_stuff *los, char *flags)
     double VisRayvsSurfN;
 
     if (rdebug & RDEBUG_LIGHT) bu_log("light_vis\n");
-
- retry:
 
     /* compute the light direction */
     if (los->lsp->lt_infinite) {
@@ -1370,7 +1351,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	     * (since the light on the surface from such would be
 	     * very small).  We also tolerance the normal on the
 	     * light to the visibility ray so that points on the
-	     * perimiter of the presented area of the light source
+	     * perimeter of the presented area of the light source
 	     * are not chosen.  This helps avoid shooting at points
 	     * on the light source which machine floating-point
 	     * inaccuracies would cause the ray to miss.
@@ -1418,7 +1399,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	}
 
 	tryagain = 0;
-	for (k=0; k < los->lsp->lt_pt_count; k++) {
+	for (k = 0; k < los->lsp->lt_pt_count; k++) {
 	    if (flags[k] & VF_SEEN) {
 		/* this one was used, we can re-use it */
 		tryagain = 1;
@@ -1447,7 +1428,8 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
 	if (rdebug & RDEBUG_LIGHT)
 	    bu_log("shooting at approximating sphere\n");
-	/* We're going to shoot at a point on the apporximating
+
+	/* We're going to shoot at a point on the approximating
 	 * sphere for the light source.  We pick a point on the
 	 * circle (presented area) for the light source from this
 	 * angle.  This is done by picking random radius and angle
@@ -1457,7 +1439,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	    /* drand48(); */
 	    fabs(bn_rand_half(los->ap->a_resource->re_randptr)
 		 * 2.0);
-	angle =  M_PI * 2.0 *
+	angle =  M_2PI *
 	    /* drand48(); */
 	    (bn_rand_half(los->ap->a_resource->re_randptr) + 0.5);
 
@@ -1471,7 +1453,9 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	 * x = radius * cos(angle);
 	 */
 	cos_angle = M_PI_2 + angle;
-	if (cos_angle > (2.0*M_PI)) cos_angle -= (2.0*M_PI);
+	if (cos_angle > M_2PI)
+	    cos_angle -= M_2PI;
+
 	x = radius * bn_tab_sin(cos_angle);
 
 	VJOIN2(shoot_pt, los->lsp->lt_pos,
@@ -1498,7 +1482,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
     if (rdebug& RDEBUG_RAYPLOT) {
 	point_t ray_endpt;
 
-	/* Yelow -- light visibility ray */
+	/* Yellow -- light visibility ray */
 	VADD2(ray_endpt, los->swp->sw_hit.hit_point, shoot_dir);
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	pl_color(stdout, 200, 200, 0);
@@ -1562,7 +1546,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
     sub_ap.a_miss = light_miss;
     sub_ap.a_logoverlap = los->ap->a_logoverlap;
     sub_ap.a_user = -1; /* sanity */
-    sub_ap.a_uptr = (genptr_t)los->lsp;	/* so we can tell.. */
+    sub_ap.a_uptr = (void *)los->lsp;	/* so we can tell.. */
     sub_ap.a_level = 0;
     /* Will need entry & exit pts, for filter glass ==> 2 */
     /* Continue going through air ==> negative */
@@ -1575,30 +1559,10 @@ light_vis(struct light_obs_stuff *los, char *flags)
     RT_CK_AP(&sub_ap);
 
     if (rdebug & RDEBUG_LIGHT)
-	bu_log("shooting level %d from %d\n",
-	       sub_ap.a_level, __LINE__);
+	bu_log("shooting level %d from %d\n", sub_ap.a_level, __LINE__);
+
+    /* see if we are in the dark. */
     shot_status = rt_shootray(&sub_ap);
-    if (rdebug & RDEBUG_LIGHT)
-	bu_log("shot_status: %d\n", shot_status);
-
-    if (shot_status < 0) {
-	if (los->lsp->lt_infinite) {
-	}  else if (los->lsp->lt_pt_count > 0) {
-	    if (rdebug & RDEBUG_LIGHT) {
-		bu_log("was pt %d\n (%g %g %g) normal %g %g %g\n", k,
-		       V3ARGS(los->lsp->lt_sample_pts[k].lp_pt),
-		       V3ARGS(los->lsp->lt_sample_pts[k].lp_norm));
-	    }
-	} else {
-	    if (rdebug & RDEBUG_LIGHT) {
-		bu_log("was radius: %g of (%g) angle: %g\n",
-		       radius, los->lsp->lt_radius, angle);
-
-		bu_log("re-shooting\n");
-	    }
-	    goto retry;
-	}
-    }
 
     if (shot_status > 0) {
 	/* light visible */
@@ -1634,8 +1598,6 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
 
 /**
- * L I G H T _ O B S C U R A T I O N
- *
  * Determine the visibility of each light source in the scene from a
  * particular location.  It is up to the caller to apply
  * sw_lightfract[] to lp_color, etc.
@@ -1791,13 +1753,11 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	bu_free(flags, "free flags array");
     }
 
-    if (rdebug & RDEBUG_LIGHT) bu_log("computing Light obscruration: end\n");
+    if (rdebug & RDEBUG_LIGHT) bu_log("computing Light obscuration: end\n");
 }
 
 
 /**
- * L I G H T _ M A K E R
- *
  * Special hook called by view_2init to build 1 or 3 debugging lights.
  */
 void
@@ -1813,7 +1773,7 @@ light_maker(int num, mat_t v2m)
 #endif
 
     /* Determine the Light location(s) in view space */
-    for (i=0; i<num; i++) {
+    for (i = 0; i < num; i++) {
 	switch (i) {
 	    case 0:
 		/* 0:  At left edge, 1/2 high */
@@ -1847,8 +1807,8 @@ light_maker(int num, mat_t v2m)
 	    MAT4X3PNT(tmp, v2m, pt); bu_log("Q %g %g %g\n", V3ARGS(tmp));
 	}
 
-	BU_GETSTRUCT(lsp, light_specific);
-	lsp->l.magic = LIGHT_MAGIC;
+	BU_GET(lsp, struct light_specific);
+	BU_LIST_INIT_MAGIC(&(lsp->l), LIGHT_MAGIC);
 
 #ifdef RT_MULTISPECTRAL
 	BN_GET_TABDATA(lsp->lt_spectrum, spectrum);
@@ -1877,7 +1837,7 @@ light_maker(int num, mat_t v2m)
 	lsp->lt_cosangle = -1;		/* cos(180) */
 	lsp->lt_infinite = 0;
 	lsp->lt_rp = REGION_NULL;
-	if (BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+	if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	    BU_LIST_INIT(&(LightHead.l));
 	}
 	BU_LIST_INSERT(&(LightHead.l), &(lsp->l));

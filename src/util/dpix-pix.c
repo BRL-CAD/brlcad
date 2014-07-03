@@ -1,7 +1,7 @@
 /*                      D P I X - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dpix-pix.c
+/** @file util/dpix-pix.c
  *
  * Convert double precision images in .dpix form to a .pix file.  By
- * default, will determin min/max values to drive exposure
+ * default, will determine min/max values to drive exposure
  * calculations, and perform linear interpolation on the way to 1-byte
  * values.
  *
@@ -34,17 +34,19 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "vmath.h"
 #include "bu.h"
 
 
 #define NUM (1024 * 16)	/* Note the powers of 2 -- v. efficient */
-static double doub[NUM];
-static unsigned char cha[NUM];
 
 
 int
 main(int argc, char **argv)
 {
+    double doub[NUM];
+    unsigned char cha[NUM];
+
     size_t count;			/* count of items */
     ssize_t got;			/* count of bytes */
     int fd;			/* UNIX file descriptor */
@@ -52,66 +54,60 @@ main(int argc, char **argv)
     double *ep;
     double m;			/* slope */
     double b;			/* intercept */
+    char *ifname;
+
+    double min, max;		/* high usage items */
 
     if (argc < 2) {
 	bu_exit(1, "Usage: dpix-pix file.dpix > file.pix\n");
     }
 
-    if ((fd = open(argv[1], 0)) < 0) {
-	perror(argv[1]);
+    ifname = bu_realpath(argv[1], NULL);
+    if ((fd = open(ifname, 0)) < 0) {
+	perror(ifname);
+	bu_free(ifname, "ifname alloc from bu_realpath");
 	exit(1);
     }
+    bu_free(ifname, "ifname alloc from bu_realpath");
 
     if (isatty(fileno(stdout))) {
 	bu_exit(2, "dpix-pix:  binary output directed to terminal, aborting\n");
     }
 
-    /* Note that the minimum is set to 1.0e20, the computer's working
-     * equivalent of positive infinity.  Thus any subsequent value
-     * must be larger. Likewise, the maximun is set to -1.0e20, the
-     * equivalent of negative infinity, and any values must thus be
-     * bigger than it.
-     */
-    {
-	double min, max;		/* high usage items */
+    min = INFINITY;
+    max = -INFINITY;
 
-	min = 1.0e20;
-	max = -1.0e20;
-
-	while (1) {
-	    got = read(fd, (char *)&doub[0], NUM*sizeof(doub[0]));
-	    if (got <= 0) {
-		if (got < 0) {
-		    perror("dpix-pix READ ERROR");
-		}
-		break;
+    while (1) {
+	got = read(fd, (char *)&doub[0], NUM*sizeof(doub[0]));
+	if (got <= 0) {
+	    if (got < 0) {
+		perror("dpix-pix READ ERROR");
 	    }
-	    count = got / sizeof(doub[0]);
-	    ep = &doub[count];
-	    for (dp = &doub[0]; dp < ep;) {
-		double val;
-		if ((val = *dp++) < min)
-		    min = val;
-		else if (val > max)
-		    max = val;
-	    }
+	    break;
 	}
+	count = got / sizeof(doub[0]);
+	ep = &doub[count];
+	for (dp = &doub[0]; dp < ep;) {
+	    double val = *dp++;
 
-	lseek(fd, 0L, 0);		/* rewind(fp); */
-
-
-	/* This section uses the maximum and the minimum values found to
-	 * compute the m and the b of the line as specified by the
-	 * equation y = mx + b.
-	 */
-	fprintf(stderr, "min=%f, max=%f\n", min, max);
-	if (max < min) {
-	    bu_exit(1, "MINMAX: max less than min!\n");
+	    V_MIN(min, val);
+	    V_MAX(max, val);
 	}
-
-	m = (255 - 0)/(max - min);
-	b = (-255 * min)/(max - min);
     }
+
+    lseek(fd, 0, 0);		/* rewind(fp); */
+
+    /* This section uses the maximum and the minimum values found to
+     * compute the m and the b of the line as specified by the
+     * equation y = mx + b.
+     */
+    fprintf(stderr, "min=%f, max=%f\n", min, max);
+    if (max < min) {
+	bu_exit(1, "MINMAX: max less than min!\n");
+    }
+
+    m = (255 - 0)/(max - min);
+    b = (-255 * min)/(max - min);
 
     while (1) {
 	char *cp;		/* ptr to c */

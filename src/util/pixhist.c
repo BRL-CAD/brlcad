@@ -1,7 +1,7 @@
 /*                       P I X H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixhist.c
+/** @file util/pixhist.c
  *
  * Display a color histogram of a pix file.
  * 0 is top of screen, 255 bottom.
@@ -30,6 +30,9 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/str.h"
 #include "fb.h"
 
 
@@ -55,7 +58,7 @@ main(int argc, char **argv)
     int i;
 
     /* check for verbose flag */
-    if (argc > 1 && strcmp(argv[1], "-v") == 0) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
 	argv++;
 	argc--;
@@ -73,7 +76,7 @@ main(int argc, char **argv)
 
     /* check usage */
     if (argc > 1 || isatty(fileno(fp))) {
-	bu_exit(1, "usage: pixhist [-v] [file.pix]\n");
+	bu_exit(1, "Usage: pixhist [-v] [file.pix]\n");
     }
 
     while ((i = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0) {

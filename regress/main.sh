@@ -2,7 +2,7 @@
 #                         M A I N . S H
 # BRL-CAD
 #
-# Copyright (c) 2010 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ vast)
 esac
 
 
-# note thate MYNAME and START_TIME are set in the nightly.sh script for us
+# note that MYNAME and START_TIME are set in the nightly.sh script for us
 export BUILD_DIR=`pwd`/${MYNAME}_${START_TIME}.dir
 rm -f $BUILD_DIR
 mkdir $BUILD_DIR

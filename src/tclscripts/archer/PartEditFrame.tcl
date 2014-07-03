@@ -1,7 +1,7 @@
 #               P A R T E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2010 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -37,6 +37,8 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
     }
@@ -54,6 +56,17 @@
 	variable mHz ""
 	variable mR_v ""
 	variable mR_h ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmVx ""
+	variable cmVy ""
+	variable cmVz ""
+	variable cmHx ""
+	variable cmHy ""
+	variable cmHz ""
+	variable cmR_v ""
+	variable cmR_h ""
 
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame
@@ -103,6 +116,8 @@
     set mR_h [bu_get_value_by_keyword r_h $gdata]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmVx == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
 }
 
 ::itcl::body PartEditFrame::updateGeometry {} {
@@ -117,9 +132,32 @@
 	r_v $mR_v \
 	r_h $mR_h
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
+}
+
+::itcl::body PartEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmVx  $mVx
+    set cmVy  $mVy
+    set cmVz  $mVz
+    set cmHx  $mHx
+    set cmHy  $mHy
+    set cmHz  $mHz
+    set cmR_v $mR_v
+    set cmR_h $mR_h
+}
+
+::itcl::body PartEditFrame::revertGeometry {} {
+    set mVx  $cmVx
+    set mVy  $cmVy
+    set mVz  $cmVz
+    set mHx  $cmHx
+    set mHy  $cmHy
+    set mHz  $cmHz
+    set mR_v $cmR_v
+    set mR_h $cmR_h
+
+    updateGeometry
 }
 
 ::itcl::body PartEditFrame::createGeometry {obj} {
@@ -197,19 +235,19 @@
 	::ttk::entry $parent.partVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partVyE {
 	::ttk::entry $parent.partVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partVzE {
 	::ttk::entry $parent.partVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partVUnitsL {
 	::ttk::label $parent.partVUnitsL \
@@ -225,19 +263,19 @@
 	::ttk::entry $parent.partHxE \
 	    -textvariable [::itcl::scope mHx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partHyE {
 	::ttk::entry $parent.partHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partHzE {
 	::ttk::entry $parent.partHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partHUnitsL {
 	::ttk::label $parent.partHUnitsL \
@@ -253,7 +291,7 @@
 	::ttk::entry $parent.partR_vE \
 	    -textvariable [::itcl::scope mR_v] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partR_vUnitsL {
 	::ttk::label $parent.partR_vUnitsL \
@@ -269,13 +307,26 @@
 	::ttk::entry $parent.partR_hE \
 	    -textvariable [::itcl::scope mR_h] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partR_hUnitsL {
 	::ttk::label $parent.partR_hUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
     } {}
+
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
 
     set row 0
     grid $itk_component(partType) \
@@ -323,6 +374,22 @@
 	-row $row \
 	-column 4 \
 	-sticky nsew
+
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1
@@ -341,7 +408,7 @@
 
 ::itcl::body PartEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-
+    set row 0
     foreach attribute {H r_v r_h} {
 	itk_component add set$attribute {
 	    ::ttk::radiobutton $parent.set_$attribute \
@@ -351,9 +418,8 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component(set$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component(set$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
 }
 
@@ -412,19 +478,26 @@
 
 ::itcl::body PartEditFrame::initEditState {} {
     set mEditCommand pscale
-    set mEditClass $EDIT_CLASS_SCALE
     set mEditPCommand [::itcl::code $this p]
     configure -valueUnits "mm"
 
     switch -- $mEditMode \
 	$setH {
 	    set mEditParam1 H
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setr_v {
 	    set mEditParam1 v
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setr_h {
 	    set mEditParam1 h
+	    set mEditClass $EDIT_CLASS_SCALE
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

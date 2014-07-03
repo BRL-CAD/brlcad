@@ -1,7 +1,7 @@
 /*                         F I N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file find.c
+/** @file libged/find.c
  *
  * The find command.
  *
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -37,9 +37,10 @@ HIDDEN void
 find_ref(struct db_i *dbip,
 	 struct rt_comb_internal *comb,
 	 union tree *comb_leaf,
-	 genptr_t object,
-	 genptr_t comb_name_ptr,
-	 genptr_t user_ptr3)
+	 void *object,
+	 void *comb_name_ptr,
+	 void *user_ptr3,
+	 void *UNUSED(user_ptr4))
 {
     char *obj_name;
     char *comb_name;
@@ -50,12 +51,12 @@ find_ref(struct db_i *dbip,
     RT_CK_TREE(comb_leaf);
 
     obj_name = (char *)object;
-    if (strcmp(comb_leaf->tr_l.tl_name, obj_name))
+    if (!BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj_name))
 	return;
 
     comb_name = (char *)comb_name_ptr;
 
-    bu_vls_printf(&gedp->ged_result_str, "%s ", comb_name);
+    bu_vls_printf(gedp->ged_result_str, "%s ", comb_name);
 }
 
 
@@ -74,22 +75,22 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "a")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "a")) != -1) {
 	switch (c) {
 	    case 'a':
 		aflag = 1;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Unrecognized option - %c", c);
+		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
 		return GED_ERROR;
 	}
     }
@@ -98,9 +99,9 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & DIR_COMB) ||
-		(!aflag && (dp->d_flags & DIR_HIDDEN)))
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_COMB) ||
+		(!aflag && (dp->d_flags & RT_DIR_HIDDEN)))
 		continue;
 
 	    if (rt_db_get_internal(&intern,
@@ -108,19 +109,20 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 				   gedp->ged_wdbp->dbip,
 				   (fastf_t *)NULL,
 				   &rt_uniresource) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 		return GED_ERROR;
 	    }
 
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    for (k=1; k<argc; k++)
+	    for (k = 1; k < argc; k++)
 		db_tree_funcleaf(gedp->ged_wdbp->dbip,
 				 comb,
 				 comb->tree,
 				 find_ref,
-				 (genptr_t)argv[k],
-				 (genptr_t)dp->d_namep,
-				 (genptr_t)gedp);
+				 (void *)argv[k],
+				 (void *)dp->d_namep,
+				 (void *)gedp,
+				 (void *)NULL);
 
 	    rt_db_free_internal(&intern);
 	}

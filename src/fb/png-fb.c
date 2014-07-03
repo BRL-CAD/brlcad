@@ -1,7 +1,7 @@
 /*                        P N G - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,18 +27,15 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
-#include "png.h"
+#include "bin.h"
+
 #include "bu.h"
 #include "fb.h"
-
 #include "pkg.h"
 
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
 
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static unsigned char **scanline;	/* 1 scanline pixel buffer */
@@ -81,7 +78,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "1m:g:HhicvzF:s:x:y:X:Y:S:W:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "1m:g:HhicvzF:s:x:y:X:Y:S:W:N:")) != -1) {
 	switch (c) {
 	    case '1':
 		one_line_only = 1;
@@ -150,16 +147,16 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((fp_in = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
-	    (void)fprintf(stderr,
-			  "png-fb: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "png-fb: cannot open \"%s\" for reading\n",
+		    file_name);
 	    bu_exit(1, NULL);
 	}
 	fileinput++;
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "png-fb: excess argument(s) ignored\n");
+	fprintf(stderr, "png-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -188,21 +185,21 @@ main(int argc, char **argv)
     }
 
     if (fread(header, 8, 1, fp_in) != 1) {
-	bu_exit(EXIT_FAILURE,  "ERROR: Failed while reading file header!!!\n");
+	bu_exit(EXIT_FAILURE,  "png-fb: ERROR: Failed while reading file header!!!\n");
     }
 
     if (png_sig_cmp((png_bytep)header, 0, 8)) {
-	bu_exit(EXIT_FAILURE,  "This is not a PNG file!!!\n");
+	bu_exit(EXIT_FAILURE,  "png-fb: This is not a PNG file!!!\n");
     }
 
     png_p = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_p) {
-	bu_exit(EXIT_FAILURE,  "png_create_read_struct() failed!!\n");
+	bu_exit(EXIT_FAILURE,  "png-fb: png_create_read_struct() failed!!\n");
     }
 
     info_p = png_create_info_struct(png_p);
     if (!info_p) {
-	bu_exit(EXIT_FAILURE,  "png_create_info_struct() failed!!\n");
+	bu_exit(EXIT_FAILURE,  "png-fb: png_create_info_struct() failed!!\n");
     }
 
     png_init_io(png_p, fp_in);

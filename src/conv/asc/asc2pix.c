@@ -1,7 +1,7 @@
 /*                       A S C 2 P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,6 +18,7 @@
  * information.
  *
  */
+
 /** @file asc2pix.c
  *
  *  Convert ASCII (hex) pixel files to the binary form.
@@ -36,10 +37,8 @@
 
 #include "bio.h"
 
-int lmap[256];		/* Map HEX ASCII to binary in left nybble */
+int lmap[256];		/* Map HEX ASCII to binary in left nybble  */
 int rmap[256];		/* Map HEX ASCII to binary in right nybble */
-
-unsigned char line[256];
 
 int
 main(void)
@@ -47,40 +46,64 @@ main(void)
     int	a, b;
     int	i;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-#endif
-    /* Init map */
-    for (i=0;i<256;i++) rmap[i] = -1;		/* Unused entries */
-    for (i=0; i<10; i++)  rmap['0'+i] = i;
-    for (i=10; i<16; i++)  rmap['A'-10+i] = i;
-    for (i=10; i<16; i++)  rmap['a'-10+i] = i;
-    for (i=0;i<256;i++) {
-	if ( rmap[i] >= 0 )
-	    lmap[i] = rmap[i]<<4;
+
+    /* Init rmap */
+
+    /* set all to "unused" */
+    for (i = 0; i < 256; i++)
+	rmap[i] = -1;
+
+    /* note that all input chars of interest use only low 4 bits */
+    /* set chars '0' - '9' */
+    for (i = 0; i < 10; i++)
+	rmap['0' + i] = i;
+
+    /* set chars 'A' - 'F' */
+    for (i = 10; i < 16; i++)
+	rmap['A' - 10 + i] = i;
+
+    /* set chars 'a' - 'f' */
+    for (i = 10; i < 16; i++)
+	rmap['a' - 10 + i] = i;
+
+    /* Init lmap */
+    /* copy defined chars in rmap to lmap's corresponding int but
+       shifted 4 bits left */
+    for (i = 0; i < 256; i++) {
+	if (rmap[i] >= 0)
+	    lmap[i] = rmap[i] << 4;
 	else
 	    lmap[i] = -1;
     }
 
-    for (;;)  {
+    for (;;) {
+	/* get a valid hex char in i */
 	do {
-	    if ( (a = getchar()) == EOF || a > 255 )  goto out;
-	} while ( (i = lmap[a]) < 0 );
+	    a = getchar();
+	    if (a == EOF || a < 0 || a > 255)
+		goto OUT;
+	} while ((i = lmap[a]) < 0);
 
-	if ( (b = getchar()) == EOF || b > 255 )  {
+	/* get the next hex char */
+	b = getchar();
+	if (b == EOF || b < 0 || b > 255) {
 	    fprintf(stderr, "asc2pix: unexpected EOF in middle of hex number\n");
 	    return 1;
 	}
 
-	if ( (b = rmap[b]) < 0 )  {
+	if ((b = rmap[b]) < 0) {
 	    fprintf(stderr, "asc2pix: illegal hex code in file, aborting\n");
 	    return 1;
 	}
 
-	putc( (i | b), stdout );
+	/* now output the two 4-bit chars combined as a single byte  */
+	putc((i | b), stdout);
     }
- out:
+
+ OUT:
+
     fflush(stdout);
     exit(0);
 }

@@ -1,7 +1,7 @@
 /*                       C O M M A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file command.c
+/** @file nirt/command.c
  *
  * process nirt commands
  *
@@ -30,6 +30,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/str.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -56,36 +58,61 @@ extern int need_prep;
 
 
 void
-bot_minpieces(char *buffer, com_table *ctp)
+bot_minpieces(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 {
-    int new_value;
+    long new_lvalue;
     int i=0;
 
-    ctp = ctp; /* quell warning */
-
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current rt_bot_minpieces */
-	bu_log("rt_bot_minpieces = %d\n", rt_bot_minpieces);
+	bu_log("rt_bot_minpieces = %zu\n", rt_bot_minpieces);
 	return;
     }
 
-    new_value = atoi(buffer);
+    new_lvalue = atol(buffer);
 
-    if (new_value < 0) {
+    if (new_lvalue < 0) {
 	bu_log("Error: rt_bot_minpieces cannot be less than 0\n");
 	return;
     }
 
-    if (new_value != rt_bot_minpieces) {
-	rt_bot_minpieces = new_value;
+    if ((size_t)new_lvalue != rt_bot_minpieces) {
+	rt_bot_minpieces = (size_t)new_lvalue;
 	need_prep = 1;
     }
 }
 
 void
-az_el(char *buffer, com_table *ctp)
+bot_mintie(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
+{
+    long new_lvalue;
+    int i=0;
+
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if (*(buffer+i) == '\0') {
+	/* display current rt_bot_mintie */
+	bu_log("rt_bot_mintie = %zu\n", rt_bot_mintie);
+	return;
+    }
+
+    new_lvalue = atol(buffer);
+
+    if (new_lvalue < 0) {
+	bu_log("Error: rt_bot_mintie cannot be less than 0\n");
+	return;
+    }
+
+    if ((size_t)new_lvalue != rt_bot_mintie) {
+	rt_bot_mintie = (size_t)new_lvalue;
+	need_prep = 1;
+    }
+}
+
+void
+az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     extern int str_dbl();  /* function to convert string to double */
     int i = 0;      /* current position on the *buffer */
@@ -93,7 +120,7 @@ az_el(char *buffer, com_table *ctp)
     double az;
     double el;
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current az and el values */
@@ -113,7 +140,7 @@ az_el(char *buffer, com_table *ctp)
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if ((rc = str_dbl(buffer+i, &el)) == 0) {
 	/* get el value */
@@ -137,45 +164,18 @@ az_el(char *buffer, com_table *ctp)
 }
 
 void
-sh_esc(char *buffer)
-{
-    static char *shell = "";
-    static char *last_cmd = "";
-
-    while (isspace(*buffer)) {
-	++buffer;
-    }
-
-    if (*buffer == '!') {
-	(void) system(last_cmd);
-    } else if (*buffer) {
-	(void) system(buffer);
-	last_cmd = buffer;
-    } else {
-	if ((*shell == '\0') && (shell = getenv("SHELL")) == 0) {
-#ifndef _WIN32
-	    shell = DFLT_SHELL;
-#else
-	    shell = "cmd.exe";
-#endif
-	}
-	(void) system(shell);
-    }
-}
-
-void
-grid_coor(char *buffer, com_table *ctp)
+grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     extern int str_dbl();  /* function to convert string to double */
     int i = 0;
     int rc = 0;    /* the return code value from str_dbl() */
     vect_t Gr;
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current grid coordinates */
-	bu_log("(h, v, d) = (%4.2f, %4.2f, %4.2f)\n",
+	fprintf(stdout, "(h, v, d) = (%4.2f, %4.2f, %4.2f)\n",
 	       grid(HORZ) * base2local,
 	       grid(VERT) * base2local,
 	       grid(DIST) * base2local);
@@ -187,7 +187,7 @@ grid_coor(char *buffer, com_table *ctp)
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if ((rc = str_dbl(buffer+i, &Gr[VERT])) == 0) {
 	/* get vert coor */
@@ -195,7 +195,7 @@ grid_coor(char *buffer, com_table *ctp)
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* if there is no dist coor, set default */
@@ -222,18 +222,18 @@ grid_coor(char *buffer, com_table *ctp)
 }
 
 void
-target_coor(char *buffer, com_table *ctp)
+target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     extern int str_dbl();  /* function to convert string to double */
     int i = 0;
     int rc = 0;     /* the return code value from str_dbl() */
     vect_t Tar;	    /* Target x, y and z */
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current target coors */
-	bu_log("(x, y, z) = (%4.2f, %4.2f, %4.2f)\n",
+	fprintf(stdout, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n",
 	       target(X) * base2local,
 	       target(Y) * base2local,
 	       target(Z) * base2local);
@@ -245,7 +245,7 @@ target_coor(char *buffer, com_table *ctp)
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if ((rc = str_dbl(buffer+i, &Tar[Y])) == 0) {
 	/* get target y coor */
@@ -253,7 +253,7 @@ target_coor(char *buffer, com_table *ctp)
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if ((rc = str_dbl(buffer+i, &Tar[Z])) == 0) {
 	/* get target z coor */
@@ -273,18 +273,18 @@ target_coor(char *buffer, com_table *ctp)
 }
 
 void
-dir_vect(char *buffer, com_table *ctp)
+dir_vect(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     extern int str_dbl();  /* function to convert string to double */
     int i = 0;
     int rc = 0;    /* the return code value from str_dbl() */
     vect_t Dir;	   /* Direction vector x, y and z */
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current direct coors */
-	bu_log("(x, y, z) = (%4.2f, %4.2f, %4.2f)\n",
+	fprintf(stdout, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n",
 	       direct(X), direct(Y), direct(Z));
 	return;
     }
@@ -294,7 +294,7 @@ dir_vect(char *buffer, com_table *ctp)
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if ((rc = str_dbl(buffer+i, &Dir[Y])) == 0) {
 	/* get direct y coor */
@@ -302,7 +302,7 @@ dir_vect(char *buffer, com_table *ctp)
 	return;
     }
     i += rc;
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if ((rc = str_dbl(buffer+i, &Dir[Z])) == 0) {
 	/* get direct z coor */
@@ -340,19 +340,18 @@ show_menu()
 }
 
 void
-shoot(char *buffer, com_table *ctp)
+shoot(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 {
     int i;
     double bov = 0.0;	/* back out value */
 
     extern void init_ovlp();
 
-    /* quellage */
-    buffer = buffer;
-    ctp = ctp;
+    if (!rtip)
+      return;
 
     if (need_prep) {
-	if (rtip) rt_clean(rtip);
+	rt_clean(rtip);
 	do_rt_gettrees(rtip, NULL, 0, &need_prep);
     }
 
@@ -373,12 +372,12 @@ shoot(char *buffer, com_table *ctp)
 	    set_diameter(rtip);
 
 	/*
-	 * calculate the distance from a plane normal to the ray direction through the center of 
+	 * calculate the distance from a plane normal to the ray direction through the center of
 	 * the bounding sphere and a plane normal to the ray direction through the aim point.
 	 */
 	VADD2SCALE(center_bsphere, rtip->mdl_max, rtip->mdl_min, 0.5);
 
-	dist_to_target = DIST_PT_PT(center_bsphere, ray_point); 
+	dist_to_target = DIST_PT_PT(center_bsphere, ray_point);
 
 	VSUB2(dvec, ray_point, center_bsphere);
 	VUNITIZE(dvec);
@@ -418,7 +417,7 @@ shoot(char *buffer, com_table *ctp)
 }
 
 void
-use_air(char *buffer, com_table *ctp)
+use_air(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     int new_use = 0;      /* current position on the *buffer */
     char response[128];
@@ -428,18 +427,18 @@ use_air(char *buffer, com_table *ctp)
 
     extern char *db_name;		/* Name of MGED database file */
 
-    while (isspace(*buffer))
+    while (isspace((int)*buffer))
 	++buffer;
     if (*buffer == '\0') {
 	/* display current value of use_of_air */
 	bu_log("use_air = %d\n", ap.a_rt_i->useair);
 	return;
     }
-    if (!isdigit(*buffer)) {
+    if (!isdigit((int)*buffer)) {
 	com_usage(ctp);
 	return;
     }
-    while (isdigit(*buffer)) {
+    while (isdigit((int)*buffer)) {
 	new_use *= 10;
 	new_use += *buffer++ - '0';
     }
@@ -481,32 +480,31 @@ use_air(char *buffer, com_table *ctp)
 }
 
 void
-nirt_units(char *buffer, com_table *ctp)
+nirt_units(char *buffer, com_table *ctp, struct rt_i *rtip)
 {
     double tmp_dbl;
     int i = 0;      /* current position on the *buffer */
-    extern struct rt_i *rtip;
 
     double mk_cvt_factor();
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current destination */
-	bu_log("units = '%s'\n", local_u_name);
+	fprintf(stdout, "units = '%s'\n", local_u_name);
 	return;
     }
 
-    if (strcmp(buffer + i, "?") == 0) {
+    if (BU_STR_EQUAL(buffer + i, "?")) {
 	com_usage(ctp);
 	return;
-    } else if (strcmp(buffer + i, "default") == 0) {
+    } else if (BU_STR_EQUAL(buffer + i, "default")) {
 	base2local = rtip->rti_dbip->dbi_base2local;
 	local2base = rtip->rti_dbip->dbi_local2base;
 	bu_strlcpy(local_u_name, bu_units_string(base2local), sizeof(local_u_name));
     } else {
 	tmp_dbl = bu_units_conversion(buffer + i);
-	if (tmp_dbl > 0.0) {
+	if (tmp_dbl <= 0.0) {
 	    bu_log("Invalid unit specification: '%s'\n", buffer + i);
 	    return;
 	}
@@ -517,13 +515,13 @@ nirt_units(char *buffer, com_table *ctp)
 }
 
 void
-do_overlap_claims(char *buffer, com_table *ctp)
+do_overlap_claims(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     int i = 0;      /* current position on the *buffer */
     int j;
     double mk_cvt_factor();
 
-    while (isspace(*(buffer+i)))
+    while (isspace((int)*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current destination */
@@ -531,7 +529,7 @@ do_overlap_claims(char *buffer, com_table *ctp)
 	return;
     }
 
-    if (strcmp(buffer + i, "?") == 0) {
+    if (BU_STR_EQUAL(buffer + i, "?")) {
 	com_usage(ctp);
 	return;
     }
@@ -540,8 +538,8 @@ do_overlap_claims(char *buffer, com_table *ctp)
 	int k;
 
 	sprintf(numeral, "%d", j);
-	if ((strcmp(buffer + i, ocname[j]) == 0)
-	    || (strcmp(buffer + i, numeral) == 0)) {
+	if ((BU_STR_EQUAL(buffer + i, ocname[j]))
+	    || (BU_STR_EQUAL(buffer + i, numeral))) {
 	    overlap_claims = j;
 	    for (k = 0; k < 2; ++k)
 		if (rti_tab[k] != RTI_NULL)
@@ -554,21 +552,21 @@ do_overlap_claims(char *buffer, com_table *ctp)
 }
 
 void
-cm_attr(char *buffer, com_table *ctp)
+cm_attr(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
-    while (isascii(*buffer) && isspace(*buffer)) buffer++;
+    while (isascii(*buffer) && isspace((int)*buffer)) buffer++;
 
     if (strlen(buffer) == 0) {
 	com_usage(ctp);
 	return;
     }
 
-    if (! strncmp(buffer, "-p", 2)) {
+    if (! bu_strncmp(buffer, "-p", 2)) {
 	attrib_print();
 	return;
     }
 
-    if (! strncmp(buffer, "-f", 2)) {
+    if (! bu_strncmp(buffer, "-f", 2)) {
 	attrib_flush();
 	return;
     }
@@ -577,12 +575,12 @@ cm_attr(char *buffer, com_table *ctp)
 }
 
 void
-cm_debug(char *buffer, com_table *ctp)
+cm_debug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     char *cp = buffer;
 
     /* This is really icky -- should have argc, argv interface */
-    while (*cp && isascii(*cp) && isspace(*cp))  cp++;
+    while (*cp && isascii(*cp) && isspace((int)*cp))  cp++;
     if (*cp == '\0') {
 	/* display current value */
 	bu_printb("debug ", nirt_debug, DEBUG_FMT);
@@ -600,13 +598,13 @@ cm_debug(char *buffer, com_table *ctp)
 }
 
 void
-cm_libdebug(char *buffer, com_table *ctp)
+cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     char *cp = buffer;
 
     /* This is really icky -- should have argc, argv interface */
 
-    while (*cp && isascii(*cp) && isspace(*cp))
+    while (*cp && isascii(*cp) && isspace((int)*cp))
 	cp++;
 
     if (*cp == '\0') {
@@ -617,7 +615,7 @@ cm_libdebug(char *buffer, com_table *ctp)
     }
 
     /* Set a new value */
-    if (sscanf(cp, "%x", (unsigned int *)&rt_g.debug) == 1) {
+    if (sscanf(cp, "%x", (unsigned int *)&RTG.debug) == 1) {
 	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FMT);
 	bu_log("\n");
     } else {
@@ -626,19 +624,17 @@ cm_libdebug(char *buffer, com_table *ctp)
 }
 
 void
-backout(char *buffer, com_table *ctp)
+backout(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 {
-    /* quellage */
-    ctp = ctp;
 
-    while (isspace(*buffer))
+    while (isspace((int)*buffer))
 	++buffer;
     if (*buffer == '\0') {
 	/* display current value of do_backout */
 	bu_log("backout = %d\n", do_backout);
 	return;
     }
-    if (!isdigit(*buffer)) {
+    if (!isdigit((int)*buffer)) {
 	bu_log("backout must be set to 0 (off) or 1 (on)\n");
 	return;
     } else {

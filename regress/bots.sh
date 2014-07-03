@@ -1,7 +1,8 @@
+#!/bin/sh
 #                        B O T S . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2010 United States Government as represented by
+# Copyright (c) 2008-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,19 +44,19 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
-MGED="`ensearch mged/mged`"
+MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find MGED, aborting"
     exit 1
 fi
-RT="`ensearch rt/rt`"
+RT="`ensearch rt`"
 if test ! -f "$RT" ; then
     echo "Unable to find RT, aborting"
     exit 1
 fi
-PIXDIFF="`ensearch util/pixdiff`"
+PIXDIFF="`ensearch pixdiff`"
 if test ! -f "$PIXDIFF" ; then
     echo "Unable to find pixdiff, aborting"
     exit 1
@@ -101,7 +102,7 @@ echo "Getting BoT orientations"
 
 rh="`$MGED -c bots.g get sph.volume.rh.bot orient 2>&1 | grep -v Using`"
 if test "x`echo $rh`" != "xrh" ; then
-    echo "ERROR: right-hand BoT orientation (faceitize) failure [$rh]"
+    echo "ERROR: right-hand BoT orientation (facetize) failure [$rh]"
     FAILED="`expr $FAILED + 1`"
 fi
 lh="`$MGED -c bots.g get sph.volume.lh.bot orient 2>&1 | grep -v Using`"

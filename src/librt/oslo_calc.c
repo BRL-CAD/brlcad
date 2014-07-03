@@ -1,7 +1,7 @@
 /*                     O S L O _ C A L C . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,16 +19,18 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file oslo_calc.c
+/** @file librt/oslo_calc.c
  *
  * Calculate the Oslo refinement matrix.
  *
- * This algorithm was taken from the paper
+ * This algorithm was taken from the paper:
+ *
  * "Making the Oslo Algorithm More Efficient" by T. Lyche and K. Morken
- * The algorithm referenced in the paper is algorithm 1 since we will be
- * dealing mostly with surfaces. This routine computes the refinement
- * matrix and returns a oslo structure which will allow a new curve or
- * surface to be built.
+ *
+ * The algorithm referenced in the paper is algorithm 1 since we will
+ * be dealing mostly with surfaces. This routine computes the
+ * refinement matrix and returns a oslo structure which will allow a
+ * new curve or surface to be built.
  *
  * Since we only want the last row of the alpha's as outlined in the
  * paper we can use a one dimensional array for the ah.
@@ -49,8 +51,8 @@
 struct oslo_mat *
 rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv, register struct knot_vector *t_kv, struct resource *res)
 
-    /* old knot vector */
-    /* new knot vector */
+/* old knot vector */
+/* new knot vector */
 
 {
     register fastf_t *t_p;
@@ -105,7 +107,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 
 	i = j + 1;
 
-	while (NEAR_ZERO(t_p[i] - tau_p[muprim], SMALL_FASTF) && i < (j + order)) {
+	while (ZERO(t_p[i] - tau_p[muprim]) && i < (j + order)) {
 	    i++;
 	    muprim--;
 	}
@@ -113,7 +115,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 	ih = muprim + 1;
 
 	for (v = 0, p = 1; p < order; p++) {
-	    if (NEAR_ZERO(t_p[j + p] - tau_p[ih], SMALL_FASTF))
+	    if (ZERO(t_p[j + p] - tau_p[ih]))
 		ih++;
 	    else
 		newknots[++v - 1] = t_p[j + p];
@@ -183,8 +185,8 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 }
 
 
-/*
- * rt_pr_oslo() - FOR DEBUGGING PURPOSES
+/**
+ * For debugging purposes only
  */
 void
 rt_nurb_pr_oslo(struct oslo_mat *om)
@@ -205,10 +207,10 @@ rt_nurb_pr_oslo(struct oslo_mat *om)
     }
 }
 
-/* rt_nurb_free_oslo()
+
+/**
  * Free up the structures and links for the oslo matrix.
  */
-
 void
 rt_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
 {
@@ -223,6 +225,7 @@ rt_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
 	bu_free((char *)omp, "rt_nurb_free_oslo: struct oslo");
     }
 }
+
 
 /** @} */
 /*

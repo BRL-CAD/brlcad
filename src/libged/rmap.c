@@ -1,7 +1,7 @@
 /*                         R M A P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rmap.c
+/** @file libged/rmap.c
  *
  * The rmap command.
  *
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -48,15 +48,15 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
-	bu_vls_printf(&gedp->ged_result_str, "%s is not available prior to version 5 of the .g file format\n", argv[0]);
+    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+	bu_vls_printf(gedp->ged_result_str, "%s is not available prior to version 5 of the .g file format\n", argv[0]);
 	return GED_ERROR;
     }
 
@@ -64,11 +64,11 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 
     /* For all regions not hidden */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    int found = 0;
 
-	    if (!(dp->d_flags & DIR_REGION) ||
-		(dp->d_flags & DIR_HIDDEN))
+	    if (!(dp->d_flags & RT_DIR_REGION) ||
+		(dp->d_flags & RT_DIR_HIDDEN))
 		continue;
 
 	    if (rt_db_get_internal(&intern,
@@ -76,7 +76,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 				   gedp->ged_wdbp->dbip,
 				   (fastf_t *)NULL,
 				   &rt_uniresource) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: Database read error, aborting", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting", argv[0]);
 		return GED_ERROR;
 	    }
 
@@ -86,7 +86,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 		if ((comb->region_id == itnp->id) ||
 		    (comb->aircode != 0 && -comb->aircode == itnp->id)) {
 		    /* add region name to our name list for this region */
-		    BU_GETSTRUCT(inp, _ged_id_names);
+		    BU_GET(inp, struct _ged_id_names);
 		    bu_vls_init(&inp->name);
 		    bu_vls_strcpy(&inp->name, dp->d_namep);
 		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
@@ -97,7 +97,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 
 	    if (!found) {
 		/* create new id_to_names node */
-		BU_GETSTRUCT(itnp, _ged_id_to_names);
+		BU_GET(itnp, struct _ged_id_to_names);
 		if (0 < comb->region_id)
 		    itnp->id = comb->region_id;
 		else
@@ -106,7 +106,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 		BU_LIST_INIT(&itnp->headName.l);
 
 		/* add region name to our name list for this region */
-		BU_GETSTRUCT(inp, _ged_id_names);
+		BU_GET(inp, struct _ged_id_names);
 		bu_vls_init(&inp->name);
 		bu_vls_strcpy(&inp->name, dp->d_namep);
 		BU_LIST_INSERT(&itnp->headName.l, &inp->l);
@@ -120,21 +120,21 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
     while (BU_LIST_WHILE(itnp, _ged_id_to_names, &headIdName.l)) {
 
 	/* add this id to the list */
-	bu_vls_printf(&gedp->ged_result_str, "%d {", itnp->id);
+	bu_vls_printf(gedp->ged_result_str, "%d {", itnp->id);
 
 	/* start sublist of names associated with this id */
 	while (BU_LIST_WHILE(inp, _ged_id_names, &itnp->headName.l)) {
 	    /* add the this name to this sublist */
-	    bu_vls_printf(&gedp->ged_result_str, " %s", bu_vls_addr(&inp->name));
+	    bu_vls_printf(gedp->ged_result_str, " %s", bu_vls_addr(&inp->name));
 
 	    BU_LIST_DEQUEUE(&inp->l);
 	    bu_vls_free(&inp->name);
-	    bu_free((genptr_t)inp, "ged_rmap: inp");
+	    BU_PUT(inp, struct _ged_id_names);
 	}
-	bu_vls_printf(&gedp->ged_result_str, " } "); /* , itnp->id); */
+	bu_vls_printf(gedp->ged_result_str, " } "); /* , itnp->id); */
 
 	BU_LIST_DEQUEUE(&itnp->l);
-	bu_free((genptr_t)itnp, "ged_rmap: itnp");
+	BU_PUT(itnp, struct _ged_id_to_names);
     }
 
     return GED_OK;

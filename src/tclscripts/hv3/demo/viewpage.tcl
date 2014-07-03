@@ -28,6 +28,6 @@ pack .hv3 -side left -expand yes -fill y
 #grid .helpviewer .helpviewer_yscroll -sticky news
 #grid rowconfigure . 0 -weight 1
 #grid columnconfigure . 0 -weight 1
-#.helpviewer configure -parsemode html 
+#.helpviewer configure -parsemode html
 #.helpviewer configure -imagecmd mkTkImage
 #.helpviewer parse $data

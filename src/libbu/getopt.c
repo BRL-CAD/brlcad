@@ -1,7 +1,7 @@
 /*                        G E T O P T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
 
 /* globals available: bu_opterr, bu_optind, bu_optopt, bu_optarg
  * see globals.c for details
@@ -31,7 +31,7 @@
 
 #define BADCH (int)'?'
 #define EMSG ""
-#define tell(s)	if (bu_opterr) {		\
+#define tell(s) if (bu_opterr) {		\
 	fputs(*nargv, stderr);			\
 	fputs(s, stderr);			\
 	fputc(bu_optopt, stderr);		\
@@ -42,21 +42,23 @@
 int
 bu_getopt(int nargc, char * const nargv[], const char *ostr)
 {
-    static char *place = EMSG;	/* option letter processing */
-    register char *oli;		/* option letter list index */
+    static const char *place = EMSG;	/* option letter processing */
+    register const char *oli;		/* option letter list index */
 
     if (*place=='\0') {
 	/* update scanning pointer */
-	if (bu_optind >= nargc || *(place = nargv[bu_optind]) != '-' ||
-	    !*++place) {
+	if (bu_optind >= nargc
+	    || *(place = nargv[bu_optind]) != '-'
+	    || !*++place)
+	{
 	    place = EMSG;
-	    return EOF;
+	    return -1;
 	}
 	if (*place == '-') {
 	    /* found "--" */
 	    place = EMSG;
 	    ++bu_optind;
-	    return EOF;
+	    return -1;
 	}
     } /* option letter okay? */
 
@@ -74,21 +76,25 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	    ++bu_optind;
 	    place = EMSG;
 	}
-    }
-    else {
+    } else {
 	/* need an argument */
-	if (*place) bu_optarg = place;	/* no white space */
-	else if (nargc <= ++bu_optind) {
+	if (*place) {
+	    /* no white space */
+	    bu_optarg = (char *)place;
+	} else if (nargc <= ++bu_optind) {
 	    /* no arg */
 	    place = EMSG;
 	    tell(": option requires an argument -- ");
+	} else {
+	    /* white space */
+	    bu_optarg = nargv[bu_optind];
 	}
-	else bu_optarg = nargv[bu_optind];	/* white space */
 	place = EMSG;
 	++bu_optind;
     }
     return bu_optopt;			/* dump back option letter */
 }
+
 
 /*
  * Local Variables:

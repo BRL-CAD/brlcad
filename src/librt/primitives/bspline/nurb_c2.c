@@ -1,7 +1,7 @@
 /*                       N U R B _ C 2 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_c2.c
+/** @file primitives/bspline/nurb_c2.c
  *
  * Given parametric u, v values, return the curvature of the surface.
  *

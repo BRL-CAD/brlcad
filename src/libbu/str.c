@@ -1,7 +1,7 @@
-/*                         S T R L . C
+/*                          S T R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,11 +21,19 @@
 #include "common.h"
 
 #include <string.h>
+#if defined(HAVE_WORKING_STRCASECMP_FUNCTION) ||  defined(HAVE_WORKING_STRNCASECMP_FUNCTION)
+#include <strings.h>
+#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
+#include <ctype.h>
+#include <stdio.h> /* for fprintf */
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
 
 
 size_t
@@ -39,7 +47,7 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 	fprintf(stderr, "WARNING: NULL destination string, size %lu [%s]\n", (unsigned long)size, label);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
-    if (!dst || !src || size <= 0) {
+    if (UNLIKELY(!dst || !src || size <= 0)) {
 	return 0;
     }
     if (!label) {
@@ -49,16 +57,16 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
     dstsize = strlen(dst);
     srcsize = strlen(src);
 
-    if (dstsize == size - 1) {
+    if (UNLIKELY(dstsize == size - 1)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fprintf(stderr, "WARNING: [%s] concatenation string is already full at %lu chars\n", label, (unsigned long)size-1);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-    } else if (dstsize > size - 1) {
+    } else if (UNLIKELY(dstsize > size - 1)) {
 	/* probably missing null-termination or is not an initialized buffer */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fprintf(stderr, "WARNING: [%s] concatenation string is already full, exceeds size (%lu > %lu)\n", label, (unsigned long)dstsize, (unsigned long)size-1);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-    } else if (srcsize >= size - dstsize) {
+    } else if (UNLIKELY(srcsize > size - dstsize - 1)) {
 	if (UNLIKELY(bu_debug)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %lu char max concatenating %lu chars (started with %lu)\n", label, (unsigned long)size-1, (unsigned long)srcsize, (unsigned long)dstsize);
@@ -70,11 +78,11 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
     /* don't return to ensure consistent null-termination behavior in following */
     (void)strlcat(dst, src, size);
 #else
-    (void)strncat(dst, src, size-strlen(dst)-1);
+    (void)strncat(dst, src, size - dstsize - 1);
 #endif
 
     /* be sure to null-terminate, contrary to strncat behavior */
-    if (dstsize + srcsize < size-1) {
+    if (dstsize + srcsize < size - 1) {
 	dst[dstsize + srcsize] = '\0';
     } else {
 	dst[size-1] = '\0'; /* sanity */
@@ -90,12 +98,12 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
     size_t srcsize;
 
 
-    if (!dst && label) {
+    if (UNLIKELY(!dst && label)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fprintf(stderr, "WARNING: NULL destination string, size %lu [%s]\n", (unsigned long)size, label);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
-    if (!dst || !src || size <= 0) {
+    if (UNLIKELY(!dst || !src || size <= 0)) {
 	return 0;
     }
     if (!label) {
@@ -105,7 +113,7 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
     srcsize = strlen(src);
 
     if (UNLIKELY(bu_debug)) {
-	if (srcsize >= size) {
+	if (srcsize > size - 1) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %lu char max copying %lu chars\n", label, (unsigned long)size-1, (unsigned long)srcsize);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
@@ -116,11 +124,11 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
     /* don't return to ensure consistent null-termination behavior in following */
     (void)strlcpy(dst, src, size);
 #else
-    (void)strncpy(dst, src, size-1);
+    (void)strncpy(dst, src, size - 1);
 #endif
 
     /* be sure to always null-terminate, contrary to strncpy behavior */
-    if (srcsize < size-1) {
+    if (srcsize < size - 1) {
 	dst[srcsize] = '\0';
     } else {
 	dst[size-1] = '\0'; /* sanity */
@@ -136,7 +144,7 @@ bu_strdupm(register const char *cp, const char *label)
     char *base;
     size_t len;
 
-    if (!cp && label) {
+    if (UNLIKELY(!cp && label)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fprintf(stderr, "WARNING: [%s] NULL copy buffer\n", label);
 	bu_semaphore_release(BU_SEM_SYSCALL);
@@ -146,7 +154,7 @@ bu_strdupm(register const char *cp, const char *label)
     }
 
     len = strlen(cp)+1;
-    base = bu_malloc(len, label);
+    base = (char *)bu_malloc(len, label);
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_LOG)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -157,6 +165,106 @@ bu_strdupm(register const char *cp, const char *label)
     memcpy(base, cp, len);
     return base;
 }
+
+
+int
+bu_strcmp(const char *string1, const char *string2)
+{
+    const char *s1 = "";
+    const char *s2 = "";
+
+    /* "" and NULL are considered equivalent which helps prevent
+     * strcmp() from crashing.
+     */
+
+    if (string1)
+	s1 = string1;
+
+    if (string2)
+	s2 = string2;
+
+    return strcmp(s1, s2);
+}
+
+
+int
+bu_strncmp(const char *string1, const char *string2, size_t n)
+{
+    const char *s1 = "";
+    const char *s2 = "";
+
+    /* "" and NULL are considered equivalent which helps prevent
+     * strncmp() from crashing.
+     */
+
+    if (string1)
+	s1 = string1;
+
+    if (string2)
+	s2 = string2;
+
+    return strncmp(s1, s2, n);
+}
+
+
+int
+bu_strcasecmp(const char *string1, const char *string2)
+{
+    const char *s1 = "";
+    const char *s2 = "";
+
+    /* "" and NULL are considered equal */
+
+    if (string1)
+	s1 = string1;
+
+    if (string2)
+	s2 = string2;
+
+#if defined(HAVE_WORKING_STRCASECMP_FUNCTION)
+    return strcasecmp(s1, s2);
+#else
+    while (tolower((unsigned char)*s1) == tolower((unsigned char)*s2)) {
+	if (*s1 == '\0')
+	    return 0;
+	s1++;
+	s2++;
+    }
+    return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+#endif
+}
+
+
+int
+bu_strncasecmp(const char *string1, const char *string2, size_t n)
+{
+    const char *s1 = "";
+    const char *s2 = "";
+
+    /* "" and NULL are considered equal */
+
+    if (string1)
+	s1 = string1;
+
+    if (string2)
+	s2 = string2;
+
+    if (n == 0)
+	return 0;
+
+#if defined(HAVE_WORKING_STRNCASECMP_FUNCTION)
+    return strncasecmp(s1, s2, n);
+#else
+    while (tolower((unsigned char)*s1) == tolower((unsigned char)*s2)) {
+	if (--n == 0 || *s1 == '\0')
+	    return 0;
+	s1++;
+	s2++;
+    }
+    return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+#endif
+}
+
 
 /*
  * Local Variables:

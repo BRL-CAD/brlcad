@@ -1,7 +1,7 @@
 /*                        E D I T I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file editit.c
+/** @file libged/editit.c
  *
  * The editit function.
  *
@@ -39,15 +39,22 @@
 #include "bio.h"
 #include "ged.h"
 
+#define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
+#define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
+#define EMACS_EDITOR "emacs"
+#define NANO_EDITOR "nano"
+#define VIM_EDITOR "vim"
+#define VI_EDITOR "vi"
+
 int
 _ged_editit(char *editstring, const char *filename)
 {
 #ifdef HAVE_UNISTD_H
     int xpid = 0;
-    int stat = 0;
+    int status = 0;
 #endif
     int pid = 0;
-    char **avtmp;
+    char **avtmp = (char **)NULL;
     const char *terminal = (char *)NULL;
     const char *terminal_opt = (char *)NULL;
     const char *editor = (char *)NULL;
@@ -66,17 +73,59 @@ _ged_editit(char *editstring, const char *filename)
 
     /* convert the edit string into pieces suitable for arguments to execlp */
 
-    avtmp = (char **)bu_malloc(sizeof(char *)*5, "ged_editit: editstring args");
-    bu_argv_from_string(avtmp, 4, editstring);
+    if (editstring != NULL) {
+	avtmp = (char **)bu_calloc(5, sizeof(char *), "ged_editit: editstring args");
+	bu_argv_from_string(avtmp, 4, editstring);
 
-    if (avtmp[0] && strcmp(avtmp[0], "(null)"))
-	terminal = avtmp[0];
-    if (avtmp[1] && strcmp(avtmp[1], "(null)"))
-	terminal_opt = avtmp[1];
-    if (avtmp[2] && strcmp(avtmp[2], "(null)"))
-	editor = avtmp[2];
-    if (avtmp[3] && strcmp(avtmp[3], "(null)"))
-	editor_opt = avtmp[3];
+	if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))
+	    terminal = avtmp[0];
+	if (avtmp[1] && !BU_STR_EQUAL(avtmp[1], "(null)"))
+	    terminal_opt = avtmp[1];
+	if (avtmp[2] && !BU_STR_EQUAL(avtmp[2], "(null)"))
+	    editor = avtmp[2];
+	if (avtmp[3] && !BU_STR_EQUAL(avtmp[3], "(null)"))
+	    editor_opt = avtmp[3];
+    } else {
+	editor = getenv("EDITOR");
+
+	/* still unset? try windows */
+	if (!editor || editor[0] == '\0') {
+	    if (bu_file_exists(WIN_EDITOR, NULL)) {
+		editor = WIN_EDITOR;
+	    }
+	}
+
+	/* still unset? try mac os x */
+	if (!editor || editor[0] == '\0') {
+	    if (bu_file_exists(MAC_EDITOR, NULL)) {
+		editor = MAC_EDITOR;
+	    }
+	}
+
+	/* still unset? try emacs */
+	if (!editor || editor[0] == '\0') {
+	    editor = bu_which(EMACS_EDITOR);
+	}
+
+	/* still unset? try nano */
+	if (!editor || editor[0] == '\0') {
+	    editor = bu_which(NANO_EDITOR);
+	}
+
+	/* still unset? try vim */
+	if (!editor || editor[0] == '\0') {
+	    editor = bu_which(VIM_EDITOR);
+	}
+
+	/* still unset? As a last resort, go with vi -
+	 * vi is part of the POSIX standard, which is as
+	 * close as we can get currently to an editor
+	 * that should always be present:
+	 * http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html */
+	if (!editor || editor[0] == '\0') {
+	    editor = bu_which(VI_EDITOR);
+	}
+    }
 
     if (!editor) {
 	bu_log("INTERNAL ERROR: editit editor missing\n");
@@ -88,10 +137,10 @@ _ged_editit(char *editstring, const char *filename)
      */
     {
 	int length;
-	struct bu_vls str;
-	struct bu_vls sep;
-	bu_vls_init(&str);
-	bu_vls_init(&sep);
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	struct bu_vls sep = BU_VLS_INIT_ZERO;
+	char *editor_basename;
+
 	if (terminal && editor_opt) {
 	    bu_log("Invoking [%s %s %s] via %s\n\n", editor, editor_opt, file, terminal);
 	} else if (terminal) {
@@ -101,13 +150,16 @@ _ged_editit(char *editstring, const char *filename)
 	} else {
 	    bu_log("Invoking [%s %s]\n\n", editor, file);
 	}
-	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", bu_basename(editor), bu_getprogname());
+	editor_basename = (char *)bu_calloc(strlen(editor), sizeof(char), "_ged_editit editor_basename");
+	bu_basename(editor_basename, editor);
+	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", editor_basename, bu_getprogname());
 	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
 	    bu_vls_putc(&sep, '*');
 	}
-	bu_log("%V%V%V\n\n", &sep, &str, &sep);
+	bu_log("%s%s%s\n\n", bu_vls_addr(&sep), bu_vls_addr(&str), bu_vls_addr(&sep));
 	bu_vls_free(&str);
 	bu_vls_free(&sep);
+	bu_free(editor_basename, "editor_basename free");
     }
 
 #if defined(SIGINT) && defined(SIGQUIT)
@@ -132,6 +184,7 @@ _ged_editit(char *editstring, const char *filename)
 #endif
 
 	{
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	    char buffer[RT_MAXLINE + 1] = {0};
 	    STARTUPINFO si = {0};
@@ -149,15 +202,18 @@ _ged_editit(char *editstring, const char *filename)
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
-
-	    if (!strcmp(bu_basename(editor), "TextEdit")) {
+	    char *editor_basename;
+	    editor_basename = (char *)bu_calloc(strlen(editor), sizeof(char), "_ged_editit editor_basename");
+	    bu_basename(editor_basename, editor);
+	    if (BU_STR_EQUAL(editor_basename, "TextEdit")) {
 		/* close stdout/stderr so we don't get blather from TextEdit about service registration failure */
 		close(fileno(stdout));
 		close(fileno(stderr));
 	    }
+	    bu_free(editor_basename, "editor_basename free");
 
 	    if (!terminal && !editor_opt) {
-    		(void)execlp(editor, editor, file, NULL);
+		(void)execlp(editor, editor, file, NULL);
 	    } else if (!terminal) {
 		(void)execlp(editor, editor, editor_opt, file, NULL);
 	    } else if (terminal && !terminal_opt) {
@@ -176,7 +232,7 @@ _ged_editit(char *editstring, const char *filename)
 
 #ifdef HAVE_UNISTD_H
     /* wait for the editor to terminate */
-    while ((xpid = wait(&stat)) >= 0) {
+    while ((xpid = wait(&status)) >= 0) {
 	if (xpid == pid) {
 	    break;
 	}
@@ -188,7 +244,9 @@ _ged_editit(char *editstring, const char *filename)
     (void)signal(SIGQUIT, s3);
 #endif
 
-    bu_free((genptr_t)avtmp, "ged_editit: avtmp");
+    if (editstring != NULL)
+	bu_free((void *)avtmp, "ged_editit: avtmp");
+
     return 1;
 }
 
@@ -196,6 +254,7 @@ _ged_editit(char *editstring, const char *filename)
 int
 ged_editit(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret = 0;
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
@@ -203,11 +262,14 @@ ged_editit(struct ged *gedp, int argc, const char *argv[])
      * edit string and temp file.  should use bu_getopt().
      */
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
+	bu_vls_printf(gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
 	return TCL_ERROR;
+    } else {
+	char *edstr = bu_strdup((char *)argv[2]);
+	ret = _ged_editit(edstr, argv[4]);
+	bu_free(edstr, "free tmp editstring copy");
+	return ret;
     }
-
-    return _ged_editit((char *)argv[2], argv[4]);
 }
 
 

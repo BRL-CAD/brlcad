@@ -1,7 +1,7 @@
 /*                     D B _ I N M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2010 United States Government as represented by
+ * Copyright (c) 2006-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_inmem.c
+/** @file librt/db_inmem.c
  *
  * Routines in support of maintaining geometry in-memory-only.  The
  * general process for adding geometry to an inmem database is to
@@ -45,20 +45,13 @@
 
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
 
-/**
- * d b _ o p e n _ i n m e m
- *
- * "open" an in-memory-only database instance.  this initializes a
- * dbip for use, creating an inmem dbi_wdbp as the means to add
- * geometry to the directory (use wdb_export_external()).
- */
 struct db_i *
 db_open_inmem(void)
 {
     register struct db_i *dbip = DBI_NULL;
     register int i;
 
-    BU_GETSTRUCT(dbip, db_i);
+    BU_ALLOC(dbip, struct db_i);
     dbip->dbi_eof = (off_t)-1L;
     dbip->dbi_fp = NULL;
     dbip->dbi_mf = NULL;
@@ -71,8 +64,8 @@ db_open_inmem(void)
     dbip->dbi_read_only = 0;
 
     /* Initialize fields */
-    for (i=0; i<RT_DBNHASH; i++) {
-	dbip->dbi_Head[i] = DIR_NULL;
+    for (i = 0; i < RT_DBNHASH; i++) {
+	dbip->dbi_Head[i] = RT_DIR_NULL;
     }
 
     dbip->dbi_local2base = 1.0;		/* mm */
@@ -96,20 +89,12 @@ db_open_inmem(void)
     return dbip;
 }
 
-
-/**
- * d b _ c r e a t e _ i n m e m
- *
- * creates an in-memory-only database.  this is very similar to
- * db_open_inmem() with the exception that the this routine adds a
- * default _GLOBAL object.
- */
 struct db_i *
 db_create_inmem(void) {
     struct db_i *dbip;
     struct bu_external obj;
     struct bu_attribute_value_set avs;
-    struct bu_vls units;
+    struct bu_vls units = BU_VLS_INIT_ZERO;
     struct bu_external attr;
     int flags;
 
@@ -119,7 +104,6 @@ db_create_inmem(void) {
     RT_CK_WDB(dbip->dbi_wdbp);
 
     /* Second, create the attribute-only _GLOBAL object */
-    bu_vls_init(&units);
     bu_vls_printf(&units, "%.25e", dbip->dbi_local2base);
 
     bu_avs_init(&avs, 4, "db_create_inmem");
@@ -131,7 +115,7 @@ db_create_inmem(void) {
 		       DB5_GLOBAL_OBJECT_NAME, DB5HDR_HFLAGS_HIDDEN_OBJECT, &attr, NULL,
 		       DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
 		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
-    flags = DIR_HIDDEN | DIR_NON_GEOM | RT_DIR_INMEM;
+    flags = RT_DIR_HIDDEN | RT_DIR_NON_GEOM | RT_DIR_INMEM;
     wdb_export_external(dbip->dbi_wdbp, &obj, DB5_GLOBAL_OBJECT_NAME, flags, 0);
 
     bu_free_external(&obj);
@@ -142,13 +126,6 @@ db_create_inmem(void) {
     return dbip;
 }
 
-
-/**
- * d b _ i n m e m
- *
- * Transmogrify an existing directory entry to be an in-memory-only
- * one, stealing the external representation from 'ext'.
- */
 void
 db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *dbip)
 {
@@ -158,7 +135,7 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     if (dp->d_flags & RT_DIR_INMEM)
 	bu_free(dp->d_un.ptr, "db_inmem() ext ptr");
     dp->d_un.ptr = ext->ext_buf;
-    if (dbip->dbi_version < 5) {
+    if (db_version(dbip) < 5) {
 	/* DB_MINREC granule size */
 	dp->d_len = ext->ext_nbytes / 128;
     } else {
@@ -167,7 +144,7 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     dp->d_flags = flags | RT_DIR_INMEM;
 
     /* Empty out the external structure, but leave it w/valid magic */
-    ext->ext_buf = (genptr_t)NULL;
+    ext->ext_buf = (uint8_t *)NULL;
     ext->ext_nbytes = 0;
 }
 

@@ -1,7 +1,7 @@
 /*                         S H A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file shade.c
+/** @file liboptical/shade.c
  *
  * Ray Tracing program, lighting model shader interface.
  *
  * Notes -
  * The normals on all surfaces point OUT of the solid.
- * The incomming light rays point IN.
+ * The incoming light rays point IN.
  *
  */
 
@@ -37,9 +37,9 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "rtprivate.h"
 #include "light.h"
 #include "plot3.h"
+
 
 #ifdef RT_MULTISPECTRAL
 #  include "spectrum.h"
@@ -47,8 +47,6 @@
 
 
 /**
- * P R _ S H A D E W O R K
- *
  * Pretty print a shadework structure.
  */
 void
@@ -59,9 +57,9 @@ pr_shadework(const char *str, const struct shadework *swp)
     if (!swp)
 	return;
 
-    bu_log("Shadework%s: 0x%x\n", str ? str : "", swp);
+    bu_log("Shadework%s: %p\n", str ? str : "", (void *)swp);
     bu_printb(" sw_inputs", swp->sw_inputs, MFI_FORMAT);
-    if (swp->sw_inputs && MFI_HIT)
+    if (swp->sw_inputs & MFI_HIT)
 	bu_log(" sw_hit.dist:%g @ sw_hit.point(%g %g %g)\n",
 	       swp->sw_hit.hit_dist,
 	       V3ARGS(swp->sw_hit.hit_point));
@@ -89,27 +87,25 @@ pr_shadework(const char *str, const struct shadework *swp)
     bu_log(" sw_xmitonly %d\n", swp->sw_xmitonly);
     bu_log("\n");
     if (swp->sw_inputs & MFI_LIGHT) for (i=0; i < SW_NLIGHTS; i++) {
-	if (swp->sw_visible[i] == (struct light_specific *)NULL)  continue;
-	RT_CK_LIGHT(swp->sw_visible[i]);
+	    if (swp->sw_visible[i] == (struct light_specific *)NULL) continue;
+	    RT_CK_LIGHT(swp->sw_visible[i]);
 #ifdef RT_MULTISPECTRAL
-	bu_log("   light %d visible, dir=(%g, %g, %g)\n",
-	       i,
-	       V3ARGS(&swp->sw_tolight[i*3]));
-	BN_CK_TABDATA(swp->msw_intensity[i]);
-	bn_pr_tabdata("light intensity", swp->msw_intensity[i]);
+	    bu_log("   light %d visible, dir=(%g, %g, %g)\n",
+		   i,
+		   V3ARGS(&swp->sw_tolight[i*3]));
+	    BN_CK_TABDATA(swp->msw_intensity[i]);
+	    bn_pr_tabdata("light intensity", swp->msw_intensity[i]);
 #else
-	bu_log("   light %d visible, intensity=%g, dir=(%g, %g, %g)\n",
-	       i,
-	       swp->sw_intensity[i],
-	       V3ARGS(&swp->sw_tolight[i*3]));
+	    bu_log("   light %d visible, intensity=%g, dir=(%g, %g, %g)\n",
+		   i,
+		   swp->sw_intensity[i],
+		   V3ARGS(&swp->sw_tolight[i*3]));
 #endif
-    }
+	}
 }
 
 
 /**
- * S H A D E _ I N P U T S
- *
  * Compute the necessary fields in the shadework structure.
  *
  * Note that only hit_dist is valid in pp_inhit.  Must calculate it if
@@ -126,7 +122,7 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 
     RT_CK_RAY(swp->sw_hit.hit_rayp);
 
-    /* These calcuations all have MFI_HIT as a pre-requisite */
+    /* These calculations all have MFI_HIT as a pre-requisite */
     if (want & (MFI_NORMAL|MFI_LIGHT|MFI_UV))
 	want |= MFI_HIT;
 
@@ -166,7 +162,7 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 		    bu_log("shade_inputs(%s) flip N xy=%d, %d %s surf=%d dot=%g\n",
 			   pp->pt_inseg->seg_stp->st_name,
 			   ap->a_x, ap->a_y,
-			   rt_functab[pp->pt_inseg->seg_stp->st_id].ft_name,
+			   OBJ[pp->pt_inseg->seg_stp->st_id].ft_name,
 			   swp->sw_hit.hit_surfno, f);
 		} else {
 		    if (counter++ == 101) {
@@ -209,8 +205,8 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 	    swp->sw_uv.uv_u = swp->sw_uv.uv_v = 0.5;
 	    swp->sw_uv.uv_du = swp->sw_uv.uv_dv = 0;
 	} else {
-	    RT_HIT_UVCOORD(	ap, pp->pt_inseg->seg_stp,
-				&(swp->sw_hit), &(swp->sw_uv));
+	    RT_HIT_UVCOORD(ap, pp->pt_inseg->seg_stp,
+			   &(swp->sw_hit), &(swp->sw_uv));
 	}
 	if (swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 ||
 	    swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1) {
@@ -218,7 +214,7 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 		   swp->sw_uv.uv_u, swp->sw_uv.uv_v,
 		   swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 		   pp->pt_inseg->seg_stp->st_name,
-		   rt_functab[pp->pt_inseg->seg_stp->st_id].ft_name,
+		   OBJ[pp->pt_inseg->seg_stp->st_id].ft_name,
 		   pp->pt_inhit->hit_surfno,
 		   ap->a_x, ap->a_y);
 #ifdef RT_MULTISPECTRAL
@@ -250,8 +246,6 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 
 
 /**
- * V I E W S H A D E
- *
  * Call the material-specific shading function, after making certain
  * that all shadework fields desired have been provided.
  *
@@ -280,9 +274,9 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
     mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs;
     RT_CK_MF(mfp);
 
-    if (!swp) {
+    if (!swp || !mfp) {
 	if (R_DEBUG&RDEBUG_SHADE) {
-	    bu_log("ERROR: NULL shadework structure encountered\n");
+	    bu_log("ERROR: NULL shadework or mfuncs structure encountered\n");
 	}
 	return 0;
     }
@@ -322,7 +316,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
      * "safe" values, and claim that the light is visible, in case
      * they are used.
      */
-    if (swp->sw_xmitonly)  want &= ~MFI_LIGHT;
+    if (swp->sw_xmitonly) want &= ~MFI_LIGHT;
     if (!(want & MFI_LIGHT)) {
 	register int i;
 
@@ -360,7 +354,8 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
 
 
     /* Invoke the actual shader (may be a tree of them) */
-    (void)mfp->mf_render(ap, pp, swp, rp->reg_udata);
+    if (mfp && mfp->mf_render)
+	(void)mfp->mf_render(ap, pp, swp, rp->reg_udata);
 
     if (R_DEBUG&RDEBUG_SHADE) {
 	pr_shadework("after mf_render", swp);
@@ -369,6 +364,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
 
     return 1;
 }
+
 
 /*
  * Local Variables:

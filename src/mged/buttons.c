@@ -1,7 +1,7 @@
 /*                       B U T T O N S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file buttons.c
+/** @file mged/buttons.c
  *
  */
 
@@ -36,12 +36,13 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 
+/* external sp_hook function */
+extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *);	/* defined in set.c */
 
 extern int mged_svbase(void);
 extern void set_e_axes_pos(int both);
 extern int mged_zoom(double val);
 extern void set_absolute_tran(void);	/* defined in set.c */
-extern void set_scroll_private(void);	/* defined in set.c */
 extern void adc_set_scroll(void);	/* defined in adc.c */
 
 /* forward declarations for the buttons table */
@@ -82,14 +83,14 @@ int bv_zoomout();
  * This flag indicates that Primitive editing is in effect.
  * edobj may not be set at the same time.
  * It is set to the 0 if off, or the value of the button function
- * that is currently in effect (eg, BE_S_SCALE).
+ * that is currently in effect (e.g., BE_S_SCALE).
  */
 static int edsol;
 
 /* This flag indicates that Matrix editing is in effect.
  * edsol may not be set at the same time.
  * Value is 0 if off, or the value of the button function currently
- * in effect (eg, BE_O_XY).
+ * in effect (e.g., BE_O_XY).
  */
 int edobj;		/* object editing */
 int movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
@@ -150,7 +151,7 @@ struct buttons {
 
 static mat_t sav_viewrot, sav_toviewcenter;
 static fastf_t sav_vscale;
-static int vsaved = 0;	/* set iff view saved */
+static int vsaved = 0;	/* set if view saved */
 
 extern void color_soltab(void);
 extern void sl_halt_scroll(void);	/* in scroll.c */
@@ -209,9 +210,6 @@ struct menu_item oed_menu[] = {
 };
 
 
-/*
- * B U T T O N
- */
 void
 button(int bnum)
 {
@@ -234,8 +232,6 @@ button(int bnum)
 
 
 /*
- * F _ P R E S S
- *
  * Hook for displays with no buttons
  *
  * Given a string description of which button to press, simulate
@@ -250,11 +246,9 @@ f_press(ClientData clientData,
 	const char *argv[])
 {
     int i;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help press");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -269,18 +263,12 @@ f_press(ClientData clientData,
 	struct menu_item *mptr;
 
 	if (edsol && edobj) {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
+	    bu_vls_printf(&vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
 	}
 
-	if (strcmp(str, "help") == 0) {
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
+	if (BU_STR_EQUAL(str, "help")) {
 
 	    for (bp = button_table; bp->bu_code >= 0; bp++)
 		vls_col_item(&vls, bp->bu_name);
@@ -293,25 +281,25 @@ f_press(ClientData clientData,
 
 	/* Process the button function requested. */
 	for (bp = button_table; bp->bu_code >= 0; bp++) {
-	    if (strcmp(str, bp->bu_name) != 0)
+	    if (!BU_STR_EQUAL(str, bp->bu_name))
 		continue;
 
 	    (void)bp->bu_func(clientData, interp, 2, argv+1);
 	    goto next;
 	}
 
-	for (menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
+	for (menu = 0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
 	    if (*m == MENU_NULL) continue;
-	    for (item=0, mptr = *m;
+	    for (item = 0, mptr = *m;
 		 mptr->menu_string[0] != '\0';
 		 mptr++, item++) {
-		if (strcmp(str, mptr->menu_string) != 0)
+		if (!BU_STR_EQUAL(str, mptr->menu_string))
 		    continue;
 
 		menu_state->ms_cur_item = item;
 		menu_state->ms_cur_menu = menu;
 		menu_state->ms_flag = 1;
-		/* It's up to the menu_func to set menu_state->ms_flag=0
+		/* It's up to the menu_func to set menu_state->ms_flag = 0
 		 * if no arrow is desired */
 		if (mptr->menu_func != ((void (*)())0))
 		    (*(mptr->menu_func))(mptr->menu_arg, menu, item);
@@ -330,10 +318,8 @@ f_press(ClientData clientData,
 
 
 /*
- * L A B E L _ B U T T O N
- *
  * For a given GED button number, return the "press" ID string.
- * Useful for displays with programable button lables, etc.
+ * Useful for displays with programmable button labels, etc.
  */
 char *
 label_button(int bnum)
@@ -348,9 +334,8 @@ label_button(int bnum)
     }
 
     {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "label_button(%d):  Not a defined operation\n", bnum);
 	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
@@ -380,7 +365,16 @@ int
 bv_rate_toggle()
 {
     mged_variables->mv_rateknobs = !mged_variables->mv_rateknobs;
-    set_scroll_private();
+
+    {
+	/* need dummy values for func signature--they are unused in the func */
+	const struct bu_structparse *sdp = 0;
+	const char name[] = "name";
+	void *base = 0;
+	const char value[] = "value";
+	set_scroll_private(sdp, name, base, value);
+    }
+
     return TCL_OK;
 }
 
@@ -469,8 +463,6 @@ bv_vsave()
 
 
 /*
- * B V _ A D C U R S O R
- *
  * Toggle state of angle/distance cursor.
  * "press adc"
  * This command conflicts with existing "adc" command,
@@ -511,7 +503,7 @@ bv_45_45() {
 
 int
 bv_35_25() {
-    /* Use Azmuth=35, Elevation=25 in GIFT's backwards space */
+    /* Use Azimuth=35, Elevation=25 in GIFT's backwards space */
     setview(270.0+25.0, 0.0, 270.0-35.0);
     return TCL_OK;
 }
@@ -525,8 +517,8 @@ ill_common(void) {
     int is_empty = 1;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
@@ -730,8 +722,8 @@ be_accept()
 	mmenu_set_all(MENU_L1, MENU_NULL);
 	mmenu_set_all(MENU_L2, MENU_NULL);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
@@ -768,9 +760,8 @@ be_accept()
 	    dmlp->dml_mged_variables->mv_transform = 'v';
 
     {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "end_edit_callback");
 	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -826,8 +817,8 @@ be_reject()
     illump = SOLID_NULL;		/* None selected */
 
     /* Clear illumination flags */
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
@@ -844,9 +835,8 @@ be_reject()
 	    dmlp->dml_mged_variables->mv_transform = 'v';
 
     {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "end_edit_callback");
 	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -919,8 +909,6 @@ be_s_scale()
 
 
 /*
- * N O T _ S T A T E
- *
  * Returns 0 if current state is as desired,
  * Returns !0 and prints error message if state mismatch.
  */
@@ -971,8 +959,6 @@ stateChange(int UNUSED(oldstate), int newstate)
 
 
 /*
- * C H G _ S T A T E
- *
  * Returns 0 if state change is OK,
  * Returns !0 and prints error message if error.
  */
@@ -981,7 +967,7 @@ chg_state(int from, int to, char *str)
 {
     struct dm_list *p;
     struct dm_list *save_dm_list;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (STATE != from) {
 	bu_log("Unable to do <%s> going from %s to %s state.\n", str, state_str[from], state_str[to]);
@@ -1001,7 +987,6 @@ chg_state(int from, int to, char *str)
 
     curr_dm_list = save_dm_list;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "%s(state)", MGED_DISPLAY_VAR);
     Tcl_SetVar(INTERP, bu_vls_addr(&vls), state_str[STATE], TCL_GLOBAL_ONLY);
     bu_vls_free(&vls);
@@ -1019,8 +1004,6 @@ state_err(char *str)
 
 
 /*
- * B T N _ I T E M _ H I T
- *
  * Called when a menu item is hit
  */
 void
@@ -1034,8 +1017,6 @@ btn_item_hit(int arg, int menu, int UNUSED(item))
 
 
 /*
- * B T N _ H E A D _ M E N U
- *
  * Called to handle hits on menu heads.
  * Also called from main() with arg 0 in init.
  */
@@ -1053,9 +1034,8 @@ btn_head_menu(int i, int UNUSED(menu), int UNUSED(item)) {
 	    break;
 	default:
 	    {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "btn_head_menu(%d): bad arg\n", i);
 		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -1080,9 +1060,8 @@ chg_l2menu(int i) {
 	    break;
 	default:
 	    {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "chg_l2menu(%d): bad arg\n", i);
 		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);

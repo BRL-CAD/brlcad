@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ B L E N D . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2010 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,47 +17,36 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture_blend.c
+/** @file librender/texture_blend.c
  *
- *  Comments -
- *      Texture Library - Uses the R and B channels to blend 2 colors
+ * Comments -
+ * Texture Library - Uses the R and B channels to blend 2 colors
  *
  */
 
+#include "bu/malloc.h"
 #include "texture.h"
 #include <stdlib.h>
 
-#include "bu.h"
-
-void texture_blend_init(texture_t *texture, TIE_3 color1, TIE_3 color2) {
-    texture_blend_t *sd;
-
-    texture->data = bu_malloc(sizeof(texture_blend_t), "texture data");
-    texture->free = texture_blend_free;
-    texture->work = (texture_work_t *)texture_blend_work;
-
-    sd = (texture_blend_t *)texture->data;
-    sd->color1 = color1;
-    sd->color2 = color2;
-}
-
-
-void texture_blend_free(texture_t *texture) {
+void
+texture_blend_free(struct texture_s *texture) {
     bu_free(texture->data, "texture data");
 }
 
 
-void texture_blend_work(__TEXTURE_WORK_PROTOTYPE__) {
-    texture_blend_t *sd;
-    tfloat coef;
+void
+texture_blend_work(struct texture_s *texture, void *UNUSED(mesh), struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), vect_t *pixel) {
+    struct texture_blend_s *sd;
+    fastf_t coef;
 
-    sd = (texture_blend_t *)texture->data;
+    sd = (struct texture_blend_s *)texture->data;
 
-    coef = pixel->v[0];
-    pixel->v[0] = (1.0 - coef)*sd->color1.v[0] + coef*sd->color2.v[0];
-    pixel->v[1] = (1.0 - coef)*sd->color1.v[1] + coef*sd->color2.v[1];
-    pixel->v[2] = (1.0 - coef)*sd->color1.v[2] + coef*sd->color2.v[2];
+    coef = *pixel[0];
+    *pixel[0] = (1.0 - coef)*sd->color1[0] + coef*sd->color2[0];
+    *pixel[1] = (1.0 - coef)*sd->color1[1] + coef*sd->color2[1];
+    *pixel[2] = (1.0 - coef)*sd->color1[2] + coef*sd->color2[2];
 }
+
 
 /*
  * Local Variables:

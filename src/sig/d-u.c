@@ -1,7 +1,7 @@
 /*                           D - U . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,9 +19,9 @@
  */
 /** @file d-u.c
  *
- *  Convert doubles to 16bit unsigned ints
+ * Convert doubles to 16bit unsigned ints
  *
- *	% d-i [-n || scale]
+ *	% d-u [-n || scale]
  *
  *	-n will normalize the data (scale -1.0 to +1.0
  *		between -32767 and +32767).
@@ -30,61 +30,64 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h> /* for atof() */
 #include <string.h>
 #include "bio.h"
 
 #include "bu.h"
-
-double	ibuf[512];
-unsigned short	obuf[512];
+#include "vmath.h"
 
 
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
-    int	i, num;
-    double	scale;
-    double	value;
-    int	clip_high, clip_low;
+    double ibuf[512];
+    unsigned short obuf[512];
 
-    scale = 1.0;
+    int i, num;
+    double scale = 1.0;
+    double value;
+    int clip_high, clip_low;
+    size_t ret;
 
-    if ( argc > 1 ) {
-	if ( strcmp( argv[1], "-n" ) == 0 )
+    if (argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-n"))
 	    scale = 65536.0;
 	else
-	    scale = atof( argv[1] );
+	    scale = atof(argv[1]);
 	argc--;
     }
 
-    if ( argc > 1 || scale == 0 || isatty(fileno(stdin)) ) {
-	bu_exit(1, "Usage: d-i [-n || scale] < doubles > unsigned_shorts\n");
+    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin))) {
+	bu_exit(1, "Usage: d-u [-n || scale] < doubles > unsigned_shorts\n");
     }
 
     clip_high = clip_low = 0;
 
-    while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
-	for ( i = 0; i < num; i++ ) {
+    while ((num = fread(&ibuf[0], sizeof(ibuf[0]), 512, stdin)) > 0) {
+	for (i = 0; i < num; i++) {
 	    value = ibuf[i] * scale;
-	    if ( value > 65535.0 ) {
+	    if (value > 65535.0) {
 		obuf[i] = 65535;
 		clip_high++;
-	    } else if ( value < 0.0 ) {
+	    } else if (value < 0.0) {
 		obuf[i] = 0;
 		clip_low++;
 	    } else
 		obuf[i] = (unsigned short)value;
 	}
 
-	fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+	ret = fwrite(&obuf[0], sizeof(obuf[0]), num, stdout);
+	if (ret != (size_t)num)
+	    perror("fwrite");
     }
 
-    if ( clip_low != 0 || clip_high != 0 )
-	fprintf( stderr, "Warning: Clipped %d high, %d low\n",
-		 clip_high, clip_low );
+    if (clip_low != 0 || clip_high != 0)
+	fprintf(stderr, "%s: warning: clipped %d high, %d low\n",
+		argv[0], clip_high, clip_low);
     return 0;
 }
+
 
 /*
  * Local Variables:

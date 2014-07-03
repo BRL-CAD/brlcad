@@ -1,7 +1,7 @@
 /*                      C H G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file chgmodel.c
+/** @file mged/chgmodel.c
  *
  * This module contains functions which change particulars of the
  * model, generally on a single solid or combination.
@@ -49,7 +49,7 @@
 
 
 /* defined in chgview.c */
-extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
+extern int edit_com(int argc, const char *argv[], int kind);
 
 /* defined in buttons.c */
 extern int be_s_trans();
@@ -64,8 +64,6 @@ aexists(const char *name)
 
 
 /*
- * F _ M A K E
- *
  * Create a new solid of a given type
  * (Generic, or explicit)
  */
@@ -103,7 +101,7 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	ret = ged_make(gedp, argc, (const char **)argv);
 
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK) {
@@ -113,7 +111,7 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	av[1] = "-R";
 	av[2] = argv[argc-2];
 	av[3] = NULL;
-	edit_com(3, av, 1, 1);
+	edit_com(3, av, 1);
     } else {
 	return TCL_ERROR;
     }
@@ -139,11 +137,8 @@ mged_rot_obj(int iflag, fastf_t *argvect)
     }
 
     /* find point for rotation to take place wrt */
-#if 0
-    MAT4X3PNT(model_pt, es_mat, es_keypoint);
-#else
     VMOVE(model_pt, es_keypoint);
-#endif
+
     MAT4X3PNT(point, modelchanges, model_pt);
 
     /* Find absolute translation vector to go from "model_pt" to
@@ -195,9 +190,8 @@ f_rot_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     CHECK_READ_ONLY;
 
     if (argc < 4 || 5 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -236,9 +230,8 @@ f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     CHECK_READ_ONLY;
 
     if (argc < 2 || 2 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help oscale");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -254,15 +247,6 @@ f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     }
 
     update_views = 1;
-
-#if 0
-    if (movedir != SARROW) {
-	/* Put in global object scale mode */
-	if (edobj == 0)
-	    edobj = BE_O_SCALE;	/* default is global scaling */
-	movedir = SARROW;
-    }
-#endif
 
     MAT_IDN(incr);
 
@@ -291,11 +275,8 @@ f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     }
 
     /* find point the scaling is to take place wrt */
-#if 0
-    MAT4X3PNT(temp, es_mat, es_keypoint);
-#else
     VMOVE(temp, es_keypoint);
-#endif
+
     MAT4X3PNT(point, modelchanges, temp);
 
     wrt_point(modelchanges, incr, modelchanges, point);
@@ -306,8 +287,6 @@ f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 
 /*
- * F _ T R _ O B J
- *
  * Bound to command "translate"
  *
  * Allow precise changes to object translation
@@ -323,9 +302,8 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     CHECK_READ_ONLY;
 
     if (argc < 4 || 4 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help translate");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -359,11 +337,9 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     for (i=0; i<3; i++) {
 	new_vertex[i] = atof(argv[i+1]) * local2base;
     }
-#if 0
-    MAT4X3PNT(model_sol_pt, es_mat, es_keypoint);
-#else
+
     VMOVE(model_sol_pt, es_keypoint);
-#endif
+
     MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
     VSUB2(model_incr, new_vertex, ed_sol_pt);
     MAT_DELTAS_VEC(incr, model_incr);
@@ -376,8 +352,6 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 
 
 /*
- * F _ Q O R O T
- *
  * Usage: qorot x y z dx dy dz theta
  *
  * rotate an object through a specified angle
@@ -394,9 +368,8 @@ f_qorot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     CHECK_READ_ONLY;
 
     if (argc < 8 || 8 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help qorot");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -439,15 +412,12 @@ f_qorot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 void
 set_localunit_TclVar(void)
 {
-    struct bu_vls vls;
-    struct bu_vls units_vls;
-    const char *str;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_vls units_vls = BU_VLS_INIT_ZERO;
+    const char *str = NULL;
 
     if (dbip == DBI_NULL)
 	return;
-
-    bu_vls_init(&vls);
-    bu_vls_init(&units_vls);
 
     str = bu_units_string(dbip->dbi_local2base);
     if (str)

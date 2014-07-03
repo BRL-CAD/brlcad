@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-generic.c
+/** @file mged/dm-generic.c
  *
  * Routines common to MGED's interface to LIBDM.
  *
@@ -40,7 +40,7 @@
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
-#include "dm_xvars.h"
+#include "dm/dm_xvars.h"
 
 #include "bu.h"
 #include "vmath.h"
@@ -82,19 +82,40 @@ int
 common_dm(int argc, const char *argv[])
 {
     int status;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (dbip == DBI_NULL)
 	return TCL_OK;
 
-    if (!strcmp(argv[0], "idle")) {
+    if (BU_STR_EQUAL(argv[0], "idle")) {
+
+	/* redraw after scaling */
+	if (gedp && gedp->ged_gvp &&
+	    gedp->ged_gvp->gv_adaptive_plot &&
+	    gedp->ged_gvp->gv_redraw_on_zoom &&
+	    (am_mode == AMM_SCALE ||
+	     am_mode == AMM_CON_SCALE_X ||
+	     am_mode == AMM_CON_SCALE_Y ||
+	     am_mode == AMM_CON_SCALE_Z))
+	{
+	    if (redraw_visible_objects() == TCL_ERROR) {
+		return TCL_ERROR;
+	    }
+	}
+
 	am_mode = AMM_IDLE;
 	scroll_active = 0;
 	if (rubber_band->rb_active) {
 	    rubber_band->rb_active = 0;
 
-	    if (mged_variables->mv_mouse_behavior == 'p')
-		rb_set_dirty_flag();
+	    if (mged_variables->mv_mouse_behavior == 'p') {
+		/* need dummy values for func signature--they are unused in the func */
+		const struct bu_structparse *sdp = 0;
+		const char name[] = "name";
+		void *base = 0;
+		const char value[] = "value";
+		rb_set_dirty_flag(sdp, name, base, value);
+	    }
 	    else if (mged_variables->mv_mouse_behavior == 'r')
 		rt_rect_area();
 	    else if (mged_variables->mv_mouse_behavior == 'z')
@@ -104,7 +125,7 @@ common_dm(int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[0], "m")) {
+    if (BU_STR_EQUAL(argv[0], "m")) {
 	int x;
 	int y;
 	int old_orig_gui;
@@ -144,7 +165,6 @@ common_dm(int argc, const char *argv[])
 	y = fy * GED_MAX;
 
     end:
-	bu_vls_init(&vls);
 	if (mged_variables->mv_mouse_behavior == 'q' && !stolen) {
 	    point_t view_pt;
 	    point_t model_pt;
@@ -153,11 +173,11 @@ common_dm(int argc, const char *argv[])
 		snap_to_grid(&fx, &fy);
 
 	    if (mged_variables->mv_perspective_mode)
-		VSET(view_pt, fx, fy, 0.0)
-		    else
-			VSET(view_pt, fx, fy, 1.0)
+		VSET(view_pt, fx, fy, 0.0);
+	    else
+		VSET(view_pt, fx, fy, 1.0);
 
-			    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
+	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    if (dmp->dm_zclip)
 		bu_vls_printf(&vls, "qray_nirt %lf %lf %lf",
@@ -178,42 +198,21 @@ common_dm(int argc, const char *argv[])
 	    rubber_band->rb_width = 0.0;
 	    rubber_band->rb_height = 0.0;
 	    rect_view2image();
-	    rb_set_dirty_flag();
-	} else if (mged_variables->mv_mouse_behavior == 's' && !stolen) {
-#if 0
-	    if (grid_state->gr_snap) {
-		snap_to_grid(&fx, &fy);
-		x = fx * GED_MAX;
-		y = fy * GED_MAX;
+	    {
+		/* need dummy values for func signature--they are unused in the func */
+		const struct bu_structparse *sdp = 0;
+		const char name[] = "name";
+		void *base = 0;
+		const char value[] = "value";
+		rb_set_dirty_flag(sdp, name, base, value);
 	    }
-#endif
+	} else if (mged_variables->mv_mouse_behavior == 's' && !stolen) {
 	    bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
 	} else if (mged_variables->mv_mouse_behavior == 'm' && !stolen) {
-#if 0
-	    if (grid_state->gr_snap) {
-		snap_to_grid(&fx, &fy);
-		x = fx * GED_MAX;
-		y = fy * GED_MAX;
-	    }
-#endif
 	    bu_vls_printf(&vls, "mouse_matrix_edit_select %d %d", x, y);
 	} else if (mged_variables->mv_mouse_behavior == 'c' && !stolen) {
-#if 0
-	    if (grid_state->gr_snap) {
-		snap_to_grid(&fx, &fy);
-		x = fx * GED_MAX;
-		y = fy * GED_MAX;
-	    }
-#endif
 	    bu_vls_printf(&vls, "mouse_comb_edit_select %d %d", x, y);
 	} else if (mged_variables->mv_mouse_behavior == 'o' && !stolen) {
-#if 0
-	    if (grid_state->gr_snap) {
-		snap_to_grid(&fx, &fy);
-		x = fx * GED_MAX;
-		y = fy * GED_MAX;
-	    }
-#endif
 	    bu_vls_printf(&vls, "mouse_rt_obj_select %d %d", x, y);
 	} else if (adc_state->adc_draw && mged_variables->mv_transform == 'a' && !stolen) {
 	    point_t model_pt;
@@ -275,7 +274,7 @@ common_dm(int argc, const char *argv[])
 	return status;
     }
 
-    if (!strcmp(argv[0], "am")) {
+    if (BU_STR_EQUAL(argv[0], "am")) {
 	if (argc < 4) {
 	    Tcl_AppendResult(INTERP, "dm am: need more parameters\n",
 			     "dm am <r|t|s> xpos ypos\n", (char *)NULL);
@@ -319,7 +318,7 @@ common_dm(int argc, const char *argv[])
 		break;
 	    case 's':
 		if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-		    NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
+		    ZERO(acc_sc_sol))
 		    acc_sc_sol = 1.0;
 		else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 		    edit_absolute_scale = acc_sc_obj - 1.0;
@@ -338,7 +337,7 @@ common_dm(int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[0], "adc")) {
+    if (BU_STR_EQUAL(argv[0], "adc")) {
 	fastf_t fx, fy;
 	fastf_t td; /* tick distance */
 
@@ -356,7 +355,6 @@ common_dm(int argc, const char *argv[])
 		fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - adc_state->adc_dv_x;
 		fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
@@ -367,7 +365,6 @@ common_dm(int argc, const char *argv[])
 		fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - adc_state->adc_dv_x;
 		fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
@@ -378,8 +375,6 @@ common_dm(int argc, const char *argv[])
 		{
 		    point_t model_pt;
 		    point_t view_pt;
-
-		    bu_vls_init(&vls);
 
 		    VSET(view_pt, dm_Xx2Normal(dmp, dml_omx), dm_Xy2Normal(dmp, dml_omy, 1), 0.0);
 
@@ -404,7 +399,7 @@ common_dm(int argc, const char *argv[])
 		      adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
 
 		td = sqrt(fx * fx + fy * fy);
-		bu_vls_init(&vls);
+
 		bu_vls_printf(&vls, "adc dst %lf\n", td);
 		Tcl_Eval(INTERP, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
@@ -420,7 +415,7 @@ common_dm(int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[0], "con")) {
+    if (BU_STR_EQUAL(argv[0], "con")) {
 	if (argc < 5) {
 	    Tcl_AppendResult(INTERP, "dm con: need more parameters\n",
 			     "dm con r|t|s x|y|z xpos ypos\n",
@@ -492,7 +487,7 @@ common_dm(int argc, const char *argv[])
 		switch (*argv[2]) {
 		    case 'x':
 			if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
+			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
 			else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 			    edit_absolute_scale = acc_sc[0] - 1.0;
@@ -504,7 +499,7 @@ common_dm(int argc, const char *argv[])
 			break;
 		    case 'y':
 			if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
+			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
 			else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 			    edit_absolute_scale = acc_sc[1] - 1.0;
@@ -516,7 +511,7 @@ common_dm(int argc, const char *argv[])
 			break;
 		    case 'z':
 			if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
+			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
 			else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 			    edit_absolute_scale = acc_sc[2] - 1.0;
@@ -541,12 +536,11 @@ common_dm(int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[0], "size")) {
+    if (BU_STR_EQUAL(argv[0], "size")) {
 	int width, height;
 
 	/* get the window size */
 	if (argc == 1) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d %d", dmp->dm_width, dmp->dm_height);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -559,13 +553,8 @@ common_dm(int argc, const char *argv[])
 	    width = atoi(argv[1]);
 	    height = atoi(argv[2]);
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
-#  if 0
-	    Tk_ResizeWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
-#  else
-	    Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
-#  endif
-#endif
+	    dmp->dm_width = width;
+	    dmp->dm_height = height;
 
 	    return TCL_OK;
 	}
@@ -575,18 +564,16 @@ common_dm(int argc, const char *argv[])
     }
 
 #if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
-    if (!strcmp(argv[0], "getx")) {
+    if (BU_STR_EQUAL(argv[0], "getx")) {
 	if (argc == 1) {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&tmp_vls);
 	    /* Bare set command, print out current settings */
 	    bu_vls_struct_print2(&tmp_vls, "dm internal X variables", dm_xvars_vparse,
 				 (const char *)dmp->dm_vars.pub_vars);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	} else if (argc == 2) {
-	    bu_vls_init(&vls);
 	    bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1], (const char *)dmp->dm_vars.pub_vars, COMMA);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -596,11 +583,10 @@ common_dm(int argc, const char *argv[])
     }
 #endif
 
-    if (!strcmp(argv[0], "bg")) {
+    if (BU_STR_EQUAL(argv[0], "bg")) {
 	int r, g, b;
 
 	if (argc != 1 && argc != 4) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "Usage: dm bg [r g b]");
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -610,7 +596,6 @@ common_dm(int argc, const char *argv[])
 
 	/* return background color of current display manager */
 	if (argc == 1) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d %d %d",
 			  dmp->dm_bg[0],
 			  dmp->dm_bg[1],
@@ -624,7 +609,6 @@ common_dm(int argc, const char *argv[])
 	if (sscanf(argv[1], "%d", &r) != 1 ||
 	    sscanf(argv[2], "%d", &g) != 1 ||
 	    sscanf(argv[3], "%d", &b) != 1) {
-	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "Usage: dm bg r g b");
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
@@ -633,6 +617,7 @@ common_dm(int argc, const char *argv[])
 	}
 
 	dirty = 1;
+	(void)DM_MAKE_CURRENT(dmp);
 	return DM_SET_BGCOLOR(dmp, r, g, b);
     }
 

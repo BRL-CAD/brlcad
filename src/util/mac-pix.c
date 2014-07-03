@@ -1,7 +1,7 @@
 /*                       M A C - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mac-pix.c
+/** @file util/mac-pix.c
  *
  * Read MacPaint document and output pix(5) or bw(5) raster image
  *
@@ -64,12 +64,15 @@ int file_height = MAC_HEIGHT;	/* generally constant */
 int file_width = MAC_WIDTH;
 int file_xoff;
 int file_yoff;
-int scr_width = 1024;		/* "screen" tracks input file if zero */
+int scr_width = 1024;	/* If this and scr_height are later found to be zero,
+			 * they assume the values of file_width and file_height .
+			 */
 int scr_height = 1024;
 int scr_xoff;
 int scr_yoff;
 
 int bwflag;
+char hyphen[] = "-";
 char *file_name;
 FILE *infp;
 
@@ -85,7 +88,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:C:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:C:h?")) != -1) {
 	switch (c) {
 	    case 'c':
 		/* Center in output */
@@ -109,11 +112,17 @@ get_args(int argc, char **argv)
 	    case 'n':
 		file_height = atoi(bu_optarg);
 		break;
+	    case 'N':
+		scr_height = atoi(bu_optarg);
+		break;
 	    case 'x':
 		file_xoff = atoi(bu_optarg);
 		break;
 	    case 'X':
 		scr_xoff += atoi(bu_optarg);
+		break;
+	    case 'y':
+		file_yoff = atoi(bu_optarg);
 		break;
 	    case 'Y':
 		scr_yoff += atoi(bu_optarg);
@@ -123,12 +132,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'W':
 		scr_width = atoi(bu_optarg);
-		break;
-	    case 'N':
-		scr_height = atoi(bu_optarg);
-		break;
-	    case 'y':
-		file_yoff = atoi(bu_optarg);
 		break;
 	    case 'C':
 		{
@@ -145,7 +148,7 @@ get_args(int argc, char **argv)
 		}
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' or 'h' will get you here */
 		return 0;
 	}
 
@@ -163,20 +166,20 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "mac-pix: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "mac-pix: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "mac-pix: excess argument(s) ignored\n");
+	fprintf(stderr, "mac-pix: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

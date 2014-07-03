@@ -1,7 +1,7 @@
 /*                         Y P R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ypr.c
+/** @file libged/ypr.c
  *
  * The ypr command.
  *
@@ -37,6 +37,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 {
     vect_t ypr;
     mat_t mat;
+    double scan[3];
     static const char *usage = "yaw pitch roll";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -44,41 +45,43 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* return Viewrot as yaw, pitch and roll */
     if (argc == 1) {
-	point_t pt;
+	point_t pt = VINIT_ZERO;
 
 	bn_mat_trn(mat, gedp->ged_gvp->gv_rotation);
 	anim_v_unpermute(mat);
 
-	if (anim_mat2ypr(pt, mat) == 2) {
-	    bu_vls_printf(&gedp->ged_result_str, "view %s - matrix is not a rotation matrix", argv[0]);
+	if (anim_mat2ypr(mat, pt) == 2) {
+	    bu_vls_printf(gedp->ged_result_str, "view %s - matrix is not a rotation matrix", argv[0]);
 	    return GED_ERROR;
 	}
 
-	VSCALE(pt, pt, bn_radtodeg);
-	bu_vls_printf(&gedp->ged_result_str, "%.12g %.12g %.12g", V3ARGS(pt));
+	VSCALE(pt, pt, RAD2DEG);
+	bu_vls_printf(gedp->ged_result_str, "%.12g %.12g %.12g", V3ARGS(pt));
 
 	return GED_OK;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: view %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: view %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* attempt to set Viewrot given yaw, pitch and roll */
-    if (sscanf(argv[1], "%lf", ypr) != 1
-	|| sscanf(argv[2], "%lf", ypr+1) != 1
-	|| sscanf(argv[3], "%lf", ypr+2) != 1)
+    if (sscanf(argv[1], "%lf", &scan[0]) != 1
+	|| sscanf(argv[2], "%lf", &scan[1]) != 1
+	|| sscanf(argv[3], "%lf", &scan[2]) != 1)
     {
 
-	bu_vls_printf(&gedp->ged_result_str, "view %s: bad value detected - %s %s %s",
+	bu_vls_printf(gedp->ged_result_str, "view %s: bad value detected - %s %s %s",
 		      argv[0], argv[1], argv[2], argv[3]);
 	return GED_ERROR;
     }
+    /* convert double to fastf_t */
+    VMOVE(ypr, scan);
 
     anim_dy_p_r2mat(mat, V3ARGS(ypr));
     anim_v_permute(mat);
@@ -87,6 +90,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

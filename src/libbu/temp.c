@@ -1,7 +1,7 @@
 /*                           T E M P . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2010 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,92 +31,105 @@
 #endif
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/list.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 
 
 /* c99 doesn't declare these */
 #if !defined(_WIN32) || defined(__CYGWIN__)
+#  if !defined(__cplusplus)
 extern FILE *fdopen(int, const char *);
+#  endif
 #endif
 
 
-struct _bu_tf_list {
+struct temp_file_list {
     struct bu_list l;
     struct bu_vls fn;
     int fd;
 };
 
-static int _bu_temp_files = 0;
-static struct _bu_tf_list *_bu_tf = NULL;
+static int temp_files = 0;
+static struct temp_file_list *TF = NULL;
 
 
 HIDDEN void
-_bu_close_files(void)
+temp_close_files(void)
 {
-    struct _bu_tf_list *popped;
-    if (!_bu_tf) {
+    struct temp_file_list *popped;
+    if (!TF) {
 	return;
     }
 
     /* close all files, free their nodes, and unlink */
-    while (BU_LIST_WHILE(popped, _bu_tf_list, &(_bu_tf->l))) {
+    while (BU_LIST_WHILE(popped, temp_file_list, &(TF->l))) {
+	if (!popped)
+	    break;
+
+	/* take it off the list */
 	BU_LIST_DEQUEUE(&(popped->l));
-	if (popped) {
-	    if (popped->fd != -1) {
-		close(popped->fd);
-		popped->fd = -1;
-	    }
-	    if (BU_VLS_IS_INITIALIZED(&popped->fn) && bu_vls_addr(&popped->fn)) {
-		unlink(bu_vls_addr(&popped->fn));
-		bu_vls_free(&popped->fn);
-	    }
-	    bu_free(popped, "free bu_temp_file node");
+
+	/* close up shop */
+	if (popped->fd != -1) {
+	    close(popped->fd);
+	    popped->fd = -1;
 	}
+
+	/* burn the house down */
+	if (BU_VLS_IS_INITIALIZED(&popped->fn) && bu_vls_addr(&popped->fn)) {
+	    bu_file_delete(bu_vls_addr(&popped->fn));
+	    bu_vls_free(&popped->fn);
+	}
+	BU_PUT(popped, struct temp_file_list);
     }
 
     /* free the head */
-    if (_bu_tf->fd != -1) {
-	close(_bu_tf->fd);
-	_bu_tf->fd = -1;
+    if (TF->fd != -1) {
+	close(TF->fd);
+	TF->fd = -1;
     }
-    if (BU_VLS_IS_INITIALIZED(&_bu_tf->fn) && bu_vls_addr(&_bu_tf->fn)) {
-	unlink(bu_vls_addr(&_bu_tf->fn));
-	bu_vls_free(&_bu_tf->fn);
+    if (BU_VLS_IS_INITIALIZED(&TF->fn) && bu_vls_addr(&TF->fn)) {
+	bu_file_delete(bu_vls_addr(&TF->fn));
+	bu_vls_free(&TF->fn);
     }
-    bu_free(_bu_tf, "free bu_temp_file head");
+    BU_PUT(TF, struct temp_file_list);
 }
 
 
 HIDDEN void
-_bu_add_to_list(const char *fn, int fd)
+temp_add_to_list(const char *fn, int fd)
 {
-    struct _bu_tf_list *newtf;
+    struct temp_file_list *newtf;
 
-    _bu_temp_files++;
+    temp_files++;
 
-    if (_bu_temp_files == 1) {
+    if (temp_files == 1) {
 	/* schedule files for closure on exit */
-	atexit(_bu_close_files);
+	atexit(temp_close_files);
 
-	BU_GETSTRUCT(_bu_tf, _bu_tf_list);
-	BU_LIST_INIT(&(_bu_tf->l));
-	bu_vls_init(&_bu_tf->fn);
+	BU_GET(TF, struct temp_file_list);
+	BU_LIST_INIT(&(TF->l));
+	bu_vls_init(&TF->fn);
 
-	bu_vls_strcpy(&_bu_tf->fn, fn);
-	_bu_tf->fd = fd;
+	bu_vls_strcpy(&TF->fn, fn);
+	TF->fd = fd;
 
 	return;
     }
 
-    BU_GETSTRUCT(newtf, _bu_tf_list);
-    bu_vls_init(&_bu_tf->fn);
+    BU_GET(newtf, struct temp_file_list);
+    BU_LIST_INIT(&(TF->l));
+    bu_vls_init(&TF->fn);
 
-    bu_vls_strcpy(&_bu_tf->fn, fn);
+    bu_vls_strcpy(&TF->fn, fn);
     newtf->fd = fd;
 
-    BU_LIST_PUSH(&(_bu_tf->l), &(newtf->l));
+    BU_LIST_PUSH(&(TF->l), &(newtf->l));
 
     return;
 }
@@ -170,6 +183,7 @@ bu_temp_file(char *filepath, size_t len)
     int i;
     int fd = -1;
     char tempfile[MAXPATHLEN];
+    mode_t mask;
     const char *dir = NULL;
     const char *envdirs[] = {"TMPDIR", "TEMP", "TMP", NULL};
     const char *trydirs[] = {
@@ -215,7 +229,10 @@ bu_temp_file(char *filepath, size_t len)
 
     snprintf(tempfile, MAXPATHLEN, "%s%cBRL-CAD_temp_XXXXXXX", dir, BU_DIR_SEPARATOR);
 
+    /* secure the temp file with user read-write only */
+    mask = umask(S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
     fd = mkstemp(tempfile);
+    (void)umask(mask); /* restore */
 
     if (UNLIKELY(fd == -1)) {
 	perror("mkstemp");
@@ -225,10 +242,9 @@ bu_temp_file(char *filepath, size_t len)
 
     if (filepath) {
 	if (UNLIKELY(len < strlen(tempfile))) {
-	    bu_log("WARNING: bu_temp_file filepath buffer size is insufficient (%d < %d)\n", len, strlen(tempfile));
-	} else {
-	    snprintf(filepath, len, "%s", tempfile);
+	    bu_log("INTERNAL ERROR: bu_temp_file filepath buffer size is insufficient (%zu < %zu)\n", len, strlen(tempfile));
 	}
+	snprintf(filepath, len, "%s", tempfile);
     }
 
     fp = fdopen(fd, "wb+");
@@ -240,7 +256,7 @@ bu_temp_file(char *filepath, size_t len)
     }
 
     /* add the file to the atexit auto-close list */
-    _bu_add_to_list(tempfile, fd);
+    temp_add_to_list(tempfile, fd);
 
     return fp;
 }

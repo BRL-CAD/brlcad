@@ -1,7 +1,7 @@
 /*                    B O O L E A N I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2010 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,37 +25,94 @@
 #include <string.h>
 #include <errno.h>
 
+#include "bu/parse.h"
+#include "bu/str.h"
 
 int
-bu_booleanize(const char *str)
+bu_str_true(const char *str)
 {
     long val;
     size_t len;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    const char *newstr;
+    char *endptr;
 
     /* no string */
-    if (!str == 0)
+    if (!str)
 	return 0;
+
+    bu_vls_strcpy(&vls, str);
+    bu_vls_trimspace(&vls);
+    newstr = bu_vls_addr(&vls);
 
     /* empty string */
-    len = strlen(str);
-    if (len == 0)
+    len = strlen(newstr);
+    if (len == 0) {
+	bu_vls_free(&vls);
 	return 0;
+    }
 
     /* starts with 'n', [nN]* looks like 'no' */
-    if (str[0] == 'n' || str[0] == 'N')
+    if (newstr[0] == 'n' || newstr[0] == 'N') {
+	bu_vls_free(&vls);
 	return 0;
+    }
 
     /* exactly "0" */
-    if (strcmp(str, "0") == 0)
+    if (BU_STR_EQUAL(newstr, "0")) {
+	bu_vls_free(&vls);
 	return 0;
+    }
 
     /* variant of "0" (e.g., 000) */
-    val = strtol(str, NULL, 10);
-    if (val == 0 && errno != EINVAL)
+    val = strtol(newstr, &endptr, 10);
+    if (val == 0 && errno != EINVAL && *endptr == '\0') {
+	bu_vls_free(&vls);
 	return 0;
+    }
+
+    /* exactly "(null)" */
+    if (BU_STR_EQUAL(newstr, "(null)")) {
+	bu_vls_free(&vls);
+	return 0;
+    }
+
+    /* true value from here on out */
+
+    /* starts with 'y', [yY]* looks like 'yes' */
+    if (newstr[0] == 'y' || newstr[0] == 'Y') {
+	bu_vls_free(&vls);
+	return 1;
+    }
+
+    /* exactly "1" */
+    if (BU_STR_EQUAL(newstr, "1")) {
+	bu_vls_free(&vls);
+	return 1;
+    }
+
+    /* variant of "1" (e.g., 001) */
+    val = strtol(newstr, &endptr, 10);
+    if (val == 1 && errno != EINVAL && *endptr == '\0') {
+	bu_vls_free(&vls);
+	return 1;
+    }
+
+    /* done with our string */
+    val = bu_vls_addr(&vls)[0];
+    bu_vls_free(&vls);
 
     /* anything else */
-    return 1;
+    if ((int)val > 1)
+	return (int)val;
+    return 2;
+}
+
+
+int
+bu_str_false(const char *str)
+{
+    return !bu_str_true(str);
 }
 
 

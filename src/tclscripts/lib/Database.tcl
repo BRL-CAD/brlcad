@@ -1,7 +1,7 @@
 #                    D A T A B A S E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2010 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used.
+# Use the Ged widget instead.
+#####################################################################
+
 #
 # Description -
 #	The Database class inherits from Db and Drawable.
@@ -39,6 +45,10 @@
 	method getUserCmds {}
 	method shareDb {_db}
     }
+}
+
+::itcl::body Database::constructor {dbOrFile} {
+	puts "DEPRECATION WARNING: The Database widget should no longer be used.  Use the Ged widget instead."
 }
 
 ::itcl::body Database::? {} {

@@ -1,7 +1,8 @@
+
 /*                       M A S O N R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +18,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file masonry.c
+/** @file proc-db/masonry.c
  *
  * build a wall out of various materials.
  *
@@ -37,11 +38,9 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#define min(_a, _b) ((_a) < (_b) ? (_a) : (_b))
-#define max(_a, _b) ((_a) > (_b) ? (_a) : (_b))
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "w:o:n:t:b:u:c:rlhdm:T:R:";
+char *options = "w:o:n:t:b:u:c:rldm:T:R:h?";
 
 int debug = 0;
 char *progname = "masonry";
@@ -52,16 +51,15 @@ char *type = "frame";
 char *units = "mm";
 double unit_conv = 1.0;
 matp_t trans_matrix = (matp_t)NULL;
-const double degtorad =  0.01745329251994329573;
 
 int log_cmds = 0;	/* log sessions to a log file */
 /* standard construction brick:
  * 8" by 2 1/4" by 3 3/8"
  */
-double brick_height = 8.0 * 25.4;
-double brick_width = 2.25 * 25.4;
-double brick_depth = 3.25 * 25.4;
-double min_mortar = 0.25 * 25.4;
+double brick_height = 203.2; /* 8.0  * 25.4 */
+double brick_width =  57.15; /* 2.25 * 25.4 */
+double brick_depth =  82.55; /* 3.25 * 25.4 */
+double min_mortar =    6.35; /* 0.25 * 25.4 */
 
 unsigned char *color;
 unsigned char def_color[3];
@@ -69,13 +67,13 @@ unsigned char brick_color[3] = {160, 40, 40};
 unsigned char mortar_color[3] = {190, 190, 190};
 
 int rand_brick_color = 0;
-int make_mortar = 1;
+int make_mortar = 0;
 
 /* real dimensions of a "2 by 4" board */
-double bd_thick = 3.25 * 25.4;
-double bd_thin = 1.5 * 25.4;
-double beam_height = 5.5 * 25.4;
-double sr_thick = 0.75 * 25.4;	/* sheetrock thickness */
+double bd_thick =     3.25 * 25.4;
+double bd_thin =      1.5  * 25.4;
+double beam_height =  5.5  * 25.4;
+double sr_thick =     0.75 * 25.4; /* sheetrock thickness */
 double stud_spacing = 16.0 * 25.4; /* spacing between vertical studs */
 
 unsigned char sheetrock_color[3] = { 200, 200, 200 };
@@ -102,8 +100,6 @@ struct boardseg {
 
 
 /**
- * U S A G E
- *
  * tell user how to invoke this program, then exit
  */
 void usage(char *s)
@@ -111,12 +107,13 @@ void usage(char *s)
     if (s)
 	bu_log("%s\n", s);
 
-    bu_exit(1, "Usage: %s %s\n%s\n%s\n%s\n",
+    bu_exit(1, "Usage: %s %s\n%s\n%s\n%s\n%s\n",
 	    progname,
-	    "[ -u units ] -w(all) width, height [-o(pening) lx, lz, hx, hz ...]",
-	    " [-n name] [ -d(ebug) ] [-t {frame|brick|block|sheetrock} ] [-c R/G/B]",
+	    "[-u units] [-w(all) width, height] [-o(pening) lx, lz, hx, hz]",
+	    " [-n name_mged_object] [-d(ebug)] [-t {frame|brick|block|sheetrock}] [-c R/G/B]",
 	    " [-l(og_commands)] [-R(otate) rx/ry/rz] [-T(ranslate) dx/dy/dz]",
-	    " brick sub-options: [-r(and_color)] [-b width, height, depth ] [-m min_mortar]"
+	    " (brick options:) [-r(and_color)] [-b width, height, depth] [-m min_mortar_width]",
+	    " (default units=mm)"
 	);
 }
 
@@ -137,9 +134,8 @@ set_translate(char *s)
     MAT_DELTAS(trans_matrix, dx*unit_conv, dy*unit_conv, dz*unit_conv);
 }
 
+
 /*
- * B U I L D H R O T
- *
  * This routine builds a Homogeneous rotation matrix, given
  * alpha, beta, and gamma as angles of rotation.
  *
@@ -168,7 +164,7 @@ buildHrot(matp_t mat, double alpha, double beta, double ggamma)
      * Gamma is angle of rotation about Z axis, and is done first.
      */
 #ifdef m_RZ_RY_RX
-    /* view = model * RZ * RY * RX (Neuman+Sproul, premultiply) */
+    /* view = model * RZ * RY * RX (Neuman+Sproull, premultiply) */
     mat[0] = cbeta * cgamma;
     mat[1] = -cbeta * sgamma;
     mat[2] = -sbeta;
@@ -197,6 +193,7 @@ buildHrot(matp_t mat, double alpha, double beta, double ggamma)
     mat[10] = calpha * cbeta;
 }
 
+
 void
 set_rotate(char *s)
 {
@@ -210,14 +207,12 @@ set_rotate(char *s)
 					 "rotation matrix");
 	MAT_IDN(trans_matrix);
     }
-    buildHrot(trans_matrix, rx*degtorad, ry*degtorad, rz*degtorad);
+    buildHrot(trans_matrix, rx*DEG2RAD, ry*DEG2RAD, rz*DEG2RAD);
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char **av)
+int
+parse_args(int ac, char **av)
 {
     int c;
     struct opening *op;
@@ -234,11 +229,8 @@ int parse_args(int ac, char **av)
 
     BU_LIST_INIT(&ol_hd.l);
 
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != EOF) {
+    while ((c=bu_getopt(ac, av, options)) != -1) {
 	switch (c) {
 	    case 'T':
 		set_translate(bu_optarg);
@@ -248,15 +240,13 @@ int parse_args(int ac, char **av)
 		set_rotate(bu_optarg);
 		break;
 	    case 'b':
-		if (sscanf(bu_optarg, "%lf, %lf, %lf", &width, &height, &dy) == 3) {
-		    brick_width = width * unit_conv;
-		    brick_height = height * unit_conv;
-		    brick_depth = dy * unit_conv;
-		    units_lock = 1;
-		} else {
-		    usage("error parsing -b option\n");
-		}
+		if (sscanf(bu_optarg, "%lf, %lf, %lf", &width, &height, &dy) != 3)
+			usage("error parsing -b option\n");
 
+		brick_width = width * unit_conv;
+		brick_height = height * unit_conv;
+		brick_depth = dy * unit_conv;
+		units_lock = 1;
 		break;
 	    case 'c':
 		if (sscanf(bu_optarg, "%d %d %d", &R, &G, &B) == 3) {
@@ -273,41 +263,41 @@ int parse_args(int ac, char **av)
 		log_cmds = !log_cmds;
 		break;
 	    case 'm':
-		if ((dx=atof(bu_optarg)) > 0.0) {
-		    min_mortar = dx * unit_conv;
-		    units_lock = 1;
-		    make_mortar = 1;
-		} else {
+		if ((dx=atof(bu_optarg)) <= 0.0)
 		    usage("error parsing -m option\n");
-		}
+
+		min_mortar = dx * unit_conv;
+		units_lock = 1;
+		make_mortar = 1;
 
 		break;
 	    case 'n':
 		obj_name = bu_optarg;
 		break;
 	    case 'o':
-		if (ol_hd.ex == 0.0) {
-		    usage("set wall dim before openings\n");
-		} else if (sscanf(bu_optarg, "%lf, %lf, %lf, %lf", &dx, &dy, &width, &height) == 4) {
-		    op = (struct opening *)bu_calloc(1, sizeof(struct opening), "calloc opening");
-		    BU_LIST_INSERT(&ol_hd.l, &op->l);
-		    op->sx = dx * unit_conv;
-		    op->sz = dy * unit_conv;
-		    op->ex = width * unit_conv;
-		    op->ez = height * unit_conv;
-		    
-		    /* do bounds checking */
-		    if (op->sx < 0.0) op->sx = 0.0;
-		    if (op->sz < 0.0) op->sz = 0.0;
-		    if (op->ex > WALL_WIDTH)
-			op->ex = WALL_WIDTH;
-		    if (op->ez > WALL_HEIGHT)
-			op->ez = WALL_HEIGHT;
-		    
-		    units_lock = 1;
-		} else {
+		if (ZERO(ol_hd.ex))
+		    usage("set wall dimensions (-w) ahead of openings (-o)\n");
+		if (sscanf(bu_optarg, "%lf, %lf, %lf, %lf", &dx, &dy, &width, &height) != 4)
 		    usage("error parsing -o option\n");
-		}
+
+		BU_ALLOC(op, struct opening);
+		BU_LIST_INSERT(&ol_hd.l, &op->l);
+		op->sx = dx * unit_conv;
+		op->sz = dy * unit_conv;
+		op->ex = width * unit_conv;
+		op->ez = height * unit_conv;
+
+		/* do bounds checking */
+		if (op->sx < 0.0)
+			op->sx = 0.0;
+		if (op->sz < 0.0)
+			op->sz = 0.0;
+		if (op->ex > WALL_WIDTH)
+			op->ex = WALL_WIDTH;
+		if (op->ez > WALL_HEIGHT)
+			op->ez = WALL_HEIGHT;
+
+		units_lock = 1;
 		break;
 	    case 'r':
 		rand_brick_color = !rand_brick_color;
@@ -319,26 +309,23 @@ int parse_args(int ac, char **av)
 		if (units_lock)
 		    bu_log("Warning: attempting to change units in mid-parse\n");
 
-		if ((dx=bu_units_conversion(bu_optarg)) != 0.0) {
-		    unit_conv = dx;
-		    units = bu_optarg;
-		} else {
+		dx=bu_units_conversion(bu_optarg);
+		if (ZERO(dx))
 		    usage("error parsing -u (units)\n");
-		}
+
+		unit_conv = dx;
+		units = bu_optarg;
 		break;
 	    case 'w':
-		if (sscanf(bu_optarg, "%lf, %lf", &width, &height) == 2) {
-		    WALL_WIDTH = width * unit_conv;
-		    WALL_HEIGHT = height * unit_conv;
-		    units_lock = 1;
-		} else {
+		if (sscanf(bu_optarg, "%lf, %lf", &width, &height) != 2)
 		    usage("error parsing -w (wall dimensions)\n");
-		}
+
+		WALL_WIDTH = width * unit_conv;
+		WALL_HEIGHT = height * unit_conv;
+		units_lock = 1;
 		break;
-	    case '?':
-	    case 'h':
 	    default:
-		usage("Bad or help flag specified\n");
+		usage((char *)NULL);
 		break;
 	}
     }
@@ -350,7 +337,7 @@ int parse_args(int ac, char **av)
 	    bu_exit(-1, NULL);
 	}
 	for (R=0; R < ac; R++)
-	    (void)fprintf(logfile, "%s ", av[R]);
+	    fprintf(logfile, "%s ", av[R]);
 	(void)putc('\n', logfile);
 	(void)fclose(logfile);
     }
@@ -366,7 +353,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
     struct opening *op;
     struct boardseg *seg, *sp;
 
-    seg = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "initial seg");
+    BU_ALLOC(seg, struct boardseg);
     seg->s = sx;
     seg->e = ex;
     /* trim opening to X bounds of wall */
@@ -385,7 +372,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 		if (op->sx <= seg->s) {
 		    if (op->ex >= seg->e) {
 			/* opening covers entire segment.
-			 * segement gets deleted
+			 * segment gets deleted
 			 */
 			sp = BU_LIST_PLAST(boardseg, &(seg->l));
 			BU_LIST_DEQUEUE(&(seg->l));
@@ -393,7 +380,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 			seg = sp;
 
 		    } else if (op->ex > seg->s) {
-			/* opening covers begining of segment */
+			/* opening covers beginning of segment */
 			seg->s = op->ex;
 		    }
 		    /* else opening is entirely prior to seg->s */
@@ -406,9 +393,9 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 		} else {
 		    /* there is an opening in the middle of the
 		     * segment.  We must divide the segment into
-		     * 2 segements
+		     * 2 segments
 		     */
-		    sp = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "alloc boardseg");
+		    BU_ALLOC(sp, struct boardseg);
 		    sp->s = seg->s;
 		    sp->e = op->sx;
 		    seg->s = op->ex;
@@ -418,6 +405,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 	}
     }
 }
+
 
 void
 mksolid(struct rt_wdb *fd, point_t (*pts), struct wmember *wm_hd)
@@ -431,6 +419,7 @@ mksolid(struct rt_wdb *fd, point_t (*pts), struct wmember *wm_hd)
     if (trans_matrix)
 	MAT_COPY(wm->wm_mat, trans_matrix);
 }
+
 
 void
 mk_h_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
@@ -449,6 +438,7 @@ mk_h_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, dou
     mksolid(fd, pts, wm_hd);
 }
 
+
 void
 mk_v_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
 {
@@ -465,6 +455,7 @@ mk_v_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, dou
 
     mksolid(fd, pts, wm_hd);
 }
+
 
 /*
  * put the sides on a frame opening
@@ -618,8 +609,8 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 
 	    /* put the beam in */
 	    mk_h_rpp(fd, wm_hd,
-		     max(0.0, op->sx-bd_thin),
-		     min(WALL_WIDTH, op->ex+bd_thin),
+		     FMAX(0.0, op->sx-bd_thin),
+		     FMIN(WALL_WIDTH, op->ex+bd_thin),
 		     0.0, bd_thick,
 		     WALL_HEIGHT-bd_thin-beam_height,
 		     WALL_HEIGHT-bd_thin);
@@ -660,8 +651,8 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 	     */
 
 	    mk_h_rpp(fd, wm_hd,
-		     max(0.0, op->sx-bd_thin),
-		     min(WALL_WIDTH, op->ex+bd_thin),
+		     FMAX(0.0, op->sx-bd_thin),
+		     FMIN(WALL_WIDTH, op->ex+bd_thin),
 		     0.0, bd_thick,
 		     op->ez, WALL_HEIGHT-bd_thin);
 
@@ -702,7 +693,7 @@ frame(struct rt_wdb *fd)
     mk_id(fd, "A wall");
 
     /* find the segments of the base-board */
-    s_hd = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "s_hd");
+    BU_ALLOC(s_hd, struct boardseg);
     BU_LIST_INIT(&(s_hd->l));
 
     h_segs(0.0, bd_thin, s_hd, 0.0, WALL_WIDTH);
@@ -790,9 +781,9 @@ frame(struct rt_wdb *fd)
 
     /* put all the studding in a region */
     snprintf(sol_name, 64, "r.%s.studs", obj_name);
-    mk_lcomb(fd, sol_name, &wm_hd, 1,
-	     stud_properties[0], stud_properties[1], color, 0);
+    mk_lcomb(fd, sol_name, &wm_hd, 1, stud_properties[0], stud_properties[1], color, 0);
 }
+
 
 void
 sheetrock(struct rt_wdb *fd)
@@ -837,20 +828,21 @@ sheetrock(struct rt_wdb *fd)
     }
 
     snprintf(sol_name, 64, "r.%s.sr1", obj_name);
-    mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
-	     color, 0);
+    mk_lcomb(fd, sol_name, &wm_hd, 1, (const char *)NULL, (const char *)NULL, color, 0);
 }
+
 
 void
 mortar_brick(struct rt_wdb *fd)
 {
     struct wmember wm_hd;
-#if 0
     int horiz_bricks;
     int vert_bricks;
     double mortar_height;
     double mortar_width;
     point_t pts[8];
+
+    bu_log("WARNING: the mortar brick type option is untested\n");
 
     horiz_bricks = (WALL_WIDTH-brick_depth) / (brick_width + min_mortar);
 
@@ -858,13 +850,12 @@ mortar_brick(struct rt_wdb *fd)
     mortar_width = WALL_WIDTH -
 	(horiz_bricks * (brick_width + min_mortar) +
 	 brick_depth);
-
     mortar_width = min_mortar + mortar_width / (double)horiz_bricks;
 
     vert_bricks = WALL_HEIGHT / (brick_height+min_mortar);
+
     mortar_height = WALL_HEIGHT - vert_bricks * (brick_height+min_mortar);
     mortar_height = min_mortar + mortar_height/vert_bricks;
-
 
     /* make prototype brick */
 
@@ -885,11 +876,9 @@ mortar_brick(struct rt_wdb *fd)
     *sol_name = 'r';
 
     if (rand_brick_color)
-	mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
-		 (char *)NULL, 0);
+	mk_lcomb(fd, sol_name, &wm_hd, 1, (const char *)NULL, (const char *)NULL, (const unsigned char *)NULL, 0);
     else
-	mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
-		 brick_color, 0);
+	mk_lcomb(fd, sol_name, &wm_hd, 1, (const char *)NULL, (const char *)NULL, brick_color, 0);
 
 
     /* make prototype mortar upon which brick will sit */
@@ -908,8 +897,7 @@ mortar_brick(struct rt_wdb *fd)
 
     (void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
     *sol_name = 'r';
-    mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
-	     mortar_color, 0);
+    mk_lcomb(fd, sol_name, &wm_hd, 1, (const char *)NULL, (const char *)NULL, mortar_color, 0);
 
 
     /* make the mortar that goes between
@@ -930,14 +918,7 @@ mortar_brick(struct rt_wdb *fd)
 
     (void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
     *sol_name = 'r';
-    mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
-	     mortar_color, 0);
-#else
-    BU_LIST_INIT(&wm_hd.l);
-
-    bu_exit(0, "Not Yet Implemented\n");
-
-#endif
+    mk_lcomb(fd, sol_name, &wm_hd, 1, (const char *)NULL, (const char *)NULL, mortar_color, 0);
 }
 
 
@@ -945,24 +926,23 @@ void
 brick(struct rt_wdb *fd)
 {
     struct wmember wm_hd;
-#if 0
     int horiz_bricks;
-    int vert_bricks;
     double mortar_height;
     double mortar_width;
     point_t pts[8];
     char proto_brick[64];
 
+    bu_log("WARNING: the brick type option is untested\n");
+
     if (!color)
 	color = brick_color;
 
     horiz_bricks = (WALL_WIDTH-brick_depth) / brick_width;
+
     mortar_width = WALL_WIDTH - horiz_bricks * brick_width;
     mortar_width /= horiz_bricks;
 
-    vert_bricks = WALL_HEIGHT / brick_height;
     mortar_height = 0.0;
-
 
     /* make prototype brick */
 
@@ -981,20 +961,11 @@ brick(struct rt_wdb *fd)
     (void)mk_addmember(proto_brick, &wm_hd.l, NULL, WMOP_UNION);
     *proto_brick = 'r';
 
-    mk_lcomb(fd, proto_brick, &wm_hd, 1, (char *)NULL, (char *)NULL,
-	     (char *)NULL, 0);
-#else
-    BU_LIST_INIT(&wm_hd.l);
-
-    bu_exit(0, "Not Yet Implemented\n");
-
-#endif
+    mk_lcomb(fd, proto_brick, &wm_hd, 1, (const char *)NULL, (const char *)NULL, (const unsigned char *)NULL, 0);
 }
 
 
 /**
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */
@@ -1016,6 +987,7 @@ int main(int ac, char **av)
 	perror(sol_name);
 	return -1;
     }
+    bu_log("Have created file %s.g .\n",progname);
 
     if (debug) {
 	bu_log("Wall \"%s\"(%g) %g by %g\n", units, unit_conv,
@@ -1041,6 +1013,7 @@ int main(int ac, char **av)
     wdb_close(db_fd);
     return 0;
 }
+
 
 /*
  * Local Variables:

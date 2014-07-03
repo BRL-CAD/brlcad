@@ -1,7 +1,7 @@
 /*                   G R I D _ R O T A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file grid_rotate.c
+/** @file lgt/grid_rotate.c
  *
  */
 
@@ -37,11 +37,9 @@
 
 
 /**
- * g r i d _ R o t a t e
- *
  * Creates the unit vectors H and V which are the horizontal and
  * vertical components of the grid in target coordinates.  The vectors
- * are found from the azimuth and elivation of the viewing angle
+ * are found from the azimuth and elevation of the viewing angle
  * according to a simplification of the rotation matrix from grid
  * coordinates to target coordinates.  To see that the vectors are,
  * indeed, unit vectors, recall the trigonometric relation:

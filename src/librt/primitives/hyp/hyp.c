@@ -1,7 +1,7 @@
 /*                           H Y P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file hyp.c
+/** @file primitives/hyp/hyp.c
  *
  * Intersect a ray with an elliptical hyperboloid of one sheet.
  *
@@ -38,14 +38,14 @@
 #include <math.h>
 
 /* interface headers */
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 
-
-extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
+#include "../../librt_private.h"
 
 
 /* ray tracing form of solid, including precomputed terms */
@@ -73,7 +73,7 @@ struct hyp_specific {
 struct hyp_specific *
 hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
     struct hyp_specific *hyp;
-    BU_GETSTRUCT(hyp, hyp_specific);
+    BU_GET(hyp, struct hyp_specific);
 
     hyp->hyp_r1 = hyp_in->hyp_bnr * MAGNITUDE(hyp_in->hyp_A);
     hyp->hyp_r2 = hyp_in->hyp_bnr * hyp_in->hyp_b;
@@ -106,18 +106,67 @@ hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
 
 
 const struct bu_structparse rt_hyp_parse[] = {
-    { "%f", 3, "V",   bu_offsetof(struct rt_hyp_internal, hyp_Vi[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "H",   bu_offsetof(struct rt_hyp_internal, hyp_Hi[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A",   bu_offsetof(struct rt_hyp_internal, hyp_A[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V",   bu_offsetofarray(struct rt_hyp_internal, hyp_Vi, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H",   bu_offsetofarray(struct rt_hyp_internal, hyp_Hi, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A",   bu_offsetofarray(struct rt_hyp_internal, hyp_A, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "b", bu_offsetof(struct rt_hyp_internal, hyp_b), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "bnr",   bu_offsetof(struct rt_hyp_internal, hyp_bnr), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * Create a bounding RPP for an hyp
+ */
+int
+rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+    struct rt_hyp_internal *xip;
+    vect_t hyp_Au, hyp_B, hyp_An, hyp_Bn, hyp_H;
+    vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
+    RT_CK_DB_INTERNAL(ip);
+    xip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(xip);
+
+    VMOVE(hyp_H, xip->hyp_Hi);
+    VUNITIZE(hyp_H);
+    VMOVE(hyp_Au, xip->hyp_A);
+    VUNITIZE(hyp_Au);
+    VCROSS(hyp_B, hyp_Au, hyp_H);
+
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
+    VSCALE(hyp_B, hyp_B, xip->hyp_b);
+    VREVERSE(hyp_An, xip->hyp_A);
+    VREVERSE(hyp_Bn, hyp_B);
+
+    VADD3(pt1, xip->hyp_Vi, xip->hyp_A, hyp_B);
+    VADD3(pt2, xip->hyp_Vi, xip->hyp_A, hyp_Bn);
+    VADD3(pt3, xip->hyp_Vi, hyp_An, hyp_B);
+    VADD3(pt4, xip->hyp_Vi, hyp_An, hyp_Bn);
+    VADD4(pt5, xip->hyp_Vi, xip->hyp_A, hyp_B, xip->hyp_Hi);
+    VADD4(pt6, xip->hyp_Vi, xip->hyp_A, hyp_Bn, xip->hyp_Hi);
+    VADD4(pt7, xip->hyp_Vi, hyp_An, hyp_B, xip->hyp_Hi);
+    VADD4(pt8, xip->hyp_Vi, hyp_An, hyp_Bn, xip->hyp_Hi);
+
+    /* Find the RPP of the rotated axis-aligned hyp bbox - that is,
+     * the bounding box the given hyp would have if its height
+     * vector were in the positive Z direction. This does not give
+     * us an optimal bbox except in the case where the hyp is
+     * actually axis aligned to start with, but it's usually
+     * at least a bit better than the bounding sphere RPP. */
+    VMINMAX((*min), (*max), pt1);
+    VMINMAX((*min), (*max), pt2);
+    VMINMAX((*min), (*max), pt3);
+    VMINMAX((*min), (*max), pt4);
+    VMINMAX((*min), (*max), pt5);
+    VMINMAX((*min), (*max), pt6);
+    VMINMAX((*min), (*max), pt7);
+    VMINMAX((*min), (*max), pt8);
+
+    return 0;
+}
 
 /**
- * R T _ H Y P _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid HYP, and if so, precompute
  * various terms of the formula.
@@ -127,7 +176,7 @@ const struct bu_structparse rt_hyp_parse[] = {
  * !0 Error in description
  *
  * Implicit return -
- * A struct hyp_specific is created, and it's address is stored in
+ * A struct hyp_specific is created, and its address is stored in
  * stp->st_specific for use by hyp_shot().
  */
 int
@@ -135,14 +184,9 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_hyp_internal *hyp_ip;
     struct hyp_specific *hyp;
-#ifndef NO_MAGIC_CHECKING
-    const struct bn_tol *tol = &rtip->rti_tol;
-#endif
 
-#ifndef NO_MAGIC_CHECKING
     RT_CK_DB_INTERNAL(ip);
-    BN_CK_TOL(tol);
-#endif
+
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_ip);
 
@@ -150,10 +194,10 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* set soltab ID */
     stp->st_id = ID_HYP;
-    stp->st_meth = &rt_functab[ID_HYP];
+    stp->st_meth = &OBJ[ID_HYP];
 
     hyp =  hyp_internal_to_specific(hyp_ip);
-    stp->st_specific = (genptr_t)hyp;
+    stp->st_specific = (void *)hyp;
 
     /* calculate bounding sphere */
     VMOVE(stp->st_center, hyp->hyp_V);
@@ -161,22 +205,12 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 			   + (hyp->hyp_r1*hyp->hyp_r1));
     stp->st_bradius = stp->st_aradius;
 
-    /* cheat, make bounding RPP by enclosing bounding sphere (copied from g_ehy.c) */
-    stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
-    stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
-    stp->st_min[Y] = stp->st_center[Y] - stp->st_bradius;
-    stp->st_max[Y] = stp->st_center[Y] + stp->st_bradius;
-    stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
-    stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
-
+    /* calculate bounding RPP */
+    if (rt_hyp_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
     return 0;			/* OK */
-
 }
 
 
-/**
- * R T _ H Y P _ P R I N T
- */
 void
 rt_hyp_print(const struct soltab *stp)
 {
@@ -194,12 +228,10 @@ rt_hyp_print(const struct soltab *stp)
 /* hit_surfno is set to one of these */
 #define HYP_NORM_BODY	(1)		/* compute normal */
 #define HYP_NORM_TOP	(2)		/* copy hyp_Hunit */
-#define HYP_NORM_BOTTOM	(3)		/* copy -hyp_Huint */
+#define HYP_NORM_BOTTOM	(3)		/* copy -hyp_Hunit */
 
 
 /**
- * R T _ H Y P _ S H O T
- *
  * Intersect a ray with a hyp.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -374,8 +406,6 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ H Y P _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -423,8 +453,6 @@ rt_hyp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ H Y P _ C U R V E
- *
  * Return the curvature of the hyp.
  */
 void
@@ -434,7 +462,7 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 	(struct hyp_specific *)stp->st_specific;
     vect_t vert, horiz;
     point_t hp;
-    fastf_t c, h, z, k1, k2, denom;
+    fastf_t c, h, k1, k2, denom;
     fastf_t x, y, ratio;
 
     switch (hitp->hit_surfno) {
@@ -452,7 +480,6 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 	    /* vertical curvature */
 	    c = hyp->hyp_c;
 	    h = sqrt(hp[X]*hp[X] + hp[Y]*hp[Y]);
-	    z = hp[Z];
 
 	    denom = 1 + (c*c*c*c)*(hp[Z]*hp[Z])/(h*h);
 	    denom = sqrt(denom*denom*denom);
@@ -498,8 +525,6 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ H Y P _ U V
- *
  * For a hit on the surface of an hyp, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -514,11 +539,11 @@ rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     if (ap) RT_CK_APPLICATION(ap);
 
     /* u = (angle from semi-major axis on basic hyperboloid) / (2*pi) */
-    uvp->uv_u = M_1_PI * 0.5
+    uvp->uv_u = M_1_2PI
 	* (atan2(-hitp->hit_vpriv[X] * hyp->hyp_r2, hitp->hit_vpriv[Y] * hyp->hyp_r1) + M_PI);
 
     /* v ranges (0, 1) on each plate */
-    switch(hitp->hit_surfno) {
+    switch (hitp->hit_surfno) {
 	case HYP_NORM_BODY:
 	    /* v = (z + Hmag) / (2*Hmag) */
 	    uvp->uv_v = (hitp->hit_vpriv[Z] + hyp->hyp_Hmag) / (2.0 * hyp->hyp_Hmag);
@@ -552,28 +577,22 @@ rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ H Y P _ F R E E
- */
 void
 rt_hyp_free(struct soltab *stp)
 {
     struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
 
-    bu_free((char *)hyp, "hyp_specific");
+    BU_PUT(hyp, struct hyp_specific);
 }
 
 
-/**
- * R T _ H Y P _ P L O T
- */
 int
-rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     int i, j;		/* loop indices */
     struct rt_hyp_internal *hyp_in;
-    struct hyp_specific *hyp_ip;
+    struct hyp_specific *hyp;
     vect_t majorAxis[8],	/* vector offsets along major axis */
 	minorAxis[8],		/* vector offsets along minor axis */
 	heightAxis[7],		/* vector offsets for layers */
@@ -589,12 +608,12 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
     hyp_in = (struct rt_hyp_internal *)incoming->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_in);
 
-    hyp_ip = hyp_internal_to_specific(hyp_in);
+    hyp = hyp_internal_to_specific(hyp_in);
 
-    VCROSS(Bunit, hyp_ip->hyp_H, hyp_ip->hyp_Au);
+    VCROSS(Bunit, hyp->hyp_H, hyp->hyp_Au);
     VUNITIZE(Bunit);
 
-    VMOVE(heightAxis[0], hyp_ip->hyp_H);
+    VMOVE(heightAxis[0], hyp->hyp_H);
     VSCALE(heightAxis[1], heightAxis[0], 0.5);
     VSCALE(heightAxis[2], heightAxis[0], 0.25);
     VSETALL(heightAxis[3], 0);
@@ -604,10 +623,10 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     for (i = 0; i < 7; i++) {
 	/* determine Z height depending on i */
-	scale = sqrt(MAGSQ(heightAxis[i])*(hyp_ip->hyp_c * hyp_ip->hyp_c)/(hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + 1);
+	scale = sqrt(MAGSQ(heightAxis[i])*(hyp->hyp_c * hyp->hyp_c)/(hyp->hyp_r1 * hyp->hyp_r1) + 1);
 
 	/* calculate vectors for offset */
-	VSCALE(majorAxis[0], hyp_ip->hyp_Au, hyp_ip->hyp_r1 * scale);
+	VSCALE(majorAxis[0], hyp->hyp_Au, hyp->hyp_r1 * scale);
 	VSCALE(majorAxis[1], majorAxis[0], cos22_5);
 	VSCALE(majorAxis[2], majorAxis[0], M_SQRT1_2);
 	VSCALE(majorAxis[3], majorAxis[0], cos67_5);
@@ -616,7 +635,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 	VREVERSE(majorAxis[6], majorAxis[1]);
 	VREVERSE(majorAxis[7], majorAxis[0]);
 
-	VSCALE(minorAxis[0], Bunit, hyp_ip->hyp_r2 * scale);
+	VSCALE(minorAxis[0], Bunit, hyp->hyp_r2 * scale);
 	VSCALE(minorAxis[1], minorAxis[0], cos22_5);
 	VSCALE(minorAxis[2], minorAxis[0], M_SQRT1_2);
 	VSCALE(minorAxis[3], minorAxis[0], cos67_5);
@@ -626,51 +645,51 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 	VREVERSE(minorAxis[7], minorAxis[0]);
 
 	/* calculate ellipse */
-	VADD3(ell[ 0], hyp_ip->hyp_V, heightAxis[i], majorAxis[0]);
-	VADD4(ell[ 1], hyp_ip->hyp_V, heightAxis[i], majorAxis[1], minorAxis[3]);
-	VADD4(ell[ 2], hyp_ip->hyp_V, heightAxis[i], majorAxis[2], minorAxis[2]);
-	VADD4(ell[ 3], hyp_ip->hyp_V, heightAxis[i], majorAxis[3], minorAxis[1]);
-	VADD3(ell[ 4], hyp_ip->hyp_V, heightAxis[i], minorAxis[0]);
-	VADD4(ell[ 5], hyp_ip->hyp_V, heightAxis[i], majorAxis[4], minorAxis[1]);
-	VADD4(ell[ 6], hyp_ip->hyp_V, heightAxis[i], majorAxis[5], minorAxis[2]);
-	VADD4(ell[ 7], hyp_ip->hyp_V, heightAxis[i], majorAxis[6], minorAxis[3]);
-	VADD3(ell[ 8], hyp_ip->hyp_V, heightAxis[i], majorAxis[7]);
-	VADD4(ell[ 9], hyp_ip->hyp_V, heightAxis[i], majorAxis[6], minorAxis[4]);
-	VADD4(ell[10], hyp_ip->hyp_V, heightAxis[i], majorAxis[5], minorAxis[5]);
-	VADD4(ell[11], hyp_ip->hyp_V, heightAxis[i], majorAxis[4], minorAxis[6]);
-	VADD3(ell[12], hyp_ip->hyp_V, heightAxis[i], minorAxis[7]);
-	VADD4(ell[13], hyp_ip->hyp_V, heightAxis[i], majorAxis[3], minorAxis[6]);
-	VADD4(ell[14], hyp_ip->hyp_V, heightAxis[i], majorAxis[2], minorAxis[5]);
-	VADD4(ell[15], hyp_ip->hyp_V, heightAxis[i], majorAxis[1], minorAxis[4]);
+	VADD3(ell[ 0], hyp->hyp_V, heightAxis[i], majorAxis[0]);
+	VADD4(ell[ 1], hyp->hyp_V, heightAxis[i], majorAxis[1], minorAxis[3]);
+	VADD4(ell[ 2], hyp->hyp_V, heightAxis[i], majorAxis[2], minorAxis[2]);
+	VADD4(ell[ 3], hyp->hyp_V, heightAxis[i], majorAxis[3], minorAxis[1]);
+	VADD3(ell[ 4], hyp->hyp_V, heightAxis[i], minorAxis[0]);
+	VADD4(ell[ 5], hyp->hyp_V, heightAxis[i], majorAxis[4], minorAxis[1]);
+	VADD4(ell[ 6], hyp->hyp_V, heightAxis[i], majorAxis[5], minorAxis[2]);
+	VADD4(ell[ 7], hyp->hyp_V, heightAxis[i], majorAxis[6], minorAxis[3]);
+	VADD3(ell[ 8], hyp->hyp_V, heightAxis[i], majorAxis[7]);
+	VADD4(ell[ 9], hyp->hyp_V, heightAxis[i], majorAxis[6], minorAxis[4]);
+	VADD4(ell[10], hyp->hyp_V, heightAxis[i], majorAxis[5], minorAxis[5]);
+	VADD4(ell[11], hyp->hyp_V, heightAxis[i], majorAxis[4], minorAxis[6]);
+	VADD3(ell[12], hyp->hyp_V, heightAxis[i], minorAxis[7]);
+	VADD4(ell[13], hyp->hyp_V, heightAxis[i], majorAxis[3], minorAxis[6]);
+	VADD4(ell[14], hyp->hyp_V, heightAxis[i], majorAxis[2], minorAxis[5]);
+	VADD4(ell[15], hyp->hyp_V, heightAxis[i], majorAxis[1], minorAxis[4]);
 
 	/* draw ellipse */
 	RT_ADD_VLIST(vhead, ell[15], BN_VLIST_LINE_MOVE);
-	for (j=0; j<16; j++) {
+	for (j = 0; j < 16; j++) {
 	    RT_ADD_VLIST(vhead, ell[j], BN_VLIST_LINE_DRAW);
 	}
 
 	/* add ellipse's points to ribs */
-	for (j=0; j<16; j++) {
+	for (j = 0; j < 16; j++) {
 	    VMOVE(ribs[j][i], ell[j]);
 	}
     }
 
     /* draw ribs */
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	RT_ADD_VLIST(vhead, ribs[i][0], BN_VLIST_LINE_MOVE);
-	for (j=1; j<7; j++) {
+	for (j = 1; j < 7; j++) {
 	    RT_ADD_VLIST(vhead, ribs[i][j], BN_VLIST_LINE_DRAW);
 	}
 
     }
+
+    BU_PUT(hyp, struct hyp_specific);
 
     return 0;
 }
 
 
 /**
- * R T _ H Y P _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -679,7 +698,8 @@ int
 rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, r3, cprime;
-    fastf_t **ellipses, theta_prev, theta_new;
+    fastf_t **ellipses = NULL;
+    fastf_t theta_new;
     int *pts_dbl, face, i, j, nseg;
     int jj, nell;
     mat_t invRoS;
@@ -720,7 +740,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     r3 = r1 / c;
     /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
 	return 1;		/* BAD */
     }
@@ -737,47 +757,29 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     VMOVE(Au, xip->hyp_Au);
     VCROSS(Bu, Hu, Au);
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0)
-	dtol = 0.0;		/* none */
-    else
-	/* Convert rel to absolute by scaling by smallest side */
-	dtol = ttol->rel * 2 * r2;
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    dtol = 2 * 0.10 * r2;	/* 10% */
-	}
-	/* else, use absolute-ized relative tolerance */
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * r2);
 
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0)
 	ntol = ttol->norm;
     else
 	/* tolerate everything */
-	ntol = bn_pi;
+	ntol = M_PI;
 
     /*
      * build hyp from 2 hyperbolas
      */
 
     /* calculate major axis hyperbola */
-    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_a, struct rt_pt_node);
 
     /* set base, center, and top points */
     pos_a = pts_a;
     VSET(pos_a->p, sqrt((mag_h*mag_h) * (c*c) + (r1*r1)), 0, -mag_h);
-    pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pos_a->next, struct rt_pt_node);
     pos_a = pos_a->next;
     VSET(pos_a->p, r1, 0, 0);
-    pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pos_a->next, struct rt_pt_node);
     pos_a = pos_a->next;
     VSET(pos_a->p, sqrt((mag_h*mag_h) * (c*c) + (r1*r1)), 0, mag_h);
     pos_a->next = NULL;
@@ -800,7 +802,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		VMOVE(p2, pos_a->next->p);
 		/* either X or Y will be zero; so adding handles either case */
 		mm = (p2[Z] - p0[Z]) / ((p2[X]+p2[Y]) - (p0[X]+p0[Y]));
-		if (!NEAR_ZERO(p0[X], SMALL_FASTF)) {
+		if (!ZERO(p0[X])) {
 		    p1[X] = fabs(mm*c*r1) / sqrt(mm*mm*c*c - 1.0);
 		    p1[Y] = 0.0;
 		    p1[Z] = sqrt(p1[X]*p1[X] - r1*r1) / c;
@@ -829,7 +831,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		if (dist > dtol || ang0 > ntol || ang2 > ntol) {
 		    /* split segment */
-		    add = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+		    BU_ALLOC(add, struct rt_pt_node);
 		    VMOVE(add->p, p1);
 		    add->next = pos_a->next;
 		    pos_a->next = add;
@@ -843,7 +845,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* calculate minor axis hyperbola */
-    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_b, struct rt_pt_node);
 
     pos_a = pts_a;
     pos_b = pts_b;
@@ -854,7 +856,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	pos_b->p[Y] = r2 * sqrt(pos_b->p[Z] * pos_b->p[Z]/(r3*r3) + 1.0);
 	pos_a = pos_a->next;
 	if (pos_a) {
-	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	    BU_ALLOC(pos_b->next, struct rt_pt_node);
 	    pos_b = pos_b->next;
 	} else {
 	    pos_b->next = NULL;
@@ -873,7 +875,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* make ellipses at each z level */
     i = 0;
     nseg = 0;
-    theta_prev = bn_twopi;
     pos_a = pts_a;	/*->next; */	/* skip over apex of hyp */
     pos_b = pts_b;	/*->next; */
     while (pos_a) {
@@ -884,16 +885,15 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	VJOIN1(V, xip->hyp_V, -pos_a->p[Z], Hu);
 
 	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = rt_ell_ang(p1, pos_a->p[X], pos_b->p[Y], dtol, ntol);
+	theta_new = ell_angle(p1, pos_a->p[X], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
-	    nseg = (int)(bn_twopi / theta_new) + 1;
+	    nseg = (int)(M_2PI / theta_new) + 1;
 	    pts_dbl[i] = 0;
 	    /* maximum number of faces needed for hyp */
 	    face = 2*nseg*nell - 4;	/*nseg*(1 + 3*((1 << (nell-1)) - 1));*/
 	    /* array for each triangular face */
 	    outfaceuses = (struct faceuse **)
 		bu_malloc((face+1) * sizeof(struct faceuse *), "hyp: *outfaceuses[]");
-	    theta_prev = theta_new;
 	} else {
 	    pts_dbl[i] = 0;
 	}
@@ -1076,7 +1076,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate the face geometry */
-    for (i=0; i < face; i++) {
+    for (i = 0; i < face; i++) {
 	if (nmg_fu_planeeqn(outfaceuses[i], tol) < 0) {
 	    bu_log("planeeqn fail:\n\ti:\t%d\n\toutfaceuses:\n\tmin:\t%f\t%f\t%f\n\tmax:\t%f\t%f\t%f\n",
 		   i, outfaceuses[i]->f_p->min_pt[0],
@@ -1099,17 +1099,22 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_shell_coplanar_face_merge(s, tol, 1);
 
     /* free mem */
-    bu_free((char *)outfaceuses, "faceuse []");
+    if (outfaceuses)
+	bu_free((char *)outfaceuses, "faceuse []");
     for (i = 0; i < nell; i++) {
-	bu_free((char *)ellipses[i], "pts ell");
-	bu_free((char *)vells[i], "vertex []");
+	if (ellipses)
+	    bu_free((char *)ellipses[i], "pts ell");
+	if (vells)
+	    bu_free((char *)vells[i], "vertex []");
     }
-    bu_free((char *)ellipses, "fastf_t ell[]");
-    bu_free((char *)vells, "vertex [][]");
+    if (ellipses)
+	bu_free((char *)ellipses, "fastf_t ell[]");
+    if (vells)
+	bu_free((char *)vells, "vertex [][]");
 
     /* Assign vertexuse normals */
     nmg_vertex_tabulate(&vert_tab, &s->l.magic);
-    for (i=0; i<BU_PTBL_END(&vert_tab); i++) {
+    for (i = 0; i < BU_PTBL_END(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;
 	struct vertex_g *vg;
@@ -1147,25 +1152,31 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     bu_ptbl_free(&vert_tab);
+    BU_PUT(xip, struct hyp_specific);
     return 0;
 
  fail:
     /* free mem */
-    bu_free((char *)outfaceuses, "faceuse []");
+    if (xip)
+	BU_PUT(xip, struct hyp_specific);
+    if (outfaceuses)
+	bu_free((char *)outfaceuses, "faceuse []");
     for (i = 0; i < nell; i++) {
-	bu_free((char *)ellipses[i], "pts ell");
-	bu_free((char *)vells[i], "vertex []");
+	if (ellipses)
+	    bu_free((char *)ellipses[i], "pts ell");
+	if (vells)
+	    bu_free((char *)vells[i], "vertex []");
     }
-    bu_free((char *)ellipses, "fastf_t ell[]");
-    bu_free((char *)vells, "vertex [][]");
+    if (ellipses)
+	bu_free((char *)ellipses, "fastf_t ell[]");
+    if (vells)
+	bu_free((char *)vells, "vertex [][]");
 
     return -1;
 }
 
 
 /**
- * R T _ H Y P _ I M P O R T 5
- *
  * Import an HYP from the database format to the internal format.
  * Note that the data read will be in network order.  This means
  * Big-Endian integers and IEEE doubles for floating point.
@@ -1176,7 +1187,9 @@ int
 rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_hyp_internal *hyp_ip;
-    fastf_t vec[ELEMENTS_PER_VECT*4];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4];
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -1187,8 +1200,9 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_HYP;
-    ip->idb_meth = &rt_functab[ID_HYP];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_hyp_internal), "rt_hyp_internal");
+    ip->idb_meth = &OBJ[ID_HYP];
+    BU_ALLOC(ip->idb_ptr, struct rt_hyp_internal);
+
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     hyp_ip->hyp_magic = RT_HYP_INTERNAL_MAGIC;
 
@@ -1196,7 +1210,7 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
      * conversion from network data (Big Endian ints, IEEE double
      * floating point) to host local data representations.
      */
-    ntohd((unsigned char *)&vec, (const unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*4);
+    bu_cv_ntohd((unsigned char *)&vec, (const unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*4);
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1204,8 +1218,8 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     MAT4X3VEC(hyp_ip->hyp_Hi, mat, &vec[1*3]);
     MAT4X3VEC(hyp_ip->hyp_A, mat, &vec[2*3]);
 
-    if (!NEAR_ZERO(mat[15], SMALL_FASTF))
-	hyp_ip->hyp_b = vec[ 9] / mat[15];
+    if (!ZERO(mat[15]))
+	hyp_ip->hyp_b = vec[9] / mat[15];
     else
 	hyp_ip->hyp_b = INFINITY;
     hyp_ip->hyp_bnr = vec[10] ;
@@ -1215,8 +1229,6 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
 
 
 /**
- * R T _ H Y P _ E X P O R T 5
- *
  * Export an HYP from internal form to external format.  Note that
  * this means converting all integers to Big-Endian format and
  * floating point data to IEEE double.
@@ -1227,7 +1239,9 @@ int
 rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_hyp_internal *hyp_ip;
-    fastf_t vec[ELEMENTS_PER_VECT * 4];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT * 4];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1238,7 +1252,7 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT * 4;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "hyp external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "hyp external");
 
 
     /* Since libwdb users may want to operate in units other than mm,
@@ -1252,15 +1266,13 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[10] = hyp_ip->hyp_bnr * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4);
 
     return 0;
 }
 
 
 /**
- * R T _ H Y P _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1308,8 +1320,6 @@ rt_hyp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ H Y P _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1325,20 +1335,59 @@ rt_hyp_ifree(struct rt_db_internal *ip)
     hyp_ip->hyp_magic = 0;			/* sanity */
 
     bu_free((char *)hyp_ip, "hyp ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
+}
+
+
+int
+rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
+{
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
+    return 0;			/* OK */
+}
+
+
+void
+rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    if (cent != NULL && ip != NULL) {
+	struct rt_hyp_internal *hip;
+
+	RT_CK_DB_INTERNAL(ip);
+	hip = (struct rt_hyp_internal *)ip->idb_ptr;
+	RT_HYP_CK_MAGIC(hip);
+
+	VSCALE(*cent, hip->hyp_Hi, 0.5);
+	VADD2(*cent, hip->hyp_Vi, *cent);
+    }
 }
 
 
 /**
- * R T _ H Y P _ P A R A M S
+ * only the stub to make analyze happy
+ * TODO: needs an implementation
  */
-int
-rt_hyp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
-{
-    ps = ps; /* quellage */
-    if (ip) RT_CK_DB_INTERNAL(ip);
+void
+rt_hyp_surf_area(fastf_t *UNUSED(area), const struct rt_db_internal *UNUSED(ip)) {}
 
-    return 0;			/* OK */
+
+void
+rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    if (volume != NULL || ip != NULL) {
+	struct rt_hyp_internal *hip;
+	struct hyp_specific *hyp;
+
+	RT_CK_DB_INTERNAL(ip);
+	hip = (struct rt_hyp_internal *)ip->idb_ptr;
+	RT_HYP_CK_MAGIC(hip);
+
+	hyp = hyp_internal_to_specific(hip);
+	*volume = M_2PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag *
+	    (1 + hyp->hyp_Hmag * hyp->hyp_Hmag * hyp->hyp_c * hyp->hyp_c / (12 * hyp->hyp_r1 * hyp->hyp_r1));
+	bu_free(hyp, "hyp volume");
+    }
 }
 
 

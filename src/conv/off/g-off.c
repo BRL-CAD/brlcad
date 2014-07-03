@@ -1,7 +1,7 @@
 /*                         G - O F F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,10 +40,10 @@
 #include "plot3.h"
 
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 
-static const char usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
+static const char usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] [-P #_of_CPUs] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -52,7 +52,7 @@ static int	ncpu = 1;	/* Number of processors */
 static char	*prefix = NULL;	/* output filename prefix. */
 static FILE	*fp_fig;	/* Jack Figure file. */
 static struct db_i		*dbip;
-static struct bu_vls		base_seg;
+static struct bu_vls		base_seg = BU_VLS_INIT_ZERO;
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
 static struct model		*the_model;
@@ -65,9 +65,6 @@ static int	regions_done = 0;
 static void nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf);
 static void jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map);
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -76,6 +73,7 @@ main(int argc, char **argv)
     double		percent;
     int size;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
 
     jack_tree_state = rt_initial_tree_state;	/* struct copy */
@@ -99,10 +97,10 @@ main(int argc, char **argv)
     rt_init_resource( &rt_uniresource, 0, NULL );
 
     the_model = nmg_mm();
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:dn:p:r:vx:P:X:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a:dn:p:r:vx:P:X:h?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -124,46 +122,41 @@ main(int argc, char **argv)
 		break;
 	    case 'P':
 		ncpu = atoi( bu_optarg );
-		rt_g.debug = 1;
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-		NMG_debug = rt_g.NMG_debug;
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
 
     /* Open BRL-CAD database */
     argc -= bu_optind;
     argv += bu_optind;
-    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
+    if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "ERROR: Unable to open geometry database (%s)\n", argv[0]);
+	bu_exit(1, "ERROR: Unable to open geometry database file (%s)\n", argv[0]);
     }
-    if ( db_dirbuild( dbip ) ) {
+    if ( db_dirbuild( dbip ) )
 	bu_exit(1, "db_dirbuild failed\n" );
-    }
 
     /* Create .fig file name and open it. */
     size = sizeof(prefix) + sizeof(argv[0] + 4);
-    fig_file = bu_malloc(size, "st");
+    fig_file = (char *)bu_malloc(size, "st");
     /* Ignore leading path name. */
     if ((dot = strrchr(argv[0], '/')) != (char *)NULL) {
-	if (prefix) {
+	if (prefix)
 	    snprintf(fig_file, size, "%s%s", prefix, 1+dot);
-	} else {
+	else
 	    snprintf(fig_file, size, "%s", 1+dot);
-	}
     } else {
 	if (prefix)
 	    snprintf(fig_file, size, "%s%s", prefix, argv[0]);
@@ -179,7 +172,6 @@ main(int argc, char **argv)
     if ((fp_fig = fopen(fig_file, "wb")) == NULL)
 	perror(fig_file);
     fprintf(fp_fig, "figure {\n");
-    bu_vls_init(&base_seg);		/* .fig figure file's main segment. */
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void)db_walk_tree(dbip, argc-1, (const char **)(argv+1),
@@ -188,7 +180,7 @@ main(int argc, char **argv)
 		       0,			/* take all regions */
 		       do_region_end,
 		       nmg_booltree_leaf_tess,
-		       (genptr_t)NULL);	/* in librt/nmg_bool.c */
+		       (void *)NULL);	/* in librt/nmg_bool.c */
 
     fprintf(fp_fig, "\troot=%s_seg.base;\n", bu_vls_addr(&base_seg));
     fprintf(fp_fig, "}\n");
@@ -204,24 +196,66 @@ main(int argc, char **argv)
     return 0;
 }
 
+
+static union tree *
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+{
+    union tree *ret_tree = TREE_NULL;
+
+    /* Begin bomb protection */
+    if ( !BU_SETJUMP ) {
+	/* try */
+
+	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+
+    } else  {
+	/* catch */
+	char *name = db_path_to_string( pathp );
+
+	/* Error, bail out */
+	bu_log( "conversion of %s FAILED!\n", name );
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before before bombing out.
+	 */
+	RTG.NMG_debug = NMG_debug;/* restore mode */
+
+	/* Release any intersector 2d tables */
+	nmg_isect2d_final_cleanup();
+
+	/* Release the tree memory & input regions */
+	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
+
+	/* Get rid of (m)any other intermediate structures */
+	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	    nmg_km(*tsp->ts_m);
+	} else {
+	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	}
+
+	bu_free( name, "db_path_to_string" );
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+    } BU_UNSETJUMP;/* Relinquish the protection */
+
+    return ret_tree;
+}
+
+
 /*
- *			D O _ R E G I O N _ E N D
- *
  *  Called from db_walk_tree().
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     union tree		*ret_tree;
     struct nmgregion	*r;
-    struct bu_list		vhead;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
-
-    BU_LIST_INIT(&vhead);
 
     if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
 	char	*sofar = db_path_to_string(pathp);
@@ -237,45 +271,21 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     regions_tried++;
 
-    /* Begin bomb protection */
-    if ( ncpu == 1 ) {
-	if ( BU_SETJUMP )  {
-	    /* Error, bail out */
-	    BU_UNSETJUMP;		/* Relinquish the protection */
+    ret_tree = process_boolean(curtree, tsp, pathp);
 
-	    /* Sometimes the NMG library adds debugging bits when
-	     * it detects an internal error, before bombing out.
-	     */
-	    rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-	    /* Release the tree memory & input regions */
-	    db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
-
-	    /* Get rid of (m)any other intermediate structures */
-	    if ( (*tsp->ts_m)->magic != -1L )
-		nmg_km(*tsp->ts_m);
-
-	    /* Now, make a new, clean model structure for next pass. */
-	    *tsp->ts_m = nmg_mm();
-	    goto out;
-	}
-    }
-    (void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-    ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
-    BU_UNSETJUMP;		/* Relinquish the protection */
     if ( ret_tree )
 	r = ret_tree->tr_d.td_r;
     else
 	r = (struct nmgregion *)NULL;
+
     regions_done++;
+
     if (r != 0) {
 	FILE	*fp_psurf;
-	int	i;
-	struct bu_vls	file_base;
-	struct bu_vls	file;
+	size_t	i;
+	struct bu_vls	file_base = BU_VLS_INIT_ZERO;
+	struct bu_vls	file = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&file_base);
-	bu_vls_init(&file);
 	bu_vls_strcpy(&file_base, prefix);
 	bu_vls_strcat(&file_base, DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 	/* Dots confuse Jack's Peabody language.  Change to '_'. */
@@ -332,7 +342,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	if ( debug_plots )  {
 	    FILE	*fp;
 	    bu_vls_vlscat(&file, &file_base);
-	    bu_vls_strcat(&file, ".pl");
+	    bu_vls_strcat(&file, ".plot3");
 
 	    if ((fp = fopen(bu_vls_addr(&file), "wb")) == NULL)
 		perror(bu_vls_addr(&file));
@@ -364,16 +374,13 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
- out:
-    BU_GETUNION(curtree, tree);
-    curtree->magic = RT_TREE_MAGIC;
+    BU_ALLOC(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
 }
 
 /*
- *	N M G _ T O _ P S U R F
- *
  *	Convert an nmg region into Jack format.  This routine makes a
  *	list of unique vertices and writes them to the ascii Jack
  *	data base file.  Then a routine to generate the face vertex
@@ -382,14 +389,14 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
 static void
 nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
-    /* NMG region to be converted. */
-    /* Jack format file to write vertex list to. */
+/* NMG region to be converted. */
+/* Jack format file to write vertex list to. */
 {
     int			i;
     int			*map;	/* map from v->index to Jack vert # */
     struct bu_ptbl		vtab;	/* vertex table */
 
-    map = (int *)bu_calloc(r->m_p->maxindex, sizeof(int *), "Jack vert map");
+    map = (int *)bu_calloc(r->m_p->maxindex, sizeof(int), "Jack vert map");
 
     /* Built list of vertex structs */
     nmg_vertex_tabulate( &vtab, &r->l.magic );
@@ -420,8 +427,6 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 
 
 /*
- *	J A C K _ F A C E S
- *
  *	Continues the conversion of an nmg into Jack format.  Before
  *	this routine is called, a list of unique vertices has been
  *	stored in a heap.  Using this heap and the nmg structure, a
@@ -429,8 +434,8 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
  */
 static void
 jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
-    /* NMG region to be converted. */
-    /* Jack format file to write face vertices to. */
+/* NMG region to be converted. */
+/* Jack format file to write face vertices to. */
 
 {
     struct edgeuse		*eu;

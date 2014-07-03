@@ -1,7 +1,7 @@
 /*                        F B Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
  */
 /** @file fbzoom.c
  *
- * Dynamicly modify Ikonas Zoom and Window parameters, using VI and/or
+ * Dynamically modify Ikonas Zoom and Window parameters, using VI and/or
  * EMACS-like keystrokes on a regular terminal.
  *
  */
@@ -49,20 +49,20 @@ int doKeyPad(void);
 #define MaxYPan (fb_getheight(fbp)-1)
 #define MinPan (0)
 
-static int PanFactor;			/* Speed with whitch to pan.	*/
+static int PanFactor;			/* Speed with which to pan.	*/
 static int xPan, yPan;			/* Pan Location.		*/
 static int xZoom, yZoom;		/* Zoom Factor.			*/
 static int new_xPan, new_yPan;
 static int new_xZoom, new_yZoom;
 
-static int scr_width = 0;		/* screen size */
-static int scr_height = 0;
+static int scr_width = 512;		/* screen size */
+static int scr_height = 512;
 static int toggle_pan = 0;		/* Reverse sense of pan commands? */
 static char *framebuffer = NULL;
 static FBIO *fbp;
 
 static char usage[] = "\
-Usage: fbzoom [-hT] [-F framebuffer]\n\
+Usage: fbzoom [-T] [-F framebuffer]\n\
 	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n";
 
 int
@@ -83,14 +83,7 @@ main(int argc, char **argv)
 	fb_view(fbp, xPan, yPan, xZoom, yZoom);
     }
 
-#if 0
-    xZoom = 1;
-    yZoom = 1;
-    xPan = fb_getwidth(fbp)/2;
-    yPan = fb_getheight(fbp)/2;
-#else
     fb_getview(fbp, &xPan, &yPan, &xZoom, &yZoom);
-#endif
 
     /* Set RAW mode */
     save_Tty(0);
@@ -149,6 +142,29 @@ main(int argc, char **argv)
 
 #define ctl(x)	(x&037)
 
+static void
+printUsage()
+{
+    bu_log("\n\nBoth VI and EMACS motions work.\r\n");
+    bu_log("b ^V	zoom Bigger (*2) s	zoom Smaller (*0.5)\n");
+    bu_log("+ =	zoom Bigger (+1)		-	zoom Smaller (-1)\n");
+    bu_log("(zoom Y Bigger (*2)) zoom Y Smaller (*0.5)\n");
+    bu_log("0	zoom Y Bigger (+1)		9	zoom Y Smaller (-1)\n");
+    bu_log("<	zoom X Bigger (*2)		>	zoom X Smaller (*0.5)\n");
+    bu_log(",	zoom X Bigger (+1)		.	zoom X Smaller (-1)\n");
+    bu_log("h B 	pan Left (1) l F	pan Right (1)\n");
+    bu_log("H ^B	pan Left (many) L ^F	pan Right (many)\n");
+    bu_log("k P	pan Up (1) j N	pan Down (1)\n");
+    bu_log("K ^P	pan Up (many) J ^N	pan Down (many)\n");
+    bu_log("T	toggle sense of pan commands\n");
+    bu_log("c	goto Center\n");
+    bu_log("z	zoom 1 1\n");
+    bu_log("r	Reset to normal\n");
+    bu_log("q	Exit\n");
+    bu_log("RETURN	Exit\n");
+}
+
+
 int
 doKeyPad(void)
 {
@@ -158,30 +174,9 @@ doKeyPad(void)
 	return 0;		/* done */
     ch &= ~0x80;			/* strip off parity bit */
     switch (ch) {
-	default :
-	    (void) fprintf(stdout,
-			   "\r\n'%c' bad -- Type ? for help\r\n",
-			   ch);
 	case '?' :
-	    bu_log("\n\nBoth VI and EMACS motions work.\r\n");
-	    bu_log("b ^V	zoom Bigger (*2) s	zoom Smaller (*0.5)\n");
-	    bu_log("+ =	zoom Bigger (+1)		-	zoom Smaller (-1)\n");
-	    bu_log("(zoom Y Bigger (*2)) zoom Y Smaller (*0.5)\n");
-	    bu_log("0	zoom Y Bigger (+1)		9	zoom Y Smaller (-1)\n");
-	    bu_log("<	zoom X Bigger (*2)		>	zoom X Smaller (*0.5)\n");
-	    bu_log(",	zoom X Bigger (+1)		.	zoom X Smaller (-1)\n");
-	    bu_log("h B 	pan Left (1) l F	pan Right (1)\n");
-	    bu_log("H ^B	pan Left (many) L ^F	pan Right (many)\n");
-	    bu_log("k P	pan Up (1) j N	pan Down (1)\n");
-	    bu_log("K ^P	pan Up (many) J ^N	pan Down (many)\n");
-	    bu_log("T	toggle sense of pan commands\n");
-	    bu_log("c	goto Center\n");
-	    bu_log("z	zoom 1 1\n");
-	    bu_log("r	Reset to normal\n");
-	    bu_log("q	Exit\n");
-	    bu_log("RETURN	Exit\n");
+	    printUsage();
 	    break;
-
 	case 'T' :
 	    toggle_pan = 1 - toggle_pan;
 	    break;
@@ -190,7 +185,6 @@ doKeyPad(void)
 	case 'q' :
 	case 'Q' :
 	    return 0;
-
 	case 'c' :				/* Reset Pan (Center) */
 	case 'C' :
 	    new_xPan = fb_getwidth(fbp)/2;
@@ -286,24 +280,22 @@ doKeyPad(void)
 	case ctl('f') :
 	    new_xPan += PanFactor * (1 - 2 * toggle_pan);
 	    break;
+	default :
+	    (void) fprintf(stdout, "\r\n'%c' bad -- Type ? for help\r\n", ch);
+	    printUsage();
+	    break;
     }
     return 1;		/* keep going */
 }
 
 
-/* p a r s _ A r g v ()
- */
 int
 pars_Argv(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hTF:s:S:w:W:n:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "TF:s:S:w:W:n:N:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		scr_height = scr_width = 1024;
-		break;
 	    case 'T':
 		/* reverse the sense of pan commands */
 		toggle_pan = 1;
@@ -328,6 +320,10 @@ pars_Argv(int argc, char **argv)
 		return 0;
 	}
     }
+
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	return 0;
+
     return 1;
 }
 

@@ -1,7 +1,7 @@
 /*                         S C R E E N G R A B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file screengrab.c
+/** @file libged/screengrab.c
  *
  * The screengrab command.
  *
@@ -29,32 +29,40 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu.h"
-#include "dm.h"
+
+#include "icv.h"
 
 #include "./ged_private.h"
 
+
+/* !!! FIXME: this command should not be directly utilizing LIBDM or
+ * LIBFB as this breaks library encapsulation.  Generic functionality
+ * should be moved out of LIBDM into LIBICV, or be handled by the
+ * application logic calling this routine.
+ */
 int
-ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
+ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 {
 
-    FILE *fp;
     int i;
     int width = 0;
     int height = 0;
     int bytes_per_pixel = 0;
-    int bits_per_channel = 0;
     int bytes_per_line = 0;
     static const char *usage = "image_name.ext";
     unsigned char **rows = NULL;
     unsigned char *idata = NULL;
-    struct bu_image_file *bif = NULL;	/* bu image for saving image formats */
-    struct dm *dmp = NULL;
+    struct icv_image *bif = NULL;	/**< icv image container for saving images */
 
-    if ((dmp = ( struct dm *)gedp->ged_dmp) == NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "Bad display pointer.");
-		return GED_ERROR;
-	}
+    if (gedp->ged_dmp_is_null) {
+	bu_vls_printf(gedp->ged_result_str, "Bad display pointer.");
+	return GED_ERROR;
+    }
+
+    if (gedp->ged_dm_get_display_image == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Bad display function pointer.");
+	return GED_ERROR;
+    }
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -62,43 +70,52 @@ ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    width = dmp->dm_width;
-    height = dmp->dm_height;
+    width = gedp->ged_dm_width;
+    height = gedp->ged_dm_height;
+
+    if (width <= 0 || height <= 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s: invalid screen dimensions.", argv[1]);
+	return GED_ERROR;
+    }
+
     bytes_per_pixel = 3;
-    bits_per_channel = dmp->dm_bits_per_channel;
-    bytes_per_line = dmp->dm_width * bytes_per_pixel;
+    bytes_per_line = width * bytes_per_pixel;
 
     /* create image file */
-    if ((bif = bu_image_save_open(argv[1], BU_IMAGE_AUTO, width, height, bytes_per_pixel)) == NULL)  {
-    	bu_vls_printf(&gedp->ged_result_str, "%s: could not create bu_image_ write structure.", argv[1]);
-		return GED_ERROR;
-	}
+
+   if ((bif = icv_create(width, height, ICV_COLOR_SPACE_RGB)) == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: could not create icv_image write structure.", argv[1]);
+	return GED_ERROR;
+    }
 
     rows = (unsigned char **)bu_calloc(height, sizeof(unsigned char *), "rows");
 
-    DM_GET_DISPLAY_IMAGE(dmp,&idata);
+    gedp->ged_dm_get_display_image(gedp, &idata);
 
     for (i = 0; i < height; ++i) {
 	rows[i] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));
-	bu_image_save_writeline(bif, i, (unsigned char *)rows[i]);
+	/* TODO : Add double type data to maintain resolution */
+	icv_writeline(bif, i, rows[i], ICV_DATA_UCHAR);
     }
 
-    if (bif != NULL)
-    	bu_image_save_close(bif);
-    bif = NULL;
+    if (bif != NULL) {
+	icv_write(bif, argv[1], ICV_IMAGE_AUTO);
+	icv_destroy(bif);
+	bif = NULL;
+    }
 
     bu_free(rows, "rows");
     bu_free(idata, "image data");

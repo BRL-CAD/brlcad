@@ -1,7 +1,7 @@
 /*                           C - D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,29 +27,34 @@
 #include <math.h>
 #include "bio.h"
 
-static const char usage[] = "\
-Usage: c-d -r -i -m -p -z < complex_data > doubles\n";
+#include "bu.h"
+#include "vmath.h"
 
-int	rflag = 0;
-int	iflag = 0;
-int	mflag = 0;
-int	pflag = 0;
-int	zflag = 0;
 
-double	ibuf[512];
-double	obuf[512];
-double	*obp;
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
-    int	i, num, onum;
+    static const char usage[] = "Usage: c-d -r -i -m -p -z < complex_data > doubles\n";
 
-    if ( argc <= 1 || isatty(fileno(stdin)) ) {
-	bu_exit(1, "%s", usage );
+    int rflag = 0;
+    int iflag = 0;
+    int mflag = 0;
+    int pflag = 0;
+    int zflag = 0;
+
+    double ibuf[512];
+    double obuf[512];
+    double *obp;
+
+    int i, num, onum;
+    size_t ret;
+
+    if (argc <= 1 || isatty(fileno(stdin))) {
+	bu_exit(1, "%s", usage);
     }
 
-    while ( argc > 1 && argv[1][0] == '-' )  {
-	switch ( argv[1][1] )  {
+    while (argc > 1 && argv[1][0] == '-') {
+	switch (argv[1][1]) {
 	    case 'r':
 		rflag++;
 		break;
@@ -70,38 +75,41 @@ int main(int argc, char **argv)
 	argv++;
     }
 
-    while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
+    while ((num = fread(&ibuf[0], sizeof(ibuf[0]), 512, stdin)) > 0) {
 	onum = 0;
 	obp = obuf;
-	for ( i = 0; i < num; i += 2 ) {
-	    if ( rflag ) {
+	for (i = 0; i < num; i += 2) {
+	    if (rflag) {
 		*obp++ = ibuf[i];
 		onum++;
 	    }
-	    if ( iflag ) {
+	    if (iflag) {
 		*obp++ = ibuf[i+1];
 		onum++;
 	    }
-	    if ( mflag ) {
-		*obp++ = hypot( ibuf[i], ibuf[i+1] );
+	    if (mflag) {
+		*obp++ = hypot(ibuf[i], ibuf[i+1]);
 		onum++;
 	    }
-	    if ( pflag ) {
-		if ( ibuf[i] == 0 && ibuf[i+1] == 0 )
+	    if (pflag) {
+		if (ZERO(ibuf[i]) && ZERO(ibuf[i+1]))
 		    *obp++ = 0;
 		else
-		    *obp++ = atan2( ibuf[i], ibuf[i+1] );
+		    *obp++ = atan2(ibuf[i], ibuf[i+1]);
 		onum++;
 	    }
-	    if ( zflag ) {
+	    if (zflag) {
 		*obp++ = 0.0;
 		onum++;
 	    }
 	}
-	fwrite( &obuf[0], sizeof( obuf[0] ), onum, stdout );
+	ret = fwrite(&obuf[0], sizeof(obuf[0]), onum, stdout);
+	if (ret != (size_t)onum)
+	    perror("fwrite");
     }
     return 0;
 }
+
 
 /*
  * Local Variables:

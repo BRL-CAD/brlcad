@@ -1,7 +1,7 @@
 /*                      T G F - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
  *	IABG mbH (Germany)
  */
 
+#include "common.h"
+
 #include <iostream>
 #include <fstream>
 
@@ -42,36 +44,36 @@ int main
     int ret = 0;
 
     if (argc < 4) {
-        std::cout << "Usage: " << argv[0] << " <DRA-mat> <DRA-geo> <BRL-g>" << std::endl;
-        ret = 1;
+	std::cout << "Usage: " << argv[0] << " <DRA-mat> <DRA-geo> <BRL-g>" << std::endl;
+	ret = 1;
     }
     else {
-        FILE* in = fopen(argv[1], "r");
+	FILE* in = fopen(argv[1], "r");
 
-        if (in == 0) {
-            std::cout << "Error reading DRA-mat file" << std::endl;
-            ret = 1;
-        }
-        else {
-            ret = readMaterials(in);
-            fclose(in);
+	if (in == 0) {
+	    std::cout << "Error reading DRA-mat file" << std::endl;
+	    ret = 1;
+	}
+	else {
+	    ret = readMaterials(in);
+	    fclose(in);
 
-            if (ret == 0) {
-                std::ifstream is(argv[2]);
+	    if (ret == 0) {
+		std::ifstream is(argv[2]);
 
-                if (!is.is_open()) {
-                    std::cout << "Error reading DRA-geo file" << std::endl;
-                    ret = 1;
-                }
-                else {
-                    struct rt_wdb* wdbp = wdb_fopen(argv[3]); // force create
+		if (!is.is_open()) {
+		    std::cout << "Error reading DRA-geo file" << std::endl;
+		    ret = 1;
+		}
+		else {
+		    struct rt_wdb* wdbp = wdb_fopen(argv[3]); // force create
 
-                    conv(is, wdbp);
-                    createRegions(wdbp);
-                    wdb_close(wdbp);
-                }
-            }
-        }
+		    conv(is, wdbp);
+		    createRegions(wdbp);
+		    wdb_close(wdbp);
+		}
+	    }
+	}
     }
 
     return ret;

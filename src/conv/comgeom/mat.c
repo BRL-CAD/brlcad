@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,19 +18,19 @@
  * information.
  *
  */
-/** @file mat.c
+/** @file comgeom/mat.c
  *
- * 4 x 4 Matrix manipulation functions..............
+ * 4 x 4 Matrix manipulation functions
  *
- *	mat_zero( &m )			Fill matrix m with zeros
- *	mat_idn( &m )			Fill matrix m with identity matrix
- *	mat_copy( &o, &i )		Copy matrix i to matrix o
- *	mat_mul( &o, &i1, &i2 )		Multiply i1 by i2 and store in o
- *	vecXmat( &ov, &iv, &m )		Multiply vector iv by m and store in ov
- *	matXvec( &ov, &m, &iv )		Multiply m by vector iv and store in ov
- *	mat_print( &m )			Print out the 4x4 matrix - calls printf
- *	mat_hscale( &m, hscale )	Homogenious scale of input matrix
- *	mat_inv( &om, &im )		Invert matrix im and store result in om
+ * mat_zero(&m)			Fill matrix m with zeros
+ * mat_idn(&m)			Fill matrix m with identity matrix
+ * mat_copy(&o, &i)		Copy matrix i to matrix o
+ * mat_mul(&o, &i1, &i2)		Multiply i1 by i2 and store in o
+ * vecXmat(&ov, &iv, &m)		Multiply vector iv by m and store in ov
+ * matXvec(&ov, &m, &iv)		Multiply m by vector iv and store in ov
+ * mat_print(&m)			Print out the 4x4 matrix - calls printf
+ * mat_hscale(&m, hscale)	        Homogeneous scale of input matrix
+ * mat_inv(&om, &im)		Invert matrix im and store result in om
  *
  *
  * Matrix array elements have the following positions in the matrix:
@@ -53,8 +53,6 @@
 
 
 /*
- *			M A T _ Z E R O
- *
  * Fill in the matrix "m" with zeros.
  */
 void
@@ -63,21 +61,19 @@ mat_zero(matp_t m)
     int i = 0;
 
     /* Clear everything */
-    for (; i<16; i++)
+    for (; i < 16; i++)
 	*m++ = 0;
 }
 
 
 /*
- *			M A T _ I D N
- *
  * Fill in the matrix "m" with an identity matrix.
  */
 void
 mat_idn(matp_t m)
 {
     /* Clear everything first */
-    mat_zero( m );
+    mat_zero(m);
 
     /* Set ones in the diagonal */
     m[0] = m[5] = m[10] = m[15] = 1;
@@ -85,8 +81,6 @@ mat_idn(matp_t m)
 
 
 /*
- *			M A T _ C O P Y
- *
  * Copy the matrix "im" into the matrix "om".
  */
 void
@@ -95,14 +89,12 @@ mat_copy(matp_t om, matp_t im)
     int i = 0;
 
     /* Copy all elements */
-    for (; i<16; i++)
+    for (; i < 16; i++)
 	*om++ = *im++;
 }
 
 
 /*
- *			M A T _ M U L
- *
  * Multiply matrix "im1" by "im2" and store the result in "om".
  * NOTE:  This is different from multiplying "im2" by "im1" (most
  * of the time!)
@@ -116,13 +108,13 @@ mat_mul(matp_t om, matp_t im1, matp_t im2)
     int i;			/* For counting */
 
     /* For each element in the output matrix... */
-    for (; el<16; el++) {
+    for (; el < 16; el++) {
 
 	om[el] = 0;		/* Start with zero in output */
 	em1 = (el/4)*4;		/* Element at right of row in im1 */
 	em2 = el%4;		/* Element at top of column in im2 */
 
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 	    om[el] += im1[em1] * im2[em2];
 
 	    em1++;		/* Next row element in m1 */
@@ -133,8 +125,6 @@ mat_mul(matp_t om, matp_t im1, matp_t im2)
 
 
 /*
- *			V E C X M A T
- *
  * Multiply the vector "iv" by the matrix "im" and store the result
  * in the vector "ov".  Note this is pre-multiply.
  */
@@ -146,12 +136,12 @@ vecXmat(vectp_t ov, vectp_t iv, matp_t im)
     int em;		/* Position in input matrix */
 
     /* For each element in the output array... */
-    for (; el<4; el++) {
+    for (; el < 4; el++) {
 
 	ov[el] = 0;		/* Start with zero in output */
 	em = el;		/* Top of column in input matrix */
 
-	for (ev=0; ev<4; ev++) {
+	for (ev = 0; ev < 4; ev++) {
 	    ov[el] += iv[ev] * im[em];
 	    em += 4;	/* Next element in column from im */
 	}
@@ -160,8 +150,6 @@ vecXmat(vectp_t ov, vectp_t iv, matp_t im)
 
 
 /*
- *			M A T X V E C
- *
  * Multiply the matrix "im" by the vector "iv" and store the result
  * in the vector "ov".  Note this is post-multiply.
  */
@@ -173,19 +161,17 @@ matXvec(vectp_t ov, matp_t im, vectp_t iv)
     int ei;		/* Position in input vector */
 
     /* For each element in the output array... */
-    for (; eo<4; eo++) {
+    for (; eo < 4; eo++) {
 
 	ov[eo] = 0;		/* Start with zero in output */
 
-	for (ei=0; ei<4; ei++)
+	for (ei = 0; ei < 4; ei++)
 	    ov[eo] += im[em++] * iv[ei];
     }
 }
 
 
 /*
- *			M A T _ P R I N T
- *
  * Print out the 4x4 matrix addressed by "m".
  */
 void
@@ -193,39 +179,35 @@ mat_print(matp_t m)
 {
     int i;
 
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	printf("%f%c", m[i], ((i+1)%4) ? '\t' : '\n');
     }
 }
 
 
 /*
- *			M A T _ H S C A L E
- *
- * The matrix pointed at by "m" is homogeniously scaled by the
+ * The matrix pointed at by "m" is homogeneously scaled by the
  * variable "hscale".  NOTE that the input matrix is ALSO the output
  * matrix.
  */
 void
 mat_hscale(matp_t m, float hscale)
 {
-    m[0] *= hscale;
-    m[5] *= hscale;
+    m[0]  *= hscale;
+    m[5]  *= hscale;
     m[10] *= hscale;
 }
 
 
 /*
- *			M A T _ I N V
- *
  * The matrix pointed at by "im" is inverted and stored in the area
  * pointed at by "om".
  */
-#define EPSILON	0.000001
+#define EPSILON 0.000001
 
 /*
  * Invert a 4-by-4 matrix using Algorithm 120 from ACM.
- * This is a modified Gauss-Jordan alogorithm
+ * This is a modified Gauss-Jordan algorithm
  * Note:  Inversion is done in place, with 3 work vectors
  */
 void
@@ -233,39 +215,39 @@ mat_inv(matp_t output, matp_t input)
 {
     int i, j;			/* Indices */
     static int k;				/* Indices */
-    static int	z[4];			/* Temporary */
-    static float	b[4];			/* Temporary */
-    static float	c[4];			/* Temporary */
+    static int z[4];			/* Temporary */
+    static float b[4];			/* Temporary */
+    static float c[4];			/* Temporary */
 
-    mat_copy( output, input );	/* Duplicate */
+    mat_copy(output, input);	/* Duplicate */
 
     /* Initialization */
-    for ( j = 0; j < 4; j++ )
+    for (j = 0; j < 4; j++)
 	z[j] = j;
 
     /* Main Loop */
-    for ( i = 0; i < 4; i++ )  {
+    for (i = 0; i < 4; i++) {
 	static float y;				/* local temporary */
 
 	k = i;
 	y = output[i*4+i];
-	for ( j = i+1; j < 4; j++ )  {
+	for (j = i + 1; j < 4; j++) {
 	    static float w;			/* local temporary */
 
 	    w = output[i*4+j];
-	    if ( fabs(w) > fabs(y) )  {
+	    if (fabs(w) > fabs(y)) {
 		k = j;
 		y = w;
 	    }
 	}
 
-	if ( fabs(y) < EPSILON )  {
+	if (fabs(y) < EPSILON) {
 	    printf("mat_inv:  error!\n");
 	    return;
 	}
 	y = 1.0 / y;
 
-	for ( j = 0; j < 4; j++ )  {
+	for (j = 0; j < 4; j++) {
 	    static float temp;		/* Local */
 
 	    c[j] = output[j*4+k];
@@ -280,21 +262,21 @@ mat_inv(matp_t output, matp_t input)
 	j = z[i];
 	z[i] = z[k];
 	z[k] = j;
-	for ( k = 0; k < 4; k++ )  {
-	    if ( k == i )  continue;
-	    for ( j = 0; j < 4; j++ )  {
-		if ( j == i )  continue;
+	for (k = 0; k < 4; k++) {
+	    if (k == i)  continue;
+	    for (j = 0; j < 4; j++) {
+		if (j == i)  continue;
 		output[k*4+j] = output[k*4+j] - b[j] * c[k];
 	    }
 	}
     }
 
-    /*  Second Loop */
-    for ( i = 0; i < 4; i++ )  {
-	while ( (k = z[i]) != i )  {
+    /* Second Loop */
+    for (i = 0; i < 4; i++) {
+	while ((k = z[i]) != i) {
 	    static int p;			/* Local temp */
 
-	    for ( j = 0; j < 4; j++ )  {
+	    for (j = 0; j < 4; j++) {
 		static float w;		/* Local temp */
 
 		w = output[i*4+j];
@@ -310,25 +292,9 @@ mat_inv(matp_t output, matp_t input)
 }
 
 
-/*
- *			V T O H _ M O V E
- *
- * Takes a pointer to a [x, y, z] vector, and a pointer
- * to space for a homogeneous vector [x, y, z, w],
- * and builds [x, y, z, 1].
- */
-void
-vtoh_move(float *h, float *v)
-{
-    *h++ = *v++;
-    *h++ = *v++;
-    *h++ = *v;
-    *h++ = 1;
-}
+
 
 /*
- *			H T O V _ M O V E
- *
  * Takes a pointer to [x, y, z, w], and converts it to
  * an ordinary vector [x/w, y/w, z/w].
  * Optimization for the case of w==1 is performed.
@@ -338,11 +304,11 @@ htov_move(float *v, float *h)
 {
     static float inv;
 
-    if ( NEAR_ZERO(h[3] - 1.0, SMALL_FASTF) )  {
+    if (ZERO(h[3] - 1.0)) {
 	*v++ = *h++;
 	*v++ = *h++;
 	*v   = *h;
-    }  else  {
+    }  else {
 	inv = 1 / h[3];
 
 	*v++ = *h++ * inv;

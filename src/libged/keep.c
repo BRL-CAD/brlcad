@@ -1,7 +1,7 @@
 /*                         K E E P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file keep.c
+/** @file libged/keep.c
  *
  * The keep command.
  *
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "rtgeom.h"
 
 #include "./ged_private.h"
@@ -39,12 +39,13 @@ struct keep_node_data {
     struct ged *gedp;
 };
 
+
 /*
  * Supports for the 'keep' method.
  * Write each node encountered exactly once.
  */
 HIDDEN void
-node_write(struct db_i *dbip, struct directory *dp, genptr_t ptr)
+node_write(struct db_i *dbip, struct directory *dp, void *ptr)
 {
     struct keep_node_data *kndp = (struct keep_node_data *)ptr;
     struct rt_db_internal intern;
@@ -55,39 +56,50 @@ node_write(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	return;		/* already written */
 
     if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&kndp->gedp->ged_result_str, "Database read error, aborting\n");
+	bu_vls_printf(kndp->gedp->ged_result_str, "Database read error, aborting\n");
 	return;
     }
 
-    /* if this is an extrusion, keep the referenced sketch */
     if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
+	/* if this is an extrusion, keep the referenced sketch */
 	struct rt_extrude_internal *extr;
 	struct directory *dp2;
 
 	extr = (struct rt_extrude_internal *)intern.idb_ptr;
 	RT_EXTRUDE_CK_MAGIC(extr);
 
-	if ((dp2 = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET)) != DIR_NULL) {
+	if ((dp2 = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	    node_write(dbip, dp2, ptr);
+	}
+    } else if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) {
+	/* if this is a revolve, keep the referenced sketch */
+	struct rt_revolve_internal *rev;
+	struct directory *dp2;
+
+	rev = (struct rt_revolve_internal *)intern.idb_ptr;
+	RT_REVOLVE_CK_MAGIC(rev);
+
+	if ((dp2 = db_lookup(dbip, bu_vls_addr(&rev->sketch_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	    node_write(dbip, dp2, ptr);
 	}
     } else if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP) {
+	/* if this is a DSP, keep the referenced binary object too */
 	struct rt_dsp_internal *dsp;
 	struct directory *dp2;
 
-	/* this is a DSP, if it uses a binary object, keep it also */
 	dsp = (struct rt_dsp_internal *)intern.idb_ptr;
 	RT_DSP_CK_MAGIC(dsp);
 
 	if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ) {
 	    /* need to keep this object */
-	    if ((dp2 = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name),  LOOKUP_QUIET)) != DIR_NULL) {
+	    if ((dp2 = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name),  LOOKUP_QUIET)) != RT_DIR_NULL) {
 		node_write(dbip, dp2, ptr);
 	    }
 	}
     }
 
     if (wdb_put_internal(kndp->wdbp, dp->d_namep, &intern, 1.0) < 0) {
-	bu_vls_printf(&kndp->gedp->ged_result_str, "Database write error, aborting\n");
+	bu_vls_printf(kndp->gedp->ged_result_str, "Database write error, aborting\n");
 	return;
     }
 }
@@ -100,7 +112,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     struct keep_node_data knd;
     struct rt_wdb *keepfp;
     struct directory *dp;
-    struct bu_vls title;
+    struct bu_vls title = BU_VLS_INIT_ZERO;
     struct db_i *new_dbip;
     const char *cmd = argv[0];
     static const char *usage = "[-R] file object(s)";
@@ -112,24 +124,24 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_HELP;
     }
 
     /* check for options */
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "R")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "R")) != -1) {
 	switch (c) {
 	    case 'R':
 		/* not recursively */
 		flag_R = 1;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Unrecognized option - %c", c);
+		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
 		return GED_ERROR;
 	}
     }
@@ -138,40 +150,40 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     argv += bu_optind;
 
     if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: missing file or object names\n");
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	bu_vls_printf(gedp->ged_result_str, "ERROR: missing file or object names\n");
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_ERROR;
     }
 
     /* First, clear any existing counts */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    dp->d_nref = 0;
     }
 
     /* Alert user if named file already exists */
 
-    new_dbip = db_open(argv[0], "w");
+    new_dbip = db_open(argv[0], DB_OPEN_READWRITE);
 
     if (new_dbip != DBI_NULL) {
-	if (new_dbip->dbi_version != gedp->ged_wdbp->dbip->dbi_version) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: File format mismatch between '%s' and '%s'\n",
+	if (db_version(new_dbip) != db_version(gedp->ged_wdbp->dbip)) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: File format mismatch between '%s' and '%s'\n",
 			  cmd, argv[0], gedp->ged_wdbp->dbip->dbi_filename);
 	    return GED_ERROR;
 	}
 
 	if ((keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK)) == NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s:  Error opening '%s'\n", cmd, argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s:  Error opening '%s'\n", cmd, argv[0]);
 	    return GED_ERROR;
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "%s:  Appending to '%s'\n", cmd, argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s:  Appending to '%s'\n", cmd, argv[0]);
 
 	    /* --- Scan geometry database and build in-memory directory --- */
 	    db_dirbuild(new_dbip);
 	}
     } else {
 	/* Create a new database */
-	keepfp = wdb_fopen_v(argv[0], gedp->ged_wdbp->dbip->dbi_version);
+	keepfp = wdb_fopen_v(argv[0], db_version(gedp->ged_wdbp->dbip));
 
 	if (keepfp == NULL) {
 	    perror(argv[0]);
@@ -183,15 +195,14 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     knd.gedp = gedp;
 
     /* ident record */
-    bu_vls_init(&title);
-    if (strncmp(gedp->ged_wdbp->dbip->dbi_title, "Parts of: ", 10) != 0) {
+    if (bu_strncmp(gedp->ged_wdbp->dbip->dbi_title, "Parts of: ", 10) != 0) {
 	bu_vls_strcat(&title, "Parts of: ");
     }
     bu_vls_strcat(&title, gedp->ged_wdbp->dbip->dbi_title);
 
     if (db_update_ident(keepfp->dbip, bu_vls_addr(&title), gedp->ged_wdbp->dbip->dbi_local2base) < 0) {
 	perror("fwrite");
-	bu_vls_printf(&gedp->ged_result_str, "db_update_ident() failed\n");
+	bu_vls_printf(gedp->ged_result_str, "db_update_ident() failed\n");
 	wdb_close(keepfp);
 	bu_vls_free(&title);
 	return GED_ERROR;
@@ -199,21 +210,22 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&title);
 
     for (i = 1; i < argc; i++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	if (!flag_R) {
 	    /* recursively keep objects */
-	    db_functree(gedp->ged_wdbp->dbip, dp, node_write, node_write, &rt_uniresource, (genptr_t)&knd);
+	    db_functree(gedp->ged_wdbp->dbip, dp, node_write, node_write, &rt_uniresource, (void *)&knd);
 	} else {
 	    /* keep just this object */
-	    node_write(gedp->ged_wdbp->dbip, dp, (genptr_t)&knd);
+	    node_write(gedp->ged_wdbp->dbip, dp, (void *)&knd);
 	}
     }
 
     wdb_close(keepfp);
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

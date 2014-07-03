@@ -1,7 +1,7 @@
 /*                    R P C _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,9 +30,6 @@
 #include "brep.h"
 
 
-/**
- * R T _ R P C _ B R E P
- */
 extern "C" void
 rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
@@ -41,11 +38,6 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(eip);
-
-    *b = ON_Brep::New();
-
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
 
     point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
@@ -65,7 +57,7 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     plane1_origin = ON_3dPoint(p1_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    const ON_Plane* rpc_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane rpc_bottom_plane = ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
 
     // Next, create a parabolic NURBS curve corresponding to the shape
     // of the parabola in the two planes.
@@ -77,7 +69,6 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     VADD2(ep2, p1_origin, tmppt);
     VADD2(ep3, p1_origin, x_dir);
     ON_3dPoint onp1 = ON_3dPoint(ep1);
-    ON_3dPoint onp2 = ON_3dPoint(ep2);
     ON_3dPoint onp3 = ON_3dPoint(ep3);
 
 
@@ -89,15 +80,11 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     parabnurbscurve->SetCV(0, ON_3dPoint(ep1));
     parabnurbscurve->SetCV(1, ON_3dPoint(ep2));
     parabnurbscurve->SetCV(2, ON_3dPoint(ep3));
-    bu_log("Valid nurbs curve: %d\n", parabnurbscurve->IsValid(dump));
-    parabnurbscurve->Dump(*dump);
 
-    // Also need a staight line from the beginning to the end to
+    // Also need a straight line from the beginning to the end to
     // complete the loop.
 
     ON_LineCurve* straightedge = new ON_LineCurve(onp3, onp1);
-    bu_log("Valid curve: %d\n", straightedge->IsValid(dump));
-    straightedge->Dump(*dump);
 
     // Generate the bottom cap
     ON_SimpleArray<ON_Curve*> boundary;
@@ -105,7 +92,7 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     boundary.Append(ON_Curve::Cast(straightedge));
 
     ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = (*rpc_bottom_plane);
+    bp->m_plane = rpc_bottom_plane;
     bp->SetDomain(0, -100.0, 100.0);
     bp->SetDomain(1, -100.0, 100.0);
     bp->SetExtents(0, bp->Domain(0));
@@ -128,6 +115,7 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->rpc_V), ON_3dPoint(vp2));
     ON_Brep& brep = *(*b);
     ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
+    delete extrudepath;
 
 }
 

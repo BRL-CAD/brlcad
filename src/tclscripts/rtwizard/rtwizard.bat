@@ -1,7 +1,7 @@
 REM                      R T W I Z A R D . B A T
 REM  BRL-CAD
 REM 
-REM  Copyright (c) 2006-2010 United States Government as represented by
+REM  Copyright (c) 2006-2014 United States Government as represented by
 REM  the U.S. Army Research Laboratory.
 REM 
 REM  This library is free software; you can redistribute it and/or
@@ -18,17 +18,16 @@ REM  License along with this file; see the file named COPYING for more
 REM  information.
 REM 
 REM REM REM 
+
 @ECHO OFF
 
 SETLOCAL
 
-SET BWISH=%~dp0bwish
-SET RTWIZARD=%~dp0rtwizard.tcl
+SET PATH=%~dp0;%PATH%
+SET BTCLSH=%~dp0btclsh
+SET RTWIZARD=%~dp0rtwizard
 
-START /B %BWISH% "%RTWIZARD%" %1
-
-CLS
-EXIT
+START /B "" "%BTCLSH%" "%RTWIZARD%" %*
 
 REM Local Variables:
 REM mode: sh

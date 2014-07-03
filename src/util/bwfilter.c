@@ -1,7 +1,7 @@
 /*                      B W F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwfilter.c
+/** @file util/bwfilter.c
  *
  * Filters a black and white file with an arbitrary 3x3 kernel.
  * Leaves the outer rows untouched.  Allows an alternate divisor and
@@ -32,12 +32,8 @@
 #include "bio.h"
 
 #include "bu.h"
-
-
-#define MAXLINE (8*1024)
-#define DEFAULT_WIDTH 512
-unsigned char line1[MAXLINE], line2[MAXLINE], line3[MAXLINE], obuf[MAXLINE];
-unsigned char *top, *middle, *bottom, *temp;
+#include "icv.h"
+#include "vmath.h"
 
 /* The filter kernels */
 struct kernels {
@@ -46,41 +42,80 @@ struct kernels {
     int kern[9];
     int kerndiv;	/* Divisor for kernel */
     int kernoffset;	/* To be added to result */
+    ICV_FILTER filter;
 } kernel[] = {
-    { "Low Pass", "lo", {3, 5, 3, 5, 10, 5, 3, 5, 3}, 42, 0 },
-    { "Laplacian", "la", {-1, -1, -1, -1, 8, -1, -1, -1, -1}, 16, 128 },
-    { "High Pass", "hi", {-1, -2, -1, -2, 13, -2, -1, -2, -1}, 1, 0 },
-    { "Horizontal Gradiant", "hg", {1, 0, -1, 1, 0, -1, 1, 0, -1}, 6, 128},
-    { "Vertical Gradient", "vg", {1, 1, 1, 0, 0, 0, -1, -1, -1}, 6, 128 },
-    { "Boxcar Average", "b", {1, 1, 1, 1, 1, 1, 1, 1, 1}, 9, 0 },
-    { NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0 },
+    { "Low Pass", "lo", {3, 5, 3, 5, 10, 5, 3, 5, 3}, 42, 0, ICV_FILTER_LOW_PASS },
+    { "Laplacian", "la", {-1, -1, -1, -1, 8, -1, -1, -1, -1}, 16, 128, ICV_FILTER_LAPLACIAN },
+    { "High Pass", "hi", {-1, -2, -1, -2, 13, -2, -1, -2, -1}, 1, 0, ICV_FILTER_HIGH_PASS },
+    { "Horizontal Gradient", "hg", {1, 0, -1, 1, 0, -1, 1, 0, -1}, 6, 128, ICV_FILTER_HORIZONTAL_GRAD },
+    { "Vertical Gradient", "vg", {1, 1, 1, 0, 0, 0, -1, -1, -1}, 6, 128, ICV_FILTER_VERTICAL_GRAD },
+    { "Boxcar Average", "b", {1, 1, 1, 1, 1, 1, 1, 1, 1}, 9, 0, ICV_FILTER_BOXCAR_AVERAGE },
+    { NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, ICV_FILTER_NULL },
 };
 
-
-int *kern;
 int kerndiv;
 int kernoffset;
-int width = DEFAULT_WIDTH;
-int height = DEFAULT_WIDTH;
+int *kern;
+ICV_FILTER filter_type;
+int kernel_index;
+int inx = 512;
+int iny = 512;   /* Default Width */
 int verbose = 0;
 int dflag = 0;	/* Different divisor specified */
 int oflag = 0;	/* Different offset specified */
 
-char *file_name;
-FILE *infp;
-
 void select_filter(char *str), dousage(void);
 
 char usage[] = "\
-Usage: bwfilter [-f type] [-v] [-d div] [-o offset]\n\
-	[-s squaresize] [-w width] [-n height] [file.bw] > file.bw\n";
+Usage: bwfilter [-f type] [-v] [-d div] [-O offset]\n\
+	[-s squaresize] [-w width] [-n height] [-o out_file.bw] [file.bw] > out_file.bw\n";
+
+char *in_file = NULL;
+char *out_file = NULL;
+
+/*
+ * Looks at the command line string and selects a filter
+ * based on it.
+ */
+void
+select_filter(char *str)
+{
+    kernel_index = 0;
+    while (kernel[kernel_index].name != NULL) {
+	if (bu_strncmp(str, kernel[kernel_index].uname, strlen(kernel[kernel_index].uname)) == 0)
+	    break;
+	kernel_index++;
+    }
+
+    if (kernel[kernel_index].name == NULL) {
+	/* No match, output list and exit */
+	fprintf(stderr, "Unrecognized filter type \"%s\"\n", str);
+	dousage();
+	bu_exit (3, NULL);
+    }
+    kern = kernel[kernel_index].kern;
+    filter_type = kernel[kernel_index].filter;
+}
+
+void
+dousage(void)
+{
+    int i;
+    fputs(usage, stderr);
+    fputs("Possible arguments for -f (type):\n", stderr);
+    i = 0;
+    while (kernel[i].name != NULL) {
+	fprintf(stderr, "  %-10s%s\n", kernel[i].uname, kernel[i].name);
+	i++;
+    }
+}
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vf:d:o:w:n:s:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "vf:d:O:w:n:s:h?")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
@@ -91,58 +126,60 @@ get_args(int argc, char **argv)
 	    case 'd':
 		dflag++;
 		kerndiv = atoi(bu_optarg);
+		if (ZERO(kerndiv)) {
+		    bu_log("Bad argument for kerndiv\n");
+		    return 1;
+		}
 		break;
-	    case 'o':
+	    case 'O':
 		oflag++;
 		kernoffset = atoi(bu_optarg);
 		break;
 	    case 'w':
-		width = atoi(bu_optarg);
+		inx = atoi(bu_optarg);
+		break;
+	    case 'o':
+		out_file = bu_optarg;
 		break;
 	    case 'n':
-		height = atoi(bu_optarg);
+		iny = atoi(bu_optarg);
 		break;
 	    case 's':
-		width = height = atoi(bu_optarg);
+		inx = iny = atoi(bu_optarg);
 		break;
 	    default:		/* '?' */
 		return 0;
 	}
     }
-
     if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = "-";
-	infp = stdin;
-    } else {
-	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "bwfilter: cannot open \"%s\" for reading\n",
-			  file_name);
+	if (isatty(fileno(stdin))) {
 	    return 0;
 	}
+    } else {
+	in_file = argv[bu_optind];
+	bu_optind++;
+	return 1;
     }
 
-    if (isatty(fileno(stdout)))
+    if (!isatty(fileno(stdout)) && out_file!=NULL) {
 	return 0;
+    }
 
-    if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bwfilter: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	bu_log("bwrfilter: excess argument(s) ignored\n");
+    }
 
-    return 1;		/* OK */
+    return 1;
 }
 
 
 int
 main(int argc, char **argv)
 {
-    int x, y;
-    int value, r1, r2, r3;
+    icv_image_t *img;
+    double *max_d = NULL, *min_d = NULL; /* return values from min and max */
     int max, min;
-    size_t ret;
-
+    int x;
     /* Select Default Filter (low pass) */
     select_filter("low");
 
@@ -150,136 +187,43 @@ main(int argc, char **argv)
 	dousage();
 	bu_exit (1, NULL);
     }
+    img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
+    if (img == NULL)
+	return 1;
 
-    if (width > MAXLINE) {
-	fprintf(stderr, "bwfilter:  limited to scanlines of %d\n", MAXLINE);
-	bu_exit (1, NULL);
+    icv_filter(img, filter_type);
+
+    /* Correct the image as per the input offset and */
+    if (oflag | dflag) {
+        icv_add_val(img, -ICV_CONV_8BIT(kernel[kernel_index].kernoffset));
+
+        if (dflag) {
+            if (ZERO(kerndiv))
+            icv_multiply_val(img, ICV_CONV_8BIT(kernel[kernel_index].kerndiv/kerndiv));
+        }
+
+        if (oflag)
+            icv_add_val(img, ICV_CONV_8BIT(kernoffset));
+        else
+            icv_add_val(img, ICV_CONV_8BIT(kernel[kernel_index].kernoffset));
     }
-
-    /*
-     * Read in bottom and middle lines.
-     * Write out bottom untouched.
-     */
-    bottom = &line1[0];
-    middle = &line2[0];
-    top    = &line3[0];
-    ret = fread(bottom, sizeof(char), width, infp);
-    if (ret == 0)
-	perror("fread");
-
-    ret = fread(middle, sizeof(char), width, infp);
-    if (ret == 0)
-	perror("fread");
-
-    ret = fwrite(bottom, sizeof(char), width, stdout);
-    if (ret == 0)
-	perror("fwrite");
 
     if (verbose) {
 	for (x = 0; x < 11; x++)
-	    fprintf(stderr, "kern[%d] = %d\n", x, kern[x]);
+	    bu_log("kern[%d] = %d\n", x, kern[x]);
+
+	max_d = icv_max(img);
+	min_d = icv_min(img);
+	max = (int) (*max_d * 255.0);
+	min = (int) (*min_d * 255.0);
+	bu_log("\n\tMax = %d, Min = %d\n",max, min);
     }
+    bu_free(min_d, "max value");
+    bu_free(max_d, "min values");
 
-    max = 0;
-    min = 255;
-
-    for (y = 1; y < height-1; y++) {
-	/* read in top line */
-	ret = fread(top, sizeof(char), width, infp);
-	if (ret == 0)
-	    perror("fread");
-
-	obuf[0] = middle[0];
-	/* Filter a line */
-	for (x = 1; x < width-1; x++) {
-	    r1 = top[x-1] * kern[0] + top[x] * kern[1] + top[x+1] * kern[2];
-	    r2 = middle[x-1] * kern[3] + middle[x] * kern[4] + middle[x+1] * kern[5];
-	    r3 = bottom[x-1] * kern[6] + bottom[x] * kern[7] + bottom[x+1] * kern[8];
-	    value = (r1+r2+r3) / kerndiv + kernoffset;
-	    if (value > max) max = value;
-	    if (value < min) min = value;
-	    if (verbose && (value > 255 || value < 0)) {
-		fprintf(stderr, "Value %d\n", value);
-		fprintf(stderr, "r1=%d, r2=%d, r3=%d\n", r1, r2, r3);
-	    }
-	    if (value < 0)
-		obuf[x] = 0;
-	    else if (value > 255)
-		obuf[x] = 255;
-	    else
-		obuf[x] = value;
-	}
-	obuf[width-1] = middle[width-1];
-	ret = fwrite(obuf, sizeof(char), width, stdout);
-	if (ret == 0)
-	    perror("fwrite");
-
-	/* Adjust row pointers */
-	temp = bottom;
-	bottom = middle;
-	middle = top;
-	top = temp;
-    }
-    /* write out last line untouched */
-    ret = fwrite(top, sizeof(char), width, stdout);
-    if (ret == 0)
-	perror("fwrite");
-
-    /* Give advise on scaling factors */
-    if (verbose)
-	fprintf(stderr, "Max = %d,  Min = %d\n", max, min);
-
+    icv_write(img, out_file, ICV_IMAGE_BW);
     return 0;
 }
-
-
-/*
- * S E L E C T _ F I L T E R
- *
- * Looks at the command line string and selects a filter
- * based on it.
- */
-void
-select_filter(char *str)
-{
-    int i;
-
-    i = 0;
-    while (kernel[i].name != NULL) {
-	if (strncmp(str, kernel[i].uname, strlen(kernel[i].uname)) == 0)
-	    break;
-	i++;
-    }
-
-    if (kernel[i].name == NULL) {
-	/* No match, output list and exit */
-	fprintf(stderr, "Unrecognized filter type \"%s\"\n", str);
-	dousage();
-	bu_exit (3, NULL);
-    }
-
-    /* Have a match, set up that kernel */
-    kern = &kernel[i].kern[0];
-    if (dflag == 0)
-	kerndiv = kernel[i].kerndiv;
-    if (oflag == 0)
-	kernoffset = kernel[i].kernoffset;
-}
-
-
-void
-dousage(void)
-{
-    int i;
-
-    fputs(usage, stderr);
-    i = 0;
-    while (kernel[i].name != NULL) {
-	fprintf(stderr, "%-10s%s\n", kernel[i].uname, kernel[i].name);
-	i++;
-    }
-}
-
 
 /*
  * Local Variables:

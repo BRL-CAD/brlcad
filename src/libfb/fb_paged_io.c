@@ -1,7 +1,7 @@
 /*                   F B _ P A G E D _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "bu/color.h"
+#include "bu/log.h"
 #include "fb.h"
 
 
@@ -39,7 +41,7 @@
 #define PAGE_SCANS (ifp->if_ppixels/ifp->if_width)
 
 #define Malloc_Bomb(_bytes_)					\
-    fb_log("\"%s\"(%d) : allocation of %d bytes failed.\n",	\
+    fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n",	\
 	   __FILE__, __LINE__, _bytes_)
 
 
@@ -113,8 +115,6 @@ _fb_pgflush(register FBIO *ifp)
 
 
 /**
- * F B _ I O I N I T
- *
  * This initialization routine must be called before any buffered I/O
  * routines in this file are used.
  */
@@ -183,8 +183,8 @@ fb_tell(register FBIO *ifp, int *xp, int *yp)
     *xp = (int) (ifp->if_pixcur % ifp->if_width);
 
     if (ifp->if_debug & FB_DEBUG_BIO) {
-	fb_log("fb_tell(%p, 0x%x, 0x%x) => (%4d, %4d)\n",
-	       (void *)ifp, xp, yp, *xp, *yp);
+	fb_log("fb_tell(%p, %p, %p) => (%4d, %4d)\n",
+	       (void *)ifp, (void *)xp, (void *)yp, *xp, *yp);
     }
 
     return 0;

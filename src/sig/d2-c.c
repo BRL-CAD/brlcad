@@ -1,7 +1,7 @@
 /*                          D 2 - C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,19 +26,19 @@
 #include "common.h"
 
 #include <string.h>
-#include <stdio.h>
+#include "bio.h"
 
 #include "bu.h"
 
 
-void
+static void
 open_file(FILE **fp, char *name)
 {
     /* check for special names */
-    if (strcmp(name, "-") == 0) {
+    if (BU_STR_EQUAL(name, "-")) {
 	*fp = stdin;
 	return;
-    } else if (strcmp(name, ".") == 0) {
+    } else if (BU_STR_EQUAL(name, ".")) {
 	*fp = fopen("/dev/null", "r");
 	return;
     }
@@ -58,6 +58,7 @@ main(int argc, char *argv[])
     double *obufp;
     FILE *rfp, *ifp;
     double real[1024], imag[1024];
+    size_t ret;
 
     if (argc != 3 || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: d2-c real_file imag_file > complex (- stdin, . skip)\n");
@@ -68,7 +69,7 @@ main(int argc, char *argv[])
 
     while (1) {
 	nr = fread(real, sizeof(double), 1024, rfp);
-	ni = fread(real, sizeof(double), 1024, ifp);
+	ni = fread(imag, sizeof(double), 1024, ifp);
 	if (nr <= 0 && ni <= 0)
 	    break;
 
@@ -84,7 +85,9 @@ main(int argc, char *argv[])
 	    *obufp++ = real[i];
 	    *obufp++ = imag[i];
 	}
-	fwrite(obuf, sizeof(double), num*2, stdout);
+	ret = fwrite(obuf, sizeof(double), num*2, stdout);
+	if (ret != (size_t)(num*2))
+	    perror("fwrite");
     }
     return 0;
 }

@@ -1,7 +1,7 @@
 /*                    E B M _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,29 +36,28 @@ extern "C" {
 }
 
 
-/**
- * R T _ E B M _ B R E P
- */
 extern "C" void
 rt_ebm_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
-    RT_INIT_DB_INTERNAL(tmp_internal);
+    struct rt_db_internal *tmp_internal;
     struct rt_tess_tol ttmptol;
+
+    BU_ALLOC(tmp_internal, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(tmp_internal);
+
     ttmptol.abs = 0;
     ttmptol.rel = 0.01;
     ttmptol.norm = 0;
+
     const struct rt_tess_tol *ttol = &ttmptol;
-
-    *b = NULL;
-    *b = ON_Brep::New();
-
     struct model *ebmm = nmg_mm();
     struct nmgregion *ebmr;
-    tmp_internal->idb_ptr = (genptr_t)ip->idb_ptr;
+
+    tmp_internal->idb_ptr = (void *)ip->idb_ptr;
     rt_ebm_tess(&ebmr, ebmm, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (genptr_t)ebmm;
+    tmp_internal->idb_ptr = (void *)ebmm;
     rt_nmg_brep(b, tmp_internal, tol);
+
     FREE_MODEL(ebmm);
     bu_free(tmp_internal, "free temporary rt_db_internal");
 }

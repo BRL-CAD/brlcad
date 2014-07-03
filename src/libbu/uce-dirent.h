@@ -68,7 +68,7 @@
  * handle inclusion of sys/dir.h in a part that is compiled only in Apollo
  * operating system.  To fix the problem you need to insert DIR.H into
  * SYSINCL.DAT located in MSVC\BIN directory and restart visual C++.
- * Consult manuals for more informaton about the problem.
+ * Consult manuals for more information about the problem.
  *
  * Since many UNIX systems have dirent.h we assume to have one also.
  * However, if your UNIX system does not have dirent.h you can download one
@@ -78,8 +78,8 @@
  * HAVE_DIRECT_H, HAVE_DIR_H, HAVE_NDIR_H, HAVE_SYS_DIR_H and
  * HAVE_SYS_NDIR_H according to the files found.
  */
-#ifndef DIRENT_H
-#define DIRENT_H
+#ifndef LIBBU_UCE_DIRENT_H
+#define LIBBU_UCE_DIRENT_H
 #define DIRENT_H_INCLUDED
 
 /* find out platform */
@@ -101,7 +101,7 @@
 
 /*
  * See what kind of dirent interface we have unless autoconf has already
- * determinated that.
+ * determined that.
  */
 #if !defined(HAVE_DIRENT_H) && !defined(HAVE_DIRECT_H) && !defined(HAVE_SYS_DIR_H) && !defined(HAVE_NDIR_H) && !defined(HAVE_SYS_NDIR_H) && !defined(HAVE_DIR_H)
 # if defined(_MSC_VER)                         /* Microsoft C/C++ */
@@ -149,7 +149,7 @@
 # include <sys/ndir.h>
 # define NAMLEN(dp) ((int)((dp)->d_namlen))
 
-#elif defined(HAVE_DIRECT_H)
+#elif defined(HAVE_DIRECT_H) && !defined(_MSC_VER)
 # include <direct.h>
 # define NAMLEN(dp) ((int)((dp)->d_namlen))
 
@@ -167,7 +167,10 @@
 
 #elif defined(MSDOS) || defined(WIN32)
 
-  /* figure out type of underlaying directory interface to be used */
+  /* figure out type of underlying directory interface to be used */
+# if defined(HAVE_DIRECT_H)
+# include <direct.h>
+# endif
 # if defined(WIN32)
 #   define DIRENT_WIN32_INTERFACE
 # elif defined(MSDOS)
@@ -233,12 +236,11 @@
 #   error "assertion failed: NAME_MAX >= DIRENT_MAXNAMLEN"
 # endif
 
-
   /*
    * Substitute for real dirent structure.  Note that `d_name' field is a
    * true character array although we have it copied in the implementation
    * dependent data.  We could save some memory if we had declared `d_name'
-   * as a pointer refering the name within implementation dependent data.
+   * as a pointer referencing the name within implementation dependent data.
    * We have not done that since some code may rely on sizeof(d_name) to be
    * something other than four.  Besides, directory entries are typically so
    * small that it takes virtually no time to copy them from place to place.
@@ -259,7 +261,7 @@
   } dirent;
 
   /* DIR substitute structure containing directory name.  The name is
-   * essential for the operation of ``rewinndir'' function. */
+   * essential for the operation of ``rewinddir'' function. */
   typedef struct DIR {
     char          *dirname;                    /* directory being scanned */
     dirent        current;                     /* current entry */
@@ -408,7 +410,7 @@ opendir(
  * capacity of d_name with different macros and some systems do not define
  * capacity at all (besides actual declaration of the field). If you really
  * need to find out storage capacity of d_name then you might want to try
- * NAME_MAX macro. The NAME_MAX is defined in POSIX standard althought
+ * NAME_MAX macro. The NAME_MAX is defined in POSIX standard although
  * there are many MS-DOS and MS-Windows implementations those do not define
  * it.  There are also systems that declare d_name as "char d_name[1]" and
  * then allocate suitable amount of memory at run-time.  Thanks to Alain
@@ -463,7 +465,7 @@ readdir (DIR *dirp)
     /* fill in entry and return that */
 #if defined(DIRENT_WIN32_INTERFACE)
     if (FindNextFile (dirp->search_handle, &dirp->current.data) == FALSE) {
-      /* Last file has been processed or an error occured */
+      /* Last file has been processed or an error occurred */
       FindClose (dirp->search_handle);
       dirp->search_handle = INVALID_HANDLE_VALUE;
       errno = ENOENT;
@@ -624,7 +626,7 @@ _initdir (DIR *dirp)
   }
 # endif
 
-  /* initialize DIR and it's first entry */
+  /* initialize DIR and its first entry */
   _setdirname (dirp);
   dirp->dirent_filled = 1;
   return 1;
@@ -673,4 +675,4 @@ _setdirname (struct DIR *dirp) {
 #endif
 
 
-#endif /*DIRENT_H*/
+#endif /*LIBBU_UCE_DIRENT_H*/

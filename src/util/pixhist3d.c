@@ -1,7 +1,7 @@
 /*                     P I X H I S T 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixhist3d.c
+/** @file util/pixhist3d.c
  *
  * Display R x G, R x B, B x G on a framebuffer, where the
  * intensity is the relative frequency for that plane.
@@ -51,12 +51,13 @@ FILE *fp;
 
 long rxb[256][256], rxg[256][256], bxg[256][256];
 
+static const int MAX_INDEX = sizeof(rxb[0]) - 1;
+
 unsigned char ibuf[8*1024*3];
 
 void disp_array(long int (*v)[256], int xoff, int yoff);
 
-static const char *Usage = "usage: pixhist3d [file.pix]\n";
-
+static const char *Usage = "Usage: pixhist3d [file.pix]\n";
 
 int
 main(int argc, char **argv)
@@ -79,15 +80,43 @@ main(int argc, char **argv)
 	bu_exit(12, "fb_open failed\n");
     }
 
+#define CHECK_INDEX(idx) \
+    if (idx > MAX_INDEX) { \
+	bu_exit(3, "pixhist3d: read invalid index %u\n", (unsigned int)idx); \
+    }
+
     while ((n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0) {
 	unsigned char *bp;
 	int i;
+	long r, g, b;
+
+	CHECK_INDEX(ibuf[RED]);
+	CHECK_INDEX(ibuf[GRN]);
+	CHECK_INDEX(ibuf[BLU]);
 
 	bp = &ibuf[0];
 	for (i = n/3; i > 0; i--, bp += 3) {
-	    rxb[ bp[RED] ][ bp[BLU] ]++;
-	    rxg[ bp[RED] ][ bp[GRN] ]++;
-	    bxg[ bp[BLU] ][ bp[GRN] ]++;
+	    r = bp[RED];
+	    g = bp[GRN];
+	    b = bp[BLU];
+
+	    /* sanitize no-op */
+	    if (UNLIKELY(r < 0))
+		r = 0;
+	    if (UNLIKELY(r > 255))
+		r = 255;
+	    if (UNLIKELY(g < 0))
+		g = 0;
+	    if (UNLIKELY(g > 255))
+		g = 255;
+	    if (UNLIKELY(b < 0))
+		b = 0;
+	    if (UNLIKELY(b > 255))
+		b = 255;
+
+	    rxb[ r ][ b ]++;
+	    rxg[ r ][ g ]++;
+	    bxg[ b ][ g ]++;
 	}
     }
 

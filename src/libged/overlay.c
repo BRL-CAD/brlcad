@@ -1,7 +1,7 @@
 /*                         O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file overlay.c
+/** @file libged/overlay.c
  *
  * The overlay command.
  *
@@ -38,28 +38,28 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
     FILE *fp;
     double char_size;
     char *name;
-    static const char *usage = "file.pl char_size [name]";
+    static const char *usage = "file.plot3 char_size [name]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 4 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &char_size) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_overlay: bad character size - %s\n", argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "ged_overlay: bad character size - %s\n", argv[2]);
 	return GED_ERROR;
     }
 
@@ -69,7 +69,7 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
 	name = (char *)argv[3];
 
     if ((fp = fopen(argv[1], "rb")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_overlay: failed to open file - %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "ged_overlay: failed to open file - %s\n", argv[1]);
 	return GED_ERROR;
     }
 

@@ -1,7 +1,7 @@
 /*                      V I E W S C A T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,19 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewscat.c
+/** @file rt/viewscat.c
  *
  *  Ray Tracing program RTRAD bottom half.
  *
  *  This module takes the first hit from rt_shootray(), and produces
  *  a GIFT/SRIM format Radar file.  It tracks specular direction
  *  reflections.
- *
- *  Author -
- *	Phillip Dykstra
- *	Paul R. Stay		(Added parallelization and physics code)
- *	From viewpp.c and viewray.c by
- *	Michael John Muuss
  *
  */
 
@@ -41,13 +35,10 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
-#include "rad.h"
 
+#include "./rtuif.h"
+#include "./rad.h"
 
-#ifndef M_PI
-#  define M_PI            3.14159265358979323846
-#endif
 
 #define	MAXREFLECT	16
 #define	DEFAULTREFLECT	16
@@ -88,7 +79,7 @@ Options:\n\
  -a Az		Azimuth in degrees\n\
  -e Elev	Elevation in degrees\n\
  -g #		ray horizontal tube size (cell_width)\n\
- -G #		ray vertical tube size (cell_heigth)\n\
+ -G #		ray vertical tube size (cell_height)\n\
  -M		Read matrix, cmds on stdin\n\
  -o file.rad	Output file name, else stdout\n\
  -x #		Set librt debug flags\n\
@@ -102,7 +93,7 @@ static int radmiss();
 
 vect_t uhoriz;	/* horizontal emanation plane unit vector. */
 vect_t unorml;	/* normal unit vector to emanation plane. */
-vect_t cemant;	/* center vector of emanation plane. */
+/* vect_t cemant; */	/* center vector of emanation plane. */
 vect_t uvertp;	/* vertical emanation plane unit vector. */
 fastf_t wavelength = 1.0;	/* Radar wavelength */
 fastf_t xhpol = 0.0;	/* Transmitter vertical polarization */
@@ -114,8 +105,6 @@ fastf_t totali;
 fastf_t totalq;
 
 /*
- *  			V I E W _ I N I T
- *
  *  Called at the start of a run.
  *  Returns 1 if framebuffer should be opened, else 0.
  */
@@ -147,8 +136,8 @@ view_2init( struct application *ap )
 	numreflect = MAXREFLECT;
     }
 
-    elvang = elevation * M_PI / 180.0;
-    aziang = azimuth * M_PI / 180.0;
+    elvang = elevation * DEG2RAD;
+    aziang = azimuth * DEG2RAD;
 
     uhoriz[0] = (fastf_t) sin(aziang);
     uhoriz[1] = (fastf_t) -cos(aziang);
@@ -171,11 +160,11 @@ view_2init( struct application *ap )
     totali = 0.0;
     totalq = 0.0;
 
-    VSET(temp, 0.0, 0.0, -1.414 );
+    VSET(temp, 0.0, 0.0, -M_SQRT2);
     MAT4X3PNT( aimpt, view2model, temp);
     bu_log("aim point %f %f %f\n", aimpt[0], aimpt[1], aimpt[2]);
     bu_log("viewsize %f\n", viewsize);
-    backoff = 1.414 * viewsize/2.0;
+    backoff = M_SQRT1_2*viewsize;
     bu_log("backoff %f\n", backoff);
 
 #ifdef SAR

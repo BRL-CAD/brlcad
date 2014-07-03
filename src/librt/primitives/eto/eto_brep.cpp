@@ -1,7 +1,7 @@
 /*                    E L L _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,15 +30,10 @@
 #include "brep.h"
 
 
-/**
- * R T _ E T O _ B R E P
- */
 extern "C" void
 rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_eto_internal *eip;
-
-    *b = NULL;
 
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_eto_internal *)ip->idb_ptr;
@@ -62,41 +57,54 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     //  and scale it.
 
     VCROSS(v1, eip->eto_C, eip->eto_N);
+    if (NEAR_ZERO(MAGNITUDE(v1), VUNITIZE_TOL)) {
+	vect_t dir_vect;
+	VSET(dir_vect, 0, 1, 0);
+	VCROSS(v1, dir_vect, eip->eto_N);
+	if (NEAR_ZERO(MAGNITUDE(v1), VUNITIZE_TOL)) {
+	    VSET(dir_vect, 1, 0, 0);
+	    VCROSS(v1, dir_vect, eip->eto_N);
+	}
+    }
+    point_t temp;
+    VMOVE(temp, v1);
     VCROSS(v1a, v1, eip->eto_N);
     VSET(v1, -v1a[0], -v1a[1], -v1a[2]);
     VUNITIZE( v1 );
     VSCALE(v1, v1, eip->eto_r);
+    VADD2(v1, v1, eip->eto_V);
     VMOVE(x_dir, eip->eto_C);
-    bn_vec_ortho( y_dir, x_dir);
+    VCROSS(y_dir, x_dir, temp);
     VSET(p_origin, v1[0], v1[1], v1[2]);
     plane_origin = ON_3dPoint(p_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
 
-    const ON_Plane* ell_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane ell_plane(plane_origin, plane_x_dir, plane_y_dir);
 
 
     //  Once the plane has been created, create the ellipse
     //  within the plane.
     ell_axis_len_1 = MAGNITUDE(eip->eto_C);
     ell_axis_len_2 = eip->eto_rd;
-    ON_Ellipse* ellipse = new ON_Ellipse(*ell_plane, ell_axis_len_1, ell_axis_len_2);
+    ON_Ellipse ellipse(ell_plane, ell_axis_len_1, ell_axis_len_2);
 
 
     //  Generate an ON_Curve from the ellipse and revolve it
     //  around eto_N
 
     ON_NurbsCurve ellcurve;
-    ellipse->GetNurbForm(ellcurve);
+    ellipse.GetNurbForm(ellcurve);
+    point_t eto_endvertex;
+    VADD2(eto_endvertex, eip->eto_V, eip->eto_N);
     ON_3dPoint eto_vertex_pt = ON_3dPoint(eip->eto_V);
-    ON_3dPoint eto_normal_pt = ON_3dPoint(eip->eto_N);
-    ON_Line revaxis = ON_Line(eto_vertex_pt, eto_normal_pt);
+    ON_3dPoint eto_endvertex_pt = ON_3dPoint(eto_endvertex);
+    ON_Line revaxis = ON_Line(eto_vertex_pt, eto_endvertex_pt);
     ON_RevSurface* eto_surf = ON_RevSurface::New();
     eto_surf->m_curve = &ellcurve;
     eto_surf->m_axis = revaxis;
 
     /* Create brep with one face*/
-    *b = ON_Brep::New();
     ON_BrepFace *newface = (*b)->NewFace(*eto_surf);
     (*b)->FlipFace(*newface);
 //    (*b)->Standardize();

@@ -1,7 +1,7 @@
 /*                  P O L Y _ M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file poly_mirror.c
+/** @file primitives/poly/poly_mirror.c
  *
  * mirror support
  *
@@ -30,8 +30,6 @@
 
 
 /**
- * R T _ P O L Y _ M I R R O R
- *
  * Given a pointer to an internal GED database object, mirror the
  * object's values about the given transformation matrix.
  */
@@ -49,8 +47,7 @@ rt_poly_mirror(struct rt_db_internal *ip, register const plane_t plane)
     point_t mirror_pt;
     fastf_t ang;
 
-    size_t i;
-    int j;
+    size_t i, j;
     fastf_t *verts;
     fastf_t *norms;
 
@@ -90,7 +87,7 @@ rt_poly_mirror(struct rt_db_internal *ip, register const plane_t plane)
     norms = (fastf_t *)bu_calloc(poly->max_npts*3, sizeof(fastf_t), "rt_mirror: norms");
 
     for (i=0; i<poly->npoly; i++) {
-	int last;
+	size_t last;
 
 	last = (poly->poly[i].npts - 1)*3;
 	/* mirror coords and temporarily store in reverse order */

@@ -2,7 +2,7 @@
 #                      S H A D E R S . S H
 # BRL-CAD
 #
-# Copyright (c) 2010 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,26 +40,49 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
-MGED="`ensearch mged/mged`"
+MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
     exit 1
 fi
 
+RT="`ensearch rt`"
+if test ! -f "$RT" ; then
+    echo "Unable to find rt, aborting"
+    exit 1
+fi
+
+PIXDIFF="`ensearch pixdiff`"
+if test ! -f "$PIXDIFF" ; then
+    echo "Unable to find pixdiff, aborting"
+    exit 1
+fi
+
+ASC2PIX="`ensearch asc2pix`"
+if test ! -f "$ASC2PIX" ; then
+    echo "Unable to find asc2pix, aborting"
+    exit 1
+fi
+
+GENCOLOR="`ensearch gencolor`"
+if test ! -f "$GENCOLOR" ; then
+    echo "Unable to find gencolor, aborting"
+    exit 1
+fi
 
 EAGLECAD=eagleCAD-512x438.pix
 rm -f shaders.rt shaders.g shaders.rt.pix shaders.pixdiff.log shaders.rt.log shaders.log shaders.txt shaders.dat $EAGLECAD shaders.mged
 
-TOP_SRCDIR=$1
+TOP_SRCDIR="$1"
 
 if [ ! -f ebm.bw ] ; then
-	../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
+	$GENCOLOR -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
 fi
 
 
-../src/conv/asc2pix > $EAGLECAD << EOF
+$ASC2PIX > $EAGLECAD << EOF
 FFFFFD
 FEFEFD
 FFFFFD
@@ -224318,10 +224341,6 @@ FEFEFD
 FEFEFD
 EOF
 
-export ITCL_LIBRARY=$TOP_SRCDIR/src/other/incrTcl/itcl/library/
-export TCL_LIBRARY=$TOP_SRCDIR/src/other/libtcl/library/
-export BRLCAD_DATA=$TOP_SRCDIR/src
-
 cat > shaders.mged <<EOF
 opendb shaders.g y
 
@@ -224465,12 +224484,22 @@ EOF
     exit 1
 fi
 mv shaders.rt shaders.rt.orig
-sed "s,^rt,../src/rt/rt -P 1 -B -U 1," < shaders.rt.orig > shaders.rt
+
+# use our RT instead of searching PATH
+sed "s,^rt,$RT," < shaders.rt.orig > shaders.rt
+
 rm shaders.rt.orig
 chmod 775 shaders.rt
 echo 'rendering shaders...'
-# the script 'shaders' creates shaders.rt.log
-./shaders.rt
+
+# NOTICE: -P1 and -B are required because the 25th shader (top-right
+# corner ellipsoid) is a random transparency shader.  that shader
+# pulls values from a random number generator for each pixel so the
+# render must run single-threaded in order to obtain a repeatably
+# matching sequence.
+
+./shaders.rt -B -U 1 -P 1
+# the script creates shaders.rt.log
 
 # determine the behavior of tail
 case "x`echo 'tail' | tail -n 1 2>&1`" in
@@ -224484,11 +224513,11 @@ if [ ! -f shaders.rt.pix ] ; then
 	echo '-> shaders.sh FAILED'
 	exit 1
 else
-	if [ ! -f $TOP_SRCDIR/regress/shaderspix.asc ] ; then
+	if [ ! -f "$TOP_SRCDIR/regress/shaderspix.asc" ] ; then
 		echo No reference file for $TOP_SRCDIR/regress/shaders.rt.pix
 	else
-		../src/conv/asc2pix < $TOP_SRCDIR/regress/shaderspix.asc > shaders_ref.pix
-		../src/util/pixdiff shaders.rt.pix shaders_ref.pix > shaders.rt.diff.pix 2> shaders.rt.pixdiff.log
+		$ASC2PIX < "$TOP_SRCDIR/regress/shaderspix.asc" > shaders_ref.pix
+		$PIXDIFF shaders.rt.pix shaders_ref.pix > shaders.rt.diff.pix 2> shaders.rt.pixdiff.log
 
 		NUMBER_WRONG=`tr , '\012' < shaders.rt.pixdiff.log | awk '/many/ {print $1}' | tail -${TAIL_N}1`
 		export NUMBER_WRONG

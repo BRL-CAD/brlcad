@@ -1,7 +1,7 @@
 /*                         I L L U M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,12 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file illum.c
+/** @file libged/illum.c
  *
  * The illum command.
  *
  */
 
+#include "common.h"
 #include <string.h>
 
 #include "ged.h"
@@ -33,7 +34,7 @@
  * Illuminate/highlight database object
  *
  * Usage:
- *        illum [-n] obj
+ * illum [-n] obj
  *
  */
 int
@@ -51,11 +52,11 @@ ged_illum(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -72,16 +73,16 @@ ged_illum(struct ged *gedp, int argc, const char *argv[])
     if (argc != 2)
 	goto bad;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    int i;
+	    size_t i;
 
 	    for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
 		if (*argv[1] == *DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep &&
-		    strcmp(argv[1], DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep) == 0) {
+		    BU_STR_EQUAL(argv[1], DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep)) {
 		    found = 1;
 		    if (illum)
 			sp->s_iflag = UP;
@@ -96,14 +97,14 @@ ged_illum(struct ged *gedp, int argc, const char *argv[])
 
 
     if (!found) {
-	bu_vls_printf(&gedp->ged_result_str, "illum: %s not found", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "illum: %s not found", argv[1]);
 	return GED_ERROR;
     }
 
     return GED_OK;
 
- bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+bad:
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 

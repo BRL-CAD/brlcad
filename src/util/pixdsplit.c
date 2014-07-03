@@ -1,7 +1,7 @@
 /*                     P I X D S P L I T . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixdsplit.c
+/** @file util/pixdsplit.c
  *
  * Disentangle the chars from the doubles in a pixd(5) stream
  *
@@ -72,13 +72,20 @@ main (int argc, char *argv[])
     int dwidth;		/* doubles/pixel (in bytes) */
     int pwidth;		/* bytes/pixel, total */
     int num;
-    int infd;		/* File descriptor */
+    int infd = 0;	/* File descriptor */
     int cfd = -1;	/*   "       "     */
     int dfd = -1;	/*   "       "     */
+    ssize_t ret;
+    char hyphen[] = "-";
+    char empty_string[] = "";
+    char Stdout[] = "stdout";
+    c_per_p = 3;
+    d_per_p = 1;
 
-    c_per_p = 3; cf_name = "-";
-    d_per_p = 1; df_name = "";
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
+    cf_name = hyphen;
+    df_name = empty_string;
+
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (ch) {
 	    case 'd':
 		df_name = (char *) bu_malloc(strlen(bu_optarg)+1, "df_name");
@@ -117,15 +124,21 @@ main (int argc, char *argv[])
      */
     switch (argc - bu_optind) {
 	case 0:
-	    inf_name = "stdin";
 	    infd = 0;
 	    break;
 	case 1:
-	    inf_name = argv[bu_optind++];
-	    if ((infd = open(inf_name, O_RDONLY)) == -1) {
-		bu_log("Cannot open file '%s'\n", inf_name);
+	    inf_name = bu_realpath(argv[bu_optind++], NULL);
+	    if (inf_name == NULL || *inf_name == '\0') {
+		bu_log("Bad file name\n");
+		bu_free(inf_name, "realpath alloc from bu_realpath");
 		return 1;
 	    }
+	    if ((infd = open(inf_name, O_RDONLY)) == -1) {
+		bu_log("Cannot open file '%s'\n", inf_name);
+		bu_free(inf_name, "realpath alloc from bu_realpath");
+		return 1;
+	    }
+	    bu_free(inf_name, "realpath alloc from bu_realpath");
 	    break;
 	default:
 	    print_usage();
@@ -134,11 +147,11 @@ main (int argc, char *argv[])
      * Establish the output stream for chars
      */
     if (*cf_name == '\0') {
-	cf_name = 0;
+	cf_name = NULL;
     } else if ((*cf_name == '-') && (*(cf_name + 1) == '\0')) {
-	cf_name = "stdout";
+	cf_name = Stdout;
 	cfd = 1;
-    } else if ((cfd = open(cf_name, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1) {
+    } else if ((cfd = open(cf_name,  O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644)) == -1) {
 	bu_log("Cannot open file '%s'\n", cf_name);
 	return 1;
     }
@@ -146,11 +159,11 @@ main (int argc, char *argv[])
      * Establish the output stream for doubles
      */
     if (*df_name == '\0') {
-	df_name = 0;
+	df_name = NULL;
     } else if ((*df_name == '-') && (*(df_name + 1) == '\0')) {
-	df_name = "stdout";
+	df_name = Stdout;
 	dfd = 1;
-    } else if ((dfd = open(df_name, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1) {
+    } else if ((dfd = open(df_name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644)) == -1) {
 	bu_log("Cannot open file '%s'\n", df_name);
 	return 1;
     }
@@ -178,10 +191,16 @@ main (int argc, char *argv[])
 	    cbp += cwidth;
 	    dbp += dwidth;
 	}
-	if (cf_name)
-	    write(cfd, cbuf, i * cwidth);
-	if (df_name)
-	    write(dfd, dbuf, i * dwidth);
+	if (cf_name) {
+	    ret = write(cfd, cbuf, i * cwidth);
+	    if (ret < 0)
+		perror("write");
+	}
+	if (df_name) {
+	    ret = write(dfd, dbuf, i * dwidth);
+	    if (ret < 0)
+		perror("write");
+	}
 	if (num % pwidth != 0)
 	    bu_log("pixdsplit: WARNING: incomplete final pixel ignored\n");
     }

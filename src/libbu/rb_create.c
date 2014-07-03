@@ -1,7 +1,7 @@
 /*                     R B _ C R E A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,45 +22,46 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "bu.h"
+#include "bu/rb.h"
 #include "./rb_internals.h"
 
 
-bu_rb_tree *
-bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
+struct bu_rb_tree *
+bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const void *, const void *))
 {
     int order;
-    bu_rb_tree *tree;
+    struct bu_rb_tree *tree;
 
     /*
      * Allocate memory for the tree
      */
-    tree = (bu_rb_tree *) bu_malloc(sizeof(bu_rb_tree), "red-black tree");
+    BU_ALLOC(tree, struct bu_rb_tree);
+
     tree->rbt_root = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node),
 		  "red-black roots");
     tree->rbt_unique = (char *)
-	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+	bu_malloc((size_t) lrint(ceil((double) (nm_orders / 8.0))),
 		  "red-black uniqueness flags");
-    rb_null(tree) = (struct bu_rb_node *)
+    RB_NULL(tree) = (struct bu_rb_node *)
 	bu_malloc(sizeof(struct bu_rb_node),
 		  "red-black empty node");
-    rb_null(tree)->rbn_parent = (struct bu_rb_node **)
+    RB_NULL(tree)->rbn_parent = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black parents");
-    rb_null(tree)->rbn_left = (struct bu_rb_node **)
+    RB_NULL(tree)->rbn_left = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black left children");
-    rb_null(tree)->rbn_right = (struct bu_rb_node **)
+    RB_NULL(tree)->rbn_right = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black right children");
-    rb_null(tree)->rbn_color = (char *)
-	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+    RB_NULL(tree)->rbn_color = (char *)
+	bu_malloc((size_t) lrint(ceil((double) (nm_orders / 8.0))),
 		  "red-black colors");
-    rb_null(tree)->rbn_size = (int *)
+    RB_NULL(tree)->rbn_size = (int *)
 	bu_malloc(nm_orders * sizeof(int),
 		  "red-black subtree sizes");
-    rb_null(tree)->rbn_package = (struct bu_rb_package **)
+    RB_NULL(tree)->rbn_package = (struct bu_rb_package **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_package *),
 		  "red-black packages");
     /*
@@ -69,43 +70,43 @@ bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
     tree->rbt_magic = BU_RB_TREE_MAGIC;
     tree->rbt_description = description;
     tree->rbt_nm_orders = nm_orders;
-    tree->rbt_order = order_funcs;
+    tree->rbt_compar = compare_funcs;
     tree->rbt_print = 0;
     bu_rb_uniq_all_off(tree);
     tree->rbt_debug = 0x0;
-    tree->rbt_current = rb_null(tree);
+    tree->rbt_current = RB_NULL(tree);
     for (order = 0; order < nm_orders; ++order)
-	rb_root(tree, order) = rb_null(tree);
+	RB_ROOT(tree, order) = RB_NULL(tree);
     BU_LIST_INIT(&(tree->rbt_nodes.l));
     BU_LIST_INIT(&(tree->rbt_packages.l));
 
     /*
      * Initialize the nil sentinel
      */
-    rb_null(tree)->rbn_magic = BU_RB_NODE_MAGIC;
-    rb_null(tree)->rbn_tree = tree;
+    RB_NULL(tree)->rbn_magic = BU_RB_NODE_MAGIC;
+    RB_NULL(tree)->rbn_tree = tree;
     for (order = 0; order < nm_orders; ++order) {
-	rb_parent(rb_null(tree), order) = BU_RB_NODE_NULL;
-	rb_set_color(rb_null(tree), order, RB_BLK);
-	rb_left_child(rb_null(tree), order) = BU_RB_NODE_NULL;
-	rb_right_child(rb_null(tree), order) = BU_RB_NODE_NULL;
-	rb_size(rb_null(tree), order) = 0;
-	(rb_null(tree)->rbn_package)[order] = BU_RB_PKG_NULL;
+	RB_PARENT(RB_NULL(tree), order) = BU_RB_NODE_NULL;
+	RB_SET_COLOR(RB_NULL(tree), order, RB_BLK);
+	RB_LEFT_CHILD(RB_NULL(tree), order) = BU_RB_NODE_NULL;
+	RB_RIGHT_CHILD(RB_NULL(tree), order) = BU_RB_NODE_NULL;
+	RB_SIZE(RB_NULL(tree), order) = 0;
+	(RB_NULL(tree)->rbn_package)[order] = BU_RB_PKG_NULL;
     }
 
     return tree;
 }
 
 
-bu_rb_tree *
-bu_rb_create1(char *description, int (*order_func) (/* ??? */))
+struct bu_rb_tree *
+bu_rb_create1(const char *description, int (*compare_func)(void))
 {
-    int (**ofp)();
+    int (**cfp)(const void *, const void *);
 
-    ofp = (int (**)())
-	bu_malloc(sizeof(int (*)()), "red-black function table");
-    *ofp = order_func;
-    return bu_rb_create(description, 1, ofp);
+    cfp = (int (**)(const void *, const void *))
+	bu_malloc(sizeof(int (*)(const void *, const void *)), "red-black function table");
+    *cfp = (int (*)(const void *, const void *)) compare_func;
+    return bu_rb_create(description, 1, cfp);
 }
 
 /*

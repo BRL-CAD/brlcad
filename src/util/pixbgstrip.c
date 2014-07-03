@@ -1,7 +1,7 @@
 /*                    P I X B G S T R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2010 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixbgstrip.c
+/** @file util/pixbgstrip.c
  *
- * Backgound Un-Maker
+ * Background Un-Maker
  *
  */
 
@@ -58,7 +58,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ahs:w:n:t:x:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ahs:w:n:t:x:")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
@@ -101,16 +101,16 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
-	    (void)fprintf(stderr,
-			  "pixbgstrip: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "pixbgstrip: cannot open \"%s\" for reading\n",
+		    file_name);
 	    bu_exit (1, NULL);
 	}
 	fileinput++;
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixbgstrip: excess argument(s) ignored\n");
+	fprintf(stderr, "pixbgstrip: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -135,7 +135,7 @@ main(int argc, char **argv)
 
     /* autosize input? */
     if (fileinput && autosize) {
-	unsigned long int w, h;
+	size_t w, h;
 	if (fb_common_file_size(&w, &h, file_name, 3)) {
 	    file_width = (long)w;
 	} else {

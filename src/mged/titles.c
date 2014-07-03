@@ -1,7 +1,7 @@
 /*                        T I T L E S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file titles.c
+/** @file mged/titles.c
  *
  */
 
@@ -59,8 +59,6 @@ extern mat_t perspective_mat;  /* defined in dozoom.c */
 extern struct rt_db_internal es_int;
 
 /*
- * C R E A T E _ T E X T _ O V E R L A Y
- *
  * Prepare the numerical display of the currently edited solid/object.
  */
 void
@@ -76,8 +74,11 @@ create_text_overlay(struct bu_vls *vp)
      * so each line is written with a separate call to DM_DRAW_STRING_2D().
      */
 
-    /* print solid info at top of screen */
-    if (es_edflag >= 0) {
+    /* print solid info at top of screen
+     * Check if the illuminated solid still exists or it has been killed
+     * before Accept was clicked.
+     */
+    if (es_edflag >= 0 && illump != SOLID_NULL) {
 	dp = LAST_SOLID(illump);
 
 	bu_vls_strcat(vp, "** SOLID -- ");
@@ -119,7 +120,7 @@ create_text_overlay(struct bu_vls *vp)
 	int imax = 0;
 	int i = 0;
 	int j;
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	start = bu_vls_addr(vp);
 	/*
@@ -144,7 +145,6 @@ create_text_overlay(struct bu_vls *vp)
 	/* Prep string for use with Tcl/Tk */
 	++imax;
 	i = 0;
-	bu_vls_init(&vls);
 	for (p = start; *p != '\0'; ++p) {
 	    if (*p == '\n') {
 		for (j = 0; j < imax - i; ++j)
@@ -165,8 +165,6 @@ create_text_overlay(struct bu_vls *vp)
 
 
 /*
- * S C R E E N _ V L S
- *
  * Output a vls string to the display manager,
  * as a text overlay on the graphics area (ugh).
  *
@@ -207,15 +205,13 @@ screen_vls(
 
 
 /*
- * D O T I T L E S
- *
- * Produce titles, etc, on the screen.
+ * Produce titles, etc., on the screen.
  * NOTE that this routine depends on being called AFTER dozoom();
  */
 void
 dotitles(struct bu_vls *overlay_vls)
 {
-    int i = 0;
+    size_t i = 0;
 
     /* for menu computations */
     int x = 0;
@@ -224,7 +220,7 @@ dotitles(struct bu_vls *overlay_vls)
     int yloc = 0;
     int xloc = 0;
     int scroll_ybot = 0;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     char cent_x[80] = {0};
     char cent_y[80] = {0};
@@ -235,18 +231,17 @@ dotitles(struct bu_vls *overlay_vls)
     char ang_z[80] = {0};
 
     int ss_line_not_drawn=1; /* true if the second status line has not been drawn */
-    vect_t temp = {0.0, 0.0, 0.0};
+    vect_t temp = VINIT_ZERO;
     fastf_t tmp_val = 0.0;
 
     if (dbip == DBI_NULL)
 	return;
 
-    bu_vls_init(&vls);
-
     /* Set the Tcl variables to the appropriate values. */
 
     if (illump != SOLID_NULL) {
-	struct bu_vls path_lhs, path_rhs;
+	struct bu_vls path_lhs = BU_VLS_INIT_ZERO;
+	struct bu_vls path_rhs = BU_VLS_INIT_ZERO;
 	struct directory *dp;
 	struct db_full_path *dbfp = &illump->s_fullpath;
 
@@ -256,12 +251,12 @@ dotitles(struct bu_vls *overlay_vls)
 	}
 	RT_CK_FULL_PATH(dbfp);
 
-	bu_vls_init(&path_lhs);
-	bu_vls_init(&path_rhs);
-	for (i = 0; i < ipathpos; i++) {
-	    dp = DB_FULL_PATH_GET(dbfp, i);
-	    if (dp && dp->d_namep) {
-		bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
+	for (i = 0; i < (size_t)ipathpos; i++) {
+	    if ((size_t)i < (size_t)dbfp->fp_len) {
+		dp = DB_FULL_PATH_GET(dbfp, i);
+		if (dp && dp->d_namep) {
+		    bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
+		}
 	    }
 	}
 	for (; i < dbfp->fp_len; i++) {
@@ -362,7 +357,7 @@ dotitles(struct bu_vls *overlay_vls)
 		       color_scheme->cs_geo_label[0],
 		       color_scheme->cs_geo_label[1],
 		       color_scheme->cs_geo_label[2], 1, 1.0);
-	for (i=0; i<num_lines; i++)
+	for (i=0; i<(size_t)num_lines; i++)
 	    DM_DRAW_LINE_2D(dmp,
 			    GED2PM1(((int)(lines[i*2][X]*GED_MAX))),
 			    GED2PM1(((int)(lines[i*2][Y]*GED_MAX)) * dmp->dm_aspect),
@@ -425,7 +420,7 @@ dotitles(struct bu_vls *overlay_vls)
 	if (illump != SOLID_NULL &&
 	    (STATE==ST_O_PATH || STATE==ST_O_PICK || STATE==ST_S_PICK)) {
 	    for (i=0; i < illump->s_fullpath.fp_len; i++) {
-		if (i == ipathpos  &&  STATE == ST_O_PATH) {
+		if (i == (size_t)ipathpos  &&  STATE == ST_O_PATH) {
 		    DM_SET_FGCOLOR(dmp,
 				   color_scheme->cs_state_text1[0],
 				   color_scheme->cs_state_text1[1],
@@ -556,12 +551,11 @@ dotitles(struct bu_vls *overlay_vls)
     }
 
     if (STATE == ST_S_EDIT || STATE == ST_O_EDIT) {
-	struct bu_vls kp_vls;
+	struct bu_vls kp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&kp_vls);
 	bu_vls_printf(&kp_vls,
 		      " Keypoint: %s %s: (%g, %g, %g)",
-		      rt_functab[es_int.idb_type].ft_name+3,	/* Skip ID_ */
+		      OBJ[es_int.idb_type].ft_name+3,	/* Skip ID_ */
 		      es_keytag,
 		      es_keypoint[X] * base2local,
 		      es_keypoint[Y] * base2local,
@@ -594,7 +588,7 @@ dotitles(struct bu_vls *overlay_vls)
 	    /* Illuminated path */
 	    bu_vls_strcat(&vls, " Path: ");
 	    for (i=0; i < illump->s_fullpath.fp_len; i++) {
-		if (i == ipathpos  &&
+		if (i == (size_t)ipathpos  &&
 		    (STATE == ST_O_PATH || STATE == ST_O_EDIT))
 		    bu_vls_strcat(&vls, "/__MATRIX__");
 		bu_vls_printf(&vls, "/%s",

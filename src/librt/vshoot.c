@@ -1,7 +1,7 @@
 /*                        V S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup ray */
 /** @{ */
-/** @file vshoot.c
+/** @file librt/vshoot.c
  *
  * EXPERIMENTAL vector version of the Ray Tracing program shot
  * coordinator.
@@ -35,7 +35,7 @@
 
 
 /**
- * Stub function which will "similate" a call to a vector shot routine
+ * Stub function which will "simulate" a call to a vector shot routine
  */
 HIDDEN void
 vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
@@ -58,8 +58,8 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
 	    /* skip call if solid table pointer is NULL */
 	    /* do scalar call, place results in segp array */
 	    ret = -1;
-	    if (rt_functab[stp[i]->st_id].ft_shot) {
-		ret = rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead);
+	    if (OBJ[stp[i]->st_id].ft_shot) {
+		ret = OBJ[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead);
 	    }
 	    if (ret <= 0) {
 		segp[i].seg_stp=(struct soltab *) 0;
@@ -75,8 +75,6 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
 
 
 /**
- * R T _ S H O O T R A Y
- *
  * Given a ray, shoot it at all the relevant parts of the model,
  * (building the HeadSeg chain), and then call rt_boolregions() to
  * build and evaluate the partition chain.  If the ray actually hit
@@ -108,7 +106,7 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
  *
  * Returns: whatever the application function returns (an int).
  *
- * NOTE: The appliction functions may call rt_shootray() recursively.
+ * NOTE: The application functions may call rt_shootray() recursively.
  * Thus, none of the local variables may be static.
  *
  * An open issue for execution in a PARALLEL environment is locking of
@@ -119,13 +117,13 @@ rt_vshootray(struct application *ap)
 {
     struct seg *HeadSeg;
     int ret;
-    auto vect_t inv_dir;	/* inverses of ap->a_ray.r_dir */
+    vect_t inv_dir;	/* inverses of ap->a_ray.r_dir */
     struct bu_bitv *solidbits;	/* bits for all solids shot so far */
     struct bu_ptbl *regionbits;	/* bits for all involved regions */
     char *status;
-    auto struct partition InitialPart;	/* Head of Initial Partitions */
-    auto struct partition FinalPart;	/* Head of Final Partitions */
-    int nrays = 1;	/* for now */
+    struct partition InitialPart;	/* Head of Initial Partitions */
+    struct partition FinalPart;	/* Head of Final Partitions */
+    int nrays = 1;			/* for now */
     int vlen;
     int id;
     int i;
@@ -138,9 +136,8 @@ rt_vshootray(struct application *ap)
 #define BACKING_DIST (-2.0)		/* mm to look behind start point */
     rtip = ap->a_rt_i;
     RT_AP_CHECK(ap);
-    if (ap->a_resource == RESOURCE_NULL) {
+    if (!ap->a_resource) {
 	ap->a_resource = &rt_uniresource;
-	rt_uniresource.re_magic = RESOURCE_MAGIC;
     }
     RT_CK_RESOURCE(ap->a_resource);
 
@@ -175,10 +172,9 @@ rt_vshootray(struct application *ap)
     HeadSeg = RT_SEG_NULL;
 
     solidbits = rt_get_solidbitv(rtip->nsolids, ap->a_resource);
-    bu_bitv_clear(solidbits);
 
     if (BU_LIST_IS_EMPTY(&ap->a_resource->re_region_ptbl)) {
-	BU_GETSTRUCT(regionbits, bu_ptbl);
+	BU_ALLOC(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &ap->a_resource->re_region_ptbl);
@@ -187,19 +183,19 @@ rt_vshootray(struct application *ap)
     }
 
     /* Compute the inverse of the direction cosines */
-    if (!NEAR_ZERO(ap->a_ray.r_dir[X], SQRT_SMALL_FASTF)) {
+    if (!ZERO(ap->a_ray.r_dir[X])) {
 	inv_dir[X]=1.0/ap->a_ray.r_dir[X];
     } else {
 	inv_dir[X] = INFINITY;
 	ap->a_ray.r_dir[X] = 0.0;
     }
-    if (!NEAR_ZERO(ap->a_ray.r_dir[Y], SQRT_SMALL_FASTF)) {
+    if (!ZERO(ap->a_ray.r_dir[Y])) {
 	inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
     } else {
 	inv_dir[Y] = INFINITY;
 	ap->a_ray.r_dir[Y] = 0.0;
     }
-    if (!NEAR_ZERO(ap->a_ray.r_dir[Z], SQRT_SMALL_FASTF)) {
+    if (!ZERO(ap->a_ray.r_dir[Z])) {
 	inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
     } else {
 	inv_dir[Z] = INFINITY;
@@ -242,8 +238,8 @@ rt_vshootray(struct application *ap)
 	/* bit vector per ray check */
 	/* mark elements to be skipped with ary_stp[] = SOLTAB_NULL */
 	ap->a_rt_i->nshots += nsol;	/* later: skipped ones */
-	if (rt_functab[id].ft_vshot) {
-	    rt_functab[id].ft_vshot(ary_stp, ary_rp, ary_seg, nsol, ap);
+	if (OBJ[id].ft_vshot) {
+	    OBJ[id].ft_vshot(ary_stp, ary_rp, ary_seg, nsol, ap);
 	} else {
 	    vshot_stub(ary_stp, ary_rp, ary_seg, nsol, ap);
 	}
@@ -274,13 +270,13 @@ rt_vshootray(struct application *ap)
 #if 0
 	    /* FIXME: need to use waiting_segs/finished_segs here in
 	     * conjunction with rt_boolweave()
-	    {
-		register struct seg *seg3 = seg2;
-		while (seg3->seg_next != RT_SEG_NULL)
-		    seg3 = seg3->seg_next;
-		seg3->seg_next = HeadSeg;
-		HeadSeg = seg2;
-	    }
+	     {
+	     register struct seg *seg3 = seg2;
+	     while (seg3->seg_next != RT_SEG_NULL)
+	     seg3 = seg3->seg_next;
+	     seg3->seg_next = HeadSeg;
+	     HeadSeg = seg2;
+	     }
 	    */
 #endif
 	}
@@ -358,8 +354,13 @@ freeup:
 	    FREE_PT(newpp, ap->a_resource);
 	}
     }
+
     /* Segs can't be freed until after a_hit() has returned */
-    RT_FREE_SEG_LIST(HeadSeg, ap->a_resource);
+#if 0
+    /* FIXME: depends on commented out code above */
+    if (HeadSeg)
+	RT_FREE_SEG_LIST(HeadSeg, ap->a_resource);
+#endif
 
 out:
     bu_free((char *)ary_stp, "*ary_stp[]");

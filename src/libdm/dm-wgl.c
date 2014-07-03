@@ -1,7 +1,7 @@
 /*                       D M - W G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-wgl.c
+/** @file libdm/dm-wgl.c
  *
  *  A Windows OpenGL (wgl) Display Manager.
  *
@@ -28,6 +28,7 @@
 #ifdef DM_WGL
 
 #include "tk.h"
+/* needed for TkWinGetHWND() */
 #include "TkWinInt.h"
 
 #undef VMIN		/* is used in vmath.h, too */
@@ -43,9 +44,12 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm-wgl.h"
-#include "dm_xvars.h"
+#include "dm/dm-Null.h"
+#include "dm/dm-wgl.h"
+#include "dm/dm_xvars.h"
 #include "solid.h"
+
+#include "./dm_util.h"
 
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))
@@ -68,6 +72,7 @@ HIDDEN int	wgl_drawString2D();
 HIDDEN int	wgl_configureWin_guts();
 HIDDEN int	wgl_setLight();
 HIDDEN int	wgl_setZBuffer();
+HIDDEN void	wgl_reshape(struct dm *dmp, int width, int height);
 
 static fastf_t default_viewscale = 1000.0;
 static double	xlim_view = 1.0;	/* args for glOrtho*/
@@ -82,7 +87,8 @@ static float wireColor[4];
 static float ambientColor[4];
 static float specularColor[4];
 static float diffuseColor[4];
-static float backColor[] = {1.0f, 1.0f, 0.0f, 1.0f}; /* yellow */
+static float backDiffuseColorDark[4];
+static float backDiffuseColorLight[4];
 
 void
 wgl_fogHint(struct dm *dmp, int fastfog)
@@ -90,6 +96,7 @@ wgl_fogHint(struct dm *dmp, int fastfog)
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
+
 
 HIDDEN int
 wgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict,  fastf_t transparency)
@@ -108,7 +115,7 @@ wgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
     wireColor[3] = transparency;
 
     if (strict) {
-	glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
+	glColor3ub((GLubyte)r, (GLubyte)g, (GLubyte)b);
     } else {
 	if (dmp->dm_light) {
 	    /* Ambient = .2, Diffuse = .6, Specular = .2 */
@@ -134,18 +141,22 @@ wgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 	    diffuseColor[2] = wireColor[2] * 0.6;
 	    diffuseColor[3] = wireColor[3];
 
-#if 1
+	    backDiffuseColorDark[0] = wireColor[0] * 0.9;
+	    backDiffuseColorDark[1] = wireColor[1] * 0.9;
+	    backDiffuseColorDark[2] = wireColor[2] * 0.9;
+	    backDiffuseColorDark[3] = wireColor[3];
+
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
-#endif
 	} else {
-	    glColor3ub( (GLubyte)r,  (GLubyte)g,  (GLubyte)b );
+	    glColor3ub((GLubyte)r,  (GLubyte)g,  (GLubyte)b);
 	}
     }
 
     return TCL_OK;
 }
+
 
 HIDDEN int
 wgl_setBGColor(struct dm *dmp,
@@ -165,12 +176,6 @@ wgl_setBGColor(struct dm *dmp,
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
 
     if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
-	if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	    bu_log("wgl_setBGColor: Couldn't make context current\n");
-	    return TCL_ERROR;
-	}
-
 	SwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
 	glClearColor(((struct wgl_vars *)dmp->dm_vars.priv_vars)->r,
 		     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
@@ -184,8 +189,6 @@ wgl_setBGColor(struct dm *dmp,
 
 
 /*
- *			W G L _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
@@ -195,8 +198,8 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     static int count = 0;
     GLfloat backgnd[4];
     int make_square = -1;
-    struct bu_vls str;
-    struct bu_vls init_proc_vls;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin;
     HWND hwnd;
@@ -208,33 +211,19 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	return DM_NULL;
     }
 
-    BU_GETSTRUCT(dmp, dm);
-    if (dmp == DM_NULL) {
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_wgl; /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "wgl_open: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free(dmp, "wgl_open: dmp");
-	return DM_NULL;
-    }
-
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct wgl_vars), "wgl_open: wgl_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free(dmp->dm_vars.pub_vars, "wgl_open: dmp->dm_vars.pub_vars");
-	bu_free(dmp, "wgl_open: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct wgl_vars);
 
     dmp->dm_vp = &default_viewscale;
 
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
     bu_vls_init(&dmp->dm_dName);
-    bu_vls_init(&init_proc_vls);
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
@@ -297,7 +286,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
-#if 1
 	Tcl_DString ds;
 
 	Tcl_DStringInit(&ds);
@@ -312,13 +300,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
 	    Tk_NameToWindow(interp, bu_vls_addr(&dmp->dm_pathName), tkwin);
 	Tcl_DStringFree(&ds);
-#else
-	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
-	    Tk_CreateWindowFromPath(interp,
-				    tkwin,
-				    bu_vls_addr(&dmp->dm_pathName),
-				    bu_vls_addr(&dmp->dm_dName));
-#endif
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin;
     } else {
 	char *cp;
@@ -327,11 +308,10 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
 	} else {
-	    struct bu_vls top_vls;
+	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&top_vls);
-	    bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
-			  bu_vls_addr(&dmp->dm_pathName));
+	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
+
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top =
 		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
 	    bu_vls_free(&top_vls);
@@ -343,7 +323,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 			    cp + 1, (char *)NULL);
     }
 
-    if ( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL ) {
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL) {
 	bu_log("open_gl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	bu_vls_free(&init_proc_vls);
 	(void)wgl_close(dmp);
@@ -353,10 +333,9 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
-    bu_vls_init(&str);
-    bu_vls_printf(&str, "_init_dm %V %V\n",
-		  &init_proc_vls,
-		  &dmp->dm_pathName);
+    bu_vls_printf(&str, "_init_dm %s %s\n",
+		  bu_vls_addr(&init_proc_vls),
+		  bu_vls_addr(&dmp->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_log("open_wgl: _init_dm failed\n");
@@ -403,15 +382,15 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->depth = ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.depth;
 
     /* open GLX context */
-    if (( ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc =
-	  wglCreateContext(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc))==NULL) {
+    if ((((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc =
+	 wglCreateContext(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc))==NULL) {
 	bu_log("wgl_open: couldn't create glXContext.\n");
 	(void)wgl_close(dmp);
 	return DM_NULL;
     }
 
-    if (!wglMakeCurrent( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("wgl_open: couldn't make context current\n");
 	(void)wgl_close(dmp);
 	return DM_NULL;
@@ -439,7 +418,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     (void)wgl_configureWin_guts(dmp, 1);
 
     /* Lines will be solid when stippling disabled, dashed when enabled*/
-    glLineStipple( 1, 0xCF33);
+    glLineStipple(1, 0xCF33);
     glDisable(GL_LINE_STIPPLE);
 
     backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
@@ -455,15 +434,17 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     /* Leave it in model_view mode normally */
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
     glGetDoublev(GL_PROJECTION_MATRIX, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0, 0.0, -1.0);
     glPushMatrix();
     glLoadIdentity();
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
+
+    wgl_setZBuffer(dmp, dmp->dm_zbuffer);
+    wgl_setLight(dmp, dmp->dm_light);
 
     if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {
 	LPVOID buf;
@@ -489,8 +470,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     return dmp;
 }
 
-/*
- */
+
 int
 wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 {
@@ -513,8 +493,8 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    return TCL_ERROR;
 	}
 
-	if (!wglMakeCurrent( ((struct dm_xvars *)dmp1->dm_vars.pub_vars)->hdc,
-			     ((struct wgl_vars *)dmp1->dm_vars.priv_vars)->glxc)) {
+	if (!wglMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->hdc,
+			    ((struct wgl_vars *)dmp1->dm_vars.priv_vars)->glxc)) {
 	    bu_log("wgl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct wgl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
@@ -547,7 +527,7 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	(void)wgl_configureWin_guts(dmp1, 1);
 
 	/* Lines will be solid when stippling disabled, dashed when enabled*/
-	glLineStipple( 1, 0xCF33);
+	glLineStipple(1, 0xCF33);
 	glDisable(GL_LINE_STIPPLE);
 
 	backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
@@ -564,12 +544,11 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	/* Leave it in model_view mode normally */
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
 	glGetDoublev(GL_PROJECTION_MATRIX, ((struct wgl_vars *)dmp1->dm_vars.priv_vars)->faceplate_mat);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0.0, 0.0, -1.0);
 	glPushMatrix();
 	glLoadIdentity();
 	((struct wgl_vars *)dmp1->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
@@ -579,7 +558,7 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 		       ((struct wgl_vars *)dmp1->dm_vars.priv_vars)->glxc);
 	wglDeleteContext(old_glxContext);
     } else {
-	/* dmp1 will share it's display lists with dmp2 */
+	/* dmp1 will share its display lists with dmp2 */
 
 	old_glxContext = ((struct wgl_vars *)dmp2->dm_vars.priv_vars)->glxc;
 
@@ -591,8 +570,8 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    return TCL_ERROR;
 	}
 
-	if (!wglMakeCurrent( ((struct dm_xvars *)dmp2->dm_vars.pub_vars)->hdc,
-			     ((struct wgl_vars *)dmp2->dm_vars.priv_vars)->glxc)) {
+	if (!wglMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->hdc,
+			    ((struct wgl_vars *)dmp2->dm_vars.priv_vars)->glxc)) {
 	    bu_log("wgl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct wgl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
 
@@ -614,7 +593,7 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	(void)wgl_configureWin_guts(dmp2, 1);
 
 	/* Lines will be solid when stippling disabled, dashed when enabled*/
-	glLineStipple( 1, 0xCF33);
+	glLineStipple(1, 0xCF33);
 	glDisable(GL_LINE_STIPPLE);
 
 	backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
@@ -631,12 +610,11 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	/* Leave it in model_view mode normally */
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
 	glGetDoublev(GL_PROJECTION_MATRIX, ((struct wgl_vars *)dmp2->dm_vars.priv_vars)->faceplate_mat);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0.0, 0.0, -1.0);
 	glPushMatrix();
 	glLoadIdentity();
 	((struct wgl_vars *)dmp2->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
@@ -650,9 +628,8 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
     return TCL_OK;
 }
 
+
 /*
- *  			W G L _ C L O S E
- *
  *  Gracefully release the display.
  */
 HIDDEN int
@@ -660,8 +637,8 @@ wgl_close(struct dm *dmp)
 {
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
 	if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc) {
-	    wglMakeCurrent( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc);
+	    wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			   ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc);
 	    wglDeleteContext(((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc);
 	}
 
@@ -683,9 +660,8 @@ wgl_close(struct dm *dmp)
     return TCL_OK;
 }
 
+
 /*
- *			W G L _ D R A W B E G I N
- *
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
@@ -756,9 +732,7 @@ wgl_drawBegin(struct dm *dmp)
     return TCL_OK;
 }
 
-/*
- *			W G L _ D R A W E N D
- */
+
 HIDDEN int
 wgl_drawEnd(struct dm *dmp)
 {
@@ -787,9 +761,8 @@ wgl_drawEnd(struct dm *dmp)
 
     if (dmp->dm_debugLevel) {
 	int error;
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "ANY ERRORS?\n");
 
 	while ((error = glGetError())!=0) {
@@ -800,37 +773,12 @@ wgl_drawEnd(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-/*XXX Keep this off unless testing */
-#if 0
-    glFinish();
-#endif
-
-    if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {
-	LPVOID buf;
-
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		      FORMAT_MESSAGE_FROM_SYSTEM |
-		      FORMAT_MESSAGE_IGNORE_INSERTS,
-		      NULL,
-		      GetLastError(),
-		      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		      (LPTSTR)&buf,
-		      0,
-		      NULL);
-	bu_log("wgl_drawBegin: Couldn't release the current context.\n");
-	bu_log("wgl_drawBegin: %s", buf);
-	LocalFree(buf);
-
-	return TCL_ERROR;
-    }
-
     wgl_actively_drawing = 0;
     return TCL_OK;
 }
 
+
 /*
- *  			W G L _ L O A D M A T R I X
- *
  *  Load a new transformation matrix.  This will be followed by
  *  many calls to wgl_drawVList().
  */
@@ -839,14 +787,12 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
-    mat_t	newm;
 
     if (dmp->dm_debugLevel) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	bu_log("wgl_loadMatrix()\n");
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
 	bu_vls_printf(&tmp_vls, "transformation matrix = \n");
 	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
@@ -858,40 +804,26 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 	bu_vls_free(&tmp_vls);
     }
 
-    switch (which_eye)  {
+    switch (which_eye) {
 	case 0:
 	    /* Non-stereo */
 	    break;
 	case 1:
 	    /* R eye */
-	    glViewport(0,  0, (XMAXSCREEN)+1, ( YSTEREO)+1);
+	    glViewport(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
 	    glScissor(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
-	    wgl_drawString2D( dmp, "R", 0.986, 0.0, 0, 1 );
+	    wgl_drawString2D(dmp, "R", 0.986, 0.0, 0, 1);
 	    break;
 	case 2:
 	    /* L eye */
-	    glViewport(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1,
-		       ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
-	    glScissor(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1,
-		      ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
+	    glViewport(0,  0+YOFFSET_LEFT, (XMAXSCREEN)+1,
+		       (YSTEREO+YOFFSET_LEFT)-(YOFFSET_LEFT)+1);
+	    glScissor(0,  0+YOFFSET_LEFT, (XMAXSCREEN)+1,
+		      (YSTEREO+YOFFSET_LEFT)-(YOFFSET_LEFT)+1);
 	    break;
     }
 
-    if (!dmp->dm_zclip) {
-	mat_t       nozclip;
-
-	MAT_IDN( nozclip );
-	nozclip[10] = 1.0e-20;
-	bn_mat_mul( newm, nozclip, mat );
-	mptr = newm;
-    } else {
-	mat_t       nozclip;
-
-	MAT_IDN(nozclip);
-	nozclip[10] = dmp->dm_bound;
-	bn_mat_mul(newm, nozclip, mat);
-	mptr = newm;
-    }
+    mptr = mat;
 
     gtmat[0] = *(mptr++);
     gtmat[4] = *(mptr++);
@@ -915,22 +847,73 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef( 0.0, 0.0, -1.0 );
-    glMultMatrixf( gtmat );
+    glLoadMatrixf(gtmat);
 
     return TCL_OK;
 }
 
+
 /*
- *  			W G L _ D R A W V L I S T H I D D E N L I N E
+ * Load a new projection matrix.
  *
  */
+HIDDEN int
+wgl_loadPMatrix(struct dm *dmp, fastf_t *mat)
+{
+    fastf_t *mptr;
+    GLfloat gtmat[16];
+
+    glMatrixMode(GL_PROJECTION);
+
+    if (mat == (fastf_t *)NULL) {
+	if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
+	    glPopMatrix();
+	    glLoadIdentity();
+	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	    glPushMatrix();
+	    glLoadMatrixd(((struct wgl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
+	} else {
+	    glLoadIdentity();
+	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	}
+
+	return TCL_OK;
+    }
+
+    mptr = mat;
+
+    gtmat[0] = *(mptr++);
+    gtmat[4] = *(mptr++);
+    gtmat[8] = *(mptr++);
+    gtmat[12] = *(mptr++);
+
+    gtmat[1] = *(mptr++);
+    gtmat[5] = *(mptr++);
+    gtmat[9] = *(mptr++);
+    gtmat[13] = *(mptr++);
+
+    gtmat[2] = *(mptr++);
+    gtmat[6] = *(mptr++);
+    gtmat[10] = -*(mptr++);
+    gtmat[14] = -*(mptr++);
+
+    gtmat[3] = *(mptr++);
+    gtmat[7] = *(mptr++);
+    gtmat[11] = *(mptr++);
+    gtmat[15] = *(mptr++);
+
+    glLoadIdentity();
+    glLoadMatrixf(gtmat);
+
+    return TCL_OK;
+}
+
+
 HIDDEN int
 wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 {
     register struct bn_vlist	*tvp;
-    int				first;
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
+    register int		first;
 
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawVList()\n");
@@ -951,8 +934,8 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 
     /* Set color to background color for drawing polygons. */
     glColor3f(((struct wgl_vars *)dmp->dm_vars.priv_vars)->r,
-	       ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
-	       ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b);
+	      ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
+	      ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b);
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
@@ -961,36 +944,57 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 	register int	nused = tvp->nused;
 	register int	*cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
+	GLdouble glpt[3];
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_LINE_DRAW:
 		    break;
 		case BN_VLIST_POLY_START:
 		    /* Start poly marker & normal */
 		    if (first == 0)
 			glEnd();
+		    first = 0;
 
 		    glBegin(GL_POLYGON);
 		    /* Set surface normal (vl_pnt points outward) */
-		    glNormal3dv(*pt);
-		    break;
-		case BN_VLIST_LINE_DRAW:
+		    VMOVE(glpt, *pt);
+		    glNormal3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
-		    glVertex3dv(*pt);
+		case BN_VLIST_TRI_MOVE:
+		case BN_VLIST_TRI_DRAW:
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_END:
 		    /* Draw, End Polygon */
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    glEnd();
 		    first = 1;
 		    break;
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
-		    glNormal3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glNormal3dv(glpt);
+		    break;
+		case BN_VLIST_TRI_START:
+		    if (first)
+			glBegin(GL_TRIANGLES);
+
+		    first = 0;
+
+		    /* Set surface normal (vl_pnt points outward) */
+		    VMOVE(glpt, *pt);
+		    glNormal3dv(glpt);
+
+		    break;
+		case BN_VLIST_TRI_END:
 		    break;
 	    }
 	}
@@ -998,7 +1002,6 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 
     if (first == 0)
 	glEnd();
-
 
     /* Last, draw wireframe/edges. */
 
@@ -1012,6 +1015,7 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 	register int	nused = tvp->nused;
 	register int	*cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
+	GLdouble glpt[3];
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
@@ -1023,28 +1027,38 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		    first = 0;
 
 		    glBegin(GL_LINE_STRIP);
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_START:
+		case BN_VLIST_TRI_START:
 		    /* Start poly marker & normal */
 		    if (first == 0)
 			glEnd();
+		    first = 0;
 
 		    glBegin(GL_LINE_STRIP);
 		    break;
 		case BN_VLIST_LINE_DRAW:
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
-		    glVertex3dv(*pt);
+		case BN_VLIST_TRI_MOVE:
+		case BN_VLIST_TRI_DRAW:
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_END:
+		case BN_VLIST_TRI_END:
 		    /* Draw, End Polygon */
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    glEnd();
 		    first = 1;
 		    break;
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
+		    VMOVE(glpt, glpt);
 		    glNormal3dv(*pt);
 		    break;
 	    }
@@ -1069,17 +1083,18 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
     return TCL_OK;
 }
 
-/*
- *  			W G L _ D R A W V L I S T
- *
- */
+
 HIDDEN int
 wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
     struct bn_vlist	*tvp;
-    int				first;
-    int mflag = 1;
+    register int	first;
+    register int mflag = 1;
     float black[4] = {0.0, 0.0, 0.0, 0.0};
+    GLfloat originalPointSize, originalLineWidth;
+
+    glGetFloatv(GL_POINT_SIZE, &originalPointSize);
+    glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
 
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawVList()\n");
@@ -1087,10 +1102,11 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	int	i;
-	int	nused = tvp->nused;
-	int	*cmd = tvp->cmd;
-	point_t *pt = tvp->pt;
+	register int	i;
+	register int	nused = tvp->nused;
+	register int	*cmd = tvp->cmd;
+	register point_t *pt = tvp->pt;
+	GLdouble glpt[3];
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
@@ -1113,48 +1129,97 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    }
 
 		    glBegin(GL_LINE_STRIP);
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_START:
+		case BN_VLIST_TRI_START:
 		    /* Start poly marker & normal */
-		    if (first == 0)
-			glEnd();
 
 		    if (dmp->dm_light && mflag) {
 			mflag = 0;
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+			glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
 
-			if (1 < dmp->dm_light) {
-			    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
-			    glMaterialfv(GL_BACK, GL_DIFFUSE, backColor);
-			} else
-			    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+			switch (dmp->dm_light) {
+			case 1:
+			    break;
+			case 2:
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, diffuseColor);
+			    break;
+			case 3:
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorDark);
+			    break;
+			default:
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorLight);
+			    break;
+			}
 
 			if (dmp->dm_transparency)
 			    glEnable(GL_BLEND);
 		    }
 
-		    glBegin(GL_POLYGON);
+		    if (*cmd == BN_VLIST_POLY_START) {
+			if (first == 0)
+			    glEnd();
+
+			glBegin(GL_POLYGON);
+		    } else if (first)
+			glBegin(GL_TRIANGLES);
+
 		    /* Set surface normal (vl_pnt points outward) */
-		    glNormal3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glNormal3dv(glpt);
+
+		    first = 0;
+
 		    break;
 		case BN_VLIST_LINE_DRAW:
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
-		    glVertex3dv(*pt);
+		case BN_VLIST_TRI_MOVE:
+		case BN_VLIST_TRI_DRAW:
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_END:
 		    /* Draw, End Polygon */
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    glEnd();
 		    first = 1;
 		    break;
-		case BN_VLIST_POLY_VERTNORM:
-		    /* Set per-vertex normal.  Given before vert. */
-		    glNormal3dv(*pt);
+		case BN_VLIST_TRI_END:
 		    break;
+		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_VERTNORM:
+		    /* Set per-vertex normal.  Given before vert. */
+		    VMOVE(glpt, *pt);
+		    glNormal3dv(glpt);
+		    break;
+		case BN_VLIST_POINT_DRAW:
+		    if (first == 0)
+			glEnd();
+		    first = 0;
+		    glBegin(GL_POINTS);
+		    glVertex3dv(glpt);
+		    break;
+		case BN_VLIST_LINE_WIDTH: {
+		    GLfloat lineWidth = (GLfloat)(*pt)[0];
+		    if (lineWidth > 0.0) {
+			glLineWidth(lineWidth);
+		    }
+		    break;
+		}
+		case BN_VLIST_POINT_SIZE: {
+		    GLfloat pointSize = (GLfloat)(*pt)[0];
+		    if (pointSize > 0.0) {
+			glPointSize(pointSize);
+		    }
+		    break;
+		}
 	    }
 	}
     }
@@ -1162,21 +1227,24 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     if (first == 0)
 	glEnd();
 
+    if (dmp->dm_light && dmp->dm_transparency)
+	glDisable(GL_BLEND);
+
+    glPointSize(originalPointSize);
+    glLineWidth(originalLineWidth);
+
     return TCL_OK;
 }
 
-/*
- *  			W G L _ D R A W
- *
- */
+
 HIDDEN int
-wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
 	if (data) {
 	    vp = (struct bn_vlist *)data;
-	    wgl_drawVList(dmp,vp);
+	    wgl_drawVList(dmp, vp);
 	}
     } else {
 	if (!data) {
@@ -1188,11 +1256,10 @@ wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)),
     return TCL_OK;
 }
 
+
 /*
- *			W G L _ N O R M A L
- *
  * Restore the display processor to a normal mode of operation
- * (ie, not scaled, rotated, displaced, etc).
+ * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
 wgl_normal(struct dm *dmp)
@@ -1204,7 +1271,7 @@ wgl_normal(struct dm *dmp)
     if (!((struct wgl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
-	glLoadMatrixd( ((struct wgl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat );
+	glLoadMatrixd(((struct wgl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
@@ -1218,14 +1285,13 @@ wgl_normal(struct dm *dmp)
     return TCL_OK;
 }
 
+
 /*
- *			W G L _ D R A W S T R I N G 2 D
- *
  * Output a string.
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-wgl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+wgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawString2D()\n");
@@ -1236,16 +1302,12 @@ wgl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int 
 	glRasterPos2f(x, y);
 
     glListBase(((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-    glCallLists((GLuint)strlen( str ), GL_UNSIGNED_BYTE,  str );
+    glCallLists((GLuint)strlen(str), GL_UNSIGNED_BYTE,  str);
 
     return TCL_OK;
 }
 
 
-/*
- *			W G L _ D R A W L I N E 2 D
- *
- */
 HIDDEN int
 wgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
@@ -1278,104 +1340,20 @@ wgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     return TCL_OK;
 }
 
-/*
- *			W G L _ D R A W L I N E 3 D
- *
- */
+
 HIDDEN int
 wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
-
-    if (dmp->dm_debugLevel)
-	bu_log("wgl_drawLine3D()\n");
-
-    if (dmp->dm_debugLevel) {
-	GLfloat pmat[16];
-
-	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-	bu_log("projection matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-	bu_log("modelview matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-    }
-
-    if (dmp->dm_light) {
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-
-	if (dmp->dm_transparency)
-	    glDisable(GL_BLEND);
-    }
-
-    glBegin(GL_LINES);
-    glVertex3dv(pt1);
-    glVertex3dv(pt2);
-    glEnd();
-
-    return TCL_OK;
+    return drawLine3D(dmp, pt1, pt2, "wgl_drawLine3D()\n", wireColor);
 }
 
-/*
- *			W G L _ D R A W L I N E S 3 D
- *
- */
+
 HIDDEN int
-wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
 {
-    register int i;
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
-
-    if (dmp->dm_debugLevel)
-	bu_log("wgl_drawLine3D()\n");
-
-    if (dmp->dm_debugLevel) {
-	GLfloat pmat[16];
-
-	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-	bu_log("projection matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-	bu_log("modelview matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-    }
-
-    /* Must be an even number of points */
-    if (npoints%2)
-	return TCL_OK;
-
-    if (dmp->dm_light) {
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-
-	if (dmp->dm_transparency)
-	    glDisable(GL_BLEND);
-    }
-
-    glBegin(GL_LINES);
-    for (i = 0; i < npoints; ++i)
-	glVertex3dv(points[i]);
-    glEnd();
-
-    return TCL_OK;
+    return drawLines3D(dmp, npoints, points, sflag, "wgl_drawLine3D()\n", wireColor);
 }
+
 
 HIDDEN int
 wgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
@@ -1387,6 +1365,46 @@ wgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
     glBegin(GL_POINTS);
     glVertex2f(x, y);
+    glEnd();
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+wgl_drawPoint3D(struct dm *dmp, point_t point)
+{
+    if (!dmp || !point)
+	return TCL_ERROR;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("wgl_drawPoint3D():\n");
+	bu_log("\tdmp: %llu\tpt - %lf %lf %lf\n", (unsigned long long)dmp, V3ARGS(point));
+    }
+
+    glBegin(GL_POINTS);
+    glVertex3dv(point);
+    glEnd();
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+wgl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
+{
+    register int i;
+
+    if (!dmp || npoints < 0 || !points)
+	return TCL_ERROR;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("wgl_drawPoint3D():\n");
+    }
+
+    glBegin(GL_POINTS);
+    for (i = 0; i < npoints; ++i)
+	glVertex3dv(points[i]);
     glEnd();
 
     return TCL_OK;
@@ -1412,6 +1430,7 @@ wgl_setLineAttr(struct dm *dmp, int width, int style)
     return TCL_OK;
 }
 
+
 /* ARGSUSED */
 HIDDEN int
 wgl_debug(struct dm *dmp, int lvl)
@@ -1421,9 +1440,12 @@ wgl_debug(struct dm *dmp, int lvl)
     return TCL_OK;
 }
 
+
 HIDDEN int
-wgl_setWinBounds(struct dm *dmp, int w[6])
+wgl_setWinBounds(struct dm *dmp, fastf_t w[6])
 {
+    GLint mm;
+
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setWinBounds()\n");
 
@@ -1434,13 +1456,17 @@ wgl_setWinBounds(struct dm *dmp, int w[6])
     dmp->dm_clipmax[1] = w[3];
     dmp->dm_clipmax[2] = w[5];
 
-    if (dmp->dm_clipmax[2] <= GED_MAX)
-	dmp->dm_bound = 1.0;
-    else
-	dmp->dm_bound = GED_MAX / dmp->dm_clipmax[2];
+    glGetIntegerv(GL_MATRIX_MODE, &mm);
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glLoadIdentity();
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    glPushMatrix();
+    glMatrixMode(mm);
 
     return TCL_OK;
 }
+
 
 #define WGL_DO_STEREO 1
 /* currently, get a double buffered rgba visual that works with Tk and
@@ -1500,8 +1526,6 @@ wgl_choose_visual(struct dm *dmp,
 
 
 /*
- *			W G L _ C O N F I G U R E W I N
- *
  *  Either initially, or on resize/reshape of the window,
  *  sense the actual size of the window, and perform any
  *  other initializations of the window configuration.
@@ -1512,7 +1536,6 @@ HIDDEN int
 wgl_configureWin_guts(struct dm *dmp,
 		      int force)
 {
-    GLint mm;
     HFONT newfontstruct, oldfont;
     LOGFONT logfont;
     HWND hwnd;
@@ -1520,12 +1543,6 @@ wgl_configureWin_guts(struct dm *dmp,
 
     if (dmp->dm_debugLevel)
 	bu_log("wgl_configureWin_guts()\n");
-
-    if (!wglMakeCurrent( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_configureWin_guts: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     hwnd = WindowFromDC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
     GetWindowRect(hwnd, &xwa);
@@ -1536,34 +1553,7 @@ wgl_configureWin_guts(struct dm *dmp,
 	dmp->dm_width == (xwa.right-xwa.left))
 	return TCL_OK;
 
-    dmp->dm_height = xwa.bottom-xwa.top;
-    dmp->dm_width = xwa.right-xwa.left;
-    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
-
-    if (dmp->dm_debugLevel) {
-	bu_log("wgl_configureWin_guts()\n");
-	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
-    }
-
-    glViewport(0, 0, dmp->dm_width, dmp->dm_height);
-
-    if (dmp->dm_zbuffer)
-	wgl_setZBuffer(dmp, dmp->dm_zbuffer);
-
-    wgl_setLight(dmp, dmp->dm_light);
-
-    glClearColor(((struct wgl_vars *)dmp->dm_vars.priv_vars)->r,
-		 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
-		 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b,
-		 0.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    /*CJXX this might cause problems in perspective mode? */
-    glGetIntegerv(GL_MATRIX_MODE, &mm);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
-    glMatrixMode(mm);
+    wgl_reshape(dmp, xwa.right-xwa.left, xwa.bottom-xwa.top);
 
     /* First time through, load a font or quit */
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
@@ -1583,7 +1573,7 @@ wgl_configureWin_guts(struct dm *dmp,
 	logfont.lfFaceName[0] = (TCHAR)0;
 
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = CreateFontIndirect(&logfont);
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL ) {
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
 	    /* ????? add backup later */
 	    /* Try hardcoded backup font */
 	    /*     if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
@@ -1604,7 +1594,7 @@ wgl_configureWin_guts(struct dm *dmp,
     /* Always try to choose a the font that best fits the window size.
      */
 
-    if (!GetObject( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct, sizeof(LOGFONT), &logfont)) {
+    if (!GetObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct, sizeof(LOGFONT), &logfont)) {
 	logfont.lfHeight = 18;
 	logfont.lfWidth = 0;
 	logfont.lfEscapement = 0;
@@ -1621,7 +1611,7 @@ wgl_configureWin_guts(struct dm *dmp,
 	logfont.lfFaceName[0] = (TCHAR) 0;
 
 	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
-	     CreateFontIndirect(&logfont)) == NULL ) {
+	     CreateFontIndirect(&logfont)) == NULL) {
 	    bu_log("wgl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
 	    return TCL_ERROR;
 	}
@@ -1634,194 +1624,12 @@ wgl_configureWin_guts(struct dm *dmp,
     }
 
 
-    if (dmp->dm_width < 582) {
-	if (logfont.lfHeight != 14) {
-	    logfont.lfHeight = 14;
+    if (DM_VALID_FONT_SIZE(dmp->dm_fontsize)) {
+	if (logfont.lfHeight != dmp->dm_fontsize) {
+	    logfont.lfHeight = dmp->dm_fontsize;
 	    logfont.lfWidth = 0;
 	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 679) {
-	if (logfont.lfHeight != 15) {
-	    logfont.lfHeight = 15;
-	    logfont.lfWidth = 0;
-
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 776) {
-	if (logfont.lfHeight != 16) {
-	    logfont.lfHeight = 16;
-	    logfont.lfWidth = 0;
-
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 873) {
-	if (logfont.lfHeight != 17) {
-	    logfont.lfHeight = 17;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 970) {
-	if (logfont.lfWidth != 18) {
-	    logfont.lfHeight = 18;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1067) {
-	if (logfont.lfWidth != 19) {
-	    logfont.lfHeight = 19;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1164) {
-	if (logfont.lfWidth != 20) {
-	    logfont.lfHeight = 20;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1261) {
-	if (logfont.lfWidth != 21) {
-	    logfont.lfHeight = 21;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1358) {
-	if (logfont.lfWidth != 22) {
-	    logfont.lfHeight = 22;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1455) {
-	if (logfont.lfWidth != 23) {
-	    logfont.lfHeight = 23;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1552) {
-	if (logfont.lfWidth != 24) {
-	    logfont.lfHeight = 24;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1649) {
-	if (logfont.lfWidth != 25) {
-	    logfont.lfHeight = 25;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1746) {
-	if (logfont.lfWidth != 26) {
-	    logfont.lfHeight = 26;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1843) {
-	if (logfont.lfWidth != 27) {
-	    logfont.lfHeight = 27;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1940) {
-	if (logfont.lfWidth != 28) {
-	    logfont.lfHeight = 28;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
 		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
@@ -1831,16 +1639,214 @@ wgl_configureWin_guts(struct dm *dmp,
 	    }
 	}
     } else {
-	if (logfont.lfWidth != 29) {
-	    logfont.lfHeight = 29;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+	if (dmp->dm_width < 582) {
+	    if (logfont.lfHeight != 14) {
+		logfont.lfHeight = 14;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 
-		if (oldfont != NULL)
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 679) {
+	    if (logfont.lfHeight != 15) {
+		logfont.lfHeight = 15;
+		logfont.lfWidth = 0;
+
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 776) {
+	    if (logfont.lfHeight != 16) {
+		logfont.lfHeight = 16;
+		logfont.lfWidth = 0;
+
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 873) {
+	    if (logfont.lfHeight != 17) {
+		logfont.lfHeight = 17;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 970) {
+	    if (logfont.lfWidth != 18) {
+		logfont.lfHeight = 18;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1067) {
+	    if (logfont.lfWidth != 19) {
+		logfont.lfHeight = 19;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1164) {
+	    if (logfont.lfWidth != 20) {
+		logfont.lfHeight = 20;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1261) {
+	    if (logfont.lfWidth != 21) {
+		logfont.lfHeight = 21;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1358) {
+	    if (logfont.lfWidth != 22) {
+		logfont.lfHeight = 22;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1455) {
+	    if (logfont.lfWidth != 23) {
+		logfont.lfHeight = 23;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1552) {
+	    if (logfont.lfWidth != 24) {
+		logfont.lfHeight = 24;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1649) {
+	    if (logfont.lfWidth != 25) {
+		logfont.lfHeight = 25;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1746) {
+	    if (logfont.lfWidth != 26) {
+		logfont.lfHeight = 26;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1843) {
+	    if (logfont.lfWidth != 27) {
+		logfont.lfHeight = 27;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1940) {
+	    if (logfont.lfWidth != 28) {
+		logfont.lfHeight = 28;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else {
+	    if (logfont.lfWidth != 29) {
+		logfont.lfHeight = 29;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
 	    }
 	}
     }
@@ -1849,11 +1855,64 @@ wgl_configureWin_guts(struct dm *dmp,
 }
 
 
-HIDDEN int
-wgl_configureWin(struct dm *dmp)
+HIDDEN void
+wgl_reshape(struct dm *dmp, int width, int height)
 {
-    return wgl_configureWin_guts(dmp, 0);
+    GLint mm;
+
+    dmp->dm_height = height;
+    dmp->dm_width = width;
+    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("wgl_reshape()\n");
+	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
+    }
+
+    glViewport(0, 0, dmp->dm_width, dmp->dm_height);
+
+    glClearColor(((struct wgl_vars *)dmp->dm_vars.priv_vars)->r,
+		 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
+		 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b,
+		 0.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glGetIntegerv(GL_MATRIX_MODE, &mm);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    glMatrixMode(mm);
 }
+
+
+HIDDEN int
+wgl_makeCurrent(struct dm *dmp)
+{
+    if (dmp->dm_debugLevel)
+	bu_log("wgl_makeCurrent()\n");
+
+    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("wgl_makeCurrent: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+wgl_configureWin(struct dm *dmp, int force)
+{
+    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("wgl_configureWin: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
+    return wgl_configureWin_guts(dmp, force);
+}
+
 
 HIDDEN int
 wgl_setLight(struct dm *dmp, int lighting_on)
@@ -1864,24 +1923,20 @@ wgl_setLight(struct dm *dmp, int lighting_on)
     dmp->dm_light = lighting_on;
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on = dmp->dm_light;
 
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setLight: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
     if (!dmp->dm_light) {
 	/* Turn it off */
 	glDisable(GL_LIGHTING);
     } else {
 	/* Turn it on */
 
+	if (1 < dmp->dm_light)
+	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+	else
+	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb_three);
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 
-#if 0
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-#endif
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_diffuse);
 
@@ -1892,6 +1947,7 @@ wgl_setLight(struct dm *dmp, int lighting_on)
     return TCL_OK;
 }
 
+
 HIDDEN int
 wgl_setTransparency(struct dm *dmp,
 		    int transparency_on)
@@ -1901,12 +1957,6 @@ wgl_setTransparency(struct dm *dmp,
 
     dmp->dm_transparency = transparency_on;
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on = dmp->dm_transparency;
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setTransparency: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     if (transparency_on) {
 	/* Turn it on */
@@ -1920,6 +1970,7 @@ wgl_setTransparency(struct dm *dmp,
     return TCL_OK;
 }
 
+
 HIDDEN int
 wgl_setDepthMask(struct dm *dmp,
 		 int enable) {
@@ -1927,12 +1978,6 @@ wgl_setDepthMask(struct dm *dmp,
 	bu_log("wgl_setDepthMask()\n");
 
     dmp->dm_depthMask = enable;
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setDepthMask: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     if (enable)
 	glDepthMask(GL_TRUE);
@@ -1942,6 +1987,7 @@ wgl_setDepthMask(struct dm *dmp,
     return TCL_OK;
 }
 
+
 HIDDEN int
 wgl_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
@@ -1950,12 +1996,6 @@ wgl_setZBuffer(struct dm *dmp, int zbuffer_on)
 
     dmp->dm_zbuffer = zbuffer_on;
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_setZBuffer: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
 
     if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf == 0) {
 	dmp->dm_zbuffer = 0;
@@ -1972,21 +2012,17 @@ wgl_setZBuffer(struct dm *dmp, int zbuffer_on)
     return TCL_OK;
 }
 
+
 int
 wgl_beginDList(struct dm *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_beginDList()\n");
 
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_beginDList: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
-    glNewList(dmp->dm_displaylist + list, GL_COMPILE);
+    glNewList((GLuint)list, GL_COMPILE);
     return TCL_OK;
 }
+
 
 int
 wgl_endDList(struct dm *dmp)
@@ -1998,15 +2034,13 @@ wgl_endDList(struct dm *dmp)
     return TCL_OK;
 }
 
-int
-wgl_drawDList(struct dm *dmp, unsigned int list)
-{
-    if (dmp->dm_debugLevel)
-	bu_log("wgl_drawDList()\n");
 
-    glCallList(dmp->dm_displaylist + list);
-    return TCL_OK;
+void
+wgl_drawDList(unsigned int list)
+{
+    glCallList((GLuint)list);
 }
+
 
 int
 wgl_freeDLists(struct dm *dmp, unsigned int list, int range)
@@ -2014,15 +2048,20 @@ wgl_freeDLists(struct dm *dmp, unsigned int list, int range)
     if (dmp->dm_debugLevel)
 	bu_log("wgl_freeDLists()\n");
 
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_freeDLists: Couldn't make context current\n");
-	return TCL_ERROR;
-    }
-
-    glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
+    glDeleteLists((GLuint)list, (GLsizei)range);
     return TCL_OK;
 }
+
+
+int
+wgl_genDLists(struct dm *dmp, size_t range)
+{
+    if (dmp->dm_debugLevel)
+	bu_log("wgl_freeDLists()\n");
+
+    return glGenLists((GLsizei)range);
+}
+
 
 struct dm dm_wgl = {
     wgl_close,
@@ -2030,11 +2069,14 @@ struct dm dm_wgl = {
     wgl_drawEnd,
     wgl_normal,
     wgl_loadMatrix,
+    wgl_loadPMatrix,
     wgl_drawString2D,
     wgl_drawLine2D,
     wgl_drawLine3D,
     wgl_drawLines3D,
     wgl_drawPoint2D,
+    wgl_drawPoint3D,
+    wgl_drawPoints3D,
     wgl_drawVList,
     wgl_drawVListHiddenLine,
     wgl_draw,
@@ -2048,15 +2090,19 @@ struct dm dm_wgl = {
     wgl_setDepthMask,
     wgl_setZBuffer,
     wgl_debug,
+    NULL,
     wgl_beginDList,
     wgl_endDList,
     wgl_drawDList,
     wgl_freeDLists,
-    Nu_int0, /* display to image function */
+    wgl_genDLists,
+    null_getDisplayImage,	/* display to image function */
+    wgl_reshape,
+    wgl_makeCurrent,
     0,
     1,				/* has displaylist */
-    0,                            /* no stereo by default */
-    1.0,				/* zoom-in limit */
+    0,                          /* no stereo by default */
+    1.0,			/* zoom-in limit */
     1,				/* bound flag */
     "wgl",
     "Windows with OpenGL graphics",
@@ -2064,21 +2110,22 @@ struct dm dm_wgl = {
     1,
     0,
     0,
-    0,/* bytes per pixel */
-    0,/* bits per channel */
+    0, /* bytes per pixel */
+    0, /* bits per channel */
     1,
     0,
     1.0, /* aspect ratio */
     0,
     {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -2086,8 +2133,10 @@ struct dm dm_wgl = {
     1,				/* zbuffer */
     0,				/* no zclipping */
     0,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
+
 
 #endif /* DM_WGL */
 

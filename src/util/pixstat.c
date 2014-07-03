@@ -1,7 +1,7 @@
 /*                       P I X S T A T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixstat.c
+/** @file util/pixstat.c
  *
  * Compute statistics of pixels in a PIX file.
  * Gives min, max, mode, median, mean, s.d., var, and skew
@@ -49,7 +49,7 @@ unsigned char buf[IBUFSIZE];	/* Input buffer */
 int verbose = 0;
 
 /* our statistics pool */
-struct {
+struct rgb {
     long bin[256];
     int max, min, mode, median;
     double mean, var, skew;
@@ -84,7 +84,7 @@ main(int argc, char **argv)
     FILE *fp;
 
     /* check for verbose flag */
-    if (argc > 1 && strcmp(argv[1], "-v") == 0) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
 	argv++;
 	argc--;
@@ -102,7 +102,7 @@ main(int argc, char **argv)
 
     /* check usage */
     if (argc > 1 || isatty(fileno(fp))) {
-	bu_exit(1, "usage: pixstat [-v] [file.pix]\n");
+	bu_exit(1, "Usage: pixstat [-v] [file.pix]\n");
     }
 
     /*

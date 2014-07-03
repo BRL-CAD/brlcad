@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file tcl.c
+/** @file bwish/tcl.c
  *
  * The supporting Tcl routines for BWISH and BTCLSH.
  *
@@ -40,7 +40,29 @@
 #endif
 #include "libtermio.h"
 
+#ifdef HAVE_SYS_SELECT_H
+#  include <sys/select.h> /* for select */
+#endif
+
 #include "bu.h"
+#include "dm.h"
+
+/* We need to be careful about tty resetting - xcodebuild
+ * and resetTty were locking up.  Add a tty check
+ * along the lines of
+ * http://stackoverflow.com/questions/1594251/how-to-check-if-stdin-is-still-opened-without-blocking
+ */
+#ifdef HAVE_SYS_SELECT_H
+int tty_usable(int fd) {
+   fd_set fdset;
+   struct timeval timeout;
+   FD_ZERO(&fdset);
+   FD_SET(fd, &fdset);
+   timeout.tv_sec = 0;
+   timeout.tv_usec = 1;
+   return select(fd+1, &fdset, NULL, NULL, &timeout) == 1 ? 1 : 0;
+}
+#endif
 
 /* defined in input.c */
 extern void initInput(void);
@@ -79,7 +101,6 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
     char *filename = NULL;
     char *args = NULL;
     char buf[TCL_INTEGER_SPACE] = {0};
-    int status;
     Tcl_DString argString;
 
     bu_setprogname(argv[0]);
@@ -122,10 +143,18 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
     }
 
     if (filename != NULL) {
+	int status;
+
 	/* ??? need to arrange for a bu_log handler and or handlers
 	 * for stdout/stderr?
 	 */
+#ifdef HAVE_SYS_SELECT_H
+	if (tty_usable(fileno(stdin))) {
+	  save_Tty(fileno(stdin));
+	}
+#else
 	save_Tty(fileno(stdin));
+#endif
 	Tcl_ResetResult(interp);
 	status = Tcl_EvalFile(interp, filename);
 	if (status != TCL_OK) {
@@ -177,7 +206,13 @@ Cad_MainLoop(void)
 void
 Cad_Exit(int status)
 {
+#ifdef HAVE_SYS_SELECT_H
+    if (tty_usable(fileno(stdin))) {
+      reset_Tty(fileno(stdin));
+    }
+#else
     reset_Tty(fileno(stdin));
+#endif
     Tcl_Exit(status);
 }
 

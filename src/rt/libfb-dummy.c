@@ -1,7 +1,7 @@
 /*                   L I B F B - D U M M Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libfb-dummy.c
+/** @file rt/libfb-dummy.c
  */
 
 #include "common.h"

@@ -1,7 +1,7 @@
 /*                       S H A R P E N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sharpen.c
+/** @file halftone/sharpen.c
  *
  * return a sharpened tone mapped buffer.
  *
@@ -50,14 +50,15 @@
  *		use last cur and next lines
  *	endif
  *
- * Author:
- *	Christopher T. Johnson
  */
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "bu.h"
+#include "vmath.h"
 
 
 extern int Debug;
@@ -70,16 +71,22 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
     static int linelen;
     int result;
     int newvalue;
-     int i, value;
+    int i, value;
+    int idx;
 
 /*
  *	if no sharpening going on then just read from the file and exit.
  */
-    if (Beta == 0.0) {
+    if (ZERO(Beta)) {
 	result = fread(buf, size, num, file);
 	if (!result) return result;
 	for (i=0; i<size*num; i++) {
-	    buf[i] = Map[buf[i]];
+	    idx = buf[i];
+	    if (idx < 0)
+		idx = 0;
+	    if (idx > size*num)
+		idx = size*num;
+	    buf[i] = Map[idx];
 	}
 	return result;
     }
@@ -103,14 +110,28 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	cur  = (unsigned char *)malloc(linelen);
 	next = (unsigned char *)malloc(linelen);
 	result = fread(cur, 1, linelen, file);
-	for (i=0; i<linelen;i++) cur[i] = Map[cur[i]];
+	for (i=0; i<linelen;i++) {
+	    idx = cur[i];
+	    if (idx < 0)
+		idx = 0;
+	    if (idx > size*num)
+		idx = size*num;
+	    cur[i] = Map[idx];
+	}
 	if (!result) return result;	/* nothing there! */
 	result = fread(next, 1, linelen, file);
 	if (!result) {
 	    free(next);
 	    next = 0;
 	} else {
-	    for (i=0; i<linelen;i++) cur[i] = Map[cur[i]];
+	    for (i=0; i<linelen;i++) {
+		idx = cur[i];
+		if (idx < 0)
+		    idx = 0;
+		if (idx > size*num)
+		    idx = size*num;
+		cur[i] = Map[idx];
+	    }
 	}
     } else {
 	unsigned char *tmp;
@@ -135,7 +156,14 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	    free(next);
 	    next = 0;
 	} else {
-	    for (i=0; i<linelen;i++) cur[i] = Map[cur[i]];
+	    for (i=0; i<linelen;i++) {
+		idx = cur[i];
+		if (idx < 0)
+		    idx = 0;
+		if (idx > size*num)
+		    idx = size*num;
+		cur[i] = Map[idx];
+	    }
 	}
     }
 /*
@@ -160,7 +188,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
  * J, J, Laplacian_filter[n] are all in the range 0.0 to 1.0
  *     sharp
  *
- * The folowing is done in mostly interger mode, there is only one
+ * The following is done in mostly integer mode, there is only one
  * floating point multiply done.
  */
 

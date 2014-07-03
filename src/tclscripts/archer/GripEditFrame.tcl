@@ -1,7 +1,7 @@
 #               G R I P E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2010 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -37,6 +37,8 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
     }
 
@@ -48,6 +50,16 @@
 	variable mNy ""
 	variable mNz ""
 	variable mL ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmVx ""
+	variable cmVy ""
+	variable cmVz ""
+	variable cmNx ""
+	variable cmNy ""
+	variable cmNz ""
+	variable cmL ""
 
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
@@ -98,19 +110,19 @@
 	::ttk::entry $parent.gripVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripVyE {
 	::ttk::entry $parent.gripVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripVzE {
 	::ttk::entry $parent.gripVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripVUnitsL {
 	::ttk::label $parent.gripVUnitsL \
@@ -127,21 +139,21 @@
 	    -textvariable [::itcl::scope mNx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripNyE {
 	::ttk::entry $parent.gripNyE \
 	    -textvariable [::itcl::scope mNy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripNzE {
 	::ttk::entry $parent.gripNzE \
 	    -textvariable [::itcl::scope mNz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripNUnitsL {
 	::ttk::label $parent.gripNUnitsL \
@@ -156,12 +168,25 @@
 	::ttk::entry $parent.gripLE \
 	    -textvariable [::itcl::scope mL] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripLUnitsL {
 	::ttk::label $parent.gripLUnitsL \
 	    -anchor e
     } {}
+
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
 
     set row 0
     grid $itk_component(gripType) \
@@ -201,6 +226,22 @@
 	-row $row \
 	-column 4 \
 	-sticky nsew
+
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1
@@ -244,6 +285,8 @@
     set mL [bu_get_value_by_keyword L $gdata]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmVx == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
 }
 
 ::itcl::body GripEditFrame::updateGeometry {} {
@@ -257,9 +300,30 @@
 	N [list $mNx $mNy $mNz] \
 	L $mL
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
+}
+
+::itcl::body GripEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmVx $mVx
+    set cmVy $mVy
+    set cmVz $mVz
+    set cmNx $mNx
+    set cmNy $mNy
+    set cmNz $mNz
+    set cmL  $mL
+}
+
+::itcl::body GripEditFrame::revertGeometry {} {
+    set mVx $cmVx
+    set mVy $cmVy
+    set mVz $cmVz
+    set mNx $cmNx
+    set mNy $cmNy
+    set mNz $cmNz
+    set mL  $cmL
+
+    updateGeometry
 }
 
 ::itcl::body GripEditFrame::createGeometry {obj} {

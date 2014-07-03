@@ -1,7 +1,7 @@
 /*                        I O U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,14 +36,16 @@
 HIDDEN void
 VMessage(const char *format, va_list ap)
 {
-    struct bu_vls str;
-
-    bu_vls_init(&str);
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    char *tmp_basename = (char *)bu_calloc(strlen(bu_getprogname()), sizeof(char), "VMessage tmp_basename");
 
     bu_vls_printf(&str, format, ap);
-    bu_log("%s: %V\n", bu_basename(bu_getprogname()), &str);
+    bu_basename(tmp_basename, bu_getprogname());
+
+    bu_log("%s: %s\n", tmp_basename, bu_vls_addr(&str));
 
     bu_vls_free(&str);
+    bu_free(tmp_basename, "bu_basename");
 }
 
 
@@ -66,12 +68,12 @@ Fatal(FBIO *fbp, const char *format, ...)
     va_start(ap, format);
     VMessage(format, ap);
     va_end(ap);
-    
+
     if (fbp != FBIO_NULL && fb_close(fbp) == -1) {
 	Message("Error closing frame buffer");
 	fbp = FBIO_NULL;
     }
-    
+
     bu_exit(EXIT_FAILURE, NULL);
     /* NOT REACHED */
 }

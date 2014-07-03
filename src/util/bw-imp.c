@@ -1,7 +1,7 @@
 /*                        B W - I M P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bw-imp.c
+/** @file util/bw-imp.c
  *
  * Borrows heavily from Steve Hawley's & Geoffrey Cooper's "traceconv"
  * program.
@@ -35,7 +35,6 @@
 
 #include "bu.h"
 
-typedef int bool;
 #define true 1
 #define false 0
 
@@ -68,7 +67,8 @@ static int dither[8][8] =		/* dither pattern */
 static int (*pattern)[8] = dither;	/* -> dither or halftone */
 
 static FILE *infp;			/* input file handle */
-static char *file_name = "-";	/* name of input file, for banner */
+static const char hyphen[] = "hyphen";
+static const char *file_name = hyphen;	/* name of input file, for banner */
 
 static size_t height;			/* input height */
 static size_t width;			/* input width */
@@ -87,26 +87,22 @@ static size_t im_width;		/* image size (in Imagen dots) */
 static size_t im_wpatches;		/* # 32-bit patches width */
 static size_t im_hpatches;		/* # 32-bit patches height */
 
-bool get_args(int argc, char **argv);
-bool im_close(void);
-bool im_header(void);
+int get_args(int argc, char **argv);
+int im_close(void);
+int im_header(void);
 void im_write(int y);
 
 char usage[] = "\
-Usage: bw-imp [-h -D] [-s squaresize] [-w width] [-n height]\n\
+Usage: bw-imp [-D] [-s squaresize] [-w width] [-n height]\n\
 	[-X page_xoff] [-Y page_yoff] [-t thresh] [file.bw] > impress\n";
 
-bool
+int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hDs:n:w:t:X:Y:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "Ds:n:w:t:X:Y:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
-		break;
 	    case 'D':
 		/* halftone instead of dither */
 		pattern = halftone;
@@ -139,20 +135,20 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return false;
-	file_name = "-";
+	file_name = hyphen;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "bw-imp: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "bw-imp: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return false;
 	}
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bw-imp: excess argument(s) ignored\n");
+	fprintf(stderr, "bw-imp: excess argument(s) ignored\n");
 
     return true;
 }
@@ -183,8 +179,8 @@ main(int argc, char **argv)
     im_wpatches = (im_width+31) / 32;
     im_hpatches = ((height * im_mag)+31) / 32;
     if (im_wpatches*32 > 2560) {
-	fprintf(stderr, "bw-imp:  output %ld too wide, limit is 2560\n",
-		im_wpatches*32);
+	fprintf(stderr, "bw-imp:  output %lu too wide, limit is 2560\n",
+		(unsigned long)im_wpatches*32);
 	return 1;
     }
 
@@ -204,12 +200,12 @@ main(int argc, char **argv)
 }
 
 
-bool
+int
 im_header(void)
 {
 
-    (void)printf("@document(language impress, prerasterization on, Name \"%s\")",
-		 file_name
+    printf("@document(language impress, prerasterization on, Name \"%s\")",
+	   file_name
 	);
 
     /* The margins need to be multiples of 16 (printer word align) */
@@ -308,7 +304,7 @@ im_write(int y)
 }
 
 
-bool
+int
 im_close(void)
 {
 /* (void)putchar(219);		ENDPAGE */

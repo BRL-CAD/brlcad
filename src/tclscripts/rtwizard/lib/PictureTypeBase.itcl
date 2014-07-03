@@ -1,7 +1,7 @@
 #            P I C T U R E T Y P E B A S E . I T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -78,17 +78,12 @@ namespace eval RtWizard {
 	    # These methods generate pictures. They query the
 	    # individual pages for the information they need.
 	    #
+	    method rtimage {w h}
 	    method preview {}
 	    method fullSize {}
 	}
 
 	protected {
-	    method rtCmd {objPage width height fb} {}
-	    method rtedgeCmd \
-		{objPage fb width height \
-		     {overlay 0} \
-		     {occMode 0} \
-		     {occObjsPage {}}}  {}
 	    method hexToRGB {hexRGB} {}
 
 	    variable title
@@ -100,9 +95,6 @@ namespace eval RtWizard {
 	}
 
 	private {
-	    method runRtCmd {cmd {viewInfo {}}}
-	    method testRead {pipe}
-
 	    variable waiting ""
 	}
     }
@@ -203,6 +195,15 @@ namespace eval RtWizard {
     }
 
     #
+    # rtimage - responsible for generating the actual image
+    #
+    itcl::body PictureTypeBase::rtimage {w h} {
+	append msg "PictureTypeBase::rtimage called" \
+	    " - should be overloaded by derived class."
+	error $msg
+    }
+
+    #
     # preview - generates a 1/4 size preview image
     #
     itcl::body PictureTypeBase::preview { } {
@@ -223,155 +224,6 @@ namespace eval RtWizard {
     #-------------------#
     # Protected Methods #
     #-------------------#
-    #
-    # rtCmd - formats an rt command to generate a picture.
-    #         Width, height, and framebuffer are passed in
-    #         because they differ for fullSize and preview
-    #
-    itcl::body PictureTypeBase::rtCmd \
-	{objPage fb width height } {
-	    #
-	    # Get the page that contains the view information.
-	    #
-	    set viewPage [$::exp getViewPage]
-
-	    #
-	    # Get the view info
-	    #
-	    set viewInfo [$viewPage getEyeModel]
-
-	    #
-	    # Get the background color
-	    #
-	    set bgHex [$objPage getBackgroundColor]
-	    set bg [hexToRGB $bgHex]
-
-	    #
-	    # Get the object list, the file is global
-	    #
-	    set objects [$objPage getObjects]
-
-	    #
-	    # compute the aspect ratio. Note how floating point
-	    # math is forced.
-	    #
-	    set ar [ expr $width.0 / $height.0 ]
-
-	    #
-	    # Get the perspective angle
-	    #
-	    set perspective [$viewPage getPerspective]
-
-	    #
-	    # Assemble the rt command - note that it is a
-	    # full-blown script.
-	    #
-	    set cmd [list rt -M -R -F $fb -w $width \
-			 -n $height -V $ar -A 0.9 -p $perspective \
-			 -C [lindex $bg 0]/[lindex $bg 1]/[lindex $bg 2] \
-			 $::RtWizard::dbFile]
-
-	    foreach obj $objects {
-		lappend cmd $obj
-	    }
-
-	    runRtCmd $cmd $viewInfo
-	}
-
-    #
-    # rtedgeCmd - formats an rtedge command to generate a picture.
-    #
-    itcl::body PictureTypeBase::rtedgeCmd \
-	{objPage fb width height \
-	     {overlay 0} \
-	     {occMode 0} \
-	     {occObjsPage {}}} {
-		 #
-		 # Get the page that contains the view information.
-		 #
-		 set viewPage [$::exp getViewPage]
-
-		 #
-		 # Get the view info
-		 #
-		 set viewInfo [$viewPage getEyeModel]
-
-		 #
-		 # Get the edge color color
-		 #
-		 set lineHex [$objPage getLineColor]
-		 set l [hexToRGB $lineHex]
-
-		 #
-		 # Get the non-line color
-		 #
-		 set nonLineHex [$objPage getNonLineColor]
-		 set nl [hexToRGB $nonLineHex]
-
-		 #
-		 # Get the object list, the file is global
-		 #
-		 set objects [$objPage getObjects]
-
-		 #
-		 # compute the aspect ratio. Note how floating point
-		 # math is forced.
-		 #
-		 set ar [ expr $width.0 / $height.0 ]
-
-		 #
-		 # Get the perspective angle
-		 #
-		 set perspective [$viewPage getPerspective]
-
-		 #
-		 # Determine if region colors were requested, if so, use them.
-		 # Otherwise, use the specified foreground colors.
-		 #
-		 if {[$objPage getRegionColorFlag] == "true"} {
-		     set fgMode [list set rc=1]
-		 } else {
-		     set fgMode [list set fg=[lindex $l 0],[lindex $l 1],[lindex $l 2]]
-		 }
-
-		 #
-		 # Assemble the rtedge command - note that it is a
-		 # full-blown script.
-		 #
-		 if {$occMode != 0} {
-		     #
-		     # If required, get occlusion objects
-		     #
-		     set occObjects [$occObjsPage getObjects]
-
-		     set cmd [list rtedge -M -R -F $fb -w $width \
-				  -n $height -V $ar -A 0.9 -p $perspective \
-				  -c "$fgMode" \
-				  -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
-				  -c "set om=$occMode" \
-				  -c "set oo=\"$occObjects\"" \
-				  $::RtWizard::dbFile]
-		 } else {
-
-		     set cmd [list rtedge -M -R -F $fb -w $width \
-				  -n $height -V $ar -A 0.9 \
-				  -c "$fgMode" \
-				  -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
-				  -c "set ov=$overlay" \
-				  $::RtWizard::dbFile]
-		 }
-
-		 #
-		 # Add the objects
-		 #
-		 foreach obj $objects {
-		     lappend cmd $obj
-		 }
-
-		 runRtCmd $cmd $viewInfo
-
-	     }
-
 
     #
     # hexToRGB - converts an RGB color in hex #rrggbb format to
@@ -385,62 +237,7 @@ namespace eval RtWizard {
 
 	return [list $redDec $greenDec $blueDec]
     }
-
-    #
-    # runRtCmd - common method for event-handling the rt commands
-    #
-    itcl::body PictureTypeBase::runRtCmd {cmd {viewInfo {}}} {
-	set ::waiting ""
-	#
-	# open the pipe
-	#
-	set pipe [open "| $cmd" r+]
-
-	#
-	# puts the matrix info to the pipe
-	#
-	if {[string length $viewInfo] != 0} {
-	    puts $pipe "$viewInfo"
-	    puts $pipe "start 0; clean; end;\n\n"
-	    flush $pipe
-	}
-
-	#
-	# Set up a callback for readable events, and wait!
-	#
-	# 	fileevent $pipe readable [ list testRead $pipe ]
-	#	fileevent $pipe writable [ list testWrite $pipe ]
-	#	vwait ::waiting
-	fconfigure $pipe -blocking true
-
-	catch "close $pipe" catchResult
-	puts $catchResult
-    }
-
-    #
-    # TestRead - pipe fileevent callback
-    #
-    itcl::body PictureTypeBase::testRead {pipe} {
-
-	set waiting "Done"
-    }
 }; # end namespace
-
-#
-# TestRead - pipe fileevent callback
-#
-proc testRead {pipe} {
-    set ::waiting "Done"
-}
-
-#
-# TestWrite - pipe fileevent callback
-#
-proc testWrite {pipe} {
-    if [eof $pipe] {
-	set ::waiting "Done"
-    }
-}
 
 
 # Local Variables:

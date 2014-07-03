@@ -1,7 +1,7 @@
 /*                  W I N D O W _ F R A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file window_frame.c
+/** @file shapes/window_frame.c
  *
- * Program to make a window frame using libwdb.  The objects will be
- * in millimeters.  The window frames are composed of four arb8s and *
- * eight cylinders.  The front of the window frame is centered at *
- * (0, 0, 0) and extends in the negative x-direction the depth of the
- * * window frame.
+ * Program to make a window frame using libwdb.  The objects will be in
+ * millimeters.  The window frames are composed of four arb8s and eight
+ * cylinders.  The front of the window frame is centered at (0, 0, 0) and
+ * extends in the negative x-direction the depth of the window frame.
+ *
  */
 
 #include "common.h"
@@ -38,17 +38,21 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+static const char explain[]   = "This program constructs a window frame with all\n\
+edges and corners rounded.\n";
 
 int
 main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26];		/* Mged file create. */
-    double hgt, wid, dpt;	/* Height, width, & depth of outside window */
+    char filemged[26] = {0};	/* Mged file create. */
+    double hgt = 0.0;       	/* Height, width, & depth of outside window */
+    double wid = 0.0;
+    double dpt = 0.0;
     /* frame. */
-    double rds;			/* Radius of the corner of window frame. */
-    double isw;			/* Width of frame itself. */
+    double rds = 0.0;		/* Radius of the corner of window frame. */
+    double isw = 0.0;			/* Width of frame itself. */
     point_t pts[8];		/* Eight points of arb8. */
     point_t bs;			/* Base of rcc. */
     vect_t ht;			/* Height of rcc. */
@@ -59,12 +63,13 @@ main(int argc, char **argv)
     char solnam[9];		/* Solid name. */
     char regnam[8];		/* Region name. */
     char grpnam[5];		/* Group name. */
-    int numwin;			/* Number of windows to be created (<=26). */
+    int numwin = 0;		/* Number of window frames to be created (<=26). */
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
 
     int i, j, k;		/* Loop counters. */
+    int ret;
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';
@@ -94,42 +99,81 @@ main(int argc, char **argv)
     if (argc == 1) {
 	/* START # 3 */
 
-	/* Print info about the window. */
-	(void)printf("\nThe window frames are composed of 4 arb8s and 8\n");
-	(void)printf("cylinders.  The front of the window frame is centered\n");
-	(void)printf("at (0, 0, 0) and extends in the negative x-direction\n");
-	(void)printf("the depth of the window frame.\n\n");
+	/* Print info about the window frame. */
+	printf("\n%s\n",explain);
+	printf("\nThe window frames are composed of 4 arb8s and 8\n");
+	printf("cylinders.  The front of the window frame is centered\n");
+	printf("at (0, 0, 0) and extends in the negative x-direction\n");
+	printf("the depth of the window frame.\n\n");
 
 	/* Find name of mged file to be created. */
-	(void)printf("Enter the mged file to be created (25 char max).\n\t");
+	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%26s", filemged);
+	ret = scanf("%26s", filemged);
+	if (ret == 0)
+	    perror("scanf");
+	if (BU_STR_EQUAL(filemged, ""))
+	    bu_strlcpy(filemged, "window_frame.g", sizeof(filemged));
 
 	/* Find the number of window frames to create. */
-	(void)printf("Enter the number of window frames to create (26 max).\n\t");
+	printf("Enter the number of window frames to create (26 max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%d", &numwin);
+	ret = scanf("%d", &numwin);
+	if (ret == 0) {
+	    perror("scanf");
+	    numwin = 1;
+	}
+	else if (numwin < 1)
+	    numwin = 1;
+	else if (numwin > 26)
+	    numwin = 26;
 
 	/* Find the dimensions of the window frames. */
-	(void)printf("Enter the height, width, and depth of the window frame.\n\t");
+	printf("Enter the height, width, and depth of the window frame.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%lf %lf %lf", &hgt, &wid, &dpt);
-	(void)printf("Enter the radius of the corner.\n\t");
-	(void)fflush(stdout);
-	(void)scanf("%lf", &rds);
-	(void)printf("Enter the actual width of the window frame.\n\t");
-	(void)fflush(stdout);
-	(void)scanf("%lf", &isw);
+	ret = scanf("%lf %lf %lf", &hgt, &wid, &dpt);
+	if (ret == 0) {
+	    perror("scanf");
+	    hgt = 1618.0; /* golden ratio */
+	    wid = 1000.0;
+	    dpt = 100.0;
+	}
+	if (hgt < SMALL_FASTF)
+	    hgt = SMALL_FASTF;
+	if (wid < SMALL_FASTF)
+	    wid = SMALL_FASTF;
+	if (dpt < SMALL_FASTF)
+	    dpt = SMALL_FASTF;
 
+	printf("Enter the radius of the corner.\n\t");
+	(void)fflush(stdout);
+	ret = scanf("%lf", &rds);
+	if (ret == 0) {
+	    perror("scanf");
+	    rds = 5.0;
+	}
+	if (rds < SMALL_FASTF)
+	    rds = SMALL_FASTF;
+
+	printf("Enter the actual width of the window frame.\n\t");
+	(void)fflush(stdout);
+	ret = scanf("%lf", &isw);
+	if (ret == 0) {
+	    perror("scanf");
+	    isw = 100.0;
+	}
+	if (isw < SMALL_FASTF)
+	    isw = SMALL_FASTF;
     }							/* END # 3 */
 
     /* If there are arguments get answers from arguments. */
     else {
 	/* START # 4 */
 	/* List options. */
+	/* -h or -? help page */
 	/* -fname - name = mged file name. */
 	/* -n# - # = number of window frames. */
-	/* -h# - # = height of window frame in mm. */
+	/* -H# - # = height of window frame in mm. */
 	/* -w# - # = width of window frame in mm. */
 	/* -d# - # = depth of window frame in mm. */
 	/* -r# - # = radius of window frame corner in mm. */
@@ -139,6 +183,13 @@ main(int argc, char **argv)
 	    /* START # 5 */
 	    /* Put argument in temporary character string. */
 	    temp = argv[i];
+
+	    if (temp[1] == 'h' || temp[1] == '?') {
+	    	fprintf(stderr,"%s",explain);
+		fprintf(stderr,"Usage: window_frame -fname [-f mged_file_name] [-n #_of_window_frames] [-H window_frame_height]\n");
+		fprintf(stderr,"       [-w window_frame_width] [-d window_frame_depth] [-r radius_of_corners][-i width_of_frame_itself");
+		bu_exit(2,     "       (units of mm)\n");
+	    }
 
 	    /* -f - mged file. */
 	    if (temp[1] == 'f') {
@@ -168,31 +219,31 @@ main(int argc, char **argv)
 		}					/* END # 9 */
 		temp1[k] = '\0';
 		if (temp[1] == 'n') {
-		    (void)sscanf(temp1, "%d", &numwin);
+		    sscanf(temp1, "%d", &numwin);
 		    if (numwin > 26) numwin = 26;
-		} else if (temp[1] == 'h') {
-		    (void)sscanf(temp1, "%lf", &hgt);
+		} else if (temp[1] == 'H') {
+		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {
-		    (void)sscanf(temp1, "%lf", &wid);
+		    sscanf(temp1, "%lf", &wid);
 		} else if (temp[1] == 'd') {
-		    (void)sscanf(temp1, "%lf", &dpt);
+		    sscanf(temp1, "%lf", &dpt);
 		} else if (temp[1] == 'r') {
-		    (void)sscanf(temp1, "%lf", &rds);
+		    sscanf(temp1, "%lf", &rds);
 		} else if (temp[1] == 'i') {
-		    (void)sscanf(temp1, "%lf", &isw);
+		    sscanf(temp1, "%lf", &isw);
 		}
 	    }						/* END # 8 */
 	}						/* END # 5 */
     }							/* END # 4 */
 
     /* Print out all info. */
-    (void)printf("\nmged file:  %s\n", filemged);
-    (void)printf("height of window frame:  %f mm\n", hgt);
-    (void)printf("width of window frame:  %f mm\n", wid);
-    (void)printf("depth of window frame:  %f mm\n", dpt);
-    (void)printf("radius of corner:  %f mm\n", rds);
-    (void)printf("width of frame:  %f mm\n", isw);
-    (void)printf("number of window frames:  %d\n\n", numwin);
+    printf("\nmged file:  %s\n", filemged);
+    printf("height of window frame:  %f mm\n", hgt);
+    printf("width of window frame:  %f mm\n", wid);
+    printf("depth of window frame:  %f mm\n", dpt);
+    printf("radius of corner:  %f mm\n", rds);
+    printf("width of frame:  %f mm\n", isw);
+    printf("number of window frames:  %d\n\n", numwin);
     (void)fflush(stdout);
 
     /* Open mged file. */
@@ -204,62 +255,62 @@ main(int argc, char **argv)
     for (i=0; i<numwin; i++) {
 	/* START # 2 */
 	/* Create first arb8. */
-	pts[0][0] = (fastf_t)0.;
-	pts[0][1] = (fastf_t) (wid / 2. - rds);
-	pts[0][2] = (fastf_t) (hgt / 2.);
-	pts[1][0] = (fastf_t)0.;
-	pts[1][1] = (fastf_t) (wid / 2. - rds);
-	pts[1][2] = (fastf_t) ((-hgt) / 2.);
-	pts[2][0] = (fastf_t)0.;
-	pts[2][1] = (fastf_t) (rds - wid / 2.);
-	pts[2][2] = (fastf_t) ((-hgt) / 2.);
-	pts[3][0] = (fastf_t)0.;
-	pts[3][1] = (fastf_t) (rds - wid / 2.);
-	pts[3][2] = (fastf_t) (hgt / 2.);
+	pts[0][0] = (fastf_t)0.0;
+	pts[0][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[0][2] = (fastf_t) (hgt / 2.0);
+	pts[1][0] = (fastf_t)0.0;
+	pts[1][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[1][2] = (fastf_t) ((-hgt) / 2.0);
+	pts[2][0] = (fastf_t)0.0;
+	pts[2][1] = (fastf_t) (rds - wid / 2.0);
+	pts[2][2] = (fastf_t) ((-hgt) / 2.0);
+	pts[3][0] = (fastf_t)0.0;
+	pts[3][1] = (fastf_t) (rds - wid / 2.0);
+	pts[3][2] = (fastf_t) (hgt / 2.0);
 	pts[4][0] = (fastf_t)(-dpt);
-	pts[4][1] = (fastf_t) (wid / 2. - rds);
-	pts[4][2] = (fastf_t) (hgt / 2.);
+	pts[4][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[4][2] = (fastf_t) (hgt / 2.0);
 	pts[5][0] = (fastf_t)(-dpt);
-	pts[5][1] = (fastf_t) (wid / 2. - rds);
-	pts[5][2] = (fastf_t) ((-hgt) / 2.);
+	pts[5][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[5][2] = (fastf_t) ((-hgt) / 2.0);
 	pts[6][0] = (fastf_t)(-dpt);
-	pts[6][1] = (fastf_t) (rds - wid / 2.);
-	pts[6][2] = (fastf_t) ((-hgt) / 2.);
+	pts[6][1] = (fastf_t) (rds - wid / 2.0);
+	pts[6][2] = (fastf_t) ((-hgt) / 2.0);
 	pts[7][0] = (fastf_t)(-dpt);
-	pts[7][1] = (fastf_t) (rds - wid / 2.);
-	pts[7][2] = (fastf_t) (hgt / 2.);
+	pts[7][1] = (fastf_t) (rds - wid / 2.0);
+	pts[7][2] = (fastf_t) (hgt / 2.0);
 	solnam[5] = 97 + i;
 	solnam[6] = '0';
 	solnam[7] = '1';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/* Create second arb8. */
-	pts[0][1] = (fastf_t) (wid / 2.);
-	pts[0][2] = (fastf_t) (hgt / 2. - rds);
-	pts[1][1] = (fastf_t) (wid / 2.);
-	pts[1][2] = (fastf_t) (rds - hgt / 2.);
-	pts[2][1] = (fastf_t) ((-wid) / 2.);
-	pts[2][2] = (fastf_t) (rds - hgt / 2.);
-	pts[3][1] = (fastf_t) ((-wid) / 2.);
-	pts[3][2] = (fastf_t) (hgt / 2. - rds);
-	pts[4][1] = (fastf_t) (wid / 2.);
-	pts[4][2] = (fastf_t) (hgt / 2. - rds);
-	pts[5][1] = (fastf_t) (wid / 2.);
-	pts[5][2] = (fastf_t) (rds - hgt / 2.);
-	pts[6][1] = (fastf_t) ((-wid) / 2.);
-	pts[6][2] = (fastf_t) (rds - hgt / 2.);
-	pts[7][1] = (fastf_t) ((-wid) / 2.);
-	pts[7][2] = (fastf_t) (hgt / 2. - rds);
+	pts[0][1] = (fastf_t) (wid / 2.0);
+	pts[0][2] = (fastf_t) (hgt / 2.0 - rds);
+	pts[1][1] = (fastf_t) (wid / 2.0);
+	pts[1][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[2][1] = (fastf_t) ((-wid) / 2.0);
+	pts[2][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[3][1] = (fastf_t) ((-wid) / 2.0);
+	pts[3][2] = (fastf_t) (hgt / 2.0 - rds);
+	pts[4][1] = (fastf_t) (wid / 2.0);
+	pts[4][2] = (fastf_t) (hgt / 2.0 - rds);
+	pts[5][1] = (fastf_t) (wid / 2.0);
+	pts[5][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[6][1] = (fastf_t) ((-wid) / 2.0);
+	pts[6][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[7][1] = (fastf_t) ((-wid) / 2.0);
+	pts[7][2] = (fastf_t) (hgt / 2.0 - rds);
 	solnam[7] = '2';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/* Create cylinder 1. */
-	bs[0] = (fastf_t)0.;
-	bs[1] = (fastf_t) (wid / 2. - rds);
-	bs[2] = (fastf_t) (hgt / 2. - rds);
+	bs[0] = (fastf_t)0.0;
+	bs[1] = (fastf_t) (wid / 2.0 - rds);
+	bs[2] = (fastf_t) (hgt / 2.0 - rds);
 	ht[0] = (fastf_t)(-dpt);
-	ht[1] = (fastf_t)0.;
-	ht[2] = (fastf_t)0.;
+	ht[1] = (fastf_t)0.0;
+	ht[2] = (fastf_t)0.0;
 	rad = (fastf_t)rds;
 	solnam[7] = '3';
 	mk_rcc(fpw, solnam, bs, ht, rad);
@@ -281,60 +332,60 @@ main(int argc, char **argv)
 
 	/* Create all inside solids. */
 	/* Create arb8 3. */
-	pts[0][0] = (fastf_t)0.;
-	pts[0][1] = (fastf_t) (wid / 2. - rds);
-	pts[0][2] = (fastf_t) (hgt / 2. - isw);
-	pts[1][0] = (fastf_t)0.;
-	pts[1][1] = (fastf_t) (wid / 2. - rds);
-	pts[1][2] = (fastf_t) ((-hgt) / 2. + isw);
-	pts[2][0] = (fastf_t)0.;
-	pts[2][1] = (fastf_t) (rds - wid / 2.);
-	pts[2][2] = (fastf_t) ((-hgt) / 2. + isw);
-	pts[3][0] = (fastf_t)0.;
-	pts[3][1] = (fastf_t) (rds - wid / 2.);
-	pts[3][2] = (fastf_t) (hgt / 2. - isw);
+	pts[0][0] = (fastf_t)0.0;
+	pts[0][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[0][2] = (fastf_t) (hgt / 2.0 - isw);
+	pts[1][0] = (fastf_t)0.0;
+	pts[1][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[1][2] = (fastf_t) ((-hgt) / 2.0 + isw);
+	pts[2][0] = (fastf_t)0.0;
+	pts[2][1] = (fastf_t) (rds - wid / 2.0);
+	pts[2][2] = (fastf_t) ((-hgt) / 2.0 + isw);
+	pts[3][0] = (fastf_t)0.0;
+	pts[3][1] = (fastf_t) (rds - wid / 2.0);
+	pts[3][2] = (fastf_t) (hgt / 2.0 - isw);
 	pts[4][0] = (fastf_t)(-dpt);
-	pts[4][1] = (fastf_t) (wid / 2. - rds);
-	pts[4][2] = (fastf_t) (hgt / 2. - isw);
+	pts[4][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[4][2] = (fastf_t) (hgt / 2.0 - isw);
 	pts[5][0] = (fastf_t)(-dpt);
-	pts[5][1] = (fastf_t) (wid / 2. - rds);
-	pts[5][2] = (fastf_t) ((-hgt) / 2. + isw);
+	pts[5][1] = (fastf_t) (wid / 2.0 - rds);
+	pts[5][2] = (fastf_t) ((-hgt) / 2.0 + isw);
 	pts[6][0] = (fastf_t)(-dpt);
-	pts[6][1] = (fastf_t) (rds - wid / 2.);
-	pts[6][2] = (fastf_t) ((-hgt) / 2. + isw);
+	pts[6][1] = (fastf_t) (rds - wid / 2.0);
+	pts[6][2] = (fastf_t) ((-hgt) / 2.0 + isw);
 	pts[7][0] = (fastf_t)(-dpt);
-	pts[7][1] = (fastf_t) (rds - wid / 2.);
-	pts[7][2] = (fastf_t) (hgt / 2. - isw);
+	pts[7][1] = (fastf_t) (rds - wid / 2.0);
+	pts[7][2] = (fastf_t) (hgt / 2.0 - isw);
 	solnam[7] = '7';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/* Create arb8 4. */
-	pts[0][1] = (fastf_t) (wid / 2. - isw);
-	pts[0][2] = (fastf_t) (hgt / 2. - rds);
-	pts[1][1] = (fastf_t) (wid / 2. - isw);
-	pts[1][2] = (fastf_t) (rds - hgt / 2.);
-	pts[2][1] = (fastf_t) ((-wid) / 2. + isw);
-	pts[2][2] = (fastf_t) (rds - hgt / 2.);
-	pts[3][1] = (fastf_t) ((-wid) / 2. + isw);
-	pts[3][2] = (fastf_t) (hgt / 2. - rds);
-	pts[4][1] = (fastf_t) (wid / 2. - isw);
-	pts[4][2] = (fastf_t) (hgt / 2. - rds);
-	pts[5][1] = (fastf_t) (wid / 2. - isw);
-	pts[5][2] = (fastf_t) (rds - hgt / 2.);
-	pts[6][1] = (fastf_t) ((-wid) / 2. + isw);
-	pts[6][2] = (fastf_t) (rds - hgt / 2.);
-	pts[7][1] = (fastf_t) ((-wid) / 2. + isw);
-	pts[7][2] = (fastf_t) (hgt / 2. - rds);
+	pts[0][1] = (fastf_t) (wid / 2.0 - isw);
+	pts[0][2] = (fastf_t) (hgt / 2.0 - rds);
+	pts[1][1] = (fastf_t) (wid / 2.0 - isw);
+	pts[1][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[2][1] = (fastf_t) ((-wid) / 2.0 + isw);
+	pts[2][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[3][1] = (fastf_t) ((-wid) / 2.0 + isw);
+	pts[3][2] = (fastf_t) (hgt / 2.0 - rds);
+	pts[4][1] = (fastf_t) (wid / 2.0 - isw);
+	pts[4][2] = (fastf_t) (hgt / 2.0 - rds);
+	pts[5][1] = (fastf_t) (wid / 2.0 - isw);
+	pts[5][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[6][1] = (fastf_t) ((-wid) / 2.0 + isw);
+	pts[6][2] = (fastf_t) (rds - hgt / 2.0);
+	pts[7][1] = (fastf_t) ((-wid) / 2.0 + isw);
+	pts[7][2] = (fastf_t) (hgt / 2.0 - rds);
 	solnam[7] = '8';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/* Create cylinder 5. */
-	bs[0] = (fastf_t)0.;
-	bs[1] = (fastf_t) (wid / 2. - rds);
-	bs[2] = (fastf_t) (hgt / 2. - rds);
+	bs[0] = (fastf_t)0.0;
+	bs[1] = (fastf_t) (wid / 2.0 - rds);
+	bs[2] = (fastf_t) (hgt / 2.0 - rds);
 	ht[0] = (fastf_t)(-dpt);
-	ht[1] = (fastf_t)0.;
-	ht[2] = (fastf_t)0.;
+	ht[1] = (fastf_t)0.0;
+	ht[2] = (fastf_t)0.0;
 	rad = (fastf_t) (rds - isw);
 	solnam[7] = '9';
 	mk_rcc(fpw, solnam, bs, ht, rad);
@@ -451,6 +502,7 @@ main(int argc, char **argv)
 
     /* Close file. */
     wdb_close(fpw);
+
     return 0;
 }							/* END # 1 */
 

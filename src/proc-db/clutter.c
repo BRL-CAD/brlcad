@@ -1,7 +1,7 @@
 /*                       C L U T T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file clutter.c
+/** @file proc-db/clutter.c
  *
  * Program to generate procedural clutter out of primitive
  * geometric objects.
@@ -38,8 +38,6 @@
 
 #define STRSIZ 64
 
-mat_t identity;
-double degtorad = 0.0174532925199433;
 double sin60;
 
 struct mtab {
@@ -96,10 +94,13 @@ main(int argc, char **argv)
 
 #define rand_num(p)	(BN_UNIF_DOUBLE(p)+0.5)
 
+    if (argc > 1) {
+	bu_exit(1, "Usage: %s\n", argv[0]);
+    }
 
     BU_LIST_INIT(&head.l);
 
-    sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
+    sin60 = sin(60.0 * DEG2RAD);
 
     outfp = wdb_fopen("clutter.g");
     mk_id(outfp, "Procedural Clutter");
@@ -110,7 +111,6 @@ main(int argc, char **argv)
     rgb[0] = 240;	/* gold/brown */
     rgb[1] = 180;
     rgb[2] = 64;
-    MAT_IDN(identity);
 
     mk_region1(outfp, "plane.r", "plane", NULL, NULL, rgb);
 
@@ -143,7 +143,7 @@ main(int argc, char **argv)
 		    height = prim_stack(name, x, y, size);
 		    break;
 	    }
-	    if (height > maxheight)  maxheight = height;
+	    if (height > maxheight) maxheight = height;
 	}
     }
 
@@ -174,10 +174,11 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 double
 crystal_stack(char *cname, double xc, double yc, double size)
 
-    /* center coordinates, z=0+ */
+/* center coordinates, z=0+ */
 
 {
     int i;
@@ -204,17 +205,16 @@ crystal_stack(char *cname, double xc, double yc, double size)
     VUNITIZE(min);
 
     for (i=0; i<3; i++) {
+	double rand1 = rand_num(rbuf);
+	double rand2 = rand_num(rbuf);
+
 	snprintf(name, STRSIZ, "%sL%c", cname, 'a'+i);
 	(void)mk_addmember(name, &head.l, NULL, WMOP_UNION);
 	VSET(center, xc, yc, size/2*i);
 	nsolids = 3 + (rand() & 7);
 
-	high = crystal_layer(name, center, size/2,
-			     maj, min,
-			     rand_num(rbuf) * 90.0,
-			     rand_num(rbuf) * 8.0 + 2.0,
-			     nsolids);
-	if (high > height)  height = high;
+	high = crystal_layer(name, center, size/2, maj, min, rand1 * 90.0, rand2 * 8.0 + 2.0, nsolids);
+	if (high > height) height = high;
     }
 
     /* Build the crystal union */
@@ -239,16 +239,17 @@ crystal_stack(char *cname, double xc, double yc, double size)
     return height;
 }
 
+
 double
 crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_t *min, double var, double ratio, int nsolids)
 
-    /* center coordinates, (min Z) */
-    /* cell radius */
-    /* main axis of growth */
-    /* minor axis of growth */
-    /* max degrees of variation off axis (0..90) */
-    /* len/width ratio */
-    /* number of solids for this layer */
+/* center coordinates, (min Z) */
+/* cell radius */
+/* main axis of growth */
+/* minor axis of growth */
+/* max degrees of variation off axis (0..90) */
+/* len/width ratio */
+/* number of solids for this layer */
 {
     int todo;
     double height = center[Z];
@@ -275,7 +276,7 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
 	if (rand() & 1) {
 	    maj_axis = maj;
 	    min_axis = min;
-	}  else  {
+	} else {
 	    maj_axis = min;
 	    min_axis = maj;
 	}
@@ -325,10 +326,11 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
     return height;
 }
 
+
 void
 do_plate(char *name, double xc, double yc, double size)
 
-    /* center coordinates, z=0+ */
+/* center coordinates, z=0+ */
 
 {
     double esz;
@@ -344,17 +346,18 @@ do_plate(char *name, double xc, double yc, double size)
     VSET(maxpt, xc+esz, yc+esz, -1);
     mk_rpp(outfp, sname, minpt, maxpt);
 
-    /* Needs to be in a region, with color!  */
+    /* Needs to be in a region, with color! */
     get_rgb(rgb);
     i = PICK_MAT;
     mk_region1(outfp, name, sname,
 	       mtab[i].mt_name, mtab[i].mt_param, rgb);
 }
 
+
 double
 ball_stack(char *bname, double xc, double yc, double size)
 
-    /* center coordinates, z=0+ */
+/* center coordinates, z=0+ */
 
 {
     point_t center;
@@ -384,10 +387,11 @@ ball_stack(char *bname, double xc, double yc, double size)
     return n*size;
 }
 
+
 double
 prim_stack(char *pname, double xc, double yc, double size)
 
-    /* center coordinates, z=0+ */
+/* center coordinates, z=0+ */
 
 {
     point_t pt[8];
@@ -464,6 +468,7 @@ prim_stack(char *pname, double xc, double yc, double size)
     return vpos;
 }
 
+
 void
 do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int n)
 {
@@ -493,6 +498,7 @@ do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int
     /* Build the group that holds all the regions */
     mk_lfcomb(outfp, ringname, &head, 0);
 }
+
 
 /*
  * Local Variables:

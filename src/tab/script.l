@@ -1,7 +1,7 @@
 /*                        S C R I P T . L
  * BRL-CAD
  *
- * Copyright (c) 2005-2010 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,14 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file script.l
- *
- */
+%option nounput
 %{
 /*                        S C R I P T . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2010 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,11 +38,41 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file script.c
- *
- */
 
-#include "../tab/tokens.h"
+#include "common.h"
+
+#include <stdio.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
+#include "./tokens.h"
+
+
+/* quell flex stupidities */
+#ifndef YY_STACK_USED
+#  define YY_STACK_USED 0
+#endif
+#ifndef YY_ALWAYS_INTERACTIVE
+#  define YY_ALWAYS_INTERACTIVE 0
+#endif
+#ifndef YY_NEVER_INTERACTIVE
+#  define YY_NEVER_INTERACTIVE 0
+#endif
+#ifndef YY_MAIN
+#  define YY_MAIN 0
+#endif
+#ifndef YY_NO_INPUT
+#  define YY_NO_INPUT 1
+#endif
+#ifdef YY_NEED_STRLEN
+#  undef YY_NEED_STRLEN
+#endif
+
+/* flex is being stupid.  need to check fwrite() return value to quell warning. */
+#ifndef ECHO
+#  define ECHO  if (fwrite( yytext, yyleng, 1, yyout ) != 1) perror("fwrite")
+#endif
 
 %}
 

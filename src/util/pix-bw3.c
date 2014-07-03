@@ -1,7 +1,7 @@
 /*                       P I X - B W 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-bw3.c
+/** @file util/pix-bw3.c
  *
  * Converts a RGB pix file into 3 8-bit BW files.
- * (i.e. seperates the colors)
+ * (i.e. separates the colors)
  *
  */
 
@@ -43,9 +43,10 @@ main(int argc, char **argv)
     int i, num;
     FILE *rfp, *bfp, *gfp;
     unsigned char *ibufp;
+    size_t ret;
 
     if (argc != 4 || isatty(fileno(stdin))) {
-	bu_exit(1, "usage: pix-bw3 redout greenout blueout < file.pix\n");
+	bu_exit(1, "Usage: pix-bw3 redout greenout blueout < file.pix\n");
     }
 
     rfp = fopen(argv[1], "w");
@@ -63,9 +64,15 @@ main(int argc, char **argv)
 	    green[i] = *ibufp++;
 	    blue[i] = *ibufp++;
 	}
-	fwrite(red, sizeof(*red), num/3, rfp);
-	fwrite(green, sizeof(*green), num/3, gfp);
-	fwrite(blue, sizeof(*blue), num/3, bfp);
+	ret = fwrite(red, sizeof(*red), num/3, rfp);
+	if (ret < (size_t)num/3)
+	    perror("fwrite");
+	ret = fwrite(green, sizeof(*green), num/3, gfp);
+	if (ret < (size_t)num/3)
+	    perror("fwrite");
+	ret = fwrite(blue, sizeof(*blue), num/3, bfp);
+	if (ret < (size_t)num/3)
+	    perror("fwrite");
     }
 
     return 0;

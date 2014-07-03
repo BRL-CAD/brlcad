@@ -1,7 +1,7 @@
 #                        T E X T . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2010 United States Government as represented by
+# Copyright (c) 1995-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@
 # Utility routines called by MGED's Tcl/Tk command window(s).
 #
 
-bind Text <Control-Key-slash> {}
-bind Text <<Cut>> {}
+catch {bind Text <Control-Key-slash> {}} err
+catch {bind Text <<Cut>> {}} err
 
 proc tk_textPaste {w} {
     global tcl_platform
@@ -303,7 +303,7 @@ proc gets {channelId args} {
     if {$len != 0 && $len != 1} {
 	error "Usage: gets channelId ?varName?"
     }
-   
+
     upvar $args [lindex $args 0]
 
     if {$channelId != "stdin"} {
@@ -326,13 +326,8 @@ proc gets {channelId args} {
     if {[lindex $lines end] == {}} {
 	set lines [lreplace $lines end end]
     }
-    
-    if {[llength $lines] == 1} {
-	set vname [lindex $lines 0]
-    } else {
-	# first line is the gets line, skip it
-	set vname [lindex $lines 1]
-    }
+
+    set vname [lindex $lines end]
 
     # if a var is provided, return the length.  otherwise return the
     # string itself.  this matches gets behavior.
@@ -410,7 +405,7 @@ proc vi_edit_mode { w } {
 
     #
     # In edit mode, <Escape> means abort the current multi-key command.
-    # If no multi-key command is pending or we are expecting a serach
+    # If no multi-key command is pending or we are expecting a search
     # char, beep.
     #
     bind $w <Escape> {
@@ -564,7 +559,7 @@ proc vi_reset_cmd { w } {
 }
 
 # vi_finish_cmd is meant to be called whenever an edit-mode command is
-# complete.  Insert mode is entered if applicable, the cursor is highlit,
+# complete.  Insert mode is entered if applicable, the cursor is highlighted,
 # and vi_process_edit_cmd state is reset.  If the command results in a
 # buffer change, it is stored in dot_list.
 proc vi_finish_cmd { w } {
@@ -875,7 +870,7 @@ proc vi_process_edit_cmd { w c k state } {
     if {$vi_state($w,yank_flag)} {
 	switch -glob -- $c {
 	    [0] {
-		# if we are counting, ignore; begining-of-line ignores counts.
+		# if we are counting, ignore; beginning-of-line ignores counts.
 		if {!$vi_state($w,count_flag)} {
 		    set vi_state($w,cmd_count) 1
 		}
@@ -1034,7 +1029,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    if {   (";" == $c && [string is lower $vi_state($w,search_type)])
 		   || ("," == $c && [string is upper $vi_state($w,search_type)])} {
 
-		# do while pos_count is gte one and seach_char is found
+		# do while pos_count is gte one and search_char is found
 		for { set newindex [$w index {insert}] } {1} {
 		    if {1 == $vi_state($w,pos_count) || $newindex == ""} {
 			break
@@ -1071,7 +1066,7 @@ proc vi_process_edit_cmd { w c k state } {
 		}
 		# Backward searches...
 	    } else {
-		# do while pos_count is gte one and seach_char is found
+		# do while pos_count is gte one and search_char is found
 		for { set newindex [$w index {insert}] } {1} {
 		    if {1 == $vi_state($w,pos_count) || $newindex == ""} {
 			break
@@ -1143,7 +1138,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_hsrch_mode $w
 	}
 	0 {
-	    # Motion to begining of line (or zero in a command or position count.)
+	    # Motion to beginning of line (or zero in a command or position count).
 	    if {$vi_state($w,count_flag)} {
 		set vi_state($w,tmp_count) [expr $vi_state($w,tmp_count) * 10]
 	    } else {
@@ -1215,7 +1210,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_word_search $w "E"
 	}
 	F {
-	    # Find the previous ocurrence of a char.
+	    # Find the previous occurrence of a char.
 	    set vi_state($w,search_flag) "F"
 	}
 	I {
@@ -1343,7 +1338,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_word_search $w "e"
 	}
 	f {
-	    # Find the next ocurrence of a char.
+	    # Find the next occurrence of a char.
 	    set vi_state($w,search_flag) "f"
 	}
 	h {
@@ -1779,8 +1774,7 @@ proc tab_expansion { line } {
 	    }
 	    for { set index 0 } { $index < $pathLength } { incr index } {
 		set element [lindex $path $index]
-		# "db get_type" does not blather on error
-		if [catch {db get_type $element} type] {
+		if { ! [ exists $element ] } {
 		    # the current path element is invalid, just return
 		    return [list $line {}]
 		}
@@ -1888,22 +1882,19 @@ proc tab_expansion { line } {
     } else {
 	# command expansion
 	set cmd [lindex $line 0]
-	if { [string length $cmd] < 1 } {
-	    # just a Tab on an empty line, don't show all commands, we have "?" for that
+
+	# even if line is empty, return all registered commands.
+	set matches [lsearch -all -inline $mged_cmds "${cmd}*"]
+	set numMatches [llength $matches]
+	if { $numMatches == 0  } {
+	    # no matches
 	    set newCommand $line
+	} elseif { $numMatches > 1 } {
+	    # get longest match
+	    set newCommand [get_longest_common_string $matches]
 	} else {
-	    set matches [lsearch -all -inline $mged_cmds "${cmd}*"]
-	    set numMatches [llength $matches]
-	    if { $numMatches == 0  } {
-		# no matches
-		set newCommand $line
-	    } elseif { $numMatches > 1 } {
-		# get longest match
-		set newCommand [get_longest_common_string $matches]
-	    } else {
-		# just one match
-		set newCommand $matches
-	    }
+	    # just one match
+	    set newCommand $matches
 	}
     }
 
@@ -2151,12 +2142,12 @@ proc set_text_key_bindings { id } {
 
     bind $w <Prior> {
 	tk::TextScrollPages %W -1
- 	break
+	break
     }
 
     bind $w <Next> {
 	tk::TextScrollPages %W 1
- 	break
+	break
     }
 }
 

@@ -1,7 +1,7 @@
 /*                       I F _ D I S K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,18 +26,16 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#ifdef HAVE_SYS_FILE_H
-#  include <sys/file.h>
-#endif
 #include "bio.h"
 
+#include "bu/color.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
 #include "fb.h"
 
 
-#define FILE_CMAP_ADDR ((long) ifp->if_width*ifp->if_height	\
+#define FILE_CMAP_ADDR ((off_t) ifp->if_width*ifp->if_height	\
 			*sizeof(RGBpixel))
 
 /* Ensure integer number of pixels per DMA */
@@ -48,7 +46,7 @@
 
 
 HIDDEN int
-dsk_open(FBIO *ifp, char *file, int width, int height)
+dsk_open(FBIO *ifp, const char *file, int width, int height)
 {
     static char zero = 0;
 
@@ -60,7 +58,7 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
     if (height == 0)
 	height = ifp->if_height;
 
-    if (strcmp(file, "-") == 0) {
+    if (BU_STR_EQUAL(file, "-")) {
 	/*
 	 * It is the applications job to write ascending scanlines.
 	 * If it does not, then this can be stacked with /dev/mem,
@@ -69,15 +67,15 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
 	ifp->if_fd = 1;		/* fileno(stdout) */
 	ifp->if_width = width;
 	ifp->if_height = height;
-	ifp->if_seekpos = 0L;
+	ifp->if_seekpos = 0;
 	return 0;
     }
 
-    if ((ifp->if_fd = open(file, O_RDWR, 0)) == -1
-	&& (ifp->if_fd = open(file, O_RDONLY, 0)) == -1) {
-	if ((ifp->if_fd = open(file, O_RDWR|O_CREAT, 0664)) > 0) {
+    if ((ifp->if_fd = open(file, O_RDWR | O_BINARY, 0)) == -1
+	&& (ifp->if_fd = open(file, O_RDONLY | O_BINARY, 0)) == -1) {
+	if ((ifp->if_fd = open(file, O_RDWR | O_CREAT | O_BINARY, 0664)) > 0) {
 	    /* New file, write byte at end */
-	    if (lseek(ifp->if_fd, (off_t)(height*width*sizeof(RGBpixel)-1), 0) == -1) {
+	    if (lseek(ifp->if_fd, (height*width*sizeof(RGBpixel)-1), 0) == -1) {
 		fb_log("disk_device_open : can not seek to end of new file.\n");
 		return -1;
 	    }
@@ -89,17 +87,15 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
 	    return -1;
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(ifp->if_fd, O_BINARY);
-#endif
 
     ifp->if_width = width;
     ifp->if_height = height;
-    if (lseek(ifp->if_fd, (off_t)0L, 0) == -1L) {
+    if (lseek(ifp->if_fd, 0, 0) == -1) {
 	fb_log("disk_device_open : can not seek to beginning.\n");
 	return -1;
     }
-    ifp->if_seekpos = 0L;
+    ifp->if_seekpos = 0;
     return 0;
 }
 
@@ -115,13 +111,15 @@ HIDDEN int
 dsk_free(FBIO *ifp)
 {
     close(ifp->if_fd);
-    return unlink(ifp->if_name);
+    if (bu_file_delete(ifp->if_name)) {
+	return 0;
+    } else {
+	return 1;
+    }
 }
 
 
 /*
- * D I S K _ C O L O R _ C L E A R
- *
  * Clear the disk file to the given color.
  */
 HIDDEN int
@@ -141,7 +139,7 @@ disk_color_clear(FBIO *ifp, register unsigned char *bpp)
 
     /* Set start of framebuffer */
     fd = ifp->if_fd;
-    if (ifp->if_seekpos != 0L && lseek(fd, (off_t)0L, 0) == -1) {
+    if (ifp->if_seekpos != 0 && lseek(fd, 0, 0) == -1) {
 	fb_log("disk_color_clear : seek failed.\n");
 	return -1;
     }
@@ -172,28 +170,28 @@ dsk_clear(FBIO *ifp, unsigned char *bgpp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
-    size_t bytes = count * (long) sizeof(RGBpixel);
+    size_t bytes = count * sizeof(RGBpixel);
     size_t todo;
-    long got;
+    ssize_t got;
     size_t dest;
-    long bytes_read = 0;
+    size_t bytes_read = 0;
     int fd = ifp->if_fd;
 
     /* Reads on stdout make no sense.  Take reads from stdin. */
     if (fd == 1) fd = 0;
 
     dest = ((y * ifp->if_width) + x) * sizeof(RGBpixel);
-    if (ifp->if_seekpos != dest && lseek(fd, (off_t)dest, 0) == -1L) {
+    if (ifp->if_seekpos != dest && lseek(fd, dest, 0) == -1) {
 	fb_log("disk_buffer_read : seek to %ld failed.\n", dest);
 	return -1;
     }
     ifp->if_seekpos = dest;
     while (bytes > 0) {
 	todo = bytes;
-	if ((got = read(fd, (char *) pixelp, todo)) != (long)todo) {
+	if ((got = read(fd, (char *) pixelp, todo)) != (ssize_t)todo) {
 	    if (got <= 0) {
 		if (got < 0) {
 		    perror("READ ERROR");
@@ -207,8 +205,8 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	    }
 	    if (fd != 0) {
 		/* This happens all the time reading from pipes */
-		fb_log("disk_buffer_read(fd=%d): y=%d read of %ld got %d bytes\n",
-		       fd, y, (long)todo, got);
+		fb_log("disk_buffer_read(fd=%d): y=%d read of %lu got %ld bytes\n",
+		       fd, y, todo, got);
 	    }
 	}
 	bytes -= got;
@@ -220,16 +218,16 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
-    register long bytes = count * (long) sizeof(RGBpixel);
-    size_t todo;
-    size_t dest;
+    register ssize_t bytes = count * sizeof(RGBpixel);
+    ssize_t todo;
+    off_t dest;
 
     dest = (y * ifp->if_width + x) * sizeof(RGBpixel);
-    if (dest != ifp->if_seekpos) {
-	if (lseek(ifp->if_fd, (off_t)dest, 0) == -1L) {
+    if (dest != (off_t)ifp->if_seekpos) {
+	if (lseek(ifp->if_fd, dest, 0) == -1) {
 	    fb_log("disk_buffer_write : seek to %ld failed.\n", dest);
 	    return -1;
 	}
@@ -237,9 +235,9 @@ dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
     }
     while (bytes > 0) {
 	ssize_t ret;
-	todo = (size_t)bytes;
-	ret = (ssize_t)write(ifp->if_fd, (char *) pixelp, todo);
-	if (ret != (ssize_t)todo) {
+	todo = bytes;
+	ret = write(ifp->if_fd, (char *) pixelp, todo);
+	if (ret != todo) {
 	    fb_log("disk_buffer_write: write failed\n");
 	    return -1;
 	}
@@ -247,7 +245,7 @@ dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	pixelp += todo / sizeof(RGBpixel);
 	ifp->if_seekpos += todo;
     }
-    return (int)count;
+    return count;
 }
 
 
@@ -260,7 +258,7 @@ dsk_rmap(FBIO *ifp, ColorMap *cmap)
     if (fd == 1) fd = 0;
 
     if (ifp->if_seekpos != FILE_CMAP_ADDR &&
-	lseek(fd, (off_t)FILE_CMAP_ADDR, 0) == -1) {
+	lseek(fd, FILE_CMAP_ADDR, 0) == -1) {
 	fb_log("disk_colormap_read : seek to %ld failed.\n",
 	       FILE_CMAP_ADDR);
 	return -1;
@@ -284,7 +282,7 @@ dsk_wmap(FBIO *ifp, const ColorMap *cmap)
 	return 0;
     if (fb_is_linear_cmap(cmap))
 	return 0;
-    if (lseek(ifp->if_fd, (off_t)FILE_CMAP_ADDR, 0) == -1) {
+    if (lseek(ifp->if_fd, FILE_CMAP_ADDR, 0) == -1) {
 	fb_log("disk_colormap_write : seek to %ld failed.\n",
 	       FILE_CMAP_ADDR);
 	return -1;

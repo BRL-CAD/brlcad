@@ -1,7 +1,7 @@
 #                    D R A W A B L E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2010 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used.
+# Use the Ged widget instead.
+#####################################################################
+
 #
 # Description -
 #	The Drawable class wraps LIBRT's drawable geometry object.
@@ -34,7 +40,6 @@
 	method draw {args}
 	method E {args}
 	method erase {args}
-	method erase_all {args}
 	method ev {args}
 	method get_autoview {}
 	method get_eyemodel {viewObj}
@@ -79,6 +84,8 @@
 ::itcl::body Drawable::constructor {db} {
     global tcl_platform
 
+    puts "DEPRECATION WARNING: The Drawable widget should no longer be used.  Use the Ged widget instead."
+
     set dg [subst $this]_dg
     dg_open $dg $db
 
@@ -116,10 +123,6 @@
 
 ::itcl::body Drawable::erase {args} {
     eval $dg erase $args
-}
-
-::itcl::body Drawable::erase_all {args} {
-    eval $dg erase_all $args
 }
 
 ::itcl::body Drawable::ev {args} {
@@ -243,14 +246,13 @@
     $help add clear		{{} {clear screen}}
     $help add draw		{{"-C#/#/# <objects>"} {draw objects}}
     $help add erase		{{<objects>} {remove objects from the screen}}
-    $help add erase_all		{{<objects>} {remove all occurrences of object(s) from the screen}}
     $help add ev		{{"[-dfnqstuvwT] [-P #] <objects>"} {evaluate objects via NMG tessellation}}
     $help add get_autoview	{{} {get view parameters that shows drawn geometry}}
     $help add how		{{obj} {returns how an object is being displayed}}
     $help add illum		{{name} {illuminate object}}
     $help add label		{{[-n] obj} {label objects}}
     $help add nirt		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
-    $help add overlay		{{file.pl [name]} {overlay the specified 2D/3D UNIX plot file}}
+    $help add overlay		{{file.plot3 [name]} {overlay the specified 2D/3D UNIX plot file}}
     $help add qray		{{subcommand}	{get/set query_ray characteristics}}
     $help add report		{{[lvl]} {print solid table & vector list}}
     $help add rt		{{[options] [-- objects]} {do raytrace of view or specified objects}}

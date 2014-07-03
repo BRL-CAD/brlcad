@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,50 +23,42 @@
 #include <string.h>
 #include "bio.h"
 
-#include "tcl.h"
-#include "bu.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 
 
 int
-bu_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv, struct bu_cmdtab *cmds, int cmd_index)
+bu_cmd(const struct bu_cmdtab *cmds, int argc, const char **argv, int cmd_index, void *data, int *retval)
 {
-    struct bu_cmdtab *ctp = NULL;
+    const struct bu_cmdtab *ctp = NULL;
 
     /* sanity */
     if (UNLIKELY(cmd_index >= argc)) {
-	Tcl_AppendResult(interp, "missing command; must be one of:", (char *)NULL);
+	bu_log("missing command; must be one of:");
 	goto missing_cmd;
     }
 
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	if (ctp->ct_name[0] == argv[cmd_index][0] &&
-	    strcmp(ctp->ct_name, argv[cmd_index]) == 0) {
-	    return (*ctp->ct_func)(clientData, interp, argc, argv);
+	if (ctp->ct_name[0] == argv[cmd_index][0]
+	    && BU_STR_EQUAL(ctp->ct_name, argv[cmd_index]))
+	{
+	    if (retval) {
+		*retval = (*ctp->ct_func)(data, argc, argv);
+	    } else {
+		(void)(*ctp->ct_func)(data, argc, argv);
+	    }
+	    return BRLCAD_OK;
 	}
     }
 
-    Tcl_AppendResult(interp, "unknown command: ", argv[cmd_index], ";", " must be one of: ", (char *)NULL);
+    bu_log("unknown command: %s; must be one of: ", argv[cmd_index]);
 
 missing_cmd:
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	Tcl_AppendResult(interp, " ", ctp->ct_name, (char *)NULL);
+	bu_log(" %s", ctp->ct_name);
     }
-    Tcl_AppendResult(interp, "\n", (char *)NULL);
+    bu_log("\n");
 
-    return TCL_ERROR;
-}
-
-
-void
-bu_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
-{
-    struct bu_cmdtab *ctp = NULL;
-
-    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	Tcl_CmdProc *func = (Tcl_CmdProc *)ctp->ct_func;
-	(void)Tcl_CreateCommand(interp, ctp->ct_name, func, (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
-    }
+    return BRLCAD_ERROR;
 }
 
 

@@ -1,7 +1,7 @@
 /*                         H M E N U . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file hmenu.h
+/** @file lgt/hmenu.h
 
 Authors:	Gary S. Moss
 Douglas A. Gwyn
@@ -26,8 +26,8 @@ This code is derived in part from menuhit(9.3) in AT&T 9th Edition UNIX,
 Version 1 Programmer's Manual.
 
 */
-#ifndef INCL_HM
-#define INCL_HM
+#ifndef LGT_HMENU_H
+#define LGT_HMENU_H
 struct HMenu;
 
 /*	"dfn()" is called just before the submenu is invoked, and "bfn()"
@@ -56,7 +56,7 @@ typedef struct HMenu
 {
     HMitem	*item;
     HMitem	*(*generator)();
-    short	prevtop;	/* Top entry currently visable		*/
+    short	prevtop;	/* Top entry currently visible		*/
     short	prevhit;	/* Offset from top of last select	*/
     short	sticky;		/* If set, menu stays around after SELECT,
 				   and until QUIT. */

@@ -2,7 +2,7 @@ Name,Importer,Exporter,Descr
 ADRT,,Y,Advanced Distributed RayTracer (included with BRL-CAD)
 BRL-CAD Ascii,Y,Y,ASCII form of BRL-CAD .g files
 CY,Y,,
-ComGeom,,,
+ComGeom,Y,Y,GIFT format (several versions)
 DXF,Y,Y,AutoCAD
 ENF,Y,,
 Euclid Ascii,Y,Y,

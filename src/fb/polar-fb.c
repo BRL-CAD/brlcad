@@ -1,7 +1,7 @@
 /*                      P O L A R - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 
 /* Program constants */
 #define High_Size 1024
-#define GRID_RHO_EPS 0.005
+#define GRID_RHO_EPS 0.0005
 #define GRID_THETA_EPS 0.2
 
 /* Color[] indices */
@@ -112,14 +112,12 @@ RGBpixel Color[] = {
 
 int
 LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_min, double arc_max)
-
-    /* Name of input file */
-    /* Location for storing function */
-    /* Angular resolution of Table (in degrees) */
-    /* Factor to convert input units to radians */
-    /* First angle of interest */
-    /* Last    "    "     "    */
-
+/* Name of input file */
+/* Location for storing function */
+/* Angular resolution of Table (in degrees) */
+/* Factor to convert input units to radians */
+/* First angle of interest */
+/* Last    "    "     "    */
 {
     int Warnings = 0;	/* Have any warning messages been printed? */
     int angle;
@@ -152,13 +150,12 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
 
     /* Fill the table */
     while ((fscanf(fPtr, "%lf", &theta) == 1) &&
-	   (fscanf(fPtr, "%lf", &rho) == 1))
-    {
+	   (fscanf(fPtr, "%lf", &rho) == 1)) {
 	theta *= convert;
 	if ((theta < 0.0) || (npf_index(theta / Deg2Rad) * Quantum > 360)) {
 	    (void) fprintf(stderr,
 			   "Fatal:  Theta out of range: %g %s\n",
-			   theta / convert, (NEAR_ZERO(convert - 1.0, SMALL_FASTF)) ? "radians" : "degrees");
+			   theta / convert, (ZERO(convert - 1.0)) ? "radians" : "degrees");
 	    Warnings = 2;
 	}
 	if ((rho < 0.0) || (rho > 1.0)) {
@@ -176,7 +173,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
     gap_min = gap_max = -1;
     for (angle = floor(arc_min); angle < ceil(arc_max); angle+=Quantum) {
 	/* if == -1 */
-	if (NEAR_ZERO(*(Table + npf_index(angle)) + 1.0, SMALL_FASTF)) {
+	if (ZERO(*(Table + npf_index(angle)) + 1.0)) {
 	    *(Table + npf_index(angle)) = 0.0;
 	    if (gap_min == -1)
 		gap_min = angle;
@@ -241,50 +238,46 @@ void
 ArgCompat (int Interior)
 {
     if (Interior != BI_RINGS) {
-	(void) fputs("Only one of -e, -i, -l, and -w may be specified\n",
+	(void)fputs("Only one of -e, -i, -l, and -w may be specified\n",
 		     stderr);
-	(void) bu_exit (1, NULL);
+	(void)bu_exit (1, NULL);
     }
 }
 
 
 void
 Fill_Empty (unsigned char *fbbPtr, double UNUSED(rho), double UNUSED(npf_rho), int UNUSED(unit_r), int merge)
-
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
-
+/* Pointer to within fbb */
+/* Radius of current pixel */
+/* Value of function at this theta */
+/* Unit radius (in pixels) */
+/* Overlay onto current FB contents? */
 {
-    if (! merge) {
+    if (!merge) {
 	COPYRGB(fbbPtr, Color[C_BKGRND]);
     }
 }
 
+
 void
 Fill_Constant (unsigned char *fbbPtr, double UNUSED(rho), double UNUSED(npf_rho), int UNUSED(unit_r), int UNUSED(merge))
-
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
-
+/* Pointer to within fbb */
+/* Radius of current pixel */
+/* Value of function at this theta */
+/* Unit radius (in pixels) */
+/* Overlay onto current FB contents? */
 {
     COPYRGB(fbbPtr, Color[C_INTERIOR]);
 }
 
+
 void
 Fill_Ramp (unsigned char *fbbPtr, double rho, double UNUSED(npf_rho), int unit_r, int UNUSED(merge))
-
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
-
+/* Pointer to within fbb */
+/* Radius of current pixel */
+/* Value of function at this theta */
+/* Unit radius (in pixels) */
+/* Overlay onto current FB contents? */
 {
     RGBpixel ThisPix;	/* Ramped color for current pixel */
 
@@ -297,15 +290,14 @@ Fill_Ramp (unsigned char *fbbPtr, double rho, double UNUSED(npf_rho), int unit_r
     COPYRGB(fbbPtr, ThisPix);
 }
 
+
 void
 Fill_Wedges (unsigned char *fbbPtr, double UNUSED(rho), double npf_rho, int UNUSED(unit_r), int UNUSED(merge))
-
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
-
+/* Pointer to within fbb */
+/* Radius of current pixel */
+/* Value of function at this theta */
+/* Unit radius (in pixels) */
+/* Overlay onto current FB contents? */
 {
     if (npf_rho > .8) {
 	COPYRGB(fbbPtr, Color[C_RED]);
@@ -323,13 +315,11 @@ Fill_Wedges (unsigned char *fbbPtr, double UNUSED(rho), double npf_rho, int UNUS
 
 void
 Fill_Rings (unsigned char *fbbPtr, double rho, double UNUSED(npf_rho), int unit_r, int UNUSED(merge))
-
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
-
+/* Pointer to within fbb */
+/* Radius of current pixel */
+/* Value of function at this theta */
+/* Unit radius (in pixels) */
+/* Overlay onto current FB contents? */
 {
     if (rho / unit_r > .8) {
 	COPYRGB(fbbPtr, Color[C_RED]);
@@ -350,13 +340,13 @@ PrintUsage (int ShoOpts)
 {
     char **oPtr;		/* Pointer to option string */
 
-    (void) fprintf(stderr, "Usage: '%s [options] [file]'\n", ProgName);
+    (void)fprintf(stderr, "Usage: '%s [options] [file]'\n", ProgName);
     if (ShoOpts) {
-	(void) fputs("Options:\n", stderr);
+	(void)fputs("Options:\n", stderr);
 	for (oPtr = ExplainOpts; **oPtr != '\0'; oPtr++)
-	    (void) fputs(*oPtr, stderr);
+	    (void)fputs(*oPtr, stderr);
     } else
-	(void) fputs(" -? option for help\n", stderr);
+	(void)fputs(" -? option for help\n", stderr);
 }
 
 
@@ -364,17 +354,17 @@ int
 main (int argc, char **argv)
 {
     int clr_fb = 0;	/* Clear the frame buffer first? */
-    int draw_grid = 1;	/* Plot the plolar axes? */
+    int draw_grid = 1;	/* Plot the polar axes? */
     int merge = 0;	/* Overlay data on current contents FB? */
     int NoWarnings = 0;	/* Abort if any irregular input? */
     int perimeter = 0;	/* Plot perimeter of function? */
-    char *FB_Name;	/* Name of frame-buffer file */
-    char *FileName;	/* Name of input file */
-    char *Opt;		/* Used in parsing command-line options */
-    double angle_cvt;	/* Factor to convert input units to radians */
-    double arc_max = 360.0;/* Greatest value of theta to plot */
+    char *Opt = NULL;	/* Used in parsing command-line options */
+    char *FB_Name = NULL;	/* Name of frame-buffer file */
+    char *FileName = NULL;	/* Name of input file */
+    double angle_cvt = 0.0;	/* Factor to convert input units to radians */
+    double arc_max = 360.0;	/* Greatest value of theta to plot */
     double arc_min = 0.0;	/* Least      "    "   "    "   "  */
-    double npf_rho;	/* Current entry in npf_tbl */
+    double npf_rho = 0.0;	/* Current entry in npf_tbl */
     double npf_tbl[360];	/* The function (in (theta, rho) pairs) */
     double rho, theta;	/* Polar coordinates of current pixel */
     double twist = 0.0;	/* Clockwise rotation of image (in degrees) */
@@ -397,17 +387,17 @@ main (int argc, char **argv)
     unsigned char *fbb;		/* Buffer for current line of frame buffer */
     unsigned char *fbbPtr;	/* Pointer to within fbb */
 
-    void (*Fill_Func)();
+    void (*Fill_Func)(unsigned char *, double, double, int, int) = Fill_Empty;
 
-/* Initialize things */
+    /* Initialize things */
     ProgName = *argv;
-    angle_cvt = Deg2Rad = M_PI / 180.0;
+    angle_cvt = Deg2Rad = DEG2RAD;
     FB_Name = "";
     Interior = BI_RINGS;
     Color[C_BKGRND][RED] = Color[C_BKGRND][GRN] = Color[C_BKGRND][BLU] = 255;
 
-/* Handle command-line options */
-    while ((--argc > 0) && ((*++argv)[0] == '-'))
+    /* Handle command-line options */
+    while ((--argc > 0) && ((*++argv)[0] == '-')) {
 	for (Opt = argv[0] + 1; *Opt != '\0'; Opt++)
 	    switch (*Opt) {
 		case 'o':		/* Translate the plot */
@@ -708,11 +698,12 @@ main (int argc, char **argv)
 		    Interior = BI_WEDGES;
 		    break;
 		case '?':
-	    error:
+		error:
 		default:
 		    PrintUsage(1);
 		    (void) bu_exit (*Opt != '?', NULL);
 	    }
+    } /* while */
 
     /* Determine source of input */
     switch (argc) {
@@ -754,10 +745,9 @@ main (int argc, char **argv)
      * the FB are mutually compatible
      */
     if ((ctr_x + unit_r > fb_width) || (ctr_x < unit_r) ||
-	(ctr_y + unit_r > fb_height) || (ctr_y < unit_r))
-    {
-	(void) fputs("Plot not entirely within frame buffer\n", stderr);
-	(void) bu_exit (1, NULL);
+	(ctr_y + unit_r > fb_height) || (ctr_y < unit_r)) {
+	(void)fputs("Plot not entirely within frame buffer\n", stderr);
+	(void)bu_exit (1, NULL);
     }
 
     if (clr_fb)
@@ -797,9 +787,9 @@ main (int argc, char **argv)
 	    Fill_Func = Fill_Rings;
 	    break;
 	default:
-	    (void) fputs("Bad interior.  Shouldn't happen\n",
-			 stderr);
-	    (void) bu_exit (1, NULL);
+	    (void)fputs("Bad interior.  Shouldn't happen\n",
+			stderr);
+	    (void)bu_exit (1, NULL);
 	    break;
     }
 
@@ -838,9 +828,9 @@ main (int argc, char **argv)
 	    /* Rotate the point for display */
 	    theta += twist;
 	    while (theta < 0)
-		theta += M_PI * 2;
-	    while (theta > M_PI * 2)
-		theta -= M_PI * 2;
+		theta += M_2PI;
+	    while (theta > M_2PI)
+		theta -= M_2PI;
 
 	    /* If this point is outside the arc of interest, skip it */
 	    if ((theta < arc_min) || (theta > arc_max)) {
@@ -864,7 +854,7 @@ main (int argc, char **argv)
 		    COPYRGB(fbbPtr, Color[C_BKGRND]);
 		}
 	    } else {
-		(*Fill_Func)(fbbPtr, rho, npf_rho, unit_r, merge);
+		Fill_Func(fbbPtr, rho, npf_rho, unit_r, merge);
 
 		if (perimeter && (npf_rho - rho / unit_r < .02)) {
 		    COPYRGB(fbbPtr, Color[C_PERIM]);

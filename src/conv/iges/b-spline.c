@@ -1,7 +1,7 @@
 /*                      B - S P L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file b-spline.c
+/** @file iges/b-spline.c
  *
  * These functions evaluate a Rational B-Spline Curve
  *
@@ -27,12 +27,12 @@
 
 #include <stdio.h>
 
+#include "bu.h"
 #include "vmath.h"
-#include "raytrace.h"		/* for declaration of bu_calloc() */
 
 
-static fastf_t *knots=(fastf_t *)NULL;
-static int numknots=0;
+static fastf_t *knots = (fastf_t *)NULL;
+static int numknots = 0;
 
 
 /* Set the knot values */
@@ -53,7 +53,7 @@ Knot(int n /* number of values in knot sequence */, fastf_t values[] /* knot val
 
     numknots = n;
 
-    for (i=0; i<n; i++)
+    for (i = 0; i < n; i++)
 	knots[i] = values[i];
 
 }
@@ -71,7 +71,7 @@ Freeknots(void)
 fastf_t
 Basis(int i /* interval number (0 through k) */, int k /* degree of basis function */, fastf_t t /* parameter value */)
 {
-    fastf_t denom1, denom2, retval=0.0;
+    fastf_t denom1, denom2, retval = 0.0;
 
     if ((i+1) > (numknots-1)) {
 	bu_log("Error in evaluation of a B-spline Curve\n");
@@ -88,10 +88,10 @@ Basis(int i /* interval number (0 through k) */, int k /* degree of basis functi
 	denom1 = knots[i+k-1] - knots[i];
 	denom2 = knots[i+k] - knots[i+1];
 
-	if (!NEAR_ZERO(denom1, SMALL_FASTF))
+	if (!ZERO(denom1))
 	    retval += (t - knots[i])*Basis(i, k-1, t)/denom1;
 
-	if (!NEAR_ZERO(denom2, SMALL_FASTF))
+	if (!ZERO(denom2))
 	    retval += (knots[i+k] - t)*Basis(i+1, k-1, t)/denom2;
 
 	return retval;
@@ -109,20 +109,20 @@ B_spline(fastf_t t /* parameter value */,
 	 point_t pt /* Evaluated point on spline */)
 {
 
-    fastf_t tmp, numer[3], denom=0.0;
+    fastf_t tmp, numer[3], denom = 0.0;
     int i, j;
 
-    for (j=0; j<3; j++)
+    for (j = 0; j < 3; j++)
 	numer[j] = 0.0;
 
-    for (i=0; i<=m; i++) {
+    for (i = 0; i <= m; i++) {
 	tmp = weights[i]*Basis(i, k, t);
 	denom += tmp;
-	for (j=0; j<3; j++)
+	for (j = 0; j < 3; j++)
 	    numer[j] += P[i][j]*tmp;
     }
 
-    for (j=0; j<3; j++)
+    for (j = 0; j < 3; j++)
 	pt[j] = numer[j]/denom;
 }
 

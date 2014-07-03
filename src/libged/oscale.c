@@ -1,7 +1,7 @@
 /*                         O S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file oscale.c
+/** @file libged/oscale.c
  *
  * The oscale command.
  *
@@ -45,8 +45,11 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
     mat_t invXform;
     point_t rpp_min;
     point_t rpp_max;
-    fastf_t sf;
     point_t keypoint;
+
+    /* intentionally double for scan */
+    double sf;
+
     static const char *usage = "obj sf [kX kY kZ]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -54,21 +57,21 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 3 && argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &sf) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad sf value - %s", argv[0], argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad sf value - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
@@ -77,7 +80,7 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
 	    return TCL_ERROR;
 
 	dp = gtd.gtd_obj[gtd.gtd_objpos-1];
-	if (!(dp->d_flags & DIR_SOLID)) {
+	if (!(dp->d_flags & RT_DIR_SOLID)) {
 	    if (_ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == TCL_ERROR)
 		return TCL_ERROR;
 	}
@@ -85,28 +88,30 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
 	VADD2(keypoint, rpp_min, rpp_max);
 	VSCALE(keypoint, keypoint, 0.5);
     } else {
+	double scan[3];
+
 	/* The user has provided the keypoint. */
 	MAT_IDN(gtd.gtd_xform);
 
-	if (sscanf(argv[3], "%lf", &keypoint[X]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad kx value - %s", argv[0], argv[3]);
+	if (sscanf(argv[3], "%lf", &scan[X]) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad kx value - %s", argv[0], argv[3]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[4], "%lf", &keypoint[Y]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad ky value - %s", argv[0], argv[4]);
+	if (sscanf(argv[4], "%lf", &scan[Y]) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad ky value - %s", argv[0], argv[4]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[5], "%lf", &keypoint[Z]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad kz value - %s", argv[0], argv[5]);
+	if (sscanf(argv[5], "%lf", &scan[Z]) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad kz value - %s", argv[0], argv[5]);
 	    return GED_ERROR;
 	}
 
-	VSCALE(keypoint, keypoint, gedp->ged_wdbp->dbip->dbi_local2base);
+	VSCALE(keypoint, scan, gedp->ged_wdbp->dbip->dbi_local2base);
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET)) == DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
 	    return GED_ERROR;
 	}
     }
@@ -121,11 +126,6 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
     GED_DB_GET_INTERNAL(gedp, &intern, dp, emat, &rt_uniresource, GED_ERROR);
     RT_CK_DB_INTERNAL(&intern);
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
-
-#if 0
-    /* notify observers */
-    bu_observer_notify(interp, &gedp->wdb_observers, bu_vls_addr(&gedp->wdb_name));
-#endif
 
     return GED_OK;
 }

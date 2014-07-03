@@ -1,7 +1,7 @@
 /*                      P I X E M B E D . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2010 United States Government as represented by
+ * Copyright (c) 1992-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixembed.c
+/** @file util/pixembed.c
  *
  * Embed a smaller pix file in a larger space, replicating the boundary
  * pixels to fill out the borders, and output as a pix file.
@@ -53,15 +53,14 @@ Usage: pixembed [-h] [-b border_inset] \n\
 	[-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
 
-/*
- * G E T _ A R G S
- */
+char hyphen[] = "-";
+
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "b:hs:w:n:S:W:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "b:hs:w:n:S:W:N:")) != -1) {
 	switch (c) {
 	    case 'b':
 		border_inset = atoi(bu_optarg);
@@ -99,28 +98,25 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "pixembed: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "pixembed: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixembed: excess argument(s) ignored\n");
+	fprintf(stderr, "pixembed: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -174,8 +170,6 @@ main(int argc, char **argv)
 
 
 /*
- * L O A D _ B U F F E R
- *
  * Read one input scanline into the middle of the output scanline,
  * and duplicate the border pixels.
  */
@@ -220,8 +214,6 @@ load_buffer(void)
 
 
 /*
- * W R I T E _ B U F F E R
- *
  * Write the buffer to stdout, with error checking.
  */
 void

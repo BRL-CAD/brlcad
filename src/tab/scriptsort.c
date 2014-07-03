@@ -99,7 +99,7 @@ sf(int start, int skip)
  */
     while (&runner->l != &head) {
 	printframe(runner);
-	for (i=0; i<skip; i++) {
+	for (i = 0; i < skip; i++) {
 	    runner = (struct frame *)runner->l.forw;
 	    if (&runner->l == &head) return;
 	}
@@ -111,9 +111,9 @@ void
 squirtframes(int base)
 {
 
-    sf(0, base);	/* start by outputing every base entries at one */
+    sf(0, base);	/* start by outputting every base entries at one */
 
-    while (base > 1 ) {
+    while (base > 1) {
 	sf(base/2, base);
 	base /= 2;
     }
@@ -124,10 +124,13 @@ void addtext(struct frame *fp, char *tp)
 {
     char *p;
     int length;
+
 #ifdef DEBUG
     fprintf(stderr, "addtext: %s\n", tp);
 #endif
-    if (fp->l.magic != MAGIC) abort();
+
+    BU_CKMAG(&(fp->l.magic), MAGIC, "frame magic");
+
     length = strlen(tp) + 1;	/* length of text string and NULL */
     length += 1;			/* For the Space or newline */
     if (fp->text) {
@@ -160,7 +163,7 @@ struct frame *getframe(FILE *in)
 {
     extern FILE *yyin;
     extern char yytext[];
-    struct frame *new;
+    struct frame *newframe;
 
     yyin = in;
 
@@ -188,18 +191,17 @@ struct frame *getframe(FILE *in)
 /*
  * get a frame and set it up.
  */
-    new = (struct frame *) bu_calloc(1, sizeof(struct frame), "struct frame");
-    BU_LIST_INIT(&(new->l));
-    BU_LIST_MAGIC_SET(&(new->l), MAGIC);
-    new->number = atoi(yytext);
-    new->number += frame_offset;
+    BU_ALLOC(newframe, struct frame);
+    BU_LIST_INIT_MAGIC(&(newframe->l), MAGIC);
+    newframe->number = atoi(yytext);
+    newframe->number += frame_offset;
 /*
  * The next token should be SEMI COLON;
  */
     token = yylex();
     if (!token) {
-	new->l.magic = -1;
-	bu_free(new, "struct frame");
+	newframe->l.magic = -1;
+	bu_free(newframe, "struct frame");
 	return NULL;
     }
 
@@ -208,29 +210,29 @@ struct frame *getframe(FILE *in)
 	fprintf(stderr, "getframe: Inserting semi colon.\n");
     }
 /*
- * Now comes the the rest.
+ * Now comes the rest.
  */
     while ((token = yylex()) != END && (token)) {
 	if (token == CLEAN) {
 	    (void) yylex(); /* skip semi-colon */
-	    new->flags |= FLAG_CLEAN;
+	    newframe->flags |= FLAG_CLEAN;
 	} else {
-	    addtext(new, yytext);
+	    addtext(newframe, yytext);
 	    /* Can't concatenate commands to comments. */
 	    if (token == COMMENT) {
-		addtext(new, "\n");
+		addtext(newframe, "\n");
 	    }
 	}
     }
     token = yylex();	/* scarf the semi-colon */
     token = yylex();	/* Get the next token.  It could be shell */
     if (token == SHELL) {
-	new->flags |= FLAG_SCRIPT;
+	newframe->flags |= FLAG_SCRIPT;
     }
     if (verbose) {
-	fprintf(stderr, "scriptsort: Frame %d(%d)\n", new->number, new->tp);
+	fprintf(stderr, "scriptsort: Frame %d(%d)\n", newframe->number, newframe->tp);
     }
-    return new;
+    return newframe;
 }
 
 
@@ -240,7 +242,7 @@ bubblesort(void)
     struct frame *a, *b;
 
     a = (struct frame *)head.forw;
-    while (a->l.forw != &head ) {
+    while (a->l.forw != &head) {
 	b = (struct frame *)a->l.forw;
 	if (a->number > b->number) {
 	    BU_LIST_DEQUEUE(&b->l);
@@ -284,7 +286,7 @@ get_args(int argc, char **argv)
     verbose = 1;
     specify_base = force_shell = suppress_shell = 0;
     frame_offset = 0;
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	switch (c) {
 	    case 'q':
 		verbose = 0;
@@ -313,13 +315,10 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
-    struct frame *new, *lp;
+    struct frame *newframe, *lp;
 
     int base, count;
 
@@ -330,14 +329,14 @@ main(int argc, char *argv[])
 
     BU_LIST_INIT(&head);
     globals.text=NULL;
-    globals.tp=globals.tl=0;
+    globals.tp=globals.tl = 0;
     globals.flags=globals.location=globals.length = 0;
     globals.l.magic = MAGIC;
 
     if (verbose) fprintf(stderr, "scriptsort: reading.\n");
 
-    while ((new=getframe(stdin)) != NULL) {
-	BU_LIST_INSERT(&head, &new->l);
+    while ((newframe=getframe(stdin)) != NULL) {
+	BU_LIST_INSERT(&head, &newframe->l);
     }
     if (verbose) fprintf(stderr, "scriptsort: sorting.\n");
     bubblesort();
@@ -354,7 +353,7 @@ main(int argc, char *argv[])
 	/*compute base as largest power of 2 less than num of frames*/
 	base = 1;
 	count = 2;
-	for ( BU_LIST_FOR( lp, frame, &head ) ) {
+	for (BU_LIST_FOR(lp, frame, &head)) {
 	    if (count-- <= 0) {
 		base *= 2;
 		count = base - 1;

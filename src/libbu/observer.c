@@ -1,7 +1,7 @@
 /*                      O B S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,17 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup butcl */
-/** @{ */
 
 #include "common.h"
 
 #include <string.h>
 #include "bio.h"
 
-#include "tcl.h"
-#include "cmd.h"                  /* includes bu.h */
-
+#include "bu/cmd.h"
 
 /**
  * Attach observer.
@@ -37,24 +33,19 @@
  *
  */
 HIDDEN int
-_bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+observer_attach(void *clientData, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
 
     if (argc < 2 || 3 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib bu_observer_attach");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	bu_log("ERROR: expecting only three arguments\n");
+	return BRLCAD_ERROR;
     }
 
     /* see if it already exists, if so, modify it */
     for (BU_LIST_FOR(op, bu_observer, &headp->l))
-	if (strcmp(bu_vls_addr(&op->observer), argv[1]) == 0) {
+	if (BU_STR_EQUAL(bu_vls_addr(&op->observer), argv[1])) {
 	    if (argc == 2)
 		/* clobber cmd */
 		bu_vls_init(&op->cmd);
@@ -62,11 +53,11 @@ _bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, con
 		/* overwrite cmd */
 		bu_vls_strcpy(&op->cmd, argv[2]);
 
-	    return TCL_OK;
+	    return BRLCAD_OK;
 	}
 
     /* acquire bu_observer struct */
-    BU_GETSTRUCT(op, bu_observer);
+    BU_GET(op, struct bu_observer);
 
     /* initialize observer */
     bu_vls_init(&op->observer);
@@ -79,7 +70,7 @@ _bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, con
     /* append to list of bu_observer's */
     BU_LIST_APPEND(&headp->l, &op->l);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -91,34 +82,29 @@ _bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, con
  *
  */
 HIDDEN int
-_bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+observer_detach(void *clientData, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
 
     if (argc != 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib bu_observer_attach");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	bu_log("ERROR: expecting two arguments\n");
+	return BRLCAD_ERROR;
     }
 
     /* search for observer and remove from list */
     for (BU_LIST_FOR(op, bu_observer, &headp->l))
-	if (strcmp(bu_vls_addr(&op->observer), argv[1]) == 0) {
+	if (BU_STR_EQUAL(bu_vls_addr(&op->observer), argv[1])) {
 	    BU_LIST_DEQUEUE(&op->l);
 	    bu_vls_free(&op->observer);
 	    bu_vls_free(&op->cmd);
-	    bu_free((genptr_t)op, "_bu_observer_detach_tcl: op");
+	    BU_PUT(op, struct bu_observer);
 
-	    return TCL_OK;
+	    return BRLCAD_OK;
 	}
 
-    Tcl_AppendResult(interp, "detach: ", argv[1], " not found", (char *)NULL);
-    return TCL_ERROR;
+    bu_log("detach: %s not found", argv[1]);
+    return BRLCAD_ERROR;
 }
 
 
@@ -130,27 +116,21 @@ _bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, con
  *
  */
 HIDDEN int
-_bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+observer_show(void *clientData, int argc, const char **UNUSED(argv))
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
 
     if (argc != 1) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	bu_log("ERROR: expecting only one argument\n");
+	return BRLCAD_ERROR;
     }
 
     for (BU_LIST_FOR(op, bu_observer, &headp->l)) {
-	Tcl_AppendResult(interp, bu_vls_addr(&op->observer), " - ",
-			 bu_vls_addr(&op->cmd), "\n", (char *)NULL);
+	bu_log("%s - %s\n", bu_vls_addr(&op->observer), bu_vls_addr(&op->cmd));
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -158,9 +138,8 @@ void
 bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *self)
 {
     struct bu_observer *op;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&vls);
     for (BU_LIST_FOR(op, bu_observer, &headp->l)) {
 	if (bu_vls_strlen(&op->cmd) > 0) {
 	    /* Execute cmd */
@@ -189,7 +168,7 @@ bu_observer_free(struct bu_observer *headp)
 	BU_LIST_DEQUEUE(&op->l);
 	bu_vls_free(&op->observer);
 	bu_vls_free(&op->cmd);
-	bu_free((genptr_t)op, "bu_observer_free: op");
+	BU_PUT(op, struct bu_observer);
 	op = nop;
     }
 }
@@ -200,21 +179,25 @@ bu_observer_free(struct bu_observer *headp)
  * wdb_obj interfaces.
  */
 static struct bu_cmdtab bu_observer_cmds[] = {
-    {"attach",	_bu_observer_attach_tcl},
-    {"detach",	_bu_observer_detach_tcl},
-    {"show",	_bu_observer_show_tcl},
-    {(char *)0,	CMD_NULL}
+    {"attach",	observer_attach},
+    {"detach",	observer_detach},
+    {"show",	observer_show},
+    {(const char *)NULL, BU_CMD_NULL}
 };
 
 
 int
-bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+bu_observer_cmd(void *clientData, int argc, const char **argv)
 {
-    return bu_cmd(clientData, interp, argc, argv, bu_observer_cmds, 0);
+    int ret;
+    if (bu_cmd(bu_observer_cmds, argc, argv, 0, clientData, &ret) == BRLCAD_OK)
+	return ret;
+
+    bu_log("ERROR: '%s' command not found\n", argv[0]);
+    return BRLCAD_ERROR;
 }
 
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

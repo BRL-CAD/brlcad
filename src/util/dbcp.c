@@ -1,7 +1,7 @@
 /*                          D B C P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dbcp.c
+/** @file util/dbcp.c
  *
  * Double-buffered copy program for UNIX
  *
@@ -61,9 +61,6 @@ Usage:  dbcp [-v] blocksize < input > output\n\
 	(blocksize = number of 512 byte 'blocks' per record)\n";
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -78,27 +75,37 @@ main(int argc, char **argv)
     char msgchar;
     pipefds par2chld, chld2par;
     int c;
+    int deprecated = 1;
 
-    while ((c = bu_getopt(argc, argv, "v")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "vDh?")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
+		break;
+	    case 'D':
+		deprecated=0;
 		break;
 	    default:
 		bu_exit(1, "%s", usage);
 	}
     }
 
+    if (deprecated)
+	bu_log("DEPRECATED: dbcp is no longer being maintained.  Please contact the developers if you use this tool.  Use -D to suppress this message.\n");
+
     if (bu_optind >= argc) {
 	bu_exit(2, "%s", usage);
     }
     size = 512 * atoi(argv[bu_optind]);
+    if (size > INT_MAX)
+	size = INT_MAX;
 
     setbuf (stderr, errbuf);
-    if ((buffer = (char *)malloc(size)) == NULL)
-	bu_exit(88, "dbcp: Insufficient buffer memory\n");
+    buffer = (char *)bu_malloc(size, "alloc buffer");
+
     if (pipe (par2chld) < 0 || pipe (chld2par) < 0) {
 	perror("pipe");
+	bu_free(buffer, "free buffer");
 	bu_exit(89, "dbcp: Can't pipe\n");
     }
 
@@ -111,6 +118,7 @@ main(int argc, char **argv)
     switch (pid = fork()) {
 	case -1:
 	    perror("fork");
+	    bu_free(buffer, "free buffer");
 	    bu_exit(99, "dbcp: Can't fork\n");
 
 	case 0:
@@ -170,7 +178,7 @@ main(int argc, char **argv)
 	}
 	if (msgchar == STOP) {
 	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    bu_log("Got STOP WRITE with %u left\n", nread);
+	    bu_log("Got STOP WRITE with %ld left\n", nread);
 	    break;
 	} else if (msgchar != GO) {
 	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
@@ -187,7 +195,7 @@ main(int argc, char **argv)
 	}
 	if (verbose>1) {
 	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    bu_log("wrote %d\n", nread);
+	    bu_log("wrote %ld\n", nread);
 	}
 	if ((size_t)nread != size) {
 	    break;
@@ -231,6 +239,8 @@ main(int argc, char **argv)
 	while (wait(&waitcode) > 0)
 	    ;
     }
+
+    bu_free(buffer, "free buffer");
 
     return exitval;
 }

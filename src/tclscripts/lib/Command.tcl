@@ -1,7 +1,7 @@
 #                     C O M M A N D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2010 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -29,16 +29,20 @@
     constructor {args} {}
     destructor {}
 
-    itk_option define -edit_style edit_style Edit_style emacs
+    itk_option define -edit_style edit_style Edit_Style emacs
     itk_option define -prompt prompt Prompt "> "
     itk_option define -prompt2 prompt2 Prompt ""
-    itk_option define -cmd_prefix cmd_prefix Cmd_prefix ""
+    itk_option define -cmd_prefix cmd_prefix Cmd_Prefix ""
     itk_option define -selection_color selection_color TextColor #fefe8e
     itk_option define -prompt_color prompt_color TextColor red1
     itk_option define -cmd_color cmd_color TextColor black
     itk_option define -oldcmd_color oldcmd_color TextColor red3
     itk_option define -result_color result_color TextColor blue3
     itk_option define -maxlines maxlines MaxLines 1000
+    itk_option define -cmd_history_callback cmd_history_callback Cmd_History_Callback ""
+
+    public common CMD_MORE_ARGS "BUILT_BY_MORE_ARGS"
+    public common CMD_MORE_ARGS_LEN [string length $CMD_MORE_ARGS]
 
     public method clear {}
     public method history {}
@@ -46,7 +50,7 @@
     private method do_get_more_args {}
     public method get_more_args {}
     public method putstring {str}
-    public method reinitialize {} 
+    public method reinitialize {}
 
     private method invoke {}
     private method invokeMaster {hcmd}
@@ -88,7 +92,7 @@
     private method tab_completion {}
     private method tab_expansion {line}
     private method print {str}
-    public method print_more_args_prompt {_prompt}
+    public method print_more_args_prompt {args}
     private method print_prompt {}
     private method print_prompt2 {}
     private method print_tag {str tag}
@@ -155,7 +159,9 @@
 
     # Create new slave interp
     interp delete $slaveInterp
-    set slaveInterp [interp create]
+    if { [catch {set slaveInterp [interp create]} err] } {
+	error "Unable to reinitialize a slave interpreter"
+    }
 
     # Create slave interp's aliases
     foreach cmd $cmdlist {
@@ -192,7 +198,10 @@
 ::itcl::body Command::constructor {args} {
     eval itk_initialize $args
 
-    set slaveInterp [interp create]
+    # thar be dragons here
+    if { [catch {set slaveInterp [interp create]} err] } {
+	error "Unable to initialize a slave interpreter"
+    }
 
     doBindings
 
@@ -324,13 +333,19 @@
 ::itcl::body Command::invoke {} {
     set w $itk_component(text)
 
-    set cmd [$w get promptEnd insert]
+    set cmd [string trimleft [$w get promptEnd insert]]
     set more_args_list {}
 
     # remove any instances of prompt2 from the beginning of each secondary line
     regsub -all "\n$itk_option(-prompt2)" $cmd "" cmd
 
-    set cname [lindex $cmd 0]
+    set i [string first " " $cmd]
+    if {$i == -1} {
+	set cname $cmd
+    } else {
+	set cname [string range $cmd 0 $i-1]
+    }
+
     if {$cname == "master"} {
 	invokeMaster $cmd
 
@@ -344,6 +359,12 @@
 	    $w tag add oldcmd promptEnd insert
 	    print_tag "Error: $msg\n" result
 	} else {
+	    set i [string first $CMD_MORE_ARGS $msg]
+	    if {$i != -1} {
+		set begin [expr {$i + $CMD_MORE_ARGS_LEN}]
+		set cmd [string range $msg $begin end]
+		set msg [string range $msg 0 $i-1]
+	    }
 	    $w tag add oldcmd promptEnd insert
 
 	    if {$msg != ""} {
@@ -352,15 +373,18 @@
 	}
 
 	if {$do_history} {
-	    eval lappend cmd $more_args_list
 	    $hist add $cmd
+
+	    if {$itk_option(-cmd_history_callback) != ""} {
+		$itk_option(-cmd_history_callback) $cmd
+	    }
 	}
 
 	if {$more_args_interrupted} {
 	    set more_args_interrupted 0
-	} else {
-	    print_prompt
 	}
+
+	print_prompt
 
 	# get rid of oldest output
 	set nlines [expr int([$w index end])]
@@ -405,7 +429,7 @@
 	    $itk_component(text) delete 1.0 [expr $nlines - $itk_option(-maxlines)].end
 	}
     } else {
-	print_promt2
+	print_prompt2
     }
     $itk_component(text) see insert
 }
@@ -1152,7 +1176,9 @@
     set results [tab_expansion $line]
 
     set expansions [lindex $results 1]
-    if { [llength $expansions] > 1 } {
+    set numExpansions [llength $expansions]
+
+    if { $numExpansions > 1 } {
 	# show the possible matches
 	$w delete {insert linestart} {end-2c}
 	$w insert insert "\n${expansions}\n"
@@ -1163,6 +1189,10 @@
     $w delete promptEnd {end - 2c}
     $w mark set insert promptEnd
     $w insert insert [lindex $results 0]
+    if { $numExpansions == 1 } {
+	# only one match remaining, pad space so we can keep going
+	$w insert insert " "
+    }
     $w see insert
 }
 
@@ -1313,22 +1343,19 @@
     } else {
 	# command expansion
 	set cmd [lindex $line 0]
-	if { [string length $cmd] < 1 } {
-	    # just a Tab on an empty line, don't show all commands, we have "?" for that
+
+	# even if line is empty, return all registered commands.
+	set matches [lsearch -all -inline $cmdlist "${cmd}*"]
+	set numMatches [llength $matches]
+	if { $numMatches == 0  } {
+	    # no matches
 	    set newCommand $line
+	} elseif { $numMatches > 1 } {
+	    # get longest match
+	    set newCommand [get_longest_common_string $matches]
 	} else {
-	    set matches [lsearch -all -inline $cmdlist "${cmd}*"]
-	    set numMatches [llength $matches]
-	    if { $numMatches == 0  } {
-		# no matches
-		set newCommand $line
-	    } elseif { $numMatches > 1 } {
-		# get longest match
-		set newCommand [get_longest_common_string $matches]
-	    } else {
-		# just one match
-		set newCommand $matches
-	    }
+	    # just one match
+	    set newCommand $matches
 	}
     }
 
@@ -1340,8 +1367,9 @@
     $w insert insert $str
 }
 
-::itcl::body Command::print_more_args_prompt {_prompt} {
-    $itk_component(text) insert insert $_prompt
+::itcl::body Command::print_more_args_prompt {args} {
+    eval $itk_component(text) insert insert $args
+    $itk_component(text) see insert
 }
 
 ::itcl::body Command::print_prompt {} {

@@ -2,7 +2,7 @@
 #                         M O S S . S H
 # BRL-CAD
 #
-# Copyright (c) 2010 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,34 +40,34 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
-RT="`ensearch rt/rt`"
+RT="`ensearch rt`"
 if test ! -f "$RT" ; then
     echo "Unable to find rt, aborting"
     exit 1
 fi
-A2G="`ensearch conv/asc2g`"
+A2G="`ensearch asc2g`"
 if test ! -f "$A2G" ; then
     echo "Unable to find asc2g, aborting"
     exit 1
 fi
-A2P="`ensearch conv/asc2pix`"
+A2P="`ensearch asc2pix`"
 if test ! -f "$A2P" ; then
     echo "Unable to find asc2pix, aborting"
     exit 1
 fi
-PIXDIFF="`ensearch util/pixdiff`"
+PIXDIFF="`ensearch pixdiff`"
 if test ! -f "$PIXDIFF" ; then
     echo "Unable to find pixdiff, aborting"
     exit 1
 fi
-PIX2PNG="`ensearch util/pix-png`"
+PIX2PNG="`ensearch pix-png`"
 if test ! -f "$PIX2PNG" ; then
     echo "Unable to find pix-png, aborting"
     exit 1
 fi
-PNG2PIX="`ensearch util/png-pix`"
+PNG2PIX="`ensearch png-pix`"
 if test ! -f "$PNG2PIX" ; then
     echo "Unable to find png-pix, aborting"
     exit 1
@@ -127,13 +127,13 @@ if [ ! -f moss.pix ] ; then
     echo "raytrace failed to create moss.pix"
     NUMBER_WRONG=-1
 else
-    if [ ! -f $1/regress/mosspix.asc ] ; then
+    if [ ! -f "$1/regress/mosspix.asc" ] ; then
 	echo "No reference file for moss.pix"
     else
-	$A2P < $1/regress/mosspix.asc > moss_ref.pix
+	$A2P < "$1/regress/mosspix.asc" > moss_ref.pix
 	$PIXDIFF moss.pix moss_ref.pix > moss.pix.diff 2> moss-diff.log
 
-	echo -n moss.pix
+	echo "moss.pix vs moss_ref.pix differences:"
 	tr , '\012' < moss-diff.log | grep many
 	if test $? -ne 0 ; then
 	    echo ""

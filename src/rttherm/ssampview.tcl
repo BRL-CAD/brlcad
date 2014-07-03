@@ -1,7 +1,7 @@
 #                   S S A M P V I E W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1996-2010 United States Government as represented by
+# Copyright (c) 1996-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -265,7 +265,13 @@ proc plot_tabdata { canvas data {y_minval -1} {y_maxval -1} {screen_xmax 255} {s
     #puts "data   = $data"
     #puts "llength= [llength $data]"
     # Sets key_x, key_y, key_nx, key_ymin, key_ymax
-    bu_get_all_keyword_values $data
+
+    set key_x [bu_get_value_by_keyword x $data]
+    set key_y [bu_get_value_by_keyword y $data]
+    set key_nx [bu_get_value_by_keyword nx $data]
+    set key_ymin [bu_get_value_by_keyword ymin $data]
+    set key_ymax [bu_get_value_by_keyword ymax $data]
+
     #puts "ret    = $ret"
     #puts "nx     = $key_nx"
     #puts "key_x  = $key_x"

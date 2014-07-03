@@ -3,6 +3,6 @@ puts "*** Testing 'plot' command ***"
 autoview
 ae 35 25 0
 B clone4.c
-plot mged_plot_test.pl
+plot mged_plot_test.plot3
 
 puts "*** 'plot' testing completed ***"

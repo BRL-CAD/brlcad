@@ -1,7 +1,7 @@
 /*                           P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pkg.c
+/** @file libpkg/pkg.c
  *
  * LIBPKG provides routines to manage multiplexing and de-multiplexing
  * synchronous and asynchronous messages across stream connections.
@@ -51,7 +51,7 @@
 #else
 #  include <sys/socket.h>
 #  include <sys/ioctl.h>	/* for FIONBIO */
-#  include <netinet/in.h>	/* for htons(), etc */
+#  include <netinet/in.h>	/* for htons(), etc. */
 #  include <netdb.h>
 #  include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
 #  include <arpa/inet.h>	/* for inet_addr() */
@@ -65,7 +65,6 @@
 #  include <io.h>
 #  include <fcntl.h>
 #endif
-
 
 
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
@@ -88,6 +87,25 @@
 
 #include <errno.h>
 #include "pkg.h"
+
+
+/* compatibility for pedantic bug/limitation in gcc 4.6.2, need to
+ * mark macros as extensions else they may emit "ISO C forbids
+ * braced-groups within expressions" warnings.
+ */
+#if defined(__extension__) && GCC_PREREQ(4, 6) && !GCC_PREREQ(4, 7)
+
+#  if defined(FD_SET) && defined(__FD_SET)
+#    undef FD_SET
+#    define FD_SET(x, y) __extension__ __FD_SET((x), (y))
+#  endif
+
+#  if defined(FD_ISSET) && defined(__FD_ISSET)
+#    undef FD_ISSET
+#    define FD_ISSET(x, y) __extension__ __FD_ISSET((x), (y))
+#  endif
+
+#endif /* __extension__ */
 
 
 /* XXX is this really necessary?  the _read() and _write()
@@ -118,7 +136,7 @@
 #endif
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
-extern int errno;
+#include <errno.h>
 #endif
 
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
@@ -180,8 +198,6 @@ pkg_plong(char *buf, unsigned long l)
 
 
 /**
- * _ P K G _ T I M E S T A M P
- *
  * Output a timestamp to the log, suitable for starting each line
  * with.
  *
@@ -213,14 +229,12 @@ _pkg_timestamp(void)
 
 
 /**
- * _ P K G _ E R R L O G
- *
  * Default error logger.  Writes to stderr.
  *
  * This is a private implementation function.
  */
 static void
-_pkg_errlog(char *s)
+_pkg_errlog(const char *s)
 {
     if (_pkg_debug) {
 	_pkg_timestamp();
@@ -232,14 +246,12 @@ _pkg_errlog(char *s)
 
 
 /**
- * _ P K G _ P E R R O R
- *
  * Produce a perror on the error logging output.
  *
  * This is a private implementation function.
  */
 static void
-_pkg_perror(void (*errlog) (char *msg), char *s)
+_pkg_perror(void (*errlog)(const char *msg), const char *s)
 {
     snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "%s: ", s);
 
@@ -255,8 +267,6 @@ _pkg_perror(void (*errlog) (char *msg), char *s)
 
 
 /**
- * _ P K G _ M A K E C O N N
- *
  * Malloc and initialize a pkg_conn structure.  We have already
  * connected to a client or server on the given file descriptor.
  *
@@ -267,7 +277,7 @@ _pkg_perror(void (*errlog) (char *msg), char *s)
  */
 static
 struct pkg_conn *
-_pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg))
+_pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog)(const char *msg))
 {
     struct pkg_conn *pc;
 
@@ -302,8 +312,6 @@ _pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 
 
 /**
- * _ P K G _ C K _ D E B U G
- *
  * This is a private implementation function.
  */
 static void
@@ -320,9 +328,9 @@ _pkg_ck_debug(void)
 	place = buf;
     }
     /* Named file must exist and be writeable */
-    if (stat(place, &sbuf) != 0)
-	return;
     if ((_pkg_debug = fopen(place, "a")) == NULL)
+	return;
+    if (fstat(fileno(_pkg_debug), &sbuf) < 0)
 	return;
 
     /* Log version number of this code */
@@ -332,7 +340,7 @@ _pkg_ck_debug(void)
 
 
 struct pkg_conn *
-pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch *switchp, void (*errlog) (char *msg))
+pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *UNUSED(passwd), const struct pkg_switch *switchp, void (*errlog)(const char *msg))
 {
 #ifdef HAVE_WINSOCK_H
     LPHOSTENT lpHostEntry;
@@ -351,9 +359,6 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     struct sockaddr *addr;			/* UNIX or INET addr */
     size_t addrlen;			/* length of address */
 #endif
-
-    /* presently unused */
-    passwd = passwd;
 
     _pkg_ck_debug();
     if (_pkg_debug) {
@@ -415,10 +420,11 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     memset((char *)&sinme, 0, sizeof(sinme));
 
 #ifdef HAVE_SYS_UN_H
-    if (host == NULL || strlen(host) == 0 || strcmp(host, "unix") == 0) {
+    if (host == NULL || strlen(host) == 0 || strcmp(host, "unix")==0) {
 	/* UNIX Domain socket, port = pathname */
 	sunhim.sun_family = AF_UNIX;
 	strncpy(sunhim.sun_path, service, sizeof(sunhim.sun_path));
+	sunhim.sun_path[sizeof(sunhim.sun_path) - 1] = '\0';
 	addr = (struct sockaddr *) &sunhim;
 	addrlen = strlen(sunhim.sun_path) + 2;
 	goto ready;
@@ -452,7 +458,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 	    return PKC_ERROR;
 	}
 	sinhim.sin_family = hp->h_addrtype;
-	memcpy((char *)&sinhim.sin_addr, hp->h_addr, (size_t)hp->h_length);
+	memcpy((char *)&sinhim.sin_addr, hp->h_addr_list[0], (size_t)hp->h_length);
     }
     addr = (struct sockaddr *) &sinhim;
     addrlen = sizeof(struct sockaddr_in);
@@ -492,7 +498,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 
 
 struct pkg_conn *
-pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
+pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(const char *))
 {
     struct pkg_conn *conn;
 
@@ -507,7 +513,7 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
 
     /*
      * XXX - Somehow the system has to know what connection was
-     * accepted, it's protocol, etc.  For UNIX/inetd we use stdin.
+     * accepted, its protocol, etc.  For UNIX/inetd we use stdin.
      */
     conn = _pkg_makeconn(STDIN_FILENO, switchp, errlog);
     return conn;
@@ -518,7 +524,7 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
  * This is a private implementation function.
  */
 static int
-_pkg_permserver_impl(struct in_addr iface, const char *service, const char *protocol, int backlog, void (*errlog)(char *msg))
+_pkg_permserver_impl(struct in_addr iface, const char *service, const char *protocol, int backlog, void (*errlog)(const char *msg))
 {
     struct servent *sp;
     int pkg_listenfd;
@@ -535,6 +541,9 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     size_t addrlen;			/* length of address */
     int on = 1;
 #endif
+
+    if (service == NULL)
+      return -1;
 
     _pkg_ck_debug();
     if (_pkg_debug) {
@@ -603,9 +612,10 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     memset((char *)&sinme, 0, sizeof(sinme));
 
 #  ifdef HAVE_SYS_UN_H
-    if (service != NULL && service[0] == '/') {
+    if (service[0] == '/') {
 	/* UNIX Domain socket */
 	strncpy(sunme.sun_path, service, sizeof(sunme.sun_path));
+	sunme.sun_path[sizeof(sunme.sun_path) - 1] = '\0';
 	sunme.sun_family = AF_UNIX;
 	addr = (struct sockaddr *) &sunme;
 	addrlen = strlen(sunme.sun_path) + 2;
@@ -680,7 +690,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 
 
 int
-pkg_permserver(const char *service, const char *protocol, int backlog, void (*errlog) (char *msg))
+pkg_permserver(const char *service, const char *protocol, int backlog, void (*errlog)(const char *msg))
 {
     struct in_addr iface;
     iface.s_addr = INADDR_ANY;
@@ -689,7 +699,7 @@ pkg_permserver(const char *service, const char *protocol, int backlog, void (*er
 
 
 int
-pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *protocol, int backlog, void (*errlog)(char *msg))
+pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *protocol, int backlog, void (*errlog)(const char *msg))
 {
     struct hostent* host;
     struct in_addr iface;
@@ -700,7 +710,7 @@ pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *pro
 	} else {
 	    /* XXX gethostbyname is deprecated on Windows */
 	    host = gethostbyname(ipOrHostname);
-	    iface = *(struct in_addr*)host->h_addr;
+	    iface = *(struct in_addr*)host->h_addr_list[0];
 	}
 	return _pkg_permserver_impl(iface, service, protocol, backlog, errlog);
     } else {
@@ -711,10 +721,9 @@ pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *pro
 
 
 struct pkg_conn *
-pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg), int nodelay)
+pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const char *msg), int nodelay)
 {
     int s2;
-    auto int onoff;
 #ifdef HAVE_WINSOCK_H
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
     WSADATA wsaData;
@@ -737,6 +746,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 
 #ifdef FIONBIO
     if (nodelay) {
+	int onoff;
 	onoff = 1;
 	if (ioctl(fd, FIONBIO, &onoff) < 0)
 	    _pkg_perror(errlog, "pkg_getclient: FIONBIO 1");
@@ -773,10 +783,11 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
     }  while (s2 < 0);
 #ifdef FIONBIO
     if (nodelay) {
-	onoff = 0;
-	if (ioctl(fd, FIONBIO, &onoff) < 0)
+	int onoff2;
+	onoff2 = 0;
+	if (ioctl(fd, FIONBIO, &onoff2) < 0)
 	    _pkg_perror(errlog, "pkg_getclient: FIONBIO 2");
-	if (ioctl(s2, FIONBIO, &onoff) < 0)
+	if (ioctl(s2, FIONBIO, &onoff2) < 0)
 	    _pkg_perror(errlog, "pkg_getclient: FIONBIO 3");
     }
 #endif
@@ -832,8 +843,6 @@ pkg_close(struct pkg_conn *pc)
 
 
 /**
- * P K G _ I N G E T
- *
  * A functional replacement for bu_mread() through the first level
  * input buffer.
  *
@@ -867,8 +876,6 @@ _pkg_inget(struct pkg_conn *pc, char *buf, size_t count)
 
 
 /**
- * _ P K G _ C H E C K I N
- *
  * This routine is called whenever it is necessary to see if there is
  * more input that can be read.  If input is available, it is read
  * into pkc_inbuf[].  If nodelay is set, poll without waiting.
@@ -1272,8 +1279,6 @@ pkg_flush(struct pkg_conn *pc)
 
 
 /**
- * _ P K G _ G E T H D R
- *
  * Get header from a new message.
  *
  * Returns 1 when there is some message to go look at and -1 on fatal
@@ -1387,7 +1392,7 @@ pkg_waitfor (int type, char *buf, size_t len, struct pkg_conn *pc)
     if (pc->pkc_len == 0)
 	return 0;
 
-    /* See if incomming message is larger than user's buffer */
+    /* See if incoming message is larger than user's buffer */
     if (pc->pkc_len > len) {
 	char *bp;
 	size_t excess;
@@ -1471,10 +1476,15 @@ pkg_bwaitfor (int type, struct pkg_conn *pc)
 	return (char *)0;
 
     /* Read the whole message into the dynamic buffer */
-    if ((i = _pkg_inget(pc, pc->pkc_buf, pc->pkc_len)) != pc->pkc_len) {
+    if (pc->pkc_buf != (char *)0) {
+      if ((i = _pkg_inget(pc, pc->pkc_buf, pc->pkc_len)) != pc->pkc_len) {
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		 "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", (long)pc->pkc_len, (long)i);
+	    "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", (long)pc->pkc_len, (long)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
+      }
+    } else {
+      snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_bwaitfor: tried to read from null pc->pkc_buf!\n");
+      return (char *)0;
     }
     tmpbuf = pc->pkc_buf;
     pc->pkc_buf = (char *)0;
@@ -1486,8 +1496,6 @@ pkg_bwaitfor (int type, struct pkg_conn *pc)
 
 
 /**
- * _ P K G _ D I S P A T C H
- *
  * Given that a whole message has arrived, send it to the appropriate
  * User Handler, or else grouse.  Returns -1 on fatal error, 0 on no
  * handler, 1 if all's well.

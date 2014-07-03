@@ -1,7 +1,7 @@
 #                E L L E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2010 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -36,6 +36,8 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
     }
@@ -58,6 +60,22 @@
 	variable mCx ""
 	variable mCy ""
 	variable mCz ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmVx ""
+	variable cmVy ""
+	variable cmVz ""
+	variable cmAx ""
+	variable cmAy ""
+	variable cmAz ""
+	variable cmBx ""
+	variable cmBy ""
+	variable cmBz ""
+	variable cmCx ""
+	variable cmCy ""
+	variable cmCz ""
+
 
 	variable mCurrentGridRow 0
 
@@ -115,6 +133,9 @@
     set mCz [lindex $_C 2]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmVx == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
+
 }
 
 ::itcl::body EllEditFrame::updateGeometry {} {
@@ -129,10 +150,42 @@
 	B [list $mBx $mBy $mBz] \
 	C [list $mCx $mCy $mCz]
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
+
+::itcl::body EllEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmVx $mVx
+    set cmVy $mVy
+    set cmVz $mVz
+    set cmAx $mAx
+    set cmAy $mAy
+    set cmAz $mAz
+    set cmBx $mBx
+    set cmBy $mBy
+    set cmBz $mBz
+    set cmCx $mCx
+    set cmCy $mCy
+    set cmCz $mCz
+}
+
+::itcl::body EllEditFrame::revertGeometry {} {
+    set mVx $cmVx
+    set mVy $cmVy
+    set mVz $cmVz
+    set mAx $cmAx
+    set mAy $cmAy
+    set mAz $cmAz
+    set mBx $cmBx
+    set mBy $cmBy
+    set mBz $cmBz
+    set mCx $cmCx
+    set mCy $cmCy
+    set mCz $cmCz
+
+    updateGeometry
+}
+
 
 ::itcl::body EllEditFrame::createGeometry {obj} {
     if {![GeometryEditFrame::createGeometry $obj]} {
@@ -210,19 +263,19 @@
 	::ttk::entry $parent.ellVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ellVyE {
 	::ttk::entry $parent.ellVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ellVzE {
 	::ttk::entry $parent.ellVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ellVUnitsL {
 	::ttk::label $parent.ellVUnitsL \
@@ -240,21 +293,21 @@
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ellAyE {
 	::ttk::entry $parent.ellAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ellAzE {
 	::ttk::entry $parent.ellAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ellAUnitsL {
 	::ttk::label $parent.ellAUnitsL \
@@ -272,21 +325,21 @@
 	    -textvariable [::itcl::scope mBx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ellByE {
 	::ttk::entry $parent.ellByE \
 	    -textvariable [::itcl::scope mBy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ellBzE {
 	::ttk::entry $parent.ellBzE \
 	    -textvariable [::itcl::scope mBz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ellBUnitsL {
 	::ttk::label $parent.ellBUnitsL \
@@ -304,27 +357,40 @@
 	    -textvariable [::itcl::scope mCx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ellCyE {
 	::ttk::entry $parent.ellCyE \
 	    -textvariable [::itcl::scope mCy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ellCzE {
 	::ttk::entry $parent.ellCzE \
 	    -textvariable [::itcl::scope mCz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ellCUnitsL {
 	::ttk::label $parent.ellCUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
     } {}
+
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
 
     grid $itk_component(ellType) \
 	-row $mCurrentGridRow \
@@ -371,6 +437,21 @@
 	$itk_component(ellCUnitsL) \
 	-row $mCurrentGridRow \
 	-sticky nsew
+    incr mCurrentGridRow
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $mCurrentGridRow \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $mCurrentGridRow \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1
@@ -393,7 +474,7 @@
 
 ::itcl::body EllEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-
+    set row 0
     foreach attribute {A B C ABC} {
 	itk_component add set$attribute {
 	    ::ttk::radiobutton $parent.set_$attribute \
@@ -403,9 +484,8 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component(set$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component(set$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
 }
 
@@ -481,22 +561,30 @@
 
 ::itcl::body EllEditFrame::initEditState {} {
     set mEditCommand pscale
-    set mEditClass $EDIT_CLASS_SCALE
     set mEditPCommand [::itcl::code $this p]
     configure -valueUnits "mm"
 
     switch -- $mEditMode \
 	$setA {
 	    set mEditParam1 a
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setB {
 	    set mEditParam1 b
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setC {
 	    set mEditParam1 c
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setABC {
 	    set mEditParam1 abc
+	    set mEditClass $EDIT_CLASS_SCALE
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main.c
+/** @file halftone/main.c
  *
  * given a bw file, generate a ht file.
  *
@@ -26,18 +26,18 @@
  *		-s	square size
  *		-n	number of lines
  *		-w	width
- *		-h	same as -s 1024
  *		-a	Automatic bw file sizing.
- *		-B	Beta for sharpining
+ *		-B	Beta for sharpening
  *		-I	number of intensity levels
  *		-M	method
- *			0 Floyd-Steinburg
- *			1 45 degree classical halftone screen
+ *			0 Floyd-Steinberg
+ *			1 45-degree classical halftone screen
  *			2 Threshold
- *			3 0 degree dispersed halftone screen.
+ *			3 0-degree dispersed halftone screen
  *		-R	Add some noise.
- *		-S	Surpent flag.
+ *		-S	Surpent flag (set back to 0 if method is not Floyd-Steinberg)
  *		-T	tonescale points
+ *		-D	debug level
  *
  * Exit:
  *	writes a ht(bw) file.
@@ -50,14 +50,14 @@
  * Calls:
  *	sharpen()	- get a line from the file that has been sharpened
  *	tone_simple()	- Threshold halftone.
- *	tone_floyd()	- Floyd-Steinburg halftone.
+ *	tone_floyd()	- Floyd-Steinberg halftone.
  *	tone_folly()	- 0 degree halftone screen (from Folly and Van Dam)
  *	tone_classic()	- 45 degree classical halftone screen.
  *	tonescale()	- Generates a tone scale map default is 0, 0 to 255, 255
  *	cubic_init()	- Generates "cubics" for tonescale for a set of points.
  *
  * Method:
- *	Fairly simple.  Most of the algorthems are inspired by
+ *	Fairly simple.  Most of the algorithms are inspired by
  *		Digital Halftoning by Robert Ulichney
  *
  */
@@ -69,12 +69,14 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "fb.h"
 
 
-long int width=512;		/* width of pixture */
-long int height=512;		/* height of pixture */
+long int width=512;	/* width of picture */
+long int height=512;	/* height of picture */
 double Beta=0.0;	/* Beta for sharpening */
 
 #define	M_FLOYD	0
@@ -84,27 +86,32 @@ double Beta=0.0;	/* Beta for sharpening */
 int Method=M_FLOYD;	/* Method of halftoning */
 
 int Surpent=0;		/* use serpentine scan lines */
-int Levels=1;		/* Number of levels-1 */
+int Levels=1;		/* Number of levels */
 int Debug=0;
 struct bn_unif *RandomFlag=0;	/* Use random numbers ? */
 
 void cubic_init(int n, int *x, int *y);
 void tonescale(unsigned char *map, float Slope, float B, int (*eqptr)() );
 int sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map);
-int tone_floyd(int pix, int x, int y, int nx, int ny, int new);
-int tone_folly(int pix, int x, int y, int nx, int ny, int new);
-int tone_simple(int pix, int x, int y, int nx, int ny, int new);
-int tone_classic(int pix, int x, int y, int nx, int ny, int new);
+int tone_floyd(int pix, int x, int y, int nx, int ny, int newrow);
+int tone_folly(int pix, int x, int y, int nx, int ny, int newrow);
+int tone_simple(int pix, int x, int y, int nx, int ny, int newrow);
+int tone_classic(int pix, int x, int y, int nx, int ny, int newrow);
 
 static const char usage[] = "\
-Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
+Usage: halftone [-R -S -a] [-D Debug_Level]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
-	[-B contrast] [-I intensity_levels] [-T x y ... tone_curve]\n\
+	[-B contrast] [-I #_of_intensity_levels] [-T x y ... (tone curve)]\n\
 	[-M Method] [file.bw]\n\
-	Floyd-Steinberg=0	45 Degree Classic Screen=1\n\
-	Thresholding=2		0 Degree Dispersed Screen=3\n";
+	where Method is chosen from:\n\
+	    0  Floyd-Steinberg\n\
+	    1  45-Degree Classic Screen\n\
+	    2  Thresholding\n\
+	    3  0-Degree Dispersed Screen\n\
+       (stdin used with '<' construct if file.bw not supplied)\n";
 
-/*	setup	process parameters and setup working enviroment
+/*
+ * process parameters and setup working environment
  *
  * Entry:
  *	argc	- number of arguments.
@@ -115,11 +122,11 @@ Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
  *	if there is a fatal error, exit non-zero
  *
  * Uses:
- *	width	- width of pixture
- *	height	- height of pixture
- *	Beta	- sharpening value.
+ *	width	- width of picture
+ *	height	- height of picture
+ *	Beta	- sharpening value
  *	surpent	- to surpenten rasters?
- *	Levels	- number of intensity levels.
+ *	Levels	- number of intensity levels
  *	Debug	- debug level
  *	RandomFlag - Add noise to processes.
  *
@@ -137,7 +144,7 @@ setup(int argc, char **argv)
     int *Xlist, *Ylist;
     int	autosize = 0;
 
-    while ((c = bu_getopt(argc, argv, "D:hsa:n:w:B:M:RSI:T:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "D:s:an:w:B:M:RSI:T:h?")) != -1) {
 	switch (c) {
 	    case 's':
 		width = height = atol(bu_optarg);
@@ -148,9 +155,6 @@ setup(int argc, char **argv)
 	    case 'w':
 		width = atol(bu_optarg);
 		break;
-	    case 'h':
-		width = height = 1024;
-		break;
 	    case 'a':
 		autosize = 1;
 		break;
@@ -159,6 +163,10 @@ setup(int argc, char **argv)
 		break;
 	    case 'M':
 		Method = atoi(bu_optarg);
+		if (Method <0 || Method >3) {
+			fprintf(stderr,"halftone: Method must be 0,1,2,3; set to default (0)\n");
+			Method = 0;
+		}
 		break;
 	    case 'R':
 		RandomFlag = bn_unif_init(1, 0);
@@ -172,19 +180,19 @@ setup(int argc, char **argv)
 		break;
 /*
  * Tone scale processing is a little strange.  The -T option is followed
- * be a list of points.  The points are collected and one point is added
+ * by a list of points.  The points are collected and one point is added
  * at 1024, 1024 to let tonescale be stupid.  Cubic_init takes the list
  * of points and generates "cubics" for tonescale to use in generating
  * curve to use for the tone map.  If tonescale is called with no cubics
- * defined tonescale will generate a straight-line (generaly from 0, 0 to
+ * defined tonescale will generate a straight-line (generally from 0, 0 to
  * 255, 255).
  */
 	    case 'T':
 		--bu_optind;
-		for (i=bu_optind; i < argc && (isdigit(*argv[i]) ||
-					       (*argv[i] == '-' && isdigit(*(argv[i]+1)))); i++);
+		for (i=bu_optind; i < argc && (isdigit((int)*argv[i]) ||
+					       (*argv[i] == '-' && isdigit((int)(*(argv[i]+1))))); i++);
 		if ((c=i-bu_optind) % 2) {
-		    fprintf(stderr, "Missing Y coordent for tone map.\n");
+		    fprintf(stderr, "Missing Y coordinate for tone map.\n");
 		    bu_exit(1, NULL);
 		}
 		Xlist = (int *) bu_malloc((c+2)*sizeof(int), "Xlist");
@@ -209,9 +217,8 @@ setup(int argc, char **argv)
 	    case 'D':
 		Debug = atoi(bu_optarg);
 		break;
-	    case '?':
+	    default:
 		bu_exit(1, usage);
-		break;
 	}
     }
 /*
@@ -228,11 +235,14 @@ setup(int argc, char **argv)
 	    bu_exit(1, "Automatic sizing can not be used with pipes.\n");
 	}
     } else {
-	if (freopen(argv[bu_optind], "r", stdin) == NULL ) {
+	char *ifname = bu_realpath(argv[bu_optind], NULL);
+	if (freopen(ifname, "r", stdin) == NULL ) {
+	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    bu_exit(1, "halftone: cannot open \"%s\" for reading.\n", argv[bu_optind]);
 	}
+	bu_free(ifname,"ifname alloc from bu_realpath");
 	if (autosize) {
-	    if ( !fb_common_file_size((unsigned long int *)&width, (unsigned long int *)&height, argv[bu_optind], 1)) {
+	    if ( !fb_common_file_size((size_t *)&width, (size_t *)&height, argv[bu_optind], 1)) {
 		(void) fprintf(stderr, "halftone: unable to autosize.\n");
 	    }
 	}
@@ -251,6 +261,8 @@ main(int argc, char **argv)
     int NewFlag = 1;
     int Scale;
     unsigned char Map[256];
+    size_t ret;
+
 /*
  *	parameter processing.
  */
@@ -285,8 +297,8 @@ main(int argc, char **argv)
  */
 
 /*
- *	Currently only the Floyd-Steinburg method uses the surpent flag
- *	so we make things easy with in the 'y' loop by reseting surpent
+ *	Currently only the Floyd-Steinberg method uses the surpent flag
+ *	so we make things easy with in the 'y' loop by resetting surpent
  *	for all other methods to "No Surpent".
  */
     if (Method != M_FLOYD) Surpent = 0;
@@ -334,7 +346,9 @@ main(int argc, char **argv)
 		NewFlag=0;
 	    }
 	}
-	fwrite(Out, 1, width, stdout);
+	ret = fwrite(Out, 1, width, stdout);
+	if ( ret < (size_t)width)
+	    perror("fwrite");
     }
     bu_free(Line, "Line");
     bu_free(Out, "Out");

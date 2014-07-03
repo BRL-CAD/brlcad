@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2010 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot.c
+
+/** @file libwdb/bot.c
  *
  * Support for BOT solid (Bag O'Triangles)
  *
@@ -45,11 +46,11 @@ mk_bot_w_normals(
     unsigned char mode,
     unsigned char orientation,
     unsigned char flags,
-    int num_vertices,
-    int num_faces,
-    fastf_t *vertices,	/* array of floats for vertices [num_vertices*3] */
-    int *faces,		/* array of ints for faces [num_faces*3] */
-    fastf_t *thickness,	/* array of plate mode thicknesses
+    size_t num_vertices,
+    size_t num_faces,
+    const fastf_t *vertices,	/* array of floats for vertices [num_vertices*3] */
+    const int *faces,		/* array of ints for faces [num_faces*3] */
+    const fastf_t *thickness,	/* array of plate mode thicknesses
 			 * (corresponds to array of faces) NULL for
 			 * modes RT_BOT_SURFACE and RT_BOT_SOLID.
 			 */
@@ -58,23 +59,23 @@ mk_bot_w_normals(
 				 * otherwise thickness is centered
 				 * about hit point
 				 */
-    int num_normals,	/* number of unit normals in normals array */
+    size_t num_normals,	/* number of unit normals in normals array */
     fastf_t *normals,	/* array of floats for normals [num_normals*3] */
     int *face_normals)	/* array of ints (indices into normals array),
 			 * must have 3*num_faces entries.
 			 */
 {
     struct rt_bot_internal *bot;
-    int i;
+    size_t i;
 
-    if ((num_normals > 0) && (fp->dbip->dbi_version < 5)) {
+    if ((num_normals > 0) && (db_version(fp->dbip) < 5)) {
 	bu_log("You are using an old database format which does not support surface normals for BOT primitives\n");
 	bu_log("You are attempting to create a BOT primitive named \"%s\" with surface normals\n", name);
 	bu_log("The surface normals will not be saved\n");
 	bu_log("Please upgrade to the current database format by using \"dbupgrade\"\n");
     }
 
-    BU_GETSTRUCT(bot, rt_bot_internal);
+    BU_ALLOC(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = mode;
     bot->orientation = orientation;
@@ -97,7 +98,7 @@ mk_bot_w_normals(
 	bot->face_mode = (struct bu_bitv *)NULL;
     }
 
-    if ((num_normals > 0) && (fp->dbip->dbi_version >= 5)) {
+    if ((num_normals > 0) && (db_version(fp->dbip) > 4)) {
 	bot->num_normals = num_normals;
 	bot->num_face_normals = bot->num_faces;
 	bot->normals = (fastf_t *)bu_calloc(bot->num_normals * 3, sizeof(fastf_t), "BOT normals");
@@ -112,7 +113,7 @@ mk_bot_w_normals(
 	bot->face_normals = (int *)NULL;
     }
 
-    return wdb_export(fp, name, (genptr_t)bot, ID_BOT, mk_conv2mm);
+    return wdb_export(fp, name, (void *)bot, ID_BOT, mk_conv2mm);
 }
 
 
@@ -123,8 +124,8 @@ mk_bot(
     unsigned char mode,
     unsigned char orientation,
     unsigned char flags,
-    int num_vertices,
-    int num_faces,
+    size_t num_vertices,
+    size_t num_faces,
     fastf_t *vertices,	/* array of floats for vertices [num_vertices*3] */
     int *faces,		/* array of ints for faces [num_faces*3] */
     fastf_t *thickness,	/* array of plate mode thicknesses
@@ -137,7 +138,7 @@ mk_bot(
 				 * about hit point
 				 */
 {
-    return(mk_bot_w_normals(fp, name, mode, orientation, flags, num_vertices, num_faces, vertices,
+    return (mk_bot_w_normals(fp, name, mode, orientation, flags, num_vertices, num_faces, vertices,
 			    faces, thickness, face_mode, 0, NULL, NULL));
 }
 

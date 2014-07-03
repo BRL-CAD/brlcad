@@ -1,7 +1,7 @@
 /*                         S E T _ U P L O T O U T P U T M O D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,12 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file set_uplotOutputMode.c
+/** @file libged/set_uplotOutputMode.c
  *
  * The set_uplotOutputMode command.
  *
  */
 
+#include "common.h"
 #include <string.h>
 #include "ged.h"
 #include "plot3.h"
@@ -31,7 +32,7 @@
  * Set/get the unix plot output mode
  *
  * Usage:
- *        set_uplotOutputMode [binary|text]
+ * set_uplotOutputMode [binary|text]
  *
  */
 int
@@ -44,31 +45,31 @@ ged_set_uplotOutputMode(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* Get the plot output mode */
     if (argc == 1) {
 	if (gedp->ged_gdp->gd_uplotOutputMode == PL_OUTPUT_MODE_BINARY)
-	    bu_vls_printf(&gedp->ged_result_str, "binary");
+	    bu_vls_printf(gedp->ged_result_str, "binary");
 	else
-	    bu_vls_printf(&gedp->ged_result_str, "text");
+	    bu_vls_printf(gedp->ged_result_str, "text");
 
 	return GED_OK;
     }
 
     if (argv[1][0] == 'b' &&
-	!strcmp("binary", argv[1]))
+	BU_STR_EQUAL("binary", argv[1]))
 	gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     else if (argv[1][0] == 't' &&
-	     !strcmp("text", argv[1]))
+	     BU_STR_EQUAL("text", argv[1]))
 	gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_TEXT;
     else {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 

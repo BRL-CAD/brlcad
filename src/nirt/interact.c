@@ -1,7 +1,7 @@
 /*                      I N T E R A C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file interact.c
+/** @file nirt/interact.c
  *
  * handle user interaction with nirt.
  *
@@ -80,14 +80,12 @@ sgetc (char *string)
 
 
 /**
- * I N T E R A C T
- *
  * Handle user interaction.  Interact() prompts on stdin for a key
  * word, looks the key word up in the command table and, if it finds
  * the key word, the command is executed.
  */
 void
-interact(int input_source, void *sPtr)
+interact(int input_source, void *sPtr, struct rt_i *rtip)
 {
     int Ch;			/* individual characters of the input line */
     int Prev_ch=0;		/* previous character */
@@ -128,23 +126,23 @@ interact(int input_source, void *sPtr)
 	    if (nirt_debug & DEBUG_INTERACT)
 		bu_log("Skipping '%c'\n", Ch);
 	}
-	if (Ch == '\n')
+	if (Ch == '\n' || Ch == '\r')
 	    continue;
 
-	for (i = 0; (Ch != '\n') && (i < 255); ++i) {
+	for (i = 0; (Ch != '\n') && (Ch != '\r') && (i < 255); ++i) {
 	    if (Ch == CMT_CHAR) {
 		if ( Prev_ch == '\\' ) {
 		    i--;
 		} else {
 		    in_cmt = 1;
-		    while (((Ch = next_char(sPtr)) != EOF) && (Ch != '\n'))
+		    while (((Ch = next_char(sPtr)) != EOF) && (Ch != '\n') && (Ch != '\r'))
 			;
 		}
 	    }
 	    if (Ch == SEP_CHAR) {
 		more_on_line = 1;
 		break;
-	    } else if (Ch == '\n') {
+	    } else if ((Ch == '\n') || (Ch == '\r')) {
 		break;
 	    }
 
@@ -188,7 +186,7 @@ interact(int input_source, void *sPtr)
 		    line_buffer);
 	} else {
 	    /* call the callback */
-	    (*(ctp->com_func)) (&line_buffer[key_len], ctp);
+	    (*(ctp->com_func)) (&line_buffer[key_len], ctp, rtip);
 	}
     }
 }
@@ -202,7 +200,7 @@ get_comtab_ent(char *pattern, int pat_len)
 
     for (ctp = ComTab; ctp->com_name; ++ctp) {
 	len = FMAX(pat_len, (int)strlen(ctp->com_name));
-	if ((strncmp (pattern, ctp->com_name, len)) == 0)
+	if ((bu_strncmp (pattern, ctp->com_name, len)) == 0)
 	    break;
     }
     return (ctp->com_name) ? ctp : CT_NULL;

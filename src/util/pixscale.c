@@ -1,7 +1,7 @@
 /*                      P I X S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixscale.c
+/** @file util/pixscale.c
  *
  * Scale an RGB pix file.
  *
@@ -45,13 +45,14 @@
 
 unsigned char *outbuf;
 unsigned char *buffer;
-int scanlen;			/* length of infile (and buffer) scanlines */
-int buflines;			/* Number of lines held in buffer */
-int buf_start = -1000;		/* First line in buffer */
+ssize_t scanlen;		/* length of infile (and buffer) scanlines */
+ssize_t buflines;		/* Number of lines held in buffer */
+off_t buf_start = -1000;	/* First line in buffer */
 
-int bufy;				/* y coordinate in buffer */
+ssize_t bufy;				/* y coordinate in buffer */
 FILE *buffp;
 static char *file_name;
+static char hyphen[] = "-";
 
 int rflag = 0;
 int inx = 512;
@@ -61,7 +62,7 @@ int outy = 512;
 
 
 static char usage[] = "\
-Usage: pixscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
+Usage: pixscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
 
 /****** THIS PROBABLY SHOULD BE ELSEWHERE *******/
@@ -79,18 +80,22 @@ Usage: pixscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 void
 fill_buffer(int y)
 {
-    static int file_pos = 0;
+    static off_t file_pos = 0;
+    size_t ret;
 
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
     if (file_pos != buf_start * scanlen) {
-	if (fseek(buffp, buf_start * scanlen, 0) < 0) {
+	if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
 	    bu_exit(3, "pixscale: Can't seek to input pixel! y=%d\n", y);
 	}
 	file_pos = buf_start * scanlen;
     }
-    fread(buffer, scanlen, buflines, buffp);
+    ret = fread(buffer, scanlen, buflines, buffp);
+    if (ret < (size_t)buflines)
+	perror("fread");
+
     file_pos += buflines * scanlen;
 }
 
@@ -107,6 +112,7 @@ ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
     double x, y;
     double xstep, ystep;
     unsigned char *op, *lp;
+    size_t ret;
 
     xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
     ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
@@ -134,7 +140,9 @@ ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
 	    *op++ = lp[2];
 	}
 
-	(void) fwrite(outbuf, 3, ox, ofp);
+	ret = fwrite(outbuf, 3, ox, ofp);
+	if (ret < (size_t)ox)
+	    perror("fwrite");
     }
 }
 
@@ -151,6 +159,7 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
     double x, y, dx, dy, mid1, mid2;
     double xstep, ystep;
     unsigned char *op, *up, *lp;
+    size_t ret;
 
     xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
     ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
@@ -198,7 +207,9 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
 	    *op++ = mid1 + dy * (mid2 - mid1);
 	}
 
-	(void) fwrite(outbuf, 3, ox, ofp);
+	ret = fwrite(outbuf, 3, ox, ofp);
+	if (ret < (size_t)ox)
+	    perror("fwrite");
     }
 }
 
@@ -219,6 +230,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
     double xdist, ydist;			/* length of new pixel sides in old coord */
     double sumr, sumg, sumb;
     unsigned char *op;
+    size_t ret;
 
     if (ix == ox)
 	pxlen = 1.0;
@@ -289,7 +301,9 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	    *op++ = (int)(sumg / (pxlen * pylen));
 	    *op++ = (int)(sumb / (pxlen * pylen));
 	}
-	fwrite(outbuf, 3, ox, ofp);
+	ret = fwrite(outbuf, 3, ox, ofp);
+	if (ret < (size_t)ox)
+	    perror("fwrite");
     }
     return 1;
 }
@@ -315,9 +329,13 @@ init_buffer(int len)
      */
     if (max > 4096) max = 4096;
 
-    buflines = max;
+    if (max < iny)
+	buflines = max;
+    else
+	buflines = iny;
+
     buf_start = (-buflines);
-    buffer = bu_malloc(buflines * len, "buffer");
+    buffer = (unsigned char *)bu_malloc(buflines * len, "buffer");
 }
 
 
@@ -326,15 +344,11 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "rhs:w:n:S:W:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "rs:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'r':
 		/* pixel replication */
 		rflag = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		inx = iny = 1024;
 		break;
 	    case 'S':
 		/* square size */
@@ -362,7 +376,7 @@ get_args(int argc, char **argv)
 	}
     }
 
-    /* XXX - backward compatability hack */
+    /* XXX - backward compatibility hack */
     if (bu_optind+5 == argc) {
 	file_name = argv[bu_optind++];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
@@ -378,7 +392,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
@@ -400,9 +414,10 @@ main(int argc, char **argv)
 {
     int i;
 
-    if (!get_args(argc, argv) || isatty(fileno(stdout))) {
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);
-    }
+    if (!get_args(argc, argv) || isatty(fileno(stdout)))
+	bu_exit(1, "%s", usage);
 
     if (inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0) {
 	bu_exit(2, "pixscale: bad size\n");
@@ -414,10 +429,10 @@ main(int argc, char **argv)
     if (inx < outx) i = outx * 3;
     else i = inx * 3;
 
-    outbuf = bu_malloc(i, "outbuf");
+    outbuf = (unsigned char *)bu_malloc(i, "outbuf");
 
     /* Here we go */
-    i = scale(stdout, inx, iny, outx, outy);
+    scale(stdout, inx, iny, outx, outy);
     bu_free(outbuf, "outbuf");
     bu_free(buffer, "buffer");
     return 0;

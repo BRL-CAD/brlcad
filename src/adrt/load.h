@@ -1,7 +1,7 @@
 /*                         L O A D . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,18 +21,18 @@
  *
  */
 
-#ifndef _SLAVE_LOAD_H
-#define _SLAVE_LOAD_H
+#ifndef ADRT_LOAD_H
+#define ADRT_LOAD_H
 
 #include "adrt.h"
 #include "adrt_struct.h"
 
-int slave_load(tie_t *tie, void *, uint32_t dlen);
+int slave_load(struct tie_s *tie, void *);
 
 extern uint32_t slave_load_mesh_num;
 extern adrt_mesh_t *slave_load_mesh_list;
 
-int slave_load_g (tie_t *tie, char *data);
+int slave_load_g (struct tie_s *tie, char *data);
 
 #endif
 

@@ -1,7 +1,7 @@
 /*                        B W S T A T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwstat.c
+/** @file util/bwstat.c
  *
  * Compute statistics of pixels in a black and white (BW) file.
  * Gives min, max, mode, median, mean, s.d., var, and skew.
@@ -49,7 +49,7 @@ int verbose = 0;
 long bin[256];		/* Histogram bins */
 
 
-static const char *Usage = "usage: bwstat [-v] [file.bw]\n";
+static const char *Usage = "Usage: bwstat [-v] [file.bw]\n";
 
 /*
  * Display the histogram values.
@@ -79,8 +79,11 @@ main(int argc, char **argv)
     double mean, var, skew;
     FILE *fp;
 
+    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
+	bu_exit(1, "%s", Usage);
+
     /* check for verbose flag */
-    if (argc > 1 && strcmp(argv[1], "-v") == 0) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
 	argv++;
 	argc--;

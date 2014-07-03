@@ -1,7 +1,7 @@
 /*                         H T O N D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,9 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "bu.h"
-
+#include "bu/cv.h"
+#include "bu/endian.h"
+#include "bu/log.h"
 
 #define OUT_IEEE_ZERO { \
 	*out++ = 0; \
@@ -56,7 +57,7 @@
 
 
 void
-htond(register unsigned char *out, register const unsigned char *in, size_t count)
+bu_cv_htond(register unsigned char *out, register const unsigned char *in, size_t count)
 {
     register size_t i;
 
@@ -300,7 +301,7 @@ htond(register unsigned char *out, register const unsigned char *in, size_t coun
 #endif
 	exp += 1023 - 040000 - 1;
 	if ((exp & ~0x7FF) != 0) {
-	    fprintf(stderr, "htond:  Cray exponent too large on x%x\n", word);
+	    fprintf(stderr, "bu_cv_htond:  Cray exponent too large on x%x\n", word);
 	    OUT_IEEE_NAN;
 	}
 
@@ -344,7 +345,7 @@ htond(register unsigned char *out, register const unsigned char *in, size_t coun
 	/* What value here is a Convex NaN ? */
 	exp += 1023 - 1024 - 1;
 	if ((exp & ~0x7FF) != 0) {
-	    fprintf(stderr, "htond:  Convex exponent too large on x%lx\n", word);
+	    fprintf(stderr, "bu_cv_htond:  Convex exponent too large on x%lx\n", word);
 	    OUT_IEEE_NAN;
 	}
 
@@ -357,12 +358,12 @@ htond(register unsigned char *out, register const unsigned char *in, size_t coun
     return;
 #endif
 
-    bu_bomb("htond.c:  ERROR, no HtoND conversion for this machine type\n");
+    bu_bomb("bu_cv_htond.c:  ERROR, no HtoND conversion for this machine type\n");
 }
 
 
 void
-ntohd(register unsigned char *out, register const unsigned char *in, size_t count)
+bu_cv_ntohd(register unsigned char *out, register const unsigned char *in, size_t count)
 {
     register size_t i;
     bu_endian_t order;
@@ -410,7 +411,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, size_t coun
 #if defined(sgi) && !defined(mips)
     /*
      * Silicon Graphics Iris workstation.
-     * See comments in htond() for discussion of the braindamage.
+     * See comments in bu_cv_htond() for discussion of the braindamage.
      */
     for (i=count; i > 0; i--) {
 	/* Brain-damaged 3-D case */
@@ -475,7 +476,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, size_t coun
 	exp += 129 - 1023;
 	/* Check for exponent out of range */
 	if ((exp & ~0xFF) != 0) {
-	    fprintf(stderr, "ntohd: VAX exponent overflow\n");
+	    fprintf(stderr, "bu_cv_ntohd: VAX exponent overflow\n");
 	    goto vax_undef;
 	}
 	left = ((left & 0x000FFFFF)<<3) | signbit | (exp<<23) |
@@ -529,7 +530,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, size_t coun
 	exp /= 4;		/* excess 32, base 16 */
 	exp += (64-32+1);	/* excess 64, base 16, plus fudge */
 	if ((exp & ~0xFF) != 0) {
-	    fprintf(stderr, "ntohd:  IBM exponent overflow\n");
+	    fprintf(stderr, "bu_cv_ntohd:  IBM exponent overflow\n");
 	    goto ibm_undef;
 	}
 
@@ -644,7 +645,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, size_t coun
 	}
 	if (exp == 0x7FF) {
 	    /* IEEE NaN = Convex what? */
-	    fprintf(stderr, "ntohd: Convex NaN unimplemented\n");
+	    fprintf(stderr, "bu_cv_ntohd: Convex NaN unimplemented\n");
 	    word = 0;
 	    goto convex_out;
 	}
@@ -659,7 +660,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, size_t coun
     return;
 #endif
 
-    bu_bomb("ntohd.c:  ERROR, no NtoHD conversion for this machine type\n");
+    bu_bomb("bu_cv_ntohd.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
 
 

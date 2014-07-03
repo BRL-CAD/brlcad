@@ -1,7 +1,7 @@
 /*                         B E S E T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ void usage() {
 
 
 /* fitness of a given object compared to source */
-static int cmp_ind(const void *p1, const void *p2)
+static int cmp_ind(const void *p1, const void *p2, void *UNUSED(arg))
 {
     if (((struct individual *)p2)->fitness > ((struct individual *)p1)->fitness)
 	return -1;
@@ -73,7 +73,7 @@ parse_args (int ac, char *av[], struct beset_options *opts)
     bu_optind = 0;
     av++; ac--;
 
-    while ((c=bu_getopt(ac, av, OPTIONS)) != EOF) {
+    while ((c=bu_getopt(ac, av, OPTIONS)) != -1) {
 	switch (c) {
 	    case 'm':
 		opts->mut_rate = atoi(bu_optarg);
@@ -82,7 +82,7 @@ parse_args (int ac, char *av[], struct beset_options *opts)
 		opts->cross_rate = atoi(bu_optarg);
 		continue;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		continue;
 	    case 'p':
 		opts->pop_size = atoi(bu_optarg);
@@ -110,12 +110,10 @@ parse_args (int ac, char *av[], struct beset_options *opts)
 }
 
 
-
 int main(int argc, char *argv[]) {
     int i, g; /* generation and parent counters */
     int parent1, parent2;
     int gop;
-    int best, worst;
     fastf_t total_fitness = 0.0f;
     struct fitness_state fstate;
     struct population pop = {NULL, NULL, NULL, NULL, NULL, 0};
@@ -140,7 +138,7 @@ int main(int argc, char *argv[]) {
     pop_init(&pop, opts.pop_size);
     pop_spawn(&pop);
 
-    source_db = db_open(argv[ac+1], "r+w");
+    source_db = db_open(argv[ac+1], DB_OPEN_READWRITE);
     db_dirbuild(source_db);
     pop.db_c = db_create("testdb", 5);
     db_close(pop.db_c);
@@ -153,13 +151,11 @@ int main(int argc, char *argv[]) {
 #endif
 
 	total_fitness = 0.0f;
-	best = worst = 0;
 
 	snprintf(dbname, 256, "gen%.3d", g);
 	pop.db_c = db_create(dbname, 5);
 
 	pop_gop(REPRODUCE, argv[ac+2], NULL, argv[ac+2], NULL, source_db, pop.db_c, &rt_uniresource);
-
 
 
 	/* calculate sum of all fitnesses and find
@@ -172,7 +168,7 @@ int main(int argc, char *argv[]) {
 	    total_fitness += FITNESS;
 	}
 	/* sort population - used for keeping top N and dropping bottom M */
-	qsort(pop.parent, pop.size, sizeof(struct individual), cmp_ind);
+	bu_sort((void *)pop.parent, pop.size, sizeof(struct individual), cmp_ind, NULL);
 
 	/* remove lower M of individuals */
 	for (i = 0; i < opts.kill_lower; i++) {
@@ -216,13 +212,12 @@ int main(int argc, char *argv[]) {
 #ifdef VERBOSE
 		printf("x(%s, %s) --> (%s, %s)\n", NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), pop.child[i-1].id, pop.child[i].id);
 #endif
-		/* perform the genetic operation and output the children to the cihld database */
+		/* perform the genetic operation and output the children to the child database */
 		pop_gop(gop, NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), NL(pop.child[i-1].id), NL(pop.child[i].id),
 			pop.db_p, pop.db_c, &rt_uniresource);
 	    }
 
 	}
-
 
 
 	/* Close parent db and move children
@@ -252,7 +247,6 @@ int main(int argc, char *argv[]) {
     fit_clean(&fstate);
     return 0;
 }
-
 
 
 /*

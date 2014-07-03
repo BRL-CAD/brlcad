@@ -1,7 +1,7 @@
 /*                          A D R T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,12 +20,11 @@
 
 /** @file adrt.h
  *
- * Brief description
  *
  */
 
-#ifndef _ADRT_H
-#define _ADRT_H
+#ifndef ADRT_ADRT_H
+#define ADRT_ADRT_H
 
 #include "common.h"
 
@@ -56,17 +55,6 @@ enum
     ADRT_WORK_MINMAX,			/* 17 */
     ADRT_WORK_END
 };
-static char *adrt_work_table[20] = {
-    "ADRT_WORK_INIT",
-    "ADRT_WORK_STATUS",
-    "ADRT_WORK_FRAME_ATTR",
-    "ADRT_WORK_FRAME",
-    "ADRT_WORK_SHOTLINE",
-    "ADRT_WORK_SPALL",
-    "ADRT_WORK_SELECT",
-    "ADRT_WORK_MINMAX",
-    NULL};
-
 
 
 #define ADRT_NETOP_BASE 0x20
@@ -83,16 +71,7 @@ enum
     ADRT_NETOP_SHUTDOWN,		/* 27 */
     ADRT_NETOP_END
 };
-static char *adrt_netop_table[20] = {
-    "ADRT_NETOP_NOP",
-    "ADRT_NETOP_INIT",
-    "ADRT_NETOP_REQWID",
-    "ADRT_NETOP_LOAD",
-    "ADRT_NETOP_WORK",
-    "ADRT_NETOP_MESG",
-    "ADRT_NETOP_QUIT",
-    "ADRT_NETOP_SHUTDOWN",
-    NULL};
+
 
 /* fill in a human readable version of the adrt op (for debugging) */
 #define ADRT_MESSAGE_NAME(op) \
@@ -100,7 +79,7 @@ static char *adrt_netop_table[20] = {
     (op >= ADRT_NETOP_BASE && op <= ADRT_NETOP_END) ? adrt_netop_table[op-ADRT_NETOP_BASE] : \
     "Unknown"
 
-    /* use the high bit to indicate if mode has changed */
+/* use the high bit to indicate if mode has changed */
 #define ADRT_MESSAGE_MODE_CHANGE(x) (x |= 0x80)
 #define ADRT_MESSAGE_MODE_CHANGEP(x) (x & 0x80)
 #define ADRT_MESSAGE_MODE(x) (x & ~0x80)
@@ -145,9 +124,9 @@ static char *adrt_netop_table[20] = {
 
 #define TIENET_BUFFER_SIZE(_b, _s) { \
 	if (_s > _b.size) { \
-	  _b.data = bu_realloc(_b.data, _s, "tienet buffer size"); \
-	  _b.size = _s; \
-        } }
+	    _b.data = (uint8_t *)bu_realloc(_b.data, _s, "tienet buffer size");	\
+	    _b.size = _s; \
+	} }
 
 typedef struct tienet_buffer_s {
     uint8_t *data;
@@ -155,7 +134,7 @@ typedef struct tienet_buffer_s {
     uint32_t ind;
 } tienet_buffer_t;
 
-BU_EXPORT BU_EXTERN(int load_g, (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **));
+BU_EXPORT extern int load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **);
 
 #endif
 

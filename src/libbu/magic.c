@@ -1,7 +1,7 @@
 /*                         M A G I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,13 +18,10 @@
  * information.
  */
 
-#include "common.h"
-
-#include "magic.h"
-
+#include "bu/magic.h"
 
 const char *
-bu_identify_magic(register unsigned long magic)
+bu_identify_magic(register uint32_t magic)
 {
     switch (magic) {
 	case 0:
@@ -57,8 +54,6 @@ bu_identify_magic(register unsigned long magic)
 	    return "bu_list";
 	case BU_MAPPED_FILE_MAGIC:
 	    return "bu_mapped_file";
-	case BU_MRO_MAGIC:
-	    return "bu_mro";
 	case BU_PTBL_MAGIC:
 	    return "bu_ptbl";
 	case BU_RB_LIST_MAGIC:
@@ -69,6 +64,8 @@ bu_identify_magic(register unsigned long magic)
 	    return "red-black package";
 	case BU_RB_TREE_MAGIC:
 	    return "red-black tree";
+	case BN_SPM_MAGIC:
+	    return "spm.h bn_spm_map_t";
 	case BU_VLB_MAGIC:
 	    return "bu_vlb";
 	case BU_VLS_MAGIC:
@@ -161,6 +158,8 @@ bu_identify_magic(register unsigned long magic)
 	    return "rt_tor_internal";
 	case RT_VOL_INTERNAL_MAGIC:
 	    return "rt_vol_internal";
+	case RT_HRT_INTERNAL_MAGIC:
+	    return "rt_hrt_internal";
 
 	    /*
 	     * N-manifold geometry
@@ -235,7 +234,7 @@ bu_identify_magic(register unsigned long magic)
 	    return "librt rt_constraint_internal";
 	case RT_CTS_MAGIC:
 	    return "librt combined_tree_state";
-	case RT_DBTR_MAGIC:
+	case RT_DB_TRAVERSE_MAGIC:
 	    return "librt dbtr";
 	case RT_DBTS_MAGIC:
 	    return "librt dbts";
@@ -307,8 +306,6 @@ bu_identify_magic(register unsigned long magic)
 	    return "librt resource";
 	case RTI_MAGIC:
 	    return "rt_i";
-	case SPM_MAGIC:
-	    return "spm.h spm_map_t";
 	case VERT_TREE_MAGIC:
 	    return "vert_tree";
 	case WDB_METABALLPT_MAGIC:

@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file facedef.c
+/** @file mged/facedef.c
  *
  */
 
@@ -74,8 +74,6 @@ static void get_pleqn(fastf_t *plane, const char *argv[]), get_rotfb(fastf_t *pl
 static int get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol);
 
 /*
- * F _ F A C E D E F
- *
  * Redefines one of the defining planes for a GENARB8. Finds which
  * plane to redefine and gets input, then shuttles the process over to
  * one of four functions before calculating new vertices.
@@ -90,14 +88,13 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     struct rt_arb_internal *arbo;
     plane_t planes[6];
     int status = TCL_OK;
-    struct bu_vls error_msg;
+    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help facedef");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -127,7 +124,6 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     RT_ARB_CK_MAGIC(arb);
 
     /* find new planes to account for any editing */
-    bu_vls_init(&error_msg);
     if (rt_arb_calc_planes(&error_msg, arb, es_type, planes, &mged_tol)) {
 	Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
 			 "Unable to determine plane equations\n", (char *)NULL);
@@ -187,9 +183,8 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	    break;
 	default:
 	    {
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "bad face (product=%d)\n", prod);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -238,9 +233,8 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		}
 	    if (argc < 12) {
 		/* total # of args under this option */
-		struct bu_vls tmp_vls;
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "%s%s %d: ", MORE_ARGS_STR, p_3pts[(argc-3)%3], argc/3);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -298,7 +292,7 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     /* find all vertices from the plane equations */
-    if (rt_arb_calc_points(arb, es_type, planes, &mged_tol) < 0) {
+    if (rt_arb_calc_points(arb, es_type, (const plane_t *)planes, &mged_tol) < 0) {
 	Tcl_AppendResult(interp, "facedef:  unable to find points\n", (char *)NULL);
 	status = TCL_ERROR;
 	goto end;
@@ -325,8 +319,6 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 
 /*
- * G E T _ P L E Q N
- *
  * Gets the planar equation from the array argv[] and puts the result
  * into 'plane'.
  */
@@ -347,8 +339,6 @@ get_pleqn(fastf_t *plane, const char *argv[])
 
 
 /*
- * G E T _ 3 P T S
- *
  * Gets three definite points from the array argv[] and finds the
  * planar equation from these points.  The resulting plane equation is
  * stored in 'plane'.
@@ -381,8 +371,6 @@ get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
 
 
 /*
- * G E T _ R O T F B
- *
  * Gets information from the array argv[].  Finds the planar equation
  * given rotation and fallback angles, plus a fixed point. Result is
  * stored in 'plane'. The vertices pointed to by 's_recp' are used if
@@ -407,7 +395,7 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
     plane[2] = sin(fb);
 
     if (argv[2][0] == 'v') {
-      	/* vertex given */
+	/* vertex given */
 	/* strip off 'v', subtract 1 */
 	temp = atoi(argv[2]+1) - 1;
 	plane[W]= VDOT(&plane[0], arb->pt[temp]);
@@ -421,8 +409,6 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 
 
 /*
- * G E T _ N U P N T
- *
  * Gets a point from the three strings in the 'argv' array.  The value
  * of D of 'plane' is changed such that the plane passes through the
  * input point.

@@ -1,7 +1,7 @@
 /*                           L O G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +17,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file log.h
- *
- */
+
+#ifndef EXTERNAL_UNIGRAPHICS_LOG_H
+#define EXTERNAL_UNIGRAPHICS_LOG_H
+
+#include "common.h"
 
 #include <stdarg.h>
+
 extern void log(const char *fmt, ...);
 extern void dialog(const char *fmt, ...);
 extern void log_init(void);
+
+#endif /* EXTERNAL_UNIGRAPHICS_LOG_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                    O B J _ P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2010 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 
 #include "common.h"
 
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 
@@ -43,13 +43,13 @@ rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (id < 0)
 	return -2;
 
-    ft = &rt_functab[id];
+    ft = &OBJ[id];
     if (!ft)
 	return -3;
     if (!ft->ft_plot)
 	return -4;
 
-    return ft->ft_plot(vhead, ip, ttol, tol);
+    return ft->ft_plot(vhead, ip, ttol, tol, NULL);
 }
 
 

@@ -1,7 +1,7 @@
 /*                         G L O B E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file globe.c
+/** @file proc-db/globe.c
  * Creates a set of concentric "shells" that, when put together, comprise a
  * unified solid spherical object.  Kinda like an onion, not a cake, an onion.
  *
@@ -36,20 +36,22 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
-char *progname ="globe";
 
-void usage(void)
+
+static void
+usage(const char *progname)
 {
     fprintf(stderr, "Usage: %s db_file.g [stepSize [finalSize [initialSize]]]\n", progname);
     bu_exit(-1, NULL);
 }
+
 
 int
 main(int ac, char *av[])
 {
     struct rt_wdb *db_fp;
     point_t p1;
-    int is_region;
+    int is_region=0;
     unsigned char rgb[3];
     struct wmember wm_hd; /* defined in wdb.h */
     struct wmember bigList;
@@ -62,18 +64,23 @@ main(int ac, char *av[])
     char solidName[256]="";
     char prevSolid[256]="";
     char shaderparams[256]="";
+    char *progname = *av;
 
-    progname = *av;
-
-    if (ac < 2) usage();
-
-    if (ac > 2) stepSize=(double)atof(av[2]);
-    if (ac > 3) finalSize=(double)atof(av[3]);
-    if (ac > 4) initialSize=(double)atof(av[4]);
+    if (ac < 2)
+	usage(progname);
 
     if ((db_fp = wdb_fopen(av[1])) == NULL) {
 	perror(av[1]);
 	bu_exit(-1, NULL);
+    }
+
+    if (ac > 2) {
+	stepSize=(double)atof(av[2]);
+	if (ac > 3) {
+	    finalSize=(double)atof(av[3]);
+	    if (ac > 4)
+		initialSize=(double)atof(av[4]);
+	}
     }
 
     mk_id(db_fp, "Globe Database"); /* create the database header record */
@@ -145,7 +152,7 @@ main(int ac, char *av[])
     /* Create the master globe region
      *
      * In this case we are going to make it a region (hence the
-     * is_region flag is set, and we provide shader parameter information.
+     * is_region flag is set), and we provide shader parameter information.
      *
      * When making a combination that is NOT a region, the region flag
      * argument is 0, and the strings for optical shader, and shader
@@ -169,6 +176,7 @@ main(int ac, char *av[])
     wdb_close(db_fp);
     return 0;
 }
+
 
 /*
  * Local Variables:

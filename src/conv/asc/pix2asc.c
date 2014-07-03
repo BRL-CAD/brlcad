@@ -1,7 +1,7 @@
 /*                       P I X 2 A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,40 +18,38 @@
  * information.
  *
  */
-/** @file pix2asc.c
- *
- *  Author -
- *  	Michael John Muuss
- *
- */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "bio.h"
-
-unsigned char pix[3];		/* RGB of one pixel */
-
-char map[18] = "0123456789ABCDEFx";
+#include "bu.h"
 
 int
-main(void)
+main(int UNUSED(ac), char **UNUSED(argv))
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
+    unsigned char pix[3]; /* RGB of one pixel */
+
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-#endif
-    while ( !feof(stdin) &&
-	    fread( (char *)pix, sizeof(pix), 1, stdin) == 1 )  {
-	putc( map[pix[0]>>4], stdout );
-	putc( map[pix[0]&0xF], stdout );
-	putc( map[pix[1]>>4], stdout );
-	putc( map[pix[1]&0xF], stdout );
-	putc( map[pix[2]>>4], stdout );
-	putc( map[pix[2]&0xF], stdout );
-	putc( '\n', stdout );
+
+    while (!feof(stdin)
+	   && fread((void *)pix, sizeof(unsigned char) * 3, 1, stdin) == 1) {
+	/* Input validation of the individual R, G, and B bytes
+	   (required by Coverity) */
+	int i;
+	for (i = 0; i < 3; ++i) {
+	    /* the cast to int is necessary to avoid a gcc warning of
+	       an always true test */
+	    int d = (int)pix[i];
+	    if (d < 0 || d > UCHAR_MAX) {
+		bu_bomb("Corrupt file!");
+	    }
+	    printf("%02X", pix[i]);
+	}
+	printf("\n");
     }
     return 0;
 }

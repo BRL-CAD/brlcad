@@ -1,7 +1,7 @@
 /*                      V I E W C E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewcell.c
+/** @file rt/viewcell.c
  *
  *  Ray Tracing program RTCELL bottom half.
  *
@@ -32,9 +32,9 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "./ext.h"
 
-#include "rtprivate.h"
+#include "./rtuif.h"
+#include "./ext.h"
 
 
 #define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
@@ -47,27 +47,30 @@ extern int	npsw;			/* number of worker PSWs to run */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 static mat_t	model2hv;		/* model coords to GIFT h, v in inches */
 
 
 const char title[] = "RT Cell";
-const char usage[] = "\
-Usage:  rtcell [options] model.g objects... >file.cell\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -g #		Grid cell width in millimeters (conflicts with -s\n\
- -G #		Grid cell height in millimeters (conflicts with -s\n\
- -J #		Jitter.  Default is off.  Any non-zero number is on\n\
- -o model.cell	Specify output file (default=stdout)\n\
- -U #		Set use_air boolean to # (default=0)\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.cell\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
+    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
+    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -g #		Grid cell width in millimeters (conflicts with -s\n");
+    bu_log(" -G #		Grid cell height in millimeters (conflicts with -s\n");
+    bu_log(" -J #		Jitter.  Default is off.  Any non-zero number is on\n");
+    bu_log(" -o model.cell	Specify output file (default=stdout)\n");
+    bu_log(" -U #		Set use_air boolean to # (default=0)\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
 
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
@@ -75,14 +78,12 @@ int     raymiss(register struct application *ap);
 
 
 /*
- *  			V I E W _ I N I T
- *
  *  This routine is called by main().  It prints the overall shotline
  *  header. Furthermore, pointers to rayhit() and raymiss() are set up
  *  and are later called from do_run().
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
 
     if ( !minus_o )
@@ -107,14 +108,12 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 }
 
 /*
- *			V I E W _ 2 I N I T
- *
  *  View_2init is called by do_frame(), which in turn is called by
  *  main() in rt.c.
  *
  */
 void
-view_2init(struct application *ap)
+view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 {
 
     if ( outfp == NULL )
@@ -141,37 +140,31 @@ view_2init(struct application *ap)
 }
 
 /*
- *			R A Y M I S S
- *
  *  Null function -- handle a miss
  *  This function is called by rt_shootray(), which is called by
  *  do_frame().
  */
 int
-raymiss(register struct application *ap)
+raymiss(register struct application *UNUSED(ap))
 {
     return 0;
 }
 
 /*
- *			V I E W _ P I X E L
- *
  *  This routine is called from do_run(), and in this case does nothing.
  */
 void
-view_pixel(void)
+view_pixel(struct application *UNUSED(ap))
 {
     return;
 }
 
 /*
- *			R A Y H I T
- *
  *  Rayhit() is called by rt_shootray() when the ray hits one or more objects.
  *  Write information about this "cell".
  */
 int
-rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segp)
+rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp = PartHeadp->pt_forw;
     point_t			hv;		/* GIFT h, v coords, in inches */
@@ -213,28 +206,25 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 }
 
 /*
- *			V I E W _ E O L
- *
  *  View_eol() is called by rt_shootray() in do_run().  In this case,
  *  it does nothing.
  */
-void	view_eol(void)
+void
+view_eol(struct application *UNUSED(ap))
 {
 }
 
 /*
- *			V I E W _ E N D
- *
  *  View_end() is called by rt_shootray in do_run().
  */
 void
-view_end(void)
+view_end(struct application *UNUSED(ap))
 {
     fflush(outfp);
 }
 
-void view_setup(void) {}
-void view_cleanup(void) {}
+void view_setup(struct rt_i *UNUSED(rtip)) {}
+void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 void application_init (void) {}
 

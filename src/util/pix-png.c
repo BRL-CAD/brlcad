@@ -1,7 +1,7 @@
 /*                       P I X - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-png.c
+/** @file util/pix-png.c
  *
  * Convert pix file to PNG (Portable Network Graphics) format
  *
@@ -33,11 +33,9 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
-
-#include "zlib.h"
-#include "pngconf.h"
-#include "png.h"
 
 #include "bu.h"
 #include "vmath.h"
@@ -64,9 +62,9 @@ double out_gamma = -1.0;
 int
 get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE **outfp)
 {
-    int c;
+    int c, ttyin, ttyout;
 
-    while ((c = bu_getopt(argc, argv, "ag:s:w:n:o:h?")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ag:s:w:n:o:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
@@ -94,9 +92,7 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 		}
 		break;
 	    }
-		
-	    case '?':
-	    case 'h':
+
 	    default: /* help */
 		return 0;
 	}
@@ -114,14 +110,16 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 	fileinput++;
     }
 
-    if (isatty(fileno(*infp))) {
-	bu_log("ERROR: %s will not read pix data from a tty\n", bu_getprogname());
+    ttyin = isatty(fileno(*infp));
+    ttyout = isatty(fileno(*outfp));
+    if (ttyin && ttyout && argc == 1)
+	return 0; /* usage */ /* running the command with no arguments (AND no file pipes) */
+    if (ttyin)
+	bu_log("%s: will not read pix data from a tty\n", bu_getprogname());
+    if (ttyout)
+	bu_log("%s: will not write png data to a tty\n", bu_getprogname());
+    if (ttyin || ttyout)
 	return 0; /* usage */
-    }
-    if (isatty(fileno(*outfp))) {
-	bu_log("ERROR: %s will not write png data to a tty\n", bu_getprogname());
-	return 0; /* usage */
-    }
     if (argc > ++bu_optind) {
 	bu_log("%s: excess argument(s) ignored\n", bu_getprogname());
     }
@@ -167,7 +165,8 @@ write_png(FILE *outfp, unsigned char **scanlines, long int width, long int heigh
      * representing the value needed to un-do the 2.2 correction
      * auto-applied by PowerPoint for PC monitors.
      */
-    png_set_gAMA(png_p, info_p, out_gamma);
+    if (out_gamma > 0.0)
+	png_set_gAMA(png_p, info_p, out_gamma);
 
     png_write_info(png_p, info_p);
     png_write_image(png_p, scanlines);
@@ -191,7 +190,7 @@ main(int argc, char *argv[])
     size_t file_width = 512; /* default input width */
     size_t file_height = 512; /* default input height */
 
-    char usage[] = "Usage: pix-png [-a] [-w file_width] [-n file_height]\n\
+    char usage[] = "Usage: pix-png [-a] [-w file_width] [-n file_height] [-g gamma]\n\
 	[-s square_file_size] [-o file.png] [file.pix] [> file.png]\n";
 
     bu_setprogname(argv[0]);
@@ -236,13 +235,13 @@ main(int argc, char *argv[])
     }
     if (SIZE * sizeof(unsigned char) < (size_t)sb.st_size) {
 	bu_log("WARNING: Output PNG image dimensions are smaller than the PIX input image\n");
-	bu_log("Input image is %lu pixels, output image is %ld pixels\n", (unsigned long)sb.st_size / 3, SIZE * sizeof(unsigned char) / 3);
+	bu_log("Input image is %lu pixels, output image is %zu pixels\n", (unsigned long)sb.st_size / 3, SIZE * sizeof(unsigned char) / 3);
 	if (fb_common_file_size(&w, &h, file_name, 3)) {
-	    bu_log("Input PIX dimensions appear to be %ldx%ld pixels.  ", w, h);
+	    bu_log("Input PIX dimensions appear to be %zux%zu pixels.  ", w, h);
 	    if (w == h) {
-		bu_log("Try using the -s%ld option.\n", w);
+		bu_log("Try using the -s%zu option.\n", w);
 	    } else {
-		bu_log("Try using the -w%ld -n%ld options.\n", w, h);
+		bu_log("Try using the -w%zu -n%zu options.\n", w, h);
 	    }
 	}
     }

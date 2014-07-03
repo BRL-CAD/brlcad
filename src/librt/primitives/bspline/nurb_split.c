@@ -1,7 +1,7 @@
 /*                    N U R B _ S P L I T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_split.c
+/** @file primitives/bspline/nurb_split.c
  *
  * Subdivide a nurb surface by inserting a multiple knot of of the
  * surface order in a given direction and return the resulting
@@ -69,7 +69,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 	value = srf->u.knots[(srf->u.k_size -1)/2];
 
 	for (i = 0; i < srf->u.k_size; i++)
-	    if (NEAR_ZERO(value - srf->u.knots[i], SMALL_FASTF)) {
+	    if (ZERO(value - srf->u.knots[i])) {
 		k_index = i;
 		break;
 	    }
@@ -150,7 +150,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 	value = srf->v.knots[(srf->v.k_size -1)/2];
 
 	for (i = 0; i < srf->v.k_size; i++)
-	    if (NEAR_ZERO(value - srf->v.knots[i], SMALL_FASTF)) {
+	    if (ZERO(value - srf->v.knots[i])) {
 		k_index = i;
 		break;
 	    }
@@ -241,8 +241,6 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 
 
 /**
- * R T _ N U R B _ C _ S P L I T
- *
  * Split a NURB curve by inserting a multiple knot and return the
  * result of the two curves.
  *
@@ -275,7 +273,7 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 	value = crv->k.knots[(crv->k.k_size -1)/2];
 
     for (i = 0; i < crv->k.k_size; i++)
-	if (NEAR_ZERO(value - crv->k.knots[i], SMALL_FASTF)) {
+	if (ZERO(value - crv->k.knots[i])) {
 	    k_index = i;
 	    break;
 	}

@@ -1,7 +1,7 @@
 #                E H Y E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2010 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -37,6 +37,8 @@
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
 	method updateGeometry {}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method createGeometry {obj}
 	method p {obj args}
     }
@@ -59,6 +61,22 @@
 	variable mR_1 ""
 	variable mR_2 ""
 	variable mC ""
+
+	# Checkpoint values
+	variable checkpointed_name ""
+	variable cmVx ""
+	variable cmVy ""
+	variable cmVz ""
+	variable cmHx ""
+	variable cmHy ""
+	variable cmHz ""
+	variable cmAx ""
+	variable cmAy ""
+	variable cmAz ""
+	variable cmR_1 ""
+	variable cmR_2 ""
+	variable cmC ""
+
 
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame
@@ -113,6 +131,9 @@
     set mC [bu_get_value_by_keyword c $gdata]
 
     GeometryEditFrame::initGeometry $gdata
+    set curr_name $itk_option(-geometryObject)
+    if {$cmC == "" || "$checkpointed_name" != "$curr_name"} {checkpointGeometry}
+
 }
 
 ::itcl::body EhyEditFrame::updateGeometry {} {
@@ -129,9 +150,40 @@
 	r_2 $mR_2 \
 	c $mC
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
+}
+
+::itcl::body EhyEditFrame::checkpointGeometry {} {
+    set checkpointed_name $itk_option(-geometryObject)
+    set cmVx  $mVx
+    set cmVy  $mVy
+    set cmVz  $mVz
+    set cmHx  $mHx
+    set cmHy  $mHy
+    set cmHz  $mHz
+    set cmAx  $mAx
+    set cmAy  $mAy
+    set cmAz  $mAz
+    set cmR_1 $mR_1
+    set cmR_2 $mR_2
+    set cmC   $mC
+}
+
+::itcl::body EhyEditFrame::revertGeometry {} {
+    set mVx  $cmVx
+    set mVy  $cmVy
+    set mVz  $cmVz
+    set mHx  $cmHx
+    set mHy  $cmHy
+    set mHz  $cmHz
+    set mAx  $cmAx
+    set mAy  $cmAy
+    set mAz  $cmAz
+    set mR_1 $cmR_1
+    set mR_2 $cmR_2
+    set mC   $cmC
+
+    updateGeometry
 }
 
 ::itcl::body EhyEditFrame::createGeometry {obj} {
@@ -211,19 +263,19 @@
 	::ttk::entry $parent.ehyVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ehyVyE {
 	::ttk::entry $parent.ehyVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ehyVzE {
 	::ttk::entry $parent.ehyVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ehyVUnitsL {
 	::ttk::label $parent.ehyVUnitsL \
@@ -240,21 +292,21 @@
 	    -textvariable [::itcl::scope mHx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ehyHyE {
 	::ttk::entry $parent.ehyHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ehyHzE {
 	::ttk::entry $parent.ehyHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ehyHUnitsL {
 	::ttk::label $parent.ehyHUnitsL \
@@ -271,21 +323,21 @@
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ehyAyE {
 	::ttk::entry $parent.ehyAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ehyAzE {
 	::ttk::entry $parent.ehyAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ehyAUnitsL {
 	::ttk::label $parent.ehyAUnitsL \
@@ -300,7 +352,7 @@
 	::ttk::entry $parent.ehyR_1E \
 	    -textvariable [::itcl::scope mR_1] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ehyR_1UnitsL {
 	::ttk::label $parent.ehyR_1UnitsL \
@@ -316,7 +368,7 @@
 	::ttk::entry $parent.ehyR_2E \
 	    -textvariable [::itcl::scope mR_2] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ehyR_2UnitsL {
 	::ttk::label $parent.ehyR_2UnitsL \
@@ -332,11 +384,23 @@
 	::ttk::entry $parent.ehyCE \
 	    -textvariable [::itcl::scope mC] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add ehyCUnitsL {
 	::ttk::label $parent.ehyCUnitsL \
 	    -anchor e
+    } {}
+
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
     } {}
 
     set row 0
@@ -401,6 +465,22 @@
 	-row $row \
 	-column 4 \
 	-sticky nsew
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1
@@ -423,7 +503,7 @@
 
 ::itcl::body EhyEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
-
+    set row 0
     foreach attribute {H A B C} {
 	itk_component add set$attribute {
 	    ::ttk::radiobutton $parent.set_$attribute \
@@ -433,9 +513,8 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component(set$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component(set$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
 }
 
@@ -511,22 +590,30 @@
 
 ::itcl::body EhyEditFrame::initEditState {} {
     set mEditCommand pscale
-    set mEditClass $EDIT_CLASS_SCALE
     set mEditPCommand [::itcl::code $this p]
     configure -valueUnits "mm"
 
     switch -- $mEditMode \
 	$setH {
 	    set mEditParam1 h
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setA {
 	    set mEditParam1 a
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setB {
 	    set mEditParam1 b
+	    set mEditClass $EDIT_CLASS_SCALE
 	} \
 	$setC {
 	    set mEditParam1 c
+	    set mEditClass $EDIT_CLASS_SCALE
+	} \
+	default {
+	    set mEditCommand ""
+	    set mEditPCommand ""
+	    set mEditParam1 ""
 	}
 
     GeometryEditFrame::initEditState

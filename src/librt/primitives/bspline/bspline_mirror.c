@@ -1,7 +1,7 @@
 /*               B S P L I N E _ M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bspline_mirror.c
+/** @file primitives/bspline/bspline_mirror.c
  *
  * mirror support
  *
@@ -31,8 +31,6 @@
 
 
 /**
- * R T _ N U R B _ M I R R O R
- *
  * Given a pointer to an internal GED database object, mirror the
  * object's values about the given transformation matrix.
  */
@@ -93,7 +91,7 @@ rt_nurb_mirror(struct rt_db_internal *ip, register const plane_t plane)
 	int m;
 	int l;
 
-	/* swap knot vetcors between u and v */
+	/* swap knot vectors between u and v */
 	ptr = nurb->srfs[i]->u.knots;
 	tmp = nurb->srfs[i]->u.k_size;
 
@@ -114,7 +112,7 @@ rt_nurb_mirror(struct rt_db_internal *ip, register const plane_t plane)
 	nurb->srfs[i]->s_size[0] = orig_size[1];
 	nurb->srfs[i]->s_size[1] = orig_size[0];
 
-	/* allocat memory for a new control mesh */
+	/* allocate memory for a new control mesh */
 	ncoords = RT_NURB_EXTRACT_COORDS(nurb->srfs[i]->pt_type);
 	ptr = (fastf_t *)bu_calloc(orig_size[0]*orig_size[1]*ncoords, sizeof(fastf_t), "rt_mirror: ctl mesh ptr");
 
@@ -127,7 +125,7 @@ rt_nurb_mirror(struct rt_db_internal *ip, register const plane_t plane)
 	}
 
 	/* copy mirrored control points into new mesh
-	 * while swaping u and v */
+	 * while swapping u and v */
 	m = 0;
 	for (j=0; j<orig_size[0]; j++) {
 	    for (l=0; l<orig_size[1]; l++) {

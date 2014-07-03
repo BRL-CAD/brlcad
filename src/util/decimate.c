@@ -1,7 +1,7 @@
 /*                      D E C I M A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file decimate.c
+/** @file util/decimate.c
  *
  * Program to take M by N array of tuples, and reduce it down to
  * being an I by J array of tuples, by discarding unnecessary stuff.
@@ -65,9 +65,10 @@ main(int argc, char **argv)
     size_t dh, dw;
     size_t todo;
 
+    int failure;
+
     if (argc < 4) {
-	fputs(usage, stderr);
-	bu_exit (1, NULL);
+	bu_exit (1, "%s", usage);
     }
 
     nbytes = atoi(argv[1]);
@@ -77,6 +78,22 @@ main(int argc, char **argv)
     if (argc >= 6) {
 	owidth = atoi(argv[4]);
 	oheight = atoi(argv[5]);
+    }
+
+    if (nbytes <= 0 || nbytes > INT_MAX) {
+	failure = 1;
+	bu_log("decimate: bad nbytes/pixel: %ld\n", (long int)nbytes);
+    }
+    if (iwidth <= 0 || iwidth > INT_MAX || iheight <= 0 || iheight > INT_MAX) {
+	failure = 1;
+	bu_log("decimate: bad size of input range: %ldx%ld\n", (long int)iwidth, (long int)iheight);
+    }
+    if (owidth <= 0 || owidth > INT_MAX || oheight <= 0 || oheight > INT_MAX) {
+	failure = 1;
+	bu_log("decimate: bad size of output range: %ldx%ld\n", (long int)owidth, (long int)oheight);
+    }
+    if (failure) {
+	bu_exit(EXIT_FAILURE, usage);
     }
 
     /* Determine how many samples/lines to discard after each one saved,
@@ -89,7 +106,6 @@ main(int argc, char **argv)
     dw = nw - 1;
     discard = dh;
     if (dw > discard) discard = dw;
-
 
     wpad = owidth - (iwidth / (discard+1));
 
@@ -106,7 +122,8 @@ main(int argc, char **argv)
 
 	/* Scrunch down first scanline of input data */
 	ret = fread(iline, nbytes, iwidth, stdin);
-	if (ret != iwidth) break;
+	if (ret != iwidth)
+	    break;
 	ip = iline;
 	op = oline;
 	for (i=0; i < todo; i++) {
@@ -128,7 +145,7 @@ main(int argc, char **argv)
 	}
     }
 
- out:
+out:
     bu_free(iline, "iline");
     bu_free(oline, "oline");
 

@@ -1,7 +1,7 @@
 /*                         M U L T I P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup multipoly */
 /** @{ */
 /** @file libbn/multipoly.c
@@ -31,7 +32,7 @@
 #include <math.h>
 #include <signal.h>
 
-#include "bu.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "bn.h"
 
@@ -50,23 +51,24 @@
 struct bn_multipoly *
 bn_multipoly_new(int dgrs, int dgrt)
 {
-    struct bn_multipoly *new = bu_malloc(sizeof(struct bn_multipoly), FAILSTR);
+    struct bn_multipoly *newmp;
     int    i, s, t;
 
-    new->cf = bu_malloc(dgrs * sizeof(double *), FAILSTR);
+    BU_ALLOC(newmp, struct bn_multipoly);
+    newmp->cf = (double **)bu_malloc(dgrs * sizeof(double *), FAILSTR);
 
     for (i = 0; i < dgrs; i++) {
-	new->cf[i] = bu_malloc(dgrt * sizeof(double), FAILSTR);
+	newmp->cf[i] = (double *)bu_malloc(dgrt * sizeof(double), FAILSTR);
     }
 
-    new->dgrs = dgrs;
-    new->dgrt = dgrt;
+    newmp->dgrs = dgrs;
+    newmp->dgrt = dgrt;
     for (s = 0; s < dgrs; s++) {
 	for (t = 0; t < dgrt; t++) {
-	    new->cf[s][t] = 0;
+	    newmp->cf[s][t] = 0;
 	}
     }
-    return new;
+    return newmp;
 }
 
 /**
@@ -79,9 +81,9 @@ bn_multipoly_grow(register struct bn_multipoly *P, int dgrs, int dgrt)
 {
     int i, j;
     if (dgrs > P->dgrs) {
-	P->cf = bu_realloc(P->cf, dgrs * sizeof(double *), FAILSTR);
+	P->cf = (double **)bu_realloc(P->cf, dgrs * sizeof(double *), FAILSTR);
 	for (i = P->dgrs; i < dgrs; i++) {
-	    P->cf[i] = bu_malloc(Max(P->dgrt, dgrt) * sizeof(double), FAILSTR);
+	    P->cf[i] = (double *)bu_malloc(Max(P->dgrt, dgrt) * sizeof(double), FAILSTR);
 	    for (j = 0; j < Max(P->dgrt, dgrt); j++) {
 		P->cf[i][j] = 0;
 	    }
@@ -89,7 +91,7 @@ bn_multipoly_grow(register struct bn_multipoly *P, int dgrs, int dgrt)
     }
     if (dgrt > P->dgrt) {
 	for (i = 0; i < P->dgrt; i++) {
-	    P->cf[i] = bu_realloc(P->cf, dgrt * sizeof(double *), FAILSTR);
+	    P->cf[i] = (double *)bu_realloc(P->cf, dgrt * sizeof(double *), FAILSTR);
 	    for (j = P->dgrt; j < dgrt; j++) {
 		P->cf[i][j] = 0;
 	    }
@@ -117,7 +119,7 @@ bn_multipoly_set(register struct bn_multipoly *P, int s, int t, double val)
  * @brief add two polynomials
  */
 struct bn_multipoly *
-bn_multpoly_add(register struct bn_multipoly *p1, register struct bn_multipoly *p2)
+bn_multipoly_add(register struct bn_multipoly *p1, register struct bn_multipoly *p2)
 {
     struct bn_multipoly *sum = bn_multipoly_new(Max(p1->dgrs, p2->dgrs), Max(p1->dgrt, p2->dgrs));
     int s, t;

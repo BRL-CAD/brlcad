@@ -1,7 +1,8 @@
+#!/bin/sh
 #                       M G E D . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2010 United States Government as represented by
+# Copyright (c) 2008-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,35 +44,50 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
-MGED="`ensearch mged/mged`"
+# don't pop up a window on the commands that invoke tk
+DISPLAY=/dev/null
+export DISPLAY
+
+MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
     exit 1
 fi
 
-
-# test all commands
-echo "testing mged commands..."
-
-# make an empty database
-rm -f mged.g
-$MGED -c > mged.log 2>&1 <<EOF
-opendb mged.g y
-quit
-EOF
-
-if test ! -f mged.g ; then
+touch mged.g
+output="`$MGED -c mged.g quit 2>&1`"
+if test $? != 0 ; then
+    echo "Output: $output"
     echo "Unable to run mged, aborting"
     exit 1
 fi
 
-cmds="`$MGED -c mged.g ? 2>&1 | grep -v Using`"
+echo "testing mged commands..."
+
+# make an almost empty database to make sure mged runs
+rm -f mged.g
+$MGED -c > mged.log 2>&1 <<EOF
+opendb mged.g y
+in t.s sph 0 0 0 1
+r t.r u t.s
+g all t.r
+quit
+EOF
+if test ! -f mged.g ; then
+    cat mged.log
+    echo "Test file 'mged.g' is missing. Unable to run mged, aborting"
+    exit 1
+fi
+
+# collect all current commands
+cmds="`$MGED -c mged.g '?' 2>&1 | grep -v Using`"
 help="`$MGED -c mged.g help 2>&1 | grep -v Using`"
 # cmds="$cmds `$MGED -c mged.g ?lib 2>&1`"
 # cmds="$cmds `$MGED -c mged.g ?devel 2>&1`"
 
+# test all commands
 FAILED=0
 for cmd in $cmds ; do
     echo "...$cmd"
@@ -83,7 +99,6 @@ exit
 EOF
 	if test $? != 0 ; then
 	    echo "ERROR: $cmd returned non-zero exit status $?"
-	    echo "Output: $output"
 	    FAILED="`expr $FAILED + 1`"
 	fi
 	continue
@@ -91,6 +106,10 @@ EOF
 	# edcolor is special because it kicks off an editor
 	echo "XXX: Unable to test edcolor"
 	echo "It probably shouldn't kick off an editor without an argument"
+	continue
+    elif test "x$cmd" = "xgraph" ; then
+	continue
+    elif test "x$cmd" = "xigraph" ; then
 	continue
     fi
 
@@ -122,6 +141,22 @@ EOF
 	FAILED="`expr $FAILED + 1`"
 	continue
     fi
+
+    # special tests for some commands due to bug reports
+    if test "x$cmd" = "xregions" || test "x$cmd" = "xsolids" ; then
+	# regions or solids are special because they may core dump
+	# test is a result of bug 3392558 which was fixed at revision 48037
+	rm -f $t.cmd
+	$MGED -c mged.g $cmd t.$cmd all > /dev/null 2>&1 <<EOF
+exit
+EOF
+	if test $? != 0 ; then
+	    echo "ERROR: $cmd returned non-zero exit status $?"
+	    echo "Output: $output"
+	    FAILED="`expr $FAILED + 1`"
+	fi
+    fi
+
 done
 
 if test $FAILED -eq 0 ; then
@@ -129,6 +164,25 @@ if test $FAILED -eq 0 ; then
 else
     echo "-> mged check FAILED"
 fi
+
+# clean up
+# remove test databases (but only if tests succeed)
+if test $FAILED -eq 0 ; then
+    tgms="mged.g"
+    for t in $tgms ; do
+      if test -f $t ; then
+	rm $t
+      fi
+    done
+    # remove test files
+    tfils="t.solids t.regions"
+    for t in $tfils ; do
+      if test -f $t ; then
+	rm $t
+      fi
+    done
+fi
+
 
 exit $FAILED
 

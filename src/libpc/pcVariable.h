@@ -1,7 +1,7 @@
 /*                    P C V A R I A B L E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  * Class definition of Variable & Domain
  *
  */
-#ifndef __PCVARIABLE_H__
-#define __PCVARIABLE_H__
+#ifndef LIBPC_PCVARIABLE_H
+#define LIBPC_PCVARIABLE_H
 
 #define VAR_ABS 0
 #define VAR_INT 1
@@ -66,7 +66,7 @@ public:
     Domain() {}
     ~Domain() {}
     Domain(T low, T high, T step);
-    
+
     /** Data access methods */
     int size() { return Interv.size(); }
     Interval<T> & getInterval(T) throw(pcException);
@@ -80,7 +80,7 @@ public:
     void addInterval(const Interval<T>);
     void addInterval(T, T, T);
     void intersectInterval(Interval<T>);
-    
+
     /** Iterator methods */
     iterator begin();
     iterator end();
@@ -91,7 +91,7 @@ public:
     iterator erase(iterator begin, iterator end);
 
     iterator insert(iterator location, Interval<T> *I);
-    
+
     /** Emptiness check */
     bool isEmpty();
 
@@ -104,7 +104,7 @@ public:
     /** Comparison */
     bool operator==(Domain<T> & d) {
 	if (Interv == d.Interv) return true;
-	else return false; } 
+	else return false; }
     /** Display method */
     void display();
 private:
@@ -144,11 +144,11 @@ class Variable : public VariableAbstract {
 public:
 /* TODO: Implement functionality to search which domain the variable belongs to
    and increment according to the stepvalue of that domain */
-    
+
     /* Constructor and Destructor */
     Variable(std::string vid = "" , T vvalue = 0);
     virtual ~Variable();
-    
+
     /* Data Access methods */
     T getValue() { return value; }
     T getFirst() { return D.getFirst(); }
@@ -157,7 +157,7 @@ public:
     void setValue(T t) { value = t; }
     void minimize() { value = D.getFirst(); }
     void maximize() { value = D.getLast(); }
-    
+
     /* Value storing and restoring methods to assist in iteration */
     void store() { vcopy_ = value; }
     void restore() { value = vcopy_; }
@@ -170,13 +170,13 @@ public:
 
     /* value location in domain check methods */
     bool atUpperBoundary();
-    bool atLowerBoundary(); 
+    bool atLowerBoundary();
     bool atCriticalBelow();
     bool atCriticalAbove();
 
     /* Variable display method */
     void display();
-    
+
     Variable& operator++();
     /*Variable operator++(T) { value++; return this; }*/
 private:
@@ -320,14 +320,17 @@ void Domain<T>::intersectInterval(Interval<T> t)
     } else {
 	typename std::list<Interval<T> >::iterator i = this->Interv.begin();
 	while (i != Interv.end() && i->getHigh() < t.getLow())
-	    Interv.erase(i++);
-	i->setLow(t.getLow());
+	    i=Interv.erase(i);
+	if (i != Interv.end())
+	    i->setLow(t.getLow());
 	i = Interv.end();
 	i--;
 	while (i != Interv.begin() && i->getLow() > t.getHigh())
 	    Interv.erase(i--);
-	i->setHigh(t.getHigh());
-	i->setStep(t.getStep());
+	if (i != Interv.end()) {
+	    i->setHigh(t.getHigh());
+	    i->setStep(t.getStep());
+	}
     }
 }
 template<class T>
@@ -372,7 +375,7 @@ Interval<T> & Domain<T>::getInterval(T t) throw(pcException)
   i++;
   return *i;
   }
-  throw new pcException("Variable not in domain");    
+  throw new pcException("Variable not in domain");
   }
 */
 template<class T>
@@ -433,7 +436,7 @@ int Domain<T>::mergeIntervals (typename std::list<Interval<T> >::iterator i)
 {
     if (i!=Interv.end()) {
 	typename std::list<Interval<T> >::iterator j = i;j++;
-	if (NEAR_ZERO(j->getStep() - i->getStep(), SMALL_FASTF)) {
+	if (ZERO(j->getStep() - i->getStep())) {
 	    /* If interval is not inside the present one */
 	    if (j->getHigh() > i->getHigh())
 		i->setHigh(j->getHigh());
@@ -526,7 +529,7 @@ void Variable<T>::addInterval(T low, T high, T step)
 template<class T>
 void Variable<T>::display()
 {
-    std::cout << "!-- " << getID() << " = " << getValue() 
+    std::cout << "!-- " << getID() << " = " << getValue()
 	      << "\tType = "<< VariableAbstract::type
 	      << "\tConstant = "<< VariableAbstract::const_
 	      << std::endl;
@@ -550,7 +553,7 @@ bool Variable<T>::atLowerBoundary()
 {
     T st = D.getInterval(getFirst()).getStep();
     if (value - getFirst() < st)
-    	return true;
+	return true;
     else
 	return false;
 }
@@ -601,7 +604,6 @@ bool Solution<T>::addSolution(VarSet & V)
 	return false;
     }
     VarSet::iterator i = Varset_.begin();
-    typename DomSet::iterator j = Domset_.begin();
 
     Domains D;
 
@@ -648,22 +650,22 @@ void Solution<T>::cdisplay()
 	size_t l;
 	VarSet::iterator i;
 	typename DomSet::iterator j;
-        typename Domains::iterator k;
+	typename Domains::iterator k;
 	std::vector<double> minmax;
-	
-        std::cout << "Solution Ranges are shown due to existance of non-unique solutions." << std::endl;
+
+	std::cout << "Solution Ranges are shown due to existence of non-unique solutions." << std::endl;
 	for (i = Varset_.begin(); i != Varset_.end(); i++) {
 	    if (*i) std::cout << (*i)->getID() << "\t";
 	}
-        std::cout << std::endl;
-	
+	std::cout << std::endl;
+
 	if (!Domset_.empty()) {
 	    j = Domset_.begin();
 	    for (k = j->begin(), l=0; k != j->end(); ++k, ++l) {
-	        minmax.push_back(k->getFirst());
-	        minmax.push_back(k->getFirst());
+		minmax.push_back(k->getFirst());
+		minmax.push_back(k->getFirst());
 	    }
-	    
+
 	    for (j = Domset_.begin(); j != Domset_.end(); ++j) {
 		for (k = j->begin(), l = 0; k != j->end(); ++k, ++l) {
 		    T value = k->getFirst();
@@ -678,16 +680,16 @@ void Solution<T>::cdisplay()
 	std::cout << std::endl;
 
 	for (l = 0; l < minmax.size()/2; ++l) {
-	    if (!NEAR_ZERO(minmax[2*l] - minmax[2*l+1], SMALL_FASTF)) /* TODO: needs proper tolerancing */
+	    if (!ZERO(minmax[2*l] - minmax[2*l+1])) /* TODO: needs proper tolerancing */
 		std::cout << "to" << "\t";
 	}
 	std::cout << std::endl;
-    
+
 	for (l = 0; l < minmax.size()/2; ++l) {
-	    if (!NEAR_ZERO(minmax[2*l] - minmax[2*l+1], SMALL_FASTF)) /* TODO: needs proper tolerancing */
+	    if (!ZERO(minmax[2*l] - minmax[2*l+1])) /* TODO: needs proper tolerancing */
 		std::cout << minmax[2*l+1] << "\t";
 	}
-    
+
 	std::cout << std::endl << "Number of Solutions: " << Domset_.size() << std::endl;
     }
 }

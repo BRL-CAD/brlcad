@@ -1,7 +1,7 @@
 #               R A Y T R A C E W I Z A R D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #
 # This is the main script for the RaytraceWizard.
 #
+package provide RaytraceWizard 1.0
 
 #
 # Extend Autopath
@@ -37,6 +38,11 @@ foreach i $auto_path {
 namespace eval RtWizard {
     set helpFont {-family helvetica -size 12 \
 		      -slant italic}
+}
+
+namespace eval ArcherCore {
+    set parentClass itk::Widget
+    set inheritFromToplevel 0
 }
 
 #
@@ -73,7 +79,6 @@ namespace eval RaytraceWizard {
     package require PictureTypeE
     package require PictureTypeF
 
-    set dbFile ""
 #    set helpFont {-family helvetica -size 12 \
 		      -slant italic}
 
@@ -170,15 +175,7 @@ namespace eval RaytraceWizard {
 	# command line, use it and proceed. Otherwise, spin up the
 	# gui, select the database page, and wait for the database
 	# file to be specified.
-	#
-	if { [llength $args] > 0 } {
-	    set ::RtWizard::dbFile [ lindex $args 0 ]
-	    if { ! [file exists $::RtWizard::dbFile] } {
-		set ::RtWizard::dbFile ""
-	    }
-	}
-
-	if { [string length $::RtWizard::dbFile] == 0 } {
+	if { [string length $::RtWizard::wizard_state(dbFile)] == 0 } {
 	    #
 	    # select the database page
 	    #
@@ -193,7 +190,7 @@ namespace eval RaytraceWizard {
 	    # Start up the gui, and run until the dbFile has
 	    # been specified.
 	    #
-	    vwait ::RtWizard::dbFile
+	    vwait ::RtWizard::wizard_state(dbFile)
 
 	    #
 	    # Restore the Feedback
@@ -209,20 +206,20 @@ namespace eval RaytraceWizard {
 	# We load the database ourselves and hand it to the
 	# pages.
 	#
-	set ::mgedObj [Mged .\#auto $::RtWizard::dbFile]
-	$::mgedObj configure -multi_pane 0
+	set ::mgedObj [ArcherCore .\#auto 1 1 1 1]
+	$::mgedObj opendb $::RtWizard::wizard_state(dbFile)
 	$fb inform "MGED object instantiated." 40
 
-	$w add RtWizard::FullColorPage fullColor $::RtWizard::dbFile
+	$w add RtWizard::FullColorPage fullColor $::RtWizard::wizard_state(dbFile)
 	$fb inform "Support for full color images loaded." 5
 
-	$w add RtWizard::HighlightedPage highlighted $::RtWizard::dbFile
+	$w add RtWizard::HighlightedPage highlighted $::RtWizard::wizard_state(dbFile)
 	$fb inform "Support for highlighted images loaded." 5
 
-	$w add RtWizard::GhostPage ghost $::RtWizard::dbFile
+	$w add RtWizard::GhostPage ghost $::RtWizard::wizard_state(dbFile)
 	$fb inform "Support for ghost images loaded." 5
 
-	$w add RtWizard::LinePage lines $::RtWizard::dbFile
+	$w add RtWizard::LinePage lines $::RtWizard::wizard_state(dbFile)
 	$w select "exp"
 	$fb inform "rtwizard ready!" 5
 
@@ -244,8 +241,9 @@ namespace eval RaytraceWizard {
 #
 # Start main
 #
-RaytraceWizard::main $argv
-
+if {[info exists argv]} {
+    RaytraceWizard::main $argv
+}
 
 # Local Variables:
 # mode: Tcl

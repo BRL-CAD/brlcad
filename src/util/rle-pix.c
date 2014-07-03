@@ -1,7 +1,7 @@
 /*                       R L E - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rle-pix.c
+/** @file util/rle-pix.c
  *
  * Decode a Utah Raster Toolkit RLE image, and output as a pix(5)
  * file.
@@ -33,12 +33,13 @@
 #include "fb.h"
 #include "bu.h"
 
-/* 
+/*
  * system installed RLE reports a re-define, so undef it to quell the
  * warning
  */
 #include "rle.h"
 
+static char hyphen[] = "-";
 static FILE *infp;
 static char *infile;
 static FILE *outfp;
@@ -65,15 +66,12 @@ Usage: rle-pix [-c -d -h -H] [-C r/g/b]\n\
 	[file.rle [file.pix]]\n\
 ";
 
-/*
- * G E T _ A R G S
- */
 static int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "cdhHs:S:w:W:n:N:C:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "cdhHs:S:w:W:n:N:C:")) != -1) {
 	switch (c) {
 	    case 'd':
 		r_debug = 1;
@@ -127,10 +125,10 @@ get_args(int argc, char **argv)
 	}
 	bu_optind++;
     } else {
-	infile = "-";
+	infile = hyphen;
     }
     if (argv[bu_optind] != NULL) {
-	if (bu_file_exists(argv[bu_optind])) {
+	if (bu_file_exists(argv[bu_optind], NULL)) {
 	    bu_exit(1, "rle-pix: \"%s\" already exists.\n", argv[bu_optind]);
 	}
 	if ((outfp = fopen(argv[bu_optind], "w")) == NULL) {
@@ -149,9 +147,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -340,7 +335,7 @@ main(int argc, char **argv)
 	if (ret == 0)
 	    perror("fwrite");
     }
- done:
+done:
 
     for (i=0; i < ncolors; i++)
 	bu_free(rows[i], "row[]");

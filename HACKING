@@ -42,7 +42,7 @@ TABLE OF CONTENTS
   Filesystem Organization
   Coding Style & Standards
   Documentation
-  Testing
+  Testing & Debugging
   Patch Submission Guidelines
   Bugs & Unexpected Behavior
   Commit Access
@@ -51,6 +51,7 @@ TABLE OF CONTENTS
   Naming a Source Release
   Naming a Binary Release
   Making a Release
+  Patching a Release
   Getting Help
 
 
@@ -180,7 +181,7 @@ For each source file in BRL-CAD, the following checklist applies:
   scope and passing as parameters or embedding them in structures as
   data.
 
-In addtion, don't be afraid to rewrite code or throw away code that
+In addition, don't be afraid to rewrite code or throw away code that
 "smells bad".  No code is sacred.  Perfection is achieved not when
 there is nothing more to add but, rather, when there is nothing more
 to take away.
@@ -336,70 +337,77 @@ and geometry database processing libraries into one library.
 FILESYSTEM ORGANIZATION
 -----------------------
 
+BRL-CAD has a STABLE branch in SVN that should always compile and run
+with expected behavior on all supported platforms.  Contrary to
+STABLE, the SVN trunk is generally expected to compile but more
+flexibility is allowed for resolution of cross-platform build issues
+and on-going development.
+
 Included below is a sample (not comprehensive) of how some of the
 sources are organized in the source distribution.  For the directories
-under src/, see the src/README file for more details on subdirectories
-not covered here.
+under src/ and doc/docbook, see the provided README file for more
+details on subdirectories and authorship not covered here.
 
-bench/
+  bench/
 	The BRL-CAD Benchmark Suite
-db/
+  db/
 	Example geometry databases
-doc/
+  doc/
 	Documentation
-include/
+  doc/docbook
+	Documentation in DocBook xml format, see doc/docbook/README
+	for more details
+  include/
 	Public headers
-m4/
-	Autoconf compilation resource files
-misc/
+  misc/
 	Anything not categorized or is sufficiently en masse
-pix/
+  pix/
 	Sample raytrace images, includes benchmark reference images
-regress/
+  regress/
 	Scripts and resources for regression testing
-sh/
+  sh/
 	Utility scripts, used primarily by the build system
-src/
+  src/
 	Sources, see src/README for more details
-src/adrt
+  src/adrt
 	Advanced Distributed Ray Tracer
-src/conv/
+  src/conv/
 	Various geometry converters
-src/conv/iges/
+  src/conv/iges/
 	IGES converter
-src/fb/
+  src/fb/
 	Tools for displaying data to or reading from framebuffers
-src/fbserv/
+  src/fbserv/
 	Framebuffer server
-src/java/
+  src/java/
 	Java geometry server interface to librt
-src/libbn/
+  src/libbn/
 	BRL-CAD numerics library
-src/libbu
+  src/libbu
 	BRL-CAD utility library
-src/libfb/
+  src/libfb/
 	BRL-CAD Framebuffer library
-src/libfft/
+  src/libfft/
 	Fast Fourier transform library
-src/libged/
+  src/libged/
 	Geometry editing library
-src/libpkg/
+  src/libpkg/
 	Network "package" library
-src/librt/
+  src/librt/
 	BRL-CAD Ray-trace library
-src/libwdb/
+  src/libwdb/
 	Write database library
-src/mged/
+  src/mged/
 	Multi-device geometry editor
-src/other/
-	External frameworks (Tcl/Tk, libpng, zlib, etc)
-src/proc-db/
+  src/other/
+	External frameworks (Tcl/Tk, libpng, zlib, etc.)
+  src/proc-db/
 	Procedural geometry tools, create models programmatically
-src/remrt/
+  src/remrt/
 	Distributed raytrace support
-src/rt/
+  src/rt/
 	Raytracers, various
-src/util/
+  src/util/
 	Various image processing utilities
 
 
@@ -421,16 +429,17 @@ migrated to build system declarations, preprocessor defines, or being
 removed outright.  It's okay to make modifications that assume
 compiler conformance with the ANSI C standard (c89).
 
-There currently no C++ interface to the core BRL-CAD libraries.  There
-are a few tools and enhancements to libraries that are implemented in
-C++ (the new BREP object type in librt, for example), but there are
-presently no C++ bindings available beyond experimental developments.
-While C++ as an implementation language of new tools and new library
-interfaces is not prohibited, the mixing of C++ semantics and C++ code
-(including simple // style comments) in the existing C files is not
-allowed.  As new interfaces are developed, new contributors become
-involved, and C++ code integration becomes more prevalent, the
-contributor guidelines will become reinforced with more details.
+There is currently no C++ interface to the core BRL-CAD libraries.
+There are a few tools and enhancements to libraries that are
+implemented in C++ (the new BREP object type in librt, for example),
+but there are presently no C++ bindings available beyond experimental
+developments.  While C++ as an implementation language of new tools
+and new library interfaces is not prohibited, the mixing of C++
+semantics and C++ code (including simple // style comments) in the
+existing C files is not allowed.  As new interfaces are developed, new
+contributors become involved, and C++ code integration becomes more
+prevalent, the contributor guidelines will become reinforced with more
+details.
 
 
 CODING STYLE & STANDARDS
@@ -453,13 +462,14 @@ should be put in a library and not in application directories.
 C files use the .c extension.  Header files use the .h extension.  C++
 files use the .cpp extension.  PHP files use the .php extension.
 Tcl/Tk files use the .tcl/.tk extensions.  POSIX Bourne-style shell
-scripts use the .sh extension.
+scripts use the .sh extension.  Perl files use the .pl (program) or
+.pm (module) extensions.
 
 Source files go into the src/ directory on the top level, into a
 corresponding directory for the category of binary or library that it
 belongs to.  Documentation files go into the doc/ directory on the top
-level, with the exception of manual pages that should be colocated
-with any corresponding source files.
+level, with the exception of manual (man) pages that should be
+colocated with any corresponding source files.
 
 Header files private to a library go into that library's directory.
 Public header files go into the include/ directory on the top level.
@@ -490,14 +500,15 @@ to function correctly, it should include it.
 
 Build System:
 
-The GNU Autotools build system (e.g. autoconf defines) should be used
+The CMake build system (more specifically, compilation test macros
+defined in misc/CMake/BRLCAD_CheckFunctions.cmake) should be used
 extensively to test for availability of system services such as
 standard header files, available libraries, and data types.  No
 assumptions should be made regarding the availability of any
 particular header, function, datatype, or other resource.  After
-running the configure script, there will be an autogenerated
-include/brlcad_config.h file that contains many preprocessor
-directives and type declarations that may be used where needed.
+running cmake, there will be an autogenerated include/brlcad_config.h
+file that contains many preprocessor directives and type declarations
+that may be used where needed.
 
 Generic platform checks (e.g. #ifdef unix, #ifdef _WIN32) are highly
 discouraged and should generally not be used.  Replace system checks
@@ -505,7 +516,7 @@ with tests for the actual facility being utilized instead.
 
 The Windows platform utilizes its own manually-generated configure
 results header (include/config_win.h) that has to be manually updated
-if new tests are added to the configure.ac template.
+if new tests are added to the CMake build logic.
 
 Only the BRL-CAD sources should include and utilize the common.h
 header.  They should not include brlcad_config.h or config_win.h
@@ -516,21 +527,45 @@ Language Compliance:
 
 Features of C that conform to the ISO/IEC 9899-1990 C standard (C90)
 are generally the baseline for strict language conformance.  As
-BRL-CAD used to be K&R syntax conformant, there remains on-going
+BRL-CAD used to be K&R syntax conformant, there remains an on-going
 effort to ensure a full conversion to a standards compliant ISO C
 implementation.
 
 Code Conventions:
 
-Globals variables, global structures, and other public data containers
-are highly discouraged - globals are often the easy way around a hard
-coding problem but more often complicate refactoring and restructuring
-in the future.  Try to find another solution unless there is a very
-compelling and good reason for their use.
+Globals variables, structures, classes, and other public data
+containers are highly discouraged within application code.  Do not add
+any new globals to existing libraries.  Globals are often a quick
+solution to some deeper coding problem.  However, they carry
+significant maintenance costs, introduce (spaghetti) code complexity,
+make multi-threading support more costly, pollute public API
+(symbol-wise at a minimum), increase security risks, are error-prone
+to use, and usually complicate refactoring and code restructuring in
+the future.  Using static variables (whether function- or
+static/file-scoped) is a viable alternative.  Restructuring the logic
+to not be stateful is even better.
 
 Functions should always specify a return type, including functions
 that return int or void.  ANSI C prototypes should be used to declare
 functions, not K&R function prototypes.
+
+Exact floating point comparisons are unreliable without requiring
+IEEE-compliant floating point math, but BRL-CAD does not require such
+math for portability and performance reasons.  When floating point
+comparisons are necessary, use the NEAR_EQUAL and NEAR_ZERO macros
+with a specified tolerance or the EQUAL and ZERO macros where a
+tolerance is indeterminate (all the macros are available by including
+bn.h, part of libbn).  Examples:
+
+  For known tolerances:
+
+  * instead of "foo == 2.0" use "NEAR_EQUAL(foo, 2.0, tol)"
+  * instead of "foo != 0.0" use "foo !NEAR_ZERO(foo, tol)"
+
+  For indeterminate tolerances:
+
+  * instead of "foo == 2.0" use "EQUAL(foo, 2.0)"
+  * instead of "foo != 0.0" use "foo !ZERO(foo)"
 
 There are several functions whose functionality are either wrapped or
 implemented in a cross-platform manner by libbu.  This includes
@@ -539,6 +574,8 @@ logging routines, and more.  The following functions and global
 variables should be utilized instead of the standard C facility:
 
   bu_malloc() instead of malloc()
+  bu_calloc() instead of calloc()
+  bu_realloc() instead of realloc()
   bu_fgets() instead of fgets()
   bu_free() instead of free()
   bu_log() instead of printf()
@@ -550,14 +587,20 @@ variables should be utilized instead of the standard C facility:
   bu_optind instead of optind
   bu_optopt instead of optopt
   bu_optarg instead of optarg
-  bu_strlcat instead of strcat(), strncat(), and strlcat()
-  bu_strlcpy instead of strcpy(), strncpy(), and strlcpy()
+  bu_strlcat() instead of strcat(), strncat(), and strlcat()
+  bu_strlcpy() instead of strcpy(), strncpy(), and strlcpy()
+  bu_strcmp() and BU_STR_EQUAL() instead of strcmp()
+  bu_strcasecmp() and BU_STR_EQUIV() instead of stricmp()/strcasecmp()
+  bu_strncmp() instead of strncmp()
+  bu_strcasecmp() instead of strnicmp()/strncasecmp()
+  bu_file_delete() instead of unlink(), rmdir(), and remove()
+  bu_sort() instead of qsort()
 
 Similarly, ANSI C functions are preferred over the BSD and POSIX
 interfaces.  The following functions should be used:
 
-  memset instead of bzero
-  memcpy instead of bcopy
+  memset() instead of bzero()
+  memcpy() instead of bcopy()
 
 The code should strive to achieve conformance with the GNU coding
 standard with a few exceptions.  One such exception is NOT utilizing
@@ -570,9 +613,9 @@ to, if only for the sake of being consistent.
 
 Indents are 4 characters, tabs are 8 characters.  There should be an
 emacs and vi local variables block setting at the end of each file to
-adopt, enforce, and otherwise remind this convention.  The following
-lines should be in all C source and header files at the end of the
-file:
+adopt, enforce, and otherwise remind one of this convention.  The
+following lines should be in all C and C++ source and header files at
+the end of the file:
 
 /*
  * Local Variables:
@@ -584,7 +627,7 @@ file:
  * ex: shiftwidth=4 tabstop=8
  */
 
-In emacs, the the 'indent-region' command (bound to C-M-\ by default)
+In emacs, the 'indent-region' command (bound to C-M-\ by default)
 does a good job of making the needed changes to conform to this
 convention.  Vi can be configured to respect the ex: modeline by
 adding 'set modeline=1' to your .vimrc configuration file.  Microsoft
@@ -594,14 +637,36 @@ The exTabSettings project will also make MSVC conform by reading our
 file footers.
 
 A similar block can be used on source and script files in other
-languages (such as Tcl, Shell, Perl, etc).  See the local variable
+languages (such as Tcl, Shell, Perl, etc.).  See the local variable
 footer script in sh/footer.sh to automatically set/update files.
 
-2) Stylistic whitespace
+Here is an example where '.' represents a literal space character
+(0x20) and '[ ]' represents a literal tab character (0x09):
 
-Space around operators and between multiple statements.
-  a = (b + c) * d;                  /* ok */
-  b = 2; c = 3;                     /* ok */
+int
+main(int ac, char *av[])
+{
+....int i;
+....int foo = 0;
+
+....for (i = 0 ; i < 10; i++) {
+[      ]foo += 1;
+[      ]if (foo % 2) {
+[      ]....printf("hello\n");
+[      ]....if (foo > 5) {
+[      ][      ]printf("world\n");
+[      ]....}
+[      ]}
+....}
+....return 0;
+}
+
+We may change this at some point in the future, but this is the style
+for now.  If this is confusing, use spaces to indent and run sh/ws.sh
+to convert spaces to tabs.  We value consistency in order to preserve
+maintainability.
+
+2) Stylistic whitespace
 
 No space immediately inside parentheses.
   while (1) { ...                   /* ok */
@@ -611,6 +676,12 @@ No space immediately inside parentheses.
 Commas and semicolons are followed by whitespace.
   int main(int argc, char *argv[]); /* ok */
   for (i = 0; i < max; i++) { ...   /* ok */
+
+Operators and arguments generally are separated with whitespace.
+  if (FLAG & MORE_FLAGS) { ...      /* ok */
+  for (i = 0; i < max; i++) { ...   /* ok */
+  if (FLAG&MORE_FLAGS) { ...        /* discouraged */
+  for (i=0; i<max; i++) { ...       /* discouraged */
 
 No space on arrow operators.
   structure->member = 5;            /* ok */
@@ -639,30 +710,30 @@ Comments should have an interior space and be without tabs.
 BRL-CAD uses the "The One True Brace Style" from BSD KNF and K&R.
 Opening braces should be on the same line as their statement, closing
 braces should line up with that same statement.  Functions, however,
-are treated special and place the opening brace on a separate line.
-See http://en.wikipedia.org/wiki/Indent_style for details.
+are treated specially and we place their opening braces on separate
+lines.  See http://en.wikipedia.org/wiki/Indent_style for details.
 
-  int some_function(char *j)
+  int
+  some_function(char *j)
   {
       for (i = 0; i < 100; i++) {
-          if (i % 10 == 0) {
-              j += 1;
-          } else {
-              j -= 1;
-          }
+	  if (i % 10 == 0) {
+	      j += 1;
+	  } else {
+	      j -= 1;
+	  }
       }
   }
 
 4) Names
 
-Prefer mixed-case names over underscore-separated ones. (this one is
-less important, as there are vast quantities of both in the code)
-Variable names should start with a lowercase letter.
+Variable and public API function names should almost always begin with
+a lowercase letter.
   double localVariable; /* ok */
   double LocalVariable; /* bad (looks like class or constructor) */
   double _localVar;     /* bad (looks like member variable)      */
 
-Variables are not to be "decorated" to show their type (i.e. do not
+Variables are not to be "decorated" to show their type (i.e., do not
 use Hungarian notation or variations thereof) with a slight exception
 for pointers on occasion.  The name should use a concise, meaningful
 name that is not cryptic (typing a descriptive name is preferred over
@@ -676,6 +747,31 @@ Constants should be all upper-case with word boundaries optionally
 separated by underscores.
   static const int MAX_READ = 2;  /* ok  */
   static const int arraySize = 8; /* bad */
+
+Public API (global) function names are in lowercase with underscores
+to separate words.  Most functions within the core libraries are named
+with the following convention: [library]_[group]_[action]
+  bu_vls_strcat()
+  bn_mat_transpose()
+
+Naming exceptions are allowed where the API intentionally mirrors some
+other familiar programming construct (e.g., bu_malloc()+bu_free()),
+but care should otherwise be taken to be as consistent as possible
+within a file and across a library's API.
+
+Here are some naming convention pairings commonly used:
+
+  Allocation   => alloc()
+  Deallocation => free()
+
+  Initialization      => init()
+  De/Reinitialization => clear()
+
+  Allocation + Init      => create()   (new for C++)
+  Deinitialize + Dealloc => destroy()  (delete for C++)
+
+  Resource acquire => open()
+  Resource release => close()
 
 5) Debugging
 
@@ -692,7 +788,7 @@ structures.
 "//" style comments are not allowed in C source files for portability.
 Comment blocks should utilize an asterisk at the beginning of each new
 line.  Doxygen comments should start on the second line unless it's a
-succint /** single-line */ comment.
+succinct /** single-line */ comment.
 
 /* This is a
  * comment block.
@@ -701,6 +797,16 @@ succint /** single-line */ comment.
 /**
  * This is a doxygen comment.
  */
+
+7) Line length
+
+We do not impose a fixed line length for source code.  Comments blocks
+are formatted to column 70.
+
+Long 'if' statements and function prototypes are okay.  Expressions
+and function arguments are sometimes separated one per line where it
+helps readability, but reducing the complexity of expressions and
+number of function arguments is usually better.
 
 
 DOCUMENTATION
@@ -712,9 +818,9 @@ the project to have all documentation located along with the source
 code in our Subversion (SVN) repository.
 
 In line with that goal and where beneficial, a large portion of the
-tutorial documentation is being converted to the Docbook XML format.
-Having the tutorial documentation in the Docbook XML format allows for
-easier maintenances, better export conversion support, and
+tutorial documentation is being converted to the DocBook XML format.
+Having the tutorial documentation in the DocBook XML format allows for
+easier maintenance, better export conversion support, and
 representation in a textual format that may be revision controlled and
 tracked.
 
@@ -726,7 +832,7 @@ longevity.  Determining just how much documentation is sufficient and
 how much is too much is generally resolved over time, but it should
 generally be looked at from the perspective of "If I look at this code
 in a couple years from now, what would help me remember or understand
-it better?"  and add documentation accordingly.
+it better?" and add documentation accordingly.
 
 All public library functions and most private or application functions
 should be appropriately documented using Doxygen/Javadoc style
@@ -738,43 +844,81 @@ precedes your functions:
  * Computes the answer to the meaning of life, the universe, and
  * everything.
  */
-int the_answer()
+int
+the_answer(void)
 {
     return 42;
 }
 
 
-TESTING
--------
+TESTING & DEBUGGING
+-------------------
 
-The need for a more formal testing plan has become more of a pressing
-issue as the size of BRL-CAD continues to grow.  As such, more
-importance on various forms of testing is becoming necessary.
+BRL-CAD has extensive testing infrastructure in place to ensure tools
+and APIs working a particular manner keep working in an expected way.
+A testing failure usually indicates an unintended change to behavior
+that must be reviewed with the provoking code justified, reverted, or
+(most commonly) fixed.  There are system integration, performance,
+regression, and unit tests accessible through three primary build
+targets.
 
-While specific plans for unit and black box testing are not yet
-finalized, the Corredor Automation Test Suite will be used to assist
-in performing cross-platform build tests, regression tests, and
-various integration and operability tests.
+The BRL-CAD Benchmark, contained in the bench/ directory, validates
+critical raytrace library behavior:
 
-A debug build may be specified via:
+  make benchmark
 
-./configure --enable-debug
+A series of system integration regression tests, described in a series
+of scripts in the regress/ directory, examines applications:
 
-A profile build may be specified via:
+  make regress
 
-./configure --enable-profiling
+API unit testing is contained within tests/ subdirectories of the
+respective library being tested (e.g., src/libbu/tests):
 
-Verbose compilation warnings may be enabled:
+  make test
 
-./configure --enable-warnings
+Note that changes to publicly documented tools and library APIs must
+adhere to BRL-CAD's change policy.  This means changes to any tests
+may require thoughtful deployment.  See the CHANGES file for details.
 
-To perform a run of the benchmark suite to validate raytrace behavior:
+To add new regression tests, look at regress/weight.sh for an
+integration test example and src/libbu/tests/bu_vls_vprintf.c for an
+API unit test example.  See their corresponding CMakeLists.txt build
+file for examples of how they are added to the build.  Individual
+regression tests have separate regress-TARGET build targets defined
+(e.g., make regress-weight) to facilitate manual testing.
 
-make benchmark
+In addition to benchmark, regression, and unit testing, individual
+programs may be tested after a build without installing by running
+them from the build directory.  Typically, installed binaries will be
+found in the bin/ subdirectory of the top-level build directory, e.g.:
 
-To perform a run of the test suite:
+  ./bin/mged
 
-make test
+Binaries not intended for installation (i.e., marked NO_INSTALL in the
+CMakeLists.txt file) are in a build path corresponding to the source
+code location, e.g. the unit tests in src/libbu/tests compile into
+binaries in the path/to/builddir/src/libbu/tests build directory.
+
+A profile build, useful for some types of performance inspection
+(e.g., gprof) but not enabled by default, may be specified via:
+
+   cmake .. -DBRLCAD_ENABLE_PROFILING=ON
+
+Debug symbols are enabled by default, even for installation, for all
+libraries and binaries in order to facilitate diagnosing and
+inspecting problems.  Graceful crashes (i.e., an application "bomb")
+may result in a crash log (named appname-#####-bomb.log) getting
+written out on platforms that have the GNU Debugger (gdb) available.
+On most platforms, gdb can also be interactively utilized to inspect a
+reproducible crash (graceful or otherwise):
+
+$ gdb --args bin/mged -c file.g
+...
+gdb> break bu_bomb
+gdb> run
+...[interact with application until it crashes or bombs]
+gdb> backtrace
 
 
 PATCH SUBMISSION GUIDELINES
@@ -792,7 +936,7 @@ it's feasible to create one either using SVN or using the unmodified
 original file.  This is generally the "-u" option to diff, and is also
 supported by the SVN diff command:
 
-svn diff > mychanges.patch
+  svn diff > mychanges.patch
 
 Where possible, patch files should be generated against the latest
 sources available to make it easier to review and apply the changes.
@@ -816,53 +960,52 @@ BUGS & UNEXPECTED BEHAVIOR
 --------------------------
 
 When a bug or unexpected behavior is encountered that cannot be
-quickly fixed, it minimally needs to be documented.  If you are
-already a BRL-CAD contributor, this means either making a comment in
-the BUGS file or by making a formal report to the SourceForge bug
-tracker at:
+quickly fixed, it needs to be documented in our BUGS file or more
+formally reported to the SourceForge bug tracker at:
 
 http://sourceforge.net/tracker/?atid=640802&group_id=105292&func=browse
 
-If the bug is complicated, will require significant discussion or
-collaboration, cannot be fixed any time soon, or if you do not have
-commit access, the issue should be reported to the SourceForge bug
-tracker.  The issues listed in BUGS are not necessarily listed in bug
-tracker, and vice-versa.  The BUGS file is merely maintained as a
-convenience notepad of long and short term issues for the developers
-only.
+The tracker is the main source for user-reported bugs and/or any
+issues that require significant discussion or benefit from having
+their status publicly announced.  Issues listed in BUGS file are not
+necessarily listed in the tracker, and vice-versa.  The BUGS file is
+also a convenience notepad of long and short term development issues.
 
 
 COMMIT ACCESS
 -------------
 
-BRL-CAD has a STABLE branch in SVN that should always compile and run
-with expected behavior on all supported platforms.  Contrary to
-STABLE, the SVN trunk is generally expected to compile but more
-flexibility is allowed for resolution of cross-platform build issues
-and on-going development.
-
 Commit access is evaluated on a person-to-person basis at the
-discretion of existing contributors, but generally readily granted so
-long as there is an existing developer with commit access willing to
-mentor the new developer.  If you would like to have commit access,
-there is usually no need to ask -- they will ask you.  Getting
-involved with the other contributors and making patches will generally
-result in automatic consideration for commit access.  If you have to
-ask for it, you probably won't get it.
+discretion of existing contributors.  Commit access is generally
+granted after a contributor demonstrates strong competency with our
+developer guidelines and an existing developer with commit access
+vouches for the new developer.
+
+If you would like to have commit access, there is no need to ask.
+Getting involved with the other contributors and making patches will
+result in automatic consideration for commit access.  That said, the
+following steps represent a minimum that needs to occur in order for
+commit access to be granted:
+
+1) Read this file completely.
+
+2) Be able to compile BRL-CAD successfully from an SVN trunk checkout.
+
+3) Join the brlcad-devel developer mailing list, introduce yourself.
+
+4) Create a SourceForge account, submit at least two patches that
+demonstrate competency with our coding style, apply flawlessly, and
+provide some signficant improvement.
+
+5) Get to know the other developers.  One of them will need to vouch
+for your commit access.
+
+*) Be a nice person.  ;)
 
 Those with commit access have a responsibility to ensure that other
 developers are following the guidelines that have been described in
 this developer's guide within reasonable expectations.  A basic rule
-of thumb is: don't break anything.
-
-While the testing process will strive to ensure consistent behavior as
-changes are made, the responsibility still remains with the individual
-contributors to ensure that everything still compiles and runs as it
-should.  At any given time, BRL-CAD should compile on all of the
-primary platforms and (minimally) pass the BRL-CAD Benchmark
-successfully.  If changes are made that are not exercised by the
-Benchmark suite, testing should be manually performed in a manner that
-exercises those particular changes.
+of thumb is:  don't break anything.
 
 
 CONTRIBUTOR RESPONSIBILITIES
@@ -877,10 +1020,14 @@ are modifying source code or not, and have similar obligations and
 expectations.  To summarize some of the expected responsibilities:
 
 0) Primum non nocere.  All contributors are expected in good faith to
-help, or at least to do no harm.
+help, or at least to do no harm.  Be helpful and respectful.
 
 1) Developers are expected to uphold the quality, functionality,
-maintainability, and portability of the source code at all times.
+maintainability, and portability of the source code at all times.  In
+part, this means that changes should be tested to avoid breaking the
+build and short-term fixes are discouraged.  Committing code that is
+actively being worked on is encouraged but care should be taken to
+minimize impact on others and to respond quickly when an issue arises.
 
 2) Bugs, typos, and compilation errors are to be expected as part of
 the process of active software development and documentation, but it
@@ -922,8 +1069,8 @@ VERSION NUMBERS & COMPATIBILITY
 -------------------------------
 
 The BRL-CAD version number is in the include/conf directory in the
-MAJOR, MINOR, and PATCH files.  The README, ChangeLog, NEWS files as
-well as a variety of documents in the doc/ directory may also make
+MAJOR, MINOR, and PATCH files.  The README, ChangeLog, and NEWS files
+as well as a variety of documents in the doc/ directory may also make
 references to version numbers.  See the MAKING A RELEASE steps listed
 below for a more concise list of what needs to be updated.
 
@@ -931,10 +1078,13 @@ Starting with release 7.0.0, BRL-CAD has adopted a three-digit version
 number convention for identifying and tracking future releases.  This
 number follows a common convention where the three numbers represent:
 
-	{MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}
+    {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}
 
 All "development" builds use an odd number for the minor version.  All
-"release" builds use an even number for the minor version.
+"release" builds use an even number for the minor version.  Patched
+versions should include a release count:
+
+    {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}[-{RELEASE_COUNT}]
 
 The MAJOR_VERSION should only increment when it is deemed that a
 significant amount of major changes have accumulated, new features
@@ -955,6 +1105,11 @@ patch version.  Every development version modification that is
 backwards incompatible in some manner should increment the patch
 version number.
 
+If it becomes necessary to update a posted release, use and increment
+the RELEASE_COUNT.  The first posted release is implicitly the "-0"
+release count (e.g., 7.10.2 is implicitly 7.10.2-0) with subsequent
+updated releases incrementing the count (e.g., 7.10.2-1).
+
 
 NAMING A SOURCE RELEASE
 -----------------------
@@ -962,19 +1117,20 @@ NAMING A SOURCE RELEASE
 In order to achieve some consistency when preparing a source release,
 the following format should be used as the filename convention:
 
-brlcad-{VERSION}.{EXTENSION}
+  brlcad-{VERSION}.{EXTENSION}
 
 VERSION is the usual version triplet described above under the section
 entitled VERSION NUMBERS & COMPATIBILITY.  Example: 7.12.4
 
 EXTENSION is the filename extension.  Compressed tar files should use
-the expanded form (i.e. not tgz, etc) unless otherwise dictated as
+the expanded form (i.e. not tgz, etc.) unless otherwise dictated as
 necessary convention by a source package management system.  Examples:
-tar.gz
-tar.bz2
-dmg
-exe
-zip
+
+  tar.gz
+  tar.bz2
+  dmg
+  exe
+  zip
 
 
 NAMING A BINARY RELEASE
@@ -983,29 +1139,31 @@ NAMING A BINARY RELEASE
 In order to achieve some consistency when preparing a binary release,
 the following format should be used as the filename convention:
 
-BRL-CAD_{VERSION}[_{OS}][_{VENDOR}][_{CPU}][_{NOTE}].{EXTENSION}
+  BRL-CAD_{VERSION}[_{OS}][_{VENDOR}][_{CPU}][_{NOTE}].{EXTENSION}
 
 Notably, the filename should use 'BRL-CAD' instead of 'brlcad' for the
-name, it should delimit sections of the filename with underscores
-instead of spaces or dashes, and should always include the version
-number and an extension for the file type.  The optional
-_{OS}_{VENDOR}_{CPU} portion is a reverse (and simplified version) of
-the GNU autotools config.guess canonical host triplet identifier.
+name unless technically problematic, it should delimit sections of the
+filename with underscores instead of spaces, dots, or dashes, and
+should always include the version number and an extension for the file
+type.  The optional _{OS}_{VENDOR}_{CPU} portion is a reverse (and
+simplified version) of the GNU autotools config.guess canonical host
+triplet identifier.
 
 VERSION is the usual version triplet described above under the section
-entitled VERSION NUMBERS & COMPATIBILITY.  Example: 7.12.4
+entitled VERSION NUMBERS & COMPATIBILITY.  Example: 7.12.4 or 7.10.2-1
 
 OS is an optional identifier for the target operating system for
 binary distributions.  It should only be used if the file extension is
 not already platform specific (e.g., .dmg already indicates Mac OS X,
-.exe indicates Windows, etc).  The OS name can be the same as the GNU
+.exe indicates Windows, etc.).  The OS name can be the same as the GNU
 autotools OS identifier without the version number.  If there are
 other platform considerations like the version of libc or the version
 of the OS that need to be called out, they can be included.  Examples:
-freebsd
-linux
-linux_glibc3
-solaris
+
+  freebsd
+  linux
+  linux_glibc3
+  solaris
 
 VENDOR is an optional operating system qualifier that isn't necessary
 for most platforms.  It's generally only useful for vendors that use
@@ -1016,249 +1174,376 @@ Altix line.  In that case, it's useful to include the vendor: sgi
 CPU is the hardware architecture identifier.  It should be the first
 identifier in the config.guess triplet or the lowercase hardware
 identifier returned by uname -a (if any).  Examples:
-x86
-x86_64
-ia64
-sparc
-ppc
-power5
-mips
-mips_64
+
+  x86
+  x86_64
+  ia64
+  sparc
+  ppc
+  power5
+  mips
+  mips_64
 
 NOTE can be just about anything but should only be used when
 absolutely necessary.  As an example, a note might be used to indicate
 that a binary distribution is a partial or custom release.  Examples:
-dll
-benchmark
+
+  dll
+  benchmark
 
 EXTENSION is the filename extension.  Compressed tar files should use
-the expanded form (i.e. not tgz, etc) unless otherwise dictated as
+the expanded form (i.e. not tgz, etc.) unless otherwise dictated as
 necessary convention by a binary package management system.  Examples:
-tar.gz
-tar.bz2
-dmg
-exe
-zip
+
+  tar.gz
+  tar.bz2
+  dmg
+  exe
+  zip
+
+
+PATCHING A RELEASE
+------------------
+
+Should it become necessary to patch a release that has already been
+posted and announced, the mechanism is to post patch files for the
+source release and update the uploaded release notes README file.
+
+Example: stop_rt_crashing-0.patch and fix_fbserv-1.patch
+
+It's expected that all patch files are independent and will be applied
+sequentially.  They should be consistently and incrementally numbered.
+Users should be instructed in the release notes README to download and
+apply all available patch files.
+
+For binary releases, it's recommended to just "move on" and let issues
+become resolved in the next release unless there's a critical security
+or significant data corruption issue involved.  If it becomes
+necessary to repost a release, use the RELEASE_COUNT file name
+convention described in VERSION NUMBERS & COMPATIBILITY.
+
+Example:  BRL-CAD-7.12.2.dmg is superseded by BRL-CAD-7.12.2-1.dmg
+
+Patched binary releases may be moved to the hidden attic folder if
+critical, though not necessary or recommended.  They are preserved for
+historic record and should never be deleted once announced.  Releases
+not yet been announced may be updated within two days of being posted
+without involving a patch.
 
 
 MAKING A RELEASE
 ----------------
 
-BRL-CAD uses a monthly iteration development cycle.  If there have
-been significant changes since the previous iteration, the
-contributors are expected to "settle down" around the last couple days
-of the month so that the source code may be verified, tested, and
-released.  Major changes to the source code and documentation should
-not occur during these last couple days of the iteration, only minor
-bug and build fixes.  A release should then be made within the first
-few days of the next month's iteration.  Repeat, rinse, recycle.
+BRL-CAD is developed on a monthly iteration development schedule with
+a release planned (not always actualized) at the end of every month.
 
-In addition to the monthly iteration release, additional releases may
-be made on an as-needed basis.  This is particularly relevant for
-emergency bug-fix releases and in response to security issues.  The
-December/January timeframe is considered a single iteration with only
-one iteration release necessarily being made in that timeframe.
+In order to make a release, the sources need to be appropriately
+documented, tested, synchronized, and tagged.  BRL-CAD releases must
+pass strict verification and validation testing.
 
-When making a release, certain public repositories, mailing lists, and
-news outlets require updating and notification.  Especially when the
-major or minor version of BRL-CAD is going to be updated, it is very
-important to follow and ensure that the following steps have been
-successfully performed:
+Any developer may cause a release to be made provided testing passes
+and the appropriate release steps are taken.
 
-0) All code is committed to SVN.  Notify developer mailing list.
+When a release intention is announced, it is recommended to sync the
+trunk sources to the RELEASE branch so appropriate review testing,
+repairs, and release steps can occur without being impacted by other
+development activity.
 
-1) Verify that the NEWS file includes a comment for all relevant and
-significant items added since the previous release.
+Release steps are as follows:
 
-2) All existing manual pages and the TODO file are updated with the
-latest changes.
+#####################################################################
+# 00: Notify developer mailing list of intention to release.
 
-3) Update or verify the version numbers minimally in the include/conf
-version files, NEWS, and README.  See the above VERSION NUMBERS &
-COMPATIBILITY section.  Commit the changes to the source repository.
+    echo "Release preparations are under way.  Trunk sources merged to the RELEASE branch will be reviewed for sync to STABLE and release tagging.  Please help test by compiling distcheck-full and running benchmark, mged, and archer." | mail -s "Release preparations commencing" brlcad-devel@lists.sourceforge.net -r "your@subscribed.address"
 
-4) Update the ChangeLog with entries since the last release; commit
-the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.
-Get the date from the NEWS file.
+#####################################################################
+# 01: Sync trunk to RELEASE branch.
 
-    svn2cl --break-before-msg --include-rev --stdout -r HEAD:{YYYY-MM-DD} > ChangeLog
+    # NON-AUTO: Review the log and obtain the last trunk merge
+    # revision number from comments.
+    svn log --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE | grep -E 'r[0-9]{5}'
+    PREV=[[last_trunk_rev]]
+    echo "PREV=$PREV"
 
-5) Make sure default builds complete successfully on all platforms.
+    svn co svn://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE brlcad.RELEASE
+    cd brlcad.RELEASE
+    svn merge https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@$PREV https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@HEAD .
 
-    sh autogen.sh && ./configure && make distcheck
-    sh autogen.sh && ./configure --enable-all && make distcheck
-    make check
+#####################################################################
+# 02: Test the merge.
 
-6) Sync trunk with the STABLE branch.  Make sure all changes since the
-previous sync are included and that STABLE matches trunk.
+    mkdir -p .build && cd .build
+    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make
 
-    # review the log and obtain the last trunk merge revision number from comments
-    svn log --stop-on-copy https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE . | more
-    export PREV=[[last_trunk_rev]]
-	*** OR ***
-    export PREV=`svn log --xml --stop-on-copy https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE | grep 'revision=' | head -n 1 | sed 's/.*revision="\([0-9][0-9]*\)".*/\1/g'`
+    # Manually check rt, mged, and archer.
+    bin/rt        # should report usage with correct library versions
+    bin/mged -c test.g "make sph sph ; rt"   # pops up a sphere
+    bin/mged      # displays gui, run: opendb test.g ; draw sph ; rt
+    bin/archer    # displays gui, run: opendb test.g ; draw sph ; rt
 
-    # merge that range of changes into STABLE and make sure it works
-    # NOTE: if using a copy of the subversion repository checked 
-    #       out using the abbreviation "sf" for sourceforge, the svn merge
-    #       command below also needs to use "sf" - subversion will not
-    #       automatically make the substitution.  The error corresponding
-    #       to this is:  
-    #       svn: 'https://brlcad.svn.sf.net/...' isn't in the same repository 
-    #       as 'https://brlcad.svn.sourceforge.net/...'
-    svn co https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
-    svn merge https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@$PREV https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@HEAD .
-    sh autogen.sh && ./configure --enable-all && make distcheck
-    export CURR=`svn log --xml -rHEAD https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk | grep 'revision=' | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
-    svn commit -m "merge trunk to STABLE from r$PREV to HEAD r$CURR"
+    # clean up
+    cd .. && rm -rf .build
 
-7) Tag the release using "rel-MAJOR-MINOR-PATCH" format:
+#####################################################################
+# 03: Commit the merge.
 
-    svn cp https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/branches/STABLE https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH
+    CURR=`svn log --xml https://svn.code.sf.net/p/brlcad/code/brlcad/trunk | grep 'revision=' | head -n 1 | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
+    echo "CURR=$CURR"
 
-8) Obtain a tagged version of the sources from the repository
-(required to ensure the tagging and source distribution is correct):
+    svn commit -m "merge of trunk to RELEASE branch, r$PREV through r$CURR"
 
-    svn checkout https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH brlcad
+#####################################################################
+# 04: Reprioritize or address remaining TODO items.
 
-9) Perform another "make distcheck" on the exported/updated sources on
-a system with the latest GNU Autotools installed to generate the
-distributable compressed source tarballs.
+    # NON-AUTO: Do what's necessary to release, update priorities.
 
-10) Verify that the source distribution tarballs may be expanded; and
-that they build, run, and that the file permissions are correct.
-Minimally check:
+#####################################################################
+# 05: Review all commits.
 
-    rt        # should report usage with correct library versions
-    benchmark run TIMEFRAME=1            # completes without ERROR
-    mged -c test.g "make sph sph ; rt"   # pops up a sphere
-    rtwizard  # displays gui
-    mged      # displays gui, run: opendb test2.g ; make sph sph ; rt
+    # NON-AUTO: Verify all user-visible changes are in NEWS.
+    # NON-AUTO: Verify all interface changes are in CHANGES.
+    # NON-AUTO: Verify usage/options are documented in doc/.
 
-11) Use one of the source distribution tarballs to generate
-platform-specific builds.  Use the NAMING A SOURCE RELEASE and the
-NAMING A BINARY RELEASE sections above for naming source and binary
-distribution files respectively.  Test the build: make test && make
-bench
+#####################################################################
+# 06: Update the version numbers.
 
-12) Post the source and platform-specific binary distributions to
-SourceForge and then select them on the sf.net File Release System:
+    # NON-AUTO: NEWS
+    # NON-AUTO: README
+    # NON-AUTO: include/conf/PATCH
+    # NON-AUTO: include/conf/MINOR (See VERSION NUMBERS & COMPATIBILITY section.)
+    # NON-AUTO: misc/debian/changelog
+    # NON-AUTO: misc/macosx/Resources/ReadMe.rtfd/TXT.rtf
+    # NON-AUTO: misc/macosx/Resources/Welcome.rtfd/TXT.rtf
 
-SFUSERNAME=`ls ~/.subversion/auth/svn.simple/* | xargs -n 1 grep -A4 sourceforge | tail -1`
-MAJOR=`cat include/conf/MAJOR`
-MINOR=`cat include/conf/MINOR`
-PATCH=`cat include/conf/PATCH`
-echo "SFUSERNAME=$SFUSERNAME MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
-ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net create
-ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net mkdir "/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH"
-scp brlcad-$MAJOR.$MINOR.$PATCH* "$SFUSERNAME,brlcad@shell.sourceforge.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
-ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net shutdown
+#####################################################################
+# 07: Update ChangeLog.  Use the YYYY-MM-DD of previous NEWS entry.
 
-This can all be done through the sf.net project web interface too.
+    LAST=`grep -E "\--- [0-9]{4}-[0-9]{2}-[0-9]{2}" NEWS | head -n 2 | tail -n 1 | awk '{print $2}'`
+    echo "LAST=$LAST"
+    LAST=r57446
+    svn2cl --break-before-msg --include-rev --stdout -r HEAD:{$LAST} > ChangeLog
+    svn commit -m "update log with commits through $LAST" ChangeLog
 
-13) Increment and commit the next BRL-CAD release numbers to SVN;
-update the include/conf/(MAJOR|MINOR|PATCH) version files immediately
-to an odd-numbered minor version or a new patch developer version
-(e.g. 7.11.0 or 7.4.1).  Update README and NEWS version to next
-_expected_ release number (e.g. 7.12.0 or 7.4.2).
+#####################################################################
+# 08: Run distcheck-full on at least two platforms.
 
-14) Announce the new release.
+    mkdir -p .build && cd .build && cmake .. && make distcheck-full
+
+#####################################################################
+# 09: Sync RELEASE to STABLE branch:
+
+    # NON-AUTO: Review the log and obtain the last merge revision
+    # number from comments.
+    svn log --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE | less
+    PREV=[[last_trunk_rev]]
+	### OR ###
+    PREV=`svn log --xml --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE | grep 'revision=' | head -n 1 | sed 's/.*revision="\([0-9][0-9]*\)".*/\1/g'`
+    echo "PREV=$PREV"
+
+    # merge that range of changes into STABLE
+    svn co https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
+    svn merge https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE@$PREV https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE@HEAD .
+
+#####################################################################
+# 10: Test the merge.
+
+    mkdir .merge && cd .merge
+    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck-full && cd .. && rm -rf .merge
+
+#####################################################################
+# 11: Commit the merge.
+
+    CURR=`svn log --xml https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE | grep 'revision=' | head -n 1 | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
+    echo "CURR=$CURR"
+
+    svn commit -m "merging RELEASE branch to STABLE branch, r$PREV through r$CURR"
+
+#####################################################################
+# 12: Tag the release using "rel-MAJOR-MINOR-PATCH" format:
+
+    MAJOR=`awk '{print $1}' include/conf/MAJOR`
+    MINOR=`awk '{print $1}' include/conf/MINOR`
+    PATCH=`awk '{print $1}' include/conf/PATCH`
+    echo "Tagging rel-$MAJOR-$MINOR-$PATCH"
+    svn cp https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE https://svn.code.sf.net/p/brlcad/code/brlcad/tags/rel-$MAJOR-$MINOR-$PATCH
+
+#####################################################################
+# 13: Increment and commit the next BRL-CAD release numbers to SVN.
+
+    # Update the include/conf/(MAJOR|MINOR|PATCH) version files
+    # immediately to odd-numbered minor version or new patch developer
+    # version (e.g. 7.11.0 or 7.34.1).  Update README and NEWS version
+    # to next *expected* release number (e.g. 7.12.0 or 7.34.2).
+
+    echo "`expr $PATCH + 1`" > include/conf/PATCH
+    NEXT="`expr $PATCH + 2`"
+    perl -pi -e "s/Release [0-9]+\.[0-9]+\.[0-9]+/Release $MAJOR.$MINOR.$NEXT/" README
+    EXPR="s/(@---[[:space:]@-]*[0-9]{4}-)([0-9]{2}-[0-9]{2})([[:space:]]*Release[[:space:]]*${MAJOR}\.${MINOR}\.)(${PATCH})([[:space:]@-]*-@)/\$1XX-XX\${3}${NEXT}\$5@* TBD@@\1\2\3\4\5/"
+    cat NEWS | tr '\n' '@' | perl -pi -e "$EXPR" | tr '@' '\n' > NEWS
+    svn commit -m "bump to next development revision after tagging the $MAJOR.$MINOR.$PATCH release" ../include/conf/PATCH
+
+#####################################################################
+# 14: Sync RELEASE changes back to trunk.
+
+    # Work-in-progress
+
+#####################################################################
+# 15: Obtain a tagged version of the sources from the repository, make
+# final distribution tarballs:
+
+    svn checkout https://svn.code.sf.net/p/brlcad/code/brlcad/tags/rel-$MAJOR-$MINOR-$PATCH brlcad-$MAJOR.$MINOR.$PATCH
+    cd brlcad-$MAJOR.$MINOR.$PATCH-build && mkdir .build && cd .build
+    cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck-full
+
+#####################################################################
+# 16: Upload the source distributions and release notes.  Use source
+# tarballs to create binaries.
+
+    # create a shell session and source dir
+    SFUSERNAME=`ls ~/.subversion/auth/svn.simple/* | xargs -n 1 grep -A4 sourceforge | tail -1`
+    echo "SFUSERNAME=$SFUSERNAME MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
+    ssh -v $SFUSERNAME,brlcad@shell.sf.net create
+    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH"
+
+    # create binary dirs (as needed)
+    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/b/br/brlcad/BRL-CAD\ Runtime\ Libraries/$MAJOR.$MINOR.$PATCH"
+    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/b/br/brlcad/BRL-CAD\ for\ BSD/$MAJOR.$MINOR.$PATCH"
+    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/b/br/brlcad/BRL-CAD\ for\ Linux/$MAJOR.$MINOR.$PATCH"
+    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/b/br/brlcad/BRL-CAD\ for\ Mac\ OS\ X/$MAJOR.$MINOR.$PATCH"
+    ssh -v $SFUSERNAME,brlcad@shell.sf.net mkdir "/home/frs/project/b/br/brlcad/BRL-CAD\ for\ Windows/$MAJOR.$MINOR.$PATCH"
+
+    # upload source dist and any binaries
+    scp brlcad-$MAJOR.$MINOR.$PATCH* "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
+
+    # extract and upload release notes to source dir
+    cat ../NEWS | tr '\n' '@' | perl -pi -e "s/.*?(@---[[:space:]@-]*[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]*Release[[:space:]]*${MAJOR}\.${MINOR}\.${PATCH}[[:space:]@-]*.*?)@---.*/\1/" | tr '@' '\n' > README-${MAJOR}-${MINOR}-${PATCH}.txt
+    echo "Release notes for $MAJOR.$MINOR.$PATCH" && echo "==="
+    cat README-$MAJOR-$MINOR-$PATCH.txt && echo "==="
+    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
+
+    # NON-AUTO: Following the NAMING A BINARY RELEASE convention,
+    # upload any release binaries and platform-specific release notes.
+
+    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Runtime\ Libraries/$MAJOR.$MINOR.$PATCH/."
+    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ for\ BSD/$MAJOR.$MINOR.$PATCH/."
+    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ for\ Linux/$MAJOR.$MINOR.$PATCH/."
+    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ for\ Mac\ OS\ X/$MAJOR.$MINOR.$PATCH/."
+    scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/b/br/brlcad/BRL-CAD\ for\ Windows/$MAJOR.$MINOR.$PATCH/."
+
+    # NON-AUTO: Be sure to mark binaries as default download, then
+    # close shell session
+    ssh -v $SFUSERNAME,brlcad@shell.sf.net shutdown
+
+#####################################################################
+# 17: Notify binary platform maintainers:
+
+    T2 package maintainer
+	http://t2-project.org/packages/brlcad.html
+
+    OpenSUSE package maintainer
+        https://build.opensuse.org/package/users/Education/brlcad
+
+    FreeBSD ports maintainer
+	http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/
+
+    Gentoo portage maintainer
+	http://packages.gentoo.org/package/media-gfx/brlcad
+
+    Ubuntu/Debian .deb maintainer
+	Jordi Sayol <g.sayol@yahoo.es>
+
+    Debian apt package maintainer
+	http://git.debian.org/?p=debian-science/packages/brlcad.git
+
+    Slackware maintainer
+	http://slackbuilds.org/result/?search=brlcad
+
+#####################################################################
+# 18: Announce the new release.
 
 The NEWS file should generally be used as a basis for making release
 announcements though the announcements almost always require
 modification and customization tailored to the particular forum and
 audience.  Always notify the following when a release is made:
 
-      14.1) BRL-CAD Website
-         http://brlcad.org/d/node/add/story
+    BRL-CAD Website  (authorized can submit)
+	http://brlcad.org/d/node/add/story
 
-      14.2) BRL-CAD NEWS Mailing List
-         brlcad-news@lists.sourceforge.net
+    BRL-CAD NEWS Mailing List  (anyone can submit, posting moderated)
+	brlcad-news@lists.sourceforge.net
 
-      14.3) BRL-CAD Sourceforge NEWS
-         https://sourceforge.net/news/submit.php?group_id=105292
+    BRL-CAD SourceForge NEWS  (authorized can submit)
+	https://sourceforge.net/p/brlcad/news/new
 
-      14.4) Freshmeat  (anyone can submit update)
-         http://freshmeat.net/projects/BRL-CAD/
-	 short summary without news details (sentence format)
+    Freshmeat  (anyone can submit update)
+	http://freecode.com/projects/BRL-CAD/
+	short summary without news details (sentence format)
+
+    BRL-CAD on Facebook  (authorized can submit)
+	http://www.facebook.com/pages/BRL-CAD/387112738872
+	short summary without news details (sentence format)
+
+    BRL-CAD on Twitter  (authorized can submit)
+	http://twitter.com/#!/BRL_CAD
+	short summary without news details (whatever fits)
 
 If appropriate, notify and/or update the following information outlets
 with the details of the new release:
 
-Source or binary release:
+Linux release:
 
-      T2 package maintainer
-      http://t2-project.org/packages/brlcad.html
+    CAD on Linux mailing list (plain text)
+	cad-linux@freelists.org
+	with linux-specific details
 
-      OpenSUSE package maintainer
-      https://build.opensuse.org/package/users?package=brlcad&project=Education
+    CAD on Linux Dev mailing list
+	cad-linux-dev@freelists.org
+	with developer-centric details
 
-      FreeBSD ports maintainer
-      http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/
+    Linux Softpedia
+	http://linux.softpedia.com/get/Multimedia/Graphics/BRL-CAD-105.shtml
 
-      Gentoo portage maintainer
-      http://packages.gentoo.org/package/sci-misc/brlcad
+Mac OS X release:
 
-      Debian apt package maintainer
-      http://git.debian.org/?p=debian-science/packages/brlcad.git
-
-      Slackware maintainer
-      http://slackbuilds.org/result/?search=brlcad
-
-Linux binary release:
-
-      CAD on Linux mailing list
-      cad-linux@freelists.org
-	with news details
-
-      Linux Softpedia
-      http://linux.softpedia.com/get/Multimedia/Graphics/BRL-CAD-105.shtml
-
-Mac OS X binary release:
-
-      Versiontracker  (only 'brlcad' can update)
-      http://www.versiontracker.com/dyn/moreinfo/macosx/26289
-      http://www.versiontracker.com/dyn/moreinfo/win/64903
+    Versiontracker  (only 'brlcad' can update)
+	http://www.versiontracker.com/dyn/moreinfo/macosx/26289
+	http://www.versiontracker.com/dyn/moreinfo/win/64903
 	short without news details (list format)
 
-      Mac Softpedia (anyone can update)
-      http://mac.softpedia.com/user/pad.shtml
-      maceditor@softpedia.com
+    Mac Softpedia (anyone can update)
+	http://mac.softpedia.com/user/pad.shtml
+	maceditor@softpedia.com
 	(either provide doc/pad_file.xml or e-mail)
-      http://mac.softpedia.com/get/Multimedia/BRLCAD.shtml
+	http://mac.softpedia.com/get/Multimedia/BRLCAD.shtml
 
-      Fink package maintainer
-      jack@krass.com
+    Fink package maintainer
+	jack@krass.com
 
-Multiple platform major binary release:
+Multiple platform major release and announcements:
 
-      upFront.ezine
-      Ralph Grabowski
-      ralphg@upfrontezine.com
+    CADinfo.NET
+	copyboy@cadinfo.net
 	with news details
 
-      CADinfo.NET
-      copyboy@cadinfo.net
+    TenLinks Daily
+	http://www.tenlinks.com/NEWS/tl_daily/submit_news.htm
+	news@tenlinks.com
 	with news details
 
-      TenLinks Daily
-      http://www.tenlinks.com/NEWS/tl_daily/submit_news.htm
-      news@tenlinks.com
-	with news details
-
-      Slashdot
-      http://slashdot.org
+    Slashdot
+	http://slashdot.org
 	short without news details
 
-      Government Computer News
-      Joab Jackson
-      jjackson@gcn.com
-	short without news details
+    DevMaster.net (if engine-related)
+	http://www.devmaster.net/news/submit.php
 
-      DevMaster.net (if engine-related)
-      http://www.devmaster.net/news/submit.php
+    CADCAM Insider (plain text)
+	http://cadcam-insider.com/index.php/News-submission-guidelines.html
+	copyboy@cadcam-insider.com
 
-16) Sit back and enjoy a beverage for a job well done.
+#####################################################################
+# 19: Sit back and enjoy a beverage for a job well done.
+
 
 
 GETTING HELP

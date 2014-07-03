@@ -1,7 +1,7 @@
 /*                        W O R K E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file worker.c
+/** @file rt/worker.c
  *
  * Routines to handle initialization of the grid, and dispatch of the
  * first rays from the eye.
@@ -35,9 +35,11 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "./ext.h"
-#include "rtprivate.h"
 #include "fb.h"		/* Added because RGBpixel is now needed in do_pixel() */
+
+#include "./rtuif.h"
+#include "./ext.h"
+
 
 /* for fork/pipe linux timing hack */
 #ifdef USE_FORKED_THREADS
@@ -170,9 +172,9 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	 */
 	rt_prep_timer();
     }
-    
+
     /* Obtain fresh copy of global application struct */
-    a = ap;				/* struct copy */
+    a = APP;				/* struct copy */
     a.a_resource = &resource[cpu];
 
     if (incr_mode) {
@@ -197,9 +199,9 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     if (Query_one_pixel) {
 	if (a.a_x == query_x && a.a_y == query_y) {
 	    rdebug = query_rdebug;
-	    rt_g.debug = query_debug;
+	    RTG.debug = query_debug;
 	} else {
-	    rt_g.debug = rdebug = 0;
+	    RTG.debug = rdebug = 0;
 	}
     }
 
@@ -285,7 +287,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	    }
 	} else {
 	    VMOVE(a.a_ray.r_pt, point);
-	    VMOVE(a.a_ray.r_dir, ap.a_ray.r_dir);
+	    VMOVE(a.a_ray.r_dir, APP.a_ray.r_dir);
 
 	    if (a.a_rt_i->rti_prismtrace) {
 		VMOVE(pe.corner[0].r_dir, a.a_ray.r_dir);
@@ -365,7 +367,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 		}
 	    } else {
 		VMOVE(a.a_ray.r_pt, point);
-		VMOVE(a.a_ray.r_dir, ap.a_ray.r_dir);
+		VMOVE(a.a_ray.r_dir, APP.a_ray.r_dir);
 
 		if (a.a_rt_i->rti_prismtrace) {
 		    VMOVE(pe.corner[0].r_dir, a.a_ray.r_dir);
@@ -421,7 +423,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     /* bu_log("2: [%d, %d] : [%.2f, %.2f, %.2f]\n", pixelnum%width, pixelnum/width, a.a_color[0], a.a_color[1], a.a_color[2]); */
 
     /* FIXME: this should work on windows after the bu_timer() is
-     * created to replace the librt timing mechansim.
+     * created to replace the librt timing mechanism.
      */
 #if !defined(_WIN32) || defined(__CYGWIN__)
     /* Add get_pixel_timer here to get total time taken to get pixel, when asked */
@@ -433,7 +435,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	/* bu_log("PixelTime = %lf X:%d Y:%d\n", pixelTime, a.a_x, a.a_y); */
 	bu_semaphore_acquire(RT_SEM_LAST-2);
 	timeTable = timeTable_init(width, height);
-       	timeTable_input(a.a_x, a.a_y, pixelTime, timeTable);
+	timeTable_input(a.a_x, a.a_y, pixelTime, timeTable);
 	bu_semaphore_release(RT_SEM_LAST-2);
     }
 #endif
@@ -447,8 +449,6 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
 
 /**
- * W O R K E R
- *
  * Compute some pixels, and store them.
  *
  * This uses a "self-dispatching" parallel algorithm.  Executes until
@@ -461,7 +461,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
  * For a general-purpose version, see LIBRT rt_shoot_many_rays()
  */
 void
-worker(int cpu, genptr_t UNUSED(arg))
+worker(int cpu, void *UNUSED(arg))
 {
     int pixel_start;
     int pixelnum;
@@ -514,6 +514,17 @@ pat_found:
 		do_pixel(cpu, pat_num, pixelnum);
 	    }
 	}
+    } else if (random_mode) {
+
+	while (1) {
+	    /* Generate a random pixel id between 0 and last_pixel
+	       inclusive - TODO: check if there is any issue related
+	       with multi-threaded RNG */
+	    pixelnum = rand()*1.0/RAND_MAX*(last_pixel + 1);
+	    if (pixelnum >= last_pixel) pixelnum = last_pixel;
+	    do_pixel(cpu, pat_num, pixelnum);
+	}
+
     } else {
 	while (1) {
 	    if (stop_worker)
@@ -537,8 +548,6 @@ pat_found:
 
 
 /**
- * G R I D _ S E T U P
- *
  * In theory, the grid can be specified by providing any two of
  * these sets of parameters:
  *
@@ -578,7 +587,7 @@ grid_setup(void)
     }
 
     /*
-     * Optional GIFT compatabilty, mostly for RTG3.  Round coordinates
+     * Optional GIFT compatibility, mostly for RTG3.  Round coordinates
      * of lower left corner to fall on integer- valued coordinates, in
      * "gift_grid_rounding" units.
      */
@@ -630,7 +639,7 @@ grid_setup(void)
     /* "Lower left" corner of viewing plane */
     if (rt_perspective > 0.0) {
 	fastf_t zoomout;
-	zoomout = 1.0 / tan(bn_degtorad * rt_perspective / 2.0);
+	zoomout = 1.0 / tan(DEG2RAD * rt_perspective / 2.0);
 	VSET(temp, -1, -1/aspect, -zoomout);	/* viewing plane */
 
 	/*
@@ -639,19 +648,19 @@ grid_setup(void)
 	 * perspective is a full angle while divergence is the tangent
 	 * (slope) of a half angle.
 	 */
-	ap.a_diverge = tan(bn_degtorad * rt_perspective * 0.5 / width);
-	ap.a_rbeam = 0;
+	APP.a_diverge = tan(DEG2RAD * rt_perspective * 0.5 / width);
+	APP.a_rbeam = 0;
     } else {
 	/* all rays go this direction */
 	VSET(temp, 0, 0, -1);
-	MAT4X3VEC(ap.a_ray.r_dir, view2model, temp);
-	VUNITIZE(ap.a_ray.r_dir);
+	MAT4X3VEC(APP.a_ray.r_dir, view2model, temp);
+	VUNITIZE(APP.a_ray.r_dir);
 
 	VSET(temp, -1, -1/aspect, 0);	/* eye plane */
-	ap.a_rbeam = 0.5 * viewsize / width;
-	ap.a_diverge = 0;
+	APP.a_rbeam = 0.5 * viewsize / width;
+	APP.a_diverge = 0;
     }
-    if (NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL))
+    if (ZERO(APP.a_rbeam) && ZERO(APP.a_diverge))
 	bu_exit(EXIT_FAILURE, "zero-radius beam");
     MAT4X3PNT(viewbase_model, view2model, temp);
 
@@ -660,7 +669,7 @@ grid_setup(void)
 	fastf_t ang;	/* radians */
 	fastf_t dx, dy;
 
-	ang = curframe * frame_delta_t * bn_twopi / 10;	/* 10 sec period */
+	ang = curframe * frame_delta_t * M_2PI / 10;	/* 10 sec period */
 	dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
 	dy = sin(ang) * 0.5;
 	VJOIN2(viewbase_model, viewbase_model,
@@ -675,7 +684,7 @@ grid_setup(void)
 	bu_exit(EXIT_FAILURE, "cell size");
     }
     if (width <= 0 || height <= 0) {
-	bu_log("grid_setup: ERROR bad image size (%d, %d)\n",
+	bu_log("grid_setup: ERROR bad image size (%zu, %zu)\n",
 	       width, height);
 	bu_exit(EXIT_FAILURE, "bad size");
     }
@@ -683,8 +692,6 @@ grid_setup(void)
 
 
 /**
- * D O _ R U N
- *
  * Compute a run of pixels, in parallel if the hardware permits it.
  *
  * For a general-purpose version, see LIBRT rt_shoot_many_rays().
@@ -701,7 +708,7 @@ do_run(int a, int b)
     int p[2] = {0, 0};
     struct resource *tmp_res;
 
-    if (rt_g.rtg_parallel) {
+    if (RTG.rtg_parallel) {
 	buffer = bu_calloc(npsw, sizeof(resource[0]), "buffer");
 	if (pipe(p) == -1) {
 	    perror("pipe failed");
@@ -712,7 +719,7 @@ do_run(int a, int b)
     cur_pixel = a;
     last_pixel = b;
 
-    if (!rt_g.rtg_parallel) {
+    if (!RTG.rtg_parallel) {
 	/*
 	 * SERIAL case -- one CPU does all the work.
 	 */
@@ -777,7 +784,7 @@ do_run(int a, int b)
     } /* end parallel case */
 
 #ifdef USE_FORKED_THREADS
-    if (rt_g.rtg_parallel) {
+    if (RTG.rtg_parallel) {
 	tmp_res = (struct resource *)buffer;
     } else {
 	tmp_res = resource;
@@ -787,7 +794,7 @@ do_run(int a, int b)
 	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
 	    continue;
 	}
-	rt_add_res_stats(ap.a_rt_i, &tmp_res[cpu]);
+	rt_add_res_stats(APP.a_rt_i, &tmp_res[cpu]);
 	rt_zero_res_stats(&resource[cpu]);
     }
 #else
@@ -797,7 +804,7 @@ do_run(int a, int b)
 	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
 	    continue;
 	}
-	rt_add_res_stats(ap.a_rt_i, &resource[cpu]);
+	rt_add_res_stats(APP.a_rt_i, &resource[cpu]);
     }
 #endif
     return;

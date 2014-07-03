@@ -1,7 +1,7 @@
 /*                        O C T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file octree.c
+/** @file lgt/octree.c
     Author:		Gary S. Moss
 */
 /*
@@ -104,7 +104,7 @@ new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
     return	childp;
 }
 
-/*	f i n d _ O c t a n t ( )
+/*
 	Starting at "parentp" and descending, locate octree node suitable
 	for insertion of "pt".  Implicit return of tree level in "levelp".
 	Return node's address.
@@ -319,9 +319,9 @@ prnt_Node_Octree(Octree *parentp, int level)
 	    parentp->o_points->c_point[Z],
 	    parentp->o_bitv,
 	    parentp->o_temp,
-	    parentp->o_triep,
-	    parentp->o_sibling,
-	    parentp->o_child
+	    (void *)parentp->o_triep,
+	    (void *)parentp->o_sibling,
+	    (void *)parentp->o_child
 	);
     for ( ptp = parentp->o_points->c_next; ptp != PTLIST_NULL; ptp = ptp->c_next )
     {
@@ -361,7 +361,12 @@ write_Octree(Octree *parentp, FILE *fp)
 {
     PtList	*ptp;
     F_Hdr_Ptlist	hdr_ptlist;
-    long		addr = ftell( fp );
+    off_t		addr = bu_ftell( fp );
+
+    if (addr < 0) {
+	bu_log("Error: couldn't get input file's current file position.\n");
+	return 0;
+    }
     /* Write temperature and bogus number of points for this leaf.	*/
     hdr_ptlist.f_temp = parentp->o_temp;
     hdr_ptlist.f_length = 0;
@@ -385,7 +390,7 @@ write_Octree(Octree *parentp, FILE *fp)
     if ( hdr_ptlist.f_length > 0 )
     {
 	/* Go back and fudge point count.			*/
-	if ( fseek( fp, addr, 0 ) )
+	if ( bu_fseek( fp, addr, 0 ) )
 	{
 	    bu_log( "\"%s\"(%d) Fseek failed.\n", __FILE__, __LINE__ );
 	    return	0;
@@ -398,7 +403,7 @@ write_Octree(Octree *parentp, FILE *fp)
 	    return	0;
 	}
 	/* Re-position write pointer to end-of-file.		*/
-	if ( fseek( fp, 0L, 2 ) )
+	if ( bu_fseek( fp, 0, 2 ) )
 	{
 	    bu_log( "\"%s\"(%d) Fseek failed.\n", __FILE__, __LINE__ );
 	    return	0;
@@ -448,11 +453,11 @@ ir_shootray_octree(struct application *ap)
     vect_t	inv_dir;	/* Inverses of ap->a_ray.r_dir	*/
     Octree	*leafp = NULL;	/* Intersected octree leaf.	*/
     inv_dir[X] = inv_dir[Y] = inv_dir[Z] = INFINITY;
-    if ( !NEAR_ZERO(ap->a_ray.r_dir[X], SMALL_FASTF) )
+    if ( !ZERO(ap->a_ray.r_dir[X]) )
 	inv_dir[X] = 1.0 / ap->a_ray.r_dir[X];
-    if ( !NEAR_ZERO(ap->a_ray.r_dir[Y], SMALL_FASTF) )
+    if ( !ZERO(ap->a_ray.r_dir[Y]) )
 	inv_dir[Y] = 1.0 / ap->a_ray.r_dir[Y];
-    if ( !NEAR_ZERO(ap->a_ray.r_dir[Z], SMALL_FASTF) )
+    if ( !ZERO(ap->a_ray.r_dir[Z]) )
 	inv_dir[Z] = 1.0 / ap->a_ray.r_dir[Z];
     /* Descend octree from root to find the closest intersected leaf node.
        Store minimum hit distance in "a_uvec[0]" field of application

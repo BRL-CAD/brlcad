@@ -1,7 +1,7 @@
 /*                        G I F 2 F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,38 +40,42 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include "bio.h"
 
 #include "bu.h"
 #include "fb.h"
 
 
-#define	LSB	0	/* Least Signifigent Byte */
-#define MSB	1	/* Most Signifigent Byte */
+#define LSB 0 /* Least Significant Byte */
+#define MSB 1 /* Most Significant Byte */
 
 struct GIF_head {
-    char		GH_Magic[6];
-    unsigned char	GH_ScreenWidth[2];	/* MSB, LSB */
-    unsigned char	GH_ScreenHeight[2];	/* MSB, LSB */
-    unsigned char	GH_Flags;
-    unsigned char	GH_Background;
-    unsigned char	GH_EOB;
+    char GH_Magic[6];
+    unsigned char GH_ScreenWidth[2];	/* MSB, LSB */
+    unsigned char GH_ScreenHeight[2];	/* MSB, LSB */
+    unsigned char GH_Flags;
+    unsigned char GH_Background;
+    unsigned char GH_EOB;
 };
+
 
 struct GIF_Image {
-    char		IH_Magic;
-    unsigned char	IH_Left[2];		/* MSB, LSB */
-    unsigned char	IH_Top[2];		/* MSB, LSB */
-    unsigned char	IH_Width[2];		/* MSB, LSB */
-    unsigned char	IH_Height[2];		/* MSB, LSB */
-    unsigned char	IH_Flags;
+    char IH_Magic;
+    unsigned char IH_Left[2];		/* MSB, LSB */
+    unsigned char IH_Top[2];		/* MSB, LSB */
+    unsigned char IH_Width[2];		/* MSB, LSB */
+    unsigned char IH_Height[2];		/* MSB, LSB */
+    unsigned char IH_Flags;
 };
 
+
 struct acolor {
-    unsigned char	red;
-    unsigned char	green;
-    unsigned char	blue;
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
 };
+
 
 #define WORD(x)	(((int)x[MSB]<<8)+(int)x[LSB])
 
@@ -85,27 +89,33 @@ int MinBits;
 int Bits;
 int Fresh=1;
 
-struct acolor	GlobalColors[256];
-struct acolor	LocalColors[256];
+struct acolor GlobalColors[256];
+struct acolor LocalColors[256];
 
 struct GIF_head Header;
 struct GIF_Image Im;
 
 char *framebuffer=NULL;
 
-void usage(char **argv);
+void
+usage(char **argv)
+{
+    fprintf(stderr,"Usage: %s [-H] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
+    fprintf(stderr,"       (stdin used with '<' construct if gif_file not supplied)\n");
+}
+
 int getByte(FILE *inp);
 
 int
 main(int argc, char **argv)
 {
-    int	 i, idx, n;
-    int	maxcolors;
-    int	code;
-    int	verbose=0;
-    int	headers=0;
-    int	interlaced;
-    char	*file_name;
+    int i, idx, n;
+    int maxcolors;
+    int code;
+    int verbose=0;
+    int headers=0;
+    int interlaced;
+    char *file_name;
 
     unsigned char line[3*2048];
     unsigned char *lp;
@@ -117,9 +127,9 @@ main(int argc, char **argv)
     FBIO *fbp;
     FILE *fp;
 
-    while ((code = bu_getopt(argc, argv, "vFh")) != EOF) {
+    while ((code = bu_getopt(argc, argv, "HvFh?")) != -1) {
 	switch (code) {
-	    case 'h':
+	    case 'H':
 		headers=1;
 		break;
 	    case 'v':
@@ -130,36 +140,35 @@ main(int argc, char **argv)
 		break;
 	    default:	/* '?' */
 		usage(argv);
-		bu_exit(1, NULL);
+		return 1;
 	}
     }
 
-    if ( bu_optind >= argc )  {
-	if ( isatty(fileno(stdin)) ) {
-	    (void) fprintf(stderr, "%s: No input file.\n", argv[0]);
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin))) {
 	    usage(argv);
-	    bu_exit(1, NULL);
+	    return 1;
 	}
 	file_name = "-";
 	fp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ( (fp = fopen(file_name, "rb")) == NULL )  {
-	    (void)fprintf( stderr,
-			   "%s: cannot open \"%s\" for reading\n", argv[0],
-			   file_name );
+	if ((fp = fopen(file_name, "rb")) == NULL) {
+	    fprintf(stderr,
+		    "%s: cannot open \"%s\" for reading\n", argv[0],
+		    file_name);
 	    usage(argv);
-	    bu_exit(1, NULL);
+	    return 1;
 	}
     }
 /*
- * read in the Header and then check for consitence.
+ * read in the Header and then check for consistency.
  */
     n= fread(&Header, 1, 13, fp);
 
     if (n != 13) {
 	fprintf(stderr, "%s: only %d bytes in header.\n", argv[0], n);
-	bu_exit(1, NULL);
+	return 1;
     }
 
     ScreenWidth = WORD(Header.GH_ScreenWidth);
@@ -169,21 +178,25 @@ main(int argc, char **argv)
     GlobalPixels= (Header.GH_Flags&0x07) + 1;
     if (headers) {
 	fprintf(stderr, "-w%d -n%d\n", ScreenWidth, ScreenHeight);
-	bu_exit(0, NULL);
+	return 0;
     }
 /*
  * In verbose mode, output a message before checking to allow the
  * "smarter" user look over the header even if the header is barfO.
  */
     if (verbose) {
+	char magic[sizeof(Header.GH_Magic)+1];
+	memcpy(magic, Header.GH_Magic, sizeof(Header.GH_Magic));
+	magic[sizeof(magic)-1] = '\0';
+
 	fprintf(stderr, "Magic=%.6s, -w%d -n%d, M=%d, cr=%d, pixel=%d, bg=%d\n",
-		Header.GH_Magic, ScreenWidth, ScreenHeight, GlobalMap,
+		magic, ScreenWidth, ScreenHeight, GlobalMap,
 		CR, GlobalPixels, Header.GH_Background);
     }
 
     if (Header.GH_EOB) {
 	fprintf(stderr, "%s: missing EOB in header.\n", argv[0]);
-	bu_exit(1, NULL);
+	return 1;
     }
     maxcolors = 1 << GlobalPixels;
 
@@ -195,18 +208,18 @@ main(int argc, char **argv)
 	if (n != 3) {
 	    fprintf(stdout, "%s: only read %d global colors.\n",
 		    argv[0], i);
-	    bu_exit(1, NULL);
+	    return 1;
 	}
     }
 /*
  * Read in the image header.
  */
-    n= fread(&Im, 1, sizeof(Im), fp);
+    n = fread(&Im, 1, sizeof(Im), fp);
 
     if (n != sizeof(Im)) {
 	fprintf(stderr, "%s: only %d bytes in image header.\n",
 		argv[0], n);
-	bu_exit(1, NULL);
+	return 1;
     }
     if (verbose) {
 	fprintf(stderr, "Magic=%c, left=%d, top=%d, Width=%d, Height=%d\n",
@@ -215,6 +228,9 @@ main(int argc, char **argv)
 	fprintf(stderr, "Map=%d, Interlaced=%d, pixel=%d\n",
 		Im.IH_Flags>>7, (Im.IH_Flags>>6)&0x01, Im.IH_Flags&0x03);
     }
+
+    if (WORD(Im.IH_Height) < 0 || WORD(Im.IH_Height) > 65535)
+	bu_exit(1, "Bad height info in GIF header\n");
 
     interlaced = (Im.IH_Flags>>6)&0x01;
 
@@ -229,7 +245,7 @@ main(int argc, char **argv)
 		fprintf(stdout,
 			"%s: only read %d global colors.\n",
 			argv[0], i);
-		bu_exit(1, NULL);
+		return 1;
 	    }
 	}
     }
@@ -237,7 +253,7 @@ main(int argc, char **argv)
     if (WORD(Im.IH_Width) > 2048) {
 	fprintf(stderr, "%s: Input line greater than internal buffer!\n",
 		argv[0]);
-	bu_exit(1, NULL);
+	return 1;
     }
 
     MinBits = getc(fp) + 1;
@@ -246,46 +262,56 @@ main(int argc, char **argv)
 	fprintf(stderr, "MinBits=%d\n", MinBits);
     }
 
-    if (interlaced ) {
+    if (interlaced) {
 	lineIdx = 0;
 
 	lineNumber = offs[lineIdx];
 	lineInc= lace[lineIdx];
     } else {
-	lineIdx = 4;
+	lineIdx = (sizeof(lace)/sizeof(lace[0]))-1;
 	lineNumber = 0;
 	lineInc = 1;
     }
 /*
  * Open the frame buffer.
  */
-    fbp = fb_open(framebuffer, WORD(Im.IH_Width),
-		  WORD(Im.IH_Height));
+    if ((fbp = fb_open(framebuffer, WORD(Im.IH_Width), WORD(Im.IH_Height))) != NULL) {
+	int ih_height = WORD(Im.IH_Height);
+	int ih_width = WORD(Im.IH_Width);
 
-/*
- * The speed of this loop can be greatly increased by moving all of
- * the WORD macro calls out of the loop.
- */
-    for (i=0; i<WORD(Im.IH_Height);i++) {
-	int k;
-	lp = line;
-	for (k=0;k<WORD(Im.IH_Width);k++) {
-	    idx = getByte(fp);
-	    *lp++ = GlobalColors[idx].red;
-	    *lp++ = GlobalColors[idx].green;
-	    *lp++ = GlobalColors[idx].blue;
+	if (ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_height > 0xffff)
+	    bu_exit(1, "Invalid height in GIF Header\n");
+
+	/*
+	 * The speed of this loop can be greatly increased by moving all of
+	 * the WORD macro calls out of the loop.
+	 */
+	for (i=0; i<ih_height;i++) {
+	    int k;
+	    lp = line;
+	    for (k=0;k<ih_width;k++) {
+		idx = getByte(fp);
+		if (idx < 0) {
+		    fb_close(fbp);
+		    bu_exit(1, "Error: Unexpectedly reached end of input. Output may be incomplete.\n");
+		}
+		*lp++ = GlobalColors[idx].red;
+		*lp++ = GlobalColors[idx].green;
+		*lp++ = GlobalColors[idx].blue;
+	    }
+	    fb_write(fbp, 0, ih_height-lineNumber, line, ih_width);
+	    fb_flush(fbp);
+	    lineNumber += lineInc;
+	    if (lineNumber >= ih_height) {
+		++lineIdx;
+		if (lineIdx > (int)(sizeof(lace)/sizeof(lace[0]))-1)
+		    lineIdx = (sizeof(lace)/sizeof(lace[0]))-1;
+		lineInc = lace[lineIdx];
+		lineNumber = offs[lineIdx];
+	    }
 	}
-	fb_write(fbp, 0, WORD(Im.IH_Height)-lineNumber, line,
-		 WORD(Im.IH_Width));
-	fb_flush(fbp);
-	lineNumber += lineInc;
-	if (lineNumber >= WORD(Im.IH_Height)) {
-	    ++lineIdx;
-	    lineInc = lace[lineIdx];
-	    lineNumber = offs[lineIdx];
-	}
+	fb_close(fbp);
     }
-    fb_close(fbp);
     return 0;
 }
 /* getcode - Get a LWZ "code"
@@ -352,9 +378,10 @@ getcode(FILE *inp)
     return code;
 }
 
+
 /* getByte	get a byte from the input stream decompressing as we go.
  *
- * getByte uses the somewhat standard LWZ decompress algorthem.  Most
+ * getByte uses the somewhat standard LWZ decompress algorithm.  Most
  * of this subroutine is based on "compress.c".  I've added some and
  * deleted others but I do NOT claim that this is original code.
  *
@@ -374,7 +401,7 @@ getcode(FILE *inp)
  * Method:
  *	Being unable to read the papers that everybody else points to,
  *	I had to decipher the compress code.  This is how I thing this
- *	compression algorithem works.
+ *	compression algorithm works.
  *	if this is the first time the routine has been called then
  *		initialize the code sizes
  *		set the "tree" so that all "characters" are at the root.
@@ -382,21 +409,21 @@ getcode(FILE *inp)
  *	get a new code
  *	if the new code is greater than the current max code then
  *		add last(?) code to the tree.
- *		follow the tree from the leaf to the root outputing
+ *		follow the tree from the leaf to the root outputting
  *		    a "byte" for each node of the tree.
  *	endif
  */
 int getByte(FILE *inp)
 {
     int code, incode;
-    static int	firstcode, oldcode;
-    static int	firstTime = 1;
-    static int	clear_code, end_code;
-    static int	max_code, next_ent;
-#define	PREFIX	0
-#define SUFIX	1
-    static int	table[2][1<<12];
-    static int	stack[1<<13], *sp;
+    static int firstcode, oldcode;
+    static int firstTime = 1;
+    static int clear_code, end_code;
+    static int max_code, next_ent;
+#define PREFIX 0
+#define SUFIX 1
+    static int table[2][1<<12];
+    static int stack[1<<13], *sp;
 
     int i;
 
@@ -469,11 +496,6 @@ int getByte(FILE *inp)
 	if (sp >stack) return *--sp;
     }
     return code;
-}
-void
-usage(char **argv)
-{
-    fprintf(stderr, "%s [-h] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
 }
 
 /*

@@ -1,7 +1,7 @@
 /*                      R E A D _ D R A . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,11 +27,14 @@
  *	IABG mbH (Germany)
  */
 
-#ifndef READ_DRA_INCLUDED
-#define READ_DRA_INCLUDED
+#ifndef CONV_INTAVAL_READ_DRA_H
+#define CONV_INTAVAL_READ_DRA_H
+
+#include "common.h"
 
 #include <istream>
 
+#include "wdb.h"
 
 void conv
 (
@@ -40,4 +43,4 @@ void conv
 );
 
 
-#endif // READ_DRA_INCLUDED
+#endif /* CONV_INTAVAL_READ_DRA_H */

@@ -1,7 +1,7 @@
 /*               C O M B _ B O O L _ P A R S E . Y
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file comb_bool_parse.y
  *
- *	YACC(1) specifiation to parse Boolean expressions for
+ *	YACC(1) specification to parse Boolean expressions for
  *			the 'c' command
  *
  *	This grammar recognizes the classical infix notation that allows
@@ -37,8 +37,6 @@
 
 #include "../mged/comb_bool.h"
 
-/* The following is needed to get "gettxt()" correctly on IRIX platforms */
-#undef _POSIX_SOURCE
 
 %}
 

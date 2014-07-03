@@ -1,6 +1,7 @@
-/* BRL-CAD	G 5 - G 4 . C
+/*                          G 5 - G 4 . C
+ * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -58,6 +59,8 @@ main(int argc, char **argv)
     long	errors = 0, skipped = 0;
     struct bn_tol tol;
 
+    bu_setprogname(argv[0]);
+
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
@@ -74,7 +77,7 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    if ( (dbip = db_open( argv[1], "r" )) == DBI_NULL )  {
+    if ( (dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL )  {
 	perror( argv[1] );
 	return 2;
     }
@@ -92,7 +95,7 @@ main(int argc, char **argv)
 	return 4;
     }
 
-    if ( dbip->dbi_version != 5 ) {
+    if ( db_version(dbip) != 5 ) {
 	bu_log( "Input database must be a version 5 database!!!!\n" );
 	return 5;
     }

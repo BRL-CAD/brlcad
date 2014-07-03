@@ -1,7 +1,7 @@
 /*                      T I M E R H E P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,25 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup timer */
-/** @{ */
-/** @file timerhep.c
- *
- * To provide timing information for RT.
- * THIS VERSION FOR Denelcor HEP/UPX (System III-like)
- */
 
+#include "common.h"
 
 #include <stdio.h>
+
 
 /* Standard System V stuff */
 extern long time(time_t *);
 static long time0;
 
 
-/*
- * P R E P _ T I M E R
- */
 void
 rt_prep_timer(void)
 {
@@ -44,10 +36,6 @@ rt_prep_timer(void)
 }
 
 
-/*
- * R E A D _ T I M E R
- *
- */
 double
 rt_read_timer(char *str, int len)
 {
@@ -68,7 +56,6 @@ rt_read_timer(char *str, int len)
 }
 
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

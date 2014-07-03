@@ -1,7 +1,7 @@
 /*                           D - A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,41 +25,43 @@
 
 #include "common.h"
 
-#include <string.h>
-#include <ctype.h>
 #include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
 #include "bio.h"
 
-int	nflag = 0;
+#include "bu.h"
 
-static const char usage[] = "\
-Usage: d-a [-n] < doubles > ascii\n";
 
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
-    double	d;
+    static const char usage[] = "Usage: d-a [-n] < doubles > ascii\n";
 
-    while ( argc > 1 ) {
-	if ( strcmp( argv[1], "-n" ) == 0 )
+    double d;
+    int nflag = 0;
+
+    while (argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-n"))
 	    nflag++;
 	else
 	    break;
 	argc--;
 	argv++;
     }
-    if ( argc > 1 || isatty(fileno(stdin)) ) {
-	bu_exit(1, "%s", usage );
+    if (argc > 1 || isatty(fileno(stdin))) {
+	bu_exit(1, "%s", usage);
     }
 
-    if ( nflag ) {
-	long	n;
+    if (nflag) {
+	long n;
 	n = 0;
-	while ( fread(&d, sizeof(d), 1, stdin) == 1 ) {
-	    printf( "%ld %9g\n", n++, d );
+	while (fread(&d, sizeof(d), 1, stdin) == 1) {
+	    printf("%ld %9g\n", n++, d);
 	}
     } else {
-	while ( fread(&d, sizeof(d), 1, stdin) == 1 ) {
-	    printf( "%9g\n", d );
+	while (fread(&d, sizeof(d), 1, stdin) == 1) {
+	    printf("%9g\n", d);
 	}
     }
     return 0;

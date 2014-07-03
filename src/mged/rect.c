@@ -1,7 +1,7 @@
 /*                          R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rect.c
+/** @file mged/rect.c
  *
  * Routines to implement MGED's rubber band rectangle capability.
  *
@@ -57,19 +57,21 @@ struct _rubber_band default_rubber_band = {
 
 
 #define RB_O(_m) bu_offsetof(struct _rubber_band, _m)
-#define RB_OA(_m) bu_offsetofarray(struct _rubber_band, _m)
 struct bu_structparse rubber_band_vparse[] = {
     {"%d",	1, "draw",	RB_O(rb_draw),		rb_set_dirty_flag, NULL, NULL },
     {"%d",	1, "linewidth",	RB_O(rb_linewidth),	rb_set_dirty_flag, NULL, NULL },
     {"%c",	1, "linestyle",	RB_O(rb_linestyle),	rb_set_dirty_flag, NULL, NULL },
-    {"%d",	2, "pos",	RB_OA(rb_pos),		set_rect, NULL, NULL },
-    {"%d",	2, "dim",	RB_OA(rb_dim),		set_rect, NULL, NULL },
+    {"%d",	2, "pos",	RB_O(rb_pos),		set_rect, NULL, NULL },
+    {"%d",	2, "dim",	RB_O(rb_dim),		set_rect, NULL, NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 void
-rb_set_dirty_flag(void)
+rb_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
+		  const char *UNUSED(name),
+		  void *UNUSED(base),
+		  const char *UNUSED(value))
 {
     struct dm_list *dmlp;
 
@@ -108,10 +110,13 @@ rect_image2view(void)
 
 
 void
-set_rect(void)
+set_rect(const struct bu_structparse *sdp,
+	 const char *name,
+	 void *base,
+	 const char *value)
 {
     rect_image2view();
-    rb_set_dirty_flag();
+    rb_set_dirty_flag(sdp, name, base, value);
 }
 
 
@@ -152,8 +157,8 @@ draw_rect(void)
 {
     int line_style;
 
-    if (NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&
-	NEAR_ZERO(rubber_band->rb_height, (fastf_t)SMALL_FASTF))
+    if (ZERO(rubber_band->rb_width) &&
+	ZERO(rubber_band->rb_height))
 	return;
 
     if (rubber_band->rb_linestyle == 'd')
@@ -211,13 +216,13 @@ rt_rect_area(void)
     int xmin, xmax;
     int ymin, ymax;
     int width, height;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (!fbp)
 	return;
 
-    if (NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&
-	NEAR_ZERO(rubber_band->rb_height, (fastf_t)SMALL_FASTF))
+    if (ZERO(rubber_band->rb_width) &&
+	ZERO(rubber_band->rb_height))
 	return;
 
     if (mged_variables->mv_port < 0) {
@@ -244,7 +249,6 @@ rt_rect_area(void)
 	ymin += height;
     }
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "rt -w %d -n %d -V %lf -F %d -j %d,%d,%d,%d -C%d/%d/%d",
 		  dmp->dm_width, dmp->dm_height, dmp->dm_aspect,
 		  mged_variables->mv_port, xmin, ymin, xmax, ymax,
@@ -265,8 +269,8 @@ zoom_rect_area(void)
     point_t old_view_center;
     point_t new_view_center;
 
-    if (NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&
-	NEAR_ZERO(rubber_band->rb_height, (fastf_t)SMALL_FASTF))
+    if (ZERO(rubber_band->rb_width) &&
+	ZERO(rubber_band->rb_height))
 	return;
 
     adjust_rect_for_zoom();
@@ -309,7 +313,15 @@ zoom_rect_area(void)
     rubber_band->rb_height = 2.0 / dmp->dm_aspect;
 
     rect_view2image();
-    rb_set_dirty_flag();
+
+    {
+	/* need dummy values for func signature--they are unused in the func */
+	const struct bu_structparse *sdp = 0;
+	const char name[] = "name";
+	void *base = 0;
+	const char value[] = "value";
+	rb_set_dirty_flag(sdp, name, base, value);
+    }
 }
 
 

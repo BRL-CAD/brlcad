@@ -1,7 +1,7 @@
 /*                       R E A D C N V . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,22 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file readcnv.c
+/** @file iges/readcnv.c
  *
  * This routine reads the next field in "card" buffer. It expects the
  * field to contain a string representing a "float". The string is
- * read and converted to type "fastf_t", mutilpied by "conv_factor",
+ * read and converted to type "fastf_t", multiplied by "conv_factor",
  * and returned in "inum".  If "id" is not the null string, then "id"
  * is printed followed by the number.  "conv_factor" is a factor to
  * convert to mm and multiply by a scale factor.
  *
- *	"eof" is the "end-of-field" delimiter
- *	"eor" is the "end-of-record" delimiter
- *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
+ * "eof" is the "end-of-field" delimiter
+ * "eor" is the "end-of-record" delimiter
  *
  */
 
@@ -40,49 +35,45 @@
 #include "./iges_extern.h"
 
 void
-Readcnv( inum, id )
-    char *id;
-    fastf_t *inum;
+Readcnv(fastf_t *inum, char *id)
 {
-    int i=(-1), done=0, lencard;
+    int i = (-1), done = 0, lencard;
     char num[80];
 
-    if ( card[counter] == eof ) /* This is an empty field */
-    {
+    if (card[counter] == eof) {
+	/* This is an empty field */
 	counter++;
 	return;
-    }
-    else if ( card[counter] == eor ) /* Up against the end of record */
+    } else if (card[counter] == eor) /* Up against the end of record */
 	return;
 
-    if ( card[72] == 'P' )
+    if (card[72] == 'P')
 	lencard = PARAMLEN;
     else
 	lencard = CARDLEN;
 
-    if ( counter >= lencard )
-	Readrec( ++currec );
+    if (counter >= lencard)
+	Readrec(++currec);
 
-    while ( !done )
-    {
-	while ( (num[++i] = card[counter++]) != eof && num[i] != eor
-		&& counter <= lencard )
-	    if ( num[i] == 'D' )
+    while (!done) {
+	while ((num[++i] = card[counter++]) != eof && num[i] != eor
+	       && counter <= lencard)
+	    if (num[i] == 'D')
 		num[i] = 'e';
 
-	if ( counter > lencard && num[i] != eor && num[i] != eof )
-	    Readrec( ++currec );
+	if (counter > lencard && num[i] != eor && num[i] != eof)
+	    Readrec(++currec);
 	else
 	    done = 1;
     }
 
-    if ( num[i] == eor )
+    if (num[i] == eor)
 	counter--;
 
     num[++i] = '\0';
-    *inum = atof( num ) * conv_factor;
-    if ( *id != '\0' )
-	bu_log( "%s%g\n", id, *inum );
+    *inum = atof(num) * conv_factor;
+    if (*id != '\0')
+	bu_log("%s%g\n", id, *inum);
 }
 
 

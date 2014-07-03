@@ -1,7 +1,7 @@
 /*                         H M E N U . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file hmenu.c
+/** @file lgt/hmenu.c
     Authors:	Gary S. Moss
     Douglas A. Gwyn
 
@@ -88,32 +88,6 @@ struct nmllist {
     HMllist	*next;
 };
 
-static void
-prnt_HMitem(HMitem *itemp)
-{
-    if ( itemp->text == NULL )
-	return;
-    (void) fprintf( stderr, "text=\"%s\"\n", itemp->text );
-    (void) fprintf( stderr, "help=\"%s\"\n", itemp->help == NULL ? "(null)" : itemp->help );
-    (void) fprintf( stderr, "next=0x%lx\n", (unsigned long int)itemp->next );
-#ifndef sgi
-    (void) fprintf( stderr, "dfn=0x%lx\n", (unsigned long int)itemp->dfn );
-    (void) fprintf( stderr, "bfn=0x%lx\n", (unsigned long int)itemp->bfn );
-#endif
-    (void) fprintf( stderr, "hfn=0x%lx\n", (unsigned long int)itemp->hfn );
-    (void) fprintf( stderr, "data=%ld\n--\n", itemp->data );
-    return;
-}
-
-static void
-prnt_HMllist(HMllist *listp)
-{
-    if ( listp == (HMllist *) 0 )
-	return;
-    prnt_HMitem( listp->itemp );
-    prnt_HMllist( listp->next );
-    return;
-}
 
 static void
 free_HMitems(HMitem *itemp)
@@ -154,7 +128,7 @@ hm_Put_Item(HWindow *win, HMitem *itemp, int flag)
     int	bit = 1;
     int	writemask = 0;
 
-    buf = bu_calloc(1, sizeof(char) * width, "alloc buf");
+    buf = (char *)bu_calloc(1, sizeof(char) * width, "alloc buf");
     p = buf;
 
     if ( bitmap == 0 )
@@ -243,7 +217,7 @@ hm_Put_Border(HWindow *win, int row, int mark)
     static char	*buf;
     char	*p;
 
-    buf = bu_calloc(1, sizeof(char) * win->width, "alloc buf");
+    buf = (char *)bu_calloc(1, sizeof(char) * win->width, "alloc buf");
     p = buf;
     *p++ = (char)mark;
     for ( i = 0; i < win->width; i++ )
@@ -471,7 +445,7 @@ hmenuhit(HMenu *menup, int menux, int menuy)
 	/*prnt_HMllist( llhead.next );*/
 
 	/* Steal the field that the user isn't using temporarily to
-	   emmulate the static allocation of menu items.
+	   emulate the static allocation of menu items.
 	*/
 	if ( i > 0 )
 	{

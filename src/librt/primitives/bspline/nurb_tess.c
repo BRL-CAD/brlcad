@@ -1,7 +1,7 @@
 /*                     N U R B _ T E S S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_tess.c
+/** @file primitives/bspline/nurb_tess.c
  *
  * Given Epsilon, compute the number of internal knots to add so that
  * every triangle generated in parametric space is within epsilon of
@@ -41,11 +41,11 @@
 /**
  * Algorithm -
  *
- * See paper in Computer Aided Design (CAD) Volumne 27, Number 1,
- * January 1995 TESSELATING TRIMMMED NURBS SURFACES, Leslie A Piegl
+ * See paper in Computer Aided Design (CAD) Volume 27, Number 1,
+ * January 1995 TESSELATING TRIMMED NURBS SURFACES, Leslie A Piegl
  * and Arnaud Richard.
  *
- * There is a slight deviation from the paper, Since libnurb
+ * There is a slight deviation from the paper; since libnurb
  * (rt_nurb_s_diff) differentiation correctly handles rational
  * surfaces, no special processing for rational is needed.
  *
@@ -142,8 +142,6 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 
 
 /**
- * R T _ C N U R B _ P A R _ E D G E
- *
  * Calculate the maximum edge length (in parameter space) that will
  * keep the curve approximation within epsilon of the true curve
  *
@@ -198,7 +196,7 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
     rt_nurb_free_cnurb(d2);
 
     for (j=0; j<num_coords; j++) {
-	if (NEAR_ZERO(der2[j], SMALL_FASTF))
+	if (ZERO(der2[j]))
 	    continue;
 
 	t = sqrt(2.0 * epsilon / (num_coord_factor * der2[j]));
@@ -206,7 +204,7 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
 	    final_t = t;
     }
 
-    if (NEAR_ZERO(final_t - MAX_FASTF, SMALL_FASTF))
+    if (ZERO(final_t - MAX_FASTF))
 	return -1.0;
     else
 	return final_t/2.0;

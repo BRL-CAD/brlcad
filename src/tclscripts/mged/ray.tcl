@@ -1,7 +1,7 @@
 #                         R A Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -35,7 +35,10 @@ proc mouse_shoot_ray { x y } {
     # get zclip setting
     set zclip [dm set zclip]
 
-    eval .inmem rt_gettrees ray -i -u [_mged_who]
+    if {[catch {eval .inmem rt_gettrees ray -i -u [_mged_who]} msg]} {
+	error $msg
+    }
+
     ray prep 1
     ray no_bool 1
     set xx [expr $x / 2048.0]

@@ -1,7 +1,7 @@
 #                     R A Y P I C K . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,23 +18,23 @@
 # information.
 #
 ###
-#
-#    Preliminary...
-#    Ensure that all commands used here but not defined herein
-#    are provided by the application
-#
-
-set extern_commands "M _mged_M"
-foreach cmd $extern_commands {
-    catch {auto_load $cmd} val
-    if {[expr [string compare [info command $cmd] $cmd] != 0]} {
-	puts stderr "[info script]: Application fails to provide command '$cmd'"
-	return
-    }
-}
 
 
 proc raypick { } {
+
+    #    Preliminary...
+    #    Ensure that all commands used here but not defined herein
+    #    are provided by the application
+    #
+    set extern_commands "M _mged_M"
+    foreach cmd $extern_commands {
+	catch {auto_load $cmd} val
+	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
+	    puts stderr "[info script]: Application fails to provide command '$cmd'"
+	    return
+	}
+    }
+
     echo Shoot a ray by clicking the middle mouse button.
     # Replace mouse event handler
     proc M { up x y } {

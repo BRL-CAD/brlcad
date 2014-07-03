@@ -1,7 +1,7 @@
 /*                         V L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2010 United States Government as represented by
+ * Copyright (c) 1992-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,50 +17,35 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file vlist.c
- *
- * Routines for the import and export of vlist chains as:
- * Network independent binary,
- * BRL-extended UNIX-Plot files.
- *
- */
-/** @} */
+
 
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
+#include "bin.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 #include "plot3.h"
 
-/************************************************************************
- *									*
- *			Generic VLBLOCK routines			*
- *									*
- ************************************************************************/
 
-/**
- * B N _ V L B L O C K _ I N I T
- */
 struct bn_vlblock *
 bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists */
-		int max_ent)
+		int max_ent /**< maximum number of entities to get/put */)
 {
     struct bn_vlblock *vbp;
-    int i;
+    size_t i;
 
-    if (BU_LIST_UNINITIALIZED(free_vlist_hd))
+    if (!BU_LIST_IS_INITIALIZED(free_vlist_hd))
 	BU_LIST_INIT(free_vlist_hd);
 
-    BU_GETSTRUCT(vbp, bn_vlblock);
+    BU_ALLOC(vbp, struct bn_vlblock);
     vbp->magic = BN_VLBLOCK_MAGIC;
     vbp->free_vlist_hd = free_vlist_hd;
     vbp->max = max_ent;
@@ -82,23 +67,17 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
 }
 
 
-/**
- * R T _ V L B L O C K _ I N I T
- */
 struct bn_vlblock *
 rt_vlblock_init(void)
 {
-    return bn_vlblock_init(&rt_g.rtg_vlfree, 32);
+    return bn_vlblock_init(&RTG.rtg_vlfree, 32);
 }
 
 
-/**
- * R T _ V L B L O C K _ F R E E
- */
 void
 rt_vlblock_free(struct bn_vlblock *vbp)
 {
-    int i;
+    size_t i;
 
     BN_CK_VLBLOCK(vbp);
     for (i=0; i < vbp->nused; i++) {
@@ -115,28 +94,25 @@ rt_vlblock_free(struct bn_vlblock *vbp)
 }
 
 
-/**
- * R T _ V L B L O C K _ F I N D
- */
 struct bu_list *
 rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 {
-    long new;
-    int n;
-    int omax;		/* old max */
+    long newrgb;
+    size_t n;
+    size_t omax;		/* old max */
 
     BN_CK_VLBLOCK(vbp);
 
-    new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
+    newrgb = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
 
     for (n=0; n < vbp->nused; n++) {
-	if (vbp->rgb[n] == new)
+	if (vbp->rgb[n] == newrgb)
 	    return &(vbp->head[n]);
     }
     if (vbp->nused < vbp->max) {
 	/* Allocate empty slot */
 	n = vbp->nused++;
-	vbp->rgb[n] = new;
+	vbp->rgb[n] = newrgb;
 	return &(vbp->head[n]);
     }
 
@@ -149,10 +125,10 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 	if (BU_LIST_IS_EMPTY(&vbp->head[n]))
 	    vbp->head[n].forw = BU_LIST_NULL;
 
-    vbp->head = (struct bu_list *)bu_realloc((genptr_t)vbp->head,
+    vbp->head = (struct bu_list *)bu_realloc((void *)vbp->head,
 					     vbp->max * sizeof(struct bu_list),
 					     "head[]");
-    vbp->rgb = (long *)bu_realloc((genptr_t)vbp->rgb,
+    vbp->rgb = (long *)bu_realloc((void *)vbp->rgb,
 				  vbp->max * sizeof(long),
 				  "rgb[]");
 
@@ -184,21 +160,6 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 }
 
 
-/************************************************************************
- *									*
- *			Generic BN_VLIST routines			*
- *									*
- ************************************************************************/
-
-/**
- * R T _ C K _ V L I S T
- *
- * Validate an bn_vlist chain for having reasonable values inside.
- * Calls bu_bomb() if not.
- *
- * Returns -
- * npts Number of point/command sets in use.
- */
 int
 rt_ck_vlist(const struct bu_list *vhead)
 {
@@ -233,7 +194,7 @@ rt_ck_vlist(const struct bu_list *vhead)
 		    bu_bomb("rt_ck_vlist() bad coordinate value\n");
 		}
 		/* XXX Need a define for largest command number */
-		if (*cmd < 0 || *cmd > BN_VLIST_POLY_VERTNORM) {
+		if (*cmd < 0 || *cmd > BN_VLIST_CMD_MAX) {
 		    bu_log("cmd = x%x (%d.)\n", *cmd, *cmd);
 		    bu_bomb("rt_ck_vlist() bad vlist command\n");
 		}
@@ -244,12 +205,6 @@ rt_ck_vlist(const struct bu_list *vhead)
 }
 
 
-/**
- * R T _ V L I S T _ C O P Y
- *
- * Duplicate the contents of a vlist.  Note that the copy may be more
- * densely packed than the source.
- */
 void
 rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 {
@@ -261,24 +216,18 @@ rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 	register int *cmd = vp->cmd;
 	register point_t *pt = vp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    BN_ADD_VLIST(&rt_g.rtg_vlfree, dest, *pt, *cmd);
+	    BN_ADD_VLIST(&RTG.rtg_vlfree, dest, *pt, *cmd);
 	}
     }
 }
 
 
-/**
- * B N _ V L I S T _ C L E A N U P
- *
- * The macro RT_FREE_VLIST() simply appends to the list
- * &rt_g.rtg_vlfree.  Now, give those structures back to bu_free().
- */
 void
 bn_vlist_cleanup(struct bu_list *hd)
 {
     register struct bn_vlist *vp;
 
-    if (BU_LIST_UNINITIALIZED(hd)) {
+    if (!BU_LIST_IS_INITIALIZED(hd)) {
 	BU_LIST_INIT(hd);
 	return;
     }
@@ -291,87 +240,65 @@ bn_vlist_cleanup(struct bu_list *hd)
 }
 
 
-/**
- * XXX This needs to remain a LIBRT function.
- */
 void
 rt_vlist_cleanup(void)
 {
-    bn_vlist_cleanup(&rt_g.rtg_vlfree);
+    bn_vlist_cleanup(&RTG.rtg_vlfree);
 }
 
 
-/**
- * B N _ V L I S T _ R P P
- *
- * Given an RPP, draw the outline of it into the vlist.
- */
 void
 bn_vlist_rpp(struct bu_list *hd, const point_t minn, const point_t maxx)
 {
     point_t p;
 
     VSET(p, minn[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
 
 	/* first side */
 	VSET(p, minn[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, minn[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, minn[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, minn[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* across */
 	VSET(p, maxx[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* second side */
 	VSET(p, maxx[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, maxx[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, maxx[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, maxx[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* front edge */
 	VSET(p, minn[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
 	VSET(p, maxx[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* bottom back */
 	VSET(p, minn[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
 	VSET(p, maxx[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* top back */
 	VSET(p, minn[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
 	VSET(p, maxx[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	}
 
-/************************************************************************
- *									*
- *			Binary VLIST import/export routines		*
- *									*
- ************************************************************************/
 
-/**
- * R T _ V L I S T _ E X P O R T
- *
- * Convert a vlist chain into a blob of network-independent binary,
- * for transmission to another machine.
- *
- * The result is stored in a vls string, so that both the address and
- * length are available conveniently.
- */
 void
 rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 {
@@ -394,11 +321,15 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
      * nelem[4], String[n+1], cmds[nelem*1], pts[3*nelem*8]
      */
     namelen = strlen(name)+1;
-    nbytes = namelen + 4 + nelem * (1+3*8) + 2;
+    nbytes = namelen + 4 + nelem * (1+ELEMENTS_PER_VECT*SIZEOF_NETWORK_DOUBLE) + 2;
 
+    /* FIXME: this is pretty much an abuse of vls.  should be using
+     * vlb for variable-length byte buffers.
+     */
     bu_vls_setlen(vls, (int)nbytes);
     buf = (unsigned char *)bu_vls_addr(vls);
-    bp = bu_plong(buf, (uint32_t)nelem);
+    *(uint32_t *)buf = htonl((uint32_t)nelem);
+    bp = buf+sizeof(uint32_t);
     bu_strlcpy((char *)bp, name, namelen);
     bp += namelen;
 
@@ -417,20 +348,19 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 	register int i;
 	register int nused = vp->nused;
 	register point_t *pt = vp->pt;
-	for (i = 0; i < nused; i++, pt++) {
-	    htond(bp, (unsigned char *)pt, 3);
-	    bp += 3*8;
+
+	/* must be double for import and export */
+	double point[ELEMENTS_PER_POINT];
+
+	for (i = 0; i < nused; i++) {
+	    VMOVE(point, pt[i]); /* convert fastf_t to double */
+	    bu_cv_htond(bp, (unsigned char *)point, ELEMENTS_PER_VECT);
+	    bp += ELEMENTS_PER_VECT*SIZEOF_NETWORK_DOUBLE;
 	}
     }
 }
 
 
-/**
- * R T _ V L I S T _ I M P O R T
- *
- * Convert a blob of network-independent binary prepared by
- * vls_vlist() and received from another machine, into a vlist chain.
- */
 void
 rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char *buf)
 {
@@ -439,11 +369,13 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
     size_t nelem;
     size_t namelen;
     size_t i;
-    point_t point;
+
+    /* must be double for import and export */
+    double point[ELEMENTS_PER_POINT];
 
     BU_CK_VLS(namevls);
 
-    nelem = (size_t)bu_glong(buf);
+    nelem = ntohl(*(uint32_t *)buf);
     bp = buf+4;
 
     namelen = strlen((char *)bp)+1;
@@ -456,29 +388,17 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 	int cmd;
 
 	cmd = *bp++;
-	ntohd((unsigned char *)point, pp, 3);
-	pp += 3*8;
-	BN_ADD_VLIST(&rt_g.rtg_vlfree, hp, point, cmd);
+	bu_cv_ntohd((unsigned char *)point, pp, ELEMENTS_PER_POINT);
+	pp += ELEMENTS_PER_POINT*SIZEOF_NETWORK_DOUBLE;
+	BN_ADD_VLIST(&RTG.rtg_vlfree, hp, point, cmd);
     }
 }
 
 
-/************************************************************************
- *									*
- *			UNIX-Plot VLIST import/export routines		*
- *									*
- ************************************************************************/
-
-/**
- * R T _ P L O T _ V L B L O C K
- *
- * Output a bn_vlblock object in extended UNIX-plot format, including
- * color.
- */
 void
 rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
 {
-    int i;
+    size_t i;
 
     BN_CK_VLBLOCK(vbp);
 
@@ -494,13 +414,6 @@ rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
 }
 
 
-/**
- * R T _ V L I S T _ T O _ U P L O T
- *
- * Output a vlist as an extended 3-D floating point UNIX-Plot file.
- * You provide the file.  Uses libplot3 routines to create the
- * UNIX-Plot output.
- */
 void
 rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
 {
@@ -515,14 +428,18 @@ rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
+		case BN_VLIST_TRI_START:
 		    break;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    pdv_3move(fp, *pt);
 		    break;
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
 		    pdv_3cont(fp, *pt);
 		    break;
 		default:
@@ -610,8 +527,6 @@ static const struct uplot rt_uplot_letters[] = {
 
 
 /**
- * g e t s h o r t
- *
  * Read VAX-order 16-bit number
  */
 static int
@@ -636,7 +551,7 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
     size_t ret;
     int i, j;
     int cc = 0;
-    char inbuf[8] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
+    char inbuf[SIZEOF_NETWORK_DOUBLE] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
 
     for (i = 0; i < up->narg; i++) {
 	switch (up->targ) {
@@ -644,12 +559,15 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 		arg[i] = getshort(fp);
 		break;
 	    case TIEEE:
-		ret = fread(inbuf, 8, 1, fp);
+	    {
+		double scan;
+		ret = fread(inbuf, SIZEOF_NETWORK_DOUBLE, 1, fp);
 		if (ret != 1)
 		    bu_log("WARNING: uplot read failure\n");
-		ntohd((unsigned char *)&arg[i],
-		      (unsigned char *)inbuf, 1);
+		bu_cv_ntohd((unsigned char *)&scan, (unsigned char *)inbuf, 1);
+		arg[i] = scan; /* convert double to fastf_t */
 		break;
+	    }
 	    case TSTRING:
 		j = 0;
 		while (!feof(fp) &&
@@ -658,7 +576,11 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 		carg[j] = '\0';
 		break;
 	    case TCHAR:
-		carg[i] = getc(fp);
+		cc = getc(fp);
+		if (cc == EOF)
+		    return;
+
+		carg[i] = cc;
 		arg[i] = 0;
 		break;
 	    case TNONE:
@@ -676,18 +598,23 @@ rt_uplot_get_text_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *ar
     int ret;
     int i = 0;
     unsigned int tchar = 0;
+    double val;
 
     for (i = 0; i < up->narg; i++) {
 	switch (up->targ) {
 	    case TSHORT:
-		ret = fscanf(fp, "%lf", &arg[i]);
+		ret = fscanf(fp, "%lf", &val);
 		if (ret != 1)
 		    bu_log("WARNING: uplot short input failure\n");
+		else
+		    arg[i] = val;
 		break;
 	    case TIEEE:
-		ret = fscanf(fp, "%lf", &arg[i]);
+		ret = fscanf(fp, "%lf", &val);
 		if (ret != 1)
 		    bu_log("WARNING: uplot floating point input failure\n");
+		else
+		    arg[i] = val;
 		break;
 	    case TSTRING:
 		ret = fscanf(fp, "%256s\n", &carg[0]);
@@ -721,12 +648,20 @@ rt_process_uplot_value(register struct bu_list **vhead,
 {
     mat_t mat;
     const struct uplot *up;
-    char carg[256];
-    fastf_t arg[6];
+#define CARG_LEN 256
+#define ARG_LEN 6
+    char carg[CARG_LEN];
+    fastf_t arg[ARG_LEN];
     vect_t a, b;
     point_t last_pos;
     static point_t lpnt;		/* last point of a move/draw series */
     static int moved = 0;	/* moved since color change */
+
+    memset(carg, 0, sizeof(char)*CARG_LEN);
+    memset(arg, 0, sizeof(fastf_t)*ARG_LEN);
+#undef ARG_LEN
+#undef CARG_LEN
+
 
     /* look it up */
     if (c < 'A' || c > 'z') {
@@ -856,13 +791,6 @@ rt_process_uplot_value(register struct bu_list **vhead,
 }
 
 
-/**
- * R T _ U P L O T _ T O _ V L I S T
- *
- * Read a BRL-style 3-D UNIX-plot file into a vector list.  For now,
- * discard color information, only extract vectors.  This might be
- * more naturally located in mged/plot.c
- */
 int
 rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, int mode)
 {
@@ -889,11 +817,6 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
 }
 
 
-/**
- * R T _ L A B E L _ V L I S T _ V E R T S
- *
- * Used by MGED's "labelvert" command.
- */
 void
 rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, double sz, double mm2local)
 {

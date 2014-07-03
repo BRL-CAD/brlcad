@@ -1,7 +1,7 @@
 /*                    P C P C S E T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 /** @file pcVCSet.cpp
  *
  * VCSet Class Methods
- * 
+ *
  */
 #include "pcVCSet.h"
 #include "pc.h"
@@ -66,17 +66,6 @@ VCSet::~VCSet()
 }
 
 
-#if 0
-void VCSet::pushVar()
-{
-    Variable<double> *v = new Variable<double>(name, value);
-    v->addInterval(Interval<double>(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), 0.00001));
-    Vars.push_back(v);
-    /*addVariable<double>(name, value);*/
-    name.clear();
-} 
-#endif
-
 void VCSet::addConstraint(std::string cid, std::string cexpr, functor f, int count, ...)
 {
     va_list args;
@@ -105,18 +94,18 @@ void VCSet::addParameter(std::string pname, int type, void *ptr)
 {
     switch (type) {
 	case PC_DB_VECTOR_T: {
-	    Vector *v = new Vector(*this, pname, ptr); 
+	    Vector *v = new Vector(*this, pname, ptr);
 	    ParTable.push_back(v);
 	    //std::cout << "!-- Pushed " << pname << std::endl;
 	    break;
 	}
 	case PC_DB_FASTF_T: {
-	    FastF *f = new FastF(*this, pname, ptr); 
+	    FastF *f = new FastF(*this, pname, ptr);
 	    ParTable.push_back(f);
 	    break;
 	}
 	case PC_DB_POINT_T: {
-	    Point *p = new Point(*this, pname, ptr); 
+	    Point *p = new Point(*this, pname, ptr);
 	    ParTable.push_back(p);
 	    break;
 	}
@@ -142,7 +131,7 @@ void VCSet::store()
 {
     std::list<VariableAbstract *>::iterator i = Vars.begin();
     std::list<VariableAbstract *>::iterator end = Vars.end();
-    
+
     for (; i != end; i++) {
 	(**i).store();
     }
@@ -153,7 +142,7 @@ void VCSet::restore()
 {
     std::list<VariableAbstract *>::iterator i = Vars.begin();
     std::list<VariableAbstract *>::iterator end = Vars.end();
-    
+
     for (; i != end; i++) {
 	(**i).restore();
     }
@@ -206,7 +195,7 @@ void VCSet::display()
 	std::cout<< endl << "Variables:" << endl << endl;
 	for (i = Vars.begin(); i != Vars.end(); i++)
 	    (**i).display();
-    }	    
+    }
     if (!Constraints.empty()) {
 	std::cout<< endl << "Constraints:" << endl << endl;
 	for (j = Constraints.begin(); j != Constraints.end(); j++)

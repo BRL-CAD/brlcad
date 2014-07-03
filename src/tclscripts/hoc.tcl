@@ -1,7 +1,7 @@
 #                         H O C . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -28,8 +28,10 @@
 #		Paul Tanenbaum
 #
 
-if {![info exists ::tk::Priv(cad_dialog)]} {
-    set ::tk::Priv(cad_dialog) .cad_dialog
+if {[namespace exists ::tk]} {
+    if {![info exists ::tk::Priv(cad_dialog)]} {
+	set ::tk::Priv(cad_dialog) .cad_dialog
+    }
 }
 
 # hoc_build_string --

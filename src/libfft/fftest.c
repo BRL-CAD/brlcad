@@ -1,7 +1,7 @@
 /*                        F F T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fftest.c
+/** @file libfft/fftest.c
  *
  * Complex Number and FFT Library
  *
@@ -29,12 +29,6 @@
 #include <math.h>
 
 #include "fft.h"
-
-
-typedef struct {
-    double re;	/* Real Part */
-    double im;	/* Imaginary Part */
-} COMPLEX;
 
 /***** TEST ROUTINES *****/
 COMPLEX data[64];
@@ -60,11 +54,14 @@ main(int ac, char *av[])
     int i;
 
     if (ac > 1)
-	printf("Usage: %s\n", av[0]);
+	fprintf(stderr,"Usage: %s\n", av[0]);
 
     for (i = 0; i < 64; i++) {
-	data[i].re = sin((double)2.0 * M_PI * i / 64.0);
-	data[i].re += 3 * cos((double)2.0 * M_PI * i / 32.0);
+/* Original and simplified expressions in next 4 lines of file you are reading. */
+/*	data[i].re = sin((double)2.0 * M_PI * i / 64.0); */
+	data[i].re = sin( M_PI * (double) i / 32.0);
+/*	data[i].re += 3 * cos((double)2.0 * M_PI * i / 32.0); */
+	data[i].re += 3 * cos( M_PI * (double) i / 16.0);
 	data[i].im = (double)0.0;
     }
 

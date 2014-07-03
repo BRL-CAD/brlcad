@@ -1,7 +1,7 @@
 /*                         Q M A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,9 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup mat */
 /** @{ */
-/** @file qmath.c
+/** @file libbn/qmath.c
  *
  * @brief
  *  Quaternion math routines.
@@ -56,22 +57,10 @@
 
 #include <stdio.h>		/* DEBUG need stderr for now... */
 #include <math.h>
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 
-#ifdef M_PI
-#define PI M_PI
-#else
-#define PI	3.14159265358979323264
-#endif
-#define	RTODEG	(180.0/PI)
 
-/**
- *			Q U A T _ M A T 2 Q U A T
- *@brief
- *  Convert Matrix to Quaternion.
- */
 void
 quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
 {
@@ -131,14 +120,7 @@ quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
 #undef MMM
 }
 
-/**
- *			Q U A T _ Q U A T 2 M A T
- *@brief
- *  Convert Quaternion to Matrix.
- *
- * NB: This only works for UNIT quaternions.  We may get imaginary results
- *   otherwise.  We should normalize first (still yields same rotation).
- */
+
 void
 quat_quat2mat(register fastf_t *mat, register const fastf_t *quat)
 {
@@ -165,11 +147,7 @@ quat_quat2mat(register fastf_t *mat, register const fastf_t *quat)
     mat[15] = 1.0;
 }
 
-/**
- *			Q U A T _ D I S T A N C E
- *@brief
- * Gives the euclidean distance between two quaternions.
- */
+
 double
 quat_distance(const fastf_t *q1, const fastf_t *q2)
 {
@@ -179,14 +157,7 @@ quat_distance(const fastf_t *q1, const fastf_t *q2)
     return QMAGNITUDE( qtemp );
 }
 
-/**
- *			Q U A T _ D O U B L E
- *@brief
- * Gives the quaternion point representing twice the rotation
- *   from q1 to q2.
- *   Needed for patching Bezier curves together.
- *   A rather poor name admittedly.
- */
+
 void
 quat_double(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
 {
@@ -199,13 +170,7 @@ quat_double(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
     QUNITIZE( qout );
 }
 
-/**
- *			Q U A T _ B I S E C T
- *@brief
- * Gives the bisector of quaternions q1 and q2.
- * (Could be done with quat_slerp and factor 0.5)
- * [I believe they must be unit quaternions this to work]
- */
+
 void
 quat_bisect(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
 {
@@ -213,15 +178,7 @@ quat_bisect(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
     QUNITIZE( qout );
 }
 
-/**
- *			Q U A T _ S L E R P
- *@brief
- * Do Spherical Linear Interpolation between two unit quaternions
- *  by the given factor.
- *
- * As f goes from 0 to 1, qout goes from q1 to q2.
- * Code based on code by Ken Shoemake
- */
+
 void
 quat_slerp(fastf_t *qout, const fastf_t *q1, const fastf_t *q2, double f)
 {
@@ -251,31 +208,22 @@ quat_slerp(fastf_t *qout, const fastf_t *q1, const fastf_t *q2, double f)
 	QBLEND2( qout, s1, q1, s2, q2 );
     } else {
 	/*
-	 *  cos_omega == -1, omega = PI.
-	 *  The ends are nearly opposite, 180 degrees (PI) apart.
+	 *  cos_omega == -1, omega = M_PI.
+	 *  The ends are nearly opposite, 180 degrees (M_PI) apart.
 	 */
 	/* (I have no idea what permuting the elements accomplishes,
 	 * perhaps it creates a perpendicular? */
 	qout[X] = -q1[Y];
 	qout[Y] =  q1[X];
 	qout[Z] = -q1[W];
-	s1 = sin( (0.5-f) * PI );
-	s2 = sin( f * PI );
+	s1 = sin( (0.5-f) * M_PI );
+	s2 = sin( f * M_PI );
 	VBLEND2( qout, s1, q1, s2, qout );
 	qout[W] =  q1[Z];
     }
 }
 
-/**
- *			Q U A T _ S B E R P
- *@brief
- * Spherical Bezier Interpolate between four quaternions by amount f.
- * These are intended to be used as start and stop quaternions along
- *   with two control quaternions chosen to match spline segments with
- *   first order continuity.
- *
- *  Uses the method of successive bisection.
- */
+
 void
 quat_sberp(fastf_t *qout, const fastf_t *q1, const fastf_t *qa, const fastf_t *qb, const fastf_t *q2, double f)
 {
@@ -294,16 +242,7 @@ quat_sberp(fastf_t *qout, const fastf_t *q1, const fastf_t *qa, const fastf_t *q
     quat_slerp( qout, p4, p5, f );
 }
 
-/**
- *			Q U A T _ M A K E _ N E A R E S T
- *@brief
- *  Set the quaternion q1 to the quaternion which yields the
- *   smallest rotation from q2 (of the two versions of q1 which
- *   produce the same orientation).
- *
- * Note that smallest euclidian distance implies smallest great
- *   circle distance as well (since surface is convex).
- */
+
 void
 quat_make_nearest(fastf_t *q1, const fastf_t *q2)
 {
@@ -320,9 +259,7 @@ quat_make_nearest(fastf_t *q1, const fastf_t *q2)
     }
 }
 
-/**
- *			Q U A T _ P R I N T
- */
+
 /* DEBUG ROUTINE */
 void
 quat_print(const char *title, const fastf_t *quat)
@@ -335,19 +272,14 @@ quat_print(const char *title, const fastf_t *quat)
 	fprintf( stderr, "%8f  ", quat[i] );
     fprintf( stderr, "\n" );
 
-    fprintf( stderr, "rot_angle = %8f deg", RTODEG * 2.0 * acos( quat[W] ) );
+    fprintf( stderr, "rot_angle = %8f deg", RAD2DEG * 2.0 * acos( quat[W] ) );
     VMOVE( axis, quat );
     VUNITIZE( axis );
     fprintf( stderr, ", Axis = (%f, %f, %f)\n",
 	     axis[X], axis[Y], axis[Z] );
 }
 
-/**
- *			Q U A T _ E X P
- *@brief
- *  Exponentiate a quaternion, assuming that the scalar part is 0.
- *  Code by Ken Shoemake.
- */
+
 void
 quat_exp(fastf_t *out, const fastf_t *in)
 {
@@ -363,12 +295,7 @@ quat_exp(fastf_t *out, const fastf_t *in)
     out[W] = cos(theta);
 }
 
-/**
- *			Q U A T _ L O G
- *@brief
- *  Take the natural logarithm of a unit quaternion.
- *  Code by Ken Shoemake.
- */
+
 void
 quat_log(fastf_t *out, const fastf_t *in)
 {

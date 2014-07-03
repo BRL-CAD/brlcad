@@ -1,7 +1,7 @@
 /*                          G L O B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file glob.c
+/** @file fbed/glob.c
  *
  */
 
@@ -39,7 +39,6 @@ Point image_center; /* Center of image space. */
 Point windo_center; /* Center of screen, image coords. */
 Point windo_anchor; /* Saved "windo_center". */
 Try		*try_rootp = (Try *) NULL;
-bool isSGI = false; /* Are we running on an SGI with graphics. */
 char cread_buf[MACROBUFSZ] = { 0 }, *cptr = cread_buf;
 char macro_buf[MACROBUFSZ] = { 0 }, *macro_ptr = macro_buf;
 int brush_sz = 0;

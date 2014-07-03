@@ -1,7 +1,7 @@
 /*                    R H C _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,9 +30,6 @@
 #include "brep.h"
 
 
-/**
- * R T _ R H C _ B R E P
- */
 extern "C" void
 rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
@@ -41,11 +38,6 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_rhc_internal *)ip->idb_ptr;
     RT_RHC_CK_MAGIC(eip);
-
-    *b = ON_Brep::New();
-
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
 
     point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
@@ -65,7 +57,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     plane1_origin = ON_3dPoint(p1_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    const ON_Plane* rhc_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane rhc_bottom_plane = ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
 
     // Next, create a hyperbolic curve corresponding to the shape of
     // the hyperboloid in the plane.  See if the following webpage
@@ -78,12 +70,10 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     double intercept_calc = (eip->rhc_c)*(eip->rhc_c)/(MAGNITUDE(eip->rhc_B) + eip->rhc_c);
     double intercept_dist = MAGNITUDE(eip->rhc_B) + eip->rhc_c - intercept_calc;
     double intercept_length = intercept_dist - MAGNITUDE(eip->rhc_B);
-    bu_log("intercept_dist: %f\n", intercept_dist);
-    bu_log("intercept_length: %f\n", intercept_length);
+
     double MX = MAGNITUDE(eip->rhc_B);
     double MP = MX + intercept_length;
     double w1 = (MX/MP)/(1-MX/MP);
-    bu_log("weight: %f\n", w1);
 
     VMOVE(tmppt, eip->rhc_B);
     VUNITIZE(tmppt);
@@ -105,11 +95,9 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     ON_NurbsCurve* hypnurbscurve = ON_NurbsCurve::New();
 
     bcurve->GetNurbForm(*hypnurbscurve);
+    delete bcurve;
 
-    bu_log("Valid nurbs curve: %d\n", hypnurbscurve->IsValid(dump));
-    hypnurbscurve->Dump(*dump);
-
-    // Also need a staight line from the beginning to the end to
+    // Also need a straight line from the beginning to the end to
     // complete the loop.
 
     ON_LineCurve* straightedge = new ON_LineCurve(onp3, onp1);
@@ -120,7 +108,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     boundary.Append(ON_Curve::Cast(straightedge));
 
     ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = (*rhc_bottom_plane);
+    bp->m_plane = rhc_bottom_plane;
     bp->SetDomain(0, -100.0, 100.0);
     bp->SetDomain(1, -100.0, 100.0);
     bp->SetExtents(0, bp->Domain(0));
@@ -143,6 +131,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->rhc_V), ON_3dPoint(vp2));
     ON_Brep& brep = *(*b);
     ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
+    delete extrudepath;
 
 }
 

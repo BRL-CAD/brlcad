@@ -1,7 +1,7 @@
 /*                  T O N E _ C L A S S I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tone_classic.c
+/** @file halftone/tone_classic.c
  *
  *  Author -
  *	Christopher T. Johnson	- 90/03/21
@@ -47,7 +47,7 @@ static unsigned char	ordered[6][6] = {
     {13, 18, 17, 6, 1, 2},
     {10, 12, 11, 9, 7, 8}};
 
-/*	tone_classic	classic diaginal clustered halftones.
+/*	tone_classic	classic diagonal clustered halftones.
  *
  * Entry:
  *	Pix	Pixel value	0-255
@@ -71,7 +71,7 @@ static unsigned char	ordered[6][6] = {
  *	Christopher T. Johnson	- 90/03/21
  */
 int
-tone_classic(int pix, int x, int y, int nx, int ny, int new)
+tone_classic(int pix, int x, int y, int UNUSED(nx), int UNUSED(ny), int UNUSED(newrow))
 {
     int threshold = 14*ordered[( x + 3) % 6][ y % 6];
     if (RandomFlag) {

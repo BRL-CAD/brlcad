@@ -1,7 +1,7 @@
 /*                        F B G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,23 +30,23 @@
 #include "bu.h"
 #include "fb.h"
 
-static unsigned char	*white_line, *grey_line, *dark_line;
-static FBIO	*fbp;
-static char	*framebuffer = NULL;
+static unsigned char *white_line, *grey_line, *dark_line;
+static FBIO *fbp;
+static char *framebuffer = NULL;
 
-#define OLD	0
-#define	BINARY	1
-#define	DECIMAL 2
+#define OLD 0
+#define BINARY 1
+#define DECIMAL 2
 
-static int	fbwidth = 0;
-static int	fbheight = 0;
-static int	flavor = DECIMAL;
-static int	clear = 0;
+static int fbwidth = 0;
+static int fbheight = 0;
+static int flavor = DECIMAL;
+static int clear = 0;
 
 void grid(FBIO *fbiop, unsigned char *line, int spacing), oldflavor(void);
 
 static char usage[] = "\
-Usage: fbgrid [-h -c] [-b | -d | -o] [-F framebuffer]\n\
+Usage: fbgrid [-c] [-b | -d | -o] [-F framebuffer]\n\
 	[-S squaresize] [-W width] [-N height]\n";
 
 int
@@ -54,12 +54,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hcbdoF:s:w:n:S:W:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "cbdoF:s:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		fbheight = fbwidth = 1024;
-		break;
 	    case 'c':
 		clear = 1;
 		break;
@@ -94,16 +90,20 @@ get_args(int argc, char **argv)
 	}
     }
 
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	return 0;
+
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "fbgrid: excess argument(s) ignored\n");
+	fprintf(stderr, "fbgrid: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
 
+
 int
 main(int argc, char **argv)
 {
-    int	i;
+    int i;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -153,10 +153,11 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 void
 grid(FBIO *fbiop, unsigned char *line, int spacing)
 {
-    int	x, y;
+    int x, y;
 
     for (y = 0; y < fbheight; y += spacing)
 	fb_write(fbiop, 0, y, line, fbwidth);
@@ -165,17 +166,19 @@ grid(FBIO *fbiop, unsigned char *line, int spacing)
     }
 }
 
+
 void
 oldflavor(void)
 {
-    FBIO	*fbiop;
-    int	x, y;
-    int	middle;
-    int	mask;
-    int	fb_sz;
-    static RGBpixel	black, white, red;
+    FBIO *fbiop;
+    int x, y;
+    int middle;
+    int mask;
+    int fb_sz;
+    static RGBpixel black, white, red;
 
-    if ((fbiop = fb_open(NULL, fbwidth, fbheight)) == NULL) {
+    fbiop = fb_open(NULL, fbwidth, fbheight);
+    if (fbiop == NULL) {
 	bu_exit(1, NULL);
     }
 
@@ -208,6 +211,7 @@ oldflavor(void)
     fb_close(fbp);
     bu_exit(0, NULL);
 }
+
 
 /*
  * Local Variables:

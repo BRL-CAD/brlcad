@@ -1,7 +1,7 @@
 /*                          S M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,33 +35,36 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 
 #define ADD 1
 #define MULT 2
 #define ABS 3
 #define POW 4
-#define BUFLEN (8192*2)	/* usually 2 pages of memory, 16KB */
+#define BUFLEN 65536
 
 
-char *progname = "(noname)";
+static const char usage[] = "Usage: smod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [file.s]\n";
+static const char *progname = "smod";
 
-int numop = 0;		/* number of operations */
-int op[256];		/* operations */
-double val[256];		/* arguments to operations */
-short mapbuf[65536];		/* translation buffer/lookup table */
-unsigned char clip_h[256];	/* map of values which clip high */
-unsigned char clip_l[256];	/* map of values which clip low */
+static int numop = 0;		/* number of operations */
+static int op[256];		/* operations */
+static double val[256];		/* arguments to operations */
+static short mapbuf[BUFLEN];		/* translation buffer/lookup table */
+static unsigned char clip_h[BUFLEN];	/* map of values which clip high */
+static unsigned char clip_l[BUFLEN];	/* map of values which clip low */
 
 
-int
+static int
 get_args(int argc, char *argv[])
 {
     char *file_name;
+    char hyphen[] = "-";
     int c;
     double d;
 
-    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
@@ -78,8 +81,8 @@ get_args(int argc, char *argv[])
 	    case 'd':
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
-		if (d == 0.0) {
-		    bu_exit(2, "bwmod: divide by zero!\n");
+		if (ZERO(d)) {
+		    bu_exit(2, "%s: divide by zero!\n", progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -94,13 +97,13 @@ get_args(int argc, char *argv[])
 	    case 'r':
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
-		if (d == 0.0) {
-		    bu_exit(2, "bwmod: zero root!\n");
+		if (ZERO(d)) {
+		    bu_exit(2, "%s: zero root!\n", progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
 
-	    default:		/* '?' */
+	    default:
 		return 0;
 	}
     }
@@ -108,26 +111,30 @@ get_args(int argc, char *argv[])
     if (bu_optind >= argc) {
 	if (isatty((int)fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
     } else {
+	char *ifname;
 	file_name = argv[bu_optind];
-	if (freopen(file_name, "r", stdin) == NULL) {
-	    (void)fprintf(stderr,
-			  "bwmod: cannot open \"%s\" for reading\n",
-			  file_name);
+	ifname = bu_realpath(file_name, NULL);
+	if (freopen(ifname, "r", stdin) == NULL) {
+	    fprintf(stderr,
+		    "%s: cannot open \"%s(canonical %s)\" for reading\n",
+		    progname, file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return 0;
 	}
+	bu_free(ifname, "ifname alloc from bu_realpath");
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bwmod: excess argument(s) ignored\n");
+	fprintf(stderr, "%s: excess argument(s) ignored\n", progname);
 
     return 1;		/* OK */
 }
 
 
-void
-mk_trans_tbl()
+static void
+mk_trans_tbl(void)
 {
     int i, j, k;
     double d;
@@ -145,8 +152,8 @@ mk_trans_tbl()
 		case MULT: d *= val[i]; break;
 		case POW : d = pow(d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
-		default  : (void)fprintf(stderr, "%s: error in op\n",
-					 progname); break;
+		default  : fprintf(stderr, "%s: error in op\n",
+				   progname); break;
 	    }
 	}
 
@@ -168,14 +175,13 @@ main(int argc, char *argv[])
 {
     unsigned int j, n;
     unsigned long clip_high, clip_low;
-    char *strrchr();
     short iobuf[BUFLEN];		/* input buffer */
 
     if (!(progname=strrchr(*argv, '/')))
 	progname = *argv;
 
     if (!get_args(argc, argv) || isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	bu_exit(1, "Usage: smod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n");
+	bu_exit(1, "%s", usage);
     }
 
     mk_trans_tbl();
@@ -185,9 +191,24 @@ main(int argc, char *argv[])
     while ((n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
 	/* translate */
 	for (j=0; j < n; ++j) {
-	    iobuf[j] = mapbuf[iobuf[j] + 32768];
-	    if (clip_h[j]) clip_high++;
-	    else if (clip_l[j]) clip_low++;
+	    long idx = j;
+	    long mdx;
+	    if (idx < 0)
+		idx = 0;
+	    else if (idx > BUFLEN-1)
+		idx = BUFLEN-1;
+	    mdx = iobuf[idx] + 32768;
+	    if (mdx < 0)
+		mdx = 0;
+	    else if (mdx > BUFLEN-1)
+		mdx = BUFLEN-1;
+
+	    iobuf[idx] = mapbuf[mdx];
+
+	    if (clip_h[idx])
+		clip_high++;
+	    else if (clip_l[idx])
+		clip_low++;
 	}
 	/* output */
 	if (fwrite(iobuf, sizeof(*iobuf), n, stdout) != n) {
@@ -196,13 +217,12 @@ main(int argc, char *argv[])
     }
 
     if (clip_high != 0 || clip_low != 0) {
-	(void)fprintf(stderr, "%s: clipped %lu high, %lu low\n",
-		      progname,
-		      clip_high, clip_low);
+	fprintf(stderr, "%s: clipped %lu high, %lu low\n", progname, (long unsigned)clip_high, (long unsigned)clip_low);
     }
 
     return 0;
 }
+
 
 /*
  * Local Variables:

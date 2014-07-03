@@ -1,7 +1,7 @@
 /*                     N U R B _ P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,9 +19,9 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_plot.c
+/** @file primitives/bspline/nurb_plot.c
  *
- * Utilities for spline debuging.
+ * Utilities for spline debugging.
  *
  */
 /** @} */
@@ -39,9 +39,6 @@
 #include "plot3.h"
 
 
-/**
- * R T _ N U R B _ P L O T _ S N U R B
- */
 void
 rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 {
@@ -103,9 +100,6 @@ rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 }
 
 
-/**
- * R T _ N U R B _ P L O T _ C N U R B
- */
 void
 rt_nurb_plot_cnurb(FILE *fp, const struct edge_g_cnurb *crv)
 {

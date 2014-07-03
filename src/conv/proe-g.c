@@ -1,7 +1,7 @@
 /*                        P R O E - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file proe-g.c
+/** @file conv/proe-g.c
  *
  * Code to convert ascii output from Pro/Engineer to BRL-CAD
  * The required output is from the Pro/Develop application proe-brl
@@ -48,9 +48,9 @@
 static struct wmember all_head;
 static char *input_file;	/* name of the input file */
 static char *brlcad_file;	/* name of output file */
-static struct bu_vls ret_name;	/* unique name built by Build_unique_name() */
+static struct bu_vls ret_name = BU_VLS_INIT_ZERO;	/* unique name built by Build_unique_name() */
 static char *forced_name=NULL;	/* name specified on command line */
-static int stl_format=0;	/* Flag, non-zero indocates raw Stereolithography format input */
+static int stl_format=0;	/* Flag, non-zero indicates raw Stereolithography format input */
 static int solid_count=0;	/* count of solids converted */
 static struct bn_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
@@ -61,38 +61,6 @@ static int debug=0;		/* Debug flag */
 static int cut_count=0;		/* count of assembly cut HAF solids created */
 static int do_regex=0;		/* flag to indicate if 'u' option is in effect */
 static regex_t reg_cmp;		/* compiled regular expression */
-static char *proe_usage="%s [-darS] [-t tolerance] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] proe_file.brl output.g\n\
-	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
-	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
-	The -d option prints additional debugging information.\n\
-	The -i option sets the initial region ident number (default is 1000).\n\
-	The -I option sets the non-negative ident number that will be assigned to all regions (conflicts with -i).\n\
-	The -m option sets the integer material code for all the parts. (default is 1)\n\
-	The -u option indicates that portions of object names that match the regular expression\n\
-		'reg_exp' should be ignored.\n\
-	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
-	The -r option indicates that the model should not be re-oriented or scaled, \n\
-		but left in the same orientation as it was in Pro/E.\n\
-		This is to allow conversion of parts to be included in\n\
-		previously converted Pro/E assemblies.\n\
-	The -S option indicates that the input file is raw STL (STereoLithography) format.\n\
-	The -t option specifies the minumim distance between two distinct vertices (mm).\n\
-	The -x option specifies an RT debug flags (see raytrace.h).\n";
-static char *stl_usage="%s [-da] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-u reg_exp] [-x rt_debug_flag] input.stl output.g\n\
-	where input.stl is a STereoLithography file\n\
-	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
-	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n\
-	The -N option specifies a name to use for the object.\n\
-	The -d option prints additional debugging information.\n\
-	The -i option sets the initial region ident number (default is 1000).\n\
-	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n\
-	The -m option sets the integer material code for all the parts (default is 1).\n\
-	The -u option indicates that portions of object names that match the regular expression\n\
-		'reg_exp' should be ignored.\n\
-	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
-	The -t option specifies the minumim distance between two distinct vertices (mm).\n\
-	The -x option specifies an RT debug flags (see raytrace.h).\n";
-static char *usage;
 static FILE *fd_in;		/* input file (from Pro/E) */
 static struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
 static struct bu_ptbl null_parts; /* Table of NULL solids */
@@ -174,8 +142,8 @@ Build_unique_name(char *name)
     bu_vls_strcpy(&ret_name, name);
     ptr = name_root;
     while (ptr) {
-	if (!strcmp(bu_vls_addr(&ret_name), ptr->brlcad_name) ||
-	    (ptr->solid_name && !strcmp(bu_vls_addr(&ret_name), ptr->solid_name))) {
+	if (BU_STR_EQUAL(bu_vls_addr(&ret_name), ptr->brlcad_name) ||
+	    (ptr->solid_name && BU_STR_EQUAL(bu_vls_addr(&ret_name), ptr->solid_name))) {
 	    /* this name already exists, build a new one */
 	    ++tries;
 	    bu_vls_trunc(&ret_name, name_len);
@@ -204,7 +172,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 
 
     /* Add a new name */
-    ptr = (struct name_conv_list *)bu_calloc(1, sizeof(struct name_conv_list), "Add_new_name: prev->next");
+    BU_ALLOC(ptr, struct name_conv_list);
     ptr->next = (struct name_conv_list *)NULL;
     ptr->brlcad_name = bu_strdup(name);
     ptr->obj = obj;
@@ -237,18 +205,14 @@ Add_new_name(char *name, unsigned int obj, int type)
 	ptr->solid_name = NULL;
 	return ptr;
     } else if (type == PART_TYPE) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "s.");
 	bu_vls_strcat(&vls, ptr->brlcad_name);
 
 	ptr->solid_name = bu_vls_strgrab(&vls);
     } else {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "s.");
 	bu_vls_strcat(&vls, ptr->brlcad_name);
@@ -335,20 +299,20 @@ Convert_assy(char *line)
 
     start = (-1);
     /* skip leading blanks */
-    while (isspace(line[++start]) && line[start] != '\0');
-    if (strncmp(&line[start], "assembly", 8) && strncmp(&line[start], "ASSEMBLY", 8)) {
+    while (isspace((int)line[++start]) && line[start] != '\0');
+    if (bu_strncmp(&line[start], "assembly", 8) && bu_strncmp(&line[start], "ASSEMBLY", 8)) {
 	bu_log("PROE-G: Convert_assy called for non-assembly:\n%s\n", line);
 	return;
     }
 
     /* skip blanks before name */
     start += 7;
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
 
     /* get name */
     i = (-1);
     start--;
-    while (!isspace(line[++start]) && line[start] != '\0' && line[start] != '\n')
+    while (!isspace((int)line[++start]) && line[start] != '\0' && line[start] != '\n')
 	name[++i] = line[start];
     name[++i] = '\0';
 
@@ -363,9 +327,9 @@ Convert_assy(char *line)
     while (bu_fgets(line1, MAX_LINE_SIZE, fd_in)) {
 	/* skip leading blanks */
 	start = (-1);
-	while (isspace(line1[++start]) && line[start] != '\0');
+	while (isspace((int)line1[++start]) && line[start] != '\0');
 
-	if (!strncmp(&line1[start], "endassembly", 11) || !strncmp(&line1[start], "ENDASSEMBLY", 11)) {
+	if (!bu_strncmp(&line1[start], "endassembly", 11) || !bu_strncmp(&line1[start], "ENDASSEMBLY", 11)) {
 
 	    brlcad_name = Get_unique_name(name, obj, ASSEMBLY_TYPE);
 	    if (debug) {
@@ -381,12 +345,12 @@ Convert_assy(char *line)
 	    mk_lcomb(fd_out, brlcad_name, &head, 0 ,
 		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 	    break;
-	} else if (!strncmp(&line1[start], "member", 6) || !strncmp(&line1[start], "MEMBER", 6)) {
+	} else if (!bu_strncmp(&line1[start], "member", 6) || !bu_strncmp(&line1[start], "MEMBER", 6)) {
 	    start += 5;
-	    while (isspace(line1[++start]) && line1[start] != '\0');
+	    while (isspace((int)line1[++start]) && line1[start] != '\0');
 	    i = (-1);
 	    start--;
-	    while (!isspace(line1[++start]) && line1[start] != '\0' && line1[start] != '\n')
+	    while (!isspace((int)line1[++start]) && line1[start] != '\0' && line1[start] != '\n')
 		memb_name[++i] = line1[start];
 	    memb_name[++i] = '\0';
 
@@ -397,7 +361,8 @@ Convert_assy(char *line)
 	    if (debug)
 		bu_log("\tmember (%s)\n", brlcad_name);
 	    wmem = mk_addmember(brlcad_name, &head.l, NULL, WMOP_UNION);
-	} else if (!strncmp(&line1[start], "matrix", 6) || !strncmp(&line1[start], "MATRIX", 6)) {
+	} else if (!bu_strncmp(&line1[start], "matrix", 6) || !bu_strncmp(&line1[start], "MATRIX", 6)) {
+	  if (wmem) {
 	    size_t j;
 	    double scale, inv_scale;
 
@@ -408,27 +373,27 @@ Convert_assy(char *line)
 		    wmem->wm_mat[4*i+j] = mat_col[i];
 	    }
 
-	    /* convert this matrix to seperate scale factor into element #15 */
+	    /* convert this matrix to separate scale factor into element #15 */
 /*			scale = MAGNITUDE(&wmem->wm_mat[0]); */
 	    scale = pow(bn_mat_det3(wmem->wm_mat), 1.0/3.0);
 	    if (debug) {
 		bn_mat_print(brlcad_name, wmem->wm_mat);
 		bu_log("\tscale = %g, conv_factor = %g\n", scale, conv_factor);
 	    }
-	    if (!NEAR_ZERO(scale - 1.0, SMALL_FASTF)) {
+	    if (!ZERO(scale - 1.0)) {
 		inv_scale = 1.0/scale;
 		for (j=0; j<3; j++)
-		    HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale)
+		    HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale);
 
-			/* clamp rotation elements to fabs(1.0) */
-			for (j=0; j<3; j++) {
-			    for (i=0; i<3; i++) {
-				if (wmem->wm_mat[j*4 + i] > 1.0)
-				    wmem->wm_mat[j*4 + i] = 1.0;
-				else if (wmem->wm_mat[j*4 + i] < -1.0)
-				    wmem->wm_mat[j*4 + i] = -1.0;
-			    }
-			}
+		/* clamp rotation elements to fabs(1.0) */
+		for (j=0; j<3; j++) {
+		    for (i=0; i<3; i++) {
+			if (wmem->wm_mat[j*4 + i] > 1.0)
+			    wmem->wm_mat[j*4 + i] = 1.0;
+			else if (wmem->wm_mat[j*4 + i] < -1.0)
+			    wmem->wm_mat[j*4 + i] = -1.0;
+		    }
+		}
 
 		if (top_level)
 		    wmem->wm_mat[15] *= (inv_scale/conv_factor);
@@ -447,13 +412,16 @@ Convert_assy(char *line)
 	    }
 	    if (debug)
 		bn_mat_print("final matrix", wmem->wm_mat);
+	  } else {
+	       bu_log("Matrix present before wmem is initialized! (%s)\n", brlcad_name);
+	  }
 	} else {
 	    bu_log("Unrecognized line in assembly (%s)\n%s\n", name, line1);
 	}
     }
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at end of Convet_assy:\n");
+	bu_log("Barrier check at end of Convert_assy:\n");
 	if (bu_mem_barriercheck())
 	    bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n");
     }
@@ -468,8 +436,8 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
     struct wmember *wmem;
     int i;
 
-    while (strncmp(&line1[*start], "endmodifiers", 12) && strncmp(&line1[*start], "ENDMODIFIERS", 12)) {
-	if (!strncmp(&line1[*start], "plane", 5) || !strncmp(&line1[*start], "PLANE", 5)) {
+    while (bu_strncmp(&line1[*start], "endmodifiers", 12) && bu_strncmp(&line1[*start], "ENDMODIFIERS", 12)) {
+	if (!bu_strncmp(&line1[*start], "plane", 5) || !bu_strncmp(&line1[*start], "PLANE", 5)) {
 	    struct name_conv_list *ptr;
 	    char haf_name[MAX_LINE_SIZE];
 	    fastf_t dist;
@@ -585,7 +553,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 	}
 	bu_fgets(line1, MAX_LINE_SIZE, fd_in);
 	(*start) = (-1);
-	while (isspace(line1[++(*start)]));
+	while (isspace((int)line1[++(*start)]));
     }
 }
 
@@ -616,8 +584,7 @@ Convert_part(char *line)
     int i;
     int face_count=0;
     int degenerate_count=0;
-    int small_count=0;
-    float colr[3]={ 0.5, 0.5, 0.5 };
+    float colr[3] = VINITALL(0.5);
     unsigned char color[3]={ 128, 128, 128 };
     char *brlcad_name;
     struct wmember head;
@@ -630,7 +597,7 @@ Convert_part(char *line)
 	bu_prmem("At start of Conv_prt():\n");
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at start of Convet_part:\n");
+	bu_log("Barrier check at start of Convert_part:\n");
 	if (bu_mem_barriercheck())
 	    bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n");
     }
@@ -638,28 +605,28 @@ Convert_part(char *line)
 
     bot_fcurr = 0;
     BU_LIST_INIT(&head.l);
-    VSETALL(part_min, MAX_FASTF);
-    VSETALL(part_max, -MAX_FASTF);
+    VSETALL(part_min, INFINITY);
+    VSETALL(part_max, -INFINITY);
 
     clean_vert_tree(vert_tree_root);
 
     start = (-1);
     /* skip leading blanks */
-    while (isspace(line[++start]) && line[start] != '\0');
-    if (strncmp(&line[start], "solid", 5) && strncmp(&line[start], "SOLID", 5)) {
+    while (isspace((int)line[++start]) && line[start] != '\0');
+    if (bu_strncmp(&line[start], "solid", 5) && bu_strncmp(&line[start], "SOLID", 5)) {
 	bu_log("Convert_part: Called for non-part\n%s\n", line);
 	return;
     }
 
     /* skip blanks before name */
     start += 4;
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
 
     if (line[start] != '\0') {
 	/* get name */
 	i = (-1);
 	start--;
-	while (!isspace(line[++start]) && line[start] != '\0' && line[start] != '\n')
+	while (!isspace((int)line[++start]) && line[start] != '\0' && line[start] != '\n')
 	    name[++i] = line[start];
 	name[++i] = '\0';
 
@@ -682,7 +649,7 @@ Convert_part(char *line)
 	/* eliminate a trailing ".stl" */
 	len = strlen(tmp_str);
 	if (len > 4) {
-	    if (!strncmp(&tmp_str[len-4], ".stl", 4))
+	    if (!bu_strncmp(&tmp_str[len-4], ".stl", 4))
 		tmp_str[len-4] = '\0';
 	}
 
@@ -724,27 +691,27 @@ Convert_part(char *line)
 
     while (bu_fgets(line1, MAX_LINE_SIZE, fd_in) != NULL) {
 	start = (-1);
-	while (isspace(line1[++start]));
-	if (!strncmp(&line1[start], "endsolid", 8) || !strncmp(&line1[start], "ENDSOLID", 8)) {
+	while (isspace((int)line1[++start]));
+	if (!bu_strncmp(&line1[start], "endsolid", 8) || !bu_strncmp(&line1[start], "ENDSOLID", 8)) {
 	    break;
-	} else if (!strncmp(&line1[start], "color", 5) || !strncmp(&line1[start], "COLOR", 5)) {
+	} else if (!bu_strncmp(&line1[start], "color", 5) || !bu_strncmp(&line1[start], "COLOR", 5)) {
 	    sscanf(&line1[start+5], "%f%f%f", &colr[0], &colr[1], &colr[2]);
 	    for (i=0; i<3; i++)
 		color[i] = (int)(colr[i] * 255.0);
-	} else if (!strncmp(&line1[start], "normal", 6) || !strncmp(&line1[start], "NORMAL", 6)) {
+	} else if (!bu_strncmp(&line1[start], "normal", 6) || !bu_strncmp(&line1[start], "NORMAL", 6)) {
 	    float x, y, z;
 
 	    start += 6;
 	    sscanf(&line1[start], "%f%f%f", &x, &y, &z);
 	    VSET(normal, x, y, z);
-	} else if (!strncmp(&line1[start], "facet", 5) || !strncmp(&line1[start], "FACET", 5)) {
+	} else if (!bu_strncmp(&line1[start], "facet", 5) || !bu_strncmp(&line1[start], "FACET", 5)) {
 	    VSET(normal, 0.0, 0.0, 0.0);
 
 	    start += 4;
-	    while (line1[++start] && isspace(line1[start]));
+	    while (line1[++start] && isspace((int)line1[start]));
 
 	    if (line1[start]) {
-		if (!strncmp(&line1[start], "normal", 6) || !strncmp(&line1[start], "NORMAL", 6)) {
+		if (!bu_strncmp(&line1[start], "normal", 6) || !bu_strncmp(&line1[start], "NORMAL", 6)) {
 		    float x, y, z;
 
 		    start += 6;
@@ -752,21 +719,21 @@ Convert_part(char *line)
 		    VSET(normal, x, y, z);
 		}
 	    }
-	} else if (!strncmp(&line1[start], "outer loop", 10) || !strncmp(&line1[start], "OUTER LOOP", 10)) {
+	} else if (!bu_strncmp(&line1[start], "outer loop", 10) || !bu_strncmp(&line1[start], "OUTER LOOP", 10)) {
 	    int endloop=0;
 	    int vert_no=0;
-	    int tmp_face[3];
+	    int tmp_face[3] = {0, 0, 0};
 
 	    while (!endloop) {
 		if (bu_fgets(line1, MAX_LINE_SIZE, fd_in) == NULL)
 		    bu_exit(EXIT_FAILURE,  "Unexpected EOF while reading a loop in a part!!!\n");
 
 		start = (-1);
-		while (isspace(line1[++start]));
+		while (isspace((int)line1[++start]));
 
-		if (!strncmp(&line1[start], "endloop", 7) || !strncmp(&line1[start], "ENDLOOP", 7)) {
+		if (!bu_strncmp(&line1[start], "endloop", 7) || !bu_strncmp(&line1[start], "ENDLOOP", 7)) {
 		    endloop = 1;
-		} else if (!strncmp(&line1[start], "vertex", 6) || !strncmp(&line1[start], "VERTEX", 6)) {
+		} else if (!bu_strncmp(&line1[start], "vertex", 6) || !bu_strncmp(&line1[start], "VERTEX", 6)) {
 		    double x, y, z;
 
 		    sscanf(&line1[start+6], "%lf%lf%lf", &x, &y, &z);
@@ -818,7 +785,7 @@ Convert_part(char *line)
 
 	    Add_face(tmp_face);
 	    face_count++;
-	} else if (!strncmp(&line1[start], "modifiers", 9) || !strncmp(&line1[start], "MODIFIERS", 9)) {
+	} else if (!bu_strncmp(&line1[start], "modifiers", 9) || !bu_strncmp(&line1[start], "MODIFIERS", 9)) {
 	    if (face_count) {
 		wmem = mk_addmember(solid_name, &head.l, NULL, WMOP_UNION);
 		if (top_level && do_reorient) {
@@ -842,8 +809,6 @@ Convert_part(char *line)
 	bu_log("\t%s has no solid parts, ignoring\n", name);
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	if (small_count)
-	    bu_log("\t%d faces were too small\n", small_count);
 	brlcad_name = Get_unique_name(name, obj, PART_TYPE);
 	save_name = bu_strdup(brlcad_name);
 	bu_ptbl_ins(&null_parts, (long *)save_name);
@@ -851,8 +816,6 @@ Convert_part(char *line)
     } else {
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
-	if (small_count)
-	    bu_log("\t%d faces were too small\n", small_count);
     }
 
     mk_bot(fd_out, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, vert_tree_root->curr_vert, bot_fcurr,
@@ -921,9 +884,9 @@ Convert_input(void)
 	conv_factor = 1.0;
 
     while (bu_fgets(line, MAX_LINE_SIZE, fd_in) != NULL) {
-	if (!strncmp(line, "assembly", 8) || !strncmp(line, "ASSEMBLY", 8))
+	if (!bu_strncmp(line, "assembly", 8) || !bu_strncmp(line, "ASSEMBLY", 8))
 	    Convert_assy(line);
-	else if (!strncmp(line, "solid", 5) || !strncmp(line, "SOLID", 5))
+	else if (!bu_strncmp(line, "solid", 5) || !bu_strncmp(line, "SOLID", 5))
 	    Convert_part(line);
 	else
 	    bu_log("Unrecognized line:\n%s\n", line);
@@ -939,9 +902,9 @@ Rm_nulls(void)
 
     dbip = fd_out->dbip;
 
-    if (debug || BU_PTBL_END(&null_parts) ) {
+    if (debug || BU_PTBL_LEN(&null_parts) ) {
 	bu_log("Deleting references to the following null parts:\n");
-	for (i=0; i<BU_PTBL_END(&null_parts); i++) {
+	for (i=0; i<BU_PTBL_LEN(&null_parts); i++) {
 	    char *save_name;
 
 	    save_name = (char *)BU_PTBL_GET(&null_parts, i);
@@ -959,11 +922,11 @@ Rm_nulls(void)
 	int changed=0;
 
 	/* skip solids */
-	if (dp->d_flags & DIR_SOLID)
+	if (dp->d_flags & RT_DIR_SOLID)
 	    continue;
 
 	/* skip non-geometry */
-	if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource) < 1) {
@@ -994,11 +957,11 @@ Rm_nulls(void)
 	    size_t k;
 	    int found=0;
 
-	    for (k=0; k<BU_PTBL_END(&null_parts); k++) {
+	    for (k=0; k<BU_PTBL_LEN(&null_parts); k++) {
 		char *save_name;
 
 		save_name = (char *)BU_PTBL_GET(&null_parts, k);
-		if (!strcmp(save_name, tree_list[j].tl_tree->tr_l.tl_name)) {
+		if (BU_STR_EQUAL(save_name, tree_list[j].tl_tree->tr_l.tl_name)) {
 		    found = 1;
 		    break;
 		}
@@ -1038,20 +1001,41 @@ Rm_nulls(void)
     } FOR_ALL_DIRECTORY_END;
 }
 
-/*
- *			M A I N
- */
+static void
+proe_usage(const char *argv0)
+{
+    bu_log("%s [-darS] [-t tolerance] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] proe_file.brl output.g\n", argv0);
+    bu_log("	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n");
+    bu_log("	and output.g is the name of a BRL-CAD database file to receive the conversion.\n");
+    bu_log("	The -d option prints additional debugging information.\n");
+    bu_log("	The -i option sets the initial region ident number (default is 1000).\n");
+    bu_log("	The -I option sets the non-negative ident number that will be assigned to all regions (conflicts with -i).\n");
+    bu_log("	The -m option sets the integer material code for all the parts. (default is 1)\n");
+    bu_log("	The -u option indicates that portions of object names that match the regular expression\n");
+    bu_log("		'reg_exp' should be ignored.\n");
+    bu_log("	The -a option creates BRL-CAD 'air' regions from everything in the model.\n");
+    bu_log("	The -r option indicates that the model should not be re-oriented or scaled, \n");
+    bu_log("		but left in the same orientation as it was in Pro/E.\n");
+    bu_log("		This is to allow conversion of parts to be included in\n");
+    bu_log("		previously converted Pro/E assemblies.\n");
+    bu_log("	The -S option indicates that the input file is raw STL (STereoLithography) format.\n");
+    bu_log("	The -t option specifies the minimum distance between two distinct vertices (mm).\n");
+    bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
+}
+
 int
 main(int argc, char **argv)
 {
     int c;
 
+    bu_setprogname(argv[0]);
+
     tol.magic = BN_TOL_MAGIC;
 
-    /* this value selected as a resaonable compromise between eliminating
+    /* this value selected as a reasonable compromise between eliminating
      * needed faces and keeping degenerate faces
      */
-    tol.dist = 0.005;	/* default, same as MGED, RT, ... */
+    tol.dist = 0.0005;	/* default, same as MGED, RT, ... */
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -1059,25 +1043,16 @@ main(int argc, char **argv)
     vert_tree_root = create_vert_tree();
 
     bu_ptbl_init(&null_parts, 64, " &null_parts");
-    bu_vls_init(&ret_name);
 
     forced_name = NULL;
 
-    if (strstr(argv[0], "stl-g")) {
-	/* this code was called as stl-g */
-	stl_format = 1;
-	do_reorient = 0;
-	conv_factor = 1.0;	/* default */
-	usage = stl_usage;
-    } else {
-	usage = proe_usage;
+    if (argc < 2) {
+	proe_usage(argv[0]);
+	bu_exit(1, NULL);
     }
 
-    if (argc < 2)
-	bu_exit(1, usage, argv[0]);
-
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "St:i:I:m:rsdax:u:N:c:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "St:i:I:m:rsdax:u:N:c:")) != -1) {
 	double tmp;
 
 	switch (c) {
@@ -1093,7 +1068,7 @@ main(int argc, char **argv)
 		break;
 	    case 'c':	/* convert from units */
 		conv_factor = bu_units_conversion(bu_optarg);
-		if (NEAR_ZERO(conv_factor, SMALL_FASTF)) {
+		if (ZERO(conv_factor)) {
 		    bu_log("Illegal units: (%s)\n", bu_optarg);
 		    bu_exit(EXIT_FAILURE,  "Illegal units!!\n");
 		} else {
@@ -1115,7 +1090,7 @@ main(int argc, char **argv)
 		const_id = atoi(bu_optarg);
 		if (const_id < 0) {
 		    bu_log("Illegal value for '-I' option, must be zero or greater!!!\n");
-		    bu_log(usage, argv[0]);
+		    proe_usage(argv[0]);
 		    bu_exit(EXIT_FAILURE,  "Illegal value for option '-I'\n");
 		}
 		break;
@@ -1126,7 +1101,7 @@ main(int argc, char **argv)
 		debug = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
 		bu_log("\n");
 		break;
@@ -1134,7 +1109,8 @@ main(int argc, char **argv)
 		do_regex = 1;
 		if (regcomp(&reg_cmp, bu_optarg, 0)) {
 		    bu_log("Bad regular expression (%s)\n", bu_optarg);
-		    bu_exit(1, usage, argv[0]);
+		    proe_usage(argv[0]);
+		    bu_exit(1, "ERROR: Bad regular expression\n");
 		}
 		break;
 	    case 'a':
@@ -1144,7 +1120,8 @@ main(int argc, char **argv)
 		do_reorient = 0;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		proe_usage(argv[0]);
+		bu_exit(1, "ERROR: unrecognized argument\n");
 		break;
 	}
     }

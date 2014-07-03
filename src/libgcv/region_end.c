@@ -1,7 +1,7 @@
 /*                    R E G I O N _ E N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file region_end.c
+/** @file libgcv/region_end.c
  *
  * Routines to process regions during a db_walk_tree.
  *
@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include "bu/parallel.h"
 #include "gcv.h"
 
 
@@ -38,7 +39,7 @@ union tree *
 _gcv_cleanup(int state, union tree *tp)
 {
     /* restore previous debug state */
-    rt_g.NMG_debug = state;
+    RTG.NMG_debug = state;
 
     /* Dispose of original tree, so that all associated dynamic memory
      * is released now, not at the end of all regions.  A return of
@@ -48,15 +49,15 @@ _gcv_cleanup(int state, union tree *tp)
      */
     db_free_tree(tp, &rt_uniresource); /* Does an nmg_kr() */
 
-    BU_GETUNION(tp, tree);
-    tp->magic = RT_TREE_MAGIC;
+    BU_ALLOC(tp, union tree);
+    RT_TREE_INIT(tp);
     tp->tr_op = OP_NOP;
     return tp;
 }
 
 
 union tree *
-gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *tp = NULL;
     union tree *ret_tree = NULL;
@@ -106,7 +107,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     /* Sometimes the NMG library adds debugging bits when it detects
      * an internal error, before bombing.  Stash.
      */
-    NMG_debug_state = rt_g.NMG_debug;
+    NMG_debug_state = RTG.NMG_debug;
 
     /* Begin bomb protection */
     if (BU_SETJUMP) {

@@ -1,7 +1,7 @@
 /*                       V I E W R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewray.c
+/** @file rt/viewray.c
  *
  *  Ray Tracing program RTRAY bottom half.
  *
@@ -27,8 +27,8 @@
  *
  *  To obtain a UNIX-plot of a ray file, the procedure is:
  *	/vld/bin/rayvect -mMM < file.ray > file.vect
- *	/vld/bin/vectplot -mMM < file.vect > file.plot
- *	tplot -Tmeg file.plot		# or equivalent
+ *	/vld/bin/vectplot -mMM < file.vect > file.plot3
+ *	tplot -Tmeg file.plot3		# or equivalent
  *
  */
 
@@ -40,35 +40,37 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "rtprivate.h"
-
+#include "./rtuif.h"
 #include "./ext.h"
 
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 extern FILE	*outfp;			/* optional output file */
 
 const char title[] = "RT Ray";
-const char usage[] = "\
-Usage:  rtray [options] model.g objects... >file.ray\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -o model.ray	Specify output file, ray(5V) format (default=stdout)\n\
- -U #		Set use_air boolean to # (default=1)\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.ray\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
+    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
+    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -o model.ray	Specify output file, ray(5V) format (default=stdout)\n");
+    bu_log(" -U #		Set use_air boolean to # (default=1)\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
 
 
-void	view_pixel(void) {}
-void	view_setup(void) {}
-void	view_cleanup(void) {}
+void	view_pixel(struct application *UNUSED(ap)) {}
+void	view_setup(struct rt_i *UNUSED(rtip)) {}
+void	view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 
 /* "paint" types are negative ==> interpret as "special" air codes */
@@ -80,25 +82,23 @@ void	view_cleanup(void) {}
 
 /* Handle a miss */
 int
-raymiss(struct application *ap)
+raymiss(struct application *UNUSED(ap))
 {
     return 0;
 }
 
 /*
- *			R A Y H I T
- *
  *  Write a hit to the ray file.
  *  Also generate various forms of "paint".
  */
 int
-rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segHeadp)
+rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
     register struct partition *pp = PartHeadp->pt_forw;
     struct partition	*np;	/* next partition */
-    vect_t		inormal;
-    vect_t		onormal;
-    vect_t		inormal2;
+    vect_t inormal = VINIT_ZERO;
+    vect_t onormal = VINIT_ZERO;
+    vect_t inormal2 = VINIT_ZERO;
 
     if ( pp == PartHeadp )
 	return 0;		/* nothing was actually hit?? */
@@ -129,8 +129,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	/* Obtain next inhit normals & hit point, for code below */
 	RT_HIT_NORMAL( inormal2, np->pt_inhit, np->pt_inseg->seg_stp, &(ap->a_ray), np->pt_inflip );
 
-	if ( rt_fdiff( pp->pt_outhit->hit_dist,
-		       np->pt_inhit->hit_dist) >= 0 )  {
+	if (NEAR_EQUAL(pp->pt_outhit->hit_dist, np->pt_inhit->hit_dist, 0.001)) {
 	    /*
 	     *  The two partitions touch (or overlap!).
 	     *  If both are air, or both are solid, then don't
@@ -187,11 +186,8 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     return 0;
 }
 
-/*
- *  			V I E W _ I N I T
- */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
     /* Handling of air in librt */
     use_air = 1;
@@ -203,16 +199,19 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     return 0;		/* No framebuffer needed */
 }
 
-void	view_eol(void) {;}
+void
+view_eol(struct application *UNUSED(ap))
+{
+}
 
 void
-view_end(void)
+view_end(struct application *UNUSED(ap))
 {
     fflush(outfp);
 }
 
 void
-view_2init(struct application *ap)
+view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 {
 
     if ( outfp == NULL )

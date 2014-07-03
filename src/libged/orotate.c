@@ -1,7 +1,7 @@
 /*                         O R O T A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file orotate.c
+/** @file libged/orotate.c
  *
  * The orotate command.
  *
@@ -36,7 +36,10 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct _ged_trace_data gtd;
     struct rt_db_internal intern;
-    fastf_t xrot, yrot, zrot;
+
+    /* intentionally double for scan */
+    double xrot, yrot, zrot;
+
     mat_t rmat;
     mat_t pmat;
     mat_t emat;
@@ -52,31 +55,31 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5 && argc != 8) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &xrot) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad rX value - %s", argv[0], argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad rX value - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &yrot) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad rY value - %s", argv[0], argv[3]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad rY value - %s", argv[0], argv[3]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &zrot) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad rZ value - %s", argv[0], argv[4]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad rZ value - %s", argv[0], argv[4]);
 	return GED_ERROR;
     }
 
@@ -87,7 +90,7 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 
 	dp = gtd.gtd_obj[gtd.gtd_objpos-1];
-	if (!(dp->d_flags & DIR_SOLID)) {
+	if (!(dp->d_flags & RT_DIR_SOLID)) {
 	    if (_ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == GED_ERROR)
 		return GED_ERROR;
 	}
@@ -95,28 +98,30 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
 	VADD2(keypoint, rpp_min, rpp_max);
 	VSCALE(keypoint, keypoint, 0.5);
     } else {
+	double scan[3];
+
 	/* The user has provided the keypoint. */
 	MAT_IDN(gtd.gtd_xform);
 
-	if (sscanf(argv[5], "%lf", &keypoint[X]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad kX value - %s", argv[0], argv[5]);
+	if (sscanf(argv[5], "%lf", &scan[X]) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad kX value - %s", argv[0], argv[5]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[6], "%lf", &keypoint[Y]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad kY value - %s", argv[0], argv[6]);
+	if (sscanf(argv[6], "%lf", &scan[Y]) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad kY value - %s", argv[0], argv[6]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[7], "%lf", &keypoint[Z]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad kZ value - %s", argv[0], argv[7]);
+	if (sscanf(argv[7], "%lf", &scan[Z]) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad kZ value - %s", argv[0], argv[7]);
 	    return GED_ERROR;
 	}
 
-	VSCALE(keypoint, keypoint, gedp->ged_wdbp->dbip->dbi_local2base);
+	VSCALE(keypoint, scan, gedp->ged_wdbp->dbip->dbi_local2base);
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
 	    return GED_ERROR;
 	}
     }
@@ -131,11 +136,6 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
     GED_DB_GET_INTERNAL(gedp, &intern, dp, emat, &rt_uniresource, GED_ERROR);
     RT_CK_DB_INTERNAL(&intern);
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
-
-#if 0
-    /* notify observers */
-    bu_observer_notify(interp, &gedp->wdb_observers, bu_vls_addr(&gedp->wdb_name));
-#endif
 
     return GED_OK;
 }

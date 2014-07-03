@@ -1,7 +1,7 @@
 /*                    V O L _ M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vol_mirror.c
+/** @file primitives/vol/vol_mirror.c
  *
  * mirror support
  *
@@ -30,8 +30,6 @@
 
 
 /**
- * R T _ V O L _ M I R R O R
- *
  * Given a pointer to an internal GED database object, mirror the
  * object's values about the given transformation matrix.
  */
@@ -54,7 +52,7 @@ rt_vol_mirror(struct rt_db_internal *ip, register const plane_t plane)
     RT_CK_DB_INTERNAL(ip);
 
     vol = (struct rt_vol_internal *)ip->idb_ptr;
-    RT_EBM_CK_MAGIC(vol);
+    RT_VOL_CK_MAGIC(vol);
 
     MAT_IDN(mirmat);
 

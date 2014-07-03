@@ -1,7 +1,7 @@
 /*                          W A V Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2010 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wavy.c
+/** @file proc-db/wavy.c
  *
  * Create a random wavy surface spline model database.
  *
@@ -36,15 +36,15 @@
 #include "wdb.h"
 
 
-/* Interpoate the data using b-splines */
-struct face_g_snurb **
+/* Interpolate the data using b-splines */
+static struct face_g_snurb **
 interpolate_data(fastf_t *grid)
 {
     struct face_g_snurb **surfs;
     struct face_g_snurb *srf;
     fastf_t rt_nurb_par_edge();
 
-    BU_GETSTRUCT(srf, face_g_snurb);
+    BU_ALLOC(srf, struct face_g_snurb);
 
     rt_nurb_sinterp(srf, 4, grid, 10, 10);
     rt_nurb_kvnorm(&srf->u);
@@ -53,8 +53,15 @@ interpolate_data(fastf_t *grid)
     surfs = (struct face_g_snurb **)bu_calloc(2, sizeof(struct face_g_snurb *), "surfaces");
     surfs[0] = srf;
     surfs[1] = NULL;
-    
+
     return surfs;
+}
+
+
+static void
+printusage()
+{
+    bu_log("Usage: wavy [-d] [-H hscale]\n");
 }
 
 
@@ -69,25 +76,31 @@ main(int argc, char **argv)
     fastf_t grid[10][10][3];
     struct face_g_snurb **surfaces;
 
-    outfp = wdb_fopen("wavy.g");
-
     hscale = 2.5;
 
-    while ((i=bu_getopt(argc, argv, "dh:")) != EOF) {
+    while ((i=bu_getopt(argc, argv, "dH:h?")) != -1) {
 	switch (i) {
 	    case 'd':
-		rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
+		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
 		break;
-	    case 'h':
+	    case 'H':
 		hscale = atof(bu_optarg);
 		break;
 	    default:
-		bu_exit(1, "Usage: %s [-d]\n", *argv);
+		printusage();
+		bu_exit(1, NULL);
 	}
     }
 
-    /* Create the database header record.  this solid will consist of
-     * three surfaces a top surface, bottom surface, and the sides (so
+    if (argc == 1) {
+    	printusage();
+    	bu_log("       Program continues running:\n");
+    }
+
+    outfp = wdb_fopen("wavy.g");
+
+    /* Create the database header record.  This solid will consist of
+     * three surfaces: a top surface, bottom surface, and the sides (so
      * that it will be closed).
      */
 
@@ -114,6 +127,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

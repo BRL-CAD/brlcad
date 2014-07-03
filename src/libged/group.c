@@ -1,7 +1,7 @@
 /*                         G R O U P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file group.c
+/** @file libged/group.c
  *
  * The group command.
  *
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
@@ -37,8 +37,6 @@
 int
 ged_group(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory *dp;
-    int i;
     static const char *usage = "gname object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -46,30 +44,20 @@ ged_group(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    /* get objects to add to group */
-    for (i = 2; i < argc; i++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
-	    if (_ged_combadd(gedp, dp, (char *)argv[1], 0,
-			    WMOP_UNION, 0, 0) == DIR_NULL)
-		return GED_ERROR;
-	}  else
-	    bu_vls_printf(&gedp->ged_result_str, "skip member %s\n", argv[i]);
-    }
-
-    return GED_OK;
+    return _ged_combadd2(gedp, (char *)argv[1], argc-2, argv+2, 0, WMOP_UNION, 0, 0);
 }
 
 

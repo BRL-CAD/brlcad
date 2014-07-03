@@ -1,7 +1,7 @@
 /*                    E L L _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,11 +29,8 @@
 #include "rtgeom.h"
 #include "brep.h"
 
-/**
- * R T _ E L L _ B R E P
- */
 extern "C" void
-rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
+rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_ell_internal *eip;
 
@@ -41,24 +38,73 @@ rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
-    *b = ON_Brep::New();
+    // For Algorithms used in rotation and translation
+    // Please refer to ell.c
+    // X' = S(R(X - V))
+    // X = invR(invS(X')) + V = invRinvS(X') + V;
+    // where R(X) = (A/(|A|))
+    //              (B/(|B|)) . X
+    //              (C/(|C|))
+    //
+    // and S(X) = (1/|A|   0     0 )
+    //            (0     1/|B|   0 ) . X
+    //            (0      0   1/|C|)
+
+    // Parameters for Rotate and Translate
+    vect_t Au, Bu, Cu;    /* A, B, C with unit length */
+    mat_t R;
+    mat_t Rinv;
+    mat_t Sinv;
+    mat_t invRinvS;
+    fastf_t magsq_a, magsq_b, magsq_c;
+    fastf_t f;
+
+    magsq_a = MAGSQ(eip->a);
+    magsq_b = MAGSQ(eip->b);
+    magsq_c = MAGSQ(eip->c);
+
+    if (magsq_a < tol->dist_sq || magsq_b < tol->dist_sq || magsq_c < tol->dist_sq) {
+    bu_log("rt_ell_brep():  ell zero length A(%g), B(%g), or C(%g) vector\n",
+	   magsq_a, magsq_b, magsq_c);
+    }
+
+    f = 1.0/sqrt(magsq_a);
+    VSCALE(Au, eip->a, f);
+    f = 1.0/sqrt(magsq_b);
+    VSCALE(Bu, eip->b, f);
+    f = 1.0/sqrt(magsq_c);
+    VSCALE(Cu, eip->c, f);
+
+    MAT_IDN(R);
+    VMOVE(&R[0], Au);
+    VMOVE(&R[4], Bu);
+    VMOVE(&R[8], Cu);
+    bn_mat_trn(Rinv, R);
+
+    MAT_IDN(Sinv);
+    Sinv[0] = MAGNITUDE(eip->a);
+    Sinv[5] = MAGNITUDE(eip->b);
+    Sinv[10] = MAGNITUDE(eip->c);
+    bn_mat_mul(invRinvS, Rinv, Sinv);
 
     point_t origin;
     VSET(origin, 0, 0, 0);
-
-    ON_Sphere sph(origin, MAGNITUDE(eip->a));
+    ON_Sphere sph(origin, 1);
 
     // Get the NURBS form of the surface
     ON_NurbsSurface *ellcurvedsurf = ON_NurbsSurface::New();
     sph.GetNurbForm(*ellcurvedsurf);
 
-    // Scale control points for b and c
+    // Scale, rotate and translate control points
     for (int i = 0; i < ellcurvedsurf->CVCount(0); i++) {
 	for (int j = 0; j < ellcurvedsurf->CVCount(1); j++) {
 	    point_t cvpt;
 	    ON_4dPoint ctrlpt;
 	    ellcurvedsurf->GetCV(i, j, ctrlpt);
-	    VSET(cvpt, ctrlpt.x, ctrlpt.y * MAGNITUDE(eip->b)/MAGNITUDE(eip->a), ctrlpt.z * MAGNITUDE(eip->c)/MAGNITUDE(eip->a));
+	    MAT3X3VEC(cvpt, invRinvS, ctrlpt);
+	    point_t scale_v;
+	    VSCALE(scale_v, eip->v, ctrlpt.w);
+	    VADD2(cvpt, scale_v, cvpt);
 	    ON_4dPoint newpt = ON_4dPoint(cvpt[0], cvpt[1], cvpt[2], ctrlpt.w);
 	    ellcurvedsurf->SetCV(i, j, newpt);
 	}
@@ -66,10 +112,6 @@ rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
     ellcurvedsurf->SetDomain(0, 0.0, 1.0);
     ellcurvedsurf->SetDomain(1, 0.0, 1.0);
-
-
-    // Rotate and Translate
-
 
     // Make final BREP structure
     (*b)->m_S.Append(ellcurvedsurf);

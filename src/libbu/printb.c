@@ -1,7 +1,7 @@
 /*                        P R I N T B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,9 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
-
+#include "bu/bitv.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 void
 bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, register const char *bits)
@@ -56,9 +57,8 @@ bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, r
 void
 bu_printb(const char *s, register long unsigned int v, register const char *bits)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&str);
     bu_vls_printb(&str, s, v, bits);
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);

@@ -1,7 +1,7 @@
 /*                       B W S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwscale.c
+/** @file util/bwscale.c
  *
  * Scale a black and white picture.
  *
@@ -44,11 +44,11 @@
 
 unsigned char *outbuf;
 unsigned char *buffer;
-int scanlen;			/* length of infile (and buffer) scanlines */
-int buflines;			/* Number of lines held in buffer */
-int buf_start = -1000;		/* First line in buffer */
+ssize_t scanlen;		/* length of infile (and buffer) scanlines */
+ssize_t buflines;		/* Number of lines held in buffer */
+off_t buf_start = -1000;	/* First line in buffer */
 
-int bufy;				/* y coordinate in buffer */
+ssize_t bufy;				/* y coordinate in buffer */
 FILE *buffp;
 static char *file_name;
 
@@ -60,23 +60,21 @@ int outy = 512;
 
 
 static char usage[] = "\
-Usage: bwscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
+Usage: bwscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.bw] > out.bw\n";
+
+static char hyphen[] = "hyphen";
 
 static int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "rhs:w:n:S:W:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "rs:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'r':
 		/* pixel replication */
 		rflag = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		inx = iny = 1024;
 		break;
 	    case 'S':
 		/* square size */
@@ -104,13 +102,13 @@ get_args(int argc, char **argv)
 	}
     }
 
-    /* XXX - backward compatability hack */
+    /* XXX - backward compatibility hack */
     if (bu_optind+5 == argc) {
 	file_name = argv[bu_optind++];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "bwscale: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "bwscale: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	inx = atoi(argv[bu_optind++]);
@@ -126,20 +124,20 @@ get_args(int argc, char **argv)
 	if (isatty(fileno(stdin))) {
 	    return 0;
 	}
-	file_name = "-";
+	file_name = hyphen;
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "bwscale: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "bwscale: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bwscale: excess argument(s) ignored\n");
+	fprintf(stderr, "bwscale: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -160,14 +158,17 @@ get_args(int argc, char **argv)
 static void
 fill_buffer(int y)
 {
+    size_t ret;
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
-    if (fseek(buffp, buf_start * scanlen, 0) < 0) {
+    if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
 	fprintf(stderr, "bwscale: Can't seek to input pixel!\n");
 	/* bu_exit (3, NULL); */
     }
-    fread(buffer, scanlen, buflines, buffp);
+    ret = fread(buffer, scanlen, buflines, buffp);
+    if (ret != (size_t)buflines)
+	perror("fread");
 }
 
 
@@ -177,7 +178,7 @@ fill_buffer(int y)
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer(int len)
+init_buffer(size_t len)
 {
     int max;
 
@@ -191,7 +192,11 @@ init_buffer(int len)
      */
     if (max > 4096) max = 4096;
 
-    buflines = max;
+    if (max < iny)
+	buflines = max;
+    else
+	buflines = iny;
+
     buf_start = (-buflines);
     buffer = (unsigned char *)bu_calloc(buflines, len, "buffer");
 }
@@ -215,6 +220,7 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
 
     /* For each output pixel */
     for (j = 0; j < oy; j++) {
+	size_t ret;
 	y = j * ystep;
 	/*
 	 * Make sure we have this row (and the one after it)
@@ -244,7 +250,9 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
 	    *op++ = mid1 + dy * (mid2 - mid1);
 	}
 
-	(void) fwrite(outbuf, 1, ox, ofp);
+	ret = fwrite(outbuf, 1, ox, ofp);
+	if (ret != (size_t)ox)
+	    perror("fwrite");
     }
 }
 
@@ -261,6 +269,7 @@ ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
     double x, y;
     double xstep, ystep;
     unsigned char *op, *lp;
+    size_t ret;
 
     xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
     ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
@@ -286,7 +295,9 @@ ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
 	    *op++ = lp[0];
 	}
 
-	(void) fwrite(outbuf, 1, ox, ofp);
+	ret = fwrite(outbuf, 1, ox, ofp);
+	if (ret != (size_t)ox)
+	    perror("fwrite");
     }
 }
 
@@ -328,6 +339,8 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 
     /* for each output pixel */
     for (j = 0; j < oy; j++) {
+	size_t ret;
+
 	ystart = j * pylen;
 	yend = ystart + pylen;
 	op = outbuf;
@@ -368,9 +381,11 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	    }
 	    *op++ = (int)(sum / (pxlen * pylen));
 	    if (op > (outbuf+scanlen))
-		abort();
+		bu_bomb("unexpected buffer overrun");
 	}
-	(void) fwrite(outbuf, 1, ox, ofp);
+	ret = fwrite(outbuf, 1, ox, ofp);
+	if (ret != (size_t)ox)
+	    perror("fwrite");
     }
     return 1;
 }
@@ -399,7 +414,7 @@ main(int argc, char **argv)
     outbuf = (unsigned char *)bu_malloc(i, "outbuf");
 
     /* Here we go */
-    i = scale(stdout, inx, iny, outx, outy);
+    scale(stdout, inx, iny, outx, outy);
 
     bu_free(outbuf, (const char *)buffer);
     bu_free(buffer, (const char *)buffer);

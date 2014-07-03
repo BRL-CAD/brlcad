@@ -1,7 +1,7 @@
 /*                        I F _ M E M . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,11 +33,14 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/str.h"
 #include "fb.h"
 
 
 /* Per connection private info */
-struct meminfo {
+struct mem_info {
     FBIO *fbp;		/* attached frame buffer (if any) */
     unsigned char *mem;	/* memory frame buffer */
     ColorMap cmap;		/* color map buffer */
@@ -45,7 +48,7 @@ struct meminfo {
     int cmap_dirty;	/* !0 implies unflushed written cmap */
     int write_thru;	/* !0 implies pass-thru write mode */
 };
-#define MI(ptr) ((struct meminfo *)((ptr)->u1.p))
+#define MI(ptr) ((struct mem_info *)((ptr)->u1.p))
 #define MIL(ptr) ((ptr)->u1.p)		/* left hand side version */
 
 #define MODE_1MASK	(1<<1)
@@ -71,13 +74,21 @@ static struct modeflags {
 
 
 HIDDEN int
-mem_open(FBIO *ifp, char *file, int width, int height)
+mem_open(FBIO *ifp, const char *file, int width, int height)
 {
     int mode;
-    char *cp;
+    const char *cp;
     FBIO *fbp;
+    char modebuf[80];
+    char *mp;
+    int alpha;
+    struct modeflags *mfp;
 
     FB_CK_FBIO(ifp);
+
+    /* This function doesn't look like it will work if file
+     * is NULL - stop before we start, if that's the case.*/
+    if (file == NULL) return -1;
 
     /*
      * First, attempt to determine operating mode for this open,
@@ -87,13 +98,7 @@ mem_open(FBIO *ifp, char *file, int width, int height)
      */
     mode = 0;
 
-    if (file != NULL) {
-	char modebuf[80];
-	char *mp;
-	int alpha;
-	struct modeflags *mfp;
-
-	if (strncmp(file, "/dev/mem", 8)) {
+	if (bu_strncmp(file, "/dev/mem", 8)) {
 	    /* How did this happen?? */
 	    mode = 0;
 	} else {
@@ -101,9 +106,9 @@ mem_open(FBIO *ifp, char *file, int width, int height)
 	    alpha = 0;
 	    mp = &modebuf[0];
 	    cp = &file[8];
-	    while (*cp != '\0' && !isspace(*cp)) {
+	    while (*cp != '\0' && !isspace((int)*cp)) {
 		*mp++ = *cp;	/* copy it to buffer */
-		if (isdigit(*cp)) {
+		if (isdigit((int)*cp)) {
 		    cp++;
 		    continue;
 		}
@@ -123,11 +128,10 @@ mem_open(FBIO *ifp, char *file, int width, int height)
 	    if (!alpha)
 		mode = atoi(modebuf);
 	}
-    }
 
     /* build a local static info struct */
-    if ((MIL(ifp) = (char *)calloc(1, sizeof(struct meminfo))) == NULL) {
-	fb_log("mem_open:  meminfo malloc failed\n");
+    if ((MIL(ifp) = (char *)calloc(1, sizeof(struct mem_info))) == NULL) {
+	fb_log("mem_open:  mem_info malloc failed\n");
 	return -1;
     }
     cp = &file[strlen("/dev/mem")];
@@ -244,7 +248,7 @@ mem_clear(FBIO *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
@@ -259,11 +263,11 @@ mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
     memcpy((char *)pixelp, &(MI(ifp)->mem[(y*ifp->if_width + x)*3]), count*3);
 
-    return (int)count;
+    return count;
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
@@ -283,7 +287,7 @@ mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
     } else {
 	MI(ifp)->mem_dirty = 1;
     }
-    return (int)count;
+    return count;
 }
 
 

@@ -1,7 +1,7 @@
 /*                         T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file tor.c
+/** @file primitives/tor/tor.c
  *
  * Intersect a ray with a Torus
  *
@@ -31,7 +31,7 @@
  *
  * Through a series of Transformations, this set will be transformed
  * into a set of points on a unit torus (R1==1) centered at the origin
- * which lies on the X-Y plane (ie, H is on the Z axis).
+ * which lies on the X-Y plane (i.e., H is on the Z axis).
  *
  * { (x', y', z') | (x', y', z') is on unit torus at origin }
  *
@@ -77,13 +77,13 @@
  * Wx**2 = Dx**2 * t**2 +  2 * Dx * Px +  Px**2
  *
  * The real roots of the equation in 't' are the intersect points
- * along the parameteric line.
+ * along the parametric line.
  *
  * NORMALS.  Given the point W on the torus, what is the vector normal
  * to the tangent plane at that point?
  *
- * Map W onto the unit torus, ie: W' = S(R(W - V)).  In this case,
- * we find W' by solving the parameteric line given k.
+ * Map W onto the unit torus, i.e.: W' = S(R(W - V)).  In this case,
+ * we find W' by solving the parametric line given k.
  *
  * The gradient of the torus at W' is in fact the normal vector.
  *
@@ -116,26 +116,29 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#include "../../librt_private.h"
+
 
 /*
  * The TORUS has the following input fields:
  *	V	V from origin to center
  *	H	Radius Vector, Normal to plane of torus.  |H| = R2
- *	A, B	perpindicular, to CENTER of torus.  |A|==|B|==R1
- *	F5, F6	perpindicular, for inner edge (unused)
- *	F7, F8	perpindicular, for outer edge (unused)
+ *	A, B	perpendicular, to CENTER of torus.  |A|==|B|==R1
+ *	F5, F6	perpendicular, for inner edge (unused)
+ *	F7, F8	perpendicular, for outer edge (unused)
  *
  */
 
 const struct bu_structparse rt_tor_parse[] = {
-    {"%f", 3, "V",   bu_offsetof(struct rt_tor_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 3, "H",   bu_offsetof(struct rt_tor_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "V",   bu_offsetofarray(struct rt_tor_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "H",   bu_offsetofarray(struct rt_tor_internal, h, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "r_a", bu_offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "r_h", bu_offsetof(struct rt_tor_internal, r_h),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {{'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
@@ -152,10 +155,56 @@ struct tor_specific {
     mat_t tor_invR;	/* invRot(vect') */
 };
 
+/**
+ * Compute the bounding RPP for a circular torus.
+ */
+int
+rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+    vect_t P, w1;	/* for RPP calculation */
+    fastf_t f;
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+
+   /* Compute the bounding RPP planes for a circular torus.
+    *
+    * Given a circular torus with vertex V, vector N, and radii r1
+    * and r2.  A bounding plane with direction vector P will touch
+    * the surface of the torus at the points:
+    *
+    * V +/- [r2 + r1 * |N x P|] P
+    */
+   /* X */
+   VSET(P, 1.0, 0, 0);		/* bounding plane normal */
+   VCROSS(w1, tip->h, P);	/* for sin(angle N P) */
+   f = tip->r_h + tip->r_a * MAGNITUDE(w1);
+   VSCALE(w1, P, f);
+   f = fabs(w1[X]);
+   (*min)[X] = tip->v[X] - f;
+   (*max)[X] = tip->v[X] + f;
+
+   /* Y */
+   VSET(P, 0, 1.0, 0);		/* bounding plane normal */
+   VCROSS(w1, tip->h, P);	/* for sin(angle N P) */
+   f = tip->r_h + tip->r_a * MAGNITUDE(w1);
+   VSCALE(w1, P, f);
+   f = fabs(w1[Y]);
+   (*min)[Y] = tip->v[Y] - f;
+   (*max)[Y] = tip->v[Y] + f;
+
+   /* Z */
+   VSET(P, 0, 0, 1.0);		/* bounding plane normal */
+   VCROSS(w1, tip->h, P);	/* for sin(angle N P) */
+   f = tip->r_h + tip->r_a * MAGNITUDE(w1);
+   VSCALE(w1, P, f);
+   f = fabs(w1[Z]);
+   (*min)[Z] = tip->v[Z] - f;
+   (*max)[Z] = tip->v[Z] + f;
+
+   return 0;
+}
+
 
 /**
- * R T _ T O R _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid torus, and if so, precompute
  * various terms of the formula.
@@ -165,7 +214,7 @@ struct tor_specific {
  * !0 Error in description
  *
  * Implicit return -
- * A struct tor_specific is created, and it's address is stored in
+ * A struct tor_specific is created, and its address is stored in
  * stp->st_specific for use by rt_tor_shot().
  */
 int
@@ -175,14 +224,13 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct rt_tor_internal *tip;
 
     mat_t R;
-    vect_t P, w1;	/* for RPP calculation */
     fastf_t f;
 
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
     /* Validate that |A| == |B| (for now) */
-    if (rt_fdiff(tip->r_a, tip->r_b) != 0) {
+    if (!NEAR_EQUAL(tip->r_a, tip->r_b, 0.001)) {
 	bu_log("tor(%s):  (|A|=%f) != (|B|=%f) \n",
 	       stp->st_name, tip->r_a, tip->r_b);
 	return 1;		/* BAD */
@@ -217,8 +265,8 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* Solid is OK, compute constant terms now */
-    BU_GETSTRUCT(tor, tor_specific);
-    stp->st_specific = (genptr_t)tor;
+    BU_GET(tor, struct tor_specific);
+    stp->st_specific = (void *)tor;
 
     tor->tor_r1 = tip->r_a;
     tor->tor_r2 = tip->r_h;
@@ -242,49 +290,14 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VMOVE(stp->st_center, tor->tor_V);
     stp->st_aradius = stp->st_bradius = tor->tor_r1 + tip->r_h;
 
-    /*
-     * Compute the bounding RPP planes for a circular torus.
-     *
-     * Given a circular torus with vertex V, vector N, and radii r1
-     * and r2.  A bounding plane with direction vector P will touch
-     * the surface of the torus at the points:
-     *
-     * V +/- [r2 + r1 * |N x P|] P
-     */
-    /* X */
-    VSET(P, 1.0, 0, 0);		/* bounding plane normal */
-    VCROSS(w1, tor->tor_N, P);	/* for sin(angle N P) */
-    f = tor->tor_r2 + tor->tor_r1 * MAGNITUDE(w1);
-    VSCALE(w1, P, f);
-    f = fabs(w1[X]);
-    stp->st_min[X] = tor->tor_V[X] - f;
-    stp->st_max[X] = tor->tor_V[X] + f;
-
-    /* Y */
-    VSET(P, 0, 1.0, 0);		/* bounding plane normal */
-    VCROSS(w1, tor->tor_N, P);	/* for sin(angle N P) */
-    f = tor->tor_r2 + tor->tor_r1 * MAGNITUDE(w1);
-    VSCALE(w1, P, f);
-    f = fabs(w1[Y]);
-    stp->st_min[Y] = tor->tor_V[Y] - f;
-    stp->st_max[Y] = tor->tor_V[Y] + f;
-
-    /* Z */
-    VSET(P, 0, 0, 1.0);		/* bounding plane normal */
-    VCROSS(w1, tor->tor_N, P);	/* for sin(angle N P) */
-    f = tor->tor_r2 + tor->tor_r1 * MAGNITUDE(w1);
-    VSCALE(w1, P, f);
-    f = fabs(w1[Z]);
-    stp->st_min[Z] = tor->tor_V[Z] - f;
-    stp->st_max[Z] = tor->tor_V[Z] + f;
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) {
+	return 1;
+    }
 
     return 0;			/* OK */
 }
 
 
-/**
- * R T _ T O R _ P R I N T
- */
 void
 rt_tor_print(register const struct soltab *stp)
 {
@@ -302,8 +315,6 @@ rt_tor_print(register const struct soltab *stp)
 
 
 /**
- * R T _ T O R _ S H O T
- *
  * Intersect a ray with an torus, where all constant terms have been
  * precomputed by rt_tor_prep().  If an intersection occurs, one or
  * two struct seg(s) will be acquired and filled in.
@@ -312,11 +323,11 @@ rt_tor_print(register const struct soltab *stp)
  * a point, P(x0, y0, z0) and a direction normal, D = ax + by + cz.
  * Any point on a line can be expressed by one variable 't', where
  *
- * X = a*t + x0,	eg, X = Dx*t + Px
+ * X = a*t + x0,	e.g., X = Dx*t + Px
  * Y = b*t + y0,
  * Z = c*t + z0.
  *
- * First, convert the line to the coordinate system of a "stan- dard"
+ * First, convert the line to the coordinate system of a "standard"
  * torus.  This is a torus which lies in the X-Y plane, circles the
  * origin, and whose primary radius is one.  The secondary radius is
  * alpha = (R2/R1) of the original torus where (0 < alpha <= 1).
@@ -523,8 +534,6 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define RT_TOR_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
- * R T _ T O R _ V S H O T
- *
  * This is the Becker vector version
  */
 void
@@ -772,8 +781,6 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 
 /**
- * R T _ T O R _ N O R M
- *
  * Compute the normal to the torus, given a point on the UNIT TORUS
  * centered at the origin on the X-Y plane.  The gradient of the torus
  * at that point is in fact the normal vector, which will have to be
@@ -823,8 +830,6 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ T O R _ C U R V E
- *
  * Return the curvature of the torus.
  */
 void
@@ -870,9 +875,6 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 }
 
 
-/**
- * R T _ T O R _ U V
- */
 void
 rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
@@ -893,40 +895,28 @@ rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     /*
      * -pi/2 <= atan2(x, y) <= pi/2
      */
-    uvp->uv_u = atan2(pprime[Y], pprime[X]) * bn_inv2pi + 0.5;
+    uvp->uv_u = atan2(pprime[Y], pprime[X]) * M_1_2PI + 0.5;
 
     VSET(work, pprime[X], pprime[Y], 0.0);
     VUNITIZE(work);
     VSUB2(pprime2, pprime, work);
     VUNITIZE(pprime2);
     costheta = VDOT(pprime2, work);
-    uvp->uv_v = atan2(pprime2[Z], costheta) * bn_inv2pi + 0.5;
+    uvp->uv_v = atan2(pprime2[Z], costheta) * M_1_2PI + 0.5;
 }
 
 
-/**
- * R T _ T O R _ F R E E
- */
 void
 rt_tor_free(struct soltab *stp)
 {
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
 
-    bu_free((char *)tor, "tor_specific");
-}
-
-
-int
-rt_tor_class(void)
-{
-    return 0;
+    BU_PUT(tor, struct tor_specific);
 }
 
 
 /**
- * R T _ N U M _ C I R C U L A R _ S E G M E N T S
- *
  * Given a circle with a specified radius, determine the minimum
  * number of straight line segments that the circle can be
  * approximated with, while still meeting the given maximum
@@ -977,7 +967,7 @@ rt_num_circular_segments(double maxerr, double radius)
 	 */
 	return 360*10;
     }
-    n = (bn_pi / half_theta) + 0.99;
+    n = (M_PI / half_theta) + 0.99;
 
     /* Impose the limits again */
     if (n <= 6) return 6;
@@ -985,17 +975,114 @@ rt_num_circular_segments(double maxerr, double radius)
     return n;
 }
 
+static int
+tor_ellipse_points(
+	vect_t ellipse_A,
+	vect_t ellipse_B,
+	const struct rt_view_info *info)
+{
+    fastf_t avg_radius, circumference;
+
+    avg_radius = (MAGNITUDE(ellipse_A) + MAGNITUDE(ellipse_B)) / 2.0;
+    circumference = M_2PI * avg_radius;
+
+    return circumference / info->point_spacing;
+}
+
+int
+rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    vect_t a, b, tor_a, tor_b, tor_h, center;
+    fastf_t mag_a, mag_b, mag_h;
+    struct rt_tor_internal *tor;
+    fastf_t radian, radian_step;
+    int i, num_ellipses, points_per_ellipse;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    tor = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tor);
+
+    VMOVE(tor_a, tor->a);
+    mag_a = tor->r_a;
+
+    VSCALE(tor_h, tor->h, tor->r_h);
+    mag_h = tor->r_h;
+
+    VCROSS(tor_b, tor_a, tor_h);
+    VUNITIZE(tor_b);
+    VSCALE(tor_b, tor_b, mag_a);
+    mag_b = mag_a;
+
+    /* plot outer circular contour */
+    VJOIN1(a, tor_a, mag_h / mag_a, tor_a);
+    VJOIN1(b, tor_b, mag_h / mag_b, tor_b);
+
+    points_per_ellipse = tor_ellipse_points(a, b, info);
+    if (points_per_ellipse < 6) {
+	points_per_ellipse = 6;
+    }
+
+    plot_ellipse(info->vhead, tor->v, a, b, points_per_ellipse);
+
+    /* plot inner circular contour */
+    VJOIN1(a, tor_a, -1.0 * mag_h / mag_a, tor_a);
+    VJOIN1(b, tor_b, -1.0 * mag_h / mag_b, tor_b);
+
+    points_per_ellipse = tor_ellipse_points(a, b, info);
+    if (points_per_ellipse < 6) {
+	points_per_ellipse = 6;
+    }
+
+    plot_ellipse(info->vhead, tor->v, a, b, points_per_ellipse);
+
+    /* Draw parallel circles to show the primitive's most extreme points along
+     * +h/-h.
+     */
+    points_per_ellipse = tor_ellipse_points(tor_a, tor_b, info);
+    if (points_per_ellipse < 6) {
+	points_per_ellipse = 6;
+    }
+
+    VADD2(center, tor->v, tor_h);
+    plot_ellipse(info->vhead, center, tor_a, tor_b, points_per_ellipse);
+
+    VJOIN1(center, tor->v, -1.0, tor_h);
+    plot_ellipse(info->vhead, center, tor_a, tor_b, points_per_ellipse);
+
+    /* draw circular radial cross sections */
+    VMOVE(b, tor_h);
+
+    num_ellipses = primitive_curve_count(ip, info);
+    if (num_ellipses < 3) {
+	num_ellipses = 3;
+    }
+
+    radian_step = M_2PI / num_ellipses;
+    radian = 0;
+    for (i = 0; i < num_ellipses; ++i) {
+	ellipse_point_at_radian(center, tor->v, tor_a, tor_b, radian);
+
+	VJOIN1(a, center, -1.0, tor->v);
+	VUNITIZE(a);
+	VSCALE(a, a, mag_h);
+
+	plot_ellipse(info->vhead, center, a, b, points_per_ellipse);
+
+	radian += radian_step;
+    }
+
+    return 0;
+}
 
 /**
- * R T _ T O R _ P L O T
- *
  * The TORUS has the following input fields:
  * ti.v V from origin to center
  * ti.h Radius Vector, Normal to plane of torus
- * ti.a, ti.b perpindicular, to CENTER of torus (for top, bottom)
+ * ti.a, ti.b perpendicular, to CENTER of torus (for top, bottom)
  */
 int
-rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
+rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     fastf_t alpha;
     fastf_t beta;
@@ -1017,6 +1104,8 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     RT_CK_DB_INTERNAL(ip);
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
+
+    rel = primitive_get_absolute_tolerance(ttol, 2.0 * (tip->r_a + tip->r_h));
 
     if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
 	rel = 0.0;		/* none */
@@ -1056,7 +1145,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
      */
     if (ttol->norm > 0.0) {
 	register int nseg;
-	nseg = (bn_pi / ttol->norm) + 0.99;
+	nseg = (M_PI / ttol->norm) + 0.99;
 	if (nseg > nlen) nlen = nseg;
 	if (nseg > nw) nw = nseg;
     }
@@ -1071,7 +1160,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 #define TOR_NORM_A(ww, ll)	(&norms[TOR_PT(ww, ll)*3])
 
     for (len = 0; len < nlen; len++) {
-	beta = bn_twopi * len / nlen;
+	beta = M_2PI * len / nlen;
 	cos_beta = cos(beta);
 	sin_beta = sin(beta);
 	/* G always points out to rim, along radius vector */
@@ -1079,7 +1168,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* We assume that |radius| = |A|.  Circular */
 	VSCALE(G, radius, dist_to_rim);
 	for (w = 0; w < nw; w++) {
-	    alpha = bn_twopi * w / nw;
+	    alpha = M_2PI * w / nw;
 	    cos_alpha = cos(alpha);
 	    sin_alpha = sin(alpha);
 	    VCOMB2(edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h);
@@ -1109,9 +1198,6 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 
-/**
- * R T _ T O R _ T E S S
- */
 int
 rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
@@ -1180,7 +1266,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      */
     if (ttol->norm > 0.0) {
 	register int nseg;
-	nseg = (bn_pi / ttol->norm) + 0.99;
+	nseg = (M_PI / ttol->norm) + 0.99;
 	if (nseg > nlen) nlen = nseg;
 	if (nseg > nw) nw = nseg;
     }
@@ -1192,7 +1278,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     norms = (fastf_t *)bu_malloc(nw * nlen * sizeof(vect_t), "rt_tor_tess: norms[]");
 
     for (len = 0; len < nlen; len++) {
-	beta = bn_twopi * len / nlen;
+	beta = M_2PI * len / nlen;
 	cos_beta = cos(beta);
 	sin_beta = sin(beta);
 	/* G always points out to rim, along radius vector */
@@ -1200,7 +1286,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* We assume that |radius| = |A|.  Circular */
 	VSCALE(G, radius, dist_to_rim);
 	for (w = 0; w < nw; w++) {
-	    alpha = bn_twopi * w / nw;
+	    alpha = M_2PI * w / nw;
 	    cos_alpha = cos(alpha);
 	    sin_alpha = sin(alpha);
 	    VCOMB2(edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h);
@@ -1273,6 +1359,9 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
     }
 
+    /* kill zero length edgeuse */
+    (void)nmg_keu_zl(s, tol);
+
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
@@ -1285,8 +1374,6 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ T O R _ I M P O R T
- *
  * Import a torus from the database format to the internal format.
  * Apply modeling transformations at the same time.
  */
@@ -1312,13 +1399,14 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TOR;
-    ip->idb_meth = &rt_functab[ID_TOR];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_tor_internal), "rt_tor_internal");
+    ip->idb_meth = &OBJ[ID_TOR];
+    BU_ALLOC(ip->idb_ptr, struct rt_tor_internal);
+
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    rt_fastf_float(vec, rp->s.s_values, 4);
+    flip_fastf_float(vec, rp->s.s_values, 4, dbip->dbi_version < 0 ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1350,14 +1438,13 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-/**
- * R T _ T O R _ E X P O R T 5
- */
 int
 rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    double vec[2*3+2];
     struct rt_tor_internal *tip;
+
+    /* must be double for export */
+    double vec[2*3+2];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1368,7 +1455,7 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (2*3+2);
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "tor external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "tor external");
 
     /* scale values into local buffer */
     VSCALE(&vec[0*3], tip->v, local2mm);
@@ -1377,15 +1464,13 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[2*3+1] = tip->r_h*local2mm;		/* r2 */
 
     /* convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 2*3+2);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 2*3+2);
 
     return 0;
 }
 
 
 /**
- * R T _ T O R _ E X P O R T
- *
  * The name will be added by the caller.
  */
 int
@@ -1408,7 +1493,7 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "tor external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "tor external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -1454,7 +1539,7 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     /*
      * The rest of these provide no real extra information,
-     * and exist for compatability with old versions of MGED.
+     * and exist for compatibility with old versions of MGED.
      */
     r3=r1-r2;	/* Radius to inner circular edge */
     r4=r1+r2;	/* Radius to outer circular edge */
@@ -1472,8 +1557,6 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ T O R _ I M P O R T 5
- *
  * Taken from the database record:
  * v vertex (point) of center of torus.
  * h unit vector in the normal direction of the torus
@@ -1489,6 +1572,8 @@ int
 rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
+
+    /* must be double for import and export */
     struct rec {
 	double v[3];
 	double h[3];
@@ -1510,13 +1595,13 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TOR;
-    ip->idb_meth = &rt_functab[ID_TOR];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_tor_internal), "rt_tor_internal");
-    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    ip->idb_meth = &OBJ[ID_TOR];
+    BU_ALLOC(ip->idb_ptr, struct rt_tor_internal);
 
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
-    ntohd((unsigned char *)&rec, ep->ext_buf, 2*3+2);
+    bu_cv_ntohd((unsigned char *)&rec, ep->ext_buf, 2*3+2);
 
     /* Apply modeling transformations */
     MAT4X3PNT(tip->v, mat, rec.v);
@@ -1530,7 +1615,7 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->r_b = tip->r_a;
 
     /* Calculate two mutually perpendicular vectors, perpendicular to N */
-    bn_vec_ortho(tip->a, tip->h);		/* a has unit length */
+    bn_vec_ortho(tip->a, tip->h);	/* a has unit length */
     VCROSS(tip->b, tip->h, tip->a);	/* |A| = |H| = 1, so |B|=1 */
 
     VSCALE(tip->a, tip->a, tip->r_a);
@@ -1540,8 +1625,6 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 
 /**
- * R T _ T O R _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1597,8 +1680,6 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ T O R _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1613,23 +1694,47 @@ rt_tor_ifree(struct rt_db_internal *ip)
     RT_TOR_CK_MAGIC(tip);
 
     bu_free((char *)tip, "rt_tor_internal");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
-/**
- * R T _ T O R _ P A R A M S
- *
- */
 int
-rt_tor_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
 }
 
+
+void
+rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+    /* r_h: radius of torus tube
+     * r_a: radius from axis of rotation to center of tube
+     */
+    *area = 4.0 * M_PI * M_PI * tip->r_h * tip->r_a;
+}
+
+
+void
+rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
+{
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+    *vol = 2.0 * M_PI * M_PI * (tip->r_h * tip->r_h) * tip->r_a;
+}
+
+
+void
+rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+    VMOVE(*cent,tip->v);
+}
 
 /*
  * Local Variables:

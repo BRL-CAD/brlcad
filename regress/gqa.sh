@@ -2,7 +2,7 @@
 #                          G Q A . S H
 # BRL-CAD
 #
-# Copyright (c) 2010 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,14 +40,19 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
-MGED="`ensearch mged/mged`"
+MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
     exit 1
 fi
 
+GQABIN="`ensearch gqa`"
+if test ! -f "$GQABIN" ; then
+    echo "Unable to find gqa, aborting"
+    exit 1
+fi
 
 rm -f gqa.g density_table.txt gqa.log gqa_mged.log gqa.mged
 
@@ -121,7 +126,7 @@ EOF
 # open_box.r = 1000-576 = 424 m^3
 
 
-GQA="../src/gtools/g_qa -u m,m^3,kg -g 250mm-50mm -p"
+GQA="$GQABIN -u m,m^3,kg -g 250mm-50mm -p"
 export GQA
 
 STATUS=0

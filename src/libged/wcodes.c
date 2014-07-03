@@ -1,7 +1,7 @@
 /*                         W C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wcodes.c
+/** @file libged/wcodes.c
  *
  * The wcodes command.
  *
@@ -50,7 +50,7 @@ HIDDEN int wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, s
 
 
 HIDDEN void
-wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
+wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4))
 {
     FILE *fp;
     size_t *pathpos;
@@ -60,15 +60,15 @@ wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     fp = (FILE *)user_ptr1;
     pathpos = (size_t *)user_ptr2;
-    gedp = (struct ged *)user_ptr3; 
+    gedp = (struct ged *)user_ptr3;
 
     /* recurse on combinations */
-    if (nextdp->d_flags & DIR_COMB)
+    if (nextdp->d_flags & RT_DIR_COMB)
 	(void)wcodes_printcodes(gedp, fp, nextdp, (*pathpos)+1);
 }
 
@@ -81,11 +81,11 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
     struct rt_comb_internal *comb;
     int id;
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return GED_OK;
 
     if ((id=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Cannot get records for %s\n", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "Cannot get records for %s\n", dp->d_namep);
 	return GED_ERROR;
     }
 
@@ -103,7 +103,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
 		comb->aircode,
 		comb->GIFTmater,
 		comb->los);
-	for (i=0; i < pathpos; i++)
+	for (i =0 ; i < pathpos; i++)
 	    fprintf(fp, "/%s", path[i]->d_namep);
 	fprintf(fp, "/%s\n", dp->d_namep);
 	intern.idb_meth->ft_ifree(&intern);
@@ -113,11 +113,11 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
     if (comb->tree) {
 	if (pathpos >= path_capacity) {
 	    path_capacity += PATH_STEP;
-	    path = bu_realloc(path, sizeof(struct directory *) * path_capacity, "realloc path bigger");
+	    path = (struct directory **)bu_realloc(path, sizeof(struct directory *) * path_capacity, "realloc path bigger");
 	}
 	path[pathpos] = dp;
 	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, wcodes_printnode,
-			 (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)gedp);
+			 (void *)fp, (void *)&pathpos, (void *)gedp, (void *)gedp);
     }
 
     intern.idb_meth->ft_ifree(&intern);
@@ -138,30 +138,30 @@ ged_wcodes(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if ((fp = fopen(argv[1], "w")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Failed to open file - %s",
+	bu_vls_printf(gedp->ged_result_str, "%s: Failed to open file - %s",
 		      argv[0], argv[1]);
 	return GED_ERROR;
     }
 
-    path = bu_calloc(PATH_STEP, sizeof(struct directory *), "alloc initial path");
+    path = (struct directory **)bu_calloc(PATH_STEP, sizeof(struct directory *), "alloc initial path");
     path_capacity = PATH_STEP;
 
     for (i = 2; i < argc; ++i) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 	    status = wcodes_printcodes(gedp, fp, dp, 0);
 
 	    if (status == GED_ERROR) {

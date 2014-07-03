@@ -1,7 +1,7 @@
 /*                           E H Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file ehy.c
+/** @file primitives/ehy/ehy.c
  *
  * Intersect a ray with an Elliptical Hyperboloid.
  *
@@ -106,7 +106,7 @@
  * NORMALS.  Given the point W on the surface of the ehy, what is the
  * vector normal to the tangent plane at that point?
  *
- * Map W onto the unit ehy, ie:  W' = S(R(W - V)).
+ * Map W onto the unit ehy, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit ehy at W' has a normal vector N' where
  *
@@ -155,14 +155,14 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 
-
-extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
+#include "../../librt_private.h"
 
 
 struct ehy_specific {
@@ -177,9 +177,9 @@ struct ehy_specific {
 
 
 const struct bu_structparse rt_ehy_parse[] = {
-    { "%f", 3, "V",   bu_offsetof(struct rt_ehy_internal, ehy_V[X]),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "H",   bu_offsetof(struct rt_ehy_internal, ehy_H[X]),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A",   bu_offsetof(struct rt_ehy_internal, ehy_Au[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V",   bu_offsetofarray(struct rt_ehy_internal, ehy_V, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H",   bu_offsetofarray(struct rt_ehy_internal, ehy_H, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A",   bu_offsetofarray(struct rt_ehy_internal, ehy_Au, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "r_1", bu_offsetof(struct rt_ehy_internal, ehy_r1),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "r_2", bu_offsetof(struct rt_ehy_internal, ehy_r2),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "c",   bu_offsetof(struct rt_ehy_internal, ehy_c),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -187,9 +187,61 @@ const struct bu_structparse rt_ehy_parse[] = {
 };
 
 
+static int ehy_is_valid(struct rt_ehy_internal *ehy);
+
 /**
- * R T _ E H Y _ P R E P
- *
+ * Create a bounding RPP for an ehy
+ */
+int
+rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+    struct rt_ehy_internal *xip;
+    vect_t ehy_A, ehy_B, ehy_An, ehy_Bn, ehy_H;
+    vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
+    RT_CK_DB_INTERNAL(ip);
+    xip = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(xip);
+
+    VMOVE(ehy_H, xip->ehy_H);
+    VUNITIZE(ehy_H);
+    VMOVE(ehy_A, xip->ehy_Au);
+    VCROSS(ehy_B, ehy_A, ehy_H);
+
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
+    VSCALE(ehy_A, ehy_A, xip->ehy_r1);
+    VSCALE(ehy_B, ehy_B, xip->ehy_r2);
+    VREVERSE(ehy_An, ehy_A);
+    VREVERSE(ehy_Bn, ehy_B);
+
+    VADD3(pt1, xip->ehy_V, ehy_A, ehy_B);
+    VADD3(pt2, xip->ehy_V, ehy_A, ehy_Bn);
+    VADD3(pt3, xip->ehy_V, ehy_An, ehy_B);
+    VADD3(pt4, xip->ehy_V, ehy_An, ehy_Bn);
+    VADD4(pt5, xip->ehy_V, ehy_A, ehy_B, xip->ehy_H);
+    VADD4(pt6, xip->ehy_V, ehy_A, ehy_Bn, xip->ehy_H);
+    VADD4(pt7, xip->ehy_V, ehy_An, ehy_B, xip->ehy_H);
+    VADD4(pt8, xip->ehy_V, ehy_An, ehy_Bn, xip->ehy_H);
+
+    /* Find the RPP of the rotated axis-aligned ehy bbox - that is,
+     * the bounding box the given ehy would have if its height
+     * vector were in the positive Z direction. This does not give
+     * us an optimal bbox except in the case where the ehy is
+     * actually axis aligned to start with, but it's usually
+     * at least a bit better than the bounding sphere RPP. */
+    VMINMAX((*min), (*max), pt1);
+    VMINMAX((*min), (*max), pt2);
+    VMINMAX((*min), (*max), pt3);
+    VMINMAX((*min), (*max), pt4);
+    VMINMAX((*min), (*max), pt5);
+    VMINMAX((*min), (*max), pt6);
+    VMINMAX((*min), (*max), pt7);
+    VMINMAX((*min), (*max), pt8);
+    return 0;
+}
+
+
+/**
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid EHY, and if so, precompute
  * various terms of the formula.
@@ -199,7 +251,7 @@ const struct bu_structparse rt_ehy_parse[] = {
  * !0 Error in description
  *
  * Implicit return -
- * A struct ehy_specific is created, and it's address is stored in
+ * A struct ehy_specific is created, and its address is stored in
  * stp->st_specific for use by ehy_shot().
  */
 int
@@ -207,50 +259,36 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_ehy_internal *xip;
     struct ehy_specific *ehy;
-#ifndef NO_MAGIC_CHECKING
-    const struct bn_tol *tol = &rtip->rti_tol;
-#endif
+
     fastf_t magsq_h;
-    fastf_t mag_a, mag_h;
-    fastf_t c, f, r1, r2;
+    fastf_t mag_h;
+    fastf_t c, r1, r2;
     mat_t R;
     mat_t Rinv;
     mat_t S;
 
-#ifndef NO_MAGIC_CHECKING
     RT_CK_DB_INTERNAL(ip);
-    BN_CK_TOL(tol);
-#endif
-    xip = (struct rt_ehy_internal *)ip->idb_ptr;
-    RT_EHY_CK_MAGIC(xip);
 
-    /* compute |A| |H| */
-    mag_a = sqrt(MAGSQ(xip->ehy_Au));
-    mag_h = sqrt(magsq_h = MAGSQ(xip->ehy_H));
+    xip = (struct rt_ehy_internal *)ip->idb_ptr;
+
+    if (!ehy_is_valid(xip)) {
+	return -2;
+    }
+
+    magsq_h = MAGSQ(xip->ehy_H);
+    mag_h = sqrt(magsq_h);
     r1 = xip->ehy_r1;
     r2 = xip->ehy_r2;
     c = xip->ehy_c;
-    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
-	|| r1 < 0.0 || r2 < 0.0 || c < 0.0) {
-	return -2;		/* BAD, too small */
-    }
-
-    /* Check for A.H == 0 */
-    f = VDOT(xip->ehy_Au, xip->ehy_H) / mag_h;
-    if (!NEAR_ZERO(f, RT_DOT_TOL)) {
-	return -2;		/* BAD */
-    }
 
     /*
      * EHY is ok
      */
     stp->st_id = ID_EHY;		/* set soltab ID */
-    stp->st_meth = &rt_functab[ID_EHY];
+    stp->st_meth = &OBJ[ID_EHY];
 
-    BU_GETSTRUCT(ehy, ehy_specific);
-    stp->st_specific = (genptr_t)ehy;
+    BU_GET(ehy, struct ehy_specific);
+    stp->st_specific = (void *)ehy;
 
     /* make unit vectors in A, H, and BxH directions */
     VMOVE(ehy->ehy_Hunit, xip->ehy_H);
@@ -278,7 +316,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bn_mat_mul(ehy->ehy_SoR, S, R);
     bn_mat_mul(ehy->ehy_invRoS, Rinv, S);
 
-    /* Compute bounding sphere and RPP */
+    /* Compute bounding sphere */
     /* bounding sphere center */
     VJOIN1(stp->st_center, ehy->ehy_V, mag_h / 2.0, ehy->ehy_Hunit);
     /* bounding radius */
@@ -286,21 +324,12 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* approximate bounding radius */
     stp->st_aradius = stp->st_bradius;
 
-    /* cheat, make bounding RPP by enclosing bounding sphere */
-    stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
-    stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
-    stp->st_min[Y] = stp->st_center[Y] - stp->st_bradius;
-    stp->st_max[Y] = stp->st_center[Y] + stp->st_bradius;
-    stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
-    stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
+    if (rt_ehy_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     return 0;			/* OK */
 }
 
 
-/**
- * R T _ E H Y _ P R I N T
- */
 void
 rt_ehy_print(const struct soltab *stp)
 {
@@ -323,8 +352,6 @@ rt_ehy_print(const struct soltab *stp)
 
 
 /**
- * R T _ E H Y _ S H O T
- *
  * Intersect a ray with a ehy.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -413,9 +440,9 @@ rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     /*
      * Check for hitting the top plate.
      */
- check_plates:
+check_plates:
     /* check top plate */
-    if (hitp == &hits[1]  &&  !NEAR_ZERO(dp[Z], SMALL)) {
+    if (hitp == &hits[1]  &&  !ZERO(dp[Z])) {
 	/* 1 hit so far, this is worthwhile */
 	k1 = -pp[Z] / dp[Z];		/* top plate */
 
@@ -456,8 +483,6 @@ rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ E H Y _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -494,8 +519,6 @@ rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ E H Y _ C U R V E
- *
  * Return the curvature of the ehy.
  */
 void
@@ -551,8 +574,6 @@ rt_ehy_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ E H Y _ U V
- *
  * For a hit on the surface of an ehy, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -580,19 +601,19 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     switch (hitp->hit_surfno) {
 	case EHY_NORM_BODY:
 	    /* top plate, polar coords */
-	    if (NEAR_ZERO(pprime[Z] + 1.0, SMALL_FASTF)) { /* i.e., == -1.0 */
+	    if (ZERO(pprime[Z] + 1.0)) { /* i.e., == -1.0 */
 		/* bottom pt of body */
 		uvp->uv_u = 0;
 	    } else {
 		len = sqrt(pprime[X]*pprime[X] + pprime[Y]*pprime[Y]);
-		uvp->uv_u = acos(pprime[X]/len) * bn_inv2pi;
+		uvp->uv_u = acos(pprime[X]/len) * M_1_2PI;
 	    }
 	    uvp->uv_v = -pprime[Z];
 	    break;
 	case EHY_NORM_TOP:
 	    /* top plate, polar coords */
 	    len = sqrt(pprime[X]*pprime[X] + pprime[Y]*pprime[Y]);
-	    uvp->uv_u = acos(pprime[X]/len) * bn_inv2pi;
+	    uvp->uv_u = acos(pprime[X]/len) * M_1_2PI;
 	    uvp->uv_v = 1.0 - len;
 	    break;
     }
@@ -606,37 +627,294 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ E H Y _ F R E E
- */
 void
 rt_ehy_free(struct soltab *stp)
 {
     struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
 
-
-    bu_free((char *)ehy, "ehy_specific");
+    BU_PUT(ehy, struct ehy_specific);
 }
 
 
-/**
- * R T _ E H Y _ C L A S S
+/* Our canonical hyperbola in the Y-Z plane has equation
+ * z = +- (a/b) * sqrt(b^2 + y^2), and opens toward +Z and -Z with asymptote
+ * origin at the origin.
+ *
+ * The contour of an ehy in the plane H-R (where R is one of the ehy axes A or
+ * B) is the positive half of a hyperbola with asymptote origin at
+ * ((|H| + c)Hu), opening toward -H. We can transform this hyperbola to get an
+ * equivalent canonical hyperbola in the Y-Z plane, opening toward +Z (-H) with
+ * asymptote origin at the origin.
+ *
+ * This hyperbola passes through the point (r, |H| + a) (where r = |A| or |B|,
+ * and a = c). If we plug the point (r, |H| + a) into our canonical equation,
+ * we can derive b from |H|, a, and r.
+ *
+ *                             |H| + a = (a/b) * sqrt(b^2 + r^2)
+ *                       (|H| + a) / a = b * sqrt(b^2 + r^2)
+ *                   (|H| + a)^2 / a^2 = 1 + (r^2 / b^2)
+ *           ((|H| + a)^2 - a^2) / a^2 = r^2 / b^2
+ *   (a^2 * r^2) / ((|H| + a)^2 - a^2) = b^2
+ *      (ar) / sqrt((|H| + a)^2 - a^2) = b
+ *         (ar) / sqrt(|H| (|H| + 2a)) = b
  */
-int
-rt_ehy_class(void)
+static fastf_t
+ehy_hyperbola_b(fastf_t mag_h, fastf_t c, fastf_t r)
 {
+    return (c * r) / sqrt(mag_h * (mag_h + 2.0 * c));
+}
+
+
+/* The contour of an ehy in the plane H-R (where R is one of the ehy axes A or
+ * B) is the positive half of a hyperbola with asymptote origin at
+ * ((|H| + c)Hu), opening toward -H. We can transform this hyperbola to get an
+ * equivalent hyperbola in the Y-Z plane, opening toward +Z (-H) with asymptote
+ * origin at (0, -(|H| + c)).
+ *
+ * The part of this hyperbola that passes between (0, -(|H| + c)) and (r, 0)
+ * (r = |A| or |B|) is approximated by num_points points (including (0, -|H|)
+ * and (r, 0)).
+ *
+ * The constructed point list is returned (NULL returned on error). Because the
+ * above transformation puts the ehy vertex at the origin and the hyperbola
+ * asymptote origin at (0, -|H| + c), multiplying the z values by -1 gives
+ * corresponding distances along the ehy height vector H.
+ */
+static struct rt_pt_node *
+ehy_hyperbolic_curve(fastf_t mag_h, fastf_t c, fastf_t r, int num_points)
+{
+    int count;
+    struct rt_pt_node *curve;
+
+    BU_ALLOC(curve, struct rt_pt_node);
+    BU_ALLOC(curve->next, struct rt_pt_node);
+
+    curve->next->next = NULL;
+    VSET(curve->p,       0, 0, -mag_h);
+    VSET(curve->next->p, 0, r, 0);
+
+    count = approximate_hyperbolic_curve(curve, c, ehy_hyperbola_b(mag_h, c, r), num_points - 2);
+
+    if (count != (num_points - 2)) {
+	return NULL;
+    }
+
+    return curve;
+}
+
+
+/* The contour of an ehy in the plane H-R (where R is one of the ehy axes A or
+ * B) is the positive half of a hyperbola with asymptote origin at
+ * ((|H| + c)Hu), opening toward -H. We can transform this hyperbola to get an
+ * equivalent hyperbola in the Y-Z plane, with asymptote origin at
+ * (0, |H| + a) (a = c) opening toward +Z.
+ *
+ * The equation for this hyperbola is a variant of the equation for our
+ * canonical hyperbola in the Y-Z plane (z = (a/b) * sqrt(y^2 + b^2)):
+ *   z = (|H| + a) - (a/b) * sqrt(y^2 + b^2)
+ *
+ * Solving this equation for y yields:
+ *   y = (b/a) * sqrt((|H| + a - z)^2 - a^2)
+ *
+ * Substituting b = (ar) / sqrt(|H| (|H| + 2a)) (see above comment):
+ *
+ *   y = (r / sqrt(|H| (|H| + 2a))) * sqrt((|H| + a - z)^2 - a^2)
+ *     = r * sqrt(((|H| + a - z)^2 - a^2) / (|H| (|H| + 2a))))
+ */
+static fastf_t
+ehy_hyperbola_y(fastf_t mag_H, fastf_t c, fastf_t r, fastf_t z)
+{
+    fastf_t n, d;
+
+    n = pow(mag_H + c - z, 2) - c * c;
+    d = mag_H * (mag_H + 2.0 * c);
+
+    return r * sqrt(n / d);
+}
+
+
+/* Plot the elliptical cross section of the given ehy at distance h along the
+ * ehy height vector (h >= 0, h <= |H|) consisting of num_points points.
+ */
+static void
+ehy_plot_ellipse(
+    struct bu_list *vhead,
+    struct rt_ehy_internal *ehy,
+    fastf_t h,
+    fastf_t num_points)
+{
+    fastf_t mag_H;
+    vect_t V, Hu, Au, Bu, A, B, cross_section_plane;
+
+    VMOVE(V, ehy->ehy_V);
+
+    mag_H = MAGNITUDE(ehy->ehy_H);
+    VSCALE(Hu, ehy->ehy_H, 1.0 / mag_H);
+
+    VMOVE(Au, ehy->ehy_Au);
+    VCROSS(Bu, Au, Hu);
+
+    /* calculate semi-major and semi-minor axis for the elliptical
+     * cross-section at distance h along H
+     */
+    VSCALE(A, Au, ehy_hyperbola_y(mag_H, ehy->ehy_c, ehy->ehy_r1, h));
+    VSCALE(B, Bu, ehy_hyperbola_y(mag_H, ehy->ehy_c, ehy->ehy_r2, h));
+    VJOIN1(cross_section_plane, V, h, Hu);
+
+    plot_ellipse(vhead, cross_section_plane, A, B, num_points);
+}
+
+
+static void
+ehy_plot_hyperbola(
+    struct bu_list *vhead,
+    struct rt_ehy_internal *ehy,
+    struct rt_pt_node *pts,
+    vect_t Ru,
+    fastf_t r)
+{
+    point_t p;
+    vect_t ehy_V, Hu;
+    fastf_t mag_H, c, z;
+    struct rt_pt_node *node;
+
+    VMOVE(ehy_V, ehy->ehy_V);
+    mag_H = MAGNITUDE(ehy->ehy_H);
+    VSCALE(Hu, ehy->ehy_H, 1.0 / mag_H);
+    c = ehy->ehy_c;
+
+    z = pts->p[Z];
+    VJOIN2(p, ehy_V, ehy_hyperbola_y(mag_H, c, r, -z), Ru, -z, Hu);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+    node = pts->next;
+    while (node != NULL) {
+	z = node->p[Z];
+	VJOIN2(p, ehy_V, ehy_hyperbola_y(mag_H, c, r, -z), Ru, -z, Hu);
+
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+
+	node = node->next;
+    }
+}
+
+
+static int
+ehy_curve_points(
+    const struct rt_ehy_internal *ehy,
+    const struct rt_view_info *info)
+{
+    fastf_t avg_r, approx_curve_len;
+    point_t p1, p2;
+
+    avg_r = (ehy->ehy_r1 + ehy->ehy_r2) / 2.0;
+
+    VADD2(p1, ehy->ehy_V, ehy->ehy_H);
+    VJOIN1(p2, ehy->ehy_V, avg_r, ehy->ehy_Au);
+
+    approx_curve_len = 2.0 * DIST_PT_PT(p1, p2);
+
+    return approx_curve_len / info->point_spacing;
+}
+
+
+static int
+ehy_ellipse_points(
+    const struct rt_ehy_internal *ehy,
+    const struct rt_view_info *info)
+{
+    fastf_t avg_radius, avg_circumference;
+
+    avg_radius = (ehy->ehy_r1 + ehy->ehy_r2) / 2.0;
+    avg_circumference = M_2PI * avg_radius;
+
+    return avg_circumference / info->point_spacing;
+}
+
+
+int
+rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    vect_t ehy_H, Hu, Au, Bu;
+    fastf_t mag_H, z, z_step, c, r1, r2;
+    int i, num_curve_points, num_ellipse_points, num_curves;
+    struct rt_ehy_internal *ehy;
+    struct rt_pt_node *pts_r1, *pts_r2, *node, *node1, *node2;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    ehy = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(ehy);
+
+    num_curve_points = ehy_curve_points(ehy, info);
+
+    if (num_curve_points < 3) {
+	num_curve_points = 3;
+    }
+
+    num_ellipse_points = ehy_ellipse_points(ehy, info);
+
+    if (num_ellipse_points < 6) {
+	num_ellipse_points = 6;
+    }
+
+    VMOVE(ehy_H, ehy->ehy_H);
+
+    mag_H = MAGNITUDE(ehy_H);
+    VSCALE(Hu, ehy->ehy_H, 1.0 / mag_H);
+
+    VMOVE(Au, ehy->ehy_Au);
+    VCROSS(Bu, Au, Hu);
+
+    r1 = ehy->ehy_r1;
+    r2 = ehy->ehy_r2;
+    c = ehy->ehy_c;
+
+    pts_r1 = ehy_hyperbolic_curve(mag_H, c, r1, num_curve_points);
+    pts_r2 = ehy_hyperbolic_curve(mag_H, c, r2, num_curve_points);
+
+    if (pts_r1 == NULL || pts_r2 == NULL) {
+	return -1;
+    }
+
+    num_curves = mag_H / info->curve_spacing;
+    if (num_curves < 2) {
+	num_curves = 2;
+    }
+
+    z_step = mag_H / num_curves;
+    z = 0.0;
+    for (i = 0; i < num_curves; ++i) {
+	ehy_plot_ellipse(info->vhead, ehy, z, num_ellipse_points);
+	z += z_step;
+    }
+
+    ehy_plot_hyperbola(info->vhead, ehy, pts_r1, Au, r1);
+    ehy_plot_hyperbola(info->vhead, ehy, pts_r1, Au, -r1);
+    ehy_plot_hyperbola(info->vhead, ehy, pts_r1, Bu, r2);
+    ehy_plot_hyperbola(info->vhead, ehy, pts_r1, Bu, -r2);
+
+    node1 = pts_r1;
+    node2 = pts_r2;
+    for (i = 0; i < num_curve_points; ++i) {
+	node = node1;
+	node1 = node1->next;
+	bu_free(node, "rt_pt_node");
+
+	node = node2;
+	node2 = node2->next;
+	bu_free(node, "rt_pt_node");
+    }
+
     return 0;
 }
 
 
-/**
- * R T _ E H Y _ P L O T
- */
 int
-rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
+rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-    fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2;
+    fastf_t c, dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_prev, theta_new;
     int *pts_dbl, i, j, nseg;
     int jj, na, nb, nell, recalc_b;
@@ -650,30 +928,15 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
-    RT_EHY_CK_MAGIC(xip);
 
-    /*
-     * make sure ehy description is valid
-     */
+    if (!ehy_is_valid(xip)) {
+	return -2;
+    }
 
-    /* compute |A| |H| */
-    mag_a = MAGSQ(xip->ehy_Au);	/* should already be unit vector */
     mag_h = MAGNITUDE(xip->ehy_H);
-    c = xip->ehy_c;
     r1 = xip->ehy_r1;
     r2 = xip->ehy_r2;
-    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
-	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
-	return -2;		/* BAD */
-    }
-
-    /* Check for A.H == 0 */
-    f = VDOT(xip->ehy_Au, xip->ehy_H) / mag_h;
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return -2;		/* BAD */
-    }
+    c = xip->ehy_c;
 
     /* make unit vectors in A, H, and BxH directions */
     VMOVE(Hu, xip->ehy_H);
@@ -688,40 +951,22 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     VREVERSE(&R[8], Hu);
     bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0)
-	dtol = 0.0;		/* none */
-    else
-	/* Convert rel to absolute by scaling by smallest side */
-	dtol = ttol->rel * 2 * r2;
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    dtol = 2 * 0.10 * r2;	/* 10% */
-	}
-	/* Use absolute-ized relative tolerance */
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * xip->ehy_r2);
 
-    /* To ensure normal tolerance, remain below this angle */
-    if (ttol->norm > 0.0)
+    /* stay below ntol to ensure normal tolerance */
+    ntol = M_PI;
+    if (ttol->norm > 0.0) {
 	ntol = ttol->norm;
-    else
-	/* tolerate everything */
-	ntol = bn_pi;
+    }
 
     /*
      * build ehy from 2 hyperbolas
      */
 
     /* approximate positive half of hyperbola along semi-minor axis */
-    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_b, struct rt_pt_node);
+    BU_ALLOC(pts_b->next, struct rt_pt_node);
+
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
     VSET(pts_b->next->p, 0, r2, 0);
@@ -734,14 +979,14 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* construct positive half of hyperbola along semi-major axis of
      * ehy using same z coords as hyperbola along semi-minor axis
      */
-    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_a, struct rt_pt_node);
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_hyperbola to a_hyperbola */
-	pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(pos_a->next, struct rt_pt_node);
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on hyperbola */
@@ -782,14 +1027,14 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* construct hyperbola along semi-major axis of ehy using same
 	 * z coords as parab along semi-minor axis
 	 */
-	pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(pts_b, struct rt_pt_node);
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_hyperbola to b_hyperbola */
-	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	    BU_ALLOC(pos_b->next, struct rt_pt_node);
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on hyperbola */
@@ -813,7 +1058,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* make ellipses at each z level */
     i = 0;
     nseg = 0;
-    theta_prev = bn_twopi;
+    theta_prev = M_2PI;
     pos_a = pts_a->next;	/* skip over apex of ehy */
     pos_b = pts_b->next;
     while (pos_a) {
@@ -822,9 +1067,9 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	VJOIN1(V, xip->ehy_V, -pos_a->p[Z], Hu);
 
 	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
-	    nseg = (int)(bn_twopi / theta_new) + 1;
+	    nseg = (int)(M_2PI / theta_new) + 1;
 	    pts_dbl[i] = 0;
 	} else if (theta_new < theta_prev) {
 	    nseg *= 2;
@@ -908,8 +1153,6 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /**
- * R T _ E H Y _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -917,7 +1160,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 int
 rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, cprime;
+    fastf_t c, dtol, mag_h, ntol, r1, r2, cprime;
     fastf_t **ellipses, theta_prev, theta_new;
     int *pts_dbl, face, i, j, nseg;
     int jj, na, nb, nell, recalc_b;
@@ -941,31 +1184,16 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
-    RT_EHY_CK_MAGIC(xip);
 
-    /*
-     * make sure ehy description is valid
-     */
+    if (!ehy_is_valid(xip)) {
+	return 1;
+    }
 
-    /* compute |A| |H| */
-    mag_a = MAGSQ(xip->ehy_Au);	/* should already be unit vector */
     mag_h = MAGNITUDE(xip->ehy_H);
     c = xip->ehy_c;
     cprime = c / mag_h;
     r1 = xip->ehy_r1;
     r2 = xip->ehy_r2;
-    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
-	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
-	return 1;		/* BAD */
-    }
-
-    /* Check for A.H == 0 */
-    f = VDOT(xip->ehy_Au, xip->ehy_H) / mag_h;
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return 1;		/* BAD */
-    }
 
     /* make unit vectors in A, H, and BxH directions */
     VMOVE(Hu, xip->ehy_H);
@@ -990,40 +1218,22 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bn_mat_mul(SoR, S, R);
     bn_mat_mul(invRoS, invR, S);
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0)
-	dtol = 0.0;		/* none */
-    else
-	/* Convert rel to absolute by scaling by smallest side */
-	dtol = ttol->rel * 2 * r2;
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    dtol = 2 * 0.10 * r2;	/* 10% */
-	}
-	/* Use absolute-ized relative tolerance */
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * xip->ehy_r2);
 
-    /* To ensure normal tolerance, remain below this angle */
-    if (ttol->norm > 0.0)
+    /* stay below ntol to ensure normal tolerance */
+    ntol = M_PI;
+    if (ttol->norm > 0.0) {
 	ntol = ttol->norm;
-    else
-	/* tolerate everything */
-	ntol = bn_pi;
+    }
 
     /*
      * build ehy from 2 hyperbolas
      */
 
     /* approximate positive half of hyperbola along semi-minor axis */
-    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_b, struct rt_pt_node);
+    BU_ALLOC(pts_b->next, struct rt_pt_node);
+
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
     VSET(pts_b->next->p, 0, r2, 0);
@@ -1036,14 +1246,14 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* construct positive half of hyperbola along semi-major axis of
      * ehy using same z coords as parab along semi-minor axis
      */
-    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_a, struct rt_pt_node);
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_hyperbola to a_hyperbola */
-	pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(pos_a->next, struct rt_pt_node);
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on hyperbola */
@@ -1083,14 +1293,14 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* construct hyperbola along semi-major axis of ehy using same
 	 * z coords as parab along semi-minor axis
 	 */
-	pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(pts_b, struct rt_pt_node);
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_hyperbola to b_hyperbola */
-	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	    BU_ALLOC(pos_b->next, struct rt_pt_node);
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on hyperbola */
@@ -1115,7 +1325,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* make ellipses at each z level */
     i = 0;
     nseg = 0;
-    theta_prev = bn_twopi;
+    theta_prev = M_2PI;
     pos_a = pts_a->next;	/* skip over apex of ehy */
     pos_b = pts_b->next;
     while (pos_a) {
@@ -1124,9 +1334,9 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	VJOIN1(V, xip->ehy_V, -pos_a->p[Z], Hu);
 
 	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
-	    nseg = (int)(bn_twopi / theta_new) + 1;
+	    nseg = (int)(M_2PI / theta_new) + 1;
 	    pts_dbl[i] = 0;
 	    /* maximum number of faces needed for ehy */
 	    face = nseg*(1 + 3*((1 << (nell-1)) - 1));
@@ -1312,7 +1522,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate the face geometry */
-    for (i=0; i < face; i++) {
+    for (i = 0; i < face; i++) {
 	if (nmg_fu_planeeqn(outfaceuses[i], tol) < 0)
 	    goto fail;
     }
@@ -1337,7 +1547,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Assign vertexuse normals */
     nmg_vertex_tabulate(&vert_tab, &s->l.magic);
-    for (i=0; i<BU_PTBL_END(&vert_tab); i++) {
+    for (i = 0; i < BU_PTBL_END(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;
 	struct vertex_g *vg;
@@ -1377,7 +1587,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_ptbl_free(&vert_tab);
     return 0;
 
- fail:
+fail:
     /* free mem */
     bu_free((char *)outfaceuses, "faceuse []");
     for (i = 0; i < nell; i++) {
@@ -1392,8 +1602,6 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ E H Y _ I M P O R T
- *
  * Import an EHY from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1402,6 +1610,7 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     struct rt_ehy_internal *xip;
     union record *rp;
+    vect_t v1, v2, v3;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1416,20 +1625,44 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EHY;
-    ip->idb_meth = &rt_functab[ID_EHY];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_ehy_internal), "rt_ehy_internal");
+    ip->idb_meth = &OBJ[ID_EHY];
+    BU_ALLOC(ip->idb_ptr, struct rt_ehy_internal);
+
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     xip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
     /* Warning:  type conversion */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(xip->ehy_V, mat, &rp->s.s_values[0*3]);
-    MAT4X3VEC(xip->ehy_H, mat, &rp->s.s_values[1*3]);
-    MAT4X3VEC(xip->ehy_Au, mat, &rp->s.s_values[2*3]);
+
+    if (dbip->dbi_version < 0) {
+	flip_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
+	flip_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
+	flip_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
+    } else {
+	VMOVE(v1, &rp->s.s_values[0*3]);
+	VMOVE(v2, &rp->s.s_values[1*3]);
+	VMOVE(v3, &rp->s.s_values[2*3]);
+    }
+
+    MAT4X3PNT(xip->ehy_V, mat, v1);
+    MAT4X3VEC(xip->ehy_H, mat, v2);
+    MAT4X3VEC(xip->ehy_Au, mat, v3);
+
     VUNITIZE(xip->ehy_Au);
-    xip->ehy_r1 = rp->s.s_values[3*3] / mat[15];
-    xip->ehy_r2 = rp->s.s_values[3*3+1] / mat[15];
-    xip->ehy_c  = rp->s.s_values[3*3+2] / mat[15];
+
+    if (dbip->dbi_version < 0) {
+	v1[X] = flip_dbfloat(rp->s.s_values[3*3+0]);
+	v1[Y] = flip_dbfloat(rp->s.s_values[3*3+1]);
+	v1[Z] = flip_dbfloat(rp->s.s_values[3*3+2]);
+    } else {
+	v1[X] = rp->s.s_values[3*3+0];
+	v1[Y] = rp->s.s_values[3*3+1];
+	v1[Z] = rp->s.s_values[3*3+2];
+    }
+
+    xip->ehy_r1 = v1[X] / mat[15];
+    xip->ehy_r2 = v1[Y] / mat[15];
+    xip->ehy_c  = v1[Z] / mat[15];
 
     if (xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF) {
 	bu_log("rt_ehy_import4: r1, r2, or c are zero\n");
@@ -1442,8 +1675,6 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ E H Y _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1461,13 +1692,13 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ehy external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ehy external");
     ehy = (union record *)ep->ext_buf;
 
     ehy->s.s_id = ID_SOLID;
     ehy->s.s_type = EHY;
 
-    if (!NEAR_ZERO(MAGNITUDE(xip->ehy_Au) - 1., RT_LEN_TOL)) {
+    if (!NEAR_EQUAL(MAGNITUDE(xip->ehy_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_ehy_export4: Au not a unit vector!\n");
 	return -1;
     }
@@ -1504,8 +1735,6 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E H Y _ I M P O R T 5
- *
  * Import an EHY from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1513,7 +1742,9 @@ int
 rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ehy_internal *xip;
-    fastf_t vec[3*4];
+
+    /* must be double for import and export */
+    double vec[3*4];
 
     BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
@@ -1523,14 +1754,14 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EHY;
-    ip->idb_meth = &rt_functab[ID_EHY];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_ehy_internal), "rt_ehy_internal");
+    ip->idb_meth = &OBJ[ID_EHY];
+    BU_ALLOC(ip->idb_ptr, struct rt_ehy_internal);
 
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     xip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 3*4);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 3*4);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1543,8 +1774,8 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     xip->ehy_c  = vec[3*3+2] / mat[15];
 
     if (xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF) {
-	bu_log("rt_ehy_import4: r1, r2, or c are zero\n");
-	bu_free((char *)ip->idb_ptr, "rt_ehy_import4: ip->idb_ptr");
+	bu_log("rt_ehy_import5: r1, r2, or c are zero\n");
+	bu_free((char *)ip->idb_ptr, "rt_ehy_import5: ip->idb_ptr");
 	return -1;
     }
 
@@ -1553,15 +1784,15 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ E H Y _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
 rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ehy_internal *xip;
-    fastf_t vec[3*4];
+
+    /* must be double for import and export */
+    double vec[3*4];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1572,9 +1803,9 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 3*4;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "ehy external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "ehy external");
 
-    if (!NEAR_ZERO(MAGNITUDE(xip->ehy_Au) - 1., RT_LEN_TOL)) {
+    if (!NEAR_EQUAL(MAGNITUDE(xip->ehy_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_ehy_export4: Au not a unit vector!\n");
 	return -1;
     }
@@ -1607,15 +1838,13 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[3*3+2] = xip->ehy_c * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 3*4);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 3*4);
 
     return 0;
 }
 
 
 /**
- * R T _ E H Y _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1659,8 +1888,6 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ E H Y _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1676,14 +1903,10 @@ rt_ehy_ifree(struct rt_db_internal *ip)
     xip->ehy_magic = 0;		/* sanity */
 
     bu_free((char *)xip, "ehy ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
-/**
- * R T _ E H Y _ P A R A M S
- *
- */
 int
 rt_ehy_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
@@ -1691,6 +1914,66 @@ rt_ehy_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+
+static int
+ehy_is_valid(struct rt_ehy_internal *ehy)
+{
+    fastf_t mag_h, cos_angle_ah;
+    vect_t a, h;
+
+    RT_EHY_CK_MAGIC(ehy);
+
+    if (!(ehy->ehy_r1 > 0.0 && ehy->ehy_r2 > 0.0 && ehy->ehy_c > 0.0)) {
+	return 0;
+    }
+
+    VMOVE(h, ehy->ehy_H);
+    VMOVE(a, ehy->ehy_Au);
+
+    /* Check that A is a unit vector. If it is, then it should be true that
+     * |A| == |A|^2 == 1.0.
+     */
+    if (!NEAR_EQUAL(MAGSQ(a), 1.0, RT_LEN_TOL)) {
+	return 0;
+    }
+
+    /* check that |H| > 0.0 */
+    mag_h = MAGNITUDE(h);
+    if (NEAR_ZERO(mag_h, RT_LEN_TOL)) {
+	return 0;
+    }
+
+    /* check that A and H are orthogonal */
+    cos_angle_ah = VDOT(a, h) / mag_h;
+    if (!NEAR_ZERO(cos_angle_ah, RT_DOT_TOL)) {
+	return 0;
+    }
+
+    return 1;
+}
+
+
+void
+rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_ehy_internal *eip;
+    fastf_t a, b, h, integralArea, sqrt_rb;
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(eip);
+
+    a = eip->ehy_c;
+    h = MAGNITUDE(eip->ehy_H);
+    b = (eip->ehy_r1 * a) / sqrt(h * (h - 2 * a));
+
+    /** Formula taken from : https://docs.google.com/file/d/0BydeQ6BPlVejRWt6NlJLVDl0d28/edit
+     * Area can be calculated by substracting integral of hyperbola from the area of the bounding rectangle
+     */
+    sqrt_rb = sqrt(eip->ehy_r1 * eip->ehy_r1 + b * b);
+    integralArea = (a / b) * ((eip->ehy_r1 * sqrt_rb) + ((b * b / 2) * (log(sqrt_rb + eip->ehy_r1) - log(sqrt_rb - eip->ehy_r1))));
+    *area = 2 * eip->ehy_r1 * (a + h) - integralArea;
 }
 
 

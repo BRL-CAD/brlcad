@@ -1,7 +1,7 @@
 /*                        D B 5 _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file db5_io.c
+/** @file librt/db5_io.c
  *
  * Handle import/export and IO of v5 database objects.
  *
@@ -29,9 +29,13 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "bio.h"
+#include <ctype.h>
+#include "bin.h"
 
-#include "bu.h"
+
+#include "bu/endian.h"
+#include "bu/parse.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db5.h"
@@ -39,15 +43,6 @@
 #include "mater.h"
 
 
-/**
- * D B 5 _ H E A D E R _ I S _ V A L I D
- *
- * Verify that this is a valid header for a BRL-CAD v5 database.
- *
- * Returns -
- * 0 Not valid v5 header
- * 1 Valid v5 header
- */
 int
 db5_header_is_valid(const unsigned char *hp)
 {
@@ -80,18 +75,12 @@ db5_header_is_valid(const unsigned char *hp)
     if (odp->db5h_minor_type != 0) return 0;
 
     /* Check length, known to be 8-bit.  Header len=1 8-byte chunk. */
-    if (hp[6] != 1) return 0;
+    if (hp[6] != 1)
+	return 0;
 
     return 1;		/* valid */
 }
 
-
-/**
- * D B 5 _ S E L E C T _ L E N G T H _ E N C O D I N G
- *
- * Given a number to encode, decide which is the smallest encoding
- * format which will contain it.
- */
 int
 db5_select_length_encoding(size_t len)
 {
@@ -102,20 +91,10 @@ db5_select_length_encoding(size_t len)
 }
 
 
-/**
- * D B 5 _ D E C O D E _ L E N G T H
- *
- * Given a variable-width length field in network order (XDR), store
- * it in *lenp.
- *
- * This routine processes unsigned values.
- *
- * Returns -
- * The number of bytes of input that were decoded.
- */
-int
+size_t
 db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
 {
+    *lenp = 0;
     switch (format) {
 	case DB5HDR_WIDTHCODE_8BIT:
 	    *lenp = (*cp);
@@ -137,31 +116,19 @@ db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
     return 0;
 }
 
-
-/**
- * D B 5 _ D E C O D E _ S I G N E D
- *
- * Given a variable-width length field in network order (XDR), store
- * it in *lenp.
- *
- * This routine processes signed values.
- *
- * Returns -
- * The number of bytes of input that were decoded.
- */
 int
 db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 {
     switch (format) {
 	case DB5HDR_WIDTHCODE_8BIT:
-	    if ((*lenp = (*cp)) & 0x80) *lenp |= (-1L ^ 0xFF);
+	    if ((*lenp = (*cp)) & 0x80) *lenp |= ((size_t)-1 ^ 0xFF);
 	    return 1;
 	case DB5HDR_WIDTHCODE_16BIT:
-	    if ((*lenp = BU_GSHORT(cp)) & 0x8000)  *lenp |= (-1L ^ 0xFFFF);
+	    if ((*lenp = BU_GSHORT(cp)) & 0x8000)  *lenp |= ((size_t)-1 ^ 0xFFFF);
 	    return 2;
 	case DB5HDR_WIDTHCODE_32BIT:
 	    if ((*lenp = BU_GLONG(cp)) & 0x80000000)
-		*lenp |= (-1L ^ 0xFFFFFFFF);
+		*lenp |= ((size_t)-1 ^ 0xFFFFFFFF);
 	    return 4;
 	case DB5HDR_WIDTHCODE_64BIT:
 	    if (sizeof(size_t) >= 8) {
@@ -176,10 +143,8 @@ db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 
 
 /**
- * D B 5 _ E N C O D E _ L E N G T H
- *
  * Given a value and a variable-width format spec, store it in network
- * order (XDR).
+ * order.
  *
  * Returns -
  * pointer to next available byte.
@@ -193,22 +158,23 @@ db5_encode_length(
     switch (format) {
 	case DB5HDR_WIDTHCODE_8BIT:
 	    *cp = (unsigned char)val & 0xFF;
-	    return cp+1;
+	    return cp + sizeof(unsigned char);
 	case DB5HDR_WIDTHCODE_16BIT:
-	    return bu_pshort(cp, (short)val);
+	    *(uint16_t *)&cp[0] = htons((uint16_t)val);
+	    return cp + sizeof(uint16_t);
 	case DB5HDR_WIDTHCODE_32BIT:
-	    return bu_plong(cp, (uint32_t)val);
+	    *(uint32_t *)&cp[0] = htonl((uint32_t)val);
+	    return cp + sizeof(uint32_t);
 	case DB5HDR_WIDTHCODE_64BIT:
-	    return bu_plonglong(cp, (uint64_t)val);
+	    *(uint64_t *)&cp[0] = htonll((uint64_t)val);
+	    return cp + sizeof(uint64_t);
     }
     bu_bomb("db5_encode_length(): unknown width code\n");
-    return 0;
+    return NULL;
 }
 
 
 /**
- * D B 5 _ C R A C K _ D I S K _ H E A D E R
- *
  * Returns -
  * 0 on success
  * -1 on error
@@ -272,8 +238,6 @@ db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 
 
 /**
- * D B 5 _ G E T _ R A W _ I N T E R N A L _ P T R
- *
  * Returns -
  * on success, pointer to first unused byte
  * NULL, on error
@@ -302,15 +266,15 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
 	return NULL;
     }
 
-    BU_INIT_EXTERNAL(&rip->name);
-    BU_INIT_EXTERNAL(&rip->body);
-    BU_INIT_EXTERNAL(&rip->attributes);
+    BU_EXTERNAL_INIT(&rip->name);
+    BU_EXTERNAL_INIT(&rip->body);
+    BU_EXTERNAL_INIT(&rip->attributes);
 
     /* Grab name, if present */
     if (rip->h_name_present) {
 	cp += db5_decode_length(&rip->name.ext_nbytes,
 				cp, rip->h_name_width);
-	rip->name.ext_buf = (genptr_t)cp;	/* discard const */
+	rip->name.ext_buf = (uint8_t *)cp;	/* discard const */
 	cp += rip->name.ext_nbytes;
     }
 
@@ -318,7 +282,10 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     if (rip->a_present) {
 	cp += db5_decode_length(&rip->attributes.ext_nbytes,
 				cp, rip->a_width);
-	rip->attributes.ext_buf = (genptr_t)cp;	/* discard const */
+	rip->attributes.ext_buf = (uint8_t *)cp;	/* discard const */
+#if defined(USE_BINARY_ATTRIBUTES)
+	rip->attributes.widcode = rip->a_width;
+#endif
 	cp += rip->attributes.ext_nbytes;
     }
 
@@ -326,7 +293,7 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     if (rip->b_present) {
 	cp += db5_decode_length(&rip->body.ext_nbytes,
 				cp, rip->b_width);
-	rip->body.ext_buf = (genptr_t)cp;	/* discard const */
+	rip->body.ext_buf = (uint8_t *)cp;	/* discard const */
 	cp += rip->body.ext_nbytes;
     }
 
@@ -335,23 +302,15 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     return ip + rip->object_length;
 }
 
-
-/**
- * D B 5 _ G E T _ R A W _ I N T E R N A L _ F P
- *
- * Returns -
- * 0 on success
- * -1 on EOF
- * -2 on error
- */
 int
 db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 {
     struct db5_ondisk_header header;
     unsigned char lenbuf[8];
     int count = 0;
-    int used;
+    size_t used;
     size_t want, got;
+    size_t dlen;
     unsigned char *cp;
 
     if (fread((unsigned char *)&header, sizeof header, 1, fp) != 1) {
@@ -377,13 +336,26 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	    count = 8;
     }
     if (fread(lenbuf, count, 1, fp)  != 1) {
+	perror("fread");
 	bu_log("db5_get_raw_internal_fp(): fread lenbuf error\n");
 	return -2;
     }
-    used += db5_decode_length(&rip->object_length, lenbuf, rip->h_object_width);
+
+    dlen = db5_decode_length(&rip->object_length, lenbuf, rip->h_object_width);
+    if (dlen < 1 || dlen > sizeof(size_t)) {
+	bu_log("db5_get_raw_internal_fp(): Error decoding object length (got %zd)\n", dlen);
+	return -1;
+    }
+    used += dlen;
+
+    /* verify the length won't overflow before we <<=3 it */
+    if (rip->object_length > UINTPTR_MAX>>3) {
+	bu_log("db5_get_raw_internal_fp():  bad length read\n");
+	return -1;
+    }
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
-    if ((size_t)rip->object_length < sizeof(struct db5_ondisk_header)) {
+    if (rip->object_length < sizeof(struct db5_ondisk_header) || rip->object_length < used) {
 	bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database is corrupted\n",
 	       rip->object_length);
 	return -1;
@@ -395,31 +367,31 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     *((struct db5_ondisk_header *)rip->buf) = header;	/* struct copy */
     memcpy(rip->buf+sizeof(header), lenbuf, count);
 
-    cp = rip->buf+used;
-    want = rip->object_length-used;
-    BU_ASSERT_LONG(want, >, 0);
+    cp = rip->buf + used;
+    want = rip->object_length - used;
+
     if ((got = fread(cp, 1, want, fp)) != want) {
-	bu_log("db5_get_raw_internal_fp(), want=%ld, got=%ld, database is too short\n",
+	bu_log("db5_get_raw_internal_fp(): Database is too short, want=%ld, got=%ld\n",
 	       want, got);
 	return -2;
     }
 
     /* Verify trailing magic number */
     if (rip->buf[rip->object_length-1] != DB5HDR_MAGIC2) {
-	bu_log("db5_get_raw_internal_fp() bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
+	bu_log("db5_get_raw_internal_fp(): bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
 	       DB5HDR_MAGIC2, rip->buf[rip->object_length-1]);
 	return -2;
     }
 
-    BU_INIT_EXTERNAL(&rip->name);
-    BU_INIT_EXTERNAL(&rip->body);
-    BU_INIT_EXTERNAL(&rip->attributes);
+    BU_EXTERNAL_INIT(&rip->name);
+    BU_EXTERNAL_INIT(&rip->body);
+    BU_EXTERNAL_INIT(&rip->attributes);
 
     /* Grab name, if present */
     if (rip->h_name_present) {
 	cp += db5_decode_length(&rip->name.ext_nbytes,
 				cp, rip->h_name_width);
-	rip->name.ext_buf = (genptr_t)cp;	/* discard const */
+	rip->name.ext_buf = (uint8_t *)cp;	/* discard const */
 	cp += rip->name.ext_nbytes;
     }
 
@@ -427,7 +399,10 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     if (rip->a_present) {
 	cp += db5_decode_length(&rip->attributes.ext_nbytes,
 				cp, rip->a_width);
-	rip->attributes.ext_buf = (genptr_t)cp;	/* discard const */
+	rip->attributes.ext_buf = (uint8_t *)cp;	/* discard const */
+#if defined(USE_BINARY_ATTRIBUTES)
+	rip->attributes.widcode = rip->a_width;
+#endif
 	cp += rip->attributes.ext_nbytes;
     }
 
@@ -435,22 +410,13 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     if (rip->b_present) {
 	cp += db5_decode_length(&rip->body.ext_nbytes,
 				cp, rip->b_width);
-	rip->body.ext_buf = (genptr_t)cp;	/* discard const */
+	rip->body.ext_buf = (uint8_t *)cp;	/* discard const */
 	cp += rip->body.ext_nbytes;
     }
 
     return 0;		/* success */
 }
 
-
-/**
- * D B 5 _ E X P O R T _ O B J E C T 3
- *
- * A routine for merging together the three optional parts of an
- * object into the final on-disk format.  Results in extra data
- * copies, but serves as a starting point for testing.  Any of name,
- * attrib, and body may be null.
- */
 void
 db5_export_object3(
     struct bu_external *out,
@@ -517,8 +483,8 @@ db5_export_object3(
     need += 8;	/* pad and magic2 */
 
     /* Allocate the buffer for the combined external representation */
-    out->ext_magic = BU_EXTERNAL_MAGIC;
-    out->ext_buf = bu_malloc(need, "external object3");
+    BU_EXTERNAL_INIT(out);
+    out->ext_buf = (uint8_t *)bu_malloc(need, "external object3");
     out->ext_nbytes = need;		/* will be trimmed, below */
 
     /* Determine encoding for the header length field */
@@ -597,20 +563,12 @@ db5_export_object3(
 
     /* Finally, go back to the header and write the actual object length */
     cp = ((unsigned char *)out->ext_buf) + sizeof(struct db5_ondisk_header);
-    cp = db5_encode_length(cp, togo>>3, h_width);
+    (void)db5_encode_length(cp, togo>>3, h_width);
 
     out->ext_nbytes = togo;
     BU_ASSERT_LONG(out->ext_nbytes, >=, 8);
 }
 
-
-/**
- * D B 5 _ M A K E _ F R E E _ O B J E C T _ H D R
- *
- * Make only the front (header) portion of a free object.  This is
- * used when operating on very large contiguous free objects in the
- * database (e.g. 50 MBytes).
- */
 void
 db5_make_free_object_hdr(struct bu_external *ep, size_t length)
 {
@@ -625,7 +583,7 @@ db5_make_free_object_hdr(struct bu_external *ep, size_t length)
 
     /* Reserve enough space to hold any free header, even w/64-bit len */
     ep->ext_nbytes = 8+8;
-    ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "db5_make_free_object_hdr");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "db5_make_free_object_hdr");
 
     /* Determine encoding for the header length field */
     h_width = db5_select_length_encoding(length>>3);
@@ -637,16 +595,9 @@ db5_make_free_object_hdr(struct bu_external *ep, size_t length)
 	DB5HDR_HFLAGS_DLI_FREE_STORAGE;
 
     cp = ((unsigned char *)ep->ext_buf) + sizeof(struct db5_ondisk_header);
-    cp = db5_encode_length(cp, length>>3, h_width);
+    db5_encode_length(cp, length>>3, h_width);
 }
 
-
-/**
- * D B 5 _ M A K E _ F R E E _ O B J E C T
- *
- * Make a complete, zero-filled, free object.  Note that free objects
- * can sometimes get quite large.
- */
 void
 db5_make_free_object(struct bu_external *ep, size_t length)
 {
@@ -659,7 +610,7 @@ db5_make_free_object(struct bu_external *ep, size_t length)
     BU_ASSERT_SIZE_T(length, >=, 8);
     BU_ASSERT_SIZE_T(length&7, ==, 0);
 
-    ep->ext_buf = bu_calloc(1, length, "db5_make_free_object");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, length, "db5_make_free_object");
     ep->ext_nbytes = length;
 
     /* Determine encoding for the header length field */
@@ -672,33 +623,12 @@ db5_make_free_object(struct bu_external *ep, size_t length)
 	DB5HDR_HFLAGS_DLI_FREE_STORAGE;
 
     cp = ((unsigned char *)ep->ext_buf) + sizeof(struct db5_ondisk_header);
-    cp = db5_encode_length(cp, length>>3, h_width);
+    db5_encode_length(cp, length>>3, h_width);
 
     cp = ((unsigned char *)ep->ext_buf) + length-1;
     *cp = DB5HDR_MAGIC2;
 }
 
-
-/**
- * R T _ D B _ C V T _ T O _ E X T E R N A L 5
- *
- * The attributes are taken from ip->idb_avs
- *
- * If present, convert attributes to on-disk format.  This must happen
- * after exporting the body, in case the ft_export5() method happened
- * to extend the attribute set.  Combinations are one "solid" which
- * does this.
- *
- * The internal representation is NOT freed, that's the caller's job.
- *
- * The 'ext' pointer is accepted in uninitialized form, and an
- * initialized structure is always returned, so that the caller may
- * free it even when an error return is given.
- *
- * Returns -
- * 0 OK
- * -1 FAIL
- */
 int
 rt_db_cvt_to_external5(
     struct bu_external *ext,
@@ -714,23 +644,37 @@ rt_db_cvt_to_external5(
     int minor;
     int ret;
 
+    /* check inputs */
+    if (!name) {
+	bu_log("rt_db_cvt_to_external5 expecting non-NULL name parameter\n");
+	return -1;
+    }
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);	/* may be null */
-    RT_CK_RESOURCE(resp);
-    BU_INIT_EXTERNAL(&body);
+
+    if (resp) {
+	RT_CK_RESOURCE(resp);
+    } else {
+	/* needed for call into functab */
+	resp = &rt_uniresource;
+    }
+
+    /* prepare output */
+    BU_EXTERNAL_INIT(ext);
+    BU_EXTERNAL_INIT(&body);
+    BU_EXTERNAL_INIT(&attributes);
 
     minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
     /* Scale change on export is 1.0 -- no change */
     ret = -1;
-    if (ip->idb_meth->ft_export5) {
+    if (ip->idb_meth && ip->idb_meth->ft_export5) {
 	ret = ip->idb_meth->ft_export5(&body, ip, conv2mm, dbip, resp);
     }
     if (ret < 0) {
 	bu_log("rt_db_cvt_to_external5(%s):  ft_export5 failure\n",
 	       name);
 	bu_free_external(&body);
-	BU_INIT_EXTERNAL(ext);
 	return -1;		/* FAIL */
     }
     BU_CK_EXTERNAL(&body);
@@ -739,27 +683,22 @@ rt_db_cvt_to_external5(
     if (ip->idb_avs.magic == BU_AVS_MAGIC) {
 	db5_export_attributes(&attributes, &ip->idb_avs);
 	BU_CK_EXTERNAL(&attributes);
-    } else {
-	BU_INIT_EXTERNAL(&attributes);
     }
 
+    /* serialize the object with attributes */
     db5_export_object3(ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		       name, 0, &attributes, &body,
 		       major, minor,
 		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
     BU_CK_EXTERNAL(ext);
+
+    /* cleanup */
     bu_free_external(&body);
     bu_free_external(&attributes);
 
     return 0;		/* OK */
 }
 
-
-/*
- * D B _ W R A P _ V 5 _ E X T E R N A L
- *
- * Modify name of external object, if necessary.
- */
 int
 db_wrap_v5_external(struct bu_external *ep, const char *name)
 {
@@ -777,13 +716,13 @@ db_wrap_v5_external(struct bu_external *ep, const char *name)
     BU_ASSERT_LONG(raw.h_dli, ==, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT);
 
     /* See if name needs to be changed */
-    if (raw.name.ext_buf == NULL || strcmp(name, raw.name.ext_buf) != 0) {
+    if (raw.name.ext_buf == NULL || !BU_STR_EQUAL(name, (const char *)raw.name.ext_buf)) {
 	/* Name needs to be changed.  Create new external form.
 	 * Make temporary copy so input isn't smashed
 	 * as new external object is constructed.
 	 */
 	tmp = *ep;		/* struct copy */
-	BU_INIT_EXTERNAL(ep);
+	BU_EXTERNAL_INIT(ep);
 
 	db5_export_object3(ep,
 			   DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
@@ -802,31 +741,6 @@ db_wrap_v5_external(struct bu_external *ep, const char *name)
     return 0;
 }
 
-
-/**
- *
- * D B _ P U T _ E X T E R N A L 5
- *
- * Given that caller already has an external representation of the
- * database object, update it to have a new name (taken from
- * dp->d_namep) in that external representation, and write the new
- * object into the database, obtaining different storage if the size
- * has changed.
- *
- * Changing the name on a v5 object is a relatively expensive
- * operation.
- *
- * Caller is responsible for freeing memory of external
- * representation, using bu_free_external().
- *
- * This routine is used to efficiently support MGED's "cp" and "keep"
- * commands, which don't need to import and decompress objects just to
- * rename and copy them.
- *
- * Returns -
- * -1 error
- * 0 success
- */
 int
 db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 {
@@ -834,8 +748,8 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     RT_CK_DIR(dp);
     BU_CK_EXTERNAL(ep);
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external5(%s) ep=x%x, dbip=x%x, dp=x%x\n",
-				    dp->d_namep, ep, dbip, dp);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external5(%s) ep=%p, dbip=%p, dp=%p\n",
+				    dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
 
     if (dbip->dbi_read_only) {
 	bu_log("db_put_external5(%s):  READ-ONLY file\n",
@@ -853,7 +767,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     }
 
     /* Second, obtain storage for final object */
-    if (ep->ext_nbytes != dp->d_len || dp->d_addr == RT_DIR_PHONY_ADDR) {
+    if (ep->ext_nbytes != dp->d_len || (size_t)dp->d_addr == (size_t)RT_DIR_PHONY_ADDR) {
 	if (db5_realloc(dbip, dp, ep) < 0) {
 	    bu_log("db_put_external(%s) db_realloc5() failed\n", dp->d_namep);
 	    return -5;
@@ -872,23 +786,6 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     return 0;
 }
 
-
-/**
- * R T _ D B _ P U T _ I N T E R N A L 5
- *
- * Convert the internal representation of a solid to the external one,
- * and write it into the database.
- *
- * Applications and middleware shouldn't call this directly, they
- * should use the version-generic interface "rt_db_put_internal()".
- *
- * The internal representation is always freed.  (Not the pointer,
- * just the contents).
- *
- * Returns -
- * <0 error
- * 0 success
- */
 int
 rt_db_put_internal5(
     struct directory *dp,
@@ -902,10 +799,12 @@ rt_db_put_internal5(
     RT_CK_DIR(dp);
     RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
-
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
+    if (resp)
+	RT_CK_RESOURCE(resp);
+
+    BU_EXTERNAL_INIT(&ext);
     if (rt_db_cvt_to_external5(&ext, dp->d_namep, ip, 1.0, dbip, resp, major) < 0) {
 	bu_log("rt_db_put_internal5(%s):  export failure\n",
 	       dp->d_namep);
@@ -929,12 +828,12 @@ rt_db_put_internal5(
     if (db_write(dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr) < 0) {
 	goto fail;
     }
- ok:
+ok:
     bu_free_external(&ext);
     rt_db_free_internal(ip);
     return 0;			/* OK */
 
- fail:
+fail:
     bu_free_external(&ext);
     rt_db_free_internal(ip);
     return -2;		/* FAIL */
@@ -945,8 +844,6 @@ rt_db_put_internal5(
 extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
 
 /**
- * R T _ D B _ E X T E R N A L 5 _ T O _ I N T E R N A L 5
- *
  * Given an object in external form, convert it to internal form.  The
  * caller is responsible for freeing the external form.
  *
@@ -970,6 +867,13 @@ rt_db_external5_to_internal5(
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
     RT_CK_DBI(dbip);
+
+    if (resp) {
+	RT_CK_RESOURCE(resp);
+    } else {
+	/* needed for call into functab */
+	resp = &rt_uniresource;
+    }
 
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
@@ -1002,6 +906,8 @@ rt_db_external5_to_internal5(
 		   name);
 	    return -8;
 	}
+
+	(void)db5_standardize_avs(&ip->idb_avs);
     }
 
     if (!raw.body.ext_buf) {
@@ -1025,7 +931,7 @@ rt_db_external5_to_internal5(
 	    return -1;
     }
 
-    /* ip has already been initialized, and should not be re-initted */
+    /* ip has already been initialized, and should not be re-inited */
     ret = -1;
     if (id == ID_BINUNIF) {
 	/* FIXME: binunif export needs to write out minor_type so
@@ -1033,8 +939,8 @@ rt_db_external5_to_internal5(
 	 * v6.
 	 */
 	ret = rt_binunif_import5_minor_type(ip, &raw.body, mat, dbip, resp, raw.minor_type);
-    } else if (rt_functab[id].ft_import5) {
-	ret = rt_functab[id].ft_import5(ip, &raw.body, mat, dbip, resp);
+    } else if (OBJ[id].ft_import5) {
+	ret = OBJ[id].ft_import5(ip, &raw.body, mat, dbip, resp);
     }
     if (ret < 0) {
 	bu_log("rt_db_external5_to_internal5(%s):  import failure\n",
@@ -1047,25 +953,11 @@ rt_db_external5_to_internal5(
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = raw.major_type;
     ip->idb_minor_type = raw.minor_type;
-    ip->idb_meth = &rt_functab[id];
+    ip->idb_meth = &OBJ[id];
 
     return id;			/* OK */
 }
 
-
-/**
- * R T _ D B _ G E T _ I N T E R N A L 5
- *
- * Get an object from the database, and convert it into it's internal
- * representation.
- *
- * Applications and middleware shouldn't call this directly, they
- * should use the generic interface "rt_db_get_internal()".
- *
- * Returns -
- * <0 On error
- * id On success.
- */
 int
 rt_db_get_internal5(
     struct rt_db_internal *ip,
@@ -1074,11 +966,13 @@ rt_db_get_internal5(
     const mat_t mat,
     struct resource *resp)
 {
-    struct bu_external ext;
+    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
     int ret;
 
-    BU_INIT_EXTERNAL(&ext);
-    RT_INIT_DB_INTERNAL(ip);
+    RT_DB_INTERNAL_INIT(ip);
+    if (resp) {
+	RT_CK_RESOURCE(resp);
+    }
 
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
@@ -1091,9 +985,6 @@ rt_db_get_internal5(
 }
 
 
-/**
- *
- */
 void
 db5_export_color_table(struct bu_vls *ostr, struct db_i *dbip)
 {
@@ -1102,10 +993,6 @@ db5_export_color_table(struct bu_vls *ostr, struct db_i *dbip)
     rt_vls_color_map(ostr);
 }
 
-
-/**
- * D B 5 _ I M P O R T _ C O L O R _ T A B L E
- */
 void
 db5_import_color_table(char *cp)
 {
@@ -1119,27 +1006,15 @@ db5_import_color_table(char *cp)
     }
 }
 
-
-/**
- * D B 5 _ P U T _ C O L O R _ T A B L E
- *
- * Put the old region-id-color-table into the global object.  A null
- * attribute is set if the material table is empty.
- *
- * Returns -
- * <0 error
- * 0 OK
- */
 int
 db5_put_color_table(struct db_i *dbip)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int ret;
 
     RT_CK_DBI(dbip);
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
-    bu_vls_init(&str);
     db5_export_color_table(&str, dbip);
 
     ret = db5_update_attribute(DB5_GLOBAL_OBJECT_NAME,
@@ -1149,19 +1024,10 @@ db5_put_color_table(struct db_i *dbip)
     return ret;
 }
 
-
-/** D B _ G E T _ A T T R I B U T E S
- *
- * Get attributes for an object pointed to by *dp
- *
- * returns:
- * 0 - all is well
- * <0 - error
- */
 int
 db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, const struct directory *dp)
 {
-    struct bu_external ext;
+    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
     struct db5_raw_internal raw;
 
     RT_CK_DBI(dbip);
@@ -1171,7 +1037,7 @@ db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, 
 
     RT_CK_DIR(dp);
 
-    BU_INIT_EXTERNAL(&ext);
+    BU_AVS_INIT(avs);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -1;		/* FAIL */

@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file main.c
+/** @file bwish/main.c
  *
  * This file provides the main() function for both BWISH and BTCLSH.
  * While initializing Tcl, Itcl and various BRL-CAD libraries it sets
@@ -50,8 +50,10 @@
  * the global namespace..  allow for easy means to disable the import.
  */
 #define IMPORT_ITCL	1
-#define IMPORT_ITK	1
-#define IMPORT_IWIDGETS	1
+#ifdef BWISH
+#  define IMPORT_ITK	1
+#  define IMPORT_IWIDGETS	1
+#endif
 
 extern int cmdInit(Tcl_Interp *interp);
 extern void Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *interp);
@@ -99,11 +101,6 @@ Cad_AppInit(Tcl_Interp *interp)
 	}
 	init_tcl=0;
 
-	/* warn if tcl_library isn't set by now */
-	if (try_auto_path) {
-	    tclcad_tcl_library(interp);
-	}
-
 #ifdef BWISH
 	/* Initialize Tk */
 	Tcl_ResetResult(interp);
@@ -121,20 +118,28 @@ Cad_AppInit(Tcl_Interp *interp)
 
 	/* Initialize [incr Tcl] */
 	Tcl_ResetResult(interp);
+	/* NOTE: Calling "package require Itcl" here is apparently
+	 * insufficient without other changes elsewhere.  The
+	 * Combination Editor in mged fails with an iwidgets class
+	 * already loaded error if we don't perform Itcl_Init() here.
+	 */
 	if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
 	    if (!try_auto_path) {
+		Tcl_Namespace *nsp;
+
 		try_auto_path=1;
 		/* Itcl_Init() leaves initialization in a bad state
 		 * and can cause retry failures.  cleanup manually.
 		 */
 		Tcl_DeleteCommand(interp, "::itcl::class");
-		Tcl_DeleteNamespace(Tcl_FindNamespace(interp, "::itcl", NULL, 0));
+		nsp = Tcl_FindNamespace(interp, "::itcl", NULL, 0);
+		if (nsp != NULL)
+		    Tcl_DeleteNamespace(nsp);
 		continue;
 	    }
 	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
-	Tcl_StaticPackage(interp, "Itcl", Itcl_Init, Itcl_SafeInit);
 	init_itcl=0;
 
 #ifdef BWISH
@@ -148,7 +153,6 @@ Cad_AppInit(Tcl_Interp *interp)
 	    bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
-	Tcl_StaticPackage(interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
 	init_itk=0;
 #endif
 
@@ -227,7 +231,7 @@ Cad_AppInit(Tcl_Interp *interp)
 	bu_log("Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
-    Tcl_StaticPackage(interp, "Dm", Dm_Init, (Tcl_PackageInitProc *) NULL);
+    Tcl_StaticPackage(interp, "Dm", (int (*)(struct Tcl_Interp *))Dm_Init, (Tcl_PackageInitProc *) NULL);
 
     /* Initialize libfb */
     if (Fb_Init(interp) == TCL_ERROR) {
@@ -259,9 +263,12 @@ Cad_AppInit(Tcl_Interp *interp)
 
     /* Initialize libtclcad's GED Object */
     if (Go_Init(interp) == TCL_ERROR) {
-	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	bu_log("Go_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
+
+    /* initialize command history objects */
+    Cho_Init(interp);
 
 #ifdef BWISH
     if ((tkwin = Tk_MainWindow(interp)) == NULL)
@@ -280,6 +287,7 @@ main(int argc, char **argv)
 {
     /* Create the interpreter */
     INTERP = Tcl_CreateInterp();
+    Tcl_FindExecutable(argv[0]);
     Cad_Main(argc, argv, Cad_AppInit, INTERP);
 
     return 0;

@@ -1,7 +1,7 @@
 /*                          R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rect.c
+/** @file libdm/rect.c
  *
  * Rubber band rectangle.
  *
@@ -36,14 +36,9 @@
 void
 dm_draw_rect(struct dm *dmp, struct ged_rect_state *grsp)
 {
-    if (NEAR_ZERO(grsp->grs_width, (fastf_t)SMALL_FASTF) &&
-	NEAR_ZERO(grsp->grs_height, (fastf_t)SMALL_FASTF))
+    if (ZERO(grsp->grs_width) &&
+	ZERO(grsp->grs_height))
 	return;
-
-#if 0
-    if (grsp->grs_active && mged_variables->mv_mouse_behavior == 'z')
-	ged_adjust_rect_for_zoom();
-#endif
 
     /* draw rectangle */
     DM_SET_FGCOLOR(dmp,

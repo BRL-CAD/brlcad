@@ -1,7 +1,7 @@
 /*                    D O U B L E - A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2010 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file double-asc.c
+/** @file util/double-asc.c
  *
  * Take a stream of IEEE doubles and make them ASCII
  *
@@ -35,8 +35,9 @@
 #include "fb.h"
 
 
-#define OPT_STRING "acf:hs:n:w#:?"
-
+#define OPT_STRING "acf:s:n:w:#:h?"
+#define usage1 "Usage: double-asc [-a] [-s squaresize] [-w width] [-n height]\n"
+#define usage2 "                  [-c] [-f format] [-# depth] [file.d]\n"
 
 static char *file_name;
 static char *format = 0;
@@ -52,11 +53,13 @@ static int make_cells = 0;		/* Insert cell coords in output? */
 static int d_per_l = 1;		/* doubles per line of output */
 
 
-void print_usage (void)
+void
+print_usage(int willexit)
 {
-    bu_exit(1, "Usage: 'double-asc %s\n%s [file.d]'\n",
-	    "[-{ah}] [-s squaresize] [-w width] [-n height]",
-	    "                   [-c] [-f format] [-# depth]");
+    if (willexit)
+	bu_exit(1, "%s%s", usage1, usage2);
+    fprintf(stderr, "%s%s", usage1, usage2);
+    fprintf(stderr, "       Program continues running:\n");
 }
 
 
@@ -64,19 +67,15 @@ int
 get_args(int argc, char **argv)
 {
     int ch;
+    char *ifname;
 
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF) {
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
 	switch (ch) {
 	    /*
 	     * BRL-CAD image-size options
 	     */
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		file_height = file_width = 1024L;
-		autosize = 0;
 		break;
 	    case 's':
 		/* square file size */
@@ -106,11 +105,13 @@ get_args(int argc, char **argv)
 	    case '#':
 		d_per_l = atoi(bu_optarg);
 		break;
-	    case '?':
 	    default:
-		print_usage();
+		print_usage(1);
 	}
     }
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	print_usage(0);
+
     if (format == 0)
 	format = " %g";
 
@@ -124,16 +125,20 @@ get_args(int argc, char **argv)
 	    break;
 	case 1:
 	    file_name = argv[bu_optind++];
-	    if ((infd = open(file_name, O_RDONLY)) == -1)
+	    ifname = bu_realpath(file_name, NULL);
+	    if ((infd = open(ifname, O_RDONLY)) == -1) {
+		bu_free(ifname, "ifname alloc from bu_realpath");
 		bu_exit (1, "Cannot open file '%s'\n", file_name);
+	    }
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    fileinput = 1;
 	    break;
 	default:
-	    print_usage();
+	    print_usage(1);
     }
 
     if (argc > ++bu_optind) {
-	print_usage();
+	print_usage(1);
     }
 
     return 1;		/* OK */
@@ -154,12 +159,12 @@ main (int argc, char **argv)
     int row, col;	/* coords within input stream */
 
     if (!get_args(argc, argv)) {
-	print_usage();
+	print_usage(1);
     }
 
     /* autosize input? */
     if (fileinput && autosize) {
-	unsigned long int w, h;
+	size_t w, h;
 
 	if (fb_common_file_size(&w, &h, file_name, d_per_l * 8)) {
 	    file_width = (long)w;
@@ -185,7 +190,7 @@ main (int argc, char **argv)
 	for (line_nm = 0; line_nm < l_per_b; ++line_nm) {
 	    if (make_cells)
 		printf("%d %d", col, row);
-	    ntohd((unsigned char *)value, bp, d_per_l);
+	    bu_cv_ntohd((unsigned char *)value, bp, d_per_l);
 	    bp += d_per_l * 8;
 	    for (i = 0; i < d_per_l; ++i)
 		printf(format, value[i]);

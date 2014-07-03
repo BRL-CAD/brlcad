@@ -1,7 +1,7 @@
 /*                       R E A D R E C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file readrec.c
+/** @file iges/readrec.c
  *
  * This routine reads record number "recno" from the IGES file and
  * places it in the "card" buffer (available for reading by
@@ -30,37 +30,29 @@
  * desired record.  The "read" routines then call this routine if the
  * buffer empties.
  *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
  */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 int
-Readrec( recno )
-    int recno;
+Readrec(int recno)
 {
 
     int i, ch;
-    long offset;
+    off_t offset;
 
     currec = recno;
     offset = (recno - 1) * reclen;
-    if ( fseek( fd, offset, 0 ) )
-    {
-	bu_log( "Error in seek\n" );
-	perror( "Readrec" );
-	bu_exit( 1, NULL );
+    if (bu_fseek(fd, offset, 0)) {
+	bu_log("Error in seek\n");
+	perror("Readrec");
+	bu_exit(1, NULL);
     }
     counter = 0;
 
-    for ( i=0; i<reclen; i++ )
-    {
-	if ( (ch=getc( fd )) == EOF )
+    for (i = 0; i < reclen; i++) {
+	if ((ch = getc(fd)) == EOF)
 	    return 1;
 	card[i] = ch;
     }

@@ -1,7 +1,7 @@
 /*                        U P D A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file update.c
+/** @file mged/update.c
  *
  */
 
@@ -54,12 +54,12 @@ f_update(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     int non_blocking;
 
     if (argc != 2 || sscanf(argv[1], "%d", &non_blocking) != 1) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel mged_update");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -69,6 +69,7 @@ f_update(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 }
 
 
+#if defined(HAVE_TK)
 /*
  * Copied from libtk/generic/tkCmds.c. Used by
  * the f_wait() procedure.
@@ -85,7 +86,6 @@ WaitVariableProc(ClientData clientData,	/* Pointer to integer to set to 1. */
     *donePtr = 1;
     return (char *) NULL;
 }
-
 
 /*
  * Copied from libtk/generic/tkCmds.c. Used by the f_wait() procedure.
@@ -132,6 +132,7 @@ WaitWindowProc(ClientData clientData, void *eventPtr)
 {
 }
 #endif /* HAVE_X11_XLIB_H */
+#endif /* HAVE_TK */
 
 /*
  * This procedure is a slightly modified version of the Tk_TkwaitCmd.
@@ -145,9 +146,12 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
        const char *argv[])		/* Argument strings. */
 {
 #ifdef HAVE_TK
-    int c, done;
+    int c;
     size_t length;
     Tk_Window window;
+
+    /* volatile to quell infinite loop warnings */
+    volatile int done;
 
     if (argc != 3) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -156,31 +160,41 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
     }
     c = argv[1][0];
     length = strlen(argv[1]);
-    if ((c == 'v') && (strncmp(argv[1], "variable", length) == 0)
+    if ((c == 'v') && (bu_strncmp(argv[1], "variable", length) == 0)
 	&& (length >= 2)) {
+
+	/* bind to 'done' var */
 	if (Tcl_TraceVar(interp, argv[2],
 			 TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
 			 (Tcl_VarTraceProc *)WaitVariableProc,
 			 (ClientData) &done) != TCL_OK) {
 	    return TCL_ERROR;
 	}
+
+	/* Tcl sets 'done' to non-zero */
 	done = 0;
 	while (!done) {
 	    mged_update(0);
 	}
+
+	/* unbind to 'done' var */
 	Tcl_UntraceVar(interp, argv[2],
 		       TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
 		       (Tcl_VarTraceProc *)WaitVariableProc,
 		       (ClientData) &done);
-    } else if ((c == 'v') && (strncmp(argv[1], "visibility", length) == 0)
+    } else if ((c == 'v') && (bu_strncmp(argv[1], "visibility", length) == 0)
 	       && (length >= 2)) {
 
 	window = Tk_NameToWindow(interp, argv[2], tkwin);
 	if (window == NULL) {
 	    return TCL_ERROR;
 	}
+
+	/* bind to 'done' var */
 	Tk_CreateEventHandler(window, VisibilityChangeMask|StructureNotifyMask,
 			      WaitVisibilityProc, (ClientData) &done);
+
+	/* Tcl sets 'done' to non-zero */
 	done = 0;
 	while (!done) {
 	    mged_update(0);
@@ -198,15 +212,22 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
 			     (char *) NULL);
 	    return TCL_ERROR;
 	}
+
+	/* unbind to 'done' var */
 	Tk_DeleteEventHandler(window, VisibilityChangeMask|StructureNotifyMask,
 			      WaitVisibilityProc, (ClientData) &done);
-    } else if ((c == 'w') && (strncmp(argv[1], "window", length) == 0)) {
+
+    } else if ((c == 'w') && (bu_strncmp(argv[1], "window", length) == 0)) {
 	window = Tk_NameToWindow(interp, argv[2], tkwin);
 	if (window == NULL) {
 	    return TCL_ERROR;
 	}
+
+	/* bind to 'done' var */
 	Tk_CreateEventHandler(window, StructureNotifyMask,
 			      WaitWindowProc, (ClientData) &done);
+
+	/* Tcl sets 'done' to non-zero */
 	done = 0;
 	while (!done) {
 	    mged_update(0);
@@ -220,7 +241,8 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
 			 "\": must be variable, visibility, or window", (char *) NULL);
 	return TCL_ERROR;
     }
-
+#else /* HAVE_TK */
+    if (!argc || !argv) bu_log("argc/argv issue with fwait");
 #endif /* HAVE_TK */
 
     /*

@@ -1,7 +1,8 @@
+#!/bin/sh
 #                     F A S T G E N . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2010 United States Government as represented by
+# Copyright (c) 2008-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,16 +44,16 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
-F4G="`ensearch conv/fast4-g`"
+F4G="`ensearch fast4-g`"
 if test ! -f "$F4G" ; then
     echo "Unable to find fast4-g, aborting"
     exit 1
 fi
-G_DIFF="`ensearch gtools/g_diff`"
-if test ! -f "$G_DIFF" ; then
-    echo "Unable to find g_diff, aborting"
+GDIFF="`ensearch gdiff`"
+if test ! -f "$GDIFF" ; then
+    echo "Unable to find gdiff, aborting"
     exit 1
 fi
 
@@ -87,6 +88,7 @@ CTRI          12       1       4       6       3           0.100       2
 EOF
 
 rm -f fastgen_unix.g
+echo "\$ $F4G fastgen_box.fast4 fastgen_unix.g"
 $F4G fastgen_box.fast4 fastgen_unix.g
 if test "$?" -ne 0 ; then
     echo "ERROR running $F4G fastgen_box.fast4 fastgen_unix.g"
@@ -98,14 +100,15 @@ if test ! -f fastgen_unix.g ; then
 fi
 
 echo "Creating an input file with DOS line-endings"
-if test ! -f $PATH_TO_THIS/fastgen_dos.fast4 ; then
+if test ! -f "$PATH_TO_THIS/fastgen_dos.fast4" ; then
     echo "Unable to find fastgen_dos.fast4"
     exit 1
 fi
 rm -f fastgen_box.fast4
-cp $PATH_TO_THIS/fastgen_dos.fast4 fastgen_box.fast4
+cp "$PATH_TO_THIS/fastgen_dos.fast4" fastgen_box.fast4
 
 rm -f fastgen_dos.g
+echo "\$ $F4G fastgen_box.fast4 fastgen_dos.g"
 $F4G fastgen_box.fast4 fastgen_dos.g
 if test "$?" -ne 0 ; then
     echo "ERROR running $F4G fastgen_box.fast4 fastgen_dos.g"
@@ -117,9 +120,10 @@ if test ! -f fastgen_dos.g ; then
 fi
 
 echo "Comparing geometry files from sources with DOS and UNIX line endings."
-$G_DIFF fastgen_unix.g fastgen_dos.g
+echo "\$ $GDIFF fastgen_unix.g fastgen_dos.g"
+$GDIFF fastgen_unix.g fastgen_dos.g
 if test "$?" -ne 0 ; then
-    echo "ERROR running $G_DIFF fastgen_unix.g fastgen_dos.g"
+    echo "ERROR running $GDIFF fastgen_unix.g fastgen_dos.g"
     exit 1
 fi
 

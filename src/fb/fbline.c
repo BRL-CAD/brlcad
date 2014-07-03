@@ -1,7 +1,7 @@
 /*                        F B L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ struct stroke {
     struct coords pixel;	/* starting scan, nib */
     short xsign;		/* 0 or +1 */
     short ysign;		/* -1, 0, or +1 */
-    int ymajor; 		/* true iff Y is major dir. */
+    int ymajor; 		/* true if Y is major dir. */
 #undef major
 #undef minor
     short major;		/* major dir delta (nonneg) */
@@ -69,14 +69,12 @@ static int fbx1, fby1, fbx2, fby2;
 
 
 static char usage[] = "\
-Usage: fbline [-h -c ] [-F framebuffer]\n\
-	[-W screen_width] [-N screen_height]\n\
+Usage: fbline [-c ] [-F framebuffer]\n\
+	[-S squaresize] [-W screen_width] [-N screen_height]\n\
 	[-r red] [-g green] [-b blue] x1 y1 x2 y2\n";
 
 
 /*
- * E D G E L I M I T
- *
  * Limit generated positions to edges of screen
  * Really should clip to screen, instead.
  */
@@ -92,8 +90,6 @@ edgelimit(struct coords *ppos)
 
 
 /*
- * R A S T E R
- *
  * Raster - rasterize stroke.
  *
  * Method:
@@ -135,8 +131,6 @@ Raster(struct stroke *vp)
 
 
 /*
- * B U I L D S T R
- *
  * set up DDA parameters
  */
 void
@@ -178,20 +172,17 @@ BuildStr(struct coords *pt1, struct coords *pt2)
 }
 
 
-/*
- * G E T_ A R G S
- */
 int
 get_args(int argc, char **argv)
 {
 
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hW:w:N:n:cF:r:g:b:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "S:s:W:w:N:n:cF:r:g:b:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		screen_height = screen_width = 1024;
+	    case 'S':
+	    case 's':
+		screen_width = screen_height = atoi(bu_optarg);
 		break;
 	    case 'W':
 	    case 'w':
@@ -229,15 +220,12 @@ get_args(int argc, char **argv)
     fby2 = atoi(argv[bu_optind++]);
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "fbline: excess argument(s) ignored\n");
+	fprintf(stderr, "fbline: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

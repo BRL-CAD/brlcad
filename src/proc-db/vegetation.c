@@ -1,7 +1,7 @@
 /*                    V E G E T A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vegetation.c
+/** @file proc-db/vegetation.c
  *
- * This is for a program that generages geometry that resembles or
+ * This is for a program that generates geometry that resembles or
  * approximates a plant.  More specifically, the generator is geared
  * towards generating trees and shrubbery.  The plants are generated
  * based on specification of growth parameters such as growth and
@@ -34,8 +34,10 @@
 
 #include "./vegetation.h"
 
-static void ageStructure(structure_t *structure) {
-    int i;
+static void
+ageStructure(structure_t *structure)
+{
+    size_t i;
 
     /*
       printf("Aging structure\n");
@@ -53,9 +55,11 @@ static void ageStructure(structure_t *structure) {
 }
 
 
-static int getSegmentCount(structure_t *structure, unsigned int minAge, unsigned int maxAge) {
-    int i;
-    int total;
+static int
+getSegmentCount(structure_t *structure, unsigned int minAge, unsigned int maxAge)
+{
+    size_t i;
+    size_t total;
 
     for (total=i=0; i < structure->subStructureCount; i++) {
 	total += getSegmentCount(structure->subStructure[i], minAge, maxAge);
@@ -75,7 +79,9 @@ static int getSegmentCount(structure_t *structure, unsigned int minAge, unsigned
 /* used
  * http://geometryalgorithms.com/Archive/algorithm_0106/algorithm_0106.htm#dist3D_Segment_to_Segment()
  * as reference */
-static float segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, const point_t S2P0, const point_t S2P1) {
+static float
+segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, const point_t S2P0, const point_t S2P1)
+{
     vect_t u;
     vect_t v;
     vect_t w;
@@ -146,7 +152,7 @@ static float segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, co
 	else if ((-d + b) > a)
 	    sN = sD;
 	else {
-	    sN = (-d +  b);
+	    sN = (-d + b);
 	    sD = a;
 	}
     }
@@ -163,8 +169,10 @@ static float segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, co
 }
 
 
-static segmentList_t *findIntersectors(const growthSegment_t * const segment, const structure_t * const structure, const segmentList_t * const exemptList) {
-    int i, j;
+static segmentList_t *
+findIntersectors(const growthSegment_t * const segment, const structure_t * const structure, const segmentList_t * const exemptList)
+{
+    size_t i, j;
     segmentList_t *bigList = NULL;
     segmentList_t *segList = NULL;
     double maxFromRadius = 0.0;
@@ -180,7 +188,7 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
 	return NULL;
     }
     if (bigList == NULL) {
-	bigList = (segmentList_t *)bu_calloc(1, sizeof(segmentList_t), "bigList");
+	BU_ALLOC(bigList, segmentList_t);
 	INIT_GROWTHSEGMENTLIST_T(bigList);
 
 	/* allocate 10 initial segment slots */
@@ -190,6 +198,11 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
 
     for (i=0; i < structure->subStructureCount; i++) {
 	segList = findIntersectors(segment, structure->subStructure[i], exemptList);
+
+	if (segList == NULL) {
+	    bu_log("segList is null?\n");
+	    return NULL;
+	}
 
 	/* ensure we have enough room */
 	if (bigList->count + segList->count + 1 >= bigList->capacity) {
@@ -269,9 +282,11 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
 }
 
 
-static int branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAge, unsigned int maxAge, double probability) {
-    int i;
-    int total;
+static int
+branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAge, unsigned int maxAge, double probability)
+{
+    size_t i;
+    size_t total;
 
     /* make sure there is something to do.. */
     if (probability <= 0.0) {
@@ -340,8 +355,8 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 		      VPRINT("New Growth Direction: ", direction);
 		    */
 
-		    /* create and fill in the the growth point */
-		    newGrowthPoint = (growthPoint_t *)bu_calloc(1, sizeof(growthPoint_t), "newGrowthPoint");
+		    /* create and fill in the growth point */
+		    BU_ALLOC(newGrowthPoint, growthPoint_t);
 		    INIT_GROWTHPOINT_T(newGrowthPoint);
 		    newGrowthPoint->growthEnergy = plant->characteristic->growthEnergy;
 
@@ -360,7 +375,7 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 		    newGrowthPoint->age = 0;
 
 		    /* associate the point with a new structure */
-		    newGrowthPoint->structure = (structure_t *)bu_calloc(1, sizeof(structure_t), "newGrowthPoint->structure");
+		    BU_ALLOC(newGrowthPoint->structure, structure_t);
 		    INIT_STRUCTURE_T(newGrowthPoint->structure);
 
 		    /* make sure the growth point is linked back to his parent branch */
@@ -397,7 +412,10 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 
 }
 
-static void branchGrowthPoints(plant_t *plant) {
+
+static void
+branchGrowthPoints(plant_t *plant)
+{
     int totalSegments;
     double segmentProbability;
 
@@ -433,10 +451,12 @@ static void branchGrowthPoints(plant_t *plant) {
 }
 
 
-static void growPlant(plant_t *plant) {
-    int i;
-    int growthSteps;
-    int retryCount;
+static void
+growPlant(plant_t *plant)
+{
+    size_t i;
+    size_t growthSteps;
+    size_t retryCount;
     growthSegment_t *segment;
     growthPoint_t *point;
 
@@ -474,7 +494,7 @@ static void growPlant(plant_t *plant) {
 		continue;
 	    }
 
-	    segment = (growthSegment_t *)bu_calloc(1, sizeof(growthSegment_t), "segment");
+	    BU_ALLOC(segment, growthSegment_t);
 
 	    INIT_GROWTHSEGMENT_T(segment);
 	    VMOVE(segment->position, point->position);
@@ -488,7 +508,7 @@ static void growPlant(plant_t *plant) {
 
 	    point->length -= point->length * point->lengthDecay;
 	    /* jitter next segment length */
-	    if (!NEAR_ZERO(plant->characteristic->lengthMaxVariation - plant->characteristic->lengthMinVariation, ZERO_TOLERANCE)) {
+	    if (!NEAR_EQUAL(plant->characteristic->lengthMaxVariation, plant->characteristic->lengthMinVariation, ZERO_TOLERANCE)) {
 		point->length += (drand48() * (plant->characteristic->lengthMaxVariation - plant->characteristic->lengthMinVariation)) + plant->characteristic->lengthMinVariation;
 	    }
 	    /* clamp the length to positive values */
@@ -502,7 +522,7 @@ static void growPlant(plant_t *plant) {
 
 	    point->radius -= point->radius * point->radiusDecay;
 	    /* jitter next radius */
-	    if (!NEAR_ZERO(plant->characteristic->radiusMaxVariation - plant->characteristic->radiusMinVariation, ZERO_TOLERANCE)) {
+	    if (!NEAR_EQUAL(plant->characteristic->radiusMaxVariation, plant->characteristic->radiusMinVariation, ZERO_TOLERANCE)) {
 		point->radius += (drand48() * (plant->characteristic->radiusMaxVariation - plant->characteristic->radiusMinVariation)) + plant->characteristic->radiusMinVariation;
 	    }
 	    /* clamp the radius to positive values */
@@ -573,7 +593,7 @@ static void growPlant(plant_t *plant) {
 			    included=(segmentList_t *)NULL;
 			} else {
 			    /*
-			      printf("successfull regrowth attempt\n");
+			      printf("successful regrowth attempt\n");
 			    */
 			    printf(".");
 			    break;
@@ -620,8 +640,8 @@ static void growPlant(plant_t *plant) {
 
 	    /* what if there is no structure yet? -- make one */
 	    if (point->structure == NULL) {
-		plant->structure = (structure_t *)bu_calloc(1, sizeof(structure_t), "plant->structure");
-		INIT_STRUCTURE_T(plant->structure);
+		BU_ALLOC(point->structure, structure_t);
+		INIT_STRUCTURE_T(point->structure);
 	    }
 
 	    /* add segment to list of segments for this growth point structure*/
@@ -645,7 +665,9 @@ static void growPlant(plant_t *plant) {
 }
 
 
-static plant_t *createPlant(unsigned int age, vect_t position, double radius, vect_t direction, characteristic_t *characteristic) {
+static plant_t *
+createPlant(unsigned int age, vect_t position, double radius, vect_t direction, characteristic_t *characteristic)
+{
     plant_t *plant;
 
     /* List of growth points */
@@ -661,27 +683,27 @@ static plant_t *createPlant(unsigned int age, vect_t position, double radius, ve
     }
 
     /* not our responsibility to release this sucker in here -- it is what we return */
-    plant = (plant_t *)bu_calloc(1, sizeof(plant_t), "plant");
+    BU_ALLOC(plant, plant_t);
     INIT_PLANT_T(plant);
     VMOVE(plant->position, position);
     plant->radius = radius;
     VMOVE(plant->direction, direction);
     plant->characteristic = characteristic;
 
-    plant->structure = (structure_t *)bu_calloc(1, sizeof(structure_t), "plant->structure");
+    BU_ALLOC(plant->structure, structure_t);
     INIT_STRUCTURE_T(plant->structure);
-    plant->structure->segment = (growthSegment_t **)bu_calloc(1, sizeof(growthSegment_t *), "plant->structure->segment");
+    BU_ALLOC(plant->structure->segment, growthSegment_t *);
     plant->structure->segmentCapacity=1;
 
-    plant->structure->subStructure = (structure_t **)bu_calloc(1, sizeof(structure_t *), "plant->structure->subStructure");
+    BU_ALLOC(plant->structure->subStructure, structure_t *);
     plant->structure->subStructureCapacity=1;
 
-    gpoints = (growthPointList_t *)bu_calloc(1, sizeof(growthPointList_t), "gpoints");
+    BU_ALLOC(gpoints, growthPointList_t);
     INIT_GROWTHPOINTLIST_T(gpoints);
 
     gpoints->point = (growthPoint_t **)bu_calloc(10, sizeof(growthPoint_t *), "gpoints->point");
     gpoints->capacity=10;
-    gpoints->point[0] = (growthPoint_t *)bu_calloc(1, sizeof(growthPoint_t), "gpoints->point[0]");
+    BU_ALLOC(gpoints->point[0], growthPoint_t);
     gpoints->count=1;
     INIT_GROWTHPOINT_T(gpoints->point[0]);
 
@@ -710,8 +732,10 @@ static plant_t *createPlant(unsigned int age, vect_t position, double radius, ve
 }
 
 
-static int writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outputCounter_t *oc) {
-    int i;
+static int
+writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outputCounter_t *oc)
+{
+    size_t i;
     vect_t height;
 
     for (i=0; i < structure->segmentCount; i++) {
@@ -755,7 +779,9 @@ static int writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outpu
 }
 
 
-static int writePlantToDisk(struct rt_wdb *fp, plant_t *plant) {
+static int
+writePlantToDisk(struct rt_wdb *fp, plant_t *plant)
+{
     outputCounter_t oc;
 
     printf ("Writing a plant at %f %f %f of age %d to disk\n", plant->position[X], plant->position[Y], plant->position[Z], plant->age);
@@ -777,8 +803,10 @@ static int writePlantToDisk(struct rt_wdb *fp, plant_t *plant) {
 }
 
 
-static void destroyPlant(plant_t *plant) {
-    int i;
+static void
+destroyPlant(plant_t *plant)
+{
+    size_t i;
 
     /* get rid of the plant structure properly */
     if (plant != NULL) {
@@ -820,7 +848,10 @@ static void destroyPlant(plant_t *plant) {
 
 }
 
-static int invalidCharacteristics(const characteristic_t * const c) {
+
+static int
+invalidCharacteristics(const characteristic_t * const c)
+{
     if (c->totalHeight <= 0.0) {
 	fprintf(stderr, "Need positive plant height\n");
 	return 1;
@@ -838,7 +869,7 @@ static int invalidCharacteristics(const characteristic_t * const c) {
 	return 4;
     }
     if (c->branchingRate < 0.0) {
-	fprintf(stderr, "Negative branching rate is meaninglss (same as 0.0 rate)\n");
+	fprintf(stderr, "Negative branching rate is meaningless (same as 0.0 rate)\n");
     }
     if (c->branchAtEndpointRate < 0.0) {
 	fprintf(stderr, "Negative branch at endpoint rate is meaningless (same as 0.0)\n");
@@ -847,8 +878,9 @@ static int invalidCharacteristics(const characteristic_t * const c) {
 }
 
 
-int main (int argc, char *argv[]) {
-
+int
+main(int argc, char *argv[])
+{
     struct rt_wdb *fp;
     plant_t *plant;
     characteristic_t c;
@@ -866,24 +898,37 @@ int main (int argc, char *argv[]) {
     printf("Vegetation generator\n");
     printf("====================\n");
 
-    if (argc > 1) {
+    if (argc > 1)
 	age = atoi(argv[1]);
-    }
+
+    if (age == 0)
+	age = 1;
+    else if (age > UINT32_MAX)
+	age = UINT32_MAX;
+
     printf("Growing for %d years\n", age);
-    if (argc > 2) {
+    if (argc > 2)
 	height = atof(argv[2]);
-    }
+
+    if (height < (SMALL_FASTF * 1000.0))
+	height = (SMALL_FASTF * 1000.0);
+
     printf("Growing to about %f meters in height\n", height / 1000);
-    if (argc > 3) {
+    if (argc > 3)
 	trunkRadius = atof(argv[3]);
-    }
+
+    if (trunkRadius < (SMALL_FASTF * 1000.0))
+	trunkRadius = (SMALL_FASTF * 1000.0);
+
     printf("Growing from a base width of %f meters\n", trunkRadius / 1000);
-    if (argc > 4) {
+    if (argc > 4)
 	branchingRate = atof(argv[4]);
-    }
-    if (argc > 5) {
+
+    if (branchingRate < SMALL_FASTF)
+	branchingRate = SMALL_FASTF;
+
+    if (argc > 5)
 	seed = atol(argv[5]);
-    }
 
     /* save the seed just in case we want to know it */
     seed=time(0);
@@ -927,7 +972,7 @@ int main (int argc, char *argv[]) {
     VSET(c.branchMinVariation, -0.8, -0.8, 0.0); /* branches just cannot go "inward" */
     VSET(c.branchMaxVariation, 0.8, 0.8, 1.0);  /* branches cannot go "inwards" */
 
-    c.dyingRate = 0.0;  /* unimplemnted */
+    c.dyingRate = 0.0;  /* unimplemented */
     c.dyingAge = INT_MAX;  /* unimplemented */
     c.lengthDecayRate = 0.01; /* almost same length every year */
     c.radiusDecayRate = 0.15;  /* radius gets smaller by about 20% every year */
@@ -942,7 +987,7 @@ int main (int argc, char *argv[]) {
 	bu_exit(1, NULL);
     }
 
-    printf("There are %ld segments\n", plant->segmentCount);
+    printf("There are %ld segments\n", (long)plant->segmentCount);
 
     if (writePlantToDisk(fp, plant) != 0) {
 	fprintf(stderr, "Unable to write plant to disk\n");
@@ -954,6 +999,7 @@ int main (int argc, char *argv[]) {
     wdb_close(fp);
     return 0;
 }
+
 
 /*
  * Local Variables:

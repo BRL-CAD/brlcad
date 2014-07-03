@@ -1,7 +1,7 @@
 /*                     N U R B _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_eval.c
+/** @file primitives/bspline/nurb_eval.c
  *
  * Evaluate a Non Uniform Rational B-spline curve or at the given (u,
  * v) values.
@@ -43,7 +43,7 @@
  * Algorithm -
  *
  * The algorithm uses the traditional COX-deBoor approach found in the
- * book "Pratical Guide to Splines" Carl de Boor, pg 147 to evaluate a
+ * book "Practical Guide to Splines" Carl de Boor, pg 147 to evaluate a
  * parametric value on a curve. This is expanded to the surface.
  */
 void
@@ -176,7 +176,7 @@ rt_nurb_eval_crv(register fastf_t *crv, int order, fastf_t param, const struct k
 
 	k2 =  k_vec->knots[ (j) ];
 
-	if (!NEAR_ZERO(k1 - k2, SMALL_FASTF)) {
+	if (!ZERO(k1 - k2)) {
 	    for (i= 0; i < coords; i++) {
 		*((crv + ((j) * coords)) + i) =
 		    ((k1 - param) *

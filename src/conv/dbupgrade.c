@@ -1,7 +1,7 @@
 /*                    D B U P G R A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file dbupgrade.c
+/** @file conv/dbupgrade.c
  *
  * This is a program to upgrade database files to the current version.
  *
@@ -27,8 +27,6 @@
  * and converts it to the current database version.  This code is
  * intended to be upgraded as new database versions are
  * created. Currently, only db version 4 can be upgraded.
- *
- * Example usage: dbupgrade input.g output.g
  */
 
 #include "common.h"
@@ -44,6 +42,11 @@
 #include "rtgeom.h"
 #include "mater.h"
 
+void
+usage (char *name)
+{
+	fprintf(stderr, "Usage: %s input.g output.g\n", name);
+}
 
 int
 main(int argc, char **argv)
@@ -53,13 +56,16 @@ main(int argc, char **argv)
     struct db_i	*dbip4;
     struct directory	*dp;
     struct bn_tol tol;
-    struct bu_vls colortab;
+    struct bu_vls colortab = BU_VLS_INIT_ZERO;
     char name[17];
     int reverse=0;
     int in_arg=1;
     int out_arg=2;
     long	errors = 0, skipped = 0;
+    int version;
     name[16] = '\0';
+
+    bu_setprogname(argv[0]);
 
     /* this tolerance structure is only used for converting polysolids to BOT's
      * use zero distance to avoid losing any polysolid facets
@@ -70,12 +76,10 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    bu_debug = BU_DEBUG_COREDUMP;
-
     rt_init_resource( &rt_uniresource, 0, NULL );
 
     if ( argc != 3 && argc != 4 )  {
-	fprintf(stderr, "Usage: %s input.g output.g\n", argv[0]);
+	usage(argv[0]);
 	return 1;
     }
 
@@ -83,73 +87,61 @@ main(int argc, char **argv)
 	/* undocumented option to revert to an old db version
 	 * currently, can only revert to db version 4
 	 */
-	if ( strcmp( argv[1], "-r" ) ) {
-	    fprintf(stderr, "Usage: %s input.g output.g\n", argv[0]);
+	if ( !BU_STR_EQUAL( argv[1], "-r" ) ) {
+	    usage(argv[0]);
 	    return 1;
-	} else {
-	    reverse = 1;
-	    in_arg = 2;
-	    out_arg = 3;
 	}
+	reverse = 1;
+	in_arg = 2;
+	out_arg = 3;
     }
 
-    if ( !reverse ) {
-	if ( (dbip = db_open( argv[in_arg], "r" )) == DBI_NULL )  {
-	    perror( argv[in_arg] );
-	    return 2;
-	}
+    if ( (dbip = db_open(argv[in_arg], DB_OPEN_READONLY)) == DBI_NULL )  {
+	perror( argv[in_arg] );
+	return 2;
+    }
 
+    version = db_version(dbip);
+    if ( !reverse ) {
+	if ( version == 5 ) {
+	    bu_log( "This database (%s) is already at the current version\n",
+		    argv[in_arg] );
+	    return 5;
+	}
+	if ( version != 4 ) {
+	    bu_log( "Input database version not recognized!!!!\n" );
+	    return 4;
+	}
 	if ( (fp = wdb_fopen( argv[out_arg] )) == NULL )  {
 	    perror( argv[out_arg] );
 	    return 3;
 	}
     } else {
-	if ( (dbip = db_open( argv[in_arg], "r" )) == DBI_NULL )  {
-	    perror( argv[in_arg] );
-	    return 2;
+	if ( version != 5 ) {
+	    bu_log( "Can only revert from db version 5\n" );
+	    return 6;
 	}
 	if ( (dbip4 = db_create( argv[out_arg], 4 )) == DBI_NULL ) {
 	    bu_log( "Failed to create output database (%s)\n", argv[out_arg] );
 	    return 3;
 	}
-
 	if ( (fp = wdb_dbopen( dbip4, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
 	    bu_log( "db_dbopen() failed for %s\n", argv[out_arg] );
 	    return 4;
 	}
-
     }
-
-    if ( !reverse ) {
-	if ( dbip->dbi_version == 5 ) {
-	    bu_log( "This database (%s) is already at the current version\n",
-		    argv[in_arg] );
-	    return 5;
-	}
-	if ( dbip->dbi_version != 4 ) {
-	    bu_log( "Input database version not recognized!!!!\n" );
-	    return 4;
-	}
-    } else if ( reverse ) {
-	if ( dbip->dbi_version != 5 ) {
-	    bu_log( "Can only revert from db version 5\n" );
-	    return 6;
-	}
-    }
-
 
     RT_CK_DBI(dbip);
     if ( db_dirbuild( dbip ) )
 	bu_exit(1, "db_dirbuild failed\n" );
 
-    if ( (strcmp( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )==0) && (dbip->dbi_version == 4) ) {
+    if ( (BU_STR_EQUAL( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )) && (version == 4) ) {
 	dbip->dbi_title=bu_strdup( "Untitled BRL-CAD Database" );
     }
     db_update_ident( fp->dbip, dbip->dbi_title, dbip->dbi_local2base );
 
     /* set regionid color table */
     if ( rt_material_head() != MATER_NULL ) {
-	bu_vls_init( &colortab );
 	rt_vls_color_map(&colortab);
 
 	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colortab), fp->dbip);

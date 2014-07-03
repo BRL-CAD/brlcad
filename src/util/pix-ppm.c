@@ -1,7 +1,7 @@
 /*                       P I X - P P M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-ppm.c
+/** @file util/pix-ppm.c
  *
  * convert BRL .pix files to ppm
  *
@@ -51,7 +51,7 @@ get_args(int argc, char *argv[], long *width, long *height)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "a#:s:w:n:o:h?")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a#:s:w:n:o:h?")) != -1) {
 	switch (c) {
 	    case '#':
 		pixbytes = atoi(bu_optarg);
@@ -119,6 +119,7 @@ write_ppm(FILE *fp, char *data, long width, long height, int bytes_per_pixel)
 {
     int i;
     char *row;
+    size_t ret;
 
     if (bytes_per_pixel == 1) {
 	/* PGM magic number */
@@ -129,7 +130,7 @@ write_ppm(FILE *fp, char *data, long width, long height, int bytes_per_pixel)
     }
 
     /* width height */
-    fprintf(fp, "%lu %lu\n", width, height);
+    fprintf(fp, "%lu %lu\n", (long unsigned)width, (long unsigned)height);
 
     /* maximum color component value */
     fprintf(fp, "255\n");
@@ -142,7 +143,9 @@ write_ppm(FILE *fp, char *data, long width, long height, int bytes_per_pixel)
 
     for (i = 0; i < height; i++) {
 	row = data + (height-1 - i) * width * bytes_per_pixel;
-	fwrite(row, 1, width * bytes_per_pixel, fp);
+	ret = fwrite(row, 1, width * bytes_per_pixel, fp);
+	if (ret < (size_t)width * bytes_per_pixel)
+	    perror("fwrite");
     }
 
 }
@@ -178,7 +181,7 @@ main(int argc, char *argv[])
 
     /* autosize input? */
     if (fileinput && autosize) {
-	unsigned long int w, h;
+	size_t w, h;
 	if (fb_common_file_size(&w, &h, file_name, pixbytes)) {
 	    file_width = (long)w;
 	    file_height = (long)h;
@@ -190,7 +193,7 @@ main(int argc, char *argv[])
     /*
      * gobble up the bytes
      */
-    scanbuf = bu_malloc(size, "scanbuf");
+    scanbuf = (char *)bu_malloc(size, "scanbuf");
     if (fread(scanbuf, 1, size, infp) == 0) {
 	bu_exit (1, "%s: Short read\n", bu_getprogname());
     }

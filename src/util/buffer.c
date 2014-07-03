@@ -1,7 +1,7 @@
 /*                        B U F F E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file buffer.c
+/** @file util/buffer.c
  *
  * This program is intended to be use as part of a complex pipeline.
  * It serves somewhat the same purpose as the Prolog "cut" operator.
@@ -26,7 +26,7 @@
  * amount of data may need to be buffered, so a combination of a 1
  * Mbyte memory buffer and a temporary file is used.
  *
- * The use of read() and write() is prefered over fread() and fwrite()
+ * The use of read() and write() is preferred over fread() and fwrite()
  * for reasons of efficiency, given the large buffer size in use.
  *
  */
@@ -42,19 +42,26 @@
 #define SIZE (1024*1024)
 
 
-char template[512] = {0};
-char buf[SIZE] = {0};
-
-
 int
 main(int argc, char *argv[])
 {
-    FILE *fp;
-    long count;
-    int tfd;
+    char _template[512] = {0};
+    char buf[SIZE] = {0};
 
-    if (argc > 1)
+    FILE *fp = NULL;
+    long count = 0;
+    int tfd = 0;
+    int ret = 0;
+
+    if ((BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2) {
+	bu_log("Usage: %s (takes no arguments)\n",argv[0]);
+	exit(1);
+    }
+
+    if (argc > 1) {
 	bu_log("%s: unrecognized argument(s)\n", argv[0]);
+	bu_log("        Program continues running:\n", argv[0]);
+    }
 
     if ((count = bu_mread(0, buf, sizeof(buf))) < (long)sizeof(buf)) {
 	if (count < 0) {
@@ -70,9 +77,9 @@ main(int argc, char *argv[])
     }
 
     /* Create temporary file to hold data, get r/w file descriptor */
-    fp = bu_temp_file(template, 512);
-    if ((tfd = fileno(fp)) < 0) {
-	perror(template);
+    fp = bu_temp_file(_template, 512);
+    if (fp == NULL || (tfd = fileno(fp)) < 0) {
+	perror(_template);
 	goto err;
     }
 
@@ -95,7 +102,7 @@ main(int argc, char *argv[])
     }
 
     /* All input read, regurgitate it all on stdout */
-    if (lseek(tfd, 0L, 0) < 0) {
+    if (lseek(tfd, 0, 0) < 0) {
 	perror("buffer: lseek");
 	goto err;
     }
@@ -109,16 +116,20 @@ main(int argc, char *argv[])
 	perror("buffer: tmp read");
 	goto err;
     }
-    (void)unlink(template);
-    return 0;
 
- err:
+    ret = 0;
+    goto clean;
+err:
+    ret = 1;
+clean:
+    /* clean up */
     if (fp) {
 	fclose(fp);
 	fp = NULL;
     }
-    unlink(template);
-    return 1;
+    bu_file_delete(_template);
+
+    return ret;
 }
 
 

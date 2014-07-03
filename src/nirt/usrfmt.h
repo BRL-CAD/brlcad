@@ -1,7 +1,7 @@
 /*                        U S R F M T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file usrfmt.h
+/** @file nirt/usrfmt.h
  *
  * Common defines and declarations used by nirt.
  *
  */
 
-#ifndef __USRFMT_H__
-#define __USRFMT_H__
+#ifndef NIRT_USRFMT_H
+#define NIRT_USRFMT_H
 
 #define OUTITEM_NULL ((outitem *) 0)
 #define OVERLAP_NULL ((overlap *) 0)
@@ -170,7 +170,7 @@ extern FILE *fopenrc(void);
 #define elevation()	(ValTab[VTI_E].value.fval)
 #define g_entry(i)	(ValTab[VTI_XPREV_OUT + i].value.fval)
 
-/* Define D, H, and V for use with the preceeding macros.
+/* Define D, H, and V for use with the preceding macros.
  *
  * NOTE! --- H was defined in vmath.h as the index of the fourth
  * homogeneous coordinate.  In NIRT, we are not using H that way!
@@ -182,7 +182,7 @@ extern FILE *fopenrc(void);
 #define H 4
 #define V 5
 
-#endif /* __USRFMT_H__ */
+#endif /* NIRT_USRFMT_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                          A R G V . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,14 +21,154 @@
 #include "common.h"
 
 #include <string.h>
+#include <ctype.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/file.h"
+
+size_t
+bu_argv_from_string(char *argv[], size_t lim, char *lp)
+{
+    size_t argc = 0; /* number of words seen */
+    size_t skip = 0;
+    int quoted = 0;
+    int escaped = 0;
+
+    if (UNLIKELY(!argv)) {
+	/* do this instead of crashing */
+	bu_bomb("bu_argv_from_string received a null argv\n");
+    }
+
+    /* argv is expected to be at least lim+1 */
+    argv[0] = (char *)NULL;
+
+    if (UNLIKELY(lim == 0 || !lp)) {
+	/* nothing to do, only return NULL in argv[0] */
+	return 0;
+    }
+
+    /* skip leading whitespace */
+    while (*lp != '\0' && isspace((int)(*lp)))
+	lp++;
+
+    if (*lp == '\0') {
+	/* no words, only return NULL in argv[0] */
+	return 0;
+    }
+
+    /* some non-space string has been seen, set argv[0] */
+    argc = 0;
+    argv[argc] = lp;
+
+    for (; *lp != '\0'; lp++) {
+
+	if (*lp == '\\') {
+	    char *cp = lp;
+
+	    /* Shift everything to the left (i.e. stomp on the escape character) */
+	    while (*cp != '\0') {
+		*cp = *(cp+1);
+		cp++;
+	    }
+
+	    /* mark the next character as escaped */
+	    escaped = 1;
+
+	    /* remember the loops lp++ */
+	    lp--;
+
+	    continue;
+	}
+
+	if (*lp == '"') {
+	    if (!quoted) {
+		char *cp = lp;
+
+		/* start collecting quoted string */
+		quoted = 1;
+
+		if (!escaped) {
+		    /* Shift everything to the left (i.e. stomp on the quote character) */
+		    while (*cp != '\0') {
+			*cp = *(cp+1);
+			cp++;
+		    }
+
+		    /* remember the loops lp++ */
+		    lp--;
+		}
+
+		continue;
+	    }
+
+	    /* end qoute */
+	    quoted = 0;
+	    if (escaped)
+		lp++;
+	    else
+		*lp++ = '\0';
+
+	    /* skip leading whitespace */
+	    while (*lp != '\0' && isspace((int)(*lp))) {
+		/* null out spaces */
+		*lp = '\0';
+		lp++;
+	    }
+
+	    skip = 0;
+	    goto nextword;
+	}
+
+	escaped = 0;
+
+	/* skip over current word */
+	if (quoted || !isspace((int)(*lp)))
+	    continue;
+
+	skip = 0;
+
+	/* terminate current word, skip space until we find the start
+	 * of the next word nulling out the spaces as we go along.
+	 */
+	while (*(lp+skip) != '\0' && isspace((int)(*(lp+skip)))) {
+	    lp[skip] = '\0';
+	    skip++;
+	}
+
+	if (*(lp + skip) == '\0')
+	    break;
+
+    nextword:
+	/* make sure argv[] isn't full, need room for NULL */
+	if (argc >= lim-1)
+	    break;
+
+	/* start of next word */
+	argc++;
+	argv[argc] = lp + skip;
+
+	/* jump over the spaces, remember the loop's lp++ */
+	lp += skip - 1;
+    }
+
+    /* always NULL-terminate the array */
+    argc++;
+    argv[argc] = (char *)NULL;
+
+    return argc;
+}
 
 
 void
 bu_free_argv(int argc, char *argv[])
 {
     register int i;
+
+    if (UNLIKELY(!argv || argc <= 0)) {
+	return;
+    }
 
     for (i = 0; i < argc; ++i) {
 	if (argv[i]) {
@@ -144,11 +284,11 @@ bu_argv_from_path(const char *path, int *ac)
 	++i;
 
     if (UNLIKELY(newstr[i] == '\0')) {
-	bu_free((genptr_t)newstr, "bu_argv_from_path");
+	bu_free((void *)newstr, "bu_argv_from_path");
 	return (char **)0;
     }
 
-    /* If we get here, there is alteast one path element */
+    /* If we get here, there is at least one path element */
     *ac = 1;
     headpath = &newstr[i];
 

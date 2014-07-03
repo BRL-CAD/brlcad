@@ -1,7 +1,7 @@
 /*                         C O P Y E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file copyeval.c
+/** @file libged/copyeval.c
  *
  * The copyeval command.
  *
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -36,31 +36,32 @@
 int
 ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory *dp;
-    struct rt_db_internal internal, new_int;
-    struct rt_db_internal *ip;
-    mat_t start_mat;
-    int i;
-    int endpos;
-    char *tok;
-    struct _ged_trace_data gtd;
     static const char *usage = "path_to_old_prim new_prim";
+    struct _ged_trace_data gtd;
+    struct directory *dp;
+    struct rt_db_internal *ip;
+    struct rt_db_internal internal, new_int;
+
+    char *tok;
+    int endpos = 0;
+    int i;
+    mat_t start_mat;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -76,8 +77,6 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 
     /* build directory pointer array for desired path */
     if (strchr(argv[1], '/')) {
-	endpos = 0;
-
 	tok = strtok((char *)argv[1], "/");
 	while (tok) {
 	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], tok, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
@@ -85,9 +84,13 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
-	endpos = 0;
 	GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
 	endpos++;
+    }
+
+    if (endpos < 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
     }
 
     gtd.gtd_objpos = endpos - 1;
@@ -98,20 +101,20 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	/* Make sure that final component in path is a solid */
 	if (internal.idb_type == ID_COMBINATION) {
 	    rt_db_free_internal(&internal);
-	    bu_vls_printf(&gedp->ged_result_str, "final component on path must be a primitive!\n");
+	    bu_vls_printf(gedp->ged_result_str, "final component on path must be a primitive!\n");
 	    return GED_ERROR;
 	}
 
 	/* Accumulate the matrices */
-	_ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd);
+	_ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd, 1);
 
 	if (gtd.gtd_prflag == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "PATH:  ");
+	    bu_vls_printf(gedp->ged_result_str, "PATH:  ");
 
-	    for (i=0; i<gtd.gtd_objpos; i++)
-		bu_vls_printf(&gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
+	    for (i = 0; i < gtd.gtd_objpos; i++)
+		bu_vls_printf(gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
 
-	    bu_vls_printf(&gedp->ged_result_str, "  NOT FOUND\n");
+	    bu_vls_printf(gedp->ged_result_str, "  NOT FOUND\n");
 	    rt_db_free_internal(&internal);
 	    return GED_ERROR;
 	}
@@ -120,11 +123,11 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	/* wdb_xform matrix calculated in wdb_trace() */
 
 	/* create the new solid */
-	RT_INIT_DB_INTERNAL(&new_int);
+	RT_DB_INTERNAL_INIT(&new_int);
 	if (rt_generic_xform(&new_int, gtd.gtd_xform,
 			     &internal, 0, gedp->ged_wdbp->dbip, &rt_uniresource)) {
 	    rt_db_free_internal(&internal);
-	    bu_vls_printf(&gedp->ged_result_str, "ged_copyeval: rt_generic_xform failed\n");
+	    bu_vls_printf(gedp->ged_result_str, "ged_copyeval: rt_generic_xform failed\n");
 	    return GED_ERROR;
 	}
 
@@ -135,12 +138,12 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     /* should call GED_DB_DIRADD() but need to deal with freeing the
      * internals on failure.
      */
-    dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (genptr_t)&ip->idb_type);
-    if (dp == DIR_NULL) {
+    dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (void *)&ip->idb_type);
+    if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&internal);
 	if (ip == &new_int)
 	    rt_db_free_internal(&new_int);
-	bu_vls_printf(&gedp->ged_result_str, "An error has occured while adding a new object to the database.");
+	bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding a new object to the database.");
 	return GED_ERROR;
     }
 
@@ -157,7 +160,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	if (ip == &new_int)
 	    rt_db_free_internal(&internal);
 
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	return GED_ERROR;
     }
 

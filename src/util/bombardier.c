@@ -1,7 +1,7 @@
 /*                    B O M B A R D I E R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bombardier.c
+/** @file util/bombardier.c
  *
  * BRL-CAD Crash Reporter - this program takes a given log file and,
  * through a gui or non-interactively, will send back the results of a
@@ -86,8 +86,10 @@ frame .f_bottom \n");
 
     bu_vls_printf(s, "\
 label .l_top -text {Crash details and system information:} \n\
-label .l_bottom -text {Please describe what you were doing when the crash occurred:} \n\
-label .l_info -justify left -text {Your crash report will help BRL-CAD improve.  No other information is sent with this report other that what is shown.  You will not be contacted in response to this report unless you file a formal bug report to the project bug tracker.  See http://brlcad.org for details.} \n\
+label .l_bottom -text {Please describe what you were doing when the problem occurred:} \n");
+
+    bu_vls_printf(s, "\
+label .l_info -justify left -text {Help improve BRL-CAD by sending us diagnostic and usage information.  You will not be contacted in response to this report.  See http://brlcad.org in order to manually submit a bug report, feature request, or code contribution.  By selecting \"Send to BRL-CAD developers...\" you're agree to let us use this information in order to improve our products and services.} \n\
 .l_info configure -wraplength 500 \n");
 
     bu_vls_printf(s, "\
@@ -155,9 +157,9 @@ static void
 load_file(const char *filename)
 {
     FILE *fp = NULL;
-    struct bu_vls buffer;
+    struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
-    if (!bu_file_exists(filename)) {
+    if (!bu_file_exists(filename, NULL)) {
 	return;
     }
 
@@ -168,9 +170,8 @@ load_file(const char *filename)
 	return;
     }
 
-    bu_vls_init(&buffer);
     if (!report) {
-	BU_GETSTRUCT(report, bu_vls);
+	BU_ALLOC(report, struct bu_vls);
 	bu_vls_init(report);
 	atexit(_free_report_memory);
     }
@@ -197,7 +198,7 @@ sendlog(ClientData data, Tcl_Interp *UNUSED(interp), int UNUSED(argc), const cha
     struct bu_vls *daBomb = (struct bu_vls *)data;
 
     bu_log("Pretending that we're sending the log file to brlcad.org\n");
-    bu_log("REPORT:\n%V\n", daBomb);
+    bu_log("REPORT:\n%s\n", bu_vls_addr(daBomb));
 
     return TCL_OK;
 }
@@ -210,8 +211,8 @@ static int
 init(Tcl_Interp *interp)
 {
     char *c;
-    struct bu_vls appname;
-    struct bu_vls crash_reporter;
+    struct bu_vls appname = BU_VLS_INIT_ZERO;
+    struct bu_vls crash_reporter = BU_VLS_INIT_ZERO;
 
     /* locate brl-cad specific scripts (or uninstalled tcl/tk stuff) */
     tclcad_auto_path(interp);
@@ -233,17 +234,15 @@ init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
-    bu_vls_init(&appname);
-
     /* try to pull the command name from the report */
     c = bu_vls_addr(report);
     while (c[0] != '\0') {
-	if (strncmp(c, "Command:", 8) == 0) {
+	if (bu_strncmp(c, "Command:", 8) == 0) {
 	    c+=8;
-	    while (c[0] != '\0' && isspace(c[0])) {
+	    while (c[0] != '\0' && isspace((int)c[0])) {
 		c++;
 	    }
-	    while (c[0] != '\0' && !isspace(c[0])) {
+	    while (c[0] != '\0' && !isspace((int)c[0])) {
 		bu_vls_putc(&appname, c[0]);
 		c++;
 	    }
@@ -266,7 +265,6 @@ init(Tcl_Interp *interp)
     }
 
     /* FIXME: why are we stashing this in a variable? */
-    bu_vls_init(&crash_reporter);
     init_crash_reporter(&crash_reporter);
     Tcl_SetVar(interp, "script", bu_vls_addr(&crash_reporter), 0);
     bu_vls_free(&crash_reporter);
@@ -287,6 +285,13 @@ main(int argc, char *argv[])
 {
     int tkargc = 1;
     char *tkargv[2] = {NULL, NULL};
+
+    if (argc > 1) {
+	if (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
+		bu_exit(1, "Usage: %s logfile(s)\n", argv[0]);
+	}
+    }
+
     tkargv[0] = argv[0];
 
     if (argc <= 1) {
@@ -295,7 +300,7 @@ main(int argc, char *argv[])
 
     /* load all file arguments into our buffer */
     while (argc > 1) {
-	if (!bu_file_exists(argv[1])) {
+	if (!bu_file_exists(argv[1], NULL)) {
 	    bu_log("WARNING: Log file [%s] does not exist\n", argv[1]);
 	} else {
 	    bu_log("Processing %s\n", argv[1]);

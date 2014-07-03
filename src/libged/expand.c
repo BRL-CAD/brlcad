@@ -1,7 +1,7 @@
 /*                         E X P A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file expand.c
+/** @file libged/expand.c
  *
  * The expand command.
  *
@@ -28,14 +28,31 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
 
 static void
-ged_scrape_escapes_AppendResult(struct bu_vls	*result,
-				const char	*str);
+expand_scrape_escapes(struct bu_vls *result, const char *str)
+{
+    char buf[2];
+    buf[1] = '\0';
+
+    while (*str) {
+	buf[0] = *str;
+	if (*str != '\\') {
+	    bu_vls_printf(result, "%s", buf);
+	} else if (*(str+1) == '\\') {
+	    bu_vls_printf(result, "%s", buf);
+	    ++str;
+	}
+	if (*str == '\0')
+	    break;
+	++str;
+    }
+}
+
 
 int
 ged_expand(struct ged *gedp, int argc, const char *argv[])
@@ -50,11 +67,11 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -78,10 +95,10 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 
 	/* If it isn't a regexp, copy directly and continue */
 	if (regexp == 0) {
-	    if (db_lookup(gedp->ged_wdbp->dbip, argv[whicharg], LOOKUP_QUIET) != DIR_NULL) {
+	    if (db_lookup(gedp->ged_wdbp->dbip, argv[whicharg], LOOKUP_QUIET) != RT_DIR_NULL) {
 		if (nummatch > 0)
-		    bu_vls_printf(&gedp->ged_result_str, " ");
-		ged_scrape_escapes_AppendResult(&gedp->ged_result_str, argv[whicharg]);
+		    bu_vls_printf(gedp->ged_result_str, " ");
+		expand_scrape_escapes(gedp->ged_result_str, argv[whicharg]);
 		++nummatch;
 	    }
 	    continue;
@@ -97,14 +114,14 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 	pattern = (char *)argv[whicharg];
 	thismatch = 0;
 	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-		if (!db_regexp_match(pattern, dp->d_namep))
+	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (bu_fnmatch(pattern, dp->d_namep, 0) != 0)
 		    continue;
 		/* Successful match */
 		if (nummatch == 0)
-		    bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
+		    bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
 		else
-		    bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
+		    bu_vls_printf(gedp->ged_result_str, " %s", dp->d_namep);
 		++nummatch;
 		++thismatch;
 	    }
@@ -112,27 +129,6 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
     }
 
     return GED_OK;
-}
-
-static void
-ged_scrape_escapes_AppendResult(struct bu_vls	*result,
-				const char	*str)
-{
-    char buf[2];
-    buf[1] = '\0';
-
-    while (*str) {
-	buf[0] = *str;
-	if (*str != '\\') {
-	    bu_vls_printf(result, "%s", buf);
-	} else if (*(str+1) == '\\') {
-	    bu_vls_printf(result, "%s", buf);
-	    ++str;
-	}
-	if (*str == '\0')
-	    break;
-	++str;
-    }
 }
 
 

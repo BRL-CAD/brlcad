@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-X.c
+/** @file mged/dm-X.c
  *
  * Routines specific to MGED's use of LIBDM's X display manager.
  *
@@ -40,8 +40,8 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "dm_xvars.h"
-#include "dm-X.h"
+#include "dm/dm_xvars.h"
+#include "dm/dm-X.h"
 #include "fb.h"
 
 #include "./mged.h"
@@ -53,22 +53,28 @@ extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.
 
 
 static void
-dirty_hook(void)
+dirty_hook(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *UNUSED(base),
+	   const char *UNUSED(value))
 {
     dirty = 1;
 }
 
 
 static void
-zclip_hook(void)
+zclip_hook(const struct bu_structparse *sdp,
+	   const char *name,
+	   void *base,
+	   const char *value)
 {
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook();
+    dirty_hook(sdp, name, base, value);
 }
 
 
 struct bu_structparse X_vparse[] = {
-    {"%f",  1, "bound",		DM_O(dm_bound),		dirty_hook, NULL, NULL},
+    {"%g",  1, "bound",		DM_O(dm_bound),		dirty_hook, NULL, NULL},
     {"%d",  1, "useBound",	DM_O(dm_boundFlag),	dirty_hook, NULL, NULL},
     {"%d",  1, "zclip",		DM_O(dm_zclip),		zclip_hook, NULL, NULL},
     {"%d",  1, "debug",		DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
@@ -97,10 +103,8 @@ X_doevent(ClientData UNUSED(clientData), XEvent *eventPtr)
 static int
 X_dm(int argc, const char *argv[])
 {
-    if (!strcmp(argv[0], "set")) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
+    if (BU_STR_EQUAL(argv[0], "set")) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	if (argc < 2) {
 	    /* Bare set command, print out current settings */
@@ -108,14 +112,18 @@ X_dm(int argc, const char *argv[])
 	} else if (argc == 2) {
 	    bu_vls_struct_item_named(&vls, X_vparse, argv[1], (const char *)dmp, COMMA);
 	} else {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	    int ret;
 
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	    bu_vls_putc(&tmp_vls, '\"');
-	    bu_struct_parse(&tmp_vls, X_vparse, (char *)dmp);
+	    ret = bu_struct_parse(&tmp_vls, X_vparse, (char *)dmp);
 	    bu_vls_free(&tmp_vls);
+	    if (ret < 0) {
+	      bu_vls_free(&vls);
+	      return TCL_ERROR;
+	    }
 	}
 
 	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
@@ -133,7 +141,7 @@ X_dm_init(struct dm_list *o_dm_list,
 	  int argc,
 	  const char *argv[])
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     dm_var_init(o_dm_list);
 
@@ -156,9 +164,8 @@ X_dm_init(struct dm_list *o_dm_list,
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
 #endif
 
-    (void)DM_CONFIGURE_WIN(dmp);
+    (void)DM_CONFIGURE_WIN(dmp, 0);
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -180,7 +187,7 @@ X_fb_open(void)
 
     *fbp = X24_interface; /* struct copy */
 
-    fbp->if_name = bu_malloc((unsigned)strlen(X_name)+1, "if_name");
+    fbp->if_name = (char *)bu_malloc((unsigned)strlen(X_name)+1, "if_name");
     bu_strlcpy(fbp->if_name, X_name, strlen(X_name)+1);
 
     /* Mark OK by filling in magic number */

@@ -1,7 +1,7 @@
 /*                     P I X - A L I A S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-alias.c
+/** @file util/pix-alias.c
  *
- * Convert BRL PIX format image files to ALIAS(tm) PIX fomat files.
+ * Convert BRL PIX format image files to ALIAS(tm) PIX format files.
  *
  * Format of a BRL PIX file:
  * RGB RGB RGB RGB .... RGB
@@ -46,9 +46,10 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "hs:w:n:";
+char options[] = "hs:w:n:";
 char optflags[sizeof(options)];
-char *progname = "(noname)";
+char noname[] = "(noname)";
+char *progname = noname;
 
 int x=512;
 int y=512;
@@ -61,9 +62,10 @@ struct aliashead {
 
 
 /*
- * D O I T --- Main function of program
+ * Main function of program
  */
-void doit(void)
+void
+doit(void)
 {
     struct aliashead ah;
     char *image;
@@ -81,6 +83,7 @@ void doit(void)
     for (n=y-1; n >= 0; --n)
 	if (fread(&image[n*x*3], x*3, 1, stdin) != 1) {
 	    (void) fprintf(stderr, "Error reading image at scanline %u\n", n);
+	    bu_free(image, "image alloc from malloc");
 	    bu_exit (-2, NULL);
 	}
 
@@ -121,13 +124,14 @@ void doit(void)
 	(void) putchar(image[cpix+1]);
 	(void) putchar(image[cpix]);
     }
+    bu_free(image, "image alloc from malloc");
 }
 
 
 void usage(void)
 {
-    (void)fprintf(stderr, "Usage: %s [ -s squaresize ] [-w file_width ] [-n file_height ]\n", progname);
-    (void)fprintf(stderr, "\t< BRLpixfile > ALIASpixfile\n");
+    fprintf(stderr, "Usage: %s [ -s squaresize ] [-w file_width ] [-n file_height ]\n", progname);
+    fprintf(stderr, "\t< BRLpixfile > ALIASpixfile\n");
     bu_exit (1, NULL);
 }
 
@@ -151,7 +155,7 @@ main(int ac, char **av)
 
     /* get all the option flags from the command line
      */
-    while ((c=bu_getopt(ac, av, options)) != EOF)
+    while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'w' : x = atoi(bu_optarg); break;
 	    case 'n' : y = atoi(bu_optarg); break;

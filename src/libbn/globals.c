@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,15 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libbn/globals.c
- *
- * Global variables in LIBBN.
- *
- * New global variables are discouraged and refactoring in ways that
- * eliminates existing global variables without reducing functionality
- * is always encouraged.
- *
- */
 
 #include "common.h"
 
@@ -33,6 +24,13 @@
 
 #include "vmath.h"
 #include "bn.h"
+
+
+/*
+ * New global variables are discouraged and refactoring in ways that
+ * eliminates existing global variables without reducing functionality
+ * is always encouraged.
+ */
 
 
 /* see rand.c for random constant globals */
@@ -46,53 +44,6 @@ extern float bn_rand_poison_[];
 /* see vectfont.c for vector font constant globals */
 extern int *tp_cindex[];
 extern int tp_ctable[];
-
-
-/**
- * pi
- */
-const fastf_t bn_pi	= M_PI;
-/**
- * pi*2
- */
-const fastf_t bn_twopi	= 6.28318530717958647692;
-
-/**
- * pi/2
- */
-const fastf_t bn_halfpi		= M_PI_2;
-/**
- * pi/4
- */
-const fastf_t bn_quarterpi	= M_PI_4;
-
-/**
- * 1/pi
- */
-const fastf_t bn_invpi	= M_1_PI;
-/**
- * 1/(pi*2)
- */
-const fastf_t bn_inv2pi	= 0.159154943091895335769;
-/**
- * 1/(pi*4)
- */
-const fastf_t bn_inv4pi	= 0.07957747154594766788;
-
-/**
- * 1.0/255.0
- */
-const fastf_t bn_inv255	= 0.003921568627450980392156862745;
-
-/**
- * (pi*2)/360
- */
-const fastf_t bn_degtorad = DEG2RAD;
-/**
- * 360/(pi*2)
- */
-const fastf_t bn_radtodeg = RAD2DEG;
-
 
 /*
  * Local Variables:

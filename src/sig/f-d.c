@@ -1,7 +1,7 @@
 /*                           F - D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file f-d.c
  *
- *  Convert floats to doubles.
+ * Convert floats to doubles.
  *
  *	% f-d [-n || scale]
  *
@@ -31,49 +31,49 @@
 #include "common.h"
 
 #include <stdlib.h> /* for atof() */
-#include <math.h>
 #include <string.h>
+#include <math.h>
 #include "bio.h"
 
 #include "bu.h"
-
-float	ibuf[512];
-double	obuf[512];
+#include "vmath.h"
 
 
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
-    int	i, num;
-    double	scale;
+    int i, num;
+    double scale = 1.0;
+    size_t ret;
 
-    scale = 1.0;
+    float ibuf[512];
+    double obuf[512];
 
-    if ( argc > 1 ) {
-	if ( strcmp( argv[1], "-n" ) == 0 )
-	    scale = 1.0;
-	else
-	    scale = atof( argv[1] );
+    if (argc > 1) {
+	if (!BU_STR_EQUAL(argv[1], "-n"))
+	    scale = atof(argv[1]);
 	argc--;
     }
 
-    if ( argc > 1 || scale == 0 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
+    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin)) || isatty(fileno(stdout)))
 	bu_exit(1, "Usage: f-d [-n || scale] < floats > doubles\n");
-    }
 
-    while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
-	if ( scale != 1.0 ) {
-	    for ( i = 0; i < num; i++ )
-		obuf[i] = ibuf[i] * scale;
-	} else {
-	    for ( i = 0; i < num; i++ )
+    while ((num = fread(&ibuf[0], sizeof(ibuf[0]), 512, stdin)) > 0) {
+	if (EQUAL(scale, 1.0)) {
+	    for (i = 0; i < num; i++)
 		obuf[i] = ibuf[i];
+	} else {
+	    for (i = 0; i < num; i++)
+		obuf[i] = ibuf[i] * scale;
 	}
 
-	fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+	ret = fwrite(&obuf[0], sizeof(obuf[0]), num, stdout);
+	if (ret != (size_t)num)
+	    perror("fwrite");
     }
-
     return 0;
 }
+
 
 /*
  * Local Variables:

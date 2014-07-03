@@ -1,7 +1,7 @@
 /*                        R T S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2010 United States Government as represented by
+ * Copyright (c) 1987-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtshot.c
+/** @file rt/rtshot.c
  *
  * Demonstration Ray Tracing main program, using RT library.
  * Fires a single ray, given any two of these three parameters:
@@ -29,49 +29,45 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
 
+#include "bu/debug.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
 #include "plot3.h"
 
+#include "./rtuif.h"
 
-extern void rt_raybundle_maker(struct xray *rp,
-			       double radius,
-			       const vect_t avec,
-			       const vect_t bvec,
-			       int rays_per_ring,
-			       int nring);
 
-extern int rt_shootray_bundle(struct application *ap,
-			      struct xray *rays,
-			      int nrays);
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects...\n", argv0);
+    bu_log(" -U #		Set reporting of air regions (default=1)\n");
+    bu_log(" -u #		Set libbu debug flag\n");
+    bu_log(" -x #		Set librt debug flags\n");
+    bu_log(" -X #		Set rt program debug flags\n");
+    bu_log(" -N #		Set NMG debug flags\n");
+    bu_log(" -d # # #	Set direction vector\n");
+    bu_log(" -p # # #	Set starting point\n");
+    bu_log(" -a # # #	Set shoot-at point\n");
+    bu_log(" -t #		Set number of triangles per piece for BOT's (default is 4)\n");
+    bu_log(" -b #		Set threshold number of triangles to use pieces (default is 32)\n");
+    bu_log(" -O #		Set overlap-claimant handling\n");
+    bu_log(" -o #		Set onehit flag\n");
+    bu_log(" -r #		Set ray length\n");
+    bu_log(" -n #		Set number of rings for ray bundle\n");
+    bu_log(" -c #		Set number of rays per ring for ray bundle\n");
+    bu_log(" -R #		Set radius for ray bundle in mm\n");
+    bu_log(" -g #		Set ray bundle grid size in mm(default 1mm)\n");
+    bu_log(" -v \"attribute_name1 attribute_name2 ...\" Show attribute values\n");
+}
 
-char usage[] = "\
-Usage:  rtshot [options] model.g objects...\n\
- -U #		Set reporting of air regions (default=1)\n\
- -u #		Set libbu debug flag\n\
- -x #		Set librt debug flags\n\
- -X #		Set rt program debug flags\n\
- -N #		Set NMG debug flags\n\
- -d # # #	Set direction vector\n\
- -p # # #	Set starting point\n\
- -a # # #	Set shoot-at point\n\
- -t #		Set number of triangles per piece for BOT's (default is 4)\n\
- -b #		Set threshold number of triangles to use pieces (default is 32)\n\
- -O #		Set overlap-claimant handling\n\
- -o #		Set onehit flag\n\
- -r #		Set ray length\n\
- -n #		Set number of rings for ray bundle\n\
- -c #		Set number of rays per ring for ray bundle\n\
- -R #		Set radius for ray bundle in mm\n\
- -g #		Set ray bundle grid size in mm(default 1mm)\n\
- -v \"attribute_name1 attribute_name2 ...\" Show attribute values\n";
 
 static FILE *plotfp;		/* For plotting into */
 
@@ -94,205 +90,229 @@ extern int miss(register struct application *ap);
 int bundle_hit(register struct application_bundle *bundle, struct partition_bundle *PartBundlep);
 int bundle_miss(register struct application_bundle *bundle);
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
     struct application ap;
     static struct rt_i *rtip;
     char *title_file;
-    char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
+    char idbuf[2048] = {0};		/* First ID record info */
     char *ptr;
     int attr_count=0, i;
     char **attrs = (char **)NULL;
     const char *argv0 = argv[0];
+    int atoival;
 
     if (argc < 3) {
-	bu_exit(1, usage);
+	usage(argv0);
+	return 1;
     }
 
     RT_APPLICATION_INIT(&ap);
 
     argc--;
     argv++;
-    while (argv[0][0] == '-') switch (argv[0][1]) {
-	case 'R':
-	    bundle_radius = atof(argv[1]);
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'n':
-	    num_rings = atoi(argv[1]);
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'g':
-	    grid_size = atof(argv[1]);
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'c':
-	    rays_per_ring = atoi(argv[1]);
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'v':
-	    /* count the number of attribute names provided */
-	    ptr = argv[1];
-	    while (*ptr) {
-		while (*ptr && isspace(*ptr))
-		    ptr++;
-		if (*ptr)
-		    attr_count++;
-		while (*ptr && !isspace(*ptr))
-		    ptr++;
-	    }
+    while (argv[0][0] == '-') {
 
-	    if (attr_count == 0) {
-		bu_log("missing list of attribute names!\n");
-		bu_exit(1, usage);
-	    }
+	/* sanity */
+	if (!argv[1])
+	    return 1;
 
-	    /* allocate enough for a null terminated list */
-	    attrs = (char **)bu_calloc(attr_count + 1, sizeof(char *), "attrs");
+	switch (argv[0][1]) {
+	    case 'R':
+		bundle_radius = atof(argv[1]);
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'n':
+		atoival = atoi(argv[1]);
+		if (atoival > 0 && atoival < INT_MAX-1)
+		    num_rings = atoival;
+		else
+		    return 1;
 
-	    /* use strtok to actually grab the names */
-	    i = 0;
-	    ptr = strtok(argv[1], "\t ");
-	    while (ptr && i < attr_count) {
-		attrs[i] = bu_strdup(ptr);
-		ptr = strtok((char *)NULL, "\t ");
-		i++;
-	    }
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 't':
-	    rt_bot_tri_per_piece = atoi(argv[1]);
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'b':
-	    rt_bot_minpieces = atoi(argv[1]);
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'o':
-	    sscanf(argv[1], "%d", &set_onehit);
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'r':
-	    {
-		float ray_len;
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'g':
+		grid_size = atof(argv[1]);
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'c':
+		atoival = atoi(argv[1]);
+		if (atoival > 0 && atoival < INT_MAX-1)
+		    rays_per_ring = atoival;
+		else
+		    return 1;
 
-		sscanf(argv[1], "%f", &ray_len);
-		set_ray_length = ray_len;
-	    }
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'U':
-	    sscanf(argv[1], "%d", &set_air);
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'u':
-	    sscanf(argv[1], "%x", (unsigned int *)&bu_debug);
-	    fprintf(stderr, "librt bu_debug=x%x\n", bu_debug);
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'x':
-	    sscanf(argv[1], "%x", (unsigned int *)&rt_g.debug);
-	    fprintf(stderr, "librt rt_g.debug=x%x\n", rt_g.debug);
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'X':
-	    sscanf(argv[1], "%x", (unsigned int *)&rdebug);
-	    fprintf(stderr, "rdebug=x%x\n", rdebug);
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'N':
-	    sscanf(argv[1], "%x", (unsigned int *)&rt_g.NMG_debug);
-	    fprintf(stderr, "librt rt_g.NMG_debug=x%x\n", rt_g.NMG_debug);
-	    argc -= 2;
-	    argv += 2;
-	    break;
-	case 'd':
-	    if (argc < 4) goto err;
-	    ap.a_ray.r_dir[X] = atof(argv[1]);
-	    ap.a_ray.r_dir[Y] = atof(argv[2]);
-	    ap.a_ray.r_dir[Z] = atof(argv[3]);
-	    set_dir = 1;
-	    argc -= 4;
-	    argv += 4;
-	    continue;
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'v':
+		/* count the number of attribute names provided */
+		ptr = argv[1];
+		if (!ptr)
+		    return 1;
 
-	case 'p':
-	    if (argc < 4) goto err;
-	    ap.a_ray.r_pt[X] = atof(argv[1]);
-	    ap.a_ray.r_pt[Y] = atof(argv[2]);
-	    ap.a_ray.r_pt[Z] = atof(argv[3]);
-	    set_pt = 1;
-	    argc -= 4;
-	    argv += 4;
-	    continue;
+		while (*ptr) {
+		    while (*ptr && *ptr > 0 && *ptr < CHAR_MAX && isspace((int)*ptr))
+			ptr++;
+		    if (*ptr)
+			attr_count++;
+		    while (*ptr && *ptr > 0 && *ptr < CHAR_MAX && !isspace((int)*ptr))
+			ptr++;
+		}
 
-	case 'a':
-	    if (argc < 4) goto err;
-	    at_vect[X] = atof(argv[1]);
-	    at_vect[Y] = atof(argv[2]);
-	    at_vect[Z] = atof(argv[3]);
-	    set_at = 1;
-	    argc -= 4;
-	    argv += 4;
-	    continue;
+		if (attr_count == 0) {
+		    bu_log("missing list of attribute names!\n");
+		    usage(argv0);
+		    return 1;
+		}
 
-	case 'O':
-	    {
-		if (!strcmp(argv[1], "resolve") || !strcmp(argv[1], "0"))
-		    overlap_claimant_handling = 0;
-		else if (!strcmp(argv[1], "rebuild_fastgen") || !strcmp(argv[1], "1"))
-		    overlap_claimant_handling = 1;
-		else if (!strcmp(argv[1], "rebuild_all") || !strcmp(argv[1], "2"))
-		    overlap_claimant_handling = 2;
-		else if (!strcmp(argv[1], "retain") || !strcmp(argv[1], "3"))
-		    overlap_claimant_handling = 3;
-		else {
-		    bu_log("Illegal argument (%s) to '-O' option.  Must be:\n", argv[1]);
-		    bu_log("\t'resolve' or '0'\n");
-		    bu_log("\t'rebuild_fastgen' or '1'\n");
-		    bu_log("\t'rebuild_all' or '2'\n");
-		    bu_log("\t'retain' or '3'\n");
-		    bu_exit(1, NULL);
+		/* allocate enough for a null terminated list */
+		attrs = (char **)bu_calloc(attr_count + 1, sizeof(char *), "attrs");
+
+		/* use strtok to actually grab the names */
+		i = 0;
+		ptr = strtok(argv[1], "\t ");
+		while (ptr && i < attr_count) {
+		    attrs[i] = bu_strdup(ptr);
+		    ptr = strtok((char *)NULL, "\t ");
+		    i++;
 		}
 		argc -= 2;
 		argv += 2;
-	    }
-	    continue;
+		break;
+	    case 't':
+		rt_bot_tri_per_piece = atoi(argv[1]);
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'b':
+		rt_bot_minpieces = atoi(argv[1]);
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'o':
+		sscanf(argv[1], "%d", &set_onehit);
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'r':
+		{
+		    float ray_len;
 
-	default:
-    err:
-	    bu_exit(1, usage);
+		    sscanf(argv[1], "%f", &ray_len);
+		    set_ray_length = ray_len;
+		}
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'U':
+		sscanf(argv[1], "%d", &set_air);
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'u':
+		sscanf(argv[1], "%x", (unsigned int *)&bu_debug);
+		fprintf(stderr, "librt bu_debug=x%x\n", bu_debug);
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'x':
+		sscanf(argv[1], "%x", (unsigned int *)&RTG.debug);
+		fprintf(stderr, "librt RTG.debug=x%x\n", RTG.debug);
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'X':
+		sscanf(argv[1], "%x", (unsigned int *)&rdebug);
+		fprintf(stderr, "rdebug=x%x\n", rdebug);
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'N':
+		sscanf(argv[1], "%x", (unsigned int *)&RTG.NMG_debug);
+		fprintf(stderr, "librt RTG.NMG_debug=x%x\n", RTG.NMG_debug);
+		argc -= 2;
+		argv += 2;
+		break;
+	    case 'd':
+		if (argc < 4) goto err;
+		ap.a_ray.r_dir[X] = atof(argv[1]);
+		ap.a_ray.r_dir[Y] = atof(argv[2]);
+		ap.a_ray.r_dir[Z] = atof(argv[3]);
+		set_dir = 1;
+		argc -= 4;
+		argv += 4;
+		continue;
+
+	    case 'p':
+		if (argc < 4) goto err;
+		ap.a_ray.r_pt[X] = atof(argv[1]);
+		ap.a_ray.r_pt[Y] = atof(argv[2]);
+		ap.a_ray.r_pt[Z] = atof(argv[3]);
+		set_pt = 1;
+		argc -= 4;
+		argv += 4;
+		continue;
+
+	    case 'a':
+		if (argc < 4) goto err;
+		at_vect[X] = atof(argv[1]);
+		at_vect[Y] = atof(argv[2]);
+		at_vect[Z] = atof(argv[3]);
+		set_at = 1;
+		argc -= 4;
+		argv += 4;
+		continue;
+
+	    case 'O':
+		{
+		    if (BU_STR_EQUAL(argv[1], "resolve") || BU_STR_EQUAL(argv[1], "0"))
+			overlap_claimant_handling = 0;
+		    else if (BU_STR_EQUAL(argv[1], "rebuild_fastgen") || BU_STR_EQUAL(argv[1], "1"))
+			overlap_claimant_handling = 1;
+		    else if (BU_STR_EQUAL(argv[1], "rebuild_all") || BU_STR_EQUAL(argv[1], "2"))
+			overlap_claimant_handling = 2;
+		    else if (BU_STR_EQUAL(argv[1], "retain") || BU_STR_EQUAL(argv[1], "3"))
+			overlap_claimant_handling = 3;
+		    else {
+			bu_log("Illegal argument (%s) to '-O' option.  Must be:\n", argv[1]);
+			bu_log("\t'resolve' or '0'\n");
+			bu_log("\t'rebuild_fastgen' or '1'\n");
+			bu_log("\t'rebuild_all' or '2'\n");
+			bu_log("\t'retain' or '3'\n");
+			bu_exit(1, NULL);
+		    }
+		    argc -= 2;
+		    argv += 2;
+		}
+		continue;
+
+	    default:
+	    err:
+		usage(argv0);
+		return 1;
+	}
     }
     if (argc < 2) {
-	(void)fputs(usage, stderr);
+	usage(argv0);
 	bu_exit(1, "%s: BRL-CAD geometry database not specified\n", argv0);
     }
 
     if (set_dir + set_pt + set_at != 2) goto err;
 
-    if (num_rings != 0 || rays_per_ring != 0) {
-	if (num_rings <= 0 || rays_per_ring <= 0 || bundle_radius <= 0.0) {
-	    fprintf(stderr, "Must have all of \"-R\", \"-n\", and \"-c\" set\n");
-	    goto err;
-	}
+    /* explicit input sanitization */
+    if (num_rings <= 0 || rays_per_ring <= 0 || bundle_radius <= 0.0) {
+	fprintf(stderr, "Must have all of \"-R\", \"-n\", and \"-c\" set\n");
+	goto err;
     }
+    if (num_rings > INT_MAX)
+	num_rings = INT_MAX;
+    if (rays_per_ring > INT_MAX)
+	rays_per_ring = INT_MAX;
 
     /* Load database */
     title_file = argv[0];
@@ -318,8 +338,8 @@ main(int argc, char **argv)
     rt_prep(rtip);
 
     if (R_DEBUG&RDEBUG_RAYPLOT) {
-	if ((plotfp = fopen("rtshot.plot", "w")) == NULL) {
-	    perror("rtshot.plot");
+	if ((plotfp = fopen("rtshot.plot3", "w")) == NULL) {
+	    perror("rtshot.plot3");
 	    bu_exit(1, NULL);
 	}
 	pdv_3space(plotfp, rtip->rti_pmin, rtip->rti_pmax);
@@ -381,11 +401,7 @@ main(int argc, char **argv)
     } else if (bundle_radius > 0.0) {
 	vect_t avec, bvec;
 	struct xray center_ray;
-	struct xray *rp;
-	struct xray *rays=NULL;
-	struct xrays *ray_bundle;
 	struct application_bundle b;
-	int numrays;
 	struct xrays *xr;
 
 	b.b_ap = ap;
@@ -408,7 +424,7 @@ main(int argc, char **argv)
 	VUNITIZE(bvec);
 
 	center_ray = ap.a_ray;	/* struct copy */
-	numrays = rt_gen_circular_grid(&b.b_rays, &center_ray, bundle_radius, avec, grid_size);
+	(void)rt_gen_circular_grid(&b.b_rays, &center_ray, bundle_radius, avec, grid_size);
 
 	(void) rt_shootrays(&b);
 
@@ -426,14 +442,17 @@ main(int argc, char **argv)
 }
 
 
-int hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
+int hit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp;
     register struct soltab *stp;
-    struct curvature cur;
     fastf_t out;
     point_t inpt, outpt;
     vect_t inormal, onormal;
+    struct curvature cur;
+    cur.crv_c1 = 0.0;
+    cur.crv_c2 = 0.0;
+    VSETALL(cur.crv_pdir, 0.0);
 
     if ((pp=PartHeadp->pt_forw) == PartHeadp)
 	return 0;		/* Nothing hit?? */
@@ -518,7 +537,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    MAT4X3PNT(out_trans, inv_mat, outpt);
 	    MAT4X3VEC(dir_trans, inv_mat, ap->a_ray.r_dir);
 	    VUNITIZE(dir_trans);
-	    bu_log("\ttranformed ORCA outhit = (%g %g %g)\n", V3ARGS(out_trans));
+	    bu_log("\ttransformed ORCA outhit = (%g %g %g)\n", V3ARGS(out_trans));
 	    bu_log("\ttransformed ORCA ray direction = (%g %g %g)\n", V3ARGS(dir_trans));
 	}
 
@@ -541,14 +560,14 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    if (ap->attrs) {
 		bu_log("\tattribute values:\n");
 		i = 0;
-		while (ap->attrs[i] && regp->attr_values[i]) {
+		while (ap->attrs[i] && regp->attr_values.count) {
 		    bu_log("\t\t%s:\n", ap->attrs[i]);
 		    bu_log("\t\t\tstring rep = %s\n",
-			   BU_MRO_GETSTRING(regp->attr_values[i]));
-		    bu_log("\t\t\tlong rep = %d\n",
-			   BU_MRO_GETLONG(regp->attr_values[i]));
-		    bu_log("\t\t\tdouble rep = %f\n",
-			   BU_MRO_GETDOUBLE(regp->attr_values[i]));
+			   bu_avs_get(&(regp->attr_values), ap->attrs[i]));
+		    /*  bu_log("\t\t\tlong rep = %d\n",
+			BU_MRO_GETLONG(regp->attr_values[i]));
+			bu_log("\t\t\tdouble rep = %f\n",
+			BU_MRO_GETDOUBLE(regp->attr_values[i]));*/
 		    i++;
 		}
 	    }
@@ -577,8 +596,7 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 {
     register struct partition *pp;
     register struct soltab *stp;
-    struct curvature cur;
-    fastf_t out;
+    struct curvature cur = RT_CURVATURE_INIT_ZERO;
     point_t inpt, outpt;
     vect_t inormal, onormal;
     int raycnt=1;
@@ -588,11 +606,11 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 
     /* First, plot bundle's application ray */
     if (R_DEBUG & RDEBUG_RAYPLOT) {
-	vect_t out;
+	vect_t vout;
 
-	VJOIN1(out, bundle->b_ap.a_ray.r_pt, 10000, bundle->b_ap.a_ray.r_dir); /* to imply direction */
+	VJOIN1(vout, bundle->b_ap.a_ray.r_pt, 10000, bundle->b_ap.a_ray.r_dir); /* to imply direction */
 	pl_color(plotfp, 0, 0, 255);
-	pdv_3line(plotfp, bundle->b_ap.a_ray.r_pt, out);
+	pdv_3line(plotfp, bundle->b_ap.a_ray.r_pt, vout);
     }
 
     for (BU_LIST_FOR(pl, partition_list, &(PartBundlep->list->l))) {
@@ -608,6 +626,7 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 	    }
 	}
 	for (; pp != &pl->PartHeadp; pp = pp->pt_forw) {
+	    fastf_t out;
 	    matp_t inv_mat;
 	    Tcl_HashEntry *entry;
 
@@ -677,7 +696,7 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 		MAT4X3PNT(out_trans, inv_mat, outpt);
 		MAT4X3VEC(dir_trans, inv_mat, pl->ap->a_ray.r_dir);
 		VUNITIZE(dir_trans);
-		bu_log("\ttranformed ORCA outhit = (%g %g %g)\n", V3ARGS(
+		bu_log("\ttransformed ORCA outhit = (%g %g %g)\n", V3ARGS(
 			   out_trans));
 		bu_log("\ttransformed ORCA ray direction = (%g %g %g)\n",
 		       V3ARGS(dir_trans));
@@ -700,14 +719,14 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 		if (pl->ap->attrs) {
 		    bu_log("\tattribute values:\n");
 		    i = 0;
-		    while (pl->ap->attrs[i] && regp->attr_values[i]) {
+		    while (pl->ap->attrs[i] && regp->attr_values.count) {
 			bu_log("\t\t%s:\n", pl->ap->attrs[i]);
-			bu_log("\t\t\tstring rep = %s\n", BU_MRO_GETSTRING(
-				   regp->attr_values[i]));
-			bu_log("\t\t\tlong rep = %d\n", BU_MRO_GETLONG(
-				   regp->attr_values[i]));
-			bu_log("\t\t\tdouble rep = %f\n", BU_MRO_GETDOUBLE(
-				   regp->attr_values[i]));
+			bu_log("\t\t\tstring rep = %s\n",
+			       bu_avs_get(&(regp->attr_values), pl->ap->attrs[i]));
+			/*  bu_log("\t\t\tlong rep = %d\n",
+			    BU_MRO_GETLONG(regp->attr_values[i]));
+			    bu_log("\t\t\tdouble rep = %f\n",
+			    BU_MRO_GETDOUBLE(regp->attr_values[i]));*/
 			i++;
 		    }
 		}

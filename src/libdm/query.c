@@ -1,7 +1,7 @@
 /*                         Q U E R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file query.c
+/** @file libdm/query.c
  *
  */
 
@@ -40,9 +40,13 @@ int dm_validXType(char *dpy_string, char *name);
 char *dm_bestXType(char *dpy_string);
 
 int
+#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_X) && !defined(DM_TK)
+dm_validXType(char *UNUSED(dpy_string), char *name)
+#else
 dm_validXType(char *dpy_string, char *name)
+#endif
 {
-    if (strcmp(name, "wgl")==0) {
+    if (BU_STR_EQUAL(name, "wgl")) {
 #ifdef DM_WGL
 	return 1;
 #else
@@ -51,7 +55,7 @@ dm_validXType(char *dpy_string, char *name)
 #endif /* DM_WGL */
     }
 
-    if (strcmp(name, "rtgl")==0) {
+    if (BU_STR_EQUAL(name, "rtgl")) {
 #ifdef DM_RTGL
 	Display *dpy;
 	int return_val;
@@ -68,7 +72,7 @@ dm_validXType(char *dpy_string, char *name)
 	return 0;
     }
 
-    if (strcmp(name, "ogl")==0) {
+    if (BU_STR_EQUAL(name, "ogl")) {
 #ifdef DM_OGL
 	Display *dpy;
 	int return_val;
@@ -85,7 +89,7 @@ dm_validXType(char *dpy_string, char *name)
 	return 0;
     }
 
-    if (strcmp(name, "X")==0) {
+    if (BU_STR_EQUAL(name, "X")) {
 #ifdef DM_X
 	Display *dpy;
 	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
@@ -98,7 +102,7 @@ dm_validXType(char *dpy_string, char *name)
 	return 0;
     }
 
-    if (strcmp(name, "tk")==0) {
+    if (BU_STR_EQUAL(name, "tk")) {
 #ifdef DM_TK
 	return 1;
 #else
@@ -115,7 +119,11 @@ dm_validXType(char *dpy_string, char *name)
   */
 
 char *
+#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_X) && !defined(DM_TK)
+dm_bestXType(char *UNUSED(dpy_string))
+#else
 dm_bestXType(char *dpy_string)
+#endif
 {
 #ifdef DM_WGL
     /* should probably make sure wgl works */
@@ -164,6 +172,8 @@ dm_bestXType(char *dpy_string)
 
 #ifdef DM_TK
     return "tk";
+#else
+    return "nu";
 #endif
 }
 

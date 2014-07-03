@@ -1,7 +1,7 @@
 /*                        R L E - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,26 +52,23 @@ static int screen_height = 0;
 static int scr_xoff = 0;
 static int scr_yoff = 0;
 
-static int crunch;
-static int overlay;
-static int r_debug;
+static int crunch = 0;
+static int overlay = 0;
+static int r_debug = 0;
 
 static char usage[] = "\
-Usage: rle-fb [-c -d -h -O] [-F framebuffer]  [-C r/g/b]\n\
+Usage: rle-fb [-c -d -O] [-F framebuffer]  [-C r/g/b]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
 	[-X scr_xoff] [-Y scr_yoff] [file.rle]\n\
 ";
 
 
-/*
- * G E T _ A R G S
- */
 static int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "cOdhs:S:w:W:n:N:C:F:X:Y:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "cOds:S:w:W:n:N:C:F:X:Y:h?")) != -1) {
 	switch (c) {
 	    case 'O':
 		overlay = 1;
@@ -84,10 +81,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'c':
 		crunch = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		screen_height = screen_width = 1024;
 		break;
 	    case 'S':
 	    case 's':
@@ -122,7 +115,6 @@ get_args(int argc, char **argv)
 	    }
 		break;
 	    default:
-	    case '?':
 		return 0;
 	}
     }
@@ -144,9 +136,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

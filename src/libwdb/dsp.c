@@ -1,7 +1,7 @@
 /*                            D S P . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dsp.c
+/** @file libwdb/dsp.c
  *
  */
 
@@ -34,7 +34,7 @@
 #include "db.h"
 
 int
-mk_dsp(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, const matp_t mat)
+mk_dsp(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_t ydim, const matp_t mat)
     /* name of file containing elevation data */
     /* X dimension of file (w cells) */
     /* Y dimension of file (n cells) */
@@ -42,7 +42,7 @@ mk_dsp(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim
 {
     struct rt_dsp_internal *dsp;
 
-    BU_GETSTRUCT(dsp, rt_dsp_internal);
+    BU_ALLOC(dsp, struct rt_dsp_internal);
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
     bu_vls_init(&dsp->dsp_name);
@@ -52,7 +52,7 @@ mk_dsp(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim
     dsp->dsp_ycnt = ydim;
     MAT_COPY(dsp->dsp_stom, mat);
 
-    return wdb_export(fp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm);
+    return wdb_export(fp, name, (void *)dsp, ID_DSP, mk_conv2mm);
 }
 
 

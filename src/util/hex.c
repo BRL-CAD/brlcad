@@ -1,7 +1,7 @@
 /*                            H E X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file hex.c
+/** @file util/hex.c
  *
  * Give a good ole' CPM style Hex dump of a file or standard input.
  *
  * Options
  * h    help
- * o    offset from begining of data from which to start dump
+ * o    offset from beginning of data from which to start dump
  */
 
 #include "common.h"
@@ -37,27 +37,30 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-static char *options = "o:";
-static char *progname = "(noname)";
+static char options[] = "o:";
+static char noname[]  = "(noname)";
+static char *progname = noname;
 
-static long offset=0;	 /* offset from begining of file from which to start */
+static off_t offset=0;	 /* offset from beginning of file from which to start */
 
 #define DUMPLEN 16    /* number of bytes to dump on one line */
 
-/*
- * D U M P --- Dump file in hex
+
+/**
+ * Dump file in hex
  */
-void dump(FILE *fd)
+void
+dump(FILE *fd)
 {
-    int i;
+    size_t i;
     char *p;
-    int bytes;
-    long addr = 0L;
+    size_t bytes;
+    off_t addr = 0;
     static char buf[DUMPLEN];    /* input buffer */
 
     if (offset != 0) {
-  	/* skip over "offset" bytes first */
-	if (fseek(fd, offset, 0)) {
+	/* skip over "offset" bytes first */
+	if (bu_fseek(fd, offset, 0)) {
 
 	    /* If fseek fails, try reading our way to the desired offset.
 	     * The fseek will fail if we're reading from a pipe.
@@ -68,7 +71,8 @@ void dump(FILE *fd)
 		if ((i=fread(buf, 1, sizeof(buf), fd)) == 0) {
 		    fprintf(stderr, "%s: offset exceeds end of input!\n", progname);
 		    bu_exit (-1, NULL);
-		} else addr += i;
+		}
+		addr += i;
 	    }
 	} else addr = offset;
     }
@@ -77,7 +81,7 @@ void dump(FILE *fd)
     while ((bytes=fread(buf, 1, sizeof(buf), fd)) > 0) {
 
 	/* print the offset into the file */
-	printf("%08lx", addr);
+	printf("%08llx", (unsigned long long)addr);
 
 	/* produce the hexadecimal dump */
 	for (i=0, p=buf; i < DUMPLEN; ++i) {
@@ -93,8 +97,15 @@ void dump(FILE *fd)
 	/* produce the ASCII dump */
 	printf(" |");
 	for (i=0, p=buf; i < bytes; ++i, ++p) {
-	    if (isascii(*p) && isprint(*p)) putchar(*p);
-	    else putchar('.');
+	    int c = *p;
+	    if (c < 0)
+		c = 0;
+	    else if (c > 255)
+		c = 255;
+	    if (isascii(c) && isprint(c))
+		putchar(c);
+	    else
+		putchar('.');
 	}
 	printf("|\n");
 	addr += DUMPLEN;
@@ -102,19 +113,16 @@ void dump(FILE *fd)
 }
 
 
-/*
- * U S A G E --- Print helpful message and bail out
- */
-void usage(void)
+void
+usage(void)
 {
     (void) fprintf(stderr, "Usage: %s [-o offset] [file...]\n", progname);
     bu_exit (1, NULL);
 }
 
 
-/* M A I N
- *
- * Parse arguemnts and call 'dump' to perform primary task.
+/*
+ * Parse arguments and call 'dump' to perform primary task.
  */
 int
 main(int ac, char **av)
@@ -122,36 +130,40 @@ main(int ac, char **av)
     int c, optlen, files;
     FILE *fd;
     char *eos;
-    long newoffset;
+    off_t newoffset;
 
     progname = *av;
 
     /* Get # of options & turn all the option flags off */
     optlen = strlen(options);
 
-    for (c=0; c < optlen; c++)  /* NIL */;
-
     /* Turn off bu_getopt's error messages */
     bu_opterr = 0;
 
-    /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != EOF)
-	if (c == 'o') {
-	    newoffset = strtol(bu_optarg, &eos, 0);
+    for (c=0; c < optlen; c++)  /* NIL */;
 
-	    if (eos != bu_optarg)
+    /* get all the option flags from the command line */
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+	if (c != 'o')
+		usage();
+
+	newoffset = strtol(bu_optarg, &eos, 0);
+
+	if (eos != bu_optarg)
 		offset = newoffset;
-	    else
-		fprintf(stderr, "%s: error parsing offset \"%s\"\n",
-			progname, bu_optarg);
-	} else usage();
+	else
+	    fprintf(stderr, "%s: error parsing offset \"%s\"\n",
+		progname, bu_optarg);
+    }
 
     if (offset%DUMPLEN != 0) offset -= offset % DUMPLEN;
 
     if (bu_optind >= ac) {
 	/* no file left, try processing stdin */
-	if (isatty(fileno(stdin))) usage();
-	else dump(stdin);
+	if (isatty(fileno(stdin)))
+		usage();
+
+	dump(stdin);
     } else {
 	/* process each remaining arguments */
 	for (files = ac-bu_optind; bu_optind < ac; bu_optind++) {

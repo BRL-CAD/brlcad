@@ -1,7 +1,7 @@
 /*                     B R E P _ D E B U G . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __BREP_DEBUG
-#define __BREP_DEBUG
+#ifndef LIBRT_PRIMITIVES_BREP_BREP_DEBUG_H
+#define LIBRT_PRIMITIVES_BREP_BREP_DEBUG_H
 
 #include "common.h"
 
@@ -82,7 +82,7 @@ using namespace brlcad;
 #define LIGHTGOLDENROD 238, 221, 130
 #define DARKYELLOW 155, 155, 52
 #define LIGHTYELLOW 255, 255, 224
-#define RED 255, 0, 0
+#define PURERED 255, 0, 0
 #define GREEN 0, 255, 0
 #define BLUE 0, 0, 255
 #define YELLOW 255, 255, 0
@@ -118,6 +118,8 @@ void plotleafuv(BBNode* bb);
 void plottrim(ON_BrepFace &face, struct bn_vlblock *vbp);
 void plottrim(const ON_Curve &curve, double from, double to);
 void plottrim(ON_Curve &curve);
+
+int brep_translate_scv(ON_Brep *brep, int surface_index, int i, int j, fastf_t dx, fastf_t dy, fastf_t dz);
 
 #endif
 /** @} */

@@ -1,7 +1,7 @@
 /*                         T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tree.c
+/** @file libged/tree.c
  *
  * The tree command.
  *
@@ -30,7 +30,7 @@
 #include <limits.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "solid.h"
 
 #include "./ged_private.h"
@@ -40,57 +40,67 @@
  * Return the object hierarchy for all object(s) specified or for all currently displayed
  *
  * Usage:
- *        tree [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]
+ * tree [-a] [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]
  *
  */
 int
 ged_tree(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory	*dp;
-    int		j;
-    int				cflag = 0;
-    int				indentSize = -1;
-    int                         displayDepth = INT_MAX;
-    int				c;
-    FILE			*fdout = NULL;
-    char			*buffer = NULL;
+    struct directory *dp;
+    int j;
+    unsigned flags = 0;
+    int indentSize = -1;
+    int displayDepth = INT_MAX;
+    int c;
+    FILE *fdout = NULL;
+    char *buffer = NULL;
 #define WHOARGVMAX 256
-    char				*whoargv[WHOARGVMAX+1] = {0};
-    static const char *usage = "[-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]";
+    char *whoargv[WHOARGVMAX+1] = {0};
+    static const char *usage = "[-a] [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* Parse options */
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "d:i:o:c")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "d:i:o:ca")) != -1) {
 	switch (c) {
 	    case 'i':
 		indentSize = atoi(bu_optarg);
 		break;
+	    case 'a':
+		flags |= _GED_TREE_AFLAG;
+		break;
 	    case 'c':
-		cflag = 1;
+		flags |= _GED_TREE_CFLAG;
 		break;
 	    case 'o':
-		if ((fdout = fopen(bu_optarg, "w+b")) == NULL) {
-		    bu_vls_printf(&gedp->ged_result_str, "Failed to open output file, %d", errno);
+		if (fdout)
+		    fclose(fdout);
+		fdout = fopen(bu_optarg, "w+b");
+		if (fdout == NULL) {
+		    bu_vls_printf(gedp->ged_result_str, "Failed to open output file, %d", errno);
 		    return GED_ERROR;
 		}
 		break;
 	    case 'd':
 		displayDepth = atoi(bu_optarg);
 		if (displayDepth < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "Negative number supplied as depth - unsupported.");
+		    bu_vls_printf(gedp->ged_result_str, "Negative number supplied as depth - unsupported.");
+		    if (fdout != NULL)
+		      fclose(fdout);
 		    return GED_ERROR;
 		}
 		break;
 	    case '?':
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		if (fdout != NULL)
+		  fclose(fdout);
 		return GED_ERROR;
 	}
     }
@@ -102,8 +112,8 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	char *whocmd[2] = {"who", NULL};
 	if (ged_who(gedp, 1, (const char **)whocmd) == GED_OK) {
-	    buffer = bu_strdup(bu_vls_addr(&gedp->ged_result_str));
-	    bu_vls_trunc(&gedp->ged_result_str, 0);
+	    buffer = bu_strdup(bu_vls_addr(gedp->ged_result_str));
+	    bu_vls_trunc(gedp->ged_result_str, 0);
 
 	    argc += bu_argv_from_string(whoargv, WHOARGVMAX, buffer);
 	}
@@ -116,10 +126,10 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (j > 1)
-	    bu_vls_printf(&gedp->ged_result_str, "\n");
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, next, LOOKUP_NOISY)) == DIR_NULL)
+	    bu_vls_printf(gedp->ged_result_str, "\n");
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
-	_ged_print_node(gedp, dp, 0, indentSize, 0, cflag, displayDepth, 0);
+	_ged_print_node(gedp, dp, 0, indentSize, 0, flags, displayDepth, 0);
     }
 
     if (buffer) {
@@ -128,7 +138,7 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (fdout != NULL) {
-	fprintf(fdout, "%s", bu_vls_addr(&gedp->ged_result_str));
+	fprintf(fdout, "%s", bu_vls_addr(gedp->ged_result_str));
 	fclose(fdout);
     }
 

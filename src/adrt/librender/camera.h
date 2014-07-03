@@ -1,7 +1,7 @@
 /*                        C A M E R A . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,23 +17,23 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file camera.h
+/** @file librender/camera.h
  *
  */
 
-#ifndef _RENDER_CAMERA_H
-#define _RENDER_CAMERA_H
+#ifndef ADRT_LIBRENDER_CAMERA_H
+#define ADRT_LIBRENDER_CAMERA_H
 
 #include "tie.h"
 #include "adrt.h"
 #include "render.h"
 
-#define	RENDER_CAMERA_DOF_SAMPLES	13
+#define RENDER_CAMERA_DOF_SAMPLES	13
 #define RENDER_CAMERA_PERSPECTIVE	0x0
 #define RENDER_CAMERA_ORTHOGRAPHIC	0x1
-#define	RENDER_CAMERA_BGR		0.00
-#define	RENDER_CAMERA_BGG		0.05
-#define	RENDER_CAMERA_BGB		0.15
+#define RENDER_CAMERA_BGR		0.00
+#define RENDER_CAMERA_BGG		0.05
+#define RENDER_CAMERA_BGB		0.15
 
 #define RENDER_CAMERA_BIT_DEPTH_24	0
 #define RENDER_CAMERA_BIT_DEPTH_128	1
@@ -41,18 +41,18 @@
 
 typedef struct render_camera_view_s
 {
-    TIE_3 step_x;
-    TIE_3 step_y;
-    TIE_3 pos;
-    TIE_3 top_l;
+    vect_t step_x;
+    vect_t step_y;
+    vect_t pos;
+    vect_t top_l;
 } render_camera_view_t;
 
 
 typedef struct render_camera_s
 {
     uint8_t type;
-    TIE_3 pos;
-    TIE_3 focus;
+    point_t pos;
+    vect_t focus;
     fastf_t tilt;
     fastf_t fov;
     fastf_t gridsize;
@@ -82,23 +82,23 @@ typedef struct camera_tile_s
 typedef struct render_camera_thread_data_s
 {
     render_camera_t *camera;
-    tie_t *tie;
+    struct tie_s *tie;
     camera_tile_t *tile;
     void *res_buf;
     unsigned int *scanline;
 } render_camera_thread_data_t;
 
 
-BU_EXPORT BU_EXTERN(void render_camera_init, (render_camera_t *camera, int threads));
-BU_EXPORT BU_EXTERN(void render_camera_free, (render_camera_t *camera));
-BU_EXPORT BU_EXTERN(void render_camera_prep, (render_camera_t *camera));
-BU_EXPORT BU_EXTERN(void render_camera_render, (render_camera_t *camera, tie_t *tie, camera_tile_t *tile, tienet_buffer_t *result));
+BU_EXPORT extern void render_camera_init(render_camera_t *camera, int threads);
+BU_EXPORT extern void render_camera_free(render_camera_t *camera);
+BU_EXPORT extern void render_camera_prep(render_camera_t *camera);
+BU_EXPORT extern void render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result);
 
-BU_EXPORT BU_EXTERN(int render_shader_init, (render_t *, const char *name, const char *buf));
-BU_EXPORT BU_EXTERN(const char *render_shader_load_plugin, (const char *filename));
+BU_EXPORT extern int render_shader_init(render_t *, const char *name, const char *buf);
+BU_EXPORT extern const char *render_shader_load_plugin(const char *filename);
 /* r is passed in so something ... sane(?) can be done if the shader being
  * unloaded is in use. */
-BU_EXPORT BU_EXTERN(int render_shader_unload_plugin, (render_t *r, const char *name));
+BU_EXPORT extern int render_shader_unload_plugin(render_t *r, const char *name);
 
 #endif
 

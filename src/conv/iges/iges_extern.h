@@ -1,7 +1,7 @@
 /*                   I G E S _ E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,16 +17,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file iges_extern.h
- *
- */
 
-#define		CARDLEN		71 /* length of data portion in Global records */
-#define		PARAMLEN	63 /* length of data portion in Parameter records */
+#ifndef CONV_IGES_IGES_EXTERN_H
+#define CONV_IGES_IGES_EXTERN_H
+
+#define CARDLEN 71 /* length of data portion in Global records */
+#define PARAMLEN 63 /* length of data portion in Parameter records */
 
 extern int do_projection;
-extern char eor; /* IGES end of record delimeter */
-extern char eof; /* IGES end of field delimeter */
+extern char eor; /* IGES end of record delimiter */
+extern char eof; /* IGES end of field delimiter */
 extern char card[256]; /* input buffer, filled by readrec */
 extern fastf_t scale, inv_scale; /* IGES file scale factor and inverse */
 extern fastf_t conv_factor; /* Conversion factor from IGES file units to mm */
@@ -51,7 +51,7 @@ extern struct iges_directory **dir; /* Directory array */
 extern struct reglist *regroot; /* list of regions created from solids of revolution */
 extern struct types typecount[]; /* Count of how many entities of each type actually
 				    appear in the IGES file */
-extern char operator[]; /* characters representing operators: 'u', '+', and '-' */
+extern char operators[]; /* characters representing operators: 'u', '+', and '-' */
 extern struct iges_edge_list *edge_root;
 extern struct iges_vertex_list *vertex_root;
 extern struct bn_tol tol;
@@ -59,6 +59,8 @@ extern char *solid_name;
 extern struct file_list *curr_file;
 extern struct file_list iges_list;
 extern struct name_list *name_root;
+
+#endif /* CONV_IGES_IGES_EXTERN_H */
 
 /*
  * Local Variables:

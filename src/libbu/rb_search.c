@@ -1,7 +1,7 @@
 /*                     R B _ S E A R C H . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -26,14 +24,11 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
-
+#include "bu/rb.h"
 #include "./rb_internals.h"
 
 
 /**
- * _ R B _ S E A R C H ()
- *
  * Search for a node in a red-black tree
  *
  * This function has four parameters: the root and order of the tree
@@ -43,50 +38,49 @@
  * (tree->rbt_empty_node).
  */
 HIDDEN struct bu_rb_node *
-_rb_search(struct bu_rb_node *root, int order_nm, int (*order) (/* ??? */), void *data)
+_rb_search(struct bu_rb_node *root, int order_nm, int (*compare)(const void *, const void *), void *data)
 {
     int result;
-    bu_rb_tree *tree;
+    struct bu_rb_tree *tree;
 
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     tree = root->rbn_tree;
     RB_CKORDER(tree, order_nm);
 
     while (1) {
-	if (root == rb_null(root->rbn_tree))
+	if (root == RB_NULL(root->rbn_tree))
 	    break;
-	if ((result = (*order)(data, rb_data(root, order_nm))) == 0)
+	if ((result = compare(data, RB_DATA(root, order_nm))) == 0)
 	    break;
 	else if (result < 0)
-	    root = rb_left_child(root, order_nm);
+	    root = RB_LEFT_CHILD(root, order_nm);
 	else	/* result > 0 */
-	    root = rb_right_child(root, order_nm);
+	    root = RB_RIGHT_CHILD(root, order_nm);
 	BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     }
-    rb_current(tree) = root;
+    RB_CURRENT(tree) = root;
     return root;
 }
 
 
-void *bu_rb_search (bu_rb_tree *tree, int order, void *data)
+void *
+bu_rb_search (struct bu_rb_tree *tree, int order, void *data)
 {
 
-    int (*compare)();
+    int (*compare)(const void *, const void *);
     struct bu_rb_node *node;
 
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
 
-    compare = rb_order_func(tree, order);
-    node = _rb_search(rb_root(tree, order), order, compare, data);
-    if (node == rb_null(tree))
+    compare = RB_COMPARE_FUNC(tree, order);
+    node = _rb_search(RB_ROOT(tree, order), order, compare, data);
+    if (node == RB_NULL(tree))
 	return NULL;
     else
-	return rb_data(node, order);
+	return RB_DATA(node, order);
 }
 
-
-/** @} */
 
 /*
  * Local Variables:

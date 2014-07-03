@@ -10,8 +10,27 @@
 
 #include "common.h"
 
+/* quell warnings */
+#if defined(HAVE_WUNUSED_CONST_VARIABLE)
+#  if HAVE_GCC_DIAG_PRAGMAS
+#    pragma GCC diagnostic push /* begin ignoring warnings */
+#    pragma GCC diagnostic ignored "-Wunused-const-variable"
+#  elif HAVE_CLANG_DIAG_PRAGMAS
+#    pragma clang diagnostic push /* begin ignoring warnings */
+#    pragma clang diagnostic ignored "-Wunused-const-variable"
+#  endif
+#endif
+
 /* quell empty-compilation unit warnings */
 static const int unused = 0;
+
+#if defined(HAVE_WUNUSED_CONST_VARIABLE)
+#  if HAVE_GCC_DIAG_PRAGMAS
+#    pragma GCC diagnostic pop /* end ignoring warnings */
+#  elif HAVE_CLANG_DIAG_PRAGMAS
+#    pragma clang diagnostic pop /* end ignoring warnings */
+#  endif
+#endif
 
 /*
  *  This public domain version of strtok() made available to systems that
@@ -25,7 +44,7 @@ static char *scanpoint = 0;
 /**
  * Get next token from string s (0 on 2nd, 3rd, etc. calls),
  * where tokens are nonempty strings separated by runs of
- * chars from delim.  Writes NULs into s to end tokens.  delim need not
+ * chars from delim.  Writes NULLs into s to end tokens.  delim need not
  * remain constant from call to call.
  */
 char *				/* 0 if no token left */

@@ -1,7 +1,7 @@
 /*                         P A T H L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pathlist.c
+/** @file libged/pathlist.c
  *
  * The pathlist command.
  *
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -36,14 +36,8 @@
 static int pathListNoLeaf = 0;
 
 
-/*
- *			P A T H L I S T _ L E A F _ F U N C
- */
 static union tree *
-ged_pathlist_leaf_func(struct db_tree_state	*tsp,
-		       const struct db_full_path *pathp,
-		       struct rt_db_internal	*ip,
-		       genptr_t			client_data)
+pathlist_leaf_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
     struct ged *gedp = (struct ged *)client_data;
     char *str;
@@ -57,14 +51,14 @@ ged_pathlist_leaf_func(struct db_tree_state	*tsp,
 	db_dup_full_path(&pp, pathp);
 	--pp.fp_len;
 	str = db_path_to_string(&pp);
-	bu_vls_printf(&gedp->ged_result_str, " %s", str);
+	bu_vls_printf(gedp->ged_result_str, " %s", str);
 	db_free_full_path(&pp);
     } else {
 	str = db_path_to_string(pathp);
-	bu_vls_printf(&gedp->ged_result_str, " %s", str);
+	bu_vls_printf(gedp->ged_result_str, " %s", str);
     }
 
-    bu_free((genptr_t)str, "path string");
+    bu_free((void *)str, "path string");
     return TREE_NULL;
 }
 
@@ -78,23 +72,23 @@ ged_pathlist(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (3 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     pathListNoLeaf = 0;
 
     if (argc == 3) {
-	if (!strcmp(argv[1], "-noleaf"))
+	if (BU_STR_EQUAL(argv[1], "-noleaf"))
 	    pathListNoLeaf = 1;
 
 	++argv;
@@ -103,8 +97,8 @@ ged_pathlist(struct ged *gedp, int argc, const char *argv[])
 
     if (db_walk_tree(gedp->ged_wdbp->dbip, argc-1, (const char **)argv+1, 1,
 		     &gedp->ged_wdbp->wdb_initial_tree_state,
-		     0, 0, ged_pathlist_leaf_func, (genptr_t)gedp) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_pathlist: db_walk_tree() error");
+		     0, 0, pathlist_leaf_func, (void *)gedp) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "ged_pathlist: db_walk_tree() error");
 	return GED_ERROR;
     }
 

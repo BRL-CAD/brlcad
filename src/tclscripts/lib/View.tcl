@@ -1,7 +1,7 @@
 #                        V I E W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2010 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used.
+# Use the Ged widget instead.
+#####################################################################
+
 #
 # Description -
 #	The View class wraps LIBRT's view object.
@@ -115,6 +121,9 @@
 }
 
 ::itcl::body View::constructor {args} {
+
+    puts "DEPRECATION WARNING: The View widget should no longer be used.  Use the Ged widget instead."
+
     # first create view object
     set view [v_open $this\_view]
 
@@ -441,7 +450,7 @@
     $help add ae2dir		{{[-i] az el} {return the view direction}}
     $help add arot		{{x y z angle} {rotate about axis x,y,z by angle (degrees)}}
     $help add center		{{["x y z"]} {set/get the view center}}
-    $help add coord		{{[m|v]} {set/get the coodinate system}}
+    $help add coord		{{[m|v]} {set/get the coordinate system}}
     $help add eye		{{mx my mz} {set eye point to given model coordinates}}
     $help add eye_pos		{{mx my mz} {set eye position to given model coordinates}}
     $help add invSize		{{} {returns the inverse of view size}}

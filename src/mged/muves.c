@@ -1,7 +1,7 @@
 /*                         M U V E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file muves.c
+/** @file mged/muves.c
  *
  * Routines to support viewing of BRL-CAD models by using MUVES
  * component/system names
@@ -44,7 +44,7 @@
 #include "./sedit.h"
 
 /* defined in chgview.c */
-extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
+extern int edit_com(int argc, const char *argv[], int kind);
 
 /* Maximum line length allowed for MUVES input files */
 #define MUVES_LINE_LEN 256
@@ -101,7 +101,7 @@ struct muves_sys
 static char *regionmap_delims=" \t";
 static char *sysdef_delims=" \t\n@?!~&-^><|*+";
 
-static struct muves_sys muves_sys_head = { 
+static struct muves_sys muves_sys_head = {
     {BU_LIST_HEAD_MAGIC, &muves_sys_head.l, &muves_sys_head.l}, /* l */
     (char *)NULL,  /* muves_name */
     {
@@ -110,7 +110,7 @@ static struct muves_sys muves_sys_head = {
 	{NULL} /* member_head.mem */
     }
 };
-static struct muves_comp muves_comp_head = { 
+static struct muves_comp muves_comp_head = {
     {BU_LIST_HEAD_MAGIC, &muves_comp_head.l, &muves_comp_head.l}, /* l */
     (char *)NULL, /* muves_name */
     {
@@ -164,8 +164,6 @@ Free_muves_comp(struct bu_list *hp)
 
 
 /*
- * F _ R E A D _ M U V E S
- *
  * routine to read MUVES input files and create structures to hold the data
  */
 int
@@ -185,10 +183,11 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
     CHECK_DBI_NULL;
 
-    if (argc < 2 || argc > 3) {
-	struct bu_vls vls;
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n");
 
-	bu_vls_init(&vls);
+    if (argc < 2 || argc > 3) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -208,7 +207,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
     /* count the number of regions in the model */
     FOR_ALL_DIRECTORY_START(dp, dbip) {
-	if (!(dp->d_flags & DIR_REGION))
+	if (!(dp->d_flags & RT_DIR_REGION))
 	    continue;
 	reg_count++;
     } FOR_ALL_DIRECTORY_END;
@@ -220,7 +219,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
     reg_count =  0;
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {
-	if (!(dp->d_flags & DIR_REGION))
+	if (!(dp->d_flags & RT_DIR_REGION))
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -268,7 +267,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
 	    c = ptr;
 	    while (*c != '\0') {
-		if (isalpha(*c)) {
+		if (isalpha((int)*c)) {
 		    size_t length;
 
 		    /* found a new component name, save the old one */
@@ -278,13 +277,13 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
 		    /* check if this component name already exists */
 		    for (BU_LIST_FOR(new_comp, muves_comp, &muves_comp_head.l)) {
-			if (!strcmp(ptr, new_comp->muves_name))
+			if (BU_STR_EQUAL(ptr, new_comp->muves_name))
 			    break;
 		    }
 
 		    /* if name doesn't exist, create a new list */
 		    if (BU_LIST_IS_HEAD(&new_comp->l, &muves_comp_head.l)) {
-			new_comp = (struct muves_comp *)bu_malloc(sizeof(struct muves_comp), "new_comp");
+			BU_ALLOC(new_comp, struct muves_comp);
 			BU_LIST_INIT(&new_comp->l);
 			length = strlen(ptr);
 			new_comp->muves_name = (char *)bu_malloc(length+1, "muves_comp.name");
@@ -327,7 +326,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 		    continue;
 
 		/* this region is part of the current MUVES component */
-		comp = (struct cad_comp_list *)bu_malloc(sizeof(struct cad_comp_list), "comp");
+		BU_ALLOC(comp, struct cad_comp_list);
 		comp->dp = regions[i].dp;
 		BU_LIST_INSERT(&new_comp->comp_head.l, &comp->l);
 	    }
@@ -365,7 +364,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	char *equal_sign=(char *)NULL;
 
 	i = 0;
-	while (isspace(line[i]) && line[i] != '\0')
+	while (isspace((int)line[i]) && line[i] != '\0')
 	    i++;
 	if (line[i] == '#')	/* comment */
 	    continue;
@@ -393,14 +392,14 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
 	    /* mark end of system name */
 	    j = i;
-	    while (line[j] != '\0' && !isspace(line[j]))
+	    while (line[j] != '\0' && !isspace((int)line[j]))
 		j++;
 	    line[j] = '\0';
 
 	    /* look for system name in existing list */
 	    new_sys = (struct muves_sys *)NULL;
 	    for (BU_LIST_FOR(sys, muves_sys, &muves_sys_head.l)) {
-		if (!strcmp(&line[i], sys->muves_name)) {
+		if (BU_STR_EQUAL(&line[i], sys->muves_name)) {
 		    /* found system already existing */
 		    new_sys = sys;
 		    break;
@@ -411,7 +410,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 		size_t length;
 
 		/* need to create a new system */
-		new_sys = (struct muves_sys *)bu_malloc(sizeof(struct muves_sys), "new_sys");
+		BU_ALLOC(new_sys, struct muves_sys);
 		length = strlen(&line[i]);
 		new_sys->muves_name = (char *)bu_malloc(length+1, "new_sys->muves_name");
 		bu_strlcpy(new_sys->muves_name, &line[i], length+1);
@@ -459,7 +458,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	    c = ptr;
 	    is_constant = 1;
 	    while (*c != '\0') {
-		if (isalpha(*c)) {
+		if (isalpha((int)*c)) {
 		    is_constant = 0;
 		    break;
 		}
@@ -479,11 +478,11 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	    for (BU_LIST_FOR(member, member_list, &new_sys->member_head.l)) {
 		switch (member->object_type) {
 		    case MUVES_COMPONENT:   /* component */
-			if (!strcmp(ptr, member->mem.comp->muves_name))
+			if (BU_STR_EQUAL(ptr, member->mem.comp->muves_name))
 			    already_member = 1;
 			break;
 		    case MUVES_SYSTEM:      /* system */
-			if (!strcmp(ptr, member->mem.sys->muves_name))
+			if (BU_STR_EQUAL(ptr, member->mem.sys->muves_name))
 			    already_member = 1;
 			break;
 		    default:
@@ -499,10 +498,10 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 		continue;
 	    }
 
-	    member = (struct member_list *)bu_malloc(sizeof(struct member_list), "member");
+	    BU_ALLOC(member, struct member_list);
 	    member->object_type = MUVES_TYPE_UNKNOWN;
 	    for (BU_LIST_FOR(sys, muves_sys, &muves_sys_head.l)) {
-		if (!strcmp(ptr, sys->muves_name)) {
+		if (BU_STR_EQUAL(ptr, sys->muves_name)) {
 		    /* found a matching system name */
 		    member->object_type = MUVES_SYSTEM;
 		    member->mem.sys = sys;
@@ -513,7 +512,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	    if (member->object_type == MUVES_TYPE_UNKNOWN) {
 		/* look for a matching component */
 		for (BU_LIST_FOR(comp, muves_comp, &muves_comp_head.l)) {
-		    if (!strcmp(ptr, comp->muves_name)) {
+		    if (BU_STR_EQUAL(ptr, comp->muves_name)) {
 			/* found a matching component */
 			member->object_type = MUVES_COMPONENT;
 			member->mem.comp = comp;
@@ -533,6 +532,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	}
 
     }
+    fclose(muves_in);
     return TCL_OK;
 }
 
@@ -580,8 +580,6 @@ Display_muves_sys(struct muves_sys *sys, int *e_argc, char ***e_argv, int *e_arg
 
 
 /*
- * F _ E _ M U V E S
- *
  * routine to display regions using MUVES component names
  */
 
@@ -596,6 +594,8 @@ f_e_muves(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int argc, c
     int e_argv_len=0;
     char *e_comm="e";
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n");
+
     e_argv = (char **)bu_malloc(E_ARGV_BLOCK_LEN * sizeof(char *), "e_argv");
     e_argv_len = E_ARGV_BLOCK_LEN;
     e_argv[0] = e_comm;
@@ -605,21 +605,21 @@ f_e_muves(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int argc, c
     for (i=1; i<argc; i++) {
 	/* look in list of MUVES components */
 	for (BU_LIST_FOR(comp, muves_comp, &muves_comp_head.l)) {
-	    if (!strcmp(argv[i], comp->muves_name))
+	    if (BU_STR_EQUAL(argv[i], comp->muves_name))
 		Display_muves_comp(comp,
 				   &e_argc, &e_argv, &e_argv_len);
 	}
 
 	/* look in list of MUVES systems */
 	for (BU_LIST_FOR(sys, muves_sys, &muves_sys_head.l)) {
-	    if (!strcmp(argv[i], sys->muves_name))
+	    if (BU_STR_EQUAL(argv[i], sys->muves_name))
 		Display_muves_sys(sys,
 				  &e_argc, &e_argv, &e_argv_len);
 	}
     }
 
     if (e_argc > 1)
-	return edit_com(e_argc, (const char **)e_argv, 1, 0);
+	return edit_com(e_argc, (const char **)e_argv, 1);
 
     bu_free((char *)e_argv, "e_argv");
 
@@ -627,14 +627,15 @@ f_e_muves(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int argc, c
 }
 
 
-/* F _ L _ M U V E S
- *
- * routine to list the muves comoponents
+/*
+ * routine to list the muves components
  */
 int
 f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int i;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n");
 
     if (BU_LIST_IS_EMPTY(&muves_comp_head.l) && BU_LIST_IS_EMPTY(&muves_sys_head.l)) {
 	Tcl_AppendResult(interp, "No MUVES components known, use 'read_muves' command\n", (char *)NULL);
@@ -646,7 +647,7 @@ f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	struct muves_sys *sys;
 
 	for (BU_LIST_FOR(comp, muves_comp, &muves_comp_head.l)) {
-	    if (!strcmp(argv[i], comp->muves_name)) {
+	    if (BU_STR_EQUAL(argv[i], comp->muves_name)) {
 		struct cad_comp_list *cad;
 		int member_count;
 		char count_str[32];
@@ -664,7 +665,7 @@ f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	}
 
 	for (BU_LIST_FOR(sys, muves_sys, &muves_sys_head.l)) {
-	    if (!strcmp(argv[i], sys->muves_name)) {
+	    if (BU_STR_EQUAL(argv[i], sys->muves_name)) {
 		struct member_list *member;
 		int member_count;
 		char count_str[32];
@@ -701,15 +702,16 @@ f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 }
 
 
-/* F _ T _ M U V E S
- *
- * routine to list the muves comoponents
+/*
+ * routine to list the muves components
  */
 int
 f_t_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     struct muves_comp *comp;
     struct muves_sys *sys;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n");
 
     for (BU_LIST_FOR(comp, muves_comp, &muves_comp_head.l))
 	Tcl_AppendResult(interp, "\t", comp->muves_name, " (component)\n", (char *)NULL);

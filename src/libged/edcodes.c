@@ -1,7 +1,7 @@
 /*                         E D C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file edcodes.c
+/** @file libged/edcodes.c
  *
  * The edcodes command.
  *
@@ -30,6 +30,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
+#include "bu/sort.h"
 #include "./ged_private.h"
 
 
@@ -39,7 +41,7 @@
 
 
 HIDDEN int
-edcodes_id_compare(const void *p1, const void *p2)
+edcodes_id_compare(const void *p1, const void *p2, void *UNUSED(arg))
 {
     int id1, id2;
 
@@ -51,21 +53,21 @@ edcodes_id_compare(const void *p1, const void *p2)
 
 
 HIDDEN int
-edcodes_reg_compare(const void *p1, const void *p2)
+edcodes_reg_compare(const void *p1, const void *p2, void *UNUSED(arg))
 {
     char *reg1, *reg2;
 
     reg1 = strchr(*(char **)p1, '/');
     reg2 = strchr(*(char **)p2, '/');
 
-    return strcmp(reg1, reg2);
+    return bu_strcmp(reg1, reg2);
 }
 
 
 HIDDEN int edcodes_collect_regnames(struct ged *, struct directory *, int);
 
 HIDDEN void
-edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
+edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4))
 {
     int ret;
     int *pathpos;
@@ -75,14 +77,14 @@ edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), 
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     pathpos = (int *)user_ptr1;
     gedp = (struct ged *)user_ptr2;
 
     /* recurse on combinations */
-    if (nextdp->d_flags & DIR_COMB) {
+    if (nextdp->d_flags & RT_DIR_COMB) {
 	int *status = (int *)user_ptr3;
 	ret = edcodes_collect_regnames(gedp, nextdp, (*pathpos)+1);
 	if (status && ret == EDCODES_HALT)
@@ -104,7 +106,7 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
 
     if ((id=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
 			       (matp_t)NULL, &rt_uniresource)) < 0) {
-	bu_vls_printf(&gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "Cannot get records for %s\n", dp->d_namep);
 	return EDCODES_NOTOK;
     }
@@ -118,13 +120,13 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
     RT_CK_COMB(comb);
 
     if (comb->region_flag) {
-	bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, " %s", dp->d_namep);
 	intern.idb_meth->ft_ifree(&intern);
 	return EDCODES_OK;
     }
 
     if (comb->tree) {
-	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node, (genptr_t)&pathpos, (genptr_t)gedp, (genptr_t)&status);
+	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node, (void *)&pathpos, (void *)gedp, (void *)&status, (void *)NULL);
     }
 
     intern.idb_meth->ft_ifree(&intern);
@@ -149,41 +151,27 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     char tmpfil[MAXPATHLEN] = {0};
     const char *editstring = NULL;
 
-    static const char *usage = "[-i|-n|-r] object(s)";
+    static const char *usage = "[-i|-n|-r|-E editor] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    /* First, grab the editstring off of the argv list */
-    
-    bu_optind = 1;
-    /* First, grab the editstring off of the argv list */
-    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != EOF) {
-	switch (c) {
-	    case 'E' :
-	    	editstring = bu_optarg;
-		break;
-	    default :
-		break;
-	}
-    }
-
-    argc -= bu_optind - 1;
-    argv += bu_optind - 1;
-
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "inr")) != EOF) {
-	switch(c) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "E:inr")) != -1) {
+	switch (c) {
+	    case 'E' :
+		editstring = bu_optarg;
+		break;
 	    case 'i':
 		sort_by_ident = 1;
 		break;
@@ -197,23 +185,23 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     }
 
     if ((nflag + sort_by_ident + sort_by_region) > 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
+    argc -= bu_optind - 1;
+    argv += bu_optind - 1;
 
     if (nflag) {
 	struct directory *dp;
 
 	for (i = 1; i < argc; ++i) {
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
+	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 		status = edcodes_collect_regnames(gedp, dp, 0);
 
 		if (status != EDCODES_OK) {
 		    if (status == EDCODES_HALT)
-			bu_vls_printf(&gedp->ged_result_str, "%s: nesting is too deep\n", argv[0]);
+			bu_vls_printf(gedp->ged_result_str, "%s: nesting is too deep\n", argv[0]);
 
 		    return GED_ERROR;
 		}
@@ -235,13 +223,13 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
     av[i] = NULL;
 
+    (void)fclose(fp);
+
     if (ged_wcodes(gedp, argc + 1, (const char **)av) == GED_ERROR) {
-	(void)unlink(tmpfil);
-	bu_free((genptr_t)av, "ged_edcodes av");
+	bu_file_delete(tmpfil);
+	bu_free((void *)av, "ged_edcodes av");
 	return GED_ERROR;
     }
-
-    (void)fclose(fp);
 
     if (sort_by_ident || sort_by_region) {
 	char **line_array;
@@ -251,8 +239,8 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	int j;
 
 	if ((f_srt=fopen(tmpfil, "r+")) == NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Failed to open temp file for sorting\n", argv[0]);
-	    (void)unlink(tmpfil);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Failed to open temp file for sorting\n", argv[0]);
+	    bu_file_delete(tmpfil);
 	    return GED_ERROR;
 	}
 
@@ -274,14 +262,14 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
 	/* sort the array of lines */
 	if (sort_by_ident) {
-	    qsort(line_array, line_count, sizeof(char *), edcodes_id_compare);
+	    bu_sort((void *)line_array, line_count, sizeof(char *), edcodes_id_compare, NULL);
 	} else {
-	    qsort(line_array, line_count, sizeof(char *), edcodes_reg_compare);
+	    bu_sort((void *)line_array, line_count, sizeof(char *), edcodes_reg_compare, NULL);
 	}
 
 	/* rewrite the temp file using the sorted lines */
 	rewind(f_srt);
-	for (j=0; j<line_count; j++) {
+	for (j = 0; j < line_count; j++) {
 	    fprintf(f_srt, "%s", line_array[j]);
 	    bu_free(line_array[j], "ged_edcodes line array element");
 	}
@@ -296,8 +284,8 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     } else
 	status = GED_ERROR;
 
-    unlink(tmpfil);
-    bu_free((genptr_t)av, "ged_edcodes av");
+    bu_file_delete(tmpfil);
+    bu_free((void *)av, "ged_edcodes av");
     return status;
 }
 

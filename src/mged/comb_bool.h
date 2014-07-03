@@ -1,7 +1,7 @@
 /*                     C O M B _ B O O L . H
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,13 +17,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file comb_bool.h
+/** @file mged/comb_bool.h
  *
  */
 
+#ifndef MGED_COMB_BOOL_H
+#define MGED_COMB_BOOL_H
+
 struct bool_tree_node
 {
-    long btn_magic;
+    uint32_t btn_magic;
     int btn_opn;
     union {
 	char *leaf_name;
@@ -48,7 +51,7 @@ struct bool_tree_node
 
 struct tree_tail
 {
-    long tt_magic;
+    uint32_t tt_magic;
     int tt_opn;
     struct tree_tail *tt_next;
 };
@@ -60,8 +63,7 @@ struct tree_tail
 
 extern struct bool_tree_node *comb_bool_tree;
 
-/* T A L L O C ()
- *
+/*
  * Simple interface to malloc()
  *
  * This macro has three parameters:  a pointer, a C data type,
@@ -75,10 +77,6 @@ extern struct bool_tree_node *comb_bool_tree;
 		    __FILE__, __LINE__);                                \
 	    bu_exit(1, NULL);                                           \
 	}
-
-/*
- *
- */
 
 extern struct bool_tree_node *bt_create_internal (int, struct bool_tree_node *, struct bool_tree_node *);
 extern struct bool_tree_node *bt_create_leaf (char*);
@@ -95,6 +93,8 @@ extern void show_gift_bool (struct bool_tree_node *, int);
     } else {							\
 	show_tree_infix((t), 0);				\
     }
+
+#endif /* MGED_COMB_BOOL_H */
 
 /*
  * Local Variables:

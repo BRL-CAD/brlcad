@@ -1,7 +1,7 @@
 /*                          G L O B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #include <math.h>
 #include <assert.h>
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -96,12 +97,12 @@ fastf_t	modl_radius;		/* Radius of model (bounding sphere).	*/
 fastf_t	modl_cntr[3];
 
 /* Conversion degrees to radians.					*/
-fastf_t	degtorad = 0.0174532925;
+fastf_t	degtorad = DEG2RAD;
 
 /* Translations of grid in plane of view.				*/
 fastf_t	x_grid_offset = 0.0, y_grid_offset = 0.0;
 
-/* Distance of grid from the model centroid measured in milimeters.	*/
+/* Distance of grid from the model centroid measured in millimeters.	*/
 fastf_t	grid_dist = 0.0;
 
 /* Rotation of grid around viewing axis (radians).			*/
@@ -152,8 +153,6 @@ int query_region = false;	/* If (true) spit out region info.	*/
 int report_overlaps = true;	/* If (false) shut-up about overlaps.	*/
 int reverse_video = false;	/* If (true) HL drawing white-on-black.	*/
 int save_view_flag = false;	/* View specified in "model2view".	*/
-int sgi_console = false;	/* Logged in to IRIS console.		*/
-int sgi_usemouse = false;	/* User wants to use the IRIS mouse.	*/
 int shadowing = true;		/* If (false) no shadows are computed.	*/
 int tracking_cursor=false;	/* Cursor is on by default.		*/
 int tty;			/* Is input attached to a terminal.	*/

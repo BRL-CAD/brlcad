@@ -1,7 +1,7 @@
 /*                          H A S H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,16 +25,15 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/magic.h"
+#include "bu/hash.h"
 
 unsigned long
-bu_hash(unsigned char *str, int len)
+bu_hash(const unsigned char *str, int len)
 {
     unsigned long hash = 5381;
     int i, c;
 
-    c = *str;
     for (i=0; i<len; i++) {
 	c = *str;
 	hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
@@ -46,7 +45,7 @@ bu_hash(unsigned char *str, int len)
 
 
 struct bu_hash_tbl *
-bu_create_hash_tbl(unsigned long tbl_size)
+bu_hash_tbl_create(unsigned long tbl_size)
 {
     struct bu_hash_tbl *hsh_tbl;
     unsigned long power_of_two=64;
@@ -92,9 +91,8 @@ bu_create_hash_tbl(unsigned long tbl_size)
     return hsh_tbl;
 }
 
-
 struct bu_hash_entry *
-bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
+bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl, const unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
 {
     struct bu_hash_entry *hsh_entry=NULL;
     int found=0;
@@ -116,7 +114,7 @@ bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
 	*prev = NULL;
 	hsh_entry = hsh_tbl->lists[*idx];
 	while (hsh_entry) {
-	    unsigned char *c1, *c2;
+	    const unsigned char *c1, *c2;
 	    int i;
 
 	    /* compare key lengths first for performance */
@@ -169,7 +167,7 @@ bu_set_hash_value(struct bu_hash_entry *hsh_entry, unsigned char *value)
 
 
 unsigned char *
-bu_get_hash_value(struct bu_hash_entry *hsh_entry)
+bu_get_hash_value(const struct bu_hash_entry *hsh_entry)
 {
     BU_CK_HASH_ENTRY(hsh_entry);
 
@@ -178,7 +176,7 @@ bu_get_hash_value(struct bu_hash_entry *hsh_entry)
 
 
 unsigned char *
-bu_get_hash_key(struct bu_hash_entry *hsh_entry)
+bu_get_hash_key(const struct bu_hash_entry *hsh_entry)
 {
     BU_CK_HASH_ENTRY(hsh_entry);
 
@@ -187,7 +185,7 @@ bu_get_hash_key(struct bu_hash_entry *hsh_entry)
 
 
 struct bu_hash_entry *
-bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, int *new_entry)
+bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl, const unsigned char *key, int key_len, int *new_entry)
 {
     struct bu_hash_entry *hsh_entry, *prev;
     unsigned long idx;
@@ -199,7 +197,7 @@ bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, 
      * get the hash bin index for this key.
      * find the previous entry to link the new one to.
      */
-    hsh_entry = bu_find_hash_entry(hsh_tbl, key, key_len, &prev, &idx);
+    hsh_entry = bu_hash_tbl_find(hsh_tbl, key, key_len, &prev, &idx);
 
     if (hsh_entry) {
 	/* this key is already in the table, return the entry, with
@@ -239,7 +237,7 @@ bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, 
 
 
 void
-bu_hash_tbl_pr(struct bu_hash_tbl *hsh_tbl, char *str)
+bu_hash_tbl_printint(const struct bu_hash_tbl *hsh_tbl, const char *str)
 {
     unsigned long idx;
     struct bu_hash_entry *hsh_entry;
@@ -281,7 +279,7 @@ bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl)
 	    free(hsh_entry->key);
 	    free(hsh_entry);
 
-	    /* step to next entry in libnked list */
+	    /* step to next entry in linked list */
 	    hsh_entry = tmp;
 	}
     }
@@ -295,7 +293,7 @@ bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl)
 
 
 struct bu_hash_entry *
-bu_hash_tbl_first(struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
+bu_hash_tbl_first(const struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
 {
     BU_CK_HASH_TBL(hsh_tbl);
 
@@ -328,7 +326,7 @@ bu_hash_tbl_first(struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
 struct bu_hash_entry *
 bu_hash_tbl_next(struct bu_hash_record *rec)
 {
-    struct bu_hash_tbl *hsh_tbl;
+    const struct bu_hash_tbl *hsh_tbl;
 
     BU_CK_HASH_RECORD(rec);
     hsh_tbl = rec->tbl;
@@ -355,6 +353,25 @@ bu_hash_tbl_next(struct bu_hash_record *rec)
     /* no more entries, return NULL */
     return (struct bu_hash_entry *)NULL;
 }
+
+struct bu_hash_entry *
+bu_hash_tbl_traverse(struct bu_hash_tbl *hsh_tbl, int (*func)(struct bu_hash_entry *, void *), void *func_arg)
+{
+    int ret;
+    struct bu_hash_record rec;
+    struct bu_hash_entry *entry;
+
+    entry = bu_hash_tbl_first(hsh_tbl, &rec);
+    while (entry) {
+	ret = func(entry, func_arg);
+	if (ret) {
+	    return entry;
+	}
+	entry = bu_hash_tbl_next(&rec);
+    }
+    return NULL;
+}
+
 
 /*
  * Local Variables:

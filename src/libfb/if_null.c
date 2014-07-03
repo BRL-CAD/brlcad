@@ -1,7 +1,7 @@
 /*                       I F _ N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,13 +32,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "bu/log.h"
 #include "fb.h"
 
 
 HIDDEN int
-null_open(FBIO *ifp, char *UNUSED(file), int width, int height)
+null_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
 {
     FB_CK_FBIO(ifp);
+
     if (width > 0)
 	ifp->if_width = width;
     if (height > 0)
@@ -66,21 +68,21 @@ null_clear(FBIO *ifp, unsigned char *UNUSED(pp))
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 null_read(FBIO *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FBIO(ifp);
 
-    return (int)count;
+    return count;
 }
 
 
-HIDDEN int
+HIDDEN ssize_t
 null_write(FBIO *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FBIO(ifp);
 
-    return (int)count;
+    return count;
 }
 
 

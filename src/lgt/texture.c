@@ -1,7 +1,7 @@
 /*                       T E X T U R E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture.c
+/** @file lgt/texture.c
     Author:		Gary S. Moss
 */
 
@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <math.h>
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -69,7 +70,7 @@ struct fb_texture
 }
 *fbs = NULL;
 
-static char	*
+static char *
 suffix(char *str)
 {
     char	*p = str + strlen( str ) - 1;
@@ -82,9 +83,7 @@ suffix(char *str)
 }
 
 static RGBpixel	*
-icon_Lookup( iconp, u, v )
-    struct icon_texture	*iconp;
-    int	u, v;
+icon_Lookup(struct icon_texture	*iconp, int u, int v)
 {
     static int	word_sz = sizeof(icon_t) * BITS_PER_BYTE;
     static RGBpixel	black_pixel = { 0, 0, 0 };
@@ -98,7 +97,7 @@ icon_Lookup( iconp, u, v )
 	return	(RGBpixel *) white_pixel;
 }
 
-static struct icon_texture	*
+static struct icon_texture *
 init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 {
     FILE	*iconfp;
@@ -122,10 +121,11 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 	 != ITEMS_WIDE*hgt )
     {
 	bu_log( "Read of icon texture map failed.\n" );
+	fclose(iconfp);
 	return	NULL;
     }
-    iconp =	(struct icon_texture *) bu_malloc( sizeof( struct icon_texture ), "iconp" );
-    iconp->filenm = bu_malloc( strlen(file)+1, "iconp->filenm");
+    BU_ALLOC(iconp, struct icon_texture);
+    iconp->filenm = (char *)bu_malloc( strlen(file)+1, "iconp->filenm");
 
     bu_strlcpy( iconp->filenm, file, strlen(file)+1);
     iconp->map = iconmap;
@@ -149,7 +149,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
     return	iconp;
 }
 
-static struct fb_texture	*
+static struct fb_texture *
 init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 {
     FBIO		*txfbiop;
@@ -170,8 +170,8 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 	bu_log( "Read of frame buffer texture failed.\n" );
 	return	NULL;
     }
-    fbp = (struct fb_texture *) bu_malloc( sizeof( struct fb_texture ), "fbp");
-    fbp->filenm = bu_malloc( strlen(file)+1, "fbp->filenm");
+    BU_ALLOC(fbp, struct fb_texture);
+    fbp->filenm = (char *)bu_malloc( strlen(file)+1, "fbp->filenm");
     bu_strlcpy( fbp->filenm, file, strlen(file)+1 );
     fbp->map = fbmap;
     fbp->wid = wid;
@@ -197,10 +197,10 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 int
 tex_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 {
-    if ( strcmp( ICON_SUFFIX, suffix( entry->name ) ) == 0 )
+    if ( BU_STR_EQUAL( ICON_SUFFIX, suffix( entry->name ) ) )
 	return	icon_Entry( uvp, entry );
     else
-	if ( strcmp( FB_SUFFIX, suffix( entry->name ) ) == 0 )
+	if ( BU_STR_EQUAL( FB_SUFFIX, suffix( entry->name ) ) )
 	    return	fb_Entry( uvp, entry );
 	else
 	    return	0;
@@ -216,7 +216,7 @@ icon_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
     char				*file = entry->name + TEX_KEYLEN;
     bu_semaphore_acquire( RT_SEM_RESULTS );
     for (	iconp = icons;
-		iconp != NULL && strcmp( iconp->filenm, file ) != 0;
+		iconp != NULL && !BU_STR_EQUAL( iconp->filenm, file );
 		iconp = iconp->next )
 	;
     if ( iconp == NULL )
@@ -253,7 +253,7 @@ fb_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
     char				*file = entry->name + TEX_KEYLEN;
     bu_semaphore_acquire( RT_SEM_RESULTS );
     for (	fbp = fbs;
-		fbp != NULL && strcmp( fbp->filenm, file ) != 0;
+		fbp != NULL && !BU_STR_EQUAL( fbp->filenm, file );
 		fbp = fbp->next )
 	;
     if ( fbp == NULL )

@@ -1,7 +1,7 @@
 /*                     E X E C S H E L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file execshell.c
+/** @file lgt/execshell.c
  *	Author:		Gary S. Moss
  */
 
@@ -32,6 +32,9 @@
 #include <assert.h>
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
 
 #include "vmath.h"
@@ -65,7 +68,7 @@ loc_Perror(char *msg)
 	loc_Perror( error_buf ); \
 	return	-1;
 
-/*	e x e c _ S h e l l ( )
+/*
 	If args[0] is NULL, spawn a shell, otherwise execute the specified
 	command line.
 	Return the exit status of the program, or -1 if wait() or fork()
@@ -82,8 +85,8 @@ exec_Shell(char **args)
 	/* $SHELL, if set, DFL_SHELL otherwise.			*/
 	if (	arg_sh == NULL
 		/* Work around for process group problem.		*/
-		||	strcmp( arg_sh, TCSH ) == 0
-		||	strcmp( arg_sh, CSH ) == 0
+		||	BU_STR_EQUAL( arg_sh, TCSH )
+		||	BU_STR_EQUAL( arg_sh, CSH )
 	    )
 	    arg_sh = DFL_SHELL;
 	args[0] = arg_sh;

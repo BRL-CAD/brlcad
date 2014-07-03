@@ -1,7 +1,7 @@
 /*                     P I X B O R D E R . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2010 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixborder.c
+/** @file util/pixborder.c
  *
  * Add a 1-pixel-wide border to regions of a specified color.
  *
@@ -82,8 +82,6 @@ Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
 		 [file.pix]\n";
 
 /*
- * R E A D _ H S V ()
- *
  * Read in an HSV triple.
  */
 static int read_hsv (fastf_t *hsvp, char *buf)
@@ -96,16 +94,13 @@ static int read_hsv (fastf_t *hsvp, char *buf)
 	|| (tmp[SAT] < 0.0) || (tmp[SAT] > 1.0)
 	|| (tmp[VAL] < 0.0) || (tmp[VAL] > 1.0))
 	return 0;
-    if (NEAR_ZERO(tmp[SAT], SMALL_FASTF))
+    if (ZERO(tmp[SAT]))
 	tmp[HUE] = ACHROMATIC;
     VMOVE(hsvp, tmp);
     return 1;
 }
 
 
-/*
- * R E A D _ R O W ()
- */
 static int
 read_row(unsigned char *rp, size_t width, FILE *fp)
 {
@@ -133,9 +128,6 @@ read_row(unsigned char *rp, size_t width, FILE *fp)
  * Reading, MA, 1990.
  */
 
-/*
- * R G B _ T O _ H S V ()
- */
 static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 {
     fastf_t red, grn, blu;
@@ -176,14 +168,14 @@ static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
     /*
      * Compute hue
      */
-    if (NEAR_ZERO(*sat, SMALL_FASTF))
+    if (ZERO(*sat))
 	*hue = ACHROMATIC;
     else {
-	if (NEAR_ZERO(red - max, SMALL_FASTF)) /* red == max */
+	if (ZERO(red - max)) /* red == max */
 	    *hue = (grn - blu) / delta;
-	else if (NEAR_ZERO(grn - max, SMALL_FASTF)) /* grn == max */
+	else if (ZERO(grn - max)) /* grn == max */
 	    *hue = 2.0 + (blu - red) / delta;
-	else if (NEAR_ZERO(blu - max, SMALL_FASTF)) /* blu == max */
+	else if (ZERO(blu - max)) /* blu == max */
 	    *hue = 4.0 + (red - grn) / delta;
 
 	/*
@@ -196,9 +188,6 @@ static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 }
 
 
-/*
- * H S V _ T O _ R G B ()
- */
 int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 {
     fastf_t float_rgb[3];
@@ -207,12 +196,14 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
     fastf_t p, q, t;
     int hue_int;
 
+    VSETALL(float_rgb, 0.0);
+
     hue = hsv[HUE];
     sat = hsv[SAT];
     val = hsv[VAL];
 
-    if (NEAR_ZERO(sat, SMALL_FASTF)) {
-	if (NEAR_ZERO(hue - ACHROMATIC, SMALL_FASTF)) { /* hue == ACHROMATIC */
+    if (ZERO(sat)) {
+	if (ZERO(hue - ACHROMATIC)) { /* hue == ACHROMATIC */
 	    VSETALL(float_rgb, val);
 	} else {
 	    (void) fprintf(stderr, "Illegal HSV (%g, %g, %g)\n",
@@ -220,7 +211,7 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 	    return 0;
 	}
     } else {
-	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF)) /* hue == 360.0 */
+	if (ZERO(hue - 360.0)) /* hue == 360.0 */
 	    hue = 0.0;
 	hue /= 60.0;
 	hue_int = floor((double) hue);
@@ -250,9 +241,6 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 }
 
 
-/*
- * S A M E _ R G B ()
- */
 static int same_rgb (unsigned char *color1, unsigned char *color2)
 {
     return ((abs(color1[RED] - color2[RED]) <= (int) rgb_tol[RED]) &&
@@ -261,9 +249,6 @@ static int same_rgb (unsigned char *color1, unsigned char *color2)
 }
 
 
-/*
- * S A M E _ H S V ()
- */
 static int same_hsv (fastf_t *color1, fastf_t *color2)
 {
     return ((fabs(color1[HUE] - color2[HUE]) <= hsv_tol[HUE]) &&
@@ -272,9 +257,6 @@ static int same_hsv (fastf_t *color1, fastf_t *color2)
 }
 
 
-/*
- * I S _ I N T E R I O R ()
- */
 static int is_interior (unsigned char *pix_rgb)
 {
     if (tol_using_rgb)
@@ -282,7 +264,7 @@ static int is_interior (unsigned char *pix_rgb)
 		(! same_rgb(pix_rgb, exterior_rgb))	:
 		same_rgb(pix_rgb, interior_rgb));
     else {
-	fastf_t pix_hsv[3];
+	vect_t pix_hsv = VINIT_ZERO;
 
 	rgb_to_hsv(pix_rgb, pix_hsv);
 	return ((colors_specified == COLORS_EXTERIOR)	?
@@ -292,9 +274,6 @@ static int is_interior (unsigned char *pix_rgb)
 }
 
 
-/*
- * I S _ E X T E R I O R ()
- */
 static int is_exterior (unsigned char *pix_rgb)
 {
     if (tol_using_rgb)
@@ -302,7 +281,7 @@ static int is_exterior (unsigned char *pix_rgb)
 		(! same_rgb(pix_rgb, interior_rgb))	:
 		same_rgb(pix_rgb, exterior_rgb));
     else {
-	fastf_t pix_hsv[3];
+	vect_t pix_hsv = VINIT_ZERO;
 
 	rgb_to_hsv(pix_rgb, pix_hsv);
 	return ((colors_specified == COLORS_INTERIOR)	?
@@ -312,15 +291,12 @@ static int is_exterior (unsigned char *pix_rgb)
 }
 
 
-/*
- * I S _ B O R D E R ()
- */
 static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp, int col_nm)
 
-    /* Previous row */
-    /* Current (this) row */
-    /* Next row */
-    /* Current column */
+/* Previous row */
+/* Current (this) row */
+/* Next row */
+/* Current column */
 
 {
     unsigned char pix_rgb[3];
@@ -360,15 +336,12 @@ static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp
 }
 
 
-/*
- * G E T _ A R G S ()
- */
 static int
 get_args (int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, OPT_STRING)) != EOF) {
+    while ((c = bu_getopt(argc, argv, OPT_STRING)) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
@@ -499,9 +472,6 @@ get_args (int argc, char **argv)
 }
 
 
-/*
- * M A I N ()
- */
 int
 main (int argc, char **argv)
 {
@@ -531,7 +501,7 @@ main (int argc, char **argv)
      * Autosize the input if appropriate
      */
     if (fileinput && autosize) {
-	unsigned long int w, h;
+	size_t w, h;
 
 	if (fb_common_file_size(&w, &h, file_name, 3)) {
 	    file_width = (long)w;
@@ -544,9 +514,9 @@ main (int argc, char **argv)
      * Allocate a 1-scanline output buffer
      * and a circular input buffer of 3 scanlines
      */
-    outbuf = bu_malloc(3*file_width, "outbuf");
+    outbuf = (char *)bu_malloc(3*file_width, "outbuf");
     for (i = 0; i < 3; ++i)
-	inrow[i] = bu_malloc(3*(file_width + 2), "inrow[i]");
+	inrow[i] = (unsigned char *)bu_malloc(3*(file_width + 2), "inrow[i]");
     prev_row = 0;
     this_row = 1;
     next_row = 2;

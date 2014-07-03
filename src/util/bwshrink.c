@@ -1,7 +1,7 @@
 /*                      B W S H R I N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwshrink.c
+/** @file util/bwshrink.c
  *
  * scale down a picture by a uniform factor.
  *
@@ -36,17 +36,16 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "uhs:w:n:f:";
+char options[] = "us:w:n:f:h?";
+char noname[]  = "(noname)";
+char Stdin[]   = "(stdin)";
+char *progname = noname;
+char *filename = Stdin;
 
-char *progname = "(noname)";
-char *filename = "(stdin)";
-
-/* S H R I N K _ I M A G E
- */
 void
 shrink_image(int w, int h, unsigned char *buffer, int Factor)
 {
-    unsigned char *finalpixel;	/* output pixel pointer */
+    unsigned char *finalpixel, *pixelp;	/* output pixel pointer */
     unsigned int p;		/* pixel sum/average */
     int facsq, x, y, px, py;
 
@@ -57,13 +56,13 @@ shrink_image(int w, int h, unsigned char *buffer, int Factor)
 	for (x=0; x < w; x += Factor) {
 
 	    /* average factor by factor grid of pixels */
-
 	    p = 0;
 	    for (py = 0; py < Factor; py++) {
 
+		pixelp = &buffer[(y+py)*w+x];
 		/* add pixels from scanline to average */
 		for (px = 0; px < Factor; px++) {
-		    p += buffer[y*w + x+px];
+		    p += *pixelp++;
 		}
 	    }
 
@@ -86,9 +85,8 @@ usample_image(int w, int h, unsigned char *buffer, int Factor)
     p = buffer;
 
     for (y=0; y < h; y += Factor)
-	for (x=0; x < w; x += Factor, p++) {
+	for (x=0; x < w; x += Factor, p++)
 	    p[0] = buffer[x + y * w];
-	}
 }
 
 
@@ -100,50 +98,51 @@ int factor = 2;
 #define METH_UNDERSAMPLE 2
 int method = METH_BOXCAR;
 
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(void)
+
+void
+usage(void)
 {
     (void) fprintf(stderr,
-		   "Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
-[-f shrink_factor] [pixfile] > pixfile\n", progname);
+		   "Usage: %s [-u] [-w width] [-n scanlines] [-s squaresize]\n\
+		[-f shrink_factor] [bwfile] > bwfile\n", progname);
     bu_exit (1, NULL);
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
-void parse_args(int ac, char **av)
+void
+parse_args(int ac, char **av)
 {
     int c;
 
     if (!(progname = strrchr(*av, '/')))
 	progname = *av;
 
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != EOF)
+    while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
-	    case 'f'	: if ((c = atoi(bu_optarg)) > 1)
-		factor = c;
+	    case 'f':
+		if ((c = atoi(bu_optarg)) > 1)
+		    factor = c;
 		break;
-	    case 'h'	: width = height = 1024; break;
-	    case 'n'	: if ((c=atoi(bu_optarg)) > 0)
-		height = c;
+	    case 'n':
+		if ((c=atoi(bu_optarg)) > 0)
+		    height = c;
 		break;
-	    case 'w'	: if ((c=atoi(bu_optarg)) > 0)
-		width = c;
+	    case 'w':
+		if ((c=atoi(bu_optarg)) > 0)
+		    width = c;
 		break;
-	    case 's'	: if ((c=atoi(bu_optarg)) > 0)
-		height = width = c;
+	    case 's':
+		if ((c=atoi(bu_optarg)) > 0)
+		    height = width = c;
 		break;
-	    case 'u'	: method = METH_UNDERSAMPLE; break;
-	    case '?'	:
-	    default		: usage(); break;
+	    case 'u'
+		: method = METH_UNDERSAMPLE;
+		break;
+
+	    default:
+		usage();
+		break;
 	}
 
     if (bu_optind >= ac) {
@@ -151,21 +150,21 @@ void parse_args(int ac, char **av)
 	    usage();
     }
     if (bu_optind < ac) {
-	if (freopen(av[bu_optind], "r", stdin) == (FILE *)NULL) {
-	    perror(av[bu_optind]);
+	char *ifname = bu_realpath(av[bu_optind], NULL);
+	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
+	    perror(ifname);
 	    bu_exit (-1, NULL);
 	} else
 	    filename = av[bu_optind];
+	bu_free(ifname, "ifname alloc from bu_realpath");
     }
     if (bu_optind+1 < ac)
-	(void)fprintf(stderr, "%s: Excess arguments ignored\n", progname);
+	fprintf(stderr, "%s: Excess arguments ignored\n", progname);
 
 }
 
 
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */
@@ -177,16 +176,18 @@ int main(int ac, char **av)
     int t;
 
     (void)parse_args(ac, av);
-    if (isatty(fileno(stdin))) usage();
+    if (isatty(fileno(stdin)))
+	usage();
 
     /* process stdin */
 
     /* get buffer for image */
     size = width * height;
-    if ((buffer = (unsigned char *)malloc(width*height)) == (unsigned char *)NULL) {
-	(void)fprintf(stderr, "%s: cannot allocate input buffer\n",
-		      progname);
-	bu_exit (-1, NULL);
+    if (size > 0) {
+	buffer = (unsigned char *)bu_malloc(size, "alloc buffer");
+    } else {
+	bu_log("ERROR: zero dimension image\n");
+	usage();
     }
 
     /* read in entire image */
@@ -200,14 +201,20 @@ int main(int ac, char **av)
     }
 
     switch (method) {
-	case METH_BOXCAR : shrink_image(width, height, buffer, factor); break;
-	case METH_UNDERSAMPLE : usample_image(width, height, buffer, factor);
+	case METH_BOXCAR:
+	    shrink_image(width, height, buffer, factor);
 	    break;
-	default: return -1;
+	case METH_UNDERSAMPLE:
+	    usample_image(width, height, buffer, factor);
+	    break;
+	default:
+	    return -1;
     }
 
     for (t=0; t < size && (c=write(1, (char *)&buffer[t], size-t)) >= 0;
 	 t += c);
+
+    bu_free(buffer, "buffer alloc from malloc");
 
     if (c < 0) {
 	perror("stdout");

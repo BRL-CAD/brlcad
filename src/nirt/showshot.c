@@ -1,7 +1,7 @@
 /*                      S H O W S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file showshot.c
+/** @file nirt/showshot.c
  *
  * Filter output from NIRT(1) to generate an MGED(1) object
  * representing a shotline through some geometry.
@@ -49,14 +49,16 @@ main (int argc, char **argv)
     char *nlp;			/* Location of newline in buf */
     char rname[BUF_LEN];	/* Name of current region */
     char rayname[BUF_LEN];	/* Name of ray */
-    fastf_t ray_radius = 1.0;	/* Thickness of the RCC */
-    point_t entryp;		/* Ray's entry into current region */
-    point_t exitp;		/* Ray's exit from current region */
-    point_t first_entryp;	/* Ray's entry into the entire geometry */
     int i;			/* Index into rname */
     int line_nm = 0;		/* Number of current line of input */
     int opt;			/* Command-line option returned by bu_getopt */
     int pid;			/* Process ID for unique group name */
+    point_t first_entryp = VINIT_ZERO;	/* Ray's entry into the entire geometry */
+
+    /* intentionally double for scan */
+    double ray_radius = 1.0;	/* Thickness of the RCC */
+    double entryp[3] = VINIT_ZERO;	/* Ray's entry into current region */
+    double exitp[3] = VINIT_ZERO;		/* Ray's exit from current region */
 
     pid = bu_process_id();
 
@@ -68,7 +70,7 @@ main (int argc, char **argv)
 		bu_strlcpy(rayname, bu_optarg, BUF_LEN);
 		break;
 	    case 'r':
-		if (sscanf(bu_optarg, "%F", &ray_radius) != 1) {
+		if (sscanf(bu_optarg, "%lf", &ray_radius) != 1) {
 		    bu_exit(1, "Illegal radius: '%s'\n", bu_optarg);
 		}
 		break;
@@ -105,16 +107,16 @@ main (int argc, char **argv)
 	    *nlp = '\0';
 
 	/* Skip initial white space */
-	while (isspace(*bp))
+	while (isspace((int)*bp))
 	    ++bp;
 
 	/* Get region name */
-	for (i = 0; ! isspace(*bp) && (*bp != '\0'); ++i, ++bp)
+	for (i = 0; ! isspace((int)*bp) && (*bp != '\0'); ++i, ++bp)
 	    rname[i] = *bp;
 	rname[i] = '\0';
 
 	/* Read entry and exit coordinates for this partition */
-	if (sscanf(bp, "%F%F%F%F%F%F",
+	if (sscanf(bp, "%lf%lf%lf%lf%lf%lf",
 		   &entryp[X], &entryp[Y], &entryp[Z],
 		   &exitp[X], &exitp[Y], &exitp[Z]) != 6) {
 	    bu_exit(1, "Illegal data on line %d: '%s'\n", line_nm, bp);
@@ -139,6 +141,8 @@ main (int argc, char **argv)
 	   ray_radius);
     printf("g %s %s.r\n", rayname, rayname);
     fprintf(stderr, "Group is '%s'\n", rayname);
+
+    return 0;
 }
 
 

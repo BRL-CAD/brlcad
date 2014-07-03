@@ -1,9 +1,7 @@
-@ECHO OFF
-
 REM                      A R C H E R . B A T
 REM  BRL-CAD
 REM 
-REM  Copyright (c) 2006-2010 United States Government as represented by
+REM  Copyright (c) 2006-2014 United States Government as represented by
 REM  the U.S. Army Research Laboratory.
 REM 
 REM  This library is free software; you can redistribute it and/or
@@ -20,14 +18,16 @@ REM  License along with this file; see the file named COPYING for more
 REM  information.
 REM 
 
+@ECHO OFF
+
 SETLOCAL
 
+SET PATH=%~dp0;%PATH%
 SET BWISH=%~dp0bwish
 SET ARCHER=%~dp0archer
 
-START /B %BWISH% "%ARCHER%" %1
+START /B "" "%BWISH%" "%ARCHER%" %*
 
-CLS
 EXIT
 
 REM Local Variables:

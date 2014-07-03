@@ -1,7 +1,7 @@
 /*                         P U T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file put.c
+/** @file libged/put.c
  *
  * The put command.
  *
@@ -47,41 +47,37 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     name = (char *)argv[1];
 
-    /* Verify that this wdb supports lookup operations (non-null dbip).
-     * stdout/file wdb objects don't, but can still be written to.
-     * If not, just skip the lookup test and write the object
-     */
-    if (gedp->ged_wdbp->dbip && db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s already exists", argv[1]);
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s already exists", argv[1]);
 	return GED_ERROR;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
-    for (i = 0; argv[2][i] != 0 && i < 16; i++) {
-	type[i] = isupper(argv[2][i]) ? tolower(argv[2][i]) :
+    for (i = 0; argv[2][i] != 0 && i < 15; i++) {
+	type[i] = isupper((int)argv[2][i]) ? tolower((int)argv[2][i]) :
 	    argv[2][i];
     }
     type[i] = 0;
 
     ftp = rt_get_functab_by_label(type);
     if (ftp == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s is an unknown object type.", type);
+	bu_vls_printf(gedp->ged_result_str, "%s is an unknown object type.", type);
 	return GED_ERROR;
     }
 
@@ -93,13 +89,13 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
 	rt_generic_make(ftp, &intern);
     }
 
-    if (!ftp->ft_adjust || ftp->ft_adjust(&gedp->ged_result_str, &intern, argc-3, argv+3) == GED_ERROR) {
+    if (!ftp->ft_adjust || ftp->ft_adjust(gedp->ged_result_str, &intern, argc-3, argv+3) == GED_ERROR) {
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
     if (wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }

@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-X.c
+/** @file libdm/dm-X.c
  *
  * An X Window System Display Manager.
  *
@@ -32,6 +32,8 @@
 #include <limits.h>
 #include <string.h>
 
+
+#define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -48,7 +50,6 @@
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX
 #endif
-#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 
 #ifdef HAVE_TK
 #  include "tk.h"
@@ -59,13 +60,16 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm-X.h"
-#include "dm_xvars.h"
+#include "dm/dm-X.h"
+#include "dm/dm-Null.h"
+#include "dm/dm_xvars.h"
 #include "solid.h"
 
+#include "./dm_util.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
+#define DM_X_DEFAULT_POINT_SIZE 1.0
 
 extern void X_allocate_color_cube(Display *, Colormap, long unsigned int *, int, int, int);
 extern unsigned long X_get_pixel(unsigned char, unsigned char, unsigned char, long unsigned int *, int);
@@ -79,6 +83,7 @@ struct allocated_colors {
     XColor c;
 };
 
+
 HIDDEN void
 get_color(Display *dpy, Colormap cmap, XColor *color)
 {
@@ -88,7 +93,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
     int r, g, b;
 
     if (!colors) {
-	BU_GETSTRUCT(colors, allocated_colors);
+	BU_ALLOC(colors, struct allocated_colors);
 	BU_LIST_INIT(&(colors->l));
 	colors->r = colors->g = colors->b = -1;
     }
@@ -125,12 +130,21 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
     }
 
     /* got new valid color, add it to our list */
-    BU_GETSTRUCT(c, allocated_colors);
+    BU_ALLOC(c, struct allocated_colors);
     c->r = r;
     c->g = g;
     c->b = b;
     c->c = *color; /* struct copy */
     BU_LIST_PUSH(&(colors->l), &(c->l));
+}
+
+
+HIDDEN void
+X_reshape(struct dm *dmp, int width, int height)
+{
+    dmp->dm_height = height;
+    dmp->dm_width = width;
+    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 }
 
 
@@ -152,9 +166,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 	dmp->dm_width == xwa.width)
 	return TCL_OK;
 
-    dmp->dm_height = xwa.height;
-    dmp->dm_width = xwa.width;
-    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+    X_reshape(dmp, xwa.width, xwa.height);
 
     if (dmp->dm_debugLevel) {
 	bu_log("X_configureWin_guts()\n");
@@ -267,16 +279,20 @@ X_choose_visual(struct dm *dmp)
     int desire_trueColor = 1;
     int min_depth = 8;
     int *good = NULL;
+    int screen;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     vibase = XGetVisualInfo(pubvars->dpy, 0, &vitemp, &num);
+    screen = DefaultScreen(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
 
     good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
 
     while (1) {
 	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
 	    /* requirements */
+	    if (vip->screen != screen)
+		continue;
 	    if (vip->depth < min_depth)
 		continue;
 	    if (desire_trueColor) {
@@ -348,8 +364,6 @@ X_choose_visual(struct dm *dmp)
 
 
 /*
- * X _ C L O S E
- *
  * Gracefully release the display.
  */
 HIDDEN int
@@ -384,25 +398,21 @@ X_close(struct dm *dmp)
     bu_vls_free(&dmp->dm_pathName);
     bu_vls_free(&dmp->dm_tkName);
     bu_vls_free(&dmp->dm_dName);
-    bu_free((genptr_t)dmp->dm_vars.priv_vars, "X_close: x_vars");
-    bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
-    bu_free((genptr_t)dmp, "X_close: dmp");
+    bu_free((void *)dmp->dm_vars.priv_vars, "X_close: x_vars");
+    bu_free((void *)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
+    bu_free((void *)dmp, "X_close: dmp");
 
     return TCL_OK;
 }
 
 
 /*
- * X _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
 struct dm *
 X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 {
-    extern struct dm dm_X;
-
     static int count = 0;
     int make_square = -1;
     XGCValues gcv;
@@ -416,8 +426,8 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     XEventClass e_class[15];
     XInputClassInfo *cip = NULL;
 #endif
-    struct bu_vls str;
-    struct bu_vls init_proc_vls;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     Screen *screen = (Screen *)NULL;
@@ -431,33 +441,20 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 #endif
 
-    BU_GETSTRUCT(dmp, dm);
-    if (dmp == DM_NULL) {
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_X; /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "X_open_dm: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free((genptr_t)dmp, "X_open_dm: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
     pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct x_vars), "X_open_dm: x_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_open_dm: dmp->dm_vars.pub_vars");
-	bu_free((genptr_t)dmp, "X_open_dm: dmp");
-	return DM_NULL;
-    }
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct x_vars);
     privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
     bu_vls_init(&dmp->dm_dName);
-    bu_vls_init(&init_proc_vls);
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
@@ -500,11 +497,10 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
 	    pubvars->top = tkwin;
 	} else {
-	    struct bu_vls top_vls;
+	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&top_vls);
-	    bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
-			  bu_vls_addr(&dmp->dm_pathName));
+	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
+
 #ifdef HAVE_TK
 	    pubvars->top =
 		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
@@ -531,10 +527,9 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		  (char *)Tk_Name(pubvars->xtkwin));
 #endif
 
-    bu_vls_init(&str);
-    bu_vls_printf(&str, "_init_dm %V %V\n",
-		  &init_proc_vls,
-		  &dmp->dm_pathName);
+    bu_vls_printf(&str, "_init_dm %s %s\n",
+		  bu_vls_addr(&init_proc_vls),
+		  bu_vls_addr(&dmp->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_vls_free(&str);
@@ -566,12 +561,18 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #endif
     }
 
-    /* make sure there really is a screen before proceesing. */
+    /* make sure there really is a screen before processing. */
     if (!screen) {
 	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->dm_pathName));
 	(void)X_close(dmp);
 	return DM_NULL;
     }
+
+    /* FIXME: Applications on Mac OS X linking against the system
+     * Tcl/Tk frameworks may crash here due to dpy being a high (7+
+     * digit) value and the screens[] array it indexes into being 0x0.
+     * Might have better luck calling functions instead of macros.
+     */
 
     if (dmp->dm_width == 0) {
 	dmp->dm_width =
@@ -688,7 +689,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
-	    if (!strcmp(list->name, "dial+buttons")) {
+	    if (BU_STR_EQUAL(list->name, "dial+buttons")) {
 		if ((dev = XOpenDevice(pubvars->dpy,
 				       list->id)) == (XDevice *)NULL) {
 		    bu_log("X_open_dm: Couldn't open the dials+buttons\n");
@@ -726,11 +727,11 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	    }
 	}
     }
- Done:
+Done:
     XFreeDeviceList(olist);
 #endif
 
- Skip_dials:
+Skip_dials:
     (void)X_configureWin_guts(dmp, 1);
 
 #ifdef HAVE_TK
@@ -745,9 +746,6 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-/*
- * X _ D R A W B E G I N
- */
 HIDDEN int
 X_drawBegin(struct dm *dmp)
 {
@@ -779,9 +777,6 @@ X_drawBegin(struct dm *dmp)
 }
 
 
-/*
- * X _ E P I L O G
- */
 HIDDEN int
 X_drawEnd(struct dm *dmp)
 {
@@ -806,8 +801,6 @@ X_drawEnd(struct dm *dmp)
 
 
 /*
- * X _ L O A D M A T R I X
- *
  * Load a new transformation matrix.  This will be followed by many
  * calls to X_draw().
  */
@@ -834,10 +827,6 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 }
 
 
-/**
- * X _ D R A W V L I S T
- *
- */
 HIDDEN int
 X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
@@ -854,7 +843,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
     static int nvectors = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
-
+    fastf_t pointSize = DM_X_DEFAULT_POINT_SIZE;
 
     if (dmp->dm_debugLevel) {
 	bu_log("X_drawVList()\n");
@@ -887,11 +876,13 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
-
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_VERTNORM:
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (dmp->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
@@ -923,6 +914,8 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
 		    /* draw */
 		    if (dmp->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
@@ -943,6 +936,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				pt_prev = pt;
 				continue;
 			    } else {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -952,9 +946,11 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(pnt, privars->xmat, tmp_pt);
+				}
 			    }
 			} else {
 			    if (dist_prev <= 0.0) {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -968,6 +964,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				lpnt[1] *= 2047 * dmp->dm_aspect;
 				lpnt[2] *= 2047;
 				MAT4X3PNT(pnt, privars->xmat, *pt);
+				}
 			    } else {
 				MAT4X3PNT(pnt, privars->xmat, *pt);
 			    }
@@ -1055,6 +1052,52 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			segp = segbuf;
 		    }
 		    break;
+		case BN_VLIST_POINT_DRAW:
+		    if (dmp->dm_debugLevel > 2) {
+			bu_log("before transformation:\n");
+			bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
+		    }
+
+		    if (dmp->dm_perspective > 0) {
+			dist = VDOT(*pt, &privars->xmat[12]) + privars->xmat[15];
+
+			if (dist <= 0.0) {
+			    /* nothing to plot - point is behind eye plane */
+			    continue;
+			}
+		    }
+
+		    MAT4X3PNT(pnt, privars->xmat, *pt);
+
+		    pnt[0] *= 2047;
+		    pnt[1] *= 2047 * dmp->dm_aspect;
+		    pnt[2] *= 2047;
+
+		    if (dmp->dm_debugLevel > 2) {
+			bu_log("after clipping:\n");
+			bu_log("pt - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
+		    }
+
+		    if (pointSize <= DM_X_DEFAULT_POINT_SIZE) {
+			XDrawPoint(pubvars->dpy, privars->pix, privars->gc,
+				GED_TO_Xx(dmp, pnt[0]), GED_TO_Xy(dmp, pnt[1]));
+		    } else {
+			int upperLeft[2];
+
+			upperLeft[X] = GED_TO_Xx(dmp, pnt[0]) - pointSize / 2.0;
+			upperLeft[Y] = GED_TO_Xy(dmp, pnt[1]) - pointSize / 2.0;
+
+			XFillRectangle(pubvars->dpy, privars->pix, privars->gc,
+				upperLeft[X], upperLeft[Y], pointSize, pointSize);
+
+		    }
+		    break;
+		case BN_VLIST_POINT_SIZE:
+		    pointSize = (*pt)[0];
+		    if (pointSize < DM_X_DEFAULT_POINT_SIZE) {
+			pointSize = DM_X_DEFAULT_POINT_SIZE;
+		    }
+		    break;
 	    }
 	}
 
@@ -1080,12 +1123,8 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-/**
- * X _ D R A W
- *
- */
 HIDDEN int
-X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -1097,7 +1136,7 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), g
 	if (!data) {
 	    return TCL_ERROR;
 	} else {
-	    vp = callback_function(data);
+	    (void)callback_function(data);
 	}
     }
     return TCL_OK;
@@ -1105,10 +1144,8 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), g
 
 
 /**
- * X _ N O R M A L
- *
- * Restore the display processor to a normal mode of operation (ie,
- * not scaled, rotated, displaced, etc).
+ * Restore the display processor to a normal mode of operation (i.e.,
+ * not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
 X_normal(struct dm *dmp)
@@ -1121,13 +1158,11 @@ X_normal(struct dm *dmp)
 
 
 /**
- * X _ D R A W S T R I N G 2 D
- *
  * Output a string into the displaylist.  The starting position of the
  * beam is as specified.
  */
 HIDDEN int
-X_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+X_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
@@ -1189,19 +1224,12 @@ X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 HIDDEN int
 X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
-    if (!dmp)
-	return TCL_ERROR;
-
-    if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
-	/* nothing to do for a singular point */
-	return TCL_OK;
-    }
-    return TCL_OK;
+    return draw_Line3D(dmp, pt1, pt2);
 }
 
 
 HIDDEN int
-X_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+X_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
 	return TCL_ERROR;
@@ -1350,7 +1378,16 @@ X_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-X_setWinBounds(struct dm *dmp, int *w)
+X_logfile(struct dm *dmp, const char *filename)
+{
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+X_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("X_setWinBounds()\n");
@@ -1367,10 +1404,10 @@ X_setWinBounds(struct dm *dmp, int *w)
 
 
 HIDDEN int
-X_configureWin(struct dm *dmp)
+X_configureWin(struct dm *dmp, int force)
 {
     /* don't force */
-    return X_configureWin_guts(dmp, 0);
+    return X_configureWin_guts(dmp, force);
 }
 
 
@@ -1396,6 +1433,7 @@ X_setZBuffer(struct dm *dmp, int zbuffer_on)
 
     return TCL_OK;
 }
+
 
 HIDDEN int
 X_getDisplayImage(struct dm *dmp, unsigned char **image)
@@ -1611,6 +1649,7 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image)
     return TCL_OK;
 }
 
+
 /* Display Manager package interface */
 struct dm dm_X = {
     X_close,
@@ -1618,11 +1657,14 @@ struct dm dm_X = {
     X_drawEnd,
     X_normal,
     X_loadMatrix,
+    null_loadPMatrix,
     X_drawString2D,
     X_drawLine2D,
     X_drawLine3D,
     X_drawLines3D,
     X_drawPoint2D,
+    null_drawPoint3D,
+    null_drawPoints3D,
     X_drawVList,
     X_drawVList,
     X_draw,
@@ -1632,15 +1674,19 @@ struct dm dm_X = {
     X_configureWin,
     X_setWinBounds,
     X_setLight,
-    Nu_int0,
-    Nu_int0,
+    null_setTransparency,
+    null_setDepthMask,
     X_setZBuffer,
     X_debug,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
+    X_logfile,
+    null_beginDList,
+    null_endDList,
+    null_drawDList,
+    null_freeDLists,
+    null_genDLists,
     X_getDisplayImage, /* display to image function */
+    X_reshape,
+    null_makeCurrent,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */
@@ -1652,31 +1698,38 @@ struct dm dm_X = {
     1,
     0,
     0,
-    0,/* bytes per pixel */
-    0,/* bits per channel */
+    0, /* bytes per pixel */
+    0, /* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */
     0,
     {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
     0,				/* depth buffer is not writable */
     0,				/* no zbuffer */
     0,				/* no zclipping */
-    1,                            /* clear back buffer after drawing and swap */
+    1,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
 
+/* Because class is actually used to access a struct
+ * entry in this file, preserve our redefinition
+ * of class for the benefit of avoiding C++ name
+ * collisions until the end of this file */
+#undef class
 
 #endif /* DM_X */
 

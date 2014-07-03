@@ -1,7 +1,7 @@
 /*                           E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file ell.c
+/** @file primitives/ell/ell.c
  *
  * Intersect a ray with a Generalized Ellipsoid.
  *
@@ -33,6 +33,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -40,15 +41,17 @@
 #include "raytrace.h"
 #include "nurb.h"
 
+#include "../../librt_private.h"
 
-BU_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
-			    struct rt_i *rtip));
+
+extern int rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip,
+		       struct rt_i *rtip);
 
 const struct bu_structparse rt_ell_parse[] = {
-    { "%f", 3, "V", bu_offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A", bu_offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "B", bu_offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "C", bu_offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V", bu_offsetofarray(struct rt_ell_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A", bu_offsetofarray(struct rt_ell_internal, a, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "B", bu_offsetofarray(struct rt_ell_internal, b, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "C", bu_offsetofarray(struct rt_ell_internal, c, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -117,7 +120,7 @@ HIDDEN void nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m);
  * NORMALS.  Given the point W on the ellipsoid, what is the vector
  * normal to the tangent plane at that point?
  *
- * Map W onto the unit sphere, ie:  W' = S(R(W - V)).
+ * Map W onto the unit sphere, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit sphere at W' has a normal vector of the same
  * value(!).  N' = W'
@@ -163,10 +166,82 @@ struct ell_specific {
 
 #define ELL_NULL ((struct ell_specific *)0)
 
+/**
+ * Compute the bounding RPP for an ellipsoid
+ */
+int
+rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+    vect_t w1, w2, P;
+    vect_t Au, Bu, Cu;	/* A, B, C with unit length */
+    fastf_t magsq_a, magsq_b, magsq_c, f;
+    mat_t R;
+    struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    magsq_a = MAGSQ(eip->a);
+    magsq_b = MAGSQ(eip->b);
+    magsq_c = MAGSQ(eip->c);
+
+    /* Try a shortcut - if this is a sphere, the calculation simplifies */
+    /* Check whether |A|, |B|, and |C| are nearly equal */
+    if (EQUAL(magsq_a, magsq_b) && EQUAL(magsq_a, magsq_c)) {
+	fastf_t sph_rad = sqrt(magsq_a);
+	(*min)[X] = eip->v[X] - sph_rad;
+	(*max)[X] = eip->v[X] + sph_rad;
+	(*min)[Y] = eip->v[Y] - sph_rad;
+	(*max)[Y] = eip->v[Y] + sph_rad;
+	(*min)[Z] = eip->v[Z] - sph_rad;
+	(*max)[Z] = eip->v[Z] + sph_rad;
+	return 0;
+    }
+
+    /* Create unit length versions of A, B, C */
+    f = 1.0/sqrt(magsq_a);
+    VSCALE(Au, eip->a, f);
+    f = 1.0/sqrt(magsq_b);
+    VSCALE(Bu, eip->b, f);
+    f = 1.0/sqrt(magsq_c);
+    VSCALE(Cu, eip->c, f);
+
+    MAT_IDN(R);
+    VMOVE(&R[0], Au);
+    VMOVE(&R[4], Bu);
+    VMOVE(&R[8], Cu);
+
+    /* Compute bounding RPP */
+    VSET(w1, magsq_a, magsq_b, magsq_c);
+
+    /* X */
+    VSET(P, 1.0, 0, 0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);	/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
+    f = sqrt(f);
+    (*min)[X] = eip->v[X] - f;	/* V.P +/- f */
+    (*max)[X] = eip->v[X] + f;
+
+    /* Y */
+    VSET(P, 0, 1.0, 0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);	/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
+    f = sqrt(f);
+    (*min)[Y] = eip->v[Y] - f;	/* V.P +/- f */
+    (*max)[Y] = eip->v[Y] + f;
+
+    /* Z */
+    VSET(P, 0, 0, 1.0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);	/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
+    f = sqrt(f);
+    (*min)[Z] = eip->v[Z] - f;	/* V.P +/- f */
+    (*max)[Z] = eip->v[Z] + f;
+    return 0;
+}
+
 
 /**
- * R T _ E L L _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid ellipsoid, and if so,
  * precompute various terms of the formula.
@@ -176,7 +251,7 @@ struct ell_specific {
  * !0 Error in description
  *
  * Implicit return -
- * A struct ell_specific is created, and it's address is stored in
+ * A struct ell_specific is created, and its address is stored in
  * stp->st_specific for use by rt_ell_shot().
  */
 int
@@ -190,7 +265,6 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mat_t SS;
     mat_t mtemp;
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
-    vect_t w1, w2, P;	/* used for bounding RPP */
     fastf_t f;
 
     eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -242,8 +316,8 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* Solid is OK, compute constant terms now */
-    BU_GETSTRUCT(ell, ell_specific);
-    stp->st_specific = (genptr_t)ell;
+    BU_GET(ell, struct ell_specific);
+    stp->st_specific = (void *)ell;
 
     VMOVE(ell->ell_V, eip->v);
 
@@ -286,42 +360,11 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = stp->st_bradius = sqrt(f);
 
     /* Compute bounding RPP */
-    VSET(w1, magsq_a, magsq_b, magsq_c);
-
-    /* X */
-    VSET(P, 1.0, 0, 0);		/* bounding plane normal */
-    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
-    VELMUL(w2, w2, w2);		/* square each term */
-    f = VDOT(w1, w2);
-    f = sqrt(f);
-    stp->st_min[X] = ell->ell_V[X] - f;	/* V.P +/- f */
-    stp->st_max[X] = ell->ell_V[X] + f;
-
-    /* Y */
-    VSET(P, 0, 1.0, 0);		/* bounding plane normal */
-    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
-    VELMUL(w2, w2, w2);		/* square each term */
-    f = VDOT(w1, w2);
-    f = sqrt(f);
-    stp->st_min[Y] = ell->ell_V[Y] - f;	/* V.P +/- f */
-    stp->st_max[Y] = ell->ell_V[Y] + f;
-
-    /* Z */
-    VSET(P, 0, 0, 1.0);		/* bounding plane normal */
-    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
-    VELMUL(w2, w2, w2);		/* square each term */
-    f = VDOT(w1, w2);
-    f = sqrt(f);
-    stp->st_min[Z] = ell->ell_V[Z] - f;	/* V.P +/- f */
-    stp->st_max[Z] = ell->ell_V[Z] + f;
-
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
     return 0;			/* OK */
 }
 
 
-/**
- * R T _ E L L _ P R I N T
- */
 void
 rt_ell_print(register const struct soltab *stp)
 {
@@ -335,8 +378,6 @@ rt_ell_print(register const struct soltab *stp)
 
 
 /**
- * R T _ E L L _ S H O T
- *
  * Intersect a ray with an ellipsoid, where all constant terms have
  * been precomputed by rt_ell_prep().  If an intersection occurs, a
  * struct seg will be acquired and filled in.
@@ -391,16 +432,14 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define RT_ELL_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 /**
- * R T _ E L L _ V S H O T
- *
  * This is the Becker vector version.
  */
 void
 rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
 
 {
     register int i;
@@ -452,8 +491,6 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 
 /**
- * R T _ E L L _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -476,8 +513,6 @@ rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ E L L _ C U R V E
- *
  * Return the curvature of the ellipsoid.
  */
 void
@@ -514,8 +549,6 @@ rt_ell_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 
 /**
- * R T _ E L L _ U V
- *
  * For a hit on the surface of an ELL, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -539,7 +572,7 @@ rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     /* Assert that pprime has unit length */
 
     /* U is azimuth, atan() range: -pi to +pi */
-    uvp->uv_u = bn_atan2(pprime[Y], pprime[X]) * bn_inv2pi;
+    uvp->uv_u = bn_atan2(pprime[Y], pprime[X]) * M_1_2PI;
     if (uvp->uv_u < 0)
 	uvp->uv_u += 1.0;
     /* V is elevation, atan() range: -pi/2 to +pi/2, because sqrt()
@@ -547,38 +580,26 @@ rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
      */
     uvp->uv_v = bn_atan2(pprime[Z],
 			 sqrt(pprime[X] * pprime[X] + pprime[Y] * pprime[Y])) *
-	bn_invpi + 0.5;
+	M_1_PI + 0.5;
 
     /* approximation: r / (circumference, 2 * pi * aradius) */
     r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
     uvp->uv_du = uvp->uv_dv =
-	bn_inv2pi * r / stp->st_aradius;
+	M_1_2PI * r / stp->st_aradius;
 }
 
 
-/**
- * R T _ E L L _ F R E E
- */
 void
 rt_ell_free(register struct soltab *stp)
 {
     register struct ell_specific *ell =
 	(struct ell_specific *)stp->st_specific;
 
-    bu_free((char *)ell, "ell_specific");
-}
-
-
-int
-rt_ell_class(void)
-{
-    return 0;
+    BU_PUT(ell, struct ell_specific);
 }
 
 
 /**
- * R T _ E L L _ 1 6 P T S
- *
  * Also used by the TGC code
  */
 #define ELLOUT(n) ov+(n-1)*3
@@ -590,16 +611,16 @@ rt_ell_16pts(fastf_t *ov,
 {
     static fastf_t c, d, e, f, g, h;
 
-    e = h = .92388;	/* cos(22.5) */
-    c = d = .707107;	/* cos(45) */
-    g = f = .382683;	/* cos(67.5) */
+    e = h = .92388;	/* cos(22.5 degrees) */
+    c = d = M_SQRT1_2;	/* cos(45 degrees) */
+    g = f = .382683;	/* cos(67.5 degrees) */
 
     /*
      * For angle theta, compute surface point as
      *
      * V + cos(theta) * A + sin(theta) * B
      *
-     * note that sin(theta) is cos(90-theta).
+     * note that sin(theta) is cos(90-theta), with arguments in degrees.
      */
 
     VADD2(ELLOUT(1), V, A);
@@ -620,12 +641,157 @@ rt_ell_16pts(fastf_t *ov,
     VJOIN2(ELLOUT(16), V, e, A, -f, B);
 }
 
+struct ell_draw_configuration {
+    struct bu_list *vhead;
+    vect_t ell_center;
+    vect_t ell_axis_vector_a;
+    vect_t ell_axis_vector_b;
+    vect_t ell_travel_vector;
+    int num_cross_sections;
+    int points_per_section;
+};
 
-/**
- * R T _ E L L _ P L O T
+struct ellipse_cross_section {
+    vect_t a;
+    vect_t b;
+    vect_t translation;
+    double ellipsoid_travel_axis_mag;
+    double ellipsoid_travel_axis_position;
+};
+
+static double
+cross_section_axis_magnitude(
+	struct ellipse_cross_section cross_section,
+	double target_axis_mag)
+{
+    double travel_mag, travel_pos;
+    double fixed_term;
+
+    travel_mag = cross_section.ellipsoid_travel_axis_mag;
+    travel_pos = cross_section.ellipsoid_travel_axis_position;
+
+    fixed_term = (travel_pos * travel_pos) / (travel_mag * travel_mag);
+
+    return sqrt(target_axis_mag * target_axis_mag * (1.0 - fixed_term));
+}
+
+/* Draws elliptical cross-sections along an ell vector (the "travel vector").
+ *
+ * algorithm overview:
+ *  1 Pretend the ellipsoid is at the origin with the ell vectors axis-aligned.
+ *  2 Step along the travel vector t from -mag(t) to mag(t).
+ *  3 Calculate the axis vectors for the cross-section ellipse at that step.
+ *  4 Draw multiple points along the ellipse to define the cross-section,
+ *    using a parametric vector equation to calculate ellipse points for
+ *    given radian values.
  */
+static void
+draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
+{
+    int i;
+    vect_t ell_a, ell_b, ell_t;
+    double ellipse_a_mag, ellipse_b_mag;
+    double ell_a_mag, ell_b_mag, ell_t_mag;
+    double num_cross_sections, points_per_section;
+    double position_step;
+    struct ellipse_cross_section cross_section = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, 0.0, 0.0};
+
+    VMOVE(ell_a, config.ell_axis_vector_a);
+    VMOVE(ell_b, config.ell_axis_vector_b);
+    VMOVE(ell_t, config.ell_travel_vector);
+
+    ell_a_mag = MAGNITUDE(ell_a);
+    ell_b_mag = MAGNITUDE(ell_b);
+    ell_t_mag = MAGNITUDE(ell_t);
+
+    points_per_section = config.points_per_section;
+    num_cross_sections = config.num_cross_sections;
+
+    position_step = 2.0 * ell_t_mag / (num_cross_sections + 1);
+
+    cross_section.ellipsoid_travel_axis_mag = ell_t_mag;
+    cross_section.ellipsoid_travel_axis_position = -ell_t_mag;
+    for (i = 0; i < num_cross_sections; ++i) {
+	cross_section.ellipsoid_travel_axis_position += position_step;
+
+	ellipse_a_mag = cross_section_axis_magnitude(cross_section, ell_a_mag);
+	ellipse_b_mag = cross_section_axis_magnitude(cross_section, ell_b_mag);
+
+	VSCALE(cross_section.a, ell_a, ellipse_a_mag / ell_a_mag);
+	VSCALE(cross_section.b, ell_b, ellipse_b_mag / ell_b_mag);
+	VSCALE(cross_section.translation, ell_t,
+		cross_section.ellipsoid_travel_axis_position / ell_t_mag);
+	VADD2(cross_section.translation, cross_section.translation, config.ell_center);
+
+	plot_ellipse(config.vhead, cross_section.translation, cross_section.a,
+		     cross_section.b, points_per_section);
+    }
+}
+
+/* decide how many ellipse points are needed to satisfy point spacing */
+static int
+ell_ellipse_points(
+	const struct rt_ell_internal *ell,
+	const struct rt_view_info *info)
+{
+    fastf_t avg_radius, avg_circumference;
+    fastf_t ell_mag_a, ell_mag_b, ell_mag_c;
+
+    ell_mag_a = MAGNITUDE(ell->a);
+    ell_mag_b = MAGNITUDE(ell->b);
+    ell_mag_c = MAGNITUDE(ell->c);
+
+    avg_radius = (ell_mag_a + ell_mag_b + ell_mag_c) / 3.0;
+    avg_circumference = M_2PI * avg_radius;
+
+    return avg_circumference / info->point_spacing;
+}
+
 int
-rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    struct ell_draw_configuration config;
+    struct rt_ell_internal *eip;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    config.vhead = info->vhead;
+    VMOVE(config.ell_center, eip->v);
+
+    config.points_per_section = ell_ellipse_points(eip, info);
+
+    if (config.points_per_section < 4) {
+	RT_ADD_VLIST(info->vhead, eip->v, BN_VLIST_POINT_DRAW);
+	return 0;
+    }
+
+    config.num_cross_sections = primitive_curve_count(ip, info);
+
+    VMOVE(config.ell_travel_vector, eip->a);
+    VMOVE(config.ell_axis_vector_a, eip->b);
+    VMOVE(config.ell_axis_vector_b, eip->c);
+    draw_cross_sections_along_ell_vector(config);
+
+    config.num_cross_sections = 1;
+
+    VMOVE(config.ell_travel_vector, eip->b);
+    VMOVE(config.ell_axis_vector_a, eip->a);
+    VMOVE(config.ell_axis_vector_b, eip->c);
+    draw_cross_sections_along_ell_vector(config);
+
+    VMOVE(config.ell_travel_vector, eip->c);
+    VMOVE(config.ell_axis_vector_a, eip->a);
+    VMOVE(config.ell_axis_vector_b, eip->b);
+    draw_cross_sections_along_ell_vector(config);
+
+    return 0;
+}
+
+int
+rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     register int i;
     struct rt_ell_internal *eip;
@@ -643,19 +809,20 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     rt_ell_16pts(middle, eip->v, eip->a, eip->c);
 
     RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
 
     RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
 
     RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
+
     return 0;
 }
 
@@ -698,8 +865,6 @@ struct ell_vert_strip {
 
 
 /**
- * R T _ E L L _ T E S S
- *
  * Tessellate an ellipsoid.
  *
  * The strategy is based upon the approach of Jon Leech 3/24/89, from
@@ -753,8 +918,8 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     int boff;		/* base offset */
     int toff;		/* top offset */
     int blim;		/* base subscript limit */
-    int tlim;		/* top subscrpit limit */
-    fastf_t rel;	/* Absolutized relative tolerance */
+    int tlim;		/* top subscript limit */
+    fastf_t dtol;	/* Absolutized relative tolerance */
 
     RT_CK_DB_INTERNAL(ip);
     state.eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -832,35 +997,16 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (Clen > radius)
 	radius = Clen;
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
-	rel = 0.0;		/* none */
-    } else {
-	/* Convert rel to absolute by scaling by radius */
-	rel = ttol->rel * radius;
-    }
-    if (ttol->abs <= 0.0) {
-	if (rel <= 0.0) {
-	    /* No tolerance given, use a default */
-	    rel = 0.10 * radius;	/* 10% */
-	} else {
-	    /* Use absolute-ized relative tolerance */
-	}
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || rel > ttol->abs) {
-	    rel = ttol->abs;
-	    if (rel > radius)
-		rel = radius;
-	}
+    dtol = primitive_get_absolute_tolerance(ttol, radius);
+
+    if (dtol > radius) {
+	dtol = radius;
     }
 
-    /* Converte distance tolerance into a maximum permissible angle
+    /* Convert distance tolerance into a maximum permissible angle
      * tolerance.  'radius' is largest radius.
      */
-    state.theta_tol = 2 * acos(1.0 - rel / radius);
+    state.theta_tol = 2 * acos(1.0 - dtol / radius);
 
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0 && ttol->norm < state.theta_tol) {
@@ -871,12 +1017,12 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     state.s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
     /* Find the number of segments to divide 90 degrees worth into */
-    nsegs = (int)(bn_halfpi / state.theta_tol + 0.999);
+    nsegs = (int)(M_PI_2 / state.theta_tol + 0.999);
     if (nsegs < 2) nsegs = 2;
 
     /* Find total number of strips of vertices that will be needed.
      * nsegs for each hemisphere, plus the equator.  Note that faces
-     * are listed in the the stripe ABOVE, ie, toward the poles.
+     * are listed in the stripe ABOVE, i.e., toward the poles.
      * Thus, strips[0] will have 4 faces.
      */
     nstrips = 2 * nsegs + 1;
@@ -896,7 +1042,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     strips[nsegs].nverts_per_strip = nsegs;
     strips[nsegs].nfaces = 0;
 
-    for (i=1; i<nsegs; i++) {
+    for (i = 1; i < nsegs; i++) {
 	strips[i].nverts_per_strip =
 	    strips[nstrips-1-i].nverts_per_strip = i;
 	strips[i].nverts =
@@ -905,14 +1051,14 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    strips[nstrips-1-i].nfaces = (2 * i + 1)*4;
     }
     /* All strips have vertices and normals */
-    for (i=0; i<nstrips; i++) {
+    for (i = 0; i < nstrips; i++) {
 	strips[i].vp = (struct vertex **)bu_calloc(strips[i].nverts,
 						   sizeof(struct vertex *), "strip vertex[]");
 	strips[i].norms = (vect_t *)bu_calloc(strips[i].nverts,
 					      sizeof(vect_t), "strip normals[]");
     }
     /* All strips have faces, except for the equator */
-    for (i=0; i < nstrips; i++) {
+    for (i = 0; i < nstrips; i++) {
 	if (strips[i].nfaces <= 0) continue;
 	strips[i].fu = (struct faceuse **)bu_calloc(strips[i].nfaces,
 						    sizeof(struct faceuse *), "strip faceuse[]");
@@ -924,7 +1070,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	faceno = 0;
 	tlim = strips[i-1].nverts;
 	blim = strips[i].nverts;
-	for (stripno=0; stripno<4; stripno++) {
+	for (stripno = 0; stripno < 4; stripno++) {
 	    toff = stripno * strips[i-1].nverts_per_strip;
 	    boff = stripno * strips[i].nverts_per_strip;
 
@@ -957,7 +1103,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	faceno = 0;
 	tlim = strips[i+1].nverts;
 	blim = strips[i].nverts;
-	for (stripno=0; stripno<4; stripno++) {
+	for (stripno = 0; stripno < 4; stripno++) {
 	    toff = stripno * strips[i+1].nverts_per_strip;
 	    boff = stripno * strips[i].nverts_per_strip;
 
@@ -990,7 +1136,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      * in the unit sphere, and project back.  i=0 is "straight up"
      * along +B.
      */
-    for (i=0; i < nstrips; i++) {
+    for (i = 0; i < nstrips; i++) {
 	double alpha;		/* decline down from B to A */
 	double beta;		/* angle around equator (azimuth) */
 	fastf_t cos_alpha, sin_alpha;
@@ -999,13 +1145,13 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	point_t model_pt;
 
 	alpha = (((double)i) / (nstrips-1));
-	cos_alpha = cos(alpha*bn_pi);
-	sin_alpha = sin(alpha*bn_pi);
-	for (j=0; j < strips[i].nverts; j++) {
+	cos_alpha = cos(alpha*M_PI);
+	sin_alpha = sin(alpha*M_PI);
+	for (j = 0; j < strips[i].nverts; j++) {
 
 	    beta = ((double)j) / strips[i].nverts;
-	    cos_beta = cos(beta*bn_twopi);
-	    sin_beta = sin(beta*bn_twopi);
+	    cos_beta = cos(beta*M_2PI);
+	    sin_beta = sin(beta*M_2PI);
 	    VSET(sphere_pt,
 		 cos_beta * sin_alpha,
 		 cos_alpha,
@@ -1024,34 +1170,34 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate face geometry.  Equator has no faces */
-    for (i=0; i < nstrips; i++) {
-	for (j=0; j < strips[i].nfaces; j++) {
+    for (i = 0; i < nstrips; i++) {
+	for (j = 0; j < strips[i].nfaces; j++) {
 	    if (nmg_fu_planeeqn(strips[i].fu[j], tol) < 0)
 		goto fail;
 	}
     }
 
     /* Associate normals with vertexuses */
-    for (i=0; i < nstrips; i++) {
-	for (j=0; j < strips[i].nverts; j++) {
+    for (i = 0; i < nstrips; i++) {
+	for (j = 0; j < strips[i].nverts; j++) {
 	    struct faceuse *fu;
 	    struct vertexuse *vu;
 	    vect_t norm_opp;
 
 	    NMG_CK_VERTEX(strips[i].vp[j]);
-	    VREVERSE(norm_opp, strips[i].norms[j])
+	    VREVERSE(norm_opp, strips[i].norms[j]);
 
-		for (BU_LIST_FOR(vu, vertexuse, &strips[i].vp[j]->vu_hd)) {
-		    fu = nmg_find_fu_of_vu(vu);
-		    NMG_CK_FACEUSE(fu);
-		    /* get correct direction of normals depending on
-		     * faceuse orientation
-		     */
-		    if (fu->orientation == OT_SAME)
-			nmg_vertexuse_nv(vu, strips[i].norms[j]);
-		    else if (fu->orientation == OT_OPPOSITE)
-			nmg_vertexuse_nv(vu, norm_opp);
-		}
+	    for (BU_LIST_FOR(vu, vertexuse, &strips[i].vp[j]->vu_hd)) {
+		fu = nmg_find_fu_of_vu(vu);
+		NMG_CK_FACEUSE(fu);
+		/* get correct direction of normals depending on
+		 * faceuse orientation
+		 */
+		if (fu->orientation == OT_SAME)
+		    nmg_vertexuse_nv(vu, strips[i].norms[j]);
+		else if (fu->orientation == OT_OPPOSITE)
+		    nmg_vertexuse_nv(vu, norm_opp);
+	    }
 	}
     }
 
@@ -1060,26 +1206,26 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Release memory */
     /* All strips have vertices and normals */
-    for (i=0; i<nstrips; i++) {
+    for (i = 0; i < nstrips; i++) {
 	bu_free((char *)strips[i].vp, "strip vertex[]");
 	bu_free((char *)strips[i].norms, "strip norms[]");
     }
     /* All strips have faces, except for equator */
-    for (i=0; i < nstrips; i++) {
+    for (i = 0; i < nstrips; i++) {
 	if (strips[i].fu == (struct faceuse **)0) continue;
 	bu_free((char *)strips[i].fu, "strip faceuse[]");
     }
     bu_free((char *)strips, "strips[]");
     return 0;
- fail:
+fail:
     /* Release memory */
     /* All strips have vertices and normals */
-    for (i=0; i<nstrips; i++) {
+    for (i = 0; i < nstrips; i++) {
 	bu_free((char *)strips[i].vp, "strip vertex[]");
 	bu_free((char *)strips[i].norms, "strip norms[]");
     }
     /* All strips have faces, except for equator */
-    for (i=0; i < nstrips; i++) {
+    for (i = 0; i < nstrips; i++) {
 	if (strips[i].fu == (struct faceuse **)0) continue;
 	bu_free((char *)strips[i].fu, "strip faceuse[]");
     }
@@ -1089,8 +1235,6 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ E L L _ I M P O R T
- *
  * Import an ellipsoid/sphere from the database format to the internal
  * structure.  Apply modeling transformations as well.
  */
@@ -1114,13 +1258,14 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ELL;
-    ip->idb_meth = &rt_functab[ID_ELL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_ell_internal), "rt_ell_internal");
+    ip->idb_meth = &OBJ[ID_ELL];
+    BU_ALLOC(ip->idb_ptr, struct rt_ell_internal);
+
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     eip->magic = RT_ELL_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    rt_fastf_float(vec, rp->s.s_values, 4);
+    flip_fastf_float(vec, rp->s.s_values, 4, dbip->dbi_version < 0 ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1133,9 +1278,6 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-/**
- * R T _ E L L _ E X P O R T
- */
 int
 rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -1151,7 +1293,7 @@ rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ell external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ell external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -1168,8 +1310,6 @@ rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E L L _ I M P O R T 5
- *
  * Import an ellipsoid/sphere from the database format to the internal
  * structure.  Apply modeling transformations as well.
  */
@@ -1177,7 +1317,9 @@ int
 rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ell_internal *eip;
-    fastf_t vec[ELEMENTS_PER_VECT*4];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4];
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
@@ -1187,14 +1329,14 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ELL;
-    ip->idb_meth = &rt_functab[ID_ELL];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_ell_internal), "rt_ell_internal");
+    ip->idb_meth = &OBJ[ID_ELL];
+    BU_ALLOC(ip->idb_ptr, struct rt_ell_internal);
 
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     eip->magic = RT_ELL_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1208,8 +1350,6 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 
 /**
- * R T _ E L L _ E X P O R T 5
- *
  * The external format is:
  * V point
  * A vector
@@ -1220,7 +1360,9 @@ int
 rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ell_internal *eip;
-    fastf_t vec[ELEMENTS_PER_VECT*4];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1231,7 +1373,7 @@ rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*4;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "ell external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "ell external");
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0*ELEMENTS_PER_VECT], eip->v, local2mm);
@@ -1240,15 +1382,13 @@ rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(&vec[3*ELEMENTS_PER_VECT], eip->c, local2mm);
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4);
 
     return 0;
 }
 
 
 /**
- * R T _ E L L _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1316,8 +1456,6 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ E L L _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1327,7 +1465,7 @@ rt_ell_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "ell ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
@@ -1343,9 +1481,6 @@ static const fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
 };
 
 
-/**
- * R T _ E L L _ T N U R B
- */
 int
 rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
@@ -1464,7 +1599,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
      *
      * Somewhat surprisingly, the U parameter runs from south to north.
      */
-    for (i=0; i<8; i++) verts[i] = (struct vertex *)0;
+    for (i = 0; i < 8; i++) verts[i] = (struct vertex *)0;
 
     *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
@@ -1486,7 +1621,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     NMG_CK_EDGEUSE(eu);
 
     /* Loop always has Counter-Clockwise orientation (CCW) */
-    for (i=0; i < 4; i++) {
+    for (i = 0; i < 4; i++) {
 	nmg_vertexuse_a_cnurb(eu->vu_p, &rt_ell_uvw[i*ELEMENTS_PER_VECT]);
 	nmg_vertexuse_a_cnurb(eu->eumate_p->vu_p, &rt_ell_uvw[(i+1)*ELEMENTS_PER_VECT]);
 	eu = BU_LIST_NEXT(edgeuse, &eu->l);
@@ -1504,7 +1639,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     /* Associate edge geometry (trimming curve) -- linear in param space */
     eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
     NMG_CK_EDGEUSE(eu);
-    for (i=0; i < 4; i++) {
+    for (i = 0; i < 4; i++) {
 	nmg_edge_g_cnurb_plinear(eu);
 	eu = BU_LIST_NEXT(edgeuse, &eu->l);
     }
@@ -1632,8 +1767,6 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 
 
 /**
- * R T _ E L L _ P A R A M S
- *
  * @brief Method for declaration of parameters so that it can be used
  * by Parametrics and Constraints library.
  *
@@ -1643,34 +1776,166 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
  * @return -1 on failure
  */
 int
-rt_ell_params(struct pc_pc_set *pcs, const struct rt_db_internal *ip)
+rt_ell_params(struct pc_pc_set *UNUSED(pcs), const struct rt_db_internal *UNUSED(ip))
 {
-    struct rt_ell_internal *eip;
-    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    return -1;			/* FAIL */
+}
 
-    if (!pcs) return 0;
 
-#if 0
-    pcs->ps = bu_calloc(pcs->n_params, sizeof (struct pc_param), "pc_param");
-    pcs->cs = bu_calloc(pcs->n_constraints, sizeof (struct pc_constrnt), "pc_constrnt");
+/*
+ * Used by EHY, EPA, HYP.  See librt_private.h for details.
+ */
+fastf_t
+ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
+{
+    fastf_t dist, intr, m, theta0, theta1;
+    point_t mpt, p0;
+    vect_t norm_line, norm_ell;
 
-    strcpy(pcs->ps[0].pname, "V");
-    pcs->ps[0].ptype = pc_point;
-    pcs->ps[0].pval.pointp = (pointp_t) &(eip->v);
+    VSET(p0, a, 0., 0.);
+    /* slope and intercept of segment */
+    m = (p1[Y] - p0[Y]) / (p1[X] - p0[X]);
+    intr = p0[Y] - m * p0[X];
+    /* point on ellipse with max dist between ellipse and line */
+    mpt[X] = a / sqrt(b*b / (m*m*a*a) + 1);
+    mpt[Y] = b * sqrt(1 - mpt[X] * mpt[X] / (a*a));
+    mpt[Z] = 0;
+    /* max distance between that point and line */
+    dist = fabs(m * mpt[X] - mpt[Y] + intr) / sqrt(m * m + 1);
+    /* angles between normal of line and of ellipse at line endpoints */
+    VSET(norm_line, m, -1., 0.);
+    VSET(norm_ell, b * b * p0[X], a * a * p0[Y], 0.);
+    VUNITIZE(norm_line);
+    VUNITIZE(norm_ell);
+    theta0 = fabs(acos(VDOT(norm_line, norm_ell)));
+    VSET(norm_ell, b * b * p1[X], a * a * p1[Y], 0.);
+    VUNITIZE(norm_ell);
+    theta1 = fabs(acos(VDOT(norm_line, norm_ell)));
+    /* split segment at widest point if not within error tolerances */
+    if (dist > dtol || theta0 > ntol || theta1 > ntol) {
+	/* split segment */
+	return ell_angle(mpt, a, b, dtol, ntol);
+    } else
+	return (acos(VDOT(p0, p1)
+		    / (MAGNITUDE(p0) * MAGNITUDE(p1))));
+}
 
-    strcpy(pcs->ps[1].pname, "A");
-    pcs->ps[1].ptype = pc_vector;
-    pcs->ps[1].pval.vectorp = (vectp_t) &(eip->a);
 
-    strcpy(pcs->ps[2].pname, "B");
-    pcs->ps[2].ptype = pc_vector;
-    pcs->ps[2].pval.vectorp = (vectp_t)  &(eip->b);
+/**
+ * Computes volume of a ellipsoid.
+ */
+void
+rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    fastf_t mag_a, mag_b, mag_c;
+    struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
 
-    strcpy(pcs->ps[3].pname, "C");
-    pcs->ps[3].ptype = pc_value;
-    pcs->ps[3].pval.vectorp = (vectp_t) &(eip->c);
+    mag_a = MAGNITUDE(eip->a);
+    mag_b = MAGNITUDE(eip->b);
+    mag_c = MAGNITUDE(eip->c);
+    *volume = 4.0/3.0 * M_PI * mag_a * mag_b * mag_c;
+}
+
+
+/**
+ * Computes centroid of an ellipsoid
+ */
+void
+rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+    VMOVE(*cent,eip->v);
+}
+
+
+/**
+ * Computes the surface area of an ellipsoid.
+ * logs error if triaxial ellipsoid (cannot find surface area).
+ */
+#define PROLATE 1
+#define OBLATE 2
+void
+rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    fastf_t mag_a, mag_b, mag_c;
+#ifdef major        /* Some systems have these defined as macros!!! */
+#undef major
 #endif
-    return 0;			/* OK */
+#ifdef minor
+#undef minor
+#endif
+    fastf_t major = 0, minor = 0;
+    fastf_t major2, minor2;
+    fastf_t ecc;
+    int ell_type = 0;
+
+    struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    mag_a = MAGNITUDE(eip->a);
+    mag_b = MAGNITUDE(eip->b);
+    mag_c = MAGNITUDE(eip->c);
+
+    if (EQUAL(mag_a, mag_b) && EQUAL(mag_b, mag_c)) {
+	/* case: sphere */
+	*area = 4.0 * M_PI * mag_a * mag_a;
+	return;
+    }
+
+    if (EQUAL(mag_a, mag_b)) {
+	if (mag_a > mag_c) {
+	    /* case: prolate spheroid */
+	    ell_type = PROLATE;
+	    major = mag_a;
+	    minor = mag_c;
+	} else {
+	    /* case: oblate spheroid */
+	    ell_type = OBLATE;
+	    major = mag_c;
+	    minor = mag_a;
+	}
+    } else if (EQUAL(mag_a, mag_c)) {
+	if (mag_a > mag_b) {
+	    /* case: prolate spheroid */
+	    ell_type = PROLATE;
+	    major = mag_a;
+	    minor = mag_b;
+	} else {
+	    /* case: oblate spheroid */
+	    ell_type = OBLATE;
+	    major = mag_b;
+	    minor = mag_a;
+	}
+    } else if (EQUAL(mag_b, mag_c)) {
+	if (mag_a > mag_c) {
+	    /* case: prolate spheroid */
+	    ell_type = PROLATE;
+	    major = mag_a;
+	    minor = mag_c;
+	} else {
+	    /* case: oblate spheroid */
+	    ell_type = OBLATE;
+	    major = mag_c;
+	    minor = mag_a;
+	}
+    }
+
+    major2 = major * major;
+    minor2 = minor * minor;
+    ecc = sqrt(1.0 - (minor2 / major2));
+
+    switch (ell_type) {
+    case PROLATE:
+	*area = (M_2PI * minor2) + (M_2PI * major * minor / ecc) * asin(ecc);
+	break;
+    case OBLATE:
+	*area = (M_2PI * major2) + (M_PI * minor2 / ecc) * log((1.0 + ecc) / (1.0 - ecc));
+	break;
+    default:
+	bu_log("rt_ell_surf_area(): triaxial ellipsoid, cannot find surface area");
+    }
 }
 
 

@@ -1,7 +1,7 @@
 /*                       P I X - S U N . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-sun.c
+/** @file util/pix-sun.c
  *
  * Program to take a BRL-CAD PIX format image file and convert the
  * image to a Sun Microsystems 8-bit deep color "rasterfile" format
@@ -36,15 +36,16 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "hs:w:n:d";
+char options[] = "hs:w:n:d";
 char optflags[sizeof(options)];
-char *progname = "(noname)";
+char noname[] = "(noname)";
+char *progname = noname;
 int dither = 0;
 
 #define MAPSIZE 256   /* Number of unique color values in Sun Colormap */
 /* Description of header for files containing raster images */
 struct rasterfile {
-    long ras_magic;	/* magic number */
+    uint32_t ras_magic;	/* magic number */
     size_t ras_width;	/* width (pixels) of image */
     size_t ras_height;	/* height (pixels) of image */
     size_t ras_depth;	/* depth (1, 8, or 24 bits) of pixel */
@@ -124,7 +125,7 @@ unsigned char blumap[MAPSIZE] =
   119, 136, 170, 187, 221, 238, 17, 34, 68, 85, 119, 136, 170, 187, 221, 238 };
 
 
-/* indicies of the primary colors and grey values in the color map */
+/* indices of the primary colors and grey values in the color map */
 static unsigned char rvec[16] = { 0, 216, 217, 1, 218, 219, 2, 220, 221,
 				  3, 222, 223, 4, 224, 225, 5};
 static unsigned char gvec[16] = { 0, 226, 227,  6, 228, 229, 12, 230,
@@ -153,40 +154,40 @@ double *end_table = &table[10];
 	dg = NOISE(); DITHER(_g, green, dg, MAG1); _g = (_g+26) / 51; \
 	db = NOISE(); DITHER(_b, blue, db, MAG1); _b = (_b+26) / 51; \
 	if (_r == _g) { \
-		if (_r == _b) { \
- 			/* grey */ \
-			DITHER(_r, red, dr, MAG2); \
-			DITHER(_g, green, dg, MAG2); \
-			DITHER(_b, blue, db, MAG2); \
-			i = nvec[ ((_r+_g+_b)/3) >> 4]; \
-		} else if (_r == 0) { \
- 			/* all blue */ \
-			DITHER(_r, red, dr, MAG2); \
-			DITHER(_g, green, dg, MAG2); \
-			DITHER(_b, blue, db, MAG2); \
-			i = bvec[ _b >> 4]; \
-		} else { \
-			/* color cube # */ \
-			i = (unsigned char)(_r + _g * 6 + _b * 36); \
-		} \
-	} \
-	else if (_g == _b && _g == 0) { \
- 		/* all red */ \
+	    if (_r == _b) { \
+		/* grey */ \
 		DITHER(_r, red, dr, MAG2); \
 		DITHER(_g, green, dg, MAG2); \
 		DITHER(_b, blue, db, MAG2); \
-		i = rvec[ _r >> 4]; \
-	} else if (_r == _b && _r == 0) { \
-		/* all green */ \
+		i = nvec[ ((_r+_g+_b)/3) >> 4]; \
+	    } else if (_r == 0) { \
+		/* all blue */ \
 		DITHER(_r, red, dr, MAG2); \
 		DITHER(_g, green, dg, MAG2); \
 		DITHER(_b, blue, db, MAG2); \
-		i = gvec[_g >> 4]; \
-	} else { \
+		i = bvec[ _b >> 4]; \
+	    } else { \
 		/* color cube # */ \
 		i = (unsigned char)(_r + _g * 6 + _b * 36); \
+	    } \
 	} \
-}
+	else if (_g == _b && _g == 0) { \
+	    /* all red */ \
+	    DITHER(_r, red, dr, MAG2); \
+	    DITHER(_g, green, dg, MAG2); \
+	    DITHER(_b, blue, db, MAG2); \
+	    i = rvec[ _r >> 4]; \
+	} else if (_r == _b && _r == 0) { \
+	    /* all green */ \
+	    DITHER(_r, red, dr, MAG2); \
+	    DITHER(_g, green, dg, MAG2); \
+	    DITHER(_b, blue, db, MAG2); \
+	    i = gvec[_g >> 4]; \
+	} else { \
+	    /* color cube # */ \
+	    i = (unsigned char)(_r + _g * 6 + _b * 36); \
+	} \
+    }
 
 
 #define REMAPIXEL(red, green, blue, i) {\
@@ -200,11 +201,11 @@ double *end_table = &table[10];
 	else if (_g == _b && _g == 0) i = rvec[red/16];   /* all red */ \
 	else if (_r == _b && _r == 0) i = gvec[green/16]; /* all green */ \
 	else i = (unsigned char)(_r + _g * 6 + _b * 36);  /* color cube # */ \
-}
+    }
 
 
 /*
- * D O I T --- convert stdin pix file to stdout rasterfile
+ * convert stdin pix file to stdout rasterfile
  */
 void
 doit(void)
@@ -221,12 +222,12 @@ doit(void)
     i = ras.ras_width * ras.ras_height;
     /* allocate buffer for the pix file */
     if ((pix=(unsigned char *)malloc(i*3)) == (unsigned char *)NULL) {
-	bu_exit(1, "%s: cannot get memory for a %d x %d pix file\n",
+	bu_exit(1, "%s: cannot get memory for a %zu x %zu pix file\n",
 		progname, ras.ras_width, ras.ras_height);
     }
 
     if ((rast=(unsigned char *)malloc(i)) == (unsigned char *)NULL) {
-	bu_exit(1, "%s: cannot get memory for a %d x %d pixrect\n",
+	bu_exit(1, "%s: cannot get memory for a %zu x %zu pixrect\n",
 		progname, ras.ras_width, ras.ras_height);
     }
 
@@ -236,7 +237,7 @@ doit(void)
      */
     for (i=(long)ras.ras_height-1; i >= 0; i--)
 	if (fread(&pix[i*ras.ras_width*3], ras.ras_width*3, 1, stdin) != 1) {
-	    bu_exit(1, "%s: error reading %d x %d pix file scanline %d\n",
+	    bu_exit(1, "%s: error reading %zu x %zu pix file scanline %ld\n",
 		    progname, ras.ras_width, ras.ras_height, i);
 	}
 
@@ -267,7 +268,7 @@ doit(void)
      */
     free(pix);
 
-    /* fill in miscelaneous rasterfile header fields */
+    /* fill in miscellaneous rasterfile header fields */
     ras.ras_length = ras.ras_width * ras.ras_height;
 
     /* write the rasterfile header */
@@ -301,16 +302,14 @@ void
 usage(void)
 {
 
-    (void)fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [ -d ]\n", progname);
-    (void)fprintf(stderr, "\t< BRLpixfile > rasterfile\n");
+    fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [ -d ]\n", progname);
+    fprintf(stderr, "\t< BRLpixfile > rasterfile\n");
     bu_exit (1, NULL);
 }
 
 
 /*
- * M A I N
- *
- * Perform miscelaneous tasks such as argument parsing and
+ * Perform miscellaneous tasks such as argument parsing and
  * I/O setup and then call "doit" to perform the task at hand
  */
 int
@@ -332,7 +331,7 @@ main(int ac, char **av)
 
     /* get all the option flags from the command line
      */
-    while ((c=bu_getopt(ac, av, options)) != EOF)
+    while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'd'    : dither = !dither; break;
 	    case 'w'    : ras.ras_width = atoi(bu_optarg); break;

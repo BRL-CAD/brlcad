@@ -1,7 +1,7 @@
 #             G E O M E T R Y B R O W S E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #   1) mged has no publish/subscribe model in place so we poll.  that sucks.
 #   2) nice fancy icons.  need a good way to describe the difference
 #      between a combination and a region, and to distinguish different prims
-#   3) better context menu bindings.  tcl or the widget has akward key
+#   3) better context menu bindings.  tcl or the widget has awkward key
 #      bindings that require holding a mouse while clicking a second to select.
 #   4) implement the right info panel.  the code for the panel is in place,
 #      just absolutely no logic is implemented to describe them.  I'm thinking
@@ -97,7 +97,7 @@ class GeometryBrowser {
 	variable _showAllGeometry
 	variable _autoRender
 
-	# hooks to the heirarchy pop-up menus
+	# hooks to the hierarchy pop-up menus
 	variable _itemMenu
 	variable _bgMenu
 
@@ -221,7 +221,7 @@ body GeometryBrowser::constructor {} {
 
 
     # itemMenu and bgMenu are the two pop-up menus available from hierarchy class
-    # XXX for some reason, the current call is not returing a value properly
+    # XXX for some reason, the current call is not returning a value properly
     $_itemMenu add command \
 	-label "Display" \
 	-command [ code $this displayNode [ $itk_interior.cadtree current ] "appended" ]
@@ -475,7 +475,7 @@ body GeometryBrowser::destructor {} {
     # destroy the framebuffer, if we opened it
     if { $_weStartedFbserv } {
 	puts "cleaning up fbserv"
-	set fbfree [bu_brlcad_root "bin/fbfree"]
+	set fbfree [file join [bu_brlcad_root "bin"] fbfree]
 	if { [ catch { exec $fbfree -F $_fbservPort } error ] } {
 	    puts $error
 	    puts "Unable to properly clean up after our fbserv"
@@ -520,7 +520,7 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 
 	# figure out what title to put in the label space.  XXX we could use
 	# the format command to generate a nicely formatted paragraph, but
-	# it's behavior is not consistent.  Plus... the titles could potentially
+	# its behavior is not consistent.  Plus... the titles could potentially
 	# be huge and we'd still need to trim, so just trim short anyways.
 	set titleLabel ""
 	if [ catch { title } tit ] {
@@ -718,7 +718,7 @@ body GeometryBrowser::updateGeometryLists { { node "" } } {
 
 # displayNode is the -dblclickcommand
 #
-# displayes the geometry of a given node to the mged window.  later it will be
+# displays the geometry of a given node to the mged window.  later it will be
 # able to display the selected geometry detailed information to a side panel.
 #
 # there are two special keywords for how to display the node.  it may either be
@@ -799,7 +799,7 @@ body GeometryBrowser::undisplayNode { { node "" } } {
 
 # setNodeColor -- used by pop-up menu
 #
-# sets the color of a particular node in the heirarchy, regardless of the node
+# sets the color of a particular node in the hierarchy, regardless of the node
 # type.  node is the path to a piece of geometry like /all.g/compartment/reg.r
 # color is expected to be 3 rgb values like "255 0 0".
 #
@@ -956,10 +956,10 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
     set device /dev/X
     set rgb "255 255 255"
     set rtrun ""
-    set fbserv [bu_brlcad_root "bin/fbserv"]
-    set fbfree [bu_brlcad_root "bin/fbfree"]
-    set fbclear [bu_brlcad_root "bin/fbclear"]
-    set fbline [bu_brlcad_root "bin/fbline"]
+    set fbserv [file join [bu_brlcad_root "bin"] fbserv]
+    set fbfree [file join [bu_brlcad_root "bin"] fbfree]
+    set fbline [file join [bu_brlcad_root "bin"] fbline]
+    set fbclear [file join [bu_brlcad_root "bin"] fbclear]
 
     # see if we can try to use the mged graphics window instead of firing up our own framebuffer
     set useMgedWindow 0
@@ -1111,7 +1111,7 @@ body GeometryBrowser::raytracePanel {} {
 # simply fires off rtwizard
 #
 body GeometryBrowser::raytraceWizard {} {
-    set rtwizard [bu_brlcad_root "bin/rtwizard"]
+    set rtwizard [file join [bu_brlcad_root "bin"] rtwizard]
     puts "exec $rtwizard &"
     return [ exec $rtwizard & ]
 }
@@ -1488,8 +1488,8 @@ body GeometryBrowser::checkAutoRender {} {
 #
 # handles the oddball node name that gets passed in from the hierarchy widget
 # during callback.  The nodes are expected to be named in a directory-style
-# slashed format and are optionally preceeded or followed by a "branch" or
-# "leaf" identifier. (XXX roots are preceeded, children are followed.. ! )
+# slashed format and are optionally preceded or followed by a "branch" or
+# "leaf" identifier. (XXX roots are preceded, children are followed.. ! )
 #
 body GeometryBrowser::extractNodeName { { node "" } } {
     if { $_debug } {

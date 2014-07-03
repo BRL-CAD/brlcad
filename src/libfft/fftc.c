@@ -1,7 +1,7 @@
 /*                          F F T C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fftc.c
+/** @file libfft/fftc.c
  *
  * Split Radix Decimation in Time
  * FFT C code generator.
@@ -47,8 +47,12 @@ main(int argc, char *argv[])
     }
 
     n = atoi(argv[1]);
-    m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
+    if (n < 0 || n >= INT32_MAX) {
+	fprintf( stderr, "fftc: bad length - %s\n", argv[1]);
+	return 1;
+    }
 
+    m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
     splitdit( n, m );
     fprintf( stderr, "adds = %d, mults = %d\n", rfft_adds, rfft_mults );
     return 0;

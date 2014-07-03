@@ -1,7 +1,7 @@
 /*                         H T O N F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,11 +26,12 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "bu.h"
-
+#include "bu/cv.h"
+#include "bu/endian.h"
+#include "bu/log.h"
 
 void
-htonf(register unsigned char *out, register const unsigned char *in, size_t count)
+bu_cv_htonf(register unsigned char *out, register const unsigned char *in, size_t count)
 {
     register size_t i;
 
@@ -62,12 +63,12 @@ htonf(register unsigned char *out, register const unsigned char *in, size_t coun
 	    break;
     }
 
-    bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
+    bu_bomb("bu_ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
 
 
 void
-ntohf(register unsigned char *out, register const unsigned char *in, size_t count)
+bu_cv_ntohf(register unsigned char *out, register const unsigned char *in, size_t count)
 {
     register size_t i;
 
@@ -99,7 +100,7 @@ ntohf(register unsigned char *out, register const unsigned char *in, size_t coun
 	    break;
     }
 
-    bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
+    bu_bomb("bu_ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
 
 /*

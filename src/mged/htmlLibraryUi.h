@@ -1,7 +1,7 @@
 /*                 H T M L L I B R A R Y U I . H
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,11 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file htmlLibraryUi.h
+/** @file mged/htmlLibraryUi.h
     # Simple HTML display library by Stephen Uhler (stephen.uhler@sun.com)
     # Copyright (c) 1995 by Sun Microsystems
     # Version 0.1 Thu Jul 20 09:06:28 PDT 1995
 */
+
+#ifndef MGED_HTMLLIBRARYUI_H
+#define MGED_HTMLLIBRARYUI_H
+
 char *html_library_ui_str = "\
 array set HMtag_map {\
 	a	   {Tlink link}\
@@ -492,6 +496,8 @@ array set HMesc_map {\
 	yuml \\xff\
 };\
 ";
+
+#endif /* MGED_HTMLLIBRARYUI_H */
 
 /*
  * Local Variables:

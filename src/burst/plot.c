@@ -1,7 +1,7 @@
 /*                          P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file plot.c
+/** @file burst/plot.c
  *
  */
 
@@ -66,15 +66,17 @@ plotGrid(fastf_t *r_pt)
 
 
 void
-plotRay(struct xray *rayp)
+plotRayLine(struct xray *rayp)
 {
     int endpoint[3];
     if (plotfp == NULL)
 	return;
     VJOIN1(endpoint, rayp->r_pt, cellsz, rayp->r_dir);
+
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     pl_color(plotfp, R_BURST, G_BURST, B_BURST);
-#if 0
+
+    /* draw line */
     pl_3line(plotfp,
 	     (int) rayp->r_pt[X],
 	     (int) rayp->r_pt[Y],
@@ -83,9 +85,26 @@ plotRay(struct xray *rayp)
 	     endpoint[Y],
 	     endpoint[Z]
 	);
-#else
+
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    return;
+}
+
+
+void
+plotRayPoint(struct xray *rayp)
+{
+    int endpoint[3];
+    if (plotfp == NULL)
+	return;
+    VJOIN1(endpoint, rayp->r_pt, cellsz, rayp->r_dir);
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    pl_color(plotfp, R_BURST, G_BURST, B_BURST);
+
+    /* draw point */
     pl_3point(plotfp, (int) endpoint[X], (int) endpoint[Y], (int) endpoint[Z]);
-#endif
+
     bu_semaphore_release(BU_SEM_SYSCALL);
     return;
 }

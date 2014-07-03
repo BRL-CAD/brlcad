@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fbserv.c
+/** @file mged/fbserv.c
  *
  * This code was developed by modifying the stand-alone version of
  * fbserv to work within MGED.
@@ -35,7 +35,7 @@
 #  include <winsock.h>
 #else
 #  include <sys/socket.h>
-#  include <netinet/in.h>		/* For htonl(), etc */
+#  include <netinet/in.h>		/* For htonl(), etc. */
 #endif
 #include "bio.h"
 
@@ -49,18 +49,14 @@
 
 #include "./fbserv.h"
 
-HIDDEN struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp);
-
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
 
 /*
- * C O M M _ E R R O R
- *
- * Communication error.  An error occured on the PKG link.
+ * Communication error.  An error occurred on the PKG link.
  */
 HIDDEN void
-communications_error(char *str)
+communications_error(const char *str)
 {
     bu_log(str);
 }
@@ -73,7 +69,7 @@ fbserv_setup_socket(int fd)
 
 #if defined(SO_KEEPALIVE)
     if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
-	bu_log("setsockopt (SO_KEEPALIVE): %m\n");
+	perror("setsockopt (SO_KEEPALIVE)");
     }
 #endif
 #if defined(SO_RCVBUF)
@@ -94,15 +90,12 @@ fbserv_setup_socket(int fd)
 	}
 
 	if (m < 0 || n < 0)
-	    bu_log("fbserv_setup_socket: setsockopt() SO_RCVBUF/SO_SNDBUF failed: %m\n");
+	    perror("setsockopt");
     }
 #endif
 }
 
 
-/*
- * D R O P _ C L I E N T
- */
 HIDDEN void
 fbserv_drop_client(int sub)
 {
@@ -181,10 +174,12 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
+HIDDEN struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp);
+
 HIDDEN void
 fbserv_new_client(struct pkg_conn *pcp,
 		  Tcl_Channel chan)
-	   
+
 {
     int i;
 
@@ -222,7 +217,7 @@ fbserv_new_client_handler(ClientData clientData,
 {
     struct dm_list *dlp = (struct dm_list *)clientData;
     struct dm_list *scdlp;  /* save current dm_list pointer */
-    int fd;
+    uintptr_t fd;
 
     if (dlp == NULL)
 	return;
@@ -233,16 +228,13 @@ fbserv_new_client_handler(ClientData clientData,
     curr_dm_list = dlp;
 
     if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
-	fbserv_new_client(fbserv_makeconn(fd, pkg_switch), chan);
+	fbserv_new_client(fbserv_makeconn((int)fd, pkg_switch), chan);
 
     /* restore */
     curr_dm_list = scdlp;
 }
 
 
-/*
- * S E T _ P O R T
- */
 void
 fbserv_set_port(void)
 {
@@ -260,7 +252,7 @@ fbserv_set_port(void)
 	    fbserv_drop_client(i);
 
 	fd = (ClientData)netfd;
-	Tcl_DeleteChannelHandler(netchan, fbserv_new_client_handler, fd);
+	Tcl_DeleteChannelHandler(netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
 
 	Tcl_Close(dmp->dm_interp, netchan);
 	netchan = NULL;
@@ -357,9 +349,6 @@ fbserv_makeconn(int fd,
 #else /* defined(_WIN32) && !defined(__CYGWIN__) */
 
 
-/*
- * N E W _ C L I E N T
- */
 HIDDEN void
 fbserv_new_client(struct pkg_conn *pcp)
 {
@@ -417,9 +406,6 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 }
 
 
-/*
- * S E T _ P O R T
- */
 void
 fbserv_set_port(void)
 {
@@ -486,6 +472,11 @@ fbserv_set_port(void)
 void
 rfbunknown(struct pkg_conn *pcp, char *buf)
 {
+    if (buf == NULL) {
+	bu_log("rfbunknown: null buffer\n");
+	return;
+    }
+
     bu_log("fbserv: unable to handle message type %d\n", pcp->pkc_type);
     (void)free(buf);
 }
@@ -499,6 +490,11 @@ rfbopen(struct pkg_conn *pcp, char *buf)
     char rbuf[5*NET_LONG_LEN+1];
     int want;
 
+    if (buf == NULL) {
+	bu_log("rfbopen: null buffer\n");
+	return;
+    }
+
     /* Don't really open a new framebuffer --- use existing one */
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], 0);	/* ret */
     (void)pkg_plong(&rbuf[1*NET_LONG_LEN], fbp->if_max_width);
@@ -510,8 +506,7 @@ rfbopen(struct pkg_conn *pcp, char *buf)
     if (pkg_send(MSG_RETURN, rbuf, want, pcp) != want)
 	communications_error("pkg_send fb_open reply\n");
 
-    if (buf)
-	(void)free(buf);
+    (void)free(buf);
 }
 
 
@@ -558,6 +553,11 @@ rfbclear(struct pkg_conn *pcp, char *buf)
     RGBpixel bg;
     char rbuf[NET_LONG_LEN+1];
 
+    if (buf == NULL) {
+	bu_log("rfbwindow: null buffer\n");
+	return;
+    }
+
     bg[RED] = buf[0];
     bg[GRN] = buf[1];
     bg[BLU] = buf[2];
@@ -565,8 +565,7 @@ rfbclear(struct pkg_conn *pcp, char *buf)
     (void)pkg_plong(rbuf, fb_clear(fbp, bg));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
 
-    if (buf)
-	(void)free(buf);
+    (void)free(buf);
 }
 
 
@@ -578,6 +577,11 @@ rfbread(struct pkg_conn *pcp, char *buf)
     int ret;
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
+
+    if (buf == NULL) {
+	bu_log("rfbreadrect: null buffer\n");
+	return;
+    }
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -591,7 +595,7 @@ rfbread(struct pkg_conn *pcp, char *buf)
 	    buflen = 1024*sizeof(RGBpixel);
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("fb_read: malloc failed!");
-	    if (buf) (void)free(buf);
+	    (void)free(buf);
 	    buflen = 0;
 	    return;
 	}
@@ -601,7 +605,7 @@ rfbread(struct pkg_conn *pcp, char *buf)
     if (ret < 0) ret = 0;		/* map error indications */
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret*sizeof(RGBpixel), pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
@@ -613,6 +617,11 @@ rfbwrite(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
+    if (buf == NULL) {
+	bu_log("rfbreadrect: null buffer\n");
+	return;
+    }
+
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
     num = pkg_glong(&buf[2*NET_LONG_LEN]);
@@ -623,13 +632,10 @@ rfbwrite(struct pkg_conn *pcp, char *buf)
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
-/*
- * R F B R E A D R E C T
- */
 void
 rfbreadrect(struct pkg_conn *pcp, char *buf)
 {
@@ -639,6 +645,11 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
     int ret;
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
+
+    if (buf == NULL) {
+	bu_log("rfbreadrect: null buffer\n");
+	return;
+    }
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -654,7 +665,7 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
 	    buflen = 1024*sizeof(RGBpixel);
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("fb_read: malloc failed!");
-	    if (buf) (void)free(buf);
+	    (void)free(buf);
 	    buflen = 0;
 	    return;
 	}
@@ -664,13 +675,10 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
     if (ret < 0) ret = 0;		/* map error indications */
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret*sizeof(RGBpixel), pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
-/*
- * R F B W R I T E R E C T
- */
 void
 rfbwriterect(struct pkg_conn *pcp, char *buf)
 {
@@ -679,6 +687,11 @@ rfbwriterect(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1];
     int ret;
     int type;
+
+    if (buf == NULL) {
+	bu_log("rfbreadrect: null buffer\n");
+	return;
+    }
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -693,13 +706,10 @@ rfbwriterect(struct pkg_conn *pcp, char *buf)
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
-/*
- * R F B B W R E A D R E C T
- */
 void
 rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 {
@@ -709,6 +719,11 @@ rfbbwreadrect(struct pkg_conn *pcp, char *buf)
     int ret;
     static unsigned char *scanbuf = NULL;
     static int buflen = 0;
+
+    if (buf == NULL) {
+	bu_log("rfbbwreadrect: null buffer\n");
+	return;
+    }
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -724,7 +739,7 @@ rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 	    buflen = 1024;
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("rfbbwreadrect: malloc failed!");
-	    if (buf) (void)free(buf);
+	    (void)free(buf);
 	    buflen = 0;
 	    return;
 	}
@@ -734,13 +749,10 @@ rfbbwreadrect(struct pkg_conn *pcp, char *buf)
     if (ret < 0) ret = 0;		/* map error indications */
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret, pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
-/*
- * R F B B W W R I T E R E C T
- */
 void
 rfbbwwriterect(struct pkg_conn *pcp, char *buf)
 {
@@ -749,6 +761,11 @@ rfbbwwriterect(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1];
     int ret;
     int type;
+
+    if (buf == NULL) {
+	bu_log("rfbbwwriterect: null buffer\n");
+	return;
+    }
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -763,7 +780,7 @@ rfbbwwriterect(struct pkg_conn *pcp, char *buf)
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
@@ -773,13 +790,18 @@ rfbcursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
+    if (buf == NULL) {
+	bu_log("rfbwindow: null buffer\n");
+	return;
+    }
+
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
     x = pkg_glong(&buf[1*NET_LONG_LEN]);
     y = pkg_glong(&buf[2*NET_LONG_LEN]);
 
     (void)pkg_plong(&rbuf[0], fb_cursor(fbp, mode, x, y));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
@@ -808,6 +830,11 @@ rfbsetcursor(struct pkg_conn *pcp, char *buf)
     int xbits, ybits;
     int xorig, yorig;
 
+    if (buf == NULL) {
+	bu_log("rfbreadrect: null buffer\n");
+	return;
+    }
+
     xbits = pkg_glong(&buf[0*NET_LONG_LEN]);
     ybits = pkg_glong(&buf[1*NET_LONG_LEN]);
     xorig = pkg_glong(&buf[2*NET_LONG_LEN]);
@@ -820,7 +847,7 @@ rfbsetcursor(struct pkg_conn *pcp, char *buf)
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
@@ -831,13 +858,18 @@ rfbscursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
+    if (buf == NULL) {
+	bu_log("rfbopen: null buffer\n");
+	return;
+    }
+
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
     x = pkg_glong(&buf[1*NET_LONG_LEN]);
     y = pkg_glong(&buf[2*NET_LONG_LEN]);
 
     (void)pkg_plong(&rbuf[0], fb_scursor(fbp, mode, x, y));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
@@ -848,12 +880,17 @@ rfbwindow(struct pkg_conn *pcp, char *buf)
     int x, y;
     char rbuf[NET_LONG_LEN+1];
 
+    if (buf == NULL) {
+	bu_log("rfbwindow: null buffer\n");
+	return;
+    }
+
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
 
     (void)pkg_plong(&rbuf[0], fb_window(fbp, x, y));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
@@ -864,12 +901,17 @@ rfbzoom(struct pkg_conn *pcp, char *buf)
     int x, y;
     char rbuf[NET_LONG_LEN+1];
 
+    if (buf == NULL) {
+	bu_log("rfbreadrect: null buffer\n");
+	return;
+    }
+
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
 
     (void)pkg_plong(&rbuf[0], fb_zoom(fbp, x, y));
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
@@ -880,6 +922,11 @@ rfbview(struct pkg_conn *pcp, char *buf)
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[NET_LONG_LEN+1];
 
+    if (buf == NULL) {
+	bu_log("rfbreadrect: null buffer\n");
+	return;
+    }
+
     xcenter = pkg_glong(&buf[0*NET_LONG_LEN]);
     ycenter = pkg_glong(&buf[1*NET_LONG_LEN]);
     xzoom = pkg_glong(&buf[2*NET_LONG_LEN]);
@@ -888,7 +935,7 @@ rfbview(struct pkg_conn *pcp, char *buf)
     ret = fb_view(fbp, xcenter, ycenter, xzoom, yzoom);
     (void)pkg_plong(&rbuf[0], ret);
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
@@ -931,8 +978,6 @@ rfbrmap(struct pkg_conn *pcp, char *buf)
 
 
 /*
- * R F B W M A P
- *
  * Accept a color map sent by the client, and write it to the
  * framebuffer.  Network format is to send each entry as a network
  * (IBM) order 2-byte short, 256 red shorts, followed by 256 green and
@@ -946,6 +991,11 @@ rfbwmap(struct pkg_conn *pcp, char *buf)
     long ret;
     ColorMap map;
 
+    if (buf == NULL) {
+	bu_log("rfbwmap: null buffer\n");
+	return;
+    }
+
     if (pcp->pkc_len == 0)
 	ret = fb_wmap(fbp, COLORMAP_NULL);
     else {
@@ -958,7 +1008,7 @@ rfbwmap(struct pkg_conn *pcp, char *buf)
     }
     (void)pkg_plong(&rbuf[0], ret);
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 
@@ -997,12 +1047,17 @@ rfbhelp(struct pkg_conn *pcp, char *buf)
     long ret;
     char rbuf[NET_LONG_LEN+1];
 
+    if (buf == NULL) {
+	bu_log("rfbwindow: null buffer\n");
+	return;
+    }
+
     (void)pkg_glong(&buf[0*NET_LONG_LEN]);
 
     ret = fb_help(fbp);
     (void)pkg_plong(&rbuf[0], ret);
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
-    if (buf) (void)free(buf);
+    (void)free(buf);
 }
 
 

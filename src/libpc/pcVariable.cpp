@@ -1,7 +1,7 @@
 /*                    P C V A R I A B L E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,9 @@ void VariableAbstract::restore()
 template<>
 Variable<int>::Variable(std::string vid, int vvalue) :
     VariableAbstract(vid),
-    value(vvalue)
+    value(vvalue),
+    vcopy_(vvalue),
+    D()
 {
     double min, max;
     VariableAbstract::type = VAR_INT;
@@ -77,7 +79,9 @@ Variable<int>::Variable(std::string vid, int vvalue) :
 template<>
 Variable<double>::Variable(std::string vid, double vvalue) :
     VariableAbstract(vid),
-    value(vvalue)
+    value(vvalue),
+    vcopy_(vvalue),
+    D()
 {
     double min, max;
     VariableAbstract::type = VAR_DBL;

@@ -1,7 +1,7 @@
 /*                         D M - P S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-ps.c
+/** @file mged/dm-ps.c
  *
  * Routines specific to MGED's use of LIBDM's Postscript display manager.
  *
@@ -36,7 +36,7 @@
 #include "raytrace.h"
 #include "./mged.h"
 #include "./mged_dm.h"
-#include "dm-ps.h"
+#include "dm/dm-ps.h"
 
 
 extern void dm_var_init(struct dm_list *initial_dm_list);

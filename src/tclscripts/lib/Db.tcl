@@ -1,7 +1,7 @@
 #                          D B . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2010 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used.
+# Use the Ged widget instead.
+#####################################################################
+
 #
 # Description -
 #	The Db class wraps LIBRT's database object.
@@ -45,6 +51,7 @@
 	method dump {args}
 	method dup {args}
 	method edcomb {args}
+	method edit {args}
 	method edmater {args}
 	method expand {args}
 	method facetize {args}
@@ -68,7 +75,6 @@
 	method ls {args}
 	method lt {args}
 	method make {args}
-	method make_bb {name args}
 	method make_name {args}
 	method match {args}
 	method mater {args}
@@ -88,6 +94,7 @@
 	method pathlist {args}
 	method paths {args}
 	method prcolor {args}
+	method pull {args}
 	method push {args}
 	method put {args}
 	method r {args}
@@ -109,6 +116,7 @@
 	method unhide {args}
 	method units {args}
 	method version {args}
+	method voxelize {args}
 	method whatid {args}
 	method whichair {args}
 	method whichid {args}
@@ -138,6 +146,9 @@
 }
 
 ::itcl::body Db::constructor {dbOrFile} {
+
+    puts "DEPRECATION WARNING: The Db widget should no longer be used.  Use the Ged widget instead."
+
     if {[catch {$dbOrFile ls}]} {
 	set dbfile $dbOrFile
 	set db [subst $this]_db
@@ -284,6 +295,11 @@
     eval $db facetize $args
 }
 
+
+::itcl::body Db::voxelize {args} {
+    eval $db voxelize $args
+}
+
 ::itcl::body Db::kill {args} {
     eval $db kill $args
 }
@@ -322,6 +338,10 @@
 
 ::itcl::body Db::edcomb {args} {
     eval $db edcomb $args
+}
+
+::itcl::body Db::edit {args} {
+    eval $db edit $args
 }
 
 ::itcl::body Db::edmater {args} {
@@ -456,10 +476,6 @@
     eval $db make $args
 }
 
-::itcl::body Db::make_bb {name args} {
-    eval $db make_bb $name $args
-}
-
 ::itcl::body Db::make_name {args} {
     eval $db make_name $args
 }
@@ -554,13 +570,14 @@
     $help add color	{{low high r g b str} {make color entry}}
     $help add comb	{{comb_name <operation solid>} {create or extend combination w/booleans}}
     $help add comb_color {{comb R G B} {set combination's color}}
-    $help add concat	{{file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
+    $help add concat	{{[-t] [-u] [-c] [-s|-p] file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
     $help add copyeval	{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
     $help add cp	{{from to} {copy [duplicate] object}}
     $help add dbip	{{} {get dbip}}
     $help add dump	{{file} {write current state of database object to file}}
     $help add dup	{{file [prefix]} {check for dup names in 'file'}}
     $help add edcomb	{{comb rflag rid air los mid} {modify combination record information}}
+    $help add edit      {{[help] subcmd args} {edit objects via subcommands}}
     $help add edmater	{{comb1 [comb2 ...]} {edit combination materials}}
     $help add expand	{{expression} {globs expression against database objects}}
     $help add find	{{[-s] <objects>} {find all references to objects}}
@@ -580,7 +597,6 @@
     $help add ls	{{[-a -c -r -s]} {table of contents}}
     $help add lt	{{object} {return first level tree as list of operator/member pairs}}
     $help add make	{{-t | object type} {make an object/primitive of the specified type}}
-    $help add make_bb	{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
     $help add match	{{exp} {returns all database objects matching the given expression}}
     $help add mater	{{region shader R G B inherit} {modify region's material information}}
     $help add mirror	{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}
@@ -608,7 +624,7 @@
     $help add rt_gettrees      {{} {}}
     $help add rotate_arb_face	{{arb face pt} {rotate an arb's face through pt}}
     $help add shader	{{comb shader_material [shader_args]} {command line version of the mater command}}
-    $help add shells	{{nmg_model}	{breaks model into seperate shells}}
+    $help add shells	{{nmg_model}	{breaks model into separate shells}}
     $help add showmats	{{path}	{show xform matrices along path}}
     $help add summary	{{[s r g]}	{count/list solid/reg/groups}}
     $help add title	{{?string?} {print or change the title}}

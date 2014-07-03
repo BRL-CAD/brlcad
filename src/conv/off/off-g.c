@@ -1,7 +1,7 @@
 /*                         O F F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,9 +44,7 @@
 static struct bn_tol tol;
 
 /*
- *         R E A D _ F A C E S
- *
- * Reads the geometry from the the geometry file and creates the appropriate
+ * Reads the geometry from the geometry file and creates the appropriate
  *  vertices and faces.
  */
 
@@ -59,6 +57,7 @@ int read_faces(struct model *m, FILE *fgeom)
     struct faceuse 	 **outfaceuses;
     struct nmgregion  *r;
     struct shell 	  *s;
+    size_t ret;
 
     /* Get numbers of vertices and faces, and grab the appropriate amount of memory */
     if (fscanf(fgeom, "%d %d %d", &nverts, &nfaces, &nedges) != 3)
@@ -70,11 +69,18 @@ int read_faces(struct model *m, FILE *fgeom)
 
     /* Read in vertex geometry, store in geometry list */
     for (i = 0; i < nverts; i++) {
-	if (fscanf(fgeom, "%lf %lf %lf", &pts[3*i], &pts[3*i+1], &pts[3*i+2]) != 3)
+	double scan[3];
+	if (fscanf(fgeom, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]) != 3) {
 	    bu_exit(1, "Not enough data points in geometry file.\n");
+	}
+	pts[3*i] = scan[0];
+	pts[3*i+1] = scan[1];
+	pts[3*i+2] = scan[2];
 
 	verts[i] = (struct vertex *) 0;
-	fscanf(fgeom, "%*[^\n]");
+	ret = fscanf(fgeom, "%*[^\n]");
+	if (ret > 0)
+	    bu_log("unknown parsing error\n");
     }
 
     r = nmg_mrsv(m);		/* Make region, empty shell, vertex. */
@@ -91,10 +97,10 @@ int read_faces(struct model *m, FILE *fgeom)
 	}
 	/* Grab memory for list for this face. */
 	vlist = (struct vertex **) bu_malloc(sizeof(struct vertex *) * nedges, "vertex list");
-	pinds = (int *) bu_malloc(sizeof(int) * nedges, "point indicies");
+	pinds = (int *) bu_malloc(sizeof(int) * nedges, "point indices");
 
 	for (j = 0; j < nedges; j++) {
-	    /* Read list of point indicies. */
+	    /* Read list of point indices. */
 	    if (fscanf(fgeom, "%d", &pinds[j]) != 1) {
 		bu_exit(1, "Not enough points on face.\n");
 	    }
@@ -107,10 +113,12 @@ int read_faces(struct model *m, FILE *fgeom)
 	for (j = 0; j < nedges; j++)		/* Save (possibly) newly created vertex structs. */
 	    verts[pinds[j]-1] = vlist[j];
 
-	fscanf(fgeom, "%*[^\n]");
+	ret = fscanf(fgeom, "%*[^\n]");
+	if (ret > 0)
+	    bu_log("unknown parsing error\n");
 
 	bu_free((char *)vlist, "vertext list");
-	bu_free((char *)pinds, "point indicies");
+	bu_free((char *)pinds, "point indices");
     }
 
     for (i = 0; i < nverts; i++)
@@ -160,7 +168,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 	    char dtype[40], format[40];
 	    if (sscanf(buf2, "%40s %40s %64s", dtype, format, geom_fname) != 3)
 		bu_exit(1, "Incomplete geometry field in input file.");
-	    if (strcmp(dtype, "indexed_poly") != 0)
+	    if (!BU_STR_EQUAL(dtype, "indexed_poly"))
 		bu_exit(1, "Unknown geometry data type. Must be \"indexed_poly\".");
 	}
 	bu_fgets(buf, sizeof(buf), fpin);
@@ -197,6 +205,8 @@ int main(int argc, char **argv)
 {
     FILE *fpin;
     struct rt_wdb *fpout;
+
+    bu_setprogname(argv[0]);
 
     tol.magic = BN_TOL_MAGIC;	/* Copied from proc-db/nmgmodel.c */
     tol.dist = 0.01;

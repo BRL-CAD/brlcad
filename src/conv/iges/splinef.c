@@ -1,7 +1,7 @@
 /*                       S P L I N E F . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,12 +32,12 @@ splinef(fastf_t c[4], fastf_t s)
 {
     int i;
     float retval;
-    double stopow=1.0;
+    double stopow = 1.0;
 
     retval = c[0];
-    for (i=1; i<4; i++) {
+    for (i = 1; i < 4; i++) {
 	stopow *= s;
-	if (!NEAR_ZERO(c[i], SMALL_FASTF))
+	if (!ZERO(c[i]))
 	    retval += c[i]*stopow;
     }
 

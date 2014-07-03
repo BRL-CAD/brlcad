@@ -1,7 +1,7 @@
 /*                          M E N U . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,16 +17,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file menu.h
+/** @file mged/menu.h
  *
- * Each active menu is installed by haveing a non-null entry in
+ * Each active menu is installed by having a non-null entry in
  * menu_array[] which is a pointer
  * to an array of menu items.  The first ([0]) menu item is the title
  * for the menu, and the remaining items are individual menu entries.
  *
  */
-#ifndef SEEN_MENU_H
-#define SEEN_MENU_H
+#ifndef MGED_MENU_H
+#define MGED_MENU_H
 
 struct menu_item {
     char *menu_string;
@@ -43,7 +43,7 @@ struct menu_item {
 #define MENU_L2 1 /* second-level menu (unused) */
 #define MENU_GEN 2 /* general features (mouse buttons) */
 
-#endif /* SEEN_MENU_H */
+#endif /* MGED_MENU_H */
 
 /*
  * Local Variables:

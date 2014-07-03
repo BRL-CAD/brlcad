@@ -1,7 +1,7 @@
 /*                            I R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ir.c
+/** @file lgt/ir.c
     Author:		Gary S. Moss
 */
 
@@ -32,7 +32,7 @@
 #include "raytrace.h"
 #include "fb.h"
 
-#include "../vfont/vfont.h"
+#include "../libbu/vfont.h"
 
 #include "./hmenu.h"
 #include "./lgt.h"
@@ -52,7 +52,7 @@ extern fastf_t epsilon;
 static RGBpixel	black = { 0, 0, 0 };
 static int	ir_max_index = -1;
 RGBpixel	*ir_table = (RGBpixel *)RGBPIXEL_NULL;
-struct vfont	font;
+struct vfont_file font;
 
 static void	temp_To_RGB(unsigned char *rgb, int temp);
 
@@ -165,7 +165,7 @@ display_Temps(int xmin, int ymin)
 static int
 get_IR(int x, int y, int *fahp, FILE *fp)
 {
-    if ( fseek( fp, (long)((y*IR_DATA_WID + x) * sizeof(int)), 0 ) != 0 )
+    if ( bu_fseek( fp, (y*IR_DATA_WID + x)*sizeof(int), 0 ) != 0 )
 	return	0;
     else
 	if ( fread( (char *) fahp, (int) sizeof(int), 1, fp ) != 1 )
@@ -258,7 +258,7 @@ read_IR(FILE *fp)
     }
 }
 
-/*	t e m p _ T o _ R G B ( )
+/*
 	Map temperatures to spectrum of colors.
 	This routine is extracted from the "mandel" program written by
 	Douglas A. Gwyn here at BRL, and has been modified slightly
@@ -275,7 +275,7 @@ temp_To_RGB(unsigned char *rgb, int temp)
     int	h = (int) hue;	/* integral part	*/
     int	f = (int)(256.0 * (hue - (fastf_t)h));
     /* fractional part * 256	*/
-    if ( NEAR_ZERO(t - ABSOLUTE_ZERO, SMALL_FASTF) )
+    if ( ZERO(t - ABSOLUTE_ZERO) )
 	rgb[RED] = rgb[GRN] = rgb[BLU] = 0;
     else
 	switch ( h )
@@ -317,7 +317,7 @@ temp_To_RGB(unsigned char *rgb, int temp)
     return;
 }
 
-/*	i n i t _ T e m p _ T o _ R G B ( )
+/*
 	Initialize pseudo-color mapping table for the current view.  This
 	color assignment will vary with each set of IR data read so as to
 	map the full range of data to the full spectrum of colors.  This
@@ -378,48 +378,48 @@ same_Hue(RGBpixel (*pixel1p), RGBpixel (*pixel2p))
     rval2 = (*pixel2p)[RED];
     gval2 = (*pixel2p)[GRN];
     bval2 = (*pixel2p)[BLU];
-    if ( NEAR_ZERO(rval1, SMALL_FASTF) )
+    if ( ZERO(rval1) )
     {
-	if ( !NEAR_ZERO(rval2, SMALL_FASTF) )
+	if ( !ZERO(rval2) )
 	    return	0;
 	else /* Both red values are zero. */
 	    rratio = 0.0;
     }
     else
-	if ( NEAR_ZERO(rval2, SMALL_FASTF) )
+	if ( ZERO(rval2) )
 	    return	0;
 	else /* Neither red value is zero. */
 	    rratio = rval1/rval2;
-    if ( NEAR_ZERO(gval1, SMALL_FASTF) )
+    if ( ZERO(gval1) )
     {
-	if ( !NEAR_ZERO(gval2, SMALL_FASTF) )
+	if ( !ZERO(gval2) )
 	    return	0;
 	else /* Both green values are zero. */
 	    gratio = 0.0;
     }
     else
-	if ( NEAR_ZERO(gval2, SMALL_FASTF) )
+	if ( ZERO(gval2) )
 	    return	0;
 	else /* Neither green value is zero. */
 	    gratio = gval1/gval2;
-    if ( NEAR_ZERO(bval1, SMALL_FASTF) )
+    if ( ZERO(bval1) )
     {
-	if ( !NEAR_ZERO(bval2, SMALL_FASTF) )
+	if ( !ZERO(bval2) )
 	    return	0;
 	else /* Both blue values are zero. */
 	    bratio = 0.0;
     }
     else
-	if ( NEAR_ZERO(bval2, SMALL_FASTF) )
+	if ( ZERO(bval2) )
 	    return	0;
 	else /* Neither blue value is zero. */
 	    bratio = bval1/bval2;
-    if ( NEAR_ZERO(rratio, SMALL_FASTF) )
+    if ( ZERO(rratio) )
     {
-	if ( NEAR_ZERO(gratio, SMALL_FASTF) )
+	if ( ZERO(gratio) )
 	    return	1;
 	else
-	    if ( NEAR_ZERO(bratio, SMALL_FASTF) )
+	    if ( ZERO(bratio) )
 		return	1;
 	    else
 		if ( AproxEq( gratio, bratio, HUE_TOL ) )
@@ -428,9 +428,9 @@ same_Hue(RGBpixel (*pixel1p), RGBpixel (*pixel2p))
 		    return	0;
     }
     else
-	if ( NEAR_ZERO(gratio, SMALL_FASTF) )
+	if ( ZERO(gratio) )
 	{
-	    if ( NEAR_ZERO(bratio, SMALL_FASTF) )
+	    if ( ZERO(bratio) )
 		return	1;
 	    else
 		if ( AproxEq( bratio, rratio, HUE_TOL ) )
@@ -439,7 +439,7 @@ same_Hue(RGBpixel (*pixel1p), RGBpixel (*pixel2p))
 		    return	0;
 	}
 	else
-	    if ( NEAR_ZERO(bratio, SMALL_FASTF) )
+	    if ( ZERO(bratio) )
 	    {
 		if ( AproxEq( rratio, gratio, HUE_TOL ) )
 		    return	1;
@@ -480,8 +480,8 @@ f_IR_Model(struct application *ap, Octree *op)
 {
     fastf_t		octnt_min[3], octnt_max[3];
     fastf_t		delta = modl_radius / pow_Of_2( ap->a_level );
-    fastf_t		point[3]; /* Intersection point.	*/
-    fastf_t		norml[3]; /* Unit normal at point.	*/
+    fastf_t		point[3] = VINIT_ZERO; /* Intersection point.	*/
+    fastf_t		norml[3] = VINIT_ZERO; /* Unit normal at point.	*/
     /* Push ray origin along ray direction to intersection point.	*/
     VJOIN1( point, ap->a_ray.r_pt, ap->a_uvec[0], ap->a_ray.r_dir );
 

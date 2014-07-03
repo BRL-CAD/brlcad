@@ -1,7 +1,7 @@
 #                        M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2010 United States Government as represented by
+# Copyright (c) 1995-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -51,9 +51,9 @@ if { [info exists tk_strictMotif] == 0 } {
 #   bu_brlcad_data/html/manuals/mged
 
 if ![info exists mged_default(html_dir)] {
-    set mged_default(html_dir) [file normalize [bu_brlcad_data "html/manuals/mged"]]
+    set mged_default(html_dir) [file normalize [file join [bu_brlcad_data "html"] manuals mged]]
     if {![file exists $mged_default(html_dir)]} {
-	set mged_default(html_dir) [file normalize [bu_brlcad_data "doc/html/manuals/mged"]]
+	set mged_default(html_dir) [file normalize [file join [bu_brlcad_data "doc"] html manuals mged]]
     }
 }
 
@@ -109,7 +109,6 @@ proc mged_help { w1 screen } {
 }
 
 
-
 proc ia_apropos { parent screen } {
     set w $parent.apropos
 
@@ -151,21 +150,6 @@ proc ia_changestate { args } {
     }
 }
 
-proc ::tk::TextInsert {w s} {
-    if {$s == ""} {
-	return
-    }
-    catch {
-	if {[$w compare sel.first <= insert] && \
-		[$w compare sel.last >= insert]} {
-	    $w tag remove sel sel.first promptEnd
-	    $w delete sel.first sel.last
-	}
-    }
-    $w insert insert $s
-    $w see insert
-}
-
 proc get_player_id_t { w } {
     global mged_players
 
@@ -187,37 +171,23 @@ proc do_New { id } {
     global mged_gui
     global ::tk::Priv
 
-    set ret [cad_input_dialog .$id.new $mged_gui($id,screen)\
-		 "New MGED Database" \
-		 "Enter new database filename:" ia_filename "${mged_gui(databaseDir)}/" \
-		 0 {{ summary "Enter a new database name. Note - a database
-must not exist by this name."}}\
-		 OK Cancel]
+    set ftypes {{{MGED Database} {.g}} {{All Files} *}}
+    set filename [tk_getSaveFile -parent .$id \
+				 -filetypes $ftypes \
+				 -initialdir $mged_gui(databaseDir) \
+				 -title "Create a New Database"]
 
-    if {$ia_filename != "" && $ret == 0} {
-	# save the directory
-	if [file isdirectory $ia_filename] {
-	    # the split followed by the join removes extra /'s
-	    set mged_gui(databaseDir) [eval file join [file split $ia_filename]]
-	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Not a database." \
-		"$ia_filename is a directory!" info 0 OK
-	    return
-	} else {
-	    set mged_gui(databaseDir) [file dirname $ia_filename]
-	}
+    if {$filename != ""} {
+	# save the current directory for subsequent file saves
+	set mged_gui(databaseDir) [file dirname $filename]
 
-	if [file exists $ia_filename] {
-	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Existing Database" \
-		"$ia_filename already exists" info 0 OK
+	file delete $filename
+	if [catch {opendb $filename y} msg] {
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
+	    "Error" $msg info 0 OK
 	} else {
-	    set ret [catch {opendb $ia_filename y} msg]
-	    if {$ret} {
-		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
-		    $msg info 0 OK
-	    } else {
-		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "File created" \
-		    $msg info 0 OK
-	    }
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
+	    "File created" $msg info 0 OK
 	}
     }
 }
@@ -468,7 +438,11 @@ proc ia_invoke { w } {
 	    set result [catch { uplevel \#0 $cmd } ia_msg]
 	} else {
 	    catch { db_glob $cmd } globbed_cmd
-	    set result [catch { uplevel \#0 $globbed_cmd } ia_msg]
+	    if {$globbed_cmd == ""} {
+		set result [catch { uplevel \#0 $cmd } ia_msg]
+	    } else {
+		set result [catch { uplevel \#0 $globbed_cmd } ia_msg]
+	    }
 	}
 
 	if { ![winfo exists $w] } {
@@ -596,7 +570,7 @@ proc HMlink_callback { w href } {
     lappend ia_url(last) $ia_url(current)
     set ia_url(backtrack) [lrange $ia_url(last) 0 \
 			       [expr [llength $ia_url(last)]-2]]
-    
+
     HMreset_win $w
     HMparse_html [ia_get_html $ia_url(current)] "HMrender $w"
     update

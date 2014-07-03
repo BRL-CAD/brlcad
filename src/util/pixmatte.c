@@ -1,7 +1,7 @@
 /*                      P I X M A T T E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixmatte.c
+/** @file util/pixmatte.c
  *
  * Given four streams of data elements,
  * where element is of arbitrary width,
@@ -33,7 +33,7 @@
  * Each of these streams comes from a file, or is given as a constant.
  * A particular file may be used to feed more than one stream,
  * and the name '-' specifies stdin.
- * For example, the forground file may also be the true-output file.
+ * For example, the foreground file may also be the true-output file.
  *
  * This routine operates on an element-by-element basis, and thus
  * is independent of the resolution of the image.
@@ -83,7 +83,7 @@ The default width is 3 bytes, suitable for processing .pix files.\n\
 
 
 void
-usage(char *s, int n)
+usage(const char *s, int n)
 {
     if (s && *s) (void)fputs(s, stderr);
 
@@ -91,9 +91,6 @@ usage(char *s, int n)
 }
 
 
-/*
- * O P E N _ F I L E
- */
 int
 open_file(int i, char *name)
 {
@@ -117,7 +114,7 @@ open_file(int i, char *name)
     }
 
     file_name[i] = name;
-    if (strcmp(name, "-") == 0) {
+    if (BU_STR_EQUAL(name, "-")) {
 	fp[i] = stdin;
 	if (isatty(fileno(stdin)))
 	    return -1;	/* FAIL */
@@ -141,9 +138,6 @@ open_file(int i, char *name)
 }
 
 
-/*
- * G E T _ A R G S
- */
 void
 get_args(int argc, char **argv)
 {
@@ -151,7 +145,7 @@ get_args(int argc, char **argv)
     int seen_formula = 0;
     int i;
 
-    while ((c = bu_getopt(argc, argv, "glenaw:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "glenaw:")) != -1) {
 	switch (c) {
 	    case 'g':
 		wanted |= GT;
@@ -214,11 +208,9 @@ main(int argc, char **argv)
     if (isatty(fileno(stdout)))
 	usage("Cannot write image to tty\n", 1);
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#endif
 
     bu_log("pixmatte:\tif (%s ", file_name[0]);
     if (wanted & LT) {

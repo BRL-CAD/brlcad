@@ -1,7 +1,7 @@
 /*                       P I X T I L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixtile.c
+/** @file util/pixtile.c
  *
  * Given multiple .pix files with ordinary lines of pixels, produce a
  * single image with each image side-by-side, right to left, bottom to
@@ -47,15 +47,12 @@ Usage: pixtile [-h] [-s squareinsize] [-w file_width] [-n file_height]\n\
 	[-o startframe] basename [file2 ... fileN] >file.pix\n";
 
 
-/*
- * G E T _ A R G S
- */
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hs:w:n:S:W:N:o:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "hs:w:n:S:W:N:o:")) != -1) {
 	switch (c) {
 	    case 'h':
 		/* high-res */
@@ -116,6 +113,7 @@ main(int argc, char **argv)
     int islist = 0;		/* set if a list, zero if basename */
     int is_stream = 0;	/* set if input is stream on stdin */
     char name[256] = {0};
+    ssize_t ret;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -150,12 +148,14 @@ main(int argc, char **argv)
     maximage = im_line * im_high;
 
     if ((obuf = (char *)malloc(swathbytes)) == (char *)0) {
-	(void)fprintf(stderr, "pixtile:  malloc %d failure\n", swathbytes);
+	fprintf(stderr, "pixtile:  malloc %d failure\n", swathbytes);
 	bu_exit (10, NULL);
     }
 
     image = 0;
     while (image < maximage) {
+	char *ifname;
+
 	memset(obuf, 0, swathbytes);
 	/*
 	 * Collect together one swath
@@ -180,10 +180,14 @@ main(int argc, char **argv)
 		} else {
 		    snprintf(name, sizeof(name), "%s.%d", base_name, framenumber);
 		}
-		if ((fd=open(name, 0))<0) {
-		    perror(name);
+
+		ifname = bu_realpath(name, NULL);
+		if ((fd=open(ifname, 0))<0) {
+		    perror(ifname);
+		    bu_free(ifname, "ifname alloc from bu_realpath");
 		    goto done;
 		}
+		bu_free(ifname, "ifname alloc from bu_realpath");
 	    }
 	    /* Read in .pix file.  Bottom to top */
 	    for (i=0; i<file_height; i++) {
@@ -202,13 +206,22 @@ main(int argc, char **argv)
 	    }
 	    if (fd > 0) close(fd);
 	}
-	(void)write(1, obuf, swathbytes);
+	ret = write(1, obuf, swathbytes);
+	if (ret < 0)
+	    perror("write");
+
 	rel = 0;	/* in case we fall through */
     }
- done:
+done:
     /* Flush partial frame? */
-    if (rel != 0)
-	(void)write(1, obuf, swathbytes);
+    if (rel != 0) {
+	ret = write(1, obuf, swathbytes);
+	if (ret < 0)
+	    perror("write");
+    }
+
+    bu_free(obuf, "obuf alloc from malloc");
+
     fprintf(stderr, "\n");
 
     return 0;

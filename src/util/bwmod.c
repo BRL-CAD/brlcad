@@ -1,7 +1,7 @@
 /*                         B W M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwmod.c
+/** @file util/bwmod.c
  *
  * Modify intensities in Black and White files.
  *
@@ -39,8 +39,9 @@
 #include "bu.h"
 #include "vmath.h"
 
-
-char *progname = "(noname)";
+char hyphen[] = "-";
+char noname[] = "(noname)";
+char *progname = noname;
 
 char *file_name;
 
@@ -74,7 +75,7 @@ get_args(int argc, char **argv)
     int c = 0;
     double d = 0.0;
 
-    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
@@ -92,7 +93,7 @@ get_args(int argc, char **argv)
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 
-		if (NEAR_ZERO(d, SMALL_FASTF)) {
+		if (ZERO(d)) {
 		    bu_exit(2, "bwmod: cannot divide by zero!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
@@ -108,7 +109,7 @@ get_args(int argc, char **argv)
 	    case 'r':
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
-		if (NEAR_ZERO(d, SMALL_FASTF)) {
+		if (ZERO(d)) {
 		    bu_exit(2, "bwmod: zero root!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
@@ -143,20 +144,24 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty((int)fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
     } else {
+	char *ifname;
 	file_name = argv[bu_optind];
-	if (freopen(file_name, "rb", stdin) == NULL) {
-	    (void)fprintf(stderr,
-			  "bwmod: cannot open \"%s\" for reading\n",
-			  file_name);
+	ifname = bu_realpath(file_name, NULL);
+	if (freopen(ifname, "rb", stdin) == NULL) {
+	    fprintf(stderr,
+		    "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
+		    file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return 0;
 	}
+	bu_free(ifname, "ifname alloc from bu_realpath");
     }
-    
+
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bwmod: excess argument(s) ignored\n");
-    
+	fprintf(stderr, "bwmod: excess argument(s) ignored\n");
+
     return 1;		/* OK */
 }
 
@@ -179,8 +184,8 @@ void mk_trans_tbl(void)
 		case OR  : tmp=d; tmp |= (int)val[i]; d=tmp;break;
 		case AND : tmp=d; tmp &= (int)val[i]; d=tmp;break;
 		case XOR : tmp=d; tmp ^= (int)val[i]; d= tmp; break;
-		case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break;
-		default  : (void)fprintf(stderr, "%s: error in op\n", progname);
+		    /* case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break; */
+		default  : fprintf(stderr, "%s: error in op\n", progname);
 		    bu_exit (-1, NULL);
 		    break;
 	    }
@@ -212,7 +217,7 @@ void mk_char_trans_tbl(void)
 		case OR  : d |= (int)val[i]; break;
 		case XOR : d ^= (int)val[i]; break;
 		case TRUNC: d /= (int)val[i];d *= (int)val[i]; break;
-		default  : (void)fprintf(stderr, "%s: error in op\n", progname);
+		default  : fprintf(stderr, "%s: error in op\n", progname);
 		    bu_exit (-1, NULL);
 		    break;
 	    }
@@ -227,11 +232,9 @@ int main(int argc, char **argv)
     int n;
     unsigned long clip_high, clip_low;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#endif
 
     progname = *argv;
 
@@ -250,15 +253,27 @@ int main(int argc, char **argv)
     while ((n=read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
 	/* translate */
 	for (p = ibuf, q = &ibuf[n]; p < q; ++p) {
-	    tmp = mapbuf[*p];
-	    if (tmp > 255) { ++clip_high; *p = 255; }
-	    else if (tmp < 0) { ++clip_low; *p = 0; }
-	    else *p = tmp;
+	    long i = *p;
+	    if (i < 0)
+		i = 0;
+	    if (i >= MAPBUFLEN)
+		*p = i = MAPBUFLEN;
+
+	    tmp = mapbuf[i];
+	    if (tmp > 255) {
+		++clip_high;
+		*p = 255;
+	    } else if (tmp < 0) {
+		++clip_low;
+		*p = 0;
+	    } else {
+		*p = tmp;
+	    }
 	}
 	/* output */
 	if (write(1, (void *)ibuf, (unsigned)n) != n) {
-	    (void)fprintf(stderr, "%s: Error writing stdout\n",
-			  progname);
+	    fprintf(stderr, "%s: Error writing stdout\n",
+		    progname);
 	    bu_exit (-1, NULL);
 	}
     }
@@ -267,8 +282,7 @@ int main(int argc, char **argv)
     }
 
     if (clip_high != 0 || clip_low != 0) {
-	(void)fprintf(stderr, "bwmod: clipped %lu high, %lu low\n",
-		      clip_high, clip_low);
+	fprintf(stderr, "bwmod: clipped %lu high, %lu low\n", (long unsigned)clip_high, (long unsigned)clip_low);
     }
     return 0;
 }

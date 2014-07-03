@@ -1,7 +1,7 @@
 /*                         F B - B W . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -58,12 +58,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hiF:X:Y:s:w:n:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "iF:X:Y:s:w:n:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
-		break;
 	    case 'i':
 		inverse = 1;
 		break;
@@ -100,15 +96,15 @@ get_args(int argc, char **argv)
     } else {
 	file_name = argv[bu_optind];
 	if ((outfp = fopen(file_name, "wb")) == NULL) {
-	    (void)fprintf(stderr,
-			  "fb-bw: cannot open \"%s\" for writing\n",
-			  file_name);
+	    fprintf(stderr,
+		    "fb-bw: cannot open \"%s\" for writing\n",
+		    file_name);
 	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "fb-bw: excess argument(s) ignored\n");
+	fprintf(stderr, "fb-bw: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -122,8 +118,7 @@ main(int argc, char **argv)
     int x, y;
     int xin, yin;		/* number of sceen output lines */
 
-    char usage[] = "\
-Usage: fb-bw [-h -i] [-F framebuffer]\n\
+    char usage[] = "Usage: fb-bw [-i] [-F framebuffer]\n\
 	[-X scr_xoff] [-Y scr_yoff]\n\
 	[-s squaresize] [-w width] [-n height] [file.bw]\n";
 
@@ -149,6 +144,7 @@ Usage: fb-bw [-h -i] [-F framebuffer]\n\
     if (yin > height) yin = height;
 
     for (y = scr_yoff; y < scr_yoff + yin; y++) {
+	size_t ret;
 	if (inverse) {
 	    (void)fb_read(fbp, scr_xoff, fb_getheight(fbp)-1-y, inbuf, xin);
 	} else {
@@ -158,7 +154,9 @@ Usage: fb-bw [-h -i] [-F framebuffer]\n\
 	    obuf[x] = (((int)inbuf[3*x+RED]) + ((int)inbuf[3*x+GRN])
 		       + ((int)inbuf[3*x+BLU])) / 3;
 	}
-	fwrite(&obuf[0], sizeof(char), xin, outfp);
+	ret = fwrite(&obuf[0], sizeof(char), xin, outfp);
+	if (ret != (size_t)xin)
+	    perror("fwrite");
     }
 
     fb_close(fbp);

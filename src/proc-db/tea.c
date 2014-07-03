@@ -1,7 +1,7 @@
 /*                           T E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tea.c
+/** @file proc-db/tea.c
  *
  * Convert the Utah Teapot description from the IEEE CG&A database to
  * the BRL-CAD spline format. (Note that this has the closed bottom)
@@ -28,6 +28,7 @@
 
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
@@ -43,9 +44,6 @@
 void
 dump_patch(struct face_g_snurb **surfp, pt patch)
 {
-    /* Vertex data of teapot */
-    extern dt ducks[DUCK_COUNT];
-
     struct face_g_snurb *b_patch;
     int i, j, pt_type;
     fastf_t *mesh_pointer;
@@ -93,9 +91,6 @@ dump_patch(struct face_g_snurb **surfp, pt patch)
 int
 main(int argc, char **argv)
 {
-    /* Patch data of teapot */
-    extern pt patches[PATCH_COUNT];
-
     const char *id_name = "Spline Example";
     const char *tea_name = "UtahTeapot";
 
@@ -103,19 +98,25 @@ main(int argc, char **argv)
     struct rt_wdb *outfp;
     struct face_g_snurb **surfaces;
 
+    while ((i=bu_getopt(argc, argv, "dh?")) != -1) {
+	switch (i) {
+	    case 'd':
+		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
+		break;
+	    default:
+		bu_log("Usage: %s [-d]\n", *argv);
+		bu_exit(-1, NULL);
+	}
+    }
+
+    if (argc == 1) {
+	bu_log("Usage: %s [-d]\n", *argv);
+    	bu_log("       Program continues running:\n");
+    }
+
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     outfp = wdb_fopen("teapot.g");
-
-    while ((i=bu_getopt(argc, argv, "d")) != EOF) {
-	switch (i) {
-	    case 'd':
-		rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
-		break;
-	    default:
-		bu_exit(-1, "Usage: %s [-d]\n", *argv);
-	}
-    }
 
     /* Setup information
      * Database header record
@@ -140,6 +141,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

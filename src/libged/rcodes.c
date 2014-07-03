@@ -1,7 +1,7 @@
 /*                         R C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rcodes.c
+/** @file libged/rcodes.c
  *
  * The rcodes command.
  *
@@ -37,6 +37,8 @@ int
 ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 {
     int item, air, mat, los;
+    size_t g_changed = 0;
+    int found_a_match = 0;
     char name[RT_MAXLINE];
     char line[RT_MAXLINE];
     char *cp;
@@ -50,28 +52,28 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s filename", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s filename", argv[0]);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s filename", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s filename", argv[0]);
 	return GED_ERROR;
     }
 
     if ((fp = fopen(argv[1], "r")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Failed to read file - %s", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Failed to read file - %s", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
     while (bu_fgets(line, RT_MAXLINE, fp) != NULL) {
 	int changed;
 
-	/* character and/or whitespace deliminted numbers */
+	/* character and/or whitespace delimited numbers */
 	if (sscanf(line, "%d%*c%d%*c%d%*c%d%s", &item, &air, &mat, &los, name) != 5)
 	    continue; /* not useful */
 
@@ -84,20 +86,23 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 	if (*cp == '\0')
 	    continue;
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[1], cp);
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[1], cp);
 	    continue;
 	}
 
-	if (!(dp->d_flags & DIR_REGION)) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not a region\n", argv[1], cp);
+	if (!(dp->d_flags & RT_DIR_REGION)) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not a region\n", argv[1], cp);
 	    continue;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) != ID_COMBINATION) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not a region\n", argv[1], cp);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not a region\n", argv[1], cp);
 	    continue;
 	}
+
+	/* By the time we make it here, we've got something */
+	found_a_match = 1;
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -123,15 +128,25 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 	if (changed) {
 	    /* write out all changes */
 	    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
-		bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
-		bu_vls_printf(&gedp->ged_result_str,
+		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
+		bu_vls_printf(gedp->ged_result_str,
 			      "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety, \nyou should exit now, and resolve the I/O problem, before continuing.\n");
 
 		rt_db_free_internal(&intern);
+		fclose(fp);
 		return GED_ERROR;
 	    }
 	}
+	g_changed += (size_t)changed;
 
+    }
+    fclose(fp);
+
+    if (!found_a_match) {
+	bu_vls_printf(gedp->ged_result_str, "WARNING: rcodes file \"%s\" contained no matching lines.  Geometry unchanged.\n", argv[1]);
+    }
+    if (g_changed) {
+	bu_vls_printf(gedp->ged_result_str, "NOTE: rcodes file \"%s\" applied.  %d region%supdated.\n", argv[1], g_changed, (g_changed==1)?" ":"s ");
     }
 
     return GED_OK;

@@ -1,7 +1,7 @@
 /*                       P C M A T H V M . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,14 +26,32 @@
  * Code is based on concepts from YAC by Angus Leeming
  *
  */
-#ifndef __PCMATHVM_H__
-#define __PCMATHVM_H__
+#ifndef LIBPC_PCMATHVM_H
+#define LIBPC_PCMATHVM_H
 
 #include "common.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
-#include <boost/spirit/symbols/symbols.hpp>	/* deprecated header */
+
+/* for g++ to quell -Wshadow warnings */
+#if HAVE_GCC_DIAG_PRAGMAS
+#  pragma GCC diagnostic push /* start ignoring warnings */
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic push /* start ignoring warnings */
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
+#include <boost/spirit/include/classic.hpp>
+
+#if HAVE_GCC_DIAG_PRAGMAS
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 
 #include <iostream>
 #include <string>
@@ -52,7 +70,7 @@ struct Node {
 
     /** Clone method */
     virtual boost::shared_ptr<Node> clone() const = 0;
-    
+
     /** Branch Methods */
     virtual std::size_t branchSize() const { return 0; }
     virtual Stack *branch(std::size_t) { return 0; }
@@ -73,7 +91,7 @@ public:
     Stack() {}
     Stack(Stack const &);
 
-    /** Data access/mnodification methods */
+    /** Data access/modification methods */
     size_type size() const;
     bool empty() const;
     void push_back(Node *n);
@@ -106,8 +124,8 @@ struct MathFunction;
 struct MathVM
 {
     Stack stack;
-    boost::spirit::symbols<double> variables;
-    boost::spirit::symbols<boost::shared_ptr<MathFunction> > functions;
+    boost::spirit::classic::symbols<double> variables;
+    boost::spirit::classic::symbols<boost::shared_ptr<MathFunction> > functions;
     void display();
 };
 
@@ -122,7 +140,7 @@ struct MathFunction
     MathFunction() {}
     MathFunction(std::string const &);
     virtual ~MathFunction() {}
-    
+
     virtual UserFunction *asUserFunction();
 
     /** Data access methods */
@@ -141,7 +159,7 @@ private:
 };
 
 
-/** Implemation of various convenience Function types*/
+/** Implementation of various convenience Function types*/
 
 /** Unary function */
 template<typename T>
@@ -154,7 +172,7 @@ struct MathF1 : public MathFunction
 	: MathFunction(function_name),
 	  funct(fp)
     {}
-    
+
     /* Implementation of the virtual function in MathFunction class
      * to return an arity of 1
      */
@@ -191,11 +209,11 @@ private:
 };
 
 
-/** UserFunction Defintion */
+/** UserFunction Definition */
 struct UserFuncExpression;
 struct UserFunction : public MathFunction
 {
-    typedef boost::spirit::symbols<double> symboltable;
+    typedef boost::spirit::classic::symbols<double> symboltable;
     typedef boost::shared_ptr<symboltable> stptr;
 
     /** Create and Copy constructors */
@@ -206,7 +224,7 @@ struct UserFunction : public MathFunction
 
     /** Data access methods */
     UserFunction *asUserFunction();
-    boost::spirit::symbols<double> const & localvariables() const;
+    boost::spirit::classic::symbols<double> const & localvariables() const;
 
     /** Arity return method */
     std::size_t arity() const;
@@ -285,7 +303,7 @@ struct OrNode : public FunctionNode
     Stack *branch(std::size_t);
 private:
     struct OrFunc : public MathFunction {
-    	OrFunc(Stack const &);
+	OrFunc(Stack const &);
 
 	std::size_t arity() const;
 	double evalp(std::vector<double> const & params) const;
@@ -308,7 +326,7 @@ struct BranchNode : public FunctionNode
 private:
     struct BranchFunc : public MathFunction {
 	BranchFunc(Stack const & stack1, Stack const & stack2);
-	
+
 	std::size_t arity() const;
 	double evalp(std::vector<double> const & params) const;
 
@@ -322,12 +340,12 @@ private:
 struct UserFuncExpression
 {
     UserFuncExpression(std::vector<std::string> const & arnam, \
-		       boost::shared_ptr<boost::spirit::symbols<double> > const & locvar,
+		       boost::shared_ptr<boost::spirit::classic::symbols<double> > const & locvar,
 		       Stack const & s)
-    	: argnames(arnam), localvars(locvar), stack(s)
+	: argnames(arnam), localvars(locvar), stack(s)
     {}
     std::vector<std::string> argnames;
-    boost::shared_ptr<boost::spirit::symbols<double> > localvars;
+    boost::shared_ptr<boost::spirit::classic::symbols<double> > localvars;
     Stack stack;
 };
 
@@ -335,7 +353,7 @@ struct UserFuncExpression
 struct FuncDefNode : public Node
 {
     FuncDefNode(boost::shared_ptr<MathFunction> const & funcptr, \
-    		UserFuncExpression const & value);
+		UserFuncExpression const & value);
     boost::shared_ptr<Node> clone() const;
     void assign() const;
 private:

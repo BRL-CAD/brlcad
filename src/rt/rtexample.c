@@ -1,7 +1,7 @@
 /*                     R T E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtexample.c
+/** @file rt/rtexample.c
  *
  * This is a heavily commented example of a program that uses librt to
  * shoot a single ray at some geometry in a .g database.
@@ -66,7 +66,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
+#include <stdio.h>
 
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */
@@ -85,7 +85,7 @@
  * The 'segs' segment list is unused in this example.
  */
 int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
+hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     /* iterating over partitions, this will keep track of the current
      * partition we're working on.
@@ -99,7 +99,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     struct soltab *stp;
 
     /* will contain surface curvature information at the entry */
-    struct curvature cur;
+    struct curvature cur = RT_CURVATURE_INIT_ZERO;
 
     /* will contain our hit point coordinate */
     point_t pt;
@@ -199,7 +199,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
  * rt_shootray() if the ray encounters nothing.
  */
 int
-miss(struct application *ap)
+miss(struct application *UNUSED(ap))
 {
     bu_log("missed\n");
     return 0;
@@ -227,7 +227,7 @@ main(int argc, char **argv)
      */
     static struct rt_i *rtip;
 
-    /* optional parameter to rt_dirbuild() what can be used to capture
+    /* optional parameter to rt_dirbuild() that can be used to capture
      * a title if the geometry database has one set.
      */
     char title[1024] = {0};
@@ -270,7 +270,7 @@ main(int argc, char **argv)
 
     /* This next call gets the database ready for ray tracing.  This
      * causes some values to be precomputed, sets up space
-     * partitioning, computes boudning volumes, etc.
+     * partitioning, computes bounding volumes, etc.
      */
     rt_prep_parallel(rtip, 1);
 

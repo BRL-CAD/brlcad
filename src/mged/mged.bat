@@ -1,9 +1,7 @@
-@ECHO OFF
-
 REM                      M G E D . B A T
 REM  BRL-CAD
 REM 
-REM  Copyright (c) 2006-2010 United States Government as represented by
+REM  Copyright (c) 2006-2014 United States Government as represented by
 REM  the U.S. Army Research Laboratory.
 REM 
 REM  This library is free software; you can redistribute it and/or
@@ -20,16 +18,13 @@ REM  License along with this file; see the file named COPYING for more
 REM  information.
 REM 
 
+@ECHO OFF
+
 SETLOCAL
 
+SET PATH=%~dp0;%PATH%
 SET MGED=%~dp0mged
-SET WEB_BROWSER=C:\Program Files\Internet Explorer\IEXPLORE.EXE
 
-IF "%1"=="-g" (
-    START /B %MGED% %2
-) ELSE (
-    START /B %MGED% %1
-)
+START /B "" "%MGED%" %*
 
-CLS
 EXIT

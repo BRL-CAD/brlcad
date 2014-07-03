@@ -1,7 +1,7 @@
 /*               R E N D E R _ I N T E R N A L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,14 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file render_internal.h
+/** @file librender/render_internal.h
  *
  */
 
-#ifndef _RENDER_INTERNAL_H
-#define _RENDER_INTERNAL_H
+#ifndef ADRT_LIBRENDER_RENDER_INTERNAL_H
+#define ADRT_LIBRENDER_RENDER_INTERNAL_H
 
 #include "tie.h"
+
+#ifndef RENDER_EXPORT
+#  if defined(RENDER_DLL_EXPORTS) && defined(RENDER_DLL_IMPORTS)
+#    error "Only RENDER_DLL_EXPORTS or RENDER_DLL_IMPORTS can be defined, not both."
+#  elif defined(RENDER_DLL_EXPORTS)
+#    define RENDER_EXPORT __declspec(dllexport)
+#  elif defined(RENDER_DLL_IMPORTS)
+#    define RENDER_EXPORT __declspec(dllimport)
+#  else
+#    define RENDER_EXPORT
+#  endif
+#endif
 
 #define RENDER_METHOD_COMPONENT	0x01
 #define RENDER_METHOD_CUT	0x02
@@ -44,20 +56,20 @@
 #define RENDER_MAX_DEPTH	24
 
 
-#define RENDER_SHADER(name) BU_EXTERN(int render_##name##_init, (render_t *, char *));
+#define RENDER_SHADER(name) RENDER_EXPORT extern int render_##name##_init(render_t *, const char *)
 
 struct render_s;
-typedef void render_work_t(struct render_s *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
+typedef void render_work_t(struct render_s *render, struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel);
 typedef void render_free_t(struct render_s *render);
 
 typedef struct render_s {
     char name[256];
-    tie_t *tie;
+    struct tie_s *tie;
     render_work_t *work;
     render_free_t *free;
     void *data;
     struct render_s *next;
-    char *shader;
+    const char *shader;
 } render_t;
 
 #endif

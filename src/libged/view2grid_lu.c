@@ -1,7 +1,7 @@
 /*                         V I E W 2 G R I D _ L U . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view2grid_lu.c
+/** @file libged/view2grid_lu.c
  *
  * The view2grid_lu command.
  *
@@ -36,8 +36,10 @@
 int
 ged_view2grid_lu(struct ged *gedp, int argc, const char *argv[])
 {
+    /* intentionally double for scan */
+    double view_pt[3];
+
     fastf_t f;
-    point_t view_pt;
     point_t model_pt;
     point_t mo_view_pt;           /* model origin in view space */
     point_t diff;
@@ -48,7 +50,7 @@ ged_view2grid_lu(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 4)
 	goto bad;
@@ -65,12 +67,12 @@ ged_view2grid_lu(struct ged *gedp, int argc, const char *argv[])
     VSCALE(mo_view_pt, mo_view_pt, f);
     VSUB2(diff, view_pt, mo_view_pt);
 
-    bu_vls_printf(&gedp->ged_result_str, "%.15e %.15e", diff[X], diff[Y]);
+    bu_vls_printf(gedp->ged_result_str, "%.15e %.15e", diff[X], diff[Y]);
 
     return GED_OK;
 
 bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 

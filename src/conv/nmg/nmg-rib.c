@@ -1,7 +1,7 @@
 /*                       N M G - R I B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,10 +27,12 @@
  *
  */
 
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -42,10 +44,9 @@ char *options = "ht";
 char *progname = "(noname)";
 int triangulate = 0;
 
-/*
- *	U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(char *s)
+
+void
+usage(char *s)
 {
     if (s) {
 	bu_log(s);
@@ -55,10 +56,9 @@ void usage(char *s)
 		   progname);
 }
 
-/*
- *	P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char **av)
+
+int
+parse_args(int ac, char **av)
 {
     int  c;
     char *strrchr(const char *, int);
@@ -72,7 +72,7 @@ int parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != EOF)
+    while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 't'	: triangulate = !triangulate; break;
 	    case '?'	:
@@ -129,8 +129,8 @@ nmg_to_rib(struct model *m)
     struct shell *s;
     struct faceuse *fu;
     struct loopuse *lu;
-    struct bu_vls points;
-    struct bu_vls norms;
+    struct bu_vls points = BU_VLS_INIT_ZERO;
+    struct bu_vls norms = BU_VLS_INIT_ZERO;
     vect_t fu_normal;
 
     tol.magic = BN_TOL_MAGIC;
@@ -142,9 +142,6 @@ nmg_to_rib(struct model *m)
 
     if (triangulate)
 	nmg_triangulate_model(m, &tol);
-
-    bu_vls_init(&norms);
-    bu_vls_init(&points);
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
 	for (BU_LIST_FOR(s, shell, &r->s_hd))
@@ -166,8 +163,6 @@ nmg_to_rib(struct model *m)
 
 
 /*
- *	M A I N
- *
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
@@ -187,7 +182,7 @@ int main(int ac, char **av)
     rt_init_resource( &rt_uniresource, 0, NULL );
 
     /* open the database */
-    if ((dbip = db_open(av[arg_index], "r")) == DBI_NULL) {
+    if ((dbip = db_open(av[arg_index], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(av[arg_index]);
 	bu_exit(255, "ERROR: unable to open geometry database (%s)\n", av[arg_index]);
     }

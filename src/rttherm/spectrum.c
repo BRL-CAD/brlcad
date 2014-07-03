@@ -1,7 +1,7 @@
 /*                      S P E C T R U M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file spectrum.c
+/** @file rttherm/spectrum.c
  *
  * These are all the routines that are not ready to be moved to
  * LIBRT/spectrum.c
@@ -32,6 +32,7 @@
  * With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
 
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -119,8 +120,6 @@ struct bn_tabdata *rt_NTSC_g_tabdata;
 struct bn_tabdata *rt_NTSC_b_tabdata;
 
 /*
- * R T _ S P E C T _ M A K E _ N T S C _ R G B
- *
  * Using the "Representative set of camera taking sensitivities"
  * for a NTSC television camera, from Benson "Television Engineering
  * Handbook" page 4.58, convert an RGB value in range 0..1 to
@@ -130,10 +129,10 @@ struct bn_tabdata *rt_NTSC_b_tabdata;
  * to NTSC RGB values.
  */
 void
-rt_spect_make_NTSC_RGB(struct bn_tabdata **rp,
-		       struct bn_tabdata **gp,
-		       struct bn_tabdata **bp,
-		       const struct bn_table *tabp)
+spect_make_NTSC_RGB(struct bn_tabdata **rp,
+		    struct bn_tabdata **gp,
+		    struct bn_tabdata **bp,
+		    const struct bn_table *tabp)
 {
     BN_CK_TABLE(tabp);
 
@@ -150,17 +149,9 @@ rt_spect_make_NTSC_RGB(struct bn_tabdata **rp,
     bn_print_table_and_tabdata("/dev/tty", rt_NTSC_b_tabdata);
 
     /* Resample original NTSC curves to match given bn_table sampling */
-#if 0
-    /* just to test the routine */
-    *rp = bn_tabdata_resample_avg(tabp, rt_NTSC_r_tabdata);
-    *gp = bn_tabdata_resample_avg(tabp, rt_NTSC_g_tabdata);
-    *bp = bn_tabdata_resample_avg(tabp, rt_NTSC_b_tabdata);
-#else
-    /* use this one for real */
     *rp = bn_tabdata_resample_max(tabp, rt_NTSC_r_tabdata);
     *gp = bn_tabdata_resample_max(tabp, rt_NTSC_g_tabdata);
     *bp = bn_tabdata_resample_max(tabp, rt_NTSC_b_tabdata);
-#endif
 }
 
 
@@ -172,7 +163,7 @@ rt_spect_make_NTSC_RGB(struct bn_tabdata **rp,
  * Gives the XYZ coordinates of the NTSC primaries and D6500 white.
  * Note:  X+Y+Z=1 for primaries (cf. equations of pg.54)
  */
-const static point_t rgb_NTSC[4] = {
+static const point_t rgb_NTSC[4] = {
     {0.670,     0.330,      0.000},     /* red */
     {0.210,     0.710,      0.080},     /* green */
     {0.140,     0.080,      0.780},     /* blue */
@@ -235,7 +226,7 @@ rt_clr__cspace_to_xyz (const point_t cspace[4],
 		ind[ii]=tmp_i;
 	    }
 	}
-	if (tmat(ind[ii], ii) == 0.0) return 0;
+	if (ZERO(tmat(ind[ii], ii))) return 0;
 
 	for (jj=ii+1; jj<=2; jj++) {
 	    mult = tmat(ind[jj], ii) / tmat(ind[ii], ii);
@@ -244,7 +235,7 @@ rt_clr__cspace_to_xyz (const point_t cspace[4],
 	    white[ind[jj]] -= white[ind[ii]] * mult;
 	}
     }
-    if (tmat(ind[2], 2) == 0.0) return 0;
+    if (ZERO(tmat(ind[2], 2))) return 0;
 
     /* back substitution to solve for scale */
     scale[ind[2]] = white[ind[2]] / tmat(ind[2], 2);
@@ -269,101 +260,84 @@ rt_clr__cspace_to_xyz (const point_t cspace[4],
 
 
 /*
- * R T _ M A K E _ N T S C _ X Y Z 2 R G B
- *
  * Create the map from
  * CIE XYZ perceptual space into
  * an idealized RGB space assuming NTSC primaries with D6500 white.
  * Only high-quality television-studio monitors are like this, but...
  */
 void
-rt_make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
+make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
 {
     mat_t rgb2xyz;
-    point_t tst, new;
+    point_t tst, newpt;
 
     if (rt_clr__cspace_to_xyz(rgb_NTSC, rgb2xyz) == 0)
-	bu_exit(EXIT_FAILURE, "rt_make_ntsc_xyz2rgb() can't initialize color space\n");
+	bu_exit(EXIT_FAILURE, "make_ntsc_xyz2rgb() can't initialize color space\n");
     bn_mat_inv(xyz2rgb, rgb2xyz);
 
-#if 1
     /* Verify that it really works, I'm a skeptic */
+
     VSET(tst, 1, 1, 1);
-    MAT3X3VEC(new, rgb2xyz, tst);
+    MAT3X3VEC(newpt, rgb2xyz, tst);
     VPRINT("white_rgb (i)", tst);
-    VPRINT("white_xyz (o)", new);
+    VPRINT("white_xyz (o)", newpt);
 
     VSET(tst, 0.313,     0.329,      0.358);
-    MAT3X3VEC(new, xyz2rgb, tst);
+    MAT3X3VEC(newpt, xyz2rgb, tst);
     VPRINT("white_xyz (i)", tst);
-    VPRINT("white_rgb (o)", new);
+    VPRINT("white_rgb (o)", newpt);
 
     VSET(tst, 1, 0, 0);
-    MAT3X3VEC(new, rgb2xyz, tst);
+    MAT3X3VEC(newpt, rgb2xyz, tst);
     VPRINT("red_rgb (i)", tst);
-    VPRINT("red_xyz (o)", new);
+    VPRINT("red_xyz (o)", newpt);
 
     VSET(tst, 0.670,     0.330,      0.000);
-    MAT3X3VEC(new, xyz2rgb, tst);
+    MAT3X3VEC(newpt, xyz2rgb, tst);
     VPRINT("red_xyz (i)", tst);
-    VPRINT("red_rgb (o)", new);
+    VPRINT("red_rgb (o)", newpt);
 
     VSET(tst, 0, 1, 0);
-    MAT3X3VEC(new, rgb2xyz, tst);
+    MAT3X3VEC(newpt, rgb2xyz, tst);
     VPRINT("grn_rgb (i)", tst);
-    VPRINT("grn_xyz (o)", new);
+    VPRINT("grn_xyz (o)", newpt);
 
     VSET(tst, 0.210,     0.710,      0.080);
-    MAT3X3VEC(new, xyz2rgb, tst);
+    MAT3X3VEC(newpt, xyz2rgb, tst);
     VPRINT("grn_xyz (i)", tst);
-    VPRINT("grn_rgb (o)", new);
+    VPRINT("grn_rgb (o)", newpt);
 
     VSET(tst, 0, 0, 1);
-    MAT3X3VEC(new, rgb2xyz, tst);
+    MAT3X3VEC(newpt, rgb2xyz, tst);
     VPRINT("blu_rgb (i)", tst);
-    VPRINT("blu_xyz (o)", new);
+    VPRINT("blu_xyz (o)", newpt);
 
     VSET(tst, 0.140,     0.080,      0.780);
-    MAT3X3VEC(new, xyz2rgb, tst);
+    MAT3X3VEC(newpt, xyz2rgb, tst);
     VPRINT("blu_xyz (i)", tst);
-    VPRINT("blu_rgb (o)", new);
-#endif
+    VPRINT("blu_rgb (o)", newpt);
 }
 
 
 /*
- * R T _ S P E C T _ C U R V E _ T O _ X Y Z
- *
  * Convenience routine.
  * Serves same function as Roy Hall's CLR_spect_to_xyz(), pg 233.
  * The normalization xyz_scale = 1.0 / bn_tabdata_area2(cie_y);
- * has been folded into rt_spect_make_CIE_XYZ();
+ * has been folded into spect_make_CIE_XYZ();
  */
 void
-rt_spect_curve_to_xyz(
-    point_t xyz,
-    const struct bn_tabdata *tabp,
-    const struct bn_tabdata *cie_x,
-    const struct bn_tabdata *cie_y,
-    const struct bn_tabdata *cie_z)
+spect_curve_to_xyz(point_t xyz,
+		   const struct bn_tabdata *tabp,
+		   const struct bn_tabdata *cie_x,
+		   const struct bn_tabdata *cie_y,
+		   const struct bn_tabdata *cie_z)
 {
     fastf_t tab_area;
 
     BN_CK_TABDATA(tabp);
 
-#if 0
-    tab_area = bn_tabdata_area2(tabp);
-    bu_log(" tab_area = %g\n", tab_area);
-    if (fabs(tab_area) < VDIVIDE_TOL) {
-	bu_log("rt_spect_curve_to_xyz(): Area = 0 (no luminance) in this part of the spectrum\n");
-	VSETALL(xyz, 0);
-	return;
-    }
-    tab_area = 1 / tab_area;
-#else
     /* This is what Roy says to do, but I'm not certain */
     tab_area = 1;
-#endif
 
     xyz[X] = bn_tabdata_mul_area2(tabp, cie_x) * tab_area;
     xyz[Y] = bn_tabdata_mul_area2(tabp, cie_y) * tab_area;
@@ -372,8 +346,6 @@ rt_spect_curve_to_xyz(
 
 
 /*
- * R T _ S P E C T _ R G B _ T O _ C U R V E
- *
  * Using the "Representative set of camera taking sensitivities"
  * for a NTSC television camera, from Benson "Television Engineering
  * Handbook" page 4.58, convert an RGB value in range 0..1 to
@@ -382,7 +354,7 @@ rt_spect_curve_to_xyz(
  * XXX This is completely wrong, don't do this.
  */
 void
-rt_spect_rgb_to_curve(struct bn_tabdata *tabp, const fastf_t *rgb, const struct bn_tabdata *ntsc_r, const struct bn_tabdata *ntsc_g, const struct bn_tabdata *ntsc_b)
+spect_rgb_to_curve(struct bn_tabdata *tabp, const fastf_t *rgb, const struct bn_tabdata *ntsc_r, const struct bn_tabdata *ntsc_g, const struct bn_tabdata *ntsc_b)
 {
     bn_tabdata_blend3(tabp,
 		      rgb[0], ntsc_r,
@@ -392,8 +364,6 @@ rt_spect_rgb_to_curve(struct bn_tabdata *tabp, const fastf_t *rgb, const struct 
 
 
 /*
- * R T _ S P E C T _ X Y Z _ T O _ C U R V E
- *
  * Values of the curve will be normalized to 0..1 range;
  * caller must scale into meaningful units.
  *
@@ -402,7 +372,7 @@ rt_spect_rgb_to_curve(struct bn_tabdata *tabp, const fastf_t *rgb, const struct 
  XXX Converting rgb to a curve, directly, should be easy.
 */
 void
-rt_spect_xyz_to_curve(struct bn_tabdata *tabp, const fastf_t *xyz, const struct bn_tabdata *cie_x, const struct bn_tabdata *cie_y, const struct bn_tabdata *cie_z)
+spect_xyz_to_curve(struct bn_tabdata *tabp, const fastf_t *xyz, const struct bn_tabdata *cie_x, const struct bn_tabdata *cie_y, const struct bn_tabdata *cie_z)
 {
     bn_tabdata_blend3(tabp,
 		      xyz[X], cie_x,
@@ -412,14 +382,12 @@ rt_spect_xyz_to_curve(struct bn_tabdata *tabp, const fastf_t *xyz, const struct 
 
 
 /*
- * R T _ T A B L E _ M A K E _ V I S I B L E _ A N D _ U N I F O R M
- *
  * A quick hack to make sure there are enough samples in the visible band.
  */
 struct bn_table *
 bn_table_make_visible_and_uniform(int num, double first, double last, int vis_nsamp)
 {
-    struct bn_table *new;
+    struct bn_table *newtab;
     struct bn_table *uniform;
     struct bn_table *vis;
 
@@ -427,47 +395,15 @@ bn_table_make_visible_and_uniform(int num, double first, double last, int vis_ns
     uniform = bn_table_make_uniform(num, first, last);
     vis = bn_table_make_uniform(vis_nsamp, 340.0, 700.0);
 
-    new = bn_table_merge2(uniform, vis);
-    bn_ck_table(new);
+    newtab = bn_table_merge2(uniform, vis);
+    bn_ck_table(newtab);
 
     bn_table_free(uniform);
     bn_table_free(vis);
 
-    return new;
+    return newtab;
 }
 
-
-#if 0
-main()
-{
-    struct bn_tabdata *x, *y, *z;
-    struct bn_table *tabp;
-
-#if 0
-    tabp = bn_table_make_uniform(200, 360.0, 800.0);
-
-    rt_spect_make_CIE_XYZ(&x, &y, &z, tabp);
-
-    bn_print_table_and_tabdata("/tmp/x", x);
-    bn_print_table_and_tabdata("/tmp/y", y);
-    bn_print_table_and_tabdata("/tmp/z", z);
-#endif
-
-    tabp = bn_table_make_uniform(100, 3.0, 3000.0);
-
-    BN_GET_TABDATA(x, tabp);
-    rt_spect_black_body_points(x, 10000.0);
-    bn_print_table_and_tabdata("/tmp/x", x);
-
-    BN_GET_TABDATA(y, tabp);
-    rt_spect_black_body(y, 10000.0, 3);
-    bn_print_table_and_tabdata("/tmp/y", y);
-
-    BN_GET_TABDATA(z, tabp);
-    rt_spect_black_body_fast(z, 10000.0);
-    bn_print_table_and_tabdata("/tmp/z", z);
-}
-#endif
 
 /*
  * Local Variables:

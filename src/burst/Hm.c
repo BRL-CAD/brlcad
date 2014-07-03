@@ -1,7 +1,7 @@
 /*                            H M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file Hm.c
+/** @file burst/Hm.c
  *
  * This code is derived in part from menuhit(9.3) in AT&T 9th Edition
  * UNIX, Version 1 Programmer's Manual.
@@ -199,22 +199,6 @@ HmPrntWindows(void)
 
 
 /*
-  void HmPrntLList(HmLList *listp)	(DEBUG)
-
-  Print all HmItem's in listp.
-*/
-static void
-HmPrntLList(HmLList *listp)
-{
-    if (listp == (HmLList *) NULL)
-	return;
-    HmPrntItem(listp->itemp);
-    HmPrntLList(listp->next);
-    return;
-}
-
-
-/*
   void HmFreeItems(Hmitem *itemp)
 
   Free storage (allocated with malloc) for an array of HmItem's.
@@ -360,7 +344,6 @@ static void
 HmPutBorder(HmWindow *win, int row, char mark)
 {
     int i;
-    int bit = 1;
     int col = win->menux;
     int bitmap = win->dirty[row - win->menuy];
     static char buf[HmMAXLINE];
@@ -377,6 +360,8 @@ HmPutBorder(HmWindow *win, int row, char mark)
 	(void) ScMvCursor(col, row);
 	(void) fputs(buf, stdout);
     } else {
+	int bit = 1;
+
 	for (i = 0; i < p - buf; i++)
 	    PutMenuChar(buf[i], col, row, bitmap, bit);
     }
@@ -722,7 +707,7 @@ HmTtyReset(void)
   void HmInit(int x, int y, int maxvis)
 
   Initialize position of top-level menu.  Specify maximum
-  number of menu items visable at once.  Place these values
+  number of menu items visible at once.  Place these values
   in global variables.  Determine as best we can whether MYX
   is available and place int result in HmMyxflag.  Return
   true for success and false for failure to open "/dev/tty".
@@ -755,7 +740,7 @@ static void
 HmWidHgtMenu(HmWindow *win)
 {
     HmItem *itemp;
-    
+
     /* Determine width of menu, allowing for border.		*/
     for (itemp = win->menup->item; itemp->text != (char *) NULL; itemp++) {
 	int len = 0;

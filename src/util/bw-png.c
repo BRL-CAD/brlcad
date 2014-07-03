@@ -1,7 +1,7 @@
 /*                        B W - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bw-png.c
+/** @file util/bw-png.c
  *
  * Convert bw file to PNG (Portable Network Graphics) format
  *
@@ -27,10 +27,10 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include "zlib.h"
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
 
-#include "png.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -58,7 +58,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "as:w:n:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "as:w:n:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
@@ -91,16 +91,16 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
-	    (void)fprintf(stderr,
-			  "bw-png: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "bw-png: cannot open \"%s\" for reading\n",
+		    file_name);
 	    bu_exit (1, NULL);
 	}
 	fileinput++;
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bw-png: excess argument(s) ignored\n");
+	fprintf(stderr, "bw-png: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 
     /* autosize input? */
     if (fileinput && autosize) {
-	unsigned long int w, h;
+	size_t w, h;
 	if (fb_common_file_size(&w, &h, file_name, 1)) {
 	    file_width = (long)w;
 	    file_height = (long)h;

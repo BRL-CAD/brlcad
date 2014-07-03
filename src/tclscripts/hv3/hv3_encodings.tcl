@@ -1,15 +1,15 @@
 
 # hv3_encodings.tcl
 #
-#     This file contains wrappers around the Tcl built-in commands 
-#     [fconfigure] and [encoding]. The purpose is to support identifiers 
+#     This file contains wrappers around the Tcl built-in commands
+#     [fconfigure] and [encoding]. The purpose is to support identifiers
 #     like "windows-1257" as an alias for "cp1257". We need to replace
 #     the original commands so that the http package sees our encoding
 #     database.
 #
 #     To add new encoding aliases, entries should be added to the
 #     global ::Hv3EncodingMap array. This array maps from identifiers
-#     commonly used on the web to the cannonical name used by Tcl. For
+#     commonly used on the web to the canonical name used by Tcl. For
 #     example, some Japanese websites use "shift_jis", but Tcl calls
 #     this encoding "shiftjis". To work around this, we add the following
 #     entry to ::Hv3EncodingMap:
@@ -58,7 +58,7 @@ proc fconfigure {args} {
     if {[lindex $argv $ii] eq "-encoding"} {
       set enc [string tolower [lindex $argv [expr {$ii+1}]]]
       if {[info exists ::Hv3EncodingMap($enc)]} {
-        lset argv [expr {$ii+1}] $::Hv3EncodingMap($enc)
+	lset argv [expr {$ii+1}] $::Hv3EncodingMap($enc)
       }
     }
   }
@@ -101,11 +101,11 @@ foreach name [encoding_orig names] {
   if {[string match cp* $name]} {
     set name2 "windows-[string range $name 2 end]"
     set ::Hv3EncodingMap($name2) $name
-  } 
+  }
   if {[string match iso* $name]} {
     set name2 "iso-[string range $name 3 end]"
     set ::Hv3EncodingMap($name2) $name
-  } 
+  }
 }
 
 # Deal with some Japanese encodings. Because of the dominance of
@@ -126,4 +126,3 @@ set ::Hv3EncodingMap(iso-8559-1) utf-8
 
 # Thai encoding.
 set ::Hv3EncodingMap(windows-874) tis-620
-

@@ -1,7 +1,7 @@
 /*                         B O T _ F L I P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_flip.c
+/** @file libged/bot_flip.c
  *
  * The bot_flip command.
  *
@@ -49,35 +49,45 @@ ged_bot_flip(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
-    for (i=1; i < argc; ++i) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET)) == DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: db_lookup(%s) error\n", argv[0], argv[i]);
-	    continue;
+    for (i = 1; i < argc; ++i) {
+	/* Skip past any path elements */
+	char *obj = (char *)bu_calloc(strlen(argv[i]), sizeof(char), "ged_bot_flip obj");
+	bu_basename(obj, argv[i]);
+
+	if (BU_STR_EQUAL(obj, ".")) {
+	    /* malformed path, lookup using exactly what was provided */
+	    bu_free(obj, "free bu_basename");
+	    obj = bu_strdup(argv[i]);
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, obj, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: db_lookup(%s) error\n", argv[0], obj);
+	} else {
+	    GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[i]);
-	    continue;
+	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+		bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], obj);
+	    } else {
+		bot = (struct rt_bot_internal *)intern.idb_ptr;
+		rt_bot_flip(bot);
+
+		GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
+	    }
 	}
-
-	bot = (struct rt_bot_internal *)intern.idb_ptr;
-	rt_bot_flip(bot);
-
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
+	bu_free(obj, "free obj");
     }
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

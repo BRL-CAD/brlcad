@@ -1,7 +1,7 @@
 /*                        M A T _ D B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mat_db.c
+/** @file lgt/mat_db.c
     Author:		Gary S. Moss
 */
 
@@ -67,7 +67,7 @@ Mat_Db_Entry		mat_nul_entry =
 };
 static int	get_Mat_Entry(Mat_Db_Entry *entry, FILE *fp), put_Mat_Entry(Mat_Db_Entry *entry, FILE *fp);
 
-/*	m a t _ R d _ D b ( )
+/*
 	Open material database and read entries into table,
 	return number of entries successfully read.
 */
@@ -92,7 +92,7 @@ mat_Rd_Db(char *file)
     return	mat_db_size;
 }
 
-/*	m a t _ P r i n t _ D b ( )
+/*
 	Print material database entry.
 */
 int
@@ -153,7 +153,7 @@ mat_Print_Db(int material_id)
 	prnt_Scroll( "        refractive index\t(%g)\n", entry->refrac_index );
 	if ( --lines <= 0 && ! do_More( &lines ) )
 	    break;
-	if ( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
+	if ( bu_strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
 	    prnt_Scroll( "        diffuse color\t\t(%d %d %d)\n",
 			 entry->df_rgb[0],
 			 entry->df_rgb[1],
@@ -168,7 +168,7 @@ mat_Print_Db(int material_id)
     return	success;
 }
 
-/*	m a t _ S a v e _ D b ( )
+/*
 	Write ASCII material database from table.
 	Return 1 for success, 0 for failure.
 */
@@ -179,7 +179,7 @@ mat_Save_Db(char *file)
     FILE		*fp;
     if ( (fp = fopen( file, "wb" )) == NULL )
 	return	0;
-    setbuf( fp, bu_malloc( BUFSIZ, "buffer" ) );
+    setbuf( fp, (char *)bu_malloc( BUFSIZ, "buffer" ) );
     for (	entry = mat_db_table;
 		entry < &mat_db_table[mat_db_size]
 		    && put_Mat_Entry( entry, fp );
@@ -193,7 +193,7 @@ mat_Save_Db(char *file)
 }
 
 
-/*	m a t _ E d i t _ D b _ E n t r y ( )
+/*
 	Create or overwrite entry in material table.
 */
 int
@@ -242,7 +242,7 @@ mat_Edit_Db_Entry(int id)
     if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 	(void) sscanf( input_buf, "%lf", &entry->refrac_index );
 
-    if ( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
+    if ( bu_strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
     {
 	(void) sprintf( editprompt, "diffuse RGB values ? [0 to 255](%d %d %d) ",
 			entry->df_rgb[RED],
@@ -277,7 +277,7 @@ mat_Edit_Db_Entry(int id)
     return	1;
 }
 
-/*	m a t _ G e t _ D b _ E n t r y ( )
+/*
 	Return pointer to entry indexed by id or NULL.
 */
 Mat_Db_Entry *

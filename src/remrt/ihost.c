@@ -1,7 +1,7 @@
 /*                         I H O S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,9 +32,6 @@
 #include <math.h>
 #include <string.h>
 
-#ifdef HAVE_WINSOCK2_H
-#  include <winsock2.h>
-#endif
 #ifdef HAVE_NETDB_H
 #  include <netdb.h>
 #endif
@@ -47,12 +44,7 @@
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
 #endif
-#ifdef HAVE_NETINET_IN_H
-#  include <netinet/in.h>
-#endif
-#ifndef HAVE_ARPA_INET_H
-#  include <arpa/inet.h>
-#endif
+#include "bin.h"
 #include "bio.h"
 
 #include "vmath.h"
@@ -64,14 +56,12 @@
 struct bu_list	HostHead;
 
 /*
- *			G E T _ O U R _ H O S T N A M E
- *
  * There is a problem in some hosts that gethostname() will only
  * return the host name and *not* the fully qualified host name
  * with domain name.
  *
  * gethostbyname() will return a host table (nameserver) entry
- * where h_name is the "offical name", i.e. fully qualified.
+ * where h_name is the "official name", i.e. fully qualified.
  * Therefore the following piece of code.
  */
 char *
@@ -91,8 +81,6 @@ get_our_hostname(void)
 }
 
 /*
- *			H O S T _ L O O K U P _ B Y _ H O S T E N T
- *
  *  We have a hostent structure, of which, the only thing of interest is
  *  the host name.  Go from name to address back to name, to get formal name.
  *
@@ -124,7 +112,7 @@ host_lookup_by_hostent(const struct hostent * addr, int enter)
     for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 	CK_IHOST(ihp);
 
-	if ( strcmp( ihp->ht_name, addr->h_name ) != 0 )
+	if ( !BU_STR_EQUAL( ihp->ht_name, addr->h_name ) )
 	    continue;
 	return ihp;
     }
@@ -137,8 +125,6 @@ host_lookup_by_hostent(const struct hostent * addr, int enter)
 }
 
 /*
- *			M A K E _ D E F A U L T _ H O S T
- *
  *  Add a new host entry to the list of known hosts, with
  *  default parameters.
  *  This routine is used to handle unexpected volunteers.
@@ -148,7 +134,7 @@ make_default_host(const char* name)
 {
     struct ihost	*ihp;
 
-    BU_GETSTRUCT( ihp, ihost );
+    BU_ALLOC(ihp, struct ihost);
     ihp->l.magic = IHOST_MAGIC;
 
     /* Make private copy of host name -- callers have static buffers */
@@ -166,9 +152,6 @@ make_default_host(const char* name)
     return ihp;
 }
 
-/*
- *			H O S T _ L O O K U P _ B Y _ A D D R
- */
 struct ihost *
 host_lookup_by_addr(const struct sockaddr_in * from, int enter)
 {
@@ -200,7 +183,7 @@ host_lookup_by_addr(const struct sockaddr_in * from, int enter)
     /* See if this host has been previously entered by number */
     for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 	CK_IHOST(ihp);
-	if ( strcmp( ihp->ht_name, name ) == 0 )
+	if ( BU_STR_EQUAL( ihp->ht_name, name ) )
 	    return ihp;
     }
 
@@ -208,9 +191,6 @@ host_lookup_by_addr(const struct sockaddr_in * from, int enter)
     return make_default_host( name );
 }
 
-/*
- *			H O S T _ L O O K U P _ B Y _ N A M E
- */
 struct ihost *
 host_lookup_by_name(const char* name, int enter)
 {
@@ -218,7 +198,7 @@ host_lookup_by_name(const char* name, int enter)
     struct hostent		*addr;
 
     /* Determine name to be found */
-    if ( isdigit( *name ) )  {
+    if ( isdigit( (int)*name ) )  {
 	/* Numeric */
 	sockhim.sin_family = AF_INET;
 	sockhim.sin_addr.s_addr = inet_addr(name);
@@ -233,16 +213,13 @@ host_lookup_by_name(const char* name, int enter)
     return host_lookup_by_hostent( addr, enter );
 }
 
-/*
- *			H O S T _ L O O K U P _ O F _ F D
- */
 struct ihost *
 host_lookup_of_fd(int fd)
 {
-    auto socklen_t	fromlen;
+    socklen_t	fromlen;
     struct sockaddr_in from;
 
-    fromlen = sizeof (from);
+    fromlen = sizeof(from);
     if (getpeername(fd, (struct sockaddr *)&from, &fromlen) < 0) {
 	perror("getpeername");
 	return IHOST_NULL;

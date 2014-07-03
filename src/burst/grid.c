@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file grid.c
+/** @file burst/grid.c
  *
  */
 
@@ -43,13 +43,13 @@
 #define DEBUG_GRID	0
 #define DEBUG_SHOT	1
 #ifndef	EPSILON
-#define EPSILON		0.000001
+#  define EPSILON	0.000001
 #endif
 #define FABS(a)		((a) > 0 ? (a) : -(a))
 #define AproxEq(a, b, e)	(FABS((a)-(b)) < (e))
 #define AproxEqVec(A, B, e) (AproxEq((A)[X], (B)[X], (e)) && \
-			    AproxEq((A)[Y], (B)[Y], (e)) &&	\
-			    AproxEq((A)[Z], (B)[Z], (e)))
+			     AproxEq((A)[Y], (B)[Y], (e)) &&	\
+			     AproxEq((A)[Z], (B)[Z], (e)))
 
 /* local communication with multitasking process */
 static int currshot;	/* current shot index */
@@ -66,25 +66,21 @@ static struct application ag;	/* global application structure (zeroed out) */
 
 /* functions local to this module */
 static int doBursts();
-static int burstPoint();
+static int burstPoint(struct application *, fastf_t *, fastf_t *);
 static int burstRay();
 static int gridShot();
-static fastf_t	max();
-static fastf_t	min();
-static int f_BurstHit();
-static int f_BurstMiss();
-static int f_HushOverlap();
-static int f_Overlap();
-static int f_ShotHit();
-static int f_ShotMiss();
-static int getRayOrigin();
-static int readBurst();
-static int readShot();
-static void consVector();
-static void lgtModel();
+static int f_BurstHit(struct application *x, struct partition *, struct seg *);
+static int f_BurstMiss(struct application *ap);
+static int f_HushOverlap(struct application *ap, struct partition *, struct region *, struct region *, struct partition *);
+static int f_Overlap(struct application *, struct partition *, struct region *, struct region *, struct partition *);
+static int f_ShotHit(struct application *, struct partition *, struct seg *);
+static int f_ShotMiss(struct application *);
+static int getRayOrigin(struct application *);
+static int readBurst(fastf_t *);
+static int readShot(fastf_t *);
+static void lgtModel(struct application *, struct partition *, struct hit *, struct xray *, fastf_t surfnorm[3]);
 static void view_end();
-static void view_pix();
-static void spallVec();
+static void view_pix(struct application *);
 
 /*
   void colorPartition(struct region *regp, int type)
@@ -396,7 +392,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 {
     struct partition *pp;
     struct partition *bp = PT_NULL;
-    fastf_t burstnorm[3]; /* normal at burst point */
+    vect_t burstnorm = VINIT_ZERO; /* normal at burst point */
 #if DEBUG_GRID
     brst_log("f_ShotHit\n");
     for (pp = pt_headp->pt_forw; pp != pt_headp; pp = pp->pt_forw)
@@ -427,7 +423,6 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
        and imagined (implicit).
     */
     for (pp = pt_headp->pt_forw; pp != pt_headp; pp = pp->pt_forw) {
-	fastf_t	los = 0.0;
 	int	voidflag = 0;
 	struct partition *np = pp->pt_forw;
 	struct partition *cp;
@@ -449,6 +444,8 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 
 	/* Check for voids. */
 	if (np != pt_headp) {
+	    fastf_t los = 0.0;
+
 #if DEBUG_GRID
 	    brst_log("\tprocessing region '%s', \tid=%d\taircode=%d\n",
 		     pp->pt_regionp->reg_name,
@@ -518,7 +515,6 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 	/* Check for possible phantom armor before internal air,
 	   that is if it is the first thing hit. */
 	if (pp->pt_back == pt_headp && InsideAir(regp)) {
-	    fastf_t	slos;
 	    /* If adjacent partitions are the same air, extend
 	       the first on to include them. */
 #if DEBUG_GRID
@@ -537,7 +533,6 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 
 	    }
 
-	    slos = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	    prntPhantom(pp->pt_inhit, (int) regp->reg_aircode);
 	} else
 	    if (! Air(regp)) {
@@ -574,14 +569,14 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 		    if (bp == PT_NULL && ! reqburstair
 			&&	findIdents(regp->reg_regionid,
 					   &armorids)) {
-			/* Bursting on armor/void (ouchh). */
+			/* Bursting on armor/void (ouch). */
 			bp = pp;
 			VMOVE(burstnorm, exitnorm);
 		    }
 		    prntSeg(ap, pp, OUTSIDE_AIR,
 			    entrynorm, exitnorm, pp == bp);
 		} else
-		    /* If air expicitly follows, output space code. */
+		    /* If air explicitly follows, output space code. */
 		    if (np != pt_headp && Air(nregp)) {
 			/* Check for interior burst point. */
 #if DEBUG_GRID
@@ -693,7 +688,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 	    } else	  /* Interior burst point: no fuzing offset. */
 		VMOVE(burstpt, bp->pt_outhit->hit_point);
 
-	/* Only generate burst rays if nspallrays is greater then
+	/* Only generate burst rays if nspallrays is greater than
 	   zero. */
 	if (nspallrays < 1)
 	    return	1;
@@ -711,7 +706,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
   Fill normal and hit point into hit struct and if the flipped
   flag is set, reverse the normal.  Return a private copy of the
   flipped normal in normvec.  NOTE: the normal placed in the hit
-  struct should not be modified (ie reversed) by the application
+  struct should not be modified (i.e. reversed) by the application
   because it can be instanced by other solids.
 */
 void
@@ -872,9 +867,9 @@ f_ShotMiss(struct application *ap)
 		return	1;
 	}
     }
-    missed_ground :
-	if (fbfile[0] != NUL)
-	    paintCellFb(ap, pixmiss, zoom == 1 ? pixblack : pixbkgr);
+missed_ground :
+    if (fbfile[0] != NUL)
+	paintCellFb(ap, pixmiss, zoom == 1 ? pixblack : pixbkgr);
     VSETALL(ap->a_color, 0.0); /* All misses black. */
     return	0;
 }
@@ -961,6 +956,23 @@ getRayOrigin(struct application *ap)
     VADD2(ap->a_ray.r_pt, gridsoff, gridyinc);
     VADD2(ap->a_ray.r_pt, ap->a_ray.r_pt, gridxinc);
     return	1;
+}
+
+
+/*
+	Construct a direction vector out of azimuth and elevation angles
+	in radians, allocating storage for it and returning its address.
+*/
+static void
+consVector(fastf_t *vec, fastf_t azim, fastf_t elev)
+{
+    /* Store cosine of the elevation to save calculating twice. */
+    fastf_t	cosE;
+    cosE = cos(elev);
+    vec[0] = cos(azim) * cosE;
+    vec[1] = sin(azim) * cosE;
+    vec[2] = sin(elev);
+    return;
 }
 
 
@@ -1053,79 +1065,79 @@ gridInit()
 	    VMOVE(modelmax, rtip->mdl_max);
 	}
 	/* Calculate extent of grid. */
-	gridrt = max(gridhor[X] * modelmax[X],
-		     gridhor[X] * modelmin[X]
+	gridrt = FMAX(gridhor[X] * modelmax[X],
+		      gridhor[X] * modelmin[X]
 	    ) +
-	    max(gridhor[Y] * modelmax[Y],
-		gridhor[Y] * modelmin[Y]
+	    FMAX(gridhor[Y] * modelmax[Y],
+		 gridhor[Y] * modelmin[Y]
 		) +
-	    max(gridhor[Z] * modelmax[Z],
-		gridhor[Z] * modelmin[Z]
+	    FMAX(gridhor[Z] * modelmax[Z],
+		 gridhor[Z] * modelmin[Z]
 		);
-	gridlf = min(gridhor[X] * modelmax[X],
-		     gridhor[X] * modelmin[X]
+	gridlf = FMIN(gridhor[X] * modelmax[X],
+		      gridhor[X] * modelmin[X]
 	    ) +
-	    min(gridhor[Y] * modelmax[Y],
-		gridhor[Y] * modelmin[Y]
+	    FMIN(gridhor[Y] * modelmax[Y],
+		 gridhor[Y] * modelmin[Y]
 		) +
-	    min(gridhor[Z] * modelmax[Z],
-		gridhor[Z] * modelmin[Z]
+	    FMIN(gridhor[Z] * modelmax[Z],
+		 gridhor[Z] * modelmin[Z]
 		);
-	gridup = max(gridver[X] * modelmax[X],
-		     gridver[X] * modelmin[X]
+	gridup = FMAX(gridver[X] * modelmax[X],
+		      gridver[X] * modelmin[X]
 	    ) +
-	    max(gridver[Y] * modelmax[Y],
-		gridver[Y] * modelmin[Y]
+	    FMAX(gridver[Y] * modelmax[Y],
+		 gridver[Y] * modelmin[Y]
 		) +
-	    max(gridver[Z] * modelmax[Z],
-		gridver[Z] * modelmin[Z]
+	    FMAX(gridver[Z] * modelmax[Z],
+		 gridver[Z] * modelmin[Z]
 		);
-	griddn = min(gridver[X] * modelmax[X],
-		     gridver[X] * modelmin[X]
+	griddn = FMIN(gridver[X] * modelmax[X],
+		      gridver[X] * modelmin[X]
 	    ) +
-	    min(gridver[Y] * modelmax[Y],
-		gridver[Y] * modelmin[Y]
+	    FMIN(gridver[Y] * modelmax[Y],
+		 gridver[Y] * modelmin[Y]
 		) +
-	    min(gridver[Z] * modelmax[Z],
-		gridver[Z] * modelmin[Z]
+	    FMIN(gridver[Z] * modelmax[Z],
+		 gridver[Z] * modelmin[Z]
 		);
 	/* Calculate extent of model in plane of grid. */
 	if (groundburst) {
-	    modlrt = max(gridhor[X] * rtip->mdl_max[X],
-			 gridhor[X] * rtip->mdl_min[X]
+	    modlrt = FMAX(gridhor[X] * rtip->mdl_max[X],
+			  gridhor[X] * rtip->mdl_min[X]
 		) +
-		max(gridhor[Y] * rtip->mdl_max[Y],
-		    gridhor[Y] * rtip->mdl_min[Y]
+		FMAX(gridhor[Y] * rtip->mdl_max[Y],
+		     gridhor[Y] * rtip->mdl_min[Y]
 		    ) +
-		max(gridhor[Z] * rtip->mdl_max[Z],
-		    gridhor[Z] * rtip->mdl_min[Z]
+		FMAX(gridhor[Z] * rtip->mdl_max[Z],
+		     gridhor[Z] * rtip->mdl_min[Z]
 		    );
-	    modllf = min(gridhor[X] * rtip->mdl_max[X],
-			 gridhor[X] * rtip->mdl_min[X]
+	    modllf = FMIN(gridhor[X] * rtip->mdl_max[X],
+			  gridhor[X] * rtip->mdl_min[X]
 		) +
-		min(gridhor[Y] * rtip->mdl_max[Y],
-		    gridhor[Y] * rtip->mdl_min[Y]
+		FMIN(gridhor[Y] * rtip->mdl_max[Y],
+		     gridhor[Y] * rtip->mdl_min[Y]
 		    ) +
-		min(gridhor[Z] * rtip->mdl_max[Z],
-		    gridhor[Z] * rtip->mdl_min[Z]
+		FMIN(gridhor[Z] * rtip->mdl_max[Z],
+		     gridhor[Z] * rtip->mdl_min[Z]
 		    );
-	    modlup = max(gridver[X] * rtip->mdl_max[X],
-			 gridver[X] * rtip->mdl_min[X]
+	    modlup = FMAX(gridver[X] * rtip->mdl_max[X],
+			  gridver[X] * rtip->mdl_min[X]
 		) +
-		max(gridver[Y] * rtip->mdl_max[Y],
-		    gridver[Y] * rtip->mdl_min[Y]
+		FMAX(gridver[Y] * rtip->mdl_max[Y],
+		     gridver[Y] * rtip->mdl_min[Y]
 		    ) +
-		max(gridver[Z] * rtip->mdl_max[Z],
-		    gridver[Z] * rtip->mdl_min[Z]
+		FMAX(gridver[Z] * rtip->mdl_max[Z],
+		     gridver[Z] * rtip->mdl_min[Z]
 		    );
-	    modldn = min(gridver[X] * rtip->mdl_max[X],
-			 gridver[X] * rtip->mdl_min[X]
+	    modldn = FMIN(gridver[X] * rtip->mdl_max[X],
+			  gridver[X] * rtip->mdl_min[X]
 		) +
-		min(gridver[Y] * rtip->mdl_max[Y],
-		    gridver[Y] * rtip->mdl_min[Y]
+		FMIN(gridver[Y] * rtip->mdl_max[Y],
+		     gridver[Y] * rtip->mdl_min[Y]
 		    ) +
-		min(gridver[Z] * rtip->mdl_max[Z],
-		    gridver[Z] * rtip->mdl_min[Z]
+		FMIN(gridver[Z] * rtip->mdl_max[Z],
+		     gridver[Z] * rtip->mdl_min[Z]
 		    );
 	} else {
 	    modlrt = gridrt;
@@ -1154,14 +1166,14 @@ gridInit()
 #endif
 
     /* compute stand-off distance */
-    standoff = max(viewdir[X] * rtip->mdl_max[X],
-		   viewdir[X] * rtip->mdl_min[X]
+    standoff = FMAX(viewdir[X] * rtip->mdl_max[X],
+		    viewdir[X] * rtip->mdl_min[X]
 	) +
-	max(viewdir[Y] * rtip->mdl_max[Y],
-	    viewdir[Y] * rtip->mdl_min[Y]
+	FMAX(viewdir[Y] * rtip->mdl_max[Y],
+	     viewdir[Y] * rtip->mdl_min[Y]
 	    ) +
-	max(viewdir[Z] * rtip->mdl_max[Z],
-	    viewdir[Z] * rtip->mdl_min[Z]
+	FMAX(viewdir[Z] * rtip->mdl_max[Z],
+	     viewdir[Z] * rtip->mdl_min[Z]
 	    );
 
     /* determine largest grid dimension for frame buffer display */
@@ -1320,32 +1332,6 @@ lgtModel(struct application *ap, struct partition *pp, struct hit *hitp, struct 
 
 
 /*
-  fastf_t max(fastf_t a, fastf_t b)
-
-  Returns the maximum of a and b.  Useful when a macro would
-  cause side-effects or redundant computation.
-*/
-static fastf_t
-max(fastf_t a, fastf_t b)
-{
-    return	FMAX(a, b);
-}
-
-
-/*
-  fastf_t min(fastf_t a, fastf_t b)
-
-  Returns the minimum of a and b.  Useful when a macro would
-  cause side-effects or redundant computation.
-*/
-static fastf_t
-min(fastf_t a, fastf_t b)
-{
-    return	FMIN(a, b);
-}
-
-
-/*
   int readBurst(fastf_t *vec)
 
   This routine reads the next set of burst point coordinates from the
@@ -1357,16 +1343,21 @@ static int
 readBurst(fastf_t *vec)
 {
     int	items;
+    double scan[3];
+
     assert(burstfp != (FILE *) NULL);
     /* read 3D firing coordinates from input stream */
-    if ((items = fscanf(burstfp, "%lf %lf %lf", &vec[X], &vec[Y], &vec[Z])) != 3) {
+    items = fscanf(burstfp, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+    VMOVE(vec, scan); /* double to fastf_t */
+    if (items != 3) {
 	if (items != EOF) {
 	    brst_log("Fatal error: %d burst coordinates read.\n",
 		     items);
 	    fatalerror = 1;
 	    return	0;
-	} else
+	} else {
 	    return	EOF;
+	}
     } else {
 	vec[X] /= unitconv;
 	vec[Y] /= unitconv;
@@ -1388,18 +1379,25 @@ readBurst(fastf_t *vec)
 static int
 readShot(fastf_t *vec)
 {
+    double scan[3] = VINIT_ZERO;
+
     assert(shotfp != (FILE *) NULL);
+
     if (! TSTBIT(firemode, FM_3DIM)) {
 	/* absence of 3D flag means 2D */
 	int	items;
+
 	/* read 2D firing coordinates from input stream */
-	if ((items = fscanf(shotfp, "%lf %lf", &vec[X], &vec[Y])) != 2) {
+	items = fscanf(shotfp, "%lf %lf", &scan[0], &scan[1]);
+	VMOVE(vec, scan);
+	if (items != 2) {
 	    if (items != EOF) {
 		brst_log("Fatal error: only %d firing coordinates read.\n", items);
 		fatalerror = 1;
 		return	0;
-	    } else
+	    } else {
 		return	EOF;
+	    }
 	} else {
 	    vec[X] /= unitconv;
 	    vec[Y] /= unitconv;
@@ -1408,15 +1406,18 @@ readShot(fastf_t *vec)
 	if (TSTBIT(firemode, FM_3DIM)) {
 	    /* 3D coordinates */
 	    int	items;
+
 	    /* read 3D firing coordinates from input stream */
-	    if ((items = fscanf(shotfp, "%lf %lf %lf", &vec[X], &vec[Y], &vec[Z])) != 3)
-	    {
+	    items = fscanf(shotfp, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+	    VMOVE(vec, scan); /* double to fastf_t */
+	    if (items != 3) {
 		if (items != EOF) {
 		    brst_log("Fatal error: %d firing coordinates read.\n", items);
 		    fatalerror = 1;
 		    return	0;
-		} else
+		} else {
 		    return	EOF;
+		}
 	    } else {
 		vec[X] /= unitconv;
 		vec[Y] /= unitconv;
@@ -1477,7 +1478,7 @@ spallInit()
     }
 
     /* Compute sampling cone of rays which are equally spaced. */
-    theta = TWO_PI * (1.0 - cos(conehfangle)); /* solid angle */
+    theta = M_2PI * (1.0 - cos(conehfangle)); /* solid angle */
     delta = sqrt(theta/nspallrays); /* angular ray delta */
     n = conehfangle / delta;
     phiinc = conehfangle / n;
@@ -1490,9 +1491,9 @@ spallInit()
 	fastf_t	gammaval, gammainc, gammalast;
 	int m;
 	sinphi = FABS(sinphi);
-	m = (TWO_PI * sinphi)/delta + 1;
-	gammainc = TWO_PI / m;
-	gammalast = TWO_PI-gammainc+EPSILON;
+	m = (M_2PI * sinphi)/delta + 1;
+	gammainc = M_2PI / m;
+	gammalast = M_2PI-gammainc+EPSILON;
 	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc)
 	    spallct++;
     }
@@ -1532,84 +1533,22 @@ burstPoint(struct application *ap, fastf_t *normal, fastf_t *bpt)
        axis. */
     if (cantwarhead) {
 	VADD2(a_burst.a_ray.r_dir, a_burst.a_ray.r_dir, cantdelta);
-	VUNITIZE(a_burst.a_ray.r_dir)
-	    }
+	VUNITIZE(a_burst.a_ray.r_dir);
+    }
     /* If a deflected cone is specified (the default) the spall cone
        axis is half way between the main penetrator axis and exit
        normal of the spalling component.
     */
     if (deflectcone) {
 	VADD2(a_burst.a_ray.r_dir, a_burst.a_ray.r_dir, normal);
-	VUNITIZE(a_burst.a_ray.r_dir)
-	    }
+	VUNITIZE(a_burst.a_ray.r_dir);
+    }
     VMOVE(a_burst.a_ray.r_pt, bpt);
 
     comphi = 0.0; /* Initialize global for concurrent access. */
 
     /* SERIAL case -- one CPU does all the work. */
     return	burstRay();
-}
-
-
-static int
-burstRay()
-{
-    /* Need local copy of all but readonly variables for concurrent
-       threads of execution. */
-    struct application	a_spall;
-    fastf_t			phi;
-    int			hitcrit = 0;
-    a_spall = a_burst;
-    a_spall.a_resource = RESOURCE_NULL;
-    for (; ! userinterrupt;) {
-	fastf_t	sinphi;
-	fastf_t	gammaval, gammainc, gammalast;
-	int done;
-	int m;
-	bu_semaphore_acquire(RT_SEM_WORKER);
-	phi = comphi;
-	comphi += phiinc;
-	done = phi > conehfangle;
-	bu_semaphore_release(RT_SEM_WORKER);
-	if (done)
-	    break;
-	sinphi = sin(phi);
-	sinphi = FABS(sinphi);
-	m = (TWO_PI * sinphi)/delta + 1;
-	gammainc = TWO_PI / m;
-	gammalast = TWO_PI - gammainc + EPSILON;
-	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc) {
-	    int	ncrit;
-	    spallVec(a_burst.a_ray.r_dir, a_spall.a_ray.r_dir,
-		     phi, gammaval);
-	    plotRay(&a_spall.a_ray);
-	    bu_semaphore_acquire(RT_SEM_WORKER);
-	    a_spall.a_user = a_burst.a_user++;
-	    bu_semaphore_release(RT_SEM_WORKER);
-	    if ((ncrit = rt_shootray(&a_spall)) == -1
-		&&	fatalerror) {
-		/* Fatal error in application routine. */
-		brst_log("Error: ray tracing aborted.\n");
-		return	0;
-	    }
-	    if (fbfile[0] != NUL && ncrit > 0) {
-		paintSpallFb(&a_spall);
-		hitcrit = 1;
-	    }
-	    if (histfile[0] != NUL) {
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		(void) fprintf(histfp, "%d\n", ncrit);
-		bu_semaphore_release(BU_SEM_SYSCALL);
-	    }
-	}
-    }
-    if (fbfile[0] != NUL) {
-	if (hitcrit)
-	    paintCellFb(&a_spall, pixcrit, pixtarg);
-	else
-	    paintCellFb(&a_spall, pixbhit, pixtarg);
-    }
-    return	1;
 }
 
 
@@ -1642,20 +1581,70 @@ spallVec(fastf_t *dvec, fastf_t *s_rdir, fastf_t phi, fastf_t gammaval)
 }
 
 
-/*	c o n s _ V e c t o r ()
-	Construct a direction vector out of azimuth and elevation angles
-	in radians, allocating storage for it and returning its address.
-*/
-static void
-consVector(fastf_t *vec, fastf_t azim, fastf_t elev)
+static int
+burstRay()
 {
-    /* Store cosine of the elevation to save calculating twice. */
-    fastf_t	cosE;
-    cosE = cos(elev);
-    vec[0] = cos(azim) * cosE;
-    vec[1] = sin(azim) * cosE;
-    vec[2] = sin(elev);
-    return;
+    /* Need local copy of all but readonly variables for concurrent
+       threads of execution. */
+    struct application	a_spall;
+    fastf_t			phi;
+    int			hitcrit = 0;
+    a_spall = a_burst;
+    a_spall.a_resource = RESOURCE_NULL;
+    for (; ! userinterrupt;) {
+	fastf_t	sinphi;
+	fastf_t	gammaval, gammainc, gammalast;
+	int done;
+	int m;
+	bu_semaphore_acquire(RT_SEM_WORKER);
+	phi = comphi;
+	comphi += phiinc;
+	done = phi > conehfangle;
+	bu_semaphore_release(RT_SEM_WORKER);
+	if (done)
+	    break;
+	sinphi = sin(phi);
+	sinphi = FABS(sinphi);
+	m = (M_2PI * sinphi)/delta + 1;
+	gammainc = M_2PI / m;
+	gammalast = M_2PI - gammainc + EPSILON;
+	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc) {
+	    int	ncrit;
+	    spallVec(a_burst.a_ray.r_dir, a_spall.a_ray.r_dir,
+		     phi, gammaval);
+
+	    if (plotline)
+		plotRayPoint(&a_spall.a_ray);
+	    else
+		plotRayLine(&a_spall.a_ray);
+
+	    bu_semaphore_acquire(RT_SEM_WORKER);
+	    a_spall.a_user = a_burst.a_user++;
+	    bu_semaphore_release(RT_SEM_WORKER);
+	    if ((ncrit = rt_shootray(&a_spall)) == -1
+		&&	fatalerror) {
+		/* Fatal error in application routine. */
+		brst_log("Error: ray tracing aborted.\n");
+		return	0;
+	    }
+	    if (fbfile[0] != NUL && ncrit > 0) {
+		paintSpallFb(&a_spall);
+		hitcrit = 1;
+	    }
+	    if (histfile[0] != NUL) {
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		(void) fprintf(histfp, "%d\n", ncrit);
+		bu_semaphore_release(BU_SEM_SYSCALL);
+	    }
+	}
+    }
+    if (fbfile[0] != NUL) {
+	if (hitcrit)
+	    paintCellFb(&a_spall, pixcrit, pixtarg);
+	else
+	    paintCellFb(&a_spall, pixbhit, pixtarg);
+    }
+    return	1;
 }
 
 
@@ -1668,7 +1657,6 @@ abort_RT(int UNUSED(sig))
 }
 
 
-/*	v i e w _ p i x () */
 static void
 view_pix(struct application *ap)
 {
@@ -1682,7 +1670,6 @@ view_pix(struct application *ap)
 }
 
 
-/*	v i e w _ e n d () */
 static void
 view_end()
 {

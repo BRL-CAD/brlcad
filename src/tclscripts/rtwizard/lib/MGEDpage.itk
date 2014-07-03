@@ -1,7 +1,7 @@
 #                    M G E D P A G E . I T K
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -115,6 +115,7 @@ namespace eval RtWizard {
 	    method getElevation {}
 	    method getSize {}
 	    method getPerspective {}
+	    method getCenter {}
 	    method getOrientation
 	    method getEyepoint
 	    method getLineColor {} {return $lineColor}
@@ -161,6 +162,12 @@ namespace eval RtWizard {
 	    method perspectiveDialogOK {}
 	    method perspectiveDialogApply {}
 	    method perspectiveDialogCancel {}
+
+	    method createCenterDialog {parent}
+	    method centerDialogReveal {}
+	    method centerDialogOK {}
+	    method centerDialogApply {}
+	    method centerDialogCancel {}
 
 	    method lineColorChooser {}
 	    method nonLineColorChooser {}
@@ -281,7 +288,7 @@ namespace eval RtWizard {
 
 	#
 	# Create a frame for the center of the panel. On the left
-	# will be the hierachy window, on the right will be the
+	# will be the hierarchy window, on the right will be the
 	# mged window over its controls
 	#
 	itk_component add midFrame {
@@ -319,7 +326,7 @@ namespace eval RtWizard {
 	}
 
 	#
-	# Create a frame to manage the contols
+	# Create a frame to manage the controls
 	#
 	itk_component add conFrame {
 	    iwidgets::labeledframe $itk_component(hierFrame).conFrame \
@@ -386,7 +393,7 @@ namespace eval RtWizard {
 	# Create the hierarchy browser
 	#
 	itk_component add hier {
-	    hierarchy $itk_component(hierFrame).#auto \
+	    iwidgets::hierarchy $itk_component(hierFrame).#auto \
 		-querycommand  "[itcl::code $this getChildren] %n " \
 		-selectcommand "[itcl::code $this selectNode] %n %s " \
 		-alwaysquery 0 \
@@ -396,7 +403,6 @@ namespace eval RtWizard {
 		-hscrollmode dynamic \
 		-labeltext $database \
 		-labelpos nw
-
 	} {
 	    usual
 	}
@@ -408,6 +414,7 @@ namespace eval RtWizard {
 	createAzimuthDialog     $itk_interior
 	createSizeDialog        $itk_interior
 	createPerspectiveDialog $itk_interior
+	createCenterDialog $itk_interior
 	createIntensityDialog $itk_interior
 	createOccModeDialog   $itk_interior
 
@@ -521,6 +528,10 @@ namespace eval RtWizard {
 	    -helpstr "Set view perspective" \
 	    -command "[::itcl::code $this perspectiveDialogReveal]"
 
+	$w menubar add command .$viewMenu.center -label "Center..." \
+	    -helpstr "Set view center" \
+	    -command "[::itcl::code $this centerDialogReveal]"
+
 	#
 	# Do the options menu, callback to the child
 	#
@@ -597,7 +608,7 @@ namespace eval RtWizard {
     #
     ::itcl::body MGEDpage::getAzimuth { } {
 	if {$isSelected == "true"} {
-	    set currentAzimuth [lindex [$::mgedObj ae] 0 ]
+	    set currentAzimuth [lindex [$::mgedObj gedCmd aet] 0 ]
 	}
 	return $currentAzimuth
     }
@@ -607,7 +618,7 @@ namespace eval RtWizard {
     #
     ::itcl::body MGEDpage::getElevation { } {
 	if {$isSelected == "true"} {
-	    set currentElevation [lindex [$::mgedObj ae] 1 ]
+	    set currentElevation [lindex [$::mgedObj gedCmd aet] 1 ]
 	}
 	return $currentElevation
     }
@@ -617,7 +628,7 @@ namespace eval RtWizard {
     #
     itcl::body MGEDpage::getSize {} {
 	if {$isSelected == "true"} {
-	    set currentSize [$::mgedObj size]
+	    set currentSize [$::mgedObj gedCmd size]
 	}
 	return $currentSize
     }
@@ -627,21 +638,17 @@ namespace eval RtWizard {
     #
     itcl::body MGEDpage::getOrientation {} {
 	if {$isSelected == "true"} {
-	    set currentRmat [ $::mgedObj rmat ]
+	    set currentRmat [ $::mgedObj gedCmd rmat ]
 	}
 	return [ quat_mat2quat $currentRmat]
     }
 
     #
     # getEyeModel - returns the full specification of the view.
-    #               Note the "kludge" necessary to get the view info
-    #               from the Mged object.
     #
     itcl::body MGEDpage::getEyeModel {} {
 	if {$isSelected == "true"} {
-	    set vu [$::mgedObj component [$::mgedObj cget -pane]]
-	    append view "::" $vu "_view"
-	    set currentEyemodel [$::mgedObj get_eyemodel $view]
+	    set currentEyemodel [$::mgedObj gedCmd get_eyemodel]
 	}
 	return $currentEyemodel
 
@@ -652,7 +659,7 @@ namespace eval RtWizard {
     #
     itcl::body MGEDpage::getEyepoint {} {
 	if {$isSelected == "true"} {
-	    set currentEye [$::mgedObj eye]
+	    set currentEye [$::mgedObj gedCmd eye]
 	}
 	return $currentEye
     }
@@ -662,9 +669,19 @@ namespace eval RtWizard {
     #
     itcl::body MGEDpage::getPerspective {} {
 	if {$isSelected == "true"} {
-	    set currentPerspective [$::mgedObj perspective_angle]
+	    set currentPerspective [$::mgedObj gedCmd perspective]
 	}
 	return $currentPerspective
+    }
+
+    #
+    # getCenter - returns the current view center
+    #
+    itcl::body MGEDpage::getCenter {} {
+	if {$isSelected == "true"} {
+	    set currentCenter [$::mgedObj gedCmd center]
+	}
+	return $currentCenter
     }
 
     #--------------------#
@@ -683,20 +700,21 @@ namespace eval RtWizard {
 	    # When the widget is initially opened, the parent is null.
 	    # In this case, use tops.
 	    #
-	    set raw [ $::mgedObj tops ]
+	    set raw [ $::mgedObj gedCmd tops ]
 	    foreach i $raw {
 		if { $i != "_GLOBAL" } {
 		    regsub {/R*} $i {} clean
 		    lappend objs $clean
 		}
 	    }
+	    set objs [lsort $objs]
 	} else {
 	    #
-	    # For the given parent, get its consituents using the 'lt'
+	    # For the given parent, get its constituents using the 'lt'
 	    # command. This produces a tcl list of the items.
 	    #
 	    set t [file tail $parent]
-	    set raw [ $::mgedObj lt $t ]
+	    set raw [ $::mgedObj gedCmd lt $t ]
 	    foreach i $raw {
 		set obj [lindex $i 1]
 		lappend objs [list [file join $parent $obj] $obj]
@@ -712,10 +730,10 @@ namespace eval RtWizard {
     itcl::body MGEDpage::selectNode {tag isOn} {
 
 	if {$isOn} {
-	    $::mgedObj erase $tag
+	    $::mgedObj gedCmd erase $tag
 	    $itk_component(hier) selection remove $tag
 	} else {
-	    $::mgedObj draw $tag
+	    $::mgedObj gedCmd draw $tag
 	    $itk_component(hier) selection add $tag
 	}
 	updateStatus
@@ -737,7 +755,7 @@ namespace eval RtWizard {
     ::itcl::body MGEDpage::clearDisplay { } {
 
 	$itk_component(hier) selection clear
-	$::mgedObj zap
+	$::mgedObj gedCmd zap
 	updateStatus
     }
 
@@ -750,10 +768,10 @@ namespace eval RtWizard {
 	set selected [$itk_component(hier) selection get]
 
 	# clear the display
-	$::mgedObj zap
+	$::mgedObj gedCmd zap
 
 	# redraw the selection list
-	eval $::mgedObj draw $selected
+	eval $::mgedObj gedCmd draw $selected
 
 	updateStatus
     }
@@ -776,33 +794,34 @@ namespace eval RtWizard {
 	getOrientation
 	getEyeModel
 	getPerspective
+	getCenter
 
-	set currentEye [$::mgedObj eye]
-	set currentSize [$::mgedObj size]
-	set currentRmat [$::mgedObj rmat]
-	set currentCenter [$::mgedObj center]
+	set currentEye [$::mgedObj gedCmd eye]
+	set currentSize [$::mgedObj gedCmd size]
+	set currentRmat [$::mgedObj gedCmd rmat]
+	set currentCenter [$::mgedObj gedCmd center]
     }
 
     #
     # restoreView - restores the mgedObj to its previous state.
     #
     ::itcl::body MGEDpage::restoreView {} {
-	$::mgedObj zap
+	$::mgedObj gedCmd zap
 
 	#
 	# Reselect the objects - XXX
 	#
 	if {[llength $selected] > 0} {
-	    eval $::mgedObj draw $selected
+	    eval $::mgedObj gedCmd draw $selected
 	}
 
 	#
 	# Reset the view
 	#
-	$::mgedObj eye $currentEye
-	$::mgedObj center $currentCenter
-	$::mgedObj size $currentSize
-	$::mgedObj rmat $currentRmat
+	$::mgedObj gedCmd eye $currentEye
+	$::mgedObj gedCmd center $currentCenter
+	$::mgedObj gedCmd size $currentSize
+	$::mgedObj gedCmd rmat $currentRmat
     }
 
     #
@@ -812,7 +831,7 @@ namespace eval RtWizard {
     ::itcl::body MGEDpage::setAzEl { ignored } {
 	set az [ $itk_component(azimuth) get ]
 	set el [ $itk_component(elevation) get ]
-	$::mgedObj ae $az $el 0
+	$::mgedObj gedCmd aet $az $el 0
 	updateStatus
 
     }
@@ -1026,13 +1045,13 @@ namespace eval RtWizard {
 	#
 	# Get the units
 	#
-	set rawUnits [ $::mgedObj units ]
+	set rawUnits [ $::mgedObj gedCmd units ]
 	set units [ string trim [ lindex $rawUnits 4 ] {'.} ]
 
 	#
 	# Get the current size
 	#
-	set currSize  [ $::mgedObj size ]
+	set currSize  [ $::mgedObj gedCmd size ]
 
 	#
 	# Build the dialog
@@ -1049,7 +1068,7 @@ namespace eval RtWizard {
 	# Build the current size indicator
 	#
 	itk_component add sizeLabel {
-	    labeledwidget $cs.scl \
+	    iwidgets::labeledwidget $cs.scl \
 		-labeltext "Current Size:" \
 		-labelpos "w"
 	} {
@@ -1077,7 +1096,7 @@ namespace eval RtWizard {
 	# Build the entry field for the size.
 	#
 	itk_component add sizeEntry {
-	    entryfield $cs.sze \
+	    iwidgets::entryfield $cs.sze \
 		-labeltext "Desired Size:" \
 		-labelpos w \
 		-width 10\
@@ -1128,7 +1147,7 @@ namespace eval RtWizard {
     #                       is requested from the menu bar
     #
     ::itcl::body MGEDpage::sizeDialogReveal {} {
-	set oldSize [ $::mgedObj size ]
+	set oldSize [ $::mgedObj gedCmd size ]
 	$itk_component(sizeCurrent) configure -text $oldSize
 	$itk_component(sizeEntry) clear
 	$itk_component(sizeEntry) insert 0 $oldSize
@@ -1139,7 +1158,7 @@ namespace eval RtWizard {
     # sizeDialogOK - executed when the OK button is pressed.
     #
     ::itcl::body MGEDpage::sizeDialogOK {} {
-	$::mgedObj size [ $itk_component(sizeEntry) get ]
+	$::mgedObj gedCmd size [ $itk_component(sizeEntry) get ]
 	$itk_component(sizeDialog) deactivate
 	updateStatus
     }
@@ -1149,7 +1168,7 @@ namespace eval RtWizard {
     #
     ::itcl::body MGEDpage::sizeDialogApply {} {
 	set newSize [ $itk_component(sizeEntry) get ]
-	$::mgedObj size $newSize
+	$::mgedObj gedCmd size $newSize
 	$itk_component(sizeCurrent) configure -text $newSize
 	updateStatus
     }
@@ -1158,7 +1177,7 @@ namespace eval RtWizard {
     # sizeDialogCancel - executed when the close button is pressed.
     #
     ::itcl::body MGEDpage::sizeDialogCancel {} {
-	$::mgedObj size $oldSize
+	$::mgedObj gedCmd size $oldSize
 	$itk_component(sizeDialog) deactivate
 	updateStatus
     }
@@ -1222,7 +1241,7 @@ namespace eval RtWizard {
     # perspectiveDialogOK - executed when the OK button is pressed.
     #
     ::itcl::body MGEDpage::perspectiveDialogOK {} {
-	$::mgedObj perspective_angle [ $itk_component(perspective) get]
+	$::mgedObj gedCmd perspective [ $itk_component(perspective) get]
 	$itk_component(perspectiveDialog) deactivate
 	updateStatus
     }
@@ -1231,7 +1250,7 @@ namespace eval RtWizard {
     # perspectiveDialogApply - executed when the apply button is pressed.
     #
     ::itcl::body MGEDpage::perspectiveDialogApply {} {
-	$::mgedObj perspective_angle [ $itk_component(perspective) get]
+	$::mgedObj gedCmd perspective [ $itk_component(perspective) get]
 	updateStatus
     }
 
@@ -1239,10 +1258,112 @@ namespace eval RtWizard {
     # perspectiveDialogCancel - executed when the close button is pressed.
     #
     ::itcl::body MGEDpage::perspectiveDialogCancel {} {
-	$::mgedObj perspective_angle $oldPerspective
+	$::mgedObj gedCmd perspective $oldPerspective
 	$itk_component(perspectiveDialog) deactivate
 	updateStatus
     }
+
+    #---------------------#
+    #    Center Control   #
+    #---------------------#
+    #
+    # createCenterDialog - creates a dialog window that allows the user
+    #                         to set the view center
+    #
+    ::itcl::body MGEDpage::createCenterDialog {parent} {
+
+	# Get current Center
+	set currCenter [ getCenter ]
+
+	itk_component add centerDialog {
+	    iwidgets::dialog $parent.#auto -title Center
+	} {
+	    usual
+	}
+
+	set cs [ eval $itk_component(centerDialog) childsite ]
+#
+	# Build the current size indicator
+	#
+	itk_component add centerLabel {
+	    iwidgets::labeledwidget $cs.scl \
+		-labeltext "Center(x y z):" \
+		-labelpos "w"
+	} {
+	    usual
+	}
+
+	#
+	# Build the entry field for the size.
+	#
+	itk_component add centerEntry {
+	    iwidgets::entryfield $cs.sze \
+		-labeltext "Center (x y z):" \
+		-labelpos w \
+		-width 30\
+		-command "[::itcl::code $this centerDialogApply]"
+	} {
+	    usual
+	}
+
+	$itk_component(centerDialog) hide Help
+	$itk_component(centerDialog) buttonconfigure OK \
+	    -command "[::itcl::code $this centerDialogOK]"
+	$itk_component(centerDialog) buttonconfigure Apply \
+	    -command "[::itcl::code $this centerDialogApply]"
+	$itk_component(centerDialog) buttonconfigure Cancel \
+	    -command "[::itcl::code $this centerDialogCancel]"
+	pack $itk_component(centerLabel) -anchor c
+	pack $itk_component(centerEntry) -anchor c
+	eval iwidgets::Labeledwidget::alignlabels \
+	    $itk_component(centerLabel) \
+	    $itk_component(centerEntry)
+
+	$itk_component(sizeCurrent) configure -text $currCenter
+	$itk_component(centerDialog) deactivate
+    }
+
+    #
+    # centerDialogReveal - executed when the center dialog window
+    #                       is requested from the menu bar
+    #
+    ::itcl::body MGEDpage::centerDialogReveal {} {
+	set oldCenter [ getCenter ]
+	$itk_component(centerEntry) clear
+	$itk_component(centerEntry) insert 0 $oldCenter
+	$itk_component(centerDialog) activate
+    }
+
+    #
+    # centerDialogOK - executed when the OK button is pressed.
+    #
+    ::itcl::body MGEDpage::centerDialogOK {} {
+	$::mgedObj gedCmd center [ $itk_component(centerEntry) get]
+	$itk_component(centerDialog) deactivate
+	updateStatus
+    }
+
+    #
+    # centerDialogApply - executed when the apply button is pressed.
+    #
+    ::itcl::body MGEDpage::centerDialogApply {} {
+	set newCenter [ $itk_component(centerEntry) get]
+	$::mgedObj gedCmd center $newCenter
+	$itk_component(sizeCurrent) configure -text $newCenter
+	updateStatus
+    }
+
+    #
+    # centerDialogCancel - executed when the close button is pressed.
+    #
+    ::itcl::body MGEDpage::centerDialogCancel {} {
+	set oldCenter [ getCenter ]
+	$::mgedObj gedCmd center $oldCenter
+	$itk_component(centerDialog) deactivate
+	updateStatus
+    }
+
+
 
     #--------------------#
     # Line Color Control #
@@ -1347,7 +1468,7 @@ namespace eval RtWizard {
 	# Build the radiobox
 	#
 	itk_component add occModeRB {
-	    radiobox $cs.rb \
+	    iwidgets::radiobox $cs.rb \
 		-labeltext "Select the Occlusion Mode:" \
 		-labelpos "nw" \
 		-ipady 10

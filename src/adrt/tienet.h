@@ -1,7 +1,7 @@
 /*                        T I E N E T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,15 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @file tienet.h
  *
- * Brief description
  *
  */
 
-#ifndef _TIENET_H
-#define _TIENET_H
+#ifndef ADRT_TIENET_H
+#define ADRT_TIENET_H
 
 #include "adrt.h"
 

@@ -1,7 +1,7 @@
 /*                         T O R I I . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file torii.c
+/** @file proc-db/torii.c
  *
  * Create a bunch of torii.
  *
@@ -57,14 +57,18 @@ typedef struct torusLevels {
     unsigned short int levels;
 } torusLevels_t;
 
-void usage(char *progname)
+
+void
+usage(char *progname)
 {
     fprintf(stderr, "Usage: %s db_file.g\n", progname);
     bu_exit(-1, NULL);
 }
 
 
-int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t position, const int dirArray[6][6], int dir) {
+int
+create_torii(int level, int currentLevel, torusLevels_t *torii, point_t position, const int dirArray[6][6], int dir)
+{
     point_t newPosition;
 
     VMOVE(newPosition, position);
@@ -104,14 +108,15 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
 	}
 
     } else {
-#if 0
-	torusArray_t *ta = &torii->level[currentLevel];
+	/* TESTING DYNAMIC RECURSION */
+
+	torusArray_t *ta = &torii->level[currentLevel-1];
 	/* base case */
 	printf("base case (%d levels deep)\n", currentLevel);
 
 	/* see if we need to allocate more memory */
 	if (ta->count >= ta->max) {
-	    if ((ta->torus = realloc(ta->torus, (ta->count+6)*sizeof(torus_t))) == NULL) {
+	    if ((ta->torus = (struct torus *)realloc(ta->torus, (ta->count+6)*sizeof(torus_t))) == NULL) {
 		bu_log("Unable to allocate memory for torii during runtime\n");
 		perror("torus_t allocation during runtime failed");
 		bu_exit(3, NULL);
@@ -124,20 +129,24 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
 	ta->torus[ta->count].minorRadius = 2.0;
 	ta->torus[ta->count].direction = dir;
 	ta->count++;
-#endif
     }
     bu_log("returning from create_torii\n");
 
     return 0;
 }
 
-int output_torii(const char *fileName, int levels, const torusLevels_t torii, const char *name) {
+
+int
+output_torii(const char *fileName, int levels, const torusLevels_t UNUSED(torii), const char *name)
+{
     char scratch[256];
 
     bu_strlcpy(scratch, name, sizeof(scratch));
     bu_strlcat(scratch, "_0", sizeof(scratch));
 
     bu_log("output_torii to file \"%s\" for %d levels using \"%s.c\" as the combination name", fileName, levels, name);
+
+    /* TODO: actually write out the torii here. */
 
     return 0;
 }
@@ -188,11 +197,11 @@ main(int ac, char *av[])
 
     /* init the levels array */
     torii.levels = levels;
-    torii.level = bu_calloc(levels, sizeof(torusArray_t), "torii");
+    torii.level = (struct torusArray *)bu_calloc(levels, sizeof(torusArray_t), "torii");
 
     /* initialize at least a few torus to minimize allocation calls */
     for (i=0; i<levels; i++) {
-	torii.level[i].torus = bu_calloc(6, sizeof(torus_t), "torii.level[i].torus");
+	torii.level[i].torus = (struct torus *)bu_calloc(6, sizeof(torus_t), "torii.level[i].torus");
 	torii.level[i].count=0;
 	torii.level[i].max=6;
     }
@@ -209,6 +218,7 @@ main(int ac, char *av[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

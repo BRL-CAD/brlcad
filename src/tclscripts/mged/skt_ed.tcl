@@ -1,7 +1,7 @@
 #                      S K T _ E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,6 +18,93 @@
 # information.
 #
 ###
+
+
+proc dot { v1_in v2_in } {
+    # args are names of arrays
+    upvar $v1_in v1
+    upvar $v2_in v2
+
+    return [expr { $v1(0) * $v2(0) + $v1(1) * $v2(1) } ]
+}
+
+proc dist { x1 y1 x2 y2 } {
+    return [expr { sqrt( ($x1 - $x2) * ($x1 - $x2) + ($y1 - $y2) * ($y1 - $y2))}]
+}
+
+proc cross2d { v1_in v2_in } {
+    # args are names of arrays
+    # only the value of the 'z' component is returned
+    upvar $v1_in v1
+    upvar $v2_in v2
+    return [expr {$v1(0) * $v2(1) - $v1(1) * $v2(0)}]
+}
+
+proc diff { v_out v1_in v2_in } {
+    # args are the names of arrays
+    # returns difference array in v_out
+    upvar $v1_in v1
+    upvar $v2_in v2
+    upvar $v_out v
+    set v(0) [expr {$v1(0) - $v2(0)}]
+    set v(1) [expr {$v1(1) - $v2(1)}]
+}
+
+proc find_arc_center { sx sy ex ey radius center_is_left } {
+    # The center must lie on the perpendicular bisector of the line connecting the two points
+
+    # vector from start point to end point
+    set s2e(0) [expr {$ex - $sx}]
+    set s2e(1) [expr {$ey - $sy}]
+
+    # mid point
+    set midx [expr {($sx + $ex) / 2.0}]
+    set midy [expr {($sy + $ey) / 2.0}]
+
+    # perpendicular direction
+    set dirx [expr {-($midy - $sy)}]
+    set diry [expr {$midx - $sx}]
+
+    # unitize direction vector
+    set len1sq [expr {$dirx * $dirx + $diry * $diry}]
+    set dir_len [expr {sqrt( $len1sq ) }]
+    set dirx [expr {$dirx / $dir_len}]
+    set diry [expr {$diry / $dir_len}]
+
+    # calculate distance from mid point to center
+    set lensq [expr {$radius * $radius - $len1sq}]
+    if { $lensq <= 0. } {
+	set tmp_len 0.0
+    } else {
+	set tmp_len [expr {sqrt( $lensq )}]
+    }
+
+    # calculate center as distance from mid point along the bisector direction
+    set cx [expr { $midx + $dirx * $tmp_len } ]
+    set cy [expr { $midy + $diry * $tmp_len } ]
+
+    # There are two possible centers, make sure we have the right one
+    set s2c(0) [expr {$cx - $sx}]
+    set s2c(1) [expr {$cy - $sy}]
+
+    if { $center_is_left == 0 } {
+	if { [cross2d s2e s2c] < 0.0 } {
+	    # wrong center
+	    set cx [expr { $midx - $dirx * $tmp_len } ]
+	    set cy [expr { $midy - $diry * $tmp_len } ]
+	}
+    } else {
+	if { [cross2d s2e s2c] > 0.0 } {
+	    # wrong center
+	    set cx [expr { $midx - $dirx * $tmp_len } ]
+	    set cy [expr { $midy - $diry * $tmp_len } ]
+	}
+    }
+
+    return "$cx $cy"
+}
+
+
 class Sketch_editor {
     inherit itk::Toplevel
 
@@ -325,7 +412,7 @@ class Sketch_editor {
 	}
 
 	if { [$curr_seg is_full_circle] } {
-	    tk_messageBox -icon error -type ok -title "Full CIrcle Selected" \
+	    tk_messageBox -icon error -type ok -title "Full Circle Selected" \
 		-message "Please select an arc (Not a full circle)"
 	    return
 	}
@@ -376,14 +463,14 @@ class Sketch_editor {
 
 	set diff(0) [expr {[lindex $v1 0] - [lindex $v2 0] } ]
 	set diff(1) [expr {[lindex $v1 1] - [lindex $v2 1] } ]
-	set dot [dot diff dir]
-	if { [expr { abs( $dot ) } ] < 1.0e-10 } {
+	set dotval [dot diff dir]
+	if { [expr { abs( $dotval ) } ] < 1.0e-10 } {
 	    tk_messageBox -type ok -icon error -title "Impossible Tangency" \
 		-message "Cannot create such an arc (you are asking for a straight line)"
 	    return
 
 	}
-	set new_radius [expr { [dot diff diff] / (-2.0 * $dot) } ]
+	set new_radius [expr { [dot diff diff] / (-2.0 * $dotval) } ]
 	if { $new_radius < 0.0 } {
 	    set new_radius [expr { -$new_radius } ]
 	    set dir(0) [expr { -$dir(0) } ]
@@ -1212,7 +1299,7 @@ class Sketch_editor {
 	set e [lindex $VL $index2]
 	set ex [lindex $e 0]
 	set ey [lindex $e 1]
-	set radius [dist $sx $sy $ex $ey]
+	set radius [::dist $sx $sy $ex $ey]
 	set new_seg [Sketch_carc \#auto $this $itk_component(canvas) "S $index1 E $index2 R $radius L 0 O 0"]
 	lappend segments ::Sketch_editor::$new_seg
 	set needs_saving 1
@@ -1276,7 +1363,7 @@ class Sketch_editor {
 	    set orient 0
 	}
 
-	set radius [dist $s(0) $s(1) $cx $cy]
+	set radius [::dist $s(0) $s(1) $cx $cy]
 	$segment set_vars R $radius L $center_is_left O $orient
 	redraw_segs
     }
@@ -1325,7 +1412,7 @@ class Sketch_editor {
 	    } else {
 		set orient 0
 	    }
-	    set radius [dist $s(0) $s(1) $cx $cy]
+	    set radius [::dist $s(0) $s(1) $cx $cy]
 	    $segment set_vars R $radius L $center_is_left O $orient
 	} else {
 	    set s_list [lindex $VL $index1]
@@ -1334,7 +1421,7 @@ class Sketch_editor {
 	    set e_list [lindex $VL $index2]
 	    set e(0) [lindex $e_list 0]
 	    set e(1) [lindex $e_list 1]
-	    set min_radius [expr {[dist $s(0) $s(1) $e(0) $e(1)] / 2.0}]
+	    set min_radius [expr {[::dist $s(0) $s(1) $e(0) $e(1)] / 2.0}]
 	    if { $radius < $min_radius } {
 		tk_messageBox -icon error -title "Radius Too Small" -type ok \
 		    -message "Radius of $radius is too small, minimum is $min_radius"
@@ -1530,7 +1617,7 @@ class Sketch_editor {
 	draw_segs
 	$itk_component(status_line) configure -text "Click and hold mouse button 1 to adjust end point\n\
 			or click mouse button 3 to select an existing vertex to set the endpoint\n\
-			or enter end point cordinates in the entry windows"
+			or enter end point coordinates in the entry windows"
 	bind $itk_component(canvas) <B1-Motion> [code $this continue_line $new_seg 0 1 %x %y]
 	bind $itk_component(canvas) <ButtonPress-1> [code $this continue_line $new_seg 2 1 %x %y]
 	bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_line $new_seg 1 1 %x %y]
@@ -1597,89 +1684,6 @@ class Sketch_editor {
     }
 }
 
-proc Sketch_editor::dot { v1_in v2_in } {
-    # args are names of arrays
-    upvar $v1_in v1
-    upvar $v2_in v2
-
-    return [expr { $v1(0) * $v2(0) + $v1(1) * $v2(1) } ]
-}
-
-proc Sketch_editor::dist { x1 y1 x2 y2 } {
-    return [expr { sqrt( ($x1 - $x2) * ($x1 - $x2) + ($y1 - $y2) * ($y1 - $y2))}]
-}
-
-proc Sketch_editor::cross2d { v1_in v2_in } {
-    # args are names of arrays
-    # only the value of the 'z' component is returned
-    upvar $v1_in v1
-    upvar $v2_in v2
-    return [expr {$v1(0) * $v2(1) - $v1(1) * $v2(0)}]
-}
-
-proc Sketch_editor::diff { v_out v1_in v2_in } {
-    # args are the names of arrays
-    # returns difference array in v_out
-    upvar $v1_in v1
-    upvar $v2_in v2
-    upvar $v_out v
-    set v(0) [expr {$v1(0) - $v2(0)}]
-    set v(1) [expr {$v1(1) - $v2(1)}]
-}
-
-proc Sketch_editor::find_arc_center { sx sy ex ey radius center_is_left } {
-    # The center must lie on the perpendicular bisector of the line connecting the two points
-
-    # vector from start point to end point
-    set s2e(0) [expr {$ex - $sx}]
-    set s2e(1) [expr {$ey - $sy}]
-
-    # mid point
-    set midx [expr {($sx + $ex) / 2.0}]
-    set midy [expr {($sy + $ey) / 2.0}]
-
-    # perpendicular direction
-    set dirx [expr {-($midy - $sy)}]
-    set diry [expr {$midx - $sx}]
-
-    # unitize direction vector
-    set len1sq [expr {$dirx * $dirx + $diry * $diry}]
-    set dir_len [expr {sqrt( $len1sq ) }]
-    set dirx [expr {$dirx / $dir_len}]
-    set diry [expr {$diry / $dir_len}]
-
-    # calculate distance from mid point to center
-    set lensq [expr {$radius * $radius - $len1sq}]
-    if { $lensq <= 0. } {
-	set tmp_len 0.0
-    } else {
-	set tmp_len [expr {sqrt( $lensq )}]
-    }
-
-    # calculate center as distance from mid point along the bisector direction
-    set cx [expr { $midx + $dirx * $tmp_len } ]
-    set cy [expr { $midy + $diry * $tmp_len } ]
-
-    # There are two possible centers, make sure we have the right one
-    set s2c(0) [expr {$cx - $sx}]
-    set s2c(1) [expr {$cy - $sy}]
-
-    if { $center_is_left == 0 } {
-	if { [cross2d s2e s2c] < 0.0 } {
-	    # wrong center
-	    set cx [expr { $midx - $dirx * $tmp_len } ]
-	    set cy [expr { $midy - $diry * $tmp_len } ]
-	}
-    } else {
-	if { [cross2d s2e s2c] > 0.0 } {
-	    # wrong center
-	    set cx [expr { $midx - $dirx * $tmp_len } ]
-	    set cy [expr { $midy - $diry * $tmp_len } ]
-	}
-    }
-
-    return "$cx $cy"
-}
 
 class Sketch_carc {
     private variable canv
@@ -1752,7 +1756,7 @@ class Sketch_carc {
 	    }
 	    set normalx [expr $ex - $sx]
 	    set normaly [expr $ey - $sy]
-	    set len [Sketch_editor::dist $sx $sy $ex $ey]
+	    set len [::dist $sx $sy $ex $ey]
 	    if { [catch {expr 1.0 / $len} one_over_len] } {
 		return "0 0"
 	    }
@@ -1760,13 +1764,13 @@ class Sketch_carc {
 	    set tangenty [expr $normalx * $one_over_len ]
 	} else {
 	    set tmp_radius [expr {$myscale * $radius}]
-	    set center [Sketch_editor::find_arc_center $sx $sy $ex $ey $tmp_radius $center_is_left]
+	    set center [find_arc_center $sx $sy $ex $ey $tmp_radius $center_is_left]
 	    set cx [lindex $center 0]
 	    set cy [lindex $center 1]
 	    if { $vertex == $start_index } {
 		set normalx [expr $sx - $cx]
 		set normaly [expr $sy - $cy]
-		set len [Sketch_editor::dist $sx $sy $cx $cy]
+		set len [::dist $sx $sy $cx $cy]
 		if { [catch {expr 1.0 / $len} one_over_len] } {
 		    return "0 0"
 		}
@@ -1780,7 +1784,7 @@ class Sketch_carc {
 	    } else {
 		set normalx [expr $ex - $cx]
 		set normaly [expr $ey - $cy]
-		set len [Sketch_editor::dist $ex $ey $cx $cy]
+		set len [::dist $ex $ey $cx $cy]
 		if { [catch {expr 1.0 / $len} one_over_len] } {
 		    return "0 0"
 		}
@@ -1822,7 +1826,7 @@ class Sketch_carc {
 	    set sy [expr {-$myscale * [lindex $start 1]}]
 	    set ex [expr {$myscale * [lindex $end 0]}]
 	    set ey [expr {-$myscale * [lindex $end 1]}]
-	    set tmp_radius [Sketch_editor::dist $sx $sy $ex $ey]
+	    set tmp_radius [::dist $sx $sy $ex $ey]
 	    return $tmp_radius
 	}
     }
@@ -1869,7 +1873,7 @@ class Sketch_carc {
 
 	if { $radius < 0.0 } {
 	    # full circle
-	    set tmp_radius [Sketch_editor::dist $sx $sy $ex $ey]
+	    set tmp_radius [::dist $sx $sy $ex $ey]
 	    $editor set_radius $tmp_radius
 	    set x1 [expr {$ex - $tmp_radius}]
 	    set y1 [expr {$ey - $tmp_radius}]
@@ -1883,10 +1887,10 @@ class Sketch_carc {
 	} elseif { $radius > 0.0 } {
 	    # arc
 	    set tmp_radius [expr {$myscale * $radius}]
-	    set center [Sketch_editor::find_arc_center $sx $sy $ex $ey $tmp_radius $center_is_left]
+	    set center [find_arc_center $sx $sy $ex $ey $tmp_radius $center_is_left]
 	    set cx [lindex $center 0]
 	    set cy [lindex $center 1]
-	    set min_radius [::Sketch_editor::dist $sx $sy $cx $cy]
+	    set min_radius [::dist $sx $sy $cx $cy]
 	    if { $tmp_radius < $min_radius } {
 		set tmp_radius $min_radius
 		set radius [expr { $tmp_radius / $myscale }]

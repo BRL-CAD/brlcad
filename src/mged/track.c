@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file track.c
+/** @file mged/track.c
  *
  * f_amtrack():	Adds "tracks" to the data file given the required info
  *
@@ -62,10 +62,9 @@ void top(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
 void crregion(char *region, char *op, int *members, int number, char *solidname, int maxlen);
 void itoa(int n, char *s, int w);
 
+
 /*
- *
- * F _ A M T R A C K () :	adds track given "wheel" info
- *
+ * adds track given "wheel" info
  */
 int
 f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
@@ -87,9 +86,8 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     BU_LIST_INIT(&head);
 
     if (argc < 1 || 27 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help track");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -311,8 +309,8 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     for (i=0; i<11; i++) {
 	crname(solname, i, sizeof(solname));
 	crname(regname, i, sizeof(regname));
-	if ((db_lookup(dbip, solname, LOOKUP_QUIET) != DIR_NULL)	||
-	    (db_lookup(dbip, regname, LOOKUP_QUIET) != DIR_NULL)) {
+	if ((db_lookup(dbip, solname, LOOKUP_QUIET) != RT_DIR_NULL)	||
+	    (db_lookup(dbip, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
 	    /* name already exists */
 	    solname[8] = regname[8] = '\0';
 	    if ((Trackpos += 10) > 500) {
@@ -338,7 +336,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     crname(solname, 1, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
     sol.s_type = ID_ARB8;
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
 
     solname[8] = '\0';
@@ -350,7 +348,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     trcurve(iw, tr);
     crname(solname, 2, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
     /* idler dummy rcc */
@@ -360,7 +358,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     VMOVE(&sol.s_values[15], &sol.s_values[9]);
     crname(solname, 3, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -371,7 +369,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
     sol.s_type = ID_ARB8;
     crdummy(iw, tr, 1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -382,7 +380,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     VMOVE(temp1, &sol.s_values[0]);
     crname(solname, 5, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -393,7 +391,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     trcurve(dw, tr);
     crname(solname, 6, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -404,18 +402,18 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     VMOVE(&sol.s_values[15], &sol.s_values[9]);
     crname(solname, 7, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
     /* drive dummy arb8 */
     for (i=0; i<24; i++)
-	sol.s_name[i] = 0.0;
+	sol.s_values[i] = 0.0;
     crname(solname, 8, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
     sol.s_type = ID_ARB8;
     crdummy(dw, tr, 2);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -424,7 +422,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     bottom(temp1, temp2, tr);
     crname(solname, 9, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -437,7 +435,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     top(temp1, temp2, tr);
     crname(solname, 10, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -506,7 +504,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	    continue;
 	regname[8] = '\0';
 	crname(regname, i, sizeof(regname));
-	if (db_lookup(dbip, regname, LOOKUP_QUIET) == DIR_NULL) {
+	if (db_lookup(dbip, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
 			     regname, "\n", (char *)NULL);
 	    continue;
@@ -521,7 +519,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		0, 1, 1) < 0)
     {
 	Tcl_AppendResult(interp,
-			 "An error has occured while adding '",
+			 "An error has occurred while adding '",
 			 grpname, "' to the database.\n", (char *)NULL);
     }
 
@@ -576,42 +574,42 @@ wrobj(char name[], int flags)
     if (dbip == DBI_NULL)
 	return 0;
 
-    if (db_lookup(dbip, name, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(INTERP, "track naming error: ", name,
 			 " already exists\n", (char *)NULL);
 	return -1;
     }
 
-    if (flags != DIR_SOLID) {
+    if (flags != RT_DIR_SOLID) {
 	Tcl_AppendResult(INTERP, "wrobj can only write solids, aborting\n");
 	return -1;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     switch (sol.s_type) {
 	case ID_ARB8:
 	    {
 		struct rt_arb_internal *arb;
 
-		BU_GETSTRUCT(arb, rt_arb_internal);
+		BU_ALLOC(arb, struct rt_arb_internal);
 
 		arb->magic = RT_ARB_INTERNAL_MAGIC;
 
 		VMOVE(arb->pt[0], &sol.s_values[0]);
 		for (i=1; i<8; i++)
-		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
+		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0]);
 
-			intern.idb_ptr = (genptr_t)arb;
+		intern.idb_ptr = (void *)arb;
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_type = ID_ARB8;
-		intern.idb_meth = &rt_functab[ID_ARB8];
+		intern.idb_meth = &OBJ[ID_ARB8];
 	    }
 	    break;
 	case ID_TGC:
 	    {
 		struct rt_tgc_internal *tgc;
 
-		BU_GETSTRUCT(tgc, rt_tgc_internal);
+		BU_ALLOC(tgc, struct rt_tgc_internal);
 
 		tgc->magic = RT_TGC_INTERNAL_MAGIC;
 
@@ -622,10 +620,10 @@ wrobj(char name[], int flags)
 		VMOVE(tgc->c, &sol.s_values[12]);
 		VMOVE(tgc->d, &sol.s_values[15]);
 
-		intern.idb_ptr = (genptr_t)tgc;
+		intern.idb_ptr = (void *)tgc;
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_type = ID_TGC;
-		intern.idb_meth = &rt_functab[ID_TGC];
+		intern.idb_meth = &OBJ[ID_TGC];
 	    }
 	    break;
 	default:
@@ -633,7 +631,7 @@ wrobj(char name[], int flags)
 	    return -1;
     }
 
-    if ((tdp = db_diradd(dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+    if ((tdp = db_diradd(dbip, name, -1L, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(INTERP, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
 	return -1;
@@ -884,7 +882,7 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
     for (i=0; i<number; i++) {
 	solidname[8] = '\0';
 	crname(solidname, members[i], maxlen);
-	if (db_lookup(dbip, solidname, LOOKUP_QUIET) == DIR_NULL) {
+	if (db_lookup(dbip, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    Tcl_AppendResult(INTERP, "region: ", region, " will skip member: ",
 			     solidname, "\n", (char *)NULL);
 	    continue;
@@ -898,7 +896,7 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
 }
 
 
-/*	==== I T O A ()
+/*
  * convert integer to ascii wd format
  */
 void

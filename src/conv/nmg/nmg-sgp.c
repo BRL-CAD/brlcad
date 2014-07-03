@@ -1,7 +1,7 @@
 /*                       N M G - S G P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 #include <errno.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -49,15 +50,17 @@ static const char *usage="Usage:\n\t%s [-d] [-v] [-x librt_debug_flag] [-X NMG_d
 static long polygons=0;
 static int stats=0;
 
-static void
-write_fu_as_sgp( fu )
-    struct faceuse *fu;
+/* returns 1 if faceuse was not written because it was empty */
+static int
+write_fu_as_sgp(struct faceuse *fu)
 {
     struct loopuse *lu;
 
     NMG_CK_FACEUSE( fu );
 
-    nmg_triangulate_fu( fu, &tol );
+    if (nmg_triangulate_fu( fu, &tol )) {
+	return 1;
+    }
 
     for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
     {
@@ -77,36 +80,43 @@ write_fu_as_sgp( fu )
 	    fprintf( fp_out, "%f %f %f\n", vg->coord[X], -vg->coord[Y], -vg->coord[Z] );
 	}
     }
+    return 0;
 }
 
 static void
-write_model_as_sgp( m )
-    struct model *m;
+write_model_as_sgp(struct model *m)
 {
     struct nmgregion *r;
     struct shell *s;
-    struct faceuse *fu;
+    struct faceuse *fu, *fu_next;
 
-    NMG_CK_MODEL( m );
+    NMG_CK_MODEL(m);
 
-    for ( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
-    {
-	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-	{
-	    for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
-	    {
-		if ( fu->orientation != OT_SAME )
-		    continue;
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 
-		write_fu_as_sgp( fu );
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+
+	    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
+	    while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
+
+		NMG_CK_FACEUSE(fu);
+		fu_next = BU_LIST_PNEXT(faceuse, &fu->l);
+		if (fu->orientation == OT_SAME) {
+		    if (fu_next == fu->fumate_p) {
+			fu_next = BU_LIST_PNEXT(faceuse, &fu_next->l);
+		    }
+		    if (write_fu_as_sgp(fu)) {
+			if (nmg_kfu(fu)) {
+			    bu_bomb("write_model_as_sgp() shell is empty");
+			}
+		    }
+		}
+		fu = fu_next;
 	    }
 	}
     }
 }
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -115,7 +125,7 @@ main(int argc, char *argv[])
 
     bu_setlinebuf( stderr );
 
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
@@ -125,7 +135,7 @@ main(int argc, char *argv[])
     tol.para = 1 - tol.perp;
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "do:vx:X:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "do:vx:X:")) != -1) {
 	switch (c) {
 	    case 'd':		/* increment debug level */
 		debug++;
@@ -140,13 +150,13 @@ main(int argc, char *argv[])
 		verbose++;
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", &rt_g.debug );
+		sscanf( bu_optarg, "%x", &RTG.debug );
 		bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", &rt_g.NMG_debug );
-		bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+		sscanf( bu_optarg, "%x", &RTG.NMG_debug );
+		bu_printb( "librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    default:
@@ -160,10 +170,10 @@ main(int argc, char *argv[])
     }
 
     /* Open BRL-CAD database */
-    if ( (dbip = db_open( argv[bu_optind], "r" )) == DBI_NULL )
+    if ( (dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL )
     {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
+	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind] );
     }
 
     if ( db_dirbuild( dbip ) ) {
@@ -172,9 +182,7 @@ main(int argc, char *argv[])
 
     if (out_file == NULL) {
 	fp_out = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp_out), O_BINARY);
-#endif
     } else {
 	if ((fp_out = fopen( out_file, "wb")) == NULL)
 	{
@@ -191,7 +199,7 @@ main(int argc, char *argv[])
 	int id;
 	struct model *m;
 
-	if ( (dp=db_lookup( dbip, argv[bu_optind], LOOKUP_NOISY)) == DIR_NULL )
+	if ( (dp=db_lookup( dbip, argv[bu_optind], LOOKUP_NOISY)) == RT_DIR_NULL )
 	    continue;
 
 	if ( (id=rt_db_get_internal( &ip, dp, dbip, bn_mat_identity, &rt_uniresource )) < 0 )
@@ -216,7 +224,7 @@ main(int argc, char *argv[])
 
     fprintf( fp_out, "end_object\n" );
 
-    bu_log( "\t%d polygons\n", polygons );
+    bu_log( "\t%ld polygons\n", polygons );
 
     return 0;
 }

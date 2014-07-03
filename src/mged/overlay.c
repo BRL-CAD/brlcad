@@ -1,7 +1,7 @@
 /*                       O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file overlay.c
+/** @file mged/overlay.c
  *
  */
 
@@ -36,7 +36,7 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-/* Usage:  overlay file.pl [name] */
+/* Usage:  overlay file.plot3 [name] */
 int
 cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
@@ -44,7 +44,7 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     Tcl_DString ds;
     int ac;
     const char *av[5];
-    struct bu_vls char_size;
+    struct bu_vls char_size = BU_VLS_INIT_ZERO;
 
     if (gedp == GED_NULL)
 	return TCL_OK;
@@ -52,13 +52,13 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     Tcl_DStringInit(&ds);
 
     if (argc == 1) {
-	Tcl_DStringAppend(&ds, "file.pl [name]", -1);
+	Tcl_DStringAppend(&ds, "file.plot3 [name]", -1);
 	Tcl_DStringResult(interp, &ds);
 	return TCL_OK;
     }
 
     ac = argc + 1;
-    bu_vls_init(&char_size);
+
     bu_vls_printf(&char_size, "%lf", view_state->vs_gvp->gv_scale * 0.01);
     av[0] = argv[0];		/* command name */
     av[1] = argv[1];		/* plotfile name */
@@ -70,7 +70,7 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	av[3] = (char *)0;
 
     ret = ged_overlay(gedp, ac, (const char **)av);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret != GED_OK)
@@ -98,9 +98,8 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     CHECK_DBI_NULL;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help labelvert");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -114,11 +113,11 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     for (i=1; i<argc; i++) {
 	struct solid *s;
-	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	/* Find uses of this solid in the solid table */
-	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(s, &gdlp->gdl_headSolid) {

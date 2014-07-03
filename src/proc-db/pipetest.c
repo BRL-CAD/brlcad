@@ -1,7 +1,7 @@
 /*                      P I P E T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pipetest.c
+/** @file proc-db/pipetest.c
  *
  * Program to generate test pipes and particles.
  *
@@ -64,7 +64,7 @@ struct wdb_pipept pipeA[] = {
 };
 int pipeA_npts = sizeof(pipeA)/sizeof(struct wdb_pipept);
 
-#define Q 0.05	/* inset from borders of enclsing cube */
+#define Q 0.05	/* inset from borders of enclosing cube */
 #define R 0.05	/* pushout factor */
 
 #define A 0+Q
@@ -110,6 +110,9 @@ main(int argc, char **argv)
     int i;
     struct bu_list head;
 
+    if (argc > 0)
+	bu_log("Usage: %s\n", argv[0]);
+
     outfp = wdb_fopen("pipetest.g");
     mk_conversion("meters");
     mk_id(outfp, "Pipe & Particle Test");
@@ -142,6 +145,7 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 void
 do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend, double od)
 {
@@ -164,6 +168,7 @@ do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend,
 
 }
 
+
 void
 pr_pipe(const char *name, struct wdb_pipept *head)
 {
@@ -179,6 +184,7 @@ pr_pipe(const char *name, struct wdb_pipept *head)
 		psp->pp_bendradius);
     }
 }
+
 
 /*
  * Local Variables:

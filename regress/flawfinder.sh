@@ -2,7 +2,7 @@
 #                   F L A W F I N D E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2010 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,11 +45,11 @@ if test ! -f "$TOPSRC/misc/flawfinder" ; then
 fi
 
 HAVE_PYTHON=no
-if test "`env python -V 2>&1 | awk '{print $1}'`" = "xPython" ; then
+if test "x`env python -V 2>&1 | awk '{print $1}'`" = "xPython" ; then
     HAVE_PYTHON=yes
 fi
 
-if test "x$HAVE_PYTHON" = "x" ; then
+if test "x$HAVE_PYTHON" = "xyes" ; then
 
     echo "running flawfinder..."
 

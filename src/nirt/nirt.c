@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nirt.c
+/** @file nirt/nirt.c
  *
  * This program is Natalie's Interactive Ray-Tracer
  *
@@ -38,30 +38,11 @@
 /* private */
 #include "./nirt.h"
 #include "./usrfmt.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 /* bleh */
 int need_prep = 1;
-
-
-const char usage[] = "\
-Usage: 'nirt [options] model.g objects...'\n\
-Options:\n\
- -b         back out of geometry before first shot\n\
- -B n       set rt_bot_minpieces=n\n\
- -e script  run script before interacting\n\
- -f sfile   run script sfile before interacting\n\
- -L         list output formatting options\n\
- -M         read matrix, cmds on stdin\n\
- -O action  handle overlap claims via action\n\
- -s         run in silent (non-verbose) mode\n\
- -u n       set use_air=n (default 0)\n\
- -v         run in verbose mode\n\
- -x v       set librt(3) diagnostic flag=v\n\
- -X v       set nirt diagnostic flag=v\n\
-";
-
 
 const com_table ComTab[] = {
     { "attr", cm_attr, "select attributes", "<-f(flush) | -p(print) | attribute_name>" },
@@ -81,9 +62,9 @@ const com_table ComTab[] = {
     { "load", load_state, "read new state for NIRT from the state file", NULL },
     { "print", print_item, "query an output item", "item" },
     { "bot_minpieces", bot_minpieces, "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
+    { "bot_mintie", bot_mintie, "Get/Set value for rt_bot_mintie (0 means do not use pieces, default is 4294967295)", "min_tie" },
     { "libdebug", cm_libdebug, "set/query librt debug flags", "hex_flag_value" },
     { "debug", cm_debug, "set/query nirt debug flags", "hex_flag_value" },
-    { "!", sh_esc, "escape to the shell", NULL },
     { "q", quit, "quit", NULL },
     { "?", show_menu, "display this help menu", NULL },
     { (char *)NULL, NULL, (char *)NULL, (char *)NULL }
@@ -109,7 +90,6 @@ int nirt_debug = 0;			/* Control of diagnostics */
 
 /* Parallel structures needed for operation w/ and w/o air */
 struct rt_i *rti_tab[2];
-struct rt_i *rtip;
 struct resource res_tab;
 
 struct application ap;
@@ -122,32 +102,48 @@ char *db_name;
 
 void printusage(void)
 {
-    bu_log("%s", usage);
+    bu_log("Usage: 'nirt [options] model.g objects...'\n");
+    bu_log("Options:\n");
+    bu_log(" -A n       add attribute_name=n\n");
+    bu_log(" -b         back out of geometry before first shot\n");
+    bu_log(" -B n       set rt_bot_minpieces=n\n");
+    bu_log(" -T n       set rt_bot_mintie=n\n");
+    bu_log(" -e script  run script before interacting\n");
+    bu_log(" -f sfile   run script sfile before interacting\n");
+    bu_log(" -E         ignore any -e or -f options specified earlier on the command line\n");
+    bu_log(" -L         list output formatting options\n");
+    bu_log(" -M         read matrix, cmds on stdin\n");
+    bu_log(" -O action  handle overlap claims via action\n");
+    bu_log(" -s         run in silent (non-verbose) mode\n");
+    bu_log(" -v         run in verbose mode\n");
+    bu_log(" -H n       flag (n) for enable/disable informational header\n");
+    bu_log("            (n=1 [on] by default, always off in silent mode)\n");
+    bu_log(" -u n       set use_air=n (default 0)\n");
+    bu_log(" -x v       set librt(3) diagnostic flag=v\n");
+    bu_log(" -X v       set nirt diagnostic flag=v\n");
 }
 
 /**
  * List formats installed in global nirt data directory
  */
-void listformats(void)
+void
+listformats(void)
 {
-    int files, i;
-    char **filearray;
-    struct bu_vls nirtfilespath, nirtpathtofile, vlsfileline;
-    char suffix[5]=".nrt";
-    FILE *cfPtr;
+    size_t files, i;
+    char **filearray = NULL;
+    char suffix[6]="*.nrt";
+    FILE *cfPtr = NULL;
     int fnddesc;
 
-    bu_vls_init(&vlsfileline);
-    bu_vls_init(&nirtfilespath);
-    bu_vls_init(&nirtpathtofile);
+    struct bu_vls nirtfilespath = BU_VLS_INIT_ZERO;
+    struct bu_vls nirtpathtofile = BU_VLS_INIT_ZERO;
+    struct bu_vls vlsfileline = BU_VLS_INIT_ZERO;
+
+    /* get a nirt directory listing */
     bu_vls_printf(&nirtfilespath, "%s", bu_brlcad_data("nirt", 0));
+    files = bu_dir_list(bu_vls_addr(&nirtfilespath), suffix, &filearray);
 
-    files = bu_count_path(bu_vls_addr(&nirtfilespath), suffix);
-
-    filearray = (char **)bu_malloc(files*sizeof(char *), "filelist");
-
-    bu_list_path(bu_vls_addr(&nirtfilespath), suffix, filearray);
-
+    /* open every nirt file we find and extract the description */
     for (i = 0; i < files; i++) {
 	bu_vls_trunc(&nirtpathtofile, 0);
 	bu_vls_trunc(&vlsfileline, 0);
@@ -155,7 +151,7 @@ void listformats(void)
 	cfPtr = fopen(bu_vls_addr(&nirtpathtofile), "rb");
 	fnddesc = 0;
 	while (bu_vls_gets(&vlsfileline, cfPtr) && fnddesc == 0) {
-	    if (strncmp(bu_vls_addr(&vlsfileline), "# Description: ", 15) == 0) {
+	    if (bu_strncmp(bu_vls_addr(&vlsfileline), "# Description: ", 15) == 0) {
 		fnddesc = 1;
 		bu_log("%s\n", bu_vls_addr(&vlsfileline)+15);
 	    }
@@ -164,7 +160,8 @@ void listformats(void)
 	fclose(cfPtr);
     }
 
-    bu_free(filearray, "filelist");
+    /* release resources */
+    bu_free_argv(files, filearray);
     bu_vls_free(&vlsfileline);
     bu_vls_free(&nirtfilespath);
     bu_vls_free(&nirtpathtofile);
@@ -175,8 +172,8 @@ attrib_print(void)
 {
     int i;
 
-    for (i=0; i < a_tab.attrib_use; i++) {
-	bu_log("\"%s\"\n", a_tab.attrib[i]);
+    for (i = 0; i < a_tab.attrib_use; i++) {
+	fprintf(stdout, "\"%s\"\n", a_tab.attrib[i]);
     }
 }
 
@@ -190,7 +187,7 @@ attrib_flush(void)
     int i;
 
     a_tab.attrib_use = 0;
-    for (i=0; i < a_tab.attrib_use; i++)
+    for (i = 0; i < a_tab.attrib_use; i++)
 	bu_free(a_tab.attrib[i], "strdup");
 }
 
@@ -211,13 +208,13 @@ attrib_add(char *a, int *prep)
 	/* make sure we have space */
 	if (!a_tab.attrib || a_tab.attrib_use >= (a_tab.attrib_cnt-1)) {
 	    a_tab.attrib_cnt += 16;
-	    a_tab.attrib = bu_realloc(a_tab.attrib,
-				      a_tab.attrib_cnt * sizeof(char *),
-				      "attrib_tab");
+	    a_tab.attrib = (char **)bu_realloc(a_tab.attrib,
+					       a_tab.attrib_cnt * sizeof(char *),
+					       "attrib_tab");
 	}
 
 	/* add the attribute name(s) */
-	a_tab.attrib[a_tab.attrib_use] = bu_strdup(p);
+	a_tab.attrib[a_tab.attrib_use] = bu_strdup(db5_standard_attribute(db5_standardize_attribute(p)));
 	/* bu_log("attrib[%d]=\"%s\"\n", attrib_use, attrib[attrib_use]); */
 	a_tab.attrib[++a_tab.attrib_use] = (char *)NULL;
 
@@ -235,13 +232,11 @@ enqueue_script(struct bu_list *qp, int type, char *string)
 {
     struct script_rec *srp;
     FILE *cfPtr;
-    struct bu_vls str;
-    bu_vls_init(&str);
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     BU_CK_LIST_HEAD(qp);
 
-    srp = (struct script_rec *)
-	bu_malloc(sizeof(struct script_rec), "script record");
+    BU_ALLOC(srp, struct script_rec);
     srp->sr_magic = SCRIPT_REC_MAGIC;
     srp->sr_type = type;
     bu_vls_init(&(srp->sr_script));
@@ -305,12 +300,12 @@ free_script(struct script_rec *srp)
     BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
 
     bu_vls_free(&(srp->sr_script));
-    bu_free((genptr_t) srp, "script record");
+    bu_free((void *) srp, "script record");
 }
 
 
 static void
-run_scripts(struct bu_list *sl)
+run_scripts(struct bu_list *sl, struct rt_i *rtip)
 {
     struct script_rec *srp;
     char *cp;
@@ -333,13 +328,13 @@ run_scripts(struct bu_list *sl)
 
 	switch (srp->sr_type) {
 	    case READING_STRING:
-		interact(READING_STRING, cp);
+		interact(READING_STRING, cp, rtip);
 		break;
 	    case READING_FILE:
 		if ((fPtr = fopen(cp, "rb")) == NULL) {
 		    bu_log("Cannot open script file '%s'\n", cp);
 		} else {
-		    interact(READING_FILE, fPtr);
+		    interact(READING_FILE, fPtr, rtip);
 		    fclose(fPtr);
 		}
 		break;
@@ -357,6 +352,8 @@ run_scripts(struct bu_list *sl)
 int
 main(int argc, char *argv[])
 {
+    struct rt_i *rtip = NULL;
+
     char db_title[TITLE_LEN+1];/* title from MGED file */
     const char *tmp_str;
     extern char local_u_name[65];
@@ -366,6 +363,7 @@ main(int argc, char *argv[])
     int Ch;		/* Option name */
     int mat_flag = 0;	/* Read matrix from stdin? */
     int use_of_air = 0;
+    int print_ident_flag = 1;
     char ocastring[1024] = {0};
     struct bu_list script_list;	/* For -e and -f options */
     struct script_rec *srp;
@@ -378,6 +376,8 @@ main(int argc, char *argv[])
 
     BU_LIST_INIT(&script_list);
 
+    bu_setprogname(argv[0]);
+
     ocname[OVLP_RESOLVE] = "resolve";
     ocname[OVLP_REBUILD_FASTGEN] = "rebuild_fastgen";
     ocname[OVLP_REBUILD_ALL] = "rebuild_all";
@@ -387,13 +387,17 @@ main(int argc, char *argv[])
     bu_optind = 1;		/* restart */
 
     /* Handle command-line options */
-    while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF) {
+    while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
+    	if (bu_optopt == '?') Ch='h';
 	switch (Ch) {
 	    case 'A':
 		attrib_add(bu_optarg, &need_prep);
 		break;
 	    case 'B':
 		rt_bot_minpieces = atoi(bu_optarg);
+		break;
+	    case 'T':
+		rt_bot_mintie = atoi(bu_optarg);
 		break;
 	    case 'b':
 		do_backout = 1;
@@ -434,7 +438,7 @@ main(int argc, char *argv[])
 		silent_flag = SILENT_NO;	/* Positively no */
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&nirt_debug);
@@ -446,10 +450,16 @@ main(int argc, char *argv[])
 		    return 1;
 		}
 		break;
-	    case '?':
+	    case 'H':
+		if (sscanf(bu_optarg, "%d", &print_ident_flag) != 1) {
+		    (void) fprintf(stderr,
+				   "Illegal header output option specified: '%s'\n", bu_optarg);
+		    return 1;
+		}
+		break;
 	    default:
 		printusage();
-		bu_exit (Ch != '?', NULL);
+		bu_exit (Ch != 'h', NULL);
 	}
     } /* end while getopt */
 
@@ -466,7 +476,7 @@ main(int argc, char *argv[])
 	if (silent_flag != SILENT_NO)
 	    silent_flag = SILENT_YES;
     }
-    if (silent_flag != SILENT_YES)
+    if (silent_flag != SILENT_YES && print_ident_flag)
 	(void) fputs(brlcad_ident("Natalie's Interactive Ray Tracer"), stdout);
 
     if (use_of_air && (use_of_air != 1)) {
@@ -492,13 +502,13 @@ main(int argc, char *argv[])
 	    }
 	    break;
 	case 'r':
-	    if (strcmp(ocastring, "resolve") == 0)
+	    if (BU_STR_EQUAL(ocastring, "resolve"))
 		overlap_claims = OVLP_RESOLVE;
-	    else if (strcmp(ocastring, "rebuild_fastgen") == 0)
+	    else if (BU_STR_EQUAL(ocastring, "rebuild_fastgen"))
 		overlap_claims = OVLP_REBUILD_FASTGEN;
-	    else if (strcmp(ocastring, "rebuild_all") == 0)
+	    else if (BU_STR_EQUAL(ocastring, "rebuild_all"))
 		overlap_claims = OVLP_REBUILD_ALL;
-	    else if (strcmp(ocastring, "retain") == 0)
+	    else if (BU_STR_EQUAL(ocastring, "retain"))
 		overlap_claims = OVLP_RETAIN;
 	    else {
 		fprintf(stderr,
@@ -548,7 +558,7 @@ main(int argc, char *argv[])
     ap.a_rt_i = rtip;         /* rt_i pointer */
     ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h */
     ap.a_zero2 = 0;           /* sanity check, sayth raytrace.h */
-    ap.a_uptr = (genptr_t)a_tab.attrib;
+    ap.a_uptr = (void *)a_tab.attrib;
 
     /* initialize variables */
     azimuth() = 0.0;
@@ -570,9 +580,9 @@ main(int argc, char *argv[])
     local2base = rtip->rti_dbip->dbi_local2base;
     tmp_str = bu_units_string(local2base);
     if (tmp_str) {
-	bu_strlcpy(local_u_name, bu_units_string(local2base), sizeof(local_u_name));
+	bu_strlcpy(local_u_name, tmp_str, sizeof(local_u_name));
     } else {
-	strcpy(local_u_name, "Unknown units");
+	bu_strlcpy(local_u_name, "Unknown units", sizeof(local_u_name));
     }
 
     if (silent_flag != SILENT_YES) {
@@ -589,19 +599,19 @@ main(int argc, char *argv[])
 
     /* Run the run-time configuration file, if it exists */
     if ((fPtr = fopenrc()) != NULL) {
-	interact(READING_FILE, fPtr);
+	interact(READING_FILE, fPtr, rtip);
 	fclose(fPtr);
     }
 
     /* Run all scripts specified on the command line */
-    run_scripts(&script_list);
+    run_scripts(&script_list, rtip);
 
     /* Perform the user interface */
     if (mat_flag) {
-	read_mat();
+	read_mat(rtip);
 	return 0;
     } else {
-	interact(READING_FILE, stdin);
+	interact(READING_FILE, stdin, rtip);
     }
 
     return 0;

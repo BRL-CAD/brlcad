@@ -2,7 +2,7 @@
 #                   C O N V E R S I O N . S H
 # BRL-CAD
 #
-# Copyright (c) 2010 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,9 @@ fi
 LC_ALL=C
 
 # force posix behavior
-set -o posix >/dev/null 2>&1
+POSIX_PEDANTIC=1
+POSIXLY_CORRECT=1
+export POSIX_PEDANTIC POSIXLY_CORRECT
 
 
 #######################
@@ -166,6 +168,9 @@ while test $# -gt 0 ; do
 	x*[vV][eE][rR][bB][oO][sS][eE])
 	    VERBOSE=1
 	    ;;
+	x*[kK][eE][eE][pP])
+	    KEEP=1
+	    ;;
 	x*=*)
 	    VAR=`echo $arg | sed 's/=.*//g' | sed 's/^[-]*//g'`
 	    if test ! "x$VAR" = "x" ; then
@@ -184,7 +189,7 @@ while test $# -gt 0 ; do
 done
 
 # validate and clean up options (all default to 0)
-booleanize HELP INSTRUCTIONS VERBOSE
+booleanize HELP INSTRUCTIONS VERBOSE KEEP
 
 
 ###
@@ -208,12 +213,14 @@ will convert, what percentage, and how long the conversion will take.
 There are several environment variables that will modify how this
 script behaves:
 
-  GED - path to BRL-CAD geometry editor (i.e., mged) for converting
-  SEARCH - path to BRL-CAD geometry editor to use for searching
-  OBJECTS - parameters for selecting objects to convert
-  MAXTIME - maximum number of seconds allowed for each conversion
-  QUIET - turn off all printing output (writes results to log file)
-  VERBOSE - turn on extra debug output for testing/development
+  GED          - file path to geometry editor to use for converting
+  SEARCH       - file to geometry editor to use for searching
+  OPATH        - geometry path to use for object search (default .)
+  OBJECTS      - parameters for selecting objects to convert
+  KEEP         - retain the converted geometry instead of deleting
+  MAXTIME      - maximum number of seconds allowed for each conversion
+  QUIET        - turn off all output (writes results to log file)
+  VERBOSE      - turn on extra debug output for testing/development
   INSTRUCTIONS - display these more detailed instructions
 
 The GED option allows you to specify a specific pathname for MGED.
@@ -233,6 +240,9 @@ available parameters.  Examples:
 
 OBJECTS="-type region"  # only convert regions
 OBJECTS="-not -type comb"  # only convert primitives
+
+The KEEP option retains the converted geometry file after conversion
+processing has ended.  The default is to delete the working copy.
 
 The MAXTIME option specifies how many seconds are allowed to elapse
 before the conversion is aborted.  Some conversions can take days or
@@ -272,10 +282,20 @@ if test "x$HELP" = "x1" ; then
     else
 	echo "  SEARCH=/path/to/search-enabled/mged (using $SEARCH)"
     fi
+    if test "x$OPATH" = "x" ; then
+	echo "  OPATH=/path/to/objects (default .)"
+    else
+	echo "  OPATH=/path/to/objects (using $OPATH)"
+    fi
     if test "x$OBJECTS" = "x" ; then
 	echo "  OBJECTS=\"search params\" (default \"\" for all objects)"
     else
 	echo "  OBJECTS=\"search params\" (using \"$OBJECTS\")"
+    fi
+    if test "x$KEEP" = "x" ; then
+	echo "  KEEP=boolean (default \"no\")"
+    else
+	echo "  KEEP=boolean (using \"$KEEP\")"
     fi
     if test "x$MAXTIME" = "x" ; then
 	echo "  MAXTIME=#seconds (default 300)"
@@ -318,6 +338,10 @@ else
     fi
 fi
 
+if test "x$KEEP" = "x1" ; then
+    $VERBOSE_ECHO "Converted geometry file will be retained"
+fi
+
 ###
 # ensure variable is set to something
 ###
@@ -353,6 +377,16 @@ if test ! -f "$MGED" ; then
     echo "Aborting."
     exit 1
 fi
+SGED="`which $SEARCH`"
+if test ! -f "$SGED" ; then
+    echo "ERROR: Unable to find $SEARCH"
+    echo ""
+    echo "Configure the SEARCH variable or check your PATH."
+    echo "Run '$0 instructions' for additional information."
+    echo ""
+    echo "Aborting."
+    exit 1
+fi
 
 
 ################
@@ -373,6 +407,7 @@ files=0
 count=0
 nmg_count=0
 bot_count=0
+brep_count=0
 $ECHO "%s" "-=-"
 begin=`elapsed` # start elapsed runtime timer
 while test $# -gt 0 ; do
@@ -383,13 +418,14 @@ while test $# -gt 0 ; do
 	continue
     fi
 
-    work="${file}.conversion"
+    work="${file}.conversion.g"
     cmd="cp \"$file\" \"$work\""
     $VERBOSE_ECHO "\$ $cmd"
     eval "$cmd"
 
     # execute in a coprocess
-    cmd="$SEARCH -c \"$work\" search . $OBJECTS"
+    if test "x$OBJECTS" = "x" ; then OBJECTS='-print' ; fi
+    cmd="$SGED -c \"$work\" search $OPATH $OBJECTS"
     objects=`eval "$cmd" 2>&1 | grep -v Using`
     $VERBOSE_ECHO "\$ $cmd"
     $VERBOSE_ECHO "$objects"
@@ -406,7 +442,7 @@ EOF
     while read object ; do
 
 	obj="`basename \"$object\"`"
-	found=`$SEARCH -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
+	found=`$SGED -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
 	if test "x$found" != "x$object" ; then
 	    $ECHO "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])"
 	    continue
@@ -415,21 +451,21 @@ EOF
 	# start the limit timer.  this will kill the upcoming facetize
 	# job if more than MAXTIME seconds have elapsed.  in order for
 	# this to work while still ECHO'ing a message and without
-	# leaving orphaned 'sleep' processes that accumualte, this
+	# leaving orphaned 'sleep' processes that accumulate, this
 	# method had to be executed in the current shell environment.
 
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && `touch "./${obj}.nmg.extl"` && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-        spid=$!
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && touch "./${obj}.nmg.extl" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+	spid=$!
 
 	# convert NMG
 	nmg=fail
-	cmd="$GED -c "$work" facetize -n \"${obj}.nmg\" \"${obj}\""
+	cmd="$GED -c \"$work\" facetize -n \"${obj}.nmg\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time "$cmd" 2>&1 | grep -v Using`
+	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
 
 	# stop the limit timer.  when we get here, see if there is a
 	# sleep process still running.  if any found, the sleep
-	# proceses are killed and waited for so that we successfully
+	# processes are killed and waited for so that we successfully
 	# avoid the parent shell reporting a "Terminated" process kill
 	# message.
 
@@ -446,25 +482,25 @@ EOF
 	real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify NMG
-	found=`$SEARCH -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
+	found=`$SGED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.nmg" ; then
 	    nmg=pass
 	    nmg_count=`expr $nmg_count + 1`
 	fi
 	if [ -e "./${obj}.nmg.extl" ] ; then
-            `rm "./${obj}.nmg.extl"`
+	    rm "./${obj}.nmg.extl"
 	    nmg=extl
 	fi
 
 	# start the limit timer, same as above.
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && `touch "./${obj}.bot.extl"` && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-        spid=$!
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && touch "./${obj}.bot.extl" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+	spid=$!
 
 	# convert BoT
 	bot=fail
-	cmd="$GED -c "$work" facetize \"${obj}.bot\" \"${obj}\""
+	cmd="$GED -c \"$work\" facetize \"${obj}.bot\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time "$cmd" 2>&1 | grep -v Using`
+	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
 
 	# stop the limit timer, same as above.
 	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
@@ -480,31 +516,81 @@ EOF
 	real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify BoT
-	found=`$SEARCH -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
+	found=`$SGED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.bot" ; then
 	    bot=pass
 	    bot_count=`expr $bot_count + 1`
 	fi
 	if [ -e "./${obj}.bot.extl" ] ; then
-            `rm "./${obj}.bot.extl"`
+	    rm "./${obj}.bot.extl"
 	    bot=extl
+	fi
+
+	# start the limit timer, same as above.
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'`" != "x" && touch "./${obj}.brep.extl" && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+	spid=$!
+
+	# convert Brep
+	brep=fail
+	cmd="$GED -c \"$work\" brep \"${obj}\" \"${obj}.brep\""
+	$VERBOSE_ECHO "\$ $cmd"
+	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
+
+	# stop the limit timer, same as above.
+	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
+	    # must kill sleep children first or they can continue running orphaned
+	    kill $pid >/dev/null 2>&1
+	    wait $pid >/dev/null 2>&1
+	done
+	# must wait in order to suppress kill messages
+	kill -9 $spid >/dev/null 2>&1
+	wait $spid >/dev/null 2>&1
+
+	$VERBOSE_ECHO "$output"
+	real_brep="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
+
+	# verify Brep
+	found=`$SGED -c "$work" search . -name \"${obj}.brep\" 2>&1 | grep -v Using`
+	if test "x$found" = "x${object}.brep" ; then
+	    brep=pass
+	    brep_count=`expr $brep_count + 1`
+	else
+	    found2=`$SGED -c "$work" search . -name \"${obj}.${obj}.brep\" 2>&1 | grep -v Using`
+	    if test "x$found2" = "x${object}.${object}.brep" ; then
+		brep=pass
+		brep_count=`expr $brep_count + 1`
+	    fi
+	fi
+	if [ -e "./${obj}.brep.extl" ] ; then
+	    rm "./${obj}.brep.extl"
+	    brep=extl
 	fi
 
 	# print result for this object
 	status=fail
-	if test "x$nmg" = "xpass" && test "x$bot" = "xpass" ; then
+	if test "x$nmg" = "xpass" && test "x$bot" = "xpass" && test "x$brep" = "xpass" ; then
 	    status=ok
 	fi
 
 	count=`expr $count + 1`
-	$ECHO "%-4s\tnmg: %s %s\tbot: %s %s %6lds %*s%ld %s:%s" $status $nmg $real_nmg $bot $real_bot $SECONDS \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
+
+	SECONDS=`echo $real_nmg $real_bot $real_brep | awk '{print ($1+$2+$3)}'`
+	$ECHO "%-4s\tnmg: %s %ss\tbot: %s %ss\tbrep: %s %ss %6.2fs %*s%.0f %s:%s" \
+	       \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$brep\" \"$real_brep\" \"$SECONDS\" \
+	       \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
+
     done
 
     # restore stdin
     exec 0<&3
 
     files=`expr $files + 1`
-    rm -f "$work"
+
+    # remove the file if so directed
+    if test "x$KEEP" = "x0" ; then
+	rm -f "$work"
+    fi
+
     shift
 done
 end=`elapsed` # stop elapsed runtime timer
@@ -514,15 +600,18 @@ $ECHO "%s" "-=-"
 elp=`echo $begin $end | awk '{print $2-$1}'`
 nmg_fail=`echo $nmg_count $count | awk '{print $2-$1}'`
 bot_fail=`echo $bot_count $count | awk '{print $2-$1}'`
+brep_fail=`echo $brep_count $count | awk '{print $2-$1}'`
 if test $count -eq 0 ; then
     nmg_percent=0
     bot_percent=0
+    brep_percent=0
     rate=0
     avg=0
 else
     nmg_percent=`echo $nmg_count $count | awk '{print ($1/$2)*100.0}'`
     bot_percent=`echo $bot_count $count | awk '{print ($1/$2)*100.0}'`
-    rate=`echo $nmg_count $bot_count $count | awk '{print ($1+$2)/($3+$3)*100.0}'`
+    brep_percent=`echo $brep_count $count | awk '{print ($1/$2)*100.0}'`
+    rate=`echo $nmg_count $bot_count $brep_count $count | awk '{print ($1+$2+$3)/($4+$4+$4)*100.0}'`
     avg=`echo $elp $count | awk '{print $1/$2}'`
 fi
 
@@ -532,14 +621,15 @@ $ECHO "... Done."
 $ECHO
 $ECHO "Summary:"
 $ECHO
-$ECHO "   Files:  %ld" $files
-$ECHO " Objects:  %ld" $count
-$ECHO "Failures:  %ld NMG, %ld BoT" $nmg_fail $bot_fail
-$ECHO "NMG conversion:  %.1f%%  (%ld of %ld objects)" $nmg_percent $nmg_count $count
-$ECHO "BoT conversion:  %.1f%%  (%ld of %ld objects)" $bot_percent $bot_count $count
+$ECHO "   Files:  %.0f" $files
+$ECHO " Objects:  %.0f" $count
+$ECHO "Failures:  %.0f NMG, %.0f BoT, %.0f Brep" $nmg_fail $bot_fail $brep_fail
+$ECHO "NMG conversion:  %.1f%%  (%.0f of %.0f objects)" $nmg_percent $nmg_count $count
+$ECHO "BoT conversion:  %.1f%%  (%.0f of %.0f objects)" $bot_percent $bot_count $count
+$ECHO "Brep conversion:  %.1f%%  (%.0f of %.0f objects)" $brep_percent $brep_count $count
 $ECHO "  Success rate:  %.1f%%" $rate
 $ECHO
-$ECHO "Elapsed:  %d seconds" $elp
+$ECHO "Elapsed:  %.0f seconds" $elp
 $ECHO "Average:  %.1f seconds per object" $avg
 $ECHO
 $ECHO "Finished running $THIS on `date`"

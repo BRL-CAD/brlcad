@@ -1,7 +1,7 @@
 /*                      M O L E C U L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file molecule.c
+/** @file proc-db/molecule.c
  *
  * Create a molecule from G. Adams format
  *
@@ -44,6 +44,7 @@ struct sphere  {
     int s_atom_type;		/* Atom Type */
 };
 
+
 struct sphere *s_list = (struct sphere *) 0;
 struct sphere *s_head = (struct sphere *) 0;
 
@@ -53,7 +54,8 @@ struct atoms  {
     unsigned char red, green, blue;
 };
 
-struct atoms atom_list[50];
+#define MAX_ATOMS 50
+struct atoms atom_list[MAX_ATOMS];
 
 char * matname = "plastic";
 char * matparm = "shine=100.0 diffuse=.8 specular=.2";
@@ -63,7 +65,7 @@ int make_bond(int sp1, int sp2);
 
 struct wmember head;
 
-static const char usage[] = "Usage: molecule db_title < mol-cube.dat > mol.g\n";
+static const char usage[] = "Usage: molecule db_title < mol-cube.dat\n      (output file molecule.g)\n";
 
 struct rt_wdb *outfp;
 
@@ -71,7 +73,7 @@ int
 main(int argc, char **argv)
 {
 
-    if (argc != 2) {
+    if (argc != 2 || (argc == 2 && (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")))) {
 	fputs(usage, stderr);
 	return 1;
     }
@@ -82,23 +84,25 @@ main(int argc, char **argv)
     read_data();
 
     /* Build the overall combination */
-    mk_lfcomb(outfp, "mol.g", &head, 0);
+    mk_lfcomb(outfp, "molecule", &head, 0);
 
     wdb_close(outfp);
     return 0;
 }
 
+
 /* File format from stdin
  *
- * For a ATOM DATA_TYPE ATOM_ID ATOM_NAME RED GREEN BLUE
- * For a Sphere DATA_TYPE SPH_ID CENTER (X, Y, Z) RADIUS ATOM_TYPE
- * For a Bond   DATA_TYPE SPH_ID SPH_ID
- * DATA_TYPE = 0 - Atom1 - Sphere 2 - Bond
- * SPH_ID = integer
- * CENTER = three float values x, y, z
- * RADIUS = Float
- * ATOM_TYPE = integer
- * ATOM_NAME = Character pointer to name value.
+ *   Atom definition line: 0 atom_id name red green blue
+ * Sphere definition line: 1 sph_id center_x center_y center_z radius atom_id
+ *   Bond definition line: 2 sph_id sph_id
+ *
+ * Example File (Water):
+ * 0 0 Oxygen   255 0   0
+ * 0 1 Hydrogen 255 255 255
+ * 1 0  0.0  0.0 0.0 1.5 0
+ * 1 1 -3.0 -2.0 0.0 1.0 1
+ * 1 2  3.0 -2.0 0.0 1.0 1
  */
 void
 read_data(void)
@@ -113,51 +117,83 @@ read_data(void)
     int b_1, b_2;
     int red, green, blue;
     int i = 0;
+    int ret;
 
-
-    while (scanf(" %d", &data_type) != 0) {
+    while (scanf("%d", &data_type) != EOF) {
 
 	switch (data_type) {
 	    case (0):
-		scanf("%d", &i);
-		scanf("%128s", atom_list[i].a_name);
-		scanf("%d", &red);
-		scanf("%d", &green);
-		scanf("%d", &blue);
+		ret = scanf("%d", &i);
+		if (ret == 0)
+		    perror("scanf");
+		if (i < 0 || i >= MAX_ATOMS) {
+		    fprintf(stderr, "Atom index value %d is out of bounds [0, %d]\n", i, MAX_ATOMS - 1);
+		    return;
+		}
+		ret = scanf("%128s", atom_list[i].a_name);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%d", &red);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%d", &green);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%d", &blue);
+		if (ret == 0)
+		    perror("scanf");
 		atom_list[i].red  = red;
 		atom_list[i].green  = green;
 		atom_list[i].blue  = blue;
 		break;
 	    case (1):
-		scanf("%d", &sphere_id);
-		scanf("%f", &x);
-		scanf("%f", &y);
-		scanf("%f", &z);
-		scanf("%f", &sphere_radius);
-		scanf("%d", &atom_type);
+		ret = scanf("%d", &sphere_id);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%f", &x);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%f", &y);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%f", &z);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%f", &sphere_radius);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%d", &atom_type);
+		if (ret == 0)
+		    perror("scanf");
 		VSET(center, x, y, z);
 		process_sphere(sphere_id, center, sphere_radius,
 			       atom_type);
 		break;
 	    case (2):
-		scanf("%d", &b_1);
-		scanf("%d", &b_2);
+		ret = scanf("%d", &b_1);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%d", &b_2);
+		if (ret == 0)
+		    perror("scanf");
 		(void)make_bond(b_1, b_2);
 		break;
-	    case (4):
+	    default:
 		return;
 	}
     }
 }
 
+
 void
 process_sphere(int id, fastf_t *center, double rad, int sph_type)
 {
-    struct sphere * newsph = (struct sphere *)
-	bu_malloc(sizeof (struct sphere), "newsph");
+    struct sphere *newsph;
     char nm[128], nm1[128];
     unsigned char rgb[3];
     struct wmember reg_head;
+
+    BU_ALLOC(newsph, struct sphere);
 
     rgb[0] = atom_list[sph_type].red;
     rgb[1] = atom_list[sph_type].green;
@@ -191,6 +227,7 @@ process_sphere(int id, fastf_t *center, double rad, int sph_type)
     }
 }
 
+
 int
 make_bond(int sp1, int sp2)
 {
@@ -223,13 +260,10 @@ make_bond(int sp1, int sp2)
     rgb[1] = 142;
     rgb[2] = 57;
 
-#if 1
-    /* Use this for mol-cube.dat */
-    mk_rcc(outfp, nm, base, height, s1->s_rad * 0.15);
-#else
-    /* Use this for chemical molecules */
-    mk_rcc(outfp, nm, base, height, s1->s_rad * 0.5);
-#endif
+    /* TODO: make the scaling factor configurable or autosize based on
+     * overall complexity.
+     */
+    mk_rcc(outfp, nm, base, height, s1->s_rad * 0.25);
 
     BU_LIST_INIT(&reg_head.l);
     (void)mk_addmember(nm, &reg_head.l, NULL, WMOP_UNION);
@@ -241,6 +275,7 @@ make_bond(int sp1, int sp2)
 
     return 0;		/* OK */
 }
+
 
 /*
  * Local Variables:

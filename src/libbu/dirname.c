@@ -1,7 +1,7 @@
 /*                      D I R N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,46 +22,66 @@
 
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 char *
 bu_dirname(const char *cp)
 {
     char *ret;
-    char *slash;
+    char *found_dslash;
+    char *found_fslash;
     size_t len;
-    const char *SLASH = "/";
+    const char DSLASH[2] = {BU_DIR_SEPARATOR, '\0'};
+    const char FSLASH[2] = {'/', '\0'};
     const char *DOT = ".";
     const char *DOTDOT = "..";
 
     /* Special cases */
-    if (cp == NULL)  return bu_strdup(".");
-    if (strcmp(cp, SLASH) == 0)
-	return bu_strdup(SLASH);
-    if (strcmp(cp, DOT) == 0 ||
-	strcmp(cp, DOTDOT) == 0 ||
-	strrchr(cp, '/') == NULL)
+    if (UNLIKELY(!cp))
+	return bu_strdup(".");
+
+    if (BU_STR_EQUAL(cp, DSLASH))
+	return bu_strdup(DSLASH);
+    if (BU_STR_EQUAL(cp, FSLASH))
+	return bu_strdup(FSLASH);
+
+    if (BU_STR_EQUAL(cp, DOT)
+	|| BU_STR_EQUAL(cp, DOTDOT)
+	|| (strrchr(cp, BU_DIR_SEPARATOR) == NULL
+	    && strrchr(cp, '/') == NULL))
 	return bu_strdup(DOT);
 
     /* Make a duplicate copy of the string, and shorten it in place */
     ret = bu_strdup(cp);
 
-    /* A trailing slash doesn't count */
+    /* A sequence of trailing slashes don't count */
     len = strlen(ret);
-    if (ret[len-1] == '/')  ret[len-1] = '\0';
+    while (len > 1
+	   && (ret[len-1] == BU_DIR_SEPARATOR
+	       || ret[len-1] == '/')) {
+	ret[len-1] = '\0';
+	len--;
+    }
 
     /* If no slashes remain, return "." */
-    if ((slash = strrchr(ret, '/')) == NULL) {
+    found_dslash = strrchr(ret, BU_DIR_SEPARATOR);
+    found_fslash = strrchr(ret, '/');
+    if (!found_dslash && !found_fslash) {
 	bu_free(ret, "bu_dirname");
 	return bu_strdup(DOT);
     }
 
     /* Remove trailing slash, unless it's at front */
-    if (slash == ret)
-	ret[1] = '\0';		/* ret == "/" */
-    else
-	*slash = '\0';
+    if (found_dslash == ret || found_fslash == ret) {
+	ret[1] = '\0';		/* ret == BU_DIR_SEPARATOR || "/" */
+    } else {
+	if (found_dslash)
+	    *found_dslash = '\0';
+	if (found_fslash)
+	    *found_fslash = '\0';
+    }
 
     return ret;
 }

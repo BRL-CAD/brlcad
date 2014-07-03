@@ -1,7 +1,7 @@
 /*                         B O T _ M E R G E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_merge.c
+/** @file libged/bot_merge.c
  *
  * The bot_merge command.
  *
@@ -42,7 +42,8 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal **bots;
     int i, idx;
-    int avail_vert, avail_face, face;
+    int avail_vert, avail_face;
+    size_t face;
     static const char *usage = "bot_dest bot1_src [botn_src]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -50,18 +51,18 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
-    bots = bu_calloc(sizeof(struct rt_bot_internal), argc, "bot internal");
+    bots = (struct rt_bot_internal **)bu_calloc(argc, sizeof(struct rt_bot_internal *), "bot internal");
 
     /* create a new bot */
-    BU_GETSTRUCT(bots[0], rt_bot_internal);
+    BU_ALLOC(bots[0], struct rt_bot_internal);
     bots[0]->mode = 0;
     bots[0]->orientation = RT_BOT_UNORIENTED;
     bots[0]->bot_flags = 0;
@@ -79,23 +80,23 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 
 
     /* read in all the bots */
-    for (idx=1, i=2; i < argc; i++ ) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
+    for (idx = 1, i = 2; i < argc; i++) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}
 
 	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!  Skipping.\n", argv[0], argv[i]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!  Skipping.\n", argv[0], argv[i]);
 	    continue;
 	}
 
 	bots[idx] = (struct rt_bot_internal *)intern.idb_ptr;
 
-	intern.idb_ptr = (genptr_t)0;
+	intern.idb_ptr = (void *)0;
 
-	RT_BOT_CK_MAGIC( bots[idx] );
+	RT_BOT_CK_MAGIC(bots[idx]);
 
 	bots[0]->num_vertices += bots[idx]->num_vertices;
 	bots[0]->num_faces += bots[idx]->num_faces;
@@ -106,16 +107,15 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     if (idx == 1) return GED_ERROR;
 
 
-    for (i=1; i < idx; i++ ) {
+    for (i = 1; i < idx; i++) {
 	/* check for surface normals */
 	if (bots[0]->mode) {
 	    if (bots[0]->mode != bots[i]->mode) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: Warning: not all bots share same mode\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: Warning: not all bots share same mode\n", argv[0]);
 	    }
 	} else {
 	    bots[0]->mode = bots[i]->mode;
 	}
-
 
 	if (bots[i]->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) bots[0]->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS;
 	if (bots[i]->bot_flags & RT_BOT_USE_NORMALS) bots[0]->bot_flags |= RT_BOT_USE_NORMALS;
@@ -132,14 +132,19 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    bots[0]->vertices = bu_calloc(bots[0]->num_vertices*3, sizeof(fastf_t), "verts");
-    bots[0]->faces = bu_calloc(bots[0]->num_faces*3, sizeof(int), "verts");
+    bots[0]->vertices = (fastf_t *)bu_calloc(bots[0]->num_vertices*3, sizeof(fastf_t), "verts");
+    bots[0]->faces = (int *)bu_calloc(bots[0]->num_faces*3, sizeof(int), "verts");
+
+    if (bots[0]->mode == RT_BOT_PLATE || bots[0]->mode == RT_BOT_PLATE_NOCOS) {
+	bots[0]->thickness = (fastf_t *)bu_calloc(bots[0]->num_faces, sizeof(fastf_t), "thickness");
+	bots[0]->face_mode = (struct bu_bitv *)bu_calloc(bots[0]->num_faces, sizeof(struct bu_bitv), "face_mode");
+    }
 
     avail_vert = 0;
     avail_face = 0;
 
 
-    for (i=1; i < idx; i++ ) {
+    for (i = 1; i < idx; i++) {
 	/* copy the vertices */
 	memcpy(&bots[0]->vertices[3*avail_vert], bots[i]->vertices, bots[i]->num_vertices*3*sizeof(fastf_t));
 
@@ -151,6 +156,11 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 		bots[0]->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3  ] + avail_vert;
 		bots[0]->faces[avail_face*3+face*3+1] = bots[i]->faces[face*3+1] + avail_vert;
 		bots[0]->faces[avail_face*3+face*3  ] = bots[i]->faces[face*3+2] + avail_vert;
+
+		if (bots[0]->mode == RT_BOT_PLATE || bots[0]->mode == RT_BOT_PLATE_NOCOS) {
+		    bots[0]->thickness[avail_face+face] = bots[i]->thickness[face];
+		    bots[0]->face_mode[avail_face+face] = bots[i]->face_mode[face];
+		}
 	    }
 	} else {
 	    /* just copy */
@@ -159,6 +169,11 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 		bots[0]->faces[avail_face*3+face*3  ] = bots[i]->faces[face*3  ] + avail_vert;
 		bots[0]->faces[avail_face*3+face*3+1] = bots[i]->faces[face*3+1] + avail_vert;
 		bots[0]->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3+2] + avail_vert;
+
+		if (bots[0]->mode == RT_BOT_PLATE || bots[0]->mode == RT_BOT_PLATE_NOCOS) {
+		    bots[0]->thickness[avail_face+face] = bots[i]->thickness[face];
+		    bots[0]->face_mode[avail_face+face] = bots[i]->face_mode[face];
+		}
 	    }
 	}
 
@@ -170,25 +185,25 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
-
 	avail_vert += bots[i]->num_vertices;
 	avail_face += bots[i]->num_faces;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_type = ID_BOT;
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_BOT;
-    intern.idb_meth = &rt_functab[ID_BOT];
-    intern.idb_ptr = (genptr_t)bots[0];
+    intern.idb_meth = &OBJ[ID_BOT];
+    intern.idb_ptr = (void *)bots[0];
 
-    GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, GED_ERROR);
 
     bu_free(bots, "bots");
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

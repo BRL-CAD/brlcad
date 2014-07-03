@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file grid.c
+/** @file mged/grid.c
  *
  * Routines to implement MGED's snap to grid capability.
  *
@@ -42,16 +42,16 @@ extern point_t curr_e_axes_pos;  /* from edsol.c */
 
 void draw_grid(void);
 void snap_to_grid(fastf_t *mx, fastf_t *my);
-static void grid_set_dirty_flag(void);
-static void set_grid_draw(void);
-static void set_grid_res(void);
+static void grid_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *);
+static void set_grid_draw(const struct bu_structparse *, const char *, void *, const char *);
+static void set_grid_res(const struct bu_structparse *, const char *, void *, const char *);
 
 
 struct _grid_state default_grid_state = {
     /* gr_rc */		1,
     /* gr_draw */		0,
     /* gr_snap */		0,
-    /* gr_anchor */		{ 0.0, 0.0, 0.0 },
+    /* gr_anchor */		VINIT_ZERO,
     /* gr_res_h */		1.0,
     /* gr_res_v */		1.0,
     /* gr_res_major_h */	5,
@@ -60,11 +60,10 @@ struct _grid_state default_grid_state = {
 
 
 #define GRID_O(_m) bu_offsetof(struct _grid_state, _m)
-#define GRID_OA(_m) bu_offsetofarray(struct _grid_state, _m)
 struct bu_structparse grid_vparse[] = {
     {"%d", 1, "draw",	GRID_O(gr_draw),	set_grid_draw, NULL, NULL },
     {"%d", 1, "snap",	GRID_O(gr_snap),	grid_set_dirty_flag, NULL, NULL },
-    {"%f", 3, "anchor",	GRID_OA(gr_anchor),	grid_set_dirty_flag, NULL, NULL },
+    {"%f", 3, "anchor",	GRID_O(gr_anchor),	grid_set_dirty_flag, NULL, NULL },
     {"%f", 1, "rh",	GRID_O(gr_res_h),	set_grid_res, NULL, NULL },
     {"%f", 1, "rv",	GRID_O(gr_res_v),	set_grid_res, NULL, NULL },
     {"%d", 1, "mrh",	GRID_O(gr_res_major_h),	set_grid_res, NULL, NULL },
@@ -74,7 +73,10 @@ struct bu_structparse grid_vparse[] = {
 
 
 static void
-grid_set_dirty_flag(void)
+grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
+		    const char *UNUSED(name),
+		    void *UNUSED(base),
+		    const char *UNUSED(value))
 {
     struct dm_list *dmlp;
 
@@ -85,7 +87,10 @@ grid_set_dirty_flag(void)
 
 
 static void
-set_grid_draw(void)
+set_grid_draw(const struct bu_structparse *sdp,
+	      const char *name,
+	      void *base,
+	      const char *value)
 {
     struct dm_list *dlp;
 
@@ -94,7 +99,7 @@ set_grid_draw(void)
 	return;
     }
 
-    grid_set_dirty_flag();
+    grid_set_dirty_flag(sdp, name, base, value);
 
     /* This gets done at most one time. */
     if (grid_auto_size && grid_state->gr_draw) {
@@ -110,11 +115,14 @@ set_grid_draw(void)
 
 
 static void
-set_grid_res(void)
+set_grid_res(const struct bu_structparse *sdp,
+	     const char *name,
+	     void *base,
+	     const char *value)
 {
     struct dm_list *dlp;
 
-    grid_set_dirty_flag();
+    grid_set_dirty_flag(sdp, name, base, value);
 
     if (grid_auto_size)
 	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
@@ -143,8 +151,8 @@ draw_grid(void)
     fastf_t inv_aspect;
 
     if (dbip == DBI_NULL ||
-	NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
-	NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
+	ZERO(grid_state->gr_res_h) ||
+	ZERO(grid_state->gr_res_v))
 	return;
 
     inv_grid_res_h= 1.0 / grid_state->gr_res_h;
@@ -231,8 +239,8 @@ snap_to_grid(
     fastf_t inv_sf;
 
     if (dbip == DBI_NULL ||
-	NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
-	NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
+	ZERO(grid_state->gr_res_h) ||
+	ZERO(grid_state->gr_res_v))
 	return;
 
     sf = view_state->vs_gvp->gv_scale*base2local;
@@ -277,7 +285,7 @@ snap_keypoint_to_grid(void)
 {
     point_t view_pt;
     point_t model_pt;
-    struct bu_vls cmd;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
     if (dbip == DBI_NULL)
 	return;
@@ -297,7 +305,6 @@ snap_keypoint_to_grid(void)
     MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
     VSCALE(model_pt, model_pt, base2local);
 
-    bu_vls_init(&cmd);
     if (STATE == ST_S_EDIT)
 	bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
     else
@@ -347,8 +354,8 @@ round_to_grid(fastf_t *view_dx, fastf_t *view_dy)
     int nh, nv;
 
     if (dbip == DBI_NULL ||
-	NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
-	NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
+	ZERO(grid_state->gr_res_h) ||
+	ZERO(grid_state->gr_res_v))
 	return;
 
     sf = view_state->vs_gvp->gv_scale*base2local;
@@ -388,8 +395,8 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
     point_t vcenter, diff;
 
     if (dbip == DBI_NULL ||
-	NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
-	NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
+	ZERO(grid_state->gr_res_h) ||
+	ZERO(grid_state->gr_res_v))
 	return;
 
     round_to_grid(&view_dx, &view_dy);
@@ -412,17 +419,14 @@ void
 update_grids(fastf_t sf)
 {
     struct dm_list *dlp;
-    struct bu_vls save_result;
-    struct bu_vls cmd;
+    struct bu_vls save_result = BU_VLS_INIT_ZERO;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	dlp->dml_grid_state->gr_res_h *= sf;
 	dlp->dml_grid_state->gr_res_v *= sf;
 	VSCALE(dlp->dml_grid_state->gr_anchor, dlp->dml_grid_state->gr_anchor, sf);
     }
-
-    bu_vls_init(&save_result);
-    bu_vls_init(&cmd);
 
     bu_vls_strcpy(&save_result, Tcl_GetStringResult(INTERP));
 
@@ -439,9 +443,7 @@ update_grids(fastf_t sf)
 int
 f_grid_set (ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 5 < argc) {
 	bu_vls_printf(&vls, "help grid_set");

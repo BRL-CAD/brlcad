@@ -1,7 +1,7 @@
-/*                       W H E R I S . C
+/*                       W H E R E I S . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2010 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,10 @@
 #endif
 
 /* common headers */
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 
 /* how big should PATH from getenv ever be */
@@ -49,11 +52,11 @@ const char *
 bu_whereis(const char *cmd)
 {
     static const char *gotpath = NULL;
-
     char PATH[MAXPATHENV];
 
     char *directory = NULL;
     char *position = NULL;
+    char curr_dir[] = ".";
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("bu_whereis: [%s]\n", cmd);
@@ -69,13 +72,15 @@ bu_whereis(const char *cmd)
 
     /* check for full/relative path match */
     bu_strlcpy(bu_whereis_result, cmd, MAXPATHLEN);
-    if (strcmp(bu_whereis_result, cmd) != 0) {
+    if (!BU_STR_EQUAL(bu_whereis_result, cmd)) {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("command [%s] is too long\n", cmd);
 	}
 	return NULL;
     }
-    if (bu_file_exists(bu_whereis_result) && strchr(bu_whereis_result, BU_DIR_SEPARATOR)) {
+    if (bu_file_exists(bu_whereis_result, NULL) && strchr(bu_whereis_result, BU_DIR_SEPARATOR)) {
+	if (bu_whereis_result[0] == '\0')
+	    return NULL; /* never return empty */
 	return bu_whereis_result;
     }
 
@@ -104,16 +109,19 @@ bu_whereis(const char *cmd)
     do {
 	position = strchr(directory, BU_PATH_SEPARATOR);
 	if (position) {
+	    /* 'directory' can't be const because we have to change a character here: */
 	    *position = '\0';
 	}
 
 	/* empty means use current dir */
 	if (strlen(directory) == 0) {
-	    directory = ".";
+	    directory = curr_dir; /* "."; */
 	}
 
 	snprintf(bu_whereis_result, MAXPATHLEN, "%s/%s", directory, cmd);
-	if (bu_file_exists(bu_whereis_result)) {
+	if (bu_file_exists(bu_whereis_result, NULL)) {
+	    if (bu_whereis_result[0] == '\0')
+		return NULL; /* never return empty */
 	    return bu_whereis_result;
 	}
 

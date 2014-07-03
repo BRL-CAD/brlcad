@@ -1,7 +1,7 @@
 /*                    C O N V E R S I O N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file conversion.c
+/** @file nirt/conversion.c
  *
  * handle ae/direction/grid conversions
  *
@@ -40,7 +40,7 @@ void
 dir2ae(void)
 {
     double square;
-    int zeroes = NEAR_ZERO(direct(Y), SMALL_FASTF) && NEAR_ZERO(direct(X), SMALL_FASTF);
+    int zeroes = ZERO(direct(Y)) && ZERO(direct(X));
 
     azimuth() = zeroes ? 0.0 : atan2 (-(direct(Y)), -(direct(X))) / DEG2RAD;
 

@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file color.c
+/** @file libdm/color.c
  *
  */
 
@@ -34,7 +34,7 @@
 
 #include "bu.h"
 
-#include "dm_xvars.h"
+#include "dm/dm_xvars.h"
 
 
 /* Return the allocated pixel value that most closely represents
@@ -98,7 +98,7 @@ _X_copy_cmap(Display *dpy, Colormap dest, Colormap src, int low, int hi, int sto
 	}
     }
 
-    bu_free((genptr_t)colors, "dm_load_cmap: colors");
+    bu_free((void *)colors, "dm_load_cmap: colors");
 }
 
 void

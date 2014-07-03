@@ -1,7 +1,7 @@
 /*                         B W - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- *
  */
 /** @file bw-fb.c
  *
@@ -72,7 +71,7 @@ static int infd;
 static FBIO *fbp;
 
 static char usage[] = "\
-Usage: bw-fb [-a -h -i -c -z -R -G -B] [-F framebuffer]\n\
+Usage: bw-fb [-a -i -c -z -R -G -B] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.bw]\n";
@@ -81,16 +80,10 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ahiczRGBF:s:w:n:x:y:X:Y:S:W:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "aiczRGBF:s:w:n:x:y:X:Y:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		file_height = file_width = 1024;
-		scr_height = scr_width = 1024;
-		autosize = 0;
 		break;
 	    case 'i':
 		inverse = 1;
@@ -159,18 +152,22 @@ get_args(int argc, char **argv)
 	file_name = "-";
 	infd = 0;
     } else {
+	char *ifname;
 	file_name = argv[bu_optind];
-	if ((infd = open(file_name, 0)) < 0) {
-	    (void)fprintf(stderr,
-			  "bw-fb: cannot open \"%s\" for reading\n",
-			  file_name);
+	ifname = bu_realpath(file_name, NULL);
+	if ((infd = open(ifname, 0)) < 0) {
+	    fprintf(stderr,
+		    "bw-fb: cannot open \"%s (canonical %s)\" for reading\n",
+		    file_name, ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return 0;
 	}
+	bu_free(ifname, "ifname alloc from bu_realpath");
 	fileinput++;
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bw-fb: excess argument(s) ignored\n");
+	fprintf(stderr, "bw-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -180,7 +177,7 @@ int
 main(int argc, char **argv)
 {
     int x, y, n;
-    long xout, yout;		/* number of sceen output lines */
+    long xout, yout;		/* number of screen output lines */
     long xstart, xskip;
 
     if (!get_args(argc, argv)) {
@@ -190,7 +187,7 @@ main(int argc, char **argv)
 
     /* autosize input? */
     if (fileinput && autosize) {
-	unsigned long int w, h;
+	size_t w, h;
 	if (fb_common_file_size(&w, &h, file_name, 1)) {
 	    file_width = w;
 	    file_height = h;
@@ -262,7 +259,7 @@ main(int argc, char **argv)
 	unsigned char *buf;
 	int npix = file_width * yout;
 
-	if ((buf = malloc(npix)) == NULL) {
+	if ((buf = (unsigned char *)malloc(npix)) == NULL) {
 	    perror("bw-fb malloc");
 	    goto general;
 	}
@@ -338,7 +335,7 @@ general:
 int
 skipbytes(int fd, off_t num)
 {
-    int n, try;
+    int n, tries;
 
     if (fileinput) {
 	(void)lseek(fd, num, 1);
@@ -346,8 +343,8 @@ skipbytes(int fd, off_t num)
     }
 
     while (num > 0) {
-	try = num > MAX_LINE ? MAX_LINE : num;
-	n = read(fd, ibuf, try);
+	tries = num > MAX_LINE ? MAX_LINE : num;
+	n = read(fd, ibuf, tries);
 	if (n <= 0) {
 	    return -1;
 	}

@@ -1,7 +1,7 @@
 #                        M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2010 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used.
+# Use the Ged widget instead.
+#####################################################################
+
 #
 # Description -
 #	The Mged class inherits from QuadDisplay and contains
@@ -63,9 +69,9 @@ option add *Mged.height 400 widgetDefault
 	method dup {args}
 	method E {args}
 	method edcomb {args}
+	method edit {args}
 	method edmater {args}
 	method erase {args}
-	method erase_all {args}
 	method ev {args}
 	method expand {args}
 	method facetize {args}
@@ -91,7 +97,6 @@ option add *Mged.height 400 widgetDefault
 	method ls {args}
 	method lt {args}
 	method make {args}
-	method make_bb {name args}
 	method make_name {args}
 	method match {args}
 	method mater {args}
@@ -111,6 +116,7 @@ option add *Mged.height 400 widgetDefault
 	method pathlist {args}
 	method paths {args}
 	method prcolor {args}
+	method pull {args}
 	method push {args}
 	method put {args}
 	method r {args}
@@ -132,10 +138,12 @@ option add *Mged.height 400 widgetDefault
 	method tol {args}
 	method tops {args}
 	method track {args}
+	method translate {args}
 	method tree {args}
 	method unhide {args}
 	method units {args}
 	method vdraw {args}
+	method voxelize {args}
 	method whatid {args}
 	method whichair {args}
 	method whichid {args}
@@ -168,6 +176,8 @@ option add *Mged.height 400 widgetDefault
     set db [Database \#auto $dbOrFile]
     set dg [$db Drawable::get_dgname]
     addAll $dg
+
+    puts "DEPRECATION WARNING: The Mged widget should no longer be used.  Use the Ged widget instead."
 
     # sync up the units between the Database and QuadDisplay
     QuadDisplay::units [$db units -s]
@@ -304,6 +314,11 @@ option add *Mged.height 400 widgetDefault
     eval $db facetize $args
 }
 
+
+::itcl::body Mged::voxelize {args} {
+    eval $db voxelize $args
+}
+
 ::itcl::body Mged::kill {args} {
     eval $db kill $args
 }
@@ -432,6 +447,10 @@ option add *Mged.height 400 widgetDefault
     eval $db track $args
 }
 
+::itcl::body Mged::translate {args} {
+    eval $db translate $args
+}
+
 ::itcl::body Mged::tree {args} {
     eval $db tree $args
 }
@@ -523,10 +542,6 @@ option add *Mged.height 400 widgetDefault
 	    return [lindex $result 1]
 	}
     }
-}
-
-::itcl::body Mged::make_bb {name args} {
-    eval $db make_bb $name $args
 }
 
 ::itcl::body Mged::make_name {args} {
@@ -632,6 +647,10 @@ option add *Mged.height 400 widgetDefault
     return [eval run_cmd edcomb $args]
 }
 
+::itcl::body Mged::edit {args} {
+    return [eval run_cmd edit $args]
+}
+
 ::itcl::body Mged::edmater {args} {
     return [eval run_cmd edmater $args]
 }
@@ -670,10 +689,6 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::ev {args} {
     eval $db ev $args
-}
-
-::itcl::body Mged::erase_all {args} {
-    eval $db erase_all $args
 }
 
 ::itcl::body Mged::overlay {args} {

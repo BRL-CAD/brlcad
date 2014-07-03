@@ -1,7 +1,7 @@
 /*                          T R I E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file trie.c
+/** @file lgt/trie.c
     Author:		Gary S. Moss
 */
 
@@ -180,7 +180,7 @@ get_Trie(char *name, Trie *triep)
 		    )
 		    ;
 		if ( triep == TRIE_NULL )
-		    /* Non-existant name, truncate bad part.*/
+		    /* Non-existent name, truncate bad part.*/
 		{
 		    *name = NUL;
 		    return	OCLIST_NULL;
@@ -340,7 +340,6 @@ read_Trie(FILE *fp)
     Trie	*triep;
     F_Hdr_Ptlist	hdr_ptlist;
     int		min, max;
-    extern Trie	*reg_triep;
     /* Read temperature range information.				*/
     if (	fread( (char *) &min, (int) sizeof(int), 1, fp ) != 1
 		||	fread( (char *) &max, (int) sizeof(int), 1, fp ) != 1
@@ -443,7 +442,7 @@ char_To_String(int i)
     return	buf;
 }
 
-/*	g e t _ R e g i o n _ N a m e ( )
+/*
 	TENEX-style name completion.
 	Returns a linked-list of pointers to octree leaf nodes.
 */
@@ -454,8 +453,6 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
     char	*p = buffer;
     int	c;
     OcList		*oclistp = OCLIST_NULL;
-    extern Trie	*reg_triep;
-    extern int	tty;
     if ( tty )
     {
 	save_Tty( 0 );

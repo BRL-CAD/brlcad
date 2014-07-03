@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,9 @@
 #include <stdarg.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
 /* libfb defines replicated here to avoid a libfb dependency */
@@ -54,27 +56,28 @@ enum axis {
 #define V3ARGS(a) (a)[X], (a)[Y], (a)[Z]
 
 
-void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
+void
+bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
 {
     fastf_t red, grn, blu;
     fastf_t *hue = &hsv[HUE];
     fastf_t *sat = &hsv[SAT];
     fastf_t *val = &hsv[VAL];
     fastf_t max, min;
-    fastf_t delta;
+    fastf_t chroma;
 
     /*
      * Compute value
      */
-    max = min = red = ((fastf_t) rgb[RED]) / 255.0;
+    max = min = red = ((fastf_t)rgb[RED]) / 255.0;
 
-    grn = ((fastf_t) rgb[GRN]) / 255.0;
+    grn = ((fastf_t)rgb[GRN]) / 255.0;
     if (grn < min)
 	min = grn;
     else if (grn > max)
 	max = grn;
 
-    blu = ((fastf_t) rgb[BLU]) / 255.0;
+    blu = ((fastf_t)rgb[BLU]) / 255.0;
     if (blu < min)
 	min = blu;
     else if (blu > max)
@@ -85,9 +88,9 @@ void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
     /*
      * Compute saturation
      */
-    delta = max - min;
+    chroma = max - min;
     if (max > 0.0)
-	*sat = delta / max;
+	*sat = chroma / max;
     else
 	*sat = 0.0;
 
@@ -97,12 +100,12 @@ void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
     if (NEAR_ZERO(*sat, SMALL_FASTF)) {
 	*hue = ACHROMATIC;
     } else {
-	if (NEAR_ZERO(red - max, SMALL_FASTF)) /* red == max */
-	    *hue = (grn - blu) / delta;
+	if (NEAR_ZERO(red - max, SMALL_FASTF))      /* red == max */
+	    *hue = (grn - blu) / chroma;
 	else if (NEAR_ZERO(grn - max, SMALL_FASTF)) /* grn == max */
-	    *hue = 2.0 + (blu - red) / delta;
+	    *hue = 2.0 + (blu - red) / chroma;
 	else if (NEAR_ZERO(blu - max, SMALL_FASTF)) /* blu == max */
-	    *hue = 4.0 + (red - grn) / delta;
+	    *hue = 4.0 + (red - grn) / chroma;
 
 	/*
 	 * Convert hue to degrees
@@ -114,13 +117,14 @@ void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
 }
 
 
-int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
+int
+bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
 {
     fastf_t float_rgb[3] = { 0.0, 0.0, 0.0 };
     fastf_t hue, sat, val;
     fastf_t hue_frac;
     fastf_t p, q, t;
-    int hue_int;
+    long int hue_int;
 
     hue = hsv[HUE];
     sat = hsv[SAT];
@@ -143,7 +147,7 @@ int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
 	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
 	    hue = 0.0;
 	hue /= 60.0;
-	hue_int = floor((double) hue);
+	hue_int = lrint(floor((double)hue));
 	hue_frac = hue - hue_int;
 	p = val * (1.0 - sat);
 	q = val * (1.0 - (sat * hue_frac));
@@ -162,47 +166,52 @@ int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
 	}
     }
 
-    rgb[RED] = float_rgb[RED] * 255;
-    rgb[GRN] = float_rgb[GRN] * 255;
-    rgb[BLU] = float_rgb[BLU] * 255;
+    rgb[RED] = (unsigned char)lrint(float_rgb[RED] * 255.0);
+    rgb[GRN] = (unsigned char)lrint(float_rgb[GRN] * 255.0);
+    rgb[BLU] = (unsigned char)lrint(float_rgb[BLU] * 255.0);
 
     return 1;
 }
 
 
-int bu_str_to_rgb(char *str, unsigned char *rgb)
+int
+bu_str_to_rgb(char *str, unsigned char *rgb)
 {
     int num;
-    int r, g, b;
+    unsigned int r = 0;
+    unsigned int g = 0;
+    unsigned int b = 0;
 
     if (UNLIKELY(!str || !rgb)) {
 	return 0;
     }
 
-    r = g = b = -1;
-    while (isspace(*str))
+    while (isspace((int)(*str)))
 	++str;
 
     if (*str == '#') {
 	if (strlen(++str) != 6)
 	    return 0;
-	num = sscanf(str, "%02x%02x%02x", (unsigned int *)&r, (unsigned int *)&g, (unsigned int *)&b);
-    } else if (isdigit(*str)) {
-	num = sscanf(str, "%d/%d/%d", &r, &g, &b);
+	sscanf(str, "%02x%02x%02x", (unsigned int *)&r, (unsigned int *)&g, (unsigned int *)&b);
+    } else if (isdigit((int)(*str))) {
+	num = sscanf(str, "%u/%u/%u", &r, &g, &b);
 	if (num == 1) {
-	    num = sscanf(str, "%d %d %d", &r, &g, &b);
+	    num = sscanf(str, "%u %u %u", &r, &g, &b);
+	    if (num != 3)
+		return 0;
 	}
-	VSET(rgb, r, g, b);
-	if ((r < 0) || (r > 255)
-	    || (g < 0) || (g > 255)
-	    || (b < 0) || (b > 255)) {
-	    return 0;
-	}
+	if (r > 255)
+	    r = 255;
+	if (g > 255)
+	    g = 255;
+	if (b > 255)
+	    b = 255;
     } else {
 	return 0;
     }
 
-    VSET(rgb, r, g, b);
+    VSET(rgb, (fastf_t)r, (fastf_t)g, (fastf_t)b);
+
     return 1;
 }
 

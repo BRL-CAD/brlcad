@@ -1,7 +1,7 @@
 /*                        B S P L I N E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1991-2010 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,8 +41,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "bio.h"
+#include "bin.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "rtgeom.h"
@@ -54,13 +55,15 @@
 #  include "opennurbs.h"
 #endif /* CONVERT_TO_BREP */
 
+#include "../../librt_private.h"
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct nurb_specific {
-    struct nurb_specific *next;	/* next surface in the the solid */
+    struct nurb_specific *next;	/* next surface in the solid */
     struct face_g_snurb *srf;	/* Original surface description */
     struct bu_list bez_hd;	/* List of Bezier face_g_snurbs */
 };
@@ -89,7 +92,7 @@ struct nurb_hit {
     extern void rt_brep_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp);
     extern void rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp);
     extern void rt_brep_free(register struct soltab *stp);
-    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
 
 #endif /* CONVERT_TO_BREP */
 
@@ -113,10 +116,82 @@ rt_nurb_grans(struct face_g_snurb *srf)
     return 1 + k_gran + p_gran;
 }
 
+/**
+ * Calculate the bounding RPP of a bspline
+ */
+int
+rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    int i;
+    struct nurb_specific *nurbs = NULL;
+    struct nurb_specific *next;
+    struct rt_nurb_internal *sip;
+
+    sip = (struct rt_nurb_internal *) ip->idb_ptr;
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
+    for (i = 0; i < sip->nsrf; i++) {
+	struct face_g_snurb * s;
+	struct nurb_specific * n;
+
+	BU_GET(n, struct nurb_specific);
+
+	/* Store off the original face_g_snurb */
+	s = rt_nurb_scopy(sip->srfs[i], (struct resource *)NULL);
+	NMG_CK_SNURB(s);
+	rt_nurb_s_bound(s, s->min_pt, s->max_pt);
+
+	n->srf = s;
+	BU_LIST_INIT(&n->bez_hd);
+
+	/* Grind up the original surf into a list of Bezier face_g_snurbs */
+	(void)rt_nurb_bezier(&n->bez_hd, sip->srfs[i], (struct resource *)NULL);
+
+	/* Compute bounds of each Bezier face_g_snurb */
+	for (BU_LIST_FOR(s, face_g_snurb, &n->bez_hd)) {
+	    NMG_CK_SNURB(s);
+	    rt_nurb_s_bound(s, s->min_pt, s->max_pt);
+	    VMINMAX((*min), (*max), s->min_pt);
+	    VMINMAX((*min), (*max), s->max_pt);
+	}
+
+	n->next = nurbs;
+	nurbs = n;
+    }
+    /* zero thickness will get missed by the raytracer */
+    if (NEAR_EQUAL((*min)[X], (*max)[X], SMALL_FASTF)) {
+	(*min)[X] -= SMALL_FASTF;
+	(*max)[X] += SMALL_FASTF;
+    }
+    if (NEAR_EQUAL((*min)[Y], (*max)[Y], SMALL_FASTF)) {
+	(*min)[Y] -= SMALL_FASTF;
+	(*max)[Y] += SMALL_FASTF;
+    }
+    if (NEAR_EQUAL((*min)[Z], (*max)[Z], SMALL_FASTF)) {
+	(*min)[Z] -= SMALL_FASTF;
+	(*max)[Z] += SMALL_FASTF;
+    }
+
+    for (; nurbs != (struct nurb_specific *)0; nurbs = next) {
+	register struct face_g_snurb *s;
+
+	next = nurbs->next;
+
+	/* There is a linked list of surfaces to free for each nurb */
+	while (BU_LIST_WHILE (s, face_g_snurb, &nurbs->bez_hd)) {
+	    NMG_CK_SNURB(s);
+	    BU_LIST_DEQUEUE(&(s->l));
+	    rt_nurb_free_snurb(s, (struct resource *)NULL);
+	}
+	rt_nurb_free_snurb(nurbs->srf, (struct resource *)NULL);	/* original surf */
+	BU_PUT(nurbs, struct nurb_specific);
+    }
+
+    return 0;
+}
+
 
 /**
- * R T _ N U R B _ P R E P
- *
  * Given a pointer of a GED database record, and a transformation
  * matrix, determine if this is a valid NURB, and if so, prepare the
  * surface so the intersections will work.
@@ -124,15 +199,16 @@ rt_nurb_grans(struct face_g_snurb *srf)
 int
 rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-    struct nurb_specific *nurbs;
+#ifndef CONVERT_TO_BREP
+    struct nurb_specific *nurbs = NULL;
+#endif
+
     struct rt_nurb_internal *sip;
     const struct bn_tol *tol = &rtip->rti_tol;
     fastf_t los = tol->dist;
 
     if (los < SMALL_FASTF)
 	los = SMALL_FASTF;
-
-    nurbs = (struct nurb_specific *) 0;
 
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);
@@ -147,8 +223,8 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bi.brep = brep;
 
     struct rt_db_internal di;
-    RT_INIT_DB_INTERNAL(&di);
-    di.idb_ptr = (genptr_t)&bi;
+    RT_DB_INTERNAL_INIT(&di);
+    di.idb_ptr = (void *)&bi;
 
     return rt_brep_prep(stp, &di, rtip);
 #else
@@ -157,7 +233,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	struct face_g_snurb * s;
 	struct nurb_specific * n;
 
-	BU_GETSTRUCT(n, nurb_specific);
+	BU_GET(n, struct nurb_specific);
 
 	/* Store off the original face_g_snurb */
 	s = rt_nurb_scopy(sip->srfs[i], (struct resource *)NULL);
@@ -182,18 +258,18 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	nurbs = n;
     }
 
-    stp->st_specific = (genptr_t)nurbs;
+    stp->st_specific = (void *)nurbs;
 
     /* zero thickness will get missed by the raytracer */
-    if (NEAR_ZERO(stp->st_min[X] - stp->st_max[X], los)) {
+    if (NEAR_EQUAL(stp->st_min[X], stp->st_max[X], los)) {
 	stp->st_min[X] -= los;
 	stp->st_max[X] += los;
     }
-    if (NEAR_ZERO(stp->st_min[Y] - stp->st_max[Y], los)) {
+    if (NEAR_EQUAL(stp->st_min[Y], stp->st_max[Y], los)) {
 	stp->st_min[Y] -= los;
 	stp->st_max[Y] += los;
     }
-    if (NEAR_ZERO(stp->st_min[Z] - stp->st_max[Z], los)) {
+    if (NEAR_EQUAL(stp->st_min[Z], stp->st_max[Z], los)) {
 	stp->st_min[Z] -= los;
 	stp->st_max[Z] += los;
     }
@@ -216,9 +292,6 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ N U R B _ P R I N T
- */
 void
 rt_nurb_print(register const struct soltab *stp)
 {
@@ -242,8 +315,6 @@ rt_nurb_print(register const struct soltab *stp)
 
 
 /**
- * R T _ N U R B _ S H O T
- *
  * Intersect a ray with a nurb.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -271,11 +342,11 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
     int surface = 0;
 
     invdir[0] = invdir[1] = invdir[2] = INFINITY;
-    if (!NEAR_ZERO(rp->r_dir[0], SQRT_SMALL_FASTF))
+    if (!ZERO(rp->r_dir[0]))
 	invdir[0] = 1.0 / rp->r_dir[0];
-    if (!NEAR_ZERO(rp->r_dir[1], SQRT_SMALL_FASTF))
+    if (!ZERO(rp->r_dir[1]))
 	invdir[1] = 1.0 / rp->r_dir[1];
-    if (!NEAR_ZERO(rp->r_dir[2], SQRT_SMALL_FASTF))
+    if (!ZERO(rp->r_dir[2]))
 	invdir[2] = 1.0 / rp->r_dir[2];
 
     /* Create two orthogonal Planes their intersection contains the
@@ -400,8 +471,6 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 
 /**
- * R T _ N U R B _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -432,8 +501,6 @@ rt_nurb_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 
 
 /**
- * R T _ N U R B _ C U R V E
- *
  * Return the curvature of the nurb.
  */
 void
@@ -464,8 +531,6 @@ rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 
 
 /**
- * R T _ N U R B _ U V
- *
  * For a hit on the surface of an nurb, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  * u = azimuth
@@ -486,9 +551,6 @@ rt_nurb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 }
 
 
-/**
- * R T _ N U R B _ F R E E
- */
 void
 rt_nurb_free(register struct soltab *stp)
 {
@@ -515,16 +577,13 @@ rt_nurb_free(register struct soltab *stp)
 	    rt_nurb_free_snurb(s, (struct resource *)NULL);
 	}
 	rt_nurb_free_snurb(nurb->srf, (struct resource *)NULL);	/* original surf */
-	bu_free((char *)nurb, "nurb_specific");
+	BU_PUT(nurb, struct nurb_specific);
     }
     return;
 #endif /* CONVERT_TO_BREP */
 }
 
 
-/**
- * R T _ N U R B _ C L A S S
- */
 int
 rt_nurb_class(void)
 {
@@ -532,11 +591,8 @@ rt_nurb_class(void)
 }
 
 
-/**
- * R T _ N U R B _ P L O T
- */
 int
-rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
     struct rt_nurb_internal *sip;
 
@@ -551,7 +607,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	int coords;
 	fastf_t bound;
 	point_t tmp_pt;
-	fastf_t rel;
+	fastf_t dtol;
 	struct knot_vector tkv1,
 	    tkv2;
 	fastf_t tess;
@@ -564,33 +620,14 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 	VSUB2(tmp_pt, n->min_pt, n->max_pt);
 	bound =         MAGNITUDE(tmp_pt)/ 2.0;
-	/*
-	 * Establish tolerances
-	 */
-	if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
-	    rel = 0.0;              /* none */
-	} else {
-	    /* Convert rel to absolute by scaling by diameter */
-	    rel = ttol->rel * 2 * bound;
-	}
-	if (ttol->abs <= 0.0) {
-	    if (rel <= 0.0) {
-		/* No tolerance given, use a default */
-		rel = 2 * 0.10 * bound;        /* 10% */
-	    } else {
-		/* Use absolute-ized relative tolerance */
-	    }
-	} else {
-	    /* Absolute tolerance was given, pick smaller */
-	    if (ttol->rel <= 0.0 || rel > ttol->abs)
-		rel = ttol->abs;
-	}
+
+	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * bound);
 
 	if (n->order[0] < 3 || n->order[1] < 3) {
 	    /* cannot use rt_nurb_par_edge() in this case */
 	    tess = 0.25; /* hack for now */
 	} else
-	    tess = (fastf_t) rt_nurb_par_edge(n, rel);
+	    tess = (fastf_t) rt_nurb_par_edge(n, dtol);
 
 	num_knots = (int)floor(1.0/((M_SQRT1_2 / 2.0) * tess));
 
@@ -673,19 +710,16 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     bi.brep = brep;
 
     struct rt_db_internal di;
-    RT_INIT_DB_INTERNAL(&di);
-    di.idb_ptr = (genptr_t)&bi;
+    RT_DB_INTERNAL_INIT(&di);
+    di.idb_ptr = (void *)&bi;
 
-    return rt_brep_plot(vhead, &di, ttol, tol);
+    return rt_brep_plot(vhead, &di, ttol, tol, NULL);
 #else
     return 0;
 #endif /* CONVERT_TO_BREP */
 }
 
 
-/**
- * R T _ N U R B _ T E S S
- */
 int
 rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *)
 {
@@ -693,9 +727,6 @@ rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const
 }
 
 
-/**
- * R T _ N U R B _ I M P O R T
- */
 int
 rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -716,13 +747,18 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BSPLINE;
-    ip->idb_meth = &rt_functab[ID_BSPLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_nurb_internal), "rt_nurb_internal");
+    ip->idb_meth = &OBJ[ID_BSPLINE];
+    BU_ALLOC(ip->idb_ptr, struct rt_nurb_internal);
+
     sip = (struct rt_nurb_internal *)ip->idb_ptr;
     sip->magic = RT_NURB_INTERNAL_MAGIC;
 
+    if (dbip->dbi_version < 0) {
+	sip->nsrf = flip_short(rp->B.B_nsurf);
+    } else {
+	sip->nsrf = rp->B.B_nsurf;
+    }
 
-    sip->nsrf = rp->B.B_nsurf;
     sip->srfs = (struct face_g_snurb **) bu_malloc(sip->nsrf * sizeof(struct face_g_snurb), "nurb srfs[]");
     rp++;
 
@@ -731,6 +767,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	int coords;
 	register dbfloat_t *vp;
 	int pt_type;
+	union record d;
 
 	if (rp->d.d_id != ID_BSURF) {
 	    bu_log("rt_nurb_import4() surf %d bad ID\n", s);
@@ -742,42 +779,100 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	else
 	    pt_type = RT_NURB_MAKE_PT_TYPE(4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL);
 
+	/* fix endianness */
+	d.d.d_id = rp->d.d_id;
+	if (dbip->dbi_version < 0) {
+	    d.d.d_order[0] = flip_short(rp->d.d_order[0]);
+	    d.d.d_order[1] = flip_short(rp->d.d_order[1]);
+	    d.d.d_kv_size[0] = flip_short(rp->d.d_kv_size[0]);
+	    d.d.d_kv_size[1] = flip_short(rp->d.d_kv_size[1]);
+	    d.d.d_ctl_size[0] = flip_short(rp->d.d_ctl_size[0]);
+	    d.d.d_ctl_size[1] = flip_short(rp->d.d_ctl_size[1]);
+	    d.d.d_geom_type = flip_short(rp->d.d_geom_type);
+	    d.d.d_nknots = flip_short(rp->d.d_nknots);
+	    d.d.d_nctls = flip_short(rp->d.d_nctls);
+	} else {
+	    d.d.d_order[0] = rp->d.d_order[0];
+	    d.d.d_order[1] = rp->d.d_order[1];
+	    d.d.d_kv_size[0] = rp->d.d_kv_size[0];
+	    d.d.d_kv_size[1] = rp->d.d_kv_size[1];
+	    d.d.d_ctl_size[0] = rp->d.d_ctl_size[0];
+	    d.d.d_ctl_size[1] = rp->d.d_ctl_size[1];
+	    d.d.d_geom_type = rp->d.d_geom_type;
+	    d.d.d_nknots = rp->d.d_nknots;
+	    d.d.d_nctls = rp->d.d_nctls;
+	}
+
 	sip->srfs[s] = (struct face_g_snurb *) rt_nurb_new_snurb(
-	    rp->d.d_order[0], rp->d.d_order[1],
-	    rp->d.d_kv_size[0], rp->d.d_kv_size[1],
-	    rp->d.d_ctl_size[0], rp->d.d_ctl_size[1],
+	    d.d.d_order[0], d.d.d_order[1],
+	    d.d.d_kv_size[0], d.d.d_kv_size[1],
+	    d.d.d_ctl_size[0], d.d.d_ctl_size[1],
 	    pt_type, (struct resource *)NULL);
 
 	vp = (dbfloat_t *) &rp[1];
 
-	for (i = 0; i < rp->d.d_kv_size[0]; i++)
-	    sip->srfs[s]->u.knots[i] = (fastf_t) *vp++;
-
-	for (i = 0; i < rp->d.d_kv_size[1]; i++)
-	    sip->srfs[s]->v.knots[i] = (fastf_t) *vp++;
+	if (dbip->dbi_version < 0) {
+	    for (i = 0; i < d.d.d_kv_size[0]; i++) {
+		sip->srfs[s]->u.knots[i] = flip_dbfloat(*vp++);
+	    }
+	    for (i = 0; i < d.d.d_kv_size[1]; i++) {
+		sip->srfs[s]->v.knots[i] = flip_dbfloat(*vp++);
+	    }
+	} else {
+	    for (i = 0; i < d.d.d_kv_size[0]; i++) {
+		sip->srfs[s]->u.knots[i] = (fastf_t) *vp++;
+	    }
+	    for (i = 0; i < d.d.d_kv_size[1]; i++) {
+		sip->srfs[s]->v.knots[i] = (fastf_t) *vp++;
+	    }
+	}
 
 	rt_nurb_kvnorm(&sip->srfs[s]->u);
 	rt_nurb_kvnorm(&sip->srfs[s]->v);
 
-	vp = (dbfloat_t *) &rp[rp->d.d_nknots+1];
+	vp = (dbfloat_t *) &rp[d.d.d_nknots+1];
 	m = sip->srfs[s]->ctl_points;
-	coords = rp->d.d_geom_type;
-	i = (rp->d.d_ctl_size[0] *rp->d.d_ctl_size[1]);
-	if (mat == NULL) mat = bn_mat_identity;
+	coords = d.d.d_geom_type;
+	i = (d.d.d_ctl_size[0] * d.d.d_ctl_size[1]);
+
+	if (mat == NULL)
+	    mat = bn_mat_identity;
+
 	if (coords == 3) {
 	    for (; i> 0; i--) {
-		MAT4X3PNT(m, mat, vp);
+		vect_t f;
+
+		if (dbip->dbi_version < 0) {
+		    f[0] = flip_dbfloat(vp[0]);
+		    f[1] = flip_dbfloat(vp[1]);
+		    f[2] = flip_dbfloat(vp[2]);
+		} else {
+		    VMOVE(f, vp);
+		}
+
+		MAT4X3PNT(m, mat, f);
 		m += 3;
 		vp += 3;
 	    }
 	} else if (coords == 4) {
 	    for (; i> 0; i--) {
-		MAT4X4PNT(m, mat, vp);
+		hvect_t f;
+
+		if (dbip->dbi_version < 0) {
+		    f[0] = flip_dbfloat(vp[0]);
+		    f[1] = flip_dbfloat(vp[1]);
+		    f[2] = flip_dbfloat(vp[2]);
+		    f[3] = flip_dbfloat(vp[3]);
+		} else {
+		    HMOVE(f, vp);
+		}
+
+		MAT4X4PNT(m, mat, f);
 		m += 4;
 		vp += 4;
 	    }
 	} else {
-	    bu_log("rt_nurb_internal: %d invalid elements per vect\n", rp->d.d_geom_type);
+	    bu_log("rt_nurb_internal: %d invalid elements per vect\n", d.d.d_geom_type);
 	    return -1;
 	}
 
@@ -785,15 +880,12 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	rt_nurb_s_bound(sip->srfs[s], sip->srfs[s]->min_pt,
 			sip->srfs[s]->max_pt);
 
-	rp += 1 + rp->d.d_nknots + rp->d.d_nctls;
+	rp += 1 + d.d.d_nknots + d.d.d_nctls;
     }
     return 0;
 }
 
 
-/**
- * R T _ N U R B _ E X P O R T
- */
 int
 rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
@@ -815,7 +907,7 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     /* Figure out how many recs to buffer by
      * walking through the surfaces and
-     * calculating the number of granuels
+     * calculating the number of granules
      * needed for storage and add it to the total
      */
     total_grans = 1;	/* First gran for BSOLID record */
@@ -825,7 +917,7 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = total_grans * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "nurb external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "nurb external");
     rec = (union record *)ep->ext_buf;
 
     rec[0].B.B_id = ID_BSOLID;
@@ -876,6 +968,9 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	rec_ptr += grans;
 	total_grans -= grans;
     }
+
+    bu_log("DEPRECATED:  The 'bspline' primitive is no longer supported.  Use 'brep' NURBS instead.\n");
+
     return 0;
 }
 
@@ -896,9 +991,6 @@ rt_nurb_bytes(struct face_g_snurb *srf)
 }
 
 
-/**
- * R T _ N U R B _ E X P O R T 5
- */
 int
 rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
@@ -919,55 +1011,82 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
      * calculating the number of bytes
      * needed for storage and add it to the total
      */
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_LONG;	/* number of surfaces */
     for (s = 0; s < sip->nsrf; s++) {
 	ep->ext_nbytes += rt_nurb_bytes(sip->srfs[s]);
     }
 
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "nurb external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "nurb external");
     cp = (unsigned char *)ep->ext_buf;
 
-    (void)bu_plong(cp, sip->nsrf);
+    *(uint32_t *)cp = htonl(sip->nsrf);
     cp += SIZEOF_NETWORK_LONG;
 
     for (s = 0; s < sip->nsrf; s++) {
-	register struct face_g_snurb *srf = sip->srfs[s];
+	int i;
+	struct face_g_snurb *srf = sip->srfs[s];
+
+	/* must be double for import and export */
+	double *uknots;
+	double *vknots;
+	double *points;
 
 	NMG_CK_SNURB(srf);
 
 	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
-	(void)bu_plong(cp, coords);
+	*(uint32_t *)cp = htonl(coords);
 	cp += SIZEOF_NETWORK_LONG;
-	(void)bu_plong(cp, srf->order[0]);
+	*(uint32_t *)cp = htonl(srf->order[0]);
 	cp += SIZEOF_NETWORK_LONG;
-	(void)bu_plong(cp, srf->order[1]);
+	*(uint32_t *)cp = htonl(srf->order[1]);
 	cp += SIZEOF_NETWORK_LONG;
-	(void)bu_plong(cp, srf->u.k_size);
+	*(uint32_t *)cp = htonl(srf->u.k_size);
 	cp += SIZEOF_NETWORK_LONG;
-	(void)bu_plong(cp, srf->v.k_size);
+	*(uint32_t *)cp = htonl(srf->v.k_size);
 	cp += SIZEOF_NETWORK_LONG;
-	(void)bu_plong(cp, srf->s_size[0]);
+	*(uint32_t *)cp = htonl(srf->s_size[0]);
 	cp += SIZEOF_NETWORK_LONG;
-	(void)bu_plong(cp, srf->s_size[1]);
+	*(uint32_t *)cp = htonl(srf->s_size[1]);
 	cp += SIZEOF_NETWORK_LONG;
-	htond(cp, (unsigned char *)srf->u.knots, srf->u.k_size);
-	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
-	htond(cp, (unsigned char *)srf->v.knots, srf->v.k_size);
-	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
 
-	htond(cp, (unsigned char *)srf->ctl_points,
+	/* allocate for export */
+	uknots = (double *)bu_malloc(srf->u.k_size * sizeof(double), "uknots");
+	vknots = (double *)bu_malloc(srf->v.k_size * sizeof(double), "vknots");
+	points = (double *)bu_malloc(coords * srf->s_size[0] * srf->s_size[1] * sizeof(double), "points");
+
+	/* convert fastf_t to double */
+	for (i=0; i<srf->u.k_size; i++) {
+	    uknots[i] = srf->u.knots[i];
+	}
+	for (i=0; i<srf->v.k_size; i++) {
+	    vknots[i] = srf->v.knots[i];
+	}
+	for (i=0; i<coords * srf->s_size[0] * srf->s_size[1]; i++) {
+	    points[i] = srf->ctl_points[i];
+	}
+
+	/* serialize */
+	bu_cv_htond(cp, (unsigned char *)uknots, srf->u.k_size);
+	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
+	bu_cv_htond(cp, (unsigned char *)vknots, srf->v.k_size);
+	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
+	bu_cv_htond(cp, (unsigned char *)srf->ctl_points,
 	      coords * srf->s_size[0] * srf->s_size[1]);
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
+
+	/* release our arrays */
+	bu_free(uknots, "uknots");
+	bu_free(vknots, "vknots");
+	bu_free(points, "points");
     }
+
+    bu_log("DEPRECATED:  The 'bspline' primitive is no longer supported.  Use 'brep' NURBS instead.\n");
 
     return 0;
 }
 
 
-/**
- * R T _ N U R B _ I M P O R T 5
- */
 int
 rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
@@ -984,14 +1103,15 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BSPLINE;
-    ip->idb_meth = &rt_functab[ID_BSPLINE];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_nurb_internal), "rt_nurb_internal");
+    ip->idb_meth = &OBJ[ID_BSPLINE];
+    BU_ALLOC(ip->idb_ptr, struct rt_nurb_internal);
+
     sip = (struct rt_nurb_internal *)ip->idb_ptr;
     sip->magic = RT_NURB_INTERNAL_MAGIC;
 
     cp = (unsigned char *)ep->ext_buf;
 
-    sip->nsrf = bu_glong(cp);
+    sip->nsrf = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     sip->srfs = (struct face_g_snurb **) bu_calloc(sip->nsrf, sizeof(struct face_g_snurb *), "nurb srfs[]");
 
@@ -1002,19 +1122,24 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	int order[2], u_size, v_size;
 	int s_size[2];
 
-	pt_type = bu_glong(cp);
+	/* must be double for import and export */
+	double *uknots;
+	double *vknots;
+	double *points;
+
+	pt_type = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	order[0] = bu_glong(cp);
+	order[0] = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	order[1] = bu_glong(cp);
+	order[1] = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	u_size = bu_glong(cp);
+	u_size = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	v_size = bu_glong(cp);
+	v_size = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	s_size[0] = bu_glong(cp);
+	s_size[0] = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	s_size[1] = bu_glong(cp);
+	s_size[1] = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
 	if (pt_type == 3)
 	    pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
@@ -1030,16 +1155,38 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	srf = sip->srfs[s];
 	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
-	ntohd((unsigned char *)srf->u.knots, cp, srf->u.k_size);
+	uknots = (double *)bu_malloc(srf->u.k_size * sizeof(double), "uknots");
+	vknots = (double *)bu_malloc(srf->v.k_size * sizeof(double), "vknots");
+
+	bu_cv_ntohd((unsigned char *)uknots, cp, srf->u.k_size);
 	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
-	ntohd((unsigned char *)srf->v.knots, cp, srf->v.k_size);
+	bu_cv_ntohd((unsigned char *)vknots, cp, srf->v.k_size);
 	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
+
+	/* convert double to fastf_t */
+	for (i=0; i<srf->u.k_size; i++) {
+	    srf->u.knots[i] = uknots[i];
+	}
+	for (i=0; i<srf->v.k_size; i++) {
+	    srf->v.knots[i] = vknots[i];
+	}
+
+	bu_free(uknots, "uknots");
+	bu_free(vknots, "vknots");
 
 	rt_nurb_kvnorm(&srf->u);
 	rt_nurb_kvnorm(&srf->v);
 
-	ntohd((unsigned char *)srf->ctl_points, cp,
-	      coords * srf->s_size[0] * srf->s_size[1]);
+	points = (double *)bu_malloc(coords * srf->s_size[0] * srf->s_size[1] * sizeof(double), "points");
+
+	bu_cv_ntohd((unsigned char *)points, cp, coords * srf->s_size[0] * srf->s_size[1]);
+
+	/* convert double to fastf_t */
+	for (i=0; i < coords * srf->s_size[0] * srf->s_size[1]; i++) {
+	    srf->ctl_points[i] = points[i];
+	}
+
+	bu_free(points, "points");
 
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
 
@@ -1065,9 +1212,6 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-/**
- * R T _ N U R B _ I F R E E
- */
 void
 rt_nurb_ifree(struct rt_db_internal *ip)
 {
@@ -1086,16 +1230,13 @@ rt_nurb_ifree(struct rt_db_internal *ip)
     sip->magic = 0;
     sip->nsrf = 0;
     bu_free(sip->srfs, "nurb surfs[]");
-    sip->srfs = (struct face_g_snurb**)GENPTR_NULL;
+    sip->srfs = (struct face_g_snurb**)((void *)0);
 
     bu_free(ip->idb_ptr, "sip ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
-/**
- * R T _ N U R B _ D E S C R I B E
- */
 int
 rt_nurb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
@@ -1233,7 +1374,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    return BRLCAD_ERROR;
 	}
 
-	if (!strcmp(argv[0], "N")) {
+	if (BU_STR_EQUAL(argv[0], "N")) {
 	    if (nurb->srfs) {
 		for (i=0; i<nurb->nsrf; i++)
 		    rt_nurb_free_snurb(nurb->srfs[i], NULL);
@@ -1242,7 +1383,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    nurb->nsrf = atoi(argv[1]);
 	    nurb->srfs = (struct face_g_snurb **) bu_calloc(
 		nurb->nsrf, sizeof(struct face_g_snurb *), "nurb srfs[]");
-	} else if (!strcmp(argv[0], "S")) {
+	} else if (BU_STR_EQUAL(argv[0], "S")) {
 	    (void)Tcl_ListObjGetElements(brlcad_interp, list, &len, &srf_array);
 	    for (srf_no=0; srf_no < nurb->nsrf; srf_no++) {
 		int n_params=0;
@@ -1256,7 +1397,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		    int tmp_len;
 
 		    key = Tcl_GetStringFromObj(srf_param_array[i], NULL);
-		    if (!strcmp(key, "O")) {
+		    if (BU_STR_EQUAL(key, "O")) {
 			tmp_len = 0;
 			if (tcl_obj_to_int_array(brlcad_interp, srf_param_array[i+1],
 						 &order, &tmp_len) != 2) {
@@ -1264,7 +1405,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 					  "ERROR: unable to parse surface\n");
 			    return BRLCAD_ERROR;
 			}
-		    } else if (!strcmp(key, "s")) {
+		    } else if (BU_STR_EQUAL(key, "s")) {
 			tmp_len = 0;
 			if (tcl_obj_to_int_array(brlcad_interp, srf_param_array[i+1],
 						 &s_size, &tmp_len) != 2) {
@@ -1272,16 +1413,16 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 					  "ERROR: unable to parse surface\n");
 			    return BRLCAD_ERROR;
 			}
-		    } else if (!strcmp(key, "T")) {
+		    } else if (BU_STR_EQUAL(key, "T")) {
 			pt_type = atoi(Tcl_GetStringFromObj(
 					   srf_param_array[i+1], NULL));
-		    } else if (!strcmp(key, "u")) {
+		    } else if (BU_STR_EQUAL(key, "u")) {
 			tcl_obj_to_fastf_array(brlcad_interp, srf_param_array[i+1], &u_pts,
 					       &u_size);
-		    } else if (!strcmp(key, "v")) {
+		    } else if (BU_STR_EQUAL(key, "v")) {
 			tcl_obj_to_fastf_array(brlcad_interp, srf_param_array[i+1], &v_pts,
 					       &v_size);
-		    } else if (!strcmp(key, "P")) {
+		    } else if (BU_STR_EQUAL(key, "P")) {
 			int tmp2;
 
 			if (!order || !s_size || !u_pts || !v_pts ||
@@ -1328,10 +1469,6 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 }
 
 
-/**
- * R T _ N U R B _ P A R A M S
- *
- */
 int
 rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
 {

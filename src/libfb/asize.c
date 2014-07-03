@@ -1,7 +1,7 @@
 /*                         A S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,8 +40,8 @@
 
 /* This table does not need to include any square sizes */
 struct sizes {
-    unsigned long int	width;		/* image width in pixels */
-    unsigned long int	height;		/* image height in pixels */
+    size_t	width;		/* image width in pixels */
+    size_t	height;		/* image height in pixels */
 };
 struct sizes fb_common_sizes[] = {
     {  160,  120 },		/* quarter 640x480 */
@@ -74,8 +74,6 @@ struct sizes fb_common_sizes[] = {
 
 
 /*
- *		       F B _ C O M M O N _ F I L E _ S I Z E
- *
  *  If the file name contains size information encoded in it,
  *  then that size is returned, even if it differs from the actual
  *  file dimensions.  (It might have been truncated).
@@ -87,14 +85,14 @@ struct sizes fb_common_sizes[] = {
  *	1	width and height returned
  */
 int
-fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const char *filename, int pixel_size)
+fb_common_file_size(size_t *widthp, size_t *heightp, const char *filename, int pixel_size)
 /* pointer to returned width */
 /* pointer to returned height */
 /* image file to stat */
 /* bytes per pixel */
 {
     struct	stat	sbuf;
-    unsigned long int	size;
+    size_t	size;
     register const char	*cp;
 
     *widthp = *heightp = 0;		/* sanity */
@@ -121,14 +119,13 @@ fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const
     if (stat(filename, &sbuf) < 0)
 	return	0;
 
-    size = (unsigned long int)(sbuf.st_size / pixel_size);
+    size = (size_t)(sbuf.st_size / pixel_size);
 
     return fb_common_image_size(widthp, heightp, size);
 }
 
 
-/*                      F B _ C O M M O N _ N A M E _ S I Z E
- *
+/*
  *  Given the number of pixels in an image file, along with a name for the
  *  image (possibly the filename), attempt to determine the
  *  the width and height of the image.
@@ -139,19 +136,24 @@ fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const
  */
 
 int
-fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const char *name)
+fb_common_name_size(size_t *widthp, size_t *heightp, const char *name)
 /* pointer to returned width */
 /* pointer to returned height */
 /* name to parse */
 {
     register const char *cp = name;
+    unsigned long w;
+    unsigned long h;
 
     /* File name may have several minus signs in it.  Try repeatedly */
     while (*cp) {
 	cp = strchr(cp, '-');		/* Find a minus sign */
 	if (cp == NULL) break;
-	if (sscanf(cp, "-w%lu-n%lu", widthp, heightp) == 2)
+	if (sscanf(cp, "-w%lu-n%lu", &w, &h) == 2) {
+	    *widthp = w;
+	    *heightp = h;
 	    return 1;
+	}
 	cp++;				/* skip over the minus */
     }
 
@@ -161,8 +163,6 @@ fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const
 
 
 /*
- *			F B _ C O M M O N _ I M A G E _ S I Z E
- *
  *  Given the number of pixels in an image file,
  *  if this is a "common" image size,
  *  return the width and height of the image.
@@ -172,13 +172,13 @@ fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const
  *	1	width and height returned
  */
 int
-fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, unsigned long int npixels)
+fb_common_image_size(size_t *widthp, size_t *heightp, size_t npixels)
 /* pointer to returned width */
 /* pointer to returned height */
 /* Number of pixels */
 {
     struct sizes *sp;
-    unsigned long int root;
+    size_t root;
 
     if (npixels <= 0)
 	return	0;
@@ -194,7 +194,7 @@ fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, unsi
     }
 
     /* If the size is a perfect square, then use that. */
-    root = (long int)(sqrt((double)npixels)+0.999);
+    root = (size_t)(sqrt((double)npixels)+0.999);
     if (root*root == npixels) {
 	*widthp = root;
 	*heightp = root;

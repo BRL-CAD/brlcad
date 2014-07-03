@@ -1,7 +1,7 @@
 /*                   N U R B _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,6 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     RT_NURB_CK_MAGIC(nip);
 
     ON_TextLog log(stderr);
-    *b = ON_Brep::New();
 
     for (i = 0; i < nip->nsrf; i++) {
 	struct face_g_snurb *surface = nip->srfs[i];

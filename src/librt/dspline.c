@@ -1,7 +1,7 @@
 /*                        D S P L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,25 +19,25 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file dspline.c
+/** @file librt/dspline.c
  *
  * Simple data (double) spline package.
  *
- * rt_dspline_matrix(m, type, tension, bias)	create basis matrix
- * rt_dspline4(m, a, b, c, d, alpha)		interpolate 1 value
- * rt_dspline4v(m, a, b, c, d, depth alpha)	interpolate vectors
- * rt_dspline(r, m, knots, n, depth, alpha)	interpolate n knots over 0..1
+ * rt_dspline_matrix(m, type, tension, bias) create basis matrix
+ * rt_dspline4(m, a, b, c, d, alpha) interpolate 1 value
+ * rt_dspline4v(m, a, b, c, d, depth alpha) interpolate vectors
+ * rt_dspline(r, m, knots, n, depth, alpha) interpolate n knots over 0..1
  *
  * Example:
  *
  * mat_t m;
  * double d;
  * vect_t v;
- * vect_t kn = { 	{0., 0., 0.},
- *		 	{0., 1., 0.},
- * 			{.5, 1., 0.},
- *		 	{1., 1., 0.},
- *		 	{1., 0., 0.} };
+ * vect_t kn = { {0., 0., 0.},
+ *		 {0., 1., 0.},
+ * 		 {.5, 1., 0.},
+ *		 {1., 1., 0.},
+ *		 {1., 0., 0.} };
  *
  * rt_dspline_matrix(m, "Beta", 0.5, 1.0);
  *
@@ -60,7 +60,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+
 #include "raytrace.h"
 
 
@@ -103,6 +103,7 @@ GetBeta(fastf_t *m, const double bias, const double tension)
     for (i=0; i < 16; i++) m[i] *= d;
 }
 
+
 static void
 GetCardinal(fastf_t *m, const double tension)
 {
@@ -117,44 +118,32 @@ GetCardinal(fastf_t *m, const double tension)
     m[ 9] = m[11] = m[12] = m[14] = m[15] = 0.0;
 }
 
-/**
- * R T _ D S P L I N E _ M A T R I X
- *
- * Initialize a spline matrix for a particular spline type.
- *
- */
+
 void
 rt_dspline_matrix(fastf_t *m, const char *type, const double tension, const double bias)
 
-    /* "Cardinal", "Catmull", "Beta" */
-    /* Cardinal tension of .5 is Catmull spline */
-    /* only for B spline */
+/* "Cardinal", "Catmull", "Beta" */
+/* Cardinal tension of .5 is Catmull spline */
+/* only for B spline */
 {
-    if (!strncmp(type, "Cardinal", 8))	GetCardinal(m, tension);
-    else if (!strncmp(type, "Catmull", 7))	GetCardinal(m, 0.5);
-    else if (!strncmp(type, "Beta", 4)) 	GetBeta(m, bias, tension);
-    else {
-	bu_log("Error: %s:%d spline type \"%s\" Unknown\n",
-	       __FILE__, __LINE__, type);
-	abort();
+    if (!bu_strncasecmp(type, "Cardinal", 8)) {
+	GetCardinal(m, tension);
+    } else if (!bu_strncasecmp(type, "Catmull", 7)) {
+	GetCardinal(m, 0.5);
+    } else if (!bu_strncasecmp(type, "Beta", 4)) {
+	GetBeta(m, bias, tension);
+    } else {
+	bu_log("WARNING: %s:%d spline type \"%s\" unknown\n", __FILE__, __LINE__, type);
+	GetBeta(m, bias, tension);
     }
 }
 
-/**
- * R T _ D S P L I N E 4
- *
- * m		spline matrix (see rt_dspline4_matrix)
- * a, b, c, d	knot values
- * alpha:	0..1	interpolation point
- *
- * Evaluate a 1-dimensional spline at a point "alpha" on knot values
- * a, b, c, d.
- */
+
 double
 rt_dspline4(fastf_t *m, double a, double b, double c, double d, double alpha)
-    /* spline matrix */
-    /* control pts */
-    /* point to interpolate at */
+/* spline matrix */
+/* control pts */
+/* point to interpolate at */
 {
     double p0, p1, p2, p3;
 
@@ -163,30 +152,19 @@ rt_dspline4(fastf_t *m, double a, double b, double c, double d, double alpha)
     p2 = m[ 8]*a + m[ 9]*b + m[10]*c + m[11]*d;
     p3 = m[12]*a + m[13]*b + m[14]*c + m[15]*d;
 
-    return p3 +  alpha*(p2 + alpha*(p1 + alpha*p0));
+    return p3 + alpha*(p2 + alpha*(p1 + alpha*p0));
 }
 
-/**
- * R T _ D S P L I N E 4 V
- *
- * pt		vector to recieve the interpolation result
- * m		spline matrix (see rt_dspline4_matrix)
- * a, b, c, d	knot values
- * alpha:	0..1	interpolation point
- *
- * Evaluate a spline at a point "alpha" between knot pts b & c
- * The knots and result are all vectors with "depth" values (length).
- *
- */
+
 void
 rt_dspline4v(double *pt, const fastf_t *m, const double *a, const double *b, const double *c, const double *d, const int depth, const double alpha)
-    /* result */
-    /* spline matrix obtained with spline_matrix() */
-    /* knots */
+/* result */
+/* spline matrix obtained with spline_matrix() */
+/* knots */
 
 
-    /* number of values per knot */
-    /* 0 <= alpha <= 1 */
+/* number of values per knot */
+/* 0 <= alpha <= 1 */
 {
     int i;
     double p0, p1, p2, p3;
@@ -197,46 +175,18 @@ rt_dspline4v(double *pt, const fastf_t *m, const double *a, const double *b, con
 	p2 = m[ 8]*a[i] + m[ 9]*b[i] + m[10]*c[i] + m[11]*d[i];
 	p3 = m[12]*a[i] + m[13]*b[i] + m[14]*c[i] + m[15]*d[i];
 
-	pt[i] = p3 +  alpha*(p2 + alpha*(p1 + alpha*p0));
+	pt[i] = p3 + alpha*(p2 + alpha*(p1 + alpha*p0));
     }
 }
 
-
-/**
- * R T _ D S P L I N E _ N
- *
- * Interpolate n knot vectors over the range 0..1
- *
- * "knots" is an array of "n" knot vectors.  Each vector consists of
- * "depth" values.  They define an "n" dimensional surface which is
- * evaluated at the single point "alpha".  The evaluated point is
- * returned in "r"
- *
- * Example use:
- *
- * double result[MAX_DEPTH], knots[MAX_DEPTH*MAX_KNOTS];
- * mat_t m;
- * int knot_count, depth;
- *
- * knots = bu_malloc(sizeof(double) * knot_length * knot_count);
- * result = bu_malloc(sizeof(double) * knot_length);
- *
- * rt_dspline4_matrix(m, "Catmull", (double *)NULL, 0.0);
- *
- * for (i=0; i < knot_count; i++)
- *   get a knot(knots, i, knot_length);
- *
- * rt_dspline_n(result, m, knots, knot_count, knot_length, alpha);
- *
- */
 void
 rt_dspline_n(double *r, const fastf_t *m, const double *knots, const int nknots, const int depth, const double alpha)
-    /* result */
-    /* spline matrix */
-    /* knot values */
-    /* number of knots */
-    /* number of values per knot */
-    /* point on surface (0..1) to evaluate */
+/* result */
+/* spline matrix */
+/* knot values */
+/* number of knots */
+/* number of values per knot */
+/* point on surface (0..1) to evaluate */
 {
     double *a, *b, *c, *d, x;
     int nspans = nknots - 3;
@@ -266,6 +216,7 @@ rt_dspline_n(double *r, const fastf_t *m, const double *knots, const int nknots,
     rt_dspline4v(r, m, a, b, c, d, depth, x);
 
 }
+
 
 /*
  * Local Variables:

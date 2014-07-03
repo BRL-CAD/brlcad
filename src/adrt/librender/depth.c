@@ -1,7 +1,7 @@
 /*                         D E P T H . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file depth.c
+/** @file librender/depth.c
  *
  */
 
@@ -26,29 +26,31 @@
 
 
 void
-render_depth_free(render_t *render)
+render_depth_free(render_t *UNUSED(render))
 {
     return;
 }
 
+
 void
-render_depth_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+render_depth_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
-    tie_id_t id;
-    adrt_mesh_t *mesh;
+    struct tie_id_s id;
 
     /* Visualize ray depth, must put ray->depth++ hack into bsp for this to be of any use */
-    if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL)))
-	pixel->v[0] = 0.0075 * ray->kdtree_depth;
+    if (tie_work(tie, ray, &id, render_hit, NULL) != NULL)
+	*pixel[0] = 0.0075 * ray->kdtree_depth;
 }
 
+
 int
-render_depth_init(render_t *render, char *usr)
+render_depth_init(render_t *render, const char *UNUSED(usr))
 {
     render->work = render_depth_work;
     render->free = render_depth_free;
     return 0;
 }
+
 
 /*
  * Local Variables:

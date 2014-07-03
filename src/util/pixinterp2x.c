@@ -1,7 +1,7 @@
 /*                   P I X I N T E R P 2 X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixinterp2x.c
+/** @file util/pixinterp2x.c
  *
  * Read a .pix file of a given resolution, and produce one with
  * twice as many pixels by interpolating between the pixels.
@@ -49,15 +49,12 @@ char usage[] = "\
 Usage: pixinterp2x [-h] [-s squarefilesize]\n\
 	[-w file_width] [-n file_height] [file.pix] > outfile.pix\n";
 
-/*
- * G E T _ A R G S
- */
 static int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hs:w:n:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "hs:w:n:")) != -1) {
 	switch (c) {
 	    case 'h':
 		/* high-res */
@@ -93,9 +90,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -136,6 +130,7 @@ main(int argc, char **argv)
 	    interp_lines(outy-1, outy, outy-2);
     }
     ret = write(1, (char *)outbuf, outsize);
+    bu_free(inbuf, "inbuf alloc from malloc");
     if (ret != outsize) {
 	perror("pixinterp2x write");
 	bu_exit (1, NULL);

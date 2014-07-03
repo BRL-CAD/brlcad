@@ -1,247 +1,199 @@
-include_directories(
-    ../../include
-    ../other/libz
-    ../other/openNURBS
-    ../other/libregex
-    ../other/tcl/generic
-)
+if(MSVC)
+  add_definitions(
+    -DON_DLL_IMPORTS
+    )
+endif(MSVC)
 
 add_definitions(
-    -DBRLCAD_DLL
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-    -DON_DLL_IMPORTS
-)
+  -D_CONSOLE
+  -DBRLCAD_DLL
+  )
 
-add_executable(3dm-g
-    3dm/3dm-g.cpp
-)
-target_link_libraries(3dm-g
-    BrlcadCore
-    openNURBS
-)
+add_subdirectory(step)
 
-add_executable(asc2g
-    asc/asc2g.c
-)
-target_link_libraries(asc2g
-    BrlcadCore
-    tcl85
-)
+add_subdirectory(iges)
+add_subdirectory(intaval)
+add_subdirectory(raw)
+add_subdirectory(vdeck)
 
-add_executable(g2asc
-    asc/g2asc.c
-)
-target_link_libraries(g2asc
-    BrlcadCore
-    tcl85
-)
+set(CONV_INCLUDE_DIRS
+  ${BU_INCLUDE_DIRS}
+  ${BN_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
+  ${GCV_INCLUDE_DIRS}
+  ${SYSV_INCLUDE_DIRS}
+  ${ORLE_INCLUDE_DIRS}
+  ${WDB_INCLUDE_DIRS}
+  ${TCLCAD_INCLUDE_DIRS}
+  ${REGEX_INCLUDE_DIR}
+  )
+BRLCAD_INCLUDE_DIRS(CONV_INCLUDE_DIRS)
 
-add_executable(comgeom-g
-    comgeom/cvt.c
-    comgeom/f2a.c
-    comgeom/mat.c
-    comgeom/read.c
-    comgeom/region.c
-    comgeom/solid.c
-    comgeom/tools.c
-)
-target_link_libraries(comgeom-g
-    BrlcadCore
-)
+set(3dm-g_SRCS
+  3dm/conv3dm-g.cpp
+  3dm/3dm-g.cpp
+  )
+BRLCAD_ADDEXEC(3dm-g "${3dm-g_SRCS}" "libwdb;libicv;${OPENNURBS_LIBRARY}" NO_STRICT)
 
-add_executable(bot-bldxf
-    dxf/bot-bldxf.c
-)
-target_link_libraries(bot-bldxf
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(asc2dsp asc/asc2dsp.c libbu)
 
-add_executable(dxf-g
-    dxf/dxf-g.c
-)
-target_link_libraries(dxf-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libtclcad;libged;libwdb;librt;libbu;${WINSOCK_LIB};${M_LIBRARY}")
 
-add_executable(g-dxf
-    dxf/g-dxf.c
-)
-target_link_libraries(g-dxf
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(asc2pix asc/asc2pix.c libbu)
 
-add_executable(fast4-g
-    fast4-g.c
-)
-target_link_libraries(fast4-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(pix2asc asc/pix2asc.c libbu)
 
-add_executable(jack-g
-    jack/jack-g.c
-)
-target_link_libraries(jack-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(asc-nmg nmg/asc-nmg.c "libwdb;${M_LIBRARY}")
 
-add_executable(g-jack
-    jack/g-jack.c
-)
-target_link_libraries(g-jack
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(g2asc asc/g2asc.c "librt;libbu;${WINSOCK_LIB}")
 
-add_executable(g-off
-    off/g-off.c
-)
-target_link_libraries(g-off
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(bot-bldxf dxf/bot-bldxf.c "librt;libbu;${M_LIBRARY}")
 
-add_executable(off-g
-    off/off-g.c
-)
-target_link_libraries(off-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(bot_dump bot_dump.c "libged;librt")
 
-add_executable(stl-g
-    stl/stl-g.c
-)
-target_link_libraries(stl-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(bot_shell-vtk bot_shell-vtk.c librt)
 
-add_executable(g-stl
-    stl/g-stl.c
-)
-target_link_libraries(g-stl
-    BrlcadCore
-)
+set(comgeom-g_SRCS
+  comgeom/cvt.c
+  comgeom/f2a.c
+  comgeom/mat.c
+  comgeom/read.c
+  comgeom/region.c
+  comgeom/solid.c
+  comgeom/tools.c
+  )
+BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "libwdb;libbn;libbu;${M_LIBRARY}")
 
-add_executable(dbupgrade
-    dbupgrade.c
-)
-target_link_libraries(dbupgrade
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu;libsysv")
 
-add_executable(g4-g5
-    g4-g5.c
-)
-target_link_libraries(g4-g5
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(cy-g cy-g.c "libwdb;${M_LIBRARY}")
 
-add_executable(g5-g4
-    g5-g4.c
-)
-target_link_libraries(g5-g4
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(dbupgrade dbupgrade.c "libwdb;librt;libbu")
 
-add_executable(g-acad
-    g-acad.c
-)
-target_link_libraries(g-acad
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(dem-g dem-g.c "libwdb;${M_LIBRARY}")
 
-add_executable(g-obj
-    g-obj.c
-)
-target_link_libraries(g-obj
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb;librt;libbn;libbu;${M_LIBRARY}")
 
-add_executable(obj-g
-    obj-g.c
-)
-target_link_libraries(obj-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${M_LIBRARY}")
 
-add_executable(patch-g
-    patch/patch-g.c
-)
-target_link_libraries(patch-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(euclid_format euclid/euclid_format.c librt)
 
-add_executable(rpatch
-    patch/rpatch.c
-)
-target_link_libraries(rpatch
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "libbn;libbu;libsysv")
 
-add_executable(g-tankill
-    tankill/g-tankill.c
-)
-target_link_libraries(g-tankill
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(euclid-g euclid/euclid-g.c libwdb)
 
-add_executable(tankill-g
-    tankill/tankill-g.c
-)
-target_link_libraries(tankill-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(g-dot g-dot.c "libged;libbu")
 
-add_executable(g-var
-    g-var.c
-)
-target_link_libraries(g-var
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(g-dxf dxf/g-dxf.c "librt;libgcv;libbu")
 
-add_executable(g-vrml
-    g-vrml.c
-)
-target_link_libraries(g-vrml
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(g-egg g-egg.c "libwdb;libgcv")
 
-add_executable(g-x3d
-    g-x3d.c
-)
-target_link_libraries(g-x3d
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(g-euclid euclid/g-euclid.c librt)
 
-add_executable(nastran-g
-    nastran-g.c
-)
-target_link_libraries(nastran-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(g-euclid1 euclid/g-euclid1.c librt)
 
-add_executable(ply-g
-    ply-g.c
-)
-target_link_libraries(ply-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(g-nff g-nff.c "libwdb;${M_LIBRARY}")
 
-add_executable(proe-g
-    proe-g.c
-)
-target_link_libraries(proe-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(g-nmg nmg/g-nmg.c libwdb)
 
-add_executable(viewpoint-g
-    viewpoint-g.c
-)
-target_link_libraries(viewpoint-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(fast4-g fast4-g.c "libwdb;librt;libbu;${M_LIBRARY}")
 
-add_executable(g-xxx_facets
-    g-xxx_facets.c
-)
-target_link_libraries(g-xxx_facets
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(jack-g jack/jack-g.c "libwdb;librt;libbu")
+
+BRLCAD_ADDEXEC(g-jack jack/g-jack.c "librt;libbu")
+
+BRLCAD_ADDEXEC(g-off off/g-off.c "librt;libbu")
+
+BRLCAD_ADDEXEC(off-g off/off-g.c "libwdb;librt;libbu")
+
+BRLCAD_ADDEXEC(stl-g stl/stl-g.c "libwdb;librt;libbu;${WINSOCK_LIB}")
+
+BRLCAD_ADDEXEC(g-stl stl/g-stl.c "librt;libgcv;libbu;${WINSOCK_LIB}")
+
+BRLCAD_ADDEXEC(g4-g5 g4-g5.c "librt;libbu" NO_INSTALL)
+
+BRLCAD_ADDEXEC(g5-g4 g5-g4.c "libwdb;librt;libbu" NO_INSTALL)
+
+BRLCAD_ADDEXEC(g-acad g-acad.c "librt;libbu")
+
+BRLCAD_ADDEXEC(g-obj g-obj.c "librt;libbu")
+
+BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;")
+
+# TODO - Until wfobj functionality is available as a libgcv API,
+# obj-g build logic is living in src/libgcv/wfobj. Once an API
+# for libgcv is devised that exposes the wfobj functionality move
+# obj-g build logic back here
+#BRLCAD_ADDEXEC(obj-g ${OBJ_G_SRCS} "libbu;libbn;librt;libwdb;libgcv")
+
+BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libwdb;librt;libbu;${M_LIBRARY}")
+
+BRLCAD_ADDEXEC(rpatch patch/rpatch.c "librt;libbu")
+
+BRLCAD_ADDEXEC(g-tankill tankill/g-tankill.c "librt;libbu")
+
+BRLCAD_ADDEXEC(tankill-g tankill/tankill-g.c "libwdb;librt;libbu")
+
+BRLCAD_ADDEXEC(g-var g-var.c "librt;libbu;${M_LIBRARY}")
+
+BRLCAD_ADDEXEC(g-vrml g-vrml.c "librt;libbu;${M_LIBRARY}")
+
+BRLCAD_ADDEXEC(g-x3d g-x3d.c "librt;libbu;${M_LIBRARY}")
+
+BRLCAD_ADDEXEC(nastran-g nastran-g.c "libwdb;librt;libbu;${M_LIBRARY}")
+
+BRLCAD_ADDEXEC(nmg-bot nmg/nmg-bot.c libwdb)
+
+BRLCAD_ADDEXEC(nmg-rib nmg/nmg-rib.c libwdb)
+
+BRLCAD_ADDEXEC(nmg-sgp nmg/nmg-sgp.c libwdb)
+
+BRLCAD_ADDEXEC(ply-g ply-g.c "librt;libbu")
+
+BRLCAD_ADDEXEC(poly-bot poly-bot.c "libwdb;${WINSOCK_LIB}")
+
+BRLCAD_ADDEXEC(proe-g proe-g.c "libwdb;librt;libbu;${M_LIBRARY}")
+
+BRLCAD_ADDEXEC(shp-g "shp/shp-g.c;shp/shapelib/safileio.c;shp/shapelib/shpopen.c" "libwdb;librt;libbu")
+
+BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "libwdb;librt;libbu")
+
+BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb;librt;libbu;${M_LIBRARY}")
+
+BRLCAD_ADDEXEC(g-xxx g-xxx.c "librt;libbu" NO_INSTALL)
+BRLCAD_ADDDATA(g-xxx.c sample_applications)
+
+BRLCAD_ADDEXEC(g-xxx_facets g-xxx_facets.c "librt;libbu" NO_INSTALL)
+BRLCAD_ADDDATA(g-xxx_facets.c sample_applications)
+
+BRLCAD_ADDEXEC(walk_example walk_example.c "libbu;librt" NO_INSTALL)
+BRLCAD_ADDDATA(walk_example.c sample_applications)
+
+install(PROGRAMS intaval-g.py DESTINATION bin)
+
+
+set(conv_ignore_files
+  Formats.csv
+  comgeom/try.sh
+  dbclean.sh
+  dxf/dxf.h
+  intaval-g.py
+  off
+  patch/patch-g.h
+  patch/pull_comp.sh
+  patch/pull_solidsub.sh
+  patch/rpatch.f
+  shp/shapelib/LICENSE.LGPL
+  shp/shapelib/license.html
+  shp/shapelib/shapefil.h
+  shp/README
+  )
+CMAKEFILES(${conv_ignore_files})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

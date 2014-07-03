@@ -1,7 +1,7 @@
 /*                        M A K E _ P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file make_pnts.c
+/** @file libged/make_pnts.c
  *
  * The "make_pnts" command makes a point-cloud from a points data file.
  *
@@ -30,6 +30,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/sort.h"
+#include "bu/units.h"
 #include "rtgeom.h"
 #include "wdb.h"
 
@@ -92,10 +94,10 @@ static char *p_make_pnts[] = {
 
 
 /*
- * Character compare function used by qsort function.
+ * Character compare function used by bu_sort function.
  */
 int
-compare_char(const char *a, const char *b)
+compare_char(const char *a, const char *b, void *UNUSED(arg))
 {
     return (int)(*a - *b);
 }
@@ -110,13 +112,11 @@ compare_char(const char *a, const char *b)
 int
 str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_result_str)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     char *temp_string = (char *)NULL;
-    size_t index = 0;
+    size_t idx = 0;
     size_t format_string_length = 0;
     int ret = GED_OK;
-
-    bu_vls_init(&str);
 
     if ((format_string == (char *)NULL) || (pnt_type == (rt_pnt_type *)NULL)) {
 	bu_vls_printf(ged_result_str, "NULL pointer(s) passed to function 'str2type'.\n");
@@ -125,32 +125,32 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 	format_string_length = strlen(format_string);
 
 	/* remove any '?' from format string before testing for point-cloud type */
-	for (index = 0 ; index < format_string_length ; index++) {
-	    if (format_string[index] != '?') {
-		bu_vls_putc(&str, format_string[index]);
+	for (idx = 0 ; idx < format_string_length ; idx++) {
+	    if (format_string[idx] != '?') {
+		bu_vls_putc(&str, format_string[idx]);
 	    }
 	}
 
 	bu_vls_trimspace(&str);
 
 	temp_string = bu_vls_addr(&str);
-	qsort(temp_string, strlen(temp_string), sizeof(char), (int (*)(const void *a, const void *b))compare_char);
+	bu_sort(temp_string, strlen(temp_string), sizeof(char), (int (*)(const void *a, const void *b, void *arg))compare_char, NULL);
 
-	if (strcmp(temp_string, "xyz") == 0) {
+	if (BU_STR_EQUAL(temp_string, "xyz")) {
 	    *pnt_type = RT_PNT_TYPE_PNT;
-	} else if (strcmp(temp_string, "bgrxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "bgrxyz")) {
 	    *pnt_type = RT_PNT_TYPE_COL;
-	} else if (strcmp(temp_string, "sxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "sxyz")) {
 	    *pnt_type = RT_PNT_TYPE_SCA;
-	} else if (strcmp(temp_string, "ijkxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "ijkxyz")) {
 	    *pnt_type = RT_PNT_TYPE_NRM;
-	} else if (strcmp(temp_string, "bgrsxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "bgrsxyz")) {
 	    *pnt_type = RT_PNT_TYPE_COL_SCA;
-	} else if (strcmp(temp_string, "bgijkrxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "bgijkrxyz")) {
 	    *pnt_type = RT_PNT_TYPE_COL_NRM;
-	} else if (strcmp(temp_string, "ijksxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "ijksxyz")) {
 	    *pnt_type = RT_PNT_TYPE_SCA_NRM;
-	} else if (strcmp(temp_string, "bgijkrsxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "bgijkrsxyz")) {
 	    *pnt_type = RT_PNT_TYPE_COL_SCA_NRM;
 	} else {
 	    bu_vls_printf(ged_result_str, "Invalid format string '%s'", format_string);
@@ -175,12 +175,10 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 int
 str2mm(const char *units_string, double *conv_factor, struct bu_vls *ged_result_str)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     double tmp_value = 0.0;
     char *endp = (char *)NULL;
     int ret = GED_OK;
-
-    bu_vls_init(&str);
 
     if ((units_string == (char *)NULL) || (conv_factor == (double *)NULL)) {
 	bu_vls_printf(ged_result_str, "NULL pointer(s) passed to function 'str2mm'.\n");
@@ -270,8 +268,8 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 				  /* it is expected that the character representation of a double will never exceed this size string */
     char *endp = (char *)NULL;
 
-    struct bu_vls format_string;
-    int format_string_index = 0;
+    struct bu_vls format_string = BU_VLS_INIT_ZERO;
+    size_t format_string_index = 0;
 
     unsigned int num_doubles_per_point = 0;
 
@@ -288,16 +286,16 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* prompt for point-cloud name */
     if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s", prompt[0]);
 	return GED_MORE;
     }
 
@@ -305,35 +303,35 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
     /* prompt for data file name with path */
     if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s", prompt[1]);
 	return GED_MORE;
     }
 
     /* prompt for data file format */
     if (argc < 4) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[2]);
+	bu_vls_printf(gedp->ged_result_str, "%s", prompt[2]);
 	return GED_MORE;
     }
 
     /* Validate 'point file data format string' and return point-cloud type. */
-    if (str2type(argv[3], &type, &gedp->ged_result_str) == GED_ERROR) {
+    if (str2type(argv[3], &type, gedp->ged_result_str) == GED_ERROR) {
 	return GED_ERROR;
     }
 
     /* prompt for data file units */
     if (argc < 5) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[3]);
+	bu_vls_printf(gedp->ged_result_str, "%s", prompt[3]);
 	return GED_MORE;
     }
 
     /* Validate the unit string and return conversion factor to millimeters. */
-    if (str2mm(argv[4], &local2base, &gedp->ged_result_str) == GED_ERROR) {
+    if (str2mm(argv[4], &local2base, gedp->ged_result_str) == GED_ERROR) {
 	return GED_ERROR;
     }
 
     /* prompt for default point size */
     if (argc < 6) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[4]);
+	bu_vls_printf(gedp->ged_result_str, "%s", prompt[4]);
 	return GED_MORE;
     }
 
@@ -341,24 +339,23 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     if ((endp != argv[5]) && (*endp == '\0')) {
 	/* convert to double success */
 	if (defaultSize < 0.0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Default point size '%lf' must be non-negative.\n", defaultSize);
+	    bu_vls_printf(gedp->ged_result_str, "Default point size '%lf' must be non-negative.\n", defaultSize);
 	    return GED_ERROR;
 	}
     } else {
-	bu_vls_printf(&gedp->ged_result_str, "Invalid default point size '%s'\n", argv[5]);
+	bu_vls_printf(gedp->ged_result_str, "Invalid default point size '%s'\n", argv[5]);
 	return GED_ERROR;
     }
 
-    bu_vls_init(&format_string);
     bu_vls_strcat(&format_string, argv[3]);
     bu_vls_trimspace(&format_string);
 
     /* init database structure */
-    RT_INIT_DB_INTERNAL(&internal);
+    RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_PNTS;
-    internal.idb_meth = &rt_functab[ID_PNTS];
-    internal.idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
+    internal.idb_meth = &OBJ[ID_PNTS];
+    BU_ALLOC(internal.idb_ptr, struct rt_pnts_internal);
 
     /* init internal structure */
     pnts = (struct rt_pnts_internal *) internal.idb_ptr;
@@ -371,42 +368,42 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     /* empty list head */
     switch (type) {
 	case RT_PNT_TYPE_PNT:
-	    BU_GETSTRUCT(headPoint, pnt);
+	    BU_ALLOC(headPoint, struct pnt);
 	    BU_LIST_INIT(&(((struct pnt *)headPoint)->l));
 	    num_doubles_per_point = 3;
 	    break;
 	case RT_PNT_TYPE_COL:
-	    BU_GETSTRUCT(headPoint, pnt_color);
+	    BU_ALLOC(headPoint, struct pnt_color);
 	    BU_LIST_INIT(&(((struct pnt_color *)headPoint)->l));
 	    num_doubles_per_point = 6;
 	    break;
 	case RT_PNT_TYPE_SCA:
-	    BU_GETSTRUCT(headPoint, pnt_scale);
+	    BU_ALLOC(headPoint, struct pnt_scale);
 	    BU_LIST_INIT(&(((struct pnt_scale *)headPoint)->l));
 	    num_doubles_per_point = 4;
 	    break;
 	case RT_PNT_TYPE_NRM:
-	    BU_GETSTRUCT(headPoint, pnt_normal);
+	    BU_ALLOC(headPoint, struct pnt_normal);
 	    BU_LIST_INIT(&(((struct pnt_normal *)headPoint)->l));
 	    num_doubles_per_point = 6;
 	    break;
 	case RT_PNT_TYPE_COL_SCA:
-	    BU_GETSTRUCT(headPoint, pnt_color_scale);
+	    BU_ALLOC(headPoint, struct pnt_color_scale);
 	    BU_LIST_INIT(&(((struct pnt_color_scale *)headPoint)->l));
 	    num_doubles_per_point = 7;
 	    break;
 	case RT_PNT_TYPE_COL_NRM:
-	    BU_GETSTRUCT(headPoint, pnt_color_normal);
+	    BU_ALLOC(headPoint, struct pnt_color_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_normal *)headPoint)->l));
 	    num_doubles_per_point = 9;
 	    break;
 	case RT_PNT_TYPE_SCA_NRM:
-	    BU_GETSTRUCT(headPoint, pnt_scale_normal);
+	    BU_ALLOC(headPoint, struct pnt_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_scale_normal *)headPoint)->l));
 	    num_doubles_per_point = 7;
 	    break;
 	case RT_PNT_TYPE_COL_SCA_NRM:
-	    BU_GETSTRUCT(headPoint, pnt_color_scale_normal);
+	    BU_ALLOC(headPoint, struct pnt_color_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
 	    num_doubles_per_point = 10;
 	    break;
@@ -415,8 +412,8 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     pnts->point = headPoint;
 
     if ((fp=fopen(argv[2], "rb")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
-	bu_vls_printf(&gedp->ged_result_str, "Could not open file '%s'.\n", argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Could not open file '%s'.\n", argv[2]);
 	bu_vls_free(&format_string);
 	rt_db_free_internal(&internal);
 	return GED_ERROR;
@@ -427,28 +424,28 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 	/* allocate memory for single point structure for current point-cloud type */
 	switch (type) {
 	    case RT_PNT_TYPE_PNT:
-		BU_GETSTRUCT(point, pnt);
+		BU_ALLOC(point, struct pnt);
 		break;
 	    case RT_PNT_TYPE_COL:
-		BU_GETSTRUCT(point, pnt_color);
+		BU_ALLOC(point, struct pnt_color);
 		break;
 	    case RT_PNT_TYPE_SCA:
-		BU_GETSTRUCT(point, pnt_scale);
+		BU_ALLOC(point, struct pnt_scale);
 		break;
 	    case RT_PNT_TYPE_NRM:
-		BU_GETSTRUCT(point, pnt_normal);
+		BU_ALLOC(point, struct pnt_normal);
 		break;
 	    case RT_PNT_TYPE_COL_SCA:
-		BU_GETSTRUCT(point, pnt_color_scale);
+		BU_ALLOC(point, struct pnt_color_scale);
 		break;
 	    case RT_PNT_TYPE_COL_NRM:
-		BU_GETSTRUCT(point, pnt_color_normal);
+		BU_ALLOC(point, struct pnt_color_normal);
 		break;
 	    case RT_PNT_TYPE_SCA_NRM:
-		BU_GETSTRUCT(point, pnt_scale_normal);
+		BU_ALLOC(point, struct pnt_scale_normal);
 		break;
 	    case RT_PNT_TYPE_COL_SCA_NRM:
-		BU_GETSTRUCT(point, pnt_color_scale_normal);
+		BU_ALLOC(point, struct pnt_color_scale_normal);
 		break;
 	}
 
@@ -471,8 +468,8 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 		    if (ferror(fp)) {
 			perror("ERROR: Problem reading file, system error message");
 			fclose(fp);
-			bu_vls_printf(&gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
-			bu_vls_printf(&gedp->ged_result_str, "Unable to read file at byte '%lu'.\n", num_characters_read_from_file);
+			bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
+			bu_vls_printf(gedp->ged_result_str, "Unable to read file at byte '%lu'.\n", num_characters_read_from_file);
 			bu_vls_free(&format_string);
 			rt_db_free_internal(&internal);
 			return GED_ERROR;
@@ -485,14 +482,15 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 		    fclose(fp);
 		    current_character_double = 0;
 		    if (num_doubles_read == 0) {
-			bu_vls_printf(&gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
-			bu_vls_printf(&gedp->ged_result_str, "No data in file '%s'.\n", argv[2]);
+			bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
+			bu_vls_printf(gedp->ged_result_str, "No data in file '%s'.\n", argv[2]);
 			bu_vls_free(&format_string);
 			rt_db_free_internal(&internal);
 			return GED_ERROR;
 		    }
 		} else {
-		    if ((temp_char_ptr = strchr("0123456789.+-eE", buf)) != NULL) {
+		    temp_char_ptr = strchr("0123456789.+-eE", buf);
+		    if (temp_char_ptr != NULL) {
 			/* character read is part of a double */
 			current_character_double = 1;
 		    } else {
@@ -502,10 +500,11 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
 		if (previous_character_double && current_character_double) {
 		    if (temp_string_index >= temp_string_size) {
-			bu_vls_printf(&gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
-			bu_vls_printf(&gedp->ged_result_str, "String representing double too large, exceeds '%d' character limit. ", temp_string_size - 1);
+			fclose(fp);
+			bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
+			bu_vls_printf(gedp->ged_result_str, "String representing double too large, exceeds '%d' character limit. ", temp_string_size - 1);
 			report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
-						     format, &gedp->ged_result_str);
+						     format, gedp->ged_result_str);
 			bu_vls_free(&format_string);
 			rt_db_free_internal(&internal);
 			return GED_ERROR;
@@ -516,10 +515,11 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
 		if (previous_character_double && !current_character_double) {
 		    if (temp_string_index >= temp_string_size) {
-			bu_vls_printf(&gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
-			bu_vls_printf(&gedp->ged_result_str, "String representing double too large, exceeds '%d' character limit. ", temp_string_size - 1);
+			fclose(fp);
+			bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
+			bu_vls_printf(gedp->ged_result_str, "String representing double too large, exceeds '%d' character limit. ", temp_string_size - 1);
 			report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
-						     format, &gedp->ged_result_str);
+						     format, gedp->ged_result_str);
 			bu_vls_free(&format_string);
 			rt_db_free_internal(&internal);
 			return GED_ERROR;
@@ -530,10 +530,11 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 		    if (format != '?') {
 			temp_double = strtod(temp_string, &endp);
 			if (!((endp != temp_string) && (*endp == '\0'))) {
-			    bu_vls_printf(&gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
-			    bu_vls_printf(&gedp->ged_result_str, "Unable to convert string '%s' to double. ", temp_string);
+			    fclose(fp);
+			    bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
+			    bu_vls_printf(gedp->ged_result_str, "Unable to convert string '%s' to double. ", temp_string);
 			    report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
-							 format, &gedp->ged_result_str);
+							 format, gedp->ged_result_str);
 			    bu_vls_free(&format_string);
 			    rt_db_free_internal(&internal);
 			    return GED_ERROR;
@@ -555,7 +556,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 		    previous_character_double = current_character_double;
 		}
 
-	    } /* loop exits when eof encounted (and/or) double found */
+	    } /* loop exits when eof encountered (and/or) double found */
 
 	    if (found_double) {
 
@@ -650,18 +651,18 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     } /* loop exits when eof encountered */
 
     if (num_doubles_read < num_doubles_per_point) {
-	bu_vls_printf(&gedp->ged_result_str, "Make '%s' failed. Number of values read inconsistent with point-cloud type ", argv[1]);
-	bu_vls_printf(&gedp->ged_result_str, "defined by format string '%V'. The number of values read must be an even ", format_string);
-	bu_vls_printf(&gedp->ged_result_str, "multiple of %d but read %lu values.\n", num_doubles_per_point, num_doubles_read);
+	bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. Number of values read inconsistent with point-cloud type ", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "defined by format string '%V'. The number of values read must be an even ", format_string);
+	bu_vls_printf(gedp->ged_result_str, "multiple of %d but read %lu values.\n", num_doubles_per_point, num_doubles_read);
 	bu_vls_free(&format_string);
 	rt_db_free_internal(&internal);
 	return GED_ERROR;
     }
 
     if (num_doubles_read % num_doubles_per_point) {
-	bu_vls_printf(&gedp->ged_result_str, "Make '%s' failed. Number of values read inconsistent with point-cloud type ", argv[1]);
-	bu_vls_printf(&gedp->ged_result_str, "defined by format string '%V'. The number of values read must be an even ", format_string);
-	bu_vls_printf(&gedp->ged_result_str, "multiple of %d but read %lu values.\n", num_doubles_per_point, num_doubles_read);
+	bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. Number of values read inconsistent with point-cloud type ", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "defined by format string '%V'. The number of values read must be an even ", format_string);
+	bu_vls_printf(gedp->ged_result_str, "multiple of %d but read %lu values.\n", num_doubles_per_point, num_doubles_read);
 	bu_vls_free(&format_string);
 	rt_db_free_internal(&internal);
 	return GED_ERROR;
@@ -669,12 +670,12 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
     pnts->count = numPoints;
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     bu_vls_free(&format_string);
 
-    bu_vls_printf(&gedp->ged_result_str, "Make '%s' success, %lu values read, %lu points imported.\n", argv[1], num_doubles_read, numPoints);
+    bu_vls_printf(gedp->ged_result_str, "Make '%s' success, %lu values read, %lu points imported.\n", argv[1], num_doubles_read, numPoints);
 
     return GED_OK;
 }

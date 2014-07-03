@@ -1,7 +1,7 @@
 /*                         W H O . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file who.c
+/** @file libged/who.c
  *
  * The who command.
  *
@@ -31,7 +31,7 @@
  * List the objects currently prepped for drawing
  *
  * Usage:
- *        who [r(eal)|p(hony)|b(oth)]
+ * who [r(eal)|p(hony)|b(oth)]
  *
  */
 int
@@ -46,10 +46,10 @@ ged_who(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (2 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -70,19 +70,19 @@ ged_who(struct ged *gedp, int argc, const char *argv[])
 		skip_phony = 1;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "ged_who: argument not understood\n");
+		bu_vls_printf(gedp->ged_result_str, "ged_who: argument not understood\n");
 		return GED_ERROR;
 	}
     }
 
-    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
 	if (gdlp->gdl_dp->d_addr == RT_DIR_PHONY_ADDR) {
 	    if (skip_phony) continue;
 	} else {
 	    if (skip_real) continue;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "%s ", bu_vls_addr(&gdlp->gdl_path));
+	bu_vls_printf(gedp->ged_result_str, "%s ", bu_vls_addr(&gdlp->gdl_path));
     }
 
     return GED_OK;

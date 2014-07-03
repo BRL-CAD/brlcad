@@ -1,7 +1,7 @@
 /*                        S C R O L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scroll.c
+/** @file mged/scroll.c
  *
  */
 
@@ -96,8 +96,6 @@ struct scroll_item sl_adc_menu[] = {
 
 
 /*
- * S E T _ S C R O L L
- *
  * Set scroll_array.
  */
 void
@@ -122,31 +120,32 @@ set_scroll(void)
 
 
 /*
- * S L _ H A L T _ S C R O L L
- *
  * Reset all scroll bars to the zero position.
  */
 void
 sl_halt_scroll(void)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob zero");
     (void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
 
-/*
- * S L _ T O G G L E _ S C R O L L
- */
 void
 sl_toggle_scroll(void)
 {
     mged_variables->mv_sliders = mged_variables->mv_sliders ? 0 : 1;
 
-    set_scroll_private();
+    {
+	/* need dummy values for func signature--they are unused in the func */
+	const struct bu_structparse *sdp = 0;
+	const char name[] = "name";
+	void *base = 0;
+	const char value[] = "value";
+	set_scroll_private(sdp, name, base, value);
+    }
 }
 
 
@@ -163,7 +162,7 @@ sl_toggle_scroll(void)
 static void
 sl_tol(struct scroll_item *mptr, double val)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
 	val += SL_TOL;
@@ -173,7 +172,6 @@ sl_tol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val);
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -183,7 +181,7 @@ sl_tol(struct scroll_item *mptr, double val)
 static void
 sl_atol(struct scroll_item *mptr, double val)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (dbip == DBI_NULL)
 	return;
@@ -196,7 +194,6 @@ sl_atol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*view_state->vs_gvp->gv_scale*base2local);
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -206,7 +203,7 @@ sl_atol(struct scroll_item *mptr, double val)
 static void
 sl_rrtol(struct scroll_item *mptr, double val)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
 	val += SL_TOL;
@@ -216,7 +213,6 @@ sl_rrtol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val * RATE_ROT_FACTOR);
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -226,7 +222,7 @@ sl_rrtol(struct scroll_item *mptr, double val)
 static void
 sl_artol(struct scroll_item *mptr, double val)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
 	val += SL_TOL;
@@ -236,7 +232,6 @@ sl_artol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*ABS_ROT_FACTOR);
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -246,7 +241,7 @@ sl_artol(struct scroll_item *mptr, double val)
 static void
 sl_adctol(struct scroll_item *mptr, double val)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
 	val += SL_TOL;
@@ -256,7 +251,6 @@ sl_adctol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, 45.0 - val*45.0);
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -266,7 +260,7 @@ sl_adctol(struct scroll_item *mptr, double val)
 static void
 sl_itol(struct scroll_item *mptr, double val)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
 	val += SL_TOL;
@@ -276,7 +270,6 @@ sl_itol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*GED_MAX);
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -290,8 +283,6 @@ sl_itol(struct scroll_item *mptr, double val)
  ************************************************************************/
 
 /*
- * S C R O L L _ D I S P L A Y
- *
  * The parameter is the Y pixel address of the starting
  * screen Y to be used, and the return value is the last screen Y
  * position used.
@@ -309,11 +300,7 @@ scroll_display(int y_top)
     scroll_top = y_top;
     y = y_top;
 
-#if 1
     DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
-#else
-    DM_SET_LINE_ATTR(dmp, 1, 0);  /* linewidth - 1, not dashed */
-#endif
 
     for (m = &scroll_array[0]; *m != SCROLL_NULL; m++) {
 	++second_menu;
@@ -707,8 +694,6 @@ scroll_display(int y_top)
 
 
 /*
- * S C R O L L _ S E L E C T
- *
  * Called with Y coordinate of pen in menu area.
  *
  * Returns:

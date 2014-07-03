@@ -1,7 +1,7 @@
 #                        P L O T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ proc init_plotTool { id } {
     }
 
     if ![info exists pl_control($id,file)] {
-	regsub \.g$ [_mged_opendb] .pl default_file
+	regsub \.g$ [_mged_opendb] .plot3 default_file
 	set pl_control($id,file) $default_file
     }
 

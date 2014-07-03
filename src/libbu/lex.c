@@ -1,7 +1,7 @@
 /*                           L E X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,16 +23,19 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 static int bu_lex_reading_comment = 0;
 
 
 HIDDEN char *
-_bu_lex_getone(int *used, struct bu_vls *rtstr)
+lex_getone(int *used, struct bu_vls *rtstr)
 {
     register char *cp;
     register char *sp;
+    register char tc;
     register char *unit;
     int number;
 
@@ -41,46 +44,36 @@ _bu_lex_getone(int *used, struct bu_vls *rtstr)
 
     BU_CK_VLS(rtstr);
     cp = bu_vls_addr(rtstr);
-top:
-    if (bu_lex_reading_comment) {
-	for (;;) {
-	    register char tc;
-	    tc = *cp; cp++;
-	    if (!tc) {
-		return 0;
-	    }
-	    if (tc != '*') continue;
-	    if (*cp != '/') continue;
-	    cp++;	/* Skip the '/' */
+    while (1) {
+	if (bu_lex_reading_comment) {
+	    do {
+		/* looking at two consecutive chars */
+		tc = *cp; cp++;
+		if (!tc) {
+		    return 0;
+		}
+	    } while (!(tc == '*' && *cp == '/'));
+	    cp++;   /* skip the '/' */
+	    bu_lex_reading_comment = 0;
+	}
+	/* skip leading blanks */
+	while (*cp && isspace((int)(*cp))) cp++;
+	/* is this a comment? '#' to end of line is */
+	if (!*cp || *cp == '#') {
+	    return 0;
+
+	}
+	/* is this a 'C' multi-line comment? */
+	if (*cp == '/' && *(cp+1) == '*') {
+	    cp += 2;
+	    bu_lex_reading_comment = 1;
+	} else /* we are done reading comments */ {
 	    break;
 	}
-	bu_lex_reading_comment = 0;
     }
-
-    /*
-     * skip leading blanks
-     */
-    for (; *cp && isspace(*cp); cp++);
-    /*
-     * Is this a comment?  '#' to end of line is.
-     */
-    if (!*cp || *cp == '#') {
-	return 0;
-    }
-    /*
-     * Is this a 'C' multi-line comment?
-     */
-    if (*cp == '/' && *(cp+1)=='*') {
-	cp += 2;
-	bu_lex_reading_comment = 1;
-	goto top;
-    }
-    /*
-     * cp points to the first non-blank character.
-     */
+    /* cp points to the first non-blank character */
     sp = cp;		/* start pointer */
     while (*cp) {
-	register char tc;
 
 	tc = *cp; cp++;
 	/*
@@ -94,13 +87,13 @@ top:
 	     * We have not seen anything to make this NOT
 	     * a number.
 	     */
-	    if (isdigit(tc)) {
+	    if (isdigit((int)tc)) {
 		if (number == 5 || number == 6) number = 7;
 		if (number == 3) number = 4;
 		if (number == 1) number = 2;
 		continue;
 	    }
-	    if (number==2 && tc == '.') {
+	    if (number == 2 && tc == '.') {
 		/*
 		 * [0-9][0-9]*.
 		 */
@@ -124,9 +117,9 @@ top:
 	    if (number == 3) break;
 	    number = 0;
 	}
-	if (!isalnum(tc) && tc != '.' && tc != '_') break;
+	if (!isalnum((int)tc) && tc != '.' && tc != '_') break;
     }
-    if (number ==  6) --cp;	/* subtract off the + or - */
+    if (number == 6) --cp;	/* subtract off the + or - */
     if (number == 3) --cp;  /* subtract off the . */
     /*
      * All spaces have been skipped. (sp)
@@ -162,7 +155,7 @@ bu_lex(
      * get a unit of information from rtstr.
      */
     used = 0;
-    unit = _bu_lex_getone(&used, rtstr);
+    unit = lex_getone(&used, rtstr);
 
     /*
      * Was line empty or commented out.
@@ -175,7 +168,7 @@ bu_lex(
     /*
      * Decide if this unit is a symbol, number or identifier.
      */
-    if (isdigit(*unit)) {
+    if (isdigit((int)(*unit))) {
 	/*
 	 * Humm, this could be a number.
 	 * octal -- 0[0-7]*
@@ -203,7 +196,7 @@ bu_lex(
 	     */
 	    cp=unit+1;
 	    if (*cp == 'x' || *cp == 'X') {
-		for (;*cp && isxdigit(*cp);cp++);
+		for (;*cp && isxdigit((int)(*cp));cp++);
 		if (!*cp) {
 		    token->type = BU_LEX_INT;
 		    sscanf(unit, "%x", (unsigned int *)&token->t_int.value);
@@ -216,7 +209,7 @@ bu_lex(
 	 * This could be a decimal number, a double or an identifier.
 	 * dec   -- [0-9][0-9]*
 	 */
-	for (cp=unit; *cp && isdigit(*cp); cp++);
+	for (cp=unit; *cp && isdigit((int)(*cp)); cp++);
 	if (!*cp) {
 	    token->type = BU_LEX_INT;
 	    sscanf(unit, "%d", &token->t_int.value);
@@ -231,10 +224,10 @@ bu_lex(
 	 * *cp should be a '.'
 	 */
 	if (*cp == '.') {
-	    for (cp++;*cp &&isdigit(*cp);cp++);
+	    for (cp++;*cp &&isdigit((int)(*cp));cp++);
 	    if (*cp == 'e' || *cp == 'E') cp++;
 	    if (*cp == '+' || *cp == '-') cp++;
-	    for (;*cp &&isdigit(*cp);cp++);
+	    for (;*cp &&isdigit((int)(*cp));cp++);
 	    if (!*cp) {
 		token->type = BU_LEX_DOUBLE;
 		sscanf(unit, "%lg", &token->t_dbl.value);
@@ -267,7 +260,7 @@ bu_lex(
     if (keywords) {
 	register struct bu_lex_key *kp;
 	for (kp=keywords;kp->tok_val; kp++) {
-	    if (strcmp(kp->string, unit) == 0) {
+	    if (BU_STR_EQUAL(kp->string, unit)) {
 		token->type = BU_LEX_KEYWORD;
 		token->t_key.value = kp->tok_val;
 		bu_free(unit, "unit token");

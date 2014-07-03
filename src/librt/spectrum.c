@@ -1,7 +1,7 @@
 /*                      S P E C T R U M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file spectrum.c
+/** @file librt/spectrum.c
  *
  * An application of the 'tabdata' package to spectral data.
  *
@@ -40,13 +40,13 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/debug.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "spectrum.h"
 
+
 /**
- * R T _ C I E _ X Y Z
- *
  * This is the data for the CIE_XYZ curves take from Judd and Wyszecki
  * (1975), table 2.6, these are for the 1931 standard observer with a
  * 2-degree visual field.  From Roy Hall, pg 228.
@@ -97,8 +97,6 @@ static const double rt_CIE_XYZ[81][4] = {
 
 
 /**
- * R T _ S P E C T _ M A K E _ C I E _ X Y Z
- *
  * Given as input a spectral sampling distribution, generate the 3
  * curves to match the human eye's response in CIE color parameters X,
  * Y, and Z.  XYZ space can be readily converted to RGB with a 3x3
@@ -116,7 +114,7 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
     struct bn_tabdata *a, *b, *c;
     fastf_t xyz_scale;
     int i;
-    int j;
+    size_t j;
 
     BN_CK_TABLE(tabp);
 
@@ -174,8 +172,6 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
 
 
 /**
- * R T _ S P E C T _ R E F L E C T A N C E _ R G B
- *
  * Given reflectance data (in range 0..1) in terms of RGB color,
  * convert that to a spectral reflectance curve.
  *
@@ -195,7 +191,7 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
 void
 rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
 {
-    register int i;
+    register size_t i;
     register const struct bn_table *tabp;
 
     BN_CK_TABDATA(curve);
@@ -232,8 +228,6 @@ rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
     (PLANCK_C1/(_w*_w*_w*_w*_w*(exp(PLANCK_C2/(_w*_tempK))-1)))
 
 /**
- * R T _ S P E C T _ B L A C K _ B O D Y
- *
  * Integrate Planck's Radiation Formula for a black body radiator
  * across the given spectrum.  Returns radiant emittance in W/cm**2
  * for each wavelength interval.
@@ -248,15 +242,15 @@ rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
 /* # wavelengths to eval at */
 {
     const struct bn_table *tabp;
-    int j;
+    size_t j;
 
     BN_CK_TABDATA(data);
     tabp = data->table;
     BN_CK_TABLE(tabp);
 
     if (bu_debug&BU_DEBUG_TABDATA) {
-	bu_log("rt_spect_black_body(x%x, %g degK) %g um to %g um\n",
-	       data, temp,
+	bu_log("rt_spect_black_body(%p, %g degK) %g um to %g um\n",
+	       (void *)data, temp,
 	       tabp->x[0] * 0.001,	/* nm to um */
 	       tabp->x[tabp->nx] * 0.001	/* nm to um */
 	    );
@@ -290,8 +284,6 @@ rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
 
 
 /**
- * R T _ S P E C T _ B L A C K _ B O D Y _ F A S T
- *
  * Returns radiant emittance for each spectral interval in the given
  * spectrum in units of watts/cm**2.  Integrate each wavelength
  * interval of spectral radiant emittance, by fitting with a rectangle
@@ -307,15 +299,15 @@ rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
 /* Degrees Kelvin */
 {
     const struct bn_table *tabp;
-    int j;
+    size_t j;
 
     BN_CK_TABDATA(data);
     tabp = data->table;
     BN_CK_TABLE(tabp);
 
     if (bu_debug&BU_DEBUG_TABDATA) {
-	bu_log("rt_spect_black_body_fast(x%x, %g degK)\n",
-	       data, temp);
+	bu_log("rt_spect_black_body_fast(%p, %g degK)\n",
+	       (void *)data, temp);
     }
 
     for (j = 0; j < tabp->nx; j++) {
@@ -326,8 +318,6 @@ rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
 
 
 /**
- * R T _ S P E C T _ B L A C K _ B O D Y _ P O I N T S
- *
  * Returns point-sampled values of spectral radiant emittance, in
  * units of watts/cm**2/um, straight from Planck's black-body
  * radiation formula.
@@ -338,15 +328,15 @@ rt_spect_black_body_points(struct bn_tabdata *data, double temp)
 /* Degrees Kelvin */
 {
     const struct bn_table *tabp;
-    int j;
+    size_t j;
 
     BN_CK_TABDATA(data);
     tabp = data->table;
     BN_CK_TABLE(tabp);
 
     if (bu_debug&BU_DEBUG_TABDATA) {
-	bu_log("rt_spect_black_body_points(x%x, %g degK)\n",
-	       data, temp);
+	bu_log("rt_spect_black_body_points(%p, %g degK)\n",
+	       (void *)data, temp);
     }
 
     for (j = 0; j < tabp->nx; j++) {

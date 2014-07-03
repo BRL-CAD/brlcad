@@ -1,7 +1,7 @@
 /*                 T I E N E T _ M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2010 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
  */
 /** @file tienet_master.c
  *
- *  Comments -
- *      TIE Networking Master
+ * Comments -
+ * TIE Networking Master
  *
  */
 
@@ -47,7 +47,7 @@
 #  include <netdb.h>
 #endif
 
-#include "libtie/tie.h"
+#include "tie.h"
 #include "adrt.h"
 #include "tienet.h"
 #include "tienet_master.h"
@@ -56,14 +56,13 @@
 
 #include "tie.h"
 
-#include "bu.h"
+
 
 #include "master.h"
 
 #if TN_COMPRESSION
 # include <zlib.h>
 #endif
-
 
 
 void tienet_sem_init(tienet_sem_t *sem, int val)
@@ -73,11 +72,13 @@ void tienet_sem_init(tienet_sem_t *sem, int val)
     sem->val = val;
 }
 
+
 void tienet_sem_free(tienet_sem_t *sem)
 {
     pthread_mutex_destroy(&sem->mut);
     pthread_cond_destroy(&sem->cond);
 }
+
 
 void tienet_sem_post(tienet_sem_t *sem)
 {
@@ -87,16 +88,15 @@ void tienet_sem_post(tienet_sem_t *sem)
     pthread_mutex_unlock(&sem->mut);
 }
 
+
 void tienet_sem_wait(tienet_sem_t *sem)
 {
     pthread_mutex_lock(&sem->mut);
     if (!sem->val)
-        pthread_cond_wait(&sem->cond, &sem->mut);
+	pthread_cond_wait(&sem->cond, &sem->mut);
     sem->val--;
     pthread_mutex_unlock(&sem->mut);
 }
-
-
 
 
 typedef struct tienet_master_data_s {
@@ -116,63 +116,63 @@ typedef struct tienet_master_socket_s {
 } tienet_master_socket_t;
 
 
-void				tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char *list, char *exec, int buffer_size, int ver_key, int verbose);
-void				tienet_master_free(void);
-void				tienet_master_push(const void *data, size_t size);
-void				tienet_master_shutdown(void);
-void				tienet_master_broadcast(const void *mesg, size_t mesg_len);
+void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char *list, char *exec, int buffer_size, int ver_key, int verbose);
+void tienet_master_free(void);
+void tienet_master_push(const void *data, size_t size);
+void tienet_master_shutdown(void);
+void tienet_master_broadcast(const void *mesg, size_t mesg_len);
 
-void				tienet_master_begin(void);
-void				tienet_master_end(void);
-void				tienet_master_wait(void);
+void tienet_master_begin(void);
+void tienet_master_end(void);
+void tienet_master_wait(void);
 
-void				tienet_master_connect_slaves(fd_set *readfds);
-void*				tienet_master_listener(void *ptr);
-void				tienet_master_send_work(tienet_master_socket_t *sock);
-void				tienet_master_result(tienet_master_socket_t *sock);
-void				tienet_master_shutdown(void);
+void tienet_master_connect_slaves(fd_set *readfds);
+void* tienet_master_listener(void *ptr);
+void tienet_master_send_work(tienet_master_socket_t *sock);
+void tienet_master_result(tienet_master_socket_t *sock);
+void tienet_master_shutdown(void);
 
-static int			tienet_master_ver_key;
-static int			tienet_master_port;
-static int			tienet_master_highest_fd;
+static int tienet_master_ver_key;
+static int tienet_master_port;
+static int tienet_master_highest_fd;
 
-int				tienet_master_active_slaves;
-int				tienet_master_socket_num;
-static tienet_master_socket_t	*tienet_master_socket_list;
-static tienet_master_socket_t	*tienet_master_dead_socket_list;
+int tienet_master_active_slaves;
+int tienet_master_socket_num;
+static tienet_master_socket_t *tienet_master_socket_list;
+static tienet_master_socket_t *tienet_master_dead_socket_list;
 
-int				tienet_master_buffer_size;
-static tienet_master_data_t	*tienet_master_buffer;		/* Buffer */
-static int			tienet_master_pos_fill;
-static int			tienet_master_pos_read;
+int tienet_master_buffer_size;
+static tienet_master_data_t *tienet_master_buffer;		/* Buffer */
+static int tienet_master_pos_fill;
+static int tienet_master_pos_read;
 
-static tienet_sem_t		tienet_master_sem_fill;	/* Fill Buffer Semaphore */
-static tienet_sem_t		tienet_master_sem_read;	/* Read Buffer Semaphore */
-static tienet_sem_t		tienet_master_sem_app;	/* Application Semaphore */
-static tienet_sem_t		tienet_master_sem_out;	/* Outstanding Semaphore */
-static tienet_sem_t		tienet_master_sem_shutdown; /* Shutdown Semaphore */
+static tienet_sem_t tienet_master_sem_fill;	/* Fill Buffer Semaphore */
+static tienet_sem_t tienet_master_sem_read;	/* Read Buffer Semaphore */
+static tienet_sem_t tienet_master_sem_app;	/* Application Semaphore */
+static tienet_sem_t tienet_master_sem_out;	/* Outstanding Semaphore */
+static tienet_sem_t tienet_master_sem_shutdown; /* Shutdown Semaphore */
 
-uint64_t			tienet_master_transfer;
-static char			tienet_master_exec[64];	/* Something to run in order to jumpstart the slaves */
-static char			tienet_master_list[64]; /* A list of slaves in daemon mode to connect to */
-int				tienet_master_verbose;
-int				tienet_master_endflag;
-int				tienet_master_shutdown_state;
-int				tienet_master_halt_networking;
+uint64_t tienet_master_transfer;
+static char tienet_master_exec[64]; /* Something to run in order to jumpstart the slaves */
+static char tienet_master_list[64]; /* A list of slaves in daemon mode to connect to */
+int tienet_master_verbose;
+int tienet_master_endflag;
+int tienet_master_shutdown_state;
+int tienet_master_halt_networking;
 
-tienet_buffer_t			tienet_master_result_buffer;
-pthread_mutex_t			tienet_master_send_mut;
-pthread_mutex_t			tienet_master_push_mut;
-pthread_mutex_t			tienet_master_broadcast_mut;
+tienet_buffer_t tienet_master_result_buffer;
+pthread_mutex_t tienet_master_send_mut;
+pthread_mutex_t tienet_master_push_mut;
+pthread_mutex_t tienet_master_broadcast_mut;
 
 
 #if TN_COMPRESSION
-tienet_buffer_t			tienet_master_result_buffer_comp;
+tienet_buffer_t tienet_master_result_buffer_comp;
 #endif
 
 /* result data callback */
 typedef void tienet_master_fcb_result_t(tienet_buffer_t *result);
-tienet_master_fcb_result_t	*tienet_master_fcb_result;
+tienet_master_fcb_result_t *tienet_master_fcb_result;
 
 
 void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char *list, char *exec, int buffer_size, int ver_key, int verbose)
@@ -184,7 +184,8 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
     tienet_master_port = port;
     tienet_master_verbose = verbose;
     tienet_master_buffer_size = buffer_size;
-    tienet_master_buffer = (tienet_master_data_t *)bu_malloc(sizeof(tienet_master_data_t) * tienet_master_buffer_size, "initial tienet buffer");
+
+    BU_ALLOC(tienet_master_buffer, tienet_master_data_t);
 
     tienet_master_fcb_result = fcb_result;
     tienet_master_active_slaves = 0;
@@ -205,8 +206,8 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
     TIENET_BUFFER_INIT(tienet_master_result_buffer_comp);
 #endif
 
-    strncpy(tienet_master_list, list, sizeof(tienet_master_list));
-    strncpy(tienet_master_exec, exec, sizeof(tienet_master_exec));
+    bu_strlcpy(tienet_master_list, list, sizeof(tienet_master_list));
+    bu_strlcpy(tienet_master_exec, exec, sizeof(tienet_master_exec));
 
     /* Copy version key to validate slaves of correct version are connecting */
     tienet_master_ver_key = ver_key;
@@ -345,20 +346,23 @@ void tienet_master_wait()
 
 void tienet_master_connect_slaves(fd_set *readfds)
 {
-    FILE				*fh;
-    struct	sockaddr_in	daemon, slave;
-    struct	hostent		slave_ent;
-    tienet_master_socket_t	*tmp;
-    short				op;
-    char				host[64], *temp;
-    int				daemon_socket, port, slave_ver_key;
-
+    FILE *fh;
+    struct sockaddr_in daemon, slave;
+    struct hostent slave_ent;
+    tienet_master_socket_t *tmp;
+    short op;
+    char host[64], *temp;
+    int slave_ver_key;
 
     fh = fopen(tienet_master_list, "rb");
     if (fh) {
+
 	while (!feof(fh)) {
 	    bu_fgets(host, 64, fh);
+
 	    if (host[0]) {
+		int port;
+
 		port = TN_SLAVE_PORT;
 		temp = strchr(host, ':');
 		if (temp) {
@@ -370,6 +374,8 @@ void tienet_master_connect_slaves(fd_set *readfds)
 
 		/* check to see if this slave is in dns */
 		if (gethostbyname(host)) {
+		    int daemon_socket;
+
 		    slave_ent = gethostbyname(host)[0];
 
 		    /* This is what we're connecting to */
@@ -380,7 +386,7 @@ void tienet_master_connect_slaves(fd_set *readfds)
 		    /* Make a communications socket that will get stuffed into the list */
 		    daemon_socket = socket(AF_INET, SOCK_STREAM, 0);
 		    if (daemon_socket < 0) {
-			fprintf(stderr, "unable to create  socket, exiting.\n");
+			fprintf(stderr, "unable to create socket, exiting.\n");
 			exit(1);
 		    }
 
@@ -412,7 +418,8 @@ void tienet_master_connect_slaves(fd_set *readfds)
 
 			    /* Append to select list */
 			    tmp = tienet_master_socket_list;
-			    tienet_master_socket_list = (tienet_master_socket_t *)bu_malloc(sizeof(tienet_master_socket_t), "socket list");
+
+			    BU_ALLOC(tienet_master_socket_list, tienet_master_socket_t);
 			    tienet_master_socket_list->next = tmp;
 			    tienet_master_socket_list->prev = NULL;
 			    tienet_master_socket_list->work.data = NULL;
@@ -445,12 +452,12 @@ void tienet_master_connect_slaves(fd_set *readfds)
 
 void* tienet_master_listener(void *ptr)
 {
-    struct	sockaddr_in	master, slave;
-    socklen_t			addrlen;
-    fd_set			readfds;
-    tienet_master_socket_t	*sock, *tmp;
-    int				r, master_socket, slave_socket, slave_ver_key;
-    short				op;
+    struct sockaddr_in master, slave;
+    socklen_t addrlen;
+    fd_set readfds;
+    tienet_master_socket_t *sock, *tmp;
+    int r, master_socket, slave_socket, slave_ver_key;
+    short op;
 
 
     if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) <= 0) {
@@ -469,7 +476,7 @@ void* tienet_master_listener(void *ptr)
     }
 
     /* Set first socket as master, rest are slaves - LIFO Stack - Always gets processed last */
-    tienet_master_socket_list = (tienet_master_socket_t *)bu_malloc(sizeof(tienet_master_socket_t), "socket list");
+    BU_ALLOC(tienet_master_socket_list, tienet_master_socket_t);
     tienet_master_socket_list->next = NULL;
     tienet_master_socket_list->prev = NULL;
     tienet_master_socket_list->work.data = NULL;
@@ -515,7 +522,8 @@ void* tienet_master_listener(void *ptr)
 			if (tienet_master_verbose)
 			    printf ("The slave %s has connected on port: %d, sock_num: %d\n", inet_ntoa(slave.sin_addr), tienet_master_port, slave_socket);
 			tmp = tienet_master_socket_list;
-			tienet_master_socket_list = (tienet_master_socket_t *)bu_malloc(sizeof(tienet_master_socket_t), "master socket list");
+
+			BU_ALLOC(tienet_master_socket_list, tienet_master_socket_t);
 			tienet_master_socket_list->next = tmp;
 			tienet_master_socket_list->prev = NULL;
 			tienet_master_socket_list->work.data = NULL;
@@ -547,24 +555,29 @@ void* tienet_master_listener(void *ptr)
 			}
 
 			/* Send some work */
-/*            tienet_master_send_work(sock); */
+			/* tienet_master_send_work(sock); */
 		    }
 		} else {
 		    /* Make sure socket is still active on this recv */
 		    r = tienet_recv(sock->num, &op, sizeof(short));
 		    /* if "r", error code returned, remove slave from pool */
 		    if (r) {
-			tienet_master_socket_t		*tmp2;
-			/* Because master socket is always last there is no need to check if "next" exists.
-			 * Remove this socket from chain and link prev and next up to fill gap. */
+			tienet_master_socket_t *tmp2;
+			/* Because master socket is always last there
+			 * is no need to check if "next" exists.
+			 * Remove this socket from chain and link prev
+			 * and next up to fill gap.
+			 */
 			if (sock->prev)
 			    sock->prev->next = sock->next;
 			sock->next->prev = sock->prev;
 
 			/* Store ptr to sock before we modify it */
 			tmp = sock;
-			/* If the socket is the head then we need to not only modify the socket,
-			 * but the head as well. */
+			/* If the socket is the head then we need to
+			 * not only modify the socket, but the head as
+			 * well.
+			 */
 			if (tienet_master_socket_list == sock)
 			    tienet_master_socket_list = sock->next;
 			sock = sock->prev ? sock->prev : sock->next;
@@ -621,10 +634,12 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
     short op;
 
     /*
-     * This exists to prevent a collision from tienet_master_push calling this function
-     * as a result of a socket being idle and then given work.  If this function were called
-     * and 2 threads entered the if (tienet_master_sem_read.val) block and waited on tienet_master_sem_read
-     * with the first one hitting the wait on a value of one the other one could end up waiting forever.
+     * This exists to prevent a collision from tienet_master_push
+     * calling this function as a result of a socket being idle and
+     * then given work.  If this function were called and 2 threads
+     * entered the if (tienet_master_sem_read.val) block and waited on
+     * tienet_master_sem_read with the first one hitting the wait on a
+     * value of one the other one could end up waiting forever.
      */
     pthread_mutex_lock(&tienet_master_send_mut);
 
@@ -642,7 +657,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
 
     /*
      * Check to see if a broadcast message is sitting in the queue.
-     * The mutex prevents a read and write from occuring at the same time.
+     * The mutex prevents a read and write from occurring at the same time.
      */
     pthread_mutex_lock(&tienet_master_broadcast_mut);
     if (sock->mesg.size) {
@@ -701,7 +716,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
 void tienet_master_result(tienet_master_socket_t *sock)
 {
 #if TN_COMPRESSION
-    unsigned long	dest_len;
+    unsigned long dest_len;
 #endif
 
     /* A work unit has come in, this slave is officially active */
@@ -776,10 +791,11 @@ void tienet_master_shutdown()
 	    tienet_send(socket->num, &op, sizeof(short));
 
 	    /*
-	     * Wait on Recv.  When slave socket closes, select will be triggered.
-	     * At this point we know for sure the slave has disconnected.  This prevents
-	     * the master socket from being closed before the slave socket, thus pushing
-	     * the socket into an evil wait state
+	     * Wait on Recv.  When slave socket closes, select will be
+	     * triggered.  At this point we know for sure the slave
+	     * has disconnected.  This prevents the master socket from
+	     * being closed before the slave socket, thus pushing the
+	     * socket into an evil wait state
 	     */
 
 	    tienet_recv(socket->num, &op, sizeof(short));
@@ -787,7 +803,7 @@ void tienet_master_shutdown()
 	}
     }
 
-    printf("Total data transfered: %.1f MiB\n", (tfloat)tienet_master_transfer/(tfloat)(1024*1024));
+    printf("Total data transferred: %.1f MiB\n", (tfloat)tienet_master_transfer/(tfloat)(1024*1024));
 }
 
 
@@ -796,7 +812,7 @@ void tienet_master_broadcast(const void *mesg, size_t mesg_len)
 {
     tienet_master_socket_t *socket;
 
-    /* Prevent a Read and Write of the broadcast from occuring at the same time */
+    /* Prevent a Read and Write of the broadcast from occurring at the same time */
     pthread_mutex_lock(&tienet_master_broadcast_mut);
 
     /* Send a message to each available socket */
@@ -811,9 +827,9 @@ void tienet_master_broadcast(const void *mesg, size_t mesg_len)
     pthread_mutex_unlock(&tienet_master_broadcast_mut);
 
     /*
-     * Tell any idle slaves to get back to work.
-     * This is the case where slaves have exhausted the work buffer,
-     * then new work becomes available.
+     * Tell any idle slaves to get back to work.  This is the case
+     * where slaves have exhausted the work buffer, then new work
+     * becomes available.
      */
     for (socket = tienet_master_socket_list; socket; socket = socket->next) {
 	/* Only if not master socket do we send data to slave */
@@ -821,6 +837,7 @@ void tienet_master_broadcast(const void *mesg, size_t mesg_len)
 	    tienet_master_send_work(socket);
     }
 }
+
 
 /*
  * Local Variables:

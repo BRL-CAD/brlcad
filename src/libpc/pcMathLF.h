@@ -1,7 +1,7 @@
 /*                       P C M A T H L F . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,14 +24,14 @@
  * Lazy Function wrappers for Math VM
  *
  */
-#ifndef __PCMATHLF_H__
-#define __PCMATHLF_H__
+#ifndef LIBPC_PCMATHLF_H
+#define LIBPC_PCMATHLF_H
 
 #include "pcMathVM.h"
 
-#include <boost/spirit/symbols/symbols.hpp>	/* deprecated header */
+#include <boost/spirit/include/classic.hpp>
+#include <boost/spirit/include/phoenix1.hpp>
 
-#include <boost/spirit/phoenix/functions.hpp>	/* deprecated header */
 #include <boost/shared_ptr.hpp>
 
 #include <string>
@@ -41,9 +41,9 @@
  */
 struct addsymbol_impl {
     typedef boost::shared_ptr<MathFunction> FunctionPtr;
-    typedef boost::spirit::symbols<FunctionPtr> FunctionTable;
+    typedef boost::spirit::classic::symbols<FunctionPtr> FunctionTable;
 
-    template<typename T, typename Arg1, typename Arg2 = boost::spirit::nil_t>
+    template<typename T, typename Arg1, typename Arg2 = boost::spirit::classic::nil_t>
     struct result
     {
 	typedef void type;
@@ -68,7 +68,7 @@ struct addsymbol_impl {
 phoenix::function<addsymbol_impl> const addsymbol = addsymbol_impl();
 
 /**
- * Lazy function wrapper for boost::spirit::symbols::find()
+ * Lazy function wrapper for boost::spirit::classic::symbols::find()
  */
 struct findsymbol_impl {
     template <typename T, typename Arg>
@@ -119,7 +119,7 @@ struct size_impl {
     template <typename T>
     std::size_t operator()(T const & t) const
     {
-    	return t.size();
+	return t.size();
     }
 };
 phoenix::function<size_impl> const size = size_impl();
@@ -135,7 +135,7 @@ struct reset_impl {
     template <typename T>
     void operator()(boost::shared_ptr<T> *shptr, T *ptr = 0) const
     {
-	shptr.reset(ptr);
+	shptr->reset(ptr);
     }
 };
 phoenix::function<reset_impl> const reset = reset_impl();

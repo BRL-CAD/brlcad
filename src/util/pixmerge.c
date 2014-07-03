@@ -1,7 +1,7 @@
 /*                      P I X M E R G E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixmerge.c
+/** @file util/pixmerge.c
  *
  * Given two streams of data, typically pix(5) or bw(5) images,
  * generate an output stream of the same size, where the value of the
@@ -73,7 +73,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "glenw:C:c:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "glenw:C:c:")) != -1) {
 	switch (c) {
 	    case 'g':
 		wanted |= GT;
@@ -97,7 +97,7 @@ get_args(int argc, char **argv)
 		    width = c;
 		break;
 	    case 'C':
-	    case 'c':	/* backword compatability */
+	    case 'c':	/* backward compatibility */
 		{
 		    char *cp = bu_optarg;
 		    unsigned char *conp = pconst;
@@ -121,29 +121,29 @@ get_args(int argc, char **argv)
 	return 0;
 
     f1_name = argv[bu_optind++];
-    if (strcmp(f1_name, "-") == 0)
+    if (BU_STR_EQUAL(f1_name, "-"))
 	f1 = stdin;
     else if ((f1 = fopen(f1_name, "r")) == NULL) {
 	perror(f1_name);
-	(void)fprintf(stderr,
-		      "pixmerge: cannot open \"%s\" for reading\n",
-		      f1_name);
+	fprintf(stderr,
+		"pixmerge: cannot open \"%s\" for reading\n",
+		f1_name);
 	return 0;
     }
 
     f2_name = argv[bu_optind++];
-    if (strcmp(f2_name, "-") == 0)
+    if (BU_STR_EQUAL(f2_name, "-"))
 	f2 = stdin;
     else if ((f2 = fopen(f2_name, "r")) == NULL) {
 	perror(f2_name);
-	(void)fprintf(stderr,
-		      "pixmerge: cannot open \"%s\" for reading\n",
-		      f2_name);
+	fprintf(stderr,
+		"pixmerge: cannot open \"%s\" for reading\n",
+		f2_name);
 	return 0;
     }
 
     if (argc > bu_optind)
-	(void)fprintf(stderr, "pixmerge: excess argument(s) ignored\n");
+	fprintf(stderr, "pixmerge: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -152,6 +152,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+    size_t ret;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
@@ -254,7 +255,9 @@ main(int argc, char **argv)
 	    }
 	    bg_cnt++;
 	}
-	fwrite(b3, width, len, stdout);
+	ret = fwrite(b3, width, len, stdout);
+	if (ret < (size_t)len)
+	    perror("fwrite");
     }
     fprintf(stderr, "pixmerge: %ld foreground, %ld background\n",
 	    fg_cnt, bg_cnt);

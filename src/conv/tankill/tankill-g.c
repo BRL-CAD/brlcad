@@ -1,7 +1,7 @@
 /*                     T A N K I L L - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -74,7 +75,7 @@ Add_solid(int comp_code_num)
     /* if list is empty, start one */
     if ( id_root == NULL )
     {
-	id_root = (struct comp_idents *)bu_malloc( sizeof( struct comp_idents ), "tankill-g: idents list" );
+	BU_ALLOC(id_root, struct comp_idents);
 	id_root->next = (struct comp_idents *)NULL;
 	id_root->ident = comp_code_num;
 	id_root->no_of_solids = 1;
@@ -96,7 +97,7 @@ Add_solid(int comp_code_num)
 	else
 	{
 	    /* make a new entry for this component */
-	    ptr->next = (struct comp_idents *)bu_malloc( sizeof( struct comp_idents ), "tankill-g: idents list " );
+	    BU_ALLOC(ptr->next, struct comp_idents);
 	    ptr = ptr->next;
 	    ptr->next = NULL;
 	    ptr->ident = comp_code_num;
@@ -106,20 +107,24 @@ Add_solid(int comp_code_num)
     }
 }
 
-/*	T A N K I L L - G
- *
- *	Converts "tankill" format geometry to BRL-CAD model
- */
 
-static char *usage="Usage: tankill-g [-v] [-p] [-k] [-t tolerance] [-x lvl] [-X lvl] [-i input_tankill_file] [-o output_brlcad_model]\n\
-    where tolerance is the minimum distance (mm) between distinct vertices,\n\
-    input_tankill_file is the file name for input TANKILL model\n\
-    output_brlcad_model is the file name for output BRL-CAD model\n\
-	-v -> verbose\n\
-	-p -> write output as polysolids rather than NMG's\n\
-	-k -> keep components with id = 1001 (normally skipped)\n\
-	-x lvl -> sets the librt debug flag to lvl\n\
-	-X lvl -> sets the NMG debug flag to lvl\n";
+/*
+ * Converts "tankill" format geometry to BRL-CAD model
+ */
+static void
+usage()
+{
+    bu_log("Usage: tankill-g [-v] [-p] [-k] [-t tolerance] [-x lvl] [-X lvl] [-i input_tankill_file] [-o output_brlcad_model]\n");
+    bu_log("    where tolerance is the minimum distance (mm) between distinct vertices,\n");
+    bu_log("    input_tankill_file is the file name for input TANKILL model\n");
+    bu_log("    output_brlcad_model is the file name for output BRL-CAD model\n");
+    bu_log("	-v -> verbose\n");
+    bu_log("	-p -> write output as polysolids rather than NMG's\n");
+    bu_log("	-k -> keep components with id = 1001 (normally skipped)\n");
+    bu_log("	-x lvl -> sets the librt debug flag to lvl\n");
+    bu_log("	-X lvl -> sets the NMG debug flag to lvl\n");
+}
+
 
 int
 main(int argc, char **argv)
@@ -152,6 +157,8 @@ main(int argc, char **argv)
     int group_len[100];
     int all_len=0;
 
+    bu_setprogname(argv[0]);
+
     /* Set defaults */
 
     /* FIXME: These need to be improved */
@@ -162,15 +169,13 @@ main(int argc, char **argv)
     tol.para = 1 - tol.perp;
 
     in_fp = stdin;
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(in_fp), O_BINARY);
-#endif
     polysolids = 1;
     id_root = (struct comp_idents *)NULL;
     bu_ptbl_init( &faces, 64, " &faces ");
 
     /* get command line arguments */
-    while ((c = bu_getopt(argc, argv, "vknt:i:o:x:X:")) != EOF)
+    while ((c = bu_getopt(argc, argv, "vknt:i:o:x:X:")) != -1)
     {
 	switch ( c )
 	{
@@ -178,13 +183,13 @@ main(int argc, char **argv)
 		verbose = 1;
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-		bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
+		bu_printb( "librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    case 'k': /* keep component codes of 1001 */
@@ -210,7 +215,8 @@ main(int argc, char **argv)
 		output_file = bu_optarg;
 		break;
 	    default:
-		bu_exit( EXIT_FAILURE,  usage );
+		usage();
+		bu_exit( EXIT_FAILURE,  NULL );
 		break;
 	}
     }
@@ -301,7 +307,7 @@ main(int argc, char **argv)
 		    face_verts[i] = &verts[i+vert_no].vp;
 
 		/* make a face */
-		fu = nmg_cmface( s, face_verts, 3 );
+		(void)nmg_cmface( s, face_verts, 3 );
 
 		/* make sure any duplicate vertices get the same vertex pointer */
 		for (; vert1 < vert_no+3; vert1++ )
@@ -550,7 +556,7 @@ main(int argc, char **argv)
 	    sprintf( name, "%dXXX_codes", i );
 
 	    if ( mk_addmember( name, &reg_head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
-		bu_log( "mk_admember failed for %s\n", name );
+		bu_log( "mk_addmember failed for %s\n", name );
 	    all_len++;
 	}
     }

@@ -1,7 +1,7 @@
 /*                     P I X B U S T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixbustup.c
+/** @file util/pixbustup.c
  *
  * Take concatenated .pix files, and write them into individual files.
  * Mostly a holdover from the days when RT wrote animations into one
@@ -36,25 +36,43 @@
 int infd;
 unsigned char *in1;
 
-static int scanbytes;			/* # of bytes of scanline */
-static int nlines;		/* Number of input lines */
-static int pix_line;		/* Number of pixels/line */
+static size_t scanbytes;		/* # of bytes of scanline */
+static size_t nlines;		/* Number of input lines */
+static size_t pix_line;		/* Number of pixels/line */
+
+static void
+printUsage(void)
+{
+    bu_log("Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
+}
 
 
 int
 main(int argc, char **argv)
 {
-    int image_offset;
-    int framenumber;
+    off_t image_offset;
+    size_t framenumber;
     char *base_name;
     char name[128];
 
     if (argc < 3) {
-	bu_exit(1, "Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
+	printUsage();
+	return 1;
     }
 
     base_name = argv[1];
     nlines = atoi(argv[2]);
+
+    if (nlines < 1) {
+	bu_log("ERROR: need width of at least 1 pixel.");
+	printUsage();
+	return 2;
+    }
+    if (nlines > UINT32_MAX) {
+	bu_log("ERROR: not ready to handle images bigger than %x bytes square.", UINT32_MAX);
+	printUsage();
+	return 3;
+    }
 
     pix_line = nlines;	/* Square pictures */
     scanbytes = nlines * pix_line * 3;
@@ -72,20 +90,26 @@ main(int argc, char **argv)
     for (;; framenumber++) {
 	int fd;
 	int rwval = read(0, in1, scanbytes);
+	char *ifname;
 
-	if (rwval != scanbytes) {
+	if ((size_t)rwval != scanbytes) {
 	    if (rwval < 0) {
 		perror("pixbustup READ ERROR");
 	    }
 	    break;
 	}
-	snprintf(name, 128, "%s.%d", base_name, framenumber);
-	if ((fd=creat(name, 0444))<0) {
-	    perror(name);
+	snprintf(name, 128, "%s.%ld", base_name, (unsigned long)framenumber);
+
+	ifname = bu_realpath(name, NULL);
+	if ((fd=creat(ifname, 0444))<0) {
+	    perror(ifname);
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    continue;
 	}
+	bu_free(ifname, "ifname alloc from bu_realpath");
+
 	rwval = write(fd, in1, scanbytes);
-	if (rwval != scanbytes) {
+	if ((size_t)rwval != scanbytes) {
 	    if (rwval < 0) {
 		perror("pixbustup WRITE ERROR");
 	    }

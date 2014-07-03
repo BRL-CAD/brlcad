@@ -1,7 +1,7 @@
 /*                         F G E T S . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2010 United States Government as represented by
+ * Copyright (c) 2006-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/log.h"
 
 char *
 bu_fgets(char *s, int size, FILE *stream)

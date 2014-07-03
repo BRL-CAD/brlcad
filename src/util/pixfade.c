@@ -1,7 +1,7 @@
 /*                       P I X F A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,24 +17,24 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixfade.c
+/** @file util/pixfade.c
  *
- * Fade a pixture
+ * Fade a picture
  *
- * pixfade will darken a pix by a certen percentage or do an integer
+ * pixfade will darken a pix by a certain percentage or do an integer
  * max pixel value.  It runs in two modes, truncate which will cut any
  * channel greater than param to param, and scale which will change
- * a channel to param percent of its orignal value (limited by 0-255)
+ * a channel to param percent of its original value (limited by 0-255)
  *
- * entry:
+ * Inputs:
  *	-m	integer max value
  *	-f	fraction to fade
  *	-p	percentage of fade (fraction = percentage/100)
- *	file	a pixture file.
- *	<stdin>	a pixture file if file is not given.
+ *	file	a picture file.
+ *	STDIN	a picture file if 'file' is not given.
  *
- * Exit:
- *	<stdout>	the faded pixture.
+ * Output:
+ *	STDOUT	the faded picture.
  *
  * Calls:
  *	get_args
@@ -43,47 +43,60 @@
  *	straight-forward.
  *
  */
-
 #include "common.h"
 
-#include <stdlib.h> /* for atof() */
-#include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "bio.h"
-
-#include "vmath.h"
+#include "icv.h"
 #include "bu.h"
-#include "bn.h"
 
+int inx=512, iny=512;
+char *out_file = NULL;
+char *in_file = NULL;
+
+
+char usage[] = "\
+Usage: pixfade [-h] [-p percentage] [-f fraction] [-s squaresize] [-w width] [-n height] \n\
+                [-o out_file.pix] [file.bw] > [out_file.pix]\n";
+
+double multiplier = 0.5;
 
 int
-get_args(int argc, char **argv, FILE **inpp, int *max, double *multiplier)
+get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "m:p:f:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "p:f:s:w:n:o:h?")) != -1) {
 	switch (c) {
-	    case 'm':
-		*max = atoi(bu_optarg);
-		if ((*max < 0) || (*max > 255)) {
-		    fprintf(stderr, "pixfade: max out of range");
-		    bu_exit (1, NULL);
-		}
-		break;
-	    case 'p':
-		*multiplier = atof(bu_optarg) / 100.0;
-		if (*multiplier < 0.0) {
-		    fprintf(stderr, "pixfade: percent is negitive");
+            case 'p':
+		multiplier = atof(bu_optarg) / 100.0;
+		if (multiplier < 0.0) {
+		    bu_log("pixfade: percent is negative");
 		    bu_exit (1, NULL);
 		}
 		break;
 	    case 'f':
-		*multiplier = atof(bu_optarg);
-		if (*multiplier < 0.0) {
-		    fprintf(stderr, "pixfade: fraction is negitive");
+		multiplier = atof(bu_optarg);
+		if (multiplier < 0.0) {
+		    bu_log("pixfade: fraction is negative");
 		    bu_exit (1, NULL);
 		}
 		break;
-
+    	    case 's':
+		inx = iny = atoi(bu_optarg);
+		break;
+	    case 'w':
+		inx = atoi(bu_optarg);
+		break;
+	    case 'n':
+		iny = atoi(bu_optarg);
+		break;
+	    case 'o':
+		out_file = bu_optarg;
+		break;
+	    case 'h':
 	    default:		/* '?' */
 		return 0;
 	}
@@ -91,26 +104,21 @@ get_args(int argc, char **argv, FILE **inpp, int *max, double *multiplier)
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin))) {
-	    fprintf(stderr, "pixfade: stdin is a tty\n");
 	    return 0;
 	}
-	*inpp = stdin;
     } else {
-	*inpp = fopen(argv[bu_optind], "r");
-	if (*inpp == NULL) {
-	    (void)fprintf(stderr,
-			  "pixfade: cannot open \"%s\" for reading\n",
-			  argv[bu_optind]);
-	    return 0;
-	}
+        in_file = argv[bu_optind];
+        bu_optind++;
+        return 1;
     }
 
-    if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pixfade: excess argument(s) ignored\n");
 
-    if (isatty(fileno(stdout))) {
-	fprintf(stderr, "pixfade: stdout is a tty\n");
+    if (!isatty(fileno(stdout)) && out_file!=NULL) {
 	return 0;
+    }
+
+    if (argc > ++bu_optind) {
+	bu_log("pixfade: excess argument(s) ignored\n");
     }
 
     return 1;		/* OK */
@@ -120,55 +128,19 @@ get_args(int argc, char **argv, FILE **inpp, int *max, double *multiplier)
 int
 main(int argc, char **argv)
 {
-    static char usage[] = "\
-Usage: pixfade [-m max] [-p percent] [-f fraction] [pix-file]\n";
-
-    FILE *inp = NULL;
-    int max = 255;
-    double multiplier = 1.0;
-
-    float *randp;
-    struct color_rec {
-	unsigned char red, green, blue;
-    } cur_color;
-
-    bn_rand_init(randp, 0);
-
-    if (!get_args(argc, argv, &inp, &max, &multiplier)) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+    icv_image_t *img;
+    if (!get_args(argc, argv)) {
+        bu_log("%s", usage);
+        return 1;
     }
 
-    /* fprintf(stderr, "pixfade: max = %d, multiplier = %f\n", max, multiplier); */
+    img = icv_read(in_file, ICV_IMAGE_PIX, inx, iny);
+    if (img == NULL)
+        return 1;
+    icv_fade(img, multiplier);
+    icv_write(img, out_file, ICV_IMAGE_PIX);
 
-    for (;;) {
-	double t;
-	size_t ret;
-
-	ret = fread(&cur_color, 1, 3, inp);
-	if (ret != 3) break;
-	if (feof(inp)) break;
-
-	t = cur_color.red * multiplier + bn_rand_half(randp);
-	if (t > max)
-	    cur_color.red   = max;
-	else
-	    cur_color.red = t;
-
-	t = cur_color.green * multiplier + bn_rand_half(randp);
-	if (t > max)
-	    cur_color.green = max;
-	else
-	    cur_color.green = t;
-
-	t = cur_color.blue * multiplier + bn_rand_half(randp);
-	if (t > max)
-	    cur_color.blue  = max;
-	else
-	    cur_color.blue = t;
-
-	fwrite(&cur_color, 1, 3, stdout);
-    }
+    icv_destroy(img);
     return 0;
 }
 

@@ -1,7 +1,7 @@
 /*                     B A C K T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,21 +39,26 @@
 #ifdef HAVE_PROCESS_H
 #  include <process.h>
 #endif
-#ifdef HAVE_SYS_SELECT_H
-#  include <sys/select.h>
-#endif
+#include "bselect.h"
 #include "bio.h"
 
 /* common headers */
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
 
-
-/* c99 doesn't declare these */
-#ifdef HAVE_KILL
+/* strict c99 doesn't declare kill() (but POSIX does) */
+#if defined(HAVE_KILL) && !defined(HAVE_DECL_KILL)
 extern int kill(pid_t, int);
 #endif
 
-#ifndef fileno
+/* fileno() may be a macro (e.g., Windows) or may not even be declared
+ * when compiling strict, but declare it as needed
+ */
+#if defined(HAVE_FILENO) && !defined(HAVE_DECL_FILENO)
 extern int fileno(FILE*);
 #endif
 
@@ -171,7 +176,7 @@ backtrace(char * const *args, int fd)
     } else if (write(input[1], "bt full\n", 8) != 8) {
 	perror("write [bt full] failed");
     }
-    /* can add additional gdb commands here.  output will contain
+    /* can add additional gdb commands here. Output will contain
      * everything up to the "Detaching from process" statement from
      * quit.
      */
@@ -209,11 +214,11 @@ backtrace(char * const *args, int fd)
 			} else {
 			    position++;
 			}
-			if (strncmp(buffer, "No locals", 9) == 0) {
+			if (bu_strncmp(buffer, "No locals", 9) == 0) {
 			    /* skip it */
-			} else if (strncmp(buffer, "No symbol table", 15) == 0) {
+			} else if (bu_strncmp(buffer, "No symbol table", 15) == 0) {
 			    /* skip it */
-			} else if (strncmp(buffer, "Detaching", 9) == 0) {
+			} else if (bu_strncmp(buffer, "Detaching", 9) == 0) {
 			    /* done processing backtrace output */
 			    processing_bt = 0;
 			} else if (processing_bt == 1) {
@@ -305,12 +310,12 @@ bu_backtrace(FILE *fp)
 	debugger_args[0] = bu_strdup(locate_gdb);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("Found gdb in SYSTEM path: %s\n", locate_gdb);
+	} else {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+		bu_log("gdb was NOT found, no backtrace available\n");
+	    }
+	    return 0;
 	}
-    } else {
-	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("gdb was NOT found, no backtrace available\n");
-	}
-	return 0;
     }
     locate_gdb = NULL;
 
@@ -352,8 +357,8 @@ bu_backtrace(FILE *fp)
     }
     fflush(fp);
 
-    /* could probably do something better than this to avoid hanging
-     * indefinitely.  keeps the trace clean, though, and allows for a
+    /* Could probably do something better than this to avoid hanging
+     * indefinitely. Keeps the trace clean, though, and allows for a
      * debugger to be attached interactively if needed.
      */
     interrupt_wait = 0;
@@ -362,7 +367,7 @@ bu_backtrace(FILE *fp)
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 	gettimeofday(&end, NULL);
-	while ((interrupt_wait == 0) && (end.tv_sec - start.tv_sec < 60)) {
+	while ((interrupt_wait == 0) && (end.tv_sec - start.tv_sec < 45 /* seconds */)) {
 	    /* do nothing, wait for debugger to attach but don't wait too long */;
 	    gettimeofday(&end, NULL);
 	    sleep(1);

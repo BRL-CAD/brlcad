@@ -1,7 +1,7 @@
 /*                         S E D I T . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,13 +17,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sedit.h
+/** @file mged/sedit.h
  *
  * This header file contains the esolid structure definition,
  * which holds all the information necessary for solid editing.
  * Storage is actually allocated in edsol.c
  *
  */
+
+#ifndef MGED_SEDIT_H
+#define MGED_SEDIT_H
 
 #define MGED_SMALL_SCALE 1.0e-10
 
@@ -36,9 +39,9 @@
 /* These ECMD_ values go in es_edflag.  Some names not changed yet */
 #define IDLE		0	/* edarb.c */
 #define STRANS		1	/* buttons.c */
-#define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalor */
+#define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalar */
 #define SROT		3	/* buttons.c */
-#define PSCALE		4	/* Scale one solid parameter by scalor */
+#define PSCALE		4	/* Scale one solid parameter by scalar */
 
 #define ECMD_TGC_MV_H	5
 #define ECMD_TGC_MV_HH	6
@@ -247,19 +250,6 @@ extern struct dm_list *edit_rate_vr_dm_list;
 extern struct dm_list *edit_rate_mt_dm_list;
 extern struct dm_list *edit_rate_vt_dm_list;
 
-extern struct bu_vls edit_rate_model_tran_vls[3];
-extern struct bu_vls edit_rate_view_tran_vls[3];
-extern struct bu_vls edit_rate_model_rotate_vls[3];
-extern struct bu_vls edit_rate_object_rotate_vls[3];
-extern struct bu_vls edit_rate_view_rotate_vls[3];
-extern struct bu_vls edit_rate_scale_vls;
-extern struct bu_vls edit_absolute_model_tran_vls[3];
-extern struct bu_vls edit_absolute_view_tran_vls[3];
-extern struct bu_vls edit_absolute_model_rotate_vls[3];
-extern struct bu_vls edit_absolute_object_rotate_vls[3];
-extern struct bu_vls edit_absolute_view_rotate_vls[3];
-extern struct bu_vls edit_absolute_scale_vls;
-
 extern fastf_t es_scale;	/* scale factor */
 extern fastf_t es_para[3];	/* keyboard input parameter changes */
 extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
@@ -267,6 +257,8 @@ extern int es_menu;		/* item/edit_mode selected from menu */
 extern int es_edflag;		/* type of editing for this solid */
 extern int es_edclass;		/* type of editing class for this solid */
 extern int es_type;		/* COMGEOM solid type */
+extern int es_keyfixed;		/* keypoint specified by user */
+extern struct rt_db_internal es_int;
 
 extern mat_t es_mat;		/* accumulated matrix of path */
 extern mat_t es_invmat;		/* inverse of es_mat KAA */
@@ -277,6 +269,13 @@ extern point_t curr_e_axes_pos;	/* center of editing xforms */
 
 extern int arb_faces[5][24];	/* from edarb.c */
 extern int arb_planes[5][24];	/* from edarb.c */
+
+extern void get_solid_keypoint(fastf_t *pt,
+			       char **strp,
+			       struct rt_db_internal *ip,
+			       fastf_t *mat);
+
+#endif /* MGED_SEDIT_H */
 
 /*
  * Local Variables:

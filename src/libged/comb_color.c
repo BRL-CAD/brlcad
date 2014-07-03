@@ -1,7 +1,7 @@
 /*                        C O M B _ C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file comb_color.c
+/** @file libged/comb_color.c
  *
  * The comb_color command.
  *
@@ -29,28 +29,28 @@
 int
 ged_comb_color(struct ged *gedp, int argc, const char *argv[])
 {
-    int				i;
-    int				val;
-    struct directory	*dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
-    static const char *usage = "comb_color combination R G B";
+    int i;
+    int val;
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    static const char *usage = "combination R G B";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -63,11 +63,10 @@ ged_comb_color(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 0; i < 3; ++i) {
 	if (sscanf(argv[i+2], "%d", &val) != 1 || val < 0 || 255 < val) {
-	    bu_vls_printf(&gedp->ged_result_str,"RGB value out of range: %s", argv[i + 2]);
+	    bu_vls_printf(gedp->ged_result_str, "RGB value out of range: %s", argv[i + 2]);
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
-	}
-	else
+	} else
 	    comb->rgb[i] = val;
     }
 

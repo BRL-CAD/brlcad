@@ -1,7 +1,7 @@
 #                        B O T S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2009-2010 United States Government as represented by
+# Copyright (c) 2009-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -25,25 +25,17 @@
 # introspect primitive data parameters (form elements)
 #
 
-set extern_commands [list db tops]
-foreach cmd $extern_commands {
-    catch {auto_load $cmd} val
-    if {[expr [string compare [info command $cmd] $cmd] != 0]} {
-	puts stderr "[info script]: Application fails to provide command '$cmd'"
-	return
-    }
-}
+proc bots { args } {
 
-proc per_line { args } {
-    puts stderr "DEPRECATION WARNING: 'bots' and 'per_line' are temporary until 'search' is enhanced."
-    foreach list $args {
-	foreach item $list {
-	    puts "$item"
+    set extern_commands [list db tops]
+    foreach cmd $extern_commands {
+	catch {auto_load $cmd} val
+	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
+	    puts stderr "[info script]: Application fails to provide command '$cmd'"
+	    return
 	}
     }
-}
 
-proc bots { args } {
     set argc [llength $args]
     set results [list]
 

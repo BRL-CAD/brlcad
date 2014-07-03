@@ -1,7 +1,7 @@
 /*                         U N I T S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,11 +26,16 @@
 #include <string.h>
 #include <float.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/units.h"
+#include "bu/vls.h"
 
 
 /* done specifically to avoid a libbn dependency */
 #define NEAR_ZERO(val, epsilon) (((val) > -epsilon) && ((val) < epsilon))
+#define ZERO(val) NEAR_ZERO((val), SMALL_FASTF)
 
 
 struct cvt_tab {
@@ -42,7 +47,7 @@ struct conv_table {
     struct cvt_tab *cvttab;
 };
 
-struct cvt_tab bu_units_length_tab[] = {
+static struct cvt_tab bu_units_length_tab[] = {
     {0.0,		"none"},
     {1.0e-21,		"ym"},
     {1.0e-21,		"yoctometer"},
@@ -91,7 +96,7 @@ struct cvt_tab bu_units_length_tab[] = {
     {1.0e+27,		"yottameter"},
     {25.4,		"in"},
     {25.4,		"inch"},
-    {25.4,		"inche"}, /* plural */
+    {25.4,		"inches"}, /* plural */
     {101.6,		"hand"},
     {304.8,		"ft"},
     {304.8,		"foot"},
@@ -106,21 +111,14 @@ struct cvt_tab bu_units_length_tab[] = {
     {1609344.0,		"mi"},
     {1609344.0,		"mile"},
     {1852000.0,		"nmile"},
-    {1852000.0,		"nauticalmile"},
     {1852000.0,		"nautical mile"},
     {5556000.0,		"league"},
-    {2.99792458e+11,	"lightsecond"},
     {2.99792458e+11,	"light second"},
-    {1.79875475e+13,	"lightminute"},
     {1.79875475e+13,	"light minute"},
     {1.495979e+14,	"AU"},
-    {1.495979e+14,	"astronomicalunit"},
     {1.495979e+14,	"astronomical unit"},
-    {1.07925285e+15,	"lighthour"},
     {1.07925285e+15,	"light hour"},
-    {2.59020684e+16,	"lightday"},
     {2.59020684e+16,	"light day"},
-    {9.4605284+18,	"lightyear"},
     {9.4605284+18,	"light year"},
     {3.08568025e+19,	"pc"},
     {3.08568025e+19,	"parsec"},
@@ -128,7 +126,7 @@ struct cvt_tab bu_units_length_tab[] = {
 };
 #define BU_UNITS_TABLE_SIZE (sizeof(bu_units_length_tab) / sizeof(struct cvt_tab) - 1)
 
-struct cvt_tab bu_units_volume_tab[] = {
+static struct cvt_tab bu_units_volume_tab[] = {
     {0.0,		"none"},
     {1.0,		"mm^3"},		/* default */
     {1.0, 		"cu mm"},
@@ -150,7 +148,7 @@ struct cvt_tab bu_units_volume_tab[] = {
     {0.0,               ""}                     /* LAST ENTRY */
 };
 
-struct cvt_tab bu_units_mass_tab[] = {
+static struct cvt_tab bu_units_mass_tab[] = {
     {0.0,		"none"},
     {1.0,		"grams"},		/* default */
     {1.0, 		"g"},
@@ -169,39 +167,84 @@ static const struct conv_table unit_lists[4] = {
 };
 
 
+/**
+ * compares an input units string to a reference units name and
+ * returns truthfully if they match.  the comparison ignores any
+ * embedded whitespace and is case insensitive.
+ */
+static int
+units_name_matches(const char *input, const char *name)
+{
+    const char *cp;
+    int match;
+    struct bu_vls normalized_input = BU_VLS_INIT_ZERO;
+    struct bu_vls normalized_name = BU_VLS_INIT_ZERO;
+
+    /* convert NULL */
+    if (!input)
+	input = "";
+    if (!name)
+	name = "";
+
+    /* skip spaces */
+    while (isspace((unsigned char)*input))
+	input++;
+    while (isspace((unsigned char)*name))
+	name++;
+
+    /* quick exit */
+    if (tolower((unsigned char)input[0]) != tolower((unsigned char)name[0]))
+	return 0;
+
+    cp = input;
+    /* skip spaces, convert to lowercase */
+    while (*cp != '\0') {
+	if (!isspace((unsigned char)*cp))
+	    bu_vls_putc(&normalized_input, tolower((unsigned char)*cp));
+	cp++;
+    }
+
+    cp = name;
+    /* skip spaces, convert to lowercase */
+    while (*cp != '\0') {
+	if (!isspace((unsigned char)*cp))
+	    bu_vls_putc(&normalized_name, tolower((unsigned char)*cp));
+	cp++;
+    }
+
+    /* trim any trailing 's' for plurality */
+    if (bu_vls_addr(&normalized_input)[bu_vls_strlen(&normalized_input)-1] == 's') {
+	bu_vls_trunc(&normalized_input, -1);
+    }
+    if (bu_vls_addr(&normalized_name)[bu_vls_strlen(&normalized_name)-1] == 's') {
+	bu_vls_trunc(&normalized_name, -1);
+    }
+
+    /* compare */
+    match = BU_STR_EQUAL(bu_vls_addr(&normalized_input), bu_vls_addr(&normalized_name));
+
+    bu_vls_free(&normalized_input);
+    bu_vls_free(&normalized_name);
+
+    return match;
+}
+
+
 double
 bu_units_conversion(const char *str)
 {
-    register char *ip;
-    register int c;
     register const struct cvt_tab *tp;
     register const struct conv_table *cvtab;
     char ubuf[256];
-    size_t len;
 
+    /* Copy the given string */
     bu_strlcpy(ubuf, str, sizeof(ubuf));
-
-    /* Copy the given string, making it lower case */
-    ip = ubuf;
-    c = *ip;
-    while (c) {
-	if (isupper(c))
-	    *ip++ = tolower(c);
-	else
-	    ip++;
-
-	c = *ip;
-    }
-
-    /* Remove any trailing "s" (plural) */
-    len = strlen(ubuf);
-    if (ubuf[len-1] == 's')  ubuf[len-1] = '\0';
 
     /* Search for this string in the table */
     for (cvtab=unit_lists; cvtab->cvttab; cvtab++) {
 	for (tp=cvtab->cvttab; tp->name[0]; tp++) {
-	    if (ubuf[0] != tp->name[0])  continue;
-	    if (strcmp(ubuf, tp->name) != 0)  continue;
+	    if (!units_name_matches(ubuf, tp->name))
+		continue;
 	    return tp->val;
 	}
     }
@@ -215,13 +258,13 @@ bu_units_string(register const double mm)
     register const struct cvt_tab *tp;
 
     if (UNLIKELY(mm <= 0))
-	return (char *)NULL;
+	return (const char *)NULL;
 
     /* Search for this string in the table */
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	fastf_t diff, bigger;
 
-	if (NEAR_ZERO(mm - tp->val, SMALL_FASTF))
+	if (ZERO(mm - tp->val))
 	    return tp->name;
 
 	/* Check for near-miss */
@@ -241,7 +284,7 @@ bu_units_string(register const double mm)
 	if (diff < 0.000000001 * bigger)
 	    return tp->name;
     }
-    return (char *)NULL;
+    return (const char *)NULL;
 }
 
 struct bu_vls *
@@ -251,10 +294,10 @@ bu_units_strings_vls()
     struct bu_vls *vlsp;
     double prev_val = 0.0;
 
-    BU_GETSTRUCT(vlsp, bu_vls);
+    BU_ALLOC(vlsp, struct bu_vls);
     bu_vls_init(vlsp);
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
-	if (NEAR_ZERO(prev_val - tp->val, SMALL_FASTF))
+	if (ZERO(prev_val - tp->val))
 	    continue;
 
 	bu_vls_printf(vlsp, "%s, ", tp->name);
@@ -277,18 +320,18 @@ bu_nearest_units_string(register const double mm)
     double nearer = DBL_MAX;
 
     if (UNLIKELY(mm <= 0))
-	return (char *)NULL;
+	return (const char *)NULL;
 
     /* Search for this unit in the table */
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	double nearness;
 
 	/* skip zero so we don't return 'none' */
-	if (NEAR_ZERO(tp->val, SMALL_FASTF))
+	if (ZERO(tp->val))
 	    continue;
 
 	/* break early on perfect match */
-	if (NEAR_ZERO(mm - tp->val, SMALL_FASTF))
+	if (ZERO(mm - tp->val))
 	    return tp->name;
 
 	/* Check for nearness */
@@ -319,35 +362,37 @@ bu_mm_value(const char *s)
 
     if (ptr == s) {
 	/* No number could be found, unity is implied */
-	/* e.g. interprept "ft" as "1ft" */
+	/* e.g. interpret "ft" as "1ft" */
 	v = 1.0;
     }
     if (! *ptr) {
-	/* There are no characters following the scaned number */
+	/* There are no characters following the scanned number */
 	return v;
     }
 
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
-	if (*ptr != tp->name[0])  continue;
-	if (strcmp(ptr, tp->name) == 0) {
+	if (units_name_matches(ptr, tp->name)) {
 	    v *= tp->val;
 	    return v;
 	}
     }
 
     /* A string was seen, but not found in the table.  Signal error */
-    return -1;
+    return -1.0;
 }
 
 
 void
-bu_mm_cvt(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+bu_mm_cvt(const struct bu_structparse *sdp,
+	  const char *name,
+	  void *base,
+	  const char *value)
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
-    register double *p = (double *)(base+sdp->sp_offset);
+    register double *p = (double *)((char *)base + sdp->sp_offset);
 
     if (UNLIKELY(!name)) {
 	bu_log("bu_mm_cvt: NULL name encountered\n");

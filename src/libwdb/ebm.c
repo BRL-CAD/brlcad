@@ -1,7 +1,7 @@
 /*                            E B M . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ebm.c
+/** @file libwdb/ebm.c
  *
  */
 
@@ -35,20 +35,17 @@
 #include "db.h"
 
 
-/*
- * M K _ E B M
- */
 int
-mk_ebm(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, fastf_t tallness, const matp_t mat)
+mk_ebm(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_t ydim, fastf_t tallness, const matp_t mat)
     /* name of file containing bitmap */
-    /* X dimansion of file (w cells) */
+    /* X dimension of file (w cells) */
     /* Y dimension of file (n cells) */
     /* Z extrusion height (mm) */
     /* convert local coords to model space */
 {
     struct rt_ebm_internal *ebm;
 
-    BU_GETSTRUCT(ebm, rt_ebm_internal);
+    BU_ALLOC(ebm, struct rt_ebm_internal);
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
     bu_strlcpy(ebm->file, file, RT_EBM_NAME_LEN);
     ebm->xdim = xdim;
@@ -56,7 +53,7 @@ mk_ebm(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim
     ebm->tallness = tallness;
     MAT_COPY(ebm->mat, mat);
 
-    return wdb_export(fp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm);
+    return wdb_export(fp, name, (void *)ebm, ID_EBM, mk_conv2mm);
 }
 
 

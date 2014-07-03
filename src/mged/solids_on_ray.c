@@ -1,7 +1,7 @@
 /*                 S O L I D S _ O N _ R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file solids_on_ray.c
+/** @file mged/solids_on_ray.c
  *
  * Routines to implement the click-to-pick-an-edit-solid feature.
  *
@@ -48,13 +48,11 @@
 				fflush(stdout)
 
 /*
- * S O L _ N A M E _ D I S T
- *
  * Little pair for storing the name and distance of a solid
  */
 struct sol_name_dist
 {
-    long magic;
+    uint32_t magic;
     char *name;
     fastf_t dist;
 };
@@ -62,8 +60,6 @@ struct sol_name_dist
 
 #ifdef OLD_RPT
 /*
- * S O L _ C O M P _ N A M E
- *
  * The function to order solids alphabetically by name
  */
 static int
@@ -75,13 +71,11 @@ sol_comp_name(void *v1, void *v2)
     BU_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
     BU_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
-    return strcmp(s1->name, s2->name);
+    return bu_strcmp(s1->name, s2->name);
 }
 
 
 /*
- * S O L _ C O M P _ D I S T
- *
  * The function to order solids by distance along the ray
  */
 static int
@@ -102,19 +96,14 @@ sol_comp_dist(void *v1, void *v2)
 }
 
 
-/*
- * M K _ S O L I D
- */
 static struct sol_name_dist *
 mk_solid(char *name, fastf_t dist)
 {
     struct sol_name_dist *sp;
 
-    sp = (struct sol_name_dist *)
-	bu_malloc(sizeof(struct sol_name_dist), "solid");
+    BU_ALLOC(sp, struct sol_name_dist);
     sp->magic = SOL_NAME_DIST_MAGIC;
-    sp->name = (char *)
-	bu_malloc(strlen(name)+1, "solid name");
+    sp->name = (char *)bu_malloc(strlen(name)+1, "solid name");
     bu_strlcpy(sp->name, name, strlen(name)+1);
     sp->dist = dist;
     return sp;
@@ -122,8 +111,6 @@ mk_solid(char *name, fastf_t dist)
 
 
 /*
- * F R E E _ S O L I D
- *
  * This function has two parameters: the solid to free and
  * an indication whether the name member of the solid should
  * also be freed.
@@ -134,23 +121,19 @@ free_solid(struct sol_name_dist *sol, int free_name)
     BU_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
     if (free_name)
-	bu_free((genptr_t) sol->name, "solid name");
-    bu_free((genptr_t) sol, "solid");
+	bu_free((void *) sol->name, "solid name");
+    bu_free((void *) sol, "solid");
 }
 
 
-/*
- * P R I N T _ S O L I D
- */
 static void
 print_solid(void *vp)
 {
     struct sol_name_dist *sol = vp;
-    struct bu_vls tmp_vls;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
     BU_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
-    bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "solid %s at distance %g along ray\n",
 		  sol->name, sol->dist);
     Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -160,8 +143,6 @@ print_solid(void *vp)
 
 
 /*
- * N O _ O P
- *
  * Null event handler for use by rt_shootray().
  *
  * Does nothing.  Returns 1.
@@ -173,171 +154,7 @@ no_op(struct application *UNUSED(ap), struct partition *UNUSED(ph), struct regio
 }
 
 
-#ifdef OLD_RPT
 /*
- * R P T _ S O L I D S
- *
- * Hit handler for use by rt_shootray().
- *
- * Grabs the first partition it sees, extracting thence
- * the segment list.  Rpt_solids() sorts the solids along
- * the ray by first encounter.  As a side-effect, rpt_solids()
- * stores in ap->a_uptr the address of a null-terminated array
- * of the sorted solid names.  If ap->a_user is nonzero,
- * rpt_solids() stashes the complete path name for each solid,
- * otherwise, just its basename.  It returns 1.
- */
-/* If this is defined inside the body of rpt_solids(), it causes
- * the IRIX 6 compilers to segmentation fault in WHIRL file phase. Ugh. */
-static int (*rpt_solids_orders[])() =
-{
-    sol_comp_name,
-    sol_comp_dist
-};
-
-
-static int
-rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_segs)
-{
-    char **result;
-    struct db_full_path *fp;
-    int i;
-    struct partition *pp;
-    bu_rb_tree *solids;
-    struct seg *segp;
-    struct sol_name_dist *old_sol;
-    struct sol_name_dist *sol;
-    struct soltab *stp;
-    struct bu_vls sol_path_name;
-    int index;
-
-    /*
-     * Initialize the solid list
-     */
-    if ((solids = bu_rb_create("Primitive list", 2, rpt_solids_orders)) == BU_RB_TREE_NULL)
-	bu_exit (1, "%s: %d: bu_rb_create() bombed\n", __FILE__, __LINE__);
-    solids->rbt_print = print_solid;
-    bu_rb_uniq_on(solids, ORDER_BY_NAME);
-
-    bu_vls_init(&sol_path_name);
-
-    /*
-     * Get the list of segments along this ray
-     * and seek to its head
-     */
-    BU_CKMAG(ph, PT_HD_MAGIC, "partition head");
-    pp = ph->pt_forw;
-    BU_CKMAG(pp, PT_MAGIC, "partition structure");
-    if (BU_LIST_MAGIC_WRONG((struct bu_list *) finished_segs,
-			    RT_SEG_MAGIC))
-	BU_CKMAG(finished_segs, BU_LIST_HEAD_MAGIC, "list head");
-
-    /*
-     * New stuff
-     */
-
-    RT_CK_LIST_HEAD(&finished_segs->l);
-
-    for (BU_LIST_FOR(pp, partition, (struct bu_list *) &ph->pt_magic)) {
-	BU_CKMAG(pp, PT_MAGIC, "partition");
-	BU_CKMAG(pp->pt_regionp, RT_REGION_MAGIC, "region");
-	printf("    Partition <x%lx> is '%s' ",
-	       (long)pp, pp->pt_regionp->reg_name);
-
-	printf("\n--- Primitives hit on this partition ---\n");
-	for (i = 0; i < (pp->pt_seglist).end; ++i) {
-	    stp = ((struct seg *)BU_PTBL_GET(&pp->pt_seglist, i))->seg_stp;
-	    RT_CK_SOLTAB(stp);
-	    bu_vls_trunc(&sol_path_name, 0);
-	    fp = &(stp->st_path);
-	    if (fp->magic != 0) {
-		printf(" full path... ");fflush(stdout);
-		RT_CK_FULL_PATH(fp);
-		bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
-	    } else {
-		printf(" dir-entry name... ");fflush(stdout);
-		BU_CKMAG(stp->st_dp, RT_DIR_MAGIC,
-			 "directory");
-		bu_vls_strcpy(&sol_path_name, stp->st_name);
-	    }
-	    printf("'%s'\n", bu_vls_addr(&sol_path_name));fflush(stdout);
-	}
-	printf("------------------------------------\n");
-
-	/*
-	 * Look at each segment that participated in this ray partition.
-	 */
-	for (index = 0; index < BU_PTBL_END(&pp->pt_seglist); index++) {
-	    segp = (struct seg *)BU_PTBL_GET(&pp->pt_seglist, index);
-	    RT_CK_SEG(segp);
-	    RT_CK_SOLTAB(segp->seg_stp);
-
-	    printf("Primitive #%d in this partition is ", index);fflush(stdout);
-	    bu_vls_trunc(&sol_path_name, 0);
-	    fp = &(segp->seg_stp->st_path);
-	    if (fp->magic != 0) {
-		printf(" full path... ");fflush(stdout);
-		RT_CK_FULL_PATH(fp);
-		bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
-	    } else {
-		printf(" dir-entry name... ");fflush(stdout);
-		BU_CKMAG(segp->seg_stp->st_dp, RT_DIR_MAGIC,
-			 "directory");
-		bu_vls_strcpy(&sol_path_name, segp->seg_stp->st_name);
-	    }
-	    printf("'%s'\n", bu_vls_addr(&sol_path_name));
-
-	    /*
-	     * Attempt to record the new solid.
-	     * If it shares its name with a previously recorded solid,
-	     * then retain the one that appears earlier on the ray.
-	     */
-	    sol = mk_solid(bu_vls_addr(&sol_path_name),
-			   segp->seg_in.hit_dist);
-	    if (bu_rb_insert(solids, (void *) sol) < 0) {
-		old_sol = (struct sol_name_dist *)
-		    bu_rb_curr(solids, ORDER_BY_NAME);
-		BU_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
-			 "sol_name_dist structure");
-		if (sol->dist >= old_sol->dist)
-		    free_solid(sol, 1);
-		else {
-		    bu_rb_delete(solids, ORDER_BY_NAME);
-		    bu_rb_insert(solids, sol);
-		    free_solid(old_sol, 1);
-		}
-	    }
-	}
-    }
-
-    /*
-     * Record the resulting list of solid names
-     * for use by the calling function
-     */
-    result = (char **)
-	bu_malloc((solids->rbt_nm_nodes + 1) * sizeof(char *),
-		  "names of solids on ray");
-    for (sol = (struct sol_name_dist *) bu_rb_min(solids, ORDER_BY_DISTANCE),
-	     i=0;
-	 sol != NULL;
-	 sol = (struct sol_name_dist *) bu_rb_succ(solids, ORDER_BY_DISTANCE),
-	     ++i) {
-	result[i] = sol->name;
-	free_solid(sol, 0);
-    }
-    result[i] = 0;
-    ap->a_uptr = (char *) result;
-
-    bu_rb_free(solids, BU_RB_RETAIN_DATA);
-
-    return 1;
-}
-#endif
-
-
-/*
- * R P T _ H I T S _ M I K E
- *
  * Each partition represents a segment, i.e. a single solid.
  * Boolean operations have not been performed.
  * The partition list is sorted by ascending inhit distance.
@@ -363,14 +180,12 @@ rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *U
     list[i++] = NULL;
     if (i > len) bu_exit(EXIT_FAILURE, "rpt_hits_mike: array overflow\n");
 
-    ap->a_uptr = (genptr_t)list;
+    ap->a_uptr = (void *)list;
     return len;
 }
 
 
 /*
- * R P T _ M I S S
- *
  * Miss handler for use by rt_shootray().
  *
  * Stuffs the address of a null string in ap->a_uptr and returns 0.
@@ -386,8 +201,6 @@ rpt_miss(struct application *ap)
 
 
 /*
- * S K E W E R _ S O L I D S
- *
  * Fire a ray at some geometry and obtain a list of
  * the solids encountered, sorted by first intersection.
  *
@@ -420,7 +233,7 @@ char **skewer_solids (int argc, const char *argv[], fastf_t *ray_orig, fastf_t *
     if (rt_gettrees(rtip, argc, argv, 1) == -1) {
 	Tcl_AppendResult(INTERP, "rt_gettrees() failed\n", (char *)NULL);
 	rt_clean(rtip);
-	bu_free((genptr_t)rtip, "struct rt_i");
+	bu_free((void *)rtip, "struct rt_i");
 	return (char **) 0;
     }
 
@@ -452,7 +265,7 @@ char **skewer_solids (int argc, const char *argv[], fastf_t *ray_orig, fastf_t *
     (void) rt_shootray(&ap);
 
     rt_clean(rtip);
-    bu_free((genptr_t)rtip, "struct rt_i");
+    bu_free((void *)rtip, "struct rt_i");
 
     return (char **) ap.a_uptr;
 }

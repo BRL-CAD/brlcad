@@ -1,7 +1,7 @@
 /*                     V I E W D U M M Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewdummy.c
+/** @file rt/viewdummy.c
  *
  *  A dummy or example "view" module.
  *  This code may be used as a prototype for building a new application
@@ -33,10 +33,11 @@
 #include "common.h"
 
 #include <stdio.h>
+
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "rtprivate.h"
+#include "./rtuif.h"
 
 
 /*
@@ -68,8 +69,6 @@ int	rayhit(register struct application *ap, struct partition *PartHeadp);
 int	raymiss(register struct application *ap);
 
 /*
- *  			V I E W _ I N I T
- *
  *  Called by main() at the start of a run.
  *  Returns 1 if framebuffer should be opened, else 0.
  */
@@ -79,8 +78,6 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 }
 
 /*
- *			V I E W _ 2 I N I T
- *
  *  The beginning of a frame.
  *  Called by do_frame() just before raytracing starts.
  */
@@ -93,9 +90,7 @@ view_2init(struct application *ap)
 }
 
 /*
- *			V I E W _ P I X E L
- *
- *  Called by worker() after the end of proccessing for each pixel.
+ *  Called by worker() after the end of processing for each pixel.
  */
 void
 view_pixel(register struct application *ap)
@@ -103,9 +98,7 @@ view_pixel(register struct application *ap)
 }
 
 /*
- *			V I E W _ E O L
- *
- *  Called by worker() at the end of each line.  Depricated.
+ *  Called by worker() at the end of each line.  Deprecated.
  *  Any end-of-line processing should be done in view_pixel().
  */
 void
@@ -114,8 +107,6 @@ view_eol(register struct application *ap)
 }
 
 /*
- *			V I E W _ E N D
- *
  *  Called in do_frame() at the end of a frame,
  *  just after raytracing completes.
  */
@@ -125,8 +116,6 @@ view_end(register struct application *ap)
 }
 
 /*
- *			V I E W _ S E T U P
- *
  *  Called by do_prep(), just before rt_prep() is called, in do.c
  *  This allows the lighting model to get set up for this frame,
  *  e.g., generate lights, associate materials routines, etc.
@@ -137,8 +126,6 @@ view_setup(struct rt_i *rtip)
 }
 
 /*
- *			V I E W _ C L E A N U P
- *
  *  Called by "clean" command, just before rt_clean() is called, in do.c
  */
 void
@@ -147,8 +134,6 @@ view_cleanup(struct rt_i *rtip)
 }
 
 /*
- *			R A Y H I T
- *
  *  Called via a_hit linkage from rt_shootray() when ray hits.
  */
 int
@@ -160,8 +145,6 @@ rayhit(register struct application *ap, struct partition *PartHeadp)
 }
 
 /*
- *			R A Y M I S S
- *
  *  Called via a_miss linkage from rt_shootray() when ray misses.
  */
 int

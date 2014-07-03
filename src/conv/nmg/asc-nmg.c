@@ -1,7 +1,7 @@
 /*                       A S C - N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,27 +43,39 @@
 static int ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name);
 static void descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext);
 
-char		usage[] = "Usage: %s [file]\n";
+void
+usage(void)
+{
+	bu_log("Usage: asc-nmg [filein] [fileout] ; use - for stdin\n");
+}
 
 /*
- *	M a i n
- *
  *	Get ascii input file and output file names.
  */
 int
 main(int argc, char **argv)
 {
-    char		*afile, *bfile = "nmg.g";
+    char		*afile = "-", *bfile = "nmg.g";
     FILE		*fpin;
     struct rt_wdb	*fpout;
 
+    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
+	usage();
+	bu_exit(1, NULL);
+    }
+
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
+    	usage();
+	bu_log("       Program continues running:\n");
+    }
+
+    bu_setprogname(argv[0]);
+
     /* Get ascii NMG input file name. */
-    if (bu_optind >= argc) {
-	afile = "-";
+    if (bu_optind >= argc || (int)(*argv[1]) == '-') {
 	fpin = stdin;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fpin), O_BINARY);
-#endif
+	bu_log("%s: will be reading from stdin\n",argv[0]);
     } else {
 	afile = argv[bu_optind];
 	if ((fpin = fopen(afile, "rb")) == NULL) {
@@ -72,21 +84,19 @@ main(int argc, char **argv)
 		    argv[0], afile);
 	    bu_exit(1, NULL);
 	}
+    bu_log("%s: will be reading from file %s\n",argv[0],afile);
     }
-
 
     /* Get BRL-CAD output data base name. */
     bu_optind++;
-    if (bu_optind >= argc) {
-	bfile = "nmg.g";
-    } else {
+    if (bu_optind < argc)
 	bfile = argv[bu_optind];
-    }
     if ((fpout = wdb_fopen(bfile)) == NULL) {
 	fprintf(stderr, "%s: cannot open %s for writing\n",
 		argv[0], bfile);
 	bu_exit(1, NULL);
     }
+    bu_log("%s: will be creating file %s\n",argv[0],bfile);
 
     ascii_to_brlcad(fpin, fpout, "nmg", NULL);
     fclose(fpin);
@@ -95,8 +105,6 @@ main(int argc, char **argv)
 }
 
 /*
- *	C r e a t e _ B r l c a d _ D b
- *
  *	Write the nmg to a BRL-CAD style data base.
  */
 void
@@ -107,8 +115,8 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
 
     mk_id(fpout, "Ascii NMG");
 
-    rname = bu_malloc(size, "rname");	/* Region name. */
-    sname = bu_malloc(size, "sname");	/* Solid name. */
+    rname = (char *)bu_malloc(size, "rname");	/* Region name. */
+    sname = (char *)bu_malloc(size, "sname");	/* Solid name. */
 
     snprintf(sname, size, "s.%s", reg_name);
     mk_nmg(fpout, sname,  m);		/* Make nmg object. */
@@ -120,8 +128,6 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
 }
 
 /*
- *	A s c i i _ t o _ B r l c a d
- *
  *	Convert an ascii nmg description into a BRL-CAD data base.
  */
 static int
@@ -169,8 +175,6 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 }
 
 /*
- *	D e s c r _ t o _ N M G
- *
  *	Convert an ascii description of an nmg to an actual nmg.
  *	(This should be done with lex and yacc.)
  */
@@ -182,173 +186,177 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 {
 #define MAXV	10000
 
-    char	token[80] = {0};	/* Token read from ascii nmg file. */
-    fastf_t	x, y, z;	/* Coordinates of a vertex. */
+    char token[80] = {0};	/* Token read from ascii nmg file. */
+    double x, y, z;	/* Coordinates of a vertex. */
     int	dir = OT_NONE;	/* Direction of face. */
     int	i,
 	lu_verts[MAXV] = {0},	/* Vertex names making up loop. */
 	n,		/* Number of vertices so far in loop. */
-	    stat,		/* Set to EOF when finished ascii file. */
-	    vert_num;	/* Current vertex in ascii file. */
-	fastf_t	pts[3*MAXV] = {(fastf_t)0};	/* Points in current loop. */
-	struct faceuse *fu;	/* Face created. */
-	struct vertex	*cur_loop[MAXV], /* Vertices in current loop. */
-	    *verts[MAXV];	/* Vertices in all loops. */
+	status,		/* Set to EOF when finished ascii file. */
+	vert_num;	/* Current vertex in ascii file. */
+    fastf_t	pts[3*MAXV] = {(fastf_t)0};	/* Points in current loop. */
+    struct faceuse *fu;	/* Face created. */
+    struct vertex	*cur_loop[MAXV], /* Vertices in current loop. */
+			*verts[MAXV];	/* Vertices in all loops. */
 
-	n = 0;			/* No vertices read in yet. */
-	fu = NULL;		/* Face to be created elsewhere. */
-	for (i = 0; i < MAXV; i++) {
-	    cur_loop[i] = NULL;
-	    verts[i] = NULL;
-	}
+    n = 0;			/* No vertices read in yet. */
+    fu = NULL;		/* Face to be created elsewhere. */
+    for (i = 0; i < MAXV; i++) {
+	cur_loop[i] = NULL;
+	verts[i] = NULL;
+    }
 
-	stat = fscanf(fp, "%80s", token);	/* Get 1st token. */
-	do {
-	    switch (token[0]) {
-		case 'e':		/* Extrude face. */
-		    stat = fscanf(fp, "%80s", token);
-		    switch (token[0]) {
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-			case '.':
-			case '+':
-			case '-':
-			    /* Get x value of vector. */
-			    x = atof(token);
-			    if (fscanf(fp, "%lf%lf", &y, &z) != 2)
-				bu_exit(EXIT_FAILURE, "descr_to_nmg: messed up vector\n");
-			    VSET(Ext, x, y, z);
+    status = fscanf(fp, "%80s", token);	/* Get 1st token. */
+    do {
+	switch (token[0]) {
+	    case 'e':		/* Extrude face. */
+		status = fscanf(fp, "%80s", token);
+		switch (token[0]) {
+		    case '0':
+		    case '1':
+		    case '2':
+		    case '3':
+		    case '4':
+		    case '5':
+		    case '6':
+		    case '7':
+		    case '8':
+		    case '9':
+		    case '.':
+		    case '+':
+		    case '-':
+			/* Get x value of vector. */
+			x = atof(token);
+			if (fscanf(fp, "%lf%lf", &y, &z) != 2)
+			    bu_exit(EXIT_FAILURE, "descr_to_nmg: messed up vector\n");
+			VSET(Ext, x, y, z);
 
-			    /* Get token for next trip through loop. */
-			    stat = fscanf(fp, "%80s", token);
-			    break;
-		    }
-		    break;
-		case 'l':		/* Start new loop. */
-		    /* Make a loop with vertices previous to this 'l'. */
-		    if (n) {
-			for (i = 0; i < n; i++)
-			    if (lu_verts[i] >= 0)
-				cur_loop[i] = verts[lu_verts[i]];
-			    else /* Reuse of a vertex. */
-				cur_loop[i] = NULL;
-			fu = nmg_add_loop_to_face(s, fu, cur_loop, n,
-						  dir);
-			/* Associate geometry with vertices. */
-			for (i = 0; i < n; i++) {
-			    if (lu_verts[i] >= 0 && !verts[lu_verts[i]]) {
-				nmg_vertex_gv( cur_loop[i],
-					       &pts[3*lu_verts[i]]);
-				verts[lu_verts[i]] =
-				    cur_loop[i];
-			    }
-			}
-			/* Take care of reused vertices. */
-			for (i = 0; i < n; i++)
-			    if (lu_verts[i] < 0)
-				nmg_jv(verts[-lu_verts[i]], cur_loop[i]);
-			n = 0;
-		    }
-		    stat = fscanf(fp, "%80s", token);
-
-		    switch (token[0]) {
-			case 'h':	/* Is it cw or ccw? */
-			    if (!strcmp(token, "hole"))
-				dir = OT_OPPOSITE;
-			    else
-				bu_exit(EXIT_FAILURE, "descr_to_nmg: expected \"hole\"\n");
-			    /* Get token for next trip through loop. */
-			    stat = fscanf(fp, "%80s", token);
-			    break;
-
-			default:
-			    dir = OT_SAME;
-			    break;
-		    }
-		    break;
-
-		case 'v':		/* Vertex in current loop. */
-		    if (token[1] == '\0')
-			bu_exit(EXIT_FAILURE, "descr_to_nmg: vertices must be numbered.\n");
-		    vert_num = atoi(token+1);
-		    stat = fscanf(fp, "%80s", token);
-		    switch (token[0]) {
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-			case '.':
-			case '+':
-			case '-':
-			    /* Get coordinates of vertex. */
-			    x = atof(token);
-			    if (fscanf(fp, "%lf%lf", &y, &z) != 2)
-				bu_exit(EXIT_FAILURE, "descr_to_nmg: messed up vertex\n");
-			    /* Save vertex with others in current loop. */
-			    pts[3*vert_num] = x;
-			    pts[3*vert_num+1] = y;
-			    pts[3*vert_num+2] = z;
-			    /* Save vertex number. */
-			    lu_verts[n] = vert_num;
-			    if (++n > MAXV)
-				bu_exit(EXIT_FAILURE, "descr_to_nmg: too many points in loop\n");
-			    /* Get token for next trip through loop. */
-			    stat = fscanf(fp, "%80s", token);
-			    break;
-
-			default:
-			    /* Use negative vert number to mark vertex as being reused. */
-			    lu_verts[n] = -vert_num;
-			    if (++n > MAXV)
-				bu_exit(EXIT_FAILURE, "descr_to_nmg: too many points in loop\n");
-			    break;
-		    }
-		    break;
-
-		default:
-		    bu_exit(1, "descr_to_nmg: unexpected token \"%s\"\n", token);
-		    break;
-	    }
-	} while (stat != EOF);
-
-	/* Make a loop with vertices previous to this 'l'. */
-	if (n) {
-	    for (i = 0; i < n; i++)
-		if (lu_verts[i] >= 0)
-		    cur_loop[i] = verts[lu_verts[i]];
-		else /* Reuse of a vertex. */
-		    cur_loop[i] = NULL;
-	    fu = nmg_add_loop_to_face(s, fu, cur_loop, n,
-				      dir);
-	    /* Associate geometry with vertices. */
-	    for (i = 0; i < n; i++) {
-		if (lu_verts[i] >= 0 && !verts[lu_verts[i]]) {
-		    nmg_vertex_gv( cur_loop[i],
-				   &pts[3*lu_verts[i]]);
-		    verts[lu_verts[i]] =
-			cur_loop[i];
+			/* Get token for next trip through loop. */
+			status = fscanf(fp, "%80s", token);
+			break;
 		}
-	    }
-	    /* Take care of reused vertices. */
-	    for (i = 0; i < n; i++)
-		if (lu_verts[i] < 0)
-		    nmg_jv(verts[-lu_verts[i]], cur_loop[i]);
-	    n = 0;
+		break;
+	    case 'l':		/* Start new loop. */
+		/* Make a loop with vertices previous to this 'l'. */
+		if (n) {
+		    for (i = 0; i < n; i++)
+			if (lu_verts[i] >= 0)
+			    cur_loop[i] = verts[lu_verts[i]];
+			else /* Reuse of a vertex. */
+			    cur_loop[i] = NULL;
+		    fu = nmg_add_loop_to_face(s, fu, cur_loop, n,
+			    dir);
+		    /* Associate geometry with vertices. */
+		    for (i = 0; i < n; i++) {
+			if (lu_verts[i] >= 0 && !verts[lu_verts[i]]) {
+			    nmg_vertex_gv( cur_loop[i],
+				    &pts[3*lu_verts[i]]);
+			    verts[lu_verts[i]] =
+				cur_loop[i];
+			}
+		    }
+		    /* Take care of reused vertices. */
+		    for (i = 0; i < n; i++)
+			if (lu_verts[i] < 0)
+			    nmg_jv(verts[-lu_verts[i]], cur_loop[i]);
+		    n = 0;
+		}
+		status = fscanf(fp, "%80s", token);
+
+		switch (token[0]) {
+		    case 'h':	/* Is it cw or ccw? */
+			if (BU_STR_EQUAL(token, "hole"))
+			    dir = OT_OPPOSITE;
+			else
+			    bu_exit(EXIT_FAILURE, "descr_to_nmg: expected \"hole\"\n");
+			/* Get token for next trip through loop. */
+			status = fscanf(fp, "%80s", token);
+			break;
+
+		    default:
+			dir = OT_SAME;
+			break;
+		}
+		break;
+
+	    case 'v':		/* Vertex in current loop. */
+		if (token[1] == '\0')
+		    bu_exit(EXIT_FAILURE, "descr_to_nmg: vertices must be numbered.\n");
+		vert_num = atoi(token+1);
+		if (vert_num < 0 || vert_num >= MAXV) {
+		    bu_log("Vertex number out of bounds: %d\nAborting\n", vert_num);
+		    return;
+		}
+		status = fscanf(fp, "%80s", token);
+		switch (token[0]) {
+		    case '0':
+		    case '1':
+		    case '2':
+		    case '3':
+		    case '4':
+		    case '5':
+		    case '6':
+		    case '7':
+		    case '8':
+		    case '9':
+		    case '.':
+		    case '+':
+		    case '-':
+			/* Get coordinates of vertex. */
+			x = atof(token);
+			if (fscanf(fp, "%lf%lf", &y, &z) != 2)
+			    bu_exit(EXIT_FAILURE, "descr_to_nmg: messed up vertex\n");
+			/* Save vertex with others in current loop. */
+			pts[3*vert_num] = x;
+			pts[3*vert_num+1] = y;
+			pts[3*vert_num+2] = z;
+			/* Save vertex number. */
+			lu_verts[n] = vert_num;
+			if (++n > MAXV)
+			    bu_exit(EXIT_FAILURE, "descr_to_nmg: too many points in loop\n");
+			/* Get token for next trip through loop. */
+			status = fscanf(fp, "%80s", token);
+			break;
+
+		    default:
+			/* Use negative vert number to mark vertex as being reused. */
+			lu_verts[n] = -vert_num;
+			if (++n > MAXV)
+			    bu_exit(EXIT_FAILURE, "descr_to_nmg: too many points in loop\n");
+			break;
+		}
+		break;
+
+	    default:
+		bu_exit(1, "descr_to_nmg: unexpected token \"%s\"\n", token);
+		break;
 	}
+    } while (status != EOF);
+
+    /* Make a loop with vertices previous to this 'l'. */
+    if (n) {
+	for (i = 0; i < n; i++)
+	    if (lu_verts[i] >= 0)
+		cur_loop[i] = verts[lu_verts[i]];
+	    else /* Reuse of a vertex. */
+		cur_loop[i] = NULL;
+	nmg_add_loop_to_face(s, fu, cur_loop, n, dir);
+
+	/* Associate geometry with vertices. */
+	for (i = 0; i < n; i++) {
+	    if (lu_verts[i] >= 0 && !verts[lu_verts[i]]) {
+		nmg_vertex_gv( cur_loop[i],
+			&pts[3*lu_verts[i]]);
+		verts[lu_verts[i]] =
+		    cur_loop[i];
+	    }
+	}
+	/* Take care of reused vertices. */
+	for (i = 0; i < n; i++)
+	    if (lu_verts[i] < 0)
+		nmg_jv(verts[-lu_verts[i]], cur_loop[i]);
+	n = 0;
+    }
 }
 
 /*

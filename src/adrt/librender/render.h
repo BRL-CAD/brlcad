@@ -1,7 +1,7 @@
 /*                        R E N D E R . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file render.h
+/** @file librender/render.h
  *
  */
 
-#ifndef _RENDER_H
-#define _RENDER_H
+#ifndef ADRT_LIBRENDER_RENDER_H
+#define ADRT_LIBRENDER_RENDER_H
 
 #include "render_internal.h"
 
@@ -38,7 +38,7 @@ RENDER_SHADER(phong);
 RENDER_SHADER(spall);
 RENDER_SHADER(surfel);
 
-void* render_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
+RENDER_EXPORT void* render_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr);
 
 #endif
 

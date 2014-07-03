@@ -1,7 +1,7 @@
 /*                      T I M E R - N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -16,12 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @addtogroup timer */
-/** @{ */
-/** @file timer-nt.c
- *
- * To provide timing information on Microsoft Windows NT.
  */
 
 #include "common.h"
@@ -38,9 +32,7 @@
 static clock_t start;
 time_t time0;
 
-/*
- * P R E P _ T I M E R
- */
+
 void
 rt_prep_timer(void)
 {
@@ -49,15 +41,6 @@ rt_prep_timer(void)
 }
 
 
-/*
- * R T _ G E T _ T I M E R
- *
- * Reports on the passage of time, since rt_prep_timer() was called.
- * Explicit return is number of CPU seconds.
- * String return is descriptive.
- * If "elapsed" pointer is non-null, number of elapsed seconds are returned.
- * Times returned will never be zero.
- */
 double
 rt_get_timer(struct bu_vls *vp, double *elapsed)
 {
@@ -97,14 +80,13 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 double
 rt_read_timer(char *str, int len)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     double cpu;
     int todo;
 
     if (!str)
 	return rt_get_timer((struct bu_vls *)0, (double *)0);
 
-    bu_vls_init(&vls);
     cpu = rt_get_timer(&vls, (double *)0);
     todo = bu_vls_strlen(&vls);
     if (todo > len)
@@ -115,7 +97,6 @@ rt_read_timer(char *str, int len)
 }
 
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

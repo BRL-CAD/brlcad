@@ -1,7 +1,7 @@
 /*                         P O P U P . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file popup.h
+/** @file fbed/popup.h
  *	Author:		Gary S. Moss
  */
+
+#ifndef FBED_POPUP_H
+#define FBED_POPUP_H
+
 #define INCL_POPUP
 #define MENU_FONT	"/usr/lib/vfont/fix.6"
 
@@ -69,6 +73,8 @@ typedef struct
 Panel;
 
 #define RESERVED_CMAP  ((pallet.cmap_base+pallet.n_segs+1)*2)
+
+#endif /* FBED_POPUP_H */
 
 /*
  * Local Variables:

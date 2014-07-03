@@ -1,7 +1,7 @@
 /*                        F B - R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ static int screen_yoff;
 static char *framebuffer;
 
 static char usage[] = "\
-Usage: fb-rle [-c -h -d] [-F framebuffer] [-C r/g/b]\n\
+Usage: fb-rle [-c -d] [-F framebuffer] [-C r/g/b]\n\
 	[-S squarescrsize] [-W screen_width] [-N screen_height]\n\
 	[-X screen_xoff] [-Y screen_yoff]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
@@ -81,25 +81,18 @@ If omitted, the .rle file is written to stdout\n";
 extern void cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *colormap);
 
 
-/*
- * G E T _ A R G S
- */
 static int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "cF:hds:w:n:S:W:N:X:Y:C:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "cF:ds:w:n:S:W:N:X:Y:C:h?")) != -1) {
 	switch (c) {
 	    case 'c':
 		crunch = 1;
 		break;
 	    case 'F':
 		framebuffer = bu_optarg;
-		break;
-	    case 'h':
-		/* high-res */
-		screen_height = screen_width = 1024;
 		break;
 	    case 's':
 		/* square file size */
@@ -139,12 +132,11 @@ get_args(int argc, char **argv)
 	    }
 		break;
 	    default:
-	    case '?':
 		return 0;
 	}
     }
     if (argv[bu_optind] != NULL) {
-	if (bu_file_exists(argv[bu_optind])) {
+	if (bu_file_exists(argv[bu_optind], NULL)) {
 	    (void) fprintf(stderr,
 			   "\"%s\" already exists.\n",
 			   argv[bu_optind]);
@@ -164,9 +156,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -235,10 +224,10 @@ main(int argc, char **argv)
 
     /* Convert to Utah format */
     if (cm_save_needed) for (y=0; y<256; y++) {
-	rlemap[y+0*256] = cmap.cm_red[y];
-	rlemap[y+1*256] = cmap.cm_green[y];
-	rlemap[y+2*256] = cmap.cm_blue[y];
-    }
+	    rlemap[y+0*256] = cmap.cm_red[y];
+	    rlemap[y+1*256] = cmap.cm_green[y];
+	    rlemap[y+2*256] = cmap.cm_blue[y];
+	}
 
     scan_buf = (unsigned char *)malloc(sizeof(RGBpixel) * screen_width);
 

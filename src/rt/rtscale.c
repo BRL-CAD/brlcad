@@ -1,7 +1,7 @@
 /*                       R T S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2010 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtscale.c
+/** @file rt/rtscale.c
  *
  *
  *  This is a program will compute and plot an appropriate scale in the lower
  *  left corner of a given image.  The scale is layed out in view
  *  space coordinates and then translated into model coordinates, where it is
- *  plotted.  This plot can be overlayed onto any other UNIX-Plot file of onto
+ *  plotted.  This plot can be overlaid onto any other UNIX-Plot file of onto
  *  a pix file.
  *
  *  The scale will be a simple line with a certain number of tick marks along
@@ -38,10 +38,10 @@
  *			and
  *	3) concatenate the scales and a copy of the original image into a
  *	   a composite that it printed on standard out.  For the moment this
- *	   is achieved by saying " cat scale.pl file.pl >> out.file ".
+ *	   is achieved by saying " cat scale.plot3 file.plot3 >> out.file ".
  *	   The order of the files is very important: if not cat'ed in the
  *	   right order, the scales will be lost when plrot is applied though
- *	   they will still be seen with pl-sgi and mged. Later
+ *	   they will still be seen with pl-fb and mged. Later
  *	   this will be handled by scale.c as an fread() and fwrite().
  *
  */
@@ -66,7 +66,7 @@
 
 
 char usage[] = "\
-Usage:  rtscale (width) (units) (interval) filename [string] >  file.pl\n\
+Usage:  rtscale (width) (units) (interval) filename [string] >  file.plot3\n\
 	(width)		length of scale in model measurements\n\
 	(units)		string denoting the unit type,\n\
 	(interval)	number of intervals on the scale\n\
@@ -87,8 +87,6 @@ int		verbose;		/* flag for debugging; to be used later */
 int		SEEN_DESCRIPT=0;	/* flag for descriptive string */
 
 /*
- *
- *                     M A I N
  *
  *  Main exists to coordinate the actions of the three parts of this program.
  *  It also processes its own arguments (argc and argv).
@@ -185,14 +183,11 @@ main(int argc, char **argv)
 	make_border(stdout, view2model);
     }
 
-    bu_exit(0, NULL);
-
+    return 0;
 }
 
 
 /*
- *		L A Y O U T _ N _ P L O T
- *
  *  This routine lays out the scale in view coordinates.  These are then
  *  converted to model space.
  *  It receives pointers to stdout, a label, and a view2model matrix, as
@@ -212,7 +207,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
     int		nchar;		/* number of characters in the label */
     double		v_char_width;	/* char. width in view space */
     double		m_char_width;	/* char. width in model space */
-    mat_t		v2symbol;	/* view to symbol sapce matrix */
+    mat_t		v2symbol;	/* view to symbol space matrix */
     float		v_len;		/* scale length in view space */
     float		v_tick_hgt;	/* total height of tick marks, view space */
     float		m_tick_hgt;	/* total height of tick marks, model space */
@@ -249,7 +244,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
     v_tick_hgt = 0.05;
 
     if (verbose)  {
-	fprintf(stderr, "plot: nticks=%d,\n", nticks);
+	fprintf(stderr, "plot3: nticks=%d,\n", nticks);
     }
 
     /* Make the starting point (in view-coordinates) of the scale.
@@ -314,8 +309,8 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
     /* Convert v_label_st to model space */
     MAT4X3PNT(m_label_st, v2mod, v_label_st);
 
-    /* Now make the offset for the optional descriptive lable.
-     * The lable should appear beneath the begining of the scale and
+    /* Now make the offset for the optional descriptive label.
+     * The label should appear beneath the beginning of the scale and
      * run the length of the paper if that is what it takes.
      */
 
@@ -369,12 +364,12 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
     }
 
     if (verbose)  {
-	fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %.6f, %.6f, %.6f, m_char_width=%.6f\n",
+	fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_label_st= %.6f, %.6f, %.6f, m_char_width=%.6f\n",
 		label, V3ARGS(m_label_st), m_char_width);
 	bn_mat_print("v2symbol", v2symbol);
     }
 
-    /* Now put the label on the plot.  The first is the lable for
+    /* Now put the label on the plot.  The first is the label for
      * numbers under the scale; the second is for an optional string.
      */
 
@@ -384,8 +379,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 }
 
 
-/*		D R A W S C A L E
- *
+/*
  * This routine draws the basic scale: it draws a line confined by two
  * end tick marks.  It return either 0 okay < 0 failure.
  * The parameters are a pointer to stdout, a start
@@ -419,8 +413,7 @@ drawscale(FILE *outfp, fastf_t *startpt, fastf_t len, fastf_t hgt, fastf_t *lenv
 }
 
 
-/*		D R A W T I C K S
- *
+/*
  * This routine draws the tick marks for the scale.  It takes a out file
  * pointer, a center point whereat to start the tick mark, a height vector
  * for the tick, and a scalar for the tick height.  It returns either
@@ -444,7 +437,7 @@ drawticks(FILE *outfp, fastf_t *centerpt, fastf_t *hgtv, fastf_t hgt, fastf_t *i
     if (verbose)  {
 	VPRINT("top", top);
 	VPRINT("bot", bot);
-	fprintf(stderr, "drawticks now using top, bot to plot\n");
+	fprintf(stderr, "drawticks now using top, bot to plot3\n");
     }
 
     pdv_3move(outfp, top);
@@ -453,8 +446,7 @@ drawticks(FILE *outfp, fastf_t *centerpt, fastf_t *hgtv, fastf_t hgt, fastf_t *i
     return 0;
 }
 
-/*		M A K E _ B O R D E R
- *
+/*
  * This routine exists to draw an optional border around the image.  It
  * exists for diagnostic purposes.  It takes a view to model matrix and
  * a file pointer.  It lays out and plots the four corners of the image border.
@@ -497,10 +489,8 @@ make_border(FILE *outfp, fastf_t *v2mod)
 }
 
 /*
- *		M A K E _ B O U N D I N G _ R P P
- *
- * This routine takes a view2model matrix and a file pointer.  It calculates the  minimun and
- * the maximun points of the viewing cube in view space, and then translates
+ * This routine takes a view2model matrix and a file pointer.  It calculates the minimum and
+ * the maximum points of the viewing cube in view space, and then translates
  * it to model space and rotates it so that it will not shrink when rotated and
  * cut off the geometry/image.  This routine returns nothing.
  */
@@ -511,8 +501,8 @@ make_bounding_rpp(FILE *outfp, fastf_t *v2mod)
 
     point_t		v_min;		/* view space minimum coordinate */
     point_t		v_max;		/* view space maximum coordinate */
-    point_t		new_min;	/* new min of rotated viewing cube */
-    point_t		new_max;	/* new max of rotated viewing cube */
+    point_t		new_min = VINIT_ZERO;	/* new min of rotated viewing cube */
+    point_t		new_max = VINIT_ZERO;	/* new max of rotated viewing cube */
 
     /* Make the min and max points of the view-space viewing cube */
     VSET(v_min, -1.0, -1.0, -1.0);

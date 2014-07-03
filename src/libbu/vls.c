@@ -1,7 +1,7 @@
 /*                           V L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
+#include <assert.h>
 
 #ifdef HAVE_STDINT_H
 #   include <stdint.h>
@@ -31,8 +32,13 @@
 
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 
+#include "./vls_internals.h"
 
 /* non-published globals */
 extern const char bu_vls_message[];
@@ -43,12 +49,8 @@ extern const char bu_strdup_message[];
 /* minimum initial allocation size */
 static const unsigned int _VLS_ALLOC_MIN = 32;
 
-/* minimum vls allocation increment size */
-static const size_t _VLS_ALLOC_STEP = 128;
-
 /* minimum vls buffer allocation size */
 static const unsigned int _VLS_ALLOC_READ = 4096;
-
 
 void
 bu_vls_init(struct bu_vls *vp)
@@ -74,6 +76,8 @@ bu_vls_init(struct bu_vls *vp)
 void
 bu_vls_init_if_uninit(struct bu_vls *vp)
 {
+    bu_log("DEPRECATION WARNING: bu_vls_init_if_uninit() should no longer be called.\n\t\tUse bu_vls_init() instead.\n");
+
     if (UNLIKELY(vp == (struct bu_vls *)NULL))
 	bu_bomb("bu_vls_init_if_uninit() passed NULL pointer");
 
@@ -88,10 +92,18 @@ bu_vls_vlsinit(void)
 {
     struct bu_vls *vp;
 
-    vp = (struct bu_vls *)bu_malloc(sizeof(struct bu_vls), "bu_vls_vlsinit struct");
+    BU_ALLOC(vp, struct bu_vls);
     bu_vls_init(vp);
 
     return vp;
+}
+
+
+const char *
+bu_vls_cstr(const struct bu_vls *vp)
+{
+    /* a wrapper for bu_vls_addr, but name is intended to be more intuitive to use */
+    return bu_vls_addr(vp);
 }
 
 
@@ -108,13 +120,10 @@ bu_vls_addr(const struct bu_vls *vp)
     }
 
     /* Sanity checking */
-    if (vp->vls_max < 0 ||
-	vp->vls_len < 0 ||
-	vp->vls_offset < 0 ||
-	vp->vls_str == (char *)NULL ||
+    if (vp->vls_str == (char *)NULL ||
 	vp->vls_len + vp->vls_offset >= vp->vls_max)
     {
-	bu_log("bu_vls_addr: bad VLS.  max=%d, len=%d, offset=%d\n",
+	bu_log("bu_vls_addr: bad VLS.  max=%zu, len=%zu, offset=%zu\n",
 	       vp->vls_max, vp->vls_len, vp->vls_offset);
 	bu_bomb("bu_vls_addr\n");
     }
@@ -124,7 +133,7 @@ bu_vls_addr(const struct bu_vls *vp)
 
 
 void
-bu_vls_extend(struct bu_vls *vp, unsigned int extra)
+bu_vls_extend(struct bu_vls *vp, size_t extra)
 {
     BU_CK_VLS(vp);
 
@@ -132,9 +141,16 @@ bu_vls_extend(struct bu_vls *vp, unsigned int extra)
     if (extra < _VLS_ALLOC_MIN)
 	extra = _VLS_ALLOC_MIN;
 
-    /* first time allocation */
+    /* first time allocation.
+     *
+     * performance testing using a static buffer indicated an
+     * approximate 25% gain by avoiding this first allocation but not
+     * worth the complexity involved (e.g., extending the struct or
+     * hijacking vls_str) and it'd be error-prone whenever the vls
+     * implementation changes.
+     */
     if (vp->vls_max <= 0 || vp->vls_str == (char *)0) {
-	vp->vls_str = (char *)bu_malloc((size_t)extra, bu_vls_message);
+	vp->vls_str = (char *)bu_malloc(extra, bu_vls_message);
 	vp->vls_max = extra;
 	vp->vls_len = 0;
 	vp->vls_offset = 0;
@@ -143,21 +159,21 @@ bu_vls_extend(struct bu_vls *vp, unsigned int extra)
     }
 
     /* make sure to increase in step sized increments */
-    if ((size_t)extra < _VLS_ALLOC_STEP)
-	extra = (unsigned int)_VLS_ALLOC_STEP;
-    else if ((size_t)extra % _VLS_ALLOC_STEP != 0)
-	extra += (unsigned int)(_VLS_ALLOC_STEP - (extra % _VLS_ALLOC_STEP));
+    if (extra < _VLS_ALLOC_STEP)
+	extra = _VLS_ALLOC_STEP;
+    else if (extra % _VLS_ALLOC_STEP != 0)
+	extra += _VLS_ALLOC_STEP - (extra % _VLS_ALLOC_STEP);
 
     /* need more space? */
-    if (vp->vls_offset + vp->vls_len + extra >= (size_t)vp->vls_max) {
-	vp->vls_str = (char *)bu_realloc(vp->vls_str, (size_t)(vp->vls_max + extra), bu_vls_message);
+    if (vp->vls_offset + vp->vls_len + extra >= vp->vls_max) {
+	vp->vls_str = (char *)bu_realloc(vp->vls_str, (vp->vls_max + extra), bu_vls_message);
 	vp->vls_max += extra;
     }
 }
 
 
 void
-bu_vls_setlen(struct bu_vls *vp, int newlen)
+bu_vls_setlen(struct bu_vls *vp, size_t newlen)
 {
     BU_CK_VLS(vp);
 
@@ -169,13 +185,10 @@ bu_vls_setlen(struct bu_vls *vp, int newlen)
 }
 
 
-int
+size_t
 bu_vls_strlen(const struct bu_vls *vp)
 {
     BU_CK_VLS(vp);
-
-    if (vp->vls_len <= 0)
-	return 0;
 
     return vp->vls_len;
 }
@@ -190,7 +203,7 @@ bu_vls_trunc(struct bu_vls *vp, int len)
 	/* now an absolute length */
 	len = vp->vls_len + len;
     }
-    if (vp->vls_len <= len)
+    if (vp->vls_len <= (size_t)len)
 	return;
     if (len == 0)
 	vp->vls_offset = 0;
@@ -201,37 +214,33 @@ bu_vls_trunc(struct bu_vls *vp, int len)
 
 
 void
-bu_vls_trunc2(struct bu_vls *vp, int len)
+bu_vls_nibble(struct bu_vls *vp, off_t len)
 {
     BU_CK_VLS(vp);
 
-    if (vp->vls_len <= len)
-	return;
-
-    if (len < 0)
-	len = 0;
-    if (len == 0)
-	vp->vls_offset = 0;
-
-    vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
-    vp->vls_len = len;
-}
-
-
-void
-bu_vls_nibble(struct bu_vls *vp, int len)
-{
-    BU_CK_VLS(vp);
-
-    if (len < 0 && (-len) > vp->vls_offset)
-	len = -vp->vls_offset;
-    if (len >= vp->vls_len) {
+    /* if the caller asks to nibble everything, truncate the string */
+    if (len > 0 && (size_t)len >= vp->vls_len) {
 	bu_vls_trunc(vp, 0);
 	return;
     }
 
-    vp->vls_len -= len;
-    vp->vls_offset += len;
+    /* if the caller asks to un-nibble more than we can, we just
+     * unroll to the original beginning of the string
+     */
+    if (len < 0 && (size_t)(-len) > vp->vls_offset) {
+	vp->vls_len += vp->vls_offset;
+	vp->vls_offset = 0;
+	return;
+    }
+
+    /* could be collapsed due to prior, but appease dumb compilers */
+    if (len < 0) {
+	vp->vls_len += (size_t)(-len);
+	vp->vls_offset -= (size_t)(-len);
+    } else {
+	vp->vls_len -= (size_t)len;
+	vp->vls_offset += (size_t)len;
+    }
 }
 
 
@@ -240,7 +249,7 @@ bu_vls_free(struct bu_vls *vp)
 {
     BU_CK_VLS(vp);
 
-    if (vp->vls_str) {
+    if (vp->vls_str && vp->vls_max > 0) {
 	vp->vls_str[0] = '?'; /* Sanity */
 	bu_free(vp->vls_str, "bu_vls_free");
 	vp->vls_str = (char *)0;
@@ -270,9 +279,9 @@ bu_vls_strdup(const struct bu_vls *vp)
     BU_CK_VLS(vp);
 
     len = bu_vls_strlen(vp);
-    str = bu_malloc(len+1, bu_strdup_message);
-    strncpy(str, bu_vls_addr(vp), len);
-    str[len] = '\0'; /* sanity */
+    str = (char *)bu_malloc(len+1, bu_strdup_message);
+    bu_strlcpy(str, bu_vls_addr(vp), len+1);
+
     return str;
 }
 
@@ -284,7 +293,7 @@ bu_vls_strgrab(struct bu_vls *vp)
 
     BU_CK_VLS(vp);
 
-    if (vp->vls_offset != 0) {
+    if (vp->vls_offset != 0 || !vp->vls_str) {
 	str = bu_vls_strdup(vp);
 	bu_vls_free(vp);
 	return str;
@@ -318,11 +327,11 @@ bu_vls_strcpy(struct bu_vls *vp, const char *s)
 
     /* cancel offset before extending */
     vp->vls_offset = 0;
-    if (len+1 >= (size_t)vp->vls_max)
-	bu_vls_extend(vp, (unsigned int)len+1);
+    if (len+1 >= vp->vls_max)
+	bu_vls_extend(vp, len+1);
 
     memcpy(vp->vls_str, s, len+1); /* include null */
-    vp->vls_len = (int)len;
+    vp->vls_len = len;
 }
 
 
@@ -346,12 +355,12 @@ bu_vls_strncpy(struct bu_vls *vp, const char *s, size_t n)
 
     /* cancel offset before extending */
     vp->vls_offset = 0;
-    if (len+1 >= (size_t)vp->vls_max)
-	bu_vls_extend(vp, (unsigned int)len+1);
+    if (len+1 >= vp->vls_max)
+	bu_vls_extend(vp, len+1);
 
     memcpy(vp->vls_str, s, len);
     vp->vls_str[len] = '\0'; /* force null termination */
-    vp->vls_len = (int)len;
+    vp->vls_len = len;
 }
 
 
@@ -369,11 +378,11 @@ bu_vls_strcat(struct bu_vls *vp, const char *s)
     if (UNLIKELY(len <= 0))
 	return;
 
-    if ((size_t)vp->vls_offset + (size_t)vp->vls_len + len+1 >= (size_t)vp->vls_max)
-	bu_vls_extend(vp, (unsigned int)len+1);
+    if (vp->vls_offset + vp->vls_len + len+1 >= vp->vls_max)
+	bu_vls_extend(vp, len+1);
 
     memcpy(vp->vls_str +vp->vls_offset + vp->vls_len, s, len+1); /* include null */
-    vp->vls_len += (int)len;
+    vp->vls_len += len;
 }
 
 
@@ -393,11 +402,11 @@ bu_vls_strncat(struct bu_vls *vp, const char *s, size_t n)
     if (UNLIKELY(len <= 0))
 	return;
 
-    if ((size_t)vp->vls_offset + (size_t)vp->vls_len + len+1 >= (size_t)vp->vls_max)
-	bu_vls_extend(vp, (unsigned int)len+1);
+    if (vp->vls_offset + vp->vls_len + len+1 >= vp->vls_max)
+	bu_vls_extend(vp, len+1);
 
     memcpy(vp->vls_str + vp->vls_offset + vp->vls_len, s, len);
-    vp->vls_len += (int)len;
+    vp->vls_len += len;
     vp->vls_str[vp->vls_offset + vp->vls_len] = '\0'; /* force null termination */
 }
 
@@ -412,10 +421,10 @@ bu_vls_vlscat(struct bu_vls *dest, const struct bu_vls *src)
 	return;
 
     if (dest->vls_offset + dest->vls_len + src->vls_len+1 >= dest->vls_max)
-	bu_vls_extend(dest, (unsigned int)src->vls_len+1);
+	bu_vls_extend(dest, src->vls_len+1);
 
     /* copy source string, including null */
-    memcpy(dest->vls_str +dest->vls_offset + dest->vls_len, src->vls_str+src->vls_offset, (size_t)src->vls_len+1);
+    memcpy(dest->vls_str +dest->vls_offset + dest->vls_len, src->vls_str+src->vls_offset, src->vls_len+1);
     dest->vls_len += src->vls_len;
 }
 
@@ -431,6 +440,41 @@ bu_vls_vlscatzap(struct bu_vls *dest, struct bu_vls *src)
 
     bu_vls_vlscat(dest, src);
     bu_vls_trunc(src, 0);
+}
+
+
+void
+bu_vls_substr(struct bu_vls *dest, const struct bu_vls *src, size_t begin, size_t nchars)
+{
+    size_t len;
+    size_t i, end;
+
+    BU_CK_VLS(src);
+    BU_CK_VLS(dest);
+
+    len = src->vls_len;
+    if (UNLIKELY(len == 0))
+	return;
+    if (UNLIKELY(begin > len))
+	return;
+    if (UNLIKELY(nchars == 0))
+	return;
+
+    if (nchars > len)
+	nchars = len;
+
+    bu_vls_trunc(dest, 0);
+    bu_vls_extend(dest, nchars + 1);
+
+    end = begin + nchars;
+    if (end > len)
+	end = len;
+
+    for (i = begin; i < end; ++i)
+	bu_vls_putc(dest, bu_vls_cstr(src)[i]);
+
+    /* ensure we have an end */
+    bu_vls_putc(dest, '\0');
 }
 
 
@@ -453,7 +497,7 @@ bu_vls_strcmp(struct bu_vls *s1, struct bu_vls *s2)
     }
 
     /* neither empty, straight up comparison */
-    return strcmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset);
+    return bu_strcmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset);
 }
 
 
@@ -480,7 +524,7 @@ bu_vls_strncmp(struct bu_vls *s1, struct bu_vls *s2, size_t n)
 	bu_vls_extend(s2, 1);
     }
 
-    return strncmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset, n);
+    return bu_strncmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset, n);
 }
 
 
@@ -496,101 +540,6 @@ bu_vls_from_argv(struct bu_vls *vp, int argc, const char *argv[])
 }
 
 
-int
-bu_argv_from_string(char *argv[], int lim, char *lp)
-{
-    int argc = 0; /* number of words seen */
-    int skip = 0;
-    int quoted = 0;
-
-    if (UNLIKELY(!argv)) {
-	/* do this instead of crashing */
-	bu_bomb("bu_argv_from_string received a null argv\n");
-    }
-    argv[0] = (char *)NULL;
-
-    if (UNLIKELY(lim <= 0 || !lp)) {
-	/* nothing to do, only return NULL */
-	return 0;
-    }
-
-    /* skip leading whitespace */
-    while (*lp != '\0' && isspace(*lp))
-	lp++;
-
-    if (*lp == '\0') {
-	/* no words, only return NULL */
-	return 0;
-    }
-
-    /* some non-space string has been seen, set argv[0] */
-    argc = 0;
-    argv[argc] = lp;
-
-    for (; *lp != '\0'; lp++) {
-
-	if (*lp == '"') {
-	    if (!quoted) {
-		/* start collecting quoted string */
-		quoted = 1;
-
-		/* skip past the quote character */
-		argv[argc] = lp + 1;
-		continue;
-	    }
-
-	    /* end qoute */
-	    quoted = 0;
-	    *lp++ = '\0';
-
-	    /* skip leading whitespace */
-	    while (*lp != '\0' && isspace(*lp)) {
-		/* null out spaces */
-		*lp = '\0';
-		lp++;
-	    }
-
-	    skip = 0;
-	    goto nextword;
-	}
-
-	/* skip over current word */
-	if (quoted || !isspace(*lp))
-	    continue;
-
-	skip = 0;
-
-	/* terminate current word, skip space until we find the start
-	 * of the next word nulling out the spaces as we go along.
-	 */
-	while (*(lp+skip) != '\0' && isspace(*(lp+skip))) {
-	    lp[skip] = '\0';
-	    skip++;
-	}
-
-	if (*(lp + skip) == '\0')
-	    break;
-
-    nextword:
-	/* make sure argv[] isn't full, need room for NULL */
-	if (argc >= lim-1)
-	    break;
-
-	/* start of next word */
-	argc++;
-	argv[argc] = lp + skip;
-
-	/* jump over the spaces, remember the loop's lp++ */
-	lp += skip - 1;
-    }
-
-    /* always NULL-terminate the array */
-    argc++;
-    argv[argc] = (char *)NULL;
-    return argc;
-}
-
-
 void
 bu_vls_fwrite(FILE *fp, const struct bu_vls *vp)
 {
@@ -602,7 +551,7 @@ bu_vls_fwrite(FILE *fp, const struct bu_vls *vp)
 	return;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    status = fwrite(vp->vls_str + vp->vls_offset, (size_t)vp->vls_len, 1, fp);
+    status = fwrite(vp->vls_str + vp->vls_offset, vp->vls_len, 1, fp);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (UNLIKELY(status != 1)) {
@@ -615,7 +564,7 @@ bu_vls_fwrite(FILE *fp, const struct bu_vls *vp)
 void
 bu_vls_write(int fd, const struct bu_vls *vp)
 {
-    int status;
+    ssize_t status;
 
     BU_CK_VLS(vp);
 
@@ -623,10 +572,10 @@ bu_vls_write(int fd, const struct bu_vls *vp)
 	return;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    status = (int)write(fd, vp->vls_str + vp->vls_offset, (size_t)vp->vls_len);
+    status = write(fd, vp->vls_str + vp->vls_offset, vp->vls_len);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
-    if (UNLIKELY(status != vp->vls_len)) {
+    if (UNLIKELY(status < 0 || (size_t)status != vp->vls_len)) {
 	perror("write");
 	bu_bomb("bu_vls_write() write error\n");
     }
@@ -644,7 +593,7 @@ bu_vls_read(struct bu_vls *vp, int fd)
 
     for (;;) {
 	bu_vls_extend(vp, _VLS_ALLOC_READ);
-	todo = (size_t)vp->vls_max - vp->vls_len - vp->vls_offset - 1;
+	todo = vp->vls_max - vp->vls_len - vp->vls_offset - 1;
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	got = (int)read(fd, vp->vls_str+vp->vls_offset+vp->vls_len, todo);
@@ -713,19 +662,17 @@ bu_vls_gets(struct bu_vls *vp, FILE *fp)
     return endlen;
 }
 
-
 void
 bu_vls_putc(struct bu_vls *vp, int c)
 {
     BU_CK_VLS(vp);
 
     if (vp->vls_offset + vp->vls_len+1 >= vp->vls_max)
-	bu_vls_extend(vp, (unsigned int)_VLS_ALLOC_STEP);
+	bu_vls_extend(vp, _VLS_ALLOC_STEP);
 
     vp->vls_str[vp->vls_offset + vp->vls_len++] = (char)c;
     vp->vls_str[vp->vls_offset + vp->vls_len] = '\0'; /* force null termination */
 }
-
 
 void
 bu_vls_trimspace(struct bu_vls *vp)
@@ -734,367 +681,14 @@ bu_vls_trimspace(struct bu_vls *vp)
 
     /* Remove trailing white space */
     while ((vp->vls_len > 0) &&
-	   isspace(bu_vls_addr(vp)[bu_vls_strlen(vp)-1]))
+	   isspace((int)(bu_vls_addr(vp)[bu_vls_strlen(vp)-1])))
 	bu_vls_trunc(vp, -1);
 
     /* Remove leading white space */
     while ((vp->vls_len > 0) &&
-	   isspace(*bu_vls_addr(vp)))
+	   isspace((int)(*bu_vls_addr(vp))))
 	bu_vls_nibble(vp, 1);
 }
-
-
-void
-bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
-{
-    const char *sp; /* start pointer */
-    const char *ep; /* end pointer */
-    int len;
-
-#define LONG_INT 0x001
-#define FIELDLEN 0x002
-#define SHORTINT 0x004
-#define LLONGINT 0x008
-#define SHHRTINT 0x010
-#define INTMAX_T 0x020
-#define PTRDIFFT 0x040
-#define SIZETINT 0x080
-
-    int flags;
-    int fieldlen=-1;
-
-    char fbuf[64] = {0}; /* % format buffer */
-    char buf[BUFSIZ] = {0};
-
-    if (UNLIKELY(!vls || !fmt || fmt[0] == '\0')) {
-	/* nothing to print to or from */
-	return;
-    }
-
-    BU_CK_VLS(vls);
-
-    bu_vls_extend(vls, (unsigned int)_VLS_ALLOC_STEP);
-
-    sp = fmt;
-    while (*sp) {
-	/* Initial state:  just printing chars */
-	fmt = sp;
-	while (*sp != '%' && *sp)
-	    sp++;
-
-	if (sp != fmt)
-	    bu_vls_strncat(vls, fmt, (size_t)(sp-fmt));
-
-	if (*sp == '\0')
-	    break;
-
-	/* Saw a percent sign, find end of fmt specifier */
-
-	flags = 0;
-	ep = sp;
-	while (*ep) {
-	    ++ep;
-	    if (*ep == ' ' || *ep == '#' || *ep == '-' || *ep == '+' || *ep == '.' || isdigit(*ep)) {
-		continue;
-	    } else if (*ep == 'l' || *ep == 'U' || *ep == 'O') {
-		if (flags & LONG_INT) {
-		    flags ^= LONG_INT;
-		    flags |= LLONGINT;
-		} else {
-		    flags |= LONG_INT;
-		}
-	    } else if (*ep == '*') {
-		fieldlen = va_arg(ap, int);
-		flags |= FIELDLEN;
-	    } else if (*ep == 'h') {
-		if (flags & SHORTINT) {
-		    flags ^= SHORTINT;
-		    flags |= SHHRTINT;
-		} else {
-		    flags |= SHORTINT;
-		}
-	    } else if (*ep == 'j') {
-		flags |= INTMAX_T;
-	    } else if (*ep == 't') {
-		flags |= PTRDIFFT;
-	    } else if (*ep == 'z') {
-		flags |= SIZETINT;
-	    } else
-		/* Anything else must be the end of the fmt specifier */
-		break;
-	}
-
-	/* Copy off the format string */
-	len = ep-sp+1;
-	if ((size_t)len > sizeof(fbuf)-1)
-	    len = sizeof(fbuf)-1;
-	strncpy(fbuf, sp, (size_t)len);
-	fbuf[len] = '\0'; /* ensure null termination */
-
-	/* Grab parameter from arg list, and print it */
-	switch (*ep) {
-	    case 's':
-		{
-		    char *str;
-
-		    str = va_arg(ap, char *);
-		    if (str) {
-			if (flags & FIELDLEN) {
-			    int stringlen = (int)strlen(str);
-			    int left_justify;
-
-			    left_justify = (fieldlen < 0);
-			    if (left_justify)
-				fieldlen *= -1; /* make positive */
-
-			    if (stringlen >= fieldlen)
-				bu_vls_strncat(vls, str, (size_t)fieldlen);
-			    else {
-				struct bu_vls padded;
-				int i;
-
-				bu_vls_init(&padded);
-				if (left_justify)
-				    bu_vls_strcat(&padded, str);
-				for (i = 0; i < fieldlen - stringlen; ++i)
-				    bu_vls_putc(&padded, ' ');
-				if (!left_justify)
-				    bu_vls_strcat(&padded, str);
-				bu_vls_vlscat(vls, &padded);
-			    }
-			} else {
-			    bu_vls_strcat(vls, str);
-			}
-		    }  else  {
-			if (flags & FIELDLEN)
-			    bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
-			else
-			    bu_vls_strcat(vls, "(null)");
-		    }
-		}
-		break;
-	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
-		/* fall through */
-	    case 'V':
-		{
-		    struct bu_vls *vp;
-
-		    vp = va_arg(ap, struct bu_vls *);
-		    if (vp) {
-			BU_CK_VLS(vp);
-			if (flags & FIELDLEN) {
-			    int stringlen = bu_vls_strlen(vp);
-			    int left_justify;
-
-			    left_justify = (fieldlen < 0);
-			    if (left_justify)
-				fieldlen *= -1;
-
-			    if (stringlen >= fieldlen)
-				bu_vls_strncat(vls, bu_vls_addr(vp), (size_t)fieldlen);
-			    else {
-				struct bu_vls padded;
-				int i;
-
-				bu_vls_init(&padded);
-				if (left_justify)
-				    bu_vls_vlscat(&padded, vp);
-				for (i = 0; i < fieldlen - stringlen; ++i)
-				    bu_vls_putc(&padded, ' ');
-				if (!left_justify)
-				    bu_vls_vlscat(&padded, vp);
-				bu_vls_vlscat(vls, &padded);
-			    }
-			} else {
-			    bu_vls_vlscat(vls, vp);
-			}
-		    }  else  {
-			if (flags & FIELDLEN)
-			    bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
-			else
-			    bu_vls_strcat(vls, "(null)");
-		    }
-		}
-		break;
-	    case 'e':
-	    case 'E':
-	    case 'f':
-	    case 'g':
-	    case 'G':
-		/* All floating point ==> "double" */
-		{
-		    double d;
-
-		    d = va_arg(ap, double);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, d);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, d);
-		}
-		bu_vls_strcat(vls, buf);
-		break;
-	    case 'o':
-	    case 'u':
-	    case 'x':
-		if (flags & LONG_INT) {
-		    /* Unsigned long int */
-		    unsigned long l;
-
-		    l = va_arg(ap, unsigned long);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, l);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, l);
-		} else if (flags & LLONGINT) {
-		    /* Unsigned long long int */
-		    unsigned long long ll;
-
-		    ll = va_arg(ap, unsigned long long);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, ll);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, ll);
-		} else if (flags & SHORTINT || flags & SHHRTINT) {
-		    /* unsigned short int */
-		    unsigned short int sh;
-		    sh = (unsigned short int)va_arg(ap, int);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, sh);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, sh);
-		} else if (flags & INTMAX_T) {
-		    intmax_t im;
-		    im = va_arg(ap, intmax_t);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, im);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, im);
-		} else if (flags & PTRDIFFT) {
-		    ptrdiff_t pd;
-		    pd = va_arg(ap, ptrdiff_t);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, pd);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, pd);
-		} else if (flags & SIZETINT) {
-		    size_t st;
-		    st = va_arg(ap, size_t);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, st);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, st);
-		} else {
-		    /* Regular unsigned int */
-		    unsigned int j;
-
-		    j = (unsigned int)va_arg(ap, unsigned int);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, j);
-		}
-		bu_vls_strcat(vls, buf);
-		break;
-	    case 'd':
-	    case 'i':
-		if (flags & LONG_INT) {
-		    /* Long int */
-		    long l;
-
-		    l = va_arg(ap, long);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, l);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, l);
-		} else if (flags & LLONGINT) {
-		    /* Long long int */
-		    long long ll;
-
-		    ll = va_arg(ap, long long);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, ll);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, ll);
-		} else if (flags & SHORTINT || flags & SHHRTINT) {
-		    /* short int */
-		    short int sh;
-		    sh = (short int)va_arg(ap, int);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, sh);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, sh);
-		} else if (flags & INTMAX_T) {
-		    intmax_t im;
-		    im = va_arg(ap, intmax_t);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, im);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, im);
-		} else if (flags & PTRDIFFT) {
-		    ptrdiff_t pd;
-		    pd = va_arg(ap, ptrdiff_t);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, pd);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, pd);
-		} else if (flags & SIZETINT) {
-		    size_t st;
-		    st = va_arg(ap, size_t);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, st);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, st);
-		} else {
-		    /* Regular int */
-		    int j;
-
-		    j = va_arg(ap, int);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, j);
-		}
-		bu_vls_strcat(vls, buf);
-		break;
-	    case 'n':
-	    case 'p':
-		/* all pointer == "void *" */
-		{
-		    void *vp;
-		    vp = (void *)va_arg(ap, void *);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, vp);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, vp);
-		}
-		bu_vls_strcat(vls, buf);
-		break;
-	    case '%':
-		bu_vls_putc(vls, '%');
-		break;
-	    default:  /* Something weird, maybe %c */
-		{
-		    int j;
-
-		    /* We hope, whatever it is, it fits in an int and the resulting
-		       stringlet is smaller than sizeof(buf) bytes */
-
-		    j = va_arg(ap, int);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, j);
-		}
-		bu_vls_strcat(vls, buf);
-		break;
-	}
-	sp = ep+1;
-    }
-
-    va_end(ap);
-}
-
 
 void
 bu_vls_printf(struct bu_vls *vls, const char *fmt, ...)
@@ -1124,25 +718,25 @@ bu_vls_sprintf(struct bu_vls *vls, const char *fmt, ...)
 
 
 void
-bu_vls_spaces(struct bu_vls *vp, int cnt)
+bu_vls_spaces(struct bu_vls *vp, size_t cnt)
 {
     BU_CK_VLS(vp);
 
-    if (UNLIKELY(cnt <= 0))
+    if (UNLIKELY(cnt == 0))
 	return;
     if (vp->vls_offset + vp->vls_len + cnt+1 >= vp->vls_max)
-	bu_vls_extend(vp, (unsigned)cnt);
+	bu_vls_extend(vp, cnt);
 
-    memset(vp->vls_str + vp->vls_offset + vp->vls_len, ' ', (size_t)cnt);
+    memset(vp->vls_str + vp->vls_offset + vp->vls_len, ' ', cnt);
     vp->vls_len += cnt;
 }
 
 
-int
+size_t
 bu_vls_print_positions_used(const struct bu_vls *vp)
 {
     char *start;
-    int used;
+    size_t used;
 
     BU_CK_VLS(vp);
 
@@ -1167,21 +761,20 @@ bu_vls_print_positions_used(const struct bu_vls *vp)
 void
 bu_vls_detab(struct bu_vls *vp)
 {
-    struct bu_vls src;
+    struct bu_vls src = BU_VLS_INIT_ZERO;
     char *cp;
-    int used;
+    size_t used;
 
     BU_CK_VLS(vp);
 
-    bu_vls_init(&src);
     bu_vls_vlscatzap(&src, vp);	/* make temporary copy of src */
-    bu_vls_extend(vp, (unsigned int)bu_vls_strlen(&src) + (unsigned int)_VLS_ALLOC_STEP);
+    bu_vls_extend(vp, bu_vls_strlen(&src) + _VLS_ALLOC_STEP);
 
     cp = bu_vls_addr(&src);
     used = 0;
     while (*cp != '\0') {
 	if (*cp == '\t') {
-	    int todo;
+	    size_t todo;
 	    todo = 8 - (used % 8);
 	    bu_vls_spaces(vp, todo);
 	    used += todo;
@@ -1204,15 +797,15 @@ bu_vls_prepend(struct bu_vls *vp, char *str)
 {
     size_t len = strlen(str);
 
-    bu_vls_extend(vp, (unsigned int)len);
+    bu_vls_extend(vp, len);
 
     /* memmove is supposed to be safe even if strings overlap */
-    memmove(vp->vls_str+vp->vls_offset+len, vp->vls_str+vp->vls_offset, (size_t)vp->vls_len);
+    memmove(vp->vls_str+vp->vls_offset+len, vp->vls_str+vp->vls_offset, vp->vls_len);
 
     /* insert the data at the head of the string */
     memcpy(vp->vls_str+vp->vls_offset, str, len);
 
-    vp->vls_len += (int)len;
+    vp->vls_len += len;
 }
 
 /*

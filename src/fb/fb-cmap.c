@@ -1,7 +1,7 @@
 /*                       F B - C M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,11 +20,7 @@
  */
 /** @file fb-cmap.c
  *
- *  Save a colormap from a framebuffer.
- *
- *  Author -
- *	Robert Reschly
- *	Phillip Dykstra
+ * Save a colormap from a framebuffer.
  *
  */
 
@@ -39,52 +35,57 @@
 
 ColorMap cm;
 static char usage[] = "\
-Usage: fb-cmap [-h] [colormap]\n";
+Usage: fb-cmap [-H] [colormap]\n";
 
 int
 main(int argc, char **argv)
 {
-    FBIO	*fbp;
-    FILE	*fp;
-    int	fbsize = 512;
-    int	i;
+    FBIO *fbp;
+    FILE *fp;
+    int fbsize = 512;
+    int i;
 
-    while ( argc > 1 ) {
-	if ( strcmp(argv[1], "-h") == 0 ) {
+    while (argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-H")) {
 	    fbsize = 1024;
-	} else if ( argv[1][0] == '-' ) {
-	    /* unknown flag */
-	    bu_exit(1, "%s", usage );
+	} else if (argv[1][0] == '-') {
+	    if ( (!BU_STR_EQUAL(argv[1], "-?")) && (!BU_STR_EQUAL(argv[1], "-h")) )
+		fprintf(stderr, "fb-cmap: unknown flag %s\n", argv[1]);
+	    bu_exit(1, "%s", usage);
 	} else
 	    break;	/* must be a filename */
 	argc--;
 	argv++;
     }
 
-    if ( argc > 1 ) {
-	if ( (fp = fopen(argv[1], "wb")) == NULL ) {
-	    fprintf( stderr, "fb-cmap: can't open \"%s\"\n", argv[1] );
-	    bu_exit(2, "%s", usage );
+    if (argc > 1) {
+	if ((fp = fopen(argv[1], "wb")) == NULL) {
+	    fprintf(stderr, "fb-cmap: can't open \"%s\"\n", argv[1]);
+	    bu_exit(2, "%s", usage);
 	}
-    } else
+    } else {
 	fp = stdout;
-
-    if ( (fbp = fb_open( NULL, fbsize, fbsize )) == FBIO_NULL )
-	bu_exit( 2, "Unable to open framebuffer\n" );
-
-    i = fb_rmap( fbp, &cm );
-    fb_close( fbp );
-    if ( i < 0 ) {
-	bu_exit(3, "fb-cmap: can't read colormap\n" );
+	if (isatty(fileno(fp)))
+	    fprintf(stderr, "%s       Program continues running:\n", usage);
     }
 
-    for ( i = 0; i <= 255; i++ ) {
-	fprintf( fp, "%d\t%04x %04x %04x\n", i,
-		 cm.cm_red[i], cm.cm_green[i], cm.cm_blue[i] );
+    if ((fbp = fb_open(NULL, fbsize, fbsize)) == FBIO_NULL)
+	bu_exit(2, "Unable to open framebuffer\n");
+
+    i = fb_rmap(fbp, &cm);
+    fb_close(fbp);
+    if (i < 0) {
+	bu_exit(3, "fb-cmap: can't read colormap\n");
+    }
+
+    for (i = 0; i <= 255; i++) {
+	fprintf(fp, "%d\t%04x %04x %04x\n", i,
+		cm.cm_red[i], cm.cm_green[i], cm.cm_blue[i]);
     }
 
     return 0;
 }
+
 
 /*
  * Local Variables:

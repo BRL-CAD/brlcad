@@ -1,7 +1,7 @@
 #                     H E L P L I B . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -72,9 +72,9 @@ set helplib_data(wdb_bot_face_sort)     {{triangles_per_piece bot_solid1 [bot_so
 set helplib_data(wdb_bot_decimate)      {{ -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
 set helplib_data(wdb_color)		{{[-e] [low high r g b]} {text edit color table or make new color entry}}
-set helplib_data(wdb_comb)		{{comb_name <operation solid>}	{create or extend combination w/booleans}}
+set helplib_data(wdb_comb)		{{comb_name [-c|-r] [-w|-f|-l] [-S] <operation solid>}	{create or extend combination w/booleans}}
 set helplib_data(wdb_comb_std)		{{[-cr] comb_name <boolean_expr>}	{create or extend a combination using standard notation}}
-set helplib_data(wdb_concat)		{{[-s|-p] file.g [suffix|prefix]} {import a database into the current database using an auto-incrementing or custom affix}}
+set helplib_data(wdb_concat)		{{[-t] [-u] [-c] [-s|-p] file.g [suffix|prefix]} {import a database into the current database using an auto-incrementing or custom affix}}
 set helplib_data(wdb_copy)		{{from to} {copy a database object}}
 set helplib_data(wdb_copyeval)		{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
 set helplib_data(wdb_dbip)		{{} {get dbip}}
@@ -90,27 +90,28 @@ set helplib_data(wdb_hide)              {{<objects>} {set the "hidden" flag for 
 set helplib_data(wdb_instance)		{{obj comb [op]} {add instance of obj to comb}}
 set helplib_data(wdb_keep)		{{[-R] file object(s)} {save named objects in the specified file.  Does not recursively keep objects with the -R option.}}
 set helplib_data(wdb_kill)		{{<objects>} {kill/delete database objects}}
-set helplib_data(wdb_killall)		{{<objects>} {kill/delete database objects, removing all references}}
-set helplib_data(wdb_killtree)		{{[-a] <objects>} {kill all paths belonging to objects}}
+set helplib_data(wdb_killall)		{{[-n] <objects>} {kill/delete database objects, removing all references}}
+set helplib_data(wdb_killtree)		{{[-a|-f|-n] <objects>} {kill all paths belonging to objects}}
 set helplib_data(wdb_list)		{{[-r] <objects>} {list object information, verbose}}
 set helplib_data(wdb_listeval)		{{}	{lists 'evaluated' path solids}}
 set helplib_data(wdb_ls)		{{[-A name/value pairs] OR [-acrslop] object(s)} {list objects in this database}}
 set helplib_data(wdb_lt)		{{object} {list object's tree as a tcl list of {operator object} pairs}}
 set helplib_data(wdb_make_bb)		{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
-set helplib_data(wdb_make_name)		{{template | -s [num]}	{make an object name not occuring in the database}}
+set helplib_data(wdb_make_name)		{{template | -s [num]}	{make an object name not occurring in the database}}
 set helplib_data(wdb_match)		{{expression}	{globs expression against database objects, does not return tokens that match nothing}}
 set helplib_data(wdb_mirror)		{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror primitive or combination along the specified axis}}
 set helplib_data(wdb_move_arb_edge)	{{arb edge pt} {move an arb's edge through pt}}
 set helplib_data(wdb_move_arb_face)	{{arb face pt} {move an arb's face through pt}}
 set helplib_data(wdb_rotate_arb_face)	{{arb face pt} {rotate an arb's face through pt}}
 set helplib_data(wdb_move)		{{from to} {rename a database object}}
-set helplib_data(wdb_moveall)		{{[-n] from to} {rename all occurences of object.  only reports matches without renaming with the -n option.}}
+set helplib_data(wdb_moveall)		{{[-n] from to} {rename all occurrences of object.  only reports matches without renaming with the -n option.}}
 set helplib_data(wdb_nmg_collapse)	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
 set helplib_data(wdb_nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
 set helplib_data(wdb_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
 set helplib_data(wdb_pathlist)		{{name(s)}	{list all paths from name(s) to leaves}}
 set helplib_data(wdb_paths)		{{pattern}	{lists all paths matching input path}}
 set helplib_data(wdb_prcolor)		{{} {print color table}}
+set helplib_data(wdb_pull)             {{object(s)} {pull object(s) path transformations from solids}}
 set helplib_data(wdb_push)		{{object(s)} {push object(s) path transformations to solids}}
 set helplib_data(wdb_put)		{{object type attrs} {create a database object}}
 set helplib_data(wdb_region)		{{object(s)} {create or append objects to a region}}
@@ -118,7 +119,7 @@ set helplib_data(wdb_remove)		{{comb object(s)} {remove members from a combinati
 set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
 set helplib_data(wdb_rt_gettrees)	{{procname [-i] [-u] treetops...} {create an rt instance object}}
 set helplib_data(wdb_search)		{{[path] [options]} {search database for objects matching parameters defined by options within the specified path}}
-set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into seperate shells}}
+set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into separate shells}}
 set helplib_data(wdb_showmats)		{{path}	{show xform matrices along path}}
 set helplib_data(wdb_bot_smooth)        {{[-t norm_tolerance_degrees] new_bot_name old_bot_name} {calculate vertex normals for BOT primitive}}
 set helplib_data(wdb_summary)		{{[p r g]}	{count/list primitives/regions/groups}}
@@ -140,7 +141,7 @@ set helplib_data(vo_ae2dir)		{{[-i] az el} {return the view direction}}
 set helplib_data(vo_arot)		{{x y z angle} {rotate angle degrees about the axis specified by xyz}}
 set helplib_data(vo_base2local)		{{} {get base2local conversion factor}}
 set helplib_data(vo_center)		{{["x y z"]} {set/get the view center}}
-set helplib_data(vo_coord)		{{[m|v]} {set/get the coodinate system}}
+set helplib_data(vo_coord)		{{[m|v]} {set/get the coordinate system}}
 set helplib_data(vo_eye)		{{"x y z"} {set the eyepoint}}
 set helplib_data(vo_eye_pos)		{{"x y z"} {set the eye position}}
 set helplib_data(vo_invSize)		{{} {get the inverse view size}}
@@ -185,7 +186,7 @@ set helplib_data(dgo_illum)		{{[-n] obj} {illuminate/highlight obj}}
 set helplib_data(dgo_nirt)		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
 set helplib_data(dgo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
 set helplib_data(dgo_open)		{{name wdb_obj} {open/create a new drawable geometry object}}
-set helplib_data(dgo_overlay)		{{file.pl [name]}	{overlay the specified 2D/3D UNIX plot file}}
+set helplib_data(dgo_overlay)		{{file.plot3 [name]}	{overlay the specified 2D/3D UNIX plot file}}
 set helplib_data(dgo_qray)		{{subcommand}	{get/set query_ray characteristics}}
 set helplib_data(dgo_report)		{{[lvl]} {print solid table & vector list}}
 set helplib_data(dgo_rt)		{{[options] [-- objects]}	{do raytrace of view or specified objects}}
@@ -198,7 +199,7 @@ set helplib_data(dgo_set_outputHandler)	{{[script]}	{get/set output handler scri
 set helplib_data(dgo_set_plOutputMode)	{{[binary|text]}	{get/set the plot output mode}}
 set helplib_data(dgo_set_transparency)	{{obj transparency}	{set transparency of the specified object}}
 set helplib_data(dgo_shaded_mode)	{{[0|1|2]}	{get/set shaded mode}}
-set helplib_data(dgo_vdraw)		{{write|insert|delete|read|send|params|open|vlist [args]}	{Expermental drawing (cnuzman)}}
+set helplib_data(dgo_vdraw)		{{write|insert|delete|read|send|params|open|vlist [args]}	{Experimental drawing (cnuzman)}}
 set helplib_data(dgo_vnirt)		{{[vnirt(1) options] viewX viewY}	{trace a single ray from current view}}
 set helplib_data(dgo_who)		{{[r(eal)|p(hony)|b(oth)]}	{list the top-level objects currently being displayed}}
 set helplib_data(dgo_zap)		{{} {erase all objects from the display}}
@@ -243,7 +244,7 @@ set helplib_data(quat_distance)		{{quatA quatB}	{finds the euclidean distance be
 set helplib_data(quat_double)		{{quatA quatB}	{finds the quaternion point representing twice the rotation from
     quatA to quatB}}
 set helplib_data(quat_bisect)		{{quatA quatB}	{finds the bisector of quaternions quatA and quatB}}
-set helplib_data(quat_sberp)		{{quat1 quat2 quat3 quat4 factor}	{do sperical bezier interpolation between four quaternions
+set helplib_data(quat_sberp)		{{quat1 quat2 quat3 quat4 factor}	{do spherical bezier interpolation between four quaternions
     by the given factor}}
 set helplib_data(quat_slerp)		{{quat1 quat2 factor}	{do spherical linear interpolation between two unit quaternions
     by the given factor}}

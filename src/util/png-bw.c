@@ -1,7 +1,7 @@
 /*                        P N G - B W . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file png-bw.c
+/** @file util/png-bw.c
  *
  * Convert PNG (Portable Network Graphics) format to bw
  *
@@ -28,13 +28,13 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
 
-#include "png.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "zlib.h"
 
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static int verbose=0;
@@ -70,42 +70,45 @@ main(int argc, char **argv)
     int num;
     int in, out;
     double value;
+    size_t ret;
 
     while (argc > 1 && argv[1][0] == '-') {
-	if (strcmp(argv[1], "-v") == 0)
+	if (BU_STR_EQUAL(argv[1], "-v"))
 	    verbose = 1;
-	else if (strcmp(argv[1], "-ntsc") == 0) {
+	else if (BU_STR_EQUAL(argv[1], "-ntsc")) {
 	    /* NTSC weights */
 	    rweight = 0.30;
 	    gweight = 0.59;
 	    bweight = 0.11;
 	    red = green = blue = 1;
-	} else if (strcmp(argv[1], "-crt") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-crt")) {
 	    /* CRT weights */
 	    rweight = 0.26;
 	    gweight = 0.66;
 	    bweight = 0.08;
 	    red = green = blue = 1;
-	} else switch (argv[1][1]) {
-	    case 'R':
-		red++;
-		if (argv[1][2] != '\0')
-		    rweight = atof(&argv[1][2]);
-		break;
-	    case 'G':
-		green++;
-		if (argv[1][2] != '\0')
-		    gweight = atof(&argv[1][2]);
-		break;
-	    case 'B':
-		blue++;
-		if (argv[1][2] != '\0')
-		    bweight = atof(&argv[1][2]);
-		break;
-	    default:
-		bu_log("Illegal option (%s)\n", argv[1]);
-		bu_log(usage, "png-bw");
-		bu_exit(EXIT_FAILURE, "Illegal option\n");
+	} else {
+	    switch (argv[1][1]) {
+		case 'R':
+		    red++;
+		    if (argv[1][2] != '\0')
+			rweight = atof(&argv[1][2]);
+		    break;
+		case 'G':
+		    green++;
+		    if (argv[1][2] != '\0')
+			gweight = atof(&argv[1][2]);
+		    break;
+		case 'B':
+		    blue++;
+		    if (argv[1][2] != '\0')
+			bweight = atof(&argv[1][2]);
+		    break;
+		default:
+		    bu_log("Illegal option (%s)\n", argv[1]);
+		    bu_log(usage, "png-bw");
+		    bu_exit(EXIT_FAILURE, "Illegal option\n");
+	    }
 	}
 	argc--;
 	argv++;
@@ -229,7 +232,9 @@ main(int argc, char **argv)
     png_read_image(png_p, rows);
 
     if (!convert_to_bw) {
-	fwrite(image, file_width*file_height, 1, stdout);
+	ret = fwrite(image, file_width*file_height, 1, stdout);
+	if (ret < 1)
+	    perror("fwrite");
 	bu_exit (0, NULL);
     }
 
@@ -285,7 +290,9 @@ main(int argc, char **argv)
 			 (int)image[in+2]) / 3;
     }
 
-    fwrite(obuf, sizeof(char), num/3, stdout);
+    ret = fwrite(obuf, sizeof(char), num/3, stdout);
+    if (ret < (size_t)num/3)
+	perror("fwrite");
 
     if (clip_high != 0 || clip_low != 0) {
 	fprintf(stderr, "png-bw: clipped %d high, %d, low\n",

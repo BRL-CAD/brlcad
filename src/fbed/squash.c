@@ -1,7 +1,7 @@
 /*                        S Q U A S H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +17,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file squash.c
- *	Author:		Gary S. Moss
- */
-/*
+/** @file fbed/squash.c
+ *
  * squash.c - Filter super-sampled image for one scan line
+ *
  */
+
+#include "common.h"
+
 #include <stdio.h>
+
 #include "./std.h"
+
+
 #define DEBUG_SQUASH	false
 /* Cone filtering weights.
  * #define CNTR_WT 0.23971778

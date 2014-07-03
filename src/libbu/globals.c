@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file globals.c
+/** @file libbu/globals.c
  *
  * Global variables in LIBBU.
  *
@@ -27,8 +27,11 @@
  *
  */
 
-#include "bu.h"
-
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/vls.h"
 
 /**
  * number of calls to bu_malloc()/bu_calloc()/bu_alloc().
@@ -59,50 +62,14 @@ long bu_n_realloc = 0;
  *
  * NOT published in a public header.
  */
-const char bu_vls_message[] = "bu_vls_str";
+EXTERNVARINIT const char bu_vls_message[] = "bu_vls_str";
 
 /**
  * used by malloc and vls as the bu_strdup debug string.
  *
  * NOT published in a public header.
  */
-const char bu_strdup_message[] = "bu_strdup string";
-
-/**
- * process id of the initiating thread. used to shutdown bu_parallel
- * threads/procs.
- *
- * NOT published in a public header.
- */
-int bu_pid_of_initiating_thread = 0;
-
-/**
- * list of callbacks to call during bu_bomb.
- */
-struct bu_hook_list bu_bomb_hook_list = {
-    {
-	BU_LIST_HEAD_MAGIC,
-	&bu_bomb_hook_list.l,
-	&bu_bomb_hook_list.l
-    },
-    BU_HOOK_NULL,
-    GENPTR_NULL
-};
-
-/**
- * list of callbacks to call during bu_log.
- *
- * NOT published in a public header.
- */
-struct bu_hook_list bu_log_hook_list = {
-    {
-	BU_LIST_HEAD_MAGIC,
-	&bu_log_hook_list.l,
-	&bu_log_hook_list.l
-    },
-    BU_HOOK_NULL,
-    GENPTR_NULL
-};
+EXTERNVARINIT const char bu_strdup_message[] = "bu_strdup string";
 
 /**
  * bu_setjmp_valid is global because BU_SETJUMP() *must* be a macro.
@@ -118,7 +85,7 @@ int bu_setjmp_valid = 0;
  */
 jmp_buf bu_jmpbuf;
 
-/* externed in bu.h */
+/* externed in bu/ headers */
 int bu_debug = 0;
 int bu_opterr = 1;
 int bu_optind = 1;

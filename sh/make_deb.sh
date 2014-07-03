@@ -2,7 +2,7 @@
 #                     M A K E _ D E B . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2010 United States Government as represented by
+# Copyright (c) 2005-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,28 +37,160 @@
 
 set -e
 
+ferror(){
+    echo "=========================================================="
+    echo $1
+    echo $2
+    echo "=========================================================="
+    exit 1
+}
+
+# show help
+if test -z $1 ;then
+    echo "Script to create Debian binary and source packages."
+    echo
+    echo "Usage:"
+    echo "  sh/make_deb.sh -b | -s [-t]"
+    echo
+    echo "Options:"
+    echo "  -b       build the Debian binary package (deb file)"
+    echo "  -s *     build the Debian source packages"
+    echo "  -t       as second argument: test for all prerequisites"
+    echo
+    echo "           * (use with a clean brlcad tree)"
+    exit 1
+fi
+
+# too many parameters
+if test $# -gt 2 ;then
+    ferror "Too many arguments" "Exiting..."
+fi
+
+# unknown parameter
+if test "$1" != "-s" && test "$1" != "-b" ; then
+    ferror "Unknown first argument '$1'." "Exiting..."
+fi
+
+# check for test
+TEST=0
+if test $# -eq 2 && test "$2" != "-t" ; then
+    ferror "Unknown second argument '$2'." "Exiting..."
+elif test $# -eq 2 && test "$2" = "-t" ; then
+   TEST=1
+fi
+
+# test if in project root
+if test ! -f misc/debian/control ; then
+    ferror "\"make_deb.sh\" should be run from project root directory." "Exiting..."
+fi
+
+# test if in debian-like system
 if test ! -e /etc/debian_version ; then
-    echo "Refusing to build on a non-debian system."
-    exit 1
+    ferror "Refusing to build on a non-debian system." "Exiting..."
 fi
 
-if test ! -e /usr/bin/fakeroot ; then
-    echo "Need the fakeroot package."
-    exit 1
+# check needed packages
+E=0
+fcheck() {
+    T="install ok installed"
+    if test ! `dpkg -s $1 2>/dev/null | grep "$T" | wc -l` -eq 0 ; then
+	# success
+	echo "Found package $1..."
+	return
+    fi
+
+    # need to check for local, non-package versions
+    # check for binaries
+    if test "$2" = "x" ; then
+	if [ -f /usr/bin/$1 ]; then
+	    # success
+	    echo "Found /usr/bin/$1..."
+	    return
+	elif [ -f /usr/local/bin/$1 ]; then
+	    # success
+	    echo "Found /usr/local/bin/$1..."
+	    return
+	fi
+    fi
+
+    echo "* Missing $1..."
+    LLIST=$LLIST" "$1
+    E=1
+}
+
+fcheck debhelper
+fcheck fakeroot x
+
+if test "$1" = "-b" ;then
+    fcheck build-essential
+    fcheck make
+    fcheck cmake x
+    fcheck sed x
+    fcheck bison x
+    fcheck flex x
+    fcheck libxi-dev
+    fcheck xsltproc x
+    fcheck libglu1-mesa-dev
+    fcheck libpango1.0-dev
+    #fcheck fop # allows pdf creation
 fi
 
-if test ! -e /usr/bin/debuild ; then
-    echo "Need the devscripts package."
-    exit 1
+if [ $E -eq 1 ]; then
+    ferror "Mandatory to install these packages first:" "$LLIST"
 fi
 
-if test ! -e ./debian && test ! -e ./debian/control ; then
-    ln -fs misc/debian debian
+if [ $TEST -eq 1 ]; then
+    echo "=========================================================="
+    echo "Testing complete"
+    echo "Ready to create a Debian package"
+    echo "=========================================================="
+    exit
 fi
 
-fakeroot debian/rules binary && debuild -us -uc
+# set variables
+BVERSION=`sed 's/[^0-9]//g' include/conf/MAJOR`"."`sed 's/[^0-9]//g' include/conf/MINOR`"."`sed 's/[^0-9]//g' include/conf/PATCH`
+CDATE=`date -R`
+CFILE="debian/changelog"
+RELEASE="0"
 
-if test -L ./debian ; then rm debian ; fi
+NJOBS=`getconf _NPROCESSORS_ONLN`
+if test ! $NJOBS -gt 0 2>/dev/null ;then
+    NJOBS=1
+fi
+
+# if building sources, create *orig.tar.gz
+rm -Rf debian
+if test "$1" = "-s" ;then
+    echo "building brlcad_$BVERSION.orig.tar.gz..."
+    tar -czf "../brlcad_$BVERSION.orig.tar.gz" *
+fi
+
+# copy debian folder on project root
+cp -Rf misc/debian/ .
+
+# create "version" file
+echo $BVERSION >debian/version
+
+# update debian/changelog if needed
+if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-$RELEASE" | wc -l` -eq 0 ; then
+    L1="brlcad ($BVERSION-$RELEASE) unstable; urgency=low\n\n"
+    L2="  **** VERSION ENTRY AUTOMATICALLY ADDED BY \"sh\/make_deb.sh\" SCRIPT ****\n\n"
+    L3=" -- Jordi Sayol <g.sayol@yahoo.es>  $CDATE\n\n/"
+    sed -i "1s/^/$L1$L2$L3" $CFILE
+    echo "\"$CFILE\" has been modified!"
+fi
+
+# create deb or source packages
+case "$1" in
+-b) fakeroot debian/rules clean
+    DEB_BUILD_OPTIONS=parallel=$NJOBS fakeroot debian/rules binary
+    ;;
+-s) fakeroot dpkg-buildpackage -S -us -uc
+    ;;
+esac
+
+# #
+rm -Rf debian
 
 # Local Variables:
 # mode: sh

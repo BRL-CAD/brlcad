@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,12 +18,12 @@
  * information.
  *
  */
-/** @file extern.h
+/** @file burst/extern.h
  *
  */
 
-#ifndef __EXTERN_H__
-#define __EXTERN_H__
+#ifndef BURST_EXTERN_H
+#define BURST_EXTERN_H
 
 #include "common.h"
 
@@ -57,7 +57,6 @@ extern int findIdents();
 extern int readColors();
 extern int readIdents();
 extern int notify();
-extern int roundToInt();
 extern void closeUi();
 extern void colorPartition();
 extern void exitCleanly();
@@ -74,7 +73,8 @@ extern void paintSpallFb();
 extern void plotGrid();
 extern void plotInit();
 extern void plotPartition();
-extern void plotRay();
+extern void plotRayLine();
+extern void plotRayPoint();
 extern void prntAspectInit();
 extern void prntBurstHdr();
 extern void prntCellIdent();
@@ -89,10 +89,7 @@ extern void prntRayIntersect();
 extern void prntTimer();
 extern void prompt();
 extern void readCmdFile();
-extern void prntScr(const char *, ...);
-extern void brst_log(const char *, ...);
 extern void warning();
-extern void prntUsage();
 extern void clr_Tabs();
 extern void prntShieldComp();
 extern void qFree();
@@ -112,6 +109,11 @@ extern void save_Tty();
 extern void (*norml_sig)(), (*abort_sig)();
 extern void abort_RT();
 extern void intr_sig();
+
+/* proper prototype */
+extern void prntScr(const char *, ...);
+extern void brst_log(const char *, ...);
+extern int roundToInt(fastf_t f);
 
 extern Colors colorids;
 extern FBIO *fbiop;
@@ -138,6 +140,7 @@ extern unsigned char pixmiss[3];
 extern unsigned char pixtarg[3];
 extern Trie *cmdtrie;
 
+extern int plotline;
 extern int batchmode;
 extern int cantwarhead;
 extern int deflectcone;
@@ -174,8 +177,6 @@ extern char timer[];
 extern char tmpfname[];
 
 extern char *cmdptr;
-
-extern char **template;
 
 extern fastf_t bdist;
 extern fastf_t burstpoint[];
@@ -233,7 +234,7 @@ extern int zoom;
 
 extern struct rt_i *rtip;
 
-#endif  /* __EXTERN_H__ */
+#endif  /* BURST_EXTERN_H */
 
 /*
  * Local Variables:

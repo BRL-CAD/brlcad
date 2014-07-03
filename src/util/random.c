@@ -1,7 +1,7 @@
 /*                        R A N D O M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,11 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file random.c
+/** @file util/random.c
  *
  * Generate a random number between the two values given. The number
  * can be uniform across the entire range or it can be a gaussian
- * distrubution around the center of the range (or a named center.)
+ * distribution around the center of the range (or a named center).
  *
  */
 
@@ -52,7 +52,7 @@ main(int argc, char *argv[])
     int c;
     const char *usage = "[-u] [-g [-c center]] [-s seed] [-v] low high";
 
-    while ((c = bu_getopt(argc, argv, "vugs:c:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "vugs:c:")) != -1) {
 	switch (c) {
 	    case 's':
 		seed = atoi(bu_optarg);
@@ -63,11 +63,9 @@ main(int argc, char *argv[])
 		break;
 	    case 'g':
 		gauss = 1;
-		uniform = 0;
 		break;
 	    case 'u':
 		uniform = 1;
-		gauss = 0;
 		break;
 	    case 'v':
 		verbose = 1;
@@ -76,7 +74,7 @@ main(int argc, char *argv[])
 		bu_exit(1, "%s %s\n", argv[0], usage);
 	}
     }
-    if (! gauss && !uniform) uniform = 1;
+    if (gauss == 0 && uniform == 0) uniform = 1;
     if (gauss && uniform) {
 	bu_log("%s %s\n", argv[0], usage);
 	bu_exit(1, "\tOnly one of gaussian or uniform may be used.\n");

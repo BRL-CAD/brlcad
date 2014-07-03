@@ -1,7 +1,7 @@
 /*                         S I M D . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2010 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,34 +17,50 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_simd */
-/** @{ */
 
 #include "common.h"
-#include "bu.h"
+#include "bu/simd.h"
 
 int
 bu_simd_level()
 {
-#if __GNUC__ && __SSE__
-    int d;
-    /* since we're PIC, we need to stash EBX on ia32 */
-#ifdef __i386__
-    asm ("pushl %%ebx;cpuid;popl %%ebx;movl $0,%%eax": "=d" (d): "a" (0x1));
-#else
-    asm ("cpuid;movl $0,%%eax": "=d"(d): "a"(0x1));
-#endif
-    if(d & 0x1<<26)
+#if defined(__GNUC__) && defined(__SSE__)
+    int c=0, d=0;
+# ifdef __i386__
+    __asm__ volatile("pushl %%ebx;cpuid;popl %%ebx;":"=c"(c),"=d"(d):"a"(0x1));
+# else
+    int b=0;
+    __asm__ volatile("cpuid":"=b"(b),"=c"(c),"=d"(d):"a"(0x1));
+# endif
+    if (c & 0x100000)
+	return BU_SIMD_SSE4_2;
+    if (c & 0x080000)
+	return BU_SIMD_SSE4_1;
+    if (c & 0x1)
+	return BU_SIMD_SSE3;
+    if (d & 0x1<<26)
 	return BU_SIMD_SSE2;
-    if(d & 0x1<<25)
+    if (d & 0x1<<25)
 	return BU_SIMD_SSE;
-    if(d & 0x1<<24)
+    if (d & 0x1<<24)
 	return BU_SIMD_MMX;
 #endif
     return BU_SIMD_NONE;
 }
 
-/** @} */
+int
+bu_simd_supported(int level)
+{
+    int l;
+
+    if (level == 4)
+	return 0;
+
+    l = bu_simd_level();
+
+    return l >= level;
+}
+
 
 /*
  * Local Variables:

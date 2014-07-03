@@ -1,7 +1,7 @@
 /*                     P I X U N T I L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixuntile.c
+/** @file util/pixuntile.c
  *
  * Given a single .pix file with multiple images, each side-by-side,
  * right to left, bottom to top, break them up into separate .pix
@@ -52,7 +52,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hs:w:n:S:W:N:o:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "hs:w:n:S:W:N:o:")) != -1) {
 	switch (c) {
 	    case 'h':
 		/* high-res */
@@ -108,7 +108,8 @@ main(int argc, char **argv)
     int i, y;
     char ibuf[1024*3] = {0};
     char name[80] = {0};
-    FILE *f[8];
+    FILE *f[8] = {NULL};
+    size_t ret;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -123,7 +124,7 @@ main(int argc, char **argv)
     }
 
     if (in_width < 1) {
-	fprintf(stderr, "pixuntile: width of %lu out of range\n", in_width);
+	fprintf(stderr, "pixuntile: width of %lu out of range\n", (long unsigned)in_width);
 	bu_exit (12, NULL);
     }
 
@@ -155,11 +156,13 @@ main(int argc, char **argv)
 	}
 	/* split this scanline up into the output files */
 	for (i = 0; i < numx; i++) {
-	    fwrite(&ibuf[i*out_width*pixsize], pixsize, out_width, f[i]);
+	    ret = fwrite(&ibuf[i*out_width*pixsize], pixsize, out_width, f[i]);
+	    if (ret < out_width)
+		perror("fwrite");
 	}
 	y = (y + 1) % out_height;
     }
- done:
+done:
     fprintf(stderr, "\n");
 
     return 0;

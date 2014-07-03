@@ -1,7 +1,7 @@
 /*                          T U B E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tube.c
+/** @file proc-db/tube.c
  *
  * Program to generate a gun-tube as a procedural spline.
  * The tube's core lies on the X axis.
@@ -39,7 +39,7 @@
 
 
 mat_t identity;
-double degtorad = 0.0174532925199433;
+double degtorad = DEG2RAD;
 double inches2mm = 25.4;
 
 void build_spline(char *name, int npts, double radius), read_pos(FILE *fp), build_cyl(char *cname, int npts, double radius), xfinddir(fastf_t *dir, double x, fastf_t *loc);
@@ -54,7 +54,8 @@ fastf_t circle_knots[N_CIRCLE_KNOTS] = {
     4,	4,	4
 };
 
-#define IRT2 0.70710678	/* 1/sqrt(2) */
+
+#define IRT2 M_SQRT1_2	/* 1/sqrt(2) */
 #define NCOLS 9
 /* When scaling, multiply only XYZ, not W */
 fastf_t polyline[NCOLS*4] = {
@@ -68,6 +69,7 @@ fastf_t polyline[NCOLS*4] = {
     0,	IRT2,	-IRT2,	IRT2,
     0,	1,	0,	1
 };
+
 
 /*
  * X displacement table for Kathy's gun tube center of masses, in mm,
@@ -93,9 +95,10 @@ double dxtab[] = {
     0,
 };
 
+
 double projectile_pos;
 point_t sample[1024];
-int nsamples;
+size_t nsamples;
 
 double iradius, oradius;
 double length;
@@ -121,6 +124,18 @@ main(int argc, char **argv)
     mat_t rot1, rot2, rot3;
     vect_t from, to;
     vect_t offset;
+
+    if (argc > 0) {
+	bu_log("Usage: %s\n", argv[0]);
+    	bu_log("       (Program expects ./pos.dat file to be present)\n");
+    	bu_log("       (Will generate file tube.g)\n");
+    	if (argc == 2) {
+	    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
+		bu_exit(1,NULL);
+    	}
+	else if (argc == 1)
+	    bu_log("       Program continues running:\n");
+    }
 
     BU_LIST_INIT(&head.l);
     BU_LIST_INIT(&ghead.l);
@@ -151,9 +166,9 @@ main(int argc, char **argv)
 #endif
     fprintf(stderr, "inner radius=%gmm, outer radius=%gmm\n", iradius, oradius);
 
-    length = 187 * inches2mm;
+    length = 187.0 * inches2mm;
 #ifdef never
-    spacing = 100;			/* mm per sample */
+    spacing = 100.;			/* mm per sample */
     nsamples = ceil(length/spacing);
     fprintf(stderr, "length=%gmm, spacing=%gmm\n", length, spacing);
     fprintf(stderr, "nframes=%d\n", nframes);
@@ -168,14 +183,14 @@ main(int argc, char **argv)
 	    sample[i][X] = i * spacing;
 	    sample[i][Y] = 0;
 	    sample[i][Z] = 4 * oradius * sin(
-		((double)i*i)/nsamples * 2 * 3.14159265358979323 +
-		frame * 3.141592 * 2 / 8);
+		((double)i*i)/nsamples * M_2PI +
+		frame * M_PI_4);
 	}
 	projectile_pos = ((double)frame)/nframes *
 	    (sample[nsamples-1][X] - sample[0][X]); /* length */
 #else
-	if (read_frame(stdin) < 0)  break;
-	if (pos_fp != NULL)  read_pos(pos_fp);
+	if (read_frame(stdin) < 0) break;
+	if (pos_fp != NULL) read_pos(pos_fp);
 #endif
 
 #define build_spline build_cyl
@@ -203,12 +218,12 @@ main(int argc, char **argv)
 
 	VSET(from, 0, -1, 0);
 	VSET(to, 1, 0, 0);		/* to X axis */
-	bn_mat_fromto(rot1, from, to);
+	bn_mat_fromto(rot1, from, to, &outfp->wdb_tol);
 
 	VSET(from, 1, 0, 0);
 	/* Projectile is 480mm long -- use center pt, not end */
 	xfinddir(to, projectile_pos + 480.0/2, offset);
-	bn_mat_fromto(rot2, from, to);
+	bn_mat_fromto(rot2, from, to, &outfp->wdb_tol);
 
 	MAT_IDN(xlate);
 	MAT_DELTAS_VEC(xlate, offset);
@@ -222,11 +237,10 @@ main(int argc, char **argv)
 	mk_lcomb(outfp, gname, &ghead, 0,
 		 (char *)0, "", (unsigned char *)0, 0);
 
-	fprintf(stderr, "%d, ", frame);  fflush(stderr);
+	fprintf(stderr, "frame %d\n", frame);  fflush(stderr);
     }
     wdb_close(outfp);
     fflush(stderr);
-    system("cat ke.g");	/* XXX need library routine */
 
     return 0;
 }
@@ -325,6 +339,7 @@ build_spline(char *name, int npts, double radius)
     rt_nurb_free_snurb(bp, &rt_uniresource);
 }
 
+
 /* Returns -1 if done, 0 if something to draw */
 int
 read_frame(FILE *fp)
@@ -340,7 +355,7 @@ read_frame(FILE *fp)
 #ifdef never
     /* Phils format */
     for (nsamples=0;;nsamples++) {
-	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  return -1;
+	if (bu_fgets(buf, sizeof(buf), fp) == NULL) return -1;
 	if (buf[0] == '\0' || buf[0] == '\n')
 	    /* Blank line, marks break in implicit connection */
 	    fprintf(stderr, "implicit break unimplemented\n");
@@ -382,7 +397,7 @@ read_frame(FILE *fp)
 	    fprintf(stderr, "EOF?\n");
 	    return -1;
 	}
-	if (strncmp(buf, "TIME", strlen("TIME")) != 0)  continue;
+	if (bu_strncmp(buf, "TIME", strlen("TIME")) != 0) continue;
 	if (sscanf(buf, "TIME %f", &last_read_time) < 1) {
 	    fprintf(stderr, "bad TIME\n");
 	    return -1;
@@ -391,23 +406,25 @@ read_frame(FILE *fp)
     }
 
     for (nsamples=0;;nsamples++) {
-	int nmass;
+	size_t nmass;
 	float kx, ky, kz;
-	
+	int nmassval;
+
 	buf[0] = '\0';
-	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  return -1;
+	if (bu_fgets(buf, sizeof(buf), fp) == NULL) return -1;
 	/* center of mass #, +X, +Z, -Y (chg of coordinates) */
 	if (buf[0] == '\0' || buf[0] == '\n')
 	    break;		/* stop at a blank line */
 	i = sscanf(buf, "%d %f %f %f",
-		   &nmass, &kx, &ky, &kz);
+		   &nmassval, &kx, &ky, &kz);
 	if (i != 4) {
 	    fprintf(stderr, "input line in error: %s\n", buf);
 	    return -1;
 	}
+	nmass = (size_t)nmassval;
 	if (nmass-1 != nsamples) {
-	    fprintf(stderr, "nmass %d / nsamples %d mismatch\n",
-		    nmass, nsamples);
+	    fprintf(stderr, "nmass %lu / nsamples %lu mismatch\n",
+		    (unsigned long)nmass, (unsigned long)nsamples);
 	    return -1;
 	}
 #define EXAGERATION (4 * oradius)
@@ -421,6 +438,10 @@ read_frame(FILE *fp)
 	    EXAGERATION / (0.02 * inches2mm);
     }
 /* Extrapolate data for the right side -- end of muzzle */
+    if (nsamples < 2) {
+	bu_log("Insufficient number of samples for extrapolation. Aborting\n");
+	return -1;
+    }
     sample[nsamples][X] = dxtab[nsamples] + dx;	/* reuse last displacement */
     sample[nsamples][Y] = sample[nsamples-1][Y] * 2 - sample[nsamples-2][Y];
     sample[nsamples][Z] = sample[nsamples-1][Z] * 2 - sample[nsamples-2][Z];
@@ -433,17 +454,22 @@ read_frame(FILE *fp)
     return 0;			/* OK */
 }
 
+
 void
 read_pos(FILE *fp)
 {
     static float last_read_time = -5;
     static float pos = 0;
+    int ret;
 
 /* Skip over needless intermediate time steps */
     while (last_read_time < cur_time) {
 	if (feof(fp))
 	    break;
-	fscanf(fp, "%f %f", &last_read_time, &pos);
+	ret = fscanf(fp, "%f %f", &last_read_time, &pos);
+	if (ret == -1)
+	    perror("fscanf");
+
 	/* HACK:  tmax[kathy]=6.155ms, tmax[kurt]=9.17 */
 	/* we just read a Kurt number, make it a Kathy number */
 	last_read_time = last_read_time / 9.17 * 6.155;
@@ -452,6 +478,7 @@ read_pos(FILE *fp)
 /* Kurt's data is in inches */
     projectile_pos = pos * inches2mm;
 }
+
 
 void
 build_cyl(char *cname, int npts, double radius)
@@ -476,6 +503,7 @@ build_cyl(char *cname, int npts, double radius)
     mk_lfcomb(outfp, cname, &head, 0);
 }
 
+
 /*
  * Find which section a given X value is in, and indicate what
  * direction the tube is headed in then.
@@ -483,7 +511,7 @@ build_cyl(char *cname, int npts, double radius)
 void
 xfinddir(fastf_t *dir, double x, fastf_t *loc)
 {
-    int i;
+    size_t i;
     fastf_t ratio;
 
     for (i=0; i<nsamples-1; i++) {
@@ -495,7 +523,7 @@ xfinddir(fastf_t *dir, double x, fastf_t *loc)
     }
     fprintf(stderr, "xfinddir: x=%g is past last segment, using final direction\n", x);
     i = nsamples-2;
- out:
+out:
     VSUB2(dir, sample[i+1], sample[i]);
     ratio = (x-sample[i][X]) / (sample[i+1][X]-sample[i][X]);
     VJOIN1(loc, sample[i], ratio, dir);
@@ -503,6 +531,7 @@ xfinddir(fastf_t *dir, double x, fastf_t *loc)
     VUNITIZE(dir);
     return;
 }
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                    R B _ E X T R E M E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -26,14 +24,11 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
-
+#include "bu/rb.h"
 #include "./rb_internals.h"
 
 
 /**
- * _ R B _ E X T R E M E
- *
  * Find the minimum or maximum node in one order of a red-black tree
  *
  * This function has four parameters: the root of the tree, the
@@ -45,7 +40,7 @@ HIDDEN struct bu_rb_node *
 _rb_extreme(struct bu_rb_node *root, int order, int sense, struct bu_rb_node *empty_node)
 {
     struct bu_rb_node *child;
-    bu_rb_tree *tree;
+    struct bu_rb_tree *tree;
 
     if (root == empty_node)
 	return root;
@@ -55,22 +50,22 @@ _rb_extreme(struct bu_rb_node *root, int order, int sense, struct bu_rb_node *em
 	tree = root->rbn_tree;
 	RB_CKORDER(tree, order);
 
-	child = (sense == SENSE_MIN) ? rb_left_child(root, order) :
-	    rb_right_child(root, order);
+	child = (sense == SENSE_MIN) ? RB_LEFT_CHILD(root, order) :
+	    RB_RIGHT_CHILD(root, order);
 	if (child == empty_node)
 	    break;
 	root = child;
     }
 
     /* Record the node with which we've been working */
-    rb_current(tree) = root;
+    RB_CURRENT(tree) = root;
 
     return root;
 }
 
 
 void *
-bu_rb_extreme(bu_rb_tree *tree, int order, int sense)
+bu_rb_extreme(struct bu_rb_tree *tree, int order, int sense)
 {
     struct bu_rb_node *node;
 
@@ -82,13 +77,13 @@ bu_rb_extreme(bu_rb_tree *tree, int order, int sense)
 	return NULL;
     }
 
-    /* Wade throught the tree */
-    node = _rb_extreme(rb_root(tree, order), order, sense, rb_null(tree));
+    /* Wade through the tree */
+    node = _rb_extreme(RB_ROOT(tree, order), order, sense, RB_NULL(tree));
 
-    if (node == rb_null(tree))
+    if (node == RB_NULL(tree))
 	return NULL;
     else
-	return rb_data(node, order);
+	return RB_DATA(node, order);
 }
 
 
@@ -97,36 +92,36 @@ rb_neighbor(struct bu_rb_node *node, int order, int sense)
 {
     struct bu_rb_node *child;
     struct bu_rb_node *parent;
-    bu_rb_tree *tree;
+    struct bu_rb_tree *tree;
     struct bu_rb_node *empty_node;
 
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
     tree = node->rbn_tree;
     RB_CKORDER(tree, order);
 
-    empty_node = rb_null(tree);
+    empty_node = RB_NULL(tree);
 
-    child = (sense == SENSE_MIN) ? rb_left_child(node, order) :
-	rb_right_child(node, order);
+    child = (sense == SENSE_MIN) ? RB_LEFT_CHILD(node, order) :
+	RB_RIGHT_CHILD(node, order);
     if (child != empty_node)
 	return _rb_extreme(child, order, 1 - sense, empty_node);
-    parent = rb_parent(node, order);
+    parent = RB_PARENT(node, order);
     while ((parent != empty_node) &&
-	   (node == rb_child(parent, order, sense)))
+	   (node == RB_CHILD(parent, order, sense)))
     {
 	node = parent;
-	parent = rb_parent(parent, order);
+	parent = RB_PARENT(parent, order);
     }
 
     /* Record the node with which we've been working */
-    rb_current(tree) = parent;
+    RB_CURRENT(tree) = parent;
 
     return parent;
 }
 
 
 void *
-bu_rb_neighbor(bu_rb_tree *tree, int order, int sense)
+bu_rb_neighbor(struct bu_rb_tree *tree, int order, int sense)
 {
     struct bu_rb_node *node;
 
@@ -139,31 +134,30 @@ bu_rb_neighbor(bu_rb_tree *tree, int order, int sense)
     }
 
     /* Wade through the tree */
-    node = rb_neighbor(rb_current(tree), order, sense);
+    node = rb_neighbor(RB_CURRENT(tree), order, sense);
 
-    if (node == rb_null(tree)) {
+    if (node == RB_NULL(tree)) {
 	return NULL;
     } else {
 	/* Record the node with which we've been working */
-	rb_current(tree) = node;
-	return rb_data(node, order);
+	RB_CURRENT(tree) = node;
+	return RB_DATA(node, order);
     }
 }
 
 
 void *
-bu_rb_curr(bu_rb_tree *tree, int order)
+bu_rb_curr(struct bu_rb_tree *tree, int order)
 {
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
 
-    if (rb_current(tree) == rb_null(tree))
+    if (RB_CURRENT(tree) == RB_NULL(tree))
 	return NULL;
     else
-	return rb_data(rb_current(tree), order);
+	return RB_DATA(RB_CURRENT(tree), order);
 }
 
-/** @} */
 
 /*
  * Local Variables:

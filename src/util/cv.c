@@ -1,7 +1,7 @@
 /*                            C V . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2010 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,13 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cv.c
+/** @file util/cv.c
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "bio.h"
 
@@ -35,7 +36,7 @@
 char usage[] = "\
 Usage: cv in_pat out_pat [[infile] outfile]\n\
 \n\
-Where a pattern is: [h|n][s|u] c|s|i|l|d|8|16|32|64\n\
+Where a pattern (no embedded blanks) is: [h|n] [s|u] [c|s|i|l|d|8|16|32|64]\n\
 e.g., hui is host unsigned int, nl is network (signed) long\n\
 ";
 
@@ -51,12 +52,17 @@ int outbytes;
 FILE *infp;
 FILE *outfp;
 
-genptr_t ibuf;
-genptr_t obuf;
+void *ibuf;
+void *obuf;
+
+const char huc[] = "huc";
+const char nuc[] = "nuc";
 
 int
 main(int argc, char **argv)
 {
+    const char *in_pat;
+    const char *out_pat;
     int m;
     int n;
 
@@ -65,10 +71,23 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    in_cookie = bu_cv_cookie(argv[1]);
-    out_cookie = bu_cv_cookie(argv[2]);
+    in_pat = argv[1];
+    if (BU_STR_EQUAL(in_pat, "")) {
+	in_pat = huc;
+    } else if (strlen(in_pat) > 4 || strlen(in_pat) < 1) {
+	fprintf(stderr, "cv: unrecognized input pattern\n");
+	return 1;
+    }
 
-    if (argc >= 5) {
+    out_pat = argv[2];
+    if (BU_STR_EQUAL(out_pat, "")) {
+	out_pat = nuc;
+    } else if (strlen(out_pat) > 4 || strlen(out_pat) < 1) {
+	fprintf(stderr, "cv: unrecognized output pattern\n");
+	return 1;
+    }
+
+    if (argc == 5) {
 	if ((outfp = fopen(argv[4], "w")) == NULL) {
 	    perror(argv[4]);
 	    return 2;
@@ -91,14 +110,16 @@ main(int argc, char **argv)
 	return 5;
     }
 
+    in_cookie = bu_cv_cookie(in_pat);
+    out_cookie = bu_cv_cookie(out_pat);
     iitem = bu_cv_itemlen(in_cookie);
     oitem = bu_cv_itemlen(out_cookie);
 #define NITEMS (64*1024)
     inbytes = NITEMS*iitem;
     outbytes = NITEMS*oitem;
 
-    ibuf = (genptr_t)bu_malloc(inbytes, "cv input buffer");
-    obuf = (genptr_t)bu_malloc(outbytes, "cv output buffer");
+    ibuf = (void *)bu_malloc(inbytes, "cv input buffer");
+    obuf = (void *)bu_malloc(outbytes, "cv output buffer");
 
     while (!feof(infp)) {
 	if ((n = fread(ibuf, iitem, NITEMS, infp)) <= 0)

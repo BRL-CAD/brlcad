@@ -1,7 +1,7 @@
 /*                     D B _ F L A G S . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2010 United States Government as represented by
+ * Copyright (c) 2006-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup db4 */
 /** @{ */
-/** @file db_flags.c
+/** @file librt/db_flags.c
  *
  * Given an internal representation of a geometry object, there are
  * particular directory flags associated with it (at least for
@@ -33,74 +33,59 @@
 
 #include "bio.h"
 
-#include "bu.h"
+
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
 
 
-/**
- *  D B _ F L A G S _ I N T E R N A L
- *
- * Given the internal form of a database object, return the
- * appropriate 'flags' word for stashing in the in-memory directory of
- * objects.
- */
 int
 db_flags_internal(const struct rt_db_internal *intern)
 {
-    const struct rt_comb_internal	*comb;
+    const struct rt_comb_internal *comb;
 
     RT_CK_DB_INTERNAL(intern);
 
-    if ( intern->idb_type != ID_COMBINATION )
-	return DIR_SOLID;
+    if (intern->idb_type != ID_COMBINATION)
+	return RT_DIR_SOLID;
 
     comb = (struct rt_comb_internal *)intern->idb_ptr;
     RT_CK_COMB(comb);
 
-    if ( comb->region_flag )
-	return DIR_COMB | DIR_REGION;
-    return DIR_COMB;
+    if (comb->region_flag)
+	return RT_DIR_COMB | RT_DIR_REGION;
+    return RT_DIR_COMB;
 }
 
-
-/* XXX - should use in db5_diradd() */
-/**
- * d b _ f l a g s _ r a w _ i n t e r n a l
- *
- * Given a database object in "raw" internal form, return the
- * appropriate 'flags' word for stashing in the in-memory directory of
- * objects.
- */
 int
 db_flags_raw_internal(const struct db5_raw_internal *raw)
 {
     struct bu_attribute_value_set avs;
 
     if (raw->major_type != DB5_MAJORTYPE_BRLCAD) {
-	return DIR_NON_GEOM;
+	return RT_DIR_NON_GEOM;
     }
     if (raw->minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
 	if (raw->attributes.ext_buf) {
 	    bu_avs_init_empty(&avs);
 	    if (db5_import_attributes(&avs, &raw->attributes) < 0) {
 		/* could not load attributes, so presume not a region */
-		return DIR_COMB;
+		return RT_DIR_COMB;
 	    }
 	    if (avs.count == 0) {
-		return DIR_COMB;
+		return RT_DIR_COMB;
 	    }
-	    if (bu_avs_get( &avs, "region" ) != NULL) {
-		return DIR_COMB|DIR_REGION;
+	    if (bu_avs_get(&avs, "region") != NULL) {
+		return RT_DIR_COMB|RT_DIR_REGION;
 	    }
 	}
-	return DIR_COMB;
+	return RT_DIR_COMB;
     }
 
     /* anything else is a solid? */
-    return DIR_SOLID;
+    return RT_DIR_SOLID;
 }
+
 
 /** @} */
 /*

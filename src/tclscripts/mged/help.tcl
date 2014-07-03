@@ -1,7 +1,7 @@
 #                        H E L P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 #==============================================================================
 
 # This command causes helplib.tcl to get read in.
+source [file join [bu_brlcad_data "tclscripts"] "helplib.tcl"]
 helplib
 
 set mged_help_data(?)		{{}	{summary of available mged commands}}
@@ -53,6 +54,22 @@ set mged_help_data(attach)	{{[-d display_string] [-i init_script] [-n name]
 set mged_help_data(attr)        $helplib_data(wdb_attr)
 set mged_help_data(autoview)	{{}	{set view size and center so that all displayed solids are in view}}
 set mged_help_data(B)		$helplib_data(dgo_blast)
+set mged_help_data(bb)          {{[options] object1 [object2 object3 ...]}
+    {manipulate bounding box (bbox) data for object(s).
+
+Options:
+	-c bbname       Create an rpp primitive of the bbox named 'bbname'.
+	-d              Show bbox dimensions.
+	-e              Show bbox coordinates.
+	-q              Do not print header.
+	-u              Use air.
+	-v              Show volume.
+
+If no options are entered the following will be shown:
+
+	header
+	dimensions
+	volume}}
 set mged_help_data(bev)		{{[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...}	{boolean evaluation of objects via NMG's}}
 set mged_help_data(bo)	{{{-i major_type minor_type | -o} dest source}
     {manipulate opaque objects.
@@ -110,13 +127,12 @@ set mged_help_data(copymat)	{{a/b c/d}	{copy matrix from one combination's arc t
 set mged_help_data(cp)		$helplib_data(wdb_copy)
 set mged_help_data(cpi)		{{from to}	{copy cylinder and position at end of original cylinder}}
 set mged_help_data(d)		$helplib_data(dgo_erase)
-set mged_help_data(dall)	$helplib_data(dgo_erase_all)
 set mged_help_data(db)		{{command}	{database manipulation routines}}
 set mged_help_data(db_glob)	{{cmd_string}	{globs cmd_string against the MGED database
     resulting in an expanded command string}}
 set mged_help_data(dbconcat)	$helplib_data(wdb_concat)
 set mged_help_data(dbfind)	$helplib_data(wdb_find)
-set mged_help_data(dbupgrade)	{{[-f|-help]}	{upgrade your database to the current format}}
+set mged_help_data(dbupgrade)	{{[-f|-help] [upgrade|cancel|help]}	{upgrade your database to the current format}}
 set mged_help_data(dbversion)	{{}	{return the database version}}
 set mged_help_data(debugbu)	{{[hex_code]}	{show/set debugging bit vector for libbu}}
 set mged_help_data(debugdir)	{{}	{Print in-memory directory, for debugging}}
@@ -135,7 +151,7 @@ set mged_help_data(e)		$helplib_data(dgo_draw)
 set mged_help_data(e_id)	{{ident[-ident] ...} {Edits object(s) with the specified ident number or within the hyphenated ident ranges.
 
 Example: e_id 1000 2000 3000-4000}}
-set mged_help_data(em)          {{[-C#/#/#] value [value value...]} {display all regions with attribute "MUVES_Component" set to any of the specified values}}
+set mged_help_data(em)          {{[-C#/#/#] value [value value...]} {DEPRECATED: display all regions with attribute "MUVES_Component" set to any of the specified values}}
 set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code}}
 set mged_help_data(echo)	{{[text]}	{echo arguments back}}
 set mged_help_data(edcodes)	{{[-n] object(s)}	{edit region ident codes.   only reports matches without renaming with the -n option.}}
@@ -143,14 +159,13 @@ set mged_help_data(edcomb)	{{combname Regionflag regionid air los [material]}	{e
 set mged_help_data(edgedir)	{{[delta_x delta_y delta_z]|[rot fb]}	{define direction of ARB edge being moved}}
 set mged_help_data(edmater)	{{comb(s)}	{edit combination materials}}
 set mged_help_data(erase)	{{<objects>}	{remove objects from the screen}}
-set mged_help_data(erase_all)	{{<objects>}	{remove all occurrences of object(s) from the screen}}
 set mged_help_data(ev)		$helplib_data(dgo_ev)
 set mged_help_data(eqn)		{{A B C}	{planar equation coefficients}}
 set mged_help_data(exit)	{{}	{exit}}
 set mged_help_data(extrude)	{{#### distance}	{extrude dist from face}}
 set mged_help_data(expand)	$helplib_data(wdb_expand)
 set mged_help_data(eye_pt)	$helplib_data(vo_eye)
-set mged_help_data(e_muves)	{{MUVES_component_1 MUVES_component2 ...}	{display listed MUVES components/systems}}
+set mged_help_data(e_muves)	{{MUVES_component_1 MUVES_component2 ...}	{DEPRECATED: display listed MUVES components/systems}}
 set mged_help_data(facedef)	{{####}	{define new face for an arb}}
 set mged_help_data(facetize)	{{[-mntT] [-P#] new_obj old_obj(s)}	{convert objects to faceted BOT objects (or NMG for -n option, with -m for marching cubes) at current tol}}
 set mged_help_data(form)	$helplib_data(wdb_form)
@@ -158,6 +173,7 @@ set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into ma
 set mged_help_data(g)		$helplib_data(wdb_group)
 set mged_help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
 set mged_help_data(get)		$helplib_data(wdb_get)
+set mged_help_data(graph)       {{}    {query and manipulate properties of the graph that corresponds to the currently opened .g database}}
 set mged_help_data(gui)	{{[-config b|c|g] [-d display_string]
     [-gd graphics_display_string] [-dt graphics_type]
     [-id name] [-c -h -j -s]}	{create display/command window pair}}
@@ -168,6 +184,7 @@ set mged_help_data(hide)        $helplib_data(wdb_hide)
 set mged_help_data(history)	{{[-delays]}	{list command history}}
 set mged_help_data(i)		$helplib_data(wdb_instance)
 set mged_help_data(idents)		{{file object(s)}	{make ascii summary of region idents}}
+set mged_help_data(igraph)      {{}    {interactive graph for the objects of the currently opened .g database}}
 set mged_help_data(ill)		{{name}	{illuminate object}}
 set mged_help_data(in)		{{[-f] [-s] parameters...}	{keyboard entry of solids.  -f for no drawing, -s to enter solid edit}}
 set mged_help_data(inside)	{{[outside_solid new_inside_solid thicknesses]}	{finds inside solid per specified thicknesses. Note that in an edit mode the edited solid is used for the outside_solid and should not appear on the command line }}
@@ -181,18 +198,18 @@ set mged_help_data(killall)	$helplib_data(wdb_killall)
 set mged_help_data(killtree)	$helplib_data(wdb_killtree)
 set mged_help_data(knob)	{{[-e -i -m -v] [-o v/m/e/k] [zap|zero|(x|y|z|X|Y|Z|S|ax|ay|az|aX|aY|aZ|aS|xadc|yadc|ang1|ang2|distadc [val])]}	{emulate knob twist (e.g. knob x 1)}}
 set mged_help_data(l)		$helplib_data(wdb_list)
-set mged_help_data(l_muves)	{{MUVES_component1 MUVES_component2 ...} {list the MGED components that make up the specified MUVES components/systems}}
+set mged_help_data(l_muves)	{{MUVES_component1 MUVES_component2 ...} {DEPRECATED: list the MGED components that make up the specified MUVES components/systems}}
 set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
 set mged_help_data(listeval)	$helplib_data(wdb_listeval)
 set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(loadview)	{{file}	{load view from raytrace script file}}
+set mged_help_data(lod)		{{} {configure Level of Detail drawing}}
 set mged_help_data(lookat)	$helplib_data(vo_lookat)
 set mged_help_data(ls)		$helplib_data(wdb_ls)
-set mged_help_data(lm)          {{[-l] value [value value...]} {list all regions that have a MUVES_Component attribute with any of the listed values}}
+set mged_help_data(lm)          {{[-l] value [value value...]} {DEPRECATED: list all regions that have a MUVES_Component attribute with any of the listed values}}
 set mged_help_data(lt)		$helplib_data(wdb_lt)
 set mged_help_data(M)		{{1|0 xpos ypos}	{invoke a traditional MGED mouse event}}
 set mged_help_data(make)	{{-t | name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>}	{create a primitive}}
-set mged_help_data(make_bb)	$helplib_data(wdb_make_bb)
 set mged_help_data(make_pnts)	{{object_name path_and_filename file_format units_or_conv_factor default_diameter} {creates a point-cloud}}
 set mged_help_data(match)	$helplib_data(wdb_match)
 set mged_help_data(mater)	{{comb [material]}	{assign/delete material to combination}}
@@ -208,7 +225,7 @@ set mged_help_data(nmg_collapse)	$helplib_data(wdb_nmg_collapse)
 set mged_help_data(nmg_fix_normals)	{{NMG object} {Attempt to fix the normals of an NMG object.}}
 set mged_help_data(nmg_simplify)	$helplib_data(wdb_nmg_simplify)
 set mged_help_data(oed)		{{path_lhs path_rhs}	{go from view to object_edit of path_lhs/path_rhs}}
-set mged_help_data(opendb)	{{[database.g] [y|n]}	{close any currently open .g file and open the specified database.g file, or return the name of the currently open geometry database.  A trailing 'y' or 'n' indicates whether to create a new database if one does not already exist.}}
+set mged_help_data(opendb)	{{[-f] [database.g] [y|n]}	{close any currently open .g file and open the specified database.g file, or return the name of the currently open geometry database.  A trailing 'y' or 'n' indicates whether to create a new database if one does not already exist.  A -f option specifies that binary-incompatible v4 files should have their endianness flipped.}}
 set mged_help_data(orientation)	$helplib_data(vo_orient)
 set mged_help_data(orot)	{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
 set mged_help_data(oscale)	{{factor}	{scale object by factor}}
@@ -228,6 +245,7 @@ set mged_help_data(press)	{{button_label}	{emulate button press}}
 set mged_help_data(prj_add)	{{ [-t] [-b] [-n] shaderfile [image_file] [image_width] [image_height]} {Appends image filename + current view parameters to shaderfile}}
 set mged_help_data(preview)	{{[-v] [-o imagename.ext] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
 set mged_help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
+set mged_help_data(pull)       $helplib_data(wdb_pull)
 set mged_help_data(push)	$helplib_data(wdb_push)
 set mged_help_data(put)		$helplib_data(wdb_put)
 set mged_help_data(putmat)	{{a/b {I | m0 m1 ... m16}}	{replace matrix on combination's arc}}
@@ -243,18 +261,15 @@ set mged_help_data(rcc-cap)     {{rccname newname [height] [b|t]}      {create a
 set mged_help_data(rcc-tgc)     {{rccname newname x y z [b|t]}     {create a tgc with the specified apex at an end of an rcc}}
 set mged_help_data(rcc-tor)     {{rccname newname}     {create a tor from an rcc}}
 set mged_help_data(rcodes)	{{filename}	{read region ident codes from filename}}
-set mged_help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{read the MUVES region_map file and optionally the sysdef file}}
+set mged_help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{DEPRECATED: read the MUVES region_map file and optionally the sysdef file}}
 set mged_help_data(red)		{{object}	{edit a group or region using a text editor}}
-set mged_help_data(redraw_vlist)	{{object(s)}	{given the name(s) of database objects, re-generate the vlist
-    associated with every solid in view which references the
-    named object(s), either solids or regions. Particularly
-    useful with outboard .inmem database modifications.}}
 set mged_help_data(refresh)	{{}	{send new control list}}
 set mged_help_data(regdebug)	{{[number]}	{toggle display manager debugging or set debug level}}
 set mged_help_data(regdef)	{{ident [air [los [material]]]}	{change next region default codes}}
 set mged_help_data(regions)	{{file object(s)}	{make ascii summary of regions}}
 set mged_help_data(reid)	{{assembly regionID}	{incrementally assign region IDs to all regions under a given assembly starting with the given region ID number}}
 set mged_help_data(release)	{{[name]}	{release display processor}}
+set mged_help_data(relos)	{{assembly LOS}	{assign the same LOS to all regions under some given assembly}}
 set mged_help_data(remat)	{{assembly materialID}	{assign the same material ID number to all regions under some given assembly}}
 set mged_help_data(reset)	{{}	{Reset view such that all solids can be seen}}
 set mged_help_data(rfarb)	{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
@@ -295,8 +310,8 @@ set mged_help_data(size)	$helplib_data(vo_size)
 set mged_help_data(solids)	{{file object(s)}	{make ascii summary of solid parameters}}
 set mged_help_data(sph-part)	{{sph1name sph2name newname}	{create a part from two sph's}}
 set mged_help_data(status)	{{[state|Viewscale|base2local|local2base|
-				   toViewcenter|Viewrot|model2view|view2model|
-				   model2objview|objview2model|help]}	{get view status}}
+	toViewcenter|Viewrot|model2view|view2model|
+	model2objview|objview2model|help]}	{get view status}}
 set mged_help_data(summary)	$helplib_data(wdb_summary)
 set mged_help_data(sv)		$helplib_data(vo_slew)
 set mged_help_data(sync)	{{}	{forces UNIX sync}}
@@ -310,15 +325,23 @@ set mged_help_data(tra)		$helplib_data(vo_tra)
 set mged_help_data(track)	{{<parameters>}	{adds tracks to database}}
 set mged_help_data(translate)	{{x y z}	{trans object to x,y, z}}
 set mged_help_data(tree)	{{[-c] [-i n] [-d n] [-o outfile] object(s)}	{print out a tree of all members of an object, or all members to depth n if -d option is supplied}}
-set mged_help_data(t_muves)	{{}	{list all the known MUVES components/systems}}
+set mged_help_data(t_muves)	{{}	{DEPRECATED: list all the known MUVES components/systems}}
 set mged_help_data(unhide)	$helplib_data(wdb_unhide)
 set mged_help_data(units)	$helplib_data(wdb_units)
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
-set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{Expermental drawing (cnuzman)}}
+set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{Experimental drawing (cnuzman)}}
 set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (local units).}}
 set mged_help_data(vnirt)	{{x y}  	{trace a single ray from x y}}
+set mged_help_data(voxelize)	{{[-s "dx dy dz"] [-d n] [-t f] new_obj old_obj [old_obj2 old_obj3 ...]} {convert object to its constituent voxels, i.e.the RPPs which approximate it.
+
+Options:
+	-d n		    - Specifies the level of detail(precision in approximation of volume) required. An input of n means that n * n rays will be shot through each row, and an approximation of volume filled is reached averaging these n * n values
+
+	-s "dx dy dz"       - Specifies the voxel size in each direction.
+
+	-t f		    - Specifies the threshold volume to decide if voxel is to be included in the voxelized output.
+  }}
 set mged_help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
-#set mged_help_data(vrmgr)	{{host {master|slave|overview}}	{link with Virtual Reality manager}}
 set mged_help_data(vrot)	$helplib_data(vo_vrot)
 set mged_help_data(wcodes)	{{filename object(s)}	{write region ident codes to filename}}
 set mged_help_data(whatid)	$helplib_data(wdb_whatid)

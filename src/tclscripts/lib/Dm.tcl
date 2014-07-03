@@ -1,7 +1,7 @@
 #                          D M . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2010 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used,
+# use ArcherCore instead.
+#####################################################################
+
 #
 # Description -
 #	The Dm class wraps LIBDM's display manager object.
@@ -132,6 +138,8 @@
 ::itcl::body Dm::constructor {args} {
     global tcl_platform
     global env
+
+    puts "DEPRECATION WARNING: The Dm widget should no longer be used.  Use the Ged widget instead."
 
     catch {set display $env(DISPLAY)}
     if {![info exists display] || $display == ""} {

@@ -1,7 +1,7 @@
 /*                    R P C _ M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rpc_mirror.c
+/** @file primitives/rpc/rpc_mirror.c
  *
  * mirror support
  *
@@ -30,8 +30,6 @@
 
 
 /**
- * R T _ R P C _ M I R R O R
- *
  * Given a pointer to an internal GED database object, mirror the
  * object's values about the given transformation matrix.
  */

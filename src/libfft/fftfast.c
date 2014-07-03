@@ -1,7 +1,7 @@
 /*                       F F T F A S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fftfast.c
+/** @file libfft/fftfast.c
  *
  * Complex Number and FFT Library
  *
@@ -42,13 +42,6 @@
 
 #define MAXSIZE 65536	/* Needed for sin/cos tables */
 int _init_size = 0;	/* Internal: shows last initialized size */
-
-
-/* The COMPLEX type used throughout */
-typedef struct {
-    double re;	/* Real Part */
-    double im;	/* Imaginary Part */
-} COMPLEX;
 
 void scramble(int numpoints, COMPLEX *dat);
 void butterflies(int numpoints, int inverse, COMPLEX *dat);
@@ -98,8 +91,6 @@ double *sintab;
 double *costab;
 
 /*
- * I N I T _ S I N T A B
- *
  * Internal routine to initialize the sine/cosine table for
  * transforms of a given size.  Checks size for power of two
  * and within table limits.
@@ -145,7 +136,7 @@ init_sintab(int size)
     /* Get some buffer space */
     if (sintab != NULL) free(sintab);
     if (costab != NULL) free(costab);
-    /* should not use bu_calloc() as libfft is not dependant upon libbu */
+    /* should not use bu_calloc() as libfft is not dependent upon libbu */
     sintab = (double *)calloc(sizeof(*sintab), size);
     costab = (double *)calloc(sizeof(*costab), size);
 
@@ -259,7 +250,7 @@ butterflies(int numpoints, int inverse, COMPLEX *dat)
     /* Scale Data (on forward transform only) */
     /*
      * Technically speaking this gives us the periodogram. XXX
-     * The canonical definition does the scaleing only
+     * The canonical definition does the scaling only
      * after the inverse xform.  Our method may hurt certain
      * other forms of analysis, e.g. cepstrum.
      * **** We Now Do It The Canonical Way! ****

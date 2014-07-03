@@ -1,7 +1,7 @@
 /*                         F B _ I K . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fb_ik.h
+/** @file fbed/fb_ik.h
  *	Author:		Gary S. Moss
  */
 
-#ifndef __FB_IK_H__
-#define __FB_IK_H__
+#ifndef FBED_FB_IK_H
+#define FBED_FB_IK_H
 
 #ifdef vax
 /* GSM : '' needed for Sys V emulation.					*/
@@ -67,7 +67,7 @@
 #define BPS	IK(020500, 0)	/* beginning of bps registers */
 #define BPSPC	IK(020500, 0)	/* bps program counter (read only) */
 #define BPSSTAT	IK(020500, 0)	/* bps status register (write only) */
-#define SR	IK(020200, 0)	/* beginnig of scratch pad registers */
+#define SR	IK(020200, 0)	/* beginning of scratch pad registers */
 #define MCM	IK(020000, 0)	/* beginning of microcode memory */
 #define MA	IK(020400, 0)	/* beginning of multiplier/accumulator */
 #define MACM	IK(020400, 0)	/* ma coefficient memory */
@@ -164,7 +164,7 @@ struct ikdevice {
 #define X_CURSOR_OFFSET		(-15)
 #define Y_CURSOR_OFFSET		15
 
-#endif  /* __FB_IK_H__ */
+#endif  /* FBED_FB_IK_H */
 
 /*
  * Local Variables:

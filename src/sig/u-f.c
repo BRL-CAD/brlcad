@@ -1,7 +1,7 @@
 /*                           U - F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,13 +18,12 @@
  * information.
  */
 /** @file u-f.c
- *		I - F . C
  *
- *  Convert shorts to floats.
+ * Convert shorts to floats.
  *
  *	% i-f [-n || scale]
  *
- *	-n will normalize the data (scale between -1.0 and +1.0).
+ * -n will normalize the data (scale between -1.0 and +1.0).
  *
  */
 
@@ -36,44 +35,47 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 
-unsigned short	ibuf[512];
-float	obuf[512];
-
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
-    int	i, num;
-    double	scale;
+    unsigned short ibuf[512];
+    float obuf[512];
 
-    scale = 1.0;
+    int i, num;
+    double scale = 1.0;
+    size_t ret;
 
-    if ( argc > 1 ) {
-	if ( strcmp( argv[1], "-n" ) == 0 )
+    if (argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-n"))
 	    scale = 1.0 / 65536.0;
 	else
-	    scale = atof( argv[1] );
+	    scale = atof(argv[1]);
 	argc--;
     }
 
-    if ( argc > 1 || scale == 0 || isatty(fileno(stdin)) ) {
-	bu_exit( 1, "Usage: i-f [-n || scale] < shorts > floats\n" );
+    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin))) {
+	bu_exit(1, "Usage: i-f [-n || scale] < shorts > floats\n");
     }
 
-    while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
-	if ( scale == 1.0 ) {
-	    for ( i = 0; i < num; i++ )
+    while ((num = fread(&ibuf[0], sizeof(ibuf[0]), 512, stdin)) > 0) {
+	if (EQUAL(scale, 1.0)) {
+	    for (i = 0; i < num; i++)
 		obuf[i] = ibuf[i];
 	} else {
-	    for ( i = 0; i < num; i++ )
+	    for (i = 0; i < num; i++)
 		obuf[i] = (double)ibuf[i] * scale;
 	}
-	fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+	ret = fwrite(&obuf[0], sizeof(obuf[0]), num, stdout);
+	if (ret != (size_t)num)
+	    perror("fwrite");
     }
 
     return 0;
 }
+
 
 /*
  * Local Variables:

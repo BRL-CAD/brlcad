@@ -1,7 +1,7 @@
 /*                     N U R B _ N O R M . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2010 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,9 +19,9 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_norm.c
+/** @file primitives/bspline/nurb_norm.c
  *
- * Calulate and return the normal of a surface given the U, V
+ * Calculate and return the normal of a surface given the U, V
  * parametric values.
  *
  */
@@ -61,9 +61,9 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 		&& u < srf->u.knots[i+1]) {
 		p = srf->u.knots[i];
 
-		if (NEAR_ZERO(u - p, SMALL_FASTF))
+		if (ZERO(u - p))
 		    p = srf->u.knots[i+1];
-		if (NEAR_ZERO(u - p, SMALL_FASTF) && i > 1)
+		if (ZERO(u - p) && i > 1)
 		    p = srf->u.knots[i-1];
 	    }
 	}
@@ -73,11 +73,11 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	p = 0.0;
 	for (i = 0; i < srf->v.k_size -1; i++) {
 	    if (srf->v.knots[i] < v
-		&& !NEAR_ZERO(srf->v.knots[i+1], SMALL_FASTF)) {
+		&& !ZERO(srf->v.knots[i+1])) {
 		p = srf->v.knots[i];
-		if (NEAR_ZERO(v - p, SMALL_FASTF))
+		if (ZERO(v - p))
 		    p = srf->v.knots[i+1];
-		if (NEAR_ZERO(v - p, SMALL_FASTF) && i > 1)
+		if (ZERO(v - p) && i > 1)
 		    p = srf->v.knots[i-1];
 	    }
 	}
@@ -118,9 +118,9 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 		&& u < srf->u.knots[i+1]) {
 		p = srf->u.knots[i];
 
-		if (NEAR_ZERO(u - p, SMALL_FASTF))
+		if (ZERO(u - p))
 		    p = srf->u.knots[i+1];
-		if (NEAR_ZERO(u - p, SMALL_FASTF) && i > 1)
+		if (ZERO(u - p) && i > 1)
 		    p = srf->u.knots[i-1];
 	    }
 	}
@@ -172,9 +172,9 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 		&& v < srf->v.knots[i+1]) {
 		p = srf->v.knots[i];
 
-		if (NEAR_ZERO(v - p, SMALL_FASTF))
+		if (ZERO(v - p))
 		    p = srf->v.knots[i+1];
-		if (NEAR_ZERO(v - p, SMALL_FASTF) && i > 1)
+		if (ZERO(v - p) && i > 1)
 		    p = srf->v.knots[i-1];
 	    }
 	}

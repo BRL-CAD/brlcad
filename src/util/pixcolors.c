@@ -1,7 +1,7 @@
 /*                     P I X C O L O R S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixcolors.c
+/** @file util/pixcolors.c
  *
  * Count the number of different pixel values in a PIX format image.
  * If the "-v" option is selected, list each unique pixel value to the
@@ -37,9 +37,10 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "v";
+char options[] = "v";
 char verbose = 0;
-char *progname = "(noname)";
+char noname[] = "(noname)";
+char *progname = noname;
 
 #define PIXELS 1024
 unsigned char pixbuf[BUFSIZ*3];
@@ -52,53 +53,67 @@ unsigned char pixbuf[BUFSIZ*3];
 /*NOBASE*/
 unsigned char vals[1L << (24-3)];
 
+
 /*
- * D O I T --- Main function of program
+ * Main function of program
  */
-void doit(FILE *fd)
+void
+doit(FILE *fd)
 {
     unsigned long pixel, count;
     int bytes;
     int mask, i;
     unsigned long k;
+    int r, g, b;
 
 
     count = 0;
-    while ((bytes=fread(pixbuf, 3, PIXELS, fd)) > 0) {
-	for (i=(bytes-1)*3; i >= 0; i -= 3) {
-	    pixel = pixbuf[i] +
-		(pixbuf[i+1] << 8) +
-		(pixbuf[i+2] << 16);
+    while ((bytes = fread(pixbuf, 3, PIXELS, fd)) > 0) {
+	for (i = (bytes-1)*3; i >= 0; i -= 3) {
+	    r = pixbuf[i];
+	    g = pixbuf[i+1];
+	    b = pixbuf[i+2];
+	    if (r < 0)
+		r = 0;
+	    if (g < 0)
+		g = 0;
+	    if (b < 0)
+		b = 0;
+	    if (r > UCHAR_MAX)
+		r = UCHAR_MAX;
+	    if (g > UCHAR_MAX)
+		g = UCHAR_MAX;
+	    if (b > UCHAR_MAX)
+		b = UCHAR_MAX;
+	    pixel = r +	(g << 8) + (b << 16);
 
-	    if (! (vals[k=(pixel >> 3)] &
-		   (mask=(1 << (pixel & 0x07))))) {
+	    if (!(vals[k=(pixel >> 3)] &
+		  (mask = (1 << (pixel & 0x07))))) {
 		vals[k] |= (unsigned char)mask;
 		++count;
 	    }
 	}
     }
-    (void) printf("%lu\n", count);
+    printf("%lu\n", (long unsigned)count);
     if (verbose)
-	for (i=0; i < 1<<24; ++i)
+	for (i = 0; i < 1<<24; ++i)
 	    if ((vals[i>>3] & (1<<(i & 0x07))))
-		(void) printf("%3d %3d %3d\n",
-			      i & 0x0ff,
-			      (i >> 8) & 0x0ff,
-			      (i >> 16) & 0x0ff);
+		printf("%3d %3d %3d\n",
+		       i & 0x0ff,
+		       (i >> 8) & 0x0ff,
+		       (i >> 16) & 0x0ff);
 }
 
 
 void usage(void)
 {
-    (void) fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
+    fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
     bu_exit (1, NULL);
 }
 
 
 /*
- * M A I N
- *
- * Perform miscelaneous tasks such as argument parsing and
+ * Perform miscellaneous tasks such as argument parsing and
  * I/O setup and then call "doit" to perform the task at hand
  */
 int main(int ac, char **av)
@@ -114,7 +129,7 @@ int main(int ac, char **av)
 
     /* get all the option flags from the command line
      */
-    while ((c=bu_getopt(ac, av, options)) != EOF) {
+    while ((c=bu_getopt(ac, av, options)) != -1) {
 	if (c == 'v') verbose = ! verbose;
 	else usage();
     }

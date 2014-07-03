@@ -1,7 +1,7 @@
 /*                            D O . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2010 United States Government as represented by
+ * Copyright (c) 1987-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file do.c
+/** @file rt/do.c
  *
  * Routines that process the various commands, and manage the overall
  * process of running the raytracing process.
@@ -43,57 +43,34 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "rtprivate.h"
 #include "bu.h"
+#include "icv.h"
+
+#include "./rtuif.h"
+#include "./ext.h"
+
 
 /***** Variables shared with viewing model *** */
 extern FILE *outfp;			/* optional pixel output file */
-extern double azimuth, elevation;
 extern mat_t view2model;
 extern mat_t model2view;
 /***** end of sharing with viewing model *****/
 
 extern void grid_setup(void);
-extern void worker(int cpu, genptr_t arg);
+extern void worker(int cpu, void *arg);
 
-/***** variables shared with worker() ******/
-extern struct application ap;
-extern int hypersample;		/* number of extra rays to fire */
-extern fastf_t aspect;		/* view aspect ratio X/Y */
-extern fastf_t cell_width;	/* model space grid cell width */
-extern fastf_t cell_height;	/* model space grid cell height */
-extern point_t eye_model;	/* model-space location of eye */
-extern fastf_t eye_backoff;	/* dist of eye from center */
-extern fastf_t rt_perspective;	/* persp (degrees X) 0 => ortho */
-extern size_t width;		/* # of pixels in X */
-extern size_t height;		/* # of lines in Y */
-extern mat_t Viewrotscale;	/* view orientation quaternion */
-extern fastf_t viewsize;
-extern int incr_mode;		/* !0 for incremental resolution */
-extern int incr_level;		/* current incremental level */
-extern int incr_nlevel;		/* number of levels */
-extern int npsw;
-extern struct resource resource[];
-/***** end variables shared with worker() */
+/***** variables shared with opt.c *****/
+extern int	orientflag;		/* 1 means orientation has been set */
+/***** end variables shared with opt.c *****/
 
 /***** variables shared with rt.c *****/
 extern char *string_pix_start;	/* string spec of starting pixel */
 extern char *string_pix_end;	/* string spec of ending pixel */
-extern int pix_start;		/* pixel to start at */
-extern int pix_end;		/* pixel to end at */
-extern int nobjs;		/* Number of cmd-line treetops */
-extern char **objtab;		/* array of treetop strings */
-extern int matflag;		/* read matrix from stdin */
-extern int desiredframe;	/* frame to start at */
 extern int finalframe;		/* frame to halt at */
-extern int curframe;		/* current frame number */
-extern char *outputfile;	/* name of base of output file */
-extern int interactive;		/* human is watching results */
-extern int save_overlaps;	/* flag for setting rti_save_overlaps */
 /***** end variables shared with rt.c *****/
 
 /***** variables shared with viewg3.c *****/
-struct bu_vls ray_data_file;  /* file name for ray data output */
+struct bu_vls ray_data_file = BU_VLS_INIT_ZERO;  /* file name for ray data output */
 /***** end variables shared with viewg3.c *****/
 
 /***** variables for frame buffer black pixel rendering *****/
@@ -105,11 +82,10 @@ void do_ae(double azim, double elev);
 void res_pr(void);
 void memory_summary(void);
 
-extern struct bu_image_file *bif;
+extern struct icv_image *bif;
+
 
 /**
- * O L D _ F R A M E
- *
  * Acquire particulars about a frame, in the old format.  Returns -1
  * if unable to acquire info, 0 if successful.
  */
@@ -128,7 +104,7 @@ old_frame(FILE *fp)
     eye_model[Y] = atof(number);
     if (fscanf(fp, "%128s", number) != 1) return -1;
     eye_model[Z] = atof(number);
-    for (i=0; i < 16; i++) {
+    for (i = 0; i < 16; i++) {
 	if (fscanf(fp, "%128s", number) != 1)
 	    return -1;
 	Viewrotscale[i] = atof(number);
@@ -138,8 +114,6 @@ old_frame(FILE *fp)
 
 
 /**
- * O L D _ W A Y
- *
  * Determine if input file is old or new format, and if old format,
  * handle process.  Returns 0 if new way, 1 if old way (and all done).
  * Note that the rewind() will fail on ttys, pipes, and sockets
@@ -152,9 +126,9 @@ old_way(FILE *fp)
 
     viewsize = -42.0;
 
-    /* Sneek a peek at the first character, and then put it back */
+    /* Sneak a peek at the first character, and then put it back */
     if ((c = fgetc(fp)) == EOF) {
-	/* Claim old way, all (ie, nothing) done */
+	/* Claim old way, all (i.e., nothing) done */
 	return 1;
     }
     if (ungetc(c, fp) != c)
@@ -174,7 +148,7 @@ old_way(FILE *fp)
     }
     bu_log("Interpreting command stream in old format\n");
 
-    def_tree(ap.a_rt_i);	/* Load the default trees */
+    def_tree(APP.a_rt_i);	/* Load the default trees */
 
     curframe = 0;
     do {
@@ -189,14 +163,15 @@ old_way(FILE *fp)
 
 
 /**
- * C M _ S T A R T
- *
  * Process "start" command in new format input stream
  */
-int cm_start(int argc, char **argv)
+int cm_start(const int argc, const char **argv)
 {
     char *buf = (char *)NULL;
     int frame;
+
+    if (argc < 2)
+	return 1;
 
     frame = atoi(argv[1]);
     if (finalframe >= 0 && frame > finalframe)
@@ -211,10 +186,10 @@ int cm_start(int argc, char **argv)
 	register char *cp;
 
 	cp = buf;
-	while (*cp && isspace(*cp)) cp++;	/* skip spaces */
-	if (strncmp(cp, "start", 5) != 0) continue;
-	while (*cp && !isspace(*cp)) cp++;	/* skip keyword */
-	while (*cp && isspace(*cp)) cp++;	/* skip spaces */
+	while (*cp && isspace((int)*cp)) cp++;	/* skip spaces */
+	if (bu_strncmp(cp, "start", 5) != 0) continue;
+	while (*cp && !isspace((int)*cp)) cp++;	/* skip keyword */
+	while (*cp && isspace((int)*cp)) cp++;	/* skip spaces */
 	frame = atoi(cp);
 	bu_free(buf, "rt_read_cmd command buffer (skipping frames)");
 	buf = (char *)0;
@@ -229,24 +204,30 @@ int cm_start(int argc, char **argv)
 }
 
 
-int cm_vsize(int argc, char **argv)
+int cm_vsize(const int argc, const char **argv)
 {
+    if (argc < 2)
+	return 1;
+
     viewsize = atof(argv[1]);
     return 0;
 }
 
 
-int cm_eyept(int argc, char **argv)
+int cm_eyept(const int argc, const char **argv)
 {
     register int i;
 
-    for (i=0; i<3; i++)
+    if (argc < 2)
+	return 1;
+
+    for (i = 0; i < 3; i++)
 	eye_model[i] = atof(argv[i+1]);
     return 0;
 }
 
 
-int cm_lookat_pt(int argc, char **argv)
+int cm_lookat_pt(const int argc, const char **argv)
 {
     point_t pt;
     vect_t dir;
@@ -279,31 +260,38 @@ int cm_lookat_pt(int argc, char **argv)
 }
 
 
-int cm_vrot(int argc, char **argv)
+int cm_vrot(const int argc, const char **argv)
 {
     register int i;
 
-    for (i=0; i<16; i++)
+    if (argc < 16)
+	return 1;
+
+    for (i = 0; i < 16; i++)
 	Viewrotscale[i] = atof(argv[i+1]);
     return 0;
 }
 
 
-int cm_orientation(int argc, char **argv)
+int cm_orientation(const int argc, const char **argv)
 {
     register int i;
     quat_t quat;
 
-    for (i=0; i<4; i++)
+    if (argc < 4)
+	return 1;
+
+    for (i = 0; i < 4; i++)
 	quat[i] = atof(argv[i+1]);
     quat_quat2mat(Viewrotscale, quat);
+    orientflag = 1;
     return 0;
 }
 
 
-int cm_end(int argc, char **argv)
+int cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 {
-    struct rt_i *rtip = ap.a_rt_i;
+    struct rt_i *rtip = APP.a_rt_i;
 
     if (rtip && BU_LIST_IS_EMPTY(&rtip->HeadRegion)) {
 	def_tree(rtip);		/* Load the default trees */
@@ -318,16 +306,15 @@ int cm_end(int argc, char **argv)
 }
 
 
-int cm_tree(int argc, const char **argv)
+int cm_tree(const int argc, const char **argv)
 {
-    register struct rt_i *rtip = ap.a_rt_i;
-    struct bu_vls times;
+    register struct rt_i *rtip = APP.a_rt_i;
+    struct bu_vls times = BU_VLS_INIT_ZERO;
 
     if (argc <= 1) {
 	def_tree(rtip);		/* Load the default trees */
 	return 0;
     }
-    bu_vls_init(&times);
 
     rt_prep_timer();
     if (rt_gettrees(rtip, argc-1, &argv[1], npsw) < 0)
@@ -341,9 +328,9 @@ int cm_tree(int argc, const char **argv)
 }
 
 
-int cm_multiview(int argc, char **argv)
+int cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 {
-    register struct rt_i *rtip = ap.a_rt_i;
+    register struct rt_i *rtip = APP.a_rt_i;
     size_t i;
     static int a[] = {
 	35,   0,
@@ -359,7 +346,7 @@ int cm_multiview(int argc, char **argv)
     if (rtip && BU_LIST_IS_EMPTY(&rtip->HeadRegion)) {
 	def_tree(rtip);		/* Load the default trees */
     }
-    for (i=0; i<(sizeof(a)/sizeof(a[0])); i++) {
+    for (i = 0; i < (sizeof(a)/sizeof(a[0])); i++) {
 	do_ae((double)a[i], (double)e[i]);
 	(void)do_frame(curframe++);
     }
@@ -368,16 +355,14 @@ int cm_multiview(int argc, char **argv)
 
 
 /**
- * C M _ A N I M
- *
  * Experimental animation code
  *
- * Usage:  anim <path> <type> args
+ * Usage: anim path type args
  */
-int cm_anim(int argc, const char **argv)
+int cm_anim(const int argc, const char **argv)
 {
 
-    if (db_parse_anim(ap.a_rt_i->rti_dbip, argc, argv) < 0) {
+    if (db_parse_anim(APP.a_rt_i->rti_dbip, argc, argv) < 0) {
 	bu_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
 	return -1;		/* BAD */
     }
@@ -386,16 +371,14 @@ int cm_anim(int argc, const char **argv)
 
 
 /**
- * C M _ C L E A N
- *
  * Clean out results of last rt_prep(), and start anew.
  */
-int cm_clean(int argc, char **argv)
+int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 {
-    /* Allow lighting model clean up (e.g. lights, materials, etc) */
-    view_cleanup(ap.a_rt_i);
+    /* Allow lighting model clean up (e.g. lights, materials, etc.) */
+    view_cleanup(APP.a_rt_i);
 
-    rt_clean(ap.a_rt_i);
+    rt_clean(APP.a_rt_i);
 
     if (R_DEBUG&RDEBUG_RTMEM_END)
 	bu_prmem("After cm_clean");
@@ -404,20 +387,18 @@ int cm_clean(int argc, char **argv)
 
 
 /**
- * C M _ C L O S E D B
- *
  * To be invoked after a "clean" command, to close out the ".g"
  * database.  Intended for memory debugging, to help chase down memory
  * "leaks".  This terminates the program, as there is no longer a
  * database.
  */
-int cm_closedb(int argc, char **argv)
+int cm_closedb(const int UNUSED(argc), const char **UNUSED(argv))
 {
-    db_close(ap.a_rt_i->rti_dbip);
-    ap.a_rt_i->rti_dbip = DBI_NULL;
+    db_close(APP.a_rt_i->rti_dbip);
+    APP.a_rt_i->rti_dbip = DBI_NULL;
 
-    bu_free((genptr_t)ap.a_rt_i, "struct rt_i");
-    ap.a_rt_i = RTI_NULL;
+    bu_free((void *)APP.a_rt_i, "struct rt_i");
+    APP.a_rt_i = RTI_NULL;
 
     bu_prmem("After _closedb");
     bu_exit(0, NULL);
@@ -430,37 +411,43 @@ int cm_closedb(int argc, char **argv)
 extern struct bu_structparse view_parse[];
 
 struct bu_structparse set_parse[] = {
-    {"%d",	1, "width",	bu_byteoffset(width),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "height",	bu_byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "save_overlaps", bu_byteoffset(save_overlaps),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "perspective", bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "angle",	bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "width",			bu_byteoffset(width),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "height",			bu_byteoffset(height),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "save_overlaps",		bu_byteoffset(save_overlaps),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "perspective",		bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "angle",			bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 #if !defined(_WIN32) || defined(__CYGWIN__)
-    {"%d",  1, "rt_bot_minpieces", bu_byteoffset(rt_bot_minpieces), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "rt_bot_tri_per_piece", bu_byteoffset(rt_bot_tri_per_piece), BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "rt_cline_radius", bu_byteoffset(rt_cline_radius), BU_STRUCTPARSE_FUNC_NULL },
+    /* FIXME: these cannot be listed in here because they are LIBRT
+     * globals.  due to the way symbols are not imported until a DLL
+     * is loaded on Windows, the byteoffset address of the global is
+     * not known at compile-time.  they would needed to be added to
+     * set_parse() during runtime initialization.
+     */
+    {"%d",	1, "rt_bot_mintie",		bu_byteoffset(rt_bot_mintie),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "rt_bot_minpieces",		bu_byteoffset(rt_bot_minpieces),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "rt_bot_tri_per_piece",	bu_byteoffset(rt_bot_tri_per_piece),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "rt_cline_radius",		bu_byteoffset(rt_cline_radius),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 #endif
-    {"%V",  1, "ray_data_file", bu_byteoffset(ray_data_file), BU_STRUCTPARSE_FUNC_NULL },
-    {"%p", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
+    {"%V",	1, "ray_data_file",		bu_byteoffset(ray_data_file),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    /* daisy-chain to additional app-specific parameters */
+    {"%p",	1, "Application-Specific Parameters", bu_byteoffset(view_parse[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,						BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 /**
- * C M _ S E T
- *
  * Allow variable values to be set or examined.
  */
-int cm_set(int argc, char **argv)
+int cm_set(const int argc, const char **argv)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (argc <= 1) {
 	bu_struct_print("Generic and Application-Specific Parameter Values",
 			set_parse, (char *)0);
 	return 0;
     }
-    bu_vls_init(&str);
+
     bu_vls_from_argv(&str, argc-1, (const char **)argv+1);
     if (bu_struct_parse(&str, set_parse, (char *)0) < 0) {
 	bu_vls_free(&str);
@@ -471,11 +458,11 @@ int cm_set(int argc, char **argv)
 }
 
 
-/**
- * C M _ A E
- */
-int cm_ae(int argc, char **argv)
+int cm_ae(const int argc, const char **argv)
 {
+    if (argc < 3)
+	return 1;
+
     azimuth = atof(argv[1]);	/* set elevation and azimuth */
     elevation = atof(argv[2]);
     do_ae(azimuth, elevation);
@@ -484,10 +471,7 @@ int cm_ae(int argc, char **argv)
 }
 
 
-/**
- * C M _ O P T
- */
-int cm_opt(int argc, char **argv)
+int cm_opt(const int argc, const char **argv)
 {
     int old_bu_optind=bu_optind;	/* need to restore this value after calling get_args() */
 
@@ -501,21 +485,19 @@ int cm_opt(int argc, char **argv)
 
 
 /**
- * D E F _ T R E E
- *
  * Load default tree list, from command line.
  */
 void
 def_tree(register struct rt_i *rtip)
 {
-    struct bu_vls times;
+    struct bu_vls times = BU_VLS_INIT_ZERO;
 
     RT_CK_RTI(rtip);
 
-    bu_vls_init(&times);
     rt_prep_timer();
-    if (rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0)
-	bu_log("rt_gettrees(%s) FAILED\n", objtab[0]);
+    if (rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0) {
+	bu_log("rt_gettrees(%s) FAILED\n", (objtab && objtab[0]) ? objtab[0] : "ERROR");
+    }
     (void)rt_get_timer(&times, NULL);
 
     if (rt_verbosity & VERBOSE_STATS)
@@ -526,22 +508,19 @@ def_tree(register struct rt_i *rtip)
 
 
 /**
- * D O _ P R E P
- *
  * This is a separate function primarily as a service to REMRT.
  */
 void
 do_prep(struct rt_i *rtip)
 {
-    struct bu_vls times;
+    struct bu_vls times = BU_VLS_INIT_ZERO;
 
     RT_CHECK_RTI(rtip);
     if (rtip->needprep) {
-	/* Allow lighting model to set up (e.g. lights, materials, etc) */
+	/* Allow lighting model to set up (e.g. lights, materials, etc.) */
 	view_setup(rtip);
 
 	/* Allow RT library to prepare itself */
-	bu_vls_init(&times);
 	rt_prep_timer();
 	rt_prep_parallel(rtip, npsw);
 
@@ -552,7 +531,7 @@ do_prep(struct rt_i *rtip)
     }
     memory_summary();
     if (rt_verbosity & VERBOSE_STATS) {
-	bu_log("%s: %d nu, %d cut, %d box (%d empty)\n",
+	bu_log("%s: %d nu, %d cut, %d box (%zu empty)\n",
 	       rtip->rti_space_partition == RT_PART_NUGRID ?
 	       "NUGrid" : "NUBSP",
 	       rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
@@ -564,8 +543,6 @@ do_prep(struct rt_i *rtip)
 
 
 /**
- * D O _ F R A M E
- *
  * Do all the actual work to run a frame.
  *
  * Returns -1 on error, 0 if OK.
@@ -573,14 +550,13 @@ do_prep(struct rt_i *rtip)
 int
 do_frame(int framenumber)
 {
-    struct bu_vls times;
+    struct bu_vls times = BU_VLS_INIT_ZERO;
     char framename[128] = {0};		/* File name to hold current frame */
-    struct rt_i *rtip = ap.a_rt_i;
+    struct rt_i *rtip = APP.a_rt_i;
     double utime = 0.0;			/* CPU time used */
     double nutime = 0.0;		/* CPU time used, normalized by ncpu */
     double wallclock = 0.0;		/* # seconds of wall clock time */
     int npix = 0;			/* # of pixel values to be done */
-    int lim = 0;
     vect_t work, temp;
     quat_t quat;
 
@@ -588,16 +564,16 @@ do_frame(int framenumber)
 	bu_log("\n...................Frame %5d...................\n",
 	       framenumber);
 
-    /* Compute model RPP, etc */
+    /* Compute model RPP, etc. */
     do_prep(rtip);
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
-	bu_log("Tree: %d solids in %d regions\n", rtip->nsolids, rtip->nregions);
+	bu_log("Tree: %zu solids in %zu regions\n", rtip->nsolids, rtip->nregions);
 
     if (Query_one_pixel) {
 	query_rdebug = R_DEBUG;
 	query_debug = RT_G_DEBUG;
-	rt_g.debug = rdebug = 0;
+	RTG.debug = rdebug = 0;
     }
 
     if (rtip->nsolids <= 0)
@@ -631,33 +607,33 @@ do_frame(int framenumber)
 	bu_log("Orientation: %g, %g, %g, %g\n", V4ARGS(quat));
 	bu_log("Eye_pos: %g, %g, %g\n", V3ARGS(eye_model));
 	bu_log("Size: %gmm\n", viewsize);
-#if 0
-	/*
+
+	/**
 	 * This code shows how the model2view matrix can be
 	 * reconstructed using the information from the Orientation,
-	 * Eye_pos, and Size messages.
+	 * Eye_pos, and Size messages in the rt log output.
+	 @code
+	 {
+	 mat_t rotscale, xlate, newmat;
+	 quat_t newquat;
+	 bn_mat_print("model2view", model2view);
+	 quat_quat2mat(rotscale, quat);
+	 rotscale[15] = 0.5 * viewsize;
+	 MAT_IDN(xlate);
+	 MAT_DELTAS_VEC_NEG(xlate, eye_model);
+	 bn_mat_mul(newmat, rotscale, xlate);
+	 bn_mat_print("reconstructed m2v", newmat);
+	 quat_mat2quat(newquat, newmat);
+	 HPRINT("reconstructed orientation:", newquat);
+	 @endcode
+	 *
 	 */
-	{
-	    mat_t rotscale, xlate;
-	    mat_t new;
-	    quat_t newquat;
 
-	    bn_mat_print("model2view", model2view);
-	    quat_quat2mat(rotscale, quat);
-	    rotscale[15] = 0.5 * viewsize;
-	    MAT_IDN(xlate);
-	    MAT_DELTAS_VEC_NEG(xlate, eye_model);
-	    bn_mat_mul(new, rotscale, xlate);
-	    bn_mat_print("reconstructed m2v", new);
-	    quat_mat2quat(newquat, new);
-	    HPRINT("reconstructed orientation:", newquat);
-	}
-#endif
-	bu_log("Grid: (%g, %g) mm, (%d, %d) pixels\n",
+	bu_log("Grid: (%g, %g) mm, (%zu, %zu) pixels\n",
 	       cell_width, cell_height,
 	       width, height);
 	bu_log("Beam: radius=%g mm, divergence=%g mm/1mm\n",
-	       ap.a_rbeam, ap.a_diverge);
+	       APP.a_rbeam, APP.a_diverge);
     }
 
     /* Process -b and ??? options now, for this frame */
@@ -693,19 +669,6 @@ do_frame(int framenumber)
 	}
     }
 
-    /*
-     * After the parameters for this calculation have been
-     * established, deal with CPU limits and priorities, where
-     * appropriate.  Because limits exist, they better be adequate.
-     * We assume that the Cray can produce MINRATE pixels/sec on
-     * images with extreme amounts of glass & mirrors.
-     */
-#define MINRATE 65
-    npix = width*height*(hypersample+1);
-    if ((lim = bu_cpulimit_get()) > 0) {
-	bu_cpulimit_set(lim + npix / MINRATE + 100);
-    }
-
     /* Allocate data for pixel map for rerendering of black pixels */
     if (pixmap == NULL) {
 	pixmap = (unsigned char*)bu_calloc(sizeof(RGBpixel), width*height, "pixmap allocate");
@@ -716,10 +679,10 @@ do_frame(int framenumber)
      * be gentle to the machine.
      */
     if (!interactive) {
-	if (npix > 256*256)
-	    bu_nice_set(10);
-	else if (npix > 512*512)
+	if (npix > 512*512)
 	    bu_nice_set(14);
+	else if (npix > 256*256)
+	    bu_nice_set(10);
     }
 
     /*
@@ -748,24 +711,47 @@ do_frame(int framenumber)
 	 * in).
 	 *
 	 * view_2init() can depend on the file being open for both
-	 * reading and writing, but must do it's own positioning.
+	 * reading and writing, but must do its own positioning.
 	 */
 	{
+	    int fd;
+	    int ret;
 	    struct stat sb;
-	    if (stat(framename, &sb) >= 0 &&
-		sb.st_size > 0 &&
-		sb.st_size < width*height*sizeof(RGBpixel)) {
-		/* File exists, with partial results */
-		register int fd;
-		if ((fd = open(framename, 2)) < 0 ||
-		    (outfp = fdopen(fd, "r+")) == NULL) {
-		    perror(framename);
-		    if (matflag) return 0;	/* OK */
-		    return -1;			/* Bad */
+
+	    if (bu_file_exists(framename, NULL)) {
+		/* File exists, maybe with partial results */
+		outfp = NULL;
+		fd = open(framename, O_RDWR);
+		if (fd < 0) {
+		    perror("open");
+		} else {
+		    outfp = fdopen(fd, "r+");
+		    if (!outfp)
+			perror("fdopen");
 		}
-		/* Read existing pix data into the frame buffer */
-		if (sb.st_size > 0) {
-		    (void)fread(pixmap, 1, (size_t)sb.st_size, outfp);
+
+		if (fd < 0 || !outfp) {
+		    bu_log("ERROR: Unable to open \"%s\" for reading and writing (check file permissions)\n", framename);
+
+		    if (matflag)
+			return 0; /* OK: some undocumented reason */
+
+		    return -1; /* BAD: oops, disappeared */
+		}
+
+		/* check if partial result */
+		ret = fstat(fd, &sb);
+		if (ret >= 0 && sb.st_size > 0 && (size_t)sb.st_size < width*height*sizeof(RGBpixel)) {
+
+		    /* Read existing pix data into the frame buffer */
+		    if (sb.st_size > 0) {
+			size_t bytes_read = fread(pixmap, 1, (size_t)sb.st_size, outfp);
+			if (rt_verbosity & VERBOSE_OUTPUTFILE)
+			    bu_log("Reading existing pix data from \"%s\".\n", framename);
+			if (bytes_read < (size_t)sb.st_size)
+			    return -1;
+		    }
+
 		}
 	    }
 	}
@@ -773,7 +759,11 @@ do_frame(int framenumber)
 
 	/* Ordinary case for creating output file */
 	if (outfp == NULL) {
-	    bif = bu_image_save_open(framename, BU_IMAGE_AUTO_NO_PIX, width, height, 3);
+	    /* FIXME: in the case of rtxray, this is wrong.  it writes
+	     * out a bw image so depth should be just 1, not 3.
+	     */
+	    bif = icv_create(width, height, ICV_COLOR_SPACE_RGB);
+
 	    if (bif == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
 		perror(framename);
 		if (matflag) return 0;	/* OK */
@@ -782,12 +772,12 @@ do_frame(int framenumber)
 	}
 
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
-	    bu_log("Output file is '%s' %dx%d pixels\n",
+	    bu_log("Output file is '%s' %zux%zu pixels\n",
 		   framename, width, height);
     }
 
     /* initialize lighting, may update pix_start */
-    view_2init(&ap, framename);
+    view_2init(&APP, framename);
 
     /* Just while doing the ray-tracing */
     if (R_DEBUG&RDEBUG_RTMEM)
@@ -815,40 +805,43 @@ do_frame(int framenumber)
     if (incr_mode) {
 	for (incr_level = 1; incr_level <= incr_nlevel; incr_level++) {
 	    if (incr_level > 1)
-		view_2init(&ap, framename);
+		view_2init(&APP, framename);
 
 	    do_run(0, (1<<incr_level)*(1<<incr_level)-1);
 	}
-    } else {
+    }
+    else if (full_incr_mode) {
+	/* Multiple frame buffer mode */
+	for (full_incr_sample = 1; full_incr_sample <= full_incr_nsamples;
+	    full_incr_sample++) {
+	    if (full_incr_sample > 1) /* first sample was already initialized */
+		view_2init(&APP, framename);
+	    do_run(pix_start, pix_end);
+	}
+    }
+    else {
 	do_run(pix_start, pix_end);
 
 	/* Reset values to full size, for next frame (if any) */
 	pix_start = 0;
 	pix_end = height*width - 1;
     }
-    bu_vls_init(&times);
     utime = rt_get_timer(&times, &wallclock);
 
     /*
      * End of application.  Done outside of timing section.
      * Typically, writes any remaining results out.
      */
-    view_end(&ap);
+    view_end(&APP);
 
     /* Stop memory debug printing until next frame, leave full checking on */
     if (R_DEBUG&RDEBUG_RTMEM)
 	bu_debug &= ~BU_DEBUG_MEM_LOG;
 
-    /*
-     * Certain parallel systems (eg, Alliant) count the entire
-     * multi-processor complex as one computer, and charge only once.
-     * This matches the desired behavior here.  Other vendors (eg,
-     * SGI) count each processor separately, and charge for all of
-     * them.  These results need to be normalized.  Otherwise, all we
-     * would know is that a given workload takes about the same amount
-     * of CPU time, regardless of the number of CPUs.
+    /* These results need to be normalized.  Otherwise, all we would
+     * know is that a given workload takes about the same amount of
+     * CPU time, regardless of the number of CPUs.
      */
-#if !defined(alliant)
     if (npsw > 1) {
 	int avail_cpus;
 	int ncpus;
@@ -860,12 +853,12 @@ do_frame(int framenumber)
 	    ncpus = npsw;
 	}
 	nutime = utime / ncpus;			/* compensate */
-    } else
-#endif
+    } else {
 	nutime = utime;
+    }
 
-    /* prevent a bogus near-zero time to prevent infinate and
-     * near-infinate results without relying on IEEE floating point
+    /* prevent a bogus near-zero time to prevent infinite and
+     * near-infinite results without relying on IEEE floating point
      * zero comparison.
      */
     if (NEAR_ZERO(nutime, VDIVIDE_TOL)) {
@@ -881,32 +874,35 @@ do_frame(int framenumber)
     bu_vls_free(&times);
     memory_summary();
     if (rt_verbosity & VERBOSE_STATS) {
-	bu_log("%ld solid/ray intersections: %ld hits + %ld miss\n",
+	bu_log("%zu solid/ray intersections: %zu hits + %zu miss\n",
 	       rtip->nshots, rtip->nhits, rtip->nmiss);
-	bu_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
-	       rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
+	bu_log("pruned %.1f%%:  %zu model RPP, %zu dups skipped, %zu solid RPP\n",
+	       rtip->nshots > 0 ? ((double)rtip->nhits*100.0)/rtip->nshots : 100.0,
 	       rtip->nmiss_model, rtip->ndup, rtip->nmiss_solid);
-	bu_log("Frame %2d: %10d pixels in %9.2f sec = %12.2f pixels/sec\n",
+	bu_log("Frame %2d: %10zu pixels in %9.2f sec = %12.2f pixels/sec\n",
 	       framenumber,
 	       width*height, nutime, ((double)(width*height))/nutime);
-	bu_log("Frame %2d: %10d rays   in %9.2f sec = %12.2f rays/sec (RTFM)\n",
+	bu_log("Frame %2d: %10zu rays   in %9.2f sec = %12.2f rays/sec (RTFM)\n",
 	       framenumber,
 	       rtip->rti_nrays, nutime, ((double)(rtip->rti_nrays))/nutime);
-	bu_log("Frame %2d: %10d rays   in %9.2f sec = %12.2f rays/CPU_sec\n",
+	bu_log("Frame %2d: %10zu rays   in %9.2f sec = %12.2f rays/CPU_sec\n",
 	       framenumber,
 	       rtip->rti_nrays, utime, ((double)(rtip->rti_nrays))/utime);
-	bu_log("Frame %2d: %10d rays   in %9.2f sec = %12.2f rays/sec (wallclock)\n",
+	bu_log("Frame %2d: %10zu rays   in %9.2f sec = %12.2f rays/sec (wallclock)\n",
 	       framenumber,
 	       rtip->rti_nrays,
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
-    if (bif != NULL)
-	bu_image_save_close(bif);
-    bif = NULL;
+    if (bif != NULL) {
+	icv_write(bif, framename, ICV_IMAGE_AUTO);
+	icv_destroy(bif);
+	bif = NULL;
+    }
+
     if (outfp != NULL) {
 	/* Protect finished product */
 	if (outputfile != (char *)0)
-	    (void)bu_fchmod(outfp, 0444);
+	    (void)bu_fchmod(fileno(outfp), 0444);
 
 	(void)fclose(outfp);
 	outfp = NULL;
@@ -925,11 +921,9 @@ do_frame(int framenumber)
 
 
 /**
- * D O _ A E
- *
  * Compute the rotation specified by the azimuth and elevation
  * parameters.  First, note that these are specified relative to the
- * GIFT "front view", ie, model (X, Y, Z) is view (Z, X, Y): looking
+ * GIFT "front view", i.e., model (X, Y, Z) is view (Z, X, Y): looking
  * down X axis, Y right, Z up.
  *
  * A positive azimuth represents rotating the *eye* around the
@@ -943,7 +937,10 @@ do_ae(double azim, double elev)
     vect_t temp;
     vect_t diag;
     mat_t toEye;
-    struct rt_i *rtip = ap.a_rt_i;
+    struct rt_i *rtip = APP.a_rt_i;
+
+    if (rtip == NULL)
+	return;
 
     if (rtip->nsolids <= 0)
 	bu_exit(EXIT_FAILURE, "ERROR: no primitives active\n");
@@ -993,6 +990,14 @@ do_ae(double azim, double elev)
 	    viewsize *= aspect;
 	}
     }
+
+    /* sanity check: make sure viewsize still isn't zero in case
+     * bounding box is empty, otherwise bn_mat_int() will bomb.
+     */
+    if (viewsize < 0 || ZERO(viewsize)) {
+	viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
+    }
+
     Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
     bn_mat_mul(model2view, Viewrotscale, toEye);
     bn_mat_inv(view2model, model2view);
@@ -1001,33 +1006,23 @@ do_ae(double azim, double elev)
 }
 
 
-/**
- * R E S _ P R
- */
 void
 res_pr(void)
 {
     register struct resource *res;
     register int i;
 
-    fprintf(stderr, "\nResource use summary, by processor:\n");
+    bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];
-    for (i=0; i<npsw; i++, res++) {
-	fprintf(stderr, "---CPU %d:\n", i);
+    for (i = 0; i < npsw; i++, res++) {
+	bu_log("---CPU %d:\n", i);
 	if (res->re_magic != RESOURCE_MAGIC) {
-	    fprintf(stderr, "Bad magic number!!\n");
+	    bu_log("Bad magic number!\n");
 	    continue;
 	}
-	fprintf(stderr, "seg       len=%10ld get=%10ld free=%10ld\n",
-		res->re_seglen, res->re_segget, res->re_segfree);
-	fprintf(stderr, "partition len=%10ld get=%10ld free=%10ld\n",
-		res->re_partlen, res->re_partget, res->re_partfree);
-#if 0
-	fprintf(stderr, "bitv_elem len=%10ld get=%10ld free=%10ld\n",
-		res->re_bitvlen, res->re_bitvget, res->re_bitvfree);
-#endif
-	fprintf(stderr, "boolstack len=%10ld\n",
-		res->re_boolslen);
+	bu_log("seg       len=%10ld get=%10ld free=%10ld\n", res->re_seglen, res->re_segget, res->re_segfree);
+	bu_log("partition len=%10ld get=%10ld free=%10ld\n", res->re_partlen, res->re_partget, res->re_partfree);
+	bu_log("boolstack len=%10ld\n", res->re_boolslen);
     }
 }
 
@@ -1046,7 +1041,7 @@ struct command_tab rt_cmdtab[] = {
      cm_lookat_pt,	4, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
      cm_vrot,	17, 17},
-    {"orientation", "quaturnion", "set view direction from quaturnion",
+    {"orientation", "quaternion", "set view direction from quaternion",
      cm_orientation,	5, 5},
     {"end", 	"", "end of frame setup, begin raytrace",
      cm_end,		1, 1},

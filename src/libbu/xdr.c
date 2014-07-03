@@ -1,7 +1,7 @@
 /*                           X D R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,17 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/cv.h"
 
+
+unsigned char *
+bu_pshort(register unsigned char *msgp, register uint16_t s)
+{
+
+    msgp[1] = (unsigned char)s;
+    msgp[0] = (unsigned char)(s >> 8);
+    return msgp+2;
+}
 
 uint16_t
 bu_gshort(const unsigned char *msgp)
@@ -39,6 +48,17 @@ bu_gshort(const unsigned char *msgp)
 }
 
 
+unsigned char *
+bu_plong(register unsigned char *msgp, register uint32_t l)
+{
+
+    msgp[3] = (unsigned char)l;
+    msgp[2] = (unsigned char)(l >>= 8);
+    msgp[1] = (unsigned char)(l >>= 8);
+    msgp[0] = (unsigned char)(l >> 8);
+    return msgp+4;
+}
+
 uint32_t
 bu_glong(const unsigned char *msgp)
 {
@@ -49,28 +69,6 @@ bu_glong(const unsigned char *msgp)
     u |= *p++; u <<= 8;
     u |= *p++; u <<= 8;
     return u | *p;
-}
-
-
-unsigned char *
-bu_pshort(register unsigned char *msgp, register uint16_t s)
-{
-
-    msgp[1] = (unsigned char)s;
-    msgp[0] = (unsigned char)(s >> 8);
-    return msgp+2;
-}
-
-
-unsigned char *
-bu_plong(register unsigned char *msgp, register uint32_t l)
-{
-
-    msgp[3] = (unsigned char)l;
-    msgp[2] = (unsigned char)(l >>= 8);
-    msgp[1] = (unsigned char)(l >>= 8);
-    msgp[0] = (unsigned char)(l >> 8);
-    return msgp+4;
 }
 
 

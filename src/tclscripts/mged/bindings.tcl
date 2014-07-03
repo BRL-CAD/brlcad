@@ -1,7 +1,7 @@
 #                    B I N D I N G S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ proc mged_bind_dm { w } {
     if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
 	bind $w <Enter> "winset $w; focus $w;"
     } else {
-	# some platforms should not be forced window activiation (winset)
+	# some platforms should not be forced window activation (winset)
 	bind $w <Enter> "winset $w;"
     }
 
@@ -58,8 +58,8 @@ if ![info exists mged_default(dm_key_bindings)] {
 \te\t\t\ttoggle edit axes
 \tm\t\t\ttoggle model axes
 \tv\t\t\ttoggle view axes
-\ti\t\t\tadvance illumation pointer forward
-\tI\t\t\tadvance illumation pointer backward
+\ti\t\t\tadvance illumination pointer forward
+\tI\t\t\tadvance illumination pointer backward
 \tp\t\t\tsimulate mouse press (i.e. to pick a solid)
 \t0\t\t\tzero knobs
 \tx\t\t\trate rotate about x axis
@@ -109,6 +109,7 @@ if ![info exists mged_default(dm_key_bindings)] {
 
 proc default_key_bindings { w } {
     bind $w a "winset $w; adc; break"
+    bind $w c "open_cmd_win id_0"
     bind $w e "winset $w; rset ax edit_draw !;\
 	    update_gui $w edit_draw \[rset ax edit_draw\]; break"
     bind $w m "winset $w; rset ax model_draw !;\
@@ -286,10 +287,24 @@ proc default_mouse_bindings { w } {
 	bind $w <1> "winset $w; zoom 0.5; break"
 	bind $w <2> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	bind $w <3> "winset $w; zoom 2.0; break"
+
+	if {$tcl_platform(os) == "Darwin"} {
+	    # Mac option-key emulates mouse 2 (doesn't work?)
+	    bind $w <Option-ButtonPress-1> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
+	    # Mac command-key emulates mouse 3
+	    bind $w <Mod2-ButtonPress-1> "winset $w; zoom 2.0; break"
+	}
     } else {
 	bind $w <1> "winset $w; focus $w; zoom 0.5; break"
 	bind $w <2> "winset $w; focus $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	bind $w <3> "winset $w; focus $w; zoom 2.0; break"
+
+	if {$tcl_platform(os) == "Darwin"} {
+	    # Mac command-key emulates mouse 2 (doesn't work?)
+	    bind $w <Option-ButtonPress-1> "winset $w; focus $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
+	    # Mac command-key emulates mouse 3
+	    bind $w <Mod2-ButtonPress-1> "winset $w; focus $w; zoom 2.0; break"
+	}
     }
 
     bind $w <ButtonRelease> "winset $w; dm idle; break"

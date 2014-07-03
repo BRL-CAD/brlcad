@@ -1,7 +1,7 @@
 /*                    E H Y _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file ehy_brep.cpp
  *
- * Convert a Right Parabolic Cylinder to b-rep form
+ * Convert an Elliptical Hyperboloid to b-rep form
  *
  */
 
@@ -30,9 +30,6 @@
 #include "brep.h"
 
 
-/**
- * R T _ E H Y _ B R E P
- */
 extern "C" void
 rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
@@ -42,10 +39,29 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     eip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(eip);
 
-    *b = ON_Brep::New();
+    // Check the parameters
+    if (!NEAR_ZERO(VDOT(eip->ehy_Au, eip->ehy_H), RT_DOT_TOL)) {
+	bu_log("rt_ehy_brep: Au and H are not perpendicular!\n");
+	return;
+    }
 
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
+    if (!NEAR_EQUAL(MAGNITUDE(eip->ehy_Au), 1.0, RT_LEN_TOL)) {
+	bu_log("rt_ehy_brep: Au not a unit vector!\n");
+	return;
+    }
+
+    if (MAGNITUDE(eip->ehy_H) < RT_LEN_TOL
+	|| eip->ehy_c < RT_LEN_TOL
+	|| eip->ehy_r1 < RT_LEN_TOL
+	|| eip->ehy_r2 < RT_LEN_TOL) {
+	bu_log("rt_ehy_brep: not all dimensions positive!\n");
+	return;
+    }
+
+    if (eip->ehy_r2 > eip->ehy_r1) {
+	bu_log("rt_ehy_brep: semi-minor axis cannot be longer than semi-major axis!\n");
+	return;
+    }
 
     point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
@@ -63,20 +79,20 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     plane1_origin = ON_3dPoint(p1_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    const ON_Plane* ehy_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane ehy_bottom_plane(plane1_origin, plane_x_dir, plane_y_dir);
 
     //  Next, create an ellipse in the plane corresponding to the edge of the ehy.
 
-    ON_Ellipse* ellipse1 = new ON_Ellipse(*ehy_bottom_plane, eip->ehy_r1, eip->ehy_r2);
+    ON_Ellipse ellipse1(ehy_bottom_plane, eip->ehy_r1, eip->ehy_r2);
     ON_NurbsCurve* ellcurve1 = ON_NurbsCurve::New();
-    ellipse1->GetNurbForm((*ellcurve1));
+    ellipse1.GetNurbForm((*ellcurve1));
     ellcurve1->SetDomain(0.0, 1.0);
 
     // Generate the bottom cap
     ON_SimpleArray<ON_Curve*> boundary;
     boundary.Append(ON_Curve::Cast(ellcurve1));
     ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = (*ehy_bottom_plane);
+    bp->m_plane = ehy_bottom_plane;
     bp->SetDomain(0, -100.0, 100.0);
     bp->SetDomain(1, -100.0, 100.0);
     bp->SetExtents(0, bp->Domain(0));
@@ -91,8 +107,9 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     bp->SetExtents(0, bp->Domain(0));
     bp->SetExtents(1, bp->Domain(1));
     (*b)->SetTrimIsoFlags(bface);
+    delete ellcurve1;
 
-    //  Now, the hard part.  Need an elliptical hyperboloic NURBS surface
+    //  Now, the hard part.  Need an elliptical hyperbolic NURBS surface
     //  First step is to create a nurbs curve.
 
     double intercept_calc = (eip->ehy_c)*(eip->ehy_c)/(MAGNITUDE(eip->ehy_H) + eip->ehy_c);
@@ -124,8 +141,6 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     const ON_Interval subinterval = ON_Interval(0, 0.5);
     tnurbscurve->GetNurbForm(*hypbnurbscurve, 0.0, &subinterval);
 
-    hypbnurbscurve->Dump(*dump);
-
     // Next, rotate that curve around the height vector.
 
     point_t revpoint1, revpoint2;
@@ -143,32 +158,52 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     // Get the NURBS form of the surface
     ON_NurbsSurface *ehycurvedsurf = ON_NurbsSurface::New();
     hyp_surf->GetNurbForm(*ehycurvedsurf, 0.0);
-    ehycurvedsurf->Dump(*dump);
 
-    // Last but not least, scale the control points of the
-    // resulting surface to map to the shorter axis.
+    delete hyp_surf;
+    delete tnurbscurve;
+    delete bcurve;
+
+    // Transformations
 
     for (int i = 0; i < ehycurvedsurf->CVCount(0); i++) {
 	for (int j = 0; j < ehycurvedsurf->CVCount(1); j++) {
 	    point_t cvpt;
 	    ON_4dPoint ctrlpt;
 	    ehycurvedsurf->GetCV(i, j, ctrlpt);
+
+	    // Scale the control points of the
+	    // resulting surface to map to the shorter axis.
 	    VSET(cvpt, ctrlpt.x, ctrlpt.y * eip->ehy_r2/eip->ehy_r1, ctrlpt.z);
+
+	    // Rotate according to the directions of Au and H
+	    vect_t Hu;
+	    mat_t R;
+	    point_t new_cvpt;
+
+	    VSCALE(Hu, eip->ehy_H, 1/MAGNITUDE(eip->ehy_H));
+	    MAT_IDN(R);
+	    VMOVE(&R[0], eip->ehy_Au);
+	    VMOVE(&R[4], y_dir);
+	    VMOVE(&R[8], Hu);
+	    VEC3X3MAT(new_cvpt, cvpt, R);
+	    VMOVE(cvpt, new_cvpt);
+
+	    // Translate according to V
+	    vect_t scale_v;
+	    VSCALE(scale_v, eip->ehy_V, ctrlpt.w);
+	    VADD2(cvpt, cvpt, scale_v);
+
 	    ON_4dPoint newpt = ON_4dPoint(cvpt[0], cvpt[1], cvpt[2], ctrlpt.w);
 	    ehycurvedsurf->SetCV(i, j, newpt);
 	}
     }
 
-
-    bu_log("Valid nurbs surface: %d\n", ehycurvedsurf->IsValid(dump));
-    ehycurvedsurf->Dump(*dump);
-
     (*b)->m_S.Append(ehycurvedsurf);
     int surfindex = (*b)->m_S.Count();
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
+    (*b)->FlipFace(face);
     int faceindex = (*b)->m_F.Count();
     (*b)->NewOuterLoop(faceindex-1);
-    bu_log("Valid brep face: %d\n", face.IsValid(dump));
 }
 
 

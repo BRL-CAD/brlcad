@@ -1,7 +1,7 @@
 /*                           E P A . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file epa.c
+/** @file primitives/epa/epa.c
  *
  * Intersect a ray with an Elliptical Paraboloid.
  *
@@ -103,7 +103,7 @@
  * NORMALS.  Given the point W on the surface of the epa, what is the
  * vector normal to the tangent plane at that point?
  *
- * Map W onto the unit epa, ie:  W' = S(R(W - V)).
+ * Map W onto the unit epa, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit epa at W' has a normal vector N' where
  *
@@ -152,15 +152,16 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#include "../../librt_private.h"
 
-extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
-
+static int epa_is_valid(struct rt_epa_internal *epa);
 
 struct epa_specific {
     point_t epa_V;		/* vector to epa origin */
@@ -176,18 +177,67 @@ struct epa_specific {
 
 
 const struct bu_structparse rt_epa_parse[] = {
-    { "%f", 3, "V",   bu_offsetof(struct rt_epa_internal, epa_V[X]),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "H",   bu_offsetof(struct rt_epa_internal, epa_H[X]),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A",   bu_offsetof(struct rt_epa_internal, epa_Au[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V",   bu_offsetofarray(struct rt_epa_internal, epa_V, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H",   bu_offsetofarray(struct rt_epa_internal, epa_H, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A",   bu_offsetofarray(struct rt_epa_internal, epa_Au, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "r_1", bu_offsetof(struct rt_epa_internal, epa_r1),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "r_2", bu_offsetof(struct rt_epa_internal, epa_r2),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * Create a bounding RPP for an epa
+ */
+int
+rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+    struct rt_epa_internal *xip;
+    vect_t epa_A, epa_B, epa_An, epa_Bn, epa_H;
+    vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
+    RT_CK_DB_INTERNAL(ip);
+    xip = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(xip);
+
+    VMOVE(epa_H, xip->epa_H);
+    VUNITIZE(epa_H);
+    VMOVE(epa_A, xip->epa_Au);
+    VCROSS(epa_B, epa_A, epa_H);
+
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
+    VSCALE(epa_A, epa_A, xip->epa_r1);
+    VSCALE(epa_B, epa_B, xip->epa_r2);
+    VREVERSE(epa_An, epa_A);
+    VREVERSE(epa_Bn, epa_B);
+
+    VADD3(pt1, xip->epa_V, epa_A, epa_B);
+    VADD3(pt2, xip->epa_V, epa_A, epa_Bn);
+    VADD3(pt3, xip->epa_V, epa_An, epa_B);
+    VADD3(pt4, xip->epa_V, epa_An, epa_Bn);
+    VADD4(pt5, xip->epa_V, epa_A, epa_B, xip->epa_H);
+    VADD4(pt6, xip->epa_V, epa_A, epa_Bn, xip->epa_H);
+    VADD4(pt7, xip->epa_V, epa_An, epa_B, xip->epa_H);
+    VADD4(pt8, xip->epa_V, epa_An, epa_Bn, xip->epa_H);
+
+    /* Find the RPP of the rotated axis-aligned epa bbox - that is,
+     * the bounding box the given epa would have if its height
+     * vector were in the positive Z direction. This does not give
+     * us an optimal bbox except in the case where the epa is
+     * actually axis aligned to start with, but it's usually
+     * at least a bit better than the bounding sphere RPP. */
+    VMINMAX((*min), (*max), pt1);
+    VMINMAX((*min), (*max), pt2);
+    VMINMAX((*min), (*max), pt3);
+    VMINMAX((*min), (*max), pt4);
+    VMINMAX((*min), (*max), pt5);
+    VMINMAX((*min), (*max), pt6);
+    VMINMAX((*min), (*max), pt7);
+    VMINMAX((*min), (*max), pt8);
+    return 0;
+}
+
 
 /**
- * R T _ E P A _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid EPA, and if so, precompute
  * various terms of the formula.
@@ -197,7 +247,7 @@ const struct bu_structparse rt_epa_parse[] = {
  * !0 Error in description
  *
  * Implicit return -
- * A struct epa_specific is created, and it's address is stored in
+ * A struct epa_specific is created, and its address is stored in
  * stp->st_specific for use by epa_shot().
  */
 int
@@ -205,49 +255,36 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_epa_internal *xip;
     struct epa_specific *epa;
-#ifndef NO_MAGIC_CHECKING
-    const struct bn_tol *tol = &rtip->rti_tol;
-#endif
+
     fastf_t magsq_h;
-    fastf_t mag_a, mag_h;
-    fastf_t f, r1, r2;
+    fastf_t /* mag_a, */ mag_h;
+    fastf_t r1, r2;
     mat_t R;
     mat_t Rinv;
     mat_t S;
 
-#ifndef NO_MAGIC_CHECKING
     RT_CK_DB_INTERNAL(ip);
-    BN_CK_TOL(tol);
-#endif
+
     xip = (struct rt_epa_internal *)ip->idb_ptr;
-    RT_EPA_CK_MAGIC(xip);
+    if (!epa_is_valid(xip)) {
+	return 1;
+    }
 
     /* compute |A| |H| */
-    mag_a = sqrt(MAGSQ(xip->epa_Au));
+    /* mag_a = sqrt(MAGSQ(xip->epa_Au)); */
     mag_h = sqrt(magsq_h = MAGSQ(xip->epa_H));
     r1 = xip->epa_r1;
     r2 = xip->epa_r2;
-    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
-	|| r1 < 0.0 || r2 < 0.0) {
-	return 1;		/* BAD, too small */
-    }
 
-    /* Check for A.H == 0 */
-    f = VDOT(xip->epa_Au, xip->epa_H) / mag_h;
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return 1;		/* BAD */
-    }
 
     /*
      * EPA is ok
      */
     stp->st_id = ID_EPA;	/* set soltab ID */
-    stp->st_meth = &rt_functab[ID_EPA];
+    stp->st_meth = &OBJ[ID_EPA];
 
-    BU_GETSTRUCT(epa, epa_specific);
-    stp->st_specific = (genptr_t)epa;
+    BU_GET(epa, struct epa_specific);
+    stp->st_specific = (void *)epa;
 
     epa->epa_h = mag_h;
     epa->epa_inv_r1sq = 1 / (r1 * r1);
@@ -278,7 +315,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bn_mat_mul(epa->epa_SoR, S, R);
     bn_mat_mul(epa->epa_invRoS, Rinv, S);
 
-    /* Compute bounding sphere and RPP */
+    /* Compute bounding sphere */
     /* bounding sphere center */
     VJOIN1(stp->st_center, epa->epa_V, mag_h / 2.0, epa->epa_Hunit);
     /* bounding radius */
@@ -286,21 +323,13 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* approximate bounding radius */
     stp->st_aradius = stp->st_bradius;
 
-    /* cheat, make bounding RPP by enclosing bounding sphere */
-    stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
-    stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
-    stp->st_min[Y] = stp->st_center[Y] - stp->st_bradius;
-    stp->st_max[Y] = stp->st_center[Y] + stp->st_bradius;
-    stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
-    stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
+    /* Calculate bounding box (RPP) */
+    if (rt_epa_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     return 0;			/* OK */
 }
 
 
-/**
- * R T _ E P A _ P R I N T
- */
 void
 rt_epa_print(const struct soltab *stp)
 {
@@ -322,8 +351,6 @@ rt_epa_print(const struct soltab *stp)
 
 
 /**
- * R T _ E P A _ S H O T
- *
  * Intersect a ray with a epa.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -405,7 +432,7 @@ rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
      */
  check_plates:
     /* check top plate */
-    if (hitp == &hits[1]  &&  !NEAR_ZERO(dprime[Z], SMALL)) {
+    if (hitp == &hits[1]  &&  !ZERO(dprime[Z])) {
 	/* 1 hit so far, this is worthwhile */
 	k1 = -pprime[Z] / dprime[Z];		/* top plate */
 
@@ -446,8 +473,6 @@ rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ E P A _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -483,8 +508,6 @@ rt_epa_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ E P A _ C U R V E
- *
  * Return the curvature of the epa.
  */
 void
@@ -536,8 +559,6 @@ rt_epa_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ E P A _ U V
- *
  * For a hit on the surface of an epa, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -565,19 +586,19 @@ rt_epa_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     switch (hitp->hit_surfno) {
 	case EPA_NORM_BODY:
 	    /* top plate, polar coords */
-	    if (NEAR_ZERO(pprime[Z] + 1.0, SMALL_FASTF)) { /* i.e., == -1.0 */
+	    if (ZERO(pprime[Z] + 1.0)) { /* i.e., == -1.0 */
 		/* bottom pt of body */
 		uvp->uv_u = 0;
 	    } else {
 		len = sqrt(pprime[X]*pprime[X] + pprime[Y]*pprime[Y]);
-		uvp->uv_u = acos(pprime[X]/len) * bn_inv2pi;
+		uvp->uv_u = acos(pprime[X]/len) * M_1_2PI;
 	    }
 	    uvp->uv_v = -pprime[Z];
 	    break;
 	case EPA_NORM_TOP:
 	    /* top plate, polar coords */
 	    len = sqrt(pprime[X]*pprime[X] + pprime[Y]*pprime[Y]);
-	    uvp->uv_u = acos(pprime[X]/len) * bn_inv2pi;
+	    uvp->uv_u = acos(pprime[X]/len) * M_1_2PI;
 	    uvp->uv_v = 1.0 - len;
 	    break;
     }
@@ -590,37 +611,274 @@ rt_epa_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ E P A _ F R E E
- */
 void
 rt_epa_free(struct soltab *stp)
 {
     struct epa_specific *epa =
 	(struct epa_specific *)stp->st_specific;
 
-
-    bu_free((char *)epa, "epa_specific");
+    BU_PUT(epa, struct epa_specific);
 }
 
 
-/**
- * R T _ E P A _ C L A S S
+/* A canonical parabola in the Y-Z plane has equation z = y^2 / 4p, and opens
+ * toward positive z with vertex at the origin.
+ *
+ * The contour of an epa in the plane H-R (where R is one of the epa axes A or
+ * B) is a parabola with vertex at H, opening toward -H. We can transform this
+ * parabola to get an equivalent canonical parabola in the Y-Z plane, opening
+ * toward positive Z (-H) with vertex at the origin (H).
+ *
+ * This parabola passes through the point (r, |H|) (where r = |A| or |B|).  If
+ * we plug the point (r, |H|) into our canonical equation, we see how p relates
+ * to r and |H|:
+ *
+ *   |H| = r^2 / 4p
+ *     p = (r^2) / (4|H|)
  */
-int
-rt_epa_class(void)
+static fastf_t
+epa_parabola_p(fastf_t r, fastf_t mag_h)
 {
+    return (r * r) / (4 * mag_h);
+}
+
+/* The contour of an epa in the plane H-R (where R is one of the epa axes A or
+ * B) is a parabola with vertex at H, opening toward -H. We can transform this
+ * parabola to get an equivalent parabola in the Y-Z plane, opening toward
+ * positive Z (-H) with vertex at (0, -|H|).
+ *
+ * The part of this parabola that passes between (0, -|H|) and (r, 0) is
+ * approximated by num_points points (including (0, -|H|) and (r, 0)).
+ *
+ * The constructed point list is returned (NULL returned on error). Because the
+ * above transformation puts the epa vertex at the origin and the parabola
+ * vertex at (0, -|H|), multiplying the z values by -1 gives corresponding
+ * distances along the epa height vector H.
+ */
+static struct rt_pt_node *
+epa_parabolic_curve(fastf_t mag_h, fastf_t r, int num_points)
+{
+    int count;
+    struct rt_pt_node *curve;
+
+    BU_ALLOC(curve, struct rt_pt_node);
+    BU_ALLOC(curve->next, struct rt_pt_node);
+
+    curve->next->next = NULL;
+    VSET(curve->p,       0, 0, -mag_h);
+    VSET(curve->next->p, 0, r, 0);
+
+    count = approximate_parabolic_curve(curve, epa_parabola_p(r, mag_h), num_points - 2);
+
+    if (count != (num_points - 2)) {
+	return NULL;
+    }
+
+    return curve;
+}
+
+/* The contour of an epa in the plane H-R (where R is one of the epa axes A or
+ * B) is a parabola with vertex at H, opening toward -H. We can transform this
+ * parabola into an equivalent one in the Y-Z plane which has vertext at (0, |H|)
+ * and opens toward -Z.
+ *
+ * The equation for this parabola is a variant of the equation for a canonical
+ * parabola in the Y-Z plane (z = y^2 / 4p):
+ *   z = |H| - y^2 / 4p
+ *
+ * Solving this equation for y yields:
+ *   y = sqrt(4p * (|H| - z))
+ *
+ * Substituting p = r^2 / 4|H| (see above comment):
+ *   y = sqrt(r^2 * (|H| - z) / |H|)
+ *     = r * sqrt((|H| - z) / |H|)
+ *     = r * sqrt(1 - z / |H|)
+ */
+static fastf_t
+epa_parabola_y(fastf_t r, fastf_t mag_H, fastf_t z)
+{
+    return r * sqrt(1 - z / mag_H);
+}
+
+/* Plot the elliptical cross section of the given epa at distance h along the
+ * epa height vector (h >= 0, h <= |H|) consisting of num_points points.
+ */
+static void
+epa_plot_ellipse(
+	struct bu_list *vhead,
+	struct rt_epa_internal *epa,
+	fastf_t h,
+	fastf_t num_points)
+{
+    fastf_t mag_H;
+    vect_t V, Hu, Au, Bu, A, B, cross_section_plane;
+
+    VMOVE(V, epa->epa_V);
+
+    mag_H = MAGNITUDE(epa->epa_H);
+    VSCALE(Hu, epa->epa_H, 1.0 / mag_H);
+
+    VMOVE(Au, epa->epa_Au);
+    VCROSS(Bu, Au, Hu);
+
+    /* calculate semi-major and semi-minor axis for the elliptical
+     * cross-section at distance h along H
+     */
+    VSCALE(A, Au, epa_parabola_y(epa->epa_r1, mag_H, h));
+    VSCALE(B, Bu, epa_parabola_y(epa->epa_r2, mag_H, h));
+    VJOIN1(cross_section_plane, V, h, Hu);
+
+    plot_ellipse(vhead, cross_section_plane, A, B, num_points);
+}
+
+static void
+epa_plot_parabola(
+	struct bu_list *vhead,
+	struct rt_epa_internal *epa,
+	struct rt_pt_node *pts,
+	vect_t Ru,
+	fastf_t r)
+{
+    point_t p;
+    vect_t epa_V, Hu;
+    fastf_t mag_H, z;
+    struct rt_pt_node *node;
+
+    VMOVE(epa_V, epa->epa_V);
+    mag_H = MAGNITUDE(epa->epa_H);
+    VSCALE(Hu, epa->epa_H, 1.0 / mag_H);
+
+    z = pts->p[Z];
+    VJOIN2(p, epa_V, epa_parabola_y(r, mag_H, -z), Ru, -z, Hu);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+    node = pts->next;
+    while (node != NULL) {
+	z = node->p[Z];
+	VJOIN2(p, epa_V, epa_parabola_y(r, mag_H, -z), Ru, -z, Hu);
+
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+
+	node = node->next;
+    }
+}
+
+static int
+epa_curve_points(
+    const struct rt_epa_internal *epa,
+    const struct rt_view_info *info)
+{
+    fastf_t avg_r, approx_curve_len;
+    point_t p1, p2;
+
+    avg_r = (epa->epa_r1 + epa->epa_r2) / 2.0;
+
+    VADD2(p1, epa->epa_V, epa->epa_H);
+    VJOIN1(p2, epa->epa_V, avg_r, epa->epa_Au);
+
+    approx_curve_len = 2.0 * DIST_PT_PT(p1, p2);
+
+    return approx_curve_len / info->point_spacing;
+}
+
+static int
+epa_ellipse_points(
+	struct rt_epa_internal *epa,
+	const struct rt_view_info *info)
+{
+    fastf_t avg_radius, avg_circumference;
+
+    avg_radius = (epa->epa_r1 + epa->epa_r2) / 2.0;
+    avg_circumference = M_2PI * avg_radius;
+
+    return avg_circumference / info->point_spacing;
+}
+
+int
+rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    vect_t epa_H, Hu, Au, Bu;
+    fastf_t mag_H, z, z_step, r1, r2;
+    int i, num_curve_points, num_ellipse_points, num_curves;
+    struct rt_epa_internal *epa;
+    struct rt_pt_node *pts_r1, *pts_r2, *node, *node1, *node2;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+
+    epa = (struct rt_epa_internal *)ip->idb_ptr;
+    if (!epa_is_valid(epa)) {
+	return -2;
+    }
+
+    num_curve_points = epa_curve_points(epa, info);
+
+    if (num_curve_points < 3) {
+	num_curve_points = 3;
+    }
+
+    num_ellipse_points = epa_ellipse_points(epa, info);
+
+    if (num_ellipse_points < 6) {
+	num_ellipse_points = 6;
+    }
+
+
+    VMOVE(epa_H, epa->epa_H);
+
+    mag_H = MAGNITUDE(epa_H);
+    VSCALE(Hu, epa->epa_H, 1.0 / mag_H);
+
+    VMOVE(Au, epa->epa_Au);
+    VCROSS(Bu, Au, Hu);
+
+    r1 = epa->epa_r1;
+    r2 = epa->epa_r2;
+
+    pts_r1 = epa_parabolic_curve(mag_H, r1, num_curve_points);
+    pts_r2 = epa_parabolic_curve(mag_H, r2, num_curve_points);
+
+    if (pts_r1 == NULL || pts_r2 == NULL) {
+	return -1;
+    }
+
+    num_curves = mag_H / info->curve_spacing;
+    if (num_curves < 2) {
+	num_curves = 2;
+    }
+
+    z_step = mag_H / num_curves;
+    z = 0.0;
+    for (i = 0; i < num_curves; ++i) {
+	epa_plot_ellipse(info->vhead, epa, z, num_ellipse_points);
+
+	z += z_step;
+    }
+
+    epa_plot_parabola(info->vhead, epa, pts_r1, Au, r1);
+    epa_plot_parabola(info->vhead, epa, pts_r1, Au, -r1);
+    epa_plot_parabola(info->vhead, epa, pts_r1, Bu, r2);
+    epa_plot_parabola(info->vhead, epa, pts_r1, Bu, -r2);
+
+    node1 = pts_r1;
+    node2 = pts_r2;
+    for (i = 0; i < num_curve_points; ++i) {
+	node = node1;
+	node1 = node1->next;
+	bu_free(node, "rt_pt_node");
+
+	node = node2;
+	node2 = node2->next;
+	bu_free(node, "rt_pt_node");
+    }
+
     return 0;
 }
 
-
-/**
- * R T _ E P A _ P L O T
- */
 int
-rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
+rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-    fastf_t dtol, f, mag_a, mag_h, ntol, r1, r2;
+    fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_new, theta_prev;
     int *pts_dbl, i, j, nseg;
     int jj, na, nb, nell, recalc_b;
@@ -633,30 +891,16 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+
     xip = (struct rt_epa_internal *)ip->idb_ptr;
-    RT_EPA_CK_MAGIC(xip);
+    if (!epa_is_valid(xip)) {
+	return -2;
+    }
 
-    /*
-     * make sure epa description is valid
-     */
-
-    /* compute |A| |H| */
-    mag_a = MAGSQ(xip->epa_Au);	/* should already be unit vector */
+    /* compute |H| */
     mag_h = MAGNITUDE(xip->epa_H);
     r1 = xip->epa_r1;
     r2 = xip->epa_r2;
-    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
-	|| r1 <= 0.0 || r2 <= 0.0) {
-	return -2;		/* BAD */
-    }
-
-    /* Check for A.H == 0 */
-    f = VDOT(xip->epa_Au, xip->epa_H) / mag_h;
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return -2;		/* BAD */
-    }
 
     /* make unit vectors in A, H, and BxH directions */
     VMOVE(Hu, xip->epa_H);
@@ -671,45 +915,29 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     VREVERSE(&R[8], Hu);
     bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0)
-	dtol = 0.0;		/* none */
-    else
-	/* Convert rel to absolute by scaling by smallest side */
-	dtol = ttol->rel * 2 * r2;
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    dtol = 2 * 0.10 * r2;	/* 10% */
-	}
-	/* Use absolute-ized relative tolerance */
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * r2);
 
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0)
 	ntol = ttol->norm;
     else
 	/* tolerate everything */
-	ntol = bn_pi;
+	ntol = M_PI;
 
     /*
      * build epa from 2 parabolas
      */
 
     /* approximate positive half of parabola along semi-minor axis */
-    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_b, struct rt_pt_node);
+    BU_ALLOC(pts_b->next, struct rt_pt_node);
+
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
     VSET(pts_b->next->p, 0, r2, 0);
     /* 2 endpoints in 1st approximation */
     nb = 2;
+
     /* recursively break segment 'til within error tolerances */
     nb += rt_mk_parabola(pts_b, r2, mag_h, dtol, ntol);
     nell = nb - 1;	/* # of ellipses needed */
@@ -717,14 +945,14 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* construct positive half of parabola along semi-major axis of
      * epa using same z coords as parab along semi-minor axis
      */
-    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_a, struct rt_pt_node);
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_parabola to a_parabola */
-	pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(pos_a->next, struct rt_pt_node);
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on parabola */
@@ -761,14 +989,14 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* construct parabola along semi-major axis of epa using same
 	 * z coords as parab along semi-minor axis
 	 */
-	pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(pts_b, struct rt_pt_node);
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_parabola to b_parabola */
-	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	    BU_ALLOC(pos_b->next, struct rt_pt_node);
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on parabola */
@@ -787,7 +1015,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* make ellipses at each z level */
     i = 0;
     nseg = 0;
-    theta_prev = bn_twopi;
+    theta_prev = M_2PI;
     pos_a = pts_a->next;	/* skip over apex of epa */
     pos_b = pts_b->next;
     while (pos_a) {
@@ -796,9 +1024,9 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	VJOIN1(V, xip->epa_V, -pos_a->p[Z], Hu);
 
 	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
-	    nseg = (int)(bn_twopi / theta_new) + 1;
+	    nseg = (int)(M_2PI / theta_new) + 1;
 	    pts_dbl[i] = 0;
 	} else if (theta_new < theta_prev) {
 	    nseg *= 2;
@@ -892,7 +1120,7 @@ rt_ell_norms(fastf_t *ov, fastf_t *A, fastf_t *B, fastf_t *h_vec, fastf_t t, int
     sqrt_1mt = sqrt(1.0 - t);
     if (sqrt_1mt <= SMALL_FASTF)
 	bu_bomb("rt_epa_tess: rt_ell_norms: sqrt(1.0 -t) is zero\n");
-    theta = 2 * bn_pi / sides;
+    theta = M_2PI / sides;
     ang = 0.;
 
     for (n = 1; n <= sides; n++, ang += theta) {
@@ -908,8 +1136,6 @@ rt_ell_norms(fastf_t *ov, fastf_t *A, fastf_t *B, fastf_t *h_vec, fastf_t t, int
 
 
 /**
- * R T _ E L L
- *
  * Generate an ellipsoid with the specified number of sides approximating it.
  */
 void
@@ -918,7 +1144,7 @@ rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int si
     fastf_t ang, theta, x, y;
     int n;
 
-    theta = 2 * bn_pi / sides;
+    theta = M_2PI / sides;
     ang = 0.;
     /* make ellipse regardless of whether it meets req's */
     for (n = 1; n <= sides; n++, ang += theta) {
@@ -931,51 +1157,6 @@ rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int si
 
 
 /**
- * R T _ E L L _ A N G
- *
- * Return angle required for smallest side to fall within tolerances
- * for ellipse.  Smallest side is a side with an endpoint at (a, 0, 0)
- * where a is the semi-major axis.
- */
-fastf_t
-rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
-{
-    fastf_t dist, intr, m, theta0, theta1;
-    point_t mpt, p0;
-    vect_t norm_line, norm_ell;
-
-    VSET(p0, a, 0., 0.);
-    /* slope and intercept of segment */
-    m = (p1[Y] - p0[Y]) / (p1[X] - p0[X]);
-    intr = p0[Y] - m * p0[X];
-    /* point on ellipse with max dist between ellipse and line */
-    mpt[X] = a / sqrt(b*b / (m*m*a*a) + 1);
-    mpt[Y] = b * sqrt(1 - mpt[X] * mpt[X] / (a*a));
-    mpt[Z] = 0;
-    /* max distance between that point and line */
-    dist = fabs(m * mpt[X] - mpt[Y] + intr) / sqrt(m * m + 1);
-    /* angles between normal of line and of ellipse at line endpoints */
-    VSET(norm_line, m, -1., 0.);
-    VSET(norm_ell, b * b * p0[X], a * a * p0[Y], 0.);
-    VUNITIZE(norm_line);
-    VUNITIZE(norm_ell);
-    theta0 = fabs(acos(VDOT(norm_line, norm_ell)));
-    VSET(norm_ell, b * b * p1[X], a * a * p1[Y], 0.);
-    VUNITIZE(norm_ell);
-    theta1 = fabs(acos(VDOT(norm_line, norm_ell)));
-    /* split segment at widest point if not within error tolerances */
-    if (dist > dtol || theta0 > ntol || theta1 > ntol) {
-	/* split segment */
-	return rt_ell_ang(mpt, a, b, dtol, ntol);
-    } else
-	return(acos(VDOT(p0, p1)
-		    / (MAGNITUDE(p0) * MAGNITUDE(p1))));
-}
-
-
-/**
- * R T _ E P A _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -983,7 +1164,7 @@ rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 int
 rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    fastf_t dtol, f, mag_a, mag_h, ntol, r1, r2;
+    fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, **normals, theta_new, theta_prev;
     int *pts_dbl, face, i, j, nseg;
     int *segs_per_ell;
@@ -1005,30 +1186,17 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct faceuse *fu;
 
     RT_CK_DB_INTERNAL(ip);
+
     xip = (struct rt_epa_internal *)ip->idb_ptr;
-    RT_EPA_CK_MAGIC(xip);
+    if (!epa_is_valid(xip)) {
+	return -2;
+    }
 
-    /*
-     * make sure epa description is valid
-     */
-
-    /* compute |A| |H| */
-    mag_a = MAGSQ(xip->epa_Au);	/* should already be unit vector */
+    /* compute |H| */
     mag_h = MAGNITUDE(xip->epa_H);
     r1 = xip->epa_r1;
     r2 = xip->epa_r2;
-    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
-	|| r1 <= 0.0 || r2 <= 0.0) {
-	return -2;		/* BAD */
-    }
 
-    /* Check for A.H == 0 */
-    f = VDOT(xip->epa_Au, xip->epa_H) / mag_h;
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return -2;		/* BAD */
-    }
 
     /* make unit vectors in A, H, and BxH directions */
     VMOVE(Hu, xip->epa_H);
@@ -1046,40 +1214,23 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     VREVERSE(&R[8], Hu);
     bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0)
-	dtol = 0.0;		/* none */
-    else
-	/* Convert rel to absolute by scaling by smallest side */
-	dtol = ttol->rel * 2 * r2;
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    dtol = 2 * 0.10 * r2;	/* 10% */
-	}
-	/* Use absolute-ized relative tolerance */
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * r2);
 
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0)
 	ntol = ttol->norm;
     else
 	/* tolerate everything */
-	ntol = bn_pi;
+	ntol = M_PI;
 
     /*
      * build epa from 2 parabolas
      */
 
     /* approximate positive half of parabola along semi-minor axis */
-    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_b, struct rt_pt_node);
+    BU_ALLOC(pts_b->next, struct rt_pt_node);
+
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
     VSET(pts_b->next->p, 0, r2, 0);
@@ -1092,14 +1243,14 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* construct positive half of parabola along semi-major axis of
      * epa using same z coords as parab along semi-minor axis
      */
-    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    BU_ALLOC(pts_a, struct rt_pt_node);
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_parabola to a_parabola */
-	pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(pos_a->next, struct rt_pt_node);
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on parabola */
@@ -1135,14 +1286,14 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* construct parabola along semi-major axis of epa
 	 * using same z coords as parab along semi-minor axis
 	 */
-	pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	BU_ALLOC(pts_b, struct rt_pt_node);
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_parabola to b_parabola */
-	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	    BU_ALLOC(pos_b->next, struct rt_pt_node);
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on parabola */
@@ -1168,7 +1319,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* make ellipses at each z level */
     i = 0;
     nseg = 0;
-    theta_prev = bn_twopi;
+    theta_prev = M_2PI;
     pos_a = pts_a->next;	/* skip over apex of epa */
     pos_b = pts_b->next;
     while (pos_a) {
@@ -1180,9 +1331,9 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	VJOIN1(V, xip->epa_V, -pos_a->p[Z], Hu);
 
 	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
-	    nseg = (int)(bn_twopi / theta_new) + 1;
+	    nseg = (int)(M_2PI / theta_new) + 1;
 	    pts_dbl[i] = 0;
 	    /* maximum number of faces needed for epa */
 	    face = nseg*(1 + 3*((1 << (nell-1)) - 1));
@@ -1356,14 +1507,14 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate the face geometry */
-    for (i=0; i < face; i++) {
+    for (i = 0; i < face; i++) {
 	if (nmg_fu_planeeqn(outfaceuses[i], tol) < 0)
 	    goto fail;
     }
 
     /* Associate vertexuse normals */
-    for (i=0; i<nell; i++) {
-	for (j=0; j<segs_per_ell[i]; j++) {
+    for (i = 0; i < nell; i++) {
+	for (j = 0; j < segs_per_ell[i]; j++) {
 	    VREVERSE(rev_norm, &normals[i][j*3]);
 	    for (BU_LIST_FOR(vu, vertexuse, &vells[i][j]->vu_hd)) {
 
@@ -1431,8 +1582,6 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- * R T _ E P A _ I M P O R T
- *
  * Import an EPA from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1441,6 +1590,7 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     struct rt_epa_internal *xip;
     union record *rp;
+    vect_t v1, v2, v3;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1455,19 +1605,41 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EPA;
-    ip->idb_meth = &rt_functab[ID_EPA];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_epa_internal), "rt_epa_internal");
+    ip->idb_meth = &OBJ[ID_EPA];
+    BU_ALLOC(ip->idb_ptr, struct rt_epa_internal);
+
     xip = (struct rt_epa_internal *)ip->idb_ptr;
     xip->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
     /* Warning:  type conversion */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(xip->epa_V, mat, &rp->s.s_values[0*3]);
-    MAT4X3VEC(xip->epa_H, mat, &rp->s.s_values[1*3]);
-    MAT4X3VEC(xip->epa_Au, mat, &rp->s.s_values[2*3]);
+
+    if (dbip->dbi_version < 0) {
+	flip_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
+	flip_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
+	flip_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
+    } else {
+	VMOVE(v1, &rp->s.s_values[0*3]);
+	VMOVE(v2, &rp->s.s_values[1*3]);
+	VMOVE(v3, &rp->s.s_values[2*3]);
+    }
+
+    MAT4X3PNT(xip->epa_V, mat, v1);
+    MAT4X3VEC(xip->epa_H, mat, v2);
+    MAT4X3VEC(xip->epa_Au, mat, v3);
+
     VUNITIZE(xip->epa_Au);
-    xip->epa_r1 = rp->s.s_values[3*3] / mat[15];
-    xip->epa_r2 = rp->s.s_values[3*3+1] / mat[15];
+
+    if (dbip->dbi_version < 0) {
+	v1[X] = flip_dbfloat(rp->s.s_values[3*3+0]);
+	v1[Y] = flip_dbfloat(rp->s.s_values[3*3+1]);
+    } else {
+	v1[X] = rp->s.s_values[3*3+0];
+	v1[Y] = rp->s.s_values[3*3+1];
+    }
+
+    xip->epa_r1 = v1[X] / mat[15];
+    xip->epa_r2 = v1[Y] / mat[15];
 
     if (xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF) {
 	bu_log("rt_epa_import4: r1 or r2 are zero\n");
@@ -1480,8 +1652,6 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ E P A _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -1500,13 +1670,13 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "epa external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "epa external");
     epa = (union record *)ep->ext_buf;
 
     epa->s.s_id = ID_SOLID;
     epa->s.s_type = EPA;
 
-    if (!NEAR_ZERO(MAGNITUDE(xip->epa_Au) - 1., RT_LEN_TOL)) {
+    if (!NEAR_EQUAL(MAGNITUDE(xip->epa_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_epa_export4: Au not a unit vector!\n");
 	return -1;
     }
@@ -1542,8 +1712,6 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ E P A _ I M P O R T 5
- *
  * Import an EPA from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1551,7 +1719,9 @@ int
 rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_epa_internal *xip;
-    fastf_t vec[11];
+
+    /* must be double for import and export */
+    double vec[11];
 
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
@@ -1561,14 +1731,14 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EPA;
-    ip->idb_meth = &rt_functab[ID_EPA];
-    ip->idb_ptr = bu_malloc(sizeof(struct rt_epa_internal), "rt_epa_internal");
+    ip->idb_meth = &OBJ[ID_EPA];
+    BU_ALLOC(ip->idb_ptr, struct rt_epa_internal);
 
     xip = (struct rt_epa_internal *)ip->idb_ptr;
     xip->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 11);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 11);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1590,16 +1760,16 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ E P A _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
 rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_epa_internal *xip;
-    fastf_t vec[11];
     fastf_t mag_h;
+
+    /* must be double for import and export */
+    double vec[11];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1610,9 +1780,9 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "epa external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "epa external");
 
-    if (!NEAR_ZERO(MAGNITUDE(xip->epa_Au) - 1., RT_LEN_TOL)) {
+    if (!NEAR_EQUAL(MAGNITUDE(xip->epa_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_epa_export4: Au not a unit vector!\n");
 	return -1;
     }
@@ -1644,15 +1814,13 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[3*3+1] = xip->epa_r2 * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 11);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 11);
 
     return 0;
 }
 
 
 /**
- * R T _ E P A _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -1693,8 +1861,6 @@ rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ E P A _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -1710,14 +1876,10 @@ rt_epa_ifree(struct rt_db_internal *ip)
     xip->epa_magic = 0;		/* sanity */
 
     bu_free((char *)xip, "epa ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
-/**
- * R T _ E P A _ P A R A M S
- *
- */
 int
 rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
@@ -1727,6 +1889,76 @@ rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+
+void
+rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
+{
+    fastf_t mag_h;
+    struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(xip);
+
+    mag_h = MAGNITUDE(xip->epa_H);
+    *vol = M_PI_2 * xip->epa_r1 * xip->epa_r2 * mag_h;
+}
+
+
+void
+rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(xip);
+    VJOIN1(*cent, xip->epa_V, 1.0/3.0, xip->epa_H);
+}
+
+
+void
+rt_epa_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    fastf_t magsq_h, m;
+    struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(xip);
+
+    magsq_h = MAGSQ(xip->epa_H);
+    m = sqrt(1.0 + (4.0 * magsq_h) / (xip->epa_r1 * xip->epa_r2));
+    *area = 2.0/3.0 * M_PI * xip->epa_r1 * xip->epa_r2 * (m + (1.0 / (m + 1.0)));
+}
+
+static int
+epa_is_valid(struct rt_epa_internal *epa)
+{
+    fastf_t mag_h, cos_angle_ah;
+    vect_t epa_H, epa_Au;
+
+    RT_EPA_CK_MAGIC(epa);
+
+    if (!(epa->epa_r1 > 0.0 && epa->epa_r2 > 0.0)) {
+	return 0;
+    }
+
+    VMOVE(epa_H, epa->epa_H);
+    VMOVE(epa_Au, epa->epa_Au);
+
+    /* Check that Au is a unit vector. If it is, then it should be true that
+     * |Au| == |Au|^2 == 1.0.
+     */
+    if (!NEAR_EQUAL(MAGSQ(epa_Au), 1.0, RT_LEN_TOL)) {
+	return 0;
+    }
+
+    /* check that |H| > 0.0 */
+    mag_h = MAGNITUDE(epa_H);
+    if (NEAR_ZERO(mag_h, RT_LEN_TOL)) {
+	return 0;
+    }
+
+    /* check that A and H are orthogonal */
+    cos_angle_ah = VDOT(epa_Au, epa_H) / mag_h;
+    if (!NEAR_ZERO(cos_angle_ah, RT_DOT_TOL)) {
+	return 0;
+    }
+
+    return 1;
+}
 
 /** @} */
 /*

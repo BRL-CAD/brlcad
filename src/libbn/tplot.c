@@ -1,7 +1,7 @@
 /*                         T P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup plot */
 /** @{ */
-/** @file tplot.c
+/** @file libbn/tplot.c
  *
  * @brief
  *	This routine is designed to simplify the creation of
@@ -29,7 +29,7 @@
  *				16 March 1979
  *
  *	This routine is designed to simplify the creation of
- * X, Y plots for user. The user need only furnish this program
+ * X, Y plots for user. The user need only furnish this program with
  * the data arrays to be plotted, the lengths of the respective
  * axis, titles for the axis, and the point on the page corresponding
  * to data point (0, 0).
@@ -43,17 +43,6 @@
  * -	char xtitle[], ytitle[]	titles for the axis
  * -	float x[], y[]	the floating point data arrays
  * -	int n		the number of points in the data arrays
- *
- *		R E V I S I O N  H I S T O R Y
- *
- *	WHO	WHEN		WHAT
- *	GWH	5/21/79		Modified ftoa so that nos. < e-15
- *				map to zero.
- *	GWH	6/29/79		Changed the axis drawing loops to
- *				prevent a one tic mark overrun.
- *	GWH	7/10/79		Subtracted one from n to allow for the
- *				fact that fortran arrays start at one
- *				and not zero as with c.
  */
 
 #include "common.h"
@@ -74,10 +63,10 @@
 #define LAB_LNGTH	860
 
 
-/**			T P _ S E P
+/**
  *@brief
  *  tp_sep() divides a floating point number into a coefficient
- *  and an exponent. works in base ten.
+ *  and an exponent. Works in base ten.
  */
 void
 tp_sep(float x, float *coef, int *ex)
@@ -125,9 +114,9 @@ tp_sep(float x, float *coef, int *ex)
 }
 
 
-/**			T P _ I P O W
+/**
  *@brief
- *  tp_ipow() raises a floating point number to a positve integer
+ *  tp_ipow() raises a floating point number to a positive integer
  *  power.
  *  XXX Horribly inefficient!
  */
@@ -137,8 +126,7 @@ double tp_ipow (double x, int n)
 }
 
 
-/**			T P _ F I X S C
- *
+/**
  *   tp_fixsc is a scaling routine intended to be used in conjunction
  *   with plotting routines. What tp_fixsc does is scale the user supplied
  *   data so that it fits on a specified axis and has 'nice' numbers
@@ -153,7 +141,7 @@ double tp_ipow (double x, int n)
  * @param	npts	the number of elements in x[]
  * @param	size	the length into which x[] is supposed to be fitted
  * 			(in inches)
- * @param	xs	the returned scale facter to integer space
+ * @param	xs	the returned scale factor to integer space
  * @param	xmin	the new minimum value for the data array (a returned
  *			value)
  * @param	xmax	the new maximum value for the data array (a returned
@@ -358,7 +346,7 @@ loop:
 }
 
 
-/**			T P _ F T O A
+/**
  * @brief
  * This routine converts a floating point number into a string
  * of ascii characters of the form "sX.XXXesXX". The string is

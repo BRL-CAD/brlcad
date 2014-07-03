@@ -2,7 +2,7 @@
 #                          R U N . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,8 +52,8 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # save the precious args
 ARGS="$*"
-NAME_OF_THIS=`basename $0`
-PATH_TO_THIS=`dirname $0`
+NAME_OF_THIS="`basename \"$0\"`"
+PATH_TO_THIS="`dirname \"$0\"`"
 THIS="$PATH_TO_THIS/$NAME_OF_THIS"
 
 # sanity check
@@ -241,14 +241,14 @@ if test "x$HELP" = "x1" ; then
     echo "Available options:"
     echo "  RT=/path/to/rt_binary (e.g., rt)"
     echo "  DB=/path/to/reference/geometry (e.g. ../db)"
-    echo "  PIX=/path/to/reference/images (e.g., ../pix)"
-    echo "  LOG=/path/to/reference/logs (e.g., ../pix)"
+    echo "  PIX=/path/to/reference/images (e.g., ./ref)"
+    echo "  LOG=/path/to/reference/logs (e.g., ./ref)"
     echo "  CMP=/path/to/pixcmp_tool (e.g., pixcmp)"
     echo "  ELP=/path/to/time_tool (e.g., elapsed.sh)"
     echo "  TIMEFRAME=#seconds (default 32)"
     echo "  MAXTIME=#seconds (default 300)"
-    echo "  DEVIATION=%deviation (default 3)"
-    echo "  AVERAGE=#frames (default 3)"
+    echo "  DEVIATION=%deviation (default 2)"
+    echo "  AVERAGE=#frames (default 5)"
     echo ""
     echo "Available RT options:"
     echo "  -P# (e.g., -P1 to force single CPU)"
@@ -278,7 +278,7 @@ test the performance of a system by iteratively rendering several
 well-known datasets into 512x512 images where performance metrics are
 documented and fairly well understood.  The local machine's
 performance is compared to the base system (called VGR) and a numeric
-"VGR" mulitplier of performance is computed.  This number is a
+"VGR" multiplier of performance is computed.  This number is a
 simplified metric from which one may qualitatively compare cpu and
 cache performance, versions of BRL-CAD, and different compiler
 characteristics.
@@ -291,8 +291,8 @@ it may be run in a stand-alone environment:
 
   RT - the rt binary (e.g. ../src/rt/rt or /usr/brlcad/bin/rt)
   DB - the directory containing the reference geometry (e.g. ../db)
-  PIX - the directory containing the reference images (e.g. ../pix)
-  LOG - the directory containing the reference logs (e.g. ../pix)
+  PIX - the directory containing the reference images (e.g. ./ref)
+  LOG - the directory containing the reference logs (e.g. ./ref)
   CMP - the name of a pixcmp tool (e.g. ./pixcmp or cmp)
   ELP - the name of an elapsed time tool (e.g. ../sh/elapsed.sh)
   TIMEFRAME - the minimum number of seconds each trace needs to take
@@ -318,7 +318,7 @@ additional rays are hypersampled but without any jitter, so it's
 effectively performing a multiplier amount of work over the initial
 frame.
 
-Plese send your BRL-CAD Benchmark results to the developers along with
+Please send your BRL-CAD Benchmark results to the developers along with
 detailed system information to <devs@brlcad.org>.  Include at least:
 
   0) Compiler name and version (e.g. gcc --version)
@@ -350,19 +350,19 @@ if test "x$CLEAN" = "x1" ; then
     $ECHO
 
     for i in moss world star bldg391 m35 sphflake ; do
-	$ECHO rm -f $i.log $i.pix $i.log.[0-9]* $i.pix.[0-9]*
-	rm -f $i.log $i.pix $i.log.[0-9]* $i.pix.[0-9]*
+	$ECHO rm -f $i.log $i.pix $i-[0-9]*.log $i-[0-9]*.pix
+	rm -f $i.log $i.pix $i-[0-9]*.log $i-[0-9]*.pix
     done
     if test "x$CLOBBER" = "x1" ; then
 	# NEVER automatically delete the summary file, but go ahead with the rest
-	for i in benchmark-[0-9]*-run.log ; do
+	for i in run-[0-9]*-benchmark.log ; do
 	    $ECHO rm -f $i
 	    rm -f $i
 	done
     fi
 
     printed=no
-    for i in summary benchmark-[0-9]*-run.log ; do
+    for i in summary run-[0-9]*-benchmark.log ; do
 	if test -f "$i" ; then
 	    if test "x$printed" = "xno" ; then
 		$ECHO
@@ -520,9 +520,8 @@ look_for directory "a benchmark reference image directory" PIX \
     ${PATH_TO_THIS}/share/brlcad/pix \
     ${PATH_TO_THIS}/../share/pix \
     ${PATH_TO_THIS}/share/pix \
-    ${PATH_TO_THIS}/../pix \
-    ${PATH_TO_THIS}/pix \
-    ./pix
+    ${PATH_TO_THIS}/ref \
+    ./ref
 
 look_for directory "a benchmark reference log directory" LOG \
     $PIX \
@@ -532,9 +531,8 @@ look_for directory "a benchmark reference log directory" LOG \
     ${PATH_TO_THIS}/share/brlcad/pix \
     ${PATH_TO_THIS}/../share/pix \
     ${PATH_TO_THIS}/share/pix \
-    ${PATH_TO_THIS}/../pix \
-    ${PATH_TO_THIS}/pix \
-    ./pix
+    ${PATH_TO_THIS}/ref \
+    ./ref
 
 look_for executable "a pixel comparison utility" CMP \
     ${PATH_TO_THIS}/pixcmp \
@@ -619,7 +617,7 @@ if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  ELP does not seem to work as expected"
     exit 2
-fi 
+fi
 
 
 # utility function to set a variable if it's not already set to something
@@ -652,10 +650,10 @@ if test $MAXTIME -lt $TIMEFRAME ; then
 fi
 
 # maximum deviation percentage
-set_if_unset DEVIATION 3
+set_if_unset DEVIATION 2
 
 # maximum number of iterations to average
-set_if_unset AVERAGE 3
+set_if_unset AVERAGE 5
 
 # end of settings, separate the output
 $ECHO
@@ -667,7 +665,7 @@ $ECHO
 
 # determine raytracer version
 $ECHO "RT reports the following version information:"
-versions="`$RT 2>&1 | grep BRL-CAD`"
+versions="`$RT 2>&1 | grep BRL-CAD | grep Release`"
 if test "x$versions" = "x" ; then
     $ECHO "Unknown"
 else
@@ -675,17 +673,27 @@ else
 fi
 $ECHO
 
+
 # if expr works, let the user know about how long this might take
 if test "x`expr 1 - 1 2>/dev/null`" = "x0" ; then
-    mintime="`expr $TIMEFRAME \* 6`"
+    mintime="`expr 6 \* $TIMEFRAME`"
+    if test $mintime -lt 1 ; then
+	mintime=0 # zero is okay
+    fi
     $ECHO "Minimum run time is `$ELP $mintime`"
-    maxtime="`expr $MAXTIME \* 6`"
+    maxtime="`expr 6 \* $MAXTIME`"
+    if test $maxtime -lt 1 ; then
+	maxtime=1 # zero would be misleading
+    fi
     $ECHO "Maximum run time is `$ELP $maxtime`"
-    estimate="`expr $mintime \* 3`"
+    estimate="`expr 3 \* $mintime`"
+    if test $estimate -lt 1 ; then
+	estimate=1 # zero would be misleading
+    fi
     if test $estimate -gt $maxtime ; then
 	estimate="$maxtime"
     fi
-    $ECHO "Estimated   time is `$ELP $estimate`"
+    $ECHO "Estimated time is `$ELP $estimate`"
     $ECHO
 else
     $ECHO "WARNING: expr is unavailable, unable to compute statistics"
@@ -890,6 +898,43 @@ sqrt ( ) {
 
 
 #
+# clean_obstacles base_filename
+#   conditionally removes or saves backup of any .pix or .log files
+#   output during bench.
+#
+clean_obstacles ( ) {
+    base="$1" ; shift
+
+    if test "x$base" = "x" ; then
+	$ECHO "ERROR: argument mismatch, cleaner is missing base name"
+	exit 1
+    fi
+
+    # look for an image file
+    if test -f ${base}.pix ; then
+	if test -f ${base}-$$.pix ; then
+	    # backup already exists, just delete obstacle
+	    rm -f ${base}.pix
+	else
+	    # no backup exists yet, so keep it
+	    mv -f ${base}.pix ${base}-$$.pix
+	fi
+    fi
+
+    # look for a log file
+    if test -f ${base}.log ; then
+	if test -f ${base}-$$.log ; then
+	    # backup already exists, just delete obstacle
+	    rm -f ${base}.log
+	else
+	    # no backup exists yet, so keep it
+	    mv -f ${base}.log ${base}-$$.log
+	fi
+    fi
+}
+
+
+#
 # bench test_name geometry [..rt args..]
 #   runs a series of benchmark tests assuming the following are preset:
 #
@@ -920,15 +965,20 @@ bench ( ) {
     bench_rtfms=""
     bench_percent=100
     bench_start_time="`date '+%H %M %S'`"
-    bench_overall_elapsed=0
+    bench_overall_elapsed=-1
 
+    # clear out before we begin, only saving backup on first encounter
+    clean_obstacles "$bench_testname"
+
+    # use -lt since -le makes causes a "floor(elapsed)" comparison and too many iterations
     while test $bench_overall_elapsed -lt $MAXTIME ; do
 
-	bench_elapsed=0
+	bench_elapsed=-1
+	# use -lt since -le makes causes a "floor(elapsed)" comparison and too many iterations
 	while test $bench_elapsed -lt $TIMEFRAME ; do
 
-	    if test -f ${bench_testname}.pix; then mv -f ${bench_testname}.pix ${bench_testname}.pix.$$; fi
-	    if test -f ${bench_testname}.log; then mv -f ${bench_testname}.log ${bench_testname}.log.$$; fi
+	    # clear out any previous run, only saving backup on first encounter
+	    clean_obstacles "$bench_testname"
 
 	    bench_frame_start_time="`date '+%H %M %S'`"
 
@@ -939,7 +989,13 @@ end;
 EOF
 	    retval=$?
 
-	    if test -f ${bench_testname}.pix.$bench_frame ; then mv -f ${bench_testname}.pix.$bench_frame ${bench_testname}.pix ; fi
+	    if test $bench_frame -ne 0 ; then
+		if test -f ${bench_testname}.pix.$bench_frame ; then
+		    mv -f ${bench_testname}.pix.$bench_frame ${bench_testname}.pix
+		else
+		    $ECHO "WARNING: ${bench_testname}.pix.$bench_frame does not exist"
+		fi
+	    fi
 
 	    # compute how long we took, rounding up to at least one
 	    # second to prevent division by zero.
@@ -962,19 +1018,27 @@ EOF
 
 		# increase the number of rays exponentially if we are
 		# considerably faster than the TIMEFRAME required.
-		if test `expr $bench_elapsed \* 32` -le ${TIMEFRAME} ; then
+		if test `expr $bench_elapsed \* 128` -lt ${TIMEFRAME} ; then
+		    # 128x increase, skip six frames
+		    bench_hypersample="`expr $bench_hypersample \* 128 + 127`"
+		    bench_frame="`expr $bench_frame + 7`"
+		elif test `expr $bench_elapsed \* 64` -lt ${TIMEFRAME} ; then
+		    # 64x increase, skip five frames
+		    bench_hypersample="`expr $bench_hypersample \* 64 + 63`"
+		    bench_frame="`expr $bench_frame + 6`"
+		elif test `expr $bench_elapsed \* 32` -lt ${TIMEFRAME} ; then
 		    # 32x increase, skip four frames
 		    bench_hypersample="`expr $bench_hypersample \* 32 + 31`"
 		    bench_frame="`expr $bench_frame + 5`"
-		elif test `expr $bench_elapsed \* 16` -le ${TIMEFRAME} ; then
+		elif test `expr $bench_elapsed \* 16` -lt ${TIMEFRAME} ; then
 		    # 16x increase, skip three frames
 		    bench_hypersample="`expr $bench_hypersample \* 16 + 15`"
 		    bench_frame="`expr $bench_frame + 4`"
-		elif test `expr $bench_elapsed \* 8` -le ${TIMEFRAME} ; then
+		elif test `expr $bench_elapsed \* 8` -lt ${TIMEFRAME} ; then
 		    # 8x increase, skip two frames
 		    bench_hypersample="`expr $bench_hypersample \* 8 + 7`"
 		    bench_frame="`expr $bench_frame + 3`"
-		elif test `expr $bench_elapsed \* 4` -le ${TIMEFRAME} ; then
+		elif test `expr $bench_elapsed \* 4` -lt ${TIMEFRAME} ; then
 		    # 4x increase, skip a frame
 		    bench_hypersample="`expr $bench_hypersample \* 4 + 3`"
 		    bench_frame="`expr $bench_frame + 2`"
@@ -1047,11 +1111,26 @@ EOF
 	bench_hypersample="`expr \( \( $bench_hypersample + 1 \) / 2 \) - 1`"
     done
 
+    # clear out any profile output files
+    if test -f gmon.out ; then
+	mv -f gmon.out gmon.${bench_testname}.out
+    fi
+
     # the last run should be a relatively stable representative of the performance
 
-    if test -f gmon.out; then mv -f gmon.out gmon.${bench_testname}.out; fi
-    ${CMP} ${PIX}/${bench_testname}.pix ${bench_testname}.pix
+    if ! test -f "${PIX}/${bench_testname}.pix" ; then
+	$ECHO "ERROR: reference image ${PIX}/${bench_testname}.pix not found"
+    fi
+    if ! test -f "${bench_testname}.pix" ; then
+	$ECHO "ERROR: computed image ${bench_testname}.pix disappeared?!"
+	ls -la *.pix*
+    fi
+    $VERBOSE_ECHO "DEBUG: $CMP $PIX/${bench_testname}.pix ${bench_testname}.pix"
+    cmp_result="`${CMP} ${PIX}/${bench_testname}.pix ${bench_testname}.pix 2>&1`"
     ret=$?
+
+    $ECHO "$cmp_result"
+
     if test $ret = 0 ; then
 	# perfect match
 	$ECHO ${bench_testname}.pix:  answers are RIGHT
@@ -1116,7 +1195,7 @@ perf ( ) {
     done
 
     # extract the RTFM values from the log files, use TR to convert
-    # newlines to tabs.  the trailing tab is signficant in case there
+    # newlines to tabs.  the trailing tab is significant in case there
     # are not enough results.
     #
     # FIXME: should really iterate one file at a time so we don't
@@ -1137,7 +1216,7 @@ perf ( ) {
 
     # Trick: Force args $1 through $6 to the numbers in $perf_CURVALS
     # This should be "set -- $perf_CURVALS", but 4.2BSD /bin/sh can't
-    # handle it, and perf_CURVALS are all positive (ie, no leading
+    # handle it, and perf_CURVALS are all positive (i.e., no leading
     # dashes), so this is safe.
 
     set $perf_CURVALS
@@ -1282,7 +1361,7 @@ $ECHO "Total testing time elapsed: `$ELP $start`"
 # see if we fail
 if test ! "x$ret" = "x0" ; then
     $ECHO
-    $ECHO "THE BENCHARK ANALYSIS DID NOT COMPLETE SUCCESSFULLY." 
+    $ECHO "THE BENCHMARK ANALYSIS DID NOT COMPLETE SUCCESSFULLY."
     $ECHO
     $ECHO "A benchmark failure means this is not a viable install of BRL-CAD.  This may be"
     $ECHO "a new bug or (more likely) is a compilation configuration error.  Ensure your"
@@ -1417,7 +1496,7 @@ else
     $ECHO
     blankit=no
 
-    # BSD
+    # BSD+
     look_for executable "a sysctl command" SYSCTL_CMD `echo "$PATH" | tr ":" "\n" | sed 's/$/\/sysctl/g'`
     if test ! "x$SYSCTL_CMD" = "x" ; then
 	$ECHO "Collecting system state information (via $SYSCTL_CMD)"
@@ -1479,6 +1558,19 @@ else
 	QUIET=1
 	$ECHO "==============================================================================="
 	$ECHO "`cat $CPUINFO_FILE 2>&1`"
+	$ECHO
+	QUIET="$preQUIET"
+	blankit=yes
+    fi
+
+    # Linux+
+    look_for executable "an lscpu command" LSCPU_CMD `echo $PATH | tr ":" "\n" | sed 's/$/\/lscpu/g'`
+    if test ! "x$LSCPU_CMD" = "x" ; then
+	$ECHO "Collecting system CPU information (via $LSCPU_CMD)"
+	preQUIET="$QUIET"
+	QUIET=1
+	$ECHO "==============================================================================="
+	$ECHO "`$LSCPU_CMD 2>&1`"
 	$ECHO
 	QUIET="$preQUIET"
 	blankit=yes

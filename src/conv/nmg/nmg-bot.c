@@ -1,7 +1,7 @@
 /*                       N M G - B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ main(int argc, char **argv)
     }
 
     if (argc == 4) {
-	if (!strcmp(argv[1], "-v"))
+	if (BU_STR_EQUAL(argv[1], "-v"))
 	    verbose = 1;
 	else {
 	    bu_log("Illegal option: %s\n", argv[1]);
@@ -101,10 +101,10 @@ main(int argc, char **argv)
 
     rt_init_resource(&rt_uniresource, 0, NULL);
 
-    dbip = db_open(argv[argc-2], "r");
+    dbip = db_open(argv[argc-2], DB_OPEN_READONLY);
     if (dbip == DBI_NULL) {
 	perror(argv[0]);
-	bu_exit(1, "Cannot open file (%s)\n", argv[argc-2]);
+	bu_exit(1, "Cannot open geometry database file (%s)\n", argv[argc-2]);
     }
 
     if ((fdout=wdb_fopen(argv[argc-1])) == NULL) {

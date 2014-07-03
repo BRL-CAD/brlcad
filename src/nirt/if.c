@@ -1,7 +1,7 @@
 /*                            I F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file if.c
+/** @file nirt/if.c
  *
  * This program is an Interactive Ray-Tracer
  *
@@ -50,26 +50,23 @@ void del_ovlp(overlap *op);
 void init_ovlp(void);
 
 int
-if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
+if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(finished_segs))
 {
-    struct partition *part;
+    char regionPN[512] = {0};
+    const char *val;
     fastf_t ar = azimuth() * DEG2RAD;
     fastf_t er = elevation() * DEG2RAD;
+    fastf_t get_obliq(fastf_t *ray, fastf_t *normal);
     int i;
+    int need_to_free = 0;	/* Clean up the bu_vls? */
     int part_nm = 0;
     overlap *ovp;	/* the overlap record for this partition */
     point_t inormal;
     point_t onormal;
-    struct bu_vls claimant_list;	/* Names of the claiming regions */
-    int need_to_free = 0;	/* Clean up the bu_vls? */
-    fastf_t get_obliq(fastf_t *ray, fastf_t *normal);
-    struct bu_vls *vls;
-    struct bu_vls attr_vls;
-    struct bu_mro **attr_values;
-    char regionPN[512] = {0};
+    struct partition *part;
 
-    /* quellage */
-    finished_segs = finished_segs;
+    struct bu_vls claimant_list = BU_VLS_INIT_ZERO;	/* Names of the claiming regions */
+    struct bu_vls attr_vls = BU_VLS_INIT_ZERO;
 
     report(FMT_RAY);
     report(FMT_HEAD);
@@ -141,7 +138,8 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	bu_strlcpy(regionPN, part->pt_regionp->reg_name, sizeof(regionPN));
 
 	ValTab[VTI_PATH_NAME].value.sval = part->pt_regionp->reg_name;
-	ValTab[VTI_REG_NAME].value.sval = bu_basename(regionPN);
+	ValTab[VTI_REG_NAME].value.sval = (char *)bu_calloc(strlen(regionPN), sizeof(char), "if_hit sval");
+	bu_basename((char *)ValTab[VTI_REG_NAME].value.sval, regionPN);
 	ValTab[VTI_REG_ID].value.ival = part->pt_regionp->reg_regionid;
 	ValTab[VTI_SURF_NUM_IN].value.ival = part->pt_inhit->hit_surfno;
 	ValTab[VTI_SURF_NUM_OUT].value.ival = part->pt_outhit->hit_surfno;
@@ -159,15 +157,20 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	    struct region **rpp;
 	    char *cp;
 
-	    bu_vls_init(&claimant_list);
+	    bu_vls_trunc(&claimant_list, 0);
 	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 0;
 	    for (rpp = part->pt_overlap_reg; *rpp != REGION_NULL; ++rpp) {
 		char tmpcp[512] = {0};
+		char *base = NULL;
 
 		if (ValTab[VTI_CLAIMANT_COUNT].value.ival++)
 		    bu_vls_strcat(&claimant_list, " ");
 		bu_strlcpy(tmpcp, (*rpp)->reg_name, sizeof(tmpcp));
-		bu_vls_strcat(&claimant_list, bu_basename(tmpcp));
+
+		base = (char *)bu_calloc(strlen(tmpcp), sizeof(char), "if_hit base");
+		bu_basename(base, tmpcp);
+		bu_vls_strcat(&claimant_list, base);
+		bu_free(base, "bu_basename");
 	    }
 	    ValTab[VTI_CLAIMANT_LIST].value.sval =
 		bu_vls_addr(&claimant_list);
@@ -183,17 +186,11 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	}
 
 	/* format up the attribute strings into a single string */
-	bu_vls_init(&attr_vls);
-	attr_values = part->pt_regionp->attr_values;
-	for (i=0; i < a_tab.attrib_use; i++) {
-
-	    BU_CK_MRO(attr_values[i]);
-	    vls = &attr_values[i]->string_rep;
-
-	    if (bu_vls_strlen(vls) > 0) {
-		/* XXX only print attributes that actually were set */
-		bu_vls_printf(&attr_vls, "%s=%V ", a_tab.attrib[i], vls);
-	    }
+	bu_vls_trunc(&attr_vls, 0);
+	for (i = 0; i < a_tab.attrib_use; i++) {
+	   if ((val = bu_avs_get(&part->pt_regionp->attr_values, db5_standard_attribute(db5_standardize_attribute(a_tab.attrib[i])))) != NULL) {
+	       bu_vls_printf(&attr_vls, "%s=%s ", a_tab.attrib[i], val);
+	   }
 	}
 
 	ValTab[VTI_ATTRIBUTES].value.sval = bu_vls_addr(&attr_vls);
@@ -203,7 +200,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 
 	if (need_to_free) {
 	    bu_vls_free(&claimant_list);
-	    bu_free((genptr_t)ValTab[VTI_CLAIMANT_LISTN].value.sval, "returned by bu_vls_strdup");
+	    bu_free((void *)ValTab[VTI_CLAIMANT_LISTN].value.sval, "returned by bu_vls_strdup");
 	    need_to_free = 0;
 	}
 
@@ -215,8 +212,10 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	    char *copy_ovlp_reg1 = bu_strdup(ovp->reg1->reg_name);
 	    char *copy_ovlp_reg2 = bu_strdup(ovp->reg2->reg_name);
 
-	    ValTab[VTI_OV_REG1_NAME].value.sval = bu_basename(copy_ovlp_reg1);
-	    ValTab[VTI_OV_REG2_NAME].value.sval = bu_basename(copy_ovlp_reg2);
+	    ValTab[VTI_OV_REG1_NAME].value.sval = (char *)bu_calloc(strlen(copy_ovlp_reg1), sizeof(char), "if_hit sval2");
+	    bu_basename((char *)ValTab[VTI_OV_REG1_NAME].value.sval, copy_ovlp_reg1);
+	    ValTab[VTI_OV_REG2_NAME].value.sval = (char *)bu_calloc(strlen(copy_ovlp_reg2), sizeof(char), "if_hit sval3");
+	    bu_basename((char *)ValTab[VTI_OV_REG2_NAME].value.sval, copy_ovlp_reg2);
 #endif
 	    ValTab[VTI_OV_REG1_ID].value.ival = ovp->reg1->reg_regionid;
 	    ValTab[VTI_OV_REG2_ID].value.ival = ovp->reg2->reg_regionid;
@@ -236,8 +235,8 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	    report(FMT_OVLP);
 
 #ifndef NIRT_OVLP_PATH
-	    bu_free((genptr_t)copy_ovlp_reg1, "copy_ovlp_reg1");
-	    bu_free((genptr_t)copy_ovlp_reg2, "copy_ovlp_reg2");
+	    bu_free((void *)copy_ovlp_reg1, "copy_ovlp_reg1");
+	    bu_free((void *)copy_ovlp_reg2, "copy_ovlp_reg2");
 #endif
 
 	    del_ovlp(ovp);
@@ -270,8 +269,6 @@ if_miss(void)
 
 
 /**
- * I F _ O V E R L A P
- *
  * Default handler for overlaps in rt_boolfinal().
  * Returns -
  *  0 to eliminate partition with overlap entirely
@@ -283,8 +280,7 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1, st
 {
     overlap *new_ovlp;
 
-    /* N. B. bu_malloc() only returns on successful allocation */
-    new_ovlp = (overlap *) bu_malloc(sizeof(overlap), "new_ovlp");
+    BU_ALLOC(new_ovlp, overlap);
 
     new_ovlp->ap = ap;
     new_ovlp->pp = pp;
@@ -314,7 +310,7 @@ get_obliq(fastf_t *ray, fastf_t *normal)
     fastf_t cos_obl;
     fastf_t obliquity;
 
-    cos_obl = fabs(VDOT(ray, normal) * MAGNITUDE(normal) / MAGNITUDE(ray));
+    cos_obl = fabs(VDOT(ray, normal) / (MAGNITUDE(normal) * MAGNITUDE(ray)));
     if (cos_obl < 1.001) {
 	if (cos_obl > 1)
 	    cos_obl = 1;
@@ -327,7 +323,7 @@ get_obliq(fastf_t *ray, fastf_t *normal)
     }
 
     /* convert obliquity to degrees */
-    obliquity = fabs(obliquity * 180/M_PI);
+    obliquity = fabs(obliquity * RAD2DEG);
     if (obliquity > 90 && obliquity <= 180)
 	obliquity = 180 - obliquity;
     else if (obliquity > 180 && obliquity <= 270)

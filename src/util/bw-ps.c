@@ -1,7 +1,7 @@
 /*                         B W - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bw-ps.c
+/** @file util/bw-ps.c
  *
  * Convert a black and white (bw) file to an 8-bit PostScript image.
  *
@@ -48,6 +48,7 @@ static size_t ypoints;
 static size_t pagewidth = 612;	/* page size in points - 8.5 inches */
 static size_t pageheight = 792;	/* 11 inches */
 
+static char Stdin[] = "stdin";
 static char *file_name;
 static FILE *infp;
 
@@ -55,7 +56,7 @@ void prolog(FILE *fp, char *name, int w, int h);
 void postlog(FILE *fp);
 
 static char usage[] = "\
-Usage: bw-ps [-e] [-c] [-L] [-h]\n\
+Usage: bw-ps [-e] [-c] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
 
@@ -64,15 +65,11 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ehcLs:w:n:S:W:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ecLs:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'e':
 		/* Encapsulated PostScript */
 		encapsulated++;
-		break;
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
 		break;
 	    case 'c':
 		center = 1;
@@ -109,21 +106,21 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "[stdin]";
+	file_name = Stdin;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "bw-ps: cannot open \"%s\" for reading\n",
-			  file_name);
+	    fprintf(stderr,
+		    "bw-ps: cannot open \"%s\" for reading\n",
+		    file_name);
 	    return 0;
 	}
 	/*fileinput++;*/
     }
 
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bw-ps: excess argument(s) ignored\n");
+	fprintf(stderr, "bw-ps: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -161,10 +158,10 @@ main(int argc, char **argv)
     for (y = 0; y < height; y += scans_per_patch) {
 	/* start a patch */
 	fprintf(ofp, "save\n");
-	fprintf(ofp, "%ld %ld 8 [%ld 0 0 %ld 0 %ld] {<\n ",
-		width, scans_per_patch,		/* patch size */
-		width, height,			/* total size = 1.0 */
-		-y);				/* patch y origin */
+	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %ld] {<\n ",
+		(unsigned long)width, (unsigned long)scans_per_patch,		/* patch size */
+		(unsigned long)width, (unsigned long)height,			/* total size = 1.0 */
+		-(long)y);				/* patch y origin */
 
 	/* data */
 	num = 0;
@@ -188,7 +185,7 @@ void
 prolog(FILE *fp, char *name, int w, int h)
 
 
-    /* in points */
+/* in points */
 {
     time_t ltime;
 
@@ -216,7 +213,7 @@ prolog(FILE *fp, char *name, int w, int h)
 	pagewidth = pageheight;
 	pageheight = tmp;
 	fprintf(fp, "90 rotate\n");
-	fprintf(fp, "0 -%ld translate\n", pageheight);
+	fprintf(fp, "0 -%lu translate\n", (unsigned long)pageheight);
     }
     if (!encapsulated && center) {
 	int xtrans, ytrans;

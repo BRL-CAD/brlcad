@@ -1,7 +1,7 @@
 /*                  N M G _ F I X _ N O R M A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file nmg_fix_normals.c
+/** @file libged/nmg_fix_normals.c
  *
  * The nmg_fix_normals command.
  *
@@ -29,7 +29,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "rtgeom.h"
 
 #include "./ged_private.h"
@@ -60,25 +60,25 @@ ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[])
     tol.para = 0.999;
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     /* attempt to resolve and verify before we jump in */
     nmg_name = argv[1];
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_name, LOOKUP_QUIET)) == DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s does not exist\n", nmg_name);
+    if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", nmg_name);
 	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&nmg_intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal() error\n");
+	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return GED_ERROR;
     }
 
     if (nmg_intern.idb_type != ID_NMG) {
-	bu_vls_printf(&gedp->ged_result_str, "%s is not an NMG solid\n", nmg_name);
+	bu_vls_printf(gedp->ged_result_str, "%s is not an NMG solid\n", nmg_name);
 	rt_db_free_internal(&nmg_intern);
 	return GED_ERROR;
     }
@@ -93,6 +93,7 @@ ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

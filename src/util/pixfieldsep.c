@@ -1,7 +1,7 @@
 /*                   P I X F I E L D S E P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixfieldsep.c
+/** @file util/pixfieldsep.c
  *
  * Separate an interlaced video image into two separate .pix files.
  *
@@ -39,8 +39,10 @@ size_t file_width = 720;
 size_t bytes_per_sample = 3;
 int doubleit = 0;
 
-char *even_file = "even.pix";
-char *odd_file = "odd.pix";
+char Even_file[] = "even.pix";
+char Odd_file[]  = "odd.pix";
+char *even_file  = Even_file;
+char *odd_file   = Odd_file;
 
 static char usage[] = "\
 Usage: pixfieldsep [-w file_width] [-s square_size] [-# nbytes/pixel] \n\
@@ -51,7 +53,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ds:w:#:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ds:w:#:")) != -1) {
 	switch (c) {
 	    case 'd':
 		doubleit = 1;
@@ -80,7 +82,7 @@ get_args(int argc, char **argv)
     }
 
     if (++bu_optind <= argc)
-	(void)fprintf(stderr, "pixfieldsep: excess argument(s) ignored\n");
+	fprintf(stderr, "pixfieldsep: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
