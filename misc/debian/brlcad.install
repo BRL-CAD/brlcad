@@ -1,0 +1,93 @@
+usr/brlcad/
+
+debian/icons/16x16/archer.png usr/share/icons/hicolor/16x16/apps
+debian/icons/16x16/brlcad-db.png usr/share/icons/hicolor/16x16/apps
+debian/icons/16x16/brlcad-doc.png usr/share/icons/hicolor/16x16/apps
+debian/icons/16x16/brlcad.png usr/share/icons/hicolor/16x16/apps
+debian/icons/16x16/brlcad-v4.png usr/share/icons/hicolor/16x16/mimetypes
+debian/icons/16x16/brlcad-v5.png usr/share/icons/hicolor/16x16/mimetypes
+debian/icons/16x16/mged.png usr/share/icons/hicolor/16x16/apps
+debian/icons/16x16/rtwizard.png usr/share/icons/hicolor/16x16/apps
+
+debian/icons/24x24/archer.png usr/share/icons/hicolor/24x24/apps
+debian/icons/24x24/brlcad-db.png usr/share/icons/hicolor/24x24/apps
+debian/icons/24x24/brlcad-doc.png usr/share/icons/hicolor/24x24/apps
+debian/icons/24x24/brlcad.png usr/share/icons/hicolor/24x24/apps
+debian/icons/24x24/brlcad-v4.png usr/share/icons/hicolor/24x24/mimetypes
+debian/icons/24x24/brlcad-v5.png usr/share/icons/hicolor/24x24/mimetypes
+debian/icons/24x24/mged.png usr/share/icons/hicolor/24x24/apps
+debian/icons/24x24/rtwizard.png usr/share/icons/hicolor/24x24/apps
+
+debian/icons/36x36/archer.png usr/share/icons/hicolor/36x36/apps
+debian/icons/36x36/brlcad-db.png usr/share/icons/hicolor/36x36/apps
+debian/icons/36x36/brlcad-doc.png usr/share/icons/hicolor/36x36/apps
+debian/icons/36x36/brlcad.png usr/share/icons/hicolor/36x36/apps
+debian/icons/36x36/brlcad-v4.png usr/share/icons/hicolor/36x36/mimetypes
+debian/icons/36x36/brlcad-v5.png usr/share/icons/hicolor/36x36/mimetypes
+debian/icons/36x36/mged.png usr/share/icons/hicolor/36x36/apps
+debian/icons/36x36/rtwizard.png usr/share/icons/hicolor/36x36/apps
+
+debian/icons/48x48/archer.png usr/share/icons/hicolor/48x48/apps
+debian/icons/48x48/brlcad-db.png usr/share/icons/hicolor/48x48/apps
+debian/icons/48x48/brlcad-doc.png usr/share/icons/hicolor/48x48/apps
+debian/icons/48x48/brlcad.png usr/share/icons/hicolor/48x48/apps
+debian/icons/48x48/brlcad-v4.png usr/share/icons/hicolor/48x48/mimetypes
+debian/icons/48x48/brlcad-v5.png usr/share/icons/hicolor/48x48/mimetypes
+debian/icons/48x48/mged.png usr/share/icons/hicolor/48x48/apps
+debian/icons/48x48/rtwizard.png usr/share/icons/hicolor/48x48/apps
+
+debian/icons/64x64/archer.png usr/share/icons/hicolor/64x64/apps
+debian/icons/64x64/brlcad-db.png usr/share/icons/hicolor/64x64/apps
+debian/icons/64x64/brlcad-doc.png usr/share/icons/hicolor/64x64/apps
+debian/icons/64x64/brlcad.png usr/share/icons/hicolor/64x64/apps
+debian/icons/64x64/brlcad-v4.png usr/share/icons/hicolor/64x64/mimetypes
+debian/icons/64x64/brlcad-v5.png usr/share/icons/hicolor/64x64/mimetypes
+debian/icons/64x64/mged.png usr/share/icons/hicolor/64x64/apps
+debian/icons/64x64/rtwizard.png usr/share/icons/hicolor/64x64/apps
+
+debian/icons/96x96/archer.png usr/share/icons/hicolor/96x96/apps
+debian/icons/96x96/brlcad-db.png usr/share/icons/hicolor/96x96/apps
+debian/icons/96x96/brlcad-doc.png usr/share/icons/hicolor/96x96/apps
+debian/icons/96x96/brlcad.png usr/share/icons/hicolor/96x96/apps
+debian/icons/96x96/brlcad-v4.png usr/share/icons/hicolor/96x96/mimetypes
+debian/icons/96x96/brlcad-v5.png usr/share/icons/hicolor/96x96/mimetypes
+debian/icons/96x96/mged.png usr/share/icons/hicolor/96x96/apps
+debian/icons/96x96/rtwizard.png usr/share/icons/hicolor/96x96/apps
+
+debian/icons/128x128/archer.png usr/share/icons/hicolor/128x128/apps
+debian/icons/128x128/brlcad-db.png usr/share/icons/hicolor/128x128/apps
+debian/icons/128x128/brlcad-doc.png usr/share/icons/hicolor/128x128/apps
+debian/icons/128x128/brlcad.png usr/share/icons/hicolor/128x128/apps
+debian/icons/128x128/brlcad-v4.png usr/share/icons/hicolor/128x128/mimetypes
+debian/icons/128x128/brlcad-v5.png usr/share/icons/hicolor/128x128/mimetypes
+debian/icons/128x128/mged.png usr/share/icons/hicolor/128x128/apps
+debian/icons/128x128/rtwizard.png usr/share/icons/hicolor/128x128/apps
+
+debian/icons/256x256/archer.png usr/share/icons/hicolor/256x256/apps
+debian/icons/256x256/brlcad-db.png usr/share/icons/hicolor/256x256/apps
+debian/icons/256x256/brlcad-doc.png usr/share/icons/hicolor/256x256/apps
+debian/icons/256x256/brlcad.png usr/share/icons/hicolor/256x256/apps
+debian/icons/256x256/brlcad-v4.png usr/share/icons/hicolor/256x256/mimetypes
+debian/icons/256x256/brlcad-v5.png usr/share/icons/hicolor/256x256/mimetypes
+debian/icons/256x256/mged.png usr/share/icons/hicolor/256x256/apps
+debian/icons/256x256/rtwizard.png usr/share/icons/hicolor/256x256/apps
+
+debian/brlcad.xml usr/share/mime/packages
+
+debian/brlcad.sh etc/profile.d
+
+debian/brlcad.menu etc/xdg/menus/applications-merged
+
+debian/brlcad.directory usr/share/desktop-directories
+debian/brlcad-doc.directory usr/share/desktop-directories
+
+debian/archer.desktop usr/share/applications
+debian/brlcad-db.desktop usr/share/applications
+debian/brlcad-doc-animation.desktop usr/share/applications
+debian/brlcad-doc.desktop usr/share/applications
+debian/brlcad-doc-mged.desktop usr/share/applications
+debian/mged.desktop usr/share/applications
+debian/rtwizard.desktop usr/share/applications
+
+debian/version usr/brlcad
+

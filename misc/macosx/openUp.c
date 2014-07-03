@@ -5,7 +5,7 @@
  *
  * The contents of this file constitute Original Code
  * as defined in and are subject to the
- * Apple               
+ * Apple
  * Public             ( quell
  * Source               ohloh
  * License              license
@@ -57,7 +57,6 @@ struct volumeinfo {
     u_int32_t finderinfo[8];
 };
 
-
 int main(int argc, char *argv[]) {
 
     char *path = NULL;
@@ -66,12 +65,12 @@ int main(int argc, char *argv[]) {
     struct volumeinfo volinfo;
     struct statfs sfs;
 
-    if (argc > 1) {
-	path = argv[1];
-    } else {
-	printf("Usage: %s /Volumes/Foo/OpenMe/\n", argv[0]);
+    if (argc <= 1) {
+	fprintf(stderr,"Usage: %s /Volumes/Foo/OpenMe/\n", argv[0]);
 	exit(1);
     }
+
+    path = argv[1];
 
     memset(&alist, 0, sizeof(alist));
     alist.bitmapcount = 5;

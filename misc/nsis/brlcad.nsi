@@ -9,7 +9,7 @@ RequestExecutionLevel user
 
 ;--------------------------------
 
-; Modurn User Interface
+; Modern User Interface
 !include "MUI.nsh"
 !include "FileFunc.nsh"
 !include "WordFunc.nsh"
@@ -100,14 +100,14 @@ FunctionEnd
   ;Finished page configuration
   !define MUI_FINISHPAGE_NOAUTOCLOSE
   !define MUI_FINISHPAGE_SHOWREADME "..\..\README"
-  !define MUI_FINISHPAGE_SHOWREADME_TEXT "View Readme"
+  !define MUI_FINISHPAGE_SHOWREADME_TEXT "View ReadMe"
   !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 
   !define MUI_FINISHPAGE_LINK "BRL-CAD Website"
   !define MUI_FINISHPAGE_LINK_LOCATION "http://brlcad.org/"
 
   !insertmacro MUI_PAGE_FINISH
-  
+
   !insertmacro MUI_UNPAGE_WELCOME
   !insertmacro MUI_UNPAGE_CONFIRM
   !insertmacro MUI_UNPAGE_INSTFILES
@@ -117,7 +117,7 @@ FunctionEnd
 
 ;--------------------------------
 ;Languages
- 
+
   !insertmacro MUI_LANGUAGE "English"
 
 ;--------------------------------
@@ -201,7 +201,7 @@ SectionEnd
 ; Uninstaller
 
 Section "Uninstall"
-  
+
   !insertmacro MUI_STARTMENU_GETFOLDER Application $MUI_TEMP
 
   ; Remove shortcuts, if any

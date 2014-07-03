@@ -1,0 +1,21 @@
+#include <time.h>
+#include <stdio.h>
+int main(void) {
+  FILE *outfp = NULL;
+  time_t t;
+  struct tm *currenttime;
+  t = time(NULL);
+  currenttime = localtime(&t);
+  outfp = fopen("${BUILD_DELTA_FILE}", "w");
+  fprintf(outfp, "%d/", currenttime->tm_sec);         /* seconds after the minute [0-60] */
+  fprintf(outfp, "%d/", currenttime->tm_min);         /* minutes after the hour [0-59] */
+  fprintf(outfp, "%d/", currenttime->tm_hour);        /* hours since midnight [0-23] */
+  fprintf(outfp, "%d/", currenttime->tm_mday);        /* day of the month [1-31] */
+  fprintf(outfp, "%d/", currenttime->tm_mon);         /* months since January [0-11] */
+  fprintf(outfp, "%d/", currenttime->tm_year);        /* years since 1900 */
+  fprintf(outfp, "%d/", currenttime->tm_wday);        /* days since Sunday [0-6] */
+  fprintf(outfp, "%d/", currenttime->tm_yday);        /* days since January 1 [0-365] */
+  fprintf(outfp, "%d", currenttime->tm_isdst);       /* Daylight Savings Time flag */
+  fclose(outfp);
+  return 0;
+}

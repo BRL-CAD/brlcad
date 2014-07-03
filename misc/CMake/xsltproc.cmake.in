@@ -1,0 +1,68 @@
+#               X S L T P R O C . C M A K E . I N
+# BRL-CAD
+#
+# Copyright (c) 2012-2014 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
+set(ENV{XML_DEBUG_CATALOG} 1)
+# It is necessary to ensure that the target directory exists *before* calling xsltproc
+# when building in parallel, due to a bug/limitation in xsltproc
+get_filename_component(output_dir "@outfile@" PATH)
+execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory "${output_dir}/")
+execute_process(COMMAND "@XSLTPROC_EXECUTABLE@" -nonet -xinclude -o "@outfile@" "@CURRENT_XSL_STYLESHEET@" "@full_path_filename@" RESULT_VARIABLE CMDRESULT)
+
+# For some reason, xsltproc doesn't always seem to respect the
+# output variable when doing man pages.  Add a backup check
+# to move the man page to the right location if xsltproc insists
+# on putting it in the current directory.
+get_filename_component(base_output_name "@outfile@" NAME)
+get_filename_component(base_output_path "@outfile@" PATH)
+set(output_names ${base_output_name} @EXTRA_OUTPUTS@)
+foreach(output_name ${output_names})
+  if(NOT "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" STREQUAL "${base_output_path}/${output_name}")
+    if(EXISTS "@CMAKE_CURRENT_BINARY_DIR@/${output_name}")
+      execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" "${base_output_path}/${output_name}")
+      execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" )
+    endif(EXISTS "@CMAKE_CURRENT_BINARY_DIR@/${output_name}")
+  endif(NOT "@CMAKE_CURRENT_BINARY_DIR@/${output_name}" STREQUAL "${base_output_path}/${output_name}")
+endforeach(output_name ${output_names})
+if(CMDRESULT)
+  message(FATAL_ERROR "xsltproc build failure: ${CMDRESULT}")
+endif(CMDRESULT)
+
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

@@ -1,9 +1,8 @@
-# $Id$
-
-#               B R L C A D . I N S T A L L
+#!/bin/sh
+#                  B R L C A D . I N S T A L L
 # BRL-CAD
 #
-# Copyright (c) 2007-2010 United States Government as represented by
+# Copyright (c) 2007-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,10 +43,11 @@
 
 # arg 1:  the new package version
 post_install() {
-  if ! [ `grep '/opt/brlcad/lib' etc/ld.so.conf` ]; then
-    echo "/opt/brlcad/lib" >>etc/ld.so.conf
-    sbin/ldconfig -r .
-  fi
+  pre_remove
+}
+
+post_upgrade() {
+  pre_remove
 }
 
 # arg 1:  the old package version

@@ -1,0 +1,8 @@
+
+[Desktop Entry]
+Name=BRL-CAD Examples
+Comment=BRL-CAD Database examples
+Exec=xdg-open /usr/brlcad/share/db
+Icon=brlcad-db
+Type=Application
+Categories=BRL-CAD-doc;

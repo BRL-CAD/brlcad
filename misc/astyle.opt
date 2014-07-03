@@ -1,0 +1,23 @@
+# Use k&r styling
+style=k&r
+
+# Enable support for mixed tabs and spaces
+indent=spaces=4
+
+# Indent goto labels rather than making them flush on the left
+indent-labels
+
+# Indent switch cases
+indent-switches
+
+# We don't want to add additional indentation to conditionals
+min-conditional-indent=0
+
+# Pad operators
+#pad-oper
+
+# Tighten parenthesis (unless overridden by other options such as pad-header)
+unpad-paren
+
+# Keep the space between if, while, etc. and the first paren
+pad-header

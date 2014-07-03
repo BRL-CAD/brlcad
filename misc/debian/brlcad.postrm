@@ -1,0 +1,16 @@
+#!/bin/sh
+
+file="/usr/share/applications/mimeapps.list"
+section="Added Associations"
+
+if [ -f $file ]
+then
+	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $file
+fi
+
+if [ -f $file ] && [ -z "$(sed "/\[$section\]/d" $file)" ]
+then
+	rm $file || :
+fi
+
+update-mime-database /usr/share/mime || :

@@ -1,0 +1,20 @@
+<!DOCTYPE Menu PUBLIC "-//freedesktop//DTD Menu 1.0//EN"
+    "http://www.freedesktop.org/standards/menu-spec/menu-1.0.dtd">
+
+<Menu>
+	<Name>Applications</Name>
+	<Menu>
+		<Name>brlcad</Name>
+		<Directory>brlcad.directory</Directory>
+		<Include>
+			<Category>BRL-CAD</Category>
+		</Include>
+		<Menu>
+			<Name>brlcad-doc</Name>
+			<Directory>brlcad-doc.directory</Directory>
+			<Include>
+				<Category>BRL-CAD-doc</Category>
+			</Include>
+		</Menu>
+	</Menu>
+</Menu>

@@ -1,0 +1,20 @@
+#include <stdio.h>
+#include <stdlib.h>
+#ifdef _WIN32
+   #define USERVAR "USERNAME"
+#else
+   #include <unistd.h>
+   #define USERVAR "USER"
+#endif
+#define chararraysize 2048
+int main(void) {
+  FILE *outfp = NULL;
+  char *name = getenv(USERVAR);
+  outfp = fopen("${BRLCAD_BINARY_DIR}/include/conf/USER.tmp", "w");
+  if (!name)
+    name = "unknown";
+  printf("user name: %s\n", name);
+  fprintf(outfp, "\"%s\"", name);
+  fclose(outfp);
+  return 0;
+}
