@@ -447,20 +447,24 @@ struct ged_qray_fmt {
     struct bu_vls fmt;
 };
 
+typedef enum {
+    GED_NONE = 0,  /* No change, no command has flagged this item as needing any action. */
+    GED_UPDATE,    /* A command has altered the item's data, display needs to be updated */
+    GED_ADD,       /* Item is newly added to display list */
+    GED_REMOVE     /* Item is flagged for removal from display list */
+} ged_view_event_t;
+
 struct ged_display_list {
     struct bu_list	l;
     struct bu_vls	gdl_path;
     struct bu_vls	gdl_data;
-    int			gdl_update_flag;
+    ged_view_event_t	gdl_view_event_flag;
 };
 
 /* FIXME: should be private */
 struct ged_drawable {
     struct bu_list		l;
-    struct bu_list		*gd_headDisplay;		/**< @brief  head of display list */
-    struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
-    struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
-    struct solid		*gd_freeSolids;		/**< @brief  ptr to head of free solid list */
+    struct bu_list		*display_list;		/**< @brief  display list */
 
     char			**gd_rt_cmd;
     int				gd_rt_cmd_len;
@@ -574,8 +578,6 @@ struct ged {
     void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
-    void			(*ged_create_vlist_callback)(struct solid *);	/**< @brief  function to call after creating a vlist */
-    void			(*ged_free_vlist_callback)();	/**< @brief  function to call after freeing a vlist */
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
     int 			ged_internal_call;
@@ -596,8 +598,6 @@ struct ged {
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 typedef void (*ged_refresh_callback_ptr)(void *);
-typedef void (*ged_create_vlist_callback_ptr)(struct solid *);
-typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
 
 
 /**
