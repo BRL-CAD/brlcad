@@ -447,19 +447,37 @@ struct ged_qray_fmt {
     struct bu_vls fmt;
 };
 
+/**************************************************/
+/* LIBGED display list experimenation starts here */
+/**************************************************/
+
 typedef enum {
     GED_NONE = 0,  /* No change, no command has flagged this item as needing any action. */
     GED_UPDATE,    /* A command has altered the item's data, display needs to be updated */
     GED_ADD,       /* Item is newly added to display list */
-    GED_REMOVE     /* Item is flagged for removal from display list */
+    GED_REMOVE,     /* Item is flagged for removal from display list */
+    GED_LABEL,      /* TODO - how do we specify individual labels, if we're only editing one parameter?  A list in the ged_display_list item?  How do we highlight just one portion of a primitive? */
+    GED_HIGHLIGHT   /* Highlight this item in the display (like illuminate, except how to hightlight is left up to the display.  Hopefully we can manage turning everything not hightlighted transparent.) */
 } ged_view_event_t;
+
+typedef enum {
+    GED_SHADED = 0,   /* By default, draw shaded objects. */
+    GED_WIREFRAME,    /* Wireframe */
+    GED_HIDDEN_LINE   /* Exterior lines on top of invisible solids */
+} ged_view_mode_t;
+
 
 struct ged_display_list {
     struct bu_list	l;
     struct bu_vls	gdl_path;
     struct bu_vls	gdl_data;
-    ged_view_event_t	gdl_view_event_flag;
+    ged_view_event_t	gdl_view_event_flags;
+    ged_view_mode_t	gdl_view_mode_flags;
+    fastf_t		transparency; /* 0 - 1 */
+    vect_t		color_override;
 };
+
+/**************************************************/
 
 /* FIXME: should be private */
 struct ged_drawable {
