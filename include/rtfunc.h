@@ -1,7 +1,7 @@
 /*                        R T F U N C . H
  * BRL-CAD
  *
- * Copyright (c) 2010 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,13 +30,17 @@
  *
  */
 
-#ifndef __RTFUNC_H__
-#define __RTFUNC_H__
+#ifndef RTFUNC_H
+#define RTFUNC_H
 
+#include "common.h"
 
-#include "bu.h"
+#include "bu/list.h"
+#include "bu/parse.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 
+__BEGIN_DECLS
 
 /**
  * prep an object for ray tracing
@@ -81,7 +85,7 @@ RT_EXPORT extern int rt_obj_curve(struct curvature *cvp, struct hit *hitp, struc
 /**
  * DEPRECATED: Unimplemented.
  */
-RT_EXPORT extern int rt_obj_class();
+DEPRECATED RT_EXPORT extern int rt_obj_class(void);
 
 /**
  * release the memory used by a solid
@@ -94,7 +98,7 @@ RT_EXPORT extern int rt_obj_free(struct soltab *stp);
 RT_EXPORT extern int rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
 
 /**
- * shoot an array of rays at a set of homogenous objects.
+ * shoot an array of rays at a set of homogeneous objects.
  */
 RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap);
 
@@ -158,7 +162,10 @@ RT_EXPORT extern int rt_obj_params(struct pc_pc_set *ps, const struct rt_db_inte
  */
 RT_EXPORT extern int rt_obj_mirror(struct rt_db_internal *ip, const plane_t *plane);
 
-#endif  /* __RTFUNC_H__ */
+__END_DECLS
+
+#endif  /* RTFUNC_H */
+
 /** @} */
 
 /*

@@ -1,7 +1,7 @@
 /*                        B R L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,13 +24,13 @@
  *  Convenience header for the core BRL-CAD libraries
  *
  *  This header includes the headers provided by libbu, libbn, libwdb,
- *  and librt.  It may be used in leu of including all of the
+ *  and librt.  It may be used in lieu of including all of the
  *  individual headers.
  *
  */
 
-#ifndef __BRLCAD_H__
-#define __BRLCAD_H__
+#ifndef BRLCAD_H
+#define BRLCAD_H
 
 #include "common.h"
 
@@ -71,7 +71,7 @@
  */
 #include "rtfunc.h"
 
-#endif  /* __BRLCAD_H__ */
+#endif  /* BRLCAD_H */
 /** @} */
 /*
  * Local Variables:

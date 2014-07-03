@@ -1,7 +1,7 @@
 /*                            F B . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,9 +25,12 @@
  *
  */
 
-#ifndef __FB_H__
-#define __FB_H__
+#ifndef FB_H
+#define FB_H
 
+#include "common.h"
+
+#include <limits.h>  /* For INT_MAX */
 #include <stdlib.h>
 
 /*
@@ -45,10 +48,15 @@
 #endif
 
 #include "fbio.h"
-#include "bu.h"
 
+#include "bu/bu_tcl.h"
+#include "bu/vls.h"
 
-/* Library entry points which are macros. */
+/* Library entry points which are macros.
+ *
+ * FIXME: turn these into proper functions so we can appropriately
+ * avoid dereferencing a NULL _ifp or calling an invalid callback.
+ */
 #define fb_gettype(_ifp)		(_ifp->if_type)
 #define fb_getwidth(_ifp)		(_ifp->if_width)
 #define fb_getheight(_ifp)		(_ifp->if_height)
@@ -70,9 +78,11 @@
 #define fb_bwreadrect(_ifp, _xmin, _ymin, _width, _height, _pp) 	(*_ifp->if_bwreadrect)(_ifp, _xmin, _ymin, _width, _height, _pp)
 #define fb_bwwriterect(_ifp, _xmin, _ymin, _width, _height, _pp)	(*_ifp->if_bwwriterect)(_ifp, _xmin, _ymin, _width, _height, _pp)
 
+__BEGIN_DECLS
+
 /* Library entry points which are true functions. */
 FB_EXPORT extern void fb_configureWindow(FBIO *, int, int);
-FB_EXPORT extern FBIO *fb_open(char *file, int _width, int _height);
+FB_EXPORT extern FBIO *fb_open(const char *file, int _width, int _height);
 FB_EXPORT extern int fb_close(FBIO *ifp);
 FB_EXPORT extern int fb_close_existing(FBIO *ifp);
 FB_EXPORT extern int fb_genhelp(void);
@@ -83,15 +93,17 @@ FB_EXPORT extern int fb_rpixel(FBIO *ifp, unsigned char *pp);
 FB_EXPORT extern int fb_wpixel(FBIO *ifp, unsigned char *pp);
 FB_EXPORT extern int fb_flush(FBIO *ifp);
 #if !defined(_WIN32) || defined(__CYGWIN__)
-FB_EXPORT extern void fb_log(const char *fmt, ...) __BU_ATTR_FORMAT12;
+FB_EXPORT extern void fb_log(const char *fmt, ...) _BU_ATTR_PRINTF12;
 #endif
 FB_EXPORT extern int fb_null(FBIO *ifp);
 FB_EXPORT extern int fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
 
 /* utility functions */
-FB_EXPORT extern int fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const char *filename, int pixel_size);
-FB_EXPORT extern int fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, unsigned long int npixels);
-FB_EXPORT extern int fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const char *name);
+FB_EXPORT extern int fb_common_file_size(size_t *widthp, size_t *heightp, const char *filename, int pixel_size);
+FB_EXPORT extern int fb_common_image_size(size_t *widthp, size_t *heightp, size_t npixels);
+FB_EXPORT extern int fb_common_name_size(size_t *widthp, size_t *heightp, const char *name);
+FB_EXPORT extern int fb_write_fp(FBIO *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result);
+FB_EXPORT extern int fb_read_fd(FBIO *ifp, int fd,  int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *result);
 
 /* color mapping */
 FB_EXPORT extern int fb_is_linear_cmap(const ColorMap *cmap);
@@ -174,33 +186,16 @@ FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 			   (to)[GRN]=(from)[GRN];\
 			   (to)[BLU]=(from)[BLU]; }
 
-/**
- * DEPRECATED: use fb_wpixel() instead.
- */
-#define FB_WPIXEL(ifp, pp) fb_wpixel(ifp, pp)
-
 /* Debug Bitvector Definition */
 #define FB_DEBUG_BIO 1	/* Buffered io calls (less r/wpixel) */
 #define FB_DEBUG_CMAP 2	/* Contents of colormaps */
 #define FB_DEBUG_RW 4	/* Contents of reads and writes */
 #define FB_DEBUG_BRW 8	/* Buffered IO rpixel and wpixel */
 
-#define FB_CKMAG(_ptr, _magic, _str)	\
-	if (!(_ptr)) { \
-		fb_log("ERROR: null %s ptr, file %s, line %d\n", \
-			_str, __FILE__, __LINE__); \
-		abort(); \
-	} else if ((uint32_t)(*((uintptr_t *)(_ptr))) != (uint32_t)(_magic)) { \
-		fb_log("ERROR: bad %s ptr %p, s/b 0x%x, was 0x%x, file %s, line %d\n", \
-			_str, _ptr, (uint32_t)_magic, \
-			(uint32_t)(*((uintptr_t *)(_ptr))), __FILE__, __LINE__); \
-		abort(); \
-	}
-
 /* tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
-FB_EXPORT extern void fb_tcl_setup();
-FB_EXPORT extern int Fb_Init();
+FB_EXPORT extern void fb_tcl_setup(void);
+FB_EXPORT extern int Fb_Init(Tcl_Interp *interp);
 FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
 
 
@@ -209,7 +204,9 @@ FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
  */
 FB_EXPORT extern const char *fb_version(void);
 
-#endif /* __FB_H__ */
+__END_DECLS
+
+#endif /* FB_H */
 
 /** @} */
 /*

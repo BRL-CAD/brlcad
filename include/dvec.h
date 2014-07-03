@@ -1,7 +1,7 @@
 /*                           D V E C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,19 +19,21 @@
  */
 /** @file dvec.h
  *
- * Brief description
  *
  */
 
-#ifndef __DVEC_H__
-#define __DVEC_H__
+#ifndef DVEC_H
+#define DVEC_H
 
 #include "common.h"
 
 #include <math.h>
 
-#include "raytrace.h"
+/* Needed for fastf_t definition */
+#include "bu/defines.h"
 
+/* Needed for VUNITIZE_TOL and NEAR_ZERO */
+#include "vmath.h"
 
 extern "C++" {
 #include <iostream>
@@ -39,7 +41,10 @@ extern "C++" {
     const double VEQUALITY = 0.0000001;
 
     template<int LEN>
-    struct vec_internal;
+    struct dvec_internal;
+
+    template<int LEN>
+    struct fvec_internal;
 
     template<int LEN>
     class dvec;
@@ -63,13 +68,16 @@ extern "C++" {
     class dvec {
     public:
 	dvec(double s);
-	dvec(const double* vals, bool aligned=true);
+	dvec(const double* vals);
+	dvec(const float* vals);
 	dvec(const dvec<LEN>& p);
 
 	dvec<LEN>& operator=(const dvec<LEN>& p);
 	double operator[](int index) const;
 	void u_store(double* arr) const;
+	void u_store(float* arr) const;
 	void a_store(double* arr) const;
+	void a_store(float* arr) const;
 
 	bool operator==(const dvec<LEN>& b) const;
 
@@ -105,9 +113,10 @@ extern "C++" {
 	    double operator()(double a) const { return ::sqrt(a); }
 	};
     private:
-	vec_internal<LEN> data;
+	dvec_internal<LEN> data;
 
-	dvec(const vec_internal<LEN>& d);
+	dvec(const dvec_internal<LEN>& d);
+	dvec(const fvec_internal<LEN>& f);
     };
 
 //#define DVEC4(V, t, a, b, c, d) double v#t[4] VEC_ALIGN = {(a), (b), (c), (d)}; V(v#t)
@@ -116,7 +125,7 @@ extern "C++" {
 #define VEC_ALIGN
 
 /*#undef __SSE2__*/ // Test FPU version
-#if defined(__SSE2__) && defined(__GNUC__) && defined(HAVE_EMMINTRIN_H)
+#if defined(__SSE2__) && defined(__GNUC__) && defined(HAVE_EMMINTRIN_H) && defined(HAVE_EMMINTRIN)
 #  define __x86_vector__
 #  include "vector_x86.h"
 #else
@@ -130,8 +139,11 @@ extern "C++" {
 	    (fabs(a.y()-b.y()) < VEQUALITY);
     }
 
+    // 2x2 row-major matrix
+    typedef fastf_t mat2d_t[4] VEC_ALIGN;
+
+    // 2d point
     typedef fastf_t pt2d_t[2] VEC_ALIGN;
-    typedef fastf_t mat2d_t[4] VEC_ALIGN; // row-major
 
     //--------------------------------------------------------------------------------
     // MATH / VECTOR ops
@@ -177,14 +189,15 @@ extern "C++" {
 	dvec<2> sq = a*a;
 	return sqrt(sq.foldr(0, dvec<2>::add()));
     }
+
     inline
-    void move(pt2d_t a, const pt2d_t b) {
+    void move(pt2d_t a, const double *b) {
 	a[0] = b[0];
 	a[1] = b[1];
     }
 }
 
-#endif /* __DVEC_H__ */
+#endif /* DVEC_H */
 
 /*
  * Local Variables:

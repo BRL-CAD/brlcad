@@ -1,7 +1,7 @@
 /*                         M A T E R . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,21 +26,23 @@
  *
  */
 
-#ifndef __MATER_H__
-#define __MATER_H__
+#ifndef MATER_H
+#define MATER_H
 
-#include "bu.h"
+#include "common.h"
+
+#include "bu/vls.h"
 #include "raytrace.h"
 
 __BEGIN_DECLS
 
 #ifndef RT_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef RT_EXPORT_DLL
-#      define RT_EXPORT __declspec(dllexport)
-#    else
-#      define RT_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
+#    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
+#  elif defined(RT_DLL_EXPORTS)
+#    define RT_EXPORT __declspec(dllexport)
+#  elif defined(RT_DLL_IMPORTS)
+#    define RT_EXPORT __declspec(dllimport)
 #  else
 #    define RT_EXPORT
 #  endif
@@ -59,33 +61,25 @@ struct mater {
 #define MATER_NO_ADDR	((off_t)0)		/**< @brief invalid mt_daddr */
 
 
-RT_EXPORT BU_EXTERN(void rt_region_color_map,
-		    (struct region *regp));
+RT_EXPORT extern void rt_region_color_map(struct region *regp);
 
 /* process ID_MATERIAL record */
-RT_EXPORT BU_EXTERN(void rt_color_addrec,
-		    (int low,
-		     int hi,
-		     int r,
-		     int g,
-		     int b,
-		     off_t addr));
-RT_EXPORT BU_EXTERN(void rt_insert_color,
-		    (struct mater *newp));
-RT_EXPORT BU_EXTERN(void rt_vls_color_map,
-		    (struct bu_vls *str));
-RT_EXPORT BU_EXTERN(struct mater *rt_material_head,
-		    ());
-RT_EXPORT BU_EXTERN(void rt_new_material_head,
-		    (struct mater *));
-RT_EXPORT BU_EXTERN(struct mater *rt_dup_material_head,
-		    ());
-RT_EXPORT BU_EXTERN(void rt_color_free,
-		    ());
+RT_EXPORT extern void rt_color_addrec(int low,
+				      int hi,
+				      int r,
+				      int g,
+				      int b,
+				      off_t addr);
+RT_EXPORT extern void rt_insert_color(struct mater *newp);
+RT_EXPORT extern void rt_vls_color_map(struct bu_vls *str);
+RT_EXPORT extern struct mater *rt_material_head(void);
+RT_EXPORT extern void rt_new_material_head(struct mater *);
+RT_EXPORT extern struct mater *rt_dup_material_head(void);
+RT_EXPORT extern void rt_color_free(void);
 
 __END_DECLS
 
-#endif /* __MATER_H__ */
+#endif /* MATER_H */
 
 /** @} */
 /*

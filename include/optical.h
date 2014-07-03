@@ -1,7 +1,7 @@
 /*                            O P T I C A L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,43 +26,47 @@
  *
  */
 
-#ifndef __OPTICAL_H__
-#define __OPTICAL_H__
+#ifndef OPTICAL_H
+#define OPTICAL_H
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/vls.h"
 #include "shadefuncs.h"
 #include "shadework.h"
 
 __BEGIN_DECLS
 
 #ifndef OPTICAL_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef OPTICAL_EXPORT_DLL
-#      define OPTICAL_EXPORT __declspec(dllexport)
-#    else
-#      define OPTICAL_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(OPTICAL_DLL_EXPORTS) && defined(OPTICAL_DLL_IMPORTS)
+#    error "Only OPTICAL_DLL_EXPORTS or OPTICAL_DLL_IMPORTS can be defined, not both."
+#  elif defined(OPTICAL_DLL_EXPORTS)
+#    define OPTICAL_EXPORT __declspec(dllexport)
+#  elif defined(OPTICAL_DLL_IMPORTS)
+#    define OPTICAL_EXPORT __declspec(dllimport)
 #  else
 #    define OPTICAL_EXPORT
 #  endif
 #endif
 
-
-/* defined in init.c */
+/**
+ * this function sets the provided mfuncs head pointer to the list of
+ * available shaders.  the provided mfuncs head pointer should point
+ * to MF_NULL prior to getting passed to optical_shader_init() so that
+ * the same shader list may be returned repeatably.
+ */
 OPTICAL_EXPORT extern void optical_shader_init(struct mfuncs **headp);
 
 /* stub functions useful for debugging */
 /* defined in sh_text.c */
-OPTICAL_EXPORT extern int mlib_zero();
-OPTICAL_EXPORT extern int mlib_one();
-OPTICAL_EXPORT extern void mlib_void();
+OPTICAL_EXPORT extern int mlib_zero(struct application *, const struct partition *, struct shadework *, void *);
+OPTICAL_EXPORT extern int mlib_one(struct region *, struct bu_vls *, void **, const struct mfuncs *, struct rt_i *);
+OPTICAL_EXPORT extern void mlib_void(struct region *, void *);
 
 
 /* defined in refract.c */
 OPTICAL_EXPORT extern int
-rr_render(struct application *app, struct partition *pp, struct shadework *swp);
+rr_render(struct application *app, const struct partition *pp, struct shadework *swp);
 
 /* defined in shade.c */
 OPTICAL_EXPORT extern void
@@ -85,6 +89,20 @@ viewshade(struct application *app, const struct partition *pp, struct shadework 
 /* defined in vers.c */
 OPTICAL_EXPORT extern const char *optical_version(void);
 
+/* for libmultispectral */
+
+/* FIXME: these should not need to be declared for libmultispectral.
+ * breaks encapsulation/modularity of shaders if we have to list them
+ * in more than one place.  maybe give multispectral arrays their own
+ * suffix so as not to conflict.
+ */
+
+OPTICAL_EXPORT extern struct mfuncs camo_mfuncs[];
+OPTICAL_EXPORT extern struct mfuncs light_mfuncs[];
+OPTICAL_EXPORT extern struct mfuncs stk_mfuncs[];
+OPTICAL_EXPORT extern struct mfuncs phg_mfuncs[];
+OPTICAL_EXPORT extern struct mfuncs noise_mfuncs[];
+OPTICAL_EXPORT extern struct bn_table *spectrum;
 
 OPTICAL_EXPORT extern int	rdebug;
 
@@ -104,7 +122,7 @@ OPTICAL_EXPORT extern int	rdebug;
  */
 
 /* These definitions are each for one bit */
-/* Should be reogranized to put most useful ones first */
+/* Should be reorganized to put most useful ones first */
 #define RDEBUG_HITS	0x00000001	/* 1 Print hits used by view() */
 #define RDEBUG_MATERIAL	0x00000002	/* 2 Material properties */
 #define RDEBUG_SHOWERR	0x00000004	/* 3 Colorful markers on errors */
@@ -159,10 +177,6 @@ OPTICAL_EXPORT extern struct bn_tabdata *background;
 OPTICAL_EXPORT extern vect_t background;
 #endif
 
-#if 0
-OPTICAL_EXPORT
-OPTICAL_EXPORT extern
-#endif
 /* defined in sh_text.c */
 OPTICAL_EXPORT extern struct region env_region; /* environment map region */
 
@@ -182,7 +196,7 @@ struct floatpixel {
 
 __END_DECLS
 
-#endif /* __OPTICAL_H__ */
+#endif /* OPTICAL_H */
 
 /** @} */
 /*

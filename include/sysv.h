@@ -1,7 +1,7 @@
 /*                          S Y S V . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __SYSV_H__
-#define __SYSV_H__
+#ifndef SYSV_H
+#define SYSV_H
 
 #include "common.h"
 
@@ -42,12 +42,12 @@
 __BEGIN_DECLS
 
 #ifndef SYSV_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef SYSV_EXPORT_DLL
-#      define SYSV_EXPORT __declspec(dllexport)
-#    else
-#      define SYSV_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(SYSV_DLL_EXPORTS) && defined(SYSV_DLL_IMPORTS)
+#    error "Only SYSV_DLL_EXPORTS or SYSV_DLL_IMPORTS can be defined, not both."
+#  elif defined(SYSV_DLL_EXPORTS)
+#    define SYSV_EXPORT __declspec(dllexport)
+#  elif defined(SYSV_DLL_IMPORTS)
+#    define SYSV_EXPORT __declspec(dllimport)
 #  else
 #    define SYSV_EXPORT
 #  endif
@@ -58,7 +58,7 @@ SYSV_EXPORT extern void *memset(void *s, int c, size_t n);
 #endif
 
 #ifndef HAVE_STRCHR
-SYSV_EXPORT extern char *strchr(char *sp, char c);
+SYSV_EXPORT extern char *strchr(const char *sp, int c);
 #endif
 
 #ifndef HAVE_STRDUP
@@ -75,7 +75,7 @@ SYSV_EXPORT extern char *strtok(char *s, const char *delim);
 
 __END_DECLS
 
-#endif /* __SYSV_H__ */
+#endif /* SYSV_H */
 
 /*
  * Local Variables:

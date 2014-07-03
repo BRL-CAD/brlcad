@@ -1,7 +1,7 @@
 /*                           B I O . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,22 +20,24 @@
 /** @file bio.h
  *
  * BRL-CAD private system compatibility wrapper header that provides
- * declarations for native and standard input/output system routines.
+ * declarations for native and standard system INPUT/OUTPUT routines.
  *
- * This header does not belong to any BRL-CAD library but is used by
- * all of them.  Consider this header private and subject to change,
- * not to be used by third parties.
+ * This header is commonly used in lieu of including the following:
+ * stdio.h, io.h, fcntl, unistd.h, and windows.h
  *
- * BRL-CAD libraries and applications should include this library in
- * place of including existing native and standard headers.
+ * This header does not belong to any BRL-CAD library but may used by
+ * all of them.  Consider this header PRIVATE and subject to change,
+ * NOT TO BE USED BY THIRD PARTIES.
  *
  */
 
-#ifndef __BIO_H__
-#define __BIO_H__
+#ifndef BIO_H
+#define BIO_H
 
 /* Do not rely on common.h's HAVE_* defines.  Do not include the
- * common.h header.
+ * common.h header.  This is a stand-alone portability header intended
+ * to be independent of BRL-CAD and the BRL-CAD build system, reusable
+ * by external projects.
  */
 
 #include <stdio.h>
@@ -45,14 +47,16 @@
 #  include <windows.h>
 #  include <io.h>
 
-#   undef rad1 /* Win32 radio button 1 */
-#   undef rad2 /* Win32 radio button 2 */
-#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
-#   undef IN
-#   undef OUT
-
+#  undef rad1 /* Win32 radio button 1 */
+#  undef rad2 /* Win32 radio button 2 */
+#  undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
+#  undef IN
+#  undef OUT
 #else
 #  include <unistd.h>
+
+/* provide a stub so we don't need to wrap all setmode() calls */
+#  define setmode(a, b) /* poof */
 #endif
 
 /* needed for testing O_TEMPORARY and O_BINARY */
@@ -68,19 +72,14 @@
 #  define O_BINARY 0
 #endif
 
-/* account for badness in Tcl regex header */
-#ifdef regfree
-#  undef regfree
-#endif
-
 /* the S_IS* macros should replace the S_IF*'s
-   already defined in C99 complient compilers
+   already defined in C99 compliant compilers
    this is the work-around for older compilers */
 #ifndef S_ISDIR
 #   define S_ISDIR(_st_mode) (((_st_mode) & S_IFMT) == S_IFDIR)
 #endif
 
-#endif /* __BIO_H__ */
+#endif /* BIO_H */
 
 /*
  * Local Variables:

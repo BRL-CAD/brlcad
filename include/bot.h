@@ -1,7 +1,7 @@
 /*                           B O T . H
  * BRL-CAD
  *
- * Copyright (c) 2001-2010 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup g_ */
 /** @{ */
 /** @file bot.h
@@ -26,34 +27,42 @@
  */
 /** @} */
 
+#ifndef BOT_H
+#define BOT_H
+
+#include "common.h"
+
+__BEGIN_DECLS
 
 struct bot_specific {
     unsigned char bot_mode;
     unsigned char bot_orientation;
     unsigned char bot_flags;
-    int bot_ntri;
+    size_t bot_ntri;
     fastf_t *bot_thickness;
     struct bu_bitv *bot_facemode;
-    genptr_t bot_facelist;	/* head of linked list */
-    genptr_t *bot_facearray;	/* head of face array */
-    unsigned int bot_tri_per_piece;	/* log # tri per peice. 1 << bot_ltpp is tri per piece */
-
+    void *bot_facelist;	/* head of linked list */
+    void **bot_facearray;	/* head of face array */
+    size_t bot_tri_per_piece;	/* log # tri per piece. 1 << bot_ltpp is tri per piece */
+    void *tie; /* FIXME: horrible blind cast, points to one in rt_bot_internal */
 };
 
-RT_EXPORT BU_EXTERN(void rt_bot_prep_pieces,
-		    (struct bot_specific	*bot,
-		     struct soltab		*stp,
-		     int			ntri,
-		     const struct bn_tol	*tol));
+RT_EXPORT extern void rt_bot_prep_pieces(struct bot_specific	*bot,
+					 struct soltab		*stp,
+					 size_t			ntri,
+					 const struct bn_tol	*tol);
 
-RT_EXPORT BU_EXTERN(int rt_botface,
-		    (struct soltab		*stp,
-		     struct bot_specific	*bot,
-		     fastf_t			*ap,
-		     fastf_t			*bp,
-		     fastf_t			*cp,
-		     int			face_no,
-		     const struct bn_tol	*tol));
+RT_EXPORT extern size_t rt_botface(struct soltab		*stp,
+				   struct bot_specific	*bot,
+				   fastf_t			*ap,
+				   fastf_t			*bp,
+				   fastf_t			*cp,
+				   size_t			face_no,
+				   const struct bn_tol	*tol);
+
+__END_DECLS
+
+#endif /* BOT_H */
 
 /*
  * Local Variables:

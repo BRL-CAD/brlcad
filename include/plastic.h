@@ -1,7 +1,7 @@
 /*                          P L A S T I C . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,15 +22,15 @@
 /** @file plastic.h
  *
  */
-#ifndef plastic_h
-#define plastic_h
+#ifndef PLASTIC_H
+#define PLASTIC_H
 
 #define PL_NULL ((struct phong_specific *)0)
 #define PL_O(m) offsetof(struct phong_specific, m)
 
 /* Local information */
 struct phong_specific {
-    unsigned long magic;
+    uint32_t magic;
     int	shine;
     double	wgt_specular;
     double	wgt_diffuse;
@@ -39,7 +39,7 @@ struct phong_specific {
     double	refrac_index;
     double	extinction;
     double	emission[3];
-    struct	mfuncs *mfp;
+    const struct mfuncs *mfp;
 };
 
 extern struct bu_structparse phong_parse[];

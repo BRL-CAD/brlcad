@@ -1,7 +1,7 @@
 /*                            P C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,21 +24,24 @@
  * Structures required for implementing Parametrics and constraints
  *
  */
-#ifndef __PC_H__
-#define __PC_H__
+#ifndef PC_H
+#define PC_H
 
-#include "bu.h"
+#include "common.h"
+
+#include "bu/list.h"
+#include "bu/vls.h"
 #include "bn.h"
 
 __BEGIN_DECLS
 
 #ifndef PC_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef PC_EXPORT_DLL
-#      define PC_EXPORT __declspec(dllexport)
-#    else
-#      define PC_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(PC_DLL_EXPORTS) && defined(PC_DLL_IMPORTS)
+#    error "Only PC_DLL_EXPORTS or PC_DLL_IMPORTS can be defined, not both."
+#  elif defined(PC_DLL_EXPORTS)
+#    define PC_EXPORT __declspec(dllexport)
+#  elif defined(PC_DLL_IMPORTS)
+#    define PC_EXPORT __declspec(dllimport)
 #  else
 #    define PC_EXPORT
 #  endif
@@ -49,9 +52,6 @@ __BEGIN_DECLS
  * compiler understands them or not.  It is vital that the argument
  * list given for "args" be enclosed in parens.
  */
-
-#define PC_EXTERN(type_and_name, args) extern type_and_name args
-#define PC_ARGS(args) args
 
 #define PC_PCSET_PUSHP(_pcsp,_par) \
 	BU_LIST_PUSH(&(_pcsp->ps->l),&(_par->l));
@@ -71,20 +71,20 @@ extern "C" {
 #endif
 
 /**
- * A composite set of parameters constraints with respect to those 
+ * A composite set of parameters constraints with respect to those
  * parameters. Used for declaration by each geometry object
  */
 struct pc_param {
     struct bu_list l;
     struct bu_vls name; /** Name of the parameter */
-    
+
     /** @todo convert to enum after pc becomes a dependency of rt */
     int ctype;	/** Container type used for storing data */
     int dtype; 	/** Data type of the data pointed to */
-    
+
     union {		/** The Actual data / pointer */
-    	struct bu_vls expression;
-    	void * ptr;
+	struct bu_vls expression;
+	void * ptr;
     } data;
 };
 
@@ -99,7 +99,7 @@ struct pc_constrnt {
     struct bu_vls name;
     int ctype;
     union {
-    	struct bu_vls expression;
+	struct bu_vls expression;
 	struct pc_constraint_fp cf;
     } data;
     const char **args;
@@ -112,25 +112,25 @@ struct pc_pc_set {
 
 /* functions defined in pc_main.c */
 
-PC_EXPORT PC_EXTERN(void pc_init_pcset, (struct pc_pc_set * pcs));
-PC_EXPORT PC_EXTERN(void pc_free_pcset, (struct pc_pc_set * pcs));
-PC_EXPORT PC_EXTERN(void pc_free_constraint, (struct pc_constrnt * c));
-PC_EXPORT PC_EXTERN(void pc_getparameter, (struct pc_param ** p, int t));
-PC_EXPORT PC_EXTERN(void pc_pushparam_expr, (struct pc_pc_set * pcs, const char * name, const char * str));
-PC_EXPORT PC_EXTERN(void pc_pushparam_struct, (struct pc_pc_set * pcs, const char * name, int type, void * ptr));
-PC_EXPORT PC_EXTERN(void pc_getconstraint_expr, (struct pc_constrnt ** c));
-PC_EXPORT PC_EXTERN(void pc_getconstraint_struct, (struct pc_constrnt ** c, int nargs));
-PC_EXPORT PC_EXTERN(void pc_pushconstraint_expr, (struct pc_pc_set * pcs, const char * name, const char * str));
-PC_EXPORT PC_EXTERN(void pc_pushconstraint_struct, (struct pc_pc_set * pcs, const char * name, int nargs, int dimension, int (*fp) (double ** args), const char ** args));
-PC_EXPORT PC_EXTERN(void pc_pushconstraint_struct1, (struct pc_pc_set * pcs, struct pc_constrnt * c));
-PC_EXPORT PC_EXTERN(void pc_pushconstraint, (struct pc_pc_set * pcs, const char * str));
+PC_EXPORT extern void pc_init_pcset(struct pc_pc_set * pcs);
+PC_EXPORT extern void pc_free_pcset(struct pc_pc_set * pcs);
+PC_EXPORT extern void pc_free_constraint(struct pc_constrnt * c);
+PC_EXPORT extern void pc_getparameter(struct pc_param **p, int t);
+PC_EXPORT extern void pc_pushparam_expr(struct pc_pc_set * pcsp, const char *name, const char *str);
+PC_EXPORT extern void pc_pushparam_struct(struct pc_pc_set * pcs, const char * name, int type, void * ptr);
+PC_EXPORT extern void pc_getconstraint_expr(struct pc_constrnt ** c);
+PC_EXPORT extern void pc_getconstraint_struct(struct pc_constrnt **c, int nargs);
+PC_EXPORT extern void pc_pushconstraint_expr(struct pc_pc_set * pcsp, const char * name, const char * str);
+PC_EXPORT extern void pc_pushconstraint_struct(struct pc_pc_set * pcs, const char * name, int nargs, int dimension, int (*fp) (double ** args), const char ** args);
+PC_EXPORT extern void pc_pushconstraint_struct1(struct pc_pc_set * pcs, struct pc_constrnt * c);
+PC_EXPORT extern void pc_pushconstraint(struct pc_pc_set * pcs, const char * str);
 
 /* constraint eval functions defined in pc_constraints.c */
 
-PC_EXPORT PC_EXTERN(int pc_isperpendicular, (double ** v));
-PC_EXPORT PC_EXTERN(void pc_mk_isperpendicular, (struct pc_constrnt ** c, const char * name, const char **args));
-PC_EXPORT PC_EXTERN(int pc_ismodpositive, (double ** v));
-PC_EXPORT PC_EXTERN(void pc_mk_ismodpositive, (struct pc_constrnt ** c, const char * name, const char **args));
+PC_EXPORT extern int pc_isperpendicular(double ** v);
+PC_EXPORT extern void pc_mk_isperpendicular(struct pc_constrnt ** c, const char * name, const char **args);
+PC_EXPORT extern int pc_ismodpositive(double ** v);
+PC_EXPORT extern void pc_mk_ismodpositive(struct pc_constrnt ** c, const char * name, const char **args);
 
 #ifdef __cplusplus
 }

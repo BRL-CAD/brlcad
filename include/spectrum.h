@@ -1,7 +1,7 @@
 /*                      S P E C T R U M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup libmultispectral */
 /** @{ */
 /** @file spectrum.h
@@ -41,7 +42,7 @@
  *  For example, if the val[] array contains power values, then
  *  val[j] contains the integral of the power from wavel[j] to wavel[j+1]
  *
- *  As an exmple, assume nwave=2, wavel[0]=500, wavel[1]=600, wavel[2]=700.
+ *  As an example, assume nwave=2, wavel[0]=500, wavel[1]=600, wavel[2]=700.
  *  Then val[0] would contain data for the 500 to 600nm interval,
  *  and val[1] would contain data for the 600 to 700nm interval.
  *  There would be no storage allocated for val[2] -- don't use it!
@@ -58,7 +59,7 @@
  *
  *  Wavelength Units -
  *	cm = 10** -2 m	centimeters
- *	mm = 10** -3 m	milimeters
+ *	mm = 10** -3 m	millimeters
  *	um = 10** -6 m	micrometers, or microns
  *	nm = 10** -9 m	nanometers
  *
@@ -87,31 +88,35 @@
  *
  */
 
+#ifndef SPECTRUM_H
+#define SPECTRUM_H
+
 #include "common.h"
 
 #include "bn.h"
 #include "raytrace.h"
 
+__BEGIN_DECLS
+
 /*
  * Routines
  */
-RT_EXPORT BU_EXTERN(void			rt_spect_make_CIE_XYZ,
-		    (struct bn_tabdata		**x,
-		     struct bn_tabdata		**y,
-		     struct bn_tabdata		**z,
-		     const struct bn_table	*tabp));
+RT_EXPORT extern void			rt_spect_make_CIE_XYZ(struct bn_tabdata		**x,
+							      struct bn_tabdata		**y,
+							      struct bn_tabdata		**z,
+							      const struct bn_table	*tabp);
 
-RT_EXPORT BU_EXTERN(void			rt_spect_black_body,
-		    (struct bn_tabdata		*data,
-		     double			temp,
-		     unsigned int		n));
-RT_EXPORT BU_EXTERN(void			rt_spect_black_body_fast,
-		    (struct bn_tabdata		*data,
-		     double			temp));
+RT_EXPORT extern void			rt_spect_black_body(struct bn_tabdata		*data,
+							    double			temp,
+							    unsigned int		n);
+RT_EXPORT extern void			rt_spect_black_body_fast(struct bn_tabdata		*data,
+								 double			temp);
 
-RT_EXPORT BU_EXTERN(void			rt_spect_reflectance_rgb,
-		    (struct bn_tabdata		*curve,
-		     const float		rgb[3]));
+RT_EXPORT extern void			rt_spect_reflectance_rgb(struct bn_tabdata		*curve,
+								 const float		rgb[3]);
+__END_DECLS
+
+#endif /* SPECTRUM_H */
 
 /** @} */
 /*

@@ -1,7 +1,7 @@
 /*                    V E C T O R _ F P U . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,12 +19,13 @@
  */
 /** @file vector_fpu.h
  *
- * Brief description
  *
  */
 
-#ifndef __VECTOR_FPU
-#define __VECTOR_FPU
+#ifndef VECTOR_FPU_H
+#define VECTOR_FPU_H
+
+#include "common.h"
 
 #ifdef __GNUC__
 #undef VEC_ALIGN
@@ -32,8 +33,13 @@
 #endif
 
 template<int LEN>
-struct vec_internal {
+struct dvec_internal {
     double v[LEN] VEC_ALIGN;
+};
+
+template<int LEN>
+struct fvec_internal {
+    float v[LEN] VEC_ALIGN;
 };
 
 template<int LEN>
@@ -44,7 +50,14 @@ inline dvec<LEN>::dvec(double s)
 }
 
 template<int LEN>
-inline dvec<LEN>::dvec(const double* vals, bool aligned)
+inline dvec<LEN>::dvec(const float* vals)
+{
+    for (int i = 0; i < LEN; i++)
+	data.v[i] = vals[i];
+}
+
+template<int LEN>
+inline dvec<LEN>::dvec(const double* vals)
 {
     for (int i = 0; i < LEN; i++)
 	data.v[i] = vals[i];
@@ -58,10 +71,17 @@ inline dvec<LEN>::dvec(const dvec<LEN>& p)
 }
 
 template<int LEN>
-inline dvec<LEN>::dvec(const vec_internal<LEN>& d)
+inline dvec<LEN>::dvec(const dvec_internal<LEN>& d)
 {
     for (int i = 0; i < LEN; i++)
 	data.v[i] = d.v[i];
+}
+
+template<int LEN>
+inline dvec<LEN>::dvec(const fvec_internal<LEN>& f)
+{
+    for (int i = 0; i < LEN; i++)
+	data.v[i] = f.v[i];
 }
 
 template<int LEN>
@@ -82,9 +102,24 @@ dvec<LEN>::operator[](int index) const
 
 template<int LEN>
 inline void
+dvec<LEN>::u_store(float* arr) const
+{
+    a_store(arr);
+}
+
+template<int LEN>
+inline void
 dvec<LEN>::u_store(double* arr) const
 {
     a_store(arr);
+}
+
+template<int LEN>
+inline void
+dvec<LEN>::a_store(float* arr) const
+{
+    for (int i = 0; i < LEN; i++)
+	arr[i] = data.v[i];
 }
 
 template<int LEN>
@@ -108,7 +143,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::operator+(const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN; i++)
 	r.v[i] = data.v[i] + b.data.v[i];
     return dvec<LEN>(r);
@@ -118,7 +153,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::operator-(const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN; i++)
 	r.v[i] = data.v[i] - b.data.v[i];
     return dvec<LEN>(r);
@@ -128,7 +163,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::operator*(const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN; i++)
 	r.v[i] = data.v[i] * b.data.v[i];
     return dvec<LEN>(r);
@@ -138,7 +173,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::operator/(const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN; i++)
 	r.v[i] = data.v[i] / b.data.v[i];
     return dvec<LEN>(r);
@@ -148,7 +183,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::madd(const dvec<LEN>& s, const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN; i++)
 	r.v[i] = data.v[i] * s.data.v[i] + b.data.v[i];
     return dvec<LEN>(r);
@@ -158,7 +193,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::madd(const double s, const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN; i++)
 	r.v[i] = data.v[i] * s +  b.data.v[i];
     return dvec<LEN>(r);
@@ -189,7 +224,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::map(const dvec_unop& op, int limit)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < limit; i++) {
 	r.v[i] = op(data.v[i]);
     }
@@ -218,8 +253,8 @@ public:
 	_init(0, 0);
     }
 
-    vec2d(double x, double y) {
-	_init(x, y);
+    vec2d(double xin, double yin) {
+	_init(xin, yin);
     }
 
     vec2d(const vec2d& proto) {
@@ -265,11 +300,11 @@ private:
     double* v;
     double  m[4];
 
-    void _init(double x, double y) {
+    void _init(double xin, double yin) {
 	// align to 16-byte boundary
 	v = (double*)((((uintptr_t)m) + 0x10L) & ~0xFL);
-	v[0] = x;
-	v[1] = y;
+	v[0] = xin;
+	v[1] = yin;
     }
 };
 
