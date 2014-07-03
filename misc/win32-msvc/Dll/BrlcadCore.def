@@ -2,10 +2,7 @@ EXPORTS
 
 bn_3pts_collinear
 bn_3pts_distinct
-bn_degtorad
 bn_dist_pt3_pt3
-bn_halfpi
-bn_invpi
 bn_mat_angles
 bn_mat_det3
 bn_mat_determinant
@@ -17,7 +14,6 @@ bn_mat_mul2
 bn_mat_print
 bn_mk_plane_3pts
 bn_mkpoint_3planes
-bn_pi
 bn_pt3_pt3_equal
 bn_vec_ortho
 bn_vlist_2string
@@ -34,7 +30,6 @@ bu_bitv_new
 bu_bitv_shift
 bu_bitv_to_hex
 bu_bomb
-bu_booleanize
 bu_brlcad_data
 bu_byteorder
 bu_calloc
@@ -69,6 +64,7 @@ bu_ptbl_rm
 bu_realloc
 bu_setjmp_valid
 bu_setlinebuf
+bu_strcmpm
 bu_strdupm
 bu_strlcatm
 bu_strlcpym
@@ -96,7 +92,9 @@ bu_vls_vlscat
 
 db5_get_attributes
 db5_header_is_valid
+db5_replace_attributes
 db5_update_attribute
+db5_update_attributes
 
 db_ck_v4gift_tree
 db_close
@@ -114,6 +112,7 @@ db_tree_funcleaf
 db_tree_nleaves
 db_update_ident
 db_update_nref
+db_version
 db_walk_tree
 
 gcv_region_end
@@ -275,6 +274,7 @@ rt_arc2d_to_cnurb
 rt_bot_condense
 rt_bot_face_fuse
 rt_bot_minpieces
+rt_bot_mintie
 rt_bot_smooth
 rt_bot_vertex_fuse
 rt_clean
@@ -288,7 +288,7 @@ rt_defoverlap
 rt_dirbuild
 rt_free_rti
 rt_functab
-rt_g
+RTG
 rt_get_functab_by_label
 rt_gettree
 rt_gettrees_and_attrs
