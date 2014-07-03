@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -31,6 +32,12 @@ ON_Color::ON_Color(int r, int g, int b) : m_color(0)
 ON_Color::ON_Color(int r, int g, int b, int a) : m_color(0) 
 {
   SetRGBA(r,g,b,a);
+}
+
+unsigned int ON_Color::WindowsRGB() const
+{
+  unsigned int RGB = ON_Color(Red(),Green(),Blue());
+  return RGB;
 }
 
 ON_Color::operator unsigned int() const

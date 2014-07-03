@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -72,19 +73,26 @@ public:
   // query ///////////////////////////////////////////////////////////////
   
 	int Count() const;      // number of elements in array
+  unsigned int UnsignedCount() const;
 	
 	int Capacity() const;  // capacity of array
 
   unsigned int SizeOfArray() const; // amount of memory in the m_a[] array
 
+  unsigned int SizeOfElement() const; // amount of memory in an m_a[] array element
+
   ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 
-  T& operator[]( int );              // grows array if index >= Capacity()
-
-  const T& operator[]( int ) const;  // The const operator[] does not
-                                     // check for a valid index.  Caller
-                                     // is responsible for making sure
-                                     // that the index is > 0 and < Capacity().
+  // The operator[] does to not check for valid indices.
+  // The caller is responsibile for insuring that 0 <= i < Capacity()
+  T& operator[]( int );
+  T& operator[]( unsigned int );
+  T& operator[]( ON__INT64 );
+  T& operator[]( ON__UINT64 );
+  const T& operator[]( int ) const;
+  const T& operator[]( unsigned int ) const;  
+  const T& operator[]( ON__INT64 ) const;
+  const T& operator[]( ON__UINT64 ) const;  
 
   operator T*();                     // The cast operators return a pointer
   operator const T*() const;         // to the array.  If Count() is zero,
@@ -93,8 +101,15 @@ public:
   T* First();
   const T* First() const;             // returns NULL if count = 0
 
+  // At(index) returns NULL if index < 0 or index >= count
   T* At( int );
-  const T* At( int ) const;          // returns NULL if index < 0 or index >= count
+  T* At( unsigned int );
+  T* At( ON__INT64 );
+  T* At( ON__UINT64 );
+  const T* At( int ) const;
+  const T* At( unsigned int ) const;
+  const T* At( ON__INT64 ) const;
+  const T* At( ON__UINT64 ) const;
 
   T* Last();
   const T* Last() const;             // returns NULL if count = 0
@@ -156,27 +171,33 @@ public:
   //////////
   // BinarySearch( p, compare ) does a fast search of a sorted array
   // and returns the smallest index "i" of the element that satisifies
-  // 0==compare(p,&array[i]).  If the search is successful, 
+  // 0==compare(p,&array[i]).  
+  //
+  // BinarySearch( p, compare, count ) does a fast search of the first
+  // count element sorted array and returns the smallest index "i" of 
+  // the element that satisifies 0==compare(p,&array[i]).  The version
+  // that takes a "count" is useful when elements are being appended
+  // during a calculation and the appended elements are not sorted.
+  //
+  // If the search is successful, 
   // BinarySearch() returns the index of the element (>=0).
-  // If the search is not successful, BinarySearch() returns -1.  Use
-  // HeapSort( compare ) or QuickSort( compare ) to sort the array.
+  // If the search is not successful, BinarySearch() returns -1.  
+  // Use QuickSort( compare ) or, in rare cases and after meaningful
+  // performance testing using optimzed release builds, 
+  // HeapSort( compare ) to sort the array.
 	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
   int BinarySearch( const T*, int (*)(const T*,const T*) ) const;
+  int BinarySearch( const T*, int (*)(const T*,const T*), int ) const;
 
   //////////
   // Sorts the array using the heap sort algorithm.
+  // QuickSort() is generally the better choice.
   bool HeapSort( int (*)(const T*,const T*) );
 
   //////////
   // Sorts the array using the quick sort algorithm.
 	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
   bool QuickSort( int (*)(const T*,const T*) );
-
-  //////////
-  // Sort() computes fills in the index[] array so that
-  // array[index[i]] <= array[index[i+1]].  The array is not
-  // modified
-  bool Sort( ON::sort_algorithm, int* /* index[] */ , int (*)(const T*,const T*) ) const; 
 
   /*
   Description:
@@ -185,7 +206,36 @@ public:
     The array is not modified.  
 
   Parameters:
-    sa - [in] ON::heap_sort or  ON::quick_sort
+    sort_algorithm - [in]  
+      ON::quick_sort (best in general) or ON::heap_sort
+      Use ON::heap_sort only if you have done extensive testing with
+      optimized release builds and are confident heap sort is 
+      significantly faster.
+    index - [out] an array of length Count() that is returned with
+        some permutation of (0,1,...,Count()-1). 
+    compare - [in] compare function compare(a,b,p) should return
+        <0 if a<b, 0, if a==b, and >0 if a>b.
+  Returns:
+    true if successful
+  */
+  bool Sort( 
+    ON::sort_algorithm sort_algorithm, 
+    int* /* index[] */ ,
+    int (*)(const T*,const T*) 
+    ) const; 
+
+  /*
+  Description:
+    Sort() fills in the index[] array so that 
+    array[index[i]] <= array[index[i+1]].  
+    The array is not modified.  
+
+  Parameters:
+    sort_algorithm - [in]  
+      ON::quick_sort (best in general) or ON::heap_sort
+      Use ON::heap_sort only if you have done extensive testing with
+      optimized release builds and are confident heap sort is 
+      significantly faster.
     index - [out] an array of length Count() that is returned with
         some permutation of (0,1,...,Count()-1). 
     compare - [in] compare function compare(a,b,p) should return
@@ -196,7 +246,7 @@ public:
     true if successful
   */
   bool Sort( 
-    ON::sort_algorithm, // sa
+    ON::sort_algorithm sort_algorithm,
     int*, // index[] 
     int (*)(const T*,const T*,void*), // int compare(const T*,const T*,void* p)
     void* // p
@@ -265,6 +315,9 @@ public:
                                       // this calculates the new value for m_capacity.
 
   /*
+  Description:
+    Expert user tool to take charge of the memory used by 
+    the dyanmic array.
   Returns:
      A pointer to the array and zeros out this class.
      The returned pointer is on the heap and must be
@@ -274,14 +327,23 @@ public:
 
   /*
   Description:
-    Expert user tool to set m_a = T. 
-  Parameters:
-    T* pointer - [in]
-       m_a is set to T*.  It is critical that the pointer
-       be one returned by onmalloc(sz), where
-       sz >= Capacity()*sizeof(T[0]);
+    Do not use this version of SetArray().  Use the one that takes
+    a pointer, count and capacity.
   */
   void SetArray(T*);
+
+  /*
+  Description:
+    Expert user tool to set the memory used by the dyanmic array.
+  Parameters:
+    T* pointer - [in]
+    int count [in]
+    int capacity - [in]
+       m_a is set to pointer, m_count is set to count, and m_capacity
+       is set to capacity.  It is critical that the pointer be one 
+       returned by onmalloc(sz), where sz >= capacity*sizeof(T[0]).
+  */
+  void SetArray(T*, int, int);
 
 protected:
   // implimentation //////////////////////////////////////////////////////
@@ -782,17 +844,24 @@ public:
   // query ///////////////////////////////////////////////////////////////
   
 	int Count() const;      // number of elements in array
-	
+	unsigned int UnsignedCount() const;
+
 	int Capacity() const;  // capacity of array
 
   unsigned int SizeOfArray() const; // amount of memory in the m_a[] array
 
-  T& operator[]( int );              // grows array if index >= Capacity()
+  unsigned int SizeOfElement() const; // amount of memory in an m_a[] array element
 
-  const T& operator[]( int ) const;  // The const operator[] does not
-                                     // check for a valid index.  Caller
-                                     // is responsible for making sure
-                                     // that the index is > 0 and < Capacity().
+  // The operator[] does to not check for valid indices.
+  // The caller is responsibile for insuring that 0 <= i < Capacity()
+  T& operator[]( int );
+  T& operator[]( unsigned int );
+  T& operator[]( ON__INT64 );
+  T& operator[]( ON__UINT64 );
+  const T& operator[]( int ) const;
+  const T& operator[]( unsigned int ) const;  
+  const T& operator[]( ON__INT64 ) const;
+  const T& operator[]( ON__UINT64 ) const;  
 
   operator T*();                     // The cast operators return a pointer
   operator const T*() const;         // to the array.  If Count() is zero,
@@ -800,8 +869,15 @@ public:
   T* First();
   const T* First() const;             // returns NULL if count = 0
 
+  // At(index) returns NULL if index < 0 or index >= count
   T* At( int );
-  const T* At( int ) const;          // returns NULL if index < 0 or index >= count
+  T* At( unsigned int );
+  T* At( ON__INT64 );
+  T* At( ON__UINT64 );
+  const T* At( int ) const;
+  const T* At( unsigned int ) const;
+  const T* At( ON__INT64 ) const;
+  const T* At( ON__UINT64 ) const;
 
   T* Last();
   const T* Last() const;             // returns NULL if count = 0
@@ -848,16 +924,28 @@ public:
   //////////
   // BinarySearch( p, compare ) does a fast search of a sorted array
   // and returns the smallest index "i" of the element that satisifies
-  // 0==compare(p,&array[i]).  If the search is successful, 
+  // 0==compare(p,&array[i]).
+  //
+  // BinarySearch( p, compare, count ) does a fast search of the first
+  // count element sorted array and returns the smallest index "i" of 
+  // the element that satisifies 0==compare(p,&array[i]).  The version
+  // that takes a "count" is useful when elements are being appended
+  // during a calculation and the appended elements are not sorted.
+  //
+  // If the search is successful, 
   // BinarySearch() returns the index of the element (>=0).
-  // If the search is not successful, BinarySearch() returns -1.  Use
-  // HeapSort( compare ) or QuickSort( compare ) to sort the array.
+  // If the search is not successful, BinarySearch() returns -1.
+  // Use QuickSort( compare ) or, in rare cases and after meaningful
+  // performance testing using optimzed release builds, 
+  // HeapSort( compare ) to sort the array.
 	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
   int BinarySearch( const T*, int (*)(const T*,const T*) ) const;
+  int BinarySearch( const T*, int (*)(const T*,const T*), int ) const;
 
   //////////
   // Sorts the array using the heap sort algorithm.
 	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
+  // QuickSort() is generally the better choice.
   virtual
   bool HeapSort( int (*)(const T*,const T*) );
 
@@ -866,11 +954,31 @@ public:
   virtual
   bool QuickSort( int (*)(const T*,const T*) );
 
-  //////////
-  // Sort() computes fills in the index[] array so that
-  // array[index[i]] <= array[index[i+1]].  The array is not
-  // modified
-  bool Sort( ON::sort_algorithm, int* /* index[] */ , int (*)(const T*,const T*) ) const; 
+  /*
+  Description:
+    Sort() fills in the index[] array so that 
+    array[index[i]] <= array[index[i+1]].  
+    The array is not modified.  
+
+  Parameters:
+    sort_algorithm - [in]  
+      ON::quick_sort (best in general) or ON::heap_sort
+      Use ON::heap_sort only if you have done extensive testing with
+      optimized release builds and are confident heap sort is 
+      significantly faster.
+    index - [out] an array of length Count() that is returned with
+        some permutation of (0,1,...,Count()-1). 
+    compare - [in] compare function compare(a,b) should return
+        <0 if a<b, 0, if a==b, and >0 if a>b.
+
+  Returns:
+    true if successful
+  */
+  bool Sort( 
+    ON::sort_algorithm sort_algorithm, 
+    int* /* index[] */ ,
+    int (*)(const T*,const T*)
+    ) const; 
 
   /*
   Description:
@@ -879,7 +987,11 @@ public:
     The array is not modified.  
 
   Parameters:
-    sa - [in] ON::heap_sort or  ON::quick_sort
+    sort_algorithm - [in]  
+      ON::quick_sort (best in general) or ON::heap_sort
+      Use ON::heap_sort only if you have done extensive testing with
+      optimized release builds and are confident heap sort is 
+      significantly faster.
     index - [out] an array of length Count() that is returned with
         some permutation of (0,1,...,Count()-1). 
     compare - [in] compare function compare(a,b,p) should return
@@ -890,7 +1002,7 @@ public:
     true if successful
   */
   bool Sort( 
-    ON::sort_algorithm, // sa
+    ON::sort_algorithm sort_algorithm,
     int*, // index[] 
     int (*)(const T*,const T*,void*), // int compare(const T*,const T*,void* p)
     void* // p
@@ -966,14 +1078,25 @@ public:
 
   /*
   Description:
-    Expert user tool to set m_a = T. 
-  Parameters:
-    T* pointer - [in]
-       m_a is set to T*.  It is critical that the pointer
-       be one returned by onmalloc(sz), where
-       sz >= Capacity()*sizeof(T[0]);
+    Do not use this version of SetArray().  Use the one that takes
+    a pointer, count and capacity: SetArray(pointer,count,capacity)
   */
   void SetArray(T*);
+
+  /*
+  Description:
+    Expert user tool to set the memory used by the dyanmic array.
+  Parameters:
+    T* pointer - [in]
+    int count - [in]  0 <= count <= capacity
+    int capacity - [in]
+       m_a is set to pointer, m_count is set to count, and m_capacity
+       is set to capacity.  It is critical that the pointer be one 
+       returned by onmalloc(sz), where sz >= capacity*sizeof(T[0]),
+       and that the in-place operator new has been used to initialize
+       each element of the array.  
+  */
+  void SetArray(T*, int, int);
 
 protected:
   // implimentation //////////////////////////////////////////////////////
@@ -1013,6 +1136,7 @@ public:
   // virtual ON_ClassArray<T> override that 
   // calls MemoryRelocate on each element after
   // the heap sort.
+  // QuickSort() is generally the better choice.
   bool HeapSort( int (*)(const T*,const T*) );
 
   // virtual ON_ClassArray<T> override that 
@@ -1040,7 +1164,7 @@ public:
 
   /*
   Description:
-    Compares m_uuid[0] first and then m_uuid[1].
+    Compares m_uuid[0] then m_uuid[1].
   */
   static 
   int Compare(const class ON_UuidPair*,const class ON_UuidPair*);
@@ -1261,7 +1385,9 @@ public:
   Description:
     Adds a uuid-index pair to the list.
   Parameters:
-    uuid - [in] id to add.
+    uuid - [in] id to add.  
+      This uuid cannot be ON_max_uuid because ON_max_uuid
+      is 
     bCheckForDupicates - [in] if true, then the uuid
        is not added if it is already in the list.
        If you are certain that the uuid is not in the list
@@ -1292,22 +1418,6 @@ public:
 
   /*
   Description:
-    Removes every element with a matching uuid-index pair from
-    the list.
-  Parameters:
-    uuid - [in] id to remove
-    index - [in] index value
-  Returns:
-    True if an element was removed.  False if the uuid-index
-    pair does not appear in the list.
-  */
-  bool RemoveUuidIndex(
-    ON_UUID uuid,
-    int index
-    );
-
-  /*
-  Description:
     Determine if an element with a uuid is in the list.
   Parameters:
     index - [out] if not NULL and a matching uuid is found,
@@ -1330,30 +1440,6 @@ public:
 
   /*
   Description:
-    Saves the uuid-index list in an archive.
-  Parameters:
-    archive - [in] archive to write to.
-  Returns:
-    true if write was successful.
-  */
-  bool Write( 
-    class ON_BinaryArchive& archive 
-    ) const;
-
-  /*
-  Description:
-    Read the uuid-index list from an archive.
-  Parameters:
-    archive - [in] archive to read from.
-  Returns:
-    true if the read was successful.
-  */
-  bool Read( 
-    class ON_BinaryArchive& archive 
-    );
-
-  /*
-  Description:
     Append the uuids in this class to uuid_list.
   Parameters:
     uuid_list - [in/out]
@@ -1364,11 +1450,163 @@ public:
      ON_SimpleArray<ON_UUID>& uuid_list
      ) const;
 
+  /*
+  Description:
+    If you will perform lots of searches before the next
+    change to the list, then calling ImproveSearchSpeed()
+    will speed up the searches by culling removed objects
+    and completely sorting the list so only a binary search
+    is required. You may edit the list at any time after 
+    calling ImproveSearchSpeed().  If you are performing 
+    a few searches between edits, then excessive calling
+    of ImproveSearchSpeed() may actually decrease overall
+    program performance.
+  */
+  void ImproveSearchSpeed();
 
 private:
   ON_UuidIndex* SearchHelper(const ON_UUID*) const;
-  int m_sorted_count;
-  int m_removed_count;
+  unsigned int m_sorted_count;
+  unsigned int m_removed_count;
+};
+
+/*
+Description:
+  The ON_UuidPairList class provides a tool
+  to efficiently maintain a list of uuid pairs 
+  and determine if a uuid is in the list.
+  This class is based on the premise that there are
+  no duplicate uuids in the list.
+*/
+class ON_CLASS ON_UuidPairList : private ON_SimpleArray<ON_UuidPair>
+{
+public:
+  ON_UuidPairList();
+  ON_UuidPairList(int capacity);
+  ~ON_UuidPairList();
+  ON_UuidPairList(const ON_UuidPairList& src);
+  ON_UuidPairList& operator=(const ON_UuidPairList& src);
+
+  /*
+  Returns:
+    Number of active uuids in the list.
+  */
+  int Count() const;
+
+  /*
+  Description:
+    Provides an efficient way to empty a list so that it
+    can be used again.
+  */
+  void Empty();
+
+  void Reserve( int capacity );
+
+  /*
+  Description:
+    Adds a uuid-index pair to the list.
+  Parameters:
+    id1 - [in] id to add.
+    id2 - [in] id to add.
+    bCheckForDupicates - [in] if true, then the pair
+       is not added if id1 is already in the list.
+       If you are certain that the id1 is not in the list
+       and you have a have a large collection of uuids,
+       then setting bCheckForDupicates=false will
+       speed up the addition of uuids.
+  Returns:
+    True if the pair was added.  False if the pair was not added
+    because it is already in the collection.
+  Remarks:
+    You cannot add the pair value ( ON_max_uuid, ON_max_uuid ). This
+    pair value is used to mark removed elements in the ON_UuidPairList[].
+  */
+  bool AddPair(
+    ON_UUID id1, 
+    ON_UUID id2, 
+    bool bCheckForDupicates=true
+    );
+
+  /*
+  Description:
+    Removes an element with a matching id1 from the list.
+  Parameters:
+    id1 - [in] id to remove
+  Returns:
+    True if an element was removed.  False if the id1
+    was not in the list.
+  */
+  bool RemovePair(
+    ON_UUID id1
+    );
+
+  /*
+  Description:
+    Removes an element with a matching id pair from the list.
+  Parameters:
+    id1 - [in]
+    id2 - [in]
+  Returns:
+    True if an element was removed.  False if the id pair
+    does not appear in the list.
+  */
+  bool RemovePair(
+    ON_UUID id1,
+    ON_UUID id2
+    );
+
+  /*
+  Description:
+    Determine if an element with a uuid is in the list.
+  Parameters:
+    id1 - [in]
+    id2 - [out] if not NULL and a matching id1 is found,
+       then *id2 is set to the value of the second uuid.
+  Returns:
+    True if an element was found.  Returns false if
+    the id1 is not in the list.
+  */
+  bool FindId1(ON_UUID id1, ON_UUID* id2=0) const;
+
+  /*
+  Description:
+    Determine if an id pair is in the list.
+  Returns:
+    True if the id pair is in the list.
+    False if the id pair is not in the list.
+  */
+  bool FindPair(ON_UUID id1, ON_UUID id2) const;
+
+  /*
+  Description:
+    Append the value of the first id in each pair to uuid_list[].
+  Parameters:
+    uuid_list - [in/out]
+  Returns:
+    Number of ids appended to uuid_list[].
+  */
+  int GetId1s(
+     ON_SimpleArray<ON_UUID>& uuid_list
+     ) const;
+
+  /*
+  Description:
+    If you will perform lots of searches before the next
+    change to the list, then calling ImproveSearchSpeed()
+    will speed up the searches by culling removed objects
+    and completely sorting the list so only a binary search
+    is required. You may edit the list at any time after 
+    calling ImproveSearchSpeed().  If you are performing 
+    a few searches between edits, then excessive calling
+    of ImproveSearchSpeed() may actually decrease overall
+    program performance.
+  */
+  void ImproveSearchSpeed();
+
+private:
+  ON_UuidPair* SearchHelper(const ON_UUID*) const;
+  unsigned int m_sorted_count;
+  unsigned int m_removed_count;
 };
 
 class ON_CLASS ON_2dexMap : private ON_SimpleArray<ON_2dex>
@@ -1506,6 +1744,7 @@ See Also:
   ON_CompareDecreasing
 */
 template< class T>
+static
 int ON_CompareIncreasing( const T* a, const T* b);
 
 /* 
@@ -1539,6 +1778,7 @@ See Also:
   ON_CompareIncreasing
 */
 template< class T>
+static
 int ON_CompareDecreasing( const T* a, const T* b);
 
 

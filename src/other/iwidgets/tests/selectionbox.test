@@ -48,7 +48,7 @@ test Selectionbox-1.$c {Selectionbox construction} {
     set cs [label [.sb childsite].label -text "Child Site"]
     pack $cs -fill x -padx 10 -pady 10
     pack .sb -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -67,39 +67,39 @@ foreach test {
     {-height 340 340}
     {-activebackground #ececec #ececec}
     {-activerelief raised raised}
-    {-background #d9d9d9 #d9d9d9}
-    {-textbackground GhostWhite GhostWhite}
-    {-borderwidth 2 2}
-    {-childsitepos n n}
-    {-childsitepos s s}
-    {-childsitepos e e}
-    {-childsitepos w w}
-    {-childsitepos center center}
-    {-cursor gumby gumby}
-    {-dblclickcommand {.sb configure -background blue} {.sb configure -background blue}}
-    {-exportselection 1 1}
+    {-background #d9d9d9 #d9d9d9} 
+    {-textbackground GhostWhite GhostWhite} 
+    {-borderwidth 2 2} 
+    {-childsitepos n n} 
+    {-childsitepos s s} 
+    {-childsitepos e e} 
+    {-childsitepos w w} 
+    {-childsitepos center center} 
+    {-cursor gumby gumby} 
+    {-dblclickcommand {.sb configure -background blue} {.sb configure -background blue}} 
+    {-exportselection 1 1} 
     {-foreground Black Black}
     {-highlightcolor Black Black}
     {-highlightthickness 2 2}
-    {-insertbackground Black Black}
-    {-insertborderwidth 0 0}
-    {-insertofftime 300 300}
-    {-insertontime  600 600}
-    {-insertwidth 2 2}
-    {-itemslabel "Items Label" "Items Label"}
-    {-itemson no no}
-    {-labelfont -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*}
-    {-margin 10 10}
-    {-itemson yes yes}
-    {-selectbackground #c3c3c3 #c3c3c3}
-    {-selectborderwidth 1 1}
-    {-itemscommand {.sb selectitem} {.sb selectitem}}
-    {-selectforeground Black Black}
-    {-selectioncommand _command _command}
-    {-selectionlabel "Selection Label" "Selection Label"}
-    {-selectionon no no}
-    {-selectionon yes yes}
-    {-textfont 6x13 6x13}
+    {-insertbackground Black Black} 
+    {-insertborderwidth 0 0} 
+    {-insertofftime 300 300} 
+    {-insertontime  600 600} 
+    {-insertwidth 2 2} 
+    {-itemslabel "Items Label" "Items Label"} 
+    {-itemson no no} 
+    {-labelfont -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*} 
+    {-margin 10 10} 
+    {-itemson yes yes} 
+    {-selectbackground #c3c3c3 #c3c3c3} 
+    {-selectborderwidth 1 1} 
+    {-itemscommand {.sb selectitem} {.sb selectitem}} 
+    {-selectforeground Black Black} 
+    {-selectioncommand _command _command} 
+    {-selectionlabel "Selection Label" "Selection Label"} 
+    {-selectionon no no} 
+    {-selectionon yes yes} 
+    {-textfont 6x13 6x13} 
     {-width 0 0}
     {-height 0 0}} {
 	set option [lindex $test 0]
@@ -107,7 +107,7 @@ foreach test {
 	    .sb configure $option [lindex $test 1]
 	    lindex [.sb configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -137,7 +137,7 @@ foreach test {
 	test Selectionbox-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -158,23 +158,23 @@ foreach test {
 #
 test Selectionbox-1.$c {Selectionbox destruction} {
     destroy .sb
-    update
+    update 
 } {}
 
 incr c
 
 test Selectionbox-1.$c {Selectionbox construction} {
-    iwidgets::selectionbox .sb
+    iwidgets::selectionbox .sb 
     .sb component items configure -vscrollmode none -hscrollmode none
     pack .sb -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Selectionbox-1.$c {Selectionbox destruction} {
     destroy .sb
-    update
+    update 
 } {}
 
 incr c
@@ -183,7 +183,7 @@ test Selectionbox-1.$c {Selectionbox destruction} {
     iwidgets::selectionbox .sb
     pack .sb
     destroy .sb
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

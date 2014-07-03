@@ -1,0 +1,10 @@
+INCLUDE(CheckLibraryExists)
+
+MACRO(UTAH_CHECK_LIBRARY targetname lname func)
+	IF(NOT ${targetname}_LIBRARY)
+		CHECK_LIBRARY_EXISTS(${lname} ${func} "" HAVE_${targetname}_${lname})
+		IF(HAVE_${targetname}_${lname})
+			set(${targetname}_LIBRARY "${lname}")
+		ENDIF(HAVE_${targetname}_${lname})
+	ENDIF(NOT ${targetname}_LIBRARY)
+ENDMACRO(UTAH_CHECK_LIBRARY lname func)

@@ -67,7 +67,7 @@ TCLSTUBLIB	= $(TCLIMPLIB)
 BIN_INSTALL_DIR		= $(_INSTALLDIR)\bin
 DOC_INSTALL_DIR		= $(_INSTALLDIR)\doc
 LIB_INSTALL_DIR		= $(_INSTALLDIR)\lib
-SCRIPT_INSTALL_DIR	= $(_INSTALLDIR)\lib\itcl$(ITCL_DOTVERSION)
+SCRIPT_INSTALL_DIR	= $(_INSTALLDIR)\lib\$(PROJECT)$(ITCL_DOTVERSION)
 INCLUDE_INSTALL_DIR	= $(_INSTALLDIR)\include
 
 ITCLOBJS = \
@@ -177,16 +177,17 @@ TCL_INCLUDES	= -I"$(TCLDIR)\generic" -I"$(TCLDIR)\win"
 
 ITCL_INCLUDES	= -I$(WINDIR) -I$(GENERICDIR)
 ITCL_DEFINES	= -DBUILD_itcl -DTCL_THREADS=1
-ITCL_EXE_CFLAGS	= $(cdebug) $(cflags) $(crt) $(ITCL_INCLUDES) $(ITCL_DEFINES) $(TCL_INCLUDES)
+ITCL_STUB_CFLAGS= $(cflags) $(cdebug) $(ITCL_INCLUDES) $(ITCL_DEFINES) $(TCL_INCLUDES)
+ITCL_DLL_CFLAGS	= $(cflags) $(cdebug) $(crt) $(ITCL_INCLUDES) $(ITCL_DEFINES) $(TCL_INCLUDES) $(OPTDEFINES)
 
 ### By convention, static builds do not use Stubs.  This is just a practice,
 ### not a technical limitation.
 !if $(STATIC_BUILD)
-ITCL_CFLAGS	= $(ITCL_EXE_CFLAGS) -DSTATIC_BUILD
+ITCL_CFLAGS	= $(ITCL_DLL_CFLAGS) -DSTATIC_BUILD
 !elseif $(TCL_DOES_STUBS)
-ITCL_CFLAGS	= $(ITCL_EXE_CFLAGS) -DUSE_TCL_STUBS
+ITCL_CFLAGS	= $(ITCL_DLL_CFLAGS) -DUSE_TCL_STUBS
 !else
-ITCL_CFLAGS	= $(ITCL_EXE_CFLAGS)
+ITCL_CFLAGS	= $(ITCL_DLL_CFLAGS)
 !endif
 
 #---------------------------------------------------------------------
@@ -284,14 +285,44 @@ genstubs:
 !endif
 
 #---------------------------------------------------------------------
+# Generate the source dependencies.
+#---------------------------------------------------------------------
+
+depend:
+!if !exist($(TCLSH))
+	@echo Build tclsh first!
+!else
+	$(TCLSH) $(TCLTOOLSDIR)\mkdepend.tcl -vc32 -out:"$(OUT_DIR)\depend.mk" \
+		-passthru:"-DBUILD_itcl $(ITCL_INCLUDES) $(TCL_INCLUDES)" $(GENERICDIR),$$(GENERICDIR) \
+		$(WINDIR),$$(WINDIR) @<<
+$(ITCLOBJS)
+<<
+!endif
+
+#---------------------------------------------------------------------
+# Dependency rules
+#---------------------------------------------------------------------
+
+!if exist("$(OUT_DIR)\depend.mk")
+!include "$(OUT_DIR)\depend.mk"
+!message *** Dependency rules in use.
+!else
+!message *** Dependency rules are not being used.
+!endif
+
+### add a spacer in the output
+!message
+
+#---------------------------------------------------------------------
 # Special case object file targets
 #---------------------------------------------------------------------
 
 # The following object is part of the stub library and should not
 # be built as DLL objects but none of the symbols should be exported
+# and without reference to any specific C-runtime.
 
 $(TMP_DIR)\itclStubLib.obj : $(GENERICDIR)\itclStubLib.c
-	$(cc32) -DSTATIC_BUILD $(ITCL_EXE_CFLAGS) -Zl -Fo$@ $?
+	$(cc32) -DSTATIC_BUILD $(ITCL_STUB_CFLAGS) -Zl -Fo$@ $?
 
 #---------------------------------------------------------------------
 # Inference rules.  Use batch-mode when supported.

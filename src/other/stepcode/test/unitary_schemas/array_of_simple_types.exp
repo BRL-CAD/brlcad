@@ -1,0 +1,9 @@
+SCHEMA test_array_of_simple_types;
+
+ENTITY point;
+    arr_real : ARRAY[1:3] OF REAL;
+    arr_string : ARRAY[1:3] OF STRING;
+    arr_integer : ARRAY[1:?] OF INTEGER;
+END_ENTITY;
+
+END_SCHEMA;

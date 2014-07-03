@@ -46,7 +46,7 @@ See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "
 </td>
 </table>
 <P>
-See the "labeledframe" class manual entry for details on the
+See the "labeledframe" class manual entry for details on the 
 inherited options.
 </pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
 <P>
@@ -56,7 +56,7 @@ Class:                  <B>Command</B>
 Command-Line Switch:    <B>-command</B>
 </pre>
 <UL>
-Specifies a Tcl command procedure to be evaluated following a  change in
+Specifies a Tcl command procedure to be evaluated following a  change in 
 the current check box selection.
 </UL>
 <P>
@@ -64,8 +64,8 @@ the current check box selection.
 
 </pre><H2>DESCRIPTION</H2>
 <P>
-The <B>checkbox</B> command creates a check button box widget
-capable of adding, inserting, deleting, selecting, and configuring
+The <B>checkbox</B> command creates a check button box widget 
+capable of adding, inserting, deleting, selecting, and configuring 
 checkbuttons as well as obtaining the currently selected button.
 
 </pre><H2>METHODS</H2>
@@ -78,7 +78,7 @@ operations on the widget.  It has the following general form:
 <I>pathName option </I>?<I>arg arg ...</I>?
 </pre>
 <I>Option</I> and the <I>arg</I>s
-determine the exact behavior of the command.
+determine the exact behavior of the command.  
 <P>
 Many of the widget commands for the <B>checkbox</B> take as one argument an
 indicator of which checkbutton of the checkbox to operate on.  These indicators
@@ -87,7 +87,7 @@ Checkbox indexes may be specified in any of the following forms:
 <DL>
 <DT> <I>number</I>
 </I></B>
-<DD> Specifies the checkbutton numerically, where 0 corresponds to the top
+<DD> Specifies the checkbutton numerically, where 0 corresponds to the top 
 checkbutton of the checkbox.
 </DL>
 <DL>
@@ -118,7 +118,7 @@ returned.
 <DT> <I>pathName <B>buttonconfigure</B> <I>index</I> ?<I>options</I>?
 </I></B>
 <DD> This command is similar to the <B>configure</B> command, except that
-it applies to the options for an individual checkbutton,
+it applies to the options for an individual checkbutton, 
 whereas <B>configure</B>applies to the options for the checkbox as a whole.
 <I>Options</I> may have any of the values accepted by the <B>add</B>
 widget command.  If <I>options</I> are specified, options are modified
@@ -169,7 +169,7 @@ command.
 <DL>
 <DT> <I>pathName <B>get</B> ?<I>index</I>?
 </I></B>
-<DD> Returns the tags of the currently selected checkbuttons or the
+<DD> Returns the tags of the currently selected checkbuttons or the 
 selection status of specific checkbutton when given an index.
 </DL>
 <DL>
@@ -184,7 +184,7 @@ selection status of specific checkbutton when given an index.
 checkbutton just before the one given by <I>index</I>, instead of appending
 to the end of the checkbox.  The <I>option</I>, and <I>value</I>
 arguments have the same interpretation as for the <B>add</B> widget
-command.
+command.  
 </DL>
 <DL>
 <DT> <I>pathName <B>select</B> <I>index</I>

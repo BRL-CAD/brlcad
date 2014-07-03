@@ -64,8 +64,8 @@ Command-Line Switch:	<B>-buttonboxpadx</B>
 </pre>
 <UL>
 Specifies a non-negative padding distance to leave between the button group and
-the outer edge of the button box in the x direction.  The value may be
-given in any of the forms accpetable to <B>Tk_GetPixels</B>.  The default
+the outer edge of the button box in the x direction.  The value may be 
+given in any of the forms accpetable to <B>Tk_GetPixels</B>.  The default 
 is 5 pixels.
 </UL>
 <P>
@@ -76,8 +76,8 @@ Command-Line Switch:	<B>-buttonboxpady</B>
 </pre>
 <UL>
 Specifies a non-negative padding distance to leave between the button group and
-the outer edge of the button box in the y direction.  The value may be
-given in any of the forms accpetable to <B>Tk_GetPixels</B>.  The default
+the outer edge of the button box in the y direction.  The value may be 
+given in any of the forms accpetable to <B>Tk_GetPixels</B>.  The default 
 is 5 pixels.
 </UL>
 <P>
@@ -87,7 +87,7 @@ Class:                  <B>Position</B>
 Command-Line Switch:	<B>-buttonboxpos</B>
 </pre>
 <UL>
-Attaches buttons to the given side of the dialog: <B>n</B>, <B>s</B>,
+Attaches buttons to the given side of the dialog: <B>n</B>, <B>s</B>, 
 <B>e</B> or <B>w</B>.  The default is s.
 </UL>
 <P>
@@ -117,7 +117,7 @@ Class:                  <B>Separator</B>
 Command-Line Switch:	<B>-separator</B>
 </pre>
 <UL>
-Specifies whether a line is drawn to separate the
+Specifies whether a line is drawn to separate the 
 buttons from the dialog box contents in any of the forms
 acceptable to <B>Tcl_GetBoolean</B>.  The default is true.
 </UL>
@@ -135,7 +135,7 @@ to <B>Tk_GetPixels</B>.  The default is 3 pixels.
 
 </pre><H2>DESCRIPTION</H2>
 <P>
-The <B>dialogshell</B> command creates a dialog shell which is a top
+The <B>dialogshell</B> command creates a dialog shell which is a top 
 level widget composed of a button box, separator, and child site area.
 The class also has methods to control button construction.
 
@@ -228,7 +228,7 @@ Name:                   <B>dschildsite</B>
 Class:                  <B>frame</B>
 </pre>
 <UL>
-The dschildsite component is the user child site for the dialog shell.  See
+The dschildsite component is the user child site for the dialog shell.  See 
 the "frame" widget manual entry for details on the dschildsite component item.
 </UL>
 <P>
@@ -238,7 +238,7 @@ Class:                  <B>frame</B>
 </pre>
 <UL>
 The separator component devides the area between the user child site and
-the button box.  See the "frame" widget manual entry for details on the
+the button box.  See the "frame" widget manual entry for details on the 
 separator component item.
 </UL>
 <P>
@@ -247,8 +247,8 @@ Name:                   <B>bbox</B>
 Class:                  <B>ButtonBox</B>
 </pre>
 <UL>
-The bbox component is the button box containing the buttons for the dialog
-shell.  See the "ButtonBox" widget manual entry for details on the
+The bbox component is the button box containing the buttons for the dialog 
+shell.  See the "ButtonBox" widget manual entry for details on the 
 bbox component item.
 </UL>
 </table>
@@ -256,11 +256,11 @@ bbox component item.
 </pre><H2>EXAMPLE</H2>
 <pre>
  dialogshell .ds -modality none
-
- .ds add OK -text "OK"
+ 
+ .ds add OK -text "OK" 
  .ds add Cancel -text "Cancel"
  .ds default OK
-
+ 
  .ds activate
 </pre>
 </pre><H2>AUTHOR</H2>

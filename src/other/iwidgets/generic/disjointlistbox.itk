@@ -73,7 +73,7 @@ itk::usual Disjointlistbox {
 
 
 # ----------------------------------------------------------------------
-# ::iwidgets::Disjointlistbox
+# ::iwidgets::Disjointlistbox 
 # ----------------------------------------------------------------------
 itcl::class ::iwidgets::Disjointlistbox {
 
@@ -123,7 +123,7 @@ itcl::class ::iwidgets::Disjointlistbox {
 
 #
 # Provide a lowercased access method for the ::iwidgets::Disjointlistbox class.
-#
+# 
 proc ::iwidgets::disjointlistbox {pathName args} {
     uplevel ::iwidgets::Disjointlistbox $pathName $args
 }
@@ -132,7 +132,7 @@ proc ::iwidgets::disjointlistbox {pathName args} {
 #
 # Method: Constructor
 #
-# Purpose:
+# Purpose:   
 #
 itcl::body ::iwidgets::Disjointlistbox::constructor {args} {
     #
@@ -341,7 +341,7 @@ itcl::body ::iwidgets::Disjointlistbox::remove {theListbox items} {
     foreach item $items {
         #
         # if the item is in the listbox then add its index to the index list
-        #
+        # 
         if {[set index [lsearch -exact $curritems $item]] != -1} {
             lappend indexes $index
         }
@@ -435,7 +435,7 @@ itcl::configbody ::iwidgets::Disjointlistbox::buttonplacement {
                 itk_component add bbox {
                     frame $itk_interior.bbox
                 }
-
+    
                 itk_component add lhsbutton {
                     button $itk_component(bbox).lhsbutton -command [itcl::code \
                             $this transfer]
@@ -444,7 +444,7 @@ itcl::configbody ::iwidgets::Disjointlistbox::buttonplacement {
                     rename -text -lhsbuttonlabel lhsButtonLabel LabelText
                     rename -font -labelfont labelFont Font
                 }
-
+    
                 itk_component add rhsbutton {
                     button $itk_component(bbox).rhsbutton -command [itcl::code \
                             $this transfer]
@@ -453,15 +453,19 @@ itcl::configbody ::iwidgets::Disjointlistbox::buttonplacement {
                     rename -text -rhsbuttonlabel rhsButtonLabel LabelText
                     rename -font -labelfont labelFont Font
                 }
-
+    
                 grid configure $itk_component(lhsCount) -row 1 -column 0 \
                         -sticky ew
                 grid configure $itk_component(rhsCount) -row 1 -column 2 \
                         -sticky ew
-
+     
                 grid configure $itk_component(bbox) \
                         -in $itk_interior -row 0 -column 1 -columnspan 1 \
                                 -sticky nsew
+
+		# Tk8.5: enforce compatibility to previous versions
+		# see Tk-ticket 2062394
+		catch {grid anchor $itk_component(bbox) center}
 
                 grid configure $itk_component(rhsbutton) \
                         -in $itk_component(bbox) -row 0 -column 0 -sticky ew
@@ -470,7 +474,7 @@ itcl::configbody ::iwidgets::Disjointlistbox::buttonplacement {
                 }
 
             bottom {
-
+    
                 itk_component add lhsbutton {
                     button $itk_interior.lhsbutton -command [itcl::code $this \
                             transfer]

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -122,12 +123,6 @@ public:
   ON_BOOL32 SwapCoordinates(
         int, int        // indices of coords to swap
         );
-
-  // virtual ON_Geometry override
-  bool Morph( const ON_SpaceMorph& morph );
-
-  // virtual ON_Geometry override
-  bool IsMorphable() const;
 
   /////////////////////////////////////////////////////////////////
   // ON_Curve overrides
@@ -269,133 +264,14 @@ public:
                          //            repeated evaluations
          ) const;
 
-  //////////
-  // Find parameter of the point on a curve that is closest to test_point.
-  // If the maximum_distance parameter is > 0, then only points whose distance
-  // to the given point is <= maximum_distance will be returned.  Using a 
-  // positive value of maximum_distance can substantially speed up the search.
-  // If the sub_domain parameter is not NULL, then the search is restricted
-  // to the specified portion of the curve.
-  //
-  // true if returned if the search is successful.  false is returned if
-  // the search fails.
-  bool GetClosestPoint( const ON_3dPoint&, // test_point
-          double*,       // parameter of local closest point returned here
-          double = 0.0,  // maximum_distance
-          const ON_Interval* = NULL // sub_domain
-          ) const;
-
-  //////////
-  // Find parameter of the point on a curve that is locally closest to 
-  // the test_point.  The search for a local close point starts at 
-  // seed_parameter. If the sub_domain parameter is not NULL, then
-  // the search is restricted to the specified portion of the curve.
-  //
-  // true if returned if the search is successful.  false is returned if
-  // the search fails.
-  ON_BOOL32 GetLocalClosestPoint( const ON_3dPoint&, // test_point
-          double,    // seed_parameter
-          double*,   // parameter of local closest point returned here
-          const ON_Interval* = NULL // sub_domain
-          ) const;
 
   // virtual ON_Curve override
-  int IntersectSelf( 
+  int IntersectSelf(
           ON_SimpleArray<ON_X_EVENT>& x,
           double intersection_tolerance = 0.0,
           const ON_Interval* curve_domain = 0
           ) const;
 
-  // Description:
-  //   virtual ON_Curve::GetLength override.
-  //   Get the length of the line.
-  // Parameters:
-  //   length - [out] length returned here.
-  //   t - [out] parameter such that the length of the curve
-  //      from its start to t is arc_length.
-  //   fractional_tolerance - [in] desired fractional precision.
-  //       fabs(("exact" length from start to t) - arc_length)/arc_length <= fractional_tolerance
-  //   sub_domain - [in] If not NULL, the calculation is performed on
-  //       the specified sub-domain of the curve.
-  // Returns:
-  //   true if returned if the length calculation is successful.
-  ON_BOOL32 GetLength(
-          double* length,
-          double fractional_tolerance = 1.0e-8,
-          const ON_Interval* sub_domain = NULL
-          ) const;
-
-  /*
-  Description:
-    Used to quickly find short curves.
-  Parameters:
-    tolerance - [in] (>=0)
-    sub_domain - [in] If not NULL, the test is performed
-      on the interval that is the intersection of 
-      sub_domain with Domain().
-  Returns:
-    True if the length of the curve is <= tolerance.
-  Remarks:
-    Faster than calling Length() and testing the
-    result.
-  */
-  bool IsShort(
-    double tolerance,
-    const ON_Interval* sub_domain = NULL
-    ) const;
-
-  // Description:
-  //   virtual ON_Curve::GetNormalizedArcLengthPoint override.
-  //   Get the parameter of the point on the line that is a 
-  //   prescribed distance from the start of the line
-  // Parameters:
-  //   s - [in] normalized arc length parameter.  E.g., 0 = start
-  //        of curve, 1/2 = midpoint of curve, 1 = end of curve.
-  //   t - [out] parameter such that the length of the line
-  //      from its start to t is arc_length.
-  //   fractional_tolerance - [in] desired fractional precision.
-  //       fabs(("exact" length from start to t) - arc_length)/arc_length <= fractional_tolerance
-  //   sub_domain - [in] If not NULL, the calculation is performed on
-  //       the specified sub-domain of the curve.
-  // Returns:
-  //   true if successful
-  ON_BOOL32 GetNormalizedArcLengthPoint(
-          double s,
-          double* t,
-          double fractional_tolerance = 1.0e-8,
-          const ON_Interval* sub_domain = NULL
-          ) const;
-
-  /*
-  Description:
-    virtual ON_Curve::GetNormalizedArcLengthPoints override.
-    Get the parameter of the point on the curve that is a 
-    prescribed arc length from the start of the curve.
-  Parameters:
-    count - [in] number of parameters in s.
-    s - [in] array of normalized arc length parameters. E.g., 0 = start
-         of curve, 1/2 = midpoint of curve, 1 = end of curve.
-    t - [out] array of curve parameters such that the length of the 
-       curve from its start to t[i] is s[i]*curve_length.
-    absolute_tolerance - [in] if absolute_tolerance > 0, then the difference
-        between (s[i+1]-s[i])*curve_length and the length of the curve
-        segment from t[i] to t[i+1] will be <= absolute_tolerance.
-    fractional_tolerance - [in] desired fractional precision for each segment.
-        fabs("true" length - actual length)/(actual length) <= fractional_tolerance
-    sub_domain - [in] If not NULL, the calculation is performed on
-        the specified sub-domain of the curve.  A 0.0 s value corresponds to
-        sub_domain->Min() and a 1.0 s value corresponds to sub_domain->Max().
-  Returns:
-    true if successful
-  */
-  ON_BOOL32 GetNormalizedArcLengthPoints(
-          int count,
-          const double* s,
-          double* t,
-          double absolute_tolerance = 0.0,
-          double fractional_tolerance = 1.0e-8,
-          const ON_Interval* sub_domain = NULL
-          ) const;
 
   // Description:
   //   virtual ON_Curve::Trim override.

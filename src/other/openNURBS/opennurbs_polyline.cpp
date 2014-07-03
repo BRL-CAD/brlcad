@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -54,31 +55,32 @@ int ON_Polyline::Clean( double tolerance )
 {
   // 14 January 2005 Dale Lear
   //     Fixed this cleaner so that it did not modify
-  //     the start and end point.  This is still a 
-  //     pretty sloppy way of cleaning a polyline.
+  //     the start and end point.
   int count0 = m_count;
-  int i = m_count-2;
-  while( i > 0 )
-  {
-    if ( m_a[i+1].DistanceTo(m_a[i]) <= tolerance )
-    {
-      Remove(i);
-    }
-    else
-    {
-      i--;
-    }
-  }
 
-  while (m_count > 2 )
+  if ( m_count > 2 )
   {
-    if ( m_a[0].DistanceTo(m_a[1]) <= tolerance )
+    int i,j;
+    j = 0;
+    for ( i = 1; i < m_count-1; i++ )
     {
-      Remove(1);
+       if ( m_a[j].DistanceTo(m_a[i]) <= tolerance )
+         continue;
+       j++;
+       if ( i > j )
+         m_a[j] = m_a[i];
     }
-    else
+
+    if ( m_count > j+2 )
     {
-      break;
+      m_a[j+1] = m_a[m_count-1];
+      m_count = j+2;
+    }
+
+    while ( m_count > 2 && m_a[m_count-2].DistanceTo(m_a[m_count-1]) <= tolerance )
+    {
+      m_a[m_count-2] = m_a[m_count-1];
+      m_count--;
     }
   }
 
@@ -129,11 +131,14 @@ bool ON_Polyline::IsClosed( double tolerance ) const
         }
       }
     }
-    else {
-      if ( 0 == ON_ComparePoint(3,false,&m_a[0].x,&m_a[count].x) ) {
+    else
+    {
+      if ( ON_PointsAreCoincident(3,false,&m_a[0].x,&m_a[count].x) ) 
+      {
         for ( i = 1; i < count; i++ ) {
-          if (    ON_ComparePoint(3,false,&m_a[i].x,&m_a[0].x) 
-               && ON_ComparePoint(3,false,&m_a[i].x,&m_a[count].x) )
+          if (    !ON_PointsAreCoincident(3,false,&m_a[i].x,&m_a[0].x) 
+               && !ON_PointsAreCoincident(3,false,&m_a[i].x,&m_a[count].x) 
+             )
           {
             rc = true;
             break;

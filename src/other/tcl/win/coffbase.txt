@@ -1,10 +1,10 @@
 ;
 ; This file defines the virtual base addresses for the Dynamic Link Libraries
 ; that are part of the Tcl system.  The first token on a line is the key (or name
-; of the DLL) and the second token is the virtual base address, in hexidecimal.
+; of the DLL) and the second token is the virtual base address, in hexadecimal.
 ; The third token is the maximum size of the DLL image file, including symbols.
 ;
-; Using a specified "prefered load address" should speed loading time by avoiding
+; Using a specified "preferred load address" should speed loading time by avoiding
 ; relocations (NT supported only).  It is assumed extension authors will contribute
 ; their modules to this grand-master list.  You can use the dumpbin utility with
 ; the /headers option to get the "size of image" data (already in hex).  If the

@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#if defined(_WIN32) || defined(WIN64) || defined(_WIN64)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -53,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 4,0,2006,1206
- PRODUCTVERSION 4,0,2006,1206
+ FILEVERSION 5,0,2012,1024
+ PRODUCTVERSION 5,0,2012,1024
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -70,31 +68,15 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Robert McNeel & Associates"
-            VALUE "FileDescription", "openNURBS Dynamic Link Library"
-            VALUE "FileVersion", "4, 0, 2006, 1206"
-            VALUE "InternalName", "openNURBS"
-            VALUE "LegalCopyright", "Copyright 1993-2007 Robert McNeel & Associates. All Rights Reserved."
+            VALUE "FileDescription", "Public openNURBS Dynamic Link Library"
+            VALUE "FileVersion", "5.0.2012.1024"
+            VALUE "InternalName", "Public openNURBS"
+            VALUE "LegalCopyright", "Copyright 1993-2012 Robert McNeel & Associates. All Rights Reserved."
             VALUE "LegalTrademarks", "openNURBS is a trademark of Robert McNeel & Associates."
-#ifdef _DEBUG
-#if defined(WIN64) || defined(_WIN64)
-            VALUE "OriginalFilename", "opennurbsx64_d.dll"
-#else
-            VALUE "OriginalFilename", "opennurbs_d.dll"
-#endif
-#else
-#if defined(WIN64) || defined(_WIN64)
-            VALUE "OriginalFilename", "opennurbsx64.dll"
-#else
+            VALUE "openNURBSVersion", "201210245"
             VALUE "OriginalFilename", "opennurbs.dll"
-#endif
-#endif
-            VALUE "ProductName", "openNURBS"
-            VALUE "ProductVersion", "4, 0, 2006, 1206"
-#ifdef _DEBUG
-            VALUE "openNURBSVersion", "200612069"
-#else
-            VALUE "openNURBSVersion", "200612060"
-#endif
+            VALUE "ProductName", "Public openNURBS"
+            VALUE "ProductVersion", "5.0.2012.1024"
         END
     END
     BLOCK "VarFileInfo"
@@ -103,7 +85,7 @@ BEGIN
     END
 END
 
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

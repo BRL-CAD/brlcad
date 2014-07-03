@@ -31,7 +31,7 @@
                         print tablns[j] "<br>"
                     print "</td>"
                 }
-
+            
             print "</table>"
         }
 
@@ -45,7 +45,7 @@
             }
             print "</pre>"
         }
-
+        
         next
     }
 

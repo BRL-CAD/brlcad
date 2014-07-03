@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) dialogshell.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::dialogshell iwid
 .BS
@@ -35,7 +35,7 @@ See the "shell" manual entry for details on the above inherited options.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBtitle\fR
+\fBtitle\fR 
 .fi
 .LP
 See the "Toplevel" manual entry for details on the above inherited options.
@@ -49,8 +49,8 @@ Command-Line Switch:	\fB-buttonboxpadx\fR
 .fi
 .IP
 Specifies a non-negative padding distance to leave between the button group and
-the outer edge of the button box in the x direction.  The value may be
-given in any of the forms accpetable to \fBTk_GetPixels\fR.  The default
+the outer edge of the button box in the x direction.  The value may be 
+given in any of the forms accpetable to \fBTk_GetPixels\fR.  The default 
 is 5 pixels.
 .LP
 .nf
@@ -60,8 +60,8 @@ Command-Line Switch:	\fB-buttonboxpady\fR
 .fi
 .IP
 Specifies a non-negative padding distance to leave between the button group and
-the outer edge of the button box in the y direction.  The value may be
-given in any of the forms accpetable to \fBTk_GetPixels\fR.  The default
+the outer edge of the button box in the y direction.  The value may be 
+given in any of the forms accpetable to \fBTk_GetPixels\fR.  The default 
 is 5 pixels.
 .LP
 .nf
@@ -70,7 +70,7 @@ Class:	\fBPosition\fR
 Command-Line Switch:	\fB-buttonboxpos\fR
 .fi
 .IP
-Attaches buttons to the given side of the dialog: \fBn\fR, \fBs\fR,
+Attaches buttons to the given side of the dialog: \fBn\fR, \fBs\fR, 
 \fBe\fR or \fBw\fR.  The default is s.
 .LP
 .nf
@@ -97,7 +97,7 @@ Class:	\fBSeparator\fR
 Command-Line Switch:	\fB-separator\fR
 .fi
 .IP
-Specifies whether a line is drawn to separate the
+Specifies whether a line is drawn to separate the 
 buttons from the dialog box contents in any of the forms
 acceptable to \fBTcl_GetBoolean\fR.  The default is true.
 .LP
@@ -113,7 +113,7 @@ to \fBTk_GetPixels\fR.  The default is 3 pixels.
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::dialogshell\fR command creates a dialog shell which is a top
+The \fBiwidgets::dialogshell\fR command creates a dialog shell which is a top 
 level widget composed of a button box, separator, and child site area.
 The class also has methods to control button construction.
 
@@ -178,7 +178,7 @@ Name:	\fBdschildsite\fR
 Class:	\fBframe\fR
 .fi
 .IP
-The dschildsite component is the user child site for the dialog shell.  See
+The dschildsite component is the user child site for the dialog shell.  See 
 the "frame" widget manual entry for details on the dschildsite component item.
 .LP
 .nf
@@ -187,7 +187,7 @@ Class:	\fBframe\fR
 .fi
 .IP
 The separator component devides the area between the user child site and
-the button box.  See the "frame" widget manual entry for details on the
+the button box.  See the "frame" widget manual entry for details on the 
 separator component item.
 .LP
 .nf
@@ -195,8 +195,8 @@ Name:	\fBbbox\fR
 Class:	\fBButtonBox\fR
 .fi
 .IP
-The bbox component is the button box containing the buttons for the dialog
-shell.  See the "ButtonBox" widget manual entry for details on the
+The bbox component is the button box containing the buttons for the dialog 
+shell.  See the "ButtonBox" widget manual entry for details on the 
 bbox component item.
 .fi
 
@@ -204,11 +204,11 @@ bbox component item.
 .DS
  package require Iwidgets 4.0
  iwidgets::dialogshell .ds -modality none
-
- .ds add OK -text "OK"
+ 
+ .ds add OK -text "OK" 
  .ds add Cancel -text "Cancel"
  .ds default OK
-
+ 
  .ds activate
 .DE
 .SH AUTHOR

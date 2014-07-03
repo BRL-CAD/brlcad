@@ -55,8 +55,10 @@
 
 
 #include <stdlib.h>     /* for exit() prototype */
+#include <setjmp.h>
 
-#include "png.h"        /* libpng header; includes zlib.h and setjmp.h */
+#include <zlib.h>
+#include "png.h"        /* libpng header from the local directory */
 #include "readpng2.h"   /* typedefs, common macros, public prototypes */
 
 
@@ -67,6 +69,7 @@ static void readpng2_row_callback(png_structp png_ptr, png_bytep new_row,
                                  png_uint_32 row_num, int pass);
 static void readpng2_end_callback(png_structp png_ptr, png_infop info_ptr);
 static void readpng2_error_handler(png_structp png_ptr, png_const_charp msg);
+static void readpng2_warning_handler(png_structp png_ptr, png_const_charp msg);
 
 
 
@@ -102,7 +105,7 @@ int readpng2_init(mainprog_info *mainprog_ptr)
     /* could also replace libpng warning-handler (final NULL), but no need: */
 
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, mainprog_ptr,
-      readpng2_error_handler, NULL);
+      readpng2_error_handler, readpng2_warning_handler);
     if (!png_ptr)
         return 4;   /* out of memory */
 
@@ -134,29 +137,23 @@ int readpng2_init(mainprog_info *mainprog_ptr)
      * used, i.e., all chunks recognized by libpng except for IHDR, PLTE, IDAT,
      * IEND, tRNS, bKGD, gAMA, and sRGB (small performance improvement) */
     {
-        /* These byte strings were copied from png.h.  If a future libpng
-         * version recognizes more chunks, add them to this list.  If a
-         * future version of readpng2.c recognizes more chunks, delete them
-         * from this list. */
-        static /* const */ png_byte chunks_to_ignore[] = {
-             99,  72,  82,  77, '\0',  /* cHRM */
-            104,  73,  83,  84, '\0',  /* hIST */
-            105,  67,  67,  80, '\0',  /* iCCP */
-            105,  84,  88, 116, '\0',  /* iTXt */
-            111,  70,  70, 115, '\0',  /* oFFs */
-            112,  67,  65,  76, '\0',  /* pCAL */
-            112,  72,  89, 115, '\0',  /* pHYs */
-            115,  66,  73,  84, '\0',  /* sBIT */
-            115,  67,  65,  76, '\0',  /* sCAL */
-            115,  80,  76,  84, '\0',  /* sPLT */
-            115,  84,  69,  82, '\0',  /* sTER */
-            116,  69,  88, 116, '\0',  /* tEXt */
-            116,  73,  77,  69, '\0',  /* tIME */
-            122,  84,  88, 116, '\0'   /* zTXt */
-        };
+        /* These byte strings were copied from png.h.  If a future version
+         * of readpng2.c recognizes more chunks, add them to this list.
+         */
+        static PNG_CONST png_byte chunks_to_process[] = {
+            98,  75,  71,  68, '\0',  /* bKGD */
+           103,  65,  77,  65, '\0',  /* gAMA */
+           115,  82,  71,  66, '\0',  /* sRGB */
+           };
 
-        png_set_keep_unknown_chunks(png_ptr, 1 /* PNG_HANDLE_CHUNK_NEVER */,
-          chunks_to_ignore, sizeof(chunks_to_ignore)/5);
+       /* Ignore all chunks except for IHDR, PLTE, tRNS, IDAT, and IEND */
+       png_set_keep_unknown_chunks(png_ptr, -1 /* PNG_HANDLE_CHUNK_NEVER */,
+          NULL, -1);
+
+       /* But do not ignore chunks in the "chunks_to_process" list */
+       png_set_keep_unknown_chunks(png_ptr,
+          0 /* PNG_HANDLE_CHUNK_AS_DEFAULT */, chunks_to_process,
+          sizeof(chunks_to_process)/5);
     }
 #endif /* PNG_HANDLE_AS_UNKNOWN_SUPPORTED */
 
@@ -216,7 +213,11 @@ static void readpng2_info_callback(png_structp png_ptr, png_infop info_ptr)
     mainprog_info  *mainprog_ptr;
     int  color_type, bit_depth;
     png_uint_32 width, height;
+#ifdef PNG_FLOATING_POINT_SUPPORTED
     double  gamma;
+#else
+    png_fixed_point gamma;
+#endif
 
 
     /* setjmp() doesn't make sense here, because we'd either have to exit(),
@@ -305,8 +306,14 @@ static void readpng2_info_callback(png_structp png_ptr, png_infop info_ptr)
         png_set_expand(png_ptr);
     if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
         png_set_expand(png_ptr);
+#ifdef PNG_READ_16_TO_8_SUPPORTED
     if (bit_depth == 16)
+#  ifdef PNG_READ_SCALE_16_TO_8_SUPPORTED
+        png_set_scale_16(png_ptr);
+#  else
         png_set_strip_16(png_ptr);
+#  endif
+#endif
     if (color_type == PNG_COLOR_TYPE_GRAY ||
         color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
         png_set_gray_to_rgb(png_ptr);
@@ -327,11 +334,19 @@ static void readpng2_info_callback(png_structp png_ptr, png_infop info_ptr)
      * "gamma" value for the entire display system, i.e., the product of
      * LUT_exponent and CRT_exponent. */
 
+#ifdef PNG_FLOATING_POINT_SUPPORTED
     if (png_get_gAMA(png_ptr, info_ptr, &gamma))
         png_set_gamma(png_ptr, mainprog_ptr->display_exponent, gamma);
     else
         png_set_gamma(png_ptr, mainprog_ptr->display_exponent, 0.45455);
-
+#else
+    if (png_get_gAMA_fixed(png_ptr, info_ptr, &gamma))
+        png_set_gamma_fixed(png_ptr,
+            (png_fixed_point)(100000*mainprog_ptr->display_exponent+.5), gamma);
+    else
+        png_set_gamma_fixed(png_ptr,
+            (png_fixed_point)(100000*mainprog_ptr->display_exponent+.5), 45455);
+#endif
 
     /* we'll let libpng expand interlaced images, too */
 
@@ -453,7 +468,11 @@ void readpng2_cleanup(mainprog_info *mainprog_ptr)
 }
 
 
-
+static void readpng2_warning_handler(png_structp png_ptr, png_const_charp msg)
+{
+    fprintf(stderr, "readpng2 libpng warning: %s\n", msg);
+    fflush(stderr);
+}
 
 
 static void readpng2_error_handler(png_structp png_ptr, png_const_charp msg)
@@ -480,5 +499,12 @@ static void readpng2_error_handler(png_structp png_ptr, png_const_charp msg)
         exit(99);
     }
 
+    /* Now we have our data structure we can use the information in it
+     * to return control to our own higher level code (all the points
+     * where 'setjmp' is called in this file.)  This will work with other
+     * error handling mechanisms as well - libpng always calls png_error
+     * when it can proceed no further, thus, so long as the error handler
+     * is intercepted, application code can do its own error recovery.
+     */
     longjmp(mainprog_ptr->jmpbuf, 1);
 }

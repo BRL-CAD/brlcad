@@ -79,18 +79,18 @@ proc test {test_name test_description contents_of_test passing_results} {
     if {$code != 0} {
 	print_verbose $test_name $test_description $contents_of_test \
 		$code $answer
-    } elseif {[string compare $answer $passing_results] == 0} then {
+    } elseif {[string compare $answer $passing_results] == 0} then { 
 	if $VERBOSE then {
 	    print_verbose $test_name $test_description $contents_of_test \
 		    $code $answer
 	    puts stdout "++++ $test_name PASSED"
 	}
-    } else {
+    } else { 
 	print_verbose $test_name $test_description $contents_of_test \
-		$code $answer
+		$code $answer 
 	puts stdout "---- Result should have been:"
 	puts stdout "$passing_results"
-	puts stdout "---- $test_name FAILED"
+	puts stdout "---- $test_name FAILED" 
     }
     after $DELAY
 }
@@ -119,18 +119,18 @@ proc test_pattern {test_name test_description contents_of_test passing_results} 
 	if {$code != 0} {
 		print_verbose $test_name $test_description $contents_of_test \
 			$code $answer
-	} elseif {[regexp -- [lindex $passing_results 1] [lindex $answer 1]] == 1 } {
+	} elseif {[regexp -- [lindex $passing_results 1] [lindex $answer 1]] == 1 } { 
 		if $VERBOSE then {
 			print_verbose $test_name $test_description $contents_of_test \
 				$code $answer
 			puts stdout "++++ $test_name PASSED"
 		}
-	} else {
+	} else { 
 		print_verbose $test_name $test_description $contents_of_test \
-			$code $answer
+			$code $answer 
 		puts stdout "---- Result should have been:"
 		puts stdout "$passing_results"
-		puts stdout "**** $test_name FAILED ****"
+		puts stdout "**** $test_name FAILED ****" 
 	}
 }
 

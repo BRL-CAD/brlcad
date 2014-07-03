@@ -1,0 +1,37 @@
+SCHEMA test_select_data_type;
+
+TYPE attachment_method = SELECT(permanent_attachment, temporary_attachment);
+END_TYPE;
+
+TYPE permanent_attachment = SELECT(glue, weld);
+END_TYPE;
+
+TYPE temporary_attachment = SELECT(nail, screw);
+END_TYPE;
+
+ENTITY nail;
+  body_length : REAL;
+  head_area : REAL;
+END_ENTITY;
+
+ENTITY screw;
+  body_length : REAL;
+  pitch : REAL;
+END_ENTITY;
+
+ENTITY glue;
+  composition : STRING;
+  solvent : STRING;
+END_ENTITY;
+
+ENTITY weld;
+  composition : STRING;
+END_ENTITY;
+
+ENTITY wall_mounting;
+  mounting : STRING;
+  on : STRING;
+  using : attachment_method;
+END_ENTITY;
+
+END_SCHEMA;

@@ -16,9 +16,10 @@ EXTRA_DIST = \
 	examples \
 	itkConfig.sh.in \
 	license.terms \
-	mac \
 	tests \
-	win
+	win \
+	CMakeLists.txt \
+	CMake
 
 DISTCLEANFILES = pkgIndex.tcl
 

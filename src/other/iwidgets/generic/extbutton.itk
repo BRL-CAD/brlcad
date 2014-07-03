@@ -295,7 +295,7 @@ itcl::configbody iwidgets::Extbutton::state {
 # OPTION: -text
 #
 # DESCRIPTION: This isn't a new option.  Similar to -image, we just need to
-#   repack the frame when the text changes.
+#   repack the frame when the text changes.   
 #-------------------------------------------------------------------------------
 itcl::configbody iwidgets::Extbutton::text {
   pack $itk_component(frame) -padx 4 -pady 4

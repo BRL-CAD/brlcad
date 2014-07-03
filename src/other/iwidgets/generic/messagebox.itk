@@ -9,8 +9,8 @@
 # method is provided for file I/O.
 #
 # The number of lines that can be displayed may be limited with
-# the default being 1000. When this limit is reached, the oldest line
-# is removed.  There is also support for saving the contents to a
+# the default being 1000. When this limit is reached, the oldest line 
+# is removed.  There is also support for saving the contents to a 
 # file, using a file selection dialog.
 # ----------------------------------------------------------------------
 #
@@ -21,9 +21,9 @@
 #       button can be used to configure/access the message area.
 #       New methods added: _post and _toggleDebug.
 #   01/30/97 - Alfredo Jahn  Add -filename option
-#   05/11/97 - Mark Ulferts  Added the ability to define and configure
-#       new types.  Changed print method to be issue.
-#   09/05/97 - John Tucker Added export method.
+#   05/11/97 - Mark Ulferts  Added the ability to define and configure 
+#       new types.  Changed print method to be issue.  
+#   09/05/97 - John Tucker Added export method. 
 #
 # ----------------------------------------------------------------------
 #  AUTHOR: Alfredo Jahn V               EMAIL: ajahn@spd.dsccc.com
@@ -33,24 +33,24 @@
 # ----------------------------------------------------------------------
 #            Copyright (c) 1997 DSC Technologies Corporation
 # ======================================================================
-# Permission to use, copy, modify, distribute and license this software
-# and its documentation for any purpose, and without fee or written
-# agreement with DSC, is hereby granted, provided that the above copyright
-# notice appears in all copies and that both the copyright notice and
-# warranty disclaimer below appear in supporting documentation, and that
-# the names of DSC Technologies Corporation or DSC Communications
-# Corporation not be used in advertising or publicity pertaining to the
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
 # software without specific, written prior permission.
-#
-# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
 # ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
 # INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
-# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
-# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
-# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
 # WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
 # SOFTWARE.
 # ======================================================================
 
@@ -60,7 +60,7 @@
 itk::usual Messagebox {
     keep -activebackground -activeforeground -background -borderwidth \
     -cursor -highlightcolor -highlightthickness \
-    -jump -labelfont -textbackground -troughcolor
+    -jump -labelfont -textbackground -troughcolor 
 }
 
 # ------------------------------------------------------------------
@@ -92,7 +92,7 @@ itcl::class iwidgets::Messagebox {
 
     public {
         method clear {}
-        method export {filename}
+        method export {filename} 
         method find {}
         method issue {string {type DEFAULT} args}
         method save {}
@@ -110,7 +110,7 @@ itcl::class iwidgets::Messagebox {
 
 #
 # Provide a lowercased access method for the Messagebox class.
-#
+# 
 proc ::iwidgets::messagebox {pathName args} {
     uplevel ::iwidgets::Messagebox $pathName $args
 }
@@ -130,7 +130,7 @@ option add *Messagebox.visibleItems 80x24 widgetDefault
 itcl::body iwidgets::Messagebox::constructor {args} {
     set _interior $itk_interior
 
-    #
+    # 
     # Create the text area.
     #
     itk_component add text {
@@ -139,7 +139,7 @@ itcl::body iwidgets::Messagebox::constructor {args} {
     } {
     keep -borderwidth -cursor -exportselection -highlightcolor \
         -highlightthickness -padx -pady -relief -setgrid -spacing1 \
-        -spacing2 -spacing3
+        -spacing2 -spacing3 
 
     keep -activerelief -elementborderwidth -jump -troughcolor
 
@@ -152,7 +152,7 @@ itcl::body iwidgets::Messagebox::constructor {args} {
     grid $itk_component(text) -row 0 -column 0 -sticky nsew
     grid rowconfigure $_interior 0 -weight 1
     grid columnconfigure $_interior 0 -weight 1
-
+    
     #
     # Setup right mouse button binding to post a user configurable
     # popup menu and diable the binding for left mouse clicks.
@@ -160,12 +160,12 @@ itcl::body iwidgets::Messagebox::constructor {args} {
     bind [$itk_component(text) component text] <ButtonPress-1> "break"
     bind [$itk_component(text) component text] \
     <ButtonPress-3> [itcl::code $this _post %x %y]
-
+    
     #
     # Create the small popup menu that can be configurable by users.
     #
     itk_component add itemMenu {
-    menu $itk_component(hull).itemmenu -tearoff 0
+    menu $itk_component(hull).itemmenu -tearoff 0 
     } {
     keep -background -font -foreground \
         -activebackground -activeforeground
@@ -204,7 +204,7 @@ itcl::body iwidgets::Messagebox::destructor {} {
 # ------------------------------------------------------------------
 
 # ------------------------------------------------------------------
-# METHOD clear
+# METHOD clear 
 #
 # Clear the text area.
 # ------------------------------------------------------------------
@@ -227,7 +227,7 @@ itcl::body iwidgets::Messagebox::type {op tag args} {
     switch $op {
         add {
             eval iwidgets::MsgType $this$tag $args
-
+        
             lappend _types $tag
 
             $itk_component(text) tag configure $tag \
@@ -252,14 +252,14 @@ itcl::body iwidgets::Messagebox::type {op tag args} {
         configure {
             if {[set index [lsearch $_types $tag]] != -1} {
                 set retVal [eval $this$tag configure $args]
-
+    
                 $itk_component(text) tag configure $tag \
                     -font [$this$tag cget -font] \
                     -background [$this$tag cget -background] \
                     -foreground [$this$tag cget -foreground]
-
+    
                 return $retVal
-
+    
             } else {
                 error "bad message type: \"$tag\", does not exist"
             }
@@ -284,7 +284,7 @@ itcl::body iwidgets::Messagebox::type {op tag args} {
 # PUBLIC METHOD: issue string ?type? args
 #
 # Print the string out to the Messagebox. Check the options of the
-# message type to see if it should be displayed or if the bell
+# message type to see if it should be displayed or if the bell 
 # should be wrong.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Messagebox::issue {string {type DEFAULT} args} {
@@ -295,7 +295,7 @@ itcl::body iwidgets::Messagebox::issue {string {type DEFAULT} args} {
 
     #
     # If the type is currently configured to be displayed, then insert
-    # it in the text widget, add the tag to the line and move the
+    # it in the text widget, add the tag to the line and move the 
     # vertical scroll bar to the bottom.
     #
     set tag $this$type
@@ -307,7 +307,7 @@ itcl::body iwidgets::Messagebox::issue {string {type DEFAULT} args} {
         # Find end of last message.
         #
         set prevend [$itk_component(text) index "end - 1 chars"]
-
+     
         $itk_component(text) insert end "$string\n" $args
 
         $itk_component(text) tag add $type $prevend "end - 1 chars"
@@ -328,7 +328,7 @@ itcl::body iwidgets::Messagebox::issue {string {type DEFAULT} args} {
 
         if { $lineCount > $itk_option(-maxlines) } {
             set numLines [expr {$lineCount - $itk_option(-maxlines) -1}]
-
+        
             $itk_component(text) delete 1.0 $numLines.0
         }
 
@@ -339,7 +339,7 @@ itcl::body iwidgets::Messagebox::issue {string {type DEFAULT} args} {
 # ------------------------------------------------------------------
 # PUBLIC METHOD: save
 #
-# Save contents of messages area to a file using a fileselectionbox.
+# Save contents of messages area to a file using a fileselectionbox. 
 # ------------------------------------------------------------------
 itcl::body iwidgets::Messagebox::save {} {
     set saveFile ""
@@ -365,7 +365,7 @@ itcl::body iwidgets::Messagebox::find {} {
         itk_component add findd {
             iwidgets::Finddialog $itk_interior.findd \
             -textwidget $itk_component(text)
-        }
+        } 
     }
 
     $itk_component(findd) center $itk_component(text)

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -224,10 +225,10 @@ int ON_CompareKnotVector( // returns
 
 ON_DECL
 bool ON_IsValidKnotVector(
-          int,           // order (>=2)
-          int,           // cv count
-          const double*, // knot[] array
-          ON_TextLog* text_log = NULL
+          int order,
+          int cv_count, 
+          const double* knot, 
+          ON_TextLog* text_log = 0
           );
 
 ON_DECL
@@ -377,6 +378,7 @@ Returns:
   The cv values are changed so that
   output_bezier(t) = input_bezier(lambda(t)).
 */
+ON_DECL
 bool ON_ReparameterizeRationalBezierCurve(
           double c,
           int dim,
@@ -413,6 +415,7 @@ Remarks:
   If the input Bezier has control vertices {B_0, ..., B_d}, then the 
   output Bezier has control vertices {s*B_0, ... s*r^i * B_i, ..., s*r^d * B_d}.
 */
+ON_DECL
 bool ON_ChangeRationalBezierCurveWeights(
           int dim, int order, int cvstride, double* cv,
           int i0, double w0, 

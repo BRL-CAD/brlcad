@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -17,10 +18,12 @@
 
 ON_VIRTUAL_OBJECT_IMPLEMENT(ON_Surface,ON_Geometry,"4ED7D4E1-E947-11d3-BFE5-0010830122F0");
 
-ON_Surface::ON_Surface() : m_stree(0)
+ON_Surface::ON_Surface()
+: ON_Geometry()
 {}
 
-ON_Surface::ON_Surface(const ON_Surface& src) : ON_Geometry(src), m_stree(0)
+ON_Surface::ON_Surface(const ON_Surface& src)
+: ON_Geometry(src)
 {}
 
 unsigned int ON_Surface::SizeOf() const
@@ -51,13 +54,6 @@ ON_Surface::~ON_Surface()
   // "dirty" destructors of classes derived from ON_Surface
   // that to not use DestroyRuntimeCache() in their
   // destructors and to not set deleted pointers to zero.
-  if ( m_stree ) 
-  {
-#if defined(OPENNURBS_PLUS_INC_)
-    delete m_stree;
-#endif
-    m_stree = 0;
-  }
 }
 
 ON_Surface* ON_Surface::DuplicateSurface() const
@@ -325,7 +321,8 @@ ON_Surface::IsClosed(int dir) const
   if ( d.IsIncreasing() && Dimension() <= 3 ) {
     const int span_count = SpanCount(dir?0:1);
     const int span_degree = Degree(dir?0:1);
-    if ( span_count > 0 && span_degree > 0 ) {
+    if ( span_count > 0 && span_degree > 0 )
+    {
       ON_SimpleArray<double> s(span_count+1);
       s.SetCount(span_count+1);
       int n = 2*span_degree+1;
@@ -350,7 +347,8 @@ ON_Surface::IsClosed(int dir) const
         v0 = &t;
         v1 = &t;
       }
-      if ( GetSpanVector( dir?0:1, s.Array() ) ) {
+      if ( GetSpanVector( dir?0:1, s.Array() ) )
+      {
         int span_index, i;
         for ( span_index = 0; span_index < span_count; span_index++ ) {
           sp.Set(s[span_index],s[span_index+1]);
@@ -360,10 +358,11 @@ ON_Surface::IsClosed(int dir) const
               return false;
             if ( !Evaluate( *u1, *v1, 2, 3, Q, 0, hintQ ) )
               return false;
-            if ( ON_ComparePoint( 3, 0, &P.x, &Q.x ) )
+            if ( false == ON_PointsAreCoincident( 3, 0, &P.x, &Q.x ) )
               return false;
           }
         }
+        return true;
       }
     }
   }
@@ -544,6 +543,37 @@ bool ON_Surface::GetNextDiscontinuity(
   return rc;
 }
 
+static 
+bool PrincipalCurvaturesAreContinuous( 
+    bool bSmoothTest, 
+    double k1a, double k2a, // side "a" principal curvatures
+    double k1b, double k2b, // side "b" principal curvatures 
+    double curvature_tolerance 
+    )
+{
+  ON_3dVector K[2];
+  K[0].x = k1a;
+  K[0].y = 0.0;
+  K[0].z = 0.0;
+  K[1].x = k1b;
+  K[1].y = 0.0;
+  K[1].z = 0.0;
+  // compare the first principal curvatures
+  bool rc = ( bSmoothTest )
+            ? ON_IsGsmoothCurvatureContinuous(K[0],K[1],0.0,curvature_tolerance)
+            : ON_IsG2CurvatureContinuous(K[0],K[1],0.0,curvature_tolerance);
+  if ( rc )
+  {
+    // compare the second principal curvatures
+    K[0].x = k2a;
+    K[1].x = k2b;
+    rc = ( bSmoothTest )
+       ? ON_IsGsmoothCurvatureContinuous(K[0],K[1],0.0,curvature_tolerance)
+       : ON_IsG2CurvatureContinuous(K[0],K[1],0.0,curvature_tolerance);
+  }
+  return rc;
+}
+
 bool ON_Surface::IsContinuous(
     ON::continuity desired_continuity,
     double s, 
@@ -552,7 +582,7 @@ bool ON_Surface::IsContinuous(
     double point_tolerance, // default=ON_ZERO_TOLERANCE
     double d1_tolerance, // default==ON_ZERO_TOLERANCE
     double d2_tolerance, // default==ON_ZERO_TOLERANCE
-    double cos_angle_tolerance, // default==0.99984769515639123915701155881391
+    double cos_angle_tolerance, // default==ON_DEFAULT_ANGLE_TOLERANCE_COSINE
     double curvature_tolerance  // default==ON_SQRT_EPSILON
     ) const
 {
@@ -724,34 +754,34 @@ bool ON_Surface::IsContinuous(
     break;
 
   case ON::G2_continuous:
-    for ( qi = 0; qi < 4; qi++ )
+  case ON::Gsmooth_continuous:
     {
-      if ( !Ev2Der( sq[qi], tq[qi], P[qi], Ds[qi], Dt[qi], 
-                    Dss[qi], Dst[qi], Dtt[qi], 
-                    qi+1, hint ) )
-        return false;
-      ON_EvPrincipalCurvatures( Ds[qi], Dt[qi], Dss[qi], Dst[qi], Dtt[qi], N[qi],
-                                &gauss[qi], &mean[qi], &kappa1[qi], &kappa2[qi], 
-                                K1[qi], K2[qi] );
-      if ( qi )
+      bool bSmoothCon = (ON::Gsmooth_continuous == desired_continuity);
+      for ( qi = 0; qi < 4; qi++ )
       {
-        if ( !(P[qi]-P[qi-1]).IsTiny(point_tolerance) )
+        if ( !Ev2Der( sq[qi], tq[qi], P[qi], Ds[qi], Dt[qi], 
+                      Dss[qi], Dst[qi], Dtt[qi], 
+                      qi+1, hint ) )
           return false;
-        if ( N[qi]*N[qi-1] < cos_angle_tolerance )
+        ON_EvPrincipalCurvatures( Ds[qi], Dt[qi], Dss[qi], Dst[qi], Dtt[qi], N[qi],
+                                  &gauss[qi], &mean[qi], &kappa1[qi], &kappa2[qi], 
+                                  K1[qi], K2[qi] );
+        if ( qi )
+        {
+          if ( !(P[qi]-P[qi-1]).IsTiny(point_tolerance) )
+            return false;
+          if ( N[qi]*N[qi-1] < cos_angle_tolerance )
+            return false;
+          if ( !PrincipalCurvaturesAreContinuous(bSmoothCon,kappa1[qi],kappa2[qi],kappa1[qi-1],kappa2[qi-1],curvature_tolerance) )
+            return false;
+        }
+        if ( !(P[3]-P[0]).IsTiny(point_tolerance) )
           return false;
-        if ( fabs(kappa1[qi] - kappa1[qi-1]) > curvature_tolerance )
+        if ( N[3]*N[0] < cos_angle_tolerance )
           return false;
-        if ( fabs(kappa2[qi] - kappa2[qi-1]) > curvature_tolerance )
+        if ( !PrincipalCurvaturesAreContinuous(bSmoothCon,kappa1[3],kappa2[3],kappa1[0],kappa2[0],curvature_tolerance) )
           return false;
       }
-      if ( !(P[3]-P[0]).IsTiny(point_tolerance) )
-        return false;
-      if ( N[3]*N[0] < cos_angle_tolerance )
-        return false;
-      if ( fabs(kappa1[3] - kappa1[0]) > curvature_tolerance )
-        return false;
-      if ( fabs(kappa2[3] - kappa2[0]) > curvature_tolerance )
-        return false;
     }
     break;
 
@@ -1212,9 +1242,9 @@ ON_Surface::EvNormal( // returns false if unable to evaluate
 //virtual
 ON_Curve* ON_Surface::IsoCurve(
        int dir,    // 0 first parameter varies and second parameter is constant
-                   //   e.g., point on IsoCurve(0,c) at t is srf(t,c)
+                   //   e.g., point on IsoCurve(0,c) at t is srf(t,c) - Horizontal
                    // 1 first parameter is constant and second parameter varies
-                   //   e.g., point on IsoCurve(1,c) at t is srf(c,t)
+                   //   e.g., point on IsoCurve(1,c) at t is srf(c,t) - Vertical
        double c    // value of constant parameter 
        ) const
 {
@@ -1285,654 +1315,7 @@ ON_Curve* ON_Surface::Pushup( const ON_Curve& curve_2d,
     }
   }
   return curve;
-} 
-
-static bool CheckPullbackPoint( 
-                        const ON_Surface* srf,
-                        double u, double v, 
-                        int* srf_hint, // array of 2 ints
-                        const ON_Curve& curve_3d,
-                        double t, 
-                        int* crv_hint, // pointer to 1 int
-                        const ON_3dVector& lineDir,
-                        int* check_hint, // pointer to 1 int
-                        double tolerance,
-                        double* point_dist)
-{
-  // returns true if the point srf(u,v) is a valid pullback
-  // of the point crv(t).  The value of the returned
-  // *point_dist = distance from crv(t) to srf(u,v). 
-  // It is possible for true to be returned and have
-  // *point_dist > tolerance.  This happens when the curve
-  // is not on the surface.  (See the careful test section.)
-  bool rc = false;
-  ON_3dPoint srfP, crvP;
-  ON_3dVector Du, Dv, Duu, Duv, Dvv, T;
-  if ( 2 != *check_hint )
-  {
-    // try quick eval test
-    srf->Ev1Der( u, v, srfP, Du, Dv, 0, srf_hint );
-    curve_3d.Ev1Der( t, crvP, T, 0, crv_hint );
-  }
-  else
-  {
-    srf->Ev2Der( u, v, srfP, Du, Dv, Duu, Duv, Dvv, 0, srf_hint );
-    curve_3d.EvTangent( t, crvP, T, 0, crv_hint );
-  }
-  *point_dist = crvP.DistanceTo(srfP);
-
-  double d = crvP.DistanceTo(srfP);
-  if ( d <= tolerance )
-  {
-    // simple direction test will suffice
-    rc = true;
-    d = (lineDir.x*Du + lineDir.y*Dv)*T;
-    rc = (d >= 0.0); // accept 0 for collapsed span support
-    *check_hint = 1; // try quick eval next time
-  }
-  else
-  {
-    // careful test is required
-    //   check projected distance and test pullback tangent
-    if ( 2 != *check_hint )
-    {
-      // get full derviative information
-      srf->Ev2Der( u, v, srfP, Du, Dv, Duu, Duv, Dvv, 0, srf_hint );
-      curve_3d.EvTangent( t, crvP, T, 0, crv_hint );
-      *check_hint = 2;
-    }
-    ON_3dVector N(0,0,0);
-    ON_EvNormal( 0, Du, Dv, Duu, Duv, Dvv, N );
-    ON_3dVector V = (crvP - srfP);
-    double normal_dist = V*N;
-    d = (V - normal_dist*N).Length();
-    rc = ( d <= tolerance );
-    if (rc)
-    {
-      ON_2dVector uvT(0,0);
-      ON_Pullback3dVector( T, normal_dist, Du, Dv, Duu, Duv, Dvv, uvT );
-      d = uvT.x*lineDir.x + uvT.y*lineDir.y;
-      rc = (d >= 0.0); // accept 0 for collapsed span support
-    }
-  }
-
-  return rc;
 }
-
-static bool CheckPullbackLineEnds( const ON_Surface* srf, 
-                               const ON_3dPoint& start_uv,
-                               const ON_3dPoint& end_uv,
-                               const ON_Curve& curve_3d,
-                               ON_Interval crv_dom,
-                               double tolerance,
-                               bool bTestMidPoint,
-                               double* dist
-                             )
-{
-  // Used to check a pullback candidate when the surface
-  // is closed or singular.
-  //
-  // Returning false means the line cannot be used.
-  //
-  // Returning true means that, in the crudest possbile sense,
-  // the line is in the right direction.  The dist
-  // value can be used to choose the best line from a 
-  // set of candidates.  The line still needs to be carefully
-  // tested.  This test happens at the end of ON_Surface::Pullback().
-
-  // 20 November 2003 Dale Lear - statck corruption crash fix - srf_hint is an array of 2 ints (not a single int)
-  int srf_hint[2]; 
-
-  int crv_hint = 0;
-  int check_hint = 0;
-
-  srf_hint[0] = 0;
-  srf_hint[1] = 0;
-
-  ON_Line uv(start_uv,end_uv);
-  uv.from.z = 0.0;
-  uv.to.z = 0.0;
-  ON_3dVector lineT = uv.Tangent();
-  if ( lineT.x == 0.0 && lineT.y == 0.0 )
-    return false;
-
-  double dist0=0.0, dist1=0.0, dist2 = 0.0;
-
-  if ( !CheckPullbackPoint( srf,
-          start_uv.x, start_uv.y, srf_hint,
-          curve_3d, crv_dom[0], &crv_hint,
-          lineT, &check_hint, tolerance, &dist0 ) )
-  {
-    return false;
-  }
-
-  if ( !CheckPullbackPoint( srf,
-          end_uv.x, end_uv.y, srf_hint,
-          curve_3d, crv_dom[1], &crv_hint,
-          lineT, &check_hint, tolerance, &dist1 ))
-  {
-    return false;
-  }
-
-  if ( bTestMidPoint )
-  {
-    // on surfaces that are closed (like cylinders and tori), 
-    // this midpoint test is needed to weed out edge curves
-    // connecting the wrong corners.
-    ON_3dPoint uv = ON_Line( start_uv,end_uv).PointAt(0.5);
-    if ( !CheckPullbackPoint( srf,
-            uv.x, uv.y, srf_hint,
-            curve_3d, crv_dom.ParameterAt(0.5), &crv_hint,
-            lineT, &check_hint, tolerance, &dist2 ))
-    {
-      return false;
-    }
-  }
-
-  // set *dist = largest distance from a curve
-  // test point end to the surface.  It is ok if this is
-  // > tolerance in the case when the curve
-  // is not on the surface.
-  *dist = (dist0 < dist1) ? ((dist1<dist2)?dist2:dist1) : ((dist0<dist2)?dist2:dist0);
-
-  return true;
-}
-
-ON_Curve* ON_Surface::Pullback( const ON_Curve& curve_3d,
-                  double tolerance,
-                  const ON_Interval* curve_3d_subdomain,
-                  ON_3dPoint start_uv,
-                  ON_3dPoint end_uv
-                  ) const
-{
-  // 3 April 2003 Dale Lear:
-  //    The virtual overrides to the real work. This
-  //    base class handes the simple isocurve case and
-  //    is called by the fancier Pullback() overrides.
-  //ON_3dPoint mid_uv;
-  //ON_3dPoint start_srf, mid_srf, end_srf;
-
-  // set dom to an increasing interval of the
-  // portion of curve_3d to pullback.
-  ON_Interval crv_dom = curve_3d.Domain();
-  if ( 0 != curve_3d_subdomain )
-  {
-    if ( !curve_3d_subdomain->IsIncreasing() )
-      return NULL;
-    if ( !crv_dom.Intersection(*curve_3d_subdomain) )
-      return NULL;
-  }
-  if ( !crv_dom.IsIncreasing() )
-    return NULL;
-
-  const ON_3dPoint start_crv = curve_3d.PointAt(crv_dom[0]);
-  const ON_3dPoint end_crv   = curve_3d.PointAt(crv_dom[1]);
-
-  bool bStartFixed = false;
-  bool bEndFixed = false;
-
-  start_uv.z = 0.0;
-  end_uv.z = 0.0;
-
-  if ( start_uv.IsValid() )
-  {
-    bStartFixed = true;
-  }
-  else
-  {
-    if ( !GetClosestPoint( start_crv, &start_uv.x, &start_uv.y ) )
-      return NULL;
-  }
-
-  if ( end_uv.IsValid() )
-  {
-    bEndFixed = true;
-  }
-  else
-  {
-    if ( !GetClosestPoint( end_crv, &end_uv.x, &end_uv.y ) )
-      return NULL;
-  }
-
-  ON_Interval udom = Domain(0);
-  ON_Interval vdom = Domain(1);
-
-  if ( !bStartFixed || !bEndFixed )
-  {
-    // This entire claus attempts to handle surface
-    // parameter ambiguities that happen at seams 
-    // and singular points.
-
-    ON_BOOL32 bClosedU = IsClosed(0);
-    ON_BOOL32 bClosedV = IsClosed(1);
-    const double reltol = 0.001;
-    ON_BOOL32 bSingS = false;
-    ON_BOOL32 bSingE = false;
-    ON_BOOL32 bSingN = false;
-    ON_BOOL32 bSingW = false;
-    int sing_start = 0; // 1 = S, 2 = E, 3 = N, 4 = W;
-    int sing_end   = 0; // 1 = S, 2 = E, 3 = N, 4 = W;
-    double s, e;
-
-    // resolve ambiguities that happen at singular points
-    if ( !bClosedU )
-    {
-      s = udom.NormalizedParameterAt( start_uv.x);
-      e = udom.NormalizedParameterAt( end_uv.x );
-      bSingW = IsSingular(3);
-      bSingE = IsSingular(1);
-      if ( bSingW )
-      {
-        if ( s <= reltol )
-          sing_start = 4;
-        if ( e <= reltol )
-          sing_end = 4;
-      }
-      if ( bSingE )
-      {
-        if ( s >= 1.0-reltol )
-          sing_start = 2;
-        if ( e >= 1.0-reltol )
-          sing_end = 2;
-      }
-
-      if ( sing_start && sing_end && sing_start != sing_end && !bStartFixed && !bEndFixed )
-      {
-        double xx = ON_UNSET_VALUE;
-        double yy = ON_UNSET_VALUE;
-        if ( GetClosestPoint( curve_3d.PointAt(crv_dom.ParameterAt(0.5)), &xx, &yy ) )
-        {
-          if ( yy != ON_UNSET_VALUE )
-          {
-            start_uv.y = yy;
-            end_uv.y = yy;
-          }
-        }
-      }
-      else if ( sing_start && !bStartFixed && (!sing_end || bEndFixed) )
-      {
-        start_uv.y = end_uv.y;
-      }
-      else if ( sing_end && !bEndFixed && (!sing_start || bStartFixed) )
-      {
-        end_uv.y = start_uv.y;
-      }
-    }
-
-    if ( !bClosedV )
-    {
-      s = vdom.NormalizedParameterAt( start_uv.y );
-      e = vdom.NormalizedParameterAt( end_uv.y );
-      bSingS = IsSingular(0);
-      bSingN = IsSingular(2);
-      if ( bSingS )
-      {
-        if ( s <= reltol )
-          sing_start = 1;
-        if ( e <= reltol )
-          sing_end = 1;
-      }
-      if ( bSingN )
-      {
-        if ( s >= 1.0-reltol )
-          sing_start = 3;
-        if ( e >= 1.0-reltol )
-          sing_end = 3;
-      }
-
-      if ( sing_start && sing_end && sing_start != sing_end && !bStartFixed && !bEndFixed )
-      {
-        double xx = ON_UNSET_VALUE;
-        double yy = ON_UNSET_VALUE;
-        if ( GetClosestPoint( curve_3d.PointAt(crv_dom.ParameterAt(0.5)), &xx, &yy ) )
-        {
-          if (xx != ON_UNSET_VALUE )
-          {
-            start_uv.x = xx;
-            end_uv.x = xx;
-          }
-        }
-      }
-      else if ( sing_start && !bStartFixed && (!sing_end || bEndFixed) )
-      {
-        start_uv.x = end_uv.x;
-      }
-      else if ( sing_end && !bEndFixed && (!sing_start || bStartFixed) )
-      {
-        end_uv.x = start_uv.x;
-      }
-
-    }
-
-    if ( bClosedU || bClosedV )
-    {
-      // resolve ambiguities that happen at seams
-      double start_u[4];
-      int start_u_count=0;
-      double start_v[4];
-      int start_v_count=0;
-
-      double end_u[4];
-      int end_u_count=0;
-      double end_v[4];
-      int end_v_count=0;
-
-      start_u[start_u_count++] = start_uv.x;
-      start_v[start_v_count++] = start_uv.y;
-      end_u[end_u_count++] = end_uv.x;
-      end_v[end_v_count++] = end_uv.y;
-
-      if ( bClosedU )
-      {
-        if ( !bStartFixed )
-        {
-          s = udom.NormalizedParameterAt(start_uv.x);
-          if ( s <= reltol )
-            start_u[start_u_count++] = udom[1];
-          else if ( s >= 1.0-reltol )
-            start_u[start_u_count++] = udom[0];
-        }
-        if ( !bEndFixed )
-        {
-          e = udom.NormalizedParameterAt(end_uv.x);
-          if ( e <= reltol )
-            end_u[end_u_count++] = udom[1];
-          else if ( e >= 1.0-reltol )
-            end_u[end_u_count++] = udom[0];
-        }
-      }
-
-      if ( bClosedV )
-      {
-        if ( !bStartFixed )
-        {
-          s = vdom.NormalizedParameterAt(start_uv.y);
-          if ( s <= 0.001 )
-            start_v[start_v_count++] = vdom[1];
-          else if ( s >= .999 )
-            start_v[start_v_count++] = vdom[0];
-        }
-        if ( !bEndFixed )
-        {
-          e = vdom.NormalizedParameterAt(end_uv.y);
-          if ( e <= 0.001 )
-            end_v[end_v_count++] = vdom[1];
-          else if ( e >= .999 )
-            end_v[end_v_count++] = vdom[0];
-        }
-      }
-
-      // check all posibilities and choose the best
-      {
-        int sx0 = 0;
-        int sy0 = 0;
-        int ex0 = 0;
-        int ey0 = 0;
-        int si, sj, ei, ej;
-        ON_3dPoint suv, euv;
-        double dist0 = 1.0e300, dist;
-
-        bool bTestMidPoint = ((bClosedU&&bClosedV)
-                              || start_u_count>1 
-                              || start_v_count>1 
-                              || end_u_count>1 
-                              || end_v_count>1
-                              );
-
-        bool bHaveCandidate = CheckPullbackLineEnds( this, start_uv, end_uv, curve_3d, crv_dom,
-                                                     tolerance, bTestMidPoint,  &dist0 );
-        suv.z = 0.0;
-        euv.z = 0.0;
-        for ( si = 0; si < start_u_count; si++ )
-        {
-          suv.x = start_u[si];
-          for ( sj = 0; sj < start_v_count; sj++ )
-          {
-            suv.y = start_v[sj];
-            for ( ei = 0; ei < end_u_count; ei++ )
-            {
-              euv.x = end_u[ei];
-              for ( ej = 0; ej < end_v_count; ej++ )
-              {
-                if ( si || sj || ei || ej )
-                {
-                  euv.y = end_v[ej];
-                  dist = dist0;
-                  if ( CheckPullbackLineEnds( this, suv, euv, curve_3d, crv_dom, 
-                                              tolerance, bTestMidPoint, &dist ) )
-                  {
-                    if ( dist < dist0 || !bHaveCandidate )
-                    {
-                      sx0 = si;
-                      sy0 = sj;
-                      ex0 = ei;
-                      ey0 = ej;
-                      dist0 = dist;
-                      bHaveCandidate = true;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        start_uv.x = start_u[sx0];
-        start_uv.y = start_v[sy0];
-        end_uv.x = end_u[ex0];
-        end_uv.y = end_v[ey0];
-      }
-
-    }
-  }
-
-  double u = (start_uv.x <= end_uv.x) ? start_uv.x : end_uv.x;
-  double v = (start_uv.y <= end_uv.y) ? start_uv.y : end_uv.y;
-
-  ON_3dPoint start_srf = PointAt(start_uv.x,start_uv.y);
-  ON_3dPoint end_srf   = PointAt(end_uv.x,  end_uv.y);
-
-  ON_3dPoint srfP = PointAt(u,start_uv.y);
-  double d1 = start_srf.DistanceTo(srfP);
-  srfP = PointAt(u,end_uv.y);
-  double d2 = end_srf.DistanceTo(srfP);
-  bool bIsoU = ( d1 <= tolerance && d2 <= tolerance );
-
-  srfP = PointAt(start_uv.x,v);
-  d1 = start_srf.DistanceTo(srfP);
-  srfP = PointAt(end_uv.x,v);
-  d2 = end_srf.DistanceTo(srfP);
-  bool bIsoV = ( d1 <= tolerance && d2 <= tolerance );
-
-  ON_Line line(start_uv,end_uv);
-
-  if ( start_uv.x == end_uv.x && start_uv.y != end_uv.y )
-  {
-    bIsoU = true;
-    bIsoV = false;
-  }
-  else if ( start_uv.y == end_uv.y && start_uv.x != end_uv.x )
-  {
-    bIsoU = false;
-    bIsoV = true;
-  }
-  else if ( bIsoU && !bIsoV )
-  {
-    // see if a constant u isocurve will work
-    if ( !bStartFixed )
-    {
-      line.from.x = u;
-      start_srf = PointAt(line.from.x,line.from.y);
-    }
-    if ( !bEndFixed )
-    {
-      line.to.x = u;
-      end_srf = PointAt(line.to.x,line.to.y);
-    }
-  }
-  else if ( bIsoV && !bIsoU )
-  {
-    // see if a constant v isocurve will work
-    if ( !bStartFixed )
-    {
-      line.from.y = v;
-      start_srf = PointAt(line.from.x,line.from.y);
-    }
-    if ( !bEndFixed )
-    {
-      line.to.y = v;
-      end_srf = PointAt(line.to.x,line.to.y);
-    }
-  }
-  else
-  {
-    // virtual overrides will have to do the pullback
-    return NULL;
-  }
-
-  // test 65 points on the line
-  {
-    const int test_count = 64; // must be a power of 2
-    double t[test_count+1], s, d;
-    t[0] = crv_dom[0];
-    t[test_count] = crv_dom[1];
-    ON_Interval in;
-    int i, j, k, i0, i1, i2;
-
-    int srf_hint[2];
-    srf_hint[0] = 0;
-    srf_hint[1] = 0;
-
-    int crv_hint = 0;
-    int check_hint = 0;
-
-    ON_3dPoint srf_uv;   // surface 2d point
-    ON_3dVector lineDir = line.Tangent();
-
-    // check start
-    if ( !CheckPullbackPoint( this, line.from.x, line.from.y, srf_hint,
-                              curve_3d, crv_dom[0], &crv_hint,
-                              lineDir, &check_hint, tolerance, &d ) )
-    {
-      return NULL;
-    }
-
-    // check end
-    if ( !CheckPullbackPoint( this, line.to.x, line.to.y, srf_hint,
-                              curve_3d, crv_dom[1], &crv_hint,
-                              lineDir, &check_hint, tolerance, &d ) )
-    {
-      return NULL;
-    }
-
-    // check interior points
-    for ( i = 2; i <= test_count; i *= 2 )
-    {
-      crv_hint = 0;
-      k = (2*test_count)/i; // 64, 32, 16, 8, 4, 2
-      i2 = 0;
-      for ( j = 1; j < i; j += 2 )
-      {
-        i0 = i2;
-        i2 += k;
-        i1 = (i0+i2)/2;
-        s = ((double)j)/((double)i);
-        srf_uv = line.PointAt(s);
-        Evaluate( srf_uv.x, srf_uv.y, 0, 3, &srfP.x, 0, srf_hint );
-        in.Set(t[i0],t[i2]);
-
-        // get point on curve_3d that is closest to srfP
-        if ( i > 8 )
-        {
-          // faster local search
-          if ( !curve_3d.GetLocalClosestPoint( srfP, in.ParameterAt(0.5), 
-                                               &t[i1], &in ) )
-            return NULL;
-        }
-        else
-        {
-          // slower but more robust global search
-          if ( !curve_3d.GetClosestPoint( srfP, &t[i1], 0.0, &in ) )
-            return NULL;
-        }
-
-        if ( !CheckPullbackPoint( this, srf_uv.x, srf_uv.y, srf_hint,
-                                  curve_3d, t[i1], &crv_hint,
-                                  lineDir, &check_hint, tolerance, &d ) )
-        {
-          if ( i > 8 )
-          {
-            // global double check to make sure local solution
-            // was the best possible
-            if ( !curve_3d.GetClosestPoint( srfP, &t[i1], 0.0, &in ) )
-              return NULL;
-            if ( !CheckPullbackPoint( this, srf_uv.x, srf_uv.y, srf_hint,
-                                      curve_3d, t[i1], &crv_hint,
-                                      lineDir, &check_hint, tolerance, &d ) )
-            {
-              return NULL;
-            }
-          }
-          else
-          {
-            return NULL;
-          }
-        }
-      }
-    }
-
-    // 18 June 2003 Dale Lear - fix 10136
-    // make sure t's generally increase
-    int pcnt = 0;
-    for ( i = 0; i < test_count; i++ )
-    {
-      if ( t[i] < t[i+1] )
-        pcnt++;
-    }
-    if ( 2*pcnt <  test_count )
-      return NULL;
-
-    {
-      // This test is done to make sure the parameter space
-      // line segment we've finished validating is not subset
-      // of the entire pullback.  The test is done here becuase
-      // is uses the more expensive closest point to surface
-      // call.  The cases when we get this far are rare so this
-      // test should be quick.
-      ON_3dPoint crvP, isoP, iso_uv;
-      d = 1.0;
-
-      for ( k = 2; k <= 8; k *= 2 )
-      {
-        d *= 0.5;
-        crv_hint = 0;
-        for ( i = 1; i < k; i += 2 )
-        {
-          curve_3d.Evaluate( crv_dom.ParameterAt(i*d), 0, 3, &crvP.x, 0, &crv_hint );
-          if ( !GetClosestPoint( crvP, &srf_uv.x, &srf_uv.y ) )
-            return NULL;
-          Evaluate( srf_uv.x, srf_uv.y, 0, 3, &srfP.x, 0, srf_hint );
-          s = 0.5;
-          line.ClosestPointTo(srf_uv,&s);
-          if ( s < 0.0 ) s = 0.0; else if (s > 1.0) s = 1.0;
-          iso_uv = line.PointAt(s);
-          Evaluate( iso_uv.x, iso_uv.y, 0, 3, &isoP.x, 0, srf_hint );
-          if ( isoP.DistanceTo(srfP) > tolerance )
-            return NULL;
-        }
-      }
-    }
-  }
-  
-  // the line works
-  ON_LineCurve* pullback = new ON_LineCurve( line );
-  pullback->ChangeDimension(2);
-  pullback->SetDomain( crv_dom[0], crv_dom[1] );
-
-  return pullback;
-}
-
-
 
 //virtual
 ON_BOOL32 ON_Surface::Trim(
@@ -1963,92 +1346,6 @@ ON_BOOL32 ON_Surface::Split(
   return false;
 }
 
-
-bool ON_Surface::GetClosestPoint( 
-        const ON_3dPoint& P,
-        double* s,
-        double* t,
-        double maximum_distance,
-        const ON_Interval* sdomain,
-        const ON_Interval* tdomain
-        ) const
-{
-  bool rc = false;
-
-#if defined(OPENNURBS_PLUS_INC_)
-	const ON_SurfaceTree* tree = SurfaceTree();
-	while ( tree && tree->m_root )
-  {
-    ON_3dPoint Q;
-	  const ON_Interval* sdom = sdomain;
-	  const ON_Interval* tdom = tdomain;
-    ON_Interval tempdom[2];
-    double u,v;
-    const ON_SurfaceTreeNode* node;
-    const bool bAdjustParameter = tree->m_root->AdjustParameter();
-
-    if ( bAdjustParameter && (sdom || tdom) )
-    {
-      // change domains to the tree's parameterization
-      tempdom[0] = sdomain ? *sdomain : Domain(0);
-      tempdom[1] = tdomain ? *tdomain : Domain(1);
-      if ( !GetNurbFormParameterFromSurfaceParameter(tempdom[0][0],tempdom[1][0],&tempdom[0].m_t[0],&tempdom[1].m_t[0]) )
-        break;
-      if ( !GetNurbFormParameterFromSurfaceParameter(tempdom[0][1],tempdom[1][1],&tempdom[0].m_t[1],&tempdom[1].m_t[1]) )
-        break;
-      if ( sdom )
-        sdom = &tempdom[0];
-      if ( tdom )
-        tdom = &tempdom[1];
-    }
-  	
-    // NOTE: ON_SurfaceTreeNode::ON_SurfaceTreeNode works in Rhino but not in free opennurbs.
-	  node = tree->m_root->GetClosestPoint( P, s, t, &Q, maximum_distance, sdom, tdom );
-
-    if ( !node )
-      return false;
-
-    if (bAdjustParameter)
-    {
-		  // change (*s,*t) to the surface's parameterization
-      u = *s;
-      v = *t;
-      if ( !GetSurfaceParameterFromNurbFormParameter(u,v,s,t) )
-        break;
-
-      // With all the parameterization juggling, make sure conversion
-      // is exact on the boundaries of any domain restrictions.
-      if ( sdomain )
-      {
-        if ( u <= sdom->m_t[0] || u >= sdom->m_t[1] )
-          *s = sdomain->m_t[(u <= sdom->m_t[0])?0:1];
-        else if ( *s < sdomain->m_t[0] ) 
-          *s = sdomain->m_t[0]; 
-        else if (*s > sdomain->m_t[1]) 
-          *s = sdomain->m_t[1];
-      }
-
-      if ( tdomain )
-      {
-        if ( v <= tdom->m_t[0] || v >= tdom->m_t[1] )
-          *t = tdomain->m_t[(v <= tdom->m_t[0])?0:1];
-		    else if ( *t < tdomain->m_t[0] )
-          *t = tdomain->m_t[0]; 
-        else if (*t > tdomain->m_t[1]) 
-          *t = tdomain->m_t[1];
-      }
-    }
-
-    rc = true;
-
-    break;
-  }
-
-#endif
-
-	return rc;
-}
-
 //virtual
 ON_BOOL32 ON_Surface::GetLocalClosestPoint( const ON_3dPoint&, // test_point
         double,double,     // seed_parameters
@@ -2059,53 +1356,6 @@ ON_BOOL32 ON_Surface::GetLocalClosestPoint( const ON_3dPoint&, // test_point
 {
   return false;
 }
-
-/*
-static ON_Surface* ON_Surface_OffsetHelper( 
-          const ON_Surface* base_surface,
-          double offset_distance, 
-          double tolerance, 
-          double* max_deviation
-          )
-{
-  // This returns NULL in for users of the free OpenNURBS toolkit
-  // and works for Rhino plug-ins.
-  ON_Surface* offset_srf = NULL;
-  if ( base_surface->ClassId() != &ON_NurbsSurface::m_ON_NurbsSurface_class_id )
-    offset_srf = base_surface->Offset( offset_distance, tolerance, max_deviation );
-  return offset_srf;
-}
-*/
-
-//virtual
-ON_Surface* ON_Surface::Offset(
-      double offset_distance, 
-      double tolerance, 
-      double* max_deviation
-      ) const
-{
-  ON_Surface* offset_srf = NULL;
-  if ( max_deviation )
-    *max_deviation = 0.0;
-  if ( !ON_NurbsSurface::Cast(this) )
-  {
-    // This works when openNURBS is used in Rhino
-    const ON_Surface* proxy = NULL;
-    ON_NurbsSurface ns;
-    int rc = GetNurbForm( ns, 0.25*tolerance );
-    if ( rc > 0 )
-    {
-      proxy = &ns;
-      if ( rc >= 3 )
-        tolerance *= 0.75; // ns locus is approximation
-    }
-    // MUST call Offset() via proxy pointer
-    if ( proxy )
-      offset_srf = proxy->Offset( offset_distance, tolerance, max_deviation );
-  }
-  return offset_srf;
-}
-
 
 // virtual
 int ON_Surface::GetNurbForm(
@@ -2212,16 +1462,19 @@ ON_BOOL32 ON_SurfaceArray::Write( ON_BinaryArchive& file ) const
 {
   ON_BOOL32 rc = file.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK, 0 );
   if (rc) rc = file.Write3dmChunkVersion(1,0);
-  if (rc ) {
+  if (rc ) 
+  {
     int i;
     rc = file.WriteInt( Count() );
     for ( i = 0; rc && i < Count(); i++ ) {
-      if ( m_a[i] ) {
+      if ( m_a[i] ) 
+      {
         rc = file.WriteInt(1);
         if ( rc ) 
           rc = file.WriteObject( *m_a[i] ); // polymorphic surfaces
       }
-      else {
+      else 
+      {
         // NULL surface
         rc = file.WriteInt(0);
       }
@@ -2317,14 +1570,49 @@ void ON_Surface::DestroySurfaceTree()
   DestroyRuntimeCache(true);
 }
 
-const ON_SurfaceTree* ON_Surface::SurfaceTree() const
+ON_SurfaceProperties::ON_SurfaceProperties()
 {
-  if ( !m_stree ) 
-  {
-    const_cast<ON_Surface*>(this)->m_stree = CreateSurfaceTree();
-  }
-  return m_stree;
+  memset(this,0,sizeof(*this));
 }
 
 
+void ON_SurfaceProperties::Set( const ON_Surface* surface )
+{
+  m_surface = surface;
 
+  if ( 0 == m_surface )
+  {
+    m_bIsSet = false;
+
+    m_bHasSingularity = false;
+    m_bIsSingular[0] = false;
+    m_bIsSingular[1] = false;
+    m_bIsSingular[2] = false;
+    m_bIsSingular[3] = false;
+
+    m_bHasSeam = false;
+    m_bIsClosed[0] = false;
+    m_bIsClosed[1] = false;
+
+    m_domain[0].Set(0.0,0.0);
+    m_domain[1].Set(0.0,0.0);
+  }
+  else
+  {
+    m_bIsSet = true;
+
+    m_bIsSingular[0] = m_surface->IsSingular(0)?true:false;
+    m_bIsSingular[1] = m_surface->IsSingular(1)?true:false;
+    m_bIsSingular[2] = m_surface->IsSingular(2)?true:false;
+    m_bIsSingular[3] = m_surface->IsSingular(3)?true:false;
+    m_bHasSingularity = (m_bIsSingular[0] || m_bIsSingular[1] || m_bIsSingular[2] || m_bIsSingular[3]);
+
+    m_bIsClosed[0] = m_surface->IsClosed(0)?true:false;
+    m_bIsClosed[1] = m_surface->IsClosed(1)?true:false;
+    m_bHasSeam = (m_bIsClosed[0] || m_bIsClosed[1]);
+
+    m_domain[0] = m_surface->Domain(0);
+    m_domain[1] = m_surface->Domain(1);
+  }
+
+}

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -271,8 +272,11 @@ public:
   // override virtual ON_Object::Dump function
   void Dump( ON_TextLog& text_log ) const;
 
-  // override virtual ON_Object::Dump function
+  // override virtual ON_Object::SizeOf function
   unsigned int SizeOf() const;
+
+  // override virtual ON_Object::DataCRC function
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 
   // override virtual ON_Object::Write function
   ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
@@ -286,9 +290,40 @@ public:
   // override virtual ON_UserData::Archive function
   ON_BOOL32 Archive() const; 
 
+  /*
+  Description:
+    Add, replace or remove a user string.
+  Parameters:
+    key - [in]
+      must be a non-empty string.  If an entry with the same key
+      (case insensitive compares are used) exists, the existing
+      entry is updated.
+    string_value - [in]
+      If string_value is empty and an entry with a matching key
+      exists, the entry is deleted.
+  Returns:
+    True if the key is valid.
+  */
   bool SetUserString( const wchar_t* key, const wchar_t* string_value );
 
   bool GetUserString( const wchar_t* key, ON_wString& string_value ) const;
+
+  /*
+  Description:
+    Append entries to the user string list
+  Parameters:
+    count - [in]
+      number of element in us[] array
+    us - [in]
+      entries to append.
+    bReplace - [in]
+      If bReplace is true, then existing entries with the same key are
+      updated with the new entry's value.  If bReplace is false, then
+      existing entries are not updated.
+  Returns:
+    Number of entries added, deleted, or modified.
+  */
+  int SetUserStrings( int count, const ON_UserString* us, bool bReplace );
 
   ON_ClassArray<ON_UserString> m_e;
 };
@@ -335,6 +370,37 @@ public:
   bool MoveUserDataTo(  const ON_Object& source_object, bool bAppend );
 
   ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+};
+
+/*
+Description:
+  An ON_DocumentUserStringList object is saved in the list of user
+  tables.  The Rhino SetDocumentText and GetDocumentText
+  commands use the ON_Object SetUserString, GetUserString,
+  GetUserStrings, GetUserStringKeys functions on an 
+  ON_DocumentUserStringList class to manage the tag-value pairs of 
+  strings.
+*/
+class ON_CLASS ON_DocumentUserStringList : public ON_Object
+{
+  ON_OBJECT_DECLARE(ON_DocumentUserStringList);
+public:
+  ON_DocumentUserStringList();
+  ~ON_DocumentUserStringList();
+
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  void Dump( ON_TextLog& ) const;
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+  ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
+  ON_BOOL32 Read(ON_BinaryArchive& binary_archive);
+
+  // Use the
+  //   ON_Object::SetUserString()
+  //   ON_Object::GetUserString()
+  //   ON_Object::GetUserStrings()
+  //   ON_Object::GetUserStringKeys()
+  //   ON_Object::UserStringCount()
+  // functions to access and modify user string information.
 };
 
 #endif

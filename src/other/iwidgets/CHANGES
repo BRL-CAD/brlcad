@@ -1,5 +1,13 @@
 [incr Widgets] CHANGES
 ----------------------
+==========================================================================
+CURRENT VERSION:  4.0.2
+PREVIOUS VERSION: 4.0.1
+
+
+
+
+
 
 ==========================================================================
 CURRENT VERSION:  4.0.1
@@ -93,14 +101,14 @@ o - Error checking was added to hierarchy's -alwaysquery option to enforce
  -------------------- CHANGES FROM iwidgets-2.2.0 -----------------------
 ==========================================================================
 
-  [incr Widgets] version 3.0.0 is compatable with itcl3.0
+  [incr Widgets] version 3.0.0 is compatible with itcl3.0
 
   [incr Widgets] has undergone a major overhaul between the last version
 and 3.0.0.  Since so many changes have taken place it made more since to
 list them by widget class name rather than the old style of new features
 and bug fixes.  The majority of the changes are under the covers and will
 have minimal impact of existing scripts, but there are a few that may
-bite you.  To locate possible incompatabilities, just search this file
+bite you.  To locate possible incompatibilities, just search this file
 for the key words "POSSIBLE INCOMPATIBILITY".
 
   In addition, quite a few new widgets have been added to the set.  They
@@ -172,7 +180,7 @@ ______________________________________________________________________________
 
 >> Added a -state option that allows you to disable the listbox.  Selection
    is blocked.  The foreground of the scrolledlistbox label is changed
-   to disbabledforeground.
+   to disabledforeground.
 
 >> Fixed the infinite looping problem which would occur with -hscrollmode
    set to dynamic and a really long line added just out of the view port.
@@ -219,10 +227,10 @@ ______________________________________________________________________________
 
 >> Changed component option basis to be that of the "usuals".
 
->> POSSIBLE INCOMPATABILITY - The pushButton component has been changed
+>> POSSIBLE INCOMPATIBILITY - The pushButton component has been changed
    to pushbutton.
 
->> POSSIBLE INCOMPATABILITY - The following options have been removed
+>> POSSIBLE INCOMPATIBILITY - The following options have been removed
    and are not directly available in the pushbutton anymore:
 	-anchor -justify -textvariable
 
@@ -288,11 +296,11 @@ ______________________________________________________________________________
    the grid by maintaining an empty row for the margin and adjusting
    its minsize.
 
->> Removed the unecessary frame that was used to contrain the width
+>> Removed the unnecessary frame that was used to contrain the width
    and height of the widget.  This is now performed directly on the
    widget hull.
 
->> POSSIBLE INCOMPATABILITY - The following options have been removed
+>> POSSIBLE INCOMPATIBILITY - The following options have been removed
    and are not directly available in the selectionbox anymore:
 	-hscrollmode -itemslabelpos -labelmargin -margin -relief
 	-sbwidth -scrollmargin -selectionlabelpos -vscrollmode
@@ -321,10 +329,10 @@ ______________________________________________________________________________
 
 >> Changed component option basis to be that of the "usuals".
 
->> POSSIBLE INCOMPATABILITY - The "sb" component has been renamed to be
+>> POSSIBLE INCOMPATIBILITY - The "sb" component has been renamed to be
    "selectionbox".  This is much more descriptive.
 
->> POSSIBLE INCOMPATABILITY - The following options have been removed
+>> POSSIBLE INCOMPATIBILITY - The following options have been removed
    and are not directly available in the selectiondialog anymore:
 	-hscrollmode -itemslabelpos -labelmargin -margin -relief
 	-sbwidth -scrollmargin -selectionlabelpos -vscrollmode
@@ -374,7 +382,7 @@ ______________________________________________________________________________
 Feedback
 ______________________________________________________________________________
 
->> Corrected namspace problem by removing global scope qualifier from
+>> Corrected namespace problem by removing global scope qualifier from
    class definition as well as method and option bodies.  Bug report
    and patch provided by evans@engineous.com (Rick Evans).
 
@@ -382,7 +390,7 @@ ______________________________________________________________________________
 Hyperhelp
 ______________________________________________________________________________
 
->> Corrected namspace problem by removing global scope qualifier from
+>> Corrected namespace problem by removing global scope qualifier from
    class definition as well as method and option bodies.  Bug report
    provided by evans@engineous.com (Rick Evans).
 
@@ -390,7 +398,7 @@ ______________________________________________________________________________
 Scrolledhtml
 ______________________________________________________________________________
 
->> Corrected namspace problem by removing global scope qualifier from
+>> Corrected namespace problem by removing global scope qualifier from
    class definition as well as method and option bodies.  Bug report
    provided by evans@engineous.com (Rick Evans).
 
@@ -462,9 +470,9 @@ ______________________________________________________________________________
 
 >> Changed component option basis to be that of the "usuals".
 
->> POSSIBLE INCOMPATABILITY - Renamed the "ef" component to "prompt".
+>> POSSIBLE INCOMPATIBILITY - Renamed the "ef" component to "prompt".
 
->> POSSIBLE INCOMPATABILITY - The following options have been removed
+>> POSSIBLE INCOMPATIBILITY - The following options have been removed
    and are not directly available in the promptdialog anymore:
 	-fixed -justify -labelbitmap -labelimage -labelmargin
 	-state -textvariable -width
@@ -481,9 +489,9 @@ ______________________________________________________________________________
 
 >> Changed component option basis to be that of the "usuals".
 
->> POSSIBLE INCOMPATABILITY - Renamed the "msg" component to "message".
+>> POSSIBLE INCOMPATIBILITY - Renamed the "msg" component to "message".
 
->> POSSIBLE INCOMPATABILITY - The following options have been removed
+>> POSSIBLE INCOMPATIBILITY - The following options have been removed
    and are not directly available in the messagedialog anymore:
 	-anchor -justify -wraplength
 
@@ -850,7 +858,7 @@ ______________________________________________________________________________
 >> POSSIBLE INCOMPATIBILITY - The childsite is now a protected component.
    If you need access to it, use the childsite command.
 
->> POSSIBLE INCOMPATABILITY - The following options have been removed
+>> POSSIBLE INCOMPATIBILITY - The following options have been removed
    and are not directly available in the fileselectionbox anymore:
 
 	-relief -repeatdelay -repeatinterval -labelmargin
@@ -946,7 +954,7 @@ ______________________________________________________________________________
  -------------------- CHANGES FROM iwidgets-2.1.0 -----------------------
 ==========================================================================
 
-  [incr Widgets] version 2.1.1 is compatable with itcl2.1
+  [incr Widgets] version 2.1.1 is compatible with itcl2.1
 
 NEW FEATURES
 ------------------------------------------------------------------------------
@@ -967,7 +975,7 @@ NEW FEATURES
    Previously, closing the hyperhelp widget deleted the object which was
    deemed to be user hostile.  Now, there exists a -closecmd option
    which defaults to just deactivating the widget.  Should you wish to
-   destroy the widget, either do so explictly or modify the -closecmd
+   destroy the widget, either do so explicitly or modify the -closecmd
    to do it.
 
 
@@ -982,7 +990,7 @@ BUG FIXES
 
 >> Allow negative indexes in scrolledlistbox
 
-   Negative indicies are reasonable and valid.  Bug report by
+   Negative indices are reasonable and valid.  Bug report by
    wfarel@cas.org (Bill Farel).
 
 >> Corrected problem with caps-lock and num-lock in entryfields
@@ -1056,7 +1064,7 @@ INCOMPATIBLE CHANGES
  -------------------- CHANGES FROM iwidgets-2.0.1 -----------------------
 ==========================================================================
 
-  [incr Widgets] version 2.1.0 is compatable with itcl2.1
+  [incr Widgets] version 2.1.0 is compatible with itcl2.1
 
 NEW FEATURES
 ------------------------------------------------------------------------------
@@ -1129,7 +1137,7 @@ INCOMPATIBLE CHANGES
  -------------------- CHANGES FROM iwidgets-2.0.0 -----------------------
 ==========================================================================
 
-  [incr Widgets] version 2.0.1 is compatable with itcl2.0
+  [incr Widgets] version 2.0.1 is compatible with itcl2.0
 
 NEW FEATURES
 ------------------------------------------------------------------------------
@@ -1227,7 +1235,7 @@ BUG FIXES
    removed when it shouldn't have been.
 
 >> Buttonbox wasn't adjusting properly following button additions which
-   were preceeded by deletions.
+   were preceded by deletions.
 
    Greg McFarlane found this one.  The buttonbox needed to do perform
    and update idletasks following the sizing of the box during a deletion.
@@ -1249,7 +1257,7 @@ INCOMPATIBLE CHANGES
  -------------------- CHANGES FROM iwidgets-2.0b4 -----------------------
 ==========================================================================
 
-  [incr Widgets] version 2.0.0 is compatable with itcl2.0
+  [incr Widgets] version 2.0.0 is compatible with itcl2.0
 
 NEW FEATURES
 ------------------------------------------------------------------------------
@@ -1409,7 +1417,7 @@ INCOMPATIBLE CHANGES
  -------------------- CHANGES FROM iwidgets-2.0b1 -----------------------
 ==========================================================================
 
-  [incr Widgets] versions b1, b2, b3, and b4 are compatable with itcl-2.0b2
+  [incr Widgets] versions b1, b2, b3, and b4 are compatible with itcl-2.0b2
 
 NEW FEATURES
 ------------------------------------------------------------------------------
@@ -1442,7 +1450,7 @@ NEW FEATURES
 
 >> The Panedwindow class additional commands:
 
-   A paneconfigure command exists for configuring indiviual tagged panes.
+   A paneconfigure command exists for configuring individual tagged panes.
 
 	panedwindow .pw
 	.pw add first
@@ -1456,7 +1464,7 @@ NEW FEATURES
 
 >> The Buttonbox class now has additional commands:
 
-   A buttonconfigure command exists for configuring indiviual tagged buttons.
+   A buttonconfigure command exists for configuring individual tagged buttons.
 
 	buttonbox .bb
 	.bb add OK -text OK
@@ -1491,7 +1499,7 @@ BUG FIXES
    regardless if it was already selected.  The programmer must now determine
    if the selected item has changed if necessary.  The previous approach of
    only invoking the -selectioncommand if the selection has changed caused
-   too many problems, making it behave erraticly.
+   too many problems, making it behave erratically.
 
 >> Corrected problems preventing classes being derived from scrolled* classes
 

@@ -64,33 +64,33 @@ test Dialog-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-background #d9d9d9 #d9d9d9}
+    {-background #d9d9d9 #d9d9d9} 
     {-width 400 400}
     {-height 400 400}
-    {-buttonboxpadx 10 10}
-    {-buttonboxpady 10 10}
-    {-buttonboxpos n n}
-    {-buttonboxpos e e}
-    {-buttonboxpos w w}
-    {-buttonboxpos s s}
-    {-cursor gumby gumby}
-    {-modality global global}
-    {-modality application application}
-    {-modality none none}
-    {-padx 15 15}
-    {-pady 15 15}
-    {-separator off off}
-    {-thickness 5 5}
+    {-buttonboxpadx 10 10} 
+    {-buttonboxpady 10 10} 
+    {-buttonboxpos n n} 
+    {-buttonboxpos e e} 
+    {-buttonboxpos w w} 
+    {-buttonboxpos s s} 
+    {-cursor gumby gumby} 
+    {-modality global global} 
+    {-modality application application} 
+    {-modality none none} 
+    {-padx 15 15} 
+    {-pady 15 15} 
+    {-separator off off} 
+    {-thickness 5 5} 
     {-width 0 0}
     {-height 0 0}
-    {-separator on on}
+    {-separator on on} 
     {-title Dialog Dialog}} {
 	set option [lindex $test 0]
 	test Dialog-2.$o "configuration options, $option" {
 	    .dlg configure $option [lindex $test 1]
 	    lindex [.dlg configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -109,7 +109,7 @@ foreach test {
 	test Dialog-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -118,21 +118,21 @@ foreach test {
 #
 test Dialog-1.$c {Dialog destruction} {
     destroy .dlg
-    update
+    update 
 } {}
 
 incr c
 
 test Dialog-1.$c {Dialog construction} {
     iwidgets::Dialog .dlg
-    update
+    update 
 } {}
 
 incr c
 
 test Dialog-1.$c {Dialog destruction} {
     destroy .dlg
-    update
+    update 
 } {}
 
 incr c
@@ -140,7 +140,7 @@ incr c
 test Dialog-1.$c {Dialog destruction} {
     iwidgets::dialog .dlg
     destroy .dlg
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

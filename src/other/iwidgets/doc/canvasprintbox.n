@@ -4,7 +4,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::canvasprintbox iwid
 .BS
@@ -258,7 +258,7 @@ pages to use verticaly when \fBposterize\fR is turned on.
 .DS
 package require Iwidgets 4.0
 iwidgets::canvasprintbox .fsb -orient landscape -stretch 1
-pack .fsb -padx 10 -pady 10 -fill both -expand yes
+pack .fsb -padx 10 -pady 10 -fill both -expand yes 
 .DE
 .SH AUTHOR
 Tako Schotanus

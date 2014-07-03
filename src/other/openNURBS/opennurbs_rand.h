@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -135,6 +136,19 @@ public:
     double in the interval [t0,t1]
   */
   double RandomDouble(double t0, double t1);
+
+  /*
+  Description:
+    Perform a random permuation on an array.
+  Parameters:
+    base - [in/out]
+      Array of element to permute
+    nel - [in]
+      number of elements in the array.
+    sizeof_element
+      size of an element in bytes.
+  */
+  void RandomPermutation(void* base, size_t nel, size_t sizeof_element );
 
 private:
   struct ON_RANDOM_NUMBER_CONTEXT m_rand_context;

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -312,8 +313,6 @@ public:
   bool Transform( 
          const ON_Xform& xform
          );
-
-  bool Morph( const ON_SpaceMorph& morph );
 
   // Description:
   //   Rotates the bezier curve about the specified axis.  A positive
@@ -949,6 +948,7 @@ public:
           double w1
           );
 
+
   /*
   Description:
     Get the parameter of the point on the bezier curve
@@ -1266,8 +1266,6 @@ public:
          const ON_Xform&
          );
 
-  bool Morph( const ON_SpaceMorph& morph );
-
   // Description:
   //   Rotates the bezier surface about the specified axis.  A positive
   //   rotation angle results in a counter-clockwise rotation
@@ -1518,7 +1516,7 @@ public:
     find multiple closest points, make a surface tree and use it.
     See the ON_BezierSurface::GetClosestPoint code for an example.
   */
-  bool GetClosestPoint( 
+  bool GetClosestPoint(
           ON_3dPoint P,
           double* s,
           double* t,
@@ -1526,6 +1524,7 @@ public:
           const ON_Interval* sub_domain0 = 0,
           const ON_Interval* sub_domain1 = 0
           ) const;
+
 
   /*
   Description:
@@ -1549,7 +1548,7 @@ public:
   Returns:
     True if a point is found.
   */
-  bool GetLocalClosestPoint( 
+  bool GetLocalClosestPoint(
           ON_3dPoint P,
           double s_seed,
           double t_seed,
@@ -1558,6 +1557,7 @@ public:
           const ON_Interval* sub_domain0 = 0,
           const ON_Interval* sub_domain1 = 0
           ) const;
+
 
   /////////////////////////////////////////////////////////////////
   // Implementation
@@ -1813,8 +1813,6 @@ public:
   bool Transform( 
          const ON_Xform& xform
          );
-
-  bool Morph( const ON_SpaceMorph& morph );
 
   // Description:
   //   Rotates the bezier surface about the specified axis.  A positive
@@ -2087,17 +2085,6 @@ public:
 
   /*
   Description:
-    Override of virtual ON_SpaceMorph::MorphPoint.
-  Parameters:
-    point - [in] 
-      (x,y,z) gets mapped to m_rst2xyz(m_xyz2rst*point);
-  */
-  ON_3dPoint MorphPoint( 
-            ON_3dPoint point 
-            ) const;
-
-  /*
-  Description:
     Create a Bezier volume.
   Parameters:
     P0 - [in] 
@@ -2227,3 +2214,4 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_BezierCageMorph*>;
 #endif
 
 #endif
+

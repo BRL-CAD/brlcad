@@ -59,7 +59,7 @@ See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "
 </td>
 </table>
 <P>
-See the <A HREF="scrolledlistbox.n.html"> "scrolledlistbox" </A> manual entry for details on the above inherited
+See the <A HREF="scrolledlistbox.n.html"> "scrolledlistbox" </A> manual entry for details on the above inherited 
 options.
 <P>
 <table cellpadding=5>
@@ -116,7 +116,7 @@ See the <A HREF="entryfield.n.html"> "entryfield" </A> class manual entry for de
 </td>
 </table>
 <P>
-See the <A HREF="labeledwidget.n.html"> "labeledwidget" </A> class manual entry for details on the
+See the <A HREF="labeledwidget.n.html"> "labeledwidget" </A> class manual entry for details on the 
 inherited options.
 </pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
 <P>
@@ -127,9 +127,9 @@ Command-Line Switch:	<B>-arrowrelief</B>
 </pre>
 <UL>
 Specifies the relief style to use for a dropdown Combobox's arrow
-button in a normal (not depressed) state. Acceptable values
-are <B>raised</B>, <B>sunken</B>, <B>flat</B>, <B>ridge</B>, and <B>groove</B>.
-Sunken is discouraged as this is the relief used to indicate a depressed
+button in a normal (not depressed) state. Acceptable values 
+are <B>raised</B>, <B>sunken</B>, <B>flat</B>, <B>ridge</B>, and <B>groove</B>.  
+Sunken is discouraged as this is the relief used to indicate a depressed 
 state. This option has no effect on simple Comboboxes. The default is raised.
 </UL>
 <P>
@@ -153,13 +153,13 @@ Command-Line Switch:	<B>-dropdown</B>
 </pre>
 <UL>
 Boolean describing the Combobox layout style given in any of the forms
-acceptable to <B>Tcl_GetBoolean</B>. If true, the Combobox
+acceptable to <B>Tcl_GetBoolean</B>. If true, the Combobox 
 will be a dropdown style
 widget which displays an entry field and an arrow button which when activated
-will pop up a scrollable list of items. If false, a simple Combobox style
-will be used which has an entry field and a scrollable list beneath it
+will pop up a scrollable list of items. If false, a simple Combobox style 
+will be used which has an entry field and a scrollable list beneath it 
 which is always visible. Both styles allow an optional label for the entry
-field area. The default is true.
+field area. The default is true. 
 </UL>
 <P>
 <pre>
@@ -173,7 +173,7 @@ by the user. If true the user can add items to the combobox by entering text
 into the entry area and then pressing Return. If false, the list of items is
 non-editable and can only be changed by calling the insert or delete
 methods. (The value in the entry field can still be modified by selecting
-from the list.)  Given in any of the forms acceptable to <B>Tcl_GetBoolean</B>.
+from the list.)  Given in any of the forms acceptable to <B>Tcl_GetBoolean</B>. 
 The default is true.
 </UL>
 <P>
@@ -194,7 +194,7 @@ Class:                  <B>Height</B>
 Command-Line Switch:	<B>-listheight</B>
 </pre>
 <UL>
-Height of the listbox specified in any of the forms acceptable to
+Height of the listbox specified in any of the forms acceptable to 
 <B>Tk_GetPixels</B>.  The default is 150 pixels.
 </UL>
 <P>
@@ -205,7 +205,7 @@ Command-Line Switch:	<B>-margin</B>
 </pre>
 <UL>
 Specifies the width in pixels between the entry component and the arrow button
-for a dropdown Combobox given in any of the forms acceptable to
+for a dropdown Combobox given in any of the forms acceptable to 
 <B>Tk_GetPixels</B>. This option has no effect on a simple Combobox. The
 default is 1.
 </UL>
@@ -218,7 +218,7 @@ Command-Line Switch:	<B>-popupcursor</B>
 <UL>
 Specifies the cursor to be used for dropdown style listboxes. The value
 may have any of the forms acceptable to <B>Tk_GetCursor</B>. The default is
-arrow.
+arrow. 
 </UL>
 <P>
 <pre>
@@ -228,8 +228,8 @@ Command-Line Switch:	<B>-selectioncommand</B>
 </pre>
 <UL>
 Specifies a Tcl command procedure which is called when an item in the
-listbox area is selected. The item will be selected in the list, the listbox
-will be removed if it is a dropdown Combobox, and the selected item's
+listbox area is selected. The item will be selected in the list, the listbox 
+will be removed if it is a dropdown Combobox, and the selected item's 
 text will be inserted into the entry field before the -selectioncommand proc is
 called. The default is {}.
 </UL>
@@ -255,7 +255,7 @@ Command-Line Switch:	<B>-unique</B>
 Boolean describing whether or not duplicate items are allowed in the combobox
 list. If true, then duplicates are not allowed to be inserted. If false, a
 duplicate entry causes selection of the item. Given in any of the forms
-acceptable to <B>Tcl_GetBoolean</B>. The default is true.
+acceptable to <B>Tcl_GetBoolean</B>. The default is true. 
 </UL>
 </pre><HR>
 
@@ -265,13 +265,13 @@ The <B>combobox</B> command creates an enhanced entry field widget with an
 optional associated label and a scrollable list. When an item is selected in
 the list area of a Combobox, its value is then displayed in the entry field
 text area. Functionally similar to an Optionmenu, the Combobox adds (optional)
-list scrolling and (optional) item editing and inserting capabilities.
+list scrolling and (optional) item editing and inserting capabilities. 
 <P>
 There are two basic styles of Comboboxes (determined by the -dropdown option):
 dropdown and simple. The dropdown style adds an arrow button to the right of
 the entry field which when activated will pop up (and down) the scrolled
-listbox beneath the entry field. The simple (non-dropdown) Combobox
-permanently displays the listbox beneath the entry field and has no
+listbox beneath the entry field. The simple (non-dropdown) Combobox 
+permanently displays the listbox beneath the entry field and has no 
 arrow button. Either style allows an optional entry field label.
 </pre><H2>METHODS</H2>
 <P>
@@ -335,7 +335,7 @@ See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/listbox.n.html"> "
 </td>
 </table>
 <P>
-See the <A HREF="scrolledlistbox.n.html"> "scrolledlistbox" </A> manual entries for details on the above associated
+See the <A HREF="scrolledlistbox.n.html"> "scrolledlistbox" </A> manual entries for details on the above associated 
 methods.
 <P>
 </pre><H2>WIDGET-SPECIFIC METHODS</H2>
@@ -373,14 +373,14 @@ command.
 <DT> <I>pathName <B>delete <I>component</I> <I>first</I> ?<I>last</I>?
 </I></B>
 <DD> Delete one or more elements from a given component, <B>list</B> or <B>entry</B>.
-If a list item to be removed is currently selected (displayed in the entry
+If a list item to be removed is currently selected (displayed in the entry 
 field area), the entry field will be cleared.
 </DL>
 <DL>
 <DT> <I>pathName <B>get ?<I>index</I>? </B></I>
 </I></B>
-<DD> With no arguments, returns the contents currently in the entry
-field area. With a single argument, returns the contents of the
+<DD> With no arguments, returns the contents currently in the entry 
+field area. With a single argument, returns the contents of the 
 listbox item at the indicated index.
 </DL>
 <DL>
@@ -403,8 +403,8 @@ Name:                   <B>entry</B>
 Class:                  <B>Entry</B>
 </pre>
 <UL>
-Text entry area where the current selection is displayed. If the
-Combobox is editable and its state is normal, the user can edit the
+Text entry area where the current selection is displayed. If the 
+Combobox is editable and its state is normal, the user can edit the 
 contents of this item.
 </UL>
 <P>
@@ -435,15 +435,15 @@ area, that item will be selected before the list is removed.
 <P>
 [3] Button-3 mouse press on the arrow key of a dropdown Combobox causes the
 next item to be selected. Shift-Button-3 causes the previous item to be
-selected.
+selected. 
 <P>
-[4] Escape keypress removes a dropdown list which has been popped up.
+[4] Escape keypress removes a dropdown list which has been popped up. 
 <P>
 [5] The &lt;space&gt; and &lt;Return&gt; keystrokes select the current item. They also
 remove the popped up list for dropdown comboboxes.
 <P>
 [6] Up and Down arrow keypresses from the entry field and arrow button
-component cause the previous and next items in the listbox to be selected
+component cause the previous and next items in the listbox to be selected 
 respectively. Ctl-P and Ctl-N are similarly mapped for emacs emulation.
 <P>
 [7] Entry field and arrow button component Shift-Up and Shift-Down arrow keys
@@ -461,9 +461,9 @@ also maps &lt;Return&gt; and &lt;space&gt; similarly.
  #
  combobox .cb1 -labeltext Month: \\
      -selectioncommand {puts "selected: [.cb1 getcurselection]"} \\
-     -editable false -listheight 185 -popupcursor hand1
+     -editable false -listheight 185 -popupcursor hand1 
  .cb1 insert list end Jan Feb Mar Apr May June Jul Aug Sept Oct Nov Dec
-
+	
  #
  # Editable Dropdown Combobox
  #
@@ -471,7 +471,7 @@ also maps &lt;Return&gt; and &lt;space&gt; similarly.
  .cb2 insert list end Linux HP-UX SunOS Solaris Irix
  .cb2 insert entry end L
 
- pack .cb1 -padx 10 -pady 10 -fill x
+ pack .cb1 -padx 10 -pady 10 -fill x 
  pack .cb2 -padx 10 -pady 10 -fill x
 
 </pre>

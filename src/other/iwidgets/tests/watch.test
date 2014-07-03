@@ -47,7 +47,7 @@ catch {destroy .w}
 test Watch-1.$c {Watch construction} {
     iwidgets::Watch .w
     pack .w -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -82,7 +82,7 @@ foreach test {
 	    .w configure $option [lindex $test 1]
 	    lindex [.w configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 	.w show
 	after 500
@@ -112,7 +112,7 @@ foreach test {
 	test Watch-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 	after 500
 }
@@ -134,22 +134,22 @@ foreach test {
 #
 test Watch-1.$c {Watch destruction} {
     destroy .w
-    update
+    update 
 } {}
 
 incr c
 
 test Watch-1.$c {Watch construction} {
-    iwidgets::watch .w
+    iwidgets::watch .w 
     pack .w -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Watch-1.$c {Watch destruction} {
-    destroy .w
-    update
+    destroy .w 
+    update 
 } {}
 
 incr c
@@ -157,8 +157,8 @@ incr c
 test Watch-1.$c {Watch destruction} {
     iwidgets::watch .w
     pack .w
-    destroy .w
-    update
+    destroy .w 
+    update 
 } {}
 
 ::tcltest::cleanupTests

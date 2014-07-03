@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -163,12 +164,6 @@ public:
         int i, 
         int j
         );
-
-  // virtual ON_Geometry override
-  bool Morph( const ON_SpaceMorph& morph );
-
-  // virtual ON_Geometry override
-  bool IsMorphable() const;
 
   /////////////////////////////////////////////////////////////////
   // ON_Curve overrides
@@ -335,9 +330,16 @@ public:
         of the angle between two tangent vectors 
         is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-        c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
-        from above and below and |K0 - K1| > curvature_tolerance,
-        then a curvature discontinuity is reported.
+        c is ON::G2_continuous or ON::Gsmooth_continuous.  
+        ON::G2_continuous:
+          If K0 and K1 are curvatures evaluated
+          from above and below and |K0 - K1| > curvature_tolerance,
+          then a curvature discontinuity is reported.
+        ON::Gsmooth_continuous:
+          If K0 and K1 are curvatures evaluated from above and below
+          and the angle between K0 and K1 is at least twice angle tolerance
+          or ||K0| - |K1|| > (max(|K0|,|K1|) > curvature_tolerance,
+          then a curvature discontinuity is reported.
   Returns:
     true if a discontinuity was found on the interior of the interval (t0,t1).
   Remarks:
@@ -350,7 +352,7 @@ public:
                   double* t,
                   int* hint=NULL,
                   int* dtype=NULL,
-                  double cos_angle_tolerance=0.99984769515639123915701155881391,
+                  double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
                   double curvature_tolerance=ON_SQRT_EPSILON
                   ) const;
 
@@ -372,9 +374,16 @@ public:
         of the angle between two tangent vectors 
         is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-        c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
-        from above and below and |K0 - K1| > curvature_tolerance,
-        then a curvature discontinuity is reported.
+        c is ON::G2_continuous or ON::Gsmooth_continuous.  
+        ON::G2_continuous:
+          If K0 and K1 are curvatures evaluated
+          from above and below and |K0 - K1| > curvature_tolerance,
+          then a curvature discontinuity is reported.
+        ON::Gsmooth_continuous:
+          If K0 and K1 are curvatures evaluated from above and below
+          and the angle between K0 and K1 is at least twice angle tolerance
+          or ||K0| - |K1|| > (max(|K0|,|K1|) > curvature_tolerance,
+          then a curvature discontinuity is reported.
   Returns:
     true if the curve has at least the c type continuity at the parameter t.
   Remarks:
@@ -387,7 +396,7 @@ public:
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
     double d2_tolerance=ON_ZERO_TOLERANCE,
-    double cos_angle_tolerance=0.99984769515639123915701155881391,
+    double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
     double curvature_tolerance=ON_SQRT_EPSILON
     ) const;
 
@@ -451,144 +460,6 @@ public:
          int* = 0        // optional - evaluation hint (int) used to speed
                          //            repeated evaluations
          ) const;
-
-  //////////
-  // Find parameter of the point on a curve that is closest to test_point.
-  // If the maximum_distance parameter is > 0, then only points whose distance
-  // to the given point is <= maximum_distance will be returned.  Using a 
-  // positive value of maximum_distance can substantially speed up the search.
-  // If the sub_domain parameter is not NULL, then the search is restricted
-  // to the specified portion of the curve.
-  //
-  // true if returned if the search is successful.  false is returned if
-  // the search fails.
-  bool GetClosestPoint( const ON_3dPoint&, // test_point
-          double*,       // parameter of local closest point returned here
-          double = 0.0,  // maximum_distance
-          const ON_Interval* = NULL // sub_domain
-          ) const;
-
-  //////////
-  // Find parameter of the point on a curve that is locally closest to 
-  // the test_point.  The search for a local close point starts at 
-  // seed_parameter. If the sub_domain parameter is not NULL, then
-  // the search is restricted to the specified portion of the curve.
-  //
-  // true if returned if the search is successful.  false is returned if
-  // the search fails.
-  ON_BOOL32 GetLocalClosestPoint( const ON_3dPoint&, // test_point
-          double,    // seed_parameter
-          double*,   // parameter of local closest point returned here
-          const ON_Interval* = NULL // sub_domain
-          ) const;
-
-  //////////
-  // Length of curve.
-  // true if returned if the length calculation is successful.
-  // false is returned if the length is not calculated.
-  //
-  // The arc length will be computed so that
-  // (returned length - real length)/(real length) <= fractional_tolerance
-  // More simply, if you want N significant figures in the answer, set the
-  // fractional_tolerance to 1.0e-N.  For "nice" curves, 1.0e-8 works
-  // fine.  For very high degree nurbs and nurbs with bad parameterizations,
-  // use larger values of fractional_tolerance.
-  ON_BOOL32 GetLength( // returns true if length successfully computed
-          double*,                   // length returned here
-          double = 1.0e-8,           // fractional_tolerance
-          const ON_Interval* = NULL  // (optional) sub_domain
-          ) const;
-
-  /*
-  Description:
-    Used to quickly find short curves.
-  Parameters:
-    tolerance - [in] (>=0)
-    sub_domain - [in] If not NULL, the test is performed
-      on the interval that is the intersection of 
-      sub_domain with Domain().
-  Returns:
-    True if the length of the curve is <= tolerance.
-  Remarks:
-    Faster than calling Length() and testing the
-    result.
-  */
-  bool IsShort(
-    double tolerance,
-    const ON_Interval* sub_domain = NULL
-    ) const;
-
-  /*
-  Description:
-    Looks for segments that are shorter than tolerance
-    that can be removed. If bRemoveShortSegments is true,
-    then the short segments are removed. Does not change the 
-    domain, but it will change the relative parameterization.
-  Parameters:
-    tolerance - [in]
-    bRemoveShortSegments - [in] If true, then short segments
-                                are removed.
-  Returns:
-    True if removable short segments can were found.
-    False if no removable short segments can were found.
-  */
-  bool RemoveShortSegments(
-    double tolerance,
-    bool bRemoveShortSegments = true
-    );
-
-  // Description:
-  //   virtual ON_Curve::GetNormalizedArcLengthPoint override.
-  //   Get the parameter of the point on the curve that is a 
-  //   prescribed arc length from the start of the curve.
-  // Parameters:
-  //   s - [in] normalized arc length parameter.  E.g., 0 = start
-  //        of curve, 1/2 = midpoint of curve, 1 = end of curve.
-  //   t - [out] parameter such that the length of the curve
-  //      from its start to t is arc_length.
-  //   fractional_tolerance - [in] desired fractional precision.
-  //       fabs(("exact" length from start to t) - arc_length)/arc_length <= fractional_tolerance
-  //   sub_domain - [in] If not NULL, the calculation is performed on
-  //       the specified sub-domain of the curve.
-  // Returns:
-  //   true if successful
-  ON_BOOL32 GetNormalizedArcLengthPoint(
-          double s,
-          double* t,
-          double fractional_tolerance = 1.0e-8,
-          const ON_Interval* sub_domain = NULL
-          ) const;
-
-  /*
-  Description:
-    virtual ON_Curve::GetNormalizedArcLengthPoints override.
-    Get the parameter of the point on the curve that is a 
-    prescribed arc length from the start of the curve.
-  Parameters:
-    count - [in] number of parameters in s.
-    s - [in] array of normalized arc length parameters. E.g., 0 = start
-         of curve, 1/2 = midpoint of curve, 1 = end of curve.
-    t - [out] array of curve parameters such that the length of the 
-       curve from its start to t[i] is s[i]*curve_length.
-    absolute_tolerance - [in] if absolute_tolerance > 0, then the difference
-        between (s[i+1]-s[i])*curve_length and the length of the curve
-        segment from t[i] to t[i+1] will be <= absolute_tolerance.
-    fractional_tolerance - [in] desired fractional precision for each segment.
-        fabs("true" length - actual length)/(actual length) <= fractional_tolerance
-    sub_domain - [in] If not NULL, the calculation is performed on
-        the specified sub-domain of the curve.  A 0.0 s value corresponds to
-        sub_domain->Min() and a 1.0 s value corresponds to sub_domain->Max().
-  Returns:
-    true if successful
-  */
-  ON_BOOL32 GetNormalizedArcLengthPoints(
-          int count,
-          const double* s,
-          double* t,
-          double absolute_tolerance = 0.0,
-          double fractional_tolerance = 1.0e-8,
-          const ON_Interval* sub_domain = NULL
-          ) const;
 
   // Description:
   //   virtual ON_Curve::Trim override.

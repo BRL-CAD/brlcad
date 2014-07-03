@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -49,20 +50,23 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
 {
   // See http://www.faqs.org/rfcs/rfc4122.html for uuid details.
 
-  ////{
-  ////  // Use this code when testing reqires "repeatable uniqueness".
-  ////  // NEVER check in this code.
-  ////  static ON_UUID blank = {
-  ////    0,                                        // unsigned long  Data1;
-  ////    0,                                        // unsigned short Data2;
-  ////    0x11dc,                                   // unsigned short Data3;
-  ////    {0x98,0x85,0x00,0x13,0x72,0xc3,0x38,0x78} // unsigned char  Data4[8];
-  ////  };
-  ////  if ( 0 == ++blank.Data1)
-  ////    blank.Data2++;
-  ////  new_uuid = blank;
-  ////}
-  ////return true;
+#if 0
+  {
+    // Use this code when testing reqires "repeatable uniqueness".
+    // NEVER check in this code.
+    static ON_UUID blank = {
+      0,                                        // unsigned long  Data1;
+      0,                                        // unsigned short Data2;
+      0x11dc,                                   // unsigned short Data3;
+      {0x98,0x85,0x00,0x13,0x72,0xc3,0x38,0x78} // unsigned char  Data4[8];
+    };
+    if ( 0 == ++blank.Data1)
+      blank.Data2++;
+    new_uuid = blank;
+  }
+  return true;
+
+#else
 
 #if defined(ON_OS_WINDOWS)
   // Header: Declared in Rpcdce.h.
@@ -123,6 +127,7 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
   return false;
 #endif
 
+#endif
 }
 
  
@@ -241,6 +246,8 @@ ON_UUID ON_UuidFromString( const wchar_t* sUUID )
   wchar_t w;
   char s[64];
   int i;
+  if( NULL == sUUID )
+    return ON_nil_uuid;
   while ( *sUUID && *sUUID <= ' ' ) // skip leading white space
     sUUID++;
   if ( *sUUID == '{' )

@@ -1,0 +1,76 @@
+SCHEMA multiple_rep;
+
+(* component_2d_location has multiple variables with the same name, because it inherits representation_relationship from more than one supertype:
+class SdaiComponent_2d_location  :    public SdaiContext_dependent_shape_representation  {
+   protected:
+        SDAI_String _name ;
+        SDAI_Application_instance_ptr _rep_1 ;
+        SDAI_Application_instance_ptr _rep_2 ;
+        SDAI_String _name ;
+        SDAI_Application_instance_ptr _rep_1 ;
+        SDAI_Application_instance_ptr _rep_2 ;
+//...
+}
+*)
+ENTITY component_2d_location
+  SUBTYPE OF (context_dependent_shape_representation, shape_representation_relationship, definitional_representation_relationship);
+  DERIVE
+    SELF\context_dependent_shape_representation.representation_relation : component_2d_location := SELF;   -- NEW
+  WHERE
+    WR1: SELF\representation_relationship.name = 'component 2d location';
+END_ENTITY;
+
+  ENTITY context_dependent_shape_representation;
+    representation_relation : shape_representation_relationship;
+  WHERE
+    WR2: SIZEOF(USEDIN(SELF, 'MULTIPLE_REP.' + 'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+    WR3: SIZEOF(USEDIN(SELF, 'MULTIPLE_REP.' + 'NAME_ATTRIBUTE.NAMED_ITEM')) <= 1;
+  END_ENTITY;
+
+  ENTITY shape_representation_relationship
+    SUBTYPE OF (representation_relationship);
+  WHERE
+    WR1: 'MULTIPLE_REP.SHAPE_REPRESENTATION' IN (TYPEOF(SELF\representation_relationship.rep_1) + TYPEOF(SELF\representation_relationship.rep_2));
+  END_ENTITY;
+
+  ENTITY definitional_representation_relationship
+    SUBTYPE OF (representation_relationship);
+  END_ENTITY;
+
+
+  ENTITY representation_relationship;
+      name        : label;
+      rep_1       : representation;
+      rep_2       : representation;
+  END_ENTITY;
+
+  ENTITY property_definition ;
+    name : label;
+    definition : characterized_definition;
+  WHERE
+    WR1: SIZEOF(USEDIN(SELF, 'MULTIPLE_REP.' + 'ID_ATTRIBUTE.IDENTIFIED_ITEM')) <= 1;
+  END_ENTITY;
+
+  ENTITY representation;
+      name             : label;
+      items            : SET[1:?] OF representation_item;
+      context_of_items : representation_context;
+    WHERE
+      WR1: SIZEOF (USEDIN (SELF, 'MULTIPLE_REP.' + 'ID_ATTRIBUTE.IDENTIFIED_ITEM')) <= 1;
+      WR2: SIZEOF (USEDIN (SELF, 'MULTIPLE_REP.' + 'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+  END_ENTITY;
+
+  TYPE characterized_definition = SELECT (characterized_object, characterized_product_definition, shape_definition);
+  END_TYPE;
+
+TYPE text = STRING; END_TYPE;
+TYPE characterized_object = STRING; END_TYPE;
+TYPE characterized_product_definition = STRING; END_TYPE;
+TYPE shape_definition = STRING; END_TYPE;
+TYPE label = STRING; END_TYPE;
+TYPE representation_item = STRING; END_TYPE;
+TYPE representation_context = STRING; END_TYPE;
+TYPE identifier = STRING; END_TYPE;
+TYPE transformation = STRING; END_TYPE;
+
+END_SCHEMA;

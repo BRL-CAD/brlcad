@@ -1,5 +1,9 @@
 
 man3_MANS = \
+	Preserve.3 \
+	Class.3 \
+	Object.3 \
+	List.3 \
 	RegisterC.3 \
 	Stack.3
 

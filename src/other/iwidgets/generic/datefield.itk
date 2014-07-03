@@ -11,24 +11,24 @@
 #            Copyright (c) 1997 DSC Technologies Corporation
 # ======================================================================
 #
-# Permission to use, copy, modify, distribute and license this software
-# and its documentation for any purpose, and without fee or written
-# agreement with DSC, is hereby granted, provided that the above copyright
-# notice appears in all copies and that both the copyright notice and
-# warranty disclaimer below appear in supporting documentation, and that
-# the names of DSC Technologies Corporation or DSC Communications
-# Corporation not be used in advertising or publicity pertaining to the
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
 # software without specific, written prior permission.
-#
-# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
 # ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
 # INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
-# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
-# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
-# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
 # WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
 # SOFTWARE.
 # ======================================================================
 
@@ -37,15 +37,15 @@
 #
 itk::usual Datefield {
     keep -background -borderwidth -cursor -foreground -highlightcolor \
-     -highlightthickness -labelfont -textbackground -textfont
+     -highlightthickness -labelfont -textbackground -textfont 
 }
 
 # ------------------------------------------------------------------
 #                               DATEFIELD
 # ------------------------------------------------------------------
 itcl::class iwidgets::Datefield {
-    inherit iwidgets::Labeledwidget
-
+    inherit iwidgets::Labeledwidget 
+    
     constructor {args} {}
 
     itk_option define -childsitepos childSitePos Position e
@@ -53,7 +53,7 @@ itcl::class iwidgets::Datefield {
     itk_option define -iq iq Iq high
     itk_option define -gmt gmt GMT no
     itk_option define -int int DateFormat no
-
+    
     public method get {{format "-string"}}
     public method isvalid {}
     public method show {{date now}}
@@ -74,7 +74,7 @@ itcl::class iwidgets::Datefield {
 
 #
 # Provide a lowercased access method for the datefield class.
-#
+# 
 proc ::iwidgets::datefield {pathName args} {
     uplevel ::iwidgets::Datefield $pathName $args
 }
@@ -89,17 +89,17 @@ option add *Datefield.justify center widgetDefault
 # ------------------------------------------------------------------
 itcl::body iwidgets::Datefield::constructor {args} {
     component hull configure -borderwidth 0
-
-    #
+    
+    #   
     # Create an entry field for entering the date.
-    #
+    #   
     itk_component add date {
     entry $itk_interior.date -width 10
     } {
     keep -borderwidth -cursor -exportselection \
         -foreground -highlightcolor -highlightthickness \
         -insertbackground -justify -relief -state
-
+    
     rename -font -textfont textFont Font
     rename -highlightbackground -background background Background
     rename -background -textbackground textBackground Background
@@ -110,15 +110,15 @@ itcl::body iwidgets::Datefield::constructor {args} {
     #
     itk_component add -protected dfchildsite {
     frame $itk_interior.dfchildsite
-    }
+    } 
     set itk_interior $itk_component(dfchildsite)
-
+    
     #
     # Add datefield event bindings for focus in and keypress events.
     #
     bind $itk_component(date) <FocusIn> [itcl::code $this _focusIn]
     bind $itk_component(date) <KeyPress> [itcl::code $this _keyPress %A %K %s]
-
+    
     #
     # Disable some mouse button event bindings:
     #   Button Motion
@@ -168,7 +168,7 @@ itcl::configbody iwidgets::Datefield::childsitepos {
         grid columnconfigure $parent 0 -weight 1
         grid columnconfigure $parent 1 -weight 0
     }
-
+    
     e {
         grid $itk_component(dfchildsite) -row 0 -column 1 -sticky ns
         grid $itk_component(date) -row 0 -column 0 -sticky nsew
@@ -178,7 +178,7 @@ itcl::configbody iwidgets::Datefield::childsitepos {
         grid columnconfigure $parent 0 -weight 1
         grid columnconfigure $parent 1 -weight 0
     }
-
+    
     s {
         grid $itk_component(dfchildsite) -row 1 -column 0 -sticky ew
         grid $itk_component(date) -row 0 -column 0 -sticky nsew
@@ -188,7 +188,7 @@ itcl::configbody iwidgets::Datefield::childsitepos {
         grid columnconfigure $parent 0 -weight 1
         grid columnconfigure $parent 1 -weight 0
     }
-
+    
     w {
         grid $itk_component(dfchildsite) -row 0 -column 0 -sticky ns
         grid $itk_component(date) -row 0 -column 1 -sticky nsew
@@ -198,7 +198,7 @@ itcl::configbody iwidgets::Datefield::childsitepos {
         grid columnconfigure $parent 0 -weight 0
         grid columnconfigure $parent 1 -weight 1
     }
-
+    
     default {
         error "bad childsite option\
             \"$itk_option(-childsitepos)\":\
@@ -220,9 +220,9 @@ itcl::configbody iwidgets::Datefield::command {}
 # Specifies the level of intelligence to be shown in the actions
 # taken by the date field during the processing of keypress events.
 # Valid settings include high, average, and low.  With a high iq,
-# the date prevents the user from typing in an invalid date.  For
+# the date prevents the user from typing in an invalid date.  For 
 # example, if the current date is 05/31/1997 and the user changes
-# the month to 04, then the day will be instantly modified for them
+# the month to 04, then the day will be instantly modified for them 
 # to be 30.  In addition, leap years are fully taken into account.
 # With average iq, the month is limited to the values of 01-12, but
 # it is possible to type in an invalid day.  A setting of low iq
@@ -243,14 +243,14 @@ itcl::configbody iwidgets::Datefield::iq {
 }
 
 # ------------------------------------------------------------------
-# OPTION: -int
+# OPTION: -int 
 #
 # Added by Mark Alston 2001/10/21
 #
 # Allows for the use of dates in "international" format: YYYY-MM-DD.
 # It must be a boolean value.
 # ------------------------------------------------------------------
-itcl::configbody iwidgets::Datefield::int {
+itcl::configbody iwidgets::Datefield::int { 
     switch $itk_option(-int) {
     1 - yes - true - on {
         set _cfield "year"
@@ -288,8 +288,8 @@ itcl::configbody iwidgets::Datefield::gmt {
 #
 # Return the current contents of the datefield in one of two formats
 # string or as an integer clock value using the -string and -clicks
-# options respectively.  The default is by string.  Reference the
-# clock command for more information on obtaining dates and their
+# options respectively.  The default is by string.  Reference the 
+# clock command for more information on obtaining dates and their 
 # formats.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Datefield::get {{format "-string"}} {
@@ -312,9 +312,9 @@ itcl::body iwidgets::Datefield::get {{format "-string"}} {
 # ------------------------------------------------------------------
 # PUBLIC METHOD: show date
 #
-# Changes the currently displayed date to be that of the date
+# Changes the currently displayed date to be that of the date 
 # argument.  The date may be specified either as a string or an
-# integer clock value.  Reference the clock command for more
+# integer clock value.  Reference the clock command for more 
 # information on obtaining dates and their formats.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Datefield::show {{date "now"}} {
@@ -372,7 +372,7 @@ itcl::body iwidgets::Datefield::isvalid {} {
 # ------------------------------------------------------------------
 # PROTECTED METHOD: _focusIn
 #
-# This method is bound to the <FocusIn> event.  It resets the
+# This method is bound to the <FocusIn> event.  It resets the 
 # insert cursor and field settings to be back to their last known
 # positions.
 # ------------------------------------------------------------------
@@ -381,7 +381,7 @@ itcl::body iwidgets::Datefield::_focusIn {} {
 }
 
 # ------------------------------------------------------------------
-# PROTECTED METHOD: _keyPress
+# PROTECTED METHOD: _keyPress 
 #
 # This method is the workhorse of the class.  It is bound to the
 # <KeyPress> event and controls the processing of all key strokes.
@@ -390,13 +390,13 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
     #
     #  Determine which field we are in currently.  This is needed
     # since the user may have moved to this position via a mouse
-    # selection and so it would not be in the position we last
+    # selection and so it would not be in the position we last 
     # knew it to be.
     #
-    _whichField
+    _whichField 
 
     #
-    # If we are using an international date the split char is "-"
+    # If we are using an international date the split char is "-" 
     # otherwise it is "/".
     #
     if {$itk_option(-int)} {
@@ -452,12 +452,12 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
 
 
     #
-    # Process numeric keystrokes.  This involes a fair amount of
+    # Process numeric keystrokes.  This involes a fair amount of 
     # processing with step one being to check and make sure we
     # aren't attempting to insert more that 10 characters.  If
     # so ring the bell and break.
     #
-    if {[regexp {[0-9]} $char]} {
+    if {[string match {[0-9]} $char]} {
         if {[$itk_component(date) index insert] == 10} {
             bell
             return -code break
@@ -466,7 +466,7 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
         #
         # If we are currently in the month field then we process the
         # number entered based on the cursor position.  If we are at
-        # at the first position and our iq is low, then accept any
+        # at the first position and our iq is low, then accept any 
         # input.
         #
         if {$_cfield == "month"} {
@@ -478,10 +478,10 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
             } else {
                 #
                 # Otherwise, we're slightly smarter.  If the number
-                # is less than two insert it at position zero.  If
-                # this makes the month greater than twelve, set the
-                # number at position one to zero which makes in
-                # effect puts the month back in range.
+                # is less than two insert it at position zero.  If 
+                # this makes the month greater than twelve, set the 
+                # number at position one to zero which makes in 
+                # effect puts the month back in range.  
                 #
                 regsub {([0-9])([0-9])} $month "$char\\2" month2b
 
@@ -500,10 +500,10 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
                     }
 
                     #
-                    # Finally, if the number is greater than one we'll
+                    # Finally, if the number is greater than one we'll 
                     # assume that they really mean to be entering a zero
-                    # followed by their number, do so for them, and
-                    # proceed to skip to the next field which is the
+                    # followed by their number, do so for them, and 
+                    # proceed to skip to the next field which is the 
                     # day field.
                     #
                 } else {
@@ -512,16 +512,16 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
                     _setField day
                 }
             }
-
+            
             #
             # Else, we're at the second month position.  Again, if we aren't
-            # too smart, let them enter anything.  Otherwise, if the
+            # too smart, let them enter anything.  Otherwise, if the 
             # number makes the month exceed twelve, set the month to
             # zero followed by their number to get it back into range.
             #
         } else {
             regsub {([0-9])([0-9])} $month "\\1$char" month2b
-
+        
             if {$itk_option(-iq) == "low"} {
                 $itk_component(date) delete $month_second_pos
                 $itk_component(date) insert $month_second_pos $char
@@ -535,12 +535,12 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
                 } else {
                     $itk_component(date) delete $month_second_pos
                     $itk_component(date) insert $month_second_pos $char
-                }
+                }           
             }
             _setField day
         }
 
-        #
+        # 
         # Now, the month processing is complete and if we're of a
         # high level of intelligence, then we'll make sure that the
         # current value for the day is valid for this month.  If
@@ -557,7 +557,7 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
                 $itk_component(date) icursor $icursor
             }
         }
-
+        
         #
         # Finally, return with a code of break to stop any normal
         # processing in that we've done all that is necessary.
@@ -577,16 +577,16 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
         }
 
         #
-        # If we are at the first cursor position for the day
-        # we are processing
-        # the first character of the day field.  If we have an iq
+        # If we are at the first cursor position for the day 
+        # we are processing 
+        # the first character of the day field.  If we have an iq 
         # of low accept any input.
         #
         if {[$itk_component(date) index insert] == $day_start_pos} {
             if {$itk_option(-iq) == "low"} {
                 $itk_component(date) delete $day_start_pos
                 $itk_component(date) insert $day_start_pos $char
-
+            
             } else {
 
                 #
@@ -600,27 +600,27 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
                     $itk_component(date) insert $day_start_pos 01
                     $itk_component(date) icursor $day_second_pos
                     #
-                    # Otherwise, if the character is less than four
-                    # and the month is not Feburary, insert the number
-                    # and if this makes the day be beyond the valid
-                    # range for this month, than set to be back in
-                    # range.
+                    # Otherwise, if the character is less than four 
+                    # and the month is not Feburary, insert the number 
+                    # and if this makes the day be beyond the valid 
+                    # range for this month, than set to be back in 
+                    # range.  
                     #
                 } elseif {($char < 4) && ($month != "02")} {
                     $itk_component(date) delete $day_start_pos
                     $itk_component(date) insert $day_start_pos $char
-
+            
                     if {$day2b > $endofMonth} {
                         $itk_component(date) delete $day_second_pos
                         $itk_component(date) insert $day_second_pos 0
                         $itk_component(date) icursor $day_second_pos
-                    }
-
+                    } 
+            
                     #
-                    # For Feburary with a number to be entered of
-                    # less than three, make sure the number doesn't
+                    # For Feburary with a number to be entered of 
+                    # less than three, make sure the number doesn't 
                     # make the day be greater than the correct range
-                    # and if so adjust the input.
+                    # and if so adjust the input. 
                     #
                 } elseif {$char < 3} {
                     $itk_component(date) delete $day_start_pos
@@ -629,11 +629,11 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
                         $itk_component(date) delete $day_start_pos $day_end_pos
                         $itk_component(date) insert $day_start_pos $endofMonth
                         $itk_component(date) icursor $day_second_pos
-                    }
+                    } 
 
                     #
                     # Finally, if the number is greater than three,
-                    # set the day to be zero followed by the number
+                    # set the day to be zero followed by the number 
                     # entered and proceed to the year field or end.
                     #
                 } else {
@@ -653,7 +653,7 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
             #
         } else {
             regsub {([0-9])([0-9])} $day "\\1$char" day2b
-
+        
             if {($itk_option(-iq) != "low") && \
                 (($day2b > $endofMonth) || ($day2b == "00"))} {
                 bell
@@ -668,13 +668,13 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
         }
 
         #
-        # Return with a code of break to prevent normal processing.
+        # Return with a code of break to prevent normal processing. 
         #
         return -code break
     }
 
     #
-    # This month and day we're tough, the code for the year is
+    # This month and day we're tough, the code for the year is 
     # comparitively simple.  Accept any input and if we are really
     # sharp, then make sure the day is correct for the month
     # given the year.  In short, handle leap years.
@@ -704,7 +704,7 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
                 $itk_component(date) icursor $year_second_pos
                 return -code break
             }
-
+        
             $itk_component(date) delete $icursor
             $itk_component(date) insert $icursor $char
 
@@ -738,7 +738,7 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
         }
         return -code break
     }
-
+    
     #
     # Process the plus and the up arrow keys.  They both yeild the same
     # effect, they increment the day by one.
@@ -748,7 +748,7 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
             bell
         }
         return -code break
-
+    
         #
         # Process the minus and the down arrow keys which decrement the day.
         #
@@ -774,7 +774,7 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
         }
 
         #
-        # A ctrl-tab key moves the day/month/year field backwards by one
+        # A ctrl-tab key moves the day/month/year field backwards by one 
         # unless the current field is the the first field.  In that case we'll
         # let tab take the focus to a previous widget.
         #
@@ -795,7 +795,7 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
         return -code break
 
         #
-        # A left arrow, backspace, or delete key moves the insert cursor
+        # A left arrow, backspace, or delete key moves the insert cursor 
         # to the left one.  This is what you expect for the left arrow
         # and since the whole widget always operates in overstrike mode,
         # it makes the most sense for backspace and delete to do the same.
@@ -813,7 +813,7 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
         #
     } elseif {$sym == "Return"} {
         uplevel #0 $itk_option(-command)
-        return -code break
+        return -code break 
     } else {
         bell
         return -code break
@@ -823,12 +823,12 @@ itcl::body iwidgets::Datefield::_keyPress {char sym state} {
 # ------------------------------------------------------------------
 # PROTECTED METHOD: _setField field
 #
-# Internal method which adjusts the field to be that of the
+# Internal method which adjusts the field to be that of the 
 # argument, setting the insert cursor appropriately.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Datefield::_setField {field} {
     set _cfield $field
-
+    
     if {$itk_option(-int)} {
         set year_pos 2
         set month_pos 5
@@ -838,7 +838,6 @@ itcl::body iwidgets::Datefield::_setField {field} {
         set day_pos 3
         set year_pos 8
     }
-
 
     switch $field {
         "month" {

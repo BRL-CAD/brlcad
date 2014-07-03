@@ -62,9 +62,9 @@ Class:                  <B>ClickTime</B>
 Command-Line Switch:	<B>-clicktime</B>
 </pre>
 <UL>
-Interval time, in msec, used to determine that a single mouse
+Interval time, in msec, used to determine that a single mouse 
 click has occurred. Used to post menu on a "quick" mouse click.
-<B>Note</B>: changing this value may cause the sigle-click
+<B>Note</B>: changing this value may cause the sigle-click 
 functionality to not work properly.  The default is 150 msec.
 </UL>
 <P>
@@ -74,7 +74,7 @@ Class:                  <B>Command</B>
 Command-Line Switch:	<B>-command</B>
 </pre>
 <UL>
-Specifies a Tcl command procedure to be evaluated following a  change in
+Specifies a Tcl command procedure to be evaluated following a  change in 
 the current option menu selection.
 </UL>
 <P>
@@ -86,7 +86,7 @@ Command-Line Switch:	<B>-cyclicon</B>
 <UL>
 Turns on/off the 3rd mouse button capability. The value may be specified
 in any of the forms acceptable to <B>Tcl_GetBoolean</B>.  This feature
-allows the right mouse button to cycle through the popup
+allows the right mouse button to cycle through the popup 
 menu list without poping it up. The right mouse button cycles through
 the menu in reverse order.  The default is true.
 </UL>
@@ -97,7 +97,7 @@ Class:                  <B>Cursor</B>
 Command-Line Switch:	<B>-popupcursor</B>
 </pre>
 <UL>
-Specifies  the mouse cursor to be used for the popup menu.  The value may
+Specifies  the mouse cursor to be used for the popup menu.  The value may 
 have any of the  forms  acceptable to <B>Tk_GetCursor</B>.
 </UL>
 <P>
@@ -120,9 +120,9 @@ Command-Line Switch:	<B>-width</B>
 <UL>
 Specifies a fixed size for the menu button label in any of the forms
 acceptable to \Tk_GetPixels</B></I>.  If the text
-is too small to fit in the label, the text is clipped.
-Note: Normally, when a new list is created, or new items are
-added to an existing list, the menu button label is resized
+is too small to fit in the label, the text is clipped. 
+Note: Normally, when a new list is created, or new items are 
+added to an existing list, the menu button label is resized 
 automatically.  Setting this option overrides that functionality.
 </UL>
 <P>
@@ -130,7 +130,7 @@ automatically.  Setting this option overrides that functionality.
 
 </pre><H2>DESCRIPTION</H2>
 <P>
-The <B>optionmenu</B> command creates an option menu widget with options
+The <B>optionmenu</B> command creates an option menu widget with options 
 to manage it.  An option menu displays a frame containing a label and a button.
 A pop-up menu will allow for the value of the button to change.
 
@@ -144,7 +144,7 @@ operations on the widget.  It has the following general form:
 <I>pathName option </I>?<I>arg arg ...</I>?
 </pre>
 <I>Option</I> and the <I>arg</I>s
-determine the exact behavior of the command.
+determine the exact behavior of the command.  
 <P>
 Many of the widget commands for an optionmenu take as one argument an
 indicator of which entry of the option menu to operate on.  These
@@ -210,17 +210,17 @@ command.
 <DT> <I>pathName <B>delete <I>first</I> ?<I>last</I>?
 </I></B>
 <DD> Delete all of the option menu entries between <I>first</I> and
-<I>last</I> inclusive.  If <I>last</I> is omitted then it defaults
+<I>last</I> inclusive.  If <I>last</I> is omitted then it defaults 
 to <I>first</I>.
 </DL>
 <DL>
 <DT> <I>pathName <B>disable <I>index</I>
 </I></B>
-<DD> Disable the option menu entry specified by <I>index</I>.
-Disabling a menu item will prevent the user from being able to select
-this item from the menu.  This only effects the state of the item
-in the menu, in other words, should the item be the currently
-selected item, the programmer is responsible for determining this condition
+<DD> Disable the option menu entry specified by <I>index</I>. 
+Disabling a menu item will prevent the user from being able to select 
+this item from the menu.  This only effects the state of the item 
+in the menu, in other words, should the item be the currently 
+selected item, the programmer is responsible for determining this condition 
 and taking appropriate action.
 </DL>
 <DL>
@@ -250,7 +250,7 @@ and <I>last</I>.
 <DL>
 <DT> <I>pathName <B>select <I>index</I>
 </I></B>
-<DD> Select an item from the option menu to be displayed as the currently
+<DD> Select an item from the option menu to be displayed as the currently 
 selected item.
 </DL>
 <DL>
@@ -278,7 +278,7 @@ Class:                  <B>Menu</B>
 </pre>
 <UL>
 The popupMenu component is menu displayed upon selection of the menu button.
-The menu contains the choices for the option menu.  See the "menu" widget
+The menu contains the choices for the option menu.  See the "menu" widget 
 manual entry for details on the popupMenu component item.
 </UL>
 </table>
@@ -297,7 +297,7 @@ manual entry for details on the popupMenu component item.
 </pre><H2>ACKNOWLEDGEMENTS:</H2>
 Michael J. McLennan
 <UL>
-Borrowed some ideas (next &amp; previous) from OptionButton class.
+Borrowed some ideas (next &amp; previous) from OptionButton class. 
 </UL>
 <P>
 Steven B. Jaggers

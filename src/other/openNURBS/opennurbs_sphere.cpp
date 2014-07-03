@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -301,6 +302,14 @@ int ON_Sphere::GetNurbForm( ON_NurbsSurface& s ) const
 
 ON_RevSurface* ON_Sphere::RevSurfaceForm( ON_RevSurface* srf ) const
 {
+  return RevSurfaceForm(false,srf);
+}
+
+ON_RevSurface* ON_Sphere::RevSurfaceForm( 
+  bool bArcLengthParameterization,
+  ON_RevSurface* srf 
+  ) const
+{
   if ( srf )
     srf->Destroy();
   ON_RevSurface* pRevSurface = NULL;
@@ -333,6 +342,15 @@ ON_RevSurface* ON_Sphere::RevSurfaceForm( ON_RevSurface* srf ) const
     pRevSurface->m_bbox.m_max.x += radius;
     pRevSurface->m_bbox.m_max.y += radius;
     pRevSurface->m_bbox.m_max.z += radius;
+    if ( bArcLengthParameterization )
+    {
+      double r = fabs(radius);
+      if ( !(r > ON_SQRT_EPSILON) )
+        r = 1.0;
+      r *= ON_PI;
+      pRevSurface->SetDomain(0,0.0,2.0*r);
+      pRevSurface->SetDomain(1,-0.5*r,0.5*r);
+    }
   }
   return pRevSurface;
 }

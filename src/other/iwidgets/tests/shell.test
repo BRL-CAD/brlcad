@@ -65,15 +65,15 @@ test Shell-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-background #d9d9d9 #d9d9d9}
+    {-background #d9d9d9 #d9d9d9} 
     {-width 200 200}
     {-height 200 200}
-    {-cursor gumby gumby}
-    {-modality global global}
-    {-modality application application}
-    {-modality none none}
-    {-padx 15 15}
-    {-pady 15 15}
+    {-cursor gumby gumby} 
+    {-modality global global} 
+    {-modality application application} 
+    {-modality none none} 
+    {-padx 15 15} 
+    {-pady 15 15} 
     {-width 0 0}
     {-height 0 0}
     {-title "Shell" "Shell"}} {
@@ -82,7 +82,7 @@ foreach test {
 	    .sh configure $option [lindex $test 1]
 	    lindex [.sh configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -110,7 +110,7 @@ foreach test {
 	test Shell-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -128,7 +128,7 @@ incr m
 #
 test Shell-1.$c {Shell destruction} {
     destroy .sh
-    update
+    update 
 } {}
 incr c
 
@@ -150,7 +150,7 @@ update
 #
 test Shell-1.$c {Shell destruction} {
     destroy .sh
-    update
+    update 
 } {}
 incr c
 
@@ -174,7 +174,7 @@ update
 #
 test Shell-1.$c {Shell destruction} {
     destroy .sh
-    update
+    update 
 } {}
 
 incr c
@@ -197,7 +197,7 @@ update
 #
 test Shell-1.$c {Shell destruction} {
     destroy .sh
-    update
+    update 
 } {}
 
 incr c
@@ -205,7 +205,7 @@ incr c
 test Shell-1.$c {Shell destruction} {
     iwidgets::shell .sh
     destroy .sh
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

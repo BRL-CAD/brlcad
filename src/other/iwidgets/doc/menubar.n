@@ -24,7 +24,7 @@ itk::Widget <- iwidgets::Menubar
 activeBackground      activeBorderWidth     activeForeground
 anchor                background            borderWidth
 cursor                disabledForeground    font
-foreground            highlightBackground   hightlightColor
+foreground            highlightBackground   hightlightColor 
 highligthThickness    justify               relief
 padX                  padY                  wrapLength\fR
 .fi
@@ -67,9 +67,9 @@ curly braces ({}) to ensure proper parsing of the substituted values.
 .PP
 The \fBiwidgets::menubar\fR command creates a new window (given by the \fIpathName\fR argument) and makes it into a \fBmenubar\fR menu widget. Additional options, described above may be specified on the command line or in the option database to configure aspects of the menubar such as its colors and font. The \fBiwidgets::menubar\fR command returns its \fIpathName\fR argument. At the time this command is invoked, there must not exist a window named pathName, but pathName's parent must exist.
 .PP
-A \fBmenubar\fR is a widget that simplifies the task of creating menu hierarchies. It encapsulates a \fBframe\fR widget, as well as \fBmenubuttons\fR, \fBmenus\fR, and menu \fBentries\fR. The menubar allows menus to be specified and referenced in a more consistent manner than using Tk to build menus directly.
+A \fBmenubar\fR is a widget that simplifies the task of creating menu hierarchies. It encapsulates a \fBframe\fR widget, as well as \fBmenubuttons\fR, \fBmenus\fR, and menu \fBentries\fR. The menubar allows menus to be specified and referenced in a more consistent manner than using Tk to build menus directly. 
 
-\fBMenubar\fR allows a menu tree to be expressed in a hierachical "language". The \fBmenubar\fR accepts a \fBmenuButtons\fR option that allows a list of menubuttons to be added to the menubar. In turn, each menubutton accepts a \fBmenu\fR option that specifies a list of menu entries to be added to the menubutton's menu. Cascade entries also accept the \fBmenu\fR option for specifying a list of menu entries to be added to the cascade's menu.
+\fBMenubar\fR allows a menu tree to be expressed in a hierachical "language". The \fBmenubar\fR accepts a \fBmenuButtons\fR option that allows a list of menubuttons to be added to the menubar. In turn, each menubutton accepts a \fBmenu\fR option that specifies a list of menu entries to be added to the menubutton's menu. Cascade entries also accept the \fBmenu\fR option for specifying a list of menu entries to be added to the cascade's menu. 
 
 Additionally, the menubar allows each component of the menubar system to be referenced by a simple \fImenuPathName\fR syntax. The menubar also extends the set of options for menu entries to include a \fBhelpStr\fR option.
 .SH "MENU PATH NAMES"
@@ -92,12 +92,12 @@ Specifies the name of the component, either a \fBframe\fR, \fBmenubutton\fR, \fB
 The \fImenuPathName\fR is a series of segment names, each separated by the '.' character. Segment names may be one of the following forms:
 .TP 14
 \fInumber\fR
-Specifies the index of the the component. For menubuttons, 0 corresponds to the left-most menubutton of the menu bar frame. As an example, \fI.1\fR would correspond to the second menubutton on the menu bar frame.
+Specifies the index of the the component. For menubuttons, 0 corresponds to the left-most menubutton of the menu bar frame. As an example, \fI.1\fR would correspond to the second menubutton on the menu bar frame. 
 .IP
 For entries, 0 corresponds to the top-most entry of the menu. For example, .file.0 would correspond to the first entry on the menu attached to the menubutton named \fIfile\fR.
 .TP 14
 \fBend\fR
-Specifes the last component. For menubuttons, it specifies the right-most entry of the menu bar frame. For menu entries, it specifies the bottom-most entry of the menu.
+Specifes the last component. For menubuttons, it specifies the right-most entry of the menu bar frame. For menu entries, it specifies the bottom-most entry of the menu. 
 .TP 14
 \fBlast\fR
 Same as end.
@@ -128,7 +128,7 @@ The following commands are possible for menubar widgets:
 \fIpathName\fR \fBadd\fR \fItype\fR \fImenuPathName\fR ?\fIoption value option value\fR?
 Adds either a menu to the menu bar or a menu entry to a menu pane.
 .IP
-If additional arguments are present, they specify \fIoption\fRs available to component type \fBentry\fR. See the man pages for \fBmenu\fR(1) in the section on \fBENTRIES\fR.
+If additional arguments are present, they specify \fIoption\fRs available to component type \fBentry\fR. See the man pages for \fBmenu\fR(1) in the section on \fBENTRIES\fR. 
 
 If \fItype\fR is one of \fBcascade\fR, \fBcheckbutton\fR, \fBcommand\fR, \fBradiobutton\fR, or \fBseparator\fR it adds a new entry to the bottom of the menu denoted by the prefix of \fImenuPathName\fR. If additonal arguments are present, they specify options available to menu \fBentry\fR widgets. In addition, the \fBhelpStr\fR option is added by the menubar widget to all components of type entry.
 .RS
@@ -162,7 +162,7 @@ This command deletes all components between \fImenuPathName\fR and \fImenuPathNa
 If \fImenuPathName\fR is of type menubar, then all menus and the menu bar frame will be destroyed. In this case \fImenuPathName2\fR is ignored.
 .TP
 \fIpathName\fR \fBindex\fR \fImenuPathName\fR
-If \fImenuPathName\fR is of type menubutton or menu, it returns the position of the menu/menubutton on the menubar frame.
+If \fImenuPathName\fR is of type menubutton or menu, it returns the position of the menu/menubutton on the menubar frame. 
 
 If \fImenuPathName\fR is of type \fBcommand\fR, \fBseparator\fR, \fBradiobutton\fR, \fBcheckbutton\fR, or \fBcascade\fR, it returns the menu widget's numerical index for the entry corresponding to \fImenuPathName\fR. If path is not found or the path is equal to ".", a value of -1 is returned.
 .TP
@@ -204,12 +204,12 @@ Returns the type of the component specified by \fImenuPathName\fR. For menu entr
 Returns a decimal string giving the y-coordinate within the menu window of the topmost pixel in the entry specified by \fImenuPathName\fR. If the \fImenuPathName\fR is not an entry, an error is issued.
 .SH "EXAMPLE ONE: USING GRAMMAR"
 .PP
-The following example creates a menubar with "File", "Edit", "Options" menubuttons. Each of these menubuttons has an associated menu.
+The following example creates a menubar with "File", "Edit", "Options" menubuttons. Each of these menubuttons has an associated menu. 
 In turn the File menu has menu entries, as well as the Edit
 menu and the Options menu. The Options menu is a tearoff menu
 with selectColor (for radiobuttons) set to blue.
 In addition, the Options menu has a cascade titled More,
-with several menu entries attached to it as well. An entry widget is
+with several menu entries attached to it as well. An entry widget is 
 provided to display help status.
 .DS
 package require Iwidgets 4.0

@@ -9,24 +9,24 @@
 # ======================================================================
 #            Copyright (c) 1997 DSC Technologies Corporation
 # ======================================================================
-# Permission to use, copy, modify, distribute and license this software
-# and its documentation for any purpose, and without fee or written
-# agreement with DSC, is hereby granted, provided that the above copyright
-# notice appears in all copies and that both the copyright notice and
-# warranty disclaimer below appear in supporting documentation, and that
-# the names of DSC Technologies Corporation or DSC Communications
-# Corporation not be used in advertising or publicity pertaining to the
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
 # software without specific, written prior permission.
-#
-# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
 # ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
 # INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
-# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
-# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
-# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
 # WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
 # SOFTWARE.
 # ======================================================================
 
@@ -104,7 +104,7 @@ itcl::class iwidgets::Watch {
 
 #
 # Provide a lowercased access method for the Watch class.
-#
+# 
 proc ::iwidgets::watch {pathName args} {
     uplevel ::iwidgets::Watch $pathName $args
 }
@@ -153,7 +153,7 @@ itcl::body iwidgets::Watch::constructor { args } {
     #
     itk_component add frame {
 	frame $itk_interior.frame
-    }
+    } 
 
     #
     # Create the canvas in which the clock will be drawn
@@ -350,7 +350,7 @@ itcl::body iwidgets::Watch::_drawHand {tag} {
 #
 # Changes the currently displayed time to be that of the time
 # argument.  The time may be specified either as a string or an
-# integer clock value.  Reference the clock command for more
+# integer clock value.  Reference the clock command for more 
 # information on obtaining times and their formats.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Watch::show {{time "now"}} {
@@ -441,7 +441,7 @@ itcl::body iwidgets::Watch::_displayClock {{when "later"}} {
     set y1Center [expr {$_y0-$_radius(pivot)}]
     set x2Center [expr {$_x0+$_radius(pivot)}]
     set y2Center [expr {$_y0+$_radius(pivot)}]
-    watch coords pivot $x1Center $y1Center $x2Center $y2Center
+    watch coords pivot $x1Center $y1Center $x2Center $y2Center        
 
     #
     # Set the coordinates of the hour, minute, and second dial items
@@ -466,7 +466,7 @@ itcl::body iwidgets::Watch::_displayClock {{when "later"}} {
 # OPTION: state
 #
 # Configure the editable state of the widget.  Valid values are
-# normal and disabled.  In a disabled state, the hands of the
+# normal and disabled.  In a disabled state, the hands of the 
 # watch are not selectabled.
 # ------------------------------------------------------------------
 itcl::configbody ::iwidgets::Watch::state {
@@ -517,14 +517,14 @@ itcl::configbody ::iwidgets::Watch::state {
 # ------------------------------------------------------------------
 itcl::configbody ::iwidgets::Watch::showampm {
     switch -- $itk_option(-showampm) {
-        0 - no - false - off {
+        0 - no - false - off { 
 	    pack forget $itk_component(am)
 	    pack forget $itk_component(pm)
 	}
 
-        1 - yes - true - on {
+        1 - yes - true - on { 
 	    pack $itk_component(am) -side left -fill both -expand 1
-	    pack $itk_component(pm) -side right -fill both -expand 1
+	    pack $itk_component(pm) -side right -fill both -expand 1 
 	}
 
         default {

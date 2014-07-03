@@ -121,7 +121,7 @@ Class:                  <B>FileName</B>
 Command-Line Switch:	<B>-filename</B>
 </pre>
 <UL>
-Specifies the filename to be displayed in the file selection dialog when
+Specifies the filename to be displayed in the file selection dialog when 
 it pops up during a save of the messagebox contents operation.
 </UL>
 <P>
@@ -131,8 +131,8 @@ Class:                  <B>MaxLines</B>
 Command-Line Switch:	<B>-maxlines</B>
 </pre>
 <UL>
-Specifies the maximum number of lines allowed in the text area of the
-messagebox. When this limit is reached, the oldest line will be deleted
+Specifies the maximum number of lines allowed in the text area of the 
+messagebox. When this limit is reached, the oldest line will be deleted 
 such that the total number of lines remains <I>maxlines</I>.
 </UL>
 <P>
@@ -142,9 +142,9 @@ Class:                  <B>SaveDir</B>
 Command-Line Switch:	<B>-savedir</B>
 </pre>
 <UL>
-Specifies the default directory to display when the file selection dialog
-pops up during a save of the messagebox contents operation. If this
-parameter is not specified, then the files in the current working directory
+Specifies the default directory to display when the file selection dialog 
+pops up during a save of the messagebox contents operation. If this 
+parameter is not specified, then the files in the current working directory 
 are displayed.
 </UL>
 <P>
@@ -152,7 +152,7 @@ are displayed.
 
 </pre><H2>DESCRIPTION</H2>
 <P>
-The <B>messagebox</B> command creates
+The <B>messagebox</B> command creates 
 a scrolled information messages area widget.
 Message types can be user defined and configured.  Their options
 include foreground, background, font, bell, and their display
@@ -162,12 +162,12 @@ method is provided for file I/O.
 
 <P>
 The number of lines displayed may be limited with
-the default being 1000. When this limit is reached, the oldest line
+the default being 1000. When this limit is reached, the oldest line 
 is removed.  A popup menu which appears when the right mouse button
 has been pressed in the message area has been predefined.  The contents
 of the popup menu by default support clearing the area and saving its
 contents to a file.  Additional operations may be defined or existing
-operations removed by using the component command to access the
+operations removed by using the component command to access the 
 popup menu.
 
 </pre><H2>MESSAGE TYPES</H2>
@@ -187,7 +187,7 @@ It may have any of the forms accepted by <B>Tk_GetColor</B>.
 <DT> <B>-bell <I>boolean</I>
 </I></B>
 <DD> Specifies whether or not to ring the bell whenenver a message of this
-type is issued.  <I>Boolean</I> may have any of the forms accepted by
+type is issued.  <I>Boolean</I> may have any of the forms accepted by 
 <B>Tk_GetBoolean</B>.  The default is 0.
 </DL>
 <DL>
@@ -208,7 +208,7 @@ It may have any of the forms accepted by <B>Tk_GetColor</B>.
 <DT> <B>-show <I>boolean</I>
 </I></B>
 <DD> Specifies whether of not to display this message type when issued.
-<I>Boolean</I> may have any of the forms accepted by
+<I>Boolean</I> may have any of the forms accepted by 
 <B>Tk_GetBoolean</B>.  The default is 1.
 
 </DL>
@@ -264,8 +264,8 @@ command.
 <DL>
 <DT> <I>pathName <B>type</B> <I>option</I> <I>msgtype</I> ?<I>arg arg ...</I>?
 </I></B>
-<DD> This  command  is  used to manipulate message types.  The behavior of
-the command depends on the option argument that follows the type keyword.
+<DD> This  command  is  used to manipulate message types.  The behavior of 
+the command depends on the option argument that follows the type keyword. 
 The following forms of the command are supported:
 </DL>
 <UL>
@@ -275,7 +275,7 @@ The following forms of the command are supported:
 <DT> <I>pathName <B>type add</B> <I>msgtype</I> ?<I>option value ...</I>?
 </I></B>
 <DD> Adds a new message type given by <I>msgtype</I> with the display
-properties defined by the option value pairs.
+properties defined by the option value pairs.  
 See MESSAGE TYPES for information on the options that
 are supported.
 </DL>
@@ -300,7 +300,7 @@ modifies the given option(s) to have the given value(s);  in
 this case the command returns an empty string.
 See MESSAGE TYPES for information on the options that
 are supported.
-<I>pathName <B>type remove</B> <I>msgtype</I>
+<I>pathName <B>type remove</B> <I>msgtype</I> 
 Removes an existing message type given by <I>msgtype</I>.
 </DL>
 </UL>
@@ -318,7 +318,7 @@ Name:                   <B>itemMenu</B>
 Class:                  <B>Menu</B>
 </pre>
 <UL>
-This is the popup menu that gets displayed when you right-click in the
+This is the popup menu that gets displayed when you right-click in the 
 text area of the messagebox.  Its contents may be modified via the component
 command.
 </UL>
@@ -328,7 +328,7 @@ Name:                   <B>text</B>
 Class:                  <B>Scrolledtext</B>
 </pre>
 <UL>
-The text component is the scrolledtext widget.  See the "scrolledtext" widget
+The text component is the scrolledtext widget.  See the "scrolledtext" widget 
 manual entry for details on the text component item.
 </UL>
 </table>

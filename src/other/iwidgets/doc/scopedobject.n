@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) scopedobject.n 1.21 97/1/30 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS scopedobject iwid
 .BS

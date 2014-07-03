@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) selectiondialog.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::selectiondialog iwid
 .BS
@@ -40,7 +40,7 @@ associated options.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBlabelFont\fR
+\fBlabelFont\fR	
 .fi
 .LP
 See the "labeledwidget" widget manual entry for details on the above
@@ -56,7 +56,7 @@ associated options.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBtextBackground\fR	\fBtextFont\fR
+\fBtextBackground\fR	\fBtextFont\fR	
 .fi
 .LP
 See the "scrolledlistbox" widget class manual entry for details on the above
@@ -88,7 +88,7 @@ inherited options.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBtitle\fR
+\fBtitle\fR 
 .fi
 .LP
 See the "Toplevel" widget  manual entry for details on the above
@@ -97,10 +97,10 @@ inherited options.
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::selectiondialog\fR command creates a selection box similar to
+The \fBiwidgets::selectiondialog\fR command creates a selection box similar to 
 the OSF/Motif standard selection
-dialog composite widget.  The selectiondialog is derived from the
-Dialog class and is composed of a selectionbox with commands
+dialog composite widget.  The selectiondialog is derived from the 
+Dialog class and is composed of a selectionbox with commands 
 to manipulate the dialog buttons.
 
 .SH "METHODS"
@@ -139,7 +139,7 @@ associated methods.
 .nf
 .ta 4c 8c 12c
 \fBadd\fR	\fBbuttonconfigure\fR	\fBdefault\fR	\fBhide\fR
-\fBinvoke\fR	\fBshow\fR
+\fBinvoke\fR	\fBshow\fR	
 .fi
 .LP
 See the "buttonbox" widget manual entry for details on the above
@@ -181,15 +181,15 @@ Name:	\fBselectionbox\fR
 Class:	\fBSelectionbox\fR
 .fi
 .IP
-The selectionbox component is the selection box for the selection
-dialog.  See the "selectionbox" widget manual entry for details on the
+The selectionbox component is the selection box for the selection 
+dialog.  See the "selectionbox" widget manual entry for details on the 
 selectionbox component item.
 .fi
 
 .SH EXAMPLE
 .DS
  package require Iwidgets 4.0
- iwidgets::selectiondialog .sd
+ iwidgets::selectiondialog .sd 
  .sd activate
 .DE
 .SH AUTHOR

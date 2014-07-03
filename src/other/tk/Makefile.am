@@ -38,6 +38,7 @@ INSTALLED_MANPAGES = \
 	tk.n \
 	tk_*.n \
 	ttk_*.n \
+	ttk::*.n \
 	tkerror.n \
 	tkvars.n \
 	tkwait.n \
@@ -160,7 +161,6 @@ EXTRA_DIST = \
 	unix/installManPage \
 	unix/license.terms \
 	unix/tcl.m4 \
-	unix/tk.spec \
 	unix/tkAppInit.c \
 	unix/tkConfig.h.in \
 	unix/tkConfig.sh.in \
@@ -191,7 +191,9 @@ EXTRA_DIST = \
 	unix/tkUnixWm.c \
 	unix/tkUnixXId.c \
 	win \
-	xlib
+	xlib \
+	CMakeLists.txt \
+	CMake
 
 DISTCLEANFILES = \
 	unix/autom4te.cache \

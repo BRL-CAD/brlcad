@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -63,7 +64,9 @@ public:
     ) const;
 
   bool IsValid() const; // empty boxes are not valid
-
+  
+  void Dump(class ON_TextLog&) const;
+  
   /*
   Description:
     Test a bounding box to see if it is degenerate (flat)
@@ -614,6 +617,36 @@ double ON_BoundingBoxTolerance(
         const double* bboxmin,
         const double* bboxmax
         );
+
+/*
+Description:
+  Determine if an object is too large or too far 
+  from the origin for single precision coordinates
+  to be useful.
+Parameters:
+  bbox - [in]
+    Bounding box of an object with single precision
+    coordinates.  An ON_Mesh is an example of an
+    object with single precision coordinates.
+  xform - [out]
+    If this function returns false and xform is not
+    null, then the identity transform is returned.
+    If this function returns true and xform is not
+    null, then the transform moves the region
+    contained in bbox to a location where single 
+    precision coordinates will have enough
+    information for the object to be useful.
+Returns:
+  true:
+    The region contained in bbox is too large
+    or too far from the origin for single 
+    precision coordinates to be useful.
+  false:
+    A single precision object contained in bbox
+    will be satisfactory for common calculations.
+*/
+ON_DECL
+bool ON_BeyondSinglePrecision( const ON_BoundingBox& bbox, ON_Xform* xform );
 
 ON_DECL
 bool ON_WorldBBoxIsInTightBBox( 

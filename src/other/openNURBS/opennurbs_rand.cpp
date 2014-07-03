@@ -1,10 +1,9 @@
-#include "opennurbs.h"
-
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2009 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -15,7 +14,7 @@
 ////////////////////////////////////////////////////////////////
 */
 
-
+#include "opennurbs.h"
 
 // This source code is from 
 // http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
@@ -277,3 +276,109 @@ double ON_RandomNumberGenerator::RandomDouble(double t0, double t1)
   const double s = ((double)on_random_number(&m_rand_context))/4294967295.0;
   return ((1.0-s)*t0 + s*t1);
 }
+
+static void Swap1(size_t count, unsigned char* a, unsigned char* b)
+{
+  unsigned char t;
+  while (count--)
+  {
+    t = *a;
+    *a = *b;
+    *b = t;
+    a++;
+    b++;
+  }
+}
+
+static void Swap4(size_t count, ON__UINT32* a, ON__UINT32* b)
+{
+  ON__UINT32 t;
+  while (count--)
+  {
+    t = *a;
+    *a = *b;
+    *b = t;
+    a++;
+    b++;
+  }
+}
+
+static void Swap8(size_t count, ON__UINT64* a, ON__UINT64* b)
+{
+  ON__UINT64 t;
+  while (count--)
+  {
+    t = *a;
+    *a = *b;
+    *b = t;
+    a++;
+    b++;
+  }
+}
+
+void ON_RandomNumberGenerator::RandomPermutation(void* base, size_t nel, size_t sizeof_element )
+{
+  ON__UINT32 i, j, n;
+
+  if ( 0 == base || nel <= 1 || sizeof_element <= 0 )
+    return;
+
+#if defined(ON_64BIT_POINTER)
+  if ( nel > 0xFFFFFFFF || sizeof_element > 0xFFFFFFFF)
+    return;
+#endif
+
+  n = (ON__UINT32)nel; // for 64 bit systems, nel is wider than n.
+
+  // References: 
+  //  http://en.wikipedia.org/wiki/Random_permutation
+  //  http://en.wikipedia.org/wiki/Knuth_shuffle
+
+  // Note:
+  //   There is the usual "sloppy bias" in the code below because 
+  //   (on_random_number(&m_rand_context) % N) is used to get a random
+  //   number int the range 0 to N-1 when N is not a factor of 2^32.
+  //   As usual, this bias is not worth worrying about
+  //   unlsess 2^32 / N is smallish.  If you need a random
+  //   permuation of a very large array, look elsewhere.
+
+  if ( 0 == sizeof_element % sizeof(ON__UINT64) )
+  {
+    ON__UINT64* a = (ON__UINT64*)base;
+    sizeof_element /= sizeof(a[0]);
+    for ( i = 0; i < n; i++ )
+    {
+      j = on_random_number(&m_rand_context) % (n-i);
+      if ( j )
+      {
+        Swap8(sizeof_element, a+i, a+i+j);
+      }
+    }
+  }
+  else if ( 0 == sizeof_element % sizeof(ON__UINT32) )
+  {
+    ON__UINT32* a = (ON__UINT32*)base;
+    sizeof_element /= sizeof(a[0]);
+    for ( i = 0; i < n; i++ )
+    {
+      j = on_random_number(&m_rand_context) % (n-i);
+      if ( j )
+      {
+        Swap4(sizeof_element, a+i, a+i+j);
+      }
+    }
+  }
+  else
+  {
+    unsigned char* a = (unsigned char*)base;
+    for ( i = 0; i < n; i++ )
+    {
+      j = on_random_number(&m_rand_context) % (n-i);
+      if ( j )
+      {
+        Swap1(sizeof_element, a+i, a+i+j);
+      }
+    }
+  }
+}
+

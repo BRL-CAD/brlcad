@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -307,30 +308,6 @@ public:
         int i,
         int j
         );
-
-
-  /*
-  Description:
-    Apply the space morph to this geometry.
-  Parameters:
-    morph - [in]
-  Returns:
-    True is successful.  If false is returned,
-    the object may be damaged and should be discarded.
-  See Also:
-    ON_Geometry::IsMorphable
-  */
-  virtual 
-  bool Morph( const ON_SpaceMorph& morph );
-
-  /*
-  Returns:
-    True if the object can be morphed by calling Morph().
-  See Also:
-    ON_Geometry::Morph
-  */
-  virtual
-  bool IsMorphable() const;
 
   /*
   Description:

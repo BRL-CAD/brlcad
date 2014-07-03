@@ -87,7 +87,9 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	getopt.c
+	getopt.c \
+	CMakeLists.txt \
+	CMake
 
 include $(top_srcdir)/misc/Makefile.defs
 

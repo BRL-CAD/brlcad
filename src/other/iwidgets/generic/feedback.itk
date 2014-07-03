@@ -1,8 +1,8 @@
 #
 # Feedback
 # ----------------------------------------------------------------------
-# Implements a Feedback widget, to display feedback on the status of an
-# process to the user. Display is given as a percentage and as a
+# Implements a Feedback widget, to display feedback on the status of an 
+# process to the user. Display is given as a percentage and as a 
 # thermometer type bar. Options exist for adding a label and controlling its
 # position.
 #
@@ -36,12 +36,12 @@
 
 # Acknowledgements:
 #
-# Special thanks go to Sam Shen(SLShen@lbl.gov), as this code is based on his
+# Special thanks go to Sam Shen(SLShen@lbl.gov), as this code is based on his 
 # feedback.tcl code from tk inspect. The original code is copyright 1995
 # Lawrence Berkeley Laboratory.
 #
 # This software is copyright (C) 1994 by the Lawrence Berkeley Laboratory.
-#
+#  
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that: (1) source code distributions
 # retain the above copyright notice and this paragraph in its entirety, (2)
@@ -54,7 +54,7 @@
 # the University nor the names of its contributors may be used to endorse
 # or promote products derived from this software without specific prior
 # written permission.
-#
+#  
 # THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
 # WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
@@ -101,7 +101,7 @@ itcl::class iwidgets::Feedback {
 
 #
 # Provide a lowercased access method for the Dialogshell class.
-#
+# 
 proc ::iwidgets::feedback {pathName args} {
     uplevel ::iwidgets::Feedback $pathName $args
 }
@@ -167,7 +167,7 @@ itcl::configbody iwidgets::Feedback::steps {
 # ------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
-# PROTECTED METHOD: _display
+# PROTECTED METHOD: _display 
 #
 # Displays the bar in the trough with the width set using the current number
 # of steps.
@@ -193,7 +193,7 @@ itcl::body iwidgets::Feedback::_display {} {
 # ------------------------------------------------------------------
 itcl::body iwidgets::Feedback::reset {} {
     set _stepval 0
-    _display
+    _display 
 }
 
 # ------------------------------------------------------------------
@@ -208,5 +208,5 @@ itcl::body iwidgets::Feedback::step {{inc 1}} {
     }
 
     incr _stepval $inc
-    _display
+    _display 
 }

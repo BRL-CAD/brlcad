@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) labeledwidget.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::labeledwidget iwid
 .BS
@@ -32,7 +32,7 @@ Class:	\fBDisabledForeground\fR
 Command-Line Switch:	\fB-disabledforeground\fR
 .fi
 .IP
-Specifies the foreground to be used when the state is disabled.
+Specifies the foreground to be used when the state is disabled. 
 .LP
 .nf
 Name:	\fBlabelBitmap\fR
@@ -40,7 +40,7 @@ Class:	\fBBitmap\fR
 Command-Line Switch:	\fB-labelbitmap\fR
 .fi
 .IP
-Specifies a bitmap to display in the widget, in any of the forms
+Specifies a bitmap to display in the widget, in any of the forms 
 acceptable to \fBTk_GetBitmap\fR.  This option overrides the \fIlabeltext\fR
 option.
 .LP
@@ -77,8 +77,8 @@ Class:	\fBPosition\fR
 Command-Line Switch:	\fB-labelpos\fR
 .fi
 .IP
-Specifies the position of the label along the side of the childsite:
-\fBnw\fR, \fBn\fR, \fBne\fR, \fBsw\fR, \fBs\fR, \fBse\fR, \fBen\fR, \fBe\fR,
+Specifies the position of the label along the side of the childsite: 
+\fBnw\fR, \fBn\fR, \fBne\fR, \fBsw\fR, \fBs\fR, \fBse\fR, \fBen\fR, \fBe\fR, 
 \fBes\fR, \fBwn\fR, \fBw\fR, or \fBws\fR.  The default is w.
 .LP
 .nf
@@ -121,11 +121,11 @@ added.
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::labeledwidget\fR command creates a labeled widget which contains
-a label and child site.  The child site is a frame
-which can filled with any widget via a derived class or though the use
+The \fBiwidgets::labeledwidget\fR command creates a labeled widget which contains 
+a label and child site.  The child site is a frame 
+which can filled with any widget via a derived class or though the use 
 of the childsite method.  This class
-was designed to be a general purpose base class for supporting the
+was designed to be a general purpose base class for supporting the 
 combination of label widget and a childsite.  The options include the
 ability to position the label around the childsite widget, modify the
 font and margin, and control the display of the labels.
@@ -173,7 +173,7 @@ command.
 The alignlabels procedure takes a list of widgets derived from
 the Labeledwidget class and uses the label margin to make each widget
 have the same total space for the combination of label and margin.  The
-net effect is to left align the labels.  Generally, this method is only
+net effect is to left align the labels.  Generally, this method is only 
 useful with a label position of w, which is the default.
 
 .SH "COMPONENTS"
@@ -183,7 +183,7 @@ Name:	\fBlabel\fR
 Class:	\fBlabel\fR
 .fi
 .IP
-The label component provides the label for the labeled widget.  See the
+The label component provides the label for the labeled widget.  See the 
 "label" widget manual entry for details on the label component item.
 .LP
 .nf
@@ -191,7 +191,7 @@ Name:	\fBlwchildsite\fR
 Class:	\fBframe\fR
 .fi
 .IP
-The lwchildsite component is the user child site for the labeled widget.  See
+The lwchildsite component is the user child site for the labeled widget.  See 
 the "frame" widget manual entry for details on the lwchildsite component item.
 .fi
 

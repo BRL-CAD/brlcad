@@ -1,0 +1,115 @@
+
+STEPcheck v 2.0 (February 21, 2000) for stepcheck_stage_1_2 schema
+
+Copyright ERIM (July 1997)
+
+Checking STEP file: s1-c5-214.stp
+
+
+Reading Data from s1-c5-214.stp...
+
+HEADER read:
+ERROR: instance #37 'APPLIED_DOCUMENT_REFERENCE': Unknown ENTITY type.
+	Data lost: (#33,,(#30)) 
+
+ERROR: instance #77 'APPLIED_DOCUMENT_REFERENCE': Unknown ENTITY type.
+	Data lost: (#73,,(#70)) 
+
+ERROR: instance #117 'APPLIED_DOCUMENT_REFERENCE': Unknown ENTITY type.
+	Data lost: (#113,,(#110)) 
+
+ERROR: instance #157 'APPLIED_DOCUMENT_REFERENCE': Unknown ENTITY type.
+	Data lost: (#153,,(#150)) 
+
+ERROR: instance #35 'APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT': Unknown ENTITY type.
+	Data lost: (TAIL.stp,#36,#32,(#33)) 
+
+ERROR: instance #75 'APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT': Unknown ENTITY type.
+	Data lost: (HEAD.stp,#76,#72,(#73)) 
+
+ERROR: instance #115 'APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT': Unknown ENTITY type.
+	Data lost: (MAINBODY.stp,#116,#112,(#113)) 
+
+ERROR: instance #155 'APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT': Unknown ENTITY type.
+	Data lost: (FOOT.stp,#156,#152,(#153)) 
+
+
+FIRST PASS complete:  190 instances created.
+  8  ERRORS	  0  WARNINGS
+
+
+ERROR: in 2nd pass, instance #37 not found.
+	Data lost: =APPLIED_DOCUMENT_REFERENCE(#33,,(#30)) 
+
+ERROR: in 2nd pass, instance #77 not found.
+	Data lost: =APPLIED_DOCUMENT_REFERENCE(#73,,(#70)) 
+
+ERROR: in 2nd pass, instance #117 not found.
+	Data lost: =APPLIED_DOCUMENT_REFERENCE(#113,,(#110)) 
+
+ERROR: in 2nd pass, instance #157 not found.
+	Data lost: =APPLIED_DOCUMENT_REFERENCE(#153,,(#150)) 
+
+ERROR: in 2nd pass, instance #35 not found.
+	Data lost: =APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT(TAIL.stp,#36,#32,(#33)) 
+
+ERROR: in 2nd pass, instance #75 not found.
+	Data lost: =APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT(HEAD.stp,#76,#72,(#73)) 
+
+ERROR: in 2nd pass, instance #115 not found.
+	Data lost: =APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT(MAINBODY.stp,#116,#112,(#113)) 
+
+ERROR: in 2nd pass, instance #155 not found.
+	Data lost: =APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT(FOOT.stp,#156,#152,(#153)) 
+Second pass complete - instance summary: 
+	Total instances: 190 
+	Invalid instances: 8 
+	Incomplete instances (includes invalid instances): 0 
+	Warnings: 0.
+
+
+SECOND PASS complete:  190 instances valid.
+  12  ERRORS	  0  WARNINGS
+
+Finished reading file.
+
+Where Rule Document_File_WR1 violated by :
+	1) #33=DOCUMENT_FILE('TAIL.stp','','',#34,'',$);
+
+
+	2) #73=DOCUMENT_FILE('HEAD.stp','','',#74,'',$);
+
+
+	3) #113=DOCUMENT_FILE('MAINBODY.stp','','',#114,'',$);
+
+
+	4) #153=DOCUMENT_FILE('FOOT.stp','','',#154,'',$);
+
+
+
+
+
+Global Rule Dependent_instantiable_identification_role violated by :
+	1) #76=IDENTIFICATION_ROLE('external document id and location', ...
+
+	2) #156=IDENTIFICATION_ROLE('external document id and location' ...
+
+	3) #36=IDENTIFICATION_ROLE('external document id and location', ...
+
+	4) #116=IDENTIFICATION_ROLE('external document id and location' ...
+
+
+
+
+Special Rule CheckAggregateBounds violated by :
+	1) #8=PRODUCT_RELATED_PRODUCT_CATEGORY('part',$,());
+
+		because lower bound check failed for products aggregate
+
+
+
+
+total violations = 9
+total parse errors = 12
+total parse warnings = 0
+elapsed time : 0.357 seconds

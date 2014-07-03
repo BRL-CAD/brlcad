@@ -3,8 +3,6 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id$ */
-
 #ifndef ZCONF_H
 #define ZCONF_H
 
@@ -362,16 +360,6 @@ typedef uLong FAR uLongf;
 
 #ifdef STDC
 #  include <sys/types.h>    /* for off_t */
-#endif
-
-/* a little trick to accommodate both "#define _LARGEFILE64_SOURCE" and
- * "#define _LARGEFILE64_SOURCE 1" as requesting 64-bit operations, (even
- * though the former does not conform to the LFS document), but considering
- * both "#undef _LARGEFILE64_SOURCE" and "#define _LARGEFILE64_SOURCE 0" as
- * equivalently requesting no 64-bit operations
- */
-#if -_LARGEFILE64_SOURCE - -1 == 1
-#  undef _LARGEFILE64_SOURCE
 #endif
 
 #if defined(Z_HAVE_UNISTD_H) || defined(_LARGEFILE64_SOURCE)

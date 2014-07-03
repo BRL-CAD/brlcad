@@ -8,7 +8,7 @@ if [ $# -eq 0 ] ; then
     exit
 fi
 
-cat  $1 |
+cat  $1 | 
     sed  -e 's/\\-/-/g' \
          -e 's/\\[0&]/  /g' \
          -e 's/&/\&amp;/g' \
@@ -16,7 +16,7 @@ cat  $1 |
          -e 's/>/\&gt;/g' \
          -e 's/\\|//g' \
          -e 's/\\e/\\/g'     |
-    /usr/bin/nawk -f ${TOP}/tk2html.awk |
+    /usr/bin/nawk -f ${TOP}/tk2html.awk | 
      sed -e 's^\\fB\([^\\]*\)\\fR^<B>\1</B>^g' \
         -e 's^\\fI\(.[^\\]*\)\\fR^<I>\1</I>^g' \
         -e 's^\\fB^<B>^g' \
@@ -34,12 +34,12 @@ cat  $1 |
         -e 's^\.SH *"*\([^"]*\)"*^</pre><H2>\1</H2>^' \
         -e 's/^\.[a-zA-Z]*.*//' \
         -e 's/^`\\\".*//' |
-    /usr/bin/nawk -f ${TOP}/tk2html2.awk
+    /usr/bin/nawk -f ${TOP}/tk2html2.awk 
 
-# The above handling for font mapping to html works correctly in about 95% of
-# the cases, the others turn out stacking the font setting so you get the
-# font bleeding since it isn't being turned # off in the correct places.
-# To correct we would have to record the current ( non-default) font and
+# The above handling for font mapping to html works correctly in about 95% of 
+# the cases, the others turn out stacking the font setting so you get the 
+# font bleeding since it isn't being turned # off in the correct places. 
+# To correct we would have to record the current ( non-default) font and 
 # explicitly turn it off when another font change is detected.
 # Which would make multiple styles impossible concurrently which seems to
 # be the case anyway....

@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) messagedialog.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::messagedialog iwid
 .BS
@@ -30,7 +30,7 @@ See the "options" manual entry for details on the standard options.
 .nf
 .ta 4c 8c 12c
 \fBbuttonBoxPadX\fR	\fBbuttonBoxPadY\fR	\fBbuttonBoxPos\fR	\fBpadX\fR
-\fBpadY\fR	\fBseparator\fR	\fBthickness\fR
+\fBpadY\fR	\fBseparator\fR	\fBthickness\fR	
 .fi
 .LP
 See the "dialogshell" widget manual entry for details on the above
@@ -60,7 +60,7 @@ Class:	\fBPosition\fR
 Command-Line Switch:	\fB-imagepos\fR
 .fi
 .IP
-Specifies the image position relative to the message text: \fBn\fR, \fBs\fR,
+Specifies the image position relative to the message text: \fBn\fR, \fBs\fR, 
 \fBe\fR, or \fBw\fR.  The default is w.
 .LP
 .nf
@@ -69,8 +69,8 @@ Class:	\fBPad\fR
 Command-Line Switch:	\fB-textpadx\fR
 .fi
 .IP
-Specifies a non-negative value indicating how much extra space to request for
-the message text in the X direction.  The value may have any of the forms
+Specifies a non-negative value indicating how much extra space to request for 
+the message text in the X direction.  The value may have any of the forms 
 acceptable to Tk_GetPixels.
 .LP
 .nf
@@ -79,17 +79,17 @@ Class:	\fBPad\fR
 Command-Line Switch:	\fB-textpady\fR
 .fi
 .IP
-Specifies a non-negative value indicating how much extra space to request for
-the message text in the X direction.  The value may have any of the forms
+Specifies a non-negative value indicating how much extra space to request for 
+the message text in the X direction.  The value may have any of the forms 
 acceptable to Tk_GetPixels.
 .LP
 .BE
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::messagedialog\fR command creates a message dialog composite widget.
-The messagedialog is derived from the Dialog class and is composed of
-an image and associated message text with commands to manipulate the
+The \fBiwidgets::messagedialog\fR command creates a message dialog composite widget. 
+The messagedialog is derived from the Dialog class and is composed of 
+an image and associated message text with commands to manipulate the 
 dialog buttons.
 
 .SH "METHODS"
@@ -118,7 +118,7 @@ inherited methods.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBchildsite\fR
+\fBchildsite\fR	
 .fi
 .LP
 See the "dialogshell" widget manual entry for details on the above
@@ -160,7 +160,7 @@ Name:	\fBimage\fR
 Class:	\fBLabel\fR
 .fi
 .IP
-The image component is the bitmap or image of the message dialog.  See
+The image component is the bitmap or image of the message dialog.  See 
 the "label" widget manual entry for details on the image component item.
 .LP
 .nf
@@ -203,7 +203,7 @@ See the "label" widget manual entry for details on the message component item.
  iwidgets::messagedialog .cr -title "Copyright" -bitmap @dsc.xbm -imagepos n \\
      -text "Copyright 1995 DSC Communications Corporation\\n \\
 	    All rights reserved"
-
+ 
  .cr hide Cancel
 
  .cr activate

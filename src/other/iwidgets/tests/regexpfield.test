@@ -46,7 +46,7 @@ test Regexpfield-1.$c {Regexpfield construction} {
     iwidgets::Regexpfield .ef -labeltext "Entry Field"
     .ef insert end test
     pack .ef -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -62,46 +62,46 @@ incr o
 
 foreach test {
     {-background #d9d9d9 #d9d9d9}
-    {-borderwidth 4 4}
-    {-borderwidth 2 2}
-    {-childsitepos e e}
-    {-childsitepos s s}
-    {-childsitepos w w}
-    {-childsitepos n n}
+    {-borderwidth 4 4} 
+    {-borderwidth 2 2} 
+    {-childsitepos e e} 
+    {-childsitepos s s} 
+    {-childsitepos w w} 
+    {-childsitepos n n} 
     {-command {.ef configure -background red} {.ef configure -background red}}
-    {-cursor gumby gumby}
-    {-exportselection 0 0}
-    {-fixed 10 10}
-    {-fixed 0 0}
-    {-foreground Green Green}
-    {-foreground Black Black}
+    {-cursor gumby gumby} 
+    {-exportselection 0 0} 
+    {-fixed 10 10} 
+    {-fixed 0 0} 
+    {-foreground Green Green} 
+    {-foreground Black Black} 
     {-highlightcolor Red Red}
     {-highlightthickness 2 2}
-    {-insertbackground Yellow Yellow}
-    {-insertbackground Black Black}
-    {-insertborderwidth 1 1}
-    {-insertborderwidth 0 0}
-    {-insertofftime 400 400}
-    {-insertontime 700 700}
-    {-insertwidth 3 3}
+    {-insertbackground Yellow Yellow} 
+    {-insertbackground Black Black} 
+    {-insertborderwidth 1 1} 
+    {-insertborderwidth 0 0} 
+    {-insertofftime 400 400} 
+    {-insertontime 700 700} 
+    {-insertwidth 3 3} 
     {-invalid {.ef configure -background Green} {.ef configure -background Green}}
     {-justify right right}
     {-justify center center}
     {-justify left left}
-    {-labelmargin 5 5}
-    {-labelpos w w}
-    {-labelpos nw nw}
-    {-labelpos n n}
-    {-labelpos ne ne}
-    {-labelpos e e}
-    {-labelpos se se}
-    {-labelpos s s}
-    {-labelpos sw sw}
-    {-labeltext Label Label}
-    {-relief raised raised}
-    {-relief sunken sunken}
-    {-state disabled disabled}
-    {-state normal normal}
+    {-labelmargin 5 5} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-labeltext Label Label} 
+    {-relief raised raised} 
+    {-relief sunken sunken} 
+    {-state disabled disabled} 
+    {-state normal normal} 
     {-sticky w w}
     {-sticky nw nw}
     {-sticky n n}
@@ -111,16 +111,16 @@ foreach test {
     {-sticky s s}
     {-sticky sw sw}
     {-sticky news news}
-    {-textbackground GhostWhite GhostWhite}
-    {-regexp {.*} {.*}}
-    {-nocase 0 0}
+    {-textbackground GhostWhite GhostWhite} 
+    {-regexp {.*} {.*}} 
+    {-nocase 0 0} 
     {-width 30 30}} {
 	set option [lindex $test 0]
 	test Regexpfield-2.$o "configuration options, $option" {
 	    .ef configure $option [lindex $test 1]
 	    lindex [.ef configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -157,7 +157,7 @@ foreach test {
 	test Regexpfield-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -166,7 +166,7 @@ foreach test {
 #
 test Regexpfield-1.$c {Regexpfield destruction} {
     destroy .ef
-    update
+    update 
 } {}
 
 incr c
@@ -174,14 +174,14 @@ incr c
 test Regexpfield-1.$c {Regexpfield construction} {
     iwidgets::regexpfield .ef -width 12
     pack .ef -padx 10 -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Regexpfield-1.$c {Regexpfield destruction} {
     destroy .ef
-    update
+    update 
 } {}
 
 incr c
@@ -190,7 +190,7 @@ test Regexpfield-1.$c {Regexpfield destruction} {
     iwidgets::regexpfield .ef
     pack .ef
     destroy .ef
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

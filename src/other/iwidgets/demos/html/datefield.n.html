@@ -51,7 +51,7 @@ See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "
 </td>
 </table>
 <P>
-See the <A HREF="labeledwidget.n.html"> "labeledwidget" </A> class manual entry for details on the
+See the <A HREF="labeledwidget.n.html"> "labeledwidget" </A> class manual entry for details on the 
 inherited options.
 </pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
 <P>
@@ -61,7 +61,7 @@ Class:                  <B>Position</B>
 Command-Line Switch:	<B>-childsitepos</B>
 </pre>
 <UL>
-Specifies the position of the child site in the date field: <B>n</B>,
+Specifies the position of the child site in the date field: <B>n</B>, 
 <B>s</B>, <B>e</B>, or <B>w</B>.  The default is e.
 </UL>
 <P>
@@ -71,7 +71,7 @@ Class:                  <B>Command</B>
 Command-Line Switch:	<B>-command</B>
 </pre>
 <UL>
-Specifies a Tcl command to be executed upon detection of a Return key
+Specifies a Tcl command to be executed upon detection of a Return key 
 press event.
 </UL>
 <P>
@@ -106,16 +106,16 @@ Command-Line Switch:	<B>-iq</B>
 <UL>
 Specifies the level of intelligence to be shown in the actions
 taken by the datefield during the processing of keypress events.
-Valid settings include <B>high</B>, <B>average</B>, and <B>low</B>.
-With a high iq,the date prevents the user from typing in an
-invalid date.  For example, if the current date is 05/31/1997 and
-the user changes the month to 04, then the day will be instantly
-modified for them to be 30.  In addition, leap years are fully
-taken into account.  With average iq, the month is limited to the
-values of 01-12, but it is possible to type in an invalid day.
-A setting of low iq instructs the widget to do no validity
-checking at all during date entry.  With both average and low
-iq levels, it is assumed that the validity will be determined
+Valid settings include <B>high</B>, <B>average</B>, and <B>low</B>.  
+With a high iq,the date prevents the user from typing in an 
+invalid date.  For example, if the current date is 05/31/1997 and 
+the user changes the month to 04, then the day will be instantly 
+modified for them to be 30.  In addition, leap years are fully 
+taken into account.  With average iq, the month is limited to the 
+values of 01-12, but it is possible to type in an invalid day.  
+A setting of low iq instructs the widget to do no validity 
+checking at all during date entry.  With both average and low 
+iq levels, it is assumed that the validity will be determined 
 at a later time using the date's <B>isvalid</B> command.
 </UL>
 <P>
@@ -198,10 +198,10 @@ command.
 <DL>
 <DT> <I>pathName <B>get</B> ?<B>format</B>?
 </I></B>
-<DD> Returns the current contents of the datefield in a format of
+<DD> Returns the current contents of the datefield in a format of 
 string or as an integer clock value using the <B>-string</B> and <B>-clicks</B>
-format options respectively.  The default is by string.  Reference the
-clock command for more information on obtaining dates and their
+format options respectively.  The default is by string.  Reference the 
+clock command for more information on obtaining dates and their 
 formats.
 </DL>
 <DL>
@@ -214,9 +214,9 @@ displayed date value.  For example, 03/03/1960 is valid whereas
 <DL>
 <DT> <I>pathName <B>show</B> <I>date</I>
 </I></B>
-<DD> Changes the currently displayed date to be that of the date
+<DD> Changes the currently displayed date to be that of the date 
 argument.  The date may be specified either as a string, an
-integer clock value or the keyword "now".  Reference the clock
+integer clock value or the keyword "now".  Reference the clock 
 command for more information on obtaining dates and their formats.
 
 </DL>

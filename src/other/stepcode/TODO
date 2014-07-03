@@ -1,0 +1,6 @@
+(from BRL-CAD)
+
+* rewrite express parser to not require lex/yacc
+
+* verify/fix step parser generation with newer AP schemas, seems to be
+  outputting invalid syntax.

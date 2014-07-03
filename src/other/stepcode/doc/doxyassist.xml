@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- run doxyassist from scl root dir:
+    ../doxyassist/doxyassist.py doc/doxyassist.xml -->
+
+<!-- The main tag provides the version (1.0 only for now). The type attribute
+     is not required, and defaults to "generic". To use a different project handler,
+     change its type. The "name" attribute defines the name of your configuration.
+     Note: you must define and use the "http://simply-life.net/doxyassist/project.xsd"
+     namespace for the XML file to be processed properly.  -->
+<DoxyAssist xmlns="http://simply-life.net/doxyassist/doxyassist.xsd"
+            xmlns:da="http://simply-life.net/doxyassist/doxyassist.xsd"
+            version="1.0" type="generic" name="My DoxyAssist Project">
+  <!-- You can set global settings here. The doxyfile attribute defines the
+       Doxyfile to load by default. If none is given, or the template cannot be
+       loaded, the default Doxygen settings are used as base.
+
+       You can include any setting here, and it will be passed to Doxygen
+       (even if it is not a recognized setting). You can add as many as you like,
+       overriding the template or default Doxyfile.
+
+       The given template file will never be overwritten by Doxygen Assistant.
+       Instead the project specific version will be kept in memory and written
+       to Doxygen over a pipe.
+
+       Note that some settings are always overridden due to project definitions.
+       See the information near the projects for more information. Changing these
+       settings here will have no effect when using the Doxygen Assistant to
+       run Doxygen. -->
+  <doxygen doxyfile="./doc/Doxyfile">
+    <!-- A boolean setting is defined like this. This will write "YES" or "NO" for
+         the specific setting in the Doxyfile passed to Doxygen. -->
+    <bool name="CREATE_SUBDIRS">false</bool>
+    <!-- A numeric setting is written like this. It will be written to the Doxyfile
+         without quotes. -->
+    <int name="TAB_SIZE">8</int>
+    <!-- This is a single string setting. When writing this out to the doxyfile,
+         it will be quoted and treated as a whole. -->
+    <string name="OUTPUT_LANGUAGE">English</string>
+    <!-- A list setting contains multiple elements, seperated by whitespace. Each
+         individual item will be quoted and treated as a whole for Doxygen. By
+         default a list replaces the existing setting. If the append attribute is
+         set to true, then the items will be added to the existing set. -->
+    <string name="HTML_HEADER">./doc/doxygen_custom_header.html</string>
+    <list name="FILE_PATTERNS" append="false">
+      <item>*.h</item>
+      <item>*.c</item>
+      <item>*.hh</item>
+      <item>*.cc</item>
+      <item>README</item>
+  </list>
+  </doxygen>
+
+  <!-- Settings for the Qt Help Collection to create. If not present, no
+       help collection will be created. See
+       http://doc.trolltech.com/assistant-custom-help-viewer.html for a
+       description of all settings; the inner configuration is copied directly
+       into the <assistant> section of the project file.
+
+       The collectionFile attribute contains the path to the collection file to
+       create (this file must be writable). Additionally provide the name for the
+       project file in the projectFile attribute. By default this is the same
+       as the collection file, with an extension of "qhcp" instead of "qhc"
+
+       The storage attribute defines the subdirectory to place copies of Qt
+       Compressed Help files in. The copyAction attribute defaults to making
+       actual copies; this attribute can be set to "copy", "move" and "symlink".
+  -->
+  <qtHelp collectionFile="./doc/helpcollection.qhc"
+          projectFile="./doc/helpcollection.qhcp"
+          storage="./doc/qch" copyAction="copy">
+    <title>STEPcode</title>
+    <startPage>qthelp://com.github.mpictor/doc/index.html</startPage>
+    <!-- See http://doc.trolltech.com/assistant-custom-help-viewer.html for more
+         settings in the <assistant> section. -->
+  </qtHelp>
+  <!-- Start a list of projects -->
+  <projects>
+    <!-- A project contains information about one Doxygen run, as well as
+         as well as subprojects. It can have its completely own Doxygen
+         configuration.
+
+         Various settings are determined by the Doxygen Assistant; they will
+         always override the Doxyfile settings. All values are by default inherited
+         from the parent project, or empty if there is nothing to inherit from,
+         unless noted otherwise. Note that even if a value is empty, this will
+         override the Doxyfile settings. The following Doxyfile settings are
+         overridden:
+         - PROJECT_NAME
+         - PROJECT_VERSION
+         - INPUT
+         - EXCLUDE
+         - OUTPUT_DIRECTORY
+         - WARN_LOGFILE
+         - DOCSET_BUNDLE_ID
+         - QCH_FILE
+         - QHP_NAMESPACE
+         - QHP_CUST_FILTER_NAME
+         - QHP_CUST_FILTER_ATTRS
+         - QHP_SECT_FILTER_ATTRS
+    -->
+    <project>
+      <!-- The name of the project -->
+      <name>STEPcode</name>
+      <!-- The version number of the documentation -->
+      <version>0.2</version>
+      <!-- Whether to build version specific documentation for the projects or not.
+         Note that if this is set, Qt Help filters may become invalid when newer
+         versions of the documentation are built. Due to user-specific settings,
+         it may be necessary to remove the user specific cache files to reset
+         the filters. It does however allow you to keep documentation of multiple
+         versions next to each other. Default value is false.
+
+         Note that regardless of this setting, the version is still used in the
+         PROJECT_NUMBER setting, as well as the PROJECT_NAME of subprojects -->
+      <versionSpecific>false</versionSpecific>
+      <!-- Full path to the directory with documented source code. You can add
+           multiple input lines if you need to add multiple locations.
+
+           If you want documentation of subprojects to be explicitly included as well,
+           you must list the EXACT same input directories in the parent; this
+           will prevent the directories from being excluded. -->
+      <input>./src</input>
+      <input>./include</input>
+      <exclude>./include/exppp</exclude>
+      <exclude>./include/express</exclude>
+<!--      <input>./include/exppp</input>
+      <input>./include/express</input>
+      <input>./src/cldai</input>
+      <input>./src/cleditor</input>
+      <input>./src/clprobe-ui</input>
+      <input>./src/clstepcore</input>
+      <input>./src/clutils</input>
+      <input>./src/exppp</input>
+      <input>./src/express</input>
+      <input>./src/exp2cxx</input>
+      <input>./src/test</input>-->
+      <!-- A list of files/paths to exclude. Add one <exclude> tag per path to
+           exclude. This will automatically be expanded to exclude input directories
+           of subprojects, and prevent mangled documentation. -->
+<!--       <exclude>/path/to/my-application/src/excluded</exclude> -->
+      <!-- Directory to store Doxygen output for this project. Note that within
+           this directory, a subdirectory is created based on the project name.
+           Additionally, if the <versionspecific> setting has a value of true,
+           another subdirectory based on the version number will be created (e.g.
+           "/path/to/my-application/out/my-application/1.0". -->
+      <output>./doc/doxygen</output>
+      <!-- The directory where error and log files will be stored. Log and error
+           files will be named "my-application.1-0.log" and
+           "my-application.1-0-error.log" respectively. -->
+      <logDirectory>./doc/doxygen/log</logDirectory>
+      <!-- Optional base namespace for this application. This is prefixed to the
+           normalized project name and version number (if version specific is set).
+           The full namespace would now become "com.mycompany.my-application.1-0"
+           in this example. -->
+      <namespace>doc</namespace>
+      <!-- You can define a <doxygen> block, in which you set project specific
+           settings. This will hold for this and all subprojects. See also the
+           <doxygen> block above. If you provide a doxyfile attribute, that
+           file will be used as template instead; this also implies all settings
+           in parent projects including the main doxygen settings will be
+           discarded. -->
+<!--      <doxygen>
+        <list name="FILE_PATTERNS" append="true">
+          <item>*.module</item>
+          <item>*.inc</item>
+          <item>*.html</item>
+        </list>
+      </doxygen>-->
+
+      <!-- You can define subprojects here. Input directories of subprojects are
+           automatically excluded from parent projects. As such, documentation will
+           not be mixed.
+
+           Note that by default _all_ settings will be inherited from the parent.
+      -->
+      <project>
+        <!-- The name of the subproject -->
+        <name>CLStepCore</name>
+        <version> </version>
+        <!-- And its version -->
+<!--         <version>1.1</version> -->
+        <!-- Whether to build version specific documentation for this subproject.
+             If the parent is version specific, that setting will still be
+             adhered to. If this is left out, the parent setting is inherited. -->
+<!--         <versionSpecific>false</versionSpecific> -->
+        <!-- Full path to the directory with documented source code -->
+        <input>./src/clstepcore</input>
+            <!-- Subproject excluded directories -->
+<!--         <exclude>/path/to/my-application/src/mymodule/excluded</exclude> -->
+        <!-- Optional output directory. If omitted, the parent project's output
+             directory is inherited. The actual output is written to the same
+             subdirectory of the parent project, in an extra subdirectory with a
+             name based on the project name and optionally version. -->
+<!--         <output>/path/to/my-application/out</output> -->
+        <!-- The optional log directory. If omitted, the parent project's log
+             directory is inherited. Files will be named using project name and
+             version number (if versionSpecific is true), including the parent
+             project's information. Log and error files will, in this example,
+             be named "my-application.1-0.my-module.log" and
+             "my-application.1-0.my-module.err" respectively. -->
+<!--         <logDirectory>/path/to/my-application/doc/log</logDirectory> -->
+        <!-- Additional part to prefix the project's subnamespace with. In this
+             example, the namespace would become
+             "com.mycompany.my-application.1-0.modules.my-module". -->
+<!--         <namespace>modules</namespace> -->
+        <!-- You can add subprojects to subprojects as well, if you like -->
+      </project>
+        <project>
+            <name>CLDAI</name>
+        <version> </version>
+            <input>./src/cldai</input>
+        </project>
+        <project>
+            <name>CLEditor</name>
+        <version> </version>
+            <input>./src/cleditor</input>
+        </project>
+        <project>
+            <name>CLProbe-ui</name>
+        <version> </version>
+            <input>./src/clprobe-ui</input>
+        </project>
+        <project>
+            <name>CLUtils</name>
+        <version> </version>
+            <input>./src/clutils</input>
+        </project>
+        <project>
+            <name>ExPPP</name>
+        <version> </version>
+            <input>./src/exppp</input>
+            <input>./include/exppp</input>
+        </project>
+        <project>
+            <name>Express</name>
+        <version> </version>
+            <input>./src/express</input>
+            <input>./include/express</input>
+        </project>
+        <project>
+            <name>Fedex Plus</name>
+        <version> </version>
+            <input>./src/exp2cxx</input>
+        </project>
+        <project>
+            <name>Tests</name>
+        <version> </version>
+            <input>./src/test</input>
+        </project>
+    </project>
+    <!-- And you can even add more top level projects to collect. -->
+  </projects>
+</DoxyAssist>

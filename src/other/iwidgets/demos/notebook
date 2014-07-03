@@ -16,7 +16,7 @@ pack .pages -padx 4 -pady 4
 
 iwidgets::notebook .nb -width 3i -height 2.6i
 pack .nb -padx 4 -pady 4
-
+ 
 # Page #1
 # ----------------------------------------------------------------------
 set page [.nb add -label "Personal Info"]
@@ -56,7 +56,7 @@ proc set_color {page {val 0}} {
     $page.sample configure -background $color
 }
 set_color $page
-
+ 
 
 # Page #3
 # ----------------------------------------------------------------------

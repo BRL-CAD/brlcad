@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -251,12 +252,3 @@ bool ON_Geometry::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) 
   return false;
 }
 
-bool ON_Geometry::Morph( const ON_SpaceMorph& morph )
-{
-  return false;
-}
-
-bool ON_Geometry::IsMorphable() const
-{
-  return false;
-}

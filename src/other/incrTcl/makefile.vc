@@ -11,7 +11,7 @@
 #  $Id$
 #------------------------------------------------------------------------------
 
-!if "$(MSVCDIR)" == ""
+!if !defined(MSDEVDIR) && !defined(MSVCDIR)
 MSG = ^
 You'll need to run vcvars32.bat from Developer Studio, first, to setup^
 the environment.  Jump to this line to read the new instructions.
@@ -99,7 +99,7 @@ the environment.  Jump to this line to read the new instructions.
 #	TMP_DIR=<path>
 #	OUT_DIR=<path>
 #		Hooks to allow the intermediate and output directories to be
-#		changed.  $(OUT_DIR) is assumed to be
+#		changed.  $(OUT_DIR) is assumed to be 
 #		$(BINROOT)\(Release|Debug) based on if symbols are requested.
 #		$(TMP_DIR) will de $(OUT_DIR)\<buildtype> by default.
 #
@@ -140,6 +140,13 @@ genstubs :
 	$(MAKECMD) genstubs
 	cd ..\..\itk\win
 	$(MAKECMD) genstubs
+	cd $(MAKEDIR)
+
+depend :
+	cd itcl\win
+	$(MAKECMD) depend
+	cd ..\..\itk\win
+	$(MAKECMD) depend
 	cd $(MAKEDIR)
 
 docs :

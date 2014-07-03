@@ -622,12 +622,7 @@ Itcl_CreateMemberCode(interp, cdefn, arglist, body, mcodePtr)
      *  Allocate some space to hold the implementation.
      */
     mcode = (ItclMemberCode*)ckalloc(sizeof(ItclMemberCode));
-    mcode->flags        = 0;
-    mcode->argcount     = 0;
-    mcode->arglist      = NULL;
-    mcode->procPtr      = NULL;
-    mcode->cfunc.objCmd = NULL;
-    mcode->clientData   = NULL;
+    memset(mcode, 0, sizeof(ItclMemberCode));
 
     if (arglist) {
         if (Itcl_CreateArgList(interp, arglist, &argc, &args)
@@ -656,6 +651,7 @@ Itcl_CreateMemberCode(interp, cdefn, arglist, body, mcodePtr)
     procPtr->iPtr = (Interp*)interp;
     procPtr->refCount = 1;
     procPtr->cmdPtr = (Command*)ckalloc(sizeof(Command));
+    memset(procPtr->cmdPtr, 0, sizeof(Command));
     procPtr->cmdPtr->nsPtr = (Namespace*)cdefn->namesp;
 
     if (body) {
@@ -2505,7 +2501,7 @@ Itcl_ReportFuncErrors(interp, mfunc, contextObj, result)
 
             if ((mfunc->member->code->flags & ITCL_IMPLEMENT_TCL) != 0) {
                 Tcl_AppendToObj(objPtr, "body line ", -1);
-                sprintf(num, "%d", iPtr->errorLine);
+                sprintf(num, "%d", ERRORLINE(iPtr));
                 Tcl_AppendToObj(objPtr, num, -1);
                 Tcl_AppendToObj(objPtr, ")", -1);
             } else {

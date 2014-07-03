@@ -12,24 +12,24 @@
 # ----------------------------------------------------------------------
 #            Copyright (c) 1997 DSC Technologies Corporation
 # ======================================================================
-# Permission to use, copy, modify, distribute and license this software
-# and its documentation for any purpose, and without fee or written
-# agreement with DSC, is hereby granted, provided that the above copyright
-# notice appears in all copies and that both the copyright notice and
-# warranty disclaimer below appear in supporting documentation, and that
-# the names of DSC Technologies Corporation or DSC Communications
-# Corporation not be used in advertising or publicity pertaining to the
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
 # software without specific, written prior permission.
-#
-# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
 # ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
 # INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
-# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
-# SUPPORT, UPTIMES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
-# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPTIMES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
 # WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
 # SOFTWARE.
 # ======================================================================
 
@@ -46,7 +46,7 @@ itk::usual Timeentry {
 # ------------------------------------------------------------------
 itcl::class iwidgets::Timeentry {
     inherit iwidgets::Timefield
-
+    
     constructor {args} {}
 
     itk_option define -grab grab Grab "global"
@@ -62,19 +62,19 @@ itcl::class iwidgets::Timeentry {
     #
     itk_option define -hourradius hourRadius Radius .50
     itk_option define -hourcolor hourColor Color red
-
+    
     itk_option define -minuteradius minuteRadius Radius .80
     itk_option define -minutecolor minuteColor Color yellow
-
+    
     itk_option define -pivotradius pivotRadius Radius .10
     itk_option define -pivotcolor pivotColor Color white
-
+    
     itk_option define -secondradius secondRadius Radius .90
     itk_option define -secondcolor secondColor Color black
-
+    
     itk_option define -clockcolor clockColor Color white
     itk_option define -clockstipple clockStipple ClockStipple {}
-
+    
     itk_option define -tickcolor tickColor Color black
 
     itk_option define -watchheight watchHeight Height 175
@@ -92,7 +92,7 @@ itcl::class iwidgets::Timeentry {
 
 #
 # Provide a lowercased access method for the timeentry class.
-#
+# 
 proc ::iwidgets::timeentry {pathName args} {
     uplevel ::iwidgets::Timeentry $pathName $args
 }
@@ -102,19 +102,19 @@ proc ::iwidgets::timeentry {pathName args} {
 #
 option add *Timeentry.watchWidth 155 widgetDefault
 option add *Timeentry.watchHeight 175 widgetDefault
-
+ 
 # ------------------------------------------------------------------
 #                        CONSTRUCTOR
 # ------------------------------------------------------------------
 itcl::body iwidgets::Timeentry::constructor {args} {
     #
-    # Create an icon label to act as a button to bring up the
+    # Create an icon label to act as a button to bring up the 
     # watch popup.
     #
     itk_component add iconbutton {
 	label $itk_interior.iconbutton -relief raised
     } {
-	keep -borderwidth -cursor -foreground
+	keep -borderwidth -cursor -foreground 
     }
     grid $itk_component(iconbutton) -row 0 -column 0 -sticky ns
 
@@ -131,7 +131,7 @@ itcl::body iwidgets::Timeentry::constructor {args} {
 # ------------------------------------------------------------------
 # OPTION: -icon
 #
-# Specifies the clock icon image to be used in the time entry.
+# Specifies the clock icon image to be used in the time entry.  
 # Should one not be provided, then a default pixmap will be used
 # if possible, bitmap otherwise.
 # ------------------------------------------------------------------
@@ -151,7 +151,7 @@ itcl::configbody iwidgets::Timeentry::icon {
 # ------------------------------------------------------------------
 # OPTION: -grab
 #
-# Specifies the grab level, local or global, to be obtained when
+# Specifies the grab level, local or global, to be obtained when 
 # bringing up the popup watch.  The default is global.
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Timeentry::grab {
@@ -260,14 +260,14 @@ itcl::body iwidgets::Timeentry::_getDefaultIcon {} {
 # ------------------------------------------------------------------
 # PROTECTED METHOD: _popup
 #
-# This method is invoked upon selection of the icon button.  It
-# creates a watch widget within a toplevel popup, calculates
+# This method is invoked upon selection of the icon button.  It 
+# creates a watch widget within a toplevel popup, calculates 
 # the position at which to display the watch, performs a grab
 # and displays the watch.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Timeentry::_popup {} {
     #
-    # First, let's nullify the icon binding so that any another
+    # First, let's nullify the icon binding so that any another 
     # selections are ignored until were done with this one.  Next,
     # change the relief of the icon.
     #
@@ -275,11 +275,11 @@ itcl::body iwidgets::Timeentry::_popup {} {
     $itk_component(iconbutton) configure -relief sunken
 
     #
-    # Create a withdrawn toplevel widget and remove the window
+    # Create a withdrawn toplevel widget and remove the window 
     # decoration via override redirect.
     #
     itk_component add -private popup {
-	toplevel $itk_interior.popup
+	toplevel $itk_interior.popup 
     }
     $itk_component(popup) configure -borderwidth 2 -background black
     wm withdraw $itk_component(popup)
@@ -298,11 +298,11 @@ itcl::body iwidgets::Timeentry::_popup {} {
     } {
 	usual
 
-	rename -width -watchwidth watchWidth Width
-	rename -height -watchheight watchHeight Height
+	rename -width -watchwidth watchWidth Width 
+	rename -height -watchheight watchHeight Height 
 
 	keep -hourradius -minuteradius -minutecolor -pivotradius -pivotcolor \
-	    -secondradius -secondcolor -clockcolor -clockstipple -tickcolor
+	    -secondradius -secondcolor -clockcolor -clockstipple -tickcolor 
     }
     grid $itk_component(watch) -row 0 -column 0
     $itk_component(watch) configure -cursor top_left_arrow
@@ -341,7 +341,7 @@ itcl::body iwidgets::Timeentry::_popup {} {
         set popupx [expr {$rootx - 3 - $popupwidth}]
         set popupy [expr {$rooty - 3 - $popupheight}]
     }
-
+    
     #
     # Get the current time from the timefield widget and both
     # show and select it on the watch.
@@ -374,25 +374,25 @@ itcl::body iwidgets::Timeentry::_popup {} {
 # ------------------------------------------------------------------
 # PROTECTED METHOD: _popupGetTime
 #
-# This method is the callback for selection of a time on the
+# This method is the callback for selection of a time on the 
 # watch.  It releases the grab and sets the time in the
 # timefield widget.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Timeentry::_getPopupTime {} {
     show [$itk_component(watch) get -clicks]
-    _releaseGrab
+    _releaseGrab 
 }
 
 # ------------------------------------------------------------------
 # PROTECTED METHOD: _releaseGrab
 #
-# This method releases the grab, destroys the popup, changes the
+# This method releases the grab, destroys the popup, changes the 
 # relief of the button back to raised and reapplies the binding
 # to the icon button that engages the popup action.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Timeentry::_releaseGrab {} {
     grab release $itk_component(popup)
     $itk_component(iconbutton) configure -relief raised
-    destroy $itk_component(popup)
+    destroy $itk_component(popup) 
     bind $itk_component(iconbutton) <Button-1> [itcl::code $this _popup]
 }

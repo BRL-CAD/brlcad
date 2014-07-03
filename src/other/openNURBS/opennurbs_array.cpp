@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -656,7 +657,7 @@ void ON_UuidList::SortHelper()
   if ( m_sorted_count < m_count || m_removed_count > 0 )
   {
     // clean up array
-    HeapSort(ON_UuidList::CompareUuid);
+    QuickSort(ON_UuidList::CompareUuid);
     while ( m_count > 0 && ON_max_uuid == m_a[m_count-1] )
     {
       m_count--;
@@ -837,9 +838,14 @@ bool ON_UuidIndexList::AddUuidIndex(ON_UUID uuid, int index, bool bCheckForDupic
   bool rc = bCheckForDupicates ? !FindUuid(uuid,NULL) : true;
   if (rc)
   {
-    ON_UuidIndex& ui = AppendNew();
-    ui.m_id = uuid;
-    ui.m_i = index;
+    if ( ON_max_uuid == uuid )
+      rc = 0;
+    else
+    {
+      ON_UuidIndex& ui = AppendNew();
+      ui.m_id = uuid;
+      ui.m_i = index;
+    }
   }
   return rc;
 }
@@ -856,7 +862,6 @@ void ON_UuidIndexList::Empty()
   m_removed_count = 0;
 }
 
-
 void ON_UuidIndexList::Reserve( int capacity )
 {
   if( m_capacity < capacity )
@@ -870,6 +875,9 @@ bool ON_UuidIndexList::RemoveUuid(ON_UUID uuid)
   {
     p->m_id = ON_max_uuid;
     m_removed_count++;
+    unsigned int i = (unsigned int)(p - m_a);
+    if ( i < m_sorted_count )
+      m_sorted_count = i;
   }
   return (0!=p);
 }
@@ -898,6 +906,229 @@ bool ON_UuidIndexList::FindUuidIndex(ON_UUID uuid, int index) const
     ui = 0;
   }
   return (0!=ui);
+}
+
+
+
+
+
+ON_UuidPairList::ON_UuidPairList() 
+: ON_SimpleArray<ON_UuidPair>(32)
+, m_sorted_count(0)
+, m_removed_count(0)
+{
+}
+
+ON_UuidPairList::ON_UuidPairList(int capacity) 
+: ON_SimpleArray<ON_UuidPair>(capacity>32?capacity:32)
+, m_sorted_count(0)
+, m_removed_count(0)
+{
+}
+
+ON_UuidPairList::~ON_UuidPairList()
+{
+  m_sorted_count = 0;
+  m_removed_count = 0;
+}
+
+ON_UuidPairList::ON_UuidPairList(const ON_UuidPairList& src) 
+: ON_SimpleArray<ON_UuidPair>(src)
+, m_sorted_count(src.m_sorted_count)
+, m_removed_count(src.m_removed_count)
+{
+}
+
+ON_UuidPairList& ON_UuidPairList::operator=(const ON_UuidPairList& src)
+{
+  if ( this != &src)
+  {
+    ON_SimpleArray<ON_UuidPair>::operator=(src);
+    m_sorted_count = src.m_sorted_count;
+    m_removed_count = src.m_removed_count;
+  }
+  return *this;
+}
+
+bool ON_UuidPairList::AddPair(ON_UUID id1, ON_UUID id2, bool bCheckForDupicates)
+{
+  bool rc = bCheckForDupicates ? !FindId1(id1,0) : true;
+  if (rc)
+  {
+    if ( ON_max_uuid == id1 && ON_max_uuid == id2 )
+    {
+      // The value pair (ON_max_uuid,ON_max_uuid) is used
+      // to mark removed elements.
+      rc = false;
+    }
+    else
+    {
+      ON_UuidPair& ui = AppendNew();
+      ui.m_uuid[0] = id1;
+      ui.m_uuid[1] = id2;
+    }
+  }
+  return rc;
+}
+
+int ON_UuidPairList::Count() const
+{
+  return m_count - m_removed_count;
+}
+
+void ON_UuidPairList::Empty()
+{
+  m_count = 0;
+  m_sorted_count = 0;
+  m_removed_count = 0;
+}
+
+
+void ON_UuidPairList::Reserve( int capacity )
+{
+  if( m_capacity < capacity )
+    SetCapacity( capacity );
+}
+
+bool ON_UuidPairList::RemovePair(ON_UUID id1)
+{
+  ON_UuidPair* p = SearchHelper(&id1);
+  if ( 0 != p )
+  {
+    p->m_uuid[0] = ON_max_uuid;
+    p->m_uuid[1] = ON_max_uuid;
+    m_removed_count++;
+    unsigned int i = (unsigned int)(p - m_a);
+    if ( i < m_sorted_count )
+      m_sorted_count = i;
+  }
+  return (0!=p);
+}
+
+bool ON_UuidPairList::RemovePair(ON_UUID id1, ON_UUID id2)
+{
+  ON_UuidPair* p = SearchHelper(&id1);
+  if ( 0 != p && p->m_uuid[1] == id2)
+  {
+    p->m_uuid[0] = ON_max_uuid;
+    p->m_uuid[1] = ON_max_uuid;
+    m_removed_count++;
+    unsigned int i = (unsigned int)(p - m_a);
+    if ( i < m_sorted_count )
+      m_sorted_count = i;
+  }
+  return (0!=p);
+}
+
+static
+int compar_uuidpair_id1(const ON_UuidPair* a, const ON_UuidPair* b)
+{
+  return ON_UuidList::CompareUuid(&a->m_uuid[0],&b->m_uuid[0]);
+}
+
+static
+int compar_uuidpair_id1id2(const ON_UuidPair* a, const ON_UuidPair* b)
+{
+  int i;
+  if ( 0 == (i = ON_UuidList::CompareUuid(&a->m_uuid[0],&b->m_uuid[0])) )
+    i = ON_UuidList::CompareUuid(&a->m_uuid[1],&b->m_uuid[1]);
+  return i;
+}
+
+bool ON_UuidPairList::FindId1(ON_UUID id1, ON_UUID* id2) const
+{
+  const ON_UuidPair* ui = SearchHelper(&id1);
+  if (ui && id2)
+  {
+    *id2 = ui->m_uuid[1];
+  }
+  return (0!=ui);
+}
+
+bool ON_UuidPairList::FindPair(ON_UUID id1, ON_UUID id2) const
+{
+  const ON_UuidPair* ui = SearchHelper(&id1);
+  if (ui && id2 != ui->m_uuid[1])
+  {
+    ui = 0;
+  }
+  return (0!=ui);
+}
+
+int ON_UuidPairList::GetId1s(
+    ON_SimpleArray<ON_UUID>& uuid_list
+    ) const
+{
+  const int count0 = uuid_list.Count();
+  int i;
+  uuid_list.Reserve(uuid_list.Count() + m_count - m_removed_count);
+  for ( i = 0; i < m_count; i++ )
+  {
+    if ( ON_max_uuid == m_a[i].m_uuid[0] && ON_max_uuid == m_a[i].m_uuid[1] )
+      continue;
+    uuid_list.Append(m_a[i].m_uuid[0]);
+  }
+  return uuid_list.Count() - count0;
+}
+
+void ON_UuidPairList::ImproveSearchSpeed()
+{
+  if ( ((unsigned int)m_count) > m_sorted_count )
+  {
+    QuickSort(compar_uuidpair_id1id2);
+    if ( m_removed_count > 0 )
+    {
+      // cull removed items.  These get sorted to the
+      // end because the removed uuid is the largest
+      // possible uuid.
+      ON_UuidPair removed_uuid;
+      removed_uuid.m_uuid[0] = ON_max_uuid;
+      removed_uuid.m_uuid[1] = ON_max_uuid;
+      while ( m_count > 0 && !compar_uuidpair_id1id2(&removed_uuid,m_a+(m_count-1)))
+      {
+        m_count--;
+      }
+      m_removed_count = 0;
+    }
+    m_sorted_count = m_count;
+  }
+}
+
+ON_UuidPair* ON_UuidPairList::SearchHelper(const ON_UUID* id1) const
+{
+  if ( m_count - m_sorted_count > 8 || m_removed_count > 0 )
+  {
+    // time to resort the array so that the speedy
+    // bsearch() can be used to find uuids
+    const_cast<ON_UuidPairList*>(this)->ImproveSearchSpeed();
+  }
+
+  // NOTE: 
+  //   The pair (ON_max_uuid,ON_max_uuid) never appears in the sorted portion of the array.
+  ON_UuidPair* p = (m_sorted_count > 0 )
+                   ? (ON_UuidPair*)bsearch( id1, m_a, m_sorted_count, 
+                                        sizeof(m_a[0]), 
+                                        (int(*)(const void*,const void*))compar_uuidpair_id1 ) 
+                   : 0;
+
+  if (0 == p)
+  {
+    // do a slow search on the last m_count-m_sort_count elements
+    // in the array.
+    int i;
+    for ( i = m_sorted_count; i < m_count; i++ )
+    {
+      if (    0 == ON_UuidList::CompareUuid(id1,&m_a[i].m_uuid[0]) 
+           && (ON_max_uuid != m_a[i].m_uuid[0] || ON_max_uuid != m_a[i].m_uuid[1])
+         )
+      {
+        p = m_a+i;
+        break;
+      }
+    }
+  }
+
+  return p;
 }
 
 void ON_UuidList::RemapUuids( const ON_SimpleArray<ON_UuidPair>& uuid_remap )
@@ -969,14 +1200,11 @@ int ON_UuidIndexList::GetUuids(
   return uuid_list.Count() - count0;
 }
 
-ON_UuidIndex* ON_UuidIndexList::SearchHelper(const ON_UUID* uuid) const
+void ON_UuidIndexList::ImproveSearchSpeed()
 {
-  if ( m_count - m_sorted_count > 8 || m_removed_count > 0 )
+  if ( ((unsigned int)m_count) > m_sorted_count )
   {
-    // time to resort the array so that the speedy
-    // bsearch() can be used to find uuids
-    ON_UuidIndexList* p = const_cast<ON_UuidIndexList*>(this);
-    p->HeapSort(compar_uuidindex_uuid);
+    QuickSort(compar_uuidindex_uuid);
     if ( m_removed_count > 0 )
     {
       // cull removed items.  These get sorted to the
@@ -985,13 +1213,23 @@ ON_UuidIndex* ON_UuidIndexList::SearchHelper(const ON_UUID* uuid) const
       ON_UuidIndex removed_uuid;
       removed_uuid.m_id = ON_max_uuid;
       removed_uuid.m_i = 0;
-      while ( p->m_count > 0 && !compar_uuidindex_uuid(&removed_uuid,p->m_a+(p->m_count-1)))
+      while ( m_count > 0 && !compar_uuidindex_uuid(&removed_uuid,m_a+(m_count-1)))
       {
-        p->m_count--;
+        m_count--;
       }
-      p->m_removed_count = 0;
+      m_removed_count = 0;
     }
-    p->m_sorted_count = m_count;
+    m_sorted_count = m_count;
+  }
+}
+
+ON_UuidIndex* ON_UuidIndexList::SearchHelper(const ON_UUID* uuid) const
+{
+  if ( m_count - m_sorted_count > 8 || m_removed_count > 0 )
+  {
+    // time to resort the array so that the speedy
+    // bsearch() can be used to find uuids
+    const_cast<ON_UuidIndexList*>(this)->ImproveSearchSpeed();
   }
 
   ON_UuidIndex* p = (m_sorted_count > 0 )
@@ -1076,33 +1314,41 @@ const ON_2dex* ON_BinarySearch2dexArray( int key_i, const ON_2dex* base, size_t 
   if (nel > 0 && base )
   {
     size_t i;
-    int d;
+    int base_i;
 
     // The end tests are not necessary, but they
     // seem to provide overall speed improvement
     // for the types of searches that call this
     // function.
-    d = key_i-base[0].i;
-    if ( d < 0 )
+
+    // 26 January 2012 Dale Lear
+    //   Part of the fix for http://dev.mcneel.com/bugtrack/?q=97693
+    //   When the values of key_i and base[].i are large,
+    //   key_i - base[].i suffers from integer overflow
+    //   and the difference can not be use to compare
+    //   magnitudes.
+
+    base_i = base[0].i;
+    if ( key_i < base_i )
       return 0;
-    if ( !d )
+    if ( key_i == base_i )
       return base;
 
-    d = key_i-base[nel-1].i;
-    if ( d > 0 )
+    base_i = base[nel-1].i;
+    if ( key_i > base_i )
       return 0;
-    if ( !d )
+    if ( key_i == base_i )
       return (base + (nel-1));
 
     while ( nel > 0 )
     {
       i = nel/2;
-      d = key_i - base[i].i;
-      if ( d < 0 )
+      base_i = base[i].i;
+      if ( key_i < base_i )
       {
         nel = i;
       }
-      else if ( d > 0 )
+      else if ( key_i > base_i )
       {
         i++;
         base += i;
@@ -1120,7 +1366,13 @@ const ON_2dex* ON_BinarySearch2dexArray( int key_i, const ON_2dex* base, size_t 
 static
 int compare_2dex_i(const void* a, const void* b)
 {
-  return ( *((const int*)a) - *((const int*)b) );
+  const int ai = *((const int*)a);
+  const int bi = *((const int*)b);
+  if ( ai < bi )
+    return -1;
+  if ( ai > bi )
+    return 1;
+  return 0;
 }
 
 const ON_2dex* ON_2dexMap::Find2dex(int i) const
@@ -1130,7 +1382,7 @@ const ON_2dex* ON_2dexMap::Find2dex(int i) const
   {
     if ( !m_bSorted )
     {
-      ON_hsort(m_a,m_count,sizeof(m_a[0]),compare_2dex_i);
+      ON_qsort(m_a,m_count,sizeof(m_a[0]),compare_2dex_i);
       const_cast<ON_2dexMap*>(this)->m_bSorted = true;
     }
     e = ON_BinarySearch2dexArray(i,m_a,m_count);

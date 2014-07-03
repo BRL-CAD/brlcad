@@ -1,0 +1,19 @@
+surface checker 
+ [[ string description = "Simple checker material" ]]
+(
+        float K = 2.0
+        [[  string description = "Tiling scale" ]],
+        closure color Cw = diffuse(N),
+        closure color Cb = diffuse(N)
+)
+{
+        int iu = (int)(u*K);
+        int iv = (int)(v*K);
+
+        if((iu & 1) == (iv & 1)){
+               Ci = Cw;
+        }
+        else {
+             Ci = Cb;
+        }
+}

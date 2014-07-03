@@ -45,7 +45,7 @@ set m 1
 test Spintime-1.$c {Spintime construction} {
     iwidgets::Spintime .st
     pack .st -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -92,7 +92,7 @@ foreach test {
 	    .st configure $option [lindex $test 1]
 	    lindex [.st configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -106,7 +106,7 @@ foreach test {
 	test Spintime-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -125,22 +125,22 @@ foreach test {
 #
 test Spintime-1.$c {Spintime destruction} {
     destroy .st
-    update
+    update 
 } {}
 
 incr c
 
 test Spintime-1.$c {Spintime construction} {
-    iwidgets::spintime .st
+    iwidgets::spintime .st 
     pack .st -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Spintime-1.$c {Spintime destruction} {
-    destroy .st
-    update
+    destroy .st 
+    update 
 } {}
 
 incr c
@@ -148,8 +148,8 @@ incr c
 test Spintime-1.$c {Spintime destruction} {
     iwidgets::spintime .st
     pack .st
-    destroy .st
-    update
+    destroy .st 
+    update 
 } {}
 
 ::tcltest::cleanupTests

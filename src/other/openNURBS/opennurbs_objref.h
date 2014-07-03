@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -171,6 +172,7 @@ public:
   ON_ObjRef& operator=(const ON_ObjRef& src);
   ~ON_ObjRef();
 
+  void Destroy();
   bool Write( ON_BinaryArchive& ) const;
   bool Read( ON_BinaryArchive& );
 
@@ -320,6 +322,7 @@ private:
   ON_Object* m__proxy1;
   ON_Object* m__proxy2;
   int* m__proxy_ref_count;
+  //ON__INT_PTR m_reserved;
 };
 
 #if defined(ON_DLL_TEMPLATE)

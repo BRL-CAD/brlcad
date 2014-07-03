@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) radiobox.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::radiobox iwid
 .BS
@@ -33,7 +33,7 @@ See the "options" manual entry for details on the standard options.
 \fBlabelPos\fR	\fBlabelText\fR	\fBlabelVariable\fR
 .fi
 .LP
-See the "labeledframe" class manual entry for details on the
+See the "labeledframe" class manual entry for details on the 
 inherited options.
 .SH "WIDGET-SPECIFIC OPTIONS"
 .LP
@@ -43,7 +43,7 @@ Class:  \fBCommand\fR
 Command-Line Switch:    \fB-command\fR
 .fi
 .IP
-Specifies a Tcl command procedure to be evaluated following a change in
+Specifies a Tcl command procedure to be evaluated following a change in 
 the current radio box selection.
 .LP
 .nf
@@ -60,8 +60,8 @@ values are either "horizontal" or "vertical".
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::radiobox\fR command creates a radio button box widget
-capable of adding, inserting, deleting, selecting, and configuring
+The \fBiwidgets::radiobox\fR command creates a radio button box widget 
+capable of adding, inserting, deleting, selecting, and configuring 
 radiobuttons as well as obtaining the currently selected button.
 
 .SH "METHODS"
@@ -74,7 +74,7 @@ operations on the widget.  It has the following general form:
 \fIpathName option \fR?\fIarg arg ...\fR?
 .DE
 \fIOption\fR and the \fIarg\fRs
-determine the exact behavior of the command.
+determine the exact behavior of the command.  
 .PP
 Many of the widget commands for the \fBradiobox\fR take as one argument an
 indicator of which radiobutton of the radiobox to operate on.  These indicators
@@ -82,7 +82,7 @@ are called \fIindexes\fR and allow reference and manipulation of radiobuttons.
 Radiobox indexes may be specified in any of the following forms:
 .TP 12
 \fInumber\fR
-Specifies the radiobutton numerically, where 0 corresponds to the top
+Specifies the radiobutton numerically, where 0 corresponds to the top 
 radiobutton of the radiobox.
 .TP 12
 \fBend\fR
@@ -105,7 +105,7 @@ returned.
 .TP
 \fIpathName \fBbuttonconfigure\fR \fIindex\fR ?\fIoptions\fR?
 This command is similar to the \fBconfigure\fR command, except that
-it applies to the options for an individual radiobutton,
+it applies to the options for an individual radiobutton, 
 whereas \fBconfigure\fRapplies to the options for the radiobox as a whole.
 \fIOptions\fR may have any of the values accepted by the \fBadd\fR
 widget command.  If \fIoptions\fR are specified, options are modified
@@ -154,7 +154,7 @@ Same as the \fBadd\fR command except that it inserts the new
 radiobutton just before the one given by \fIindex\fR, instead of appending
 to the end of the radiobox.  The \fIoption\fR, and \fIvalue\fR
 arguments have the same interpretation as for the \fBadd\fR widget
-command.
+command.  
 .TP
 \fIpathName \fBselect\fR \fIindex\fR
 Selects a specified radiobutton given an \fIindex\fR.

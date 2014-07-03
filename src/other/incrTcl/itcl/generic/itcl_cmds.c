@@ -913,7 +913,7 @@ Itcl_ProtectionCmd(clientData, interp, objc, objv)
     else if (result != TCL_OK) {
         char mesg[256], *name;
         name = Tcl_GetString(objv[0]);
-        sprintf(mesg, "\n    (%.100s body line %d)", name, interp->errorLine);
+        sprintf(mesg, "\n    (%.100s body line %d)", name, ERRORLINE(interp));
         Tcl_AddErrorInfo(interp, mesg);
     }
 

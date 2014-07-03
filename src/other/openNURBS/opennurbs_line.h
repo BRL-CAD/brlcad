@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -261,6 +262,7 @@ public:
         const ON_3dVector& delta
         );
 
+
   /*
   Description:
     Intersect infinite line with surfaceB.
@@ -275,10 +277,10 @@ public:
       intersection events and the distance from line(t) to the
       surface is <= overlap_tolerance for every t1 <= t <= t2,
       then the event will be returened as an overlap event.
-      If the input overlap_tolerance <= 0.0, then 
+      If the input overlap_tolerance <= 0.0, then
       intersection_tolerance*2.0 is used.
     line_domain - [in] optional restriction on line's domain
-      If you want a finite intersection, then specify a 
+      If you want a finite intersection, then specify a
       line_domain. If you want a ray intersection, then specify
       a line domain like (0.0, ON_DBL_MAX).
     surfaceB_udomain - [in] optional restriction on surfaceB u domain
@@ -286,7 +288,7 @@ public:
   Returns:
     Number of intersection events appended to x.
   */
-  int IntersectSurface( 
+  int IntersectSurface(
           const class ON_Surface* surfaceB,
           ON_SimpleArray<ON_X_EVENT>& x,
           double intersection_tolerance = 0.0,

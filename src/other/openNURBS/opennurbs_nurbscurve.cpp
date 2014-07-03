@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -265,6 +266,7 @@ bool ON_NurbsCurve::Create(
 
 void ON_NurbsCurve::Destroy()
 {
+  DestroyCurveTree();
   double* cv = ( m_cv && m_cv_capacity ) ? m_cv : NULL;
   double* knot = ( m_knot && m_knot_capacity ) ? m_knot : NULL;
   Initialize();
@@ -295,6 +297,7 @@ void ON_NurbsCurve::Initialize()
 
 static void ON_NurbsCurveCopyHelper( const ON_NurbsCurve& src, ON_NurbsCurve& dest )
 {
+  dest.DestroyCurveTree();
   dest.m_dim       = src.m_dim;
   dest.m_is_rat    = src.m_is_rat;
   dest.m_order     = src.m_order;
@@ -381,127 +384,219 @@ void ON_NurbsCurve::Dump( ON_TextLog& dump ) const
   }
 }
 
+
+static bool ON_NurbsCurveIsNotValid()
+{
+  return ON_IsNotValid(); // <-- good place for a breakpoint
+}
+
+static bool ON_ControlPointsAreNotValid()
+{
+  return ON_IsNotValid(); // <-- good place for a breakpoint
+}
+
+static bool ON_ControlPointsAreValid( int cv_size, int cv_count, int cv_stride, const double* cv, ON_TextLog* text_log )
+{
+  int i, j;
+  if ( 0 == cv  )
+  {
+    if ( text_log )
+    {
+      text_log->Print("cv pointer is null.\n");
+    }
+    return ON_ControlPointsAreNotValid();
+  }
+
+  if ( cv_count < 2 )
+  {
+    if ( text_log )
+    {
+      text_log->Print("cv_count = %d (must be >= 2).\n",cv_count);
+    }
+    return ON_ControlPointsAreNotValid();
+  }
+
+  if ( cv_size < 1 )
+  {
+    if ( text_log )
+    {
+      text_log->Print("cv_size = %d (must be >= 1).\n",cv_size);
+    }
+    return ON_ControlPointsAreNotValid();
+  }
+
+  if ( cv_stride < cv_size )
+  {
+    if ( text_log )
+    {
+      text_log->Print("cv_stride = %d and cv_size = %d (cv_stride must be >= cv_size).\n",cv_stride,cv_size);
+    }
+    return ON_ControlPointsAreNotValid();
+  }
+
+  for ( i = 0; i < cv_count; i++, cv += cv_stride )
+  {
+    for ( j = 0; j < cv_size; j++ )
+    {
+      if ( !ON_IsValid(cv[j]) )
+      {
+        if ( text_log )
+        {
+          text_log->Print("cv[%d*cv_stride + %d] = %g is not valid.\n",i,j,cv[j]);
+        }
+        return ON_ControlPointsAreNotValid();
+      }
+    }    
+  }
+
+  return true;
+}
+
 ON_BOOL32 ON_NurbsCurve::IsValid( ON_TextLog* text_log ) const
 {
-  ON_BOOL32 rc = false;
   if ( m_dim <= 0 )
   {
     if ( text_log )
     {
       text_log->Print("ON_NurbsCurve.m_dim = %d (should be > 0).\n",m_dim);
     }
+    return ON_NurbsCurveIsNotValid();
   }
-  else if (m_order < 2 )
+  
+  if (m_order < 2 )
   {
     if ( text_log )
     {
       text_log->Print("ON_NurbsCurve.m_order = %d (should be >= 2).\n",m_order);
     }
+    return ON_NurbsCurveIsNotValid();
   }
-  else if (m_cv_count < m_order )
+  
+  if (m_cv_count < m_order )
   {
     if ( text_log )
     {
       text_log->Print("ON_NurbsCurve.m_cv_count = %d (should be >= m_order=%d).\n",m_cv_count,m_order);
     }
+    return ON_NurbsCurveIsNotValid();
   }
-  else if (m_cv_stride < CVSize() )
+  
+  if (m_cv_stride < CVSize() )
   {
     if ( text_log )
     {
       text_log->Print("ON_NurbsCurve.m_cv_stride = %d (should be >= %d).\n",m_cv_stride,CVSize());
     }
   }
-  else if (m_cv == NULL)
+  
+  if (m_cv == NULL)
   {
     if ( text_log )
     {
       text_log->Print("ON_NurbsCurve.m_cv is NULL.\n");
     }
+    return ON_NurbsCurveIsNotValid();
   }
-  else if (m_knot == NULL)
+  
+  if (m_knot == NULL)
   {
     if ( text_log )
     {
       text_log->Print("ON_NurbsCurve.m_knot is NULL.\n");
     }
+    return ON_NurbsCurveIsNotValid();
   }
-  else
-  {
-    if ( !ON_IsValidKnotVector( m_order, m_cv_count, m_knot, text_log ) ) 
-    {
-      if ( text_log )
-      {
-        text_log->Print("ON_NurbsCurve.m_knot[] is not a valid knot vector.\n");
-      }
-    }
-    else
-    {
-      rc = true;
-      if ( m_is_rat ) {
-        // weights at fully multiple knots must be nonzero
-        // partial test for weight function being zero
-        double sign = 0.0;
-        const double* w = &m_cv[m_dim];
-        int zcount = 0;
-        int i;
-        for ( i = 0; i < m_cv_count && rc; i++, w += m_cv_stride ) {
-          if ( *w == 0.0 )
-            zcount++;
-          else
-            zcount = 0;
-          if ( zcount >= m_order )
-          {
-            if ( text_log )
-            {
-              text_log->Print("ON_NurbsCurve.m_cv has zero weights for CV[%d],...,CV[%d].\n",i-m_order+1,i);
-            }
-            rc = false; // denominator is zero for entire span
-          }
-          else if ( m_knot[i] == m_knot[i+m_order-2] ) 
-          {
-            if ( *w == 0.0 )
-            {
-              if ( text_log )
-              {
-                text_log->Print("ON_NurbsCurve.m_cv has zero weights for CV[%d].\n",i);
-              }
-              rc = false;
-            }
-            else if (sign == 0.0) 
-            {
-              sign = (*w > 0.0) ? 1.0 : -1.0;
-            }
-            else if ( *w * sign <= 0.0 ) 
-            {
-              if ( text_log )
-              {
-                text_log->Print("ON_NurbsCurve.m_cv has a zero denominator in the parameter interval [%g,%g].\n",
-                                m_knot[i-1],m_knot[i]);
-              }
-              rc = false;
-            }
-          }
-        }
-      }
 
-      if ( rc && 2 == m_order && 2 == m_cv_count )
+  if ( !ON_IsValidKnotVector( m_order, m_cv_count, m_knot, text_log ) ) 
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_NurbsCurve.m_knot[] is not a valid knot vector.\n");
+    }
+    return ON_NurbsCurveIsNotValid();
+  }
+
+  if ( !ON_ControlPointsAreValid(CVSize(),m_cv_count,m_cv_stride,m_cv,text_log) )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_NurbsCurve.m_cv[] is not valid.\n");
+    }
+    return ON_NurbsCurveIsNotValid();
+  }
+
+  if ( m_is_rat )
+  {
+    // weights at fully multiple knots must be nonzero
+    // partial test for weight function being zero
+    double sign = 0.0;
+    const double* w = &m_cv[m_dim];
+    int zcount = 0;
+    int i;
+    for ( i = 0; i < m_cv_count; i++, w += m_cv_stride )
+    {
+      if ( *w == 0.0 )
+        zcount++;
+      else
+        zcount = 0;
+
+      if ( zcount >= m_order )
       {
-        // fix for RR 21239
-        ON_3dPoint P0 = PointAtStart();
-        ON_3dPoint P1 = PointAtEnd();
-        if ( P0 == P1 )
+        if ( text_log )
+        {
+          text_log->Print("ON_NurbsCurve.m_cv has zero weights for CV[%d],...,CV[%d].\n",i-m_order+1,i);
+        }
+        return ON_NurbsCurveIsNotValid(); // denominator is zero for entire span
+      }
+      
+      if ( m_knot[i] == m_knot[i+m_order-2] ) 
+      {
+        if ( *w == 0.0 )
         {
           if ( text_log )
           {
-            text_log->Print("ON_NurbsCurve is a line with no length.\n");
+            text_log->Print("ON_NurbsCurve.m_cv has zero weights for CV[%d].\n",i);
           }
-          rc = false;
+          return ON_NurbsCurveIsNotValid();
+        }
+        
+        if (sign == 0.0) 
+        {
+          sign = (*w > 0.0) ? 1.0 : -1.0;
+        }
+        else if ( *w * sign <= 0.0 ) 
+        {
+          if ( text_log )
+          {
+            text_log->Print("ON_NurbsCurve.m_cv has a zero denominator in the parameter interval [%g,%g].\n",
+                            m_knot[i-1],m_knot[i]);
+          }
+          return ON_NurbsCurveIsNotValid();
         }
       }
     }
+
+    if ( m_dim <= 3 && 2 == m_order && 2 == m_cv_count )
+    {
+      // fix for RR 21239
+      // 16 November 2010 Chuck and Dale Lear added m_dim <= 3
+      // so the 3d checking does not interfer with applications
+      // that use high dimension curves where the start and end
+      // points can be arbitrary.
+      ON_3dPoint P0 = PointAtStart();
+      ON_3dPoint P1 = PointAtEnd();
+      if ( P0 == P1 )
+      {
+        if ( text_log )
+        {
+          text_log->Print("ON_NurbsCurve is a line with no length.\n");
+        }
+        return ON_NurbsCurveIsNotValid();
+      }
+    }
   }
-  return rc;
+
+  return true;
 }
 
 ON_BOOL32 ON_NurbsCurve::GetBBox( // returns true if successful
@@ -558,7 +653,8 @@ ON_BOOL32 ON_NurbsCurve::Write(
 {
   // NOTE - check legacy I/O code if changed
   ON_BOOL32 rc = file.Write3dmChunkVersion(1,0);
-  if (rc) {
+  if (rc)
+  {
     if (rc) rc = file.WriteInt( m_dim );
     if (rc) rc = file.WriteInt( m_is_rat );
     if (rc) rc = file.WriteInt( m_order );
@@ -567,13 +663,16 @@ ON_BOOL32 ON_NurbsCurve::Write(
     if (rc) rc = file.WriteInt( 0 ); // reserved   
     
     // write invalid bounding box - may be used in future
-    if (rc) {
+    if (rc) 
+    {
       ON_BoundingBox bbox;
       rc = file.WriteBoundingBox(bbox);
     }
 
     // write knots
-    int count = m_knot ? KnotCount() : 0;
+    int count = (0 != m_knot && m_cv_count >= m_order && m_order >= 2)
+              ? KnotCount() 
+              : 0;
     if (rc) rc = file.WriteInt(count);
     if (rc) rc = file.WriteDouble( count, m_knot );
 
@@ -583,9 +682,11 @@ ON_BOOL32 ON_NurbsCurve::Write(
           ? m_cv_count
           : 0;
     if (rc) rc = file.WriteInt(count);
-    if (rc && count > 0 ) {
+    if (rc && count > 0 )
+    {
       int i;
-      for ( i = 0; i < m_cv_count && rc; i++ ) {
+      for ( i = 0; i < m_cv_count && rc; i++ )
+      {
         rc = file.WriteDouble( cv_size, CV(i) );
       }
     }
@@ -603,14 +704,19 @@ ON_BOOL32 ON_NurbsCurve::Read(
   int major_version = 0;
   int minor_version = 0;
   ON_BOOL32 rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if (rc && major_version==1) {
+  if (rc && major_version==1)
+  {
     // common to all 1.x versions
     int dim = 0, is_rat = 0, order = 0, cv_count = 0;
     int reserved1 = 0, reserved2 = 0;
     if (rc) rc = file.ReadInt( &dim );
     if (rc) rc = file.ReadInt( &is_rat );
     if (rc) rc = file.ReadInt( &order );
+    if ( order < 0 )
+      rc = false;
     if (rc) rc = file.ReadInt( &cv_count );
+    if ( cv_count < order )
+      rc = false;
     if (rc) rc = file.ReadInt( &reserved1 ); // reserved - legacy flag values
     if (rc) rc = file.ReadInt( &reserved2 ); // reserved    
 
@@ -621,11 +727,16 @@ ON_BOOL32 ON_NurbsCurve::Read(
       rc = file.ReadBoundingBox( bbox );
     }
     
-    Create( dim, is_rat, order, cv_count );
+    if ( !Create( dim, is_rat, order, cv_count ) )
+      rc = false;
 
     // read knots
     int count = 0;
     if (rc) rc = file.ReadInt(&count);
+    if ( count < 0 )
+      rc = false; // fix crash bug 92841
+    else if ( 0 != count && count != ON_KnotCount(order,cv_count) )
+      rc = false;
     if (rc ) rc = ReserveKnotCapacity(count);
     if (rc) rc = file.ReadDouble( count, m_knot );
 
@@ -634,9 +745,11 @@ ON_BOOL32 ON_NurbsCurve::Read(
     if (rc) rc = file.ReadInt(&count);
     const int cv_size = CVSize();
     if (rc) rc = ReserveCVCapacity( count*cv_size );
-    if (count > 0 && cv_size > 0 && rc ) {
+    if (count > 0 && cv_size > 0 && rc )
+    {
       int i;
-      for ( i = 0; i < m_cv_count && rc; i++ ) {
+      for ( i = 0; i < m_cv_count && rc; i++ )
+      {
         rc = file.ReadDouble( cv_size, CV(i) );
       }
     }
@@ -701,6 +814,7 @@ ON_BOOL32 ON_NurbsCurve::ChangeClosedCurveSeam( double t )
         s += 1.0;
       k = old_dom.ParameterAt(s);
     }
+		s = old_dom.NormalizedParameterAt( k);
     if ( old_dom.Includes(k,true) )
     {
       ON_NurbsCurve left, right;
@@ -783,15 +897,19 @@ ON_NurbsCurve::IsLinear(
   // then "t" will end failing the ON_IsValid() test.
   D.x = L.to.x - L.from.x; D.y = L.to.y - L.from.y; D.z = L.to.z - L.from.z; 
   t = D.x*D.x + D.y*D.y + D.z*D.z;
-  if ( !ON_IsValid(t) || t <= 0.0 )
+  if ( !ON_IsValid(t) || !(t > 0.0) )
     return false;
 
   if ( 2 == m_cv_count )
     return true;
 
   t0 = 0.0;
-  if ( tolerance <= 0.0 )
+  bool bDefaultTolerance = false;
+  if ( !(tolerance > 0.0) )
+  {
+    bDefaultTolerance = true;
     tolerance = ON_ZERO_TOLERANCE;
+  }
   const double tol2 = tolerance*tolerance;
   t = 1.0/t;
   D.x *= t; D.y *= t; D.z *= t;
@@ -824,33 +942,48 @@ ON_NurbsCurve::IsLinear(
     s = 1.0-t;
     Q.x = s*L.from.x + t*L.to.x; Q.y = s*L.from.y + t*L.to.y; Q.z = s*L.from.z + t*L.to.z;
 
-    // verify that the distance from P to Q is <= tolerance
-    s = P.x-Q.x;
-    d = tol2 - s*s;
-    if ( d < 0.0 )
-      return false;
-    s = P.y-Q.y;
-    d -= s*s;
-    if ( d < 0.0 )
-      return false;
-    s = P.z-Q.z;
-    d -= s*s;
-    if ( d < 0.0 )
-      return false;
-
-    // 14 Dec 2004
-    //  Chuck and Dale Lear added this "t < t0" test to weed out
-    //  garbage curves whose locus is a line but that self intersect.
-    //  For example, cirles that have been projected onto a plane 
-    //  perpindicular to their axis are garbage and are not "linear".
-    if ( t < t0 )
+    if ( bDefaultTolerance )
     {
+      if ( !ON_PointsAreCoincident(3,0,&P.x,&Q.x) )
+        return false;
+    }
+    else
+    {
+      // verify that the distance from P to Q is <= tolerance
+      s = P.x-Q.x;
+      d = tol2 - s*s;
+      if ( d < 0.0 )
+        return false;
+      s = P.y-Q.y;
+      d -= s*s;
+      if ( d < 0.0 )
+        return false;
+      s = P.z-Q.z;
+      d -= s*s;
+      if ( d < 0.0 )
+        return false;
+    }
+
+    if ( t > t0 && t0 < 1.0 )
+    {
+      t0 = (t < 1.0) ? t : 1.0;
+    }
+
+    if ( !(t >= t0 && t <= 1.0) )
+    {
+      // 14 Dec 2004
+      //  Chuck and Dale Lear added this test to weed out
+      //  garbage curves whose locus is a line but that self intersect.
+      //  For example, circles that have been projected onto a plane 
+      //  perpendicular to their axis are garbage and are not "linear".
+
       // either a (nearly) stacked control point or
       // the curve has reversed direction        
-      if ( Q.DistanceTo(L.PointAt(t0)) > tolerance )
-        return false; // curve has reversed direction
+      P = L.PointAt(t0);
+      d = Q.DistanceTo(P);
+      if ( !(d <= tolerance) )
+        return false; // curve has reversed direction ("garbage")
     }
-    t0 = t;
   }
 
   return true;
@@ -993,11 +1126,10 @@ int ON_NurbsCurve::IsPolyline(
 
 
 ON_BOOL32
-ON_NurbsCurve::IsArc( // true if curve locus in an arc or circle
-      const ON_Plane* plane, // if not NULL, test is performed in this plane
-      ON_Arc* arc,         // if not NULL and true is returned, then arc
-                              // arc parameters are filled in
-      double tolerance // tolerance to use when checking linearity
+ON_NurbsCurve::IsArc(
+      const ON_Plane* plane,
+      ON_Arc* arc,
+      double tolerance
       ) const
 {
   // If changes are made, verify that RR 8497 still works.
@@ -1007,10 +1139,10 @@ ON_NurbsCurve::IsArc( // true if curve locus in an arc or circle
   // So on 6 May 2003 Dale Lear added in the "bLooseTest" check.
   // If the tolerance > ON_ZERO_TOLERANCE a fuzzy fit to arc
   // arc test is performed.  If tolerance <= ON_ZERO_TOLERANCE,
-  // a strict arc test is performed.
-  bool rc = false;
-  bool bLooseTest = (tolerance > ON_ZERO_TOLERANCE);
-  int i, knotcount = KnotCount(), degree = m_order-1;
+  // a stricter arc test is performed.
+  const bool bLooseTest = (tolerance > ON_ZERO_TOLERANCE);
+  const int knotcount = KnotCount();
+  const int degree = m_order-1;
   if ( (2 == m_dim || 3 == m_dim)
        && m_cv_count >= m_order
        && degree >= 2
@@ -1021,18 +1153,30 @@ ON_NurbsCurve::IsArc( // true if curve locus in an arc or circle
   {
     if ( bLooseTest || 0 == (knotcount % degree) )
     {
+
       if ( !bLooseTest )
       {
-        for ( i = 0; i < m_cv_count; i += degree )
+        for ( int i = 0; i < m_cv_count; i += degree )
         {
           if ( m_knot[i] != m_knot[i+degree-1] )
             return false;
         }
       }
-      rc = ON_Curve::IsArc( plane, arc, tolerance )?true:false;
+
+      // 24 July 2012 Dale Lear
+      //   You can't be a line and an arc.  This test prevents
+      //   creating arcs with small angles and large radii and
+      //   prevents sloppy tolerances from classifying a span
+      //   as an arc when it makes no sense.
+      if ( IsLinear(tolerance) )
+        return false;
+
+      if ( ON_Curve::IsArc( plane, arc, tolerance ) )
+        return true;
     }
   }
-  return rc;
+
+  return false;
 }
 
 ON_BOOL32
@@ -1159,88 +1303,6 @@ ON_NurbsCurve::GetParameterTolerance( // returns tminus < tplus: parameters tmin
   return rc;
 }
 
-
-bool ON_NurbsCurve::GetClosestPoint( 
-        const ON_3dPoint& P,
-        double* t,
-        double maximum_distance,
-        const ON_Interval* sub_domain
-        ) const
-{
-  if ( 2 == m_cv_count && 0 == m_is_rat && (m_dim >= 2 && m_dim <= 3) )
-  {
-    // fast special case for lines
-    ON_3dVector Q, P1;
-    double s, k, d;
-    const double* cv1 = m_cv + m_cv_stride;
-
-    Q.x = P.x - m_cv[0];
-    Q.y = P.y - m_cv[1];
-    P1.x = *cv1++ - m_cv[0];
-    P1.y = *cv1++ - m_cv[1];
-    if ( 3 == m_dim )
-    {
-      Q.z = P.z - m_cv[2];    
-      P1.z = *cv1 - m_cv[2];
-    }
-    else
-    {
-      Q.z = 0.0;
-      P1.z = 0.0;
-    }
-
-    s = P1.x*P1.x + P1.y*P1.y + P1.z*P1.z;
-    if ( 0.0 != s )
-    {
-      s = (Q.x*P1.x + Q.y*P1.y + Q.z*P1.z)/s;
-      if ( s <= 0.0 ) 
-        s = 0.0;
-      else if ( s > 1.0 )
-        s = 1.0;
-
-      k = (1.0-s)*m_knot[0] + s*m_knot[1];
-
-      if ( sub_domain )
-      {
-        if ( k < sub_domain->m_t[0]  )
-        {
-          if ( m_knot[1] < sub_domain->m_t[0] )
-            return false;
-          k = sub_domain->m_t[0];
-          s = (k - m_knot[0])/(m_knot[1] - m_knot[0]);
-        }
-        else if ( k > sub_domain->m_t[1] )
-        {
-          if ( m_knot[0] > sub_domain->m_t[1] )
-            return false;
-          k = sub_domain->m_t[1];
-          s = (k - m_knot[0])/(m_knot[1] - m_knot[0]);
-        }
-      }
-
-      if ( maximum_distance > 0.0 )
-      {
-        cv1 = m_cv + m_cv_stride;
-        d = 1.0-s;
-        Q.x = d*m_cv[0] + s* *cv1++ - P.x;
-        Q.y = d*m_cv[1] + s* *cv1++ - P.y;
-        Q.z = (3 == m_dim ) ? (d*m_cv[2] + s* *cv1 - P.z) : 0.0;
-        d = Q.Length();
-        if ( d > maximum_distance )
-          return false;
-      }
-      
-      *t = k;
-      return true;
-    }
-  }
-
-  return ON_Curve::GetClosestPoint(P,t,maximum_distance,sub_domain);
-}
-
-
-
-
 ON_BOOL32 
 ON_NurbsCurve::Evaluate( // returns false if unable to evaluate
        double t,       // evaluation parameter
@@ -1260,7 +1322,24 @@ ON_NurbsCurve::Evaluate( // returns false if unable to evaluate
   if( m_order<2)      // GBA added 01-12-06 to fix crash bug
      return false;
 
-  const int span_index = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,t,side,(hint)?*hint:0);
+  int span_index = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,t,side,(hint)?*hint:0);
+
+  if ( -2 == side || 2 == side )
+  {
+    // 9 November 2010 Dale Lear - ON_TuneupEvaluationParameter fix
+    //   When evluation passes through ON_CurveProxy or ON_PolyCurve reparamterization
+    //   and the original side parameter was -1 or +1, it is changed to -2 or +2
+    //   to indicate that if t is numerically closed to an end paramter, then
+    //   it should be tuned up to be at the end paramter.
+    double a = t;
+    if ( ON_TuneupEvaluationParameter( side, m_knot[span_index+m_order-2], m_knot[span_index+m_order-1], &a) )
+    {
+      // recalculate span_index
+      t = a;
+      span_index = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,t,side,span_index);
+    }
+  }
+
   rc = ON_EvaluateNurbsSpan(
      m_dim, m_is_rat, m_order, 
      m_knot + span_index, 
@@ -1301,7 +1380,7 @@ ON_NurbsCurve::IsPeriodic() const
     const double* cv0 = m_cv + i0*m_cv_stride;
     const double* cv1 = m_cv + i1*m_cv_stride;
     for ( /*empty*/; i0 >= 0; i0--, i1-- ) {
-      if ( ON_ComparePoint( m_dim, m_is_rat, cv0, cv1 ) )
+      if ( false == ON_PointsAreCoincident( m_dim, m_is_rat, cv0, cv1 ) )
         return false;
       cv0 -= m_cv_stride;
       cv1 -= m_cv_stride;      
@@ -1320,9 +1399,103 @@ bool ON_IsCurvatureDiscontinuity(
   double radius_tolerance
   )
 {
+  // This function is provided so old code will link.
+  // New code should use the version with an explicit relative_tolerance
+  return ON_IsCurvatureDiscontinuity( Km, Kp, 
+    cos_angle_tolerance, 
+    curvature_tolerance,
+    zero_curvature,
+    radius_tolerance,
+    0.001 // relative_tolerance - used to be hard coded in this version of the function
+    );
+}
+
+bool ON_IsG2CurvatureContinuous(
+  const ON_3dVector Km, 
+  const ON_3dVector Kp,
+  double cos_angle_tolerance,
+  double curvature_tolerance
+  )
+{
+  // 6 November 2010 Dale Lear
+  //  I made up these values used for cos_Kangle_tolerance
+  //  and rel_tol today.  They may need adjusting as we 
+  //  get test results.
+  double rel_tol = 0.05; // disables using curvature_tolerance to flag unequal scalars
+
+  double cos_Kangle_tolerance = cos_angle_tolerance;
+  if ( cos_Kangle_tolerance > ON_DEFAULT_ANGLE_TOLERANCE_COSINE )
+    cos_Kangle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE_COSINE;
+  if ( cos_Kangle_tolerance > 0.95 )
+  {
+    // double the tangent angle
+    if ( cos_angle_tolerance < 0.0 )
+    {
+      cos_Kangle_tolerance = -1.0;
+    }
+    else
+    {
+      cos_Kangle_tolerance = 2.0*cos_Kangle_tolerance*cos_Kangle_tolerance - 1.0; // = cos(2*tangent_angle_tolerace)
+      if ( cos_angle_tolerance >= 0.0 && cos_Kangle_tolerance < 0.0 )
+        cos_Kangle_tolerance = 0.0;
+    }
+  }
+
+  return !ON_IsCurvatureDiscontinuity(Km,Kp,
+            cos_Kangle_tolerance,
+            curvature_tolerance,
+            ON_ZERO_CURVATURE_TOLERANCE,
+            ON_UNSET_VALUE, // no absolute delta radius tolerance
+            rel_tol
+            );
+}
+
+bool ON_IsGsmoothCurvatureContinuous(
+  const ON_3dVector Km, 
+  const ON_3dVector Kp,
+  double cos_angle_tolerance,
+  double curvature_tolerance
+  )
+{
+  double rel_tol = 1.0; // disables using curvature_tolerance to flag unequal scalars
+
+  // point of inflection angle >= 90 degrees
+  double cos_Kangle_tolerance = 0.0;
+
+  // Since cos_Kangle_tolerance and rel_tol are valid settings,
+  // curvature_tolerance is used only to test for equality.
+  return !ON_IsCurvatureDiscontinuity(Km,Kp,
+            cos_Kangle_tolerance,
+            curvature_tolerance,
+            ON_ZERO_CURVATURE_TOLERANCE,
+            ON_UNSET_VALUE, // no absolute delta radius tolerance
+            rel_tol
+            );
+}
+
+bool ON_IsCurvatureDiscontinuity( 
+  const ON_3dVector Km, 
+  const ON_3dVector Kp,
+  double cos_angle_tolerance,
+  double curvature_tolerance,
+  double zero_curvature,
+  double radius_tolerance,
+  double relative_tolerance
+  )
+{
   const double d = (Km-Kp).Length();
-  if ( d <= curvature_tolerance )
-    return false;
+  if ( !ON_IsValid(d) )
+  {
+    // invalid curvatures - call it discontinuous because
+    // there is a good chance the derivative evaluation 
+    // failed or the first derivative is zero.
+    return true;
+  }
+
+  // The d <= 0.0 test handles the case when 
+  // curvature_tolerance is ON_UNSET_VALUE
+  if ( d <= 0.0 || d <= curvature_tolerance )
+    return false; // "equal" curvature vectors
 
   // If the scalar curvature is <= zero_curvature,
   // then K is small enough that we assume it is zero.
@@ -1333,9 +1506,12 @@ bool ON_IsCurvatureDiscontinuity(
     zero_curvature = 7.7037197787136e-34;
   double km = Km.Length();
   double kp = Kp.Length();
-  if ( km <= zero_curvature )
+  // If km or kp are NaNs, I treat them as zero so
+  // the rest of this code can assume they are 0.0
+  // or positive.
+  if ( !(km > zero_curvature) )
     km = 0.0;
-  if ( kp <= zero_curvature )
+  if ( !(kp > zero_curvature) )
   {
     kp = 0.0;
     if ( 0.0 == km )
@@ -1345,7 +1521,7 @@ bool ON_IsCurvatureDiscontinuity(
     }
   }
 
-  if ( 0.0 == km || 0.0 == kp )
+  if ( !(km > 0.0 && kp > 0.0) )
   {
     // one side is flat and the other is curved.
     return true;
@@ -1357,41 +1533,58 @@ bool ON_IsCurvatureDiscontinuity(
     return true;
   }
 
+
   // At this point we know km > 0 and kp > 0.
 
-  // 2 March 2010 Dale Lear
-  //   I'm adding the code below this comment so curvature discontinuities
-  //   that are the result of loss of precision in evaluating Km and Kp
-  //   are ignored.  These are hurestics from this point on
-  //   because I cannot change the tolerance value used in legacy
-  //   code.  This change is motivated by the rail curve in bug 61851.
-  //   The rail is G2 and the 1.0e-3 is what is required
-  //   to get this function to report the curve is G2.
+  bool bPointOfInflection = (curvature_tolerance > 0.0);
+  bool bDifferentScalars = bPointOfInflection;
+  // NOTE: 
+  //   At this point either curvature_tolerance was not
+  //   specified or |Km - Kp| > curvature_tolerance. Because
+  //   it is difficult to come up with a meaningful value for
+  //   curvature_tolerance that works at all scales, the
+  //   additional tests below are used to determine if 
+  //   Km and Kp are different enough to matter. If additional
+  //   tests are performed, then bTestCurvatureTolerance
+  //   is set to false. If no additional tests are performed,
+  //   then bTestCurvatureTolerance will remain true and
+  //   the |Km-Kp| > curvature_tolerance test is performed
+  //   at the end of this function.
 
-
-  const double KmoKp = Kp*Km;
-  if ( KmoKp < km*kp*cos_angle_tolerance )
-    return true; // Km and Kp are not parallel
-
-  const double relative_tolerance = 1.0e-3;
-
-  // At this point we assume Km and Kp are parallel, km > 0 and kp > 0,
-  // and focus on deciding if km and kp should be considered equal.
-
-  const double rm = (km > 0.0) ? 1.0/km : 0.0;
-  const double rp = (kp > 0.0) ? 1.0/kp : 0.0;
-  if ( !(radius_tolerance >= 0.0) )
-    radius_tolerance = (rm+rp)*relative_tolerance;
-  if ( fabs(rm-rp) > radius_tolerance )
+  if ( cos_angle_tolerance >= -1.0 && cos_angle_tolerance <= 1.0 )
   {
-    // radii do not agree
-    return true;
+    const double KmoKp = Kp*Km;
+    if ( KmoKp < km*kp*cos_angle_tolerance )
+      return true; // Km and Kp are not parallel
+    bPointOfInflection = false;
   }
 
-  const double k_reltol = (km+kp)*relative_tolerance;
-  if ( d > k_reltol )
+  // At this point we assume Km and Kp are parallel and we
+  // know km > 0 and kp > 0.
+  if ( radius_tolerance >= 0.0 )
   {
-    // curvature vectors not agree to 3 decimal places.
+    // This test is if (fabs(rm - rp) > radius_tolerance) return true
+    // where rm = 1.0/km and rp = 1.0/kp.  It is coded the way
+    // it is to avoid divides (not that that really matters any more).
+    if ( fabs(km-kp) > kp*km*radius_tolerance )
+      // radii do not agree
+      return true;
+    bDifferentScalars = false;
+  }
+
+  if ( relative_tolerance > 0.0 )
+  {
+    if ( fabs(km-kp) > ((km>kp)?km:kp)*relative_tolerance )
+    {
+      return true;
+    }
+    bDifferentScalars = false;
+  }
+
+  if ( bPointOfInflection || bDifferentScalars )
+  {
+    // |Km - Kp| > curvature_tolerance and we were not asked to
+    // perform and other tests.
     return true;
   }
 
@@ -1410,6 +1603,8 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
                 double curvature_tolerance
                 ) const
 {
+  const double is_linear_tolerance = 1.0e-8;  
+  const double is_linear_min_length = 1.0e-8;
   int tmp_hint = 0, tmp_dtype=0;
   double d, tmp_t;
   ON_3dPoint Pm, Pp;
@@ -1422,14 +1617,11 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
   if ( !t )
     t = &tmp_t;
   
-  // 20 March 2003 Dale Lear:
-  //     Make this work for locus style queries
-  ON::continuity input_c = c;
   if ( c == ON::C0_continuous )
     return false;
   if ( c == ON::C0_locus_continuous )
   {
-    return ON_Curve::GetNextDiscontinuity( input_c, t0, t1, t, hint, dtype, 
+    return ON_Curve::GetNextDiscontinuity( c, t0, t1, t, hint, dtype, 
                                     cos_angle_tolerance, curvature_tolerance );
   }
   if ( t0 == t1 )
@@ -1437,21 +1629,24 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
 
   // First test for parametric discontinuities.  If none are found
   // then we will look for locus discontinuities at ends
+  if ( m_order <= 2 )
+    c = ON::PolylineContinuity(c); // no need to check 2nd derivatives that are zero
+  const ON::continuity input_c = c;
   c = ON::ParametricContinuity(c);
-
-  ON_BOOL32 bEv2ndDer = (    (c == ON::C2_continuous || c == ON::G2_continuous)
-                     && m_order > 2);
-  ON_BOOL32 bTestKappa = ( bEv2ndDer && c == ON::G2_continuous );
-  ON_BOOL32 bTestTangent = ( bTestKappa || c == ON::G1_continuous || c == ON::G2_continuous );
+  bool bEv2ndDer    = (c == ON::C2_continuous || c == ON::G2_continuous || c == ON::Gsmooth_continuous) && (m_order>2);
+  bool bTestKappa   = ( bEv2ndDer && c != ON::C2_continuous );
+  bool bTestTangent = ( bTestKappa || c == ON::G1_continuous );
 
   int delta_ki = 1;
-  int delta = ((bEv2ndDer) ? 3 : 2) - m_order;
+  int delta = ((bEv2ndDer) ? 3 : 2) - m_order; // delta <= 0
   if ( ON::Cinfinity_continuous == c )
     delta = 0;
 
-
-  ki = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,t0,1,*hint);
+  ki = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,t0,(t0>t1)?-1:1,*hint);
   double segtol = (fabs(m_knot[ki]) + fabs(m_knot[ki+1]) + fabs(m_knot[ki+1]-m_knot[ki]))*ON_SQRT_EPSILON;
+
+  const bool bLineWiggleTest = (c == ON::Gsmooth_continuous && m_order >= 4);
+  bool bSpanIsLinear = false;
 
   if ( t0 < t1 )
   {
@@ -1461,10 +1656,12 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
       t0 = m_knot[ii+1];
       ki = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,t0,1,*hint);
     }
+    if ( bLineWiggleTest )
+      bSpanIsLinear = SpanIsLinear(ki,is_linear_min_length,is_linear_tolerance);
     *hint = ki;
     ki += m_order-2;
     while (ki < m_cv_count-1 && m_knot[ki] <= t0) 
-      ki += delta_ki;
+      ki++;
     if (ki >= m_cv_count-1) 
     {
       if ( input_c != c && t0 < m_knot[m_cv_count-1] && t1 >= m_knot[m_cv_count-1] )
@@ -1483,12 +1680,13 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
     if ( t0 > m_knot[ii] && t1 < m_knot[ii] && (t0-m_knot[ii]) <= segtol && ii > m_order-2 )
     {
       t0 = m_knot[ii];
-      ki = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,t0,1,*hint);
+      ki = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,t0,-1,*hint);
     }
-
+    if ( bLineWiggleTest )
+      bSpanIsLinear = SpanIsLinear(ki,is_linear_min_length,is_linear_tolerance);
     *hint = ki;
     ki += m_order-2;
-    while (ki < m_order-2 && m_knot[ki] >= t0) 
+    while (ki > m_order-2 && m_knot[ki] >= t0) 
       ki--;
     if (ki <= m_order-2) 
     {
@@ -1503,9 +1701,20 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
     delta_ki = -1;
     delta = -delta;
   }
-  
 
-  while (m_knot[ki] < t1) 
+  double search_domain[2];
+  if ( t0 <= t1 )
+  {
+    search_domain[0] = t0;
+    search_domain[1] = t1;
+  }
+  else
+  {
+    search_domain[0] = t1;
+    search_domain[1] = t0;
+  }
+
+  while ( search_domain[0] < m_knot[ki] && m_knot[ki] < search_domain[1] ) 
   {
     if ( delta_ki > 0 )
     {
@@ -1568,12 +1777,10 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
         }
         else if ( bTestKappa )
         {
-          if ( ON_IsCurvatureDiscontinuity( Km, Kp, 
-                                            cos_angle_tolerance,
-                                            curvature_tolerance, 
-                                            ON_UNSET_VALUE, 
-                                            ON_UNSET_VALUE )
-             )
+          bool bIsCurvatureContinuous = ( ON::Gsmooth_continuous == c )
+                  ? ON_IsGsmoothCurvatureContinuous( Km, Kp, cos_angle_tolerance, curvature_tolerance )
+                  : ON_IsG2CurvatureContinuous( Km, Kp, cos_angle_tolerance, curvature_tolerance );
+          if ( !bIsCurvatureContinuous )
           {
             // NOTE:
             //   The test to enter this scope must exactly match
@@ -1582,6 +1789,19 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
             *dtype = 2;
             *t = m_knot[ki];
             return true;
+          }
+          if ( bLineWiggleTest )
+          {
+            if ( bSpanIsLinear != (( delta_ki < 0 )
+                                  ? SpanIsLinear(ki - m_order + 1,is_linear_min_length,is_linear_tolerance)
+                                  : SpanIsLinear(ki - m_order + 2,is_linear_min_length,is_linear_tolerance))
+               )
+            {
+              // we are at a transition between a line segment and a wiggle
+              *dtype = 3;
+              *t = m_knot[ki];
+              return true;
+            }
           }
         }
       }
@@ -1629,11 +1849,14 @@ bool ON_NurbsCurve::IsContinuous(
     double point_tolerance, // default=ON_ZERO_TOLERANCE
     double d1_tolerance, // default==ON_ZERO_TOLERANCE
     double d2_tolerance, // default==ON_ZERO_TOLERANCE
-    double cos_angle_tolerance, // default==0.99984769515639123915701155881391
+    double cos_angle_tolerance, // default==ON_DEFAULT_ANGLE_TOLERANCE_COSINE
     double curvature_tolerance  // default==ON_SQRT_EPSILON
     ) const
 {
   bool rc = true;
+
+  if ( m_order <= 2 )
+    desired_continuity = ON::PolylineContinuity(desired_continuity);
 
   if ( t <= m_knot[m_order-2] || t >= m_knot[m_cv_count-1] )
   {
@@ -1698,22 +1921,6 @@ bool ON_NurbsCurve::IsContinuous(
 
       // t = interior knot value - check for discontinuity
       int knot_mult = ON_KnotMultiplicity( m_order, m_cv_count, m_knot, ki );
-      if ( m_order == 2 )
-      {
-        switch(desired_continuity)
-        {
-        case ON::C2_continuous: 
-          desired_continuity = ON::C1_continuous; 
-          break;
-
-        case ON::G2_continuous: 
-          desired_continuity = ON::G1_continuous; 
-          break;
-        default:
-          // intentionally ignoring other ON::continuity enum values
-          break;
-        }
-      }
 
       switch(desired_continuity)
       {
@@ -1726,6 +1933,7 @@ bool ON_NurbsCurve::IsContinuous(
           return true;
         break;
       case ON::G2_continuous: 
+      case ON::Gsmooth_continuous: 
         if ( m_order - knot_mult >= 3 )
           return true;
         break;
@@ -1742,6 +1950,21 @@ bool ON_NurbsCurve::IsContinuous(
       rc = ON_Curve::IsContinuous( desired_continuity, t, hint, 
                            point_tolerance, d1_tolerance, d2_tolerance, 
                            cos_angle_tolerance, curvature_tolerance );
+
+      if ( rc 
+           && ON::Gsmooth_continuous == desired_continuity 
+           && knot_mult == m_order-1 
+           && ki > m_order-2
+           && ki < m_cv_count-1
+           )
+      {
+        // See if we are transitioning from linear to non-linear
+        const double is_linear_tolerance = 1.0e-8;  
+        const double is_linear_min_length = 1.0e-8;
+        if ( SpanIsLinear(ki - m_order + 2,is_linear_min_length,is_linear_tolerance) != SpanIsLinear(ki - 2*m_order + 3,is_linear_min_length,is_linear_tolerance) )
+          rc = false;
+        
+      }
     }
   }
   return rc;
@@ -1991,12 +2214,7 @@ ON_BOOL32 ON_NurbsCurve::SetStartPoint(
     else
     {
       ClampEnd(2);
-      double t;
-      ON_Interval domain = Domain();
-      if ( !GetLocalClosestPoint( start_point, domain[0], &t ) )
-        t = domain[0];
-      Trim( ON_Interval( t, domain[1] ) );
-      //DestroyCurveTree();
+
       double w = 1.0;
       if (IsRational()) {
         w = Weight(0);
@@ -2005,7 +2223,7 @@ ON_BOOL32 ON_NurbsCurve::SetStartPoint(
       SetCV(0,start_point);
       if (IsRational())
         SetWeight(0, w);
-      SetDomain(domain[0],domain[1]);
+
       DestroyCurveTree();
       rc = true;
     }
@@ -2027,12 +2245,7 @@ ON_BOOL32 ON_NurbsCurve::SetEndPoint(
     else
     {
       ClampEnd(2);
-      double t;
-      ON_Interval domain = Domain();
-      if ( !GetLocalClosestPoint( end_point, domain[1], &t ) )
-        t = domain[1];
-      Trim( ON_Interval( domain[0], t ) );
-      DestroyCurveTree();
+
       double w = 1.0;
       if (IsRational()) {
         w = Weight(m_cv_count-1);
@@ -2041,8 +2254,8 @@ ON_BOOL32 ON_NurbsCurve::SetEndPoint(
       SetCV(m_cv_count-1,end_point);
       if (IsRational())
         SetWeight(m_cv_count-1, w);
-      SetDomain(domain[0],domain[1]);
-    	DestroyCurveTree();
+
+      DestroyCurveTree();
       rc = true;
     }
   }
@@ -2667,19 +2880,6 @@ bool ON_NurbsCurve::ChangeDimension( int desired_dimension )
   return rc;
 }
 
-ON_BOOL32 ON_NurbsCurve::GetLength(
-        double* length,
-        double fractional_tolerance,
-        const ON_Interval* sub_domain
-        ) const
-{
-  // 3rd party developers who want to enhance openNURBS
-  // may provide a working GetLength here.
-  if ( length )
-    *length = 0;
-  return false;
-}
-
 bool ON_NurbsCurve::Append( const ON_NurbsCurve& c )
 {
   bool rc = false;
@@ -2702,7 +2902,7 @@ bool ON_NurbsCurve::Append( const ON_NurbsCurve& c )
       return false;
   }
 
-  if (    IsRational() && !c.IsRational() 
+  if (    (IsRational() && !c.IsRational())
        || c.Degree() < Degree() 
        || !c.IsClamped(0) 
        || c.Dimension() < Dimension() ) 
@@ -3206,7 +3406,7 @@ static bool ON_IsDuplicatePointList( int dim, int is_rat,
                                      double tolerance
                                      )
 {
-  bool rc = (dim > 0 || is_rat >= 0 && is_rat <= 1 && count > 0
+  bool rc = (dim > 0 && is_rat >= 0 && is_rat <= 1 && count > 0
              && abs(stride) >= dim+is_rat && abs(other_stride) >= (dim+is_rat)
              && 0 != cv && 0 != other_cv);
   if (rc)
@@ -3406,7 +3606,7 @@ bool ON_NurbsCurve::ChangeEndWeights(double w0, double w1)
 {
   if ( !ON_IsValid(w0) || !ON_IsValid(w1) || 0.0 == w0 || 0.0 == w1 )
     return false;
-  if ( (w0 < 0.0 && w1 > 0.0) || (w0 > 0.0 && w0 < 0.0) )
+  if ( (w0 < 0.0 && w1 > 0.0) || (w0 > 0.0 && w1 < 0.0) )
     return false;
 
   if (!ClampEnd(2))
@@ -3441,7 +3641,7 @@ bool ON_ChangeRationalNurbsCurveEndWeights(
 
   if ( !ON_IsValid(w0) || !ON_IsValid(w1) || 0.0 == w0 || 0.0 == w1 )
     return false;
-  if ( (w0 < 0.0 && w1 > 0.0) || (w0 > 0.0 && w0 < 0.0) )
+  if ( (w0 < 0.0 && w1 > 0.0) || (w0 > 0.0 && w1 < 0.0) )
     return false;
 
   if ( !ON_ClampKnotVector( dim+1, order, cv_count, cvstride, cv, knot, 2 ) )
@@ -3506,3 +3706,265 @@ bool ON_ChangeRationalNurbsCurveEndWeights(
   return true;
 }
 
+double ON_Fuzz( double x, double absolute_tolerance )
+{
+  double fuzz = fabs(x)*ON_RELATIVE_TOLERANCE;
+  return(fuzz > absolute_tolerance) ? fuzz : absolute_tolerance;
+}
+
+bool ON_NurbsCurve::SpanIsSingular( 
+  int span_index 
+  ) const
+{
+  const int cv_size = CVSize();
+  if (    m_order < 2 
+       || m_cv_count < m_order
+       || m_dim <= 0
+       || cv_size > m_cv_stride 
+       || 0 == m_knot
+       || 0 == m_cv
+       )
+  {
+    ON_ERROR("Invalid NURBS curve.");
+    return false;
+  }
+
+  if ( span_index < 0 || span_index > m_cv_count-m_order )
+  {
+    ON_ERROR("span_index parameter is out of range.");
+    return false;
+  }
+
+  const double* cv = CV(span_index);
+  const double* knot = m_knot + span_index;
+
+  if ( !(knot[m_order-2] < knot[m_order-1]) )
+  {
+    // vacuous question because there is no "span" evaluate.
+    // I chose return false here so people won't try to
+    // remove this empty span.
+    // no call to ON_ERROR here
+    return false; 
+  }
+
+  double* p = 0;
+  int cv_stride = m_cv_stride;
+  if ( knot[0] != knot[m_order-2] || knot[m_order-1] != knot[2*m_order-3] )
+  {
+    const size_t sizeof_cv = cv_size*sizeof(p[0]);
+    p = (double*)onmalloc(sizeof_cv*m_order);
+    for ( int i = 0; i < m_order; i++ )
+      memcpy( p+(i*cv_size), cv+(i*cv_stride), sizeof_cv );
+    ON_ConvertNurbSpanToBezier( cv_size, m_order, cv_size, p,
+															  knot, knot[m_order-2], knot[m_order-1] 
+                              );
+    cv_stride = cv_size;
+    cv = p;
+  }
+  const bool rc = ON_PointsAreCoincident(m_dim,m_is_rat,m_order,cv_stride,cv);
+  if ( 0 != p )
+    onfree(p);
+
+  return rc;
+}
+
+bool ON_NurbsCurve::RemoveSpan(
+  int span_index 
+  )
+{
+  const int cv_size = CVSize();
+  if (    m_order < 2 
+       || m_cv_count < m_order
+       || m_dim <= 0
+       || cv_size > m_cv_stride 
+       || 0 == m_knot
+       || 0 == m_cv
+       )
+  {
+    ON_ERROR("Invalid NURBS curve.");
+    return false;
+  }
+
+  if ( span_index < 0 || span_index > m_cv_count-m_order )
+  {
+    ON_ERROR("span_index parameter is out of range.");
+    return false;
+  }
+
+  if ( m_cv_count == m_order )
+  {
+    ON_ERROR("Cannot remove the only span from a Bezier NURBS curve.");
+    return false;
+  }
+
+  const size_t sizeof_cv = cv_size*sizeof(m_cv[0]);
+  int i, j;
+
+  const double knot0 = m_knot[span_index+m_order-2];
+  const double knot1 = m_knot[span_index+m_order-1];
+  const double knot_delta = (knot0 < knot1) ? (knot1 - knot0) : 0.0;
+
+  const bool bIsPeriodic0 = IsPeriodic()?true:false;
+
+  if ( span_index <= 0 )
+  {
+    // remove initial span
+    // set span_index = index of the span to keep.
+    for ( span_index = 1; span_index < m_cv_count-m_order; span_index++ )
+    {
+      if ( m_knot[span_index+m_order-2] < m_knot[span_index+m_order-1] )
+        break;
+    }
+    for ( i = 0; i+span_index < m_cv_count; i++ )
+      memcpy(CV(i),CV(i+span_index),sizeof_cv);
+    for ( i = 0; i+span_index < m_cv_count+m_order-2; i++ )
+    {
+      m_knot[i] = (knot1 == m_knot[i+span_index])
+                ? knot0
+                : (m_knot[i+span_index] - knot_delta);
+    }
+    m_cv_count -= span_index;
+  }
+  else if ( span_index >= m_cv_count-m_order )
+  {
+    // remove final span
+    // set span_index = index of the span to keep.
+    for ( span_index = m_cv_count-m_order-1; span_index > 0; span_index-- )
+    {
+      if ( m_knot[span_index+m_order-2] < m_knot[span_index+m_order-1] )
+        break;
+    }
+    m_cv_count = span_index+m_order;
+  }
+  else
+  {
+    // remove interior span
+    int k0 = span_index+m_order-2;
+    int k1 = span_index+m_order-1;
+    int i0 = k0;
+    int i1 = k1;
+    for ( i0 = k0; i0 > 0; i0-- )
+    {
+      if ( m_knot[i0-1] < m_knot[k0] )
+        break;
+    }
+    for ( i1 = k1; i1 < m_cv_count+m_order-3; i1++ )
+    {
+      if ( m_knot[i1+1] > m_knot[k1] )
+        break;
+    }
+    int m = (i1-i0+1);
+    if ( !(knot_delta > 0.0) )
+    {
+      if ( !(m_knot[i0] == m_knot[i1]) || m < m_order )
+      {
+        ON_ERROR("span_index parameter identifies an empty span.");
+        return false;
+      }
+    }
+
+    int span_index0 = i0 - (m_order-1);
+    double* cv0 = 0;
+    if ( span_index0 >= 0 && k0 - i0 + 1 < m_order-1 )
+    {
+      cv0 = (double*)onmalloc( (m_order*cv_size + 2*m_order-2)*sizeof(cv0[0]) );
+      double* knot0 = cv0 + (m_order*cv_size);
+      memcpy( knot0, m_knot+span_index0, (2*m_order-2)*sizeof(knot0[0]) );
+      for ( i = 0; i < m_order; i++ )
+        memcpy( cv0 + (i*cv_size), CV(span_index0+i), sizeof_cv );
+      ON_ClampKnotVector( cv_size, m_order, m_order, cv_size, cv0, knot0, 1 );
+    }
+
+    if ( m < m_order-1 )
+    {
+      i = m_order-1 - m;
+      ReserveCVCapacity( m_cv_stride*(m_cv_count+i) );
+      ReserveKnotCapacity( m_cv_count+m_order-2+i );
+      for ( j = m_cv_count+m_order-3; j >= i1-m_order+2; j-- )
+        m_knot[j+i] = m_knot[j];
+      for ( j = m_cv_count-1; j >= i1-m_order+2; j-- )
+        memcpy(CV(j+i),CV(j),sizeof_cv);
+      i1 += i;
+      k1 += i;
+      m_cv_count += i;
+    }
+
+    if ( i1-k1 < m_order-2 )
+      ON_ClampKnotVector( cv_size, m_order, m_order, m_cv_stride, 
+                          m_cv + ((i1-m_order+2)*m_cv_stride), 
+                          m_knot + (i1-m_order+2), 
+                          0 );
+
+    k0 = i0;
+    k1 = i1-m_order+2;
+
+    if ( 0 != cv0 )
+    {
+      for ( i = 0; i < m_order-1; i++ )
+        memcpy(CV(i+span_index0),cv0 + (i*cv_size),sizeof_cv);
+      onfree(cv0);
+      cv0 = 0;
+    }
+
+    if ( k0 < k1 )
+    {
+      for ( i = 0; i + k1 < m_cv_count; i++ )
+        memcpy(CV(i+k0),CV(i+k1),sizeof_cv);
+      for ( i = 0; i + k1 < m_cv_count+m_order-2; i++ )
+      {
+        m_knot[i+k0] = (knot1 == m_knot[i+k1]) 
+                     ? knot0
+                     : (m_knot[i+k1] - knot_delta);
+      }
+      m_cv_count -= (k1-k0);
+    }
+    else if ( k0 == k1 && knot_delta > 0.0 )
+    {
+      for ( i = k0; i < m_cv_count+m_order-2; i++ )
+      {
+        m_knot[i] = (knot1 == m_knot[i])
+                  ? knot0
+                  : (m_knot[i] - knot_delta);
+      }
+    }
+  }
+
+  if ( false == bIsPeriodic0 || false == IsPeriodic() )
+    ClampEnd(2);
+
+  return true;
+}
+
+int ON_NurbsCurve::RemoveSingularSpans()
+{
+  const int cv_size = CVSize();
+  if (    m_order < 2 
+       || m_cv_count < m_order
+       || m_dim <= 0
+       || cv_size > m_cv_stride 
+       || 0 == m_knot
+       || 0 == m_cv
+       )
+  {
+    ON_ERROR("Invalid NURBS curve.");
+    return 0;
+  }
+
+  int singular_span_count = 0;
+
+  for ( int span_index = 0; m_cv_count > m_order && span_index <= m_cv_count-m_order; span_index++ )
+  {
+    if (    m_knot[span_index+m_order-2] < m_knot[span_index+m_order-1] 
+         && SpanIsSingular(span_index) 
+       )
+    {
+      const int cv_count0 = m_cv_count;
+      if ( RemoveSpan(span_index) )
+        singular_span_count++;
+      if ( 0 == span_index || m_cv_count < cv_count0 )
+        span_index--;
+    }
+  }
+
+  return singular_span_count;
+}

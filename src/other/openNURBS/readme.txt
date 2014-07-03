@@ -81,7 +81,7 @@ Legal Stuff:
 	  (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 
  
-  Copyright (c) 1993-2009 Robert McNeel & Associates. All Rights Reserved.
+  Copyright (c) 1993-2012 Robert McNeel & Associates. All Rights Reserved.
   Rhinoceros is a registered trademark of Robert McNeel & Associates.
 
   THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED

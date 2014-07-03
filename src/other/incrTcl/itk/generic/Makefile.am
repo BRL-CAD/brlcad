@@ -8,14 +8,9 @@ noinst_LTLIBRARIES = libitg.la
 AM_CFLAGS = ${X_CFLAGS}
 
 # make sure we find Tcl's private headers
-if TCL_8_4_HEADERS
-compat_cppflags = \
-	-I$(top_srcdir)/src/other/incrTcl/compat/8.4
-else
 compat_cppflags = \
 	-I$(top_srcdir)/src/other/tcl/generic \
 	-I$(top_srcdir)/src/other/tcl/unix
-endif # TCL_8_4_HEADERS
 
 AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \

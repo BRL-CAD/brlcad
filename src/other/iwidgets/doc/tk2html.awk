@@ -3,7 +3,7 @@
 
 $0 ~ /'[\/\\]" */ || $1 == "'"    { next }    # eat [nt]roff comments
 
-# defining macros - eat them
+# defining macros - eat them 
 /^\.de.*/ {
         getline
         while ( $0 !~ "^\.\.$" )
@@ -19,7 +19,7 @@ $1 == ".VS" || $1 == ".VE" || $1 == ".AS"  { next }
 # handle first .SH as special case - .SH NAME
 /^.SH *NAME */ {
         getline
-        while ( $0 ~ /\.[a-zA-Z].*/ )   # eat dot-cmd following title
+        while ( $0 ~ /\.[a-zA-Z].*/ )   # eat dot-cmd following title 
         {
             getline
         }
@@ -39,13 +39,13 @@ $1 == ".VS" || $1 == ".VE" || $1 == ".AS"  { next }
         {
             print "</UL>"
         }
-        inIP = 1
+        inIP = 1 
         print "<UL>"
         match($0, /".*"/ )
         if ( RSTART > 0 )
         {
             arg = substr( $0, RSTART+1, RLENGTH-2)
-
+            
             print arg " <BR>"
         }
         else if ( length( $2 ) > 0 )
@@ -60,16 +60,16 @@ $0 ~ /^\.[a-zA-Z]*/ && inIP > 0 {
         print "</UL>"
     }
 
-# Convert
+# Convert 
 # .TP
 # Line1
 # line 2 - n
-# .Any
+# .Any              
 #
 # to
 # <DL>
 # <DT> Line1
-# <DD> lines 2 - n
+# <DD> lines 2 - n 
 # <DT>
 
 /^\.TP */ {
@@ -77,7 +77,7 @@ $0 ~ /^\.[a-zA-Z]*/ && inIP > 0 {
         {
             print "</DL>"
         }
-        inTP = 1
+        inTP = 1 
         print "<DL>"
         next
     }
@@ -110,7 +110,7 @@ $1 == ".AP" {
         next
     }
 
-# make a blank line
+# make a blank line 
 $1 == ".sp" {
         print "<BR>"
         next #        print "<BR>"
@@ -120,7 +120,7 @@ $1 == ".sp" {
 $1 == ".ta"  { next }
 
 
-# try and make links ( tk )
+# try and make links ( tk ) 
 #       "See the .*  manual entry"
 
 /"options"/  {
@@ -315,6 +315,6 @@ $1 == ".ta"  { next }
 
 # just pass everything else on
 
-    { print $0 }
+    { print $0 }    
 
 

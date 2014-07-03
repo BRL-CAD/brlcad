@@ -176,6 +176,13 @@ public:
 
 public:
   ON_MeshNgonList* m_ngon_list;
+
+  // used to validate ngon list.
+  // If the information here does not match the
+  // information in the mesh, then the ngon list
+  // is known to be invalid.
+  int m_mesh_F_count;
+  int m_mesh_V_count;
 };
 
 ON_OBJECT_IMPLEMENT(ON_MeshNgonUserData,ON_UserData,"31F55AA3-71FB-49f5-A975-757584D937FF");
@@ -186,6 +193,8 @@ ON_MeshNgonUserData::ON_MeshNgonUserData()
   m_application_uuid = ON_opennurbs4_id;
   m_userdata_copycount = 1;
   m_ngon_list = 0;
+  m_mesh_F_count = 0;
+  m_mesh_V_count = 0;
 }
 
 ON_MeshNgonUserData::~ON_MeshNgonUserData()
@@ -197,7 +206,10 @@ ON_MeshNgonUserData::~ON_MeshNgonUserData()
   }
 }
 
-ON_MeshNgonUserData::ON_MeshNgonUserData(const ON_MeshNgonUserData& src) : ON_UserData(src)
+ON_MeshNgonUserData::ON_MeshNgonUserData(const ON_MeshNgonUserData& src) 
+: ON_UserData(src)
+, m_mesh_F_count(src.m_mesh_F_count)
+, m_mesh_V_count(src.m_mesh_V_count)
 {
   m_ngon_list = (0 != src.m_ngon_list) 
               ? new ON_MeshNgonList(*src.m_ngon_list)
@@ -218,6 +230,8 @@ ON_MeshNgonUserData& ON_MeshNgonUserData::operator=(const ON_MeshNgonUserData& s
     {
        m_ngon_list = new ON_MeshNgonList(*src.m_ngon_list);
     }
+    m_mesh_F_count = src.m_mesh_F_count;
+    m_mesh_V_count = src.m_mesh_V_count;
   }
   return *this;
 }
@@ -251,7 +265,7 @@ unsigned int ON_MeshNgonUserData::SizeOf() const
 
 ON_BOOL32 ON_MeshNgonUserData::Write(ON_BinaryArchive& archive) const
 {
-  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,1);
   if (!rc)
     return false;
   for (;;)
@@ -276,6 +290,14 @@ ON_BOOL32 ON_MeshNgonUserData::Write(ON_BinaryArchive& archive) const
       if (!rc)
         break;
     }
+    if (!rc)
+      break;
+
+    // chunk version 1.1 added face and vertex validation counts.
+    rc = archive.WriteInt(m_mesh_F_count);
+    if (!rc)
+      break;
+    rc = archive.WriteInt(m_mesh_V_count);
     if (!rc)
       break;
 
@@ -337,6 +359,17 @@ ON_BOOL32 ON_MeshNgonUserData::Read(ON_BinaryArchive& archive)
     if (!rc)
       break;
 
+    if ( minor_version >= 1 )
+    {
+      // chunk version 1.1 added face and vertex validation counts.
+      rc = archive.ReadInt(&m_mesh_F_count);
+      if (!rc)
+        break;
+      rc = archive.ReadInt(&m_mesh_V_count);
+      if (!rc)
+        break;
+    }
+
     break;
   }
   if ( !archive.EndRead3dmChunk() )
@@ -353,14 +386,83 @@ ON_BOOL32 ON_MeshNgonUserData::GetDescription( ON_wString& description )
 
 ON_BOOL32 ON_MeshNgonUserData::Archive() const
 {
+  return ( 0 != m_ngon_list && m_ngon_list->NgonCount() > 0 );
+}
+
+static
+bool ON_ValidateNgon(
+  const ON_MeshNgon* ngon,
+  int mesh_V_count,
+  int mesh_F_count
+  )
+{
+  unsigned int j;
+  if ( 0 == ngon || ngon->N < 0 )
+    return false;
+  const unsigned int N = ngon->N;
+  for ( j = 0; j < N; j++ )
+  {
+    if ( ngon->vi[j] < 0 || ngon->vi[j] >= mesh_V_count )
+      return false;
+    if ( ngon->fi[j] < -1 || ngon->fi[j] >= mesh_F_count )
+      return false;
+  }
   return true;
 }
 
+static 
+bool ON_ValidateMeshNgonUserData(
+  ON_MeshNgonUserData* ngud,
+  const ON_Mesh& mesh
+  )
+{
+  int i;
+  if ( 0 == ngud || 0 == ngud->m_ngon_list )
+    return false;
+
+  const int mesh_V_count = mesh.m_V.Count();
+  const int mesh_F_count = mesh.m_F.Count();
+
+  if ( 0 == ngud->m_mesh_V_count && 0 == ngud->m_mesh_F_count )
+  {
+    // This is old user data that did not have validation counts
+    // saved in the file.
+
+    // Set validation counts to -1 so we never do this slow validation again.
+    ngud->m_mesh_V_count = -1;
+    ngud->m_mesh_F_count = -1;
+
+    const int ngon_count = ngud->m_ngon_list->NgonCount();
+
+    for ( i = 0; i < ngon_count; i++ )
+    {
+      if ( !ON_ValidateNgon(ngud->m_ngon_list->Ngon(i),mesh_V_count,mesh_F_count) )
+        return false;
+    }
+
+    // Set validation counts to proper values because we will 
+    // assume this old ngon information is valid since the indices
+    // are in range.  This assumption may not be valid, but
+    // at least the ngon won't cause a crash.
+    ngud->m_mesh_V_count = mesh_V_count;
+    ngud->m_mesh_F_count = mesh_F_count;
+  }
+
+  return ( ngud->m_mesh_F_count == mesh_F_count && ngud->m_mesh_V_count == mesh_V_count );
+}
+                         
 
 const class ON_MeshNgonList* ON_Mesh::NgonList() const
 {
   ON_UserData* ud = GetUserData(ON_MeshNgonUserData::m_ON_MeshNgonUserData_class_id.Uuid());
   ON_MeshNgonUserData* ngud = ON_MeshNgonUserData::Cast(ud);
+  
+  if ( 0 != ngud && !ON_ValidateMeshNgonUserData(ngud,*this) )
+  {
+    delete ngud;
+    ngud = 0;
+  }
+
   return (0 == ngud) ? 0 : ngud->m_ngon_list;
 }
 
@@ -377,12 +479,23 @@ class ON_MeshNgonList* ON_Mesh::ModifyNgonList()
       ud = 0;
     }
     ngud = new ON_MeshNgonUserData();
+    ngud->m_mesh_F_count = m_F.Count();
+    ngud->m_mesh_V_count = m_V.Count();
     AttachUserData(ngud);
   }
+  else if ( 0 != ngud->m_ngon_list && !ON_ValidateMeshNgonUserData(ngud,*this) )
+  {
+    delete ngud->m_ngon_list;
+    ngud->m_ngon_list = 0;
+  }
+
   if ( 0 == ngud->m_ngon_list )
   {
     ngud->m_ngon_list = new ON_MeshNgonList();
+    ngud->m_mesh_F_count = m_F.Count();
+    ngud->m_mesh_V_count = m_V.Count();
   }
+
   return ngud->m_ngon_list;
 }
 

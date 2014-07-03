@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -297,19 +298,8 @@ public:
         int, int        // indices of coords to swap
         );
 
-  // virtual ON_Geometry override
-  bool Morph( const ON_SpaceMorph& morph );
-
-  // virtual ON_Geometry override
-  bool IsMorphable() const;
-
   /////////////////////////////////////////////////////////////////
   // ON_Surface overrides
-
-  ON_Mesh* CreateMesh( 
-             const ON_MeshParameters& mp,
-             ON_Mesh* mesh = NULL
-             ) const;
 
   ON_BOOL32 SetDomain( 
     int dir, // 0 sets first parameter's domain, 1 gets second parameter's domain
@@ -452,7 +442,7 @@ public:
                   double* t,
                   int* hint=NULL,
                   int* dtype=NULL,
-                  double cos_angle_tolerance=0.99984769515639123915701155881391,
+                  double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
                   double curvature_tolerance=ON_SQRT_EPSILON
                   ) const;
 
@@ -491,7 +481,7 @@ public:
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
     double d2_tolerance=ON_ZERO_TOLERANCE,
-    double cos_angle_tolerance=0.99984769515639123915701155881391,
+    double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
     double curvature_tolerance=ON_SQRT_EPSILON
     ) const;
 
@@ -1268,27 +1258,6 @@ public:
   bool MakeDeformable();
 
   /*
-  Description:
-    Overrides virtual ON_Geometry::Morph function.
-    Applies the space morph to the NURBS volume's control points.
-  Parameters:
-    morph - [in]
-  Returns:
-    True is successful.
-  */
-  bool Morph( 
-    const ON_SpaceMorph& morph 
-    );
-
-  /*
-  Description:
-    Overrides virtual ON_Geometry::IsMorphable function.
-  Returns:
-    True because NURBS volumes can be morphed by calling Morph().
-  */
-  bool IsMorphable() const;
-
-  /*
   Returns:
     True if the cage is a parallelogram within the tolerance.
     This means the cage can be used as a starting point
@@ -1825,10 +1794,6 @@ public:
          const ON_Xform& xform
          );
 
-  bool Morph( const ON_SpaceMorph& morph );
-
-  bool IsMorphable() const;
-
   ON_BOOL32 HasBrepForm() const;
 
   ON_Brep* BrepForm( ON_Brep* brep = NULL ) const;
@@ -1929,41 +1894,6 @@ public:
   // Get a cage_morph that can be passed to Morph functions
   bool GetCageMorph( class ON_CageMorph& cage_morph ) const;
 
-  /*
-  Description:
-    Evaluates the deformation.  Used by ON_CageMorph::MorphPoint().
-  */
-  ON_3dPoint MorphPoint( ON_3dPoint point ) const;
-
-  /*
-  Description:
-    Get localizer settings needed in MorphPoint().
-  */
-  void MorphPointLocalizerHelper( 
-                const ON_3dPoint& point, 
-                double& w, 
-                double& clspt_max_dist,
-                const ON_Localizer*& distloc  
-                ) const;
-
-  void MorphPointVarient1Helper(
-                double t,
-                double w,
-                const ON_Localizer* distloc,
-                ON_3dPoint& Q,
-                ON_3dVector* N
-                ) const;
-
-  void MorphPointVarient2Helper(
-                double s,
-                double t,
-                double w,
-                const ON_Localizer* distloc,
-                ON_3dPoint& Q,
-                ON_3dVector* N
-                ) const;
-
-
   bool IsIdentity( const ON_BoundingBox& bbox ) const;
 
   int m_varient; // 1= curve, 2 = surface, 3 = cage
@@ -2002,7 +1932,6 @@ public:
   ON_CageMorph();
   ~ON_CageMorph();
 
-  ON_3dPoint MorphPoint( ON_3dPoint point ) const;
   bool IsIdentity( const ON_BoundingBox& bbox ) const;
 
   const ON_MorphControl* m_control;

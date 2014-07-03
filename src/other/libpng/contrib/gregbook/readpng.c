@@ -55,8 +55,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <zlib.h>
 
-#include "png.h"        /* libpng header; includes zlib.h */
+#include "png.h"        /* libpng header */
 #include "readpng.h"    /* typedefs, common macros, public prototypes */
 
 /* future versions of libpng will provide this macro: */
@@ -214,6 +215,10 @@ uch *readpng_get_image(double display_exponent, int *pChannels, ulg *pRowbytes)
      * libpng function */
 
     if (setjmp(png_jmpbuf(png_ptr))) {
+        free(image_data);
+        image_data = NULL;
+        free(row_pointers);
+        row_pointers = NULL;
         png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
         return NULL;
     }
@@ -229,8 +234,14 @@ uch *readpng_get_image(double display_exponent, int *pChannels, ulg *pRowbytes)
         png_set_expand(png_ptr);
     if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
         png_set_expand(png_ptr);
+#ifdef PNG_READ_16_TO_8_SUPPORTED
     if (bit_depth == 16)
+#  ifdef PNG_READ_SCALE_16_TO_8_SUPPORTED
+        png_set_scale_16(png_ptr);
+#  else
         png_set_strip_16(png_ptr);
+#  endif
+#endif
     if (color_type == PNG_COLOR_TYPE_GRAY ||
         color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
         png_set_gray_to_rgb(png_ptr);
@@ -263,7 +274,8 @@ uch *readpng_get_image(double display_exponent, int *pChannels, ulg *pRowbytes)
         return NULL;
     }
 
-    Trace((stderr, "readpng_get_image:  channels = %d, rowbytes = %ld, height = %ld\n", *pChannels, rowbytes, height));
+    Trace((stderr, "readpng_get_image:  channels = %d, rowbytes = %ld, height = %ld\n",
+        *pChannels, rowbytes, height));
 
 
     /* set the individual row_pointers to point at the correct offsets */

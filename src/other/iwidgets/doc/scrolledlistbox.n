@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) scrolledlistbox.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::scrolledlistbox iwid
 .BS
@@ -23,7 +23,7 @@ itk::Widget <- iwidgets::Labeledwidget <- iwidgets::Scrolledwidget <- iwidgets::
 \fB
 activeBackground  background        borderWidth        cursor
 exportSelection   foreground        highlightColor     highlightThickness
-relief            selectBackground  selectBorderWidth  selectForeground\fR
+relief            selectBackground  selectBorderWidth  selectForeground\fR	
 .fi
 .LP
 See the "options" manual entry for details on the standard options.
@@ -53,7 +53,7 @@ associated options.
 \fBstate\fR	\fBsticky\fR
 .fi
 .LP
-See the "labeledwidget" class manual entry for details on the inherited
+See the "labeledwidget" class manual entry for details on the inherited 
 options.
 .SH "WIDGET-SPECIFIC OPTIONS"
 .LP
@@ -64,7 +64,7 @@ Command-Line Switch:	\fB-dblclickcommand\fR
 .fi
 .IP
 Specifies a Tcl command procedure which is called when an item is
-double clicked.  Typically this occurs when mouse button 1 is double
+double clicked.  Typically this occurs when mouse button 1 is double 
 clicked over an item.  Selection policy does not matter.
 .LP
 .nf
@@ -74,11 +74,11 @@ Command-Line Switch:	\fB-height\fR
 .fi
 .IP
 Specifies the height of the scrolled list box as an entire unit.
-The value may be specified in any of the forms acceptable to
+The value may be specified in any of the forms acceptable to 
 \fBTk_GetPixels\fR.  Any additional space needed to display the other
 components such as labels, margins, and scrollbars force the listbox
-to be compressed.  A value of zero along with the same value for
-the width causes the value given for the visibleitems option
+to be compressed.  A value of zero along with the same value for 
+the width causes the value given for the visibleitems option 
 to be applied which administers geometry constraints in a different
 manner.  The default height is zero.
 .LP
@@ -89,9 +89,9 @@ Command-Line Switch:	\fB-hscrollmode\fR
 .fi
 .IP
 Specifies the the display mode to be used for the horizontal
-scrollbar: \fBstatic, dynamic,\fR or \fBnone\fR.  In static mode, the
+scrollbar: \fBstatic, dynamic,\fR or \fBnone\fR.  In static mode, the 
 scroll bar is displayed at all times.  Dynamic mode displays the
-scroll bar as required, and none disables the scroll bar display.  The
+scroll bar as required, and none disables the scroll bar display.  The 
 default is static.
 .LP
 .nf
@@ -100,7 +100,7 @@ Class:	\fBWidth\fR
 Command-Line Switch:	\fB-sbwidth\fR
 .fi
 .IP
-Specifies the width of the scrollbar in any of the forms acceptable
+Specifies the width of the scrollbar in any of the forms acceptable 
 to \fBTk_GetPixels\fR.  The default width is 15 pixels..
 .LP
 .nf
@@ -109,7 +109,7 @@ Class:	\fBMargin\fR
 Command-Line Switch:	\fB-scrollmargin\fR
 .fi
 .IP
-Specifies the distance between the listbox and scrollbar in any of the
+Specifies the distance between the listbox and scrollbar in any of the 
 forms acceptable to \fBTk_GetPixels\fR.  The default is 3 pixels.
 .LP
 .nf
@@ -137,7 +137,7 @@ Class:	\fBBackground\fR
 Command-Line Switch \fB-textbackground\fR
 .fi
 .IP
-Specifies the background color for the listbox.  This allows the background
+Specifies the background color for the listbox.  This allows the background 
 within the listbox to be different from the normal background color.
 .LP
 .nf
@@ -146,8 +146,8 @@ Class:	\fBFont\fR
 Command-Line Switch:	\fB-textfont\fR
 .fi
 .IP
-Specifies the font to be used for text in the listbox.  This allows for
-the font associated with text internal to the scrolled listbox to be
+Specifies the font to be used for text in the listbox.  This allows for 
+the font associated with text internal to the scrolled listbox to be 
 different than the font for labels.
 .LP
 .nf
@@ -159,12 +159,12 @@ Command-Line Switch:	\fB-visibleitems\fR
 Specifies the widthxheight in characters and lines for the listbox.
 This option is only administered if the width and height options
 are both set to zero, otherwise they take precedence.  The default value
-is 20x10.  With the visibleitems option engaged, geometry constraints
-are maintained only on the listbox.  The size of the other components such as
-labels, margins, and scroll bars, are additive and independent,
+is 20x10.  With the visibleitems option engaged, geometry constraints 
+are maintained only on the listbox.  The size of the other components such as 
+labels, margins, and scroll bars, are additive and independent, 
 effecting the overall size of the scrolled list box.  In contrast,
 should the width and height options have non zero values, they
-are applied to the scrolled list box as a whole.  The listbox
+are applied to the scrolled list box as a whole.  The listbox 
 is compressed or expanded to maintain the geometry constraints.
 .LP
 .nf
@@ -174,9 +174,9 @@ Command-Line Switch:	\fB-vscrollmode\fR
 .fi
 .IP
 Specifies the the display mode to be used for the vertical
-scrollbar: \fBstatic, dynamic,\fR or \fBnone\fR.  In static mode, the
-scroll bar is displayed at all times.  Dynamic mode displays the
-scroll bar as required, and none disables the scroll bar display.  The
+scrollbar: \fBstatic, dynamic,\fR or \fBnone\fR.  In static mode, the 
+scroll bar is displayed at all times.  Dynamic mode displays the 
+scroll bar as required, and none disables the scroll bar display.  The 
 default is static.
 .LP
 .nf
@@ -186,18 +186,18 @@ Command-Line Switch:	\fB-width\fR
 .fi
 .IP
 Specifies the width of the scrolled list box as an entire unit.
-The value may be specified in any of the forms acceptable to
+The value may be specified in any of the forms acceptable to 
 \fBTk_GetPixels\fR.  Any additional space needed to display the other
 components such as labels, margins, and scrollbars force the listbox
-to be compressed.  A value of zero along with the same value for
-the height causes the value given for the visibleitems option
+to be compressed.  A value of zero along with the same value for 
+the height causes the value given for the visibleitems option 
 to be applied which administers geometry constraints in a different
 manner.  The default width is zero.
 .BE
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::scrolledlistbox\fR command creates
+The \fBiwidgets::scrolledlistbox\fR command creates 
 a scrolled listbox with additional options to manage
 horizontal and vertical scrollbars.  This includes options to control
 which scrollbars are displayed and the method, i.e. statically or
@@ -304,7 +304,7 @@ Returns the number of items currently selected in the list.
 .TP
 \fIpathName \fBsort\fR \fIorder\fR
 Sort the current list in any of the forms accepted by Tcl's lsort command.
-Also accepts either \fBascending\fR or \fBdescending\fR order.
+Also accepts either \fBascending\fR or \fBdescending\fR order.  
 
 .SH "COMPONENTS"
 .LP
@@ -313,7 +313,7 @@ Name:	\fBlistbox\fR
 Class:	\fBlistbox\fR
 .fi
 .IP
-The listbox component is the listbox widget.  See the "listbox" widget
+The listbox component is the listbox widget.  See the "listbox" widget 
 manual entry for details on the listbox component item.
 .LP
 .nf
@@ -321,7 +321,7 @@ Name:	\fBhorizsb\fR
 Class:	\fBScrollbar\fR
 .fi
 .IP
-The horizsb component is the horizontal scroll bar.  See the "scrollbar"
+The horizsb component is the horizontal scroll bar.  See the "scrollbar" 
 widget manual entry for details on the horizsb component item.
 .LP
 .nf
@@ -329,7 +329,7 @@ Name:	\fBvertsb\fR
 Class:	\fBScrollbar\fR
 .fi
 .IP
-The vertsb component is the vertical scroll bar.  See the "scrollbar" widget
+The vertsb component is the vertical scroll bar.  See the "scrollbar" widget 
 manual entry for details on the vertsb component item.
 .fi
 
@@ -348,7 +348,7 @@ manual entry for details on the vertsb component item.
     -vscrollmode static -hscrollmode dynamic -labeltext "List" \\
     -selectioncommand selCmd -dblclickcommand defCmd
  pack .slb -padx 10 -pady 10 -fill both -expand yes
- .slb insert end {Hello {Out There} World}
+ .slb insert end {Hello {Out There} World} 
 .DE
 .SH AUTHOR
 Mark L. Ulferts

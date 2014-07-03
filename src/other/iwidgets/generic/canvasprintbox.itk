@@ -5,7 +5,7 @@
 # to a printer or a file. It is possible to specify page orientation, the
 # number of pages to print the image on and if the output should be
 # stretched to fit the page.
-#
+# 
 # CanvasPrintBox is a "super-widget" that can be used as an
 # element in ones own GUIs. It is used to print the contents
 # of a canvas (called the source hereafter) to a printer or a
@@ -26,15 +26,15 @@
 # software and its documentation for any purpose, provided that the
 # above copyright notice and the following two paragraphs appear in
 # all copies of this software.
-#
+# 
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE TO ANY PARTY FOR
-# DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
-# ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN
-# IF THE COPYRIGHT HOLDER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+# DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES 
+# ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN 
+# IF THE COPYRIGHT HOLDER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH 
 # DAMAGE.
 #
-# THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING,
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+# THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, 
+# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
 # FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
 # ON AN "AS IS" BASIS, AND THE COPYRIGHT HOLDER HAS NO OBLIGATION TO
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
@@ -89,7 +89,7 @@ itcl::class iwidgets::Canvasprintbox {
 	itk_option define -printregion printRegion PrintRegion ""
 	itk_option define -stretch stretch Stretch 0
 	itk_option define -vpagecnt vPageCnt PageCnt 1
-
+	
 	constructor {args} {}
 	destructor {}
 
@@ -114,23 +114,23 @@ itcl::class iwidgets::Canvasprintbox {
 	  #
 	  variable win ""
 	  variable canvw ""
-
+	
 	  #
-	  # The canvas we want to print.
+	  # The canvas we want to print. 
 	  #
 	  variable canvas ""
-
+	
 	  #
 	  # Boolean indicating if the attribute "orient" is set
 	  # to landscape or not.
 	  #
 	  variable rotate 1
-
+	
 	  #
 	  # Holds the configure options that were used to create this object.
 	  #
 	  variable init_opts ""
-
+	
 	  #
 	  # The following attributes hold a list of lines that are
 	  # currently drawn on the "stamp" to show how the page(s) is/are
@@ -166,7 +166,7 @@ itcl::class iwidgets::Canvasprintbox {
 
 #
 # Provide a lowercased access method for the Canvasprintbox class.
-#
+# 
 proc ::iwidgets::canvasprintbox {args} {
 	uplevel ::iwidgets::Canvasprintbox $args
 }
@@ -357,7 +357,7 @@ itcl::body iwidgets::Canvasprintbox::constructor {args} {
 			-justify left \
 			-value printer \
 			-command [itcl::code $this _update_attr]
-	} {
+	} { 
 		usual
 		rename -font -labelfont labelFont Font
 	}
@@ -377,7 +377,7 @@ itcl::body iwidgets::Canvasprintbox::constructor {args} {
 			-variable [itcl::scope _globVar($this,output)] \
 			-value file \
 			-command [itcl::code $this _update_attr]
-	} {
+	} { 
 		usual
 		rename -font -labelfont labelFont Font
 	}
@@ -401,7 +401,7 @@ itcl::body iwidgets::Canvasprintbox::constructor {args} {
 			-labelpos w -cyclicon 1 \
 			-labeltext "Paper size:" \
 			-command [itcl::code $this refresh]
-	} {
+	} { 
 		usual
 		rename -font -labelfont labelFont Font
 	}
@@ -424,7 +424,7 @@ itcl::body iwidgets::Canvasprintbox::constructor {args} {
 			-anchor w \
 			-variable [itcl::scope _globVar($this,stretchcb)] \
 			-command [itcl::code $this refresh]
-	} {
+	} { 
 		usual
 		rename -font -labelfont labelFont Font
 	}
@@ -437,7 +437,7 @@ itcl::body iwidgets::Canvasprintbox::constructor {args} {
 			-anchor w \
 			-variable [itcl::scope _globVar($this,postercb)] \
 			-command [itcl::code $this refresh]
-	} {
+	} { 
 		usual
 		rename -font -labelfont labelFont Font
 	}
@@ -460,13 +460,13 @@ itcl::body iwidgets::Canvasprintbox::constructor {args} {
 
 	itk_component add pages {
 		label $cs.pages -text pages.
-	} {
+	} { 
 		usual
 		rename -font -labelfont labelFont Font
 	}
-
+	
 	set init_opts $args
-
+	
 	grid $itk_component(canvasframe) -row 0 -column 0 -rowspan 4 -sticky nsew
 	grid $itk_component(propsframe)  -row 0 -column 1 -sticky nsew
 	grid $itk_component(outputom)    -row 1 -column 1 -sticky nsew
@@ -507,7 +507,7 @@ itcl::body iwidgets::Canvasprintbox::constructor {args} {
 #
 # In:	canv - The canvas to be printed
 # Out:	canvas (attrib) - Holds the canvas to be printed
-#>
+#>	
 itcl::body iwidgets::Canvasprintbox::setcanvas {canv} {
 	set canvas $canv
 	_update_canvas
@@ -691,7 +691,7 @@ itcl::body iwidgets::Canvasprintbox::_calc_poster_size {} {
 #	pixel-coordinates (topleft & bottomright).
 #
 itcl::body iwidgets::Canvasprintbox::_calc_print_region {} {
-	set printreg [expr {$itk_option(-printregion) != ""
+	set printreg [expr {$itk_option(-printregion) != "" 
 		? $itk_option(-printregion) : [$canvas bbox all]}]
 
 	if {$printreg != ""} {
@@ -704,7 +704,7 @@ itcl::body iwidgets::Canvasprintbox::_calc_print_region {} {
 	} else {
 		set res "0 0 0 0"
 	}
-
+	
 	return $res
 }
 
@@ -760,7 +760,7 @@ itcl::body iwidgets::Canvasprintbox::_update_canvas {{when later}} {
 	    $_globVar($this,vpc) == [llength $hlines]} {
 		stop
 		return
-	}
+	}	
 
 	$canvw delete all
 
@@ -852,7 +852,7 @@ itcl::body iwidgets::Canvasprintbox::_update_canvas {{when later}} {
 		if {$t == "line" && $tsf < 0.33} {
 			lappend cfg2 -arrow none
 		}
-
+		
 		#
 		# Create a copy of the item on the "printing" canvas.
 		#
@@ -981,11 +981,11 @@ itcl::body iwidgets::Canvasprintbox::destructor {} {
 #
 itcl::body iwidgets::Canvasprintbox::ezPaperInfo {size {attr ""} \
 	{orient "portrait"} {window ""}} {
-
+    
 	set size [string tolower $size]
 	set attr [string tolower $attr]
 	set orient [string tolower $orient]
-
+	
 	case $size in {
 		types {
 			return "A5 A4 A3 A2 A1 Legal Letter"
@@ -1078,7 +1078,7 @@ itcl::body iwidgets::Canvasprintbox::ezPaperInfo {size {attr ""} \
 			error "ezPaperInfo: Unknown paper type ($type)"
 		}
 	}
-
+	
 	set inv(x1) "y1"
 	set inv(x2) "y2"
 	set inv(y1) "x1"
@@ -1089,7 +1089,7 @@ itcl::body iwidgets::Canvasprintbox::ezPaperInfo {size {attr ""} \
 	set inv(height) "width"
 	set inv(centerx) "centery"
 	set inv(centery) "centerx"
-
+	
 	case $orient in {
 		landscape {
 			set res $paper($inv($attr))
@@ -1102,10 +1102,10 @@ itcl::body iwidgets::Canvasprintbox::ezPaperInfo {size {attr ""} \
 				portrait or landscape (not $orient)"
 		}
 	}
-
+	
 	if {$window != ""} {
 		set res [winfo fpixels $window $res]
 	}
-
+	
 	return $res
-}
+} 

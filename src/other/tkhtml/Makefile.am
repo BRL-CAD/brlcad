@@ -124,7 +124,7 @@ DEFS		= @DEFS@ $(PKG_CFLAGS)
 CONFIG_CLEAN_FILES = Makefile
 
 CPPFLAGS	= @CPPFLAGS@
-LIBS		= -L/usr/lib -L/usr/local/lib @PKG_LIBS@ @LIBS@
+LIBS		= -L/usr/lib -L/usr/local/lib -L/usr/X11/lib @PKG_LIBS@ @LIBS@
 LDFLAGS		= @LDFLAGS@
 AR		= @AR@
 CFLAGS		= @CFLAGS@
@@ -382,7 +382,7 @@ pkgIndex.tcl:
 # variable in configure.in
 #========================================================================
 
-clean:  
+clean: clean-am
 	-test -z "$(BINARIES)" || rm -f $(BINARIES)
 	-rm -f *.$(OBJEXT) core *.core
 	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
@@ -522,7 +522,9 @@ EXTRA_DIST = \
 	src/tkhtml.tcl \
 	src/tokenlist.txt \
 	tclconfig/README.txt \
-	tclconfig/tcl.m4
+	tclconfig/tcl.m4 \
+	CMakeLists.txt \
+	CMake
 
 .PHONY: all binaries clean depend distclean doc install libraries test
 

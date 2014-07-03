@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2008 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -81,76 +82,12 @@ public:
   ON_Surface::ISO    IsoType( double t) const;
 
   double EdgeParameter(double t) const;
-  double TrimParameter(double t) const;
-  ON_2dPoint SurfaceParameter(double t) const;
 
   // Test if there are any surface edges in the polyedge
   bool ContainsAnyEdges() const;
   // Test if all segments of the polyedge are surface edges
   bool ContainsAllEdges() const;
   
-  /*
-  Description:
-    Evaluate surface binormal and normal.
-  Parameters:
-    t - [in] ON_PolyEdgeCurve curve parameter
-    bIsoDir - [in] (if true, the tangent will be parallel to an isodir)
-    srfpoint - [out] location on surface
-    srftangent - [out] "binormal" tangent to the surface.
-         The direction of this tangent is controled by
-         the surface tangent mode setting.
-    srfnormal - [out] normal to surface,
-  See Also:
-    ON_PolyEdgeCurve::SetSrfTangentMode    
-  */
-  bool EvSrfTangent( 
-          double t,
-          bool bIsoDir,
-          ON_3dPoint& srfpoint,
-          ON_3dVector& srftangent,
-          ON_3dVector& srfnormal
-          ) const;
-
-  /*
-  Description:
-    Evaluate surface normal curvature
-  Parameters:
-    t - [in] ON_PolyEdgeCurve curve parameter
-    srftangent - [in] tangent to the surface
-    srfnormalcurvature - [out] normal curvature
-    srfnormal - [out] normal to surface
-  See Also:
-    ON_PolyEdgeCurve::EvSrfTangent    
-  */
-  bool EvSrfNormalCurvature( 
-            double t,
-            ON_3dVector srftangent,
-            ON_3dVector& srfnormalcurvature,
-            ON_3dVector& srfnormal
-            ) const;
-
-  /*
-  Description:
-    Evaluate surface derivatives.
-  Parameters:
-    t - [in] ON_PolyEdgeCurve curve parameter
-    srfpoint - [out] location on surface
-    du - [out]
-    dv - [out]
-    duu - [out]
-    duv - [out]
-    dvv - [out]
-  */
-  bool EvSrfDerivatives(
-          double t,
-          ON_3dPoint& srfpoint,
-          ON_3dVector& du,
-          ON_3dVector& dv,
-          ON_3dVector& duu,
-          ON_3dVector& duv,
-          ON_3dVector& dvv
-          ) const;
-
   /*
   Description:
     See if this polyedge has an edge as one of its segments
@@ -266,8 +203,6 @@ public:
   ON_Surface::ISO    IsoType() const;
 
   double EdgeParameter(double t) const;
-  double TrimParameter(double t) const;
-  ON_2dPoint SurfaceParameter(double t) const;
 
   /*
   Returns:
@@ -296,16 +231,6 @@ public:
     be different than the domain returned by this->Domain().
   */
   ON_Interval TrimDomain() const;
-
-  ON_BOOL32 Trim(
-    const ON_Interval& domain
-    );
-
-  ON_BOOL32 Split(
-      double t,
-      ON_Curve*& left_side,
-      ON_Curve*& right_side
-    ) const;
 
   // m_object_id = id of a brep or curve object in Rhino
   ON_UUID m_object_id; 
@@ -353,8 +278,6 @@ public:
   const ON_BrepEdge* m_edge;  // 3d edge in m_brep
   const ON_BrepFace* m_face;
   const ON_Surface* m_surface;
-
-  void SetTrimDomainFromEdgeDomain();
 
 private:
   friend class ON_PolyEdgeCurve;

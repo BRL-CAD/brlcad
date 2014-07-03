@@ -87,7 +87,8 @@ EXTRA_DIST = \
 	rletoppm.c \
 	rletorast.c \
 	rletotiff.c \
-	tifftorle.c
+	tifftorle.c \
+	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

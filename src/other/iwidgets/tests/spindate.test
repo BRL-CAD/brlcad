@@ -45,7 +45,7 @@ set m 1
 test Spindate-1.$c {Spindate construction} {
     iwidgets::Spindate .sd
     pack .sd -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -95,7 +95,7 @@ foreach test {
 	    .sd configure $option [lindex $test 1]
 	    lindex [.sd configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -122,7 +122,7 @@ foreach test {
 	test Spindate-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -141,7 +141,7 @@ foreach test {
 #
 test Spindate-1.$c {Spindate destruction} {
     destroy .sd
-    update
+    update 
 } {}
 
 incr c
@@ -149,14 +149,14 @@ incr c
 test Spindate-1.$c {Spindate construction} {
     iwidgets::spindate .sd -monthformat brief
     pack .sd -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Spindate-1.$c {Spindate destruction} {
     destroy .sd
-    update
+    update 
 } {}
 
 incr c
@@ -165,7 +165,7 @@ test Spindate-1.$c {Spindate destruction} {
     iwidgets::spindate .sd
     pack .sd
     destroy .sd
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

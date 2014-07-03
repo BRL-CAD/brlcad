@@ -18,7 +18,8 @@ termcap: termcap.src
 
 EXTRA_DIST = \
 	termcap \
-	termcap.src
+	termcap.src \
+	CMakeLists.txt
 
 BUILT_SOURCES = termcap
 

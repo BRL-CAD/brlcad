@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -184,17 +185,17 @@ public:
         determine the location of the sides.
     dx - [in]
        Determines the location of the front and back planes.
-       The vector plane.xaxis is perpindicular to these planes
+       The vector plane.xaxis is perpendicular to these planes
        and they pass through plane.PointAt(dx[0],0,0) and
        plane.PointAt(dx[1],0,0), respectivly.
     dy - [in]
        Determines the location of the left and right planes.
-       The vector plane.yaxis is perpindicular to these planes
+       The vector plane.yaxis is perpendicular to these planes
        and they pass through plane.PointAt(0,dy[0],0) and
        plane.PointAt(0,dy[1],0), respectivly.
     dz - [in] 
        Determines the location of the top and bottom planes.
-       The vector plane.zaxis is perpindicular to these planes
+       The vector plane.zaxis is perpendicular to these planes
        and they pass through plane.PointAt(0,0,dz[0]) and
        plane.PointAt(0,0,dz[1]), respectivly.
     bIsCapped - [in]
@@ -448,29 +449,6 @@ public:
     ON_3dPoint* T
     ) const;
 
-  int EvaluateMeshMapping( 
-    const ON_3dPoint& P,
-    const ON_3dVector& N,
-    const ON_Mesh* mesh,
-    ON_3dPoint* T
-    ) const;
-
-  int EvaluateSurfaceMapping( 
-    const ON_3dPoint& P,
-    const ON_3dVector& N,
-    const ON_Surface* srf,
-    ON_3dPoint* T
-    ) const;
-
-  int EvaluateBrepMapping( 
-    const ON_3dPoint& P,
-    const ON_3dVector& N,
-    const ON_Brep* brep,
-    ON_3dPoint* T
-    ) const;
-
-  static void SetAdvancedBrepMappingToolFunctions(TEXMAP_INTERSECT_LINE_SURFACE, TEXMAP_BREP_FACE_CLOSEST_POINT);
-
   /*
   Description:
     Quickly check to see if a mesh or tag has texture coordinates
@@ -661,9 +639,10 @@ public:
   
   TEXTURE_SPACE m_texture_space;
 
-  // The m_bCapped applies to cylinder and box mappings.  If
-  // m_bCapped is false, the cylinder or box is "infinite".
-  // If m_bCapped is true, they are finite.
+  // The m_bCapped applies to planar, cylinder and box mappings.
+  // If m_bCapped is false, the cylinder or box is "infinite", if m_bCapped is true, they are finite.
+  // In planar mappings, m_bCapped=false means "the Z texture coordinate will always be 0.0"
+  // this is now the default behaviour in Rhino 5.0 - it's what users expect apparently.
   bool m_bCapped;
 
   //////////////////////////////////////////////////////////

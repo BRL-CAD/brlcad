@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -636,6 +637,44 @@ ON_EvNormal(int limit_dir,
   return N.Unitize();
 }
 
+bool ON_EvTangent( 
+        const ON_3dVector& D1, // first derivative
+        const ON_3dVector& D2, // second derivative
+        ON_3dVector& T         // Unit tangent returned here
+        )
+{
+  // Evaluate unit tangent from first and second derivatives
+  // T = D1 / |D1|
+
+  bool rc = false;
+  double d1 = D1.Length();
+
+  if (d1 == 0.0) 
+  {
+    // Use L'hopital's rule to show that if the unit tanget
+    // exists and the 1rst derivative is zero and the 2nd derivative is
+    // nonzero, then the unit tangent is equal to +/-the unitized 
+    // 2nd derivative.  The sign is equal to the sign of D1(s) o D2(s)
+    // as s approaches the evaluation parameter.
+    //
+    d1 = D2.Length();
+    if (d1 > 0.0) 
+    {
+      T = D2/d1;
+      rc = true;
+    }
+    else 
+    {
+      T.Zero();
+    }
+  }
+  else 
+  {
+    T = D1/d1;
+    rc = true;
+  }
+  return rc;  
+}
 
 
 ON_BOOL32 
@@ -789,8 +828,6 @@ bool ON_EvSectionalCurvature(
   return true;
 }
 
-
-
 ON_BOOL32 ON_IsContinuous(
   ON::continuity desired_continuity,
   ON_3dPoint Pa, ON_3dVector D1a, ON_3dVector D2a,
@@ -842,18 +879,26 @@ ON_BOOL32 ON_IsContinuous(
 
   case ON::G2_continuous:
   case ON::G2_locus_continuous:
+  case ON::Gsmooth_continuous:
     ON_EvCurvature( D1a, D2a, Ta, Ka );
     ON_EvCurvature( D1b, D2b, Tb, Kb );
-    if ( !(Pa-Pb).IsTiny(point_tolerance) || Ta*Tb < cos_angle_tolerance || 
-					(Ka-Kb).Length() > curvature_tolerance || 
-					(!Ka.IsTiny() && !Kb.IsTiny() && Ka.Unitize()*Kb.Unitize() <.95 )  )
+    if ( !(Pa-Pb).IsTiny(point_tolerance) || Ta*Tb < cos_angle_tolerance )
       return false;
+    if ( ON::Gsmooth_continuous == desired_continuity )
+    {
+      if ( !ON_IsGsmoothCurvatureContinuous(Ka,Kb,cos_angle_tolerance,curvature_tolerance) )
+        return false;
+    }
+    else
+    {
+      if ( !ON_IsG2CurvatureContinuous(Ka,Kb,cos_angle_tolerance,curvature_tolerance) )
+        return false;
+    }
     break;
   }
 
   return true;
 }
-
 
 int 
 ON_SearchMonotoneArray(const double* array, int length, double t)
@@ -1546,7 +1591,84 @@ ON_TransformVectorList(
   return rc;
 }
 
+bool ON_PointsAreCoincident(
+    int dim,
+    int is_rat,
+    const double* pointA,
+    const double* pointB
+    )
+{
+  double d, a, b, wa, wb;
+  
+  if ( dim < 1 || 0 == pointA || 0 == pointB )
+    return false;
 
+  if ( is_rat )
+  {
+    wa = pointA[dim];
+    wb = pointB[dim];
+    if ( 0.0 == wa || 0.0 == wb )
+    {
+      if ( 0.0 == wa && 0.0 == wb )
+        return ON_PointsAreCoincident(dim,0,pointA,pointB);
+      return false;
+    }
+    while(dim--)
+    {
+      a = *pointA++ / wa;
+      b = *pointB++ / wb;
+      d = fabs(a-b);
+      if ( d <= ON_ZERO_TOLERANCE )
+        continue;
+      if ( d <= (fabs(a)+fabs(b))*ON_RELATIVE_TOLERANCE )
+        continue;
+      return false;
+    }
+  }
+  else
+  {
+    while(dim--)
+    {
+      a = *pointA++;
+      b = *pointB++;
+      d = fabs(a-b);
+      if ( d <= ON_ZERO_TOLERANCE )
+        continue;
+      if ( d <= (fabs(a)+fabs(b))*ON_RELATIVE_TOLERANCE )
+        continue;
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool ON_PointsAreCoincident(
+    int dim,
+    int is_rat,
+    int point_count,
+    int point_stride,
+    const double* points
+    )
+{
+  if ( 0 == points || point_count < 2 )
+    return false;
+  if ( point_stride < (is_rat?(dim+1):dim) )
+    return false;
+  if ( false == ON_PointsAreCoincident( dim, is_rat, points, points + ((point_count-1)*point_stride) ) )
+    return false;
+  if ( point_count > 2 )
+  {
+    point_count--;
+    while ( point_count-- )
+    {
+      if ( false == ON_PointsAreCoincident(dim,is_rat,points,points + point_stride ) )
+        return false;
+      points += point_stride;
+    }
+  }
+  return true;
+}
 
 int 
 ON_ComparePoint( // returns 
@@ -1566,7 +1688,7 @@ ON_ComparePoint( // returns
   for ( i = 0; i < dim; i++ ) {
     a = wA* *pointA++;
     b = wB* *pointB++;
-    tol = (fabs(a) + fabs(b))* ON_SQRT_EPSILON;
+    tol = (fabs(a) + fabs(b))* ON_RELATIVE_TOLERANCE;
     if ( tol <  ON_ZERO_TOLERANCE )
       tol =  ON_ZERO_TOLERANCE;
     if ( a < b-tol )
@@ -2056,7 +2178,7 @@ ON_Solve3x2(const double col0[3], const double col1[3],
  *      with full pivoting.
  * EXAMPLE:
  *      // If A, B and T are 3D vectors, find a and b so that
- *      // T - a*A + b*B is perpindicular to both A and B.
+ *      // T - a*A + b*B is perpendicular to both A and B.
  *      rc = TL_Solve3x3(A,B,T[0],T[1],T[2],&a,&b,&len);
  *      switch(rc) {
  *      case  0: // {x,y,z} = intersection point, len = T o (A X B / |A X B|)
@@ -2760,9 +2882,6 @@ struct tagON_SORT_CONTEXT
   int (*compar3)(const void*,const void*,void*);
 };
 
-#if defined(ON_OS_WINDOWS) && defined(ON_COMPILER_MSC)
-// used by ON_Sort( ON::quick_sort,...)
-
 static int qicompar2(void* p, const void* a, const void* b)
 {
   return ((struct tagON_SORT_CONTEXT*)p)->compar2(
@@ -2779,34 +2898,6 @@ static int qicompar3(void* p, const void* a, const void* b)
     ((struct tagON_SORT_CONTEXT*)p)->users_context
     );
 }
-#define ON__HAVE_CONTEXT_QSORT
-#endif
-
-void ON_qsort( 
-        void* base,
-        size_t count,
-        size_t sizeof_element,
-        int (*compare)(const void*,const void*)
-        )
-{
-  qsort(base,count,sizeof_element,compare);
-}
-
-void ON_qsort( 
-        void* base,
-        size_t count,
-        size_t sizeof_element,
-        int (*compare)(void*,const void*,const void*),
-        void* context
-        )
-{
-#if defined(ON__HAVE_CONTEXT_QSORT)
-  qsort_s(base,count,sizeof_element,compare,context);
-#else
-  ON_hsort(base,count,sizeof_element,compare,context);
-#endif
-}
-
 
 void
 ON_Sort( ON::sort_algorithm method, 
@@ -2821,8 +2912,7 @@ Sort an index
  
 INPUT:
   method
-    0: use heap sort
-    1: use quick sort
+    ON::quick_sort (generally best) or ON::heap_sort
   data
     pointer passed to compar() function
   index, count
@@ -2837,13 +2927,11 @@ OUTPUT:
   index
     Sorted so that datum at index[i] is less than or equal to datum at index[i+1]  
 COMMENTS:
-  If you want the data sorted in place, then use qsort() or ON_hsort().
+  If you want the data sorted in place, then use ON_qsort() or ON_hsort().
 EXAMPLE:
   // ...
 REFERENCE:
   KNUTH
-RELATED FUNCTIONS:
-  ON_hsort
 */
 {
   tagON_SORT_CONTEXT context;
@@ -2874,14 +2962,11 @@ RELATED FUNCTIONS:
   context.qdata = (const unsigned char*)data;
   context.compar2 = compar;
   idx    = (unsigned int*)index; // convert to unsigned int
-#if defined(ON__HAVE_CONTEXT_QSORT)
   if ( ON::quick_sort == method )
   {
-    // use thread safe qsort_s()
-    qsort_s(idx,count,sizeof(idx[0]),qicompar2,&context);
+    ON_qsort(idx,count,sizeof(idx[0]),qicompar2,&context);
   }
   else
-#endif
   {
     // heap sort
     icount = (unsigned int)count;
@@ -2974,14 +3059,11 @@ ON_Sort( ON::sort_algorithm method,
   context.qdata = (const unsigned char*)data;
   context.compar3 = compar;
   idx    = (unsigned int*)index; // convert to unsigned int
-#if defined(ON__HAVE_CONTEXT_QSORT)
   if ( ON::quick_sort == method )
   {
-    // use thread safe qsort_s()
-    qsort_s(idx,count,sizeof(idx[0]),qicompar3,&context);
+    ON_qsort(idx,count,sizeof(idx[0]),qicompar3,&context);
   }
   else
-#endif
   {
     // heap sort
     icount = (unsigned int)count;
@@ -3035,370 +3117,7 @@ ON_Sort( ON::sort_algorithm method,
   }
 }
 
-#undef ON__HAVE_CONTEXT_QSORT
-
-
-#define work_size 64
-void
-ON_hsort(void *base, size_t nel, size_t width, int (*compar)(const void*,const void*))
-{
-  size_t
-    i_end,k;
-  unsigned char
-    work_memory[work_size], *e_tmp, *e_end;
-
-  if (nel < 2) return;
-  k = nel >> 1;
-  i_end = nel-1;
-  e_end = ((unsigned char*)base) + i_end*width;
-  e_tmp = (width > work_size) ? (unsigned char*)onmalloc(width) : work_memory;
-  for (;;) {
-    if (k) {
-      --k;
-      memcpy(e_tmp,((unsigned char*)base)+k*width,width); /* e_tmp = e[k]; */
-    } 
-    else {      
-      memcpy(e_tmp,e_end,width);     /* e_tmp = e[i_end]; */
-      memcpy(e_end,base,width);      /* e[i_end] = e[0];  */
-      if (!(--i_end)) {
-        memcpy(base,e_tmp,width);    /* e[0] = e_tmp;     */
-        break;
-      }
-      e_end -= width;
-    }
-    { size_t i, j;
-      unsigned char *e_i, *e_j;
-      i = k;
-      j = (k<<1) + 1;
-      e_i = ((unsigned char*)base) + i*width;
-      while (j <= i_end) {
-        e_j = ((unsigned char*)base) + j*width;
-        if (j < i_end && compar(e_j,e_j+width)<0 /*e[j] < e[j + 1] */)
-          {j++; e_j += width;}
-        if (compar(e_tmp,e_j)<0 /* e_tmp < e[j] */) {
-          memcpy(e_i,e_j,width); /* e[i] = e[j]; */
-          i = j;
-          e_i = e_j;
-          j = (j<<1) + 1;
-        } else j = i_end + 1;
-      }
-      memcpy(e_i,e_tmp,width); /* e[i] = e_tmp; */
-    }
-  }
-  if (width > work_size) onfree(e_tmp); 
-}
-
-void
-ON_hsort(void *base, size_t nel, size_t width, int (*compar)(void*,const void*,const void*), void* context)
-{
-  size_t
-    i_end,k;
-  unsigned char
-    work_memory[work_size], *e_tmp, *e_end;
-
-  if (nel < 2) return;
-  k = nel >> 1;
-  i_end = nel-1;
-  e_end = ((unsigned char*)base) + i_end*width;
-  e_tmp = (width > work_size) ? (unsigned char*)onmalloc(width) : work_memory;
-  for (;;) {
-    if (k) {
-      --k;
-      memcpy(e_tmp,((unsigned char*)base)+k*width,width); /* e_tmp = e[k]; */
-    } 
-    else {      
-      memcpy(e_tmp,e_end,width);     /* e_tmp = e[i_end]; */
-      memcpy(e_end,base,width);      /* e[i_end] = e[0];  */
-      if (!(--i_end)) {
-        memcpy(base,e_tmp,width);    /* e[0] = e_tmp;     */
-        break;
-      }
-      e_end -= width;
-    }
-    { size_t i, j;
-      unsigned char *e_i, *e_j;
-      i = k;
-      j = (k<<1) + 1;
-      e_i = ((unsigned char*)base) + i*width;
-      while (j <= i_end) {
-        e_j = ((unsigned char*)base) + j*width;
-        if (j < i_end && compar(context,e_j,e_j+width)<0 /*e[j] < e[j + 1] */)
-          {j++; e_j += width;}
-        if (compar(context,e_tmp,e_j)<0 /* e_tmp < e[j] */) {
-          memcpy(e_i,e_j,width); /* e[i] = e[j]; */
-          i = j;
-          e_i = e_j;
-          j = (j<<1) + 1;
-        } else j = i_end + 1;
-      }
-      memcpy(e_i,e_tmp,width); /* e[i] = e_tmp; */
-    }
-  }
-  if (width > work_size) onfree(e_tmp); 
-}
-#undef work_size  
-
-
-static void ON_hsort_dbl(double *e, size_t nel)
-/* Use the heap sort algorithm to sort an array of doubles
- *
- * INPUT:
- *   e
- *      array of doubles
- *   nel
- *      number of doubles
- *
- * OUTPUT:
- *   e
- *      array sorted in ascending order (first element is
- *      smallest and the last element is the largest.)
- *
- * COMMENTS:
- *   ON_hsort_dbl() is simply a version of ON_hsort() that
- *   uses the built-in "<" and "=" operators in place of the
- *   compar() and memcpy() functions.
- *
- * EXAMPLE:
- *   Sort a list of 20 doubles.
- *
- *  ...
- *  double e[20];
- *  e = ...;
- *  ON_hsort_dbl(20,e);
- *  ...
- *
- * REFERENCE:
- *   KNUTH
- *
- * RELATED FUNCTIONS:
- *   ON_hsort(), ON_hsort_int(), ON_hsort_str()
- *
- * Copyright (c) 1994 Robert McNeel & Associates. All rights reserved.
- */
-{
-  size_t
-    i_end,k;
-  double 
-    e_tmp;
-
-  if (nel < 2) return;
-  k = nel >> 1;
-  i_end = nel-1;
-  for (;;) {
-    if (k) {
-      --k;
-      e_tmp = e[k];
-    } else {
-      e_tmp = e[i_end];
-      e[i_end] = e[0];
-      if (!(--i_end)) {
-        e[0] = e_tmp;
-        break;
-      }
-    }
-    { size_t i, j;
-      i = k;
-      j = (k<<1) + 1;
-      while (j <= i_end) {
-        if (j < i_end && e[j] < e[j + 1]) j++;
-        if (e_tmp < e[j]) {
-          e[i] = e[j];
-          i = j;
-          j = (j<<1) + 1;
-        } else j = i_end + 1;
-      }
-      e[i] = e_tmp;
-    }
-  }
-}
-
-static void ON_hsort_int(int *e, size_t nel)
-/* Use the heap sort algorithm to sort an array of integers
- *
- * INPUT:
- *   e
- *      array of ints
- *   nel
- *      number of doubles
- *
- * OUTPUT:
- *   e
- *      array sorted in ascending order (first element is
- *      smallest and the last element is the largest.)
- *
- * COMMENTS:
- *   ON_hsort_int() is simply a version of ON_hsort() that
- *   uses the built-in "<" and "=" operators in place of the
- *   compar() and memcpy() functions.
- *
- * EXAMPLE:
- *   Sort a list of 20 ints.
- *
- *  ...
- *  int e[20];
- *  e = ...;
- *  ON_hsort_int(20,e);
- *  ...
- *
- * REFERENCE:
- *   KNUTH
- *
- * RELATED FUNCTIONS:
- *   ON_hsort(), ON_hsort_dbl(), ON_hsort_str()
- *
- * Copyright (c) 1994 Robert McNeel & Associates. All rights reserved.
- */
-{
-  size_t
-    i_end,k;
-  int 
-    e_tmp;
-
-  if (nel < 2) return;
-  k = nel >> 1;
-  i_end = nel-1;
-  for (;;) {
-    if (k) {
-      --k;
-      e_tmp = e[k];
-    } else {
-      e_tmp = e[i_end];
-      e[i_end] = e[0];
-      if (!(--i_end)) {
-        e[0] = e_tmp;
-        break;
-      }
-    }
-    { size_t i, j;
-      i = k;
-      j = (k<<1) + 1;
-      while (j <= i_end) {
-        if (j < i_end && e[j] < e[j + 1]) j++;
-        if (e_tmp < e[j]) {
-          e[i] = e[j];
-          i = j;
-          j = (j<<1) + 1;
-        } else j = i_end + 1;
-      }
-      e[i] = e_tmp;
-    }
-  }
-}
-
-static void ON_hsort_unsigned_int(unsigned int *e, size_t nel)
-/* Use the heap sort algorithm to sort an array of unsigned integers
- *
- * INPUT:
- *   e
- *      array of ints
- *   nel
- *      number of doubles
- *
- * OUTPUT:
- *   e
- *      array sorted in ascending order (first element is
- *      smallest and the last element is the largest.)
- *
- * COMMENTS:
- *   ON_hsort_int() is simply a version of ON_hsort() that
- *   uses the built-in "<" and "=" operators in place of the
- *   compar() and memcpy() functions.
- *
- * EXAMPLE:
- *   Sort a list of 20 ints.
- *
- *  ...
- *  int e[20];
- *  e = ...;
- *  ON_hsort_int(20,e);
- *  ...
- *
- * REFERENCE:
- *   KNUTH
- *
- * RELATED FUNCTIONS:
- *   ON_hsort(), ON_hsort_dbl(), ON_hsort_str()
- *
- * Copyright (c) 1994 Robert McNeel & Associates. All rights reserved.
- */
-{
-  size_t       i_end, i, j, k;
-  unsigned int e_tmp;
-
-  if (nel < 2) 
-    return;
-  k = nel >> 1;
-  i_end = nel-1;
-  for (;;) 
-  {
-    if (k) 
-    {
-      --k;
-      e_tmp = e[k];
-    } 
-    else 
-    {
-      e_tmp = e[i_end];
-      e[i_end] = e[0];
-      if (!(--i_end)) 
-      {
-        e[0] = e_tmp;
-        break;
-      }
-    }
-
-    i = k;
-    j = (k<<1) + 1;
-    while (j <= i_end)
-    {
-      if (j < i_end && e[j] < e[j + 1])
-        j++;
-      if (e_tmp < e[j])
-      {
-        e[i] = e[j];
-        i = j;
-        j = (j<<1) + 1;
-      } 
-      else 
-        j = i_end + 1;
-    }
-    e[i] = e_tmp;
-  }
-}
-
 static void ON_hsort_str(char **e, size_t nel)
-/* Use the heap sort algorithm to sort an array of strings
- *
- * INPUT:
- *   e
- *      array of strings
- *   nel
- *      number of doubles
- *
- * OUTPUT:
- *   e
- *      array sorted in ascending order (first element is
- *      smallest and the last element is the largest.)
- *
- * COMMENTS:
- *   ON_hsort_int() is simply a version of ON_hsort() that
- *   uses strcmp() and the "=" operator in place of the
- *   compar() and memcpy() functions.
- *
- * EXAMPLE:
- *   Sort a list of 5 words.
- *
- *    char *words[5] = {"zebra","charlie","horse","xenon","alpha"};
- *    ON_hsort_str(words,5);
- *
- * REFERENCE:
- *   KNUTH
- *
- * RELATED FUNCTIONS:
- *   ON_hsort(), ON_hsort_dbl(), ON_hsort_int()
- *
- * Copyright (c) 1994 Robert McNeel & Associates. All rights reserved.
- */
 {
   size_t
     i_end,k;
@@ -3434,13 +3153,6 @@ static void ON_hsort_str(char **e, size_t nel)
       e[i] = e_tmp;
     }
   }
-}
-
-static int compar_dbl(const void* pa, const void* pb)
-{
-  const double a = *((double*)pa);
-  const double b = *((double*)pb);
-  return (a < b) ? -1 : ((a>b)?1:0);
 }
 
 const int* ON_BinarySearchIntArray( int key, const int* base, size_t nel )
@@ -3535,7 +3247,7 @@ const unsigned int* ON_BinarySearchUnsignedIntArray( unsigned int key, const uns
   return 0;
 }
 
-const int* ON_BinarySearchDoubleArray( int key, const int* base, size_t nel )
+const double* ON_BinarySearchDoubleArray( double key, const double* base, size_t nel )
 {
   if (nel > 0 && base )
   {
@@ -3605,79 +3317,18 @@ int ON_Compare3dex( const ON_3dex* a, const ON_3dex* b)
 }
 
 
-void
-ON_SortDoubleArray( // heap sort array of doubles in place
-        ON::sort_algorithm method, // ON::heap_sort or ON::quick_sort, 
-        double* e,    // array of doubles
-        size_t  nel   // length of array
-        )
+int ON_Compare4dex( const ON_4dex* a, const ON_4dex* b)
 {
-  if ( nel > 1 )
+  int d;
+  if ( 0 == (d = (a->i - b->i)) )
   {
-    switch ( method ) 
+    if ( 0 == (d = a->j - b->j) )
     {
-    case ON::heap_sort:
-      ON_hsort_dbl( e, nel );
-      break;
-    case ON::quick_sort:
-      qsort( e, nel, sizeof(*e), compar_dbl );
-      break;
+      if ( 0 == (d = a->k - b->k) )
+        d = a->l - b->l;
     }
   }
-}
-
-static int compar_int(const void* pa, const void* pb)
-{
-  return *((int*)pa) - *((int*)pb);
-}
-
-static int compar_unsigned_int(const void* pa, const void* pb)
-{
-  return  ( *((unsigned int*)pa) < *((unsigned int*)pb) )
-          ? -1 
-          : (( *((unsigned int*)pa) == *((unsigned int*)pb) ) ? 0 : 1);
-}
-
-void
-ON_SortIntArray(
-        ON::sort_algorithm method, // ON::heap_sort or ON::quick_sort, 
-        int* e,    // array of ints
-        size_t  nel   // length of array
-        )
-{
-  if ( nel > 1 )
-  {
-    switch ( method ) 
-    {
-    case ON::heap_sort:
-      ON_hsort_int( e, nel );
-      break;
-    case ON::quick_sort:
-      qsort( e, nel, sizeof(*e), compar_int );
-      break;
-    }
-  }
-}
-
-void
-ON_SortUnsignedIntArray(
-        ON::sort_algorithm method, // ON::heap_sort or ON::quick_sort, 
-        unsigned int* e,    // array of ints
-        size_t  nel   // length of array
-        )
-{
-  if ( nel > 1 )
-  {
-    switch ( method ) 
-    {
-    case ON::heap_sort:
-      ON_hsort_unsigned_int( e, nel );
-      break;
-    case ON::quick_sort:
-      qsort( e, nel, sizeof(*e), compar_unsigned_int );
-      break;
-    }
-  }
+  return d;
 }
 
 static int compar_string(const void* pa, const void* pb)
@@ -3693,11 +3344,9 @@ static int compar_string(const void* pa, const void* pb)
   return strcmp(sa,sb);
 }
 
-
-
 void
 ON_SortStringArray(
-        ON::sort_algorithm method, // ON::heap_sort or ON::quick_sort, 
+        ON::sort_algorithm method,
         char** e,   // array of strings
         size_t nel    // length of array
         )
@@ -3710,7 +3359,8 @@ ON_SortStringArray(
       ON_hsort_str( e, nel );
       break;
     case ON::quick_sort:
-      qsort( e, nel, sizeof(*e), compar_string );
+    default:
+      ON_qsort( e, nel, sizeof(*e), compar_string );
       break;
     }
   }

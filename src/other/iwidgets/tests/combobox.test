@@ -44,7 +44,7 @@ test Combobox-1.$c {Combobox construction} {
     iwidgets::Combobox .cb
     pack .cb -padx 10 -pady 10 -fill x -expand yes
     image create bitmap flagup -file $tk_library/demos/images/flagup.bmp
-    update
+    update 
 } {}
 
 incr c
@@ -62,7 +62,7 @@ foreach test {
     {-listheight 150 150}
     {-width 20 20}
     {-textvariable option option}
-    {-labeltext Combobox: Combobox:}
+    {-labeltext Combobox: Combobox:} 
     {-labelpos nw nw}
     {-labelpos n n}
     {-labelpos ne ne}
@@ -72,7 +72,7 @@ foreach test {
     {-labelpos n n}
     {-labelpos ne ne}
     {-labelpos w w}
-    {-labelimage {} {}}
+    {-labelimage {} {}} 
     {-borderwidth 10 10}
     {-borderwidth 2 2}
     {-background steelblue steelblue}
@@ -126,7 +126,7 @@ foreach test {
     {-textbackground white white}
     {-textfont 10x20 10x20}
     {-textfont -Adobe-Helvetica-Medium-R-Normal--*-120-* \
-	-Adobe-Helvetica-Medium-R-Normal--*-120-*}
+	-Adobe-Helvetica-Medium-R-Normal--*-120-*} 
     {-textvariable {} {} }
     {-unique true true}
     {-validate alpha alpha}
@@ -143,7 +143,7 @@ foreach test {
 	    .cb configure $option [lindex $test 2]
 	    lindex [.cb configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
     }
 
@@ -250,7 +250,7 @@ foreach test {
 	test Combobox-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -285,7 +285,7 @@ foreach test {
 #
 test Combobox-4.1 {Combobox destruction} {
     destroy .cb
-    update
+    update 
 } {}
 
 incr c
@@ -297,14 +297,14 @@ test Combobox-4.2 {Combobox construction} {
 	-validate numeric -unique false
 	.cb3 insert list end 123 456 789 101112
     pack .cb3 -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Combobox-4.3 {Combobox destruction} {
     destroy .cb3
-    update
+    update 
 } {}
 
 test Combobox-4.4 {Combobox construction} {
@@ -314,14 +314,14 @@ test Combobox-4.4 {Combobox construction} {
 	-popupcursor hand1 -unique true
 	.cb4 insert list end Hello {Out There} World
     pack .cb4 -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Combobox-4.5 {Combobox destruction} {
     destroy .cb4
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

@@ -1,0 +1,13 @@
+data/ directory README
+
+Layout
+------
+Each directory
+ - must contain exactly one EXPRESS schema
+     -- this schema must be useful to end users - i.e. not a schema crafted to test SCL
+ - must be named after the numeric designation of the schema *if and only if*
+   it is an IS STEP schema
+     -- examples: ap214e3, AP235, etc (case insensitive)
+     -- directories for schemas that are not STEP IS must be named differently
+ - may contain part 21 files
+     -- these files must be compatible with the schema

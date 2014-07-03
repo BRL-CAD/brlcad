@@ -118,7 +118,7 @@ Command-Line Switch:	<B>-feedback</B>
 </pre>
 <UL>
 Specifies the callback command to use to give feedback on current
-status. The command is executed in the form <I>command</I> <I>&lt;number of
+status. The command is executed in the form <I>command</I> <I>&lt;number of 
 characters remaining&gt;</B></I>
 </UL>
 <P>
@@ -129,8 +129,8 @@ Command-Line Switch:	<B>-fixedfont</B>
 </pre>
 <UL>
 Specifies the name of the font to be used for fixed-width character
-text (such as &lt;pre&gt;...&lt;/pre&gt; or &lt;tt&gt;...&lt;/tt&gt;.) The size, style, and
-other font attributes are determined by the format tags in the
+text (such as &lt;pre&gt;...&lt;/pre&gt; or &lt;tt&gt;...&lt;/tt&gt;.) The size, style, and 
+other font attributes are determined by the format tags in the 
 document. The default is courier.
 </UL>
 <P>
@@ -140,8 +140,8 @@ Class:                  <B>FontName</B>
 Command-Line Switch:	<B>-fontname</B>
 </pre>
 <UL>
-Specifies the name of the font to be used for normal-width character
-spaced text. The size, style, and other font attributes are
+Specifies the name of the font to be used for normal-width character 
+spaced text. The size, style, and other font attributes are 
 determined by the format tags in the document. The default is times.
 </UL>
 <P>
@@ -161,9 +161,9 @@ Class:                  <B>Foreground</B>
 Command-Line Switch:	<B>-foreground</B>
 </pre>
 <UL>
-Specifies the color of text other than hypertext links, in any
+Specifies the color of text other than hypertext links, in any 
 of the forms acceptable to <B>Tk_GetColor</B>. This value may
-be overridden in a particular document by the <I>text</I> attribute
+be overridden in a particular document by the <I>text</I> attribute 
 of the <B>Body</B> HTML tag.
 </UL>
 <P>
@@ -175,7 +175,7 @@ Command-Line Switch:	<B>-link</B>
 <UL>
 Specifies the default color of hypertext links in any of the forms
 acceptable to <B>Tk_GetColor</B>. This value may be overridden in a
-particular document by the <I>link</I> attribute of the <B>Body</B>
+particular document by the <I>link</I> attribute of the <B>Body</B> 
 HTML tag. The default is blue.
 </UL>
 <P>
@@ -206,9 +206,9 @@ Class:                  <B>Background</B>
 Command-Line Switch:	<B>-textbackground</B>
 </pre>
 <UL>
-Specifies the background color for the text area in any of
-the forms acceptable to <B>Tk_GetColor</B>. This value may be
-overridden in a particular document by the <I>bgcolor</I> attribute
+Specifies the background color for the text area in any of 
+the forms acceptable to <B>Tk_GetColor</B>. This value may be 
+overridden in a particular document by the <I>bgcolor</I> attribute 
 of the <B>Body</B> HTML tag.
 </UL>
 <P>
@@ -235,7 +235,7 @@ A boolean value indicating whether to call update during html rendering.
 
 </pre><H2>DESCRIPTION</H2>
 <P>
-The <B>scrolledhtml</B> command creates
+The <B>scrolledhtml</B> command creates 
 a scrolled text widget with the additional capability to display
 html formatted documents.
 An import method is provided to read an html document file, and
@@ -330,12 +330,12 @@ command.
 </I></B>
 <DD> Load html formatted text from a file.  <I>Href</I> must exist.
 If <I>option</I> is -link, <I>href</I> is assumed to be relative
-to the application's current working directory. Otherwise,
+to the application's current working directory. Otherwise, 
 <I>href</I> is assumed to be relative to the path of the last
 page loaded. <I>Href</I> is either a filename, or a reference
 of the form <I>filename</I>#<I>anchorname</I>. In the latter form,
-fIFilename</B></I> and/or <I>anchorname</I> may be empty.
-If <I>filename</I> is empty, the current document is assumed.
+fIFilename</B></I> and/or <I>anchorname</I> may be empty. 
+If <I>filename</I> is empty, the current document is assumed. 
 If <I>anchorname</I> is empty, the top of the document is assumed.
 </DL>
 <DL>

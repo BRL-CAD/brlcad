@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -170,10 +171,35 @@ public:
   // a distinct value of ON_MappingRef.m_plugin_id.
   ON_ClassArray<ON_MappingRef> m_mappings;
 
+  /*
+  Parameters:
+    bEnable - [in]
+      false - (default)
+       Do not generate bitmap textures that 
+       approximate procedural textures.
+      true - 
+       generate bitmap textures that approximate
+       procedural textures and use these for
+       quick previews.
+  Returns:
+    True if advancded texture preview is enabled.
+  */
+  void EnableAdvancedTexturePreview(bool b);
+
+  /*
+  Returns:
+    True if advancded texture preview is enabled.
+  */
+  bool AdvancedTexturePreview() const;
+
   bool m_bCastsShadows;    // default is true
   bool m_bReceivesShadows; // default is true
-  bool m_bReserved1;
-  bool m_bReserved2;
+
+private:
+  // m_bits encodes 8 true/false settings
+  unsigned char m_bits; // (m_bits & 1) == AdvancedTexturePreview();
+
+  unsigned char m_reserved1;
 };
 
 #if defined(ON_DLL_TEMPLATE)

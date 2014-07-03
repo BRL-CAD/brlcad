@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -182,8 +183,8 @@ public:
   //   Row reduce a matrix to calculate rank and determinant.
   // Parameters:
   //   zero_tolerance - [in] (>=0.0) zero tolerance for pivot test
-  //       If a the absolute value of a pivot is <= zero_tolerance,
-  //       then the pivoit is assumed to be zero.
+  //       If the absolute value of a pivot is <= zero_tolerance,
+  //       then the pivot is assumed to be zero.
   //   determinant - [out] value of determinant is returned here.
   //   pivot - [out] value of the smallest pivot is returned here
   // Returns:
@@ -202,8 +203,8 @@ public:
   //   B is a column of values.
   // Parameters:
   //   zero_tolerance - [in] (>=0.0) zero tolerance for pivot test
-  //       If a the absolute value of a pivot is <= zero_tolerance,
-  //       then the pivoit is assumed to be zero.
+  //       If the absolute value of a pivot is <= zero_tolerance,
+  //       then the pivot is assumed to be zero.
   //   B - [in/out] an array of m_row_count values that is row reduced
   //       with the matrix.
   //   determinant - [out] value of determinant is returned here.
@@ -234,8 +235,8 @@ public:
   //   B is a column of 3d points
   // Parameters:
   //   zero_tolerance - [in] (>=0.0) zero tolerance for pivot test
-  //       If a the absolute value of a pivot is <= zero_tolerance,
-  //       then the pivoit is assumed to be zero.
+  //       If the absolute value of a pivot is <= zero_tolerance,
+  //       then the pivot is assumed to be zero.
   //   B - [in/out] an array of m_row_count 3d points that is 
   //       row reduced with the matrix.
   //   determinant - [out] value of determinant is returned here.

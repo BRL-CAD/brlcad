@@ -7,7 +7,7 @@
 # stretched to fit the page. The CanvasPrintDialog is derived from the
 # Dialog class and is composed of a CanvasPrintBox with attributes set to
 # manipulate the dialog buttons.
-#
+# 
 # ----------------------------------------------------------------------
 #  AUTHOR: Tako Schotanus              EMAIL: Tako.Schotanus@bouw.tno.nl
 # ----------------------------------------------------------------------
@@ -18,15 +18,15 @@
 # software and its documentation for any purpose, provided that the
 # above copyright notice and the following two paragraphs appear in
 # all copies of this software.
-#
+# 
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE TO ANY PARTY FOR
-# DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
-# ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN
-# IF THE COPYRIGHT HOLDER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+# DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES 
+# ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN 
+# IF THE COPYRIGHT HOLDER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH 
 # DAMAGE.
 #
-# THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING,
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+# THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, 
+# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
 # FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
 # ON AN "AS IS" BASIS, AND THE COPYRIGHT HOLDER HAS NO OBLIGATION TO
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
@@ -51,7 +51,7 @@ option add *Canvasprintdialog.master "." widgetDefault
 # Usual options.
 #
 itk::usual Canvasprintdialog {
-	keep -background -cursor -foreground -modality
+	keep -background -cursor -foreground -modality 
 }
 
 # ------------------------------------------------------------------
@@ -60,7 +60,7 @@ itk::usual Canvasprintdialog {
 itcl::class iwidgets::Canvasprintdialog {
 	inherit iwidgets::Dialog
 
-	constructor {args} {}
+	constructor {args} {}   
 	destructor {}
 
 	method deactivate {args} {}
@@ -72,20 +72,20 @@ itcl::class iwidgets::Canvasprintdialog {
 
 #
 # Provide a lowercased access method for the Canvasprintdialog class.
-#
+# 
 proc ::iwidgets::canvasprintdialog {args} {
 	uplevel ::iwidgets::Canvasprintdialog $args
 }
 
 # ------------------------------------------------------------------
-# CONSTRUCTOR
+# CONSTRUCTOR 
 #
 # Create new file selection dialog.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Canvasprintdialog::constructor {args} {
 	component hull configure -borderwidth 0
 
-	#
+	# 
 	# Instantiate a file selection box widget.
 	#
 	itk_component add cpb {
@@ -105,7 +105,7 @@ itcl::body iwidgets::Canvasprintdialog::constructor {args} {
 	hide Help
 
 	eval itk_initialize $args
-}
+}   
 
 # ------------------------------------------------------------------
 # METHOD: deactivate

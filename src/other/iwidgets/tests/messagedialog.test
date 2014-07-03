@@ -61,32 +61,32 @@ test Messagedialog-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-background #d9d9d9 #d9d9d9}
-    {-buttonboxpos n n}
-    {-buttonboxpadx 10 10}
-    {-buttonboxpos e e}
-    {-buttonboxpos w w}
-    {-buttonboxpady 10 10}
-    {-buttonboxpos s s}
-    {-imagepos n n}
-    {-bitmap warning warning}
-    {-imagepos e e}
-    {-imagepos s s}
-    {-cursor gumby gumby}
+    {-background #d9d9d9 #d9d9d9} 
+    {-buttonboxpos n n} 
+    {-buttonboxpadx 10 10} 
+    {-buttonboxpos e e} 
+    {-buttonboxpos w w} 
+    {-buttonboxpady 10 10} 
+    {-buttonboxpos s s} 
+    {-imagepos n n} 
+    {-bitmap warning warning} 
+    {-imagepos e e} 
+    {-imagepos s s} 
+    {-cursor gumby gumby} 
     {-image flagup flagup}
-    {-imagepos w w}
-    {-font -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-* -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*}
+    {-imagepos w w} 
+    {-font -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-* -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*} 
     {-foreground Black Black}
-    {-modality global global}
-    {-modality application application}
-    {-modality none none}
-    {-padx 15 15}
-    {-pady 15 15}
-    {-textpadx 15 15}
-    {-textpady 15 15}
-    {-separator off off}
-    {-thickness 4 4}
-    {-separator on on}
+    {-modality global global} 
+    {-modality application application} 
+    {-modality none none} 
+    {-padx 15 15} 
+    {-pady 15 15} 
+    {-textpadx 15 15} 
+    {-textpady 15 15} 
+    {-separator off off} 
+    {-thickness 4 4} 
+    {-separator on on} 
     {-image {} {}}
     {-title Messagedialog Messagedialog}} {
 	set option [lindex $test 0]

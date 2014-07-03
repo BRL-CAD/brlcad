@@ -1,5 +1,5 @@
 # makefile for libpng
-# Copyright (C) Glenn Randers-Pehrson
+# Copyright (C) 1998-2014 Glenn Randers-Pehrson
 # Copyright (C) 1995 Guy Eric Schalnat, Group 42, Inc.
 #
 # This code is released under the libpng license.
@@ -22,7 +22,8 @@ LIBPATH=$(prefix)/lib
 DESTDIR=
 
 CC=cc
-CFLAGS=-I../zlib -O -systype sysv -DSYSV -w -Dmips
+CPPFLAGS=-I../zlib -DSYSV -Dmips
+CFLAGS=-O -systype sysv -w
 #CFLAGS=-O
 LDFLAGS=-L. -L../zlib/ -lpng -lz -lm
 
@@ -33,7 +34,14 @@ OBJS = png.o pngset.o pngget.o pngrutil.o pngtrans.o pngwutil.o \
 	pngread.o pngrio.o pngwio.o pngwrite.o pngrtran.o \
 	pngwtran.o pngmem.o pngerror.o pngpread.o
 
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+
 all: libpng.a pngtest
+
+# see scripts/pnglibconf.mak for more options
+pnglibconf.h: scripts/pnglibconf.h.prebuilt
+	cp scripts/pnglibconf.h.prebuilt $@
 
 libpng.a: $(OBJS)
 	ar rc $@  $(OBJS)
@@ -51,16 +59,19 @@ install: libpng.a
 	-@mkdir $(DESTDIR)$(LIBPATH)
 	-@rm -f $(DESTDIR)$(INCPATH)/png.h
 	-@rm -f $(DESTDIR)$(INCPATH)/pngconf.h
+	-@rm -f $(DESTDIR)$(INCPATH)/pnglibconf.h
 	cp png.h $(DESTDIR)$(INCPATH)/libpng
 	cp pngconf.h $(DESTDIR)$(INCPATH)/libpng
+	cp pnglibconf.h $(DESTDIR)$(INCPATH)/libpng
 	chmod 644 $(DESTDIR)$(INCPATH)/libpng/png.h
 	chmod 644 $(DESTDIR)$(INCPATH)/libpng/pngconf.h
+	chmod 644 $(DESTDIR)$(INCPATH)/libpng/pnglibconf.h
 	(cd $(DESTDIR)$(INCPATH); ln -f -s libpng/* .)
 	cp libpng.a $(DESTDIR)$(LIBPATH)
 	chmod 644 $(DESTDIR)$(LIBPATH)/libpng.a
 
 clean:
-	rm -f *.o libpng.a pngtest pngout.png
+	rm -f *.o libpng.a pngtest pngout.png pnglibconf.h
 
 DOCS = ANNOUNCE CHANGES INSTALL KNOWNBUG LICENSE README TODO Y2KINFO
 writelock:
@@ -68,20 +79,20 @@ writelock:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-png.o: png.h pngconf.h pngpriv.h
-pngerror.o: png.h pngconf.h pngpriv.h
-pngrio.o: png.h pngconf.h pngpriv.h
-pngwio.o: png.h pngconf.h pngpriv.h
-pngmem.o: png.h pngconf.h pngpriv.h
-pngset.o: png.h pngconf.h pngpriv.h
-pngget.o: png.h pngconf.h pngpriv.h
-pngread.o: png.h pngconf.h pngpriv.h
-pngpread.o: png.h pngconf.h pngpriv.h
-pngrtran.o: png.h pngconf.h pngpriv.h
-pngrutil.o: png.h pngconf.h pngpriv.h
-pngtrans.o: png.h pngconf.h pngpriv.h
-pngwrite.o: png.h pngconf.h pngpriv.h
-pngwtran.o: png.h pngconf.h pngpriv.h
-pngwutil.o: png.h pngconf.h pngpriv.h
+png.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngerror.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngrio.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngwio.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngmem.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngset.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngget.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngread.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngpread.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngrtran.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngrutil.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngtrans.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngwrite.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngwtran.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+pngwutil.o: png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
 
-pngtest.o: png.h pngconf.h
+pngtest.o: png.h pngconf.h pnglibconf.h

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -12,7 +13,6 @@
 //
 ////////////////////////////////////////////////////////////////
 */
-
 #include "opennurbs.h"
 
 ON_OBJECT_IMPLEMENT(ON_Light,ON_Geometry,"85A08513-F383-11d3-BFE7-0010830122F0");
@@ -366,7 +366,7 @@ ON::light_style ON_Light::Style() const
   return m_style;
 }
 
-const ON_BOOL32 ON_Light::IsPointLight() const
+ON_BOOL32 ON_Light::IsPointLight() const
 {
   ON_BOOL32 rc;
   switch(m_style)
@@ -383,7 +383,7 @@ const ON_BOOL32 ON_Light::IsPointLight() const
   return rc;
 }
 
-const ON_BOOL32 ON_Light::IsDirectionalLight() const
+ON_BOOL32 ON_Light::IsDirectionalLight() const
 {
   ON_BOOL32 rc;
   switch(m_style)
@@ -400,7 +400,7 @@ const ON_BOOL32 ON_Light::IsDirectionalLight() const
   return rc;
 }
 
-const ON_BOOL32 ON_Light::IsSpotLight() const
+ON_BOOL32 ON_Light::IsSpotLight() const
 {
   ON_BOOL32 rc;
   switch(m_style)
@@ -417,7 +417,7 @@ const ON_BOOL32 ON_Light::IsSpotLight() const
   return rc;
 }
 
-const ON_BOOL32 ON_Light::IsLinearLight() const
+ON_BOOL32 ON_Light::IsLinearLight() const
 {
   ON_BOOL32 rc;
   switch(m_style)
@@ -434,7 +434,7 @@ const ON_BOOL32 ON_Light::IsLinearLight() const
   return rc;
 }
 
-const ON_BOOL32 ON_Light::IsRectangularLight() const
+ON_BOOL32 ON_Light::IsRectangularLight() const
 {
   ON_BOOL32 rc;
   switch(m_style)
@@ -785,7 +785,7 @@ ON_3dVector ON_Light::Direction() const
 
 ON_3dVector ON_Light::PerpindicularDirection() const
 {
-  // returns a consistent vector perpindicular to the
+  // returns a consistent vector perpendicular to the
   // light's direction.  This vector is useful for
   // user interface display.
   ON_3dVector dir = m_direction;

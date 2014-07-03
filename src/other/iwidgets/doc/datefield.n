@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) datefield.n 1.0 97/04/30 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::datefield iwid
 .BS
@@ -36,7 +36,7 @@ See the "options" manual entry for details on the standard options.
 \fBstate\fR	\fBsticky\fR
 .fi
 .LP
-See the "labeledwidget" class manual entry for details on the
+See the "labeledwidget" class manual entry for details on the 
 inherited options.
 .SH "WIDGET-SPECIFIC OPTIONS"
 .LP
@@ -46,7 +46,7 @@ Class:	\fBPosition\fR
 Command-Line Switch:	\fB-childsitepos\fR
 .fi
 .IP
-Specifies the position of the child site in the date field: \fBn\fR,
+Specifies the position of the child site in the date field: \fBn\fR, 
 \fBs\fR, \fBe\fR, or \fBw\fR.  The default is e.
 .LP
 .nf
@@ -55,7 +55,7 @@ Class:	\fBCommand\fR
 Command-Line Switch:	\fB-command\fR
 .fi
 .IP
-Specifies a Tcl command to be executed upon detection of a Return key
+Specifies a Tcl command to be executed upon detection of a Return key 
 press event.
 .LP
 .nf
@@ -87,16 +87,16 @@ Command-Line Switch:	\fB-iq\fR
 .IP
 Specifies the level of intelligence to be shown in the actions
 taken by the datefield during the processing of keypress events.
-Valid settings include \fBhigh\fR, \fBaverage\fR, and \fBlow\fR.
-With a high iq,the date prevents the user from typing in an
-invalid date.  For example, if the current date is 05/31/1997 and
-the user changes the month to 04, then the day will be instantly
-modified for them to be 30.  In addition, leap years are fully
-taken into account.  With average iq, the month is limited to the
-values of 01-12, but it is possible to type in an invalid day.
-A setting of low iq instructs the widget to do no validity
-checking at all during date entry.  With both average and low
-iq levels, it is assumed that the validity will be determined
+Valid settings include \fBhigh\fR, \fBaverage\fR, and \fBlow\fR.  
+With a high iq,the date prevents the user from typing in an 
+invalid date.  For example, if the current date is 05/31/1997 and 
+the user changes the month to 04, then the day will be instantly 
+modified for them to be 30.  In addition, leap years are fully 
+taken into account.  With average iq, the month is limited to the 
+values of 01-12, but it is possible to type in an invalid day.  
+A setting of low iq instructs the widget to do no validity 
+checking at all during date entry.  With both average and low 
+iq levels, it is assumed that the validity will be determined 
 at a later time using the date's \fBisvalid\fR command.
 .LP
 .nf
@@ -170,10 +170,10 @@ this case the command returns an empty string.
 command.
 .TP
 \fIpathName \fBget\fR ?\fBformat\fR?
-Returns the current contents of the datefield in a format of
+Returns the current contents of the datefield in a format of 
 string or as an integer clock value using the \fB-string\fR and \fB-clicks\fR
-format options respectively.  The default is by string.  Reference the
-clock command for more information on obtaining dates and their
+format options respectively.  The default is by string.  Reference the 
+clock command for more information on obtaining dates and their 
 formats.
 .TP
 \fIpathName \fBisvalid\fR
@@ -182,9 +182,9 @@ displayed date value.  For example, 03/03/1960 is valid whereas
 02/29/1997 is invalid.
 .TP
 \fIpathName \fBshow\fR \fIdate\fR
-Changes the currently displayed date to be that of the date
+Changes the currently displayed date to be that of the date 
 argument.  The date may be specified either as a string, an
-integer clock value or the keyword "now".  Reference the clock
+integer clock value or the keyword "now".  Reference the clock 
 command for more information on obtaining dates and their formats.
 
 .SH "COMPONENTS"

@@ -45,7 +45,7 @@ set m 1
 test Dateentry-1.$c {Dateentry construction} {
     iwidgets::Dateentry .de -labeltext "Date Field"
     pack .de -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -62,13 +62,13 @@ incr o
 foreach test {
     {-background #d9d9d9 #d9d9d9}
     {-buttonforeground green green}
-    {-borderwidth 4 4}
-    {-borderwidth 2 2}
+    {-borderwidth 4 4} 
+    {-borderwidth 2 2} 
     {-command {.de configure -background red} {.de configure -background red}}
-    {-cursor gumby gumby}
-    {-exportselection 0 0}
-    {-foreground Green Green}
-    {-foreground Black Black}
+    {-cursor gumby gumby} 
+    {-exportselection 0 0} 
+    {-foreground Green Green} 
+    {-foreground Black Black} 
     {-gmt true true}
     {-gmt false false}
     {-gmt on on}
@@ -79,8 +79,8 @@ foreach test {
     {-gmt no no}
     {-highlightcolor Red Red}
     {-highlightthickness 2 2}
-    {-insertbackground Yellow Yellow}
-    {-insertbackground Black Black}
+    {-insertbackground Yellow Yellow} 
+    {-insertbackground Black Black} 
     {-int yes yes}
     {-int no no}
     {-iq low low}
@@ -89,18 +89,18 @@ foreach test {
     {-justify right right}
     {-justify center center}
     {-justify left left}
-    {-labelmargin 5 5}
-    {-labelpos w w}
-    {-labelpos nw nw}
-    {-labelpos n n}
-    {-labelpos ne ne}
-    {-labelpos e e}
-    {-labelpos se se}
-    {-labelpos s s}
-    {-labelpos sw sw}
-    {-labeltext Label Label}
-    {-relief raised raised}
-    {-relief sunken sunken}
+    {-labelmargin 5 5} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-labeltext Label Label} 
+    {-relief raised raised} 
+    {-relief sunken sunken} 
     {-currentdatefont -*-helvetica-bold-r-normal--*-120-* -*-helvetica-bold-r-normal--*-120-*}
     {-datefont -*-helvetica-medium-r-normal--*-120-* -*-helvetica-medium-r-normal--*-120-*}
     {-dayfont -*-helvetica-medium-r-normal--*-120-* -*-helvetica-medium-r-normal--*-120-*}
@@ -111,27 +111,27 @@ foreach test {
     {-selectcolor blue blue}
     {-selectthickness 2 2}
     {-startday monday monday}
-    {-sticky w w}
-    {-sticky nw nw}
-    {-sticky n n}
-    {-sticky ne ne}
-    {-sticky e e}
-    {-sticky se se}
-    {-sticky s s}
-    {-sticky sw sw}
+    {-sticky w w} 
+    {-sticky nw nw} 
+    {-sticky n n} 
+    {-sticky ne ne} 
+    {-sticky e e} 
+    {-sticky se se} 
+    {-sticky s s} 
+    {-sticky sw sw} 
     {-sticky news news}
     {-titlefont -*-helvetica-bold-r-normal--*-140-* -*-helvetica-bold-r-normal--*-140-*}
     {-weekdaybackground mistyrose mistyrose}
     {-weekendbackground white white}
     {-width 350 350}
-    {-textbackground GhostWhite GhostWhite}
+    {-textbackground GhostWhite GhostWhite} 
     {-textbackground #d9d9d9 #d9d9d9}} {
 	set option [lindex $test 0]
 	test Dateentry-2.$o "configuration options, $option" {
 	    .de configure $option [lindex $test 1]
 	    lindex [.de configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -167,15 +167,15 @@ foreach test {
 	test Dateentry-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
 test Dateentry-3.$m "object methods, clock clicks" {
     set clicks [clock scan "06/08/1964"]
     .de show $clicks
-    update
-    .de get
+    update 
+    .de get 
 } {06/08/1964}
 incr m
 
@@ -197,22 +197,22 @@ foreach test {
 #
 test Dateentry-1.$c {Dateentry destruction} {
     destroy .de
-    update
+    update 
 } {}
 
 incr c
 
 test Dateentry-1.$c {Dateentry construction} {
-    iwidgets::dateentry .de
+    iwidgets::dateentry .de 
     pack .de -padx 10 -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Dateentry-1.$c {Dateentry destruction} {
     destroy .de
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

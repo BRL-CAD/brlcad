@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) feedback.n
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::feedback iwid
 .BS
@@ -136,7 +136,7 @@ by \fIinc\fR. \fIInc\fR defaults to 1.
 .SH ACKNOWLEDGEMENTS
 Sam Shen
 .IP
-This code is based largely on his feedback.tcl code from tk inspect. The
+This code is based largely on his feedback.tcl code from tk inspect. The 
 original feedback code is copyright 1995 Lawrence Berkeley Laboratory.
 .LP
 .SH AUTHOR

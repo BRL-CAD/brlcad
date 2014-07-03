@@ -1,0 +1,20 @@
+Recent changes are recorded in the publicly available repository:
+http://github.com/stepcode/stepcode
+
+This repo was moved and renamed in May 2012. Previously, it was at
+http://github.com/mpictor/StepClassLibrary
+
+Some are duplicates of changes recorded in the BRL-CAD repo:
+http://brlcad.svn.sourceforge.net/viewvc/brlcad/brlcad/trunk/src/other/step/?view=log
+
+Pre-BRL-CAD changes:
+************************************************************************
+ Updates from http://www.statik.tu-cottbus.de/fileadmin/project_dth/scl/
+            Jan 2005 - Mar 2006
+************************************************************************
+ STEP Class Library Release 3.2 February 1998
+************************************************************************
+ STEP Class Library Release 3.1 October 1997
+************************************************************************
+ STEP Class Library and Data Probe release 2.1 June 1995
+************************************************************************

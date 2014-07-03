@@ -1,6 +1,75 @@
-=-=-=-=-=-=-=-=-=-=-= BEGIN IWIDGETS 4.0.1 CHANGES =-=-=-=-=-=-=-=-=-=-=-
+2008-08-20  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/disjointlistbox.itk (::iwidgets::disjointlistbox): fix
+	8.5 grid anchoring. [Bug 2062394]
+
+2007-06-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/shell.itk (::iwidgets::shell): fix problem with "tkwait
+	visibility" in iwidget's dialog box (allaert)
+
+	* generic/pushbutton.itk (::iwidgets::pushbutton): handle Tk 8.4
+	frame padx/y changes.
+
+	* iwidgets.tcl.in: don't add non-existent path to auto_path
+
+	* generic/datefield.itk (::iwidgets::datefield): use string match
+	instead of regexp
+
+2007-05-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/combobox.itk: use -state readonly for combobox.
+	[Bug 998874] (griffin)
+
+	* generic/calendar.itk: 8.5-compatible last day of month
+	calculation. [Bug 1311531] (broeken)
+
+	* demos/catalog: make location independent. [Bug 1631754] (kupries)
+
+2006-04-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/extfileselectionbox.itk
+	(iwidgets::Extfileselectionbox::_setDirList): set currentIndex to
+	default value
+
+2005-04-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure, tclconfig/tcl.m4: TEA 3.2 update
+	* configure.in (AC_PROG_INSTALL): add back @INSTALL*@ check
+
+2005-01-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tclconfig/install-sh, tclconfig/tcl.m4 (new):
+	* tcl.m4 (removed):
+	* Makefile.in, aclocal.m4: Updated to TEA 3.1 build system
+	* configure, configure.in:
+	* iwidgets.tcl.in, pkgIndex.tcl.in:
+
+2002-10-25  Andreas Kupries  <andreask@activestate.com>
+
+	* configure.in: Added determination of EXEEXT or else
+	  SC_PROG_TCLSH may pick up the wrong file as executable (In my
+	  case it mistook tclsh83g.pdb for the tclsh).
+	  Regen'd configure.
+
+2002-09-25  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in: improved libdir support (steffen)
+
+2002-09-22  Marty Backe <marty@lucidway.org>
+    * generic/shell.itk: SF ticket 611739
+        Changed _return from a private to protected.
+    * generic/entryfield.itk
+        <Return> bindings are now passed to the parent unless the -command
+        option is defined.
+
 2002-09-09  Chad Smith  <csmith@adc.com>
-    * Makefile.in: SF ticket 227921
+
+	********************************
+	**** IWIDGETS 4.0.1 RELEASE ****
+	********************************
+
+	* Makefile.in: SF ticket 227921
 	Updated man page installation such that "iwidgets_" is now
 	prepended to the man page filename.  This is done to avoid
 	naming conflicts with man pages in other extensions.
@@ -50,7 +119,7 @@
 
 2002-03-24  Marty Backe <mgbacke@usa.net>
     * generic/disjointlistbox.itk
-        Applied patch sumitted by Brett Schwarz to add two new sort
+        Applied patch submitted by Brett Schwarz to add two new sort
         options which determine how items are added to each
         scrolledlistbox. Did some various code formatting cleanup.
     * doc/disjointlistbox.n
@@ -200,9 +269,12 @@
 		Had to do an "undo" of some previous code that was causing an
 		infinite resizing on <Configure> events.
 
-=-=-=-=-=-=-=-=-=-=-= END IWIDGETS 4.0.1 CHANGES =-=-=-=-=-=-=-=-=-=-=-=-
-
 2001-08-07  Chad Smith  <csmith@adc.com>
+
+	********************************
+	**** IWIDGETS 4.0.0 RELEASE ****
+	********************************
+
 	* Merged iwidgets_overhaul branch to CVS head.  This branch
 	included all modifications necessary to extract the iwidgets
 	from the itcl distribution.
@@ -967,7 +1039,7 @@
 		orientation of the radiobuttons within the radiobox.
 
 	* generic/checkbox.itk:
-		Added a new config option to the checkbox: -oritent, which allows the user to
+		Added a new config option to the checkbox: -orient, which allows the user to
 		specify the orientation of the checkbuttons, either horizontally or
 		vertically (default).
 
@@ -1156,7 +1228,7 @@
 	* configure:
 		tcl.m4:  Updated to reflect recent TEA changes
 
-		*/configure:  Regnereated with new tcl.m4
+		*/configure:  Regenerated with new tcl.m4
 
 		iwidgets2.2.0/Makefile.in:  Don't copy nonexistent files
 
@@ -1212,7 +1284,7 @@
 
 1999-08-21  matt
 	* win/makefile.vc:
-		Moved HTML install to seperate non-default target, since the files that
+		Moved HTML install to separate non-default target, since the files that
 		it tries to install don't exist and cause a failure during the install.
 
 1999-07-26  csmith
@@ -1260,7 +1332,7 @@
 		There were several places in the code that looped from 1 to the number of
 		actual panes in the panedwindow when the code should be looping over the
 		number of active panes.  Each of these areas in the code could cause a stack
-		dump, complaining about an invalid pathanme regarding a sash or a separator.
+		dump, complaining about an invalid pathname regarding a sash or a separator.
 		I've changed each of these areas to use _activePanes instead of _panes.
 
 1999-05-25  redman
@@ -1293,15 +1365,15 @@
 		pasting text.
 
 	* generic/entryfield.itk:
-		1) Added a new configuration option, -pasting, which allows the user to
-		   disable pasting text into the entry component of the entryfield.
-		   Previously, when using -validate, the user was allowed to paste text
-		   which could cause stack dumps into the entryfield because pasting was
-		   not caught.  The user, for instance, could paste a 40 digit number and
-		   kill any expr's since the integer is too large for tcl to handle.
-		2) The _keyPress method hardcoded state comparisons for <Ctrl>, <Alt>,
-		   <NumLock><Ctrl>, and <NumLock><Alt>.  The problem was that these
-		   hardcoded values were UNIX-specific.  I added platform-independant code.
+	1) Added a new configuration option, -pasting, which allows the user to
+	   disable pasting text into the entry component of the entryfield.
+	   Previously, when using -validate, the user was allowed to paste text
+	   which could cause stack dumps into the entryfield because pasting was
+	   not caught.  The user, for instance, could paste a 40 digit number and
+	   kill any expr's since the integer is too large for tcl to handle.
+	2) The _keyPress method hardcoded state comparisons for <Ctrl>, <Alt>,
+	   <NumLock><Ctrl>, and <NumLock><Alt>.  The problem was that these
+	   hardcoded values were UNIX-specific.  I added platform-independent code.
 
 	* CHANGES:
 		Added to entries under the Entryfield section: 1) documented new configuration
@@ -1330,21 +1402,18 @@
 1999-01-25  stanton
 	* unix/iwidgets.tcl.in:
 	* win/iwidgets.tcl:
-		Changed so iwidgets.tcl does a "namespace import -force itcl::*"
-		This is a hack to get around the fact that iwidgets uses "class"
-		instead of "itcl::class".  The correct long term solution is to change
-		all of the iwidgets code to use qualified names.
+	Changed so iwidgets.tcl does a "namespace import -force itcl::*"
+	This is a hack to get around the fact that iwidgets uses "class"
+	instead of "itcl::class".  The correct long term solution is to change
+	all of the iwidgets code to use qualified names.
 
 1998-12-22  rjohnson
-	* demos/watch:
-
-		Fixed bug in watch demo.
+	* demos/watch: Fixed bug in watch demo.
 
 1998-12-18  rjohnson
 	* demos/catalog:
-
-		Removed the mainwindow demo from the catalog demo.  It was not a well
-		behaved demo and running would break the catalog demo.  [Bug ID: 508]
+	Removed the mainwindow demo from the catalog demo.  It was not a well
+	behaved demo and running would break the catalog demo.  [Bug ID: 508]
 
 1998-09-14  stanton
 	* demos/images/clear.gif:

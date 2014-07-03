@@ -27,7 +27,7 @@ int TtkXPTheme_Init(Tcl_Interp *interp, HWND hwnd) { return TCL_OK; }
 
 #include <windows.h>
 #include <uxtheme.h>
-#ifdef HAVE_VSSYM32_H
+#if defined(HAVE_VSSYM32_H) || _MSC_VER > 1500
 #   include <vssym32.h>
 #else
 #   include <tmschema.h>

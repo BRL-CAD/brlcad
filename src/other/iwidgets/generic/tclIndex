@@ -681,6 +681,7 @@ set auto_index(::iwidgets::Panedwindow::orient) [list source [file join $dir pan
 set auto_index(::iwidgets::Panedwindow::sashborderwidth) [list source [file join $dir panedwindow.itk]]
 set auto_index(::iwidgets::Panedwindow::sashcursor) [list source [file join $dir panedwindow.itk]]
 set auto_index(::iwidgets::Panedwindow::sashwidth) [list source [file join $dir panedwindow.itk]]
+set auto_index(::iwidgets::Panedwindow::sashpad) [list source [file join $dir panedwindow.itk]]
 set auto_index(::iwidgets::Panedwindow::sashheight) [list source [file join $dir panedwindow.itk]]
 set auto_index(::iwidgets::Panedwindow::thickness) [list source [file join $dir panedwindow.itk]]
 set auto_index(::iwidgets::Panedwindow::sashindent) [list source [file join $dir panedwindow.itk]]

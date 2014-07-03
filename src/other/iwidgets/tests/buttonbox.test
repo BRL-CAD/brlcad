@@ -44,8 +44,8 @@ set m 1
 #
 test Buttonbox-1.$c {Buttonbox construction} {
     iwidgets::Buttonbox .bb
-    pack .bb
-    update
+    pack .bb 
+    update 
 } {}
 
 incr c
@@ -55,11 +55,11 @@ incr c
 #
 test Buttonbox-1.$c {Buttonbox construction} {
     .bb add Yes -text Yes
-    update
+    update 
     .bb add No -text No
-    update
+    update 
     .bb default Yes
-    update
+    update 
 } {}
 
 incr c
@@ -76,22 +76,22 @@ incr o
 foreach test {
     {-activebackground #ececec #ececec}
     {-activeforeground Black Black}
-    {-orient vertical vertical}
-    {-background #d9d9d9 #d9d9d9}
-    {-cursor gumby gumby}
+    {-orient vertical vertical} 
+    {-background #d9d9d9 #d9d9d9} 
+    {-cursor gumby gumby} 
     {-disabledforeground #a3a3a3 #a3a3a3}
     {-foreground Black Black}
     {-highlightcolor Black Black}
     {-highlightthickness 2 2}
-    {-orient horizontal horizontal}
-    {-padx 10 10}
+    {-orient horizontal horizontal} 
+    {-padx 10 10} 
     {-pady 10 10}} {
 	set option [lindex $test 0]
 	test Buttonbox-2.$o "configuration options, $option" {
 	    .bb configure $option [lindex $test 1]
 	    lindex [.bb configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -138,7 +138,7 @@ foreach test {
 	test Buttonbox-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -160,30 +160,30 @@ foreach test {
 #
 test Buttonbox-1.$c {Buttonbox destruction} {
     destroy .bb
-    update
+    update 
 } {}
 
 incr c
 
 test Buttonbox-1.$c {Buttonbox construction} {
     iwidgets::buttonbox .bb
-    pack .bb
-    update
+    pack .bb 
+    update 
     .bb add Hello -text Hello
-    update
+    update 
     .bb insert end GoodBye -text GoodBye
-    update
+    update 
     .bb default Hello
-    update
+    update 
     .bb default GoodBye
-    update
+    update 
 } {}
 
 incr c
 
 test Buttonbox-1.$c {Buttonbox destruction} {
     destroy .bb
-    update
+    update 
 } {}
 
 incr c
@@ -192,7 +192,7 @@ test Buttonbox-1.$c {Buttonbox destruction} {
     iwidgets::buttonbox .bb
     pack .bb
     destroy .bb
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

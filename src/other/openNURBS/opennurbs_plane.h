@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -55,7 +56,7 @@ public:
         determines the xaxis direction.
     y_dir - [in] non-zero vector not parallel to x_dir
         that is used to determine the yaxis direction.
-        y_dir does not have to be perpindicular to x_dir.
+        y_dir does not have to be perpendicular to x_dir.
   */
   ON_Plane(
     const ON_3dPoint& origin,
@@ -124,7 +125,7 @@ public:
         determines the xaxis direction.
     y_dir - [in] non-zero vector not parallel to x_dir
         that is used to determine the yaxis direction.
-        y_dir does not have to be perpindicular to x_dir.
+        y_dir does not have to be perpendicular to x_dir.
   Returns:
     true if valid plane is created.
   */
@@ -287,16 +288,6 @@ public:
            double* max     //max signed dist from plane to box
            ) const;
 
-  // OBSOLETE - use plane_equation.ValueAt()
-  //__declspec(deprecated) double EquationAt( 
-  //      const ON_3dPoint& point
-  //      ) const;
-
-  // OBSOLETE - use plane_equation.ValueAt()
-  //__declspec(deprecated) double EquationAt( 
-  //      const ON_4dPoint& point
-  //      ) const;
-
   /*
   Description:
     Update the plane equation based on the current values
@@ -351,18 +342,6 @@ public:
   bool Transform( 
         const ON_Xform& xform
         );
-
-  /*
-  Description:
-    Morph plane.
-  Parameters:
-    morph - [in] morph to apply to plane
-  Returns:
-    true if successful
-  Remarks:
-    The resulting plane still has an orthonormal frame
-  */
-  bool Morph( const ON_SpaceMorph& morph );
 
   /*
   Description:
@@ -489,12 +468,18 @@ public:
 class ON_CLASS ON_ClippingPlaneInfo
 {
 public:
-  // C++ defaults for construction, destruction, copys, and operator=
-  // work fine.
+  // C++ defaults for construction, destruction, copy construction
+  // and operator= work fine.
 
+  // A point is visible if m_plane_equation.ValueAt(point) <= 0.
+  // (This is the opposite convention from what OpenGL uses.)
   ON_PlaneEquation m_plane_equation;
   ON_UUID m_plane_id;
   bool m_bEnabled;
+
+  void Default();
+  bool Write( ON_BinaryArchive& ) const;
+  bool Read( ON_BinaryArchive& );
 };
 
 class ON_CLASS ON_ClippingPlane

@@ -46,10 +46,10 @@ Class:                  <B>Height</B>
 Command-Line Switch:	<B>-height</B>
 </pre>
 <UL>
-Specifies the height of the shell.  The value may be specified in
-any of the forms acceptable to <B>Tk_GetPixels</B>.  A value of zero
-causes the height to be adjusted to the required value based on
-the size requests of the components placed in the childsite.
+Specifies the height of the shell.  The value may be specified in 
+any of the forms acceptable to <B>Tk_GetPixels</B>.  A value of zero 
+causes the height to be adjusted to the required value based on 
+the size requests of the components placed in the childsite.  
 Otherwise, the height is fixed.  The default is zero.  NOTE: This
 may cause some amount of flickering on slower machines.  To prevent it
 simply set the width and height to a appropriate value.
@@ -63,7 +63,7 @@ Command-Line Switch:	<B>-master</B>
 <UL>
 Defines the shell as being a transient window with the master window
 given by the master option.  The master window should be either another
-existing toplevel window or {} for no master.  The default is {} for
+existing toplevel window or {} for no master.  The default is {} for 
 shells and "." for dialogs.
 </UL>
 <P>
@@ -76,9 +76,9 @@ Command-Line Switch:	<B>-modality</B>
 Allows the shell to grab control of the screen in one of three different ways:
 <B>application</B>, <B>system</B>, or <B>none</B>.
 Application modal prevents any other toplevel windows within the application
-which are direct children of '.' from gaining focus.  System modal locks
-the screen and prevents all windows from gaining focus regardless of
-application.  A modality of none performs no grabs at all.  The default
+which are direct children of '.' from gaining focus.  System modal locks 
+the screen and prevents all windows from gaining focus regardless of 
+application.  A modality of none performs no grabs at all.  The default 
 is none.
 </UL>
 <P>
@@ -108,10 +108,10 @@ Class:                  <B>Width</B>
 Command-Line Switch:	<B>-width</B>
 </pre>
 <UL>
-Specifies the width of the shell.  The value may be specified in
-any of the forms acceptable to <B>Tk_GetPixels</B>.  A value of zero
-causes the width to be adjusted to the required value based on
-the size requests of the components placed in the childsite.
+Specifies the width of the shell.  The value may be specified in 
+any of the forms acceptable to <B>Tk_GetPixels</B>.  A value of zero 
+causes the width to be adjusted to the required value based on 
+the size requests of the components placed in the childsite.  
 Otherwise, the width is fixed.  The default is zero.  NOTE: This
 may cause some amount of flickering on slower machines.  To prevent it
 simply set the width and height to a appropriate value.
@@ -120,7 +120,7 @@ simply set the width and height to a appropriate value.
 
 </pre><H2>DESCRIPTION</H2>
 <P>
-The <B>shell</B> command creates a shell which is a top
+The <B>shell</B> command creates a shell which is a top 
 level widget which supports modal operation.
 
 </pre><H2>METHODS</H2>
@@ -185,7 +185,7 @@ command.
 </I></B>
 <DD> Deactivate the display of the shell.  The method takes an optional
 argument to be passed to the <B>activate</B> method which returns the value.
-The optional argument is only effective for application and system
+The optional argument is only effective for application and system 
 modal dialogs.
 
 </DL>
@@ -196,8 +196,8 @@ Name:                   <B>shellchildsite</B>
 Class:                  <B>frame</B>
 </pre>
 <UL>
-The shellchildsite component is the user child site for the shell.  See
-the "frame" widget manual entry for details on the shellchildsite
+The shellchildsite component is the user child site for the shell.  See 
+the "frame" widget manual entry for details on the shellchildsite 
 component item.
 </UL>
 </table>

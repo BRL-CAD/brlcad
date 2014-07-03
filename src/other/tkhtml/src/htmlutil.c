@@ -57,11 +57,8 @@ struct InstGlobal {
     (Tcl_WideInt)tv.tv_usec + ((Tcl_WideInt)1000000 * (Tcl_WideInt)tv.tv_sec) \
 )
 
-static void
-updateInstData(pGlobal, p, iClicks)
-    InstGlobal *pGlobal;
-    InstCommand *p;
-    int iClicks;
+static void 
+updateInstData (InstGlobal *pGlobal, InstCommand *p, int iClicks)
 {
     InstVector vector;
     InstData *pData;
@@ -170,9 +167,8 @@ execInst(clientData, interp, objc, objv)
     return rc;
 }
 
-static void
-freeInstStruct(p)
-    InstCommand *p;
+static void 
+freeInstStruct (InstCommand *p)
 {
     Tcl_DecrRefCount(p->pFullName);
     ckfree((void *)p);
@@ -403,8 +399,7 @@ HtmlInstrumentInit(interp)
 
 #else  /* TKHTML_ENABLE_PROFILE */
 void
-HtmlInstrumentInit(interp)
-    Tcl_Interp *interp;
+HtmlInstrumentInit(Tcl_Interp *interp)
 {
     /* No-op */
 }

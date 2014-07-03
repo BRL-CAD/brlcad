@@ -40,8 +40,8 @@ Command-Line Switch:	<B>-padx</B>
 </pre>
 <UL>
 Specifies a non-negative padding distance to leave between the button group and
-the outer edge of the button box in the x direction.  The value may be
-given in any of the forms acceptable to <B>Tk_GetPixels</B>.  The default
+the outer edge of the button box in the x direction.  The value may be 
+given in any of the forms acceptable to <B>Tk_GetPixels</B>.  The default 
 is 5 pixels.
 </UL>
 <P>
@@ -52,7 +52,7 @@ Command-Line Switch:	<B>-pady</B>
 </pre>
 <UL>
 Specifies a non-negative padding distance to leave between the button group and
-the outer edge of the button box in the y direction.  The value may be given
+the outer edge of the button box in the y direction.  The value may be given 
 in any of the forms acceptable to <B>Tk_GetPixels</B>.  The default is 5 pixels.
 </UL>
 <P>
@@ -63,7 +63,7 @@ in any of the forms acceptable to <B>Tk_GetPixels</B>.  The default is 5 pixels.
 The <B>buttonbox</B> command creates a manager widget for controlling
 buttons.  The button box also supports the display and invocation
 of a default button.  The button box can be configured either horizontally
-or vertically.
+or vertically.  
 
 </pre><H2>METHODS</H2>
 <P>
@@ -75,18 +75,18 @@ operations on the widget.  It has the following general form:
 <I>pathName option </I>?<I>arg arg ...</I>?
 </pre>
 <I>Option</I> and the <I>arg</I>s
-determine the exact behavior of the command.
+determine the exact behavior of the command. 
 <P>
 Many of the widget commands for the buttonbox take as one argument an
-indicator of which button of the button box to operate on.  These
-indicators are called <I>indexes</I> and allow reference and manipulation
-of buttons regardless of their current map state.  buttonbox indexes
+indicator of which button of the button box to operate on.  These 
+indicators are called <I>indexes</I> and allow reference and manipulation 
+of buttons regardless of their current map state.  buttonbox indexes 
 may be specified in any of the following forms:
 <DL>
 <DT> <I>number</I>
 </I></B>
-<DD> Specifies the button numerically, where 0 corresponds to the
-left/top-most button of the button box.
+<DD> Specifies the button numerically, where 0 corresponds to the 
+left/top-most button of the button box. 
 </DL>
 <DL>
 <DT> <B>end</B>
@@ -122,7 +122,7 @@ available.
 <DT> <I>pathName <B>buttonconfigure</B> <I>index</I> ?<I>options</I>?
 </I></B>
 <DD> This command is similar to the <B>configure</B> command, except that
-it applies to the options for an individual button,
+it applies to the options for an individual button, 
 whereas <B>configure</B> applies to the options for the button box as a whole.
 <I>Options</I> may have any of the values accepted by the <B>PushButton</B>
 command.  If <I>options</I> are specified, options are modified
@@ -169,8 +169,8 @@ the default ring to appear arround the specified button.
 <DL>
 <DT> <I>pathName <B>hide</B> <I>index</I>
 </I></B>
-<DD> Hides the button denoted by <I>index</I>.  This doesn't remove the button
-permanently, just inhibits its display.
+<DD> Hides the button denoted by <I>index</I>.  This doesn't remove the button 
+permanently, just inhibits its display.  
 </DL>
 <DL>
 <DT> <I>pathName <B>index <I>index</I>
@@ -184,7 +184,7 @@ permanently, just inhibits its display.
 button just before the one given by <I>index</I>, instead of appending
 to the end of the button box.  The <I>option</I>, and <I>value</I>
 arguments have the same interpretation as for the <B>add</B> widget
-command.
+command.  
 </DL>
 <DL>
 <DT> <I>pathName <B>invoke</B> <I>?index?</I>
@@ -202,7 +202,7 @@ is expected to be a button <I>index</I>.
 <pre>
  buttonbox .bb
 
- .bb add Yes -text Yes -command "puts Yes"
+ .bb add Yes -text Yes -command "puts Yes" 
  .bb add No -text No -command "puts No"
  .bb add Maybe -text Maybe -command "puts Maybe"
  .bb default Yes

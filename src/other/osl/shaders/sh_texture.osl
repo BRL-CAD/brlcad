@@ -1,0 +1,7 @@
+surface sh_texture (
+        string filename = "",
+        output closure color Cout = diffuse(N)
+        ) {
+        color ctmp = texture(filename, u, v);
+        Cout = ctmp * diffuse(N);
+}

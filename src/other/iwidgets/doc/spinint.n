@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) spinint.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::spinint iwid
 .BS
@@ -65,7 +65,7 @@ inherited options.
 \fBrepeatInterval\fR
 .fi
 .LP
-See the "spinner" widget manual entry for details on the above
+See the "spinner" widget manual entry for details on the above 
 inherited options.
 
 .SH "WIDGET-SPECIFIC OPTIONS"
@@ -122,9 +122,9 @@ commands are possible for spinint widgets:
 .LP
 .nf
 .ta 4c 8c 12c
-\fBdelete\fR	\fBget\fR	\fBicursor\fR	\fBindex\fR
+\fBdelete\fR	\fBget\fR	\fBicursor\fR	\fBindex\fR	
 \fBinsert\fR	\fBpeek\fR	\fBscan\fR	\fBselection\fR
-\fBxview\fR
+\fBxview\fR	
 .fi
 .LP
 See the "entry" manual entry for details on the associated methods.
@@ -173,7 +173,7 @@ component items.
 .DS
  package require Iwidgets 4.0
  option add *textBackground white
-
+ 
  iwidgets::spinint .si -labeltext "Temperature" -labelpos w \\
     -fixed yes -width 5 -range {32 212}
 

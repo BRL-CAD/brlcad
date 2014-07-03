@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -15,20 +16,40 @@
 
 #include "opennurbs.h"
 
-ON_Workspace::ON_Workspace() : m_pFileBlk(0), m_pMemBlk(0)
+ON_Workspace::ON_Workspace() 
+: m_pFileBlk(0)
+, m_pMemBlk(0)
 {}
 
 ON_Workspace::~ON_Workspace()
 {
-  struct FBLK* pFileBlk = m_pFileBlk;
+  Destroy();
+}
+
+struct ON_Workspace_FBLK 
+{
+  struct ON_Workspace_FBLK* pNext;
+  FILE* pFile;
+} * m_pFileBlk;
+
+struct ON_Workspace_MBLK 
+{
+  struct ON_Workspace_MBLK* pNext;
+  void* pMem;
+} * m_pMemBlk;
+
+void ON_Workspace::Destroy()
+{
+  struct ON_Workspace_FBLK* pFileBlk = m_pFileBlk;
   while ( pFileBlk ) {
     if ( pFileBlk->pFile )
       fclose( pFileBlk->pFile );
     pFileBlk = pFileBlk->pNext;
   }
+  m_pFileBlk = 0;
 
-  struct MBLK* pNext = m_pMemBlk;
-  struct MBLK* p = NULL;
+  struct ON_Workspace_MBLK* pNext = m_pMemBlk;
+  struct ON_Workspace_MBLK* p = NULL;
   while ( pNext ) {
     p = pNext;
     pNext = pNext->pNext;
@@ -38,6 +59,7 @@ ON_Workspace::~ON_Workspace()
     }
     onfree( p );
   }
+  m_pMemBlk = 0;
 }
 
 void* ON_Workspace::GetMemory( size_t size )
@@ -45,7 +67,7 @@ void* ON_Workspace::GetMemory( size_t size )
   void* p = NULL;
   if ( size > 0 ) 
   {
-    struct MBLK* pBlk = (struct MBLK*)onmalloc(sizeof(*pBlk));
+    struct ON_Workspace_MBLK* pBlk = (struct ON_Workspace_MBLK*)onmalloc(sizeof(*pBlk));
     if ( pBlk ) 
     {
       pBlk->pMem = p = onmalloc(size);
@@ -63,7 +85,7 @@ void* ON_Workspace::GrowMemory( void* p, size_t size )
     newp = GetMemory(size);
   }
   else {
-    struct MBLK* pBlk = m_pMemBlk;
+    struct ON_Workspace_MBLK* pBlk = m_pMemBlk;
     while ( pBlk ) {
       if ( pBlk->pMem == p ) {
         if ( size > 0 ) {
@@ -81,12 +103,26 @@ void* ON_Workspace::GrowMemory( void* p, size_t size )
   return newp;
 }
 
+void ON_Workspace::KeepAllMemory()
+{
+  struct ON_Workspace_MBLK* p;
+  struct ON_Workspace_MBLK* pNext = m_pMemBlk;
+  m_pMemBlk = 0;
+  while ( pNext )
+  {
+    p = pNext;
+    pNext = pNext->pNext;
+    p->pMem = 0; // caller want to manage this heap
+    onfree( p );
+  }
+}
+
 int ON_Workspace::KeepMemory( void* p )
 {
   int rc = false;
   if ( p ) {
-    struct MBLK* pPrevBlk = NULL;
-    struct MBLK* pBlk = m_pMemBlk;
+    struct ON_Workspace_MBLK* pPrevBlk = NULL;
+    struct ON_Workspace_MBLK* pBlk = m_pMemBlk;
     while ( pBlk ) {
       if ( pBlk->pMem == p ) {
         // Remove pBlk from list so ~ON_Workspace() won't onfree() its memory
@@ -207,7 +243,7 @@ FILE* ON_Workspace::OpenFile( const char* sFileName, const char* sMode )
   FILE* pFile = ON::OpenFile( sFileName, sMode );
   if ( pFile ) 
   {
-    struct FBLK* pFileBlk = (struct FBLK*)GetMemory( sizeof(*pFileBlk) );
+    struct ON_Workspace_FBLK* pFileBlk = (struct ON_Workspace_FBLK*)GetMemory( sizeof(*pFileBlk) );
     pFileBlk->pNext = m_pFileBlk;
     pFileBlk->pFile = pFile;
     m_pFileBlk = pFileBlk;
@@ -220,7 +256,7 @@ FILE* ON_Workspace::OpenFile( const wchar_t* sFileName, const wchar_t* sMode )
   FILE* pFile = ON::OpenFile( sFileName, sMode );
   if ( pFile ) 
   {
-    struct FBLK* pFileBlk = (struct FBLK*)GetMemory( sizeof(*pFileBlk) );
+    struct ON_Workspace_FBLK* pFileBlk = (struct ON_Workspace_FBLK*)GetMemory( sizeof(*pFileBlk) );
     pFileBlk->pNext = m_pFileBlk;
     pFileBlk->pFile = pFile;
     m_pFileBlk = pFileBlk;
@@ -232,7 +268,7 @@ int ON_Workspace::KeepFile( FILE* pFile )
 {
   int rc = false;
   if ( pFile ) {
-    struct FBLK* pFileBlk = m_pFileBlk;
+    struct ON_Workspace_FBLK* pFileBlk = m_pFileBlk;
     while ( pFileBlk ) {
       if ( pFileBlk->pFile == pFile ) {
         pFileBlk->pFile = NULL;

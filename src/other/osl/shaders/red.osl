@@ -1,0 +1,9 @@
+surface 
+red () {
+
+	if(backfacing()) {
+		Ng = -Ng;
+		N = -N;
+	}
+       Ci = color(1.0, 0.0, 0)*diffuse(N);
+}

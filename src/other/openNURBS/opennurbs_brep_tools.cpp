@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -12,8 +13,8 @@
 //
 ////////////////////////////////////////////////////////////////
 */
-
 #include "opennurbs.h"
+
 
 static
 const ON_BrepEdge* FindLinearEdge( const ON_Brep& brep, int vi0, int vi1 )
@@ -714,7 +715,18 @@ ON_BrepLoop* ON_Brep::NewOuterLoop(
   {
     if ( c3[i] )
     {
-      ON_BrepEdge& edge = NewEdge( m_V[vid[i]], m_V[vid[(i+1)%4]], AddEdgeCurve( c3[i] ) );
+      int i0, i1;
+      if ( bRev3d[i] )
+      {
+        i0 = (i+1)%4;
+        i1 = i;
+      }
+      else
+      {
+        i0 = i;
+        i1 = (i+1)%4;
+      }
+      ON_BrepEdge& edge = NewEdge( m_V[vid[i0]], m_V[vid[i1]], AddEdgeCurve( c3[i] ) );
       edge.m_tolerance = 0.0;
       eid[i] = edge.m_edge_index;
       if ( i == 0 && bIsClosed[1] )
@@ -1135,22 +1147,13 @@ ON_Brep* ON_BrepWedge( const ON_3dPoint* corners, ON_Brep* pBrep )
 
 ON_Brep* ON_BrepSphere( const ON_Sphere& sphere, ON_Brep* pBrep )
 {
-  ON_BOOL32 bArcLengthParameterization = true;
+  bool bArcLengthParameterization = true;
   ON_Brep* brep = NULL;
   if ( pBrep )
     pBrep->Destroy();
-  ON_RevSurface* pRevSurface = sphere.RevSurfaceForm();
+  ON_RevSurface* pRevSurface = sphere.RevSurfaceForm(bArcLengthParameterization);
   if ( pRevSurface )
   {
-    if ( bArcLengthParameterization )
-    {
-      double r = fabs(sphere.radius);
-      if ( r <= ON_SQRT_EPSILON )
-        r = 1.0;
-      r *= ON_PI;
-      pRevSurface->SetDomain(0,0.0,2.0*r);
-      pRevSurface->SetDomain(1,-r,r);
-    }
     brep = ON_BrepRevSurface( pRevSurface, false, false, pBrep );
     if ( !brep )
       delete pRevSurface;
@@ -1270,7 +1273,7 @@ ON_Brep* ON_BrepRevSurface(
 
     if ( !brep->Create(pRevSurface) )
     {
-      if (!brep)
+      if (pBrep != brep)
         delete brep;
       brep = 0;
     }
@@ -1377,7 +1380,8 @@ static ON_BOOL32 AddC3Curve( const ON_Curve* c3, ON_SimpleArray<ON_Curve*>& C3 )
   int j;
   if ( !c3 )
     return false;
-  if ( c3->Dimension() != 3 )
+  const int c3dim = c3->Dimension();
+  if ( c3dim != 3 && c3dim != 2 )
     return false;
   if ( ON_PolyCurve::Cast(c3) )
   {
@@ -1394,16 +1398,34 @@ static ON_BOOL32 AddC3Curve( const ON_Curve* c3, ON_SimpleArray<ON_Curve*>& C3 )
     //ON_LineCurve* linecrv = 0;
     const ON_PolylineCurve* pline = static_cast<const ON_PolylineCurve*>(c3);
     line.to = pline->m_pline[0];
+    if ( 2 == c3dim )
+      line.to.z = 0.0;
     for ( j = 1; j < pline->m_pline.Count(); j++ )
     {
       line.from = line.to;
       line.to = pline->m_pline[j];
+      if ( 2 == c3dim )
+        line.to.z = 0.0;
       if ( line.Length() > 0 )
         C3.Append( new ON_LineCurve(line) );
     }
   }
   else
-    C3.Append( c3->DuplicateCurve() );
+  {
+    ON_Curve* c3dup = c3->DuplicateCurve();
+    if ( 0 == c3dup )
+      return false;
+    if ( 2 == c3dup->Dimension() )
+    {
+      c3dup->ChangeDimension(3);
+      if ( 3 != c3dup->Dimension() )
+      {
+        delete c3dup;
+        return false;
+      }
+    }
+    C3.Append( c3dup );
+  }
   return true;
 }
 
@@ -1621,6 +1643,7 @@ ON_Brep* ON_BrepTrimmedPlane(
   s->SetExtents(1, s->Domain(1) );
   const int si = brep->AddSurface(s);
   ON_BrepFace& face = brep->NewFace( si );
+  face.DestroyRuntimeCache();
   if ( brep->NewPlanarFaceLoop( face.m_face_index, ON_BrepLoop::outer, boundary, bDuplicateCurves ) )
   {
     // set face domain
@@ -1690,10 +1713,24 @@ ON_Brep* ON_BrepFromMesh(
     ON_Surface::ISO quad_iso[4] = {ON_Surface::S_iso,ON_Surface::E_iso,ON_Surface::N_iso,ON_Surface::W_iso};
     ON_Surface::ISO tri_iso[3] = {ON_Surface::S_iso,ON_Surface::E_iso,ON_Surface::not_iso};
 
+    // May 1, 2012 Tim Fix for RR 104209
+    // Use double precision vertexes from the mesh if they exist
+    const ON_3dPointArray* pDPV = 0;
+    if (mesh_topology.m_mesh->HasDoublePrecisionVertices() && mesh_topology.m_mesh->DoublePrecisionVerticesAreValid())
+      pDPV = &mesh_topology.m_mesh->DoublePrecisionVertices();
+
     for ( vi = 0; vi < vertex_count; vi++ )
     {
       ON_3dPoint pt;
-      pt = mesh_topology.TopVertexPoint(vi);
+
+      // May 1, 2012 Tim Fix for RR 104209
+      // Use double precision vertexes from the mesh if they exist
+      const ON_MeshTopologyVertex& topvert = mesh_topology.m_topv[vi];
+      if (0 != pDPV)
+        pt = *pDPV->At(topvert.m_vi[0]);
+      else
+        pt = mesh_topology.m_mesh->m_V[topvert.m_vi[0]];
+
       brep->NewVertex( pt, 0.0 );
     }
 
@@ -1797,7 +1834,7 @@ ON_Brep* ON_BrepFromMesh(
           }
           else 
           {
-            fei = (lti+1)%4;
+            fei = bTriangle ? ((lti+1)%3) : ((lti+1)%4);
             edge_index = mesh_face.m_topei[fei];
             ON_BrepEdge& brep_edge = brep->m_E[edge_index];
             const ON_MeshTopologyEdge& mesh_edge = mesh_topology.m_tope[edge_index];
@@ -2036,6 +2073,7 @@ ON_BOOL32 ON_BrepTrim::SetEndPoint(ON_3dPoint end_point)
 
 bool ON_Brep::CloseTrimGap( ON_BrepTrim& trim0, ON_BrepTrim& trim1 )
 {
+
   // carefully close gap between end of prev_trim and start of next_trim
 
   // make sure trim0 and trim1 are adjacent trims in a trimming loop
@@ -2332,17 +2370,6 @@ bool ON_Brep::RemoveNesting(
 
   return rc;
 }
-
-bool ON_Brep::SplitClosedFaces( int min_degree )
-{
-  return false;
-}
-
-bool ON_Brep::SplitBipolarFaces()
-{
-  return false;
-}
-
 static bool IsSlitTrim(const ON_BrepTrim& T)
 
 {
@@ -2765,7 +2792,7 @@ bool ON_BrepMergeFaces(ON_Brep& B)
   }
   if (SF.Count() < 2)
     return false;
-  SF.HeapSort(sfsort);
+  SF.QuickSort(sfsort);
   //int si = SF[0][0];
   int start_i = 0;
   while (start_i<SF.Count()){
@@ -2839,5 +2866,4 @@ void ON_BrepMergeAllEdges(ON_Brep& B)
   }
   return;
 }
-
 

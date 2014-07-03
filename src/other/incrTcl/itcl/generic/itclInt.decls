@@ -490,11 +490,11 @@ declare 109 generic {
 #
 
 declare 112 generic {
-    Tcl_CallFrame* _Tcl_GetCallFrame (Tcl_Interp *interp, int level)
+    Itcl_CallFrame* _Tcl_GetCallFrame (Tcl_Interp *interp, int level)
 }
 declare 113 generic {
-    Tcl_CallFrame* _Tcl_ActivateCallFrame (Tcl_Interp *interp, \
-        Tcl_CallFrame *framePtr)
+    Itcl_CallFrame* _Tcl_ActivateCallFrame (Tcl_Interp *interp, \
+        Itcl_CallFrame *framePtr)
 }
 declare 114 generic {
     Var* _TclNewVar (void)

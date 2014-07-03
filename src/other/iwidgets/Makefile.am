@@ -16,9 +16,10 @@ EXTRA_DIST = \
 	demos \
 	incoming \
 	outgoing \
-	tcl.m4 \
+	tclconfig \
 	tests \
-	win
+	win \
+	CMakeLists.txt
 
 DISTCLEANFILES = \
 	iwidgets.tcl \

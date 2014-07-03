@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -72,6 +73,158 @@ public:
   int        m_bitmap_index;
   ON_wString m_bitmap_name;     // descriptive name
   ON_wString m_bitmap_filename; // full path to file
+};
+
+/*
+  ON_EmbeddedFile is derived from ON_Bitmap so it can be stored 
+  in the Rhino document's CRhinoDoc::m_bitmap_table[] array.
+  The ON_EmbeddedFile class is used to embed any type of file
+  in a Rhino document.
+*/
+class ON_CLASS ON_EmbeddedFile : public ON_Object
+{
+  ON_OBJECT_DECLARE(ON_EmbeddedFile);
+public:
+  ON_EmbeddedFile();
+  ON_EmbeddedFile(const ON_EmbeddedFile& src);
+  ON_EmbeddedFile& operator=(const ON_EmbeddedFile& src);
+
+  virtual ~ON_EmbeddedFile();
+  void EmergencyDestroy();
+  void Destroy();
+  void DestroyBuffer();
+
+  /*
+  Description:
+    Store the specified file in an ON_EmbeddedFile class.
+  Parameters:
+    filename - [in]
+      full path to the file.
+    bCompress - [in]
+      true if the image of the file should be compressed.
+      (Pass false if the file is already in a compressed
+      format, like jpg, png, zip files.)
+  Returns:
+    true if successful.  When true is returned m_id is set to
+    a new unique id, m_full_file_name is set to filename,
+    and m_relative_file_name is empty.
+  */
+  bool Create( 
+    const wchar_t* filename, 
+    bool bCompress
+    );
+
+  /*
+  Description:
+    Store the specified file in an ON_EmbeddedFile class.
+  Parameters:
+    fp - [in]
+      Result of calling ON::OpenFile( ..., "rb" )
+    bCompress - [in]
+      true if the image of the file should be compressed.
+      (Pass false if the file is already in a compressed
+      format, like jpg, png, zip files.)
+  */
+  bool Create( 
+    FILE* fp,
+    bool bCompress 
+    );
+  
+  /*
+  Description:
+    Store the specified buffer in an ON_EmbeddedFile class.
+  Parameters:
+    source_buffer - [in]
+    source_buffer_size - [in]
+      number of bytes in source_buffer.
+    bCompress - [in]
+      true if the source_buffer should be compressed.
+      (Pass false if source_buffer is already in a compressed format.)
+  */
+  bool Create( 
+    const void* source_buffer,
+    ON__UINT64 sizeof_source_buffer,
+    bool bCompress 
+    );
+
+  bool Extract( 
+    const wchar_t* destination_filename
+    ) const;
+
+  bool Extract( 
+    FILE* fp
+    ) const;
+
+  /*
+  Description:
+    Extracts the file into a buffer.
+  Parameters:
+    buffer - [out]
+      buffer must point to FileSize() bytes of memory.
+      The extracted file will be copied to this buffer.
+  Returns:
+    True if successful.
+    False if not successful.
+  */
+  bool Extract( 
+    void* buffer
+    ) const;
+        
+  /*
+  Returns
+    full path file name
+  */
+  const wchar_t* FullFileName() const;
+    
+  /*
+  Returns
+    Relative file name.  Usually relative to the directory
+    where the archive containing this embedded file was last
+    saved.
+  */
+  const wchar_t* RelativeFileName() const;
+
+  ON_UUID Id() const;
+
+  void SetId( ON_UUID id );
+
+  void SetFullFileName( const wchar_t* full_file_name );
+
+
+  void SetRelativeFileName( const wchar_t* relative_file_name );
+
+  ON__UINT64 FileSize() const;
+  ON__UINT64 FileLastModifiedTime() const;
+  ON__UINT32 FileCRC() const;
+  
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+
+  ON_BOOL32 Write( ON_BinaryArchive& ) const;
+  ON_BOOL32 Read( ON_BinaryArchive& );
+
+  // The relative path is typically set when the .3dm file is
+  // saved and is the path to the file relative to the location
+  // of the saved file.
+  // (The full path to the file is in ON_Bitmap::m_bitmap_filename.)
+  ON_UUID    m_id;
+  ON_wString m_full_file_name; // full path file name
+  ON_wString m_relative_file_name; // relative path when the archive was last saved.
+
+private:
+  void* m_reserved;
+
+public:
+  ON__UINT64 m_file_size;
+  ON__UINT64 m_file_time;  // last modified time returned by ON::GetFileStats()
+  ON__UINT32 m_file_crc;   // 32 bit crc of the file from ON_CRC32
+
+public:
+  ON__UINT32 m_buffer_crc; // will be different from m_file_crc if the buffer is compressed.
+  ON_Buffer m_buffer;
+  unsigned char m_bCompressedBuffer; // true if m_buffer is compressed.
+
+private:
+  unsigned char m_reserved3[7];
 };
 
 
@@ -312,10 +465,6 @@ public:
   */
   ON_WindowsBitmap& operator=( const BITMAPINFO& src );
 
-
-  // OBSOLETE - just use the m_bmi pointer
-  //__declspec(deprecated) BITMAPINFO* Convert();
-
   /*
   Description:
     Create and ON_WindowsBitmap from a Windows BITMAPINFO pointer
@@ -446,9 +595,6 @@ public:
   int m_free_buffer; // 1 = ~ON_EmbeddedBitmap will onfree m_buffer.
   ON__UINT32 m_biffer_crc32; // 32 bit crc from ON_CRC32
 };
-
-// class ON_CLASS ON_OpenGLBitmap ...
-// OBSOLETE - See SourceSafe version 6 for old definition
 
 
 #endif

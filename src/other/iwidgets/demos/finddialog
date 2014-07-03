@@ -10,7 +10,7 @@ proc find {} {
     if {! [winfo exists .findd]} {
 	iwidgets::finddialog .findd -textwidget .st
     }
-
+    
     .findd center .st
     .findd activate
 }

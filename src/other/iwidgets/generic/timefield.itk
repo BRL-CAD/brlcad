@@ -10,24 +10,24 @@
 # ----------------------------------------------------------------------
 #            Copyright (c) 1997 DSC Technologies Corporation
 # ======================================================================
-# Permission to use, copy, modify, distribute and license this software
-# and its documentation for any purpose, and without fee or written
-# agreement with DSC, is hereby granted, provided that the above copyright
-# notice appears in all copies and that both the copyright notice and
-# warranty disclaimer below appear in supporting documentation, and that
-# the names of DSC Technologies Corporation or DSC Communications
-# Corporation not be used in advertising or publicity pertaining to the
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
 # software without specific, written prior permission.
-#
-# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
 # ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
 # INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
-# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
-# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
-# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
 # WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
 # SOFTWARE.
 # ======================================================================
 
@@ -50,8 +50,8 @@ itk::usual Timefield {
 # ------------------------------------------------------------------
 itcl::class iwidgets::Timefield {
 
-    inherit iwidgets::Labeledwidget
-
+    inherit iwidgets::Labeledwidget 
+    
     constructor {args} {}
 
     itk_option define -childsitepos childSitePos Position e
@@ -95,7 +95,7 @@ itcl::class iwidgets::Timefield {
 
 #
 # Provide a lowercased access method for the timefield class.
-#
+# 
 proc iwidgets::timefield {pathName args} {
     uplevel iwidgets::Timefield $pathName $args
 }
@@ -105,7 +105,7 @@ proc iwidgets::timefield {pathName args} {
 # ------------------------------------------------------------------
 itcl::body iwidgets::Timefield::constructor {args} {
     component hull configure -borderwidth 0
-
+    
     #
     # Create an entry field for entering the time.
     #
@@ -115,7 +115,7 @@ itcl::body iwidgets::Timefield::constructor {args} {
       keep -borderwidth -cursor -exportselection \
           -foreground -highlightcolor -highlightthickness \
           -insertbackground -justify -relief -textvariable
-
+      
       rename -font -textfont textFont Font
       rename -highlightbackground -background background Background
       rename -background -textbackground textBackground Background
@@ -126,9 +126,9 @@ itcl::body iwidgets::Timefield::constructor {args} {
     #
     itk_component add -protected dfchildsite {
       frame $itk_interior.dfchildsite
-    }
+    } 
     set itk_interior $itk_component(dfchildsite)
-
+    
     #
     # Add timefield event bindings for focus in and keypress events.
     #
@@ -183,7 +183,7 @@ itcl::configbody iwidgets::Timefield::childsitepos {
           grid columnconfigure $parent 0 -weight 1
           grid columnconfigure $parent 1 -weight 0
       }
-
+      
       e {
           grid $itk_component(dfchildsite) -row 0 -column 1 -sticky ns
           grid $itk_component(time) -row 0 -column 0 -sticky nsew
@@ -193,7 +193,7 @@ itcl::configbody iwidgets::Timefield::childsitepos {
           grid columnconfigure $parent 0 -weight 1
           grid columnconfigure $parent 1 -weight 0
       }
-
+      
       s {
           grid $itk_component(dfchildsite) -row 1 -column 0 -sticky ew
           grid $itk_component(time) -row 0 -column 0 -sticky nsew
@@ -203,7 +203,7 @@ itcl::configbody iwidgets::Timefield::childsitepos {
           grid columnconfigure $parent 0 -weight 1
           grid columnconfigure $parent 1 -weight 0
       }
-
+      
       w {
           grid $itk_component(dfchildsite) -row 0 -column 0 -sticky ns
           grid $itk_component(time) -row 0 -column 1 -sticky nsew
@@ -213,7 +213,7 @@ itcl::configbody iwidgets::Timefield::childsitepos {
           grid columnconfigure $parent 0 -weight 0
           grid columnconfigure $parent 1 -weight 1
       }
-
+      
       default {
           error "bad childsite option\
                 \"$itk_option(-childsitepos)\":\
@@ -235,9 +235,9 @@ itcl::configbody iwidgets::Timefield::command {}
 # Specifies the level of intelligence to be shown in the actions
 # taken by the time field during the processing of keypress events.
 # Valid settings include high or low.  With a high iq,
-# the time prevents the user from typing in an invalid time.  For
+# the time prevents the user from typing in an invalid time.  For 
 # example, if the current time is 05/31/1997 and the user changes
-# the hour to 04, then the minute will be instantly modified for them
+# the hour to 04, then the minute will be instantly modified for them 
 # to be 30.  In addition, leap seconds are fully taken into account.
 # A setting of low iq instructs the widget to do no validity checking
 # at all during time entry.  With a low iq level, it is assumed that
@@ -311,7 +311,7 @@ itcl::configbody iwidgets::Timefield::gmt {
 # ------------------------------------------------------------------
 # OPTION: -state
 #
-# Disable the
+# Disable the 
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Timefield::state {
   switch -- $itk_option(-state) {
@@ -339,8 +339,8 @@ itcl::configbody iwidgets::Timefield::state {
 #
 # Return the current contents of the timefield in one of two formats
 # string or as an integer clock value using the -string and -clicks
-# options respectively.  The default is by string.  Reference the
-# clock command for more information on obtaining times and their
+# options respectively.  The default is by string.  Reference the 
+# clock command for more information on obtaining times and their 
 # formats.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Timefield::get {{format "-string"}} {
@@ -363,9 +363,9 @@ itcl::body iwidgets::Timefield::get {{format "-string"}} {
 # ------------------------------------------------------------------
 # PUBLIC METHOD: show time
 #
-# Changes the currently displayed time to be that of the time
+# Changes the currently displayed time to be that of the time 
 # argument.  The time may be specified either as a string or an
-# integer clock value.  Reference the clock command for more
+# integer clock value.  Reference the clock command for more 
 # information on obtaining times and their formats.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Timefield::show {{time "now"}} {
@@ -422,7 +422,7 @@ itcl::body iwidgets::Timefield::isvalid {} {
 # ------------------------------------------------------------------
 # PROTECTED METHOD: _focusIn
 #
-# This method is bound to the <FocusIn> event.  It resets the
+# This method is bound to the <FocusIn> event.  It resets the 
 # insert cursor and field settings to be back to their last known
 # positions.
 # ------------------------------------------------------------------
@@ -431,7 +431,7 @@ itcl::body iwidgets::Timefield::_focusIn {} {
 }
 
 # ------------------------------------------------------------------
-# PROTECTED METHOD: _keyPress
+# PROTECTED METHOD: _keyPress 
 #
 # This method is the workhorse of the class.  It is bound to the
 # <KeyPress> event and controls the processing of all key strokes.
@@ -441,7 +441,7 @@ itcl::body iwidgets::Timefield::_keyPress {char sym state} {
   #
   #  Determine which field we are in currently.  This is needed
   # since the user may have moved to this position via a mouse
-  # selection and so it would not be in the position we last
+  # selection and so it would not be in the position we last 
   # knew it to be.
   #
   set _cfield [_whichField ]
@@ -464,7 +464,7 @@ itcl::body iwidgets::Timefield::_keyPress {char sym state} {
   set second	"$second1$second2"
 
   #
-  # Process numeric keystrokes.  This involes a fair amount of
+  # Process numeric keystrokes.  This involes a fair amount of 
   # processing with step one being to check and make sure we
   # aren't attempting to insert more that 6 characters.  If
   # so ring the bell and break.
@@ -473,8 +473,8 @@ itcl::body iwidgets::Timefield::_keyPress {char sym state} {
 
     # If we are currently in the hour field then we process the
     # number entered based on the cursor position.  If we are at
-    # at the first position and our iq is low, then accept any
-    # input.
+    # at the first position and our iq is low, then accept any 
+    # input.  
     #
     # if the current format is military, then
     # validate the hour field which can be [00 - 23]
@@ -488,7 +488,7 @@ itcl::body iwidgets::Timefield::_keyPress {char sym state} {
         } elseif {$itk_option(-format) == "military"} {
           if {$icursor == 0}  {
             #
-            # if the digit is less than 2, then
+            # if the digit is less than 2, then 
             # the second hour digit is valid for 0-9
             #
             if {$char < 2} {
@@ -496,7 +496,7 @@ itcl::body iwidgets::Timefield::_keyPress {char sym state} {
               $itk_component(time) insert 0 $char
 
             #
-            # if the digit is equal to 2, then
+            # if the digit is equal to 2, then 
             # the second hour digit is valid for 0-3
             #
             } elseif {$char == 2} {
@@ -510,7 +510,7 @@ itcl::body iwidgets::Timefield::_keyPress {char sym state} {
               }
 
             #
-            # if the digit is greater than 2, then
+            # if the digit is greater than 2, then 
             # set the first hour digit to 0 and the
             # second hour digit to the value.
             #
@@ -543,7 +543,7 @@ itcl::body iwidgets::Timefield::_keyPress {char sym state} {
         } else {
           if {$icursor == 0}  {
             #
-            # if the digit is 0, then
+            # if the digit is 0, then 
             #   the second hour digit is valid for 1-9
             #   so just insert it.
             #
@@ -552,7 +552,7 @@ itcl::body iwidgets::Timefield::_keyPress {char sym state} {
               $itk_component(time) insert 0 $char
 
             #
-            # if the digit is equal to 1, then
+            # if the digit is equal to 1, then 
             #   the second hour digit is valid for 0-2
             #
             } elseif {$char == 1} {
@@ -566,7 +566,7 @@ itcl::body iwidgets::Timefield::_keyPress {char sym state} {
               }
 
             #
-            # if the digit is greater than 1, then
+            # if the digit is greater than 1, then 
             #   set the first hour digit to 0 and the
             #   second hour digit to the value.
             #
@@ -699,8 +699,8 @@ itcl::body iwidgets::Timefield::_keyPress {char sym state} {
         _moveField forward
 
       #
-      # A ctrl-tab key moves the hour:minute:second field backwards by one
-      # unless the current field is the hour.  In that case we'll let
+      # A ctrl-tab key moves the hour:minute:second field backwards by one 
+      # unless the current field is the hour.  In that case we'll let 
       # tab take the focus to a previous widget.
       #
       } elseif {$state == 4} {
@@ -721,7 +721,7 @@ itcl::body iwidgets::Timefield::_keyPress {char sym state} {
 
     Left - BackSpace - Delete {
       #
-      # A left arrow, backspace, or delete key moves the insert cursor
+      # A left arrow, backspace, or delete key moves the insert cursor 
       # to the left one.  This is what you expect for the left arrow
       # and since the whole widget always operates in overstrike mode,
       # it makes the most sense for backspace and delete to do the same.
@@ -735,7 +735,7 @@ itcl::body iwidgets::Timefield::_keyPress {char sym state} {
       #
       uplevel #0 $itk_option(-command)
     }
-
+      
     default {
 
     }
@@ -819,7 +819,7 @@ itcl::body iwidgets::Timefield::_moveField {direction} {
   #
   # the index of the previous or next field index can be determined
   # by subtracting or adding 1 to current the index, respectively.
-  #
+  # 
   set index [lsearch $_fields $_cfield]
   expr {($direction == "forward") ? [incr index] : [incr index -1]}
 

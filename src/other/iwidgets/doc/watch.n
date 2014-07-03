@@ -55,7 +55,7 @@ Class:	\fBHeight\fR
 Command-Line Switch:	\fB-height\fR
 .fi
 .IP
-Specifies the height of the watch widget in any of the forms
+Specifies the height of the watch widget in any of the forms 
 acceptable to \fBTk_GetPixels\fR.  The default height is 175 pixels.
 .LP
 .nf
@@ -151,7 +151,7 @@ Command-Line Switch:	\fB-state\fR
 .fi
 .IP
 Specifies the editable state for the hands on the watch.  In a normal
-state, the user can select and move the hands via mouse button 1.  The
+state, the user can select and move the hands via mouse button 1.  The 
 valid values are \fBnormal\fR, and \fBdisabled\fR.  The defult is normal.
 .LP
 .nf
@@ -169,7 +169,7 @@ Class:	\fBWidth\fR
 Command-Line Switch:	\fB-width\fR
 .fi
 .IP
-Specifies the width of the watch widget in any of the forms
+Specifies the width of the watch widget in any of the forms 
 acceptable to \fBTk_GetPixels\fR.  The default height is 155 pixels.
 .BE
 
@@ -214,16 +214,16 @@ this case the command returns an empty string.
 command.
 .TP
 \fIpathName \fBget\fR ?\fBformat\fR?
-Returns the current time of the watch in a format of
+Returns the current time of the watch in a format of 
 string or as an integer clock value using the \fB-string\fR and \fB-clicks\fR
-format options respectively.  The default is by string.  Reference the
-clock command for more information on obtaining time and its
+format options respectively.  The default is by string.  Reference the 
+clock command for more information on obtaining time and its 
 formats.
 .TP
 \fIpathName \fBshow\fR \fItime\fR
-Changes the currently displayed time to be that of the time
+Changes the currently displayed time to be that of the time 
 argument.  The time may be specified either as a string, an
-integer clock value or the keyword "now".  Reference the clock
+integer clock value or the keyword "now".  Reference the clock 
 command for more information on obtaining time and its format.
 .TP
 \fIpathName \fBwatch\fR ?\fBargs\fR?
@@ -237,7 +237,7 @@ Name:	\fBcanvas\fR
 Class:	\fBCanvas\fR
 .fi
 .IP
-The canvas component is the where the clock is drawn.  See the
+The canvas component is the where the clock is drawn.  See the 
 Canvas widget manual entry for details.
 .LP
 .nf

@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) disjointlistbox.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::disjointlistbox iwid
 .BS
@@ -72,7 +72,7 @@ Command-Line Switch:	\fB-buttonplacement\fR
 .fi
 .IP
 Specifies the placement of the insertion and removal buttons relative to the
-scrolledlistbox widgets\fBn\fR,
+scrolledlistbox widgets\fBn\fR, 
 \fBbottom\fR, or \fBcenter\fR.  The default is bottom.
 .LP
 .nf
@@ -227,7 +227,7 @@ Class:	\fBScrolledlistbox\fR
 .fi
 .IP
 The lhs component is the scrolledlistbox for the rhs button.
-See the "scrolledlistbox" widget manual entry for details on the lhs
+See the "scrolledlistbox" widget manual entry for details on the lhs 
 component item.
 .LP
 .nf
@@ -280,7 +280,7 @@ See the "Label" widget manual entry for details  on the rhsCount label component
 .DS
 package require Iwidgets 4.0
 iwidgets::disjointlistbox .dlb
-pack .dlb -padx 10 -pady 10 -fill both -expand yes
+pack .dlb -padx 10 -pady 10 -fill both -expand yes 
 .DE
 .SH AUTHOR(S)
 John A. Tucker

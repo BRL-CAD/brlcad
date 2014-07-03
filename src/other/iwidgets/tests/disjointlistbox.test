@@ -45,7 +45,7 @@ set m 1
 test Disjointlistbox-1.$c {Disjointlistbox construction} {
     iwidgets::Disjointlistbox .lf
     pack .lf -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -76,7 +76,7 @@ foreach test {
 	    .lf configure $option [lindex $test 1]
 	    lindex [.lf configure $option] 4
 	} [lindex $test 2]
-        update
+        update 
 	incr o
     }
 
@@ -85,7 +85,7 @@ foreach test {
 #
 test Disjointlistbox-1.$c {Disjointlistbox destruction} {
     destroy .lf
-    update
+    update 
 } {}
 
 incr c
@@ -93,23 +93,23 @@ incr c
 test Disjointlistbox-1.$c {Disjointlistbox construction} {
     iwidgets::disjointlistbox .lf -lhslabeltext "Don't Print" -rhslabeltext "Print"
     pack .lf -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Disjointlistbox-1.$c {Disjointlistbox destruction} {
     destroy .lf
-    update
+    update 
 } {}
 
 incr c
 
 test Disjointlistbox-1.$c {Disjointlistbox construction} {
-    iwidgets::disjointlistbox .lf
-    pack .lf
+    iwidgets::disjointlistbox .lf 
+    pack .lf 
     destroy .lf
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

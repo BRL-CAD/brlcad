@@ -1,0 +1,71 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+IF(COMMAND CMAKE_POLICY)
+  CMAKE_POLICY(SET CMP0003 NEW)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+    CMAKE_POLICY(SET CMP0026 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+ENDIF(COMMAND CMAKE_POLICY)
+
+PROJECT(LIBTERMLIB)
+
+
+IF(NOT MSVC)
+
+  if(NOT CONF_DIR)
+    set(CONF_DIR etc)
+  endif(NOT CONF_DIR)
+
+  SET(LIBTERMLIB_PRIVATE_HDRS
+    termcap.h
+    )
+
+
+  SET(LIBTERM_SOURCES
+    termcap.c
+    tgoto.c
+    tputs.c
+    )
+
+  add_definitions(
+    -DCM_N
+    -DCM_GT
+    -DCM_B
+    -DCM_D
+    -DB_TERMCAP=\"${CMAKE_INSTALL_PREFIX}/${CONF_DIR}/termcap\"
+    )
+
+  add_library(termlib SHARED ${LIBTERM_SOURCES})
+  set_target_properties(termlib PROPERTIES VERSION 1.7.1 SOVERSION 1)
+  install(TARGETS termlib
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+
+  add_library(termlib-static STATIC ${LIBTERM_SOURCES})
+  install(TARGETS termlib-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+
+  SET_TARGET_PROPERTIES(termlib-static PROPERTIES OUTPUT_NAME "termlib")
+
+  if (NOT CMAKE_CONFIGURATION_TYPES)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/termcap.src ${CMAKE_BINARY_DIR}/${CONF_DIR}/termcap COPYONLY)
+    INSTALL(FILES ${CMAKE_BINARY_DIR}/${CONF_DIR}/termcap DESTINATION ${CONF_DIR})
+  else (NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/termcap.src ${CMAKE_BINARY_DIR}/${CFG_TYPE_UPPER}/${DATA_DIR}/etc/termcap COPYONLY)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    INSTALL(FILES ${CMAKE_BINARY_DIR}/\${BUILD_TYPE}/${CONF_DIR}/termcap DESTINATION ${CONF_DIR})
+  endif (NOT CMAKE_CONFIGURATION_TYPES)
+
+
+ENDIF(NOT MSVC)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

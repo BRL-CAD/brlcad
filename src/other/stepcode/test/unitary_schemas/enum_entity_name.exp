@@ -1,0 +1,11 @@
+SCHEMA test_enum_entity_name;
+
+TYPE simple_datum_reference_modifier = ENUMERATION OF (
+   line,
+   translation);
+END_TYPE;
+
+ENTITY line;
+END_ENTITY;
+
+END_SCHEMA;

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -625,13 +626,6 @@ ON_BOOL32 ON_Brep::Write( ON_BinaryArchive& file ) const
 {
   const ON_Brep* brep = this;
   ON_Brep* v2brep = 0;
-
-  if ( file.Archive3dmVersion() <= 2 && !IsValidForV2() )
-  {
-    v2brep = ON_Brep::New(*this);
-    v2brep->MakeValidForV2();
-    brep = v2brep;
-  }
 
   //ON_BOOL32 rc = file.Write3dmChunkVersion(3,0); // serialization version
   //ON_BOOL32 rc = file.Write3dmChunkVersion(3,1); // added meshes

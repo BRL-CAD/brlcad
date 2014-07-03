@@ -119,7 +119,7 @@ Class:                  <B>Position</B>
 Command-Line Switch:	<B>-childsitepos</B>
 </pre>
 <UL>
-Specifies the position of the child site in the selection box: <B>n</B>,
+Specifies the position of the child site in the selection box: <B>n</B>, 
 <B>s</B>, <B>e</B>, <B>w</B>, or <B></B>.  The default is center
 </UL>
 <P>
@@ -129,7 +129,7 @@ Class:                  <B>Height</B>
 Command-Line Switch:	<B>-height</B>
 </pre>
 <UL>
-Specifies the height of the selection box.  The value may be specified in
+Specifies the height of the selection box.  The value may be specified in 
 any of the forms acceptable to Tk_GetPixels.  The default is 320 pixels.
 </UL>
 <P>
@@ -158,7 +158,7 @@ Command-Line Switch:	<B>-itemslabelpos</B>
 </pre>
 <UL>
 Specifies the position of the label along the side of the items
-list: <B>n</B>, <B>ne</B>, <B>e</B>, <B>se</B>, <B>s</B>, <B>sw</B>, <B>w</B>,
+list: <B>n</B>, <B>ne</B>, <B>e</B>, <B>se</B>, <B>s</B>, <B>sw</B>, <B>w</B>, 
 or <B>nw</B>.  The default is nw.
 </UL>
 <P>
@@ -208,8 +208,8 @@ Class:                  <B>Position</B>
 Command-Line Switch:	<B>-selectionlabelpos</B>
 </pre>
 <UL>
-Specifies the position of the label along the side of the selection:
-<B>n</B>, <B>ne</B>, <B>e</B>, <B>se</B>, <B>s</B>, <B>sw</B>, <B>w</B>,
+Specifies the position of the label along the side of the selection: 
+<B>n</B>, <B>ne</B>, <B>e</B>, <B>se</B>, <B>s</B>, <B>sw</B>, <B>w</B>, 
 or <B>nw</B>.  The default is nw.
 </UL>
 <P>
@@ -229,7 +229,7 @@ Class:                  <B>Width</B>
 Command-Line Switch:	<B>-width</B>
 </pre>
 <UL>
-Specifies the width of the selection box.  The value may be specified in
+Specifies the width of the selection box.  The value may be specified in 
 any of the forms acceptable to Tk_GetPixels.  The default is 260 pixels.
 </UL>
 <P>
@@ -255,7 +255,7 @@ operations on the widget.  It has the following general form:
 <I>pathName option </I>?<I>arg arg ...</I>?
 </pre>
 <I>Option</I> and the <I>arg</I>s
-determine the exact behavior of the command.
+determine the exact behavior of the command.  
 
 </pre><H2>ASSOCIATED METHODS</H2>
 <P>
@@ -277,7 +277,7 @@ determine the exact behavior of the command.
 </td>
 </table>
 <P>
-See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/listbox.n.html"> "listbox" </A> widget class manual entry for details on the
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/listbox.n.html"> "listbox" </A> widget class manual entry for details on the 
 associated methods.
 
 </pre><H2>WIDGET-SPECIFIC METHODS</H2>
@@ -297,7 +297,7 @@ command.
 <DL>
 <DT> <I>pathName <B>clear</B> <I>component</I>
 </I></B>
-<DD> Delete the contents of either the selection entry widget or
+<DD> Delete the contents of either the selection entry widget or 
 items list.  The <I>component</I> argument may be either <B>items</B>
 or <B>selection</B>.
 </DL>
@@ -333,7 +333,7 @@ or list widget depending on the <I>component</I> value.
 <DL>
 <DT> <I>pathName <B>selectitem</B>
 </I></B>
-<DD> Replace the selection entry field contents with the currently
+<DD> Replace the selection entry field contents with the currently 
 selected items value.
 
 </DL>
@@ -344,7 +344,7 @@ Name:                   <B>childsite</B>
 Class:                  <B>Frame</B>
 </pre>
 <UL>
-The childsite component is the user child site for the selection box.  See
+The childsite component is the user child site for the selection box.  See 
 the "frame" widget manual entry for details on the childsite component item.
 </UL>
 <P>
@@ -354,7 +354,7 @@ Class:                  <B>Scrolledlistbox</B>
 </pre>
 <UL>
 The items component provides the scrolled list box of items for the selection
-box.  See the "scrolledlistbox" widget manual entry for details on the
+box.  See the "scrolledlistbox" widget manual entry for details on the 
 items component item.
 </UL>
 <P>
@@ -364,7 +364,7 @@ Class:                  <B>Entryfield</B>
 </pre>
 <UL>
 The selection component provides the entry field in the selection box for
-display of the selected item in the items component.  See the "entryfield"
+display of the selected item in the items component.  See the "entryfield" 
 widget manual entry for details on the selection component item.
 </UL>
 </table>
@@ -374,7 +374,7 @@ widget manual entry for details on the selection component item.
  option add *textBackground white
 
  selectionbox .sb -items {Hello {Out There} World}
- pack .sb -padx 10 -pady 10 -fill both -expand yes
+ pack .sb -padx 10 -pady 10 -fill both -expand yes 
 
  set cs [label [.sb childsite].label -text "Child Site"]
  pack $cs -fill x -padx 10 -pady 10

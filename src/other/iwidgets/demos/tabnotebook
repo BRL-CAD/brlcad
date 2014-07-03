@@ -10,7 +10,7 @@ option add *Scale.width 8
 
 iwidgets::tabnotebook .tnb -width 5i -height 3i
 pack .tnb -padx 4 -pady 4
-
+ 
 # Page #1
 # ----------------------------------------------------------------------
 set page [.tnb add -label "Personal Info"]
@@ -50,7 +50,7 @@ proc set_color {page {val 0}} {
     $page.sample configure -background $color
 }
 set_color $page
-
+ 
 
 # Page #3
 # ----------------------------------------------------------------------

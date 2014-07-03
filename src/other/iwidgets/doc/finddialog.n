@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) finddialog.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::finddialog iwid
 .BS
@@ -49,7 +49,7 @@ associated options.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBlabelFont\fR
+\fBlabelFont\fR	
 .fi
 .LP
 See the "labeledwidget" widget manual entry for details on the above
@@ -75,7 +75,7 @@ inherited options.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBtitle\fR
+\fBtitle\fR 
 .fi
 .LP
 See the "Toplevel" widget  manual entry for details on the above
@@ -88,7 +88,7 @@ Class:	\fBCommand\fR
 Command-Line Switch:	\fB-clearcommand\fR
 .fi
 .IP
-Specifies a command to be invoked following a clear operation.
+Specifies a command to be invoked following a clear operation. 
 The option is meant to be used as means of notification that the
 clear has taken place and allow other actions to take place such
 as disabling a find again menu.
@@ -99,7 +99,7 @@ Class:	\fBCommand\fR
 Command-Line Switch:	\fB-matchcommand\fR
 .fi
 .IP
-Specifies a command to be invoked following a find operation.
+Specifies a command to be invoked following a find operation. 
 The command is called with a match point as an argument which identifies
 where exactly where in the text or scrolledtext widget that the match
 is located.  Should a match not be found the match point is {}.  The
@@ -133,7 +133,7 @@ Class:	\fBBackground\fR
 Command-Line Switch:	\fB-searchbackground\fR
 .fi
 .IP
-Specifies the background color of the line containing the matching
+Specifies the background color of the line containing the matching 
 the search pattern.  It may have any of the forms accepted by Tk_GetColor.
 The default is gray77.
 .LP
@@ -143,7 +143,7 @@ Class:	\fBBackground\fR
 Command-Line Switch:	\fB-searchforeground\fR
 .fi
 .IP
-Specifies the foreground color of the line containing the matching
+Specifies the foreground color of the line containing the matching 
 the search pattern.  It may have any of the forms accepted by Tk_GetColor.
 The default is black.
 .LP
@@ -160,8 +160,8 @@ Specifies the text or scrolledtext widget to be searched.
 .PP
 The \fBiwidgets::finddialog\fR command creates a find dialog that works in
 conjunction with a text or scrolledtext widget to provide a means
-of performing search operations.  The user is prompted for a text
-pattern to be found in the text or scrolledtext widget.  The
+of performing search operations.  The user is prompted for a text 
+pattern to be found in the text or scrolledtext widget.  The 
 search can be for all occurances, by regular expression, considerate
 of the case, or backwards.
 
@@ -182,7 +182,7 @@ commands are possible for finddialog widgets:
 .nf
 .ta 4c 8c 12c
 \fBadd\fR	\fBbuttonconfigure\fR	\fBdefault\fR	\fBhide\fR
-\fBinvoke\fR	\fBshow\fR
+\fBinvoke\fR	\fBshow\fR	
 .fi
 .LP
 See the "buttonbox" widget manual entry for details on the above
@@ -204,7 +204,7 @@ by \fIoption\fR.
 command.
 .TP
 \fIpathName \fBclear\fR
-Clears the pattern in the entry field and the pattern matchin
+Clears the pattern in the entry field and the pattern matchin 
 indicators in the text or scrolledtext widget.
 .TP
 \fIpathName\fR \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
@@ -224,7 +224,7 @@ command.
 \fIpathName \fBfind\fR
 Search for a specific text string in the text widget given by
 the -textwidget option.  This method is the standard callback
-for the Find button.  It is made available such that it can be
+for the Find button.  It is made available such that it can be 
 bound to a find again action.
 
 .SH "COMPONENTS"
@@ -235,7 +235,7 @@ Class:	\fBCheckbutton\fR
 .fi
 .IP
 The all component specifies that all the matches of the pattern should be
-found when performing the search.  See the "checkbutton" widget manual
+found when performing the search.  See the "checkbutton" widget manual 
 entry for details on the all component item.
 .LP
 .nf
@@ -245,7 +245,7 @@ Class:	\fBCheckbutton\fR
 .IP
 The backwards component specifies that the search should continue in
 a backwards direction towards the beginning of the text or scrolledtext
-widget.  See the "checkbutton" widget manual entry for details on the
+widget.  See the "checkbutton" widget manual entry for details on the 
 backwards component item.
 .LP
 .nf
@@ -254,7 +254,7 @@ Class:	\fBCheckbutton\fR
 .fi
 .IP
 The case component specifies that the case of the pattern should be
-taken into consideration when performing the search.  See the
+taken into consideration when performing the search.  See the 
 "checkbutton" widget manual entry for details on the case component item.
 .LP
 .nf
@@ -262,7 +262,7 @@ Name:	\fBpattern\fR
 Class:	\fBEntryfield\fR
 .fi
 .IP
-The pattern component provides the pattern entry field.  See the
+The pattern component provides the pattern entry field.  See the 
 "entryfield" widget manual entry for details on the pattern component item.
 .LP
 .nf
@@ -271,7 +271,7 @@ Class:	\fBCheckbutton\fR
 .fi
 .IP
 The regexp component specifies that the pattern is a regular expression.
-See the "checkbutton" widget manual entry for details on the regexp
+See the "checkbutton" widget manual entry for details on the regexp 
 component item.
 .fi
 
@@ -280,7 +280,7 @@ component item.
  package require Iwidgets 4.0
  iwidgets::scrolledtext .st
  pack .st
- .st insert end "Now is the time for all good men\\n"
+ .st insert end "Now is the time for all good men\\n" 
  .st insert end "to come to the aid of their country"
 
  iwidgets::finddialog .fd -textwidget .st

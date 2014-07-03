@@ -93,7 +93,8 @@ unslice_SOURCES = unslice.c
 
 EXTRA_DIST = \
 	rleaddeof.c \
-	rleskel.c
+	rleskel.c \
+	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

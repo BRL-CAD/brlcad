@@ -44,7 +44,7 @@ set m 1
 test Spinner-1.$c {Spinner construction} {
     iwidgets::Spinner .sp
     pack .sp -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -59,45 +59,45 @@ test Spinner-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-background #d9d9d9 #d9d9d9}
+    {-background #d9d9d9 #d9d9d9} 
     {-foreground blue blue}
-    {-borderwidth 4 4}
-    {-childsitepos e e}
-    {-childsitepos s s}
-    {-childsitepos w w}
-    {-childsitepos n n}
-    {-childsitepos e e}
-    {-borderwidth 2 2}
-    {-cursor gumby gumby}
+    {-borderwidth 4 4} 
+    {-childsitepos e e} 
+    {-childsitepos s s} 
+    {-childsitepos w w} 
+    {-childsitepos n n} 
+    {-childsitepos e e} 
+    {-borderwidth 2 2} 
+    {-cursor gumby gumby} 
     {-decrement {.sp insert end Down} {.sp insert end Down}}
-    {-exportselection 0 0}
-    {-fixed 15 15}
-    {-foreground Black Black}
+    {-exportselection 0 0} 
+    {-fixed 15 15} 
+    {-foreground Black Black} 
     {-increment {.sp insert end Up} {.sp insert end Up}}
-    {-insertbackground Blue Blue}
-    {-insertbackground Black Black}
-    {-insertborderwidth 2 2}
-    {-insertofftime 200 200}
-    {-insertontime 500 500}
-    {-insertwidth 3 3}
-    {-labelfont 6x13 6x13}
-    {-labelmargin 5 5}
-    {-labeltext Label Label}
-    {-labelpos w w}
-    {-labelpos nw nw}
-    {-labelpos n n}
-    {-labelpos ne ne}
-    {-labelpos e e}
-    {-labelpos se se}
-    {-labelpos s s}
-    {-labelpos sw sw}
-    {-arroworient horizontal horizontal}
-    {-relief raised raised}
-    {-selectbackground #c3c3c3 #c3c3c3}
-    {-selectborderwidth 2 2}
-    {-selectforeground Black Black}
-    {-state disabled disabled}
-    {-state normal normal}
+    {-insertbackground Blue Blue} 
+    {-insertbackground Black Black} 
+    {-insertborderwidth 2 2} 
+    {-insertofftime 200 200} 
+    {-insertontime 500 500} 
+    {-insertwidth 3 3} 
+    {-labelfont 6x13 6x13} 
+    {-labelmargin 5 5} 
+    {-labeltext Label Label} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-arroworient horizontal horizontal} 
+    {-relief raised raised} 
+    {-selectbackground #c3c3c3 #c3c3c3} 
+    {-selectborderwidth 2 2} 
+    {-selectforeground Black Black} 
+    {-state disabled disabled} 
+    {-state normal normal} 
     {-sticky w w}
     {-sticky nw nw}
     {-sticky n n}
@@ -107,7 +107,7 @@ foreach test {
     {-sticky s s}
     {-sticky sw sw}
     {-sticky news news}
-    {-textfont 6x13 6x13}
+    {-textfont 6x13 6x13} 
     {-validate numeric {::iwidgets::Entryfield::numeric %c}}
     {-repeatdelay 400 400}
     {-repeatdelay -100 0}
@@ -119,7 +119,7 @@ foreach test {
 	    .sp configure $option [lindex $test 1]
 	    lindex [.sp configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -133,7 +133,7 @@ foreach test {
 	test Spinner-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -142,22 +142,22 @@ foreach test {
 #
 test Spinner-1.$c {Spinner destruction} {
     destroy .sp
-    update
+    update 
 } {}
 
 incr c
 
 test Spinner-1.$c {Spinner construction} {
-    iwidgets::spinner .sp
+    iwidgets::spinner .sp 
     pack .sp -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Spinner-1.$c {Spinner destruction} {
     destroy .sp
-    update
+    update 
 } {}
 
 incr c
@@ -166,7 +166,7 @@ test Spinner-1.$c {Spinner destruction} {
     iwidgets::spinner .sp
     pack .sp
     destroy .sp
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -25,6 +26,59 @@
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray< class ON_Value* >;
 #pragma warning( pop )
 #endif
+
+class ON_CLASS ON_CurveProxyHistory
+{
+public:
+  // Used to save information needed to create an ON_CurveProxy
+  // reference in history records.
+  ON_CurveProxyHistory();
+  ~ON_CurveProxyHistory();
+
+  ON_ObjRef m_curve_ref;                // from ON_CurveProxy.m_real_curve
+  bool      m_bReversed;                // from ON_CurveProxy.m_bReversed
+  ON_Interval m_full_real_curve_domain; // from ON_CurveProxy.m_real_curve.Domain()
+  ON_Interval m_sub_real_curve_domain;  // from ON_CurveProxy.m_real_curve_domain
+  ON_Interval m_proxy_curve_domain;     // from ON_CurveProxy.m_this_domain
+
+  void Destroy();
+  bool Write( ON_BinaryArchive& ) const;
+  bool Read( ON_BinaryArchive& );
+  void Dump( ON_TextLog& ) const;
+
+private:
+  ON__UINT8 m_reserved[64];
+};
+
+#if defined(ON_DLL_TEMPLATE)
+// This stuff is here because of a limitation in the way Microsoft
+// handles templates and DLLs.  See Microsoft's knowledge base 
+// article ID Q168958 for details.
+#pragma warning( push )
+#pragma warning( disable : 4231 )
+ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_CurveProxyHistory>;
+#pragma warning( pop )
+#endif
+
+class ON_CLASS ON_PolyEdgeHistory
+{
+public:
+  // Used to save information needed to create an CRhinoPolyEdge
+  // reference in history records.
+  ON_PolyEdgeHistory();
+  ~ON_PolyEdgeHistory();
+
+  void Destroy();
+  bool Write( ON_BinaryArchive& ) const;
+  bool Read( ON_BinaryArchive& );
+  void Dump( ON_TextLog& ) const;
+
+  ON_ClassArray< ON_CurveProxyHistory > m_segment;
+  ON_SimpleArray<double> m_t;
+  int m_evaluation_mode;
+private:
+  ON__UINT8 m_reserved[64];
+};
 
 class ON_CLASS ON_HistoryRecord : public ON_Object
 {
@@ -99,6 +153,7 @@ public:
   bool SetUuidValue(     int value_id, ON_UUID uuid );
   bool SetStringValue(   int value_id, const wchar_t* s );
   bool SetGeometryValue( int value_id, ON_Geometry* g);
+  bool SetPolyEdgeValue( int value_id, const ON_PolyEdgeHistory& polyedge );
 
   /*
   Description:
@@ -144,6 +199,7 @@ public:
   bool SetStringValues(   int value_id, int count, const wchar_t* const* s );
   bool SetStringValues(   int value_id, const ON_ClassArray<ON_wString>& s );
   bool SetGeometryValues( int value_id, const ON_SimpleArray<ON_Geometry*> a);
+  bool SetPolyEdgeValues( int value_id, int count, const ON_PolyEdgeHistory* a );
 
   /*
   Description:
@@ -165,6 +221,7 @@ public:
   bool GetMeshValue( int value_id, const ON_Mesh*& ) const;
   bool GetGeometryValue( int value_id, const ON_Geometry*& ) const;
   bool GetUuidValue( int value_id, ON_UUID* uuid ) const;
+  bool GetPolyEdgeValue( int value_id, const ON_PolyEdgeHistory*& polyedge ) const;
 
   int GetStringValues( int value_id, ON_ClassArray<ON_wString>& string ) const;
   int GetBoolValues( int value_id, ON_SimpleArray<bool>& ) const;
@@ -177,6 +234,7 @@ public:
   int GetObjRefValues( int value_id, ON_ClassArray<ON_ObjRef>& objects ) const;
   int GetGeometryValues( int value_id, ON_SimpleArray<const ON_Geometry*>& ) const;
   int GetUuidValues( int value_id, ON_SimpleArray<ON_UUID>& ) const;
+  int GetPolyEdgeValues( int value_id, ON_SimpleArray<const ON_PolyEdgeHistory*>& ) const;
 
   /*
   Desccription:

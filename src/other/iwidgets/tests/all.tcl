@@ -6,7 +6,7 @@
 #
 # Copyright (c) 1998-2000 by Ajuba Solutions
 # All rights reserved.
-#
+# 
 # RCS: @(#) $Id$
 
 package require tcltest
@@ -71,7 +71,7 @@ foreach file [lsort [::tcltest::getMatchingFiles]] {
     set cmd [concat [list | $shell $file] [split $argv] \
 	    [list -outfile $logfile]]
     if {[catch {
-	set pipeFd [open $cmd "r"]
+	set pipeFd [open $cmd "r"] 
 	while {[gets $pipeFd line] >= 0} {
 	    puts $::tcltest::outputChannel $line
 	}
@@ -82,7 +82,7 @@ foreach file [lsort [::tcltest::getMatchingFiles]] {
     }
 
     # Now concatenate the temporary log file to
-    # ::tcltest::outputChannel
+    # ::tcltest::outputChannel 
     if {[catch {
 	set fd [open $logfile "r"]
 	while {![eof $fd]} {

@@ -1,5 +1,5 @@
-# This file is a Tcl script to test out [incr Widgets] Extfileselectionbox
-# class.  It is organized in the standard fashion for Tcl tests with the
+# This file is a Tcl script to test out [incr Widgets] Extfileselectionbox 
+# class.  It is organized in the standard fashion for Tcl tests with the 
 # following notation for test case labels:
 #
 #   1.x - Construction/Destruction tests

@@ -90,7 +90,7 @@ associated options.
 </td>
 </table>
 <P>
-See the <A HREF="labeledwidget.n.html"> "labeledwidget" </A> class manual entry for details on the inherited
+See the <A HREF="labeledwidget.n.html"> "labeledwidget" </A> class manual entry for details on the inherited 
 options.
 </pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
 <P>
@@ -101,7 +101,7 @@ Command-Line Switch:	<B>-dblclickcommand</B>
 </pre>
 <UL>
 Specifies a Tcl command procedure which is called when an item is
-double clicked.  Typically this occurs when mouse button 1 is double
+double clicked.  Typically this occurs when mouse button 1 is double 
 clicked over an item.  Selection policy does not matter.
 </UL>
 <P>
@@ -112,11 +112,11 @@ Command-Line Switch:	<B>-height</B>
 </pre>
 <UL>
 Specifies the height of the scrolled list box as an entire unit.
-The value may be specified in any of the forms acceptable to
+The value may be specified in any of the forms acceptable to 
 <B>Tk_GetPixels</B>.  Any additional space needed to display the other
 components such as labels, margins, and scrollbars force the listbox
-to be compressed.  A value of zero along with the same value for
-the width causes the value given for the visibleitems option
+to be compressed.  A value of zero along with the same value for 
+the width causes the value given for the visibleitems option 
 to be applied which administers geometry constraints in a different
 manner.  The default height is zero.
 </UL>
@@ -128,9 +128,9 @@ Command-Line Switch:	<B>-hscrollmode</B>
 </pre>
 <UL>
 Specifies the the display mode to be used for the horizontal
-scrollbar: <B>static, dynamic,</B> or <B>none</B>.  In static mode, the
+scrollbar: <B>static, dynamic,</B> or <B>none</B>.  In static mode, the 
 scroll bar is displayed at all times.  Dynamic mode displays the
-scroll bar as required, and none disables the scroll bar display.  The
+scroll bar as required, and none disables the scroll bar display.  The 
 default is static.
 </UL>
 <P>
@@ -140,7 +140,7 @@ Class:                  <B>Width</B>
 Command-Line Switch:	<B>-sbwidth</B>
 </pre>
 <UL>
-Specifies the width of the scrollbar in any of the forms acceptable
+Specifies the width of the scrollbar in any of the forms acceptable 
 to <B>Tk_GetPixels</B>.  The default width is 15 pixels..
 </UL>
 <P>
@@ -150,7 +150,7 @@ Class:                  <B>Margin</B>
 Command-Line Switch:	<B>-scrollmargin</B>
 </pre>
 <UL>
-Specifies the distance between the listbox and scrollbar in any of the
+Specifies the distance between the listbox and scrollbar in any of the 
 forms acceptable to <B>Tk_GetPixels</B>.  The default is 3 pixels.
 </UL>
 <P>
@@ -181,7 +181,7 @@ Class:                  <B>Background</B>
 Command-Line Switch <B>-textbackground</B>
 </pre>
 <UL>
-Specifies the background color for the listbox.  This allows the background
+Specifies the background color for the listbox.  This allows the background 
 within the listbox to be different from the normal background color.
 </UL>
 <P>
@@ -191,8 +191,8 @@ Class:                  <B>Font</B>
 Command-Line Switch:	<B>-textfont</B>
 </pre>
 <UL>
-Specifies the font to be used for text in the listbox.  This allows for
-the font associated with text internal to the scrolled listbox to be
+Specifies the font to be used for text in the listbox.  This allows for 
+the font associated with text internal to the scrolled listbox to be 
 different than the font for labels.
 </UL>
 <P>
@@ -205,12 +205,12 @@ Command-Line Switch:	<B>-visibleitems</B>
 Specifies the widthxheight in characters and lines for the listbox.
 This option is only administered if the width and height options
 are both set to zero, otherwise they take precedence.  The default value
-is 20x10.  With the visibleitems option engaged, geometry constraints
-are maintained only on the listbox.  The size of the other components such as
-labels, margins, and scroll bars, are additive and independent,
+is 20x10.  With the visibleitems option engaged, geometry constraints 
+are maintained only on the listbox.  The size of the other components such as 
+labels, margins, and scroll bars, are additive and independent, 
 effecting the overall size of the scrolled list box.  In contrast,
 should the width and height options have non zero values, they
-are applied to the scrolled list box as a whole.  The listbox
+are applied to the scrolled list box as a whole.  The listbox 
 is compressed or expanded to maintain the geometry constraints.
 </UL>
 <P>
@@ -221,9 +221,9 @@ Command-Line Switch:	<B>-vscrollmode</B>
 </pre>
 <UL>
 Specifies the the display mode to be used for the vertical
-scrollbar: <B>static, dynamic,</B> or <B>none</B>.  In static mode, the
-scroll bar is displayed at all times.  Dynamic mode displays the
-scroll bar as required, and none disables the scroll bar display.  The
+scrollbar: <B>static, dynamic,</B> or <B>none</B>.  In static mode, the 
+scroll bar is displayed at all times.  Dynamic mode displays the 
+scroll bar as required, and none disables the scroll bar display.  The 
 default is static.
 </UL>
 <P>
@@ -234,11 +234,11 @@ Command-Line Switch:	<B>-width</B>
 </pre>
 <UL>
 Specifies the width of the scrolled list box as an entire unit.
-The value may be specified in any of the forms acceptable to
+The value may be specified in any of the forms acceptable to 
 <B>Tk_GetPixels</B>.  Any additional space needed to display the other
 components such as labels, margins, and scrollbars force the listbox
-to be compressed.  A value of zero along with the same value for
-the height causes the value given for the visibleitems option
+to be compressed.  A value of zero along with the same value for 
+the height causes the value given for the visibleitems option 
 to be applied which administers geometry constraints in a different
 manner.  The default width is zero.
 </UL>
@@ -246,7 +246,7 @@ manner.  The default width is zero.
 
 </pre><H2>DESCRIPTION</H2>
 <P>
-The <B>iwidgets::scrolledlistbox</B> command creates
+The <B>iwidgets::scrolledlistbox</B> command creates 
 a scrolled listbox with additional options to manage
 horizontal and vertical scrollbars.  This includes options to control
 which scrollbars are displayed and the method, i.e. statically or
@@ -396,7 +396,7 @@ combination.
 <DT> <I>pathName <B>sort</B> <I>order</I>
 </I></B>
 <DD> Sort the current list in any of the forms accepted by Tcl's lsort command.
-Also accepts either <B>ascending</B> or <B>descending</B> order.
+Also accepts either <B>ascending</B> or <B>descending</B> order.  
 
 </DL>
 </pre><H2>COMPONENTS</H2>
@@ -406,7 +406,7 @@ Name:                   <B>listbox</B>
 Class:                  <B>listbox</B>
 </pre>
 <UL>
-The listbox component is the listbox widget.  See the "listbox" widget
+The listbox component is the listbox widget.  See the "listbox" widget 
 manual entry for details on the listbox component item.
 </UL>
 <P>
@@ -415,7 +415,7 @@ Name:                   <B>horizsb</B>
 Class:                  <B>Scrollbar</B>
 </pre>
 <UL>
-The horizsb component is the horizontal scroll bar.  See the "scrollbar"
+The horizsb component is the horizontal scroll bar.  See the "scrollbar" 
 widget manual entry for details on the horizsb component item.
 </UL>
 <P>
@@ -424,7 +424,7 @@ Name:                   <B>vertsb</B>
 Class:                  <B>Scrollbar</B>
 </pre>
 <UL>
-The vertsb component is the vertical scroll bar.  See the "scrollbar" widget
+The vertsb component is the vertical scroll bar.  See the "scrollbar" widget 
 manual entry for details on the vertsb component item.
 </UL>
 </table>
@@ -444,7 +444,7 @@ manual entry for details on the vertsb component item.
     -vscrollmode static -hscrollmode dynamic -labeltext "List" \\
     -selectioncommand selCmd -dblclickcommand defCmd
  pack .slb -padx 10 -pady 10 -fill both -expand yes
- .slb insert end {Hello {Out There} World}
+ .slb insert end {Hello {Out There} World} 
 </pre>
 </pre><H2>AUTHOR</H2>
 <A HREF="mailto:mulferts@spd.dsccc.com">Mark L. Ulferts</A>

@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) optionmenu.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::optionmenu iwid
 .BS
@@ -45,9 +45,9 @@ Class:	\fBClickTime\fR
 Command-Line Switch:	\fB-clicktime\fR
 .fi
 .IP
-Interval time, in msec, used to determine that a single mouse
+Interval time, in msec, used to determine that a single mouse 
 click has occurred. Used to post menu on a "quick" mouse click.
-\fBNote\fR: changing this value may cause the sigle-click
+\fBNote\fR: changing this value may cause the sigle-click 
 functionality to not work properly.  The default is 150 msec.
 .LP
 .nf
@@ -56,7 +56,7 @@ Class:	\fBCommand\fR
 Command-Line Switch:	\fB-command\fR
 .fi
 .IP
-Specifies a Tcl command procedure to be evaluated following a  change in
+Specifies a Tcl command procedure to be evaluated following a  change in 
 the current option menu selection.
 .LP
 .nf
@@ -67,7 +67,7 @@ Command-Line Switch:	\fB-cyclicon\fR
 .IP
 Turns on/off the 3rd mouse button capability. The value may be specified
 in any of the forms acceptable to \fBTcl_GetBoolean\fR.  This feature
-allows the right mouse button to cycle through the popup
+allows the right mouse button to cycle through the popup 
 menu list without poping it up. The right mouse button cycles through
 the menu in reverse order.  The default is true.
 .LP
@@ -77,7 +77,7 @@ Class:	\fBCursor\fR
 Command-Line Switch:	\fB-popupcursor\fR
 .fi
 .IP
-Specifies  the mouse cursor to be used for the popup menu.  The value may
+Specifies  the mouse cursor to be used for the popup menu.  The value may 
 have any of the  forms  acceptable to \fBTk_GetCursor\fR.
 .LP
 .nf
@@ -98,16 +98,16 @@ Command-Line Switch:	\fB-width\fR
 .IP
 Specifies a fixed size for the menu button label in any of the forms
 acceptable to \Tk_GetPixels\fR.  If the text
-is too small to fit in the label, the text is clipped.
-Note: Normally, when a new list is created, or new items are
-added to an existing list, the menu button label is resized
+is too small to fit in the label, the text is clipped. 
+Note: Normally, when a new list is created, or new items are 
+added to an existing list, the menu button label is resized 
 automatically.  Setting this option overrides that functionality.
 .LP
 .BE
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::optionmenu\fR command creates an option menu widget with options
+The \fBiwidgets::optionmenu\fR command creates an option menu widget with options 
 to manage it.  An option menu displays a frame containing a label and a button.
 A pop-up menu will allow for the value of the button to change.
 
@@ -117,11 +117,11 @@ The \fBiwidgets::optionmenu\fR command creates a new Tcl command whose
 name is \fIpathName\fR.  This
 command may be used to invoke various
 operations on the widget.  It has the following general form:
-.DS
+.DS 
 \fIpathName option \fR?\fIarg arg ...\fR?
 .DE
 \fIOption\fR and the \fIarg\fRs
-determine the exact behavior of the command.
+determine the exact behavior of the command.  
 .PP
 Many of the widget commands for an optionmenu take as one argument an
 indicator of which entry of the option menu to operate on.  These
@@ -174,15 +174,15 @@ command.
 .TP
 \fIpathName \fBdelete \fIfirst\fR ?\fIlast\fR?
 Delete all of the option menu entries between \fIfirst\fR and
-\fIlast\fR inclusive.  If \fIlast\fR is omitted then it defaults
+\fIlast\fR inclusive.  If \fIlast\fR is omitted then it defaults 
 to \fIfirst\fR.
 .TP
 \fIpathName \fBdisable \fIindex\fR
-Disable the option menu entry specified by \fIindex\fR.
-Disabling a menu item will prevent the user from being able to select
-this item from the menu.  This only effects the state of the item
-in the menu, in other words, should the item be the currently
-selected item, the programmer is responsible for determining this condition
+Disable the option menu entry specified by \fIindex\fR. 
+Disabling a menu item will prevent the user from being able to select 
+this item from the menu.  This only effects the state of the item 
+in the menu, in other words, should the item be the currently 
+selected item, the programmer is responsible for determining this condition 
 and taking appropriate action.
 .TP
 \fIpathName \fBenable \fIindex\fR
@@ -202,7 +202,7 @@ Returns the numerical index corresponding to \fIindex\fR.
 Insert an item, or list of items, into the menu at location \fIindex\fR.
 .TP
 \fIpathName \fBselect \fIindex\fR
-Select an item from the option menu to be displayed as the currently
+Select an item from the option menu to be displayed as the currently 
 selected item.
 .TP
 \fIpathName \fBsort \fImode\fR
@@ -226,7 +226,7 @@ Class:	\fBMenu\fR
 .fi
 .IP
 The popupMenu component is menu displayed upon selection of the menu button.
-The menu contains the choices for the option menu.  See the "menu" widget
+The menu contains the choices for the option menu.  See the "menu" widget 
 manual entry for details on the popupMenu component item.
 .fi
 
@@ -245,7 +245,7 @@ manual entry for details on the popupMenu component item.
 .SH ACKNOWLEDGEMENTS:
 Michael J. McLennan
 .IP
-Borrowed some ideas (next & previous) from OptionButton class.
+Borrowed some ideas (next & previous) from OptionButton class. 
 .LP
 Steven B. Jaggers
 .IP

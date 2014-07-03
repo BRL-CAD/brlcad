@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) mainwindow.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::mainwindow iwid
 .BS
@@ -39,7 +39,7 @@ See the "toolbar" manual entry for details on the above associated options.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBtitle\fR
+\fBtitle\fR 
 .fi
 .LP
 See the "Toplevel" manual entry for details on the above inherited options.
@@ -126,7 +126,7 @@ Specifies the normal foreground color for the toolbar.
 .SH DESCRIPTION
 .PP
 The \fBiwidgets::mainwindow\fR command creates a mainwindow shell which contains
-a menubar, toolbar, mousebar, childsite, status line, and help line.
+a menubar, toolbar, mousebar, childsite, status line, and help line.  
 Each item may be filled and configured to suit individual needs.
 
 .SH "METHODS"
@@ -181,18 +181,18 @@ access to the entire API of the menubar.  See the "menubar" manual
 entry for details on the commands available in the menubar.
 .TP
 \fIpathName \fBmousebar\fR ?\fIargs\fR?
-The \fBmousebar\fR method provides access to the mousebar which is a
-vertical toolbar.  Invoked with no arguments it returns the pathname
-of the mousebar.  With arguments, they are evaluated against the mousebar
-which in effect provides access to the entire API of the underlying
-toolbar.  See the "toolbar" manual entry for details on the commands
+The \fBmousebar\fR method provides access to the mousebar which is a 
+vertical toolbar.  Invoked with no arguments it returns the pathname 
+of the mousebar.  With arguments, they are evaluated against the mousebar 
+which in effect provides access to the entire API of the underlying 
+toolbar.  See the "toolbar" manual entry for details on the commands 
 available in the mousebar.
 .TP
 \fIpathName \fBmsgd\fR ?\fIargs\fR?
 The \fBmsgd\fR method provides access to the messagedialog contained
-in the mainwindow.  Invoked with no arguments it returns the pathname
-of the messagedialog.  With arguments, they are evaluated against the
-messagedialog which in effect provides access to the entire API of the
+in the mainwindow.  Invoked with no arguments it returns the pathname 
+of the messagedialog.  With arguments, they are evaluated against the 
+messagedialog which in effect provides access to the entire API of the 
 messagedialog.  See the "messagedialog" manual
 entry for details on the commands available in the messagedialog.
 .TP
@@ -211,7 +211,7 @@ Class:	\fBLabel\fR
 .fi
 .IP
 The help component provides a location for displaying any help
-strings provided in the menubar, toolbar, or mousebar.  See the "label"
+strings provided in the menubar, toolbar, or mousebar.  See the "label" 
 widget manual entry for details on the help component item.
 .LP
 .nf
@@ -220,7 +220,7 @@ Class:	\fBMenubar\fR
 .fi
 .IP
 The menubar component is the menubar located at the top of the window.
-See the "menubar" widget manual entry for details on the menubar
+See the "menubar" widget manual entry for details on the menubar 
 component item.
 .LP
 .nf
@@ -229,7 +229,7 @@ Class:	\fBToolbar\fR
 .fi
 .IP
 The mousebar component is the vertical toolbar located on the right side
-of the window.  See the "toolbar" widget manual entry for details on
+of the window.  See the "toolbar" widget manual entry for details on 
 the mousebar component item.
 .LP
 .nf
@@ -237,8 +237,8 @@ Name:	\fBmsgd\fR
 Class:	\fBMessagedialog\fR
 .fi
 .IP
-The msgd component is a messagedialog which may be reconfigured as needed
-and used repeatedly throughout the application.  See the "messagedialog"
+The msgd component is a messagedialog which may be reconfigured as needed 
+and used repeatedly throughout the application.  See the "messagedialog" 
 widget manual entry for details on the messagedialog component item.
 .LP
 .nf
@@ -247,7 +247,7 @@ Class:	\fBLabel\fR
 .fi
 .IP
 The status component provides a location for displaying application
-status information.  See the "label" widget manual entry for details
+status information.  See the "label" widget manual entry for details 
 on the status component item.
 .LP
 .nf
@@ -255,8 +255,8 @@ Name:	\fBtoolbar\fR
 Class:	\fBToolbar\fR
 .fi
 .IP
-The toolbar component is the horizontal toolbar located on the top
-of the window.  See the "toolbar" widget manual entry for details on
+The toolbar component is the horizontal toolbar located on the top 
+of the window.  See the "toolbar" widget manual entry for details on 
 the toolbar component item.
 .fi
 
@@ -285,7 +285,7 @@ the toolbar component item.
 	       -helpstr "Close the file"
 	   separator sep2
 	   command exit -label "Exit" -underline 1 \\
-	       -helpstr "Exit this application"
+	       -helpstr "Exit this application" 
     }
 
  #

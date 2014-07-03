@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -33,7 +34,7 @@ ON_COMPONENT_INDEX::ON_COMPONENT_INDEX(
 ON_COMPONENT_INDEX::TYPE ON_COMPONENT_INDEX::Type(int i)
 {
   TYPE t = invalid_type;
-  switch(i)
+  switch((unsigned int)i)
   {
   case no_type:            t = no_type;            break;
   case brep_vertex:        t = brep_vertex;        break;
@@ -49,8 +50,14 @@ ON_COMPONENT_INDEX::TYPE ON_COMPONENT_INDEX::Type(int i)
   case polycurve_segment:  t = polycurve_segment;  break;
   case pointcloud_point:   t = pointcloud_point;   break;
   case group_member:       t = group_member;       break;
+
   case extrusion_bottom_profile: t = extrusion_bottom_profile; break;
   case extrusion_top_profile:    t = extrusion_top_profile;    break;
+  case extrusion_wall_edge:      t = extrusion_wall_edge;      break;
+  case extrusion_wall_surface:   t = extrusion_wall_surface;   break;
+  case extrusion_cap_surface:    t = extrusion_cap_surface;    break;
+  case extrusion_path:           t = extrusion_path;           break;
+
   case dim_linear_point:   t = dim_linear_point;   break;
   case dim_radial_point:   t = dim_radial_point;   break;
   case dim_angular_point:  t = dim_angular_point;  break;
@@ -158,7 +165,58 @@ bool  ON_COMPONENT_INDEX::IsGroupMemberComponentIndex() const
 
 bool  ON_COMPONENT_INDEX::IsExtrusionProfileComponentIndex() const
 {
-  return ( (ON_COMPONENT_INDEX::extrusion_bottom_profile  == m_type || ON_COMPONENT_INDEX::extrusion_top_profile == m_type) && m_index >= 0 );
+  return ( (   ON_COMPONENT_INDEX::extrusion_bottom_profile  == m_type 
+            || ON_COMPONENT_INDEX::extrusion_top_profile     == m_type
+            )
+            && m_index >= 0 
+         );
+}
+
+bool  ON_COMPONENT_INDEX::IsExtrusionPathComponentIndex() const
+{
+  return ( ON_COMPONENT_INDEX::extrusion_path  == m_type 
+           && m_index >= -1 
+           && m_index <= 1
+         );
+}
+
+bool  ON_COMPONENT_INDEX::IsExtrusionWallEdgeComponentIndex() const
+{
+  return ( ON_COMPONENT_INDEX::extrusion_wall_edge  == m_type 
+           && m_index >= 0 
+         );
+}
+
+bool  ON_COMPONENT_INDEX::IsExtrusionWallSurfaceComponentIndex() const
+{
+  return ( ON_COMPONENT_INDEX::extrusion_wall_surface  == m_type 
+           && m_index >= 0
+         );
+}
+
+bool  ON_COMPONENT_INDEX::IsExtrusionWallComponentIndex() const
+{
+  return ( (   ON_COMPONENT_INDEX::extrusion_wall_edge == m_type 
+             || ON_COMPONENT_INDEX::extrusion_wall_surface == m_type
+           )
+           && m_index >= 0
+         );
+}
+
+bool  ON_COMPONENT_INDEX::IsExtrusionComponentIndex() const
+{
+  return ( (   ON_COMPONENT_INDEX::extrusion_bottom_profile  == m_type 
+            || ON_COMPONENT_INDEX::extrusion_top_profile     == m_type
+            || ON_COMPONENT_INDEX::extrusion_wall_edge       == m_type
+            || ON_COMPONENT_INDEX::extrusion_wall_surface    == m_type
+            || ON_COMPONENT_INDEX::extrusion_cap_surface     == m_type
+            || ON_COMPONENT_INDEX::extrusion_path            == m_type
+            )
+            && 
+            (  m_index >= 0 
+              || (-1 == m_index && ON_COMPONENT_INDEX::extrusion_path == m_type)
+            )
+         );
 }
 
 bool  ON_COMPONENT_INDEX::IsPointCloudComponentIndex() const
@@ -353,6 +411,22 @@ ON_ObjRef::ON_ObjRef()
             m__proxy_ref_count(0)
 {
 }
+
+void ON_ObjRef::Destroy()
+{
+  DecrementProxyReferenceCount();
+  m_uuid = ON_nil_uuid;
+  m_geometry = 0;
+  m_parent_geometry = 0;
+  m_geometry_type = ON::unknown_object_type;
+  m_runtime_sn = 0;
+  m_point = ON_UNSET_POINT;
+  m_osnap_mode = ON::os_none;
+  m__proxy1 = 0;
+  m__proxy2 = 0;
+  m__proxy_ref_count = 0;
+}
+
 
 ON_ObjRef::ON_ObjRef( const ON_ObjRef& src ) 
           : m_uuid(src.m_uuid),
@@ -638,6 +712,9 @@ const ON_Brep* ON_BrepParent( const ON_Geometry* geo )
 {
   const ON_Brep* brep = 0;
 
+  if ( geo == NULL )
+    return NULL;
+
   if  ( ON::brep_object == geo->ObjectType() )
   {
     brep = ON_Brep::Cast(geo);
@@ -692,6 +769,9 @@ const ON_Brep* ON_BrepParent( const ON_Geometry* geo )
 const ON_Mesh* ON_MeshParent( const ON_Geometry* geo )
 {
   const ON_Mesh* mesh = 0;
+
+  if ( geo == NULL )
+    return NULL;
 
   if  ( ON::mesh_object == geo->ObjectType() )
   {
@@ -761,11 +841,27 @@ bool ON_ObjRef::SetParentIRef( const ON_InstanceRef& iref,
   }
   else if ( ON_COMPONENT_INDEX::invalid_type == m_component_index.m_type )
   {
-    // handle top level objects
-    if ( m__proxy1 || m__proxy2 || m__proxy_ref_count )
+    // handle top level objects    
+    while ( m__proxy1 || m__proxy2 || m__proxy_ref_count )
     {
+      // It it's an brep proxy for an extrusion object, then keep going.
+      if (    0 != m__proxy1
+           && 0 == m__proxy2 
+           && 0 != m__proxy_ref_count 
+           && 1 == *m__proxy_ref_count 
+           && m__proxy1 != m_geometry
+           && 0 != ON_Brep::Cast(m_geometry)
+           )
+      {
+        // 13 July 2011 - Part of the fix for bug 87827
+        // is to break here instead of returning false
+        // because we have something like a brep proxy 
+        // of an extrusion.
+        break;        
+      }
       return false;
     }
+
     if ( !m_geometry )
     {
       return false;
@@ -784,9 +880,14 @@ bool ON_ObjRef::SetParentIRef( const ON_InstanceRef& iref,
       delete proxy_geo;
       return false;
     }
+
+    // 13 July 2011 - Part of the fix for bug 87827
+    // was to put the m_geometry and m_parent_geometry
+    // assignments after the call to SetProxy() which
+    // was zeroing m_geometry and m_parent_geometry.
+    SetProxy(0,proxy_geo,true);
     m_geometry = proxy_geo;
     m_parent_geometry = proxy_geo;
-    SetProxy(0,proxy_geo,true);
     rc = true;
   }
   else

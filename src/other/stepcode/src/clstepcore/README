@@ -1,0 +1,110 @@
+This directory contains source code defining a collection of
+application independent classes that includes a common "base" class
+for all entity class definitions as well as classes for maintaining
+meta-information about schemas in the schema class library.  These
+core classes are also used by the editor and probe-ui libraries.  The
+core classes use a common set of virtual functions for reading and
+writing to exchange files, reading and writing user interface formats,
+and validating their data.
+
+This directory also contains the InstMgr class and the classes which
+help implement it. These were moved into core from the editor library
+in order to break a cyclic dependency. InstMgr is used in the public
+methods of both the core and editor libraries. Until it is known for
+certain that no code passes InstMgr objects between the methods of
+the two libraries, it will not be safe to simply remove usages from
+either library in order to break the interdependency.
+
+Directory Contents:
+
+sdaiEnum.cc, sdaiEnum.h
+Defines SdaiEenumeration (previous STEPenumeration), an abstract base
+class, and derived classes Logical and Boolean which inherit from
+SdaiEnumeration.  Logical and Boolean model the LOGICAL and BOOLEAN
+types in EXPRESS.  Other enumerated types can be implemented by
+subclassing SdaiEnumeration.
+
+ExpDict.cc, ExpDict.h, ExpDict.inline.cc
+Defines classes representing descriptors for EXPRESS schemas,
+entities, attributes, and types.  Instances of these classes comprise
+a dictionary to the contents of an application model's schema.  The
+instances populate a Registry object (see Registry below).
+
+Registry.h, Registry.inline.cc
+Defines Registry, a class with three data members: a hash table of
+active schemas, a hash table of active types, and a hash table of
+entity instances.  The Registry object serves as a dictionary to the
+contents of an application model's schema.  It is also used to create
+new entity instances.
+
+STEPaggregate.cc, STEPaggregate.h
+Defines a collection of abstract classes for representing aggregations
+of simple types, enumerations, selects, and entity types.  The
+following subclasses of STEPaggregate are stubs and have yet to be
+implemented: Array, Bag, Set, List.  Defines RealAggregate, an
+abstract subclass of STEPaggregate for implementing aggregations of
+real numbers.
+
+STEPattribute.cc, STEPattribute.h, STEPattribute.inline.cc
+Defines STEPattribute, an element in a STEPentity's list of attributes.
+
+STEPattributeList.cc, STEPattributeList.h
+Defines the class STEPattributeList -- a list of pointers to 
+STEPattribute objects.  The nodes on the list point to STEPattributes.
+STEPattributeList is derived from SingleLinkList.
+
+sdaiSelect.cc, sdaiSelect.h
+Defines SdaiSelect, an abstract base class implementing the EXPRESS 
+SELECT data type.  
+
+sdaiString.cc, sdaiString.h
+Defines SdaiString, a class implementing the EXPRESS STRING data type.
+
+STEPundefined.cc, STEPundefined.h
+Defines SCLundefined, a class for implementing any types not defined
+in other SCL classes.  
+
+sdaiBinary.cc, sdaiBinary.h
+Defines SdaiBinary, a class implementing the EXPRESS BINARY date type.
+
+SingleLinkList.cc, SingleLinkList.h, SingleLinkList.inline.cc
+Defines the classes SingleLinkList and SingleLinkNode, implementing a
+generic singly linked list.  These two classes are both abstract base
+classes.
+
+baseType.h
+Defines BASE_TYPE, an enumeration of the base data types in EXPRESS.
+
+read_func.cc, read_func.h
+Defines a collection of functions for reading and validating
+numerical data.
+
+sdai.h
+This file is basically a bunch of #include statements for all of the
+header files corresponding to the specifications in Annex D of Part 22
+(the proposaed SDAI/C++ language binding).  Defines STEPentity, the
+abstract base class of all generated entity classes.
+
+from cleditor:
+dispnode.cc, dispnode.h
+Defines DisplayNode, a class encapsulating all display information for
+an entity.
+
+dispnodelist.cc, dispnodelist.h
+Implements list operations for DisplayNode objects.
+
+instmgr.cc, instmgr.h
+Defines InstMgr, a class that keeps a master list of instances in the
+current editing session.
+
+mgrnode.cc, mgrnode.h
+Defines the class MgrNode, used to represent a STEPentity along with
+its state information and its display information.  By associating a
+STEPentity with a DisplayNode, this class hides the implementation of
+an application's user interface from the application model.
+
+mgrnodearray.cc, mgrnodearray.h
+Implements array operations for MgrNode objects.
+
+mgrnodelist.cc, mgrnodelist.h
+Implements list operations for MgrNode objects.

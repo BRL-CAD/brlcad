@@ -1692,7 +1692,8 @@ Itcl_DefaultInfoCmd(dummy, interp, objc, objv)
      *  then we got a "bad option" error message.  Add the options
      *  for the current ensemble to the error message.
      */
-    if (result != TCL_OK && strncmp(interp->result,"bad option",10) == 0) {
+    if (result != TCL_OK &&
+	    strncmp(Tcl_GetStringResult(interp),"bad option",10) == 0) {
         resultPtr = Tcl_NewObj();
         Tcl_AppendToObj(resultPtr, "\nor", -1);
         Itcl_GetEnsembleUsageForObj(interp, objv[0], resultPtr);

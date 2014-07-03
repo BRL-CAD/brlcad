@@ -1,10 +1,9 @@
-#include "opennurbs.h"
-
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2009 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -14,6 +13,8 @@
 //
 ////////////////////////////////////////////////////////////////
 */
+
+#include "opennurbs.h"
 
 // Dimension of tree bounding boxes
 #define ON_RTree_NODE_DIM 3
@@ -62,12 +63,15 @@ static void InitRect(ON_RTreeBBox* a_rect);
 static ON_RTreeBBox CombineRectHelper(const ON_RTreeBBox* a_rectA, const ON_RTreeBBox* a_rectB);
 static double CalcRectVolumeHelper(const ON_RTreeBBox* a_rect);
 static bool OverlapHelper(const ON_RTreeBBox* a_rectA, const ON_RTreeBBox* a_rectB);
+static double DistanceToCapsuleAxisHelper(const struct ON_RTreeCapsule* a_capsule, const ON_RTreeBBox* a_rect);
 static void ClassifyHelper(int a_index, int a_group, struct ON_RTreePartitionVars* a_parVars);
-static bool SearchHelper(const ON_RTreeNode* a_node, const ON_RTreeBBox* a_rect, ON_RTreeSearchResultCallback& a_result );
+static bool SearchHelper(const ON_RTreeNode* a_node, ON_RTreeBBox* a_rect, ON_RTreeSearchResultCallback& a_result );
 static bool SearchHelper(const ON_RTreeNode* a_node, const ON_RTreeBBox* a_rect, ON_RTreeSearchResult& a_result );
 static bool SearchHelper(const ON_RTreeNode* a_node, const ON_RTreeBBox* a_rect, ON_SimpleArray<ON_RTreeLeaf> &a_result );
 static bool SearchHelper(const ON_RTreeNode* a_node, const ON_RTreeBBox* a_rect, ON_SimpleArray<int> &a_result );
 static bool SearchHelper(const ON_RTreeNode* a_node, const ON_RTreeBBox* a_rect, ON_SimpleArray<void*> &a_result );
+static bool SearchHelper(const ON_RTreeNode* a_node, struct ON_RTreeSphere* a_sphere, ON_RTreeSearchResultCallback& a_result );
+static bool SearchHelper(const ON_RTreeNode* a_node, struct ON_RTreeCapsule* a_capsule, ON_RTreeSearchResultCallback& a_result );
 
 ////////////////////////////////////////////////////////////////
 //
@@ -494,60 +498,162 @@ bool ON_RTree::CreateMeshFaceTree( const ON_Mesh* mesh )
 {
   double fmin[3], fmax[3];
   ON_3dPoint V;
-  int fi, fcount;
+  unsigned int fi, fcount;
   const int* fvi;
   const ON_MeshFace* meshF;
-  const ON_3fPoint* meshV;
+  const ON_3fPoint* meshfV;
+  const ON_3dPoint* meshdV;
 
   RemoveAll();
 
   if ( 0 == mesh )
     return false;
 
-  fcount = mesh->m_F.Count();
-  if ( 0 == fcount )
+  fcount = mesh->m_F.UnsignedCount();
+  if ( fcount <= 0 )
     return false;
 
   meshF = mesh->m_F.Array();
   if ( 0 == meshF )
     return false;
 
-  meshV = mesh->m_V.Array();
-  if ( 0 == meshV )
-    return false;
+  meshfV = mesh->m_V.Array();
 
-  for ( fi = 0; fi < fcount; fi++ )
+  meshdV = mesh->HasDoublePrecisionVertices() 
+         ? mesh->DoublePrecisionVertices().Array() 
+         : 0;
+
+  if ( 0 != meshfV )
   {
-    fvi = meshF[fi].vi;
-
-    V = meshV[fvi[0]];
-    fmin[0] = fmax[0] = V.x;
-    fmin[1] = fmax[1] = V.y;
-    fmin[2] = fmax[2] = V.z;
-
-    V = meshV[fvi[1]];
-    if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
-    if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
-    if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;  
-
-    V = meshV[fvi[2]];
-    if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
-    if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
-    if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;  
-
-    if ( fvi[2] != fvi[3] )
+    if ( 0 != meshdV )
     {
-      V = meshV[fvi[3]];
+      for ( fi = 0; fi < fcount; fi++ )
+      {
+        fvi = meshF[fi].vi;
+
+        V = meshfV[fvi[0]];
+        fmin[0] = fmax[0] = V.x;
+        fmin[1] = fmax[1] = V.y;
+        fmin[2] = fmax[2] = V.z;
+        V = meshdV[fvi[0]];
+        if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
+        if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
+        if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;  
+
+        V = meshfV[fvi[1]];
+        if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
+        if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
+        if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;  
+        V = meshdV[fvi[1]];
+        if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
+        if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
+        if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;  
+
+        V = meshfV[fvi[2]];
+        if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
+        if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
+        if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;  
+        V = meshdV[fvi[2]];
+        if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
+        if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
+        if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;  
+
+        if ( fvi[2] != fvi[3] )
+        {
+          V = meshfV[fvi[3]];
+          if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
+          if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
+          if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;      
+          V = meshdV[fvi[3]];
+          if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
+          if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
+          if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;  
+        }
+
+        if ( !Insert(fmin,fmax,fi) )
+        {
+          RemoveAll();
+          return false;
+        }
+      }
+    }
+    else
+    {
+      for ( fi = 0; fi < fcount; fi++ )
+      {
+        fvi = meshF[fi].vi;
+
+        V = meshfV[fvi[0]];
+        fmin[0] = fmax[0] = V.x;
+        fmin[1] = fmax[1] = V.y;
+        fmin[2] = fmax[2] = V.z;
+
+        V = meshfV[fvi[1]];
+        if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
+        if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
+        if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;  
+
+        V = meshfV[fvi[2]];
+        if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
+        if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
+        if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;  
+
+        if ( fvi[2] != fvi[3] )
+        {
+          V = meshfV[fvi[3]];
+          if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
+          if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
+          if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;      
+        }
+
+        if ( !Insert(fmin,fmax,fi) )
+        {
+          RemoveAll();
+          return false;
+        }
+      }
+    }
+  }
+  else if ( 0 != meshdV )
+  {
+    for ( fi = 0; fi < fcount; fi++ )
+    {
+      fvi = meshF[fi].vi;
+
+      V = meshdV[fvi[0]];
+      fmin[0] = fmax[0] = V.x;
+      fmin[1] = fmax[1] = V.y;
+      fmin[2] = fmax[2] = V.z;
+
+      V = meshdV[fvi[1]];
       if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
       if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
-      if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;      
-    }
+      if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;  
 
-    if ( !Insert(fmin,fmax,fi) )
-    {
-      RemoveAll();
-      return false;
+      V = meshdV[fvi[2]];
+      if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
+      if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
+      if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;  
+
+      if ( fvi[2] != fvi[3] )
+      {
+        V = meshdV[fvi[3]];
+        if ( V.x < fmin[0] ) fmin[0] = V.x; else if ( V.x > fmax[0] ) fmax[0] = V.x;
+        if ( V.y < fmin[1] ) fmin[1] = V.y; else if ( V.y > fmax[1] ) fmax[1] = V.y;
+        if ( V.z < fmin[2] ) fmin[2] = V.z; else if ( V.z > fmax[2] ) fmax[2] = V.z;      
+      }
+
+      if ( !Insert(fmin,fmax,fi) )
+      {
+        RemoveAll();
+        return false;
+      }
     }
+  }
+  else
+  {
+    // no vertices
+    return false;
   }
 
   return (0 != m_root);
@@ -728,13 +834,55 @@ bool ON_RTree::Search(const double a_min[ON_RTree_NODE_DIM], const double a_max[
   ON_RTreeBBox rect;
   memcpy(rect.m_min,a_min,sizeof(rect.m_min));
   memcpy(rect.m_max,a_max,sizeof(rect.m_max));
+  return Search( &rect, a_resultCallback, a_context );
+}
+
+bool ON_RTree::Search( ON_RTreeBBox* a_rect,
+                       bool ON_MSC_CDECL a_resultCallback(void* a_context, ON__INT_PTR a_data), 
+                       void* a_context
+                      ) const
+{
+  if ( 0 == m_root || 0 == a_rect )
+    return false;
 
   ON_RTreeSearchResultCallback result;
   result.m_context = a_context;
   result.m_resultCallback = a_resultCallback;
-  return SearchHelper(m_root, &rect, result);
+  return SearchHelper(m_root, a_rect, result);
 }
 
+bool ON_RTree::Search( 
+    struct ON_RTreeSphere* a_sphere,
+    bool ON_MSC_CDECL a_resultCallback(void* a_context, ON__INT_PTR a_id), 
+    void* a_context
+    ) const
+{
+  if ( 0 == m_root || 0 == a_sphere )
+    return false;
+
+  ON_RTreeSearchResultCallback result;
+  result.m_context = a_context;
+  result.m_resultCallback = a_resultCallback;
+
+  return SearchHelper(m_root, a_sphere, result);
+}
+
+bool ON_RTree::Search( 
+  struct ON_RTreeCapsule* a_capsule,
+  bool ON_MSC_CDECL a_resultCallback(void* a_context, ON__INT_PTR a_id), 
+  void* a_context
+  ) const
+{
+  
+  if ( 0 == m_root || 0 == a_capsule )
+    return false;
+
+  ON_RTreeSearchResultCallback result;
+  result.m_context = a_context;
+  result.m_resultCallback = a_resultCallback;
+
+  return SearchHelper(m_root, a_capsule, result);
+}
 
 bool ON_RTree::Search2d(const double a_min[2], const double a_max[2],
                           ON_SimpleArray<ON_RTreeLeaf>& a_result 
@@ -927,7 +1075,6 @@ static void PairSearchHelper( const ON_RTreeBranch* a_branchA, const ON_RTreeNod
   }
 }
 
-
 static void PairSearchHelper( const ON_RTreeNode* a_nodeA, const ON_RTreeBranch* a_branchB, ON_RTreePairSearchResult* a_result )
 {
   // DO NOT ADD ANYTHING TO THIS FUNCTION
@@ -1020,6 +1167,15 @@ struct ON_RTreePairSearchCallbackResult
   ON_RTreePairSearchCallback m_resultCallback;
 };
 
+typedef bool (*ON_RTreePairSearchCallbackBool)(void*, ON__INT_PTR, ON__INT_PTR);
+
+struct ON_RTreePairSearchCallbackResultBool
+{
+  double m_tolerance;
+  void* m_context;
+  ON_RTreePairSearchCallbackBool m_resultCallbackBool;
+};
+
 static void PairSearchHelper( const ON_RTreeBranch* a_branchA, const ON_RTreeNode* a_nodeB, ON_RTreePairSearchCallbackResult* a_result )
 {
   // DO NOT ADD ANYTHING TO THIS FUNCTION
@@ -1044,6 +1200,33 @@ static void PairSearchHelper( const ON_RTreeBranch* a_branchA, const ON_RTreeNod
   }
 }
 
+static bool PairSearchHelperBool( const ON_RTreeBranch* a_branchA, const ON_RTreeNode* a_nodeB, ON_RTreePairSearchCallbackResultBool* a_result )
+{
+  // DO NOT ADD ANYTHING TO THIS FUNCTION
+  const ON_RTreeBranch *branchB, *branchBmax;
+
+  branchB = a_nodeB->m_branch;
+  branchBmax = branchB + a_nodeB->m_count;
+  while(branchB < branchBmax)
+  {
+    if ( PairSearchOverlapHelper( &a_branchA->m_rect, &branchB->m_rect, a_result->m_tolerance ) )
+    {
+      if ( a_nodeB->m_level > 0 )
+      {
+        if ( !PairSearchHelperBool(a_branchA,branchB->m_child,a_result) )
+          return false;
+      }
+      else
+      {
+        if ( !a_result->m_resultCallbackBool(a_result->m_context,a_branchA->m_id,branchB->m_id) )
+          return false;
+      }
+    }
+    branchB++;
+  }
+  return true;
+}
+
 static void PairSearchHelper( const ON_RTreeNode* a_nodeA, const ON_RTreeBranch* a_branchB, ON_RTreePairSearchCallbackResult* a_result )
 {
   // DO NOT ADD ANYTHING TO THIS FUNCTION
@@ -1066,6 +1249,33 @@ static void PairSearchHelper( const ON_RTreeNode* a_nodeA, const ON_RTreeBranch*
     }
     branchA++;
   }
+}
+
+static bool PairSearchHelperBool( const ON_RTreeNode* a_nodeA, const ON_RTreeBranch* a_branchB, ON_RTreePairSearchCallbackResultBool* a_result )
+{
+  // DO NOT ADD ANYTHING TO THIS FUNCTION
+  const ON_RTreeBranch *branchA, *branchAmax;
+
+  branchA = a_nodeA->m_branch;
+  branchAmax = branchA + a_nodeA->m_count;
+  while(branchA < branchAmax)
+  {
+    if ( PairSearchOverlapHelper( &branchA->m_rect, &a_branchB->m_rect, a_result->m_tolerance ) )
+    {
+      if ( a_nodeA->m_level > 0 )
+      {
+        if ( !PairSearchHelperBool(branchA->m_child,a_branchB,a_result) )
+          return false;
+      }
+      else
+      {
+        if ( !a_result->m_resultCallbackBool(a_result->m_context,branchA->m_id,a_branchB->m_id) )
+          return false;
+      }
+    }
+    branchA++;
+  }
+  return true;
 }
 
 
@@ -1105,6 +1315,50 @@ static void PairSearchHelper( const ON_RTreeNode* a_nodeA, const ON_RTreeNode* a
 }
 
 
+static bool PairSearchHelperBool( const ON_RTreeNode* a_nodeA, const ON_RTreeNode* a_nodeB, ON_RTreePairSearchCallbackResultBool* a_result )
+{
+  // DO NOT ADD ANYTHING TO THIS FUNCTION
+  const ON_RTreeBranch *branchA, *branchAmax, *branchB, *branchBmax;
+
+  branchA = a_nodeA->m_branch;
+  branchAmax = branchA + a_nodeA->m_count;
+  branchBmax = a_nodeB->m_branch + a_nodeB->m_count;
+  while(branchA < branchAmax)
+  {
+    for ( branchB = a_nodeB->m_branch; branchB < branchBmax; branchB++ )
+    {
+      if ( PairSearchOverlapHelper( &branchA->m_rect, &branchB->m_rect, a_result->m_tolerance ) )
+      {
+        if ( a_nodeA->m_level > 0 )
+        {
+          if ( a_nodeB->m_level > 0 )
+          {
+            if ( !PairSearchHelperBool(branchA->m_child,branchB->m_child,a_result) )
+              return false;
+          }
+          else
+          {
+            if ( !PairSearchHelperBool(branchA->m_child,branchB,a_result) )
+              return false;
+          }
+        }
+        else if ( a_nodeB->m_level > 0 )
+        {
+          if ( !PairSearchHelperBool(branchA,branchB->m_child,a_result) )
+            return false;
+        }
+        else
+        {
+          if ( !a_result->m_resultCallbackBool(a_result->m_context,branchA->m_id,branchB->m_id) )
+            return false;
+        }
+      }
+    }
+    branchA++;
+  }
+  return true;
+}
+
 bool ON_RTree::Search( 
           const ON_RTree& a_rtreeA,
           const ON_RTree& a_rtreeB, 
@@ -1125,6 +1379,33 @@ bool ON_RTree::Search(
   return true;
 }
 
+bool ON_RTree::Search( 
+          const ON_RTree& a_rtreeA,
+          const ON_RTree& a_rtreeB, 
+          double tolerance,
+          bool ON_MSC_CDECL resultCallback(void* a_context,ON__INT_PTR a_idA, ON__INT_PTR a_idB),
+          void* a_context
+          )
+{
+  if ( 0 == a_rtreeA.m_root )
+    return false;
+  if ( 0 == a_rtreeB.m_root )
+    return false;
+  ON_RTreePairSearchCallbackResultBool r;
+  r.m_tolerance = (ON_IsValid(tolerance) && tolerance > 0.0) ? tolerance : 0.0;
+  r.m_context = a_context;
+  r.m_resultCallbackBool = resultCallback;
+
+  // Do not return false if PairSearchHelperBool() returns false.  The only reason
+  // PairSearchHelperBool() returns false is that the user specified resultCallback()
+  // terminated the search. This way a programmer with the ability to reason can
+  // distinguish between a terminiation and a failure to start because input is
+  // missing.
+  PairSearchHelperBool(a_rtreeA.m_root,a_rtreeB.m_root,&r);
+
+  return true;
+}
+
 
 
 
@@ -1141,6 +1422,33 @@ int ON_RTree::ElementCount()
 const ON_RTreeNode* ON_RTree::Root() const
 {
   return m_root;
+}
+
+ON_BoundingBox ON_RTree::BoundingBox() const
+{
+  ON_BoundingBox bbox;
+  if ( 0 != m_root && m_root->m_count > 0 )
+  {
+    bbox.m_min = m_root->m_branch[0].m_rect.m_min;
+    bbox.m_max = m_root->m_branch[0].m_rect.m_max;
+    for ( int i = 1; i < m_root->m_count; i++ )
+    {
+      if ( m_root->m_branch[i].m_rect.m_min[0] < bbox.m_min.x )
+        bbox.m_min.x = m_root->m_branch[i].m_rect.m_min[0];
+      if ( m_root->m_branch[i].m_rect.m_min[1] < bbox.m_min.y )
+        bbox.m_min.y = m_root->m_branch[i].m_rect.m_min[1];
+      if ( m_root->m_branch[i].m_rect.m_min[2] < bbox.m_min.z )
+        bbox.m_min.z = m_root->m_branch[i].m_rect.m_min[2];
+
+      if ( m_root->m_branch[i].m_rect.m_max[0] > bbox.m_max.x )
+        bbox.m_max.x = m_root->m_branch[i].m_rect.m_max[0];
+      if ( m_root->m_branch[i].m_rect.m_max[1] > bbox.m_max.y )
+        bbox.m_max.y = m_root->m_branch[i].m_rect.m_max[1];
+      if ( m_root->m_branch[i].m_rect.m_max[2] > bbox.m_max.z )
+        bbox.m_max.z = m_root->m_branch[i].m_rect.m_max[2];
+    }
+  }
+  return bbox;
 }
 
 static void CountRec(ON_RTreeNode* a_node, int& a_count)
@@ -1842,6 +2150,242 @@ bool OverlapHelper(const ON_RTreeBBox* a_rectA, const ON_RTreeBBox* a_rectB)
   return true;
 }
 
+//static bool OverlapHelper(const struct ON_RTreeSphere* a_sphere, const ON_RTreeBBox* a_rect)
+//{
+//  double d[3], t, r;
+//  const double* mn;
+//  const double* mx;
+//  const double* pt;
+//
+//  pt = a_sphere->m_point;
+//  r  = a_sphere->m_radius;
+//  mn = a_rect->m_min;
+//  mx = a_rect->m_max;
+//
+//  if ( *pt < *mn )
+//  {
+//    d[0] = *mn - *pt;
+//    if ( d[0] > r )
+//      return false;
+//  }
+//  else if ( *pt > *mx )
+//  {
+//    d[0] = *pt - *mx;
+//    if ( d[0] > r )
+//      return false;
+//  }
+//  else
+//  {
+//    d[0] = 0.0;
+//  }
+//
+//  mn++;
+//  mx++;
+//  pt++;
+//  if ( *pt < *mn )
+//  {
+//    d[1] = *mn - *pt;
+//    if ( d[1] > r )
+//      return false;
+//    if ( d[1] > d[0] )
+//    {
+//      t = d[0]; d[0] = d[1]; d[1] = t;
+//    }
+//  }
+//  else if ( *pt > *mx )
+//  {
+//    d[1] = *pt - *mx;
+//    if ( d[1] > r )
+//      return false;
+//    if ( d[1] > d[0] )
+//    {
+//      t = d[0]; d[0] = d[1]; d[1] = t;
+//    }
+//  }
+//  else
+//  {
+//    d[1] = 0.0;
+//  }
+//
+//  mn++;
+//  mx++;
+//  pt++;
+//  if ( *pt < *mn )
+//  {
+//    d[2] = *mn - *pt;
+//    if ( d[2] > r )
+//      return false;
+//    if ( d[2] > d[0] )
+//    {
+//      t = d[0]; d[0] = d[2]; d[2] = t;
+//    }
+//  }
+//  else if ( *pt > *mx )
+//  {
+//    d[2] = *pt - *mx;
+//    if ( d[2] > r )
+//      return false;
+//    if ( d[2] > d[0] )
+//    {
+//      t = d[0]; d[0] = d[2]; d[2] = t;
+//    }
+//  }
+//  else
+//  {
+//    d[2] = 0.0;
+//  }
+//
+//  if ( d[0] > 0.0 )
+//  {
+//    d[1] /= d[0];
+//    d[2] /= d[0];
+//    d[0] *= sqrt(1.0 + d[1]*d[1] + d[2]*d[2]);
+//    return (d[0] <= r);
+//  }
+//
+//  return true;
+//}
+
+static double DistanceToBoxHelper( 
+  const double* pt, 
+  double r, 
+  const ON_RTreeBBox* a_rect
+  )
+{
+  // If the sphere with center at pt and radius r intersects a_rect, then
+  // the distance from pt to a_rect is returned. A value of 0.0 indicates
+  // that pt is inside a_rect.  If the distance from pt to a_rect is
+  // greater than r, then some number > r and <= actual distance from
+  // pt to a_rect is returned as quickly as possible.
+
+  double d[3], t;
+  const double* mn;
+  const double* mx;
+
+  mn = a_rect->m_min;
+  mx = a_rect->m_max;
+
+  if ( *pt < *mn )
+  {
+    d[0] = *mn - *pt;
+    if ( d[0] > r )
+      return d[0];
+  }
+  else if ( *pt > *mx )
+  {
+    d[0] = *pt - *mx;
+    if ( d[0] > r )
+      return d[0];
+  }
+  else
+  {
+    d[0] = 0.0;
+  }
+
+  mn++;
+  mx++;
+  pt++;
+  if ( *pt < *mn )
+  {
+    d[1] = *mn - *pt;
+    if ( d[1] > r )
+      return d[1];
+    if ( d[1] > d[0] )
+    {
+      t = d[0]; d[0] = d[1]; d[1] = t;
+    }
+  }
+  else if ( *pt > *mx )
+  {
+    d[1] = *pt - *mx;
+    if ( d[1] > r )
+      return d[1];
+    if ( d[1] > d[0] )
+    {
+      t = d[0]; d[0] = d[1]; d[1] = t;
+    }
+  }
+  else
+  {
+    d[1] = 0.0;
+  }
+
+  mn++;
+  mx++;
+  pt++;
+  if ( *pt < *mn )
+  {
+    d[2] = *mn - *pt;
+    if ( d[2] > r )
+      return d[2];
+    if ( d[2] > d[0] )
+    {
+      t = d[0]; d[0] = d[2]; d[2] = t;
+    }
+  }
+  else if ( *pt > *mx )
+  {
+    d[2] = *pt - *mx;
+    if ( d[2] > r )
+      return d[2];
+    if ( d[2] > d[0] )
+    {
+      t = d[0]; d[0] = d[2]; d[2] = t;
+    }
+  }
+  else
+  {
+    d[2] = 0.0;
+  }
+
+  if ( d[0] > 0.0 )
+  {
+    d[1] /= d[0];
+    d[2] /= d[0];
+    d[0] *= sqrt(1.0 + d[1]*d[1] + d[2]*d[2]);
+  }
+
+  return d[0];
+}
+
+static double DistanceToCapsuleAxisHelper(const struct ON_RTreeCapsule* a_capsule, const ON_RTreeBBox* a_rect)
+{
+  double L[2][3], s[2];
+  if ( 0.0 == a_capsule->m_domain[0] && 1.0 == a_capsule->m_domain[1] )
+    return ((const ON_BoundingBox*)a_rect->m_min)->MinimumDistanceTo( *((const ON_Line*)a_capsule->m_point[0]) );
+
+  if ( 0.0 == a_capsule->m_domain[0] )
+  {
+    L[0][0] = a_capsule->m_point[0][0];
+    L[0][1] = a_capsule->m_point[0][1];
+    L[0][2] = a_capsule->m_point[0][2];
+  }
+  else
+  {
+    s[0] = 1.0 - a_capsule->m_domain[0];
+    s[1] = a_capsule->m_domain[0];
+    L[0][0] = s[0]*a_capsule->m_point[0][0] + s[1]*a_capsule->m_point[1][0];
+    L[0][1] = s[0]*a_capsule->m_point[0][1] + s[1]*a_capsule->m_point[1][1];
+    L[0][2] = s[0]*a_capsule->m_point[0][2] + s[1]*a_capsule->m_point[1][2];
+  }
+
+  if ( 0.0 == a_capsule->m_domain[1] )
+  {
+    L[1][0] = a_capsule->m_point[1][0];
+    L[1][1] = a_capsule->m_point[1][1];
+    L[1][2] = a_capsule->m_point[1][2];
+  }
+  else
+  {
+    s[0] = 1.0 - a_capsule->m_domain[1];
+    s[1] = a_capsule->m_domain[1];
+    L[1][0] = s[0]*a_capsule->m_point[0][0] + s[1]*a_capsule->m_point[1][0];
+    L[1][1] = s[0]*a_capsule->m_point[0][1] + s[1]*a_capsule->m_point[1][1];
+    L[1][2] = s[0]*a_capsule->m_point[0][2] + s[1]*a_capsule->m_point[1][2];
+  }
+
+  return ((const ON_BoundingBox*)a_rect->m_min)->MinimumDistanceTo( *((const ON_Line*)L[0]) );
+}
 
 // Add a node to the reinsertion list.  All its branches will later
 // be reinserted into the index structure.
@@ -1857,11 +2401,241 @@ void ON_RTree::ReInsert(ON_RTreeNode* a_node, ON_RTreeListNode** a_listNode)
 }
 
 
+static
+bool OverlapBoundedPlaneXYZHelper( const double* a_bounded_plane, const ON_RTreeBBox* a_rect )
+{
+  unsigned char flag = 0;
+  double x, y, z, d, v;
+  
+  // check the 8 corners of the box minimizing the number of evaluations
+  // and unrolling the loop for speed
+
+  // corner = (min, min, min)
+  x = a_bounded_plane[0]*a_rect->m_min[0]; 
+  y = a_bounded_plane[1]*a_rect->m_min[1];
+  z = a_bounded_plane[2]*a_rect->m_min[2];
+  d = a_bounded_plane[3];
+  v = x + y + z + d;
+  if ( v < a_bounded_plane[4] )
+    flag = 1;
+  else if ( v > a_bounded_plane[5] )
+    flag = 2;
+  else
+    return true;
+  
+  // corner = (max, min, min)
+  x = a_bounded_plane[0]*a_rect->m_max[0]; 
+  v = x + y + z + d;
+  if ( v < a_bounded_plane[4] )
+  {
+    flag |= 1;
+    if ( 3 == flag )
+      return true;
+  }
+  else if ( v > a_bounded_plane[5] )
+  {
+    flag |= 2;
+    if ( 3 == flag )
+      return true;
+  }
+  else
+    return true;
+  
+  // corner = (max, max, min)
+  y = a_bounded_plane[1]*a_rect->m_max[1];
+  v = x + y + z + d;
+  if ( v < a_bounded_plane[4] )
+  {
+    flag |= 1;
+    if ( 3 == flag )
+      return true;
+  }
+  else if ( v > a_bounded_plane[5] )
+  {
+    flag |= 2;
+    if ( 3 == flag )
+      return true;
+  }
+  else
+    return true;
+    
+  // corner = (max, max, max)
+  z = a_bounded_plane[2]*a_rect->m_max[2];
+  v = x + y + z + d;
+  if ( v < a_bounded_plane[4] )
+  {
+    flag |= 1;
+    if ( 3 == flag )
+      return true;
+  }
+  else if ( v > a_bounded_plane[5] )
+  {
+    flag |= 2;
+    if ( 3 == flag )
+      return true;
+  }
+  else
+    return true;
+
+  // corner = (min, max, max)
+  x = a_bounded_plane[0]*a_rect->m_min[0]; 
+  v = x + y + z + d;
+  if ( v < a_bounded_plane[4] )
+  {
+    flag |= 1;
+    if ( 3 == flag )
+      return true;
+  }
+  else if ( v > a_bounded_plane[5] )
+  {
+    flag |= 2;
+    if ( 3 == flag )
+      return true;
+  }
+  else
+    return true;
+  
+  // corner = (min, min, max)
+  y = a_bounded_plane[1]*a_rect->m_min[1];
+  v = x + y + z + d;
+  if ( v < a_bounded_plane[4] )
+  {
+    flag |= 1;
+    if ( 3 == flag )
+      return true;
+  }
+  else if ( v > a_bounded_plane[5] )
+  {
+    flag |= 2;
+    if ( 3 == flag )
+      return true;
+  }
+  else
+    return true;
+
+  // corner = (max, min, max)
+  x = a_bounded_plane[0]*a_rect->m_max[0]; 
+  v = x + y + z + d;
+  if ( v < a_bounded_plane[4] )
+  {
+    flag |= 1;
+    if ( 3 == flag )
+      return true;
+  }
+  else if ( v > a_bounded_plane[5] )
+  {
+    flag |= 2;
+    if ( 3 == flag )
+      return true;
+  }
+  else
+    return true;
+
+  // corner = (min, max, min)
+  x = a_bounded_plane[0]*a_rect->m_min[0]; 
+  y = a_bounded_plane[1]*a_rect->m_max[1];
+  z = a_bounded_plane[2]*a_rect->m_min[2];
+  v = x + y + z + d;
+  if ( v < a_bounded_plane[4] )
+  {
+    flag |= 1;
+    if ( 3 == flag )
+      return true;
+  }
+  else if ( v > a_bounded_plane[5] )
+  {
+    flag |= 2;
+    if ( 3 == flag )
+      return true;
+  }
+  else
+    return true;
+  
+  // Either all 8 box corners 
+  // are below the min plane (flag=1)
+  // or above the max plane (flag=2).
+  return false;
+}
+
+static
+bool SearchBoundedPlaneXYZHelper(const ON_RTreeNode* a_node, const double* a_bounded_plane, ON_RTreeSearchResultCallback& a_result ) 
+{
+  int i, count;
+
+  if ( (count = a_node->m_count) > 0 )
+  {
+    const ON_RTreeBranch* branch = a_node->m_branch;
+    if(a_node->IsInternalNode()) 
+    {
+      // a_node is an internal node - search m_branch[].m_child as needed
+      for( i=0; i < count; ++i )
+      {
+        if(OverlapBoundedPlaneXYZHelper(a_bounded_plane, &branch[i].m_rect))
+        {
+          if(!SearchBoundedPlaneXYZHelper(branch[i].m_child, a_bounded_plane, a_result) )
+          {
+            return false; // Don't continue searching
+          }
+        }
+      }
+    }
+    else
+    {
+      // a_node is a leaf node - return m_branch[].m_id values
+      for(i=0; i < count; ++i)
+      {
+        if(OverlapBoundedPlaneXYZHelper(a_bounded_plane, &branch[i].m_rect))
+        {
+          if ( !a_result.m_resultCallback( a_result.m_context, branch[i].m_id ) )
+          {
+            // callback canceled search
+            return false;
+          }
+        }
+      }
+    }
+  }
+
+  return true; // Continue searching
+}
+
+bool ON_RTree::Search(
+  const double a_plane_eqn[4],
+  double a_min,
+  double a_max,
+  bool ON_MSC_CDECL a_resultCallback(void* a_context, ON__INT_PTR a_id), 
+  void* a_context
+  ) const
+{
+  if (    0 == m_root 
+       || 0 == a_plane_eqn 
+       || !(a_min <= a_max) 
+       || (0.0 == a_plane_eqn[0] && 0.0 == a_plane_eqn[1] && 0.0 == a_plane_eqn[2])
+     )
+    return false;
+
+  double bounded_plane[6];
+  bounded_plane[0] = a_plane_eqn[0];
+  bounded_plane[1] = a_plane_eqn[1];
+  bounded_plane[2] = a_plane_eqn[2];
+  bounded_plane[3] = a_plane_eqn[3];
+  bounded_plane[4] = a_min;
+  bounded_plane[5] = a_max;
+
+  ON_RTreeSearchResultCallback result;
+  result.m_context = a_context;
+  result.m_resultCallback = a_resultCallback;
+
+  return SearchBoundedPlaneXYZHelper(m_root, bounded_plane, result);
+}
+
 // Search in an index tree or subtree for all data retangles that overlap the argument rectangle.
 
 static
-bool SearchHelper(const ON_RTreeNode* a_node, const ON_RTreeBBox* a_rect, ON_RTreeSearchResultCallback& a_result ) 
+bool SearchHelper(const ON_RTreeNode* a_node, ON_RTreeBBox* a_rect, ON_RTreeSearchResultCallback& a_result ) 
 {
+  // NOTE: 
+  //  Some versions of ON_RTree::Search shrink a_rect as the search progresses.
   int i, count;
 
   if ( (count = a_node->m_count) > 0 )
@@ -1888,7 +2662,7 @@ bool SearchHelper(const ON_RTreeNode* a_node, const ON_RTreeBBox* a_rect, ON_RTr
       {
         if(OverlapHelper(a_rect, &branch[i].m_rect))
         {
-          if ( !a_result.m_resultCallback( a_result.m_context, a_node->m_branch[i].m_id ) )
+          if ( !a_result.m_resultCallback( a_result.m_context, branch[i].m_id ) )
           {
             // callback canceled search
             return false;
@@ -1900,6 +2674,191 @@ bool SearchHelper(const ON_RTreeNode* a_node, const ON_RTreeBBox* a_rect, ON_RTr
 
   return true; // Continue searching
 }
+
+static
+bool SearchHelper(const ON_RTreeNode* a_node, struct ON_RTreeSphere* a_sphere, ON_RTreeSearchResultCallback& a_result ) 
+{
+  // NOTE: 
+  //  Some versions of ON_RTree::Search shrink a_sphere as the search progresses.
+  int i, closest_i, count;
+  const double* sphere_center;
+  const ON_RTreeBranch* branch;
+  double r[ON_RTree_MAX_NODE_COUNT], sphere_radius, closest_d;
+  
+  if ( (count = a_node->m_count) > 0 )
+  {
+    branch = a_node->m_branch;
+    sphere_center = a_sphere->m_point;
+    sphere_radius = a_sphere->m_radius;
+    closest_i = -1;
+    closest_d = sphere_radius;
+
+    for( i = 0; i < count; ++i )
+    {
+      // The radius parameter passed to DistanceToBoxHelper()
+      // needs to be sphere_radius and not closest_d in order 
+      // for the for() loops below to work correctly.
+      r[i] = DistanceToBoxHelper( sphere_center, sphere_radius, &branch[i].m_rect );
+      if ( r[i] <= closest_d )
+      {
+        closest_d = r[i];
+        closest_i = i;
+      }
+    }
+
+    // If all of the branches rectangles do not intersect the sphere,
+    // then closest_i = -1.
+    if ( closest_i >= 0 )
+    {
+      if(a_node->IsInternalNode()) 
+      {
+        // a_node is an internal node - search m_branch[].m_child as needed.
+        // Search a closer node first to avoid worst case search times
+        // in calculations where the calls to a_result.m_resultCallback()
+        // reduce a_sphere->m_radius as results are found.  Closest point
+        // calculations are an example.
+        if ( !SearchHelper(branch[closest_i].m_child, a_sphere, a_result) )
+        {
+          // callback canceled search
+          return false;
+        }
+
+        for( i = 0; i < count; ++i )
+        {
+          // Note that the calls to SearchHelper() can reduce the
+          // value of a_sphere->m_radius.
+          if( i != closest_i && r[i] <= a_sphere->m_radius )
+          {
+            if(!SearchHelper(branch[i].m_child, a_sphere, a_result) )
+            {
+              return false; // Don't continue searching
+            }
+          }
+        }
+      }
+      else
+      {
+        // a_node is a leaf node - return m_branch[].m_id values
+        // Search a closer node first to avoid worst case search times
+        // in calculations where the calls to a_result.m_resultCallback()
+        // reduce a_sphere->m_radius as results are found.  Closest point
+        // calculations are an example.
+        if ( !a_result.m_resultCallback( a_result.m_context, branch[closest_i].m_id ) ) 
+        {
+          // callback canceled search
+          return false;
+        }
+
+        for( i = 0; i < count; ++i)
+        {
+          // Note that the calls to a_result.m_resultCallback() can reduce
+          // the value of a_sphere->m_radius.
+          if( i != closest_i && r[i] <= a_sphere->m_radius )
+          {
+            if ( !a_result.m_resultCallback( a_result.m_context, branch[i].m_id ) )
+            {
+              // callback canceled search
+              return false;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return true; // Continue searching
+}
+
+
+static
+bool SearchHelper(const ON_RTreeNode* a_node, struct ON_RTreeCapsule* a_capsule, ON_RTreeSearchResultCallback& a_result ) 
+{
+  // NOTE: 
+  //  Some versions of ON_RTree::Search shrink a_sphere as the search progresses.
+  int i, count;
+  double r[2];
+  
+  if ( (count = a_node->m_count) > 0 )
+  {
+    const ON_RTreeBranch* branch = a_node->m_branch;
+    if(a_node->IsInternalNode()) 
+    {
+      // a_node is an internal node - search m_branch[].m_child as needed
+      if ( count > 1 )
+      {
+        // search a closer node first to avoid worst case search times
+        // in closest point style calculations
+        r[0] = DistanceToCapsuleAxisHelper( a_capsule, &branch[0].m_rect );
+        r[1] = DistanceToCapsuleAxisHelper( a_capsule, &branch[count-1].m_rect );
+        i = ( r[0] <= r[1] ) ? 0 : count-1;
+        if (    (r[i?1:0] <= a_capsule->m_radius && !SearchHelper(branch[i].m_child, a_capsule, a_result)) 
+             || (r[i?0:1] <= a_capsule->m_radius && !SearchHelper(branch[count-1 - i].m_child, a_capsule, a_result))
+          )
+        {
+          // callback canceled search
+          return false;
+        }
+        count -= 2;
+        branch++;
+      }
+
+      r[1] = a_capsule->m_radius;
+      for( i = 0; i < count; ++i )
+      {
+        r[0] = DistanceToCapsuleAxisHelper(a_capsule, &branch[i].m_rect);
+        if(r[0] <= r[1])
+        {
+          if(!SearchHelper(branch[i].m_child, a_capsule, a_result) )
+          {
+            return false; // Don't continue searching
+          }
+          // a_result.m_resultCallback can shrink the capsule
+          r[1] = a_capsule->m_radius;
+        }
+      }
+    }
+    else
+    {
+      // a_node is a leaf node - return m_branch[].m_id values
+      if ( count > 1 )
+      {
+        // search a closer node first to avoid worst case search times
+        // in closest point style calculations
+        r[0] = DistanceToCapsuleAxisHelper( a_capsule, &branch[0].m_rect );
+        r[1] = DistanceToCapsuleAxisHelper( a_capsule, &branch[count-1].m_rect );
+        i = ( r[0] <= r[1] ) ? 0 : count-1;
+        if (    (r[i?1:0] <= a_capsule->m_radius && !a_result.m_resultCallback( a_result.m_context, branch[i].m_id )) 
+             || (r[i?0:1] <= a_capsule->m_radius && !a_result.m_resultCallback( a_result.m_context, branch[count-1 - i].m_id ))
+          )
+        {
+          // callback canceled search
+          return false;
+        }
+        count -= 2;
+        branch++;
+      }
+
+      r[1] = a_capsule->m_radius;
+      for( i = 0; i < count; ++i)
+      {
+        r[0] = DistanceToCapsuleAxisHelper(a_capsule, &branch[i].m_rect);
+        if(r[0] <= r[1])
+        {
+          if ( !a_result.m_resultCallback( a_result.m_context, branch[i].m_id ) )
+          {
+            // callback canceled search
+            return false;
+          }
+          // a_result.m_resultCallback can shrink the capsule
+          r[1] = a_capsule->m_radius;
+        }
+      }
+    }
+  }
+
+  return true; // Continue searching
+}
+
 
 // Search in an index tree or subtree for all data retangles that overlap the argument rectangle.
 

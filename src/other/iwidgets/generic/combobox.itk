@@ -1,17 +1,17 @@
 # Combobox
 # ----------------------------------------------------------------------
 # Implements a Combobox widget. A Combobox has 2 basic styles: simple and
-# dropdown. Dropdowns display an entry field with an arrow button to the
+# dropdown. Dropdowns display an entry field with an arrow button to the 
 # right of it. When the arrow button is pressed a selectable list of
-# items is popped up. A simple Combobox displays an entry field and a listbox
-# just beneath it which is always displayed. In both types, if the user
-# selects an item in the listbox, the contents of the entry field are
-# replaced with the text from the selected item. If the Combobox is
+# items is popped up. A simple Combobox displays an entry field and a listbox 
+# just beneath it which is always displayed. In both types, if the user 
+# selects an item in the listbox, the contents of the entry field are 
+# replaced with the text from the selected item. If the Combobox is 
 # editable, the user can type in the entry field and when <Return> is
 # pressed the item will be inserted into the list.
 #
 # WISH LIST:
-#	This section lists possible future enhancements.
+#	This section lists possible future enhancements.  
 #
 #	  Combobox 1.x:
 #		  - convert bindings to bindtags.
@@ -29,15 +29,15 @@
 # software and its documentation for any purpose, provided that the
 # above copyright notice and the following two paragraphs appear in
 # all copies of this software.
-#
+# 
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE TO ANY PARTY FOR
-# DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
-# ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN
-# IF THE COPYRIGHT HOLDER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+# DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES 
+# ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN 
+# IF THE COPYRIGHT HOLDER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH 
 # DAMAGE.
 #
-# THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING,
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+# THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, 
+# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
 # FITNESS FOR A PARTICULAR PURPOSE.	 THE SOFTWARE PROVIDED HEREUNDER IS
 # ON AN "AS IS" BASIS, AND THE COPYRIGHT HOLDER HAS NO OBLIGATION TO
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
@@ -68,7 +68,7 @@ itk::usual Combobox {
 # ------------------------------------------------------------------
 itcl::class iwidgets::Combobox {
     inherit iwidgets::Entryfield
-
+    
     constructor {args} {}
     destructor {}
 
@@ -137,11 +137,11 @@ itcl::class iwidgets::Combobox {
     private variable _next_prevFLAG 0 ;# Used in _lookup to fix SF Bug 501300
     private common _listShowing
     private common count 0
-}
+}	 
 
 #
 # Provide a lowercase access method for the Combobox class.
-#
+# 
 proc ::iwidgets::combobox {pathName args} {
     uplevel ::iwidgets::Combobox $pathName $args
 }
@@ -154,22 +154,22 @@ itcl::body iwidgets::Combobox::constructor {args} {
     set _grab(window) ""
     set _grab(status) ""
 
-    # combobox is different as all components are created
+    # combobox is different as all components are created 
     # after determining what the dropdown style is...
 
     # configure args
     eval itk_initialize $args
-
-    # create components that are dependent on options
+    
+    # create components that are dependent on options 
     # (Scrolledlistbox, arrow button) and pack them.
     if {$count == 0} {
 	image create bitmap downarrow -data {
 	    #define down_width 16
 	    #define down_height 16
 	    static unsigned char down_bits[] = {
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0xfc, 0x7f, 0xf8, 0x3f,
-		0xf0, 0x1f, 0xe0, 0x0f, 0xc0, 0x07, 0x80, 0x03,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0xfc, 0x7f, 0xf8, 0x3f, 
+		0xf0, 0x1f, 0xe0, 0x0f, 0xc0, 0x07, 0x80, 0x03, 
 		0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	    };
 	}
@@ -177,8 +177,8 @@ itcl::body iwidgets::Combobox::constructor {args} {
 	    #define up_width 16
 	    #define up_height 16
 	    static unsigned char up_bits[] = {
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00,
-		0xc0, 0x01, 0xe0, 0x03, 0xf0, 0x07, 0xf8, 0x0f,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 
+		0xc0, 0x01, 0xe0, 0x03, 0xf0, 0x07, 0xf8, 0x0f, 
 		0xfc, 0x1f, 0xfe, 0x3f, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	    };
@@ -231,7 +231,7 @@ itcl::configbody iwidgets::Combobox::completion {
 }
 
 # --------------------------------------------------------------------
-# OPTION:  -dropdown
+# OPTION:  -dropdown  
 #
 # Boolean which determines the Combobox style: dropdown or simple.
 # Because the two style's lists reside in different toplevel widgets
@@ -268,7 +268,7 @@ itcl::configbody iwidgets::Combobox::dropdown {
 }
 
 # --------------------------------------------------------------------
-# OPTION: -editable
+# OPTION: -editable	 
 #
 # Boolean which allows/disallows user input to the entry field area.
 # --------------------------------------------------------------------
@@ -282,7 +282,7 @@ itcl::configbody iwidgets::Combobox::editable {
 	    }
 	}
 	0 - false - no - off {
-	    $itk_component(entry) configure -state disabled
+	    $itk_component(entry) configure -state readonly
 	}
 	default {
 	    error "bad editable option \"$itk_option(-editable)\":\
@@ -308,7 +308,7 @@ itcl::configbody iwidgets::Combobox::grab {
 }
 
 # --------------------------------------------------------------------
-# OPTION: -listheight
+# OPTION: -listheight  
 #
 # Listbox height in pixels. (Need to integrate the scrolledlistbox
 # -visibleitems option here - at least for simple listbox.)
@@ -355,7 +355,7 @@ itcl::configbody iwidgets::Combobox::state {
 		    $itk_component(entry) configure -state normal
 		}
 		0 - false - no - off {
-		    $itk_component(entry) configure -state disabled
+		    $itk_component(entry) configure -state readonly
 		}
 	    }
 	}
@@ -373,7 +373,7 @@ itcl::configbody iwidgets::Combobox::state {
 }
 
 # --------------------------------------------------------------------
-# OPTION: -unique
+# OPTION: -unique  
 #
 # Boolean which disallows/allows adding duplicate items to the listbox.
 # --------------------------------------------------------------------
@@ -461,7 +461,7 @@ itcl::body iwidgets::Combobox::delete {component first {last {}}} {
 # PUBLIC METHOD: get ?index?
 #
 #
-# Retrieve entry contents if no args OR use args as list
+# Retrieve entry contents if no args OR use args as list 
 # index and retrieve list item at index .
 #
 # ------------------------------------------------------
@@ -489,13 +489,13 @@ itcl::body iwidgets::Combobox::getcurselection {} {
 # PUBLIC METHOD: invoke
 #
 # Pops up or down a dropdown combobox.
-#
+# 
 # ------------------------------------------------------------------
 itcl::body iwidgets::Combobox::invoke {} {
     if {$itk_option(-dropdown)} {
 	return [_toggleList]
     }
-    return
+    return 
 }
 
 # ------------------------------------------------------------
@@ -511,7 +511,7 @@ itcl::body iwidgets::Combobox::insert {component index args} {
     if {$nargs == 0} {
 	error "no value given for parameter \"string\" in function\
 			   \"Combobox::insert\""
-    }
+    } 
 
     switch -- $component {
 	entry {
@@ -586,9 +586,9 @@ itcl::body iwidgets::Combobox::selection {option first {last {}}} {
 }
 
 # ------------------------------------------------------------------
-# PUBLIC METHOD: size
+# PUBLIC METHOD: size 
 #
-# Returns a decimal string indicating the total number of elements
+# Returns a decimal string indicating the total number of elements 
 # in the listbox.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Combobox::size {} {
@@ -685,7 +685,7 @@ itcl::body iwidgets::Combobox::_createComponents {} {
 	if ![llength [cget -command]] {
 	  configure -command [itcl::code $this _addToList]
 	}
-
+	
 	# arrow button to popup the list
 	itk_component add arrowBtn {
 	    button $itk_interior.arrowBtn -borderwidth 2 \
@@ -697,7 +697,7 @@ itcl::body iwidgets::Combobox::_createComponents {} {
 	    rename -relief -arrowrelief arrowRelief Relief
 	    rename -highlightbackground -background background Background
 	}
-
+	
 	# popup list container
 	itk_component add popup {
 	    toplevel $itk_interior.popup
@@ -705,7 +705,7 @@ itcl::body iwidgets::Combobox::_createComponents {} {
 	    keep -background -cursor
 	}
 	wm withdraw $itk_interior.popup
-
+	
 	# the listbox
 	itk_component add list {
 	    iwidgets::Scrolledlistbox $itk_interior.popup.list -exportselection no \
@@ -722,8 +722,8 @@ itcl::body iwidgets::Combobox::_createComponents {} {
 	# mode specific bindings
 	_dropdownBindings
 
-	# Ugly hack to avoid tk buglet revealed in _dropdownBtnRelease where
-	# relief is used but not set in scrollbar.tcl.
+	# Ugly hack to avoid tk buglet revealed in _dropdownBtnRelease where 
+	# relief is used but not set in scrollbar.tcl. 
 	global tkPriv
 	set tkPriv(relief) raise
 
@@ -732,13 +732,13 @@ itcl::body iwidgets::Combobox::_createComponents {} {
 	configure -childsitepos s
 	itk_component add list {
 	    iwidgets::Scrolledlistbox $itk_interior.list -exportselection no \
-		-vscrollmode dynamic -hscrollmode dynamic
+		-vscrollmode dynamic -hscrollmode dynamic 
 	} {
 	    keep -background -borderwidth -cursor -foreground \
 		-highlightcolor -highlightthickness \
 		-hscrollmode -selectbackground \
 		-selectborderwidth -selectforeground -textbackground \
-		-textfont -visibleitems -vscrollmode
+		-textfont -visibleitems -vscrollmode 
 	    rename -height -listheight listHeight Height
 	}
 	# add mode specific bindings
@@ -755,7 +755,7 @@ itcl::body iwidgets::Combobox::_createComponents {} {
 # ------------------------------------------------------
 # PROTECTED METHOD: _deleteList first ?last?
 #
-# Delete an item or items from the listbox. Called via
+# Delete an item or items from the listbox. Called via 
 # "delete list args".
 #
 # ------------------------------------------------------
@@ -784,11 +784,11 @@ itcl::body iwidgets::Combobox::_deleteList {first {last {}}} {
 #
 # ------------------------------------------------------
 itcl::body iwidgets::Combobox::_deleteText {first {last {}}} {
-    $itk_component(entry) configure -state normal
+    $itk_component(entry) configure -state normal 
     set rtrn [delete $first $last]
     switch -- $itk_option(-editable) {
 	0 - false - no - off {
-	    $itk_component(entry) configure -state disabled
+	    $itk_component(entry) configure -state readonly
 	}
     }
     return $rtrn
@@ -807,7 +807,7 @@ itcl::body iwidgets::Combobox::_doLayout {{when later}} {
 
 
 # ------------------------------------------------------
-# PROTECTED METHOD:	  _drawArrow
+# PROTECTED METHOD:	  _drawArrow 
 #
 # Draw the arrow button. Determines packing according to
 # -labelpos.
@@ -825,12 +825,12 @@ itcl::body iwidgets::Combobox::_drawArrow {} {
     }
 
     if {$flip} {
-	#
+	#	 
 	#				draw up arrow
 	#
 	eval $itk_component(arrowBtn) configure -image uparrow $relief
     } else {
-	#
+	#	 
 	#				draw down arrow
 	#
 	eval $itk_component(arrowBtn) configure -image downarrow $relief
@@ -857,13 +857,13 @@ itcl::body iwidgets::Combobox::_dropdownBtnRelease {{window {}} {x 1} {y 1}} {
 	_ignoreNextBtnRelease false
 	return
     }
-
+    
     # should I use just the listbox or also include the scrollbars
     if { ($x >= 0) && ($x < [winfo width [_slbListbox]])
 	 && ($y >= 0) && ($y < [winfo height [_slbListbox]])} {
 	_stateSelect
     }
-
+    
     _unpostList
 
     # execute user command
@@ -960,7 +960,7 @@ itcl::body iwidgets::Combobox::_positionList {} {
     if {(($y+$h) > $sh) && ($y > ($sh/2))} {
 	set y [expr {[winfo rooty $itk_component(entry) ] - $h}]
     }
-
+    
     $itk_component(list) configure -width $w
     wm overrideredirect $itk_component(popup) 0
     wm geometry $itk_component(popup) +$x+$y
@@ -997,9 +997,9 @@ itcl::body iwidgets::Combobox::_postList {} {
 
     # Now grab the dropdown listbox.
     if {$itk_option(-grab) == "global"} {
-	::grab -global $itk_component(popup)
+	::grab -global $itk_component(popup) 
     } else {
-	::grab $itk_component(popup)
+	::grab $itk_component(popup) 
     }
     raise $itk_component(popup)
     focus $itk_component(popup)
@@ -1015,7 +1015,7 @@ itcl::body iwidgets::Combobox::_postList {} {
 # PROTECTED METHOD:	   _previous
 #
 # Select the previous item in the list. Wraps at front
-# and end of list.
+# and end of list. 
 #
 # ------------------------------------------------------
 itcl::body iwidgets::Combobox::_previous {} {
@@ -1054,20 +1054,20 @@ itcl::body iwidgets::Combobox::_resizeArrow {} {
 # ------------------------------------------------------
 # PROTECTED METHOD:	  _selectCmd
 #
-# Called when list item is selected to insert new text
+# Called when list item is selected to insert new text 
 # in entry, and call user -command callback if defined.
 #
 # ------------------------------------------------------
 itcl::body iwidgets::Combobox::_selectCmd {} {
     $itk_component(entry) configure -state normal
-
+    
     set _currItem [$itk_component(list) curselection]
     set item [$itk_component(list) getcurselection]
     clear entry
     $itk_component(entry) insert 0 $item
     switch -- $itk_option(-editable) {
 	0 - false - no - off {
-	    $itk_component(entry) configure -state disabled
+	    $itk_component(entry) configure -state readonly
 	}
     }
 }
@@ -1093,8 +1093,8 @@ itcl::body iwidgets::Combobox::_toggleList {} {
 #
 # ------------------------------------------------------
 itcl::body iwidgets::Combobox::_unpostList {} {
-    # Determine if event occured in the scrolledlistbox and, if it did,
-    # don't unpost it. (A selection in the list unposts it correctly and
+    # Determine if event occured in the scrolledlistbox and, if it did, 
+    # don't unpost it. (A selection in the list unposts it correctly and 
     # in the scrollbar we don't want to unpost it.)
     set x [winfo x $itk_component(list)]
     set y [winfo y $itk_component(list)]
@@ -1102,7 +1102,7 @@ itcl::body iwidgets::Combobox::_unpostList {} {
     set h [winfo height $itk_component(list)]
 
     wm withdraw $itk_component(popup)
-    ::grab release $itk_component(popup)
+    ::grab release $itk_component(popup)	
 
     # Added by csmith, 12/19/00.  Thanks to Erik Leunissen for finding
     # this problem.  We need to restore any previous grabs when the
@@ -1120,9 +1120,9 @@ itcl::body iwidgets::Combobox::_unpostList {} {
     # Added by csmith, 10/26/00.  This binding resets the binding
     # created in _postList - see that method for further details.
     bind $itk_component(entry) <Unmap> {}
-
+    
     set _isPosted false
-
+    
     $itk_component(list) selection clear 0 end
     if {$_currItem != {}} {
 	$itk_component(list) selection set $_currItem $_currItem
@@ -1134,7 +1134,7 @@ itcl::body iwidgets::Combobox::_unpostList {} {
 	    $itk_component(entry) configure -state normal
 	}
 	0 - false - no - off {
-	    $itk_component(entry) configure -state disabled
+	    $itk_component(entry) configure -state readonly
 	}
     }
 
@@ -1441,3 +1441,5 @@ itcl::body iwidgets::Combobox::_lookup {key} {
     set _inlookup 0
     return
 }
+
+ 	  	 

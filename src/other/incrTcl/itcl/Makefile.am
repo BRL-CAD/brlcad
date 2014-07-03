@@ -13,7 +13,9 @@ EXTRA_DIST = \
 	itclConfig.sh.in \
 	license.terms \
 	tests \
-	win
+	win \
+	CMakeLists.txt \
+	CMake
 
 DISTCLEANFILES = pkgIndex.tcl
 

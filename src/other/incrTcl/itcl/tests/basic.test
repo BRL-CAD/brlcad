@@ -20,6 +20,10 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 
 ::tcltest::loadTestedCommands
 
+test basic-1.0 {empty string as class name should fail but not crash} {
+    list [catch {itcl::class "" {}} err] $err
+} {1 {invalid class name ""}}
+
 # ----------------------------------------------------------------------
 #  Simple class definition
 # ----------------------------------------------------------------------
@@ -106,21 +110,29 @@ test basic-1.14 {is command with class argument (wrapped in code command)} {
     itcl::is class [itcl::code Counter]
 } {1}
 
-test basic-1.14 {is command with class argument (class does not exist)} {
+test basic-1.15 {is command with class argument (class does not exist)} {
     itcl::is class Count
 } {0}
 
-test basic-1.15 {is command with object argument} {
+test basic-1.16 {is command with object argument} {
     itcl::is object -foo
 } {1}
 
-test basic-1.16 {is command with object argument (object does not exist)} {
+test basic-1.17 {is command with object argument (object does not exist)} {
     itcl::is object xxx
 } {0}
 
-test basic-1.15 {is command with object argument (with code command)} {
+test basic-1.18 {is command with object argument (with code command)} {
     itcl::is object [itcl::code -- -foo]
 } {1}
+
+test basic-1.19 {classes can be unicode} {
+    itcl::class \u6210bcd { method foo args { return "bar" } }
+    \u6210bcd #auto
+} \u6210bcd0
+test basic-1.20 {classes can be unicode} {
+    \u6210bcd0 foo
+} bar
 
 # ----------------------------------------------------------------------
 #  #auto names
@@ -141,6 +153,36 @@ test basic-2.4 {"#auto" is smart enough to skip names that are taken} {
     Counter counter3
     Counter #auto
 } {counter4}
+
+test basic-2.5 {"#auto" with :: at front of name} {
+    itcl::class AutoCheck {}
+    set result [AutoCheck ::#auto]
+    rename AutoCheck {}
+    set result
+} {::autoCheck0}
+
+test basic-2.6 {"#auto" with :: at front of name inside method} {
+    itcl::class AutoCheck {
+        proc new {} {
+            return [AutoCheck ::#auto]
+        }
+    }
+    set result [AutoCheck::new]
+    rename AutoCheck {}
+    set result
+} {::autoCheck0}
+
+test basic-2.7 {"#auto" with :: at front of name inside method inside namespace} {
+    namespace eval AutoCheckNs {}
+    itcl::class AutoCheckNs::AutoCheck {
+        proc new {} {
+            return [AutoCheckNs::AutoCheck ::#auto]
+        }
+    }
+    set result [AutoCheckNs::AutoCheck::new]
+    namespace delete AutoCheckNs
+    set result
+} {::autoCheck0}
 
 # ----------------------------------------------------------------------
 #  Simple object use

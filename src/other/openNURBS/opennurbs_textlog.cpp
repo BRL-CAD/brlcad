@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -198,11 +199,7 @@ void ON_TextLog::AppendText( const char* s )
     }
     else
     {
-//#if (defined(OutputDebugString) || defined(ON_OS_WINDOWS)) && defined(ON_DEBUG)
-//      OutputDebugStringA(s);
-//#else
       printf("%s",s);
-//#endif
     }
   }
 }
@@ -216,10 +213,10 @@ void ON_TextLog::AppendText( const wchar_t* s )
   }
   else
   {
-    // To properly handle conversion of UNICODE values > 255, 
-    // you will probably have to derive a class from ON_TextLog, 
-    // override ON_TextLog::AppendText(const wchar_t* s ),
-    // and do whatever is appropriate for your OS and compiler.
+    // If sizeof(wchar_t) = 2, str = s performs
+    // performs UTF-16 to UTF-8 conversion.
+    // If sizeof(wchar_t) = 4, str = s performs
+    // performs UTF-32 to UTF-8 conversion.
     ON_String str = s;
     AppendText(str.Array());
   }
@@ -307,11 +304,31 @@ void ON_TextLog::Print( const ON_Xform& xform )
 
 void ON_TextLog::Print( const ON_UUID& uuid )
 {
-  Print("%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X", 
-        uuid.Data1, uuid.Data2, uuid.Data3,
-        uuid.Data4[0], uuid.Data4[1], uuid.Data4[2], uuid.Data4[3],
-        uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]
-        );
+  if ( 0 == uuid.Data2 && 0x11dc == uuid.Data3
+       && 0x98 == uuid.Data4[0]
+       && 0x85 == uuid.Data4[1]
+       && 0x00 == uuid.Data4[2]
+       && 0x13 == uuid.Data4[3]
+       && 0x72 == uuid.Data4[4]
+       && 0xc3 == uuid.Data4[5]
+       && 0x38 == uuid.Data4[6]
+       && 0x78 == uuid.Data4[7]
+     )
+  {
+    // xxxxxxxx-0000-11dc-9885-001372C33878
+    // This uuid value is a "repeatably unique" id used
+    // for testing purposes.
+    // See ON_CreateUuid(ON_UUID&) for more details.
+    Print("%08X-...(runtime value varies)", uuid.Data1 );
+  }
+  else
+  {
+    Print("%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X", 
+          uuid.Data1, uuid.Data2, uuid.Data3,
+          uuid.Data4[0], uuid.Data4[1], uuid.Data4[2], uuid.Data4[3],
+          uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]
+          );
+  }
 }
 
 void ON_TextLog::Print( const ON_COMPONENT_INDEX& ci )
@@ -389,6 +406,12 @@ void ON_TextLog::PrintString( const char* s )
     AppendText(s);
 }
 
+void ON_TextLog::PrintNewLine()
+{
+  Print("\n");
+}
+
+
 void ON_TextLog::PrintString( const wchar_t* s )
 {
   if ( s && *s )
@@ -405,24 +428,34 @@ void ON_TextLog::PrintRGB( const ON_Color& color )
 
 void ON_TextLog::PrintTime( const struct tm& t )
 {
-  const char* sDayName[8] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday",""};
-  const char* sMonName[13] = {"January","February","March","April","May","June",
-                              "July","August","September","October","November","December",""};
-  int wday = t.tm_wday;
-  if ( wday < 0 || wday > 6 )
-    wday = 7;
-  int mon = t.tm_mon;
-  if ( mon < 0 || mon > 11 )
-    mon = 12;
+  if (   0 != t.tm_sec
+      || 0 != t.tm_min
+      || 0 != t.tm_hour
+      || 0 != t.tm_mday
+      || 0 != t.tm_mon
+      || 0 != t.tm_year
+      || 0 != t.tm_wday
+    )
+  {
+    const char* sDayName[8] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","<invalid day>"};
+    const char* sMonName[13] = {"January","February","March","April","May","June",
+                               "July","August","September","October","November","December","<invalid month>"};
+    int wday = t.tm_wday;
+    if ( wday < 0 || wday > 6 )
+      wday = 7;
+    int mon = t.tm_mon;
+    if ( mon < 0 || mon > 11 )
+      mon = 12;
 
-  Print("%s %s %02d %02d:%02d:%02d %4d",
-              sDayName[wday],
-              sMonName[mon],
-              t.tm_mday,
-              t.tm_hour,
-              t.tm_min,
-              t.tm_sec,
-              t.tm_year+1900);
+    Print("%s %s %02d %02d:%02d:%02d %4d",
+                sDayName[wday],
+                sMonName[mon],
+                t.tm_mday,
+                t.tm_hour,
+                t.tm_min,
+                t.tm_sec,
+                t.tm_year+1900);
+  }
 }
 
 
@@ -510,10 +543,10 @@ void ON_TextLog::PrintKnotVector( int order, int cv_count, const double* knot )
       while ( i+mult < knot_count && knot[i] == knot[i+mult] )
         mult++;
       if ( i == 0 ) {
-        Print( "%5d  %23.20g  %4d\n", i, knot[i], mult );
+        Print( "%5d  %23.17g  %4d\n", i, knot[i], mult );
       }
       else {
-        Print( "%5d  %23.20g  %4d  %10.4g\n", i, knot[i], mult, knot[i]-knot[i0] );
+        Print( "%5d  %23.17g  %4d  %10.4g\n", i, knot[i], mult, knot[i]-knot[i0] );
       }
       i0 = i;
       i += mult;
@@ -756,7 +789,7 @@ void ON_TextLog::PrintWrappedText( const wchar_t* s, int line_length )
         if ( i1 > 0 ) {
           wsncpy( sLine, s, i1 );
           sLine[i1] = 0;
-          Print( "%S\n", sLine );
+          Print( "%ls\n", sLine );
         }
         else {
           Print("\n");
@@ -768,7 +801,7 @@ void ON_TextLog::PrintWrappedText( const wchar_t* s, int line_length )
       }
     }
     if ( s[0] ) {
-      Print( "%S", s );
+      Print( "%ls", s );
     }
   }
 }

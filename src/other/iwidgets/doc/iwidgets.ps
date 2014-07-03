@@ -12,7 +12,7 @@
 % This ps_prolog file is Copyright (c) 1986-1993 Frame Technology
 % Corporation.  All rights reserved.  This ps_prolog file may be
 % freely copied and distributed in conjunction with documents created
-% using FrameMaker, FrameBuilder and FrameViewer as long as this
+% using FrameMaker, FrameBuilder and FrameViewer as long as this 
 % copyright notice is preserved.
 %
 % Frame products normally print colors as their true color on a color printer
@@ -21,8 +21,8 @@
 % black. This has no effect on bitmap images.
 /FMPrintAllColorsAsBlack             true def
 %
-% Frame products can either set their own line screens or use a printer's
-% default settings. Three flags below control this separately for no
+% Frame products can either set their own line screens or use a printer's 
+% default settings. Three flags below control this separately for no 
 % separations, spot separations and process separations. If a flag
 % is true, then the default printer settings will not be changed. If it is
 % false, Frame products will use their own settings from a table based on
@@ -31,15 +31,15 @@
 /FMUseDefaultSpotSeparationScreen    true  def
 /FMUseDefaultProcessSeparationScreen false def
 %
-% For any given PostScript printer resolution, Frame products have two sets of
-% screen angles and frequencies for printing process separations, which are
+% For any given PostScript printer resolution, Frame products have two sets of 
+% screen angles and frequencies for printing process separations, which are 
 % recomended by Adobe. The following variable chooses the higher frequencies
 % when set to true or the lower frequencies when set to false. This is only
 % effective if the appropriate FMUseDefault...SeparationScreen flag is false.
 /FMUseHighFrequencyScreens true def
 %
 % PostScript Level 2 printers contain an "Accurate Screens" feature which can
-% improve process separation rendering at the expense of compute time. This
+% improve process separation rendering at the expense of compute time. This 
 % flag is ignored by PostScript Level 1 printers.
 /FMUseAcccurateScreens true def
 %
@@ -48,7 +48,7 @@
 % the alternative functions below, or use your own.
 %
 % Dot function
-/FMSpotFunction {abs exch abs 2 copy add 1 gt
+/FMSpotFunction {abs exch abs 2 copy add 1 gt 
 		{1 sub dup mul exch 1 sub dup mul add 1 sub }
 		{dup mul exch dup mul add 1 exch sub }ifelse } def
 %
@@ -56,11 +56,11 @@
 % /FMSpotFunction { pop } def
 %
 % Elipse function
-% /FMSpotFunction { dup 5 mul 8 div mul exch dup mul exch add
+% /FMSpotFunction { dup 5 mul 8 div mul exch dup mul exch add 
 %		sqrt 1 exch sub } def
 %
 %
-/FMversion (4.0) def
+/FMversion (4.0) def 
 /FMLevel1 /languagelevel where {pop languagelevel} {1} ifelse 2 lt def
 /FMPColor
 	FMLevel1 {
@@ -70,77 +70,77 @@
 		true
 	} ifelse
 def
-/FrameDict 400 dict def
+/FrameDict 400 dict def 
 systemdict /errordict known not {/errordict 10 dict def
 		errordict /rangecheck {stop} put} if
 % The readline in PS 23.0 doesn't recognize cr's as nl's on AppleTalk
-FrameDict /tmprangecheck errordict /rangecheck get put
-errordict /rangecheck {FrameDict /bug true put} put
-FrameDict /bug false put
-mark
+FrameDict /tmprangecheck errordict /rangecheck get put 
+errordict /rangecheck {FrameDict /bug true put} put 
+FrameDict /bug false put 
+mark 
 % Some PS machines read past the CR, so keep the following 3 lines together!
 currentfile 5 string readline
 00
 0000000000
-cleartomark
-errordict /rangecheck FrameDict /tmprangecheck get put
-FrameDict /bug get {
+cleartomark 
+errordict /rangecheck FrameDict /tmprangecheck get put 
+FrameDict /bug get { 
 	/readline {
 		/gstring exch def
 		/gfile exch def
 		/gindex 0 def
 		{
-			gfile read pop
-			dup 10 eq {exit} if
-			dup 13 eq {exit} if
-			gstring exch gindex exch put
-			/gindex gindex 1 add def
+			gfile read pop 
+			dup 10 eq {exit} if 
+			dup 13 eq {exit} if 
+			gstring exch gindex exch put 
+			/gindex gindex 1 add def 
 		} loop
-		pop
-		gstring 0 gindex getinterval true
+		pop 
+		gstring 0 gindex getinterval true 
 		} bind def
 	} if
 /FMshowpage /showpage load def
 /FMquit /quit load def
-/FMFAILURE {
-	dup = flush
-	FMshowpage
+/FMFAILURE { 
+	dup = flush 
+	FMshowpage 
 	/Helvetica findfont 12 scalefont setfont
 	72 200 moveto
-	show FMshowpage
-	FMquit
-	} def
+	show FMshowpage 
+	FMquit 
+	} def 
 /FMVERSION {
 	FMversion ne {
 		(Frame product version does not match ps_prolog!) FMFAILURE
 		} if
-	} def
-/FMBADEPSF {
+	} def 
+/FMBADEPSF { 
 	(PostScript Lang. Ref. Man., 2nd Ed., H.2.4 says EPS must not call X              )
-	dup dup (X) search pop exch pop exch pop length
-	4 -1 roll
-	putinterval
+	dup dup (X) search pop exch pop exch pop length 
+	4 -1 roll 
+	putinterval 
 	FMFAILURE
 	} def
 /FMLOCAL {
 	FrameDict begin
-	0 def
-	end
-	} def
+	0 def 
+	end 
+	} def 
 /concatprocs
 	{
 	/proc2 exch cvlit def/proc1 exch cvlit def/newproc proc1 length proc2 length add array def
 	newproc 0 proc1 putinterval newproc proc1 length proc2 putinterval newproc cvx
 }def
-FrameDict begin
+FrameDict begin 
 /FMnone 0 def
 /FMcyan 1 def
 /FMmagenta 2 def
 /FMyellow 3 def
 /FMblack 4 def
 /FMcustom 5 def
-/FrameNegative false def
-/FrameSepIs FMnone def
+/FrameNegative false def 
+/FrameSepIs FMnone def 
 /FrameSepBlack 0 def
 /FrameSepYellow 0 def
 /FrameSepMagenta 0 def
@@ -150,13 +150,13 @@ FrameDict begin
 /FrameSepBlue 1 def
 /FrameCurGray 1 def
 /FrameCurPat null def
-/FrameCurColors [ 0 0 0 1 0 0 0 ] def
-/FrameColorEpsilon .001 def
-/eqepsilon {
+/FrameCurColors [ 0 0 0 1 0 0 0 ] def 
+/FrameColorEpsilon .001 def	
+/eqepsilon {		
 	sub dup 0 lt {neg} if
 	FrameColorEpsilon le
 } bind def
-/FrameCmpColorsCMYK {
+/FrameCmpColorsCMYK { 
 	2 copy 0 get exch 0 get eqepsilon {
 		2 copy 1 get exch 1 get eqepsilon {
 			2 copy 2 get exch 2 get eqepsilon {
@@ -165,48 +165,48 @@ FrameDict begin
 		}{pop pop false} ifelse
 	} {pop pop false} ifelse
 } bind def
-/FrameCmpColorsRGB {
+/FrameCmpColorsRGB { 
 	2 copy 4 get exch 0 get eqepsilon {
 		2 copy 5 get exch 1 get eqepsilon {
 			6 get exch 2 get eqepsilon
 		}{pop pop false} ifelse
 	} {pop pop false} ifelse
 } bind def
-/RGBtoCMYK {
-	1 exch sub
-	3 1 roll
-	1 exch sub
-	3 1 roll
-	1 exch sub
-	3 1 roll
-	3 copy
-	2 copy
-	le { pop } { exch pop } ifelse
-	2 copy
-	le { pop } { exch pop } ifelse
-	dup dup dup
-	6 1 roll
-	4 1 roll
-	7 1 roll
-	sub
-	6 1 roll
-	sub
-	5 1 roll
-	sub
-	4 1 roll
+/RGBtoCMYK { 
+	1 exch sub 
+	3 1 roll 
+	1 exch sub 
+	3 1 roll 
+	1 exch sub 
+	3 1 roll 
+	3 copy 
+	2 copy 
+	le { pop } { exch pop } ifelse 
+	2 copy 
+	le { pop } { exch pop } ifelse 
+	dup dup dup 
+	6 1 roll 
+	4 1 roll 
+	7 1 roll 
+	sub 
+	6 1 roll 
+	sub 
+	5 1 roll 
+	sub 
+	4 1 roll 
 } bind def
-/CMYKtoRGB {
-	dup dup 4 -1 roll add
-	5 1 roll 3 -1 roll add
-	4 1 roll add
-	1 exch sub dup 0 lt {pop 0} if 3 1 roll
-	1 exch sub dup 0 lt {pop 0} if exch
-	1 exch sub dup 0 lt {pop 0} if exch
+/CMYKtoRGB { 
+	dup dup 4 -1 roll add 						  
+	5 1 roll 3 -1 roll add 						  
+	4 1 roll add 								  
+	1 exch sub dup 0 lt {pop 0} if 3 1 roll 	  
+	1 exch sub dup 0 lt {pop 0} if exch 	      
+	1 exch sub dup 0 lt {pop 0} if exch	  		  
 } bind def
 /FrameSepInit {
 	1.0 RealSetgray
 } bind def
-/FrameSetSepColor {
+/FrameSetSepColor { 
 	/FrameSepBlue exch def
 	/FrameSepGreen exch def
 	/FrameSepRed exch def
@@ -215,7 +215,7 @@ FrameDict begin
 	/FrameSepMagenta exch def
 	/FrameSepCyan exch def
 	/FrameSepIs FMcustom def
-	setCurrentScreen
+	setCurrentScreen	
 } bind def
 /FrameSetCyan {
 	/FrameSepBlue 1.0 def
@@ -226,9 +226,9 @@ FrameDict begin
 	/FrameSepMagenta 0.0 def
 	/FrameSepCyan 1.0 def
 	/FrameSepIs FMcyan def
-	setCurrentScreen
+	setCurrentScreen	
 } bind def
-
+ 
 /FrameSetMagenta {
 	/FrameSepBlue 1.0 def
 	/FrameSepGreen 0.0 def
@@ -240,7 +240,7 @@ FrameDict begin
 	/FrameSepIs FMmagenta def
 	setCurrentScreen
 } bind def
-
+ 
 /FrameSetYellow {
 	/FrameSepBlue 0.0 def
 	/FrameSepGreen 1.0 def
@@ -252,7 +252,7 @@ FrameDict begin
 	/FrameSepIs FMyellow def
 	setCurrentScreen
 } bind def
-
+ 
 /FrameSetBlack {
 	/FrameSepBlue 0.0 def
 	/FrameSepGreen 0.0 def
@@ -264,66 +264,66 @@ FrameDict begin
 	/FrameSepIs FMblack def
 	setCurrentScreen
 } bind def
-
-/FrameNoSep {
+ 
+/FrameNoSep { 
 	/FrameSepIs FMnone def
 	setCurrentScreen
 } bind def
-/FrameSetSepColors {
+/FrameSetSepColors { 
 	FrameDict begin
 	[ exch 1 add 1 roll ]
-	/FrameSepColors
+	/FrameSepColors  
 	exch def end
 	} bind def
-/FrameColorInSepListCMYK {
-	FrameSepColors {
-       		exch dup 3 -1 roll
-       		FrameCmpColorsCMYK
+/FrameColorInSepListCMYK { 
+	FrameSepColors {  
+       		exch dup 3 -1 roll 
+       		FrameCmpColorsCMYK 
        		{ pop true exit } if
-    	} forall
+    	} forall 
 	dup true ne {pop false} if
 	} bind def
-/FrameColorInSepListRGB {
-	FrameSepColors {
-       		exch dup 3 -1 roll
-       		FrameCmpColorsRGB
+/FrameColorInSepListRGB { 
+	FrameSepColors {  
+       		exch dup 3 -1 roll 
+       		FrameCmpColorsRGB 
        		{ pop true exit } if
-    	} forall
+    	} forall 
 	dup true ne {pop false} if
 	} bind def
 /RealSetgray /setgray load def
 /RealSetrgbcolor /setrgbcolor load def
 /RealSethsbcolor /sethsbcolor load def
-end
-/setgray {
+end 
+/setgray { 
 	FrameDict begin
 	FrameSepIs FMnone eq
-		{ RealSetgray }
-		{
-		FrameSepIs FMblack eq
-			{ RealSetgray }
-			{ FrameSepIs FMcustom eq
+		{ RealSetgray } 
+		{ 
+		FrameSepIs FMblack eq 
+			{ RealSetgray } 
+			{ FrameSepIs FMcustom eq 
 			  FrameSepRed 0 eq and
 			  FrameSepGreen 0 eq and
 			  FrameSepBlue 0 eq and {
 			  	RealSetgray
 			  } {
-				1 RealSetgray pop
+				1 RealSetgray pop 
 			  } ifelse
 			} ifelse
 		} ifelse
 	end
 } bind def
-/setrgbcolor {
+/setrgbcolor { 
 	FrameDict begin
 	FrameSepIs FMnone eq
 	{  RealSetrgbcolor }
 	{
-		3 copy [ 4 1 roll ]
+		3 copy [ 4 1 roll ] 
 		FrameColorInSepListRGB
 		{
-				FrameSepBlue eq exch
-			 	FrameSepGreen eq and exch
+				FrameSepBlue eq exch 
+			 	FrameSepGreen eq and exch 
 			 	FrameSepRed eq and
 			 	{ 0 } { 1 } ifelse
 		}
@@ -341,23 +341,23 @@ end
 			FrameSepIs FMmagenta eq
 			{pop pop 1.0 exch sub exch pop } {
 			FrameSepIs FMcyan eq
-			{pop pop pop 1.0 exch sub }
-			{pop pop pop pop 1} ifelse } ifelse } ifelse } ifelse
+			{pop pop pop 1.0 exch sub } 
+			{pop pop pop pop 1} ifelse } ifelse } ifelse } ifelse 
 		} ifelse
 		RealSetgray
-	}
+	} 
 	ifelse
 	end
 } bind def
 /sethsbcolor {
 	FrameDict begin
-	FrameSepIs FMnone eq
-	{ RealSethsbcolor }
+	FrameSepIs FMnone eq 
+	{ RealSethsbcolor } 
 	{
-		RealSethsbcolor
-		currentrgbcolor
-		setrgbcolor
-	}
+		RealSethsbcolor 
+		currentrgbcolor  
+		setrgbcolor 
+	} 
 	ifelse
 	end
 } bind def
@@ -367,22 +367,22 @@ FrameDict begin
 } {
 	/RealSetcmykcolor {
 		4 1 roll
-		3 { 3 index add 0 max 1 min 1 exch sub 3 1 roll} repeat
+		3 { 3 index add 0 max 1 min 1 exch sub 3 1 roll} repeat 
 		setrgbcolor pop
 	} bind def
 } ifelse
-userdict /setcmykcolor {
+userdict /setcmykcolor { 
 		FrameDict begin
 		FrameSepIs FMnone eq
-		{ RealSetcmykcolor }
+		{ RealSetcmykcolor } 
 		{
 			4 copy [ 5 1 roll ]
 			FrameColorInSepListCMYK
 			{
-				FrameSepBlack eq exch
-				FrameSepYellow eq and exch
-				FrameSepMagenta eq and exch
-				FrameSepCyan eq and
+				FrameSepBlack eq exch 
+				FrameSepYellow eq and exch 
+				FrameSepMagenta eq and exch 
+				FrameSepCyan eq and 
 				{ 0 } { 1 } ifelse
 			}
 			{
@@ -393,39 +393,39 @@ userdict /setcmykcolor {
 				FrameSepIs FMmagenta eq
 				{pop pop 1.0 exch sub exch pop } {
 				FrameSepIs FMcyan eq
-				{pop pop pop 1.0 exch sub }
-				{pop pop pop pop 1} ifelse } ifelse } ifelse } ifelse
+				{pop pop pop 1.0 exch sub } 
+				{pop pop pop pop 1} ifelse } ifelse } ifelse } ifelse 
 			} ifelse
 			RealSetgray
 		}
 		ifelse
 		end
 	} bind put
-FMLevel1 not {
-
+FMLevel1 not { 
+	
 	/patProcDict 5 dict dup begin
-		<0f1e3c78f0e1c387> { 3 setlinewidth -1 -1 moveto 9 9 lineto stroke
+		<0f1e3c78f0e1c387> { 3 setlinewidth -1 -1 moveto 9 9 lineto stroke 
 											4 -4 moveto 12 4 lineto stroke
 											-4 4 moveto 4 12 lineto stroke} bind def
-		<0f87c3e1f0783c1e> { 3 setlinewidth -1 9 moveto 9 -1 lineto stroke
+		<0f87c3e1f0783c1e> { 3 setlinewidth -1 9 moveto 9 -1 lineto stroke 
 											-4 4 moveto 4 -4 lineto stroke
 											4 12 moveto 12 4 lineto stroke} bind def
 		<8142241818244281> { 1 setlinewidth -1 9 moveto 9 -1 lineto stroke
 											-1 -1 moveto 9 9 lineto stroke } bind def
-		<03060c183060c081> { 1 setlinewidth -1 -1 moveto 9 9 lineto stroke
+		<03060c183060c081> { 1 setlinewidth -1 -1 moveto 9 9 lineto stroke 
 											4 -4 moveto 12 4 lineto stroke
 											-4 4 moveto 4 12 lineto stroke} bind def
-		<8040201008040201> { 1 setlinewidth -1 9 moveto 9 -1 lineto stroke
+		<8040201008040201> { 1 setlinewidth -1 9 moveto 9 -1 lineto stroke 
 											-4 4 moveto 4 -4 lineto stroke
 											4 12 moveto 12 4 lineto stroke} bind def
 	end def
 	/patDict 15 dict dup begin
-		/PatternType 1 def
-		/PaintType 2 def
-		/TilingType 3 def
-		/BBox [ 0 0 8 8 ] def
-		/XStep 8 def
-		/YStep 8 def
+		/PatternType 1 def		
+		/PaintType 2 def		
+		/TilingType 3 def		
+		/BBox [ 0 0 8 8 ] def 	
+		/XStep 8 def			
+		/YStep 8 def			
 		/PaintProc {
 			begin
 			patProcDict bstring known {
@@ -441,7 +441,7 @@ FMLevel1 not {
     FrameSepIs FMnone eq
 	{
 		graymode FMLevel1 or not {
-
+			
 			[/Pattern [/DeviceCMYK]] setcolorspace
 			FrameCurColors 0 4 getinterval aload pop FrameCurPat setcolor
 		} {
@@ -449,7 +449,7 @@ FMLevel1 not {
 				FrameCurGray RealSetgray
 			} {
 				FMPColor graymode and {
-					0 1 3 {
+					0 1 3 { 
 						FrameCurColors exch get
 						1 FrameCurGray sub mul
 					} for
@@ -467,12 +467,12 @@ FMLevel1 not {
 				} ifelse
 			} ifelse
 		} ifelse
-	} {
+	} { 
 		FrameCurColors 0 4 getinterval aload
 		FrameColorInSepListCMYK {
-			FrameSepBlack eq exch
-			FrameSepYellow eq and exch
-			FrameSepMagenta eq and exch
+			FrameSepBlack eq exch 
+			FrameSepYellow eq and exch 
+			FrameSepMagenta eq and exch 
 			FrameSepCyan eq and
 			FrameSepIs FMcustom eq and
 			{ FrameCurGray } { 1 } ifelse
@@ -484,16 +484,16 @@ FMLevel1 not {
 			FrameSepIs FMmagenta eq
 			{pop pop FrameCurGray 1.0 exch sub mul 1.0 exch sub exch pop } {
 			FrameSepIs FMcyan eq
-			{pop pop pop FrameCurGray 1.0 exch sub mul 1.0 exch sub }
-			{pop pop pop pop 1} ifelse } ifelse } ifelse } ifelse
+			{pop pop pop FrameCurGray 1.0 exch sub mul 1.0 exch sub } 
+			{pop pop pop pop 1} ifelse } ifelse } ifelse } ifelse 
 		} ifelse
 		graymode FMLevel1 or not {
-
+			
 			[/Pattern [/DeviceGray]] setcolorspace
 			FrameCurPat setcolor
-		} {
+		} { 
 			graymode not FMLevel1 and {
-
+				
 				dup 1 lt {pop FrameCurGray} if
 			} if
 			RealSetgray
@@ -509,7 +509,7 @@ FMLevel1 not {
 /dmatrix matrix def
 /dpi    72 0 dmatrix defaultmatrix dtransform
     dup mul exch   dup mul add   sqrt def
-
+	
 /freq dpi dup 72 div round dup 0 eq {pop 1} if 8 mul div def
 /sangle 1 0 dmatrix defaultmatrix dtransform exch atan def
 /dpiranges   [  2540    2400    1693     1270    1200     635      600      0      ] def
@@ -546,7 +546,7 @@ FMLevel1 not {
 } bind def
 /getBlackScreen  {
 	FMUseHighFrequencyScreens { KHighFreqs } { KLowFreqs } ifelse
-		screenIndex get 45.0 /FMSpotFunction load
+		screenIndex get 45.0 /FMSpotFunction load 
 } bind def
 /getSpotScreen {
 	getBlackScreen
@@ -554,8 +554,8 @@ FMLevel1 not {
 /getCompositeScreen {
 	getBlackScreen
 } bind def
-/FMSetScreen
-	FMLevel1 { /setscreen load
+/FMSetScreen 
+	FMLevel1 { /setscreen load 
 	}{ {
 		8 dict begin
 		/HalftoneType 1 def
@@ -608,7 +608,7 @@ def
 				} ifelse
 			} ifelse
 		} ifelse
-	} ifelse
+	} ifelse 
 } bind def
 end
 	/gstring FMLOCAL
@@ -636,51 +636,51 @@ end
 	/manualfeed FMLOCAL
 	/paperheight FMLOCAL
 	/paperwidth FMLOCAL
-/FMDOCUMENT {
-	array /FMfonts exch def
+/FMDOCUMENT { 
+	array /FMfonts exch def 
 	/#copies exch def
 	FrameDict begin
 	0 ne /manualfeed exch def
 	/paperheight exch def
 	/paperwidth exch def
-	0 ne /FrameNegative exch def
-	0 ne /edown exch def
+	0 ne /FrameNegative exch def 
+	0 ne /edown exch def 
 	/yscale exch def
 	/xscale exch def
 	FMLevel1 {
 		manualfeed {setmanualfeed} if
-		/FMdicttop countdictstack 1 add def
-		/FMoptop count def
-		setpapername
-		manualfeed {true} {papersize} ifelse
-		{manualpapersize} {false} ifelse
-		{desperatepapersize} {false} ifelse
+		/FMdicttop countdictstack 1 add def 
+		/FMoptop count def 
+		setpapername 
+		manualfeed {true} {papersize} ifelse 
+		{manualpapersize} {false} ifelse 
+		{desperatepapersize} {false} ifelse 
 		{ (Can't select requested paper size for Frame print job!) FMFAILURE } if
 		count -1 FMoptop {pop pop} for
-		countdictstack -1 FMdicttop {pop end} for
+		countdictstack -1 FMdicttop {pop end} for 
 		}
 		{{1 dict dup /PageSize [paperwidth paperheight]put setpagedevice}stopped
 		{ (Can't select requested paper size for Frame print job!) FMFAILURE } if
 		 {1 dict dup /ManualFeed manualfeed put setpagedevice } stopped pop }
-	ifelse
-
+	ifelse 
+	
 	FMPColor {
 		currentcolorscreen
 			cvlit /orgproc exch def
-				  /organgle exch def
+				  /organgle exch def 
 				  /orgfreq exch def
 			cvlit /orgbproc exch def
-				  /orgbangle exch def
+				  /orgbangle exch def 
 				  /orgbfreq exch def
 			cvlit /orggproc exch def
-				  /orggangle exch def
+				  /orggangle exch def 
 				  /orggfreq exch def
 			cvlit /orgrproc exch def
-				  /orgrangle exch def
+				  /orgrangle exch def 
 				  /orgrfreq exch def
-			currentcolortransfer
+			currentcolortransfer 
 			FrameNegative {
-				1 1 4 {
+				1 1 4 { 
 					pop { 1 exch sub } concatprocs 4 1 roll
 				} for
 				4 copy
@@ -691,75 +691,75 @@ end
 			cvlit /orggxfer exch def
 			cvlit /orgrxfer exch def
 	} {
-		currentscreen
+		currentscreen 
 			cvlit /orgproc exch def
-				  /organgle exch def
+				  /organgle exch def 
 				  /orgfreq exch def
-
-		currenttransfer
+				  
+		currenttransfer 
 		FrameNegative {
 			{ 1 exch sub } concatprocs
 			dup settransfer
-		} if
+		} if 
 		cvlit /orgxfer exch def
 	} ifelse
-	end
-} def
+	end 
+} def 
 /pagesave FMLOCAL
 /orgmatrix FMLOCAL
 /landscape FMLOCAL
 /pwid FMLOCAL
-/FMBEGINPAGE {
-	FrameDict begin
+/FMBEGINPAGE { 
+	FrameDict begin 
 	/pagesave save def
 	3.86 setmiterlimit
 	/landscape exch 0 ne def
-	landscape {
-		90 rotate 0 exch dup /pwid exch def neg translate pop
+	landscape { 
+		90 rotate 0 exch dup /pwid exch def neg translate pop 
 	}{
 		pop /pwid exch def
 	} ifelse
 	edown { [-1 0 0 1 pwid 0] concat } if
-	0 0 moveto paperwidth 0 lineto paperwidth paperheight lineto
+	0 0 moveto paperwidth 0 lineto paperwidth paperheight lineto 
 	0 paperheight lineto 0 0 lineto 1 setgray fill
 	xscale yscale scale
 	/orgmatrix matrix def
-	gsave
-} def
+	gsave 
+} def 
 /FMENDPAGE {
-	grestore
+	grestore 
 	pagesave restore
-	end
+	end 
 	showpage
-	} def
-/FMFONTDEFINE {
+	} def 
+/FMFONTDEFINE { 
 	FrameDict begin
-	findfont
-	ReEncode
-	1 index exch
-	definefont
-	FMfonts 3 1 roll
+	findfont 
+	ReEncode 
+	1 index exch 
+	definefont 
+	FMfonts 3 1 roll 
 	put
-	end
-	} def
+	end 
+	} def 
 /FMFILLS {
 	FrameDict begin dup
 	array /fillvals exch def
 	dict /patCache exch def
-	end
-	} def
+	end 
+	} def 
 /FMFILL {
 	FrameDict begin
 	 fillvals 3 1 roll put
-	end
-	} def
-/FMNORMALIZEGRAPHICS {
+	end 
+	} def 
+/FMNORMALIZEGRAPHICS { 
 	newpath
 	0.0 0.0 moveto
 	1 setlinewidth
 	0 setlinecap
 	0 0 0 sethsbcolor
-	0 setgray
+	0 setgray 
 	} bind def
 	/fx FMLOCAL
 	/fy FMLOCAL
@@ -769,15 +769,15 @@ end
 	/lly FMLOCAL
 	/urx FMLOCAL
 	/ury FMLOCAL
-/FMBEGINEPSF {
-	end
-	/FMEPSF save def
-	/showpage {} def
+/FMBEGINEPSF { 
+	end 
+	/FMEPSF save def 
+	/showpage {} def 
 % See Adobe's "PostScript Language Reference Manual, 2nd Edition", page 714.
 % "...the following operators MUST NOT be used in an EPS file:" (emphasis ours)
 	/banddevice {(banddevice) FMBADEPSF} def
 	/clear {(clear) FMBADEPSF} def
-	/cleardictstack {(cleardictstack) FMBADEPSF} def
+	/cleardictstack {(cleardictstack) FMBADEPSF} def 
 	/copypage {(copypage) FMBADEPSF} def
 	/erasepage {(erasepage) FMBADEPSF} def
 	/exitserver {(exitserver) FMBADEPSF} def
@@ -814,23 +814,23 @@ end
 	/b4 {(b4) FMBADEPSF} def
 	/b5tray {(b5tray) FMBADEPSF} def
 	/b5 {(b5) FMBADEPSF} def
-	FMNORMALIZEGRAPHICS
-	[/fy /fx /fh /fw /ury /urx /lly /llx] {exch def} forall
+	FMNORMALIZEGRAPHICS 
+	[/fy /fx /fh /fw /ury /urx /lly /llx] {exch def} forall 
 	fx fw 2 div add fy fh 2 div add  translate
 	rotate
 	fw 2 div neg fh 2 div neg translate
-	fw urx llx sub div fh ury lly sub div scale
-	llx neg lly neg translate
-	/FMdicttop countdictstack 1 add def
-	/FMoptop count def
+	fw urx llx sub div fh ury lly sub div scale 
+	llx neg lly neg translate 
+	/FMdicttop countdictstack 1 add def 
+	/FMoptop count def 
 	} bind def
 /FMENDEPSF {
-	count -1 FMoptop {pop pop} for
-	countdictstack -1 FMdicttop {pop end} for
+	count -1 FMoptop {pop pop} for 
+	countdictstack -1 FMdicttop {pop end} for 
 	FMEPSF restore
-	FrameDict begin
+	FrameDict begin 
 	} bind def
-FrameDict begin
+FrameDict begin 
 /setmanualfeed {
 %%BeginFeature *ManualFeed True
 	 statusdict /manualfeed true put
@@ -839,16 +839,16 @@ FrameDict begin
 /max {2 copy lt {exch} if pop} bind def
 /min {2 copy gt {exch} if pop} bind def
 /inch {72 mul} def
-/pagedimen {
-	paperheight sub abs 16 lt exch
+/pagedimen { 
+	paperheight sub abs 16 lt exch 
 	paperwidth sub abs 16 lt and
 	{/papername exch def} {pop} ifelse
 	} bind def
 	/papersizedict FMLOCAL
-/setpapername {
-	/papersizedict 14 dict def
+/setpapername { 
+	/papersizedict 14 dict def 
 	papersizedict begin
-	/papername /unknown def
+	/papername /unknown def 
 		/Letter 8.5 inch 11.0 inch pagedimen
 		/LetterSmall 7.68 inch 10.16 inch pagedimen
 		/Tabloid 11.0 inch 17.0 inch pagedimen
@@ -880,7 +880,7 @@ FrameDict begin
 		/unknown {unknown} def
 	papersizedict dup papername known {papername} {/unknown} ifelse get
 	end
-	statusdict begin stopped end
+	statusdict begin stopped end 
 	} bind def
 /manualpapersize {
 	papersizedict begin
@@ -899,16 +899,16 @@ FrameDict begin
 		/unknown {unknown} def
 	papersizedict dup papername known {papername} {/unknown} ifelse get
 	end
-	stopped
+	stopped 
 	} bind def
 /desperatepapersize {
 	statusdict /setpageparams known
 		{
-		paperwidth paperheight 0 1
+		paperwidth paperheight 0 1 
 		statusdict begin
-		{setpageparams} stopped
+		{setpageparams} stopped 
 		end
-		} {true} ifelse
+		} {true} ifelse 
 	} bind def
 /DiacriticEncoding [
 /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
@@ -944,49 +944,49 @@ FrameDict begin
 /Uacute /Ucircumflex /Ugrave /dotlessi /circumflex /tilde /macron
 /breve /dotaccent /ring /cedilla /hungarumlaut /ogonek /caron
 ] def
-/ReEncode {
-	dup
-	length
-	dict begin
+/ReEncode { 
+	dup 
+	length 
+	dict begin 
 	{
-	1 index /FID ne
-		{def}
-		{pop pop} ifelse
-	} forall
-	0 eq {/Encoding DiacriticEncoding def} if
-	currentdict
-	end
+	1 index /FID ne 
+		{def} 
+		{pop pop} ifelse 
+	} forall 
+	0 eq {/Encoding DiacriticEncoding def} if 
+	currentdict 
+	end 
 	} bind def
-FMPColor
-
+FMPColor 
+	
 	{
-	/BEGINBITMAPCOLOR {
+	/BEGINBITMAPCOLOR { 
 		BITMAPCOLOR} def
-	/BEGINBITMAPCOLORc {
+	/BEGINBITMAPCOLORc { 
 		BITMAPGRAYc} def
-	/BEGINBITMAPTRUECOLOR {
+	/BEGINBITMAPTRUECOLOR { 
 		BITMAPTRUECOLOR } def
-	/BEGINBITMAPTRUECOLORc {
+	/BEGINBITMAPTRUECOLORc { 
 		BITMAPTRUECOLORc } def
 	}
-
+	
 	{
-	/BEGINBITMAPCOLOR {
+	/BEGINBITMAPCOLOR { 
 		BITMAPGRAY} def
-	/BEGINBITMAPCOLORc {
+	/BEGINBITMAPCOLORc { 
 		BITMAPGRAYc} def
-	/BEGINBITMAPTRUECOLOR {
+	/BEGINBITMAPTRUECOLOR { 
 		BITMAPTRUEGRAY } def
-	/BEGINBITMAPTRUECOLORc {
+	/BEGINBITMAPTRUECOLORc { 
 		BITMAPTRUEGRAYc } def
 	}
 ifelse
-/K {
+/K { 
 	FMPrintAllColorsAsBlack {
 		dup 1 eq 2 index 1 eq and 3 index 1 eq and not
 			{7 {pop} repeat 0 0 0 1 0 0 0} if
-	} if
-	FrameCurColors astore
+	} if 
+	FrameCurColors astore 
 	pop combineColor
 } bind def
 /graymode true def
@@ -1005,7 +1005,7 @@ ifelse
 		/bpside  exch def
 		/bstring exch def
 		/onbits 0 def  /offbits 0 def
-		freq sangle landscape {90 add} if
+		freq sangle landscape {90 add} if 
 			{/y exch def
 			 /x exch def
 			 /xindex x 1 add 2 div bpside mul cvi def
@@ -1019,17 +1019,17 @@ ifelse
 			setscreen
 		offbits offbits onbits add div FrameNegative {1.0 exch sub} if
 		/FrameCurGray exch def
-	} {
+	} { 
 		pop pop
 		dup patCache exch known {
 			patCache exch get
-		} {
+		} { 
 			dup
 			patDict /bstring 3 -1 roll put
-			patDict
+			patDict 
 			9 PatFreq screenIndex get div dup matrix scale
 			makepattern
-			dup
+			dup 
 			patCache 4 -1 roll 3 -1 roll put
 		} ifelse
 		/FrameCurGray 0 def
@@ -1054,16 +1054,16 @@ ifelse
 /dnormalize {
 	dtransform round exch round exch idtransform
 	} bind def
-/lnormalize {
+/lnormalize { 
 	0 dtransform exch cvi 2 idiv 2 mul 1 add exch idtransform pop
 	} bind def
-/H {
+/H { 
 	lnormalize setlinewidth
 	} bind def
 /Z {
 	setlinecap
 	} bind def
-
+	
 /PFill {
 	graymode FMLevel1 or not {
 		gsave 1 setgray eofill grestore
@@ -1076,14 +1076,14 @@ ifelse
 	stroke
 } bind def
 	/fillvals FMLOCAL
-/X {
+/X { 
 	fillvals exch get
 	dup type /stringtype eq
-	{8 1 setPatternMode}
+	{8 1 setPatternMode} 
 	{setGrayScaleMode}
 	ifelse
 	} bind def
-/V {
+/V { 
 	PFill gsave eofill grestore
 	} bind def
 /Vclip {
@@ -1092,7 +1092,7 @@ ifelse
 /Vstrk {
 	currentlinewidth exch setlinewidth PStroke setlinewidth
 	} bind def
-/N {
+/N { 
 	PStroke
 	} bind def
 /Nclip {
@@ -1106,22 +1106,22 @@ ifelse
 /D {curveto} bind def
 /O {closepath} bind def
 	/n FMLOCAL
-/L {
+/L { 
  	/n exch def
 	newpath
 	normalize
-	moveto
+	moveto 
 	2 1 n {pop normalize lineto} for
 	} bind def
-/Y {
-	L
+/Y { 
+	L 
 	closepath
 	} bind def
 	/x1 FMLOCAL
 	/x2 FMLOCAL
 	/y1 FMLOCAL
 	/y2 FMLOCAL
-/R {
+/R { 
 	/y2 exch def
 	/x2 exch def
 	/y1 exch def
@@ -1130,14 +1130,14 @@ ifelse
 	x2 y1
 	x2 y2
 	x1 y2
-	4 Y
+	4 Y 
 	} bind def
 	/rad FMLOCAL
-/rarc
-	{rad
+/rarc 
+	{rad 
 	 arcto
 	} bind def
-/RR {
+/RR { 
 	/rad exch def
 	normalize
 	/y2 exch def
@@ -1154,17 +1154,17 @@ ifelse
 	x2 y1 x1 y1 rarc
 	x1 y1 x1 y2 rarc
 	closepath
-	} stopped {x1 y1 x2 y2 R} if
+	} stopped {x1 y1 x2 y2 R} if 
 	cleartomark
 	} bind def
-/RRR {
+/RRR { 
 	/rad exch def
 	normalize /y4 exch def /x4 exch def
 	normalize /y3 exch def /x3 exch def
 	normalize /y2 exch def /x2 exch def
 	normalize /y1 exch def /x1 exch def
 	newpath
-	normalize moveto
+	normalize moveto 
 	mark
 	{
 	x2 y2 x3 y3 rarc
@@ -1176,151 +1176,151 @@ ifelse
 	 {x1 y1 x2 y2 x3 y3 x4 y4 newpath moveto lineto lineto lineto closepath} if
 	cleartomark
 	} bind def
-/C {
+/C { 
 	grestore
 	gsave
-	R
+	R 
 	clip
 	setCurrentScreen
 } bind def
-/CP {
+/CP { 
 	grestore
 	gsave
-	Y
+	Y 
 	clip
 	setCurrentScreen
 } bind def
 	/FMpointsize FMLOCAL
-/F {
+/F { 
 	FMfonts exch get
 	FMpointsize scalefont
 	setfont
 	} bind def
-/Q {
+/Q { 
 	/FMpointsize exch def
-	F
+	F 
 	} bind def
-/T {
+/T { 
 	moveto show
 	} bind def
-/RF {
+/RF { 
 	rotate
 	0 ne {-1 1 scale} if
 	} bind def
-/TF {
+/TF { 
 	gsave
-	moveto
+	moveto 
 	RF
 	show
 	grestore
 	} bind def
-/P {
+/P { 
 	moveto
 	0 32 3 2 roll widthshow
 	} bind def
-/PF {
+/PF { 
 	gsave
-	moveto
+	moveto 
 	RF
 	0 32 3 2 roll widthshow
 	grestore
 	} bind def
-/S {
+/S { 
 	moveto
 	0 exch ashow
 	} bind def
-/SF {
+/SF { 
 	gsave
 	moveto
 	RF
 	0 exch ashow
 	grestore
 	} bind def
-/B {
+/B { 
 	moveto
 	0 32 4 2 roll 0 exch awidthshow
 	} bind def
-/BF {
+/BF { 
 	gsave
 	moveto
 	RF
 	0 32 4 2 roll 0 exch awidthshow
 	grestore
 	} bind def
-/G {
+/G { 
 	gsave
 	newpath
-	normalize translate 0.0 0.0 moveto
-	dnormalize scale
-	0.0 0.0 1.0 5 3 roll arc
-	closepath
+	normalize translate 0.0 0.0 moveto 
+	dnormalize scale 
+	0.0 0.0 1.0 5 3 roll arc 
+	closepath 
 	PFill fill
 	grestore
 	} bind def
 /Gstrk {
 	savematrix
     newpath
-    2 index 2 div add exch 3 index 2 div sub exch
-    normalize 2 index 2 div sub exch 3 index 2 div add exch
+    2 index 2 div add exch 3 index 2 div sub exch 
+    normalize 2 index 2 div sub exch 3 index 2 div add exch 
     translate
-    scale
-    0.0 0.0 1.0 5 3 roll arc
+    scale 
+    0.0 0.0 1.0 5 3 roll arc 
     restorematrix
     currentlinewidth exch setlinewidth PStroke setlinewidth
     } bind def
-/Gclip {
+/Gclip { 
 	newpath
 	savematrix
-	normalize translate 0.0 0.0 moveto
-	dnormalize scale
-	0.0 0.0 1.0 5 3 roll arc
-	closepath
+	normalize translate 0.0 0.0 moveto 
+	dnormalize scale 
+	0.0 0.0 1.0 5 3 roll arc 
+	closepath 
 	clip newpath
 	restorematrix
 	} bind def
-/GG {
+/GG { 
 	gsave
 	newpath
-	normalize translate 0.0 0.0 moveto
-	rotate
-	dnormalize scale
-	0.0 0.0 1.0 5 3 roll arc
+	normalize translate 0.0 0.0 moveto 
+	rotate 
+	dnormalize scale 
+	0.0 0.0 1.0 5 3 roll arc 
 	closepath
 	PFill
 	fill
 	grestore
 	} bind def
-/GGclip {
+/GGclip { 
 	savematrix
 	newpath
-    normalize translate 0.0 0.0 moveto
-    rotate
-    dnormalize scale
-    0.0 0.0 1.0 5 3 roll arc
+    normalize translate 0.0 0.0 moveto 
+    rotate 
+    dnormalize scale 
+    0.0 0.0 1.0 5 3 roll arc 
     closepath
 	clip newpath
 	restorematrix
 	} bind def
-/GGstrk {
+/GGstrk { 
 	savematrix
     newpath
-    normalize translate 0.0 0.0 moveto
-    rotate
-    dnormalize scale
-    0.0 0.0 1.0 5 3 roll arc
-    closepath
+    normalize translate 0.0 0.0 moveto 
+    rotate 
+    dnormalize scale 
+    0.0 0.0 1.0 5 3 roll arc 
+    closepath 
 	restorematrix
     currentlinewidth exch setlinewidth PStroke setlinewidth
 	} bind def
-/A {
+/A { 
 	gsave
 	savematrix
 	newpath
-	2 index 2 div add exch 3 index 2 div sub exch
-	normalize 2 index 2 div sub exch 3 index 2 div add exch
-	translate
-	scale
-	0.0 0.0 1.0 5 3 roll arc
+	2 index 2 div add exch 3 index 2 div sub exch 
+	normalize 2 index 2 div sub exch 3 index 2 div add exch 
+	translate 
+	scale 
+	0.0 0.0 1.0 5 3 roll arc 
 	restorematrix
 	PStroke
 	grestore
@@ -1328,28 +1328,28 @@ ifelse
 /Aclip {
 	newpath
 	savematrix
-	normalize translate 0.0 0.0 moveto
-	dnormalize scale
-	0.0 0.0 1.0 5 3 roll arc
-	closepath
+	normalize translate 0.0 0.0 moveto 
+	dnormalize scale 
+	0.0 0.0 1.0 5 3 roll arc 
+	closepath 
 	strokepath clip newpath
 	restorematrix
 } bind def
 /Astrk {
 	Gstrk
 } bind def
-/AA {
+/AA { 
 	gsave
 	savematrix
 	newpath
-
-	3 index 2 div add exch 4 index 2 div sub exch
-
+	
+	3 index 2 div add exch 4 index 2 div sub exch 
+	
 	normalize 3 index 2 div sub exch 4 index 2 div add exch
-	translate
-	rotate
-	scale
-	0.0 0.0 1.0 5 3 roll arc
+	translate 
+	rotate 
+	scale 
+	0.0 0.0 1.0 5 3 roll arc 
 	restorematrix
 	PStroke
 	grestore
@@ -1357,10 +1357,10 @@ ifelse
 /AAclip {
 	savematrix
 	newpath
-    normalize translate 0.0 0.0 moveto
-    rotate
-    dnormalize scale
-    0.0 0.0 1.0 5 3 roll arc
+    normalize translate 0.0 0.0 moveto 
+    rotate 
+    dnormalize scale 
+    0.0 0.0 1.0 5 3 roll arc 
     closepath
 	strokepath clip newpath
 	restorematrix
@@ -1379,37 +1379,37 @@ ifelse
 	/FMsaveobject FMLOCAL
 	/FMoptop FMLOCAL
 	/FMdicttop FMLOCAL
-/BEGINPRINTCODE {
-	/FMdicttop countdictstack 1 add def
-	/FMoptop count 7 sub def
+/BEGINPRINTCODE { 
+	/FMdicttop countdictstack 1 add def 
+	/FMoptop count 7 sub def 
 	/FMsaveobject save def
-	userdict begin
-	/showpage {} def
-	FMNORMALIZEGRAPHICS
+	userdict begin 
+	/showpage {} def 
+	FMNORMALIZEGRAPHICS 
 	3 index neg 3 index neg translate
 	} bind def
 /ENDPRINTCODE {
-	count -1 FMoptop {pop pop} for
-	countdictstack -1 FMdicttop {pop end} for
-	FMsaveobject restore
+	count -1 FMoptop {pop pop} for 
+	countdictstack -1 FMdicttop {pop end} for 
+	FMsaveobject restore 
 	} bind def
-/gn {
-	0
-	{	46 mul
-		cf read pop
-		32 sub
-		dup 46 lt {exit} if
-		46 sub add
+/gn { 
+	0 
+	{	46 mul 
+		cf read pop 
+		32 sub 
+		dup 46 lt {exit} if 
+		46 sub add 
 		} loop
-	add
+	add 
 	} bind def
 	/str FMLOCAL
-/cfs {
-	/str sl string def
-	0 1 sl 1 sub {str exch val put} for
-	str def
+/cfs { 
+	/str sl string def 
+	0 1 sl 1 sub {str exch val put} for 
+	str def 
 	} bind def
-/ic [
+/ic [ 
 	0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0223
 	0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0223
 	0
@@ -1431,78 +1431,78 @@ ifelse
 	/cs FMLOCAL
 	/len FMLOCAL
 	/pos FMLOCAL
-/ms {
-	/sl exch def
-	/val 255 def
-	/ws cfs
-	/im cfs
-	/val 0 def
-	/bs cfs
-	/cs cfs
+/ms { 
+	/sl exch def 
+	/val 255 def 
+	/ws cfs 
+	/im cfs 
+	/val 0 def 
+	/bs cfs 
+	/cs cfs 
 	} bind def
-400 ms
-/ip {
-	is
-	0
-	cf cs readline pop
-	{	ic exch get exec
-		add
-		} forall
-	pop
-
+400 ms 
+/ip { 
+	is 
+	0 
+	cf cs readline pop 
+	{	ic exch get exec 
+		add 
+		} forall 
+	pop 
+	
 	} bind def
-/rip {
-
-
-	  bis ris copy pop
+/rip { 
+	   
+	  
+	  bis ris copy pop 
       is
       0
-      cf cs readline pop
-      {       ic exch get exec
-              add
-              } forall
+      cf cs readline pop 
+      {       ic exch get exec 
+              add 
+              } forall 
+	  pop pop 
+	  ris gis copy pop 
+	  dup is exch 
+	  
+      cf cs readline pop 
+      {       ic exch get exec 
+              add 
+              } forall 
 	  pop pop
-	  ris gis copy pop
-	  dup is exch
-
-      cf cs readline pop
-      {       ic exch get exec
-              add
-              } forall
-	  pop pop
-	  gis bis copy pop
-	  dup add is exch
-
-      cf cs readline pop
-      {       ic exch get exec
-              add
-              } forall
-      pop
-
+	  gis bis copy pop 
+	  dup add is exch 
+	  
+      cf cs readline pop 
+      {       ic exch get exec 
+              add 
+              } forall 
+      pop 
+      
       } bind def
-/wh {
-	/len exch def
-	/pos exch def
+/wh { 
+	/len exch def 
+	/pos exch def 
 	ws 0 len getinterval im pos len getinterval copy pop
-	pos len
+	pos len 
 	} bind def
-/bl {
-	/len exch def
-	/pos exch def
+/bl { 
+	/len exch def 
+	/pos exch def 
 	bs 0 len getinterval im pos len getinterval copy pop
-	pos len
+	pos len 
 	} bind def
 /s1 1 string def
-/fl {
-	/len exch def
-	/pos exch def
+/fl { 
+	/len exch def 
+	/pos exch def 
 	/val cf s1 readhexstring pop 0 get def
 	pos 1 pos len add 1 sub {im exch val put} for
-	pos len
+	pos len 
 	} bind def
-/hx {
-	3 copy getinterval
-	cf exch readhexstring pop pop
+/hx { 
+	3 copy getinterval 
+	cf exch readhexstring pop pop 
 	} bind def
 	/h FMLOCAL
 	/w FMLOCAL
@@ -1511,77 +1511,77 @@ ifelse
 	/bitmapsave FMLOCAL
 	/is FMLOCAL
 	/cf FMLOCAL
-/wbytes {
+/wbytes { 
       dup dup
       24 eq { pop pop 3 mul }
       { 8 eq {pop} {1 eq {7 add 8 idiv} {3 add 4 idiv} ifelse} ifelse } ifelse
 	} bind def
-/BEGINBITMAPBWc {
+/BEGINBITMAPBWc { 
 	1 {} COMMONBITMAPc
 	} bind def
-/BEGINBITMAPGRAYc {
+/BEGINBITMAPGRAYc { 
 	8 {} COMMONBITMAPc
 	} bind def
-/BEGINBITMAP2BITc {
+/BEGINBITMAP2BITc { 
 	2 {} COMMONBITMAPc
 	} bind def
-/COMMONBITMAPc {
-
+/COMMONBITMAPc { 
+		 
 	/r exch def
 	/d exch def
 	gsave
-
-	3 index 2 div add exch
-	4 index 2 div add exch
-	translate
-	rotate
-	1 index 2 div neg
-	1 index 2 div neg
-	translate
-	scale
+	
+	3 index 2 div add exch	
+	4 index 2 div add exch	
+	translate		
+	rotate			
+	1 index 2 div neg	
+	1 index 2 div neg	
+	translate		
+	scale			
 	/h exch def /w exch def
-	/lb w d wbytes def
-	sl lb lt {lb ms} if
-	/bitmapsave save def
-	r
-	/is im 0 lb getinterval def
-	ws 0 lb getinterval is copy pop
-	/cf currentfile def
-	w h d [w 0 0 h neg 0 h]
-	{ip} image
-	bitmapsave restore
+	/lb w d wbytes def 
+	sl lb lt {lb ms} if 
+	/bitmapsave save def 
+	r                    
+	/is im 0 lb getinterval def 
+	ws 0 lb getinterval is copy pop 
+	/cf currentfile def 
+	w h d [w 0 0 h neg 0 h] 
+	{ip} image 
+	bitmapsave restore 
 	grestore
 	} bind def
-/BEGINBITMAPBW {
+/BEGINBITMAPBW { 
 	1 {} COMMONBITMAP
 	} bind def
-/BEGINBITMAPGRAY {
+/BEGINBITMAPGRAY { 
 	8 {} COMMONBITMAP
 	} bind def
-/BEGINBITMAP2BIT {
+/BEGINBITMAP2BIT { 
 	2 {} COMMONBITMAP
 	} bind def
-/COMMONBITMAP {
+/COMMONBITMAP { 
 	/r exch def
 	/d exch def
 	gsave
-
-	3 index 2 div add exch
-	4 index 2 div add exch
-	translate
-	rotate
-	1 index 2 div neg
-	1 index 2 div neg
-	translate
-	scale
+	
+	3 index 2 div add exch	
+	4 index 2 div add exch	
+	translate		
+	rotate			
+	1 index 2 div neg	
+	1 index 2 div neg	
+	translate		
+	scale			
 	/h exch def /w exch def
-	/bitmapsave save def
-	r
+	/bitmapsave save def 
+	r                    
 	/is w d wbytes string def
-	/cf currentfile def
-	w h d [w 0 0 h neg 0 h]
+	/cf currentfile def 
+	w h d [w 0 0 h neg 0 h] 
 	{cf is readhexstring pop} image
-	bitmapsave restore
+	bitmapsave restore 
 	grestore
 	} bind def
 /ngrayt 256 array def
@@ -1629,9 +1629,9 @@ FMLevel1 {
 }
 {
 /colorSetup2 {
-	[ /Indexed /DeviceRGB 255
-		{dup red exch get 255 div
-		 exch dup green exch get 255 div
+	[ /Indexed /DeviceRGB 255 
+		{dup red exch get 255 div 
+		 exch dup green exch get 255 div 
 		 exch blue exch get 255 div}
 	] setcolorspace
 } bind def
@@ -1639,7 +1639,7 @@ FMLevel1 {
 	/tran FMLOCAL
 /fakecolorsetup {
 	/tran 256 string def
-	0 1 255 {/indx exch def
+	0 1 255 {/indx exch def 
 		tran indx
 		red indx get 77 mul
 		green indx get 151 mul
@@ -1649,30 +1649,30 @@ FMLevel1 {
 	{255 mul cvi tran exch get 255.0 div}
 	exch concatprocs settransfer
 } bind def
-/BITMAPCOLOR {
+/BITMAPCOLOR { 
 	/d 8 def
 	gsave
-
-	3 index 2 div add exch
-	4 index 2 div add exch
-	translate
-	rotate
-	1 index 2 div neg
-	1 index 2 div neg
-	translate
-	scale
+	
+	3 index 2 div add exch	
+	4 index 2 div add exch	
+	translate		
+	rotate			
+	1 index 2 div neg	
+	1 index 2 div neg	
+	translate		
+	scale			
 	/h exch def /w exch def
 	/bitmapsave save def
-	FMLevel1 {
+	FMLevel1 {	
 		colorsetup
 		/is w d wbytes string def
-		/cf currentfile def
-		w h d [w 0 0 h neg 0 h]
-		{cf is readhexstring pop} {is} {is} true 3 colorimage
+		/cf currentfile def 
+		w h d [w 0 0 h neg 0 h] 
+		{cf is readhexstring pop} {is} {is} true 3 colorimage 
 	} {
 		colorSetup2
 		/is w d wbytes string def
-		/cf currentfile def
+		/cf currentfile def 
 		7 dict dup begin
 			/ImageType 1 def
 			/Width w def
@@ -1681,39 +1681,39 @@ FMLevel1 {
 			/DataSource {cf is readhexstring pop} bind def
 			/BitsPerComponent d def
 			/Decode [0 255] def
-		end image
+		end image	
 	} ifelse
-	bitmapsave restore
+	bitmapsave restore 
 	grestore
 	} bind def
-/BITMAPCOLORc {
+/BITMAPCOLORc { 
 	/d 8 def
 	gsave
-
-	3 index 2 div add exch
-	4 index 2 div add exch
-	translate
-	rotate
-	1 index 2 div neg
-	1 index 2 div neg
-	translate
-	scale
+	
+	3 index 2 div add exch	
+	4 index 2 div add exch	
+	translate		
+	rotate			
+	1 index 2 div neg	
+	1 index 2 div neg	
+	translate		
+	scale			
 	/h exch def /w exch def
-	/lb w d wbytes def
-	sl lb lt {lb ms} if
-	/bitmapsave save def
-	FMLevel1 {
+	/lb w d wbytes def 
+	sl lb lt {lb ms} if 
+	/bitmapsave save def 
+	FMLevel1 {	
 		colorsetup
-		/is im 0 lb getinterval def
-		ws 0 lb getinterval is copy pop
-		/cf currentfile def
-		w h d [w 0 0 h neg 0 h]
+		/is im 0 lb getinterval def 
+		ws 0 lb getinterval is copy pop 
+		/cf currentfile def 
+		w h d [w 0 0 h neg 0 h] 
 		{ip} {is} {is} true 3 colorimage
 	} {
 		colorSetup2
-		/is im 0 lb getinterval def
-		ws 0 lb getinterval is copy pop
-		/cf currentfile def
+		/is im 0 lb getinterval def 
+		ws 0 lb getinterval is copy pop 
+		/cf currentfile def 
 		7 dict dup begin
 			/ImageType 1 def
 			/Width w def
@@ -1722,91 +1722,91 @@ FMLevel1 {
 			/DataSource {ip} bind def
 			/BitsPerComponent d def
 			/Decode [0 255] def
-		end image
+		end image	
 	} ifelse
-	bitmapsave restore
+	bitmapsave restore 
 	grestore
 	} bind def
-/BITMAPTRUECOLORc {
+/BITMAPTRUECOLORc { 
 	/d 24 def
         gsave
-
-	3 index 2 div add exch
-	4 index 2 div add exch
-	translate
-	rotate
-	1 index 2 div neg
-	1 index 2 div neg
-	translate
-	scale
+ 	
+	3 index 2 div add exch	
+	4 index 2 div add exch	
+	translate		
+	rotate			
+	1 index 2 div neg	
+	1 index 2 div neg	
+	translate		
+	scale			
 	/h exch def /w exch def
-	/lb w d wbytes def
-	sl lb lt {lb ms} if
-        /bitmapsave save def
-
-	/is im 0 lb getinterval def
-	/ris im 0 w getinterval def
-	/gis im w w getinterval def
-	/bis im w 2 mul w getinterval def
-
-        ws 0 lb getinterval is copy pop
-        /cf currentfile def
-        w h 8 [w 0 0 h neg 0 h]
+	/lb w d wbytes def 
+	sl lb lt {lb ms} if 
+        /bitmapsave save def 
+        
+	/is im 0 lb getinterval def	
+	/ris im 0 w getinterval def	
+	/gis im w w getinterval def	
+	/bis im w 2 mul w getinterval def 
+        
+        ws 0 lb getinterval is copy pop 
+        /cf currentfile def 
+        w h 8 [w 0 0 h neg 0 h] 
         {w rip pop ris} {gis} {bis} true 3 colorimage
-        bitmapsave restore
+        bitmapsave restore 
         grestore
         } bind def
-/BITMAPTRUECOLOR {
+/BITMAPTRUECOLOR { 
         gsave
-
-		3 index 2 div add exch
-		4 index 2 div add exch
-		translate
-		rotate
-		1 index 2 div neg
-		1 index 2 div neg
-		translate
-		scale
+		
+		3 index 2 div add exch	
+		4 index 2 div add exch	
+		translate		
+		rotate			
+		1 index 2 div neg	
+		1 index 2 div neg	
+		translate		
+		scale			
 		/h exch def /w exch def
-        /bitmapsave save def
+        /bitmapsave save def 
         /is w string def
         /gis w string def
         /bis w string def
-        /cf currentfile def
-        w h 8 [w 0 0 h neg 0 h]
-        { cf is readhexstring pop }
-        { cf gis readhexstring pop }
-        { cf bis readhexstring pop }
-        true 3 colorimage
-        bitmapsave restore
+        /cf currentfile def 
+        w h 8 [w 0 0 h neg 0 h] 
+        { cf is readhexstring pop } 
+        { cf gis readhexstring pop } 
+        { cf bis readhexstring pop } 
+        true 3 colorimage 
+        bitmapsave restore 
         grestore
         } bind def
-/BITMAPTRUEGRAYc {
+/BITMAPTRUEGRAYc { 
 	/d 24 def
         gsave
-
-	3 index 2 div add exch
-	4 index 2 div add exch
-	translate
-	rotate
-	1 index 2 div neg
-	1 index 2 div neg
-	translate
-	scale
+	
+	3 index 2 div add exch	
+	4 index 2 div add exch	
+	translate		
+	rotate			
+	1 index 2 div neg	
+	1 index 2 div neg	
+	translate		
+	scale			
 	/h exch def /w exch def
-	/lb w d wbytes def
-	sl lb lt {lb ms} if
-        /bitmapsave save def
-
-	/is im 0 lb getinterval def
-	/ris im 0 w getinterval def
-	/gis im w w getinterval def
-	/bis im w 2 mul w getinterval def
-        ws 0 lb getinterval is copy pop
-        /cf currentfile def
-        w h 8 [w 0 0 h neg 0 h]
+	/lb w d wbytes def 
+	sl lb lt {lb ms} if 
+        /bitmapsave save def 
+        
+	/is im 0 lb getinterval def	
+	/ris im 0 w getinterval def	
+	/gis im w w getinterval def	
+	/bis im w 2 mul w getinterval def 
+        ws 0 lb getinterval is copy pop 
+        /cf currentfile def 
+        w h 8 [w 0 0 h neg 0 h] 
         {w rip pop ris gis bis w gray} image
-        bitmapsave restore
+        bitmapsave restore 
         grestore
         } bind def
 /ww FMLOCAL
@@ -1814,7 +1814,7 @@ FMLevel1 {
 /g FMLOCAL
 /b FMLOCAL
 /i FMLOCAL
-/gray {
+/gray { 
         /ww exch def
         /b exch def
         /g exch def
@@ -1823,39 +1823,39 @@ FMLevel1 {
 			b i get .114 mul add add r i 3 -1 roll floor cvi put } for
         r
         } bind def
-/BITMAPTRUEGRAY {
+/BITMAPTRUEGRAY { 
         gsave
-
-		3 index 2 div add exch
-		4 index 2 div add exch
-		translate
-		rotate
-		1 index 2 div neg
-		1 index 2 div neg
-		translate
-		scale
+		
+		3 index 2 div add exch	
+		4 index 2 div add exch	
+		translate		
+		rotate			
+		1 index 2 div neg	
+		1 index 2 div neg	
+		translate		
+		scale			
 		/h exch def /w exch def
-        /bitmapsave save def
+        /bitmapsave save def 
         /is w string def
         /gis w string def
         /bis w string def
-        /cf currentfile def
-        w h 8 [w 0 0 h neg 0 h]
-        { cf is readhexstring pop
-          cf gis readhexstring pop
+        /cf currentfile def 
+        w h 8 [w 0 0 h neg 0 h] 
+        { cf is readhexstring pop 
+          cf gis readhexstring pop 
           cf bis readhexstring pop w gray}  image
-        bitmapsave restore
+        bitmapsave restore 
         grestore
         } bind def
-/BITMAPGRAY {
+/BITMAPGRAY { 
 	8 {fakecolorsetup} COMMONBITMAP
 	} bind def
-/BITMAPGRAYc {
+/BITMAPGRAYc { 
 	8 {fakecolorsetup} COMMONBITMAPc
 	} bind def
 /ENDBITMAP {
 	} bind def
-end
+end 
 	/ALDsave FMLOCAL
 	/ALDmatrix matrix def ALDmatrix currentmatrix pop
 /StartALD {
@@ -2176,7 +2176,7 @@ N
 V
 0 X
 N
-%%BeginBinary:  6824
+%%BeginBinary:  6824     
 251 117 129.09 60.17 0 365.92 648
 /red <
 72FFFFFFFFFFFFFFFFFFFFFFFFFF66F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -2450,7 +2450,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  7011
+%%BeginBinary:  7011     
 254 115 130.63 59.14 0 121.37 651.86
 /red <
 72FFFFFFFFFFFFFFFFFFFFFFFFFF66F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -2653,7 +2653,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  4964
+%%BeginBinary:  4964     
 254 173 130.63 88.97 0 355.37 622.03
 /red <
 72FFFFFFFFFFFFFFFFFFFFFFFFFF66F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -2910,7 +2910,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  4028
+%%BeginBinary:  4028     
 196 140 100.8 72 0 376.2 99
 /red <
 72FFFFFFFFFFFFFFFFFFFFFFFFFF66F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -3147,7 +3147,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  7633
+%%BeginBinary:  7633     
 254 176 130.63 90.51 0 123.86 339.34
 /red <
 3EC472FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -3553,7 +3553,7 @@ V
 (       }) 72 92.67 T
 72 90 540 198 R
 N
-%%BeginBinary:  8344
+%%BeginBinary:  8344     
 280 176 144 90.51 0 360 98.49
 /red <
 72FFFFFFFFFFFFFFFFFFFFFFFFFF66F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -3981,7 +3981,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  12737
+%%BeginBinary:  12737    
 222 379 114.17 194.91 0 128.83 387
 /red <
 3EC472FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -4573,7 +4573,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  12524
+%%BeginBinary:  12524    
 260 357 133.71 183.6 0 116.86 127.83
 /red <
 3EC472FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -5016,7 +5016,7 @@ V
 0 X
 N
 0 0 0 1 0 0 0 K
-%%BeginBinary:  4520
+%%BeginBinary:  4520     
 217 162 86.8 64.8 0 327.2 342.2
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -5214,7 +5214,7 @@ BO1D9
 F77F7Q>F7
 ENDBITMAP
 %%EndBinary
-%%BeginBinary:  4795
+%%BeginBinary:  4795     
 254 162 101.6 64.8 0 420.4 342.2
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -5452,7 +5452,7 @@ V
 0 X
 N
 0 0 0 1 0 0 0 K
-%%BeginBinary:  4792
+%%BeginBinary:  4792     
 337 137 121.32 49.32 0 364.68 661.68
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -6224,7 +6224,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  2913
+%%BeginBinary:  2913     
 134 174 40.2 52.2 0 81 657
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -6434,7 +6434,7 @@ F8F8F8F8P>F8F8F8F8F5
 F57F5OGF5
 ENDBITMAP
 %%EndBinary
-%%BeginBinary:  2909
+%%BeginBinary:  2909     
 189 151 56.7 45.3 0 125.83 657
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -6621,7 +6621,7 @@ P(D9
 F57F5Q"F5
 ENDBITMAP
 %%EndBinary
-%%BeginBinary:  2925
+%%BeginBinary:  2925     
 134 180 40.2 54 0 188.67 657
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -6837,7 +6837,7 @@ P(D9
 F77F7OGF7
 ENDBITMAP
 %%EndBinary
-%%BeginBinary:  2903
+%%BeginBinary:  2903     
 194 151 58.2 45.3 0 233.27 657
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -7060,7 +7060,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  4942
+%%BeginBinary:  4942     
 279 127 143.49 65.31 0 108.51 368.69
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -7287,7 +7287,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  3350
+%%BeginBinary:  3350     
 147 103 75.6 52.97 0 396 584
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -7450,7 +7450,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  4071
+%%BeginBinary:  4071     
 264 73 135.77 37.54 0 359.23 311
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -7626,7 +7626,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  3312
+%%BeginBinary:  3312     
 179 73 92.06 37.54 0 144 503
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -7808,7 +7808,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  4730
+%%BeginBinary:  4730     
 255 73 131.14 37.54 0 363.14 513.86
 /red <
 3EC472FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -7950,7 +7950,7 @@ V
 0 X
 (spindate .sd -monthformat string) 349 214.91 T
 (pack .sd -padx 10 -pady 10) 349 202.91 T
-%%BeginBinary:  7044
+%%BeginBinary:  7044     
 138 123 70.97 63.26 0 387.14 237.71
 /red <
 C472FFFFFFFFFFFFFFFFFFFFFFFFFF66F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -8171,7 +8171,7 @@ V
 0 X
 (spintime .st) 108 563.33 T
 (pack .st -padx 10 -pady 10) 108 551.33 T
-%%BeginBinary:  6922
+%%BeginBinary:  6922     
 138 123 70.97 63.26 0 145.03 578.74
 /red <
 C472FFFFFFFFFFFFFFFFFFFFFFFFFF66F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -8347,7 +8347,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  7528
+%%BeginBinary:  7528     
 158 221 81.26 113.66 0 149.43 262.63
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -8670,7 +8670,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  17963
+%%BeginBinary:  17963    
 503 189 201.2 75.6 0 324 546
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -8963,7 +8963,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  5902
+%%BeginBinary:  5902     
 489 391 195.6 156.4 0 85.29 548.57
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -9437,7 +9437,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  3593
+%%BeginBinary:  3593     
 264 89 135.77 45.77 0 369 657
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -9590,7 +9590,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  5963
+%%BeginBinary:  5963     
 314 531 94.2 159.3 0 427.8 323.98
 /red <
 0000000000000000000000000000000000000000000000000000000000000000
@@ -10259,7 +10259,7 @@ V
 (pack .cb1 -padx 10 -pady 10 -\336ll x) 81 178.91 T
 (pack .cb2 -padx 10 -pady 10 -\336ll x) 81 166.91 T
 (pack .cb3 -padx 10 -pady 10 -\336ll x) 81 154.91 T
-%%BeginBinary:  38844
+%%BeginBinary:  38844    
 329 407 157.92 195.36 0 108 347
 /red <
 C472FFFFFFFFFFFFFFFFFFFFFFFFFF66F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -10759,7 +10759,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  13238
+%%BeginBinary:  13238    
 226 306 116.23 157.37 0 369.77 381
 /red <
 7266F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -11174,7 +11174,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  31814
+%%BeginBinary:  31814    
 365 317 187.71 163.03 0 90 543.43
 /red <
 7266F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -11579,7 +11579,7 @@ V
 (FIGURE 31) 373.47 412.6 T
 1 F
 ( - Messagedialog) 424.86 412.6 T
-%%BeginBinary:  11506
+%%BeginBinary:  11506    
 368 342 147.2 136.8 0 356.8 566.43
 /red <
 3EC472FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -11970,7 +11970,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  4263
+%%BeginBinary:  4263     
 283 155 145.54 79.71 0 351 246
 /red <
 7266F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -12210,7 +12210,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  5294
+%%BeginBinary:  5294     
 262 379 104.8 151.6 0 135 508.4
 /red <
 7266F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -12656,7 +12656,7 @@ V
 2 Z
 0 X
 N
-%%BeginBinary:  33477
+%%BeginBinary:  33477    
 462 429 184.8 171.6 0 337.2 482.4
 /red <
 7266F5FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF

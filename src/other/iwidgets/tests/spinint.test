@@ -45,7 +45,7 @@ set m 1
 test Spinint-1.$c {Spinint construction} {
     iwidgets::Spinint .spi
     pack .spi -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -60,46 +60,46 @@ test Spinint-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-background #d9d9d9 #d9d9d9}
-    {-childsitepos e e}
-    {-childsitepos s s}
-    {-childsitepos w w}
-    {-childsitepos n n}
-    {-childsitepos e e}
-    {-borderwidth 4 4}
-    {-cursor gumby gumby}
+    {-background #d9d9d9 #d9d9d9} 
+    {-childsitepos e e} 
+    {-childsitepos s s} 
+    {-childsitepos w w} 
+    {-childsitepos n n} 
+    {-childsitepos e e} 
+    {-borderwidth 4 4} 
+    {-cursor gumby gumby} 
     {-decrement {.spi insert end Down} {.spi insert end Down}}
-    {-exportselection 0 0}
-    {-fixed 10 10}
-    {-borderwidth 2 2}
-    {-foreground Black Black}
+    {-exportselection 0 0} 
+    {-fixed 10 10} 
+    {-borderwidth 2 2} 
+    {-foreground Black Black} 
     {-increment {.spi insert end Up} {.spi insert end Up}}
-    {-insertbackground Black Black}
-    {-insertborderwidth 2 2}
-    {-insertofftime 200 200}
-    {-insertontime 500 500}
-    {-insertwidth 3 3}
-    {-labelfont 6x13 6x13}
-    {-labelmargin 5 5}
-    {-labeltext Label Label}
-    {-labelpos w w}
-    {-labelpos nw nw}
-    {-labelpos n n}
-    {-labelpos ne ne}
-    {-labelpos e e}
-    {-labelpos se se}
-    {-labelpos s s}
-    {-labelpos sw sw}
-    {-arroworient horizontal horizontal}
+    {-insertbackground Black Black} 
+    {-insertborderwidth 2 2} 
+    {-insertofftime 200 200} 
+    {-insertontime 500 500} 
+    {-insertwidth 3 3} 
+    {-labelfont 6x13 6x13} 
+    {-labelmargin 5 5} 
+    {-labeltext Label Label} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-arroworient horizontal horizontal} 
     {-range {0 100} {0 100}}
-    {-relief raised raised}
-    {-selectbackground blue blue}
-    {-selectbackground #c3c3c3 #c3c3c3}
-    {-selectborderwidth 2 2}
-    {-selectforeground Blue Blue}
-    {-selectforeground Black Black}
-    {-state disabled disabled}
-    {-state normal normal}
+    {-relief raised raised} 
+    {-selectbackground blue blue} 
+    {-selectbackground #c3c3c3 #c3c3c3} 
+    {-selectborderwidth 2 2} 
+    {-selectforeground Blue Blue} 
+    {-selectforeground Black Black} 
+    {-state disabled disabled} 
+    {-state normal normal} 
     {-step 2 2}
     {-sticky w w}
     {-sticky nw nw}
@@ -110,7 +110,7 @@ foreach test {
     {-sticky s s}
     {-sticky sw sw}
     {-sticky news news}
-    {-textfont 6x13 6x13}
+    {-textfont 6x13 6x13} 
     {-width 30 30}
     {-wrap 0 0}} {
 	set option [lindex $test 0]
@@ -118,7 +118,7 @@ foreach test {
 	    .spi configure $option [lindex $test 1]
 	    lindex [.spi configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -151,7 +151,7 @@ foreach test {
 	test Spinint-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -159,23 +159,23 @@ foreach test {
 # Conclusion of constrcution/destruction tests
 #
 test Spinint-1.$c {Spinint destruction} {
-    destroy .spi
-    update
+    destroy .spi 
+    update 
 } {}
 
 incr c
 
 test Spinint-1.$c {Spinint construction} {
-    iwidgets::spinint .spi
+    iwidgets::spinint .spi 
     pack .spi -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Spinint-1.$c {Spinint destruction} {
-    destroy .spi
-    update
+    destroy .spi 
+    update 
 } {}
 
 incr c
@@ -183,8 +183,8 @@ incr c
 test Spinint-1.$c {Spinint destruction} {
     iwidgets::spinint .spi
     pack .spi
-    destroy .spi
-    update
+    destroy .spi 
+    update 
 } {}
 
 ::tcltest::cleanupTests

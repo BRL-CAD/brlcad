@@ -1516,7 +1516,6 @@ HandleEnsemble(clientData, interp, objc, objv)
     chainObj->bytes = NULL;
     chainObj->typePtr = &itclEnsInvocType;
     chainObj->internalRep.twoPtrValue.ptr1 = (VOID *) ensPart;
-    Tcl_IncrRefCount(objv[1]);
     chainObj->internalRep.twoPtrValue.ptr2 = (VOID *) objv[0];
     Tcl_IncrRefCount(objv[0]);
 
@@ -1707,7 +1706,7 @@ Itcl_EnsembleCmd(clientData, interp, objc, objv)
         if (objc == 3) {
             char msg[128];
             sprintf(msg, "\n    (\"ensemble\" body line %d)",
-                ensInfo->parser->errorLine);
+		    ERRORLINE(ensInfo->parser));
             Tcl_AddObjErrorInfo(interp, msg, -1);
         }
     }

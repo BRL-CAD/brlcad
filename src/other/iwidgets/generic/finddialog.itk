@@ -12,24 +12,24 @@
 # ----------------------------------------------------------------------
 #            Copyright (c) 1996 DSC Technologies Corporation
 # ======================================================================
-# Permission to use, copy, modify, distribute and license this software
-# and its documentation for any purpose, and without fee or written
-# agreement with DSC, is hereby granted, provided that the above copyright
-# notice appears in all copies and that both the copyright notice and
-# warranty disclaimer below appear in supporting documentation, and that
-# the names of DSC Technologies Corporation or DSC Communications
-# Corporation not be used in advertising or publicity pertaining to the
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
 # software without specific, written prior permission.
-#
-# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
 # ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
 # INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
-# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
-# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
-# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
 # WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
 # SOFTWARE.
 # ======================================================================
 
@@ -48,7 +48,7 @@ itcl::class ::iwidgets::Finddialog {
 
     constructor {args} {}
 
-    itk_option define -selectcolor selectColor Background {}
+    itk_option define -selectcolor selectColor Background {} 
     itk_option define -clearcommand clearCommand Command {}
     itk_option define -matchcommand matchCommand Command {}
     itk_option define -patternbackground patternBackground Background \#707070
@@ -74,7 +74,7 @@ itcl::class ::iwidgets::Finddialog {
 
 #
 # Provide a lowercased access method for the ::finddialog class.
-#
+# 
 proc ::iwidgets::finddialog {pathName args} {
     uplevel ::iwidgets::Finddialog $pathName $args
 }
@@ -93,10 +93,10 @@ itcl::body ::iwidgets::Finddialog::constructor {args} {
     #
     itk_component add pattern {
 	iwidgets::Entryfield $itk_interior.pattern -labeltext "Find:"
-    }
+    } 
     bind [$itk_component(pattern) component entry] \
 	    <Return> "[itcl::code $this invoke]; break"
-
+    
     #
     # Add the find all checkbutton.
     #
@@ -170,7 +170,7 @@ itcl::body ::iwidgets::Finddialog::constructor {args} {
 # ------------------------------------------------------------------
 # OPTION: -clearcommand
 #
-# Specifies a command to be invoked following a clear operation.
+# Specifies a command to be invoked following a clear operation. 
 # The command is meant to be a means of notification that the
 # clear has taken place and allow other actions to take place such
 # as disabling a find again menu.
@@ -180,7 +180,7 @@ itcl::configbody iwidgets::Finddialog::clearcommand {}
 # ------------------------------------------------------------------
 # OPTION: -matchcommand
 #
-# Specifies a command to be invoked following a find operation.
+# Specifies a command to be invoked following a find operation. 
 # The command is called with a match point as an argument.  Should
 # a match not be found the match point is {}.
 # ------------------------------------------------------------------
@@ -206,7 +206,7 @@ itcl::configbody iwidgets::Finddialog::patternforeground {}
 # OPTION: -searchforeground
 #
 # Specifies the foreground color of the line containing the matching
-# pattern from a search operation.  It may have any of the forms
+# pattern from a search operation.  It may have any of the forms 
 # accepted by Tk_GetColor.
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Finddialog::searchforeground {}
@@ -215,7 +215,7 @@ itcl::configbody iwidgets::Finddialog::searchforeground {}
 # OPTION: -searchbackground
 #
 # Specifies the background color of the line containing the matching
-# pattern from a search operation.  It may have any of the forms
+# pattern from a search operation.  It may have any of the forms 
 # accepted by Tk_GetColor.
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Finddialog::searchbackground {}
@@ -236,9 +236,9 @@ itcl::configbody iwidgets::Finddialog::textwidget {
 # ------------------------------------------------------------------
 
 # ------------------------------------------------------------------
-# PUBLIC METHOD: clear
+# PUBLIC METHOD: clear 
 #
-# Clear the pattern entryfield and the indicators.
+# Clear the pattern entryfield and the indicators.  
 # ------------------------------------------------------------------
 itcl::body ::iwidgets::Finddialog::clear {} {
     $itk_component(pattern) clear
@@ -260,7 +260,7 @@ itcl::body ::iwidgets::Finddialog::clear {} {
 #
 # Search for a specific text string in the text widget given by
 # the -textwidget option.  Should this option not be set to an
-# existing widget, then a quick exit is made.
+# existing widget, then a quick exit is made. 
 # ------------------------------------------------------------------
 itcl::body ::iwidgets::Finddialog::find {} {
     if {! [_textExists]} {
@@ -284,7 +284,7 @@ itcl::body ::iwidgets::Finddialog::find {} {
 
     #
     # After clearing out any old highlight indicators from a previous
-    # search, we'll be building our search command piece-meal based on
+    # search, we'll be building our search command piece-meal based on 
     # the current settings of the checkbuttons in the find dialog.  The
     # first we'll add is a variable to catch the count of the length
     # of the string matching the pattern.
@@ -322,10 +322,10 @@ itcl::body ::iwidgets::Finddialog::find {} {
     # Get the pattern to be matched and add it to the search command.
     # Since it may contain embedded spaces, we'll wrap it in a list.
     #
-    append precmd " [list $pattern]"
+    append precmd " [list $pattern]"    
 
     #
-    # If the search is for all matches, then we'll be performing the
+    # If the search is for all matches, then we'll be performing the 
     # search until no more matches are found; otherwise, we'll break
     # out of the loop after one search.
     #
@@ -356,11 +356,11 @@ itcl::body ::iwidgets::Finddialog::find {} {
 	# in the text widget up.
 	#
 	if {$matchPoint != {}} {
-	    set _searchPoint($itk_option(-textwidget)) $matchPoint
+	    set _searchPoint($itk_option(-textwidget)) $matchPoint 
 
 	    $itk_option(-textwidget) tag add search-line \
 	      "$_searchPoint($itk_option(-textwidget)) linestart" \
-		"$_searchPoint($itk_option(-textwidget))"
+		"$_searchPoint($itk_option(-textwidget))" 
 	    $itk_option(-textwidget) tag add search-line \
 	      "$_searchPoint($itk_option(-textwidget)) + \
                $_matchLen($this) chars" \
@@ -427,7 +427,7 @@ itcl::body ::iwidgets::Finddialog::find {} {
     }
 
     #
-    # Return the match point to the caller so they know if we found
+    # Return the match point to the caller so they know if we found 
     # anything and if so where
     #
     return $matchPoint

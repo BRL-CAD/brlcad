@@ -5,7 +5,7 @@ package require Iwidgets 4.0
 
 . configure -background white
 
-iwidgets::panedwindow .pw -width 3i -height 3i
+iwidgets::panedwindow .pw -width 3i -height 3i 
 pack .pw -padx 4 -pady 4
 
 .pw add "top"

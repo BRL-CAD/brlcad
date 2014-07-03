@@ -1,0 +1,5 @@
+SET(libtermlib_ignore_files
+Makefile.am
+termcap.h
+termcap.src
+)

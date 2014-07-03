@@ -1,0 +1,13 @@
+surface gen_color 
+(
+        color base = 1,
+        output closure color Cout = diffuse(N)
+)
+{
+	if(backfacing()) {
+		Ng = -Ng;
+		N = -N;
+	}
+
+        Cout = diffuse(N)*base;
+}

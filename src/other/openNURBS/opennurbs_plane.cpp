@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -364,115 +365,33 @@ bool ON_Plane::IsValid() const
 
 bool ON_Plane::Transform( const ON_Xform& xform )
 {
+  if ( xform.IsIdentity() )
+  {
+    // 27 October 2011 Dale Lear
+    //    If the plane is valid and the transformation
+    //    is the identity, then NO changes should be
+    //    made to the plane's values.  In particular
+    //    calling CreateFromFrame() can introduce
+    //    slight fuzz.
+    //
+    //    Please discuss any changes with me.
+    return IsValid();
+  }
+
   ON_3dPoint origin_pt = xform*origin;
-  // use care tranforming vectors 
-  ON_3dVector xaxis_vec = (xform*(origin+xaxis)) - origin_pt;
-  ON_3dVector yaxis_vec = (xform*(origin+yaxis)) - origin_pt;
+
+  // use care tranforming vectors to get
+  // maximum precision and the right answer
+  bool bUseVectorXform = (    0.0 == xform.m_xform[3][0] 
+                           && 0.0 == xform.m_xform[3][1]
+                           && 0.0 == xform.m_xform[3][2] 
+                           && 1.0 == xform.m_xform[3][3]
+                         );
+
+  ON_3dVector xaxis_vec = bUseVectorXform ? (xform*xaxis) : ((xform*(origin+xaxis)) - origin_pt);
+  ON_3dVector yaxis_vec = bUseVectorXform ? (xform*yaxis) : ((xform*(origin+yaxis)) - origin_pt);
 
   return CreateFromFrame( origin_pt, xaxis_vec, yaxis_vec );
-}
-
-
-bool ON_Plane::Morph( const ON_SpaceMorph& morph )
-{
-  ON_Plane mp;
-  double s = sqrt( fabs(origin.MaximumCoordinate())*ON_SQRT_EPSILON + ON_ZERO_TOLERANCE );
-  mp.xaxis = morph.MorphVector(origin,s*xaxis);
-  mp.yaxis = morph.MorphVector(origin,s*yaxis);
-  mp.zaxis = morph.MorphVector(origin,s*zaxis);
-  origin = morph.MorphPoint(origin);
-  UpdateEquation();
-  bool bx = mp.xaxis.Unitize();
-  bool by = mp.yaxis.Unitize();
-  bool bz = mp.zaxis.Unitize();
-  if (!bx)
-  {
-    mp.xaxis = ON_CrossProduct(mp.yaxis,mp.zaxis);
-    bx = mp.xaxis.Unitize();
-  }
-  if (!by)
-  {
-    mp.yaxis = ON_CrossProduct(mp.zaxis,mp.xaxis);
-    by = mp.yaxis.Unitize();
-  }
-  if (!bz)
-  {
-    mp.zaxis = ON_CrossProduct(mp.xaxis,mp.yaxis);
-    bz = mp.zaxis.Unitize();
-  }
-
-  mp.origin.Set(0.0,0.0,0.0);
-  mp.UpdateEquation();
-  bool rc = mp.IsValid();
-  ON_3dVector x, y, z;
-  if ( rc )
-  {
-    x = mp.xaxis;
-    y = mp.yaxis;
-    z = mp.zaxis;
-  }
-  else
-  {
-    x = ON_CrossProduct(mp.yaxis,mp.zaxis);
-    y = ON_CrossProduct(mp.zaxis,mp.xaxis);
-    z = ON_CrossProduct(mp.xaxis,mp.yaxis);
-    x.Unitize();
-    y.Unitize();
-    z.Unitize();
-    x = mp.xaxis + x;
-    y = mp.yaxis + y;
-    z = mp.zaxis + z;
-    x.Unitize();
-    y.Unitize();
-    z.Unitize();
-    rc = mp.CreateFromFrame(ON_origin,x,y);
-    if (rc)
-    {
-      x = mp.xaxis;
-      y = mp.yaxis;
-      z = mp.zaxis;
-    }
-    else
-    {
-      rc = mp.CreateFromFrame(ON_origin,y,z);
-      if ( rc )
-      {
-        y = mp.xaxis;
-        z = mp.yaxis;
-        x = mp.zaxis;
-      }
-      else
-      {
-        rc = mp.CreateFromFrame(ON_origin,z,x);
-        if (rc)
-        {
-          z = mp.xaxis;
-          x = mp.yaxis;
-          y = mp.zaxis;
-        }
-        else
-        {
-          rc = mp.CreateFromNormal(ON_origin,z);
-          if (rc)
-          {
-            x = mp.xaxis;
-            y = mp.yaxis;
-            z = mp.zaxis;
-          }
-        }
-      }
-    }
-  }
-
-  if (rc)
-  {
-    xaxis = x;
-    yaxis = y;
-    zaxis = z;
-    UpdateEquation();
-  }
-
-  return rc;
 }
 
 
@@ -536,7 +455,7 @@ bool ON_Plane::Rotate(
     xaxis = rot*xaxis;
     yaxis = rot*yaxis;
     zaxis = rot*zaxis;
-    UpdateEquation();
+    rc = UpdateEquation();
   }
   else {
     rot.Rotation( sin_angle, cos_angle, axis, center );

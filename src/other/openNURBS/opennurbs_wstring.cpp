@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -35,7 +36,12 @@ static int w2c_size( int w_count, const wchar_t* w )
   // include NULL terminator.
   int rc = 0;
   if ( w ) {
-	  rc = on_WideCharToMultiByte(w, w_count, NULL, 0);
+    unsigned int error_status = 0;
+    rc = ON_ConvertWideCharToUTF8(false,w,w_count,0,0,&error_status,0,0,0);
+    if ( error_status )
+    {
+      ON_ERROR("Wide char string is not valid.");
+    }
     if ( rc < 0 )
       rc = 0;
   }
@@ -48,17 +54,29 @@ static int w2c( int w_count,
                 char* c // array of at least c_count+1 characters
                 )
 {
+  // convert UTF-16 string to UTF-8 string
   int rc = 0;
   if ( c ) 
     c[0] = 0;
   // returns length of converted c[]
-  if ( c_count > 0 && c ) {
+  if ( c_count > 0 && c )
+  {
     c[0] = 0;
-    if ( w ) {
-	    rc = on_WideCharToMultiByte(w, w_count, c, c_count);
+    if ( w ) 
+    {
+      unsigned int error_status = 0;
+      unsigned int error_mask = 0xFFFFFFFF;
+      ON__UINT32 error_code_point = 0xFFFD;
+      const wchar_t* p1 = 0;
+      rc = ON_ConvertWideCharToUTF8(false,w,w_count,c, c_count, &error_status,error_mask,error_code_point,&p1);
+      if ( error_status )
+      {
+        ON_ERROR("Error converting UTF-16 encoded wchar_t string to UTF-8 encoded char string.");
+      }
       if ( rc > 0 && rc <= c_count )
         c[rc] = 0;
-      else {
+      else 
+      {
         c[c_count] = 0;
         rc = 0;
       }
@@ -69,30 +87,43 @@ static int w2c( int w_count,
 
 static wchar_t c2w( char c )
 {
-  wchar_t w[2] = {0,0};
-  c2w(1,&c,1,w);
-  return w[0];
+  // NOTE: 
+  //   Single character conversion of char values 0x80 to 0xFF 
+  //   get mapped to unicode code points U+0080 U+00FF
+  //   In particular, this is NOT UTF-8 conversion. 
+  wchar_t w = ((unsigned char)c);
+  return w;
 }
 
 static int c2w( int c_count, 
                 const char* c, 
                 int w_count, 
-                wchar_t* w // array of at least c_count+1 wide characters
+                wchar_t* w // array of at least w_count+1 wide characters
                 )
 {
+  // convert UTF-8 string to UTF-16 string
   int rc = 0;
   if ( w ) 
     w[0] = 0;
   // returns length of converted c[]
   if ( w_count > 0 && w && c_count > 0 && c && c[0] ) {
     w[0] = 0;
-    if ( c ) {
-	    rc = on_MultiByteToWideChar(c, c_count, w, w_count);
+    if ( c ) 
+    {
+      unsigned int error_status = 0;
+      unsigned int error_mask = 0xFFFFFFFF;
+      ON__UINT32 error_code_point = 0xFFFD;
+      const char* p1 = 0;
+      rc = ON_ConvertUTF8ToWideChar(c,c_count,w,w_count,&error_status,error_mask,error_code_point,&p1);
       if ( rc > 0 && rc <= w_count )
         w[rc] = 0;
       else {
         w[w_count] = 0;
         rc = 0;
+      }
+      if ( 0 != error_status )
+      {
+        ON_ERROR("Error converting UTF-8 encoded char string to UTF-16 encoded wchar_t string.");
       }
     }
   }
@@ -102,7 +133,8 @@ static int c2w( int c_count,
 
 void ON_String::CopyToArray( int w_count, const wchar_t* w )
 {
-  // convert UNICODE string to ASCII string
+  // if sizeof(wchar_t) is 2, this converts a UTF-16 string to UTF-8 string
+  // if sizeof(wchar_t) is 4, this converts a UTF-32 string to UTF-8 string
   int c_count = w2c_size( w_count, w );
   char* c = (char*)onmalloc(c_count+1);
   memset( c, 0, c_count+1 );
@@ -788,6 +820,29 @@ unsigned int ON_wString::SizeOf() const
   return ((unsigned int)sz);
 }
 
+ON__UINT32 ON_wString::DataCRC(ON__UINT32 current_remainder) const
+{
+  int string_length = Header()->string_length;
+  if ( string_length > 0 )
+  {
+    current_remainder = ON_CRC32(current_remainder,string_length*sizeof(*m_s),m_s);
+  }
+  return current_remainder;
+}
+
+ON__UINT32 ON_wString::DataCRCLower(ON__UINT32 current_remainder) const
+{
+  int string_length = Header()->string_length;
+  if ( string_length > 0 )
+  {
+    ON_wString s(*this);
+    s.MakeLower();
+    current_remainder = s.DataCRC(current_remainder);
+  }
+  return current_remainder;
+}
+
+
 int ON_wString::Compare( const char* s ) const
 {
   int rc = 0;
@@ -941,7 +996,8 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
     return ( !s || !s[0] ) ? true : false;
   }
 
-  if ( *pattern == '*' ) {
+  if ( *pattern == '*' ) 
+  {
     pattern++;
     while ( *pattern == '*' )
       pattern++;
@@ -950,7 +1006,7 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
       return true;
 
     while (*s) {
-      if ( ON_WildCardMatch(s,pattern) )
+      if ( ON_WildCardMatchNoCase(s,pattern) )
         return true;
       s++;
     }
@@ -960,7 +1016,8 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
 
   while ( *pattern != '*' )
   {
-    if ( *pattern == '?' ) {
+    if ( *pattern == '?' )
+    {
       if ( *s) {
         pattern++;
         s++;
@@ -969,7 +1026,8 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
       return false;
     }
     
-    if ( *pattern == '\\' ) {
+    if ( *pattern == '\\' )
+    {
       switch( pattern[1] )
       {
       case '*':
@@ -978,7 +1036,8 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
         break;
       }
     }
-    if ( towupper(*pattern) != towupper(*s) ) {
+    if ( towupper(*pattern) != towupper(*s) )
+    {
       return false;
     }
 
@@ -989,7 +1048,7 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
     s++;
   }
   
-  return ON_WildCardMatch(s,pattern);
+  return ON_WildCardMatchNoCase(s,pattern);
 }
 
 bool ON_wString::WildCardMatch( const wchar_t* pattern ) const
@@ -1004,40 +1063,40 @@ bool ON_wString::WildCardMatchNoCase( const wchar_t* pattern ) const
 }
 
 /*
-static TestReplace()
+static TestReplace( ON_TextLog* text_log )
 {
   int len, len1, len2, i, count, gap, k, i0, repcount, replen;
   ON_wString str;
 
   bool bRepeat = false;
 
-  wchar_t s[1024], token1[1024], token2[1024];
+  wchar_t ws[1024], wsToken1[1024], wsToken2[1024];
 
-  memset(s,     0,1024*sizeof(s[0]));
-  memset(token1,0,1024*sizeof(token1[0]));
-  memset(token2,0,1024*sizeof(token2[0]));
+  memset(ws,     0,sizeof(ws));
+  memset(wsToken1,0,sizeof(wsToken1));
+  memset(wsToken2,0,sizeof(wsToken2));
 
 	for ( len = 1; len < 32; len++ )
   {
     for ( len1 = 1; len1 < len+1; len1++ )
     {
       if ( len1 > 0 )
-        token1[0] = '<';
+        wsToken1[0] = '<';
       for ( i = 1; i < len1-1; i++ )
-        token1[i] = '-';
+        wsToken1[i] = '-';
       if ( len1 > 1 )
-        token1[len1-1] = '>';
-      token1[len1] = 0;
+        wsToken1[len1-1] = '>';
+      wsToken1[len1] = 0;
 
       for ( len2 = 1; len2 < len1+5; len2++ )
       {
         if ( len2 > 0 )
-          token2[0] = '+';
+          wsToken2[0] = '+';
         for ( i = 1; i < len2-1; i++ )
-          token2[i] = '=';
+          wsToken2[i] = '=';
         if ( len2 > 1 )
-          token2[len2-1] = '*';
-        token2[len2] = 0;
+          wsToken2[len2-1] = '*';
+        wsToken2[len2] = 0;
 
         for ( k = 1; k*len1 <= len+1; k++ )
         {
@@ -1051,23 +1110,26 @@ static TestReplace()
           {
             for ( i = 0; i < len; i++ )
             {
-              s[i] = (wchar_t)('a' + (i%26));
+              ws[i] = (wchar_t)('a' + (i%26));
             }
-            s[len] = 0;
+            ws[len] = 0;
             count = 0;
             for ( i = i0; i+len1 <= len; i += (gap+len1) )
             {
-              memcpy(&s[i],token1,len1*sizeof(s[0]));
+              memcpy(&ws[i],wsToken1,len1*sizeof(ws[0]));
               count++;
             }
-            str = s;
-            repcount = str.Replace(token1,token2);
+            str = ws;
+            repcount = str.Replace(wsToken1,wsToken2);
             replen = str.Length();
             if ( repcount != count || replen != len + count*(len2-len1) )
             {
-              RhinoApp().Print(L"%s -> %s failed\n",token1,token2);
-              RhinoApp().Print(L"%s (%d tokens, %d chars)\n",s,count,len);
-              RhinoApp().Print(L"%s (%d tokens, %d chars)\n",str.Array(),repcount,replen);
+              if ( text_log )
+              {
+                text_log->Print("%ls -> %ls failed\n",wsToken1,wsToken2);
+                text_log->Print("%ls (%d tokens, %d chars)\n",ws,count,len);
+                text_log->Print("%ls (%d tokens, %d chars)\n",str.Array(),repcount,replen);
+              }
               if ( bRepeat )
               {
                 bRepeat = false;
@@ -1568,20 +1630,14 @@ int ON_wString::Find( wchar_t c ) const
 
 int ON_wString::ReverseFind( char c ) const
 {
-  char s[2];
-  wchar_t w[3];
-  s[0] = c;
-  s[1] = 0;
-  w[0] = 0;
-  w[1] = 0;
-  w[2] = 0;
-  c2w(1,s,2,w);
-  return ReverseFind( w[0] );
+  wchar_t w = c2w(c);
+  return ReverseFind( w );
 }
 
 int ON_wString::ReverseFind( unsigned char c ) const
 {
-  return ReverseFind( (char)c );
+  wchar_t w = c2w((char)c);
+  return ReverseFind( w );
 }
 
 int ON_wString::ReverseFind( wchar_t c ) const
@@ -1947,3 +2003,203 @@ bool ON_wString::operator>=(const wchar_t* s2) const
 {
   return (Compare(s2) >= 0) ? true : false;
 }
+
+
+void ON_String::SplitPath( 
+    const char* path,
+    ON_String* drive,
+    ON_String* dir,
+    ON_String* fname,
+    ON_String* ext
+    )
+{
+  const char* dr = 0;
+  const char* d = 0;
+  const char* f = 0;
+  const char* e = 0;
+
+  on_splitpath(path,&dr,&d,&f,&e);
+
+  if ( 0 != drive )
+  {
+    if ( 0 != dr )
+    {
+      if ( 0 != d )
+        drive->CopyToArray((int)(d-dr),dr);
+      else if ( 0 != f )
+        drive->CopyToArray((int)(f-dr),dr);
+      else if ( 0 != e )
+        drive->CopyToArray((int)(e-dr),dr);
+      else
+        *drive = dr;
+    }
+    else
+      drive->Empty();
+  }
+
+  if ( 0 != dir )
+  {
+    if ( 0 != d )
+    {
+      if ( 0 != f )
+        dir->CopyToArray((int)(f-d),d);
+      else if ( 0 != e )
+        dir->CopyToArray((int)(e-d),d);
+      else
+        *dir = d;
+    }
+    else
+      dir->Empty();
+  }
+
+  if ( 0 != fname )
+  {
+    if ( 0 != f )
+    {
+      if ( 0 != e )
+        fname->CopyToArray((int)(e-f),f);
+      else
+        *fname = f;
+    }
+    else
+      fname->Empty();
+  }
+
+  if ( 0 != ext )
+  {
+    *ext = e;
+  }
+}
+
+void ON_wString::SplitPath( 
+    const char* path,
+    ON_wString* drive,
+    ON_wString* dir,
+    ON_wString* fname,
+    ON_wString* ext
+    )
+{
+  const char* dr = 0;
+  const char* d = 0;
+  const char* f = 0;
+  const char* e = 0;
+
+  on_splitpath(path,&dr,&d,&f,&e);
+
+  if ( 0 != drive )
+  {
+    if ( 0 != dr )
+    {
+      if ( 0 != d )
+        drive->CopyToArray((int)(d-dr),dr);
+      else if ( 0 != f )
+        drive->CopyToArray((int)(f-dr),dr);
+      else if ( 0 != e )
+        drive->CopyToArray((int)(e-dr),dr);
+      else
+        *drive = dr;
+    }
+    else
+      drive->Empty();
+  }
+
+  if ( 0 != dir )
+  {
+    if ( 0 != d )
+    {
+      if ( 0 != f )
+        dir->CopyToArray((int)(f-d),d);
+      else if ( 0 != e )
+        dir->CopyToArray((int)(e-d),d);
+      else
+        *dir = d;
+    }
+    else
+      dir->Empty();
+  }
+
+  if ( 0 != fname )
+  {
+    if ( 0 != f )
+    {
+      if ( 0 != e )
+        fname->CopyToArray((int)(e-f),f);
+      else
+        *fname = f;
+    }
+    else
+      fname->Empty();
+  }
+
+  if ( 0 != ext )
+  {
+    *ext = e;
+  }
+}
+
+void ON_wString::SplitPath( 
+    const wchar_t* path,
+    ON_wString* drive,
+    ON_wString* dir,
+    ON_wString* fname,
+    ON_wString* ext
+    )
+{
+  const wchar_t* dr = 0;
+  const wchar_t* d = 0;
+  const wchar_t* f = 0;
+  const wchar_t* e = 0;
+
+  on_wsplitpath(path,&dr,&d,&f,&e);
+
+  if ( 0 != drive )
+  {
+    if ( 0 != dr )
+    {
+      if ( 0 != d )
+        drive->CopyToArray((int)(d-dr),dr);
+      else if ( 0 != f )
+        drive->CopyToArray((int)(f-dr),dr);
+      else if ( 0 != e )
+        drive->CopyToArray((int)(e-dr),dr);
+      else
+        *drive = dr;
+    }
+    else
+      drive->Empty();
+  }
+
+  if ( 0 != dir )
+  {
+    if ( 0 != d )
+    {
+      if ( 0 != f )
+        dir->CopyToArray((int)(f-d),d);
+      else if ( 0 != e )
+        dir->CopyToArray((int)(e-d),d);
+      else
+        *dir = d;
+    }
+    else
+      dir->Empty();
+  }
+
+  if ( 0 != fname )
+  {
+    if ( 0 != f )
+    {
+      if ( 0 != e )
+        fname->CopyToArray((int)(e-f),f);
+      else
+        *fname = f;
+    }
+    else
+      fname->Empty();
+  }
+
+  if ( 0 != ext )
+  {
+    *ext = e;
+  }
+}
+

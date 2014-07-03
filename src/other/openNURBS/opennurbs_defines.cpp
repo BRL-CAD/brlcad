@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -79,7 +80,7 @@ char* on_strrev(char* s)
 #else
   int i, j;
   char c;
-  for ( i = 0, j = strlen(s)-1; i < j; i++, j-- ) {
+  for ( i = 0, j = ((int)strlen(s))-1; i < j; i++, j-- ) {
     c = s[i];
     s[i] = s[j];
     s[j] = c;
@@ -693,23 +694,41 @@ void ON_wString::MakeLower()
   }
 }
 
-// on_wcsrev() calls _wcsrev() or wcsrev() depending on OS
 wchar_t* on_wcsrev(wchar_t* s)
 {
   if ( !s )
     return 0;
-#if defined(ON_OS_WINDOWS)
-  return _wcsrev(s);
-#else
   int i, j;
   wchar_t w;
-  for ( i = 0, j = wcslen(s)-1; i < j; i++, j-- ) {
+  for ( j = 0; 0 != s[j]; j++ )
+  {
+    // empty for body
+  }
+
+  for ( i = 0, j--; i < j; i++, j-- ) 
+  {
     w = s[i];
-    s[i] = s[j];
-    s[j] = w;
+    if ( w >= 0xD800 && w <= 0xDBFF && s[i+1] >= 0xDC00 && s[i+1] <= 0xDFFF )
+    {
+      // UTF-16 surrogate pair
+      if ( i+1 < j-1 )
+      {
+        s[i] = s[j-1];
+        s[j-1] = w;
+        w = s[i+1];
+        s[i+1] = s[j];
+        s[j] = w;
+      }
+      i++;
+      j--;
+    }
+    else
+    {
+      s[i] = s[j];
+      s[j] = w;
+    }
   }
   return s;
-#endif
 }
 
 int on_WideCharToMultiByte(
@@ -719,51 +738,24 @@ int on_WideCharToMultiByte(
     int cchMultiByte
     )
 {
-#if defined(ON_OS_WINDOWS)
-  unsigned int code_page = ON_GetStringConversionWindowsCodePage();
-  return ::WideCharToMultiByte( code_page, 0, 
-                        lpWideCharStr, cchWideChar, 
-                        lpMultiByteStr, cchMultiByte,
-                        NULL, NULL );
-#else
-  // use simple wchar_t -> char conversion since 
-  // wcsnrtombs() and wcsrtombs() tend to crash on various
-  // UNIX platforms.
-
-  // this union is used to get around issues invovling signed/unsigned
-  // behavior of "char" on various platforms and with various
-  // compiler flags.
-  union
+  // 14 March 2011 Dale Lear
+  //   It turns out that Windows WideCharToMultiByte does correctly
+  //   convert UTF-16 to UTF-8 in Windows 7 when the code page 
+  //   is CP_ACP and calls with CP_UTF8 sometimes fail to do
+  //   any conversion.  So, I wrote ON_ConvertWideCharToUTF8()
+  //   and opennurbs will use ON_ConvertWideCharToUTF8 to get 
+  //   consistent results on all platforms.
+  unsigned int error_status = 0;
+  unsigned int error_mask = 0xFFFFFFFF;
+  ON__UINT32 error_code_point = 0xFFFD;
+  const wchar_t* p1 = 0;
+  int count = ON_ConvertWideCharToUTF8(false,lpWideCharStr,cchWideChar,lpMultiByteStr,cchMultiByte,
+                                       &error_status,error_mask,error_code_point,&p1);
+  if ( 0 != error_status )
   {
-    char c;
-    unsigned char u;
-  } u;
-  int i;
-
-  if ( cchMultiByte > 0 && lpMultiByteStr ) {
-    for (i = 0; i < cchWideChar && i < cchMultiByte; i++ ) {
-      unsigned int w = lpWideCharStr[i];
-      if ( w >= 256 )
-        w = '_'; // default is underbar
-      u.u = (unsigned char)w;
-      lpMultiByteStr[i] = u.c;
-    }
-    if ( i < cchMultiByte )
-      lpMultiByteStr[i] = 0;
+    ON_ERROR("Error converting UTF-16 encoded wchar_t string to UTF-8 encoded char string.");
   }
-  return cchWideChar; // return number of characters required for conversion
-
-  /*
-#if defined(__USE_GNU)
-  // gcc extension is what we really need
-  return wcsnrtombs( lpMultiByteStr, &lpWideCharStr, cchWideChar, cchMultiByte, NULL );
-#else
-  // see http://www.datafocus.com/docs/man3/wcsrtombs.3.asp
-  return wcsrtombs( lpMultiByteStr, &lpWideCharStr, cchMultiByte, NULL );
-#endif
-  */
-
-#endif
+  return count;
 }
 
 int on_MultiByteToWideChar(
@@ -773,42 +765,25 @@ int on_MultiByteToWideChar(
     int cchWideChar
     )
 {
-#if defined(ON_OS_WINDOWS)
-  unsigned int code_page = ON_GetStringConversionWindowsCodePage();
-  return ::MultiByteToWideChar(code_page, 0, lpMultiByteStr, cchMultiByte, lpWideCharStr, cchWideChar);
-#else
-  // use simple char -> wchar_t conversion since 
-  // mbsnrtowcs() and mbsrtowcs() tend to crash on various
-  // UNIX platforms.
-  union
+  // 14 March 2011 Dale Lear
+  //   It turns out that Windows WideCharToMultiByte does correctly
+  //   convert UTF-16 to UTF-8 in Windows 7 when the code page 
+  //   is CP_ACP and calls with CP_UTF8 sometimes fail to do
+  //   any conversion.  So, I wrote ON_ConvertUTF8ToWideChar()
+  //   and opennurbs will use ON_ConvertUTF8ToWideChar to get 
+  //   consistent results on all platforms.
+  unsigned int error_status = 0;
+  unsigned int error_mask = 0xFFFFFFFF;
+  ON__UINT32 error_code_point = 0xFFFD;
+  const char* p1 = 0;
+  int count = ON_ConvertUTF8ToWideChar(lpMultiByteStr,cchMultiByte,lpWideCharStr,cchWideChar,
+                                       &error_status,error_mask,error_code_point,&p1);
+  if ( 0 != error_status )
   {
-    char c;
-    unsigned char u;
-  } u;
-  int i;
-
-  if ( cchWideChar > 0 && lpWideCharStr ) {
-    for (i = 0; i < cchMultiByte && i < cchWideChar; i++ ) {
-      u.c = lpMultiByteStr[i];
-      lpWideCharStr[i] = u.u;
-    }
-    if ( i < cchWideChar )
-      lpWideCharStr[i] = 0;
+    ON_ERROR("Error converting UTF-8 encoded char string to UTF-16 encoded wchar_t string.");
   }
-  return cchMultiByte; // return number of characters required for conversion
-
-  /*
-#if defined(__USE_GNU)
-  // gcc extension is what we really need
-  return mbsnrtowcs(lpWideCharStr, &lpMultiByteStr, cchMultiByte, cchWideChar, NULL );
-#else
-  // see http://www.datafocus.com/docs/man3/mbsrtowcs.3.asp
-  return mbsrtowcs(lpWideCharStr, &lpMultiByteStr, cchWideChar, NULL );
-#endif
-  */
-#endif
+  return count;
 }
-
 
 int on_vsnprintf( char *buffer, size_t count, const char *format, va_list argptr )
 {
@@ -841,15 +816,228 @@ int on_vsnwprintf( wchar_t *buffer, size_t count, const wchar_t *format, va_list
   ON_String aformat = format; // convert format from UNICODE to ASCII
 
   // format an ASCII buffer
-  char* abuffer = (char*)onmalloc(2*count*sizeof(*abuffer));
-  int rc = on_vsnprintf( abuffer, 2*count, aformat.Array(), argptr );
+  char* abuffer = (char*)onmalloc(4*count*sizeof(*abuffer));
+  int rc = on_vsnprintf( abuffer, 4*count, aformat.Array(), argptr );
 
   // convert formatted ASCII buffer to UNICODE
-  on_MultiByteToWideChar( abuffer, strlen(abuffer), buffer, count );
+  on_MultiByteToWideChar( abuffer, (int)strlen(abuffer), buffer, (int)count );
   onfree(abuffer);  
   return rc;
 #endif
 }
+
+void on_splitpath(
+  const char* path,
+  const char** drive,
+  const char** dir,
+  const char** fname,
+  const char** ext
+  )
+{
+  // The "const char* path" parameter is a UTF-8 encoded string. 
+  // Since the unicode code point values for the characters we 
+  // are searching for ( '/' '\' '.' ':' A-Z a-z) are all > 0 
+  // and < 128, we can simply check for an array element having
+  // the character value and not have to worry about dealing
+  // with UTF-8 continuation values (>= 128).
+
+  const char slash1 = '/';
+  const char slash2 = '\\'; // do this even with the os is unix because
+                            // we might be parsing a file name saved
+                            // in Windows.
+
+  const char* f;
+  const char* e;
+  const char* s;
+  const char* s1;
+
+  if ( 0 != drive )
+    *drive = 0;
+  if ( 0 != dir )
+    *dir = 0;
+  if ( 0 != fname )
+    *fname = 0;
+  if ( 0 != ext )
+    *ext = 0;
+
+  if ( 0 != path && 0 != *path )
+  {
+    // deal with Windows' drive letter (even when the os is unix)
+    if ( ':' == path[1] )
+    {
+      if ( (path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z') )
+      {
+        if ( drive )
+          *drive = path;
+        path += 2;
+        if ( 0 == *path )
+          return;
+      }
+    }
+  }
+
+  if ( 0 != path && 0 != *path )
+  {
+    e = 0;
+    f = 0;
+    s1 = path;
+    while ( 0 != *s1 )
+      s1++;
+    s = (s1 > path) ? s1 - 1 : path;
+  
+    while ( s > path && '.' != *s && slash1 != *s && slash2 != *s )
+      s--;
+
+    if ( '.' == *s && 0 != s[1] )
+    {
+      // extensions must have something after the dot.
+      e = s;
+      s1 = e;
+      s--;
+    }
+
+    while ( s > path && slash1 != *s && slash2 != *s )
+      s--;
+
+    if ( s >= path && s < s1 )
+    {
+      if (slash1 == *s || slash2 == *s ) 
+      {
+        if ( s+1 < s1 )
+          f = s+1;
+      }
+      else if ( s == path )
+      {
+        f = s;
+      }
+    }
+
+    if ( 0 == f )
+    {
+      // must have a non-empty filename in order to have and "extension"
+      f = e;
+      e = 0;
+    }
+
+    if ( 0 != dir && (0 == f || path < f) )
+      *dir = path;
+
+    if ( 0 != f && 0 != fname )
+      *fname = f;
+
+    if ( 0 != e && 0 != ext )
+      *ext = e;
+  }
+
+}
+
+void on_wsplitpath(
+  const wchar_t* path,
+  const wchar_t** drive,
+  const wchar_t** dir,
+  const wchar_t** fname,
+  const wchar_t** ext
+  )
+{
+  // The "const wchar_t* path" parameter is a UTF-8, UTF-16 or UTF-32
+  // encoded string. Since the unicode code point values for the 
+  // characters we are searching for ( '/' '\' '.' ':' A-Z a-z) are
+  // all > 0 and < 128, we can simply check for an array element 
+  // having the character value and not have to worry about dealing
+  // with UTF-16 surrogate pair values (0xD800-0xDBFF and DC00-DFFF)
+  // and UTF-8 continuation values (>= 128).
+
+  const wchar_t slash1 = '/';
+  const wchar_t slash2 = '\\'; // do this even with the os is unix because
+                               // we might be parsing a file name saved
+                               // in Windows.
+
+  const wchar_t* f;
+  const wchar_t* e;
+  const wchar_t* s;
+  const wchar_t* s1;
+
+  if ( 0 != drive )
+    *drive = 0;
+  if ( 0 != dir )
+    *dir = 0;
+  if ( 0 != fname )
+    *fname = 0;
+  if ( 0 != ext )
+    *ext = 0;
+
+  if ( 0 != path && 0 != *path )
+  {
+    // deal with Windows' drive letter (even when the os is unix)
+    if ( ':' == path[1] )
+    {
+      if ( (path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z') )
+      {
+        if ( drive )
+          *drive = path;
+        path += 2;
+        if ( 0 == *path )
+          return;
+      }
+    }
+  }
+
+  if ( 0 != path && 0 != *path )
+  {
+    e = 0;
+    f = 0;
+    s1 = path;
+    while ( 0 != *s1 )
+      s1++;
+    s = (s1 > path) ? s1 - 1 : path;
+  
+    while ( s > path && '.' != *s && slash1 != *s && slash2 != *s )
+      s--;
+
+    if ( '.' == *s && 0 != s[1] )
+    {
+      // extensions must have something after the dot.
+      e = s;
+      s1 = e;
+      s--;
+    }
+
+    while ( s > path && slash1 != *s && slash2 != *s )
+      s--;
+
+    if ( s >= path && s < s1 )
+    {
+      if (slash1 == *s || slash2 == *s ) 
+      {
+        if ( s+1 < s1 )
+          f = s+1;
+      }
+      else if ( s == path )
+      {
+        f = s;
+      }
+    }
+
+    if ( 0 == f )
+    {
+      // must have a non-empty filename in order to have and "extension"
+      f = e;
+      e = 0;
+    }
+
+    if ( 0 != dir && (0 == f || path < f) )
+      *dir = path;
+
+    if ( 0 != f && 0 != fname )
+      *fname = f;
+
+    if ( 0 != e && 0 != ext )
+      *ext = e;
+  }
+
+}
+
+
 
 int ON::Version()
 {
@@ -860,18 +1048,32 @@ int ON::Version()
 #undef OPENNURBS_VERSION_DEFINITION
 }
 
-const char* ON::Revision()
+const char* ON::SourceRevision()
 {
-  return OPENNURBS_SVN_REVISION;
+  return OPENNURBS_SRC_SVN_REVISION;
 }
 
+const char* ON::SourceBranch()
+{
+  return OPENNURBS_SRC_SVN_BRANCH;
+}
+
+const char* ON::DocumentationRevision()
+{
+  return OPENNURBS_DOC_SVN_REVISION;
+}
+
+const char* ON::DocumentationBranch()
+{
+  return OPENNURBS_DOC_SVN_BRANCH;
+}
 
 FILE* ON::OpenFile( // like fopen() - needed when OpenNURBS is used as a DLL
         const char* filename, // file name
         const char* filemode // file mode
         )
 {
-  return (filename && filename[0] && filemode && filemode[0]) ? fopen(filename,filemode) : 0;
+  return ON_FileStream::Open(filename,filemode);
 }
 
 FILE* ON::OpenFile( // like fopen() - needed when OpenNURBS is used as a DLL
@@ -879,22 +1081,14 @@ FILE* ON::OpenFile( // like fopen() - needed when OpenNURBS is used as a DLL
         const wchar_t* filemode // file mode
         )
 {
-#if defined(ON_OS_WINDOWS)
-  return (filename && filename[0] && filemode && filemode[0]) ? _wfopen(filename,filemode) : 0;
-#else
-  // I can't find an wfopen() or _wfopen() in
-  // gcc version egcs-2.91.66 19990314/Linux (egcs-1.1.2 release)
-  ON_String ascii_filename = filename;
-  ON_String ascii_filemode = filemode;
-  return ON::OpenFile( ascii_filename.Array(), ascii_filemode.Array() );
-#endif
+  return ON_FileStream::Open(filename,filemode);
 }
 
 int ON::CloseFile( // like fclose() - needed when OpenNURBS is used as a DLL
         FILE* fp // pointer returned by OpenFile()
         )
 {
-  return fp ? fclose(fp) : EOF;
+  return ON_FileStream::Close(fp);
 }
 
 int ON::CloseAllFiles()
@@ -1370,6 +1564,8 @@ ON::continuity ON::Continuity(int i)
   case G2_locus_continuous: c = G2_locus_continuous; break;
 
   case Cinfinity_continuous: c = Cinfinity_continuous; break;
+
+  case Gsmooth_continuous: c = Gsmooth_continuous; break;
   };
 
   return c;
@@ -1377,6 +1573,7 @@ ON::continuity ON::Continuity(int i)
 
 ON::continuity ON::ParametricContinuity(int i)
 {
+  // "erase" the locus setting.
   continuity c = unknown_continuity;
 
   switch(i)
@@ -1393,10 +1590,37 @@ ON::continuity ON::ParametricContinuity(int i)
   case G1_locus_continuous: c = G1_continuous; break;
   case G2_locus_continuous: c = G2_continuous; break;
   case Cinfinity_continuous: c = Cinfinity_continuous; break;
+  case Gsmooth_continuous: c = Gsmooth_continuous; break;
   };
 
   return c;
 }
+
+
+ON::continuity ON::PolylineContinuity(int i)
+{
+  continuity c = unknown_continuity;
+
+  switch(i)
+  {
+  case unknown_continuity: c = unknown_continuity; break;
+  case C0_continuous: c = C0_continuous; break;
+  case C1_continuous: c = C1_continuous; break;
+  case C2_continuous: c = C1_continuous; break;
+  case G1_continuous: c = G1_continuous; break;
+  case G2_continuous: c = G1_continuous; break;
+  case C0_locus_continuous: c = C0_locus_continuous; break;
+  case C1_locus_continuous: c = C1_locus_continuous; break;
+  case C2_locus_continuous: c = C1_locus_continuous; break;
+  case G1_locus_continuous: c = G1_locus_continuous; break;
+  case G2_locus_continuous: c = G1_locus_continuous; break;
+  case Cinfinity_continuous: c = C1_continuous; break;
+  case Gsmooth_continuous: c = G1_continuous; break;
+  };
+
+  return c;
+}
+
 
 ON::curve_style ON::CurveStyle(int i)
 {
@@ -1440,12 +1664,12 @@ ON::surface_style ON::SurfaceStyle(int i)
 
 ON::sort_algorithm ON::SortAlgorithm(int i)
 {
-  sort_algorithm sa = heap_sort;
+  sort_algorithm sa = ON::quick_sort;
   
   switch (i) {
-  case heap_sort: sa = heap_sort; break;
-  case quick_sort: sa = quick_sort; break;
-  default: sa = heap_sort; break;
+  case ON::heap_sort: sa = ON::heap_sort; break;
+  case ON::quick_sort: sa = ON::quick_sort; break;
+  default: sa = ON::quick_sort; break;
   }
   return sa;
 }
@@ -1842,7 +2066,7 @@ ON::object_decoration ON::ObjectDecoration(int i)
 ON::osnap_mode ON::OSnapMode(int i)
 {
   ON::osnap_mode osm;
-  switch(i)
+  switch((unsigned int)i)
   {
   case os_none:          osm = os_none; break;
   case os_near:          osm = os_near; break;
@@ -1992,3 +2216,51 @@ unsigned int ON_GetStringConversionWindowsCodePage()
 {
   return g_s__windows_code_page;
 }
+
+/*
+ON_TimeLimit::ON_TimeLimit()
+{
+  m_time_limit[0] = 0;
+  m_time_limit[1] = 0;
+}
+
+ON_TimeLimit::ON_TimeLimit(ON__UINT64 time_limit_seconds)
+{
+  SetTimeLimit(time_limit_seconds);
+}
+
+void ON_TimeLimit::SetTimeLimit(ON__UINT64 time_limit_seconds)
+{
+  m_time_limit[0] = 0;
+  m_time_limit[1] = 0;
+  if ( time_limit_seconds > 0 )
+  {
+    // This is a crude implementation that works
+    // unless clock() is close to wrapping around
+    // or time_limit_seconds is unreasonably large.
+    clock_t max_ticks = (clock_t)(time_limit_seconds*((double)CLOCKS_PER_SEC));
+    if ( max_ticks > 0 )
+    {
+      clock_t now_clock = ::clock();
+      clock_t max_clock = max_ticks + now_clock;
+      time_t ::time()
+      if ( now_clock < max_clock )
+      {
+        *((clock_t*)(&m_time_limit[0])) = max_clock;
+      }
+    }
+  }
+}
+
+bool ON_TimeLimit::Continue() const
+{
+  clock_t max_clock = *((clock_t*)&m_time_limit[0]);
+  return ( max_clock <= 0 || ::clock() <= max_clock );
+}
+
+bool ON_TimeLimit::IsSet() const
+{
+  clock_t max_clock = *((clock_t*)&m_time_limit[0]);
+  return ( max_clock > 0 );
+}
+*/

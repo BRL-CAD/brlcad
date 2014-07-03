@@ -1,8 +1,9 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
@@ -42,6 +43,16 @@ public:
     opened with ON_Workspace::OpenFile.
   */
   ~ON_Workspace();
+
+
+  /*
+  Description:
+    The destructor frees memory that was allocated by
+    ON_Workspace::GetMemory and closes files that were 
+    opened with ON_Workspace::OpenFile.  The workspace
+    can be used again after calling destroy.
+  */
+  void Destroy();
 
   /*
   Description:
@@ -341,13 +352,29 @@ public:
     ptr - [in] pointer returned by a Get...() or Grow()
                call to this ON_Workspace.
   Returns:
-    True if the pointer was successfully freed.
+    True if the pointer was successfully found and removed
+    from this ON_Workspace.
   See Also:
     ON_Workspace::~ON_Workspace
     ON_Workspace::GetMemory
-    ON_Workspace::GrowMemory
+    ON_Workspace::KeepAllMemory
   */
   ON_BOOL32 KeepMemory( void* ptr );
+
+  /*
+  Description:
+    Calling KeepAllMemory() has the same effect as calling
+    KeepMemory(p) for every active allocation in the workspace.
+    After calling KeepAllMemory(), you can no longer use
+    Grow...() on the pointers and you are responsible 
+    for using onfree() to release the memory when it is no
+    longer needed.
+  See Also:
+    ON_Workspace::~ON_Workspace
+    ON_Workspace::GetMemory
+    ON_Workspace::KeepMemory
+  */
+  void KeepAllMemory();
 
   /*
   Description:
@@ -411,17 +438,8 @@ public:
   int KeepFile(FILE* fileptr);
 
 private:
-  struct FBLK 
-  {
-    struct FBLK* pNext;
-    FILE* pFile;
-  } * m_pFileBlk;
-
-  struct MBLK 
-  {
-    struct MBLK* pNext;
-    void* pMem;
-  } * m_pMemBlk;
+  struct ON_Workspace_FBLK * m_pFileBlk;
+  struct ON_Workspace_MBLK * m_pMemBlk;
 
 private:
   // There is no implementation of the following to prevent use.

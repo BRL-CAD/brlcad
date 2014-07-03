@@ -341,7 +341,6 @@ EXTRA_DIST = \
 	unix/installManPage \
 	unix/ldAix \
 	unix/tcl.m4 \
-	unix/tcl.spec \
 	unix/tclAppInit.c \
 	unix/tclConfig.h.in \
 	unix/tclConfig.sh.in \
@@ -367,7 +366,8 @@ EXTRA_DIST = \
 	unix/tclUnixTime.c \
 	unix/tclXtNotify.c \
 	unix/tclXtTest.c \
-	win
+	win \
+	CMake
 
 DISTCLEANFILES = \
 	unix/autom4te.cache \
