@@ -96,13 +96,13 @@ reallocate_array(void *array, int size, size_t element_size)
 /* Take note: The buffer object is sometimes used as a String buffer (one
  * continuous string), and sometimes used as a list of strings, usually line by
  * line.
- * 
+ *
  * The type is specified in buf_init by the elt_size. If the elt_size is
  * sizeof(char), then the buffer should be treated as string buffer. If the
  * elt_size is sizeof(char*), then the buffer should be treated as a list of
  * strings.
  *
- * Certain functions are only appropriate for one type or the other. 
+ * Certain functions are only appropriate for one type or the other.
  */
 
 struct Buf*
@@ -147,7 +147,7 @@ buf_linedir(struct Buf *buf, const char* filename, int lineno)
 {
     char *t;
     const char fmt[] = "#line %d \"%s\"\n";
-    
+
     t = (char*)malloc(strlen(fmt) + strlen(filename) + (int)(1 + log10(lineno >= 0? lineno : -lineno)) + 1);
     sprintf(t, fmt, lineno, filename);
     buf = buf_strappend(buf, t);
@@ -581,7 +581,7 @@ NOT_LINE_OR_QUOTE = [^"'\[\n];
 }
 <definitions,rules>"%%\n" {
     /* Matched "%%\n" appearing at start of file or start of line.
-     * We don't match the optional preceeding '\n' so that '\n' can still
+     * We don't match the optional preceding '\n' so that '\n' can still
      * end a word (e.g. "foo\n%%\n" is a word followed by a separator).
      */
     if (YYGETCONDITION == definitions) {
