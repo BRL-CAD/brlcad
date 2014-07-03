@@ -35,6 +35,7 @@
 
 #include "conv3dm-g.hpp"
 
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 
