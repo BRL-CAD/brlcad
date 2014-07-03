@@ -3378,7 +3378,7 @@ mesh as opposed to a "solid" mesh.
 &gt; same hardware) when its file sizes get to be large (&gt;15 Mb).
 
 <p>
-	Both the NMG and the polysolid are very sensitive to tesselation
+	Both the NMG and the polysolid are very sensitive to tessellation
 tolerances. It is very easy to create an outrageously large NMG or
 polysolid file from a simple curved surface primitive, just by selecting
 a very small tolerance. The polysolid is more compact than the NMG
@@ -4430,7 +4430,7 @@ Message-ID:  &lt;9804150118.aa04962@VJ.ARL.MIL&gt;
 <p>
 This evening I modified the calling sequence to libbu/bu_parallel()
 so that threads are started with one additional parameter, a
-caller-supplied genptr_t, which can be used to pass in a private
+caller-supplied void *, which can be used to pass in a private
 state structure.
 
 <p>

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='scriptsort1'>
+<refmeta>
+    <refentrytitle>SCRIPTSORT
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>scriptsort</refname>
+<refpurpose>sort an rt/mged animation script or scripts</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>scriptsort</command>
+    <arg choice='opt'>-fsq </arg>
+    <arg choice='opt'>-b <replaceable>base</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>frame_offset</replaceable></arg>
+    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'><replaceable>unsorted.script</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Scriptsort</emphasis>
+reads an rt/mged animation script from standard input and sorts it.
+Typically this program is used to combine several scripts by sorting
+their concatenation. Or, it can be used to change the ordering of the
+frames.</para>
+
+<para><emphasis remap='I'>Scriptsort</emphasis>
+organizes the input script into three different categories.
+The first category consists of
+numbered frames. Each frame begins with a
+<emphasis remap='B'>start</emphasis>
+<emphasis remap='I'>frame_num</emphasis>;
+command, and ends with an
+<emphasis remap='B'>end</emphasis>;
+command. All of the text between those two commands makes up the body of
+the frame. When two frames with the same frame number are found in the
+input, they are merged into a single frame. The body of the merged frame
+is the concatenation of the two original frames, except that only one
+<emphasis remap='B'>clean</emphasis>;
+command is ever printed in a single frame.</para>
+
+<para>The second category consists of shell commands. Any line in the
+animation script which is not inside a frame and which begins with an
+exclamation mark is considered to be a shell command.
+Typically, each frame of an animation script might have an associated
+shell command following it to process the image just computed.
+The third category
+is "everything else". These are assumed to be global animation commands that
+don't belong to any frame and should be executed before the first frame.</para>
+
+<para>Once the input has been sorted by category, output is produced according
+to the following method. First, all of the global animation commands
+that didn't belong to any frame are printed. Next,
+<command>scriptsort</command>
+determines the order in which to print the frames. This
+might be in ascending numerical order, or in a scrambled order which
+incrementally increases the time resolution of the script, depending on
+the
+<option>-b</option>
+option. Then
+<command>scriptsort</command>
+prints the frames in order. After each frame, the
+shell command
+<emphasis remap='B'>!</emphasis>end_of_frame.sh frame_num
+is added if any of the input frames which contributed to the frame had
+an associated shell command. When the animation script is run
+as input to
+<emphasis remap='I'>rt,</emphasis>
+the user should create a shell script called "end_of_frame.sh" to
+perform any desired shell commands. The argument to "end_of_frame.sh" is
+the frame number.</para>
+
+<para>The order in which the frames are printed out depends on an integer
+called the base integer, which must always be a power of two. By
+default, the base integer is one, which causes the frames to be output
+in order of increasing frame number. Larger powers of two cause the
+frames to be ordered in such a way that the time resolution of the
+animation script is incrementally increased.
+The following algorithm defines the order corresponding to a given base
+integer:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>1. List all of the frames in order of increasing frame</term>
+  <listitem>
+<para>number. Then give each frame an index according to its position in the
+list. For example, if there are 61 frames numbered from 45 to 105, then the
+index of frame 45 is 0, and the index of frame 105 is 60.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>2. Print all of the frames whose indexes are multiples of the base</term>
+  <listitem>
+<para>integer, beginning with the frame indexed by zero.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>3. If the base integer is one, stop here. Otherwise, go to step 4.</term>
+  <term>4. Divide the base integer in half and print all of the frames whose</term>
+  <listitem>
+<para>indexes are odd multiples of the new base integer. Go to step 3.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>The base integer can be set with the
+<option>-b#</option>
+option. If the specified integer is negative or zero, then the base
+integer is set to the largest power of two which is less than the number
+of frames being printed. Otherwise, if the specified integer is not a
+power of two, a warning is printed and the integer is set to 1. If the specified integer is not a power of two, then a warning
+is printed and the integer is set to the default value, which is one.</para>
+</refsect1>
+
+<refsect1 xml:id='other_options'><title>OTHER OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-f</option></term>
+  <listitem>
+<para>forces a shell command to be printed after every frame, regardless of
+whether or not shell commands were found in the input script.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s</option></term>
+  <listitem>
+<para>suppresses shell commands. No shell commands are printed, regardless of
+whether or not shell commands were found in the input script.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-q</option></term>
+  <listitem>
+<para>enables quiet mode. The status messages normally printed on standard
+error are suppressed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option></term>
+  <listitem>
+<para>frame_offset specifies an integer which should be added to all of the frame
+numbers. For example, suppose that the user wants to concatenate
+two animation scripts which begin at frame zero and are 300 frames long.
+He or she should run one script through
+<command>scriptsort</command>
+with an offset of 300 before doing the concatenation.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='authors'><title>AUTHORS</title>
+<para>Christopher T. Johnson</para>
+
+<para>Carl J. Nuzman</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1994 Geometric Solutions, Inc.
+Contributed to the US Army for unlimited distribution.
+This software is Copyright (c) 1996-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

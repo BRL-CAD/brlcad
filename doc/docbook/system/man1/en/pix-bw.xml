@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixbw1'>
+<refmeta>
+    <refentrytitle>PIX-BW
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pix-bw</refname>
+<refpurpose>combine pix color planes into a bw black and white image</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pix-bw</command>
+   <arg choice='opt'>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'>
+     <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+     <arg choice='opt'>-n <replaceable>height</replaceable></arg></arg></arg>
+   <arg choice='opt'>
+    <arg choice='opt'>-e <replaceable>ntsc|crt</replaceable></arg>
+    <arg choice='opt'>
+     <arg choice='opt'><arg choice='plain'>-R </arg><replaceable>r_weight</replaceable></arg>
+     <arg choice='opt'><arg choice='plain'>-G </arg><replaceable>g_weight</replaceable></arg>
+     <arg choice='opt'><arg choice='plain'>-B </arg><replaceable>b_weight</replaceable></arg> </arg> </arg>
+   <arg choice='opt'><replaceable>in.pix</replaceable></arg>
+   <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+   <arg choice='plain'><replaceable>out.bw</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pix-bw</emphasis>
+will combine or select the color planes of a
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format
+file from its standard input
+and produce a black and white
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file on its standard output.
+By default all three colors are weighted equally.
+The
+<option>-e </option><replaceable>type</replaceable>
+flag can be used to specify a standard weighting scheme</para>
+
+<para>The
+<emphasis remap='I'>type</emphasis>
+choices include:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>ntsc</emphasis></term>
+  <listitem>
+<para> weighting used is based on the NTSC primaries and the
+D6500 alignment white.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>crt</emphasis></term>
+  <listitem>
+<para>weighting scheme used will be for "typical" CRT phosphor chromaticities
+and the D6500 white</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+<para>
+Individual color plane(s) can be selected via the
+<option>-R1.0 -G1.0</option>
+and
+<option>-B1.0</option>
+options
+If one or more of these flags is followed by a value,
+the value will be treated as a weight
+to be applied to that color.
+</para>
+<para>
+If 0 is supplied by the user for weights, then the weights assigned
+are 1.0 divided by the number of colors selected.</para>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<para><emphasis remap='I'>pix-bw -R0.0 -B0.0 &lt; file.pix &gt; file.bw</emphasis>
+<!-- .br -->
+will equally blend the red and blue color planes.</para>
+
+<para><emphasis remap='I'>pix-bw -R0.30 -G0.59 -B0.11 &lt; file.pix &gt; file.bw</emphasis>
+<!-- .br -->
+has the same effect as the
+<option>-ntsc</option>
+flag.
+<!-- .br -->
+[The
+<option>-crt</option>
+weights are: 0.26, 0.66, 0.08]</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-bw3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

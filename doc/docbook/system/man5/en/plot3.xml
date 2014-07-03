@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plot35'>
+<refmeta>
+    <refentrytitle>PLOT3
+</refentrytitle>
+<manvolnum>5</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>plot3</refname>
+<refpurpose>3-D and color graphic plotting interface</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>Files of this format are produced by programs
+such as
+<citerefentry><refentrytitle>pixhist3d-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+using the routines
+described in
+<citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+and are interpreted for various devices
+by standard programs described in
+<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1G</manvolnum></citerefentry>,
+as well as additional programs such as
+<citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The format of output from
+<emphasis remap='I'>libplot3</emphasis>
+differs from that of
+<emphasis remap='I'>libplot</emphasis>
+only in the addition of 3-D primitives and color.
+A graphics file is a stream of plotting instructions.
+Each instruction consists of an ASCII letter
+usually followed by bytes of binary information.
+The instructions are executed in order.
+A point is designated by
+four bytes representing
+the
+<emphasis remap='B'>x</emphasis>
+and
+<emphasis remap='B'>y</emphasis>
+values;
+each value
+is a signed 16-bit integer.
+These integers are written with the most significant
+byte first.
+Three-dimensional data have an additional
+<emphasis remap='B'>z</emphasis>
+value, which is assumed to be zero
+for two-dimensional instructions.
+The last designated point in an
+<emphasis remap='B'>l</emphasis>,
+<emphasis remap='B'>m</emphasis>,
+<emphasis remap='B'>n</emphasis>,
+<emphasis remap='B'>p</emphasis>,
+<emphasis remap='B'>L</emphasis>,
+<emphasis remap='B'>M</emphasis>,
+<emphasis remap='B'>N</emphasis>,
+or
+<emphasis remap='B'>P</emphasis>
+instruction becomes the "current point"
+for the next instruction.</para>
+
+<para>Each of the following descriptions begins with the name
+of the corresponding routine in
+<citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>m</emphasis></term>
+  <listitem>
+<para>move:  The next four bytes give a new current point.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>n</emphasis></term>
+  <listitem>
+<para>cont:  Draw a line from the current point to
+the point given by the next four bytes.
+See
+<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1G</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>p</emphasis></term>
+  <listitem>
+<para>point:  Plot the point given by the next four bytes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>l</emphasis></term>
+  <listitem>
+<para>line:  Draw a line from the point given by the next
+four bytes to the point given by the following four bytes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>t</emphasis></term>
+  <listitem>
+<para>label:  Place the following ASCII string so that its
+first character falls on the current point.
+The string is terminated by a new-line.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>a</emphasis></term>
+  <listitem>
+<para>arc:  The first four bytes give the center, the next four give the
+starting point,
+and the last four give the end point of a circular arc.
+The least significant coordinate of the end point is
+used only to determine the quadrant.
+The arc is drawn counter-clockwise.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>c</emphasis></term>
+  <listitem>
+<para>circle:  The first four bytes give the center of the circle,
+the next two the radius.
+Circles and arcs are not supported on all devices.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>e</emphasis></term>
+  <listitem>
+<para>erase:  Start another frame of output.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>f</emphasis></term>
+  <listitem>
+<para>linmod:  Take the following string, up to a new-line,
+as the style for drawing further lines.
+The styles are
+"dotted",
+"solid", "longdashed", "shortdashed", and "dotdashed".
+Effective only
+for the
+<option>-T4014</option>
+and
+<option>-Tver</option>
+options of
+<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1G</manvolnum></citerefentry>
+(TEKTRONIX 4014 terminal and Versatec plotter).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>s</emphasis></term>
+  <listitem>
+<para>space:  The next four bytes give
+the lower left corner of the plotting area;
+the following four give the upper right corner.
+The plot will be magnified or reduced to fit
+the device as closely as possible.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>The following were added at BRL.
+Three-dimensional primitives have their
+<emphasis remap='B'>z</emphasis>
+values ignored when displayed on
+two-dimensional devices.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>C</emphasis></term>
+  <listitem>
+<para>color:  The next three bytes give respectively
+the intensities (0..255) of the three color components
+(additive colors red, green, and blue if a terminal;
+subtractive colors cyan, magenta, and yellow if hardcopy)
+to be used for subsequent plotting.
+The initial color is assumed to be (255,255,255),
+which is white on a terminal and black on hardcopy.
+Color specifications are ignored for black-and-white devices.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>M</emphasis></term>
+  <listitem>
+<para>3move:  The next six bytes give a new current point.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>N</emphasis></term>
+  <listitem>
+<para>3cont:  Draw a line from the current point to
+the point given by the next six bytes.
+See
+<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1G</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>P</emphasis></term>
+  <listitem>
+<para>3point:  Plot the point given by the next six bytes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>L</emphasis></term>
+  <listitem>
+<para>3line:  Draw a line from the point given by the next
+six bytes to the point given by the following six bytes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>S</emphasis></term>
+  <listitem>
+<para>3space:  The next six bytes give
+the minimum corner of the plotting area;
+the following six give the maximum corner.
+The plot will be magnified or reduced to fit
+the device as closely as possible.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>F</emphasis></term>
+  <listitem>
+<para>3flush:</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>x</emphasis></term>
+  <listitem>
+<para>double_point:  The double-precision version of point.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>v</emphasis></term>
+  <listitem>
+<para>double_line:  The double-precision version of line.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>o</emphasis></term>
+  <listitem>
+<para>double_move:  The double-precision version of move.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>q</emphasis></term>
+  <listitem>
+<para>double_cont:  The double-precision version of cont.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>w</emphasis></term>
+  <listitem>
+<para>double_space:  The double-precision version of space.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>i</emphasis></term>
+  <listitem>
+<para>double_circle:  The double-precision version of circle.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>r</emphasis></term>
+  <listitem>
+<para>double_arc:  The double-precision version of arc.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>W</emphasis></term>
+  <listitem>
+<para>double_3space:  The double-precision, 3_D version of space.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>X</emphasis></term>
+  <listitem>
+<para>double_3point:  The double-precision, 3_D version of point.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>O</emphasis></term>
+  <listitem>
+<para>double_3move:  The double-precision, 3_D version of move.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>Q</emphasis></term>
+  <listitem>
+<para>double_3cont:  The double-precision, 3_D version of cont.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>V</emphasis></term>
+  <listitem>
+<para>double_3line:  The double-precision, 3_D version of line.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>Space settings that exactly fill the plotting area
+with unity scaling appear below for
+devices supported by the filters of
+<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1G</manvolnum></citerefentry>.
+The upper limit is just outside the plotting area,
+except for the Megatek which displays the
+entire range of possible coordinates.
+In every case the plotting area is taken to be square;
+points outside may be displayable on
+devices whose face is not square.</para>
+
+  <blockquote remap='RS'>
+<!-- .PD 0 -->
+  <variablelist remap='TP'>
+    <varlistentry>
+    <term><emphasis remap='SM'>DASI 300</emphasis></term>
+    <listitem>
+<para>space(0, 0, 4096, 4096);</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><emphasis remap='SM'>DASI 300s</emphasis></term>
+    <listitem>
+<para>space(0, 0, 4096, 4096);</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term><emphasis remap='SM'>DASI 450</emphasis></term>
+    <listitem>
+<para>space(0, 0, 4096, 4096);</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term>TEKTRONIX 4014</term>
+    <listitem>
+<para>space(0, 0, 3120, 3120);</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term>Versatec plotter</term>
+    <listitem>
+<para>space(0, 0, 2048, 2048);</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term>Megatek display</term>
+    <listitem>
+<para>space(-32768, -32768, 32767, 32767);</para>
+<!-- .PD -->
+    </listitem>
+    </varlistentry>
+  </variablelist>
+  </blockquote> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>n</manvolnum></citerefentry>.</para>
+
+<para><citerefentry><refentrytitle>graph</refentrytitle><manvolnum>1G</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1G</manvolnum></citerefentry> in the
+<emphasis remap='I'>UNIX System User Reference Manual</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Douglas A. Gwyn made the 3-D and color extensions to UNIX-plot.</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

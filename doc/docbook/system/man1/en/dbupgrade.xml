@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='dbupgrade1'>
+<refmeta>
+    <refentrytitle>DBUPGRADE
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>dbupgrade</refname>
+<refpurpose> a program to upgrade BRL-CAD mged geometry databases files to the current version.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>dbupgrade</command>
+    <arg choice='plain'><replaceable>input.g</replaceable></arg>
+    <arg choice='plain'><replaceable>output.g</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>dbupgrade</command>
+operates on the indicated input geometry database
+<emphasis remap='I'>input.g</emphasis>
+recognizing the version of the BRL-CAD database provided as input and
+then converting it to the current database version.  Output is then saved to the specified
+<emphasis remap='I'>output.g</emphasis>
+file.</para>
+
+<para>Note that this tool will attempt to automatically 'fix' an existing (v4
+format) binary database that was transferred from a
+binary-incompatible platform.  However, this process may be imperfect - the best approach (if
+the original platform on which the file was created is available) is to run
+<command>dbupgrade</command>
+on the file before transferring from the originating platform.  Once upgraded the output file will be
+platform independent regardless of the platform on which the upgrade was done.</para>
+
+<para>Running
+<command>dbupgrade</command>
+removes the need to run
+<citerefentry><refentrytitle>g2asc</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>asc2g</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+on a database to move it between computers (historically this was a way to work around the platform specific nature of v4 files.)
+The latest BRL-CAD geometry database format is platform independent.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>g2asc</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>asc2g</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Numerous error conditions are possible, usually due to errors in
+the geometry database.
+Descriptive messages are printed on standard error (file descriptor 2).</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 2006-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

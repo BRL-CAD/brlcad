@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='bwthresh1'>
+<refmeta>
+    <refentrytitle>BWTHRESH
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>bwthresh</refname>
+<refpurpose>threshold a black-and-white bw file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>bwthresh</command>
+    <arg choice='plain' rep='repeat'><replaceable>val</replaceable></arg>
+    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'><replaceable>file.bw</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Bwthresh</emphasis>
+reads from standard input a stream of black-and-white data in
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format
+and thresholds it among the
+<emphasis remap='I'>vals,</emphasis>
+writing the resulting
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+data to standard output.
+The
+<emphasis remap='I'>vals</emphasis>
+must appear on the command line in strictly increasing order.</para>
+
+<para>The grey scale 0..255 is divided evenly into
+<emphasis remap='I'>n</emphasis>+1
+bins,
+and each pixel of input is compared to the
+<emphasis remap='I'>vals,</emphasis>
+to determine which of the
+<emphasis remap='I'>n</emphasis>+1
+grey levels should be output.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para>The command</para>
+
+<!-- .in +5 -->
+<para><emphasis remap='I'>bwthresh 37 143 &lt; file.bw &gt; file2.bw</emphasis></para>
+<!-- .in &bsol;-5 -->
+
+<para>performs the following mapping:</para>
+
+<!-- .in +5 -->
+<para>if (pixel_in &lt; 37)
+<!-- .in +2 -->
+pixel_out = 0
+<!-- .in &bsol;-2 -->
+else if (pixel_in &lt; 143)
+<!-- .in +2 -->
+pixel_out = 128
+<!-- .in &bsol;-2 -->
+else
+<!-- .in +2 -->
+pixel_out = 255</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>bwmod</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwstat</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1991-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

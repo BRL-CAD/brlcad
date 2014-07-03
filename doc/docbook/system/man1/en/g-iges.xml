@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='giges1'>
+<refmeta>
+    <refentrytitle>G-IGES
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>g-iges</refname>
+<refpurpose>IGES Translator (BRL-CAD to IGES)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>g-iges</command>
+    <group choice='opt'><arg choice='plain'>-f </arg><arg choice='plain'><replaceable>t</replaceable></arg><arg choice='plain'><replaceable>m</replaceable></arg></group>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-s </arg>
+    <arg choice='opt'>-x <replaceable>flag1</replaceable></arg>
+    <arg choice='opt'>-X <replaceable>flag2</replaceable></arg>
+    <arg choice='opt'>-a <replaceable>abs_tol</replaceable></arg>
+    <arg choice='opt'>-r <replaceable>rel_tol</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>norm_tol</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>output_file_or_directory</replaceable></arg>
+    <arg choice='plain'><replaceable>database.g</replaceable></arg>
+    <arg choice='plain'><replaceable>object(s)</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>g-iges</emphasis>
+converts the specified objects of the BRL-CAD database,
+<emphasis remap='I'>database.g,</emphasis>
+to an IGES version 5.1 file,
+<emphasis remap='I'>file.iges.</emphasis></para>
+
+
+<para>The following options are recognized</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-f</option></term>
+  <listitem>
+<para>selects  a  BREP  IGES  file  consisting  of  only  Manifold Solid BREP
+Objects.  All CSG solids in the specified objects  are  tessellated  to
+produce  facetted  BREP  objects, then the indicated Boolean operations
+are performed for each region. Individual regions are  written  to  the
+IGES  file  as individual BREP objects.  This procedure results in some
+approximations since curved surface solids, such as TGCs or ellipsoids,
+are  approximated  by flat facets.  The accuracy of the
+tessellation may be controlled through the use of the
+<option>-a, -r, -n</option>
+options.</para>
+
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a </option><emphasis remap='I'>abs_tol</emphasis></term>
+  <listitem>
+<para>Sets the absolute tolerance (floating point value) for tessellation.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-r </option><emphasis remap='I'>rel_tol</emphasis></term>
+  <listitem>
+<para>Sets the relative (to the size of the object) tolerance (floating point value) for tessellation.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n </option><emphasis remap='I'>norm_tol</emphasis></term>
+  <listitem>
+<para>Sets the normal tolerance (floating point value 0..1) for tessellation.
+This value is compared to the dot product of the normals to determine if the surfaces are within tolerance</para>
+
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-t</option></term>
+  <listitem>
+<para>indicates that an IGES file consisting of
+only trimmed NURBs should be created. The trimmed  NURBs  will  all  be
+planar NURBs, and they are the facets derived from the tessellation and
+Boolean evaluation as in the -f option. The file produced in  this  way
+is  acceptable  to the Pro/Engineer IGES import routine.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-m</option></term>
+  <listitem>
+<para>implies the -t option, and is used to produce multiple IGES files  (one
+for  each region converted). In this case the argument to the -o option
+should be a directory where the IGES files  will  accumulate.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>requests debugging information</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s</option></term>
+  <listitem>
+<para>all facets in  BREP  objects  should  be
+output  in  the form of planar NURBs (Intergraph likes their IGES files
+this way).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-x </option><emphasis remap='I'>flag1</emphasis></term>
+  <listitem>
+<para>set the librt debug flag (see raytrace.h for values)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-X </option><emphasis remap='I'>flag2</emphasis></term>
+  <listitem>
+<para>set the librt debug flag (see nmg.h for values)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o </option><emphasis remap='I'>output_file_or_directory</emphasis></term>
+  <listitem>
+<para>Specifies the output file (or in the case of the -m) the output directory for the iges file(s).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-P </option><emphasis remap='I'>num_cpus</emphasis></term>
+  <listitem>
+<para>Specifies the number of processors to use.</para>
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>If neither the -f , -t , nor the -m options  are  selected,
+the  default is a CSG IGES file. In this situation, all regions will be
+written to the IGES file as Boolean trees with all possible solids rep-
+resented  by their IGES CSG equivalent. In cases where there is no IGES
+CSG equivalent, the BRL-CAD solid is  tesellated  (using  the  provided
+tolerances),  and  a  BREP  object  is  written for that solid.</para>
+
+
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para><emphasis remap='I'>g-iges -f -o sample.iges sample.g object1</emphasis></para>
+
+<para>This command will produce an IGES BREP output file,
+<emphasis remap='I'>sample.iges,</emphasis>
+from
+<emphasis remap='I'>object1</emphasis>
+of the BRL-CAD database file
+<emphasis remap='I'>sample.g.</emphasis></para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>iges-g</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<!-- .br -->
+<emphasis remap='I'>The Initial Graphics Exchange Specification (IGES) Version 5.1,</emphasis>
+IGES/PDES Organization, September 1991.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1993-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='rlepix1'>
+<refmeta>
+    <refentrytitle>RLE-PIX
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>rle-pix</refname>
+<refpurpose>convert Utah Raster Toolkit run-length encoded image to RGB pixel format</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>rle-pix</command>
+    <arg choice='opt'>-cdhH </arg>
+    <arg choice='opt'>-C <replaceable>r/g/b</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squareoutsize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>out_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>out_height</replaceable></arg>
+    <arg choice='opt'>-S <replaceable>squareoutsize</replaceable></arg>
+    <arg choice='opt'>-W <replaceable>out_width</replaceable></arg>
+    <arg choice='opt'>-N <replaceable>out_height</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'><replaceable>file.rle</replaceable></arg><arg choice='opt'><replaceable>file.pix</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>rle-fb</emphasis>
+decodes a Utah Raster Toolkit
+Run-Length Encoded (RLE) format file
+(saved with
+<citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pix-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+or a similar program),
+converts it into
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format, and writes it to standard out.
+If
+<emphasis remap='I'>file.rle</emphasis>
+is not specified, standard input is read.
+<emphasis remap='I'>rle-pix</emphasis>
+determines the type and size of the saved file (color or B&amp;W)
+and acts accordingly.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-c</option></term>
+  <listitem>
+<para>is the colormap <emphasis remap='I'>crunch</emphasis> flag.
+If the crunch flag has been specified and
+a non-linear colormap is stored in the RLE file,
+then the colormap is applied to the pixels as they are output.
+Otherwise, the encoded pixel values are output without being affected by
+any color map stored in the RLE file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option></term>
+  <listitem>
+<para>Debug option, provides a description of the parameters of the
+saved RLE image on standard error.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-C</option><replaceable>r/g/b</replaceable></term>
+  <listitem>
+<para>The background of the image is
+normally set to the value recorded in the RLE file.
+This option permits
+the user to specify an alternate background color
+as slash separated decimal numbers in the range of 0 to 255,
+one each for the red, green, and blue channels.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>file.rle</emphasis></term>
+  <listitem>
+<para>Name of file to decode, in RLE format.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>file.pix</emphasis></term>
+  <listitem>
+<para>Optional name of file to store PIX image in.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<literallayout remap='RS'>
+<emphasis remap='I'> rle-pix  tank.rle   tank.pix</emphasis>
+</literallayout> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Michael John Muuss</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='cmap5'>
+<refmeta>
+    <refentrytitle>CMAP
+</refentrytitle>
+<manvolnum>5</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>cmap</refname>
+<refpurpose>Framebuffer colormap file format and utilities</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1 xml:id='format'><title>FORMAT</title>
+<para>A
+<emphasis remap='I'>cmap</emphasis>
+file is a storage format for framebuffer colormaps.
+It is an ascii file with one line per colormap entry.
+In order to accommodate colormaps of any "depth" (number
+of bits per entry), 16 bit unsigned integers were selected
+(see
+<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+for a discussion of the C program interface to colormaps).
+A value of zero corresponds to full off, or black, a
+value of 65535 decimal or ffff hexadecimal corresponds to
+full on, or white.  A given device will use as many of
+the "leftmost" bits as it can support.</para>
+
+<para>Each line of the file has a decimal colormap index, followed
+by a tab character, and then three 4 digit
+hexadecimal values, separated by spaces, which correspond to
+the red, green, and blue, channels.  Any blank lines or lines
+beginning with non-numeric characters are ignored, and can thus
+be used for comments.</para>
+
+<para>There is no requirement for all 256 entries to be specified.
+What is done with any unspecified entries is up to the individual
+programs using the colormap.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para>The beginning of an eight bit inverse video colormap might look
+as follows:</para>
+
+<literallayout remap='.nf'>
+	# Inverse video colormap
+	0       ff00 ff00 ff00
+	1       fe00 fe00 fe00
+	2       fd00 fd00 fd00
+	3       fc00 fc00 fc00
+	4       fb00 fb00 fb00
+
+</literallayout></refsect1>
+
+<refsect1 xml:id='utilities'><title>UTILITIES</title>
+<para><emphasis remap='B'>fb-cmap</emphasis>
+save a colormap from a framebuffer.</para>
+
+<para><emphasis remap='B'>cmap-fb</emphasis>
+load a saved colormap into a framebuffer.</para>
+
+<para><emphasis remap='B'>fbcmap</emphasis>
+loads one of several "standard" colormaps.</para>
+
+<para><emphasis remap='B'>fbgamma</emphasis>
+loads gamma correcting colormaps.</para>
+</refsect1>
+
+<refsect1 xml:id='files'><title>FILES</title>
+<para>file.cm</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, and above named programs.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

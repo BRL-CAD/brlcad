@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='bary1'>
+<refmeta>
+    <refentrytitle>BARY</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>bary</refname>
+<refpurpose>compute weighted sums of points</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>bary</command>    <arg choice='opt'>-nt </arg>
+    <arg choice='opt'><arg choice='plain'>-s <replaceable>'x</replaceable></arg><arg choice='plain'><replaceable>y</replaceable></arg><arg choice='plain'><replaceable>z'</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Bary</emphasis>
+computes weighted sums of a set of sites in Euclidean 3-space,
+writing them on the standard output.
+The site weights are read from
+<emphasis remap='I'>file</emphasis>
+if it is specified;
+otherwise,
+<command>bary</command>
+reads from the standard input.
+A line of input must be either
+(1) entirely white space,
+(2) white space followed by a comment (begun with the '#' character),
+or (3) white-space-separated weights, one per site.</para>
+
+<para>By default,
+<command>bary</command>
+uses the three sites (1, 0, 0), (0, 1, 0), and (0, 0, 1).
+One or more occurrences of the
+<option>-s</option>
+option cause
+<command>bary</command>
+to replace
+the default sites with all the sites
+(<emphasis remap='I'>x</emphasis>, <emphasis remap='I'>y</emphasis>, <emphasis remap='I'>z</emphasis>)
+<!-- .RI "(" "x" ", " "y" ", " "z" ")" " " "huh?" -->
+so specified.</para>
+
+<para>The
+<option>-n</option>
+option causes
+<command>bary</command>
+to normalize each tuple of weights to sum to one.
+This has the effect of computing
+barycentric combinations of the sites.</para>
+
+<para>If any line of weights in the input stream
+contains more fields than the number of sites,
+<command>bary</command>
+will, by default,
+ignore the excess fields.
+The
+<option>-t</option>
+option causes
+<command>bary</command>
+to copy all such trailing fields verbatim onto the tail of
+the corresponding line of output.</para>
+
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para>The command</para>
+
+<literallayout remap='.nf'>
+<!-- .in +4 -->
+bary -tn -s '0 0 0' -s '1 0 0' -s '0.5 0.866 0' &lt;&lt;EOF
+#------------------------------
+# x   y   z     aux. data
+#------------------------------
+ 1.0 2.5 3.6    58 alpha
+ 0.0 1.0 2.0    37 bravo
+13.0 9.2 6.3    69 charlie delta
+EOF
+<!-- .in &bsol;-4 -->
+</literallayout> <!-- .fi -->
+
+<para>maps the triples to points in an equilateral triangle in the <emphasis remap='I'>xy</emphasis>-plane,
+producing the following output:</para>
+
+<literallayout remap='.nf'>
+<!-- .in +4 -->
+0.605634 0.439099 0    58 alpha
+0.666667 0.577333 0    37 bravo
+0.433333 0.191432 0    69 charlie delta
+<!-- .in &bsol;-4 -->
+</literallayout> <!-- .fi -->
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Paul Tanenbaum</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1995-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

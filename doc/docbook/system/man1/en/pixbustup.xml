@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixbustup1'>
+<refmeta>
+    <refentrytitle>PIXBUSTUP
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pixbustup</refname>
+<refpurpose>break up concatenated pix images into separate files</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixbustup</command>
+    <arg choice='plain'><replaceable>basename</replaceable></arg>
+    <arg choice='plain'><replaceable>width</replaceable></arg>
+    <arg choice='opt'><replaceable>image_offset</replaceable></arg>
+    <arg choice='opt'><replaceable>first_number</replaceable></arg>
+    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'><replaceable>input.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pixbustup</emphasis>
+takes input consisting of a concatenated collection of
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format files
+and breaks them up into separate files.  The output file names will be
+of the form
+<emphasis remap='I'>basename.num</emphasis>,
+where
+<emphasis remap='I'>basename</emphasis>
+is given on the command line, and
+<emphasis remap='I'>num</emphasis>
+is a consecutive series of integers.  By default the first image
+will be made number " 0 ", but an alternate
+<emphasis remap='I'>first_number</emphasis>
+can be given.
+The images must be square and the width (and height) is given by
+<emphasis remap='I'>width</emphasis>.
+The program keeps reading these small files until end of file
+is reached.
+If one does not wish to extract from the beginning of the input file an
+<emphasis remap='I'>image_offset</emphasis>
+can be given which will skip that number of images before beginning.</para>
+
+<para>This program is mostly a holdover from the days when
+<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+wrote animations into
+one huge file, but it is still sometimes useful.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

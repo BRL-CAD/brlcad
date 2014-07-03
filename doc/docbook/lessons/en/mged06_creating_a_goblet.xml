@@ -1,19 +1,17 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Creating a Goblet</title>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Creating a Goblet</title>
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
    <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="creating_a_goblet_overviewlist">
+    <para xml:id="creating_a_goblet_overviewlist">
       In this lesson, you will:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Create a new database.</para>
 	</listitem>
@@ -35,14 +33,17 @@
       </itemizedlist>
     </para>
 
-   <para id="creating_a_goblet_intro">
+   <para xml:id="creating_a_goblet_intro">
       In this lesson, you will create a goblet similar to the one in the
       following example.
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged06_rtgoblet.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_rtgoblet.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_rtgoblet.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -53,50 +54,55 @@
       </informalfigure>
 
     </para>
-    
-    <sect1 id="goblet_new_database">
-      <title>Creating a New Database</title>
+
+    <section xml:id="goblet_new_database"><info><title>Creating a New Database</title></info>
+
       <para>
 	First, start <application>MGED</application> from the shell prompt. Select File from the menu bar and
 	then New. A dialog box will appear, and it will ask you for a new database
-	name. Type in goblet.g at the end of the path name and click on OK to
+	name. Type in goblet.g at the end of the path name and select OK to
 	create the new database. The program should tell you that the database was
 	successfully created and it is using millimeters for its unit of measure.
       </para>
-    </sect1>
-    
-    <sect1 id="create_edit_copy_goblet">
-      <title>Creating, Editing, and Copying the Parts of the Goblet</title>
-      
-      <sect2>
-	<title>Creating the Goblet Base</title>
-	
+    </section>
+
+    <section xml:id="create_edit_copy_goblet"><info><title>Creating, Editing, and Copying the Parts of the Goblet</title></info>
+
+
+      <section><info><title>Creating the Goblet Base</title></info>
+
+
 	<para>
 	  Go to the menu bar, select the Cones and Cylinders category, and then select
 	  rcc for right circular cylinder. A dialog box will appear asking you to
-	  name the rcc. Type in base1.s and then click on Apply (or press ENTER). A
+	  name the rcc. Type in base1.s and then select Apply (or press ENTER). A
 	  tall cylinder will appear in the Graphics Window that is ready for you to
 	  edit.
 	</para>
-      </sect2>
-      
-      <sect2>
-	<title>Editing the Base</title>
-	
+      </section>
+
+      <section><info><title>Editing the Base</title></info>
+
+
 	<para>
-	  Go to the menu bar and select Edit and then Set H. Place the mouse pointer
-	  in the lower half of the Graphics Window and click on the middle mouse
-	  button several times. The cylinder will become shorter as you click. (Note
-	  that the closer your pointer is to the midpoint of the Graphics Window,
-	  the smaller the change will be. As you click farther away from the middle,
-	  the changes will be greater.) Continue clicking until the cylinder looks
-	  like a flat disk, as shown in the following figure. Click on Accept when
+	  Go to the menu bar and select Edit and then Set H. Place the
+	  mouse pointer in the lower half of the Graphics Window and
+	  click on the middle mouse button several times. The cylinder
+	  will become shorter as you click. (Note that the closer your
+	  pointer is to the midpoint of the Graphics Window, the
+	  smaller the change will be. As you click farther away from
+	  the middle, the changes will be greater.) Continue clicking
+	  until the cylinder looks like a flat disk, as shown in the
+	  following figure. Click on Accept on the Edit menu when
 	  done.
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged06_gobletbase.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletbase.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletbase.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -107,28 +113,31 @@
       </informalfigure>
 
 	</para>
-      </sect2>
-      
-      <sect2>
-	<title>Creating the Goblet Stem</title>
-   
+      </section>
+
+      <section><info><title>Creating the Goblet Stem</title></info>
+
+
 	<para>
-	  Go to the menu bar, select Create, select Ellipsoids, and then click on
-	  sph to select a sphere. You will be asked to provide a name for the
-	  sphere. Type ball1.s in the name box and then click on Apply. A large
+	  Go to the menu bar, select Create, select Ellipsoids, and then select
+	  sph to create a sphere. You will be asked to provide a name for the
+	  sphere. Type ball1.s in the name box and then select Apply. A large
 	  sphere will appear in your Graphics Window.
 	</para>
 
 	<para>
-	  Go to the Edit menu and click on Scale. Place the mouse cursor/pointer in
+	  Go to the Edit menu and select Scale. Place the mouse cursor/pointer in
 	  the lower half of the Graphics Window and click the middle mouse button
 	  until your sphere is about one-quarter the diameter of the base, as shown
 	  in the illustration that follows.
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged06_goblet1stsphere.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_goblet1stsphere.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_goblet1stsphere.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -141,51 +150,52 @@
 	</para>
 
 	<para>
-	  To move the ball on top of the goblet base, press the SHIFT key and left
-	  mouse button to drag the sphere into place. You can check your placement
-	  by going to the View option of the menu bar and selecting a Front view. In
-	  this view, you can align the center line of the sphere with the center
-	  line of the rcc. Repeat this process from a Left view. When you believe
-	  the sphere is correctly aligned with the rcc, go back to the Edit option
-	  and click on Accept.
+	  To move the ball on top of the goblet base, press the SHIFT
+	  key and left mouse button to drag the sphere into place. You
+	  can check your placement by going to the View option of the
+	  menu bar and selecting a Front view. In this view, you can
+	  align the center line of the sphere with the center line of
+	  the rcc. Repeat this process from a Left view. When you
+	  believe the sphere is correctly aligned with the rcc, go
+	  back to the Edit menu and select Accept.
 	</para>
-      </sect2>
-      
-      <sect2>
-	<title>Adding Additional Balls to the Goblet Stem</title>
-	
+      </section>
+
+      <section><info><title>Adding Additional Balls to the Goblet Stem</title></info>
+
+
 	<para>
 	  The next step is to add more spheres to your goblet stem. An easy way to
 	  do this is to go to the Edit menu and select Primitive Editor. A dialog
 	  box will appear. Enter the name for the first sphere you created, ball1.s.
-	  Next, click on Reset (to reset the values of the dialog box to those of
+	  Next, select Reset (to reset the values of the dialog box to those of
 	  ball1.s) or hit return in the Name box. Again in the Name box, change
 	  ball1.s to ball2.s by using the BACKSPACE key to erase the 1. Type in a 2
-	  and then click on Apply.
+	  and then select Apply.
 	</para>
-	
+
 	<para>
-	  Repeat this process with an sph named ball3.s. When you are done, click on
+	  Repeat this process with an sph named ball3.s. When you are done, select
 	  OK to close the Primitive Editor box. You now have three balls for your
 	  stem, but you won't be able to see them until you edit them because they
 	  are in the same place.
 	</para>
-	
+
 	<para>
 	  An even easier way to make the copies is to use the cp (copy) command as
 	  follows:
-	  
+
 	  <command>cp ball1.s ball2.s[Enter]</command>
-	  
+
 	  <command>cp ball1.s ball3.s[Enter]</command>
 	</para>
-      </sect2>
-     
-      <sect2>
-	<title>Editing the Balls of the Goblet Stem</title>
-	
+      </section>
+
+      <section><info><title>Editing the Balls of the Goblet Stem</title></info>
+
+
 	<para>
-	  To edit the new balls you have created, go to the Edit menu and click on
+	  To edit the new balls you have created, go to the Edit menu and select
 	  Primitive Selection. A box will appear with the names of your base and
 	  balls. Double click on ball2.s to select it. You will see the first ball
 	  change color to white. Use the SHIFT key and any mouse button to drag this
@@ -194,24 +204,27 @@
 	  first ball. (Note that this alignment is even easier if you drag using the
 	  SHIFT and ALT keys and the right mouse button, which will constrain the
 	  movement of the ball to the Z direction.) Click on Accept under the Edit
-	  option when finished.
+	  menu when finished.
 	</para>
-	
+
 	<para>
 	  If you were modeling a real goblet, you would want the balls of the stem
 	  to overlap slightly. If they barely touch, the stem would be very weak. If
 	  they do not touch, then the stem would be made of separate pieces of
 	  material suspended in space.
 	</para>
-	
+
 	<para>
 	  Repeat these steps to move ball3.s into position. When you are finished,
 	  your goblet should look as follows from a front view:
-	  
+
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged06_gobletstem.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletstem.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletstem.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -221,27 +234,30 @@
 	</mediaobject>
       </informalfigure>
 	</para>
-      </sect2>
-      
-      <sect2>
-	<title>Making the Goblet Basin</title>
+      </section>
+
+      <section><info><title>Making the Goblet Basin</title></info>
+
 	<para>
 	  The next step is to make the goblet's basin. Go to the Create menu and
-	  click on eto to select an elliptical torus. Name the torus basin1.s. Click
+	  select eto to create an elliptical torus. Name the torus basin1.s. Click
 	  on Apply. A large eto will appear in your Graphics Window.
 	</para>
-	
+
 	<para>
 	  Go to the Edit menu and select Set C. Place the mouse arrow in the upper
 	  half of the Graphics Window and click on the middle mouse button until
 	  your eto is approximately the size of the one in the following figure. If
 	  you need to, use Scale to make the basin more proportional to the rest
 	  object and use the Shift Grips and multiple views to position the basin.
-	  
+
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged06_gobletbasestembasin.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletbasestembasin.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletbasestembasin.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -251,57 +267,57 @@
 	</mediaobject>
       </informalfigure>
 	</para>
-      </sect2>
-    </sect1>
-    
-    <sect1 id="making_goblet_regions">
-      <title>Making Regions of the Goblet's Base, Stem, and Basin</title>
-      
+      </section>
+    </section>
+
+    <section xml:id="making_goblet_regions"><info><title>Making Regions of the Goblet's Base, Stem, and Basin</title></info>
+
+
       <para>
 	In order for <application>MGED</application> to know what primitives to raytrace, you must first
 	designate these areas through Boolean operations. In this example, the two
 	Boolean operations used will be the union (u) and the subtraction (-).
       </para>
-      
+
       <para>
 	To make the stem a region, type at the Command Window prompt:
-	
+
 	<command>r stem1.r u ball1.s u ball2.s u ball3.s[Enter]</command>
       </para>
 
       <para>
 	To make the base a region, type at the prompt:
-	
+
 	<command>r base1.r u base1.s - ball1.s[Enter]</command>
       </para>
-      
+
       <para>
 	To make the basin a region, type at the prompt:
-	
+
 	<command>r basin1.r u basin1.s - stem1.r[Enter]</command>
       </para>
-      
+
       <para>
 	Note that when creating base1.r, we subtracted a primitive shape from
 	another primitive shape. When creating basin1.r, we subtracted an entire
 	region from a primitive shape.
       </para>
-    </sect1>
-    
-    <sect1 id="making_goblet_region_comb">
-      <title>Making a Combination of the Regions</title>
+    </section>
+
+    <section xml:id="making_goblet_region_comb"><info><title>Making a Combination of the Regions</title></info>
+
       <para>
 	To combine all the regions into one object, you will need to perform one
 	last Boolean operation. At the prompt in the Command Window, type:
-	
+
 	<command>comb goblet1.c u basin1.r u stem1.r u base1.r[Enter]</command>
       </para>
-      
+
       <para>
 	This operation tells the <application>MGED</application> program to:
       </para>
       <informaltable>
-	<tgroup cols='8'>
+	<tgroup cols="8">
 	  <tbody>
 	    <row>
 	      <entry>comb</entry>
@@ -326,10 +342,10 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-    </sect1>
-    
-    <sect1 id="goblet_view_data_tree">
-      <title>Viewing a Data Tree</title>
+    </section>
+
+    <section xml:id="goblet_view_data_tree"><info><title>Viewing a Data Tree</title></info>
+
       <para>
 	<application>MGED</application> requires a certain logical order to the model data tree so it knows
 	how to raytrace the various elements. In the goblet, the base and basin
@@ -337,17 +353,17 @@
 	contrast, consists of a region composed of the union of three spheres. The
 	three regions were combined to form a complex object.
       </para>
-      
+
       <para>
 	To view the data tree for this combination, type at the Command Window
 	prompt:
-	
+
 	<command>tree goblet1.c[Enter]</command>
       </para>
-      
+
       <para>
 	<application>MGED</application> will respond with:
-	<literallayout>
+	<literallayout class="normal">
    goblet1.c/
 
    u basin1.r/R
@@ -377,7 +393,7 @@
    - ball1.s
 	</literallayout>
       </para>
-      
+
       <para>
 	The name of the overall combination of this design is goblet1.c. It is
 	composed of the three regions: base1.r, stem1.r, and basin1.r. The region
@@ -386,7 +402,7 @@
 	ball2.s, and ball3.s. The region basin1.r is composed of the primitive
 	shape named basin1.s minus the region  stem1.r.
       </para>
-      
+
       <para>
 	Remember that regions define volumes of uniform material. In the real
 	world (and in <application>BRL-CAD</application>), no two objects can occupy the same space. If two
@@ -401,35 +417,41 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged06_base_subtracted_vol.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_base_subtracted_vol.png" format="PNG"/>
+	  </imageobject>
+	<imageobject role="fo">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_base_subtracted_vol.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </informalfigure>
 
-    </sect1>
-    
-    <sect1 id="raytracing_goblet">
-      <title>Raytracing the Goblet</title>
+    </section>
+
+    <section xml:id="raytracing_goblet"><info><title>Raytracing the Goblet</title></info>
+
       <para>
 	To raytrace the goblet using the default material properties of gray
-	plastic, go to the File menu and click on Raytrace. When the Raytrace
+	plastic, go to the File menu and select Raytrace. When the Raytrace
 	Control Panel appears, change the color of the background  by clicking on
 	the button to the right of the Background Color box and then clicking on
-	the white option  in the drop-down menu. Next, click on Raytrace.
+	the white option  in the drop-down menu. Next, select Raytrace.
       </para>
- 
+
       <para>
 	When you have finished viewing the goblet from the front view, go to the
 	View option of the menu bar and select az35, el25 and then raytrace. If
 	you want to view the goblet without the wireframe, go to the Framebuffer
-	option of the Raytrace Control Panel and click on Overlay. The goblet
+	option of the Raytrace Control Panel and select Overlay. The goblet
 	should look similar to the following illustration:
-	
+
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged06_rtgobletaz_35_el_25.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_rtgobletaz_35_el_25.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_rtgobletaz_35_el_25.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -439,13 +461,13 @@
 	</mediaobject>
       </informalfigure>
       </para>
-    </sect1>
-    
-    <sect1 id="creating_goblet_review">
-      <title>Review</title>
+    </section>
+
+    <section xml:id="creating_goblet_review"><info><title>Review</title></info>
+
       <para>
 	In this lesson, you:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Created a new database.</para>
 	  </listitem>
@@ -466,6 +488,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

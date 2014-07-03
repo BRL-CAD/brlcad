@@ -1,26 +1,12 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article>
-  <articleinfo>
-    <title>Vehicle Tire and Wheel Creation in BRL-CAD</title>
-    <author>
-      <firstname>Clifford</firstname>
-      <surname>Yapp</surname>
-    </author>
-  </articleinfo>
-  
-  <abstract>
-    <para> 
-     Vehicle wheels are often approximated in BRL-CAD models with tori, cylinders, or other
-     basic geometric shapes that represent a very rough visual and geometric approximation of
-     a tire/wheel combination.  The <command>tire</command> procedure provides BRL-CAD users
-     with the ability to rapidly generate complex tire and wheel structures with
-     standard dimensional input information.
-    </para>
-  </abstract>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Vehicle Tire and Wheel Creation in BRL-CAD</title>
 
-  <sect1>
-    <title>Overview</title>
+    <author><personname><firstname>Clifford</firstname><surname>Yapp</surname></personname></author>
+  </info>
+
+
+  <section><info><title>Overview</title></info>
+
     <para>
       Traditionally, BRL-CAD tire models have been created using a single cylinder, a torus intersected
       with a cylinder, or in some cases additional combinations of these primitives.  While these approximations
@@ -33,8 +19,8 @@
       The <command>tire</command> tool offers a method to generate a model that is dimensionally
       close to a "real" tire using primitives and CSG operations.
       The primitives used are the elliptical torus (eto), right circular cylinder (rcc), ellipsoid (ell),
-      and truncated general cone (tgc).  When tread is added, the sketch and extrude primitives 
-      are also used.  
+      and truncated general cone (tgc).  When tread is added, the sketch and extrude primitives
+      are also used.
     </para>
 
     <para>
@@ -45,28 +31,31 @@
     </para>
 
     <para>
-      While the <command>tire</command> tool <emphasis>can</emphasis> supply tread, it does 
-      not do so by default. Complex tread patterns can SIGNIFICANTLY increase the time for analysis 
-      and visualization, so the modeler needs to bear this cost in mind.  
+      While the <command>tire</command> tool <emphasis>can</emphasis> supply tread, it does
+      not do so by default. Complex tread patterns can SIGNIFICANTLY increase the time for analysis
+      and visualization, so the modeler needs to bear this cost in mind.
     </para>
 
     <para>
       The tire generated is always centered at the global origin.
     </para>
 
-  </sect1>
+  </section>
 
- <sect1>
-    <title>Specifying a Tire with Standard Dimensional Conventions</title>
+ <section><info><title>Specifying a Tire with Standard Dimensional Conventions</title></info>
+
 
     <para>
       The default behavior for the tire procedure with no arguments given is to produce a
-      tire of dimensions 215/55R17 without tread in a file named tire.g. 
-     
+      tire of dimensions 215/55R17 without tread in a file named tire.g.
+
     <informalfigure>
       <mediaobject>
-	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/tire_fig01.png" format="PNG"></imagedata>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/tire_fig01.png" format="PNG"/>
+	</imageobject>
+	<imageobject role="fo">
+	  <imagedata align="center" fileref="../../articles/en/images/tire_fig01.png" format="PNG"/>
 	</imageobject>
 	<caption>
 	  <para>
@@ -75,12 +64,12 @@
 	</caption>
       </mediaobject>
     </informalfigure>
-   
 
-        Since this default is unlikely to meet the needs of most specific modeling tasks,
+
+	Since this default is unlikely to meet the needs of most specific modeling tasks,
       almost all uses of <command>tire</command> will need the "-d" flag to
       customize the dimensions:
-      
+
       <literallayout class="monospaced">tire -d 255/40R18</literallayout>
     </para>
 
@@ -91,7 +80,7 @@
       supports the following input format:
 
       <informaltable frame="all">
-	<tgroup cols='5' align='center'>
+	<tgroup cols="5" align="center">
 	  <tbody>
 	    <row>
 	      <entry>Width(mm)</entry>
@@ -106,21 +95,21 @@
 
       Separators can be any non-numeric character, but normally are either "/",
       "-", or in the case of the latter separator a letter denoting tire structure.
-      Only single character separators are allowed. <footnote><para>As 
+      Only single character separators are allowed. <footnote><para>As
       yet BRL-CAD does not use the structural information (e.g. R = radial construction)
       in the tire building procedure when a valid structure character is supplied,
       but as it may do so in the future the "best practice" is to use the letter if
-      available.</para></footnote> The ratio specifies the sidewall height in terms of 
-      the overall tire width - for example, if a tire is 100mm wide and the Ratio is 
+      available.</para></footnote> The ratio specifies the sidewall height in terms of
+      the overall tire width - for example, if a tire is 100mm wide and the Ratio is
       40, the sidewall height is 40mm.
 
       Examples of valid input strings for tire dimensions include:
     </para>
     <para>
       <informaltable frame="all">
-	<tgroup cols='2' align='center'>
-	  <colspec colwidth='1in'/>
-	  <colspec colwidth='3in'/>
+	<tgroup cols="2" align="center">
+	  <colspec colwidth="1in"/>
+	  <colspec colwidth="3in"/>
 	  <tbody>
 	    <row>
 	      <entry>255/40R18</entry>
@@ -139,15 +128,15 @@
       </informaltable>
     </para>
     <para>
-      All three values must be present to have a valid input string.  Also note 
+      All three values must be present to have a valid input string.  Also note
       that at the moment this procedure takes ONLY integer arguments
-      and single non-numeric character separators, so the above formatting 
+      and single non-numeric character separators, so the above formatting
       restrictions need to be observed.  Examples of INVALID inputs include:
- 
+
       <informaltable frame="all">
-	<tgroup cols='2' align='center'>
-	  <colspec colwidth='1in' align='center'/>
-	  <colspec colwidth='3in' align='center'/>
+	<tgroup cols="2" align="center">
+	  <colspec colwidth="1in" align="center"/>
+	  <colspec colwidth="3in" align="center"/>
 	  <tbody>
 	    <row>
 	      <entry>255.0/40R18</entry>
@@ -164,8 +153,8 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-     
- 
+
+
       If more precision is needed on any of these inputs, the <command>tire</command>
       tool offers other command-line options to use instead of (or even in combination with) the
       <emphasis>d</emphasis> flag which accept floating point input.  When used <emphasis>with</emphasis> the <emphasis>d</emphasis>
@@ -181,11 +170,14 @@
       <command>tire</command> (for example, hub width can not be wider than the maximum
       tire width), but it should cover most real-world dimensions.
       Some examples:
-  
+
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig02.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig02.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig02.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -205,12 +197,15 @@
       the tire material itself.  Modern radial tires in reality are composed of
       several different layers of varying materials designed to enhance structural strength
       and performance, but  (as of April 2008) the <command>tire</command> tool approximates
-      tire surfaces and walls as being a single region.  
- 
+      tire surfaces and walls as being a single region.
+
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig03.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig03.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig03.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -221,17 +216,17 @@
 	</mediaobject>
       </informalfigure>
     </para>
-    
- </sect1>  
 
- <sect1>
-   <title>Options for Tire Tread Modeling</title>
+ </section>
+
+ <section><info><title>Options for Tire Tread Modeling</title></info>
+
 
    <para>
      Tread is the most difficult part of a tire to define in terms of
      the amount of input data required.  At present it is not possible
      for a user to define tread on the command line - only built-in
-     tread options are available.<footnote><para>Note that in most cases, BRL-CAD will 
+     tread options are available.<footnote><para>Note that in most cases, BRL-CAD will
      not have pre-defined knowledge of specific real world tread patterns.</para></footnote>
    </para>
 
@@ -239,7 +234,7 @@
      Tread profile and tread pattern are the two factors to consider
      when specifying tread.  Tread profile is the "shape" of the
      tread on the edges of the tread pattern.  Many truck tires have
-     a "squared off" tread, while automobile tires tend to have 
+     a "squared off" tread, while automobile tires tend to have
      more rounded tread.  Different patterns can be combined with
      different profiles.
    </para>
@@ -248,9 +243,9 @@
      The <emphasis>t</emphasis> flag controls the tread profile, and
      the <emphasis>p</emphasis> flag controls the tread pattern.
      Currently, the following profiles and patterns are available:
-     
+
      <informaltable frame="all">
-       <tgroup cols='4' align='center'>
+       <tgroup cols="4" align="center">
 	 <tbody>
 	   <row>
 	     <entry>Profile #</entry>
@@ -288,12 +283,15 @@
     <para>
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig04.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig04.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig04.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
-	      Combination of curved provile and all-weather tread pattern - generated
+	      Combination of curved profile and all-weather tread pattern - generated
 	      with the command <command>tire -p 1</command>
 	    </para>
 	  </caption>
@@ -308,8 +306,11 @@
     <para>
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig05.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig05.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig05.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -325,15 +326,18 @@
       Using <emphasis>t</emphasis> in place of <emphasis>p</emphasis> would also have produced the
       same model.  Internally the <command>tire</command> command must use some pattern and profile
       for every tread it creates, and for ease of use it will select a default if a pattern or profile
-      is specified by itself. Using the flags together can produce different results - for example, 
+      is specified by itself. Using the flags together can produce different results - for example,
       profile 2 with pattern 1:
     </para>
 
     <para>
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig06.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig06.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig06.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -359,8 +363,11 @@
     <para>
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig07.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig07.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig07.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -374,18 +381,21 @@
 
     <para>
       The other flag is the <emphasis>c</emphasis> flag, which allows
-      user control over how many copies of the master tread pattern 
-      are used to encircle the tread surface of the tire.  This can 
-      be used to create courser or finer tread with the same geometric 
-      pattern.  For example, if the first profile, second pattern and 
+      user control over how many copies of the master tread pattern
+      are used to encircle the tread surface of the tire.  This can
+      be used to create courser or finer tread with the same geometric
+      pattern.  For example, if the first profile, second pattern and
       count of 100 are used:
     </para>
 
     <para>
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig08.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig08.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig08.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -402,15 +412,15 @@
       Adjusting the count of patterns can be a way to get a different
       visual tread style without defining a new tread pattern, although
       it is unlikely to result in a "real" pattern in the sense of
-      representing an in-use tire tread.  
+      representing an in-use tire tread.
     </para>
 
 
     <note>
       <para>
-	It is important when using the count flag to remember that tread patterns 
+	It is important when using the count flag to remember that tread patterns
 	are actual geometry and a high count of patterns can slow
-	down a raytrace considerably. A strategy for models that will see a 
+	down a raytrace considerably. A strategy for models that will see a
 	variety of uses is to include both treaded and slick (non-treaded) tire
 	models in the database under different names, make a tire-model.c combination that is
 	referenced by the vehicle model, and include either the treaded or non-treaded model in the
@@ -418,11 +428,11 @@
       </para>
     </note>
 
- </sect1>
+ </section>
 
 
-  <sect1>
-    <title>Setting Tire Thickness</title>
+  <section><info><title>Setting Tire Thickness</title></info>
+
     <para>
       Tire thickness is manipulated via the <emphasis>u</emphasis>
       flag.  By default, the tire procedure will adjust the thickness
@@ -440,8 +450,11 @@
     <para>
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig09.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig09.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig09.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -458,11 +471,14 @@
       normal views (the tread pattern and depth are added so the
       cross section WITH tread is shown - it will change with
       and without tread):
- 
+
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig10.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig10.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig10.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -473,37 +489,40 @@
 	</mediaobject>
       </informalfigure>
     </para>
- 
+
     <para>
       This is a visual check - other tools are available for
       actual dimensional testing.  Let's say the desired thickness
       is 70mm.  The tire is re-generated thus:
       <literallayout class="monospaced">tire -d 395/85R20 -p 2 -g 30 -u 70</literallayout>
     </para>
-    
+
     <para>
       Examining the cross sections again, the thickness increase
       is clearly seen:
- 
+
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig11.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig11.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig11.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
-	      Cross section views - default and surface normal - of the new 
+	      Cross section views - default and surface normal - of the new
 	      395/85R20 tire with increased thickness.
 	    </para>
 	  </caption>
 	</mediaobject>
-      </informalfigure>    
+      </informalfigure>
     </para>
- 
-  </sect1>
 
-  <sect1>
-    <title>Changing the Rim Width</title>
+  </section>
+
+  <section><info><title>Changing the Rim Width</title></info>
+
     <para>
       The default behavior of <command>tire</command> is to make the rim width (the
       width of the tire at the point where the outer wall connects
@@ -515,8 +534,11 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig12.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig12.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig12.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -524,24 +546,27 @@
 	    </para>
 	  </caption>
 	</mediaobject>
-      </informalfigure>    
+      </informalfigure>
     </para>
 
- </sect1>
+ </section>
 
-  <sect1>
-    <title>Changing the Radial Location of the Maximum Tire Width</title>
+  <section><info><title>Changing the Radial Location of the Maximum Tire Width</title></info>
+
     <para>
       When <command>tire</command> accepts a maximum width specification, it internally
       decides on a default distance from the tire center where that maximum
       will occur.  This parameter can be adjusted by the modeler with the
       <emphasis>s</emphasis> flag.  Some examples using the narrow rim width model settings
       from the previous section:
- 
+
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig13.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig13.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig13.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -553,20 +578,20 @@
 	    </para>
 	  </caption>
 	</mediaobject>
-      </informalfigure>    
+      </informalfigure>
     </para>
 
- </sect1>
+ </section>
 
- 
-  <sect1>
-    <title>Other Options</title>
+
+  <section><info><title>Other Options</title></info>
+
     <para>
       The other flags available in <command>tire</command>
       relate to naming of the top-level tire object.  The <emphasis>a</emphasis>
       flag automatically appends the dimensional information to the name,
       making it simple to import multiple tires of different dimensions into
-      a single .g file with the MGED <command>dbconcat</command> command.  The 
+      a single .g file with the MGED <command>dbconcat</command> command.  The
       <emphasis>n</emphasis> option allows the modeler to specify a string
       other than "tire" for the root name of the top level object.  These
       options can work individually or in concert.  So, for example, to generate
@@ -574,7 +599,7 @@
       object the following will work:
 
       <literallayout class="monospaced">tire -a -n "car"</literallayout>
-      
+
     </para>
     <para>
       By default, the procedure creates a file called "tire.g" to contain the model.
@@ -584,21 +609,24 @@
       will create the "mytire.g" file and insert the default tire model.
     </para>
 
-  </sect1>
+  </section>
 
-  <sect1>
-    <title>Structure of a Tire Model</title>
+  <section><info><title>Structure of a Tire Model</title></info>
+
     <para>
-      Although it is not visible to the eye in normal raytracing, the 
-      tire models do include knowledge in the model of the presence of 
-      air inside the tire as well as the tire and wheel structures themselves.  
-      For illustration purposes, the following image displays the air 
+      Although it is not visible to the eye in normal raytracing, the
+      tire models do include knowledge in the model of the presence of
+      air inside the tire as well as the tire and wheel structures themselves.
+      For illustration purposes, the following image displays the air
       region inside the tire:
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig14.png" format="PNG"></imagedata>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig14.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig14.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -606,14 +634,14 @@
 	    </para>
 	  </caption>
 	</mediaobject>
-      </informalfigure>    
+      </informalfigure>
 
     </para>
     <para>
       The three material regions are defined immediately below the top-level object:
-      
+
       <literallayout class="monospaced">
-mged> l tire
+mged&gt; l tire
 tire:  --
    u tire-215-55R17.r
    u air-215-55R17.r
@@ -628,7 +656,7 @@ tire:  --
       other regions.
 
       <literallayout class="monospaced">
-mged> tree -d 2 tire
+mged&gt; tree -d 2 tire
 tire/
 	u tire-215-55R17.r/R
 		u tire-solid-215-55R17.c/
@@ -656,45 +684,45 @@ tire/
 	more involved.
       </para>
     </note>
-  </sect1>
+  </section>
 
- <sect1>
-    <title>Summary</title>
-    <para>    
-      <itemizedlist mark='bullet'>
+ <section><info><title>Summary</title></info>
+
+    <para>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>
 	    <command>tire</command> is a procedural geometry database tool to create
 	    sophisticated tire models using standard dimensional specifications.
-          </para>
-        </listitem>
+	  </para>
+	</listitem>
 	<listitem>
 	  <para>
 	    The model consists of three regions which define air,
 	    tire, and wheel structures.
-          </para>
-        </listitem>
+	  </para>
+	</listitem>
 	<listitem>
 	  <para>
 	    The wheel is generated in response to the tire dimensions and
 	    there is currently only one wheel type available in this procedure
 	    (users may model and substitute their own wheel designs).
-          </para>
-        </listitem>
+	  </para>
+	</listitem>
 	<listitem>
 	  <para>
 	    Tread is not modeled by default due to performance considerations
 	    but can be added using options.
-          </para>
-        </listitem>
+	  </para>
+	</listitem>
 	<listitem>
 	  <para>
 	    Fine grained control of parameters such as tire thickness
 	    is available with optional user flags.
-          </para>
-        </listitem>
+	  </para>
+	</listitem>
       </itemizedlist>
-      
+
     </para>
- </sect1>
+ </section>
  </article>

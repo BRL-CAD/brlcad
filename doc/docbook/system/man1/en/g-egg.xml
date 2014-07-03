@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gegg1'>
+<refmeta>
+    <refentrytitle>G-EGG
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>g-egg</refname>
+<refpurpose>Panda3D Translator (BRL-CAD to EGG)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>g-egg</command><arg choice='opt'>-8 </arg>
+    <arg choice='opt'>-xX <replaceable>lvl</replaceable></arg>
+    <arg choice='opt'>-D <replaceable>calculation_tolerance</replaceable></arg>
+    <arg choice='opt'>-a <replaceable>abs_tol</replaceable></arg>
+    <arg choice='opt'>-r <replaceable>rel_tol</replaceable></arg>
+    <arg choice='opt'>-P <replaceable>number_of_CPUs</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>norm_tol</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>EGG_file</replaceable></arg>
+    <arg choice='plain'><replaceable>database.g</replaceable></arg>
+    <arg choice='plain'><replaceable>object(s)</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>g-egg</emphasis>
+converts the specified
+<emphasis remap='I'>object(s)</emphasis>
+from a BRL-CAD
+<emphasis remap='I'>database.g</emphasis>
+file to the
+<emphasis remap='I'>panda3d</emphasis>
+file format.
+The
+<option>-x</option>
+option specifies an RT debug flag and the
+<option>-X</option>
+option specifies an NMG debug flag. The
+<option>-a</option>
+,
+<option>-r</option>
+, and
+<option>-n</option>
+options specify tessellation tolerances.
+The
+<option>-D</option>
+option specifies a calculational distance tolerance (mm). Any two vertices
+that are less than this distance apart will be treated as the same vertex.
+The
+<option>-v</option>
+option requests verbose output.
+The
+<option>-i</option>
+option requests the output file units to be inches (the default is mm).
+The
+<option>-o</option>
+option specifies the name of the file to receive the output
+(stdout is the default).
+<option>-8</option>
+option tells the facetizer to use the marching cubes algorithm.
+<option>-9</option>
+option tells the facetizer to use the "bottess" algorithm.
+The
+<option>-P</option>
+option specifies the number of CPU's to be used.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<synopsis>
+$ <emphasis remap='I'>g-egg -o sample.egg sample.g sample_object</emphasis>
+</synopsis>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 2009-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

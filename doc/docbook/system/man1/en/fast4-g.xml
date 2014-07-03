@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='fast4g1'>
+<refmeta>
+    <refentrytitle>FAST4-G
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>fast4-g</refname>
+<refpurpose>FASTGEN4 Translator (FASTGEN4 to BRL-CAD)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>fast4-g</command>
+    <arg choice='opt'>-dwq </arg>
+    <arg choice='opt'>-o <replaceable>plot_file</replaceable></arg>
+    <arg choice='opt'>-m <replaceable>muves_warnings</replaceable></arg>
+    <arg choice='opt'>-c <replaceable>id_list</replaceable></arg>
+    <arg choice='opt'>-x <replaceable>RT_DEBUG_FLAG</replaceable></arg>
+    <arg choice='opt'>-b <replaceable>BU_DEBUG_FLAG</replaceable></arg>
+    <arg choice='plain'><replaceable>file.fastgen4</replaceable></arg>
+    <arg choice='plain'><replaceable>file.g</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>fast4-g</emphasis>
+converts the specified
+<emphasis remap='I'>file.fastgen4</emphasis>
+to a BRL-CAD
+<emphasis remap='I'>file.g</emphasis>
+file.</para>
+
+<para>The
+<option>-d</option>
+option prints debugging information and the
+<option>-w</option>
+option prints warnings whenever an object is assigned a default name (no
+name specified in the FASTGEN4 file).</para>
+
+<para>The
+<option>-q</option>
+option requests quiet mode, so that nothing will be printed except errors.</para>
+
+<para>The
+<option>-b</option>
+option specifies a value for a debug flag for libbu and the
+<option>-x</option>
+option specifies a value for the librt debug flag.</para>
+
+<para>The
+<option>-o</option>
+option indicates that all CTRI and CQUAD elements that get processed should be output to the
+specified plot_file in libplot3 format.  This plot file can be viewed in MGED using the
+<emphasis remap='I'>overlay</emphasis>
+command.</para>
+
+<para>The
+<option>-m</option>
+option requests that information about any CHGCOMP and CBACKING elements be output in the specified
+<emphasis remap='I'>muves_warnings</emphasis>
+file.</para>
+
+<para>The
+<option>-c</option>
+option allows the user to specify a restricted set of components to process from the
+input file. The
+<emphasis remap='I'>id_list</emphasis>
+may be a comma separated list of ident numbers and ranges. For example,
+<option>-c 3002,5678,9213,1002-1100</option>
+will convert only the regions with idents of 3002,5678,9213, and everything from 1002 through 1100.</para>
+
+<para>If you have a FASTGEN2 or FASTGEN3 format file, they can be converted by processing them with
+<emphasis remap='I'>rpatch</emphasis>
+and then providing the resulting rpatch file to the
+<emphasis remap='I'>patch-g</emphasis>
+converter.  See their respective manual pages for more information.</para>
+
+<para>The
+<emphasis remap='I'>file.fastgen4</emphasis>
+file is expected to be in the FASTGEN 4.1 format as defined in the
+FASTGEN 4.1 User Manual.</para>
+
+<para><emphasis remap='I'>CCONE1, CCONE2,</emphasis>
+and
+<emphasis remap='I'>CCONE3</emphasis>
+elements are converted to BRL-CAD truncated right cylinders
+<emphasis remap='I'>(TRC). CHEX2</emphasis>
+elements are converted to BRL-CAD arbitrary convex polyhedrons
+<emphasis remap='I'>(ARB8).</emphasis>
+<emphasis remap='I'>CLINE</emphasis>
+elements are converted to BRL-CAD cline solids.
+<emphasis remap='I'>CQUAD</emphasis>
+,
+<emphasis remap='I'>CTRI</emphasis>
+, and
+<emphasis remap='I'>CHEX1</emphasis>
+elements are converted to faces of a BRL-CAD BOT (Bag Of Triangles).
+<emphasis remap='I'>CSPHERE</emphasis>
+elements are converted to BRL-CAD sphere
+<emphasis remap='I'>(SPH)</emphasis>
+solids. BRL-CAD region ident numbers are assigned by combining the
+FASTGEN4 group and component numbers:</para>
+
+<literallayout remap='.nf'>
+	ident = group x 1000 + component
+</literallayout> <!-- .fi -->
+
+<para>and object names are assigned from the FASTGEN4
+<emphasis remap='I'>$NAME</emphasis>
+elements using an algorithm to create unique BRL-CAD names.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<synopsis>
+$ <emphasis remap='I'>fast4-g sample.fastgen4 sample.g</emphasis>
+</synopsis>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>rpatch</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>patch-g</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<!-- .br -->
+<emphasis remap='I'>FASTGEN 4.1 User's Manual,</emphasis>
+XRESV Tech Note 94-01,
+Hugh Griffis and Maty Lentz,
+April 1994</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1994-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

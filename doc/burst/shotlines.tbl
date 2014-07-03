@@ -1,0 +1,29 @@
+.TS
+center,allbox,tab(@);
+lb lb lb
+_ _ _
+l l l.
+record description@field format@field description
+run header@'1'@record number 1
+@1x,f9.4@attack azimuth in degrees
+@1x,f8.4@attack elevation in degrees
+@1x,f7.2@shotline separation
+@1x,f7.2@maximum Y' coordinate of target
+@1x,f7.2@minimum Y' coordinate of target
+@1x,f7.2@maximum Z' coordinate of target
+@1x,f7.2@minimum Z' coordinate of target
+@1x,6a@units (\fImm,cm,inches,feet,meters\fR)
+shotline header@'2'@record number 2
+@1x,f8.3@Y' coordinate of shotline
+@1x,f8.3@Z' coordinate of shotline
+shotline intersections@'3'@record number 3
+@1x,f8.2@X' coordinate of intersection
+@1x,f7.3@sine of fallback angle of exit normal
+@1x,f7.2@rotation angle of exit normal in degrees
+@1x,i4@component code number
+@1x,f8.2@normal thickness of component
+@1x,f8.2@line-of-sight thickness of component
+@1x,i2@space code following component
+@1x,f7.2@obliquity angle at entry to component in degrees
+@1x,f7.2@obliquity angle at exit from component in degrees
+.TE

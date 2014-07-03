@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixbackgnd1'>
+<refmeta>
+    <refentrytitle>PIXBACKGND
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pixbackgnd</refname>
+<refpurpose>generate a pix(5) shaded background</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixbackgnd</command>
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-i </arg>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>height</replaceable></arg>
+    <arg choice='opt'>-t <replaceable>title_height</replaceable></arg>
+    <arg choice='opt'>-a <replaceable>top_inten</replaceable></arg>
+    <arg choice='opt'>-b <replaceable>bottom_inten</replaceable></arg>
+    <arg choice='plain'><replaceable>hue</replaceable></arg>
+    <arg choice='plain'><replaceable>saturation</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>file.pix</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+  <command>pixbackgnd</command>
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-i </arg>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>height</replaceable></arg>
+    <arg choice='opt'>-t <replaceable>title_height</replaceable></arg>
+    <arg choice='plain'><replaceable>red</replaceable></arg>
+    <arg choice='plain'><replaceable>green</replaceable></arg>
+    <arg choice='plain'><replaceable>blue</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>file.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pixbackgnd</emphasis>
+generates a
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format shaded background on stdout suitable for
+making slides for a presentation on.
+The upper portion of the screen is reserved for a title area,
+and is drawn at constant intensity 240,
+followed by a 4 scanline white bar,
+after which the intensity smoothly decreases from 240 to 50.
+<emphasis remap='I'>Hue</emphasis>
+and
+<emphasis remap='I'>saturation</emphasis>
+are values from 0 to 255 and can be selected via
+<citerefentry><refentrytitle>fbcolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+A hue of 160 is a pleasing blue.</para>
+
+<para>By default, the title height is
+80 scanlines, or 90 scanlines if the
+<option>-h</option>
+flag is set, but the
+<option>-t </option><replaceable>title_height</replaceable>
+option may be used to specify another value.
+If
+<emphasis remap='I'>title_height</emphasis>
+is set to zero, then the white bar
+is omitted as well, and the entire display is smoothly shaded.</para>
+
+<para>By default, the display is assumed to be 512x512 pixels;
+by specifying the
+<option>-h</option>
+flag, the output size is changed to 1024x1024.</para>
+
+<para>By specifying the
+<option>-i</option>
+flag, the scanlines will be written out in inverted order
+(i.e., top to bottom).
+This is mostly useful with programs like
+<citerefentry><refentrytitle>cat-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+
+<para>The
+<option>-a</option>
+and
+<option>-b</option>
+options can be used to set the top and bottom intensity,
+in the range of 0 to 255.
+By default, the top intensity is 240, and the bottom is 50.</para>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<para>pixbackgnd 160 200  |   pixmerge fg.pix - | pix-fb
+<!-- .br -->
+pixbackgnd -t120 160 250
+<!-- .br -->
+pixbackgnd -i -t0 160 200   |   cat-fb -O file.troff</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixmerge</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cat-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>The starting and ending intensities should probably be an option.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

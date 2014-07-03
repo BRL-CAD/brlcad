@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixscale1'>
+<refmeta>
+    <refentrytitle>PIXSCALE
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pixscale</refname>
+<refpurpose>change the size of a color pix file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixscale</command>
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-r </arg>
+    <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>in_height</replaceable></arg>
+    <arg choice='opt'>-S <replaceable>squareoutsize</replaceable></arg>
+    <arg choice='opt'>-W <replaceable>out_width</replaceable></arg>
+    <arg choice='opt'>-N <replaceable>out_height</replaceable></arg>
+    <arg choice='opt'><replaceable>infile.pix</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>outfile.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pixscale</emphasis>
+will take a color
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file of given dimensions and produce a larger or smaller
+scaled version.
+The
+<option>-w</option>
+and
+<option>-n</option>
+flags specify the input file width and number of scan lines in pixels.
+They can both be set to the same value via
+<option>-s.</option>
+Similarly, the
+<option>-W</option>
+and
+<option>-N</option>
+flags specify the desired output file width and number of scan lines in
+pixels.  They can both be set to the same value via
+<option>-S.</option>
+Defaults of 512 are assumed for any unspecified dimensions.</para>
+
+<para>The algorithm used is bilinear interpolation if scaling up, and
+a box filter of arbitrary size if scaling down.  For the box filter a
+"square pixel" assumption is made; that is, all whole and fractional
+input pixels falling into a rectangle the size of an output pixel contribute
+equally according to the fraction of the output pixel area they cover.
+When interpolating, the edge pixels are preserved, i.e. all of the
+interpolated pixels fall inside of the edges.  This can be a bit surprising
+when say doubling the size of a file as only the edge pixels will fall
+at exactly the location of an output pixel.</para>
+
+<para>Specifying the
+<option>-r</option>
+flag changes from bilinear interpolation to
+nearest neighbor interpolation, i.e. it enlarges the image by
+pixel replication.</para>
+
+<para>For 2X interpolation, a much faster alternative is
+<citerefentry><refentrytitle>pixinterp2x</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+
+<para>The
+<option>-h</option>
+flag causes the frame buffer to be
+used in high resolution mode (1024x1024).
+This is important for frame buffers such as the Adage which operate
+differently depending on the display size.  Without this flag
+the default size for the selected device will be used (usually
+the entire screen).</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixcrop</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixinterp2x</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>This program cannot scale up in one dimension and down in the other
+at the same time.
+<!-- .br -->
+The box filter used for scaling down results in the usual high-frequency
+ripple.
+<!-- .br -->
+Optional cubic interpolation would be nice.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

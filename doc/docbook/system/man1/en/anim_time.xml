@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='anim_time1'>
+<refmeta>
+<refentrytitle>ANIM_TIME</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>anim_time</refname>
+<refpurpose>estimate appropriate time parameters for path</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>anim_time</command>
+    <arg choice='opt'>-s <replaceable>start_speed_absolute</replaceable></arg>
+    <arg choice='opt'>-e <replaceable>end_speed_absolute</replaceable></arg>
+    <arg choice='opt'>-i <replaceable>initial_speed_relative</replaceable></arg>
+    <arg choice='opt'>-f <replaceable>final_speed_relative</replaceable></arg>
+    <arg choice='opt'>-m <replaceable>max_len</replaceable></arg>
+    <group choice='opt'><arg choice='plain'>-v </arg><arg choice='plain'><replaceable>q</replaceable></arg></group>
+    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'><replaceable>in.table</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>out.table</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>This filter is designed to estimate appropriate time parameters for
+an animation curve in 3D space. Given a four-column table specifying
+time and 3D position for an object,
+<command>anim_time</command>
+ignores all but the first and last time specifications and
+calculates reasonable time values for each intermediate point in the table.
+The
+output time values are based on the distances between points and the
+calculated speed of the object. Various options allow the user to
+control the assumptions on the object's initial and final speeds, and the
+form of the output.</para>
+
+<para><emphasis remap='I'>Anim_time</emphasis>
+is intended to be used in situations where the user knows what key points
+an object should pass through and how long the entire motion should take,
+but doesn't care exactly when the object
+reaches each point. It is also useful for getting objects to accelerate
+smoothly to and from rest.</para>
+
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-m</option>#</term>
+  <listitem>
+<para>Specify the maximum number of points to be read. This default to 64, so
+you must use this option if you want to use tables with more than 64
+points.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s</option>#</term>
+  <listitem>
+<para>Specify the starting speed of the object. If this option is not
+specified, then the object is assumed to be initially travelling on a
+pace to negotiate the entire path in the given time at a constant rate.
+The argument must be positive and no greater than three times the speed
+needed to traverse the path at a constant rate.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-e</option>#</term>
+  <listitem>
+<para>Specify the final speed of the object. If this option is not specified,
+then the object is assumed to end up travelling on a pace to negotiate
+the entire path in the given time at a constant rate. The argument must
+be positive and no greater than three times the speed needed to traverse
+the path at a constant rate.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-i</option>#</term>
+  <listitem>
+<para>Specify the initial speed of the object, relative to the speed that
+would negotiate the given path at a constant rate. For example, an
+argument of 2.0 means twice the speed needed to traverse the path at a
+constant rate. Must lie between 0.0 and 3.0.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option>#</term>
+  <listitem>
+<para>Specify the final speed of the object, relative to the speed that would
+negotiate the given path at a constant rate. Must lie between 0.0 and
+3.0.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Verbose option. The output table will contain a time column and three
+position columns. If this option is not specified, only the new time
+column will be printed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-q</option></term>
+  <listitem>
+<para>Query the total distance. If this option is specified, the only output
+will be a number representing the total length of the input path.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>The algorithm fits a cubic polynomial to the distance vs time graph, and then
+uses Newton's method to find the times corresponding to each given distance.
+If for some reason convergence is not reached,
+<command>anim_time</command>
+will print a warning on standard error. If the
+<option>-d</option>
+option is specified, the results of each iteration will be printed.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Carl J. Nuzman</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1996-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -11,7 +11,7 @@ Modeling
 		Boolean Combinations
 		DAG, Structure
 			boolean arcs
-			matricies
+			matrices
 	Materials and Appearance
 		Material types.
 		Visual Shaders
@@ -43,5 +43,5 @@ Creating and Editing Models with MGED
 		r
 	Editing Solids
 	Editing combinations
-	Editing Matricies
+	Editing Matrices
 -->

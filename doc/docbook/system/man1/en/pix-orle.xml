@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixorle1'>
+<refmeta>
+    <refentrytitle>PIX-ORLE
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pix-orle</refname>
+<refpurpose>convert a pix format RGB file into old run-length encoded form</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pix-orle</command>
+    <arg choice='opt'>-hdv </arg>
+    <arg choice='opt'>-s <replaceable>squarefilesize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
+    <arg choice='opt'><replaceable>file.pix</replaceable></arg>
+    <arg choice='opt'><replaceable>file.rle</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>pix-orle</emphasis>
+saves a
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format image in a
+Run-Length Encoded (RLE) form,
+using the old University of Utah standard (Edition-2) format.
+This program is provided for compatibility with the old RLE image
+tools, and generally should not be used for saving new images,
+except where compatibility with the old tools is a factor.
+The equivalent new tool is
+<emphasis remap='I'>pix-rle(1)</emphasis>.</para>
+
+<para>If
+<emphasis remap='I'>file.pix</emphasis>
+is not specified, the
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file is read from standard in.
+If
+<emphasis remap='I'>file.rle</emphasis>
+is not specified, the encoded file is written to standard out.
+<emphasis remap='I'>pix-orle</emphasis>
+attempts to compress flat-colored areas
+as much as possible.
+This means that it is generally reasonable to save an entire image,
+since in RLE format it will not take up much more file space than
+extracting and saving only the
+interesting portion of the image.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-w </option><replaceable>file_width</replaceable></term>
+  <listitem>
+<para>Specify the width (in pixels) of the scanlines in the input file.
+The default is 512.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n </option><replaceable>file_height</replaceable></term>
+  <listitem>
+<para>Specify the number of scanlines of input to be encoded.
+The default is 512.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s </option><replaceable>squarefilesize</replaceable></term>
+  <listitem>
+<para>Specify both the number of pixels per scanline and the number of
+scanlines in the file to process.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>"hires" flag.
+Set both the height and width of the input to 1024.
+The default is 512x512.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Verbose mode.
+The program will provide voluminous status information
+on standard error as it proceeds through encoding the image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option></term>
+  <listitem>
+<para>Debug mode.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+  <blockquote remap='RS'>
+<para>pix-orle  &lt;plane.pix  plane.rle
+<!-- .br -->
+pix-orle  -h  car.pix  car.rle
+<!-- .br -->
+pixfilter -f lo &lt;truck.pix | pix-orle &gt; truck-filt.rle
+  </para></blockquote> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>liborle</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

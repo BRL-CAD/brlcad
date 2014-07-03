@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='bwrot1'>
+<refmeta>
+    <refentrytitle>BWROT
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>bwrot</refname>
+<refpurpose>rotate, invert, or reverse a black and white bw file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>bwrot</command>
+    <group choice='opt'><arg choice='plain'>-rifb </arg><arg choice='plain'>-a <replaceable>angle</replaceable></arg></group>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>in_height</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>out.bw</replaceable></arg>
+    <arg choice='opt'><replaceable>file.bw</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'><replaceable>&gt;</replaceable></arg><arg choice='plain'><replaceable>out.bw</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>bwrot</command>
+will rotate, vertically invert, and horizontally reverse a black and white
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file or read from standard input if a file name is not given.  The
+<option>-w</option>
+and
+<option>-n</option>
+flags specify the input file width and number of scan lines in pixels.
+They can both be set to same value via
+<option>-s.</option></para>
+
+<para>The
+<option>-r</option>
+flag reverses the scan lines left to right.
+<!-- .br -->
+The
+<option>-i</option>
+flag inverts the image top to bottom.
+<!-- .br -->
+The
+<option>-f</option>
+and
+<option>-b</option>
+flag will rotate the image ninety degrees forward or backward respectively.
+The sense of the rotation is relative to a first quadrant coordinate
+system, i.e. origin lower left, where "forward" means clockwise.</para>
+
+<para>Note that a 180 degree rotation can be obtained by both reversing
+and inverting.</para>
+
+<para>If the
+<option>-a</option>
+flag is used, the image will be rotated counterclockwise by the specified
+arbitrary angle.</para>
+
+<para>The
+<option>-o</option>
+option can be used to specify an output file instead of redirecting
+standard out.</para>
+</refsect1>
+
+<refsect1 xml:id='method'><title>METHOD</title>
+<para>A fairly large buffer is kept in memory so that, file size permitting,
+the entire rotation can occur without seeking on input or output.
+In any event, the algorithm is designed to process the input sequentially,
+so that if any seeking is required, it will happen on output only.  If
+these seeks fail, e.g. the output is a pipe, the user will be told that
+it needs a file on output.
+A more general solution to this problem would be to see if seeks can
+be done on input instead, and switch the algorithm to seek on input
+only.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwscale</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>If the file size is very large, excessive seeking may occur on output
+and the rotation will take a very long time.  More complicated
+algorithms could remedy this.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

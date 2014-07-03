@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='ascnmg1'>
+<refmeta>
+    <refentrytitle>ASC-NMG</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>asc-nmg</refname>
+<refpurpose>ascii-to-NMG converter</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>asc-nmg</command>
+    <arg choice='plain'><replaceable>ascii_file</replaceable></arg>
+    <arg choice='plain'><replaceable>nmg.g</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>asc-nmg</emphasis>
+converts the specified
+<emphasis remap='I'>ascii_file</emphasis>
+(not a .asc geometry database) to a binary BRL-CAD
+<emphasis remap='I'>nmg.g</emphasis>
+geometry database file containing NMG objects. The
+<emphasis remap='I'>ascii_file</emphasis>
+is expected to contain lines of the following forms:</para>
+
+<para>To start a new outer loop for a face:</para>
+
+<literallayout remap='.nf'>
+	l
+</literallayout> <!-- .fi -->
+
+<para>To start a new "hole" loop in the current face:</para>
+
+<literallayout remap='.nf'>
+	l hole
+</literallayout> <!-- .fi -->
+
+<para>To indicate a vertex in the current loop:</para>
+
+<literallayout remap='.nf'>
+	v# x y z
+</literallayout> <!-- .fi -->
+
+<para>where # is the vertex number and x, y, and z are the coordinates
+of that vertex.</para>
+
+<para>To extrude a face:</para>
+
+<literallayout remap='.nf'>
+	e x y z
+</literallayout> <!-- .fi -->
+
+<para>where x, y, and z compose the extrusion vector for the face.</para>
+
+<para>If an extrusion vector is specified, then the first face in the
+NMG objects list of faces
+will be extruded. This is intended for cases where only one face
+is described and then extruded to form a solid. Supplying an extrusion
+vector when more than one face is described may produce erroneous results.
+A solid may be built by extruding a face or by building enough faces to
+produce a closed shell. Each execution of
+<command>asc-nmg</command>
+will produce a single NMG object.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para>If the file
+<emphasis remap='I'>ascii_file</emphasis>
+contains the following:</para>
+
+<literallayout remap='.nf'>
+l
+	e	-1 0 0
+	v0	1 -1 -1
+	v1	1 1 -1
+	v2	1 1 0
+	v3	1 0 0
+	v4	1 0 1
+	v5	1 -1 1
+</literallayout> <!-- .fi -->
+
+<para>Then, the command:</para>
+
+<synopsis>
+$ <emphasis remap='I'>asc-nmg ascii_file sample.g</emphasis>
+</synopsis>
+
+<para>will produce an 'L'-shaped NMG solid to the sample.g database file.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1994-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

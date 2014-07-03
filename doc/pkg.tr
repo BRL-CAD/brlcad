@@ -218,7 +218,7 @@ PKG_STREAM	- 	Send a buffered data stream on the connection
 		byte stream buffer.  If the current message is less
 		than MAXQLEN (currently 512) bytes in length, and space
 		remains for it, it will be appended onto the end of this
-		buffer.  Otherwise the buffer is implicity flushed by
+		buffer.  Otherwise the buffer is implicitly flushed by
 		sending this message via PKG_SEND.
 
 PKG_FLUSH	-	Flush the stream buffer out on the connection
@@ -280,7 +280,7 @@ PKG_SWITCH	-	Table of User Message Handler Pointers
 		The user may specify handlers for one or more message types.
 		When these routines are called they are passed a pointer
 		to the connection and a pointer to a buffer that contains
-		the message.  The user message handler routine is resonsible
+		the message.  The user message handler routine is responsible
 		for freeing the message buffer after processing it.  If there
 		is no message handler for that message type the message is
 		discarded and the buffered freed.  The switch routine uses
@@ -290,7 +290,7 @@ PKG_SWITCH	-	Table of User Message Handler Pointers
  		The pkg_switch list which is passed to some of the above
 		functions is a NULL terminated array of structures containing
 		the message type, a pointer to an function which handles
-		messages of that type, and a descriptive string.  A seperate
+		messages of that type, and a descriptive string.  A separate
 		pkg_switch array is kept for each connection so that several
 		entirely different PKG conversations can be carried out by a
 		single application at the same time.
@@ -357,9 +357,9 @@ host systems connected to provide relay services.
 It is not anticipated that full asynchronous I/O implementation will
 work particularly well across domain boundaries, but all other forms
 of message transfer should work quite well.  As already noted, buffered
-stream I/O may be prefectly satisfactory for many applications where
+stream I/O may be perfectly satisfactory for many applications where
 full interaction is not required.  Where applicable, this mode of
-interface is to be prefered over full asynchronous I/O.  Further
+interface is to be preferred over full asynchronous I/O.  Further
 development of this interface layer on other protocol families is
 possible, perhaps even on low level networks like BITNET and certainly
 on connection oriented X.25 or OSI networks.

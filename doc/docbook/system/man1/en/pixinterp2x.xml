@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixinterp2x1'>
+<refmeta>
+    <refentrytitle>PIXINTERP2X
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pixinterp2x</refname>
+<refpurpose>interpolate a color pix file twice as large as the original</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixinterp2x</command>
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-s <replaceable>squarefilesize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
+    <arg choice='opt'><replaceable>infile.pix</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>outfile.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pixinterp2x</emphasis>
+does a bilinear interpolation between the pixels of the
+input
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file to create the output file.
+This program is most useful when creating images for photographing.
+Even though no additional image information is created,
+there may be significant photographic advantages to operating
+the display at its highest resolution.</para>
+
+<para>This is a very fast implementation of one special case of
+interpolation;  the general tool for interpolation is
+<citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>"hires" flag.
+Set both the height and width of the input to 1024.
+The default is 512x512.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w </option><replaceable>file_width</replaceable></term>
+  <listitem>
+<para>Specify the width (in pixels) of the scanlines in the input file.
+The default is 512.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n </option><replaceable>file_height</replaceable></term>
+  <listitem>
+<para>Specify the number of scanlines of input to be processed.
+The default is 512.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s </option><replaceable>squarefilesize</replaceable></term>
+  <listitem>
+<para>Specify both the number of pixels per scanline and the number of
+scanlines in the file to process.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>The interpolated scanlines fall exactly half way between the input
+lines, and the input lines are exactly preserved.  Rather than extrapolate
+beyond the edges of the file, the first X and Y line is duplicated (left
+and bottom edge).  This differs from the behavior of
+<citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>More memory is used than is strictly necessary.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

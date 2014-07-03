@@ -1,0 +1,501 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='librt3'>
+<refmeta>
+    <refentrytitle>LIBRT
+</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>librt</refname>
+<refpurpose>library for raytracing an MGED database</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<para>This file seems to be out of date with the sources.
+Consult the headers for up-to-date information.
+Use the below interface documentation at your own discretion.
+</para>
+
+<funcsynopsis>
+
+<funcsynopsisinfo>
+#include "vmath.h"
+#include "raytrace.h"
+
+extern struct rt_functab OBJ[];
+extern struct rt_g rt_g;
+
+</funcsynopsisinfo>
+
+<funcprototype>
+<funcdef>struct <function>rt_i</function> *rt_dirbuild</funcdef>
+    <paramdef>char * <parameter>mged_file_name</parameter></paramdef>
+    <paramdef>char * <parameter>buf</parameter></paramdef>
+    <paramdef>int <parameter>len</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>int <function>rt_gettree</function></funcdef>
+    <paramdef>struct rt_i * <parameter>rtip</parameter></paramdef>
+    <paramdef>char * <parameter>object_name</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>rt_prep</function></funcdef>
+    <paramdef>struct rt_i * <parameter>rtip</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>int <function>rt_shootray</function></funcdef>
+    <paramdef>struct application * <parameter>ap</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>rt_prep_timer</function></funcdef>
+<void/>
+</funcprototype>
+
+<funcprototype>
+<funcdef>double<function>rt_read_timer</function></funcdef>
+    <paramdef>char *<parameter>buf</parameter></paramdef>
+    <paramdef>int <parameter>len</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>rt_pr_partitions</function></funcdef>
+    <paramdef>struct rt_i *rtip struct partition *<parameter>phead</parameter></paramdef>
+    <paramdef>char *<parameter>title</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>rt_pr_seg</function></funcdef>
+     <paramdef>struct seg *<parameter>segp</parameter></paramdef>
+</funcprototype>
+
+<funcsynopsisinfo>
+segp;
+
+</funcsynopsisinfo>
+
+<funcprototype>
+<funcdef>struct <function>soltab</function> *rt_find_solid</funcdef>
+<void/></funcprototype>
+
+
+</funcsynopsis>
+
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>rt_dirbuild</emphasis>
+opens
+<varname role='parameter'>mged_file_name</varname>
+and builds a directory for quick lookup of objects.
+<emphasis remap='I'>rt_dirbuild</emphasis>
+returns a pointer to a
+<emphasis remap='I'>struct rt_i</emphasis>
+on success (often called ``<varname role='parameter'>rtip</varname>''),
+or
+<emphasis remap='I'>RTI_NULL</emphasis>
+on failure (such as being unable to open the named database).
+This pointer must be saved, as it is a required parameter to
+<function>rt_gettree</function>.
+The user-supplied buffer
+<emphasis remap='I'>buf</emphasis>
+is filled with up to
+<varname role='parameter'>len</varname>
+characters
+of information from the first title record in the database.
+If it is desired for "air" objects to be reported as "hits"
+during ray-tracing, then the
+<emphasis remap='I'>useair</emphasis>
+member of the
+<emphasis remap='I'>struct rt_i</emphasis>
+must be set before the first call to
+<function>rt_gettree</function>.</para>
+
+<para>All objects (groups and regions) which are to be included in the description
+to be raytraced must be preprocessed with
+<function>rt_gettree</function>,
+which returns -1 for failure and 0 for success.
+This function can be called as many times as required.
+Be certain to pass the
+<emphasis remap='I'>struct rt_i</emphasis>
+pointer from
+<emphasis remap='I'>rt_dirbuild</emphasis>
+each time.</para>
+
+<para>After the last
+<function>rt_gettree</function>
+call,
+<function>rt_prep</function>
+can be called to complete the preparation of internal data structures.
+If
+<function>rt_prep</function>
+is not explicitly called, it will be indirectly invoked by the first use of
+<function>rt_shootray</function>.</para>
+
+<para>To fire a ray at the model, an
+<emphasis remap='I'>application</emphasis>
+structure must be
+prepared and its address passed to
+<function>rt_shootray</function>.
+Note that it is mandatory that you provide values for
+<emphasis remap='I'>a_ray.r_pt</emphasis>
+(the starting point of the ray to be fired),
+<emphasis remap='I'>a_ray.r_dir</emphasis>
+(a unit-length direction vector),
+<emphasis remap='I'>a_hit</emphasis>
+(address of user-supplied hit routine),
+<emphasis remap='I'>a_miss</emphasis>
+(address of user-supplied miss routine),
+<emphasis remap='I'>a_overlap</emphasis>
+(address of user-supplied overlap routine; may be null),
+<emphasis remap='I'>a_rt_i</emphasis>
+(<emphasis remap='I'>struct rt_i</emphasis> pointer, from
+<emphasis remap='I'>rt_dirbuild</emphasis>),
+<emphasis remap='I'>a_onehit</emphasis>
+(flag controlling stop after first hit),
+<emphasis remap='I'>a_level</emphasis>
+(recursion level, just for diagnostic printing),
+and
+<emphasis remap='I'>a_resource</emphasis>
+(address of
+<emphasis remap='I'>resource</emphasis>
+structure; may be null).</para>
+
+<para>To obtain a report of CPU usage for a portion or portions of your program,
+frame the statements with calls to
+<function>rt_prep_timer</function>
+and
+<function>rt_read_timer</function>.
+Each call to
+<function>rt_prep_timer</function>
+resets the timing process, after which
+<function>rt_read_timer</function>
+can be called to get
+a double which is the elapsed CPU time in seconds since
+<function>rt_prep_timer</function>
+was last called.
+In addition, up to
+<varname role='parameter'>len</varname>
+bytes of
+system-specific detailing of resource consumption
+is placed in the user-supplied buffer
+<varname role='parameter'>buf</varname>.</para>
+
+<para><emphasis remap='I'>bu_bomb</emphasis>
+can be used to exit your program with
+<emphasis remap='I'>msg</emphasis>
+printed on the standard error output.</para>
+</refsect1>
+
+<refsect1 xml:id='warning'><title>WARNING</title>
+<para><emphasis remap='I'>Librt</emphasis>
+is designed to run in parallel on some multiprocessor machines.
+On some such machines
+system calls must be semaphore protected.</para>
+
+<para>Dynamic memory handling in applications using
+<emphasis remap='I'>librt</emphasis>
+should use
+the functions provided by
+<emphasis remap='I'>libbu</emphasis>
+instead of the usual system runtime library
+routines.  The
+<emphasis remap='I'>libbu</emphasis>
+versions do not return to the caller unless they succeed.  If they fail,
+they call
+<emphasis remap='I'>bu_bomb</emphasis>
+with their last argument (str) as the parameter.  The string parameter
+usually indicates the purpose of the memory being allocated.</para>
+
+</refsect1>
+
+<refsect1 xml:id='exit_code'><title>EXIT CODE</title>
+<para>All truly fatal errors detected by the library use
+<emphasis remap='I'>bu_bomb</emphasis>
+to exit with a status of 12.</para>
+</refsect1>
+
+<refsect1 xml:id='definition'><title>DEFINITION</title>
+<para>RPP - Rectangular ParallelePiped.
+A region of space defined by minimum and maximum values in X, Y, and Z.
+RPPs are used by
+<emphasis remap='I'>librt</emphasis>
+as bounding volumes for solids.</para>
+</refsect1>
+
+<refsect1 xml:id='discussion'><title>DISCUSSION</title>
+<para>You should study the structures in
+<emphasis remap='I'>raytrace.h</emphasis>,
+in particular, the
+<emphasis remap='I'>application</emphasis>
+structure,
+the
+<emphasis remap='I'>partition</emphasis>
+structure and its component structures to get an idea of what information
+is handed to/from
+<function>rt_shootray</function>.
+<function>rt_shootray</function>
+may be called recursively from your
+<emphasis remap='I'>a_hit</emphasis>
+routine (good for doing bounced rays).
+If you only care about the first
+object hit along the path of the ray, set the
+<emphasis remap='I'>a_onehit</emphasis>
+flag in the application structure before calling
+<function>rt_shootray</function>.
+<function>rt_shootray</function>
+returns the return value of the user-supplied hit or miss function
+that it called.</para>
+
+<para>If the ray intersects the model, the
+<emphasis remap='I'>a_hit</emphasis>
+routine is called
+with a pointer to the application structure and a pointer to a
+linked list of ray partitions
+(<emphasis remap='I'>struct partition</emphasis>).
+Within each partition are
+<emphasis remap='I'>seg</emphasis>
+(solid segment)
+and
+<emphasis remap='I'>hit</emphasis>
+(intersection with evaluated region)
+structure pointers
+for the places where the ray enters and leaves this partition of space.
+<emphasis remap='I'>pt_inhit.hit_dist</emphasis>
+is the parametric distance at which the ray enters
+the partition, and
+<emphasis remap='I'>pt_outhit.hit_dist</emphasis>
+is the parametric distance at which the ray leaves.
+Note that while the
+<emphasis remap='I'>hit</emphasis>
+structure contains
+<emphasis remap='I'>hit_point</emphasis>
+and
+<emphasis remap='I'>hit_norm</emphasis>
+elements, they are not computed by
+<function>rt_shootray</function>.
+If these are needed, they can be filled in by using the
+<emphasis remap='I'>RT_HIT_NORMAL</emphasis>
+macro;
+if surface curvature information is needed,
+it can be obtained by using the
+<emphasis remap='I'>RT_CURVE</emphasis>
+macro after
+<emphasis remap='I'>RT_HIT_NORMAL</emphasis>;
+if only the
+<emphasis remap='I'>hit_point</emphasis>
+is needed,
+it can be filled in by using the
+<emphasis remap='I'>VJOIN1</emphasis>
+macro (see the following example).</para>
+
+<para>If the ray contains any overlaps
+(partitions claimed by two or more regions) the
+<emphasis remap='I'>a_overlap</emphasis>
+routine is called for each such partition
+with pointers to the application structure,
+the overlap partition,
+two regions,
+and the remaining partitions along the ray.
+If the
+<emphasis remap='I'>a_overlap</emphasis>
+member is null,
+<emphasis remap='I'>librt</emphasis>
+uses a default overlap handler.
+Additionally,
+<emphasis remap='I'>librt</emphasis>
+provides the routine</para>
+
+<para>If the ray does not intersect the model, the
+<emphasis remap='I'>a_miss</emphasis>
+routine is called
+with a pointer to the application structure.</para>
+
+<para>Helpful in generating a grid of ray origins, the bounding RPP of the
+model is computed by
+<function>rt_gettree</function>
+and is stored in
+<emphasis remap='I'>rtip-&gt;mdl_min</emphasis>
+and
+<emphasis remap='I'>rtip-&gt;mdl_max</emphasis>.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para>A program can be loaded as follows:</para>
+
+<para>$ <emphasis remap='I'>cc -I/usr/brlcad/include main.c /usr/brlcad/lib/librt.a -l&lt;system-specific&gt; -lm</emphasis></para>
+
+<para>where
+<emphasis remap='I'>&lt;system-specific&gt;</emphasis>
+indicates libraries required on a particular architecture.  The table below
+indicates which system specific libraries are necessary on a particular
+architecture.</para>
+
+<para>     Architecture             Librarie(s)
+     Alliant FX/8             -lcvec -lcommon
+     Alliant FX/2800          -lcommon
+     SGI 4D                   -lmpc
+     Cray(X/Y)                -L/lib/multi -lu -lio
+     Cray2                    -lmt
+     Encore Multi-Max         -lpp</para>
+
+<para>Here is a portion of a hypothetical program which uses the library:</para>
+  <blockquote remap='RS'>
+
+<literallayout remap='.nf'>
+#include &lt;vmath.h&gt;
+#include &lt;raytrace.h&gt;
+int
+main(int argc, char argv[])
+{
+  static int do_if_hit(), do_if_miss(); /* Application routines */
+  register int h, v;
+  int grid_sz;
+  struct application ap; /* Set up for rt_shootray() */
+  struct rt_i *rtip;
+  /* ... */
+
+  /* Build the directory.	*/
+  rtip = rt_dirbuild( argv[bu_optind++] );
+
+  /* Load the desired portion of the model. */
+  while (argv[bu_optind] != NULL)
+    rt_gettree(rtip, argv[bu_optind++]);
+
+  ap.a_hit = do_if_hit;     /* Routine for hit */
+  ap.a_miss = do_if_missed; /* Routine for miss */
+  ap.a_overlap = 0;
+  ap.a_rt_i = rtip;
+  ap.a_level = 0;
+  ap.a_onehit = 0;          /* Return all objects along ray */
+  ap.a_resource = 0;
+
+  for (v = 0; v &lt; grid_sz; ++v) /* For each scanline */
+    for (h = 0; h &lt; grid_sz; ++h) {
+      /* Set up ray origin. */
+      VMOVE( ap.a_ray.r_pt, get_grid(h, v));
+      /* Compute ray direction. */
+      VMOVE( ap.a_ray.r_dir, get_dir(h, v));
+      /* Must be unit vector. */
+      VUNITIZE(ap.a_ray.r_dir);
+      (void)rt_shootray(&amp;ap);
+    }
+   /* ... */
+}
+
+static int
+do_if_hit(register struct application *ap,
+          struct partition *PartHeadp)
+{
+  extern void put_component();
+  struct curvature incurv;
+  register struct partition *pp;
+
+  for (pp = PartHeadp-&gt;pt_forw; pp != PartHeadp;
+       pp = pp-&gt;pt_forw)  {
+
+  /* Fill in all inhit info, but just the exit location for outhit. */
+  RT_HIT_NORMAL(pp-&gt;pt_inhit-&gt;hit_normal, pp-&gt;pt_inhit,
+                pp-&gt;pt_inseg-&gt;seg_stp, &amp;ap-&gt;a_ray,
+                pp-&gt;pt_inflip);
+  RT_CURVE(&amp;incurv, pp-&gt;pt_inhit, pp-&gt;pt_inseg-&gt;seg_stp);
+  VJOIN1(pp-&gt;pt_outhit-&gt;hit_point, ap-&gt;a_ray.r_pt,
+         pp-&gt;pt_outhit-&gt;hit_dist, ap-&gt;a_ray.r_dir);
+
+  /* Do something based on information in partition structure
+   *	such as output a shotline component data record.
+   */
+  put_component( pp-&gt;pt_inhit, &amp;incurv, pp-&gt;pt_outhit );
+  /* ... */
+  }
+  return 1; /* Report hit to main routine */
+}
+
+static int
+do_if_missed(register struct application *ap)
+{
+  return 0; /* Report miss to main routine */
+}
+  </literallayout></blockquote> <!-- remap='RE' -->
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1B</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1B</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>"rt_malloc: malloc failure",
+if
+<emphasis remap='I'>librt</emphasis>
+is unable to allocate memory with
+<emphasis remap='I'>malloc</emphasis>.
+``rt_<emphasis remap='I'>???</emphasis>: read error'', if an error or EOF occurs while
+reading from the model database.
+"unexpected SIGFPE!" when a floating point error occurs.
+(The rootfinder traps SIGFPE, but SIGFPE elsewhere is unexpected.)
+"rt_shootray: zero length dir vector" when the
+<emphasis remap='I'>a_ray.r_dir</emphasis>
+vector is not unit length.
+"rt_gettree called again after rt_prep!" when an attempt is made
+to add more sub-trees to the active model after calling
+<function>rt_prep</function>
+(or after firing the first ray).
+"rt_prep: re-invocation" when
+<function>rt_prep</function>
+is called more than once.
+"rt_prep: no solids to prep" when there are no valid solids
+in the model.</para>
+
+<para>The LIBRT_DEBUG environment variable may be set to the hexadecimal bit
+vector as described by the DEBUG_* flags listed in the raytrace.h
+header.  Similarly, many LIBRT applications provide a "-x #"
+command-line option which will take precedence over the environment
+variable.</para>
+
+<para>The LIBRT_V4FLIP environment variable may be set to a true or false
+value to respectively force or disable endianness interpretation of v4
+geometry database files.  The default behavior is to automatically
+detect whether flipping the endian interpretation will help LIBRT read
+a binary-incompatible v4 geometry database file.  Setting LIBRT_V4FLIP
+will override automatic detection.</para>
+
+<para>The LIBRT_BOT_MINTIE environment variable may be set to the minimum
+number of faces a BoT primitive must have to exercise the Triangle
+Intersection Engine (TIE) raytrace evaluation.  A value less than or
+equal to zero will utilize traditional BoT raytracing instead of TIE.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>On a VAX, the rootfinder detects "hard" cases by taking a SIGFPE
+and retrying
+with a slower but more stable algorithm.
+This is unfortunate.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>
+  This software is Copyright (c) 1986-2014 United States Government as
+  represented by the U.S. Army Research Laboratory.
+</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

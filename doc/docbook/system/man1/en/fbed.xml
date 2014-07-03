@@ -1,0 +1,679 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='fbed1'>
+<refmeta>
+    <refentrytitle>FBED
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>fbed</refname>
+<refpurpose>frame buffer editor</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>fbed</command>
+    <arg choice='opt'>-ph </arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Fbed</emphasis>
+is an editor for frame buffer images, designed to facilitate the
+manipulation of existing images for the preparation of presentation quality
+graphics.  Although it does have the potential to generate fairly complex
+images, it is meant mainly for touching up existing images; adding titles,
+captions or other labels; cutting and pasting of one or more images; and
+reducing images or portions thereof.
+<emphasis remap='I'>Fbed</emphasis>
+uses the frame buffer library
+<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+and therefore is available on all graphics devices which are supported
+by this package.  On start up, the program always attempts to open the
+default frame buffer.  This device is specified by the frame buffer library,
+and is configurable on a per system basis.  Often the user will want to
+over ride this default by setting the environment variable
+<envar>FB_FILE</envar>
+(see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+The
+<option>-h</option>
+option is for editing
+1024x1024 or high resolution
+<emphasis remap='SM'>(HIRES)</emphasis>
+images;  the default is low resolution, 512x512
+<emphasis remap='SM'>(LORES).</emphasis>
+The frame buffer's state can be toggled back and forth between
+<acronym>HIRES</acronym>
+and
+<acronym>LORES</acronym>
+at any time during execution of the program.</para>
+
+<para><emphasis remap='I'>Fbed</emphasis>
+allows function-to-key bindings and macro definition facilities
+in a fashion similar to some of the more versatile EMACS-style
+screen editors, such as
+<citerefentry><refentrytitle>jove</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+
+
+<para><emphasis remap='B'>Cursor Movement</emphasis></para>
+
+<para>When
+<emphasis remap='I'>fbed</emphasis>
+is running on a graphics device a cursor will appear on the screen.
+The position of the cursor points to the
+<emphasis remap='I'>current pixel</emphasis><literal>.</literal></para>
+
+
+<para><emphasis remap='B'>Terminal Display</emphasis></para>
+
+<para>When run interactively,
+with the standard input attached to a terminal,
+the screen will be divided into 5 areas:
+the top line will be referred to as the
+<emphasis remap='I'>option line</emphasis>;
+the second line from the top will be called the
+<emphasis remap='I'>header line</emphasis>;
+the bottom line of the screen will be the
+<emphasis remap='I'>status line</emphasis>;
+the second line from the bottom will by the
+<emphasis remap='I'>prompt line</emphasis>;
+and the rest of the screen is devoted to scrolling text output.
+The
+<emphasis remap='I'>option line </emphasis>
+contains the current
+<emphasis remap='I'>pixel</emphasis>
+color and
+<emphasis remap='I'>paint</emphasis>
+color,
+<emphasis remap='I'>stride</emphasis>
+and
+<emphasis remap='I'>brush size</emphasis><literal>.</literal>
+Colors are expressed as a combination
+of red, green, and blue intensity values; ranging from 0 to 255.  The
+<emphasis remap='I'>pixel</emphasis>
+color refers to the
+<emphasis remap='I'>current pixel </emphasis>
+which is pointed to by the
+cursor on the graphics device.
+<emphasis remap='I'>paint</emphasis>
+color is used by functions that
+require a color rather than prompting for it every time.
+The
+<emphasis remap='I'>stride</emphasis>
+indicates how many pixels the cursor will move per keystroke
+during key-activated cursor movement.  Finally,
+<emphasis remap='I'>brush size </emphasis>
+refers to
+the size of the square of pixels filled in by the
+<emphasis remap='I'>put-pixel</emphasis>
+command.
+The
+<emphasis remap='I'>header line </emphasis>
+is displayed in reversed video,
+and contains the program name and version number as well as the current
+cursor position.
+The
+<emphasis remap='I'>prompt line </emphasis>
+is where the user will see prompts when the program requires
+information.
+The
+<emphasis remap='I'>status line </emphasis>
+is used to print messages,
+indicating to the user that an operation is on-going.</para>
+
+
+<para><emphasis remap='B'>Modes of Input</emphasis></para>
+
+<para>The user interface consists of a list of provided commands, referred to as
+<emphasis remap='I'>functions</emphasis>
+and user-defined commands, called
+<emphasis remap='I'>macros</emphasis>.
+In general, every key-stroke will immediately be processed (this is often
+popularly called
+<emphasis remap='I'>raw</emphasis>
+mode input) and therefore, virtually every
+function or macro is executed by striking a particular key,
+without having to enter it by hitting
+<acronym>RETURN.</acronym>
+The key that activates a particular function or macro is said to be
+<emphasis remap='I'>bound</emphasis>
+to that operation.</para>
+
+<para>Many of the functions will require the user to type some additional
+information or
+<emphasis remap='I'>arguments</emphasis>,
+and a prompt will appear in the lower left corner of the screen.
+When responding to such prompts,
+the style of input resembles that of Bourne and C Shell derivatives
+with in-line EMACS-style editing.
+This means that the following
+<emphasis remap='I'>control</emphasis>
+keys have special meaning:</para>
+
+<informaltable pgwide='0' frame='all'>
+  <tgroup cols='2' align='center' colsep='1' rowsep='1'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <tbody>
+      <row>
+        <entry align='center'><emphasis remap='B'>key</emphasis></entry>
+        <entry align='center'>editing function</entry>
+      </row>
+      <row>
+        <entry align='center'>^A</entry>
+        <entry align='center'>cursor to beginning of line</entry>
+      </row>
+      <row>
+        <entry align='center'>^B</entry>
+        <entry align='center'>cursor back one character</entry>
+      </row>
+      <row>
+        <entry align='center'>^D</entry>
+        <entry align='center'>delete character under cursor</entry>
+      </row>
+      <row>
+        <entry align='center'>^E</entry>
+        <entry align='center'>cursor to end of line</entry>
+      </row>
+      <row>
+        <entry align='center'>^F</entry>
+        <entry align='center'>cursor forward one character</entry>
+      </row>
+      <row>
+        <entry align='center'>^G</entry>
+        <entry align='center'>abort this function</entry>
+      </row>
+      <row>
+        <entry align='center'>^K</entry>
+        <entry align='center'>erase from cursor to end of line</entry>
+      </row>
+      <row>
+        <entry align='center'>^P</entry>
+        <entry align='center'>fetch last input typed to this prompt</entry>
+      </row>
+      <row>
+        <entry align='center'>^U</entry>
+        <entry align='center'>erase from start of line to cursor</entry>
+      </row>
+      <row>
+        <entry align='center'>^R</entry>
+        <entry align='center'>redraw line as it currently exists</entry>
+      </row>
+      <row>
+        <entry align='center'>^V</entry>
+        <entry align='center'>escape special meaning of next character typed</entry>
+      </row>
+      <row>
+        <entry align='center'>Back Space</entry>
+        <entry align='center'>move cursor backward one character</entry>
+      </row>
+      <row>
+        <entry align='center'>Delete</entry>
+        <entry align='center'>delete character behind cursor</entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+
+
+<para>When attempting to fetch the last input typed,
+the user should keep in mind that this is specific to the particular
+function which is doing the prompting and to that particular question
+being asked by that function.
+Most of the prompts are intended to appear self-explanatory,
+but there are a couple of exceptions.
+The
+<emphasis remap='I'>execute-function-or-macro</emphasis>
+function places the user in the prompted mode of input
+for the purpose of typing the name of the command.
+This is useful when the key binding is not known off-hand or a key
+binding does not exist,
+but the name of the command is known (or can be guessed at).
+In any case,
+it is an alternative to key-activated execution of a function or macro.
+When entering the prompted mode of command input,
+a `:' will appear in the bottom left of the terminal screen and the
+terminal's cursor will appear just ahead of it.
+Now,
+all of the above control key functions are in force,
+and command-completion is implemented as well.
+At any time while typing the name of the function or macro,
+the space bar may be hit to attempt command-completion.
+The command-completion logic will look at what has been typed,
+and if it represents the beginning of an existing function or macro,
+the remainder of that name which can be uniquely matched will appear.
+If there is no match,
+the portion of the name that has been typed that does not match
+will be deleted,
+starting at the end and working back.
+In other words,
+the user only needs to type the unambiguous root of the name.
+If the user has done so,
+hitting the space bar will show the complete name,
+or hitting the
+<acronym>RETURN</acronym>
+key will
+enter the command.
+If the
+<acronym>RETURN</acronym>
+key is struck,
+and there is no unique match,
+nothing will happen.
+Whenever the user is prompted for the name of a function or macro,
+and there are other functions that prompt for this specifically,
+then command-completion is provided.
+Another atypical prompt is generated by the
+<emphasis remap='I'>argument-count</emphasis>
+function,
+and looks like
+<emphasis remap='I'>M-</emphasis>.
+The cursor will appear right after the hyphen,
+and the user is expected to type a number (sequence of digits).
+This sequence of digits must be terminated by a command key-stroke.
+This number represents an count of how many times to execute the command
+bound to that final key-stroke.
+If a digit is bound to a function or macro,
+it will not be recognized by the
+<emphasis remap='I'>argument-count</emphasis>
+function.</para>
+
+
+
+<para><emphasis remap='B'>User-defined Macros and Key Bindings</emphasis></para>
+
+<para>The user may define a macro as a series of key-strokes.
+This is initiated by executing the
+<emphasis remap='I'>start-macro-definition</emphasis>
+function.
+The message "Remembering..." will appear on the
+<emphasis remap='I'>status line</emphasis><emphasis remap='I'>,</emphasis>
+and the user then types the key-strokes which will represent
+the macro definition.
+These key-strokes will be executed as the macro is defined.
+To end the macro definition,
+the user executes the
+<emphasis remap='I'>stop-macro-definition</emphasis>
+function.
+Sometimes,
+the user will want to defer specifying the answers to prompts
+when defining a macro, so that he can supply the information when the
+macro is executed.
+In order to incorporate this into his macro,
+the user would type a '@' at the prompt.
+This will cause the function to fail while the user is defining the macro,
+but this will hopefully not cause any fatal side-effects.
+Immediately after defining the macro,
+or before defining another,
+the user should enable its execution by giving it a name with the
+<emphasis remap='I'>name-keyboard-macro</emphasis>
+function.
+If the user desires,
+he may bind it to a key with the
+<emphasis remap='I'>bind-macro-to-key</emphasis>
+function,
+or it may be executed by name only.</para>
+
+<para>Another way of customizing the frame buffer editor is to change the binding
+of keys to functions.
+This is done by executing either
+<emphasis remap='I'>bind-key-to-name</emphasis>
+or
+<emphasis remap='I'>bind-key-to-key</emphasis>.
+The former will bind a key to either a function or macro by specifying its name,
+and the latter refers to the function or macro by a key that is currently
+bound to it.</para>
+
+<para>Both key bindings and macro definitions can be saved in a file using
+<emphasis remap='I'>write-macros-to-file</emphasis>
+and read back with
+<emphasis remap='I'>read-macros-from-file</emphasis>.
+Whenever the frame buffer editor starts up,
+it looks for a file called
+<markup>.fbed_macros</markup>
+in the user's home directory,
+and reads it if it exists.
+A list of functions and macros and their key bindings can be obtained by
+executing the
+<emphasis remap='I'>print-bindings</emphasis>
+function which is bound to `?' by default.
+Here is the standard listing:</para>
+
+<informaltable pgwide='0' frame='all'>
+  <tgroup cols='2' align='center' colsep='1' rowsep='1'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <thead>
+      <row>
+        <entry align='center'><emphasis remap='B'>key</emphasis></entry>
+        <entry align='center'>function</entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry align='center'>^H</entry>
+        <entry align='left'>move-window-left</entry>
+      </row>
+      <row>
+        <entry align='center'>^J</entry>
+        <entry align='left'>move-window-down</entry>
+      </row>
+      <row>
+        <entry align='center'>^K</entry>
+        <entry align='left'>move-window-up</entry>
+      </row>
+      <row>
+        <entry align='center'>^L</entry>
+        <entry align='left'>move-window-right</entry>
+      </row>
+      <row>
+        <entry align='center'>Return</entry>
+        <entry align='left'>reset-view</entry>
+      </row>
+      <row>
+        <entry align='center'>^R</entry>
+        <entry align='left'>redraw-tty-screen</entry>
+      </row>
+      <row>
+        <entry align='center'>^X</entry>
+        <entry align='left'>execute-function-or-macro</entry>
+      </row>
+      <row>
+        <entry align='center'>^Z</entry>
+        <entry align='left'>stop-program</entry>
+      </row>
+      <row>
+        <entry align='center'>Esc</entry>
+        <entry align='left'>argument-count</entry>
+      </row>
+      <row>
+        <entry align='center'><emphasis remap='I'>space</emphasis></entry>
+        <entry align='left'>pick-point</entry>
+      </row>
+      <row>
+        <entry align='center'>,</entry>
+        <entry align='left'>decrement-brush-size</entry>
+      </row>
+<!--  .	increment&bsol;-brush&bsol;-size -->
+      <row>
+        <entry align='center'>&lt;</entry>
+        <entry align='left'>decrement-step-size</entry>
+      </row>
+      <row>
+        <entry align='center'>&gt;</entry>
+        <entry align='left'>increment-step-size</entry>
+      </row>
+      <row>
+        <entry align='center'>?</entry>
+        <entry align='left'>print-bindings</entry>
+      </row>
+      <row>
+        <entry align='center'>A</entry>
+        <entry align='left'>start-macro-definition</entry>
+      </row>
+      <row>
+        <entry align='center'>B</entry>
+        <entry align='left'>bind-macro-to-key</entry>
+      </row>
+      <row>
+        <entry align='center'>C</entry>
+        <entry align='left'>shrink-image-by-half</entry>
+      </row>
+      <row>
+        <entry align='center'>E</entry>
+        <entry align='left'>clear-framebuffer-memory</entry>
+      </row>
+      <row>
+        <entry align='center'>F</entry>
+        <entry align='left'>flip-framebuffer-resolution</entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+
+<informaltable pgwide='0' frame='all'>
+  <tgroup cols='2' align='center' colsep='1' rowsep='1'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <thead>
+      <row>
+        <entry align='center'><emphasis remap='B'>key</emphasis></entry>
+        <entry align='center'>function</entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry align='center'>G</entry>
+        <entry align='left'>get-current-rectangle</entry>
+      </row>
+      <row>
+        <entry align='center'>H</entry>
+        <entry align='left'>jump-cursor-left</entry>
+      </row>
+      <row>
+        <entry align='center'>J</entry>
+        <entry align='left'>jump-cursor-down</entry>
+      </row>
+      <row>
+        <entry align='center'>K</entry>
+        <entry align='left'>jump-cursor-up</entry>
+      </row>
+      <row>
+        <entry align='center'>L</entry>
+        <entry align='left'>jump-cursor-right</entry>
+      </row>
+      <row>
+        <entry align='center'>N</entry>
+        <entry align='left'>name-keyboard-macro</entry>
+      </row>
+      <row>
+        <entry align='center'>P</entry>
+        <entry align='left'>put-saved-rectangle</entry>
+      </row>
+      <row>
+        <entry align='center'>R</entry>
+        <entry align='left'>read-rle-fle</entry>
+      </row>
+      <row>
+        <entry align='center'>S</entry>
+        <entry align='left'>write-rle-file</entry>
+      </row>
+      <row>
+        <entry align='center'>T</entry>
+        <entry align='left'>replace-pixel-current-rectangle</entry>
+      </row>
+      <row>
+        <entry align='center'>U</entry>
+        <entry align='left'>write-macros-to-file</entry>
+      </row>
+      <row>
+        <entry align='center'>V</entry>
+        <entry align='left'>fill-bounded-region</entry>
+      </row>
+      <row>
+        <entry align='center'>W</entry>
+        <entry align='left'>fill-current-rectangle</entry>
+      </row>
+      <row>
+        <entry align='center'>X</entry>
+        <entry align='left'>bind-key-to-key</entry>
+      </row>
+      <row>
+        <entry align='center'>Y</entry>
+        <entry align='left'>bind-key-to-name</entry>
+      </row>
+      <row>
+        <entry align='center'>Z</entry>
+        <entry align='left'>stop-macro-definition</entry>
+      </row>
+      <row>
+        <entry align='center'>a</entry>
+        <entry align='left'>enter-macro-definition</entry>
+      </row>
+      <row>
+        <entry align='center'>b</entry>
+        <entry align='left'>set-current-rectangle</entry>
+      </row>
+      <row>
+        <entry align='center'>c</entry>
+        <entry align='left'>window-center</entry>
+      </row>
+      <row>
+        <entry align='center'>d</entry>
+        <entry align='left'>draw-line</entry>
+      </row>
+      <row>
+        <entry align='center'>f</entry>
+        <entry align='left'>read-font</entry>
+      </row>
+      <row>
+        <entry align='center'>g</entry>
+        <entry align='left'>set-paint-to-current-pixel</entry>
+      </row>
+      <row>
+        <entry align='center'>h</entry>
+        <entry align='left'>move-cursor-left</entry>
+      </row>
+      <row>
+        <entry align='center'>i</entry>
+        <entry align='left'>zoom-in</entry>
+      </row>
+      <row>
+        <entry align='center'>j</entry>
+        <entry align='left'>move-cursor-down</entry>
+      </row>
+      <row>
+        <entry align='center'>k</entry>
+        <entry align='left'>move-cursor-up</entry>
+      </row>
+      <row>
+        <entry align='center'>l</entry>
+        <entry align='left'>move-cursor-right</entry>
+      </row>
+      <row>
+        <entry align='center'>m</entry>
+        <entry align='left'>set-monitor</entry>
+      </row>
+      <row>
+        <entry align='center'>n</entry>
+        <entry align='left'>set-tolerance-color-match</entry>
+      </row>
+      <row>
+        <entry align='center'>o</entry>
+        <entry align='left'>zoom-out</entry>
+      </row>
+      <row>
+        <entry align='center'>p</entry>
+        <entry align='left'>set-paint-from-key</entry>
+      </row>
+      <row>
+        <entry align='center'>q</entry>
+        <entry align='left'>quit</entry>
+      </row>
+      <row>
+        <entry align='center'>r</entry>
+        <entry align='left'>read-framebuffer</entry>
+      </row>
+      <row>
+        <entry align='center'>s</entry>
+        <entry align='left'>put-string</entry>
+      </row>
+      <row>
+        <entry align='center'>t</entry>
+        <entry align='left'>change-region-color</entry>
+      </row>
+      <row>
+        <entry align='center'>u</entry>
+        <entry align='left'>read-macros-from-file</entry>
+      </row>
+      <row>
+        <entry align='center'>v</entry>
+        <entry align='left'>draw-rectangle</entry>
+      </row>
+      <row>
+        <entry align='center'>w</entry>
+        <entry align='left'>put-pixel</entry>
+      </row>
+      <row>
+        <entry align='center'>x</entry>
+        <entry align='left'>set-cursor-y-pos</entry>
+      </row>
+      <row>
+        <entry align='center'>y</entry>
+        <entry align='left'>set-cursor-x-pos</entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+
+
+
+<para>Macros and functions which are not bound to a key will not be displayed.</para>
+</refsect1>
+
+<refsect1 xml:id='hints'><title>HINTS</title>
+<para>This program may require a little practice,
+be sure to save a copy of the input files until you are confident.
+The first time using the program you should start out by listing the menu
+and finding the command for saving your image and use it if you don't
+already have a copy.</para>
+</refsect1>
+
+<refsect1 xml:id='files'><title>FILES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='I'>/usr/lib/vfont/*</emphasis></term>
+  <listitem>
+<para>Berkeley font files</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>$HOME/.fbed_macros</emphasis></term>
+  <listitem>
+<para>Startup configuration file</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='known_bugs'><title>KNOWN BUGS</title>
+<para>This program is currently under development.</para>
+
+<para>It is known that aborting
+the execution of the certain functions will at times display bogus
+messages like "I seem to have lost my bindings."</para>
+
+<para>There is currently a hard limit of 10 times
+<acronym>BUFSIZ</acronym>
+(defined in
+<emphasis remap='I'>stdio.h</emphasis>)
+for the length of the macro startup file.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1986-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

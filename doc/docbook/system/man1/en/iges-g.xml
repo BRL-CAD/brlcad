@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='igesg1'>
+<refmeta>
+    <refentrytitle>IGES-G
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='software'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>User Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>iges-g</refname>
+<refpurpose>IGES Translator (IGES CSG to BRL-CAD)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>iges-g</command>
+    <arg choice='opt'>-X <replaceable>NMG_debug_flag</replaceable></arg>
+    <arg choice='opt'>-x <replaceable>rt_debug_flag</replaceable></arg>
+    <arg choice='opt'>-N <replaceable>solid_name</replaceable></arg>
+    <arg choice='opt'>-b </arg>
+    <group choice='opt'><arg choice='plain'>-n </arg><arg choice='plain'><replaceable>d</replaceable></arg><arg choice='plain'><replaceable>3</replaceable></arg><arg choice='plain'><replaceable>t</replaceable></arg></group>
+    <arg choice='plain'>-o <replaceable>database.g</replaceable></arg>
+    <arg choice='plain'><replaceable>file.iges</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>iges-g</emphasis>
+converts the specified
+<emphasis remap='I'>file.iges</emphasis>
+to a BRL-CAD
+<emphasis remap='I'>database.g</emphasis>
+file. The IGES file is expected to conform to IGES 5.1.
+The
+<option>-n</option>
+option specifies that all rational B-spline surfaces in the IGES file should be
+combined into one BRL-CAD spline solid.
+The
+<option>-d</option>
+option indicates that IGES drawings should be converted to BRL-CAD NMG objects.
+Theses objects will be two-dimensional drawings, not solids.
+The
+<option>-3</option>
+option is the same as the
+<option>-d</option>
+option except the final projection into 2D is not performed. This may produce 3D drawings
+in cases where the drawings have been produced from a 3D model.
+The
+<option>-t</option>
+option requests all the trimmed surfaces in the IGES file be converted to
+a single BRL-CAD NMG solid.
+The
+<option>-N</option>
+option provides a name to be used for the single solid created under the
+<option>-n</option>
+or
+<option>-t</option>
+options, and is ignored for other options.
+The
+<option>-p</option>
+option indicates that BREP objects should be converted to NMG solids rather than the default BOT solids.
+The
+<option>-X</option>
+and
+<option>-x</option>
+options allow the setting of debug flags for the NMG routines and the rt library
+respectively. See
+<emphasis remap='I'>nmg.h</emphasis>
+and
+<emphasis remap='I'>raytrace.h</emphasis>
+for details.
+The absence of any of the
+<option>-n</option>
+,
+<option>-d</option>
+, or
+<option>-t</option>
+options results in the default behavior where
+all IGES CSG and planar face BREP objects are converted to BRL-CAD
+equivalents. Most conversions are exact, with the exceptions of the solid of
+revolution and the solid of linear extrusion. These solids do not exist in BRL-CAD
+and are therefore approximated. The solid of revolution is built from a series of
+truncated right cones developed by approximating the curve to be revolved with a series
+of straight line segments. The extrusion is similarly handled by approximating the
+curve to be extruded with straight line segments and using that to build a BRL-CAD
+<emphasis remap='I'>polysolid.</emphasis>
+Planar faced IGES BREP objects are converted to BRL-CAD NMG structures.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<synopsis>
+$ <emphasis remap='I'>iges-g -o sample.g sample.iges</emphasis>
+</synopsis>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><emphasis remap='I'>The Initial Graphics Exchange Specification (IGES) Version 5.1,</emphasis>
+IGES/PDES Organization, September 1991.</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+</refsect1>
+
+<refsect1 xml:id='authors'><title>AUTHORS</title>
+<para>John Anderson
+<!-- .br -->
+Susanne Muuss
+<!-- .br -->
+Phil Dykstra
+<!-- .br -->
+Earl Weaver</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1991-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='bwcrop1'>
+<refmeta>
+    <refentrytitle>BWCROP
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>bwcrop</refname>
+<refpurpose>crop black and white bw files</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>bwcrop</command>
+    <arg choice='plain'><replaceable>in.bw</replaceable></arg>
+    <arg choice='plain'><replaceable>out.bw</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+  <command>bwcrop</command>
+    <arg choice='plain'><replaceable>in.bw</replaceable></arg>
+    <arg choice='plain'><replaceable>out.bw</replaceable></arg>
+    <arg choice='plain'><replaceable>inwidth</replaceable></arg>
+    <arg choice='plain'><replaceable>outwidth</replaceable></arg>
+    <arg choice='plain'><replaceable>outheight</replaceable></arg>
+    <arg choice='plain'><replaceable>ulx</replaceable></arg>
+    <arg choice='plain'><replaceable>uly</replaceable></arg>
+    <arg choice='plain'><replaceable>urx</replaceable></arg>
+    <arg choice='plain'><replaceable>ury</replaceable></arg>
+    <arg choice='plain'><replaceable>lrx</replaceable></arg>
+    <arg choice='plain'><replaceable>lry</replaceable></arg>
+    <arg choice='plain'><replaceable>llx</replaceable></arg>
+    <arg choice='plain'><replaceable>lly</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Bwcrop</emphasis>
+crops any quadrilateral out of an arbitrarily large
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+input file
+(<emphasis remap='I'>in.bw</emphasis>)<emphasis remap='I'>,</emphasis>
+squares that region to a given height and width output size,
+and writes the result to
+<emphasis remap='I'>out.bw</emphasis>.
+The first form of
+<command>bwcrop</command>
+prompts for all parameters it needs to do the cropping.
+All responses should be pixel counts or first
+quadrant coordinates.
+The second form allows all of the needed parameters to be given
+on the command line and is intended for use from shell scripts.
+The coordinate names stand for upper-left-x, lower-right-y, etc.</para>
+
+<para>The nearest input pixel is selected for each output pixel.  No
+interpolation is done by this program.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

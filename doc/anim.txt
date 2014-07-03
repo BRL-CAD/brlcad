@@ -105,7 +105,7 @@ matrix operations; the local coordinate system being that of the point
 on the extreme right.
 
 In walking a model tree (such as "prep'ing" the model for ray tracing),
-each arc crossed from root to leaf normally gets its matrix multipled on
+each arc crossed from root to leaf normally gets its matrix multiplied on
 the right side of the current matrix stack[1].  Rigid body articulations
 of a model can then be described by changing or adding matrices at the
 appropriate points in this stack.

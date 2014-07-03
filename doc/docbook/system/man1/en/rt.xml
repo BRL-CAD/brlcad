@@ -1,98 +1,59 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
-
-<!-- Copyright (c) 2005-2010 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-
-<refentry id='rt1'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="rt1">
   <refmeta>
-    <refentrytitle>RT</refentrytitle>
+      <refentrytitle>RT
+</refentrytitle>
     <manvolnum>1</manvolnum>
-    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-  
-  <refnamediv id='name'>
+
+  <refnamediv xml:id="name">
     <refname>rt</refname>
     <refpurpose>
       raytrace an mged model, giving a shaded picture
     </refpurpose>
   </refnamediv>
-  
+
   <!-- body begins here -->
-  <refsynopsisdiv id='synopsis'>
-    <cmdsynopsis>
-      <command>rt</command>    
-      <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
-      <arg choice='plain'><replaceable>model.g</replaceable></arg>
-      <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
-      
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>rt</command>
+      <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
+      <arg choice="plain" rep="norepeat"><replaceable>model.g</replaceable></arg>
+      <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg>
+
     </cmdsynopsis>
   </refsynopsisdiv>
-  
-  
-  <refsect1 id='description'>
-    <title>DESCRIPTION</title>
+
+
+  <refsection xml:id="description"><title>DESCRIPTION</title>
+
     <para>
-      <emphasis remap='I'>Rt</emphasis> operates on the indicated
-      <emphasis remap='I'>objects</emphasis> in the input
-      <emphasis remap='I'>model.g</emphasis> and produces a color-shaded image 
+      <emphasis remap="I">Rt</emphasis> operates on the indicated
+      <emphasis remap="I">objects</emphasis> in the input
+      <emphasis remap="I">model.g</emphasis> and produces a color-shaded image
       as the output. By default, the output is placed on the current framebuffer
       as it is computed.  The environment variable FB_FILE specifies
-      the current framebuffer, see 
+      the current framebuffer, see
       <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
       Alternatively, the output can be stored in a pixel file
       (<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
       format) by specifying <option>-o</option> <replaceable>output.pix</replaceable>
       in the option list. The orientation of the rays to be fired may be specified by
-      the <option>-a</option> and <option>-e</option> options, in which case the model 
-      will be autosized, and the grid will be centered on the centroid of the model, with 
-      ray spacing chosen to span the entire set of <emphasis remap='I'>objects.</emphasis>
-      Alternatively, with the <option>-M</option> option, a transformation matrix may 
-      be provided on standard input which maps model-space to view-space. In this case, 
-      the grid ranges from -1.0 = X,Y = +1.0 in view space, with the size of the grid 
+      the <option>-a</option> and <option>-e</option> options, in which case the model
+      will be autosized, and the grid will be centered on the centroid of the model, with
+      ray spacing chosen to span the entire set of <emphasis remap="I">objects.</emphasis>
+      Alternatively, with the <option>-M</option> option, a transformation matrix may
+      be provided on standard input which maps model-space to view-space. In this case,
+      the grid ranges from -1.0 = X,Y = +1.0 in view space, with the size of the grid
       (number of rays fired) specified with <option>-s</option>.  The <option>-M</option>
-      option is most useful when <command>rt</command> is being invoked from a shell script 
+      option is most useful when <command>rt</command> is being invoked from a shell script
       created by an <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-      <emphasis remap='I'>saveview</emphasis> command.
+      <emphasis remap="I">saveview</emphasis> command.
     </para>
 
     <para>The following options are recognized:</para>
-    <variablelist remap='TP'>
+    <variablelist remap="TP">
       <varlistentry>
 	<term><option>-a#</option></term>
 	<listitem>
@@ -104,13 +65,13 @@
 	  </para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-b # #</option></term>
 	<listitem>
 	  <para>
 	    is sometimes useful for debugging.  A single ray is fired at the pixel
-	    coordinates specified. This is best when accompanied by debugging options.  
+	    coordinates specified. This is best when accompanied by debugging options.
 	    Note that the standard
 	    <citerefentry><refentrytitle>getopt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	    routine only allows options to have one parameter, so the X and Y
@@ -119,7 +80,7 @@
 	  </para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-c "script_command"</option></term>
 	<listitem>
@@ -132,7 +93,7 @@
 	  will print the values of all settable variables.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-d#</option></term>
 	<listitem>
@@ -141,7 +102,7 @@
 	  double (in IEEE format) giving the distance to the ray's first hit.
 	  If the ray doesn't hit, a zero distance is reported by default
 	  which causes
-	  <emphasis remap='I'>rt (1)</emphasis>
+	  <emphasis remap="I">rt (1)</emphasis>
 	  to write only the color information.
 	  See
 	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
@@ -149,7 +110,7 @@
 	  <citerefentry><refentrytitle>pixd</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-e#</option></term>
 	<listitem>
@@ -159,7 +120,7 @@
 	  <option>-M</option></para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-f#</option></term>
 	<listitem>
@@ -167,14 +128,14 @@
 	  The default is 30fps.
 	  Several time-evolving shaders
 	  such as
-	  <emphasis remap='I'>fire</emphasis>
+	  <emphasis remap="I">fire</emphasis>
 	  and
-	  <emphasis remap='I'>grass</emphasis>
+	  <emphasis remap="I">grass</emphasis>
 	  need to know the time at which each frame and pixel occur to drive their
 	  evolution.</para>
 	</listitem>
       </varlistentry>
-   
+
       <varlistentry>
 	<term><option>-g#</option></term>
 	<listitem>
@@ -184,11 +145,11 @@
 	  To obtain exactly 1 inch ray spacing, specify
 	  <option>-g25.4.</option>
 	  If the grid cell width is specified and
-	  the grid cell height is <emphasis remap='I'>not</emphasis> specified,
+	  the grid cell height is <emphasis remap="I">not</emphasis> specified,
 	  the grid cell height defaults to be the same as the width.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-h density,r,g,b</option></term>
 	<listitem>
@@ -196,14 +157,14 @@
 	  first hit location.  This allows a cheap simulation of atmospheric haze
 	  with lower performance impact than explicit modeling of the air volume.
 	  The haze is computed using the form:</para>
-	  
+
 	  <para>f = e^(-dist * density)</para>
 	  <para>g = 1.0 - f</para>
 	  <para>color = color * f + hazeRGB * g</para>
-	  
+
 	  <para>The color values are optional.  If not specified, they will have the passable
 	  values 0.8 .9 .99.</para>
-	  
+
 	  <para>Example usage: -h '2.5e-8,.75,.95,.99'</para>
 	</listitem>
       </varlistentry>
@@ -211,7 +172,7 @@
       <varlistentry>
 	<term><option>-i</option></term>
 	<listitem>
-	  <para>enables <emphasis remap='I'>incremental mode</emphasis> processing.
+	  <para>enables <emphasis remap="I">incremental mode</emphasis> processing.
 	  First, a single ray is fired.
 	  Then, the screen is subdivided into four parts by evenly subdividing
 	  in the vertical and horizontal directions.
@@ -222,12 +183,12 @@
 	  Also assumes fast path between CPU and display hardware.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-j</option></term>
 	<listitem>
-	  <para><emphasis remap = 'B' role ='B'>xmin,ymin,xmax,ymax</emphasis>
-	  enables <emphasis remap='I'>just this sub-rectangle</emphasis> processing.
+	  <para><emphasis remap="B" role="B">xmin,ymin,xmax,ymax</emphasis>
+	  enables <emphasis remap="I">just this sub-rectangle</emphasis> processing.
 	  Specifies the screen coordinates of the lower left and upper right
 	  corner of a rectangle within the rectangle (0,0) (width-1,height-1).
 	  Ray-tracing will be limited to just those pixels within the sub-rectangle,
@@ -239,11 +200,11 @@
 	  to allow sweeping out a rectangular portion of the view for ray-tracing.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-k xdir,ydir,zdir,dist</option></term>
 	<listitem>
-	  <para>enables the use of a <emphasis remap='I'>cutting plane</emphasis>. The xdir, ydir, zdir, and dist
+	  <para>enables the use of a <emphasis remap="I">cutting plane</emphasis>. The xdir, ydir, zdir, and dist
 	  define a plane (equivalent to a halfspace primitive with the same parameters).
 	  The vector (xdir, ydir, zdir) is normal to the plane and points away from
 	  the space to be subtracted. The dist parameter specifies the distance from
@@ -254,7 +215,7 @@
 	  objects that are cut away by the cutting plane will still cast shadows.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-l#</option></term>
 	<listitem>
@@ -296,18 +257,18 @@
 	  sources will not work.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-n#</option></term>
 	<listitem>
 	  <para>defines the height of the image as a number of scanlines.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-o</option></term>
 	<listitem>
-	  <para><emphasis remap = 'B' role ='B'>output.pix</emphasis>
+	  <para><emphasis remap="B" role="B">output.pix</emphasis>
 	  Specify the name of a file to store the
 	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 	  format output.
@@ -316,21 +277,21 @@
 	  utility can be used later to display ".pix" files.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-p#</option></term>
 	<listitem>
 	  <para>Sets the perspective, in degrees, ranging  0 &lt; = # &lt; 180.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-r</option></term>
 	<listitem>
 	  <para>requests that overlapping regions be reported. (conflicts with -R)</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-s#</option></term>
 	<listitem>
@@ -339,7 +300,7 @@
 	  The default size is 512 pixels.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-v#</option></term>
 	<listitem>
@@ -348,14 +309,14 @@
 	  See include/brlcad/rtprivate.h for various bit definitions.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-w#</option></term>
 	<listitem>
 	  <para>defines the width of each scanline in pixels.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-x#</option></term>
 	<listitem>
@@ -370,7 +331,7 @@
 	  See h/bu.h for the bit definitions.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-A#</option></term>
 	<listitem>
@@ -379,7 +340,7 @@
 	  in the range of 0.0 to 1.0.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-B</option></term>
 	<listitem>
@@ -388,7 +349,7 @@
 	  benchmark timing comparison and benchmark result comparison.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-C#/#/#</option></term>
 	<listitem>
@@ -397,7 +358,7 @@
 	  All non-background colors will be dithered away from this value.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-D#</option></term>
 	<listitem>
@@ -406,7 +367,7 @@
 	  <option>-K#</option></para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-E#</option></term>
 	<listitem>
@@ -415,7 +376,7 @@
 	  <option>-M</option></para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><option>-F framebuffer</option></term>
 	<listitem>
@@ -450,7 +411,7 @@
 	<term><option>-I</option></term>
 	<listitem>
 	  <para>Turns on interactive mode.  If this flag is off and your image is
-	  "large" (> = 256 x 256), it will lower the priority of the rt process.</para>
+	  "large" (&gt; = 256 x 256), it will lower the priority of the rt process.</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
@@ -496,7 +457,7 @@
       <varlistentry>
 	<term><option>-O</option></term>
 	<listitem>
-	  <para><emphasis remap='B' role='B'>output.dpix</emphasis>
+	  <para><emphasis remap="B" role="B">output.dpix</emphasis>
 	  Specify the name of a file to store the double-precision floating-point
 	  version of the image.
 	  <citerefentry><refentrytitle>dpix-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -532,7 +493,7 @@
       <varlistentry>
 	<term><option>-R</option></term>
 	<listitem>
-	  <para>requests that overlapping regions not be reported. (confilcts with -r)</para>
+	  <para>requests that overlapping regions not be reported. (conflicts with -r)</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
@@ -617,7 +578,7 @@
 	</listitem>
       </varlistentry>
     </variablelist>
-    
+
     <para>The
     <command>rt</command>
     program is a simple front-end to
@@ -626,9 +587,9 @@
     <command>rt</command>
     command in
     <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
-  </refsect1>
-  
-  <refsect1 id='signals'><title>SIGNALS</title>
+  </refsection>
+
+  <refsection xml:id="signals"><title>SIGNALS</title>
   <para>You can obtain progress information from a running rt process by
   sending it a SIGUSR1 or SIGINFO signal.  The raytracer will report
   progress via details about the ray sample being processed at the time
@@ -636,9 +597,9 @@
   to:
   <!-- .br -->
   frame 0, xy=1516,2466 on cpu 0, samp=0</para>
-  </refsect1>
-  
-  <refsect1 id='animation_scripts'><title>ANIMATION SCRIPTS</title>
+  </refsection>
+
+  <refsection xml:id="animation_scripts"><title>ANIMATION SCRIPTS</title>
   <para>For information on the animation script language accepted by
   <command>rt</command>,
   please refer to the manual pages for
@@ -648,9 +609,9 @@
   <citerefentry><refentrytitle>anim_script</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
   Also please consult the HTML documentation for a complete animation
   tutorial.</para>
-  </refsect1>
-  
-  <refsect1 id='ntsc_animation_tips'><title>NTSC ANIMATION TIPS</title>
+  </refsection>
+
+  <refsection xml:id="ntsc_animation_tips"><title>NTSC ANIMATION TIPS</title>
   <para>When using
   <command>rt</command>
   to create an animation sequence destined for NTSC video,
@@ -672,46 +633,44 @@
   <citerefentry><refentrytitle>bwmod</refentrytitle><manvolnum>1</manvolnum></citerefentry>
   avoids Mach-bands in dark regions of the image, and retains the
   maximum amount of image detail.</para>
-  </refsect1>
-  
-  <refsect1 id='see_also'><title>SEE ALSO</title>
+  </refsection>
+
+  <refsection xml:id="see_also"><title>SEE ALSO</title>
   <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
+  <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>lgt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
+  <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>, 
+  <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
-  </refsect1>
-  
-  <refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
+  </refsection>
+
+  <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
   <para>Numerous error conditions are possible.
   Descriptive messages are printed on stderr.</para>
-  </refsect1>
-  
-  <refsect1 id='author'>
-    <title>AUTHOR</title>
-    <para>BRL-CAD Team</para>
-  </refsect1>
-  
-  <refsect1 id='copyright'><title>COPYRIGHT</title>
-  <para>This software is Copyright (c) 1984-2010 United States Government as
-  represented by the U.S. Army Research Laboratory. All rights reserved.</para>
-  </refsect1>
-  
-  <refsect1 id='bugs'><title>BUGS</title>
+  </refsection>
+
+  <refsection xml:id="author"><title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+  </refsection>
+
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
+  <para>This software is Copyright (c) 1984-2014 United States Government as
+  represented by the U.S. Army Research Laboratory.</para>
+  </refsection>
+
+  <refsection xml:id="bugs"><title>BUGS</title>
   <para>Most deficiencies observed while using the
   <command>rt</command>
-  program are a consequence of problems in 
+  program are a consequence of problems in
   <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
   </para>
-  </refsect1>
-  
-  <refsect1 id='bug_reports'><title>BUG REPORTS</title>
-  <para>Reports of bugs or problems should be submitted via electronic
-  mail to &lt;devs@brlcad.org>, or via the "cadbug.sh" script.</para>
-  </refsect1>
-</refentry>
+  </refsection>
 
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+  <para>Reports of bugs or problems should be submitted via electronic
+  mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.</para>
+  </refsection>
+</refentry>
