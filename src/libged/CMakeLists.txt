@@ -111,6 +111,7 @@ set(LIBGED_SOURCES
   facedef.c
   facetize.c
   fb2pix.c
+  fbclear.c
   find.c
   form.c
   fracture.c
