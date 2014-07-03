@@ -106,7 +106,6 @@ macro(BRLCAD_FUNCTION_EXISTS function var)
 	  endif(NOT ${var}_${test_src}_COMPILE)
 	endforeach(test_src ${${var}_COMPILE_TEST_SRCS})
 	if(${var}_COMPILE)
-	  CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
 	  set(${var} 1 CACHE INTERNAL "Have function ${function}")
 	else(${var}_COMPILE)
 	  set(${var} "" CACHE INTERNAL "Function ${function} found but did not build.")
@@ -117,10 +116,6 @@ macro(BRLCAD_FUNCTION_EXISTS function var)
     else(${var}_EXISTS)
       set(${var} "" CACHE INTERNAL "Have function ${function}")
     endif(${var}_EXISTS)
-
-    if(CONFIG_H_FILE AND ${var})
-      CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
-    endif(CONFIG_H_FILE AND ${var})
 
     if(${ARGC} GREATER 2)
       if (${${var}_REQUIRED_LIBS})
@@ -145,6 +140,10 @@ macro(BRLCAD_FUNCTION_EXISTS function var)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 
   endif("${var}" MATCHES "^${var}$")
+
+  if(CONFIG_H_FILE AND ${var})
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
+  endif(CONFIG_H_FILE AND ${var})
 endmacro(BRLCAD_FUNCTION_EXISTS)
 
 
