@@ -100,6 +100,8 @@ w2string(const ON_wString &source)
 
 
 
+// used for checking existence with ON_SimpleArray::At()
+// when accessing ON model objects referred to by index.
 template <typename T>
 inline T &ref(T *ptr)
 {
@@ -122,6 +124,7 @@ generate_uuid()
 	return result;
 
 
+    // fine for use here, but officially UUIDv4 also requires certain bits to be set
     result.Data1 = static_cast<ON__UINT32>(drand48() *
 					   std::numeric_limits<ON__UINT32>::max());
     result.Data2 = static_cast<ON__UINT16>(drand48() *
