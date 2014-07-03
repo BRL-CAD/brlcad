@@ -30,7 +30,6 @@
 #include "common.h"
 
 
-/* disabled if OBJ_BREP is not available */
 #ifdef OBJ_BREP
 
 #include "conv3dm-g.hpp"
@@ -101,7 +100,7 @@ w2string(const ON_wString &source)
 
 
 // used for checking existence with ON_SimpleArray::At()
-// when accessing ON model objects referred to by index.
+// when accessing ONX_Model objects referenced by index
 template <typename T>
 inline T &ref(T *ptr)
 {
@@ -124,7 +123,8 @@ generate_uuid()
 	return result;
 
 
-    // fine for use here, but officially UUIDv4 also requires certain bits to be set
+    // sufficient for our use here, but
+    // officially UUIDv4 also requires certain bits to be set
     result.Data1 = static_cast<ON__UINT32>(drand48() *
 					   std::numeric_limits<ON__UINT32>::max());
     result.Data2 = static_cast<ON__UINT16>(drand48() *
@@ -232,6 +232,7 @@ load_pix(const std::string &path, int width, int height)
     ICV_IMAGE_FORMAT format = icv_guess_file_format(path.c_str(), buf);
 
     if (icv_image_t *image = icv_read(path.c_str(), format, width, height)) {
+	// TODO import the image data after adding support to libicv
 	icv_destroy(image);
     } else
 	throw std::runtime_error("icv_read() failed");
@@ -479,11 +480,7 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
     create_all_bitmaps();
     create_all_idefs();
     create_all_geometry();
-    nest_all_layers();
     create_all_layers();
-
-    // create root layer
-    create_layer(ON_Layer());
 
     m_model->Destroy();
 
@@ -662,6 +659,8 @@ RhinoConverter::create_all_layers()
 {
     m_log->Print("Creating layers...\n");
 
+    nest_all_layers();
+
     for (int i = 0; i < m_model->m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = m_model->m_layer_table[i];
 	const std::string &layer_name =
@@ -670,6 +669,9 @@ RhinoConverter::create_all_layers()
 	m_log->Print("Creating layer '%s'\n", layer_name.c_str());
 	create_layer(layer);
     }
+
+    // create root layer
+    create_layer(ON_Layer());
 }
 
 
@@ -724,8 +726,7 @@ RhinoConverter::create_all_idefs()
 	const std::string &idef_name =
 	    m_obj_map.at(UUIDstr(idef.m_uuid)).m_name;
 
-	m_log->Print("Creating instance definition '%s'\n",
-		     idef_name.c_str());
+	m_log->Print("Creating instance definition '%s'\n", idef_name.c_str());
 	create_idef(idef);
     }
 }
