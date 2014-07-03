@@ -1,0 +1,10 @@
+SET(perplex_ignore_files
+    CMake
+    mbo_getopt.h
+    parser.y
+    perplex.h
+    README.txt
+    scanner.re
+    perplex_template.c
+    token_type.h
+)
