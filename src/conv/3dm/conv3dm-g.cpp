@@ -91,15 +91,17 @@ UUIDstr(const ON_UUID &uuid)
 static inline std::string
 w2string(const ON_wString &source)
 {
-    if (!source) return "";
-    return ON_String(source).Array();
+    if (source)
+	return ON_String(source).Array();
+    else
+	return "";
 }
 
 
 
 
 template <typename T>
-T &ref(T *ptr)
+inline T &ref(T *ptr)
 {
     if (!ptr)
 	throw std::logic_error("invalid index");
@@ -870,7 +872,7 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
 
     const std::string comb_name =
 	unique_name(m_name_count_map, geom_obj.m_name, ".c");
-    const std::string &comb_uuid = UUIDstr(generate_uuid());
+    const std::string comb_uuid = UUIDstr(generate_uuid());
     const std::pair<std::string, std::string> shader
 	= get_shader(geom_attrs.m_material_index);
 
@@ -907,8 +909,9 @@ RhinoConverter::create_brep(const ON_Brep &brep,
 
 
 
-void RhinoConverter::create_mesh(ON_Mesh mesh,
-				 const ON_3dmObjectAttributes &mesh_attrs)
+void
+RhinoConverter::create_mesh(ON_Mesh mesh,
+			    const ON_3dmObjectAttributes &mesh_attrs)
 {
     const std::string mesh_uuid = UUIDstr(mesh_attrs.m_uuid);
     const std::string &mesh_name = m_obj_map.at(mesh_uuid).m_name;
@@ -918,20 +921,20 @@ void RhinoConverter::create_mesh(ON_Mesh mesh,
 
     mesh.ConvertQuadsToTriangles();
 
-    const std::size_t num_vertices = mesh.m_V.Count();
-    const std::size_t num_faces = mesh.m_F.Count();
+    const int num_vertices = mesh.m_V.Count();
+    const int num_faces = mesh.m_F.Count();
 
     std::vector<fastf_t> vertices(num_vertices * 3);
-    for (std::size_t i = 0; i < num_vertices; ++i) {
-	const ON_3fPoint &point = mesh.m_V[static_cast<int>(i)];
+    for (int i = 0; i < num_vertices; ++i) {
+	const ON_3fPoint &point = mesh.m_V[i];
 	vertices[i * 3] = point.x;
 	vertices[i * 3 + 1] = point.y;
 	vertices[i * 3 + 2] = point.z;
     }
 
     std::vector<int> faces(num_faces * 3);
-    for (std::size_t i = 0; i < num_faces; ++i) {
-	const ON_MeshFace &face = mesh.m_F[static_cast<int>(i)];
+    for (int i = 0; i < num_faces; ++i) {
+	const ON_MeshFace &face = mesh.m_F[i];
 	faces[i * 3] = face.vi[0];
 	faces[i * 3 + 1] = face.vi[1];
 	faces[i * 3 + 2] = face.vi[2];
