@@ -105,7 +105,7 @@ template <typename T>
 inline T &ref(T *ptr)
 {
     if (!ptr)
-	throw std::logic_error("invalid index");
+	throw std::out_of_range("invalid index");
 
     return *ptr;
 }
@@ -412,7 +412,7 @@ RhinoConverter::Color::set_rgb(int red, int green, int blue)
     if (red < 0 || red > 255
 	|| green < 0 || green > 255
 	|| blue < 0 || blue > 255)
-	throw std::out_of_range("invalid color");
+	throw std::invalid_argument("invalid color");
 
     m_rgb[0] = static_cast<unsigned char>(red);
     m_rgb[1] = static_cast<unsigned char>(green);
@@ -927,6 +927,11 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 
     const int num_vertices = mesh.m_V.Count();
     const int num_faces = mesh.m_F.Count();
+
+    if (num_vertices == 0 || num_faces == 0) {
+	m_log->Print("-- Mesh has no content; skipping...\n");
+	return;
+    }
 
     std::vector<fastf_t> vertices(num_vertices * 3);
     for (int i = 0; i < num_vertices; ++i) {
