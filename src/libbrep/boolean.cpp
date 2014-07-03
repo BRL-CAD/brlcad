@@ -542,6 +542,67 @@ replace_curve_with_subcurve(ON_Curve *&curve, const ON_Interval &interval)
     }
 }
 
+HIDDEN ON_SimpleArray<ON_Interval>
+get_curve_intervals_inside_outerloop(
+    ON_Curve *curve2D,
+    ON_SimpleArray<ON_Curve *> outerloop_curves,
+    double isect_tol)
+{
+    // get curve-curve intersections
+    ON_SimpleArray<double> isect_curve_t;
+    ON_SimpleArray<ON_X_EVENT> ccx_events;
+    for (int i = 0; i < outerloop_curves.Count(); i++) {
+	ON_Intersect(curve2D, outerloop_curves[i], ccx_events, isect_tol);
+    }
+
+    // get a sorted list of just the parameters on the first curve
+    // where it intersects the outerloop
+    for (int i = 0; i < ccx_events.Count(); i++) {
+	isect_curve_t.Append(ccx_events[i].m_a[0]);
+
+	if (ccx_events[i].m_type == ON_X_EVENT::ccx_overlap) {
+	    isect_curve_t.Append(ccx_events[i].m_a[1]);
+	}
+    }
+    isect_curve_t.QuickSort(ON_CompareIncreasing);
+
+    // find the intervals delimiting segments inside the outerloop
+    ON_SimpleArray<ON_Interval> intervals_inside_outerloop;
+    if (isect_curve_t.Count() != 0) {
+	// add curve endpoints to the list if recorded
+	// intersections nearly coincide with them
+	if (!ON_NearZero(isect_curve_t[0] - curve2D->Domain().Min())) {
+	    isect_curve_t.Insert(0, curve2D->Domain().Min());
+	}
+	if (!ON_NearZero(*isect_curve_t.Last() - curve2D->Domain().Max())) {
+	    isect_curve_t.Append(curve2D->Domain().Max());
+	}
+
+	// Check if the midpoint of each non-degenerate interval is
+	// inside the outerloop. Record the entire interval as being
+	// inside the outerloop.
+	for (int i = 0; i < isect_curve_t.Count() - 1; i++) {
+	    ON_Interval interval(isect_curve_t[i], isect_curve_t[i + 1]);
+	    if (ON_NearZero(interval.Length())) {
+		continue;
+	    }
+	    ON_2dPoint pt = curve2D->PointAt(interval.Mid());
+	    try {
+		if (is_point_inside_loop(pt, outerloop_curves)) {
+		    intervals_inside_outerloop.Append(interval);
+		}
+	    } catch (InvalidGeometry &e) {
+		bu_log("%s", e.what());
+	    }
+	}
+    } else {
+	// no intersection with the outerloop implies the entire
+	// intersection curve is inside the face
+	intervals_inside_outerloop.Append(curve2D->Domain());
+    }
+    return intervals_inside_outerloop;
+}
+
 HIDDEN int
 get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i1, int face_i2, ON_SSX_EVENT *event)
 {
@@ -578,87 +639,12 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
 	outerloop2.Append(brep2->m_C2[brep2->m_T[loop2.m_ti[i]].m_c2i]);
     }
 
-    // 2.1 Intersect the curves in event with outerloop1, and get the parts
-    // inside. (Represented with param intervals on the curve's domain [0, 1])
-    ON_SimpleArray<double> isect_location;
+    // 2. Find the intervals of the curves that are inside the outerloops.
     ON_SimpleArray<ON_Interval> intervals1, intervals2;
-    ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
-    for (int i = 0; i < outerloop1.Count(); i++) {
-	ON_Intersect(event->m_curveA, outerloop1[i], x_event1, INTERSECTION_TOL);
-    }
-    for (int i = 0; i < x_event1.Count(); i++) {
-	isect_location.Append(x_event1[i].m_a[0]);
-	if (x_event1[i].m_type == ON_X_EVENT::ccx_overlap) {
-	    isect_location.Append(x_event1[i].m_a[1]);
-	}
-    }
-    isect_location.QuickSort(ON_CompareIncreasing);
-    if (isect_location.Count() != 0) {
-	if (!ON_NearZero(isect_location[0] - event->m_curveA->Domain().Min())) {
-	    isect_location.Insert(0, event->m_curveA->Domain().Min());
-	}
-	if (!ON_NearZero(*isect_location.Last() - event->m_curveA->Domain().Max())) {
-	    isect_location.Append(event->m_curveA->Domain().Max());
-	}
-	for (int i = 0; i < isect_location.Count() - 1; i++) {
-	    ON_Interval interval(isect_location[i], isect_location[i + 1]);
-	    if (ON_NearZero(interval.Length())) {
-		continue;
-	    }
-	    ON_2dPoint pt = event->m_curveA->PointAt(interval.Mid());
-	    try {
-		if (is_point_inside_loop(pt, outerloop1)) {
-		    intervals1.Append(interval);
-		}
-	    } catch (InvalidGeometry &e) {
-		bu_log("%s", e.what());
-	    }
-	}
-    } else {
-	intervals1.Append(event->m_curveA->Domain());    // No intersection
-    }
-
-    // 2.2 Intersect the curves in event with outerloop2, and get the parts
-    // inside. (Represented with param intervals on the curve's domain [0, 1])
-    isect_location.Empty();
-    for (int i = 0; i < outerloop2.Count(); i++) {
-	ON_Intersect(event->m_curveB, outerloop2[i], x_event2, INTERSECTION_TOL);
-    }
-    for (int i = 0; i < x_event2.Count(); i++) {
-	isect_location.Append(x_event2[i].m_a[0]);
-	if (x_event2[i].m_type == ON_X_EVENT::ccx_overlap) {
-	    isect_location.Append(x_event2[i].m_a[1]);
-	}
-    }
-    isect_location.QuickSort(ON_CompareIncreasing);
-    if (isect_location.Count() != 0) {
-	if (!ON_NearZero(isect_location[0] - event->m_curveB->Domain().Min())) {
-	    isect_location.Insert(0, event->m_curveB->Domain().Min());
-	}
-	if (!ON_NearZero(*isect_location.Last() - event->m_curveB->Domain().Max())) {
-	    isect_location.Append(event->m_curveB->Domain().Max());
-	}
-	for (int i = 0; i < isect_location.Count() - 1; i++) {
-	    ON_Interval interval(isect_location[i], isect_location[i + 1]);
-	    if (ON_NearZero(interval.Length())) {
-		continue;
-	    }
-	    ON_2dPoint pt = event->m_curveB->PointAt(interval.Mid());
-	    try {
-		if (is_point_inside_loop(pt, outerloop2)) {
-		    // According to openNURBS's definition, the domain of m_curve3d,
-		    // m_curveA, m_curveB in an ON_SSX_EVENT should be the same.
-		    // (See ON_SSX_EVENT::IsValid()).
-		    // So we don't need to pull the interval back to A
-		    intervals2.Append(interval);
-		}
-	    } catch (InvalidGeometry &e) {
-		bu_log("%s", e.what());
-	    }
-	}
-    } else {
-	intervals2.Append(event->m_curveB->Domain());    // No intersection
-    }
+    intervals1 = get_curve_intervals_inside_outerloop(event->m_curveA,
+	    outerloop1, INTERSECTION_TOL);
+    intervals2 = get_curve_intervals_inside_outerloop(event->m_curveB,
+	    outerloop2, INTERSECTION_TOL);
 
     // 3. Merge the intervals and get the final result.
     try {
