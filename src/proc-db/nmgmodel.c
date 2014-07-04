@@ -35,9 +35,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-
-static struct model *m;
-static struct nmgregion *r;
 static struct shell *s;
 static struct faceuse *fu;
 static struct faceuse *tc_fu;	/* top center */
@@ -499,13 +496,8 @@ make_1manifold_bits()
 void
 make_0manifold_bits()
 {
-    struct shell *sp;
-
-    /* make a shell of a single vertex in the same region
-     * as all the other stuff
-     */
-    sp = nmg_msv(r);
-    vertl[48] = sp->vu_p->v_p;
+    s = nmg_ms();
+    vertl[48] = s->vu_p->v_p;
     nmg_vertex_g(vertl[48],  -10.0, 40.0, -10.0);
 }
 
@@ -526,10 +518,7 @@ main(int ac, char *av[])
     if (!manifold[0] && !manifold[1] && !manifold[2] && !manifold[3])
 	usage("No manifolds selected\n",1);
 
-
-    m = nmg_mm();
-    r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
+    s = nmg_ms();
 
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.01;
@@ -542,13 +531,13 @@ main(int ac, char *av[])
     if (manifold[1]) make_1manifold_bits();
     if (manifold[0]) make_0manifold_bits();
 
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
 
     /* write a plot file */
     if ((fdplot = fopen(plotfilename, "w")) == (FILE *)NULL)
 	perror(plotfilename);
     else {
-	nmg_pl_m(fdplot, m);
+	nmg_pl_s(fdplot, s);
 	fclose(fdplot);
     }
 
@@ -557,7 +546,7 @@ main(int ac, char *av[])
 	perror(mfilename);
     else {
 	mk_id(fdmodel, "hairy NMG");
-	mk_nmg(fdmodel, "s.NMG",  m); /* releases m, boo */
+	mk_nmg(fdmodel, "s.NMG",  s); /* releases m, boo */
 
 	/* build a database region mentioning the solid */
 	mk_comb1(fdmodel, "r.NMG", "s.NMG", 1);

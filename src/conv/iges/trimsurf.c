@@ -49,7 +49,7 @@ struct snurb_hit
 
 
 struct face_g_snurb *
-Get_nurb_surf(int entityno, struct model *m)
+Get_nurb_surf(int entityno, struct shell *s)
 {
     struct face_g_snurb *srf;
     point_t pt;
@@ -96,12 +96,12 @@ Get_nurb_surf(int entityno, struct model *m)
 
     n_u = n_cols+u_order;
     n_v = n_rows+v_order;
-    if (!m) {
+    if (!s) {
 	srf = rt_nurb_new_snurb(u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type, (struct resource *)NULL);
     } else {
 	int pnum;
 
-	GET_FACE_G_SNURB(srf, m);
+	GET_FACE_G_SNURB(srf, s);
 	BU_LIST_INIT(&srf->l);
 	BU_LIST_INIT(&srf->f_hd);
 	srf->l.magic = NMG_FACE_G_SNURB_MAGIC;
@@ -897,7 +897,6 @@ Assign_surface_to_fu(struct faceuse *fu, struct face_g_snurb *srf)
 struct faceuse *
 trim_surf(int entityno, struct shell *s)
 {
-    struct model *m;
     struct face_g_snurb *srf;
     struct faceuse *fu;
     struct loopuse *lu;
@@ -911,9 +910,6 @@ trim_surf(int entityno, struct shell *s)
     int lu_uv_orient;
 
     NMG_CK_SHELL(s);
-
-    m = nmg_find_model(&s->l.magic);
-    NMG_CK_MODEL(m);
 
     if (bu_debug & BU_DEBUG_MEM_CHECK) {
 	bu_log("barriercheck at start of trim_surf():\n");
@@ -943,7 +939,7 @@ trim_surf(int entityno, struct shell *s)
 	    Readint(&inner_loop[i], "");
     }
 
-    if ((srf = Get_nurb_surf((surf_de-1)/2, m)) == (struct face_g_snurb *)NULL) {
+    if ((srf = Get_nurb_surf((surf_de-1)/2, s)) == (struct face_g_snurb *)NULL) {
 	if (inner_loop_count)
 	    bu_free((char *)inner_loop, "trim_surf: inner_loop");
 	return (struct faceuse *)NULL;
@@ -1358,10 +1354,7 @@ Find_pt_in_fu(struct faceuse *fu, point_t pt, vect_t norm)
 void
 Convtrimsurfs()
 {
-
     int i, convsurf = 0, totsurfs = 0;
-    struct model *m;
-    struct nmgregion *r;
     struct shell *s;
     struct faceuse *fu;
     struct bu_list hit_list;
@@ -1371,9 +1364,7 @@ Convtrimsurfs()
     if (RT_G_DEBUG & DEBUG_MEM_FULL)
 	bu_mem_barriercheck();
 
-    m = nmg_mm();
-    r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
+    s = nmg_ms();
 
     for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 144) {
@@ -1392,7 +1383,7 @@ Convtrimsurfs()
 	}
     }
 
-    nmg_rebound(m, &tol);
+    nmg_rebound(s, &tol);
 
     bu_log("\n\t%d surfaces converted, adjusting surface normals....\n", convsurf);
 
@@ -1445,18 +1436,18 @@ Convtrimsurfs()
 	bu_mem_barriercheck();
 
     if (convsurf) {
-	(void)nmg_vertex_fuse(&m->magic, &tol);
+	(void)nmg_vertex_fuse(&s->magic, &tol);
 
 	if (!BU_STR_EMPTY(curr_file->obj_name))
-	    mk_nmg(fdout, curr_file->obj_name, m);
+	    mk_nmg(fdout, curr_file->obj_name, s);
 	else
-	    mk_nmg(fdout, "Trimmed_surf", m);
+	    mk_nmg(fdout, "Trimmed_surf", s);
     }
     if (RT_G_DEBUG & DEBUG_MEM_FULL)
 	bu_mem_barriercheck();
 
     if (!convsurf) {
-	nmg_km(m);
+	nmg_ks(s);
     }
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL)

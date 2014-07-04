@@ -40,7 +40,7 @@
 
 
 struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    void (*func)(struct shell *, const struct db_full_path *, int, int, float [3]);
 };
 
 
@@ -316,7 +316,7 @@ invert(union tree *tree)
 	bu_log("Erm, this isn't an nmg tess\n");
 	return tree;
     }
-    s = (struct soup_s *)tree->tr_d.td_r->m_p;
+    s = (struct soup_s *)tree->tr_d.td_s;
     SOUP_CKMAG(s);
 
     for (i=0;i<s->nfaces;i++) {
@@ -341,8 +341,8 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
 
     RT_CK_TREE(left_tree);
     RT_CK_TREE(right_tree);
-    l = (struct soup_s *)left_tree->tr_d.td_r->m_p;
-    r = (struct soup_s *)right_tree->tr_d.td_r->m_p;
+    l = (struct soup_s *)left_tree->tr_d.td_s;
+    r = (struct soup_s *)right_tree->tr_d.td_s;
     SOUP_CKMAG(l);
     SOUP_CKMAG(r);
 
@@ -378,8 +378,8 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int UNUSED(
 
     RT_CK_TREE(left_tree);
     RT_CK_TREE(right_tree);
-    l = (struct soup_s *)left_tree->tr_d.td_r->m_p;
-    r = (struct soup_s *)right_tree->tr_d.td_r->m_p;
+    l = (struct soup_s *)left_tree->tr_d.td_s;
+    r = (struct soup_s *)right_tree->tr_d.td_s;
     printf("Composing! %lu %lu\n", l->nfaces, r->nfaces);
 
     bu_log("solid /left\n");
@@ -424,18 +424,18 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 	     * model. Primitives should only provide a single shell, right? */
 	    {
 		struct rt_db_internal ip;
-		struct nmgregion *nmgr = BU_LIST_FIRST(nmgregion, &tr->tr_d.td_r->m_p->r_hd);
+		struct shell *nmgs = tr->tr_d.td_s;
 		/* the bot temporary format may be unnecessary if we can walk
 		 * the nmg shells and generate soup from them directly. */
-		struct rt_bot_internal *bot = nmg_bot(BU_LIST_FIRST(shell, &nmgr->s_hd), tol);
+		struct rt_bot_internal *bot = nmg_bot(nmgs, tol);
 
 		/* causes a crash.
 		   nmg_kr(nmgr);
 		   free(nmgr);
 		*/
 
-		tr->tr_d.td_r->m_p = (struct model *)bot2soup(bot, tol);
-		SOUP_CKMAG((struct soup_s *)tr->tr_d.td_r->m_p);
+		tr->tr_d.td_s = (struct shell *)bot2soup(bot, tol);
+		SOUP_CKMAG((struct soup_s *)tr->tr_d.td_s);
 
 		/* fill in a db_internal with our new bot so we can free it */
 		RT_DB_INTERNAL_INIT(&ip);
@@ -455,13 +455,13 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 	    tr->tr_b.tb_right = evaluate(tr->tr_b.tb_right, ttol, tol);
 	    RT_CK_TREE(tr->tr_b.tb_left);
 	    RT_CK_TREE(tr->tr_b.tb_right);
-	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_r->m_p);
-	    SOUP_CKMAG(tr->tr_b.tb_right->tr_d.td_r->m_p);
+	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_s);
+	    SOUP_CKMAG(tr->tr_b.tb_right->tr_d.td_s);
 	    split_faces(tr->tr_b.tb_left, tr->tr_b.tb_right, tol);
 	    RT_CK_TREE(tr->tr_b.tb_left);
 	    RT_CK_TREE(tr->tr_b.tb_right);
-	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_r->m_p);
-	    SOUP_CKMAG(tr->tr_b.tb_right->tr_d.td_r->m_p);
+	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_s);
+	    SOUP_CKMAG(tr->tr_b.tb_right->tr_d.td_s);
 	    break;
 	default:
 	    bu_bomb("bottess evaluate(): bad op (first pass)\n");
@@ -489,7 +489,7 @@ union tree *
 gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *ret_tree = TREE_NULL;
-    void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    void (*write_region)(struct shell *, const struct db_full_path *, int, int, float [3]);
 
     if (!tsp || !curtree || !pathp || !client_data) {
 	bu_log("INTERNAL ERROR: gcv_region_end missing parameters\n");
@@ -506,7 +506,7 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     RT_CK_TREE(curtree);
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
 
     splitz=0;
     splitty=0;
@@ -515,7 +515,7 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     RT_CK_TREE(curtree);
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
 
     if (curtree->tr_op == OP_NOP)
 	return curtree;

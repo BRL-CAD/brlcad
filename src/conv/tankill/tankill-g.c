@@ -140,8 +140,6 @@ main(int argc, char **argv)
     float x, y, z;
     struct tankill_verts *verts;
     struct vertex **face_verts[3];
-    struct model *m;
-    struct nmgregion *r;
     struct shell *s;
     struct faceuse *fu;
     struct bu_ptbl faces;
@@ -241,9 +239,7 @@ main(int argc, char **argv)
     while ( fscanf( in_fp, "%d", &no_of_verts ) != EOF )
     {
 	/* make a new shell */
-	m = nmg_mm();
-	r = nmg_mrsv( m );
-	s = BU_LIST_FIRST( shell, &r->s_hd );
+	s = nmg_ms();
 
 	/* make sure there is enough room */
 	if ( no_of_verts > array_size )
@@ -333,7 +329,6 @@ main(int argc, char **argv)
 	}
 
 	/* calculate plane equations for faces */
-	for (BU_LIST_FOR(s, shell, &r->s_hd))
 	{
 	    NMG_CK_SHELL( s );
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
@@ -360,7 +355,6 @@ main(int argc, char **argv)
 	 * upper edge
 	 */
 
-	s = BU_LIST_FIRST( shell, &r->s_hd );
 	nmg_break_long_edges( s, &tol );
 
 	/* glue all the faces together */
@@ -370,18 +364,15 @@ main(int argc, char **argv)
 	bu_ptbl_reset( &faces );
 
 	/* Calculate bounding boxes */
-	nmg_region_a( r, &tol );
+	nmg_shell_a( s, &tol );
 
 	/* fix the normals */
-	s = BU_LIST_FIRST( shell, &r->s_hd );
-
 	nmg_fix_normals( s, &tol );
 
 	/* make a name for this solid */
 	sprintf( name, "s.%d.%d", comp_code, Add_solid( comp_code ) );
 
 	/* write the solid to the brlcad database */
-	s = BU_LIST_FIRST( shell, &r->s_hd );
 	if ( polysolids )
 	{
 	    if ( verbose )
@@ -403,12 +394,12 @@ main(int argc, char **argv)
 		/* write it out */
 		if ( verbose )
 		    bu_log( "\twriting polysolid %s\n", name );
-		mk_nmg( out_fp, name, m );
+		mk_nmg( out_fp, name, s );
 	    }
 	}
 
 	/* kill the nmg model */
-	nmg_km( m );
+	nmg_ks( s );
 
     }
 

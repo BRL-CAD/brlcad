@@ -84,36 +84,28 @@ write_fu_as_sgp(struct faceuse *fu)
 }
 
 static void
-write_model_as_sgp(struct model *m)
+write_shell_as_sgp(struct shell *s)
 {
-    struct nmgregion *r;
-    struct shell *s;
     struct faceuse *fu, *fu_next;
 
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
 
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
+    while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
 
-	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-
-	    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
-	    while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
-
-		NMG_CK_FACEUSE(fu);
-		fu_next = BU_LIST_PNEXT(faceuse, &fu->l);
-		if (fu->orientation == OT_SAME) {
-		    if (fu_next == fu->fumate_p) {
-			fu_next = BU_LIST_PNEXT(faceuse, &fu_next->l);
-		    }
-		    if (write_fu_as_sgp(fu)) {
-			if (nmg_kfu(fu)) {
-			    bu_bomb("write_model_as_sgp() shell is empty");
-			}
-		    }
+	NMG_CK_FACEUSE(fu);
+	fu_next = BU_LIST_PNEXT(faceuse, &fu->l);
+	if (fu->orientation == OT_SAME) {
+	    if (fu_next == fu->fumate_p) {
+		fu_next = BU_LIST_PNEXT(faceuse, &fu_next->l);
+	    }
+	    if (write_fu_as_sgp(fu)) {
+		if (nmg_kfu(fu)) {
+		    bu_bomb("write_model_as_sgp() shell is empty");
 		}
-		fu = fu_next;
 	    }
 	}
+	fu = fu_next;
     }
 }
 
@@ -197,7 +189,7 @@ main(int argc, char *argv[])
 	struct directory *dp;
 	struct rt_db_internal ip;
 	int id;
-	struct model *m;
+	struct shell *s;
 
 	if ( (dp=db_lookup( dbip, argv[bu_optind], LOOKUP_NOISY)) == RT_DIR_NULL )
 	    continue;
@@ -215,10 +207,10 @@ main(int argc, char *argv[])
 	    continue;
 	}
 
-	m = (struct model *)ip.idb_ptr;
-	NMG_CK_MODEL( m );
+	s = (struct shell *)ip.idb_ptr;
+	NMG_CK_SHELL( s );
 
-	write_model_as_sgp( m );
+	write_shell_as_sgp( s );
 	rt_db_free_internal(&ip);
     }
 

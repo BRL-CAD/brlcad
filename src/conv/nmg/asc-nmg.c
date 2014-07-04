@@ -108,7 +108,7 @@ main(int argc, char **argv)
  *	Write the nmg to a BRL-CAD style data base.
  */
 void
-create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name)
+create_brlcad_db(struct rt_wdb *fpout, struct shell *s, char *reg_name, char *grp_name)
 {
     char	*rname, *sname;
     int size = sizeof(reg_name) + 3;
@@ -119,7 +119,7 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
     sname = (char *)bu_malloc(size, "sname");	/* Solid name. */
 
     snprintf(sname, size, "s.%s", reg_name);
-    mk_nmg(fpout, sname,  m);		/* Make nmg object. */
+    mk_nmg(fpout, sname, s);		/* Make nmg object. */
     snprintf(rname, size, "r.%s", reg_name);
     mk_comb1(fpout, rname, sname, 1);	/* Put object in a region. */
     if (grp_name) {
@@ -133,8 +133,6 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
 static int
 ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name)
 {
-    struct model	*m;
-    struct nmgregion	*r;
     struct bn_tol	tol;
     struct shell	*s;
     vect_t		Ext;
@@ -143,9 +141,7 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 
     VSETALL(Ext, 0.);
 
-    m = nmg_mm();		/* Make nmg model. */
-    r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-    s = BU_LIST_FIRST(shell, &r->s_hd);
+    s = nmg_ms();
     descr_to_nmg(s, fpin, Ext);	/* Convert ascii description to nmg. */
 
     /* Copied from proc-db/nmgmodel.c */
@@ -165,11 +161,11 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
     if (!NEAR_ZERO(MAGNITUDE(Ext), 0.001))
 	nmg_extrude_face(BU_LIST_FIRST(faceuse, &s->fu_hd), Ext, &tol);
 
-    nmg_region_a(r, &tol);	/* Calculate geometry for region and shell. */
+    nmg_shell_a(s, &tol);	/* Calculate geometry for region and shell. */
 
     nmg_fix_normals( s, &tol ); /* insure that faces have outward pointing normals */
 
-    create_brlcad_db(fpout, m, reg_name, grp_name);
+    create_brlcad_db(fpout, s, reg_name, grp_name);
 
     return 0;
 }

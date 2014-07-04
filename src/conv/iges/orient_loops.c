@@ -245,38 +245,32 @@ Orient_nurb_face_loops(struct faceuse *fu)
 
 
 void
-Orient_loops(struct nmgregion *r)
+Orient_loops(struct shell *s)
 {
-    struct shell *s;
+    struct faceuse *fu;
 
-    NMG_CK_REGION(r);
+    NMG_CK_SHELL(s);
 
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	struct faceuse *fu;
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	struct face *f;
 
-	NMG_CK_SHELL(s);
+	NMG_CK_FACEUSE(fu);
 
-	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	    struct face *f;
+	if (fu->orientation != OT_SAME)
+	    continue;
 
-	    NMG_CK_FACEUSE(fu);
+	f = fu->f_p;
+	NMG_CK_FACE(f);
 
-	    if (fu->orientation != OT_SAME)
-		continue;
+	if (!f->g.magic_p)
+	    bu_exit(1, "Face has no geometry!\n");
 
-	    f = fu->f_p;
-	    NMG_CK_FACE(f);
-
-	    if (!f->g.magic_p)
-		bu_exit(1, "Face has no geometry!\n");
-
-	    if (*f->g.magic_p == NMG_FACE_G_PLANE_MAGIC)
-		Orient_face_loops(fu);
-	    else if (*f->g.magic_p == NMG_FACE_G_SNURB_MAGIC)
-		Orient_nurb_face_loops(fu);
-	    else
-		bu_exit(1, "Face has unrecognized geometry type\n");
-	}
+	if (*f->g.magic_p == NMG_FACE_G_PLANE_MAGIC)
+	    Orient_face_loops(fu);
+	else if (*f->g.magic_p == NMG_FACE_G_SNURB_MAGIC)
+	    Orient_nurb_face_loops(fu);
+	else
+	    bu_exit(1, "Face has unrecognized geometry type\n");
     }
 }
 

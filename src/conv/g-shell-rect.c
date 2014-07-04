@@ -394,25 +394,23 @@ static int
 Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
 	     char *manifolds, fastf_t *hit1, fastf_t *hit2)
 {
-    struct model *m;
     struct ray_data rd;
     struct seg seghead;
     struct xray *rp;
     int ret;
 
     NMG_CK_SHELL(s);
-    m = nmg_find_model(&s->l.magic);
 
     memset(&rd, 0, sizeof(struct ray_data));
 
     rp = &ap->a_ray;
     rd.tol = &tol;
-    rd.rd_m = m;
+    rd.rd_s = s;
     rd.rp = rp;
     rd.ap = ap;
     rd.manifolds = manifolds;
     rd.hitmiss = hitmiss;
-    memset(hitmiss, 0, m->maxindex*sizeof(struct hitmiss *));
+    memset(hitmiss, 0, s->maxindex*sizeof(struct hitmiss *));
     BU_LIST_INIT(&rd.rd_hit);
     BU_LIST_INIT(&rd.rd_miss);
     BU_LIST_INIT(&seghead.l);
@@ -439,7 +437,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
     }
     rd.magic = NMG_RAY_DATA_MAGIC;
 
-    nmg_isect_ray_model(&rd);
+    nmg_isect_ray_shell(&rd);
 
     if (BU_LIST_IS_EMPTY(&rd.rd_hit))
 	ret = 0;
@@ -475,9 +473,6 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     struct application ap2;
     struct shell *s;
     struct shell_a *sa;
-    struct nmgregion *r;
-    struct nmgregion_a *ra;
-    struct model *m;
     struct nmg_shot_data *sd;
     int i;
 
@@ -485,10 +480,6 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     s = sd->s;
     NMG_CK_SHELL(s);
     sa = s->sa_p;
-    r = s->r_p;
-    ra = r->ra_p;
-    m = r->m_p;
-    NMG_CK_MODEL(m);
     memset(&ap2, 0, sizeof(struct application));
     ap2.a_resource = ap->a_resource;
     ap2.a_ray = ap->a_ray;
@@ -690,9 +681,6 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	    VMINMAX(sa->min_pt, sa->max_pt, f->max_pt);
 	}
 
-	VMINMAX(ra->min_pt, ra->max_pt, sa->min_pt);
-	VMINMAX(ra->min_pt, ra->max_pt, sa->max_pt);
-
 	bu_ptbl_zero(&verts, (long *)hit1_v);
     }
 
@@ -734,9 +722,6 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	    VMINMAX(sa->min_pt, sa->max_pt, f->min_pt);
 	    VMINMAX(sa->min_pt, sa->max_pt, f->max_pt);
 	}
-
-	VMINMAX(ra->min_pt, ra->max_pt, sa->min_pt);
-	VMINMAX(ra->min_pt, ra->max_pt, sa->max_pt);
 
 	bu_ptbl_zero(&verts, (long *)hit2_v);
     }
@@ -971,14 +956,11 @@ shrink_wrap(struct shell *s)
     struct application ap;
     struct nmg_shot_data sd;
     struct bu_ptbl extra_verts;
-    struct model *m;
     int vert_no;
     int i, j;
     int dirs;
 
     NMG_CK_SHELL(s);
-
-    m = nmg_find_model(&s->l.magic);
 
     bu_ptbl_init(&extra_verts, 64, "extra verts");
 
@@ -987,11 +969,11 @@ shrink_wrap(struct shell *s)
 
     nmg_triangulate_shell(s, &tol);
 
-    nmg_split_loops_into_faces(&s->l.magic, &tol);
+    nmg_split_loops_into_faces(&s->magic, &tol);
 
     sd.s = s;
-    sd.manifolds = nmg_manifolds(m);
-    sd.hitmiss = (struct hitmiss **)bu_calloc(2 * m->maxindex, sizeof(struct hitmiss *), "nmg geom hit list");
+    sd.manifolds = nmg_manifolds(s);
+    sd.hitmiss = (struct hitmiss **)bu_calloc(2 * s->maxindex, sizeof(struct hitmiss *), "nmg geom hit list");
 
     memset(&ap, 0, sizeof(struct application));
     ap.a_uptr = (void *)&sd;
@@ -1256,16 +1238,13 @@ refine_edges(struct shell *s)
     struct bu_ptbl edges_2;
     struct bu_ptbl *cur, *next, *tmp;
     struct application ap;
-    struct model *m;
     int breaks=0;
     int loop_count=0;
     int i;
 
     NMG_CK_SHELL(s);
 
-    m = nmg_find_model(&s->l.magic);
-
-    nmg_edge_tabulate(&edges_1, &s->l.magic);
+    nmg_edge_tabulate(&edges_1, &s->magic);
     cur = &edges_1;
     bu_ptbl_init(&edges_2, 64, "edges_2");
     next = &edges_2;
@@ -1279,8 +1258,8 @@ refine_edges(struct shell *s)
     ap.a_hit = refine_hit;
 
     if (debug) {
-	nmg_rebound(m, &tol);
-	mk_nmg(fd_out, "break.0", m);
+	nmg_rebound(s, &tol);
+	mk_nmg(fd_out, "break.0", s);
     }
 
     breaks = 1;
@@ -1393,8 +1372,8 @@ refine_edges(struct shell *s)
 	    char name[16];
 
 	    sprintf(name, "break.%d", loop_count);
-	    nmg_rebound(m, &tol);
-	    mk_nmg(fd_out, name, m);
+	    nmg_rebound(s, &tol);
+	    mk_nmg(fd_out, name, s);
 	}
 
 	bu_ptbl_reset(cur);
@@ -1418,17 +1397,13 @@ Make_shell(void)
     int x_index, y_index, z_index;
     int cell_no[4];
     int status;
-    struct model *m;
-    struct nmgregion *r;
     struct shell *s;
     struct faceuse *fu;
     struct local_part *lpart[4];
 
     bu_log("Building initial shell...\n");
 
-    m = nmg_mm();
-    r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
+    s = nmg_ms();
 
     switch (cur_dir) {
 	case X:
@@ -1535,15 +1510,15 @@ Make_shell(void)
 	    break;
     }
 
-    nmg_rebound(m, &tol);
+    nmg_rebound(s, &tol);
 
     if (do_extra_rays)
 	shrink_wrap(s);
 
     if (edge_tol > 0.0) {
 	if (debug) {
-	    nmg_rebound(m, &tol);
-	    mk_nmg(fd_out, "break.0", m);
+	    nmg_rebound(s, &tol);
+	    mk_nmg(fd_out, "break.0", s);
 	}
 
 	bu_log("Shooting rays at edge mid points...\n");
@@ -1552,11 +1527,11 @@ Make_shell(void)
 
     if (decimation_tol > 0.0) {
 	bu_log("%d edges eliminated by decimation to tolerance of %gmm\n",
-		nmg_edge_collapse(m, &tol, decimation_tol, min_angle), decimation_tol);
+		nmg_edge_collapse(s, &tol, decimation_tol, min_angle), decimation_tol);
     }
 
     if (do_extra_rays || edge_tol > 0.0 || decimation_tol > 0.0)
-	nmg_rebound(m, &tol);
+	nmg_rebound(s, &tol);
 
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	if (fu->orientation != OT_SAME)
@@ -1564,13 +1539,12 @@ Make_shell(void)
 	face_count++;
     }
 
-    bu_log("Bounding box of output: (%g %g %g) <-> (%g %g %g)\n", V3ARGS(r->ra_p->min_pt), V3ARGS(r->ra_p->max_pt));
     bu_log("%ld facets\n", face_count);
 
     if (bot)
 	mk_bot_from_nmg(fd_out, "shell", s);
     else
-	mk_nmg(fd_out, "shell", m);
+	mk_nmg(fd_out, "shell", s);
 }
 
 static int

@@ -60,7 +60,7 @@ static struct db_i		*dbip;
 static struct bu_vls		base_seg = BU_VLS_INIT_ZERO;
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
-static struct model		*the_model;
+static struct shell		*the_shell;
 
 static struct db_tree_state	jack_tree_state;	/* includes tol & model */
 
@@ -75,7 +75,7 @@ static int	regions_done = 0;
  *	list of face vertices is written to the Jack data base file.
  */
 void
-jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
+jack_faces(struct shell *s, FILE *fp_psurf, int *map)
     /* NMG region to be converted. */
     /* Jack format file to write face vertices to. */
 
@@ -83,10 +83,9 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
     struct edgeuse		*eu;
     struct faceuse		*fu;
     struct loopuse		*lu;
-    struct shell		*s;
     struct vertex		*v;
 
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+    {
 	/* Shell is made of faces. */
 	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	    NMG_CK_FACEUSE(fu);
@@ -176,7 +175,7 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
  *	data is called.
  */
 void
-nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
+nmg_to_psurf(struct shell *s, FILE *fp_psurf)
     /* NMG region to be converted. */
     /* Jack format file to write vertex list to. */
 {
@@ -184,10 +183,10 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
     int			*map;	/* map from v->index to Jack vert # */
     struct bu_ptbl		vtab;	/* vertex table */
 
-    map = (int *)bu_calloc(r->m_p->maxindex, sizeof(int), "Jack vert map");
+    map = (int *)bu_calloc(s->maxindex, sizeof(int), "Jack vert map");
 
     /* Built list of vertex structs */
-    nmg_vertex_tabulate(&vtab, &r->l.magic);
+    nmg_vertex_tabulate(&vtab, &s->magic);
 
     /* FIXME: What to do if 0 vertices?  */
 
@@ -207,7 +206,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
     }
     fprintf(fp_psurf, ";;\n");
 
-    jack_faces(r, fp_psurf, map);
+    jack_faces(s, fp_psurf, map);
 
     bu_ptbl_free(&vtab);
     bu_free((char *)map, "Jack vert map");
@@ -223,7 +222,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	(void)nmg_shell_fuse(*tsp->ts_s, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
     } else  {
@@ -244,16 +243,16 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Release the tree memory & input regions */
 	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
 
-	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
-	    nmg_km(*tsp->ts_m);
+	/* Get rid of (s)any other intermediate structures */
+	if ((*tsp->ts_s)->magic == NMG_SHELL_MAGIC) {
+	    nmg_ks(*tsp->ts_s);
 	} else {
-	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	    bu_log("WARNING: tsp->ts_s pointer corrupted, ignoring it.\n");
 	}
 
 	bu_free(name, "db_path_to_string");
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
+	*tsp->ts_s = nmg_ms();
     } BU_UNSETJUMP;/* Relinquish the protection */
 
     return ret_tree;
@@ -268,13 +267,13 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     union tree		*ret_tree;
-    struct nmgregion	*r;
+    struct shell	*s;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
 
     if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
 	char	*sofar = db_path_to_string(pathp);
@@ -293,13 +292,13 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     ret_tree = process_boolean(curtree, tsp, pathp);
 
     if (ret_tree)
-	r = ret_tree->tr_d.td_r;
+	s = ret_tree->tr_d.td_s;
     else
-	r = (struct nmgregion *)NULL;
+	s = (struct shell *)NULL;
 
     regions_done++;
 
-    if (r && !no_file_output)  {
+    if (s && !no_file_output)  {
 	FILE	*fp_psurf;
 	size_t	i;
 	struct bu_vls	file_base = BU_VLS_INIT_ZERO;
@@ -351,7 +350,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	if ((fp_psurf = fopen(bu_vls_addr(&file), "wb")) == NULL)
 	    perror(bu_vls_addr(&file));
 	else {
-	    nmg_to_psurf(r, fp_psurf);
+	    nmg_to_psurf(s, fp_psurf);
 	    fclose(fp_psurf);
 	    if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
 	}
@@ -373,7 +372,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 			  (int)(tsp->ts_mater.ma_color[2] * 255));
 		/* nmg_pl_r(fp, r); */
 		BU_LIST_INIT(&vhead);
-		nmg_r_to_vlist(&vhead, r, 0);
+		nmg_s_to_vlist(&vhead, s, 0);
 		rt_vlist_to_uplot(fp, &vhead);
 		fclose(fp);
 		RT_FREE_VLIST(&vhead);
@@ -417,7 +416,7 @@ main(int argc, char **argv)
     jack_tree_state = rt_initial_tree_state;	/* struct copy */
     jack_tree_state.ts_tol = &tol;
     jack_tree_state.ts_ttol = &ttol;
-    jack_tree_state.ts_m = &the_model;
+    jack_tree_state.ts_s = &the_shell;
 
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -441,7 +440,7 @@ main(int argc, char **argv)
 
     rt_init_resource(&rt_uniresource, 0, NULL);
 
-    the_model = nmg_mm();
+    the_shell = nmg_ms();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
@@ -560,7 +559,7 @@ main(int argc, char **argv)
 	   regions_tried, regions_done, percent);
 
     /* Release dynamic storage */
-    nmg_km(the_model);
+    nmg_ks(the_shell);
     rt_vlist_cleanup();
     db_close(dbip);
 

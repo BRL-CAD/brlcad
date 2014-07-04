@@ -67,16 +67,16 @@ void w_start_global(
     const char *id,
     const char *version);
 extern void w_terminate(FILE *fp);
-extern void write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
-extern void write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
-extern void nmg_region_edge_list(struct bu_ptbl *tab, struct nmgregion *r);
-extern int nmgregion_to_iges(char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param);
-extern int write_shell_face_loop(struct nmgregion *r, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern void write_edge_list(struct shell *s, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern void write_vertex_list(struct shell *s, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern void nmg_region_edge_list(struct bu_ptbl *tab, struct shell *s);
+extern int shell_to_iges(char *name, struct shell *s, int dependent, FILE *fp_dir, FILE *fp_param);
+extern int write_shell_face_loop(struct shell *s, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern void csg_comb_func(struct db_i *dbip, struct directory *dp, void *ptr);
 extern void csg_leaf_func(struct db_i *dbip, struct directory *dp, void *ptr);
 extern void set_iges_tolerances(struct bn_tol *set_tol, struct rt_tess_tol *set_ttol);
 extern void count_refs(struct db_i *dbip, struct directory *dp, void *ptr);
-extern int nmgregion_to_tsurf(char *name, struct nmgregion *r, FILE *fp_dir, FILE *fp_param);
+extern int shell_to_tsurf(char *name, struct shell *s, FILE *fp_dir, FILE *fp_param);
 extern int write_solid_instance(int orig_de, mat_t mat, FILE *fp_dir, FILE *fp_param);
 extern void get_props(struct iges_properties *props, struct rt_comb_internal *comb);
 extern int comb_to_iges(struct rt_comb_internal *comb, int length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param);
@@ -120,7 +120,7 @@ static FILE *fp_dir = NULL;	/* IGES start, global, and directory sections */
 static FILE *fp_param = NULL;	/* IGES parameter section */
 static struct rt_tess_tol ttol;
 static struct bn_tol tol;
-static struct model *the_model;
+static struct shell *the_shell;
 struct db_i *DBIP;
 
 static struct db_tree_state tree_state;	/* includes tol & model */
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
+    tree_state.ts_s = &the_shell;
 
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -221,7 +221,7 @@ main(int argc, char *argv[])
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    the_model = nmg_mm();
+    the_shell = nmg_ms();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     rt_init_resource(&rt_uniresource, 0, NULL);
@@ -452,7 +452,7 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	(void)nmg_shell_fuse(*tsp->ts_s, tsp->ts_tol);
 	result = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
     } else {
@@ -475,11 +475,11 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
 	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC)
-	    nmg_km(*tsp->ts_m);
+	if ((*tsp->ts_s)->magic == NMG_MODEL_MAGIC)
+	    nmg_ks(*tsp->ts_s);
 
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
+	*tsp->ts_s = nmg_ms();
     } BU_UNSETJUMP;		/* Relinquish the protection */
 
     return result;
@@ -495,7 +495,7 @@ union tree *
 do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     union tree *result;
-    struct nmgregion *r;
+    struct shell *s;
     struct bu_list vhead;
     struct directory *dp;
     int dependent;
@@ -503,7 +503,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
 
     BU_LIST_INIT(&vhead);
 
@@ -528,15 +528,15 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     result = process_boolean(tsp, curtree, pathp);
 
     if (result)
-	r = result->tr_d.td_r;
+	s = result->tr_d.td_s;
     else
-	r = (struct nmgregion *)NULL;
+	s = (struct shell *)NULL;
 
     if (verbose)
 	bu_log("\nfinished boolean tree evaluate...\n");
 
     regions_done++;
-    if (r != NULL) {
+    if (s != NULL) {
 
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
@@ -609,12 +609,12 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		}
 	    }
 
-	    dp->d_uses = (-nmgregion_to_iges(dp->d_namep, r, dependent, fp_dir, fp_param));
+	    dp->d_uses = (shell_to_iges(dp->d_namep, s, dependent, fp_dir, fp_param));
 	} else if (mode == TRIMMED_SURF_MODE)
-	    dp->d_uses = (-nmgregion_to_tsurf(dp->d_namep, r, fp_dir, fp_param));
+	    dp->d_uses = (shell_to_tsurf(dp->d_namep, s, fp_dir, fp_param));
 
 	/* NMG region is no longer necessary */
-	nmg_kr(r);
+	nmg_ks(s);
 
 	if (multi_file) {
 	    char copy_buffer[CP_BUF_SIZE] = {0};

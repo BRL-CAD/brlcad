@@ -387,22 +387,19 @@ Leader_to_vlist(int entno, struct bu_list *vhead)
 
 
 void
-Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t y, fastf_t local_scale, fastf_t ang, mat_t *xform)
+Draw_entities(struct shell *s, int de_list[], int no_of_des, fastf_t x, fastf_t y, fastf_t local_scale, fastf_t ang, mat_t *xform)
 {
     struct bu_list vhead;
     struct bn_vlist *vp;
     struct ptlist *pts, *ptr;
-    struct nmgregion *r;
-    struct shell *s;
     int npts;
     int entno;
     int i;
     fastf_t sina, cosa;
 
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
 
-    r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
+    s = nmg_ms();
 
     BU_LIST_INIT(&vhead);
     BU_LIST_INIT(&RTG.rtg_vlfree);
@@ -543,7 +540,7 @@ Get_views_visible(int entno)
 
 
 void
-Do_view(struct model *m, struct bu_ptbl *view_vis_list, int entno,
+Do_view(struct shell *s, struct bu_ptbl *view_vis_list, int entno,
 	fastf_t x, fastf_t y, fastf_t ang)
 {
     int view_de;
@@ -637,7 +634,7 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, int entno,
 	}
     }
 
-    Draw_entities(m, de_list, no_of_des, x, y, ang, (fastf_t)local_scale, xform);
+    Draw_entities(s, de_list, no_of_des, x, y, ang, (fastf_t)local_scale, xform);
 
     bu_free((char *)de_list, "Do_view: de_list");
 }
@@ -678,27 +675,18 @@ Get_drawing(int entno, struct bu_ptbl *view_vis_list)
     }
 
     for (i = 0; i < no_of_views; i++) {
-	struct model *m;
-	struct nmgregion *r;
 	struct shell *s;
 
-	m = nmg_mm();
+	s = nmg_ms();
 
-	Do_view(m, view_vis_list, view_entno[i], (fastf_t)x[i], (fastf_t)y[i], (fastf_t)ang[i]);
+	Do_view(s, view_vis_list, view_entno[i], (fastf_t)x[i], (fastf_t)y[i], (fastf_t)ang[i]);
 
 	/* write the view to the BRL-CAD file if the model is not empty */
-	NMG_CK_MODEL(m);
-	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-	if (BU_LIST_NOT_HEAD(&r->l, &m->r_hd)) {
-	    NMG_CK_REGION(r);
-	    s = BU_LIST_FIRST(shell, &r->s_hd);
-	    if (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
-		if (BU_LIST_NON_EMPTY(&s->eu_hd)) {
-		    nmg_rebound(m, &tol);
-		    mk_nmg(fdout, dir[view_entno[i]]->name, m);
-		    (void)mk_addmember(dir[view_entno[i]]->name, &headp.l, NULL, WMOP_UNION);
-		}
-	    }
+	NMG_CK_MODEL(s);
+	if (BU_LIST_NON_EMPTY(&s->eu_hd)) {
+	    nmg_rebound(s, &tol);
+	    mk_nmg(fdout, dir[view_entno[i]]->name, s);
+	    (void)mk_addmember(dir[view_entno[i]]->name, &headp.l, NULL, WMOP_UNION);
 	}
     }
 
@@ -720,8 +708,6 @@ Conv_drawings()
     int tot_drawings = 0;
     int tot_views = 0;
     struct views_visible *vv;
-    struct model *m;
-    struct nmgregion *r;
     struct shell *s;
     struct bu_ptbl view_vis_list;
 
@@ -778,55 +764,42 @@ Conv_drawings()
 	/* Convert each view */
 	for (i = 0; i < totentities; i++) {
 	    if (dir[i]->type == 410) {
-		m = nmg_mm();
+		s = nmg_ms();
 
-		Do_view(m, &view_vis_list, i, 0.0, 0.0, 0.0);
+		Do_view(s, &view_vis_list, i, 0.0, 0.0, 0.0);
 
 		/* write the drawing to the BRL-CAD file if the model is not empty */
-		r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-		if (BU_LIST_NOT_HEAD(&r->l, &m->r_hd)) {
-		    NMG_CK_REGION(r);
-		    s = BU_LIST_FIRST(shell, &r->s_hd);
-		    if (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
-			if (BU_LIST_NON_EMPTY(&s->eu_hd)) {
-			    nmg_rebound(m, &tol);
-			    mk_nmg(fdout, dir[i]->name, m);
-			    (void)mk_addmember(dir[i]->name, &headp.l, NULL, WMOP_UNION);
-			}
-		    }
+		if (BU_LIST_NON_EMPTY(&s->eu_hd)) {
+		    nmg_rebound(s, &tol);
+		    mk_nmg(fdout, dir[i]->name, s);
+		    (void)mk_addmember(dir[i]->name, &headp.l, NULL, WMOP_UNION);
 		}
 	    }
 	}
+
 	(void)mk_lfcomb(fdout, default_drawing_name, &headp, 0)
 
-	    /* free views visible list */
-	    for (i = 0; i < BU_PTBL_END(&view_vis_list); i++) {
-		vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
-		bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
-		bu_free((char *)vv, "Conv_drawings: vv");
-	    }
-	bu_ptbl_free(&view_vis_list);
+	/* free views visible list */
+	for (i = 0; i < BU_PTBL_END(&view_vis_list); i++) {
+	    vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
+	    bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
+	    bu_free((char *)vv, "Conv_drawings: vv");
+	}
 
+	bu_ptbl_free(&view_vis_list);
 	return;
     }
     bu_log("No view entities\n");
 
     /* no drawings or views, just convert all independent lines, arcs, etc. */
-    m = nmg_mm();
+    s = nmg_ms();
 
-    Draw_entities(m, (int *)NULL, 0, 0.0, 0.0, 0.0, 1.0, (mat_t *)NULL);
+    Draw_entities(s, (int *)NULL, 0, 0.0, 0.0, 0.0, 1.0, (mat_t *)NULL);
 
     /* write the drawing to the BRL-CAD file if the model is not empty */
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-    if (BU_LIST_NOT_HEAD(&r->l, &m->r_hd)) {
-	NMG_CK_REGION(r);
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	if (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
-	    if (BU_LIST_NON_EMPTY(&s->eu_hd)) {
-		nmg_rebound(m, &tol);
-		mk_nmg(fdout, default_drawing_name, m);
-	    }
-	}
+    if (BU_LIST_NON_EMPTY(&s->eu_hd)) {
+	nmg_rebound(s, &tol);
+	mk_nmg(fdout, default_drawing_name, s);
     }
 
     /* free views visible list */

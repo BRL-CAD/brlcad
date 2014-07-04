@@ -59,7 +59,7 @@ static FILE *fpe;		/* Error file pointer */
 static struct db_i *dbip;
 static struct rt_tess_tol ttol;
 static struct bn_tol tol;
-static struct model *the_model;
+static struct shell *the_shell;
 
 static struct db_tree_state tree_state;	/* includes tol & model */
 
@@ -80,10 +80,8 @@ usage(const char *argv0)
 
 
 static void
-nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id)
+nmg_to_acad(struct shell *s, const struct db_full_path *pathp, int region_id)
 {
-    struct model *m;
-    struct shell *s;
     struct vertex *v;
     struct bu_ptbl verts;
     char *region_name;
@@ -92,20 +90,17 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
     int tricount = 0;		/* Triangle number */
     int i;
 
-    NMG_CK_REGION(r);
+    NMG_CK_SHELL(s);
     RT_CK_FULL_PATH(pathp);
 
     region_name = db_path_to_string(pathp);
 
-    m = r->m_p;
-    NMG_CK_MODEL(m);
-
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_shell(s, &tol);
 
 
     /* list all vertices in result */
-    nmg_vertex_tabulate(&verts, &r->l.magic);
+    nmg_vertex_tabulate(&verts, &s->magic);
 
     /* Get number of vertices */
 
@@ -121,7 +116,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
     }
 
 /* Check triangles */
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+    {
 	struct faceuse *fu;
 
 	NMG_CK_SHELL(s);
@@ -155,7 +150,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 		    if (i < 0) {
 			bu_ptbl_free(&verts);
 			bu_free(region_name, "region name");
-			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
+			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)s);
 			bu_exit(1, "ERROR: Triangle vertex was not located\n");
 		    }
 		}
@@ -200,7 +195,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
     fprintf(fp, "%d       %d\n", numtri, 3);
 
     /* output triangles */
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+    {
 	struct faceuse *fu;
 
 	NMG_CK_SHELL(s);
@@ -233,7 +228,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 		    i = bu_ptbl_locate(&verts, (long *)v);
 		    if (i < 0) {
 			bu_ptbl_free(&verts);
-			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
+			bu_log("Vertex from eu %p is not in shell %p\n", (void *)eu, (void *)s);
 			bu_free(region_name, "region name");
 			bu_exit(1, "ERROR: Can't find vertex in list!\n");
 		    }
@@ -311,14 +306,14 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 	/* db_free_tree(curtree);*/		/* Does an nmg_kr() */
 
 	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
-	    nmg_km(*tsp->ts_m);
+	if ((*tsp->ts_s)->magic == NMG_SHELL_MAGIC) {
+	    nmg_ks(*tsp->ts_s);
 	} else {
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 	}
 
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
+	*tsp->ts_s = nmg_ms();
 
 	return TREE_NULL;
     }
@@ -336,13 +331,13 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     union tree *ret_tree = NULL;
     struct bu_list vhead;
     /* static due to longjmp */
-    static struct nmgregion *r = NULL;
+    static struct shell *s = NULL;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
 
     BU_LIST_INIT(&vhead);
 
@@ -364,7 +359,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     ret_tree = process_region(pathp, curtree, tsp);
 
     if (ret_tree)
-	r = ret_tree->tr_d.td_r;
+	s = ret_tree->tr_d.td_s;
     else {
 	if (verbose) {
 	    printf("\tNothing left of this region after Boolean evaluation\n");
@@ -373,80 +368,44 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	    fflush(fpe);
 	}
 	regions_written++; /* don't count as a failure */
-	r = (struct nmgregion *)NULL;
+	s = (struct shell *)NULL;
     }
 
     regions_converted++;
 
-    if (r != (struct nmgregion *)NULL) {
-	struct shell *s;
-	int empty_region=0;
-	int empty_model=0;
+    if (s != (struct shell *)NULL) {
+	if (!BU_SETJUMP) {
+	    /* Write the region to the TANKILL file */
+	    nmg_to_acad(s, pathp, tsp->ts_regionid);
+	    regions_written++;
+	} else {
+	    char *sofar;
+	    BU_UNSETJUMP;
+	    sofar = db_path_to_string(pathp);
+	    bu_free((char *)sofar, "sofar");
 
-	/* Kill cracks */
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
-	    struct shell *next_s;
+	    /* Sometimes the NMG library adds debugging bits when
+	     * it detects an internal error, before bombing out.
+	     */
+	    RTG.NMG_debug = NMG_debug;	/* restore mode */
 
-	    next_s = BU_LIST_PNEXT(shell, &s->l);
-	    if (nmg_kill_cracks(s)) {
-		if (nmg_ks(s)) {
-		    empty_region = 1;
-		    break;
-		}
-	    }
-	    s = next_s;
-	}
+	    /* Release any intersector 2d tables */
+	    nmg_isect2d_final_cleanup();
 
-	/* kill zero length edgeuses */
-	if (!empty_region) {
-	    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
-	}
-
-	if (!empty_region && !empty_model) {
-	    if (!BU_SETJUMP) {
-		/* try */
-
-		/* Write the region to the TANKILL file */
-		nmg_to_acad(r, pathp, tsp->ts_regionid);
-		regions_written++;
-
+	    /* Get rid of (m)any other intermediate structures */
+	    if ((*tsp->ts_s)->magic == NMG_SHELL_MAGIC) {
+		nmg_ks(*tsp->ts_s);
 	    } else {
-		/* catch */
+		bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	    }
 
-		char *sofar;
+	    /* Now, make a new, clean model structure for next pass. */
+	    *tsp->ts_s = nmg_ms();
 
-		BU_UNSETJUMP;
+	    /* FIXME: leaking memory with curtree */
 
-		sofar = db_path_to_string(pathp);
-		bu_free((char *)sofar, "sofar");
-
-		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before bombing out.
-		 */
-		RTG.NMG_debug = NMG_debug;	/* restore mode */
-
-		/* Release any intersector 2d tables */
-		nmg_isect2d_final_cleanup();
-
-		/* Get rid of (m)any other intermediate structures */
-		if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
-		    nmg_km(*tsp->ts_m);
-		} else {
-		    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-		}
-
-		/* Now, make a new, clean model structure for next pass. */
-		*tsp->ts_m = nmg_mm();
-
-		/* FIXME: leaking memory with curtree */
-
-		return TREE_NULL;
-	    } BU_UNSETJUMP;
-	}
-
-	if (!empty_model)
-	    nmg_kr(r);
+	    return TREE_NULL;
+	} BU_UNSETJUMP;
     }
 
     /*
@@ -489,7 +448,7 @@ main(int argc, char **argv)
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
+    tree_state.ts_s = &the_shell;
 
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -506,7 +465,7 @@ main(int argc, char **argv)
 
     rt_init_resource(&rt_uniresource, 0, NULL);
 
-    the_model = nmg_mm();
+    the_shell = nmg_ms();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
@@ -655,7 +614,7 @@ main(int argc, char **argv)
     fclose(fp);
 
     /* Release dynamic storage */
-    nmg_km(the_model);
+    nmg_ks(the_shell);
     rt_vlist_cleanup();
     db_close(dbip);
 

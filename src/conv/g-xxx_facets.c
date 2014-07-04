@@ -61,7 +61,7 @@ static int	verbose;
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;	/* tessellation tolerance in mm */
 static struct bn_tol		tol;	/* calculation tolerance */
-static struct model		*the_model;
+static struct shell		*the_shell;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
 
@@ -82,7 +82,7 @@ main(int argc, char **argv)
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
+    tree_state.ts_s = &the_shell;
 
     /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
@@ -103,7 +103,7 @@ main(int argc, char **argv)
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* make empty NMG model */
-    the_model = nmg_mm();
+    the_shell = nmg_ms();
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "r:a:n:o:vx:D:X:h?")) != -1) {
@@ -206,7 +206,7 @@ main(int argc, char **argv)
     bu_log("  dist [-D]    %g\n", tol.dist);
 
     /* Release dynamic storage */
-    nmg_km(the_model);
+    nmg_ks(the_shell);
     rt_vlist_cleanup();
     db_close(dbip);
 
@@ -215,23 +215,18 @@ main(int argc, char **argv)
 
 /* routine to output the faceted NMG representation of a BRL-CAD region */
 static void
-output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id))
+output_nmg(struct shell *s, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id))
 {
-    struct model *m;
-    struct shell *s;
     struct vertex *v;
     char *region_name;
 
-    NMG_CK_REGION(r);
+    NMG_CK_SHELL(s);
     RT_CK_FULL_PATH(pathp);
 
     region_name = db_path_to_string(pathp);
 
-    m = r->m_p;
-    NMG_CK_MODEL(m);
-
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_shell(s, &tol);
 
     /* Output triangles */
     if (verbose) {
@@ -239,7 +234,7 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     } else {
 	printf("Converted %s\n", region_name);
     }
-    for (BU_LIST_FOR(s, shell, &r->s_hd))
+
     {
 	struct faceuse *fu;
 
@@ -289,13 +284,13 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 
 static void
-process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp)
+process_triangulation(struct shell *s, const struct db_full_path *pathp, struct db_tree_state *tsp)
 {
     if (!BU_SETJUMP) {
 	/* try */
 
 	/* Write the facetized region to the output file */
-	output_nmg(r, pathp, tsp->ts_regionid, tsp->ts_gmater);
+	output_nmg(s, pathp, tsp->ts_regionid, tsp->ts_gmater);
 
     } else {
 	/* catch */
@@ -314,15 +309,15 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
 
-	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
-	    nmg_km(*tsp->ts_m);
+	/* Get rid of (s)any other intermediate structures */
+	if ((*tsp->ts_s)->magic == NMG_SHELL_MAGIC) {
+	    nmg_ks(*tsp->ts_s);
 	} else {
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 	}
 
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
+	*tsp->ts_s = nmg_ms();
     }  BU_UNSETJUMP;
 }
 
@@ -336,7 +331,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	(void)nmg_shell_fuse(*tsp->ts_s, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
     } else  {
@@ -357,16 +352,16 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Release the tree memory & input regions */
 	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
 
-	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
-	    nmg_km(*tsp->ts_m);
+	/* Get rid of (s)any other intermediate structures */
+	if ((*tsp->ts_s)->magic == NMG_SHELL_MAGIC) {
+	    nmg_ks(*tsp->ts_s);
 	} else {
-	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	    bu_log("WARNING: tsp->ts_s pointer corrupted, ignoring it.\n");
 	}
 
 	bu_free(name, "db_path_to_string");
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
+	*tsp->ts_s = nmg_ms();
     } BU_UNSETJUMP;/* Relinquish the protection */
 
     return ret_tree;
@@ -382,13 +377,13 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 {
     union tree		*ret_tree;
     struct bu_list		vhead;
-    struct nmgregion	*r;
+    struct shell	*s;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
 
     BU_LIST_INIT(&vhead);
 
@@ -412,54 +407,21 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     ret_tree= process_boolean(curtree, tsp, pathp);
 
     if (ret_tree)
-	r = ret_tree->tr_d.td_r;
+	s = ret_tree->tr_d.td_s;
     else
     {
 	if (verbose)
 	    bu_log("\tNothing left of this region after Boolean evaluation\n");
 	regions_written++; /* don't count as a failure */
-	r = (struct nmgregion *)NULL;
+	s = (struct shell *)NULL;
     }
 
     regions_converted++;
 
-    if (r != (struct nmgregion *)NULL)
+    if (s != (struct shell *)NULL)
     {
-	struct shell *s;
-	int empty_region=0;
-	int empty_model=0;
-
-	/* Kill cracks */
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd))
-	{
-	    struct shell *next_s;
-
-	    next_s = BU_LIST_PNEXT(shell, &s->l);
-	    if (nmg_kill_cracks(s))
-	    {
-		if (nmg_ks(s))
-		{
-		    empty_region = 1;
-		    break;
-		}
-	    }
-	    s = next_s;
-	}
-
-	/* kill zero length edgeuses */
-	if (!empty_region) {
-	    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
-	}
-
-	if (!empty_region && !empty_model) {
-	    process_triangulation(r, pathp, tsp);
-
-	    regions_written++;
-	}
-
-	if (!empty_model)
-	    nmg_kr(r);
+	process_triangulation(s, pathp, tsp);
+	regions_written++;
     }
 
     /*

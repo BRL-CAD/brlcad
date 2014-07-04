@@ -336,7 +336,6 @@ Make_nurb_face(struct shell *s, int surf_entityno)
     struct loopuse *lu;
     struct faceuse *fu;
     struct face_g_snurb *srf;
-    struct model *m;
 
     if (dir[surf_entityno]->type != 128) {
 	bu_log("Make_nurb_face: Called with surface entity (%d) of type %s\n", surf_entityno,
@@ -345,9 +344,7 @@ Make_nurb_face(struct shell *s, int surf_entityno)
 	return (struct faceuse *)NULL;
     }
 
-    m = nmg_find_model(&s->l.magic);
-
-    if ((srf = Get_nurb_surf(surf_entityno, m)) == (struct face_g_snurb *)NULL) {
+    if ((srf = Get_nurb_surf(surf_entityno, s)) == (struct face_g_snurb *)NULL) {
 	bu_log("Make_nurb_face: Get_nurb_surf failed for surface entity (%d), face ignored\n",	 surf_entityno);
 	return (struct faceuse *)NULL;
     }

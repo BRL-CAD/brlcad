@@ -52,8 +52,8 @@ static const char usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_
 
 extern fastf_t nmg_loop_plane_area(const struct loopuse *lu, plane_t pl);
 
-int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile);
-int	create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name);
+int	psurf_to_nmg(struct shell *s, FILE *fp, char *jfile);
+int	create_brlcad_db(struct rt_wdb *fpout, struct shell *s, char *reg_name, char *grp_name);
 void	jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile);
 
 
@@ -139,12 +139,12 @@ main(int argc, char **argv)
 void
 jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile)
 {
-    struct model	*m;
+    struct shell	*s;
 
-    m = nmg_mm();			/* Make nmg model. */
-    psurf_to_nmg(m, fpin, jfile);	/* Convert psurf model to nmg. */
-    create_brlcad_db(fpout, m, reg_name, grp_name);	/* Put in db. */
-    nmg_km(m);			/* Destroy the nmg model. */
+    s = nmg_ms();			/* Make nmg model. */
+    psurf_to_nmg(s, fpin, jfile);	/* Convert psurf model to nmg. */
+    create_brlcad_db(fpout, s, reg_name, grp_name);	/* Put in db. */
+    nmg_ks(s);			/* Destroy the nmg model. */
 }
 
 /*
@@ -209,15 +209,13 @@ read_psurf_face(FILE *fp, int *lst)
 }
 
 int
-psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
+psurf_to_nmg(struct shell *s, FILE *fp, char *jfile)
 /* Input/output, nmg model. */
 /* Input, pointer to psurf data file. */
 /* Name of Jack data base file. */
 {
     int		face, fail, i, lst[MAX_NUM_PTS], nf, nv;
     struct faceuse	*outfaceuses[MAX_NUM_PTS];
-    struct nmgregion *r;
-    struct shell	*s;
     struct vertex	*vertlist[MAX_NUM_PTS];
     struct vlist	vert;
 
@@ -229,8 +227,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
     tol.para = 0.999;
 
     face = 0;
-    r = nmg_mrsv(m);	/* Make region, empty shell, vertex. */
-    s = BU_LIST_FIRST(shell, &r->s_hd);
+    s = nmg_ms();
 
     while ((nv = read_psurf_vertices(fp, &vert)) != 0) {
 	size_t ret;
@@ -260,7 +257,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 			jfile, i+1);
     }
 
-    nmg_vertex_fuse(&m->magic, &tol);
+    nmg_vertex_fuse(&s->magic, &tol);
 
     /* Associate the face geometry. */
     for (i = 0, fail = 0; i < face; i++)
@@ -282,18 +279,18 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 
     if (face)
     {
-	int empty_model;
-	empty_model = nmg_kill_zero_length_edgeuses(m);
-	if (!empty_model) {
+	int empty_shell;
+	empty_shell = nmg_kill_zero_length_edgeuses(s);
+	if (!empty_shell) {
 
 	  /* Compute "geometry" for region and shell */
-	  nmg_region_a(r, &tol);
+	  nmg_shell_a(s, &tol);
 
-	  nmg_break_e_on_v(&m->magic, &tol);
-	  empty_model = nmg_kill_zero_length_edgeuses(m);
+	  nmg_break_e_on_v(&s->magic, &tol);
+	  empty_shell = nmg_kill_zero_length_edgeuses(s);
 
 	  /* Glue edges of outward pointing face uses together. */
-	  if (!empty_model) nmg_edge_fuse(&m->magic, &tol);
+	  if (!empty_shell) nmg_edge_fuse(&s->magic, &tol);
 	}
     }
 
@@ -304,25 +301,21 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
  *	Write the nmg to a BRL-CAD style data base.
  */
 int
-create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name)
+create_brlcad_db(struct rt_wdb *fpout, struct shell *s, char *reg_name, char *grp_name)
 {
     char *rname, *sname;
     int empty_model;
-    struct shell *s;
-    struct nmgregion *r;
 
     rname = (char *)bu_malloc(sizeof(reg_name) + 3, "rname");	/* Region name. */
     sname = (char *)bu_malloc(sizeof(reg_name) + 3, "sname");	/* Solid name. */
 
     snprintf(sname, sizeof(reg_name) + 2, "s.%s", reg_name);
-    empty_model = nmg_kill_zero_length_edgeuses(m);
+    empty_model = nmg_kill_zero_length_edgeuses(s);
     if (empty_model) {
 	bu_log("Warning: skipping empty model.");
 	return 0;
     }
-    nmg_rebound(m, &tol);
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
+    nmg_rebound(s, &tol);
     mk_bot_from_nmg(fpout, sname,  s);		/* Make BOT object. */
     snprintf(rname, sizeof(reg_name) + 2, "r.%s", reg_name);
     mk_comb1(fpout, rname, sname, 1);	/* Put object in a region. */

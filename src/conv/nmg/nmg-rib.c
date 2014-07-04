@@ -122,11 +122,9 @@ lu_to_rib(struct loopuse *lu, fastf_t *fu_normal, struct bu_vls *norms, struct b
 }
 
 void
-nmg_to_rib(struct model *m)
+nmg_to_rib(struct shell *s)
 {
     struct bn_tol tol;
-    struct nmgregion *r;
-    struct shell *s;
     struct faceuse *fu;
     struct loopuse *lu;
     struct bu_vls points = BU_VLS_INIT_ZERO;
@@ -141,24 +139,22 @@ nmg_to_rib(struct model *m)
 
 
     if (triangulate)
-	nmg_triangulate_model(m, &tol);
+	nmg_triangulate_shell(s, &tol);
 
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
-	for (BU_LIST_FOR(s, shell, &r->s_hd))
-	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		if (fu->orientation != OT_SAME)
-		    continue;
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	if (fu->orientation != OT_SAME)
+	    continue;
 
-		NMG_GET_FU_NORMAL(fu_normal, fu);
+	NMG_GET_FU_NORMAL(fu_normal, fu);
 
-		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		    bu_vls_strcpy(&norms, "");
-		    bu_vls_strcpy(&points, "");
-		    lu_to_rib(lu, fu_normal, &norms, &points);
-		    printf("Polygon \"P\" [ %s ] \"N\" [ %s ]\n",
-			   bu_vls_addr(&points), bu_vls_addr(&norms));
-		}
-	    }
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	    bu_vls_strcpy(&norms, "");
+	    bu_vls_strcpy(&points, "");
+	    lu_to_rib(lu, fu_normal, &norms, &points);
+	    printf("Polygon \"P\" [ %s ] \"N\" [ %s ]\n",
+		   bu_vls_addr(&points), bu_vls_addr(&norms));
+	}
+    }
 }
 
 
@@ -209,7 +205,7 @@ int main(int ac, char **av)
 	    bu_exit(255, "%s: solid type (%d) is NOT NMG!\n",
 		    progname, ip.idb_type);
 	}
-	nmg_to_rib((struct model *)ip.idb_ptr );
+	nmg_to_rib((struct shell *)ip.idb_ptr );
     }
     return 0;
 }

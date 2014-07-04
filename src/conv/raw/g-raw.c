@@ -64,7 +64,7 @@ static char *output_file = NULL;	/* output filename */
 static char *output_directory = NULL;	/* directory name to hold output files */
 static FILE *fp;			/* Output file pointer */
 static struct db_i *dbip;
-static struct model *the_model;
+static struct shell *the_shell;
 static struct bu_vls file_name = BU_VLS_INIT_ZERO;		/* file name built from region name */
 static struct rt_tess_tol ttol;		/* tessellation tolerance in mm */
 static struct bn_tol tol;		/* calculation tolerance */
@@ -90,15 +90,13 @@ lswap(unsigned int *v)
 
 
 static void
-nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
+nmg_to_raw(struct shell *s, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
 {
-    struct model *m;
-    struct shell *s;
     struct vertex *v;
+    struct faceuse *fu;
     char *region_name;
     int region_polys=0;
 
-    NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
 
     region_name = db_path_to_string(pathp);
@@ -130,70 +128,63 @@ nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	}
     }
 
-    m = r->m_p;
-    NMG_CK_MODEL(m);
-
     /* Write pertinent info for this region */
     fprintf(fp, "%s\n", (region_name+1));
 
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_shell(s, &tol);
 
     /* Check triangles */
-    for (BU_LIST_FOR (s, shell, &r->s_hd))
+    NMG_CK_SHELL(s);
+
+    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd))
     {
-	struct faceuse *fu;
+	struct loopuse *lu;
 
-	NMG_CK_SHELL(s);
+	NMG_CK_FACEUSE(fu);
 
-	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd))
+	if (fu->orientation != OT_SAME)
+	    continue;
+
+	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd))
 	{
-	    struct loopuse *lu;
+	    struct edgeuse *eu;
+	    int vert_count=0;
+	    unsigned char vert_buffer[50];
 
-	    NMG_CK_FACEUSE(fu);
+	    NMG_CK_LOOPUSE(lu);
 
-	    if (fu->orientation != OT_SAME)
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		continue;
 
-	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd))
+	    memset(vert_buffer, 0, sizeof(vert_buffer));
+
+	    /* check vertex numbers for each triangle */
+	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
 	    {
-		struct edgeuse *eu;
-		int vert_count=0;
-		unsigned char vert_buffer[50];
+		NMG_CK_EDGEUSE(eu);
 
-		NMG_CK_LOOPUSE(lu);
+		vert_count++;
 
-		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		    continue;
-
-		memset(vert_buffer, 0, sizeof(vert_buffer));
-
-		/* check vertex numbers for each triangle */
-		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
-		{
-		    NMG_CK_EDGEUSE(eu);
-
-		    vert_count++;
-
-		    v = eu->vu_p->v_p;
-		    NMG_CK_VERTEX(v);
-		    if (inches)
-			fprintf(fp, vert_count != 3 ? "%f %f %f " : "%f %f %f\n", V3ARGSIN(v->vg_p->coord));
-		    else
-			fprintf(fp, vert_count != 3 ? "%f %f %f " : "%f %f %f\n", V3ARGS(v->vg_p->coord));
-		}
-		if (vert_count > 3)
-		{
-		    bu_free(region_name, "region name");
-		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
-		    bu_exit(1, "ERROR: LU is not a triangle");
-		}
-		else if (vert_count < 3)
-		    continue;
-
-		tot_polygons++;
-		region_polys++;
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX(v);
+		if (inches)
+		    fprintf(fp, vert_count != 3 ? "%f %f %f " : "%f %f %f\n", V3ARGSIN(v->vg_p->coord));
+		else
+		    fprintf(fp, vert_count != 3 ? "%f %f %f " : "%f %f %f\n", V3ARGS(v->vg_p->coord));
 	    }
+
+	    if (vert_count > 3)
+	    {
+		bu_free(region_name, "region name");
+		bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
+		bu_exit(1, "ERROR: LU is not a triangle");
+	    }
+	    else if (vert_count < 3)
+		continue;
+
+	    tot_polygons++;
+	    region_polys++;
 	}
     }
 
@@ -206,7 +197,7 @@ nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 /* FIXME: this be a dumb hack to avoid void* conversion */
 struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    void (*func)(struct shell *, const struct db_full_path *, int, int, float [3]);
 };
 static struct gcv_data gcvwriter = {nmg_to_raw};
 
@@ -226,7 +217,7 @@ main(int argc, char *argv[])
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
+    tree_state.ts_s = &the_shell;
 
     /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
@@ -247,7 +238,7 @@ main(int argc, char *argv[])
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* make empty NMG model */
-    the_model = nmg_mm();
+    the_shell = nmg_ms();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
@@ -376,7 +367,7 @@ main(int argc, char *argv[])
     }
 
     /* Release dynamic storage */
-    nmg_km(the_model);
+    nmg_ks(the_shell);
     rt_vlist_cleanup();
     db_close(dbip);
 

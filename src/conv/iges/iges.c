@@ -79,9 +79,9 @@ extern int do_nurbs;
 extern int mode;
 
 extern int write_dir_entry(FILE *fp, int entry[]);
-extern int write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
-extern int write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
-extern int write_shell_face_loop(char *name, struct nmgregion *r, int dependent, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern int write_vertex_list(struct shell *s, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern int write_edge_list(struct shell *s, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern int write_shell_face_loop(char *name, struct shell *s, int dependent, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern int write_solid_assembly(char *name, int de_list[], int length, int dependent, FILE *fp_dir, FILE *fp_param);
 extern int write_planar_nurb(struct faceuse *fu, vect_t u_dir, vect_t v_dir, fastf_t *u_max, fastf_t *v_max, point_t base_pt, FILE *fp_dir, FILE *fp_param);
 extern int write_name_entity(char *name, FILE *fp_dir, FILE *fp_param);
@@ -207,73 +207,67 @@ static unsigned char colortab[9][4] = {
 
 
 void
-nmg_to_winged_edge(struct nmgregion *r)
+nmg_to_winged_edge(struct shell *s)
 {
-    struct shell *s;
+    struct faceuse *fu;
 
-    NMG_CK_REGION(r);
+    NMG_CK_SHELL(s);
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	struct loopuse *lu;
 
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	struct faceuse *fu;
+	NMG_CK_FACEUSE(fu);
+	if (fu->orientation != OT_SAME)
+	    continue;
 
-	NMG_CK_SHELL(s);
-	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	    struct loopuse *lu;
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	    struct edgeuse *eu1, *eu2;
 
-	    NMG_CK_FACEUSE(fu);
-	    if (fu->orientation != OT_SAME)
+	    NMG_CK_LOOPUSE(lu);
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		continue;
 
-	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		struct edgeuse *eu1, *eu2;
+	    for (BU_LIST_FOR(eu1, edgeuse, &lu->down_hd)) {
+		struct edgeuse *eu_new;
+		struct vertex *v1 = NULL, *v2 = NULL;
 
-		NMG_CK_LOOPUSE(lu);
-		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		    continue;
+		NMG_CK_EDGEUSE(eu1);
+		if (eu1->radial_p == eu1->eumate_p)
+		    continue;	/* dangling edge (?warning?) */
 
-		for (BU_LIST_FOR(eu1, edgeuse, &lu->down_hd)) {
-		    struct edgeuse *eu_new;
-		    struct vertex *v1 = NULL, *v2 = NULL;
+		if (eu1->radial_p->eumate_p->radial_p == eu1->eumate_p)
+		    continue;	/* winged edge */
 
-		    NMG_CK_EDGEUSE(eu1);
-		    if (eu1->radial_p == eu1->eumate_p)
-			continue;	/* dangling edge (?warning?) */
+		/* this edge has more than two radial faces
+		 * find the other face from this shell
+		 */
+		eu2 = eu1->radial_p;
+		while (eu2 != eu1 && eu2 != eu1->eumate_p
+			&& nmg_find_s_of_eu(eu2) != s)
+		    eu2 = eu2->eumate_p->radial_p;
 
-		    if (eu1->radial_p->eumate_p->radial_p == eu1->eumate_p)
-			continue;	/* winged edge */
+		/* unglue edge eu1 */
+		nmg_unglueedge(eu1);
 
-		    /* this edge has more than two radial faces
-		     * find the other face from this shell
-		     */
-		    eu2 = eu1->radial_p;
-		    while (eu2 != eu1 && eu2 != eu1->eumate_p
-			   && nmg_find_s_of_eu(eu2) != s)
-			eu2 = eu2->eumate_p->radial_p;
+		/* Make a new edge */
+		eu_new = nmg_me(v1, v2, s);
 
-		    /* unglue edge eu1 */
-		    nmg_unglueedge(eu1);
+		/* Give the endpoints the same coordinates as the original edge */
+		nmg_vertex_gv(eu_new->vu_p->v_p, eu1->vu_p->v_p->vg_p->coord);
+		nmg_vertex_gv(eu_new->eumate_p->vu_p->v_p, eu1->eumate_p->vu_p->v_p->vg_p->coord);
 
-		    /* Make a new edge */
-		    eu_new = nmg_me(v1, v2, s);
+		/* Move edgeuses to the new vertices */
+		nmg_movevu(eu1->vu_p, eu_new->vu_p->v_p);
+		nmg_movevu(eu1->eumate_p->vu_p, eu_new->eumate_p->vu_p->v_p);
 
-		    /* Give the endpoints the same coordinates as the original edge */
-		    nmg_vertex_gv(eu_new->vu_p->v_p, eu1->vu_p->v_p->vg_p->coord);
-		    nmg_vertex_gv(eu_new->eumate_p->vu_p->v_p, eu1->eumate_p->vu_p->v_p->vg_p->coord);
+		/* kill the new edge (I only wanted it for its vertices) */
+		if (nmg_keu(eu_new))
+		    bu_exit(EXIT_FAILURE,  "nmg_to_winged_edge: Can't happen nmg_keu resulted in empty shell!\n");
 
-		    /* Move edgeuses to the new vertices */
-		    nmg_movevu(eu1->vu_p, eu_new->vu_p->v_p);
-		    nmg_movevu(eu1->eumate_p->vu_p, eu_new->eumate_p->vu_p->v_p);
-
-		    /* kill the new edge (I only wanted it for its vertices) */
-		    if (nmg_keu(eu_new))
-			bu_exit(EXIT_FAILURE,  "nmg_to_winged_edge: Can't happen nmg_keu resulted in empty shell!\n");
-
-		    /* move the other edgeuse to the same edge */
-		    if (eu2 == eu1 || eu2 == eu1->eumate_p)
-			bu_log("nmg_to_winged_edge: couldn't find second radial face for eu %p in shell %p\n", (void *)eu1, (void *)s);
-		    else
-			nmg_je(eu1, eu2);
-		}
+		/* move the other edgeuse to the same edge */
+		if (eu2 == eu1 || eu2 == eu1->eumate_p)
+		    bu_log("nmg_to_winged_edge: couldn't find second radial face for eu %p in shell %p\n", (void *)eu1, (void *)s);
+		else
+		    nmg_je(eu1, eu2);
 	    }
 	}
     }
@@ -793,53 +787,45 @@ w_start_global(
 
 
 int
-nmgregion_to_iges(char *name,
-		  struct nmgregion *r,
+shell_to_iges(char *name,
+		  struct shell *s,
 		  int dependent,
 		  FILE *fp_dir, FILE *fp_param)
 {
-    struct nmgregion *new_r;		/* temporary nmgregion */
     struct shell *s_new;		/* shell made by nmg_mrsv */
     struct bu_ptbl vtab;		/* vertex table */
     struct bu_ptbl etab;		/* edge table */
-    struct bu_ptbl **shells;	/* array of tables of shells */
     int *brep_de;	/* Directory entry sequence # for BREP Object(s) */
     int vert_de;	/* Directory entry sequence # for vertex list */
     int edge_de;	/* Directory entry sequence # for edge list */
     int outer_shell_count; /* number of outer shells in nmgregion */
     int face_count = 0;	/* number of faces in nmgregion */
-    int i;
+    int i = 0;
+    struct faceuse *fu;
 
-    NMG_CK_REGION(r);
+    NMG_CK_SHELL(s);
 
-    {
-	struct shell *s;
-	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    struct faceuse *fu;
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	struct loopuse *lu;
 
-	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		struct loopuse *lu;
+	if (fu->orientation != OT_SAME)
+	    continue;
 
-		if (fu->orientation != OT_SAME)
-		    continue;
+	face_count++;
 
-		face_count++;
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	    struct edgeuse *eu;
 
-		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		    struct edgeuse *eu;
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+		continue;
 
-		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-			continue;
+	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		struct vertex *v;
 
-		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-			struct vertex *v;
-
-			v = eu->vu_p->v_p;
-			NMG_CK_VERTEX(v);
-			if (!v->vg_p)
-			    bu_log("vertex with no geometry!\n");
-		    }
-		}
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX(v);
+		if (!v->vg_p)
+		    bu_log("vertex with no geometry!\n");
 	    }
 	}
     }
@@ -848,50 +834,35 @@ nmgregion_to_iges(char *name,
 	return 0;
 
     /* Find outer shells and void shells and their associations */
-    outer_shell_count = nmg_find_outer_and_void_shells(r, &shells, &tol);
+    outer_shell_count = 1;
 
-    brep_de = (int *)bu_calloc(outer_shell_count, sizeof(int), "nmgregion_to_iges: brep_de");
+    brep_de = (int *)bu_calloc(outer_shell_count, sizeof(int), "shell_to_iges: brep_de");
 
     for (i = 0; i < outer_shell_count; i++) {
-	int j;
 	int tmp_dependent;
-	struct shell *s;
 	char *tmp_name;
 
 	if (outer_shell_count == 1) {
-	    new_r = r;
 	    s_new = NULL;
 	    tmp_name = name;
 	    tmp_dependent = dependent;
-	} else {
-	    new_r = nmg_mrsv(r->m_p);
-	    s_new = BU_LIST_FIRST(shell, &new_r->s_hd);
-	    tmp_name = NULL;
-	    tmp_dependent = 1;
-
-	    for (j = BU_PTBL_END(shells[i])-1; j >= 0; j--) {
-		s = (struct shell *)BU_PTBL_GET(shells[i], j);
-		nmg_mv_shell_to_region(s, new_r);
-	    }
-	    (void)nmg_ks(s_new);
 	}
 
-
 	/* Make the vertex list entity */
-	vert_de = write_vertex_list(new_r, &vtab, fp_dir, fp_param);
+	vert_de = write_vertex_list(s_new, &vtab, fp_dir, fp_param);
 
 	/* Make the edge list entity */
-	edge_de = write_edge_list(new_r, vert_de, &etab, &vtab, fp_dir, fp_param);
+	edge_de = write_edge_list(s_new, vert_de, &etab, &vtab, fp_dir, fp_param);
 
 	/* Make the face, loop, shell entities */
-	brep_de[i] = write_shell_face_loop(tmp_name, new_r, tmp_dependent, edge_de, &etab, vert_de, &vtab, fp_dir, fp_param);
+	brep_de[i] = write_shell_face_loop(tmp_name, s_new, tmp_dependent, edge_de, &etab, vert_de, &vtab, fp_dir, fp_param);
 
 	/* Clear the tables */
 	(void)bu_ptbl_reset(&vtab);
 	(void)bu_ptbl_reset(&etab);
 
 	if (outer_shell_count != 1)
-	    (void)nmg_kr(new_r);
+	    (void)nmg_ks(s_new);
     }
 
     /* Free the tables */
@@ -1133,24 +1104,18 @@ nmg_fu_to_tsurf(struct faceuse *fu,
 }
 
 
-int nmgregion_to_tsurf(char *UNUSED(name), struct nmgregion *r, FILE *fp_dir, FILE *fp_param)
+int shell_to_tsurf(char *UNUSED(name), struct shell *s, FILE *fp_dir, FILE *fp_param)
 {
-    struct shell *s;
+    struct faceuse *fu;
 
-    NMG_CK_REGION(r);
+    NMG_CK_SHELL(s);
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	NMG_CK_FACEUSE(fu);
 
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	struct faceuse *fu;
+	if (fu->orientation != OT_SAME)
+	    continue;
 
-	NMG_CK_SHELL(s);
-	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	    NMG_CK_FACEUSE(fu);
-
-	    if (fu->orientation != OT_SAME)
-		continue;
-
-	    nmg_fu_to_tsurf(fu, fp_dir, fp_param);
-	}
+	nmg_fu_to_tsurf(fu, fp_dir, fp_param);
     }
 
     return -1;
@@ -1158,7 +1123,7 @@ int nmgregion_to_tsurf(char *UNUSED(name), struct nmgregion *r, FILE *fp_dir, FI
 
 
 int
-write_vertex_list(struct nmgregion *r,
+write_vertex_list(struct shell *s,
 		  struct bu_ptbl *vtab,   /* vertex table */
 		  FILE *fp_dir, FILE *fp_param)
 {
@@ -1166,14 +1131,14 @@ write_vertex_list(struct nmgregion *r,
     int dir_entry[21];
     int i;
 
-    NMG_CK_REGION(r);
+    NMG_CK_SHELL(s);
 
     /* initialize directory entry */
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
 
     /* Built list of vertex structs */
-    nmg_vertex_tabulate(vtab, &r->l.magic);
+    nmg_vertex_tabulate(vtab, &s->magic);
 
     /* write parameter data for vertex list entity */
     bu_vls_printf(&str, "502, %ld", (long int)BU_PTBL_END(vtab));
@@ -1306,7 +1271,7 @@ write_linear_bspline(struct vertex_g *start_vg,
 
 
 int
-write_edge_list(struct nmgregion *r,
+write_edge_list(struct shell *s,
 		int vert_de,		/* DE# for vertex list */
 		struct bu_ptbl *etab,	/* edge table */
 		struct bu_ptbl *vtab,	/* vertex table (already filled in) */
@@ -1316,14 +1281,14 @@ write_edge_list(struct nmgregion *r,
     int dir_entry[21];
     int i;
 
-    NMG_CK_REGION(r);
+    NMG_CK_SHELL(s);
 
     /* initialize directory entry */
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
 
     /* Build list of edge structures */
-    nmg_edge_tabulate(etab, &r->l.magic);
+    nmg_edge_tabulate(etab, &s->magic);
 
     bu_vls_printf(&str, "504, %ld", (long int)BU_PTBL_END(etab));
 
@@ -1604,7 +1569,7 @@ write_planar_nurb(struct faceuse *fu,
 
 int
 write_shell_face_loop(char *name,
-		      struct nmgregion *r,
+		      struct shell *s,
 		      int dependent,
 		      int edge_de,		/* directory entry # for edge list */
 		      struct bu_ptbl *etab,	/* Table of edge pointers */
@@ -1615,7 +1580,6 @@ write_shell_face_loop(char *name,
     struct edgeuse *eu;
     struct faceuse *fu;
     struct loopuse *lu;
-    struct shell *s;
     struct vertex *v;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct iges_properties props;
@@ -1626,200 +1590,189 @@ write_shell_face_loop(char *name,
     int name_de;
     int prop_de;
     int color_de = DEFAULT;
+    int *face_list;
+    int face_count = 0;
 
-    NMG_CK_REGION(r);
-
-    /* count the shells */
-    for (BU_LIST_FOR(s, shell, &r->s_hd))
-	shell_count++;
+    NMG_CK_SHELL(s);
 
     /* make space for the list of shell DE's */
-    shell_list = (int *)bu_calloc(shell_count, sizeof(int), "write_shell_face_loop: shell_list");
+    shell_list = (int *)bu_calloc(1, sizeof(int), "write_shell_face_loop: shell_list");
 
-    shell_count = 0;
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	int *face_list;
-	int face_count = 0;
+    /* Count faces */
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	NMG_CK_FACEUSE(fu);
+	if (fu->orientation != OT_SAME)
+	    continue;
+	face_count++;
+    }
 
+    face_list = (int *)bu_calloc(face_count, sizeof(int), "face_list");
+    face_count = 0;
 
-	/* Count faces */
-	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	    NMG_CK_FACEUSE(fu);
-	    if (fu->orientation != OT_SAME)
-		continue;
-	    face_count++;
+    /* Shell is made of faces. */
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	int *loop_list;
+	int loop_count = 0;
+	int exterior_loop = (-1);	/* index of outer loop (in loop_list) */
+	int outer_loop_flag = 1;	/* IGES flag to indicate a selected outer loop */
+
+	if (fu->orientation != OT_SAME)
+	    continue;
+
+	/* Count loops */
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	    NMG_CK_LOOPUSE(lu);
+	    if (lu->orientation == OT_SAME)
+		exterior_loop = loop_count;
+	    loop_count++;
 	}
-	face_list = (int *)bu_calloc(face_count, sizeof(int), "face_list");
-	face_count = 0;
 
-	/* Shell is made of faces. */
-	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	    int *loop_list;
-	    int loop_count = 0;
-	    int exterior_loop = (-1);	/* index of outer loop (in loop_list) */
-	    int outer_loop_flag = 1;	/* IGES flag to indicate a selected outer loop */
+	loop_list = (int *)bu_calloc(loop_count, sizeof(int), "loop_list");
+	loop_count = 0;
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	    int edge_count = 0;
 
-	    if (fu->orientation != OT_SAME)
-		continue;
-
-	    /* Count loops */
-	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		NMG_CK_LOOPUSE(lu);
-		if (lu->orientation == OT_SAME)
-		    exterior_loop = loop_count;
-		loop_count++;
-	    }
-	    loop_list = (int *)bu_calloc(loop_count, sizeof(int), "loop_list");
-
-	    loop_count = 0;
-	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		int edge_count = 0;
-
-		/* Count edges */
-		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-			NMG_CK_EDGEUSE(eu);
-			NMG_CK_EDGE(eu->e_p);
-			NMG_CK_VERTEXUSE(eu->vu_p);
-			NMG_CK_VERTEX(eu->vu_p->v_p);
-			NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-			edge_count++;
-		    }
-		} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
-		    v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
-		    NMG_CK_VERTEX(v);
-		    NMG_CK_VERTEX_G(v->vg_p);
+	    /* Count edges */
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    NMG_CK_EDGEUSE(eu);
+		    NMG_CK_EDGE(eu->e_p);
+		    NMG_CK_VERTEXUSE(eu->vu_p);
+		    NMG_CK_VERTEX(eu->vu_p->v_p);
+		    NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
 		    edge_count++;
-		} else
-		    bu_log("write_shell_face_loop: loopuse mess up! (1)\n");
-
-		bu_vls_printf(&str, "508, %d", edge_count);
-
-		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-			int orientation;
-			struct edge *e;
-			struct edgeuse *eu_tab;
-
-			e = eu->e_p;
-			eu_tab = e->eu_p;
-			if (eu_tab->vu_p->v_p == eu->vu_p->v_p)
-			    orientation = 1;
-			else
-			    orientation = 0;
-
-			bu_vls_printf(&str, ", 0, %d, %d, %d, 0",
-				      edge_de ,
-				      bu_ptbl_locate(etab, (long *)(e)) + 1,
-				      orientation);
-
-			edge_count++;
-		    }
-		} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
-		    v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
-		    bu_vls_printf(&str, ", 1, %d, %d, 1, 0",
-				  vert_de,
-				  bu_ptbl_locate(vtab, (long *)v)+1);
-		} else
-		    bu_log("write_shell_face_loop: loopuse mess up! (2)\n");
-
-		bu_vls_strcat(&str, ";");
-
-		/* write loop entry */
-		/* initialize directory entry */
-		for (i = 0; i < 21; i++)
-		    dir_entry[i] = DEFAULT;
-
-		/* remember where parameter data is going */
-		dir_entry[2] = param_seq + 1;
-
-		/* get parameter line count */
-		dir_entry[14] = write_freeform(fp_param, bu_vls_addr(&str), dir_seq+1, 'P');
-
-		/* write directory entry for loop entity */
-		dir_entry[1] = 508;
-		dir_entry[8] = 0;
-		dir_entry[9] = 10001;
-		dir_entry[11] = 508;
-		dir_entry[15] = 1;
-		loop_list[loop_count++] = write_dir_entry(fp_dir, dir_entry);
-
-		bu_vls_free(&str);
-
-	    }
-
-	    if (exterior_loop < 0) {
-		bu_log("No outside loop found for face\n");
-		outer_loop_flag = 0;
-	    } else if (exterior_loop != 0) {
-		/* move outside loop to start of list */
-		int tmp;
-
-		tmp = loop_list[0];
-		loop_list[0] = loop_list[exterior_loop];
-		loop_list[exterior_loop] = tmp;
-	    }
-
-	    if (do_nurbs) {
-		vect_t u_dir, v_dir;
-		point_t base_pt;
-		fastf_t u_max, v_max;
-
-		bu_vls_printf(&str, "510, %d, %d, %d" ,
-			      write_planar_nurb(fu, u_dir, v_dir, &u_max, &v_max, base_pt, fp_dir, fp_param),
-			      loop_count,
-			      outer_loop_flag);
+		}
+	    } else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+		v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
+		NMG_CK_VERTEX(v);
+		NMG_CK_VERTEX_G(v->vg_p);
+		edge_count++;
 	    } else
-		bu_vls_printf(&str, "510, %d, %d, %d" ,
-			      write_plane_entity(fu->f_p->g.plane_p->N, fp_dir, fp_param),
-			      loop_count,
-			      outer_loop_flag);
+		bu_log("write_shell_face_loop: loopuse mess up! (1)\n");
+	    bu_vls_printf(&str, "508, %d", edge_count);
 
-	    for (i = 0; i < loop_count; i++)
-		bu_vls_printf(&str, ", %d", loop_list[i]);
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    int orientation;
+		    struct edge *e;
+		    struct edgeuse *eu_tab;
+
+		    e = eu->e_p;
+		    eu_tab = e->eu_p;
+		    if (eu_tab->vu_p->v_p == eu->vu_p->v_p)
+			orientation = 1;
+		    else
+			orientation = 0;
+
+		    bu_vls_printf(&str, ", 0, %d, %d, %d, 0",
+				  edge_de ,
+				  bu_ptbl_locate(etab, (long *)(e)) + 1,
+				  orientation);
+
+		    edge_count++;
+		}
+	    } else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+		v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
+		bu_vls_printf(&str, ", 1, %d, %d, 1, 0",
+			      vert_de,
+			      bu_ptbl_locate(vtab, (long *)v)+1);
+	    } else
+		bu_log("write_shell_face_loop: loopuse mess up! (2)\n");
 
 	    bu_vls_strcat(&str, ";");
 
+	    /* write loop entry */
+	    /* initialize directory entry */
 	    for (i = 0; i < 21; i++)
 		dir_entry[i] = DEFAULT;
 
-	    dir_entry[1] = 510;
+	    /* remember where parameter data is going */
 	    dir_entry[2] = param_seq + 1;
-	    dir_entry[8] = 0;
-	    dir_entry[9] = 10001;
-	    dir_entry[11] = 510;
-	    dir_entry[15] = 1;
+
+	    /* get parameter line count */
 	    dir_entry[14] = write_freeform(fp_param, bu_vls_addr(&str), dir_seq+1, 'P');
 
-	    face_list[face_count++] = write_dir_entry(fp_dir, dir_entry);
-
-	    bu_free((char *)loop_list, "loop list");
+	    /* write directory entry for loop entity */
+	    dir_entry[1] = 508;
+	    dir_entry[8] = 0;
+	    dir_entry[9] = 10001;
+	    dir_entry[11] = 508;
+	    dir_entry[15] = 1;
+	    loop_list[loop_count++] = write_dir_entry(fp_dir, dir_entry);
 	    bu_vls_free(&str);
 	}
 
-	/* write shell entity */
-	bu_vls_printf(&str, "514, %d", face_count);
-	for (i = 0; i < face_count; i++)
-	    bu_vls_printf(&str, ", %d, 1", face_list[i]);
+	if (exterior_loop < 0) {
+	    bu_log("No outside loop found for face\n");
+	    outer_loop_flag = 0;
+	} else if (exterior_loop != 0) {
+	    /* move outside loop to start of list */
+	    int tmp;
+
+	    tmp = loop_list[0];
+	    loop_list[0] = loop_list[exterior_loop];
+	    loop_list[exterior_loop] = tmp;
+	}
+
+	if (do_nurbs) {
+	    vect_t u_dir, v_dir;
+	    point_t base_pt;
+	    fastf_t u_max, v_max;
+
+	    bu_vls_printf(&str, "510, %d, %d, %d" ,
+			  write_planar_nurb(fu, u_dir, v_dir, &u_max, &v_max, base_pt, fp_dir, fp_param),
+			  loop_count,
+			  outer_loop_flag);
+	} else
+	    bu_vls_printf(&str, "510, %d, %d, %d" ,
+			  write_plane_entity(fu->f_p->g.plane_p->N, fp_dir, fp_param),
+			  loop_count,
+			  outer_loop_flag);
+
+	for (i = 0; i < loop_count; i++)
+	    bu_vls_printf(&str, ", %d", loop_list[i]);
+
 	bu_vls_strcat(&str, ";");
 
-	/* initialize directory entry */
 	for (i = 0; i < 21; i++)
 	    dir_entry[i] = DEFAULT;
 
-	dir_entry[1] = 514;
+	dir_entry[1] = 510;
 	dir_entry[2] = param_seq + 1;
 	dir_entry[8] = 0;
 	dir_entry[9] = 10001;
-	dir_entry[11] = 514;
+	dir_entry[11] = 510;
 	dir_entry[15] = 1;
 	dir_entry[14] = write_freeform(fp_param, bu_vls_addr(&str), dir_seq+1, 'P');
 
-	shell_list[shell_count++] = write_dir_entry(fp_dir, dir_entry);
+	face_list[face_count++] = write_dir_entry(fp_dir, dir_entry);
 
-	bu_free((char *)face_list, "face list");
+	bu_free((char *)loop_list, "loop list");
 	bu_vls_free(&str);
     }
+
+    /* write shell entity */
+    bu_vls_printf(&str, "514, %d", face_count);
+    for (i = 0; i < face_count; i++)
+	bu_vls_printf(&str, ", %d, 1", face_list[i]);
+    bu_vls_strcat(&str, ";");
+
+    /* initialize directory entry */
+    for (i = 0; i < 21; i++)
+	dir_entry[i] = DEFAULT;
+
+    dir_entry[1] = 514;
+    dir_entry[2] = param_seq + 1;
+    dir_entry[8] = 0;
+    dir_entry[9] = 10001;
+    dir_entry[11] = 514;
+    dir_entry[15] = 1;
+    dir_entry[14] = write_freeform(fp_param, bu_vls_addr(&str), dir_seq+1, 'P');
+
+    shell_list[shell_count++] = write_dir_entry(fp_dir, dir_entry);
+
+    bu_free((char *)face_list, "face list");
+    bu_vls_free(&str);
 
     /* write BREP object entity */
 
@@ -2535,10 +2488,7 @@ nmg_to_iges(struct rt_db_internal *ip,
 	    char *name,
 	    FILE *fp_dir, FILE *fp_param)
 {
-    struct model *model;
-    struct nmgregion *r;
-    int region_count;
-    int *region_de;
+    struct shell *s;
     int brep_de;
     int dependent;
     int i;
@@ -2556,40 +2506,11 @@ nmg_to_iges(struct rt_db_internal *ip,
     solid_is_brep = 1;
     comb_form = 1;
     if (ip->idb_type == ID_NMG) {
-	model = (struct model *)ip->idb_ptr;
-	NMG_CK_MODEL(model);
-
-	/* count the number of nmgregions */
-	region_count = 0;
-	for (BU_LIST_FOR(r, nmgregion, &model->r_hd)) {
-	    NMG_CK_REGION(r);
-	    region_count++;
-	}
-
-	if (region_count == 0)
-	    return 0;
-	else if (region_count == 1)
-	    return (nmgregion_to_iges(name, BU_LIST_FIRST(nmgregion, &model->r_hd) ,
-				     dependent, fp_dir, fp_param));
-	else {
-	    /* make a boolean tree unioning all the regions */
-
-	    /* space to save the iges location of each nmgregion */
-	    region_de = (int *)bu_calloc(region_count, sizeof(int), "nmg_to_iges");
-
-	    /* loop through all nmgregions in the model */
-	    region_count = 0;
-	    for (BU_LIST_FOR(r, nmgregion, &model->r_hd))
-		region_de[region_count++] = nmgregion_to_iges((char *)NULL, r, 1 ,
-							      fp_dir, fp_param);
-
-	    /* now make the boolean tree */
-	    brep_de = write_tree_of_unions(name, region_de, region_count ,
-					   dependent, fp_dir, fp_param);
-
-	    bu_free((char *)region_de, "nmg_to_iges");
-	    return brep_de;
-	}
+	s = (struct shell *)ip->idb_ptr;
+	NMG_CK_SHELL(s);
+	brep_de = shell_to_iges(name, s, dependent, fp_dir, fp_param);
+	nmg_ks(s);
+	return brep_de;
     } else {
 	if (ip->idb_type == ID_BOT) {
 	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -2598,14 +2519,14 @@ nmg_to_iges(struct rt_db_internal *ip,
 		return 0;
 	    }
 	}
-	model = nmg_mm();
-	if (OBJ[ip->idb_type].ft_tessellate(&r, model, ip, &ttol, &tol)) {
-	    nmg_km(model);
+	s= nmg_ms();
+	if (OBJ[ip->idb_type].ft_tessellate(&s, ip, &ttol, &tol)) {
+	    nmg_ks(s);
 	    return 0;
 	} else {
 	    solids_to_nmg++;
-	    brep_de =  nmgregion_to_iges(name, r, dependent, fp_dir, fp_param);
-	    nmg_km(model);
+	    brep_de = shell_to_iges(name, s, dependent, fp_dir, fp_param);
+	    nmg_ks(s);
 	    return brep_de;
 	}
     }

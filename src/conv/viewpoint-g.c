@@ -87,8 +87,6 @@ main(int argc, char **argv)
     struct bu_ptbl vertices;		/* table of vertices for one face */
     struct bu_ptbl faces;		/* table of faces for one element */
     struct bu_ptbl names;		/* table of element names */
-    struct model *m;
-    struct nmgregion *r;
     struct shell *s;
     struct faceuse *fu;
     struct wmember reg_head;
@@ -257,9 +255,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "\tMaking %s\n", curr_name);
 
 	/* make basic nmg structures */
-	m = nmg_mm();
-	r = nmg_mrsv(m);
-	s = BU_LIST_FIRST(shell, &r->s_hd);
+	s = nmg_ms();
 
 	/* set all vertex pointers to NULL so that different models don't share vertices */
 	for (i=0; i<no_of_verts; i++)
@@ -326,7 +322,7 @@ main(int argc, char **argv)
 	    }
 	}
 
-	(void)nmg_vertex_fuse(&m->magic, &tol);
+	(void)nmg_vertex_fuse(&s->magic, &tol);
 
 	/* calculate plane equations for faces */
 	NMG_CK_SHELL(s);
@@ -375,12 +371,12 @@ main(int argc, char **argv)
 	    /* glue faces together */
 	    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), &tol);
 
-	    nmg_rebound(m, &tol);
+	    nmg_rebound(s, &tol);
 	    nmg_fix_normals(s, &tol);
 
 	    nmg_shell_coplanar_face_merge(s, &tol, 1);
 
-	    nmg_rebound(m, &tol);
+	    nmg_rebound(s, &tol);
 
 	    /* write the nmg to the output file */
 	    mk_bot_from_nmg(out_fp, curr_name, s);
@@ -388,7 +384,7 @@ main(int argc, char **argv)
 	    bu_log("Object %s has no faces\n", curr_name);
 
 	/* kill the current model */
-	nmg_km(m);
+	nmg_ks(s);
 
 	/* restart the list of faces for the next object */
 	bu_ptbl_reset(&faces);

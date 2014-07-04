@@ -98,7 +98,6 @@ struct layer {
     size_t face3d_count;
     size_t point_count;
     struct bu_ptbl solids;
-    struct model *m;
     struct shell *s;
 };
 
@@ -339,9 +338,8 @@ get_layer()
     }
 
     if (verbose && curr_layer != old_layer) {
-	bu_log("changed to layer #%d, (m = %p, s=%p)\n",
+	bu_log("changed to layer #%d, (s=%p)\n",
 	       curr_layer,
-	       (void *)layers[curr_layer]->m,
 	       (void *)layers[curr_layer]->s);
     }
 }
@@ -350,13 +348,10 @@ get_layer()
 static void
 create_nmg()
 {
-    struct model *m;
-    struct nmgregion *r;
+    struct shell *s;
 
-    m = nmg_mm();
-    r = nmg_mrsv(m);
-    layers[curr_layer]->s = BU_LIST_FIRST(shell, &r->s_hd);
-    layers[curr_layer]->m = m;
+    s = nmg_ms();
+    layers[curr_layer]->s = s;
 }
 
 
@@ -893,7 +888,7 @@ process_entities_polyline_code(int code)
 		    if (polyline_vertex_count > 1) {
 			int i;
 
-			if (!layers[curr_layer]->m) {
+			if (!layers[curr_layer]->s) {
 			    create_nmg();
 			}
 
@@ -1294,7 +1289,7 @@ process_solid_entities_code(int code)
 
 	    layers[curr_layer]->solid_count++;
 
-	    if (!layers[curr_layer]->m) {
+	    if (!layers[curr_layer]->s) {
 		create_nmg();
 	    }
 
@@ -1383,7 +1378,7 @@ process_lwpolyline_entities_code(int code)
 
 	    layers[curr_layer]->lwpolyline_count++;
 
-	    if (!layers[curr_layer]->m) {
+	    if (!layers[curr_layer]->s) {
 		create_nmg();
 	    }
 
@@ -1391,7 +1386,7 @@ process_lwpolyline_entities_code(int code)
 		struct vertex *v0=NULL, *v1=NULL, *v2=NULL;
 		int i;
 
-		if (!layers[curr_layer]->m) {
+		if (!layers[curr_layer]->s) {
 		    create_nmg();
 		}
 
@@ -1485,7 +1480,7 @@ process_line_entities_code(int code)
 
 	    layers[curr_layer]->line_count++;
 
-	    if (!layers[curr_layer]->m) {
+	    if (!layers[curr_layer]->s) {
 		create_nmg();
 	    }
 
@@ -1572,7 +1567,7 @@ process_ellipse_entities_code(int code)
 		bu_log("Found an ellipse\n");
 	    }
 
-	    if (!layers[curr_layer]->m) {
+	    if (!layers[curr_layer]->s) {
 		create_nmg();
 	    }
 
@@ -1713,7 +1708,7 @@ process_circle_entities_code(int code)
 		bu_log("Found a circle\n");
 	    }
 
-	    if (!layers[curr_layer]->m) {
+	    if (!layers[curr_layer]->s) {
 		create_nmg();
 	    }
 
@@ -2188,7 +2183,7 @@ process_leader_entities_code(int code)
 	    layers[curr_layer]->leader_count++;
 
 	    if (polyline_vertex_count > 1) {
-		if (!layers[curr_layer]->m) {
+		if (!layers[curr_layer]->s) {
 		    create_nmg();
 		}
 
@@ -2307,7 +2302,7 @@ process_mtext_entities_code(int code)
 	    /* draw the text */
 	    get_layer();
 
-	    if (!layers[curr_layer]->m) {
+	    if (!layers[curr_layer]->s) {
 		create_nmg();
 	    }
 
@@ -2424,7 +2419,7 @@ process_text_attrib_entities_code(int code)
 		/* draw the text */
 		get_layer();
 
-		if (!layers[curr_layer]->m) {
+		if (!layers[curr_layer]->s) {
 		    create_nmg();
 		}
 
@@ -2595,7 +2590,7 @@ process_arc_entities_code(int code)
 
 	    layers[curr_layer]->arc_count++;
 
-	    if (!layers[curr_layer]->m) {
+	    if (!layers[curr_layer]->s) {
 		create_nmg();
 	    }
 
@@ -2843,7 +2838,7 @@ process_spline_entities_code(int code)
 		    crv->ctl_points[i*ncoords + 3] = weights[i];
 		}
 	    }
-	    if (!layers[curr_layer]->m) {
+	    if (!layers[curr_layer]->s) {
 		create_nmg();
 	    }
 	    startParam = knots[0];
@@ -3021,12 +3016,11 @@ process_thumbnail_code(int code)
  * Create a sketch object based on the wire edges in an NMG
  */
 static struct rt_sketch_internal *
-nmg_wire_edges_to_sketch(struct model *m)
+nmg_wire_edges_to_sketch(struct shell *s)
 {
     struct rt_sketch_internal *skt;
     struct bu_ptbl segs;
-    struct nmgregion *r;
-    struct shell *s;
+    struct edgeuse *eu1;
     struct edgeuse *eu;
     struct vertex *v;
     struct vert_root *vr;
@@ -3040,34 +3034,30 @@ nmg_wire_edges_to_sketch(struct model *m)
 
     vr = create_vert_tree();
     bu_ptbl_init(&segs, 64, "segs for sketch");
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    struct edgeuse *eu1;
 
-	    /* add a line segment for each wire edge */
-	    bu_ptbl_reset(&segs);
-	    eu1 = NULL;
-	    for (BU_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
-		struct line_seg * lseg;
-		if (eu == eu1) {
-		    continue;
-		} else {
-		    eu1 = eu->eumate_p;
-		}
-		BU_ALLOC(lseg, struct line_seg);
-		lseg->magic = CURVE_LSEG_MAGIC;
-		v = eu->vu_p->v_p;
-		lseg->start = Add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
-		v = eu->eumate_p->vu_p->v_p;
-		lseg->end = Add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
-		if (verbose) {
-		    bu_log("making sketch line seg from #%d (%g %g %g) to #%d (%g %g %g)\n",
-			   lseg->start, V3ARGS(&vr->the_array[lseg->start]),
-			   lseg->end, V3ARGS(&vr->the_array[lseg->end]));
-		}
-		bu_ptbl_ins(&segs, (long int *)lseg);
-	    }
+
+    /* add a line segment for each wire edge */
+    bu_ptbl_reset(&segs);
+    eu1 = NULL;
+    for (BU_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
+	struct line_seg * lseg;
+	if (eu == eu1) {
+	    continue;
+	} else {
+	    eu1 = eu->eumate_p;
 	}
+	BU_ALLOC(lseg, struct line_seg);
+	lseg->magic = CURVE_LSEG_MAGIC;
+	v = eu->vu_p->v_p;
+	lseg->start = Add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
+	v = eu->eumate_p->vu_p->v_p;
+	lseg->end = Add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
+	if (verbose) {
+	    bu_log("making sketch line seg from #%d (%g %g %g) to #%d (%g %g %g)\n",
+		   lseg->start, V3ARGS(&vr->the_array[lseg->start]),
+		   lseg->end, V3ARGS(&vr->the_array[lseg->end]));
+	}
+	bu_ptbl_ins(&segs, (long int *)lseg);
     }
 
     if (BU_PTBL_LEN(&segs) < 1) {
@@ -3301,7 +3291,7 @@ main(int argc, char *argv[])
 	BU_LIST_INIT(&head);
 
 	if (layers[i]->color_number < 0) layers[i]->color_number = 7;
-	if (layers[i]->curr_tri || BU_PTBL_END(&layers[i]->solids) || layers[i]->m) {
+	if (layers[i]->curr_tri || BU_PTBL_END(&layers[i]->solids) || layers[i]->s) {
 	    bu_log("LAYER: %s, color = %d (%d %d %d)\n", layers[i]->name, layers[i]->color_number, V3ARGS(&rgb[layers[i]->color_number*3]));
 	}
 
@@ -3322,12 +3312,12 @@ main(int argc, char *argv[])
 	    bu_free((char *)BU_PTBL_GET(&layers[i]->solids, j), "solid_name");
 	}
 
-	if (layers[i]->m) {
+	if (layers[i]->s) {
 	    char name[32];
 	    struct rt_sketch_internal *skt;
 
 	    sprintf(name, "sketch.%d", i);
-	    skt = nmg_wire_edges_to_sketch(layers[i]->m);
+	    skt = nmg_wire_edges_to_sketch(layers[i]->s);
 	    if (skt != NULL) {
 		mk_sketch(out_fp, name, skt);
 		(void) mk_addmember(name, &head, NULL, WMOP_UNION);

@@ -80,8 +80,6 @@ main(int argc, char *argv[])
 
     union record rec;
     int c;
-    struct model *m;
-    struct nmgregion *r;
     struct shell *s;
     struct bu_ptbl faces;
     int done=0;
@@ -119,8 +117,7 @@ main(int argc, char *argv[])
     }
 
     bu_ptbl_init(&faces, 64, "faces");
-    m = nmg_mmr();
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+    s = nmg_ms();
     while (1) {
 	struct vertex *verts[5];
 	union record rec2 = {0};
@@ -141,7 +138,6 @@ main(int argc, char *argv[])
 		break;
 	    case ID_P_HEAD:
 		bu_log("Polysolid (%s)\n", rec.p.p_name);
-		s = nmg_msv(r);
 		bu_ptbl_reset(&faces);
 		while (!done) {
 		    struct faceuse *fu;
@@ -176,9 +172,9 @@ main(int argc, char *argv[])
 			bu_ptbl_ins(&faces, (long *)fu);
 		    }
 		}
-		nmg_rebound(m, &tol);
+		nmg_rebound(s, &tol);
 		(void)nmg_break_long_edges(s, &tol);
-		(void)nmg_vertex_fuse(&m->magic, &tol);
+		(void)nmg_vertex_fuse(&s->magic, &tol);
 		nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), &tol);
 		nmg_fix_normals(s, &tol);
 

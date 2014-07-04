@@ -50,7 +50,7 @@
 extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    void (*func)(struct shell *, const struct db_full_path *, int, int, float [3]);
     FILE *fp;
     unsigned long tot_polygons;
     struct bn_tol tol;
@@ -67,110 +67,96 @@ usage(const char *argv0)
 }
 
 static void
-nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
+nmg_to_egg(struct shell *s, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
 {
-    struct model *m;
-    struct shell *s;
+    struct faceuse *fu;
     struct vertex *v;
     char *region_name;
     int region_polys=0;
     int vert_count=0;
 
-    NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
 
     region_name = db_path_to_string(pathp);
 
-    m = r->m_p;
-    NMG_CK_MODEL(m);
-
     /* triangulate model */
-    nmg_triangulate_model(m, &gcvwriter.tol);
+    nmg_triangulate_shell(s, &gcvwriter.tol);
 
     /* Write pertinent info for this region */
     fprintf(gcvwriter.fp, "  <VertexPool> %s {\n", (region_name+1));
 
-    /* Build the VertexPool */
-    for (BU_LIST_FOR (s, shell, &r->s_hd)) {
-	struct faceuse *fu;
+    NMG_CK_SHELL(s);
 
-	NMG_CK_SHELL(s);
+    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
+	struct loopuse *lu;
+	vect_t facet_normal;
 
-	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-	    struct loopuse *lu;
-	    vect_t facet_normal;
+	NMG_CK_FACEUSE(fu);
 
-	    NMG_CK_FACEUSE(fu);
+	if (fu->orientation != OT_SAME)
+	    continue;
 
-	    if (fu->orientation != OT_SAME)
+	/* Grab the face normal and save it for all the vertex loops */
+	NMG_GET_FU_NORMAL(facet_normal, fu);
+
+	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
+	    struct edgeuse *eu;
+
+	    NMG_CK_LOOPUSE(lu);
+
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		continue;
 
-	    /* Grab the face normal and save it for all the vertex loops */
-	    NMG_GET_FU_NORMAL(facet_normal, fu);
+	    /* check vertex numbers for each triangle */
+	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
 
-	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-		struct edgeuse *eu;
+		vert_count++;
 
-		NMG_CK_LOOPUSE(lu);
-
-		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		    continue;
-
-		/* check vertex numbers for each triangle */
-		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-		    NMG_CK_EDGEUSE(eu);
-
-		    vert_count++;
-
-		    v = eu->vu_p->v_p;
-		    NMG_CK_VERTEX(v);
-		    fprintf(gcvwriter.fp, "    <Vertex> %d {\n      %f %f %f\n      <Normal> { %f %f %f }\n    }\n",
-			    vert_count,
-			    V3ARGS(v->vg_p->coord),
-			    V3ARGS(facet_normal));
-		}
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX(v);
+		fprintf(gcvwriter.fp, "    <Vertex> %d {\n      %f %f %f\n      <Normal> { %f %f %f }\n    }\n",
+			vert_count,
+			V3ARGS(v->vg_p->coord),
+			V3ARGS(facet_normal));
 	    }
 	}
     }
     fprintf(gcvwriter.fp, "  }\n");
     vert_count = 0;
 
-    for (BU_LIST_FOR (s, shell, &r->s_hd)) {
-	struct faceuse *fu;
+    NMG_CK_SHELL(s);
 
-	NMG_CK_SHELL(s);
+    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
+	struct loopuse *lu;
 
-	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-	    struct loopuse *lu;
+	NMG_CK_FACEUSE(fu);
 
-	    NMG_CK_FACEUSE(fu);
+	if (fu->orientation != OT_SAME)
+	    continue;
 
-	    if (fu->orientation != OT_SAME)
+	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
+	    struct edgeuse *eu;
+
+	    NMG_CK_LOOPUSE(lu);
+
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		continue;
 
-	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-		struct edgeuse *eu;
+	    fprintf(gcvwriter.fp, "  <Polygon> { \n    <RGBA> { 1 1 1 1 } \n    <VertexRef> { ");
+	    /* check vertex numbers for each triangle */
+	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
 
-		NMG_CK_LOOPUSE(lu);
+		vert_count++;
 
-		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		    continue;
-
-		fprintf(gcvwriter.fp, "  <Polygon> { \n    <RGBA> { 1 1 1 1 } \n    <VertexRef> { ");
-		/* check vertex numbers for each triangle */
-		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-		    NMG_CK_EDGEUSE(eu);
-
-		    vert_count++;
-
-		    v = eu->vu_p->v_p;
-		    NMG_CK_VERTEX(v);
-		    fprintf(gcvwriter.fp, " %d", vert_count);
-		}
-		fprintf(gcvwriter.fp, " <Ref> { \"%s\" } }\n  }\n", region_name+1);
-
-		region_polys++;
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX(v);
+		fprintf(gcvwriter.fp, " %d", vert_count);
 	    }
+
+	    fprintf(gcvwriter.fp, " <Ref> { \"%s\" } }\n  }\n", region_name+1);
+	    region_polys++;
 	}
     }
 
@@ -186,7 +172,7 @@ main(int argc, char *argv[])
     int ncpu = 1;			/* Number of processors */
     char *output_file = NULL;	/* output filename */
     struct db_i *dbip;
-    struct model *the_model;
+    struct shell *the_shell;
     struct rt_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
@@ -198,7 +184,7 @@ main(int argc, char *argv[])
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &gcvwriter.tol;
     tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
+    tree_state.ts_s = &the_shell;
 
     /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
@@ -221,7 +207,7 @@ main(int argc, char *argv[])
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* make empty NMG model */
-    the_model = nmg_mm();
+    the_shell = nmg_ms();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
@@ -338,7 +324,7 @@ main(int argc, char *argv[])
 	fclose(gcvwriter.fp);
 
     /* Release dynamic storage */
-    nmg_km(the_model);
+    nmg_ks(the_shell);
     rt_vlist_cleanup();
     db_close(dbip);
 

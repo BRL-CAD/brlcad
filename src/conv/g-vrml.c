@@ -103,7 +103,7 @@ static FILE *fp_out; /* Output file pointer */
 static struct db_i *dbip;
 static struct rt_tess_tol ttol;
 static struct bn_tol tol;
-static struct model *the_model;
+static struct shell *the_shell;
 
 static char *units = "mm";
 static fastf_t scale_factor = 1.0;
@@ -585,11 +585,11 @@ main(int argc, char **argv)
 
     bu_setlinebuf(stderr);
 
-    the_model = nmg_mm();
+    the_shell = nmg_ms();
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
+    tree_state.ts_s = &the_shell;
 
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -785,7 +785,7 @@ main(int argc, char **argv)
 		       (void *)&pm);	/* in librt/nmg_bool.c */
 
     /* Release dynamic storage */
-    nmg_km(the_model);
+    nmg_ks(the_shell);
 
     if (!eval_all) {
 	bu_free(pm.bots, "pm.bots");
@@ -813,11 +813,10 @@ out:
 
 
 void
-nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct model *m)
+nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct shell *s)
 {
     struct mater_info *mater = &tsp->ts_mater;
     const struct bn_tol *tol2 = tsp->ts_tol;
-    struct nmgregion *reg;
     struct bu_ptbl verts;
     struct vrml_mat mat;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -838,12 +837,13 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
+    struct faceuse *fu;
     int id;
 
     /* static due to libbu exception handling */
     static float r, g, b;
 
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
 
     full_path = db_path_to_string(pathp);
 
@@ -1012,14 +1012,14 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     }
 
     if (!is_light) {
-	nmg_triangulate_model(m, tol2);
+	nmg_triangulate_shell(s, tol2);
 	fprintf(fp_out, "\t\t\t}\n");
 	fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
 	fprintf(fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */
-    nmg_vertex_tabulate(&verts, &m->magic);
+    nmg_vertex_tabulate(&verts, &s->magic);
     if (!is_light) {
 	fprintf(fp_out, "\t\t\t\t\tpoint [");
     } else {
@@ -1064,49 +1064,41 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     first = 1;
     if (!is_light) {
 	fprintf(fp_out, "\t\t\t\tcoordIndex [\n");
-	for (BU_LIST_FOR(reg, nmgregion, &m->r_hd)) {
-	    struct shell *s;
 
-	    NMG_CK_REGION(reg);
-	    for (BU_LIST_FOR(s, shell, &reg->s_hd)) {
-		struct faceuse *fu;
+	NMG_CK_SHELL(s);
+	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	    struct loopuse *lu;
 
-		NMG_CK_SHELL(s);
-		for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		    struct loopuse *lu;
+	    NMG_CK_FACEUSE(fu);
 
-		    NMG_CK_FACEUSE(fu);
+	    if (fu->orientation != OT_SAME) {
+		continue;
+	    }
 
-		    if (fu->orientation != OT_SAME) {
-			continue;
-		    }
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		struct edgeuse *eu;
 
-		    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-			struct edgeuse *eu;
-
-			NMG_CK_LOOPUSE(lu);
-			if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-			    continue;
-			}
-
-			if (!first) {
-			    fprintf(fp_out, ",\n");
-			} else {
-			    first = 0;
-			}
-
-			fprintf(fp_out, "\t\t\t\t\t");
-			for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-			    struct vertex *v;
-
-			    NMG_CK_EDGEUSE(eu);
-			    v = eu->vu_p->v_p;
-			    NMG_CK_VERTEX(v);
-			    fprintf(fp_out, " %d,", bu_ptbl_locate(&verts, (long *)v));
-			}
-			fprintf(fp_out, "-1");
-		    }
+		NMG_CK_LOOPUSE(lu);
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+		    continue;
 		}
+
+		if (!first) {
+		    fprintf(fp_out, ",\n");
+		} else {
+		    first = 0;
+		}
+
+		fprintf(fp_out, "\t\t\t\t\t");
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    struct vertex *v;
+
+		    NMG_CK_EDGEUSE(eu);
+		    v = eu->vu_p->v_p;
+		    NMG_CK_VERTEX(v);
+		    fprintf(fp_out, " %d,", bu_ptbl_locate(&verts, (long *)v));
+		}
+		fprintf(fp_out, "-1");
 	    }
 	}
 	fprintf(fp_out, "\n\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n");
@@ -1297,14 +1289,14 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 union tree *
 nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
-    struct nmgregion *r;
+    struct shell *s;
     struct bu_list vhead;
     union tree *ret_tree;
     char *name;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
 
     BU_LIST_INIT(&vhead);
 
@@ -1325,48 +1317,22 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     ret_tree = process_boolean(curtree, tsp, pathp);
 
     if (ret_tree) {
-	r = ret_tree->tr_d.td_r;
+	s = ret_tree->tr_d.td_s;
     } else {
-	r = (struct nmgregion *)NULL;
+	s = (struct shell *)NULL;
     }
 
     bu_free(name, "db_path_to_string");
-    if (r != (struct nmgregion *)NULL) {
-	struct shell *s;
-	int empty_region = 0;
-
-	/* kill zero length edgeuse and cracks */
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
-	    struct shell *next_s;
-	    next_s = BU_LIST_PNEXT(shell, &s->l);
-	    (void)nmg_keu_zl(s, tsp->ts_tol); /* kill zero length edgeuse */
-	    if (nmg_kill_cracks(s)) {
-		/* true when shell is empty */
-		if (nmg_ks(s)) {
-		    /* true when nmg region is empty */
-		    empty_region = 1;
-		    break;
-		}
-	    }
-	    s = next_s;
-	}
-
-	if (!empty_region) {
-	    /* Write the nmgregion to the output file */
-	    nmg_2_vrml(tsp, pathp, r->m_p);
-	    regions_converted++;
-	} else {
-	    bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to cleanup)\n",
-		db_path_to_string(pathp));
-	}
-
+    if (s != (struct shell *)NULL) {
+	/* Write the nmgregion to the output file */
+	nmg_2_vrml(tsp, pathp, s);
+	regions_converted++;
     } else {
 	bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to error or null result)\n",
 		db_path_to_string(pathp));
     }
 
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
 
     /*  Dispose of original tree, so that all associated dynamic
      *  memory is released now, not at the end of all regions.

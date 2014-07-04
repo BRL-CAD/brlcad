@@ -67,7 +67,7 @@ static char *output_directory = NULL;	/* directory name to hold output files */
 static FILE *fp;			/* Output file pointer */
 static int bfd;				/* Output binary file descriptor */
 static struct db_i *dbip;
-static struct model *the_model;
+static struct shell *the_shell;
 static struct bu_vls file_name = BU_VLS_INIT_ZERO;		/* file name built from region name */
 static struct rt_tess_tol ttol;		/* tessellation tolerance in mm */
 static struct bn_tol tol;		/* calculation tolerance */
@@ -93,16 +93,14 @@ lswap(unsigned int *v)
 
 
 static void
-nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
+nmg_to_stl(struct shell *s, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
 {
-    struct model *m;
-    struct shell *s;
     struct vertex *v;
     char *region_name;
     int region_polys=0;
     int ret;
 
-    NMG_CK_REGION(r);
+    NMG_CK_SHELL(s);
     RT_CK_FULL_PATH(pathp);
 
     region_name = db_path_to_string(pathp);
@@ -164,18 +162,14 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	}
     }
 
-    m = r->m_p;
-    NMG_CK_MODEL(m);
-
     /* Write pertinent info for this region */
     if (!binary)
 	fprintf(fp, "solid %s\n", (region_name+1));
 
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_shell(s, &tol);
 
     /* Check triangles */
-    for (BU_LIST_FOR (s, shell, &r->s_hd))
     {
 	struct faceuse *fu;
 
@@ -298,7 +292,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 /* FIXME: this be a dumb hack to avoid void* conversion */
 struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    void (*func)(struct shell *, const struct db_full_path *, int, int, float [3]);
 };
 static struct gcv_data gcvwriter = {nmg_to_stl};
 
@@ -319,7 +313,7 @@ main(int argc, char *argv[])
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
+    tree_state.ts_s = &the_shell;
 
     /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
@@ -340,7 +334,7 @@ main(int argc, char *argv[])
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* make empty NMG model */
-    the_model = nmg_mm();
+    the_shell = nmg_ms();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
@@ -520,7 +514,7 @@ main(int argc, char *argv[])
     }
 
     /* Release dynamic storage */
-    nmg_km(the_model);
+    nmg_ks(the_shell);
     rt_vlist_cleanup();
     db_close(dbip);
 

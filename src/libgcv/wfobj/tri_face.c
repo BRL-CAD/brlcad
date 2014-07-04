@@ -35,31 +35,19 @@ static const int VERTICES_PER_FACE = 3;
 /* nmg access routines */
 
 HIDDEN struct shell*
-get_first_shell(struct model *model)
+get_faceuse_shell(struct faceuse *fu)
 {
-    struct nmgregion *region;
-    struct shell *shell;
-
-    region = BU_LIST_FIRST(nmgregion, &model->r_hd);
-    shell = BU_LIST_FIRST(shell, &region->s_hd);
-
-    return shell;
-}
-
-HIDDEN struct model*
-get_faceuse_model(struct faceuse *fu)
-{
-    return fu->s_p->r_p->m_p;
+    return fu->s_p;
 }
 
 /* nmg construction routines */
 
 HIDDEN struct vertex_g*
-make_nmg_vertex_g(struct model *model, double x, double y, double z, long index)
+make_nmg_vertex_g(struct shell *s, double x, double y, double z, long index)
 {
     struct vertex_g *vg;
 
-    GET_VERTEX_G(vg, model);
+    GET_VERTEX_G(vg, s);
     vg->magic = NMG_VERTEX_G_MAGIC;
 
     VSET(vg->coord, x, y, z);
@@ -69,26 +57,26 @@ make_nmg_vertex_g(struct model *model, double x, double y, double z, long index)
 }
 
 HIDDEN struct vertex*
-make_nmg_vertex(struct model *model, double x, double y, double z, long index)
+make_nmg_vertex(struct shell *s, double x, double y, double z, long index)
 {
     struct vertex *v;
 
-    GET_VERTEX(v, model);
+    GET_VERTEX(v, s);
     v->magic = NMG_VERTEX_MAGIC;
 
     BU_LIST_INIT(&v->vu_hd);
-    v->vg_p = make_nmg_vertex_g(model, x, y, z, index);
+    v->vg_p = make_nmg_vertex_g(s, x, y, z, index);
     v->index = index;
 
     return v;
 }
 
 HIDDEN void
-attach_face_g_plane(struct model *model, struct face *f)
+attach_face_g_plane(struct shell *s, struct face *f)
 {
     struct face_g_plane *plane;
 
-    GET_FACE_G_PLANE(plane, model);
+    GET_FACE_G_PLANE(plane, s);
     plane->magic = NMG_FACE_G_PLANE_MAGIC;
 
     /* link up and down */
@@ -101,19 +89,17 @@ attach_face_g_plane(struct model *model, struct face *f)
 /* builds an nmg model containing a single faceuse which represents the face
  * specified in points[]
  */
-HIDDEN struct model*
-make_model_from_face(const double points[], int numPoints)
+HIDDEN struct shell*
+make_shell_from_face(const double points[], int numPoints)
 {
     int i;
-    struct model *model;
-    struct shell *shell;
+    struct shell *s;
     struct faceuse *fu;
     struct vertex **verts;
     const double *p;
 
     /* make base nmg model */
-    model = nmg_mm();
-    nmg_mrsv(model);
+    s = nmg_ms();
 
     /* copy each point into vertex to create verts array */
     verts = (struct vertex**)bu_malloc(sizeof(struct vertex*) * numPoints,
@@ -121,39 +107,36 @@ make_model_from_face(const double points[], int numPoints)
 
     for (i = 0; i < numPoints; i++) {
 	p = &points[i * ELEMENTS_PER_POINT];
-	verts[i] = make_nmg_vertex(model, p[X], p[Y], p[Z], (long)i);
+	verts[i] = make_nmg_vertex(s, p[X], p[Y], p[Z], (long)i);
     }
 
     /* add face from verts */
-    shell = get_first_shell(model);
-    nmg_cface(shell, verts, numPoints);
+    nmg_cface(s, verts, numPoints);
     bu_free(verts, "verts");
 
     /* add geometry to face */
-    fu = BU_LIST_FIRST(faceuse, &shell->fu_hd);
-    attach_face_g_plane(model, fu->f_p);
+    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
+    attach_face_g_plane(s, fu->f_p);
     if (nmg_calc_face_plane(fu, fu->f_p->g.plane_p->N)) {
-	nmg_km(model);
-	model = NULL;
+	nmg_ks(s);
+	s = NULL;
     } else {
 	fu->orientation = OT_SAME;
     }
 
-    return model;
+    return s;
 }
 
 struct faceuse*
 make_faceuse_from_face(const double points[], int numPoints)
 {
-    struct model *model;
-    struct shell *shell;
+    struct shell *s;
     struct faceuse *fu = NULL;
 
-    model = make_model_from_face(points, numPoints);
+    s = make_shell_from_face(points, numPoints);
 
-    if (model != NULL) {
-	shell = get_first_shell(model);
-	fu = BU_LIST_FIRST(faceuse, &shell->fu_hd);
+    if (s != NULL) {
+	fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
     }
 
     return fu;
@@ -203,7 +186,7 @@ triangulateFace(
     size_t numPoints,
     struct bn_tol tol)
 {
-    struct model *model;
+    struct shell *s;
     struct faceuse *fu;
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -246,8 +229,8 @@ triangulateFace(
 	}
     }
 
-    model = get_faceuse_model(fu);
-    nmg_km(model);
+    s = get_faceuse_shell(fu);
+    nmg_ks(s);
 }
 
 

@@ -117,7 +117,7 @@ static FILE	*outfp;		/* Output file pointer */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
-static struct model		*the_model;
+static struct shell		*the_shell;
 
 static	char*	units="mm";
 static fastf_t	scale_factor=1.0;
@@ -359,11 +359,11 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
 
-    the_model = nmg_mm();
+    the_shell = nmg_ms();
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
+    tree_state.ts_s = &the_shell;
 
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -507,7 +507,7 @@ main(int argc, char **argv)
 
     BARRIER_CHECK;
     /* Release dynamic storage */
-    nmg_km(the_model);
+    nmg_ks(the_shell);
 
     db_close(dbip);
 
@@ -522,95 +522,80 @@ main(int argc, char **argv)
 }
 
 void
-process_non_light(struct model *m) {
+process_non_light(struct shell *s) {
     /* static due to bu exception handling */
-    static struct shell *s;
-    static struct shell *next_s;
     static struct faceuse *fu;
     static struct faceuse *next_fu;
     static struct loopuse *lu;
-    static struct nmgregion *reg;
 
     /* triangulate any faceuses with holes */
-    for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
+    NMG_CK_SHELL( s );
+    fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
+    while ( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
     {
-	NMG_CK_REGION( reg );
-	s = BU_LIST_FIRST( shell, &reg->s_hd );
-	while ( BU_LIST_NOT_HEAD( s, &reg->s_hd ) )
+	int shell_is_dead=0;
+
+	NMG_CK_FACEUSE( fu );
+
+	next_fu = BU_LIST_PNEXT( faceuse, &fu->l );
+
+	if ( fu->orientation != OT_SAME )
 	{
-	    NMG_CK_SHELL( s );
-	    next_s = BU_LIST_PNEXT( shell, &s->l );
-	    fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
-	    while ( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
-	    {
-		int shell_is_dead=0;
-
-		NMG_CK_FACEUSE( fu );
-
-		next_fu = BU_LIST_PNEXT( faceuse, &fu->l );
-
-		if ( fu->orientation != OT_SAME )
-		{
-		    fu = next_fu;
-		    continue;
-		}
-
-		if ( fu->fumate_p == next_fu )
-		{
-		    /* make sure next_fu is not the mate of fu */
-		    next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
-		}
-
-
-		/* check if this faceuse has any holes */
-		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-		{
-		    NMG_CK_LOOPUSE( lu );
-		    if ( lu->orientation == OT_OPPOSITE )
-		    {
-			/* this is a hole, so
-			 * triangulate the faceuse
-			 */
-			if ( !BU_SETJUMP )
-			{
-			    /* try */
-			    if ( nmg_triangulate_fu( fu, &tol ) )
-			    {
-				if ( nmg_kfu( fu ) )
-				{
-				    (void) nmg_ks( s );
-				    shell_is_dead = 1;
-
-				}
-			    }
-			} else {
-			    /* catch */
-			    bu_log( "A face has failed triangulation!\n" );
-			    if ( next_fu == fu->fumate_p )
-				next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
-			    if ( nmg_kfu( fu ) )
-			    {
-				(void) nmg_ks( s );
-				shell_is_dead = 1;
-			    }
-			} BU_UNSETJUMP;
-			break;
-		    }
-
-		}
-		if ( shell_is_dead )
-		    break;
-		fu = next_fu;
-	    }
-	    s = next_s;
+	    fu = next_fu;
+	    continue;
 	}
+
+	if ( fu->fumate_p == next_fu )
+	{
+	    /* make sure next_fu is not the mate of fu */
+	    next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
+	}
+
+
+	/* check if this faceuse has any holes */
+	for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	{
+	    NMG_CK_LOOPUSE( lu );
+	    if ( lu->orientation == OT_OPPOSITE )
+	    {
+		/* this is a hole, so
+		 * triangulate the faceuse
+		 */
+		if ( !BU_SETJUMP )
+		{
+		    /* try */
+		    if ( nmg_triangulate_fu( fu, &tol ) )
+		    {
+			if ( nmg_kfu( fu ) )
+			{
+			    (void) nmg_ks( s );
+			    shell_is_dead = 1;
+
+			}
+		    }
+		} else {
+		    /* catch */
+		    bu_log( "A face has failed triangulation!\n" );
+		    if ( next_fu == fu->fumate_p )
+			next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
+		    if ( nmg_kfu( fu ) )
+		    {
+			(void) nmg_ks( s );
+			shell_is_dead = 1;
+		    }
+		} BU_UNSETJUMP;
+		break;
+	    }
+	}
+	if ( shell_is_dead )
+	    break;
+	fu = next_fu;
     }
 }
 
 void
-nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct mater_info *mater)
+nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct shell *s, struct mater_info *mater)
 {
-    struct nmgregion *reg;
     struct bu_ptbl verts;
     struct vrml_mat mat;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -631,7 +616,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     struct rt_comb_internal *comb;
     int id;
 
-    NMG_CK_MODEL( m );
+    NMG_CK_SHELL( s );
 
     BARRIER_CHECK;
 
@@ -744,68 +729,60 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 
     if ( !is_light )
     {
-	process_non_light(m);
+	process_non_light(s);
 	fprintf( fp, "\t\t</Appearance>\n");
     }
 
     /* FIXME: need code to handle light */
 
     /* get list of vertices */
-    nmg_vertex_tabulate( &verts, &m->magic );
+    nmg_vertex_tabulate( &verts, &s->magic );
 
     fprintf( fp, "\t\t<IndexedFaceSet coordIndex=\"\n");
     first = 1;
     if ( !is_light )
     {
-	for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
+	struct faceuse *fu;
+
+	NMG_CK_SHELL( s );
+	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
-	    struct shell *s;
+	    struct loopuse *lu;
 
-	    NMG_CK_REGION( reg );
-	    for ( BU_LIST_FOR( s, shell, &reg->s_hd ) )
+	    NMG_CK_FACEUSE( fu );
+
+	    if ( fu->orientation != OT_SAME )
+		continue;
+
+	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	    {
-		struct faceuse *fu;
+		struct edgeuse *eu;
 
-		NMG_CK_SHELL( s );
-		for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+		NMG_CK_LOOPUSE( lu );
+
+		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		    continue;
+
+		if ( !first )
+		    fprintf( fp, ",\n" );
+		else
+		    first = 0;
+
+		fprintf( fp, "\t\t\t\t" );
+		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 		{
-		    struct loopuse *lu;
+		    struct vertex *v;
 
-		    NMG_CK_FACEUSE( fu );
+		    NMG_CK_EDGEUSE( eu );
 
-		    if ( fu->orientation != OT_SAME )
-			continue;
-
-		    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-		    {
-			struct edgeuse *eu;
-
-			NMG_CK_LOOPUSE( lu );
-
-			if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-			    continue;
-
-			if ( !first )
-			    fprintf( fp, ",\n" );
-			else
-			    first = 0;
-
-			fprintf( fp, "\t\t\t\t" );
-			for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
-			{
-			    struct vertex *v;
-
-			    NMG_CK_EDGEUSE( eu );
-
-			    v = eu->vu_p->v_p;
-			    NMG_CK_VERTEX( v );
-			    fprintf( fp, " %d,", bu_ptbl_locate( &verts, (long *)v ) );
-			}
-			fprintf( fp, "-1" );
-		    }
+		    v = eu->vu_p->v_p;
+		    NMG_CK_VERTEX( v );
+		    fprintf( fp, " %d,", bu_ptbl_locate( &verts, (long *)v ) );
 		}
+		fprintf( fp, "-1" );
 	    }
 	}
+
 	/* close coordIndex */
 	fprintf( fp, "\" ");
 	fprintf( fp, "normalPerVertex=\"false\" ");
@@ -996,16 +973,16 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Release the tree memory & input regions */
 	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-	/* Get rid of (m)any other intermediate structures */
-	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
-	    nmg_km(*tsp->ts_m);
+	/* Get rid of (s)any other intermediate structures */
+	if ( (*tsp->ts_s)->magic == NMG_SHELL_MAGIC ) {
+	    nmg_ks(*tsp->ts_s);
 	} else {
-	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	    bu_log("WARNING: tsp->ts_s pointer corrupted, ignoring it.\n");
 	}
 
 	bu_free( name, "db_path_to_string" );
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
+	*tsp->ts_s = nmg_ms();
     } BU_UNSETJUMP;		/* Relinquish the protection */
 
     return ret_tree;
@@ -1015,14 +992,14 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 union tree *
 nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
-    struct nmgregion	*r;
+    struct shell	*s;
     struct bu_list		vhead;
     union tree		*ret_tree;
     char			*name;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_MODEL(*tsp->ts_s);
 
     BARRIER_CHECK;
     BU_LIST_INIT(&vhead);
@@ -1044,52 +1021,16 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     ret_tree = process_boolean(curtree, tsp, pathp);
 
     if ( ret_tree )
-	r = ret_tree->tr_d.td_r;
+	s = ret_tree->tr_d.td_s;
     else
-	r = (struct nmgregion *)NULL;
+	s = (struct shell *)NULL;
 
     bu_free( name, "db_path_to_string" );
     regions_converted++;
-    if (r != (struct nmgregion *)NULL)
+    if (s != (struct shell *)NULL)
     {
-	struct shell *s;
-	int empty_region=0;
-	int empty_model=0;
-
-	/* Kill cracks */
-	s = BU_LIST_FIRST( shell, &r->s_hd );
-	while ( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
-	{
-	    struct shell *next_s;
-
-	    next_s = BU_LIST_PNEXT( shell, &s->l );
-	    if ( nmg_kill_cracks( s ) )
-	    {
-		if ( nmg_ks( s ) )
-		{
-		    empty_region = 1;
-		    break;
-		}
-	    }
-	    s = next_s;
-	}
-
-	/* kill zero length edgeuses */
-	if ( !empty_region )
-	{
-	    empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
-	}
-
-	if ( !empty_region && !empty_model )
-	{
-	    /* Write the nmgregion to the output file */
-	    nmg_2_vrml( outfp, pathp, r->m_p, &tsp->ts_mater );
-	}
-
-	/* NMG region is no longer necessary */
-	if ( !empty_model )
-	    nmg_kr(r);
-
+	/* Write the nmgregion to the output file */
+	nmg_2_vrml( outfp, pathp, s, &tsp->ts_mater );
     }
     else
 	bu_log( "WARNING: Nothing left after Boolean evaluation of %s\n",

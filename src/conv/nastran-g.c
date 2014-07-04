@@ -125,7 +125,6 @@ static char *prev_line;			/* previous input line */
 static int input_status;		/* status of input FILE */
 static long line_count;			/* count of input lines */
 static long bulk_data_start_line;	/* line number where BULK DATA begins */
-static struct model *nmg_model;		/* NMG solid for surfaces */
 static struct shell *nmg_shell;		/* NMG shell */
 static struct bn_tol tol;		/* tolerance for NMG's */
 static int polysolids=1;		/* flag for outputting NMG's rather than BOT's */
@@ -891,12 +890,8 @@ get_cquad4(void)
     VSCALE(pt3, g_pts[gin3].pt, conv[units]);
     VSCALE(pt4, g_pts[gin4].pt, conv[units]);
 
-    if (!nmg_model && !pid) {
-	struct nmgregion *r;
-
-	nmg_model = nmg_mm();
-	r = nmg_mrsv(nmg_model);
-	nmg_shell = BU_LIST_FIRST(shell, &r->s_hd);
+    if (!nmg_shell && !pid) {
+	nmg_shell = nmg_ms();
     }
 
     if (!pid)
@@ -922,12 +917,7 @@ get_cquad4(void)
 	if (psh->s)
 	    s = psh->s;
 	else {
-	    struct model *m;
-	    struct nmgregion *r;
-
-	    m = nmg_mm();
-	    r = nmg_mrsv(m);
-	    s = BU_LIST_FIRST(shell, &r->s_hd);
+	    s = nmg_ms();
 	    psh->s = s;
 	}
     }
@@ -993,12 +983,8 @@ get_ctria3(void)
     VSCALE(pt2, g_pts[gin2].pt, conv[units]);
     VSCALE(pt3, g_pts[gin3].pt, conv[units]);
 
-    if (!nmg_model && !pid) {
-	struct nmgregion *r;
-
-	nmg_model = nmg_mm();
-	r = nmg_mrsv(nmg_model);
-	nmg_shell = BU_LIST_FIRST(shell, &r->s_hd);
+    if (!nmg_shell && !pid) {
+	nmg_shell = nmg_ms();
     }
 
     if (!pid)
@@ -1023,12 +1009,7 @@ get_ctria3(void)
 	if (psh->s)
 	    s = psh->s;
 	else {
-	    struct model *m;
-	    struct nmgregion *r;
-
-	    m = nmg_mm();
-	    r = nmg_mrsv(m);
-	    s = BU_LIST_FIRST(shell, &r->s_hd);
+	    s = nmg_ms();
 	    psh->s = s;
 	}
     }
@@ -1216,7 +1197,7 @@ main(int argc, char **argv)
     BU_LIST_INIT(&pshell_head.l);
     BU_LIST_INIT(&all_head.l);
 
-    nmg_model = (struct model *)NULL;
+    nmg_shell = (struct shell *)NULL;
 
     /* count grid points */
     bu_fseek(fptmp, 0, SEEK_SET);
@@ -1318,34 +1299,32 @@ main(int argc, char **argv)
 	    get_cquad4();
     }
 
-    if (nmg_model) {
-	nmg_rebound(nmg_model, &tol);
+    if (nmg_shell) {
+	nmg_rebound(nmg_shell, &tol);
 	if (polysolids)
 	    mk_bot_from_nmg(fpout, "pshell.0", nmg_shell);
 	else
-	    mk_nmg(fpout, "pshell.0", nmg_model);
+	    mk_nmg(fpout, "pshell.0", nmg_shell);
     }
 
     BU_LIST_INIT(&head.l);
     for (BU_LIST_FOR(psh, pshell, &pshell_head.l)) {
-	struct model *m;
 	char name[NAMESIZE+1];
 
 	if (!psh->s)
 	    continue;
 
-	m = nmg_find_model(&psh->s->l.magic);
-	nmg_rebound(m, &tol);
+	nmg_rebound(psh->s, &tol);
 	nmg_fix_normals(psh->s, &tol);
 	if (psh->thick > tol.dist) {
-	    nmg_model_face_fuse(m, &tol);
+	    nmg_shell_face_fuse(psh->s, &tol);
 	    nmg_hollow_shell(psh->s, psh->thick*conv[units], 1, &tol);
 	}
 	sprintf(name, "pshell.%d", psh->pid);
 	if (polysolids)
 	    mk_bot_from_nmg(fpout, name, psh->s);
 	else
-	    mk_nmg(fpout, name, m);
+	    mk_nmg(fpout, name, psh->s);
 
 	mk_addmember(name, &head.l, NULL, WMOP_UNION);
     }

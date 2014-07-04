@@ -243,8 +243,7 @@ int test_compose()
     unsigned int i;
     union tree l, *r;
     struct soup_s ls, *rs;
-    struct model lm, rm;
-    struct nmgregion lnr, rnr;
+    struct shell lshell, rshell;
     struct bn_tol t;
     point_t p[3];
 
@@ -253,7 +252,7 @@ int test_compose()
     t.dist_sq = t.dist * t.dist;
 
     /* assembly tree linkages */
-#define PREP l.magic = RT_TREE_MAGIC; ls.magic = SOUP_MAGIC; lm.magic = NMG_MODEL_MAGIC; lnr.m_p = &lm; ls.faces = NULL; ls.nfaces = ls.maxfaces = 0; l.tr_d.td_r = &lnr; l.tr_d.td_r->m_p = (struct model *)&ls; BU_ALLOC(r, union tree); BU_ALLOC(rs, struct soup_s); r->magic = RT_TREE_MAGIC; rs->magic = SOUP_MAGIC; rm.magic = NMG_MODEL_MAGIC; rnr.m_p = &rm; rs->faces = NULL; rs->nfaces = rs->maxfaces = 0; r->tr_d.td_r = &rnr; r->tr_d.td_r->m_p = (struct model *)rs;
+#define PREP l.magic = RT_TREE_MAGIC; ls.magic = SOUP_MAGIC; lshell.magic = NMG_SHELL_MAGIC; ls.faces = NULL; ls.nfaces = ls.maxfaces = 0; l.tr_d.td_s = &lshell; BU_ALLOC(r, union tree); BU_ALLOC(rs, struct soup_s); r->magic = RT_TREE_MAGIC; rs->magic = SOUP_MAGIC; rshell.magic = NMG_SHELL_MAGIC; rs->faces = NULL; rs->nfaces = rs->maxfaces = 0; r->tr_d.td_s = &rshell;
 
     /* test empty tree */
     PREP;

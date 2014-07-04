@@ -90,8 +90,6 @@ extrude(int entityno)
 	case 126: {
 	    /* B-spline */
 	    int npts;
-	    struct model *m;
-	    struct nmgregion *r;
 	    struct shell *s;
 	    struct faceuse *fu;
 	    struct loopuse *lu;
@@ -102,10 +100,7 @@ extrude(int entityno)
 	    if (npts < 3)
 		return 0;
 
-
-	    m = nmg_mm();
-	    r = nmg_mrsv(m);
-	    s = BU_LIST_FIRST(shell, &r->s_hd);
+	    s = nmg_ms();
 
 	    fu = nmg_cface(s, (struct vertex **)NULL, npts-1);
 	    pt_ptr = curv_pts;
@@ -120,20 +115,20 @@ extrude(int entityno)
 
 	    if (nmg_calc_face_g(fu)) {
 		bu_log("Extrude: Failed to calculate face geometry\n");
-		nmg_km(m);
+		nmg_ks(s);
 		bu_free((char *)curv_pts, "curve_pts");
 		return 0;
 	    }
 
 	    if (nmg_extrude_face(fu, evect, &tol)) {
 		bu_log("Extrude: extrusion failed\n");
-		nmg_km(m);
+		nmg_ks(s);
 		bu_free((char *)curv_pts, "curve_pts");
 		return 0;
 	    }
 
 	    mk_bot_from_nmg(fdout, dir[entityno]->name, s);
-	    nmg_km(m);
+	    nmg_ks(s);
 	    bu_free((char *)curv_pts, "curve_pts");
 
 	    return 1;

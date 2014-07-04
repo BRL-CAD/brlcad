@@ -47,20 +47,11 @@ static struct rt_wdb *fdout=NULL;
 static void
 nmg_conv(struct rt_db_internal *intern, const char *name)
 {
-    struct model *m;
-    struct nmgregion *r;
     struct shell *s;
 
     RT_CK_DB_INTERNAL(intern);
-    m = (struct model *)intern->idb_ptr;
-    NMG_CK_MODEL(m);
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-    if (r && BU_LIST_NEXT(nmgregion, &r->l) !=  (struct nmgregion *)&m->r_hd)
-	bu_exit(1, "ERROR: this code works only for NMG models with one region!\n");
-
-    s = BU_LIST_FIRST(shell, &r->s_hd);
-    if (s && BU_LIST_NEXT(shell, &s->l) != (struct shell *)&r->s_hd)
-	bu_exit(1, "ERROR: this code works only for NMG models with one shell!\n");
+    s = (struct shell *)intern->idb_ptr;
+    NMG_CK_SHELL(s);
 
     if (!s) {
 	bu_log("WARNING: NMG has no shells\n");

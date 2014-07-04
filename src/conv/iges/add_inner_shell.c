@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 struct shell *
-Add_inner_shell(struct nmgregion *r, int entityno)
+Add_inner_shell(struct shell *s, int entityno)
 {
 
     int sol_num;		/* IGES solid type number */
@@ -31,7 +31,6 @@ Add_inner_shell(struct nmgregion *r, int entityno)
     int *face_de;		/* Directory sequence numbers for faces */
     int *face_orient;		/* Orientation of faces */
     int face;
-    struct shell *s;			/* NMG shell */
     struct faceuse **fu;			/* list of faceuses */
 
     /* Acquiring Data */
@@ -55,7 +54,6 @@ Add_inner_shell(struct nmgregion *r, int entityno)
 	Readint(&face_orient[face], "");
     }
 
-    s = nmg_msv(r);
     for (face = 0; face < no_of_faces; face++) {
 	fu[face_count] = Add_face_to_shell(s, (face_de[face]-1)/2, 1);
 	if (fu[face_count] != (struct faceuse *)NULL)

@@ -79,7 +79,7 @@ static int	ident_length=0;		/* Length of idents array */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
-static struct model		*the_model;
+static struct shell		*the_shell;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
 
@@ -148,47 +148,43 @@ leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, s
 }
 
 
-/*	Routine to write an nmgregion in the TANKILL format */
+/*	Routine to write an shell in the TANKILL format */
 static void
-Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struct db_full_path *pathp)
+Write_tankill_shell(struct shell *s, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    struct model *m;
-    struct shell *s;
     struct bu_ptbl vertices;	/* vertex list in TANKILL order */
     long *flags;			/* array to insure that no loops are missed */
     int i;
 
-    NMG_CK_REGION( r );
-    m = r->m_p;
-    NMG_CK_MODEL( m );
+    NMG_CK_SHELL( s );
 
     /* if bounds haven't been calculated, do it now */
-    if ( r->ra_p == NULL )
-	nmg_region_a( r, &tol );
+    if ( s->sa_p == NULL )
+	nmg_shell_a( s, &tol );
 
     /* Check if region extents are beyond the limitations of the TANKILL format */
     for ( i=X; i<ELEMENTS_PER_POINT; i++ )
     {
-	if ( r->ra_p->min_pt[i] < (-12000.0) )
+	if ( s->sa_p->min_pt[i] < (-12000.0) )
 	{
-	    bu_log( "g-tankill: Coordinates too large (%g) for TANKILL format\n", r->ra_p->min_pt[i] );
+	    bu_log( "g-tankill: Coordinates too large (%g) for TANKILL format\n", s->sa_p->min_pt[i] );
 	    return;
 	}
-	if ( r->ra_p->max_pt[i] > 12000.0 )
+	if ( s->sa_p->max_pt[i] > 12000.0 )
 	{
-	    bu_log( "g-tankill: Coordinates too large (%g) for TANKILL format\n", r->ra_p->max_pt[i] );
+	    bu_log( "g-tankill: Coordinates too large (%g) for TANKILL format\n", s->sa_p->max_pt[i] );
 	    return;
 	}
     }
     /* Now triangulate the entire model */
-    nmg_triangulate_model( m, &tol );
+    nmg_triangulate_shell( s, &tol );
 
     /* Need a flag array to insure that no loops are missed */
-    flags = (long *)bu_calloc( m->maxindex, sizeof( long ), "g-tankill: flags" );
+    flags = (long *)bu_calloc( s->maxindex, sizeof( long ), "g-tankill: flags" );
 
     /* Output each shell as a TANKILL object */
     bu_ptbl_init( &vertices, 64, " &vertices ");
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
+
     {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -205,9 +201,6 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 	NMG_CK_FACEUSE( fu );
 	while ( fu->orientation != OT_SAME && BU_LIST_NOT_HEAD( fu, &s->fu_hd ) )
 	    fu = BU_LIST_PNEXT( faceuse, fu );
-
-	if ( BU_LIST_IS_HEAD( fu, &s->fu_hd ) )
-	    continue;
 
 	lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 	NMG_CK_LOOPUSE( lu );
@@ -406,11 +399,11 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
 
-    the_model = nmg_mm();
+    the_shell = nmg_ms();
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
+    tree_state.ts_s = &the_shell;
 
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -574,13 +567,13 @@ main(int argc, char **argv)
 
 
 static void
-process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp)
+process_triangulation(struct shell *s, const struct db_full_path *pathp, struct db_tree_state *tsp)
 {
     if (!BU_SETJUMP) {
 	/* try */
 
 	/* Write the region to the TANKILL file */
-	Write_tankill_region( r, tsp, pathp );
+	Write_tankill_shell( s, tsp, pathp );
 
     } else {
 	/* catch */
@@ -599,15 +592,15 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
 
-	/* Get rid of (m)any other intermediate structures */
-	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
-	    nmg_km(*tsp->ts_m);
+	/* Get rid of (s)any other intermediate structures */
+	if ( (*tsp->ts_s)->magic == NMG_SHELL_MAGIC ) {
+	    nmg_ks(*tsp->ts_s);
 	} else {
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 	}
 
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
+	*tsp->ts_s = nmg_ms();
     }  BU_UNSETJUMP;
 }
 
@@ -621,7 +614,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if ( !BU_SETJUMP ) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	(void)nmg_shell_fuse(*tsp->ts_s, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
     } else  {
@@ -642,16 +635,16 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Release the tree memory & input regions */
 	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
 
-	/* Get rid of (m)any other intermediate structures */
-	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
-	    nmg_km(*tsp->ts_m);
+	/* Get rid of (s)any other intermediate structures */
+	if ( (*tsp->ts_s)->magic == NMG_SHELL_MAGIC ) {
+	    nmg_ks(*tsp->ts_s);
 	} else {
-	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	    bu_log("WARNING: tsp->ts_s pointer corrupted, ignoring it.\n");
 	}
 
 	bu_free( name, "db_path_to_string" );
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
+	*tsp->ts_s = nmg_ms();
     } BU_UNSETJUMP;/* Relinquish the protection */
 
     return ret_tree;
@@ -665,13 +658,13 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
  */
 union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
-    struct nmgregion	*r;
+    struct shell	*s;
     struct bu_list		vhead;
     union tree		*ret_tree;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_MODEL(*tsp->ts_s);
 
     BU_LIST_INIT(&vhead);
 
@@ -692,52 +685,16 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     ret_tree = process_boolean(curtree, tsp, pathp);
 
     if ( ret_tree )
-	r = ret_tree->tr_d.td_r;
+	s = ret_tree->tr_d.td_s;
     else
-	r = (struct nmgregion *)NULL;
+	s = (struct shell *)NULL;
 
     regions_converted++;
 
-    if (r != (struct nmgregion *)NULL)
+    if (s != (struct shell *)NULL)
     {
-	struct shell *s;
-	int empty_region=0;
-	int empty_model=0;
-
-	/* Kill cracks */
-	s = BU_LIST_FIRST( shell, &r->s_hd );
-	while ( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
-	{
-	    struct shell *next_s;
-
-	    next_s = BU_LIST_PNEXT( shell, &s->l );
-	    if ( nmg_kill_cracks( s ) )
-	    {
-		if ( nmg_ks( s ) )
-		{
-		    empty_region = 1;
-		    break;
-		}
-	    }
-	    s = next_s;
-	}
-
-	/* kill zero length edgeuses */
-	if ( !empty_region )
-	{
-	    empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
-	}
-
-	if ( !empty_region && !empty_model )
-	{
-	    process_triangulation(r, pathp, tsp);
-
-	    regions_written++;
-
-	}
-
-	if ( !empty_model )
-	    nmg_kr( r );
+	process_triangulation(s, pathp, tsp);
+	regions_written++;
     }
 
     /*

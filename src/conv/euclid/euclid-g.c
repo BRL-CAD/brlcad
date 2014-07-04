@@ -230,19 +230,14 @@ main(int argc, char **argv)
  *	Write the nmg to a BRL-CAD style data base.
  */
 static void
-add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
+add_nmg_to_db(struct rt_wdb *fpout, struct shell *s, int reg_id)
 {
     char	id[80], *rname, *sname;
     int gift_ident;
     int group_id;
-    struct nmgregion *r;
-    struct shell *s;
     struct wmember head;
 
     BU_LIST_INIT( &head.l );
-
-    r = BU_LIST_FIRST( nmgregion, &m->r_hd );
-    s = BU_LIST_FIRST( shell, &r->s_hd );
 
     sprintf(id, "%d", reg_id);
     rname = (char *)bu_malloc(sizeof(id) + 3, "rname");	/* Region name. */
@@ -255,24 +250,17 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
     {
 	int something_left=1;
 
-	while ( BU_LIST_NOT_HEAD( s, &r->s_hd ) )
+	if ( nmg_simplify_shell( s ) )
 	{
-	    struct shell *next_s;
-
-	    next_s = BU_LIST_PNEXT( shell, &s->l );
-	    if ( nmg_simplify_shell( s ) )
+	    if ( nmg_ks( s ) )
 	    {
-		if ( nmg_ks( s ) )
-		{
-		    /* we killed it all! */
-		    something_left = 0;
-		    break;
-		}
+		/* we killed it all! */
+		something_left = 0;
 	    }
-	    s = next_s;
 	}
+
 	if ( something_left )
-	    mk_nmg(fpout, sname,  m);		/* Make nmg object. */
+	    mk_nmg(fpout, sname,  s);		/* Make nmg object. */
     }
 
     gift_ident = reg_id % 100000;
@@ -422,17 +410,8 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
  * Return 0 otherwise.
  */
 static int
-kill_cracks_in_next_shell(struct nmgregion *r)
+kill_cracks_in_next_shell(struct shell *s)
 {
-    struct shell *s = NULL;
-
-    if (BU_LIST_IS_EMPTY(&r->s_hd)) {
-	/* region is empty (no next shell) */
-	return 1;
-    }
-
-    /* kill cracks in next shell */
-    s = BU_LIST_FIRST(shell, &r->s_hd);
     if (nmg_kill_cracks(s)) {
 
 	/* shell is now empty, remove it from the region */
@@ -457,16 +436,12 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     int	cur_id, face, facet_type, i, lst[MAX_PTS_PER_FACE], np, nv;
     int hole_face = -4200;
     struct faceuse	*outfaceuses[MAX_PTS_PER_FACE];
-    struct model	*m;	/* Input/output, nmg model. */
-    struct nmgregion *r;
     struct shell	*s;
     struct faceuse	*fu;
     struct vertex	*vertlist[MAX_PTS_PER_FACE];
     struct vlist	vert;
 
-    m = nmg_mm();		/* Make nmg model. */
-    r = nmg_mrsv(m);	/* Make region, empty shell, vertex. */
-    s = BU_LIST_FIRST(shell, &r->s_hd);
+    s = nmg_ms();
 
     nv = 0;			/* Initially no vertices for this region. */
     face = 0;		/* No faces either. */
@@ -550,23 +525,23 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 
     if ( debug )
 	bu_log( "Calling nmg_vertex_fuse()\n" );
-    (void)nmg_vertex_fuse(&m->magic, &tol );
+    (void)nmg_vertex_fuse(&s->magic, &tol );
 
     /* Break edges on vertices */
     if ( debug )
 	bu_log( "Calling nmg_break_e_on_v()\n" );
-    (void)nmg_break_e_on_v( &m->magic, &tol );
+    (void)nmg_break_e_on_v( &s->magic, &tol );
 
     /* kill zero length edgeuses */
-    if ( nmg_kill_zero_length_edgeuses( m ) )
+    if ( nmg_kill_zero_length_edgeuses( s ) )
     {
-	nmg_km( m );
-	m = (struct model *)NULL;
+	nmg_ks( s );
+	s = (struct shell *)NULL;
 	return cur_id;
     }
 
-    if (kill_cracks_in_next_shell(r)) {
-	nmg_km(m);
+    if (kill_cracks_in_next_shell(s)) {
+	nmg_ks(s);
 	return cur_id;
     }
 
@@ -593,7 +568,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     /* Compute "geometry" for model, region, and shell */
     if ( debug )
 	bu_log( "Rebound\n" );
-    nmg_rebound( m, &tol );
+    nmg_rebound( s, &tol );
 
     if ( RT_G_DEBUG&DEBUG_MEM_FULL )
 	bu_prmem( "Before gluing faces:\n" );
@@ -601,12 +576,12 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     /* Glue faceuses together. */
     if ( debug )
 	bu_log( "Glueing faces\n" );
-    (void)nmg_edge_fuse( &m->magic, &tol );
+    (void)nmg_edge_fuse( &s->magic, &tol );
 
     /* Compute "geometry" for model, region, and shell */
     if ( debug )
 	bu_log( "Rebound\n" );
-    nmg_rebound( m, &tol );
+    nmg_rebound( s, &tol );
 
     /* fix the normals */
     if ( debug )
@@ -620,8 +595,8 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	bu_log( "nmg_s_join_touchingloops( %p )\n", (void *)s );
     nmg_s_join_touchingloops( s, &tol );
 
-    if (kill_cracks_in_next_shell(r)) {
-	nmg_km(m);
+    if (kill_cracks_in_next_shell(s)) {
+	nmg_ks(s);
 	return cur_id;
     }
 
@@ -629,15 +604,15 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	bu_log( "nmg_s_split_touchingloops( %p )\n", (void *)s );
     nmg_s_split_touchingloops( s, &tol);
 
-    if (kill_cracks_in_next_shell(r)) {
-	nmg_km(m);
+    if (kill_cracks_in_next_shell(s)) {
+	nmg_ks(s);
 	return cur_id;
     }
 
     /* verify face plane calculations */
     if ( debug )
     {
-	nmg_stash_model_to_file( "before_tri.g", m, "before_tri" );
+	nmg_stash_shell_to_file( "before_tri.g", s, "before_tri" );
 	bu_log( "Verify plane equations:\n" );
     }
 
@@ -700,16 +675,16 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     }
 
     if ( debug )
-	bu_log( "%d vertices out of tolerance after fixing out of tolerance faces\n", nmg_ck_geometry( m, &tol ) );
+	bu_log( "%d vertices out of tolerance after fixing out of tolerance faces\n", nmg_ck_geometry( s, &tol ) );
 
     nmg_s_join_touchingloops( s, &tol );
     nmg_s_split_touchingloops( s, &tol);
 
     if ( debug )
 	bu_log( "Writing model to database:\n" );
-    add_nmg_to_db( fpdb, m, reg_id );
+    add_nmg_to_db( fpdb, s, reg_id );
 
-    nmg_km(m);				/* Safe to kill model now. */
+    nmg_ks(s);				/* Safe to kill model now. */
 
     return cur_id;
 }

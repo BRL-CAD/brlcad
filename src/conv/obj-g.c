@@ -1403,7 +1403,7 @@ populate_triangle_indexes(struct ga_t *ga,
 		triFaces[vert_idx * ELEMENTS_PER_POINT + Z] = vert_idx + 2;
 	    }
 
-	    nmg_km(fu->s_p->r_p->m_p);
+	    nmg_ks(fu->s_p);
 	} else {
 	    triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol);
 	}
@@ -2765,8 +2765,6 @@ output_to_nmg(struct ga_t *ga,
 	      int output_mode,      /* OUT_NMG, OUT_VBOT */
 	      int face_test_type)
 {
-    struct model *m = (struct model *)NULL;
-    struct nmgregion *r = (struct nmgregion *)NULL;
     struct shell *s = (struct shell *)NULL;
     struct bu_ptbl faces;  /* table of faces for one element */
     struct faceuse *fu = (struct faceuse *)NULL;
@@ -2795,13 +2793,7 @@ output_to_nmg(struct ga_t *ga,
 
     size_t num_faces_killed = 0; /* number of degenerate faces killed in the current shell */
 
-    m = nmg_mm();
-    if (m == NULL)
-	return -1;
-    r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
-    NMG_CK_MODEL(m);
-    NMG_CK_REGION(r);
+    s = nmg_ms();
     NMG_CK_SHELL(s);
 
     /* begin bomb protection */
@@ -2816,9 +2808,9 @@ output_to_nmg(struct ga_t *ga,
 	if (verts)
 	    bu_free(verts, "verts");
 
-	if (m != (struct model *)NULL) {
+	if (s != (struct shell *)NULL) {
 	    /* sanity check */
-	    nmg_km(m);
+	    nmg_ks(s);
 	}
 
 	bu_log("ERROR: caught nmg bomb for obj file face grouping name (%s), obj file face grouping index (%zu)\n",
@@ -2930,7 +2922,7 @@ output_to_nmg(struct ga_t *ga,
 	if ((verbose > 1) || debug) {
 	    bu_log("Running nmg_model_fuse on (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
-	num_entities_fused = nmg_model_fuse(m, tol);
+	num_entities_fused = nmg_shell_fuse(s, tol);
 	if ((verbose > 1) || debug) {
 	    bu_log("Completed nmg_model_fuse for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	    bu_log("Fused (%d) entities in obj file face grouping name (%s), obj file face grouping index (%zu)\n",
@@ -2950,7 +2942,7 @@ output_to_nmg(struct ga_t *ga,
 	if ((verbose > 1) || debug) {
 	    bu_log("Running nmg_mark_edges_real with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
-	(void)nmg_mark_edges_real(&s->l.magic);
+	(void)nmg_mark_edges_real(&s->magic);
 	if ((verbose > 1) || debug) {
 	    bu_log("Completed nmg_mark_edges_real for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
@@ -2958,7 +2950,7 @@ output_to_nmg(struct ga_t *ga,
 	if ((verbose > 1) || debug) {
 	    bu_log("Running nmg_region_a with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
-	nmg_region_a(r, tol);
+	nmg_shell_a(s, tol);
 	if ((verbose > 1) || debug) {
 	    bu_log("Completed nmg_region_a for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
@@ -2977,7 +2969,7 @@ output_to_nmg(struct ga_t *ga,
 	    if ((verbose > 1) || debug) {
 		bu_log("Running nmg_rebound with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	    }
-	    nmg_rebound(m, tol);
+	    nmg_rebound(s, tol);
 	    if ((verbose > 1) || debug) {
 		bu_log("Completed nmg_rebound for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	    }
@@ -3011,7 +3003,7 @@ output_to_nmg(struct ga_t *ga,
 			bu_log("Running mk_nmg with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 		    }
 		    /* the model (m) is freed when mk_nmg completes */
-		    if (mk_nmg(outfp, bu_vls_addr(gfi->primitive_name), m) < 0) {
+		    if (mk_nmg(outfp, bu_vls_addr(gfi->primitive_name), s) < 0) {
 			bu_log("ERROR: Completed mk_nmg but FAILED for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 		    } else {
 			if ((verbose > 1) || debug) {
@@ -3042,7 +3034,7 @@ output_to_nmg(struct ga_t *ga,
 			    bu_log("Completed mk_bot_from_nmg for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 			}
 			ret = 0; /* set return success */
-			nmg_km(m); /* required for mk_bot_from_nmg but not mk_nmg */
+			nmg_ks(s); /* required for mk_bot_from_nmg but not mk_nmg */
 		    }
 		}
 	    } else {
@@ -3060,7 +3052,7 @@ output_to_nmg(struct ga_t *ga,
 
     if (ret) {
 	/* if failure kill model */
-	nmg_km(m);
+	nmg_ks(s);
     }
 
     return ret;

@@ -32,7 +32,7 @@
 
 /* FIXME: this be a dumb hack to avoid void* conversion */
 struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    void (*func)(struct shell *, const struct db_full_path *, int, int, float [3]);
 };
 
 
@@ -43,17 +43,14 @@ union tree *
 gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *tp = NULL;
-    struct model *m = NULL;
-    struct nmgregion *r = NULL;
     struct shell *s = NULL;
     struct bu_list vhead;
 
-    int empty_region = 0;
-    int empty_model = 0;
+    int empty_shell = 0;
     int NMG_debug_state = 0;
     int count = 0;
 
-    void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    void (*write_region)(struct shell *, const struct db_full_path *, int, int, float [3]);
 
     if (!tsp || !pathp || !client_data) {
 	bu_log("INTERNAL ERROR: gcv_region_end_mc missing parameters\n");
@@ -70,7 +67,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     RT_CK_TREE(curtree);
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
 
     BU_LIST_INIT(&vhead);
 
@@ -96,9 +93,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
      */
     NMG_debug_state = RTG.NMG_debug;
 
-    m = nmg_mmr();
-    r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
+    s = nmg_ms();
 
     if (tsp->ts_rtip == NULL)
 	tsp->ts_rtip = rt_new_rti(tsp->ts_dbip);
@@ -120,27 +115,18 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     */
 
     /* Kill cracks */
-    while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
-	struct shell *next_s;
-
-	next_s = BU_LIST_PNEXT(shell, &s->l);
-	if (nmg_kill_cracks(s)) {
-	    if (nmg_ks(s)) {
-		empty_region = 1;
-		break;
-	    }
+    if (nmg_kill_cracks(s)) {
+	if (nmg_ks(s)) {
+	    empty_shell = 1;
 	}
-	/*
-	  nmg_shell_coplanar_face_merge(s, tsp->ts_tol, 42);
-	*/
-	s = next_s;
     }
-    if (empty_region)
+
+    if (empty_shell)
 	return _gcv_cleanup(NMG_debug_state, tp);
 
     /* kill zero length edgeuses */
-    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
-    if (empty_model)
+    empty_shell = nmg_kill_zero_length_edgeuses(*tsp->ts_s);
+    if (empty_shell)
 	return _gcv_cleanup(NMG_debug_state, tp);
 
     if (BU_SETJUMP) {
@@ -158,23 +144,23 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	nmg_isect2d_final_cleanup();
 
 	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC)
-	    nmg_km(*tsp->ts_m);
+	if ((*tsp->ts_s)->magic == NMG_SHELL_MAGIC)
+	    nmg_ks(*tsp->ts_s);
 	else
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
-	nmg_kr(r);
+	*tsp->ts_s = nmg_ms();
+	nmg_ks(s);
 
 	return _gcv_cleanup(NMG_debug_state, tp);
     } else {
 	/* Write the region out */
-	write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
+	write_region(s, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
 
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 
-    nmg_kr(r);
+    nmg_ks(s);
 
     return _gcv_cleanup(NMG_debug_state, tp);
 }

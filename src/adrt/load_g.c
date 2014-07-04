@@ -57,10 +57,10 @@ static struct tie_s *cur_tie;
 static struct db_i *dbip;
 TIE_3 **tribuf;
 
-static void nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3]);
+static void nmg_to_adrt_gcvwrite(struct shell *s, const struct db_full_path *pathp, int region_id, int material_id, float color[3]);
 
 struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    void (*func)(struct shell *, const struct db_full_path *, int, int, float [3]);
     struct adrt_mesh_s **meshes;
 };
 static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite, NULL};
@@ -68,19 +68,10 @@ static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite, NULL};
 
 /* load the region into the tie image */
 static void
-nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
+nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct shell *s)
 {
-    struct model *m;
-    struct shell *s;
     int region_polys=0;
 
-    NMG_CK_REGION(r);
-
-    m = r->m_p;
-    NMG_CK_MODEL(m);
-
-    /* Check triangles */
-    for (BU_LIST_FOR (s, shell, &r->s_hd))
     {
 	struct faceuse *fu;
 
@@ -187,7 +178,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     bu_strlcpy(mesh->name, db_path_to_string(path), sizeof(mesh->name));
 
     if (intern.idb_minor_type == ID_NMG) {
-	nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
+	nmg_to_adrt_internal(mesh, (struct shell *)intern.idb_ptr);
 	return -1;
     } else if (intern.idb_minor_type == ID_BOT) {
 	size_t i;
@@ -212,19 +203,15 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 
 
 static void
-nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int material_id, float color[3])
+nmg_to_adrt_gcvwrite(struct shell *s, const struct db_full_path *pathp, int UNUSED(region_id), int material_id, float color[3])
 {
-    struct model *m;
     struct adrt_mesh_s *mesh;
 
-    NMG_CK_REGION(r);
+    NMG_CK_SHELL(s);
     RT_CK_FULL_PATH(pathp);
 
-    m = r->m_p;
-    NMG_CK_MODEL(m);
-
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_shell(s, &tol);
 
     /* FIXME: where is this released? */
     BU_ALLOC(mesh, struct adrt_mesh_s);
@@ -240,14 +227,14 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
     VMOVE(mesh->attributes->color.v, color);
     bu_strlcpy(mesh->name, db_path_to_string(pathp), sizeof(mesh->name));
 
-    nmg_to_adrt_internal(mesh, r);
+    nmg_to_adrt_internal(mesh, s);
 }
 
 
 int
 load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
 {
-    struct model *the_model;
+    struct shell *the_shell;
     struct rt_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
@@ -256,7 +243,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
+    tree_state.ts_s = &the_shell;
 
     /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
@@ -278,7 +265,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* make empty NMG model */
-    the_model = nmg_mm();
+    the_shell = nmg_ms();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /*
@@ -321,7 +308,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
 			(void *)&gcvwriter);	/* client data */
 
     /* Release dynamic storage */
-    nmg_km(the_model);
+    nmg_ks(the_shell);
     rt_vlist_cleanup();
     db_close(dbip);
     bu_free(tribuf[0], "vert");

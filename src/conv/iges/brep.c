@@ -31,10 +31,7 @@ brep(int entityno)
     int *void_shell_de;		/* Directory sequence number for an void shell */
     int *void_orient;		/* Orientation of void shell */
     int num_of_voids;		/* Number of inner void shells */
-    struct model *m;			/* NMG model */
-    struct nmgregion *r;			/* NMG region */
-    struct shell **void_shells;		/* List of void shells */
-    struct shell *s_outer;		/* Outer shell */
+    struct shell *s;		/* Outer shell */
     struct iges_vertex_list *v_list;
     struct iges_vertex_list *v_list_tmp;
     struct iges_edge_list *e_list;
@@ -59,7 +56,7 @@ brep(int entityno)
     if (num_of_voids) {
 	void_shell_de = (int *)bu_calloc(num_of_voids, sizeof(int), "BREP: void shell DE's");
 	void_orient = (int *)bu_calloc(num_of_voids, sizeof(int), "BREP: void shell orients");
-	void_shells = (struct shell **)bu_calloc(num_of_voids, sizeof(struct shell *), "BREP: void shell pointers");
+
 	for (i = 0; i < num_of_voids; i++) {
 	    Readint(&void_shell_de[i], "");
 	    Readint(&void_orient[i], "");
@@ -67,56 +64,28 @@ brep(int entityno)
     } else {
 	void_shell_de = NULL;
 	void_orient = NULL;
-	void_shells = NULL;
     }
 
     /* start building */
-    m = nmg_mmr();
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-
-    /* Put outer shell in region */
-    if ((s_outer = Get_outer_shell(r, (shell_de - 1)/2)) == (struct shell *)NULL)
-	goto err;
-
-    /* Put voids in */
-    for (i = 0; i < num_of_voids; i++) {
-	if ((void_shells[i] = Add_inner_shell(r, (void_shell_de[i] - 1)/2))
-	    == (struct shell *)NULL)
-	    goto err;
-    }
-
-    /* orient loops */
-    Orient_loops(r);
+    s = nmg_ms();
 
     /* orient shells */
-    nmg_fix_normals(s_outer, &tol);
-    for (i = 0; i < num_of_voids; i++) {
-	nmg_fix_normals(void_shells[i], &tol);
-	nmg_invert_shell(void_shells[i]);
-    }
+    nmg_fix_normals(s, &tol);
+    nmg_fix_normals(s, &tol);
+    nmg_invert_shell(s);
 
     if (do_bots) {
-	/* Merge all shells into one */
-	for (i = 0; i < num_of_voids; i++)
-	    nmg_js(s_outer, void_shells[i], &tol);
-
 	/* write out BOT */
-	if (mk_bot_from_nmg(fdout, dir[entityno]->name, s_outer))
+	if (mk_bot_from_nmg(fdout, dir[entityno]->name, s))
 	    goto err;
     } else {
 	/* Compute "geometry" for region and shell */
-	nmg_region_a(r, &tol);
+	nmg_shell_a(s, &tol);
 
 	/* Write NMG solid */
 	mk_nmg_executed_flag = 1;
-	if (mk_nmg(fdout, dir[entityno]->name, m))
+	if (mk_nmg(fdout, dir[entityno]->name, s))
 	    goto err;
-    }
-
-    if (num_of_voids) {
-	bu_free((char *)void_shell_de, "BREP: void shell DE's");
-	bu_free((char *)void_orient, "BREP: void shell orients");
-	bu_free((char *)void_shells, "brep: void shell list");
     }
 
     v_list = vertex_root;
@@ -141,7 +110,7 @@ brep(int entityno)
      * make nmg will have already performed an nmg kill model
      */
     if (!mk_nmg_executed_flag) {
-	nmg_km(m);
+	nmg_ks(s);
     }
 
     return 1;
@@ -150,14 +119,13 @@ brep(int entityno)
 	if (num_of_voids) {
 	    bu_free((char *)void_shell_de, "BREP: void shell DE's");
 	    bu_free((char *)void_orient, "BREP: void shell orients");
-	    bu_free((char *)void_shells, "brep: void shell list");
 	}
 
     /* perform nmg kill model if make nmg was not executed since
      * make nmg will have already performed an nmg kill model
      */
     if (!mk_nmg_executed_flag) {
-	nmg_km(m);
+	nmg_ks(s);
     }
 
     return 0;

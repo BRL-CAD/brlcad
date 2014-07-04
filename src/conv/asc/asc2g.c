@@ -509,10 +509,10 @@ nmgbld(void)
     bu_free_external(&ext);
 
     /* Now we should have a good NMG in memory */
-    nmg_vmodel((struct model *)intern.idb_ptr);
+    nmg_vsshell((struct shell *)intern.idb_ptr);
 
     /* Finally, squirt it back out through LIBWDB */
-    mk_nmg(ofp, name, (struct model *)intern.idb_ptr);
+    mk_nmg(ofp, name, (struct shell *)intern.idb_ptr);
     /* mk_nmg() frees the intern.idp_ptr pointer */
     RT_DB_INTERNAL_INIT(&intern);
 

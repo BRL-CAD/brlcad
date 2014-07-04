@@ -51,7 +51,7 @@ static FILE *fpe;			/* Error file pointer */
 static struct db_i *dbip;
 static struct rt_tess_tol ttol;
 static struct bn_tol tol;
-static struct model *the_model;
+static struct shell *the_shell;
 
 static struct db_tree_state tree_state;	/* includes tol & model */
 
@@ -68,57 +68,48 @@ static point_t model_min;
 
 
 static void
-nmg_to_nff(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id))
+nmg_to_nff(struct shell *s, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id))
 {
-    struct model *m;
-    struct shell *s;
     struct vertex *v;
+    struct faceuse *fu;
 
-    NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
-
-    m = r->m_p;
-    NMG_CK_MODEL(m);
+    NMG_CK_SHELL(s);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_shell(s, &tol);
 
     /* output triangles */
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	struct faceuse *fu;
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	struct loopuse *lu;
 
-	NMG_CK_SHELL(s);
+	NMG_CK_FACEUSE(fu);
 
-	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	    struct loopuse *lu;
+	if (fu->orientation != OT_SAME)
+	    continue;
 
-	    NMG_CK_FACEUSE(fu);
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	    struct edgeuse *eu;
 
-	    if (fu->orientation != OT_SAME)
+	    NMG_CK_LOOPUSE(lu);
+
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		continue;
 
-	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		struct edgeuse *eu;
+	    fprintf(fp, "p 3\n");
+	    /* list vertices for each triangle */
+	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
 
-		NMG_CK_LOOPUSE(lu);
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX(v);
 
-		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		    continue;
+		VMINMAX(model_min, model_max, v->vg_p->coord);
+		fprintf(fp, "%g %g %g\n", V3ARGS(v->vg_p->coord));
 
-		fprintf(fp, "p 3\n");
-		/* list vertices for each triangle */
-		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-		    NMG_CK_EDGEUSE(eu);
-
-		    v = eu->vu_p->v_p;
-		    NMG_CK_VERTEX(v);
-
-		    VMINMAX(model_min, model_max, v->vg_p->coord);
-		    fprintf(fp, "%g %g %g\n", V3ARGS(v->vg_p->coord));
-
-		}
-		tot_polygons++;
 	    }
+
+	    tot_polygons++;
 	}
     }
 
@@ -126,13 +117,13 @@ nmg_to_nff(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 
 static void
-process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp)
+process_triangulation(struct shell *s, const struct db_full_path *pathp, struct db_tree_state *tsp)
 {
     if (!BU_SETJUMP) {
 	/* try */
 
 	/* Write the region to the NFF file */
-	nmg_to_nff(r, pathp, tsp->ts_regionid, tsp->ts_gmater);
+	nmg_to_nff(s, pathp, tsp->ts_regionid, tsp->ts_gmater);
 
     } else {
 	/* catch */
@@ -152,14 +143,14 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	nmg_isect2d_final_cleanup();
 
 	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
-	    nmg_km(*tsp->ts_m);
+	if ((*tsp->ts_s)->magic == NMG_MODEL_MAGIC) {
+	    nmg_ks(*tsp->ts_s);
 	} else {
-	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	    bu_log("WARNING: tsp->ts_s pointer corrupted, ignoring it.\n");
 	}
 
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
+	*tsp->ts_s = nmg_ms();
     }  BU_UNSETJUMP;
 }
 
@@ -173,7 +164,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	(void)nmg_shell_fuse(*tsp->ts_s, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
     } else {
@@ -195,15 +186,15 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
 
 	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
-	    nmg_km(*tsp->ts_m);
+	if ((*tsp->ts_s)->magic == NMG_MODEL_MAGIC) {
+	    nmg_ks(*tsp->ts_s);
 	} else {
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 	}
 
 	bu_free(name, "db_path_to_string");
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
+	*tsp->ts_s = nmg_ms();
     } BU_UNSETJUMP;/* Relinquish the protection */
 
     return ret_tree;
@@ -220,14 +211,14 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 {
     union tree *ret_tree;
     struct bu_list vhead;
-    struct nmgregion *r;
+    struct shell *s;
     char *region_name;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
 
     BU_LIST_INIT(&vhead);
 
@@ -251,7 +242,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     ret_tree = process_boolean(curtree, tsp, pathp);
 
     if (ret_tree)
-	r = ret_tree->tr_d.td_r;
+	s = ret_tree->tr_d.td_s;
     else {
 	if (verbose) {
 	    printf("\tNothing left of this region after Boolean evaluation\n");
@@ -260,54 +251,23 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	    fflush(fpe);
 	}
 	regions_written++; /* don't count as a failure */
-	r = (struct nmgregion *)NULL;
+	s = (struct shell *)NULL;
     }
 
     BU_UNSETJUMP;		/* Relinquish the protection */
     regions_converted++;
 
-    if (r != (struct nmgregion *)NULL) {
-	struct shell *s;
-	int empty_region=0;
-	int empty_model=0;
+    region_name = db_path_to_string(pathp);
+    fprintf(fp, "# %s\n", region_name);
+    bu_free(region_name, "region name");
 
-	/* Kill cracks */
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
-	    struct shell *next_s;
+    /* write the material properties to the NFF file */
+    fprintf(fp, "f %g %g %g 0.5 0.5 4.81884 0 0\n",
+	    V3ARGS(tsp->ts_mater.ma_color));
 
-	    next_s = BU_LIST_PNEXT(shell, &s->l);
-	    if (nmg_kill_cracks(s)) {
-		if (nmg_ks(s)) {
-		    empty_region = 1;
-		    break;
-		}
-	    }
-	    s = next_s;
-	}
+    process_triangulation(s, pathp, tsp);
 
-	/* kill zero length edgeuses */
-	if (!empty_region) {
-	    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
-	}
-
-	if (!empty_region && !empty_model) {
-	    region_name = db_path_to_string(pathp);
-	    fprintf(fp, "# %s\n", region_name);
-	    bu_free(region_name, "region name");
-
-	    /* write the material properties to the NFF file */
-	    fprintf(fp, "f %g %g %g 0.5 0.5 4.81884 0 0\n",
-		    V3ARGS(tsp->ts_mater.ma_color));
-
-	    process_triangulation(r, pathp, tsp);
-
-	    regions_written++;
-	}
-
-	if (!empty_model)
-	    nmg_kr(r);
-    }
+    regions_written++;
 
     /*
      * Dispose of original tree, so that all associated dynamic
@@ -366,7 +326,7 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
+    tree_state.ts_s = &the_shell;
 
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -383,7 +343,7 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
 
     rt_init_resource(&rt_uniresource, 0, NULL);
 
-    the_model = nmg_mm();
+    the_shell = nmg_ms();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
@@ -502,7 +462,7 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
     bu_log("%ld triangles written\n", tot_polygons);
 
     /* Release dynamic storage */
-    nmg_km(the_model);
+    nmg_ks(the_shell);
     rt_vlist_cleanup();
     db_close(dbip);
 

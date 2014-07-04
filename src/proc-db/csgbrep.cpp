@@ -235,8 +235,7 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (void *)&arbnmg8;
 
     // Now, need nmg form of the arb
-    struct model *m = nmg_mm();
-    struct nmgregion *r;
+    struct shell *s = nmg_ms();
     struct rt_tess_tol ttol;
     ttol.abs = 0.0;
     ttol.rel = 0.01;
@@ -244,13 +243,13 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (void *)&arbnmg8;
     tmp_internal.idb_minor_type = ID_ARB8;
     tmp_internal.idb_meth = &OBJ[ID_ARB8];
-    tmp_internal.idb_meth->ft_tessellate(&r, m, &tmp_internal, &ttol, &tol);
+    tmp_internal.idb_meth->ft_tessellate(&s, &tmp_internal, &ttol, &tol);
 
-    tmp_internal.idb_ptr = m;
+    tmp_internal.idb_ptr = s;
     tmp_internal.idb_minor_type = ID_NMG;
     tmp_internal.idb_meth = &OBJ[ID_NMG];
     write_out(outfp, &tmp_internal, "nmg", &tol);
-    FREE_MODEL(m);
+    nmg_ks(s);
 
     bu_log("SPH\n");
     struct rt_ell_internal sph;

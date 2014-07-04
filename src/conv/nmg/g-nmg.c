@@ -53,13 +53,12 @@ static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	do_bots=0;		/* flag to output BOT's instead of NMG's */
 static int	ncpu = 1;		/* Number of processors */
-static int	nmg_count=0;		/* Count of nmgregions written to output */
 static char	*out_file = "nmg.g";	/* Output filename */
 static struct rt_wdb		*fp_out; /* Output file pointer */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
-static struct model		*the_model;
+static struct shell		*the_shell;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
 
@@ -102,13 +101,13 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	db_free_tree(curtree, &rt_uniresource);	/* Does an nmg_kr() */
 
 	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
-	    nmg_km(*tsp->ts_m);
+	if ((*tsp->ts_s)->magic == NMG_SHELL_MAGIC) {
+	    nmg_ks(*tsp->ts_s);
 	} else
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
+	*tsp->ts_s = nmg_ms();
     } BU_UNSETJUMP;		/* Relinquish the protection */
 
     return ret_tree;
@@ -122,8 +121,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
  */
 union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
-    struct nmgregion	*r;
     struct bu_list		vhead;
+    struct shell	*s;
     union tree		*ret_tree;
     char			*sofar;
     struct bu_vls		shader_params = BU_VLS_INIT_ZERO;
@@ -137,7 +136,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
 
     BU_LIST_INIT(&vhead);
 
@@ -160,15 +159,15 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     regions_converted++;
 
     if (ret_tree) {
-	r = ret_tree->tr_d.td_r;
-	if (do_bots && r) {
-	    bot = nmg_bot(BU_LIST_FIRST(shell, &r->s_hd), tsp->ts_tol);
+	s = ret_tree->tr_d.td_s;
+	if (do_bots && s) {
+	    bot = nmg_bot(s, tsp->ts_tol);
 	}
     } else {
 	if (verbose) {
 	    printf("\tNothing left of this region after Boolean evaluation\n");
 	}
-	r = (struct nmgregion *)NULL;
+	s = (struct shell *)NULL;
     }
 
     if (tsp->ts_mater.ma_shader) {
@@ -188,60 +187,30 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	    matparm = strtok((char *)NULL, tok_sep);
 	}
     }
-    if (r != (struct nmgregion *)NULL) {
-	struct shell *s;
-	int empty_region=0;
-	int empty_model=0;
 
-	/* Kill cracks */
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
-	    struct shell *next_s;
+    if (do_bots)
+	wdb_export(fp_out, nmg_name, (void *)bot, ID_BOT, 1.0);
+    else
+	mk_nmg(fp_out, nmg_name, s);
 
-	    next_s = BU_LIST_PNEXT(shell, &s->l);
-	    if (nmg_kill_cracks(s)) {
-		if (nmg_ks(s)) {
-		    empty_region = 1;
-		    break;
-		}
-	    }
-	    s = next_s;
-	}
+    /* Now make a normal brlcad region */
+    if (tsp->ts_mater.ma_color_valid) {
+	rgb[0] = (int)(tsp->ts_mater.ma_color[0] * 255.0);
+	rgb[1] = (int)(tsp->ts_mater.ma_color[1] * 255.0);
+	rgb[2] = (int)(tsp->ts_mater.ma_color[2] * 255.0);
+	color = rgb;
+    }
+    else
+	color = (unsigned char *)NULL;
 
-	/* kill zero length edgeuses */
-	if (!empty_region)
-	    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
-
-	if (!empty_region && !empty_model) {
-	    /* Write the nmgregion to the output file */
-	    nmg_count++;
-	    sprintf(nmg_name, "nmg.%d", nmg_count);
-
-	    if (do_bots)
-		wdb_export(fp_out, nmg_name, (void *)bot, ID_BOT, 1.0);
-	    else
-		mk_nmg(fp_out, nmg_name, r->m_p);
-	}
-
-	/* Now make a normal brlcad region */
-	if (tsp->ts_mater.ma_color_valid) {
-	    rgb[0] = (int)(tsp->ts_mater.ma_color[0] * 255.0);
-	    rgb[1] = (int)(tsp->ts_mater.ma_color[1] * 255.0);
-	    rgb[2] = (int)(tsp->ts_mater.ma_color[2] * 255.0);
-	    color = rgb;
-	}
-	else
-	    color = (unsigned char *)NULL;
-
-	BU_LIST_INIT(&headp.l);
-	(void)mk_addmember(nmg_name, &headp.l, NULL, WMOP_UNION);
-	if (mk_lrcomb(fp_out,
-			pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
-			shader, bu_vls_addr(&shader_params), color,
-			tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
-			tsp->ts_los, tsp->ts_mater.ma_cinherit)) {
-	    bu_log("G-nmg: error in making region (%s)\n", pathp->fp_names[pathp->fp_len-1]->d_namep);
-	}
+    BU_LIST_INIT(&headp.l);
+    (void)mk_addmember(nmg_name, &headp.l, NULL, WMOP_UNION);
+    if (mk_lrcomb(fp_out,
+		  pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
+		  shader, bu_vls_addr(&shader_params), color,
+		  tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
+		  tsp->ts_los, tsp->ts_mater.ma_cinherit)) {
+	bu_log("G-nmg: error in making region (%s)\n", pathp->fp_names[pathp->fp_len-1]->d_namep);
     } else {
 	BU_LIST_INIT(&headp.l);
 	if (mk_lrcomb(fp_out,
@@ -300,11 +269,11 @@ csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
 
 	/* convert a region to NMG's */
 
-	the_model = nmg_mm();
+	the_shell = nmg_ms();
 	tree_state = rt_initial_tree_state;	/* struct copy */
 	tree_state.ts_tol = &tol;
 	tree_state.ts_ttol = &ttol;
-	tree_state.ts_m = &the_model;
+	tree_state.ts_s = &the_shell;
 
 	name = (&(dp->d_namep));
 
@@ -317,7 +286,7 @@ csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
 			    (void *)NULL);
 
 	/* Release dynamic storage */
-	nmg_km(the_model);
+	nmg_ks(the_shell);
 
 	return;
     }

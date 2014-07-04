@@ -67,7 +67,7 @@ static int	ident_length = 0;	/* Length of idents array */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
-static struct model		*the_model;
+static struct shell		*the_shell;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
 
@@ -226,38 +226,35 @@ Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regi
 
 /*	Routine to write an nmgregion in the Euclid "decoded" format */
 static void
-Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
+Write_euclid_shell(struct shell *s, struct db_tree_state *tsp)
 {
-    struct shell *s;
     struct facets *faces=NULL;
     int i, j;
 
-    NMG_CK_REGION(r);
-
     if (verbose)
-	bu_log("Write_euclid_region: r=%p\n", (void *)r);
+	bu_log("Write_euclid_shell: s=%p\n", (void *)s);
 
     /* if bounds haven't been calculated, do it now */
-    if (r->ra_p == NULL)
-	nmg_region_a(r, &tol);
+    if (s->sa_p == NULL)
+	nmg_shell_a(s, &tol);
 
     /* Check if region extents are beyond the limitations of the format */
     for (i=X; i<ELEMENTS_PER_POINT; i++)
     {
-	if (r->ra_p->min_pt[i] < (-999999.0))
+	if (s->sa_p->min_pt[i] < (-999999.0))
 	{
-	    bu_log("g-euclid: Coordinates too large (%g) for Euclid format\n", r->ra_p->min_pt[i]);
+	    bu_log("g-euclid: Coordinates too large (%g) for Euclid format\n", s->sa_p->min_pt[i]);
 	    return;
 	}
-	if (r->ra_p->max_pt[i] > 9999999.0)
+	if (s->sa_p->max_pt[i] > 9999999.0)
 	{
-	    bu_log("g-euclid: Coordinates too large (%g) for Euclid format\n", r->ra_p->max_pt[i]);
+	    bu_log("g-euclid: Coordinates too large (%g) for Euclid format\n", s->sa_p->max_pt[i]);
 	    return;
 	}
     }
 
     /* write out each face in the region */
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+    {
 	struct faceuse *fu;
 
 	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
@@ -474,9 +471,9 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    the_model = (struct model *)NULL;
+    the_shell = (struct shell *)NULL;
     tree_state = rt_initial_tree_state;	/* struct copy */
-    tree_state.ts_m = &the_model;
+    tree_state.ts_s = &the_shell;
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
 
@@ -578,8 +575,8 @@ main(int argc, char **argv)
 	/* Walk indicated tree(s).  Each region will be output separately */
 
 	tree_state = rt_initial_tree_state;	/* struct copy */
-	the_model = nmg_mm();
-	tree_state.ts_m = &the_model;
+	the_shell = nmg_ms();
+	tree_state.ts_s = &the_shell;
 	tree_state.ts_tol = &tol;
 	tree_state.ts_ttol = &ttol;
 
@@ -591,7 +588,7 @@ main(int argc, char **argv)
 			   nmg_booltree_leaf_tess,
 			   (void *)NULL);	/* in librt/nmg_bool.c */
 
-	nmg_km(the_model);
+	nmg_ks(the_shell);
     }
 
     percent = 0;
@@ -622,7 +619,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	(void)nmg_shell_fuse(*tsp->ts_s, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
     } else  {
@@ -644,15 +641,15 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
 
 	/* Get rid of (m)any other intermediate structures */
-	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
-	    nmg_km(*tsp->ts_m);
+	if ( (*tsp->ts_s)->magic == NMG_SHELL_MAGIC ) {
+	    nmg_ks(*tsp->ts_s);
 	} else {
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 	}
 
 	bu_free( name, "db_path_to_string" );
 	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
+	*tsp->ts_s = nmg_ms();
     } BU_UNSETJUMP;/* Relinquish the protection */
 
     return ret_tree;
@@ -667,7 +664,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 union tree *
 do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
-    struct nmgregion	*r;
+    struct shell	*s;
     struct bu_list	vhead;
     union tree		*ret_tree;
 
@@ -676,7 +673,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
+    NMG_CK_SHELL(*tsp->ts_s);
 
     BU_LIST_INIT(&vhead);
 
@@ -700,43 +697,15 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     ret_tree = process_boolean(curtree, tsp, pathp);
 
     if (ret_tree)
-	r = ret_tree->tr_d.td_r;
+	s = ret_tree->tr_d.td_s;
     else
-	r = (struct nmgregion *)NULL;
+	s = (struct shell *)NULL;
 
     regions_converted++;
-    if (r != (struct nmgregion *)NULL) {
-	struct shell *s;
-	int empty_region = 0;
-	int empty_model = 0;
+    if (s != (struct shell *)NULL) {
 
-	/* Kill cracks */
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
-	    struct shell *next_s;
-
-	    next_s = BU_LIST_PNEXT(shell, &s->l);
-	    if (nmg_kill_cracks(s)) {
-		if (nmg_ks(s)) {
-		    empty_region = 1;
-		    break;
-		}
-	    }
-	    s = next_s;
-	}
-
-	/* kill zero length edgeuses */
-	if (!empty_region) {
-	    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
-	}
-
-	if (!empty_region && !empty_model) {
-	    /* Write the region to the EUCLID file */
-	    Write_euclid_region(r, tsp);
-	}
-
-	if (!empty_model)
-	    nmg_kr(r);
+	    Write_euclid_shell(s, tsp);
+	    nmg_ks(s);
     }
 
     /*

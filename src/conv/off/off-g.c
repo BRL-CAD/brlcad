@@ -48,15 +48,13 @@ static struct bn_tol tol;
  *  vertices and faces.
  */
 
-int read_faces(struct model *m, FILE *fgeom)
+int read_faces(struct shell *s, FILE *fgeom)
 {
     int 		   nverts, nfaces, nedges;
     int 	   i, j, fail=0;
     fastf_t 	  *pts;
     struct vertex 	 **verts;
     struct faceuse 	 **outfaceuses;
-    struct nmgregion  *r;
-    struct shell 	  *s;
     size_t ret;
 
     /* Get numbers of vertices and faces, and grab the appropriate amount of memory */
@@ -82,10 +80,6 @@ int read_faces(struct model *m, FILE *fgeom)
 	if (ret > 0)
 	    bu_log("unknown parsing error\n");
     }
-
-    r = nmg_mrsv(m);		/* Make region, empty shell, vertex. */
-    s = BU_LIST_FIRST(shell, &r->s_hd);
-
 
     for (i = 0; i < nfaces; i++) {
 	/* Read in each of the faces */
@@ -141,7 +135,7 @@ int read_faces(struct model *m, FILE *fgeom)
     if (fail) return -1;
 
     nmg_gluefaces(outfaceuses, nfaces, &tol);
-    nmg_region_a(r, &tol);
+    nmg_shell_a(s, &tol);
 
     bu_free((char *)pts, "points list");
     return 0;
@@ -155,7 +149,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
     char buf[200], buf2[200];
 
     FILE *fgeom;
-    struct model *m;
+    struct shell *s;
 
     title[0] = geom_fname[0] = '\0';
 
@@ -185,18 +179,18 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 		geom_fname);
     }
 
-    m = nmg_mm();
-    read_faces(m, fgeom);
+    s = nmg_ms();
+    read_faces(s, fgeom);
     fclose(fgeom);
 
     snprintf(sname, 67, "s.%s", title);
     snprintf(rname, 67, "r.%s", title);
 
     mk_id(fpout, title);
-    mk_nmg(fpout, sname, m);
+    mk_nmg(fpout, sname, s);
     mk_comb1(fpout, rname, sname, 1);
 
-    nmg_km(m);
+    nmg_ks(s);
     return 0;
 }
 
