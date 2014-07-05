@@ -1916,13 +1916,13 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    }
 	} else if (!bu_strncmp(attr, "fn", 2)) {
 	    if (attr[2] == '\0') {
-		for (i = 0; i < bot->num_faces; i++) {
+		for (i = 0; i < bot->num_face_normals; i++) {
 		    bu_vls_printf(logstr, " { %d %d %d }", V3ARGS(&bot->face_normals[i*3]));
 		}
 		status = BRLCAD_OK;
 	    } else {
 		li = atol(&attr[2]);
-		if (li < 0 || (size_t)li >= bot->num_faces) {
+		if (li < 0 || (size_t)li >= bot->num_face_normals) {
 		    bu_vls_printf(logstr, "Specified face index [%ld] is out of range", li);
 		    status = BRLCAD_ERROR;
 		} else {
