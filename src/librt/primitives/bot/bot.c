@@ -1887,7 +1887,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		bu_vls_printf(logstr, " { %.25G %.25G %.25G }", V3ARGS(&bot->normals[i*3]));
 	    }
 	    bu_vls_printf(logstr, "} fn {");
-	    for (i = 0; i < bot->num_faces; i++) {
+	    for (i = 0; i < bot->num_face_normals; i++) {
 		bu_vls_printf(logstr, " { %d %d %d }", V3ARGS(&bot->face_normals[i*3]));
 	    }
 	    bu_vls_printf(logstr, "}");
