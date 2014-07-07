@@ -58,12 +58,12 @@ fi
 
 # get a source and header file list so we only walk the sources once
 
-SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/shapelib/.*'`"
+SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/shapelib/.*'`"
 
-INCFILES="`find include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
+INCFILES="`find include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
 
-BLDFILES="`find src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
-`find misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
+BLDFILES="`find src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
+`find misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
 CMakeLists.txt"
 
 
