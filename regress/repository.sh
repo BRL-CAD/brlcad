@@ -329,12 +329,12 @@ NEED_FIXING=200
 if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     if test $FOUND -ne $NEED_FIXING ; then
 	echo "********************************************************"
-	echo "FIXME: UPDATE THE PLATFORM SYMBOL COUNT IN $0"
+	echo "FIXME: UPDATE THE PLATFORM SYMBOL COUNT IN $0 - expected $NEED_FIXING, found $FOUND"
 	echo "********************************************************"
     fi
     echo "-> platform symbol usage check succeeded"
 else
-    echo "-> platform symbol usage check FAILED"
+    echo "-> platform symbol usage check FAILED - expected $NEED_FIXING, found $FOUND"
     FAILED="`expr $FAILED + 1`"
 fi
 
