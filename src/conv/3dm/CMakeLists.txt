@@ -2,6 +2,13 @@ if(MSVC)
   add_definitions(-DON_DLL_IMPORTS)
 endif(MSVC)
 
+set(3DM_INCLUDE_DIRS
+  ${OPENNURBS_INCLUDE_DIRS}
+  ${ICV_INCLUDE_DIRS}
+  ${WDB_INCLUDE_DIRS}
+  )
+BRLCAD_INCLUDE_DIRS(3DM_INCLUDE_DIRS)
+
 set(3dm-g_SRCS
   conv3dm-g.cpp
   3dm-g.cpp
