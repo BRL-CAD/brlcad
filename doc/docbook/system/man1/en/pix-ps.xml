@@ -34,7 +34,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pix-ps</emphasis>
+<para><command>pix-ps</command>
 will take a color
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file of given dimensions and produce a Postscript file
@@ -50,8 +50,8 @@ If no input size is given, defaults of 512 are assumed.</para>
 
 <para>By default the output PostScript image size is 6.75 inches.
 The
-<option>-c</option> (on by default)
-option will center it on a 8.5 x 11 inch page; otherwise, the
+<option>-c</option>
+option (on by default) will center it on a 8.5 x 11 inch page; otherwise, the
 <option>-l</option>
 option uses the lower left corner.
 If a different output size is desired,
