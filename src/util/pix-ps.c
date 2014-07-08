@@ -42,8 +42,8 @@ static int landscape = 0;	/* landscape mode */
 
 static size_t width = 512;		/* input size in pixels */
 static size_t height = 512;
-static double outwidth;		/* output image size in inches */
-static double outheight;
+static double outwidth = DEFAULT_SIZE;		/* output image size in inches */
+static double outheight = DEFAULT_SIZE;
 static size_t xpoints;		/* output image size in points */
 static size_t ypoints;
 static size_t pagewidth = 612;	/* page size in points - 8.5 inches */
@@ -221,8 +221,6 @@ main(int argc, char **argv)
 	printusage();
     if (!get_args(argc, argv))
 	printusage();
-
-    outwidth = outheight = DEFAULT_SIZE;
 
     if (encapsulated) {
 	xpoints = width;
