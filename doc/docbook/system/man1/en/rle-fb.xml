@@ -30,7 +30,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">rle-fb</emphasis>
+<para><command>rle-fb</command>
 decodes a University of Utah
 standard (Edition-3, or "Utah Raster Toolkit")
 Run-Length Encoded (RLE) format file
@@ -74,25 +74,25 @@ command line options, as well as by using
 <emphasis remap="I">repos(1)</emphasis>.</para>
 <variablelist remap="TP">
   <varlistentry>
-  <term><option>-W </option><replaceable>scr_width</replaceable></term>
+  <term><option>-W </option><replaceable>scr_width</replaceable></term>
   <listitem>
 <para>specifies the desired width of the screen, in pixels.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-N </option><replaceable>scr_height</replaceable></term>
+  <term><option>-N </option><replaceable>scr_height</replaceable></term>
   <listitem>
 <para>specifies the desired height of the screen, in scanlines.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-S </option><replaceable>squarescrsize</replaceable></term>
+  <term><option>-S </option><replaceable>squarescrsize</replaceable></term>
   <listitem>
 <para>sets the screen width and height to the indicated value.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-F </option><replaceable>framebuffer</replaceable></term>
+  <term><option>-F </option><replaceable>framebuffer</replaceable></term>
   <listitem>
 <para>This option specifies which framebuffer the image is to be displayed on.
 If not given, the environment variable
@@ -108,7 +108,7 @@ be used.</para>
   <varlistentry>
   <term><option>-c</option></term>
   <listitem>
-<para>The “crunch colormap” option.
+<para>The crunch colormap option.
 If the RLE file contains a colormap, rather than loading that colormap
 into the framebuffer and allowing the framebuffer to apply the colormap
 to produce the final image, this option causes the colormap to be applied
@@ -125,7 +125,7 @@ not affect the displayed image.</para>
   <varlistentry>
   <term><option>-d</option></term>
   <listitem>
-<para>Debug option, provides a verbose description of the input file structure and
+<para>Debug option; provides a verbose description of the input file structure and
 image decoding process, written on standard error.</para>
   </listitem>
   </varlistentry>
@@ -144,29 +144,29 @@ and the composite scanline must be written back to the framebuffer.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-C </option><replaceable>r/g/b</replaceable></term>
+  <term><option>-C </option><replaceable>r/g/b</replaceable></term>
   <listitem>
 <para>If the image is not being decoded in overlay mode, the background is
 normally set to the value recorded in the RLE file.
 This option permits
 the user to specify an alternate background color
-as a red/green/blue triple, separated by slashes (“/”).
+as a red/green/blue triple, separated by slashes (/).
 The color intensity in each channel ranges from 0 (dark) to 255 (bright).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-X </option><replaceable>scr_xoff</replaceable></term>
+  <term><option>-X </option><replaceable>scr_xoff</replaceable></term>
   <listitem>
 <para>Specify a screen X offset, which will offset the file onto the screen
 by the given amount.  (i.e.,
-<option>-X </option><literal>10</literal>
+<option>-X</option><literal>10</literal>
 would place (0,0) in the RLE image rectangle at screen coordinate (10,0).
 The offset may be negative or positive.
 The RLE image rectangle will be clipped to the screen, as required.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-Y </option><replaceable>scr_yoff</replaceable></term>
+  <term><option>-Y </option><replaceable>scr_yoff</replaceable></term>
   <listitem>
 <para>Specify a screen Y offset, which will offset the file onto the screen
 by the given amount.</para>
@@ -216,24 +216,24 @@ are used.</para>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
   <blockquote remap="RS">
-<para> rle-fb  truck.rle
+<para>rle-fb truck.rle
 <!-- .br -->
- rle-fb  -O  text.rle
+rle-fb -O text.rle
 <!-- .br -->
- rle-fb  -C 0/255/0  &lt;car.rle
+rle-fb -C 0/255/0 &lt;car.rle
   </para></blockquote> <!-- remap='RE' -->
 </refsection>
 
 <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
 <variablelist remap="TP">
   <varlistentry>
-  <term>“rle-fb: excess arguments ignored”.</term>
+  <term>rle-fb: excess arguments ignored.</term>
   <listitem>
 <para>More than one RLE file name was specified.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>“rle-fb: Error reading setup information”.</term>
+  <term>rle-fb: Error reading setup information.</term>
   <listitem>
 <para>The subroutine
 <function>rle_get_setup()</function>
@@ -246,7 +246,7 @@ program can be used to display the file.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>“rle-fb: Warning: RLE image rectangle entirely off screen”</term>
+  <term>rle-fb: Warning: RLE image rectangle entirely off screen</term>
   <listitem>
 <para>The combined effects of the RLE image rectangle definition stored in the
 RLE file and any
@@ -260,7 +260,7 @@ This may not have been the intent of the user, so the message is printed.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>“rle-fb: correcting for old style colormap”.</term>
+  <term>rle-fb: correcting for old style colormap.</term>
   <listitem>
 <para>The only change between the Edition-2 and Edition-3 RLE file formats
 that is not upwards compatible is the format of the colormap.
@@ -270,7 +270,7 @@ In order to allow this program to decode images stored in the Edition-2
 format, any colormap which has the upper eight bits all zero in all
 colormap entries is assumed to be an Edition-2 colormap, and is adjusted
 for suitable display.
-While this heuristic may be “tricked” with an Edition-3 colormap
+While this heuristic may be tricked with an Edition-3 colormap
 with degenerate values, the picture would have been very dark,
 and the benefits of full upwards compatibility from Edition-2 format files
 were deemed worth this risk.</para>
