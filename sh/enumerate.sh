@@ -204,11 +204,15 @@ echo "--          PUBLIC API TOTALS          --"
 echo "-----------------------------------------"
 
 libs=`find $BASE/include -not \( $those_pattern \) -exec grep '^[A-Z]*_EXPORT' {} \; | awk '{print $1}' | sort | uniq -c | sort -n | awk '{print $2}' | sed 's/_EXPORT//g'`
+exports_lc_total=0
 for lib in $libs ; do
     exports=`find $BASE/include -not \( $those_pattern \) -exec grep "^${lib}_EXPORT" {} /dev/null \;`
     exports_lc="`echo \"$exports\" | wc -l`"
     printf "%7d\t%s\n" "$exports_lc" "$lib API"
+    exports_lc_total="`expr $exports_lc_total + $exports_lc`"
 done
+echo "-----------------------------------------"
+printf "%7d\t%s\n" "$exports_lc_total" "Exported API Total"
 
 printf "\n"
 
