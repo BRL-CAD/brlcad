@@ -157,12 +157,9 @@ is_toplevel(const ON_Layer &layer)
 static std::string
 basename(const std::string &path)
 {
-    char *buf = new char[path.size() + 1];
-    bu_basename(buf, path.c_str());
-    std::string result = buf;
-    delete[] buf;
-
-    return result;
+    std::vector<char> buf(path.size() + 1);
+    bu_basename(&buf[0], path.c_str());
+    return &buf[0];
 }
 
 
@@ -215,8 +212,19 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
 
     std::ofstream file(path.c_str(), std::ofstream::binary);
     file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+
+    // for windows
+#ifdef write
+#define write_was_defined
+#undef write
+
     file.write(static_cast<const char *>(bitmap.m_buffer),
 	       static_cast<std::streamsize>(bitmap.m_sizeof_buffer));
+#ifdef write_was_defined
+#undef write
+#define write _write
+#endif
+
     file.close();
 
     return path;
