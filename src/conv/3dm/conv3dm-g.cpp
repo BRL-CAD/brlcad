@@ -99,10 +99,10 @@ w2string(const ON_wString &source)
 
 
 
-// used for checking existence with ON_SimpleArray::At()
+// used for checking ON_SimpleArray::At(),
 // when accessing ONX_Model objects referenced by index
 template <typename T>
-inline T &ref(T *ptr)
+static inline T &ref(T *ptr)
 {
     if (!ptr)
 	throw std::out_of_range("invalid index");
@@ -216,7 +216,7 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
     std::ofstream file(path.c_str(), std::ofstream::binary);
     file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
     file.write(static_cast<const char *>(bitmap.m_buffer),
-	       bitmap.m_sizeof_buffer);
+	       static_cast<std::streamsize>(bitmap.m_sizeof_buffer));
     file.close();
 
     return path;
@@ -225,7 +225,7 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
 
 
 
-void
+static void
 load_pix(const std::string &path, int width, int height)
 {
     char buf[BUFSIZ]; // libicv currently requires BUFSIZ
@@ -338,12 +338,12 @@ private:
 struct RhinoConverter::ModelObject {
     std::string m_name;
     std::vector<std::string> m_children;
-    bool is_in_idef;
+    bool m_idef_member;
 
     ModelObject() :
 	m_name(),
 	m_children(),
-	is_in_idef(false)
+	m_idef_member(false)
     {}
 };
 
@@ -520,20 +520,20 @@ void
 RhinoConverter::map_uuid_names()
 {
     for (int i = 0; i < m_model->m_object_table.Count(); ++i) {
-	const ON_Object *object = m_model->m_object_table[i].m_object;
-	const ON_3dmObjectAttributes &myAttributes =
+	const ON_Object *geom = m_model->m_object_table[i].m_object;
+	const ON_3dmObjectAttributes &geom_attrs =
 	    m_model->m_object_table[i].m_attributes;
-	const std::string obj_uuid = UUIDstr(myAttributes.m_uuid);
+	const std::string geom_uuid = UUIDstr(geom_attrs.m_uuid);
 
 	std::string suffix = ".s";
-	if (object->ObjectType() == ON::instance_reference)
+	if (geom->ObjectType() == ON::instance_reference)
 	    suffix = ".c";
 
 	if (m_use_uuidnames)
-	    m_obj_map[obj_uuid].m_name = obj_uuid + suffix;
+	    m_obj_map[geom_uuid].m_name = geom_uuid + suffix;
 	else
-	    m_obj_map[obj_uuid].m_name =
-		unique_name(m_name_count_map, CleanName(myAttributes.m_name), suffix);
+	    m_obj_map[geom_uuid].m_name =
+		unique_name(m_name_count_map, CleanName(geom_attrs.m_name), suffix);
 
     }
 
@@ -689,7 +689,7 @@ RhinoConverter::create_layer(const ON_Layer &layer)
     for (std::vector<std::string>::const_iterator it = layer_obj.m_children.begin();
 	 it != layer_obj.m_children.end(); ++it) {
 	const ModelObject &obj = m_obj_map.at(*it);
-	if (obj.is_in_idef) continue;
+	if (obj.m_idef_member) continue;
 	mk_addmember(obj.m_name.c_str(), &members.l, NULL, WMOP_UNION);
     }
 
@@ -745,7 +745,7 @@ RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
 	ModelObject &member_obj = m_obj_map.at(member_uuid);
 
 	mk_addmember(member_obj.m_name.c_str(), &members.l, NULL, WMOP_UNION);
-	member_obj.is_in_idef = true;
+	member_obj.m_idef_member = true;
     }
 
     const std::string &idef_name =
@@ -811,8 +811,7 @@ RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs) const
 		break;
 
 	    default:
-		m_log->Print("ERROR: unknown color source\n");
-		return Color(255, 0, 0);
+		throw std::logic_error("unknown color source");
 	}
 
 
@@ -862,7 +861,7 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
     const std::string geom_uuid = UUIDstr(geom_attrs.m_uuid);
     const ModelObject &geom_obj = m_obj_map.at(geom_uuid);
 
-    if (geom_obj.is_in_idef || !is_toplevel(parent_layer)) {
+    if (geom_obj.m_idef_member || !is_toplevel(parent_layer)) {
 	m_obj_map.at(parent_layer_uuid).m_children.push_back(geom_uuid);
 	return;
     }
@@ -924,9 +923,31 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 	m_log->Print("Creating Mesh '%s'\n", mesh_name.c_str());
 
     mesh.ConvertQuadsToTriangles();
+    mesh.CombineIdenticalVertices();
+    mesh.Compact();
+    mesh.UnitizeFaceNormals();
 
-    const int num_vertices = mesh.m_V.Count();
-    const int num_faces = mesh.m_F.Count();
+    const std::size_t num_vertices = static_cast<std::size_t>(mesh.m_V.Count());
+    const std::size_t num_faces = static_cast<std::size_t>(mesh.m_F.Count());
+    unsigned char mode = mesh.IsSolid() ? RT_BOT_SOLID : RT_BOT_PLATE;
+
+    unsigned char orientation;
+    switch (mesh.SolidOrientation()) {
+	case 0:
+	    orientation = RT_BOT_UNORIENTED;
+	    break;
+
+	case 1:
+	    orientation = RT_BOT_CW;
+	    break;
+
+	case -1:
+	    orientation = RT_BOT_CCW;
+	    break;
+
+	default:
+	    throw std::logic_error("unknown orientation");
+    }
 
     if (num_vertices == 0 || num_faces == 0) {
 	m_log->Print("-- Mesh has no content; skipping...\n");
@@ -934,26 +955,63 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     }
 
     std::vector<fastf_t> vertices(num_vertices * 3);
-    for (int i = 0; i < num_vertices; ++i) {
-	const ON_3fPoint &point = mesh.m_V[i];
+    for (std::size_t i = 0; i < num_vertices; ++i) {
+	const ON_3fPoint &point = mesh.m_V[static_cast<int>(i)];
 	vertices[i * 3] = point.x;
 	vertices[i * 3 + 1] = point.y;
 	vertices[i * 3 + 2] = point.z;
     }
 
     std::vector<int> faces(num_faces * 3);
-    for (int i = 0; i < num_faces; ++i) {
-	const ON_MeshFace &face = mesh.m_F[i];
+    for (std::size_t i = 0; i < num_faces; ++i) {
+	const ON_MeshFace &face = mesh.m_F[static_cast<int>(i)];
 	faces[i * 3] = face.vi[0];
 	faces[i * 3 + 1] = face.vi[1];
 	faces[i * 3 + 2] = face.vi[2];
     }
 
-    mk_bot(m_db, mesh_name.c_str(), 0, 0, 0,
-	   num_vertices, num_faces, &vertices[0], &faces[0],
-	   NULL, NULL);
+    std::vector<fastf_t> thicknesses;
+    bu_bitv *bitv = NULL;
+    if (mode == RT_BOT_PLATE) {
+	thicknesses.assign(num_faces, 2);
+	bitv = bu_bitv_new(num_faces);
+    }
+
+    if (mesh.m_FN.Count() != mesh.m_F.Count()) {
+	int r = mk_bot(m_db, mesh_name.c_str(), mode, orientation, 0,
+		       num_vertices, num_faces, &vertices[0], &faces[0],
+		       thicknesses.empty() ? NULL : &thicknesses[0],
+		       bitv);
+
+	if (r) throw std::runtime_error("mk_bot() failed");
+    } else {
+	std::vector<fastf_t> normals(num_faces * 3);
+	for (std::size_t i = 0; i < num_faces; ++i) {
+	    const ON_3fVector &vec = mesh.m_FN[static_cast<int>(i)];
+	    normals[i * 3] = vec.x;
+	    normals[i * 3 + 1] = vec.y;
+	    normals[i * 3 + 2] = vec.z;
+	}
+
+	std::vector<int> face_normals(num_faces * 3);
+	for (std::size_t i = 0; i < num_faces; ++i) {
+	    face_normals[i * 3] = i;
+	    face_normals[i * 3 + 1] = i;
+	    face_normals[i * 3 + 2] = i;
+	}
+
+	int r = mk_bot_w_normals(m_db, mesh_name.c_str(), mode, orientation,
+				 RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
+				 num_vertices, num_faces, &vertices[0], &faces[0],
+				 thicknesses.empty() ? NULL : &thicknesses[0],
+				 bitv, num_faces, &normals[0], &face_normals[0]);
+
+	if (r) throw std::runtime_error("mk_bot_w_normals() failed");
+    }
 
     create_geom_comb(mesh_attrs);
+
+    if (bitv) bu_bitv_free(bitv);
 }
 
 
