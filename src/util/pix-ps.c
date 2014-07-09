@@ -56,7 +56,7 @@ static FILE *infp;
 static char usage[] = "\
 Usage: pix-ps [-e] [-c|-l] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
-	[-S inches_square] [-W inches_width] [-N inches_height] [file.pix]\n";
+	[-S inches_square] [-W inches_width] [-N inches_height] [<] file.pix\n";
 
 
 void
