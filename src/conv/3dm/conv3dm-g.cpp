@@ -27,22 +27,26 @@
 
 
 
-#include "common.h"
-
-
 #ifdef OBJ_BREP
 
 #include "conv3dm-g.hpp"
-
-#include <limits>
-#include <sstream>
-#include <stdexcept>
 
 
 #include "bu/getopt.h"
 #include "icv.h"
 #include "vmath.h"
 #include "wdb.h"
+
+
+// for windows
+#ifdef write
+#undef write
+#endif
+
+
+#include <limits>
+#include <sstream>
+#include <stdexcept>
 
 
 
@@ -212,19 +216,8 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
 
     std::ofstream file(path.c_str(), std::ofstream::binary);
     file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-
-    // for windows
-#ifdef write
-#define write_was_defined
-#undef write
-
     file.write(static_cast<const char *>(bitmap.m_buffer),
 	       static_cast<std::streamsize>(bitmap.m_sizeof_buffer));
-#ifdef write_was_defined
-#undef write
-#define write _write
-#endif
-
     file.close();
 
     return path;

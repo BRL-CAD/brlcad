@@ -27,12 +27,15 @@
 
 #include "common.h"
 
-#include "stdio.h" /* for sscanf */
 
 #ifdef OBJ_BREP
 
+
 #include "conv3dm-g.hpp"
 #include "bu/getopt.h"
+
+
+#include <cstdio> /* for sscanf */
 #include <iostream>
 
 
