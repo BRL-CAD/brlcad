@@ -212,7 +212,7 @@ for lib in $libs ; do
     exports_lc_total="`expr $exports_lc_total + $exports_lc`"
 done
 echo "-----------------------------------------"
-printf "%7d\t%s\n" "$exports_lc_total" "Exported API Total"
+printf "%7d\t%s\n" "$exports_lc_total" "BRL-CAD API Total"
 
 printf "\n"
 
