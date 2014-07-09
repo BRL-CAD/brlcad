@@ -160,7 +160,7 @@ is_toplevel(const ON_Layer &layer)
 
 
 static std::string
-basename(const std::string &path)
+strbasename(const std::string &path)
 {
     std::vector<char> buf(path.size() + 1);
     bu_basename(&buf[0], path.c_str());
@@ -450,7 +450,7 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 	m_log->Print("Number of NURBS objects read: %d\n\n",
 		     m_model->m_object_table.Count());
 
-    m_obj_map[ROOT_UUID].m_name = basename(path);
+    m_obj_map[ROOT_UUID].m_name = strbasename(path);
 
     map_uuid_names();
     create_all_bitmaps();
@@ -553,7 +553,7 @@ RhinoConverter::map_uuid_names()
 	else {
 	    std::string bitmap_name = clean_name(w2string(bitmap->m_bitmap_name));
 	    if (bitmap_name == DEFAULT_NAME)
-		bitmap_name = clean_name(basename(w2string(bitmap->m_bitmap_filename)));
+		bitmap_name = clean_name(strbasename(w2string(bitmap->m_bitmap_filename)));
 
 	    m_obj_map[bitmap_uuid].m_name =
 		unique_name(m_name_count_map, bitmap_name, ".pix");
@@ -586,7 +586,7 @@ void
 RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 {
     if (const ON_EmbeddedBitmap *bitmap = ON_EmbeddedBitmap::Cast(bmap)) {
-	const std::string filename = basename(w2string(bitmap->m_bitmap_filename));
+	const std::string filename = strbasename(w2string(bitmap->m_bitmap_filename));
 	const std::string path = extract_bitmap(m_output_dirname, filename, *bitmap);
 
 	try {
