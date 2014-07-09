@@ -7,10 +7,16 @@
 
 
 
+namespace
+{
+
+
+
+
 typedef std::pair<std::size_t, std::size_t> Edge;
 
 
-static inline bool check_vertices(
+static bool register_edge(
     std::vector<std::set<Edge> > &vertex_edges,
     std::map<Edge, int> &edge_incidence_map,
     std::size_t va, std::size_t vb)
@@ -19,8 +25,13 @@ static inline bool check_vertices(
     vertex_edges[va].insert(edge);
     vertex_edges[vb].insert(edge);
 
-    // quit early if any edge borders more than two faces
+    // test fails if any edge borders more than two faces
     return ++edge_incidence_map[edge] <= 2;
+}
+
+
+
+
 }
 
 
@@ -38,9 +49,9 @@ int bot_is_closed(const rt_bot_internal *bot)
 	const std::size_t v2 = bot->faces[fi * 3 + 1];
 	const std::size_t v3 = bot->faces[fi * 3 + 2];
 
-	bool valid = check_vertices(vertex_edges, edge_incidence_map, v1, v2)
-		     && check_vertices(vertex_edges, edge_incidence_map, v1, v3)
-		     && check_vertices(vertex_edges, edge_incidence_map, v2, v3);
+	bool valid = register_edge(vertex_edges, edge_incidence_map, v1, v2)
+		     && register_edge(vertex_edges, edge_incidence_map, v1, v3)
+		     && register_edge(vertex_edges, edge_incidence_map, v2, v3);
 
 	if (!valid) return false;
     }

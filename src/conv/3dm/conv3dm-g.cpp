@@ -44,6 +44,7 @@
 #endif
 
 
+#include <cctype> // for isalnum()
 #include <limits>
 #include <sstream>
 #include <stdexcept>
@@ -118,7 +119,7 @@ static inline T &ref(T *ptr)
 
 
 // according to openNURBS documentation,
-// their own ON_CreateUUID() only works on Windows
+// their own ON_CreateUuid() only works on Windows
 static ON_UUID
 generate_uuid()
 {
@@ -242,60 +243,34 @@ load_pix(const std::string &path, int width, int height)
 
 
 
-// Removes all leading and trailing non alpha-numeric characters,
-// then replaces all remaining non alpha-numeric characters with
-// the '_' character. The allow string is an exception list where
-// these characters are allowed, but not leading or trailing, in
-// the name.
 static std::string
-CleanName(ON_wString name)
+clean_name(const std::string &input)
 {
-    ON_wString allow(".-_");
-    ON_wString new_name;
-    bool was_cleaned = false;
-
-    bool found_first = false;
-    int idx_first = 0, idx_last = 0;
-
-    for (int j = 0; j < name.Length(); j++) {
-	wchar_t c = name.GetAt(j);
-
-	bool ok_char = false;
-	if (isalnum(c)) {
-	    if (!found_first) {
-		idx_first = idx_last = j;
-		found_first = true;
-	    } else {
-		idx_last = j;
-	    }
-	    ok_char = true;
-	} else {
-	    for (int k = 0 ; k < allow.Length() ; k++) {
-		if (c == allow.GetAt(k)) {
-		    ok_char = true;
-		    break;
-		}
-	    }
-	}
-	if (!ok_char) {
-	    c = L'_';
-	    was_cleaned = true;
-	}
-	new_name += c;
-    }
-    if (idx_first != 0 || name.Length() != ((idx_last - idx_first) + 1)) {
-	new_name = new_name.Mid(idx_first, (idx_last - idx_first) + 1);
-	was_cleaned = true;
-    }
-    if (was_cleaned) {
-	name.Destroy();
-	name = new_name;
-    }
-
-    if (name)
-	return w2string(name);
-    else
+    if (input.empty())
 	return DEFAULT_NAME;
+
+    std::ostringstream ss;
+    int index = -1;
+    for (std::string::const_iterator it = input.begin();
+	 it != input.end(); ++it) {
+	++index;
+	switch (*it) {
+	    case '.':
+	    case '-':
+	    case '_':
+		ss.put(index > 0 ? *it : '_');
+		break;
+
+
+	    default:
+		if (std::isalnum(*it))
+		    ss.put(*it);
+		else
+		    ss.put('_');
+	}
+    }
+
+    return ss.str();
 }
 
 
@@ -534,7 +509,7 @@ RhinoConverter::map_uuid_names()
 	    m_obj_map[geom_uuid].m_name = geom_uuid + suffix;
 	else
 	    m_obj_map[geom_uuid].m_name =
-		unique_name(m_name_count_map, CleanName(geom_attrs.m_name), suffix);
+		unique_name(m_name_count_map, clean_name(w2string(geom_attrs.m_name)), suffix);
 
     }
 
@@ -547,7 +522,7 @@ RhinoConverter::map_uuid_names()
 	    m_obj_map[idef_uuid].m_name = idef_uuid + ".c";
 	else
 	    m_obj_map[idef_uuid].m_name =
-		unique_name(m_name_count_map, CleanName(idef.Name()), ".c");
+		unique_name(m_name_count_map, clean_name(w2string(idef.Name())), ".c");
     }
 
 
@@ -563,7 +538,7 @@ RhinoConverter::map_uuid_names()
 	    m_obj_map[layer_uuid].m_name = layer_uuid + suffix;
 	else
 	    m_obj_map[layer_uuid].m_name =
-		unique_name(m_name_count_map, CleanName(layer.m_name), suffix);
+		unique_name(m_name_count_map, clean_name(w2string(layer.m_name)), suffix);
     }
 
 
@@ -576,9 +551,9 @@ RhinoConverter::map_uuid_names()
 	if (m_use_uuidnames)
 	    m_obj_map[bitmap_uuid].m_name = bitmap_uuid + ".pix";
 	else {
-	    std::string bitmap_name = CleanName(bitmap->m_bitmap_name);
+	    std::string bitmap_name = clean_name(w2string(bitmap->m_bitmap_name));
 	    if (bitmap_name == DEFAULT_NAME)
-		bitmap_name = CleanName(bitmap->m_bitmap_filename);
+		bitmap_name = clean_name(basename(w2string(bitmap->m_bitmap_filename)));
 
 	    m_obj_map[bitmap_uuid].m_name =
 		unique_name(m_name_count_map, bitmap_name, ".pix");
@@ -709,9 +684,10 @@ RhinoConverter::create_layer(const ON_Layer &layer)
 	color = Color(255, 0, 0);
     }
 
+    const bool do_inherit = false;
     mk_comb(m_db, layer_obj.m_name.c_str(), &members.l, is_region,
 	    shader.first.c_str(), shader.second.c_str(), color.get_rgb(),
-	    0, 0, 0, 0, false, false, false);
+	    0, 0, 0, 0, do_inherit, false, false);
 }
 
 
@@ -777,10 +753,11 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
     BU_LIST_INIT(&members.l);
     mk_addmember(member_name.c_str(), &members.l, matrix, WMOP_UNION);
 
+    const bool do_inherit = false;
     mk_comb(m_db, iref_name.c_str(), &members.l, false,
 	    shader.first.c_str(), shader.second.c_str(),
 	    get_color(iref_attrs).get_rgb(),
-	    0, 0, 0, 0, false, false, false);
+	    0, 0, 0, 0, do_inherit, false, false);
 
     const std::string parent_uuid =
 	UUIDstr(ref(m_model->m_layer_table.At(iref_attrs.m_layer_index)).m_layer_id);
@@ -884,10 +861,11 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
     BU_LIST_INIT(&members.l);
     mk_addmember(geom_obj.m_name.c_str(), &members.l, NULL, WMOP_UNION);
 
+    const bool do_inherit = false;
     mk_comb(m_db, comb_name.c_str(), &members.l, false,
 	    shader.first.c_str(), shader.second.c_str(),
 	    get_color(geom_attrs).get_rgb(),
-	    0, 0, 0, 0, false, false, false);
+	    0, 0, 0, 0, do_inherit, false, false);
 
     m_obj_map[comb_uuid].m_name = comb_name;
     m_obj_map.at(parent_layer_uuid).m_children.push_back(comb_uuid);
