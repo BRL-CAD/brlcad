@@ -19,6 +19,7 @@ static inline bool check_vertices(
     vertex_edges[va].insert(edge);
     vertex_edges[vb].insert(edge);
 
+    // quit early if any edge borders more than two faces
     return ++edge_incidence_map[edge] <= 2;
 }
 
@@ -30,6 +31,8 @@ int bot_is_closed(const rt_bot_internal *bot)
     std::map<Edge, int> edge_incidence_map;
     std::vector<std::set<Edge> > vertex_edges(bot->num_vertices);
 
+    // map edges to number of incident faces
+    // map vertices to edges
     for (std::size_t fi = 0; fi < bot->num_faces; ++fi) {
 	const std::size_t v1 = bot->faces[fi * 3];
 	const std::size_t v2 = bot->faces[fi * 3 + 1];
@@ -42,16 +45,24 @@ int bot_is_closed(const rt_bot_internal *bot)
 	if (!valid) return false;
     }
 
+    // all edges must border exactly two faces
+    for (std::map<Edge, int>::const_iterator it = edge_incidence_map.begin();
+	 it != edge_incidence_map.end(); ++it)
+	if (it->second != 2) return false;
+
     for (std::vector<std::set<Edge> >::const_iterator
 	 vertex_it = vertex_edges.begin();
 	 vertex_it != vertex_edges.end(); ++vertex_it) {
 
-	if (vertex_it->empty()) return false;
-    }
+	// each vertex must be incident to at least two edges
+	if (vertex_it->size() < 2) return false;
 
-    for (std::map<Edge, int>::const_iterator it = edge_incidence_map.begin();
-	 it != edge_incidence_map.end(); ++it)
-	if (it->second != 2) return false;
+	// check if the edges form a closed or open fan
+	for (std::set<Edge>::const_iterator it = vertex_it->begin();
+	     it != vertex_it->end(); ++it) {
+	    // TODO
+	}
+    }
 
     return true;
 }
