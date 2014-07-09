@@ -705,8 +705,8 @@ qt_processEvents(struct dm *dmp)
 
 
 HIDDEN int
-qt_openFb(struct dm *UNUSED(dmp), FBIO *UNUSED(ifp)) {
-    bu_log("openFb\n");
+qt_openFb(struct dm *UNUSED(dmp), FBIO *ifp) {
+    _qt_open_existing(ifp);
     return 0;
 }
 
