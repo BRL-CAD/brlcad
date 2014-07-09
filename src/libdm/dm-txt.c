@@ -332,6 +332,14 @@ txt_makeCurrent(struct dm *UNUSED(dmp))
 }
 
 
+HIDDEN int
+txt_openFb(struct dm *UNUSED(dmp), FBIO *UNUSED(ifp))
+{
+    bu_log("openFb called\n");
+    return 0;
+}
+
+
 struct dm dm_txt = {
     txt_close,
     txt_drawBegin,
@@ -368,6 +376,7 @@ struct dm dm_txt = {
     txt_getDisplayImage,
     txt_reshape,
     txt_makeCurrent,
+    txt_openFb,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
