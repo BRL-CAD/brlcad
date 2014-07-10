@@ -281,19 +281,23 @@ subtracted_solid(struct db_full_path *path)
 }
 
 void
-add_comb_child(osg::Group *comb, osg::Group *child, struct db_full_path *child_path)
+add_comb_child(osg::Group *comb, osg::Group *child, struct db_full_path *child_path, struct db_i *dbip)
 {
-    if (child_path->fp_mat[child_path->fp_len - 1]) {
-	mat_t m;
-	MAT_TRANSPOSE(m, child_path->fp_mat[child_path->fp_len - 1]);
-	osg::Matrixd osgMat(m);
-	osg::ref_ptr<osg::MatrixTransform> mt = new osg::MatrixTransform(osgMat);
-	mt->addChild(child);
-	comb->addChild(mt);
+    mat_t m = MAT_INIT_IDN;
+    mat_t m_idn = MAT_INIT_IDN;
+    const struct bn_tol tol = {BN_TOL_MAGIC, 0.0005, 0.0005 * 0.0005, 1e-6, 1 - 1e-6};
+    (void)db_full_path_transformation_matrix((matp_t)(&m), dbip, child_path, child_path->fp_len - 1);
+    if (!bn_mat_is_equal(m, m_idn, &tol)) {
+	mat_t mt = MAT_INIT_IDN;
+	MAT_TRANSPOSE(mt, m);
+	osg::Matrixd osgMat(mt);
+	osg::ref_ptr<osg::MatrixTransform> osgmt = new osg::MatrixTransform(osgMat);
+	osgmt->addChild(child);
+	comb->addChild(osgmt);
 
 	/* If this child_path is subtracted in this comb, stipple the line drawings */
 	if (child_path->fp_bool[child_path->fp_len - 1] == 4) {
-	    osg::StateSet* state = mt->getOrCreateStateSet();
+	    osg::StateSet* state = osgmt->getOrCreateStateSet();
 	    osg::ref_ptr<osg::LineStipple> ls = new osg::LineStipple();
 	    ls->setPattern(0xCF33);
 	    ls->setFactor(1);
@@ -350,7 +354,7 @@ full_comb_node(
 		osg::ref_ptr<osg::Group> new_node = solid_node(osg_nodes, curr_child_dp, dbip);
 		(*osg_nodes)[curr_child_dp] = new_node.get();
 	    }
-	    add_comb_child(sub_comb, (*osg_nodes)[curr_child_dp], curr_path);
+	    add_comb_child(sub_comb, (*osg_nodes)[curr_child_dp], curr_path, dbip);
 	}
 	db_search_free(&comb_children);
     }
@@ -488,7 +492,7 @@ full_assembly_node(
 		osg::ref_ptr<osg::Group> new_node = solid_node(osg_nodes, curr_child_dp, dbip);
 		(*osg_nodes)[curr_child_dp] = new_node.get();
 	    }
-	    add_comb_child(sub_comb, (*osg_nodes)[curr_child_dp], curr_path);
+	    add_comb_child(sub_comb, (*osg_nodes)[curr_child_dp], curr_path, dbip);
 	}
 	db_search_free(&comb_children);
     }
@@ -573,7 +577,7 @@ add_path_to_scene(
 	osg::ref_ptr<osg::Group> comb = bare_comb_node(osg_nodes, parent_dp, dbip);
 	osg::ref_ptr<osg::Group> child = (*osg_nodes)[curr_dp];
 
-	add_comb_child(comb, child, &working_path);
+	add_comb_child(comb, child, &working_path, dbip);
 
 	DB_FULL_PATH_POP(&working_path);
     }
