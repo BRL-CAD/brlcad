@@ -46,12 +46,9 @@ namespace
 {
 
 
-static const std::string ROOT_UUID = "00000000-0000-0000-0000-000000000000";
+static const ON_UUID ROOT_UUID = ON_UuidFromString("00000000-0000-0000-0000-000000000000");
 static const std::string DEFAULT_NAME = "noname";
 static const std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
-
-/* UUID buffers must be >= 37 chars per openNURBS API */
-static const std::size_t UUID_LEN = 37;
 
 
 static struct _InitOpenNURBS {
@@ -70,6 +67,9 @@ static struct _InitOpenNURBS {
 static inline std::string
 UUIDstr(const ON_UUID &uuid)
 {
+    // UUID buffers must be >= 37 chars per openNURBS API
+    const std::size_t UUID_LEN = 37;
+
     char buf[UUID_LEN];
     return ON_UuidToString(uuid, buf);
 }
@@ -95,6 +95,27 @@ static inline T &ref(T *ptr)
 
     return *ptr;
 }
+
+
+template <typename T, typename R, R(*Destructor)(T*)>
+struct AutoDestroyer {
+    AutoDestroyer() : ptr(NULL) {}
+    AutoDestroyer(T *vptr) : ptr(vptr) {}
+
+
+    ~AutoDestroyer()
+    {
+	if (ptr) Destructor(ptr);
+    }
+
+
+    T *ptr;
+
+
+private:
+    AutoDestroyer(const AutoDestroyer &);
+    AutoDestroyer &operator=(const AutoDestroyer &);
+};
 
 
 // according to openNURBS documentation, their own ON_CreateUuid()
@@ -126,13 +147,10 @@ generate_uuid()
 }
 
 
-static bool
+static inline bool
 is_toplevel(const ON_Layer &layer)
 {
-    const std::string layer_uuid = UUIDstr(layer.m_layer_id);
-    const std::string parent_uuid = UUIDstr(layer.m_parent_layer_id);
-
-    return (parent_uuid == ROOT_UUID) && (layer_uuid != ROOT_UUID);
+    return (layer.m_parent_layer_id == ROOT_UUID) && (layer.m_layer_id != ROOT_UUID);
 }
 
 
@@ -202,9 +220,9 @@ load_pix(const std::string &path, int width, int height)
     char buf[BUFSIZ]; // libicv currently requires BUFSIZ
     ICV_IMAGE_FORMAT format = icv_guess_file_format(path.c_str(), buf);
 
-    if (icv_image_t *image = icv_read(path.c_str(), format, width, height)) {
+    AutoDestroyer<icv_image_t, int, icv_destroy> image(icv_read(path.c_str(), format, width, height));
+    if (image.ptr) {
 	// TODO import the image data after adding support to libicv
-	icv_destroy(image);
     } else
 	throw std::runtime_error("icv_read() failed");
 }
@@ -255,7 +273,7 @@ public:
 
 
     Color();
-    Color(int red, int green, int blue);
+    Color(unsigned char red, unsigned char green, unsigned char blue);
     Color(const ON_Color &src);
 
     bool operator==(const Color &rhs) const;
@@ -264,8 +282,6 @@ public:
 
 
 private:
-    void set_rgb(int red, int green, int blue);
-
     unsigned char m_rgb[3];
 };
 
@@ -286,9 +302,9 @@ struct RhinoConverter::ModelObject {
 RhinoConverter::Color
 RhinoConverter::Color::random()
 {
-    int red = static_cast<int>(255 * drand48());
-    int green = static_cast<int>(255 * drand48());
-    int blue = static_cast<int>(255 * drand48());
+    unsigned char red = static_cast<unsigned char>(255 * drand48());
+    unsigned char green = static_cast<unsigned char>(255 * drand48());
+    unsigned char blue = static_cast<unsigned char>(255 * drand48());
 
     return Color(red, green, blue);
 }
@@ -296,19 +312,29 @@ RhinoConverter::Color::random()
 
 RhinoConverter::Color::Color()
 {
-    set_rgb(0, 0, 0);
+    m_rgb[0] = m_rgb[1] = m_rgb[2] = 0;
 }
 
 
-RhinoConverter::Color::Color(int red, int green, int blue)
+RhinoConverter::Color::Color(unsigned char red, unsigned char green,
+			     unsigned char blue)
 {
-    set_rgb(red, green, blue);
+    m_rgb[0] = red;
+    m_rgb[1] = green;
+    m_rgb[2] = blue;
 }
 
 
 RhinoConverter::Color::Color(const ON_Color &src)
 {
-    set_rgb(src.Red(), src.Green(), src.Blue());
+    if (src.Red() < 0 || src.Red() > 255
+	|| src.Green() < 0 || src.Green() > 255
+	|| src.Blue() < 0 || src.Blue() > 255)
+	throw std::invalid_argument("invalid ON_Color");
+
+    m_rgb[0] = static_cast<unsigned char>(src.Red());
+    m_rgb[1] = static_cast<unsigned char>(src.Green());
+    m_rgb[2] = static_cast<unsigned char>(src.Blue());
 }
 
 
@@ -325,20 +351,6 @@ const unsigned char *
 RhinoConverter::Color::get_rgb() const
 {
     return m_rgb;
-}
-
-
-void
-RhinoConverter::Color::set_rgb(int red, int green, int blue)
-{
-    if (red < 0 || red > 255
-	|| green < 0 || green > 255
-	|| blue < 0 || blue > 255)
-	throw std::invalid_argument("invalid color");
-
-    m_rgb[0] = static_cast<unsigned char>(red);
-    m_rgb[1] = static_cast<unsigned char>(green);
-    m_rgb[2] = static_cast<unsigned char>(blue);
 }
 
 
@@ -390,7 +402,7 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 	m_log->Print("Number of NURBS objects read: %d\n\n",
 		     m_model->m_object_table.Count());
 
-    m_obj_map[ROOT_UUID].m_name = strbasename(path);
+    m_obj_map[UUIDstr(ROOT_UUID)].m_name = strbasename(path);
 
     map_uuid_names();
     create_all_bitmaps();
@@ -860,17 +872,20 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     }
 
     std::vector<fastf_t> thicknesses;
-    bu_bitv *bitv = NULL;
+
+
+    AutoDestroyer<bu_bitv, void, bu_bitv_free> mbitv;
+
     if (mode == RT_BOT_PLATE) {
 	thicknesses.assign(num_faces, 2);
-	bitv = bu_bitv_new(num_faces);
+	mbitv.ptr = bu_bitv_new(num_faces);
     }
 
     if (mesh.m_FN.Count() != mesh.m_F.Count()) {
 	int r = mk_bot(m_db, mesh_name.c_str(), mode, orientation, 0,
 		       num_vertices, num_faces, &vertices[0], &faces[0],
 		       thicknesses.empty() ? NULL : &thicknesses[0],
-		       bitv);
+		       mbitv.ptr);
 
 	if (r) throw std::runtime_error("mk_bot() failed");
     } else {
@@ -893,14 +908,12 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 				 RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
 				 num_vertices, num_faces, &vertices[0], &faces[0],
 				 thicknesses.empty() ? NULL : &thicknesses[0],
-				 bitv, num_faces, &normals[0], &face_normals[0]);
+				 mbitv.ptr, num_faces, &normals[0], &face_normals[0]);
 
 	if (r) throw std::runtime_error("mk_bot_w_normals() failed");
     }
 
     create_geom_comb(mesh_attrs);
-
-    if (bitv) bu_bitv_free(bitv);
 }
 
 
@@ -950,7 +963,6 @@ RhinoConverter::create_geometry(const ON_Geometry *geom,
 
 	create_mesh(*mesh, geom_attrs);
 
-	if (m_verbose_mode) mesh->Dump(*m_log);
     } else if (const ON_RevSurface *revsurf = ON_RevSurface::Cast(geom)) {
 	m_log->Print("-- Skipping: Type: ON_RevSurface\n");
 	if (m_verbose_mode) revsurf->Dump(*m_log);
