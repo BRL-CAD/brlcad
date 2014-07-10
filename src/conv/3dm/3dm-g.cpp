@@ -24,27 +24,22 @@
  *
  */
 
+#ifdef OBJ_BREP
 
 #include "common.h"
 
-
-#ifdef OBJ_BREP
-
+#include <cstdio> /* for sscanf */
+#include <iostream>
 
 #include "conv3dm-g.hpp"
 #include "bu/getopt.h"
 
 
-#include <cstdio> /* for sscanf */
-#include <iostream>
-
-
-static const char * const USAGE = "USAGE: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n";
-
-
 int
 main(int argc, char** argv)
 {
+    static const char * const usage = "Usage: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n";
+
     bool verbose_mode = false;
     bool random_colors = false;
     bool use_uuidnames = false;
@@ -73,7 +68,7 @@ main(int argc, char** argv)
 		use_uuidnames = true;
 		break;
 	    default:
-		std::cerr << USAGE;
+		std::cerr << usage;
 		return 1;
 	}
     }
@@ -82,7 +77,7 @@ main(int argc, char** argv)
     argv += bu_optind;
     inputFileName  = argv[0];
     if (outputFileName == NULL) {
-	std::cerr << USAGE;
+	std::cerr << usage;
 	return 1;
     }
 
@@ -93,8 +88,10 @@ main(int argc, char** argv)
 }
 
 
-#else
+#else //!OBJ_BREP
 
+
+#include "common.h"
 
 #include <iostream>
 
@@ -103,17 +100,13 @@ int
 main()
 {
     std::cerr << "ERROR: Boundary Representation object support is not available with\n"
-	      "       this compilation of BRL-CAD.\n";
+	"       this compilation of BRL-CAD.\n";
 
     return 1;
 }
 
 
-
-
 #endif //!OBJ_BREP
-
-
 
 
 /*
