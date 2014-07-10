@@ -427,9 +427,12 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 static void
 nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **classlist)
 {
-    struct bu_ptbl verts;
-    struct bu_ptbl edges;
+    struct bu_ptbl vertsA;
+    struct bu_ptbl vertsB;
+    struct bu_ptbl edgesA;
+    struct bu_ptbl edgesB;
     int i;
+    int j;
 
     if (RTG.NMG_debug & DEBUG_CLASSIFY)
 	bu_log("nmg_classify_shared_edges_verts(sA=%p, sB=%p)\n", (void *)sA, (void *)sB);
@@ -437,61 +440,92 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
     NMG_CK_SHELL(sA);
     NMG_CK_SHELL(sB);
 
-    nmg_vertex_tabulate(&verts, &sA->magic);
-    for (i=0; i<BU_PTBL_END(&verts); i++) {
-	struct vertex *v;
-	struct vertexuse *vu;
+    nmg_vertex_tabulate(&vertsA, &sA->magic);
+    nmg_vertex_tabulate(&vertsB, &sB->magic);
 
-	v = (struct vertex *)BU_PTBL_GET(&verts, i);
-	NMG_CK_VERTEX(v);
+    for (i=0; i<BU_PTBL_END(&vertsA); i++) {
+	struct vertex *vA;
 
-	for (BU_LIST_FOR(vu, vertexuse, &v->vu_hd)) {
-	    NMG_CK_VERTEXUSE(vu);
+	vA = (struct vertex *)BU_PTBL_GET(&vertsA, i);
+	NMG_CK_VERTEX(vA);
 
-	    if (nmg_find_s_of_vu(vu) == sB) {
-		/* set classification in both lists */
-		NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], v);
-		NMG_INDEX_SET(classlist[4 + NMG_CLASS_AonBshared], v);
+	for (j=0; j<BU_PTBL_END(&vertsB); j++) {
+	    struct vertex *vB;
+
+	    vB = (struct vertex *)BU_PTBL_GET(&vertsB, j);
+	    NMG_CK_VERTEX(vB);
+
+	    if (VEQUAL(vA->vg_p->coord, vB->vg_p->coord)) {
+		NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], vA);
+		NMG_INDEX_SET(classlist[4 + NMG_CLASS_AonBshared], vA);
 
 		if (RTG.NMG_debug & DEBUG_CLASSIFY)
-		    bu_log("nmg_classify_shared_edges_verts: v=%p is shared\n", (void *)v);
+		    bu_log("nmg_classify_shared_edges_verts: v=%p is shared\n", (void *)vA);
 
 		break;
 	    }
 	}
     }
-    bu_ptbl_free(&verts);
 
-    nmg_edge_tabulate(&edges, &sA->magic);
-    for (i=0; i<BU_PTBL_END(&edges); i++) {
-	struct edge *e;
-	struct edgeuse *eu;
-	struct edgeuse *eu_start;
+    bu_ptbl_free(&vertsA);
+    bu_ptbl_free(&vertsB);
 
-	e = (struct edge *)BU_PTBL_GET(&edges, i);
-	NMG_CK_EDGE(e);
+    nmg_edge_tabulate(&edgesA, &sA->magic);
+    for (i=0; i<BU_PTBL_END(&edgesA); i++) {
+	struct edge *eA;
 
-	eu_start = e->eu_p;
-	NMG_CK_EDGEUSE(eu_start);
+	eA = (struct edge *)BU_PTBL_GET(&edgesA, i);
+	NMG_CK_EDGE(eA);
 
-	eu = eu_start;
-	do {
-	    if (nmg_find_s_of_eu(eu) == sB) {
-		NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], e);
-		NMG_INDEX_SET(classlist[4 + NMG_CLASS_AonBshared], e);
+	for (j=0; j<BU_PTBL_END(&edgesB); j++) {
+	    struct edge *eB;
+	    int lenA;
+	    int lenB;
 
-		if (RTG.NMG_debug & DEBUG_CLASSIFY)
-		    bu_log("nmg_classify_shared_edges_verts: e=%p is shared\n", (void *)e);
+	    eB = (struct edge *)BU_PTBL_GET(&edgesB, j);
+	    NMG_CK_EDGE(eB);
 
-		break;
+	    lenA = bu_list_len(&eA->eu_p->l);
+	    lenB = bu_list_len(&eB->eu_p->l);
+
+	    if (lenA == lenB)
+	    {
+		struct edgeuse *euA;
+		struct edgeuse *euB;
+		int find1 = 1;
+
+		for (BU_LIST_FOR (euA, edgeuse, &eA->eu_p->l)) {
+		    int find2 = 0;
+
+		    for (BU_LIST_FOR (euB, edgeuse, &eB->eu_p->l)) {
+			if (VEQUAL(euA->vu_p->v_p->vg_p->coord, euB->vu_p->v_p->vg_p->coord)) {
+			    find2 = 1;
+			    break;
+			}
+		    }
+
+		    if (!find2)
+		    {
+			find1 = 0;
+		    }
+		}
+
+		if (find1)
+		{
+		    NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], eA);
+		    NMG_INDEX_SET(classlist[4 + NMG_CLASS_AonBshared], eA);
+
+		    if (RTG.NMG_debug & DEBUG_CLASSIFY)
+			bu_log("nmg_classify_shared_edges_verts: e=%p is shared\n", (void *)eA);
+
+		    break;
+		}
 	    }
-
-	    eu = eu->eumate_p->radial_p;
-	    NMG_CK_EDGEUSE(eu);
-
-	} while (eu != eu_start && eu->eumate_p != eu_start);
+	}
     }
-    bu_ptbl_free(&edges);
+
+    bu_ptbl_free(&edgesA);
+    bu_ptbl_free(&edgesB);
 }
 
 
