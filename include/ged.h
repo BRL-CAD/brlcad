@@ -449,9 +449,10 @@ struct ged_qray_fmt {
 
 struct ged_display_list {
     struct bu_list	l;
+    struct directory	*gdl_dp;
     struct bu_vls	gdl_path;
-    struct bu_vls	gdl_data;
-    int			gdl_update_flag;
+    struct bu_list	gdl_headSolid;		/**< @brief  head of solid list for this object */
+    int			gdl_wflag;
 };
 
 /* FIXME: should be private */
