@@ -46,7 +46,7 @@ namespace
 {
 
 
-static const ON_UUID ROOT_UUID = ON_UuidFromString("00000000-0000-0000-0000-000000000000");
+static const ON_UUID &ROOT_UUID = ON_nil_uuid;
 static const std::string DEFAULT_NAME = "noname";
 static const std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
 
