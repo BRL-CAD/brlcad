@@ -124,8 +124,6 @@ private:
 #endif
 
 
-
-
 /*
  * Local Variables:
  * tab-width: 8

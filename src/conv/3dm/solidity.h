@@ -4,8 +4,6 @@
 #include "raytrace.h"
 
 
-
-
 #ifdef __cplusplus
 #define EXTERN_C extern "C"
 #else
@@ -13,11 +11,7 @@
 #endif
 
 
-
-
 EXTERN_C int bot_is_closed(const rt_bot_internal *bot);
-
-
 
 
 /*

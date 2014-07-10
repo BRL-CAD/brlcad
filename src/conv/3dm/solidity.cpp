@@ -5,12 +5,8 @@
 #include <set>
 
 
-
-
 namespace
 {
-
-
 
 
 typedef std::pair<std::size_t, std::size_t> Edge;
@@ -30,11 +26,7 @@ static bool register_edge(
 }
 
 
-
-
 }
-
-
 
 
 int bot_is_closed(const rt_bot_internal *bot)
@@ -77,8 +69,6 @@ int bot_is_closed(const rt_bot_internal *bot)
 
     return true;
 }
-
-
 
 
 /*
