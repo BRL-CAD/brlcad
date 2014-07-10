@@ -19,8 +19,7 @@
  */
 /** @file conv3dm-g.cpp
  *
- * Program to convert a Rhino model (in a .3dm file) to a BRL-CAD .g
- * file.
+ * Library for conversion of Rhino models (in .3dm files) to BRL-CAD databases.
  *
  */
 
@@ -121,7 +120,7 @@ generate_uuid()
 
     for (int i = 0; i < 8; ++i)
 	result.Data4[i] = static_cast<unsigned char>(drand48() *
-						     std::numeric_limits<unsigned char>::max());
+			  std::numeric_limits<unsigned char>::max());
 
     return result;
 }
@@ -182,7 +181,7 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
     while (bu_file_exists(path.c_str(), NULL)) {
 	std::ostringstream ss;
 	ss << dir_path << BU_DIR_SEPARATOR << "extracted_" <<
-	    ++counter << "_" << filename;
+	   ++counter << "_" << filename;
 
 	path = ss.str();
     }
@@ -317,8 +316,8 @@ bool
 RhinoConverter::Color::operator==(const Color &rhs) const
 {
     return m_rgb[0] == rhs.m_rgb[0]
-	&& m_rgb[1] == rhs.m_rgb[1]
-	&& m_rgb[2] == rhs.m_rgb[2];
+	   && m_rgb[1] == rhs.m_rgb[1]
+	   && m_rgb[2] == rhs.m_rgb[2];
 }
 
 
@@ -994,13 +993,11 @@ RhinoConverter::create_geometry(const ON_Geometry *geom,
 
 #endif //OBJ_BREP
 
-
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C++
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

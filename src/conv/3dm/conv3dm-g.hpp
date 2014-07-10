@@ -17,10 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file conv3dm-g.cpp
+/** @file conv3dm-g.hpp
  *
- * Program to convert a Rhino model (in a .3dm file) to a BRL-CAD .g
- * file.
+ * Library for conversion of Rhino models (in .3dm files) to BRL-CAD databases.
  *
  */
 
@@ -121,13 +120,11 @@ private:
 
 #endif
 
-
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C++
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

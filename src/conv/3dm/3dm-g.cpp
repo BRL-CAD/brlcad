@@ -1,4 +1,4 @@
-/*                           3 D M - G . C P P
+/*                       3 D M - G . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -100,7 +100,7 @@ int
 main()
 {
     std::cerr << "ERROR: Boundary Representation object support is not available with\n"
-	"       this compilation of BRL-CAD.\n";
+	      "       this compilation of BRL-CAD.\n";
 
     return 1;
 }
@@ -108,13 +108,11 @@ main()
 
 #endif //!OBJ_BREP
 
-
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C++
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
