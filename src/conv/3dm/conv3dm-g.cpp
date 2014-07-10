@@ -27,25 +27,20 @@
 
 #ifdef OBJ_BREP
 
-#include "conv3dm-g.hpp"
+/* interface header */
+#include "conv3dm-g.hpp" // includes common.h
 
-
-#include "bu/getopt.h"
-#include "icv.h"
-#include "vmath.h"
-#include "wdb.h"
-
-
-// for windows
-#ifdef write
-#undef write
-#endif
-
-
+/* system headers */
 #include <cctype> // for isalnum()
 #include <limits>
 #include <sstream>
 #include <stdexcept>
+
+/* implementation headers */
+#include "bu/getopt.h"
+#include "icv.h"
+#include "vmath.h"
+#include "wdb.h"
 
 
 namespace
@@ -65,7 +60,6 @@ static struct _InitOpenNURBS {
     {
 	ON::Begin();
     }
-
 
     ~_InitOpenNURBS()
     {

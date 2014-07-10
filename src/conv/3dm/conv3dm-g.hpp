@@ -28,9 +28,7 @@
 #ifndef CONV3DM_G_H
 #define CONV3DM_G_H
 
-
 #include "common.h"
-
 
 #include <map>
 #include <memory>
