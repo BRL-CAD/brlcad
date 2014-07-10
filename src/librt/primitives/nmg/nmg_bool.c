@@ -700,6 +700,9 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 		VMOVE(sA->sa_p->min_pt, s_min_pt);
 		VMOVE(sA->sa_p->max_pt, s_max_pt);
 
+		/* recompute index of shell sA */
+		nmg_s_reindex(sA, 0);
+
 		/* kill shell sB */
 		nmg_ks(sB);
 		break;
@@ -737,6 +740,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vsshell(sA);
+	nmg_vsshell(sB);
     }
 
     nmg_shell_coplanar_face_merge(sA, tol, 1);
@@ -858,6 +862,12 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	 */
 	nmg_vsshell(sA);
 	if ((i = nmg_shell_fuse(sA, tol)) > 0) {
+	    bu_log("NOTICE: nmg_bool: fused %d entities while cracking shells\n", i);
+	    bu_bomb("nmg_bool() entities unfused after nmg_crackshells()\n");
+	}
+
+	nmg_vsshell(sB);
+	if ((i = nmg_shell_fuse(sB, tol)) > 0) {
 	    bu_log("NOTICE: nmg_bool: fused %d entities while cracking shells\n", i);
 	    bu_bomb("nmg_bool() entities unfused after nmg_crackshells()\n");
 	}
