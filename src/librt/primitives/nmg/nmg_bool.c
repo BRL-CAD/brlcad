@@ -425,7 +425,7 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
  */
 
 static void
-nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **classlist)
+nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **classlist, const struct bn_tol *tol)
 {
     struct bu_ptbl vertsA;
     struct bu_ptbl vertsB;
@@ -455,7 +455,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
 	    vB = (struct vertex *)BU_PTBL_GET(&vertsB, j);
 	    NMG_CK_VERTEX(vB);
 
-	    if (VEQUAL(vA->vg_p->coord, vB->vg_p->coord)) {
+	    if (VNEAR_EQUAL(vA->vg_p->coord, vB->vg_p->coord, tol->dist)) {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], vA);
 		NMG_INDEX_SET(classlist[4 + NMG_CLASS_AonBshared], vA);
 
@@ -500,7 +500,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
 		    int find2 = 0;
 
 		    for (BU_LIST_FOR (euB, edgeuse, &eB->eu_p->l)) {
-			if (VEQUAL(euA->vu_p->v_p->vg_p->coord, euB->vu_p->v_p->vg_p->coord)) {
+			if (VNEAR_EQUAL(euA->vu_p->v_p->vg_p->coord, euB->vu_p->v_p->vg_p->coord, tol->dist)) {
 			    find2 = 1;
 			    break;
 			}
@@ -964,7 +964,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	classlist[i] = (char *)bu_calloc(nelem, sizeof(char), "nmg_bool classlist");
     }
 
-    nmg_classify_shared_edges_verts(sA, sB, classlist);
+    nmg_classify_shared_edges_verts(sA, sB, classlist, tol);
 
     nmg_class_nothing_broken = 1;
     if (RTG.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
@@ -1145,9 +1145,6 @@ nmg_do_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_
     nmg_shell_v_unique(sB, tol);
 
     s = nmg_bool(sA, sB, oper, tol);
-
-    /* shell B was destroyed, need to eliminate region B */
-    nmg_ks(sB);
 
     NMG_CK_SHELL(s);
 
