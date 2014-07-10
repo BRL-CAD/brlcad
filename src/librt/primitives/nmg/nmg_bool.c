@@ -471,6 +471,8 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
     bu_ptbl_free(&vertsB);
 
     nmg_edge_tabulate(&edgesA, &sA->magic);
+    nmg_edge_tabulate(&edgesB, &sB->magic);
+
     for (i=0; i<BU_PTBL_END(&edgesA); i++) {
 	struct edge *eA;
 
