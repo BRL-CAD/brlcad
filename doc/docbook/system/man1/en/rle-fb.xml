@@ -216,12 +216,10 @@ are used.</para>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
   <blockquote remap="RS">
-<para>rle-fb truck.rle
-<!-- .br -->
-rle-fb -O text.rle
-<!-- .br -->
-rle-fb -C 0/255/0 &lt;car.rle
-  </para></blockquote> <!-- remap='RE' -->
+<para>rle-fb truck.rle</para>
+<para>rle-fb -O text.rle</para>
+<para>rle-fb -C 0/255/0 &lt;car.rle</para>
+ </blockquote> <!-- remap='RE' -->
 </refsection>
 
 <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
