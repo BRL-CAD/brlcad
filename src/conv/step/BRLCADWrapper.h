@@ -61,6 +61,8 @@ public:
     bool WriteBrep(std::string name, ON_Brep *brep, mat_t &mat);
     bool WriteCombs();
     bool AddMember(const std::string &combname,const std::string &member,mat_t mat);
+    std::string ReplaceAccented( std::string &str );
+    std::string CleanBRLCADName(std::string &name);
     std::string GetBRLCADName(std::string &name);
     static void getRandomColor(unsigned char *rgb);
     struct db_i * GetDBIP();
