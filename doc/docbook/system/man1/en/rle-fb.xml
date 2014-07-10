@@ -135,11 +135,11 @@ image decoding process, written on standard error.</para>
 <para>Restores the image data in <emphasis remap="I">overlay</emphasis> mode.
 Only areas of the original image which were not the background color are
 decoded.  The rest of the image already in the frame buffer is undisturbed.
-That this mode uses twice as many DMAs to the frame buffer as
+Note that this mode uses twice as many DMAs to the frame buffer as
 the normal mode.
 This is because each scanline of the
 previous image must be read from the framebuffer,
-the overlay portions of the new image written on top,
+the overlay portions of the new image must be written on top,
 and the composite scanline must be written back to the framebuffer.</para>
   </listitem>
   </varlistentry>
