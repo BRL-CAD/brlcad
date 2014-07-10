@@ -25,8 +25,6 @@
  */
 
 
-
-
 #ifdef OBJ_BREP
 
 #include "conv3dm-g.hpp"
@@ -50,12 +48,8 @@
 #include <stdexcept>
 
 
-
-
 namespace
 {
-
-
 
 
 static const std::string ROOT_UUID = "00000000-0000-0000-0000-000000000000";
@@ -80,16 +74,12 @@ static struct _InitOpenNURBS {
 } _init_opennurbs;
 
 
-
-
 static inline std::string
 UUIDstr(const ON_UUID &uuid)
 {
     char buf[UUID_LEN];
     return ON_UuidToString(uuid, buf);
 }
-
-
 
 
 static inline std::string
@@ -100,8 +90,6 @@ w2string(const ON_wString &source)
     else
 	return "";
 }
-
-
 
 
 // used for checking ON_SimpleArray::At(),
@@ -116,17 +104,17 @@ static inline T &ref(T *ptr)
 }
 
 
-
-
-// according to openNURBS documentation,
-// their own ON_CreateUuid() only works on Windows
+// according to openNURBS documentation, their own ON_CreateUuid()
+// only works on Windows, but the implementation shows it's also
+// implemented for XCode builds.  when it fails, we pretend to make a
+// uuid.  FIXME: this is a great candidate for a bu_uuid() function
+// (but with real uuid behavior).
 static ON_UUID
 generate_uuid()
 {
     ON_UUID result;
     if (ON_CreateUuid(result))
 	return result;
-
 
     // sufficient for our use here, but
     // officially UUIDv4 also requires certain bits to be set
@@ -139,12 +127,10 @@ generate_uuid()
 
     for (int i = 0; i < 8; ++i)
 	result.Data4[i] = static_cast<unsigned char>(drand48() *
-			  std::numeric_limits<unsigned char>::max());
+						     std::numeric_limits<unsigned char>::max());
 
     return result;
 }
-
-
 
 
 static bool
@@ -157,8 +143,6 @@ is_toplevel(const ON_Layer &layer)
 }
 
 
-
-
 static std::string
 strbasename(const std::string &path)
 {
@@ -166,8 +150,6 @@ strbasename(const std::string &path)
     bu_basename(&buf[0], path.c_str());
     return &buf[0];
 }
-
-
 
 
 static std::string
@@ -187,8 +169,6 @@ unique_name(std::map<std::string, int> &count_map,
 }
 
 
-
-
 static void
 xform2mat_t(const ON_Xform &source, mat_t dest)
 {
@@ -197,8 +177,6 @@ xform2mat_t(const ON_Xform &source, mat_t dest)
 	for (int col = 0; col < dmax; ++col)
 	    dest[row*dmax + col] = source[row][col];
 }
-
-
 
 
 static std::string
@@ -210,7 +188,7 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
     while (bu_file_exists(path.c_str(), NULL)) {
 	std::ostringstream ss;
 	ss << dir_path << BU_DIR_SEPARATOR << "extracted_" <<
-	   ++counter << "_" << filename;
+	    ++counter << "_" << filename;
 
 	path = ss.str();
     }
@@ -225,8 +203,6 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
 }
 
 
-
-
 static void
 load_pix(const std::string &path, int width, int height)
 {
@@ -239,8 +215,6 @@ load_pix(const std::string &path, int width, int height)
     } else
 	throw std::runtime_error("icv_read() failed");
 }
-
-
 
 
 static std::string
@@ -274,17 +248,11 @@ clean_name(const std::string &input)
 }
 
 
-
-
 }
-
-
 
 
 namespace conv3dm
 {
-
-
 
 
 class RhinoConverter::Color
@@ -309,8 +277,6 @@ private:
 };
 
 
-
-
 struct RhinoConverter::ModelObject {
     std::string m_name;
     std::vector<std::string> m_children;
@@ -324,8 +290,6 @@ struct RhinoConverter::ModelObject {
 };
 
 
-
-
 RhinoConverter::Color
 RhinoConverter::Color::random()
 {
@@ -337,14 +301,10 @@ RhinoConverter::Color::random()
 }
 
 
-
-
 RhinoConverter::Color::Color()
 {
     set_rgb(0, 0, 0);
 }
-
-
 
 
 RhinoConverter::Color::Color(int red, int green, int blue)
@@ -353,24 +313,19 @@ RhinoConverter::Color::Color(int red, int green, int blue)
 }
 
 
-
 RhinoConverter::Color::Color(const ON_Color &src)
 {
     set_rgb(src.Red(), src.Green(), src.Blue());
 }
 
 
-
-
 bool
 RhinoConverter::Color::operator==(const Color &rhs) const
 {
     return m_rgb[0] == rhs.m_rgb[0]
-	   && m_rgb[1] == rhs.m_rgb[1]
-	   && m_rgb[2] == rhs.m_rgb[2];
+	&& m_rgb[1] == rhs.m_rgb[1]
+	&& m_rgb[2] == rhs.m_rgb[2];
 }
-
-
 
 
 const unsigned char *
@@ -378,8 +333,6 @@ RhinoConverter::Color::get_rgb() const
 {
     return m_rgb;
 }
-
-
 
 
 void
@@ -394,8 +347,6 @@ RhinoConverter::Color::set_rgb(int red, int green, int blue)
     m_rgb[1] = static_cast<unsigned char>(green);
     m_rgb[2] = static_cast<unsigned char>(blue);
 }
-
-
 
 
 RhinoConverter::RhinoConverter(const std::string &output_path,
@@ -422,14 +373,10 @@ RhinoConverter::RhinoConverter(const std::string &output_path,
 }
 
 
-
-
 RhinoConverter::~RhinoConverter()
 {
     wdb_close(m_db);
 }
-
-
 
 
 void
@@ -464,8 +411,6 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 }
 
 
-
-
 void
 RhinoConverter::clean_model()
 {
@@ -488,8 +433,6 @@ RhinoConverter::clean_model()
 	    m_log->Print("WARNING: Repair unsuccessful, model is still NOT valid.\n");
     }
 }
-
-
 
 
 void
@@ -562,8 +505,6 @@ RhinoConverter::map_uuid_names()
 }
 
 
-
-
 void
 RhinoConverter::create_all_bitmaps()
 {
@@ -578,8 +519,6 @@ RhinoConverter::create_all_bitmaps()
 	create_bitmap(bitmap);
     }
 }
-
-
 
 
 void
@@ -613,8 +552,6 @@ RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 }
 
 
-
-
 void
 RhinoConverter::nest_all_layers()
 {
@@ -626,8 +563,6 @@ RhinoConverter::nest_all_layers()
 	m_obj_map.at(parent_layer_uuid).m_children.push_back(layer_uuid);
     }
 }
-
-
 
 
 void
@@ -649,8 +584,6 @@ RhinoConverter::create_all_layers()
     // create root layer
     create_layer(ON_Layer());
 }
-
-
 
 
 void
@@ -691,8 +624,6 @@ RhinoConverter::create_layer(const ON_Layer &layer)
 }
 
 
-
-
 void
 RhinoConverter::create_all_idefs()
 {
@@ -707,8 +638,6 @@ RhinoConverter::create_all_idefs()
 	create_idef(idef);
     }
 }
-
-
 
 
 void
@@ -729,8 +658,6 @@ RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
 	m_obj_map.at(UUIDstr(idef.m_uuid)).m_name;
     mk_lfcomb(m_db, idef_name.c_str(), &members, false);
 }
-
-
 
 
 void
@@ -763,8 +690,6 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
 	UUIDstr(ref(m_model->m_layer_table.At(iref_attrs.m_layer_index)).m_layer_id);
     m_obj_map.at(parent_uuid).m_children.push_back(iref_uuid);
 }
-
-
 
 
 RhinoConverter::Color
@@ -801,8 +726,6 @@ RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs) const
 }
 
 
-
-
 std::pair<std::string, std::string>
 RhinoConverter::get_shader(int index) const
 {
@@ -825,8 +748,6 @@ RhinoConverter::get_shader(int index) const
 
     return std::make_pair(DEFAULT_SHADER.first, args.str());
 }
-
-
 
 
 void
@@ -872,8 +793,6 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
 }
 
 
-
-
 void
 RhinoConverter::create_brep(const ON_Brep &brep,
 			    const ON_3dmObjectAttributes &brep_attrs)
@@ -887,8 +806,6 @@ RhinoConverter::create_brep(const ON_Brep &brep,
     mk_brep(m_db, brep_name.c_str(), const_cast<ON_Brep *>(&brep));
     create_geom_comb(brep_attrs);
 }
-
-
 
 
 void
@@ -994,8 +911,6 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 }
 
 
-
-
 void
 RhinoConverter::create_all_geometry()
 {
@@ -1020,8 +935,6 @@ RhinoConverter::create_all_geometry()
 	    m_log->Print("WARNING: Skipping non-Geometry entity '%s'\n", geom_name.c_str());
     }
 }
-
-
 
 
 void
@@ -1082,16 +995,10 @@ RhinoConverter::create_geometry(const ON_Geometry *geom,
 }
 
 
-
-
 }
 
 
-
-
 #endif //OBJ_BREP
-
-
 
 
 /*
