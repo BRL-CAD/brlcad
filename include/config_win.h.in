@@ -98,6 +98,12 @@
 #define YY_NO_UNISTD_H		1
 #define YYTOKENTYPE		1
 
+/* it we're compiling c++ sources, there's a possibility that we'll be
+ * including libc++ headers (e.g., iostream) where these underscore IO
+ * function hacks become counterproductive.
+ */
+#ifndef __cplusplus
+
 /*
  * functions declared in io.h
  */
@@ -123,6 +129,8 @@
 /* #define tell _tell */
 #define umask _umask
 #define write _write
+
+#endif /* __cplusplus */
 
 /*
  * other functions declared elsewhere (many in stdio.h)

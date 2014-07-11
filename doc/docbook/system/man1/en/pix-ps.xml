@@ -72,20 +72,20 @@ selects landscape mode, i.e. rotates the output image by ninety degrees.</para>
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
 <para>pix-ps -c image.pix &gt; image.ps</para>
 
-<para>Produces a 6.75 inch PostScript file from an 512x512 input image
+<para>Produces a 6.75 inch PostScript file from a 512x512 input image
 and centers it on an 8.5 x 11 inch page.</para>
 
 
 <para>pix-ps -e -w 1024 -n 768 image.pix &gt; image.ps</para>
 
 <para>Takes the file image.pix which has the dimensions of 1024 pixels wide
-by 768 pixel high, and produces an Encapsulated Postscript version
+by 768 pixels high, and produces an Encapsulated Postscript version
 of it.</para>
 
 
-<para>pix-ps -L -c -W 5.2 &lt; image.pix &gt; image.ps</para>
+<para>pix-ps -L -c -S 5.2 &lt; image.pix &gt; image.ps</para>
 
-<para>Makes a PostScript file of the (assumed 512 square) image, with
+<para>Makes a PostScript file of the (assumed 512x512) image, with
 the output image 5.2 inches square, in landscape mode, centered
 on an 8.5 x 11 inch page.</para>
 </refsect1>
