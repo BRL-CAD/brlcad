@@ -30,23 +30,9 @@
 #include "common.h"
 
 #include <map>
-#include <memory>
 #include <string>
-#include <vector>
 
-
-class ONX_Model;
-class ON_TextLog;
-class ON_InstanceDefinition;
-class ON_Brep;
-class ON_3dmObjectAttributes;
-class ON_Geometry;
-class ON_InstanceRef;
-class ON_Layer;
-class ON_Material;
-class ON_Bitmap;
-class ON_Mesh;
-struct rt_wdb;
+#include "wdb.h"
 
 
 namespace conv3dm
@@ -69,6 +55,11 @@ public:
 private:
     class Color;
     struct ModelObject;
+
+    struct UuidCompare {
+	bool operator()(const ON_UUID &l, const ON_UUID &r);
+    };
+
 
     RhinoConverter(const RhinoConverter &source);
     RhinoConverter &operator=(const RhinoConverter &source);
@@ -107,10 +98,10 @@ private:
     bool m_use_uuidnames;
     bool m_random_colors;
     std::string m_output_dirname;
-    std::map<std::string, ModelObject> m_obj_map;
+    std::map<ON_UUID, ModelObject, UuidCompare> m_obj_map;
     std::map<std::string, int> m_name_count_map;
-    std::auto_ptr<ON_TextLog> m_log;
-    std::auto_ptr<ONX_Model> m_model;
+    ON_TextLog m_log;
+    ONX_Model m_model;
     rt_wdb *m_db;
 };
 
