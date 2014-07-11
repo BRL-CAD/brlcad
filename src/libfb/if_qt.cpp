@@ -275,6 +275,13 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
     return 0;
 }
 
+int
+_qt_open_existing(FBIO *UNUSED(ifp))
+{
+    fb_log("open_existing\n");
+    return 0;
+}
+
 
 HIDDEN int
 qt_close(FBIO *ifp)

@@ -535,7 +535,7 @@ main(int argc, char **argv)
 	    regions_tried, regions_converted, percent);
 
     if (suppliedname)
-    	printf("Output file name: %s\n",out_file);
+	printf("Output file name: %s\n",out_file);
     else
 	printf("Output file name (default): %s\n",out_file);
 

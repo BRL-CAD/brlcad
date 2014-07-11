@@ -1,14 +1,14 @@
-/*                         C O N V 3 D M - G . H
+/*                   C O N V 3 D M - G . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
- * This program is free software; you can redistribute it and/or
+ * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
+ * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
@@ -19,46 +19,36 @@
  */
 /** @file conv3dm-g.cpp
  *
- * Program to convert a Rhino model (in a .3dm file) to a BRL-CAD .g
- * file.
+ * Library for conversion of Rhino models (in .3dm files) to BRL-CAD databases.
  *
  */
 
 
-
-
-#include "common.h"
-
-
 #ifdef OBJ_BREP
 
-#include "conv3dm-g.hpp"
+/* interface header */
+#include "conv3dm-g.hpp" // includes common.h
 
+/* system headers */
+#include <cctype> // for isalnum()
 #include <limits>
 #include <sstream>
 #include <stdexcept>
 
-
+/* implementation headers */
 #include "bu/getopt.h"
 #include "icv.h"
 #include "vmath.h"
 #include "wdb.h"
 
 
-
-
 namespace
 {
 
 
-
-
-static const std::string ROOT_UUID = "00000000-0000-0000-0000-000000000000";
+static const ON_UUID &ROOT_UUID = ON_nil_uuid;
 static const std::string DEFAULT_NAME = "noname";
 static const std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
-
-/* UUID buffers must be >= 37 chars per openNURBS API */
-static const std::size_t UUID_LEN = 37;
 
 
 static struct _InitOpenNURBS {
@@ -67,7 +57,6 @@ static struct _InitOpenNURBS {
 	ON::Begin();
     }
 
-
     ~_InitOpenNURBS()
     {
 	ON::End();
@@ -75,16 +64,15 @@ static struct _InitOpenNURBS {
 } _init_opennurbs;
 
 
-
-
 static inline std::string
 UUIDstr(const ON_UUID &uuid)
 {
+    // UUID buffers must be >= 37 chars per openNURBS API
+    const std::size_t UUID_LEN = 37;
+
     char buf[UUID_LEN];
     return ON_UuidToString(uuid, buf);
 }
-
-
 
 
 static inline std::string
@@ -97,12 +85,10 @@ w2string(const ON_wString &source)
 }
 
 
-
-
-// used for checking existence with ON_SimpleArray::At()
+// used for checking ON_SimpleArray::At(),
 // when accessing ONX_Model objects referenced by index
 template <typename T>
-inline T &ref(T *ptr)
+static inline T &ref(T *ptr)
 {
     if (!ptr)
 	throw std::out_of_range("invalid index");
@@ -111,17 +97,38 @@ inline T &ref(T *ptr)
 }
 
 
+template <typename T, typename R, R(*Destructor)(T*)>
+struct AutoDestroyer {
+    AutoDestroyer() : ptr(NULL) {}
+    AutoDestroyer(T *vptr) : ptr(vptr) {}
 
 
-// according to openNURBS documentation,
-// their own ON_CreateUUID() only works on Windows
+    ~AutoDestroyer()
+    {
+	if (ptr) Destructor(ptr);
+    }
+
+
+    T *ptr;
+
+
+private:
+    AutoDestroyer(const AutoDestroyer &);
+    AutoDestroyer &operator=(const AutoDestroyer &);
+};
+
+
+// according to openNURBS documentation, their own ON_CreateUuid()
+// only works on Windows, but the implementation shows it's also
+// implemented for XCode builds.  when it fails, we pretend to make a
+// uuid.  FIXME: this is a great candidate for a bu_uuid() function
+// (but with real uuid behavior).
 static ON_UUID
 generate_uuid()
 {
     ON_UUID result;
     if (ON_CreateUuid(result))
 	return result;
-
 
     // sufficient for our use here, but
     // officially UUIDv4 also requires certain bits to be set
@@ -140,32 +147,20 @@ generate_uuid()
 }
 
 
-
-
-static bool
+static inline bool
 is_toplevel(const ON_Layer &layer)
 {
-    const std::string layer_uuid = UUIDstr(layer.m_layer_id);
-    const std::string parent_uuid = UUIDstr(layer.m_parent_layer_id);
-
-    return (parent_uuid == ROOT_UUID) && (layer_uuid != ROOT_UUID);
+    return (layer.m_parent_layer_id == ROOT_UUID) && (layer.m_layer_id != ROOT_UUID);
 }
-
-
 
 
 static std::string
-basename(const std::string &path)
+strbasename(const std::string &path)
 {
-    char *buf = new char[path.size() + 1];
-    bu_basename(buf, path.c_str());
-    std::string result = buf;
-    delete[] buf;
-
-    return result;
+    std::vector<char> buf(path.size() + 1);
+    bu_basename(&buf[0], path.c_str());
+    return &buf[0];
 }
-
-
 
 
 static std::string
@@ -185,8 +180,6 @@ unique_name(std::map<std::string, int> &count_map,
 }
 
 
-
-
 static void
 xform2mat_t(const ON_Xform &source, mat_t dest)
 {
@@ -195,8 +188,6 @@ xform2mat_t(const ON_Xform &source, mat_t dest)
 	for (int col = 0; col < dmax; ++col)
 	    dest[row*dmax + col] = source[row][col];
 }
-
-
 
 
 static std::string
@@ -216,99 +207,63 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
     std::ofstream file(path.c_str(), std::ofstream::binary);
     file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
     file.write(static_cast<const char *>(bitmap.m_buffer),
-	       bitmap.m_sizeof_buffer);
+	       static_cast<std::streamsize>(bitmap.m_sizeof_buffer));
     file.close();
 
     return path;
 }
 
 
-
-
-void
+static void
 load_pix(const std::string &path, int width, int height)
 {
     char buf[BUFSIZ]; // libicv currently requires BUFSIZ
     ICV_IMAGE_FORMAT format = icv_guess_file_format(path.c_str(), buf);
 
-    if (icv_image_t *image = icv_read(path.c_str(), format, width, height)) {
+    AutoDestroyer<icv_image_t, int, icv_destroy> image(icv_read(path.c_str(), format, width, height));
+    if (image.ptr) {
 	// TODO import the image data after adding support to libicv
-	icv_destroy(image);
     } else
 	throw std::runtime_error("icv_read() failed");
 }
 
 
-
-
-// Removes all leading and trailing non alpha-numeric characters,
-// then replaces all remaining non alpha-numeric characters with
-// the '_' character. The allow string is an exception list where
-// these characters are allowed, but not leading or trailing, in
-// the name.
 static std::string
-CleanName(ON_wString name)
+clean_name(const std::string &input)
 {
-    ON_wString allow(".-_");
-    ON_wString new_name;
-    bool was_cleaned = false;
-
-    bool found_first = false;
-    int idx_first = 0, idx_last = 0;
-
-    for (int j = 0; j < name.Length(); j++) {
-	wchar_t c = name.GetAt(j);
-
-	bool ok_char = false;
-	if (isalnum(c)) {
-	    if (!found_first) {
-		idx_first = idx_last = j;
-		found_first = true;
-	    } else {
-		idx_last = j;
-	    }
-	    ok_char = true;
-	} else {
-	    for (int k = 0 ; k < allow.Length() ; k++) {
-		if (c == allow.GetAt(k)) {
-		    ok_char = true;
-		    break;
-		}
-	    }
-	}
-	if (!ok_char) {
-	    c = L'_';
-	    was_cleaned = true;
-	}
-	new_name += c;
-    }
-    if (idx_first != 0 || name.Length() != ((idx_last - idx_first) + 1)) {
-	new_name = new_name.Mid(idx_first, (idx_last - idx_first) + 1);
-	was_cleaned = true;
-    }
-    if (was_cleaned) {
-	name.Destroy();
-	name = new_name;
-    }
-
-    if (name)
-	return w2string(name);
-    else
+    if (input.empty())
 	return DEFAULT_NAME;
+
+    std::ostringstream ss;
+    int index = -1;
+    for (std::string::const_iterator it = input.begin();
+	 it != input.end(); ++it) {
+	++index;
+	switch (*it) {
+	    case '.':
+	    case '-':
+	    case '_':
+		ss.put(index > 0 ? *it : '_');
+		break;
+
+
+	    default:
+		if (std::isalnum(*it))
+		    ss.put(*it);
+		else
+		    ss.put('_');
+	}
+    }
+
+    return ss.str();
 }
 
 
-
-
 }
-
-
 
 
 namespace conv3dm
 {
-
-
 
 
 class RhinoConverter::Color
@@ -318,7 +273,7 @@ public:
 
 
     Color();
-    Color(int red, int green, int blue);
+    Color(unsigned char red, unsigned char green, unsigned char blue);
     Color(const ON_Color &src);
 
     bool operator==(const Color &rhs) const;
@@ -327,63 +282,60 @@ public:
 
 
 private:
-    void set_rgb(int red, int green, int blue);
-
     unsigned char m_rgb[3];
 };
-
-
 
 
 struct RhinoConverter::ModelObject {
     std::string m_name;
     std::vector<std::string> m_children;
-    bool is_in_idef;
+    bool m_idef_member;
 
     ModelObject() :
 	m_name(),
 	m_children(),
-	is_in_idef(false)
+	m_idef_member(false)
     {}
 };
-
-
 
 
 RhinoConverter::Color
 RhinoConverter::Color::random()
 {
-    int red = static_cast<int>(255 * drand48());
-    int green = static_cast<int>(255 * drand48());
-    int blue = static_cast<int>(255 * drand48());
+    unsigned char red = static_cast<unsigned char>(255 * drand48());
+    unsigned char green = static_cast<unsigned char>(255 * drand48());
+    unsigned char blue = static_cast<unsigned char>(255 * drand48());
 
     return Color(red, green, blue);
 }
 
 
-
-
 RhinoConverter::Color::Color()
 {
-    set_rgb(0, 0, 0);
+    m_rgb[0] = m_rgb[1] = m_rgb[2] = 0;
 }
 
 
-
-
-RhinoConverter::Color::Color(int red, int green, int blue)
+RhinoConverter::Color::Color(unsigned char red, unsigned char green,
+			     unsigned char blue)
 {
-    set_rgb(red, green, blue);
+    m_rgb[0] = red;
+    m_rgb[1] = green;
+    m_rgb[2] = blue;
 }
-
 
 
 RhinoConverter::Color::Color(const ON_Color &src)
 {
-    set_rgb(src.Red(), src.Green(), src.Blue());
+    if (src.Red() < 0 || src.Red() > 255
+	|| src.Green() < 0 || src.Green() > 255
+	|| src.Blue() < 0 || src.Blue() > 255)
+	throw std::invalid_argument("invalid ON_Color");
+
+    m_rgb[0] = static_cast<unsigned char>(src.Red());
+    m_rgb[1] = static_cast<unsigned char>(src.Green());
+    m_rgb[2] = static_cast<unsigned char>(src.Blue());
 }
-
-
 
 
 bool
@@ -395,31 +347,11 @@ RhinoConverter::Color::operator==(const Color &rhs) const
 }
 
 
-
-
 const unsigned char *
 RhinoConverter::Color::get_rgb() const
 {
     return m_rgb;
 }
-
-
-
-
-void
-RhinoConverter::Color::set_rgb(int red, int green, int blue)
-{
-    if (red < 0 || red > 255
-	|| green < 0 || green > 255
-	|| blue < 0 || blue > 255)
-	throw std::invalid_argument("invalid color");
-
-    m_rgb[0] = static_cast<unsigned char>(red);
-    m_rgb[1] = static_cast<unsigned char>(green);
-    m_rgb[2] = static_cast<unsigned char>(blue);
-}
-
-
 
 
 RhinoConverter::RhinoConverter(const std::string &output_path,
@@ -446,14 +378,10 @@ RhinoConverter::RhinoConverter(const std::string &output_path,
 }
 
 
-
-
 RhinoConverter::~RhinoConverter()
 {
     wdb_close(m_db);
 }
-
-
 
 
 void
@@ -474,7 +402,7 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 	m_log->Print("Number of NURBS objects read: %d\n\n",
 		     m_model->m_object_table.Count());
 
-    m_obj_map[ROOT_UUID].m_name = basename(path);
+    m_obj_map[UUIDstr(ROOT_UUID)].m_name = strbasename(path);
 
     map_uuid_names();
     create_all_bitmaps();
@@ -486,8 +414,6 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 
     m_log->Print("Done.\n");
 }
-
-
 
 
 void
@@ -514,26 +440,24 @@ RhinoConverter::clean_model()
 }
 
 
-
-
 void
 RhinoConverter::map_uuid_names()
 {
     for (int i = 0; i < m_model->m_object_table.Count(); ++i) {
-	const ON_Object *object = m_model->m_object_table[i].m_object;
-	const ON_3dmObjectAttributes &myAttributes =
+	const ON_Object *geom = m_model->m_object_table[i].m_object;
+	const ON_3dmObjectAttributes &geom_attrs =
 	    m_model->m_object_table[i].m_attributes;
-	const std::string obj_uuid = UUIDstr(myAttributes.m_uuid);
+	const std::string geom_uuid = UUIDstr(geom_attrs.m_uuid);
 
 	std::string suffix = ".s";
-	if (object->ObjectType() == ON::instance_reference)
+	if (geom->ObjectType() == ON::instance_reference)
 	    suffix = ".c";
 
 	if (m_use_uuidnames)
-	    m_obj_map[obj_uuid].m_name = obj_uuid + suffix;
+	    m_obj_map[geom_uuid].m_name = geom_uuid + suffix;
 	else
-	    m_obj_map[obj_uuid].m_name =
-		unique_name(m_name_count_map, CleanName(myAttributes.m_name), suffix);
+	    m_obj_map[geom_uuid].m_name =
+		unique_name(m_name_count_map, clean_name(w2string(geom_attrs.m_name)), suffix);
 
     }
 
@@ -546,7 +470,7 @@ RhinoConverter::map_uuid_names()
 	    m_obj_map[idef_uuid].m_name = idef_uuid + ".c";
 	else
 	    m_obj_map[idef_uuid].m_name =
-		unique_name(m_name_count_map, CleanName(idef.Name()), ".c");
+		unique_name(m_name_count_map, clean_name(w2string(idef.Name())), ".c");
     }
 
 
@@ -562,7 +486,7 @@ RhinoConverter::map_uuid_names()
 	    m_obj_map[layer_uuid].m_name = layer_uuid + suffix;
 	else
 	    m_obj_map[layer_uuid].m_name =
-		unique_name(m_name_count_map, CleanName(layer.m_name), suffix);
+		unique_name(m_name_count_map, clean_name(w2string(layer.m_name)), suffix);
     }
 
 
@@ -575,17 +499,15 @@ RhinoConverter::map_uuid_names()
 	if (m_use_uuidnames)
 	    m_obj_map[bitmap_uuid].m_name = bitmap_uuid + ".pix";
 	else {
-	    std::string bitmap_name = CleanName(bitmap->m_bitmap_name);
+	    std::string bitmap_name = clean_name(w2string(bitmap->m_bitmap_name));
 	    if (bitmap_name == DEFAULT_NAME)
-		bitmap_name = CleanName(bitmap->m_bitmap_filename);
+		bitmap_name = clean_name(strbasename(w2string(bitmap->m_bitmap_filename)));
 
 	    m_obj_map[bitmap_uuid].m_name =
 		unique_name(m_name_count_map, bitmap_name, ".pix");
 	}
     }
 }
-
-
 
 
 void
@@ -604,13 +526,11 @@ RhinoConverter::create_all_bitmaps()
 }
 
 
-
-
 void
 RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 {
     if (const ON_EmbeddedBitmap *bitmap = ON_EmbeddedBitmap::Cast(bmap)) {
-	const std::string filename = basename(w2string(bitmap->m_bitmap_filename));
+	const std::string filename = strbasename(w2string(bitmap->m_bitmap_filename));
 	const std::string path = extract_bitmap(m_output_dirname, filename, *bitmap);
 
 	try {
@@ -637,8 +557,6 @@ RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 }
 
 
-
-
 void
 RhinoConverter::nest_all_layers()
 {
@@ -650,8 +568,6 @@ RhinoConverter::nest_all_layers()
 	m_obj_map.at(parent_layer_uuid).m_children.push_back(layer_uuid);
     }
 }
-
-
 
 
 void
@@ -675,8 +591,6 @@ RhinoConverter::create_all_layers()
 }
 
 
-
-
 void
 RhinoConverter::create_layer(const ON_Layer &layer)
 {
@@ -689,7 +603,7 @@ RhinoConverter::create_layer(const ON_Layer &layer)
     for (std::vector<std::string>::const_iterator it = layer_obj.m_children.begin();
 	 it != layer_obj.m_children.end(); ++it) {
 	const ModelObject &obj = m_obj_map.at(*it);
-	if (obj.is_in_idef) continue;
+	if (obj.m_idef_member) continue;
 	mk_addmember(obj.m_name.c_str(), &members.l, NULL, WMOP_UNION);
     }
 
@@ -708,12 +622,11 @@ RhinoConverter::create_layer(const ON_Layer &layer)
 	color = Color(255, 0, 0);
     }
 
+    const bool do_inherit = false;
     mk_comb(m_db, layer_obj.m_name.c_str(), &members.l, is_region,
 	    shader.first.c_str(), shader.second.c_str(), color.get_rgb(),
-	    0, 0, 0, 0, false, false, false);
+	    0, 0, 0, 0, do_inherit, false, false);
 }
-
-
 
 
 void
@@ -732,8 +645,6 @@ RhinoConverter::create_all_idefs()
 }
 
 
-
-
 void
 RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
 {
@@ -745,15 +656,13 @@ RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
 	ModelObject &member_obj = m_obj_map.at(member_uuid);
 
 	mk_addmember(member_obj.m_name.c_str(), &members.l, NULL, WMOP_UNION);
-	member_obj.is_in_idef = true;
+	member_obj.m_idef_member = true;
     }
 
     const std::string &idef_name =
 	m_obj_map.at(UUIDstr(idef.m_uuid)).m_name;
     mk_lfcomb(m_db, idef_name.c_str(), &members, false);
 }
-
-
 
 
 void
@@ -776,17 +685,16 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
     BU_LIST_INIT(&members.l);
     mk_addmember(member_name.c_str(), &members.l, matrix, WMOP_UNION);
 
+    const bool do_inherit = false;
     mk_comb(m_db, iref_name.c_str(), &members.l, false,
 	    shader.first.c_str(), shader.second.c_str(),
 	    get_color(iref_attrs).get_rgb(),
-	    0, 0, 0, 0, false, false, false);
+	    0, 0, 0, 0, do_inherit, false, false);
 
     const std::string parent_uuid =
 	UUIDstr(ref(m_model->m_layer_table.At(iref_attrs.m_layer_index)).m_layer_id);
     m_obj_map.at(parent_uuid).m_children.push_back(iref_uuid);
 }
-
-
 
 
 RhinoConverter::Color
@@ -811,8 +719,7 @@ RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs) const
 		break;
 
 	    default:
-		m_log->Print("ERROR: unknown color source\n");
-		return Color(255, 0, 0);
+		throw std::logic_error("unknown color source");
 	}
 
 
@@ -822,8 +729,6 @@ RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs) const
     } else
 	return color;
 }
-
-
 
 
 std::pair<std::string, std::string>
@@ -850,8 +755,6 @@ RhinoConverter::get_shader(int index) const
 }
 
 
-
-
 void
 RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
 {
@@ -862,7 +765,7 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
     const std::string geom_uuid = UUIDstr(geom_attrs.m_uuid);
     const ModelObject &geom_obj = m_obj_map.at(geom_uuid);
 
-    if (geom_obj.is_in_idef || !is_toplevel(parent_layer)) {
+    if (geom_obj.m_idef_member || !is_toplevel(parent_layer)) {
 	m_obj_map.at(parent_layer_uuid).m_children.push_back(geom_uuid);
 	return;
     }
@@ -884,16 +787,15 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
     BU_LIST_INIT(&members.l);
     mk_addmember(geom_obj.m_name.c_str(), &members.l, NULL, WMOP_UNION);
 
+    const bool do_inherit = false;
     mk_comb(m_db, comb_name.c_str(), &members.l, false,
 	    shader.first.c_str(), shader.second.c_str(),
 	    get_color(geom_attrs).get_rgb(),
-	    0, 0, 0, 0, false, false, false);
+	    0, 0, 0, 0, do_inherit, false, false);
 
     m_obj_map[comb_uuid].m_name = comb_name;
     m_obj_map.at(parent_layer_uuid).m_children.push_back(comb_uuid);
 }
-
-
 
 
 void
@@ -911,8 +813,6 @@ RhinoConverter::create_brep(const ON_Brep &brep,
 }
 
 
-
-
 void
 RhinoConverter::create_mesh(ON_Mesh mesh,
 			    const ON_3dmObjectAttributes &mesh_attrs)
@@ -924,9 +824,31 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 	m_log->Print("Creating Mesh '%s'\n", mesh_name.c_str());
 
     mesh.ConvertQuadsToTriangles();
+    mesh.CombineIdenticalVertices();
+    mesh.Compact();
+    mesh.UnitizeFaceNormals();
 
-    const int num_vertices = mesh.m_V.Count();
-    const int num_faces = mesh.m_F.Count();
+    const std::size_t num_vertices = static_cast<std::size_t>(mesh.m_V.Count());
+    const std::size_t num_faces = static_cast<std::size_t>(mesh.m_F.Count());
+    unsigned char mode = mesh.IsSolid() ? RT_BOT_SOLID : RT_BOT_PLATE;
+
+    unsigned char orientation;
+    switch (mesh.SolidOrientation()) {
+	case 0:
+	    orientation = RT_BOT_UNORIENTED;
+	    break;
+
+	case 1:
+	    orientation = RT_BOT_CW;
+	    break;
+
+	case -1:
+	    orientation = RT_BOT_CCW;
+	    break;
+
+	default:
+	    throw std::logic_error("unknown orientation");
+    }
 
     if (num_vertices == 0 || num_faces == 0) {
 	m_log->Print("-- Mesh has no content; skipping...\n");
@@ -934,29 +856,65 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     }
 
     std::vector<fastf_t> vertices(num_vertices * 3);
-    for (int i = 0; i < num_vertices; ++i) {
-	const ON_3fPoint &point = mesh.m_V[i];
+    for (std::size_t i = 0; i < num_vertices; ++i) {
+	const ON_3fPoint &point = mesh.m_V[static_cast<int>(i)];
 	vertices[i * 3] = point.x;
 	vertices[i * 3 + 1] = point.y;
 	vertices[i * 3 + 2] = point.z;
     }
 
     std::vector<int> faces(num_faces * 3);
-    for (int i = 0; i < num_faces; ++i) {
-	const ON_MeshFace &face = mesh.m_F[i];
+    for (std::size_t i = 0; i < num_faces; ++i) {
+	const ON_MeshFace &face = mesh.m_F[static_cast<int>(i)];
 	faces[i * 3] = face.vi[0];
 	faces[i * 3 + 1] = face.vi[1];
 	faces[i * 3 + 2] = face.vi[2];
     }
 
-    mk_bot(m_db, mesh_name.c_str(), 0, 0, 0,
-	   num_vertices, num_faces, &vertices[0], &faces[0],
-	   NULL, NULL);
+    std::vector<fastf_t> thicknesses;
+
+
+    AutoDestroyer<bu_bitv, void, bu_bitv_free> mbitv;
+
+    if (mode == RT_BOT_PLATE) {
+	thicknesses.assign(num_faces, 2);
+	mbitv.ptr = bu_bitv_new(num_faces);
+    }
+
+    if (mesh.m_FN.Count() != mesh.m_F.Count()) {
+	int r = mk_bot(m_db, mesh_name.c_str(), mode, orientation, 0,
+		       num_vertices, num_faces, &vertices[0], &faces[0],
+		       thicknesses.empty() ? NULL : &thicknesses[0],
+		       mbitv.ptr);
+
+	if (r) throw std::runtime_error("mk_bot() failed");
+    } else {
+	std::vector<fastf_t> normals(num_faces * 3);
+	for (std::size_t i = 0; i < num_faces; ++i) {
+	    const ON_3fVector &vec = mesh.m_FN[static_cast<int>(i)];
+	    normals[i * 3] = vec.x;
+	    normals[i * 3 + 1] = vec.y;
+	    normals[i * 3 + 2] = vec.z;
+	}
+
+	std::vector<int> face_normals(num_faces * 3);
+	for (std::size_t i = 0; i < num_faces; ++i) {
+	    face_normals[i * 3] = i;
+	    face_normals[i * 3 + 1] = i;
+	    face_normals[i * 3 + 2] = i;
+	}
+
+	int r = mk_bot_w_normals(m_db, mesh_name.c_str(), mode, orientation,
+				 RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
+				 num_vertices, num_faces, &vertices[0], &faces[0],
+				 thicknesses.empty() ? NULL : &thicknesses[0],
+				 mbitv.ptr, num_faces, &normals[0], &face_normals[0]);
+
+	if (r) throw std::runtime_error("mk_bot_w_normals() failed");
+    }
 
     create_geom_comb(mesh_attrs);
 }
-
-
 
 
 void
@@ -985,8 +943,6 @@ RhinoConverter::create_all_geometry()
 }
 
 
-
-
 void
 RhinoConverter::create_geometry(const ON_Geometry *geom,
 				const ON_3dmObjectAttributes &geom_attrs)
@@ -1007,7 +963,6 @@ RhinoConverter::create_geometry(const ON_Geometry *geom,
 
 	create_mesh(*mesh, geom_attrs);
 
-	if (m_verbose_mode) mesh->Dump(*m_log);
     } else if (const ON_RevSurface *revsurf = ON_RevSurface::Cast(geom)) {
 	m_log->Print("-- Skipping: Type: ON_RevSurface\n");
 	if (m_verbose_mode) revsurf->Dump(*m_log);
@@ -1045,24 +1000,16 @@ RhinoConverter::create_geometry(const ON_Geometry *geom,
 }
 
 
-
-
 }
-
-
 
 
 #endif //OBJ_BREP
 
-
-
-
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C++
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
