@@ -1469,8 +1469,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	ON_Surface *north = NULL;
 	ON_Surface *south = NULL;
 
-	ON_BoundingBox box = localsurf->BoundingBox();
-
 	int dir = 1;
 	if (prev_knot) {
 	    split = localsurf->Split(dir, vsplit, south, north);
