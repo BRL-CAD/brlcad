@@ -162,9 +162,10 @@ plotsurfaceleafs(SurfaceTree* surf) {
 }
 
 
-void
+unsigned int
 plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
 {
+    register int cnt = 0;
     register struct bu_list *vhead;
     fastf_t min[3], max[3];
     std::list<BBNode*> leaves;
@@ -199,7 +200,7 @@ plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
 	BB_PLOT_VLIST(min, max);
     }
 
-    return;
+    return leaves.size();
 }
 
 
@@ -2328,15 +2329,34 @@ brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
     if (index == -1) {
 	for (index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace& face = brep->m_F[index];
+	    const ON_Surface *s = face.SurfaceOf();
+	    double surface_width,surface_height;
+	    if (s->GetSurfaceSize(&surface_width,&surface_height)) {
+		// reparameterization of the face's surface and transforms the "u"
+		// and "v" coordinates of all the face's parameter space trimming
+		// curves to minimize distortion in the map from parameter space to 3d..
+		face.SetDomain(0, 0.0, surface_width);
+		face.SetDomain(1, 0.0, surface_height);
+	    }
 	    SurfaceTree* st = new SurfaceTree(&face);
 	    plotsurfaceleafs(st, vbp, dim3d);
+	    bu_log("Face: %d contains %d SBBs",index,plotsurfaceleafs(st, vbp, dim3d));
 	}
     } else if (index < brep->m_F.Count()) {
 	ON_BrepFaceArray& faces = brep->m_F;
 	if (index < faces.Count()) {
 	    ON_BrepFace& face = faces[index];
+	    const ON_Surface *s = face.SurfaceOf();
+	    double surface_width,surface_height;
+	    if (s->GetSurfaceSize(&surface_width,&surface_height)) {
+		// reparameterization of the face's surface and transforms the "u"
+		// and "v" coordinates of all the face's parameter space trimming
+		// curves to minimize distortion in the map from parameter space to 3d..
+		face.SetDomain(0, 0.0, surface_width);
+		face.SetDomain(1, 0.0, surface_height);
+	    }
 	    SurfaceTree* st = new SurfaceTree(&face);
-	    plotsurfaceleafs(st, vbp, dim3d);
+	    bu_log("Face: %d contains %d SBBs",index,plotsurfaceleafs(st, vbp, dim3d));
 	}
     }
 
