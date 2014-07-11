@@ -3913,25 +3913,29 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	ON_BrepFace& face = brep->m_F[index];
 	const ON_Surface *surf = face.SurfaceOf();
 
-	if (surf->IsClosed(0) || surf->IsClosed(1)) {
-	    ON_SumSurface *sumsurf = const_cast<ON_SumSurface *> (ON_SumSurface::Cast(surf));
-	    if (sumsurf != NULL) {
-		SurfaceTree* st = new SurfaceTree(&face, true, 2);
-
-		plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
-
-		delete st;
-	    } else {
-		ON_RevSurface *revsurf = const_cast<ON_RevSurface *> (ON_RevSurface::Cast(surf));
-
-		if (revsurf != NULL) {
-		    SurfaceTree* st = new SurfaceTree(&face, true, 0);
+	if (surf != NULL) {
+	    if (surf->IsClosed(0) || surf->IsClosed(1)) {
+		ON_SumSurface *sumsurf = const_cast<ON_SumSurface *> (ON_SumSurface::Cast(surf));
+		if (sumsurf != NULL) {
+		    SurfaceTree* st = new SurfaceTree(&face, true, 2);
 
 		    plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
 
 		    delete st;
+		} else {
+		    ON_RevSurface *revsurf = const_cast<ON_RevSurface *> (ON_RevSurface::Cast(surf));
+
+		    if (revsurf != NULL) {
+			SurfaceTree* st = new SurfaceTree(&face, true, 0);
+
+			plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
+
+			delete st;
+		    }
 		}
 	    }
+	} else {
+	    bu_log("Surface index %d not defined.\n",index);
 	}
     }
 
@@ -4027,8 +4031,9 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 	fastf_t  max_dist = 0;
 #endif
 	for (int index = 0; index < brep->m_F.Count(); index++) {
-		ON_BrepFace *face = brep->Face(index);
-		const ON_Surface *s = face->SurfaceOf();
+	    ON_BrepFace *face = brep->Face(index);
+	    const ON_Surface *s = face->SurfaceOf();
+	    if (s) {
 		double surface_width,surface_height;
 		if (s->GetSurfaceSize(&surface_width,&surface_height)) {
 		    // reparameterization of the face's surface and transforms the "u"
@@ -4040,6 +4045,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 		    max_dist = sqrt(surface_width*surface_width + surface_height*surface_height) / 10.0;
 #endif
 		}
+	    }
 	}
 #ifdef DRAW_FACE
 	for (int index = 0; index < brep->m_E.Count(); index++) {
@@ -4054,13 +4060,19 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 	int plottype = 0;
 	int numpoints = -1;
 	for (int index = 0; index < brep->m_F.Count(); index++) {
-		ON_BrepFace& face = brep->m_F[index];
+	    ON_BrepFace& face = brep->m_F[index];
+	    const ON_Surface *s = face.SurfaceOf();
+
+	    if (s) {
 
 #ifdef DRAW_FACE
 		draw_face_CDT(vhead, face, ttol, tol, info, watertight, plottype, numpoints);
 #else
 		poly2tri_CDT(vhead, face, ttol, tol, info, watertight, plottype, numpoints);
 #endif
+	    } else {
+		bu_log("Error solid \"%s\" missing surface definition for Face(%d). Will skip this face when drawing.\n",solid_name,index);
+	    }
 	}
 #else
 	for (int index = 0; index < brep->m_F.Count(); index++) {
