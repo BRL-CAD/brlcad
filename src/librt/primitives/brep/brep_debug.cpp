@@ -2339,7 +2339,6 @@ brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
 		face.SetDomain(1, 0.0, surface_height);
 	    }
 	    SurfaceTree* st = new SurfaceTree(&face);
-	    plotsurfaceleafs(st, vbp, dim3d);
 	    bu_log("Face: %d contains %d SBBs",index,plotsurfaceleafs(st, vbp, dim3d));
 	}
     } else if (index < brep->m_F.Count()) {
