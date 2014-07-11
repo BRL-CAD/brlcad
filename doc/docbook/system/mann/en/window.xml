@@ -31,7 +31,7 @@
     libwdb to create a BRL-CAD database.  The windows are composed of two
     arb8s and four cylinders.   This program may be run interactively or
     the user may specify options on a command line.  If the user chooses to
-    run the program interactively he answers the questions as the program
+    run the program interactively, he answers the questions as the program
     prompts him.  Below are the options that can be used on the command line.
  </para>
 </refsection>
@@ -41,7 +41,7 @@
 
   <variablelist remap="TP">
     <varlistentry>
-      <term><option>-fname.g</option></term>
+      <term><option>-f </option><replaceable>name.g</replaceable></term>
       <listitem>
 	<para>
 	BRL-CAD file name.
@@ -49,15 +49,15 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-n#</option></term>
+      <term><option>-n #</option></term>
       <listitem>
 	<para>
-	 The number of windows to be created (must be less than or equal to 26.)
+	 The number of windows to be created (must be less than or equal to 26).
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-h#</option></term>
+      <term><option>-h #</option></term>
       <listitem>
 	<para>
 	 Height of window in millimeters.
@@ -65,7 +65,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-w#</option></term>
+      <term><option>-w #</option></term>
       <listitem>
 	<para>
 	 Width of window in millimeters.
@@ -73,7 +73,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-d#</option></term>
+      <term><option>-d #</option></term>
       <listitem>
 	<para>
 	 Depth of window in millimeters.
@@ -81,7 +81,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-r#</option></term>
+      <term><option>-r #</option></term>
       <listitem>
 	<para>
 	 Radius of the corner in millimeters.
