@@ -1222,22 +1222,28 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	curr = hits.begin();
 	while (curr != hits.end()) {
 	    brep_hit &curr_hit = *curr;
-	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
-		if (curr != hits.begin()) {
+	    if (curr != hits.begin()) {
+		if (curr_hit.hit == brep_hit::NEAR_MISS) {
 		    prev = curr;
 		    prev--;
 		    brep_hit &prev_hit = (*prev);
-		    if ((prev_hit.hit == brep_hit::NEAR_MISS) && (prev_hit.direction == curr_hit.direction)) {
-			//remove current miss
-			prev_hit.hit = brep_hit::CRACK_HIT;
-			curr=hits.erase(curr);
-			continue;
-		    } else if ((prev_hit.hit == brep_hit::NEAR_MISS) && (prev_hit.direction != curr_hit.direction)) {
-			//remove edge near miss
-			prev_hit.hit = brep_hit::CRACK_HIT;
-			(void)hits.erase(prev);
-			curr=hits.erase(curr);
-			continue;
+		    if (prev_hit.hit == brep_hit::NEAR_MISS) { // two near misses in a row
+			if (prev_hit.m_adj_face_index == curr_hit.face.m_face_index) {
+			    if (prev_hit.direction == curr_hit.direction) {
+				//remove current miss
+				prev_hit.hit = brep_hit::CRACK_HIT;
+				curr=hits.erase(curr);
+				continue;
+			    } else {
+				//remove both edge near misses
+				(void)hits.erase(prev);
+				curr=hits.erase(curr);
+				continue;
+			    }
+			} else {
+			    // not adjacent faces so remove first miss
+			    (void)hits.erase(prev);
+			}
 		    }
 		}
 	    }
