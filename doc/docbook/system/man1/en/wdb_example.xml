@@ -24,9 +24,10 @@
 
 
     <refsect1 xml:id="description"><title>DESCRIPTION</title>
-        <literallayout>The wdb_example program creates a BRL-CAD geometry database from C code. This database contains a sphere centered a 0,0,0, an rpp under it and a union of both objects.
-        Note that this is for writing a database and not modifying it. Currently, there is no API for modifying the database. Also note that the values in the database are stored in millimeters.
-        </literallayout>
+        <para>The wdb_example program creates a BRL-CAD geometry database from C code. This database contains a sphere centered at 0,0,0; an rpp under it; and a union of both objects.
+        </para>
+        <para>Note that this is for writing a database and not modifying it. Currently, there is no API for modifying the database. Also note that the values in the database are stored in millimeters.
+        </para>
     </refsect1>
 
     <refsect1 xml:id="examples">

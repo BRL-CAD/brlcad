@@ -61,8 +61,8 @@ before output will begin appearing.</para>
   <varlistentry>
   <term><option>-d</option></term>
   <listitem>
-<para>Debug option, provides verbose description of file structure and
-processes called, written on standard error.</para>
+<para>Debug option; provides verbose description of file structure and
+processes called; written on standard error.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -83,7 +83,7 @@ the normal mode, as the previous image must be read back into the host.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-b</option><replaceable>x</replaceable></term>
+  <term><option>-b </option><replaceable>x</replaceable></term>
   <listitem>
 <para>If the image is not being decoded in overlay mode, the background is
 normally set to the value recorded in the RLE file.
@@ -108,7 +108,7 @@ can be any of
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-p</option><replaceable>x y</replaceable></term>
+  <term><option>-p </option><replaceable>x y</replaceable></term>
   <listitem>
 <para>Reposition the image.
 The original lower left corner is positioned at
@@ -123,7 +123,7 @@ and it is repositioned, the framebuffer will be opened in
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-F framebuffer</option></term>
+  <term><option>-F framebuffer</option></term>
   <listitem>
 <para>indicates that the output should be sent to the indicated framebuffer.
 See
@@ -142,12 +142,10 @@ for more details on the specification of a framebuffer.</para>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
   <blockquote remap="RS">
-<para> orle-fb  truck.rle
-<!-- .br -->
- orle-fb  -Ot  text.rle
-<!-- .br -->
- orle-fb  -bG  &lt;car.rle
-  </para></blockquote> <!-- remap='RE' -->
+<para>orle-fb truck.rle</para>
+<para>orle-fb -Ot text.rle</para>
+<para>orle-fb -bG &lt;car.rle</para>
+ </blockquote> <!-- remap='RE' -->
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>

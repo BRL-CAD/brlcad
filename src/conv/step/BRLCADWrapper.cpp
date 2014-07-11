@@ -108,11 +108,70 @@ BRLCADWrapper::WriteSphere(double *center, double radius)
     return true;
 }
 
+
+/* This simple routine will replace diacritic characters(code >= 192) from the extended
+ * ASCII set with a specific mapping from the standard ASCII set. This code was copied
+ * and modified from a solution provided on stackoverflow.com at:
+ *     (http://stackoverflow.com/questions/14094621/)
+ */
+std::string
+BRLCADWrapper::ReplaceAccented( std::string &str ) {
+    std::string retStr = "";
+    const char *p = str.c_str();
+    while ( (*p)!=0 ) {
+        const char*
+        //   "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ"
+        tr = "AAAAAAECEEEEIIIIDNOOOOOx0UUUUYPsaaaaaaeceeeeiiiiOnooooo/0uuuuypy";
+        unsigned char ch = (*p);
+        if ( ch >=192 ) {
+            retStr += tr[ ch-192 ];
+        } else {
+            retStr += *p;
+        }
+        ++p;
+    }
+    return retStr;
+}
+
+
+/*
+ * Simplifying names for better behavior under our Tcl based tools. This routine
+ * replaces spaces and non-alphanumeric characters with underscores. It also replaces
+ * ASCII extended characters representing diacritics (code >= 192)  with specific
+ * mapped ASCII characters below ASCII code 128.
+ */
+std::string
+BRLCADWrapper::CleanBRLCADName(std::string &inname)
+{
+    std::string retStr = "";
+    std::string name = ReplaceAccented(inname);
+    char *cp;
+
+    for (cp = (char *)name.c_str(); *cp != '\0'; ++cp) {
+	if (*cp == '\'') {
+	    // remove non-printable
+	    continue;
+	}
+	if (*cp == ' ') {
+	    // replace spaces with underscores
+	    retStr += '_';
+	} else {
+	    if (!isalpha(*cp) && !isdigit(*cp)) {
+		// replace non-alphanumeric characters with underscore
+		retStr += '_';
+	    } else {
+		retStr += *cp;
+	    }
+	}
+    }
+
+    return retStr;
+}
+
+
 std::string
 BRLCADWrapper::GetBRLCADName(std::string &name)
 {
-    std::ostringstream str;
-    std::string strcnt;
     struct bu_vls obj_name = BU_VLS_INIT_ZERO;
     int len = 0;
     char *cp,*tp;
@@ -125,9 +184,19 @@ BRLCADWrapper::GetBRLCADName(std::string &name)
 	    else
 		break;
 	}
-	bu_vls_putc(&obj_name, *cp);
+	if (*cp == '\'') {
+	    // remove single quotes
+	    continue;
+	}
+	if (*cp == ' ') {
+	    // simply replace spaces with underscores
+	    bu_vls_putc(&obj_name, '_');
+	} else {
+	    bu_vls_putc(&obj_name, *cp);
+	}
     }
     bu_vls_putc(&obj_name, '\0');
+
     tp = (char *)((*cp == '\0') ? "" : cp + 1);
 
     do {
@@ -201,8 +270,6 @@ BRLCADWrapper::getRandomColor(unsigned char *rgb)
 bool
 BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat)
 {
-    std::ostringstream str;
-    std::string strcnt;
     std::string sol = name + ".s";
     std::string reg = name;
 
