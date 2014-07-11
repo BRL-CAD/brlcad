@@ -30,7 +30,7 @@
     ending points of the different segments of wires along with the radius at each
     of these points.  Currently the program is limited to 10 segments.  This
     number may be changed by changing the variable MAXSEG.  MAXSEG may be no greater
-    than 100 with out changing other parts of the program.  The wires are composed
+    than 100 without changing other parts of the program.  The wires are composed
     of cones and spheres.  This program is designed to be run interactively.
  </para>
 </refsection>
@@ -75,7 +75,7 @@ Segment # 3:  (0.000000, 10.000000, -3.000000) 0.250000
   </example>
 
   <para>
-  In this example a wire of three segments is made.  These
+  In this example, a wire of three segments is made.  These
   segments  are  joined together with spheres.  All dimensions
   are in millimeters.
   </para>

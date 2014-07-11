@@ -1,14 +1,14 @@
-/*                         C O N V 3 D M - G . H
+/*                   C O N V 3 D M - G . H P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
- * This program is free software; you can redistribute it and/or
+ * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
+ * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
@@ -17,10 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file conv3dm-g.cpp
+/** @file conv3dm-g.hpp
  *
- * Program to convert a Rhino model (in a .3dm file) to a BRL-CAD .g
- * file.
+ * Library for conversion of Rhino models (in .3dm files) to BRL-CAD databases.
  *
  */
 
@@ -28,6 +27,7 @@
 #ifndef CONV3DM_G_H
 #define CONV3DM_G_H
 
+#include "common.h"
 
 #include <map>
 #include <memory>
@@ -120,15 +120,11 @@ private:
 
 #endif
 
-
-
-
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C++
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
