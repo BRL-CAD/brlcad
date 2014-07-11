@@ -30,6 +30,7 @@
 #include "common.h"
 
 #include <map>
+#include <set>
 #include <string>
 
 #include "wdb.h"
@@ -54,10 +55,27 @@ public:
 
 private:
     class Color;
-    struct ModelObject;
 
     struct UuidCompare {
-	bool operator()(const ON_UUID &l, const ON_UUID &r);
+	bool operator()(const ON_UUID &left, const ON_UUID &right) const;
+    };
+
+
+    class ObjectManager
+    {
+    public:
+	ObjectManager();
+
+	void add(const ON_UUID &uuid, const std::string &name);
+	void register_member(const ON_UUID &parent_uuid, const ON_UUID &member_uuid);
+	void mark_idef_member(const ON_UUID &uuid);
+
+	const std::string &get_name(const ON_UUID &uuid) const;
+	const std::set<ON_UUID, UuidCompare> &get_members(const ON_UUID &uuid) const;
+	bool is_idef_member(const ON_UUID &uuid) const;
+    private:
+	struct ModelObject;
+	std::map<ON_UUID, ModelObject, UuidCompare> m_obj_map;
     };
 
 
@@ -98,8 +116,8 @@ private:
     bool m_use_uuidnames;
     bool m_random_colors;
     std::string m_output_dirname;
-    std::map<ON_UUID, ModelObject, UuidCompare> m_obj_map;
     std::map<std::string, int> m_name_count_map;
+    ObjectManager m_objects;
     ON_TextLog m_log;
     ONX_Model m_model;
     rt_wdb *m_db;
