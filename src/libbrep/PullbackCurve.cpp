@@ -37,6 +37,7 @@
 #include <string>
 
 #include "brep.h"
+#include "bu.h"
 
 /* interface header */
 #include "PullbackCurve.h"
@@ -214,6 +215,14 @@ surface_EvNormal( // returns false if unable to evaluate
 }
 
 
+static bool locals_initialized[MAX_PSW] = {false};
+static ON_RevSurface *rev_surface[MAX_PSW] = {NULL};
+static ON_NurbsSurface *nurbs_surface[MAX_PSW] = {NULL};
+static ON_Extrusion *extr_surface[MAX_PSW] = {NULL};
+static ON_PlaneSurface *plane_surface[MAX_PSW] = {NULL};
+static ON_SumSurface *sum_surface[MAX_PSW] = {NULL};
+static ON_SurfaceProxy *proxy_surface[MAX_PSW] = {NULL};
+
 ON_BOOL32
 surface_GetBoundingBox(
 	const ON_Surface *surf,
@@ -223,16 +232,19 @@ surface_GetBoundingBox(
 	ON_BOOL32 bGrowBox
         )
 {
-    /* TODO: Address for threading
-     * defined static for first time thru initialization, will
-     * have to do something else here for multiple threads
-     */
-    static ON_RevSurface *rev_surface = ON_RevSurface::New();
-    static ON_NurbsSurface *nurbs_surface = ON_NurbsSurface::New();
-    static ON_Extrusion *extr_surface = new ON_Extrusion();
-    static ON_PlaneSurface *plane_surface = new ON_PlaneSurface();
-    static ON_SumSurface *sum_surface = ON_SumSurface::New();
-    static ON_SurfaceProxy *proxy_surface = new ON_SurfaceProxy();
+    int p = bu_parallel_id();
+
+    if (!locals_initialized[p]) {
+	bu_semaphore_acquire(BU_SEM_MALLOC);
+	rev_surface[p] = ON_RevSurface::New();
+	nurbs_surface[p] = ON_NurbsSurface::New();
+	extr_surface[p] = new ON_Extrusion();
+	plane_surface[p] = new ON_PlaneSurface();
+	sum_surface[p] = ON_SumSurface::New();
+	proxy_surface[p] = new ON_SurfaceProxy();
+	locals_initialized[p] = true;
+	bu_semaphore_release(BU_SEM_MALLOC);
+    }
 
     ON_Interval domSplits[2][2] = { { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }, { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }};
     if (!GetDomainSplits(surf,u_interval,v_interval,domSplits)) {
@@ -247,49 +259,49 @@ surface_GetBoundingBox(
 	for (int j=0; j<2; j++) {
 	    if (domSplits[1][j] != ON_Interval::EmptyInterval) {
 		if (dynamic_cast<ON_RevSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *rev_surface = *dynamic_cast<ON_RevSurface * >(const_cast<ON_Surface *>(surf));
-		    if (rev_surface->Trim(0, domSplits[0][i]) && rev_surface->Trim(1, domSplits[1][j])) {
-			if (!rev_surface->GetBoundingBox(bbox, growcurrent)) {
+		    *rev_surface[p] = *dynamic_cast<ON_RevSurface * >(const_cast<ON_Surface *>(surf));
+		    if (rev_surface[p]->Trim(0, domSplits[0][i]) && rev_surface[p]->Trim(1, domSplits[1][j])) {
+			if (!rev_surface[p]->GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 			growcurrent = true;
 		    }
 		} else if (dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *nurbs_surface = *dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf));
-		    if (nurbs_surface->Trim(0, domSplits[0][i]) && nurbs_surface->Trim(1, domSplits[1][j])) {
-			if (!nurbs_surface->GetBoundingBox(bbox, growcurrent)) {
+		    *nurbs_surface[p] = *dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf));
+		    if (nurbs_surface[p]->Trim(0, domSplits[0][i]) && nurbs_surface[p]->Trim(1, domSplits[1][j])) {
+			if (!nurbs_surface[p]->GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 		    }
 		    growcurrent = true;
 		} else if (dynamic_cast<ON_Extrusion * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *extr_surface = *dynamic_cast<ON_Extrusion * >(const_cast<ON_Surface *>(surf));
-		    if (extr_surface->Trim(0, domSplits[0][i]) && extr_surface->Trim(1, domSplits[1][j])) {
-			if (!extr_surface->GetBoundingBox(bbox, growcurrent)) {
+		    *extr_surface[p] = *dynamic_cast<ON_Extrusion * >(const_cast<ON_Surface *>(surf));
+		    if (extr_surface[p]->Trim(0, domSplits[0][i]) && extr_surface[p]->Trim(1, domSplits[1][j])) {
+			if (!extr_surface[p]->GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 		    }
 		    growcurrent = true;
 		} else if (dynamic_cast<ON_PlaneSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *plane_surface = *dynamic_cast<ON_PlaneSurface * >(const_cast<ON_Surface *>(surf));
-		    if (plane_surface->Trim(0, domSplits[0][i]) && plane_surface->Trim(1, domSplits[1][j])) {
-			if (!plane_surface->GetBoundingBox(bbox, growcurrent)) {
+		    *(plane_surface[p]) = *dynamic_cast<ON_PlaneSurface * >(const_cast<ON_Surface *>(surf));
+		    if (plane_surface[p]->Trim(0, domSplits[0][i]) && plane_surface[p]->Trim(1, domSplits[1][j])) {
+			if (!plane_surface[p]->GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 		    }
 		    growcurrent = true;
 		} else if (dynamic_cast<ON_SumSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *sum_surface = *dynamic_cast<ON_SumSurface * >(const_cast<ON_Surface *>(surf));
-		    if (sum_surface->Trim(0, domSplits[0][i]) && sum_surface->Trim(1, domSplits[1][j])) {
-			if (!sum_surface->GetBoundingBox(bbox, growcurrent)) {
+		    *sum_surface[p] = *dynamic_cast<ON_SumSurface * >(const_cast<ON_Surface *>(surf));
+		    if (sum_surface[p]->Trim(0, domSplits[0][i]) && sum_surface[p]->Trim(1, domSplits[1][j])) {
+			if (!sum_surface[p]->GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 		    }
 		    growcurrent = true;
 		} else if (dynamic_cast<ON_SurfaceProxy * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *proxy_surface = *dynamic_cast<ON_SurfaceProxy * >(const_cast<ON_Surface *>(surf));
-		    if (proxy_surface->Trim(0, domSplits[0][i]) && proxy_surface->Trim(1, domSplits[1][j])) {
-			if (!proxy_surface->GetBoundingBox(bbox, growcurrent)) {
+		    *proxy_surface[p] = *dynamic_cast<ON_SurfaceProxy * >(const_cast<ON_Surface *>(surf));
+		    if (proxy_surface[p]->Trim(0, domSplits[0][i]) && proxy_surface[p]->Trim(1, domSplits[1][j])) {
+			if (!proxy_surface[p]->GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 		    }
