@@ -4401,7 +4401,7 @@ check_pullback_data(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator d = pbcs.begin();
 
-    if ((*d) == NULL || (*d)->surf == NULL)
+    if (d == pbcs.end() || (*d) == NULL || (*d)->surf == NULL)
 	return false;
 
     const ON_Surface *surf = (*d)->surf;
