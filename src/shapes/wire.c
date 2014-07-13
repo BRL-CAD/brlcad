@@ -43,7 +43,6 @@
 #define MAXWIRESEG 100
 
 static const char usage[]   = "Usage: wire [interactive questions...]\n";
-static const char purpose[] = "generate a wire of up to 100 segments";
 
 int
 main(int argc, char *argv[])
