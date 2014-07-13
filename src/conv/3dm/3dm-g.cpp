@@ -28,7 +28,6 @@
 
 #include "common.h"
 
-#include <cstdio> /* for sscanf */
 #include <iostream>
 
 #include "conv3dm-g.hpp"
