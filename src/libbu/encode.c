@@ -26,7 +26,6 @@
 #include "bu/log.h"
 
 
-static const char SPACE = ' ';
 static const char DQUOTE = '"';
 static const char ESCAPE = '\\';
 
