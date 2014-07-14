@@ -404,9 +404,6 @@ joint_usage(struct ged *gedp, int argc, const char *argv[], struct funtab *funct
 {
     struct funtab *ftp;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     if (argc <= 1) {
 	bu_vls_printf(gedp->ged_result_str, "The following commands are available:\n");
 	for (ftp = functions+1; ftp->ft_name; ftp++) {
@@ -3536,8 +3533,11 @@ joint_cmd(struct ged *gedp,
 {
     struct funtab *ftp;
 
-    if (argc == 0)
-	return GED_OK;	/* No command entered, that's fine */
+    if (argc == 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: joint {command} [command_options]\n\n");
+	(void)joint_usage(gedp, argc, argv, functions);
+	return GED_HELP;	/* No command entered */
+    }
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
