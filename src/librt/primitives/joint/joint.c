@@ -60,6 +60,7 @@ struct joint_specific {
     fastf_t joint_value; /* currently angle or cross product value */
 };
 #define JOINT_NULL ((struct joint_specific *)0)
+#define JOINT_FLOAT_SIZE 10
 
 const struct bu_structparse rt_joint_parse[] = {
     { "%f", 3, "L", bu_offsetofarray(struct rt_joint_internal, location, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -211,30 +212,6 @@ rt_joint_free(struct soltab *stp)
  * XXX No checking for degenerate faces is done, but probably should
  * be.
  */
-/*
-int
-rt_joint_plot_old(struct bu_list *vhead, struct rt_db_internal *UNUSED(ip), const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
-{
-    point_t a,b;
-    point_t position = { 0.0, 0.0, 0.0 };
-    vect_t V1 = { 1.0, 0.0, 0.0 };
-    vect_t V2 = { 0.0, 0.0, 1.0 };
-
-    VMOVE(jointp->joint_location, jip->location);
-    VMOVE(jointp->joint_vector1, jip->v1);
-    VMOVE(jointp->joint_vector2, jip->v2);
-    jointp->joint_value = jip->value;
-
-    VADD2(a, jointp->joint_location, V1);
-    VADD2(b, jointp->joint_location, V2);
-    RT_ADD_VLIST(vhead, jointp->joint_location, BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, a, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, b, BN_VLIST_LINE_DRAW);
-
-
-    return 0;
-}
-*/
 int
 rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -265,55 +242,14 @@ rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
  * 0 success
  */
 int
-rt_joint_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+rt_joint_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *dbip)
 {
-    struct rt_joint_internal *jip;
-    union record *rp;
-
-    fastf_t orig_eqn[3*3];
-
+    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (ep) BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
 
-    BU_CK_EXTERNAL(ep);
-    rp = (union record *)ep->ext_buf;
-    if (rp->u_id != ID_SOLID) {
-	bu_log("rt_grp_import4: defective record, id=x%x\n", rp->u_id);
-	return -1;
-    }
+    bu_bomb("rt_joint_import4: nobody should be asking for import of a joint from this format.\n");
 
-    RT_CK_DB_INTERNAL(ip);
-    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    ip->idb_type = ID_JOINT;
-    ip->idb_meth = &OBJ[ID_JOINT];
-    BU_ALLOC(ip->idb_ptr, struct rt_joint_internal);
-
-    jip = (struct rt_joint_internal *)ip->idb_ptr;
-    jip->magic = RT_JOINT_INTERNAL_MAGIC;
-
-    flip_fastf_float(orig_eqn, rp->s.s_values, 3, dbip->dbi_version < 0 ? 1 : 0);	/* 2 floats to many */
-
-    /* Transform the point, and the normal */
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(jip->location, mat, &orig_eqn[0]);
-    MAT4X3VEC(jip->vector1, mat, &orig_eqn[3]);
-    MAT4X3VEC(jip->vector2, mat, &orig_eqn[3]);
-    if (NEAR_ZERO(mat[15], 0.001)) {
-	bu_bomb("rt_joint_import4, scale factor near zero.");
-    }
-#if 0
-    /* Verify that vectors have unit length */
-    f = MAGNITUDE(jip->normal);
-    if (f <= SMALL) {
-	bu_log("rt_grp_import4:  bad normal, len=%g\n", f);
-	return -1;		/* BAD */
-    }
-    t = f - 1.0;
-    if (!NEAR_ZERO(t, 0.001)) {
-	/* Restore normal to unit length */
-	f = 1/f;
-	VSCALE(jip->normal, jip->normal, f);
-    }
-#endif
     return 0;			/* OK */
 }
 
@@ -351,15 +287,16 @@ int
 rt_joint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_joint_internal *jip;
+    double f, t;
 
     /* must be double for import and export */
-    double vec[7];
+    double vec[JOINT_FLOAT_SIZE];
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 7);
+    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * JOINT_FLOAT_SIZE);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_JOINT;
@@ -370,42 +307,57 @@ rt_joint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     jip->magic = RT_JOINT_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 7);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, JOINT_FLOAT_SIZE);
 
     /* Transform the point, and the normal */
     if (mat == NULL) mat = bn_mat_identity;
-#if 0
-    MAT4X3PNT(jip->center, mat, &vec[0]);
-    MAT4X3VEC(jip->normal, mat, &vec[3]);
+
+
+    MAT4X3PNT(jip->location, mat, &vec[0]);
+    MAT4X3VEC(jip->vector1, mat, &vec[3]);
+    MAT4X3VEC(jip->vector2, mat, &vec[6]);
     if (NEAR_ZERO(mat[15], 0.001)) {
 	bu_bomb("rt_joint_import5, scale factor near zero.");
     }
-    jip->mag = vec[6]/mat[15];
+    jip->value = vec[9];
 
-    /* Verify that normal has unit length */
-    f = MAGNITUDE(jip->normal);
+    /* Verify that vector1 has unit length */
+    f = MAGNITUDE(jip->vector1);
     if (f <= SMALL) {
-	bu_log("rt_grp_import4:  bad normal, len=%g\n", f);
+	bu_log("rt_joint_import5:  bad vector1, len=%g\n", f);
 	return -1;		/* BAD */
     }
     t = f - 1.0;
     if (!NEAR_ZERO(t, 0.001)) {
 	/* Restore normal to unit length */
 	f = 1/f;
-	VSCALE(jip->normal, jip->normal, f);
+	VSCALE(jip->vector1, jip->vector1, f);
     }
-#endif
+    /* Verify that vector2 has unit length */
+    f = MAGNITUDE(jip->vector2);
+    if (f <= SMALL) {
+	bu_log("rt_joint_import5:  bad vector2, len=%g\n", f);
+	return -1;		/* BAD */
+    }
+    t = f - 1.0;
+    if (!NEAR_ZERO(t, 0.001)) {
+	/* Restore normal to unit length */
+	f = 1/f;
+	VSCALE(jip->vector2, jip->vector2, f);
+    }
+
+
     return 0;		/* OK */
 }
 
 
 int
-rt_joint_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
+rt_joint_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_joint_internal *jip;
 
-    /* must be double for import and export
-    double vec[7]; */
+    /* must be double for import and export */
+    double vec[JOINT_FLOAT_SIZE];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -415,17 +367,18 @@ rt_joint_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     RT_JOINT_CK_MAGIC(jip);
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 7;
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * JOINT_FLOAT_SIZE;
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "joint external");
 
-#if 0
-    VSCALE(&vec[0], jip->center, local2mm);
-    VMOVE(&vec[3], jip->normal);
-    vec[6] = jip->mag * local2mm;
+    VSCALE(&vec[0], jip->location, local2mm);
+    VMOVE(&vec[3], jip->vector1);
+    VMOVE(&vec[6], jip->vector2);
+    vec[9] = jip->value;
 
     /* Convert from internal (host) to database (network) format */
-    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 7);
-#endif
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, JOINT_FLOAT_SIZE);
+
+
     return 0;
 }
 
