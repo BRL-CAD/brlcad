@@ -186,7 +186,6 @@ ged_joint(struct ged *gedp, int argc, const char *argv[])
     int status;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
      /* initialize result */
