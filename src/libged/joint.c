@@ -2053,17 +2053,13 @@ joint_move(struct ged *gedp, struct joint *jp)
 	BU_ALLOC(anp, struct animate); /* may be free'd by librt */
 	anp->magic = ANIMATE_MAGIC;
 	db_full_path_init(&anp->an_path);
-	anp->an_path.fp_len = jp->path.arc_last+1;
-	anp->an_path.fp_maxlen= jp->path.arc_last+1;
-	anp->an_path.fp_names = (struct directory **)bu_malloc(sizeof(struct directory *)*anp->an_path.fp_maxlen, "full path");
+
 	for (i=0; i<= jp->path.arc_last; i++) {
-	    dp = anp->an_path.fp_names[i] = db_lookup(gedp->ged_wdbp->dbip, jp->path.arc[i], LOOKUP_NOISY);
+	    dp = db_lookup(gedp->ged_wdbp->dbip, jp->path.arc[i], LOOKUP_NOISY);
 	    if (!dp) {
-		anp->an_path.fp_len = i;
-		db_free_full_path(&anp->an_path);
-		bu_free(anp, "struct animate");
-		return;
+		continue;
 	    }
+	    db_add_node_to_full_path(anp->an_path, dp);
 	}
 	jp->anim=anp;
 	db_add_anim(gedp->ged_wdbp->dbip, anp, 0);
@@ -2268,38 +2264,24 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 
 	if (hp->effector.arc.type == ARC_ARC) {
 	    db_full_path_init(&hp->effector.path);
-	    hp->effector.path.fp_len = hp->effector.arc.arc_last+1;
-	    hp->effector.path.fp_maxlen = hp->effector.arc.arc_last+1;
-	    hp->effector.path.fp_names = (struct directory **)
-		bu_malloc(sizeof(struct directory *) * hp->effector.path.fp_maxlen,
-			  "full path");
+
 	    for (i=0; i<= hp->effector.arc.arc_last; i++) {
-		dp = hp->effector.path.fp_names[i] =
-		    db_lookup(gedp->ged_wdbp->dbip, hp->effector.arc.arc[i],
-			      LOOKUP_NOISY);
+		dp = db_lookup(gedp->ged_wdbp->dbip, hp->effector.arc.arc[i], LOOKUP_NOISY);
 		if (!dp) {
-		    hp->effector.path.fp_len = i;
-		    db_free_full_path(&hp->effector.path);
-		    break;
+		    continue;
 		}
+		db_add_node_to_full_path(hp->effector.path.fp_names[i], dp);
 	    }
 	}
 	if (hp->objective.arc.type == ARC_ARC) {
 	    db_full_path_init(&hp->objective.path);
-	    hp->objective.path.fp_len = hp->objective.arc.arc_last+1;
-	    hp->objective.path.fp_maxlen = hp->objective.arc.arc_last+1;
-	    hp->objective.path.fp_names = (struct directory **)
-		bu_malloc(sizeof(struct directory *) * hp->objective.path.fp_maxlen,
-			  "full path");
+
 	    for (i=0; i<= hp->objective.arc.arc_last; i++) {
-		dp = hp->objective.path.fp_names[i] =
-		    db_lookup(gedp->ged_wdbp->dbip, hp->objective.arc.arc[i],
-			      LOOKUP_NOISY);
+		dp = db_lookup(gedp->ged_wdbp->dbip, hp->objective.arc.arc[i], LOOKUP_NOISY);
 		if (!dp) {
-		    hp->objective.path.fp_len = i;
-		    db_free_full_path(&hp->objective.path);
 		    break;
 		}
+		db_add_node_to_full_path(hp->objective.path.fp_names[i], dp);
 	    }
 	}
     }
