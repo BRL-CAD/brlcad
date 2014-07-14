@@ -225,7 +225,7 @@ rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
 
     VADD2(a, jip->location, jip->vector1);
-    VADD2(b, jip->location, jip->vector1);
+    VADD2(b, jip->location, jip->vector2);
 
     RT_ADD_VLIST(vhead, jip->location, BN_VLIST_LINE_MOVE); /* the base */
     RT_ADD_VLIST(vhead, a, BN_VLIST_LINE_DRAW);
