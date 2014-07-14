@@ -369,8 +369,6 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
     int ret = 0;
     size_t len;
 
-    RT_CK_FULL_PATH(pp);
-
     /* assume NULL str is '/' */
     if (!str) {
 	db_full_path_init(pp);
