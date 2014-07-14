@@ -1196,6 +1196,47 @@ const struct rt_functab OBJ[] = {
     {
 	/* 23 -- XXX unimplemented */
 	RT_FUNCTAB_MAGIC, "ID_JOINT", "joint",
+	1,
+	RTFUNCTAB_FUNC_PREP_CAST(rt_joint_prep),
+	RTFUNCTAB_FUNC_SHOT_CAST(rt_joint_shot),
+	RTFUNCTAB_FUNC_PRINT_CAST(rt_joint_print),
+	RTFUNCTAB_FUNC_NORM_CAST(rt_joint_norm),
+	NULL,
+	NULL,
+	RTFUNCTAB_FUNC_UV_CAST(rt_joint_uv),
+	RTFUNCTAB_FUNC_CURVE_CAST(rt_joint_curve),
+	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	RTFUNCTAB_FUNC_FREE_CAST(rt_joint_free),
+	RTFUNCTAB_FUNC_PLOT_CAST(rt_joint_plot),
+	NULL,
+	NULL,
+	RTFUNCTAB_FUNC_TESS_CAST(rt_joint_tess),
+	NULL,
+	NULL,
+	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_joint_import5),
+	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_joint_export5),
+	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_joint_import4),
+	RTFUNCTAB_FUNC_EXPORT4_CAST(rt_joint_export4),
+	RTFUNCTAB_FUNC_IFREE_CAST(rt_joint_ifree),
+	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_joint_describe),
+	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
+	rt_joint_parse,
+	sizeof(struct rt_joint_internal),
+	RT_JOINT_INTERNAL_MAGIC,
+	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
+	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
+	NULL,
+	RTFUNCTAB_FUNC_PARAMS_CAST(rt_joint_params),
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+#if 0
 	0, /* ft_use_rpp */
 	NULL,/* prep */
 	NULL,/* shot */
@@ -1236,6 +1277,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL
+#endif
     },
 
     {
