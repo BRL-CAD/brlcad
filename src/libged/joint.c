@@ -38,7 +38,7 @@
 
 #include "./joint.h"
 
-static unsigned int joint_debug = 0;
+static unsigned int J_DEBUG = 0;
 #define DEBUG_J_MESH	0x00000001
 #define DEBUG_J_LOAD	0x00000002
 #define DEBUG_J_MOVE	0x00000004
@@ -47,7 +47,7 @@ static unsigned int joint_debug = 0;
 #define DEBUG_J_SYSTEM	0x00000020
 #define DEBUG_J_PARSE	0x00000040
 #define DEBUG_J_LEX	0x00000080
-#define JOINT_DEBUG_FORMAT \
+#define J_DEBUG_FORMAT \
     "\020\10LEX\7PARSE\6SYSTEM\5EVAL\4SOLVE\3MOVE\2LOAD\1MESH"
 
 
@@ -96,7 +96,7 @@ findjoint(struct ged *gedp, const struct db_full_path *pathp)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (joint_debug & DEBUG_J_MESH) {
+    if (J_DEBUG & DEBUG_J_MESH) {
 	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(gedp->ged_result_str, "joint mesh: PATH = '%s'\n", sofar);
@@ -123,13 +123,13 @@ findjoint(struct ged *gedp, const struct db_full_path *pathp)
 	}
     }
     if (best > 0) {
-	if (joint_debug & DEBUG_J_MESH) {
+	if (J_DEBUG & DEBUG_J_MESH) {
 	    bu_vls_printf(gedp->ged_result_str, "joint mesh: returning joint '%s'\n", bestjp->name);
 	}
 	return bestjp;
     }
 
-    if (joint_debug & DEBUG_J_MESH) {
+    if (J_DEBUG & DEBUG_J_MESH) {
 	bu_vls_printf(gedp->ged_result_str, "joint mesh: returning joint 'NULL'\n");
     }
     return (struct joint *) 0;
@@ -247,12 +247,12 @@ static struct db_tree_state mesh_initial_tree_state = {
  * The UNUSED option must be removed from the int argc and const char *argv[] parameters
  * when the cvt_vlblock_to_solids() function it is fixed.
  *
- * The joint accept option is not working properly, it needs joint_Jmesh() function,
+ * The joint accept option is not working properly, it needs joint_mesh() function,
  * for the ANIM name parameter that currently it is commented. The same thing
  * applies for the mesh and solve options.
  */
 static int
-joint_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
+joint_mesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     /* name used for the cvt_vlblock_to_solids call
        const char *name; */
@@ -317,7 +317,7 @@ joint_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 		RT_ADD_VLIST(vhead, gpp->vert, BN_VLIST_LINE_DRAW);
 	    }
 	}
-	if (joint_debug & DEBUG_J_MESH) {
+	if (J_DEBUG & DEBUG_J_MESH) {
 	    /* initialize result */
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 	    bu_vls_printf(gedp->ged_result_str, "joint mesh: %s has %d grips.\n",
@@ -342,7 +342,7 @@ joint_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 
 
 static int
-joint_Jdebug(struct ged *gedp,
+joint_debug(struct ged *gedp,
 	 int argc,
 	 const char *argv[])
 {
@@ -350,12 +350,12 @@ joint_Jdebug(struct ged *gedp,
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc >= 2) {
-	sscanf(argv[1], "%x", &joint_debug);
+	sscanf(argv[1], "%x", &J_DEBUG);
     } else {
-	bu_vls_printb(gedp->ged_result_str, "possible flags", 0xffffffffL, JOINT_DEBUG_FORMAT);
+	bu_vls_printb(gedp->ged_result_str, "possible flags", 0xffffffffL, J_DEBUG_FORMAT);
 	bu_vls_printf(gedp->ged_result_str, "\n");
     }
-    bu_vls_printb(gedp->ged_result_str, "joint_debug", joint_debug, JOINT_DEBUG_FORMAT);
+    bu_vls_printb(gedp->ged_result_str, "J_DEBUG", J_DEBUG, J_DEBUG_FORMAT);
     bu_vls_printf(gedp->ged_result_str, "\n");
 
     return GED_OK;
@@ -400,7 +400,7 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
  * the indicated commands.
  */
 static int
-joint_help(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+joint_usage(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
 {
     struct funtab *ftp;
 
@@ -419,7 +419,7 @@ joint_help(struct ged *gedp, int argc, const char *argv[], struct funtab *functi
 
 
 static int
-joint_help2(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+joint_command_tab(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
 {
     struct funtab *ftp;
 
@@ -440,11 +440,11 @@ joint_help2(struct ged *gedp, int argc, const char *argv[], struct funtab *funct
 
 
 static int
-joint_Jhelp2(struct ged *gedp, int argc, const char *argv[])
+joint_help_commands(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
 
-    status = joint_help2(gedp, argc, argv, &joint_tab[0]);
+    status = joint_command_tab(gedp, argc, argv, &joint_tab[0]);
 
     if (status == GED_OK)
 	return GED_OK;
@@ -454,11 +454,11 @@ joint_Jhelp2(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_Jhelp(struct ged *gedp, int argc, const char *argv[])
+joint_help(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
 
-    status = joint_help(gedp, argc, argv, &joint_tab[0]);
+    status = joint_usage(gedp, argc, argv, &joint_tab[0]);
 
     if (status == GED_OK)
 	return GED_OK;
@@ -546,7 +546,7 @@ hold_clear_flags(struct hold *hp)
 
 
 static int
-joint_Junload(struct ged *gedp, int argc, const char *argv[])
+joint_unload(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
     struct hold *hp;
@@ -577,12 +577,12 @@ joint_Junload(struct ged *gedp, int argc, const char *argv[])
     while (BU_LIST_WHILE(jp, joint, &joint_head)) {
 	joints++;
 	BU_LIST_DEQUEUE(&(jp->l));
-	if (joint_debug & DEBUG_J_LOAD) {
+	if (J_DEBUG & DEBUG_J_LOAD) {
 	    bu_vls_printf(gedp->ged_result_str, "joint unload: unloading '%s'.\n", jp->name);
 	}
 	free_joint(jp);
     }
-    if (joint_debug & DEBUG_J_LOAD) {
+    if (J_DEBUG & DEBUG_J_LOAD) {
 	bu_vls_printf(gedp->ged_result_str, "joint unload: unloaded %d joints, %d constraints.\n",
 		      joints, holds);
     }
@@ -743,7 +743,7 @@ get_token(struct ged *gedp, union bu_lex_token *token, FILE *fip, struct bu_vls 
     {
 	bu_vls_trunc(gedp->ged_result_str, 0);
 
-	if (joint_debug & DEBUG_J_LEX) {
+	if (J_DEBUG & DEBUG_J_LEX) {
 	    int i;
 	    switch (token->type) {
 		case BU_LEX_KEYWORD:
@@ -826,7 +826,7 @@ skip_group(struct ged *gedp, FILE *fip, struct bu_vls *str)
     /*initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "skip_group: Skipping....\n");
     }
 
@@ -843,7 +843,7 @@ skip_group(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	    count--;
 	}
     }
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "skip_group: Done....\n");
     }
 
@@ -889,7 +889,7 @@ parse_path(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
     union bu_lex_token token;
     int max;
 
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	/* initialize result */
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "parse_path: open.\n");
@@ -968,7 +968,7 @@ parse_list(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
     union bu_lex_token token;
     int max;
 
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	/* initialize result */
 	bu_vls_printf(gedp->ged_result_str, "parse_path: open.\n");
     }
@@ -1034,7 +1034,7 @@ parse_ARC(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_ARC: open.\n");
     }
 
@@ -1069,7 +1069,7 @@ parse_ARC(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
 	    break;
 	}
 	if (token.t_key.value == SYM_END) {
-	    if (joint_debug & DEBUG_J_PARSE) {
+	    if (J_DEBUG & DEBUG_J_PARSE) {
 		bu_vls_printf(gedp->ged_result_str, "parse_ARC: close.\n");
 	    }
 
@@ -1094,7 +1094,7 @@ parse_double(struct ged *gedp, double *dbl, FILE *fip, struct bu_vls *str)
     double sign;
     sign = 1.0;
 
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	/* initialize result */
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "parse_double: open\n");
@@ -1153,7 +1153,7 @@ parse_vect(struct ged *gedp, fastf_t *vect, FILE *fip, struct bu_vls *str)
     int i;
     double scan[3];
 
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	/* initialize result */
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "parse_vect: open.\n");
@@ -1184,7 +1184,7 @@ parse_trans(struct ged *gedp, struct joint *jp, int idx, FILE *fip, struct bu_vl
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_trans: open\n");
     }
 
@@ -1203,7 +1203,7 @@ parse_trans(struct ged *gedp, struct joint *jp, int idx, FILE *fip, struct bu_vl
 	}
 	if (token.type == BU_LEX_SYMBOL &&
 	    token.t_key.value == SYM_CL_GROUP) {
-	    if (joint_debug & DEBUG_J_PARSE) {
+	    if (J_DEBUG & DEBUG_J_PARSE) {
 		bu_vls_printf(gedp->ged_result_str, "parse_trans: closing.\n");
 	    }
 
@@ -1349,7 +1349,7 @@ parse_rots(struct ged *gedp, struct joint *jp, int idx, FILE *fip, struct bu_vls
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_rots: open\n");
     }
 
@@ -1368,7 +1368,7 @@ parse_rots(struct ged *gedp, struct joint *jp, int idx, FILE *fip, struct bu_vls
 	}
 	if (token.type == BU_LEX_SYMBOL &&
 	    token.t_key.value == SYM_CL_GROUP) {
-	    if (joint_debug & DEBUG_J_PARSE) {
+	    if (J_DEBUG & DEBUG_J_PARSE) {
 		bu_vls_printf(gedp->ged_result_str, "parse_rots: closing.\n");
 	    }
 
@@ -1515,7 +1515,7 @@ parse_joint(struct ged *gedp, FILE *fip, struct bu_vls *str)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_joint: reading joint.\n");
     }
 
@@ -1551,7 +1551,7 @@ parse_joint(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	}
 	if (token.type == BU_LEX_SYMBOL &&
 	    token.t_key.value == SYM_CL_GROUP) {
-	    if (joint_debug & DEBUG_J_PARSE) {
+	    if (J_DEBUG & DEBUG_J_PARSE) {
 		bu_vls_printf(gedp->ged_result_str, "parse_joint: closing.\n");
 	    }
 	    if (!arcfound) {
@@ -1675,7 +1675,7 @@ parse_jset(struct ged *gedp, struct hold *hp, FILE *fip, struct bu_vls *str)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_jset: open\n");
     }
 
@@ -1694,7 +1694,7 @@ parse_jset(struct ged *gedp, struct hold *hp, FILE *fip, struct bu_vls *str)
 		parse_error(gedp, str, "parse_jset: no list/arc/path given.");
 		return 0;
 	    }
-	    if (joint_debug & DEBUG_J_PARSE) {
+	    if (J_DEBUG & DEBUG_J_PARSE) {
 		bu_vls_printf(gedp->ged_result_str, "parse_jset: close\n");
 	    }
 	    return 1;
@@ -1771,7 +1771,7 @@ parse_solid(struct ged *gedp, struct hold_point *pp, FILE *fip, struct bu_vls *s
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_solid: open\n");
     }
 
@@ -1789,7 +1789,7 @@ parse_solid(struct ged *gedp, struct hold_point *pp, FILE *fip, struct bu_vls *s
 		return 0;
 	    }
 	    if (!vertexfound) pp->vertex_number = 1;
-	    if (joint_debug & DEBUG_J_PARSE) {
+	    if (J_DEBUG & DEBUG_J_PARSE) {
 		bu_vls_printf(gedp->ged_result_str, "parse_solid: close\n");
 	    }
 
@@ -1870,7 +1870,7 @@ parse_point(struct ged *gedp, struct hold_point *pp, FILE *fip, struct bu_vls *s
 	skip_group(gedp, fip, str);
 	return 0;
     }
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_point: close.\n");
     }
     return 1;
@@ -1887,7 +1887,7 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (joint_debug & DEBUG_J_PARSE) {
+    if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_hold: reading constraint\n");
     }
     BU_GET(hp, struct hold);
@@ -1936,7 +1936,7 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
 
 	if (token.type == BU_LEX_SYMBOL && token.t_key.value == SYM_CL_GROUP) {
-	    if (joint_debug & DEBUG_J_PARSE) {
+	    if (J_DEBUG & DEBUG_J_PARSE) {
 		bu_vls_printf(gedp->ged_result_str, "parse_hold: closing.\n");
 	    }
 
@@ -2082,7 +2082,7 @@ joint_move(struct ged *gedp, struct joint *jp)
 	}
 	jp->anim=anp;
 	db_add_anim(gedp->ged_wdbp->dbip, anp, 0);
-	if (joint_debug & DEBUG_J_MOVE) {
+	if (J_DEBUG & DEBUG_J_MOVE) {
 
 	    sofar = db_path_to_string(&jp->anim->an_path);
 	    bu_vls_printf(gedp->ged_result_str, "joint move: %s added animate %s to %s(%p)\n",
@@ -2112,7 +2112,7 @@ joint_move(struct ged *gedp, struct joint *jp)
 	 */
 	tmp = (jp->rots[i].current * DEG2RAD)/2.0;
 	VMOVE(q1, jp->rots[i].quat);
-	if (joint_debug & DEBUG_J_MOVE) {
+	if (J_DEBUG & DEBUG_J_MOVE) {
 	    bu_vls_printf(gedp->ged_result_str, "joint move: rotating %g around (%g %g %g)\n",
 			  tmp*2*RAD2DEG, q1[X], q1[Y], q1[Z]);
 	}
@@ -2147,7 +2147,7 @@ joint_move(struct ged *gedp, struct joint *jp)
 		   jp->dirs[i].unitvec[Y]*tmp,
 		   jp->dirs[i].unitvec[Z]*tmp);
 
-	if (joint_debug & DEBUG_J_MOVE) {
+	if (J_DEBUG & DEBUG_J_MOVE) {
 	    bu_vls_printf(gedp->ged_result_str, "joint move: moving %g along (%g %g %g)\n",
 			  tmp*gedp->ged_wdbp->dbip->dbi_base2local, m2[3], m2[7], m2[11]);
 	}
@@ -2161,14 +2161,14 @@ joint_move(struct ged *gedp, struct joint *jp)
     MAT_DELTAS_VEC(m2, jp->location);
     MAT_COPY(m1, ANIM_MAT);
     bn_mat_mul(ANIM_MAT, m2, m1);
-    if (joint_debug & DEBUG_J_MOVE) {
+    if (J_DEBUG & DEBUG_J_MOVE) {
 	bn_mat_print("joint move: ANIM_MAT", ANIM_MAT);
     }
 }
 
 
 static int
-joint_Jload(struct ged *gedp, int argc, const char *argv[])
+joint_load(struct ged *gedp, int argc, const char *argv[])
 {
     static struct bu_list path_head;
 
@@ -2201,7 +2201,7 @@ joint_Jload(struct ged *gedp, int argc, const char *argv[])
     }
     argv += bu_optind;
     argc -= bu_optind;
-    if (!no_unload) joint_Junload(gedp, 0, NULL);
+    if (!no_unload) joint_unload(gedp, 0, NULL);
 
     base2mm = gedp->ged_wdbp->dbip->dbi_base2local;
     mm2base = gedp->ged_wdbp->dbip->dbi_local2base;
@@ -2214,7 +2214,7 @@ joint_Jload(struct ged *gedp, int argc, const char *argv[])
 	    --argc;
 	    continue;
 	}
-	if (joint_debug & DEBUG_J_LOAD) {
+	if (J_DEBUG & DEBUG_J_LOAD) {
 	    bu_vls_printf(gedp->ged_result_str, "joint load: loading from '%s'", *argv);
 	}
 	lex_line = 0;
@@ -2318,13 +2318,13 @@ joint_Jload(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
     }
-    if (!no_mesh) (void) joint_Jmesh(gedp, 0, 0);
+    if (!no_mesh) (void) joint_mesh(gedp, 0, 0);
     return GED_OK;
 }
 
 
 static int
-joint_Jsave(struct ged *gedp, int argc, const char *argv[])
+joint_save(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -2410,7 +2410,7 @@ joint_Jsave(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_Jaccept(struct ged *gedp, int argc, const char *argv[])
+joint_accept(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -2444,13 +2444,13 @@ joint_Jaccept(struct ged *gedp, int argc, const char *argv[])
 	    jp->rots[i].accepted = jp->rots[i].current;
 	}
     }
-    if (!no_mesh) joint_Jmesh(gedp, 0, 0);
+    if (!no_mesh) joint_mesh(gedp, 0, 0);
     return GED_OK;
 }
 
 
 static int
-joint_Jreject(struct ged *gedp, int argc, const char *argv[])
+joint_reject(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -2486,7 +2486,7 @@ joint_Jreject(struct ged *gedp, int argc, const char *argv[])
 	}
 	joint_move(gedp, jp);
     }
-    if (!no_mesh) joint_Jmesh(gedp, 0, 0);
+    if (!no_mesh) joint_mesh(gedp, 0, 0);
     return GED_OK;
 }
 
@@ -2576,21 +2576,21 @@ hold_eval(struct ged *gedp, struct hold *hp)
      * get the current location of the effector.
      */
     if (!hold_point_location(gedp, e_loc, &hp->effector)) {
-	if (joint_debug & DEBUG_J_EVAL) {
+	if (J_DEBUG & DEBUG_J_EVAL) {
 	    bu_vls_printf(gedp->ged_result_str, "hold_eval: unable to find location of effector for %s.\n",
 			  hp->name);
 	}
 	return 0.0;
     }
     if (!hold_point_location(gedp, o_loc, &hp->objective)) {
-	if (joint_debug & DEBUG_J_EVAL) {
+	if (J_DEBUG & DEBUG_J_EVAL) {
 	    bu_vls_printf(gedp->ged_result_str, "hold_eval: unable to find location of objective for %s.\n",
 			  hp->name);
 	}
 	return 0.0;
     }
     value = hp->weight * DIST_PT_PT(e_loc, o_loc);
-    if (joint_debug & DEBUG_J_EVAL) {
+    if (J_DEBUG & DEBUG_J_EVAL) {
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "hold_eval: PT->PT of %s is %g\n", hp->name, value);
     }
@@ -2637,7 +2637,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 
     /* initialize result */
 
-    if (joint_debug & DEBUG_J_SOLVE) {
+    if (J_DEBUG & DEBUG_J_SOLVE) {
 	bu_vls_printf(gedp->ged_result_str, "part_solve: solving for %s.\n", hp->name);
     }
 
@@ -2645,7 +2645,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 	size_t i, j;
 	int startjoint;
 	startjoint = -1;
-	if (joint_debug & DEBUG_J_SOLVE) {
+	if (J_DEBUG & DEBUG_J_SOLVE) {
 	    bu_vls_printf(gedp->ged_result_str, "part_solve: looking for joints on arc.\n");
 	}
 	for (BU_LIST_FOR(jp, joint, &joint_head)) {
@@ -2675,7 +2675,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 		    != 0) break;
 	    }
 	    if (j>(size_t)jp->path.arc_last) {
-		if (joint_debug & DEBUG_J_SOLVE) {
+		if (J_DEBUG & DEBUG_J_SOLVE) {
 		    bu_vls_printf(gedp->ged_result_str, "part_solve: found %s\n", jp->name);
 		}
 		BU_GET(jh, struct jointH);
@@ -2701,7 +2701,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 	     */
 	    if (jh->arc_loc < startjoint) {
 		struct jointH *hold;
-		if (joint_debug & DEBUG_J_SOLVE) {
+		if (J_DEBUG & DEBUG_J_SOLVE) {
 		    bu_vls_printf(gedp->ged_result_str, "part_solve: dequeuing %s from %s", jh->p->name, hp->name);
 		}
 		hold=(struct jointH *)jh->l.back;
@@ -2713,7 +2713,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
     }
     origvalue = besteval = hold_eval(gedp, hp);
     if (fabs(origvalue) < tol) {
-	if (joint_debug & DEBUG_J_SOLVE) {
+	if (J_DEBUG & DEBUG_J_SOLVE) {
 	    bu_vls_printf(gedp->ged_result_str, "part_solve: solved, original(%g) < tol(%g)\n",
 			  origvalue, tol);
 	}
@@ -2791,7 +2791,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 	    jp->rots[i].current = hold;
 	    joint_move(gedp, jp);
 	    if (f0 < besteval) {
-		if (joint_debug & DEBUG_J_SOLVE) {
+		if (J_DEBUG & DEBUG_J_SOLVE) {
 		    bu_vls_printf(gedp->ged_result_str, "part_solve: NEW min %s(%d, %g) %g <%g\n",
 				  jp->name, i, x0, f0, besteval);
 		}
@@ -2799,7 +2799,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 		bestjoint = jp;
 		bestfreedom = i;
 		bestvalue = x0;
-	    } else if (joint_debug & DEBUG_J_SOLVE) {
+	    } else if (J_DEBUG & DEBUG_J_SOLVE) {
 		bu_vls_printf(gedp->ged_result_str, "part_solve: OLD min %s(%d, %g)%g >= %g\n",
 			      jp->name, i, x0, f0, besteval);
 	    }
@@ -2867,7 +2867,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 	    jp->dirs[i].current = hold;
 	    joint_move(gedp, jp);
 	    if (f0 < besteval-SQRT_SMALL_FASTF) {
-		if (joint_debug & DEBUG_J_SOLVE) {
+		if (J_DEBUG & DEBUG_J_SOLVE) {
 		    bu_vls_printf(gedp->ged_result_str, "part_solve: NEW min %s(%d, %g) %g <%g delta=%g\n",
 				  jp->name, i+3, x0, f0, besteval, besteval-f0);
 		}
@@ -2875,7 +2875,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 		bestjoint = jp;
 		bestfreedom = i + 3;
 		bestvalue = x0;
-	    } else if (joint_debug & DEBUG_J_SOLVE) {
+	    } else if (J_DEBUG & DEBUG_J_SOLVE) {
 		bu_vls_printf(gedp->ged_result_str, "part_solve: OLD min %s(%d, %g)%g >= %g\n",
 			      jp->name, i, x0, f0, besteval);
 	    }
@@ -2886,13 +2886,13 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
      * Did we find a better joint?
      */
     if (!bestjoint) {
-	if (joint_debug & DEBUG_J_SOLVE) {
+	if (J_DEBUG & DEBUG_J_SOLVE) {
 	    bu_vls_printf(gedp->ged_result_str, "part_solve: No joint configuration found to be better.\n");
 	}
 	return 0;
     }
     if (origvalue - besteval < (tol/100.0)) {
-	if (joint_debug & DEBUG_J_SOLVE) {
+	if (J_DEBUG & DEBUG_J_SOLVE) {
 	    bu_vls_printf(gedp->ged_result_str, "part_solve: No reasonable improvement found.\n");
 	}
 	return 0;
@@ -2927,7 +2927,7 @@ reject_move(struct ged *gedp)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (joint_debug & DEBUG_J_SYSTEM) {
+    if (J_DEBUG & DEBUG_J_SYSTEM) {
 	bu_vls_printf(gedp->ged_result_str, "reject_move: rejecting %s(%d, %g)->%g\n", ssp->jp->name,
 		      ssp->freedom, ssp->newval, ssp->oldval);
     }
@@ -2993,7 +2993,7 @@ system_solve(struct ged *gedp, int pri, double delta, double epsilon)
 	pri_weights[hp->priority] += hp->eval;
     }
 
-    if (joint_debug & DEBUG_J_SYSTEM) {
+    if (J_DEBUG & DEBUG_J_SYSTEM) {
 	for (i=0; i <= pri; i++) {
 	    if (pri_weights[i] > 0.0) {
 		bu_vls_printf(gedp->ged_result_str, "system_solve: priority %d has system weight of %g.\n",
@@ -3027,7 +3027,7 @@ Middle:
      */
     for (; pri>=0 && pri_weights[pri] < epsilon; pri--);
     if (pri <0) {
-	if (joint_debug & DEBUG_J_SYSTEM) {
+	if (J_DEBUG & DEBUG_J_SYSTEM) {
 	    bu_vls_printf(gedp->ged_result_str, "system_solve: returning 1\n");
 	}
 	return 1;	/* solved */
@@ -3062,7 +3062,7 @@ Middle:
 	if (hp->priority != pri) continue;
 	new_eval += hold_eval(gedp, hp);
     }
-    if (joint_debug & DEBUG_J_SYSTEM) {
+    if (J_DEBUG & DEBUG_J_SYSTEM) {
 	bu_vls_printf(gedp->ged_result_str, "system_solve: old eval = %g, new eval = %g\n",
 		      pri_weights[pri], new_eval);
     }
@@ -3142,24 +3142,24 @@ Middle:
 	    }
 	}
 	reject_move(gedp);
-	if (joint_debug & DEBUG_J_SYSTEM) {
+	if (J_DEBUG & DEBUG_J_SYSTEM) {
 	    bu_vls_printf(gedp->ged_result_str, "system_solve: returning -1\n");
 	}
 	return -1;
     }
-    if (joint_debug & DEBUG_J_SYSTEM) {
+    if (J_DEBUG & DEBUG_J_SYSTEM) {
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "system_solve: new_weights[%d] = %g, returning ", pri,
 		      new_weights[pri]);
     }
     if (new_weights[pri] < epsilon) {
-	if (joint_debug & DEBUG_J_SYSTEM) {
+	if (J_DEBUG & DEBUG_J_SYSTEM) {
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 	    bu_vls_printf(gedp->ged_result_str, "1\n");
 	}
 	return 1;
     }
-    if (joint_debug & DEBUG_J_SYSTEM) {
+    if (J_DEBUG & DEBUG_J_SYSTEM) {
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "0\n");    }
     return 0;
@@ -3168,7 +3168,7 @@ Middle:
 
 
 static int
-joint_Jsolve(struct ged *gedp, int argc, char *argv[])
+joint_solve(struct ged *gedp, int argc, char *argv[])
 {
     struct hold *hp;
     int loops, count;
@@ -3236,7 +3236,7 @@ joint_Jsolve(struct ged *gedp, int argc, char *argv[])
 		for (count=0; count<loops; count++) {
 		    if (!part_solve(gedp, hp, delta, epsilon)) break;
 		    if (domesh) {
-			joint_Jmesh(gedp, 0, 0);
+			joint_mesh(gedp, 0, 0);
 			/* refreshing the screen */
 			if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 			    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
@@ -3289,7 +3289,7 @@ joint_Jsolve(struct ged *gedp, int argc, char *argv[])
 	    break;
 	} else if (result == -1) {
 	    delta /= 2.0;
-	    if (joint_debug & DEBUG_J_SYSTEM) {
+	    if (J_DEBUG & DEBUG_J_SYSTEM) {
 		bu_vls_printf(gedp->ged_result_str, "joint solve: splitting delta (%g)\n",
 			      delta);
 	    }
@@ -3297,7 +3297,7 @@ joint_Jsolve(struct ged *gedp, int argc, char *argv[])
 	}
 	joint_clear();
 	if (domesh) {
-	    joint_Jmesh(gedp, 0, 0);
+	    joint_mesh(gedp, 0, 0);
 	    /* refreshing the screen */
 	    if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 		(*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
@@ -3321,7 +3321,7 @@ joint_Jsolve(struct ged *gedp, int argc, char *argv[])
 		break;
 	    } else if (result == -1) {
 		delta /= 2.0;
-		if (joint_debug & DEBUG_J_SYSTEM) {
+		if (J_DEBUG & DEBUG_J_SYSTEM) {
 		    bu_vls_printf(gedp->ged_result_str, "joint solve: splitting delta (%g)\n",
 				  delta);
 		}
@@ -3329,7 +3329,7 @@ joint_Jsolve(struct ged *gedp, int argc, char *argv[])
 	    }
 	    joint_clear();
 	    if (domesh) {
-		joint_Jmesh(gedp, 0, 0);
+		joint_mesh(gedp, 0, 0);
 		/* refreshing the screen */
 		if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 		    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
@@ -3346,7 +3346,7 @@ joint_Jsolve(struct ged *gedp, int argc, char *argv[])
     }
     joint_clear();
     if (domesh) {
-	joint_Jmesh(gedp, 0, 0);
+	joint_mesh(gedp, 0, 0);
 	/* refreshing the screen */
 	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
@@ -3404,7 +3404,7 @@ print_hold(struct ged *gedp, struct hold *hp)
 
 
 static int
-joint_Jhold(struct ged *gedp, int argc, const char *argv[])
+joint_hold(struct ged *gedp, int argc, const char *argv[])
 {
     struct hold *hp;
     ++argv;
@@ -3425,7 +3425,7 @@ joint_Jhold(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_Jlist(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
+joint_list(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     struct joint *jp;
 
@@ -3442,7 +3442,7 @@ joint_Jlist(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 
 
 static int
-joint_Jmove(struct ged *gedp, int argc, const char *argv[])
+joint_adjust(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -3479,7 +3479,7 @@ joint_Jmove(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 	tmp = atof(*argv);
-	if (joint_debug & DEBUG_J_MOVE) {
+	if (J_DEBUG & DEBUG_J_MOVE) {
 	    bu_vls_printf(gedp->ged_result_str, "joint move: %s rotate (%g %g %g) %g degrees.\n",
 			  jp->name, jp->rots[i].quat[X],
 			  jp->rots[i].quat[Y], jp->rots[i].quat[Z],
@@ -3517,7 +3517,7 @@ joint_Jmove(struct ged *gedp, int argc, const char *argv[])
 	}
     }
     joint_move(gedp, jp);
-    joint_Jmesh(gedp, 0, 0);
+    joint_mesh(gedp, 0, 0);
     return GED_OK;
 }
 
@@ -3599,31 +3599,31 @@ struct funtab joint_tab[] = {
     {"joint ", "", "Joint command table",
      0, 0, 0, FALSE},
     {"?", "[commands]", "summary of available joint commands",
-     joint_Jhelp2, 0, FUNTAB_UNLIMITED, FALSE},
+     joint_help_commands, 0, FUNTAB_UNLIMITED, FALSE},
     {"accept", "[joints]", "accept a series of moves",
-     joint_Jaccept, 1, FUNTAB_UNLIMITED, FALSE},
+     joint_accept, 1, FUNTAB_UNLIMITED, FALSE},
     {"debug", "[hex code]", "Show/set debugging bit vector for joints",
-     joint_Jdebug, 1, 2, FALSE},
+     joint_debug, 1, 2, FALSE},
     {"help", "[commands]", "give usage message for given joint commands",
-     joint_Jhelp, 0, FUNTAB_UNLIMITED, FALSE},
+     joint_help, 0, FUNTAB_UNLIMITED, FALSE},
     {"holds", "[names]", "list constraints",
-     joint_Jhold, 1, FUNTAB_UNLIMITED, FALSE},
+     joint_hold, 1, FUNTAB_UNLIMITED, FALSE},
     {"list", "[names]", "list joints.",
-     joint_Jlist, 1, FUNTAB_UNLIMITED, FALSE},
+     joint_list, 1, FUNTAB_UNLIMITED, FALSE},
     {"load", "file_name", "load a joint/constraint file",
-     joint_Jload, 2, FUNTAB_UNLIMITED, FALSE},
+     joint_load, 2, FUNTAB_UNLIMITED, FALSE},
     {"mesh", "", "Build the grip mesh",
-     joint_Jmesh, 0, 1, FALSE},
+     joint_mesh, 0, 1, FALSE},
     {"move", "joint_name p1 [p2...p6]", "Manual adjust a joint",
-     joint_Jmove, 3, 8, FALSE},
+     joint_adjust, 3, 8, FALSE},
     {"reject", "[joint_names]", "reject joint motions",
-     joint_Jreject, 1, FUNTAB_UNLIMITED, FALSE},
+     joint_reject, 1, FUNTAB_UNLIMITED, FALSE},
     {"save",	"file_name", "Save joints and constraints to disk",
-     joint_Jsave, 2, 2, FALSE},
+     joint_save, 2, 2, FALSE},
     {"solve", "constraint", "Solve a or all constraints",
-     joint_Jsolve, 1, FUNTAB_UNLIMITED, FALSE},
+     joint_solve, 1, FUNTAB_UNLIMITED, FALSE},
     {"unload", "", "Unload any joint/constraints that have been loaded",
-     joint_Junload, 1, 1, FALSE},
+     joint_unload, 1, 1, FALSE},
     {NULL, NULL, NULL,
      NULL, 0, 0, FALSE}
 };
