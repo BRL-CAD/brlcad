@@ -234,6 +234,7 @@ message(" ")
 ###################################################
 
 # Build options
+set(BRLCAD_BULLET_BUILD_LABEL "Compile Bullet ")
 set(BRLCAD_TCL_BUILD_LABEL "Compile Tcl ")
 set(BRLCAD_TK_BUILD_LABEL "Compile Tk ")
 set(BRLCAD_INCRTCL_BUILD_LABEL "Compile Itcl/Itk ")
@@ -248,6 +249,7 @@ set(BRLCAD_TERMLIB_BUILD_LABEL "Compile termlib ")
 set(BRLCAD_UTAHRLE_BUILD_LABEL "Compile Utah Raster Toolkit ")
 set(BRLCAD_OPENNURBS_BUILD_LABEL "Compile openNURBS ")
 set(BRLCAD_SC_BUILD_LABEL "Compile STEPcode")
+set(BRLCAD_ENABLE_BULLET_LABEL "Bullet support (optional) ")
 set(BRLCAD_ENABLE_X11_LABEL "X11 support (optional) ")
 set(BRLCAD_ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
 set(BRLCAD_ENABLE_QT_LABEL "Qt support (optional) ")
@@ -270,10 +272,11 @@ set(ENABLE_ALL_CXX_COMPILE_LABEL "Build all C and C++ files with a C++ compiler 
 
 # Make sets to use for iteration over all report items
 set(BUILD_REPORT_ITEMS
-    TCL TK INCRTCL IWIDGETS TKHTML TKPNG TKTABLE PNG REGEX ZLIB
+    BULLET TCL TK INCRTCL IWIDGETS TKHTML TKPNG TKTABLE PNG REGEX ZLIB
     TERMLIB UTAHRLE OPENNURBS SC)
 
 set(FEATURE_REPORT_ITEMS
+    BRLCAD_ENABLE_BULLET
     BRLCAD_ENABLE_OPENGL
     BRLCAD_ENABLE_X11
     BRLCAD_ENABLE_QT
