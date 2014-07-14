@@ -21,9 +21,6 @@
  *
  * Process all animation edit commands.
  *
- * Function -
- * f_joint start the animation edit
- *
  * Author -
  * Christopher T. Johnson
  *
@@ -255,12 +252,12 @@ static struct db_tree_state mesh_initial_tree_state = {
  * The UNUSED option must be removed from the int argc and const char *argv[] parameters
  * when the cvt_vlblock_to_solids() function it is fixed.
  *
- * The joint accept option is not working properly, it needs f_Jmesh() function,
+ * The joint accept option is not working properly, it needs joint_Jmesh() function,
  * for the ANIM name parameter that currently it is commented. The same thing
  * applies for the mesh and solve options.
  */
-int
-f_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
+static int
+joint_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     /* name used for the cvt_vlblock_to_solids call
        const char *name; */
@@ -349,8 +346,8 @@ f_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 }
 
 
-int
-f_Jdebug(struct ged *gedp,
+static int
+joint_Jdebug(struct ged *gedp,
 	 int argc,
 	 const char *argv[])
 {
@@ -407,8 +404,8 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
  * Print a help message, two lines for each command.  Or, help with
  * the indicated commands.
  */
-int
-f_help(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+static int
+joint_help(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
 {
     struct funtab *ftp;
 
@@ -426,8 +423,8 @@ f_help(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
 }
 
 
-int
-f_help2(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+static int
+joint_help2(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
 {
     struct funtab *ftp;
 
@@ -448,11 +445,11 @@ f_help2(struct ged *gedp, int argc, const char *argv[], struct funtab *functions
 
 
 static int
-f_Jhelp2(struct ged *gedp, int argc, const char *argv[])
+joint_Jhelp2(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
 
-    status = f_help2(gedp, argc, argv, &joint_tab[0]);
+    status = joint_help2(gedp, argc, argv, &joint_tab[0]);
 
     if (status == GED_OK)
 	return GED_OK;
@@ -462,11 +459,11 @@ f_Jhelp2(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-f_Jhelp(struct ged *gedp, int argc, const char *argv[])
+joint_Jhelp(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
 
-    status = f_help(gedp, argc, argv, &joint_tab[0]);
+    status = joint_help(gedp, argc, argv, &joint_tab[0]);
 
     if (status == GED_OK)
 	return GED_OK;
@@ -553,8 +550,8 @@ hold_clear_flags(struct hold *hp)
 }
 
 
-int
-f_Junload(struct ged *gedp, int argc, const char *argv[])
+static int
+joint_Junload(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
     struct hold *hp;
@@ -2051,7 +2048,7 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 }
 
 
-void
+static void
 joint_move(struct ged *gedp, struct joint *jp)
 {
     struct animate *anp;
@@ -2175,10 +2172,11 @@ joint_move(struct ged *gedp, struct joint *jp)
 }
 
 
-static struct bu_list path_head;
-int
-f_Jload(struct ged *gedp, int argc, const char *argv[])
+static int
+joint_Jload(struct ged *gedp, int argc, const char *argv[])
 {
+    static struct bu_list path_head;
+
     FILE *fip;
     struct bu_vls instring = BU_VLS_INIT_ZERO;
     union bu_lex_token token;
@@ -2208,7 +2206,7 @@ f_Jload(struct ged *gedp, int argc, const char *argv[])
     }
     argv += bu_optind;
     argc -= bu_optind;
-    if (!no_unload) f_Junload(gedp, 0, NULL);
+    if (!no_unload) joint_Junload(gedp, 0, NULL);
 
     base2mm = gedp->ged_wdbp->dbip->dbi_base2local;
     mm2base = gedp->ged_wdbp->dbip->dbi_local2base;
@@ -2325,13 +2323,13 @@ f_Jload(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
     }
-    if (!no_mesh) (void) f_Jmesh(gedp, 0, 0);
+    if (!no_mesh) (void) joint_Jmesh(gedp, 0, 0);
     return GED_OK;
 }
 
 
-int
-f_Jsave(struct ged *gedp, int argc, const char *argv[])
+static int
+joint_Jsave(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -2416,8 +2414,8 @@ f_Jsave(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-int
-f_Jaccept(struct ged *gedp, int argc, const char *argv[])
+static int
+joint_Jaccept(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -2451,13 +2449,13 @@ f_Jaccept(struct ged *gedp, int argc, const char *argv[])
 	    jp->rots[i].accepted = jp->rots[i].current;
 	}
     }
-    if (!no_mesh) f_Jmesh(gedp, 0, 0);
+    if (!no_mesh) joint_Jmesh(gedp, 0, 0);
     return GED_OK;
 }
 
 
-int
-f_Jreject(struct ged *gedp, int argc, const char *argv[])
+static int
+joint_Jreject(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -2493,7 +2491,7 @@ f_Jreject(struct ged *gedp, int argc, const char *argv[])
 	}
 	joint_move(gedp, jp);
     }
-    if (!no_mesh) f_Jmesh(gedp, 0, 0);
+    if (!no_mesh) joint_Jmesh(gedp, 0, 0);
     return GED_OK;
 }
 
@@ -2524,7 +2522,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 		return 1;
 	    }
 	    /* TODO
-	     * there is a bug where f_jhold/f_jsolve is passing a hold struct
+	     * there is a bug where joint_jhold/joint_jsolve is passing a hold struct
 	     * with NULL fields when using MGED's "joint holds" or "joint solve"
 	     * command. In particular, hp->path.fp_names can end up NULL,
 	     * this prints an error message instead of crashing MGED.
@@ -2569,7 +2567,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 }
 
 
-double
+static double
 hold_eval(struct ged *gedp, struct hold *hp)
 {
     vect_t e_loc = VINIT_ZERO;
@@ -2618,7 +2616,7 @@ struct bu_list solve_head = {
 };
 
 
-void
+static void
 joint_clear(void)
 {
     struct stack_solve *ssp;
@@ -2630,7 +2628,7 @@ joint_clear(void)
 }
 
 
-int
+static int
 part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 {
     struct joint *jp;
@@ -2924,7 +2922,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 }
 
 
-void
+static void
 reject_move(struct ged *gedp)
 {
     struct solve_stack *ssp;
@@ -2976,7 +2974,7 @@ reject_move(struct ged *gedp)
  */
 #define SOLVE_MAX_PRIORITY 100
 
-int
+static int
 system_solve(struct ged *gedp, int pri, double delta, double epsilon)
 {
     double pri_weights[SOLVE_MAX_PRIORITY+1];
@@ -3174,8 +3172,8 @@ Middle:
 }
 
 
-int
-f_Jsolve(struct ged *gedp, int argc, char *argv[])
+static int
+joint_Jsolve(struct ged *gedp, int argc, char *argv[])
 {
     struct hold *hp;
     int loops, count;
@@ -3243,7 +3241,7 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
 		for (count=0; count<loops; count++) {
 		    if (!part_solve(gedp, hp, delta, epsilon)) break;
 		    if (domesh) {
-			f_Jmesh(gedp, 0, 0);
+			joint_Jmesh(gedp, 0, 0);
 			/* refreshing the screen */
 			if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 			    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
@@ -3304,7 +3302,7 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
 	}
 	joint_clear();
 	if (domesh) {
-	    f_Jmesh(gedp, 0, 0);
+	    joint_Jmesh(gedp, 0, 0);
 	    /* refreshing the screen */
 	    if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 		(*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
@@ -3336,7 +3334,7 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
 	    }
 	    joint_clear();
 	    if (domesh) {
-		f_Jmesh(gedp, 0, 0);
+		joint_Jmesh(gedp, 0, 0);
 		/* refreshing the screen */
 		if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 		    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
@@ -3353,7 +3351,7 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
     }
     joint_clear();
     if (domesh) {
-	f_Jmesh(gedp, 0, 0);
+	joint_Jmesh(gedp, 0, 0);
 	/* refreshing the screen */
 	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
@@ -3410,8 +3408,8 @@ print_hold(struct ged *gedp, struct hold *hp)
 }
 
 
-int
-f_Jhold(struct ged *gedp, int argc, const char *argv[])
+static int
+joint_Jhold(struct ged *gedp, int argc, const char *argv[])
 {
     struct hold *hp;
     ++argv;
@@ -3431,8 +3429,8 @@ f_Jhold(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-int
-f_Jlist(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
+static int
+joint_Jlist(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     struct joint *jp;
 
@@ -3448,8 +3446,8 @@ f_Jlist(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 }
 
 
-int
-f_Jmove(struct ged *gedp, int argc, const char *argv[])
+static int
+joint_Jmove(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -3524,7 +3522,7 @@ f_Jmove(struct ged *gedp, int argc, const char *argv[])
 	}
     }
     joint_move(gedp, jp);
-    f_Jmesh(gedp, 0, 0);
+    joint_Jmesh(gedp, 0, 0);
     return GED_OK;
 }
 
@@ -3606,31 +3604,31 @@ struct funtab joint_tab[] = {
     {"joint ", "", "Joint command table",
      0, 0, 0, FALSE},
     {"?", "[commands]", "summary of available joint commands",
-     f_Jhelp2, 0, FUNTAB_UNLIMITED, FALSE},
+     joint_Jhelp2, 0, FUNTAB_UNLIMITED, FALSE},
     {"accept", "[joints]", "accept a series of moves",
-     f_Jaccept, 1, FUNTAB_UNLIMITED, FALSE},
+     joint_Jaccept, 1, FUNTAB_UNLIMITED, FALSE},
     {"debug", "[hex code]", "Show/set debugging bit vector for joints",
-     f_Jdebug, 1, 2, FALSE},
+     joint_Jdebug, 1, 2, FALSE},
     {"help", "[commands]", "give usage message for given joint commands",
-     f_Jhelp, 0, FUNTAB_UNLIMITED, FALSE},
+     joint_Jhelp, 0, FUNTAB_UNLIMITED, FALSE},
     {"holds", "[names]", "list constraints",
-     f_Jhold, 1, FUNTAB_UNLIMITED, FALSE},
+     joint_Jhold, 1, FUNTAB_UNLIMITED, FALSE},
     {"list", "[names]", "list joints.",
-     f_Jlist, 1, FUNTAB_UNLIMITED, FALSE},
+     joint_Jlist, 1, FUNTAB_UNLIMITED, FALSE},
     {"load", "file_name", "load a joint/constraint file",
-     f_Jload, 2, FUNTAB_UNLIMITED, FALSE},
+     joint_Jload, 2, FUNTAB_UNLIMITED, FALSE},
     {"mesh", "", "Build the grip mesh",
-     f_Jmesh, 0, 1, FALSE},
+     joint_Jmesh, 0, 1, FALSE},
     {"move", "joint_name p1 [p2...p6]", "Manual adjust a joint",
-     f_Jmove, 3, 8, FALSE},
+     joint_Jmove, 3, 8, FALSE},
     {"reject", "[joint_names]", "reject joint motions",
-     f_Jreject, 1, FUNTAB_UNLIMITED, FALSE},
+     joint_Jreject, 1, FUNTAB_UNLIMITED, FALSE},
     {"save",	"file_name", "Save joints and constraints to disk",
-     f_Jsave, 2, 2, FALSE},
+     joint_Jsave, 2, 2, FALSE},
     {"solve", "constraint", "Solve a or all constraints",
-     f_Jsolve, 1, FUNTAB_UNLIMITED, FALSE},
+     joint_Jsolve, 1, FUNTAB_UNLIMITED, FALSE},
     {"unload", "", "Unload any joint/constraints that have been loaded",
-     f_Junload, 1, 1, FALSE},
+     joint_Junload, 1, 1, FALSE},
     {NULL, NULL, NULL,
      NULL, 0, 0, FALSE}
 };
