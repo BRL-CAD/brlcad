@@ -7448,8 +7448,7 @@ to_mouse_joint_select(
 	return GED_ERROR;
     }
 
-    bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_joint_selection_translate %s %s %%x %%y; "
-		  "%s brep %s plot SCV}",
+    bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_joint_selection_translate %s %s %%x %%y}",
 		  bu_vls_addr(&gdvp->gdv_dmp->dm_pathName),
 		  bu_vls_addr(&current_top->to_gop->go_name),
 		  bu_vls_addr(&gdvp->gdv_name),

@@ -106,7 +106,7 @@ joint_selection(
 	/*selection_set = ip->idb_meth->ft_find_selections(ip, &query);*/
 	if (!selection_set) {
 	    bu_vls_printf(gedp->ged_result_str, "no matching selections");
-	    return GED_ERROR;
+	    return GED_OK;
 	}
 
 	/* could be multiple options, just grabbing the first and
@@ -151,7 +151,7 @@ joint_selection(
 	selections = &selection_set->selections;
 
 	if (BU_PTBL_LEN(selections) < 1) {
-	    return GED_ERROR;
+	    return GED_OK;
 	}
 
 	for (i = 0; i < (int)BU_PTBL_LEN(selections); ++i) {
