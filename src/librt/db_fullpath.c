@@ -40,6 +40,9 @@
 void
 db_full_path_init(struct db_full_path *pathp)
 {
+    if (!pathp)
+	return;
+
     pathp->fp_len = 0;
     pathp->fp_maxlen = 0;
     pathp->fp_names = (struct directory **)NULL;
@@ -52,6 +55,11 @@ void
 db_add_node_to_full_path(struct db_full_path *pp, struct directory *dp)
 {
     RT_CK_FULL_PATH(pp);
+
+    if (!dp)
+	return;
+
+    RT_CK_DIR(dp);
 
     if (pp->fp_maxlen <= 0) {
 	pp->fp_maxlen = 32;
@@ -134,6 +142,9 @@ db_extend_full_path(struct db_full_path *pathp, size_t incr)
 void
 db_append_full_path(struct db_full_path *dest, const struct db_full_path *src)
 {
+    if (!src)
+	return;
+
     RT_CK_FULL_PATH(dest);
     RT_CK_FULL_PATH(src);
 
@@ -218,6 +229,9 @@ db_path_to_vls(struct bu_vls *str, const struct db_full_path *pp)
 {
     size_t i;
 
+    if (!pp)
+	return;
+
     BU_CK_VLS(str);
     RT_CK_FULL_PATH(pp);
 
@@ -236,6 +250,10 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
     size_t i;
     int type;
     const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+
+    if (!full_path)
+	return;
+
     BU_CK_VLS(vls);
     RT_CK_FULL_PATH(full_path);
 
@@ -316,10 +334,19 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
 void
 db_pr_full_path(const char *msg, const struct db_full_path *pathp)
 {
-    char *sofar = db_path_to_string(pathp);
+    char *sofar;
 
-    bu_log("%s %s\n", msg, sofar);
-    bu_free(sofar, "path string");
+    if (!msg)
+	msg = "FULL PATH: ";
+
+    if (pathp) {
+	sofar = db_path_to_string(pathp);
+	bu_log("%s%s\n", msg, sofar);
+	bu_free(sofar, "path string");
+    } else {
+	bu_log("%s**NULL**\n", msg);
+    }
+
 }
 
 int
@@ -333,7 +360,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
     int ret = 0;
     size_t len;
 
-    RT_CK_DBI(dbip);
+    RT_CK_FULL_PATH(pp);
 
     /* assume NULL str is '/' */
     if (!str) {
@@ -374,6 +401,8 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	pp->fp_maxlen, sizeof(int),
 	"db_string_to_path bool array");
 
+    RT_CK_DBI(dbip);
+
     /* Build up path array */
     cp = copy;
     nslash = 0;
@@ -405,7 +434,8 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
     int ret = 0;
     int i;
 
-    RT_CK_DBI(dbip);
+    if (!pp)
+	return -1;
 
     /* Make a path structure just big enough */
     pp->magic = DB_FULL_PATH_MAGIC;
@@ -417,6 +447,7 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
 	pp->fp_maxlen, sizeof(int),
 	"db_argv_to_path bool array");
 
+    RT_CK_DBI(dbip);
 
     for (i = 0; i<argc; i++) {
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
@@ -433,6 +464,9 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
 void
 db_free_full_path(struct db_full_path *pp)
 {
+    if (!pp)
+	return;
+
     RT_CK_FULL_PATH(pp);
 
     if (pp->fp_maxlen > 0) {
@@ -449,6 +483,11 @@ int
 db_identical_full_paths(const struct db_full_path *a, const struct db_full_path *b)
 {
     long i;
+
+    if (!a && !b)
+	return 1;
+    else if (!a || !b)
+	return 0;
 
     RT_CK_FULL_PATH(a);
     RT_CK_FULL_PATH(b);
@@ -529,6 +568,9 @@ db_full_path_search(const struct db_full_path *a, const struct directory *dp)
 {
     long i;
 
+    if (!dp)
+	return 0;
+
     RT_CK_FULL_PATH(a);
     RT_CK_DIR(dp);
     BU_ASSERT_SIZE_T(a->fp_len, <, LONG_MAX);
@@ -543,8 +585,15 @@ int
 cyclic_path(const struct db_full_path *fp, const char *name)
 {
     /* skip the last one added since it is currently being tested. */
-    long int depth = fp->fp_len - 1;
+    long int depth;
     const char *test_name;
+
+    if (!name || !fp)
+	return 0;
+
+    RT_CK_FULL_PATH(fp);
+
+    depth = fp->fp_len - 1;
 
     if (name && !name[0] == '\0') {
 	test_name = name;
