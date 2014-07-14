@@ -97,6 +97,7 @@ main(int argc, char **argv)
 	/* START # 3 */
 
 	/* Print info about the window. */
+	printf("Usage: window [-f name.g] [-n #] [-h #] [-w #] [-d #] [-r #]\n");
 	printf("\n%s\n",explain);
 	printf("The windows are composed of 2 arb8s and 4 cylinders.\n");
 	printf("The front of the window is centered at (0, 0, 0) and\n");
@@ -104,6 +105,7 @@ main(int argc, char **argv)
 	printf("window.\n\n");
 
 	/* Find name of mged file to be created. */
+        printf("       Program continues running (in interactive mode):\n");
 	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
