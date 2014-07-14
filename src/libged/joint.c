@@ -2059,7 +2059,7 @@ joint_move(struct ged *gedp, struct joint *jp)
 	    if (!dp) {
 		continue;
 	    }
-	    db_add_node_to_full_path(anp->an_path, dp);
+	    db_add_node_to_full_path(&anp->an_path, dp);
 	}
 	jp->anim=anp;
 	db_add_anim(gedp->ged_wdbp->dbip, anp, 0);
@@ -2270,7 +2270,7 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 		if (!dp) {
 		    continue;
 		}
-		db_add_node_to_full_path(hp->effector.path.fp_names[i], dp);
+		db_add_node_to_full_path(&hp->effector.path, dp);
 	    }
 	}
 	if (hp->objective.arc.type == ARC_ARC) {
@@ -2281,7 +2281,7 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 		if (!dp) {
 		    break;
 		}
-		db_add_node_to_full_path(hp->objective.path.fp_names[i], dp);
+		db_add_node_to_full_path(&hp->objective.path, dp);
 	    }
 	}
     }
