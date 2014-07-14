@@ -37,6 +37,7 @@
 #include "raytrace.h"
 
 #include "./joint.h"
+#include "./ged_private.h"
 
 static unsigned int J_DEBUG = 0;
 #define DEBUG_J_MESH	0x00000001
@@ -240,22 +241,10 @@ static struct db_tree_state mesh_initial_tree_state = {
 };
 
 
-/*
- * The cvt_vlblock_to_solids() function is not converted it, a bu_bomb() function call
- * it is used temporarily to return from the function. The name variable is commented
- * for the moment, it is not used until the cvt_vlblock_to_solids() cand be fixed.
- * The UNUSED option must be removed from the int argc and const char *argv[] parameters
- * when the cvt_vlblock_to_solids() function it is fixed.
- *
- * The joint accept option is not working properly, it needs joint_mesh() function,
- * for the ANIM name parameter that currently it is commented. The same thing
- * applies for the mesh and solve options.
- */
 static int
-joint_mesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
+joint_mesh(struct ged *gedp, int argc, const char *argv[])
 {
-    /* name used for the cvt_vlblock_to_solids call
-       const char *name; */
+    const char *name;
     struct bn_vlblock*vbp;
     struct bu_list *vhead;
     struct artic_joints *jp;
@@ -266,12 +255,12 @@ joint_mesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return GED_OK;
-    /*
-      if (argc <= 2) {
-      name = "_ANIM_";
-      } else {
-      name = argv[2];
-      }*/
+
+    if (argc <= 2) {
+	name = "_ANIM_";
+    } else {
+	name = argv[2];
+    }
 
     topc = ged_build_tops(gedp, topv, topv+2000);
     {
@@ -325,8 +314,7 @@ joint_mesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 	}
     }
 
-    bu_bomb("cvt_vlblock_to_solids not converted yet\n");
-    /* cvt_vlblock_to_solids(gedp, vbp, name, 0); */
+    _ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
 
     rt_vlblock_free(vbp);
     while (BU_LIST_WHILE(jp, artic_joints, &artic_head)) {
