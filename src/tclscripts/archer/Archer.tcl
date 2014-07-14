@@ -6575,6 +6575,9 @@ proc title_node_handler {node} {
 		$itk_component(ged) brep [file tail $obj] plot SCV
 		bind $win <1> "$itk_component(ged) mouse_brep_selection_append $obj %x %y; break"
 		continue
+	    } elseif {$mSelectedObjType == "joint"} {
+		bind $win <1> "$itk_component(ged) mouse_joint_select $obj %x %y; break"
+		continue
 	    } else {
 		bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
 	    }

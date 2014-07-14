@@ -341,6 +341,7 @@ package provide cadwidgets::Ged 1.0
 	method mouse_find_bot_edge {_bot _mx _my}
 	method mouse_find_botpt {_bot _mx _my}
 	method mouse_find_pipept {_pipe _mx _my}
+	method mouse_joint_select {_obj _mx _my}
 	method mouse_move_arb_edge {args}
 	method mouse_move_arb_face {args}
 	method mouse_move_metaballpt {args}
@@ -2335,6 +2336,10 @@ package provide cadwidgets::Ged 1.0
     set mPrevGedMouseY $_my
 
     $mGed mouse_find_pipept $itk_component($itk_option(-pane)) $_pipe $_mx $_my
+}
+
+::itcl::body cadwidgets::Ged::mouse_joint_select {_obj _mx _my} {
+    eval $mGed mouse_joint_select $itk_component($itk_option(-pane)) $_obj $_mx $_my
 }
 
 ::itcl::body cadwidgets::Ged::mouse_move_arb_edge {args} {
