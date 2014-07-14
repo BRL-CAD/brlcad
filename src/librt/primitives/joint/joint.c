@@ -48,6 +48,7 @@
 #include "raytrace.h"
 #include "nmg.h"
 #include "db.h"
+#include "brep.h"
 
 #include "../../librt_private.h"
 

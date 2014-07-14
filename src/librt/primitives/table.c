@@ -1212,7 +1212,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	RTFUNCTAB_FUNC_TESS_CAST(rt_joint_tess),
 	NULL,
-	NULL,
+	RTFUNCTAB_FUNC_BREP_CAST(rt_joint_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_joint_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_joint_export5),
 	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_joint_import4),
