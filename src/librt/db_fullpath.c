@@ -436,8 +436,10 @@ db_free_full_path(struct db_full_path *pp)
     RT_CK_FULL_PATH(pp);
 
     if (pp->fp_maxlen > 0) {
-	bu_free((char *)pp->fp_names, "db_full_path array");
-	bu_free((char *)pp->fp_bool, "db_full_path bool array");
+	if (pp->fp_names)
+	    bu_free((char *)pp->fp_names, "db_full_path array");
+	if (pp->fp_bool)
+	    bu_free((char *)pp->fp_bool, "db_full_path bool array");
 	pp->fp_maxlen = pp->fp_len = 0;
 	pp->fp_names = (struct directory **)0;
     }
@@ -537,7 +539,8 @@ db_full_path_search(const struct db_full_path *a, const struct directory *dp)
     return 0;
 }
 
-int cyclic_path(const struct db_full_path *fp, const char *name)
+int
+cyclic_path(const struct db_full_path *fp, const char *name)
 {
     /* skip the last one added since it is currently being tested. */
     long int depth = fp->fp_len - 1;
