@@ -83,6 +83,7 @@ db_add_node_to_full_path(struct db_full_path *pp, struct directory *dp)
     pp->fp_names[pp->fp_len++] = dp;
 }
 
+
 void
 db_dup_full_path(struct db_full_path *newp, const struct db_full_path *oldp)
 {
@@ -105,6 +106,7 @@ db_dup_full_path(struct db_full_path *newp, const struct db_full_path *oldp)
 	"db_full_path bool array (duplicate)");
     memcpy((char *)newp->fp_bool, (char *)oldp->fp_bool, newp->fp_len * sizeof(int));
 }
+
 
 void
 db_extend_full_path(struct db_full_path *pathp, size_t incr)
@@ -139,6 +141,7 @@ db_extend_full_path(struct db_full_path *pathp, size_t incr)
     }
 }
 
+
 void
 db_append_full_path(struct db_full_path *dest, const struct db_full_path *src)
 {
@@ -157,6 +160,7 @@ db_append_full_path(struct db_full_path *dest, const struct db_full_path *src)
 	   src->fp_len * sizeof(int));
     dest->fp_len += src->fp_len;
 }
+
 
 void
 db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, off_t start)
@@ -182,6 +186,7 @@ db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, off
 	"db_full_path bool array (duplicate)");
     memcpy((char *)newp->fp_bool, (char *)&oldp->fp_bool[start], newp->fp_len * sizeof(int));
 }
+
 
 char *
 db_path_to_string(const struct db_full_path *pp)
@@ -224,6 +229,7 @@ db_path_to_string(const struct db_full_path *pp)
     return buf;
 }
 
+
 void
 db_path_to_vls(struct bu_vls *str, const struct db_full_path *pp)
 {
@@ -243,6 +249,7 @@ db_path_to_vls(struct bu_vls *str, const struct db_full_path *pp)
 	    bu_vls_strcat(str, "**NULL**");
     }
 }
+
 
 void
 db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, const struct db_i *dbip, int fp_flags)
@@ -331,6 +338,7 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
     }
 }
 
+
 void
 db_pr_full_path(const char *msg, const struct db_full_path *pathp)
 {
@@ -348,6 +356,7 @@ db_pr_full_path(const char *msg, const struct db_full_path *pathp)
     }
 
 }
+
 
 int
 db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str)
@@ -427,6 +436,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
     return ret;
 }
 
+
 int
 db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char *const *argv)
 {
@@ -461,6 +471,7 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
     return ret;
 }
 
+
 void
 db_free_full_path(struct db_full_path *pp)
 {
@@ -478,6 +489,7 @@ db_free_full_path(struct db_full_path *pp)
 	pp->fp_names = (struct directory **)0;
     }
 }
+
 
 int
 db_identical_full_paths(const struct db_full_path *a, const struct db_full_path *b)
@@ -500,6 +512,7 @@ db_identical_full_paths(const struct db_full_path *a, const struct db_full_path 
     }
     return 1;
 }
+
 
 int
 db_full_path_subset(
@@ -544,6 +557,7 @@ db_full_path_subset(
     return 0;
 }
 
+
 int
 db_full_path_match_top(
     const struct db_full_path *a,
@@ -563,6 +577,7 @@ db_full_path_match_top(
     return 1;
 }
 
+
 int
 db_full_path_search(const struct db_full_path *a, const struct directory *dp)
 {
@@ -580,6 +595,7 @@ db_full_path_search(const struct db_full_path *a, const struct directory *dp)
     }
     return 0;
 }
+
 
 int
 cyclic_path(const struct db_full_path *fp, const char *name)
@@ -612,9 +628,10 @@ cyclic_path(const struct db_full_path *fp, const char *name)
     return 0;
 }
 
+
 int
 db_full_path_transformation_matrix(matp_t matp, struct db_i *dbip,
-	const struct db_full_path *path, const int depth)
+				   const struct db_full_path *path, const int depth)
 {
     int ret = 0;
     struct db_tree_state ts = RT_DBTS_INIT_IDN;
