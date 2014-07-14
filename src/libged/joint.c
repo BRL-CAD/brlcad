@@ -21,11 +21,6 @@
  *
  * Process all animation edit commands.
  *
- * Author -
- * Christopher T. Johnson
- *
- * Copyright (c) 1994-2007 Geometric Solutions, Inc.
- * All rights reserved.
  */
 
 #include "common.h"
