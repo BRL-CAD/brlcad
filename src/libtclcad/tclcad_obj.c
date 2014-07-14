@@ -7435,8 +7435,7 @@ to_mouse_joint_select(
     cmd_argv[10] = bu_vls_addr(&dir[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    /* TODO: will be ged_joint2 */
-    ret = ged_joint(gedp, cmd_argc, cmd_argv);
+    ret = ged_joint2(gedp, cmd_argc, cmd_argv);
 
     bu_vls_free(&start[X]);
     bu_vls_free(&start[Y]);
@@ -7530,8 +7529,7 @@ to_mouse_joint_selection_translate(
     cmd_argv[6] = bu_vls_addr(&delta[Y]);
     cmd_argv[7] = bu_vls_addr(&delta[Z]);
 
-    /* TODO: will be ged_joint2 */
-    ret = ged_joint(gedp, cmd_argc, cmd_argv);
+    ret = ged_joint2(gedp, cmd_argc, cmd_argv);
 
     bu_free((void *)joint_name, "joint_name");
     bu_vls_free(&delta[X]);
