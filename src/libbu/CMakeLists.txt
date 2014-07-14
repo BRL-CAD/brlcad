@@ -10,11 +10,13 @@ set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 
+# this file assumes char are signed, causes warnings/errors on unsigned platforms
+# b64.c
+
 set(LIBBU_SOURCES
   affinity.c
   argv.c
   avs.c
-  b64.c
   backtrace.c
   badmagic.c
   basename.c

@@ -4309,11 +4309,14 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	ON_TextLog err(stderr);
 	bool ok = model.Write(archive, 4, "export5", &err);
 	if (ok) {
+/* FIXME: Restore after b64 interface is fixed !!! */
+#if 0
 	    void *archive_cp = archive.CreateCopy();
 	    char *brep64 = bu_b64_encode_block((const char *)archive_cp, archive.Size());
 	    bu_vls_printf(logstr, " \"%s\"", brep64);
 	    bu_free(archive_cp, "free archive copy");
 	    bu_free(brep64, "free encoded brep string");
+#endif
 	    return 0;
 	}
     }
@@ -4327,6 +4330,8 @@ rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int a
     char *decoded;
     ONX_Model model;
     if (argc == 1 && argv[0]) {
+/* FIXME: Restore after b64 interface is fixed !!! */
+#if 0
 	int decoded_size = bu_b64_decode(&decoded, argv[0]);
 	RT_MemoryArchive archive(decoded, decoded_size);
 	ON_wString wonstr;
@@ -4337,6 +4342,7 @@ rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int a
 	bu_vls_printf(logstr, "%s", ON_String(wonstr).Array());
 	ONX_Model_Object mo = model.m_object_table[0];
 	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
+#endif
 	return 0;
     }
     return -1;
