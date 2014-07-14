@@ -274,6 +274,7 @@ package provide cadwidgets::Ged 1.0
 	method isize {args}
 	method item {args}
 	method joint {args}
+	method joint2 {args}
 	method keep {args}
 	method keypoint {args}
 	method kill {args}
@@ -1974,6 +1975,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::joint {args} {
     eval $mGed joint $args
+}
+
+::itcl::body cadwidgets::Ged::joint2 {args} {
+    eval $mGed joint2 $args
 }
 
 ::itcl::body cadwidgets::Ged::keep {args} {
@@ -6219,6 +6224,7 @@ package provide cadwidgets::Ged 1.0
     $help add isize		{{} {returns the inverse of view size}}
     $help add item		{{region ident [air [material [los]]]} {set region ident codes}}
     $help add joint		{{?} {}}
+    $help add joint2		{{} {}}
     $help add keep		{{keep_file object(s)} {save named objects in specified file}}
     $help add keypoint		{{[point]} {set/get the keypoint}}
     $help add kill		{{[-f] <objects>} {delete object[s] from file}}
