@@ -138,9 +138,9 @@ findjoint(struct ged *gedp, const struct db_full_path *pathp)
 
 
 HIDDEN union tree *
-mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
+mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
-    static struct ged *gedp;
+    struct ged *gedp = (struct ged *)client_data;
     struct rt_grip_internal *gip;
     struct artic_joints *newJoint;
     struct artic_grips *newGrip;
@@ -286,7 +286,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 		     0,			/* Begin region */
 		     mesh_end_region,	/* End region */
 		     mesh_leaf,		/* node */
-		     (void *)NULL);
+		     (void *)gedp);
 
     /*
      * Now we draw the overlays.  We do this by building a
