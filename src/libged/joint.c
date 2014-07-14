@@ -1074,6 +1074,9 @@ parse_double(struct ged *gedp, double *dbl, FILE *fip, struct bu_vls *str)
 	return 0;
     }
 
+    if (J_DEBUG & DEBUG_J_PARSE)
+	bu_vls_printf(gedp->ged_result_str, "parse_double: %lf\n", *dbl);
+
     return 1;
 }
 
@@ -1119,6 +1122,10 @@ parse_vect(struct ged *gedp, fastf_t *vect, FILE *fip, struct bu_vls *str)
 	    if (!gobble_token(gedp, BU_LEX_SYMBOL, SYM_CL_PT, fip, str)) return 0;
 	}
     }
+
+    /* convert to fastf_t back to double for return */
+    VMOVE(vect, scan);
+
     return 1;
 }
 
