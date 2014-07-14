@@ -55,6 +55,128 @@ static struct _ged_funtab joint_subcommand_table[] = {
 };
 
 int
+joint_selection(
+    struct ged *gedp,
+    struct rt_db_internal *UNUSED(ip),
+    int argc,
+    const char *argv[])
+{
+    int i;
+    struct rt_selection_set *selection_set;
+    struct bu_ptbl *selections;
+    struct rt_selection *new_selection;
+    struct rt_selection_query query;
+    const char *cmd, *solid_name, *selection_name;
+
+    /*   0         1            2         3
+     * joint2 <solid_name> selection subcommand
+     */
+    if (argc < 4) {
+	bu_vls_printf(gedp->ged_result_str, "not enough args for selection replace\n");
+	return GED_ERROR;
+    }
+
+    solid_name = argv[1];
+    cmd = argv[3];
+
+    if (BU_STR_EQUAL(cmd, "replace")) {
+	/* append to named selection - selection is created if it doesn't exist */
+	void (*free_selection)(struct rt_selection *);
+
+	/*        4         5      6      7     8    9    10
+	 * selection_name startx starty startz dirx diry dirz
+	 */
+	if (argc != 11) {
+	    bu_vls_printf(gedp->ged_result_str, "wrong args for selection replace\n");
+	    return GED_ERROR;
+	}
+	selection_name = argv[4];
+
+	/* find matching selections */
+	query.start[X] = atof(argv[5]);
+	query.start[Y] = atof(argv[6]);
+	query.start[Z] = atof(argv[7]);
+	query.dir[X] = atof(argv[8]);
+	query.dir[Y] = atof(argv[9]);
+	query.dir[Z] = atof(argv[10]);
+	query.sorting = RT_SORT_CLOSEST_TO_START;
+
+	/* TODO: implement joint find_selections*/
+	selection_set = NULL;
+	/*selection_set = ip->idb_meth->ft_find_selections(ip, &query);*/
+	if (!selection_set) {
+	    bu_vls_printf(gedp->ged_result_str, "no matching selections");
+	    return GED_ERROR;
+	}
+
+	/* could be multiple options, just grabbing the first and
+	 * freeing the rest
+	 */
+	selections = &selection_set->selections;
+	new_selection = (struct rt_selection *)BU_PTBL_GET(selections, 0);
+
+	free_selection = selection_set->free_selection;
+	for (i = BU_PTBL_LEN(selections) - 1; i > 0; --i) {
+	    long *s = BU_PTBL_GET(selections, i);
+	    free_selection((struct rt_selection *)s);
+	    bu_ptbl_rm(selections, s);
+	}
+	bu_ptbl_free(selections);
+	BU_FREE(selection_set, struct rt_selection_set);
+
+	/* get existing/new selections set in gedp */
+	selection_set = ged_get_selection_set(gedp, solid_name, selection_name);
+	selection_set->free_selection = free_selection;
+	selections = &selection_set->selections;
+
+	for (i = BU_PTBL_LEN(selections) - 1; i >= 0; --i) {
+	    long *s = BU_PTBL_GET(selections, i);
+	    free_selection((struct rt_selection *)s);
+	    bu_ptbl_rm(selections, s);
+	}
+	bu_ptbl_ins(selections, (long *)new_selection);
+    } else if (BU_STR_EQUAL(cmd, "translate")) {
+
+	struct rt_selection_operation operation;
+
+	/*        4       5  6  7
+	 * selection_name dx dy dz
+	 */
+	if (argc != 8) {
+	    return GED_ERROR;
+	}
+	selection_name = argv[4];
+
+	selection_set = ged_get_selection_set(gedp, solid_name, selection_name);
+	selections = &selection_set->selections;
+
+	if (BU_PTBL_LEN(selections) < 1) {
+	    return GED_ERROR;
+	}
+
+	for (i = 0; i < (int)BU_PTBL_LEN(selections); ++i) {
+	    int ret;
+	    operation.type = RT_SELECTION_TRANSLATION;
+	    operation.parameters.tran.dx = atof(argv[5]);
+	    operation.parameters.tran.dy = atof(argv[6]);
+	    operation.parameters.tran.dz = atof(argv[7]);
+
+	    /* TODO: implement process_selection */
+	    ret = 0;
+	    /*ret = ip->idb_meth->ft_process_selection(ip,
+		    (struct rt_selection *)BU_PTBL_GET(selections, i), &operation);
+	     */
+
+	    if (ret != 0) {
+		return GED_ERROR;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+int
 ged_joint2(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *ndp;
@@ -98,6 +220,13 @@ ged_joint2(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
     */ 
+
+    /* check for selection command */
+    if (BU_STR_EQUAL(argv[2], "selection")) {
+	int ret = joint_selection(gedp, &intern, argc, argv);
+	rt_db_free_internal(&intern);
+	return ret;
+    }
    
     rt_db_free_internal(&intern);
 

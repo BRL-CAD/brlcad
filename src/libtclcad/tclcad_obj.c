@@ -7361,7 +7361,7 @@ to_mouse_joint_select(
     const char *usage,
     int maxargs)
 {
-    const char *cmd_argv[11] = {"joint2", NULL, "selection", "append", "active"};
+    const char *cmd_argv[11] = {"joint2", NULL, "selection", "replace", "active"};
     int ret, cmd_argc = (int)(sizeof(cmd_argv) / sizeof(const char *));
     struct ged_dm_view *gdvp;
     char *joint_name;
