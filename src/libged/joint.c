@@ -94,9 +94,6 @@ findjoint(struct ged *gedp, const struct db_full_path *pathp)
     int best;
     struct joint *bestjp = NULL;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     if (J_DEBUG & DEBUG_J_MESH) {
 	char *sofar = db_path_to_string(pathp);
 
@@ -307,8 +304,6 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 	if (J_DEBUG & DEBUG_J_MESH) {
-	    /* initialize result */
-	    bu_vls_trunc(gedp->ged_result_str, 0);
 	    bu_vls_printf(gedp->ged_result_str, "joint mesh: %s has %d grips.\n",
 			  (jp->joint) ? jp->joint->name: "UNGROUPED", i);
 	}
@@ -334,9 +329,6 @@ joint_debug(struct ged *gedp,
 	 int argc,
 	 const char *argv[])
 {
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     if (argc >= 2) {
 	sscanf(argv[1], "%x", &J_DEBUG);
     } else {
@@ -360,9 +352,6 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
     int i, bad;
 
     bad = 0;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* Help command(s) */
     for (i=1; i<argc; i++) {
@@ -407,9 +396,6 @@ static int
 joint_command_tab(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
 {
     struct funtab *ftp;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc <= 1) {
 	bu_vls_printf(gedp->ged_result_str, "The following %s subcommands are available:\n", functions->ft_name);
@@ -538,14 +524,9 @@ joint_unload(struct ged *gedp, int argc, const char *argv[])
     int joints, holds;
 
     if (gedp->ged_wdbp->dbip == DBI_NULL) {
-	/* initialize result */
-	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
 	return GED_ERROR;
     }
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 1) {
 	bu_vls_printf(gedp->ged_result_str, "Unexpected parameter [%s]\n", argv[1]);
@@ -687,9 +668,6 @@ parse_error(struct ged *gedp, struct bu_vls *vlsp, char *error)
     size_t len;
     const char *str = bu_vls_addr(vlsp);
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     len = bu_vls_strlen(vlsp);
     if (!len) {
 	bu_vls_printf(gedp->ged_result_str, "%s:%d %s\n", lex_name, lex_line, error);
@@ -726,8 +704,6 @@ get_token(struct ged *gedp, union bu_lex_token *token, FILE *fip, struct bu_vls 
     bu_vls_nibble(str, used);
 
     {
-	bu_vls_trunc(gedp->ged_result_str, 0);
-
 	if (J_DEBUG & DEBUG_J_LEX) {
 	    int i;
 	    switch (token->type) {
@@ -808,9 +784,6 @@ skip_group(struct ged *gedp, FILE *fip, struct bu_vls *str)
     union bu_lex_token tok;
     int count = 1;
 
-    /*initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "skip_group: Skipping....\n");
     }
@@ -875,8 +848,6 @@ parse_path(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
     int max;
 
     if (J_DEBUG & DEBUG_J_PARSE) {
-	/* initialize result */
-	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "parse_path: open.\n");
     }
     /*
@@ -954,7 +925,6 @@ parse_list(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
     int max;
 
     if (J_DEBUG & DEBUG_J_PARSE) {
-	/* initialize result */
 	bu_vls_printf(gedp->ged_result_str, "parse_path: open.\n");
     }
     /*
@@ -1015,9 +985,6 @@ parse_ARC(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
     union bu_lex_token token;
     int max;
     char *error;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_ARC: open.\n");
@@ -1080,8 +1047,6 @@ parse_double(struct ged *gedp, double *dbl, FILE *fip, struct bu_vls *str)
     sign = 1.0;
 
     if (J_DEBUG & DEBUG_J_PARSE) {
-	/* initialize result */
-	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "parse_double: open\n");
     }
 
@@ -1139,8 +1104,6 @@ parse_vect(struct ged *gedp, fastf_t *vect, FILE *fip, struct bu_vls *str)
     double scan[3];
 
     if (J_DEBUG & DEBUG_J_PARSE) {
-	/* initialize result */
-	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "parse_vect: open.\n");
     }
 
@@ -1166,15 +1129,12 @@ parse_trans(struct ged *gedp, struct joint *jp, int idx, FILE *fip, struct bu_vl
     union bu_lex_token token;
     int dirfound, upfound, lowfound, curfound;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_trans: open\n");
     }
 
     if (idx >= 3) {
-	parse_error(gedp, str, "parse_trans: To many translations for this joint.");
+	parse_error(gedp, str, "parse_trans: Too many translations for this joint.");
 	if (!gobble_token(gedp, BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 	skip_group(gedp, fip, str);
 	return 0;
@@ -1330,9 +1290,6 @@ parse_rots(struct ged *gedp, struct joint *jp, int idx, FILE *fip, struct bu_vls
 {
     union bu_lex_token token;
     int dirfound, upfound, lowfound, curfound;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_rots: open\n");
@@ -1497,9 +1454,6 @@ parse_joint(struct ged *gedp, FILE *fip, struct bu_vls *str)
     int rots;
     int arcfound, locfound;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_joint: reading joint.\n");
     }
@@ -1657,9 +1611,6 @@ parse_jset(struct ged *gedp, struct hold *hp, FILE *fip, struct bu_vls *str)
     union bu_lex_token token;
     int jointfound, listfound, arcfound, pathfound;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_jset: open\n");
     }
@@ -1753,9 +1704,6 @@ parse_solid(struct ged *gedp, struct hold_point *pp, FILE *fip, struct bu_vls *s
     int vertexfound = 0, arcfound = 0;
     double vertex;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_solid: open\n");
     }
@@ -1820,9 +1768,6 @@ parse_point(struct ged *gedp, struct hold_point *pp, FILE *fip, struct bu_vls *s
 {
     union bu_lex_token token;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     if (get_token(gedp, &token, fip, str, lex_solids, animsyms) == EOF) {
 	parse_error(gedp, str, "parse_point: Unexpected EOF getting solid type.");
 	return 0;
@@ -1868,9 +1813,6 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
     struct hold *hp;
     union bu_lex_token token;
     int jsetfound = 0, efffound=0, goalfound=0, weightfound=0, prifound=0;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_hold: reading constraint\n");
@@ -2040,9 +1982,6 @@ joint_move(struct ged *gedp, struct joint *jp)
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     /*
      * If no animate structure, cons one up.
      */
@@ -2160,9 +2099,6 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
     int c;
     struct joint *jp;
     struct hold *hp;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (gedp->ged_wdbp->dbip == DBI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
@@ -2297,9 +2233,6 @@ joint_save(struct ged *gedp, int argc, const char *argv[])
     int i;
     FILE *fop;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     if (gedp->ged_wdbp->dbip == DBI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
 	return GED_ERROR;
@@ -2384,9 +2317,6 @@ joint_accept(struct ged *gedp, int argc, const char *argv[])
     int c;
     int no_mesh = 0;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     bu_optind=1;
     while ((c=bu_getopt(argc, (char * const *)argv, "m")) != -1) {
 	switch (c) {
@@ -2423,9 +2353,6 @@ joint_reject(struct ged *gedp, int argc, const char *argv[])
     int i;
     int c;
     int no_mesh = 0;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_optind=1;
     while ((c=bu_getopt(argc, (char * const *)argv, "m")) != -1) {
@@ -2468,9 +2395,6 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return 1;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     VSETALL(loc, 0.0);	/* default is the origin. */
     switch (hp->type) {
@@ -2536,9 +2460,6 @@ hold_eval(struct ged *gedp, struct hold *hp)
     vect_t o_loc = VINIT_ZERO;
     double value;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     /*
      * get the current location of the effector.
      */
@@ -2558,7 +2479,6 @@ hold_eval(struct ged *gedp, struct hold *hp)
     }
     value = hp->weight * DIST_PT_PT(e_loc, o_loc);
     if (J_DEBUG & DEBUG_J_EVAL) {
-	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "hold_eval: PT->PT of %s is %g\n", hp->name, value);
     }
     return value;
@@ -2601,8 +2521,6 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
     int bestfreedom = -1;
     struct joint *bestjoint;
     struct jointH *jh;
-
-    /* initialize result */
 
     if (J_DEBUG & DEBUG_J_SOLVE) {
 	bu_vls_printf(gedp->ged_result_str, "part_solve: solving for %s.\n", hp->name);
@@ -2891,9 +2809,6 @@ reject_move(struct ged *gedp)
     BU_LIST_POP(solve_stack, &solve_head, ssp);
     if (!ssp) return;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     if (J_DEBUG & DEBUG_J_SYSTEM) {
 	bu_vls_printf(gedp->ged_result_str, "reject_move: rejecting %s(%d, %g)->%g\n", ssp->jp->name,
 		      ssp->freedom, ssp->newval, ssp->oldval);
@@ -2951,10 +2866,9 @@ system_solve(struct ged *gedp, int pri, double delta, double epsilon)
 
     if (pri < 0) return 1;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
+    for (i=0; i<=pri; i++)
+	pri_weights[i]=0.0;
 
-    for (i=0; i<=pri; i++) pri_weights[i]=0.0;
     for (BU_LIST_FOR(hp, hold, &hold_head)) {
 	hp->eval = hold_eval(gedp, hp);
 	pri_weights[hp->priority] += hp->eval;
@@ -3115,19 +3029,16 @@ Middle:
 	return -1;
     }
     if (J_DEBUG & DEBUG_J_SYSTEM) {
-	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "system_solve: new_weights[%d] = %g, returning ", pri,
 		      new_weights[pri]);
     }
     if (new_weights[pri] < epsilon) {
 	if (J_DEBUG & DEBUG_J_SYSTEM) {
-	    bu_vls_trunc(gedp->ged_result_str, 0);
 	    bu_vls_printf(gedp->ged_result_str, "1\n");
 	}
 	return 1;
     }
     if (J_DEBUG & DEBUG_J_SYSTEM) {
-	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "0\n");    }
     return 0;
 
@@ -3189,9 +3100,6 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
      */
     argc -= bu_optind;
     argv += bu_optind;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     for (BU_LIST_FOR(hp, hold, &hold_head)) hold_clear_flags(hp);
     found = -1;
@@ -3353,17 +3261,11 @@ print_hold(struct ged *gedp, struct hold *hp)
     t1 = hold_point_to_string(gedp, &hp->effector);
     t2 = hold_point_to_string(gedp, &hp->objective);
 
-    /*initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     bu_vls_printf(gedp->ged_result_str, "holds:\t%s with %s\n\tfrom:%s\n\tto:%s", (hp->name) ? hp->name : "UNNAMED", hp->joint, t1, t2);
     bu_free(t1, "hold_point_to_string");
     bu_free(t2, "hold_point_to_string");
 
     {
-	/* initialize result */
-	bu_vls_trunc(gedp->ged_result_str, 0);
-
 	bu_vls_printf(gedp->ged_result_str, "\n\twith a weight: %g, pull %g\n",
 		      hp->weight, hold_eval(gedp, hp));
     }
@@ -3396,9 +3298,6 @@ joint_list(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     struct joint *jp;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	vls_col_item(gedp->ged_result_str, jp->name);
     }
@@ -3414,9 +3313,6 @@ joint_adjust(struct ged *gedp, int argc, const char *argv[])
     struct joint *jp;
     int i;
     double tmp;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return GED_OK;
@@ -3508,9 +3404,6 @@ joint_cmd(struct ged *gedp,
 	(void)joint_usage(gedp, argc, argv, functions);
 	return GED_HELP;	/* No command entered */
     }
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     for (ftp = &functions[1]; ftp->ft_name; ftp++) {
 	if (!BU_STR_EQUAL(ftp->ft_name, argv[0]))
