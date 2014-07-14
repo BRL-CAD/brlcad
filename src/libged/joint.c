@@ -182,7 +182,6 @@ f_Jdebug(struct ged *gedp,
 int
 ged_joint(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char * usage = "help joint command from libged";
     int status;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -191,12 +190,7 @@ ged_joint(struct ged *gedp, int argc, const char *argv[])
      /* initialize result */
      bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc < 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    /* Skip the already processed parameters */
+    /* Skip the command name */
     argc--;
     argv++;
 
@@ -271,7 +265,7 @@ f_help2(struct ged *gedp, int argc, const char *argv[], struct funtab *functions
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc <= 1) {
-	bu_vls_printf(gedp->ged_result_str, "The following %scommands are available:\n", functions->ft_name);
+	bu_vls_printf(gedp->ged_result_str, "The following %s subcommands are available:\n", functions->ft_name);
 	for (ftp = functions+1; ftp->ft_name; ftp++) {
 	    vls_col_item(gedp->ged_result_str, ftp->ft_name);
 	}
