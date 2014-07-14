@@ -44,6 +44,7 @@
 #include "solid.h"
 #include "raytrace.h"
 
+#include "./ged_private.h"
 #include "./joint.h"
 
 static struct db_i *dbip;
@@ -79,33 +80,33 @@ int f_Jhold(struct ged *gedp, int argc, const char *argv[]);
 int f_Jsolve(struct ged *gedp, int argc, char *argv[]);
 
 
-static struct funtab joint_tab[] = {
+static struct _ged_funtab joint_tab[] = {
     {"joint ", "", "Joint command table",
      0, 0, 0, FALSE},
     {"?", "[commands]", "summary of available joint commands",
-     f_Jhelp2, 0, FUNTAB_UNLIMITED, FALSE},
+     f_Jhelp2, 0, _GED_FUNTAB_UNLIMITED, FALSE},
     {"accept", "[joints]", "accept a series of moves",
-     f_Jaccept, 1, FUNTAB_UNLIMITED, FALSE},
+     f_Jaccept, 1, _GED_FUNTAB_UNLIMITED, FALSE},
     {"debug", "[hex code]", "Show/set debugging bit vector for joints",
      f_Jdebug, 1, 2, FALSE},
     {"help", "[commands]", "give usage message for given joint commands",
-     f_Jhelp, 0, FUNTAB_UNLIMITED, FALSE},
+     f_Jhelp, 0, _GED_FUNTAB_UNLIMITED, FALSE},
     {"holds", "[names]", "list constraints",
-     f_Jhold, 1, FUNTAB_UNLIMITED, FALSE},
+     f_Jhold, 1, _GED_FUNTAB_UNLIMITED, FALSE},
     {"list", "[names]", "list joints.",
-     f_Jlist, 1, FUNTAB_UNLIMITED, FALSE},
+     f_Jlist, 1, _GED_FUNTAB_UNLIMITED, FALSE},
     {"load", "file_name", "load a joint/constraint file",
-     f_Jload, 2, FUNTAB_UNLIMITED, FALSE},
+     f_Jload, 2, _GED_FUNTAB_UNLIMITED, FALSE},
     {"mesh", "", "Build the grip mesh",
      f_Jmesh, 0, 1, FALSE},
     {"move", "joint_name p1 [p2...p6]", "Manual adjust a joint",
      f_Jmove, 3, 8, FALSE},
     {"reject", "[joint_names]", "reject joint motions",
-     f_Jreject, 1, FUNTAB_UNLIMITED, FALSE},
+     f_Jreject, 1, _GED_FUNTAB_UNLIMITED, FALSE},
     {"save",	"file_name", "Save joints and constraints to disk",
      f_Jsave, 2, 2, FALSE},
     {"solve", "constraint", "Solve a or all constraints",
-     f_Jsolve, 1, FUNTAB_UNLIMITED, FALSE},
+     f_Jsolve, 1, _GED_FUNTAB_UNLIMITED, FALSE},
     {"unload", "", "Unload any joint/constraints that have been loaded",
      f_Junload, 1, 1, FALSE},
     {NULL, NULL, NULL,
@@ -123,9 +124,9 @@ static int
 joint_cmd(struct ged *gedp,
     int argc,
     const char *argv[],
-    struct funtab functions[])
+    struct _ged_funtab functions[])
 {
-    struct funtab *ftp;
+    struct _ged_funtab *ftp;
 
     if (argc == 0)
 	return GED_OK;	/* No command entered, that's fine */
@@ -215,9 +216,9 @@ ged_joint(struct ged *gedp, int argc, const char *argv[])
  * Common code for help commands
  */
 HIDDEN int
-helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+helpcomm(struct ged *gedp, int argc, const char *argv[], struct _ged_funtab *functions)
 {
-    struct funtab *ftp;
+    struct _ged_funtab *ftp;
     int i, bad;
 
     bad = 0;
@@ -248,9 +249,9 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
  * the indicated commands.
  */
 int
-f_help(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+f_help(struct ged *gedp, int argc, const char *argv[], struct _ged_funtab *functions)
 {
-    struct funtab *ftp;
+    struct _ged_funtab *ftp;
 
 	/* initialize result */
 	bu_vls_trunc(gedp->ged_result_str, 0);
@@ -266,9 +267,9 @@ f_help(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
 }
 
 int
-f_help2(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+f_help2(struct ged *gedp, int argc, const char *argv[], struct _ged_funtab *functions)
 {
-    struct funtab *ftp;
+    struct _ged_funtab *ftp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);

@@ -1106,6 +1106,7 @@ static struct to_cmdtab to_cmds[] = {
     {"isize",	"vname", 2, to_view_func, ged_isize},
     {"item",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_item},
     {"joint",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_joint},
+    {"joint2",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_joint2},
     {"keep",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_keep},
     {"keypoint",	"[x y z]", 5, to_view_func, ged_keypoint},
     {"kill",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_kill},

@@ -132,6 +132,7 @@ set(LIBGED_SOURCES
   isize.c
   item.c
   joint.c
+  joint2.c
   keep.c
   keypoint.c
   kill.c

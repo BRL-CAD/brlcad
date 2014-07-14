@@ -37,6 +37,14 @@
 
 __BEGIN_DECLS
 
+#ifndef FALSE
+#  define FALSE 0
+#endif
+
+#ifndef TRUE
+#  define TRUE 1
+#endif
+
 #define _GED_V4_MAXNAME NAMESIZE
 #define _GED_TERMINAL_WIDTH 80
 #define _GED_COLUMNS ((_GED_TERMINAL_WIDTH + _GED_V4_MAXNAME - 1) / _GED_V4_MAXNAME)
@@ -55,6 +63,20 @@ __BEGIN_DECLS
 
 #define _GED_TREE_AFLAG 0x01
 #define _GED_TREE_CFLAG 0x02
+
+/* Container for defining sub-command structures */
+#define _GED_FUNTAB_UNLIMITED -1
+
+struct _ged_funtab {
+    char *ft_name;
+    char *ft_parms;
+    char *ft_comment;
+    int (*ft_func)();
+    int ft_min;
+    int ft_max;
+    int tcl_converted;
+};
+
 
 struct _ged_id_names {
     struct bu_list l;
@@ -112,6 +134,8 @@ struct _ged_trace_data {
     int gtd_flag;
 };
 
+void vls_col_item(struct bu_vls *str, const char *cp);
+void vls_col_eol(struct bu_vls *str);
 
 /* defined in facedef.c */
 extern int edarb_facedef(void *data, int argc, const char *argv[]);
