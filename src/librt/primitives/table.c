@@ -121,6 +121,7 @@ RT_DECLARE_INTERFACE(hrt);
 #if OBJ_BREP
 RT_DECLARE_INTERFACE(brep);
 #endif
+RT_DECLARE_INTERFACE(joint);
 
 
 /* generics for object manipulation, in generic.c */
@@ -1195,20 +1196,20 @@ const struct rt_functab OBJ[] = {
     {
 	/* 23 -- XXX unimplemented */
 	RT_FUNCTAB_MAGIC, "ID_JOINT", "joint",
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	0, /* ft_use_rpp */
+	NULL,/* prep */
+	NULL,/* shot */
+	NULL,/* print */
+	NULL,/* norm */
+	NULL,/* piece_shot */
+	NULL,/* piece_hitsegs */
+	NULL,/* uv */
+	NULL,/* curve */
+	NULL,/* classify */
+	NULL,/* free */
+	RTFUNCTAB_FUNC_PLOT_CAST(rt_joint_plot),/* plot */
+	NULL,/* adaptive_plot */
+	NULL,/* vshot */
 	NULL,
 	NULL,
 	NULL,
