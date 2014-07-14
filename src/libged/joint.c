@@ -46,8 +46,6 @@
 
 #include "./joint.h"
 
-static struct db_i *dbip;
-
 static unsigned int joint_debug = 0;
 #define DEBUG_J_MESH	0x00000001
 #define DEBUG_J_LOAD	0x00000002
@@ -402,7 +400,7 @@ f_Junload(struct ged *gedp, int argc, const char *argv[])
     struct hold *hp;
     int joints, holds;
 
-    if (dbip == DBI_NULL) {
+    if (gedp->ged_wdbp->dbip == DBI_NULL) {
 	/* initialize result */
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
@@ -416,7 +414,7 @@ f_Junload(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Unexpected parameter [%s]\n", argv[1]);
     }
 
-    db_free_anim(dbip);
+    db_free_anim(gedp->ged_wdbp->dbip);
     holds = 0;
     while (BU_LIST_WHILE(hp, hold, &hold_head)) {
 	holds++;
@@ -1890,7 +1888,7 @@ f_Jload(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (dbip == DBI_NULL) {
+    if (gedp->ged_wdbp->dbip == DBI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
 	return GED_ERROR;
     }
@@ -1910,8 +1908,8 @@ f_Jload(struct ged *gedp, int argc, const char *argv[])
     argc -= bu_optind;
     if (!no_unload) f_Junload(gedp, 0, NULL);
 
-    base2mm = dbip->dbi_base2local;
-    mm2base = dbip->dbi_local2base;
+    base2mm = gedp->ged_wdbp->dbip->dbi_base2local;
+    mm2base = gedp->ged_wdbp->dbip->dbi_local2base;
 
     while (argc) {
 	fip = fopen(*argv, "rb");
@@ -1997,7 +1995,7 @@ f_Jload(struct ged *gedp, int argc, const char *argv[])
 			  "full path");
 	    for (i=0; i<= hp->effector.arc.arc_last; i++) {
 		dp = hp->effector.path.fp_names[i] =
-		    db_lookup(dbip, hp->effector.arc.arc[i],
+		    db_lookup(gedp->ged_wdbp->dbip, hp->effector.arc.arc[i],
 			      LOOKUP_NOISY);
 		if (!dp) {
 		    hp->effector.path.fp_len = i;
@@ -2015,7 +2013,7 @@ f_Jload(struct ged *gedp, int argc, const char *argv[])
 			  "full path");
 	    for (i=0; i<= hp->objective.arc.arc_last; i++) {
 		dp = hp->objective.path.fp_names[i] =
-		    db_lookup(dbip, hp->objective.arc.arc[i],
+		    db_lookup(gedp->ged_wdbp->dbip, hp->objective.arc.arc[i],
 			      LOOKUP_NOISY);
 		if (!dp) {
 		    hp->objective.path.fp_len = i;
@@ -2040,7 +2038,7 @@ f_Jsave(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (dbip == DBI_NULL) {
+    if (gedp->ged_wdbp->dbip == DBI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
 	return GED_ERROR;
     }
@@ -2058,13 +2056,13 @@ f_Jsave(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
     fprintf(fop, "# joints and constraints for '%s'\n",
-	    dbip->dbi_title);
+	    gedp->ged_wdbp->dbip->dbi_title);
 
     /* Output the current editing units */
-    fprintf(fop, "units %gmm;\n", dbip->dbi_local2base);
+    fprintf(fop, "units %gmm;\n", gedp->ged_wdbp->dbip->dbi_local2base);
 
-    mm2base = dbip->dbi_local2base;
-    base2mm = dbip->dbi_base2local;
+    mm2base = gedp->ged_wdbp->dbip->dbi_local2base;
+    base2mm = gedp->ged_wdbp->dbip->dbi_base2local;
 
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	fprintf(fop, "joint %s {\n", jp->name);
@@ -2203,7 +2201,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
     struct rt_grip_internal *gip;
     struct rt_db_internal intern;
 
-    if (dbip == DBI_NULL)
+    if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return 1;
 
     /* initialize result */
@@ -2216,7 +2214,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	    return 1;
 	case ID_GRIP:
 	    if (hp->flag & HOLD_PT_GOOD) {
-		db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
+		db_path_to_mat(gedp->ged_wdbp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
 		MAT4X3PNT(loc, mat, hp->point);
 		return 1;
 	    }
@@ -2231,7 +2229,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 			  "hp->path.fp_names");
 	    return 0;
 	}
-	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_maxlen-1], dbip, NULL, &rt_uniresource) < 0)
+	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_maxlen-1], gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0)
 		return 0;
 
 	    RT_CK_DB_INTERNAL(&intern);
@@ -2241,11 +2239,11 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	    hp->flag |= HOLD_PT_GOOD;
 	    rt_db_free_internal(&intern);
 
-	    db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
+	    db_path_to_mat(gedp->ged_wdbp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
 	    MAT4X3PNT(loc, mat, hp->point);
 	    return 1;
 	case ID_JOINT:
-	    db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-3, &rt_uniresource);
+	    db_path_to_mat(gedp->ged_wdbp->dbip, &hp->path, mat, hp->path.fp_len-3, &rt_uniresource);
 	    if (hp->flag & HOLD_PT_GOOD) {
 		MAT4X3VEC(loc, mat, hp->point);
 		return 1;
@@ -3144,7 +3142,7 @@ joint_move(struct ged *gedp, struct joint *jp)
     quat_t q1;
     int i;
 
-    if (dbip == DBI_NULL)
+    if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return;
 
     /* initialize result */
@@ -3164,7 +3162,7 @@ joint_move(struct ged *gedp, struct joint *jp)
 	anp->an_path.fp_maxlen= jp->path.arc_last+1;
 	anp->an_path.fp_names = (struct directory **)bu_malloc(sizeof(struct directory *)*anp->an_path.fp_maxlen, "full path");
 	for (i=0; i<= jp->path.arc_last; i++) {
-	    dp = anp->an_path.fp_names[i] = db_lookup(dbip, jp->path.arc[i], LOOKUP_NOISY);
+	    dp = anp->an_path.fp_names[i] = db_lookup(gedp->ged_wdbp->dbip, jp->path.arc[i], LOOKUP_NOISY);
 	    if (!dp) {
 		anp->an_path.fp_len = i;
 		db_free_full_path(&anp->an_path);
@@ -3173,7 +3171,7 @@ joint_move(struct ged *gedp, struct joint *jp)
 	    }
 	}
 	jp->anim=anp;
-	db_add_anim(dbip, anp, 0);
+	db_add_anim(gedp->ged_wdbp->dbip, anp, 0);
 	if (joint_debug & DEBUG_J_MOVE) {
 
 	    sofar = db_path_to_string(&jp->anim->an_path);
@@ -3241,7 +3239,7 @@ joint_move(struct ged *gedp, struct joint *jp)
 
 	if (joint_debug & DEBUG_J_MOVE) {
 	    bu_vls_printf(gedp->ged_result_str, "joint move: moving %g along (%g %g %g)\n",
-			  tmp*dbip->dbi_base2local, m2[3], m2[7], m2[11]);
+			  tmp*gedp->ged_wdbp->dbip->dbi_base2local, m2[3], m2[7], m2[11]);
 	}
 	MAT_COPY(m1, ANIM_MAT);
 	bn_mat_mul(ANIM_MAT, m2, m1);
@@ -3268,7 +3266,7 @@ f_Jmove(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (dbip == DBI_NULL)
+    if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return GED_OK;
 
     /*
@@ -3324,7 +3322,7 @@ f_Jmove(struct ged *gedp, int argc, const char *argv[])
 	    --argc;
 	    continue;
 	}
-	tmp = atof(*argv) * dbip->dbi_local2base;
+	tmp = atof(*argv) * gedp->ged_wdbp->dbip->dbi_local2base;
 	if (tmp <= jp->dirs[i].upper &&
 	    tmp >= jp->dirs[i].lower) {
 	    jp->dirs[i].current = tmp;
@@ -3535,7 +3533,7 @@ f_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
     char *topv[2000];
     int topc;
 
-    if (dbip == DBI_NULL)
+    if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return GED_OK;
     /*
     if (argc <= 2) {
@@ -3562,7 +3560,7 @@ f_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 	}
     }
 
-    i = db_walk_tree(dbip, topc, (const char **)topv,
+    i = db_walk_tree(gedp->ged_wdbp->dbip, topc, (const char **)topv,
 		     1,			/* Number of cpus */
 		     &mesh_initial_tree_state,
 		     0,			/* Begin region */
