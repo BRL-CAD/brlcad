@@ -77,8 +77,10 @@ main(int argc, char *argv[])
     char temp1[10];			/* Temporary char string. */
     int ret;
 
+    bu_log(usage);
     if (argc > 1 && argv)
-	bu_exit(1, usage);
+	bu_exit(1, NULL);
+    printf("       Program continues running (in interactive mode):\n");
 
     /* Set up solid, region, & group names. */
     solcyl[0] = 's';
