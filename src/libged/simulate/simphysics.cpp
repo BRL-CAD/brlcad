@@ -21,6 +21,10 @@
  * Routines related to performing physics on the passed regions
  */
 
+
+#define USE_RT_COLLISION_ALGO
+
+
 #include "common.h"
 
 #ifdef HAVE_BULLET
@@ -54,9 +58,11 @@
 
 /* private headers */
 #include "simulate.h"
-//#include "simcollisionalgo.h" // unused
 #include "simrt.h"
 
+#ifdef USE_RT_COLLISION_ALGO
+#include "simcollisionalgo.h"
+#endif
 
 struct simulation_params *sim_params;
 
@@ -170,7 +176,7 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 	    bb_Shape->calculateLocalInertia(mass, bb_Inertia);
 
 	    /*btDefaultMotionState* bb_MotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1),
-						btVector3(0, 0, 10)));*/
+	    btVector3(0, 0, 10)));*/
 
 	    btDefaultMotionState* bb_MotionState = new btDefaultMotionState(
 		btTransform(btQuaternion(0, 0, 0, 1),
@@ -218,13 +224,8 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 int
 step_physics(btDiscreteDynamicsWorld* dynamicsWorld)
 {
-    //bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
-    //bu_vls_printf(sim_params->result_str, "----- Starting simulation -----\n");
-
     //time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
     dynamicsWorld->stepSimulation(1/60.f, 10);
-
-    //bu_vls_printf(sim_params->result_str, "----- Simulation Complete -----\n");
     return 0;
 }
 
@@ -246,20 +247,14 @@ get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
 
 
     for (i = 0; i < num_bodies; i++) {
-
 	//Common properties among all rigid bodies
 	btCollisionObject* bb_ColObj = dynamicsWorld->getCollisionObjectArray()[i];
 	btRigidBody* bb_RigidBody   = btRigidBody::upcast(bb_ColObj);
-	const btCollisionShape* bb_Shape = bb_ColObj->getCollisionShape(); //may be used later
+	const btCollisionShape* bb_Shape = bb_ColObj->getCollisionShape();
 
 	if (bb_RigidBody && bb_RigidBody->getMotionState()) {
-
-	    //Get the motion state and the world transform from it
 	    btDefaultMotionState* bb_MotionState = (btDefaultMotionState*)bb_RigidBody->getMotionState();
-	    // bb_MotionState->m_graphicsWorldTrans.getOpenGLMatrix(m);
 	    bb_ColObj->getWorldTransform().getOpenGLMatrix(m);
-
-	    //bu_log("Position : %f, %f, %f\n", m[12], m[13], m[14]);
 
 	    struct rigid_body *current_node = (struct rigid_body *)bb_RigidBody->getUserPointer();
 
@@ -295,10 +290,6 @@ get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
 
 	    v = bb_RigidBody->getLinearVelocity();
 	    VMOVE(current_node->linear_velocity, v);
-
-	    /*bu_log("Got linear velocity as : %f, %f, %f", current_node->linear_velocity[0],
-			 current_node->linear_velocity[1],
-			 current_node->linear_velocity[2]);*/
 
 	    v = bb_RigidBody->getAngularVelocity();
 	    VMOVE(current_node->angular_velocity, v);
@@ -363,7 +354,7 @@ struct broadphase_callback : public btOverlapFilterCallback {
 
 	btVector3 aabbMin, aabbMax;
 
-	//This would prevent collision between proxy0 and proxy1 ins pite of
+	//This would prevent collision between proxy0 and proxy1 despite
 	//AABB overlap being detected
 	//collides = false;
 	btRigidBody* boxA = (btRigidBody*)proxy0->m_clientObject;
@@ -460,16 +451,16 @@ nearphase_callback(btBroadphasePair& collisionPair,
  */
 bool contact_added(
     btManifoldPoint& pt,
-    const btCollisionObject* col0,
+    const btCollisionObjectWrapper* col0,
     int partId0,
     int index0,
-    const btCollisionObject* col1,
+    const btCollisionObjectWrapper* col1,
     int partId1,
     int index1)
 {
     //Get the user pointers to struct rigid_body, for printing the body name
-    struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
-    struct rigid_body *rbB = (struct rigid_body *)col1->getUserPointer();
+    struct rigid_body *rbA = (struct rigid_body *)col0->getCollisionObject()->getUserPointer();
+    struct rigid_body *rbB = (struct rigid_body *)col1->getCollisionObject()->getUserPointer();
 
     btVector3 ptA = pt.getPositionWorldOnA();
     btVector3 ptB = pt.getPositionWorldOnB();
@@ -519,6 +510,9 @@ bool contact_destroyed(void* userPersistentData)
  * C++ wrapper for doing physics using bullet
  *
  */
+
+
+#ifdef USE_RT_COLLISION_ALGO
 extern "C" int
 run_simulation(struct simulation_params *sp)
 {
@@ -539,12 +533,12 @@ run_simulation(struct simulation_params *sp)
     //arbitrary shapes from brlcad are all represented by the box collision shape
     //in bullet, the movement will not be like a box however, but according to
     //the collisions detected by rt and therefore should follow any arbitrary shape correctly
-    /*dispatcher->registerCollisionCreateFunc(SPHERE_SHAPE_PROXYTYPE,
-					SPHERE_SHAPE_PROXYTYPE,
-					new btRTCollisionAlgorithm::CreateFunc);*/
-    /*  dispatcher->registerCollisionCreateFunc(BOX_SHAPE_PROXYTYPE,
-						BOX_SHAPE_PROXYTYPE,
-						new btRTCollisionAlgorithm::CreateFunc);*/
+    dispatcher->registerCollisionCreateFunc(SPHERE_SHAPE_PROXYTYPE,
+					    SPHERE_SHAPE_PROXYTYPE,
+					    new btRTCollisionAlgorithm::CreateFunc);
+    dispatcher->registerCollisionCreateFunc(BOX_SHAPE_PROXYTYPE,
+					    BOX_SHAPE_PROXYTYPE,
+					    new btRTCollisionAlgorithm::CreateFunc);
 
     btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 
@@ -559,7 +553,7 @@ run_simulation(struct simulation_params *sp)
     add_rigid_bodies(dynamicsWorld, collision_shapes);
 
     //Add a broadphase callback to hook to the AABB detection algos
-    /*    btOverlapFilterCallback * filterCallback = new broadphase_callback();
+    btOverlapFilterCallback * filterCallback = new broadphase_callback();
     dynamicsWorld->getPairCache()->setOverlapFilterCallback(filterCallback);
 
     //Add a nearphase callback to hook to the contact points generation algos
@@ -568,7 +562,7 @@ run_simulation(struct simulation_params *sp)
     //Investigating the contact pairs used between 2 rigid bodies
     gContactAddedCallback     = contact_added;
     gContactProcessedCallback = contact_processed;
-    gContactDestroyedCallback = contact_destroyed;*/
+    gContactDestroyedCallback = contact_destroyed;
 
     //Step the physics the required number of times
     step_physics(dynamicsWorld);
@@ -580,7 +574,7 @@ run_simulation(struct simulation_params *sp)
     cleanup(dynamicsWorld, collision_shapes);
 
     //Clean up stuff in here
-    //delete filterCallback;
+    delete filterCallback;
     delete solver;
     delete dispatcher;
     delete collisionConfiguration;
@@ -591,6 +585,51 @@ run_simulation(struct simulation_params *sp)
 
     return 0;
 }
+
+#else
+
+extern "C" int
+run_simulation(struct simulation_params *sp)
+{
+    sim_params = sp;
+
+    // Keep the collision shapes, for deletion/cleanup
+    btAlignedObjectArray<btCollisionShape*> collision_shapes;
+
+    btBroadphaseInterface* broadphase = new btDbvtBroadphase();
+    btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
+    btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
+
+    btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+
+    //Initialize the physics world
+    btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(
+	dispatcher, broadphase, solver, collisionConfiguration);
+
+    //Set the gravity direction along -ve Z axis
+    dynamicsWorld->setGravity(btVector3(0, 0, -10));
+
+    //Add the rigid bodies to the world, including the ground plane
+    add_rigid_bodies(dynamicsWorld, collision_shapes);
+
+    //Step the physics the required number of times
+    step_physics(dynamicsWorld);
+
+    //Get the world transforms back into the simulation params struct
+    get_transforms(dynamicsWorld);
+
+    //Clean and free memory used by physics objects
+    cleanup(dynamicsWorld, collision_shapes);
+
+    delete solver;
+    delete dispatcher;
+    delete collisionConfiguration;
+    delete broadphase;
+
+    return 0;
+}
+
+#endif // USE_RT_COLLISION_ALGO
 
 
 #endif
