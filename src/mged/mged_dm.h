@@ -462,7 +462,6 @@ struct dm_list {
 #define netchan curr_dm_list->dml_netchan
 #endif
 #define clients curr_dm_list->dml_clients
-#define pathName dmp->dm_pathName
 #define tkName dmp->dm_tkName
 #define dName dmp->dm_dName
 #define displaylist dmp->dm_displaylist

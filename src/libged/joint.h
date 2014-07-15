@@ -57,6 +57,14 @@
 #define LIBGED_JOINT_H
 
 
+#ifndef FALSE
+#  define FALSE 0
+#endif
+
+#ifndef TRUE
+#  define TRUE 1
+#endif
+
 /* Check if database pointer is NULL */
 #define CHECK_DBI_NULL \
     if (dbip == DBI_NULL) { \
@@ -81,6 +89,7 @@ struct arc {
     char **original;
     int org_last;
 };
+
 
 #define ARC_UNSET	0x0
 #define ARC_PATH	0x1
@@ -174,6 +183,22 @@ struct hold {
  * GRIPs, JOINTs or FIXED POINTs
  */
 #define MAGIC_HOLD_STRUCT 0x684f4c63	/* 1750027363 */
+
+#define FUNTAB_UNLIMITED -1
+
+struct funtab {
+    char *ft_name;
+    char *ft_parms;
+    char *ft_comment;
+    int (*ft_func)();
+    int ft_min;
+    int ft_max;
+    int tcl_converted;
+};
+
+
+void vls_col_item(struct bu_vls *str, const char *cp);
+void vls_col_eol(struct bu_vls *str);
 
 #endif /* LIBGED_JOINT_H */
 

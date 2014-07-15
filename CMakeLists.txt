@@ -126,6 +126,7 @@ if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0017 OLD)
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
     CMAKE_POLICY(SET CMP0026 OLD)
+    CMAKE_POLICY(SET CMP0042 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
 endif(COMMAND CMAKE_POLICY)
 
@@ -905,9 +906,6 @@ manually setting individual variables. Default is \"AUTO\" - 3rd party sources
 are compiled only if they are not detected as being available and functioning
 as expected.
 ")
-
-# Set the location of the BRL-CAD bundled Boost header directory:
-set(BRLCAD_BOOST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/src/other/boost")
 
 if(MSVC)
   set(BRLCAD_BUNDLED_LIBS_DEFAULT "BUNDLED")
