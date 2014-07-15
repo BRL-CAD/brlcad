@@ -907,9 +907,6 @@ are compiled only if they are not detected as being available and functioning
 as expected.
 ")
 
-# Set the location of the BRL-CAD bundled Boost header directory:
-set(BRLCAD_BOOST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/src/other/boost")
-
 if(MSVC)
   set(BRLCAD_BUNDLED_LIBS_DEFAULT "BUNDLED")
 else(MSVC)
