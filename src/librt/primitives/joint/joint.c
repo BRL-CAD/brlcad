@@ -464,15 +464,15 @@ rt_joint_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 
 enum { JOINT_SELECT_LOC, JOINT_SELECT_V1, JOINT_SELECT_V2 };
 
-struct rt_joint_selection {
+struct joint_selection {
     int what;
 };
 
 static void
 joint_free_selection(struct rt_selection *s)
 {
-    struct rt_joint_selection *js = (struct rt_joint_selection *)s->obj;
-    BU_PUT(js, struct rt_joint_selection);
+    struct joint_selection *js = (struct joint_selection *)s->obj;
+    BU_PUT(js, struct joint_selection);
     BU_FREE(s, struct rt_selection);
 }
 
@@ -487,7 +487,7 @@ rt_joint_find_selections(
     point_t qline_pt, joint_v1pt;
     vect_t qstart;
     point_t qdir;
-    struct rt_joint_selection *joint_selection = NULL;
+    struct joint_selection *joint_selection = NULL;
     struct rt_selection *selection = NULL;
     struct rt_selection_set *selection_set = NULL;
 
@@ -509,7 +509,7 @@ rt_joint_find_selections(
 
     if (ret == 1) {
 	/* query ray is parallel to vector 1 */
-	BU_GET(joint_selection, struct rt_joint_selection);
+	BU_GET(joint_selection, struct joint_selection);
 	joint_selection->what = JOINT_SELECT_V1;
     } else {
 	point_t joint_v2pt;
@@ -528,7 +528,7 @@ rt_joint_find_selections(
 	    return NULL;
 	}
 
-	BU_GET(joint_selection, struct rt_joint_selection);
+	BU_GET(joint_selection, struct joint_selection);
 	if (dist_sq1 <= dist_sq2) {
 	    /* closer to v1 than v2 */
 	    distsq_to_loc = DIST_PT_PT_SQ(joint_v1pt, jip->location);
