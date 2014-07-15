@@ -54,7 +54,7 @@
 
 /* private headers */
 #include "simulate.h"
-#include "simcollisionalgo.h"
+//#include "simcollisionalgo.h" // unused
 #include "simrt.h"
 
 
@@ -90,7 +90,7 @@ print_matrices(char *rb_namep, mat_t t, btScalar *m)
     }
 
     sprintf(buffer, "%s-------------------------------------------------------\n", buffer);
-    bu_log(buffer);
+    bu_log("%s", buffer);
 
 }
 
@@ -187,7 +187,7 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 		btRigidBody* bb_RigidBody = new btRigidBody(bb_RigidBodyCI);
 		bb_RigidBody->setUserPointer((void *)current_node);
 
-		bu_log("Setting linear velocity as : %f, %f, %f",
+		bu_log("Setting linear velocity as : %f, %f, %f\n",
 				current_node->linear_velocity[0],
 		    current_node->linear_velocity[1],
 		    current_node->linear_velocity[2]);
@@ -256,7 +256,8 @@ get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
 
 		//Get the motion state and the world transform from it
 		btDefaultMotionState* bb_MotionState = (btDefaultMotionState*)bb_RigidBody->getMotionState();
-		bb_MotionState->m_graphicsWorldTrans.getOpenGLMatrix(m);
+		// bb_MotionState->m_graphicsWorldTrans.getOpenGLMatrix(m);
+                bb_ColObj->getWorldTransform().getOpenGLMatrix(m);
 
 		//bu_log("Position : %f, %f, %f\n", m[12], m[13], m[14]);
 
@@ -528,9 +529,6 @@ run_simulation(struct simulation_params *sp)
 
 	//for (i = 0 ; i < sim_params->duration ; i++) {
 
-    //Initialize the physics world
-    btDiscreteDynamicsWorld* dynamicsWorld;
-
     // Keep the collision shapes, for deletion/cleanup
     btAlignedObjectArray<btCollisionShape*> collision_shapes;
 
@@ -551,7 +549,9 @@ run_simulation(struct simulation_params *sp)
 
     btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 
-    dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+    //Initialize the physics world
+    btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(
+            dispatcher, broadphase, solver, collisionConfiguration);
 
     //Set the gravity direction along -ve Z axis
     dynamicsWorld->setGravity(btVector3(0, 0, -10));
