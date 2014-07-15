@@ -60,28 +60,24 @@ using namespace Gecode;
 class EqSolve : public Space {
 public:
   IntVarArray l;
-  EqSolve(void) : l(*this, 8, 0, 10) {
-     branch(*this, l, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
-  }
-  EqSolve(bool share, EqSolve& s) : Space(share, s) {
-    l.update(*this, share, s.l);
-  }
-  virtual Space* copy(bool share) {
-    return new EqSolve(share,*this);
-  }
-  void print(void) const {
-    std::cout << l << std::endl;
-  }
+  EqSolve(void) : l(*this, 8, 0, 10) {}
+  EqSolve(bool share, EqSolve& s) : Space(share, s) {l.update(*this, share, s.l);}
+  virtual Space* copy(bool share) {return new EqSolve(share,*this);}
+  void print(void) const {std::cout << l << std::endl;}
 };
 
 int main() {
+
   EqSolve* m = new EqSolve;
+
+  /* Define the constraints */
   rel((*m), m->l[0] != 0);
   rel(*m, m->l[4] != 0);
   distinct(*m, m->l);
   rel(*m,             1000*m->l[0] + 100*m->l[1] + 10*m->l[2] + m->l[3]
                         + 1000*m->l[4] + 100*m->l[5] + 10*m->l[6] + m->l[1]
              == 10000*m->l[4] + 1000*m->l[5] + 100*m->l[2] + 10*m->l[1] + m->l[7]);
+  branch(*m, m->l, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
 
   DFS<EqSolve> e(m);
   delete m;
