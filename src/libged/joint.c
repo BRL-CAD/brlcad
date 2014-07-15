@@ -2415,7 +2415,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 		return 1;
 	    }
 	    /* TODO
-	     * there is a bug where joint_jhold/joint_jsolve is passing a hold struct
+	     * there is a bug where joint_hold/joint_solve is passing a hold struct
 	     * with NULL fields when using MGED's "joint holds" or "joint solve"
 	     * command. In particular, hp->path.fp_names can end up NULL,
 	     * this prints an error message instead of crashing MGED.
@@ -2832,35 +2832,37 @@ reject_move(struct ged *gedp)
 
 /* Constraint system solver.
  *
- * The basic idea is that we are called with some priority level.
- * We will attempted to solve all constraints at that level with out
- * permanently damaging a joint of a higher priority.
+ * The basic idea is that we are called with some priority level.  We
+ * will attempt to solve all constraints nodes at that level without
+ * breaking a joint solution for a node of a higher priority.
  *
  * Returns:
- * -1 This system could not be made better without damage
- * to a higher priority system.
- * 0 All systems at a higher priority stayed stable or
- * got better and this priority level got better.
- * 1 All systems at a higher priority stayed stable or
- * got better and this system is at at min.
+ *
+ * -1: This system could not be made better without worsening a higher
+ * priority node.
+ *
+ * 0: All nodes at a higher priority stayed stable or got better and
+ * this priority level got better.
+ *
+ * 1: All systems at a higher priority stayed stable or got better and
+ * this system is at at min.
+ *
  * Method:
  *	while all constraints at this level are not solved:
- *		try to solve the select constraint.
- *		if joint change and this priority level got better then
+ *		try to solve the selected constraint
+ *		if joint changed and this priority level got better then
  *			result = system_solve(current_priority - 1);
- *			if (result == worse) then
- *				reject this joint change
- *			fi
+ *		else if (result == worse) then
+ *			reject this joint change
  *		else
  *			mark this constraint as "solved"
  *		fi
  *	endwhile
  */
-#define SOLVE_MAX_PRIORITY 100
-
 static int
 system_solve(struct ged *gedp, int pri, double delta, double epsilon)
 {
+#define SOLVE_MAX_PRIORITY 100
     double pri_weights[SOLVE_MAX_PRIORITY+1];
     double new_weights[SOLVE_MAX_PRIORITY+1];
     double new_eval;
@@ -3108,7 +3110,9 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
 
-    for (BU_LIST_FOR(hp, hold, &hold_head)) hold_clear_flags(hp);
+    for (BU_LIST_FOR(hp, hold, &hold_head))
+	hold_clear_flags(hp);
+
     found = -1;
     while (argc) {
 	found = 0;
@@ -3146,7 +3150,8 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
     }
     bu_free((void *)myargv, "param pointers");
 
-    if (found >= 0) return GED_ERROR;
+    if (found >= 0)
+	return GED_ERROR;
 
     /*
      * solve the whole system of constraints.
@@ -3198,7 +3203,7 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
 		    jh->flag = 0;
 		}
 	    }
-	    result =system_solve(gedp, SOLVE_MAX_PRIORITY, delta, epsilon);
+	    result = system_solve(gedp, SOLVE_MAX_PRIORITY, delta, epsilon);
 	    if (result == 1) {
 		break;
 	    } else if (result == -1) {
@@ -3219,10 +3224,9 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
 	}
     }
     if (result == 1) {
-	bu_vls_printf(gedp->ged_result_str, "joint solve: system has converged to a result.\n");
+	bu_vls_printf(gedp->ged_result_str, "joint solve: system has converged to a result (after %d iterations).\n", count+1);
     } else if (result == 0) {
-	bu_vls_printf(gedp->ged_result_str, "joint solve: system has not converged in %d loops.\n",
-		      count);
+	bu_vls_printf(gedp->ged_result_str, "joint solve: system has not converged after %d iterations.\n", count+1);
     } else {
 	bu_vls_printf(gedp->ged_result_str, "joint solve: system will not converge.\n");
     }
@@ -3388,6 +3392,11 @@ joint_adjust(struct ged *gedp, int argc, const char *argv[])
     }
     joint_move(gedp, jp);
     joint_mesh(gedp, 0, 0);
+
+    /* refreshing the screen */
+    if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
+	(*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
+
     return GED_OK;
 }
 
