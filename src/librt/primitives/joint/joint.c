@@ -491,6 +491,9 @@ enum { JOINT_SELECT_LOC, JOINT_SELECT_V1, JOINT_SELECT_V2 };
 
 struct joint_selection {
     int what;
+    point_t plane_pt;
+    point_t qstart;
+    vect_t qdir;
 };
 
 static void
@@ -600,6 +603,46 @@ rt_joint_find_selections(
     return selection_set;
 }
 
+int
+rt_joint_process_selection(
+    struct rt_db_internal *UNUSED(ip),
+    const struct rt_selection *UNUSED(selection),
+    const struct rt_selection_operation *UNUSED(op))
+{
+#if 0
+    struct rt_joint_selection *joint_selection;
+    struct rt_joint_internal *jip;
+    fastf_t dx, dy, dz;
+    mat_t rmat, pmat;
+
+    if (op->type == RT_SELECTION_NOP) {
+	return 0;
+    }
+
+    if (op->type != RT_SELECTION_TRANSLATION) {
+	return -1;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    jip = (struct joint_internal *)ip->idb_ptr;
+    RT_JOINT_CK_MAGIC(jip);
+
+    joint_selection *js = (joint_selection *)selection->obj;
+    if (!js) {
+	return -1;
+    }
+
+    dx = op->parameters.tran.dx;
+    dy = op->parameters.tran.dy;
+    dz = op->parameters.tran.dz;
+
+    /* need to turn delta into rotation using query reference points */
+    bn_mat_angles(rmat, dx, dy, dz);
+    bn_mat_xform_about_pt(pmat, rmat, jip->location);
+#endif
+
+    return 0;
+}
 
 /** @} */
 /*

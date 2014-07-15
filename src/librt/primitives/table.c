@@ -1235,7 +1235,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(rt_joint_find_selections),
 	NULL,
-	NULL
+	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_joint_process_selection)
 #if 0
 	0, /* ft_use_rpp */
 	NULL,/* prep */
