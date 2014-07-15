@@ -545,6 +545,9 @@ joint_unload(struct ged *gedp, int argc, const char *argv[])
     while (BU_LIST_WHILE(hp, hold, &hold_head)) {
 	holds++;
 	BU_LIST_DEQUEUE(&hp->l);
+	if (J_DEBUG & DEBUG_J_LOAD) {
+	    bu_vls_printf(gedp->ged_result_str, "joint: unloading '%s' constraint\n", hp->name);
+	}
 	free_hold(hp);
     }
     joints = 0;
@@ -552,12 +555,12 @@ joint_unload(struct ged *gedp, int argc, const char *argv[])
 	joints++;
 	BU_LIST_DEQUEUE(&(jp->l));
 	if (J_DEBUG & DEBUG_J_LOAD) {
-	    bu_vls_printf(gedp->ged_result_str, "joint unload: unloading '%s'.\n", jp->name);
+	    bu_vls_printf(gedp->ged_result_str, "joint: unloading '%s' joint\n", jp->name);
 	}
 	free_joint(jp);
     }
     if (J_DEBUG & DEBUG_J_LOAD) {
-	bu_vls_printf(gedp->ged_result_str, "joint unload: unloaded %d joints, %d constraints.\n",
+	bu_vls_printf(gedp->ged_result_str, "joint: unloaded %d joints, %d constraints.\n",
 		      joints, holds);
     }
 
@@ -1867,6 +1870,7 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
     if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_hold: reading constraint\n");
     }
+
     BU_GET(hp, struct hold);
     hp->l.magic = MAGIC_HOLD_STRUCT;
     hp->name = NULL;
