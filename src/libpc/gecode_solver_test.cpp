@@ -60,7 +60,7 @@ using namespace Gecode;
 class EqSolve : public Space {
 public:
   IntVarArray l;
-  EqSolve(void) : l(*this, 8, 0, 10) {}
+  EqSolve(int v1, int v2, int v3) : l(*this, v1, v2, v3) {}
   EqSolve(bool share, EqSolve& s) : Space(share, s) {l.update(*this, share, s.l);}
   virtual Space* copy(bool share) {return new EqSolve(share,*this);}
   void print(void) const {std::cout << l << std::endl;}
@@ -68,7 +68,7 @@ public:
 
 int main() {
 
-  EqSolve* m = new EqSolve;
+  EqSolve* m = new EqSolve(8, 0, 10);
 
   /* Define the constraints */
   rel((*m), m->l[0] != 0);
