@@ -572,6 +572,11 @@ rt_joint_find_selections(
 	}
     }
 
+    if (!joint_selection) {
+	bu_log("selected nothing.\n");
+	return NULL;
+    }
+
     switch (joint_selection->what) {
 	case JOINT_SELECT_LOC:
 	    bu_log("selected location.\n");
