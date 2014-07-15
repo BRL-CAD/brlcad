@@ -5,6 +5,13 @@ set(PC_INCLUDE_DIRS
   ${GECODE_INCLUDE_DIR}
   )
 
+set(PC_LOCAL_INCLUDE_DIRS)
+
+BRLCAD_LIB_INCLUDE_DIRS(pc PC_INCLUDE_DIRS PC_LOCAL_INCLUDE_DIRS)
+
+BRLCAD_ADDEXEC(cartesian-heart cartesian-heart.cpp "${GECODE_LIBRARIES}" NO_INSTALL)
+BRLCAD_ADDEXEC(gecode_solver_test gecode_solver_test.cpp "${GECODE_LIBRARIES}" NO_INSTALL)
+
 set(pc_ignore_files
   solver_test.cpp
   vm_test.cpp
