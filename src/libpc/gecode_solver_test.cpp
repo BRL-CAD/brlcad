@@ -55,32 +55,30 @@
 #include <gecode/minimodel.hh>
 #include <gecode/search.hh>
 
-using namespace Gecode;
-
-class EqSolve : public Space {
-public:
-  IntVarArray l;
-  EqSolve(int v1, int v2, int v3) : l(*this, v1, v2, v3) {}
-  EqSolve(bool share, EqSolve& s) : Space(share, s) {l.update(*this, share, s.l);}
-  virtual Space* copy(bool share) {return new EqSolve(share,*this);}
-  void print(void) const {std::cout << l << std::endl;}
+class EqSolve : public Gecode::Space {
+    public:
+	Gecode::IntVarArray l;
+	EqSolve(int v1, int v2, int v3) : l(*this, v1, v2, v3) {}
+	EqSolve(bool share, EqSolve& s) : Gecode::Space(share, s) {l.update(*this, share, s.l);}
+	virtual Space* copy(bool share) {return new EqSolve(share,*this);}
+	void print(void) const {std::cout << l << std::endl;}
 };
 
 int main() {
 
   EqSolve* m = new EqSolve(4, 0, 10);
 
-  IntVar A(m->l[0]), B(m->l[1]), C(m->l[2]), D(m->l[3]);
+  Gecode::IntVar A(m->l[0]), B(m->l[1]), C(m->l[2]), D(m->l[3]);
 
   /* Define the constraints */
 
-  rel(*m, A * B == 12);
-  rel(*m, B + C < 5);
-  rel(*m, A - D == 2);
-  rel(*m, A * C == 4);
-  branch(*m, m->l, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
+  Gecode::rel(*m, A * B == 12);
+  Gecode::rel(*m, B + C < 5);
+  Gecode::rel(*m, A - D == 2);
+  Gecode::rel(*m, A * C == 4);
+  Gecode::branch(*m, m->l, Gecode::INT_VAR_SIZE_MIN(), Gecode::INT_VAL_MIN());
 
-  DFS<EqSolve> e(m);
+  Gecode::DFS<EqSolve> e(m);
   delete m;
   while (EqSolve* s = e.next()) {
     s->print(); delete s;
