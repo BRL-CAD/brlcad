@@ -651,7 +651,7 @@ print_hold(struct ged *gedp, struct hold *hp)
     t1 = hold_point_to_string(gedp, &hp->effector);
     t2 = hold_point_to_string(gedp, &hp->objective);
 
-    bu_vls_printf(gedp->ged_result_str, "holds:\t%s with %s\n\tfrom:%s\n\tto:%s", (hp->name) ? hp->name : "UNNAMED", hp->joint, t1, t2);
+    bu_vls_printf(gedp->ged_result_str, "holds:\t%s with %s\n\tfrom:%s\n\tto:%s\n", (hp->name) ? hp->name : "UNNAMED", hp->joint, t1, t2);
     bu_free(t1, "hold_point_to_string");
     bu_free(t2, "hold_point_to_string");
 
