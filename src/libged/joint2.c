@@ -57,7 +57,7 @@ static struct _ged_funtab joint_subcommand_table[] = {
 int
 joint_selection(
     struct ged *gedp,
-    struct rt_db_internal *UNUSED(ip),
+    struct rt_db_internal *ip,
     int argc,
     const char *argv[])
 {
@@ -65,7 +65,7 @@ joint_selection(
     struct rt_selection_set *selection_set;
     struct bu_ptbl *selections;
     struct rt_selection *new_selection;
-    /* struct rt_selection_query query; */
+    struct rt_selection_query query;
     const char *cmd, *solid_name, *selection_name;
 
     /*   0         1            2         3
@@ -93,8 +93,6 @@ joint_selection(
 	selection_name = argv[4];
 
 	/* find matching selections */
-	/* TODO: implement joint find_selections*/
-#if 0
 	query.start[X] = atof(argv[5]);
 	query.start[Y] = atof(argv[6]);
 	query.start[Z] = atof(argv[7]);
@@ -103,9 +101,7 @@ joint_selection(
 	query.dir[Z] = atof(argv[10]);
 	query.sorting = RT_SORT_CLOSEST_TO_START;
 
-#endif
-	selection_set = NULL;
-	/*selection_set = ip->idb_meth->ft_find_selections(ip, &query);*/
+	selection_set = ip->idb_meth->ft_find_selections(ip, &query);
 	if (!selection_set) {
 	    bu_vls_printf(gedp->ged_result_str, "no matching selections");
 	    return GED_OK;

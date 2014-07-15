@@ -459,6 +459,117 @@ rt_joint_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+/* TODO: should be dynamic */
+#define JOINT_SELECT_VMAX_DISTSQ 100.0
+
+enum { JOINT_SELECT_LOC, JOINT_SELECT_V1, JOINT_SELECT_V2 };
+
+struct rt_joint_selection {
+    int what;
+};
+
+static void
+joint_free_selection(struct rt_selection *s)
+{
+    struct rt_joint_selection *js = (struct rt_joint_selection *)s->obj;
+    BU_PUT(js, struct rt_joint_selection);
+    BU_FREE(s, struct rt_selection);
+}
+
+struct rt_selection_set *
+rt_joint_find_selections(
+    const struct rt_db_internal *ip,
+    const struct rt_selection_query *query)
+{
+    int ret;
+    struct rt_joint_internal *jip;
+    fastf_t dist[3], dist_sq1, dist_sq2;
+    point_t qline_pt, joint_v1pt;
+    vect_t qstart;
+    point_t qdir;
+    struct rt_joint_selection *joint_selection = NULL;
+    struct rt_selection *selection = NULL;
+    struct rt_selection_set *selection_set = NULL;
+
+    RT_CK_DB_INTERNAL(ip);
+    jip = (struct rt_joint_internal *)ip->idb_ptr;
+    RT_JOINT_CK_MAGIC(jip);
+
+    /* select location, or vector1, or vector2 */
+    /* vectors are plotted location to location+vector */
+    /* distinguish between close to location and close to vector */
+    /* shortest distance between query vector and vector1, 2 */
+    /* if vector 1, 2 point is within radius of location, select
+     * location, otherwise select vector with shorter distance */
+    VMOVE(qstart, query->start);
+    VMOVE(qdir, query->dir);
+    ret = bn_distsq_line3_line3(dist, qstart, qdir, jip->location,
+	    jip->vector1, qline_pt, joint_v1pt);
+    dist_sq1 = dist[2];
+
+    if (ret == 1) {
+	/* query ray is parallel to vector 1 */
+	BU_GET(joint_selection, struct rt_joint_selection);
+	joint_selection->what = JOINT_SELECT_V1;
+    } else {
+	point_t joint_v2pt;
+	fastf_t distsq_to_loc;
+	fastf_t max_vdist;
+
+	ret = bn_distsq_line3_line3(dist, qstart, qdir, jip->location,
+		jip->vector2, qline_pt, joint_v2pt);
+	dist_sq2 = dist[2];
+
+	if (dist_sq1 > JOINT_SELECT_VMAX_DISTSQ &&
+	    dist_sq2 > JOINT_SELECT_VMAX_DISTSQ)
+	{
+	    /* query isn't close enough */
+	    bu_log("selected nothing.\n");
+	    return NULL;
+	}
+
+	BU_GET(joint_selection, struct rt_joint_selection);
+	if (dist_sq1 <= dist_sq2) {
+	    /* closer to v1 than v2 */
+	    distsq_to_loc = DIST_PT_PT_SQ(joint_v1pt, jip->location);
+	    max_vdist = .1 * MAGSQ(jip->vector1);
+	    joint_selection->what = JOINT_SELECT_V1;
+	} else {
+	    /* closer to v2 than v1 */
+	    distsq_to_loc = DIST_PT_PT_SQ(joint_v2pt, jip->location);
+	    max_vdist = .1 * MAGSQ(jip->vector2);
+	    joint_selection->what = JOINT_SELECT_V2;
+	}
+
+	if (distsq_to_loc < max_vdist) {
+	    /* closer to location than v1 */
+	    joint_selection->what = JOINT_SELECT_LOC;
+	}
+    }
+
+    switch (joint_selection->what) {
+	case JOINT_SELECT_LOC:
+	    bu_log("selected location.\n");
+	    break;
+	case JOINT_SELECT_V1:
+	    bu_log("selected vector1.\n");
+	    break;
+	case JOINT_SELECT_V2:
+	    bu_log("selected vector2.\n");
+    }
+
+    // build and return list of selections
+    BU_ALLOC(selection_set, struct rt_selection_set);
+    BU_PTBL_INIT(&selection_set->selections);
+
+    BU_GET(selection, struct rt_selection);
+    selection->obj = (void *)joint_selection;
+    bu_ptbl_ins(&selection_set->selections, (long *)selection);
+    selection_set->free_selection = joint_free_selection;
+
+    return selection_set;
+}
+
 
 /** @} */
 /*

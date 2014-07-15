@@ -1233,7 +1233,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
+	RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(rt_joint_find_selections),
 	NULL,
 	NULL
 #if 0
