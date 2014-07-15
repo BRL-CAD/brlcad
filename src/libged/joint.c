@@ -51,6 +51,8 @@ static unsigned int J_DEBUG = 0;
 #define J_DEBUG_FORMAT \
     "\020\10LEX\7PARSE\6SYSTEM\5EVAL\4SOLVE\3MOVE\2LOAD\1MESH"
 
+/* max object name length we expect to encounter for each arc node */
+#define MAX_OBJ_NAME 255
 
 extern struct funtab joint_tab[];
 
@@ -546,8 +548,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	     * this prints an error message instead of crashing MGED.
 	     */
 	    if (!hp->path.fp_names) {
-		bu_vls_printf(gedp->ged_result_str, "hold_point_location: null pointer! '%s' not found!\n",
-			      "hp->path.fp_names");
+		bu_vls_printf(gedp->ged_result_str, "hold_point_location: null pointer! '%s' not found!\n", "hp->path.fp_names");
 		return 0;
 	    }
 	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_maxlen-1], gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0)
@@ -1025,7 +1026,7 @@ parse_path(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
     free_arc(ap);
     if (!gobble_token(gedp, BU_LEX_SYMBOL, SYM_EQ, fip, str))
 	return 0;
-    max = 32;
+    max = MAX_OBJ_NAME;
     ap->arc = (char **)bu_malloc(sizeof(char *)*max, "arc table");
     ap->arc_last = -1;
     ap->type = ARC_PATH;
@@ -1041,9 +1042,8 @@ parse_path(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
 	    return 0;
 	}
 	if (++ap->arc_last >= max) {
-	    max +=32;
-	    ap->arc = (char **) bu_realloc((char *) ap->arc,
-					   sizeof(char *)*max, "arc table");
+	    max += MAX_OBJ_NAME + 1;
+	    ap->arc = (char **) bu_realloc((char *) ap->arc, sizeof(char *)*max, "arc table");
 	}
 	ap->arc[ap->arc_last] = token.t_id.value;
 	if (get_token(gedp, &token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
@@ -1105,7 +1105,7 @@ parse_list(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
 
     if (!gobble_token(gedp, BU_LEX_SYMBOL, SYM_EQ, fip, str))
 	return 0;
-    max = 32;
+    max = MAX_OBJ_NAME;
     ap->arc = (char **)bu_malloc(sizeof(char *)*max, "arc table");
     ap->arc_last = -1;
     ap->type = ARC_LIST;
@@ -1121,9 +1121,8 @@ parse_list(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
 	    return 0;
 	}
 	if (++ap->arc_last >= max) {
-	    max +=32;
-	    ap->arc = (char **) bu_realloc((char *) ap->arc,
-					   sizeof(char *)*max, "arc table");
+	    max += MAX_OBJ_NAME + 1;
+	    ap->arc = (char **) bu_realloc((char *) ap->arc, sizeof(char *)*max, "arc table");
 	}
 	ap->arc[ap->arc_last] = token.t_id.value;
 	if (get_token(gedp, &token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
@@ -1164,7 +1163,7 @@ parse_ARC(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
     }
 
     free_arc(ap);
-    max = 32;
+    max = MAX_OBJ_NAME;
     if (!gobble_token(gedp, BU_LEX_SYMBOL, SYM_EQ, fip, str))
 	return 0;
 
@@ -1178,9 +1177,8 @@ parse_ARC(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
 	    break;
 	}
 	if (++ap->arc_last >= max) {
-	    max+=32;
-	    ap->arc = (char **) bu_realloc((char *)ap->arc,
-					   sizeof(char *)*max, "arc table");
+	    max += MAX_OBJ_NAME + 1;
+	    ap->arc = (char **) bu_realloc((char *)ap->arc, sizeof(char *)*max, "arc table");
 	}
 	ap->arc[ap->arc_last] = token.t_id.value;
 	if (get_token(gedp, &token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
@@ -2036,11 +2034,13 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
     hp->j_set.path.type = ARC_UNSET;
     hp->j_set.exclude.type = ARC_UNSET;
 
+    /* read constraint name */
     if (get_token(gedp, &token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
 	parse_error(gedp, str, "parse_hold: Unexpected EOF getting name.");
 	free_hold(hp);
 	return 0;
     }
+    /* read constraint group label */
     if (token.type == BU_LEX_IDENT) {
 	hp->name = token.t_id.value;
 	if (get_token(gedp, &token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
@@ -2049,6 +2049,8 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	    return 0;
 	}
     }
+
+    /* sanity */
     if (token.type == BU_LEX_IDENT)
 	bu_free(token.t_id.value, "unit token");
     if (token.type != BU_LEX_SYMBOL || token.t_key.value != SYM_OP_GROUP) {
@@ -2057,6 +2059,9 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	return 0;
     }
 
+    bu_vls_printf(gedp->ged_result_str, "=== reading in constraint details ===\n");
+
+    /* read in the constraint details */
     for (;;) {
 	if (get_token(gedp, &token, fip, str, animkeys, animsyms) == EOF) {
 	    parse_error(gedp, str, "parse_hold: Unexpected EOF getting constraint contents.");
@@ -2108,13 +2113,14 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	}
 
 	switch (token.t_key.value) {
-/* effector, goal */
+	    /* effector, goal */
 	    case KEY_WEIGHT:
 		if (!parse_assign(gedp, &hp->weight, fip, str)) {
 		    free_hold(hp);
 		    skip_group(gedp, fip, str);
 		    return 0;
 		}
+		bu_vls_printf(gedp->ged_result_str, "parsed weight: %lf\n", hp->weight);
 		weightfound = 1;
 		break;
 	    case KEY_PRI:
@@ -2123,6 +2129,7 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 		    skip_group(gedp, fip, str);
 		    return 0;
 		}
+		bu_vls_printf(gedp->ged_result_str, "parsed priority: %lf\n", hp->priority);
 		prifound=1;
 		break;
 	    case KEY_JOINTS:
@@ -2132,11 +2139,13 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 		    skip_group(gedp, fip, str);
 		    return 0;
 		}
+		bu_vls_printf(gedp->ged_result_str, "parsing joint set:\n");
 		if (!parse_jset(gedp, hp, fip, str)) {
 		    free_hold(hp);
 		    skip_group(gedp, fip, str);
 		    return 0;
 		}
+		bu_vls_printf(gedp->ged_result_str, "done parsing joint set.\n");
 		jsetfound = 1;
 		break;
 	    case KEY_EFF:
@@ -2145,11 +2154,13 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 		    free_hold(hp);
 		    return 0;
 		}
+		bu_vls_printf(gedp->ged_result_str, "parsing effector:\n");
 		if (!parse_point(gedp, &hp->effector, fip, str)) {
 		    skip_group(gedp, fip, str);
 		    free_hold(hp);
 		    return 0;
 		}
+		bu_vls_printf(gedp->ged_result_str, "done parsing effector.\n");
 		efffound = 1;
 		break;
 	    case KEY_POINT:
@@ -2158,11 +2169,13 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 		    free_hold(hp);
 		    return 0;
 		}
+		bu_vls_printf(gedp->ged_result_str, "parsing point:\n");
 		if (!parse_point(gedp, &hp->objective, fip, str)) {
 		    skip_group(gedp, fip, str);
 		    free_hold(hp);
 		    return 0;
 		}
+		bu_vls_printf(gedp->ged_result_str, "done parsing point.\n");
 		goalfound=1;
 		break;
 	    default:
