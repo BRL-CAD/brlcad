@@ -68,15 +68,15 @@ public:
 
 int main() {
 
-  EqSolve* m = new EqSolve(8, 0, 10);
+  EqSolve* m = new EqSolve(6, 0, 10);
 
   /* Define the constraints */
-  rel((*m), m->l[0] != 0);
-  rel(*m, m->l[4] != 0);
-  distinct(*m, m->l);
-  rel(*m,             1000*m->l[0] + 100*m->l[1] + 10*m->l[2] + m->l[3]
-                        + 1000*m->l[4] + 100*m->l[5] + 10*m->l[6] + m->l[1]
-             == 10000*m->l[4] + 1000*m->l[5] + 100*m->l[2] + 10*m->l[1] + m->l[7]);
+
+  rel(*m, m->l[0] * m->l[1] == 12);
+  rel(*m, m->l[1] + m->l[2] < 5);
+  rel(*m, m->l[0] - m->l[3] == 2);
+  rel(*m, m->l[0] * m->l[2] == 4);
+ // rel(*m, m->l[0] + m->l[1] < 0);
   branch(*m, m->l, INT_VAR_SIZE_MIN(), INT_VAL_MIN());
 
   DFS<EqSolve> e(m);
