@@ -517,6 +517,151 @@ free_hold(struct hold *hp)
 }
 
 
+static int
+hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
+{
+    mat_t mat;
+    struct joint *jp;
+    struct rt_grip_internal *gip;
+    struct rt_db_internal intern;
+
+    if (gedp->ged_wdbp->dbip == DBI_NULL)
+	return 1;
+
+    VSETALL(loc, 0.0);	/* default is the origin. */
+    switch (hp->type) {
+	case ID_FIXED:
+	    VMOVE(loc, hp->point);
+	    return 1;
+	case ID_GRIP:
+	    if (hp->flag & HOLD_PT_GOOD) {
+		db_path_to_mat(gedp->ged_wdbp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
+		MAT4X3PNT(loc, mat, hp->point);
+		return 1;
+	    }
+	    /* TODO
+	     * there is a bug where joint_hold/joint_solve is passing a hold struct
+	     * with NULL fields when using MGED's "joint holds" or "joint solve"
+	     * command. In particular, hp->path.fp_names can end up NULL,
+	     * this prints an error message instead of crashing MGED.
+	     */
+	    if (!hp->path.fp_names) {
+		bu_vls_printf(gedp->ged_result_str, "hold_point_location: null pointer! '%s' not found!\n",
+			      "hp->path.fp_names");
+		return 0;
+	    }
+	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_maxlen-1], gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0)
+		return 0;
+
+	    RT_CK_DB_INTERNAL(&intern);
+	    if (intern.idb_type != ID_GRIP)
+		return 0;
+	    gip = (struct rt_grip_internal *)intern.idb_ptr;
+	    VMOVE(hp->point, gip->center);
+	    hp->flag |= HOLD_PT_GOOD;
+	    rt_db_free_internal(&intern);
+
+	    db_path_to_mat(gedp->ged_wdbp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
+	    MAT4X3PNT(loc, mat, hp->point);
+	    return 1;
+	case ID_JOINT:
+	    db_path_to_mat(gedp->ged_wdbp->dbip, &hp->path, mat, hp->path.fp_len-3, &rt_uniresource);
+	    if (hp->flag & HOLD_PT_GOOD) {
+		MAT4X3VEC(loc, mat, hp->point);
+		return 1;
+	    }
+	    jp = joint_lookup(hp->arc.arc[hp->arc.arc_last]);
+	    if (!jp) {
+		bu_vls_printf(gedp->ged_result_str, "hold_point_location: Lost joint! %s not found!\n",
+			      hp->arc.arc[hp->arc.arc_last]);
+		return 0;
+	    }
+	    VMOVE(hp->point, jp->location);
+	    hp->flag |= HOLD_PT_GOOD;
+	    MAT4X3VEC(loc, mat, hp->point);
+	    return 1;
+    }
+    /* NEVER REACHED */
+    return 1;	/* For the picky compilers */
+}
+
+
+static char *
+hold_point_to_string(struct ged *gedp, struct hold_point *hp)
+{
+#define HOLD_POINT_TO_STRING_LEN 1024
+    char *text = (char *)bu_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
+    char *path;
+    vect_t loc = VINIT_ZERO;
+
+    switch (hp->type) {
+	case ID_FIXED:
+	    sprintf(text, "(%g %g %g)", hp->point[X],
+		    hp->point[Y], hp->point[Z]);
+	    break;
+	case ID_GRIP:
+	case ID_JOINT:
+	    (void)hold_point_location(gedp, loc, hp);
+	    path = db_path_to_string(&hp->path);
+	    snprintf(text, HOLD_POINT_TO_STRING_LEN, "%s (%g %g %g)", path, loc[X], loc[Y], loc[Z]);
+	    bu_free(path, "full path");
+	    break;
+    }
+    return text;
+}
+
+
+static double
+hold_eval(struct ged *gedp, struct hold *hp)
+{
+    vect_t e_loc = VINIT_ZERO;
+    vect_t o_loc = VINIT_ZERO;
+    double value;
+
+    /*
+     * get the current location of the effector.
+     */
+    if (!hold_point_location(gedp, e_loc, &hp->effector)) {
+	if (J_DEBUG & DEBUG_J_EVAL) {
+	    bu_vls_printf(gedp->ged_result_str, "hold_eval: unable to find location of effector for %s.\n",
+			  hp->name);
+	}
+	return 0.0;
+    }
+    if (!hold_point_location(gedp, o_loc, &hp->objective)) {
+	if (J_DEBUG & DEBUG_J_EVAL) {
+	    bu_vls_printf(gedp->ged_result_str, "hold_eval: unable to find location of objective for %s.\n",
+			  hp->name);
+	}
+	return 0.0;
+    }
+    value = hp->weight * DIST_PT_PT(e_loc, o_loc);
+    if (J_DEBUG & DEBUG_J_EVAL) {
+	bu_vls_printf(gedp->ged_result_str, "hold_eval: PT->PT of %s is %g\n", hp->name, value);
+    }
+    return value;
+}
+
+
+static void
+print_hold(struct ged *gedp, struct hold *hp)
+{
+    char *t1, *t2;
+
+    t1 = hold_point_to_string(gedp, &hp->effector);
+    t2 = hold_point_to_string(gedp, &hp->objective);
+
+    bu_vls_printf(gedp->ged_result_str, "holds:\t%s with %s\n\tfrom:%s\n\tto:%s", (hp->name) ? hp->name : "UNNAMED", hp->joint, t1, t2);
+    bu_free(t1, "hold_point_to_string");
+    bu_free(t2, "hold_point_to_string");
+
+    {
+	bu_vls_printf(gedp->ged_result_str, "\n\twith a weight: %g, pull %g\n",
+		      hp->weight, hold_eval(gedp, hp));
+    }
+}
+
+
 static void
 hold_clear_flags(struct hold *hp)
 {
@@ -547,6 +692,9 @@ joint_unload(struct ged *gedp, int argc, const char *argv[])
 	BU_LIST_DEQUEUE(&hp->l);
 	if (J_DEBUG & DEBUG_J_LOAD) {
 	    bu_vls_printf(gedp->ged_result_str, "joint: unloading '%s' constraint\n", hp->name);
+	    bu_vls_printf(gedp->ged_result_str, "===begin %s===\n", hp->name);
+	    print_hold(gedp, hp);
+	    bu_vls_printf(gedp->ged_result_str, "===end %s===\n", hp->name);
 	}
 	free_hold(hp);
     }
@@ -2449,105 +2597,6 @@ joint_reject(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-static int
-hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
-{
-    mat_t mat;
-    struct joint *jp;
-    struct rt_grip_internal *gip;
-    struct rt_db_internal intern;
-
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return 1;
-
-    VSETALL(loc, 0.0);	/* default is the origin. */
-    switch (hp->type) {
-	case ID_FIXED:
-	    VMOVE(loc, hp->point);
-	    return 1;
-	case ID_GRIP:
-	    if (hp->flag & HOLD_PT_GOOD) {
-		db_path_to_mat(gedp->ged_wdbp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
-		MAT4X3PNT(loc, mat, hp->point);
-		return 1;
-	    }
-	    /* TODO
-	     * there is a bug where joint_hold/joint_solve is passing a hold struct
-	     * with NULL fields when using MGED's "joint holds" or "joint solve"
-	     * command. In particular, hp->path.fp_names can end up NULL,
-	     * this prints an error message instead of crashing MGED.
-	     */
-	    if (!hp->path.fp_names) {
-		bu_vls_printf(gedp->ged_result_str, "hold_point_location(): null pointer! '%s' not found!\n",
-			      "hp->path.fp_names");
-		return 0;
-	    }
-	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_maxlen-1], gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0)
-		return 0;
-
-	    RT_CK_DB_INTERNAL(&intern);
-	    if (intern.idb_type != ID_GRIP)
-		return 0;
-	    gip = (struct rt_grip_internal *)intern.idb_ptr;
-	    VMOVE(hp->point, gip->center);
-	    hp->flag |= HOLD_PT_GOOD;
-	    rt_db_free_internal(&intern);
-
-	    db_path_to_mat(gedp->ged_wdbp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
-	    MAT4X3PNT(loc, mat, hp->point);
-	    return 1;
-	case ID_JOINT:
-	    db_path_to_mat(gedp->ged_wdbp->dbip, &hp->path, mat, hp->path.fp_len-3, &rt_uniresource);
-	    if (hp->flag & HOLD_PT_GOOD) {
-		MAT4X3VEC(loc, mat, hp->point);
-		return 1;
-	    }
-	    jp = joint_lookup(hp->arc.arc[hp->arc.arc_last]);
-	    if (!jp) {
-		bu_vls_printf(gedp->ged_result_str, "hold_eval: Lost joint! %s not found!\n",
-			      hp->arc.arc[hp->arc.arc_last]);
-		return 0;
-	    }
-	    VMOVE(hp->point, jp->location);
-	    hp->flag |= HOLD_PT_GOOD;
-	    MAT4X3VEC(loc, mat, hp->point);
-	    return 1;
-    }
-    /* NEVER REACHED */
-    return 1;	/* For the picky compilers */
-}
-
-
-static double
-hold_eval(struct ged *gedp, struct hold *hp)
-{
-    vect_t e_loc = VINIT_ZERO;
-    vect_t o_loc = VINIT_ZERO;
-    double value;
-
-    /*
-     * get the current location of the effector.
-     */
-    if (!hold_point_location(gedp, e_loc, &hp->effector)) {
-	if (J_DEBUG & DEBUG_J_EVAL) {
-	    bu_vls_printf(gedp->ged_result_str, "hold_eval: unable to find location of effector for %s.\n",
-			  hp->name);
-	}
-	return 0.0;
-    }
-    if (!hold_point_location(gedp, o_loc, &hp->objective)) {
-	if (J_DEBUG & DEBUG_J_EVAL) {
-	    bu_vls_printf(gedp->ged_result_str, "hold_eval: unable to find location of objective for %s.\n",
-			  hp->name);
-	}
-	return 0.0;
-    }
-    value = hp->weight * DIST_PT_PT(e_loc, o_loc);
-    if (J_DEBUG & DEBUG_J_EVAL) {
-	bu_vls_printf(gedp->ged_result_str, "hold_eval: PT->PT of %s is %g\n", hp->name, value);
-    }
-    return value;
-}
 struct solve_stack {
     struct bu_list l;
     struct joint *jp;
@@ -3067,7 +3116,7 @@ Middle:
     /*
      * All constraints at a higher priority are stabilized.
      *
-     * If system_solve() returns "1" then every thing higher is happy
+     * If system_solve returns "1" then every thing higher is happy
      * and we only have to worry about his one.  If -1 was returned
      * then all higher priorities have to be check to make sure they
      * did not get any worse.
@@ -3318,48 +3367,6 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
 }
 
 
-static char *
-hold_point_to_string(struct ged *gedp, struct hold_point *hp)
-{
-#define HOLD_POINT_TO_STRING_LEN 1024
-    char *text = (char *)bu_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
-    char *path;
-    vect_t loc = VINIT_ZERO;
-
-    switch (hp->type) {
-	case ID_FIXED:
-	    sprintf(text, "(%g %g %g)", hp->point[X],
-		    hp->point[Y], hp->point[Z]);
-	    break;
-	case ID_GRIP:
-	case ID_JOINT:
-	    (void)hold_point_location(gedp, loc, hp);
-	    path = db_path_to_string(&hp->path);
-	    snprintf(text, HOLD_POINT_TO_STRING_LEN, "%s (%g %g %g)", path, loc[X], loc[Y], loc[Z]);
-	    bu_free(path, "full path");
-	    break;
-    }
-    return text;
-}
-void
-print_hold(struct ged *gedp, struct hold *hp)
-{
-    char *t1, *t2;
-
-    t1 = hold_point_to_string(gedp, &hp->effector);
-    t2 = hold_point_to_string(gedp, &hp->objective);
-
-    bu_vls_printf(gedp->ged_result_str, "holds:\t%s with %s\n\tfrom:%s\n\tto:%s", (hp->name) ? hp->name : "UNNAMED", hp->joint, t1, t2);
-    bu_free(t1, "hold_point_to_string");
-    bu_free(t2, "hold_point_to_string");
-
-    {
-	bu_vls_printf(gedp->ged_result_str, "\n\twith a weight: %g, pull %g\n",
-		      hp->weight, hold_eval(gedp, hp));
-    }
-}
-
-
 static int
 joint_hold(struct ged *gedp, int argc, const char *argv[])
 {
@@ -3516,7 +3523,7 @@ joint_cmd(struct ged *gedp,
 		case GED_ERROR:
 		    return GED_ERROR;
 		default:
-		    bu_vls_printf(gedp->ged_result_str, "joint_cmd(): Invalid return from %s\n", ftp->ft_name);
+		    bu_vls_printf(gedp->ged_result_str, "joint_cmd: Invalid return from %s\n", ftp->ft_name);
 		    return GED_ERROR;
 	    }
 	}
