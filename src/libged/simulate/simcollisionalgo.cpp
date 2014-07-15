@@ -56,24 +56,22 @@
 #define USE_PERSISTENT_CONTACTS 1
 
 btRTCollisionAlgorithm::btRTCollisionAlgorithm(btPersistentManifold* mf, const btCollisionAlgorithmConstructionInfo& ci, const btCollisionObjectWrapper* col0Wrap, const btCollisionObjectWrapper* col1Wrap)
-: btActivatingCollisionAlgorithm(ci, col0Wrap, col1Wrap),
-    m_ownManifold(false),
-    m_manifoldPtr(mf)
+    : btActivatingCollisionAlgorithm(ci, col0Wrap, col1Wrap),
+      m_ownManifold(false),
+      m_manifoldPtr(mf)
 {
-if (!m_manifoldPtr && m_dispatcher->needsCollision(col0Wrap->getCollisionObject(), col1Wrap->getCollisionObject()))
-{
+    if (!m_manifoldPtr && m_dispatcher->needsCollision(col0Wrap->getCollisionObject(), col1Wrap->getCollisionObject())) {
 	m_manifoldPtr = m_dispatcher->getNewManifold(col0Wrap->getCollisionObject(), col1Wrap->getCollisionObject());
 	m_ownManifold = true;
-}
+    }
 }
 
 btRTCollisionAlgorithm::~btRTCollisionAlgorithm()
 {
-if (m_ownManifold)
-{
+    if (m_ownManifold) {
 	if (m_manifoldPtr)
-		m_dispatcher->releaseManifold(m_manifoldPtr);
-}
+	    m_dispatcher->releaseManifold(m_manifoldPtr);
+    }
 }
 
 void btRTCollisionAlgorithm::processCollision(const btCollisionObjectWrapper* col0Wrap, const btCollisionObjectWrapper* col1Wrap, const btDispatcherInfo& dispatchInfo, btManifoldResult* resultOut)
@@ -102,28 +100,28 @@ void btRTCollisionAlgorithm::processCollision(const btCollisionObjectWrapper* co
 
     if (rbA != NULL && rbB != NULL) {
 
-	   struct sim_manifold *rt_mf = &(rbB->rt_manifold);
+	struct sim_manifold *rt_mf = &(rbB->rt_manifold);
 
-	   // Now add the RT contact pairs
-	   for (i = 0; i < rt_mf->num_contacts; i++) {
+	// Now add the RT contact pairs
+	for (i = 0; i < rt_mf->num_contacts; i++) {
 
-		   btVector3 ptA, ptB, normalWorldOnB;
+	    btVector3 ptA, ptB, normalWorldOnB;
 
-		   VMOVE(ptA, rt_mf->contacts[i].ptA);
-		   VMOVE(ptB, rt_mf->contacts[i].ptB);
-		   VMOVE(normalWorldOnB, rt_mf->contacts[i].normalWorldOnB);
+	    VMOVE(ptA, rt_mf->contacts[i].ptA);
+	    VMOVE(ptB, rt_mf->contacts[i].ptB);
+	    VMOVE(normalWorldOnB, rt_mf->contacts[i].normalWorldOnB);
 
-		   //Negative depth for penetration
-		   resultOut->addContactPoint(normalWorldOnB, ptB, rt_mf->contacts[i].depth);
+	    //Negative depth for penetration
+	    resultOut->addContactPoint(normalWorldOnB, ptB, rt_mf->contacts[i].depth);
 
-		   bu_log("processCollision: Added RT contact %d, A(ignore): %s(%f, %f, %f) , \
+	    bu_log("processCollision: Added RT contact %d, A(ignore): %s(%f, %f, %f) , \
 				   B: %s(%f, %f, %f), n(%f, %f, %f), depth=%f\n",
-					   i+1,
-					rt_mf->rbA->rb_namep, V3ARGS(ptA),
-					rt_mf->rbB->rb_namep, V3ARGS(ptB),
-					V3ARGS(normalWorldOnB),
-					rt_mf->contacts[i].depth);
-	   }
+		   i+1,
+		   rt_mf->rbA->rb_namep, V3ARGS(ptA),
+		   rt_mf->rbB->rb_namep, V3ARGS(ptB),
+		   V3ARGS(normalWorldOnB),
+		   rt_mf->contacts[i].depth);
+	}
 
     } //end- if (rbA != NULL && rbB...
 

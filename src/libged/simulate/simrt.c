@@ -105,7 +105,7 @@ get_overlap(struct rigid_body *rbA, struct rigid_body *rbB, vect_t overlap_min, 
 	   V3ARGS(rbA->btbb_min), V3ARGS(rbA->btbb_max),
 	   rbB->rb_namep,
 	   V3ARGS(rbB->btbb_min), V3ARGS(rbB->btbb_max)
-	);
+	  );
 
     VMOVE(overlap_max, rbA->btbb_max);
     VMIN(overlap_max, rbB->btbb_max);
@@ -118,7 +118,7 @@ get_overlap(struct rigid_body *rbA, struct rigid_body *rbB, vect_t overlap_min, 
 	   rbB->rb_namep,
 	   V3ARGS(overlap_min),
 	   V3ARGS(overlap_max)
-	);
+	  );
 
 
     return GED_OK;
@@ -288,8 +288,8 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 	     * we do not check that here. We just record the points and prims in the airgap_list[].
 	     */
 	    if ((num_hits > 1) &&
-	       (!VEQUAL(hit_list[i].in_point, hit_list[i-1].out_point))
-		) {
+		(!VEQUAL(hit_list[i].in_point, hit_list[i-1].out_point))
+	       ) {
 		/* There has been at least 1 out_point recorded and the
 		 * in_point of current hit reg. does not match out_point of previous hit reg.
 		 */
@@ -313,7 +313,7 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 			   airgap_list[j].out_stp->st_name,
 			   V3ARGS(airgap_list[j].out_point),
 			   airgap_list[j].out_dist
-			);
+			  );
 
 		    num_airgaps++;
 		} else
@@ -398,7 +398,7 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
 	bu_log("if_overlap: WARNING Skipping overlap region as maximum overlaps reached");
     }
 
-    return rt_defoverlap (ap, pp, reg1, reg2, InputHdp);
+    return rt_defoverlap(ap, pp, reg1, reg2, InputHdp);
 }
 
 
@@ -802,7 +802,7 @@ traverse_normalray_lists(
 
 	/* Check of both points are within the overlap RPP */
 	if (!V3PT_IN_RPP(overlap_list[i].in_point,  overlap_min, overlap_max) ||
-	   !V3PT_IN_RPP(overlap_list[i].out_point, overlap_min, overlap_max))
+	    !V3PT_IN_RPP(overlap_list[i].out_point, overlap_min, overlap_max))
 	    continue;
 
 
