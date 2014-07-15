@@ -492,27 +492,20 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
 
 	    if (lenA == lenB)
 	    {
-		struct edgeuse *euA;
-		struct edgeuse *euB;
-		int find1 = 1;
+		struct vertex_g *vgA;
+		struct vertex_g *vgB;
+		struct vertex_g *mgA;
+		struct vertex_g *mgB;
 
-		for (BU_LIST_FOR (euA, edgeuse, &eA->eu_p->l)) {
-		    int find2 = 0;
+		vgA = eA->eu_p->vu_p->v_p->vg_p;
+		vgB = eB->eu_p->vu_p->v_p->vg_p;
+		mgA = eA->eu_p->eumate_p->vu_p->v_p->vg_p;
+		mgB = eB->eu_p->eumate_p->vu_p->v_p->vg_p;
 
-		    for (BU_LIST_FOR (euB, edgeuse, &eB->eu_p->l)) {
-			if (VNEAR_EQUAL(euA->vu_p->v_p->vg_p->coord, euB->vu_p->v_p->vg_p->coord, tol->dist)) {
-			    find2 = 1;
-			    break;
-			}
-		    }
-
-		    if (!find2)
-		    {
-			find1 = 0;
-		    }
-		}
-
-		if (find1)
+		if ((VNEAR_EQUAL(vgA->coord, vgB->coord, tol->dist) &&
+		     VNEAR_EQUAL(mgA->coord, mgB->coord, tol->dist)) ||
+		    (VNEAR_EQUAL(vgA->coord, mgB->coord, tol->dist) &&
+		     VNEAR_EQUAL(mgA->coord, vgB->coord, tol->dist)))
 		{
 		    NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], eA);
 		    NMG_INDEX_SET(classlist[4 + NMG_CLASS_AonBshared], eA);
