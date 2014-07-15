@@ -56,6 +56,8 @@
 struct joint_specific {
     uint32_t joint_magic;
     point_t joint_location;
+    char *reference_path_1;
+    char *reference_path_2;
     vect_t joint_vector1;
     vect_t joint_vector2;
     fastf_t joint_value; /* currently angle or cross product value */
@@ -65,6 +67,8 @@ struct joint_specific {
 
 const struct bu_structparse rt_joint_parse[] = {
     { "%f", 3, "L", bu_offsetofarray(struct rt_joint_internal, location, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%V", 1, "RP1", bu_offsetof(struct rt_joint_internal, reference_path_1), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%V", 1, "RP2", bu_offsetof(struct rt_joint_internal, reference_path_2), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "V1", bu_offsetofarray(struct rt_joint_internal, vector1, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "V2", bu_offsetofarray(struct rt_joint_internal, vector2, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "A", bu_offsetof(struct rt_joint_internal, value), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -89,6 +93,8 @@ rt_joint_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VMOVE(jointp->joint_location, jip->location);
     VMOVE(jointp->joint_vector1, jip->vector1);
     VMOVE(jointp->joint_vector2, jip->vector2);
+    jointp->reference_path_1 = bu_vls_addr(&jip->reference_path_1);
+    jointp->reference_path_2 = bu_vls_addr(&jip->reference_path_2);
     jointp->joint_value = jip->value;
 
     /* No bounding sphere or bounding RPP is possible */
@@ -113,6 +119,8 @@ rt_joint_print(const struct soltab *stp)
     VPRINT("Location", jointp->joint_location);
     VPRINT("Vector1", jointp->joint_vector1);
     VPRINT("Vector2", jointp->joint_vector2);
+    bu_log("reference_path_1 = %f\n", jointp->reference_path_1);
+    bu_log("reference_path_2 = %f\n", jointp->reference_path_1);
     bu_log("Value = %f\n", jointp->joint_value);
 }
 
@@ -297,7 +305,7 @@ rt_joint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * JOINT_FLOAT_SIZE);
+    BU_ASSERT_LONG(ep->ext_nbytes, >=, SIZEOF_NETWORK_DOUBLE * JOINT_FLOAT_SIZE + 1);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_JOINT;
@@ -321,6 +329,12 @@ rt_joint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	bu_bomb("rt_joint_import5, scale factor near zero.");
     }
     jip->value = vec[9];
+
+    /* convert name of reference_path_1 & 2*/
+    bu_vls_init(&jip->reference_path_1);
+    bu_vls_strcpy(&jip->reference_path_1, (char *)ep->ext_buf + JOINT_FLOAT_SIZE * SIZEOF_NETWORK_DOUBLE);
+    bu_vls_init(&jip->reference_path_2);
+    bu_vls_strcpy(&jip->reference_path_2, (char *)ep->ext_buf + JOINT_FLOAT_SIZE * SIZEOF_NETWORK_DOUBLE + bu_vls_strlen(&jip->reference_path_1) + 1);
 
     /* Verify that vector1 has unit length */
     f = MAGNITUDE(jip->vector1);
@@ -356,6 +370,7 @@ int
 rt_joint_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_joint_internal *jip;
+    unsigned char *ptr;
 
     /* must be double for import and export */
     double vec[JOINT_FLOAT_SIZE];
@@ -368,8 +383,11 @@ rt_joint_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     RT_JOINT_CK_MAGIC(jip);
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * JOINT_FLOAT_SIZE;
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * JOINT_FLOAT_SIZE +
+		bu_vls_strlen(&jip->reference_path_1) + 1 +
+		+ bu_vls_strlen(&jip->reference_path_2) + 1;
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "joint external");
+    ptr = (unsigned char *)ep->ext_buf;
 
     VSCALE(&vec[0], jip->location, local2mm);
     VMOVE(&vec[3], jip->vector1);
@@ -379,6 +397,11 @@ rt_joint_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     /* Convert from internal (host) to database (network) format */
     bu_cv_htond(ep->ext_buf, (unsigned char *)vec, JOINT_FLOAT_SIZE);
 
+    ptr += JOINT_FLOAT_SIZE * SIZEOF_NETWORK_DOUBLE;
+    bu_strlcpy((char *)ptr, bu_vls_addr(&jip->reference_path_1), bu_vls_strlen(&jip->reference_path_1) + 1);
+
+    ptr += bu_vls_strlen(&jip->reference_path_1) + 1;
+    bu_strlcpy((char *)ptr, bu_vls_addr(&jip->reference_path_2), bu_vls_strlen(&jip->reference_path_2) + 1);
 
     return 0;
 }
@@ -406,14 +429,16 @@ rt_joint_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
     if (!verbose)
 	return 0;
 
-    sprintf(buf, "\tV1 (%g %g %g) V2 (%g %g %g) value=%g\n",
+    sprintf(buf, "\tV1 (%g %g %g) V2 (%g %g %g) value=%g RF1=%s RF2=%s\n",
 	    INTCLAMP(jip->vector1[0]*mm2local),
 	    INTCLAMP(jip->vector1[1]*mm2local),
 	    INTCLAMP(jip->vector1[2]*mm2local),
 	    INTCLAMP(jip->vector2[0]*mm2local),
 	    INTCLAMP(jip->vector2[1]*mm2local),
 	    INTCLAMP(jip->vector2[2]*mm2local),
-	    INTCLAMP(jip->value*mm2local));
+	    INTCLAMP(jip->value*mm2local),
+	    bu_vls_addr(&jip->reference_path_1),
+	    bu_vls_addr(&jip->reference_path_2));
     bu_vls_strcat(str, buf);
 
     return 0;
@@ -558,7 +583,7 @@ rt_joint_find_selections(
 	    bu_log("selected vector2.\n");
     }
 
-    // build and return list of selections
+    /* build and return list of selections */
     BU_ALLOC(selection_set, struct rt_selection_set);
     BU_PTBL_INIT(&selection_set->selections);
 

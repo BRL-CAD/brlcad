@@ -201,6 +201,9 @@ struct rt_grip_internal {
 struct rt_joint_internal {
     uint32_t magic;
     point_t location;
+    struct bu_vls reference_path_1;
+    struct bu_vls reference_path_2;
+
     /* Remaining elements are used for display purposes only */
     vect_t vector1;
     vect_t vector2;

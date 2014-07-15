@@ -599,7 +599,9 @@ static char *p_joint[] = {
     "Enter X, Y, Z of vector2: ",
     "Enter Y: ",
     "Enter Z: ",
-    "Enter joint value: "
+    "Enter joint value: ",
+    "Reference Path 1: ",
+    "Reference Path 2: "
 };
 
 /**
@@ -2899,6 +2901,10 @@ joint_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
     VMOVE(jip->vector1, &vals[3]);
     VMOVE(jip->vector2, &vals[6]);
     jip->value = vals[9];
+    bu_vls_init(&jip->reference_path_1);
+    bu_vls_strcpy(&jip->reference_path_1, cmd_argv[3 + n]);
+    bu_vls_init(&jip->reference_path_2);
+    bu_vls_strcpy(&jip->reference_path_2, cmd_argv[3 + n + 1]);
 
     return GED_OK;
 }
@@ -3165,7 +3171,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	menu = p_hrt;
 	fn_in = hrt_in;
     }else if (BU_STR_EQUAL(argv[2], "joint")) {
-	nvals = 3*3 + 1;
+	nvals = 3*3 + 1 + 2;
 	menu = p_joint;
 	fn_in = joint_in;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
