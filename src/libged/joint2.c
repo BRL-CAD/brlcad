@@ -65,7 +65,7 @@ joint_selection(
     struct rt_selection_set *selection_set;
     struct bu_ptbl *selections;
     struct rt_selection *new_selection;
-    struct rt_selection_query query;
+    /* struct rt_selection_query query; */
     const char *cmd, *solid_name, *selection_name;
 
     /*   0         1            2         3
@@ -93,6 +93,8 @@ joint_selection(
 	selection_name = argv[4];
 
 	/* find matching selections */
+	/* TODO: implement joint find_selections*/
+#if 0
 	query.start[X] = atof(argv[5]);
 	query.start[Y] = atof(argv[6]);
 	query.start[Z] = atof(argv[7]);
@@ -101,7 +103,7 @@ joint_selection(
 	query.dir[Z] = atof(argv[10]);
 	query.sorting = RT_SORT_CLOSEST_TO_START;
 
-	/* TODO: implement joint find_selections*/
+#endif
 	selection_set = NULL;
 	/*selection_set = ip->idb_meth->ft_find_selections(ip, &query);*/
 	if (!selection_set) {
@@ -137,7 +139,7 @@ joint_selection(
 	bu_ptbl_ins(selections, (long *)new_selection);
     } else if (BU_STR_EQUAL(cmd, "translate")) {
 
-	struct rt_selection_operation operation;
+	/*struct rt_selection_operation operation;*/
 
 	/*        4       5  6  7
 	 * selection_name dx dy dz
@@ -156,12 +158,14 @@ joint_selection(
 
 	for (i = 0; i < (int)BU_PTBL_LEN(selections); ++i) {
 	    int ret;
+	    /* TODO: implement process_selection */
+#if 0
 	    operation.type = RT_SELECTION_TRANSLATION;
 	    operation.parameters.tran.dx = atof(argv[5]);
 	    operation.parameters.tran.dy = atof(argv[6]);
 	    operation.parameters.tran.dz = atof(argv[7]);
+#endif
 
-	    /* TODO: implement process_selection */
 	    ret = 0;
 	    /*ret = ip->idb_meth->ft_process_selection(ip,
 		    (struct rt_selection *)BU_PTBL_GET(selections, i), &operation);
