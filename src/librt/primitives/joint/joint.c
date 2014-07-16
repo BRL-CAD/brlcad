@@ -487,7 +487,13 @@ rt_joint_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 /* TODO: should be dynamic */
 #define JOINT_SELECT_VMAX_DISTSQ 100.0
 
-enum { JOINT_SELECT_LOC, JOINT_SELECT_V1, JOINT_SELECT_V2 };
+enum {
+    JOINT_SELECT_LOC,
+    JOINT_SELECT_V1,
+    JOINT_SELECT_V2,
+    JOINT_SELECT_PATH1,
+    JOINT_SELECT_PATH2
+};
 
 struct joint_selection {
     int what;
@@ -511,13 +517,19 @@ rt_joint_find_selections(
 {
     int ret;
     struct rt_joint_internal *jip;
-    fastf_t dist[3], dist_sq1, dist_sq2;
-    point_t qline_pt, joint_v1pt;
+    fastf_t dist[3];
+    point_t qline_pt;
     vect_t qstart;
     point_t qdir;
     struct joint_selection *joint_selection = NULL;
     struct rt_selection *selection = NULL;
     struct rt_selection_set *selection_set = NULL;
+    struct bn_tol tol;
+
+#if 0
+    fastf_t dist_sq1, dist_sq2;
+    point_t joint_v1pt;
+#endif
 
     RT_CK_DB_INTERNAL(ip);
     jip = (struct rt_joint_internal *)ip->idb_ptr;
@@ -531,6 +543,22 @@ rt_joint_find_selections(
      * location, otherwise select vector with shorter distance */
     VMOVE(qstart, query->start);
     VMOVE(qdir, query->dir);
+
+    BU_GET(joint_selection, struct joint_selection);
+    joint_selection->what = JOINT_SELECT_V1;
+    VMOVE(joint_selection->qstart, qstart);
+    VMOVE(joint_selection->qdir, qdir);
+
+    /* closest point on query line to location (same as the
+     * intersection between the query line and the plane parallel to
+     * the view plane that intersects the location)
+     */
+    BN_TOL_INIT(&tol);
+    ret = bn_dist_pt3_line3(dist, qline_pt, qstart, qdir, jip->location,
+	    &tol);
+    VMOVE(joint_selection->plane_pt, qline_pt);
+
+#if 0
     ret = bn_distsq_line3_line3(dist, qstart, qdir, jip->location,
 	    jip->vector1, qline_pt, joint_v1pt);
     dist_sq1 = dist[2];
@@ -574,6 +602,7 @@ rt_joint_find_selections(
 	    joint_selection->what = JOINT_SELECT_LOC;
 	}
     }
+#endif
 
     if (!joint_selection) {
 	bu_log("selected nothing.\n");
@@ -605,15 +634,15 @@ rt_joint_find_selections(
 
 int
 rt_joint_process_selection(
-    struct rt_db_internal *UNUSED(ip),
-    const struct rt_selection *UNUSED(selection),
-    const struct rt_selection_operation *UNUSED(op))
+    struct rt_db_internal *ip,
+    const struct rt_selection *selection,
+    const struct rt_selection_operation *op)
 {
-#if 0
-    struct rt_joint_selection *joint_selection;
+    struct joint_selection *js;
     struct rt_joint_internal *jip;
-    fastf_t dx, dy, dz;
     mat_t rmat, pmat;
+    vect_t delta, start, end, orig_v1, orig_v2;
+    fastf_t angle;
 
     if (op->type == RT_SELECTION_NOP) {
 	return 0;
@@ -624,22 +653,30 @@ rt_joint_process_selection(
     }
 
     RT_CK_DB_INTERNAL(ip);
-    jip = (struct joint_internal *)ip->idb_ptr;
+    jip = (struct rt_joint_internal *)ip->idb_ptr;
     RT_JOINT_CK_MAGIC(jip);
 
-    joint_selection *js = (joint_selection *)selection->obj;
+    js = (struct joint_selection *)selection->obj;
     if (!js) {
 	return -1;
     }
 
-    dx = op->parameters.tran.dx;
-    dy = op->parameters.tran.dy;
-    dz = op->parameters.tran.dz;
+    delta[X] = op->parameters.tran.dx;
+    delta[Y] = op->parameters.tran.dy;
+    delta[Z] = op->parameters.tran.dz;
 
-    /* need to turn delta into rotation using query reference points */
-    bn_mat_angles(rmat, dx, dy, dz);
+    VJOIN1(start, js->plane_pt, -1.0, jip->location);
+    VADD2(end, js->plane_pt, delta);
+
+    angle = VDOT(start, end);
+    angle = acos(angle);
+    bn_mat_arb_rot(rmat, jip->location, js->qdir, angle);
     bn_mat_xform_about_pt(pmat, rmat, jip->location);
-#endif
+
+    VMOVE(orig_v1, jip->vector1);
+    VMOVE(orig_v2, jip->vector2);
+    MAT4X3VEC(jip->vector1, pmat, orig_v1);
+    MAT4X3VEC(jip->vector2, pmat, orig_v2);
 
     return 0;
 }

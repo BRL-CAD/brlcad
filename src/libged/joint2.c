@@ -134,8 +134,7 @@ joint_selection(
 	}
 	bu_ptbl_ins(selections, (long *)new_selection);
     } else if (BU_STR_EQUAL(cmd, "translate")) {
-
-	/*struct rt_selection_operation operation;*/
+	struct rt_selection_operation operation;
 
 	/*        4       5  6  7
 	 * selection_name dx dy dz
@@ -154,18 +153,13 @@ joint_selection(
 
 	for (i = 0; i < (int)BU_PTBL_LEN(selections); ++i) {
 	    int ret;
-	    /* TODO: implement process_selection */
-#if 0
 	    operation.type = RT_SELECTION_TRANSLATION;
 	    operation.parameters.tran.dx = atof(argv[5]);
 	    operation.parameters.tran.dy = atof(argv[6]);
 	    operation.parameters.tran.dz = atof(argv[7]);
-#endif
 
-	    ret = 0;
-	    /*ret = ip->idb_meth->ft_process_selection(ip,
+	    ret = ip->idb_meth->ft_process_selection(ip,
 		    (struct rt_selection *)BU_PTBL_GET(selections, i), &operation);
-	     */
 
 	    if (ret != 0) {
 		return GED_ERROR;
@@ -224,6 +218,9 @@ ged_joint2(struct ged *gedp, int argc, const char *argv[])
     /* check for selection command */
     if (BU_STR_EQUAL(argv[2], "selection")) {
 	int ret = joint_selection(gedp, &intern, argc, argv);
+	if (BU_STR_EQUAL(argv[3], "translate") && ret == 0) {
+	    GED_DB_PUT_INTERNAL(gedp, ndp, &intern, &rt_uniresource, GED_ERROR);
+	}
 	rt_db_free_internal(&intern);
 	return ret;
     }
