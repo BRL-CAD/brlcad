@@ -32,13 +32,13 @@ class PerpendicularSolve : public Gecode::Space {
 	Gecode::IntVarArray l;
 	PerpendicularSolve(int max, int tol) : l(*this, 6, -max, max) {
 	    Gecode::IntVar AX(l[0]), AY(l[1]), AZ(l[2]), BX(l[3]), BY(l[4]), BZ(l[5]);
-	    rel(*this, AX * BX + AY * BY + AZ * BZ > -1 * tol);
-	    rel(*this, AX * BX + AY * BY + AZ * BZ < tol);
+	    Gecode::rel(*this, AX * BX + AY * BY + AZ * BZ > -1 * tol);
+	    Gecode::rel(*this, AX * BX + AY * BY + AZ * BZ < tol);
 	}
 	PerpendicularSolve(bool share, PerpendicularSolve& s) : Gecode::Space(share, s) {
 	    l.update(*this, share, s.l);
 	}
-	virtual Space* copy(bool share) {return new PerpendicularSolve(share,*this);}
+	virtual Gecode::Space* copy(bool share) {return new PerpendicularSolve(share,*this);}
 	void print(void) const {std::cout << l << std::endl;}
 };
 
