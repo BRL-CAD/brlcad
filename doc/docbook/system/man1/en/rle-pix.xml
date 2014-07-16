@@ -17,21 +17,18 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>rle-pix</command>
-    <arg choice='opt'>-cdhH </arg>
+    <arg choice='opt'>-cdH </arg>
     <arg choice='opt'>-C <replaceable>r/g/b</replaceable></arg>
-    <arg choice='opt'>-s <replaceable>squareoutsize</replaceable></arg>
-    <arg choice='opt'>-w <replaceable>out_width</replaceable></arg>
-    <arg choice='opt'>-n <replaceable>out_height</replaceable></arg>
-    <arg choice='opt'>-S <replaceable>squareoutsize</replaceable></arg>
-    <arg choice='opt'>-W <replaceable>out_width</replaceable></arg>
-    <arg choice='opt'>-N <replaceable>out_height</replaceable></arg>
+    <arg choice='opt'>-s|S <replaceable>squareoutsize</replaceable></arg>
+    <arg choice='opt'>-w|W <replaceable>out_width</replaceable></arg>
+    <arg choice='opt'>-n|N <replaceable>out_height</replaceable></arg>
     <arg choice='opt'><arg choice='plain'><replaceable>file.rle</replaceable></arg><arg choice='opt'><replaceable>file.pix</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>rle-fb</emphasis>
+<para><command>rle-pix</command>
 decodes a Utah Raster Toolkit
 Run-Length Encoded (RLE) format file
 (saved with
@@ -44,7 +41,7 @@ format, and writes it to standard out.
 If
 <emphasis remap='I'>file.rle</emphasis>
 is not specified, standard input is read.
-<emphasis remap='I'>rle-pix</emphasis>
+<command>rle-pix</command>
 determines the type and size of the saved file (color or B&amp;W)
 and acts accordingly.</para>
 <variablelist remap='TP'>
@@ -67,7 +64,7 @@ saved RLE image on standard error.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-C</option><replaceable>r/g/b</replaceable></term>
+  <term><option>-C </option><replaceable>r/g/b</replaceable></term>
   <listitem>
 <para>The background of the image is
 normally set to the value recorded in the RLE file.
@@ -75,6 +72,30 @@ This option permits
 the user to specify an alternate background color
 as slash separated decimal numbers in the range of 0 to 255,
 one each for the red, green, and blue channels.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w|W </option><replaceable>out_width</replaceable></term>
+  <listitem>
+<para>This sets the output width.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n|N </option><replaceable>out_height</replaceable></term>
+  <listitem>
+<para>This sets the output height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s|S </option><replaceable>squareoutsize</replaceable></term>
+  <listitem>
+<para>This sets the output width and output height to the same value.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-H</option></term>
+  <listitem>
+<para>Print only the header.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
