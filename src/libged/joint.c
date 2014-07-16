@@ -2195,7 +2195,7 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 
 
 static void
-joint_move(struct ged *gedp, struct joint *jp)
+joint_adjust(struct ged *gedp, struct joint *jp)
 {
     struct animate *anp;
     double tmp;
@@ -2368,7 +2368,7 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 		if (token.t_key.value == KEY_JOINT) {
 		    if (parse_joint(gedp, fip, &instring)) {
 			jp = BU_LIST_LAST(joint, &joint_head);
-			if (!no_apply) joint_move(gedp, jp);
+			if (!no_apply) joint_adjust(gedp, jp);
 		    }
 		} else if (token.t_key.value == KEY_CON) {
 		    (void)parse_hold(gedp, fip, &instring);
@@ -2610,7 +2610,7 @@ joint_reject(struct ged *gedp, int argc, const char *argv[])
 	    jp->rots[i].current = jp->rots[i].accepted;
 	    jp->dirs[i].current = jp->dirs[i].accepted;
 	}
-	joint_move(gedp, jp);
+	joint_adjust(gedp, jp);
     }
     if (!no_mesh) joint_mesh(gedp, 0, 0);
     return GED_OK;
@@ -2781,10 +2781,10 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 		x1=bx-C*(bx-ax);
 	    }
 	    jp->rots[i].current = x1;
-	    joint_move(gedp, jp);
+	    joint_adjust(gedp, jp);
 	    f1=hold_eval(gedp, hp);
 	    jp->rots[i].current = x2;
-	    joint_move(gedp, jp);
+	    joint_adjust(gedp, jp);
 	    f2=hold_eval(gedp, hp);
 	    while (fabs(x3-x0) > EPSI*(fabs(x1)+fabs(x2))) {
 		if (f2 < f1) {
@@ -2793,7 +2793,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 		    x2 = R*x1+C*x3;
 		    f1=f2;
 		    jp->rots[i].current = x2;
-		    joint_move(gedp, jp);
+		    joint_adjust(gedp, jp);
 		    f2=hold_eval(gedp, hp);
 		} else {
 		    x3=x2;
@@ -2801,7 +2801,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 		    x1=R*x2+C*x0;
 		    f2=f1;
 		    jp->rots[i].current = x1;
-		    joint_move(gedp, jp);
+		    joint_adjust(gedp, jp);
 		    f1=hold_eval(gedp, hp);
 		}
 	    }
@@ -2813,7 +2813,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 		f0=f2;
 	    }
 	    jp->rots[i].current = hold;
-	    joint_move(gedp, jp);
+	    joint_adjust(gedp, jp);
 	    if (f0 < besteval) {
 		if (J_DEBUG & DEBUG_J_SOLVE) {
 		    bu_vls_printf(gedp->ged_result_str, "part_solve: NEW min %s(%d, %g) %g <%g\n",
@@ -2857,10 +2857,10 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 		x1=bx-C*(bx-ax);
 	    }
 	    jp->dirs[i].current = x1;
-	    joint_move(gedp, jp);
+	    joint_adjust(gedp, jp);
 	    f1=hold_eval(gedp, hp);
 	    jp->dirs[i].current = x2;
-	    joint_move(gedp, jp);
+	    joint_adjust(gedp, jp);
 	    f2=hold_eval(gedp, hp);
 	    while (fabs(x3-x0) > EPSI*(fabs(x1)+fabs(x2))) {
 		if (f2 < f1) {
@@ -2869,7 +2869,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 		    x2 = R*x1+C*x3;
 		    f1=f2;
 		    jp->dirs[i].current = x2;
-		    joint_move(gedp, jp);
+		    joint_adjust(gedp, jp);
 		    f2=hold_eval(gedp, hp);
 		} else {
 		    x3=x2;
@@ -2877,7 +2877,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 		    x1=R*x2+C*x0;
 		    f2=f1;
 		    jp->dirs[i].current = x1;
-		    joint_move(gedp, jp);
+		    joint_adjust(gedp, jp);
 		    f1=hold_eval(gedp, hp);
 		}
 	    }
@@ -2889,7 +2889,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 		f0=f2;
 	    }
 	    jp->dirs[i].current = hold;
-	    joint_move(gedp, jp);
+	    joint_adjust(gedp, jp);
 	    if (f0 < besteval-SQRT_SMALL_FASTF) {
 		if (J_DEBUG & DEBUG_J_SOLVE) {
 		    bu_vls_printf(gedp->ged_result_str, "part_solve: NEW min %s(%d, %g) %g <%g delta=%g\n",
@@ -2936,7 +2936,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
     } else {
 	bestjoint->dirs[bestfreedom-3].current = bestvalue;
     }
-    joint_move(gedp, bestjoint);
+    joint_adjust(gedp, bestjoint);
     return 1;
 }
 
@@ -2958,7 +2958,7 @@ reject_move(struct ged *gedp)
     } else {
 	ssp->jp->dirs[ssp->freedom-3].current = ssp->oldval;
     }
-    joint_move(gedp, ssp->jp);
+    joint_adjust(gedp, ssp->jp);
     BU_PUT(ssp, struct solve_stack);
 }
 
@@ -3425,7 +3425,7 @@ joint_list(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 
 
 static int
-joint_adjust(struct ged *gedp, int argc, const char *argv[])
+joint_move(struct ged *gedp, int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -3497,7 +3497,7 @@ joint_adjust(struct ged *gedp, int argc, const char *argv[])
 			  jp->name, i, *argv);
 	}
     }
-    joint_move(gedp, jp);
+    joint_adjust(gedp, jp);
     joint_mesh(gedp, 0, 0);
 
     /* refreshing the screen */
@@ -3601,7 +3601,7 @@ struct funtab joint_tab[] = {
     {"mesh", "", "Build the grip mesh",
      joint_mesh, 0, 1, FALSE},
     {"move", "joint_name p1 [p2...p6]", "Manual adjust a joint",
-     joint_adjust, 3, 8, FALSE},
+     joint_move, 3, 8, FALSE},
     {"reject", "[joint_names]", "reject joint motions",
      joint_reject, 1, FUNTAB_UNLIMITED, FALSE},
     {"save",	"file_name", "Save joints and constraints to disk",
