@@ -16,6 +16,7 @@ BRLCAD_ADDEXEC(gecode_librt_test gecode_librt_test.cpp "${GECODE_LIBRARIES}" NO_
 set(pc_ignore_files
   solver_test.cpp
   vm_test.cpp
+  domain_constraint_propagator.cpp
   )
 CMAKEFILES(${pc_ignore_files})
 
