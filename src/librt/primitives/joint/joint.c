@@ -97,6 +97,7 @@ rt_joint_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     jointp->reference_path_2 = bu_vls_addr(&jip->reference_path_2);
     jointp->joint_value = jip->value;
 
+
     /* No bounding sphere or bounding RPP is possible */
     VSETALL(stp->st_min, 0.0);
     VSETALL(stp->st_max, 0.0);
@@ -221,7 +222,7 @@ rt_joint_free(struct soltab *stp)
  * XXX No checking for degenerate faces is done, but probably should
  * be.
  */
-#define LOCATION_RADIUS 20
+#define LOCATION_RADIUS 5
 int
 rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -257,6 +258,7 @@ rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
     for (i = 0; i < 16; i++) {
 	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
+
 
     return 0;
 }
