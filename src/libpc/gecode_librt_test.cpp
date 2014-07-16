@@ -27,43 +27,93 @@
 #include <gecode/minimodel.hh>
 #include <gecode/search.hh>
 
-class PerpendicularSolve : public Gecode::Space {
+class GeometrySolve : public Gecode::Space {
     public:
 	Gecode::IntVarArray l;
-	PerpendicularSolve(int max, int tol) : l(*this, 6, -max, max) {
-	    Gecode::IntVar AX(l[0]), AY(l[1]), AZ(l[2]), BX(l[3]), BY(l[4]), BZ(l[5]);
-	    Gecode::rel(*this, AX * BX + AY * BY + AZ * BZ > -1 * tol);
-	    Gecode::rel(*this, AX * BX + AY * BY + AZ * BZ < tol);
-	}
-	PerpendicularSolve(bool share, PerpendicularSolve& s) : Gecode::Space(share, s) {
+	GeometrySolve(int pnt_cnt, int min, int max) : l(*this, pnt_cnt, min, max) {}
+	GeometrySolve(bool share, GeometrySolve& s) : Gecode::Space(share, s) {
 	    l.update(*this, share, s.l);
 	}
-	virtual Gecode::Space* copy(bool share) {return new PerpendicularSolve(share,*this);}
+	virtual Space* copy(bool share) {return new GeometrySolve(share,*this);}
 	void print(void) const {std::cout << l << std::endl;}
 };
 
+void
+add_constraint_coincident_pnt(GeometrySolve *s, int tol, int p1, int p2)
+{
+    Gecode::IntVar AX(s->l[0 + 3*p1]), AY(s->l[1 + 3*p1]), AZ(s->l[2 + 3*p1]);
+    Gecode::IntVar BX(s->l[0 + 3*p2]), BY(s->l[1 + 3*p2]), BZ(s->l[2 + 3*p2]);
+    Gecode::rel(*s, AX - BX > -1 * tol);
+    Gecode::rel(*s, AX - BX < tol);
+    Gecode::rel(*s, AY - BY > -1 * tol);
+    Gecode::rel(*s, AY - BY < tol);
+    Gecode::rel(*s, AZ - BZ > -1 * tol);
+    Gecode::rel(*s, AZ - BZ < tol);
+}
+
+void
+add_constraint_perpendicular_vect(GeometrySolve *s, int tol, int p1, int p2)
+{
+    Gecode::IntVar AX(s->l[0 + 3*p1]), AY(s->l[1 + 3*p1]), AZ(s->l[2 + 3*p1]);
+    Gecode::IntVar BX(s->l[0 + 3*p2]), BY(s->l[1 + 3*p2]), BZ(s->l[2 + 3*p2]);
+    Gecode::rel(*s, AX * BX + AY * BY + AZ * BZ > -1 * tol);
+    Gecode::rel(*s, AX * BX + AY * BY + AZ * BZ < tol);
+}
+
 int main() {
 
-  PerpendicularSolve* m = new PerpendicularSolve(100, 1);
+    /* Perpendicular constraint test */
+    {
+	GeometrySolve* s = new GeometrySolve(6, -100, 100);
+	Gecode::IntVar AX(s->l[0]), AY(s->l[1]), AZ(s->l[2]), BX(s->l[3]), BY(s->l[4]), BZ(s->l[5]);
 
-  Gecode::IntVar AX(m->l[0]), AY(m->l[1]), AZ(m->l[2]), BX(m->l[3]), BY(m->l[4]), BZ(m->l[5]);
+	/* Add a canned constraint */
+	add_constraint_perpendicular_vect(s, 1, 0, 1);
 
-  /* Define some constraints to limit the solution set */
-  Gecode::rel(*m, AX == BY);
-  Gecode::rel(*m, AX < 50);
-  Gecode::rel(*m, AY > 2);
-  Gecode::rel(*m, AY < 40);
-  Gecode::rel(*m, AZ == 10);
-  Gecode::rel(*m, AX > 0);
-  Gecode::rel(*m, AX*AX + AY*AY + AZ*AZ == BX*BX + BY*BY + BZ*BZ);
-  Gecode::branch(*m, m->l, Gecode::INT_VAR_SIZE_MIN(), Gecode::INT_VAL_MIN());
+	/* Define some additional constraints to limit the solution set */
+	Gecode::rel(*s, AX == BY);
+	Gecode::rel(*s, AX < 50);
+	Gecode::rel(*s, AY > 2);
+	Gecode::rel(*s, AY < 40);
+	Gecode::rel(*s, AZ == 10);
+	Gecode::rel(*s, AX > 0);
+	Gecode::rel(*s, AX*AX + AY*AY + AZ*AZ == BX*BX + BY*BY + BZ*BZ);
+	Gecode::branch(*s, s->l, Gecode::INT_VAR_SIZE_MIN(), Gecode::INT_VAL_MIN());
 
-  Gecode::DFS<PerpendicularSolve> e(m);
-  delete m;
-  while (PerpendicularSolve* s = e.next()) {
-    s->print();
-    delete s;
-  }
+	Gecode::DFS<GeometrySolve> e(s);
+	delete s;
+	while (GeometrySolve* sp = e.next()) {
+	    sp->print();
+	    delete sp;
+	}
+
+    }
+
+    {
+	GeometrySolve* s = new GeometrySolve(6, -10, 10);
+	Gecode::IntVar AX(s->l[0]), AY(s->l[1]), AZ(s->l[2]), BX(s->l[3]), BY(s->l[4]), BZ(s->l[5]);
+
+	/* Add a canned constraint */
+	add_constraint_coincident_pnt(s, 2, 0, 1);
+
+	/* Define some constraints to limit the solution set */
+	Gecode::rel(*s, AX == BY);
+	Gecode::rel(*s, AY == 2);
+	Gecode::rel(*s, AX > 0);
+	Gecode::rel(*s, BX > 0);
+	Gecode::rel(*s, BZ > 0);
+	Gecode::rel(*s, AX < 3);
+	Gecode::rel(*s, BX < 5);
+	Gecode::rel(*s, BZ < 6);
+	Gecode::branch(*s, s->l, Gecode::INT_VAR_SIZE_MIN(), Gecode::INT_VAL_MIN());
+
+	Gecode::DFS<GeometrySolve> e(s);
+	delete s;
+	while (GeometrySolve* sp = e.next()) {
+	    sp->print();
+	    delete sp;
+	}
+    }
   return 0;
 }
 
