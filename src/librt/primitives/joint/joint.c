@@ -687,6 +687,10 @@ rt_joint_process_selection(
     delta[Y] = op->parameters.tran.dy;
     delta[Z] = op->parameters.tran.dz;
 
+    if (VNEAR_ZERO(delta, BN_TOL_DIST)) {
+	return 0;
+    }
+
     VJOIN1(start, js->plane_pt, -1.0, jip->location);
     VADD2(end, js->plane_pt, delta);
 
