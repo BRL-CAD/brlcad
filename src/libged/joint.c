@@ -3108,7 +3108,8 @@ Middle:
 	ssp = (struct solve_stack *) solve_head.forw;
 
 	i = (2<<6) - 1;		/* Six degrees of freedom */
-	if (test_hold) {  /* make sure we've got test_hold */
+	if (test_hold) {
+	    /* make sure we've got test_hold */
 	    for (BU_LIST_FOR(jh, jointH, &test_hold->j_head)) {
 		if (ssp->jp != jh->p) {
 		    i &= jh->flag;
@@ -3161,7 +3162,8 @@ Middle:
 	    reject_move(gedp);
 	}
 	i = (2 << 6) - 1;
-	if (test_hold) { /* again, make sure we've got test_hold */
+	if (test_hold) {
+	    /* again, make sure we've got test_hold */
 	    for (BU_LIST_FOR(jh, jointH, &test_hold->j_head)) {
 		if (ssp->jp != jh->p) {
 		    i &= jh->flag;

@@ -467,7 +467,7 @@ extern int _ged_do_tra(struct ged *gedp,
  * the real definition of the struct goes here.  The public
  * header has only the notion of a ged_results structure.*/
 struct ged_results {
-        struct bu_ptbl *results_tbl;
+	struct bu_ptbl *results_tbl;
 };
 
 /* defined in ged_util.c */
