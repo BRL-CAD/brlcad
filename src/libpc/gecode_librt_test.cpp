@@ -89,6 +89,7 @@ int main() {
 
     }
 
+    /* Coincident point test */
     {
 	GeometrySolve* s = new GeometrySolve(6, -10, 10);
 	Gecode::IntVar AX(s->l[0]), AY(s->l[1]), AZ(s->l[2]), BX(s->l[3]), BY(s->l[4]), BZ(s->l[5]);
