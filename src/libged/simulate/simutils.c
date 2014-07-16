@@ -67,7 +67,7 @@ print_matrix(char *rb_namep, mat_t t)
     }
 
     bu_vls_strcat(&buffer, "-------------------------------------------------------\n");
-    bu_log("%s", bu_vls_addr(&buffer));
+    bu_log("%s\n", bu_vls_addr(&buffer));
     bu_vls_free(&buffer);
 }
 
@@ -114,7 +114,7 @@ print_command(char* cmd_args[], int argc)
 	sprintf(buffer, "%s %s", buffer, cmd_args[i]);
     }
 
-    bu_log("%s", buffer);
+    bu_log("%s\n", buffer);
 }
 
 
@@ -732,7 +732,7 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
     sprintf(buffer, "%f", v[2]);
     cmd_args[26] = bu_strdup(buffer);
 
-    bu_log("reached here");
+    bu_log("reached here\n");
 
     /* Finally make the bb primitive, phew ! */
     cmd_args[27] = (char *)0;
@@ -742,11 +742,11 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
 	       current_node->rb_namep);
     }
 
-    bu_log("after command");
+    bu_log("after command\n");
 
     bu_free_array(argc, cmd_args, "make_rpp: free cmd_args");
 
-    bu_log("after free");
+    bu_log("after free\n");
 
     /* Make the region for the bb primitive */
     add_to_comb(gedp, prefixed_reg_name, prefixed_name);
@@ -760,7 +760,7 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
     bu_vls_free(&buffer1);
     bu_vls_free(&buffer2);
 
-    bu_log("reached out");
+    bu_log("reached out\n");
 
     return GED_OK;
 
@@ -824,7 +824,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 
 	    switch (rb->bt_manifold[i].num_contacts) {
 		case 1:
-		    bu_log("1 contact got, no manifold drawn");
+		    bu_log("1 contact got, no manifold drawn\n");
 		    break;
 
 		case 2:
@@ -865,7 +865,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		    break;
 
 		case 3:
-		    bu_log("3 contacts got, no manifold drawn");
+		    bu_log("3 contacts got, no manifold drawn\n");
 		    break;
 
 		case 4:
@@ -894,7 +894,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		    break;
 
 		default:
-		    bu_log("%d contacts got, no manifold drawn", rb->bt_manifold[i].num_contacts);
+		    bu_log("%d contacts got, no manifold drawn\n", rb->bt_manifold[i].num_contacts);
 		    cmd_args[2] = (char *)0;
 		    argc = 2;
 		    break;

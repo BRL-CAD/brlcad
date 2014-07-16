@@ -189,8 +189,8 @@ get_bb(struct ged *gedp, struct simulation_params *sim_params)
 
 	/* Get its BB */
 	if (rt_bound_internal(gedp->ged_wdbp->dbip, current_node->dp, rpp_min, rpp_max) == 0) {
-	    bu_log("get_bb: Got the BB for \"%s\" as \
-					min {%f %f %f} max {%f %f %f}\n", current_node->dp->d_namep,
+	    bu_log("get_bb: Got the BB for \"%s as \
+		   min {%f %f %f} max {%f %f %f}\n", current_node->dp->d_namep,
 		   V3ARGS(rpp_min),
 		   V3ARGS(rpp_max));
 	} else {
@@ -223,11 +223,11 @@ get_bb(struct ged *gedp, struct simulation_params *sim_params)
 
 
 /**
- * This function takes the transforms present in the current node and
- * applies them in 3 steps : translate to origin, apply the rotation,
- * then translate to final position with respect to origin(as obtained
- * from physics)
- */
+* This function takes the transforms present in the current node and
+* applies them in 3 steps : translate to origin, apply the rotation,
+* then translate to final position with respect to origin(as obtained
+* from physics)
+*/
 int
 apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 {
@@ -248,7 +248,7 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 	MAT_TRANSPOSE(t, m);
 	if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
-				translating to origin!\n",
+		   translating to origin!\n",
 			  current_node->dp->d_namep);
 	    return GED_ERROR;
 	}
@@ -261,7 +261,7 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 	MAT_COPY(t, m);
 	if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
-				applying rotation\n",
+		       applying rotation\n",
 			  current_node->dp->d_namep);
 	    return GED_ERROR;
 	}
@@ -276,7 +276,7 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 	MAT_TRANSPOSE(t, m);
 	if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
-				applying rotation\n",
+			   applying rotation\n",
 			  current_node->dp->d_namep);
 	    return GED_ERROR;
 	}
@@ -290,7 +290,7 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 
 	if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
-				translating to final position\n",
+			       translating to final position\n",
 			  current_node->dp->d_namep);
 	    return GED_ERROR;
 	}
@@ -320,9 +320,9 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 
 
 /**
- * Will recreate the simulation comb, to clear the AABB and manifold regions
- * of previous iteration
- */
+* Will recreate the simulation comb, to clear the AABB and manifold regions
+* of previous iteration
+*/
 int recreate_sim_comb(struct ged *gedp, struct simulation_params *sim_params)
 {
     struct rigid_body *current_node;
@@ -367,7 +367,7 @@ init_raytrace(struct simulation_params *sim_params)
      */
     rt_prep_parallel(sim_params->rtip, 1);
 
-    bu_log("init_raytrace: Simulation objects bounding box (%f, %f, %f):(%f,%f,%f)",
+    bu_log("init_raytrace: Simulation objects bounding box (%f, %f, %f):(%f,%f,%f)\n",
 	   V3ARGS(sim_params->rtip->mdl_min), V3ARGS(sim_params->rtip->mdl_max));
 
 

@@ -81,7 +81,7 @@ void btRTCollisionAlgorithm::processCollision(const btCollisionObjectWrapper* co
 
     //quellage
     // unquell: otherwise get unused param dispatchInfo warning
-    bu_log("%d", dispatchInfo.m_stepCount);
+    bu_log("%d\n", dispatchInfo.m_stepCount);
 
     /// report a contact. internally this will be kept persistent, and contact reduction is done
     resultOut->setPersistentManifold(m_manifoldPtr);

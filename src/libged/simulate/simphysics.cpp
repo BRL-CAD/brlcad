@@ -96,7 +96,7 @@ print_matrices(char *rb_namep, mat_t t, btScalar *m)
     }
 
     sprintf(buffer, "%s-------------------------------------------------------\n", buffer);
-    bu_log("%s", buffer);
+    bu_log("%s\n", buffer);
 
 }
 
@@ -365,7 +365,7 @@ struct broadphase_callback : public btOverlapFilterCallback {
 	    struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
 	    struct rigid_body *rbB = (struct rigid_body *)boxB->getUserPointer();
 
-	    bu_log("broadphase_callback: %s & %s has overlapping AABBs",
+	    bu_log("broadphase_callback: %s & %s has overlapping AABBs\n",
 		   rbA->rb_namep, rbB->rb_namep);
 
 	    //Get the AABB for body A : will happen multiple times if there are multiple overlaps
@@ -373,7 +373,7 @@ struct broadphase_callback : public btOverlapFilterCallback {
 	    VMOVE(rbA->btbb_min, aabbMin);
 	    VMOVE(rbA->btbb_max, aabbMax);
 
-	    bu_log("broadphase_callback: %s (%f,%f,%f):(%f,%f,%f)",
+	    bu_log("broadphase_callback: %s (%f,%f,%f):(%f,%f,%f)\n",
 		   rbA->rb_namep, V3ARGS(rbA->btbb_min),
 		   V3ARGS(rbA->btbb_max));
 
@@ -386,7 +386,7 @@ struct broadphase_callback : public btOverlapFilterCallback {
 	    VMOVE(rbB->btbb_min, aabbMin);
 	    VMOVE(rbB->btbb_max, aabbMax);
 
-	    bu_log("broadphase_callback: %s (%f,%f,%f):(%f,%f,%f)",
+	    bu_log("broadphase_callback: %s (%f,%f,%f):(%f,%f,%f)\n",
 		   rbB->rb_namep, V3ARGS(rbB->btbb_min),
 		   V3ARGS(rbB->btbb_max));
 
@@ -465,7 +465,7 @@ bool contact_added(
     btVector3 ptA = pt.getPositionWorldOnA();
     btVector3 ptB = pt.getPositionWorldOnB();
 
-    bu_log("Contact added between %s(%f, %f, %f):%d,%d  &  %s(%f, %f, %f):%d,%d!",
+    bu_log("Contact added between %s(%f, %f, %f):%d,%d  &  %s(%f, %f, %f):%d,%d!\n",
 	   rbA->rb_namep, V3ARGS(ptA), partId0, index0,
 	   rbB->rb_namep, V3ARGS(ptB), partId1, index1);
 
@@ -486,7 +486,7 @@ bool contact_processed(btManifoldPoint& pt, void* col0, void* col1)
     btVector3 ptA = pt.getPositionWorldOnA();
     btVector3 ptB = pt.getPositionWorldOnB();
 
-    bu_log("Contact processed between %s(%f, %f, %f) & %s(%f, %f, %f), n=(%f, %f, %f), d=%f",
+    bu_log("Contact processed between %s(%f, %f, %f) & %s(%f, %f, %f), n=(%f, %f, %f), d=%f\n",
 	   rbA->rb_namep, V3ARGS(ptA),
 	   rbB->rb_namep, V3ARGS(ptB),
 	   V3ARGS(pt.m_normalWorldOnB),
@@ -502,7 +502,7 @@ bool contact_processed(btManifoldPoint& pt, void* col0, void* col1)
  */
 bool contact_destroyed(void* userPersistentData)
 {
-    bu_log("CONTACT DESTROYED! %s", (char*)userPersistentData);
+    bu_log("CONTACT DESTROYED! %s\n", (char*)userPersistentData);
     return true;
 }
 
