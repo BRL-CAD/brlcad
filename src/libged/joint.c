@@ -3244,8 +3244,8 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
      * these are the defaults.  Domesh will change to not at a later
      * time.
      */
-    loops = 20;
-    delta = 5.0;
+    loops = 1000;
+    delta = 16.0;
     epsilon = 0.1;
     domesh = 1;
 
