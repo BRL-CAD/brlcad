@@ -7448,11 +7448,13 @@ to_mouse_joint_select(
 	return GED_ERROR;
     }
 
-    bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_joint_selection_translate %s %s %%x %%y}",
+    bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_joint_selection_translate %s %s %%x %%y; foreach obj [%s who] { %s draw $obj }}",
 		  bu_vls_addr(&gdvp->gdv_dmp->dm_pathName),
 		  bu_vls_addr(&current_top->to_gop->go_name),
 		  bu_vls_addr(&gdvp->gdv_name),
-		  joint_name);
+		  joint_name,
+		  bu_vls_addr(&current_top->to_gop->go_name),
+		  bu_vls_addr(&current_top->to_gop->go_name));
     Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     bu_vls_free(&bindings);
 

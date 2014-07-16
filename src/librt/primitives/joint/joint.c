@@ -654,6 +654,7 @@ rt_joint_find_selections(
 int
 rt_joint_process_selection(
     struct rt_db_internal *ip,
+    struct db_i *dbip,
     const struct rt_selection *selection,
     const struct rt_selection_operation *op)
 {
@@ -662,6 +663,8 @@ rt_joint_process_selection(
     mat_t rmat, pmat;
     vect_t delta, start, end, orig_v1, cross;
     fastf_t angle;
+    struct rt_db_internal path_ip;
+    struct directory *dp;
 
     if (op->type == RT_SELECTION_NOP) {
 	return 0;
@@ -694,6 +697,14 @@ rt_joint_process_selection(
     VUNITIZE(cross);
     bn_mat_arb_rot(rmat, jip->location, cross, angle);
     bn_mat_xform_about_pt(pmat, rmat, jip->location);
+
+    dp = db_lookup(dbip, bu_vls_cstr(&jip->reference_path_1), LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+	bu_log("lookup failed\n");
+	return 0;
+    }
+    rt_db_get_internal(&path_ip, dp, dbip, pmat, NULL);
+    rt_db_put_internal(dp, dbip, &path_ip, NULL);
 
     VMOVE(orig_v1, jip->vector1);
     MAT4X3VEC(jip->vector1, pmat, orig_v1);

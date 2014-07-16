@@ -158,7 +158,7 @@ joint_selection(
 	    operation.parameters.tran.dy = atof(argv[6]);
 	    operation.parameters.tran.dz = atof(argv[7]);
 
-	    ret = ip->idb_meth->ft_process_selection(ip,
+	    ret = ip->idb_meth->ft_process_selection(ip, gedp->ged_wdbp->dbip,
 		    (struct rt_selection *)BU_PTBL_GET(selections, i), &operation);
 
 	    if (ret != 0) {

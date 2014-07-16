@@ -2218,9 +2218,10 @@ struct rt_functab {
 
     /** apply an operation to a selected subset of a primitive */
     int (*ft_process_selection)(struct rt_db_internal *,
+				struct db_i *,
 				const struct rt_selection *,
 				const struct rt_selection_operation *);
-#define RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(_func) ((int (*)(struct rt_db_internal *, const struct rt_selection *, const struct rt_selection_operation *))_func)
+#define RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(_func) ((int (*)(struct rt_db_internal *, struct db_i *, const struct rt_selection *, const struct rt_selection_operation *))_func)
 
 };
 

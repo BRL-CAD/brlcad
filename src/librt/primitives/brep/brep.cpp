@@ -96,7 +96,7 @@ extern "C" {
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
     RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
     struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
-    int rt_brep_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op);
+    int rt_brep_process_selection(struct rt_db_internal *ip, struct db_i *dbip, const struct rt_selection *selection, const struct rt_selection_operation *op);
 #ifdef __cplusplus
 }
 #endif
@@ -4709,6 +4709,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 int
 rt_brep_process_selection(
 	struct rt_db_internal *ip,
+	struct db_i *UNUSED(dbip),
 	const struct rt_selection *selection,
 	const struct rt_selection_operation *op)
 {
