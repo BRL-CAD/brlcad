@@ -541,12 +541,6 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 		MAT4X3PNT(loc, mat, hp->point);
 		return 1;
 	    }
-	    /* TODO
-	     * there is a bug where joint_hold/joint_solve is passing a hold struct
-	     * with NULL fields when using MGED's "joint holds" or "joint solve"
-	     * command. In particular, hp->path.fp_names can end up NULL,
-	     * this prints an error message instead of crashing MGED.
-	     */
 	    if (!hp->path.fp_names) {
 		bu_vls_printf(gedp->ged_result_str, "hold_point_location: null pointer! '%s' not found!\n", "hp->path.fp_names");
 		bu_bomb("this shouldn't happen\n");
@@ -621,24 +615,25 @@ hold_eval(struct ged *gedp, struct hold *hp)
     double value;
     struct directory *dp;
 
-    /* TODO: probably only need to do this once, but we re-evaluate
-     * the paths every pass through here.
-     */
-    db_free_full_path(&hp->effector.path);
-    for (i=0; i<= hp->effector.arc.arc_last; i++) {
-	dp = db_lookup(gedp->ged_wdbp->dbip, hp->effector.arc.arc[i], LOOKUP_NOISY);
-	if (!dp) {
-	    continue;
+    if (!hp->effector.path.fp_names) {
+	db_free_full_path(&hp->effector.path); /* sanity */
+	for (i=0; i<= hp->effector.arc.arc_last; i++) {
+	    dp = db_lookup(gedp->ged_wdbp->dbip, hp->effector.arc.arc[i], LOOKUP_NOISY);
+	    if (!dp) {
+		continue;
+	    }
+	    db_add_node_to_full_path(&hp->effector.path, dp);
 	}
-	db_add_node_to_full_path(&hp->effector.path, dp);
     }
-    db_free_full_path(&hp->objective.path);
-    for (i=0; i<= hp->objective.arc.arc_last; i++) {
-	dp = db_lookup(gedp->ged_wdbp->dbip, hp->objective.arc.arc[i], LOOKUP_NOISY);
-	if (!dp) {
-	    continue;
+    if (!hp->objective.path.fp_names) {
+	db_free_full_path(&hp->objective.path); /* sanity */
+	for (i=0; i<= hp->objective.arc.arc_last; i++) {
+	    dp = db_lookup(gedp->ged_wdbp->dbip, hp->objective.arc.arc[i], LOOKUP_NOISY);
+	    if (!dp) {
+		continue;
+	    }
+	    db_add_node_to_full_path(&hp->objective.path, dp);
 	}
-	db_add_node_to_full_path(&hp->objective.path, dp);
     }
 
     /*
