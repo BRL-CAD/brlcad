@@ -1835,7 +1835,7 @@ parse_jset(struct ged *gedp, struct hold *hp, FILE *fip, struct bu_vls *str)
 		    skip_group(gedp, fip, str);
 		    return 0;
 		}
-		hp->j_set.joint = token.t_id.value;
+		hp->j_set.joint = hp->joint = token.t_id.value;
 		if (!gobble_token(gedp, BU_LEX_SYMBOL, SYM_END, fip, str)) {
 		    skip_group(gedp, fip, str);
 		    return 0;
