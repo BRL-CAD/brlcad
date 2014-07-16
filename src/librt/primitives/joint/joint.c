@@ -641,7 +641,7 @@ rt_joint_process_selection(
     struct joint_selection *js;
     struct rt_joint_internal *jip;
     mat_t rmat, pmat;
-    vect_t delta, start, end, orig_v1, orig_v2;
+    vect_t delta, start, end, orig_v1, cross;
     fastf_t angle;
 
     if (op->type == RT_SELECTION_NOP) {
@@ -669,14 +669,15 @@ rt_joint_process_selection(
     VADD2(end, js->plane_pt, delta);
 
     angle = VDOT(start, end);
+    angle /= MAGNITUDE(start) * MAGNITUDE(end);
     angle = acos(angle);
-    bn_mat_arb_rot(rmat, jip->location, js->qdir, angle);
+    VCROSS(cross, jip->vector1, delta);
+    VUNITIZE(cross);
+    bn_mat_arb_rot(rmat, jip->location, cross, angle);
     bn_mat_xform_about_pt(pmat, rmat, jip->location);
 
     VMOVE(orig_v1, jip->vector1);
-    VMOVE(orig_v2, jip->vector2);
     MAT4X3VEC(jip->vector1, pmat, orig_v1);
-    MAT4X3VEC(jip->vector2, pmat, orig_v2);
 
     return 0;
 }
