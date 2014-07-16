@@ -495,13 +495,13 @@ free_hold(struct hold *hp)
     if (!hp || hp->l.magic != MAGIC_HOLD_STRUCT)
 	return;
     if (hp->objective.type != ID_FIXED) {
-	if (hp->objective.path.fp_maxlen) {
+	if (hp->objective.path.fp_len) {
 	    db_free_full_path(&hp->objective.path);
 	}
 	free_arc(&hp->objective.arc);
     }
     if (hp->effector.type != ID_FIXED) {
-	if (hp->effector.path.fp_maxlen) {
+	if (hp->effector.path.fp_len) {
 	    db_free_full_path(&hp->effector.path);
 	}
 	free_arc(&hp->effector.arc);
@@ -549,9 +549,9 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	     */
 	    if (!hp->path.fp_names) {
 		bu_vls_printf(gedp->ged_result_str, "hold_point_location: null pointer! '%s' not found!\n", "hp->path.fp_names");
-		return 0;
+		bu_bomb("this shouldn't happen\n");
 	    }
-	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_maxlen-1], gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0)
+	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_len-1], gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0)
 		return 0;
 
 	    RT_CK_DB_INTERNAL(&intern);
@@ -615,9 +615,31 @@ hold_point_to_string(struct ged *gedp, struct hold_point *hp)
 static double
 hold_eval(struct ged *gedp, struct hold *hp)
 {
+    int i;
     vect_t e_loc = VINIT_ZERO;
     vect_t o_loc = VINIT_ZERO;
     double value;
+    struct directory *dp;
+
+    /* TODO: probably only need to do this once, but we re-evaluate
+     * the paths every pass through here.
+     */
+    db_free_full_path(&hp->effector.path);
+    for (i=0; i<= hp->effector.arc.arc_last; i++) {
+	dp = db_lookup(gedp->ged_wdbp->dbip, hp->effector.arc.arc[i], LOOKUP_NOISY);
+	if (!dp) {
+	    continue;
+	}
+	db_add_node_to_full_path(&hp->effector.path, dp);
+    }
+    db_free_full_path(&hp->objective.path);
+    for (i=0; i<= hp->objective.arc.arc_last; i++) {
+	dp = db_lookup(gedp->ged_wdbp->dbip, hp->objective.arc.arc[i], LOOKUP_NOISY);
+	if (!dp) {
+	    continue;
+	}
+	db_add_node_to_full_path(&hp->objective.path, dp);
+    }
 
     /*
      * get the current location of the effector.
