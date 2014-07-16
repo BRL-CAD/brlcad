@@ -221,25 +221,42 @@ rt_joint_free(struct soltab *stp)
  * XXX No checking for degenerate faces is done, but probably should
  * be.
  */
+#define LOCATION_RADIUS 20
 int
 rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_joint_internal *jip;
-    point_t a,b;
+    point_t a = {LOCATION_RADIUS, 0, 0};
+    point_t b = {0, LOCATION_RADIUS, 0};
+    point_t c = {0, 0, LOCATION_RADIUS};
+    fastf_t top[16*3];
+    fastf_t middle[16*3];
+    fastf_t bottom[16*3];
+    int i;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     jip = (struct rt_joint_internal *)ip->idb_ptr;
     RT_JOINT_CK_MAGIC(jip);
 
+    rt_ell_16pts(top, jip->location, a, b);
+    rt_ell_16pts(bottom, jip->location, b, c);
+    rt_ell_16pts(middle, jip->location, a, c);
 
-    VADD2(a, jip->location, jip->vector1);
-    VADD2(b, jip->location, jip->vector2);
+    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 16; i++) {
+	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
 
-    RT_ADD_VLIST(vhead, jip->location, BN_VLIST_LINE_MOVE); /* the base */
-    RT_ADD_VLIST(vhead, a, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, jip->location, BN_VLIST_LINE_MOVE); /* the base */
-    RT_ADD_VLIST(vhead, b, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 16; i++) {
+	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
+
+    RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 16; i++) {
+	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
 
     return 0;
 }
