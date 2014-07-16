@@ -60,6 +60,30 @@ add_constraint_perpendicular_vect(GeometrySolve *s, int tol, int p1, int p2)
     Gecode::rel(*s, AX * BX + AY * BY + AZ * BZ < tol);
 }
 
+void
+add_constraint_pnt_on_line_segment(GeometrySolve *s, int tol, int p, int s1, int s2)
+{
+    Gecode::IntVar PX(s->l[0 + 3*p]),  PY(s->l[1 + 3*p]),  PZ(s->l[2 + 3*p]);
+    Gecode::IntVar S1X(s->l[0 + 3*s1]), S1Y(s->l[1 + 3*s1]), S1Z(s->l[2 + 3*s1]);
+    Gecode::IntVar S2X(s->l[0 + 3*s2]), S2Y(s->l[1 + 3*s2]), S2Z(s->l[2 + 3*s2]);
+
+    /* P, S1 and S2 must be colinear: (S2 - S1) X (P - S1) == 0 */
+    Gecode::rel(*s, (S2Y - S1Y) * (PZ - S1Z) - (S2Z - S1Z) * (PY - S1Y) > -1 * tol);
+    Gecode::rel(*s, (S2Z - S1Z) * (PX - S1X) - (S2X - S1X) * (PZ - S1Z) > -1 * tol);
+    Gecode::rel(*s, (S2X - S1X) * (PY - S1Y) - (S2Y - S1Y) * (PX - S1X) > -1 * tol);
+    Gecode::rel(*s, (S2Y - S1Y) * (PZ - S1Z) - (S2Z - S1Z) * (PY - S1Y) < tol);
+    Gecode::rel(*s, (S2Z - S1Z) * (PX - S1X) - (S2X - S1X) * (PZ - S1Z) < tol);
+    Gecode::rel(*s, (S2X - S1X) * (PY - S1Y) - (S2Y - S1Y) * (PX - S1X) < tol);
+
+    /* In addition to point colinearity, to check that P is between S1 and S2
+     * check the dot products: */
+    /* (S2 - S1) . (P - S1) >= 0 */
+    /* (S2 - S1) . (P - S1) <= (S2 - S1) . (S2 - S1) */
+    Gecode::rel(*s, (S2X - S1X) * (PX - S1X) +  (S2Y - S1Y) * (PY - S1Y) + (S2Z - S1Z) * (PZ - S1Z) >= 0);
+    Gecode::rel(*s, (S2X - S1X) * (PX - S1X) +  (S2Y - S1Y) * (PY - S1Y) + (S2Z - S1Z) * (PZ - S1Z) <= (S2X - S1X) * (S2X - S1X) +  (S2Y - S1Y) * (S2Y - S1Y) + (S2Z - S1Z) * (S2Z - S1Z) );
+
+}
+
 int main() {
 
     /* Perpendicular constraint test */
@@ -115,6 +139,40 @@ int main() {
 	    delete sp;
 	}
     }
+
+    /* Point on line segment constraint test */
+    {
+	GeometrySolve* s = new GeometrySolve(9, 0, 100);
+	int p = 0;
+	int s1 = 1;
+	int s2 = 2;
+	Gecode::IntVar PX(s->l[0 + 3*p]),  PY(s->l[1 + 3*p]),  PZ(s->l[2 + 3*p]);
+	Gecode::IntVar S1X(s->l[0 + 3*s1]), S1Y(s->l[1 + 3*s1]), S1Z(s->l[2 + 3*s1]);
+	Gecode::IntVar S2X(s->l[0 + 3*s2]), S2Y(s->l[1 + 3*s2]), S2Z(s->l[2 + 3*s2]);
+
+	/* Add a canned constraint */
+	add_constraint_pnt_on_line_segment(s, 1, 0, 1, 2);
+
+	/* Define some additional constraints to pick a specific line segment */
+	Gecode::rel(*s, S1X == 0);
+	Gecode::rel(*s, S1Y == 0);
+	Gecode::rel(*s, S1Z == 0);
+	Gecode::rel(*s, S2X == 12);
+	Gecode::rel(*s, S2Y == 82);
+	Gecode::rel(*s, S2Z == 92);
+	Gecode::branch(*s, s->l, Gecode::INT_VAR_SIZE_MIN(), Gecode::INT_VAL_MIN());
+
+	Gecode::DFS<GeometrySolve> e(s);
+	delete s;
+	while (GeometrySolve* sp = e.next()) {
+	    sp->print();
+	    delete sp;
+	}
+
+    }
+
+
+
   return 0;
 }
 
