@@ -59,7 +59,7 @@ any color map stored in the RLE file.</para>
   <varlistentry>
   <term><option>-d</option></term>
   <listitem>
-<para>Debug option, provides a description of the parameters of the
+<para>Debug option; provides a description of the parameters of the
 saved RLE image on standard error.</para>
   </listitem>
   </varlistentry>
