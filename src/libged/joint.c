@@ -2076,8 +2076,6 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	return 0;
     }
 
-    bu_vls_printf(gedp->ged_result_str, "=== reading in constraint details ===\n");
-
     /* read in the constraint details */
     for (;;) {
 	if (get_token(gedp, &token, fip, str, animkeys, animsyms) == EOF) {
@@ -2137,7 +2135,6 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 		    skip_group(gedp, fip, str);
 		    return 0;
 		}
-		bu_vls_printf(gedp->ged_result_str, "parsed weight: %lf\n", hp->weight);
 		weightfound = 1;
 		break;
 	    case KEY_PRI:
@@ -2146,7 +2143,6 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 		    skip_group(gedp, fip, str);
 		    return 0;
 		}
-		bu_vls_printf(gedp->ged_result_str, "parsed priority: %lf\n", hp->priority);
 		prifound=1;
 		break;
 	    case KEY_JOINTS:
@@ -2156,13 +2152,11 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 		    skip_group(gedp, fip, str);
 		    return 0;
 		}
-		bu_vls_printf(gedp->ged_result_str, "parsing joint set:\n");
 		if (!parse_jset(gedp, hp, fip, str)) {
 		    free_hold(hp);
 		    skip_group(gedp, fip, str);
 		    return 0;
 		}
-		bu_vls_printf(gedp->ged_result_str, "done parsing joint set.\n");
 		jsetfound = 1;
 		break;
 	    case KEY_EFF:
@@ -2171,13 +2165,11 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 		    free_hold(hp);
 		    return 0;
 		}
-		bu_vls_printf(gedp->ged_result_str, "parsing effector:\n");
 		if (!parse_point(gedp, &hp->effector, fip, str)) {
 		    skip_group(gedp, fip, str);
 		    free_hold(hp);
 		    return 0;
 		}
-		bu_vls_printf(gedp->ged_result_str, "done parsing effector.\n");
 		efffound = 1;
 		break;
 	    case KEY_POINT:
@@ -2186,13 +2178,11 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 		    free_hold(hp);
 		    return 0;
 		}
-		bu_vls_printf(gedp->ged_result_str, "parsing point:\n");
 		if (!parse_point(gedp, &hp->objective, fip, str)) {
 		    skip_group(gedp, fip, str);
 		    free_hold(hp);
 		    return 0;
 		}
-		bu_vls_printf(gedp->ged_result_str, "done parsing point.\n");
 		goalfound=1;
 		break;
 	    default:
@@ -2236,8 +2226,8 @@ joint_move(struct ged *gedp, struct joint *jp)
 	}
 	jp->anim=anp;
 	db_add_anim(gedp->ged_wdbp->dbip, anp, 0);
-	if (J_DEBUG & DEBUG_J_MOVE) {
 
+	if (J_DEBUG & DEBUG_J_MOVE) {
 	    sofar = db_path_to_string(&jp->anim->an_path);
 	    bu_vls_printf(gedp->ged_result_str, "joint move: %s added animate %s to %s(%p)\n",
 			  jp->name, sofar, dp->d_namep, (void *)dp);
