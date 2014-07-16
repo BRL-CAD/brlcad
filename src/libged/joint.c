@@ -609,32 +609,9 @@ hold_point_to_string(struct ged *gedp, struct hold_point *hp)
 static double
 hold_eval(struct ged *gedp, struct hold *hp)
 {
-    int i;
     vect_t e_loc = VINIT_ZERO;
     vect_t o_loc = VINIT_ZERO;
     double value;
-    struct directory *dp;
-
-    if (!hp->effector.path.fp_names) {
-	db_free_full_path(&hp->effector.path); /* sanity */
-	for (i=0; i<= hp->effector.arc.arc_last; i++) {
-	    dp = db_lookup(gedp->ged_wdbp->dbip, hp->effector.arc.arc[i], LOOKUP_NOISY);
-	    if (!dp) {
-		continue;
-	    }
-	    db_add_node_to_full_path(&hp->effector.path, dp);
-	}
-    }
-    if (!hp->objective.path.fp_names) {
-	db_free_full_path(&hp->objective.path); /* sanity */
-	for (i=0; i<= hp->objective.arc.arc_last; i++) {
-	    dp = db_lookup(gedp->ged_wdbp->dbip, hp->objective.arc.arc[i], LOOKUP_NOISY);
-	    if (!dp) {
-		continue;
-	    }
-	    db_add_node_to_full_path(&hp->objective.path, dp);
-	}
-    }
 
     /*
      * get the current location of the effector.
@@ -2087,8 +2064,33 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	    bu_free(token.t_id.value, "unit token");
 
 	if (token.type == BU_LEX_SYMBOL && token.t_key.value == SYM_CL_GROUP) {
+	    int i;
+	    struct directory *dp;
+
 	    if (J_DEBUG & DEBUG_J_PARSE) {
 		bu_vls_printf(gedp->ged_result_str, "parse_hold: closing.\n");
+	    }
+
+	    /* done loading our arc, look up our object names */
+	    if (!hp->effector.path.fp_names) {
+		db_free_full_path(&hp->effector.path); /* sanity */
+		for (i=0; i<= hp->effector.arc.arc_last; i++) {
+		    dp = db_lookup(gedp->ged_wdbp->dbip, hp->effector.arc.arc[i], LOOKUP_NOISY);
+		    if (!dp) {
+			continue;
+		    }
+		    db_add_node_to_full_path(&hp->effector.path, dp);
+		}
+	    }
+	    if (!hp->objective.path.fp_names) {
+		db_free_full_path(&hp->objective.path); /* sanity */
+		for (i=0; i<= hp->objective.arc.arc_last; i++) {
+		    dp = db_lookup(gedp->ged_wdbp->dbip, hp->objective.arc.arc[i], LOOKUP_NOISY);
+		    if (!dp) {
+			continue;
+		    }
+		    db_add_node_to_full_path(&hp->objective.path, dp);
+		}
 	    }
 
 	    if (!jsetfound) {
