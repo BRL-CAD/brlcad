@@ -32,7 +32,7 @@
 
 
   <refsection xml:id="description"><title>DESCRIPTION</title>
-    <para><emphasis remap="I">fb-rle</emphasis> saves an image from a
+    <para><command>fb-rle</command> saves an image from a
       frame buffer in the University of Utah standard (Edition-3, or
       "Utah Raster Toolkit") Run-Length Encoded (RLE) format file
       (these files can be displayed with
@@ -146,7 +146,7 @@
         <term><option>-X</option> <replaceable>scr_xoff</replaceable></term>
         <listitem>
           <para>Specify a screen X offset, which will offset the saved
-            area onto the screen by the given amount.  (i.e.,
+            area onto the screen by the given amount.  E.g.,
             <option>-X</option> <literal>10</literal> would place (0,
             10) on the screen in the RLE image rectangle coordinate
             (0, 0).</para>

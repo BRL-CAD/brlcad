@@ -135,10 +135,6 @@ endif(BRLCAD_FREETYPE_BUILD)
 
 
 # --------------------------------------------------------------------
-# Ignore the boost subdir - it's only used for the boost headers and
-# is not compiled
-CMAKEFILES(boost)
-
 # The incrtTcl subdirectory isn't directly referenced, but its
 # subdirectories are used - mark incrTcl as ignored
 CMAKEFILES(incrTcl)

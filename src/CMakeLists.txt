@@ -41,14 +41,6 @@ set(level_1_dirs
 # the BRLCAD_ENABLE_TARGETS level to 2 will enable all libraries but no
 # programs.
 
-# The interaction of MSVC and Boost looks problematic -
-# since we're not using libpc at the moment, conditionalize
-if(NOT MSVC)
-  set(LIBPC_DIR libpc)
-else(NOT MSVC)
-  CMAKEFILES(libpc)
-endif(NOT MSVC)
-
 # Only add librtserver if it's enabled
 if(BRLCAD_ENABLE_RTSERVER)
   set(LIBRTSERVER_DIR librtserver)
@@ -68,7 +60,7 @@ set(level_2_dirs
   libfft
   libicv
   libmultispectral
-  ${LIBPC_DIR}
+  libpc
   ${LIBRTSERVER_DIR}
   libtclcad
   libtermio
