@@ -276,38 +276,23 @@ rt_joint_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
     if (ep) BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
 
-    bu_bomb("rt_joint_import4: nobody should be asking for import of a joint from this format.\n");
-
-    return 0;			/* OK */
+    return -1;
 }
 
 
+/**
+ * Returns -
+ * -1 failure
+ * 0 success
+ */
 int
 rt_joint_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
-    struct rt_joint_internal *jip;
-    union record *rec;
-
+    if (ep) BU_CK_EXTERNAL(ep);
+    if (ip) RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
 
-    RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_JOINT) return -1;
-    jip = (struct rt_joint_internal *)ip->idb_ptr;
-    RT_JOINT_CK_MAGIC(jip);
-
-    BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "joint external");
-    rec = (union record *)ep->ext_buf;
-
-    rec->s.s_id = ID_SOLID;
-    rec->s.s_type = JOINT;
-#if 0
-    VMOVE(&rec->s.s_joint_N, jip->normal);
-    VMOVE(&rec->s.s_joint_C, jip->center);
-    rec->s.s_joint_m = jip->mag;
-#endif
-    return 0;
+    return -1;
 }
 
 
@@ -534,7 +519,6 @@ rt_joint_find_selections(
     const struct rt_db_internal *ip,
     const struct rt_selection_query *query)
 {
-    /*int ret;*/
     struct rt_joint_internal *jip;
     fastf_t dist[3];
     point_t qline_pt;
@@ -573,7 +557,7 @@ rt_joint_find_selections(
      * the view plane that intersects the location)
      */
     BN_TOL_INIT(&tol);
-    /*ret =*/ (void)bn_dist_pt3_line3(dist, qline_pt, qstart, qdir, jip->location, &tol);
+    (void)bn_dist_pt3_line3(dist, qline_pt, qstart, qdir, jip->location, &tol);
     VMOVE(joint_selection->plane_pt, qline_pt);
 
 #if 0
