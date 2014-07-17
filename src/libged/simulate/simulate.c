@@ -375,7 +375,7 @@ init_raytrace(struct simulation_params *sim_params)
 }
 
 
-// silence output
+/* silence output */
 int null_logger(void *UNUSED(data), void *UNUSED(str))
 {
     return 0;
