@@ -587,7 +587,7 @@ clear_bad_chars(struct bu_vls *vp)
     }
 }
 
-
+#if 0
 static int
 exists_normal(vect_t n)
 {
@@ -600,8 +600,9 @@ exists_normal(vect_t n)
 
     return 0;
 }
+#endif
 
-
+#if 0
 static int
 add_normal(vect_t n)
 {
@@ -616,8 +617,9 @@ add_normal(vect_t n)
 
     return 0;
 }
+#endif
 
-
+#if 0
 /**
  * Traverse the hit list and overlap list, drawing the ray segments
  * for x-rays
@@ -705,8 +707,9 @@ traverse_xray_lists(
 
     return GED_OK;
 }
+#endif
 
-
+#if 0
 /**
  * Traverse the hit list and overlap list, drawing the ray segments
  * for y-rays
@@ -795,8 +798,9 @@ traverse_yray_lists(
 
     return GED_OK;
 }
+#endif
 
-
+#if 0
 /**
  * Traverse the hit list and overlap list, drawing the ray segments
  * for z-rays
@@ -886,7 +890,7 @@ traverse_zray_lists(
 
     return GED_OK;
 }
-
+#endif
 
 /**
  * Traverse the hit list and overlap list, drawing the ray segments
@@ -1066,7 +1070,7 @@ traverse_normalray_lists(
     return GED_OK;
 }
 
-
+#if 0
 /**
  * Shoots a grid of rays down x axis
  */
@@ -1149,8 +1153,9 @@ shoot_x_rays(struct sim_manifold *current_manifold,
 
     return GED_OK;
 }
+#endif
 
-
+#if 0
 /**
  * Shoots a grid of rays down y axis
  */
@@ -1232,8 +1237,9 @@ shoot_y_rays(struct sim_manifold *current_manifold,
 
     return GED_OK;
 }
+#endif
 
-
+#if 0
 /**
  * Shoots a grid of rays down z axis
  */
@@ -1315,7 +1321,7 @@ shoot_z_rays(struct sim_manifold *current_manifold,
 
     return GED_OK;
 }
-
+#endif
 
 /*
  * Shoots a circular bunch of rays from B towards A along resultant_normal_B
