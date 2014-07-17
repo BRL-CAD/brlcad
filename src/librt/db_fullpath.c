@@ -628,31 +628,31 @@ cyclic_path(const struct db_full_path *fp, const char *name)
 
 
 int
-db_full_path_transformation_matrix(matp_t matp, struct db_i *dbip,
-				   const struct db_full_path *path, const int depth)
+db_path_to_mat(
+	struct db_i *dbip,
+	struct db_full_path *pathp,
+	mat_t mat,          /* result */
+	int depth,          /* number of arcs */
+	struct resource *resp)
 {
     int ret = 0;
     struct db_tree_state ts = RT_DBTS_INIT_IDN;
     struct db_full_path null_path;
 
     RT_CHECK_DBI(dbip);
-
-    if (!matp) return -1;
-    if (!path) return -1;
-    if (!dbip) return -1;
+    RT_CK_FULL_PATH(pathp);
+    if (!mat) bu_bomb("db_path_to_mat() NULL matrix pointer\n");
 
     db_full_path_init(&null_path);
-    ts.ts_dbip = dbip;
-    ts.ts_resp = &rt_uniresource;
+    db_init_db_tree_state(&ts, dbip, resp);
 
-    ret = db_follow_path(&ts, &null_path, path, LOOKUP_NOISY, depth+1);
+    ret = db_follow_path(&ts, &null_path, pathp, LOOKUP_NOISY, depth);
     db_free_full_path(&null_path);
-
-    MAT_COPY(matp, ts.ts_mat);  /* implicit return */
-
+    MAT_COPY(mat, ts.ts_mat);  /* implicit return */
     db_free_db_tree_state(&ts);
 
-    return ret;
+    /* Return 0 if we failed, else return 1 */
+    return (ret < 0) ? 0 : 1;
 }
 
 

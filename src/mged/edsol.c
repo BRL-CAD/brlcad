@@ -2551,7 +2551,7 @@ init_sedit(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_full_path_transformation_matrix(es_mat, dbip, &illump->s_fullpath, illump->s_fullpath.fp_len-2);
+    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -2644,7 +2644,7 @@ replot_editing_solid(void)
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    if (LAST_SOLID(sp) == illdp) {
-		(void)db_full_path_transformation_matrix(mat, dbip, &sp->s_fullpath, sp->s_fullpath.fp_len-2);
+		(void)db_path_to_mat(dbip, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
 		(void)replot_modified_solid(sp, &es_int, mat);
 	    }
 	}
@@ -7361,7 +7361,7 @@ init_oedit_guts(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_full_path_transformation_matrix(es_mat, dbip, &illump->s_fullpath, illump->s_fullpath.fp_len-2);
+    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -7451,7 +7451,7 @@ oedit_apply(int continue_editing)
 	    MAT_IDN(deltam);
 	    MAT_IDN(tempm);
 
-	    (void)db_full_path_transformation_matrix(topm, dbip, &illump->s_fullpath, ipathpos-2);
+	    (void)db_path_to_mat(dbip, &illump->s_fullpath, topm, ipathpos-1, &rt_uniresource);
 
 	    bn_mat_inv(inv_topm, topm);
 
@@ -9122,7 +9122,7 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
 
     /* Save aggregate path matrix */
     MAT_IDN(es_mat);
-    (void)db_full_path_transformation_matrix(es_mat, dbip, &illump->s_fullpath, illump->s_fullpath.fp_len-2);
+    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
