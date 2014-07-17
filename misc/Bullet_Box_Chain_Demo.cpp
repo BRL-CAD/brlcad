@@ -80,6 +80,9 @@ void	ConstraintDemo::clientResetScene()
     exitPhysics();
     initPhysics();
 }
+
+btRigidBody* body5;
+
 void	ConstraintDemo::initPhysics()
 {
     setTexturing(true);
@@ -152,7 +155,7 @@ void	ConstraintDemo::initPhysics()
 	btTransform trans5;
 	trans5.setIdentity();
 	trans5.setOrigin(btVector3(4*d+xoffset, yoffset, zoffset));
-	btRigidBody* body5 = localCreateRigidBody(mass,trans5,shape5);
+	/*btRigidBody**/ body5 = localCreateRigidBody(mass,trans5,shape5);
 	body5->setDamping(damping,damping);
 	btTypedConstraint* p5p5 = new btPoint2PointConstraint(*body4, *body5, trans4.inverse() * (body4->getCenterOfMassPosition() + btVector3(hd, 0 , 0)), trans5.inverse() * (body5->getCenterOfMassPosition() + btVector3(-hd, 0 , 0)));
 	m_dynamicsWorld->addConstraint(p5p5);
@@ -291,11 +294,18 @@ void ConstraintDemo::keyboardCallback(unsigned char key, int x, int y)
 		run_sim = 1;
 	    }
 	    break;
+	case 'p':
+	    {
+		std::cout << "body5 position: " << body5->getOrientation()[0] << "," << body5->getOrientation()[1] << "," << body5->getOrientation()[2] << "," << body5->getOrientation()[3] << "\n";
+	    }
+	    break;
+
 	default : 
 	    {
 		float dt = 1.0f/20.f;
 		run_sim = 0;
 		m_dynamicsWorld->stepSimulation(dt,1);
+		std::cout << "body5 position: " << body5->getOrientation()[0] << "," << body5->getOrientation()[1] << "," << body5->getOrientation()[2] << "," << body5->getOrientation()[3] << "\n";
 		//DemoApplication::keyboardCallback(key, x, y);
 	    }
 	    break;
