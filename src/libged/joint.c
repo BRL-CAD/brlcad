@@ -110,8 +110,9 @@ findjoint(struct ged *gedp, const struct db_full_path *pathp)
 	    if (jp->path.arc_last+i >= pathp->fp_len)
 		break;
 	    for (j=0; j<=(size_t)jp->path.arc_last;j++) {
-		if ((*pathp->fp_names[i+j]->d_namep != *jp->path.arc[j]) ||
-		    (!BU_STR_EQUAL(pathp->fp_names[i+j]->d_namep, jp->path.arc[j]))) {
+		const char *name = DB_FULL_PATH_GET(pathp, i+j)->d_namep;
+		if ((*name != *jp->path.arc[j]) ||
+		    (!BU_STR_EQUAL(name, jp->path.arc[j]))) {
 		    good=0;
 		    break;
 		}
