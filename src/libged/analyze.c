@@ -638,7 +638,7 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
     }
 
     if (OBJ[ip->idb_minor_type].ft_centroid) {
-        OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip);
+	OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip);
 	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
 		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
 		      centroid[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
@@ -916,7 +916,7 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
 	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "analyze_arbn: pts");
 	tmp_pts[i] = faces[i].pts;
-    	HMOVE(eqs[i], faces[i].plane_eqn);
+	HMOVE(eqs[i], faces[i].plane_eqn);
     }
     /* allocate table rows, 1 row per plane eqn */
     table.rows = (row_t *)bu_calloc(aip->neqn, sizeof(row_t), "analyze_arbn: rows");

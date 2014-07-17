@@ -58,10 +58,6 @@
 #include "./ged_private.h"
 
 
-/* defined in draw.c */
-extern void _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy);
-
-
 /**
  * Invoke nirt with the current view & stuff
  */

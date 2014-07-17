@@ -90,6 +90,7 @@ struct arc {
     int org_last;
 };
 
+
 #define ARC_UNSET	0x0
 #define ARC_PATH	0x1
 #define ARC_ARC		0x2
@@ -194,6 +195,7 @@ struct funtab {
     int ft_max;
     int tcl_converted;
 };
+
 
 void vls_col_item(struct bu_vls *str, const char *cp);
 void vls_col_eol(struct bu_vls *str);

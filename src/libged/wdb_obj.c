@@ -6674,8 +6674,8 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
  */
 int
 wdb_pull_tcl(void *clientData,
-             int argc,
-             const char *argv[])
+	     int argc,
+	     const char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
