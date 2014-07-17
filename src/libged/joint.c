@@ -160,7 +160,7 @@ mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, s
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_SOLID;
     curtree->tr_op = OP_NOP;
-    dp = pathp->fp_names[pathp->fp_len-1];
+    dp = DB_FULL_PATH_CUR_DIR(pathp);
 
     /* get the grip information. */
     gip = (struct rt_grip_internal *) ip->idb_ptr;
