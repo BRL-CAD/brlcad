@@ -171,8 +171,6 @@ print_overlap_node(int i)
     bu_log("outcurve pdir : (%f, %f, %f), curv in dir c1: %f, curv opp dir c2: %f\n",
 	   V3ARGS(overlap_list[i].outcur.crv_pdir), overlap_list[i].outcur.crv_c1,
 	   overlap_list[i].outcur.crv_c2);
-
-
 }
 
 
@@ -454,9 +452,6 @@ if_multioverlap(struct application *ap, struct partition *pp1, struct bu_ptbl *p
 
     reg1 = (struct region *)BU_PTBL_GET(pptbl, 0);
     reg2 = (struct region *)BU_PTBL_GET(pptbl, 1);
-
-    BU_CKMAG(reg1, RT_REGION_MAGIC, "reg1");
-    BU_CKMAG(reg2, RT_REGION_MAGIC, "reg2");
 
     bu_log("if_overlap: OVERLAP between %s and %s\n", reg1->reg_name, reg2->reg_name);
 

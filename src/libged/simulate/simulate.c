@@ -375,6 +375,13 @@ init_raytrace(struct simulation_params *sim_params)
 }
 
 
+// silence output
+int null_logger(void *UNUSED(data), void *UNUSED(str))
+{
+    return 0;
+}
+
+
 /**
  * The libged physics simulation function.
  *
@@ -384,6 +391,7 @@ init_raytrace(struct simulation_params *sim_params)
 int
 ged_simulate(struct ged *gedp, int argc, const char *argv[])
 {
+    const bool verbose = false;
     int rv, i;
     struct simulation_params sim_params;
     static const char *sim_comb_name = "sim.c";
@@ -429,6 +437,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    if (!verbose) bu_log_add_hook(null_logger, NULL);
     for (i = 0 ; i < sim_params.duration ; i++) {
 
 	bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i+1);
@@ -487,6 +496,8 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
     /* Draw the result : inserting it in argv[1] will cause it to be automatically drawn in the cmd_wrapper */
     argv[1] = sim_comb_name;
     argv[2] = (char *)0;
+
+    if (!verbose) bu_log_delete_hook(null_logger, NULL);
 
     return GED_OK;
 }
