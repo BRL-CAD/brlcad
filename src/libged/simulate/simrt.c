@@ -527,6 +527,7 @@ shoot_ray(struct rt_i *rtip, point_t pt, point_t dir)
     ap.a_hit = if_hit;        /* branch to if_hit routine */
     ap.a_miss = if_miss;      /* branch to if_miss routine */
     ap.a_multioverlap = if_multioverlap;
+    ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_onehit = 0;          /* continue through shotline after hit */
     ap.a_purpose = "Sim Manifold ray";
     ap.a_rt_i = rtip;         /* rt_i pointer */
