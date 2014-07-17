@@ -58,7 +58,7 @@ static int r_debug = 0;
 
 static char usage[] = "\
 Usage: rle-fb [-c -d -O] [-F framebuffer]  [-C r/g/b]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
+	[-s|S squarescrsize] [-w|W scr_width] [-n|N scr_height]\n\
 	[-X scr_xoff] [-Y scr_yoff] [file.rle]\n\
 ";
 
