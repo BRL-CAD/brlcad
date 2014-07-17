@@ -104,7 +104,7 @@ void	ConstraintDemo::initPhysics()
     btCollisionShape* shape1 = new btBoxShape(btVector3(hd, 1, 1));
     btCollisionShape* shape2 = new btBoxShape(btVector3(hd, 2, 2));
     btCollisionShape* shape3 = new btBoxShape(btVector3(hd, 3, 3));
-    btCollisionShape* shape4 = new btBoxShape(btVector3(hd, 4, 4));
+    btCollisionShape* shape4 = new btBoxShape(btVector3(hd+1, 4, 4));
     btCollisionShape* shape5 = new btBoxShape(btVector3(hd, 5, 5));
     m_collisionShapes.push_back(shape1);
     m_collisionShapes.push_back(shape2);
@@ -148,19 +148,18 @@ void	ConstraintDemo::initPhysics()
 	trans4.setOrigin(btVector3(3*d+xoffset, yoffset, zoffset));
 	btRigidBody* body4 = localCreateRigidBody(mass,trans4,shape4);
 	body4->setDamping(damping,damping);
-	btTypedConstraint* p4p4 = new btPoint2PointConstraint(*body3, *body4, trans3.inverse() * (body3->getCenterOfMassPosition() + btVector3(hd, 0 , 0)), trans4.inverse() * (body4->getCenterOfMassPosition() + btVector3(-hd, 0 , 0)));
+	btTypedConstraint* p4p4 = new btPoint2PointConstraint(*body3, *body4, trans3.inverse() * (body3->getCenterOfMassPosition() + btVector3(hd, 0 , 0)), trans4.inverse() * (body4->getCenterOfMassPosition() + btVector3(-hd-1, 0 , 0)));
 	m_dynamicsWorld->addConstraint(p4p4);
 	p4p4->setDbgDrawSize(btScalar(5.f));
-
+	
 	btTransform trans5;
 	trans5.setIdentity();
-	trans5.setOrigin(btVector3(4*d+xoffset, yoffset, zoffset));
+	trans5.setOrigin(btVector3(3*d+(d+2)+xoffset, yoffset, zoffset));
 	/*btRigidBody**/ body5 = localCreateRigidBody(mass,trans5,shape5);
 	body5->setDamping(damping,damping);
-	btTypedConstraint* p5p5 = new btPoint2PointConstraint(*body4, *body5, trans4.inverse() * (body4->getCenterOfMassPosition() + btVector3(hd, 0 , 0)), trans5.inverse() * (body5->getCenterOfMassPosition() + btVector3(-hd, 0 , 0)));
+	btTypedConstraint* p5p5 = new btPoint2PointConstraint(*body4, *body5, trans4.inverse() * (body4->getCenterOfMassPosition() + btVector3(hd+1, 0 , 0)), trans5.inverse() * (body5->getCenterOfMassPosition() + btVector3(-hd, 0 , 0)));
 	m_dynamicsWorld->addConstraint(p5p5);
 	p5p5->setDbgDrawSize(btScalar(5.f));
-
     }
 
 }
