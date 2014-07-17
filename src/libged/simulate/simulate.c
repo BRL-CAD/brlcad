@@ -391,7 +391,7 @@ int null_logger(void *UNUSED(data), void *UNUSED(str))
 int
 ged_simulate(struct ged *gedp, int argc, const char *argv[])
 {
-    const bool verbose = false;
+    const int verbose = 0;
     int rv, i;
     struct simulation_params sim_params;
     static const char *sim_comb_name = "sim.c";
