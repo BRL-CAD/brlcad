@@ -644,7 +644,7 @@ rt_joint_process_selection(
     struct joint_selection *js;
     struct rt_joint_internal *jip;
     mat_t pmat;
-    vect_t delta, start, end, orig_v1, cross;
+    vect_t delta, start, end, cross;
     fastf_t angle;
     struct rt_db_internal path_ip;
     struct directory *dp;
@@ -677,13 +677,13 @@ rt_joint_process_selection(
     }
 
     VJOIN1(start, js->plane_pt, -1.0, jip->location);
-    VADD2(end, js->plane_pt, delta);
+    VADD2(end, start, delta);
 
     angle = VDOT(start, end);
     angle /= MAGNITUDE(start) * MAGNITUDE(end);
     angle = acos(angle);
 
-    VCROSS(cross, jip->vector1, delta);
+    VCROSS(cross, start, end);
     VUNITIZE(cross);
     bn_mat_arb_rot(pmat, jip->location, cross, angle);
     /* bn_mat_xform_about_pt(pmat, rmat, jip->location); */
@@ -737,8 +737,7 @@ rt_joint_process_selection(
     /* write changes */
     rt_db_put_internal(dp, dbip, &path_ip, NULL);
 
-    VMOVE(orig_v1, jip->vector1);
-    MAT4X3VEC(jip->vector1, pmat, orig_v1);
+    VADD2(js->plane_pt, jip->location, end);
     db_free_full_path(&fpath);
 
     return 0;
