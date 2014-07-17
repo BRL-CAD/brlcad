@@ -664,6 +664,8 @@ rt_joint_process_selection(
     fastf_t angle;
     struct rt_db_internal path_ip;
     struct directory *dp;
+    struct db_full_path fpath;
+    int ret;
 
     if (op->type == RT_SELECTION_NOP) {
 	return 0;
@@ -701,16 +703,58 @@ rt_joint_process_selection(
     bn_mat_arb_rot(rmat, jip->location, cross, angle);
     bn_mat_xform_about_pt(pmat, rmat, jip->location);
 
-    dp = db_lookup(dbip, bu_vls_cstr(&jip->reference_path_1), LOOKUP_QUIET);
+    /* get solid or parent comb directory */
+    ret = db_string_to_path(&fpath, dbip, bu_vls_cstr(&jip->reference_path_1));
+    if (fpath.fp_len < 1) {
+	dp = NULL;
+    } else if (fpath.fp_len == 1) {
+	dp = db_lookup(dbip, bu_vls_cstr(&jip->reference_path_1), LOOKUP_QUIET);
+    } else {
+	dp = DB_FULL_PATH_GET(&fpath, fpath.fp_len - 2);
+    }
     if (dp == RT_DIR_NULL) {
 	bu_log("lookup failed\n");
+	db_free_full_path(&fpath);
 	return 0;
     }
-    rt_db_get_internal(&path_ip, dp, dbip, pmat, NULL);
+
+    /* modify solid matrix or parent comb's member matrix */
+    if (fpath.fp_len > 1) {
+	char *member_name = DB_FULL_PATH_CUR_DIR(&fpath)->d_namep;
+	struct rt_comb_internal *comb_ip;
+	union tree *comb_tree, *member;
+	mat_t idn, combined_mat;
+
+	MAT_IDN(idn);
+
+	rt_db_get_internal(&path_ip, dp, dbip, idn, NULL);
+	comb_ip = (struct rt_comb_internal *)path_ip.idb_ptr;
+	comb_tree = comb_ip->tree;
+
+	member = NULL;
+	member = db_find_named_leaf(comb_tree, member_name);
+
+	if (!member) {
+	    bu_log("couldn't lookup member to edit matrix\n");
+	}
+	if (!member->tr_l.tl_mat) {
+	    mat_t *new_mat;
+	    BU_ALLOC(new_mat, mat_t);
+	    MAT_IDN(*new_mat);
+	    member->tr_l.tl_mat = (matp_t)new_mat;
+	}
+	bn_mat_mul(combined_mat, member->tr_l.tl_mat, pmat);
+	MAT_COPY(member->tr_l.tl_mat, combined_mat);
+    } else {
+	rt_db_get_internal(&path_ip, dp, dbip, pmat, NULL);
+    }
+
+    /* write changes */
     rt_db_put_internal(dp, dbip, &path_ip, NULL);
 
     VMOVE(orig_v1, jip->vector1);
     MAT4X3VEC(jip->vector1, pmat, orig_v1);
+    db_free_full_path(&fpath);
 
     return 0;
 }
