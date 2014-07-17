@@ -286,7 +286,7 @@ add_comb_child(osg::Group *comb, osg::Group *child, struct db_full_path *child_p
     mat_t m = MAT_INIT_IDN;
     mat_t m_idn = MAT_INIT_IDN;
     const struct bn_tol tol = {BN_TOL_MAGIC, 0.0005, 0.0005 * 0.0005, 1e-6, 1 - 1e-6};
-    (void)db_full_path_transformation_matrix((matp_t)(&m), dbip, child_path, child_path->fp_len - 1);
+    (void)db_path_to_mat(dbip, child_path, (matp_t)(&m), child_path->fp_len, &rt_uniresource);
     if (!bn_mat_is_equal(m, m_idn, &tol)) {
 	mat_t mt = MAT_INIT_IDN;
 	MAT_TRANSPOSE(mt, m);
@@ -404,7 +404,6 @@ full_region_node(
 
     /*Search for all the solids (using full paths) below the region - that's the list of vlists we need for this particular region,
      *using the full paths below the current region to place them in their final relative positions.
-     *(db_full_path_transformation_matrix)
      */
     const char *region_vlist_search = "! -type comb";
     struct bu_ptbl region_vlist_contributors = BU_PTBL_INIT_ZERO;
@@ -419,7 +418,7 @@ full_region_node(
 	/* Get the final matrix we will need for this vlist */
 	mat_t tm;
 	MAT_IDN(tm);
-	(void)db_full_path_transformation_matrix(tm, dbip, curr_path, curr_path->fp_len-2);
+	(void)db_path_to_mat(dbip, curr_path, tm, curr_path->fp_len-1, &rt_uniresource);
 
 	/* Actually add the geometry from the vlist */
 	struct bu_list *plot_segments = obj_vlist(DB_FULL_PATH_CUR_DIR(curr_path), dbip, tm);
