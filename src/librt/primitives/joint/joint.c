@@ -534,7 +534,7 @@ rt_joint_find_selections(
     const struct rt_db_internal *ip,
     const struct rt_selection_query *query)
 {
-    int ret;
+    /*int ret;*/
     struct rt_joint_internal *jip;
     fastf_t dist[3];
     point_t qline_pt;
@@ -573,8 +573,7 @@ rt_joint_find_selections(
      * the view plane that intersects the location)
      */
     BN_TOL_INIT(&tol);
-    ret = bn_dist_pt3_line3(dist, qline_pt, qstart, qdir, jip->location,
-	    &tol);
+    /*ret =*/ (void)bn_dist_pt3_line3(dist, qline_pt, qstart, qdir, jip->location, &tol);
     VMOVE(joint_selection->plane_pt, qline_pt);
 
 #if 0
