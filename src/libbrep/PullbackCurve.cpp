@@ -1856,7 +1856,7 @@ bool trim_GetClosestPoint3dFirstOrder(
 	    t0 = span_interval[span_index].Mid();
 	    bool closestfound = false;
 	    bool notdone = true;
-	    double distance = DBL_MAX;
+	    double current_distance = DBL_MAX;
 	    double previous_distance = DBL_MAX;
 	    ON_3dVector firstDervative, secondDervative;
 	    while (notdone
@@ -1877,11 +1877,11 @@ bool trim_GetClosestPoint3dFirstOrder(
 		delta_t = new_t0 - t0;
 		t0 = new_t0;
 		point = trim.PointAt(t0);
-		distance = point.DistanceTo(p2d);
-		if (distance < previous_distance) {
+		current_distance = point.DistanceTo(p2d);
+		if (current_distance < previous_distance) {
 		    closestfound = true;
 		    closestT = t0;
-		    previous_distance = distance;
+		    previous_distance = current_distance;
 		    if (fabs(delta_t) < same_point_tol) {
 			notdone = false;
 		    }
@@ -1889,8 +1889,8 @@ bool trim_GetClosestPoint3dFirstOrder(
 		    notdone = false;
 		}
 	    }
-	    if (closestfound && (distance < closest_distance)) {
-		closest_distance = distance;
+	    if (closestfound && (current_distance < closest_distance)) {
+		closest_distance = current_distance;
 		rc = true;
 		t = closestT;
 	    }
@@ -2512,10 +2512,14 @@ DistToNearestClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt)
 
 
 void
-GetClosestExtendedPoint(const ON_Surface *surf,ON_2dPoint &pt,ON_2dPoint &prev_pt, double tol) {
+GetClosestExtendedPoint(const ON_Surface *surf,ON_2dPoint &pt,ON_2dPoint &prev_pt, double UNUSED(tol)) {
     if (surf->IsClosed(0)) {
 	double length = surf->Domain(0).Length();
 	double delta=pt.x-prev_pt.x;
+
+	/* FIXME: looks like tol should be taken into consideration
+	 * here when comparing delta against the length.
+	 */
 	while (fabs(delta) > length/2.0) {
 	    if (delta > length/2.0) {
 		pt.x = pt.x - length;
@@ -2530,6 +2534,10 @@ GetClosestExtendedPoint(const ON_Surface *surf,ON_2dPoint &pt,ON_2dPoint &prev_p
     if (surf->IsClosed(1)) {
 	double length = surf->Domain(1).Length();
 	double delta=pt.y-prev_pt.y;
+
+	/* FIXME: looks like tol should be taken into consideration
+	 * here when comparing delta against the length.
+	 */
 	while (fabs(delta) > length/2.0) {
 	    if (delta > length/2.0) {
 		pt.y = pt.y - length;
@@ -2717,7 +2725,7 @@ SwapUVSeamPoint(const ON_Surface *surf, ON_2dPoint &p, int hint)
  *  Find where Pullback of 3d curve crosses closed seam of surface UV
  */
 bool
-Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double offset,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol)
+Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double UNUSED(offset),double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol)
 {
     bool rc = true;
     const ON_Surface *surf = data.surf;
@@ -3752,7 +3760,7 @@ resolve_seam_segment_from_next(const ON_Surface *surface, ON_2dPointArray &segme
 
 
 bool
-resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment, bool &u_resolved, bool &v_resolved)
+resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment, bool &UNUSED(u_resolved), bool &UNUSED(v_resolved))
 {
     ON_2dPoint *prev = NULL;
     bool complete = false;
@@ -4097,7 +4105,6 @@ extend_over_seam_crossings(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator cs;
     ON_2dPoint *pt = NULL;
-    ON_2dPoint *prev_non_seam_pt = NULL;
     ON_2dPoint *prev_pt = NULL;
     ON_2dVector curr_uv_offsets = ON_2dVector::ZeroVector;
 
@@ -4110,9 +4117,7 @@ extend_over_seam_crossings(std::list<PBCData*> &pbcs)
 
 	const ON_Surface *surf = data->surf;
 	ON_Interval udom = surf->Domain(0);
-	double ulength = udom.Length();
 	ON_Interval vdom = surf->Domain(1);
-	double vlength = vdom.Length();
 	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	while (si != data->segments.end()) {
 	    ON_2dPointArray *samples = (*si);
