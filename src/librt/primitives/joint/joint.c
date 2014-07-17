@@ -649,7 +649,7 @@ rt_joint_process_selection(
     struct rt_db_internal path_ip;
     struct directory *dp;
     struct db_full_path fpath;
-    int ret;
+    /*int ret;*/
 
     if (op->type == RT_SELECTION_NOP) {
 	return 0;
@@ -689,7 +689,7 @@ rt_joint_process_selection(
     /* bn_mat_xform_about_pt(pmat, rmat, jip->location); */
 
     /* get solid or parent comb directory */
-    ret = db_string_to_path(&fpath, dbip, bu_vls_cstr(&jip->reference_path_1));
+    /*ret =*/ (void)db_string_to_path(&fpath, dbip, bu_vls_cstr(&jip->reference_path_1));
     if (fpath.fp_len < 1) {
 	dp = NULL;
     } else if (fpath.fp_len == 1) {
