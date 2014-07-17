@@ -66,7 +66,7 @@ struct joint_specific {
 #define JOINT_FLOAT_SIZE 10
 
 const struct bu_structparse rt_joint_parse[] = {
-    { "%f", 3, "L", bu_offsetofarray(struct rt_joint_internal, location, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V", bu_offsetofarray(struct rt_joint_internal, location, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%V", 1, "RP1", bu_offsetof(struct rt_joint_internal, reference_path_1), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%V", 1, "RP2", bu_offsetof(struct rt_joint_internal, reference_path_2), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "V1", bu_offsetofarray(struct rt_joint_internal, vector1, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -440,7 +440,7 @@ rt_joint_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
     RT_JOINT_CK_MAGIC(jip);
     bu_vls_strcat(str, "joint\n");
 
-    sprintf(buf, "\tL (%g, %g, %g)\n",
+    sprintf(buf, "\tV (%g, %g, %g)\n",
 	    V3INTCLAMPARGS(jip->location));		/* should have unit length */
 
     bu_vls_strcat(str, buf);
@@ -448,7 +448,7 @@ rt_joint_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
     if (!verbose)
 	return 0;
 
-    sprintf(buf, "\tV1 (%g %g %g) V2 (%g %g %g) value=%g RF1=%s RF2=%s\n",
+    sprintf(buf, "\tV1 (%g %g %g) V2 (%g %g %g) A=%g RP1=%s RP2=%s\n",
 	    INTCLAMP(jip->vector1[0]*mm2local),
 	    INTCLAMP(jip->vector1[1]*mm2local),
 	    INTCLAMP(jip->vector1[2]*mm2local),
