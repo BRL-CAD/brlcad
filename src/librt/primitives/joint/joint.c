@@ -643,7 +643,7 @@ rt_joint_process_selection(
 {
     struct joint_selection *js;
     struct rt_joint_internal *jip;
-    mat_t rmat, pmat;
+    mat_t pmat;
     vect_t delta, start, end, orig_v1, cross;
     fastf_t angle;
     struct rt_db_internal path_ip;
@@ -682,10 +682,11 @@ rt_joint_process_selection(
     angle = VDOT(start, end);
     angle /= MAGNITUDE(start) * MAGNITUDE(end);
     angle = acos(angle);
+
     VCROSS(cross, jip->vector1, delta);
     VUNITIZE(cross);
-    bn_mat_arb_rot(rmat, jip->location, cross, angle);
-    bn_mat_xform_about_pt(pmat, rmat, jip->location);
+    bn_mat_arb_rot(pmat, jip->location, cross, angle);
+    /* bn_mat_xform_about_pt(pmat, rmat, jip->location); */
 
     /* get solid or parent comb directory */
     ret = db_string_to_path(&fpath, dbip, bu_vls_cstr(&jip->reference_path_1));
