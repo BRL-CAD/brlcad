@@ -70,11 +70,16 @@ struct simulation_params *sim_params;
  * Prints the 16 by 16 transform matrices for debugging
  *
  */
-void
+static void
 print_matrices(char *rb_namep, mat_t t, btScalar *m)
 {
     int i, j;
     char buffer[800];
+
+    /* TODO: this should probably be using something like bn_mat_print
+     * or a vls.  should not be using a fixed buffer size or
+     * sprintf().
+     */
 
     sprintf(buffer, "------------Phy : Transformation matrices(%s)--------------\n",
 	    rb_namep);
