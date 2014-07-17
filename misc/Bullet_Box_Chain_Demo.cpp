@@ -92,12 +92,12 @@ void	ConstraintDemo::initPhysics()
 
     m_dynamicsWorld->setDebugDrawer(&gDebugDrawer);
 
-    int hd = 5;
+    int hd = 4;
     int d = 2*hd;
     int xoffset = 1;
-    int yoffset = 15;
+    int yoffset = 12;
     int zoffset = 5;
-    float damping = 0.4;
+    float damping = 0.5;
     btCollisionShape* shape1 = new btBoxShape(btVector3(hd, 1, 1));
     btCollisionShape* shape2 = new btBoxShape(btVector3(hd, 2, 2));
     btCollisionShape* shape3 = new btBoxShape(btVector3(hd, 3, 3));
@@ -225,12 +225,14 @@ ConstraintDemo::~ConstraintDemo()
 
 }
 
+/* evil global variable hack */
+int run_sim;
 
 void ConstraintDemo::clientMoveAndDisplay()
 {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
-
+if (run_sim) {
     float dt = float(getDeltaTimeMicroseconds()) * 0.000001f;
 
     {
@@ -254,6 +256,7 @@ void ConstraintDemo::clientMoveAndDisplay()
 	//optional but useful: debug drawing
 	m_dynamicsWorld->debugDrawWorld();
     }
+}
     renderme();
 
     glFlush();
@@ -283,9 +286,17 @@ void ConstraintDemo::keyboardCallback(unsigned char key, int x, int y)
     (void)y;
     switch (key) 
     {
+	case 'r':
+	    {
+		run_sim = 1;
+	    }
+	    break;
 	default : 
 	    {
-		DemoApplication::keyboardCallback(key, x, y);
+		float dt = 1.0f/20.f;
+		run_sim = 0;
+		m_dynamicsWorld->stepSimulation(dt,1);
+		//DemoApplication::keyboardCallback(key, x, y);
 	    }
 	    break;
     }
