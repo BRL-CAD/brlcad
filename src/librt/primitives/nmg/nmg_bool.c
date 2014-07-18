@@ -956,7 +956,8 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     nmg_s_reindex(sA, 0);
-    nmg_s_reindex(sB, 0);
+    nmg_s_reindex(sB, sA->maxindex);
+    sA->maxindex = sB->maxindex;
 
     /* Allocate storage for classlist[]. Allocate each of the 8 class
      * lists one at a time. This will assist with debugging to
