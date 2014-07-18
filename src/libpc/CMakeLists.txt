@@ -17,6 +17,7 @@ set(pc_ignore_files
   solver_test.cpp
   vm_test.cpp
   perpendicular.fzn
+  NOTES
   domain_constraint_propagator.cpp
   )
 CMAKEFILES(${pc_ignore_files})
