@@ -1127,6 +1127,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     nmg_kill_wire_edges(sA);
+    nmg_s_reindex(sA, 0);
 
     return sA;
 }
