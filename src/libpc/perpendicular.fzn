@@ -1,4 +1,3 @@
-int: neg1 = -1;
 var -100..100: AX :: output_var;
 var -100..100: AY :: output_var;
 var -100..100: AZ :: output_var;
@@ -22,7 +21,7 @@ var int : BXYZ;
 constraint int_times(AX, BX, AXBX);
 constraint int_times(AY, BY, AYBY);
 constraint int_times(AZ, BZ, AZBZ);
-constraint int_times(AZBZ, neg1, NAZBZ);
+constraint int_times(AZBZ, -1, NAZBZ);
 constraint int_plus(AXBX, AYBY, NAZBZ);
 
 constraint int_times(AX, AX, AXAX);
