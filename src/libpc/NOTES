@@ -12,3 +12,21 @@ converted from the Mercury language to C:  http://www.mercurylang.org/
 Would have to think about a generic C structure to hold minizinc/flatzinc
 results in a programmatically useful form - it wouldn't do to parse the text
 outputs, although they should be available for debugging if needed...
+
+Minizinc 2.0 is worth keeping an eye on - license is MPL2, which is between
+Apache and LGPLv2 from a practical standpoint (can't combine with our code, but
+we can use it - do need to provide modified versions of original code, but
+license isn't viral):
+
+http://www.minizinc.org/2.0/index.html
+
+It's being actively developed in C++ rather than Mercury, which is a Good Thing
+from a support standpoint.  Even has its own CMake build.  It's not stable yet,
+but if it works out libpc might end up being a thin wrapper over this API plus
+a batch of predefined constraints...
+
+Would require a flex -> perplex and bison -> lemon conversion from the looks
+of it, for a portable src/other version that doesn't use pre-generated files.
+Maybe in this case, since we presumably wouldn't be developing libminizinc
+ourselves the way we did with stepcode, we could get away with pre-generated
+cached files in the event flex/bison aren't around...
