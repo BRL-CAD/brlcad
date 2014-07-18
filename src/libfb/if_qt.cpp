@@ -69,8 +69,9 @@ private:
 
 struct qtinfo {
     QApplication *qapp;
-    QMainWindow *win;
+    QWindow *win;
     QImage *qi_image;
+    QPainter *qi_painter;
 
     int alive;
 
@@ -132,6 +133,10 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 
     QApplication::sendEvent(qi->win, new QEvent(QEvent::UpdateRequest));
     qi->qapp->processEvents();
+
+    if (qi->alive == 0) {
+	qi->qi_painter->drawImage(x1, y1, *qi->qi_image, x1, y1, w, h);
+    }
 }
 
 HIDDEN int
@@ -276,9 +281,76 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
 }
 
 int
-_qt_open_existing(FBIO *UNUSED(ifp))
+_qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void *qpainter)
 {
-    fb_log("open_existing\n");
+    struct qtinfo *qi;
+
+    unsigned long mode;
+    size_t size;
+
+    FB_CK_FBIO(ifp);
+
+    mode = MODE1_LINGERING;
+
+    if (width <= 0)
+	width = ifp->if_width;
+    if(height <= 0)
+	height = ifp->if_height;
+    if (width > ifp->if_max_width)
+	width = ifp->if_max_width;
+    if (height > ifp->if_max_height)
+	height = ifp->if_max_height;
+
+    ifp->if_width = width;
+    ifp->if_height = height;
+
+    ifp->if_xzoom = 1;
+    ifp->if_yzoom = 1;
+    ifp->if_xcenter = width/2;
+    ifp->if_ycenter = height/2;
+
+    if ((qi = (struct qtinfo *)calloc(1, sizeof(struct qtinfo))) ==
+	NULL) {
+	fb_log("qt_open: qtinfo malloc failed\n");
+	return -1;
+    }
+    QI_SET(ifp, qi);
+
+    qi->qi_mode = mode;
+    qi->qi_iwidth = width;
+    qi->qi_iheight = height;
+
+    /* allocate backing store */
+    size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
+    if ((qi->qi_mem = (unsigned char *)malloc(size)) == 0) {
+	fb_log("if_qt: Unable to allocate %d bytes of backing \
+		store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
+	return -1;
+    }
+
+    /* Set up an Qt window */
+    qi->qi_qwidth = width;
+    qi->qi_qheight = height;
+
+    qi->qapp = (QApplication *)qapp;
+
+    if ((qi->qi_pix = (unsigned char *) calloc(width*height*sizeof(RGBpixel),
+	sizeof(char))) == NULL) {
+	fb_log("qt_open: pix malloc failed");
+    }
+
+    qi->qi_image = new QImage(qi->qi_pix, width, height, QImage::Format_RGB888);
+
+    qi->win = (QWindow *)qwin;
+    qi->qi_painter = (QPainter *)qpainter;
+
+    qi->alive = 0;
+
+    /* Mark display ready */
+    qi->qi_flags |= FLG_INIT;
+
+    fb_log("_qt_open_existing %d %d\n", width, height);
+
     return 0;
 }
 
@@ -474,8 +546,12 @@ qt_poll(FBIO *UNUSED(ifp))
 
 
 HIDDEN int
-qt_flush(FBIO *UNUSED(ifp))
+qt_flush(FBIO *ifp)
 {
+    struct qtinfo *qi = QI(ifp);
+
+    qi->qapp->processEvents();
+
     fb_log("qt_flush\n");
 
     return 0;
