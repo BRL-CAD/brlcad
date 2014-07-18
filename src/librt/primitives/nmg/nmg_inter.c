@@ -6472,6 +6472,10 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     (void)bu_ptbl_free(&vert_list1);
     (void)bu_ptbl_free(&vert_list2);
 
+    /* Eliminate stray vertices that were added along edges in this step */
+    (void)nmg_unbreak_shell_edges(&s1->magic);
+    (void)nmg_unbreak_shell_edges(&s2->magic);
+
     nmg_isect2d_cleanup(&is);
 
     if (UNLIKELY(RTG.NMG_debug & DEBUG_VERIFY)) {
