@@ -967,8 +967,6 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	classlist[i] = (char *)bu_calloc(nelem, sizeof(char), "nmg_bool classlist");
     }
 
-    nmg_classify_shared_edges_verts(sA, sB, classlist, tol);
-
     nmg_class_nothing_broken = 1;
     if (RTG.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
 	nmg_show_broken_classifier_stuff((uint32_t *)sA, &classlist[0], nmg_class_nothing_broken, 1, "unclassed sA");
