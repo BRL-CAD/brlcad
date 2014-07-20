@@ -339,10 +339,10 @@ RhinoConverter::RhinoConverter(const std::string &output_path) :
     bu_free(buf, "bu_dirname buffer");
 
     m_db = wdb_fopen(output_path.c_str());
-    if (!m_db || mk_id(m_db, "3dm -> g conversion")) {
-	wdb_close(m_db);
+    if (!m_db)
 	throw std::runtime_error("failed to open database");
-    }
+
+    mk_id(m_db, "3dm -> g conversion");
 }
 
 
