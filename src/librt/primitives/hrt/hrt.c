@@ -182,14 +182,15 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     VMOVE(&R[8], Zu);
 
     /**
-     * 1.0 stands for the length of xdir vector and 0.25 approximates some
-     * value which encloses the displacement from the Z-axis to the furthest
-     * point on the heart surface in either the -X or +X direction
+     * View-points from directly above and besides the heart indicate that it is
+     * elliptical, Y-axis is the major axis, X-axis the minor axis and the 
+     * ratio of the radius of the minor axis to the radius of the major axis
+     * is 2/3
      */
     /* X */
     f = hip->xdir[X];
-    (*min)[X] = hip->v[X] - f * 1.25;
-    (*max)[X] = hip->v[X] + f * 1.25;
+    (*min)[X] = hip->v[X] - f * 2/3;
+    (*max)[X] = hip->v[X] + f * 2/3;
 
     /* Y */
     f = hip->ydir[Y];
