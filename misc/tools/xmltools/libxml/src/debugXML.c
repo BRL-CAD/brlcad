@@ -44,10 +44,10 @@ struct _xmlDebugCtxt {
     int depth;                  /* current depth */
     xmlDocPtr doc;              /* current document */
     xmlNodePtr node;		/* current node */
-    xmlDictPtr dict;		/* the doc dictionnary */
+    xmlDictPtr dict;		/* the doc dictionary */
     int check;                  /* do just checkings */
     int errors;                 /* number of errors found */
-    int nodict;			/* if the document has no dictionnary */
+    int nodict;			/* if the document has no dictionary */
     int options;		/* options */
 };
 
@@ -85,7 +85,7 @@ xmlCtxtDumpCleanCtxt(xmlDebugCtxtPtr ctxt ATTRIBUTE_UNUSED)
  *
  * Check that a given namespace is in scope on a node.
  *
- * Returns 1 if in scope, -1 in case of argument error, 
+ * Returns 1 if in scope, -1 in case of argument error,
  *         -2 if the namespace is not in scope, and -3 if not on
  *         an ancestor node.
  */
@@ -243,7 +243,7 @@ xmlCtxtCheckString(xmlDebugCtxtPtr ctxt, const xmlChar * str)
  * @ctxt: the debug context
  * @name: the name
  *
- * Do debugging on the name, for example the dictionnary status and
+ * Do debugging on the name, for example the dictionary status and
  * conformance to the Name production.
  */
 static void
@@ -263,7 +263,7 @@ xmlCtxtCheckName(xmlDebugCtxtPtr ctxt, const xmlChar * name)
             ((ctxt->doc == NULL) ||
              ((ctxt->doc->parseFlags & (XML_PARSE_SAX1 | XML_PARSE_NODICT)) == 0))) {
 	    xmlDebugErr3(ctxt, XML_CHECK_OUTSIDE_DICT,
-			 "Name is not from the document dictionnary '%s'",
+			 "Name is not from the document dictionary '%s'",
 			 (const char *) name);
 	}
     }
@@ -287,10 +287,10 @@ xmlCtxtGenericNodeCheck(xmlDebugCtxtPtr ctxt, xmlNodePtr node) {
 	dict = doc->dict;
 	if ((dict == NULL) && (ctxt->nodict == 0)) {
 #if 0
-            /* desactivated right now as it raises too many errors */
+            /* deactivated right now as it raises too many errors */
 	    if (doc->type == XML_DOCUMENT_NODE)
 		xmlDebugErr(ctxt, XML_CHECK_NO_DICT,
-			    "Document has no dictionnary\n");
+			    "Document has no dictionary\n");
 #endif
 	    ctxt->nodict = 1;
 	}
@@ -311,7 +311,7 @@ xmlCtxtGenericNodeCheck(xmlDebugCtxtPtr ctxt, xmlNodePtr node) {
 	        (node != (xmlNodePtr) node->parent->properties))
 		xmlDebugErr(ctxt, XML_CHECK_NO_PREV,
                     "Attr has no prev and not first of attr list\n");
-	        
+
         } else if ((node->parent != NULL) && (node->parent->children != node))
 	    xmlDebugErr(ctxt, XML_CHECK_NO_PREV,
                     "Node has no prev and not first of parent list\n");
@@ -1068,7 +1068,7 @@ xmlCtxtDumpNode(xmlDebugCtxtPtr ctxt, xmlNodePtr node)
         return;
     }
     xmlCtxtDumpOneNode(ctxt, node);
-    if ((node->type != XML_NAMESPACE_DECL) && 
+    if ((node->type != XML_NAMESPACE_DECL) &&
         (node->children != NULL) && (node->type != XML_ENTITY_REF_NODE)) {
         ctxt->depth++;
         xmlCtxtDumpNodeList(ctxt, node->children);
@@ -1167,7 +1167,7 @@ xmlCtxtDumpDocHead(xmlDebugCtxtPtr ctxt, xmlDocPtr doc)
  * @output:  the FILE * for the output
  * @doc:  the document
  *
- * Dumps debug information cncerning the document, not recursive
+ * Dumps debug information concerning the document, not recursive
  */
 static void
 xmlCtxtDumpDocumentHead(xmlDebugCtxtPtr ctxt, xmlDocPtr doc)
@@ -1340,7 +1340,7 @@ xmlCtxtDumpDTD(xmlDebugCtxtPtr ctxt, xmlDtdPtr dtd)
  * @output:  the FILE * for the output
  * @str:  the string
  *
- * Dumps informations about the string, shorten it if necessary
+ * Dumps information about the string, shorten it if necessary
  */
 void
 xmlDebugDumpString(FILE * output, const xmlChar * str)
@@ -1496,7 +1496,7 @@ xmlDebugDumpNodeList(FILE * output, xmlNodePtr node, int depth)
  * @output:  the FILE * for the output
  * @doc:  the document
  *
- * Dumps debug information cncerning the document, not recursive
+ * Dumps debug information concerning the document, not recursive
  */
 void
 xmlDebugDumpDocumentHead(FILE * output, xmlDocPtr doc)
@@ -1603,7 +1603,7 @@ int
 xmlLsCountNode(xmlNodePtr node) {
     int ret = 0;
     xmlNodePtr list = NULL;
-    
+
     if (node == NULL)
 	return(0);
 
@@ -1644,7 +1644,7 @@ xmlLsCountNode(xmlNodePtr node) {
 	    ret = 1;
 	    break;
     }
-    for (;list != NULL;ret++) 
+    for (;list != NULL;ret++)
         list = list->next;
     return(ret);
 }
@@ -1712,11 +1712,11 @@ xmlLsOneNode(FILE *output, xmlNodePtr node) {
     if (node->type != XML_NAMESPACE_DECL) {
 	if (node->properties != NULL)
 	    fprintf(output, "a");
-	else	
+	else
 	    fprintf(output, "-");
-	if (node->nsDef != NULL) 
+	if (node->nsDef != NULL)
 	    fprintf(output, "n");
-	else	
+	else
 	    fprintf(output, "-");
     }
 
@@ -1783,7 +1783,7 @@ xmlLsOneNode(FILE *output, xmlNodePtr node) {
  * xmlBoolToText:
  * @boolval: a bool to turn into text
  *
- * Convenient way to turn bool into text 
+ * Convenient way to turn bool into text
  *
  * Returns a pointer to either "True" or "False"
  */
@@ -2050,7 +2050,7 @@ xmlShellBase(xmlShellCtxtPtr ctxt,
     if (node == NULL) {
 	fprintf(ctxt->output, "NULL\n");
 	return (0);
-    }    
+    }
 
     base = xmlNodeGetBase(node->doc, node);
 
@@ -2185,7 +2185,7 @@ xmlShellRegisterRootNamespaces(xmlShellCtxtPtr ctxt, char *arg ATTRIBUTE_UNUSED,
  * @node2:  unused
  *
  * Implements the XML shell function "grep"
- * dumps informations about the node (namespace, attributes, content).
+ * dumps information about the node (namespace, attributes, content).
  *
  * Returns 0
  */
@@ -2263,7 +2263,7 @@ xmlShellGrep(xmlShellCtxtPtr ctxt ATTRIBUTE_UNUSED,
  * @node2:  unused
  *
  * Implements the XML shell function "dir"
- * dumps informations about the node (namespace, attributes, content).
+ * dumps information about the node (namespace, attributes, content).
  *
  * Returns 0
  */
@@ -2277,7 +2277,7 @@ xmlShellDir(xmlShellCtxtPtr ctxt ATTRIBUTE_UNUSED,
     if (node == NULL) {
 	fprintf(ctxt->output, "NULL\n");
 	return (0);
-    }    
+    }
     if ((node->type == XML_DOCUMENT_NODE) ||
         (node->type == XML_HTML_DOCUMENT_NODE)) {
         xmlDebugDumpDocumentHead(ctxt->output, (xmlDocPtr) node);
@@ -2297,7 +2297,7 @@ xmlShellDir(xmlShellCtxtPtr ctxt ATTRIBUTE_UNUSED,
  * @node2:  unused
  *
  * Implements the XML shell function "dir"
- * dumps informations about the node (namespace, attributes, content).
+ * dumps information about the node (namespace, attributes, content).
  *
  * Returns 0
  */
@@ -2412,7 +2412,7 @@ xmlShellCat(xmlShellCtxtPtr ctxt, char *arg ATTRIBUTE_UNUSED,
     if (node == NULL) {
 	fprintf(ctxt->output, "NULL\n");
 	return (0);
-    }    
+    }
     if (ctxt->doc->type == XML_HTML_DOCUMENT_NODE) {
 #ifdef LIBXML_HTML_ENABLED
         if (node->type == XML_HTML_DOCUMENT_NODE)
@@ -2748,7 +2748,7 @@ xmlShellDu(xmlShellCtxtPtr ctxt,
  * xmlShellPwd:
  * @ctxt:  the shell context
  * @buffer:  the output buffer
- * @node:  a node 
+ * @node:  a node
  * @node2:  unused
  *
  * Implements the XML shell function "pwd"
@@ -2793,7 +2793,7 @@ xmlShellPwd(xmlShellCtxtPtr ctxt ATTRIBUTE_UNUSED, char *buffer,
  * @input:  the line reading function
  * @output:  the output FILE*, defaults to stdout if NULL
  *
- * Implements the XML shell 
+ * Implements the XML shell
  * This allow to load, validate, view, modify and save a document
  * using a environment similar to a UNIX commandline.
  */
@@ -2895,7 +2895,7 @@ xmlShell(xmlDocPtr doc, char *filename, xmlShellReadlineFunc input,
 		  fprintf(ctxt->output, "\tbye          leave shell\n");
 		  fprintf(ctxt->output, "\tcat [node]   display node or current node\n");
 		  fprintf(ctxt->output, "\tcd [path]    change directory to path or to root\n");
-		  fprintf(ctxt->output, "\tdir [path]   dumps informations about the node (namespace, attributes, content)\n");
+		  fprintf(ctxt->output, "\tdir [path]   dumps information about the node (namespace, attributes, content)\n");
 		  fprintf(ctxt->output, "\tdu [path]    show the structure of the subtree under path or the current node\n");
 		  fprintf(ctxt->output, "\texit         leave shell\n");
 		  fprintf(ctxt->output, "\thelp         display this help\n");

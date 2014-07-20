@@ -3102,8 +3102,8 @@ poly2tri_CDT(struct bu_list *vhead,
 		ON_2dPoint p2d_end = trim->PointAt(trim->Domain().m_t[1]);
 		double delta =  trim->Domain().Length() / 10.0;
 		ON_Interval trim_dom = trim->Domain();
-		// need to determine direction
-		int side = IsAtSingularity(s, p2d_begin, BREP_SAME_POINT_TOLERANCE);// 0 = south, 1 = east, 2 = north, 3 = west
+
+
 		for (int i=1; i<=10; i++) {
 		    btp.p3d = p3d;
 		    btp.p2d = v1.Point();
