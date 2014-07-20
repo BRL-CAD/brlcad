@@ -1276,10 +1276,10 @@ main(int argc, char *argv[])
 
     BU_ALLOC(dmp, struct dm);
     *dmp = dm_null;
-    bu_vls_init(&pathName);
+    bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&tkName);
     bu_vls_init(&dName);
-    bu_vls_strcpy(&pathName, "nu");
+    bu_vls_strcpy(&dmp->dm_pathName, "nu");
     bu_vls_strcpy(&tkName, "nu");
 
     BU_ALLOC(rubber_band, struct _rubber_band);

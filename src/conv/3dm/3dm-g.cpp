@@ -1,4 +1,4 @@
-/*                           3 D M - G . C P P
+/*                       3 D M - G . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -24,24 +24,21 @@
  *
  */
 
+#ifdef OBJ_BREP
 
 #include "common.h"
 
-#include "stdio.h" /* for sscanf */
-
-#ifdef OBJ_BREP
+#include <iostream>
 
 #include "conv3dm-g.hpp"
 #include "bu/getopt.h"
-#include <iostream>
-
-
-static const char * const USAGE = "USAGE: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n";
 
 
 int
 main(int argc, char** argv)
 {
+    static const char * const usage = "Usage: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n";
+
     bool verbose_mode = false;
     bool random_colors = false;
     bool use_uuidnames = false;
@@ -70,7 +67,7 @@ main(int argc, char** argv)
 		use_uuidnames = true;
 		break;
 	    default:
-		std::cerr << USAGE;
+		std::cerr << usage;
 		return 1;
 	}
     }
@@ -79,7 +76,7 @@ main(int argc, char** argv)
     argv += bu_optind;
     inputFileName  = argv[0];
     if (outputFileName == NULL) {
-	std::cerr << USAGE;
+	std::cerr << usage;
 	return 1;
     }
 
@@ -90,8 +87,10 @@ main(int argc, char** argv)
 }
 
 
-#else
+#else //!OBJ_BREP
 
+
+#include "common.h"
 
 #include <iostream>
 
@@ -106,19 +105,13 @@ main()
 }
 
 
-
-
 #endif //!OBJ_BREP
 
-
-
-
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C++
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

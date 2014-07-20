@@ -200,6 +200,24 @@ printf "\n"
 
 
 echo "-----------------------------------------"
+echo "--          PUBLIC API TOTALS          --"
+echo "-----------------------------------------"
+
+libs=`find $BASE/include -not \( $those_pattern \) -exec grep '^[A-Z]*_EXPORT' {} \; | awk '{print $1}' | sort | uniq -c | sort -n | awk '{print $2}' | sed 's/_EXPORT//g'`
+exports_lc_total=0
+for lib in $libs ; do
+    exports=`find $BASE/include -not \( $those_pattern \) -exec grep "^${lib}_EXPORT" {} /dev/null \;`
+    exports_lc="`echo \"$exports\" | wc -l`"
+    printf "%7d\t%s\n" "$exports_lc" "$lib API"
+    exports_lc_total="`expr $exports_lc_total + $exports_lc`"
+done
+echo "-----------------------------------------"
+printf "%7d\t%s\n" "$exports_lc_total" "BRL-CAD API Total"
+
+printf "\n"
+
+
+echo "-----------------------------------------"
 echo "--          LINE COUNT TOTALS          --"
 echo "-----------------------------------------"
 # echo "   w/ws+= means with whitespace lines"
@@ -282,9 +300,9 @@ srcs_lc_total="`echo \"$real_lc_total $blank_lc_total + p\" | dc`"
 
 printf "%7d\t%s\n" "$srcs_lc_total" "BRL-CAD Sources w/ Spaces"
 printf "%7d\t%s\n" "$real_lc_total" "BRL-CAD Source Code Total"
-
 echo "========================================="
 
+printf "\nDone.\n"
 
 # Local Variables:
 # mode: sh

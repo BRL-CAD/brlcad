@@ -179,6 +179,10 @@ FB_EXPORT extern int _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, PIXELFORMATDESCRIPTOR *vip, HDC hdc, int width, int height, HGLRC glxc, int double_buffer, int soft_cmap);
 #endif
 
+#ifdef IF_QT
+FB_EXPORT extern int _qt_open_existing(FBIO *ifp);
+#endif
+
 /*
  * Copy one RGB pixel to another.
  */

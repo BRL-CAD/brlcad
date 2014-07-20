@@ -1,14 +1,14 @@
-/*                         C O N V 3 D M - G . H
+/*                   C O N V 3 D M - G . H P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
- * This program is free software; you can redistribute it and/or
+ * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but
+ * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
@@ -17,10 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file conv3dm-g.cpp
+/** @file conv3dm-g.hpp
  *
- * Program to convert a Rhino model (in a .3dm file) to a BRL-CAD .g
- * file.
+ * Library for conversion of Rhino models (in .3dm files) to BRL-CAD databases.
  *
  */
 
@@ -28,25 +27,13 @@
 #ifndef CONV3DM_G_H
 #define CONV3DM_G_H
 
+#include "common.h"
 
 #include <map>
-#include <memory>
+#include <set>
 #include <string>
-#include <vector>
 
-
-class ONX_Model;
-class ON_TextLog;
-class ON_InstanceDefinition;
-class ON_Brep;
-class ON_3dmObjectAttributes;
-class ON_Geometry;
-class ON_InstanceRef;
-class ON_Layer;
-class ON_Material;
-class ON_Bitmap;
-class ON_Mesh;
-struct rt_wdb;
+#include "wdb.h"
 
 
 namespace conv3dm
@@ -68,7 +55,29 @@ public:
 
 private:
     class Color;
-    struct ModelObject;
+
+    struct UuidCompare {
+	bool operator()(const ON_UUID &left, const ON_UUID &right) const;
+    };
+
+
+    class ObjectManager
+    {
+    public:
+	ObjectManager();
+
+	void add(const ON_UUID &uuid, const std::string &name);
+	void register_member(const ON_UUID &parent_uuid, const ON_UUID &member_uuid);
+	void mark_idef_member(const ON_UUID &uuid);
+
+	const std::string &get_name(const ON_UUID &uuid) const;
+	const std::set<ON_UUID, UuidCompare> &get_members(const ON_UUID &uuid) const;
+	bool is_idef_member(const ON_UUID &uuid) const;
+    private:
+	struct ModelObject;
+	std::map<ON_UUID, ModelObject, UuidCompare> m_obj_map;
+    };
+
 
     RhinoConverter(const RhinoConverter &source);
     RhinoConverter &operator=(const RhinoConverter &source);
@@ -107,10 +116,10 @@ private:
     bool m_use_uuidnames;
     bool m_random_colors;
     std::string m_output_dirname;
-    std::map<std::string, ModelObject> m_obj_map;
     std::map<std::string, int> m_name_count_map;
-    std::auto_ptr<ON_TextLog> m_log;
-    std::auto_ptr<ONX_Model> m_model;
+    ObjectManager m_objects;
+    ON_TextLog m_log;
+    ONX_Model m_model;
     rt_wdb *m_db;
 };
 
@@ -120,15 +129,11 @@ private:
 
 #endif
 
-
-
-
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C++
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

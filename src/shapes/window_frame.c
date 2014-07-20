@@ -100,13 +100,15 @@ main(int argc, char **argv)
 	/* START # 3 */
 
 	/* Print info about the window frame. */
+	printf("Usage: window_frame [-f name.g] [-n #] [-H #] [-w #] [-d #] [-r #] [-i #]\n");
 	printf("\n%s\n",explain);
-	printf("\nThe window frames are composed of 4 arb8s and 8\n");
+	printf("The window frames are composed of 4 arb8s and 8\n");
 	printf("cylinders.  The front of the window frame is centered\n");
 	printf("at (0, 0, 0) and extends in the negative x-direction\n");
 	printf("the depth of the window frame.\n\n");
 
 	/* Find name of mged file to be created. */
+        printf("       Program continues running (in interactive mode):\n");
 	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);

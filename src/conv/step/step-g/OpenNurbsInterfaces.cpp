@@ -1470,7 +1470,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 
     // build surface tree making sure not to remove trimmed subsurfaces
     // since currently building trims and need full tree
-    bool removeTrimmed = false;
+    // bool removeTrimmed = false;
 
     //TODO: remove debugging code
     if ((false) && (id == 24894)) {
@@ -2688,10 +2688,10 @@ Line::SetParameterTrim(double start_param, double end_param)
     t = start_param;
     s = end_param;
 
-    ON_3dPoint start = pnt->Point3d();
+    ON_3dPoint ptstart = pnt->Point3d();
     ON_3dVector vdir =  dir->Orientation();
-    ON_3dPoint end = start + (vdir*dir->Magnitude());
-    ON_Line l(start, end);
+    ON_3dPoint ptend = ptstart + (vdir*dir->Magnitude());
+    ON_Line l(ptstart, ptend);
 
     if (s < t) {
 	double tmp = s;
