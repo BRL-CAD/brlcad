@@ -30,7 +30,8 @@
 #include "conv3dm-g.hpp" // includes common.h
 
 /* system headers */
-#include <cctype> // for isalnum()
+#include <cctype>
+#include <iomanip>
 #include <limits>
 #include <sstream>
 #include <stdexcept>
@@ -64,7 +65,7 @@ static struct _InitOpenNURBS {
 
 
 static inline std::string
-Uuid2str(const ON_UUID &uuid)
+uuid2string(const ON_UUID &uuid)
 {
     // UUID buffers must be >= 37 chars per openNURBS API
     const std::size_t UUID_LEN = 37;
@@ -168,14 +169,15 @@ unique_name(std::map<std::string, int> &count_map,
 	    std::string prefix,
 	    const std::string &suffix)
 {
-    if (std::isdigit(prefix.at(prefix.size() - 1)))
+    if (std::isdigit(*prefix.rbegin()))
 	prefix += '_';
 
     std::string name = prefix + suffix;
+    int number = ++count_map[name];
 
-    if (int count = count_map[name]++) {
+    if (number > 1) {
 	std::ostringstream ss;
-	ss << prefix << count << suffix;
+	ss << prefix << std::setw(3) << std::setfill('0') << number << suffix;
 	return ss.str();
     } else
 	return name;
@@ -536,7 +538,7 @@ RhinoConverter::map_uuid_names()
 	    suffix = ".c";
 
 	if (m_use_uuidnames)
-	    m_objects.add(geom_attrs.m_uuid, Uuid2str(geom_attrs.m_uuid) + suffix);
+	    m_objects.add(geom_attrs.m_uuid, uuid2string(geom_attrs.m_uuid) + suffix);
 	else
 	    m_objects.add(geom_attrs.m_uuid,
 			  unique_name(m_name_count_map,
@@ -549,7 +551,7 @@ RhinoConverter::map_uuid_names()
 	const ON_InstanceDefinition &idef = m_model.m_idef_table[i];
 
 	if (m_use_uuidnames)
-	    m_objects.add(idef.m_uuid, Uuid2str(idef.m_uuid) + ".c");
+	    m_objects.add(idef.m_uuid, uuid2string(idef.m_uuid) + ".c");
 	else
 	    m_objects.add(idef.m_uuid,
 			  unique_name(m_name_count_map,
@@ -561,7 +563,7 @@ RhinoConverter::map_uuid_names()
 	const ON_Layer &layer = m_model.m_layer_table[i];
 
 	if (m_use_uuidnames)
-	    m_objects.add(layer.m_layer_id, Uuid2str(layer.m_layer_id) + ".c");
+	    m_objects.add(layer.m_layer_id, uuid2string(layer.m_layer_id) + ".c");
 	else
 	    m_objects.add(layer.m_layer_id,
 			  unique_name(m_name_count_map,
@@ -575,7 +577,7 @@ RhinoConverter::map_uuid_names()
 	const ON_Bitmap *bitmap = m_model.m_bitmap_table[i];
 
 	if (m_use_uuidnames)
-	    m_objects.add(bitmap->m_bitmap_id, Uuid2str(bitmap->m_bitmap_id) + ".pix");
+	    m_objects.add(bitmap->m_bitmap_id, uuid2string(bitmap->m_bitmap_id) + ".pix");
 	else {
 	    std::string bitmap_name = clean_name(w2string(bitmap->m_bitmap_name));
 	    if (bitmap_name == DEFAULT_NAME)
