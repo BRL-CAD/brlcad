@@ -123,13 +123,66 @@ static struct modeflags {
     { '\0', 0, 0, "" },
 };
 
+
+__BEGIN_DECLS
+
+void
+qt_configureWindow(FBIO *ifp, int width, int height)
+{
+    struct qtinfo *qi = QI(ifp);
+
+    FB_CK_FBIO(ifp);
+
+    if (!qi) {
+	return;
+    }
+
+    if (width == qi->qi_qwidth && height == qi->qi_qheight) {
+	return;
+    }
+
+    ifp->if_width = width;
+    ifp->if_height = height;
+
+    qi->qi_qwidth = qi->qi_iwidth = width;
+    qi->qi_qheight = qi->qi_iheight = height;
+
+    ifp->if_xcenter = width/2;
+    ifp->if_ycenter = height/2;
+
+    /* destroy old image struct and image buffers */
+    delete qi->qi_image;
+    delete qi->qi_pix;
+
+    if ((qi->qi_pix = (unsigned char *) calloc(width * height * sizeof(RGBpixel),
+	sizeof(char))) == NULL) {
+	fb_log("qt_open_existing: pix malloc failed");
+    }
+
+    qi->qi_image = new QImage(qi->qi_pix, width, height, QImage::Format_RGB888);
+
+    fb_log("configure_win %d %d\n", ifp->if_height, ifp->if_width);
+}
+
+__END_DECLS
+
 HIDDEN void
 qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 {
     struct qtinfo *qi = QI(ifp);
+    int i,j;
+    unsigned int k;
 
-    memcpy(&(qi->qi_pix[((qi->qi_iheight - y1)*qi->qi_iwidth+x1)*sizeof(RGBpixel)]),
+    for (i = y1; i < y1 + h; i++) {
+	for (j = x1; j < x1 + w; j++) {
+	    for (k = 0; k < sizeof(RGBpixel); k++)
+		qi->qi_pix[((qi->qi_iheight - i) * qi->qi_iwidth + j) * sizeof(RGBpixel) + k] = qi->qi_mem[(i * qi->qi_iwidth + j) * sizeof(RGBpixel) + k];
+	}
+    }
+/*    memcpy(&(qi->qi_pix[(y1*qi->qi_iwidth+x1)*sizeof(RGBpixel)]),
  	   &(qi->qi_mem[(y1*qi->qi_iwidth+x1)*sizeof(RGBpixel)]), w * h * sizeof(RGBpixel));
+*/
+
 
     QApplication::sendEvent(qi->win, new QEvent(QEvent::UpdateRequest));
     qi->qapp->processEvents();
@@ -152,7 +205,7 @@ qt_setup(FBIO *ifp, int width, int height)
 
     qi->qapp = new QApplication(argc, argv);
 
-    if ((qi->qi_pix = (unsigned char *) calloc(width*height*sizeof(RGBpixel),
+    if ((qi->qi_pix = (unsigned char *) calloc(width * height * sizeof(RGBpixel),
 	sizeof(char))) == NULL) {
 	fb_log("qt_open: pix malloc failed");
     }
@@ -188,7 +241,6 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
     size_t size;
 
     FB_CK_FBIO(ifp);
-
     mode = MODE1_LINGERING;
 
     if (file != NULL) {
@@ -334,9 +386,9 @@ _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void
 
     qi->qapp = (QApplication *)qapp;
 
-    if ((qi->qi_pix = (unsigned char *) calloc(width*height*sizeof(RGBpixel),
+    if ((qi->qi_pix = (unsigned char *) calloc(width * height * sizeof(RGBpixel),
 	sizeof(char))) == NULL) {
-	fb_log("qt_open: pix malloc failed");
+	fb_log("qt_open_existing: pix malloc failed");
     }
 
     qi->qi_image = new QImage(qi->qi_pix, width, height, QImage::Format_RGB888);
@@ -349,7 +401,7 @@ _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void
     /* Mark display ready */
     qi->qi_flags |= FLG_INIT;
 
-    fb_log("_qt_open_existing %d %d\n", width, height);
+    fb_log("_qt_open_existing %d %d\n", ifp->if_max_height, ifp->if_max_width);
 
     return 0;
 }
@@ -409,8 +461,8 @@ qt_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	count = maxcount;
 
     /* Save it in 24bit backing store */
-    memcpy(&(qi->qi_mem[(y*qi->qi_iwidth+x)*sizeof(RGBpixel)]),
-	   pixelp, count*sizeof(RGBpixel));
+    memcpy(&(qi->qi_mem[(y * qi->qi_iwidth + x) * sizeof(RGBpixel)]),
+	   pixelp, count * sizeof(RGBpixel));
 
     if (x + count <= (size_t)qi->qi_iwidth) {
 	qt_update(ifp, x, y, count, 1);
