@@ -88,26 +88,27 @@ int main() {
 
     /* Perpendicular constraint test */
     {
-	GeometrySolve* s = new GeometrySolve(6, -100, 100);
+	int cnt = 0;
+	GeometrySolve* s = new GeometrySolve(6, -20, 20);
 	Gecode::IntVar AX(s->l[0]), AY(s->l[1]), AZ(s->l[2]), BX(s->l[3]), BY(s->l[4]), BZ(s->l[5]);
 
 	/* Add a canned constraint */
 	add_constraint_perpendicular_vect(s, 1, 0, 1);
 
 	/* Define some additional constraints to limit the solution set */
-	Gecode::rel(*s, AX == BY);
-	Gecode::rel(*s, AX < 50);
-	Gecode::rel(*s, AY > 2);
-	Gecode::rel(*s, AY < 40);
-	Gecode::rel(*s, AZ == 10);
-	Gecode::rel(*s, AX > 0);
+	Gecode::rel(*s, AX > 10);
+	Gecode::rel(*s, AY == AX);
 	Gecode::rel(*s, AX*AX + AY*AY + AZ*AZ == BX*BX + BY*BY + BZ*BZ);
 	Gecode::branch(*s, s->l, Gecode::INT_VAR_SIZE_MIN(), Gecode::INT_VAL_MIN());
 
 	Gecode::DFS<GeometrySolve> e(s);
 	delete s;
 	while (GeometrySolve* sp = e.next()) {
-	    sp->print();
+	    //sp->print();
+	    cnt++;
+	    std::cout << "in rcc_" << cnt << "_1.s rcc 0 0 0 " << sp->l[0] << " "<< sp->l[1] << " "<< sp->l[2] << " 1\n";
+	    std::cout << "in rcc_" << cnt << "_2.s rcc 0 0 0 " << sp->l[3] << " "<< sp->l[4] << " "<< sp->l[5] << " 1\n";
+	    std::cout << "g rcc_" << cnt << ".g rcc_" << cnt<< "_1.s " << "rcc_" << cnt << "_2.s\n";
 	    delete sp;
 	}
 
@@ -135,7 +136,7 @@ int main() {
 	Gecode::DFS<GeometrySolve> e(s);
 	delete s;
 	while (GeometrySolve* sp = e.next()) {
-	    sp->print();
+	    //sp->print();
 	    delete sp;
 	}
     }
@@ -146,6 +147,7 @@ int main() {
 	int p = 0;
 	int s1 = 1;
 	int s2 = 2;
+	int cnt = 0;
 	Gecode::IntVar PX(s->l[0 + 3*p]),  PY(s->l[1 + 3*p]),  PZ(s->l[2 + 3*p]);
 	Gecode::IntVar S1X(s->l[0 + 3*s1]), S1Y(s->l[1 + 3*s1]), S1Z(s->l[2 + 3*s1]);
 	Gecode::IntVar S2X(s->l[0 + 3*s2]), S2Y(s->l[1 + 3*s2]), S2Z(s->l[2 + 3*s2]);
@@ -158,14 +160,16 @@ int main() {
 	Gecode::rel(*s, S1Y == 0);
 	Gecode::rel(*s, S1Z == 0);
 	Gecode::rel(*s, S2X == 12);
-	Gecode::rel(*s, S2Y == 82);
+	Gecode::rel(*s, S2Y == 80);
 	Gecode::rel(*s, S2Z == 92);
 	Gecode::branch(*s, s->l, Gecode::INT_VAR_SIZE_MIN(), Gecode::INT_VAL_MIN());
 
 	Gecode::DFS<GeometrySolve> e(s);
 	delete s;
 	while (GeometrySolve* sp = e.next()) {
-	    sp->print();
+	    //sp->print();
+	    cnt++;
+	    //std::cout << "in pnt" << cnt << ".s sph " << sp->l[0] << " " << sp->l[1] << " " << sp->l[2] << " 1\n";
 	    delete sp;
 	}
 
