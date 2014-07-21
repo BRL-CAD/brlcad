@@ -68,7 +68,7 @@ screen editors, such as
 <para><emphasis remap='B'>Cursor Movement</emphasis></para>
 
 <para>When
-<emphasis remap='I'>fbed</emphasis>
+<command>fbed</command>
 is running on a graphics device, a cursor will appear on the screen.
 The position of the cursor points to the
 <emphasis remap='I'>current pixel</emphasis><literal>.</literal></para>
@@ -135,7 +135,7 @@ indicating to the user that an operation is on-going.</para>
 <para><emphasis remap='B'>Modes of Input</emphasis></para>
 
 <para>The user interface consists of a list of provided commands, referred to as
-<emphasis remap='I'>functions</emphasis>
+<emphasis remap='I'>functions</emphasis>;
 and user-defined commands, called
 <emphasis remap='I'>macros</emphasis>.
 In general, every key-stroke will immediately be processed (this is often
@@ -624,11 +624,11 @@ Here is the standard listing:</para>
 </refsect1>
 
 <refsect1 xml:id='hints'><title>HINTS</title>
-<para>This program may require a little practice,
+<para>This program may require a little practice;
 be sure to save a copy of the input files until you are confident.
-The first time using the program you should start out by listing the menu
-and finding the command for saving your image and use it if you don't
-already have a copy.</para>
+If you are using the program for the first time, you should start by
+listing the menu, finding the command for saving your image, and using
+such command if you don't already have a copy.</para>
 </refsect1>
 
 <refsect1 xml:id='files'><title>FILES</title>
