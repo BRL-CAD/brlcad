@@ -84,9 +84,25 @@ struct qtinfo {
     int qi_iwidth;
     int qi_iheight;
 
+    int qi_ilf;		/* Image coordinate of LLHC image */
+    int qi_ibt;		/* pixel */
+    int qi_irt;		/* Image coordinate of URHC image */
+    int qi_itp;		/* pixel */
+
+    int qi_ilf_w;	/* Width of leftmost image pixels */
+    int qi_irt_w;	/* Width of rightmost image pixels */
+    int qi_ibt_h;	/* Height of bottommost image pixels */
+    int qi_itp_h;	/* Height of topmost image pixels */
+
     int qi_qwidth;	/* Width of Qwindow */
     int qi_qheight;	/* Height of Qwindow */
+
+    int qi_xlf;		/* X-coord of leftmost pixels */
+    int qi_xrt;		/* X-coord of rightmost pixels */
+    int qi_xtp;		/* Y-coord of topmost pixels */
+    int qi_xbt;		/* Y-coord of bottommost pixels */
 };
+
 #define QI(ptr) ((struct qtinfo *)((ptr)->u1.p))
 #define QI_SET(ptr, val) ((ptr)->u1.p) = (char *) val;
 
@@ -123,6 +139,264 @@ static struct modeflags {
     { '\0', 0, 0, "" },
 };
 
+
+HIDDEN void
+qt_updstate(FBIO *ifp)
+{
+    struct qtinfo *qi = QI(ifp);
+
+    int xwp, ywp;		/* Size of Qt window in image pixels */
+    int xrp, yrp;		/* Leftover Qt pixels */
+
+    int tp_h, bt_h;		/* Height of top/bottom image pixel slots */
+    int lf_w, rt_w;		/* Width of left/right image pixel slots */
+
+    int want, avail;		/* Wanted/available image pixels */
+
+    FB_CK_FBIO(ifp);
+
+    /*
+     * Set ?wp to the number of whole zoomed image pixels we could display
+     * in the X window.
+     */
+    xwp = qi->qi_qwidth / ifp->if_xzoom;
+    ywp = qi->qi_qheight / ifp->if_yzoom;
+
+    /*
+     * Set ?rp to the number of leftover X pixels we have, after displaying
+     * wp whole zoomed image pixels.
+     */
+    xrp = qi->qi_qwidth % ifp->if_xzoom;
+    yrp = qi->qi_qheight % ifp->if_yzoom;
+
+    /*
+     * Force ?wp to be the same as the window width (mod 2).  This
+     * keeps the image from jumping around when using large zoom
+     * factors.
+     */
+
+    if (xwp && (xwp ^ qi->qi_qwidth) & 1) {
+	xwp--;
+	xrp += ifp->if_xzoom;
+    }
+
+    if (ywp && (ywp ^ qi->qi_qheight) & 1) {
+	ywp--;
+	yrp += ifp->if_yzoom;
+    }
+
+    /*
+     * Now we calculate the height/width of the outermost image pixel
+     * slots.  If we've got any leftover X pixels, we'll make
+     * truncated slots out of them; if not, the outermost ones end up
+     * full size.  We'll adjust ?wp to be the number of full and
+     * truncated slots available.
+     */
+    switch (xrp) {
+	case 0:
+	    lf_w = ifp->if_xzoom;
+	    rt_w = ifp->if_xzoom;
+	    break;
+
+	case 1:
+	    lf_w = 1;
+	    rt_w = ifp->if_xzoom;
+	    xwp += 1;
+	    break;
+
+	default:
+	    lf_w = xrp / 2;
+	    rt_w = xrp - lf_w;
+	    xwp += 2;
+	    break;
+    }
+
+    switch (yrp) {
+	case 0:
+	    tp_h = ifp->if_yzoom;
+	    bt_h = ifp->if_yzoom;
+	    break;
+
+	case 1:
+	    tp_h = 1;
+	    bt_h = ifp->if_yzoom;
+	    ywp += 1;
+	    break;
+
+	default:
+	    tp_h = yrp / 2;
+	    bt_h = yrp - tp_h;
+	    ywp += 2;
+	    break;
+    }
+
+    /*
+     * We've now divided our Qt window up into image pixel slots as
+     * follows:
+     *
+     * - All slots are xzoom by yzoom X pixels in size, except:
+     *     slots in the top row are tp_h X pixels high
+     *     slots in the bottom row are bt_h X pixels high
+     *     slots in the left column are lf_w X pixels wide
+     *     slots in the right column are rt_w X pixels wide
+     * - The window is xwp by ywp slots in size.
+     */
+
+    /*
+     * We can think of xcenter as being "number of pixels we'd like
+     * displayed on the left half of the screen".  We have xwp/2
+     * pixels available on the left half.  We use this information to
+     * calculate the remaining parameters as noted.
+     */
+
+    want = ifp->if_xcenter;
+    avail = xwp/2;
+    if (want >= avail) {
+	/*
+	 * Just enough or too many pixels to display.  We'll be butted
+	 * up against the left edge, so
+	 *  - the leftmost X pixels will have an x coordinate of 0;
+	 *  - the leftmost column of image pixels will be as wide as the
+	 *    leftmost column of image pixel slots; and
+	 *  - the leftmost image pixel displayed will have an x
+	 *    coordinate equal to the number of pixels that didn't fit.
+	 */
+
+	qi->qi_xlf = 0;
+	qi->qi_ilf_w = lf_w;
+	qi->qi_ilf = want - avail;
+    } else {
+	/*
+	 * Not enough image pixels to fill the area.  We'll be offset
+	 * from the left edge, so
+	 *  - the leftmost X pixels will have an x coordinate equal
+	 *    to the number of pixels taken up by the unused image
+	 *    pixel slots;
+	 *  - the leftmost column of image pixels will be as wide as the
+	 *    xzoom width; and
+	 *  - the leftmost image pixel displayed will have a zero
+	 *    x coordinate.
+	 */
+
+	qi->qi_xlf = lf_w + (avail - want - 1) * ifp->if_xzoom;
+	qi->qi_ilf_w = ifp->if_xzoom;
+	qi->qi_ilf = 0;
+    }
+
+    /* Calculation for bottom edge. */
+
+    want = ifp->if_ycenter;
+    avail = ywp/2;
+    if (want >= avail) {
+	/*
+	 * Just enough or too many pixels to display.  We'll be
+	 * butted up against the bottom edge, so
+	 *  - the bottommost X pixels will have a y coordinate
+	 *    equal to the window height minus 1;
+	 *  - the bottommost row of image pixels will be as tall as the
+	 *    bottommost row of image pixel slots; and
+	 *  - the bottommost image pixel displayed will have a y
+	 *    coordinate equal to the number of pixels that didn't fit.
+	 */
+
+	qi->qi_xbt = qi->qi_qheight - 1;
+	qi->qi_ibt_h = bt_h;
+	qi->qi_ibt = want - avail;
+    } else {
+	/*
+	 * Not enough image pixels to fill the area.  We'll be
+	 * offset from the bottom edge, so
+	 *  - the bottommost X pixels will have a y coordinate equal
+	 *    to the window height, less the space taken up by the
+	 *    unused image pixel slots, minus 1;
+	 *  - the bottom row of image pixels will be as tall as the
+	 *    yzoom width; and
+	 *  - the bottommost image pixel displayed will have a zero
+	 *    y coordinate.
+	 */
+
+	qi->qi_xbt = qi->qi_qheight - (bt_h + (avail - want - 1) *
+				       ifp->if_yzoom) - 1;
+	qi->qi_ibt_h = ifp->if_yzoom;
+	qi->qi_ibt = 0;
+    }
+
+    /* Calculation for right edge. */
+
+    want = qi->qi_iwidth - ifp->if_xcenter;
+    avail =  xwp - xwp/2;
+    if (want >= avail) {
+	/*
+	 * Just enough or too many pixels to display.  We'll be
+	 * butted up against the right edge, so
+	 *  - the rightmost X pixels will have an x coordinate equal
+	 *    to the window width minus 1;
+	 *  - the rightmost column of image pixels will be as wide as
+	 *    the rightmost column of image pixel slots; and
+	 *  - the rightmost image pixel displayed will have an x
+	 *    coordinate equal to the center plus the number of pixels
+	 *    that fit, minus 1.
+	 */
+
+	qi->qi_xrt = qi->qi_qwidth - 1;
+	qi->qi_irt_w = rt_w;
+	qi->qi_irt = ifp->if_xcenter + avail - 1;
+    } else {
+	/*
+	 * Not enough image pixels to fill the area.  We'll be
+	 * offset from the right edge, so
+	 *  - the rightmost X pixels will have an x coordinate equal
+	 *    to the window width, less the space taken up by the
+	 *    unused image pixel slots, minus 1;
+	 *  - the rightmost column of image pixels will be as wide as
+	 *    the xzoom width; and
+	 *  - the rightmost image pixel displayed will have an x
+	 *    coordinate equal to the width of the image minus 1.
+	 */
+
+	qi->qi_xrt = qi->qi_qwidth - (rt_w + (avail - want - 1) *
+				      ifp->if_xzoom) - 1;
+	qi->qi_irt_w = ifp->if_xzoom;
+	qi->qi_irt = qi->qi_iwidth - 1;
+    }
+
+    /* Calculation for top edge. */
+
+    want = qi->qi_iheight - ifp->if_ycenter;
+    avail = ywp - ywp/2;
+    if (want >= avail) {
+	/*
+	 * Just enough or too many pixels to display.  We'll be
+	 * butted up against the top edge, so
+	 *  - the topmost X pixels will have a y coordinate of 0;
+	 *  - the topmost row of image pixels will be as tall as
+	 *    the topmost row of image pixel slots; and
+	 *  - the topmost image pixel displayed will have a y
+	 *    coordinate equal to the center plus the number of pixels
+	 *    that fit, minus 1.
+	 */
+
+	qi->qi_xtp = 0;
+	qi->qi_itp_h = tp_h;
+	qi->qi_itp = ifp->if_ycenter + avail - 1;
+    } else {
+	/*
+	 * Not enough image pixels to fill the area.  We'll be
+	 * offset from the top edge, so
+	 *  - the topmost X pixels will have a y coordinate equal
+	 *    to the space taken up by the unused image pixel slots;
+	 *  - the topmost row of image pixels will be as tall as
+	 *    the yzoom height; and
+	 *  - the topmost image pixel displayed will have a y
+	 *    coordinate equal to the height of the image minus 1.
+	 */
+
+	qi->qi_xtp = tp_h + (avail - want - 1) * ifp->if_yzoom;
+	qi->qi_itp_h = ifp->if_yzoom;
+	qi->qi_itp = qi->qi_iheight - 1;
+    }
+
+}
 
 __BEGIN_DECLS
 
@@ -161,15 +435,91 @@ qt_configureWindow(FBIO *ifp, int width, int height)
 
     qi->qi_image = new QImage(qi->qi_pix, width, height, QImage::Format_RGB888);
 
+    qt_updstate(ifp);
+
     fb_log("configure_win %d %d\n", ifp->if_height, ifp->if_width);
 }
 
 __END_DECLS
 
+
 HIDDEN void
 qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 {
     struct qtinfo *qi = QI(ifp);
+
+    int x2 = x1 + w - 1;	/* Convert to rectangle corners */
+    int y2 = y1 + h - 1;
+
+    int x1wd, y1ht;
+    int ox, oy;
+    int xdel, ydel;
+
+    unsigned char *ip;
+    unsigned char *op;
+
+    int j, k;
+
+    FB_CK_FBIO(ifp);
+
+    /*
+     * Figure out sizes of outermost image pixels
+     */
+    x1wd = (x1 == qi->qi_ilf) ? qi->qi_ilf_w : ifp->if_xzoom;
+    y1ht = (y1 == qi->qi_ibt) ? qi->qi_ibt_h : ifp->if_yzoom;
+
+    /* Compute ox: offset from left edge of window to left pixel */
+    xdel = x1 - qi->qi_ilf;
+    if (xdel) {
+	ox = x1wd + ((xdel - 1) * ifp->if_xzoom) + qi->qi_xlf;
+    } else {
+	ox = qi->qi_xlf;
+    }
+
+
+    /* Compute oy: offset from top edge of window to bottom pixel */
+    ydel = y1 - qi->qi_ibt;
+    if (ydel) {
+	oy = qi->qi_xbt - (y1ht + ((ydel - 1) * ifp->if_yzoom));
+    } else {
+	oy = qi->qi_xbt;
+    }
+
+
+    /*
+     * Set pointers to start of source and destination areas; note
+     * that we're going from lower to higher image coordinates, so
+     * irgb increases, but since images are in quadrant I and Qt uses
+     * quadrant IV, opix _decreases_.
+     */
+    ip = &(qi->qi_mem[(y1 * qi->qi_iwidth + x1) *
+				 sizeof (RGBpixel)]);
+    op = (unsigned char *) &qi->qi_pix[oy *
+				 qi->qi_qwidth + ox];
+
+    for (j = y2 - y1 + 1; j; j--) {
+	unsigned char *lip;
+	unsigned char *lop;
+
+	lip = ip;
+	lop = op;
+
+	for (k = x2 - x1 + 1; k; k--) {
+	    *lop++ = *lip;
+	    lip += sizeof (RGBpixel);
+	}
+
+	ip += qi->qi_iwidth * sizeof (RGBpixel);
+	op -= qi->qi_image->bytesPerLine();
+    }
+
+  /*  if (flags & BLIT_DISP) {
+	XPutImage(xi->xi_dpy, xi->xi_win, xi->xi_gc, xi->xi_image,
+		  ox, oy - xht + 1, ox, oy - xht + 1, xwd, xht);
+    }*/
+
+
+/*    struct qtinfo *qi = QI(ifp);
     int i,j;
     unsigned int k;
 
@@ -179,7 +529,7 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 		qi->qi_pix[((qi->qi_iheight - i) * qi->qi_iwidth + j) * sizeof(RGBpixel) + k] = qi->qi_mem[(i * qi->qi_iwidth + j) * sizeof(RGBpixel) + k];
 	}
     }
-/*    memcpy(&(qi->qi_pix[(y1*qi->qi_iwidth+x1)*sizeof(RGBpixel)]),
+    memcpy(&(qi->qi_pix[(y1*qi->qi_iwidth+x1)*sizeof(RGBpixel)]),
  	   &(qi->qi_mem[(y1*qi->qi_iwidth+x1)*sizeof(RGBpixel)]), w * h * sizeof(RGBpixel));
 */
 
@@ -322,6 +672,8 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
 	return -1;
     }
 
+    qt_updstate(ifp);
+
     qi->alive = 1;
 
     /* Mark display ready */
@@ -396,6 +748,7 @@ _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void
     qi->win = (QWindow *)qwin;
     qi->qi_painter = (QPainter *)qpainter;
 
+    qt_updstate(ifp);
     qi->alive = 0;
 
     /* Mark display ready */
