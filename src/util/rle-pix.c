@@ -61,7 +61,7 @@ static int r_debug;
 static int hflag;			/* print header only */
 
 static char usage[] = "\
-Usage: rle-pix [-c -d -h -H] [-C r/g/b]\n\
+Usage: rle-pix [-c -d -H] [-C r/g/b]\n\
 	[-s|S squareoutsize] [-w|W out_width] [-n|N out_height]\n\
 	[file.rle [file.pix]]\n\
 ";
@@ -71,7 +71,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "cdhHs:S:w:W:n:N:C:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "cdHs:S:w:W:n:N:C:h?")) != -1) {
 	switch (c) {
 	    case 'd':
 		r_debug = 1;
@@ -81,10 +81,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'H':
 		hflag = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		screen_height = screen_width = 1024;
 		break;
 	    case 'S':
 	    case 's':
@@ -114,7 +110,6 @@ get_args(int argc, char **argv)
 		}
 		break;
 	    default:
-	    case '?':
 		return 0;
 	}
     }

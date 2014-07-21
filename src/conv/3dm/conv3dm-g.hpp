@@ -107,6 +107,7 @@ private:
     void create_geom_comb(const ON_3dmObjectAttributes &geom_attrs);
 
     Color get_color(const ON_3dmObjectAttributes &obj_attrs) const;
+    Color get_color(const ON_Layer &layer) const;
 
     std::pair<std::string, std::string>
     get_shader(int index) const;

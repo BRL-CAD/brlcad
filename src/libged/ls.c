@@ -491,7 +491,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
     else {
 	_ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
-        _ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
+	_ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
     }
 
     bu_free((void *)dirp0, "_ged_getspace dp[]");

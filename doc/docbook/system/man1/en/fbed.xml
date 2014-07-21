@@ -17,20 +17,20 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>fbed</command>
-    <arg choice='opt'>-ph </arg>
+    <arg choice='opt'>-pH </arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Fbed</emphasis>
+<para><command>fbed</command>
 is an editor for frame buffer images, designed to facilitate the
 manipulation of existing images for the preparation of presentation quality
 graphics.  Although it does have the potential to generate fairly complex
 images, it is meant mainly for touching up existing images; adding titles,
 captions or other labels; cutting and pasting of one or more images; and
 reducing images or portions thereof.
-<emphasis remap='I'>Fbed</emphasis>
+<command>fbed</command>
 uses the frame buffer library
 <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 and therefore is available on all graphics devices which are supported
@@ -42,19 +42,23 @@ over ride this default by setting the environment variable
 (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 The
-<option>-h</option>
+<option>-H</option>
 option is for editing
 1024x1024 or high resolution
 <emphasis remap='SM'>(HIRES)</emphasis>
 images;  the default is low resolution, 512x512
-<emphasis remap='SM'>(LORES).</emphasis>
+<emphasis remap='SM'>(LORES)</emphasis>.
 The frame buffer's state can be toggled back and forth between
 <acronym>HIRES</acronym>
 and
 <acronym>LORES</acronym>
 at any time during execution of the program.</para>
 
-<para><emphasis remap='I'>Fbed</emphasis>
+<para>
+The <option>-p</option> option turns on the "pad" flag.
+</para>
+
+<para><command>fbed</command>
 allows function-to-key bindings and macro definition facilities
 in a fashion similar to some of the more versatile EMACS-style
 screen editors, such as
@@ -65,7 +69,7 @@ screen editors, such as
 
 <para>When
 <emphasis remap='I'>fbed</emphasis>
-is running on a graphics device a cursor will appear on the screen.
+is running on a graphics device, a cursor will appear on the screen.
 The position of the cursor points to the
 <emphasis remap='I'>current pixel</emphasis><literal>.</literal></para>
 

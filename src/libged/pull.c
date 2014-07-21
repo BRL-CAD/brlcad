@@ -37,7 +37,6 @@
 #include "./ged_private.h"
 
 
-
 void
 pull_comb(struct db_i *dbip,
 	  struct directory *dp,
@@ -178,14 +177,14 @@ pull_leaf(struct db_i *dbip, struct directory *dp, void *mp)
 
     if (mat == NULL) {
 	mat = (matp_t)bu_malloc(sizeof(mat_t), "cur_mat");
-        MAT_IDN(mat);
+	MAT_IDN(mat);
     }
 
     if (!(dp->d_flags & RT_DIR_SOLID))
-        return;
+	return;
     if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
-        bu_vls_printf((struct bu_vls *)mp, "Database read error, aborting\n");
-        return;
+	bu_vls_printf((struct bu_vls *)mp, "Database read error, aborting\n");
+	return;
     }
 
     MAT_IDN(mat);

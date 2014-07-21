@@ -1863,8 +1863,8 @@ ReadArgs(struct ged *gedp,
     bu_opterr = 1;
 
     while ((c=bu_getopt(argc, (char * const *)argv, options)) != -1) {
-    	if (bu_optopt == '?')
-    	    c='h';
+	if (bu_optopt == '?')
+	    c='h';
 	switch (c) {
 	    case 'a' :
 		*gen_name = 1;
@@ -1930,7 +1930,7 @@ ReadArgs(struct ged *gedp,
 		show_help(gedp, argv[0]);
 		if (c=='h')
 		    return GED_HELP;
-  	    	return GED_ERROR;
+		return GED_ERROR;
 	}
     }
 
@@ -2021,7 +2021,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     if (gen_name == 1) {
 	    if (bu_vls_strlen(&name) == 0)
 		bu_vls_printf(&name,"tire-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
-    	    else
+	    else
 		bu_vls_printf(&name,    "-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
     }
 

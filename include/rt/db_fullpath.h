@@ -25,6 +25,11 @@
 #ifndef RT_DB_FULLPATH_H
 #define RT_DB_FULLPATH_H
 
+/* struct resource requires db_fullpath as part of its definition -
+ * so long as that is true, typedef to avoid circular definition
+ * problem */
+typedef struct resource struct_resource;
+
 /**
  * For collecting paths through the database tree.
  * The fp_bool array can optionally hold a boolean flag
@@ -193,13 +198,16 @@ RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
  * to the specified depth.
  *
  * Returns -
- * -1 Failure
- * 0 OK
+ * 1 OK, path matrix written into 'mat'.
+ * 0 FAIL
+ *
+ * Called in librt/db_tree.c, mged/dodraw.c, and mged/animedit.c
  */
-RT_EXPORT extern int db_full_path_transformation_matrix(matp_t matp,
-				struct db_i *dbip,
-				const struct db_full_path *path,
-				const int depth);
+RT_EXPORT extern int db_path_to_mat(struct db_i		*dbip,
+				    struct db_full_path	*pathp,
+				    mat_t                mat,   /* result */
+				    const int            depth, /* number of arcs */
+				    struct_resource     *resp);
 
 
 #endif /*RT_DB_FULLPATH_H*/

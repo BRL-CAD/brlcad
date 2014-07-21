@@ -48,7 +48,6 @@ namespace
 
 static const ON_UUID &ROOT_UUID = ON_nil_uuid;
 static const std::string DEFAULT_NAME = "noname";
-static const std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
 
 
 static struct _InitOpenNURBS {
@@ -166,13 +165,15 @@ strbasename(const std::string &path)
 
 static std::string
 unique_name(std::map<std::string, int> &count_map,
-	    const std::string &prefix,
+	    std::string prefix,
 	    const std::string &suffix)
 {
-    std::string name = prefix + suffix;
-    int count = count_map[name]++;
+    if (std::isdigit(prefix.at(prefix.size() - 1)))
+	prefix += '_';
 
-    if (count) {
+    std::string name = prefix + suffix;
+
+    if (int count = count_map[name]++) {
 	std::ostringstream ss;
 	ss << prefix << count << suffix;
 	return ss.str();
@@ -184,10 +185,10 @@ unique_name(std::map<std::string, int> &count_map,
 static void
 xform2mat_t(const ON_Xform &source, mat_t dest)
 {
-    const int dmax = 4;
-    for (int row = 0; row < dmax; ++row)
-	for (int col = 0; col < dmax; ++col)
-	    dest[row*dmax + col] = source[row][col];
+    const int DMAX = 4;
+    for (int row = 0; row < DMAX; ++row)
+	for (int col = 0; col < DMAX; ++col)
+	    dest[row*DMAX + col] = source[row][col];
 }
 
 
@@ -294,7 +295,8 @@ public:
     Color(unsigned char red, unsigned char green, unsigned char blue);
     Color(const ON_Color &src);
 
-    bool operator==(const Color &rhs) const;
+    bool operator==(const Color &other) const;
+    bool operator!=(const Color &other) const;
 
     const unsigned char *get_rgb() const;
 
@@ -410,18 +412,28 @@ RhinoConverter::Color::Color(const ON_Color &src)
 
 
 bool
-RhinoConverter::Color::operator==(const Color &rhs) const
+RhinoConverter::Color::operator==(const Color &other) const
 {
-    return m_rgb[0] == rhs.m_rgb[0]
-	   && m_rgb[1] == rhs.m_rgb[1]
-	   && m_rgb[2] == rhs.m_rgb[2];
+    return m_rgb[0] == other.m_rgb[0]
+	   && m_rgb[1] == other.m_rgb[1]
+	   && m_rgb[2] == other.m_rgb[2];
+}
+
+
+bool
+RhinoConverter::Color::operator!=(const Color &other) const
+{
+    return !operator==(other);
 }
 
 
 const unsigned char *
 RhinoConverter::Color::get_rgb() const
 {
-    return m_rgb;
+    if (*this != Color(0, 0, 0))
+	return m_rgb;
+    else
+	return NULL;
 }
 
 
@@ -675,20 +687,9 @@ RhinoConverter::create_layer(const ON_Layer &layer)
     const std::pair<std::string, std::string> shader =
 	get_shader(layer.m_material_index);
 
-    // FIXME code duplication
-    Color color;
-    if (m_random_colors)
-	color = Color::random();
-    else
-	color = layer.m_color;
-
-    if (color == Color(0, 0, 0)) {
-	color = Color(255, 0, 0);
-    }
-
     const bool do_inherit = false;
     mk_comb(m_db, m_objects.get_name(layer.m_layer_id).c_str(), &wmembers.l,
-	    is_region, shader.first.c_str(), shader.second.c_str(), color.get_rgb(),
+	    is_region, shader.first.c_str(), shader.second.c_str(), get_color(layer).get_rgb(),
 	    0, 0, 0, 0, do_inherit, false, false);
 }
 
@@ -745,6 +746,7 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
     mk_addmember(member_name.c_str(), &members.l, matrix, WMOP_UNION);
 
     const bool do_inherit = false;
+
     mk_comb(m_db, iref_name.c_str(), &members.l, false,
 	    shader.first.c_str(), shader.second.c_str(),
 	    get_color(iref_attrs).get_rgb(),
@@ -781,17 +783,26 @@ RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs) const
 	    throw std::logic_error("unknown color source");
     }
 
+    return color;
+}
 
-    if (color == Color(0, 0, 0)) {
-	return Color(255, 0, 0);
-    } else
-	return color;
+
+RhinoConverter::Color
+RhinoConverter::get_color(const ON_Layer &layer) const
+{
+    if (m_random_colors)
+	return Color::random();
+
+    return layer.m_color;
 }
 
 
 std::pair<std::string, std::string>
 RhinoConverter::get_shader(int index) const
 {
+    const std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
+
+
     const ON_Material *material = m_model.m_material_table.At(index);
 
     if (!material)
@@ -929,7 +940,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     AutoDestroyer<bu_bitv, void, bu_bitv_free> mbitv;
 
     if (mode == RT_BOT_PLATE) {
-	const fastf_t PLATE_THICKNESS = 2;
+	const fastf_t PLATE_THICKNESS = 1;
 	thicknesses.assign(num_faces, PLATE_THICKNESS);
 	mbitv.ptr = bu_bitv_new(num_faces);
     }
