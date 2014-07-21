@@ -560,16 +560,12 @@ RhinoConverter::map_uuid_names()
     for (int i = 0; i < m_model.m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = m_model.m_layer_table[i];
 
-	std::string suffix = ".c";
-	if (!m_random_colors && is_toplevel(layer))
-	    suffix = ".r";
-
 	if (m_use_uuidnames)
-	    m_objects.add(layer.m_layer_id, Uuid2str(layer.m_layer_id) + suffix);
+	    m_objects.add(layer.m_layer_id, Uuid2str(layer.m_layer_id) + ".c");
 	else
 	    m_objects.add(layer.m_layer_id,
 			  unique_name(m_name_count_map,
-				      clean_name(w2string(layer.m_name)), suffix));
+				      clean_name(w2string(layer.m_name)), ".c"));
     }
 
 
@@ -671,8 +667,6 @@ RhinoConverter::create_all_layers()
 void
 RhinoConverter::create_layer(const ON_Layer &layer)
 {
-    const bool is_region = !m_random_colors && is_toplevel(layer);
-
     const std::set<ON_UUID, UuidCompare> &members =
 	m_objects.get_members(layer.m_layer_id);
 
@@ -687,9 +681,9 @@ RhinoConverter::create_layer(const ON_Layer &layer)
     const std::pair<std::string, std::string> shader =
 	get_shader(layer.m_material_index);
 
-    const bool do_inherit = false;
-    mk_comb(m_db, m_objects.get_name(layer.m_layer_id).c_str(), &wmembers.l,
-	    is_region, shader.first.c_str(), shader.second.c_str(), get_color(layer).get_rgb(),
+    const bool do_inherit = !m_random_colors && is_toplevel(layer);
+    mk_comb(m_db, m_objects.get_name(layer.m_layer_id).c_str(), &wmembers.l, false,
+	    shader.first.c_str(), shader.second.c_str(), get_color(layer).get_rgb(),
 	    0, 0, 0, 0, do_inherit, false, false);
 }
 
@@ -712,17 +706,19 @@ RhinoConverter::create_all_idefs()
 void
 RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
 {
-    wmember members;
-    BU_LIST_INIT(&members.l);
+    wmember wmembers;
+    BU_LIST_INIT(&wmembers.l);
 
     for (int i = 0; i < idef.m_object_uuid.Count(); ++i) {
 	const std::string &member_name = m_objects.get_name(idef.m_object_uuid[i]);
 	m_objects.mark_idef_member(idef.m_object_uuid[i]);
-	mk_addmember(member_name.c_str(), &members.l, NULL, WMOP_UNION);
+	mk_addmember(member_name.c_str(), &wmembers.l, NULL, WMOP_UNION);
     }
 
     const std::string &idef_name = m_objects.get_name(idef.m_uuid);
-    mk_lfcomb(m_db, idef_name.c_str(), &members, false);
+    const bool do_inherit = false;
+    mk_comb(m_db, idef_name.c_str(), &wmembers.l, false,
+	    NULL, NULL, NULL, 0, 0, 0, 0, do_inherit, false, false);
 }
 
 
@@ -746,7 +742,6 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
     mk_addmember(member_name.c_str(), &members.l, matrix, WMOP_UNION);
 
     const bool do_inherit = false;
-
     mk_comb(m_db, iref_name.c_str(), &members.l, false,
 	    shader.first.c_str(), shader.second.c_str(),
 	    get_color(iref_attrs).get_rgb(),
@@ -993,13 +988,9 @@ RhinoConverter::create_all_geometry()
 	const std::string &geom_name = m_objects.get_name(geom_attrs.m_uuid);
 
 	if (m_verbose_mode)
-	    m_log.Print("Object %d of %d...\n", i + 1,
-			m_model.m_object_table.Count());
+	    m_log.Print("Object %d of %d...\n", i + 1, m_model.m_object_table.Count());
 
-	const ON_Geometry *geom =
-	    ON_Geometry::Cast(m_model.m_object_table[i].m_object);
-
-	if (geom)
+	if (const ON_Geometry *geom = ON_Geometry::Cast(m_model.m_object_table[i].m_object))
 	    create_geometry(geom, geom_attrs);
 	else
 	    m_log.Print("WARNING: Skipping non-Geometry entity '%s'\n", geom_name.c_str());
