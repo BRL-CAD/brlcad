@@ -15,7 +15,11 @@ set(3dm-g_SRCS
   )
 BRLCAD_ADDEXEC(3dm-g "${3dm-g_SRCS}" "libwdb;libicv;${OPENNURBS_LIBRARY}" NO_STRICT)
 
-CMAKEFILES(conv3dm-g.hpp)
+CMAKEFILES(
+  conv3dm-g.hpp
+  solidity.cpp
+  solidity.h
+  )
 
 # Local Variables:
 # tab-width: 8
