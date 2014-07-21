@@ -70,6 +70,7 @@ private:
 	void register_member(const ON_UUID &parent_uuid, const ON_UUID &member_uuid);
 	void mark_idef_member(const ON_UUID &uuid);
 
+	bool exists(const ON_UUID &uuid) const;
 	const std::string &get_name(const ON_UUID &uuid) const;
 	const std::set<ON_UUID, UuidCompare> &get_members(const ON_UUID &uuid) const;
 	bool is_idef_member(const ON_UUID &uuid) const;
@@ -88,10 +89,10 @@ private:
     void nest_all_layers();
     void create_all_layers();
     void create_all_idefs();
-    void create_all_geometry();
+    void create_all_objects();
 
-    void create_geometry(const ON_Geometry *geom,
-			 const ON_3dmObjectAttributes &geom_attrs);
+    void create_object(const ON_Object *object,
+		       const ON_3dmObjectAttributes &object_attrs);
 
     void create_bitmap(const ON_Bitmap *bitmap);
     void create_layer(const ON_Layer &layer);

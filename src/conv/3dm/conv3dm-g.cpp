@@ -155,6 +155,25 @@ is_toplevel(const ON_Layer &layer)
 }
 
 
+static const char *
+get_object_suffix(const ON_Object &object)
+{
+    switch (object.ObjectType()) {
+	case ON::layer_object:
+	case ON::instance_definition:
+	case ON::instance_reference:
+	    return ".c";
+
+	case ON::brep_object:
+	case ON::mesh_object:
+	    return ".s";
+
+	default:
+	    return NULL;
+    };
+}
+
+
 static std::string
 strbasename(const std::string &path)
 {
@@ -167,7 +186,7 @@ strbasename(const std::string &path)
 static std::string
 unique_name(std::map<std::string, int> &count_map,
 	    std::string prefix,
-	    const std::string &suffix)
+	    const char *suffix)
 {
     if (std::isdigit(*prefix.rbegin()))
 	prefix += '_';
@@ -321,7 +340,7 @@ struct RhinoConverter::ObjectManager::ModelObject {
 };
 
 
-RhinoConverter::ObjectManager::ObjectManager() :
+inline RhinoConverter::ObjectManager::ObjectManager() :
     m_obj_map()
 {}
 
@@ -346,28 +365,35 @@ RhinoConverter::ObjectManager::register_member(
 }
 
 
-void
+inline void
 RhinoConverter::ObjectManager::mark_idef_member(const ON_UUID &uuid)
 {
     m_obj_map.at(uuid).m_idef_member = true;
 }
 
 
-const std::string &
+inline bool
+RhinoConverter::ObjectManager::exists(const ON_UUID &uuid) const
+{
+    return m_obj_map.find(uuid) != m_obj_map.end();
+}
+
+
+inline const std::string &
 RhinoConverter::ObjectManager::get_name(const ON_UUID &uuid) const
 {
     return m_obj_map.at(uuid).m_name;
 }
 
 
-const std::set<ON_UUID, RhinoConverter::UuidCompare> &
+inline const std::set<ON_UUID, RhinoConverter::UuidCompare> &
 RhinoConverter::ObjectManager::get_members(const ON_UUID &uuid) const
 {
     return m_obj_map.at(uuid).m_members;
 }
 
 
-bool
+inline bool
 RhinoConverter::ObjectManager::is_idef_member(const ON_UUID &uuid) const
 {
     return m_obj_map.at(uuid).m_idef_member;
@@ -385,14 +411,14 @@ RhinoConverter::Color::random()
 }
 
 
-RhinoConverter::Color::Color()
+inline RhinoConverter::Color::Color()
 {
     m_rgb[0] = m_rgb[1] = m_rgb[2] = 0;
 }
 
 
-RhinoConverter::Color::Color(unsigned char red, unsigned char green,
-			     unsigned char blue)
+inline RhinoConverter::Color::Color(unsigned char red, unsigned char green,
+				    unsigned char blue)
 {
     m_rgb[0] = red;
     m_rgb[1] = green;
@@ -413,7 +439,7 @@ RhinoConverter::Color::Color(const ON_Color &src)
 }
 
 
-bool
+inline bool
 RhinoConverter::Color::operator==(const Color &other) const
 {
     return m_rgb[0] == other.m_rgb[0]
@@ -422,7 +448,7 @@ RhinoConverter::Color::operator==(const Color &other) const
 }
 
 
-bool
+inline bool
 RhinoConverter::Color::operator!=(const Color &other) const
 {
     return !operator==(other);
@@ -492,7 +518,7 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
     map_uuid_names();
     create_all_bitmaps();
     create_all_idefs();
-    create_all_geometry();
+    create_all_objects();
     create_all_layers();
 
     m_model.Destroy();
@@ -514,8 +540,8 @@ RhinoConverter::clean_model()
 	m_model.Audit(true, &repair_count, &m_log, &warnings); // repair
 
 	m_log.Print("Repaired %d objects.\n", repair_count);
-	for (int warn_i = 0; warn_i < warnings.Count(); ++warn_i)
-	    m_log.Print("%s\n", warnings[warn_i]);
+	for (int i = 0; i < warnings.Count(); ++i)
+	    m_log.Print("WARNING: %s\n", warnings[i]);
 
 	if (m_model.IsValid(&m_log))
 	    m_log.Print("Repair successful, model is now valid.\n");
@@ -529,62 +555,70 @@ void
 RhinoConverter::map_uuid_names()
 {
     for (int i = 0; i < m_model.m_object_table.Count(); ++i) {
-	const ON_Object *geom = m_model.m_object_table[i].m_object;
-	const ON_3dmObjectAttributes &geom_attrs =
+	const ON_Object &object = *m_model.m_object_table[i].m_object;
+	const ON_3dmObjectAttributes &object_attrs =
 	    m_model.m_object_table[i].m_attributes;
+	const char * const suffix = get_object_suffix(object);
 
-	std::string suffix = ".s";
-	if (geom->ObjectType() == ON::instance_reference)
-	    suffix = ".c";
+	if (!suffix) {
+	    m_log.Print("WARNING: Skipping unimplemented object type: %s: '%s'\n",
+			uuid2string(object_attrs.m_uuid).c_str(),
+			w2string(object_attrs.m_name).c_str());
+
+	    continue;
+	}
 
 	if (m_use_uuidnames)
-	    m_objects.add(geom_attrs.m_uuid, uuid2string(geom_attrs.m_uuid) + suffix);
+	    m_objects.add(object_attrs.m_uuid, uuid2string(object_attrs.m_uuid) + suffix);
 	else
-	    m_objects.add(geom_attrs.m_uuid,
+	    m_objects.add(object_attrs.m_uuid,
 			  unique_name(m_name_count_map,
-				      clean_name(w2string(geom_attrs.m_name)), suffix));
+				      clean_name(w2string(object_attrs.m_name)), suffix));
 
     }
 
 
     for (int i = 0; i < m_model.m_idef_table.Count(); ++i) {
 	const ON_InstanceDefinition &idef = m_model.m_idef_table[i];
+	const char * const suffix = get_object_suffix(idef);
 
 	if (m_use_uuidnames)
-	    m_objects.add(idef.m_uuid, uuid2string(idef.m_uuid) + ".c");
+	    m_objects.add(idef.m_uuid, uuid2string(idef.m_uuid) + suffix);
 	else
 	    m_objects.add(idef.m_uuid,
 			  unique_name(m_name_count_map,
-				      clean_name(w2string(idef.Name())), ".c"));
+				      clean_name(w2string(idef.m_name)), suffix));
     }
 
 
     for (int i = 0; i < m_model.m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = m_model.m_layer_table[i];
+	const char * const suffix = get_object_suffix(layer);
 
 	if (m_use_uuidnames)
-	    m_objects.add(layer.m_layer_id, uuid2string(layer.m_layer_id) + ".c");
+	    m_objects.add(layer.m_layer_id, uuid2string(layer.m_layer_id) + suffix);
 	else
 	    m_objects.add(layer.m_layer_id,
 			  unique_name(m_name_count_map,
-				      clean_name(w2string(layer.m_name)), ".c"));
+				      clean_name(w2string(layer.m_name)), suffix));
     }
 
 
     for (int i = 0; i < m_model.m_bitmap_table.Count(); ++i) {
 	m_model.m_bitmap_table[i]->m_bitmap_id = generate_uuid();
 
-	const ON_Bitmap *bitmap = m_model.m_bitmap_table[i];
+	const ON_Bitmap &bitmap = *m_model.m_bitmap_table[i];
+	const char * const suffix = ".pix";
 
 	if (m_use_uuidnames)
-	    m_objects.add(bitmap->m_bitmap_id, uuid2string(bitmap->m_bitmap_id) + ".pix");
+	    m_objects.add(bitmap.m_bitmap_id, uuid2string(bitmap.m_bitmap_id) + suffix);
 	else {
-	    std::string bitmap_name = clean_name(w2string(bitmap->m_bitmap_name));
+	    std::string bitmap_name = clean_name(w2string(bitmap.m_bitmap_name));
 	    if (bitmap_name == DEFAULT_NAME)
-		bitmap_name = clean_name(strbasename(w2string(bitmap->m_bitmap_filename)));
+		bitmap_name = clean_name(strbasename(w2string(bitmap.m_bitmap_filename)));
 
-	    m_objects.add(bitmap->m_bitmap_id,
-			  unique_name(m_name_count_map, bitmap_name, ".pix"));
+	    m_objects.add(bitmap.m_bitmap_id,
+			  unique_name(m_name_count_map, bitmap_name, suffix));
 	}
     }
 }
@@ -596,11 +630,11 @@ RhinoConverter::create_all_bitmaps()
     m_log.Print("Creating bitmaps...\n");
 
     for (int i = 0; i < m_model.m_bitmap_table.Count(); ++i) {
-	const ON_Bitmap *bitmap = m_model.m_bitmap_table[i];
-	const std::string &bitmap_name = m_objects.get_name(bitmap->m_bitmap_id);
+	const ON_Bitmap &bitmap = *m_model.m_bitmap_table[i];
+	const std::string &bitmap_name = m_objects.get_name(bitmap.m_bitmap_id);
 
 	m_log.Print("Creating bitmap '%s'\n", bitmap_name.c_str());
-	create_bitmap(bitmap);
+	create_bitmap(&bitmap);
     }
 }
 
@@ -712,6 +746,9 @@ RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
     BU_LIST_INIT(&wmembers.l);
 
     for (int i = 0; i < idef.m_object_uuid.Count(); ++i) {
+	if (!m_objects.exists(idef.m_object_uuid[i]))
+	    continue;
+
 	const std::string &member_name = m_objects.get_name(idef.m_object_uuid[i]);
 	m_objects.mark_idef_member(idef.m_object_uuid[i]);
 	mk_addmember(member_name.c_str(), &wmembers.l, NULL, WMOP_UNION);
@@ -980,72 +1017,68 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 
 
 void
-RhinoConverter::create_all_geometry()
+RhinoConverter::create_all_objects()
 {
-    m_log.Print("Creating geometry...\n");
+    m_log.Print("Creating objects...\n");
 
     for (int i = 0; i < m_model.m_object_table.Count(); ++i) {
-	const ON_3dmObjectAttributes &geom_attrs =
+	const ON_3dmObjectAttributes &object_attrs =
 	    m_model.m_object_table[i].m_attributes;
-	const std::string &geom_name = m_objects.get_name(geom_attrs.m_uuid);
 
 	if (m_verbose_mode)
 	    m_log.Print("Object %d of %d...\n", i + 1, m_model.m_object_table.Count());
 
-	if (const ON_Geometry *geom = ON_Geometry::Cast(m_model.m_object_table[i].m_object))
-	    create_geometry(geom, geom_attrs);
-	else
-	    m_log.Print("WARNING: Skipping non-Geometry entity '%s'\n", geom_name.c_str());
+	create_object(m_model.m_object_table[i].m_object, object_attrs);
     }
 }
 
 
 void
-RhinoConverter::create_geometry(const ON_Geometry *geom,
-				const ON_3dmObjectAttributes &geom_attrs)
+RhinoConverter::create_object(const ON_Object *object,
+			      const ON_3dmObjectAttributes &object_attrs)
 {
-    if (const ON_Brep *brep = ON_Brep::Cast(geom)) {
-	create_brep(*brep, geom_attrs);
-    } else if (geom->HasBrepForm()) {
-	ON_Brep *new_brep = geom->BrepForm();
-	create_brep(*new_brep, geom_attrs);
+    if (const ON_Brep *brep = ON_Brep::Cast(object)) {
+	create_brep(*brep, object_attrs);
+    } else if (ON_Geometry::Cast(object) && ON_Geometry::Cast(object)->HasBrepForm()) {
+	ON_Brep *new_brep = ON_Geometry::Cast(object)->BrepForm();
+	create_brep(*new_brep, object_attrs);
 	delete new_brep;
-    } else if (const ON_Curve *curve = ON_Curve::Cast(geom)) {
+    } else if (const ON_Curve *curve = ON_Curve::Cast(object)) {
 	m_log.Print("-- Skipping: Type: ON_Curve\n");
 	if (m_verbose_mode) curve->Dump(m_log);
-    } else if (const ON_Surface *surface = ON_Surface::Cast(geom)) {
+    } else if (const ON_Surface *surface = ON_Surface::Cast(object)) {
 	m_log.Print("-- Skipping: Type: ON_Surface\n");
 	if (m_verbose_mode) surface->Dump(m_log);
-    } else if (const ON_Mesh *mesh = ON_Mesh::Cast(geom)) {
+    } else if (const ON_Mesh *mesh = ON_Mesh::Cast(object)) {
 
-	create_mesh(*mesh, geom_attrs);
+	create_mesh(*mesh, object_attrs);
 
-    } else if (const ON_RevSurface *revsurf = ON_RevSurface::Cast(geom)) {
+    } else if (const ON_RevSurface *revsurf = ON_RevSurface::Cast(object)) {
 	m_log.Print("-- Skipping: Type: ON_RevSurface\n");
 	if (m_verbose_mode) revsurf->Dump(m_log);
-    } else if (const ON_PlaneSurface *planesurf = ON_PlaneSurface::Cast(geom)) {
+    } else if (const ON_PlaneSurface *planesurf = ON_PlaneSurface::Cast(object)) {
 	m_log.Print("-- Skipping: Type: ON_PlaneSurface\n");
 	if (m_verbose_mode) planesurf->Dump(m_log);
-    } else if (const ON_InstanceDefinition *instdef = ON_InstanceDefinition::Cast(geom)) {
+    } else if (const ON_InstanceDefinition *instdef = ON_InstanceDefinition::Cast(object)) {
 	m_log.Print("-- Skipping: Type: ON_InstanceDefinition\n");
 	if (m_verbose_mode) instdef->Dump(m_log);
-    } else if (const ON_InstanceRef *instref = ON_InstanceRef::Cast(geom)) {
+    } else if (const ON_InstanceRef *instref = ON_InstanceRef::Cast(object)) {
 
-	create_iref(*instref, geom_attrs);
+	create_iref(*instref, object_attrs);
 
-    } else if (const ON_Layer *layer = ON_Layer::Cast(geom)) {
+    } else if (const ON_Layer *layer = ON_Layer::Cast(object)) {
 	m_log.Print("-- Skipping: Type: ON_Layer\n");
 	if (m_verbose_mode) layer->Dump(m_log);
-    } else if (const ON_Light *light = ON_Light::Cast(geom)) {
+    } else if (const ON_Light *light = ON_Light::Cast(object)) {
 	m_log.Print("-- Skipping: Type: ON_Light\n");
 	if (m_verbose_mode) light->Dump(m_log);
-    } else if (const ON_NurbsCage *nurbscage = ON_NurbsCage::Cast(geom)) {
+    } else if (const ON_NurbsCage *nurbscage = ON_NurbsCage::Cast(object)) {
 	m_log.Print("-- Skipping: Type: ON_NurbsCage\n");
 	if (m_verbose_mode) nurbscage->Dump(m_log);
-    } else if (const ON_MorphControl *morphctrl = ON_MorphControl::Cast(geom)) {
+    } else if (const ON_MorphControl *morphctrl = ON_MorphControl::Cast(object)) {
 	m_log.Print("-- Skipping: Type: ON_MorphControl\n");
 	if (m_verbose_mode) morphctrl->Dump(m_log);
-    } else if (const ON_Group *group = ON_Group::Cast(geom)) {
+    } else if (const ON_Group *group = ON_Group::Cast(object)) {
 	m_log.Print("-- Skipping: Type: ON_Group\n");
 	if (m_verbose_mode) group->Dump(m_log);
     } else m_log.Print("-- Skipping unknown object type\n");
