@@ -183,7 +183,7 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
     /**
      * View-points from directly above and besides the heart indicate that it is
-     * elliptical, Y-axis is the major axis, X-axis the minor axis and the 
+     * elliptical, Y-axis is the major axis, X-axis the minor axis and the
      * ratio of the radius of the minor axis to the radius of the major axis
      * is 2/3
      */
@@ -728,7 +728,7 @@ rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
     e = i = 0.58778;		/* cos(54.0 degrees) */
     f = h = 0.30901;            /* cos(72.0 degrees) */
     g = 0.00000;		/* cos(90.0 degrees) */
-    l = 1.00000;		/* sin(90.0 degrees) */ 
+    l = 1.00000;		/* sin(90.0 degrees) */
 
     /*
      * For angle theta, compute surface point as
