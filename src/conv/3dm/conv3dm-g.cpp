@@ -158,6 +158,10 @@ is_toplevel(const ON_Layer &layer)
 static const char *
 get_object_suffix(const ON_Object &object)
 {
+    if (const ON_Geometry *geom = ON_Geometry::Cast(&object))
+	if (geom->HasBrepForm())
+	    return ".s";
+
     switch (object.ObjectType()) {
 	case ON::layer_object:
 	case ON::instance_definition:
