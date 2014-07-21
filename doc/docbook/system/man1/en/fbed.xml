@@ -37,7 +37,7 @@ and therefore is available on all graphics devices which are supported
 by this package.  On start up, the program always attempts to open the
 default frame buffer.  This device is specified by the frame buffer library,
 and is configurable on a per system basis.  Often the user will want to
-over ride this default by setting the environment variable
+override this default by setting the environment variable
 <envar>FB_FILE</envar>
 (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
