@@ -91,7 +91,7 @@ private:
     void create_all_idefs();
     void create_all_objects();
 
-    void create_object(const ON_Object *object,
+    bool create_object(const ON_Object &object,
 		       const ON_3dmObjectAttributes &object_attrs);
 
     void create_bitmap(const ON_Bitmap *bitmap);

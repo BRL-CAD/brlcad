@@ -182,7 +182,7 @@ get_object_suffix(const ON_Object &object)
 
 	default:
 	    return NULL;
-    };
+    }
 }
 
 
@@ -520,10 +520,6 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 
     clean_model();
 
-    if (m_verbose_mode)
-	m_log.Print("Number of NURBS objects read: %d\n\n",
-		    m_model.m_object_table.Count());
-
     m_objects.add(ROOT_UUID, strbasename(path));
 
     map_uuid_names();
@@ -571,13 +567,8 @@ RhinoConverter::map_uuid_names()
 	    m_model.m_object_table[i].m_attributes;
 	const char * const suffix = get_object_suffix(object);
 
-	if (!suffix) {
-	    m_log.Print("WARNING: Skipping unimplemented object type: %s: '%s'\n",
-			uuid2string(object_attrs.m_uuid).c_str(),
-			w2string(object_attrs.m_name).c_str());
-
+	if (!suffix)
 	    continue;
-	}
 
 	if (m_use_uuidnames)
 	    m_objects.add(object_attrs.m_uuid, uuid2string(object_attrs.m_uuid) + suffix);
@@ -661,7 +652,7 @@ RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 	    load_pix(path, bitmap->Width(), bitmap->Height());
 	} catch (const std::runtime_error &) {
 	    m_log.Print("Couldn't convert bitmap to pix\n");
-	    m_log.Print("-- Extracted embedded bitmap to '%s'\n", path.c_str());
+	    m_log.Print("Extracted embedded bitmap to '%s'\n", path.c_str());
 	    return;
 	}
 
@@ -968,7 +959,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     }
 
     if (num_vertices == 0 || num_faces == 0) {
-	m_log.Print("-- Mesh has no content; skipping...\n");
+	m_log.Print("Mesh has no content; skipping...\n");
 	return;
     }
 
@@ -1039,72 +1030,58 @@ RhinoConverter::create_all_objects()
 {
     m_log.Print("Creating objects...\n");
 
-    for (int i = 0; i < m_model.m_object_table.Count(); ++i) {
+    const int num_objects = m_model.m_object_table.Count();
+    int num_created = 0;
+    for (int i = 0; i < num_objects; ++i) {
 	const ON_3dmObjectAttributes &object_attrs =
 	    m_model.m_object_table[i].m_attributes;
 
 	if (m_verbose_mode)
 	    m_log.Print("Object %d of %d...\n", i + 1, m_model.m_object_table.Count());
 
-	create_object(m_model.m_object_table[i].m_object, object_attrs);
+	if (create_object(*m_model.m_object_table[i].m_object, object_attrs))
+	    ++num_created;
     }
+
+    if (num_created != num_objects)
+	m_log.Print("Created %d of %d objects\n", num_created, num_objects);
 }
 
 
-void
-RhinoConverter::create_object(const ON_Object *object,
+bool
+RhinoConverter::create_object(const ON_Object &object,
 			      const ON_3dmObjectAttributes &object_attrs)
 {
-    if (const ON_Brep *brep = ON_Brep::Cast(object)) {
+    if (const ON_Brep *brep = ON_Brep::Cast(&object)) {
 	create_brep(*brep, object_attrs);
-    } else if (ON_Geometry::Cast(object) && ON_Geometry::Cast(object)->HasBrepForm()) {
-	ON_Brep *new_brep = ON_Geometry::Cast(object)->BrepForm();
+	return true;
+    }
+
+    if (ON_Geometry::Cast(&object) && ON_Geometry::Cast(&object)->HasBrepForm()) {
+	ON_Brep *new_brep = ON_Geometry::Cast(&object)->BrepForm();
 	create_brep(*new_brep, object_attrs);
 	delete new_brep;
-    } else if (const ON_Curve *curve = ON_Curve::Cast(object)) {
-	m_log.Print("-- Skipping: Type: ON_Curve\n");
-	if (m_verbose_mode) curve->Dump(m_log);
-    } else if (const ON_Surface *surface = ON_Surface::Cast(object)) {
-	m_log.Print("-- Skipping: Type: ON_Surface\n");
-	if (m_verbose_mode) surface->Dump(m_log);
-    } else if (const ON_Mesh *mesh = ON_Mesh::Cast(object)) {
+	return true;
+    }
 
+    if (const ON_Mesh *mesh = ON_Mesh::Cast(&object)) {
 	create_mesh(*mesh, object_attrs);
+	return true;
+    }
 
-    } else if (const ON_RevSurface *revsurf = ON_RevSurface::Cast(object)) {
-	m_log.Print("-- Skipping: Type: ON_RevSurface\n");
-	if (m_verbose_mode) revsurf->Dump(m_log);
-    } else if (const ON_PlaneSurface *planesurf = ON_PlaneSurface::Cast(object)) {
-	m_log.Print("-- Skipping: Type: ON_PlaneSurface\n");
-	if (m_verbose_mode) planesurf->Dump(m_log);
-    } else if (const ON_InstanceDefinition *instdef = ON_InstanceDefinition::Cast(object)) {
-	m_log.Print("-- Skipping: Type: ON_InstanceDefinition\n");
-	if (m_verbose_mode) instdef->Dump(m_log);
-    } else if (const ON_InstanceRef *instref = ON_InstanceRef::Cast(object)) {
-
+    if (const ON_InstanceRef *instref = ON_InstanceRef::Cast(&object)) {
 	create_iref(*instref, object_attrs);
+	return true;
+    }
 
-    } else if (const ON_Layer *layer = ON_Layer::Cast(object)) {
-	m_log.Print("-- Skipping: Type: ON_Layer\n");
-	if (m_verbose_mode) layer->Dump(m_log);
-    } else if (const ON_Light *light = ON_Light::Cast(object)) {
-	m_log.Print("-- Skipping: Type: ON_Light\n");
-	if (m_verbose_mode) light->Dump(m_log);
-    } else if (const ON_NurbsCage *nurbscage = ON_NurbsCage::Cast(object)) {
-	m_log.Print("-- Skipping: Type: ON_NurbsCage\n");
-	if (m_verbose_mode) nurbscage->Dump(m_log);
-    } else if (const ON_MorphControl *morphctrl = ON_MorphControl::Cast(object)) {
-	m_log.Print("-- Skipping: Type: ON_MorphControl\n");
-	if (m_verbose_mode) morphctrl->Dump(m_log);
-    } else if (const ON_Group *group = ON_Group::Cast(object)) {
-	m_log.Print("-- Skipping: Type: ON_Group\n");
-	if (m_verbose_mode) group->Dump(m_log);
-    } else m_log.Print("-- Skipping unknown object type\n");
-
+    m_log.Print("Skipping object of type %s\n", object.ClassId()->ClassName());
     if (m_verbose_mode) {
+	object.Dump(m_log);
 	m_log.PopIndent();
 	m_log.Print("\n");
     }
+
+    return false;
 }
 
 
