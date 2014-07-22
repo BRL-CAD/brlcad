@@ -269,7 +269,6 @@ clean_name(const std::string &input)
 	switch (*it) {
 	    case '.':
 	    case '-':
-	    case '_':
 		ss.put(index > 0 ? *it : '_');
 		break;
 
