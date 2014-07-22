@@ -607,14 +607,19 @@ RhinoConverter::map_uuid_names()
     }
 
 
-    // start numbering from 1
+    // start numbering from 1 - FIXME
     for (std::map<std::string, int>::const_iterator it
 	 = m_name_count_map.begin(); it != m_name_count_map.end(); ++it) {
 	if (it->second < 2) continue;
 
-	std::string new_name = it->first;
-	new_name.insert(new_name.size() - 2, "001");
-	// TODO change name mapping to new_name
+	for (std::map<ON_UUID, ObjectManager::ModelObject, UuidCompare>
+	     ::iterator objit = m_objects.m_obj_map.begin();
+	     objit != m_objects.m_obj_map.end(); ++objit) {
+	    if (objit->second.m_name == it->first) {
+		objit->second.m_name.insert(objit->second.m_name.size() - 2, "001");
+		break;
+	    }
+	}
     }
 }
 

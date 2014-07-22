@@ -77,6 +77,8 @@ private:
     private:
 	struct ModelObject;
 	std::map<ON_UUID, ModelObject, UuidCompare> m_obj_map;
+
+	friend class RhinoConverter; // FIXME
     };
 
 
