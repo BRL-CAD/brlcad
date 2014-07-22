@@ -604,7 +604,6 @@ rt_joint_find_selections(
 	    joint_selection->what = JOINT_SELECT_LOC;
 	}
     }
-#endif
 
     if (!joint_selection) {
 	bu_log("selected nothing.\n");
@@ -621,6 +620,7 @@ rt_joint_find_selections(
 	case JOINT_SELECT_V2:
 	    bu_log("selected vector2.\n");
     }
+#endif
 
     /* build and return list of selections */
     BU_ALLOC(selection_set, struct rt_selection_set);
