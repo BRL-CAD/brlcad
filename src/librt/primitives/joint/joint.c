@@ -680,8 +680,6 @@ rt_joint_process_selection(
 
     VCROSS(cross, js->start, end);
     VUNITIZE(cross);
-    bn_mat_arb_rot(pmat, jip->location, cross, angle);
-    /* bn_mat_xform_about_pt(pmat, rmat, jip->location); */
 
     /* get solid or parent comb directory */
     /*ret =*/ (void)db_string_to_path(&fpath, dbip, bu_vls_cstr(&jip->reference_path_1));
@@ -703,7 +701,8 @@ rt_joint_process_selection(
 	char *member_name = DB_FULL_PATH_CUR_DIR(&fpath)->d_namep;
 	struct rt_comb_internal *comb_ip;
 	union tree *comb_tree, *member;
-	mat_t idn, combined_mat;
+	mat_t idn, path_mat, combined_mat;
+	vect_t rot_dir;
 
 	MAT_IDN(idn);
 
@@ -723,9 +722,13 @@ rt_joint_process_selection(
 	    MAT_IDN(*new_mat);
 	    member->tr_l.tl_mat = (matp_t)new_mat;
 	}
+	db_path_to_mat(dbip, &fpath, path_mat, 0, NULL);
+	VEC3X4MAT(rot_dir, cross, path_mat);
+	bn_mat_arb_rot(pmat, jip->location, rot_dir, angle);
 	bn_mat_mul(combined_mat, member->tr_l.tl_mat, pmat);
 	MAT_COPY(member->tr_l.tl_mat, combined_mat);
     } else {
+	bn_mat_arb_rot(pmat, jip->location, cross, angle);
 	rt_db_get_internal(&path_ip, dp, dbip, pmat, NULL);
     }
 
