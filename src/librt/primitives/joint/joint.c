@@ -501,9 +501,7 @@ enum {
 
 struct joint_selection {
     int what;
-    point_t plane_pt;
-    point_t qstart;
-    vect_t qdir;
+    vect_t start;
 };
 
 static void
@@ -549,8 +547,6 @@ rt_joint_find_selections(
 
     BU_GET(joint_selection, struct joint_selection);
     joint_selection->what = JOINT_SELECT_V1;
-    VMOVE(joint_selection->qstart, qstart);
-    VMOVE(joint_selection->qdir, qdir);
 
     /* closest point on query line to location (same as the
      * intersection between the query line and the plane parallel to
@@ -558,7 +554,7 @@ rt_joint_find_selections(
      */
     BN_TOL_INIT(&tol);
     (void)bn_dist_pt3_line3(dist, qline_pt, qstart, qdir, jip->location, &tol);
-    VMOVE(joint_selection->plane_pt, qline_pt);
+    VJOIN1(joint_selection->start, qline_pt, -1.0, jip->location);
 
 #if 0
     ret = bn_distsq_line3_line3(dist, qstart, qdir, jip->location,
@@ -644,7 +640,7 @@ rt_joint_process_selection(
     struct joint_selection *js;
     struct rt_joint_internal *jip;
     mat_t pmat;
-    vect_t delta, start, end, cross;
+    vect_t delta, end, cross;
     fastf_t angle;
     struct rt_db_internal path_ip;
     struct directory *dp;
@@ -676,14 +672,13 @@ rt_joint_process_selection(
 	return 0;
     }
 
-    VJOIN1(start, js->plane_pt, -1.0, jip->location);
-    VADD2(end, start, delta);
+    VADD2(end, js->start, delta);
 
-    angle = VDOT(start, end);
-    angle /= MAGNITUDE(start) * MAGNITUDE(end);
+    angle = VDOT(js->start, end);
+    angle /= MAGNITUDE(js->start) * MAGNITUDE(end);
     angle = acos(angle);
 
-    VCROSS(cross, start, end);
+    VCROSS(cross, js->start, end);
     VUNITIZE(cross);
     bn_mat_arb_rot(pmat, jip->location, cross, angle);
     /* bn_mat_xform_about_pt(pmat, rmat, jip->location); */
@@ -737,7 +732,7 @@ rt_joint_process_selection(
     /* write changes */
     rt_db_put_internal(dp, dbip, &path_ip, NULL);
 
-    VADD2(js->plane_pt, jip->location, end);
+    VMOVE(js->start, end);
     db_free_full_path(&fpath);
 
     return 0;
