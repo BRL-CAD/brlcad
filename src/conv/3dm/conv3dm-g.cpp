@@ -64,6 +64,14 @@ static struct _InitOpenNURBS {
 } _init_opennurbs;
 
 
+static inline void
+check_return(int ret, const std::string &message)
+{
+    if (ret != 0)
+	throw std::runtime_error(message);
+}
+
+
 static inline std::string
 uuid2string(const ON_UUID &uuid)
 {
@@ -94,7 +102,7 @@ at_ref(const A &array, int index)
     if (const T *ptr = array.At(index))
 	return *ptr;
     else
-	throw std::logic_error("invalid index");
+	throw std::out_of_range("invalid index");
 }
 
 
@@ -355,7 +363,7 @@ RhinoConverter::ObjectManager::add(const ON_UUID &uuid,
     ModelObject object;
     object.m_name = name;
     if (!m_obj_map.insert(std::make_pair(uuid, object)).second)
-	throw std::logic_error("uuid in use");
+	throw std::invalid_argument("uuid in use");
 }
 
 
@@ -364,7 +372,7 @@ RhinoConverter::ObjectManager::register_member(
     const ON_UUID &parent_uuid, const ON_UUID &member_uuid)
 {
     if (!m_obj_map[parent_uuid].m_members.insert(member_uuid).second)
-	throw std::logic_error("member uuid already in use");
+	throw std::invalid_argument("member uuid already in use");
 }
 
 
@@ -721,9 +729,11 @@ RhinoConverter::create_layer(const ON_Layer &layer)
 	get_shader(layer.m_material_index);
 
     const bool do_inherit = !m_random_colors && is_toplevel(layer);
-    mk_comb(m_db, m_objects.get_name(layer.m_layer_id).c_str(), &wmembers.l, false,
-	    shader.first.c_str(), shader.second.c_str(), get_color(layer).get_rgb(),
-	    0, 0, 0, 0, do_inherit, false, false);
+    int ret = mk_comb(m_db, m_objects.get_name(layer.m_layer_id).c_str(), &wmembers.l, false,
+		      shader.first.c_str(), shader.second.c_str(), get_color(layer).get_rgb(),
+		      0, 0, 0, 0, do_inherit, false, false);
+
+    check_return(ret, "mk_comb()");
 }
 
 
@@ -759,8 +769,10 @@ RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
 
     const std::string &idef_name = m_objects.get_name(idef.m_uuid);
     const bool do_inherit = false;
-    mk_comb(m_db, idef_name.c_str(), &wmembers.l, false,
-	    NULL, NULL, NULL, 0, 0, 0, 0, do_inherit, false, false);
+    int ret = mk_comb(m_db, idef_name.c_str(), &wmembers.l, false,
+		      NULL, NULL, NULL, 0, 0, 0, 0, do_inherit, false, false);
+
+    check_return(ret, "mk_comb()");
 }
 
 
@@ -784,10 +796,12 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
     mk_addmember(member_name.c_str(), &members.l, matrix, WMOP_UNION);
 
     const bool do_inherit = false;
-    mk_comb(m_db, iref_name.c_str(), &members.l, false,
-	    shader.first.c_str(), shader.second.c_str(),
-	    get_color(iref_attrs).get_rgb(),
-	    0, 0, 0, 0, do_inherit, false, false);
+    int ret = mk_comb(m_db, iref_name.c_str(), &members.l, false,
+		      shader.first.c_str(), shader.second.c_str(),
+		      get_color(iref_attrs).get_rgb(),
+		      0, 0, 0, 0, do_inherit, false, false);
+
+    check_return(ret, "mk_comb()");
 
     const ON_UUID &parent_uuid =
 	at_ref<ON_Layer>(m_model.m_layer_table, iref_attrs.m_layer_index).m_layer_id;
@@ -817,7 +831,7 @@ RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs) const
 	    break;
 
 	default:
-	    throw std::logic_error("unknown color source");
+	    throw std::out_of_range("unknown color source");
     }
 
     return color;
@@ -891,10 +905,12 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
     mk_addmember(geom_name.c_str(), &members.l, NULL, WMOP_UNION);
 
     const bool do_inherit = false;
-    mk_comb(m_db, comb_name.c_str(), &members.l, false,
-	    shader.first.c_str(), shader.second.c_str(),
-	    get_color(geom_attrs).get_rgb(),
-	    0, 0, 0, 0, do_inherit, false, false);
+    int ret = mk_comb(m_db, comb_name.c_str(), &members.l, false,
+		      shader.first.c_str(), shader.second.c_str(),
+		      get_color(geom_attrs).get_rgb(),
+		      0, 0, 0, 0, do_inherit, false, false);
+
+    check_return(ret, "mk_comb()");
 
     m_objects.add(comb_uuid, comb_name);
     m_objects.register_member(parent_layer.m_layer_id, comb_uuid);
@@ -910,7 +926,8 @@ RhinoConverter::create_brep(const ON_Brep &brep,
     if (m_verbose_mode)
 	m_log.Print("Creating BREP '%s'\n", brep_name.c_str());
 
-    mk_brep(m_db, brep_name.c_str(), const_cast<ON_Brep *>(&brep));
+    int ret = mk_brep(m_db, brep_name.c_str(), const_cast<ON_Brep *>(&brep));
+    check_return(ret, "mk_brep()");
     create_geom_comb(brep_attrs);
 }
 
@@ -922,7 +939,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     const std::string &mesh_name = m_objects.get_name(mesh_attrs.m_uuid);
 
     if (m_verbose_mode)
-	m_log.Print("Creating Mesh '%s'\n", mesh_name.c_str());
+	m_log.Print("Creating mesh '%s'\n", mesh_name.c_str());
 
     mesh.ConvertQuadsToTriangles();
     mesh.CombineIdenticalVertices();
@@ -947,7 +964,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 	    break;
 
 	default:
-	    throw std::logic_error("unknown orientation");
+	    throw std::out_of_range("unknown orientation");
     }
 
     if (num_vertices == 0 || num_faces == 0) {
@@ -972,8 +989,6 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     }
 
     std::vector<fastf_t> thicknesses;
-
-
     AutoDestroyer<bu_bitv, void, bu_bitv_free> mbitv;
 
     if (mode == RT_BOT_PLATE) {
@@ -983,12 +998,12 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     }
 
     if (mesh.m_FN.Count() != mesh.m_F.Count()) {
-	int r = mk_bot(m_db, mesh_name.c_str(), mode, orientation, 0,
-		       num_vertices, num_faces, &vertices[0], &faces[0],
-		       thicknesses.empty() ? NULL : &thicknesses[0],
-		       mbitv.ptr);
+	int ret = mk_bot(m_db, mesh_name.c_str(), mode, orientation, 0,
+			 num_vertices, num_faces, &vertices[0], &faces[0],
+			 thicknesses.empty() ? NULL : &thicknesses[0],
+			 mbitv.ptr);
 
-	if (r) throw std::runtime_error("mk_bot() failed");
+	check_return(ret, "mk_bot()");
     } else {
 	mesh.UnitizeFaceNormals();
 	std::vector<fastf_t> normals(num_faces * 3);
@@ -1006,13 +1021,13 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 	    face_normals[i * 3 + 2] = i;
 	}
 
-	int r = mk_bot_w_normals(m_db, mesh_name.c_str(), mode, orientation,
-				 RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
-				 num_vertices, num_faces, &vertices[0], &faces[0],
-				 thicknesses.empty() ? NULL : &thicknesses[0],
-				 mbitv.ptr, num_faces, &normals[0], &face_normals[0]);
+	int ret = mk_bot_w_normals(m_db, mesh_name.c_str(), mode, orientation,
+				   RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
+				   num_vertices, num_faces, &vertices[0], &faces[0],
+				   thicknesses.empty() ? NULL : &thicknesses[0],
+				   mbitv.ptr, num_faces, &normals[0], &face_normals[0]);
 
-	if (r) throw std::runtime_error("mk_bot_w_normals() failed");
+	check_return(ret, "mk_bot_w_normals()");
     }
 
     create_geom_comb(mesh_attrs);
