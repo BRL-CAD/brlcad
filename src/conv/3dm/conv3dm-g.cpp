@@ -568,7 +568,8 @@ RhinoConverter::map_name(const ON_UUID &uuid, const ON_wString &name, const char
 }
 
 
-void RhinoConverter::map_uuid_names()
+void
+RhinoConverter::map_uuid_names()
 {
     for (int i = 0; i < m_model.m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = m_model.m_layer_table[i];
@@ -593,7 +594,8 @@ void RhinoConverter::map_uuid_names()
 	const ON_Bitmap &bitmap = *m_model.m_bitmap_table[i];
 	const char * const suffix = ".pix";
 
-	if (m_use_uuidnames) m_objects.add(bitmap.m_bitmap_id, uuid2string(bitmap.m_bitmap_id) + suffix);
+	if (m_use_uuidnames)
+	    m_objects.add(bitmap.m_bitmap_id, uuid2string(bitmap.m_bitmap_id) + suffix);
 	else {
 	    std::string bitmap_name = clean_name(w2string(bitmap.m_bitmap_name));
 	    if (bitmap_name == DEFAULT_NAME)
@@ -602,6 +604,19 @@ void RhinoConverter::map_uuid_names()
 	    m_objects.add(bitmap.m_bitmap_id,
 			  unique_name(m_name_count_map, bitmap_name, suffix));
 	}
+    }
+
+
+    // start numbering from 1
+    for (std::map<std::string, int>::const_iterator it
+	 = m_name_count_map.begin(); it != m_name_count_map.end(); ++it) {
+	if (it->second < 2) continue;
+
+	std::string new_name = it->first;
+	std::string suffix = new_name.substr(new_name.size() - 2, 2);
+	new_name.erase(new_name.size() - 2, 2);
+	new_name.append("001" + suffix);
+	// TODO change name mapping to new_name
     }
 }
 
