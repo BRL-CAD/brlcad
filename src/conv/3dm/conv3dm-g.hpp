@@ -107,6 +107,8 @@ private:
     void create_mesh(ON_Mesh mesh, const ON_3dmObjectAttributes &mesh_attrs);
     void create_geom_comb(const ON_3dmObjectAttributes &geom_attrs);
 
+    void map_name(const ON_UUID &uuid, const ON_wString &name, const char *suffix);
+
     Color get_color(const ON_3dmObjectAttributes &obj_attrs) const;
     Color get_color(const ON_Layer &layer) const;
 

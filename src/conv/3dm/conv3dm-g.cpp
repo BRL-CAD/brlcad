@@ -558,62 +558,42 @@ RhinoConverter::clean_model()
 }
 
 
-void
-RhinoConverter::map_uuid_names()
+inline void
+RhinoConverter::map_name(const ON_UUID &uuid, const ON_wString &name, const char *suffix)
 {
-    for (int i = 0; i < m_model.m_object_table.Count(); ++i) {
-	const ON_Object &object = *m_model.m_object_table[i].m_object;
-	const ON_3dmObjectAttributes &object_attrs =
-	    m_model.m_object_table[i].m_attributes;
-	const char * const suffix = get_object_suffix(object);
+    if (m_use_uuidnames)
+	m_objects.add(uuid, uuid2string(uuid) + suffix);
+    else
+	m_objects.add(uuid, unique_name(m_name_count_map, clean_name(w2string(name)), suffix));
+}
 
-	if (!suffix)
-	    continue;
 
-	if (m_use_uuidnames)
-	    m_objects.add(object_attrs.m_uuid, uuid2string(object_attrs.m_uuid) + suffix);
-	else
-	    m_objects.add(object_attrs.m_uuid,
-			  unique_name(m_name_count_map,
-				      clean_name(w2string(object_attrs.m_name)), suffix));
-
+void RhinoConverter::map_uuid_names()
+{
+    for (int i = 0; i < m_model.m_layer_table.Count(); ++i) {
+	const ON_Layer &layer = m_model.m_layer_table[i];
+	map_name(layer.m_layer_id, layer.m_name, get_object_suffix(layer));
     }
-
 
     for (int i = 0; i < m_model.m_idef_table.Count(); ++i) {
 	const ON_InstanceDefinition &idef = m_model.m_idef_table[i];
-	const char * const suffix = get_object_suffix(idef);
-
-	if (m_use_uuidnames)
-	    m_objects.add(idef.m_uuid, uuid2string(idef.m_uuid) + suffix);
-	else
-	    m_objects.add(idef.m_uuid,
-			  unique_name(m_name_count_map,
-				      clean_name(w2string(idef.m_name)), suffix));
+	map_name(idef.m_uuid, idef.m_name, get_object_suffix(idef));
     }
 
+    for (int i = 0; i < m_model.m_object_table.Count(); ++i) {
+	const char * const suffix = get_object_suffix(*m_model.m_object_table[i].m_object);
+	const ON_3dmObjectAttributes &object_attrs = m_model.m_object_table[i].m_attributes;
 
-    for (int i = 0; i < m_model.m_layer_table.Count(); ++i) {
-	const ON_Layer &layer = m_model.m_layer_table[i];
-	const char * const suffix = get_object_suffix(layer);
-
-	if (m_use_uuidnames)
-	    m_objects.add(layer.m_layer_id, uuid2string(layer.m_layer_id) + suffix);
-	else
-	    m_objects.add(layer.m_layer_id,
-			  unique_name(m_name_count_map,
-				      clean_name(w2string(layer.m_name)), suffix));
+	if (!suffix) continue;
+	map_name(object_attrs.m_uuid, object_attrs.m_name, suffix);
     }
-
 
     for (int i = 0; i < m_model.m_bitmap_table.Count(); ++i) {
 	m_model.m_bitmap_table[i]->m_bitmap_id = generate_uuid();
-
 	const ON_Bitmap &bitmap = *m_model.m_bitmap_table[i];
 	const char * const suffix = ".pix";
 
-	if (m_use_uuidnames)
-	    m_objects.add(bitmap.m_bitmap_id, uuid2string(bitmap.m_bitmap_id) + suffix);
+	if (m_use_uuidnames) m_objects.add(bitmap.m_bitmap_id, uuid2string(bitmap.m_bitmap_id) + suffix);
 	else {
 	    std::string bitmap_name = clean_name(w2string(bitmap.m_bitmap_name));
 	    if (bitmap_name == DEFAULT_NAME)
