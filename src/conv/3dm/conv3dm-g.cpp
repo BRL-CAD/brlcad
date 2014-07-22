@@ -613,9 +613,7 @@ RhinoConverter::map_uuid_names()
 	if (it->second < 2) continue;
 
 	std::string new_name = it->first;
-	std::string suffix = new_name.substr(new_name.size() - 2, 2);
-	new_name.erase(new_name.size() - 2, 2);
-	new_name.append("001" + suffix);
+	new_name.insert(new_name.size() - 2, "001");
 	// TODO change name mapping to new_name
     }
 }
