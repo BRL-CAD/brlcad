@@ -41,6 +41,8 @@ int bot_is_orientable(const struct rt_bot_internal *bot);
 
 int bot_is_manifold(const struct rt_bot_internal *bot);
 
+int bot_is_solid(const struct rt_bot_internal *bot);
+
 
 #ifdef __cplusplus
 }

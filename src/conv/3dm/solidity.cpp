@@ -171,6 +171,15 @@ bot_is_manifold(const rt_bot_internal *bot)
 }
 
 
+int bot_is_solid(const rt_bot_internal *bot)
+{
+    return
+	bot_is_closed(bot)
+	&& bot_is_orientable(bot)
+	&& bot_is_manifold(bot);
+}
+
+
 // Local Variables:
 // tab-width: 8
 // mode: C++
