@@ -28,70 +28,36 @@
 
 
 #include <map>
-#include <set>
-
-
-namespace
-{
-
-
-typedef std::pair<std::size_t, std::size_t> Edge;
-
-
-static bool register_edge(
-    std::vector<std::set<Edge> > &vertex_edges,
-    std::map<Edge, int> &edge_incidence_map,
-    std::size_t va, std::size_t vb)
-{
-    const Edge edge(std::min(va, vb), std::max(va, vb));
-    vertex_edges[va].insert(edge);
-    vertex_edges[vb].insert(edge);
-
-    // test fails if any edge borders more than two faces
-    return ++edge_incidence_map[edge] <= 2;
-}
-
-
-}
 
 
 int bot_is_closed(const rt_bot_internal *bot)
 {
-    std::map<Edge, int> edge_incidence_map;
-    std::vector<std::set<Edge> > vertex_edges(bot->num_vertices);
+    typedef std::pair<std::size_t, std::size_t> Edge;
 
     // map edges to number of incident faces
-    // map vertices to edges
-    for (std::size_t fi = 0; fi < bot->num_faces; ++fi) {
-	const std::size_t v1 = bot->faces[fi * 3];
-	const std::size_t v2 = bot->faces[fi * 3 + 1];
-	const std::size_t v3 = bot->faces[fi * 3 + 2];
+    std::map<Edge, int> edge_incidence_map;
 
-	bool valid = register_edge(vertex_edges, edge_incidence_map, v1, v2)
-		     && register_edge(vertex_edges, edge_incidence_map, v1, v3)
-		     && register_edge(vertex_edges, edge_incidence_map, v2, v3);
+    for (std::size_t i = 0; i < bot->num_faces; ++i) {
+	const int v1 = bot->faces[i * 3];
+	const int v2 = bot->faces[i * 3 + 1];
+	const int v3 = bot->faces[i * 3 + 2];
 
-	if (!valid) return false;
+#define REGISTER_EDGE(va, vb) do { \
+    const Edge e(std::min((va), (vb)), std::max((va), (vb))); \
+    ++edge_incidence_map[e]; \
+} while (false)
+
+	REGISTER_EDGE(v1, v2);
+	REGISTER_EDGE(v1, v3);
+	REGISTER_EDGE(v2, v3);
+
+#undef REGISTER_EDGE
     }
 
-    // all edges must border exactly two faces
+    // a mesh is closed if it has no boundary edges
     for (std::map<Edge, int>::const_iterator it = edge_incidence_map.begin();
 	 it != edge_incidence_map.end(); ++it)
-	if (it->second != 2) return false;
-
-    for (std::vector<std::set<Edge> >::const_iterator
-	 vertex_it = vertex_edges.begin();
-	 vertex_it != vertex_edges.end(); ++vertex_it) {
-
-	// each vertex must be incident to at least two edges
-	if (vertex_it->size() < 2) return false;
-
-	// check if the edges form a closed or open fan
-	for (std::set<Edge>::const_iterator it = vertex_it->begin();
-	     it != vertex_it->end(); ++it) {
-	    // TODO
-	}
-    }
+	if (it->second < 2) return false;
 
     return true;
 }

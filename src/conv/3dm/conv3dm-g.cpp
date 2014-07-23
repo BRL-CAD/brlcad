@@ -181,7 +181,7 @@ get_object_suffix(const ON_Object &object)
 	    return ".s";
 
 	default:
-	    return NULL;
+	    throw std::invalid_argument("no suffix for given object");
     }
 }
 
@@ -582,10 +582,15 @@ RhinoConverter::map_uuid_names()
     }
 
     for (int i = 0; i < m_model.m_object_table.Count(); ++i) {
-	const char * const suffix = get_object_suffix(*m_model.m_object_table[i].m_object);
 	const ON_3dmObjectAttributes &object_attrs = m_model.m_object_table[i].m_attributes;
+	const char *suffix;
 
-	if (!suffix) continue;
+	try {
+	    suffix = get_object_suffix(*m_model.m_object_table[i].m_object);
+	} catch (const std::invalid_argument &) {
+	    continue;
+	}
+
 	map_name(object_attrs.m_uuid, object_attrs.m_name, suffix);
     }
 
@@ -613,10 +618,10 @@ RhinoConverter::map_uuid_names()
 	if (it->second < 2) continue;
 
 	for (std::map<ON_UUID, ObjectManager::ModelObject, UuidCompare>
-	     ::iterator objit = m_objects.m_obj_map.begin();
-	     objit != m_objects.m_obj_map.end(); ++objit) {
-	    if (objit->second.m_name == it->first) {
-		objit->second.m_name.insert(objit->second.m_name.find_last_of('.'), "001");
+	     ::iterator obj_it = m_objects.m_obj_map.begin();
+	     obj_it != m_objects.m_obj_map.end(); ++obj_it) {
+	    if (obj_it->second.m_name == it->first) {
+		obj_it->second.m_name.insert(obj_it->second.m_name.find_last_of('.'), "001");
 		break;
 	    }
 	}
@@ -633,7 +638,7 @@ RhinoConverter::create_all_bitmaps()
 	const ON_Bitmap &bitmap = *m_model.m_bitmap_table[i];
 	const std::string &bitmap_name = m_objects.get_name(bitmap.m_bitmap_id);
 
-	m_log.Print("Creating bitmap '%s'\n", bitmap_name.c_str());
+	m_log.Print("Creating bitmap: %s\n", bitmap_name.c_str());
 	create_bitmap(&bitmap);
     }
 }
@@ -691,7 +696,7 @@ RhinoConverter::create_all_layers()
 	const ON_Layer &layer = m_model.m_layer_table[i];
 	const std::string &layer_name = m_objects.get_name(layer.m_layer_id);
 
-	m_log.Print("Creating layer '%s'\n", layer_name.c_str());
+	m_log.Print("Creating layer: %s\n", layer_name.c_str());
 	create_layer(layer);
     }
 
@@ -735,7 +740,7 @@ RhinoConverter::create_all_idefs()
 	const ON_InstanceDefinition &idef = m_model.m_idef_table[i];
 	const std::string &idef_name = m_objects.get_name(idef.m_uuid);
 
-	m_log.Print("Creating instance definition '%s'\n", idef_name.c_str());
+	m_log.Print("Creating instance definition: %s\n", idef_name.c_str());
 	create_idef(idef);
     }
 }
@@ -930,7 +935,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 
     const std::size_t num_vertices = static_cast<std::size_t>(mesh.m_V.Count());
     const std::size_t num_faces = static_cast<std::size_t>(mesh.m_F.Count());
-    unsigned char mode = mesh.IsSolid() ? RT_BOT_SOLID : RT_BOT_PLATE;
+    const unsigned char mode = mesh.IsSolid() ? RT_BOT_SOLID : RT_BOT_PLATE;
 
     unsigned char orientation;
     switch (mesh.SolidOrientation()) {

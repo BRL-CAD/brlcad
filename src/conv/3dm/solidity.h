@@ -31,13 +31,10 @@
 
 
 #ifdef __cplusplus
-#define EXTERN_C extern "C"
-#else
-#define EXTERN_C
+extern "C"
 #endif
+int bot_is_closed(const struct rt_bot_internal *bot);
 
-
-EXTERN_C int bot_is_closed(const struct rt_bot_internal *bot);
 
 /*
  * Local Variables:

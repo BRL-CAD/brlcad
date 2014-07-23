@@ -74,6 +74,8 @@ private:
 	const std::string &get_name(const ON_UUID &uuid) const;
 	const std::set<ON_UUID, UuidCompare> &get_members(const ON_UUID &uuid) const;
 	bool is_idef_member(const ON_UUID &uuid) const;
+
+
     private:
 	struct ModelObject;
 	std::map<ON_UUID, ModelObject, UuidCompare> m_obj_map;
