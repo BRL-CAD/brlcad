@@ -32,7 +32,7 @@
 
 int bot_is_closed(const rt_bot_internal *bot)
 {
-    typedef std::pair<std::size_t, std::size_t> Edge;
+    typedef std::pair<int, int> Edge;
 
     // map edges to number of incident faces
     std::map<Edge, int> edge_incidence_map;
