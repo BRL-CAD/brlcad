@@ -38,13 +38,19 @@ namespace
 typedef std::pair<int, int> Edge;
 
 
+static inline Edge
+ordered_edge(int va, int vb)
+{
+    return Edge(std::min(va, vb), std::max(va, vb));
+}
+
+
 static bool
 bot_is_orientable_register(std::map<Edge, int> &edge_order_map, int va, int vb)
 {
     enum { ORDER_NONE = 0, ORDER_MIN_MAX, ORDER_MAX_MIN, ORDER_EDGE_FULL };
 
-    const Edge edge(std::min(va, vb), std::max(va, vb));
-    int &order = edge_order_map[edge];
+    int &order = edge_order_map[ordered_edge(va, vb)];
 
     switch (order) {
 	case ORDER_NONE:
@@ -82,8 +88,7 @@ bot_is_closed(const rt_bot_internal *bot)
 
 #define REGISTER_EDGE(va, vb) \
 	do { \
-	    const Edge edge(std::min((va), (vb)), std::max((va), (vb))); \
-	    ++edge_face_count_map[edge]; \
+	    ++edge_face_count_map[ordered_edge((va), (vb))]; \
 	} while (false)
 
 	REGISTER_EDGE(v1, v2);
@@ -144,8 +149,8 @@ bot_is_manifold(const rt_bot_internal *bot)
 
 #define REGISTER_EDGE(va, vb) \
 	do { \
-	    const Edge edge(std::min((va), (vb)), std::max((va), (vb))); \
-	    if (++edge_face_count_map[edge] > 2) return false; \
+	    if (++edge_face_count_map[ordered_edge((va), (vb))] > 2) \
+		return false; \
 	} while (false)
 
 	REGISTER_EDGE(v1, v2);
