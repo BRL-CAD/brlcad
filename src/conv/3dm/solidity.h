@@ -19,7 +19,7 @@
  */
 /** @file solidity.h
  *
- * Library to determine whether a BoT is closed.
+ * Library of algorithms to determine whether a BoT is solid.
  *
  */
 
@@ -38,6 +38,8 @@ extern "C" {
 int bot_is_closed(const struct rt_bot_internal *bot);
 
 int bot_is_orientable(const struct rt_bot_internal *bot);
+
+int bot_is_manifold(const struct rt_bot_internal *bot);
 
 
 #ifdef __cplusplus

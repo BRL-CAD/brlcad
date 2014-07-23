@@ -19,7 +19,7 @@
  */
 /** @file solidity.cpp
  *
- * Library to determine whether a BoT is closed.
+ * Library of algorithms to determine whether a BoT is solid.
  *
  */
 
@@ -28,6 +28,7 @@
 
 
 #include <map>
+#include <set>
 
 
 namespace
@@ -68,10 +69,11 @@ bot_is_orientable_register(std::map<Edge, int> &edge_order_map, int va, int vb)
 }
 
 
-int bot_is_closed(const rt_bot_internal *bot)
+int
+bot_is_closed(const rt_bot_internal *bot)
 {
     // map edges to number of incident faces
-    std::map<Edge, int> edge_incidence_map;
+    std::map<Edge, int> edge_face_count_map;
 
     for (std::size_t i = 0; i < bot->num_faces; ++i) {
 	const int v1 = bot->faces[i * 3];
@@ -81,26 +83,27 @@ int bot_is_closed(const rt_bot_internal *bot)
 #define REGISTER_EDGE(va, vb) \
 	do { \
 	    const Edge edge(std::min((va), (vb)), std::max((va), (vb))); \
-	    ++edge_incidence_map[edge]; \
+	    ++edge_face_count_map[edge]; \
 	} while (false)
 
 	REGISTER_EDGE(v1, v2);
-	REGISTER_EDGE(v1, v3);
 	REGISTER_EDGE(v2, v3);
+	REGISTER_EDGE(v3, v1);
 
 #undef REGISTER_EDGE
     }
 
     // a mesh is closed if it has no boundary edges
-    for (std::map<Edge, int>::const_iterator it = edge_incidence_map.begin();
-	 it != edge_incidence_map.end(); ++it)
+    for (std::map<Edge, int>::const_iterator it = edge_face_count_map.begin();
+	 it != edge_face_count_map.end(); ++it)
 	if (it->second == 1) return false;
 
     return true;
 }
 
 
-int bot_is_orientable(const rt_bot_internal *bot)
+int
+bot_is_orientable(const rt_bot_internal *bot)
 {
     std::map<Edge, int> edge_order_map;
 
@@ -112,9 +115,48 @@ int bot_is_orientable(const rt_bot_internal *bot)
 	const int v3 = bot->faces[i * 3 + 2];
 
 	if (!(bot_is_orientable_register(edge_order_map, v1, v2)
-	      && bot_is_orientable_register(edge_order_map, v1, v3)
-	      && bot_is_orientable_register(edge_order_map, v2, v3)))
+	      && bot_is_orientable_register(edge_order_map, v2, v3)
+	      && bot_is_orientable_register(edge_order_map, v3, v1)))
 	    return false;
+    }
+
+    return true;
+}
+
+
+int
+bot_is_manifold(const rt_bot_internal *bot)
+{
+    std::map<Edge, int> edge_face_count_map;
+    std::map<int, std::set<std::size_t> > vertex_face_map;
+
+    // a mesh is manifold if:
+    // 1) each edge is incident to only one or two faces
+    // 2) the faces incident to a vertex form a closed or open fan
+    for (std::size_t i = 0; i < bot->num_faces; ++i) {
+	const int v1 = bot->faces[i * 3];
+	const int v2 = bot->faces[i * 3 + 1];
+	const int v3 = bot->faces[i * 3 + 2];
+
+#define REGISTER_EDGE(va, vb) \
+	do { \
+	    const Edge edge(std::min((va), (vb)), std::max((va), (vb))); \
+	    if (++edge_face_count_map[edge] > 2) return false; \
+	    vertex_face_map[(va)].insert(i); \
+	    vertex_face_map[(vb)].insert(i); \
+	} while (false)
+
+	REGISTER_EDGE(v1, v2);
+	REGISTER_EDGE(v2, v3);
+	REGISTER_EDGE(v3, v1);
+
+#undef REGISTER_EDGE
+    }
+
+    // check faces incident to vertices for closed or open fans
+    for (std::map<int, std::set<std::size_t> >::const_iterator it
+	 = vertex_face_map.begin(); it != vertex_face_map.end(); ++it) {
+	// TODO check for closed or open fans (need to find a definition)
     }
 
     return true;
