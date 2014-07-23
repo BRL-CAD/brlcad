@@ -42,10 +42,11 @@ int bot_is_closed(const rt_bot_internal *bot)
 	const int v2 = bot->faces[i * 3 + 1];
 	const int v3 = bot->faces[i * 3 + 2];
 
-#define REGISTER_EDGE(va, vb) do { \
-    const Edge e(std::min((va), (vb)), std::max((va), (vb))); \
-    ++edge_incidence_map[e]; \
-} while (false)
+#define REGISTER_EDGE(va, vb) \
+	do { \
+	    const Edge e(std::min((va), (vb)), std::max((va), (vb))); \
+	    ++edge_incidence_map[e]; \
+	} while (false)
 
 	REGISTER_EDGE(v1, v2);
 	REGISTER_EDGE(v1, v3);
