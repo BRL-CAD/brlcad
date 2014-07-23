@@ -31,7 +31,7 @@ is an interactive color picking facility.
 It allows you to pick and display colors, by varying parameters in
 either RGB (red, green, blue)
 or HSI (hue, saturation, intensity) space.</para>
-
+<variablelist>
       <varlistentry>
         <term><option>-F</option> <replaceable>framebuffer</replaceable></term>
         <listitem>
@@ -45,7 +45,7 @@ or HSI (hue, saturation, intensity) space.</para>
             used.</para>
         </listitem>
       </varlistentry>
-
+</variablelist>
 <para>The
 <option>-SWN</option>
 (or <option>-swn</option>) options can all be used in the normal way to specify the size of

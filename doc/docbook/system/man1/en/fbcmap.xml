@@ -28,7 +28,7 @@
 <refsection xml:id="description"><title>DESCRIPTION</title>
 <para><command>fbcmap</command>
 is used to change the color map of a frame buffer.</para>
-
+<variablelist>
       <varlistentry>
         <term><option>-F</option> <replaceable>framebuffer</replaceable></term>
         <listitem>
@@ -42,7 +42,7 @@ is used to change the color map of a frame buffer.</para>
             used.</para>
         </listitem>
       </varlistentry>
-
+</variablelist>
 <para>The requested framebuffer size will be the default size for the
 selected device (often 512x512 pixels).
 </para>
