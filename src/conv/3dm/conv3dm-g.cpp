@@ -616,7 +616,7 @@ RhinoConverter::map_uuid_names()
 	     ::iterator objit = m_objects.m_obj_map.begin();
 	     objit != m_objects.m_obj_map.end(); ++objit) {
 	    if (objit->second.m_name == it->first) {
-		objit->second.m_name.insert(objit->second.m_name.size() - 2, "001");
+		objit->second.m_name.insert(objit->second.m_name.find_last_of('.'), "001");
 		break;
 	    }
 	}
@@ -912,9 +912,6 @@ RhinoConverter::create_brep(const ON_Brep &brep,
 {
     const std::string &brep_name = m_objects.get_name(brep_attrs.m_uuid);
 
-    if (m_verbose_mode)
-	m_log.Print("Creating BREP '%s'\n", brep_name.c_str());
-
     int ret = mk_brep(m_db, brep_name.c_str(), const_cast<ON_Brep *>(&brep));
     check_return(ret, "mk_brep()");
     create_geom_comb(brep_attrs);
@@ -926,9 +923,6 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 			    const ON_3dmObjectAttributes &mesh_attrs)
 {
     const std::string &mesh_name = m_objects.get_name(mesh_attrs.m_uuid);
-
-    if (m_verbose_mode)
-	m_log.Print("Creating mesh '%s'\n", mesh_name.c_str());
 
     mesh.ConvertQuadsToTriangles();
     mesh.CombineIdenticalVertices();
@@ -1055,12 +1049,13 @@ RhinoConverter::create_object(const ON_Object &object,
 	return true;
     }
 
-    if (ON_Geometry::Cast(&object) && ON_Geometry::Cast(&object)->HasBrepForm()) {
-	ON_Brep *new_brep = ON_Geometry::Cast(&object)->BrepForm();
-	create_brep(*new_brep, object_attrs);
-	delete new_brep;
-	return true;
-    }
+    if (const ON_Geometry *geom = ON_Geometry::Cast(&object))
+	if (geom->HasBrepForm()) {
+	    ON_Brep *new_brep = geom->BrepForm();
+	    create_brep(*new_brep, object_attrs);
+	    delete new_brep;
+	    return true;
+	}
 
     if (const ON_Mesh *mesh = ON_Mesh::Cast(&object)) {
 	create_mesh(*mesh, object_attrs);
