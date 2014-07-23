@@ -17,9 +17,9 @@
 <cmdsynopsis sepchar=" ">
   <command>fbcmap</command>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-s|S <replaceable>squarescrsize</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-w|W <replaceable>scr_width</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-n|N <replaceable>scr_height</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-s|S <replaceable>squarescrsize</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><replaceable>map_number</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -27,14 +27,21 @@
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 <para><command>fbcmap</command>
-is used to change the color map of a frame buffer.
-The environment
-variable
-<envar>FB_FILE</envar>
-is used to select the display device (see
-<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
-If this variable is not set, the default device for your system will
-be used.</para>
+is used to change the color map of a frame buffer.</para>
+
+      <varlistentry>
+        <term><option>-F</option> <replaceable>framebuffer</replaceable></term>
+        <listitem>
+          <para>This option specifies which framebuffer the image is
+            to be saved from.  If not given, the environment variable
+            <acronym/><emphasis remap="B">FB_FILE</emphasis> is used
+            to select the display device (see
+            <emphasis remap="I">brlcad(1)</emphasis>).  If
+            <acronym/><emphasis remap="B">FB_FILE</emphasis> has not
+            been set, the default device for your system will be
+            used.</para>
+        </listitem>
+      </varlistentry>
 
 <para>The requested framebuffer size will be the default size for the
 selected device (often 512x512 pixels).
