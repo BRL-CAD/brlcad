@@ -30,10 +30,46 @@
 #include <map>
 
 
+namespace
+{
+
+
+typedef std::pair<int, int> Edge;
+
+
+static bool
+bot_is_orientable_register(std::map<Edge, int> &edge_order_map, int va, int vb)
+{
+    enum { ORDER_NONE = 0, ORDER_MIN_MAX, ORDER_MAX_MIN, ORDER_EDGE_FULL };
+
+    const Edge e(std::min((va), (vb)), std::max((va), (vb)));
+    int &order = edge_order_map[e];
+
+    switch (order) {
+	case ORDER_NONE:
+	    order = (va) < (vb) ? ORDER_MIN_MAX : ORDER_MAX_MIN;
+	    return va != vb;
+
+	case ORDER_MIN_MAX:
+	    order = ORDER_EDGE_FULL;
+	    return va > vb;
+
+	case ORDER_MAX_MIN:
+	    order = ORDER_EDGE_FULL;
+	    return va < vb;
+
+	case ORDER_EDGE_FULL:
+	default:
+	    return false;
+    }
+}
+
+
+}
+
+
 int bot_is_closed(const rt_bot_internal *bot)
 {
-    typedef std::pair<int, int> Edge;
-
     // map edges to number of incident faces
     std::map<Edge, int> edge_incidence_map;
 
@@ -66,9 +102,6 @@ int bot_is_closed(const rt_bot_internal *bot)
 
 int bot_is_orientable(const rt_bot_internal *bot)
 {
-    typedef std::pair<int, int> Edge;
-
-    enum { ORDER_NONE = 0, ORDER_MIN_MAX, ORDER_MAX_MIN, ORDER_EDGE_FULL };
     std::map<Edge, int> edge_order_map;
 
     // a mesh is orientable if any two adjacent faces
@@ -78,34 +111,10 @@ int bot_is_orientable(const rt_bot_internal *bot)
 	const int v2 = bot->faces[i * 3 + 1];
 	const int v3 = bot->faces[i * 3 + 2];
 
-#define REGISTER_EDGE(va, vb) \
-	do { \
-	    const Edge e(std::min((va), (vb)), std::max((va), (vb))); \
-	    int &order = edge_order_map[e]; \
-	    switch (order) { \
-		case ORDER_NONE: \
-		    if ((va) == (vb)) return false; \
-		    order = (va) < (vb) ? ORDER_MIN_MAX : ORDER_MAX_MIN; \
-		    break; \
-		case ORDER_MIN_MAX: \
-		    if ((va) < (vb)) return false; \
-		    order = ORDER_EDGE_FULL; \
-		    break; \
-		case ORDER_MAX_MIN: \
-		    if ((va) > (vb)) return false; \
-		    order = ORDER_EDGE_FULL; \
-		    break; \
-		case ORDER_EDGE_FULL: \
-		default: \
-		    return false; \
-	    } \
-	} while (false);
-
-	REGISTER_EDGE(v1, v2);
-	REGISTER_EDGE(v1, v3);
-	REGISTER_EDGE(v2, v3);
-
-#undef REGISTER_EDGE
+	if (!(bot_is_orientable_register(edge_order_map, v1, v2)
+	      && bot_is_orientable_register(edge_order_map, v1, v3)
+	      && bot_is_orientable_register(edge_order_map, v2, v3)))
+	    return false;
     }
 
     return true;
