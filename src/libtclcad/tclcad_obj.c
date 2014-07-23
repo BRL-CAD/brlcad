@@ -7416,7 +7416,7 @@ to_mouse_joint_select(
     bn_mat_inv(invRot, gedp->ged_gvp->gv_rotation);
     MAT4X3PNT(model_dir, invRot, view_dir);
 
-    /* brep joint_name selection append selection_name startx starty startz dirx diry dirz */
+    /* joint2 joint_name selection append selection_name startx starty startz dirx diry dirz */
     bu_vls_printf(&start[X], "%f", model_pt[X]);
     bu_vls_printf(&start[Y], "%f", model_pt[Y]);
     bu_vls_printf(&start[Z], "%f", model_pt[Z]);
@@ -7448,13 +7448,11 @@ to_mouse_joint_select(
 	return GED_ERROR;
     }
 
-    bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_joint_selection_translate %s %s %%x %%y; foreach obj [%s who] { %s draw $obj }}",
+    bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_joint_selection_translate %s %s %%x %%y}",
 		  bu_vls_addr(&gdvp->gdv_dmp->dm_pathName),
 		  bu_vls_addr(&current_top->to_gop->go_name),
 		  bu_vls_addr(&gdvp->gdv_name),
-		  joint_name,
-		  bu_vls_addr(&current_top->to_gop->go_name),
-		  bu_vls_addr(&current_top->to_gop->go_name));
+		  joint_name);
     Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     bu_vls_free(&bindings);
 
@@ -7532,12 +7530,11 @@ to_mouse_joint_selection_translate(
 
     ret = ged_joint2(gedp, cmd_argc, cmd_argv);
 
-    bu_free((void *)joint_name, "joint_name");
-    bu_vls_free(&delta[X]);
-    bu_vls_free(&delta[Y]);
-    bu_vls_free(&delta[Z]);
-
     if (ret != GED_OK) {
+	bu_free((void *)joint_name, "joint_name");
+	bu_vls_free(&delta[X]);
+	bu_vls_free(&delta[Y]);
+	bu_vls_free(&delta[Z]);
 	return GED_ERROR;
     }
 
@@ -7547,11 +7544,27 @@ to_mouse_joint_selection_translate(
     gdvp->gdv_view->gv_prevMouseX = screen_end[X];
     gdvp->gdv_view->gv_prevMouseY = screen_end[Y];
 
-    cmd_argc = 2;
-    cmd_argv[0] = "draw";
-    cmd_argv[1] = argv[2];
-    cmd_argv[2] = NULL;
-    ret = to_edit_redraw(gedp, cmd_argc, cmd_argv);
+    cmd_argc = 3;
+    cmd_argv[0] = "get";
+    cmd_argv[1] = joint_name;
+    cmd_argv[2] = "RP1";
+    cmd_argv[3] = NULL;
+    ret = ged_get(gedp, cmd_argc, cmd_argv);
+
+    if (ret == GED_OK) {
+	char *path_name = bu_strdup(bu_vls_cstr(gedp->ged_result_str));
+	cmd_argc = 2;
+	cmd_argv[0] = "draw";
+	cmd_argv[1] = path_name;
+	cmd_argv[2] = NULL;
+	ret = to_edit_redraw(gedp, cmd_argc, cmd_argv);
+	bu_free(path_name, "path_name");
+    }
+
+    bu_free((void *)joint_name, "joint_name");
+    bu_vls_free(&delta[X]);
+    bu_vls_free(&delta[Y]);
+    bu_vls_free(&delta[Z]);
 
     return ret;
 }
