@@ -7554,10 +7554,20 @@ to_mouse_joint_selection_translate(
     if (ret == GED_OK) {
 	char *path_name = bu_strdup(bu_vls_cstr(gedp->ged_result_str));
 	cmd_argc = 2;
-	cmd_argv[0] = "draw";
+	cmd_argv[0] = "erase";
 	cmd_argv[1] = path_name;
 	cmd_argv[2] = NULL;
-	ret = to_edit_redraw(gedp, cmd_argc, cmd_argv);
+	ret = ged_erase(gedp, cmd_argc, cmd_argv);
+
+	if (ret == GED_OK) {
+	    cmd_argc = 3;
+	    cmd_argv[0] = "draw";
+	    cmd_argv[1] = "-R";
+	    cmd_argv[2] = path_name;
+	    cmd_argv[3] = path_name;
+	    ret = ged_draw(gedp, cmd_argc, cmd_argv);
+	    to_refresh_all_views(current_top);
+	}
 	bu_free(path_name, "path_name");
     }
 
