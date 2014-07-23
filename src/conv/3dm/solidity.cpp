@@ -29,6 +29,7 @@
 
 #include <map>
 #include <set>
+#include <vector>
 
 
 namespace
@@ -133,7 +134,7 @@ int
 bot_is_manifold(const rt_bot_internal *bot)
 {
     std::map<Edge, int> edge_face_count_map;
-    std::map<int, std::set<std::size_t> > vertex_face_map;
+    std::vector<std::set<std::size_t> > vertex_face_map(bot->num_vertices);
 
     // a mesh is manifold if:
     // 1) each edge is incident to only one or two faces
@@ -161,7 +162,7 @@ bot_is_manifold(const rt_bot_internal *bot)
     }
 
     // check faces incident to vertices for closed or open fans
-    for (std::map<int, std::set<std::size_t> >::const_iterator it
+    for (std::vector<std::set<std::size_t> >::const_iterator it
 	 = vertex_face_map.begin(); it != vertex_face_map.end(); ++it) {
 	// TODO check for closed or open fans (need to find a definition)
     }
