@@ -16,18 +16,17 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fbcmap</command>
-    <arg choice="opt" rep="norepeat">-h </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">- </arg><arg choice="opt" rep="norepeat"><replaceable>sS</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>squarescrsize</replaceable></arg></arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">- </arg><arg choice="opt" rep="norepeat"><replaceable>wW</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>scr_width</replaceable></arg></arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">- </arg><arg choice="opt" rep="norepeat"><replaceable>nN</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>scr_height</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-s|S <replaceable>squarescrsize</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-w|W <replaceable>scr_width</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-n|N <replaceable>scr_height</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><replaceable>map_number</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Fbcmap</emphasis>
+<para><command>fbcmap</command>
 is used to change the color map of a frame buffer.
 The environment
 variable
@@ -39,27 +38,23 @@ be used.</para>
 
 <para>The requested framebuffer size will be the default size for the
 selected device (often 512x512 pixels).
-Specifying the
-<option>-h</option>
-flag changes the size to 1024x1024.</para>
+</para>
 
 <para>The
-<option>-w </option><replaceable>scr_width</replaceable>
-and
-<option>-W </option><replaceable>scr_width</replaceable>
-flags specifies the width of each scanline for the display device,
+<option>-w</option>
+(or <option>-W</option>) <replaceable>scr_width</replaceable>
+option specifies the width of each scanline for the display device,
 in pixels.</para>
 
 <para>The
-<option>-n </option><replaceable>scr_height</replaceable>
-and
-<option>-N </option><replaceable>scr_height</replaceable>
-flags specifies the height of each scanline for the display device.</para>
+<option>-n</option>
+(or <option>-N</option>) <replaceable>scr_height</replaceable>
+option specifies the height of each scanline for the display device.</para>
 
-<para><option>-s </option><replaceable>squarescrsize</replaceable>
-and
-<option>-S </option><replaceable>squarescrsize</replaceable>
-set both the height and width to the size given.
+<para>The
+<option>-s</option>
+(or <option>-S</option>) <replaceable>squarescrsize</replaceable>
+option sets both the height and width to the size given.
 This size distinction is important only for devices like the Adage
 framebuffers which have different operating modes based on the
 display size.</para>
