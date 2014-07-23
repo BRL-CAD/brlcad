@@ -138,12 +138,14 @@ bot_is_manifold(const rt_bot_internal *bot)
 	const int v2 = bot->faces[i * 3 + 1];
 	const int v3 = bot->faces[i * 3 + 2];
 
+	vertex_face_map[v1].insert(i);
+	vertex_face_map[v2].insert(i);
+	vertex_face_map[v3].insert(i);
+
 #define REGISTER_EDGE(va, vb) \
 	do { \
 	    const Edge edge(std::min((va), (vb)), std::max((va), (vb))); \
 	    if (++edge_face_count_map[edge] > 2) return false; \
-	    vertex_face_map[(va)].insert(i); \
-	    vertex_face_map[(vb)].insert(i); \
 	} while (false)
 
 	REGISTER_EDGE(v1, v2);
