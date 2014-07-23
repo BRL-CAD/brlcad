@@ -42,12 +42,12 @@ bot_is_orientable_register(std::map<Edge, int> &edge_order_map, int va, int vb)
 {
     enum { ORDER_NONE = 0, ORDER_MIN_MAX, ORDER_MAX_MIN, ORDER_EDGE_FULL };
 
-    const Edge e(std::min((va), (vb)), std::max((va), (vb)));
-    int &order = edge_order_map[e];
+    const Edge edge(std::min(va, vb), std::max(va, vb));
+    int &order = edge_order_map[edge];
 
     switch (order) {
 	case ORDER_NONE:
-	    order = (va) < (vb) ? ORDER_MIN_MAX : ORDER_MAX_MIN;
+	    order = va < vb ? ORDER_MIN_MAX : ORDER_MAX_MIN;
 	    return va != vb;
 
 	case ORDER_MIN_MAX:
@@ -80,8 +80,8 @@ int bot_is_closed(const rt_bot_internal *bot)
 
 #define REGISTER_EDGE(va, vb) \
 	do { \
-	    const Edge e(std::min((va), (vb)), std::max((va), (vb))); \
-	    ++edge_incidence_map[e]; \
+	    const Edge edge(std::min((va), (vb)), std::max((va), (vb))); \
+	    ++edge_incidence_map[edge]; \
 	} while (false)
 
 	REGISTER_EDGE(v1, v2);
