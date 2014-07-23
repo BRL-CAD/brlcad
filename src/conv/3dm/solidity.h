@@ -27,13 +27,22 @@
 #include "common.h"
 
 
-#include "raytrace.h"
+#include "rtgeom.h"
 
 
 #ifdef __cplusplus
-extern "C"
+extern "C" {
 #endif
+
+
 int bot_is_closed(const struct rt_bot_internal *bot);
+
+int bot_is_orientable(const struct rt_bot_internal *bot);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 /*

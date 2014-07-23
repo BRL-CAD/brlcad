@@ -58,10 +58,59 @@ int bot_is_closed(const rt_bot_internal *bot)
     // a mesh is closed if it has no boundary edges
     for (std::map<Edge, int>::const_iterator it = edge_incidence_map.begin();
 	 it != edge_incidence_map.end(); ++it)
-	if (it->second < 2) return false;
+	if (it->second == 1) return false;
 
     return true;
 }
+
+
+int bot_is_orientable(const rt_bot_internal *bot)
+{
+    typedef std::pair<int, int> Edge;
+
+    enum { ORDER_NONE = 0, ORDER_MIN_MAX, ORDER_MAX_MIN, ORDER_EDGE_FULL };
+    std::map<Edge, int> edge_order_map;
+
+    // a mesh is orientable if any two adjacent faces
+    // have compatible orientation
+    for (std::size_t i = 0; i < bot->num_faces; ++i) {
+	const int v1 = bot->faces[i * 3];
+	const int v2 = bot->faces[i * 3 + 1];
+	const int v3 = bot->faces[i * 3 + 2];
+
+#define REGISTER_EDGE(va, vb) \
+	do { \
+	    const Edge e(std::min((va), (vb)), std::max((va), (vb))); \
+	    int &order = edge_order_map[e]; \
+	    switch (order) { \
+		case ORDER_NONE: \
+		    if ((va) == (vb)) return false; \
+		    order = (va) < (vb) ? ORDER_MIN_MAX : ORDER_MAX_MIN; \
+		    break; \
+		case ORDER_MIN_MAX: \
+		    if ((va) < (vb)) return false; \
+		    order = ORDER_EDGE_FULL; \
+		    break; \
+		case ORDER_MAX_MIN: \
+		    if ((va) > (vb)) return false; \
+		    order = ORDER_EDGE_FULL; \
+		    break; \
+		case ORDER_EDGE_FULL: \
+		default: \
+		    return false; \
+	    } \
+	} while (false);
+
+	REGISTER_EDGE(v1, v2);
+	REGISTER_EDGE(v1, v3);
+	REGISTER_EDGE(v2, v3);
+
+#undef REGISTER_EDGE
+    }
+
+    return true;
+}
+
 
 // Local Variables:
 // tab-width: 8
