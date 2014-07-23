@@ -1334,6 +1334,10 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 
     iindex = 0;
     switch (ecnt[idx].kind) {
+	case NMG_KIND_MODEL:
+	case NMG_KIND_NMGREGION:
+	case NMG_KIND_NMGREGION_A:
+	    return 0;
 	case NMG_KIND_SHELL: {
 	    struct shell *s = (struct shell *)op;
 	    struct disk_shell *d;
@@ -1721,6 +1725,11 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 	    ecnt[subscript].kind = kind;
 	    ecnt[subscript].per_struct_index = 0; /* unused on import */
 	    switch (kind) {
+		case NMG_KIND_MODEL:
+		case NMG_KIND_NMGREGION:
+		case NMG_KIND_NMGREGION_A:
+		    ptrs[subscript] = (uint32_t *)0;
+		    break;
 		case NMG_KIND_SHELL: {
 		    s = nmg_ms();
 		    s->maxindex++;

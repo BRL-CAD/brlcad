@@ -49,6 +49,11 @@
 int
 nmg_index_of_struct(register const uint32_t *p)
 {
+    if (p == (uint32_t *)0)
+    {
+	return -3;
+    }
+
     switch (*p) {
 	case NMG_SHELL_MAGIC:
 	    return ((struct shell *)p)->index;
