@@ -35,7 +35,7 @@ primitive_func(db_tree_state *UNUSED(tsp), const db_full_path *UNUSED(pathp),
     bu_log("is-orientable: %s\n", strbool(bot_is_orientable(&bot)));
     bu_log("is-manifold: %s\n", strbool(bot_is_manifold(&bot)));
 
-    return NULL;
+    exit(0);
 }
 
 
