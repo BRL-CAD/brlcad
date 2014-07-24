@@ -2106,19 +2106,26 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     ptrs = nmg_s_struct_count(&cntbuf, s);
 
     /* Collect overall new subscripts, and structure-specific indices */
-    ecnt = (struct nmg_exp_counts *)bu_calloc(s->maxindex+1,
+    ecnt = (struct nmg_exp_counts *)bu_calloc(s->maxindex+4,
 					      sizeof(struct nmg_exp_counts), "ecnt[]");
     for (i = 0; i < NMG_N_KINDS; i++)
 	kind_counts[i] = 0;
     subscript = 1;		/* must be larger than DISK_INDEX_NULL */
     double_count = 0;
     fastf_byte_count = 0;
-    for (i=0; i < s->maxindex; i++) {
+    for (i=0; i < s->maxindex + 3; i++) {
 	if (ptrs[i] == NULL) {
 	    ecnt[i].kind = -1;
 	    continue;
 	}
-	kind = rt_nmg_magic_to_kind(*(ptrs[i]));
+
+	switch (i) {
+	    case 0: kind = rt_nmg_magic_to_kind(NMG_MODEL_MAGIC); break;
+	    case 1: kind = rt_nmg_magic_to_kind(NMG_REGION_MAGIC); break;
+	    case 2: kind = rt_nmg_magic_to_kind(NMG_REGION_A_MAGIC); break;
+	    default: kind = rt_nmg_magic_to_kind(*(ptrs[i]));
+	}
+
 	ecnt[i].per_struct_index = kind_counts[kind]++;
 	ecnt[i].kind = kind;
 	/* Handle the variable sized kinds */
@@ -2170,14 +2177,14 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 	     * Don't assign any new subscripts for them.
 	     * Instead, use DISK_INDEX_NULL, yielding null ptrs.
 	     */
-	    for (i=0; i < s->maxindex; i++) {
+	    for (i=0; i < s->maxindex + 3; i++) {
 		if (ptrs[i] == NULL) continue;
 		if (ecnt[i].kind != kind) continue;
 		ecnt[i].new_subscript = DISK_INDEX_NULL;
 	    }
 	    continue;
 	}
-	for (i=0; i < s->maxindex; i++) {
+	for (i=0; i < s->maxindex + 3; i++) {
 	    if (ptrs[i] == NULL) continue;
 	    if (ecnt[i].kind != kind) continue;
 	    ecnt[i].new_subscript = subscript++;
@@ -2188,7 +2195,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     subscript += kind_counts[NMG_KIND_DOUBLE_ARRAY];
 
     /* Sanity checking */
-    for (i=0; i < s->maxindex; i++) {
+    for (i=0; i < s->maxindex + 3; i++) {
 	if (ptrs[i] == NULL) continue;
 	if (nmg_index_of_struct(ptrs[i]) != i) {
 	    bu_log("***ERROR, ptrs[%d]->index = %d\n",
@@ -2238,7 +2245,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     rt_nmg_fastf_p = (unsigned char *)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
 
     /* Convert all the structures to their disk versions */
-    for (i = s->maxindex-1; i >= 0; i--) {
+    for (i = s->maxindex + 2; i >= 0; i--) {
 	if (ptrs[i] == NULL) continue;
 	kind = ecnt[i].kind;
 	if (kind_counts[kind] <= 0) continue;

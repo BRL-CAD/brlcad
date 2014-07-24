@@ -697,7 +697,7 @@ nmg_s_struct_count(register struct nmg_struct_counts *ctr, const struct shell *s
  * Count 'em up, and print 'em out.
  */
 void
-nmg_pr_m_struct_counts(const struct shell *s, const char *str)
+nmg_pr_s_struct_counts(const struct shell *s, const char *str)
 {
     struct nmg_struct_counts cnts;
     uint32_t **tab;
