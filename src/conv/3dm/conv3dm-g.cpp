@@ -94,7 +94,7 @@ w2string(const ON_wString &source)
 
 
 // used for checking ON_SimpleArray::At(),
-// when accessing ONX_Model objects referenced by index
+// when accessing ONX_Model member objects referenced by index
 template <typename T, typename A>
 static inline const T &
 at_ref(const A &array, int index)
@@ -221,7 +221,7 @@ xform2mat_t(const ON_Xform &source, mat_t dest)
     const int DMAX = 4;
     for (int row = 0; row < DMAX; ++row)
 	for (int col = 0; col < DMAX; ++col)
-	    dest[row*DMAX + col] = source[row][col];
+	    dest[row * DMAX + col] = source[row][col];
 }
 
 
@@ -270,10 +270,9 @@ clean_name(const std::string &input)
 	return DEFAULT_NAME;
 
     std::ostringstream ss;
-    int index = -1;
+    int index = 0;
     for (std::string::const_iterator it = input.begin();
-	 it != input.end(); ++it) {
-	++index;
+	 it != input.end(); ++it, ++index) {
 	switch (*it) {
 	    case '.':
 	    case '-':
@@ -676,21 +675,15 @@ RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 
 
 void
-RhinoConverter::nest_all_layers()
-{
-    for (int i = 0; i < m_model.m_layer_table.Count(); ++i) {
-	const ON_Layer &layer = m_model.m_layer_table[i];
-	m_objects.register_member(layer.m_parent_layer_id, layer.m_layer_id);
-    }
-}
-
-
-void
 RhinoConverter::create_all_layers()
 {
     m_log.Print("Creating layers...\n");
 
-    nest_all_layers();
+    // nest layers
+    for (int i = 0; i < m_model.m_layer_table.Count(); ++i) {
+	const ON_Layer &layer = m_model.m_layer_table[i];
+	m_objects.register_member(layer.m_parent_layer_id, layer.m_layer_id);
+    }
 
     for (int i = 0; i < m_model.m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = m_model.m_layer_table[i];
@@ -846,8 +839,6 @@ std::pair<std::string, std::string>
 RhinoConverter::get_shader(int index) const
 {
     const std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
-
-
     const ON_Material *material = m_model.m_material_table.At(index);
 
     if (!material)

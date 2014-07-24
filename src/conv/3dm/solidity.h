@@ -35,7 +35,7 @@ extern "C" {
 #endif
 
 
-int bot_is_closed(const struct rt_bot_internal *bot);
+int bot_is_closed(const struct rt_bot_internal *bot, int must_be_fan);
 
 int bot_is_orientable(const struct rt_bot_internal *bot);
 

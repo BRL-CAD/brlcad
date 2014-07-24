@@ -90,7 +90,6 @@ private:
     void clean_model();
     void map_uuid_names();
     void create_all_bitmaps();
-    void nest_all_layers();
     void create_all_layers();
     void create_all_idefs();
     void create_all_objects();

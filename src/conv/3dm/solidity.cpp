@@ -77,7 +77,7 @@ bot_is_orientable_register(std::map<Edge, int> &edge_order_map, int va, int vb)
 
 
 int
-bot_is_closed(const rt_bot_internal *bot)
+bot_is_closed(const rt_bot_internal *bot, int must_be_fan)
 {
     // map edges to number of incident faces
     std::map<Edge, int> edge_face_count_map;
@@ -99,10 +99,19 @@ bot_is_closed(const rt_bot_internal *bot)
 #undef REGISTER_EDGE
     }
 
-    // a mesh is closed if it has no boundary edges
     for (std::map<Edge, int>::const_iterator it = edge_face_count_map.begin();
-	 it != edge_face_count_map.end(); ++it)
-	if (it->second == 1) return false;
+	 it != edge_face_count_map.end(); ++it) {
+
+	if (must_be_fan) {
+	    // a mesh forms a closed fan if all edges are
+	    // incident to exactly two faces
+	    if (it->second != 2) return false;
+	}  else {
+	    // a mesh is closed if it has no boundary edges
+	    if (it->second == 1) return false;
+	}
+
+    }
 
     return true;
 }
@@ -174,7 +183,7 @@ bot_is_manifold(const rt_bot_internal *bot)
 int bot_is_solid(const rt_bot_internal *bot)
 {
     return
-	bot_is_closed(bot)
+	bot_is_closed(bot, true)
 	&& bot_is_orientable(bot)
 	&& bot_is_manifold(bot);
 }
