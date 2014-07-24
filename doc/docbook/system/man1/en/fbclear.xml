@@ -19,10 +19,7 @@
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-c </arg></arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat"><replaceable>red</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>green</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>blue</replaceable></arg></arg>
-</cmdsynopsis>
-or
-<cmdsynopsis sepchar=" ">
-  <command>fbclear</command>
+    <sbr></sbr>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-c </arg></arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>gray_value</replaceable></arg>
