@@ -143,7 +143,10 @@ int
 bot_is_manifold(const rt_bot_internal *bot)
 {
     std::map<Edge, int> edge_face_count_map;
-    std::vector<std::set<std::size_t> > vertex_face_map(bot->num_vertices);
+
+    // map vertices to (num_edjacent_faces, incident_edges)
+    typedef std::vector<std::pair<int, std::set<Edge> > > VERTEX_MAP;
+    VERTEX_MAP vertex_map(bot->num_vertices);
 
     // a mesh is manifold if:
     // 1) each edge is incident to only one or two faces
@@ -153,14 +156,17 @@ bot_is_manifold(const rt_bot_internal *bot)
 	const int v2 = bot->faces[i * 3 + 1];
 	const int v3 = bot->faces[i * 3 + 2];
 
-	vertex_face_map[v1].insert(i);
-	vertex_face_map[v2].insert(i);
-	vertex_face_map[v3].insert(i);
+	++vertex_map[v1].first;
+	++vertex_map[v2].first;
+	++vertex_map[v3].first;
 
 #define REGISTER_EDGE(va, vb) \
 	do { \
-	    if (++edge_face_count_map[ordered_edge((va), (vb))] > 2) \
+	    const Edge edge = ordered_edge((va), (vb)); \
+	    if (++edge_face_count_map[edge] > 2) \
 		return false; \
+	    vertex_map[(va)].second.insert(edge); \
+	    vertex_map[(vb)].second.insert(edge); \
 	} while (false)
 
 	REGISTER_EDGE(v1, v2);
@@ -170,10 +176,20 @@ bot_is_manifold(const rt_bot_internal *bot)
 #undef REGISTER_EDGE
     }
 
-    // check faces incident to vertices for closed or open fans
-    for (std::vector<std::set<std::size_t> >::const_iterator it
-	 = vertex_face_map.begin(); it != vertex_face_map.end(); ++it) {
-	// TODO check for closed or open fans (need to find a definition)
+    for (VERTEX_MAP::const_iterator it = vertex_map.begin(); it != vertex_map.end();
+	 ++it) {
+	// check if the vertex is either
+	// a) open fan: the vertex is at a border,
+	//     with valence = (num adjacent faces) + 1
+	// b) closed fan: the vertex is an inner vertex,
+	//     with valence = (num adjacent faces)
+
+	// valence: number of incident edges to a vertex
+	const int valence = it->second.size();
+	const int num_adj_faces = it->first;
+
+	if (valence != num_adj_faces && valence != num_adj_faces + 1)
+	    return false;
     }
 
     return true;
