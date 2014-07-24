@@ -48,6 +48,8 @@ int main(int argc, char **argv)
 	bu_exit(1, "Usage: test_solidity FILE COMB_NAME\n"
 		"\tWhere `COMB_NAME' is a combination with one bot.");
 
+    bu_log("Reading from %s\n", argv[1]);
+
     char idbuf[132];
     rt_i *rtip = rt_dirbuild(argv[1], idbuf, sizeof(idbuf));
 
