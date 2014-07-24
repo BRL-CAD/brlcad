@@ -18,7 +18,10 @@
 	<command>fb-fb</command>
 	<arg choice="opt" rep="norepeat">-v </arg>
 	<arg choice="opt" rep="norepeat">-F <replaceable>output_framebuffer</replaceable></arg>
-	<sbr></sbr>
+</cmdsynopsis>
+or
+<cmdsynopsis>
+	<command>fb-fb</command>
 	<arg choice="opt" rep="norepeat">-v </arg>
 	<arg choice="plain" rep="norepeat"><replaceable>input_framebuffer</replaceable></arg>
 	<arg choice="opt" rep="norepeat"><replaceable>output_framebuffer</replaceable></arg>
