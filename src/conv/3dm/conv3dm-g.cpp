@@ -136,6 +136,7 @@ static ON_UUID
 generate_uuid()
 {
     ON_UUID result;
+
     if (ON_CreateUuid(result))
 	return result;
 
@@ -159,7 +160,8 @@ generate_uuid()
 static inline bool
 is_toplevel(const ON_Layer &layer)
 {
-    return (layer.m_parent_layer_id == ROOT_UUID) && (layer.m_layer_id != ROOT_UUID);
+    return (layer.m_parent_layer_id == ROOT_UUID)
+	   && (layer.m_layer_id != ROOT_UUID);
 }
 
 
@@ -219,6 +221,7 @@ static void
 xform2mat_t(const ON_Xform &source, mat_t dest)
 {
     const int DMAX = 4;
+
     for (int row = 0; row < DMAX; ++row)
 	for (int col = 0; col < DMAX; ++col)
 	    dest[row * DMAX + col] = source[row][col];
@@ -231,6 +234,7 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
 {
     std::string path = dir_path + BU_DIR_SEPARATOR + "extracted_" + filename;
     int counter = 0;
+
     while (bu_file_exists(path.c_str(), NULL)) {
 	std::ostringstream ss;
 	ss << dir_path << BU_DIR_SEPARATOR << "extracted_" <<
@@ -254,8 +258,9 @@ load_pix(const std::string &path, int width, int height)
 {
     char buf[BUFSIZ]; // libicv currently requires BUFSIZ
     ICV_IMAGE_FORMAT format = icv_guess_file_format(path.c_str(), buf);
+    AutoDestroyer<icv_image_t, int, icv_destroy> image(
+	icv_read(path.c_str(), format, width, height));
 
-    AutoDestroyer<icv_image_t, int, icv_destroy> image(icv_read(path.c_str(), format, width, height));
     if (image.ptr) {
 	// TODO import the image data after adding support to libicv
     } else
@@ -271,8 +276,9 @@ clean_name(const std::string &input)
 
     std::ostringstream ss;
     int index = 0;
+
     for (std::string::const_iterator it = input.begin();
-	 it != input.end(); ++it, ++index) {
+	 it != input.end(); ++it, ++index)
 	switch (*it) {
 	    case '.':
 	    case '-':
@@ -286,7 +292,6 @@ clean_name(const std::string &input)
 		else
 		    ss.put('_');
 	}
-    }
 
     return ss.str();
 }
@@ -299,7 +304,8 @@ namespace conv3dm
 {
 
 
-bool RhinoConverter::UuidCompare::operator()(const ON_UUID &left, const ON_UUID &right) const
+bool RhinoConverter::UuidCompare::operator()(const ON_UUID &left,
+	const ON_UUID &right) const
 {
 #define COMPARE(a, b) do { if ((a) != (b)) return (a) < (b); } while (false)
 
@@ -320,7 +326,6 @@ class RhinoConverter::Color
 {
 public:
     static Color random();
-
 
     Color();
     Color(unsigned char red, unsigned char green, unsigned char blue);
@@ -361,6 +366,7 @@ RhinoConverter::ObjectManager::add(const ON_UUID &uuid,
 {
     ModelObject object;
     object.m_name = name;
+
     if (!m_obj_map.insert(std::make_pair(uuid, object)).second)
 	throw std::invalid_argument("uuid in use");
 }
@@ -492,6 +498,7 @@ RhinoConverter::RhinoConverter(const std::string &output_path,
     bu_free(buf, "bu_dirname buffer");
 
     m_db = wdb_fopen(output_path.c_str());
+
     if (!m_db)
 	throw std::runtime_error("failed to open database");
 
@@ -546,6 +553,7 @@ RhinoConverter::clean_model()
 	m_model.Audit(true, &repair_count, &m_log, &warnings); // repair
 
 	m_log.Print("Repaired %d objects.\n", repair_count);
+
 	for (int i = 0; i < warnings.Count(); ++i)
 	    m_log.Print("WARNING: %s\n", warnings[i]);
 
@@ -558,12 +566,14 @@ RhinoConverter::clean_model()
 
 
 inline void
-RhinoConverter::map_name(const ON_UUID &uuid, const ON_wString &name, const char *suffix)
+RhinoConverter::map_name(const ON_UUID &uuid, const ON_wString &name,
+			 const char *suffix)
 {
     if (m_use_uuidnames)
 	m_objects.add(uuid, uuid2string(uuid) + suffix);
     else
-	m_objects.add(uuid, unique_name(m_name_count_map, clean_name(w2string(name)), suffix));
+	m_objects.add(uuid, unique_name(m_name_count_map, clean_name(w2string(name)),
+					suffix));
 }
 
 
@@ -581,7 +591,8 @@ RhinoConverter::map_uuid_names()
     }
 
     for (int i = 0; i < m_model.m_object_table.Count(); ++i) {
-	const ON_3dmObjectAttributes &object_attrs = m_model.m_object_table[i].m_attributes;
+	const ON_3dmObjectAttributes &object_attrs =
+	    m_model.m_object_table[i].m_attributes;
 	const char *suffix;
 
 	try {
@@ -602,6 +613,7 @@ RhinoConverter::map_uuid_names()
 	    m_objects.add(bitmap.m_bitmap_id, uuid2string(bitmap.m_bitmap_id) + suffix);
 	else {
 	    std::string bitmap_name = clean_name(w2string(bitmap.m_bitmap_name));
+
 	    if (bitmap_name == DEFAULT_NAME)
 		bitmap_name = clean_name(strbasename(w2string(bitmap.m_bitmap_filename)));
 
@@ -706,9 +718,11 @@ RhinoConverter::create_layer(const ON_Layer &layer)
 
     wmember wmembers;
     BU_LIST_INIT(&wmembers.l);
+
     for (std::set<ON_UUID>::const_iterator it = members.begin();
 	 it != members.end(); ++it) {
 	if (m_objects.is_idef_member(*it)) continue;
+
 	mk_addmember(m_objects.get_name(*it).c_str(), &wmembers.l, NULL, WMOP_UNION);
     }
 
@@ -716,7 +730,8 @@ RhinoConverter::create_layer(const ON_Layer &layer)
 	get_shader(layer.m_material_index);
 
     const bool do_inherit = !m_random_colors && is_toplevel(layer);
-    int ret = mk_comb(m_db, m_objects.get_name(layer.m_layer_id).c_str(), &wmembers.l, false,
+    int ret = mk_comb(m_db, m_objects.get_name(layer.m_layer_id).c_str(),
+		      &wmembers.l, false,
 		      shader.first.c_str(), shader.second.c_str(), get_color(layer).get_rgb(),
 		      0, 0, 0, 0, do_inherit, false, false);
 
@@ -803,10 +818,12 @@ RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs) const
 	return Color::random();
 
     Color color;
+
     switch (obj_attrs.ColorSource()) {
 	case ON::color_from_parent:
 	case ON::color_from_layer:
-	    color = at_ref<ON_Layer>(m_model.m_layer_table, obj_attrs.m_layer_index).m_color;
+	    color = at_ref<ON_Layer>(m_model.m_layer_table,
+				     obj_attrs.m_layer_index).m_color;
 	    break;
 
 	case ON::color_from_object:
@@ -814,7 +831,8 @@ RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs) const
 	    break;
 
 	case ON::color_from_material:
-	    color = at_ref<ON_Material>(m_model.m_material_table, obj_attrs.m_material_index).m_ambient;
+	    color = at_ref<ON_Material>(m_model.m_material_table,
+					obj_attrs.m_material_index).m_ambient;
 	    break;
 
 	default:
@@ -929,6 +947,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     const unsigned char mode = mesh.IsSolid() ? RT_BOT_SOLID : RT_BOT_PLATE;
 
     unsigned char orientation;
+
     switch (mesh.SolidOrientation()) {
 	case 0:
 	    orientation = RT_BOT_UNORIENTED;
@@ -952,6 +971,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     }
 
     std::vector<fastf_t> vertices(num_vertices * 3);
+
     for (std::size_t i = 0; i < num_vertices; ++i) {
 	const ON_3fPoint &point = mesh.m_V[static_cast<int>(i)];
 	vertices[i * 3] = point.x;
@@ -960,6 +980,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     }
 
     std::vector<int> faces(num_faces * 3);
+
     for (std::size_t i = 0; i < num_faces; ++i) {
 	const ON_MeshFace &face = mesh.m_F[static_cast<int>(i)];
 	faces[i * 3] = face.vi[0];
@@ -986,6 +1007,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     } else {
 	mesh.UnitizeFaceNormals();
 	std::vector<fastf_t> normals(num_faces * 3);
+
 	for (std::size_t i = 0; i < num_faces; ++i) {
 	    const ON_3fVector &vec = mesh.m_FN[static_cast<int>(i)];
 	    normals[i * 3] = vec.x;
@@ -994,6 +1016,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 	}
 
 	std::vector<int> face_normals(num_faces * 3);
+
 	for (std::size_t i = 0; i < num_faces; ++i) {
 	    face_normals[i * 3] = i;
 	    face_normals[i * 3 + 1] = i;
@@ -1020,6 +1043,7 @@ RhinoConverter::create_all_objects()
 
     const int num_objects = m_model.m_object_table.Count();
     int num_created = 0;
+
     for (int i = 0; i < num_objects; ++i) {
 	const ON_3dmObjectAttributes &object_attrs =
 	    m_model.m_object_table[i].m_attributes;
@@ -1064,6 +1088,7 @@ RhinoConverter::create_object(const ON_Object &object,
     }
 
     m_log.Print("Skipping object of type %s\n", object.ClassId()->ClassName());
+
     if (m_verbose_mode) {
 	object.Dump(m_log);
 	m_log.PopIndent();

@@ -37,7 +37,8 @@
 int
 main(int argc, char** argv)
 {
-    static const char * const usage = "Usage: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n";
+    static const char * const usage =
+	"Usage: 3dm-g [-v] [-r] [-u] -o output_file.g input_file.3dm\n";
 
     bool verbose_mode = false;
     bool random_colors = false;
@@ -46,26 +47,34 @@ main(int argc, char** argv)
     const char* inputFileName;
 
     int c;
+
     while ((c = bu_getopt(argc, argv, "o:dvt:s:ruh?")) != -1) {
 	switch (c) {
 	    case 's':	/* scale factor */
 		break;
+
 	    case 'o':	/* specify output file name */
 		outputFileName = bu_optarg;
 		break;
+
 	    case 'd':	/* debug */
 		break;
+
 	    case 't':	/* tolerance */
 		break;
+
 	    case 'v':	/* verbose */
 		verbose_mode = true;
 		break;
+
 	    case 'r':  /* randomize colors */
 		random_colors = true;
 		break;
+
 	    case 'u':
 		use_uuidnames = true;
 		break;
+
 	    default:
 		std::cerr << usage;
 		return 1;
@@ -75,6 +84,7 @@ main(int argc, char** argv)
     argc -= bu_optind;
     argv += bu_optind;
     inputFileName  = argv[0];
+
     if (outputFileName == NULL) {
 	std::cerr << usage;
 	return 1;
@@ -98,7 +108,8 @@ main(int argc, char** argv)
 int
 main()
 {
-    std::cerr << "ERROR: Boundary Representation object support is not available with\n"
+    std::cerr <<
+	      "ERROR: Boundary Representation object support is not available with\n"
 	      "       this compilation of BRL-CAD.\n";
 
     return 1;
