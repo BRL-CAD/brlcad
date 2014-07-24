@@ -106,9 +106,9 @@ int main() {
 	while (GeometrySolve* sp = e.next()) {
 	    //sp->print();
 	    cnt++;
-	    std::cout << "in rcc_" << cnt << "_1.s rcc 0 0 0 " << sp->l[0] << " "<< sp->l[1] << " "<< sp->l[2] << " 1\n";
+/*	    std::cout << "in rcc_" << cnt << "_1.s rcc 0 0 0 " << sp->l[0] << " "<< sp->l[1] << " "<< sp->l[2] << " 1\n";
 	    std::cout << "in rcc_" << cnt << "_2.s rcc 0 0 0 " << sp->l[3] << " "<< sp->l[4] << " "<< sp->l[5] << " 1\n";
-	    std::cout << "g rcc_" << cnt << ".g rcc_" << cnt<< "_1.s " << "rcc_" << cnt << "_2.s\n";
+	    std::cout << "g rcc_" << cnt << ".g rcc_" << cnt<< "_1.s " << "rcc_" << cnt << "_2.s\n";*/
 	    delete sp;
 	}
 
@@ -143,11 +143,12 @@ int main() {
 
     /* Point on line segment constraint test */
     {
-	GeometrySolve* s = new GeometrySolve(9, 0, 100);
+	GeometrySolve* s = new GeometrySolve(9, 0, 1000);
 	int p = 0;
 	int s1 = 1;
 	int s2 = 2;
 	int cnt = 0;
+	int maxcnt = 0;
 	Gecode::IntVar PX(s->l[0 + 3*p]),  PY(s->l[1 + 3*p]),  PZ(s->l[2 + 3*p]);
 	Gecode::IntVar S1X(s->l[0 + 3*s1]), S1Y(s->l[1 + 3*s1]), S1Z(s->l[2 + 3*s1]);
 	Gecode::IntVar S2X(s->l[0 + 3*s2]), S2Y(s->l[1 + 3*s2]), S2Z(s->l[2 + 3*s2]);
@@ -159,17 +160,27 @@ int main() {
 	Gecode::rel(*s, S1X == 0);
 	Gecode::rel(*s, S1Y == 0);
 	Gecode::rel(*s, S1Z == 0);
-	Gecode::rel(*s, S2X == 12);
-	Gecode::rel(*s, S2Y == 80);
-	Gecode::rel(*s, S2Z == 92);
+	Gecode::rel(*s, S2X == 120);
+	Gecode::rel(*s, S2Y == 800);
+	Gecode::rel(*s, S2Z == 920);
 	Gecode::branch(*s, s->l, Gecode::INT_VAR_SIZE_MIN(), Gecode::INT_VAL_MIN());
 
 	Gecode::DFS<GeometrySolve> e(s);
+	Gecode::DFS<GeometrySolve> e2(s);
 	delete s;
 	while (GeometrySolve* sp = e.next()) {
 	    //sp->print();
 	    cnt++;
-	    //std::cout << "in pnt" << cnt << ".s sph " << sp->l[0] << " " << sp->l[1] << " " << sp->l[2] << " 1\n";
+	    std::cout << "in pnt" << cnt << ".s sph " << sp->l[0] << " " << sp->l[1] << " " << sp->l[2] << " 1\n";
+	}
+	maxcnt = cnt;
+	cnt = 0;
+	while (GeometrySolve* sp = e2.next()) {
+	    cnt++;
+	    if (cnt == 1)
+		std::cout << "in line.s rcc " << sp->l[0] << " " << sp->l[1] << " " << sp->l[2];
+	    if (cnt == maxcnt)
+		std::cout << " " << sp->l[0] << " " << sp->l[1] << " " << sp->l[2] << " 5\n";
 	    delete sp;
 	}
 
