@@ -451,9 +451,10 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
     int x2 = x1 + w - 1;	/* Convert to rectangle corners */
     int y2 = y1 + h - 1;
 
-    int x1wd, y1ht;
+    int x1wd, x2wd, y1ht, y2ht;
     int ox, oy;
     int xdel, ydel;
+    int xwd, xht;
 
     unsigned char *ip;
     unsigned char *op;
@@ -466,7 +467,9 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
      * Figure out sizes of outermost image pixels
      */
     x1wd = (x1 == qi->qi_ilf) ? qi->qi_ilf_w : ifp->if_xzoom;
+    x2wd = (x2 == qi->qi_irt) ? qi->qi_irt_w : ifp->if_xzoom;
     y1ht = (y1 == qi->qi_ibt) ? qi->qi_ibt_h : ifp->if_yzoom;
+    y2ht = (y2 == qi->qi_itp) ? qi->qi_itp_h : ifp->if_yzoom;
 
     /* Compute ox: offset from left edge of window to left pixel */
     xdel = x1 - qi->qi_ilf;
@@ -485,6 +488,18 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 	oy = qi->qi_xbt;
     }
 
+    if (x2 == x1) {
+	xwd = x1wd;
+    } else {
+	xwd = x1wd + x2wd + ifp->if_xzoom * (x2 - x1 - 1);
+    }
+
+    if (y2 == y1) {
+	xht = y1ht;
+    } else {
+	xht = y1ht + y2ht + ifp->if_yzoom * (y2 - y1 - 1);
+    }
+
 
     /*
      * Set pointers to start of source and destination areas; note
@@ -494,8 +509,7 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
      */
     ip = &(qi->qi_mem[(y1 * qi->qi_iwidth + x1) *
 				 sizeof (RGBpixel)]);
-    op = (unsigned char *) &qi->qi_pix[oy *
-				 qi->qi_qwidth + ox];
+    op = &qi->qi_pix[oy * qi->qi_image->bytesPerLine() + ox];
 
     for (j = y2 - y1 + 1; j; j--) {
 	unsigned char *lip;
@@ -505,7 +519,10 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 	lop = op;
 
 	for (k = x2 - x1 + 1; k; k--) {
-	    *lop++ = *lip;
+	    *lop++ = lip[0];
+	    *lop++ = lip[1];
+	    *lop++ = lip[2];
+
 	    lip += sizeof (RGBpixel);
 	}
 
@@ -513,33 +530,12 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 	op -= qi->qi_image->bytesPerLine();
     }
 
-  /*  if (flags & BLIT_DISP) {
-	XPutImage(xi->xi_dpy, xi->xi_win, xi->xi_gc, xi->xi_image,
-		  ox, oy - xht + 1, ox, oy - xht + 1, xwd, xht);
-    }*/
-
-
-/*    struct qtinfo *qi = QI(ifp);
-    int i,j;
-    unsigned int k;
-
-    for (i = y1; i < y1 + h; i++) {
-	for (j = x1; j < x1 + w; j++) {
-	    for (k = 0; k < sizeof(RGBpixel); k++)
-		qi->qi_pix[((qi->qi_iheight - i) * qi->qi_iwidth + j) * sizeof(RGBpixel) + k] = qi->qi_mem[(i * qi->qi_iwidth + j) * sizeof(RGBpixel) + k];
-	}
+    if (qi->alive == 0) {
+	qi->qi_painter->drawImage(ox, oy - xht + 1, *qi->qi_image, ox, oy - xht + 1, xwd, xht);
     }
-    memcpy(&(qi->qi_pix[(y1*qi->qi_iwidth+x1)*sizeof(RGBpixel)]),
- 	   &(qi->qi_mem[(y1*qi->qi_iwidth+x1)*sizeof(RGBpixel)]), w * h * sizeof(RGBpixel));
-*/
-
 
     QApplication::sendEvent(qi->win, new QEvent(QEvent::UpdateRequest));
     qi->qapp->processEvents();
-
-    if (qi->alive == 0) {
-	qi->qi_painter->drawImage(x1, y1, *qi->qi_image, x1, y1, w, h);
-    }
 }
 
 HIDDEN int
