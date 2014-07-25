@@ -30,10 +30,11 @@ primitive_func(db_tree_state *UNUSED(tsp), const db_full_path *UNUSED(pathp),
     bu_log("num_faces: %d\n", static_cast<int>(bot.num_faces));
     bu_log("num_vertices: %d\n", static_cast<int>(bot.num_vertices));
 
-    bu_log("is-closed: %s\n", strbool(bot_is_closed(&bot, false)));
     bu_log("is-closed-fan: %s\n", strbool(bot_is_closed(&bot, true)));
+    bu_log("is-closed: %s\n", strbool(bot_is_closed(&bot, false)));
     bu_log("is-orientable: %s\n", strbool(bot_is_orientable(&bot)));
     bu_log("is-manifold: %s\n", strbool(bot_is_manifold(&bot)));
+    bu_log("is-solid: %s\n", strbool(bot_is_solid(&bot)));
 
     exit(0);
 }

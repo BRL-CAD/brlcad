@@ -176,6 +176,18 @@ bot_is_manifold(const rt_bot_internal *bot)
 #undef REGISTER_EDGE
     }
 
+
+    // I have seen two (seemingly) different definitions of "manifold"
+    // in online references - some definitions simply require (1)
+    // (i.e. http://www.lsi.upc.edu/~virtual/SGI/english/3_queries.html);
+    // others additionally require (2)
+    // (i.e. http://www.cs.mtu.edu/~shene/COURSES/cs3621/SLIDES/Mesh.pdf)
+    //
+    // Removing (2) gives results identical to those of the openNURBS algorithms,
+    // so the code below is disabled.
+
+#if 0
+
     for (VERTEX_MAP::const_iterator it = vertex_map.begin(); it != vertex_map.end();
 	 ++it) {
 	// check if the vertex is either
@@ -192,12 +204,15 @@ bot_is_manifold(const rt_bot_internal *bot)
 	    return false;
     }
 
+#endif
+
     return true;
 }
 
 
 int bot_is_solid(const rt_bot_internal *bot)
 {
+    // note: self-intersection tests
     return
 	bot_is_closed(bot, true)
 	&& bot_is_orientable(bot)
