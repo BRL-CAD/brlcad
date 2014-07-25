@@ -42,6 +42,8 @@
 #  include <osgViewer/api/X11/GraphicsWindowX11>
 #endif
 
+#include <osg/PolygonMode>
+
 extern "C" {
 #include "tcl.h"
 #include "tk.h"
@@ -456,7 +458,7 @@ osg_reshape(struct dm *dmp, int width, int height)
 
     struct osg_vars *privvars = (struct osg_vars *)dmp->dm_vars.priv_vars;
     if (privvars->testviewer) {
-	privvars->testviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
+
 	osgViewer::Viewer::Windows    windows;
 	privvars->testviewer->getWindows(windows);
 	for(osgViewer::Viewer::Windows::iterator itr = windows.begin();
@@ -465,6 +467,14 @@ osg_reshape(struct dm *dmp, int width, int height)
 	{
 	    (*itr)->setWindowRectangle(0, 0, dmp->dm_width, dmp->dm_height);
 	}
+
+	privvars->testviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
+
+	osg::Matrixf orthom;
+	orthom.makeIdentity();
+	orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	privvars->testviewer->getCamera()->setProjectionMatrix(orthom);
+
 	privvars->testviewer->frame();
 
     }
@@ -854,7 +864,13 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     privvars->testviewer = new osgViewer::Viewer();
     privvars->testviewer->setUpViewInWindow(0, 0, 1, 1);
     privvars->testviewer->realize();
+
+    privvars->osg_root = new osg::Group();
+    privvars->testviewer->setSceneData(privvars->osg_root);
+
     privvars->testviewer->frame();
+
+
 
     return dmp;
 }
@@ -1110,6 +1126,8 @@ osg_drawBegin(struct dm *dmp)
 HIDDEN int
 osg_drawEnd(struct dm *dmp)
 {
+    struct osg_vars *privvars = (struct osg_vars *)dmp->dm_vars.priv_vars;
+
     if (dmp->dm_debugLevel)
 	bu_log("osg_drawEnd()\n");
 
@@ -1170,6 +1188,7 @@ osg_drawEnd(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
+    privvars->testviewer->frame();
 
     return TCL_OK;
 }
@@ -1269,6 +1288,31 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 	bu_log("%s", bu_vls_addr(&tmp_vls));
 	bu_vls_free(&tmp_vls);
     }
+
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+    osg::Matrix proj_matrix = osp->testviewer->getCamera()->getProjectionMatrix();
+
+    osg::Matrix osg_mp(
+	    mat[0], mat[1], mat[2], mat[3],
+	    mat[4], mat[5], mat[6], mat[7],
+	    mat[8], mat[9], mat[10], mat[11],
+	    mat[12], mat[13], mat[14], mat[15]);
+
+    std::cout << "starting projection matrix:\n";
+    std::cout << proj_matrix(0,0) << ", " << proj_matrix(0,1) << ", " << proj_matrix(0,2) << ", " << proj_matrix(0,3) << "\n";
+    std::cout << proj_matrix(1,0) << ", " << proj_matrix(1,1) << ", " << proj_matrix(1,2) << ", " << proj_matrix(1,3) << "\n";
+    std::cout << proj_matrix(2,0) << ", " << proj_matrix(2,1) << ", " << proj_matrix(2,2) << ", " << proj_matrix(2,3) << "\n";
+    std::cout << proj_matrix(3,0) << ", " << proj_matrix(3,1) << ", " << proj_matrix(3,2) << ", " << proj_matrix(3,3) << "\n";
+
+    osp->testviewer->getCamera()->setProjectionMatrix(osg_mp);
+
+    std::cout << "ending projection matrix:\n";
+    std::cout << proj_matrix(0,0) << ", " << proj_matrix(0,1) << ", " << proj_matrix(0,2) << ", " << proj_matrix(0,3) << "\n";
+    std::cout << proj_matrix(1,0) << ", " << proj_matrix(1,1) << ", " << proj_matrix(1,2) << ", " << proj_matrix(1,3) << "\n";
+    std::cout << proj_matrix(2,0) << ", " << proj_matrix(2,1) << ", " << proj_matrix(2,2) << ", " << proj_matrix(2,3) << "\n";
+    std::cout << proj_matrix(3,0) << ", " << proj_matrix(3,1) << ", " << proj_matrix(3,2) << ", " << proj_matrix(3,3) << "\n";
+
+    osp->testviewer->frame();
 
     return TCL_OK;
 }
@@ -1511,6 +1555,7 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
     register int mflag = 1;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLfloat originalPointSize, originalLineWidth;
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
 
     glGetFloatv(GL_POINT_SIZE, &originalPointSize);
     glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
@@ -1648,6 +1693,81 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
     glPointSize(originalPointSize);
     glLineWidth(originalLineWidth);
+
+    // create the osg containers to hold our data.
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode(); // Maybe create this at drawBegin?
+    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+    osg::ref_ptr<osg::Vec3dArray> vertices = new osg::Vec3dArray;
+    osg::ref_ptr<osg::Vec3dArray> normals = new osg::Vec3dArray;
+
+    // Set line color
+    osg::Vec4Array* line_color = new osg::Vec4Array;
+    line_color->push_back(osg::Vec4(255, 255, 100, 70));
+    geom->setColorArray(line_color, osg::Array::BIND_OVERALL);
+
+    // Set wireframe state
+    osg::StateSet *geom_state = geom->getOrCreateStateSet();
+    osg::ref_ptr<osg::PolygonMode> geom_polymode = new osg::PolygonMode;
+    geom_polymode->setMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
+    geom_state->setAttributeAndModes(geom_polymode);
+    geom_state->setMode(GL_LIGHTING,osg::StateAttribute::OVERRIDE|osg::StateAttribute::OFF);
+
+    /* Viewing region is from -1.0 to +1.0 */
+    int begin = 0;
+    int nverts = 0;
+    first = 1;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+        int i;
+        int nused = tvp->nused;
+        int *cmd = tvp->cmd;
+        point_t *pt = tvp->pt;
+        for (i = 0; i < nused; i++, cmd++, pt++) {
+            switch (*cmd) {
+                case BN_VLIST_LINE_MOVE:
+                    /* Move, start line */
+                    if (first == 0) {
+                        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
+
+                    } else
+                        first = 0;
+
+                    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+                    normals->push_back(osg::Vec3(0.0f,0.0f,1.0f));
+                    begin += nverts;
+                    nverts = 1;
+                    break;
+                case BN_VLIST_POLY_START:
+                    normals->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+                    begin += nverts;
+                    nverts = 0;
+                    break;
+                case BN_VLIST_LINE_DRAW:
+                case BN_VLIST_POLY_MOVE:
+                case BN_VLIST_POLY_DRAW:
+                    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+                    ++nverts;
+                    break;
+                case BN_VLIST_POLY_END:
+                    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,begin,nverts));
+                    first = 1;
+                    break;
+                case BN_VLIST_POLY_VERTNORM:
+                    break;
+            }
+        }
+    }
+
+    if (first == 0) {
+        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
+    }
+
+    geom->setVertexArray(vertices);
+    geom->setNormalArray(normals, osg::Array::BIND_OVERALL);
+    //geom->setNormalBinding(osg::Geometry::BIND_PER_PRIMITIVE_SET);
+
+    geom->setUseDisplayList(true);
+    geode->addDrawable(geom);
+    osp->osg_root->addChild(geode);
 
     return TCL_OK;
 }
