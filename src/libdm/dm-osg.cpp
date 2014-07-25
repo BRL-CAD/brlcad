@@ -1290,27 +1290,35 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     }
 
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
-    osg::Matrix proj_matrix = osp->testviewer->getCamera()->getProjectionMatrix();
+    osg::Matrix view_matrix = osp->testviewer->getCamera()->getViewMatrix();
 
     osg::Matrix osg_mp(
 	    mat[0], mat[1], mat[2], mat[3],
-	    mat[4], mat[5], mat[6], mat[7],
+	    mat[4]*dmp->dm_aspect, mat[5]*dmp->dm_aspect, mat[6]*dmp->dm_aspect, mat[7]*dmp->dm_aspect,
 	    mat[8], mat[9], mat[10], mat[11],
 	    mat[12], mat[13], mat[14], mat[15]);
 
-    std::cout << "starting projection matrix:\n";
-    std::cout << proj_matrix(0,0) << ", " << proj_matrix(0,1) << ", " << proj_matrix(0,2) << ", " << proj_matrix(0,3) << "\n";
-    std::cout << proj_matrix(1,0) << ", " << proj_matrix(1,1) << ", " << proj_matrix(1,2) << ", " << proj_matrix(1,3) << "\n";
-    std::cout << proj_matrix(2,0) << ", " << proj_matrix(2,1) << ", " << proj_matrix(2,2) << ", " << proj_matrix(2,3) << "\n";
-    std::cout << proj_matrix(3,0) << ", " << proj_matrix(3,1) << ", " << proj_matrix(3,2) << ", " << proj_matrix(3,3) << "\n";
+    std::cout << "incoming matrix:\n";
+    std::cout << osg_mp(0,0) << ", " << osg_mp(0,1) << ", " << osg_mp(0,2) << ", " << osg_mp(0,3) << "\n";
+    std::cout << osg_mp(1,0) << ", " << osg_mp(1,1) << ", " << osg_mp(1,2) << ", " << osg_mp(1,3) << "\n";
+    std::cout << osg_mp(2,0) << ", " << osg_mp(2,1) << ", " << osg_mp(2,2) << ", " << osg_mp(2,3) << "\n";
+    std::cout << osg_mp(3,0) << ", " << osg_mp(3,1) << ", " << osg_mp(3,2) << ", " << osg_mp(3,3) << "\n";
 
-    osp->testviewer->getCamera()->setProjectionMatrix(osg_mp);
+    std::cout << "starting view matrix:\n";
+    std::cout << view_matrix(0,0) << ", " << view_matrix(0,1) << ", " << view_matrix(0,2) << ", " << view_matrix(0,3) << "\n";
+    std::cout << view_matrix(1,0) << ", " << view_matrix(1,1) << ", " << view_matrix(1,2) << ", " << view_matrix(1,3) << "\n";
+    std::cout << view_matrix(2,0) << ", " << view_matrix(2,1) << ", " << view_matrix(2,2) << ", " << view_matrix(2,3) << "\n";
+    std::cout << view_matrix(3,0) << ", " << view_matrix(3,1) << ", " << view_matrix(3,2) << ", " << view_matrix(3,3) << "\n";
 
-    std::cout << "ending projection matrix:\n";
-    std::cout << proj_matrix(0,0) << ", " << proj_matrix(0,1) << ", " << proj_matrix(0,2) << ", " << proj_matrix(0,3) << "\n";
-    std::cout << proj_matrix(1,0) << ", " << proj_matrix(1,1) << ", " << proj_matrix(1,2) << ", " << proj_matrix(1,3) << "\n";
-    std::cout << proj_matrix(2,0) << ", " << proj_matrix(2,1) << ", " << proj_matrix(2,2) << ", " << proj_matrix(2,3) << "\n";
-    std::cout << proj_matrix(3,0) << ", " << proj_matrix(3,1) << ", " << proj_matrix(3,2) << ", " << proj_matrix(3,3) << "\n";
+    osp->testviewer->getCamera()->getViewMatrix().set(osg_mp);
+
+
+    view_matrix = osp->testviewer->getCamera()->getViewMatrix();
+    std::cout << "ending view matrix:\n";
+    std::cout << view_matrix(0,0) << ", " << view_matrix(0,1) << ", " << view_matrix(0,2) << ", " << view_matrix(0,3) << "\n";
+    std::cout << view_matrix(1,0) << ", " << view_matrix(1,1) << ", " << view_matrix(1,2) << ", " << view_matrix(1,3) << "\n";
+    std::cout << view_matrix(2,0) << ", " << view_matrix(2,1) << ", " << view_matrix(2,2) << ", " << view_matrix(2,3) << "\n";
+    std::cout << view_matrix(3,0) << ", " << view_matrix(3,1) << ", " << view_matrix(3,2) << ", " << view_matrix(3,3) << "\n";
 
     osp->testviewer->frame();
 
@@ -1369,6 +1377,34 @@ osg_loadPMatrix(struct dm *dmp, fastf_t *mat)
 
     glLoadIdentity();
     glLoadMatrixf(gtmat);
+
+
+    struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
+    osg::Matrix proj_matrix = osp->testviewer->getCamera()->getProjectionMatrix();
+
+    osg::Matrix osg_mp(
+	    mat[0], mat[1], mat[2], mat[3],
+	    mat[4], mat[5], mat[6], mat[7],
+	    mat[8], mat[9], mat[10], mat[11],
+	    mat[12], mat[13], mat[14], mat[15]);
+
+    std::cout << "starting projection matrix:\n";
+    std::cout << proj_matrix(0,0) << ", " << proj_matrix(0,1) << ", " << proj_matrix(0,2) << ", " << proj_matrix(0,3) << "\n";
+    std::cout << proj_matrix(1,0) << ", " << proj_matrix(1,1) << ", " << proj_matrix(1,2) << ", " << proj_matrix(1,3) << "\n";
+    std::cout << proj_matrix(2,0) << ", " << proj_matrix(2,1) << ", " << proj_matrix(2,2) << ", " << proj_matrix(2,3) << "\n";
+    std::cout << proj_matrix(3,0) << ", " << proj_matrix(3,1) << ", " << proj_matrix(3,2) << ", " << proj_matrix(3,3) << "\n";
+
+    osp->testviewer->getCamera()->setProjectionMatrix(osg_mp);
+
+    std::cout << "ending projection matrix:\n";
+    std::cout << proj_matrix(0,0) << ", " << proj_matrix(0,1) << ", " << proj_matrix(0,2) << ", " << proj_matrix(0,3) << "\n";
+    std::cout << proj_matrix(1,0) << ", " << proj_matrix(1,1) << ", " << proj_matrix(1,2) << ", " << proj_matrix(1,3) << "\n";
+    std::cout << proj_matrix(2,0) << ", " << proj_matrix(2,1) << ", " << proj_matrix(2,2) << ", " << proj_matrix(2,3) << "\n";
+    std::cout << proj_matrix(3,0) << ", " << proj_matrix(3,1) << ", " << proj_matrix(3,2) << ", " << proj_matrix(3,3) << "\n";
+
+    osp->testviewer->frame();
+
+
 
     return TCL_OK;
 }
