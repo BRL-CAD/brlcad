@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file solidity.h
+/** @file libgcv/solidity.h
  *
  * Library of algorithms to determine whether a BoT is solid.
  *
@@ -25,6 +25,9 @@
 
 
 #include "common.h"
+
+
+#include "gcv.h"
 
 
 #include "rtgeom.h"
@@ -35,13 +38,14 @@ extern "C" {
 #endif
 
 
-int bot_is_closed(const struct rt_bot_internal *bot, int must_be_fan);
+GCV_EXPORT int bot_is_closed(const struct rt_bot_internal *bot,
+			     int must_be_fan);
 
-int bot_is_orientable(const struct rt_bot_internal *bot);
+GCV_EXPORT int bot_is_orientable(const struct rt_bot_internal *bot);
 
-int bot_is_manifold(const struct rt_bot_internal *bot);
+GCV_EXPORT int bot_is_manifold(const struct rt_bot_internal *bot);
 
-int bot_is_solid(const struct rt_bot_internal *bot);
+GCV_EXPORT int bot_is_solid(const struct rt_bot_internal *bot);
 
 
 #ifdef __cplusplus

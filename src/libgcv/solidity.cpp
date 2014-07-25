@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file solidity.cpp
+/** @file libgcv/solidity.cpp
  *
  * Library of algorithms to determine whether a BoT is solid.
  *
@@ -144,7 +144,7 @@ bot_is_manifold(const rt_bot_internal *bot)
 {
     std::map<Edge, int> edge_face_count_map;
 
-    // map vertices to (num adjacent faces, incident_edges)
+    // map vertices to (num adjacent faces, incident edges)
     typedef std::vector<std::pair<int, std::set<Edge> > > VERTEX_MAP;
     VERTEX_MAP vertex_map(bot->num_vertices);
 
@@ -212,7 +212,6 @@ bot_is_manifold(const rt_bot_internal *bot)
 
 int bot_is_solid(const rt_bot_internal *bot)
 {
-    // note: self-intersection tests
     return
 	bot_is_closed(bot, true)
 	&& bot_is_orientable(bot)

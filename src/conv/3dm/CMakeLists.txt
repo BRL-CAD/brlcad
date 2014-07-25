@@ -17,8 +17,6 @@ BRLCAD_ADDEXEC(3dm-g "${3dm-g_SRCS}" "libwdb;libicv;${OPENNURBS_LIBRARY}" NO_STR
 
 CMAKEFILES(
   conv3dm-g.hpp
-  solidity.cpp
-  solidity.h
   )
 
 # Local Variables:
