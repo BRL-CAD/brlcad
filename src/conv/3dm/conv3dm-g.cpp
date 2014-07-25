@@ -41,6 +41,7 @@
 #include "bu/getopt.h"
 #include "icv.h"
 #include "vmath.h"
+#include "../../libgcv/solidity.h"
 
 
 namespace
@@ -944,7 +945,6 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 
     const std::size_t num_vertices = static_cast<std::size_t>(mesh.m_V.Count());
     const std::size_t num_faces = static_cast<std::size_t>(mesh.m_F.Count());
-    const unsigned char mode = mesh.IsSolid() ? RT_BOT_SOLID : RT_BOT_PLATE;
 
     unsigned char orientation;
 
@@ -986,6 +986,16 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 	faces[i * 3] = face.vi[0];
 	faces[i * 3 + 1] = face.vi[1];
 	faces[i * 3 + 2] = face.vi[2];
+    }
+
+    unsigned char mode;
+    {
+	rt_bot_internal bot;
+	bot.num_faces = num_faces;
+	bot.num_vertices = num_vertices;
+	bot.faces = &faces[0];
+	bot.vertices = &vertices[0];
+	mode = bot_is_solid(&bot) ? RT_BOT_SOLID : RT_BOT_PLATE;
     }
 
     std::vector<fastf_t> thicknesses;

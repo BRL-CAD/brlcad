@@ -4,6 +4,7 @@ endif(MSVC)
 
 set(3DM_INCLUDE_DIRS
   ${OPENNURBS_INCLUDE_DIRS}
+  ${GCV_INCLUDE_DIRS}
   ${ICV_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
   )
@@ -13,7 +14,7 @@ set(3dm-g_SRCS
   conv3dm-g.cpp
   3dm-g.cpp
   )
-BRLCAD_ADDEXEC(3dm-g "${3dm-g_SRCS}" "libwdb;libicv;${OPENNURBS_LIBRARY}" NO_STRICT)
+BRLCAD_ADDEXEC(3dm-g "${3dm-g_SRCS}" "libgcv;libwdb;libicv;${OPENNURBS_LIBRARY}" NO_STRICT)
 
 CMAKEFILES(
   conv3dm-g.hpp
