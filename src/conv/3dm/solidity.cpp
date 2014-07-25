@@ -179,11 +179,11 @@ bot_is_manifold(const rt_bot_internal *bot)
 
     // I have seen two (seemingly) different definitions of "manifold"
     // in online references - some definitions simply require (1)
-    // (i.e. http://www.lsi.upc.edu/~virtual/SGI/english/3_queries.html);
+    // (http://www.lsi.upc.edu/~virtual/SGI/english/3_queries.html);
     // others additionally require (2)
-    // (i.e. http://www.cs.mtu.edu/~shene/COURSES/cs3621/SLIDES/Mesh.pdf)
+    // (http://www.cs.mtu.edu/~shene/COURSES/cs3621/SLIDES/Mesh.pdf)
     //
-    // Removing (2) gives results identical to those of the openNURBS algorithms,
+    // Removing (2) gives results consistent with those of the openNURBS algorithms,
     // so the code below is disabled.
 
 #if 0
@@ -200,7 +200,7 @@ bot_is_manifold(const rt_bot_internal *bot)
 	const int valence = it->second.size();
 	const int num_adj_faces = it->first;
 
-	if (valence != num_adj_faces && valence != num_adj_faces + 1)
+	if ((valence != num_adj_faces) && (valence != num_adj_faces + 1))
 	    return false;
     }
 
