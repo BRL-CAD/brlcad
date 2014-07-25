@@ -43,6 +43,7 @@
 #endif
 
 #include <osg/PolygonMode>
+#include <osg/CullSettings>
 
 extern "C" {
 #include "tcl.h"
@@ -867,6 +868,7 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 
     privvars->osg_root = new osg::Group();
     privvars->testviewer->setSceneData(privvars->osg_root);
+    privvars->testviewer->getCamera()->setCullingMode(osg::CullSettings::NO_CULLING);
 
     privvars->testviewer->frame();
 
