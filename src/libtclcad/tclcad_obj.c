@@ -7553,6 +7553,26 @@ to_mouse_joint_selection_translate(
 
     if (ret == GED_OK) {
 	char *path_name = bu_strdup(bu_vls_cstr(gedp->ged_result_str));
+	int dmode = 0;
+	struct bu_vls path_dmode = BU_VLS_INIT_ZERO;
+
+	/* get current display mode of path */
+	cmd_argc = 2;
+	cmd_argv[0] = "how";
+	cmd_argv[1] = path_name;
+	cmd_argv[2] = NULL;
+	ret = ged_how(gedp, cmd_argc, cmd_argv);
+
+	if (ret == GED_OK) {
+	    ret = bu_sscanf(bu_vls_cstr(gedp->ged_result_str), "%d", &dmode);
+	}
+	if (dmode == 4) {
+	    bu_vls_printf(&path_dmode, "-h");
+	} else {
+	    bu_vls_printf(&path_dmode, "-m%d", dmode);
+	}
+
+	/* erase path to split it from visible vlists */
 	cmd_argc = 2;
 	cmd_argv[0] = "erase";
 	cmd_argv[1] = path_name;
@@ -7560,14 +7580,18 @@ to_mouse_joint_selection_translate(
 	ret = ged_erase(gedp, cmd_argc, cmd_argv);
 
 	if (ret == GED_OK) {
-	    cmd_argc = 3;
+	    /* redraw path with its previous display mode */
+	    cmd_argc = 4;
 	    cmd_argv[0] = "draw";
 	    cmd_argv[1] = "-R";
-	    cmd_argv[2] = path_name;
+	    cmd_argv[2] = bu_vls_cstr(&path_dmode);
 	    cmd_argv[3] = path_name;
+	    cmd_argv[4] = NULL;
 	    ret = ged_draw(gedp, cmd_argc, cmd_argv);
+
 	    to_refresh_all_views(current_top);
 	}
+	bu_vls_free(&path_dmode);
 	bu_free(path_name, "path_name");
     }
 
