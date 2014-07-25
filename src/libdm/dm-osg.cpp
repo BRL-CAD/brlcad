@@ -1291,12 +1291,18 @@ osg_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
     struct osg_vars *osp = (struct osg_vars *)dmp->dm_vars.priv_vars;
     osg::Matrix view_matrix = osp->testviewer->getCamera()->getViewMatrix();
-
+#if 0
     osg::Matrix osg_mp(
 	    mat[0], mat[1], mat[2], mat[3],
 	    mat[4]*dmp->dm_aspect, mat[5]*dmp->dm_aspect, mat[6]*dmp->dm_aspect, mat[7]*dmp->dm_aspect,
 	    mat[8], mat[9], mat[10], mat[11],
 	    mat[12], mat[13], mat[14], mat[15]);
+#endif
+osg::Matrix osg_mp(
+	    mat[0], mat[1], mat[2], mat[12],
+	    mat[4]*dmp->dm_aspect, mat[5]*dmp->dm_aspect, mat[6]*dmp->dm_aspect, mat[13]*dmp->dm_aspect,
+	    mat[8], mat[9], mat[10], mat[14],
+	    mat[3], mat[7], mat[11], mat[15]);
 
     std::cout << "incoming matrix:\n";
     std::cout << osg_mp(0,0) << ", " << osg_mp(0,1) << ", " << osg_mp(0,2) << ", " << osg_mp(0,3) << "\n";
