@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "icv.h"
 #include "ged.h"
 
 #define USE_FBSERV 1
@@ -290,102 +291,119 @@ struct dm {
 /**********************************************************************************************/
 /** EXPERIMENTAL - considering a new design for the display
  * manager structure.  DO NOT USE!! */
-#if 0
 
-/* Will need bu_dlopen and bu_dlsym for a plugin system - look at how
- * liboptical's shaders are set up. */
+#define DM_STYLE_WIREFRAME 0
+#define DM_STYLE_POINTS 1
+#define DM_STYLE_TRIANGLES 2
+#define DM_STYLE_HIDDEN_LINE 4
+struct dm_db_obj {
+    int draw_style;      	/**< @brief bitmask for points, wireframe, solid, hidden line, etc. */
+    mat_t edit_matrix;          /**< @brief local matrix for individual in-memory object manipulation during editing, when per-change disk I/O is too expensive */
+};
 
-/* Window management functions */
-struct dm_window_functions {
-    int (*dm_open)(struct dm *dmp, void *data);
-    int (*dm_close)(struct dm *dmp, void *data);
-    void *(*dm_context)(struct dm *dmp, void *data);
-    int (*dm_configureWin)(struct dm *dmp, int force);
-    int (*dm_setWinBounds)(struct dm *dmp, fastf_t *w);
-}
-struct dm_window_state {
-    struct bu_vls dm_fullName;	/**< @brief full Tcl/Tk name of drawing window */
-    struct bu_vls dm_shortName;	/**< @brief short Tcl/Tk name of drawing window */
-    int width;
-    int height;
-}
+#define DM_VIEW_OBJ_TYPE_3DLINES 0
+#define DM_VIEW_OBJ_TYPE_2DLINES 1
+#define DM_VIEW_OBJ_TYPE_TRIANGLES 2
+#define DM_VIEW_OBJ_TYPE_TEXT 4
+#define DM_VIEW_OBJ_TYPE_FB 5
+struct dm_view_obj {
+    struct bu_vls   *context;         	/**< @brief Need to know where to put this object (faceplate, 3D world, etc.) */
+    int              draw_type;   	/**< @brief obj type - framebuffer, 2D lines, 3D lines, triangles, text, etc. */
+    struct bn_vlist *vlist;  		/**< @brief If the object defines specific linear or triangular geometry for drawing
+					            (text is not required to, and a framebuffer uses image data) it is here. */
+    void *image_data;
+    mat_t placement_matrix;
+};
 
-/* Geometry view management functions */
-struct dm_view_state {
-    int dm_zclip;		/**< @brief !0 means zclipping */
-    vect_t dm_clipmin;		/**< @brief minimum clipping vector */
-    vect_t dm_clipmax;		/**< @brief maximum clipping vector */
-    int dm_perspective;		/**< @brief !0 means perspective on */
-    int dm_light;		/**< @brief !0 means lighting on */
-    int dm_transparency;	/**< @brief !0 means transparency on */
-    int dm_depthMask;		/**< @brief !0 means depth buffer is writable */
-    int dm_zbuffer;		/**< @brief !0 means zbuffer on */
-    int dm_fontsize;		/**< @brief !0 override's the auto font size */
-    int dm_displaylist;		/**< @brief !0 means device has displaylist */
-    int dm_stereo;                /**< @brief stereo flag */
-    unsigned char dm_bg[3];	/**< @brief background color */
-    unsigned char dm_fg[3];	/**< @brief foreground color */
-    int width;
-    int height;
-    double fov;
-    double aspect;
-    double near_l;
-    double far_l;
-}
-struct dm_view_functions {
-    int (*dm_normal)(struct dm *dmp);
-    int (*dm_set_perspective_view)(struct dm *dmp, double fov, double aspect, double near_l, double far_l);
-    int (*dm_loadMatrix)(struct dm *dmp, fastf_t *mat, int which_eye);
-    int (*dm_loadPMatrix)(struct dm *dmp, fastf_t *mat);
-    int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-    int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
-    int (*dm_setLineAttr)(struct dm *dmp, int width, int style);	/**< @brief currently - linewidth, (not-)dashed */
-    int (*dm_setTransparency)(struct dm *dmp, int transparency_on);
-    int (*dm_setDepthMask)(struct dm *dmp, int depthMask_on);
-    int (*dm_setZBuffer)(struct dm *dmp, int zbuffer_on);
-    void (*dm_reshape)(struct dm *dmp, int width, int height);
-}
+union dm_object {
+    struct dm_db_obj   db_obj;
+    struct dm_view_obj view_obj;
+};
 
+#define DM_DB_OBJ 1
+#define DM_VIEW_OBJ 2
+struct dm_display_list {
+    struct bu_list      l;
+    int obj_type;
+    union dm_object     obj;
+    struct bu_vls      *handle;   		/**< @brief For non-geometry view objects, need a string handle.  For geometry objects, full path string */
+    int                 dirty_flag;      	/**< @brief If set, need to (re)generate the drawing content for this object */
+    int			visibility_flag;        /**< @brief Allows users to hide/view objects without needing to recreate them */
+    int			highlight_flag;         /**< @brief Identify whether the object is highlighted within the view */
+    int 		transparency;           /**< @brief !0 -> transparency value for this object only - may be overridden by highlighting */
+    fastf_t		draw_width;		/**< @brief !0 override's the display manager's default Point radius/line width */
+    int 		fontsize;		/**< @brief !0 override's the display manager's default font size when obj labeling is performed */
+    unsigned char	rgb[3];			/**< @brief local color override */
+};
 
-/* Geometry drawing functions */
-struct dm_draw_state {
-    struct bu_list *objects;
-}
+/* For the moment, this holds the list of valid possibilities for display managers.
+ * Eventually, this will need to transition to some sort of plugin architecture. */
+typedef enum {
+    DISPLAY_NULL,
+    DISPLAY_TXT,
+    DISPLAY_OSG,
+    DISPLAY_QT,
+    DISPLAY_UNKNOWN
+} DISPLAY_TYPE;
 
-struct dm_draw_functions {
-    int (*dm_drawBegin)(struct dm *dmp);	/**< @brief formerly dmr_prolog */
-    int (*dm_drawEnd)(struct dm *dmp);		/**< @brief formerly dmr_epilog */
-     int (*dm_drawString2D)(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);	/**< @brief formerly dmr_puts */
-    int (*dm_drawLine2D)(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2);	/**< @brief formerly dmr_2d_line */
-    int (*dm_drawLine3D)(struct dm *dmp, point_t pt1, point_t pt2);
-    int (*dm_drawLines3D)(struct dm *dmp, int npoints, point_t *points, int sflag);
-    int (*dm_drawPoint2D)(struct dm *dmp, fastf_t x, fastf_t y);
-    int (*dm_drawPoint3D)(struct dm *dmp, point_t point);
-    int (*dm_drawPoints3D)(struct dm *dmp, int npoints, point_t *points);
-    int (*dm_drawVList)(struct dm *dmp, struct bn_vlist *vp);
-    int (*dm_drawVListHiddenLine)(struct dm *dmp, register struct bn_vlist *vp);
-    int (*dm_draw)(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);	/**< @brief formerly dmr_object */
-    int (*dm_beginDList)(struct dm *dmp, unsigned int list);
-    int (*dm_endDList)(struct dm *dmp);
-    void (*dm_drawDList)(unsigned int list);
-    int (*dm_freeDLists)(struct dm *dmp, unsigned int list, int range);
-    int (*dm_genDLists)(struct dm *dmp, size_t range);
-}
-
-struct display_manager {
-    struct dm_window_state *dm_win_s;
-    struct dm_window_functions *dm_win_f;
-    struct dm_view_state *dm_view_s;
-    struct dm_view_functions *dm_view_f;
-    struct dm_draw_state *dm_draw_s;
-    struct dm_draw_functions *dm_draw_f;
+struct dm_new {
     const char *dm_name;		/**< @brief short name of device */
     const char *dm_lname;		/**< @brief long name of device */
-    int (*dm_debug)(struct dm *dmp, int lvl);		/**< @brief Set DM debug level */
-    int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);
-    void *dm_interp;
-}
-#endif
+    DISPLAY_TYPE 		 dm_type;
+    mat_t			 view_matrix;
+    int 			 perspective;	/**< @brief !0 means perspective on */
+    mat_t			 projection_matrix;
+    void			*dm_canvas;
+    int				 is_embedded;
+    struct dm_display_list   	*dm_l;		/**< @brief Display list for this view */
+    int 			 fontsize;	/**< @brief !0 override's the auto font size */
+    unsigned char 		 dm_bg[3];	/**< @brief background color */
+    unsigned char 		 dm_fg[3];	/**< @brief foreground color */
+    fastf_t			 draw_width;	/**< @brief Default point radius/line width */
+    int 			 width;
+    int 			 height;
+    int 			 light;		/**< @brief !0 means lighting on */
+    int  			 zclip;		/**< @brief !0 means zclipping */
+    vect_t 			 clipmin;	/**< @brief minimum clipping vector */
+    vect_t 			 clipmax;	/**< @brief maximum clipping vector */
+    int				 debug_level;
+    struct bu_attribute_value_set *dm_extra_settings;	/**< @brief Different types of display managers (X, OSG, etc.) can optionally expose additional, DMTYPE specific settings here. */
+    void 			*client_data;	/**< @brief Slot to allow applications to store custom data */
+};
+
+/* Generic functions for all display managers */
+DM_EXPORT extern void dm_set_perspective(struct dm *dmp, int perspective_flag);
+DM_EXPORT extern void dm_set_perspective_mat(struct dm *dmp, mat_t pmat);
+DM_EXPORT extern void dm_set_view_mat(struct dm *dmp, mat_t vmat);
+DM_EXPORT extern void dm_set_background_rgb(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+DM_EXPORT extern void dm_set_foreground_rgb(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+DM_EXPORT extern void dm_set_default_draw_width(struct dm *dmp, fastf_t draw_width);
+DM_EXPORT extern void dm_set_default_fontsize(struct dm *dmp, int fontsize);
+DM_EXPORT extern void dm_toggle_context(struct dm *dmp, int active_flag);
+DM_EXPORT extern int  dm_get_image(struct dm *dmp, icv_image_t *image); 
+
+/* Object manipulators */
+DM_EXPORT extern struct dm_display_list *dm_obj_add(struct dm *dmp, const char *handle, const char *context, int style_type, struct bn_vlist *vlist);
+DM_EXPORT extern struct dm_display_list *dm_obj_find(struct dm_display_list *dl, const char *handle, const char *context);
+DM_EXPORT extern void dm_obj_remove(struct dm *dmp, const char *handle, const char *context);
+DM_EXPORT extern void dm_set_obj_rgb(struct dm *dmp, const char *handle, unsigned char r, unsigned char g, unsigned char b);
+DM_EXPORT extern void dm_toggle_obj_dirty(struct dm *dmp, const char *handle, int dirty_flag_val);
+DM_EXPORT extern void dm_toggle_obj_visible(struct dm *dmp, const char *handle, int visibility_flag_val);
+DM_EXPORT extern void dm_toggle_obj_highlight(struct dm *dmp, const char *handle, int highlight_flag_val);
+DM_EXPORT extern void dm_toggle_obj_transparency(struct dm *dmp, const char *handle, int visibility_flag_val);
+DM_EXPORT extern void dm_set_obj_draw_width(struct dm *dmp, const char *handle, fastf_t draw_width);
+DM_EXPORT extern void dm_set_obj_fontsize(struct dm *dmp, const char *handle, int fontsize);
+DM_EXPORT extern void dm_set_obj_localmat(struct dm *dmp, const char *handle, mat_t matrix);
+DM_EXPORT extern int  dm_get_obj_image(struct dm *dmp, const char *handle, icv_image_t *image); 
+
+/* Display Manager / OS type aware functions */
+DM_EXPORT extern int  dm_new_window(struct dm *dmp);
+DM_EXPORT extern int  dm_embedded_window(struct dm *dmp, void *data);
+DM_EXPORT extern int  dm_close(struct dm *dmp);
+DM_EXPORT extern int  dm_refresh(struct dm *dmp);
+DM_EXPORT extern struct bu_attribute_value_set *dm_extra_settings(struct dm *dmp);
+DM_EXPORT extern void *dm_canvas(struct dm *dmp);
+DM_EXPORT extern int  dm_change_type(struct dm *dmp, DISPLAY_TYPE dm_t);
 
 /**********************************************************************************************/
 
