@@ -144,7 +144,7 @@ bot_is_manifold(const rt_bot_internal *bot)
 {
     std::map<Edge, int> edge_face_count_map;
 
-    // map vertices to (num_edjacent_faces, incident_edges)
+    // map vertices to (num adjacent faces, incident_edges)
     typedef std::vector<std::pair<int, std::set<Edge> > > VERTEX_MAP;
     VERTEX_MAP vertex_map(bot->num_vertices);
 
