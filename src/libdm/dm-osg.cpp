@@ -453,6 +453,22 @@ osg_reshape(struct dm *dmp, int width, int height)
     glLoadIdentity();
     glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
     glMatrixMode(mm);
+
+    struct osg_vars *privvars = (struct osg_vars *)dmp->dm_vars.priv_vars;
+    if (privvars->testviewer) {
+	privvars->testviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
+	osgViewer::Viewer::Windows    windows;
+	privvars->testviewer->getWindows(windows);
+	for(osgViewer::Viewer::Windows::iterator itr = windows.begin();
+		itr != windows.end();
+		++itr)
+	{
+	    (*itr)->setWindowRectangle(0, 0, dmp->dm_width, dmp->dm_height);
+	}
+	privvars->testviewer->frame();
+
+    }
+
 }
 
 
@@ -833,6 +849,12 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
 
     osg_setZBuffer(dmp, dmp->dm_zbuffer);
     osg_setLight(dmp, dmp->dm_light);
+
+    /* Set up a "real" scene graph view to operate in parallel with the ogl-ish view */
+    privvars->testviewer = new osgViewer::Viewer();
+    privvars->testviewer->setUpViewInWindow(0, 0, 1, 1);
+    privvars->testviewer->realize();
+    privvars->testviewer->frame();
 
     return dmp;
 }
