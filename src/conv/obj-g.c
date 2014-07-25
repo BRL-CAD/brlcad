@@ -107,8 +107,8 @@ usage(const char *argv0)
 	   "\t\t\t3 = cw\n"
 	);
 
-    bu_log("  -f\t\tFuse vertices within <distance tolerance> of each other.\n"
-	   "\t\tCan make the solidity detection more reliable.\n"
+    bu_log("  -f\t\tFuse vertices that are close enough to be considered the\n"
+	   "\t\tsame. Can make the solidity detection more reliable.\n"
 	   "\t\tMay significantly increase processing time during import.\n"
 	   "  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
 	   "\t\tif they are within this distance of one another. Default is\n"
