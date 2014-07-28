@@ -33,7 +33,7 @@
 #include "bu.h"
 #include "fb.h"
 
-char *Usage="[-F framebuffer] [-s squareframesize] [-w frame_width] [-n frame_height]\n";
+char *Usage="[-F framebuffer] [-s|S squareframesize] [-w|W frame_width] [-n|N frame_height]\n";
 
 #define USAGE_EXIT(p) { fprintf(stderr, "Usage: %s %s\n", (p), Usage); \
 	bu_exit(-1, NULL); }
@@ -81,7 +81,7 @@ main(int argc, char **argv)
 		else
 		    USAGE_EXIT(*argv);
 		break;
-	    default:	/* '?' */
+	    default:	/* '?' 'h' */
 		USAGE_EXIT(*argv);
 		break;
 	}

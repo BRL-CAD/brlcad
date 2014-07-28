@@ -70,12 +70,17 @@ private:
 	void register_member(const ON_UUID &parent_uuid, const ON_UUID &member_uuid);
 	void mark_idef_member(const ON_UUID &uuid);
 
+	bool exists(const ON_UUID &uuid) const;
 	const std::string &get_name(const ON_UUID &uuid) const;
 	const std::set<ON_UUID, UuidCompare> &get_members(const ON_UUID &uuid) const;
 	bool is_idef_member(const ON_UUID &uuid) const;
+
+
     private:
 	struct ModelObject;
 	std::map<ON_UUID, ModelObject, UuidCompare> m_obj_map;
+
+	friend class RhinoConverter; // FIXME
     };
 
 
@@ -85,13 +90,12 @@ private:
     void clean_model();
     void map_uuid_names();
     void create_all_bitmaps();
-    void nest_all_layers();
     void create_all_layers();
     void create_all_idefs();
-    void create_all_geometry();
+    void create_all_objects();
 
-    void create_geometry(const ON_Geometry *geom,
-			 const ON_3dmObjectAttributes &geom_attrs);
+    bool create_object(const ON_Object &object,
+		       const ON_3dmObjectAttributes &object_attrs);
 
     void create_bitmap(const ON_Bitmap *bitmap);
     void create_layer(const ON_Layer &layer);
@@ -106,7 +110,10 @@ private:
     void create_mesh(ON_Mesh mesh, const ON_3dmObjectAttributes &mesh_attrs);
     void create_geom_comb(const ON_3dmObjectAttributes &geom_attrs);
 
+    void map_name(const ON_UUID &uuid, const ON_wString &name, const char *suffix);
+
     Color get_color(const ON_3dmObjectAttributes &obj_attrs) const;
+    Color get_color(const ON_Layer &layer) const;
 
     std::pair<std::string, std::string>
     get_shader(int index) const;
@@ -128,6 +135,7 @@ private:
 
 
 #endif
+
 
 // Local Variables:
 // tab-width: 8

@@ -16,8 +16,8 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fb-bw</command>
-    <arg choice="opt" rep="norepeat">-hi </arg>
-    <arg choice="opt" rep="norepeat">-Fframebuffer </arg>
+    <arg choice="opt" rep="norepeat">-i </arg>
+    <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-X <replaceable>scr_xoff</replaceable></arg>
     <arg choice="opt" rep="norepeat">-Y <replaceable>scr_yoff</replaceable></arg>
     <arg choice="opt" rep="norepeat">-s <replaceable>squaresize</replaceable></arg>
@@ -29,7 +29,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Fb-bw</emphasis>
+<para><command>fb-bw</command>
 will take a region of a framebuffer display and save it as a black and
 white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
@@ -46,17 +46,13 @@ by using the
 <option>-F</option>
 flag.</para>
 
-<para>By default, the output file will be made size 512x512 pixels.
-Specifying the
-<option>-h</option>
-flag, changes the default to 1024x1024.
+<para>By default, the output file will be size 512x512 pixels.
 The
 <option>-s</option>
 flag will set both the file height and width to be the given size, while
 <option>-w</option>
 and
-<option>-n</option>
-sets them individually.</para>
+<option>-n</option> are used for setting them individually.</para>
 
 <para>A first quadrant coordinate system is used (origin in lower left of
 screen), and the area saved is normally from this origin.  The

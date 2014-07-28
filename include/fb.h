@@ -180,7 +180,7 @@ FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 #endif
 
 #ifdef IF_QT
-FB_EXPORT extern int _qt_open_existing(FBIO *ifp);
+FB_EXPORT extern int _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void *qpainter);
 #endif
 
 /*

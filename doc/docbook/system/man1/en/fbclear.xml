@@ -19,9 +19,7 @@
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-c </arg></arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat"><replaceable>red</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>green</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>blue</replaceable></arg></arg>
-</cmdsynopsis>
-<cmdsynopsis sepchar=" ">
-  <command>fbclear</command>
+    <sbr></sbr>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-c </arg></arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>gray_value</replaceable></arg>
@@ -30,7 +28,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Fbclear</emphasis>
+<para><command>fbclear</command>
 is used to erase a frame buffer using whatever method is efficient for the
 device being accessed.
 By default, the selected color will be flooded into the color planes.
@@ -59,11 +57,17 @@ If this variable is not set, the default device for your system will
 be used.</para>
 
 <para>In addition to those flags shown above, the
-<option>-W </option><replaceable>width</replaceable>
-<option>-N </option><replaceable>height</replaceable>
+<option>-W</option>
+(or <option>-w</option>)
+<replaceable>width</replaceable>,
+<option>-N</option>
+(or <option>-n</option>)
+<replaceable>height</replaceable>,
 and
-<option>-S </option><replaceable>square_size</replaceable>
-flags can be used to set the size of the output frame buffer.</para>
+<option>-S</option>
+(or <option>-s</option>)
+<replaceable>square_size</replaceable>
+options can be used to set the size of the output frame buffer.</para>
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>

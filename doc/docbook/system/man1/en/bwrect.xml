@@ -17,15 +17,14 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>bwrect</command>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>height</replaceable></arg>
+    <arg choice='opt'>-S <replaceable>out_squaresize</replaceable></arg>
     <arg choice='opt'>-W <replaceable>out_width</replaceable></arg>
     <arg choice='opt'>-N <replaceable>out_height</replaceable></arg>
     <arg choice='opt'>-x <replaceable>xorig</replaceable></arg>
     <arg choice='opt'>-y <replaceable>yorig</replaceable></arg>
-    <arg choice='opt'>-S <replaceable>out_squaresize</replaceable></arg>
     <arg choice='opt'>-o <replaceable>out_file.bw</replaceable></arg>
     <arg choice='plain'><replaceable>file.bw</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>
@@ -35,11 +34,11 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bwrect</emphasis>
+<para><command>bwrect</command>
 extracts a rectangular region from a black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-format file. The default input image size is 512X512.
-The x-y coordinates of the origin (xorig=0, yorig=0 corresponds to the
+format file. The default input image size is 512x512.
+The x,y coordinates of the origin (the defaults xorig=0, yorig=0 correspond to the
 lower left corner) and the dimension of the output image are passed as
 command line arguments.</para>
 <para>This utility supports pipes and can read/write from/to them.
