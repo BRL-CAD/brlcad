@@ -980,6 +980,10 @@ rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double lo
 	    INDEXL(d, s, lu_hd);
 	    INDEXL(d, s, eu_hd);
 	    INDEX(d, s, vu_p);
+	    	
+	    *(uint32_t *)((d)->l.forw) = htonl(-1);
+	    *(uint32_t *)((d)->l.back) = htonl(-1);
+	    *(uint32_t *)(d)->r_p = htonl(2);
 	}
 	    return;
 	case NMG_KIND_SHELL_A: {
