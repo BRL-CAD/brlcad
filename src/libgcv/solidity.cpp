@@ -36,10 +36,10 @@ namespace
 {
 
 
-class Edge
+class HalfEdge
 {
 public:
-    Edge() : m_vertices(0, 0), m_was_flipped(false)
+    HalfEdge() : m_vertices(0, 0), m_was_flipped(false)
     {}
 
 
@@ -65,7 +65,7 @@ private:
 
 
 bool
-Edge::set(int va, int vb)
+HalfEdge::set(int va, int vb)
 {
     if (va == vb)
 	return false;
@@ -85,9 +85,34 @@ Edge::set(int va, int vb)
 
 
 static bool
-edge_compare(const Edge &edge_a, const Edge &edge_b)
+edge_compare(const HalfEdge &edge_a, const HalfEdge &edge_b)
 {
     return edge_a.get() < edge_b.get();
+}
+
+
+static bool
+generate_edge_list(std::vector<HalfEdge> &edges, const rt_bot_internal *bot)
+{
+    const std::size_t num_edges = 3 * bot->num_faces;
+
+    if (bot->num_faces < 4 || bot->num_vertices < 4 || num_edges % 2)
+	return false;
+
+    edges.resize(num_edges);
+    std::vector<HalfEdge>::iterator edge_it = edges.begin();
+
+    for (std::size_t face_index = 0; face_index < bot->num_faces; ++face_index) {
+	const int *face = &bot->faces[face_index * 3];
+
+	if (!((edge_it++)->set(face[0], face[1])
+	      && (edge_it++)->set(face[1], face[2])
+	      && (edge_it++)->set(face[2], face[0])))
+	    return false;
+    }
+
+    std::sort(edges.begin(), edges.end(), edge_compare);
+    return true;
 }
 
 
@@ -97,32 +122,67 @@ edge_compare(const Edge &edge_a, const Edge &edge_b)
 int
 bot_is_solid(const rt_bot_internal *bot)
 {
-    const std::size_t num_edges = 3 * bot->num_faces;
+    std::vector<HalfEdge> edges;
 
-    if (bot->num_faces < 4 || bot->num_vertices < 4 || num_edges % 2)
+    if (!generate_edge_list(edges, bot))
 	return false;
 
-    std::vector<Edge> edges(num_edges);
-    {
-	std::vector<Edge>::iterator edge_it = edges.begin();
-
-	for (std::size_t face_index = 0; face_index < bot->num_faces; ++face_index) {
-	    const int *face = &bot->faces[face_index * 3];
-
-	    if (!((edge_it++)->set(face[0], face[1])
-		  && (edge_it++)->set(face[1], face[2])
-		  && (edge_it++)->set(face[2], face[0])))
-		return false;
-	}
-    }
-
-    std::sort(edges.begin(), edges.end(), edge_compare);
-
-    for (std::vector<Edge>::const_iterator it = edges.begin(), next = it + 1;
+    for (std::vector<HalfEdge>::const_iterator it = edges.begin(), next = it + 1;
 	 it != edges.end(); it += 2, next += 2) {
 
 	// each edge must have two half-edges
 	if (it->get() != next->get()) return false;
+
+	// adjacent half-edges must be compatibly oriented
+	if (it->was_flipped() == next->was_flipped()) return false;
+
+	// only two half-edges may share an edge
+	if ((next + 1) != edges.end())
+	    if (it->get() == (next + 1)->get()) return false;
+
+    }
+
+    return true;
+}
+
+
+int
+bot_is_closed_fan(const rt_bot_internal *bot)
+{
+    std::vector<HalfEdge> edges;
+
+    if (!generate_edge_list(edges, bot))
+	return false;
+
+    for (std::vector<HalfEdge>::const_iterator it = edges.begin(), next = it + 1;
+	 it != edges.end(); it += 2, next += 2) {
+
+	// each edge must have two half-edges
+	if (it->get() != next->get()) return false;
+
+	// only two half-edges may share an edge
+	if ((next + 1) != edges.end())
+	    if (it->get() == (next + 1)->get()) return false;
+
+    }
+
+    return true;
+}
+
+
+int
+bot_is_orientable(const rt_bot_internal *bot)
+{
+    std::vector<HalfEdge> edges;
+
+    if (!generate_edge_list(edges, bot))
+	return false;
+
+    for (std::vector<HalfEdge>::const_iterator it = edges.begin(), next = it + 1;
+	 it != edges.end(); it += 2, next += 2) {
+
+	// skip if there is no adjacent half-edge
+	if (it->get() != next->get()) continue;
 
 	// adjacent half-edges must be compatibly oriented
 	if (it->was_flipped() == next->was_flipped()) return false;

@@ -38,7 +38,15 @@ extern "C" {
 #endif
 
 
+/*
+ * Determines whether a BoT is solid.
+ * Equivalent to bot_is_closed_fan() && bot_is_orientable()
+ */
 GCV_EXPORT int bot_is_solid(const struct rt_bot_internal *bot);
+
+GCV_EXPORT int bot_is_closed_fan(const struct rt_bot_internal *bot);
+
+GCV_EXPORT int bot_is_orientable(const struct rt_bot_internal *bot);
 
 
 #ifdef __cplusplus
