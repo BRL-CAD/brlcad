@@ -83,7 +83,7 @@ get_args(int argc, char **argv)
 		height = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }

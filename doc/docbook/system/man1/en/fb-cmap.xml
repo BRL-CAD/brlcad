@@ -23,7 +23,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Fb-cmap</emphasis>
+<para><command>fb-cmap</command>
 reads a colormap from a framebuffer.  A
 <emphasis remap="I">colormap</emphasis>
 filename into which to write the data can be given,
@@ -44,8 +44,8 @@ display size.</para>
 <para>The message "can't read colormap" occurs if the read failed.
 No output will be produced.  This usually means that the
 currently selected framebuffer either does not have, or can
-not support, a colormap.  This will usually be the case for
-example with a disk file "framebuffer."</para>
+not support, a colormap.  This will usually be the case, for
+example, with a disk file "framebuffer".</para>
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>

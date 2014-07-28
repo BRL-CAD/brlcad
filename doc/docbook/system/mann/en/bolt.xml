@@ -49,7 +49,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-fname.g</option></term>
+      <term><option>-f </option><replaceable>name.g</replaceable></term>
       <listitem>
 	<para>
 	 BRL-CAD file name.
@@ -57,7 +57,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-n#</option></term>
+      <term><option>-n #</option></term>
       <listitem>
 	<para>
 	 The number of bolts to be created.  This number must be less than or equal to
@@ -66,15 +66,15 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-hd#</option></term>
+      <term><option>-hd #</option></term>
       <listitem>
 	<para>
-	 Diameter of bolt head flat edge to flat edge in millimeters.
+	 Diameter of bolt head, flat edge to flat edge, in millimeters.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-hh#</option></term>
+      <term><option>-hh #</option></term>
       <listitem>
 	<para>
 	 Height of bolt head in millimeters.
@@ -82,7 +82,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-wd#</option></term>
+      <term><option>-wd #</option></term>
       <listitem>
 	<para>
 	 Diameter of washer in millimeters.
@@ -90,7 +90,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-wh#</option></term>
+      <term><option>-wh #</option></term>
       <listitem>
 	<para>
 	 Height of washer in millimeters.
@@ -98,7 +98,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-sd#</option></term>
+      <term><option>-sd #</option></term>
       <listitem>
 	<para>
 	 Diameter of bolt stem in millimeters.
@@ -106,7 +106,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-sh#</option></term>
+      <term><option>-sh #</option></term>
       <listitem>
 	<para>
 	 Height of bolt stem in millimeters.

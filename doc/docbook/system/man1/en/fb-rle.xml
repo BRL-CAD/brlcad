@@ -178,11 +178,9 @@
 
   <refsection xml:id="examples"><title>EXAMPLES</title>
     <blockquote remap="RS">
-      <para>fb-rle truck.rle
-        <!-- .br -->
-        fb-rle -C 0/255/0 &gt;car.rle
-        <!-- .br -->
-        fb-rle -h -s 512 &gt;lowerleft.rle
+      <para>fb-rle truck.rle</para>
+      <para>fb-rle -C 0/255/0 &gt;car.rle</para>
+      <para>fb-rle -s 512 &gt;lowerleft.rle
     </para></blockquote> <!-- remap='RE' -->
   </refsection>
 

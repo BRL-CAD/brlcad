@@ -182,14 +182,15 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     VMOVE(&R[8], Zu);
 
     /**
-     * 1.0 stands for the length of xdir vector and 0.25 approximates some
-     * value which encloses the displacement from the Z-axis to the furthest
-     * point on the heart surface in either the -X or +X direction
+     * View-points from directly above and besides the heart indicate that it is
+     * elliptical, Y-axis is the major axis, X-axis the minor axis and the
+     * ratio of the radius of the minor axis to the radius of the major axis
+     * is 2/3
      */
     /* X */
     f = hip->xdir[X];
-    (*min)[X] = hip->v[X] - f * 1.25;
-    (*max)[X] = hip->v[X] + f * 1.25;
+    (*min)[X] = hip->v[X] - f * 2/3;
+    (*max)[X] = hip->v[X] + f * 2/3;
 
     /* Y */
     f = hip->ydir[Y];
@@ -722,11 +723,12 @@ rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
 {
     static fastf_t c, d, e, f, g, h, i, j, k, l;
 
-    c = h = .96593;		/* cos(15.0 degrees) */
-    d = i = 0.86603;            /* cos(30.0 degrees) */
-    e = j = M_SQRT1_2;		/* cos(45.0 degrees) */
-    f = k = 0.5;                /* cos(60.0 degrees) */
-    g = l = .25882;		/* cos(75.0 degrees) */
+    c = k = 0.95105;		/* cos(18.0 degrees) */
+    d = j = 0.80901;		/* cos(36.0 degrees) */
+    e = i = 0.58778;		/* cos(54.0 degrees) */
+    f = h = 0.30901;            /* cos(72.0 degrees) */
+    g = 0.00000;		/* cos(90.0 degrees) */
+    l = 1.00000;		/* sin(90.0 degrees) */
 
     /*
      * For angle theta, compute surface point as
@@ -743,23 +745,23 @@ rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
     VJOIN2(HRTOUT(5), V, f, A, k, B);
     VJOIN2(HRTOUT(6), V, g, A, l, B);
     VADD2(HRTOUT(7), V, B);
-    VJOIN2(HRTOUT(8), V, -g, A, h, B);
-    VJOIN2(HRTOUT(9), V, -f, A, i, B);
+    VJOIN2(HRTOUT(8), V, -g, A, l, B);
+    VJOIN2(HRTOUT(9), V, -f, A, k, B);
     VJOIN2(HRTOUT(10), V, -e, A, j, B);
-    VJOIN2(HRTOUT(11), V, -d, A, k, B);
-    VJOIN2(HRTOUT(12), V, -c, A, l, B);
+    VJOIN2(HRTOUT(11), V, -d, A, i, B);
+    VJOIN2(HRTOUT(12), V, -c, A, h, B);
     VSUB2(HRTOUT(13), V, A);
-    VJOIN2(HRTOUT(14), V, -g, A, -l, B);
-    VJOIN2(HRTOUT(15), V, -f, A, -k, B);
+    VJOIN2(HRTOUT(14), V, -c, A, -h, B);
+    VJOIN2(HRTOUT(15), V, -d, A, -i, B);
     VJOIN2(HRTOUT(16), V, -e, A, -j, B);
-    VJOIN2(HRTOUT(17), V, -d, A, -i, B);
-    VJOIN2(HRTOUT(18), V, -c, A, -h, B);
+    VJOIN2(HRTOUT(17), V, -f, A, -k, B);
+    VJOIN2(HRTOUT(18), V, -g, A, -l, B);
     VSUB2(HRTOUT(19), V, B);
-    VJOIN2(HRTOUT(20), V, g, A, -h, B);
-    VJOIN2(HRTOUT(21), V, f, A, -i, B);
+    VJOIN2(HRTOUT(20), V, g, A, -l, B);
+    VJOIN2(HRTOUT(21), V, f, A, -k, B);
     VJOIN2(HRTOUT(22), V, e, A, -j, B);
-    VJOIN2(HRTOUT(23), V, d, A, -k, B);
-    VJOIN2(HRTOUT(24), V, c, A, -l, B);
+    VJOIN2(HRTOUT(23), V, d, A, -i, B);
+    VJOIN2(HRTOUT(24), V, c, A, -h, B);
 }
 
 

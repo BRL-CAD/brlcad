@@ -13,6 +13,7 @@ set(LIBGCV_SOURCES
   region_end.c
   region_end_mc.c
   tri_intersect.c
+  solidity.cpp
   )
 
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libbu")
@@ -27,7 +28,7 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 add_test(bottess_test test_bottess)
 
-CMAKEFILES(NOTES soup.h tri_intersect.h)
+CMAKEFILES(NOTES soup.h tri_intersect.h solidity.h)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/wfobj/CTestTestfile.cmake)
 

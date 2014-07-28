@@ -43,7 +43,7 @@
 
   <variablelist remap="TP">
     <varlistentry>
-      <term><option>-fname.g</option></term>
+      <term><option>-f </option><replaceable>name.g</replaceable></term>
       <listitem>
 	<para>
 	 BRL-CAD file name.
@@ -51,7 +51,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-n#</option></term>
+      <term><option>-n #</option></term>
       <listitem>
 	<para>
 	 The number of gas tanks to be created (must be less than or equal to 26).
@@ -59,7 +59,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-H#</option></term>
+      <term><option>-H #</option></term>
       <listitem>
 	<para>
 	 Height of gas tank in millimeters.
@@ -67,7 +67,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-w#</option></term>
+      <term><option>-w #</option></term>
       <listitem>
 	<para>
 	 Width of gas tank in millimeters.
@@ -75,7 +75,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-d#</option></term>
+      <term><option>-d #</option></term>
       <listitem>
 	<para>
 	 Depth of gas tank in millimeters.
@@ -83,7 +83,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-r#</option></term>
+      <term><option>-r #</option></term>
       <listitem>
 	<para>
 	 Radius of the corner in millimeters.
@@ -126,7 +126,7 @@ number of gas tanks:  3
   <example><title>Single-Line <command>gastank</command> Command</title>
 
     <para>
-      <userinput>gastank -fgastank.g -n3 -h300 -w200 -d400 -r30</userinput>
+      <userinput>gastank -fgastank.g -n3 -H300 -w200 -d400 -r30</userinput>
     </para>
   </example>
 

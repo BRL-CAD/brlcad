@@ -135,7 +135,7 @@ number of window frames:  3
   <example><title>Single-Line <command>window_frame</command> Command</title>
 
     <para>
-      <userinput>window_frame -fwin.frm.g -n3 -h200 -w300 -d20 -r30 -i10</userinput>
+      <userinput>window_frame -fwin.frm.g -n3 -H200 -w300 -d20 -r30 -i10</userinput>
     </para>
   </example>
 
