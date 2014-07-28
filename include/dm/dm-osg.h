@@ -39,6 +39,10 @@
 #include <osg/GraphicsContext>
 #include <osg/Timer>
 
+#include <osgViewer/Viewer>
+#include <osgViewer/CompositeViewer>
+#include <osgViewer/ViewerEventHandlers>
+
 #if defined(_WIN32)
 #  include <osgViewer/api/Win32/GraphicsWindowWin32>
 #else
@@ -93,6 +97,8 @@ struct osg_vars {
 #ifdef __cplusplus
     osg::ref_ptr<osg::GraphicsContext> graphicsContext;
     osg::Timer *timer;
+    osgViewer::Viewer *testviewer;
+    osg::Group *osg_root;
 #endif
 };
 

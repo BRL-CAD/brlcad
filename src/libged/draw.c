@@ -1791,7 +1791,34 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 int
 ged_draw(struct ged *gedp, int argc, const char *argv[])
 {
-    return ged_draw_guts(gedp, argc, argv, 1);
+    int i;
+    int ret;
+    struct ged_display_list *gdlp = NULL;
+    for (i = 1; i < argc; ++i) {
+	/* Skip any options */
+	if (argv[i][0] == '-')
+	    continue;
+
+	bu_log("draw %s\n", argv[i]);
+    }
+
+    bu_log("ged_gdp before draw:\n");
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	bu_log("%s\n", bu_vls_addr(&gdlp->gdl_path));
+	gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    }
+
+    ret = ged_draw_guts(gedp, argc, argv, 1);
+
+    bu_log("ged_gdp after draw:\n");
+    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	bu_log("%s\n", bu_vls_addr(&gdlp->gdl_path));
+	gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    }
+
+    return ret;
 }
 
 
