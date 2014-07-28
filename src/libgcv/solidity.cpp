@@ -115,9 +115,15 @@ bot_is_solid(const rt_bot_internal *bot)
 
     for (std::vector<Edge>::const_iterator it = edges.begin(), next = it + 1;
 	 it != edges.end(); it += 2, next += 2) {
+	// each edge must have two half-edges
 	if (it->get() != next->get()) return false;
 
+	// adjacent half-edges must be compatably oriented
 	if (it->was_flipped() == next->was_flipped()) return false;
+
+	// only two half-edges may share an edge
+	if ((next + 1) != edges.end())
+	    if (it->get() == (next + 1)->get()) return false;
     }
 
     return true;
