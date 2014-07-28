@@ -46,9 +46,6 @@
 #include <osg/CullSettings>
 
 extern "C" {
-#include "tcl.h"
-#include "tk.h"
-#include "tkPlatDecls.h"
 #include "bio.h"
 
 #include "bu.h"
@@ -56,11 +53,7 @@ extern "C" {
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm/dm_xvars.h"
-#include "dm/dm-Null.h"
-#include "./dm_util.h"
 }
-#include "dm/dm-osg.h"
 
 
 /* For Tk, we need to offset when thinking about screen size in

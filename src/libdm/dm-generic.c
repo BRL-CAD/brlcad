@@ -34,237 +34,185 @@
 #include "vmath.h"
 #include "dm.h"
 
-#include "dm/dm-Null.h"
-
-extern struct dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
-extern struct dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
-extern struct dm *txt_open(Tcl_Interp *interp, int argc, const char **argv);
-
-#ifdef DM_X
-#  if defined(HAVE_TK)
-extern struct dm *X_open_dm();
-#  endif
-#endif /* DM_X */
-
-#ifdef DM_TK
-extern struct dm *tk_open_dm();
-#endif /* DM_TK */
-
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-extern struct dm *ogl_open();
-extern void ogl_fogHint();
-extern int ogl_share_dlist();
-#  endif
-#endif /* DM_OGL */
-
-#ifdef DM_OSG
-#  if defined(HAVE_TK)
-extern struct dm *osg_open();
-extern void osg_fogHint();
-extern int osg_share_dlist();
-#  endif
-#endif /* DM_OSG*/
-
-#ifdef DM_RTGL
-extern struct dm *rtgl_open();
-extern void rtgl_fogHint();
-extern int rtgl_share_dlist();
-#endif /* DM_RTGL */
-
-#ifdef DM_WGL
-extern struct dm *wgl_open();
-extern void wgl_fogHint();
-extern int wgl_share_dlist();
-#endif /* DM_WGL */
-
-#ifdef DM_QT
-extern struct dm *qt_open();
-#endif /* DM_QT */
-
-HIDDEN struct dm *
-null_open(Tcl_Interp *interp, int argc, const char *argv[])
+void
+dm_set_perspective(struct dm *dmp, int perspective_flag)
 {
-    struct dm *dmp;
-
-    if (argc < 0 || !argv)
-	return DM_NULL;
-
-    BU_ALLOC(dmp, struct dm);
-
-    *dmp = dm_null;
-    dmp->dm_interp = interp;
-
-    return dmp;
+    if (!dmp) return;
+    dmp->perspective = perspective_flag;
 }
 
-
-struct dm *
-dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
+int dm_get_perspective(struct dm *dmp) 
 {
-    switch (type) {
-	case DM_TYPE_NULL:
-	    return null_open(interp, argc, argv);
-	case DM_TYPE_TXT:
-	    return txt_open(interp, argc, argv);
-	case DM_TYPE_PLOT:
-	    return plot_open(interp, argc, argv);
-	case DM_TYPE_PS:
-	    return ps_open(interp, argc, argv);
-#ifdef DM_X
-#  if defined(HAVE_TK)
-	case DM_TYPE_X:
-	    return X_open_dm(interp, argc, argv);
-#  endif
-#endif
-#ifdef DM_TK
-	case DM_TYPE_TK:
-	    return tk_open_dm(interp, argc, argv);
-#endif
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-	case DM_TYPE_OGL:
-	    return ogl_open(interp, argc, argv);
-#  endif
-#endif
-#ifdef DM_OSG
-#  if defined(HAVE_TK)
-	case DM_TYPE_OSG:
-	    return osg_open(interp, argc, argv);
-#  endif
-#endif
-#ifdef DM_RTGL
-	case DM_TYPE_RTGL:
-	    return rtgl_open(interp, argc, argv);
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    return wgl_open(interp, argc, argv);
-#endif
-#ifdef DM_QT
-	case DM_TYPE_QT:
-	    return qt_open(interp, argc, argv);
-#endif
-	default:
-	    break;
-    }
-
-    return DM_NULL;
-}
-
-/*
- * Provides a way to (un)share display lists. If dmp2 is
- * NULL, then dmp1 will no longer share its display lists.
- */
-int
-dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
-{
-    if (dmp1 == DM_NULL)
-	return TCL_ERROR;
-
-    /*
-     * Only display managers of the same type and using the
-     * same OGL server are allowed to share display lists.
-     *
-     * XXX - need a better way to check if using the same OGL server.
-     */
-    if (dmp2 != DM_NULL)
-	if (dmp1->dm_type != dmp2->dm_type ||
-	    bu_vls_strcmp(&dmp1->dm_dName, &dmp2->dm_dName))
-	    return TCL_ERROR;
-
-    switch (dmp1->dm_type) {
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-	case DM_TYPE_OGL:
-	    return ogl_share_dlist(dmp1, dmp2);
-#  endif
-#endif
-#ifdef DM_OSG
-#  if defined(HAVE_TK)
-	case DM_TYPE_OSG:
-	    return osg_share_dlist(dmp1, dmp2);
-#  endif
-#endif
-#ifdef DM_RTGL
-	case DM_TYPE_RTGL:
-	    return rtgl_share_dlist(dmp1, dmp2);
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    return wgl_share_dlist(dmp1, dmp2);
-#endif
-	default:
-	    return TCL_ERROR;
-    }
-}
-
-fastf_t
-dm_Xx2Normal(struct dm *dmp, int x)
-{
-    return ((x / (fastf_t)dmp->dm_width - 0.5) * 2.0);
-}
-
-int
-dm_Normal2Xx(struct dm *dmp, fastf_t f)
-{
-    return (f * 0.5 + 0.5) * dmp->dm_width;
-}
-
-fastf_t
-dm_Xy2Normal(struct dm *dmp, int y, int use_aspect)
-{
-    if (use_aspect)
-	return ((0.5 - y / (fastf_t)dmp->dm_height) / dmp->dm_aspect * 2.0);
-    else
-	return ((0.5 - y / (fastf_t)dmp->dm_height) * 2.0);
-}
-
-int
-dm_Normal2Xy(struct dm *dmp, fastf_t f, int use_aspect)
-{
-    if (use_aspect)
-	return (0.5 - f * 0.5 * dmp->dm_aspect) * dmp->dm_height;
-    else
-	return (0.5 - f * 0.5) * dmp->dm_height;
+    return dmp->perspective;
 }
 
 void
-dm_fogHint(struct dm *dmp, int fastfog)
+dm_set_proj_matrix(struct dm *dmp, mat_t pmat)
 {
-    if (!dmp) {
-	bu_log("WARNING: NULL display (fastfog => %d)\n", fastfog);
-	return;
-    }
+    if (!dmp) return;
+    MAT_COPY(dmp->proj_matrix, pmat);
+}
 
-    switch (dmp->dm_type) {
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-	case DM_TYPE_OGL:
-	    ogl_fogHint(dmp, fastfog);
-	    return;
-#  endif
-#endif
-#ifdef DM_OSG
-#  if defined(HAVE_TK)
-	case DM_TYPE_OSG:
-	    osg_fogHint(dmp, fastfog);
-	    return;
-#  endif
-#endif
-#ifdef DM_RTGL
-	case DM_TYPE_RTGL:
-	    rtgl_fogHint(dmp, fastfog);
-	    return;
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    wgl_fogHint(dmp, fastfog);
-	    return;
-#endif
-	default:
-	    return;
-    }
+mat_t dm_get_proj_mat(struct dm *dmp) 
+{
+    return dmp->proj_matrix;
+}
+
+void
+dm_set_view_matrix(struct dm *dmp, mat_t vmat)
+{
+    if (!dmp) return;
+    MAT_COPY(dmp->view_matrix, vmat);
+}
+
+mat_t dm_get_view_mat(struct dm *dmp) 
+{
+    return dmp->view_matrix;
+}
+
+void
+dm_set_background_rgb(struct dm *dmp,  unsigned char r, unsigned char g, unsigned char b)
+{
+    if (!dmp) return;
+    dmp->dm_bg[0] = r;
+    dmp->dm_bg[1] = g;
+    dmp->dm_bg[2] = b;
+}
+
+unsigned char *dm_get_background_rgb(struct dm *dmp) 
+{
+    return dmp->dm_bg;
+}
+
+
+void
+dm_set_foreground_rgb(struct dm *dmp,  unsigned char r, unsigned char g, unsigned char b)
+{
+    if (!dmp) return;
+    dmp->dm_fg[0] = r;
+    dmp->dm_fg[1] = g;
+    dmp->dm_fg[2] = b;
+}
+
+unsigned char *dm_get_foreground_rgb(struct dm *dmp) 
+{
+    return dmp->dm_fg;
+}
+
+void
+dm_set_default_draw_width(struct dm *dmp, fastf_t draw_width)
+{
+    if (!dmp) return;
+    dmp->draw_width = draw_width;
+}
+
+fastf_t dm_get_default_draw_width(struct dm *dmp)
+{
+    return dmp->draw_width;
+}
+
+void
+dm_set_default_fontsize(struct dm *dmp, int fontsize)
+{
+    if (!dmp) return;
+    dmp->fontsize= fontsize;
+}
+
+fastf_t dm_get_default_fontsize(struct dm *dmp)
+{
+    return dmp->fontsize;
+}
+
+struct bu_attribute_value_set *
+dm_get_extra_settings(struct dm *dmp)
+{
+    if (!dmp) return NULL;
+    return dmp->dm_extra_settings;
+}
+
+const char *
+dm_get_extra_setting(struct dm *dmp, const char *key, const char *val)
+{
+    if (!dmp) return -1;
+    if !(dmp->dm_extra_settings) return -1;
+
+    return bu_avs_get(dmp->dm_extra_settings, key);
+}
+
+int
+dm_set_extra_setting(struct dm *dmp, const char *key, const char *val)
+{
+    if (!dmp) return -1;
+    if !(dmp->dm_extra_settings) return -1;
+
+    if (!bu_avs_get(dmp->dm_extra_settings, key)) return -1;
+
+    return !bu_avs_add(dmp->dm_extra_settings, key, val);
+}
+
+struct dm_display_list *
+dm_obj_add(struct dm *dmp, const char *handle, int style_type, struct bn_vlist *vlist)
+{
+}
+
+struct dm_display_list *
+dm_obj_find(struct dm *dmp, const char *handle)
+{
+}
+
+void                    
+dm_obj_remove(struct dm *dmp, const char *handle)
+{
+}
+
+void   
+dm_toggle_obj_dirty(struct dm *dmp, const char *handle, int dirty_flag_val)
+{
+}
+
+void   
+dm_toggle_obj_visible(struct dm *dmp, const char *handle, int visibility_flag_val)
+{
+}
+
+void   
+dm_toggle_obj_highlight(struct dm *dmp, const char *handle, int highlight_flag_val)
+{
+}
+
+void   
+dm_toggle_obj_transparency(struct dm *dmp, const char *handle, int visibility_flag_val)
+{
+}
+
+void   
+dm_set_obj_rgb(struct dm *dmp, const char *handle, unsigned char r, unsigned char g, unsigned char b)
+{
+}
+
+void
+dm_set_obj_draw_width(struct dm *dmp, const char *handle, fastf_t draw_width)
+{
+}
+
+void
+dm_set_obj_fontsize(struct dm *dmp, const char *handle, int fontsize)
+{
+}
+
+void
+dm_set_obj_localmat(struct dm *dmp, const char *handle, mat_t matrix)
+{
+}
+
+struct bu_attribute_value_set *
+dm_get_obj_extra_settings(struct dm *dmp, const char *handle)
+{
+}
+
+int
+dm_set_obj_extra_setting(struct dm *dmp, const char *handle, const char *key, const char *val)
+{
 }
 
 /*
