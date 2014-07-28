@@ -38,13 +38,6 @@ extern "C" {
 #endif
 
 
-GCV_EXPORT int bot_is_closed(const struct rt_bot_internal *bot,
-			     int must_be_fan);
-
-GCV_EXPORT int bot_is_orientable(const struct rt_bot_internal *bot);
-
-GCV_EXPORT int bot_is_manifold(const struct rt_bot_internal *bot);
-
 GCV_EXPORT int bot_is_solid(const struct rt_bot_internal *bot);
 
 
