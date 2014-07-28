@@ -2450,6 +2450,7 @@ rt_nmg_export5(
     s = (struct shell *)ip->idb_ptr;
     NMG_CK_SHELL(s);
 
+    nmg_s_reindex(s, 0);
     memset((char *)&cntbuf, 0, sizeof(cntbuf));
     ptrs = nmg_s_struct_count(&cntbuf, s);
 
@@ -2458,7 +2459,7 @@ rt_nmg_export5(
     for (i=0; i<NMG_N_KINDS; i++) {
 	kind_counts[i] = 0;
     }
-    subscript = 1;
+    subscript = 3;
     double_count = 0;
     fastf_byte_count = 0;
     for (i=0; i< s->maxindex; i++) {
@@ -2505,6 +2506,8 @@ rt_nmg_export5(
 	}
     }
     /* Compacting wanted */
+    kind_counts[NMG_KIND_MODEL] = 1;
+    kind_counts[NMG_KIND_NMGREGION] = 1;
     kind_counts[NMG_KIND_NMGREGION_A] = 0;
     kind_counts[NMG_KIND_SHELL_A] = 0;
     kind_counts[NMG_KIND_LOOP_G] = 0;
