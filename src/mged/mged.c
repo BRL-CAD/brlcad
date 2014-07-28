@@ -1123,7 +1123,7 @@ main(int argc, char *argv[])
 		/* Fall through to help */
 	    case '?':
 	    case 'h':
-		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c] [-d display] [-h] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
+		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
 	}
     }
 

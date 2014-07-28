@@ -31,7 +31,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Fblabel</emphasis>
+<para><command>fblabel</command>
 writes a text string to
 the image on the currently selected framebuffer.
 The text string will be filtered to the image currently
@@ -42,7 +42,7 @@ to determine where to position the text string.
 The lower left corner of the text string starts
 displaying at the x and y position given.
 The environment variable FB_FILE specifies
-the current framebuffer, see
+the current framebuffer; see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 Alternatively, the framebuffer may be explicitly specified
 by using the
@@ -64,29 +64,32 @@ without clearing the screen.</para>
 
 <para>The
 <option>-a</option>
-The flag causes the text not to be filtered against the frame buffer image.</para>
+flag causes the text not to be filtered against the frame buffer image.</para>
 
 <para>The
-<option>-C r/g/b</option>
-specifies red, green, and blue rgb values [0..255] for the text.
+<option>-C </option><replaceable>r/g/b</replaceable>
+option specifies red, green, and blue (r/g/b) values [0..255] for the text.
 The default color is white.</para>
 
 <para>The
-<option>-f fontname</option>
-flag will change the current default
+<option>-f </option><replaceable>fontname</replaceable>
+option will change the current default
 font from nonie.r.12 to "/usr/lib/vfont/fontname".</para>
 
 <para>The
 <option>-S</option>
+(or <option>-s</option>)
 flag sets the width and the height to the same value; the
 <option>-W</option>
+(or <option>-w</option>)
 and
 <option>-N</option>
-flags set them individually..</para>
+(or <option>-n</option>)
+flags are used for setting them individually.</para>
 </refsection>
 
 <refsection xml:id="fonts"><title>FONTS</title>
-<para><emphasis remap="I">Fblabel</emphasis>
+<para><command>fblabel</command>
 expects the Berkeley fonts in the directory /usr/lib/vfont.
 The fonts are expected to be in Vax byte order,
 even if that is not the natural byte order of the machine,

@@ -26,7 +26,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">fb-orle</emphasis>
+<para><command>fb-orle</command>
 saves a frame buffer image in a file, using the
 old University of Utah standard (Edition-2)
 Run-Length Encoded (RLE) format.
@@ -46,7 +46,7 @@ be used.
 If
 <emphasis remap="I">file.rle</emphasis>
 is not specified, the encoded file is written to standard output.
-<emphasis remap="I">fb-orle</emphasis>
+<command>fb-orle</command>
 attempts to compress flat-colored areas
 as much as possible.
 This means that it is generally reasonable to save an entire
@@ -57,18 +57,18 @@ The default action is to encode only data
 pixels and to save the background color separately, so that when the image
 is restored all non-image pixels will be set to the background pixel value
 stored in the RLE header.
-Images saved in this mode may be displayed normally, or in “overlay”
+Images saved in this mode may be displayed normally, or in overlay
 mode by the RLE decoder program (see
 <citerefentry><refentrytitle>orle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 Alternatively, the
 <option>-S</option>
-option may be used to RLE encode the background as well (recommended only
+option may be used to RLE-encode the background as well (recommended only
 if you don't have a flat background).</para>
 <variablelist remap="TP">
   <varlistentry>
   <term><option>-C</option></term>
   <listitem>
-<para>Convert (“crunch”) an image with a non-standard color map so that the
+<para>Convert (crunch) an image with a non-standard color map so that the
 RLE file created will redisplay with a standard color map.
 Useful to preserve dramatic images created with weird color maps
 so that Gamma correction (for film) can then also be applied.
@@ -81,7 +81,7 @@ not affect the displayed image.</para>
   <varlistentry>
   <term><option>-w</option></term>
   <listitem>
-<para>Convert the color image to black and white, and RLE encode that.
+<para>Convert the color image to black and white, and RLE-encode that.
 The red, green, and blue components of each
 pixel are combined via the NTSC transform to get an intensity value (Y) which
 is saved.  A more versatile tool for this is
@@ -92,7 +92,7 @@ is saved.  A more versatile tool for this is
   <term><option>-S</option></term>
   <listitem>
 <para>Save all data in RLE format,
-irrespective of whether it is background or not (“straight box save”).
+irrespective of whether it is background or not (straight box save).
 It is not possible to
 restore a file saved with
 <option>-S</option>
@@ -143,7 +143,7 @@ on its standard error as it proceeds through encoding the image.</para>
   <varlistentry>
   <term><option>-H</option></term>
   <listitem>
-<para>“hi-res” flag.  Set both the height and width of the framebuffer
+<para>hi-res flag.  Set both the height and width of the framebuffer
 to 1024.  The default is 512x512.</para>
   </listitem>
   </varlistentry>
@@ -152,7 +152,7 @@ to 1024.  The default is 512x512.</para>
 
 <refsection xml:id="example"><title>EXAMPLE</title>
 <literallayout remap="RS" class="normal">
-<emphasis remap="I">fb-orle  -h  tank.rle</emphasis>
+<emphasis remap="I">fb-orle -H tank.rle</emphasis>
 </literallayout> <!-- remap='RE' -->
 
 </refsection>

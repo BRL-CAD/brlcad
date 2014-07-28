@@ -33,7 +33,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Bw-fb</emphasis>
+<para><command>bw-fb</command>
 reads a
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file
@@ -42,7 +42,7 @@ image on the currently selected framebuffer.
 The environment variable
 <emphasis remap="I">FB_FILE</emphasis>
 specifies
-the current framebuffer, see
+the current framebuffer; see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 Alternatively, the framebuffer may be explicitly specified
 by using the
@@ -57,10 +57,7 @@ Specifying the
 flag causes the program to attempt to autosize.
 A table of common image sizes is consulted, and if any match
 the size of the input file, then the width and height values
-associated with that size will be used.
-Specifying the
-<option>-h</option>
-flag changes both of these sizes to 1024x1024.</para>
+associated with that size will be used.</para>
 
 <para>If the
 <option>-i</option>
@@ -82,7 +79,7 @@ flag will zoom and center on the image being displayed
 to make it fill the display area.</para>
 
 <para>The flags
-<option>-R</option>,<emphasis remap="B"> -G</emphasis>, and<emphasis remap="B"> -B</emphasis>
+<option>-R</option>, <option>-G</option>, and <option>-B</option>
 select individual color planes into which the image will be loaded.
 One or more can be given.  By default all three colors are written
 with the
@@ -90,28 +87,28 @@ with the
 pixel value.</para>
 
 <para>The
-<option>-w </option>file_width
+<option>-w </option><replaceable>file_width</replaceable>
 flag specifies the width of each scanline in the input file, in pixels.
-<option>-W </option>scr_width
+<option>-W </option><replaceable>scr_width</replaceable>
 does the same for the display device.</para>
 
 <para>The
-<option>-n </option>file_height
+<option>-n </option><replaceable>file_height</replaceable>
 and
-<option>-N </option>scr_height
-flags specify the height in scanlines of the input file or display device
+<option>-N </option><replaceable>scr_height</replaceable>
+flags specify the height in scanlines of the input file and display device,
 respectively.</para>
 
-<para><option>-s </option>squarefilesize
+<para><option>-s </option><replaceable>squarefilesize</replaceable>
 and
-<option>-S </option>squarescrsize
+<option>-S </option><replaceable>squarescrsize</replaceable>
 set both the height and width to the size given.</para>
 
-<para><option>-x </option>file_xoff,
-<option>-y </option>file_yoff,
-<option>-X </option>scr_xoff,
+<para><option>-x </option><replaceable>file_xoff</replaceable>,
+<option>-y </option><replaceable>file_yoff</replaceable>,
+<option>-X </option><replaceable>scr_xoff</replaceable>,
 and
-<option>-Y </option>scr_yoff
+<option>-y </option><replaceable>scr_yoff</replaceable>
 will offset into the file or onto the screen by the given amounts.
 The coordinate system for these offsets is first quadrant, with
 the origin at the lower left corner of the image.</para>
@@ -122,7 +119,7 @@ the origin at the lower left corner of the image.</para>
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 file contains sequences of pixels.
 Each pixel is stored as one
-<emphasis remap="B">unsigned char</emphasis>
+<emphasis remap="B">unsigned char</emphasis>.
 The first pixel in a
 <emphasis remap="I">bw</emphasis>
 file is the lower left corner of the image.
