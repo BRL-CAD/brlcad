@@ -2592,6 +2592,24 @@ rt_nmg_export5(
 		     (void *)(ptrs[i]), ecnt, i, local2mm);
     }
 
+    {
+	struct disk_model *d = &((struct disk_model *)disk_arrays[NMG_KIND_MODEL])[0];
+	PUTMAGIC(DISK_MODEL_MAGIC);
+	*(uint32_t *)((d)->r_hd.forw) = htonl(2);
+	*(uint32_t *)((d)->r_hd.back) = htonl(2);
+    }
+
+    {
+	struct disk_nmgregion *d = &((struct disk_nmgregion *)disk_arrays[NMG_KIND_NMGREGION])[0];
+	PUTMAGIC(DISK_REGION_MAGIC);
+	*(uint32_t *)((d)->l.forw) = htonl(-1);
+	*(uint32_t *)((d)->l.back) = htonl(-1);
+	*(uint32_t *)(d)->m_p = htonl(1);
+	*(uint32_t *)(d)->ra_p = htonl(0);
+	*(uint32_t *)((d)->s_hd.forw) = htonl(3);
+	*(uint32_t *)((d)->s_hd.back) = htonl(3);
+    }
+
     bu_free((char *)ptrs, "ptrs[]");
     bu_free((char *)ecnt, "ecnt[]");
     return 0;		/* OK */
