@@ -183,8 +183,8 @@ bot_is_orientable(const rt_bot_internal *bot)
 
 	// skip if there is no adjacent half-edge
 	if (it->get() != next->get()) {
-	    it = next;
-	    ++next;
+	    --it;
+	    --next;
 	    continue;
 	}
 
