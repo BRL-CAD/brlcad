@@ -118,7 +118,7 @@ bot_is_solid(const rt_bot_internal *bot)
 	// each edge must have two half-edges
 	if (it->get() != next->get()) return false;
 
-	// adjacent half-edges must be compatably oriented
+	// adjacent half-edges must be compatibly oriented
 	if (it->was_flipped() == next->was_flipped()) return false;
 
 	// only two half-edges may share an edge
