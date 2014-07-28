@@ -182,7 +182,11 @@ bot_is_orientable(const rt_bot_internal *bot)
 	 it != edges.end(); it += 2, next += 2) {
 
 	// skip if there is no adjacent half-edge
-	if (it->get() != next->get()) continue;
+	if (it->get() != next->get()) {
+	    it = next;
+	    ++next;
+	    continue;
+	}
 
 	// adjacent half-edges must be compatibly oriented
 	if (it->was_flipped() == next->was_flipped()) return false;
