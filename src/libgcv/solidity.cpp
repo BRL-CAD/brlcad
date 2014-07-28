@@ -27,8 +27,8 @@
 #include "solidity.h"
 
 
-#include <map>
-#include <set>
+#include <algorithm>
+#include <utility>
 #include <vector>
 
 
@@ -42,23 +42,8 @@ public:
     Edge() : m_vertices(0, 0), m_was_flipped(false)
     {}
 
-    bool set(int va, int vb)
-    {
-	if (va == vb)
-	    return false;
 
-	if (va < vb) {
-	    m_vertices.first = va;
-	    m_vertices.second = vb;
-	    m_was_flipped = false;
-	} else {
-	    m_vertices.first = vb;
-	    m_vertices.second = va;
-	    m_was_flipped = true;
-	}
-
-	return true;
-    }
+    bool set(int va, int vb);
 
 
     const std::pair<int, int> &get() const
@@ -77,6 +62,26 @@ private:
     std::pair<int, int> m_vertices;
     bool m_was_flipped;
 };
+
+
+bool
+Edge::set(int va, int vb)
+{
+    if (va == vb)
+	return false;
+
+    if (va < vb) {
+	m_vertices.first = va;
+	m_vertices.second = vb;
+	m_was_flipped = false;
+    } else {
+	m_vertices.first = vb;
+	m_vertices.second = va;
+	m_was_flipped = true;
+    }
+
+    return true;
+}
 
 
 static bool
@@ -115,6 +120,7 @@ bot_is_solid(const rt_bot_internal *bot)
 
     for (std::vector<Edge>::const_iterator it = edges.begin(), next = it + 1;
 	 it != edges.end(); it += 2, next += 2) {
+
 	// each edge must have two half-edges
 	if (it->get() != next->get()) return false;
 
@@ -124,6 +130,7 @@ bot_is_solid(const rt_bot_internal *bot)
 	// only two half-edges may share an edge
 	if ((next + 1) != edges.end())
 	    if (it->get() == (next + 1)->get()) return false;
+
     }
 
     return true;
