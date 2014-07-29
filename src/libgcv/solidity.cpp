@@ -27,8 +27,8 @@
 #include "solidity.h"
 
 
-#include <map>
-#include <set>
+#include <algorithm>
+#include <utility>
 #include <vector>
 
 
@@ -36,40 +36,83 @@ namespace
 {
 
 
-typedef std::pair<int, int> Edge;
-
-
-static inline Edge
-ordered_edge(int va, int vb)
+class HalfEdge
 {
-    return Edge(std::min(va, vb), std::max(va, vb));
+public:
+    HalfEdge() : m_vertices(0, 0), m_was_flipped(false)
+    {}
+
+
+    bool set(int va, int vb);
+
+
+    const std::pair<int, int> &get() const
+    {
+	return m_vertices;
+    }
+
+
+    const bool &was_flipped() const
+    {
+	return m_was_flipped;
+    }
+
+
+private:
+    std::pair<int, int> m_vertices;
+    bool m_was_flipped;
+};
+
+
+bool
+HalfEdge::set(int va, int vb)
+{
+    if (va == vb)
+	return false;
+
+    if (va < vb) {
+	m_vertices.first = va;
+	m_vertices.second = vb;
+	m_was_flipped = false;
+    } else {
+	m_vertices.first = vb;
+	m_vertices.second = va;
+	m_was_flipped = true;
+    }
+
+    return true;
 }
 
 
 static bool
-bot_is_orientable_register(std::map<Edge, int> &edge_order_map, int va, int vb)
+edge_compare(const HalfEdge &edge_a, const HalfEdge &edge_b)
 {
-    enum { ORDER_NONE = 0, ORDER_MIN_MAX, ORDER_MAX_MIN, ORDER_EDGE_FULL };
+    return edge_a.get() < edge_b.get();
+}
 
-    int &order = edge_order_map[ordered_edge(va, vb)];
 
-    switch (order) {
-	case ORDER_NONE:
-	    order = va < vb ? ORDER_MIN_MAX : ORDER_MAX_MIN;
-	    return va != vb;
+static bool
+generate_edge_list(std::vector<HalfEdge> &edges, const rt_bot_internal *bot)
+{
+    const std::size_t num_edges = 3 * bot->num_faces;
 
-	case ORDER_MIN_MAX:
-	    order = ORDER_EDGE_FULL;
-	    return va > vb;
+    if (bot->num_faces < 4 || bot->num_vertices < 4 || num_edges % 2)
+	return false;
 
-	case ORDER_MAX_MIN:
-	    order = ORDER_EDGE_FULL;
-	    return va < vb;
+    edges.resize(num_edges);
+    std::vector<HalfEdge>::iterator edge_it = edges.begin();
 
-	case ORDER_EDGE_FULL:
-	default:
+    for (std::size_t face_index = 0; face_index < bot->num_faces; ++face_index) {
+	const int *face = &bot->faces[face_index * 3];
+
+	if (!((edge_it++)->set(face[0], face[1])
+	      && (edge_it++)->set(face[1], face[2])
+	      && (edge_it++)->set(face[2], face[0])))
 	    return false;
     }
+
+    std::sort(edges.begin(), edges.end(), edge_compare);
+    return true;
 }
 
 
@@ -77,39 +120,49 @@ bot_is_orientable_register(std::map<Edge, int> &edge_order_map, int va, int vb)
 
 
 int
-bot_is_closed(const rt_bot_internal *bot, int must_be_fan)
+bot_is_solid(const rt_bot_internal *bot)
 {
-    // map edges to number of incident faces
-    std::map<Edge, int> edge_face_count_map;
+    std::vector<HalfEdge> edges;
 
-    for (std::size_t i = 0; i < bot->num_faces; ++i) {
-	const int v1 = bot->faces[i * 3];
-	const int v2 = bot->faces[i * 3 + 1];
-	const int v3 = bot->faces[i * 3 + 2];
+    if (!generate_edge_list(edges, bot))
+	return false;
 
-#define REGISTER_EDGE(va, vb) \
-	do { \
-	    ++edge_face_count_map[ordered_edge((va), (vb))]; \
-	} while (false)
+    for (std::vector<HalfEdge>::const_iterator it = edges.begin(), next = it + 1;
+	 it != edges.end(); it += 2, next += 2) {
 
-	REGISTER_EDGE(v1, v2);
-	REGISTER_EDGE(v2, v3);
-	REGISTER_EDGE(v3, v1);
+	// each edge must have two half-edges
+	if (it->get() != next->get()) return false;
 
-#undef REGISTER_EDGE
+	// adjacent half-edges must be compatibly oriented
+	if (it->was_flipped() == next->was_flipped()) return false;
+
+	// only two half-edges may share an edge
+	if ((next + 1) != edges.end())
+	    if (it->get() == (next + 1)->get()) return false;
+
     }
 
-    for (std::map<Edge, int>::const_iterator it = edge_face_count_map.begin();
-	 it != edge_face_count_map.end(); ++it) {
+    return true;
+}
 
-	if (must_be_fan) {
-	    // a mesh forms a closed fan if all edges are
-	    // incident to exactly two faces
-	    if (it->second != 2) return false;
-	}  else {
-	    // a mesh is closed if it has no boundary edges
-	    if (it->second == 1) return false;
-	}
+
+int
+bot_is_closed_fan(const rt_bot_internal *bot)
+{
+    std::vector<HalfEdge> edges;
+
+    if (!generate_edge_list(edges, bot))
+	return false;
+
+    for (std::vector<HalfEdge>::const_iterator it = edges.begin(), next = it + 1;
+	 it != edges.end(); it += 2, next += 2) {
+
+	// each edge must have two half-edges
+	if (it->get() != next->get()) return false;
+
+	// only two half-edges may share an edge
+	if ((next + 1) != edges.end())
+	    if (it->get() == (next + 1)->get()) return false;
 
     }
 
@@ -120,102 +173,31 @@ bot_is_closed(const rt_bot_internal *bot, int must_be_fan)
 int
 bot_is_orientable(const rt_bot_internal *bot)
 {
-    std::map<Edge, int> edge_order_map;
+    std::vector<HalfEdge> edges;
 
-    // a mesh is orientable if any two adjacent faces
-    // have compatible orientation
-    for (std::size_t i = 0; i < bot->num_faces; ++i) {
-	const int v1 = bot->faces[i * 3];
-	const int v2 = bot->faces[i * 3 + 1];
-	const int v3 = bot->faces[i * 3 + 2];
+    if (!generate_edge_list(edges, bot))
+	return false;
 
-	if (!(bot_is_orientable_register(edge_order_map, v1, v2)
-	      && bot_is_orientable_register(edge_order_map, v2, v3)
-	      && bot_is_orientable_register(edge_order_map, v3, v1)))
-	    return false;
+    for (std::vector<HalfEdge>::const_iterator it = edges.begin(), next = it + 1;
+	 it != edges.end(); it += 2, next += 2) {
+
+	// skip if there is no adjacent half-edge
+	if (it->get() != next->get()) {
+	    --it;
+	    --next;
+	    continue;
+	}
+
+	// adjacent half-edges must be compatibly oriented
+	if (it->was_flipped() == next->was_flipped()) return false;
+
+	// only two half-edges may share an edge
+	if ((next + 1) != edges.end())
+	    if (it->get() == (next + 1)->get()) return false;
+
     }
 
     return true;
-}
-
-
-int
-bot_is_manifold(const rt_bot_internal *bot)
-{
-    std::map<Edge, int> edge_face_count_map;
-
-    // map vertices to (num adjacent faces, incident edges)
-    typedef std::vector<std::pair<int, std::set<Edge> > > VERTEX_MAP;
-    VERTEX_MAP vertex_map(bot->num_vertices);
-
-    // a mesh is manifold if:
-    // 1) each edge is incident to only one or two faces
-    // 2) the faces incident to a vertex form a closed or open fan
-    for (std::size_t i = 0; i < bot->num_faces; ++i) {
-	const int v1 = bot->faces[i * 3];
-	const int v2 = bot->faces[i * 3 + 1];
-	const int v3 = bot->faces[i * 3 + 2];
-
-	++vertex_map[v1].first;
-	++vertex_map[v2].first;
-	++vertex_map[v3].first;
-
-#define REGISTER_EDGE(va, vb) \
-	do { \
-	    const Edge edge = ordered_edge((va), (vb)); \
-	    if (++edge_face_count_map[edge] > 2) \
-		return false; \
-	    vertex_map[(va)].second.insert(edge); \
-	    vertex_map[(vb)].second.insert(edge); \
-	} while (false)
-
-	REGISTER_EDGE(v1, v2);
-	REGISTER_EDGE(v2, v3);
-	REGISTER_EDGE(v3, v1);
-
-#undef REGISTER_EDGE
-    }
-
-
-    // I have seen two (seemingly) different definitions of "manifold"
-    // in online references - some definitions simply require (1)
-    // (http://www.lsi.upc.edu/~virtual/SGI/english/3_queries.html);
-    // others additionally require (2)
-    // (http://www.cs.mtu.edu/~shene/COURSES/cs3621/SLIDES/Mesh.pdf)
-    //
-    // Removing (2) gives results consistent with those of the openNURBS algorithms,
-    // so the code below is disabled.
-
-#if 0
-
-    for (VERTEX_MAP::const_iterator it = vertex_map.begin(); it != vertex_map.end();
-	 ++it) {
-	// check if the vertex is either
-	// a) open fan: the vertex is at a border,
-	//     with valence = (num adjacent faces) + 1
-	// b) closed fan: the vertex is an inner vertex,
-	//     with valence = (num adjacent faces)
-
-	// valence: number of incident edges to a vertex
-	const int valence = it->second.size();
-	const int num_adj_faces = it->first;
-
-	if ((valence != num_adj_faces) && (valence != num_adj_faces + 1))
-	    return false;
-    }
-
-#endif
-
-    return true;
-}
-
-
-int bot_is_solid(const rt_bot_internal *bot)
-{
-    return
-	bot_is_closed(bot, true)
-	&& bot_is_orientable(bot)
-	&& bot_is_manifold(bot);
 }
 
 
