@@ -151,7 +151,7 @@ struct dm_display_list {
     fastf_t		draw_width;		/**< @brief !0 override's the display manager's default Point radius/line width */
     int 		fontsize;		/**< @brief !0 override's the display manager's default font size when obj labeling is performed */
     unsigned char	rgb[3];			/**< @brief local color override */
-    struct bu_attribute_value_set *obj_extra_settings;	/**< @brief Different types of display managers (X, OSG, etc.) can optionally do more with individual objects (e.g., transparency). DMTYPE specific settings here. */
+    struct bu_attribute_value_set *obj_extra_settings;	/**< @brief All settings (generic and DMTYPE specific) listed here. */
     void 		*client_data;		/**< @brief Slot to allow applications to supply custom data */
 };
 
@@ -177,7 +177,7 @@ struct dm {
     vect_t 			 clipmin;	/**< @brief minimum clipping vector */
     vect_t 			 clipmax;	/**< @brief maximum clipping vector */
     int				 debug_level;
-    struct bu_attribute_value_set *dm_extra_settings;	/**< @brief Different types of display managers (X, OSG, etc.) can optionally expose additional, DMTYPE specific settings here. */
+    struct bu_attribute_value_set *dm_settings;	/**< @brief All settings (generic and DMTYPE specific) listed here. */
     void 			*client_data;	/**< @brief Slot to allow applications to store custom data */
 };
 
@@ -197,14 +197,17 @@ DM_EXPORT extern fastf_t        dm_get_default_draw_width(struct dm *dmp, fastf_
 DM_EXPORT extern void           dm_set_default_fontsize(struct dm *dmp, int fontsize);
 DM_EXPORT extern int            dm_get_default_fontsize(struct dm *dmp);
 
-DM_EXPORT extern struct bu_attribute_value_set *dm_get_extra_settings(struct dm *dmp, const char *key);
-DM_EXPORT extern int                            dm_set_extra_setting(struct dm *dmp, const char *key, const char *val);
-DM_EXPORT extern const char                    *dm_get_extra_setting(struct dm *dmp, const char *key);
+DM_EXPORT extern const char 		      **dm_get_reserved_settings(struct dm *dmp); /* Will be a combination of global and dm specific reserved settings */
+DM_EXPORT extern int				dm_is_reserved_setting(struct dm *dmp, const char *key); 
+DM_EXPORT extern struct bu_vls 		       *dm_about_reserved_setting(struct dm *dmp, const char *key); 
+DM_EXPORT extern struct bu_attribute_value_set *dm_get_settings(struct dm *dmp, const char *key);
+DM_EXPORT extern int                            dm_set_setting(struct dm *dmp, const char *key, const char *val);
+DM_EXPORT extern const char                    *dm_get_setting(struct dm *dmp, const char *key);
 
 /* Object manipulators */
-DM_EXPORT extern struct dm_display_list *dm_obj_add(struct dm *dmp, const char *handle, int style_type, struct bn_vlist *vlist);
-DM_EXPORT extern struct dm_display_list *dm_obj_find(struct dm *dmp, const char *handle);
-DM_EXPORT extern void                    dm_obj_remove(struct dm *dmp, const char *handle);
+DM_EXPORT extern int  dm_obj_add(struct dm *dmp, const char *handle, int style_type, struct bn_vlist *vlist);
+DM_EXPORT extern int  dm_obj_find(struct dm *dmp, const char *handle);
+DM_EXPORT extern void dm_obj_remove(struct dm *dmp, const char *handle);
 
 DM_EXPORT extern void           dm_set_obj_localmat(struct dm *dmp, const char *handle, mat_t matrix);
 DM_EXPORT extern mat_t          dm_get_obj_localmat(struct dm *dmp, const char *handle);
@@ -214,15 +217,19 @@ DM_EXPORT extern void           dm_set_obj_draw_width(struct dm *dmp, const char
 DM_EXPORT extern fastf_t        dm_get_obj_draw_width(struct dm *dmp, const char *handle);
 DM_EXPORT extern void           dm_set_obj_fontsize(struct dm *dmp, const char *handle, int fontsize);
 DM_EXPORT extern int            dm_get_obj_fontsize(struct dm *dmp, const char *handle);
+DM_EXPORT extern void           dm_set_obj_dirty(struct dm *dmp, const char *handle, int flag);
+DM_EXPORT extern int            dm_get_obj_dirty(struct dm *dmp, const char *handle);
+DM_EXPORT extern void           dm_set_obj_visible(struct dm *dmp, const char *handle, int flag);
+DM_EXPORT extern int            dm_get_obj_visible(struct dm *dmp, const char *handle);
+DM_EXPORT extern void           dm_set_obj_highlight(struct dm *dmp, const char *handle, int flag);
+DM_EXPORT extern int            dm_get_obj_highlight(struct dm *dmp, const char *handle);
 
-DM_EXPORT extern struct bu_attribute_value_set *dm_get_obj_extra_settings(struct dm *dmp, const char *handle);
-DM_EXPORT extern int                            dm_set_obj_extra_setting(struct dm *dmp, const char *handle, const char *key, const char *val);
-DM_EXPORT extern const char                    *dm_get_obj_extra_setting(struct dm *dmp, const char *handle, const char *key);
-
-DM_EXPORT extern void dm_toggle_obj_dirty(struct dm *dmp, const char *handle, int dirty_flag_val);
-DM_EXPORT extern void dm_toggle_obj_visible(struct dm *dmp, const char *handle, int visibility_flag_val);
-DM_EXPORT extern void dm_toggle_obj_highlight(struct dm *dmp, const char *handle, int highlight_flag_val);
-DM_EXPORT extern void dm_toggle_obj_transparency(struct dm *dmp, const char *handle, int visibility_flag_val);
+DM_EXPORT extern const char 		      **dm_get_obj_reserved_settings(struct dm *dmp);  /* Will be a combination of global and dm specific reserved settings */
+DM_EXPORT extern int				dm_is_obj_reserved_setting(struct dm *dmp, const char *key); 
+DM_EXPORT extern struct bu_vls 		       *dm_about_obj_reserved_setting(struct dm *dmp, const char *key); 
+DM_EXPORT extern struct bu_attribute_value_set *dm_get_obj_settings(struct dm *dmp, const char *handle);
+DM_EXPORT extern int                            dm_set_obj_setting(struct dm *dmp, const char *handle, const char *key, const char *val);
+DM_EXPORT extern const char                    *dm_get_obj_setting(struct dm *dmp, const char *handle, const char *key);
 
 /* Display Manager / OS type aware functions */
 DM_EXPORT extern int   dm_init(struct dm *dmp, int dm_t, int embedded, void *parent_info);

@@ -124,14 +124,14 @@ fastf_t dm_get_default_fontsize(struct dm *dmp)
 }
 
 struct bu_attribute_value_set *
-dm_get_extra_settings(struct dm *dmp)
+dm_get_settings(struct dm *dmp)
 {
     if (!dmp) return NULL;
     return dmp->dm_extra_settings;
 }
 
 int
-dm_set_extra_setting(struct dm *dmp, const char *key, const char *val)
+dm_set_setting(struct dm *dmp, const char *key, const char *val)
 {
     if (!dmp) return -1;
     if !(dmp->dm_extra_settings) return -1;
@@ -142,7 +142,7 @@ dm_set_extra_setting(struct dm *dmp, const char *key, const char *val)
 }
 
 const char *
-dm_get_extra_setting(struct dm *dmp, const char *key, const char *val)
+dm_get_setting(struct dm *dmp, const char *key, const char *val)
 {
     if (!dmp) return -1;
     if !(dmp->dm_extra_settings) return -1;
@@ -207,41 +207,52 @@ dm_get_obj_fontsize(struct dm *dmp, const char *handle)
 {
 }
 
-struct bu_attribute_value_set *
-dm_get_obj_extra_settings(struct dm *dmp, const char *handle)
+void
+dm_set_obj_dirty(struct dm *dmp, const char *handle, int flag)
 {
 }
 
 int
-dm_set_obj_extra_setting(struct dm *dmp, const char *handle, const char *key, const char *val)
+dm_get_obj_dirty(struct dm *dmp, const char *handle)
+{
+}
+
+void
+dm_set_obj_visible(struct dm *dmp, const char *handle, int flag)
+{
+}
+
+int
+dm_get_obj_visible(struct dm *dmp, const char *handle)
+{
+}
+
+
+void
+dm_set_obj_highlight(struct dm *dmp, const char *handle, int flag)
+{
+}
+
+int
+dm_get_obj_highlight(struct dm *dmp, const char *handle)
+{
+}
+
+
+struct bu_attribute_value_set *
+dm_get_obj_settings(struct dm *dmp, const char *handle)
+{
+}
+
+int
+dm_set_obj_setting(struct dm *dmp, const char *handle, const char *key, const char *val)
 {
 }
 
 const char *
-dm_get_obj_extra_setting(struct dm *dmp, const char *handle, const char *key)
+dm_get_obj_setting(struct dm *dmp, const char *handle, const char *key)
 {
 }
-
-void   
-dm_toggle_obj_dirty(struct dm *dmp, const char *handle, int dirty_flag_val)
-{
-}
-
-void   
-dm_toggle_obj_visible(struct dm *dmp, const char *handle, int visibility_flag_val)
-{
-}
-
-void   
-dm_toggle_obj_highlight(struct dm *dmp, const char *handle, int highlight_flag_val)
-{
-}
-
-void   
-dm_toggle_obj_transparency(struct dm *dmp, const char *handle, int visibility_flag_val)
-{
-}
-
 
 
 /*
