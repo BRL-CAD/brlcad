@@ -45,10 +45,12 @@
 #endif
 
 int
-dm_init(struct dm *dm)
+dm_init(struct dm *dm, int dm_t, int embedded, void *parent_info)
 {
     if (!dm) return -1;
-    if (dm->is_embedded && !dm->parent_info && !dm->type == DM_TYPE_NULL) return -1;
+    if (embedded && !parent_info && !dm_t == DM_TYPE_NULL) return -1;
+
+    BU_GET(dm, struct dm);
 
     switch (dm->type) {
 	case DM_TYPE_NULL:
@@ -75,26 +77,32 @@ dm_init(struct dm *dm)
 int
 dm_close(struct dm *dm)
 {
+    int ret = 0;
     if (!dm) return -1;
     switch (dm->type) {
 	case DM_TYPE_NULL:
-	    dm->dm_canvas = NULL;
-	    return 0;
+	    break;
 	case DM_TYPE_TXT:
-	    return txt_close(dm);
+	    ret = txt_close(dm);
+	    break;
 #ifdef(DM_QT)
 	case DM_TYPE_QT:
-	    return qt_close(dm);
+	    ret = qt_close(dm);
+	    break;
 #endif
 #ifdef DM_OSG
 	case DM_TYPE_OSG:
-	    return osg_close(dm);
+	    ret = osg_close(dm);
+	    break;
 #endif
 	default:
 	    break;
     }
 
-    return -1;
+    BU_PUT(dm, struct dm);
+    dm = NULL;
+
+    return ret;
 }
 
 int
@@ -136,7 +144,7 @@ dm_canvas(struct dm *dm)
 #endif
 #ifdef DM_OSG
 	case DM_TYPE_OSG:
-	    return osg_canvas(dm); /* Probably either the osgViewer or the raw OpenGL context */
+	    return osg_canvas(dm); /* Probably the raw OpenGL context */
 #endif
 	default:
 	    break;

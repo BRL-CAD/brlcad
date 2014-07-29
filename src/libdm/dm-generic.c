@@ -130,15 +130,6 @@ dm_get_extra_settings(struct dm *dmp)
     return dmp->dm_extra_settings;
 }
 
-const char *
-dm_get_extra_setting(struct dm *dmp, const char *key, const char *val)
-{
-    if (!dmp) return -1;
-    if !(dmp->dm_extra_settings) return -1;
-
-    return bu_avs_get(dmp->dm_extra_settings, key);
-}
-
 int
 dm_set_extra_setting(struct dm *dmp, const char *key, const char *val)
 {
@@ -149,6 +140,16 @@ dm_set_extra_setting(struct dm *dmp, const char *key, const char *val)
 
     return !bu_avs_add(dmp->dm_extra_settings, key, val);
 }
+
+const char *
+dm_get_extra_setting(struct dm *dmp, const char *key, const char *val)
+{
+    if (!dmp) return -1;
+    if !(dmp->dm_extra_settings) return -1;
+
+    return bu_avs_get(dmp->dm_extra_settings, key);
+}
+
 
 struct dm_display_list *
 dm_obj_add(struct dm *dmp, const char *handle, int style_type, struct bn_vlist *vlist)
@@ -162,6 +163,62 @@ dm_obj_find(struct dm *dmp, const char *handle)
 
 void                    
 dm_obj_remove(struct dm *dmp, const char *handle)
+{
+}
+
+
+void
+dm_set_obj_localmat(struct dm *dmp, const char *handle, mat_t matrix)
+{
+}
+
+mat_t
+dm_get_obj_localmat(struct dm *dmp, const char *handle)
+{
+}
+
+void   
+dm_set_obj_rgb(struct dm *dmp, const char *handle, unsigned char r, unsigned char g, unsigned char b)
+{
+}
+
+unsigned char *
+dm_get_obj_rgb(struct dm *dmp, const char *handle)
+{
+}
+
+void
+dm_set_obj_draw_width(struct dm *dmp, const char *handle, fastf_t draw_width)
+{
+}
+
+fastf_t 
+dm_get_obj_draw_width(struct dm *dmp, const char *handle)
+{
+}
+
+void
+dm_set_obj_fontsize(struct dm *dmp, const char *handle, int fontsize)
+{
+}
+
+int
+dm_get_obj_fontsize(struct dm *dmp, const char *handle)
+{
+}
+
+struct bu_attribute_value_set *
+dm_get_obj_extra_settings(struct dm *dmp, const char *handle)
+{
+}
+
+int
+dm_set_obj_extra_setting(struct dm *dmp, const char *handle, const char *key, const char *val)
+{
+}
+
+const char *
+dm_get_obj_extra_setting(struct dm *dmp, const char *handle, const char *key)
 {
 }
 
@@ -185,35 +242,7 @@ dm_toggle_obj_transparency(struct dm *dmp, const char *handle, int visibility_fl
 {
 }
 
-void   
-dm_set_obj_rgb(struct dm *dmp, const char *handle, unsigned char r, unsigned char g, unsigned char b)
-{
-}
 
-void
-dm_set_obj_draw_width(struct dm *dmp, const char *handle, fastf_t draw_width)
-{
-}
-
-void
-dm_set_obj_fontsize(struct dm *dmp, const char *handle, int fontsize)
-{
-}
-
-void
-dm_set_obj_localmat(struct dm *dmp, const char *handle, mat_t matrix)
-{
-}
-
-struct bu_attribute_value_set *
-dm_get_obj_extra_settings(struct dm *dmp, const char *handle)
-{
-}
-
-int
-dm_set_obj_extra_setting(struct dm *dmp, const char *handle, const char *key, const char *val)
-{
-}
 
 /*
  * Local Variables:

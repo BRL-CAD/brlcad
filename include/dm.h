@@ -162,7 +162,7 @@ struct dm {
     int 			 perspective;	/**< @brief !0 means perspective on */
     mat_t			 view_matrix;   /**< @brief view matrix for the default camera */
     mat_t			 proj_matrix;   /**< @brief projection matrix for the default camera */
-    void			*dm_canvas;     /**< @brief pointer to the actual low level drawing canvas (X window, OSG viewer, etc.) */
+    void			*dm_data;       /**< @brief pointer to the actual low level, platform specific data (X window, OSG viewer, internal lists, etc.) */
     int				 is_embedded;   /**< @brief determine if the display manager is stand-alone or embedded (impacts event handling) */
     void			*parent_info;   /**< @brief if dm is embedded, parent_info must contain all the info necessary for libdm to embed the Window */
     struct bu_ptbl		*dm_l;		/**< @brief Display list for this view */
@@ -182,48 +182,53 @@ struct dm {
 };
 
 /* Generic functions for all display managers */
-DM_EXPORT extern void dm_set_perspective(struct dm *dmp, int perspective_flag);
-DM_EXPORT extern void dm_set_proj_mat(struct dm *dmp, mat_t pmat);
-DM_EXPORT extern void dm_set_view_mat(struct dm *dmp, mat_t vmat);
-DM_EXPORT extern void dm_set_background_rgb(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-DM_EXPORT extern void dm_set_foreground_rgb(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-DM_EXPORT extern void dm_set_default_draw_width(struct dm *dmp, fastf_t draw_width);
-DM_EXPORT extern void dm_set_default_fontsize(struct dm *dmp, int fontsize);
+DM_EXPORT extern void           dm_set_perspective(struct dm *dmp, int perspective_flag);
 DM_EXPORT extern int            dm_get_perspective(struct dm *dmp);
+DM_EXPORT extern void           dm_set_proj_mat(struct dm *dmp, mat_t pmat);
 DM_EXPORT extern mat_t          dm_get_proj_mat(struct dm *dmp);
+DM_EXPORT extern void           dm_set_view_mat(struct dm *dmp, mat_t vmat);
 DM_EXPORT extern mat_t          dm_get_view_mat(struct dm *dmp);
+DM_EXPORT extern void           dm_set_background_rgb(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 DM_EXPORT extern unsigned char *dm_get_background_rgb(struct dm *dmp);
+DM_EXPORT extern void           dm_set_foreground_rgb(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 DM_EXPORT extern unsigned char *dm_get_foreground_rgb(struct dm *dmp);
+DM_EXPORT extern void           dm_set_default_draw_width(struct dm *dmp, fastf_t draw_width);
 DM_EXPORT extern fastf_t        dm_get_default_draw_width(struct dm *dmp, fastf_t draw_width);
+DM_EXPORT extern void           dm_set_default_fontsize(struct dm *dmp, int fontsize);
 DM_EXPORT extern int            dm_get_default_fontsize(struct dm *dmp);
 
 DM_EXPORT extern struct bu_attribute_value_set *dm_get_extra_settings(struct dm *dmp, const char *key);
-DM_EXPORT extern const char *dm_get_extra_setting(struct dm *dmp, const char *key);
-DM_EXPORT extern int         dm_set_extra_setting(struct dm *dmp, const char *key, const char *val);
+DM_EXPORT extern int                            dm_set_extra_setting(struct dm *dmp, const char *key, const char *val);
+DM_EXPORT extern const char                    *dm_get_extra_setting(struct dm *dmp, const char *key);
 
 /* Object manipulators */
 DM_EXPORT extern struct dm_display_list *dm_obj_add(struct dm *dmp, const char *handle, int style_type, struct bn_vlist *vlist);
 DM_EXPORT extern struct dm_display_list *dm_obj_find(struct dm *dmp, const char *handle);
 DM_EXPORT extern void                    dm_obj_remove(struct dm *dmp, const char *handle);
 
-DM_EXPORT extern void   dm_toggle_obj_dirty(struct dm *dmp, const char *handle, int dirty_flag_val);
-DM_EXPORT extern void   dm_toggle_obj_visible(struct dm *dmp, const char *handle, int visibility_flag_val);
-DM_EXPORT extern void   dm_toggle_obj_highlight(struct dm *dmp, const char *handle, int highlight_flag_val);
-DM_EXPORT extern void   dm_toggle_obj_transparency(struct dm *dmp, const char *handle, int visibility_flag_val);
-
-DM_EXPORT extern void   dm_set_obj_rgb(struct dm *dmp, const char *handle, unsigned char r, unsigned char g, unsigned char b);
-DM_EXPORT extern void   dm_set_obj_draw_width(struct dm *dmp, const char *handle, fastf_t draw_width);
-DM_EXPORT extern void   dm_set_obj_fontsize(struct dm *dmp, const char *handle, int fontsize);
-DM_EXPORT extern void   dm_set_obj_localmat(struct dm *dmp, const char *handle, mat_t matrix);
+DM_EXPORT extern void           dm_set_obj_localmat(struct dm *dmp, const char *handle, mat_t matrix);
+DM_EXPORT extern mat_t          dm_get_obj_localmat(struct dm *dmp, const char *handle);
+DM_EXPORT extern void           dm_set_obj_rgb(struct dm *dmp, const char *handle, unsigned char r, unsigned char g, unsigned char b);
+DM_EXPORT extern unsigned char *dm_get_obj_rgb(struct dm *dmp, const char *handle);
+DM_EXPORT extern void           dm_set_obj_draw_width(struct dm *dmp, const char *handle, fastf_t draw_width);
+DM_EXPORT extern fastf_t        dm_get_obj_draw_width(struct dm *dmp, const char *handle);
+DM_EXPORT extern void           dm_set_obj_fontsize(struct dm *dmp, const char *handle, int fontsize);
+DM_EXPORT extern int            dm_get_obj_fontsize(struct dm *dmp, const char *handle);
 
 DM_EXPORT extern struct bu_attribute_value_set *dm_get_obj_extra_settings(struct dm *dmp, const char *handle);
-DM_EXPORT extern int dm_set_obj_extra_setting(struct dm *dmp, const char *handle, const char *key, const char *val);
+DM_EXPORT extern int                            dm_set_obj_extra_setting(struct dm *dmp, const char *handle, const char *key, const char *val);
+DM_EXPORT extern const char                    *dm_get_obj_extra_setting(struct dm *dmp, const char *handle, const char *key);
+
+DM_EXPORT extern void dm_toggle_obj_dirty(struct dm *dmp, const char *handle, int dirty_flag_val);
+DM_EXPORT extern void dm_toggle_obj_visible(struct dm *dmp, const char *handle, int visibility_flag_val);
+DM_EXPORT extern void dm_toggle_obj_highlight(struct dm *dmp, const char *handle, int highlight_flag_val);
+DM_EXPORT extern void dm_toggle_obj_transparency(struct dm *dmp, const char *handle, int visibility_flag_val);
 
 /* Display Manager / OS type aware functions */
-DM_EXPORT extern int   dm_init(struct dm *dmp);
+DM_EXPORT extern int   dm_init(struct dm *dmp, int dm_t, int embedded, void *parent_info);
 DM_EXPORT extern int   dm_close(struct dm *dmp);
 DM_EXPORT extern int   dm_refresh(struct dm *dmp);
-DM_EXPORT extern void *dm_canvas(struct dm *dmp);
+DM_EXPORT extern void *dm_canvas(struct dm *dmp);  /* Exposes the low level drawing object (X window, OpenGL context, etc.) for custom drawing */
 DM_EXPORT extern int   dm_change_type(struct dm *dmp, int dm_t);
 DM_EXPORT extern int   dm_get_image(struct dm *dmp, icv_image_t *image);
 DM_EXPORT extern int   dm_get_obj_image(struct dm *dmp, const char *handle, icv_image_t *image);
