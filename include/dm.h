@@ -185,9 +185,9 @@ struct dm {
 DM_EXPORT extern void           dm_set_perspective(struct dm *dmp, int perspective_flag);
 DM_EXPORT extern int            dm_get_perspective(struct dm *dmp);
 DM_EXPORT extern void           dm_set_proj_mat(struct dm *dmp, mat_t pmat);
-DM_EXPORT extern mat_t          dm_get_proj_mat(struct dm *dmp);
+DM_EXPORT extern matp_t         dm_get_proj_mat(struct dm *dmp);
 DM_EXPORT extern void           dm_set_view_mat(struct dm *dmp, mat_t vmat);
-DM_EXPORT extern mat_t          dm_get_view_mat(struct dm *dmp);
+DM_EXPORT extern matp_t         dm_get_view_mat(struct dm *dmp);
 DM_EXPORT extern void           dm_set_background_rgb(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 DM_EXPORT extern unsigned char *dm_get_background_rgb(struct dm *dmp);
 DM_EXPORT extern void           dm_set_foreground_rgb(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
@@ -199,7 +199,7 @@ DM_EXPORT extern int            dm_get_default_fontsize(struct dm *dmp);
 
 DM_EXPORT extern const char 		      **dm_get_reserved_settings(struct dm *dmp); /* Will be a combination of global and dm specific reserved settings */
 DM_EXPORT extern int				dm_is_reserved_setting(struct dm *dmp, const char *key); 
-DM_EXPORT extern struct bu_vls 		       *dm_about_reserved_setting(struct dm *dmp, const char *key); 
+DM_EXPORT extern const char		       *dm_about_reserved_setting(struct dm *dmp, const char *key); 
 DM_EXPORT extern struct bu_attribute_value_set *dm_get_settings(struct dm *dmp, const char *key);
 DM_EXPORT extern int                            dm_set_setting(struct dm *dmp, const char *key, const char *val);
 DM_EXPORT extern const char                    *dm_get_setting(struct dm *dmp, const char *key);
@@ -210,7 +210,7 @@ DM_EXPORT extern int  dm_obj_find(struct dm *dmp, const char *handle);
 DM_EXPORT extern void dm_obj_remove(struct dm *dmp, const char *handle);
 
 DM_EXPORT extern void           dm_set_obj_localmat(struct dm *dmp, const char *handle, mat_t matrix);
-DM_EXPORT extern mat_t          dm_get_obj_localmat(struct dm *dmp, const char *handle);
+DM_EXPORT extern matp_t         dm_get_obj_localmat(struct dm *dmp, const char *handle);
 DM_EXPORT extern void           dm_set_obj_rgb(struct dm *dmp, const char *handle, unsigned char r, unsigned char g, unsigned char b);
 DM_EXPORT extern unsigned char *dm_get_obj_rgb(struct dm *dmp, const char *handle);
 DM_EXPORT extern void           dm_set_obj_draw_width(struct dm *dmp, const char *handle, fastf_t draw_width);
@@ -226,7 +226,7 @@ DM_EXPORT extern int            dm_get_obj_highlight(struct dm *dmp, const char 
 
 DM_EXPORT extern const char 		      **dm_get_obj_reserved_settings(struct dm *dmp);  /* Will be a combination of global and dm specific reserved settings */
 DM_EXPORT extern int				dm_is_obj_reserved_setting(struct dm *dmp, const char *key); 
-DM_EXPORT extern struct bu_vls 		       *dm_about_obj_reserved_setting(struct dm *dmp, const char *key); 
+DM_EXPORT extern const char 		       *dm_about_obj_reserved_setting(struct dm *dmp, const char *key); 
 DM_EXPORT extern struct bu_attribute_value_set *dm_get_obj_settings(struct dm *dmp, const char *handle);
 DM_EXPORT extern int                            dm_set_obj_setting(struct dm *dmp, const char *handle, const char *key, const char *val);
 DM_EXPORT extern const char                    *dm_get_obj_setting(struct dm *dmp, const char *handle, const char *key);
