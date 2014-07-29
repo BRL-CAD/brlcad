@@ -29,7 +29,7 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-      <emphasis remap="I">Rt</emphasis> operates on the indicated
+      <command>rt</command> operates on the indicated
       <emphasis remap="I">objects</emphasis> in the input
       <emphasis remap="I">model.g</emphasis> and produces a color-shaded image
       as the output. By default, the output is placed on the current framebuffer
@@ -61,7 +61,7 @@
 	    selects auto-sizing, and gives the view azimuth in degrees.  Used with
 	    <option>-e</option>
 	    and conflicts with
-	    <option>-M</option>
+	    <option>-M </option>.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -117,7 +117,7 @@
 	  <para>selects auto-sizing, and gives the view elevation in degrees.  Used with
 	  <option>-a</option>
 	  and conflicts with
-	  <option>-M</option></para>
+	  <option>-M </option>.</para>
 	</listitem>
       </varlistentry>
 
