@@ -18,10 +18,11 @@
 <cmdsynopsis>
   <command>sun-pix</command>
     <arg choice='opt'>-b </arg>
-    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-H </arg>
     <arg choice='opt'>-i </arg>
     <arg choice='opt'>-P </arg>
     <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-C </arg>
     <arg choice='opt'><replaceable>sun.bitmap</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -42,7 +43,7 @@ The dimensions of the input file are the dimensions of the output
 file;  invoking
 <command>sun-pix</command>
 with the
-<option>-h</option>
+<option>-H</option>
 flag will cause the size of the image to be printed without further
 processing of the input, or generation of any other output.
 The image size is output as a pair
@@ -72,6 +73,10 @@ on top of color images.</para>
 flag indicates that the input is a pure bitmap with no Sun-style header
 on it.  The first bit to be processed will be the most significant bit (MSB),
 <emphasis remap='I'>i.e.</emphasis>, the left-most bit in the byte.</para>
+
+<para>The
+<option>-C</option>
+flag indicates that the color map is to be output.</para>
 
 <para>Note that the input file is expected to be in Sun ("network") byte order
 (<emphasis remap='I'>i.e.</emphasis>, "big-endian", with byte 0 on the left), regardless

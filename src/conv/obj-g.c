@@ -112,8 +112,10 @@ usage(const char *argv0)
 	   "\t\tMay significantly increase processing time during import.\n"
 	   "  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
 	   "\t\tif they are within this distance of one another. Default is\n"
-	   "\t\t.0005mm. You should not change this value without setting the\n"
-	   "\t\traytracer tolerance to match it.\n"
+	  );
+
+    bu_log("\t\t.0005mm. You should not change this value without setting the\n"
+	    "\t\traytracer tolerance to match it.\n"
 	   "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
 	   "\t\tYou can also provide a custom conversion factor from file units\n"
 	   "\t\tto mm.\n"
