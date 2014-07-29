@@ -23,7 +23,7 @@
   <refsection xml:id="rtwizard_description"><title>DESCRIPTION</title>
 
     <para>
-      <emphasis remap="I">rtwizard</emphasis> is a tool that automates the use of several
+      <command>rtwizard</command> is a tool that automates the use of several
       BRL-CAD graphical programs to produce complex images.  There are two primary modes of operation -
       a graphical client to guide users through the process of creating images, and
       a command line mode to allow users who already know what options they wish to
