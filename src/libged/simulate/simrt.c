@@ -918,6 +918,7 @@ traverse_normalray_lists(
      */
     for (i = 0; i < num_overlaps; i++) {
 
+#ifdef DEBUG_DRAW_LINES
 	bu_vls_sprintf(&reg_vls, "ray_ovrlp_%s_%s_%d_%f_%f_%f_%f_%f_%f",
 		       overlap_list[i].reg1->reg_name,
 		       overlap_list[i].reg2->reg_name,
@@ -934,7 +935,12 @@ traverse_normalray_lists(
 	/* bu_log("traverse_normalray_lists: %s\n", bu_vls_addr(&reg_vls)); */
 
 	add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
-
+#else
+/* unused */
+(void)pt;
+(void)dir;
+(void)clear_bad_chars;
+#endif
 
 	/* Check of both points are within the overlap RPP */
 	if (!V3PT_IN_RPP(overlap_list[i].in_point,  overlap_min, overlap_max) ||
@@ -1016,9 +1022,9 @@ traverse_normalray_lists(
 	bu_log("traverse_normalray_lists : No overlap found yet, checking hit regions\n");
 
 
+#ifdef DEBUG_DRAW_LINES
 	/* Draw the hit regions */
 	for (i = 0; i < num_hits; i++) {
-
 	    bu_vls_sprintf(&reg_vls, "ray_hit_%s_%d_%d_%d_%f_%f_%f_%f_%f_%f_%d",
 			   hit_list[i].reg_name,
 			   hit_list[i].pp->pt_regionp->reg_regionid,
@@ -1062,8 +1068,8 @@ traverse_normalray_lists(
 
 
 	} /* end-for hits */
+#endif
     }
-
 
     bu_vls_free(&reg_vls);
 
