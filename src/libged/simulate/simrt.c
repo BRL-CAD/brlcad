@@ -573,6 +573,7 @@ init_rayshot_results(void)
 }
 
 
+#ifdef DEBUG_DRAW_LINES
 static void
 clear_bad_chars(struct bu_vls *vp)
 {
@@ -586,6 +587,8 @@ clear_bad_chars(struct bu_vls *vp)
 	}
     }
 }
+#endif
+
 
 #if 0
 static int
@@ -939,7 +942,6 @@ traverse_normalray_lists(
 /* unused */
 (void)pt;
 (void)dir;
-(void)clear_bad_chars;
 #endif
 
 	/* Check of both points are within the overlap RPP */
