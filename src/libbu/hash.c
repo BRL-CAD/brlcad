@@ -237,7 +237,7 @@ bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl, const unsigned char *key, int key_l
 
 
 void
-bu_hash_tbl_printint(const struct bu_hash_tbl *hsh_tbl, const char *str)
+bu_hash_tbl_print(const struct bu_hash_tbl *hsh_tbl, const char *str)
 {
     unsigned long idx;
     struct bu_hash_entry *hsh_entry;

@@ -223,7 +223,7 @@ main(int argc, char *argv [])
 	perror("iges-g");
 	usage(argv[0]);
     }
-    bu_strlcpy(brlcad_file,  output_file, sizeof(brlcad_file));
+    bu_strlcpy(brlcad_file, output_file, sizeof(brlcad_file));
 
     argc -= bu_optind;
     argv += bu_optind;
