@@ -172,14 +172,33 @@ struct dm {
     fastf_t			 draw_width;	/**< @brief Default point radius/line width */
     int 			 width;
     int 			 height;
-    int 			 light;		/**< @brief !0 means lighting on */
-    int  			 zclip;		/**< @brief !0 means zclipping */
-    vect_t 			 clipmin;	/**< @brief minimum clipping vector */
-    vect_t 			 clipmax;	/**< @brief maximum clipping vector */
-    int				 debug_level;
     struct bu_attribute_value_set *dm_settings;	/**< @brief All settings (generic and DMTYPE specific) listed here. */
     void 			*client_data;	/**< @brief Slot to allow applications to store custom data */
 };
+
+const char *dm_common_reserved_settings[] = {
+    "perspective"    "Enable/disable perspective mode.  Specifics of the perspective mode are controlled by the projection matrix."
+    "proj_mat"       "Projection matrix, used for perspective mode."
+    "view_mat"       "View matrix - controls the \"camera\" position in space."
+    "background_rgb" "Background color, specified using Red/Green/Blue color values"
+    "foreground_rgb" "Default color for foreground objects, specified using Red/Green/Blue color values"
+    "draw_width"     "Default line width/point radius used when drawing objects."
+    "fontsize"       "Default font size for text rendering."
+    "width"          "Width of display window."
+    "height"         "Height of display window."
+    "\0"
+}
+
+const char *dm_obj_common_reserved_settings[] = {
+    "local_mat"      "Local positioning matrix, used (for example) during object editing manipulations."
+    "rgb"            "Object color, specified using Red/Green/Blue color values.  Defaults to geometry object color, if present."
+    "draw_width"     "Local line width/point radius used when drawing objects."
+    "fontsize"       "Local font size for text rendering."
+    "dirty"          "Flag telling the display manager that the object state is out of sync with the visible state."
+    "visible"        "Flag telling the display manager that the object is (or isn't) supposed to be visible in the view."
+    "highlight"      "Flag telling the display manager to highlight this object."
+    "\0"
+}
 
 /* Generic functions for all display managers */
 DM_EXPORT extern void           dm_set_perspective(struct dm *dmp, int perspective_flag);
@@ -196,16 +215,21 @@ DM_EXPORT extern void           dm_set_default_draw_width(struct dm *dmp, fastf_
 DM_EXPORT extern fastf_t        dm_get_default_draw_width(struct dm *dmp, fastf_t draw_width);
 DM_EXPORT extern void           dm_set_default_fontsize(struct dm *dmp, int fontsize);
 DM_EXPORT extern int            dm_get_default_fontsize(struct dm *dmp);
+DM_EXPORT extern void           dm_set_width(struct dm *dmp, int width);
+DM_EXPORT extern int		dm_get_width(struct dm *dmp);
+DM_EXPORT extern void           dm_set_height(struct dm *dmp, int height);
+DM_EXPORT extern int		dm_get_height(struct dm *dmp);
+
 
 DM_EXPORT extern const char 		      **dm_get_reserved_settings(struct dm *dmp); /* Will be a combination of global and dm specific reserved settings */
-DM_EXPORT extern int				dm_is_reserved_setting(struct dm *dmp, const char *key); 
-DM_EXPORT extern const char		       *dm_about_reserved_setting(struct dm *dmp, const char *key); 
+DM_EXPORT extern int				dm_is_reserved_setting(struct dm *dmp, const char *key);
+DM_EXPORT extern const char		       *dm_about_reserved_setting(struct dm *dmp, const char *key);
 DM_EXPORT extern struct bu_attribute_value_set *dm_get_settings(struct dm *dmp, const char *key);
 DM_EXPORT extern int                            dm_set_setting(struct dm *dmp, const char *key, const char *val);
 DM_EXPORT extern const char                    *dm_get_setting(struct dm *dmp, const char *key);
 
 /* Object manipulators */
-DM_EXPORT extern int  dm_obj_add(struct dm *dmp, const char *handle, int style_type, struct bn_vlist *vlist);
+DM_EXPORT extern int  dm_obj_add(struct dm *dmp, const char *handle, int style_type, struct bn_vlist *vlist, struct bu_ptbl *obj_set);
 DM_EXPORT extern int  dm_obj_find(struct dm *dmp, const char *handle);
 DM_EXPORT extern void dm_obj_remove(struct dm *dmp, const char *handle);
 
@@ -225,14 +249,20 @@ DM_EXPORT extern void           dm_set_obj_highlight(struct dm *dmp, const char 
 DM_EXPORT extern int            dm_get_obj_highlight(struct dm *dmp, const char *handle);
 
 DM_EXPORT extern const char 		      **dm_get_obj_reserved_settings(struct dm *dmp);  /* Will be a combination of global and dm specific reserved settings */
-DM_EXPORT extern int				dm_is_obj_reserved_setting(struct dm *dmp, const char *key); 
-DM_EXPORT extern const char 		       *dm_about_obj_reserved_setting(struct dm *dmp, const char *key); 
+DM_EXPORT extern int				dm_is_obj_reserved_setting(struct dm *dmp, const char *key);
+DM_EXPORT extern const char 		       *dm_about_obj_reserved_setting(struct dm *dmp, const char *key);
 DM_EXPORT extern struct bu_attribute_value_set *dm_get_obj_settings(struct dm *dmp, const char *handle);
 DM_EXPORT extern int                            dm_set_obj_setting(struct dm *dmp, const char *handle, const char *key, const char *val);
 DM_EXPORT extern const char                    *dm_get_obj_setting(struct dm *dmp, const char *handle, const char *key);
 
+/* TODO The visibility of the framebuffer is handled like any other object, but it is likely necessary
+ * to expose more of the details of the object to allow libfb to work properly?*/
+/* Idle though - could an ascii raytrace (like the old GIFT output) be useful for "txt mode" debugging of raytracing? */
+DM_EXPORT extern void 		*dm_get_framebuffer(struct dm *dmp);
+
+
 /* Display Manager / OS type aware functions */
-DM_EXPORT extern int   dm_init(struct dm *dmp, int dm_t, int embedded, void *parent_info);
+DM_EXPORT extern int   dm_init(struct dm *dmp, int dm_t, int embedded, void *parent_info);  /* TODO - probably need an actual public struct to hold parent info */
 DM_EXPORT extern int   dm_close(struct dm *dmp);
 DM_EXPORT extern int   dm_refresh(struct dm *dmp);
 DM_EXPORT extern void *dm_canvas(struct dm *dmp);  /* Exposes the low level drawing object (X window, OpenGL context, etc.) for custom drawing */

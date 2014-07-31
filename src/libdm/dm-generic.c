@@ -47,15 +47,39 @@ int dm_get_perspective(struct dm *dmp)
 }
 
 void
+dm_set_width(struct dm *dmp, int width)
+{
+    if (!dmp) return;
+    dmp->with = width;
+}
+
+int dm_get_width(struct dm *dmp) 
+{
+    return dmp->width;
+}
+
+void
+dm_set_height(struct dm *dmp, int height)
+{
+    if (!dmp) return;
+    dmp->with = height;
+}
+
+int dm_get_height(struct dm *dmp) 
+{
+    return dmp->height;
+}
+
+void
 dm_set_proj_matrix(struct dm *dmp, mat_t pmat)
 {
     if (!dmp) return;
     MAT_COPY(dmp->proj_matrix, pmat);
 }
 
-mat_t dm_get_proj_mat(struct dm *dmp) 
+matp_t dm_get_proj_mat(struct dm *dmp) 
 {
-    return dmp->proj_matrix;
+    return &(dmp->proj_matrix);
 }
 
 void
@@ -65,9 +89,9 @@ dm_set_view_matrix(struct dm *dmp, mat_t vmat)
     MAT_COPY(dmp->view_matrix, vmat);
 }
 
-mat_t dm_get_view_mat(struct dm *dmp) 
+matp_t dm_get_view_mat(struct dm *dmp) 
 {
-    return dmp->view_matrix;
+    return &(dmp->view_matrix);
 }
 
 void
@@ -152,7 +176,7 @@ dm_get_setting(struct dm *dmp, const char *key, const char *val)
 
 
 struct dm_display_list *
-dm_obj_add(struct dm *dmp, const char *handle, int style_type, struct bn_vlist *vlist)
+dm_obj_add(struct dm *dmp, const char *handle, int style_type, struct bn_vlist *vlist, struct bu_ptbl *obj_set)
 {
 }
 
@@ -172,7 +196,7 @@ dm_set_obj_localmat(struct dm *dmp, const char *handle, mat_t matrix)
 {
 }
 
-mat_t
+matp_t
 dm_get_obj_localmat(struct dm *dmp, const char *handle)
 {
 }
