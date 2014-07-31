@@ -156,9 +156,10 @@ struct dm_display_list {
 };
 
 struct dm {
-    const char *dm_name;			/**< @brief short name of device */
-    const char *dm_lname;			/**< @brief long name of device */
+    uint32_t dm_magic;
     int				 dm_type;	/**< @brief drawing canvas type (X, OSG, Qt, txt, etc.) currently in use by display manager */
+    const char 			*dm_name;       /**< @brief short name of device */
+    const char 			*dm_lname;      /**< @brief long name of device */
     int 			 perspective;	/**< @brief !0 means perspective on */
     mat_t			 view_matrix;   /**< @brief view matrix for the default camera */
     mat_t			 proj_matrix;   /**< @brief projection matrix for the default camera */
