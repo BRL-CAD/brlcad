@@ -6692,10 +6692,6 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::otranslate {args} {
     set result [eval gedWrapper otranslate 0 0 1 0 $args]
 
-    if {[llength $args] == 4} {
-	redrawObj [lindex $args 0] 0
-    }
-
     return $result
 }
 

@@ -110,6 +110,7 @@ struct ged_obj {
     int			go_refresh_on;
     int			go_dlist_on;
     Tcl_Interp		*interp;
+    struct bu_hash_tbl	*go_edited_paths;
 };
 #define GED_OBJ_NULL ((struct ged_obj *)0)
 

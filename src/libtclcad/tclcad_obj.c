@@ -953,6 +953,10 @@ typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_p
 static struct tclcad_obj HeadTclcadObj;
 static struct tclcad_obj *current_top = TCLCAD_OBJ_NULL;
 
+struct path_edit_params {
+    mat_t edit_mat;
+};
+
 struct to_cmdtab {
     char *to_name;
     char *to_usage;
@@ -1469,6 +1473,13 @@ to_cmd(ClientData clientData,
     return TCL_OK;
 }
 
+HIDDEN int
+free_path_edit_params_entry(struct bu_hash_entry *entry, void *UNUSED(udata))
+{
+    struct path_edit_params *pp = (struct path_edit_params *)bu_get_hash_value(entry);
+    BU_PUT(pp, struct path_edit_params);
+    return 0;
+}
 
 /**
  * @brief
@@ -1488,6 +1499,9 @@ to_deleteProc(ClientData clientData)
     ged_close(top->to_gop->go_gedp);
     if (top->to_gop->go_gedp)
 	BU_PUT(top->to_gop->go_gedp, struct ged);
+
+    bu_hash_tbl_traverse(top->to_gop->go_edited_paths, free_path_edit_params_entry, NULL);
+    bu_hash_tbl_free(top->to_gop->go_edited_paths);
 
     while (BU_LIST_WHILE(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
 	BU_LIST_DEQUEUE(&(gdvp->l));
@@ -1630,6 +1644,7 @@ Usage: go_open\n\
     bu_vls_init(&top->to_gop->go_rt_end_callback);
     BU_LIST_INIT(&top->to_gop->go_observers.l);
     top->to_gop->go_refresh_on = 1;
+    top->to_gop->go_edited_paths = bu_hash_tbl_create(0);
 
     BU_LIST_INIT(&top->to_gop->go_head_views.l);
 
@@ -6066,6 +6081,52 @@ to_handle_refresh(struct ged *gedp,
     return GED_OK;
 }
 
+struct redraw_edited_path_data {
+    struct ged *gedp;
+    int *need_refresh;
+};
+
+HIDDEN int
+redraw_edited_path(struct bu_hash_entry *entry, void *udata)
+{
+    const char *av[4] = {0};
+    char *draw_path = (char *)bu_get_hash_key(entry);
+    struct redraw_edited_path_data *data;
+    int ret, dmode = 0;
+    struct bu_vls path_dmode = BU_VLS_INIT_ZERO;
+
+    data = (struct redraw_edited_path_data *)udata;
+
+    av[0] = "how";
+    av[1] = draw_path;
+    av[2] = NULL;
+    ret = ged_how(data->gedp, 2, av);
+    if (ret == GED_OK) {
+	ret = bu_sscanf(bu_vls_cstr(data->gedp->ged_result_str), "%d", &dmode);
+    }
+    if (dmode == 5) {
+	bu_vls_printf(&path_dmode, "-h");
+    } else {
+	bu_vls_printf(&path_dmode, "-m%d", dmode);
+    }
+
+    av[0] = "erase";
+    ret = ged_erase(data->gedp, 2, av);
+
+    if (ret == GED_OK) {
+	av[0] = "draw";
+	av[1] = "-R";
+	av[2] = bu_vls_cstr(&path_dmode);
+	av[3] = draw_path;
+	av[4] = NULL;
+	ged_draw(data->gedp, 4, av);
+    }
+
+    *data->need_refresh = 1;
+
+    return 0;
+}
+
 HIDDEN int
 to_idle_mode(struct ged *gedp,
 	     int argc,
@@ -6076,6 +6137,7 @@ to_idle_mode(struct ged *gedp,
 {
     struct ged_dm_view *gdvp;
     int mode, need_refresh = 0;
+    struct redraw_edited_path_data data;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6143,6 +6205,15 @@ to_idle_mode(struct ged *gedp,
 
 	need_refresh = 1;
     }
+
+    /* redraw any edited paths, then clear them from our table */
+    data.gedp = gedp;
+    data.need_refresh = &need_refresh;
+    bu_hash_tbl_traverse(current_top->to_gop->go_edited_paths, redraw_edited_path, &data);
+
+    bu_hash_tbl_traverse(current_top->to_gop->go_edited_paths, free_path_edit_params_entry, NULL);
+    bu_hash_tbl_free(current_top->to_gop->go_edited_paths);
+    current_top->to_gop->go_edited_paths = bu_hash_tbl_create(0);
 
     if (need_refresh) {
 	to_refresh_all_views(current_top);
@@ -8495,12 +8566,41 @@ to_mouse_otranslate(struct ged *gedp,
     gedp->ged_gvp = gdvp->gdv_view;
 
     if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
+	const char *path_string = argv[2];
 	struct bu_vls tcl_cmd;
+	struct path_edit_params *params;
+	int is_entry_new;
+	struct bu_hash_entry *entry;
+	mat_t dmat, prev_mat;
+	vect_t dvec;
+
+	entry = bu_hash_tbl_add(current_top->to_gop->go_edited_paths,
+		(unsigned char *)path_string,
+		sizeof(char) * strlen(path_string) + 1,
+		&is_entry_new);
+
+	if (is_entry_new) {
+	    BU_GET(params, struct path_edit_params);
+	    MAT_IDN(params->edit_mat);
+
+	    bu_set_hash_value(entry, (unsigned char *)params);
+	} else {
+	    params = (struct path_edit_params *)bu_get_hash_value(entry);
+	}
+
+	MAT_IDN(dmat);
+	VSCALE(dvec, model, gedp->ged_wdbp->dbip->dbi_local2base);
+	MAT_DELTAS_VEC(dmat, dvec);
+
+	MAT_COPY(prev_mat, params->edit_mat);
+	bn_mat_mul(params->edit_mat, prev_mat, dmat);
 
 	bu_vls_init(&tcl_cmd);
 	bu_vls_printf(&tcl_cmd, "%s otranslate %s %s %s", bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback), bu_vls_addr(&tran_x_vls), bu_vls_addr(&tran_y_vls), bu_vls_addr(&tran_z_vls));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
 	bu_vls_free(&tcl_cmd);
+
+	to_refresh_view(gdvp);
     } else {
 	char *av[6];
 
@@ -13784,9 +13884,9 @@ HIDDEN void go_dm_draw_lines(struct dm *dmp, struct ged_data_line_state *gdlsp);
 HIDDEN void go_dm_draw_polys(struct dm *dmp, ged_data_polygon_state *gdpsp, int mode);
 
 HIDDEN void go_draw(struct ged_dm_view *gdvp);
-HIDDEN int go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hsp);
+HIDDEN int go_draw_dlist(struct ged_dm_view *gdvp);
 HIDDEN void go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp);
-HIDDEN void go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp);
+HIDDEN void go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp);
 
 
 HIDDEN void
@@ -13992,18 +14092,20 @@ go_draw(struct ged_dm_view *gdvp)
     else
 	(void)DM_LOADPMATRIX(gdvp->gdv_dmp, (fastf_t *)NULL);
 
-    go_draw_dlist(gdvp->gdv_gop, gdvp->gdv_dmp, gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay);
+    go_draw_dlist(gdvp);
 }
 
 
 /* Draw all display lists */
 HIDDEN int
-go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
+go_draw_dlist(struct ged_dm_view *gdvp)
 {
     register struct ged_display_list *gdlp;
     register struct ged_display_list *next_gdlp;
     struct solid *sp;
     int line_style = -1;
+    struct dm *dmp = gdvp->gdv_dmp;
+    struct bu_list *hdlp = gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay;
 
     if (dmp->dm_transparency) {
 	/* First, draw opaque stuff */
@@ -14020,7 +14122,7 @@ go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
 		    (void)DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 		}
 
-		go_draw_solid(gop, dmp, sp);
+		go_draw_solid(gdvp, sp);
 	    }
 
 	    gdlp = next_gdlp;
@@ -14044,7 +14146,7 @@ go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
 		    (void)DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 		}
 
-		go_draw_solid(gop, dmp, sp);
+		go_draw_solid(gdvp, sp);
 	    }
 
 	    gdlp = next_gdlp;
@@ -14063,7 +14165,7 @@ go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
 		    (void)DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 		}
 
-		go_draw_solid(gop, dmp, sp);
+		go_draw_solid(gdvp, sp);
 	    }
 
 	    gdlp = next_gdlp;
@@ -14165,10 +14267,56 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect);
 }
 
+struct path_match_data {
+    struct db_full_path *s_fpath;
+    struct db_i *dbip;
+};
+
+HIDDEN int
+key_matches_path(struct bu_hash_entry *entry, void *udata)
+{
+    struct path_match_data *data = (struct path_match_data *)udata;
+    struct db_full_path entry_fpath;
+    char *path_string;
+    int ret;
+
+    path_string = (char *)bu_get_hash_key(entry);
+    if (db_string_to_path(&entry_fpath, data->dbip, path_string) < 0) {
+	return 0;
+    }
+
+    ret = 0;
+    if (db_full_path_match_top(&entry_fpath, data->s_fpath)) {
+	ret = 1;
+    }
+
+    db_free_full_path(&entry_fpath);
+    return ret;
+}
 
 HIDDEN void
-go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp)
+go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp)
 {
+    struct ged_obj *gop = gdvp->gdv_gop;
+    struct dm *dmp = gdvp->gdv_dmp;
+    struct bu_hash_entry *entry;
+    struct path_edit_params *params = NULL;
+    mat_t save_mat, edit_model2view;
+    struct path_match_data data;
+
+    data.s_fpath = &sp->s_fullpath;
+    data.dbip = gop->go_gedp->ged_wdbp->dbip;
+    entry = bu_hash_tbl_traverse(gop->go_edited_paths, key_matches_path, &data);
+
+    if (entry != NULL) {
+	params = (struct path_edit_params *)bu_get_hash_value(entry);
+    }
+    if (params) {
+	MAT_COPY(save_mat, gdvp->gdv_view->gv_model2view);
+	bn_mat_mul(edit_model2view, gdvp->gdv_view->gv_model2view, params->edit_mat);
+	DM_LOADMATRIX(dmp, edit_model2view, 0);
+    }
+
     if (gop->go_dlist_on) {
 	DM_DRAWDLIST(dmp, sp->s_dlist);
     } else {
@@ -14185,6 +14333,9 @@ go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp)
 	} else {
 	    (void)DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
 	}
+    }
+    if (params) {
+	DM_LOADMATRIX(dmp, save_mat, 0);
     }
 }
 
