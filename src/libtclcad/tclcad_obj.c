@@ -954,6 +954,7 @@ static struct tclcad_obj HeadTclcadObj;
 static struct tclcad_obj *current_top = TCLCAD_OBJ_NULL;
 
 struct path_edit_params {
+    int edit_mode;
     mat_t edit_mat;
 };
 
@@ -6083,6 +6084,7 @@ to_handle_refresh(struct ged *gedp,
 
 struct redraw_edited_path_data {
     struct ged *gedp;
+    struct ged_dm_view *gdvp;
     int *need_refresh;
 };
 
@@ -6094,8 +6096,38 @@ redraw_edited_path(struct bu_hash_entry *entry, void *udata)
     struct redraw_edited_path_data *data;
     int ret, dmode = 0;
     struct bu_vls path_dmode = BU_VLS_INIT_ZERO;
+    struct path_edit_params *params;
 
     data = (struct redraw_edited_path_data *)udata;
+
+    params = (struct path_edit_params *)bu_get_hash_value(entry);
+    if (params->edit_mode == TCLCAD_OTRANSLATE_MODE) {
+	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+	struct bu_vls tran_x_vls = BU_VLS_INIT_ZERO;
+	struct bu_vls tran_y_vls = BU_VLS_INIT_ZERO;
+	struct bu_vls tran_z_vls = BU_VLS_INIT_ZERO;
+	mat_t dvec;
+
+	MAT_DELTAS_GET(dvec, params->edit_mat);
+	VSCALE(dvec, dvec, data->gedp->ged_wdbp->dbip->dbi_base2local);
+
+	bu_vls_printf(&tran_x_vls, "%lf", dvec[X]);
+	bu_vls_printf(&tran_y_vls, "%lf", dvec[Y]);
+	bu_vls_printf(&tran_z_vls, "%lf", dvec[Z]);
+
+	bu_vls_printf(&tcl_cmd, "%s otranslate %s %s %s",
+		bu_vls_addr(&data->gdvp->gdv_edit_motion_delta_callback),
+		bu_vls_addr(&tran_x_vls), bu_vls_addr(&tran_y_vls),
+		bu_vls_addr(&tran_z_vls));
+	Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
+
+	bu_vls_free(&tcl_cmd);
+	bu_vls_free(&tran_x_vls);
+	bu_vls_free(&tran_y_vls);
+	bu_vls_free(&tran_z_vls);
+    }
+
+    Tcl_Eval(current_top->to_interp, "SetWaitCursor $::ArcherCore::application");
 
     av[0] = "how";
     av[1] = draw_path;
@@ -6121,6 +6153,7 @@ redraw_edited_path(struct bu_hash_entry *entry, void *udata)
 	av[4] = NULL;
 	ged_draw(data->gedp, 4, av);
     }
+    Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
 
     *data->need_refresh = 1;
 
@@ -6208,6 +6241,7 @@ to_idle_mode(struct ged *gedp,
 
     /* redraw any edited paths, then clear them from our table */
     data.gedp = gedp;
+    data.gdvp = gdvp;
     data.need_refresh = &need_refresh;
     bu_hash_tbl_traverse(current_top->to_gop->go_edited_paths, redraw_edited_path, &data);
 
@@ -8567,7 +8601,6 @@ to_mouse_otranslate(struct ged *gedp,
 
     if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
 	const char *path_string = argv[2];
-	struct bu_vls tcl_cmd;
 	struct path_edit_params *params;
 	int is_entry_new;
 	struct bu_hash_entry *entry;
@@ -8582,6 +8615,7 @@ to_mouse_otranslate(struct ged *gedp,
 	if (is_entry_new) {
 	    BU_GET(params, struct path_edit_params);
 	    MAT_IDN(params->edit_mat);
+	    params->edit_mode = gdvp->gdv_view->gv_mode;
 
 	    bu_set_hash_value(entry, (unsigned char *)params);
 	} else {
@@ -8595,10 +8629,6 @@ to_mouse_otranslate(struct ged *gedp,
 	MAT_COPY(prev_mat, params->edit_mat);
 	bn_mat_mul(params->edit_mat, prev_mat, dmat);
 
-	bu_vls_init(&tcl_cmd);
-	bu_vls_printf(&tcl_cmd, "%s otranslate %s %s %s", bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback), bu_vls_addr(&tran_x_vls), bu_vls_addr(&tran_y_vls), bu_vls_addr(&tran_z_vls));
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
-	bu_vls_free(&tcl_cmd);
 
 	to_refresh_view(gdvp);
     } else {
