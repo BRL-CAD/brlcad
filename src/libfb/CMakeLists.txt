@@ -73,7 +73,6 @@ if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
 endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
 
 set(libfb_ignore_files
-  dmdfb.h
   if_TEMPLATE.c
   if_osg.cpp
   if_qt.cpp
