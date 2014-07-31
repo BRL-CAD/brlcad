@@ -185,6 +185,10 @@ null_makeCurrent(struct dm *dmp);
 DM_EXPORT extern void
 null_processEvents(struct dm *dmp);
 
+
+DM_EXPORT extern int
+null_openFb(struct dm *dmp, FBIO *ifp);
+
 __END_DECLS
 
 #endif  /* DM_NULL_H */

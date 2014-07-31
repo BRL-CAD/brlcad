@@ -704,6 +704,17 @@ qt_processEvents(struct dm *dmp)
 }
 
 
+HIDDEN int
+qt_openFb(struct dm *dmp, FBIO *ifp)
+{
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    _qt_open_existing(ifp, dmp->dm_width, dmp->dm_height, privars->qapp, privars->win, privars->painter);
+
+    return 0;
+}
+
+
 /**
  * Function called in Tk event loop. It simply processes any
  * pending Qt events.
@@ -952,6 +963,7 @@ struct dm dm_qt = {
     qt_getDisplayImage,
     qt_reshape,
     null_makeCurrent,
+    qt_openFb,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

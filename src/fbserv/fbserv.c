@@ -124,7 +124,7 @@ Usage: fbserv port_num\n\
    or  fbserv [-v] [-{sS} squaresize]\n\
 	  [-{wW} width] [-{nN} height] -p port_num -F frame_buffer\n\
 	  (for a single-frame-buffer server)\n\
-          (can omit -p and -F, in which case port_num and frame_buffer\n\
+          (if '-p' and '-F' are both omitted, port_num and frame_buffer\n\
            must appear in that order)\n\
 ";
 

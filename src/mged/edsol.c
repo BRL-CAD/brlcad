@@ -2551,7 +2551,7 @@ init_sedit(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_full_path_transformation_matrix(es_mat, dbip, &illump->s_fullpath, illump->s_fullpath.fp_len-2);
+    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -2644,7 +2644,7 @@ replot_editing_solid(void)
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    if (LAST_SOLID(sp) == illdp) {
-		(void)db_full_path_transformation_matrix(mat, dbip, &sp->s_fullpath, sp->s_fullpath.fp_len-2);
+		(void)db_path_to_mat(dbip, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
 		(void)replot_modified_solid(sp, &es_int, mat);
 	    }
 	}
@@ -2823,7 +2823,7 @@ get_file_name(char *str)
 
     bu_vls_printf(&cmd,
 		  "getFile %s %s {{{All Files} {*}}} {Get File}",
-		  bu_vls_addr(&pathName),
+		  bu_vls_addr(&dmp->dm_pathName),
 		  bu_vls_addr(&varname_vls));
     bu_vls_free(&varname_vls);
 
@@ -4219,7 +4219,7 @@ sedit(void)
 		old_mode = bot->mode;
 		sprintf(mode, " %d", old_mode - 1);
 		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_mode_radio ",
-				      bu_vls_addr(&pathName), " _bot_mode_result",
+				      bu_vls_addr(&dmp->dm_pathName), " _bot_mode_result",
 				      " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
 				      " { surface volume plate plate/nocosine }",
 				      " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
@@ -4257,7 +4257,7 @@ sedit(void)
 		RT_BOT_CK_MAGIC(bot);
 		sprintf(orient, " %d", bot->orientation - 1);
 		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_orient_radio ",
-				      bu_vls_addr(&pathName), " _bot_orient_result",
+				      bu_vls_addr(&dmp->dm_pathName), " _bot_orient_result",
 				      " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
 				      " { none right-hand-rule left-hand-rule }",
 				      " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
@@ -4348,7 +4348,7 @@ sedit(void)
 		ret_tcl = Tcl_VarEval(INTERP,
 				      "cad_list_buts",
 				      " .bot_list_flags ",
-				      bu_vls_addr(&pathName),
+				      bu_vls_addr(&dmp->dm_pathName),
 				      " _bot_flags_result ",
 				      cur_settings,
 				      " \"BOT Flags\"",
@@ -4426,7 +4426,7 @@ sedit(void)
 		else
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
 
-		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(&pathName),
+		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(&dmp->dm_pathName),
 				      " _bot_fmode_result ", "\"BOT Face Mode\"",
 				      " \"Select the desired face mode\"", fmode,
 				      " { {Thickness centered about hit point} {Thickness appended to hit point} }",
@@ -7361,7 +7361,7 @@ init_oedit_guts(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_full_path_transformation_matrix(es_mat, dbip, &illump->s_fullpath, illump->s_fullpath.fp_len-2);
+    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -7451,7 +7451,7 @@ oedit_apply(int continue_editing)
 	    MAT_IDN(deltam);
 	    MAT_IDN(tempm);
 
-	    (void)db_full_path_transformation_matrix(topm, dbip, &illump->s_fullpath, ipathpos-2);
+	    (void)db_path_to_mat(dbip, &illump->s_fullpath, topm, ipathpos-1, &rt_uniresource);
 
 	    bn_mat_inv(inv_topm, topm);
 
@@ -9122,7 +9122,7 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
 
     /* Save aggregate path matrix */
     MAT_IDN(es_mat);
-    (void)db_full_path_transformation_matrix(es_mat, dbip, &illump->s_fullpath, illump->s_fullpath.fp_len-2);
+    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);

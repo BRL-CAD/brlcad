@@ -72,15 +72,15 @@ flag.</para>
 <para>Ordinarily, the requested framebuffer size is the device default.</para>
 
 <para>The
-<option>-W </option><replaceable>scr_width</replaceable>
-flag specifies the width of each output scanline, in pixels.</para>
+<option>-W </option><replaceable>scr_width</replaceable>
+option specifies the width of each output scanline, in pixels.</para>
 
 <para>The
-<option>-N </option><replaceable>scr_height</replaceable>
-flag specifies the desired height in scanlines of the display device.</para>
+<option>-N </option><replaceable>scr_height</replaceable>
+option specifies the desired height in scanlines of the display device.</para>
 
-<para><option>-S </option><replaceable>squarescrsize</replaceable>
-set both the height and width to the size given.</para>
+<para><option>-S </option><replaceable>squarescrsize</replaceable>
+sets both the height and width to the size given.</para>
 </refsection>
 
 <refsection xml:id="inspirations"><title>INSPIRATIONS</title>

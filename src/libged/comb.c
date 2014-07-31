@@ -228,7 +228,6 @@ name_compare(const void *d1, const void *d2, void *UNUSED(arg))
 HIDDEN int
 comb_flatten(struct ged *gedp, struct directory *dp)
 {
-    int j;
     int result_cnt = 0;
     int obj_cnt = 0;
     struct directory **all_paths;
@@ -268,9 +267,6 @@ comb_flatten(struct ged *gedp, struct directory *dp)
     bu_vls_free(&plan_string);
 
     /* Done searching - now we can free the path list and clear the original tree */
-    for (j = 0; j < obj_cnt; j++) {
-	db_dirdelete(gedp->ged_wdbp->dbip, all_paths[j]);
-    }
     bu_free(all_paths, "free db_tops output");
     if (comb_tree_clear(gedp, dp) == GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree clearing failed", dp->d_namep);
@@ -356,10 +352,7 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
     (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp->dbip);
     bu_vls_free(&plan_string);
 
-    /* release our db_ls paths */
-    for (j = 0; j < obj_cnt; j++) {
-	db_dirdelete(gedp->ged_wdbp->dbip, all_paths[j]);
-    }
+    /* release our db_ls path */
     bu_free(all_paths, "free db_tops output");
 
     /* check for entry last node in combs_outside of tree
@@ -429,7 +422,7 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
 	bu_ptbl_init(&stack, 64, "comb mvall working stack");
 
 	(void)db_search(&combs_in_tree, DB_SEARCH_RETURN_UNIQ_DP, combs_in_tree_plan, 1, &dp, gedp->ged_wdbp->dbip);
-        bu_ptbl_ins(&combs_in_tree, (long *)dp);
+	bu_ptbl_ins(&combs_in_tree, (long *)dp);
 	for (BU_PTBL_FOR(dp_curr, (struct directory **), &regions_to_wrap)) {
 	    if ((*dp_curr) != dp) {
 		struct directory **dp_comb_from_tree;
@@ -510,13 +503,13 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
     /* Grab any arguments off of the argv list */
     while ((c = bu_getopt(argc, (char **)argv, "crwflS")) != -1) {
-        switch (c) {
-            case 'c' :
-                set_comb = 1;
-                break;
-            case 'r' :
-                set_region = 1;
-                break;
+	switch (c) {
+	    case 'c' :
+		set_comb = 1;
+		break;
+	    case 'r' :
+		set_region = 1;
+		break;
 	    case 'w' :
 		wrap_comb = 1;
 		standard_comb_build = 0;
@@ -529,12 +522,12 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 		lift_region_comb = 1;
 		standard_comb_build = 0;
 		break;
-            case 'S' :
+	    case 'S' :
 		alter_existing = 0;
 		break;
 	    default :
-                break;
-        }
+		break;
+	}
     }
 
     argc -= bu_optind - 1;
@@ -565,10 +558,10 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
 	    return GED_ERROR;
 	}
-        if (!alter_existing) {
+	if (!alter_existing) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s already exists.", comb_name);
 	    return GED_ERROR;
-        }
+	}
     }
 
     /* If we aren't performing one of the option operations,

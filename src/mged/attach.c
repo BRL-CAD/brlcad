@@ -258,7 +258,7 @@ release(char *name, int need_close)
 			     " not found\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
-    } else if (dmp && BU_STR_EQUAL("nu", bu_vls_addr(&pathName)))
+    } else if (dmp && BU_STR_EQUAL("nu", bu_vls_addr(&dmp->dm_pathName)))
 	return TCL_OK;  /* Ignore */
 
     if (fbp) {

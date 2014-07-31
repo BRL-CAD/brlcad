@@ -24,7 +24,7 @@ lessons/
 resources/
 	The DocBook xsl files are contained within the "other"
 	subdirectory.  Also included there are various directories and
-	files associated with DB validation, fonts, snd hyphenation.
+	files associated with DB validation, fonts, and hyphenation.
 	The "brlcad" subdirectory contains files customized for
 	BRL-CAD products including common files and images.
 
@@ -68,7 +68,7 @@ the file 'README.DB_authors_notes'.
 The text character code requirements may eventually be enforced by a
 pre-commit hook script.
 
-CONVERTING MAN FORMAT TO DOCBBOOK
+CONVERTING MAN FORMAT TO DOCBOOK
 ---------------------------------
 
 The doclifter program (available in a Debian or Ubuntu distribution)
@@ -103,9 +103,9 @@ documents:
   For pdf documents:
 
     * fop
-	a java program provide by the Apache Software Foundation; note
+	a java program provided by the Apache Software Foundation; note
 	that a minimum of version 1.0 is required to use the
-	hyphenation binaries provided in thre resources sub-directory
+	hyphenation binaries provided in the resources sub-directory
 	(see http://xmlgraphics.apache.org/fop/).  Also, version 1.0
 	has some new font support features and we recommend using that
 	version (or later) for DB processing.

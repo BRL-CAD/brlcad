@@ -44,7 +44,8 @@ static int scr_height = 0;
 
 static char usage[] = "\
 Usage: fb-fb [-v] [-F output_framebuffer]\n\
-	input_framebuffer [output_framebuffer]\n";
+       or\n\
+       fb-fb [-v] input_framebuffer [output_framebuffer]\n";
 
 int
 get_args(int argc, char **argv)
@@ -60,7 +61,7 @@ get_args(int argc, char **argv)
 		verbose++;
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }

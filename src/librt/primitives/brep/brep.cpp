@@ -1222,22 +1222,28 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	curr = hits.begin();
 	while (curr != hits.end()) {
 	    brep_hit &curr_hit = *curr;
-	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
-		if (curr != hits.begin()) {
+	    if (curr != hits.begin()) {
+		if (curr_hit.hit == brep_hit::NEAR_MISS) {
 		    prev = curr;
 		    prev--;
 		    brep_hit &prev_hit = (*prev);
-		    if ((prev_hit.hit == brep_hit::NEAR_MISS) && (prev_hit.direction == curr_hit.direction)) {
-			//remove current miss
-			prev_hit.hit = brep_hit::CRACK_HIT;
-			curr=hits.erase(curr);
-			continue;
-		    } else if ((prev_hit.hit == brep_hit::NEAR_MISS) && (prev_hit.direction != curr_hit.direction)) {
-			//remove edge near miss
-			prev_hit.hit = brep_hit::CRACK_HIT;
-			(void)hits.erase(prev);
-			curr=hits.erase(curr);
-			continue;
+		    if (prev_hit.hit == brep_hit::NEAR_MISS) { // two near misses in a row
+			if (prev_hit.m_adj_face_index == curr_hit.face.m_face_index) {
+			    if (prev_hit.direction == curr_hit.direction) {
+				//remove current miss
+				prev_hit.hit = brep_hit::CRACK_HIT;
+				curr=hits.erase(curr);
+				continue;
+			    } else {
+				//remove both edge near misses
+				(void)hits.erase(prev);
+				curr=hits.erase(curr);
+				continue;
+			    }
+			} else {
+			    // not adjacent faces so remove first miss
+			    (void)hits.erase(prev);
+			}
 		    }
 		}
 	    }
@@ -3102,8 +3108,8 @@ poly2tri_CDT(struct bu_list *vhead,
 		ON_2dPoint p2d_end = trim->PointAt(trim->Domain().m_t[1]);
 		double delta =  trim->Domain().Length() / 10.0;
 		ON_Interval trim_dom = trim->Domain();
-		// need to determine direction
-		int side = IsAtSingularity(s, p2d_begin, BREP_SAME_POINT_TOLERANCE);// 0 = south, 1 = east, 2 = north, 3 = west
+
+
 		for (int i=1; i<=10; i++) {
 		    btp.p3d = p3d;
 		    btp.p2d = v1.Point();
@@ -3907,25 +3913,29 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	ON_BrepFace& face = brep->m_F[index];
 	const ON_Surface *surf = face.SurfaceOf();
 
-	if (surf->IsClosed(0) || surf->IsClosed(1)) {
-	    ON_SumSurface *sumsurf = const_cast<ON_SumSurface *> (ON_SumSurface::Cast(surf));
-	    if (sumsurf != NULL) {
-		SurfaceTree* st = new SurfaceTree(&face, true, 2);
-
-		plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
-
-		delete st;
-	    } else {
-		ON_RevSurface *revsurf = const_cast<ON_RevSurface *> (ON_RevSurface::Cast(surf));
-
-		if (revsurf != NULL) {
-		    SurfaceTree* st = new SurfaceTree(&face, true, 0);
+	if (surf != NULL) {
+	    if (surf->IsClosed(0) || surf->IsClosed(1)) {
+		ON_SumSurface *sumsurf = const_cast<ON_SumSurface *> (ON_SumSurface::Cast(surf));
+		if (sumsurf != NULL) {
+		    SurfaceTree* st = new SurfaceTree(&face, true, 2);
 
 		    plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
 
 		    delete st;
+		} else {
+		    ON_RevSurface *revsurf = const_cast<ON_RevSurface *> (ON_RevSurface::Cast(surf));
+
+		    if (revsurf != NULL) {
+			SurfaceTree* st = new SurfaceTree(&face, true, 0);
+
+			plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
+
+			delete st;
+		    }
 		}
 	    }
+	} else {
+	    bu_log("Surface index %d not defined.\n",index);
 	}
     }
 
@@ -4021,8 +4031,9 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 	fastf_t  max_dist = 0;
 #endif
 	for (int index = 0; index < brep->m_F.Count(); index++) {
-		ON_BrepFace *face = brep->Face(index);
-		const ON_Surface *s = face->SurfaceOf();
+	    ON_BrepFace *face = brep->Face(index);
+	    const ON_Surface *s = face->SurfaceOf();
+	    if (s) {
 		double surface_width,surface_height;
 		if (s->GetSurfaceSize(&surface_width,&surface_height)) {
 		    // reparameterization of the face's surface and transforms the "u"
@@ -4034,6 +4045,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 		    max_dist = sqrt(surface_width*surface_width + surface_height*surface_height) / 10.0;
 #endif
 		}
+	    }
 	}
 #ifdef DRAW_FACE
 	for (int index = 0; index < brep->m_E.Count(); index++) {
@@ -4048,13 +4060,19 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 	int plottype = 0;
 	int numpoints = -1;
 	for (int index = 0; index < brep->m_F.Count(); index++) {
-		ON_BrepFace& face = brep->m_F[index];
+	    ON_BrepFace& face = brep->m_F[index];
+	    const ON_Surface *s = face.SurfaceOf();
+
+	    if (s) {
 
 #ifdef DRAW_FACE
 		draw_face_CDT(vhead, face, ttol, tol, info, watertight, plottype, numpoints);
 #else
 		poly2tri_CDT(vhead, face, ttol, tol, info, watertight, plottype, numpoints);
 #endif
+	    } else {
+		bu_log("Error solid \"%s\" missing surface definition for Face(%d). Will skip this face when drawing.\n",solid_name,index);
+	    }
 	}
 #else
 	for (int index = 0; index < brep->m_F.Count(); index++) {
