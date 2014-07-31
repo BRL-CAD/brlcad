@@ -106,7 +106,8 @@ static char *file_name;
 static FILE *fp;
 
 char usage[] = "\
-Usage: sun-pix [-b -H -i -P -v -C] [sun.bitmap]\n";
+Usage: sun-pix [-b -H -i -P -v -C] [sun.bitmap]\n\
+       (standard output must be redirected)\n";
 
 
 #define NET_LONG_LEN 4 /* # bytes to network long */

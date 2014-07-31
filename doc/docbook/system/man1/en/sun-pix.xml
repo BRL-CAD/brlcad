@@ -25,6 +25,9 @@
     <arg choice='opt'>-C </arg>
     <arg choice='opt'><replaceable>sun.bitmap</replaceable></arg>
 </cmdsynopsis>
+<cmdsynopsis>
+with standard output required to be redirected instead of being sent to a tty
+</cmdsynopsis>
 </refsynopsisdiv>
 
 
