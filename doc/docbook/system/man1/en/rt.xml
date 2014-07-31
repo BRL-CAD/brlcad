@@ -265,9 +265,9 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-o</option></term>
+	<term><option>-o output.pix</option></term>
 	<listitem>
-	  <para><emphasis remap="B" role="B">output.pix</emphasis>
+	  <para>
 	  Specify the name of a file to store the
 	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 	  format output.
