@@ -39,7 +39,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixborder</emphasis>
+<para><command>pixborder</command>
 reads an input stream of
 <emphasis remap='I'>pix</emphasis>
 data,
@@ -64,7 +64,7 @@ the default interior color of 255 255 255 by
 <emphasis remap='I'>R G B</emphasis>,
 while the
 <option>-I</option>
-replaces it by
+option replaces it by
 <emphasis remap='I'>H S V</emphasis>,
 which are reals,
 with
@@ -108,7 +108,7 @@ The
 option sets the left edge of that rectangle:
 no pixels to the left of this edge are changed.
 The
-<option>-X</option>, <emphasis remap='B'>y</emphasis>,  and <emphasis remap='B'>Y</emphasis>
+<option>-X</option>, <option>-y</option>,  and <option>-Y</option>
 options respectively
 set the right, bottom, and top edges
 in the same manner.</para>
