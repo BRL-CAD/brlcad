@@ -25,9 +25,6 @@
     <arg choice='opt'>-C </arg>
     <arg choice='opt'><replaceable>sun.bitmap</replaceable></arg>
 </cmdsynopsis>
-<cmdsynopsis>
-with standard output required to be redirected instead of being sent to a tty
-</cmdsynopsis>
 </refsynopsisdiv>
 
 
@@ -41,8 +38,11 @@ format file.  If the
 <option>-b</option>
 flag is specified, a
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-format file is created instead.
-The dimensions of the input file are the dimensions of the output
+format file is created instead.  Note that 
+<command>sun-pix</command>
+will refuse to write to a terminal; its output must be redirected unless it's invoked with the
+<option>-H</option>
+flag.  The dimensions of the input file are the dimensions of the output
 file;  invoking
 <command>sun-pix</command>
 with the
