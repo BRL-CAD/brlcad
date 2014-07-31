@@ -67,6 +67,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* See if we can use pkg_conn on Windows instead of Tcl_Channel in MGED
+
 * geometry symbolic links (hard and soft links)
 
 * investigate INFINITY spatial partitioning issue.
