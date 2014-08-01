@@ -1,7 +1,5 @@
 #include "bot_solidity.h"
 
-#include "bu.h"
-
 
 #define EDGE_EQUAL(e1, e2) (((e1).va == (e2).va) && ((e1.vb) == (e2).vb))
 
