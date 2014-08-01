@@ -34,6 +34,7 @@
 #  include <QWindow>
 #  include <QBackingStore>
 #  include <QResizeEvent>
+#  include <QImage>
 
 class QTkMainWindow: public QWindow {
 
@@ -68,6 +69,7 @@ struct qt_vars {
     QPainter *painter;
     QFont *font;
     mat_t qmat;
+    QImage *img;
 };
 
 struct qt_tk_bind {

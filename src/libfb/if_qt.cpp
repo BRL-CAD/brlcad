@@ -71,6 +71,7 @@ struct qtinfo {
     QApplication *qapp;
     QWindow *win;
     QImage *qi_image;
+    void **qi_parent_img;
     QPainter *qi_painter;
 
     int alive;
@@ -434,6 +435,7 @@ qt_configureWindow(FBIO *ifp, int width, int height)
     }
 
     qi->qi_image = new QImage(qi->qi_pix, width, height, QImage::Format_RGB888);
+    *qi->qi_parent_img = qi->qi_image;
 
     qt_updstate(ifp);
 
@@ -681,7 +683,7 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
 }
 
 int
-_qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void *qpainter)
+_qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void *qpainter, void **qimg)
 {
     struct qtinfo *qi;
 
@@ -740,9 +742,11 @@ _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void
     }
 
     qi->qi_image = new QImage(qi->qi_pix, width, height, QImage::Format_RGB888);
+    *qimg = qi->qi_image;
 
-    qi->win = (QWindow *)qwin;
+    qi->qi_parent_img = qimg;
     qi->qi_painter = (QPainter *)qpainter;
+    qi->win = (QWindow *)qwin;
 
     qt_updstate(ifp);
     qi->alive = 0;
