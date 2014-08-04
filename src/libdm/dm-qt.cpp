@@ -104,7 +104,7 @@ qt_drawBegin(struct dm *dmp)
     privars->painter->setFont(*privars->font);
 
     if (privars->img != NULL) {
-	privars->painter->drawImage(0, 0, *privars->img);
+	privars->painter->drawImage(0, 0, *privars->img, 0, 0, dmp->dm_width - 1, dmp->dm_height - 1);
     }
 
     return TCL_OK;

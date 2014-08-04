@@ -427,7 +427,7 @@ qt_configureWindow(FBIO *ifp, int width, int height)
 
     /* destroy old image struct and image buffers */
     delete qi->qi_image;
-    delete qi->qi_pix;
+    free(qi->qi_pix);
 
     if ((qi->qi_pix = (unsigned char *) calloc(width * height * sizeof(RGBpixel),
 	sizeof(char))) == NULL) {
@@ -440,6 +440,20 @@ qt_configureWindow(FBIO *ifp, int width, int height)
     qt_updstate(ifp);
 
     fb_log("configure_win %d %d\n", ifp->if_height, ifp->if_width);
+}
+
+int
+qt_close_existing(FBIO *ifp)
+{
+    struct qtinfo *qi = QI(ifp);
+    FB_CK_FBIO(ifp);
+
+    if (qi->qi_image)
+	delete qi->qi_image;
+
+    free((char *)qi);
+
+    return 0;
 }
 
 __END_DECLS
@@ -530,10 +544,6 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 
 	ip += qi->qi_iwidth * sizeof (RGBpixel);
 	op -= qi->qi_image->bytesPerLine();
-    }
-
-    if (qi->alive == 0) {
-	qi->qi_painter->drawImage(ox, oy - xht + 1, *qi->qi_image, ox, oy - xht + 1, xwd, xht);
     }
 
     QApplication::sendEvent(qi->win, new QEvent(QEvent::UpdateRequest));
