@@ -38,7 +38,7 @@ format file.  If the
 <option>-b</option>
 flag is specified, a
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-format file is created instead.  Note that 
+format file is created instead.  Note that
 <command>sun-pix</command>
 will refuse to write to a terminal; its output must be redirected unless it's invoked with the
 <option>-H</option>
