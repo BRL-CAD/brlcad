@@ -429,7 +429,7 @@ qt_configureWindow(FBIO *ifp, int width, int height)
     delete qi->qi_image;
     free(qi->qi_pix);
 
-    if ((qi->qi_pix = (unsigned char *) calloc(width * height * sizeof(RGBpixel),
+    if ((qi->qi_pix = (unsigned char *) calloc((width + 1) * (height + 1) * sizeof(RGBpixel),
 	sizeof(char))) == NULL) {
 	fb_log("qt_open_existing: pix malloc failed");
     }
@@ -495,7 +495,6 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 	ox = qi->qi_xlf;
     }
 
-
     /* Compute oy: offset from top edge of window to bottom pixel */
     ydel = y1 - qi->qi_ibt;
     if (ydel) {
@@ -515,7 +514,6 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
     } else {
 	xht = y1ht + y2ht + ifp->if_yzoom * (y2 - y1 - 1);
     }
-
 
     /*
      * Set pointers to start of source and destination areas; note
@@ -545,6 +543,10 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 	ip += qi->qi_iwidth * sizeof (RGBpixel);
 	op -= qi->qi_image->bytesPerLine();
     }
+
+    if (qi->alive == 0) {
+	qi->qi_painter->drawImage(ox, oy - xht + 1, *qi->qi_image, ox, oy - xht + 1, xwd, xht);
+     }
 
     QApplication::sendEvent(qi->win, new QEvent(QEvent::UpdateRequest));
     qi->qapp->processEvents();
