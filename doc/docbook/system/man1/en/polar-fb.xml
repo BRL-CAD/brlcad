@@ -156,7 +156,7 @@ option.</para>
   <term><option>-h</option></term>
   <listitem>
 <para>Use high-resolution mode.
-The frame buffer is 1024×1024 pixels.
+The frame buffer is 1024x1024 pixels.
 This has the same effect as
 <option>-S 1024 .</option></para>
   </listitem>
@@ -168,18 +168,21 @@ This has the same effect as
   <emphasis remap="I">b</emphasis></term>
   <listitem>
 <para>Display the interior of the npf with constant color
-(<emphasis remap="I">r</emphasis>, <emphasis remap="I">g</emphasis>, <emphasis remap="I">b</emphasis>).</para>
+(<emphasis remap="I">r</emphasis>,<emphasis remap="I">g</emphasis>,<emphasis remap="I">b</emphasis>).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-l</option><replaceable> r g b</replaceable></term>
+  <term><option>-l</option>
+  <emphasis remap="I">r</emphasis>
+  <emphasis remap="I">g</emphasis>
+  <emphasis remap="I">b</emphasis></term>
   <listitem>
 <para>Display the interior of the npf in annular regions
-whose colors are a linear ramp from (0, 0, 0) at
-<emphasis remap="I">O,</emphasis>
+whose colors are a linear ramp from (0,0,0) at
+<emphasis remap="I">O</emphasis>,
 to
-(<emphasis remap="I">r</emphasis>, <emphasis remap="I">g</emphasis>, <emphasis remap="I">b</emphasis>)
-at rho = 1.</para>
+(<emphasis remap="I">r</emphasis>,<emphasis remap="I">g</emphasis>,<emphasis remap="I">b</emphasis>)
+at rho=1.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -201,7 +204,7 @@ will abort if it detects any irregularities in the input stream.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-o</option><replaceable> x y</replaceable></term>
+  <term><option>-o </option><replaceable>x</replaceable> <replaceable>y</replaceable></term>
   <listitem>
 <para>Translate the graph, putting
 <emphasis remap="I">O</emphasis>
@@ -209,20 +212,23 @@ at frame-buffer location (<emphasis remap="I">x</emphasis>, <emphasis remap="I">
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-p</option><replaceable> r g b</replaceable></term>
+  <term><option>-p</option>
+  <emphasis remap="I">r</emphasis>
+  <emphasis remap="I">g</emphasis>
+  <emphasis remap="I">b</emphasis></term>
   <listitem>
 <para>Plot the perimeter of the npf in the color
-(<emphasis remap="I">r</emphasis>, <emphasis remap="I">g</emphasis>, <emphasis remap="I">b</emphasis>).</para>
+(<emphasis remap="I">r</emphasis>,<emphasis remap="I">g</emphasis>,<emphasis remap="I">b</emphasis>).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-q</option><replaceable> q</replaceable></term>
+  <term><option>-q </option><replaceable>q</replaceable></term>
   <listitem>
 <para>Set the angular quantum to
-<emphasis remap="I">q</emphasis> degrees.
+<emphasis remap="I">q</emphasis> degrees.
 The graph will consist of circular sectors, with the arc of each sector
 subtending an angle of
-<emphasis remap="I">q.Default is 1.</emphasis></para>
+<emphasis remap="I">q</emphasis>. Default is 1.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -233,18 +239,18 @@ Default is degrees.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-s</option><replaceable> s</replaceable></term>
+  <term><option>-s </option><replaceable>s</replaceable></term>
   <listitem>
 <para>Scale the graph so that the unit radius is
 <emphasis remap="I">s</emphasis>
 pixels.
 The dimensions of the background region of the graph will be
-2<emphasis remap="I">s</emphasis>×2<emphasis remap="I">s</emphasis>
+2<emphasis remap="I">s</emphasis>x2<emphasis remap="I">s</emphasis>
 pixels.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-t</option><replaceable> t</replaceable></term>
+  <term><option>-t </option><replaceable>t</replaceable></term>
   <listitem>
 <para>Rotate (twist) the npf
 <emphasis remap="I">t</emphasis>
@@ -265,10 +271,10 @@ colored blue, green, yellow, orange, or red, depending on radius.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-z</option><replaceable> side</replaceable></term>
+  <term><option>-z </option><replaceable>side</replaceable></term>
   <listitem>
-<para>Plot only one half of the graph.
-<emphasis remap="I">Side</emphasis>
+<para>Plot only one half of the graph;
+<emphasis remap="I">side</emphasis>
 may be either of the characters `l' or `r',
 which specify the left and right halves of the graph, respectively.
 This functionality could be duplicated through judicious combination
