@@ -865,8 +865,10 @@ qt_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
     memcpy(&(qi->qi_mem[(y * qi->qi_iwidth + x) * sizeof(RGBpixel)]),
 	   pixelp, count * sizeof(RGBpixel));
 
-    if (*qi->drawFb == 0)
-	*qi->drawFb = 1;
+    if (qi->alive == 0) {
+	if (*qi->drawFb == 0)
+	    *qi->drawFb = 1;
+    }
 
     if (x + count <= (size_t)qi->qi_iwidth) {
 	qt_update(ifp, x, y, count, 1);
