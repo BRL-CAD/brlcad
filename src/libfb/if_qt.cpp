@@ -71,9 +71,11 @@ struct qtinfo {
     QApplication *qapp;
     QWindow *win;
     QImage *qi_image;
+    void **qi_parent_img;
     QPainter *qi_painter;
 
     int alive;
+    int *drawFb;
 
     unsigned long qi_mode;
     unsigned long qi_flags;
@@ -426,18 +428,33 @@ qt_configureWindow(FBIO *ifp, int width, int height)
 
     /* destroy old image struct and image buffers */
     delete qi->qi_image;
-    delete qi->qi_pix;
+    free(qi->qi_pix);
 
-    if ((qi->qi_pix = (unsigned char *) calloc(width * height * sizeof(RGBpixel),
+    if ((qi->qi_pix = (unsigned char *) calloc((width + 1) * (height + 1) * sizeof(RGBpixel),
 	sizeof(char))) == NULL) {
 	fb_log("qt_open_existing: pix malloc failed");
     }
 
     qi->qi_image = new QImage(qi->qi_pix, width, height, QImage::Format_RGB888);
+    *qi->qi_parent_img = qi->qi_image;
 
     qt_updstate(ifp);
 
     fb_log("configure_win %d %d\n", ifp->if_height, ifp->if_width);
+}
+
+int
+qt_close_existing(FBIO *ifp)
+{
+    struct qtinfo *qi = QI(ifp);
+    FB_CK_FBIO(ifp);
+
+    if (qi->qi_image)
+	delete qi->qi_image;
+
+    free((char *)qi);
+
+    return 0;
 }
 
 __END_DECLS
@@ -479,7 +496,6 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 	ox = qi->qi_xlf;
     }
 
-
     /* Compute oy: offset from top edge of window to bottom pixel */
     ydel = y1 - qi->qi_ibt;
     if (ydel) {
@@ -499,7 +515,6 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
     } else {
 	xht = y1ht + y2ht + ifp->if_yzoom * (y2 - y1 - 1);
     }
-
 
     /*
      * Set pointers to start of source and destination areas; note
@@ -532,7 +547,7 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 
     if (qi->alive == 0) {
 	qi->qi_painter->drawImage(ox, oy - xht + 1, *qi->qi_image, ox, oy - xht + 1, xwd, xht);
-    }
+     }
 
     QApplication::sendEvent(qi->win, new QEvent(QEvent::UpdateRequest));
     qi->qapp->processEvents();
@@ -681,7 +696,7 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
 }
 
 int
-_qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void *qpainter)
+_qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void *qpainter, void *draw, void **qimg)
 {
     struct qtinfo *qi;
 
@@ -740,12 +755,15 @@ _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void
     }
 
     qi->qi_image = new QImage(qi->qi_pix, width, height, QImage::Format_RGB888);
+    *qimg = qi->qi_image;
 
-    qi->win = (QWindow *)qwin;
+    qi->qi_parent_img = qimg;
     qi->qi_painter = (QPainter *)qpainter;
+    qi->win = (QWindow *)qwin;
 
     qt_updstate(ifp);
     qi->alive = 0;
+    qi->drawFb = (int *)draw;
 
     /* Mark display ready */
     qi->qi_flags |= FLG_INIT;
@@ -775,8 +793,42 @@ qt_close(FBIO *ifp)
 
 
 HIDDEN int
-qt_clear(FBIO *UNUSED(ifp), unsigned char *UNUSED(pp))
+qt_clear(FBIO *ifp, unsigned char *pp)
 {
+    struct qtinfo *qi = QI(ifp);
+
+    int red, grn, blu;
+    int npix;
+    int n;
+    unsigned char *cp;
+
+    FB_CK_FBIO(ifp);
+
+    if (pp == (unsigned char *)NULL) {
+	red = grn = blu = 0;
+    } else {
+	red = pp[0];
+	grn = pp[1];
+	blu = pp[2];
+    }
+
+    /* Clear the backing store */
+    npix = qi->qi_iwidth * qi->qi_qheight;
+
+    if (red == grn && red == blu) {
+	memset(qi->qi_mem, red, npix*3);
+    } else {
+	cp = qi->qi_mem;
+	n = npix;
+	while (n--) {
+	    *cp++ = red;
+	    *cp++ = grn;
+	    *cp++ = blu;
+	}
+    }
+
+    qt_update(ifp, 0, 0, qi->qi_iwidth, qi->qi_iheight);
+
     fb_log("qt_clear\n");
 
     return 0;
@@ -812,6 +864,11 @@ qt_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
     /* Save it in 24bit backing store */
     memcpy(&(qi->qi_mem[(y * qi->qi_iwidth + x) * sizeof(RGBpixel)]),
 	   pixelp, count * sizeof(RGBpixel));
+
+    if (qi->alive == 0) {
+	if (*qi->drawFb == 0)
+	    *qi->drawFb = 1;
+    }
 
     if (x + count <= (size_t)qi->qi_iwidth) {
 	qt_update(ifp, x, y, count, 1);
