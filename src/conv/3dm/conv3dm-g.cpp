@@ -41,7 +41,7 @@
 #include "bu/getopt.h"
 #include "icv.h"
 #include "vmath.h"
-#include "../../libgcv/solidity.h"
+#include "../../libgcv/bot_solidity.h"
 
 
 namespace
