@@ -23,10 +23,10 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Polar-fb</emphasis>
+<para><command>polar-fb</command>
 reads data for a normalized polar function (npf)
 from
-<emphasis remap="I">file,</emphasis>
+<emphasis remap="I">file</emphasis>,
 and produces the graph on a frame buffer.
 If
 <emphasis remap="I">file</emphasis>
@@ -39,9 +39,9 @@ the second as a value of rho.</para>
 <para>An npf is a function,
 <!-- .sp
 .ce -->
-phi : [0, 2pi) → [0, 1],
+phi : [0, 2pi] → [0, 1],
 <!-- .sp -->
-that maps angles between 0 and 2pi (i.e., between 0 and 360 degrees)
+that maps angles between 0 and 2pi radians (i.e., between 0 and 360 degrees)
 into the unit interval.
 A typical application for an npf
 is to describe some attribute of an MGED model
@@ -50,35 +50,37 @@ as a function of the direction from which the geometry is viewed.</para>
 <para>In the absence of command-line options,
 <command>polar-fb</command>
 fills the default area of the frame buffer
-(typically 512×512 pixels)
+(typically 512x512 pixels)
 with a background color
 and displays the interior of the npf
 (i.e., {(theta, rho) | rho &lt;= phi(theta)}).
 The graph is positioned with its origin
-<emphasis remap="I">O,</emphasis>
+<emphasis remap="I">O</emphasis>,
 at the center of the frame-buffer,
-oriented with theta = 0 at the bottom,
+oriented with theta=0 at the bottom,
 and scaled so that the unit circle just fits in the frame buffer.
 The graph consists of concentric regions colored
 blue, green, yellow, orange, or red,
 depending on distance from
-<emphasis remap="I">O.Finally,</emphasis>
+<emphasis remap="I">O</emphasis>. Finally,
 <command>polar-fb</command>
 superimposes a polar grid in black.</para>
 
 <para>In the description that follows of the valid options,
-``<emphasis remap="I">r g b</emphasis>''
-is a triplet of integers in {0, ..., 255}
+``<emphasis remap="I">r </emphasis>
+  <emphasis remap="I">g </emphasis>
+  <emphasis remap="I">b</emphasis>''
+is a triplet of integers in {0,...,255}
 that specifies a color in terms of
 intensities for red, green, and blue, respectively.
 The options and their meanings are:</para>
 
 <variablelist remap="TP">
   <varlistentry>
-  <term><option>-F</option><replaceable> fbfile</replaceable></term>
+  <term><option>-F </option><replaceable>fbfile</replaceable></term>
   <listitem>
 <para>Send the results to the frame buffer
-<emphasis remap="I">fbfile.In the absence of the</emphasis>
+<emphasis remap="I">fbfile</emphasis>. In the absence of the
 <option>-F</option>
 option, if the shell variable
 <emphasis remap="B">FB_FILE</emphasis>
@@ -87,7 +89,7 @@ Otherwise, the host's default frame buffer is used.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-N</option><replaceable> scr_height</replaceable></term>
+  <term><option>-N </option><replaceable>scr_height</replaceable></term>
   <listitem>
 <para>Set screen (frame-buffer) height to
 <emphasis remap="I">scr_height</emphasis>
@@ -95,7 +97,7 @@ pixels.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-S</option><replaceable> scr_size</replaceable></term>
+  <term><option>-S </option><replaceable>scr_size</replaceable></term>
   <listitem>
 <para>Set screen (frame-buffer) height and width to
 <emphasis remap="I">scr_size</emphasis>
@@ -103,7 +105,7 @@ pixels.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-W</option><replaceable> scr_width</replaceable></term>
+  <term><option>-W </option><replaceable>scr_width</replaceable></term>
   <listitem>
 <para>Set screen (frame-buffer) width to
 <emphasis remap="I">scr_width</emphasis>
@@ -111,19 +113,22 @@ pixels.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-a</option><replaceable> u v</replaceable></term>
+  <term><option>-a </option><replaceable>u</replaceable> <replaceable>v</replaceable></term>
   <listitem>
 <para>Plot only the portion of the npf between <emphasis remap="I">u</emphasis> and <emphasis remap="I">v</emphasis> degrees
-(i.e., <emphasis remap="I">u</emphasis> &lt;= theta &lt;= <emphasis remap="I">v</emphasis>).
-Default is <emphasis remap="I">u</emphasis> = 0, <emphasis remap="I">v</emphasis> = 360.</para>
+(i.e., <emphasis remap="I">u</emphasis> &lt;= theta &lt;= <emphasis remap="I">v</emphasis>).
+Default is <emphasis remap="I">u</emphasis>=0, <emphasis remap="I">v</emphasis>=360.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-b</option><replaceable> r g b</replaceable></term>
+  <term><option>-b</option>
+  <emphasis remap="I">r</emphasis>
+  <emphasis remap="I">g</emphasis>
+  <emphasis remap="I">b</emphasis></term>
   <listitem>
 <para>Set the background color to
-(<emphasis remap="I">r</emphasis>, <emphasis remap="I">g</emphasis>, <emphasis remap="I">b</emphasis>).
-Default is (255, 255, 255) (i.e., white).</para>
+(<emphasis remap="I">r</emphasis>,<emphasis remap="I">g</emphasis>,<emphasis remap="I">b</emphasis>).
+Default is (255,255,255) (i.e., white).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -157,7 +162,10 @@ This has the same effect as
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-i</option><replaceable> r g b</replaceable></term>
+  <term><option>-i</option>
+  <emphasis remap="I">r</emphasis>
+  <emphasis remap="I">g</emphasis>
+  <emphasis remap="I">b</emphasis></term>
   <listitem>
 <para>Display the interior of the npf with constant color
 (<emphasis remap="I">r</emphasis>, <emphasis remap="I">g</emphasis>, <emphasis remap="I">b</emphasis>).</para>
