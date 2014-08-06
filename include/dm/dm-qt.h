@@ -70,6 +70,7 @@ struct qt_vars {
     QFont *font;
     mat_t qmat;
     QImage *img;
+    int drawFb;
 };
 
 struct qt_tk_bind {

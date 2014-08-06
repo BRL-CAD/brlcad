@@ -103,7 +103,7 @@ qt_drawBegin(struct dm *dmp)
     privars->painter->setPen(privars->fg);
     privars->painter->setFont(*privars->font);
 
-    if (privars->img != NULL) {
+    if (privars->img != NULL && privars->drawFb == 1) {
 	privars->painter->drawImage(0, 0, *privars->img, 0, 0, dmp->dm_width - 1, dmp->dm_height - 1);
     }
 
@@ -713,7 +713,7 @@ qt_openFb(struct dm *dmp, FBIO *ifp)
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
-    _qt_open_existing(ifp, dmp->dm_width, dmp->dm_height, privars->qapp, privars->win, privars->painter, (void **)&privars->img);
+    _qt_open_existing(ifp, dmp->dm_width, dmp->dm_height, privars->qapp, privars->win, privars->painter, &privars->drawFb, (void **)&privars->img);
 
     return 0;
 }
