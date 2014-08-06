@@ -86,6 +86,27 @@ typedef struct {
 #define COLORMAP_NULL (ColorMap *) 0
 #define FB_NULL (struct fb *) 0
 
+struct fbserv_listener {
+    int fbsl_fd;                        /**< @brief socket to listen for connections */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel fbsl_chan;
+#endif
+    int fbsl_port;                      /**< @brief port number to listen on */
+    int fbsl_listen;                    /**< @brief !0 means listen for connections */
+    struct fbserv_obj *fbsl_fbsp;       /**< @brief points to its fbserv object */
+};
+
+
+struct fbserv_client {
+    int fbsc_fd;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel fbsc_chan;
+    Tcl_FileProc *fbsc_handler;
+#endif
+    struct pkg_conn *fbsc_pkg;
+    struct fbserv_obj *fbsc_fbsp;       /**< @brief points to its fbserv object */
+};
+
 
 /**
  *@brief
@@ -98,35 +119,28 @@ typedef struct {
 struct fb {
     uint32_t fb_magic;
     int fb_type;
-    /* Dynamic information: per device INSTANCE. */
-    char *if_name;      /**< @brief what the user called it */
-    int if_width;       /**< @brief current values */
-    int if_height;
-    int if_selfd;       /**< @brief select(fd) for input events if >= 0 */
-    /* Internal information: needed by the library.     */
-    int if_fd;          /**< @brief internal file descriptor */
-    int if_xzoom;       /**< @brief zoom factors */
-    int if_yzoom;
-    int if_xcenter;     /**< @brief pan position */
-    int if_ycenter;
-    int if_cursmode;    /**< @brief cursor on/off */
-    int if_xcurs;       /**< @brief cursor position */
-    int if_ycurs;
-    unsigned char *if_pbase;/**< @brief Address of malloc()ed page buffer.      */
-    unsigned char *if_pcurp;/**< @brief Current pointer into page buffer.       */
-    unsigned char *if_pendp;/**< @brief End of page buffer.                     */
-    int if_pno;         /**< @brief Current "page" in memory.           */
-    int if_pdirty;      /**< @brief Page modified flag.                 */
-    long if_pixcur;     /**< @brief Current pixel number in framebuffer. */
-    long if_ppixels;    /**< @brief Sizeof page buffer (pixels).                */
-    int if_debug;       /**< @brief Buffered IO debug flag.             */
-    /* State variables for individual interface modules */
-    union {
-        char *p;
-        size_t l;
-    } u1, u2, u3, u4, u5, u6;
-} FBIO;
+    char *handle;      /**< @brief what the user called it */
+    void *fb_canvas;
+    int is_embedded;
+    int width;       /**< @brief current values */
+    int height;
+    int dirty_flag;      /**< @brief Page modified flag. */
+    struct bu_attribute_value_set *extra_settings;  /**< @brief All settings (generic and DMTYPE specific) listed here. */
+    /* Support for import/export of data via network */
+    struct fbserv_listener fbs_listener;                /**< @brief data for listening */
+    struct fbserv_client fbs_clients[MAX_CLIENTS];      /**< @brief connected clients */
+    /* With or without active network listeners/clients, have a callback function for possible parents */
+    void (*fb_callback)(void *clientData);             /**< @brief callback function */
+    void *fb_clientData;
+};
 
+/**
+ * assert the integrity of an FBIO struct.
+ */
+#define FB_CK_FBIO(_p) BU_CKMAG(_p, FB_MAGIC, "FBIO")
+
+/* Frame buffer structure will (hopefully) be internal to libfb, so use a typedef */
+typedef struct fb fb_s;
 
     /* Static information: per device TYPE.     */
     int (*if_open)(struct FBIO_ *ifp, const char *file, int _width, int _height);                       /**< @brief open device */
@@ -153,51 +167,36 @@ struct fb {
     int if_max_width;   /**< @brief max device width */
     int if_max_height;  /**< @brief max device height */
 
-/**
- * assert the integrity of an FBIO struct.
- */
-#define FB_CK_FBIO(_p) BU_CKMAG(_p, FB_MAGIC, "FBIO")
 
-/* declare all the possible interfaces */
-#ifdef IF_REMOTE
-FB_EXPORT extern FBIO remote_interface; /* not in list[] */
-#endif
+FB_EXPORT int fb_get_type(fb_s *fbp);
+FB_EXPORT int fb_set_type(fb_s *fbp, int fb_t);
 
-#ifdef IF_OGL
-FB_EXPORT extern FBIO ogl_interface;
-#endif
+FB_EXPORT int fb_get_width(fb_s *fbp);
+FB_EXPORT int fb_set_width(fb_s *fbp, int width);
 
-#ifdef IF_OSG
-FB_EXPORT extern FBIO osg_interface;
-#endif
+FB_EXPORT int fb_get_height(fb_s *fbp);
+FB_EXPORT int fb_set_height(fb_s *fbp, int height);
 
-#ifdef IF_WGL
-FB_EXPORT extern FBIO wgl_interface;
-#endif
+FB_EXPORT COLORMAP_TYPE *fb_get_colormap(fb_s *fbp);
+FB_EXPORT void           fb_set_colormap(fb_s *fbp, COLORMAP_TYPE *map);
 
-#ifdef IF_X
-FB_EXPORT extern FBIO X24_interface;
-FB_EXPORT extern FBIO X_interface;
-#endif
+FB_EXPORT ssize_t fb_get_pixels(fb_s *fbp, int x, int y, unsigned char *pp, size_t count);               /**< @brief read pixels into pp */
+FB_EXPORT ssize_t fb_set_pixels(fb_s *fbp, int x, int y, const unsigned char *pp, size_t count);   /**< @brief write pixels from pp*/
+FB_EXPORT ssize_t fb_get_rect(fb_s *fbp, int xmin, int ymin, int _width, int _height, unsigned char *pp); /**< @brief read rectangle into pp */
+FB_EXPORT ssize_t fb_set_rect(fb_s *fbp, int xmin, int ymin, int _width, int _height, unsigned char *pp);   /**< @brief write rectangle from pp*/
 
-#ifdef IF_TK
-FB_EXPORT extern FBIO tk_interface;
-#endif
 
-#ifdef IF_QT
-FB_EXPORT extern FBIO qt_interface;
-#endif
-
-/* Always included */
-FB_EXPORT extern FBIO debug_interface, disk_interface, stk_interface;
-FB_EXPORT extern FBIO memory_interface, null_interface;
+FB_EXPORT extern int   fb_init(fb_s *fbp, int fb_t, );  /* TODO - probably need an actual public struct to hold parent info */
+FB_EXPORT extern int   fb_close(fb_s *fbp);
+FB_EXPORT extern int   fb_refresh(fb_s *fbp);
+FB_EXPORT extern void *fb_canvas(fb_s *fbp);  /* Exposes the low level drawing object (X window, OpenGL context, etc.) for custom drawing */
+FB_EXPORT extern int   fb_get_type(fb_s *fbp);
+FB_EXPORT extern int   fb_set_type(fb_s *fbp, int fb_t);
+FB_EXPORT extern int   fb_get_image(fb_s *fbp, icv_image_t *image);
+FB_EXPORT extern int   fb_get_obj_image(fb_s *fbp, const char *handle, icv_image_t *image);
 
 
 
-#include "fbio.h"
-
-#include "bu/bu_tcl.h"
-#include "bu/vls.h"
 
 /* Library entry points which are macros.
  *
@@ -338,7 +337,7 @@ FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 #endif
 
 #ifdef IF_QT
-FB_EXPORT extern int _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void *qpainter);
+FB_EXPORT extern int _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void *qpainter, void *draw, void **qimg);
 #endif
 
 /*

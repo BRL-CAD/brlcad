@@ -17,11 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libgcv/solidity.h
+/** @file libgcv/bot_solidity.h
  *
  * Library of algorithms to determine whether a BoT is solid.
  *
  */
+
+
+#ifndef BOT_SOLIDITY_H
+#define BOT_SOLIDITY_H
 
 
 #include "common.h"
@@ -51,6 +55,9 @@ GCV_EXPORT int bot_is_orientable(const struct rt_bot_internal *bot);
 
 #ifdef __cplusplus
 }
+#endif
+
+
 #endif
 
 
