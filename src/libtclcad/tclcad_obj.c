@@ -13342,6 +13342,20 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 			       0);
 	    break;
 #endif
+#ifdef DM_QT
+	case DM_TYPE_QT:
+	    *gdvp->gdv_fbs.fbs_fbp = qt_interface; /* struct copy */
+
+	    gdvp->gdv_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/Qt")+1, "if_name");
+	    bu_strlcpy(gdvp->gdv_fbs.fbs_fbp->if_name, "/dev/Qt", strlen("/dev/Qt")+1);
+
+	    /* Mark OK by filling in magic number */
+	    gdvp->gdv_fbs.fbs_fbp->if_magic = FB_MAGIC;
+
+	    gdvp->gdv_dmp->dm_openFb(gdvp->gdv_dmp, gdvp->gdv_fbs.fbs_fbp);
+
+	    break;
+#endif
 	default: {
 	    Tcl_Obj *obj;
 

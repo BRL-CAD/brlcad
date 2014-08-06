@@ -24,7 +24,7 @@
 #define PATCH_COUNT 1
 
 int
-read_spline(int entityno, struct face_g_snurb **b_patch)
+spline(int entityno, struct face_g_snurb **b_patch)
 {
     int k1;	/* upper index of first sum */
     int k2;	/* upper index of second sum */
