@@ -1230,9 +1230,6 @@ split_trimmed_face(
 	    }
 	}
     }
-
-    return out;
-
     return out;
 }
 

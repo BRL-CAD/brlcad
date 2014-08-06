@@ -86,7 +86,7 @@ test_bu_vls_vlsinit(void)
 static int
 test_bu_vls_access(int argc, char *argv[])
 {
-    char *null_expected_string = '\0';
+    char *null_expected_string = "";
     char *null_actual_string;
 
     char *set_expected_string;
