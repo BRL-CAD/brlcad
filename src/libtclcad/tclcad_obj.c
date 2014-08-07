@@ -2289,7 +2289,7 @@ to_configure(struct ged *gedp,
     status = DM_CONFIGURE_WIN(gdvp->gdv_dmp, 0);
 
     /* configure the framebuffer window */
-    if (gdvp->gdv_fbs.fbs_fbp != FBIO_NULL)
+    if (gdvp->gdv_fbs.fbs_fbp != FB_NULL)
 	fb_configureWindow(gdvp->gdv_fbs.fbs_fbp,
 			   gdvp->gdv_dmp->dm_width,
 			   gdvp->gdv_dmp->dm_height);
@@ -6282,7 +6282,7 @@ to_listen(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (gdvp->gdv_fbs.fbs_fbp == FBIO_NULL) {
+    if (gdvp->gdv_fbs.fbs_fbp == FB_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s listen: framebuffer not open!\n", argv[0]);
 	return GED_ERROR;
     }
@@ -10075,7 +10075,7 @@ to_new_view(struct ged *gedp,
     new_gdvp->gdv_fbs.fbs_listener.fbsl_fbsp = &new_gdvp->gdv_fbs;
     new_gdvp->gdv_fbs.fbs_listener.fbsl_fd = -1;
     new_gdvp->gdv_fbs.fbs_listener.fbsl_port = -1;
-    new_gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
+    new_gdvp->gdv_fbs.fbs_fbp = FB_NULL;
     new_gdvp->gdv_fbs.fbs_callback = (void (*)(void *clientData))to_fbs_callback;
     new_gdvp->gdv_fbs.fbs_clientData = new_gdvp;
     new_gdvp->gdv_fbs.fbs_interp = current_top->to_interp;
@@ -13181,12 +13181,12 @@ to_fbs_callback(void *clientData)
 HIDDEN int
 to_close_fbs(struct ged_dm_view *gdvp)
 {
-    if (gdvp->gdv_fbs.fbs_fbp == FBIO_NULL)
+    if (gdvp->gdv_fbs.fbs_fbp == FB_NULL)
 	return TCL_OK;
 
     fb_flush(gdvp->gdv_fbs.fbs_fbp);
     fb_close_existing(gdvp->gdv_fbs.fbs_fbp);
-    gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
+    gdvp->gdv_fbs.fbs_fbp = FB_NULL;
 
     return TCL_OK;
 }
@@ -13206,11 +13206,11 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 {
 
     /* already open */
-    if (gdvp->gdv_fbs.fbs_fbp != FBIO_NULL)
+    if (gdvp->gdv_fbs.fbs_fbp != FB_NULL)
 	return TCL_OK;
 
     /* don't use bu_calloc so we can fail slightly more gracefully */
-    if ((gdvp->gdv_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+    if ((gdvp->gdv_fbs.fbs_fbp = (fb_s *)calloc(sizeof(fb_s), 1)) == FB_NULL) {
 	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(interp);
@@ -13360,7 +13360,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 	    Tcl_Obj *obj;
 
 	    free((void*)gdvp->gdv_fbs.fbs_fbp);
-	    gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
+	    gdvp->gdv_fbs.fbs_fbp = FB_NULL;
 
 	    obj = Tcl_GetObjResult(interp);
 	    if (Tcl_IsShared(obj))

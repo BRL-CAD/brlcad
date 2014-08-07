@@ -151,7 +151,7 @@ Ogl_fb_open()
 {
     char *ogl_name = "/dev/ogl";
 
-    if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+    if ((fbp = (fb_s *)calloc(sizeof(fb_s), 1)) == FB_NULL) {
 	Tcl_AppendResult(INTERP, "Ogl_fb_open: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;

@@ -46,7 +46,7 @@
 
 
 static int
-_fb_pgout(register FBIO *ifp)
+_fb_pgout(register fb_s *ifp)
 {
     size_t scans, first_scan;
 
@@ -71,7 +71,7 @@ _fb_pgout(register FBIO *ifp)
 
 
 static int
-_fb_pgin(register FBIO *ifp, int pageno)
+_fb_pgin(register fb_s *ifp, int pageno)
 {
     size_t scans, first_scan;
 
@@ -98,7 +98,7 @@ _fb_pgin(register FBIO *ifp, int pageno)
 
 
 static int
-_fb_pgflush(register FBIO *ifp)
+_fb_pgflush(register fb_s *ifp)
 {
     if (ifp->if_debug & FB_DEBUG_BIO) {
 	fb_log("_fb_pgflush(%p)\n", (void *)ifp);
@@ -119,7 +119,7 @@ _fb_pgflush(register FBIO *ifp)
  * routines in this file are used.
  */
 int
-fb_ioinit(register FBIO *ifp)
+fb_ioinit(register fb_s *ifp)
 {
     if (ifp->if_debug & FB_DEBUG_BIO) {
 	fb_log("fb_ioinit(%p)\n", (void *)ifp);
@@ -145,7 +145,7 @@ fb_ioinit(register FBIO *ifp)
 
 
 int
-fb_seek(register FBIO *ifp, int x, int y)
+fb_seek(register fb_s *ifp, int x, int y)
 {
     long pixelnum;
     long pagepixel;
@@ -177,7 +177,7 @@ fb_seek(register FBIO *ifp, int x, int y)
 
 
 int
-fb_tell(register FBIO *ifp, int *xp, int *yp)
+fb_tell(register fb_s *ifp, int *xp, int *yp)
 {
     *yp = (int) (ifp->if_pixcur / ifp->if_width);
     *xp = (int) (ifp->if_pixcur % ifp->if_width);
@@ -192,7 +192,7 @@ fb_tell(register FBIO *ifp, int *xp, int *yp)
 
 
 int
-fb_wpixel(register FBIO *ifp, unsigned char *pixelp)
+fb_wpixel(register fb_s *ifp, unsigned char *pixelp)
 {
     if (ifp->if_pno == -1)
 	if (_fb_pgin(ifp, ifp->if_pixcur / ifp->if_ppixels) <= -1)
@@ -212,7 +212,7 @@ fb_wpixel(register FBIO *ifp, unsigned char *pixelp)
 
 
 int
-fb_rpixel(register FBIO *ifp, unsigned char *pixelp)
+fb_rpixel(register fb_s *ifp, unsigned char *pixelp)
 {
     if (ifp->if_pno == -1)
 	if (_fb_pgin(ifp, ifp->if_pixcur / ifp->if_ppixels) <= -1)
@@ -232,7 +232,7 @@ fb_rpixel(register FBIO *ifp, unsigned char *pixelp)
 
 
 int
-fb_flush(register FBIO *ifp)
+fb_flush(register fb_s *ifp)
 {
     _fb_pgflush(ifp);
 

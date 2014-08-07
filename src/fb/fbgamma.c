@@ -49,7 +49,7 @@ int image = 0;
 static char usage[] = "\
 Usage: fbgamma [-H -o -i] [-F framebuffer] val [gval bval]\n";
 
-void mk_ramp(FBIO *fb, int r, int g, int b, int n)
+void mk_ramp(fb_s *fb, int r, int g, int b, int n)
 {
 
     /* grey ramp */
@@ -80,7 +80,7 @@ void mk_ramp(FBIO *fb, int r, int g, int b, int n)
 }
 
 
-void disp_image(FBIO *fb)
+void disp_image(fb_s *fb)
 {
 
     scr_width = fb_getwidth(fb);
@@ -115,7 +115,7 @@ main(int argc, char **argv)
     double gamr = 0, gamg = 0, gamb = 0;	/* gamma's */
     double f;
     ColorMap cm;
-    FBIO *fbp;
+    fb_s *fbp;
 
     onegamma = 0;
 
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
 
-    if ((fbp = fb_open(framebuffer, fbsize, fbsize)) == FBIO_NULL) {
+    if ((fbp = fb_open(framebuffer, fbsize, fbsize)) == FB_NULL) {
 	bu_exit(2, "Unable to open framebuffer\n");
     }
 

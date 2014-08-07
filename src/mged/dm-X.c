@@ -179,7 +179,7 @@ X_fb_open(void)
 {
     char *X_name = "/dev/X";
 
-    if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+    if ((fbp = (fb_s *)calloc(sizeof(fb_s), 1)) == FB_NULL) {
 	Tcl_AppendResult(INTERP, "X_dm_init: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;

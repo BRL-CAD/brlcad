@@ -49,7 +49,7 @@
  * These are the only symbols intended for export to LIBFB users.
  */
 
-FBIO *fb_server_fbp = FBIO_NULL;
+fb_s *fb_server_fbp = FB_NULL;
 fd_set *fb_server_select_list;
 int *fb_server_max_fd = (int *)NULL;
 int fb_server_got_fb_free = 0;	/* !0 => we have received an fb_free */
@@ -92,7 +92,7 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
     width = pkg_glong(&buf[0*NET_LONG_LEN]);
     height = pkg_glong(&buf[1*NET_LONG_LEN]);
 
-    if (fb_server_fbp == FBIO_NULL) {
+    if (fb_server_fbp == FB_NULL) {
 	/* Attempt to open new framebuffer */
 	if (strlen(&buf[8]) == 0)
 	    fb_server_fbp = fb_open(NULL, width, height);
@@ -102,7 +102,7 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 	/* Use existing framebuffer */
     }
 
-    if (fb_server_fbp == FBIO_NULL) {
+    if (fb_server_fbp == FB_NULL) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], -1);	/* ret */
 	(void)pkg_plong(&rbuf[1*NET_LONG_LEN], 0);
 	(void)pkg_plong(&rbuf[2*NET_LONG_LEN], 0);
@@ -146,7 +146,7 @@ fb_server_fb_close(struct pkg_conn *pcp, char *buf)
 	    FD_CLR(fb_server_fbp->if_selfd, fb_server_select_list);
 	}
 	(void)pkg_plong(&rbuf[0], fb_close(fb_server_fbp));
-	fb_server_fbp = FBIO_NULL;
+	fb_server_fbp = FB_NULL;
     }
     /* Don't check for errors, SGI linger mode or other events
      * may have already closed down all the file descriptors.
@@ -176,7 +176,7 @@ fb_server_fb_free(struct pkg_conn *pcp, char *buf)
 	(void)pkg_plong(&rbuf[0], -1);
     } else {
 	(void)pkg_plong(&rbuf[0], fb_free(fb_server_fbp));
-	fb_server_fbp = FBIO_NULL;
+	fb_server_fbp = FB_NULL;
     }
 
     if (pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)

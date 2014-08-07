@@ -41,7 +41,7 @@
 
 /* Per connection private info */
 struct mem_info {
-    FBIO *fbp;		/* attached frame buffer (if any) */
+    fb_s *fbp;		/* attached frame buffer (if any) */
     unsigned char *mem;	/* memory frame buffer */
     ColorMap cmap;		/* color map buffer */
     int mem_dirty;	/* !0 implies unflushed written data */
@@ -74,17 +74,17 @@ static struct modeflags {
 
 
 HIDDEN int
-mem_open(FBIO *ifp, const char *file, int width, int height)
+mem_open(fb_s *ifp, const char *file, int width, int height)
 {
     int mode;
     const char *cp;
-    FBIO *fbp;
+    fb_s *fbp;
     char modebuf[80];
     char *mp;
     int alpha;
     struct modeflags *mfp;
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /* This function doesn't look like it will work if file
      * is NULL - stop before we start, if that's the case.*/
@@ -142,7 +142,7 @@ mem_open(FBIO *ifp, const char *file, int width, int height)
 
     if (*cp) {
 	/* frame buffer device specified */
-	if ((fbp = fb_open(cp, width, height)) == FBIO_NULL) {
+	if ((fbp = fb_open(cp, width, height)) == FB_NULL) {
 	    free(MIL(ifp));
 	    return -1;
 	}
@@ -164,7 +164,7 @@ mem_open(FBIO *ifp, const char *file, int width, int height)
 	(void)free(MIL(ifp));
 	return -1;
     }
-    if ((MI(ifp)->fbp != FBIO_NULL)
+    if ((MI(ifp)->fbp != FB_NULL)
 	&& (mode & MODE_2MASK) == MODE_2PREREAD) {
 	/* Pre read all of the image data and cmap */
 	int got;
@@ -187,12 +187,12 @@ mem_open(FBIO *ifp, const char *file, int width, int height)
 
 
 HIDDEN int
-mem_close(FBIO *ifp)
+mem_close(fb_s *ifp)
 {
     /*
      * Flush memory/cmap to attached frame buffer if any
      */
-    if (MI(ifp)->fbp != FBIO_NULL) {
+    if (MI(ifp)->fbp != FB_NULL) {
 	if (MI(ifp)->cmap_dirty) {
 	    fb_wmap(MI(ifp)->fbp, &(MI(ifp)->cmap));
 	}
@@ -201,7 +201,7 @@ mem_close(FBIO *ifp)
 			 ifp->if_width, ifp->if_height, (unsigned char *)MI(ifp)->mem);
 	}
 	fb_close(MI(ifp)->fbp);
-	MI(ifp)->fbp = FBIO_NULL;
+	MI(ifp)->fbp = FB_NULL;
     }
     (void)free((char *)MI(ifp)->mem);
     (void)free((char *)MIL(ifp));
@@ -211,7 +211,7 @@ mem_close(FBIO *ifp)
 
 
 HIDDEN int
-mem_clear(FBIO *ifp, unsigned char *pp)
+mem_clear(fb_s *ifp, unsigned char *pp)
 {
     RGBpixel v;
     register int n;
@@ -249,7 +249,7 @@ mem_clear(FBIO *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
+mem_read(fb_s *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
 
@@ -268,7 +268,7 @@ mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+mem_write(fb_s *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
 
@@ -292,7 +292,7 @@ mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
 
 HIDDEN int
-mem_rmap(FBIO *ifp, ColorMap *cmp)
+mem_rmap(fb_s *ifp, ColorMap *cmp)
 {
     *cmp = MI(ifp)->cmap;		/* struct copy */
     return 0;
@@ -300,7 +300,7 @@ mem_rmap(FBIO *ifp, ColorMap *cmp)
 
 
 HIDDEN int
-mem_wmap(FBIO *ifp, const ColorMap *cmp)
+mem_wmap(fb_s *ifp, const ColorMap *cmp)
 {
     if (cmp == COLORMAP_NULL) {
 	fb_make_linear_cmap(&(MI(ifp)->cmap));
@@ -318,7 +318,7 @@ mem_wmap(FBIO *ifp, const ColorMap *cmp)
 
 
 HIDDEN int
-mem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+mem_view(fb_s *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
     if (MI(ifp)->write_thru) {
@@ -330,7 +330,7 @@ mem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-mem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+mem_getview(fb_s *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (MI(ifp)->write_thru) {
 	return fb_getview(MI(ifp)->fbp, xcenter, ycenter,
@@ -342,7 +342,7 @@ mem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 HIDDEN int
-mem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+mem_setcursor(fb_s *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     if (MI(ifp)->write_thru) {
 	return fb_setcursor(MI(ifp)->fbp,
@@ -353,7 +353,7 @@ mem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
 
 
 HIDDEN int
-mem_cursor(FBIO *ifp, int mode, int x, int y)
+mem_cursor(fb_s *ifp, int mode, int x, int y)
 {
     fb_sim_cursor(ifp, mode, x, y);
     if (MI(ifp)->write_thru) {
@@ -364,7 +364,7 @@ mem_cursor(FBIO *ifp, int mode, int x, int y)
 
 
 HIDDEN int
-mem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
+mem_getcursor(fb_s *ifp, int *mode, int *x, int *y)
 {
     if (MI(ifp)->write_thru) {
 	return fb_getcursor(MI(ifp)->fbp, mode, x, y);
@@ -375,7 +375,7 @@ mem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 
 
 HIDDEN int
-mem_poll(FBIO *ifp)
+mem_poll(fb_s *ifp)
 {
     if (MI(ifp)->write_thru) {
 	return fb_poll(MI(ifp)->fbp);
@@ -385,12 +385,12 @@ mem_poll(FBIO *ifp)
 
 
 HIDDEN int
-mem_flush(FBIO *ifp)
+mem_flush(fb_s *ifp)
 {
     /*
      * Flush memory/cmap to attached frame buffer if any
      */
-    if (MI(ifp)->fbp != FBIO_NULL) {
+    if (MI(ifp)->fbp != FB_NULL) {
 	if (MI(ifp)->cmap_dirty) {
 	    fb_wmap(MI(ifp)->fbp, &(MI(ifp)->cmap));
 	    MI(ifp)->cmap_dirty = 0;
@@ -410,7 +410,7 @@ mem_flush(FBIO *ifp)
 
 
 HIDDEN int
-mem_help(FBIO *ifp)
+mem_help(fb_s *ifp)
 {
     struct modeflags *mfp;
 
@@ -431,7 +431,7 @@ mem_help(FBIO *ifp)
 
 
 /* This is the ONLY thing that we normally "export" */
-FBIO memory_interface =  {
+fb_s memory_interface =  {
     0,
     mem_open,		/* device_open */
     mem_close,		/* device_close */

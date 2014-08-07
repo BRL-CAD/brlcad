@@ -27,7 +27,6 @@ set(public_hdrs
   dm.h
   dvec.h
   fb.h
-  fbio.h
   fbserv_obj.h
   fft.h
   gcv.h

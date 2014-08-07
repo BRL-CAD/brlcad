@@ -270,7 +270,7 @@ release(char *name, int need_close)
 
 	/* release framebuffer resources */
 	fb_close_existing(fbp);
-	fbp = (FBIO *)NULL;
+	fbp = (fb_s *)NULL;
     }
 
     /*

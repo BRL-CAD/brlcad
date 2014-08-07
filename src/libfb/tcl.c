@@ -68,51 +68,51 @@
     }
 
 
-#define FB_TCL_CK_FBIO(_p) FB_TCL_CKMAG(_p, FB_MAGIC, "FBIO")
+#define FB_TCL_CK_fb_s(_p) FB_TCL_CKMAG(_p, FB_MAGIC, "fb_s")
 
 /* from libfb/fb_obj.c */
 extern int Fbo_Init(Tcl_Interp *interp);
 
-/* XXX -- At some point these routines should be moved to FBIO */
+/* XXX -- At some point these routines should be moved to fb_s */
 #ifdef IF_WGL
-extern FBIO wgl_interface;
+extern fb_s wgl_interface;
 static const char *wgl_device_name = "/dev/wgl";
-extern void wgl_configureWindow(FBIO *ifp, int width, int height);
-extern int wgl_open_existing(FBIO *ifp, int argc, const char **argv);
-extern int wgl_refresh(FBIO *ifp, int x, int y, int w, int h);
+extern void wgl_configureWindow(fb_s *ifp, int width, int height);
+extern int wgl_open_existing(fb_s *ifp, int argc, const char **argv);
+extern int wgl_refresh(fb_s *ifp, int x, int y, int w, int h);
 #endif
 
 #ifdef IF_OGL
-extern FBIO ogl_interface;
+extern fb_s ogl_interface;
 static const char *ogl_device_name = "/dev/ogl";
-extern void ogl_configureWindow(FBIO *ifp, int width, int height);
-extern int ogl_open_existing(FBIO *ifp, int argc, const char **argv);
-extern int ogl_refresh(FBIO *ifp, int x, int y, int w, int h);
+extern void ogl_configureWindow(fb_s *ifp, int width, int height);
+extern int ogl_open_existing(fb_s *ifp, int argc, const char **argv);
+extern int ogl_refresh(fb_s *ifp, int x, int y, int w, int h);
 #endif
 
 #ifdef IF_X
-extern FBIO X24_interface;
+extern fb_s X24_interface;
 static const char *X_device_name = "/dev/X";
-extern void X24_configureWindow(FBIO *ifp, int width, int height);
-extern int X24_open_existing(FBIO *ifp, int argc, const char **argv);
-extern int X24_refresh(FBIO *ifp, int x, int y, int w, int h);
+extern void X24_configureWindow(fb_s *ifp, int width, int height);
+extern int X24_open_existing(fb_s *ifp, int argc, const char **argv);
+extern int X24_refresh(fb_s *ifp, int x, int y, int w, int h);
 #endif
 
 #ifdef IF_TK
-extern FBIO tk_interface;
+extern fb_s tk_interface;
 static const char *tk_device_name = "/dev/tk";
 #if 0
 /*XXX TJM implement this interface */
-extern void tk_configureWindow(FBIO *ifp, int width, int height);
-extern int tk_open_existing(FBIO *ifp, int argc, const char **argv);
-extern int tk_refresh(FBIO *ifp, int x, int y, int w, int h);
+extern void tk_configureWindow(fb_s *ifp, int width, int height);
+extern int tk_open_existing(fb_s *ifp, int argc, const char **argv);
+extern int tk_refresh(fb_s *ifp, int x, int y, int w, int h);
 #endif
 #endif
 
 #ifdef IF_QT
-extern FBIO qt_interface;
+extern fb_s qt_interface;
 static const char *qt_device_name = "/dev/Qt";
-extern void qt_configureWindow(FBIO *ifp, int width, int height);
+extern void qt_configureWindow(fb_s *ifp, int width, int height);
 #endif
 
 int
@@ -123,7 +123,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 #endif
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
-    register FBIO *ifp;
+    register fb_s *ifp;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int found = 0;
 
@@ -132,7 +132,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 	return TCL_ERROR;
     }
 
-    if ((ifp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+    if ((ifp = (fb_s *)calloc(sizeof(fb_s), 1)) == FB_NULL) {
 	bu_log("fb_open_existing: failed to allocate ifp memory\n");
 	return TCL_ERROR;
     }
@@ -269,7 +269,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 int
 fb_cmd_close_existing(ClientData UNUSED(clientData), int argc, const char **argv)
 {
-    FBIO *ifp;
+    fb_s *ifp;
 
     if (argc != 2) {
 	/* XXX need help message */
@@ -281,13 +281,13 @@ fb_cmd_close_existing(ClientData UNUSED(clientData), int argc, const char **argv
 	return TCL_ERROR;
     }
 
-    /* FB_TCL_CK_FBIO(ifp); */
+    /* FB_TCL_CK_fb_s(ifp); */
     return fb_close_existing(ifp);
 }
 
 
 void
-fb_configureWindow(FBIO *ifp, int width, int height)
+fb_configureWindow(fb_s *ifp, int width, int height)
 {
     /* unknown/unset framebuffer */
     if (!ifp || !ifp->if_name || width < 0 || height < 0) {
@@ -326,7 +326,7 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 
 
 int
-fb_refresh(FBIO *ifp, int x, int y, int w, int h)
+fb_refresh(fb_s *ifp, int x, int y, int w, int h)
 {
     int status=0;
 

@@ -44,7 +44,7 @@ long bin_g[256];
 long bin_b[256];
 int verbose = 0;
 
-FBIO *fbp;
+fb_s *fbp;
 
 static long max;
 static double scalefactor;

@@ -109,11 +109,11 @@ dmo_openFb(struct dm_obj *dmop)
 	return TCL_ERROR;
 
     /* already open */
-    if (dmop->dmo_fbs.fbs_fbp != FBIO_NULL)
+    if (dmop->dmo_fbs.fbs_fbp != FB_NULL)
 	return TCL_OK;
 
     /* don't use bu_calloc so we can fail slightly more gracefully */
-    if ((dmop->dmo_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+    if ((dmop->dmo_fbs.fbs_fbp = (fb_s *)calloc(sizeof(fb_s), 1)) == FB_NULL) {
 	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(dmop->interp);
@@ -199,7 +199,7 @@ dmo_openFb(struct dm_obj *dmop)
 	    Tcl_Obj *obj;
 
 	    free((void*)dmop->dmo_fbs.fbs_fbp);
-	    dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
+	    dmop->dmo_fbs.fbs_fbp = FB_NULL;
 
 	    obj = Tcl_GetObjResult(dmop->interp);
 	    if (Tcl_IsShared(obj))
@@ -227,13 +227,13 @@ dmo_openFb(struct dm_obj *dmop)
 HIDDEN int
 dmo_closeFb(struct dm_obj *dmop)
 {
-    if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL)
+    if (dmop->dmo_fbs.fbs_fbp == FB_NULL)
 	return TCL_OK;
 
     fb_flush(dmop->dmo_fbs.fbs_fbp);
     fb_close_existing(dmop->dmo_fbs.fbs_fbp);
 
-    dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
+    dmop->dmo_fbs.fbs_fbp = FB_NULL;
 
     return TCL_OK;
 }
@@ -262,7 +262,7 @@ dmo_listen_tcl(void *clientData, int argc, const char **argv)
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
-    if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL) {
+    if (dmop->dmo_fbs.fbs_fbp == FB_NULL) {
 	bu_vls_printf(&vls, "%s listen: framebuffer not open!\n", argv[0]);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
@@ -327,7 +327,7 @@ dmo_refreshFb_tcl(void *clientData, int argc, const char **argv)
     if (!dmop || !dmop->interp || argc < 1 ||  !argv)
 	return TCL_ERROR;
 
-    if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL) {
+    if (dmop->dmo_fbs.fbs_fbp == FB_NULL) {
 	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(dmop->interp);
@@ -1830,7 +1830,7 @@ dmo_configure_tcl(void *clientData, int argc, const char **argv)
 
 #ifdef USE_FBSERV
     /* configure the framebuffer window */
-    if (dmop->dmo_fbs.fbs_fbp != FBIO_NULL)
+    if (dmop->dmo_fbs.fbs_fbp != FB_NULL)
 	fb_configureWindow(dmop->dmo_fbs.fbs_fbp,
 			   dmop->dmo_dmp->dm_width,
 			   dmop->dmo_dmp->dm_height);
@@ -3210,7 +3210,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     dmop->dmo_fbs.fbs_listener.fbsl_fbsp = &dmop->dmo_fbs;
     dmop->dmo_fbs.fbs_listener.fbsl_fd = -1;
     dmop->dmo_fbs.fbs_listener.fbsl_port = -1;
-    dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
+    dmop->dmo_fbs.fbs_fbp = FB_NULL;
     dmop->dmo_fbs.fbs_callback = dmo_fbs_callback;
     dmop->dmo_fbs.fbs_clientData = dmop;
     dmop->dmo_fbs.fbs_interp = interp;

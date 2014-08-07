@@ -46,11 +46,11 @@
 
 
 HIDDEN int
-dsk_open(FBIO *ifp, const char *file, int width, int height)
+dsk_open(fb_s *ifp, const char *file, int width, int height)
 {
     static char zero = 0;
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /* check for default size */
     if (width == 0)
@@ -101,14 +101,14 @@ dsk_open(FBIO *ifp, const char *file, int width, int height)
 
 
 HIDDEN int
-dsk_close(FBIO *ifp)
+dsk_close(fb_s *ifp)
 {
     return close(ifp->if_fd);
 }
 
 
 HIDDEN int
-dsk_free(FBIO *ifp)
+dsk_free(fb_s *ifp)
 {
     close(ifp->if_fd);
     if (bu_file_delete(ifp->if_name)) {
@@ -123,7 +123,7 @@ dsk_free(FBIO *ifp)
  * Clear the disk file to the given color.
  */
 HIDDEN int
-disk_color_clear(FBIO *ifp, register unsigned char *bpp)
+disk_color_clear(fb_s *ifp, register unsigned char *bpp)
 {
     static unsigned char pix_buf[DISK_DMA_BYTES] = {0};
     register unsigned char *pix_to;
@@ -159,7 +159,7 @@ disk_color_clear(FBIO *ifp, register unsigned char *bpp)
 
 
 HIDDEN int
-dsk_clear(FBIO *ifp, unsigned char *bgpp)
+dsk_clear(fb_s *ifp, unsigned char *bgpp)
 {
     static RGBpixel black = { 0, 0, 0 };
 
@@ -171,7 +171,7 @@ dsk_clear(FBIO *ifp, unsigned char *bgpp)
 
 
 HIDDEN ssize_t
-dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
+dsk_read(fb_s *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t bytes = count * sizeof(RGBpixel);
     size_t todo;
@@ -219,7 +219,7 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+dsk_write(fb_s *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     register ssize_t bytes = count * sizeof(RGBpixel);
     ssize_t todo;
@@ -250,7 +250,7 @@ dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
 
 HIDDEN int
-dsk_rmap(FBIO *ifp, ColorMap *cmap)
+dsk_rmap(fb_s *ifp, ColorMap *cmap)
 {
     int fd = ifp->if_fd;
 
@@ -275,7 +275,7 @@ dsk_rmap(FBIO *ifp, ColorMap *cmap)
 
 
 HIDDEN int
-dsk_wmap(FBIO *ifp, const ColorMap *cmap)
+dsk_wmap(fb_s *ifp, const ColorMap *cmap)
 {
     if (cmap == (ColorMap *) NULL)
 	/* Do not write default map to file. */
@@ -297,7 +297,7 @@ dsk_wmap(FBIO *ifp, const ColorMap *cmap)
 
 
 HIDDEN int
-dsk_help(FBIO *ifp)
+dsk_help(fb_s *ifp)
 {
     fb_log("Description: %s\n", disk_interface.if_type);
     fb_log("Device: %s\n", ifp->if_name);
@@ -318,7 +318,7 @@ dsk_help(FBIO *ifp)
 }
 
 
-FBIO disk_interface = {
+fb_s disk_interface = {
     0,
     dsk_open,
     dsk_close,

@@ -36,12 +36,12 @@
 
 /*
  * A routine to simulate the effect of fb_view() by simply
- * storing this information into the FBIO structure.
+ * storing this information into the fb_s structure.
  */
 int
-fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+fb_sim_view(fb_s *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     ifp->if_xcenter = xcenter;
     ifp->if_ycenter = ycenter;
@@ -54,12 +54,12 @@ fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 /*
  * A routine to simulate the effect of fb_getview() by simply
- * reading this information from the FBIO structure.
+ * reading this information from the fb_s structure.
  */
 int
-fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+fb_sim_getview(fb_s *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     *xcenter = ifp->if_xcenter;
     *ycenter = ifp->if_ycenter;
@@ -72,12 +72,12 @@ fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 /*
  * A routine to simulate the effect of fb_cursor() by simply
- * storing this information into the FBIO structure.
+ * storing this information into the fb_s structure.
  */
 int
-fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
+fb_sim_cursor(fb_s *ifp, int mode, int x, int y)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     ifp->if_cursmode = mode;
     ifp->if_xcurs = x;
@@ -89,12 +89,12 @@ fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
 
 /*
  * A routine to simulate the effect of fb_getcursor() by simply
- * reading this information from the FBIO structure.
+ * reading this information from the fb_s structure.
  */
 int
-fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y)
+fb_sim_getcursor(fb_s *ifp, int *mode, int *x, int *y)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     *mode = ifp->if_cursmode;
     *x = ifp->if_xcurs;
@@ -107,10 +107,10 @@ fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 /* Backward Compatibility Routines */
 
 int
-fb_reset(FBIO *ifp)
+fb_reset(fb_s *ifp)
 {
     if (ifp) {
-	FB_CK_FBIO(ifp);
+	FB_CK_FB(ifp);
     }
 
     return 0;
@@ -118,10 +118,10 @@ fb_reset(FBIO *ifp)
 
 
 int
-fb_viewport(FBIO *ifp, int UNUSED(left), int UNUSED(top), int UNUSED(right), int UNUSED(bottom))
+fb_viewport(fb_s *ifp, int UNUSED(left), int UNUSED(top), int UNUSED(right), int UNUSED(bottom))
 {
     if (ifp) {
-	FB_CK_FBIO(ifp);
+	FB_CK_FB(ifp);
     }
 
     return 0;
@@ -129,13 +129,13 @@ fb_viewport(FBIO *ifp, int UNUSED(left), int UNUSED(top), int UNUSED(right), int
 
 
 int
-fb_window(FBIO *ifp, int x, int y)
+fb_window(fb_s *ifp, int x, int y)
 {
     int xcenter, ycenter;
     int xzoom, yzoom;
 
     if (ifp) {
-      FB_CK_FBIO(ifp);
+      FB_CK_FB(ifp);
       fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
       xcenter = x;
       ycenter = y;
@@ -147,13 +147,13 @@ fb_window(FBIO *ifp, int x, int y)
 
 
 int
-fb_zoom(FBIO *ifp, int x, int y)
+fb_zoom(fb_s *ifp, int x, int y)
 {
     int xcenter, ycenter;
     int xzoom, yzoom;
 
     if (ifp) {
-      FB_CK_FBIO(ifp);
+      FB_CK_FB(ifp);
 
       fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
       xzoom = x;
@@ -166,10 +166,10 @@ fb_zoom(FBIO *ifp, int x, int y)
 
 
 int
-fb_scursor(FBIO *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
+fb_scursor(fb_s *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
     if (ifp) {
-	FB_CK_FBIO(ifp);
+	FB_CK_FB(ifp);
     }
 
     /* We could actually implement this but it

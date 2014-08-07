@@ -41,7 +41,7 @@
  * particular display does not handle it.
  */
 int
-fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+fb_sim_readrect(fb_s *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     register int y;
     register int tot;
@@ -74,7 +74,7 @@ fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned c
  * Clipping to the screen may reduce the total if caller was sloppy.
  */
 int
-fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+fb_sim_writerect(fb_s *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int y;
     register int tot;
@@ -98,7 +98,7 @@ fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const uns
 
 #define SIMBUF_SIZE (24*1024)
 int
-fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+fb_sim_bwreadrect(fb_s *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     register int y;
     register int tot;
@@ -128,7 +128,7 @@ fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned
 
 
 int
-fb_sim_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+fb_sim_bwwriterect(fb_s *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int y;
     register int tot;

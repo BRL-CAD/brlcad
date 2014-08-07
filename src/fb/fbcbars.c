@@ -215,7 +215,7 @@ int
 main(int argc, char **argv)
 {
     int x, y;
-    FBIO *fbp;
+    fb_s *fbp;
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	printusage();

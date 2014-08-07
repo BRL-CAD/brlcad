@@ -278,7 +278,7 @@ null_makeCurrent(struct dm *UNUSED(dmp))
 
 
 int
-null_openFb(struct dm *UNUSED(dmp), FBIO *UNUSED(ifp))
+null_openFb(struct dm *UNUSED(dmp), fb_s *UNUSED(ifp))
 {
     return 0;
 }

@@ -53,7 +53,7 @@
 #include "fbserv_obj.h"
 
 
-static FBIO *curr_fbp;		/* current framebuffer pointer */
+static fb_s *curr_fbp;		/* current framebuffer pointer */
 
 
 /*

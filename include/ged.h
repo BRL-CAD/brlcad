@@ -161,7 +161,7 @@ __BEGIN_DECLS
     }
 
 #define GED_CHECK_FBSERV_FBP(_gedp, _flags) \
-    if (_gedp->ged_fbsp->fbs_fbp == FBIO_NULL) { \
+    if (_gedp->ged_fbsp->fbs_fbp == FB_NULL) { \
 	int ged_check_view_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_view_quiet) { \
 	    bu_vls_trunc((_gedp)->ged_result_str, 0); \

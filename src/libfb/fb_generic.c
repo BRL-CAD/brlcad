@@ -48,10 +48,10 @@
 #include "fb.h"
 
 
-extern int X24_close_existing(FBIO *ifp);
-extern int ogl_close_existing(FBIO *ifp);
-extern int wgl_close_existing(FBIO *ifp);
-extern int qt_close_existing(FBIO *ifp);
+extern int X24_close_existing(fb_s *ifp);
+extern int ogl_close_existing(fb_s *ifp);
+extern int wgl_close_existing(fb_s *ifp);
+extern int qt_close_existing(fb_s *ifp);
 
 
 #define Malloc_Bomb(_bytes_)					\
@@ -86,12 +86,12 @@ int _fb_disk_enable = 1;
 
 
 /**
- * Filler for FBIO function slots not used by a particular device
+ * Filler for fb_s function slots not used by a particular device
  */
-int fb_null(FBIO *ifp)
+int fb_null(fb_s *ifp)
 {
     if (ifp) {
-	FB_CK_FBIO(ifp);
+	FB_CK_FB(ifp);
     }
 
     return 0;
@@ -101,10 +101,10 @@ int fb_null(FBIO *ifp)
 /**
  * Used by if_*.c routines that don't have programmable cursor patterns.
  */
-int fb_null_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+int fb_null_setcursor(fb_s *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     if (ifp) {
-	FB_CK_FBIO(ifp);
+	FB_CK_FB(ifp);
     }
 
     return 0;
@@ -115,7 +115,7 @@ int fb_null_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(x
  * First element of list is default device when no name given
  */
 static
-FBIO *_if_list[] = {
+fb_s *_if_list[] = {
 #ifdef IF_WGL
     &wgl_interface,
 #endif
@@ -138,23 +138,23 @@ FBIO *_if_list[] = {
     &stk_interface,
     &memory_interface,
     &null_interface,
-    (FBIO *) 0
+    (fb_s *) 0
 };
 
 
-FBIO *
+fb_s *
 fb_open(const char *file, int width, int height)
 {
-    register FBIO *ifp;
+    register fb_s *ifp;
     int i;
 
     if (width < 0 || height < 0)
-	return FBIO_NULL;
+	return FB_NULL;
 
-    ifp = (FBIO *) calloc(sizeof(FBIO), 1);
-    if (ifp == FBIO_NULL) {
-	Malloc_Bomb(sizeof(FBIO));
-	return FBIO_NULL;
+    ifp = (fb_s *) calloc(sizeof(fb_s), 1);
+    if (ifp == FB_NULL) {
+	Malloc_Bomb(sizeof(fb_s));
+	return FB_NULL;
     }
     if (file == NULL || *file == '\0') {
 	/* No name given, check environment variable first.	*/
@@ -176,7 +176,7 @@ fb_open(const char *file, int width, int height)
      * device array.  If we don't find it assume it's a file.
      */
     i = 0;
-    while (_if_list[i] != (FBIO *)NULL) {
+    while (_if_list[i] != (fb_s *)NULL) {
 	if (bu_strncmp(file, _if_list[i]->if_name,
 		    strlen(_if_list[i]->if_name)) == 0) {
 	    /* found it, copy its struct in */
@@ -191,7 +191,7 @@ fb_open(const char *file, int width, int height)
     if (bu_strncmp(file, "/dev/", 5) == 0) {
 	fb_log("fb_open: no such device \"%s\".\n", file);
 	free((void *) ifp);
-	return FBIO_NULL;
+	return FB_NULL;
     }
 
 #ifdef IF_REMOTE
@@ -208,7 +208,7 @@ fb_open(const char *file, int width, int height)
     } else {
 	fb_log("fb_open: no such device \"%s\".\n", file);
 	free((void *) ifp);
-	return FBIO_NULL;
+	return FB_NULL;
     }
 
 found_interface:
@@ -217,7 +217,7 @@ found_interface:
     if (ifp->if_name == (char *)NULL) {
 	Malloc_Bomb(strlen(file) + 1);
 	free((void *) ifp);
-	return FBIO_NULL;
+	return FB_NULL;
     }
     bu_strlcpy(ifp->if_name, file, strlen(file)+1);
 
@@ -230,18 +230,18 @@ found_interface:
 	ifp->if_magic = 0;		/* sanity */
 	free((void *) ifp->if_name);
 	free((void *) ifp);
-	return FBIO_NULL;
+	return FB_NULL;
     }
     return ifp;
 }
 
 
 int
-fb_close(FBIO *ifp)
+fb_close(fb_s *ifp)
 {
     int i;
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
     fb_flush(ifp);
     if ((i=(*ifp->if_close)(ifp)) <= -1) {
 	fb_log("fb_close: can not close device \"%s\", ret=%d.\n",
@@ -257,12 +257,12 @@ fb_close(FBIO *ifp)
 
 
 int
-fb_close_existing(FBIO *ifp)
+fb_close_existing(fb_s *ifp)
 {
     if (!ifp)
 	return 0;
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     fb_flush(ifp);
 
@@ -383,7 +383,7 @@ fb_genhelp(void)
     int i;
 
     i = 0;
-    while (_if_list[i] != (FBIO *)NULL) {
+    while (_if_list[i] != (fb_s *)NULL) {
 	fb_log("%-12s  %s\n",
 	       _if_list[i]->if_name,
 	       _if_list[i]->if_type);
@@ -453,7 +453,7 @@ fb_cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *cmap)
 }
 
 int
-fb_write_fp(FBIO *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result)
+fb_write_fp(fb_s *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result)
 {
     unsigned char *scanline;	/* 1 scanline pixel buffer */
     int scanbytes;		/* # of bytes of scanline */
@@ -538,7 +538,7 @@ fb_skip_bytes(int fd, off_t num, int fileinput, int scanbytes, unsigned char *sc
 
 
 int
-fb_read_fd(FBIO *ifp, int fd, int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *UNUSED(result))
+fb_read_fd(fb_s *ifp, int fd, int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *UNUSED(result))
 {
     int y;
     int xout, yout, n, m, xstart, xskip;
