@@ -104,6 +104,9 @@
 
 #include "brlcad_version.h"
 
+/* For open_existing functionality - need a better solution */
+#include "../libfb/fb_private.h"
+
 #define TO_UNLIMITED -1
 
 /*
@@ -13228,7 +13231,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
     switch (gdvp->gdv_dmp->dm_type) {
 #ifdef DM_X
 	case DM_TYPE_X:
-	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, &X24_interface);
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "X24");
 	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/X");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
@@ -13268,7 +13271,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
-	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, &ogl_interface);
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "ogl");
 	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/ogl");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
@@ -13289,7 +13292,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 #ifdef DM_OSG
 	case DM_TYPE_OSG:
 #if 0
-	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, &osg_interface);
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "osg");
 	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/osg");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
@@ -13310,7 +13313,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
-	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, &wgl_interface);
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "wgl");
 	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/wgl");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
@@ -13330,7 +13333,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 #endif
 #ifdef DM_QT
 	case DM_TYPE_QT:
-	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, &qt_interface);
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "Qt");
 	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/Qt");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);

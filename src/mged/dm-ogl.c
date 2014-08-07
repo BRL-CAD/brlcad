@@ -71,6 +71,8 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
+/* For _ogl_open_existing */
+#include "../libfb/fb_private.h"
 
 extern void dm_var_init();		/* defined in attach.c */
 
@@ -158,7 +160,7 @@ Ogl_fb_open()
 	return;
     }
 
-    fb_set_interface(fbp, &ogl_interface);
+    fb_set_interface(fbp, "ogl");
     fb_set_name(fbp, ogl_name);
     /* Mark OK by filling in magic number */
     fb_set_magic(fbp, FB_MAGIC);

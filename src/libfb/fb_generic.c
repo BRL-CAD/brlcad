@@ -48,6 +48,63 @@
 #include "fb_private.h"
 #include "fb.h"
 
+static const char *fb_type_strings[] = {
+#ifdef IF_X
+    "X",
+    "X24",
+#endif
+#ifdef IF_OGL
+    "ogl",
+#endif
+#ifdef IF_WGL
+    "wgl",
+#endif
+#ifdef IF_TK
+    "tk",
+#endif
+#ifdef IF_QT
+    "qt",
+#endif
+#ifdef IF_REMOTE
+    "remote",
+#endif
+    "debug",
+    "disk",
+    "stk",
+    "memory",
+    "null",
+    NULL
+};
+
+static fb_s *fb_type_structs[] = {
+#ifdef IF_X
+    &X_interface,
+    &X24_interface,
+#endif
+#ifdef IF_OGL
+    &ogl_interface,
+#endif
+#ifdef IF_WGL
+    &wgl_interface,
+#endif
+#ifdef IF_TK
+    &tk_interface,
+#endif
+#ifdef IF_QT
+    &qt_interface,
+#endif
+#ifdef IF_REMOTE
+    &remote_interface,
+#endif
+    &debug_interface,
+    &disk_interface,
+    &stk_interface,
+    &memory_interface,
+    &null_interface,
+    FB_NULL
+};
+
+
 fb_s *fb_get()
 {
     struct fb *new_fb = FB_NULL;
@@ -62,11 +119,43 @@ void fb_put(fb_s *ifp)
 	BU_PUT(ifp, struct fb);
 }
 
-void fb_set_interface(fb_s *ifp, fb_s *interface)
+void fb_set_interface(fb_s *ifp, const char *interface)
 {
+    int i = 0;
+    fb_s *curr_interface = fb_type_structs[i];
+    fb_s *new_interface = FB_NULL;
     if (!ifp) return;
-    *ifp = *interface;
+    while (curr_interface != FB_NULL && new_interface == FB_NULL) {
+	if (!strcasecmp(interface, fb_type_strings[i])) {
+	    new_interface = curr_interface;
+	} else {
+	    curr_interface = fb_type_structs[i+1];
+	    i++;
+	}
+    }
+    if (new_interface == FB_NULL) new_interface = &null_interface;
+    *ifp = *new_interface;
 }
+
+#if 0
+void fb_open_existing(fb_s *ifp, const char *interface)
+{
+    int i = 0;
+    fb_s *curr_interface = fb_type_structs[i];
+    fb_s *new_interface = FB_NULL;
+    if (!ifp) return;
+    while (curr_interface != FB_NULL && new_interface == FB_NULL) {
+	if (!strcasecmp(interface, fb_type_strings[i])) {
+	    new_interface = curr_interface;
+	} else {
+	    curr_interface = fb_type_structs[i+1];
+	    i++;
+	}
+    }
+    if (new_interface == FB_NULL) new_interface = &null_interface;
+    *ifp = *new_interface;
+}
+#endif
 
 void fb_set_name(fb_s *ifp, const char *name)
 {

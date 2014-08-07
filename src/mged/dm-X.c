@@ -48,6 +48,8 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
+/* For _X24_open-existing */
+#include "../libfb/fb_private.h"
 
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
@@ -186,7 +188,7 @@ X_fb_open(void)
 	return;
     }
 
-    fb_set_interface(fbp, &X24_interface);
+    fb_set_interface(fbp, "X24");
     fb_set_name(fbp, X_name);
     /* Mark OK by filling in magic number */
     fb_set_magic(fbp, FB_MAGIC);

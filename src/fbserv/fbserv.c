@@ -80,6 +80,7 @@
 #include "bio.h"
 #include "bin.h"
 
+#include "../libfb/fb_private.h" /* for _fb_disk_enable */
 #include "fb.h"
 #include "pkg.h"
 #include "bu.h"

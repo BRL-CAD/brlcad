@@ -33,6 +33,31 @@
 
 #include "fb.h"
 
+/* declare all the possible interfaces */
+#ifdef IF_X
+FB_EXPORT extern fb_s X_interface;
+FB_EXPORT extern fb_s X24_interface;
+#endif
+#ifdef IF_OGL
+FB_EXPORT extern fb_s ogl_interface;
+#endif
+#ifdef IF_WGL
+FB_EXPORT extern fb_s wgl_interface;
+#endif
+#ifdef IF_TK
+FB_EXPORT extern fb_s tk_interface;
+#endif
+#ifdef IF_QT
+FB_EXPORT extern fb_s qt_interface;
+#endif
+#ifdef IF_REMOTE
+FB_EXPORT extern fb_s remote_interface; /* not in list[] */
+#endif
+
+/* Always included */
+FB_EXPORT extern fb_s debug_interface, disk_interface, stk_interface;
+FB_EXPORT extern fb_s memory_interface, null_interface;
+
 __BEGIN_DECLS
 
 /**
@@ -97,6 +122,72 @@ struct fb {
         size_t l;
     } u1, u2, u3, u4, u5, u6;
 };
+
+
+#ifdef IF_X
+#  ifdef HAVE_X11_XLIB_H
+#    include <X11/Xlib.h>
+#    include <X11/Xutil.h>
+#  endif
+FB_EXPORT extern int _X24_open_existing(fb_s *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc);
+#endif
+
+#ifdef IF_OGL
+#  ifdef HAVE_X11_XLIB_H
+#    include <X11/Xlib.h>
+#    include <X11/Xutil.h>
+#  endif
+/* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
+ *  * parameter names that shadow system symbols.  protect the system
+ *   * symbols by redefining the parameters prior to header inclusion.
+ *    */
+#  define j1 J1
+#  define y1 Y1
+#  define read rd
+#  define index idx
+#  define access acs
+#  define remainder rem
+#  ifdef HAVE_GL_GLX_H
+#    include <GL/glx.h>
+#  endif
+#  undef remainder
+#  undef access
+#  undef index
+#  undef read
+#  undef y1
+#  undef j1
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
+FB_EXPORT extern int _ogl_open_existing(fb_s *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap);
+#endif
+
+#ifdef IF_WGL
+#  include <windows.h>
+#  include <tk.h>
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
+FB_EXPORT extern int _wgl_open_existing(fb_s *ifp, Display *dpy, Window win, Colormap cmap, PIXELFORMATDESCRIPTOR *vip, HDC hdc, int width, int height, HGLRC glxc, int double_buffer, int soft_cmap);
+#endif
+
+#ifdef IF_QT
+FB_EXPORT extern int _qt_open_existing(fb_s *ifp, int width, int height, void *qapp, void *qwin, void *qpainter, void *draw, void **qimg);
+#endif
+
+/*
+ * Some functions and variables we couldn't hide.
+ * Not for general consumption.
+ */
+FB_EXPORT extern int _fb_disk_enable;
+FB_EXPORT extern int fb_sim_readrect(fb_s *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
+FB_EXPORT extern int fb_sim_writerect(fb_s *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
+FB_EXPORT extern int fb_sim_bwreadrect(fb_s *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
+FB_EXPORT extern int fb_sim_bwwriterect(fb_s *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
+FB_EXPORT extern int fb_sim_view(fb_s *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
+FB_EXPORT extern int fb_sim_getview(fb_s *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
+FB_EXPORT extern int fb_sim_cursor(fb_s *ifp, int mode, int x, int y);
+FB_EXPORT extern int fb_sim_getcursor(fb_s *ifp, int *mode, int *x, int *y);
 
 __END_DECLS
 

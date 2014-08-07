@@ -26,6 +26,10 @@
 
 #include "./dm_util.h"
 
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
+
 #if defined(DM_OGL) || defined(DM_WGL) || defined(DM_RTGL)
 int
 drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor)
