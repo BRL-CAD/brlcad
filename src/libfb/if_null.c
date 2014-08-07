@@ -33,6 +33,7 @@
 #include <stdio.h>
 
 #include "bu/log.h"
+#include "fb_private.h"
 #include "fb.h"
 
 

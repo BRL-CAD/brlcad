@@ -109,17 +109,15 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 	(void)pkg_plong(&rbuf[3*NET_LONG_LEN], 0);
 	(void)pkg_plong(&rbuf[4*NET_LONG_LEN], 0);
     } else {
+	int selfd = 0;
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], 0);	/* ret */
-	(void)pkg_plong(&rbuf[1*NET_LONG_LEN], fb_server_fbp->if_max_width);
-	(void)pkg_plong(&rbuf[2*NET_LONG_LEN], fb_server_fbp->if_max_height);
-	(void)pkg_plong(&rbuf[3*NET_LONG_LEN], fb_server_fbp->if_width);
-	(void)pkg_plong(&rbuf[4*NET_LONG_LEN], fb_server_fbp->if_height);
-	if (fb_server_fbp->if_selfd > 0 && fb_server_select_list) {
-	    FD_SET(fb_server_fbp->if_selfd, fb_server_select_list);
-	    if (fb_server_max_fd != NULL &&
-		fb_server_fbp->if_selfd > *fb_server_max_fd)
-		*fb_server_max_fd = fb_server_fbp->if_selfd;
-	}
+	(void)pkg_plong(&rbuf[1*NET_LONG_LEN], fb_get_max_width(fb_server_fbp));
+	(void)pkg_plong(&rbuf[2*NET_LONG_LEN], fb_get_max_height(fb_server_fbp));
+	(void)pkg_plong(&rbuf[3*NET_LONG_LEN], fb_getwidth(fb_server_fbp));
+	(void)pkg_plong(&rbuf[4*NET_LONG_LEN], fb_getheight(fb_server_fbp));
+	selfd = fb_set_fd(fb_server_fbp, fb_server_select_list);
+	if (fb_server_max_fd != NULL && selfd > *fb_server_max_fd)
+	    *fb_server_max_fd = selfd;
     }
 
     want = 5*NET_LONG_LEN;
@@ -142,9 +140,7 @@ fb_server_fb_close(struct pkg_conn *pcp, char *buf)
 	(void)fb_flush(fb_server_fbp);
 	(void)pkg_plong(&rbuf[0], 0);		/* return success */
     } else {
-	if (fb_server_fbp->if_selfd > 0 && fb_server_select_list) {
-	    FD_CLR(fb_server_fbp->if_selfd, fb_server_select_list);
-	}
+	(void)fb_clear_fd(fb_server_fbp, fb_server_select_list);
 	(void)pkg_plong(&rbuf[0], fb_close(fb_server_fbp));
 	fb_server_fbp = FB_NULL;
     }

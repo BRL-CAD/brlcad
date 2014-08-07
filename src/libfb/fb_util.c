@@ -31,6 +31,7 @@
 
 #include <stdio.h>
 
+#include "fb_private.h"
 #include "fb.h"
 
 

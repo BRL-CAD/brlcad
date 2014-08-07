@@ -179,19 +179,17 @@ X_fb_open(void)
 {
     char *X_name = "/dev/X";
 
-    if ((fbp = (fb_s *)calloc(sizeof(fb_s), 1)) == FB_NULL) {
+    fbp = fb_get();
+    if (fbp == FB_NULL) {
 	Tcl_AppendResult(INTERP, "X_dm_init: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;
     }
 
-    *fbp = X24_interface; /* struct copy */
-
-    fbp->if_name = (char *)bu_malloc((unsigned)strlen(X_name)+1, "if_name");
-    bu_strlcpy(fbp->if_name, X_name, strlen(X_name)+1);
-
+    fb_set_interface(fbp, &X24_interface);
+    fb_set_name(fbp, X_name);
     /* Mark OK by filling in magic number */
-    fbp->if_magic = FB_MAGIC;
+    fb_set_magic(fbp, FB_MAGIC);
 
     _X24_open_existing(fbp,
 		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,

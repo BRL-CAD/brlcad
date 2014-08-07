@@ -341,7 +341,7 @@ main_loop(void)
 	    continue;
 	}
 	/* Handle any events from the framebuffer */
-	if (fb_server_fbp && fb_server_fbp->if_selfd > 0 && FD_ISSET(fb_server_fbp->if_selfd, &infds)) {
+	if (fb_is_set_fd(fb_server_fbp, &infds)) {
 	    fb_poll(fb_server_fbp);
 	}
 
@@ -447,10 +447,7 @@ main(int argc, char **argv)
 	/* open a frame buffer */
 	if ( (fb_server_fbp = fb_open(framebuffer, width, height)) == FB_NULL )
 	    bu_exit(1, NULL);
-	if ( fb_server_fbp->if_selfd > 0 )  {
-	    FD_SET(fb_server_fbp->if_selfd, &select_list);
-	    max_fd = fb_server_fbp->if_selfd;
-	}
+	max_fd = fb_set_fd(fb_server_fbp, &select_list);
 
 	/* check/default port */
 	if ( port_set ) {

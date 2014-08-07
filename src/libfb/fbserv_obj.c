@@ -51,6 +51,7 @@
 
 #include "fbmsg.h"
 #include "fbserv_obj.h"
+#include "fb_private.h"
 
 
 static fb_s *curr_fbp;		/* current framebuffer pointer */

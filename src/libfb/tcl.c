@@ -40,6 +40,7 @@
 #include "bio.h"
 #include "tcl.h"
 #include "bu/cmd.h"
+#include "fb_private.h"
 #include "fb.h"
 #include "bu.h"
 

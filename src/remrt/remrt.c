@@ -2440,7 +2440,7 @@ cd_status(const int UNUSED(argc), const char **UNUSED(argv))
     }
 
     if (fbp != FB_NULL)
-	bu_log("%s Framebuffer is %s\n", s, fbp->if_name);
+	bu_log("%s Framebuffer is %s\n", s, fb_get_name(fbp));
     else
 	bu_log("%s No framebuffer\n", s);
     if (outputfile)

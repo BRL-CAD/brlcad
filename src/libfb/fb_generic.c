@@ -1,4 +1,4 @@
-/*                    F B _ `gG E N E R I C . C
+/*                    F B _ G E N E R I C . C
  * BRL-CAD
  *
  * Copyright (c) 1986-2014 United States Government as represented by
@@ -45,7 +45,178 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 
+#include "fb_private.h"
 #include "fb.h"
+
+fb_s *fb_get()
+{
+    struct fb *new_fb = FB_NULL;
+    BU_GET(new_fb, struct fb);
+    new_fb->if_name = NULL;
+    return new_fb;
+}
+
+void fb_put(fb_s *ifp)
+{
+    if (ifp != FB_NULL)
+	BU_PUT(ifp, struct fb);
+}
+
+void fb_set_interface(fb_s *ifp, fb_s *interface)
+{
+    if (!ifp) return;
+    *ifp = *interface;
+}
+
+void fb_set_name(fb_s *ifp, const char *name)
+{
+    if (!ifp) return;
+    /*if (ifp->if_name) bu_free(ifp->if_name, "free pre-existing fb name");*/
+    ifp->if_name = (char *)bu_malloc((unsigned)strlen(name)+1, "if_name");
+    bu_strlcpy(ifp->if_name, name, strlen(name)+1);
+}
+
+char *fb_get_name(fb_s *ifp)
+{
+    if (!ifp) return NULL;
+    return ifp->if_name;
+}
+
+long fb_get_pagebuffer_pixel_size(fb_s *ifp)
+{
+    if (!ifp) return 0;
+    return ifp->if_ppixels;
+}
+
+
+int fb_is_set_fd(fb_s *ifp, fd_set *infds)
+{
+    if (!ifp) return 0;
+    if (!infds) return 0;
+    if (!ifp->if_selfd) return 0;
+    if (ifp->if_selfd <= 0) return 0;
+    return FD_ISSET(ifp->if_selfd, infds);
+}
+
+int fb_set_fd(fb_s *ifp, fd_set *select_list)
+{
+    if (!ifp) return 0;
+    if (!select_list) return 0;
+    if (!ifp->if_selfd) return 0;
+    if (ifp->if_selfd <= 0) return 0;
+    FD_SET(ifp->if_selfd, select_list);
+    return ifp->if_selfd;
+}
+
+int fb_clear_fd(fb_s *ifp, fd_set *list)
+{
+    if (!ifp) return 0;
+    if (!list) return 0;
+    if (!ifp->if_selfd) return 0;
+    if (ifp->if_selfd <= 0) return 0;
+    FD_CLR(ifp->if_selfd, list);
+    return ifp->if_selfd;
+}
+
+void fb_set_magic(fb_s *ifp, uint32_t magic)
+{
+    ifp->if_magic = magic;
+}
+
+
+char *fb_gettype(fb_s *ifp)
+{
+    return ifp->if_type;
+}
+
+int fb_getwidth(fb_s *ifp)
+{
+    return ifp->if_width;
+}
+int fb_getheight(fb_s *ifp)
+{
+    return ifp->if_height;
+}
+
+int fb_get_max_width(fb_s *ifp)
+{
+    return ifp->if_max_width;
+}
+int fb_get_max_height(fb_s *ifp)
+{
+    return ifp->if_max_height;
+}
+
+
+int fb_poll(fb_s *ifp)
+{
+    return (*ifp->if_poll)(ifp);
+}
+int fb_help(fb_s *ifp)
+{
+    return (*ifp->if_help)(ifp);
+}
+int fb_free(fb_s *ifp)
+{
+    return (*ifp->if_free)(ifp);
+}
+int fb_clear(fb_s *ifp, unsigned char *pp)
+{
+    return (*ifp->if_clear)(ifp, pp);
+}
+ssize_t fb_read(fb_s *ifp, int x, int y, unsigned char *pp, size_t count)
+{
+    return (*ifp->if_read)(ifp, x, y, pp, count);
+}
+ssize_t fb_write(fb_s *ifp, int x, int y, const unsigned char *pp, size_t count)
+{
+    return (*ifp->if_write)(ifp, x, y, pp, count);
+}
+int fb_rmap(fb_s *ifp, ColorMap *cmap)
+{
+    return (*ifp->if_rmap)(ifp, cmap);
+}
+int fb_wmap(fb_s *ifp, const ColorMap *cmap)
+{
+    return (*ifp->if_wmap)(ifp, cmap);
+}
+int fb_view(fb_s *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+{
+    return (*ifp->if_view)(ifp, xcenter, ycenter, xzoom, yzoom);
+}
+int fb_getview(fb_s *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+{
+    return (*ifp->if_getview)(ifp, xcenter, ycenter, xzoom, yzoom);
+}
+int fb_setcursor(fb_s *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo)
+{
+    return (*ifp->if_setcursor)(ifp, bits, xb, yb, xo, yo);
+}
+int fb_cursor(fb_s *ifp, int mode, int x, int y)
+{
+    return (*ifp->if_cursor)(ifp, mode, x, y);
+}
+int fb_getcursor(fb_s *ifp, int *mode, int *x, int *y)
+{
+    return (*ifp->if_getcursor)(ifp, mode, x, y);
+}
+int fb_readrect(fb_s *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+{
+    return (*ifp->if_readrect)(ifp, xmin, ymin, width, height, pp);
+}
+int fb_writerect(fb_s *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+{
+    return (*ifp->if_writerect)(ifp, xmin, ymin, width, height, pp);
+}
+int fb_bwreadrect(fb_s *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+{
+    return (*ifp->if_bwreadrect)(ifp, xmin, ymin, width, height, pp);
+}
+int fb_bwwriterect(fb_s *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+{
+    return (*ifp->if_bwwriterect)(ifp, xmin, ymin, width, height, pp);
+}
+
 
 
 extern int X24_close_existing(fb_s *ifp);

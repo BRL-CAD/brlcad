@@ -256,7 +256,7 @@ main(int argc, char **argv)
 
     /* Add comments to the header file, since we have one */
     if (framebuffer == (char *)0)
-	framebuffer = fbp->if_name;
+	framebuffer = fb_get_name(fbp);
     snprintf(comment, COMMENT_SIZE, "encoded_from=%s", framebuffer);
     rle_putcom(bu_strdup(comment), &outrle);
     now = time(0);

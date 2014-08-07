@@ -112,8 +112,8 @@ dmo_openFb(struct dm_obj *dmop)
     if (dmop->dmo_fbs.fbs_fbp != FB_NULL)
 	return TCL_OK;
 
-    /* don't use bu_calloc so we can fail slightly more gracefully */
-    if ((dmop->dmo_fbs.fbs_fbp = (fb_s *)calloc(sizeof(fb_s), 1)) == FB_NULL) {
+    dmop->dmo_fbs.fbs_fbp = fb_get();
+    if (dmop->dmo_fbs.fbs_fbp == FB_NULL) {
 	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(dmop->interp);
@@ -130,13 +130,10 @@ dmo_openFb(struct dm_obj *dmop)
     switch (dmop->dmo_dmp->dm_type) {
 #ifdef DM_X
 	case DM_TYPE_X:
-	    *dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/X", strlen("/dev/X")+1);
-
+	    fb_set_interface(dmop->dmo_fbs.fbs_fbp, &X24_interface);
+	    fb_set_name(dmop->dmo_fbs.fbs_fbp, "/dev/X");
 	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
+	    fb_set_magic(dmop->dmo_fbs.fbs_fbp, FB_MAGIC);
 
 	    _X24_open_existing(dmop->dmo_fbs.fbs_fbp,
 			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
@@ -152,13 +149,10 @@ dmo_openFb(struct dm_obj *dmop)
 
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
-	    *dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/ogl", strlen("/dev/ogl")+1);
-
+	    fb_set_interface(dmop->dmo_fbs.fbs_fbp, &ogl_interface);
+	    fb_set_name(dmop->dmo_fbs.fbs_fbp, "/dev/ogl");
 	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
+	    fb_set_magic(dmop->dmo_fbs.fbs_fbp, FB_MAGIC);
 
 	    _ogl_open_existing(dmop->dmo_fbs.fbs_fbp,
 			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
@@ -174,13 +168,10 @@ dmo_openFb(struct dm_obj *dmop)
 #endif
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
-	    *dmop->dmo_fbs.fbs_fbp = wgl_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/wgl")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/wgl", strlen("/dev/wgl")+1);
-
+	    fb_set_interface(dmop->dmo_fbs.fbs_fbp, &wgl_interface);
+	    fb_set_name(dmop->dmo_fbs.fbs_fbp, "/dev/wgl");
 	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
+	    fb_set_magic(dmop->dmo_fbs.fbs_fbp, FB_MAGIC);
 
 	    _wgl_open_existing(dmop->dmo_fbs.fbs_fbp,
 			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,

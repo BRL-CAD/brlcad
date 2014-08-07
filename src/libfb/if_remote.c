@@ -54,6 +54,7 @@
 
 #include "bu.h"
 #include "pkg.h"
+#include "fb_private.h"
 #include "fb.h"
 #include "fbmsg.h"
 

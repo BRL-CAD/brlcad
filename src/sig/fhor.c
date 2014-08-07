@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include <string.h>
+#include <limits.h>  /* For INT_MAX */
 #include <stdlib.h>
 #include <math.h>
 #include "bio.h"

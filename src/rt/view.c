@@ -336,7 +336,7 @@ view_pixel(struct application *ap)
 		    /* Framebuffer output */
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
 		    npix = fb_write(fbp, ap->a_x, ap->a_y,
-				    (unsigned char *)p, 1);
+				    (const unsigned char *)p, 1);
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		    if (npix < 1)
 			bu_exit(EXIT_FAILURE, "pixel fb_write error");

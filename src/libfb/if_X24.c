@@ -77,7 +77,7 @@
 #include "bu/color.h"
 #include "bu/file.h"
 #include "bu/str.h"
-#include "fb.h"
+#include "fb_private.h"
 
 
 #define SHMEM_KEY 42

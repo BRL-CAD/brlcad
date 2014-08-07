@@ -987,7 +987,7 @@ f_Cursor_Module()
 		    (void) fb_window(fbiop, cx, cy);
 		    break;
 		case IN :
-		    if (zoom <= fbiop->if_width/2) {
+		    if (zoom <= fb_getwidth(fbiop)/2) {
 			zoom *= 2;
 			cx = x;
 			cy = y;
