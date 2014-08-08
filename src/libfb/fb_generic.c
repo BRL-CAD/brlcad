@@ -48,44 +48,16 @@
 #include "fb_private.h"
 #include "fb.h"
 
-static const char *fb_type_strings[] = {
-#ifdef IF_X
-    "X",
-    "X24",
-#endif
-#ifdef IF_OGL
-    "ogl",
-#endif
+static fb_s *_fb_device_interfaces[] = {
 #ifdef IF_WGL
-    "wgl",
-#endif
-#ifdef IF_TK
-    "tk",
-#endif
-#ifdef IF_QT
-    "qt",
-#endif
-#ifdef IF_REMOTE
-    "remote",
-#endif
-    "debug",
-    "disk",
-    "stk",
-    "memory",
-    "null",
-    NULL
-};
-
-static fb_s *fb_type_structs[] = {
-#ifdef IF_X
-    &X_interface,
-    &X24_interface,
+    &wgl_interface,
 #endif
 #ifdef IF_OGL
     &ogl_interface,
 #endif
-#ifdef IF_WGL
-    &wgl_interface,
+#ifdef IF_X
+    &X_interface,
+    &X24_interface,
 #endif
 #ifdef IF_TK
     &tk_interface,
@@ -119,43 +91,26 @@ void fb_put(fb_s *ifp)
 	BU_PUT(ifp, struct fb);
 }
 
-void fb_set_interface(fb_s *ifp, const char *interface)
+int fb_set_interface(fb_s *ifp, const char *interface)
 {
     int i = 0;
-    fb_s *curr_interface = fb_type_structs[i];
+    fb_s *curr_interface = _fb_device_interfaces[i];
     fb_s *new_interface = FB_NULL;
-    if (!ifp) return;
+    if (!ifp) return 0;
     while (curr_interface != FB_NULL && new_interface == FB_NULL) {
-	if (!strcasecmp(interface, fb_type_strings[i])) {
+	if (!bu_strcasecmp(interface, _fb_device_interfaces[i]->if_name)) {
 	    new_interface = curr_interface;
 	} else {
-	    curr_interface = fb_type_structs[i+1];
+	    curr_interface = _fb_device_interfaces[i+1];
 	    i++;
 	}
     }
-    if (new_interface == FB_NULL) new_interface = &null_interface;
-    *ifp = *new_interface;
-}
-
-#if 0
-void fb_open_existing(fb_s *ifp, const char *interface)
-{
-    int i = 0;
-    fb_s *curr_interface = fb_type_structs[i];
-    fb_s *new_interface = FB_NULL;
-    if (!ifp) return;
-    while (curr_interface != FB_NULL && new_interface == FB_NULL) {
-	if (!strcasecmp(interface, fb_type_strings[i])) {
-	    new_interface = curr_interface;
-	} else {
-	    curr_interface = fb_type_structs[i+1];
-	    i++;
-	}
+    if (new_interface != FB_NULL) {
+	*ifp = *new_interface;
+	return 1;
     }
-    if (new_interface == FB_NULL) new_interface = &null_interface;
-    *ifp = *new_interface;
+    return 0;
 }
-#endif
 
 void fb_set_name(fb_s *ifp, const char *name)
 {
@@ -370,38 +325,6 @@ int fb_null_setcursor(fb_s *ifp, const unsigned char *UNUSED(bits), int UNUSED(x
     return 0;
 }
 
-
-/**
- * First element of list is default device when no name given
- */
-static
-fb_s *_if_list[] = {
-#ifdef IF_WGL
-    &wgl_interface,
-#endif
-#ifdef IF_OGL
-    &ogl_interface,
-#endif
-#ifdef IF_X
-    &X24_interface,
-    &X_interface,
-#endif
-#ifdef IF_TK
-    &tk_interface,
-#endif
-#ifdef IF_QT
-    &qt_interface,
-#endif
-
-    &debug_interface,
-/* never get any of the following by default */
-    &stk_interface,
-    &memory_interface,
-    &null_interface,
-    (fb_s *) 0
-};
-
-
 fb_s *
 fb_open(const char *file, int width, int height)
 {
@@ -420,7 +343,7 @@ fb_open(const char *file, int width, int height)
 	/* No name given, check environment variable first.	*/
 	if ((file = (const char *)getenv("FB_FILE")) == NULL || *file == '\0') {
 	    /* None set, use first device as default */
-	    *ifp = *(_if_list[0]);	/* struct copy */
+	    *ifp = *(_fb_device_interfaces[0]);	/* struct copy */
 	    file = ifp->if_name;
 	    goto found_interface;
 	}
@@ -435,16 +358,7 @@ fb_open(const char *file, int width, int height)
      * else strip out "/path/devname" and try to look it up in the
      * device array.  If we don't find it assume it's a file.
      */
-    i = 0;
-    while (_if_list[i] != (fb_s *)NULL) {
-	if (bu_strncmp(file, _if_list[i]->if_name,
-		    strlen(_if_list[i]->if_name)) == 0) {
-	    /* found it, copy its struct in */
-	    *ifp = *(_if_list[i]);
-	    goto found_interface;
-	}
-	i++;
-    }
+    if (fb_set_interface(ifp, file)) goto found_interface;
 
     /* Not in list, check special interfaces or disk files */
     /* "/dev/" protection! */
@@ -643,10 +557,10 @@ fb_genhelp(void)
     int i;
 
     i = 0;
-    while (_if_list[i] != (fb_s *)NULL) {
+    while (_fb_device_interfaces[i] != (fb_s *)NULL) {
 	fb_log("%-12s  %s\n",
-	       _if_list[i]->if_name,
-	       _if_list[i]->if_type);
+	       _fb_device_interfaces[i]->if_name,
+	       _fb_device_interfaces[i]->if_type);
 	i++;
     }
 

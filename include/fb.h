@@ -148,7 +148,7 @@ FB_EXPORT extern int fb_common_name_size(size_t *widthp, size_t *heightp, const 
 FB_EXPORT extern int fb_write_fp(fb_s *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result);
 FB_EXPORT extern int fb_read_fd(fb_s *ifp, int fd,  int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *result);
 
-FB_EXPORT extern void fb_set_interface(fb_s *ifp, const char *interface_type);
+FB_EXPORT extern int fb_set_interface(fb_s *ifp, const char *interface_type);
 FB_EXPORT extern void fb_set_name(fb_s *ifp, const char *name);
 FB_EXPORT extern char *fb_get_name(fb_s *ifp);
 FB_EXPORT extern void fb_set_magic(fb_s *ifp, uint32_t magic);
@@ -161,6 +161,17 @@ FB_EXPORT extern int fb_clear_fd(fb_s *ifp, fd_set *select_list);
 /* color mapping */
 FB_EXPORT extern int fb_is_linear_cmap(const ColorMap *cmap);
 FB_EXPORT extern void fb_make_linear_cmap(ColorMap *cmap);
+
+/* open_existing functionality.  To make this an API, we have to support
+ * parent specification of a number of platform specific variables, which
+ * vary considerably between systems.  fb_set_internal uses string keys
+ * to interpret and set platform specific internal variables that must
+ * come from the parent window (this is the mechanism used to avoid
+ * explicitly hard-coding those variables at the API level) and
+ * fb_open_existing does any other initialization needed. */
+FB_EXPORT extern int fb_set_internal(fb_s *ifp, const char *var_key, void *var_val);
+FB_EXPORT extern int fb_open_existing(fb_s *ifp, int width, int height);
+
 
 /* backward compatibility hacks */
 FB_EXPORT extern int fb_reset(fb_s *ifp);
