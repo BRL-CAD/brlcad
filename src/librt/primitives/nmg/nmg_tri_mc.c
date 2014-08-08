@@ -85,6 +85,7 @@
 
 /* set this to 1 for full midpoint use. Set it to 2 for x/y mid and real z. */
 int marching_cubes_use_midpoint = 0;
+extern struct rt_g RTG;
 
 /*
  * Table data acquired from Paul Borke's page at

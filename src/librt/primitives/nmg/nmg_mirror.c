@@ -28,6 +28,8 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 
+extern struct rt_g RTG;
+
 
 /**
  * Given a pointer to an internal GED database object, mirror the

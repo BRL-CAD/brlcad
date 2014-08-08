@@ -41,7 +41,7 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-#include "./librt_private.h"
+#include "../librt/librt_private.h"
 
 
 #define SGN(_x) (((_x)<0) ? -1 : 1)

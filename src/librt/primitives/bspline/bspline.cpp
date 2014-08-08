@@ -83,8 +83,6 @@ struct nurb_hit {
 
 
 #ifdef CONVERT_TO_BREP
-    extern void rt_nurb_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
-
     extern int rt_brep_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
     extern void rt_brep_print(register const struct soltab *stp);
     extern int rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
