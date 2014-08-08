@@ -199,7 +199,6 @@ nmg_lu_to_vlist(struct bu_list *vhead, const struct loopuse *lu, int poly_marker
 		RT_ADD_VLIST(vhead, vg->coord, BN_VLIST_POLY_MOVE);
 	    } else {
 		/* move */
-		struct rt_g aaa = RTG;
 		RT_ADD_VLIST(vhead, vg->coord, BN_VLIST_LINE_MOVE);
 	    }
 	    isfirst = 0;
