@@ -30,7 +30,6 @@
 #include "nurb.h"
 #include "brep.h"
 
-extern struct rt_g RTG;
 
 extern "C" void
 rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)

@@ -62,8 +62,6 @@ struct tmp_v {
     struct vertex *v;
 };
 
-__declspec(dllimport) extern struct rt_g RTG;
-
 
 /**
  * Calculate the bounding box for an N-Manifold Geometry

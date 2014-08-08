@@ -159,6 +159,90 @@ rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t
 }
 
 
+int
+rt_in_rpp(struct xray *rp,
+	  register const fastf_t *invdir,	/* inverses of rp->r_dir[] */
+	  register const fastf_t *min,
+	  register const fastf_t *max)
+{
+    register const fastf_t *pt = &rp->r_pt[0];
+    register fastf_t sv;
+#define st sv			/* reuse the register */
+    register fastf_t rmin = -MAX_FASTF;
+    register fastf_t rmax =  MAX_FASTF;
+
+    /* Start with infinite ray, and trim it down */
+
+    /* X axis */
+    if (*invdir < -SMALL_FASTF) {
+	/* Heading towards smaller numbers */
+	/* if (*min > *pt) miss */
+	if (rmax > (sv = (*min - *pt) * *invdir))
+	    rmax = sv;
+	if (rmin < (st = (*max - *pt) * *invdir))
+	    rmin = st;
+    }  else if (*invdir > SMALL_FASTF) {
+	/* Heading towards larger numbers */
+	/* if (*max < *pt) miss */
+	if (rmax > (st = (*max - *pt) * *invdir))
+	    rmax = st;
+	if (rmin < ((sv = (*min - *pt) * *invdir)))
+	    rmin = sv;
+    } else {
+	/*
+	 * Direction cosines along this axis is NEAR 0,
+	 * which implies that the ray is perpendicular to the axis,
+	 * so merely check position against the boundaries.
+	 */
+	if ((*min > *pt) || (*max < *pt))
+	    return 0;	/* MISS */
+    }
+
+    /* Y axis */
+    pt++; invdir++; max++; min++;
+    if (*invdir < -SMALL_FASTF) {
+	if (rmax > (sv = (*min - *pt) * *invdir))
+	    rmax = sv;
+	if (rmin < (st = (*max - *pt) * *invdir))
+	    rmin = st;
+    }  else if (*invdir > SMALL_FASTF) {
+	if (rmax > (st = (*max - *pt) * *invdir))
+	    rmax = st;
+	if (rmin < ((sv = (*min - *pt) * *invdir)))
+	    rmin = sv;
+    } else {
+	if ((*min > *pt) || (*max < *pt))
+	    return 0;	/* MISS */
+    }
+
+    /* Z axis */
+    pt++; invdir++; max++; min++;
+    if (*invdir < -SMALL_FASTF) {
+	if (rmax > (sv = (*min - *pt) * *invdir))
+	    rmax = sv;
+	if (rmin < (st = (*max - *pt) * *invdir))
+	    rmin = st;
+    }  else if (*invdir > SMALL_FASTF) {
+	if (rmax > (st = (*max - *pt) * *invdir))
+	    rmax = st;
+	if (rmin < ((sv = (*min - *pt) * *invdir)))
+	    rmin = sv;
+    } else {
+	if ((*min > *pt) || (*max < *pt))
+	    return 0;	/* MISS */
+    }
+
+    /* If equal, RPP is actually a plane */
+    if (rmin > rmax)
+	return 0;	/* MISS */
+
+    /* HIT.  Only now do rp->r_min and rp->r_max have to be written */
+    rp->r_min = rmin;
+    rp->r_max = rmax;
+    return 1;		/* HIT */
+}
+
+
 /**
  * Traverse the passed tree using rt_db_internals to show the way
  * This function supports rt_bound_internal and is internal to librt

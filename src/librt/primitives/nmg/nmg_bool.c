@@ -45,7 +45,7 @@
 #include "plot3.h"
 
 
-//extern int nmg_class_nothing_broken;
+extern int nmg_class_nothing_broken;
 
 /* XXX Move to nmg_manif.c or nmg_ck.c */
 struct dangling_faceuse_state {
@@ -56,70 +56,7 @@ struct dangling_faceuse_state {
 
 
 int debug_file_count=0;
-extern struct rt_g RTG;
 
-
-/**
- * Store an NMG model as a separate .g file, for later examination.
- * Don't free the model, as the caller may still have uses for it.
- *
- * NON-PARALLEL because of rt_uniresource.
- */
-void
-nmg_stash_shell_to_file(const char *filename, const struct shell *s, const char *title)
-{
-    struct rt_wdb *fp;
-    struct rt_db_internal intern;
-    struct bu_external ext;
-    int ret;
-    int flags;
-    char *name="error.s";
-
-    bu_log("nmg_stash_shell_to_file('%s', %p, %s)\n", filename, (void *)s, title);
-
-    NMG_CK_SHELL(s);
-    nmg_vsshell(s);
-
-    if ((fp = wdb_fopen(filename)) == NULL) {
-	perror(filename);
-	return;
-    }
-
-    RT_DB_INTERNAL_INIT(&intern);
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_NMG;
-    intern.idb_meth = &OBJ[ID_NMG];
-    intern.idb_ptr = (void *)s;
-
-    if (db_version(fp->dbip) < 5) {
-	BU_EXTERNAL_INIT(&ext);
-	ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
-	if (ret < 0) {
-	    bu_log("rt_db_put_internal(%s):  solid export failure\n",
-		   name);
-	    ret = -1;
-	    goto out;
-	}
-	db_wrap_v4_external(&ext, name);
-    } else {
-	if (rt_db_cvt_to_external5(&ext, name, &intern, 1.0, fp->dbip, &rt_uniresource, intern.idb_major_type) < 0) {
-	    bu_log("wdb_export4(%s): solid export failure\n",
-		   name);
-	    ret = -2;
-	    goto out;
-	}
-    }
-    BU_CK_EXTERNAL(&ext);
-
-    flags = db_flags_internal(&intern);
-    ret = wdb_export_external(fp, &ext, name, flags, intern.idb_type);
-out:
-    bu_free_external(&ext);
-    wdb_close(fp);
-
-    bu_log("nmg_stash_shell_to_file(): wrote error.s to '%s'\n",
-	   filename);
-}
 
 /**
  * Find open edges, if any, in NMG object pointed to by magic_p and
@@ -926,9 +863,9 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	classlist[i] = (char *)bu_calloc(nelem, sizeof(char), "nmg_bool classlist");
     }
 
-    //nmg_class_nothing_broken = 1;
+    nmg_class_nothing_broken = 1;
     if (RTG.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
-	nmg_show_broken_classifier_stuff((uint32_t *)sA, &classlist[0], 1 /*nmg_class_nothing_broken*/, 1, "unclassed sA");
+	nmg_show_broken_classifier_stuff((uint32_t *)sA, &classlist[0], nmg_class_nothing_broken, 1, "unclassed sA");
 	nmg_show_broken_classifier_stuff((uint32_t *)sB, &classlist[4], 1, 1, "unclassed sB");
     }
 
@@ -961,7 +898,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     if (RTG.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
-	//nmg_class_nothing_broken = 1;
+	nmg_class_nothing_broken = 1;
 
 	/* Show each loop, one at a time, non-fancy */
 	/* XXX Should have its own bit, or combination -- not always wanted */
@@ -1032,7 +969,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
 	/* Do this before table size changes */
 	if (RTG.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
-	    //nmg_class_nothing_broken = 1;
+	    nmg_class_nothing_broken = 1;
 
 	    /* Show final result of the boolean */
 	    nmg_show_broken_classifier_stuff((uint32_t *)sA, &classlist[0], 1, 0, "sA result");

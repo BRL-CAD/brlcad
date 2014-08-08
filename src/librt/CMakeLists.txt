@@ -28,11 +28,11 @@ set(LIBRT_SOURCES
   binunif/db5_bin.c
   bool.c
   bundle.c
+  cmd.c
   comb/comb.c
   comb/comb_brep.cpp
   comb/comb_mirror.c
   comb/db_comb.c
-  cmd.c
   constraint.c
   cut.c
   db5_alloc.c
@@ -58,13 +58,17 @@ set(LIBRT_SOURCES
   db_tree.c
   db_walk.c
   dir.c
+  dspline.c
   fortray.c
+  globals.c
   htbl.c
   ls.c
-  mkbundle.c
   many.c
   mater.c
   memalloc.c
+  mkbundle.c
+  oslo_calc.c
+  oslo_map.c
   pr.c
   prep.c
   primitives/arb8/arb8.c
@@ -87,8 +91,30 @@ set(LIBRT_SOURCES
   primitives/brep/brep_debug.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_mirror.c
+  primitives/bspline/nurb_basis.c
+  primitives/bspline/nurb_bezier.c
+  primitives/bspline/nurb_bound.c
   primitives/bspline/nurb_brep.cpp
+  primitives/bspline/nurb_c2.c
+  primitives/bspline/nurb_copy.c
+  primitives/bspline/nurb_diff.c
+  primitives/bspline/nurb_eval.c
+  primitives/bspline/nurb_flat.c
+  primitives/bspline/nurb_interp.c
+  primitives/bspline/nurb_knot.c
+  primitives/bspline/nurb_norm.c
+  primitives/bspline/nurb_plot.c
+  primitives/bspline/nurb_poly.c
+  primitives/bspline/nurb_ray.c
+  primitives/bspline/nurb_refine.c
+  primitives/bspline/nurb_reverse.c
+  primitives/bspline/nurb_solve.c
+  primitives/bspline/nurb_split.c
   primitives/bspline/nurb_tess.c
+  primitives/bspline/nurb_trim.c
+  primitives/bspline/nurb_trim_util.c
+  primitives/bspline/nurb_util.c
+  primitives/bspline/nurb_xsplit.c
   primitives/cline/cline.c
   primitives/cline/cline_brep.cpp
   primitives/dsp/dsp.c
@@ -127,9 +153,31 @@ set(LIBRT_SOURCES
   primitives/mirror.c
   primitives/nmg/nmg.c
   primitives/nmg/nmg_bool.c
+  primitives/nmg/nmg_ck.c
   primitives/nmg/nmg_brep.cpp
+  primitives/nmg/nmg_class.c
+  primitives/nmg/nmg_copy.c
+  primitives/nmg/nmg_eval.c
+  primitives/nmg/nmg_extrude.c
+  primitives/nmg/nmg_fcut.c
+  primitives/nmg/nmg_fuse.c
+  primitives/nmg/nmg_index.c
+  primitives/nmg/nmg_info.c
+  primitives/nmg/nmg_inter.c
+  primitives/nmg/nmg_manif.c
+  primitives/nmg/nmg_mesh.c
   primitives/nmg/nmg_mirror.c
+  primitives/nmg/nmg_misc.c
+  primitives/nmg/nmg_mk.c
+  primitives/nmg/nmg_mod.c
+  primitives/nmg/nmg_plot.c
+  primitives/nmg/nmg_pr.c
+  primitives/nmg/nmg_pt_fu.c
+  primitives/nmg/nmg_rt_isect.c
+  primitives/nmg/nmg_rt_segs.c
+  primitives/nmg/nmg_tri.c
   primitives/nmg/nmg_tri_mc.c
+  primitives/nmg/nmg_visit.c
   primitives/obj_adjust.c
   primitives/obj_curve.c
   primitives/obj_describe.c
@@ -202,18 +250,20 @@ set(LIBRT_SOURCES
   transform.c
   tree.c
   vers.c
+  vlist.c
   vshoot.c
   wdb.c
-  ../libnmg/globals.c
   )
 
 set(librt_ignored_files
+  columnparse.c
   librt_private.h
+  namegen.c
   test_nurbsfit.cpp
   test_bot2nurbs.cpp
   test_root3-subd.cpp
-  search.h
   subd_test_bot.asc
+  prcomb.c
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
   primitives/bot/bot_wireframe.cpp
@@ -225,16 +275,28 @@ set(librt_ignored_files
   primitives/dsp/dsp.h
   primitives/fixpt.h
   primitives/metaball/metaball.h
+  primitives/nmg/nmg_junk.c
   primitives/revolve/revolve.h
   primitives/xxx/xxx.c
   primitives/xxx/xxx.h
+  search.h
+  timer-nt.c
+  timerhep.c
+  timerunix.c
+  uvpoints.cpp
   )
 CMAKEFILES(${librt_ignored_files})
 
 BRLCAD_ADDDATA(nurb_example.c sample_applications)
 BRLCAD_ADDDATA(raydebug.tcl sample_applications)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${GDIAM_LIBRARY};${VDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;libnmg;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
+if(MSVC)
+  set(LIBRT_SOURCES ${LIBRT_SOURCES} timer-nt.c)
+else(MSVC)
+  set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
+endif(MSVC)
+
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${GDIAM_LIBRARY};${VDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)

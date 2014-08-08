@@ -61,16 +61,6 @@
 
 extern int nmg_class_nothing_broken;
 
-int nmg_get_class_nothing_broken()
-{
-    return nmg_class_nothing_broken;
-}
-
-void nmg_set_class_nothing_broken(const int value)
-{
-    nmg_class_nothing_broken = value;
-}
-
 /* Structure for keeping track of how close a point/vertex is to
  * its potential neighbors.
  */
@@ -1638,6 +1628,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, const struc
 		    bu_log("wrote %s\n", buf);
 		}
 		nmg_pr_lu(lu, "");
+		nmg_stash_shell_to_file("class.g", nmg_find_shell((uint32_t *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
 		bu_free((char *)b, "nmg_pl_lu flag[]");
 	    }
 

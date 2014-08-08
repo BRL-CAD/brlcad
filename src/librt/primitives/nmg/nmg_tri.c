@@ -1129,6 +1129,9 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 	    pdv_3line(fp, p2->vu_p->v_p->vg_p->coord, cut_end);
 
 	    (void)fclose(fp);
+	    nmg_stash_shell_to_file("bad_tri_cut.g",
+				    nmg_find_shell(&p1->vu_p->l.magic), buf);
+
 	    bu_bomb("cut_mapped_loop() goodnight 3\n");
 	}
     }
@@ -1973,6 +1976,7 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
 
 	my_m2 = nmg_find_model(lu_tmp->up.magic_p);
 	NMG_CK_MODEL(my_m2);
+	nmg_stash_model_to_file("holes_removed.g", my_m2, "holes_removed");
     }
 #endif
 
@@ -2417,6 +2421,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 		eu = BU_LIST_FIRST(edgeuse, &(current->vu_p->up.eu_p->up.lu_p->down_hd));
 		nmg_plot_lu_around_eu("cut_unimonotone_infinite_loopuse", eu, tol);
 		s = nmg_find_shell(current->vu_p->up.eu_p->up.lu_p->up.magic_p);
+		nmg_stash_shell_to_file("cut_unimonotone_infinite_model.g", s, "cut_unimonotone_infinite_model");
 		nmg_pr_lu(current->vu_p->up.eu_p->up.lu_p, "cut_unimonotone_loopuse");
 		nmg_plot_fu("cut_unimonotone_infinite_loopuse", current->vu_p->up.eu_p->up.lu_p->up.fu_p, tol);
 	    }
@@ -3657,6 +3662,9 @@ triangulate:
 
     if (RTG.NMG_debug & DEBUG_TRI) {
 	sprintf(db_name, "uni%d.g", iter);
+	nmg_stash_model_to_file(db_name,
+				nmg_find_model(&fu->s_p->l.magic),
+				"triangles and unimonotones");
     }
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
@@ -3664,6 +3672,9 @@ triangulate:
 
     if (RTG.NMG_debug & DEBUG_TRI) {
 	sprintf(db_name, "uni_sj%d.g", iter);
+	nmg_stash_model_to_file(db_name,
+				nmg_find_model(&fu->s_p->l.magic),
+				"after split_at_touching_jaunt");
     }
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
@@ -3671,6 +3682,9 @@ triangulate:
 
     if (RTG.NMG_debug & DEBUG_TRI) {
 	sprintf(db_name, "uni_split%d.g", iter++);
+	nmg_stash_model_to_file(db_name,
+				nmg_find_model(&fu->s_p->l.magic),
+				"split triangles and unimonotones");
     }
 
     /* now we're left with a face that has some triangle loops and some
@@ -3694,6 +3708,9 @@ triangulate:
 
 		    if (RTG.NMG_debug & DEBUG_TRI) {
 			sprintf(db_name, "uni_mono%d.g", monotone++);
+			nmg_stash_model_to_file(db_name,
+						nmg_find_model(&fu->s_p->l.magic),
+						"newly cut unimonotone");
 		    }
 
 		    break;

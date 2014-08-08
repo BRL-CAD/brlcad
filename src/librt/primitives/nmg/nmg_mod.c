@@ -3180,7 +3180,7 @@ top:
     /* If we ever get here, we have failed to find a way to split this loop!!!! */
     bu_log("nmg_loop_split_at_touching_jaunt: Could not find a way to split lu %p\n", (void *)lu);
     nmg_pr_lu_briefly(lu, " ");
-    //nmg_stash_shell_to_file("jaunt.g", nmg_find_shell(&lu->l.magic), "Can't split lu");
+    nmg_stash_shell_to_file("jaunt.g", nmg_find_shell(&lu->l.magic), "Can't split lu");
     bu_bomb("nmg_loop_split_at_touching_jaunt: Can't split lu\n");
 
     /* This return will never execute, but the compilers like it */

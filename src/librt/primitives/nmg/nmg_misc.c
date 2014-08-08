@@ -3809,6 +3809,69 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
 }
 
 
+/**
+ * Store an NMG model as a separate .g file, for later examination.
+ * Don't free the model, as the caller may still have uses for it.
+ *
+ * NON-PARALLEL because of rt_uniresource.
+ */
+void
+nmg_stash_shell_to_file(const char *filename, const struct shell *s, const char *title)
+{
+    struct rt_wdb *fp;
+    struct rt_db_internal intern;
+    struct bu_external ext;
+    int ret;
+    int flags;
+    char *name="error.s";
+
+    bu_log("nmg_stash_shell_to_file('%s', %p, %s)\n", filename, (void *)s, title);
+
+    NMG_CK_SHELL(s);
+    nmg_vsshell(s);
+
+    if ((fp = wdb_fopen(filename)) == NULL) {
+	perror(filename);
+	return;
+    }
+
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_NMG;
+    intern.idb_meth = &OBJ[ID_NMG];
+    intern.idb_ptr = (void *)s;
+
+    if (db_version(fp->dbip) < 5) {
+	BU_EXTERNAL_INIT(&ext);
+	ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
+	if (ret < 0) {
+	    bu_log("rt_db_put_internal(%s):  solid export failure\n",
+		   name);
+	    ret = -1;
+	    goto out;
+	}
+	db_wrap_v4_external(&ext, name);
+    } else {
+	if (rt_db_cvt_to_external5(&ext, name, &intern, 1.0, fp->dbip, &rt_uniresource, intern.idb_major_type) < 0) {
+	    bu_log("wdb_export4(%s): solid export failure\n",
+		   name);
+	    ret = -2;
+	    goto out;
+	}
+    }
+    BU_CK_EXTERNAL(&ext);
+
+    flags = db_flags_internal(&intern);
+    ret = wdb_export_external(fp, &ext, name, flags, intern.idb_type);
+out:
+    bu_free_external(&ext);
+    wdb_close(fp);
+
+    bu_log("nmg_stash_model_to_file(): wrote error.s to '%s'\n",
+	   filename);
+}
+
+
 /* state for nmg_unbreak_edge */
 struct nmg_unbreak_state
 {
