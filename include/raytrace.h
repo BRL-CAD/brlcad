@@ -2224,6 +2224,8 @@ struct rt_functab {
 
 RT_EXPORT extern const struct rt_functab OBJ[];
 
+RT_EXPORT extern int nmg_class_nothing_broken;
+
 #define RT_CK_FUNCTAB(_p) BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");
 
 
@@ -7810,6 +7812,20 @@ RT_EXPORT extern struct rt_tree_array *nmg_tree_leaf_flatten(union tree *tp, con
 
 RT_EXPORT extern void nmg_tree_leaf_flatten_helper(struct rt_tree_array *tree_array, union tree* tp, int *array_index);
 
+
+RT_EXPORT extern void rt_constraint_ifree(struct rt_db_internal *ip);
+
+RT_EXPORT extern int rt_constraint_export5(struct bu_external *ep,
+					   const struct rt_db_internal *ip,
+					   double UNUSED(local2mm),
+					   const struct db_i *dbip,
+					   struct resource *resp);
+
+RT_EXPORT extern int rt_constraint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t UNUSED(mat), const struct db_i *dbip, struct resource *resp);
+
+RT_EXPORT extern void rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *);
+
+RT_EXPORT extern fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);
 
 __END_DECLS
 
