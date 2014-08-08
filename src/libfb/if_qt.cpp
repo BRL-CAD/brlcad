@@ -48,7 +48,7 @@
 class QMainWindow: public QWindow {
 
 public:
-    QMainWindow(QImage *image, QWindow *parent = 0);
+    QMainWindow(FBIO *ifp, QImage *image, QWindow *parent = 0);
     ~QMainWindow();
 
     virtual void render(QPainter *painter);
@@ -62,6 +62,7 @@ protected:
     void exposeEvent(QExposeEvent *event);
 
 private:
+    FBIO *ifp;
     QImage *image;
     QBackingStore *m_backingStore;
     bool m_update_pending;
@@ -573,7 +574,7 @@ qt_setup(FBIO *ifp, int width, int height)
 
     qi->qi_image = new QImage(qi->qi_pix, width, height, QImage::Format_RGB888);
 
-    qi->win = new QMainWindow(qi->qi_image);
+    qi->win = new QMainWindow(ifp, qi->qi_image);
     qi->win->setWidth(width);
     qi->win->setHeight(height);
     qi->win->show();
@@ -1077,6 +1078,72 @@ qt_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigne
 }
 
 
+HIDDEN void
+qt_handle_event(FBIO *ifp, QEvent *event)
+{
+    struct qtinfo *qi = QI(ifp);
+    FB_CK_FBIO(ifp);
+
+    switch (event->type()) {
+	case QEvent::MouseButtonPress:
+	    {
+		QMouseEvent *ev = (QMouseEvent *)event;
+		int button = ev->button();
+
+		switch (button) {
+		    case Qt::LeftButton:
+			break;
+		    case Qt::MiddleButton:
+			{
+			    int x, sy;
+			    int ix, isy;
+			    unsigned char *cp;
+
+			    x = ev->x();
+			    sy = qi->qi_qheight - ev->y() - 1;
+
+			    x -= qi->qi_xlf;
+			    sy -= qi->qi_qheight - qi->qi_xbt - 1;
+			    if (x < 0 || sy < 0) {
+				fb_log("No RGB (outside image) 1\n");
+				break;
+			    }
+
+			    if (x < qi->qi_ilf_w)
+				ix = qi->qi_ilf;
+			    else
+				ix = qi->qi_ilf + (x - qi->qi_ilf_w + ifp->if_xzoom - 1) / ifp->if_xzoom;
+
+			    if (sy < qi->qi_ibt_h)
+				isy = qi->qi_ibt;
+			    else
+				isy = qi->qi_ibt + (sy - qi->qi_ibt_h + ifp->if_yzoom - 1) / ifp->if_yzoom;
+
+			    if (ix >= qi->qi_iwidth || isy >= qi->qi_iheight) {
+				fb_log("No RGB (outside image) 2\n");
+				break;
+			    }
+
+			    cp = &(qi->qi_mem[(isy*qi->qi_iwidth + ix)*3]);
+			    fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
+				   ix, isy, cp[0], cp[1], cp[2]);
+
+			    break;
+			}
+		    case Qt::RightButton:
+			qi->qapp->exit();
+			break;
+		}
+		break;
+	    }
+	default:
+	    break;
+    }
+
+    return;
+}
+
+
 HIDDEN int
 qt_poll(FBIO *UNUSED(ifp))
 {
@@ -1178,13 +1245,14 @@ FBIO qt_interface =  {
  * ===================================================== Main window class ===============================================
  */
 
-QMainWindow::QMainWindow(QImage *img, QWindow *win)
+QMainWindow::QMainWindow(FBIO *fb, QImage *img, QWindow *win)
     : QWindow(win)
     , m_update_pending(false)
 {
     m_backingStore = new QBackingStore(this);
     create();
     image = img;
+    ifp = fb;
 }
 
 QMainWindow::~QMainWindow()
@@ -1214,6 +1282,9 @@ bool QMainWindow::event(QEvent *ev)
 	renderNow();
 	return true;
     }
+
+    qt_handle_event(ifp, ev);
+
     return QWindow::event(ev);
 }
 
