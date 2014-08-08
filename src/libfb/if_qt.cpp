@@ -836,8 +836,24 @@ qt_clear(FBIO *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-qt_read(FBIO *UNUSED(ifp), int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
+qt_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
+    struct qtinfo *qi = QI(ifp);
+    size_t maxcount;
+
+    FB_CK_FBIO(ifp);
+
+    /* check origin bounds */
+    if (x < 0 || x >= qi->qi_iwidth || y < 0 || y >= qi->qi_iheight)
+	return -1;
+
+    /* clip read length */
+    maxcount = qi->qi_iwidth * (qi->qi_iheight - y) - x;
+    if (count > maxcount)
+	count = maxcount;
+
+    memcpy(pixelp, &(qi->qi_mem[(y*qi->qi_iwidth + x)*sizeof(RGBpixel)]), count*sizeof(RGBpixel));
+
     fb_log("qt_read\n");
 
     return count;
@@ -927,7 +943,8 @@ qt_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     ifp->if_xzoom = xzoom;
     ifp->if_yzoom = yzoom;
 
-    /* TODO make changes */
+    qt_updstate(ifp);
+    qt_update(ifp, 0, 0, qi->qi_iwidth, qi->qi_iheight);
 
     fb_log("qt_view\n");
 
@@ -977,20 +994,86 @@ qt_getcursor(FBIO *UNUSED(ifp), int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y
 
 
 HIDDEN int
-qt_readrect(FBIO *UNUSED(ifp), int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
+qt_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
+    struct qtinfo *qi = QI(ifp);
+    FB_CK_FBIO(ifp);
+
+    /* Clip arguments */
+    if (xmin < 0)
+	xmin = 0;
+    if (ymin < 0)
+	ymin = 0;
+    if (xmin + width > qi->qi_iwidth)
+	width = qi->qi_iwidth - xmin;
+    if (ymin + height > qi->qi_iheight)
+	height = qi->qi_iheight - ymin;
+
+    /* Do copy to backing store */
+    if (xmin == 0 && width == qi->qi_iwidth) {
+	/* We can do it all in one copy */
+	memcpy(pp, &(qi->qi_mem[ymin * qi->qi_iwidth *
+				sizeof (RGBpixel)]),
+	       width * height * sizeof (RGBpixel));
+    } else {
+	/* Need to do individual lines */
+	int ht = height;
+	unsigned char *p = &(qi->qi_mem[(ymin * qi->qi_iwidth + xmin) *
+					sizeof (RGBpixel)]);
+
+	while (ht--) {
+	    memcpy(pp, p, width * sizeof (RGBpixel));
+	    p += qi->qi_iwidth * sizeof (RGBpixel);
+	    pp += width * sizeof (RGBpixel);
+	}
+    }
+
     fb_log("qt_readrect\n");
 
-    return width*height;
+    return width * height;
 }
 
 
 HIDDEN int
-qt_writerect(FBIO *UNUSED(ifp), int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
+qt_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
+    struct qtinfo *qi = QI(ifp);
+    FB_CK_FBIO(ifp);
+
+    /* Clip arguments */
+    if (xmin < 0)
+	xmin = 0;
+    if (ymin < 0)
+	ymin = 0;
+    if (xmin + width > qi->qi_iwidth)
+	width = qi->qi_iwidth - xmin;
+    if (ymin + height > qi->qi_iheight)
+	height = qi->qi_iheight - ymin;
+
+    /* Do copy to backing store */
+    if (xmin == 0 && width == qi->qi_iwidth) {
+	/* We can do it all in one copy */
+	memcpy(&(qi->qi_mem[ymin * qi->qi_iwidth * sizeof (RGBpixel)]),
+	       pp, width * height * sizeof (RGBpixel));
+    } else {
+	/* Need to do individual lines */
+	int ht = height;
+	unsigned char *p = &(qi->qi_mem[(ymin * qi->qi_iwidth + xmin) *
+					sizeof (RGBpixel)]);
+
+	while (ht--) {
+	    memcpy(p, pp, width * sizeof (RGBpixel));
+	    p += qi->qi_iwidth * sizeof (RGBpixel);
+	    pp += width * sizeof (RGBpixel);
+	}
+    }
+
+    /* Flush to screen */
+    qt_update(ifp, xmin, ymin, width, height);
+
     fb_log("qt_writerect\n");
 
-    return width*height;
+    return width * height;
 }
 
 
