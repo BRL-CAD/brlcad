@@ -141,7 +141,7 @@ Wgl_fb_open()
 			 (char *)NULL);
 	return;
     }
-    (void)fb_set_interface(fbp, "wgl");
+    fb_set_interface(fbp, "wgl");
     fb_set_name(fbp, wgl_name);
     /* Mark OK by filling in magic number */
     fb_set_magic(fbp, FB_MAGIC);

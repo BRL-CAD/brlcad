@@ -188,7 +188,7 @@ X_fb_open(void)
 	return;
     }
 
-    (void)fb_set_interface(fbp, "X24");
+    fb_set_interface(fbp, "X24");
     fb_set_name(fbp, X_name);
     /* Mark OK by filling in magic number */
     fb_set_magic(fbp, FB_MAGIC);

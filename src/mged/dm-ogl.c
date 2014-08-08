@@ -160,7 +160,7 @@ Ogl_fb_open()
 	return;
     }
 
-    (void)fb_set_interface(fbp, "ogl");
+    fb_set_interface(fbp, "ogl");
     fb_set_name(fbp, ogl_name);
     /* Mark OK by filling in magic number */
     fb_set_magic(fbp, FB_MAGIC);

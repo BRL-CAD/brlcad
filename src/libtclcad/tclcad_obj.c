@@ -13231,7 +13231,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
     switch (gdvp->gdv_dmp->dm_type) {
 #ifdef DM_X
 	case DM_TYPE_X:
-	    (void)fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "X24");
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "X24");
 	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/X");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
@@ -13251,7 +13251,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 #if 0
 /* XXX TJM implement _tk_open_existing */
 	case DM_TYPE_TK:
-	    (void)fb_set_interface(gdvp->gdv_fbs.fbs_fbp, &tk_interface);
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, &tk_interface);
 	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/tk");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
@@ -13271,7 +13271,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
-	    (void)fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "ogl");
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "ogl");
 	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/ogl");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
@@ -13292,7 +13292,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 #ifdef DM_OSG
 	case DM_TYPE_OSG:
 #if 0
-	    (void)fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "osg");
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "osg");
 	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/osg");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
@@ -13313,7 +13313,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
-	    (void)fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "wgl");
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "wgl");
 	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/wgl");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
@@ -13333,7 +13333,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 #endif
 #ifdef DM_QT
 	case DM_TYPE_QT:
-	    (void)fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "Qt");
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "Qt");
 	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/Qt");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
