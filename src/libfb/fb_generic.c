@@ -48,44 +48,20 @@
 #include "fb_private.h"
 #include "fb.h"
 
-static const char *fb_type_strings[] = {
-#ifdef IF_X
-    "X",
-    "X24",
-#endif
-#ifdef IF_OGL
-    "ogl",
-#endif
+/**
+ * First element of list is default device when no name given
+ */
+static
+fb_s *_if_list[] = {
 #ifdef IF_WGL
-    "wgl",
-#endif
-#ifdef IF_TK
-    "tk",
-#endif
-#ifdef IF_QT
-    "qt",
-#endif
-#ifdef IF_REMOTE
-    "remote",
-#endif
-    "debug",
-    "disk",
-    "stk",
-    "memory",
-    "null",
-    NULL
-};
-
-static fb_s *fb_type_structs[] = {
-#ifdef IF_X
-    &X_interface,
-    &X24_interface,
+    &wgl_interface,
 #endif
 #ifdef IF_OGL
     &ogl_interface,
 #endif
-#ifdef IF_WGL
-    &wgl_interface,
+#ifdef IF_X
+    &X24_interface,
+    &X_interface,
 #endif
 #ifdef IF_TK
     &tk_interface,
@@ -93,17 +69,14 @@ static fb_s *fb_type_structs[] = {
 #ifdef IF_QT
     &qt_interface,
 #endif
-#ifdef IF_REMOTE
-    &remote_interface,
-#endif
+
     &debug_interface,
-    &disk_interface,
+/* never get any of the following by default */
     &stk_interface,
     &memory_interface,
     &null_interface,
-    FB_NULL
+    (fb_s *) 0
 };
-
 
 fb_s *fb_get()
 {
@@ -122,19 +95,17 @@ void fb_put(fb_s *ifp)
 void fb_set_interface(fb_s *ifp, const char *interface)
 {
     int i = 0;
-    fb_s *curr_interface = fb_type_structs[i];
-    fb_s *new_interface = FB_NULL;
     if (!ifp) return;
-    while (curr_interface != FB_NULL && new_interface == FB_NULL) {
-	if (!strcasecmp(interface, fb_type_strings[i])) {
-	    new_interface = curr_interface;
+    while (_if_list[i] != FB_NULL) {
+	if (bu_strncmp(interface, _if_list[i]->if_name+5,
+		    strlen(_if_list[i]->if_name-5)) == 0) {
+	    /* found it, copy its struct in */
+	    *ifp = *(_if_list[i]);
+	    return;
 	} else {
-	    curr_interface = fb_type_structs[i+1];
 	    i++;
 	}
     }
-    if (new_interface == FB_NULL) new_interface = &null_interface;
-    *ifp = *new_interface;
 }
 
 #if 0
@@ -370,36 +341,6 @@ int fb_null_setcursor(fb_s *ifp, const unsigned char *UNUSED(bits), int UNUSED(x
     return 0;
 }
 
-
-/**
- * First element of list is default device when no name given
- */
-static
-fb_s *_if_list[] = {
-#ifdef IF_WGL
-    &wgl_interface,
-#endif
-#ifdef IF_OGL
-    &ogl_interface,
-#endif
-#ifdef IF_X
-    &X24_interface,
-    &X_interface,
-#endif
-#ifdef IF_TK
-    &tk_interface,
-#endif
-#ifdef IF_QT
-    &qt_interface,
-#endif
-
-    &debug_interface,
-/* never get any of the following by default */
-    &stk_interface,
-    &memory_interface,
-    &null_interface,
-    (fb_s *) 0
-};
 
 
 fb_s *
