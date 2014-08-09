@@ -59,8 +59,6 @@
 #define ON_SURF 64
 #define OUTSIDE 128
 
-extern int nmg_class_nothing_broken;
-
 /* Structure for keeping track of how close a point/vertex is to
  * its potential neighbors.
  */

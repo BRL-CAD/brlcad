@@ -45,8 +45,6 @@
 #include "plot3.h"
 
 
-extern int nmg_class_nothing_broken;
-
 /* XXX Move to nmg_manif.c or nmg_ck.c */
 struct dangling_faceuse_state {
     char *visited;

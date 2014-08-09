@@ -3161,6 +3161,40 @@ out:
 }
 
 
+/**
+ * Number of bytes used for each value of DB5HDR_WIDTHCODE_*
+ */
+const int db5_enc_len[4] = {
+    1,
+    2,
+    4,
+    8
+};
+
+/**
+ * this array depends on the values of the definitions of the
+ * DB5_MINORTYPE_BINU_* in db5.h
+ */
+const char *binu_types[] = {
+    NULL,
+    NULL,
+    "binary(float)",
+    "binary(double)",
+    "binary(u_8bit_int)",
+    "binary(u_16bit_int)",
+    "binary(u_32bit_int)",
+    "binary(u_64bit_int)",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    "binary(8bit_int)",
+    "binary(16bit_int)",
+    "binary(32bit_int)",
+    "binary(64bit_int)"
+};
+
+
 /*
  * Local Variables:
  * mode: C

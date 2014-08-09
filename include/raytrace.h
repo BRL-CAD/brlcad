@@ -64,6 +64,18 @@ __BEGIN_DECLS
 
 #include "./rt/defines.h"
 
+#ifndef NMG_EXPORT
+#  if defined(NMG_DLL_EXPORTS) && defined(NMG_DLL_IMPORTS)
+#    error "Only NMG_DLL_EXPORTS or NMG_DLL_IMPORTS can be defined, not both."
+#  elif defined(NMG_DLL_EXPORTS)
+#    define NMG_EXPORT __declspec(dllexport)
+#  elif defined(NMG_DLL_IMPORTS)
+#    define NMG_EXPORT __declspec(dllimport)
+#  else
+#    define NMG_EXPORT
+#  endif
+#endif
+
 /**
  * Each type of debugging support is independently controlled, by a
  * separate bit in the word RT_G_DEBUG
@@ -1476,7 +1488,7 @@ struct resource {
 /**
  * Resources for uniprocessor
  */
-RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/globals.c */
+NMG_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/globals.c */
 #define RESOURCE_NULL	((struct resource *)0)
 #define RT_CK_RESOURCE(_p) BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
@@ -1694,7 +1706,7 @@ struct rt_g {
 /**
  * global ray-trace geometry state
  */
-RT_EXPORT extern struct rt_g RTG;
+NMG_EXPORT extern struct rt_g RTG;
 
 /* Normally set when in production mode, setting the RT_G_DEBUG define
  * to 0 will allow chucks of code to poof away at compile time (since
@@ -6853,22 +6865,22 @@ RT_EXPORT extern void nmg_cnurb_to_vlist(struct bu_list *vhead,
 /**
  * global nmg animation plot callback
  */
-RT_EXPORT extern void (*nmg_plot_anim_upcall)(void);
+NMG_EXPORT extern void (*nmg_plot_anim_upcall)(void);
 
 /**
  * global nmg animation vblock callback
  */
-RT_EXPORT extern void (*nmg_vlblock_anim_upcall)(void);
+NMG_EXPORT extern void (*nmg_vlblock_anim_upcall)(void);
 
 /**
  * global nmg mged display debug callback
  */
-RT_EXPORT extern void (*nmg_mged_debug_display_hack)(void);
+NMG_EXPORT extern void (*nmg_mged_debug_display_hack)(void);
 
 /**
  * edge use distance tolerance
  */
-RT_EXPORT extern double nmg_eue_dist;
+NMG_EXPORT extern double nmg_eue_dist;
 
 
 /* from nmg_mesh.c */
@@ -7723,13 +7735,13 @@ RT_EXPORT extern void rt_binunif_dump(struct rt_binunif_internal *bip);
  *
  * shared with rt/do.c
  */
-RT_EXPORT extern fastf_t rt_cline_radius;
+NMG_EXPORT extern fastf_t rt_cline_radius;
 
 /* defined in bot.c */
 /* TODO - these global variables need to be rolled in to the rt_i structure */
-RT_EXPORT extern size_t rt_bot_minpieces;
-RT_EXPORT extern size_t rt_bot_tri_per_piece;
-RT_EXPORT extern size_t rt_bot_mintie;
+NMG_EXPORT extern size_t rt_bot_minpieces;
+NMG_EXPORT extern size_t rt_bot_tri_per_piece;
+NMG_EXPORT extern size_t rt_bot_mintie;
 RT_EXPORT extern int rt_bot_sort_faces(struct rt_bot_internal *bot,
 				       size_t tris_per_piece);
 RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
@@ -7747,8 +7759,8 @@ RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
  * Also used by converters in conv/ directory.  Don't forget to
  * initialize ts_dbip before use.
  */
-RT_EXPORT extern const struct db_tree_state rt_initial_tree_state;
-RT_EXPORT extern const char *rt_vlist_cmd_descriptions[];
+NMG_EXPORT extern const struct db_tree_state rt_initial_tree_state;
+NMG_EXPORT extern const char *rt_vlist_cmd_descriptions[];
 
 
 /** @file librt/vers.c
@@ -7810,6 +7822,11 @@ RT_EXPORT extern struct rt_tree_array *nmg_tree_leaf_flatten(union tree *tp, con
 
 RT_EXPORT extern void nmg_tree_leaf_flatten_helper(struct rt_tree_array *tree_array, union tree* tp, int *array_index);
 
+NMG_EXPORT extern int nmg_class_nothing_broken;
+
+RT_EXPORT extern const int db5_enc_len[4];
+
+RT_EXPORT extern const char *binu_types[];
 
 __END_DECLS
 
