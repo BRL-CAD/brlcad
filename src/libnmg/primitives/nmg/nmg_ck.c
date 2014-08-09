@@ -1246,8 +1246,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 		     p[0], p[1], p[2], q[0], q[1], q[2]);
 
 	    snprintf(file, 128, "radial%d.g", num++);
-	    nmg_stash_model_to_file(file,
-				    nmg_find_model(&(fu->l.magic)), buf);
+	    //nmg_stash_shell_to_file(file, nmg_find_model(&(fu->l.magic)), buf);
 
 	    nmg_pr_fu_around_eu(eu_orig, tol);
 

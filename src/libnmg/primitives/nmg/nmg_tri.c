@@ -1129,8 +1129,8 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 	    pdv_3line(fp, p2->vu_p->v_p->vg_p->coord, cut_end);
 
 	    (void)fclose(fp);
-	    nmg_stash_shell_to_file("bad_tri_cut.g",
-				    nmg_find_shell(&p1->vu_p->l.magic), buf);
+	    //nmg_stash_shell_to_file("bad_tri_cut.g",
+				 //   nmg_find_shell(&p1->vu_p->l.magic), buf);
 
 	    bu_bomb("cut_mapped_loop() goodnight 3\n");
 	}
@@ -1976,7 +1976,7 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
 
 	my_m2 = nmg_find_model(lu_tmp->up.magic_p);
 	NMG_CK_MODEL(my_m2);
-	nmg_stash_model_to_file("holes_removed.g", my_m2, "holes_removed");
+	//nmg_stash_shell_to_file("holes_removed.g", my_m2, "holes_removed");
     }
 #endif
 
@@ -2421,7 +2421,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 		eu = BU_LIST_FIRST(edgeuse, &(current->vu_p->up.eu_p->up.lu_p->down_hd));
 		nmg_plot_lu_around_eu("cut_unimonotone_infinite_loopuse", eu, tol);
 		s = nmg_find_shell(current->vu_p->up.eu_p->up.lu_p->up.magic_p);
-		nmg_stash_shell_to_file("cut_unimonotone_infinite_model.g", s, "cut_unimonotone_infinite_model");
+		//nmg_stash_shell_to_file("cut_unimonotone_infinite_model.g", s, "cut_unimonotone_infinite_model");
 		nmg_pr_lu(current->vu_p->up.eu_p->up.lu_p, "cut_unimonotone_loopuse");
 		nmg_plot_fu("cut_unimonotone_infinite_loopuse", current->vu_p->up.eu_p->up.lu_p->up.fu_p, tol);
 	    }
@@ -3662,9 +3662,9 @@ triangulate:
 
     if (RTG.NMG_debug & DEBUG_TRI) {
 	sprintf(db_name, "uni%d.g", iter);
-	nmg_stash_model_to_file(db_name,
-				nmg_find_model(&fu->s_p->l.magic),
-				"triangles and unimonotones");
+	//nmg_stash_shell_to_file(db_name,
+	//			nmg_find_model(&fu->s_p->l.magic),
+	//			"triangles and unimonotones");
     }
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
@@ -3672,9 +3672,9 @@ triangulate:
 
     if (RTG.NMG_debug & DEBUG_TRI) {
 	sprintf(db_name, "uni_sj%d.g", iter);
-	nmg_stash_model_to_file(db_name,
-				nmg_find_model(&fu->s_p->l.magic),
-				"after split_at_touching_jaunt");
+	//nmg_stash_shell_to_file(db_name,
+	//			nmg_find_model(&fu->s_p->l.magic),
+	//			"after split_at_touching_jaunt");
     }
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
@@ -3797,6 +3797,89 @@ nmg_triangulate_shell(struct shell *s, const struct bn_tol *tol)
     if (UNLIKELY(RTG.NMG_debug & DEBUG_TRI)) {
 	bu_log("nmg_triangulate_shell(): Triangulating NMG shell completed.\n");
     }
+}
+
+int
+rt_in_rpp(struct xray *rp,
+	  register const fastf_t *invdir,	/* inverses of rp->r_dir[] */
+	  register const fastf_t *min,
+	  register const fastf_t *max)
+{
+    register const fastf_t *pt = &rp->r_pt[0];
+    register fastf_t sv;
+#define st sv			/* reuse the register */
+    register fastf_t rmin = -MAX_FASTF;
+    register fastf_t rmax =  MAX_FASTF;
+
+    /* Start with infinite ray, and trim it down */
+
+    /* X axis */
+    if (*invdir < -SMALL_FASTF) {
+	/* Heading towards smaller numbers */
+	/* if (*min > *pt) miss */
+	if (rmax > (sv = (*min - *pt) * *invdir))
+	    rmax = sv;
+	if (rmin < (st = (*max - *pt) * *invdir))
+	    rmin = st;
+    }  else if (*invdir > SMALL_FASTF) {
+	/* Heading towards larger numbers */
+	/* if (*max < *pt) miss */
+	if (rmax > (st = (*max - *pt) * *invdir))
+	    rmax = st;
+	if (rmin < ((sv = (*min - *pt) * *invdir)))
+	    rmin = sv;
+    } else {
+	/*
+	 * Direction cosines along this axis is NEAR 0,
+	 * which implies that the ray is perpendicular to the axis,
+	 * so merely check position against the boundaries.
+	 */
+	if ((*min > *pt) || (*max < *pt))
+	    return 0;	/* MISS */
+    }
+
+    /* Y axis */
+    pt++; invdir++; max++; min++;
+    if (*invdir < -SMALL_FASTF) {
+	if (rmax > (sv = (*min - *pt) * *invdir))
+	    rmax = sv;
+	if (rmin < (st = (*max - *pt) * *invdir))
+	    rmin = st;
+    }  else if (*invdir > SMALL_FASTF) {
+	if (rmax > (st = (*max - *pt) * *invdir))
+	    rmax = st;
+	if (rmin < ((sv = (*min - *pt) * *invdir)))
+	    rmin = sv;
+    } else {
+	if ((*min > *pt) || (*max < *pt))
+	    return 0;	/* MISS */
+    }
+
+    /* Z axis */
+    pt++; invdir++; max++; min++;
+    if (*invdir < -SMALL_FASTF) {
+	if (rmax > (sv = (*min - *pt) * *invdir))
+	    rmax = sv;
+	if (rmin < (st = (*max - *pt) * *invdir))
+	    rmin = st;
+    }  else if (*invdir > SMALL_FASTF) {
+	if (rmax > (st = (*max - *pt) * *invdir))
+	    rmax = st;
+	if (rmin < ((sv = (*min - *pt) * *invdir)))
+	    rmin = sv;
+    } else {
+	if ((*min > *pt) || (*max < *pt))
+	    return 0;	/* MISS */
+    }
+
+    /* If equal, RPP is actually a plane */
+    if (rmin > rmax)
+	return 0;	/* MISS */
+
+    /* HIT.  Only now do rp->r_min and rp->r_max have to be written */
+    rp->r_min = rmin;
+    rp->r_max = rmax;
+    return 1;		/* HIT */
 }
 
 
