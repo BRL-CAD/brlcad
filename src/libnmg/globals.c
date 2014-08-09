@@ -48,10 +48,6 @@ void (*nmg_mged_debug_display_hack)(void);
 
 double nmg_eue_dist = 0.05;
 
-
-
-
-
 fastf_t rt_cline_radius = (fastf_t)-1.0;
 
 /**

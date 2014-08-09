@@ -7786,42 +7786,6 @@ RT_EXPORT extern void nmg_comb_merge(struct rt_comb_internal *comb1, struct rt_c
  */
 RT_EXPORT extern union tree *nmg_tree_union(union tree *tr1, union tree *tr2);
 
-/**
- * Initialize combination for nmg.
- */
-RT_EXPORT extern void nmg_comb_init(struct rt_comb_internal *comb);
-
-/**
- * Initialize combination for nmg.
- */
-RT_EXPORT extern void nmg_comb_free(struct rt_comb_internal *comb);
-
-/**
- * Initialize tree for nmg.
- */
-RT_EXPORT extern void nmg_tree_init(union tree *tp);
-
-/**
- * Free tree for nmg.
- */
-RT_EXPORT extern void nmg_tree_free(union tree *tp);
-
-/**
- * Count the node in nmg tree.
- */
-RT_EXPORT extern int nmg_tree_node_count(union tree *tp);
-
-/**
- * Count the leaf in nmg tree.
- */
-RT_EXPORT extern int nmg_tree_leaf_count(union tree *tp);
-
-RT_EXPORT extern int nmg_tree_maxindex_count(union tree *tp);
-
-RT_EXPORT extern struct rt_tree_array *nmg_tree_leaf_flatten(union tree *tp, const int leaf_count);
-
-RT_EXPORT extern void nmg_tree_leaf_flatten_helper(struct rt_tree_array *tree_array, union tree* tp, int *array_index);
-
 NMG_EXPORT extern int nmg_class_nothing_broken;
 
 RT_EXPORT extern const int db5_enc_len[4];
