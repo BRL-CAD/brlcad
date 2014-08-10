@@ -1807,16 +1807,6 @@ NMG_EXPORT extern int nmg_break_edges(uint32_t *magic_p,
 				     const struct bn_tol *tol);
 NMG_EXPORT extern int nmg_lu_is_convex(struct loopuse *lu,
 				      const struct bn_tol *tol);
-NMG_EXPORT extern int nmg_to_arb(const struct shell *s,
-				struct rt_arb_internal *arb_int);
-NMG_EXPORT extern int nmg_to_tgc(const struct shell *s,
-				struct rt_tgc_internal *tgc_int,
-				const struct bn_tol *tol);
-NMG_EXPORT extern int nmg_to_poly(const struct shell *s,
-				 struct rt_pg_internal *poly_int,
-				 const struct bn_tol *tol);
-NMG_EXPORT extern struct rt_bot_internal *nmg_bot(struct shell *s,
-						 const struct bn_tol *tol);
 
 NMG_EXPORT extern int nmg_simplify_shell_edges(struct shell *s,
 					      const struct bn_tol *tol);

@@ -6299,6 +6299,17 @@ RT_EXPORT extern const int db5_enc_len[4];
 
 RT_EXPORT extern const char *binu_types[];
 
+RT_EXPORT extern int nmg_to_arb(const struct shell *s,
+				struct rt_arb_internal *arb_int);
+RT_EXPORT extern int nmg_to_tgc(const struct shell *s,
+				struct rt_tgc_internal *tgc_int,
+				const struct bn_tol *tol);
+RT_EXPORT extern int nmg_to_poly(const struct shell *s,
+				 struct rt_pg_internal *poly_int,
+				 const struct bn_tol *tol);
+RT_EXPORT extern struct rt_bot_internal *nmg_bot(struct shell *s,
+						 const struct bn_tol *tol);
+
 __END_DECLS
 
 #endif /* RAYTRACE_H */
