@@ -100,8 +100,8 @@ tk_dm_init(struct dm_list *o_dm_list,
 void
 tk_fb_open(void)
 {
-    fbp = (FBIO *)calloc(sizeof(FBIO), 1);
-    if (fbp == FBIO_NULL) {
+    fbp = (fb *)calloc(sizeof(fb), 1);
+    if (fbp == FB_NULL) {
 	Tcl_AppendResult(INTERP, "tk_dm_init: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;

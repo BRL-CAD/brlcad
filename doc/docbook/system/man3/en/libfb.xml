@@ -22,10 +22,10 @@
 	<funcsynopsis>
 
 		<funcprototype>
-			<funcdef><function>FBIO</function> *fb_open</funcdef>
+			<funcdef><function>fb</function> *fb_open</funcdef>
 			<paramdef>* <parameter>fbfile</parameter></paramdef>
-			<paramdef>int fb_close ( fbp ) FBIO * <parameter>fbp</parameter></paramdef>
-			<paramdef>int fb_read ( fbp , x , y , addr , count ) FBIO * <parameter>fbp</parameter></paramdef>
+			<paramdef>int fb_close ( fbp ) fb * <parameter>fbp</parameter></paramdef>
+			<paramdef>int fb_read ( fbp , x , y , addr , count ) fb * <parameter>fbp</parameter></paramdef>
 			<paramdef>RGBpixel <parameter>*addr;</parameter></paramdef>
 			<paramdef>long <parameter>count;</parameter></paramdef>
 		</funcprototype>
@@ -35,7 +35,7 @@
 			<paramdef>* <parameter>fbp</parameter></paramdef>
 			<paramdef>RGBpixel * <parameter>addr</parameter></paramdef>
 			<paramdef>long <parameter>count</parameter></paramdef>
-			<paramdef>int fb_rmap ( fbp , cmap ) FBIO * <parameter>fbp</parameter></paramdef>
+			<paramdef>int fb_rmap ( fbp , cmap ) fb * <parameter>fbp</parameter></paramdef>
 			<paramdef>ColorMap * <parameter>cmap</parameter></paramdef>
 		</funcprototype>
 
@@ -78,8 +78,8 @@
 		<funcprototype>
 			<funcdef>int <function>fb_cursor</function></funcdef>
 			<paramdef>* <parameter>fbp</parameter></paramdef>
-			<paramdef>int fb_scursor ( fbp , mode , x , y ) FBIO * <parameter>fbp</parameter></paramdef>
-			<paramdef>int fb_setcursor ( fbp , bits , xbits , ybits , xorig , yorig ) FBIO * <parameter>fbp</parameter></paramdef>
+			<paramdef>int fb_scursor ( fbp , mode , x , y ) fb * <parameter>fbp</parameter></paramdef>
+			<paramdef>int fb_setcursor ( fbp , bits , xbits , ybits , xorig , yorig ) fb * <parameter>fbp</parameter></paramdef>
 			<paramdef>unsigned char <parameter>bits</parameter>[]</paramdef>
             <paramdef>int <parameter>xbits</parameter>, <parameter>ybits</parameter>;</paramdef>
             <paramdef>int <parameter>xorig</parameter>, <parameter>yorig</parameter>;</paramdef>
@@ -88,14 +88,14 @@
 		<funcprototype>
 			<funcdef>int <function>fb_window</function></funcdef>
 			<paramdef>* <parameter>fbp</parameter></paramdef>
-			<paramdef>int fb_zoom ( fbp , x , y ) FBIO * <parameter>fbp</parameter></paramdef>
-			<paramdef>/ *Buffered frame buffer I/O: */ int fb_ioinit ( fbp ) FBIO * <parameter>fbp</parameter></paramdef>
+			<paramdef>int fb_zoom ( fbp , x , y ) fb * <parameter>fbp</parameter></paramdef>
+			<paramdef>/ *Buffered frame buffer I/O: */ int fb_ioinit ( fbp ) fb * <parameter>fbp</parameter></paramdef>
 		</funcprototype>
 
 		<funcprototype>
 			<funcdef>int <function>fb_seek</function></funcdef>
 			<paramdef>* <parameter>fbp</parameter></paramdef>
-			<paramdef>void fb_tell ( fbp , xp , yp ) FBIO * <parameter>fbp</parameter></paramdef>
+			<paramdef>void fb_tell ( fbp , xp , yp ) fb * <parameter>fbp</parameter></paramdef>
 			<paramdef>int *xp , * <parameter>yp</parameter></paramdef>
 		</funcprototype>
 
@@ -168,10 +168,10 @@
 			See below for more details. The <emphasis remap="I">width</emphasis>
 			and <emphasis remap="I">height</emphasis> parameters specify the initial
 			size of display desired. If these are zero the default sizes for that
-			device will be used. On a successful open, the frame buffer I/O (FBIO)
+			device will be used. On a successful open, the frame buffer I/O (fb)
 			structure pointer is returned. This structure contains size you were
 			actually given, as well as the maximum possible size for the selected
-			device. A return of FBIO_NULL indicates failure.
+			device. A return of fb_NULL indicates failure.
 		</para>
 		<para><emphasis remap="I">Fb_close</emphasis> simply closes the frame buffer.
 		</para>
@@ -214,11 +214,11 @@
 		</para>
 		<para><emphasis remap="I">Fb_gettype</emphasis>
 			returns a pointer to a string describing the frame buffer
-			specified by the FBIO pointer.
+			specified by the fb pointer.
 		</para>
 		<para><emphasis remap="I">Fb_getwidth</emphasis>
 			and <emphasis remap="I">Fb_getheight</emphasis>
-			returns the current size of the FBIO frame buffer.
+			returns the current size of the fb frame buffer.
 		</para>
 		<para>
 			The following routines work in conjunction with those described above
@@ -433,7 +433,7 @@
 			<emphasis remap="I">fb_flush</emphasis>
 			return -1 to indicate failure.
 			<emphasis remap="I">Fb_open</emphasis>
-			returns FBIO_NULL to indicate failure, and a non-null FBIO structure pointer
+			returns fb_NULL to indicate failure, and a non-null fb structure pointer
 			upon success.
 			<emphasis remap="I">fb_read</emphasis>,
 			and

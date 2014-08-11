@@ -709,7 +709,7 @@ qt_processEvents(struct dm *dmp)
 
 
 HIDDEN int
-qt_openFb(struct dm *dmp, FBIO *ifp)
+qt_openFb(struct dm *dmp, fb *ifp)
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 

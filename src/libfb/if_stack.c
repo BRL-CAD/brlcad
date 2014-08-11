@@ -112,6 +112,24 @@ stk_open(fb *ifp, const char *file, int width, int height)
 	return -1;
 }
 
+HIDDEN struct fb_platform_specific *
+stk_get_fbps(uint32_t UNUSED(magic))
+{
+        return NULL;
+}
+
+
+HIDDEN void
+stk_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+{
+        return;
+}
+
+HIDDEN int
+stk_open_existing(fb *UNUSED(ifp), struct fb_platform_specific *UNUSED(fb_p))
+{
+        return 0;
+}
 
 HIDDEN int
 stk_close(fb *ifp)
@@ -397,6 +415,9 @@ stk_help(fb *ifp)
 fb stk_interface =  {
     0,
     stk_open,		/* device_open */
+    stk_open_existing,	/* device_open */
+    stk_get_fbps,
+    stk_put_fbps,
     stk_close,		/* device_close */
     stk_clear,		/* device_clear */
     stk_read,		/* buffer_read */

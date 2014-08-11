@@ -161,7 +161,7 @@ Qt_fb_open(void)
 {
     char *Qt_name = "/dev/Qt";
 
-    if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+    if ((fbp = (fb *)calloc(sizeof(fb), 1)) == FB_NULL) {
 	Tcl_AppendResult(INTERP, "Qt_fb_open: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;

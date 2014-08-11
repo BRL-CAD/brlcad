@@ -70,6 +70,24 @@ deb_open(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
+HIDDEN struct fb_platform_specific *
+deb_get_fbps(uint32_t UNUSED(magic))
+{
+        return NULL;
+}
+
+
+HIDDEN void
+deb_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+{
+        return;
+}
+
+HIDDEN int
+deb_open_existing(fb *UNUSED(ifp), struct fb_platform_specific *UNUSED(fb_p))
+{
+        return 0;
+}
 
 HIDDEN int
 deb_close(fb *ifp)
@@ -327,6 +345,9 @@ Usage: /dev/debug[#]\n\
 fb debug_interface = {
     0,
     deb_open,
+    deb_open_existing,
+    deb_get_fbps,
+    deb_put_fbps,
     deb_close,
     deb_clear,
     deb_read,

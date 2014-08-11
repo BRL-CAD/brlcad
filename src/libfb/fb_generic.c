@@ -78,6 +78,17 @@ fb *_if_list[] = {
     (fb *) 0
 };
 
+#define FB_WGL_MAGIC    0x574f4642 /**< WOFB */
+#define FB_OGL_MAGIC    0x584f4642 /**< XOFB */
+#define FB_X24_MAGIC    0x58324642 /**< X2FB */
+#define FB_X_MAGIC      0x58304642 /**< X0FB */
+#define FB_TK_MAGIC     0x544b4642 /**< TKFB */
+#define FB_QT_MAGIC     0x51544642 /**< QTFB */
+#define FB_DEBUG_MAGIC  0x44424642 /**< DBFB */
+#define FB_STK_MAGIC    0x53544642 /**< STFB */
+#define FB_MEMORY_MAGIC 0x4d454642 /**< MEFB */
+#define FB_NULL_MAGIC   0x4e554642 /**< NUFB */
+
 fb *fb_get()
 {
     struct fb_internal *new_fb = FB_NULL;
@@ -106,6 +117,114 @@ void fb_set_interface(fb *ifp, const char *interface)
 	    i++;
 	}
     }
+}
+
+struct fb_platform_specific *
+fb_get_platform_specific(uint32_t magic)
+{
+    switch(magic) {
+	case FB_WGL_MAGIC:
+#ifdef IF_WGL
+	    return wgl_interface.if_existing_get(magic);
+#endif
+	    break;
+	case FB_OGL_MAGIC:
+#ifdef IF_OGL
+	    return ogl_interface.if_existing_get(magic);
+#endif
+	    break;
+	case FB_X24_MAGIC:
+#ifdef IF_X
+	    return X24_interface.if_existing_get(magic);
+#endif
+	    break;
+	case FB_X_MAGIC:
+#ifdef IF_X
+	    return X_interface.if_existing_get(magic);
+#endif
+	    break;
+	case FB_TK_MAGIC:
+#ifdef IF_TK
+	    return tk_interface.if_existing_get(magic);
+#endif
+	    break;
+	case FB_QT_MAGIC:
+#ifdef IF_QT
+	    return qt_interface.if_existing_get(magic);
+#endif
+	    break;
+	case FB_DEBUG_MAGIC:
+	    return debug_interface.if_existing_get(magic);
+	    break;
+	case FB_STK_MAGIC:
+	    return stk_interface.if_existing_get(magic);
+	    break;
+	case FB_MEMORY_MAGIC:
+	    return memory_interface.if_existing_get(magic);
+	    break;
+	case FB_NULL_MAGIC:
+	    return null_interface.if_existing_get(magic);
+	    break;
+
+	default:
+	    bu_log("Unknown framebuffer magic %d\n", magic);
+	    break;
+    }
+    return NULL;
+}
+
+void
+fb_put_platform_specific(uint32_t magic, struct fb_platform_specific *fb_p)
+{
+    switch(magic) {
+	case FB_WGL_MAGIC:
+#ifdef IF_WGL
+	    wgl_interface.if_existing_put(magic, fb_p);
+#endif
+	    break;
+	case FB_OGL_MAGIC:
+#ifdef IF_OGL
+	    ogl_interface.if_existing_put(magic, fb_p);
+#endif
+	    break;
+	case FB_X24_MAGIC:
+#ifdef IF_X
+	    X24_interface.if_existing_put(magic, fb_p);
+#endif
+	    break;
+	case FB_X_MAGIC:
+#ifdef IF_X
+	    X_interface.if_existing_put(magic, fb_p);
+#endif
+	    break;
+	case FB_TK_MAGIC:
+#ifdef IF_TK
+	    tk_interface.if_existing_put(magic, fb_p);
+#endif
+	    break;
+	case FB_QT_MAGIC:
+#ifdef IF_QT
+	    qt_interface.if_existing_put(magic, fb_p);
+#endif
+	    break;
+	case FB_DEBUG_MAGIC:
+	    debug_interface.if_existing_put(magic, fb_p);
+	    break;
+	case FB_STK_MAGIC:
+	    stk_interface.if_existing_put(magic, fb_p);
+	    break;
+	case FB_MEMORY_MAGIC:
+	    memory_interface.if_existing_put(magic, fb_p);
+	    break;
+	case FB_NULL_MAGIC:
+	    null_interface.if_existing_put(magic, fb_p);
+	    break;
+
+	default:
+	    bu_log("Unknown framebuffer magic %d\n", magic);
+	    break;
+    }
+    return;
 }
 
 #if 0

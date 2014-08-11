@@ -50,6 +50,25 @@ null_open(fb *ifp, const char *UNUSED(file), int width, int height)
     return 0;
 }
 
+HIDDEN struct fb_platform_specific *
+null_get_fbps(uint32_t UNUSED(magic))
+{
+        return NULL;
+}
+
+
+HIDDEN void
+null_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+{
+        return;
+}
+
+HIDDEN int
+null_open_existing(fb *UNUSED(ifp), struct fb_platform_specific *UNUSED(fb_p))
+{
+        return 0;
+}
+
 
 HIDDEN int
 null_close(fb *ifp)
@@ -221,6 +240,9 @@ null_help(fb *ifp)
 fb null_interface =  {
     0,
     null_open,		/* device_open */
+    null_open_existing,	/* existing device_open */
+    null_get_fbps,
+    null_put_fbps,
     null_close,		/* device_close */
     null_clear,		/* device_clear */
     null_read,		/* buffer_read */

@@ -136,7 +136,7 @@ Wgl_fb_open()
 {
     char *wgl_name = "/dev/wgl";
 
-    if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+    if ((fbp = (fb *)calloc(sizeof(fb), 1)) == FB_NULL) {
 	Tcl_AppendResult(INTERP, "Wgl_fb_open: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;

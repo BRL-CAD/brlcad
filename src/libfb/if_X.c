@@ -699,6 +699,25 @@ X_open_fb(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
+HIDDEN struct fb_platform_specific *
+X_get_fbps(uint32_t UNUSED(magic))
+{
+    return NULL;
+}
+
+
+HIDDEN void
+X_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+{
+    return;
+}
+
+HIDDEN int
+X_open_existing(fb *UNUSED(ifp), struct fb_platform_specific *UNUSED(fb_p))
+{
+    return 0;
+}
+
 
 static int alive = 1;
 
@@ -1696,7 +1715,10 @@ HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap
 /* This is the ONLY thing that we normally "export" */
 fb X_interface = {
     0,
-    X_open_fb,			/* device_open */
+    X_open_fb,		/* device_open */
+    X_open_existing,	/* existing device_open */
+    X_get_fbps,		/* get platform specific memory */
+    X_put_fbps,		/* free platform specific memory */
     X_close_fb,		/* device_close */
     X_clear,		/* device_clear */
     X_read,			/* buffer_read */

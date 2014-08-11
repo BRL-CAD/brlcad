@@ -91,7 +91,7 @@ typedef struct fb_internal fb;
 #define FB_NULL (fb *) 0
 
 /**
- * assert the integrity of an FBIO struct.
+ * assert the integrity of a framebuffer struct.
  */
 #define FB_CK_FB(_p) BU_CKMAG(_p, FB_MAGIC, "FB")
 
@@ -164,6 +164,8 @@ FB_EXPORT extern void fb_make_linear_cmap(ColorMap *cmap);
 
 /* open_existing functionality. */
 struct fb_platform_specific {uint32_t magic; void *data;};
+FB_EXPORT extern struct fb_platform_specific *fb_get_platform_specific(uint32_t magic);
+FB_EXPORT extern void fb_put_platform_specific(uint32_t magic, struct fb_platform_specific *fb_p);
 FB_EXPORT extern int fb_open_existing(fb *ifp, struct fb_platform_specific *fb_p);
 
 /* backward compatibility hacks */

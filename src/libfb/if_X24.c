@@ -2548,6 +2548,25 @@ X24_open(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
+HIDDEN struct fb_platform_specific *
+X24_get_fbps(uint32_t UNUSED(magic))
+{
+        return NULL;
+}
+
+
+HIDDEN void
+X24_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+{
+        return;
+}
+
+HIDDEN int
+X24_open_existing(fb *UNUSED(ifp), struct fb_platform_specific *UNUSED(fb_p))
+{
+        return 0;
+}
+
 
 void
 X24_configureWindow(fb *ifp, int width, int height)
@@ -2831,7 +2850,7 @@ _X24_open_existing(fb *ifp, Display *dpy, Window win, Window cwinp, Colormap cma
     return 0;
 }
 
-
+#if 0
 int
 X24_open_existing(fb *ifp, int argc, const char **argv)
 {
@@ -2873,6 +2892,7 @@ X24_open_existing(fb *ifp, int argc, const char **argv)
 
     return _X24_open_existing(ifp, dpy, win, cwinp, cmap, vip, width, height, gc);
 }
+#endif
 
 
 static int alive = 1;
@@ -3503,6 +3523,9 @@ X24_refresh(fb *ifp, int x, int y, int w, int h)
 fb X24_interface =  {
     0,			/* magic number slot */
     X24_open,		/* open device */
+    X24_open_existing,    /* existing device_open */
+    X24_get_fbps,         /* get platform specific memory */
+    X24_put_fbps,         /* free platform specific memory */
     X24_close,		/* close device */
     X24_clear,		/* clear device */
     X24_read,		/* read pixels */

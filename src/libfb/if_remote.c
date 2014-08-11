@@ -285,6 +285,24 @@ rem_open(register fb *ifp, const char *file, int width, int height)
     return 0;		/* OK */
 }
 
+HIDDEN struct fb_platform_specific *
+rem_get_fbps(uint32_t UNUSED(magic))
+{
+        return NULL;
+}
+
+
+HIDDEN void
+rem_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+{
+        return;
+}
+
+HIDDEN int
+rem_open_existing(fb *UNUSED(ifp), struct fb_platform_specific *UNUSED(fb_p))
+{
+        return 0;
+}
 
 HIDDEN int
 rem_close(fb *ifp)
@@ -749,6 +767,9 @@ pkgerror(struct pkg_conn *UNUSED(pcpp), char *buf)
 fb remote_interface = {
     0,
     rem_open,
+    rem_open_existing,
+    rem_get_fbps,
+    rem_put_fbps,
     rem_close,
     rem_clear,
     rem_read,

@@ -1359,6 +1359,27 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 }
 
 
+HIDDEN struct fb_platform_specific *
+ogl_get_fbps(uint32_t UNUSED(magic))
+{
+        return NULL;
+}
+
+
+HIDDEN void
+ogl_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+{
+        return;
+}
+
+HIDDEN int
+ogl_open_existing(fb *UNUSED(ifp), struct fb_platform_specific *UNUSED(fb_p))
+{
+        return 0;
+}
+
+
+
 int
 _ogl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
 {
@@ -1424,7 +1445,7 @@ _ogl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo
     return 0;
 }
 
-
+#if 0
 int
 ogl_open_existing(fb *ifp, int argc, const char **argv)
 {
@@ -1471,7 +1492,7 @@ ogl_open_existing(fb *ifp, int argc, const char **argv)
     return _ogl_open_existing(ifp, dpy, win, cmap, vip, width, height,
 			      glxc, double_buffer, soft_cmap);
 }
-
+#endif
 
 HIDDEN int
 ogl_final_close(fb *ifp)
@@ -2381,6 +2402,9 @@ fb ogl_interface =
 {
     0,			/* magic number slot */
     fb_ogl_open,	/* open device */
+    ogl_open_existing,    /* existing device_open */
+    ogl_get_fbps,         /* get platform specific memory */
+    ogl_put_fbps,         /* free platform specific memory */
     fb_ogl_close,	/* close device */
     ogl_clear,		/* clear device */
     ogl_read,		/* read pixels */

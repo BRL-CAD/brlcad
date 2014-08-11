@@ -186,6 +186,24 @@ mem_open(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
+HIDDEN struct fb_platform_specific *
+mem_get_fbps(uint32_t UNUSED(magic))
+{
+        return NULL;
+}
+
+
+HIDDEN void
+mem_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+{
+        return;
+}
+
+HIDDEN int
+mem_open_existing(fb *UNUSED(ifp), struct fb_platform_specific *UNUSED(fb_p))
+{
+        return 0;
+}
 
 HIDDEN int
 mem_close(fb *ifp)
@@ -435,6 +453,9 @@ mem_help(fb *ifp)
 fb memory_interface =  {
     0,
     mem_open,		/* device_open */
+    mem_open_existing,	/* existing device_open */
+    mem_get_fbps,
+    mem_put_fbps,
     mem_close,		/* device_close */
     mem_clear,		/* device_clear */
     mem_read,		/* buffer_read */

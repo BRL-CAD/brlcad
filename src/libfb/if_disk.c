@@ -100,6 +100,25 @@ dsk_open(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
+HIDDEN struct fb_platform_specific *
+dsk_get_fbps(uint32_t UNUSED(magic))
+{
+        return NULL;
+}
+
+
+HIDDEN void
+dsk_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+{
+        return;
+}
+
+HIDDEN int
+dsk_open_existing(fb *UNUSED(ifp), struct fb_platform_specific *UNUSED(fb_p))
+{
+        return 0;
+}
+
 
 HIDDEN int
 dsk_close(fb *ifp)
@@ -322,6 +341,9 @@ dsk_help(fb *ifp)
 fb disk_interface = {
     0,
     dsk_open,
+    dsk_open_existing,
+    dsk_get_fbps,
+    dsk_put_fbps,
     dsk_close,
     dsk_clear,
     dsk_read,

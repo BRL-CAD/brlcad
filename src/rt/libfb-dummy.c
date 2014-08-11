@@ -26,11 +26,11 @@
 
 #include "fb.h"
 
-FBIO *
+fb *
 fb_open( name, w, h )
     char *name;
 {
-    return FBIO_NULL;
+    return FB_NULL;
 }
 
 int

@@ -280,6 +280,25 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
+HIDDEN struct fb_platform_specific *
+tk_get_fbps(uint32_t UNUSED(magic))
+{
+        return NULL;
+}
+
+
+HIDDEN void
+tk_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+{
+        return;
+}
+
+HIDDEN int
+tk_open_existing(fb *UNUSED(ifp), struct fb_platform_specific *UNUSED(fb_p))
+{
+        return 0;
+}
+
 
 HIDDEN int
 fb_tk_close(fb *ifp)
@@ -545,6 +564,9 @@ Usage: /dev/tk[#]\n\
 fb tk_interface = {
     0,
     fb_tk_open,
+    tk_open_existing,
+    tk_get_fbps,
+    tk_put_fbps,
     fb_tk_close,
     tk_clear,
     tk_read,
