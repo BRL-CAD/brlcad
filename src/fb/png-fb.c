@@ -69,7 +69,6 @@ static double def_screen_gamma=1.0;	/* Don't add more gamma, by default */
 static char usage[] = "\
 Usage: png-fb [-H -i -c -v -z -1] [-m #lines] [-F framebuffer]\n\
 	[-g screen_gamma]\n\
-	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.png]\n";
 
@@ -78,7 +77,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "1m:g:HicvzF:s:x:y:X:Y:S:W:N:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "1m:g:HicvzF:x:y:X:Y:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case '1':
 		one_line_only = 1;

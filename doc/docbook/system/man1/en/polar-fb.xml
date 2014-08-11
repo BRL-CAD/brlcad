@@ -115,7 +115,7 @@ pixels.</para>
   <varlistentry>
   <term><option>-a </option><replaceable>u</replaceable> <replaceable>v</replaceable></term>
   <listitem>
-<para>Plot only the portion of the npf between <emphasis remap="I">u</emphasis> and <emphasis remap="I">v</emphasis> degrees
+<para>Plot only the portion of the npf between <emphasis remap="I">u</emphasis> and <emphasis remap="I">v</emphasis> degrees inclusive
 (i.e., <emphasis remap="I">u</emphasis> &lt;= theta &lt;= <emphasis remap="I">v</emphasis>).
 Default is <emphasis remap="I">u</emphasis>=0, <emphasis remap="I">v</emphasis>=360.</para>
   </listitem>
@@ -150,15 +150,6 @@ option.</para>
   <term><option>-g</option></term>
   <listitem>
 <para>Do not plot the polar grid.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-h</option></term>
-  <listitem>
-<para>Use high-resolution mode.
-The frame buffer is 1024x1024 pixels.
-This has the same effect as
-<option>-S 1024 .</option></para>
   </listitem>
   </varlistentry>
   <varlistentry>
