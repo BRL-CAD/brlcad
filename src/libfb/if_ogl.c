@@ -1373,7 +1373,7 @@ ogl_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-ogl_open_existing(fb *UNUSED(ifp), struct fb_platform_specific *UNUSED(fb_p))
+ogl_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }

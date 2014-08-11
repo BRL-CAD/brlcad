@@ -227,6 +227,15 @@ fb_put_platform_specific(uint32_t magic, struct fb_platform_specific *fb_p)
     return;
 }
 
+fb *
+fb_open_existing(const char *file, int width, int height, struct fb_platform_specific *fb_p)
+{
+    fb *ifp = (fb *) calloc(sizeof(fb), 1);
+    fb_set_interface(ifp, file);
+    ifp->if_open_existing(ifp, width, height, fb_p);
+    return ifp;
+}
+
 #if 0
 void fb_open_existing(fb *ifp, const char *interface)
 {

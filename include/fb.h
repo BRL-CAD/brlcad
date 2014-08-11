@@ -166,7 +166,7 @@ FB_EXPORT extern void fb_make_linear_cmap(ColorMap *cmap);
 struct fb_platform_specific {uint32_t magic; void *data;};
 FB_EXPORT extern struct fb_platform_specific *fb_get_platform_specific(uint32_t magic);
 FB_EXPORT extern void fb_put_platform_specific(uint32_t magic, struct fb_platform_specific *fb_p);
-FB_EXPORT extern int fb_open_existing(fb *ifp, struct fb_platform_specific *fb_p);
+FB_EXPORT extern fb *fb_open_existing(const char *file, int _width, int _height, struct fb_platform_specific *fb_p);
 
 /* backward compatibility hacks */
 FB_EXPORT extern int fb_reset(fb *ifp);
