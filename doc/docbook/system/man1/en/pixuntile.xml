@@ -11,13 +11,12 @@
 
 <refnamediv>
 <refname>pixuntile</refname>
-<refpurpose>break small images up into separate files</refpurpose>
+<refpurpose>break image up into separate files</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>pixuntile</command>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>in_height</replaceable></arg>
@@ -31,7 +30,6 @@
 </cmdsynopsis>
 <cmdsynopsis>
   <command>pixuntile</command>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>in_height</replaceable></arg>
@@ -48,7 +46,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixuntile</emphasis>
+<para><command>pixuntile</command>
 performs the inverse operation of
 <citerefentry><refentrytitle>pixtile</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 It takes a large image composed of a collection of small images and
@@ -57,20 +55,17 @@ The input and output files are
 assumed to be in
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format.
-By default, the input file is assumed to be 512x512 pixels in size.
-Specifying the
-<option>-h</option>
-flag, changes the default input size to 1024x1024 pixels.</para>
+By default, the input file is assumed to be 512x512 pixels in size.</para>
 
 <para>The output files have a default width of 64 pixels
 and are usually square, i.e. have the same height as width.
 Specifying the
 <option>-S</option>
-flag, changes the default size to
+flag changes the default size to
 <emphasis remap='I'>squareoutsize</emphasis>
 pixels in width and height.</para>
 
-<para>The files being produces as output will have names of the form
+<para>The files being produced as output will have names of the form
 <emphasis remap='I'>basename.num</emphasis>,
 where
 <emphasis remap='I'>basename</emphasis>
@@ -86,7 +81,7 @@ flag and specifying the starting output frame number, where
 is substituted for
 <emphasis remap='I'>num</emphasis>
 in
-<emphasis remap='I'>basename.num</emphasis></para>
+<emphasis remap='I'>basename.num</emphasis>.</para>
 
 <para>Alternatively, if more than one
 <emphasis remap='I'>basename</emphasis>
@@ -95,11 +90,11 @@ the names of the files are used as the output file names.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<para><userinput>pixuntile -h -S 128 out &lt; in.pix</userinput>
+<para><userinput>pixuntile -s 1024 -S 128 out &lt; in.pix</userinput>
 <!-- .br -->
 will read the 1024x1024 file
 <emphasis remap='I'>in.pix</emphasis>
-and place the 128x128 chucks of that file from
+and place the 128x128 chunks of that file from
 lower left to upper right in the files
 <emphasis remap='I'>out.0</emphasis>
 through
