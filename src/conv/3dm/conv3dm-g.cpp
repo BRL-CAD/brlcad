@@ -330,7 +330,7 @@ public:
 
     Color();
     Color(unsigned char red, unsigned char green, unsigned char blue);
-    Color(const ON_Color &src);
+    explicit Color(const ON_Color &src);
 
     bool operator==(const Color &other) const;
     bool operator!=(const Color &other) const;
@@ -443,13 +443,8 @@ inline RhinoConverter::Color::Color(unsigned char red, unsigned char green,
 }
 
 
-RhinoConverter::Color::Color(const ON_Color &src)
+inline RhinoConverter::Color::Color(const ON_Color &src)
 {
-    if (src.Red() < 0 || src.Red() > 255
-	|| src.Green() < 0 || src.Green() > 255
-	|| src.Blue() < 0 || src.Blue() > 255)
-	throw std::invalid_argument("invalid ON_Color");
-
     m_rgb[0] = static_cast<unsigned char>(src.Red());
     m_rgb[1] = static_cast<unsigned char>(src.Green());
     m_rgb[2] = static_cast<unsigned char>(src.Blue());
@@ -818,29 +813,9 @@ RhinoConverter::get_color(const ON_3dmObjectAttributes &obj_attrs) const
     if (m_random_colors)
 	return Color::random();
 
-    Color color;
-
-    switch (obj_attrs.ColorSource()) {
-	case ON::color_from_parent:
-	case ON::color_from_layer:
-	    color = at_ref<ON_Layer>(m_model.m_layer_table,
-				     obj_attrs.m_layer_index).m_color;
-	    break;
-
-	case ON::color_from_object:
-	    color = obj_attrs.m_color;
-	    break;
-
-	case ON::color_from_material:
-	    color = at_ref<ON_Material>(m_model.m_material_table,
-					obj_attrs.m_material_index).m_ambient;
-	    break;
-
-	default:
-	    throw std::out_of_range("unknown color source");
-    }
-
-    return color;
+    const Color UNSET_COLOR(128, 128, 128);
+    Color result = Color(m_model.WireframeColor(obj_attrs));
+    return result != UNSET_COLOR ? result : Color(0, 0, 0);
 }
 
 
@@ -850,7 +825,7 @@ RhinoConverter::get_color(const ON_Layer &layer) const
     if (m_random_colors)
 	return Color::random();
 
-    return layer.m_color;
+    return Color(layer.m_color);
 }
 
 
