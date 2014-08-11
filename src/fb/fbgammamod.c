@@ -101,9 +101,9 @@ do_file(void)
 void
 do_fb(void)
 {
-    FBIO *fbp;
+    fb *fbp;
 
-    if ((fbp = fb_open(framebuffer, 0, 0)) == FBIO_NULL) {
+    if ((fbp = fb_open(framebuffer, 0, 0)) == FB_NULL) {
 	bu_exit(2, "Unable to open framebuffer\n");
     }
     if (fb_wmap(fbp, &map) < 0)

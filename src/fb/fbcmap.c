@@ -651,7 +651,7 @@ main(int argc, char **argv)
     int fudge;
     ColorMap cmap;
     ColorMap *cp = &cmap;
-    FBIO *fbp;
+    fb *fbp;
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	usage();

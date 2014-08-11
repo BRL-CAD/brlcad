@@ -114,7 +114,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    FBIO *fbp;
+    fb *fbp;
     int y;
 
     unsigned char *scanline;	/* 1 scanline pixel buffer */

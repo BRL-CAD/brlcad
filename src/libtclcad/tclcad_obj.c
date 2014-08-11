@@ -88,6 +88,9 @@
 
 #include "brlcad_version.h"
 
+/* For open_existing functionality - need a better solution */
+#include "../libfb/fb_private.h"
+
 #define TO_UNLIMITED -1
 
 /*
@@ -2273,7 +2276,7 @@ to_configure(struct ged *gedp,
     status = DM_CONFIGURE_WIN(gdvp->gdv_dmp, 0);
 
     /* configure the framebuffer window */
-    if (gdvp->gdv_fbs.fbs_fbp != FBIO_NULL)
+    if (gdvp->gdv_fbs.fbs_fbp != FB_NULL)
 	fb_configureWindow(gdvp->gdv_fbs.fbs_fbp,
 			   gdvp->gdv_dmp->dm_width,
 			   gdvp->gdv_dmp->dm_height);
@@ -6266,7 +6269,7 @@ to_listen(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (gdvp->gdv_fbs.fbs_fbp == FBIO_NULL) {
+    if (gdvp->gdv_fbs.fbs_fbp == FB_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s listen: framebuffer not open!\n", argv[0]);
 	return GED_ERROR;
     }
@@ -10059,7 +10062,7 @@ to_new_view(struct ged *gedp,
     new_gdvp->gdv_fbs.fbs_listener.fbsl_fbsp = &new_gdvp->gdv_fbs;
     new_gdvp->gdv_fbs.fbs_listener.fbsl_fd = -1;
     new_gdvp->gdv_fbs.fbs_listener.fbsl_port = -1;
-    new_gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
+    new_gdvp->gdv_fbs.fbs_fbp = FB_NULL;
     new_gdvp->gdv_fbs.fbs_callback = (void (*)(void *clientData))to_fbs_callback;
     new_gdvp->gdv_fbs.fbs_clientData = new_gdvp;
     new_gdvp->gdv_fbs.fbs_interp = current_top->to_interp;
@@ -13165,12 +13168,12 @@ to_fbs_callback(void *clientData)
 HIDDEN int
 to_close_fbs(struct ged_dm_view *gdvp)
 {
-    if (gdvp->gdv_fbs.fbs_fbp == FBIO_NULL)
+    if (gdvp->gdv_fbs.fbs_fbp == FB_NULL)
 	return TCL_OK;
 
     fb_flush(gdvp->gdv_fbs.fbs_fbp);
     fb_close_existing(gdvp->gdv_fbs.fbs_fbp);
-    gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
+    gdvp->gdv_fbs.fbs_fbp = FB_NULL;
 
     return TCL_OK;
 }
@@ -13190,11 +13193,12 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 {
 
     /* already open */
-    if (gdvp->gdv_fbs.fbs_fbp != FBIO_NULL)
+    if (gdvp->gdv_fbs.fbs_fbp != FB_NULL)
 	return TCL_OK;
 
     /* don't use bu_calloc so we can fail slightly more gracefully */
-    if ((gdvp->gdv_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+    gdvp->gdv_fbs.fbs_fbp = fb_get();
+    if ((gdvp->gdv_fbs.fbs_fbp == FB_NULL)) {
 	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(interp);
@@ -13211,13 +13215,10 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
     switch (gdvp->gdv_dmp->dm_type) {
 #ifdef DM_X
 	case DM_TYPE_X:
-	    *gdvp->gdv_fbs.fbs_fbp = X24_interface; /* struct copy */
-
-	    gdvp->gdv_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
-	    bu_strlcpy(gdvp->gdv_fbs.fbs_fbp->if_name, "/dev/X", strlen("/dev/X")+1);
-
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "X24");
+	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/X");
 	    /* Mark OK by filling in magic number */
-	    gdvp->gdv_fbs.fbs_fbp->if_magic = FB_MAGIC;
+	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
 
 	    _X24_open_existing(gdvp->gdv_fbs.fbs_fbp,
 			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
@@ -13234,13 +13235,10 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 #if 0
 /* XXX TJM implement _tk_open_existing */
 	case DM_TYPE_TK:
-	    *gdvp->gdv_fbs.fbs_fbp = tk_interface; /* struct copy */
-
-	    gdvp->gdv_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/tk")+1, "if_name");
-	    bu_strlcpy(gdvp->gdv_fbs.fbs_fbp->if_name, "/dev/tk", strlen("/dev/tk")+1);
-
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, &tk_interface);
+	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/tk");
 	    /* Mark OK by filling in magic number */
-	    gdvp->gdv_fbs.fbs_fbp->if_magic = FB_MAGIC;
+	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
 
 	    _tk_open_existing(gdvp->gdv_fbs.fbs_fbp,
 			      ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
@@ -13257,13 +13255,10 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
-	    *gdvp->gdv_fbs.fbs_fbp = ogl_interface; /* struct copy */
-
-	    gdvp->gdv_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
-	    bu_strlcpy(gdvp->gdv_fbs.fbs_fbp->if_name, "/dev/ogl", strlen("/dev/ogl")+1);
-
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "ogl");
+	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/ogl");
 	    /* Mark OK by filling in magic number */
-	    gdvp->gdv_fbs.fbs_fbp->if_magic = FB_MAGIC;
+	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
 
 	    _ogl_open_existing(gdvp->gdv_fbs.fbs_fbp,
 			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
@@ -13281,13 +13276,10 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 #ifdef DM_OSG
 	case DM_TYPE_OSG:
 #if 0
-	    *gdvp->gdv_fbs.fbs_fbp = osg_interface; /* struct copy */
-
-	    gdvp->gdv_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/osg")+1, "if_name");
-	    bu_strlcpy(gdvp->gdv_fbs.fbs_fbp->if_name, "/dev/osg", strlen("/dev/osg")+1);
-
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "osg");
+	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/osg");
 	    /* Mark OK by filling in magic number */
-	    gdvp->gdv_fbs.fbs_fbp->if_magic = FB_MAGIC;
+	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
 
 	    _osg_open_existing(gdvp->gdv_fbs.fbs_fbp,
 			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
@@ -13305,13 +13297,10 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
-	    *gdvp->gdv_fbs.fbs_fbp = wgl_interface; /* struct copy */
-
-	    gdvp->gdv_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/wgl")+1, "if_name");
-	    bu_strlcpy(gdvp->gdv_fbs.fbs_fbp->if_name, "/dev/wgl", strlen("/dev/wgl")+1);
-
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "wgl");
+	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/wgl");
 	    /* Mark OK by filling in magic number */
-	    gdvp->gdv_fbs.fbs_fbp->if_magic = FB_MAGIC;
+	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
 
 	    _wgl_open_existing(gdvp->gdv_fbs.fbs_fbp,
 			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
@@ -13328,13 +13317,10 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 #endif
 #ifdef DM_QT
 	case DM_TYPE_QT:
-	    *gdvp->gdv_fbs.fbs_fbp = qt_interface; /* struct copy */
-
-	    gdvp->gdv_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/Qt")+1, "if_name");
-	    bu_strlcpy(gdvp->gdv_fbs.fbs_fbp->if_name, "/dev/Qt", strlen("/dev/Qt")+1);
-
+	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "Qt");
+	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/Qt");
 	    /* Mark OK by filling in magic number */
-	    gdvp->gdv_fbs.fbs_fbp->if_magic = FB_MAGIC;
+	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
 
 	    gdvp->gdv_dmp->dm_openFb(gdvp->gdv_dmp, gdvp->gdv_fbs.fbs_fbp);
 
@@ -13344,7 +13330,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 	    Tcl_Obj *obj;
 
 	    free((void*)gdvp->gdv_fbs.fbs_fbp);
-	    gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
+	    gdvp->gdv_fbs.fbs_fbp = FB_NULL;
 
 	    obj = Tcl_GetObjResult(interp);
 	    if (Tcl_IsShared(obj))

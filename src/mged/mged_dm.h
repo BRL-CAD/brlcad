@@ -32,7 +32,7 @@
 #include "dm/dm_xvars.h"
 #include "dm/dm-Null.h"
 
-#include "fb.h" /* FBIO */
+#include "fb.h" /* fb */
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
 
@@ -396,7 +396,7 @@ struct _menu_state {
 struct dm_list {
     struct bu_list	l;
     struct dm		*dml_dmp;
-    FBIO			*dml_fbp;
+    fb			*dml_fbp;
     int			dml_netfd;			/* socket used to listen for connections */
 #if defined(_WIN32) && !defined(__CYGWIN__)
     Tcl_Channel		dml_netchan;

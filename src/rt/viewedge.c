@@ -109,7 +109,7 @@
 #endif
 
 
-extern FBIO *fbp;	/* Framebuffer handle */
+extern fb *fbp;	/* Framebuffer handle */
 extern fastf_t viewsize;
 extern int lightmodel;
 extern size_t width, height;
@@ -796,7 +796,7 @@ view_eol(struct application *ap)
 	bu_semaphore_release(BU_SEM_SYSCALL);
     } /* end blend */
 
-    else if (fbp != FBIO_NULL) {
+    else if (fbp != FB_NULL) {
 	/*
 	 * Simple whole scanline write to a framebuffer.
 	 */

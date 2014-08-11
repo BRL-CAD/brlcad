@@ -64,7 +64,7 @@ typedef struct
 }
 Panel;
 
-extern FBIO *fbp;
+extern fb *fbp;
 extern RGBpixel *menu_addr;
 extern RGBpixel paint;
 extern Point cursor_pos;

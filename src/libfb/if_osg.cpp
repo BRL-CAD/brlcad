@@ -34,6 +34,7 @@
 extern "C" {
 #include "bu/log.h"
 #include "bu/str.h"
+#include "fb_private.h"
 #include "fb.h"
 }
 
@@ -351,9 +352,9 @@ struct osginfo {
 
 
 HIDDEN int
-osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
+osg_open(fb *ifp, const char *UNUSED(file), int width, int height)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /* Get some memory for the osg specific stuff */
     if ((ifp->u6.p = (char *)calloc(1, sizeof(struct osginfo))) == NULL) {
@@ -409,34 +410,34 @@ osg_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
 }
 
 HIDDEN int
-osg_close(FBIO *ifp)
+osg_close(fb *ifp)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return (*OSG(ifp)->viewer).ViewerBase::run();
 }
 
 
 HIDDEN int
-osg_clear(FBIO *ifp, unsigned char *UNUSED(pp))
+osg_clear(fb *ifp, unsigned char *UNUSED(pp))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN ssize_t
-osg_read(FBIO *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
+osg_read(fb *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return count;
 }
 
 
 HIDDEN ssize_t
-osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
+osg_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     register int x;
     register int y;
@@ -446,7 +447,7 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 
     //fb_log("write got called!");
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /* fast exit cases */
     pix_count = count;
@@ -494,18 +495,18 @@ osg_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 
 
 HIDDEN int
-osg_rmap(FBIO *ifp, ColorMap *UNUSED(cmp))
+osg_rmap(fb *ifp, ColorMap *UNUSED(cmp))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-osg_wmap(FBIO *ifp, const ColorMap *UNUSED(cmp))
+osg_wmap(fb *ifp, const ColorMap *UNUSED(cmp))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     fb_log("wmap got called!");
 
@@ -514,9 +515,9 @@ osg_wmap(FBIO *ifp, const ColorMap *UNUSED(cmp))
 
 
 HIDDEN int
-osg_view(FBIO *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
+osg_view(fb *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
     fb_log("view was called!\n");
 
     /*fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);*/
@@ -525,9 +526,9 @@ osg_view(FBIO *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom),
 
 
 HIDDEN int
-osg_getview(FBIO *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
+osg_getview(fb *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /*fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);*/
     return 0;
@@ -535,18 +536,18 @@ osg_getview(FBIO *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(x
 
 
 HIDDEN int
-osg_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+osg_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-osg_cursor(FBIO *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
+osg_cursor(fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /*fb_sim_cursor(ifp, mode, x, y);*/
     return 0;
@@ -554,9 +555,9 @@ osg_cursor(FBIO *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 
 
 HIDDEN int
-osg_getcursor(FBIO *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
+osg_getcursor(fb *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /*fb_sim_getcursor(ifp, mode, x, y);*/
     return 0;
@@ -564,18 +565,18 @@ osg_getcursor(FBIO *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 
 
 HIDDEN int
-osg_readrect(FBIO *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
+osg_readrect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return width*height;
 }
 
 
 HIDDEN int
-osg_writerect(FBIO *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
+osg_writerect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     fb_log("writerect got called!");
 
@@ -584,18 +585,18 @@ osg_writerect(FBIO *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int heig
 
 
 HIDDEN int
-osg_poll(FBIO *ifp)
+osg_poll(fb *ifp)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-osg_flush(FBIO *ifp)
+osg_flush(fb *ifp)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     fb_log("flush was called!\n");
 
@@ -604,18 +605,18 @@ osg_flush(FBIO *ifp)
 
 
 HIDDEN int
-osg_free(FBIO *ifp)
+osg_free(fb *ifp)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-osg_help(FBIO *ifp)
+osg_help(fb *ifp)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     fb_log("Description: %s\n", osg_interface.if_type);
     fb_log("Device: %s\n", ifp->if_name);
@@ -631,32 +632,32 @@ osg_help(FBIO *ifp)
 
 /* Functions for pre-exising windows */
 extern "C" int
-osg_close_existing(FBIO *ifp)
+osg_close_existing(fb *ifp)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
     return 0;
 }
 
 extern "C" int
-_osg_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, int width, int height, osg::ref_ptr<osg::GraphicsContext> graphicsContext)
+_osg_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, int width, int height, osg::ref_ptr<osg::GraphicsContext> graphicsContext)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
     if (!dpy || !win || !cmap || !width || !height || !graphicsContext) return -1;
     return 0;
 }
 
 extern "C" int
-osg_open_existing(FBIO *ifp, int argc, const char **argv)
+osg_open_existing(fb *ifp, int argc, const char **argv)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
     if (argc != 10 || !argv) return -1;
 
     return 0;
 }
 
 extern "C" int
-osg_refresh(FBIO *ifp, int x, int y, int w, int h){
-    FB_CK_FBIO(ifp);
+osg_refresh(fb *ifp, int x, int y, int w, int h){
+    FB_CK_FB(ifp);
     if (!x || !y || !w || !h) return -1;
 
     fb_log("refresh got called!\n");
@@ -664,15 +665,15 @@ osg_refresh(FBIO *ifp, int x, int y, int w, int h){
 }
 
 extern "C" void
-osg_configureWindow(FBIO *ifp, int width, int height)
+osg_configureWindow(fb *ifp, int width, int height)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     if (!width || !height) return;
 }
 
 /* This is the ONLY thing that we normally "export" */
-FBIO osg_interface =  {
+fb osg_interface =  {
     0,
     osg_open,		/* device_open */
     osg_close,		/* device_close */

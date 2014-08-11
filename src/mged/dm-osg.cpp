@@ -102,7 +102,7 @@ Osg_fb_open()
 {
     const char *osg_name = "/dev/osg";
 
-    if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+    if ((fbp = (fb *)calloc(sizeof(fb), 1)) == fb_NULL) {
 	Tcl_AppendResult(INTERP, "Osg_fb_open: failed to allocate framebuffer memory\n",
 		(char *)NULL);
 	return;

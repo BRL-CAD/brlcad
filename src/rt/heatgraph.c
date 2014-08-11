@@ -245,7 +245,7 @@ timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *t
  * heat graph based on time taken for each pixel.
  */
 void
-timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fbp)
+timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *fbp)
 {
     fastf_t maxTime = -MAX_FASTF;		/* The 255 value */
     fastf_t minTime = MAX_FASTF; 		/* The 1 value */
@@ -313,7 +313,7 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fb
 	    p[1]=Gcolor;
 	    p[2]=Bcolor;
 
-	    if (fbp != FBIO_NULL) {
+	    if (fbp != FB_NULL) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		npix = fb_write(fbp, x, y, (unsigned char *)p, 1);
 		bu_semaphore_release(BU_SEM_SYSCALL);
@@ -322,7 +322,7 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fb
 	    }
 	}
     }
-    if (fbp != FBIO_NULL) {
+    if (fbp != FB_NULL) {
       zoomH = fb_getheight(fbp) / height;
       zoomW = fb_getwidth(fbp) / width;
       (void)fb_view(fbp, width/2, height/2, zoomH, zoomW);

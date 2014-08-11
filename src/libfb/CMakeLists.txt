@@ -76,6 +76,7 @@ set(libfb_ignore_files
   if_TEMPLATE.c
   if_osg.cpp
   if_qt.cpp
+  fb_private.h
   )
 CMAKEFILES(${libfb_ignore_files})
 

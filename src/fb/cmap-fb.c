@@ -91,7 +91,7 @@ main(int argc, char **argv)
     ColorMap cm;
     char usage[] = "Usage: cmap-fb [-H -o] [colormap]\n";
 
-    FBIO *fbp;
+    fb *fbp;
     FILE *fp;
     int fbsize = 512;
     int overlay = 0;
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 	    fprintf(stderr, "%s       Program continues running:\n", usage);
     }
 
-    if ((fbp = fb_open(NULL, fbsize, fbsize)) == FBIO_NULL)
+    if ((fbp = fb_open(NULL, fbsize, fbsize)) == FB_NULL)
 	bu_exit(3, "Unable to open framebuffer\n");
 
     if (overlay)

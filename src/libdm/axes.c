@@ -58,6 +58,10 @@ dm_draw_data_axes(struct dm *dmp,
     DM_SET_FGCOLOR(dmp, gdasp->gdas_color[0], gdasp->gdas_color[1], gdasp->gdas_color[2], 1, 1.0);
 
 #if defined(IF_OGL) || defined(IF_WGL)
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
+
     if (gdasp->gdas_draw > 1) {
 	if (dmp->dm_light)
 	    glDisable(GL_LIGHTING);
