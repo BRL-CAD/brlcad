@@ -52,7 +52,7 @@
  * First element of list is default device when no name given
  */
 static
-fb_s *_if_list[] = {
+fb *_if_list[] = {
 #ifdef IF_WGL
     &wgl_interface,
 #endif
@@ -75,24 +75,24 @@ fb_s *_if_list[] = {
     &stk_interface,
     &memory_interface,
     &null_interface,
-    (fb_s *) 0
+    (fb *) 0
 };
 
-fb_s *fb_get()
+fb *fb_get()
 {
-    struct fb *new_fb = FB_NULL;
-    BU_GET(new_fb, struct fb);
+    struct fb_internal *new_fb = FB_NULL;
+    BU_GET(new_fb, struct fb_internal);
     new_fb->if_name = NULL;
     return new_fb;
 }
 
-void fb_put(fb_s *ifp)
+void fb_put(fb *ifp)
 {
     if (ifp != FB_NULL)
-	BU_PUT(ifp, struct fb);
+	BU_PUT(ifp, struct fb_internal);
 }
 
-void fb_set_interface(fb_s *ifp, const char *interface)
+void fb_set_interface(fb *ifp, const char *interface)
 {
     int i = 0;
     if (!ifp) return;
@@ -109,11 +109,11 @@ void fb_set_interface(fb_s *ifp, const char *interface)
 }
 
 #if 0
-void fb_open_existing(fb_s *ifp, const char *interface)
+void fb_open_existing(fb *ifp, const char *interface)
 {
     int i = 0;
-    fb_s *curr_interface = fb_type_structs[i];
-    fb_s *new_interface = FB_NULL;
+    fb *curr_interface = fb_type_structs[i];
+    fb *new_interface = FB_NULL;
     if (!ifp) return;
     while (curr_interface != FB_NULL && new_interface == FB_NULL) {
 	if (!strcasecmp(interface, fb_type_strings[i])) {
@@ -128,7 +128,7 @@ void fb_open_existing(fb_s *ifp, const char *interface)
 }
 #endif
 
-void fb_set_name(fb_s *ifp, const char *name)
+void fb_set_name(fb *ifp, const char *name)
 {
     if (!ifp) return;
     /*if (ifp->if_name) bu_free(ifp->if_name, "free pre-existing fb name");*/
@@ -136,20 +136,20 @@ void fb_set_name(fb_s *ifp, const char *name)
     bu_strlcpy(ifp->if_name, name, strlen(name)+1);
 }
 
-char *fb_get_name(fb_s *ifp)
+char *fb_get_name(fb *ifp)
 {
     if (!ifp) return NULL;
     return ifp->if_name;
 }
 
-long fb_get_pagebuffer_pixel_size(fb_s *ifp)
+long fb_get_pagebuffer_pixel_size(fb *ifp)
 {
     if (!ifp) return 0;
     return ifp->if_ppixels;
 }
 
 
-int fb_is_set_fd(fb_s *ifp, fd_set *infds)
+int fb_is_set_fd(fb *ifp, fd_set *infds)
 {
     if (!ifp) return 0;
     if (!infds) return 0;
@@ -158,7 +158,7 @@ int fb_is_set_fd(fb_s *ifp, fd_set *infds)
     return FD_ISSET(ifp->if_selfd, infds);
 }
 
-int fb_set_fd(fb_s *ifp, fd_set *select_list)
+int fb_set_fd(fb *ifp, fd_set *select_list)
 {
     if (!ifp) return 0;
     if (!select_list) return 0;
@@ -168,7 +168,7 @@ int fb_set_fd(fb_s *ifp, fd_set *select_list)
     return ifp->if_selfd;
 }
 
-int fb_clear_fd(fb_s *ifp, fd_set *list)
+int fb_clear_fd(fb *ifp, fd_set *list)
 {
     if (!ifp) return 0;
     if (!list) return 0;
@@ -178,111 +178,111 @@ int fb_clear_fd(fb_s *ifp, fd_set *list)
     return ifp->if_selfd;
 }
 
-void fb_set_magic(fb_s *ifp, uint32_t magic)
+void fb_set_magic(fb *ifp, uint32_t magic)
 {
     ifp->if_magic = magic;
 }
 
 
-char *fb_gettype(fb_s *ifp)
+char *fb_gettype(fb *ifp)
 {
     return ifp->if_type;
 }
 
-int fb_getwidth(fb_s *ifp)
+int fb_getwidth(fb *ifp)
 {
     return ifp->if_width;
 }
-int fb_getheight(fb_s *ifp)
+int fb_getheight(fb *ifp)
 {
     return ifp->if_height;
 }
 
-int fb_get_max_width(fb_s *ifp)
+int fb_get_max_width(fb *ifp)
 {
     return ifp->if_max_width;
 }
-int fb_get_max_height(fb_s *ifp)
+int fb_get_max_height(fb *ifp)
 {
     return ifp->if_max_height;
 }
 
 
-int fb_poll(fb_s *ifp)
+int fb_poll(fb *ifp)
 {
     return (*ifp->if_poll)(ifp);
 }
-int fb_help(fb_s *ifp)
+int fb_help(fb *ifp)
 {
     return (*ifp->if_help)(ifp);
 }
-int fb_free(fb_s *ifp)
+int fb_free(fb *ifp)
 {
     return (*ifp->if_free)(ifp);
 }
-int fb_clear(fb_s *ifp, unsigned char *pp)
+int fb_clear(fb *ifp, unsigned char *pp)
 {
     return (*ifp->if_clear)(ifp, pp);
 }
-ssize_t fb_read(fb_s *ifp, int x, int y, unsigned char *pp, size_t count)
+ssize_t fb_read(fb *ifp, int x, int y, unsigned char *pp, size_t count)
 {
     return (*ifp->if_read)(ifp, x, y, pp, count);
 }
-ssize_t fb_write(fb_s *ifp, int x, int y, const unsigned char *pp, size_t count)
+ssize_t fb_write(fb *ifp, int x, int y, const unsigned char *pp, size_t count)
 {
     return (*ifp->if_write)(ifp, x, y, pp, count);
 }
-int fb_rmap(fb_s *ifp, ColorMap *cmap)
+int fb_rmap(fb *ifp, ColorMap *cmap)
 {
     return (*ifp->if_rmap)(ifp, cmap);
 }
-int fb_wmap(fb_s *ifp, const ColorMap *cmap)
+int fb_wmap(fb *ifp, const ColorMap *cmap)
 {
     return (*ifp->if_wmap)(ifp, cmap);
 }
-int fb_view(fb_s *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+int fb_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     return (*ifp->if_view)(ifp, xcenter, ycenter, xzoom, yzoom);
 }
-int fb_getview(fb_s *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+int fb_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     return (*ifp->if_getview)(ifp, xcenter, ycenter, xzoom, yzoom);
 }
-int fb_setcursor(fb_s *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo)
+int fb_setcursor(fb *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo)
 {
     return (*ifp->if_setcursor)(ifp, bits, xb, yb, xo, yo);
 }
-int fb_cursor(fb_s *ifp, int mode, int x, int y)
+int fb_cursor(fb *ifp, int mode, int x, int y)
 {
     return (*ifp->if_cursor)(ifp, mode, x, y);
 }
-int fb_getcursor(fb_s *ifp, int *mode, int *x, int *y)
+int fb_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     return (*ifp->if_getcursor)(ifp, mode, x, y);
 }
-int fb_readrect(fb_s *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+int fb_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     return (*ifp->if_readrect)(ifp, xmin, ymin, width, height, pp);
 }
-int fb_writerect(fb_s *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+int fb_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     return (*ifp->if_writerect)(ifp, xmin, ymin, width, height, pp);
 }
-int fb_bwreadrect(fb_s *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+int fb_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     return (*ifp->if_bwreadrect)(ifp, xmin, ymin, width, height, pp);
 }
-int fb_bwwriterect(fb_s *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+int fb_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     return (*ifp->if_bwwriterect)(ifp, xmin, ymin, width, height, pp);
 }
 
 
 
-extern int X24_close_existing(fb_s *ifp);
-extern int ogl_close_existing(fb_s *ifp);
-extern int wgl_close_existing(fb_s *ifp);
-extern int qt_close_existing(fb_s *ifp);
+extern int X24_close_existing(fb *ifp);
+extern int ogl_close_existing(fb *ifp);
+extern int wgl_close_existing(fb *ifp);
+extern int qt_close_existing(fb *ifp);
 
 
 #define Malloc_Bomb(_bytes_)					\
@@ -317,9 +317,9 @@ int _fb_disk_enable = 1;
 
 
 /**
- * Filler for fb_s function slots not used by a particular device
+ * Filler for fb function slots not used by a particular device
  */
-int fb_null(fb_s *ifp)
+int fb_null(fb *ifp)
 {
     if (ifp) {
 	FB_CK_FB(ifp);
@@ -332,7 +332,7 @@ int fb_null(fb_s *ifp)
 /**
  * Used by if_*.c routines that don't have programmable cursor patterns.
  */
-int fb_null_setcursor(fb_s *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+int fb_null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     if (ifp) {
 	FB_CK_FB(ifp);
@@ -343,18 +343,18 @@ int fb_null_setcursor(fb_s *ifp, const unsigned char *UNUSED(bits), int UNUSED(x
 
 
 
-fb_s *
+fb *
 fb_open(const char *file, int width, int height)
 {
-    register fb_s *ifp;
+    register fb *ifp;
     int i;
 
     if (width < 0 || height < 0)
 	return FB_NULL;
 
-    ifp = (fb_s *) calloc(sizeof(fb_s), 1);
+    ifp = (fb *) calloc(sizeof(fb), 1);
     if (ifp == FB_NULL) {
-	Malloc_Bomb(sizeof(fb_s));
+	Malloc_Bomb(sizeof(fb));
 	return FB_NULL;
     }
     if (file == NULL || *file == '\0') {
@@ -377,7 +377,7 @@ fb_open(const char *file, int width, int height)
      * device array.  If we don't find it assume it's a file.
      */
     i = 0;
-    while (_if_list[i] != (fb_s *)NULL) {
+    while (_if_list[i] != (fb *)NULL) {
 	if (bu_strncmp(file, _if_list[i]->if_name,
 		    strlen(_if_list[i]->if_name)) == 0) {
 	    /* found it, copy its struct in */
@@ -438,7 +438,7 @@ found_interface:
 
 
 int
-fb_close(fb_s *ifp)
+fb_close(fb *ifp)
 {
     int i;
 
@@ -458,7 +458,7 @@ fb_close(fb_s *ifp)
 
 
 int
-fb_close_existing(fb_s *ifp)
+fb_close_existing(fb *ifp)
 {
     if (!ifp)
 	return 0;
@@ -584,7 +584,7 @@ fb_genhelp(void)
     int i;
 
     i = 0;
-    while (_if_list[i] != (fb_s *)NULL) {
+    while (_if_list[i] != (fb *)NULL) {
 	fb_log("%-12s  %s\n",
 	       _if_list[i]->if_name,
 	       _if_list[i]->if_type);
@@ -654,7 +654,7 @@ fb_cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *cmap)
 }
 
 int
-fb_write_fp(fb_s *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result)
+fb_write_fp(fb *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result)
 {
     unsigned char *scanline;	/* 1 scanline pixel buffer */
     int scanbytes;		/* # of bytes of scanline */
@@ -739,7 +739,7 @@ fb_skip_bytes(int fd, off_t num, int fileinput, int scanbytes, unsigned char *sc
 
 
 int
-fb_read_fd(fb_s *ifp, int fd, int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *UNUSED(result))
+fb_read_fd(fb *ifp, int fd, int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *UNUSED(result))
 {
     int y;
     int xout, yout, n, m, xstart, xskip;

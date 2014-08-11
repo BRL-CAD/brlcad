@@ -4695,7 +4695,7 @@ sedit(void)
 	    if (inpara) {
 		static mat_t invsolr;
 		static vect_t tempvec;
-		static float rota, fb;
+		static float rota, fb_a;
 
 		/*
 		 * Keyboard parameters in degrees.
@@ -4740,12 +4740,12 @@ sedit(void)
 		} else if (inpara == 2) {
 		    /* 2 parameters:  rot, fb were given */
 		    rota= es_para[0] * DEG2RAD;
-		    fb  = es_para[1] * DEG2RAD;
+		    fb_a  = es_para[1] * DEG2RAD;
 
 		    /* calculate normal vector (length = 1) from rot, fb */
-		    es_peqn[es_menu][0] = cos(fb) * cos(rota);
-		    es_peqn[es_menu][1] = cos(fb) * sin(rota);
-		    es_peqn[es_menu][2] = sin(fb);
+		    es_peqn[es_menu][0] = cos(fb_a) * cos(rota);
+		    es_peqn[es_menu][1] = cos(fb_a) * sin(rota);
+		    es_peqn[es_menu][2] = sin(fb_a);
 		} else {
 		    Tcl_AppendResult(INTERP, "Must be < rot fb | xdeg ydeg zdeg >\n",
 				     (char *)NULL);

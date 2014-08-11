@@ -324,7 +324,7 @@ Func_Tab func_tab[] = {
 static Func_Tab	*bindings[DEL+1];
 static Func_Tab	*macro_entry = FT_NULL; /* Last keyboard macro defined. */
 
-fb_s *fbp;				/* Current framebuffer */
+fb *fbp;				/* Current framebuffer */
 static int cur_width = 512;
 
 int
@@ -1721,7 +1721,7 @@ HIDDEN int
 f_Rd_Fb() /* Read frame buffer image from file. */
 {
     static char image[MAX_LN];
-    static fb_s *imp;
+    static fb *imp;
     if (!get_Input(image, MAX_LN, "Enter framebuffer name : "))
 	return 0;
     if (image[0] == NUL) {

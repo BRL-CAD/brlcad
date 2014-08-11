@@ -89,7 +89,7 @@ static int image = 0;		/* # of image to display (0 => all) */
 static char *gif_file = NULL;	/* GIF file name */
 static FILE *gfp = NULL;		/* GIF input stream handle */
 static char *fb_file = NULL;	/* frame buffer name */
-static fb_s *fbp = FB_NULL;	/* frame buffer handle */
+static fb *fbp = FB_NULL;	/* frame buffer handle */
 static int ht;			/* virtual frame buffer height */
 static int width, height;		/* overall "screen" size */
 static int write_width;		/* used width of screen, <= width */
@@ -112,7 +112,7 @@ static RGBpixel *cmap;			/* bu_malloc()ed local color map */
 
 /* in ioutil.c */
 void Message(const char *format, ...);
-void Fatal(fb_s *fbiop, const char *format, ...);
+void Fatal(fb *fbiop, const char *format, ...);
 
 
 static void

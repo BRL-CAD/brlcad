@@ -113,7 +113,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    fb_s *fbp;
+    fb *fbp;
 
     int x, y;
     int xin, yin;		/* number of sceen output lines */

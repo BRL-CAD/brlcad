@@ -382,7 +382,7 @@ main (int argc, char **argv)
     int unit_r = -1;	/* Radius of unit circle (in pixels) */
     int x, y;		/* Cartesian coordinates of current pixel */
     int Xprime, Yprime;		/* Translated pixel */
-    fb_s *fbPtr;		/* Pointer to the frame-buffer file */
+    fb *fbPtr;		/* Pointer to the frame-buffer file */
     unsigned char *fbb;		/* Buffer for current line of frame buffer */
     unsigned char *fbbPtr;	/* Pointer to within fbb */
 

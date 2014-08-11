@@ -91,7 +91,7 @@ main(int argc, char **argv)
     ColorMap cm;
     char usage[] = "Usage: cmap-fb [-H -o] [colormap]\n";
 
-    fb_s *fbp;
+    fb *fbp;
     FILE *fp;
     int fbsize = 512;
     int overlay = 0;

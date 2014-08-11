@@ -70,9 +70,9 @@
 
 HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap);
 HIDDEN void Monochrome(unsigned char *bitbuf, unsigned char *bytebuf, int width, int height, int method);
-HIDDEN int X_wmap(fb_s *ifp, const ColorMap *cmp);
-HIDDEN int X_do_event(fb_s *ifp);
-HIDDEN int X_scanwrite(fb_s *ifp, int x, int y, const unsigned char *pixelp, int count, int save);
+HIDDEN int X_wmap(fb *ifp, const ColorMap *cmp);
+HIDDEN int X_do_event(fb *ifp);
+HIDDEN int X_scanwrite(fb *ifp, int x, int y, const unsigned char *pixelp, int count, int save);
 
 /*
  * Per window state information.
@@ -303,7 +303,7 @@ x_print_display_info(Display *dpy)
 
 
 HIDDEN int
-x_make_colormap(fb_s *ifp)
+x_make_colormap(fb *ifp)
 {
     int tot_levels;
     int i;
@@ -383,7 +383,7 @@ x_make_colormap(fb_s *ifp)
 
 HIDDEN
 int
-x_setup(fb_s *ifp, int width, int height)
+x_setup(fb *ifp, int width, int height)
 {
     Display *dpy;			/* local copy */
     int screen;			/* local copy */
@@ -529,7 +529,7 @@ x_setup(fb_s *ifp, int width, int height)
 
 
 HIDDEN int
-X_open_fb(fb_s *ifp, const char *file, int width, int height)
+X_open_fb(fb *ifp, const char *file, int width, int height)
 {
     int fd;
     int mode;
@@ -703,7 +703,7 @@ X_open_fb(fb_s *ifp, const char *file, int width, int height)
 static int alive = 1;
 
 HIDDEN
-int x_linger(fb_s *ifp)
+int x_linger(fb *ifp)
 {
     XSelectInput(XI(ifp)->dpy, XI(ifp)->win,
 		 ExposureMask|ButtonPressMask);
@@ -716,7 +716,7 @@ int x_linger(fb_s *ifp)
 
 
 HIDDEN int
-X_close_fb(fb_s *ifp)
+X_close_fb(fb *ifp)
 {
     XFlush(XI(ifp)->dpy);
     if ((XI(ifp)->mode & MODE_1MASK) == MODE_1LINGERING) {
@@ -733,7 +733,7 @@ X_close_fb(fb_s *ifp)
 
 
 HIDDEN int
-X_clear(fb_s *ifp, unsigned char *pp)
+X_clear(fb *ifp, unsigned char *pp)
 {
     unsigned char *bitbuf = XI(ifp)->bitbuf;
     unsigned char *bytebuf = XI(ifp)->bytebuf;
@@ -773,7 +773,7 @@ X_clear(fb_s *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-X_read(fb_s *ifp, int x, int y, unsigned char *pixelp, size_t count)
+X_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     unsigned char *bytebuf = XI(ifp)->bytebuf;
     register unsigned char *cp;
@@ -905,7 +905,7 @@ mfs_bw(unsigned int pixel, register int count)
  * Repaint a (pre clipped) rectangle from the image onto the screen.
  */
 HIDDEN void
-slowrect(fb_s *ifp, int xmin, int xmax, int ymin, int ymax)
+slowrect(fb *ifp, int xmin, int xmax, int ymin, int ymax)
 
 /* image bounds */
 
@@ -970,7 +970,7 @@ slowrect(fb_s *ifp, int xmin, int xmax, int ymin, int ymax)
  * scanline temporary buffer for immediate display.
  */
 HIDDEN int
-X_scanwrite(fb_s *ifp, int x, int y, const unsigned char *pixelp, int count, int save)
+X_scanwrite(fb *ifp, int x, int y, const unsigned char *pixelp, int count, int save)
 {
     unsigned char *bitbuf = XI(ifp)->bitbuf;
     unsigned char *bytebuf = XI(ifp)->bytebuf;
@@ -1102,7 +1102,7 @@ done:
  * scanline writes.
  */
 HIDDEN ssize_t
-X_write(fb_s *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+X_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t maxcount;
     size_t todo;
@@ -1140,7 +1140,7 @@ X_write(fb_s *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
 
 HIDDEN int
-X_rmap(fb_s *ifp, ColorMap *cmp)
+X_rmap(fb *ifp, ColorMap *cmp)
 {
     *cmp = XI(ifp)->rgb_cmap;	/* struct copy */
     return 0;
@@ -1148,7 +1148,7 @@ X_rmap(fb_s *ifp, ColorMap *cmp)
 
 
 HIDDEN int
-X_wmap(fb_s *ifp, const ColorMap *cmp)
+X_wmap(fb *ifp, const ColorMap *cmp)
 {
     register int i;
     int is_linear = 1;
@@ -1213,7 +1213,7 @@ X_wmap(fb_s *ifp, const ColorMap *cmp)
  * only switch to fourth for Xlib commands.
  */
 HIDDEN void
-repaint(fb_s *ifp)
+repaint(fb *ifp)
 {
     /* 1st and last image pixel coordinates *within* the window */
     int xmin, xmax;
@@ -1326,7 +1326,7 @@ repaint(fb_s *ifp)
 
 
 HIDDEN int
-X_view(fb_s *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+X_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     /* bypass if no change */
     if (ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
@@ -1352,7 +1352,7 @@ X_view(fb_s *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-X_getview(fb_s *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+X_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     *xcenter = ifp->if_xcenter;
     *ycenter = ifp->if_ycenter;
@@ -1364,7 +1364,7 @@ X_getview(fb_s *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 HIDDEN int
-X_setcursor(fb_s *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+X_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     if (ifp) {
 	FB_CK_FB(ifp);
@@ -1375,7 +1375,7 @@ X_setcursor(fb_s *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int
 
 
 HIDDEN int
-x_make_cursor(fb_s *ifp)
+x_make_cursor(fb *ifp)
 {
     XSetWindowAttributes xswa;
 
@@ -1393,7 +1393,7 @@ x_make_cursor(fb_s *ifp)
 
 
 HIDDEN int
-X_cursor(fb_s *ifp, int mode, int x, int y)
+X_cursor(fb *ifp, int mode, int x, int y)
 {
     fb_sim_cursor(ifp, mode, x, y);
 
@@ -1420,14 +1420,14 @@ X_cursor(fb_s *ifp, int mode, int x, int y)
 
 
 HIDDEN int
-X_getcursor(fb_s *ifp, int *mode, int *x, int *y)
+X_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     return fb_sim_getcursor(ifp, mode, x, y);
 }
 
 
 HIDDEN int
-X_do_event(fb_s *ifp)
+X_do_event(fb *ifp)
 {
     XEvent event;
     XExposeEvent *expose;
@@ -1579,7 +1579,7 @@ Monochrome(unsigned char *bitbuf, unsigned char *bytebuf, int width, int height,
 
 
 HIDDEN int
-X_poll(fb_s *ifp)
+X_poll(fb *ifp)
 {
     XFlush(XI(ifp)->dpy);
     while (XPending(XI(ifp)->dpy) > 0)
@@ -1590,7 +1590,7 @@ X_poll(fb_s *ifp)
 
 
 HIDDEN int
-X_flush(fb_s *ifp)
+X_flush(fb *ifp)
 {
     XFlush(XI(ifp)->dpy);
     while (XPending(XI(ifp)->dpy) > 0)
@@ -1601,7 +1601,7 @@ X_flush(fb_s *ifp)
 
 
 HIDDEN int
-X_help(fb_s *ifp)
+X_help(fb *ifp)
 {
     struct modeflags *mfp;
 
@@ -1694,7 +1694,7 @@ HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap
 
 
 /* This is the ONLY thing that we normally "export" */
-fb_s X_interface = {
+fb X_interface = {
     0,
     X_open_fb,			/* device_open */
     X_close_fb,		/* device_close */

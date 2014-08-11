@@ -97,9 +97,9 @@ static float y_scale = -1.0;		/* vertical scaling factor */
 static bool_t x_compress;		/* set if compressing horizontally */
 static bool_t y_compress;		/* set if compressing vertically */
 static char *src_file = NULL;		/* source frame buffer name */
-static fb_s *src_fbp = FB_NULL;	/* source frame buffer handle */
+static fb *src_fbp = FB_NULL;	/* source frame buffer handle */
 static char *dst_file = NULL;		/* destination frame buffer name */
-static fb_s *dst_fbp = FB_NULL;	/* destination frame buffer handle */
+static fb *dst_fbp = FB_NULL;	/* destination frame buffer handle */
 static int src_width = 512;
 static int src_height = 512;		/* source image size */
 static int dst_width = 0;
@@ -109,7 +109,7 @@ static unsigned char *dst_buf;		/* calloc()ed output scan line buffer */
 
 /* in ioutil.c */
 extern void Message(const char *format, ...);
-extern void Fatal(fb_s *fbiop, const char *format, ...);
+extern void Fatal(fb *fbiop, const char *format, ...);
 
 
 static void

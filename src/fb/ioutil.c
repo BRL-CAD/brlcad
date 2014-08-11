@@ -61,7 +61,7 @@ Message(const char *format, ...)
 
 
 void
-Fatal(fb_s *fbp, const char *format, ...)
+Fatal(fb *fbp, const char *format, ...)
 {
     va_list ap;
 

@@ -43,7 +43,7 @@ main(int argc, char **argv)
 {
     int c;
     int x;
-    fb_s *fbp;
+    fb *fbp;
     int xsize, ysize;
     int len;
     char *framebuffer = (char *)NULL;

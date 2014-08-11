@@ -54,7 +54,7 @@
 #include "fb_private.h"
 
 
-static fb_s *curr_fbp;		/* current framebuffer pointer */
+static fb *curr_fbp;		/* current framebuffer pointer */
 
 
 /*

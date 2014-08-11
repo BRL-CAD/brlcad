@@ -45,7 +45,7 @@ int usec;
 
 void newframe(int i);
 
-fb_s *fbp;
+fb *fbp;
 int screen_width;		/* Number of pixels/line in frame buffer */
 int screen_height;
 int verbose = 0;

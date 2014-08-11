@@ -196,7 +196,7 @@ edarb_edgedir(void *data, int argc, const char *argv[])
     int i;
     int edge;
     vect_t slope;
-    fastf_t rot, fb;
+    fastf_t rot, fb_a;
     static const char *usage = "arb edge [delta_x delta_y delta_z] | [rot fb]";
 
     /* must be wanting help */
@@ -235,10 +235,10 @@ edarb_edgedir(void *data, int argc, const char *argv[])
      */
     if (argc == 6) {
 	rot = atof(argv[1]) * DEG2RAD;
-	fb = atof(argv[2]) * DEG2RAD;
-	slope[0] = cos(fb) * cos(rot);
-	slope[1] = cos(fb) * sin(rot);
-	slope[2] = sin(fb);
+	fb_a = atof(argv[2]) * DEG2RAD;
+	slope[0] = cos(fb_a) * cos(rot);
+	slope[1] = cos(fb_a) * sin(rot);
+	slope[2] = sin(fb_a);
     } else {
 	for (i=0; i<3; i++) {
 	    /* put edge slope in slope[] array */

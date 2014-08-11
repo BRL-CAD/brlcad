@@ -57,7 +57,7 @@ extern const char title[];
 
 
 /***** Variables shared with viewing model *** */
-fb_s		*fbp = FB_NULL;	/* Framebuffer handle */
+fb		*fbp = FB_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
 struct icv_image *bif = NULL;
 mat_t		view2model;

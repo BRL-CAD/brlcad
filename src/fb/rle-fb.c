@@ -139,7 +139,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    fb_s *fbp;
+    fb *fbp;
     int i;
     int file_width;		/* unclipped width of rectangle */
     int file_skiplen;		/* # of pixels to skip on l.h.s. */

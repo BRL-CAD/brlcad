@@ -38,7 +38,7 @@
 
 
 HIDDEN int
-null_open(fb_s *ifp, const char *UNUSED(file), int width, int height)
+null_open(fb *ifp, const char *UNUSED(file), int width, int height)
 {
     FB_CK_FB(ifp);
 
@@ -52,7 +52,7 @@ null_open(fb_s *ifp, const char *UNUSED(file), int width, int height)
 
 
 HIDDEN int
-null_close(fb_s *ifp)
+null_close(fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -61,7 +61,7 @@ null_close(fb_s *ifp)
 
 
 HIDDEN int
-null_clear(fb_s *ifp, unsigned char *UNUSED(pp))
+null_clear(fb *ifp, unsigned char *UNUSED(pp))
 {
     FB_CK_FB(ifp);
 
@@ -70,7 +70,7 @@ null_clear(fb_s *ifp, unsigned char *UNUSED(pp))
 
 
 HIDDEN ssize_t
-null_read(fb_s *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
+null_read(fb *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FB(ifp);
 
@@ -79,7 +79,7 @@ null_read(fb_s *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp)
 
 
 HIDDEN ssize_t
-null_write(fb_s *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
+null_write(fb *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FB(ifp);
 
@@ -88,7 +88,7 @@ null_write(fb_s *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(
 
 
 HIDDEN int
-null_rmap(fb_s *ifp, ColorMap *UNUSED(cmp))
+null_rmap(fb *ifp, ColorMap *UNUSED(cmp))
 {
     FB_CK_FB(ifp);
 
@@ -97,7 +97,7 @@ null_rmap(fb_s *ifp, ColorMap *UNUSED(cmp))
 
 
 HIDDEN int
-null_wmap(fb_s *ifp, const ColorMap *UNUSED(cmp))
+null_wmap(fb *ifp, const ColorMap *UNUSED(cmp))
 {
     FB_CK_FB(ifp);
 
@@ -106,7 +106,7 @@ null_wmap(fb_s *ifp, const ColorMap *UNUSED(cmp))
 
 
 HIDDEN int
-null_view(fb_s *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
+null_view(fb *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
 {
     FB_CK_FB(ifp);
 
@@ -116,7 +116,7 @@ null_view(fb_s *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom)
 
 
 HIDDEN int
-null_getview(fb_s *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
+null_getview(fb *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
 {
     FB_CK_FB(ifp);
 
@@ -126,7 +126,7 @@ null_getview(fb_s *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(
 
 
 HIDDEN int
-null_setcursor(fb_s *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp);
 
@@ -135,7 +135,7 @@ null_setcursor(fb_s *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), 
 
 
 HIDDEN int
-null_cursor(fb_s *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
+null_cursor(fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
     FB_CK_FB(ifp);
 
@@ -145,7 +145,7 @@ null_cursor(fb_s *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 
 
 HIDDEN int
-null_getcursor(fb_s *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
+null_getcursor(fb *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 {
     FB_CK_FB(ifp);
 
@@ -155,7 +155,7 @@ null_getcursor(fb_s *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 
 
 HIDDEN int
-null_readrect(fb_s *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
+null_readrect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
 {
     FB_CK_FB(ifp);
 
@@ -164,7 +164,7 @@ null_readrect(fb_s *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int heig
 
 
 HIDDEN int
-null_writerect(fb_s *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
+null_writerect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
 {
     FB_CK_FB(ifp);
 
@@ -173,7 +173,7 @@ null_writerect(fb_s *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int hei
 
 
 HIDDEN int
-null_poll(fb_s *ifp)
+null_poll(fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -182,7 +182,7 @@ null_poll(fb_s *ifp)
 
 
 HIDDEN int
-null_flush(fb_s *ifp)
+null_flush(fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -191,7 +191,7 @@ null_flush(fb_s *ifp)
 
 
 HIDDEN int
-null_free(fb_s *ifp)
+null_free(fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -200,7 +200,7 @@ null_free(fb_s *ifp)
 
 
 HIDDEN int
-null_help(fb_s *ifp)
+null_help(fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -218,7 +218,7 @@ null_help(fb_s *ifp)
 
 
 /* This is the ONLY thing that we normally "export" */
-fb_s null_interface =  {
+fb null_interface =  {
     0,
     null_open,		/* device_open */
     null_close,		/* device_close */

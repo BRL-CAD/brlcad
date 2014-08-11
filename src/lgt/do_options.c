@@ -1207,7 +1207,7 @@ f_Animate()
 	    return -1;
 	(void) signal(SIGINT, abort_RT);
 	for (frame_no = 0; ! user_interrupt; frame_no++) {
-	    fb_s *movie_fbiop;
+	    fb *movie_fbiop;
 	    int y;
 	    if (frame_no == noframes)
 		frame_no = 0;
@@ -1359,7 +1359,7 @@ f_Wrt_Fb(char **args)
 {
     int y;
     static char save_fb_file[MAX_LN] = { 0 };
-    fb_s *save_fbiop;
+    fb *save_fbiop;
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(save_fb_file, args[1], MAX_LN);
     else
@@ -1421,7 +1421,7 @@ f_Rd_Fb(char **args)
 {
     int y;
     static char save_fb_file[MAX_LN] = { 0 };
-    fb_s *save_fbiop;
+    fb *save_fbiop;
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(save_fb_file, args[1], MAX_LN);
     else

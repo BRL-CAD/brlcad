@@ -310,7 +310,7 @@ static int sigs[] = {
 
 
 static FILE *pfin;		/* input file FIO block ptr */
-fb_s *fbp;			/* Current framebuffer */
+fb *fbp;			/* Current framebuffer */
 
 
 /*

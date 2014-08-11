@@ -103,7 +103,7 @@ usage(const char *argv0)
 }
 
 
-extern fb_s *fbp;		/* Framebuffer handle */
+extern fb *fbp;		/* Framebuffer handle */
 
 extern int max_bounces;		/* from refract.c */
 extern int max_ireflect;	/* from refract.c */

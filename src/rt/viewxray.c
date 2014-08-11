@@ -51,7 +51,7 @@
 #define	LGT_FLOAT	1
 
 
-extern	fb_s	*fbp;
+extern	fb	*fbp;
 extern	FILE	*outfp;
 extern	fastf_t	viewsize;
 extern	int	lightmodel;

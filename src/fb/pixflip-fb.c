@@ -55,7 +55,7 @@ char *input_basename;		/* basename of input file(s) */
 int framenumber = 0;	/* starting frame number (default is 0) */
 int fps = 8;		/* frames/second */
 
-fb_s *fbp;
+fb *fbp;
 int verbose = 0;
 int rocking = 0;
 int passes = 100;		/* limit on number of passes */

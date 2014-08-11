@@ -47,7 +47,7 @@ double fps = 0.0;	/* frames per second */
 int increment = 1;
 int onestep = 0;
 
-fb_s *fbp;
+fb *fbp;
 
 static char usage[] = "\
 Usage: fbcmrot [-H -i increment] steps_per_second\n";

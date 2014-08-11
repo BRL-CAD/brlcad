@@ -73,7 +73,7 @@
 #include "libtermio.h"
 
 
-fb_s *fbp;
+fb *fbp;
 
 char ibuf[1024];	/* pp file buffer */
 

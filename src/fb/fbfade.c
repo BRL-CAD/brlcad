@@ -75,7 +75,7 @@ typedef int bool_t;
 static bool_t hires = 0;		/* set for 1Kx1K; clear for 512x512 */
 static char *in_fb_file = NULL;		/* input image name */
 static char *out_fb_file = NULL;	/* output frame buffer name */
-static fb_s *fbp = FB_NULL;		/* libfb input/output handle */
+static fb *fbp = FB_NULL;		/* libfb input/output handle */
 static int src_width = 0;		/* input image width */
 static int src_height = 0;		/* input image height */
 static int dst_width = 0;		/* output frame buffer size */
@@ -85,7 +85,7 @@ static RGBpixel bg = { 0, 0, 0 };	/* background */
 
 /* in ioutil.c */
 extern void Message(const char *format, ...);
-extern void Fatal(fb_s *fbiop, const char *format, ...);
+extern void Fatal(fb *fbiop, const char *format, ...);
 
 
 static void

@@ -146,7 +146,7 @@ Horizon(int x_1, int y_1, int x_2, int y_2)
  * An integer Bresenham algorithm for any quadrant.
  */
 static void
-Draw(fb_s *fbp, int x_1, int y_1, int x_2, int y_2)
+Draw(fb *fbp, int x_1, int y_1, int x_2, int y_2)
 {
     int x, y, deltx, delty, error, i;
     int temp, s1, s2, interchange;
@@ -233,7 +233,7 @@ Intersect(int x_1, int y_1, int x_2, int y_2, int *hor, int *xi, int *yi)
  * This one goes "behind" the last one.
  */
 static void
-fhnewz(fb_s *fbp, int *f, int num)
+fhnewz(fb *fbp, int *f, int num)
 {
     int x, y, Xprev, Yprev, Xi, Yi;
     int Previously, Currently;
@@ -331,7 +331,7 @@ main(int argc, char **argv)
 {
     static const char usage[] = "Usage: fhor [width] < doubles\n";
 
-    fb_s *fbp = NULL;
+    fb *fbp = NULL;
 
     double inbuf[512];
     int f[512];

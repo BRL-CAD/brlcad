@@ -43,7 +43,7 @@ int
 main(int argc, char **argv)
 {
     int c;
-    fb_s *fbp;
+    fb *fbp;
 
     while ((c = bu_getopt(argc, argv, "F:h?")) != -1) {
 	switch (c) {

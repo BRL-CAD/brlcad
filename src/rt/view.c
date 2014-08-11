@@ -87,7 +87,7 @@ usage(const char *argv0)
 }
 
 
-extern fb_s *fbp;			/* Framebuffer handle */
+extern fb *fbp;			/* Framebuffer handle */
 
 extern int curframe;		/* from main.c */
 extern fastf_t frame_delta_t;		/* from main.c */
@@ -118,7 +118,7 @@ extern int srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 void free_scanlines(int, struct scanline *);
 struct scanline* alloc_scanlines(int);
 extern fastf_t** timeTable_init(int x, int y);
-extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb_s *efbp);
+extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *efbp);
 
 static int buf_mode=0;
 #define BUFMODE_UNBUF     1	/* No output buffering */

@@ -101,7 +101,7 @@ do_file(void)
 void
 do_fb(void)
 {
-    fb_s *fbp;
+    fb *fbp;
 
     if ((fbp = fb_open(framebuffer, 0, 0)) == FB_NULL) {
 	bu_exit(2, "Unable to open framebuffer\n");

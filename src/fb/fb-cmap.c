@@ -40,7 +40,7 @@ Usage: fb-cmap [-H] [colormap]\n";
 int
 main(int argc, char **argv)
 {
-    fb_s *fbp;
+    fb *fbp;
     FILE *fp;
     int fbsize = 512;
     int i;

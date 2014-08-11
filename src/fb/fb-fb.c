@@ -87,7 +87,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    fb_s *in_fbp, *out_fbp;
+    fb *in_fbp, *out_fbp;
     int n, m;
     int height;
 

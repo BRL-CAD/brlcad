@@ -188,7 +188,7 @@ static int xorigin = 0, yorigin = 0;	/* Pixel location of image low lft */
 static int view_flag = 0;		/* The view that is of interest */
 
 static long maxcells = 10000;	/* Max number of cells in the image */
-static fb_s *fbiop = FB_NULL;	/* Frame-buffer device */
+static fb *fbiop = FB_NULL;	/* Frame-buffer device */
 static FILE *filep;		/* Input stream */
 static struct locrec gp_locs;
 

@@ -46,7 +46,7 @@
  */
 #define THRESH 20
 
-fb_s *fbp;
+fb *fbp;
 FILE *fp;
 
 long rxb[256][256], rxg[256][256], bxg[256][256];

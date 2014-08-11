@@ -245,7 +245,7 @@ timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *t
  * heat graph based on time taken for each pixel.
  */
 void
-timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb_s *fbp)
+timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *fbp)
 {
     fastf_t maxTime = -MAX_FASTF;		/* The 255 value */
     fastf_t minTime = MAX_FASTF; 		/* The 1 value */

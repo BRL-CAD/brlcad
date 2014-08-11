@@ -35,28 +35,28 @@
 
 /* declare all the possible interfaces */
 #ifdef IF_X
-FB_EXPORT extern fb_s X_interface;
-FB_EXPORT extern fb_s X24_interface;
+FB_EXPORT extern fb X_interface;
+FB_EXPORT extern fb X24_interface;
 #endif
 #ifdef IF_OGL
-FB_EXPORT extern fb_s ogl_interface;
+FB_EXPORT extern fb ogl_interface;
 #endif
 #ifdef IF_WGL
-FB_EXPORT extern fb_s wgl_interface;
+FB_EXPORT extern fb wgl_interface;
 #endif
 #ifdef IF_TK
-FB_EXPORT extern fb_s tk_interface;
+FB_EXPORT extern fb tk_interface;
 #endif
 #ifdef IF_QT
-FB_EXPORT extern fb_s qt_interface;
+FB_EXPORT extern fb qt_interface;
 #endif
 #ifdef IF_REMOTE
-FB_EXPORT extern fb_s remote_interface; /* not in list[] */
+FB_EXPORT extern fb remote_interface; /* not in list[] */
 #endif
 
 /* Always included */
-FB_EXPORT extern fb_s debug_interface, disk_interface, stk_interface;
-FB_EXPORT extern fb_s memory_interface, null_interface;
+FB_EXPORT extern fb debug_interface, disk_interface, stk_interface;
+FB_EXPORT extern fb memory_interface, null_interface;
 
 __BEGIN_DECLS
 
@@ -68,29 +68,29 @@ __BEGIN_DECLS
  * to this structure is the first argument to all the library
  * routines.  TODO - see if this can move to a private header.
  */
-struct fb {
+struct fb_internal {
     uint32_t if_magic;
     /* Static information: per device TYPE.     */
-    int (*if_open)(struct fb *ifp, const char *file, int _width, int _height);                       /**< @brief open device */
-    int (*if_close)(struct fb *ifp);                                                                 /**< @brief close device */
-    int (*if_clear)(struct fb *ifp, unsigned char *pp);                                              /**< @brief clear device */
-    ssize_t (*if_read)(struct fb *ifp, int x, int y, unsigned char *pp, size_t count);               /**< @brief read pixels */
-    ssize_t (*if_write)(struct fb *ifp, int x, int y, const unsigned char *pp, size_t count);        /**< @brief write pixels */
-    int (*if_rmap)(struct fb *ifp, ColorMap *cmap);                                                  /**< @brief read colormap */
-    int (*if_wmap)(struct fb *ifp, const ColorMap *cmap);                                            /**< @brief write colormap */
-    int (*if_view)(struct fb *ifp, int xcent, int ycent, int xzoom, int yzoom);                      /**< @brief set view */
-    int (*if_getview)(struct fb *ifp, int *xcent, int *ycent, int *xzoom, int *yzoom);               /**< @brief get view */
-    int (*if_setcursor)(struct fb *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo);  /**< @brief define cursor */
-    int (*if_cursor)(struct fb *ifp, int mode, int x, int y);                                        /**< @brief set cursor */
-    int (*if_getcursor)(struct fb *ifp, int *mode, int *x, int *y);                                  /**< @brief get cursor */
-    int (*if_readrect)(struct fb *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);              /**< @brief read rectangle */
-    int (*if_writerect)(struct fb *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);       /**< @brief write rectangle */
-    int (*if_bwreadrect)(struct fb *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);            /**< @brief read monochrome rectangle */
-    int (*if_bwwriterect)(struct fb *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);     /**< @brief write rectangle */
-    int (*if_poll)(struct fb *ifp);          /**< @brief handle events */
-    int (*if_flush)(struct fb *ifp);         /**< @brief flush output */
-    int (*if_free)(struct fb *ifp);          /**< @brief free resources */
-    int (*if_help)(struct fb *ifp);          /**< @brief print useful info */
+    int (*if_open)(struct fb_internal *ifp, const char *file, int _width, int _height);                       /**< @brief open device */
+    int (*if_close)(struct fb_internal *ifp);                                                                 /**< @brief close device */
+    int (*if_clear)(struct fb_internal *ifp, unsigned char *pp);                                              /**< @brief clear device */
+    ssize_t (*if_read)(struct fb_internal *ifp, int x, int y, unsigned char *pp, size_t count);               /**< @brief read pixels */
+    ssize_t (*if_write)(struct fb_internal *ifp, int x, int y, const unsigned char *pp, size_t count);        /**< @brief write pixels */
+    int (*if_rmap)(struct fb_internal *ifp, ColorMap *cmap);                                                  /**< @brief read colormap */
+    int (*if_wmap)(struct fb_internal *ifp, const ColorMap *cmap);                                            /**< @brief write colormap */
+    int (*if_view)(struct fb_internal *ifp, int xcent, int ycent, int xzoom, int yzoom);                      /**< @brief set view */
+    int (*if_getview)(struct fb_internal *ifp, int *xcent, int *ycent, int *xzoom, int *yzoom);               /**< @brief get view */
+    int (*if_setcursor)(struct fb_internal *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo);  /**< @brief define cursor */
+    int (*if_cursor)(struct fb_internal *ifp, int mode, int x, int y);                                        /**< @brief set cursor */
+    int (*if_getcursor)(struct fb_internal *ifp, int *mode, int *x, int *y);                                  /**< @brief get cursor */
+    int (*if_readrect)(struct fb_internal *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);              /**< @brief read rectangle */
+    int (*if_writerect)(struct fb_internal *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);       /**< @brief write rectangle */
+    int (*if_bwreadrect)(struct fb_internal *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);            /**< @brief read monochrome rectangle */
+    int (*if_bwwriterect)(struct fb_internal *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);     /**< @brief write rectangle */
+    int (*if_poll)(struct fb_internal *ifp);          /**< @brief handle events */
+    int (*if_flush)(struct fb_internal *ifp);         /**< @brief flush output */
+    int (*if_free)(struct fb_internal *ifp);          /**< @brief free resources */
+    int (*if_help)(struct fb_internal *ifp);          /**< @brief print useful info */
     char *if_type;      /**< @brief what "open" calls it */
     int if_max_width;   /**< @brief max device width */
     int if_max_height;  /**< @brief max device height */
@@ -129,7 +129,7 @@ struct fb {
 #    include <X11/Xlib.h>
 #    include <X11/Xutil.h>
 #  endif
-FB_EXPORT extern int _X24_open_existing(fb_s *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc);
+FB_EXPORT extern int _X24_open_existing(fb *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc);
 #endif
 
 #ifdef IF_OGL
@@ -159,7 +159,7 @@ FB_EXPORT extern int _X24_open_existing(fb_s *ifp, Display *dpy, Window win, Win
 #  ifdef HAVE_GL_GL_H
 #    include <GL/gl.h>
 #  endif
-FB_EXPORT extern int _ogl_open_existing(fb_s *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap);
+FB_EXPORT extern int _ogl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap);
 #endif
 
 #ifdef IF_WGL
@@ -168,11 +168,11 @@ FB_EXPORT extern int _ogl_open_existing(fb_s *ifp, Display *dpy, Window win, Col
 #  ifdef HAVE_GL_GL_H
 #    include <GL/gl.h>
 #  endif
-FB_EXPORT extern int _wgl_open_existing(fb_s *ifp, Display *dpy, Window win, Colormap cmap, PIXELFORMATDESCRIPTOR *vip, HDC hdc, int width, int height, HGLRC glxc, int double_buffer, int soft_cmap);
+FB_EXPORT extern int _wgl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, PIXELFORMATDESCRIPTOR *vip, HDC hdc, int width, int height, HGLRC glxc, int double_buffer, int soft_cmap);
 #endif
 
 #ifdef IF_QT
-FB_EXPORT extern int _qt_open_existing(fb_s *ifp, int width, int height, void *qapp, void *qwin, void *qpainter, void *draw, void **qimg);
+FB_EXPORT extern int _qt_open_existing(fb *ifp, int width, int height, void *qapp, void *qwin, void *qpainter, void *draw, void **qimg);
 #endif
 
 /*
@@ -180,14 +180,14 @@ FB_EXPORT extern int _qt_open_existing(fb_s *ifp, int width, int height, void *q
  * Not for general consumption.
  */
 FB_EXPORT extern int _fb_disk_enable;
-FB_EXPORT extern int fb_sim_readrect(fb_s *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
-FB_EXPORT extern int fb_sim_writerect(fb_s *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
-FB_EXPORT extern int fb_sim_bwreadrect(fb_s *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
-FB_EXPORT extern int fb_sim_bwwriterect(fb_s *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
-FB_EXPORT extern int fb_sim_view(fb_s *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
-FB_EXPORT extern int fb_sim_getview(fb_s *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
-FB_EXPORT extern int fb_sim_cursor(fb_s *ifp, int mode, int x, int y);
-FB_EXPORT extern int fb_sim_getcursor(fb_s *ifp, int *mode, int *x, int *y);
+FB_EXPORT extern int fb_sim_readrect(fb *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
+FB_EXPORT extern int fb_sim_writerect(fb *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
+FB_EXPORT extern int fb_sim_bwreadrect(fb *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
+FB_EXPORT extern int fb_sim_bwwriterect(fb *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
+FB_EXPORT extern int fb_sim_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
+FB_EXPORT extern int fb_sim_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
+FB_EXPORT extern int fb_sim_cursor(fb *ifp, int mode, int x, int y);
+FB_EXPORT extern int fb_sim_getcursor(fb *ifp, int *mode, int *x, int *y);
 
 __END_DECLS
 

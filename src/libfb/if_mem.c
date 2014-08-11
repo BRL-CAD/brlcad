@@ -42,7 +42,7 @@
 
 /* Per connection private info */
 struct mem_info {
-    fb_s *fbp;		/* attached frame buffer (if any) */
+    fb *fbp;		/* attached frame buffer (if any) */
     unsigned char *mem;	/* memory frame buffer */
     ColorMap cmap;		/* color map buffer */
     int mem_dirty;	/* !0 implies unflushed written data */
@@ -75,11 +75,11 @@ static struct modeflags {
 
 
 HIDDEN int
-mem_open(fb_s *ifp, const char *file, int width, int height)
+mem_open(fb *ifp, const char *file, int width, int height)
 {
     int mode;
     const char *cp;
-    fb_s *fbp;
+    fb *fbp;
     char modebuf[80];
     char *mp;
     int alpha;
@@ -188,7 +188,7 @@ mem_open(fb_s *ifp, const char *file, int width, int height)
 
 
 HIDDEN int
-mem_close(fb_s *ifp)
+mem_close(fb *ifp)
 {
     /*
      * Flush memory/cmap to attached frame buffer if any
@@ -212,7 +212,7 @@ mem_close(fb_s *ifp)
 
 
 HIDDEN int
-mem_clear(fb_s *ifp, unsigned char *pp)
+mem_clear(fb *ifp, unsigned char *pp)
 {
     RGBpixel v;
     register int n;
@@ -250,7 +250,7 @@ mem_clear(fb_s *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-mem_read(fb_s *ifp, int x, int y, unsigned char *pixelp, size_t count)
+mem_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
 
@@ -269,7 +269,7 @@ mem_read(fb_s *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-mem_write(fb_s *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+mem_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
 
@@ -293,7 +293,7 @@ mem_write(fb_s *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
 
 HIDDEN int
-mem_rmap(fb_s *ifp, ColorMap *cmp)
+mem_rmap(fb *ifp, ColorMap *cmp)
 {
     *cmp = MI(ifp)->cmap;		/* struct copy */
     return 0;
@@ -301,7 +301,7 @@ mem_rmap(fb_s *ifp, ColorMap *cmp)
 
 
 HIDDEN int
-mem_wmap(fb_s *ifp, const ColorMap *cmp)
+mem_wmap(fb *ifp, const ColorMap *cmp)
 {
     if (cmp == COLORMAP_NULL) {
 	fb_make_linear_cmap(&(MI(ifp)->cmap));
@@ -319,7 +319,7 @@ mem_wmap(fb_s *ifp, const ColorMap *cmp)
 
 
 HIDDEN int
-mem_view(fb_s *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+mem_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
     if (MI(ifp)->write_thru) {
@@ -331,7 +331,7 @@ mem_view(fb_s *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-mem_getview(fb_s *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+mem_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (MI(ifp)->write_thru) {
 	return fb_getview(MI(ifp)->fbp, xcenter, ycenter,
@@ -343,7 +343,7 @@ mem_getview(fb_s *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 HIDDEN int
-mem_setcursor(fb_s *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+mem_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     if (MI(ifp)->write_thru) {
 	return fb_setcursor(MI(ifp)->fbp,
@@ -354,7 +354,7 @@ mem_setcursor(fb_s *ifp, const unsigned char *bits, int xbits, int ybits, int xo
 
 
 HIDDEN int
-mem_cursor(fb_s *ifp, int mode, int x, int y)
+mem_cursor(fb *ifp, int mode, int x, int y)
 {
     fb_sim_cursor(ifp, mode, x, y);
     if (MI(ifp)->write_thru) {
@@ -365,7 +365,7 @@ mem_cursor(fb_s *ifp, int mode, int x, int y)
 
 
 HIDDEN int
-mem_getcursor(fb_s *ifp, int *mode, int *x, int *y)
+mem_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     if (MI(ifp)->write_thru) {
 	return fb_getcursor(MI(ifp)->fbp, mode, x, y);
@@ -376,7 +376,7 @@ mem_getcursor(fb_s *ifp, int *mode, int *x, int *y)
 
 
 HIDDEN int
-mem_poll(fb_s *ifp)
+mem_poll(fb *ifp)
 {
     if (MI(ifp)->write_thru) {
 	return fb_poll(MI(ifp)->fbp);
@@ -386,7 +386,7 @@ mem_poll(fb_s *ifp)
 
 
 HIDDEN int
-mem_flush(fb_s *ifp)
+mem_flush(fb *ifp)
 {
     /*
      * Flush memory/cmap to attached frame buffer if any
@@ -411,7 +411,7 @@ mem_flush(fb_s *ifp)
 
 
 HIDDEN int
-mem_help(fb_s *ifp)
+mem_help(fb *ifp)
 {
     struct modeflags *mfp;
 
@@ -432,7 +432,7 @@ mem_help(fb_s *ifp)
 
 
 /* This is the ONLY thing that we normally "export" */
-fb_s memory_interface =  {
+fb memory_interface =  {
     0,
     mem_open,		/* device_open */
     mem_close,		/* device_close */

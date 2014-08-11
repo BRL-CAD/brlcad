@@ -68,7 +68,7 @@ static int blueflag  = 0;
 static char *framebuffer = NULL;
 static char *file_name;
 static int infd;
-static fb_s *fbp;
+static fb *fbp;
 
 static char usage[] = "\
 Usage: bw-fb [-a -i -c -z -R -G -B] [-F framebuffer]\n\

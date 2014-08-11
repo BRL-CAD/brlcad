@@ -110,7 +110,7 @@ int	verbose = 0;
 
 /* from server.c */
 extern const struct pkg_switch fb_server_pkg_switch[];
-extern fb_s	*fb_server_fbp;
+extern fb	*fb_server_fbp;
 extern fd_set	*fb_server_select_list;
 extern int	*fb_server_max_fd;
 extern int	fb_server_got_fb_free;       /* !0 => we have received an fb_free */

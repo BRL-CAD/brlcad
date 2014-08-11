@@ -109,7 +109,7 @@
 #endif
 
 
-extern fb_s *fbp;	/* Framebuffer handle */
+extern fb *fbp;	/* Framebuffer handle */
 extern fastf_t viewsize;
 extern int lightmodel;
 extern size_t width, height;

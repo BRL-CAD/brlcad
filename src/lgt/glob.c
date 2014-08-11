@@ -32,7 +32,7 @@
 #include "./lgt.h"
 #include "./extern.h"
 #include "./tree.h"
-fb_s	*fbiop = FB_NULL;    /* Framebuffer interface ptr.	*/
+fb	*fbiop = FB_NULL;    /* Framebuffer interface ptr.	*/
 
 /* Initialization for root of IR data base octree.			*/
 PtList	ir_ptlist = { {0.0, 0.0, 0.0}, PTLIST_NULL };

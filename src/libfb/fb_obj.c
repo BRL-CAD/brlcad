@@ -44,7 +44,7 @@
 
 
 /* defined in libfb/tcl.c */
-extern int fb_refresh(fb_s *ifp, int x, int y, int w, int h);
+extern int fb_refresh(fb *ifp, int x, int y, int w, int h);
 
 
 #define FBO_CONSTRAIN(_v, _a, _b)		\
@@ -62,7 +62,7 @@ static struct fb_obj HeadFBObj;			/* head of display manager object list */
 
 
 HIDDEN int
-fbo_coords_ok(fb_s *fbp, int x, int y)
+fbo_coords_ok(fb *fbp, int x, int y)
 {
     int width;
     int height;
@@ -776,7 +776,7 @@ HIDDEN int
 fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char **argv)
 {
     struct fb_obj *fbop;
-    fb_s *ifp;
+    fb *ifp;
     int width = 512;
     int height = 512;
     register int c;

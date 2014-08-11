@@ -68,7 +68,7 @@ int nwave = 2;				/* Linked with TCL */
 char *datafile_basename = NULL;
 char spectrum_name[100];
 
-fb_s *fbp;
+fb *fbp;
 
 struct bn_tabdata *data;
 
@@ -320,7 +320,7 @@ getspectxy(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 int
 tcl_fb_cursor(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 {
-    fb_s *ifp;
+    fb *ifp;
     long mode, x, y;
 
     Tcl_ResetResult(interp);
@@ -351,7 +351,7 @@ tcl_fb_cursor(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 int
 tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 {
-    fb_s *ifp;
+    fb *ifp;
     long x, y;
     unsigned char pixel[4];
     struct bu_vls vls = BU_VLS_INIT_ZERO;

@@ -37,7 +37,7 @@
 #include "fb.h"
 
 HIDDEN int
-deb_open(fb_s *ifp, const char *file, int width, int height)
+deb_open(fb *ifp, const char *file, int width, int height)
 {
     FB_CK_FB(ifp);
     if (file == (char *)NULL)
@@ -72,7 +72,7 @@ deb_open(fb_s *ifp, const char *file, int width, int height)
 
 
 HIDDEN int
-deb_close(fb_s *ifp)
+deb_close(fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_close(%p)\n", (void *)ifp);
@@ -81,7 +81,7 @@ deb_close(fb_s *ifp)
 
 
 HIDDEN int
-deb_clear(fb_s *ifp, unsigned char *pp)
+deb_clear(fb *ifp, unsigned char *pp)
 {
     FB_CK_FB(ifp);
     if (pp == 0)
@@ -96,7 +96,7 @@ deb_clear(fb_s *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-deb_read(fb_s *ifp, int x, int y, unsigned char *pixelp, size_t count)
+deb_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     FB_CK_FB(ifp);
     fb_log("fb_read(%p, %4d, %4d, %p, %lu)\n",
@@ -107,7 +107,7 @@ deb_read(fb_s *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-deb_write(fb_s *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+deb_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t i;
 
@@ -135,7 +135,7 @@ deb_write(fb_s *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
 
 HIDDEN int
-deb_rmap(fb_s *ifp, ColorMap *cmp)
+deb_rmap(fb *ifp, ColorMap *cmp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_rmap(%p, %p)\n",
@@ -145,7 +145,7 @@ deb_rmap(fb_s *ifp, ColorMap *cmp)
 
 
 HIDDEN int
-deb_wmap(fb_s *ifp, const ColorMap *cmp)
+deb_wmap(fb *ifp, const ColorMap *cmp)
 {
     int i;
 
@@ -172,7 +172,7 @@ deb_wmap(fb_s *ifp, const ColorMap *cmp)
 
 
 HIDDEN int
-deb_view(fb_s *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+deb_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     FB_CK_FB(ifp);
     fb_log("fb_view(%p, %4d, %4d, %4d, %4d)\n",
@@ -183,7 +183,7 @@ deb_view(fb_s *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-deb_getview(fb_s *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+deb_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FB(ifp);
     fb_log("fb_getview(%p, %p, %p, %p, %p)\n",
@@ -196,7 +196,7 @@ deb_getview(fb_s *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 HIDDEN int
-deb_setcursor(fb_s *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+deb_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     FB_CK_FB(ifp);
     fb_log("fb_setcursor(%p, %p, %d, %d, %d, %d)\n",
@@ -206,7 +206,7 @@ deb_setcursor(fb_s *ifp, const unsigned char *bits, int xbits, int ybits, int xo
 
 
 HIDDEN int
-deb_cursor(fb_s *ifp, int mode, int x, int y)
+deb_cursor(fb *ifp, int mode, int x, int y)
 {
     fb_log("fb_cursor(%p, %d, %4d, %4d)\n",
 	   (void *)ifp, mode, x, y);
@@ -216,7 +216,7 @@ deb_cursor(fb_s *ifp, int mode, int x, int y)
 
 
 HIDDEN int
-deb_getcursor(fb_s *ifp, int *mode, int *x, int *y)
+deb_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     FB_CK_FB(ifp);
     fb_log("fb_getcursor(%p, %p, %p, %p)\n",
@@ -228,7 +228,7 @@ deb_getcursor(fb_s *ifp, int *mode, int *x, int *y)
 
 
 HIDDEN int
-deb_readrect(fb_s *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+deb_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_readrect(%p, (%4d, %4d), %4d, %4d, %p)\n",
@@ -239,7 +239,7 @@ deb_readrect(fb_s *ifp, int xmin, int ymin, int width, int height, unsigned char
 
 
 HIDDEN int
-deb_writerect(fb_s *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+deb_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_writerect(%p, %4d, %4d, %4d, %4d, %p)\n",
@@ -250,7 +250,7 @@ deb_writerect(fb_s *ifp, int xmin, int ymin, int width, int height, const unsign
 
 
 HIDDEN int
-deb_bwreadrect(fb_s *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+deb_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_bwreadrect(%p, (%4d, %4d), %4d, %4d, %p)\n",
@@ -261,7 +261,7 @@ deb_bwreadrect(fb_s *ifp, int xmin, int ymin, int width, int height, unsigned ch
 
 
 HIDDEN int
-deb_bwwriterect(fb_s *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+deb_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_bwwriterect(%p, %4d, %4d, %4d, %4d, %p)\n",
@@ -272,7 +272,7 @@ deb_bwwriterect(fb_s *ifp, int xmin, int ymin, int width, int height, const unsi
 
 
 HIDDEN int
-deb_poll(fb_s *ifp)
+deb_poll(fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_poll(%p)\n", (void *)ifp);
@@ -281,7 +281,7 @@ deb_poll(fb_s *ifp)
 
 
 HIDDEN int
-deb_flush(fb_s *ifp)
+deb_flush(fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("if_flush(%p)\n", (void *)ifp);
@@ -290,7 +290,7 @@ deb_flush(fb_s *ifp)
 
 
 HIDDEN int
-deb_free(fb_s *ifp)
+deb_free(fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_free(%p)\n", (void *)ifp);
@@ -300,7 +300,7 @@ deb_free(fb_s *ifp)
 
 /*ARGSUSED*/
 HIDDEN int
-deb_help(fb_s *ifp)
+deb_help(fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("Description: %s\n", debug_interface.if_type);
@@ -324,7 +324,7 @@ Usage: /dev/debug[#]\n\
 
 
 /* This is the ONLY thing that we "export" */
-fb_s debug_interface = {
+fb debug_interface = {
     0,
     deb_open,
     deb_close,

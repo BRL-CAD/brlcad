@@ -152,7 +152,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 static struct fb_texture *
 init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 {
-    fb_s		*txfbiop;
+    fb		*txfbiop;
     struct fb_texture	*fbp;
     RGBpixel	*fbmap;
     int		wid = entry->df_rgb[0] << 3;

@@ -333,7 +333,7 @@ txt_makeCurrent(struct dm *UNUSED(dmp))
 
 
 HIDDEN int
-txt_openFb(struct dm *UNUSED(dmp), fb_s *UNUSED(ifp))
+txt_openFb(struct dm *UNUSED(dmp), fb *UNUSED(ifp))
 {
     bu_log("openFb called\n");
     return 0;
