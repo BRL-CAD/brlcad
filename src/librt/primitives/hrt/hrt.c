@@ -813,7 +813,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
-    
+
 
     mag_h = MAGNITUDE(hip->zdir);
     r1 = MAGNITUDE(hip->xdir)*0.9;
@@ -1012,7 +1012,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
 
     VADD2(Work, hip->v, hip->zdir);
     /*for (i = 0; i < nseg; i++) {
-	 Draw connector 
+	 Draw connector
 	RT_ADD_VLIST(vhead, Work, BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
 		     &ellipses[0][i*ELEMENTS_PER_VECT],
