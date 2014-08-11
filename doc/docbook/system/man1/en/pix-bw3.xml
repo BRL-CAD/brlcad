@@ -27,7 +27,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pix-bw3</emphasis>
+<para><command>pix-bw3</command>
 reads a color
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file

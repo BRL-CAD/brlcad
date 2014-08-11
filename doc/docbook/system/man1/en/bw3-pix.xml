@@ -27,19 +27,19 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bw3-pix</emphasis>
+<para><command>bw3-pix</command>
 merges (combines the colors of)
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format files into a
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 file.
-<emphasis remap='I'>Bw3-pix</emphasis>
+<command>bw3-pix</command>
 reads the specified input files
 and writes stdout until all files have been exhausted.
 The first file goes into the red color plane, the second green,
 the third blue.</para>
 
-<para><emphasis remap='I'>Bw3-pix</emphasis>
+<para><command>bw3-pix</command>
 accepts two special filename synonyms:
 ``<emphasis remap='B'>-</emphasis>'',
 which stands for stdin, and

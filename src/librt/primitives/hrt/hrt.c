@@ -774,8 +774,23 @@ rt_hrt_adaptive_plot(void)
 
 
 int
-rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
+    fastf_t c;
+    fastf_t dtol;
+    fastf_t mag_h;
+    fastf_t ntol = M_PI;
+    fastf_t r1, r2;
+    fastf_t **ellipses, theta_prev, theta_new;
+    int *pts_dbl, j, nseg;
+    int jj;
+    int na, nb, nell, recalc_b;
+    mat_t R;
+    mat_t invR;
+    point_t p1;
+    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
+    vect_t A, Au, B, Bu, Cu, V;
+    vect_t Work;
     int i;
     struct rt_hrt_internal *hip;
     fastf_t top[24*3];
@@ -798,6 +813,219 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
+    
+
+    mag_h = MAGNITUDE(hip->zdir);
+    r1 = MAGNITUDE(hip->xdir)*0.9;
+    r2 = MAGNITUDE(hip->ydir)*0.9;
+    c = hip->d;
+
+    /* make unit vectors in A, B, and AxB directions */
+    VMOVE(Cu, hip->zdir);
+    VUNITIZE(Cu);
+    VMOVE(Au, hip->xdir);
+    VUNITIZE(Au);
+    VMOVE(Bu, hip->ydir);
+    VUNITIZE(Bu);
+
+    /* Compute R and Rinv matrices */
+    MAT_IDN(R);
+    VREVERSE(&R[0], Bu);
+    VMOVE(&R[4], Au);
+    VREVERSE(&R[8], Cu);
+    bn_mat_trn(invR, R);			/* inv of rot mat is trn */
+
+    dtol = primitive_get_absolute_tolerance(ttol,r2 * 2.0);
+
+    /*
+     * build ehy from 2 hyperbolas
+     */
+
+    /* approximate positive half of hyperbola along semi-minor axis */
+    BU_ALLOC(pts_b, struct rt_pt_node);
+    BU_ALLOC(pts_b->next, struct rt_pt_node);
+
+    pts_b->next->next = NULL;
+    VSET(pts_b->p,       0, 0, 0);
+    VSET(pts_b->next->p, 0, 0, mag_h/3);
+    /* 2 endpoints in 1st approximation */
+    nb = 2;
+    /* recursively break segment 'til within error tolerances */
+    nb += rt_mk_hyperbola(pts_b, mag_h/3, mag_h, c, dtol, ntol);
+    nell = nb - 1;	/* # of ellipses needed */
+
+    /* construct positive half of hyperbola along semi-major axis of
+     * ehy using same z coords as hyperbola along semi-minor axis
+     */
+    BU_ALLOC(pts_a, struct rt_pt_node);
+    VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
+    pts_a->next = NULL;
+    pos_b = pts_b->next;
+    pos_a = pts_a;
+    while (pos_b) {
+	/* copy node from b_hyperbola to a_hyperbola */
+	BU_ALLOC(pos_a->next, struct rt_pt_node);
+	pos_a = pos_a->next;
+	pos_a->p[Z] = pos_b->p[Z];
+	/* at given z, find y on hyperbola */
+	pos_a->p[Y] = r1
+	    * sqrt(
+		((pos_b->p[Z] + mag_h + c)
+		 * (pos_b->p[Z] + mag_h + c) - c*c)
+		/ (mag_h*(mag_h + 2*c))
+		);
+	pos_a->p[X] = 0;
+	pos_b = pos_b->next;
+    }
+    pos_a->next = NULL;
+
+    /* see if any segments need further breaking up */
+    recalc_b = 0;
+    pos_a = pts_a;
+    while (pos_a->next) {
+	na = rt_mk_hyperbola(pos_a, r1, mag_h, c, dtol, ntol);
+	if (na != 0) {
+	    recalc_b = 1;
+	    nell += na;
+	}
+	pos_a = pos_a->next;
+    }
+    /* if any were broken, recalculate hyperbola 'a' */
+    if (recalc_b) {
+	/* free mem for old approximation of hyperbola */
+	pos_b = pts_b;
+	while (pos_b) {
+	    struct rt_pt_node *next;
+
+	    /* get next node before freeing */
+	    next = pos_b->next;
+	    bu_free((char *)pos_b, "rt_pt_node");
+	    pos_b = next;
+	}
+	/* construct hyperbola along semi-major axis of ehy using same
+	 * z coords as parab along semi-minor axis
+	 */
+	BU_ALLOC(pts_b, struct rt_pt_node);
+	pts_b->p[Z] = pts_a->p[Z];
+	pts_b->next = NULL;
+	pos_a = pts_a->next;
+	pos_b = pts_b;
+	while (pos_a) {
+	    /* copy node from a_hyperbola to b_hyperbola */
+	    BU_ALLOC(pos_b->next, struct rt_pt_node);
+	    pos_b = pos_b->next;
+	    pos_b->p[Z] = pos_a->p[Z];
+	    /* at given z, find y on hyperbola */
+	    pos_b->p[Y] = r2
+		* sqrt(
+		    ((pos_a->p[Z] + mag_h + c)
+		     * (pos_a->p[Z] + mag_h + c) - c*c)
+		    / (mag_h*(mag_h + 2*c))
+		    );
+	    pos_b->p[X] = 0;
+	    pos_a = pos_a->next;
+	}
+	pos_b->next = NULL;
+    }
+
+    /* make array of ptrs to ehy ellipses */
+    ellipses = (fastf_t **)bu_malloc(nell * sizeof(fastf_t *), "fastf_t ell[]");
+    /* keep track of whether pts in each ellipse are doubled or not */
+    pts_dbl = (int *)bu_malloc(nell * sizeof(int), "dbl ints");
+
+    /* make ellipses at each z level */
+    i = 0;
+    nseg = 0;
+    theta_prev = M_2PI;
+    pos_a = pts_a->next;	/* skip over apex of ehy */
+    pos_b = pts_b->next;
+    while (pos_a) {
+	VSCALE(A, Au, pos_a->p[Y]);	/* semimajor axis */
+	VSCALE(B, Bu, pos_b->p[Y]);	/* semiminor axis */
+	VJOIN1(V, hip->v, pos_a->p[Z], Cu);
+
+	VSET(p1, 0., pos_b->p[Y], 0.);
+	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+	if (nseg == 0) {
+	    nseg = (int)(M_2PI / theta_new) + 1;
+	    pts_dbl[i] = 0;
+	} else if (theta_new < theta_prev) {
+	    nseg *= 2;
+	    pts_dbl[i] = 1;
+	} else
+	    pts_dbl[i] = 0;
+	theta_prev = theta_new;
+
+	ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),
+					   "pts ell");
+	rt_ell(ellipses[i], V, A, B, nseg);
+
+	i++;
+	pos_a = pos_a->next;
+	pos_b = pos_b->next;
+    }
+
+    /* Draw the top ellipse */
+    RT_ADD_VLIST(vhead,
+		 &ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
+		 BN_VLIST_LINE_MOVE);
+    for (i = 0; i < nseg; i++) {
+	RT_ADD_VLIST(vhead,
+		     &ellipses[nell-1][i*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_DRAW);
+    }
+
+    /* connect ellipses */
+    for (i = nell-2; i >= 0; i--) {
+	/* skip top ellipse */
+	int bottom2, top2;
+
+	top2 = i + 1;
+	bottom2 = i;
+	if (pts_dbl[top2])
+	    nseg /= 2;	/* # segs in 'bottom' ellipse */
+
+	/* Draw the current ellipse */
+	RT_ADD_VLIST(vhead,
+		     &ellipses[bottom2][(nseg-1)*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_MOVE);
+	for (j = 0; j < nseg; j++) {
+	    RT_ADD_VLIST(vhead,
+			 &ellipses[bottom2][j*ELEMENTS_PER_VECT],
+			 BN_VLIST_LINE_DRAW);
+	}
+
+	/* make connections between ellipses */
+	for (j = 1; j < nseg; j++) {
+	    if (pts_dbl[top2])
+		jj = j + j;	/* top ellipse index */
+	    else
+		jj = j;
+	    RT_ADD_VLIST(vhead,
+			 &ellipses[bottom2][j*ELEMENTS_PER_VECT],
+			 BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead,
+			 &ellipses[top2][jj*ELEMENTS_PER_VECT],
+			 BN_VLIST_LINE_DRAW);
+	}
+    }
+
+    VADD2(Work, hip->v, hip->zdir);
+    /*for (i = 0; i < nseg; i++) {
+	 Draw connector 
+	RT_ADD_VLIST(vhead, Work, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead,
+		     &ellipses[0][i*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_DRAW);
+    } */
+
+    /* free mem */
+    for (i = 0; i < nell; i++) {
+	bu_free((char *)ellipses[i], "pts ell");
+    }
+    bu_free((char *)ellipses, "fastf_t ell[]");
+    bu_free((char *)pts_dbl, "dbl ints");
+
     return 0;
 }
 

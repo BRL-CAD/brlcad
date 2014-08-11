@@ -59,6 +59,11 @@
 #  endif
 #endif
 
+/* TODO - Ideally, everything should go through libpkg */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define FB_USE_TCL_CHANNEL 1
+#endif
+
 /**
  * Format of disk pixels is .pix raw image files.  Formerly used as
  * arguments to many of the library routines, but has fallen into
@@ -88,7 +93,7 @@ typedef struct {
 
 struct fbserv_listener {
     int fbsl_fd;                        /**< @brief socket to listen for connections */
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#if defined(FB_USE_TCL_CHANNEL)
     Tcl_Channel fbsl_chan;
 #endif
     int fbsl_port;                      /**< @brief port number to listen on */
@@ -99,7 +104,7 @@ struct fbserv_listener {
 
 struct fbserv_client {
     int fbsc_fd;
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#if defined(FB_USE_TCL_CHANNEL)
     Tcl_Channel fbsc_chan;
     Tcl_FileProc *fbsc_handler;
 #endif
@@ -130,8 +135,8 @@ struct fb {
     struct fbserv_listener fbs_listener;                /**< @brief data for listening */
     struct fbserv_client fbs_clients[MAX_CLIENTS];      /**< @brief connected clients */
     /* With or without active network listeners/clients, have a callback function for possible parents */
-    void (*fb_callback)(void *clientData);             /**< @brief callback function */
-    void *fb_clientData;
+    void (*fb_callback)(void *client_data, void *fb_data);             /**< @brief callback function */
+    void *fb_client_data;
 };
 
 /**
