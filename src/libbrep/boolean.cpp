@@ -564,37 +564,27 @@ get_curve_intervals_inside_outerloop(
 
     // find the intervals delimiting segments inside the outerloop
     ON_SimpleArray<ON_Interval> intervals_inside_outerloop;
-    if (isect_curve_t.Count() != 0) {
-	// add curve endpoints to the list if recorded
-	// intersections nearly coincide with them
-	if (!ON_NearZero(isect_curve_t[0] - curve2D->Domain().Min())) {
-	    isect_curve_t.Insert(0, curve2D->Domain().Min());
-	}
-	if (!ON_NearZero(*isect_curve_t.Last() - curve2D->Domain().Max())) {
-	    isect_curve_t.Append(curve2D->Domain().Max());
-	}
 
-	// Check if the midpoint of each non-degenerate interval is
-	// inside the outerloop. Record the entire interval as being
-	// inside the outerloop.
-	for (int i = 0; i < isect_curve_t.Count() - 1; i++) {
-	    ON_Interval interval(isect_curve_t[i], isect_curve_t[i + 1]);
-	    if (ON_NearZero(interval.Length())) {
-		continue;
-	    }
-	    ON_2dPoint pt = curve2D->PointAt(interval.Mid());
-	    try {
-		if (is_point_inside_loop(pt, outerloop_curves)) {
-		    intervals_inside_outerloop.Append(interval);
-		}
-	    } catch (InvalidGeometry &e) {
-		bu_log("%s", e.what());
-	    }
+    // insert start and end parameters so every part of the curve is tested
+    isect_curve_t.Insert(0, curve2D->Domain().Min());
+    isect_curve_t.Append(curve2D->Domain().Max());
+
+    // Check if the midpoint of each non-degenerate interval is
+    // inside the outerloop. Record the entire interval as being
+    // inside the outerloop.
+    for (int i = 0; i < isect_curve_t.Count() - 1; i++) {
+	ON_Interval interval(isect_curve_t[i], isect_curve_t[i + 1]);
+	if (ON_NearZero(interval.Length())) {
+	    continue;
 	}
-    } else {
-	// no intersection with the outerloop implies the entire
-	// intersection curve is inside the face
-	intervals_inside_outerloop.Append(curve2D->Domain());
+	ON_2dPoint pt = curve2D->PointAt(interval.Mid());
+	try {
+	    if (is_point_inside_loop(pt, outerloop_curves)) {
+		intervals_inside_outerloop.Append(interval);
+	    }
+	} catch (InvalidGeometry &e) {
+	    bu_log("%s", e.what());
+	}
     }
     return intervals_inside_outerloop;
 }
