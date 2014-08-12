@@ -75,6 +75,17 @@ null_close_existing(fb *UNUSED(ifp))
         return 0;
 }
 
+HIDDEN int
+null_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+{
+        return 0;
+}
+
+HIDDEN int
+null_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+{
+        return 0;
+}
 
 HIDDEN int
 null_close(fb *ifp)
@@ -265,8 +276,8 @@ fb null_interface =  {
     null_writerect,	/* rectangle write */
     null_readrect,	/* bw rectangle read */
     null_writerect,	/* bw rectangle write */
-    NULL,
-    NULL,
+    null_configure_window,
+    null_refresh,
     null_poll,		/* handle events */
     null_flush,		/* flush output */
     null_free,		/* free resources */

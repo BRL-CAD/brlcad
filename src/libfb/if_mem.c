@@ -211,6 +211,17 @@ mem_close_existing(fb *UNUSED(ifp))
         return 0;
 }
 
+HIDDEN int
+mem_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+{
+        return 0;
+}
+
+HIDDEN int
+mem_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+{
+        return 0;
+}
 
 HIDDEN int
 mem_close(fb *ifp)
@@ -479,8 +490,8 @@ fb memory_interface =  {
     fb_sim_writerect,	/* rectangle write */
     fb_sim_bwreadrect,
     fb_sim_bwwriterect,
-    NULL,
-    NULL,
+    mem_configure_window,
+    mem_refresh,
     mem_poll,		/* poll */
     mem_flush,		/* flush */
     mem_close,		/* free */

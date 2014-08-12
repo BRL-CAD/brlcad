@@ -125,6 +125,17 @@ dsk_close_existing(fb *UNUSED(ifp))
         return 0;
 }
 
+HIDDEN int
+dsk_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+{
+        return 0;
+}
+
+HIDDEN int
+dsk_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+{
+        return 0;
+}
 
 HIDDEN int
 dsk_close(fb *ifp)
@@ -366,8 +377,8 @@ fb disk_interface = {
     fb_sim_writerect,
     fb_sim_bwreadrect,
     fb_sim_bwwriterect,
-    NULL,
-    NULL,
+    dsk_configure_window,
+    dsk_refresh,
     fb_null,		/* poll */
     fb_null,		/* flush */
     dsk_free,

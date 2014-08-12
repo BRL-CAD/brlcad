@@ -305,6 +305,17 @@ tk_close_existing(fb *UNUSED(ifp))
         return 0;
 }
 
+HIDDEN int
+tk_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+{
+        return 0;
+}
+
+HIDDEN int
+tk_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+{
+        return 0;
+}
 
 HIDDEN int
 fb_tk_close(fb *ifp)
@@ -589,8 +600,8 @@ fb tk_interface = {
     tk_writerect,
     tk_bwreadrect,
     tk_bwwriterect,
-    NULL,
-    NULL,
+    tk_configure_window,
+    tk_refresh,
     tk_poll,
     tk_flush,
     tk_free,

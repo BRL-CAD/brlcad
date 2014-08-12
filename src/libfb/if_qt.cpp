@@ -774,6 +774,17 @@ _qt_open_existing(fb *ifp, int width, int height, void *qapp, void *qwin, void *
     return 0;
 }
 
+HIDDEN int
+qt_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+{
+        return 0;
+}
+
+HIDDEN int
+qt_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+{
+        return 0;
+}
 
 HIDDEN int
 qt_close(fb *ifp)
@@ -1211,8 +1222,8 @@ fb qt_interface =  {
     qt_writerect,	/* rectangle write */
     qt_readrect,	/* bw rectangle read */
     qt_writerect,	/* bw rectangle write */
-    NULL,
-    NULL,
+    qt_configure_window,
+    qt_refresh,
     qt_poll,		/* handle events */
     qt_flush,		/* flush output */
     qt_free,		/* free resources */

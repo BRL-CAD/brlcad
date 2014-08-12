@@ -103,6 +103,17 @@ deb_close(fb *ifp)
     return 0;
 }
 
+HIDDEN int
+deb_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+{
+    return 0;
+}
+
+HIDDEN int
+deb_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+{
+    return 0;
+}
 
 HIDDEN int
 deb_clear(fb *ifp, unsigned char *pp)
@@ -370,8 +381,8 @@ fb debug_interface = {
     deb_writerect,
     deb_bwreadrect,
     deb_bwwriterect,
-    NULL,
-    NULL,
+    deb_configure_window,
+    deb_refresh,
     deb_poll,
     deb_flush,
     deb_free,

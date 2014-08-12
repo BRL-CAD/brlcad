@@ -310,6 +310,18 @@ rem_close_existing(fb *UNUSED(ifp))
         return 0;
 }
 
+HIDDEN int
+rem_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+{
+        return 0;
+}
+
+HIDDEN int
+rem_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+{
+        return 0;
+}
+
 
 HIDDEN int
 rem_close(fb *ifp)
@@ -793,8 +805,8 @@ fb remote_interface = {
     rem_writerect,
     rem_bwreadrect,
     rem_bwwriterect,
-    NULL,
-    NULL,
+    rem_configure_window,
+    rem_refresh,
     rem_poll,
     rem_flush,
     rem_free,
