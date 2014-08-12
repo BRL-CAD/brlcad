@@ -50,6 +50,8 @@ double nmg_eue_dist = 0.05;
 
 fastf_t rt_cline_radius = (fastf_t)-1.0;
 
+uint32_t bu_debug = 1;
+
 /**
  * minimum number of bot pieces
  */
