@@ -973,38 +973,38 @@ split_trimmed_face(
     ON_SimpleArray<ON_Curve *> outerloop_segs;
     int clx_i = 0;
     for (int loop_seg = 0; loop_seg < orig_face->m_outerloop.Count(); loop_seg++) {
-	ON_Curve *seg_curve = orig_face->m_outerloop[loop_seg]->Duplicate();
-	if (seg_curve == NULL) {
+	ON_Curve *remainder = orig_face->m_outerloop[loop_seg]->Duplicate();
+	if (remainder == NULL) {
 	    bu_log("ON_Curve::Duplicate() failed.\n");
 	    continue;
 	}
 	for (; clx_i < clx_points.Count() && clx_points[clx_i].m_loop_seg == loop_seg; clx_i++) {
 	    IntersectPoint &ipt = clx_points[clx_i];
-	    ON_Curve *left = NULL;
-	    if (seg_curve) {
-		double seg_min_t = seg_curve->Domain().Min();
-		double seg_max_t = seg_curve->Domain().Max();
-		if (ON_NearZero(ipt.m_seg_t - seg_max_t)) {
+	    ON_Curve *portion_before_ipt = NULL;
+	    if (remainder) {
+		double start_t = remainder->Domain().Min();
+		double end_t = remainder->Domain().Max();
+		if (ON_NearZero(ipt.m_seg_t - end_t)) {
 		    // Can't call Split() if ipt is at start (that
 		    // case is handled by the initialization) or ipt
 		    // is at end (handled here).
-		    left = seg_curve;
-		    seg_curve = NULL;
-		} else if (!ON_NearZero(ipt.m_seg_t - seg_min_t)) {
-		    if (!seg_curve->Split(ipt.m_seg_t, left, seg_curve)) {
+		    portion_before_ipt = remainder;
+		    remainder = NULL;
+		} else if (!ON_NearZero(ipt.m_seg_t - start_t)) {
+		    if (!remainder->Split(ipt.m_seg_t, portion_before_ipt, remainder)) {
 			bu_log("Split failed.\n");
-			bu_log("Domain: [%f, %f]\n", seg_max_t, seg_min_t);
+			bu_log("Domain: [%f, %f]\n", end_t, start_t);
 			bu_log("m_seg_t: %f\n", ipt.m_seg_t);
 		    }
 		}
-		if (left != NULL) {
-		    outerloop_segs.Append(left);
-		}
+	    }
+	    if (portion_before_ipt) {
+		outerloop_segs.Append(portion_before_ipt);
 	    }
 	    ipt.m_split_li = outerloop_segs.Count() - 1;
 	}
-	if (seg_curve) {
-	    outerloop_segs.Append(seg_curve);
+	if (remainder) {
+	    outerloop_segs.Append(remainder);
 	}
     }
 
