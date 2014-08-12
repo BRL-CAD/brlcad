@@ -65,7 +65,9 @@ __BEGIN_DECLS
  *
  * One of these is allocated for each active framebuffer.  A pointer
  * to this structure is the first argument to all the library
- * routines.  TODO - see if this can move to a private header.
+ * routines. The details of the structure are hidden behind function
+ * calls in the fb.h API - no code external to libfb should work
+ * directly with structure members.
  */
 struct fb_internal {
     uint32_t if_magic;
