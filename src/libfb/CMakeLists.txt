@@ -9,11 +9,21 @@ set(FB_INCLUDE_DIRS
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
   ${OPENNURBS_INCLUDE_DIR}
+  ${OPENTHREADS_INCLUDE_DIR}
+  ${OSG_INCLUDE_DIR}
   ${Qt5Widgets_INCLUDE_DIRS}
   )
 BRLCAD_LIB_INCLUDE_DIRS(fb FB_INCLUDE_DIRS "")
 
 set(LINKLIBS "")
+
+if(BRLCAD_ENABLE_OSG)
+  set(FBOSGDEFS "-DIF_OSG")
+  set(LINKLIBS ${LINKLIBS} ${OSG_LIBRARIES})
+  set(fbosg_srcs if_osg.cpp)
+  set_property(SOURCE if_osg.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+endif()
+
 if(BRLCAD_ENABLE_X11 AND X11_FOUND)
   set(FBX11DEFS "-DIF_X")
   set(LINKLIBS ${LINKLIBS} ${X11_LIBRARIES})
@@ -53,6 +63,7 @@ if(BRLCAD_ENABLE_QT)
 endif(BRLCAD_ENABLE_QT)
 
 set(LIBFB_SOURCES
+  ${fbosg_srcs}
   ${fbX11_srcs}
   ${fbogl_srcs}
   ${fbwgl_srcs}
@@ -79,6 +90,7 @@ set(LIBFB_SOURCES
 add_definitions(
   -DIF_REMOTE
   -DIF_AB
+  ${FBOSGDEFS}
   ${FBX11DEFS}
   ${FBOGLDEFS}
   ${FBTKDEFS}
@@ -96,6 +108,7 @@ set(libfb_ignore_files
   if_TEMPLATE.c
   if_X24.c
   if_ogl.c
+  if_osg.cpp
   if_qt.cpp
   if_tk.c
   if_wgl.c

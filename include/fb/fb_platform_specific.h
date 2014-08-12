@@ -30,10 +30,19 @@
 /** @} */
 
 #ifdef FB_USE_INTERNAL_API
-#ifdef IF_X
 
 #include "common.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef IF_X
 #include <X11/X.h>
+#ifdef HAVE_X11_XLIB_H
+#  include <X11/Xlib.h>
+#  include <X11/Xutil.h>
+#endif
 
 struct X24_fb_info {
     Display *dpy;
@@ -47,10 +56,11 @@ struct X24_fb_info {
 #endif /* IF_X */
 
 #ifdef IF_OGL
-#  ifdef HAVE_X11_XLIB_H
-#    include <X11/Xlib.h>
-#    include <X11/Xutil.h>
-#  endif
+#include <X11/X.h>
+#ifdef HAVE_X11_XLIB_H
+#  include <X11/Xlib.h>
+#  include <X11/Xutil.h>
+#endif
 /* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
  *  *  * parameter names that shadow system symbols.  protect the system
  *   *   * symbols by redefining the parameters prior to header inclusion.
@@ -107,6 +117,10 @@ struct wgl_fb_info {
 };
 #endif /* IF_WGL */
 
+#ifdef __cplusplus
+}
+#endif
+
 #ifdef IF_QT
 struct qt_fb_info {
     void *qapp;
@@ -114,10 +128,17 @@ struct qt_fb_info {
     void *qpainter;
     void *draw;
     void *qimg;
-}
+};
 #endif /* IF_QT */
 
+#ifdef IF_OSG
+struct osg_fb_info {
+    void *draw;
+};
+#endif /* IF_OSG */
+
 #endif /* FB_USE_INTERNAL_API */
+
 
 /*
  * Local Variables:

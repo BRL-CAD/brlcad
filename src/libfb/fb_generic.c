@@ -53,6 +53,9 @@
  */
 static
 fb *_if_list[] = {
+#ifdef IF_OSG
+    &osg_interface,
+#endif
 #ifdef IF_WGL
     &wgl_interface,
 #endif
@@ -81,6 +84,8 @@ const char *
 fb_get_magic_type(uint32_t magic)
 {
     switch(magic) {
+	case FB_OSG_MAGIC:
+	    return "osg";
 	case FB_WGL_MAGIC:
 	    return "wgl";
 	case FB_OGL_MAGIC:

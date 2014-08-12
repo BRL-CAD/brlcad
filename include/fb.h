@@ -97,6 +97,7 @@ typedef struct fb_internal fb;
 
 #define FB_WGL_MAGIC    0x574f4642 /**< WOFB */
 #define FB_OGL_MAGIC    0x584f4642 /**< XOFB */
+#define FB_OSG_MAGIC    0x4f534642 /**< OSFB */
 #define FB_X24_MAGIC    0x58324642 /**< X2FB */
 #define FB_TK_MAGIC     0x544b4642 /**< TKFB */
 #define FB_QT_MAGIC     0x51544642 /**< QTFB */
