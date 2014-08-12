@@ -184,12 +184,12 @@ X_fb_open(void)
     xfb_ps = (struct X24_fb_info *)fb_ps->data;
     xfb_ps->dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
     xfb_ps->win = ((struct x_vars *)dmp->dm_vars.priv_vars)->pix;
-    xfb_ps->cwinp = ((struct dm_xvars *)dmp->dm_vars.priv_vars)->win;
-    xfb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.priv_vars)->cmap;
-    xfb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.priv_vars)->vip;
+    xfb_ps->cwinp = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
+    xfb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
+    xfb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
     xfb_ps->gc = ((struct x_vars *)dmp->dm_vars.priv_vars)->gc;
 
-    fbp = fb_open_existing("/dev/X", dmp->dm_width, dmp->dm_height, fb_ps);
+    fbp = fb_open_existing("X", dmp->dm_width, dmp->dm_height, fb_ps);
 }
 
 

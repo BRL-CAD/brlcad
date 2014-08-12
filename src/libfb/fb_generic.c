@@ -221,6 +221,7 @@ fb_open_existing(const char *file, int width, int height, struct fb_platform_spe
 {
     fb *ifp = (fb *) calloc(sizeof(fb), 1);
     fb_set_interface(ifp, file);
+    fb_set_magic(ifp, FB_MAGIC);
     ifp->if_open_existing(ifp, width, height, fb_p);
     return ifp;
 }

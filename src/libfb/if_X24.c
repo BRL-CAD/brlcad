@@ -2858,7 +2858,7 @@ X24_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *fbps)
 HIDDEN int
 X24_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
-    struct X24_fb_info *x24_internal = (struct X24_fb_info *)fb_p;
+    struct X24_fb_info *x24_internal = (struct X24_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_X24_MAGIC, "X24 framebuffer");
     return _X24_open_existing(ifp, x24_internal->dpy, x24_internal->win,
 	    x24_internal->cwinp, x24_internal->cmap, x24_internal->vip,
