@@ -1,0 +1,105 @@
+set(osg_dep_srcs
+	AlphaFunc.cpp
+	AnimationPath.cpp
+	AutoTransform.cpp
+	Billboard.cpp
+	BlendColor.cpp
+	BlendEquation.cpp
+	BlendFunc.cpp
+	Box.cpp
+	Camera.cpp
+	CameraView.cpp
+	Capsule.cpp
+	ClearNode.cpp
+	ClipNode.cpp
+	ClipPlane.cpp
+	ClusterCullingCallback.cpp
+	ColorMask.cpp
+	ColorMatrix.cpp
+	CompositeShape.cpp
+	Cone.cpp
+	ConvexPlanarOccluder.cpp
+	CoordinateSystemNode.cpp
+	CullFace.cpp
+	Cylinder.cpp
+	Depth.cpp
+	Drawable.cpp
+	EllipsoidModel.cpp
+	Fog.cpp
+	FragmentProgram.cpp
+	FrontFace.cpp
+	Geode.cpp
+	Geometry.cpp
+	Group.cpp
+	HeightField.cpp
+	Image.cpp
+	ImageSequence.cpp
+	LibraryWrapper.cpp
+	Light.cpp
+	LightModel.cpp
+	LightSource.cpp
+	LineStipple.cpp
+	LineWidth.cpp
+	LOD.cpp
+	Material.cpp
+	Matrix.cpp
+	MatrixTransform.cpp
+	NodeCallback.cpp
+	Node.cpp
+	Object.cpp
+	OccluderNode.cpp
+	OcclusionQueryNode.cpp
+	PagedLOD.cpp
+	Point.cpp
+	PointSprite.cpp
+	PolygonMode.cpp
+	PolygonOffset.cpp
+	PositionAttitudeTransform.cpp
+	Program.cpp
+	Projection.cpp
+	ProxyNode.cpp
+	Scissor.cpp
+	Sequence.cpp
+	ShadeModel.cpp
+	Shader.cpp
+	ShapeDrawable.cpp
+	Sphere.cpp
+	StateAttribute.cpp
+	StateSet.cpp
+	Stencil.cpp
+	Switch.cpp
+	TessellationHints.cpp
+	TexEnvCombine.cpp
+	TexEnv.cpp
+	TexEnvFilter.cpp
+	TexGen.cpp
+	TexGenNode.cpp
+	TexMat.cpp
+	Texture1D.cpp
+	Texture2D.cpp
+	Texture3D.cpp
+	Texture.cpp
+	TextureCubeMap.cpp
+	TextureRectangle.cpp
+	TransferFunction.cpp
+	Transform.cpp
+	Uniform.cpp
+	VertexProgram.cpp
+	Viewport.cpp
+	)
+
+if(DYNAMIC_OPENSCENEGRAPH)
+  add_library(osgdb_deprecated_osg MODULE ${osg_dep_srcs})
+else(DYNAMIC_OPENSCENEGRAPH)
+  add_library(osgdb_deprecated_osg STATIC ${osg_dep_srcs})
+endif(DYNAMIC_OPENSCENEGRAPH)
+
+target_link_libraries(osgdb_deprecated_osg osgDB osgUtil osg OpenThreads
+	${CMAKE_THREAD_LIBS_INIT} ${MATH_LIBRARY} ${RT_LIBRARY} ${DL_LIBRARY} ${OPENGL_LIBRARIES} ${COMPRESSION_LIBRARIES})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
