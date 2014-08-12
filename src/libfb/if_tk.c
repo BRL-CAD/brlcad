@@ -299,6 +299,12 @@ tk_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct 
         return 0;
 }
 
+HIDDEN int
+tk_close_existing(fb *UNUSED(ifp))
+{
+        return 0;
+}
+
 
 HIDDEN int
 fb_tk_close(fb *ifp)
@@ -565,6 +571,7 @@ fb tk_interface = {
     0,
     fb_tk_open,
     tk_open_existing,
+    tk_close_existing,
     tk_get_fbps,
     tk_put_fbps,
     fb_tk_close,

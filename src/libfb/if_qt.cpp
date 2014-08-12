@@ -1194,6 +1194,8 @@ qt_help(fb *ifp)
 fb qt_interface =  {
     0,
     qt_open,		/* device_open */
+    qt_open_existing,   /* device_open_existing */
+    qt_close_existing,  /* device_close_existing */
     qt_close,		/* device_close */
     qt_clear,		/* device_clear */
     qt_read,		/* buffer_read */
@@ -1209,6 +1211,8 @@ fb qt_interface =  {
     qt_writerect,	/* rectangle write */
     qt_readrect,	/* bw rectangle read */
     qt_writerect,	/* bw rectangle write */
+    NULL,
+    NULL,
     qt_poll,		/* handle events */
     qt_flush,		/* flush output */
     qt_free,		/* free resources */

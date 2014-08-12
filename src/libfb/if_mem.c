@@ -206,6 +206,13 @@ mem_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct
 }
 
 HIDDEN int
+mem_close_existing(fb *UNUSED(ifp))
+{
+        return 0;
+}
+
+
+HIDDEN int
 mem_close(fb *ifp)
 {
     /*
@@ -454,6 +461,7 @@ fb memory_interface =  {
     0,
     mem_open,		/* device_open */
     mem_open_existing,	/* existing device_open */
+    mem_close_existing,	/* existing device_close */
     mem_get_fbps,
     mem_put_fbps,
     mem_close,		/* device_close */

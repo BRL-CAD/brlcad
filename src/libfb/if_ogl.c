@@ -2371,6 +2371,7 @@ fb ogl_interface =
     0,			/* magic number slot */
     fb_ogl_open,	/* open device */
     ogl_open_existing,    /* existing device_open */
+    ogl_close_existing,    /* existing device_close */
     ogl_get_fbps,         /* get platform specific memory */
     ogl_put_fbps,         /* free platform specific memory */
     fb_ogl_close,	/* close device */

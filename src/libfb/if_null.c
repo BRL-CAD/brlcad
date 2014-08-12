@@ -69,6 +69,12 @@ null_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struc
         return 0;
 }
 
+HIDDEN int
+null_close_existing(fb *UNUSED(ifp))
+{
+        return 0;
+}
+
 
 HIDDEN int
 null_close(fb *ifp)
@@ -241,6 +247,7 @@ fb null_interface =  {
     0,
     null_open,		/* device_open */
     null_open_existing,	/* existing device_open */
+    null_close_existing,/* existing device_close */
     null_get_fbps,
     null_put_fbps,
     null_close,		/* device_close */

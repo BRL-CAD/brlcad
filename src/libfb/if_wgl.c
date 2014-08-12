@@ -2103,6 +2103,10 @@ fb wgl_interface =
 {
     0,			/* magic number slot */
     wgl_open,		/* open device */
+    wgl_open_existing,
+    wgl_close_existing,
+    wgl_get_fbps,
+    wgl_put_fbps,
     wgl_close,		/* close device */
     wgl_clear,		/* clear device */
     wgl_read,		/* read pixels */
@@ -2118,6 +2122,8 @@ fb wgl_interface =
     wgl_writerect,	/* write rectangle */
     fb_sim_bwreadrect,
     wgl_bwwriterect,	/* write rectangle */
+    wgl_configureWindow,
+    wgl_refresh,
     wgl_poll,		/* process events */
     wgl_flush,		/* flush output */
     wgl_free,		/* free resources */

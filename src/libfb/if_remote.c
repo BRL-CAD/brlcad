@@ -305,6 +305,13 @@ rem_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct
 }
 
 HIDDEN int
+rem_close_existing(fb *UNUSED(ifp))
+{
+        return 0;
+}
+
+
+HIDDEN int
 rem_close(fb *ifp)
 {
     unsigned char buf[NET_LONG_LEN+1];
@@ -768,6 +775,7 @@ fb remote_interface = {
     0,
     rem_open,
     rem_open_existing,
+    rem_close_existing,
     rem_get_fbps,
     rem_put_fbps,
     rem_close,

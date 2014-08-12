@@ -563,6 +563,7 @@ fb_close(fb *ifp)
 int
 fb_close_existing(fb *ifp)
 {
+    int status = 0;
     if (!ifp)
 	return 0;
 
@@ -572,108 +573,14 @@ fb_close_existing(fb *ifp)
 
     /* FIXME: these should be callbacks, not listed directly */
 
-#ifdef IF_X
-    {
-	if (BU_STR_EQUIV(ifp->if_name, X24_interface.if_name)) {
-	    int status = -1;
-	    if ((status = X24_close_existing(ifp)) <= -1) {
-		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
-		return BRLCAD_ERROR;
-	    }
-	    if (ifp->if_pbase != PIXEL_NULL) {
-		free((void *)ifp->if_pbase);
-	    }
-	    free((void *)ifp->if_name);
-	    free((void *)ifp);
-	    return BRLCAD_OK;
-	}
+    status = ifp->if_close_existing(ifp);
+
+    if (status  <= -1) {
+	fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
+	return BRLCAD_ERROR;
     }
-#endif  /* IF_X */
-
-#ifdef IF_WGL
-    {
-	if (BU_STR_EQUIV(ifp->if_name, wgl_interface.if_name)) {
-	    int status = -1;
-	    if ((status = wgl_close_existing(ifp)) <= -1) {
-		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
-		return BRLCAD_ERROR;
-	    }
-	    if (ifp->if_pbase != PIXEL_NULL)
-		free((void *)ifp->if_pbase);
-	    free((void *)ifp->if_name);
-	    free((void *)ifp);
-	    return BRLCAD_OK;
-	}
-    }
-#endif  /* IF_WGL */
-
-#ifdef IF_OGL
-    {
-	if (BU_STR_EQUIV(ifp->if_name, ogl_interface.if_name)) {
-	    int status = -1;
-	    if ((status = ogl_close_existing(ifp)) <= -1) {
-		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
-		return BRLCAD_ERROR;
-	    }
-	    if (ifp->if_pbase != PIXEL_NULL)
-		free((void *)ifp->if_pbase);
-	    /*free((void *)ifp->if_name);*/
-	    free((void *)ifp);
-	    return BRLCAD_OK;
-	}
-    }
-#endif  /* IF_OGL */
-
-#ifdef IF_RTGL
-    {
-	if (BU_STR_EQUIV(ifp->if_name, ogl_interface.if_name)) {
-	    int status = -1;
-	    if ((status = ogl_close_existing(ifp)) <= -1) {
-		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
-		return BRLCAD_ERROR;
-	    }
-	    if (ifp->if_pbase != PIXEL_NULL)
-		free((void *)ifp->if_pbase);
-	    free((void *)ifp->if_name);
-	    free((void *)ifp);
-	    return BRLCAD_OK;
-	}
-    }
-#endif  /* IF_RTGL */
-
-#ifdef IF_TK
-    {
-	if (BU_STR_EQUIV(ifp->if_name, tk_interface.if_name)) {
-	    /* may need to close_existing here at some point */
-	    if (ifp->if_pbase != PIXEL_NULL)
-		free((void *)ifp->if_pbase);
-	    free((void *)ifp->if_name);
-	    free((void *)ifp);
-	    return BRLCAD_OK;
-	}
-    }
-#endif  /* IF_TK */
-
-#ifdef IF_QT
-    {
-	if (BU_STR_EQUIV(ifp->if_name, qt_interface.if_name)) {
-	    int status = -1;
-	    if ((status = qt_close_existing(ifp)) <= -1) {
-		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
-		return BRLCAD_ERROR;
-	    }
-	    if (ifp->if_pbase != PIXEL_NULL)
-		free((void *)ifp->if_pbase);
-	    free((void *)ifp->if_name);
-	    free((void *)ifp);
-	    return BRLCAD_OK;
-	}
-    }
-#endif  /* IF_QT */
-
-    fb_log("fb_close_existing: cannot close device\nifp: %s\n", ifp->if_name);
-
-    return BRLCAD_ERROR;
+    fb_put(ifp);
+    return BRLCAD_OK;
 }
 
 

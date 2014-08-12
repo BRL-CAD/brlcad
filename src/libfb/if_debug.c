@@ -90,6 +90,12 @@ deb_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct
 }
 
 HIDDEN int
+deb_close_existing(fb *UNUSED(ifp))
+{
+        return 0;
+}
+
+HIDDEN int
 deb_close(fb *ifp)
 {
     FB_CK_FB(ifp);
@@ -346,6 +352,7 @@ fb debug_interface = {
     0,
     deb_open,
     deb_open_existing,
+    deb_close_existing,
     deb_get_fbps,
     deb_put_fbps,
     deb_close,

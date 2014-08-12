@@ -3497,6 +3497,7 @@ fb X24_interface =  {
     0,			/* magic number slot */
     X24_open,		/* open device */
     X24_open_existing,    /* existing device_open */
+    X24_close_existing,   /* existing device_close */
     X24_get_fbps,         /* get platform specific memory */
     X24_put_fbps,         /* free platform specific memory */
     X24_close,		/* close device */

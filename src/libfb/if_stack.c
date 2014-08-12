@@ -131,6 +131,14 @@ stk_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct
         return 0;
 }
 
+
+HIDDEN int
+stk_close_existing(fb *UNUSED(ifp))
+{
+        return 0;
+}
+
+
 HIDDEN int
 stk_close(fb *ifp)
 {
@@ -416,6 +424,7 @@ fb stk_interface =  {
     0,
     stk_open,		/* device_open */
     stk_open_existing,	/* device_open */
+    stk_close_existing,
     stk_get_fbps,
     stk_put_fbps,
     stk_close,		/* device_close */

@@ -119,6 +119,12 @@ dsk_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct
         return 0;
 }
 
+HIDDEN int
+dsk_close_existing(fb *UNUSED(ifp))
+{
+        return 0;
+}
+
 
 HIDDEN int
 dsk_close(fb *ifp)
@@ -342,6 +348,7 @@ fb disk_interface = {
     0,
     dsk_open,
     dsk_open_existing,
+    dsk_close_existing,
     dsk_get_fbps,
     dsk_put_fbps,
     dsk_close,

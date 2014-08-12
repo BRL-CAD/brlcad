@@ -72,6 +72,7 @@ struct fb_internal {
     /* Static information: per device TYPE.     */
     int (*if_open)(struct fb_internal *ifp, const char *file, int _width, int _height);                       /**< @brief open device */
     int (*if_open_existing)(struct fb_internal *ifp, int width, int height, struct fb_platform_specific *fb_p);                       /**< @brief open device */
+    int (*if_close_existing)(struct fb_internal *ifp);                       /**< @brief close embedded fb */
     struct fb_platform_specific *(*if_existing_get)(uint32_t magic);                       /**< @brief allocate memory for platform specific container*/
     void                         (*if_existing_put)(struct fb_platform_specific *fb_p);                       /**< @brief free memory for platform specific container */
     int (*if_close)(struct fb_internal *ifp);                                                                 /**< @brief close device */
