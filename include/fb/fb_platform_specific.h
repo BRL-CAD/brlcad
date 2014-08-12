@@ -1,28 +1,25 @@
-/*                        F B _ X 2 4 . H
+/*          F B _ P L A T F O R M _ S P E C I F I C . H
  * BRL-CAD
  *
- * Copyright (c) 1994 Sun Microsystems, Inc. - All Rights Reserved.
+ * Copyright (c) 2014 United States Government as represented by
+ * the U.S. Army Research Laboratory.
  *
- * Permission is hereby granted, without written agreement and without
- * license or royalty fees, to use, copy, modify, and distribute this
- * software and its documentation for any purpose, provided that the
- * above copyright notice and the following two paragraphs appear in
- * all copies of this software.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
  *
- * IN NO EVENT SHALL SUN MICROSYSTEMS INC. BE LIABLE TO ANY PARTY FOR
- * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING
- * OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF SUN
- * MICROSYSTEMS INC. HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * SUN MICROSYSTEMS INC. SPECIFICALLY DISCLAIMS ANY WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER
- * IS ON AN "AS IS" BASIS, AND SUN MICROSYSTEMS INC. HAS NO OBLIGATION TO
- * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
  */
 /** @addtogroup if */
 /** @{*/
-/** @file fb_X24.h
+/** @file fb_platform_specific.h
  *
  * Structure holding information necessary for embedding a
  * framebuffer in an X11 parent window.  This is NOT public API
@@ -32,7 +29,7 @@
  */
 /** @} */
 
-#ifdef FB_INTERNAL_X24_API
+#ifdef FB_USE_INTERNAL_API
 #ifdef IF_X
 
 #include "common.h"
@@ -48,7 +45,7 @@ struct X24_fb_info {
 };
 
 #endif /* IF_X */
-#endif /* FB_INTERNAL_X24_API */
+#endif /* FB_USE_INTERNAL_API */
 
 /*
  * Local Variables:
