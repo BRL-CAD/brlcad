@@ -62,6 +62,8 @@
 #include "ged.h"
 #include "dm/dm-Null.h"
 
+#include "fb.h"
+
 #ifdef DM_X
 #  ifdef WITH_TK
 #    include "tk.h"
@@ -69,7 +71,6 @@
 #  include <X11/Xutil.h>
 #  include "dm/dm_xvars.h"
 #  include "dm/dm-X.h"
-#  include "fb/fb_X24.h"
 #endif /* DM_X */
 
 #ifdef DM_TK
@@ -102,11 +103,10 @@
 
 /* Private headers */
 #include "tclcad_private.h"
+#include "fb/fb_platform_specific.h"
 
 #include "brlcad_version.h"
 
-/* For open_existing functionality - need a better solution */
-#include "fb.h"
 
 #define TO_UNLIMITED -1
 

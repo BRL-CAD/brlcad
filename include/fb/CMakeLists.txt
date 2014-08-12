@@ -1,5 +1,5 @@
 set(fb_noinstall_headers
-  fb_X24.h
+  fb_platform_specific.h
   )
 
 CMAKEFILES(${fb_noinstall_headers})

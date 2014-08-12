@@ -79,7 +79,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "fb_private.h"
-#include "fb/fb_X24.h"
+#include "fb/fb_platform_specific.h"
 
 
 #define SHMEM_KEY 42

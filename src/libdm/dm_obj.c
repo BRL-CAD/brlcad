@@ -75,8 +75,8 @@
 #  include "fb.h"
 #endif
 
-/* For the open_existing functions - need to figure out something better */
-#include "fb/fb_X24.h"
+/* Embedding windows requires platform specific information */
+#include "fb/fb_platform_specific.h"
 
 /**
  *@brief

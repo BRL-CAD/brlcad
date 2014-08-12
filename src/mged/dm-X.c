@@ -43,7 +43,7 @@
 #include "dm/dm_xvars.h"
 #include "dm/dm-X.h"
 #include "fb.h"
-#include "fb/fb_X24.h"
+#include "fb/fb_platform_specific.h"
 
 #include "./mged.h"
 #include "./sedit.h"
