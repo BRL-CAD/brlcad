@@ -111,6 +111,12 @@ dmo_openFb(struct dm_obj *dmop)
 #ifdef DM_X
     struct X24_fb_info *xfb_ps;
 #endif
+#ifdef DM_OGL
+    struct ogl_fb_info *ofb_ps;
+#endif
+#ifdef DM_WGL
+    struct wgl_fb_info *wfb_ps;
+#endif
 
     if (!dmop || !dmop->interp)
 	return TCL_ERROR;
@@ -119,22 +125,6 @@ dmo_openFb(struct dm_obj *dmop)
     if (dmop->dmo_fbs.fbs_fbp != FB_NULL)
 	return TCL_OK;
 
-#ifndef DM_X
-    dmop->dmo_fbs.fbs_fbp = fb_get();
-    if (dmop->dmo_fbs.fbs_fbp == FB_NULL) {
-	Tcl_Obj *obj;
-
-	obj = Tcl_GetObjResult(dmop->interp);
-	if (Tcl_IsShared(obj))
-	    obj = Tcl_DuplicateObj(obj);
-
-	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n",
-			       (char *)NULL);
-
-	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_ERROR;
-    }
-#endif
     switch (dmop->dmo_dmp->dm_type) {
 #ifdef DM_X
 	case DM_TYPE_X:
@@ -153,42 +143,33 @@ dmo_openFb(struct dm_obj *dmop)
 
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
-	    fb_set_interface(dmop->dmo_fbs.fbs_fbp, "ogl");
-	    fb_set_name(dmop->dmo_fbs.fbs_fbp, "/dev/ogl");
-	    /* Mark OK by filling in magic number */
-	    fb_set_magic(dmop->dmo_fbs.fbs_fbp, FB_MAGIC);
-#if 0
-	    _ogl_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
-			       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
-			       0);
-#endif
+	    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
+	    ofb_ps = (struct ogl_fb_info *)fb_ps->data;
+	    ofb_ps->dpy = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy;
+	    ofb_ps->win = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win;
+	    ofb_ps->cmap = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap;
+	    ofb_ps->vip = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip;
+	    ofb_ps->glxc = ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc;
+	    ofb_ps->double_buffer = ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer;
+	    ofb_ps->soft_cmap = 0;
+	    dmop->dmo_fbs.fbs_fbp = fb_open_existing("ogl", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height, fb_ps);
+	    fb_put_platform_specific(fb_ps);
 	    break;
 #endif
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
-	    fb_set_interface(dmop->dmo_fbs.fbs_fbp, "wgl");
-	    fb_set_name(dmop->dmo_fbs.fbs_fbp, "/dev/wgl");
-	    /* Mark OK by filling in magic number */
-	    fb_set_magic(dmop->dmo_fbs.fbs_fbp, FB_MAGIC);
-
-	    _wgl_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->hdc,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
-			       ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
-			       0);
+	    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
+	    wfb_ps = (struct wgl_fb_info *)fb_ps->data;
+	    wfb_ps->dpy =  ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy;
+	    wfb_ps->win =  ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win;
+	    wfb_ps->cmap = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap;
+	    wfb_ps->vip = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip;
+	    wfb_ps->hdc = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->hdc;
+	    wfb_ps->glxc = ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc;
+	    wfb_ps->double_buffer = ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer;
+	    wfb_ps->soft_cmap = 0;
+	    dmop->dmo_fbs.fbs_fbp = fb_open_existing("wgl", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height, fb_ps);
+	    fb_put_platform_specific(fb_ps);
 	    break;
 #endif
 	default: {
@@ -207,6 +188,20 @@ dmo_openFb(struct dm_obj *dmop)
 	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
+    }
+
+    if (dmop->dmo_fbs.fbs_fbp == FB_NULL) {
+	Tcl_Obj *obj;
+
+	obj = Tcl_GetObjResult(dmop->interp);
+	if (Tcl_IsShared(obj))
+	    obj = Tcl_DuplicateObj(obj);
+
+	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n",
+			       (char *)NULL);
+
+	Tcl_SetObjResult(dmop->interp, obj);
+	return TCL_ERROR;
     }
 
     return TCL_OK;

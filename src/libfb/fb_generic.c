@@ -617,7 +617,7 @@ fb_close_existing(fb *ifp)
 	    }
 	    if (ifp->if_pbase != PIXEL_NULL)
 		free((void *)ifp->if_pbase);
-	    free((void *)ifp->if_name);
+	    /*free((void *)ifp->if_name);*/
 	    free((void *)ifp);
 	    return BRLCAD_OK;
 	}

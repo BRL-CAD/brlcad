@@ -71,8 +71,8 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-/* For _ogl_open_existing */
-#include "../libfb/fb_private.h"
+#include "fb/fb_platform_specific.h"
+#include "fb.h"
 
 extern void dm_var_init();		/* defined in attach.c */
 
@@ -151,28 +151,19 @@ Ogl_dm_init(struct dm_list *o_dm_list,
 void
 Ogl_fb_open()
 {
-    char *ogl_name = "/dev/ogl";
-
-    fbp = fb_get();
-    if (fbp == FB_NULL) {
-	Tcl_AppendResult(INTERP, "Ogl_fb_open: failed to allocate framebuffer memory\n",
-			 (char *)NULL);
-	return;
-    }
-
-    fb_set_interface(fbp, "ogl");
-    fb_set_name(fbp, ogl_name);
-    /* Mark OK by filling in magic number */
-    fb_set_magic(fbp, FB_MAGIC);
-
-    _ogl_open_existing(fbp,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
-		       dmp->dm_width, dmp->dm_height,
-		       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc,
-		       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer, 0);
+    struct fb_platform_specific *fb_ps;
+    struct ogl_fb_info *ofb_ps;
+    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
+    ofb_ps = (struct ogl_fb_info *)fb_ps->data;
+    ofb_ps->dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
+    ofb_ps->win = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
+    ofb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
+    ofb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
+    ofb_ps->glxc = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc;
+    ofb_ps->double_buffer = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer;
+    ofb_ps->soft_cmap = 0;
+    fbp = fb_open_existing("ogl", dmp->dm_width, dmp->dm_height, fb_ps);
+    fb_put_platform_specific(fb_ps);
 }
 
 

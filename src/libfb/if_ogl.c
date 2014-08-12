@@ -85,6 +85,7 @@
 
 #include "bu.h"
 #include "fb_private.h"
+#include "fb/fb_platform_specific.h"
 #include "fb.h"
 
 
@@ -1360,26 +1361,6 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 }
 
 
-HIDDEN struct fb_platform_specific *
-ogl_get_fbps(uint32_t UNUSED(magic))
-{
-        return NULL;
-}
-
-
-HIDDEN void
-ogl_put_fbps(struct fb_platform_specific *UNUSED(fbps))
-{
-        return;
-}
-
-HIDDEN int
-ogl_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
-{
-        return 0;
-}
-
-
 
 int
 _ogl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
@@ -1446,54 +1427,40 @@ _ogl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo
     return 0;
 }
 
-#if 0
-int
-ogl_open_existing(fb *ifp, int argc, const char **argv)
+HIDDEN struct fb_platform_specific *
+ogl_get_fbps(uint32_t magic)
 {
-    Display *dpy;
-    Window win;
-    Colormap cmap;
-    XVisualInfo *vip;
-    int width;
-    int height;
-    GLXContext glxc;
-    int double_buffer;
-    int soft_cmap;
-
-    if (argc != 10)
-	return -1;
-
-    if (sscanf(argv[1], "%p", (void **)&dpy) != 1)
-	return -1;
-
-    if (sscanf(argv[2], "%p", (void **)&win) != 1)
-	return -1;
-
-    if (sscanf(argv[3], "%p", (void **)&cmap) != 1)
-	return -1;
-
-    if (sscanf(argv[4], "%p", (void **)&vip) != 1)
-	return -1;
-
-    if (sscanf(argv[5], "%d", &width) != 1)
-	return -1;
-
-    if (sscanf(argv[6], "%d", &height) != 1)
-	return -1;
-
-    if (sscanf(argv[7], "%p", (void **)&glxc) != 1)
-	return -1;
-
-    if (sscanf(argv[8], "%d", &double_buffer) != 1)
-	return -1;
-
-    if (sscanf(argv[9], "%d", &soft_cmap) != 1)
-	return -1;
-
-    return _ogl_open_existing(ifp, dpy, win, cmap, vip, width, height,
-			      glxc, double_buffer, soft_cmap);
+    struct fb_platform_specific *fb_ps = NULL;
+    struct ogl_fb_info *data = NULL;
+    BU_GET(fb_ps, struct fb_platform_specific);
+    BU_GET(data, struct ogl_fb_info);
+    fb_ps->magic = magic;
+    fb_ps->data = data;
+    return fb_ps;
 }
-#endif
+
+
+HIDDEN void
+ogl_put_fbps(struct fb_platform_specific *fbps)
+{
+    BU_CKMAG(fbps, FB_OGL_MAGIC, "X24 framebuffer");
+    BU_PUT(fbps->data, struct ogl_fb_info);
+    BU_PUT(fbps, struct fb_platform_specific);
+    return;
+}
+
+HIDDEN int
+ogl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
+{
+    struct ogl_fb_info *ogl_internal = (struct ogl_fb_info *)fb_p->data;
+    BU_CKMAG(fb_p, FB_OGL_MAGIC, "ogl framebuffer");
+    return _ogl_open_existing(ifp, ogl_internal->dpy, ogl_internal->win,
+	    ogl_internal->cmap, ogl_internal->vip, width, height, ogl_internal->glxc,
+	    ogl_internal->double_buffer, ogl_internal->soft_cmap);
+
+        return 0;
+}
+
 
 HIDDEN int
 ogl_final_close(fb *ifp)

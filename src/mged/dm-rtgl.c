@@ -49,6 +49,8 @@
 #include "raytrace.h"
 #include "dm/dm_xvars.h"
 #include "dm/dm-rtgl.h"
+#include "fb/fb_platform_specific.h"
+#include "fb.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -128,29 +130,20 @@ Rtgl_dm_init(struct dm_list *o_dm_list,
 void
 Rtgl_fb_open()
 {
-    char *rtgl_name = "/dev/rtgl";
-
-    if ((fbp = (fb *)calloc(sizeof(fb), 1)) == FB_NULL) {
-	Tcl_AppendResult(INTERP, "Rtgl_fb_open: failed to allocate framebuffer memory\n",
-			 (char *)NULL);
-	return;
-    }
-
-    *fbp = ogl_interface; /* struct copy */
-
-    fbp->if_name = bu_malloc((unsigned)strlen(rtgl_name)+1, "if_name");
-    bu_strlcpy(fbp->if_name, rtgl_name, strlen(rtgl_name)+1);
-
-    /* Mark OK by filling in magic number */
-    fbp->if_magic = FB_MAGIC;
-    _ogl_open_existing(fbp,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
-		       dmp->dm_width, dmp->dm_height,
-		       ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc,
-		       ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer, 0);
+    struct fb_platform_specific *fb_ps;
+    struct ogl_fb_info *ofb_ps;
+    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
+    ofb_ps = (struct ogl_fb_info *)fb_ps->data;
+    ofb_ps->dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
+    ofb_ps->win = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
+    ofb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
+    ofb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
+    ofb_ps->glxc = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc;
+    ofb_ps->double_buffer = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer;
+    ofb_ps->soft_cmap = 0;
+    fbp = fb_open_existing("ogl", dmp->dm_width, dmp->dm_height, fb_ps);
+    fb_put_platform_specific(fb_ps);
+    fb_set_name(fbp, "/dev/rtgl");
 }
 
 
