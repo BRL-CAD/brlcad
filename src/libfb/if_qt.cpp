@@ -104,12 +104,18 @@ struct qtinfo {
     int qi_xrt;		/* X-coord of rightmost pixels */
     int qi_xtp;		/* Y-coord of topmost pixels */
     int qi_xbt;		/* Y-coord of bottommost pixels */
+
+    ColorMap *qi_rgb_cmap;	/* User's libfb colormap */
+    unsigned char *qi_redmap;
+    unsigned char *qi_blumap;
+    unsigned char *qi_grnmap;
 };
 
 #define QI(ptr) ((struct qtinfo *)((ptr)->u1.p))
 #define QI_SET(ptr, val) ((ptr)->u1.p) = (char *) val;
 
 /* Flags in qi_flags */
+#define FLG_LINCMAP 0x10	/* We're using a linear colormap */
 #define FLG_INIT    0x40	/* Display is fully initialized */
 
 /* Mode flags for open */
@@ -477,7 +483,13 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
     unsigned char *ip;
     unsigned char *op;
 
-    int j, k;
+    int x, y;
+
+    unsigned int a_pixel;
+
+    unsigned char *red = qi->qi_redmap;
+    unsigned char *grn = qi->qi_grnmap;
+    unsigned char *blu = qi->qi_blumap;
 
     FB_CK_FBIO(ifp);
 
@@ -527,23 +539,60 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 				 sizeof (RGBpixel)]);
     op = &qi->qi_pix[oy * qi->qi_image->bytesPerLine() + ox];
 
-    for (j = y2 - y1 + 1; j; j--) {
-	unsigned char *lip;
-	unsigned char *lop;
+    for (y = y1; y <= y2; y++) {
+	unsigned char *line_irgb;
+	unsigned char *p;
 
-	lip = ip;
-	lop = op;
+	/* Save pointer to start of line */
+	line_irgb = ip;
+	p = (unsigned char *)op;
 
-	for (k = x2 - x1 + 1; k; k--) {
-	    *lop++ = lip[0];
-	    *lop++ = lip[1];
-	    *lop++ = lip[2];
+	/* For the first line, convert/copy pixels */
+	for (x = x1; x <= x2; x++) {
+	    int pxwd;
+	    /* Calculate # pixels needed */
+	    if (x == x1) {
+		pxwd = x1wd;
+	    } else if (x == x2) {
+		pxwd = x2wd;
+	    } else {
+		pxwd = ifp->if_xzoom;
+	    }
 
-	    lip += sizeof (RGBpixel);
+	    /*
+	     * Construct a pixel with the color components
+	     * in the right places as described by the
+	     * red, green and blue masks.
+	     */
+	    if (qi->qi_flags & FLG_LINCMAP) {
+		a_pixel  = (line_irgb[0] << 16);
+		a_pixel |= (line_irgb[1] << 8);
+		a_pixel |= (line_irgb[2]);
+	    } else {
+		a_pixel  = (red[line_irgb[0]] << 16);
+		a_pixel |= (grn[line_irgb[1]] << 8);
+		a_pixel |= (blu[line_irgb[2]]);
+	    }
+
+	    while (pxwd--) {
+		*p++ = (a_pixel >> 16) & 0xff;
+		*p++ = (a_pixel >> 8) & 0xff;
+		*p++ = a_pixel & 0xff;
+	    }
+
+	    /*
+	     * Move to the next input line.
+	     */
+	    line_irgb += sizeof (RGBpixel);
 	}
 
-	ip += qi->qi_iwidth * sizeof (RGBpixel);
+	/*
+	 * And again, move to the beginning of the next
+	 * line up in the X server.
+	 */
 	op -= qi->qi_image->bytesPerLine();
+
+	ip += qi->qi_iwidth * sizeof(RGBpixel);
     }
 
     if (qi->alive == 0) {
@@ -552,6 +601,92 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 
     QApplication::sendEvent(qi->win, new QEvent(QEvent::UpdateRequest));
     qi->qapp->processEvents();
+}
+
+
+HIDDEN int
+qt_rmap(FBIO *ifp, ColorMap *cmp)
+{
+    struct qtinfo *qi = QI(ifp);
+    FB_CK_FBIO(ifp);
+
+    memcpy(cmp, qi->qi_rgb_cmap, sizeof (ColorMap));
+
+    fb_log("qt_rmap\n");
+
+    return 0;
+}
+
+
+HIDDEN int
+qt_wmap(FBIO *ifp, const ColorMap *cmp)
+{
+    struct qtinfo *qi = QI(ifp);
+    ColorMap *map = qi->qi_rgb_cmap;
+    int waslincmap;
+    int i;
+    unsigned char *red = qi->qi_redmap;
+    unsigned char *grn = qi->qi_grnmap;
+    unsigned char *blu = qi->qi_blumap;
+
+    FB_CK_FBIO(ifp);
+
+    /* Did we have a linear colormap before this call? */
+    waslincmap = qi->qi_flags & FLG_LINCMAP;
+
+    /* Clear linear colormap flag, since it may be changing */
+    qi->qi_flags &= ~FLG_LINCMAP;
+
+    /* Copy in or generate colormap */
+
+    if (cmp) {
+	if (cmp != map)
+	    memcpy(map, cmp, sizeof (ColorMap));
+    } else {
+	fb_make_linear_cmap(map);
+	qi->qi_flags |= FLG_LINCMAP;
+    }
+
+    /* Decide if this colormap is linear */
+    if (!(qi->qi_flags & FLG_LINCMAP)) {
+	int nonlin = 0;
+
+	for (i = 0; i < 256; i++)
+	    if (map->cm_red[i] >> 8 != i ||
+		map->cm_green[i] >> 8 != i ||
+		map->cm_blue[i] >> 8 != i) {
+		nonlin = 1;
+		break;
+	    }
+
+	if (!nonlin)
+	    qi->qi_flags |= FLG_LINCMAP;
+    }
+
+    /*
+     * If it was linear before, and they're making it linear again,
+     * there's nothing to do.
+     */
+    if (waslincmap && qi->qi_flags & FLG_LINCMAP)
+	return 0;
+
+    /* Copy into our fake colormap arrays. */
+    for (i = 0; i < 256; i++) {
+	red[i] = map->cm_red[i] >> 8;
+	grn[i] = map->cm_green[i] >> 8;
+	blu[i] = map->cm_blue[i] >> 8;
+    }
+
+    /*
+     * If we're initialized, redraw the screen to make changes
+     * take effect.
+     */
+    if (qi->qi_flags & FLG_INIT)
+	qt_update(ifp, 0, 0, qi->qi_iwidth, qi->qi_iheight);
+
+    fb_log("qt_wmap\n");
+
+    return 0;
 }
 
 HIDDEN int
@@ -601,6 +736,7 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
 
     unsigned long mode;
     size_t size;
+    unsigned char *mem = NULL;
 
     FB_CK_FBIO(ifp);
     mode = MODE1_LINGERING;
@@ -671,12 +807,22 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
     qi->qi_iheight = height;
 
     /* allocate backing store */
-    size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
-    if ((qi->qi_mem = (unsigned char *)malloc(size)) == 0) {
+    size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel) + sizeof (*qi->qi_rgb_cmap);;
+    if ((mem = (unsigned char *)malloc(size)) == 0) {
 	fb_log("if_qt: Unable to allocate %d bytes of backing \
 		store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
 	return -1;
     }
+    qi->qi_rgb_cmap = (ColorMap *) mem;
+    qi->qi_redmap = (unsigned char *)malloc(256);
+    qi->qi_grnmap = (unsigned char *)malloc(256);
+    qi->qi_blumap = (unsigned char *)malloc(256);
+
+    if (!qi->qi_redmap || !qi->qi_grnmap || !qi->qi_blumap) {
+	fb_log("if_X24: Can't allocate colormap memory\n");
+	return -1;
+    }
+    qi->qi_mem = (unsigned char *) mem + sizeof (*qi->qi_rgb_cmap);
 
     /* Set up an Qt window */
     if (qt_setup(ifp, width, height) < 0) {
@@ -691,6 +837,9 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
     /* Mark display ready */
     qi->qi_flags |= FLG_INIT;
 
+    /* Set up default linear colormap */
+    qt_wmap(ifp, NULL);
+
     fb_log("qt_open\n");
 
     return 0;
@@ -703,6 +852,7 @@ _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void
 
     unsigned long mode;
     size_t size;
+    unsigned char *mem = NULL;
 
     FB_CK_FBIO(ifp);
 
@@ -737,12 +887,22 @@ _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void
     qi->qi_iheight = height;
 
     /* allocate backing store */
-    size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
-    if ((qi->qi_mem = (unsigned char *)malloc(size)) == 0) {
+    size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel) + sizeof (*qi->qi_rgb_cmap);;
+    if ((mem = (unsigned char *)malloc(size)) == 0) {
 	fb_log("if_qt: Unable to allocate %d bytes of backing \
 		store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
 	return -1;
     }
+    qi->qi_rgb_cmap = (ColorMap *) mem;
+    qi->qi_redmap = (unsigned char *)malloc(256);
+    qi->qi_grnmap = (unsigned char *)malloc(256);
+    qi->qi_blumap = (unsigned char *)malloc(256);
+
+    if (!qi->qi_redmap || !qi->qi_grnmap || !qi->qi_blumap) {
+	fb_log("if_X24: Can't allocate colormap memory\n");
+	return -1;
+    }
+    qi->qi_mem = (unsigned char *) mem + sizeof (*qi->qi_rgb_cmap);
 
     /* Set up an Qt window */
     qi->qi_qwidth = width;
@@ -765,6 +925,9 @@ _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void
     qt_updstate(ifp);
     qi->alive = 0;
     qi->drawFb = (int *)draw;
+
+    /* Set up default linear colormap */
+    qt_wmap(ifp, NULL);
 
     /* Mark display ready */
     qi->qi_flags |= FLG_INIT;
@@ -898,24 +1061,6 @@ qt_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 	qt_update(ifp, 0, y, qi->qi_iwidth, ylines);
     }
     return count;
-}
-
-
-HIDDEN int
-qt_rmap(FBIO *UNUSED(ifp), ColorMap *UNUSED(cmp))
-{
-    fb_log("qt_rmap\n");
-
-    return 0;
-}
-
-
-HIDDEN int
-qt_wmap(FBIO *UNUSED(ifp), const ColorMap *UNUSED(cmp))
-{
-    fb_log("qt_wmap\n");
-
-    return 0;
 }
 
 
