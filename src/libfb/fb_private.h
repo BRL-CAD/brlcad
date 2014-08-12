@@ -35,7 +35,6 @@
 
 /* declare all the possible interfaces */
 #ifdef IF_X
-FB_EXPORT extern fb X_interface;
 FB_EXPORT extern fb X24_interface;
 #endif
 #ifdef IF_OGL
@@ -74,7 +73,7 @@ struct fb_internal {
     int (*if_open)(struct fb_internal *ifp, const char *file, int _width, int _height);                       /**< @brief open device */
     int (*if_open_existing)(struct fb_internal *ifp, int width, int height, struct fb_platform_specific *fb_p);                       /**< @brief open device */
     struct fb_platform_specific *(*if_existing_get)(uint32_t magic);                       /**< @brief allocate memory for platform specific container*/
-    void (*if_existing_put)(uint32_t magic, struct fb_platform_specific *fb_p);                       /**< @brief free memory for platform specific container */
+    void                         (*if_existing_put)(struct fb_platform_specific *fb_p);                       /**< @brief free memory for platform specific container */
     int (*if_close)(struct fb_internal *ifp);                                                                 /**< @brief close device */
     int (*if_clear)(struct fb_internal *ifp, unsigned char *pp);                                              /**< @brief clear device */
     ssize_t (*if_read)(struct fb_internal *ifp, int x, int y, unsigned char *pp, size_t count);               /**< @brief read pixels */
@@ -90,6 +89,8 @@ struct fb_internal {
     int (*if_writerect)(struct fb_internal *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);       /**< @brief write rectangle */
     int (*if_bwreadrect)(struct fb_internal *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);            /**< @brief read monochrome rectangle */
     int (*if_bwwriterect)(struct fb_internal *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);     /**< @brief write rectangle */
+    int (*if_configure_window)(struct fb_internal *ifp, int width, int height);         /**< @brief configure window */
+    int (*if_refresh)(struct fb_internal *ifp, int x, int y, int w, int h);         /**< @brief refresh window */
     int (*if_poll)(struct fb_internal *ifp);          /**< @brief handle events */
     int (*if_flush)(struct fb_internal *ifp);         /**< @brief flush output */
     int (*if_free)(struct fb_internal *ifp);          /**< @brief free resources */
@@ -126,14 +127,6 @@ struct fb_internal {
     } u1, u2, u3, u4, u5, u6;
 };
 
-
-#ifdef IF_X
-#  ifdef HAVE_X11_XLIB_H
-#    include <X11/Xlib.h>
-#    include <X11/Xutil.h>
-#  endif
-/*FB_EXPORT extern int _X24_open_existing(fb *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc);*/
-#endif
 
 #ifdef IF_OGL
 #  ifdef HAVE_X11_XLIB_H

@@ -293,7 +293,7 @@ rem_get_fbps(uint32_t UNUSED(magic))
 
 
 HIDDEN void
-rem_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+rem_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
@@ -785,6 +785,8 @@ fb remote_interface = {
     rem_writerect,
     rem_bwreadrect,
     rem_bwwriterect,
+    NULL,
+    NULL,
     rem_poll,
     rem_flush,
     rem_free,

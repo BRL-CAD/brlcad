@@ -58,7 +58,7 @@ null_get_fbps(uint32_t UNUSED(magic))
 
 
 HIDDEN void
-null_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+null_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
@@ -258,6 +258,8 @@ fb null_interface =  {
     null_writerect,	/* rectangle write */
     null_readrect,	/* bw rectangle read */
     null_writerect,	/* bw rectangle write */
+    NULL,
+    NULL,
     null_poll,		/* handle events */
     null_flush,		/* flush output */
     null_free,		/* free resources */

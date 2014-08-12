@@ -108,7 +108,7 @@ dsk_get_fbps(uint32_t UNUSED(magic))
 
 
 HIDDEN void
-dsk_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+dsk_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
@@ -359,6 +359,8 @@ fb disk_interface = {
     fb_sim_writerect,
     fb_sim_bwreadrect,
     fb_sim_bwwriterect,
+    NULL,
+    NULL,
     fb_null,		/* poll */
     fb_null,		/* flush */
     dsk_free,

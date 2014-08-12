@@ -120,7 +120,7 @@ stk_get_fbps(uint32_t UNUSED(magic))
 
 
 HIDDEN void
-stk_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+stk_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
@@ -433,6 +433,8 @@ fb stk_interface =  {
     stk_writerect,		/* write rectangle */
     stk_bwreadrect,		/* read bw rectangle */
     stk_bwwriterect,	/* write bw rectangle */
+    NULL,
+    NULL,
     stk_poll,		/* handle events */
     stk_flush,		/* flush output */
     stk_free,		/* free resources */

@@ -190,6 +190,7 @@ X_fb_open(void)
     xfb_ps->gc = ((struct x_vars *)dmp->dm_vars.priv_vars)->gc;
 
     fbp = fb_open_existing("X", dmp->dm_width, dmp->dm_height, fb_ps);
+    fb_put_platform_specific(fb_ps);
 }
 
 

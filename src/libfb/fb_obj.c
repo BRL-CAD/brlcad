@@ -722,7 +722,7 @@ fbo_configure_tcl(void *clientData, int argc, const char **argv)
 
     /* configure the framebuffer window */
     if (fbop->fbo_fbs.fbs_fbp != FB_NULL)
-	fb_configureWindow(fbop->fbo_fbs.fbs_fbp, width, height);
+	(void)fb_configure_window(fbop->fbo_fbs.fbs_fbp, width, height);
 
     return BRLCAD_OK;
 }

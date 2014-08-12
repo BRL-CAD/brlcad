@@ -147,6 +147,7 @@ dmo_openFb(struct dm_obj *dmop)
 	    xfb_ps->vip = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.priv_vars)->vip;
 	    xfb_ps->gc = ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc;
 	    dmop->dmo_fbs.fbs_fbp = fb_open_existing("/dev/X", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height, fb_ps);
+	    fb_put_platform_specific(fb_ps);
 	    break;
 #endif
 
@@ -1826,7 +1827,7 @@ dmo_configure_tcl(void *clientData, int argc, const char **argv)
 #ifdef USE_FBSERV
     /* configure the framebuffer window */
     if (dmop->dmo_fbs.fbs_fbp != FB_NULL)
-	fb_configureWindow(dmop->dmo_fbs.fbs_fbp,
+	(void)fb_configure_window(dmop->dmo_fbs.fbs_fbp,
 			   dmop->dmo_dmp->dm_width,
 			   dmop->dmo_dmp->dm_height);
 #endif

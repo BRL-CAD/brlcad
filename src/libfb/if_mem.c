@@ -194,7 +194,7 @@ mem_get_fbps(uint32_t UNUSED(magic))
 
 
 HIDDEN void
-mem_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+mem_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
@@ -471,6 +471,8 @@ fb memory_interface =  {
     fb_sim_writerect,	/* rectangle write */
     fb_sim_bwreadrect,
     fb_sim_bwwriterect,
+    NULL,
+    NULL,
     mem_poll,		/* poll */
     mem_flush,		/* flush */
     mem_close,		/* free */

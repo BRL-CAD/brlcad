@@ -831,12 +831,12 @@ expose_callback(fb *ifp)
 }
 
 
-void
+int
 ogl_configureWindow(fb *ifp, int width, int height)
 {
     if (width == OGL(ifp)->win_width &&
 	height == OGL(ifp)->win_height)
-	return;
+	return 1;
 
     ifp->if_width = ifp->if_max_width = width;
     ifp->if_height = ifp->if_max_height = height;
@@ -852,6 +852,7 @@ ogl_configureWindow(fb *ifp, int width, int height)
 
     ogl_getmem(ifp);
     ogl_clipper(ifp);
+    return 0;
 }
 
 
@@ -1367,7 +1368,7 @@ ogl_get_fbps(uint32_t UNUSED(magic))
 
 
 HIDDEN void
-ogl_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+ogl_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
@@ -2420,6 +2421,8 @@ fb ogl_interface =
     ogl_writerect,	/* write rectangle */
     fb_sim_bwreadrect,
     ogl_bwwriterect,	/* write rectangle */
+    ogl_configureWindow,
+    ogl_refresh,
     ogl_poll,		/* process events */
     ogl_flush,		/* flush output */
     ogl_free,		/* free resources */

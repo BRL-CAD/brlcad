@@ -2550,7 +2550,7 @@ X24_open(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
-void
+int
 X24_configureWindow(fb *ifp, int width, int height)
 {
     struct xinfo *xi = XI(ifp);
@@ -2559,11 +2559,11 @@ X24_configureWindow(fb *ifp, int width, int height)
     FB_CK_FB(ifp);
 
     if (!xi) {
-	return;
+	return 1;
     }
 
     if (width == xi->xi_xwidth && height == xi->xi_xheight) {
-	return;
+	return 1;
     }
 
     ifp->if_width = ifp->if_max_width = width;
@@ -2598,7 +2598,7 @@ X24_configureWindow(fb *ifp, int width, int height)
 	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(unsigned int),
 						      xi->xi_xwidth*xi->xi_xheight)) == NULL) {
 		fb_log("X24: pix32 malloc failed in resize!\n");
-		return;
+		return 1;
 	    }
 
 	    xi->xi_image = XCreateImage(xi->xi_dpy, xi->xi_visual,
@@ -2615,7 +2615,7 @@ X24_configureWindow(fb *ifp, int width, int height)
 	    /* Make new buffer and new image */
 	    if ((xi->xi_pix = (unsigned char *)calloc(2, xi->xi_xwidth*xi->xi_xheight)) == NULL) {
 		fb_log("X24: pix32 malloc failed in resize!\n");
-		return;
+		return 1;
 	    }
 
 	    xi->xi_image = XCreateImage(xi->xi_dpy, xi->xi_visual,
@@ -2634,7 +2634,7 @@ X24_configureWindow(fb *ifp, int width, int height)
 	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(char),
 						      xi->xi_xwidth * xi->xi_xheight)) == NULL) {
 		fb_log("X24: pix8 malloc failed in resize!\n");
-		return;
+		return 1;
 	    }
 
 	    xi->xi_image = XCreateImage(xi->xi_dpy, xi->xi_visual,
@@ -2653,7 +2653,7 @@ X24_configureWindow(fb *ifp, int width, int height)
 	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(char),
 						      xi->xi_image->bytes_per_line * xi->xi_xheight)) == NULL) {
 		fb_log("X24: pix1 malloc failed in resize!\n");
-		return;
+		return 1;
 	    }
 
 	    xi->xi_image->data = (char *) xi->xi_pix;
@@ -2662,6 +2662,8 @@ X24_configureWindow(fb *ifp, int width, int height)
 
 	    break;
     }
+
+    return 0;
 
 }
 
@@ -2847,7 +2849,7 @@ X24_get_fbps(uint32_t magic)
 
 
 HIDDEN void
-X24_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *fbps)
+X24_put_fbps(struct fb_platform_specific *fbps)
 {
     BU_CKMAG(fbps, FB_X24_MAGIC, "X24 framebuffer");
     BU_PUT(fbps->data, struct X24_fb_info);
@@ -3512,6 +3514,8 @@ fb X24_interface =  {
     X24_writerect,	/* write rectangle */
     fb_sim_bwreadrect,
     fb_sim_bwwriterect,
+    X24_configureWindow,
+    X24_refresh,
     X24_poll,		/* process events */
     X24_flush,		/* flush output */
     X24_free,		/* free resources */

@@ -17,7 +17,7 @@ set(LINKLIBS "")
 if(BRLCAD_ENABLE_X11 AND X11_FOUND)
   set(FBX11DEFS "-DIF_X")
   set(LINKLIBS ${LINKLIBS} ${X11_LIBRARIES})
-  set(fbX11_srcs if_X.c if_X24.c)
+  set(fbX11_srcs if_X24.c)
   set_property(SOURCE if_X24.c APPEND PROPERTY COMPILE_DEFINITIONS FB_INTERNAL_X24_API)
 endif()
 if(BRLCAD_ENABLE_OPENGL AND OPENGL_FOUND AND NOT MSVC)
@@ -90,7 +90,6 @@ endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
 
 set(libfb_ignore_files
   if_TEMPLATE.c
-  if_X.c
   if_X24.c
   if_ogl.c
   if_qt.cpp

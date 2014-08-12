@@ -78,7 +78,7 @@ deb_get_fbps(uint32_t UNUSED(magic))
 
 
 HIDDEN void
-deb_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+deb_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
@@ -363,6 +363,8 @@ fb debug_interface = {
     deb_writerect,
     deb_bwreadrect,
     deb_bwwriterect,
+    NULL,
+    NULL,
     deb_poll,
     deb_flush,
     deb_free,

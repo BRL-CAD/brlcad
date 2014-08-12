@@ -98,7 +98,6 @@ typedef struct fb_internal fb;
 #define FB_WGL_MAGIC    0x574f4642 /**< WOFB */
 #define FB_OGL_MAGIC    0x584f4642 /**< XOFB */
 #define FB_X24_MAGIC    0x58324642 /**< X2FB */
-#define FB_X_MAGIC      0x58304642 /**< X0FB */
 #define FB_TK_MAGIC     0x544b4642 /**< TKFB */
 #define FB_QT_MAGIC     0x51544642 /**< QTFB */
 #define FB_DEBUG_MAGIC  0x44424642 /**< DBFB */
@@ -135,7 +134,6 @@ FB_EXPORT extern int fb_writerect(fb *ifp, int xmin, int ymin, int width, int he
 FB_EXPORT extern int fb_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
 FB_EXPORT extern int fb_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
 
-FB_EXPORT extern void fb_configureWindow(fb *, int, int);
 FB_EXPORT extern fb *fb_open(const char *file, int _width, int _height);
 FB_EXPORT extern int fb_close(fb *ifp);
 FB_EXPORT extern int fb_close_existing(fb *ifp);
@@ -146,6 +144,7 @@ FB_EXPORT extern int fb_tell(fb *ifp, int *xp, int *yp);
 FB_EXPORT extern int fb_rpixel(fb *ifp, unsigned char *pp);
 FB_EXPORT extern int fb_wpixel(fb *ifp, unsigned char *pp);
 FB_EXPORT extern int fb_flush(fb *ifp);
+FB_EXPORT extern int fb_configure_window(fb *, int, int);
 FB_EXPORT extern int fb_refresh(fb *ifp, int x, int y, int w, int h);
 #if !defined(_WIN32) || defined(__CYGWIN__)
 FB_EXPORT extern void fb_log(const char *fmt, ...) _BU_ATTR_PRINTF12;
@@ -177,7 +176,7 @@ FB_EXPORT extern void fb_make_linear_cmap(ColorMap *cmap);
 /* open_existing functionality. */
 struct fb_platform_specific {uint32_t magic; void *data;};
 FB_EXPORT extern struct fb_platform_specific *fb_get_platform_specific(uint32_t magic);
-FB_EXPORT extern void fb_put_platform_specific(uint32_t magic, struct fb_platform_specific *fb_p);
+FB_EXPORT extern void fb_put_platform_specific(struct fb_platform_specific *fb_p);
 FB_EXPORT extern fb *fb_open_existing(const char *file, int _width, int _height, struct fb_platform_specific *fb_p);
 
 /* backward compatibility hacks */

@@ -288,7 +288,7 @@ tk_get_fbps(uint32_t UNUSED(magic))
 
 
 HIDDEN void
-tk_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
+tk_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
@@ -582,6 +582,8 @@ fb tk_interface = {
     tk_writerect,
     tk_bwreadrect,
     tk_bwwriterect,
+    NULL,
+    NULL,
     tk_poll,
     tk_flush,
     tk_free,

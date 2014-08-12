@@ -61,7 +61,6 @@ fb *_if_list[] = {
 #endif
 #ifdef IF_X
     &X24_interface,
-    &X_interface,
 #endif
 #ifdef IF_TK
     &tk_interface,
@@ -127,11 +126,6 @@ fb_get_platform_specific(uint32_t magic)
 	    return X24_interface.if_existing_get(magic);
 #endif
 	    break;
-	case FB_X_MAGIC:
-#ifdef IF_X
-	    return X_interface.if_existing_get(magic);
-#endif
-	    break;
 	case FB_TK_MAGIC:
 #ifdef IF_TK
 	    return tk_interface.if_existing_get(magic);
@@ -163,54 +157,49 @@ fb_get_platform_specific(uint32_t magic)
 }
 
 void
-fb_put_platform_specific(uint32_t magic, struct fb_platform_specific *fb_p)
+fb_put_platform_specific(struct fb_platform_specific *fb_p)
 {
-    switch(magic) {
+    switch(fb_p->magic) {
 	case FB_WGL_MAGIC:
 #ifdef IF_WGL
-	    wgl_interface.if_existing_put(magic, fb_p);
+	    wgl_interface.if_existing_put(fb_p);
 #endif
 	    break;
 	case FB_OGL_MAGIC:
 #ifdef IF_OGL
-	    ogl_interface.if_existing_put(magic, fb_p);
+	    ogl_interface.if_existing_put(fb_p);
 #endif
 	    break;
 	case FB_X24_MAGIC:
 #ifdef IF_X
-	    X24_interface.if_existing_put(magic, fb_p);
-#endif
-	    break;
-	case FB_X_MAGIC:
-#ifdef IF_X
-	    X_interface.if_existing_put(magic, fb_p);
+	    X24_interface.if_existing_put(fb_p);
 #endif
 	    break;
 	case FB_TK_MAGIC:
 #ifdef IF_TK
-	    tk_interface.if_existing_put(magic, fb_p);
+	    tk_interface.if_existing_put(fb_p);
 #endif
 	    break;
 	case FB_QT_MAGIC:
 #ifdef IF_QT
-	    qt_interface.if_existing_put(magic, fb_p);
+	    qt_interface.if_existing_put(fb_p);
 #endif
 	    break;
 	case FB_DEBUG_MAGIC:
-	    debug_interface.if_existing_put(magic, fb_p);
+	    debug_interface.if_existing_put(fb_p);
 	    break;
 	case FB_STK_MAGIC:
-	    stk_interface.if_existing_put(magic, fb_p);
+	    stk_interface.if_existing_put(fb_p);
 	    break;
 	case FB_MEMORY_MAGIC:
-	    memory_interface.if_existing_put(magic, fb_p);
+	    memory_interface.if_existing_put(fb_p);
 	    break;
 	case FB_NULL_MAGIC:
-	    null_interface.if_existing_put(magic, fb_p);
+	    null_interface.if_existing_put(fb_p);
 	    break;
 
 	default:
-	    bu_log("Unknown framebuffer magic %d\n", magic);
+	    bu_log("Unknown framebuffer magic %d\n", fb_p->magic);
 	    break;
     }
     return;
@@ -226,150 +215,21 @@ fb_open_existing(const char *file, int width, int height, struct fb_platform_spe
     return ifp;
 }
 
-/* TODO - make these part of the struct fb_internal */
-#ifdef IF_X
-extern int X24_refresh(fb *ifp, int x, int y, int w, int h);
-extern void X24_configureWindow(fb *ifp, int width, int height);
-#endif
-#ifdef IF_OGL
-extern int ogl_refresh(fb *ifp, int x, int y, int w, int h);
-extern void ogl_configureWindow(fb *ifp, int width, int height);
-#endif
-#ifdef IF_WGL
-extern int wgl_refresh(fb *ifp, int x, int y, int w, int h);
-extern void wgl_configureWindow(fb *ifp, int width, int height);
-#endif
-#ifdef IF_TK
-#if 0
-/*XXX TJM implement this interface */
-extern void tk_configureWindow(fb *ifp, int width, int height);
-extern int tk_refresh(fb *ifp, int x, int y, int w, int h);
-#endif
-#endif
-#ifdef IF_QT
-extern void qt_configureWindow(fb *ifp, int width, int height);
-#endif
-
-
 int
 fb_refresh(fb *ifp, int x, int y, int w, int h)
 {
-    int status=0;
-
-    /* what does negative mean? */
-    if (x < 0)
-	x = 0;
-    if (y < 0)
-	y = 0;
-    if (w < 0)
-	w = 0;
-    if (h < 0)
-	h = 0;
-
-    if (w == 0 || h == 0) {
-	/* nothing to refresh */
-	return TCL_OK;
-    }
-
-    if (!ifp || !ifp->if_name) {
-	/* unset/unknown framebuffer */
-	return TCL_OK;
-    }
-
-#ifdef IF_X
-    status = -1;
-    if (!bu_strncmp(ifp->if_name, "/dev/X", strlen("/dev/X"))) {
-	status = X24_refresh(ifp, x, y, w, h);
-    }
-#endif /* IF_X */
-#ifdef IF_WGL
-    status = -1;
-    if (!bu_strncmp(ifp->if_name, "/dev/wgl", strlen("/dev/wgl"))) {
-	status = wgl_refresh(ifp, x, y, w, h);
-    }
-#endif  /* IF_WGL */
-#ifdef IF_OGL
-    status = -1;
-    if (!bu_strncmp(ifp->if_name, "/dev/ogl", strlen("/dev/ogl"))) {
-	status = ogl_refresh(ifp, x, y, w, h);
-    }
-#endif  /* IF_OGL */
-#ifdef IF_TK
-#if 0
-    /* XXX TJM implement tk_refresh */
-    status = -1;
-    if (!bu_strncmp(ifp->if_name, "/dev/tk", strlen("/dev/tk"))) {
-	status = tk_refresh(ifp, x, y, w, h);
-    }
-#endif
-#endif  /* IF_TK */
-
-    if (status < 0) {
-	return 1;
-    }
-
-    return 0;
+    return ifp->if_refresh(ifp, x, y, w, h);
 }
 
-void
-fb_configureWindow(fb *ifp, int width, int height)
+int
+fb_configure_window(fb *ifp, int width, int height)
 {
     /* unknown/unset framebuffer */
-    if (!ifp || !ifp->if_name || width < 0 || height < 0) {
-	return;
+    if (!ifp || !ifp->if_configure_window || width < 0 || height < 0) {
+	return 0;
     }
-
-#ifdef IF_X
-    if (!bu_strncmp(ifp->if_name, "/dev/X", strlen("/dev/X"))) {
-	X24_configureWindow(ifp, width, height);
-    }
-#endif /* IF_X */
-#ifdef IF_WGL
-    if (!bu_strncmp(ifp->if_name, "/dev/wgl", strlen("/dev/wgl"))) {
-	wgl_configureWindow(ifp, width, height);
-    }
-#endif  /* IF_WGL */
-#ifdef IF_OGL
-    if (!bu_strncmp(ifp->if_name, "/dev/ogl", strlen("/dev/ogl"))) {
-	ogl_configureWindow(ifp, width, height);
-    }
-#endif  /* IF_OGL */
-#ifdef IF_TK
-#if 0
-    /* XXX TJM implement tk_configureWindow */
-    if (!bu_strncmp(ifp->if_name, "/dev/tk", strlen("/dev/tk"))) {
-	tk_configureWindow(ifp, width, height);
-    }
-#endif
-#endif  /* IF_TK */
-#ifdef IF_QT
-    if (!bu_strncmp(ifp->if_name, "/dev/Qt", strlen("/dev/Qt"))) {
-	qt_configureWindow(ifp, width, height);
-    }
-#endif
+    return ifp->if_configure_window(ifp, width, height);
 }
-
-
-
-#if 0
-void fb_open_existing(fb *ifp, const char *interface)
-{
-    int i = 0;
-    fb *curr_interface = fb_type_structs[i];
-    fb *new_interface = FB_NULL;
-    if (!ifp) return;
-    while (curr_interface != FB_NULL && new_interface == FB_NULL) {
-	if (!strcasecmp(interface, fb_type_strings[i])) {
-	    new_interface = curr_interface;
-	} else {
-	    curr_interface = fb_type_structs[i+1];
-	    i++;
-	}
-    }
-    if (new_interface == FB_NULL) new_interface = &null_interface;
-    *ifp = *new_interface;
-}
-#endif
 
 void fb_set_name(fb *ifp, const char *name)
 {
