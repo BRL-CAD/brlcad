@@ -790,7 +790,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     point_t p1;
     struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
     vect_t A, Au, B, Bu, Cu, V;
-    vect_t Work;
+    /* vect_t Work; */
     int i;
     struct rt_hrt_internal *hip;
     fastf_t top[24*3];
@@ -1010,8 +1010,8 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
 	}
     }
 
-    VADD2(Work, hip->v, hip->zdir);
-    /*for (i = 0; i < nseg; i++) {
+    /*VADD2(Work, hip->v, hip->zdir);
+    for (i = 0; i < nseg; i++) {
 	 Draw connector
 	RT_ADD_VLIST(vhead, Work, BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
