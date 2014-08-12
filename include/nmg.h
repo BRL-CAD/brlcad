@@ -60,7 +60,7 @@ __BEGIN_DECLS
 /**
  * controls the libnmg debug level
  */
-BU_EXPORT extern uint32_t nmg_debug;
+NMG_EXPORT extern uint32_t nmg_debug;
 
 #define DEBUG_PL_ANIM   0x00000001	/**< @brief 1 mged: animated evaluation */
 #define DEBUG_PL_SLOW   0x00000002	/**< @brief 2 mged: add delays to animation */
@@ -172,6 +172,29 @@ BU_EXPORT extern uint32_t nmg_debug;
 			 __FILE__, __LINE__); \
 		bu_bomb("bye"); \
 	}
+
+NMG_EXPORT extern struct bu_list rtg_vlfree; /**< @brief  head of bn_vlist freelist */
+
+/**
+ * Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
+ * are required to execute this macro once, first:
+ *
+ * BU_LIST_INIT(&RTG.rtg_vlfree);
+ *
+ * Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL.
+ */
+#define RT_GET_VLIST(p) BN_GET_VLIST(&rtg_vlfree, p)
+
+/** Place an entire chain of bn_vlist structs on the freelist */
+#define RT_FREE_VLIST(hd) BN_FREE_VLIST(&rtg_vlfree, hd)
+
+#define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&rtg_vlfree, hd, pnt, draw)
+
+/** Set a point size to apply to the vlist elements that follow. */
+#define RT_VLIST_SET_POINT_SIZE(hd, size) BN_VLIST_SET_POINT_SIZE(&rtg_vlfree, hd, size)
+
+/** Set a line width to apply to the vlist elements that follow. */
+#define RT_VLIST_SET_LINE_WIDTH(hd, width) BN_VLIST_SET_LINE_WIDTH(&rtg_vlfree, hd, width)
 
 /**
  * @brief

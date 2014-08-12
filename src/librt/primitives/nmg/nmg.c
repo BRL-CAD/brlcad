@@ -152,7 +152,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     struct nmg_specific *nmg =
 	(struct nmg_specific *)stp->st_specific;
 
-    if (RTG.NMG_debug & DEBUG_NMGRT) {
+    if (nmg_debug & DEBUG_NMGRT) {
 	bu_log("rt_nmg_shot()\n\t");
 	rt_pr_tol(&ap->a_rt_i->rti_tol);
     }
@@ -2302,7 +2302,7 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     s = (struct shell *)ip->idb_ptr;
     NMG_CK_SHELL(s);
 
-    if (RT_G_DEBUG || RTG.NMG_debug)
+    if (RT_G_DEBUG || nmg_debug)
 	nmg_vsshell(s);
 
     return 0;			/* OK */
@@ -2397,7 +2397,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
     bu_free((char *)ecnt, "ecnt[]");
     bu_free((char *)real_ptrs, "ptrs[]");
 
-    if (RT_G_DEBUG || RTG.NMG_debug) {
+    if (RT_G_DEBUG || nmg_debug) {
 	nmg_vsshell(s);
     }
     return 0;		/* OK */
@@ -3888,7 +3888,7 @@ nmg_to_poly(const struct shell *s, struct rt_pg_internal *poly_int, const struct
 
 	/* if any loop has more than 5 vertices, triangulate the face */
 	if (max_count > 5) {
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("nmg_to_poly: triangulating fu %p\n", (void *)fu);
 	    nmg_triangulate_fu(fu, tol);
 	}
@@ -4096,6 +4096,7 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
     return bot;
 }
 
+struct rt_g RTG = RT_G_INIT_ZERO;
 
 /*
  * Local Variables:

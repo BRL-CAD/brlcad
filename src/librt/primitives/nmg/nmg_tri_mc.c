@@ -762,10 +762,10 @@ nmg_triangulate_shell_mc(struct shell *s, const struct bn_tol *tol)
     NMG_CK_SHELL(s);
     nmg_vsshell(s);
 
-    if (RTG.NMG_debug & DEBUG_TRI)
+    if (nmg_debug & DEBUG_TRI)
 	bu_log("Triangulating NMG\n");
 
-    if (RTG.NMG_debug & DEBUG_TRI)
+    if (nmg_debug & DEBUG_TRI)
 	bu_log("Triangulation completed\n");
 }
 

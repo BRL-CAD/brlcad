@@ -35,9 +35,6 @@
 #include "raytrace.h"
 #include "db.h"
 
-
-struct rt_g RTG = RT_G_INIT_ZERO;
-
 struct resource rt_uniresource;
 
 void (*nmg_plot_anim_upcall)(void);
@@ -50,7 +47,9 @@ double nmg_eue_dist = 0.05;
 
 fastf_t rt_cline_radius = (fastf_t)-1.0;
 
-uint32_t bu_debug = 1;
+uint32_t nmg_debug = 1;
+
+struct bu_list	rtg_vlfree = BU_LIST_INIT_ZERO;
 
 /**
  * minimum number of bot pieces

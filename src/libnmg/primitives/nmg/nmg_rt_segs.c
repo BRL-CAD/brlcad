@@ -238,7 +238,7 @@ set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struc
     /* copy the normal */
     VMOVE((*seg_p)->seg_in.hit_normal, a_hit->inbound_norm);
 
-    if (RTG.NMG_debug & DEBUG_RT_SEGS) {
+    if (nmg_debug & DEBUG_RT_SEGS) {
 	bu_log("Set seg_in:\n\tdist %g  pt(%g, %g, %g) N(%g, %g, %g)\n",
 	       (*seg_p)->seg_in.hit_dist,
 	       (*seg_p)->seg_in.hit_point[0],
@@ -272,7 +272,7 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
     /* copy the normal */
     VMOVE((*seg_p)->seg_out.hit_normal, a_hit->outbound_norm);
 
-    if (RTG.NMG_debug & DEBUG_RT_SEGS) {
+    if (nmg_debug & DEBUG_RT_SEGS) {
 	bu_log("Set seg_out:\n\tdist %g  pt(%g, %g, %g) N(%g, %g, %g)  =>\n",
 	       (*seg_p)->seg_in.hit_dist,
 	       (*seg_p)->seg_in.hit_point[0],
@@ -1054,7 +1054,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
     NMG_CK_HITMISS(a_hit);
 
     if (((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE ||
-	RTG.NMG_debug & DEBUG_RT_SEGS) {
+	nmg_debug & DEBUG_RT_SEGS) {
 	bu_log("check_hitstate()\n");
 	nmg_rt_print_hitlist(hd);
 
@@ -1171,13 +1171,13 @@ nmg_ray_segs(struct ray_data *rd)
 
 	NMG_FREE_HITLIST(&rd->rd_miss, rd->ap);
 
-	if (RTG.NMG_debug & DEBUG_RT_SEGS) {
+	if (nmg_debug & DEBUG_RT_SEGS) {
 	    if (last_miss) bu_log(".");
 	    else bu_log("ray missed NMG\n");
 	}
 	last_miss = 1;
 	return 0;			/* MISS */
-    } else if (RTG.NMG_debug & DEBUG_RT_SEGS) {
+    } else if (nmg_debug & DEBUG_RT_SEGS) {
 	int seg_count=0;
 
 	print_seg_list(rd->seghead, seg_count, "before");
@@ -1196,7 +1196,7 @@ nmg_ray_segs(struct ray_data *rd)
 	return 0;
     }
 
-    if (RTG.NMG_debug & DEBUG_RT_SEGS) {
+    if (nmg_debug & DEBUG_RT_SEGS) {
 	bu_log("----------morphed nmg/ray hit list---------\n");
 	for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit))
 	    nmg_rt_print_hitmiss(a_hit);
@@ -1212,7 +1212,7 @@ nmg_ray_segs(struct ray_data *rd)
 	NMG_FREE_HITLIST(&rd->rd_miss, rd->ap);
 
 
-	if (RTG.NMG_debug & DEBUG_RT_SEGS) {
+	if (nmg_debug & DEBUG_RT_SEGS) {
 	    /* print debugging data before returning */
 	    print_seg_list(rd->seghead, seg_count, "after");
 	}

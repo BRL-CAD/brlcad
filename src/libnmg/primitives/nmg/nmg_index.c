@@ -443,7 +443,7 @@ nmg_s_reindex(struct shell *s, register long int newindex)
 
 #undef ASSIGN_VU
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("nmg_s_reindex() oldmax=%ld, new%ld=>%ld\n",
 	       s->maxindex, s->index, newindex);
     }

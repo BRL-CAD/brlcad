@@ -709,8 +709,8 @@ mged_freemem(void)
 	bu_free((void *)sp, "mged_freemem: struct solid");
     }
 
-    while (BU_LIST_NON_EMPTY(&RTG.rtg_vlfree)) {
-	vp = BU_LIST_FIRST(bn_vlist, &RTG.rtg_vlfree);
+    while (BU_LIST_NON_EMPTY(&rtg_vlfree)) {
+	vp = BU_LIST_FIRST(bn_vlist, &rtg_vlfree);
 	BU_LIST_DEQUEUE(&(vp->l));
 	bu_free((void *)vp, "mged_freemem: struct bn_vlist");
     }

@@ -421,7 +421,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 
     NMG_CK_SHELL(s);
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_fix_overlapping_loops: s = %p\n", (void *)s);
 
     /* this routine needs simple faceuses */
@@ -687,7 +687,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
     }
     bu_ptbl_free(&loops);
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_fix_overlapping_loops: done\n");
 }
 
@@ -812,7 +812,7 @@ nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_t
     NMG_CK_SHELL(in_shell);
     BN_CK_TOL(tol);
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_extrude_cleanup(in_shell=%p)\n", (void *)in_shell);
 
     /* intersect each face in the shell with every other face in the
@@ -938,7 +938,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
     int is_void;
     int s_tmp_is_closed;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_extrude_shell(s=%p, thick=%f)\n", (void *)s, thick);
 
     NMG_CK_SHELL(s);

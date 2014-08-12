@@ -1253,7 +1253,7 @@ main(int argc, char *argv[])
 
     /* Set up linked lists */
     BU_LIST_INIT(&MGED_FreeSolid.l);
-    BU_LIST_INIT(&RTG.rtg_vlfree);
+    BU_LIST_INIT(&rtg_vlfree);
     BU_LIST_INIT(&RTG.rtg_headwdb.l);
 
     memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));

@@ -746,14 +746,14 @@ int
 Rt_Init(Tcl_Interp *interp)
 {
     /*XXX how much will this break? */
-    if (!BU_LIST_IS_INITIALIZED(&RTG.rtg_vlfree)) {
+    if (!BU_LIST_IS_INITIALIZED(&rtg_vlfree)) {
 	if (bu_avail_cpus() > 1) {
 	    RTG.rtg_parallel = 1;
 	    bu_semaphore_init(RT_SEM_LAST);
 	}
 
 	/* initialize RT's global state */
-	BU_LIST_INIT(&RTG.rtg_vlfree);
+	BU_LIST_INIT(&rtg_vlfree);
 	BU_LIST_INIT(&RTG.rtg_headwdb.l);
 	rt_init_resource(&rt_uniresource, 0, NULL);
     }

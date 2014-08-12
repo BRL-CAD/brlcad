@@ -584,7 +584,7 @@ nmg_pl_v(FILE *fp, const struct vertex *v, long *b)
     p = v->vg_p->coord;
 
     pl_color(fp, 255, 255, 255);
-    if (RTG.NMG_debug & DEBUG_LABEL_PTS) {
+    if (nmg_debug & DEBUG_LABEL_PTS) {
 	(void)sprintf(label, "%g %g %g", p[0], p[1], p[2]);
 	pdv_3move(fp, p);
 	pl_label(fp, label);
@@ -956,7 +956,7 @@ nmg_vlblock_euleft(struct bu_list *vh, const struct edgeuse *eu, const fastf_t *
 
     /* char_scale is based on length of eu */
     char_scale = len * 0.05;
-    bn_vlist_3string(vh, &RTG.rtg_vlfree, str, tip, mat, char_scale);
+    bn_vlist_3string(vh, &rtg_vlfree, str, tip, mat, char_scale);
 }
 
 
@@ -1242,9 +1242,9 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1)
     long *tab;
     struct bn_vlblock *vbp;
 
-    if (RTG.NMG_debug & DEBUG_PLOTEM &&
-	RTG.NMG_debug & DEBUG_FCUT) do_plot = 1;
-    if (RTG.NMG_debug & DEBUG_PL_ANIM) do_anim = 1;
+    if (nmg_debug & DEBUG_PLOTEM &&
+	nmg_debug & DEBUG_FCUT) do_plot = 1;
+    if (nmg_debug & DEBUG_PL_ANIM) do_anim = 1;
 
     if (!do_plot && !do_anim) return;
 
@@ -1278,7 +1278,7 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1)
 	    void (*cfp)(struct bn_vlblock *, int, int);
 	    cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
 	    cfp(vbp,
-		(RTG.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
+		(nmg_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
 		0);
 	} else {
 	    bu_log("null nmg_vlblock_anim_upcall, no animation\n");
@@ -1305,7 +1305,7 @@ nmg_pl_2fu(const char *str, const struct faceuse *fu1, const struct faceuse *fu2
     static int num = 1;
     struct bn_vlblock *vbp;
 
-    if ((RTG.NMG_debug & (DEBUG_PLOTEM|DEBUG_PL_ANIM)) == 0) return;
+    if ((nmg_debug & (DEBUG_PLOTEM|DEBUG_PL_ANIM)) == 0) return;
 
     s = nmg_find_shell(&fu1->l.magic);
     NMG_CK_SHELL(s);
@@ -1324,7 +1324,7 @@ nmg_pl_2fu(const char *str, const struct faceuse *fu1, const struct faceuse *fu2
     if (show_mates)
 	nmg_vlblock_fu(vbp, fu2->fumate_p, tab, 3);
 
-    if (RTG.NMG_debug & DEBUG_PLOTEM) {
+    if (nmg_debug & DEBUG_PLOTEM) {
 	snprintf(name, 32, str, num++);
 	bu_log("overlay %s\n", name);
 	fp=fopen(name, "wb");
@@ -1336,14 +1336,14 @@ nmg_pl_2fu(const char *str, const struct faceuse *fu1, const struct faceuse *fu2
 	(void)fclose(fp);
     }
 
-    if (RTG.NMG_debug & DEBUG_PL_ANIM) {
+    if (nmg_debug & DEBUG_PL_ANIM) {
 	/* Cause animation of boolean operation as it proceeds! */
 	if (nmg_vlblock_anim_upcall) {
 	    /* need to cast nmg_vlblock_anim_upcall pointer for actual use as a function */
 	    void (*cfp)(struct bn_vlblock *, int, int);
 	    cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
 	    cfp(vbp,
-		(RTG.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
+		(nmg_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
 		0);
 	}
     }
@@ -1553,7 +1553,7 @@ show_broken_lu(struct bn_vlblock *vbp, const struct loopuse *lu, int fancy)
 	return;
     }
 
-    if (RTG.NMG_debug & DEBUG_GRAPHCL) {
+    if (nmg_debug & DEBUG_GRAPHCL) {
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd))
 	    show_broken_eu(vbp, eu, fancy);
     }
@@ -1572,10 +1572,10 @@ show_broken_lu(struct bn_vlblock *vbp, const struct loopuse *lu, int fancy)
 	VSET(n, 0, 0, 1);
     }
 
-    if ((RTG.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) == (DEBUG_PL_LOOP)) {
+    if ((nmg_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) == (DEBUG_PL_LOOP)) {
 	/* If only DEBUG_PL_LOOP set, just draw lu as wires */
 	nmg_lu_to_vlist(vh, lu, 0, n);
-    } else if ((RTG.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) == (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
+    } else if ((nmg_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) == (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
 	/* Draw as polygons if both set */
 	nmg_lu_to_vlist(vh, lu, 1, n);
     } else {
@@ -1711,7 +1711,7 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
 
 	if (!a_string) {
 	    cfp(vbp,
-		(RTG.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
+		(nmg_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
 		1);
 	} else {
 
@@ -1719,7 +1719,7 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
 	    cur_sigint = signal(SIGINT, nmg_plot_sigstepalong);
 
 	    cfp(vbp,
-		(RTG.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
+		(nmg_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
 		1);
 
 	    for (stepalong = 0; !stepalong;) {
@@ -1762,7 +1762,7 @@ nmg_face_plot(const struct faceuse *fu)
     int fancy;
     static int num = 1;
 
-    if ((RTG.NMG_debug & (DEBUG_PLOTEM|DEBUG_PL_ANIM)) == 0) return;
+    if ((nmg_debug & (DEBUG_PLOTEM|DEBUG_PL_ANIM)) == 0) return;
 
     NMG_CK_FACEUSE(fu);
 
@@ -1778,7 +1778,7 @@ nmg_face_plot(const struct faceuse *fu)
     fancy = 3;	/* show both types of edgeuses */
     nmg_vlblock_fu(vbp, fu, tab, fancy);
 
-    if (RTG.NMG_debug & DEBUG_PLOTEM) {
+    if (nmg_debug & DEBUG_PLOTEM) {
 	(void)sprintf(name, "face%d.plot3", num++);
 	bu_log("overlay %s\n", name);
 	fp=fopen(name, "wb");
@@ -1790,7 +1790,7 @@ nmg_face_plot(const struct faceuse *fu)
 	(void)fclose(fp);
     }
 
-    if (RTG.NMG_debug & DEBUG_PL_ANIM) {
+    if (nmg_debug & DEBUG_PL_ANIM) {
 	/* Cause animation of boolean operation as it proceeds! */
 	if (nmg_vlblock_anim_upcall) {
 	    /* if requested, delay 3/4 second */
@@ -1798,7 +1798,7 @@ nmg_face_plot(const struct faceuse *fu)
 	    void (*cfp)(struct bn_vlblock *, int, int);
 	    cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
 	    cfp(vbp,
-		(RTG.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
+		(nmg_debug&DEBUG_PL_SLOW) ? 750000 : 0,
 		0);
 	} else {
 	    bu_log("null nmg_vlblock_anim_upcall, no animation\n");
@@ -1821,7 +1821,7 @@ nmg_2face_plot(const struct faceuse *fu1, const struct faceuse *fu2)
     long *tab;
     int fancy;
 
-    if (! (RTG.NMG_debug & DEBUG_PL_ANIM)) return;
+    if (! (nmg_debug & DEBUG_PL_ANIM)) return;
 
     NMG_CK_FACEUSE(fu1);
     NMG_CK_FACEUSE(fu2);
@@ -1846,7 +1846,7 @@ nmg_2face_plot(const struct faceuse *fu1, const struct faceuse *fu2)
 	void (*cfp)(struct bn_vlblock *, int, int);
 	cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
 	cfp(vbp,
-	    (RTG.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
+	    (nmg_debug&DEBUG_PL_SLOW) ? 750000 : 0,
 	    0);
     } else {
 	bu_log("null nmg_vlblock_anim_upcall, no animation\n");
@@ -1871,7 +1871,7 @@ nmg_face_lu_plot(const struct loopuse *lu, const struct vertexuse *vu1, const st
     vect_t dir;
     point_t p1, p2;
 
-    if (!(RTG.NMG_debug&DEBUG_PLOTEM)) return;
+    if (!(nmg_debug&DEBUG_PLOTEM)) return;
 
     NMG_CK_LOOPUSE(lu);
     NMG_CK_VERTEXUSE(vu1);
@@ -1921,7 +1921,7 @@ nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const str
     point_t p1, p2;
     fastf_t left_mag;
 
-    if (!(RTG.NMG_debug&DEBUG_PLOTEM)) return;
+    if (!(nmg_debug&DEBUG_PLOTEM)) return;
 
     NMG_CK_LOOPUSE(lu);
     NMG_CK_VERTEXUSE(vu1);
@@ -1970,7 +1970,7 @@ nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const stru
     static int i = 0;
     char name[1024] = {0};
 
-    if (! (RTG.NMG_debug & DEBUG_NMGRT))
+    if (! (nmg_debug & DEBUG_NMGRT))
 	return;
 
     snprintf(name, 1024, "%s%0d.plot3", fname, i++);
@@ -2173,7 +2173,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 
     fu = nmg_find_fu_of_eu(eu);	/* may return NULL */
     NMG_CK_FACEUSE(fu);
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("nmg_cnurb_to_vlist() eu=%p, n=%d, order=%d\n",
 	       (void *)eu, n_interior, eg->order);
     }

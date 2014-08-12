@@ -1687,17 +1687,15 @@ struct rt_g {
     uint32_t		debug;		/**< @brief  !0 for debug, see librt/debug.h */
     /* DEPRECATED:  rtg_parallel is not used by LIBRT any longer (and will be removed) */
     int8_t		rtg_parallel;	/**< @brief  !0 = trying to use multi CPUs */
-    struct bu_list	rtg_vlfree;	/**< @brief  head of bn_vlist freelist */
-    uint32_t		NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
     struct rt_wdb	rtg_headwdb;	/**< @brief  head of database object list */
 };
-#define RT_G_INIT_ZERO { 0, 0, BU_LIST_INIT_ZERO, 0, RT_WDB_INIT_ZERO }
+#define RT_G_INIT_ZERO { 0, 0, RT_WDB_INIT_ZERO }
 
 
 /**
  * global ray-trace geometry state
  */
-NMG_EXPORT extern struct rt_g RTG;
+RT_EXPORT extern struct rt_g RTG;
 
 /* Normally set when in production mode, setting the RT_G_DEBUG define
  * to 0 will allow chucks of code to poof away at compile time (since
@@ -1841,26 +1839,7 @@ struct rt_i {
 
 #define RT_VISIT_ALL_SOLTABS_END	} }
 
-/**
- * Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
- * are required to execute this macro once, first:
- *
- * BU_LIST_INIT(&RTG.rtg_vlfree);
- *
- * Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL.
- */
-#define RT_GET_VLIST(p) BN_GET_VLIST(&RTG.rtg_vlfree, p)
 
-/** Place an entire chain of bn_vlist structs on the freelist */
-#define RT_FREE_VLIST(hd) BN_FREE_VLIST(&RTG.rtg_vlfree, hd)
-
-#define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&RTG.rtg_vlfree, hd, pnt, draw)
-
-/** Set a point size to apply to the vlist elements that follow. */
-#define RT_VLIST_SET_POINT_SIZE(hd, size) BN_VLIST_SET_POINT_SIZE(&RTG.rtg_vlfree, hd, size)
-
-/** Set a line width to apply to the vlist elements that follow. */
-#define RT_VLIST_SET_LINE_WIDTH(hd, width) BN_VLIST_SET_LINE_WIDTH(&RTG.rtg_vlfree, hd, width)
 
 
 /*
@@ -2474,10 +2453,10 @@ struct ray_data {
 #else
 #  define nmg_bu_bomb(rd, str) { \
 	bu_log("%s", str); \
-	if (RTG.NMG_debug & DEBUG_NMGRT) bu_bomb("End of diagnostics"); \
+	if (nmg_debug & DEBUG_NMGRT) bu_bomb("End of diagnostics"); \
 	BU_LIST_INIT(&rd->rd_hit); \
 	BU_LIST_INIT(&rd->rd_miss); \
-	RTG.NMG_debug |= DEBUG_NMGRT; \
+	nmg_debug |= DEBUG_NMGRT; \
 	nmg_isect_ray_shell(rd); \
 	(void) nmg_ray_segs(rd); \
 	bu_bomb("Should have bombed before this\n"); \
