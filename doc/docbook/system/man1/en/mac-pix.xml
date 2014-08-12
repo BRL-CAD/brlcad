@@ -61,12 +61,12 @@ The
 flag will output a
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 black and white file instead.
-By specifying the
+If the
 <option>-c</option>
-flag, the input image is centered in the middle of the output image.
-By specifying the
+flag is specified, the input image is centered in the middle of the output image.
+If the
 <option>-l</option>
-flag, the default output size is changed to 512x512.
+flag is specified, the default output size is changed to 512x512.
 Alternatively, the
 <option>-S</option>
 flag can be used to specify the square output size, or
@@ -80,15 +80,14 @@ If no input file is specified, standard input is read instead.</para>
 The <option>-X</option> and <option>-Y</option> flags can be used to specify the output x and y offset.</para>
 </refsect1>
 
-<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<refsect1 xml:id='examples'><title>EXAMPLE</title>
 <para>Especially pleasing displays of MacPaint documents can be made by using
 <citerefentry><refentrytitle>pixmerge</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 to combine them with the output of
 <citerefentry><refentrytitle>pixbackgnd</refentrytitle><manvolnum>1</manvolnum></citerefentry>:
-<!-- .br -->
-pixbackgnd -h 160 200 &gt; bg.pix
-<!-- .br -->
-mac-pix -c file.mac | pixmerge - bg.pix | pix-fb</para>
+</para>
+<para>pixbackgnd -H 160 200 &gt; bg.pix</para>
+<para>mac-pix -c file.mac | pixmerge - bg.pix | pix-fb</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>

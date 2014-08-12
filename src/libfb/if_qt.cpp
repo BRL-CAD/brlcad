@@ -48,7 +48,7 @@
 class QMainWindow: public QWindow {
 
 public:
-    QMainWindow(QImage *image, QWindow *parent = 0);
+    QMainWindow(FBIO *ifp, QImage *image, QWindow *parent = 0);
     ~QMainWindow();
 
     virtual void render(QPainter *painter);
@@ -62,6 +62,7 @@ protected:
     void exposeEvent(QExposeEvent *event);
 
 private:
+    FBIO *ifp;
     QImage *image;
     QBackingStore *m_backingStore;
     bool m_update_pending;
@@ -103,12 +104,18 @@ struct qtinfo {
     int qi_xrt;		/* X-coord of rightmost pixels */
     int qi_xtp;		/* Y-coord of topmost pixels */
     int qi_xbt;		/* Y-coord of bottommost pixels */
+
+    ColorMap *qi_rgb_cmap;	/* User's libfb colormap */
+    unsigned char *qi_redmap;
+    unsigned char *qi_blumap;
+    unsigned char *qi_grnmap;
 };
 
 #define QI(ptr) ((struct qtinfo *)((ptr)->u1.p))
 #define QI_SET(ptr, val) ((ptr)->u1.p) = (char *) val;
 
 /* Flags in qi_flags */
+#define FLG_LINCMAP 0x10	/* We're using a linear colormap */
 #define FLG_INIT    0x40	/* Display is fully initialized */
 
 /* Mode flags for open */
@@ -476,7 +483,13 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
     unsigned char *ip;
     unsigned char *op;
 
-    int j, k;
+    int x, y;
+
+    unsigned int a_pixel;
+
+    unsigned char *red = qi->qi_redmap;
+    unsigned char *grn = qi->qi_grnmap;
+    unsigned char *blu = qi->qi_blumap;
 
     FB_CK_FBIO(ifp);
 
@@ -526,23 +539,60 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 				 sizeof (RGBpixel)]);
     op = &qi->qi_pix[oy * qi->qi_image->bytesPerLine() + ox];
 
-    for (j = y2 - y1 + 1; j; j--) {
-	unsigned char *lip;
-	unsigned char *lop;
+    for (y = y1; y <= y2; y++) {
+	unsigned char *line_irgb;
+	unsigned char *p;
 
-	lip = ip;
-	lop = op;
+	/* Save pointer to start of line */
+	line_irgb = ip;
+	p = (unsigned char *)op;
 
-	for (k = x2 - x1 + 1; k; k--) {
-	    *lop++ = lip[0];
-	    *lop++ = lip[1];
-	    *lop++ = lip[2];
+	/* For the first line, convert/copy pixels */
+	for (x = x1; x <= x2; x++) {
+	    int pxwd;
+	    /* Calculate # pixels needed */
+	    if (x == x1) {
+		pxwd = x1wd;
+	    } else if (x == x2) {
+		pxwd = x2wd;
+	    } else {
+		pxwd = ifp->if_xzoom;
+	    }
 
-	    lip += sizeof (RGBpixel);
+	    /*
+	     * Construct a pixel with the color components
+	     * in the right places as described by the
+	     * red, green and blue masks.
+	     */
+	    if (qi->qi_flags & FLG_LINCMAP) {
+		a_pixel  = (line_irgb[0] << 16);
+		a_pixel |= (line_irgb[1] << 8);
+		a_pixel |= (line_irgb[2]);
+	    } else {
+		a_pixel  = (red[line_irgb[0]] << 16);
+		a_pixel |= (grn[line_irgb[1]] << 8);
+		a_pixel |= (blu[line_irgb[2]]);
+	    }
+
+	    while (pxwd--) {
+		*p++ = (a_pixel >> 16) & 0xff;
+		*p++ = (a_pixel >> 8) & 0xff;
+		*p++ = a_pixel & 0xff;
+	    }
+
+	    /*
+	     * Move to the next input line.
+	     */
+	    line_irgb += sizeof (RGBpixel);
 	}
 
-	ip += qi->qi_iwidth * sizeof (RGBpixel);
+	/*
+	 * And again, move to the beginning of the next
+	 * line up in the X server.
+	 */
 	op -= qi->qi_image->bytesPerLine();
+
+	ip += qi->qi_iwidth * sizeof(RGBpixel);
     }
 
     if (qi->alive == 0) {
@@ -551,6 +601,92 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 
     QApplication::sendEvent(qi->win, new QEvent(QEvent::UpdateRequest));
     qi->qapp->processEvents();
+}
+
+
+HIDDEN int
+qt_rmap(FBIO *ifp, ColorMap *cmp)
+{
+    struct qtinfo *qi = QI(ifp);
+    FB_CK_FBIO(ifp);
+
+    memcpy(cmp, qi->qi_rgb_cmap, sizeof (ColorMap));
+
+    fb_log("qt_rmap\n");
+
+    return 0;
+}
+
+
+HIDDEN int
+qt_wmap(FBIO *ifp, const ColorMap *cmp)
+{
+    struct qtinfo *qi = QI(ifp);
+    ColorMap *map = qi->qi_rgb_cmap;
+    int waslincmap;
+    int i;
+    unsigned char *red = qi->qi_redmap;
+    unsigned char *grn = qi->qi_grnmap;
+    unsigned char *blu = qi->qi_blumap;
+
+    FB_CK_FBIO(ifp);
+
+    /* Did we have a linear colormap before this call? */
+    waslincmap = qi->qi_flags & FLG_LINCMAP;
+
+    /* Clear linear colormap flag, since it may be changing */
+    qi->qi_flags &= ~FLG_LINCMAP;
+
+    /* Copy in or generate colormap */
+
+    if (cmp) {
+	if (cmp != map)
+	    memcpy(map, cmp, sizeof (ColorMap));
+    } else {
+	fb_make_linear_cmap(map);
+	qi->qi_flags |= FLG_LINCMAP;
+    }
+
+    /* Decide if this colormap is linear */
+    if (!(qi->qi_flags & FLG_LINCMAP)) {
+	int nonlin = 0;
+
+	for (i = 0; i < 256; i++)
+	    if (map->cm_red[i] >> 8 != i ||
+		map->cm_green[i] >> 8 != i ||
+		map->cm_blue[i] >> 8 != i) {
+		nonlin = 1;
+		break;
+	    }
+
+	if (!nonlin)
+	    qi->qi_flags |= FLG_LINCMAP;
+    }
+
+    /*
+     * If it was linear before, and they're making it linear again,
+     * there's nothing to do.
+     */
+    if (waslincmap && qi->qi_flags & FLG_LINCMAP)
+	return 0;
+
+    /* Copy into our fake colormap arrays. */
+    for (i = 0; i < 256; i++) {
+	red[i] = map->cm_red[i] >> 8;
+	grn[i] = map->cm_green[i] >> 8;
+	blu[i] = map->cm_blue[i] >> 8;
+    }
+
+    /*
+     * If we're initialized, redraw the screen to make changes
+     * take effect.
+     */
+    if (qi->qi_flags & FLG_INIT)
+	qt_update(ifp, 0, 0, qi->qi_iwidth, qi->qi_iheight);
+
+    fb_log("qt_wmap\n");
+
+    return 0;
 }
 
 HIDDEN int
@@ -573,7 +709,7 @@ qt_setup(FBIO *ifp, int width, int height)
 
     qi->qi_image = new QImage(qi->qi_pix, width, height, QImage::Format_RGB888);
 
-    qi->win = new QMainWindow(qi->qi_image);
+    qi->win = new QMainWindow(ifp, qi->qi_image);
     qi->win->setWidth(width);
     qi->win->setHeight(height);
     qi->win->show();
@@ -600,6 +736,7 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
 
     unsigned long mode;
     size_t size;
+    unsigned char *mem = NULL;
 
     FB_CK_FBIO(ifp);
     mode = MODE1_LINGERING;
@@ -670,12 +807,22 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
     qi->qi_iheight = height;
 
     /* allocate backing store */
-    size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
-    if ((qi->qi_mem = (unsigned char *)malloc(size)) == 0) {
+    size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel) + sizeof (*qi->qi_rgb_cmap);;
+    if ((mem = (unsigned char *)malloc(size)) == 0) {
 	fb_log("if_qt: Unable to allocate %d bytes of backing \
 		store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
 	return -1;
     }
+    qi->qi_rgb_cmap = (ColorMap *) mem;
+    qi->qi_redmap = (unsigned char *)malloc(256);
+    qi->qi_grnmap = (unsigned char *)malloc(256);
+    qi->qi_blumap = (unsigned char *)malloc(256);
+
+    if (!qi->qi_redmap || !qi->qi_grnmap || !qi->qi_blumap) {
+	fb_log("if_X24: Can't allocate colormap memory\n");
+	return -1;
+    }
+    qi->qi_mem = (unsigned char *) mem + sizeof (*qi->qi_rgb_cmap);
 
     /* Set up an Qt window */
     if (qt_setup(ifp, width, height) < 0) {
@@ -690,6 +837,9 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
     /* Mark display ready */
     qi->qi_flags |= FLG_INIT;
 
+    /* Set up default linear colormap */
+    qt_wmap(ifp, NULL);
+
     fb_log("qt_open\n");
 
     return 0;
@@ -702,6 +852,7 @@ _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void
 
     unsigned long mode;
     size_t size;
+    unsigned char *mem = NULL;
 
     FB_CK_FBIO(ifp);
 
@@ -736,12 +887,22 @@ _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void
     qi->qi_iheight = height;
 
     /* allocate backing store */
-    size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
-    if ((qi->qi_mem = (unsigned char *)malloc(size)) == 0) {
+    size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel) + sizeof (*qi->qi_rgb_cmap);;
+    if ((mem = (unsigned char *)malloc(size)) == 0) {
 	fb_log("if_qt: Unable to allocate %d bytes of backing \
 		store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
 	return -1;
     }
+    qi->qi_rgb_cmap = (ColorMap *) mem;
+    qi->qi_redmap = (unsigned char *)malloc(256);
+    qi->qi_grnmap = (unsigned char *)malloc(256);
+    qi->qi_blumap = (unsigned char *)malloc(256);
+
+    if (!qi->qi_redmap || !qi->qi_grnmap || !qi->qi_blumap) {
+	fb_log("if_X24: Can't allocate colormap memory\n");
+	return -1;
+    }
+    qi->qi_mem = (unsigned char *) mem + sizeof (*qi->qi_rgb_cmap);
 
     /* Set up an Qt window */
     qi->qi_qwidth = width;
@@ -764,6 +925,9 @@ _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void
     qt_updstate(ifp);
     qi->alive = 0;
     qi->drawFb = (int *)draw;
+
+    /* Set up default linear colormap */
+    qt_wmap(ifp, NULL);
 
     /* Mark display ready */
     qi->qi_flags |= FLG_INIT;
@@ -836,8 +1000,24 @@ qt_clear(FBIO *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-qt_read(FBIO *UNUSED(ifp), int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
+qt_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
+    struct qtinfo *qi = QI(ifp);
+    size_t maxcount;
+
+    FB_CK_FBIO(ifp);
+
+    /* check origin bounds */
+    if (x < 0 || x >= qi->qi_iwidth || y < 0 || y >= qi->qi_iheight)
+	return -1;
+
+    /* clip read length */
+    maxcount = qi->qi_iwidth * (qi->qi_iheight - y) - x;
+    if (count > maxcount)
+	count = maxcount;
+
+    memcpy(pixelp, &(qi->qi_mem[(y*qi->qi_iwidth + x)*sizeof(RGBpixel)]), count*sizeof(RGBpixel));
+
     fb_log("qt_read\n");
 
     return count;
@@ -885,24 +1065,6 @@ qt_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
 
 HIDDEN int
-qt_rmap(FBIO *UNUSED(ifp), ColorMap *UNUSED(cmp))
-{
-    fb_log("qt_rmap\n");
-
-    return 0;
-}
-
-
-HIDDEN int
-qt_wmap(FBIO *UNUSED(ifp), const ColorMap *UNUSED(cmp))
-{
-    fb_log("qt_wmap\n");
-
-    return 0;
-}
-
-
-HIDDEN int
 qt_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct qtinfo *qi = QI(ifp);
@@ -927,7 +1089,8 @@ qt_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     ifp->if_xzoom = xzoom;
     ifp->if_yzoom = yzoom;
 
-    /* TODO make changes */
+    qt_updstate(ifp);
+    qt_update(ifp, 0, 0, qi->qi_iwidth, qi->qi_iheight);
 
     fb_log("qt_view\n");
 
@@ -977,20 +1140,152 @@ qt_getcursor(FBIO *UNUSED(ifp), int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y
 
 
 HIDDEN int
-qt_readrect(FBIO *UNUSED(ifp), int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
+qt_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
+    struct qtinfo *qi = QI(ifp);
+    FB_CK_FBIO(ifp);
+
+    /* Clip arguments */
+    if (xmin < 0)
+	xmin = 0;
+    if (ymin < 0)
+	ymin = 0;
+    if (xmin + width > qi->qi_iwidth)
+	width = qi->qi_iwidth - xmin;
+    if (ymin + height > qi->qi_iheight)
+	height = qi->qi_iheight - ymin;
+
+    /* Do copy to backing store */
+    if (xmin == 0 && width == qi->qi_iwidth) {
+	/* We can do it all in one copy */
+	memcpy(pp, &(qi->qi_mem[ymin * qi->qi_iwidth *
+				sizeof (RGBpixel)]),
+	       width * height * sizeof (RGBpixel));
+    } else {
+	/* Need to do individual lines */
+	int ht = height;
+	unsigned char *p = &(qi->qi_mem[(ymin * qi->qi_iwidth + xmin) *
+					sizeof (RGBpixel)]);
+
+	while (ht--) {
+	    memcpy(pp, p, width * sizeof (RGBpixel));
+	    p += qi->qi_iwidth * sizeof (RGBpixel);
+	    pp += width * sizeof (RGBpixel);
+	}
+    }
+
     fb_log("qt_readrect\n");
 
-    return width*height;
+    return width * height;
 }
 
 
 HIDDEN int
-qt_writerect(FBIO *UNUSED(ifp), int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
+qt_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
+    struct qtinfo *qi = QI(ifp);
+    FB_CK_FBIO(ifp);
+
+    /* Clip arguments */
+    if (xmin < 0)
+	xmin = 0;
+    if (ymin < 0)
+	ymin = 0;
+    if (xmin + width > qi->qi_iwidth)
+	width = qi->qi_iwidth - xmin;
+    if (ymin + height > qi->qi_iheight)
+	height = qi->qi_iheight - ymin;
+
+    /* Do copy to backing store */
+    if (xmin == 0 && width == qi->qi_iwidth) {
+	/* We can do it all in one copy */
+	memcpy(&(qi->qi_mem[ymin * qi->qi_iwidth * sizeof (RGBpixel)]),
+	       pp, width * height * sizeof (RGBpixel));
+    } else {
+	/* Need to do individual lines */
+	int ht = height;
+	unsigned char *p = &(qi->qi_mem[(ymin * qi->qi_iwidth + xmin) *
+					sizeof (RGBpixel)]);
+
+	while (ht--) {
+	    memcpy(p, pp, width * sizeof (RGBpixel));
+	    p += qi->qi_iwidth * sizeof (RGBpixel);
+	    pp += width * sizeof (RGBpixel);
+	}
+    }
+
+    /* Flush to screen */
+    qt_update(ifp, xmin, ymin, width, height);
+
     fb_log("qt_writerect\n");
 
-    return width*height;
+    return width * height;
+}
+
+
+HIDDEN void
+qt_handle_event(FBIO *ifp, QEvent *event)
+{
+    struct qtinfo *qi = QI(ifp);
+    FB_CK_FBIO(ifp);
+
+    switch (event->type()) {
+	case QEvent::MouseButtonPress:
+	    {
+		QMouseEvent *ev = (QMouseEvent *)event;
+		int button = ev->button();
+
+		switch (button) {
+		    case Qt::LeftButton:
+			break;
+		    case Qt::MiddleButton:
+			{
+			    int x, sy;
+			    int ix, isy;
+			    unsigned char *cp;
+
+			    x = ev->x();
+			    sy = qi->qi_qheight - ev->y() - 1;
+
+			    x -= qi->qi_xlf;
+			    sy -= qi->qi_qheight - qi->qi_xbt - 1;
+			    if (x < 0 || sy < 0) {
+				fb_log("No RGB (outside image) 1\n");
+				break;
+			    }
+
+			    if (x < qi->qi_ilf_w)
+				ix = qi->qi_ilf;
+			    else
+				ix = qi->qi_ilf + (x - qi->qi_ilf_w + ifp->if_xzoom - 1) / ifp->if_xzoom;
+
+			    if (sy < qi->qi_ibt_h)
+				isy = qi->qi_ibt;
+			    else
+				isy = qi->qi_ibt + (sy - qi->qi_ibt_h + ifp->if_yzoom - 1) / ifp->if_yzoom;
+
+			    if (ix >= qi->qi_iwidth || isy >= qi->qi_iheight) {
+				fb_log("No RGB (outside image) 2\n");
+				break;
+			    }
+
+			    cp = &(qi->qi_mem[(isy*qi->qi_iwidth + ix)*3]);
+			    fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
+				   ix, isy, cp[0], cp[1], cp[2]);
+
+			    break;
+			}
+		    case Qt::RightButton:
+			qi->qapp->exit();
+			break;
+		}
+		break;
+	    }
+	default:
+	    break;
+    }
+
+    return;
 }
 
 
@@ -1095,13 +1390,14 @@ FBIO qt_interface =  {
  * ===================================================== Main window class ===============================================
  */
 
-QMainWindow::QMainWindow(QImage *img, QWindow *win)
+QMainWindow::QMainWindow(FBIO *fb, QImage *img, QWindow *win)
     : QWindow(win)
     , m_update_pending(false)
 {
     m_backingStore = new QBackingStore(this);
     create();
     image = img;
+    ifp = fb;
 }
 
 QMainWindow::~QMainWindow()
@@ -1131,6 +1427,9 @@ bool QMainWindow::event(QEvent *ev)
 	renderNow();
 	return true;
     }
+
+    qt_handle_event(ifp, ev);
+
     return QWindow::event(ev);
 }
 

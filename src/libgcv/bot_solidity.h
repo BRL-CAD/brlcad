@@ -30,16 +30,11 @@
 
 #include "common.h"
 
-
 #include "gcv.h"
-
-
 #include "rtgeom.h"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 
 /*
@@ -53,9 +48,7 @@ GCV_EXPORT int bot_is_closed_fan(const struct rt_bot_internal *bot);
 GCV_EXPORT int bot_is_orientable(const struct rt_bot_internal *bot);
 
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 
 #endif

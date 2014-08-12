@@ -13526,7 +13526,7 @@ to_create_vlist_callback(struct solid *sp)
     register int first = 1;
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (to_is_viewable(gdvp)) {
+	if (current_top->to_gop->go_dlist_on && to_is_viewable(gdvp)) {
 
 	    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
 
@@ -13563,7 +13563,7 @@ to_free_vlist_callback(unsigned int dlist, int range)
     struct ged_dm_view *gdvp;
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (to_is_viewable(gdvp)) {
+	if (current_top->to_gop->go_dlist_on && to_is_viewable(gdvp)) {
 	    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
 	    (void)DM_FREEDLISTS(gdvp->gdv_dmp, dlist, range);
 	}
