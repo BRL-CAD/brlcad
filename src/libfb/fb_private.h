@@ -132,7 +132,7 @@ struct fb_internal {
 #    include <X11/Xlib.h>
 #    include <X11/Xutil.h>
 #  endif
-FB_EXPORT extern int _X24_open_existing(fb *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc);
+/*FB_EXPORT extern int _X24_open_existing(fb *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc);*/
 #endif
 
 #ifdef IF_OGL

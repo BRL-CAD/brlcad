@@ -78,17 +78,6 @@ fb *_if_list[] = {
     (fb *) 0
 };
 
-#define FB_WGL_MAGIC    0x574f4642 /**< WOFB */
-#define FB_OGL_MAGIC    0x584f4642 /**< XOFB */
-#define FB_X24_MAGIC    0x58324642 /**< X2FB */
-#define FB_X_MAGIC      0x58304642 /**< X0FB */
-#define FB_TK_MAGIC     0x544b4642 /**< TKFB */
-#define FB_QT_MAGIC     0x51544642 /**< QTFB */
-#define FB_DEBUG_MAGIC  0x44424642 /**< DBFB */
-#define FB_STK_MAGIC    0x53544642 /**< STFB */
-#define FB_MEMORY_MAGIC 0x4d454642 /**< MEFB */
-#define FB_NULL_MAGIC   0x4e554642 /**< NUFB */
-
 fb *fb_get()
 {
     struct fb_internal *new_fb = FB_NULL;

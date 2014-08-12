@@ -76,8 +76,10 @@
 
 #include "bu/color.h"
 #include "bu/file.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 #include "fb_private.h"
+#include "fb/fb_X24.h"
 
 
 #define SHMEM_KEY 42
@@ -2548,26 +2550,6 @@ X24_open(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
-HIDDEN struct fb_platform_specific *
-X24_get_fbps(uint32_t UNUSED(magic))
-{
-        return NULL;
-}
-
-
-HIDDEN void
-X24_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *UNUSED(fbps))
-{
-        return;
-}
-
-HIDDEN int
-X24_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
-{
-        return 0;
-}
-
-
 void
 X24_configureWindow(fb *ifp, int width, int height)
 {
@@ -2682,6 +2664,7 @@ X24_configureWindow(fb *ifp, int width, int height)
     }
 
 }
+
 
 
 int
@@ -2850,49 +2833,37 @@ _X24_open_existing(fb *ifp, Display *dpy, Window win, Window cwinp, Colormap cma
     return 0;
 }
 
-#if 0
-int
-X24_open_existing(fb *ifp, int argc, const char **argv)
+HIDDEN struct fb_platform_specific *
+X24_get_fbps(uint32_t magic)
 {
-    Display *dpy;
-    Window win;
-    Window cwinp;
-    Colormap cmap;
-    XVisualInfo *vip;
-    int width;
-    int height;
-    GC gc;
-
-    if (argc != 9)
-	return -1;
-
-    if (sscanf(argv[1], "%p", (void **)&dpy) != 1)
-	return -1;
-
-    if (sscanf(argv[2], "%p", (void **)&win) != 1)
-	return -1;
-
-    if (sscanf(argv[3], "%p", (void **)&cwinp) != 1)
-	return -1;
-
-    if (sscanf(argv[4], "%p", (void **)&cmap) != 1)
-	return -1;
-
-    if (sscanf(argv[5], "%p", (void **)&vip) != 1)
-	return -1;
-
-    if (sscanf(argv[6], "%d", &width) != 1)
-	return -1;
-
-    if (sscanf(argv[7], "%d", &height) != 1)
-	return -1;
-
-    if (sscanf(argv[8], "%p", (void **)&gc) != 1)
-	return -1;
-
-    return _X24_open_existing(ifp, dpy, win, cwinp, cmap, vip, width, height, gc);
+    struct fb_platform_specific *fb_ps = NULL;
+    struct X24_fb_info *data = NULL;
+    BU_GET(fb_ps, struct fb_platform_specific);
+    BU_GET(data, struct X24_fb_info);
+    fb_ps->magic = magic;
+    fb_ps->data = data;
+    return fb_ps;
 }
-#endif
+
+
+HIDDEN void
+X24_put_fbps(uint32_t UNUSED(magic), struct fb_platform_specific *fbps)
+{
+    BU_CKMAG(fbps, FB_X24_MAGIC, "X24 framebuffer");
+    BU_PUT(fbps->data, struct X24_fb_info);
+    BU_PUT(fbps, struct fb_platform_specific);
+    return;
+}
+
+HIDDEN int
+X24_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
+{
+    struct X24_fb_info *x24_internal = (struct X24_fb_info *)fb_p;
+    BU_CKMAG(fb_p, FB_X24_MAGIC, "X24 framebuffer");
+    return _X24_open_existing(ifp, x24_internal->dpy, x24_internal->win,
+	    x24_internal->cwinp, x24_internal->cmap, x24_internal->vip,
+	    width, height, x24_internal->gc);
+}
 
 
 static int alive = 1;

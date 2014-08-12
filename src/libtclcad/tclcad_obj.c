@@ -69,6 +69,7 @@
 #  include <X11/Xutil.h>
 #  include "dm/dm_xvars.h"
 #  include "dm/dm-X.h"
+#  include "fb/fb_X24.h"
 #endif /* DM_X */
 
 #ifdef DM_TK
@@ -105,7 +106,7 @@
 #include "brlcad_version.h"
 
 /* For open_existing functionality - need a better solution */
-#include "../libfb/fb_private.h"
+#include "fb.h"
 
 #define TO_UNLIMITED -1
 
@@ -13207,11 +13208,15 @@ HIDDEN void to_dm_get_display_image(struct ged *gedp, unsigned char **idata)
 HIDDEN int
 to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 {
-
+    struct fb_platform_specific *fb_ps;
+#ifdef DM_X
+    struct X24_fb_info *xfb_ps;
+#endif
     /* already open */
     if (gdvp->gdv_fbs.fbs_fbp != FB_NULL)
 	return TCL_OK;
 
+#ifndef DM_X
     /* don't use bu_calloc so we can fail slightly more gracefully */
     gdvp->gdv_fbs.fbs_fbp = fb_get();
     if ((gdvp->gdv_fbs.fbs_fbp == FB_NULL)) {
@@ -13227,24 +13232,21 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 	Tcl_SetObjResult(interp, obj);
 	return TCL_ERROR;
     }
+#endif
 
     switch (gdvp->gdv_dmp->dm_type) {
 #ifdef DM_X
 	case DM_TYPE_X:
-	    fb_set_interface(gdvp->gdv_fbs.fbs_fbp, "X24");
-	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/X");
-	    /* Mark OK by filling in magic number */
-	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
+	    fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
+	    xfb_ps = (struct X24_fb_info *)fb_ps->data;
+	    xfb_ps->dpy = ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy;
+	    xfb_ps->win = ((struct x_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->pix;
+	    xfb_ps->cwinp = ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.priv_vars)->win;
+	    xfb_ps->cmap = ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.priv_vars)->cmap;
+	    xfb_ps->vip = ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.priv_vars)->vip;
+	    xfb_ps->gc = ((struct x_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->gc;
 
-	    _X24_open_existing(gdvp->gdv_fbs.fbs_fbp,
-			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct x_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->pix,
-			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->vip,
-			       gdvp->gdv_dmp->dm_width,
-			       gdvp->gdv_dmp->dm_height,
-			       ((struct x_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->gc);
+	    gdvp->gdv_fbs.fbs_fbp = fb_open_existing("/dev/X", gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height, fb_ps);
 	    break;
 #endif
 #ifdef DM_TK
@@ -13275,7 +13277,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 	    fb_set_name(gdvp->gdv_fbs.fbs_fbp, "/dev/ogl");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(gdvp->gdv_fbs.fbs_fbp, FB_MAGIC);
-
+#if 0
 	    _ogl_open_existing(gdvp->gdv_fbs.fbs_fbp,
 			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
 			       ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->win,
@@ -13286,6 +13288,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 			       ((struct ogl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->glxc,
 			       ((struct ogl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
 			       0);
+#endif
 	    break;
 #endif
 

@@ -76,7 +76,7 @@
 #endif
 
 /* For the open_existing functions - need to figure out something better */
-#include "../libfb/fb_private.h"
+#include "fb/fb_X24.h"
 
 /**
  *@brief
@@ -107,6 +107,11 @@ static struct dm_obj HeadDMObj;	/* head of display manager object list */
 HIDDEN int
 dmo_openFb(struct dm_obj *dmop)
 {
+    struct fb_platform_specific *fb_ps;
+#ifdef DM_X
+    struct X24_fb_info *xfb_ps;
+#endif
+
     if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
@@ -114,6 +119,7 @@ dmo_openFb(struct dm_obj *dmop)
     if (dmop->dmo_fbs.fbs_fbp != FB_NULL)
 	return TCL_OK;
 
+#ifndef DM_X
     dmop->dmo_fbs.fbs_fbp = fb_get();
     if (dmop->dmo_fbs.fbs_fbp == FB_NULL) {
 	Tcl_Obj *obj;
@@ -128,24 +134,19 @@ dmo_openFb(struct dm_obj *dmop)
 	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_ERROR;
     }
-
+#endif
     switch (dmop->dmo_dmp->dm_type) {
 #ifdef DM_X
 	case DM_TYPE_X:
-	    fb_set_interface(dmop->dmo_fbs.fbs_fbp, "X24");
-	    fb_set_name(dmop->dmo_fbs.fbs_fbp, "/dev/X");
-	    /* Mark OK by filling in magic number */
-	    fb_set_magic(dmop->dmo_fbs.fbs_fbp, FB_MAGIC);
-
-	    _X24_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->pix,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc);
+	    fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
+	    xfb_ps = (struct X24_fb_info *)fb_ps->data;
+	    xfb_ps->dpy = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy;
+	    xfb_ps->win = ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->pix;
+	    xfb_ps->cwinp = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.priv_vars)->win;
+	    xfb_ps->cmap = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.priv_vars)->cmap;
+	    xfb_ps->vip = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.priv_vars)->vip;
+	    xfb_ps->gc = ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc;
+	    dmop->dmo_fbs.fbs_fbp = fb_open_existing("/dev/X", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height, fb_ps);
 	    break;
 #endif
 
@@ -155,7 +156,7 @@ dmo_openFb(struct dm_obj *dmop)
 	    fb_set_name(dmop->dmo_fbs.fbs_fbp, "/dev/ogl");
 	    /* Mark OK by filling in magic number */
 	    fb_set_magic(dmop->dmo_fbs.fbs_fbp, FB_MAGIC);
-
+#if 0
 	    _ogl_open_existing(dmop->dmo_fbs.fbs_fbp,
 			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
 			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
@@ -166,6 +167,7 @@ dmo_openFb(struct dm_obj *dmop)
 			       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
 			       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
 			       0);
+#endif
 	    break;
 #endif
 #ifdef DM_WGL
