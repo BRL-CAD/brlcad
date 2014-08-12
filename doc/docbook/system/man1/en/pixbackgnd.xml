@@ -17,7 +17,7 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>pixbackgnd</command>
-    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-H </arg>
     <arg choice='opt'>-i </arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>width</replaceable></arg>
@@ -32,7 +32,7 @@
 </cmdsynopsis>
 <cmdsynopsis>
   <command>pixbackgnd</command>
-    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-H </arg>
     <arg choice='opt'>-i </arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>width</replaceable></arg>
@@ -48,7 +48,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixbackgnd</emphasis>
+<para><command>pixbackgnd</command>
 generates a
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format shaded background on stdout suitable for
@@ -57,16 +57,17 @@ The upper portion of the screen is reserved for a title area,
 and is drawn at constant intensity 240,
 followed by a 4 scanline white bar,
 after which the intensity smoothly decreases from 240 to 50.
-<emphasis remap='I'>Hue</emphasis>
+The values of
+<emphasis remap='I'>hue</emphasis>
 and
 <emphasis remap='I'>saturation</emphasis>
-are values from 0 to 255 and can be selected via
+range from 0 to 255 inclusive and can be selected via
 <citerefentry><refentrytitle>fbcolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 A hue of 160 is a pleasing blue.</para>
 
 <para>By default, the title height is
 80 scanlines, or 90 scanlines if the
-<option>-h</option>
+<option>-H</option>
 flag is set, but the
 <option>-t </option><replaceable>title_height</replaceable>
 option may be used to specify another value.
@@ -76,9 +77,9 @@ is set to zero, then the white bar
 is omitted as well, and the entire display is smoothly shaded.</para>
 
 <para>By default, the display is assumed to be 512x512 pixels;
-by specifying the
-<option>-h</option>
-flag, the output size is changed to 1024x1024.</para>
+specifying the
+<option>-H</option>
+flag, in addition to changing the title height to 90 scanlines (see above), changes the output size to 1024x1024.</para>
 
 <para>By specifying the
 <option>-i</option>
@@ -97,11 +98,9 @@ By default, the top intensity is 240, and the bottom is 50.</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
-<para>pixbackgnd 160 200  |   pixmerge fg.pix - | pix-fb
-<!-- .br -->
-pixbackgnd -t120 160 250
-<!-- .br -->
-pixbackgnd -i -t0 160 200   |   cat-fb -O file.troff</para>
+<para>pixbackgnd 160 200  |   pixmerge fg.pix - | pix-fb</para>
+<para>pixbackgnd -t120 160 250</para>
+<para>pixbackgnd -i -t0 160 200   |   cat-fb -O file.troff</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
