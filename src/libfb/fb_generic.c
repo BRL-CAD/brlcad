@@ -77,6 +77,33 @@ fb *_if_list[] = {
     (fb *) 0
 };
 
+const char *
+fb_get_magic_type(uint32_t magic)
+{
+    switch(magic) {
+	case FB_WGL_MAGIC:
+	    return "wgl";
+	case FB_OGL_MAGIC:
+	    return "ogl";
+	case FB_X24_MAGIC:
+	    return "X";
+	case FB_TK_MAGIC:
+	    return "tk";
+	case FB_QT_MAGIC:
+	    return "Qt";
+	case FB_DEBUG_MAGIC:
+	    return "debug";
+	case FB_STK_MAGIC:
+	    return "stack";
+	case FB_MEMORY_MAGIC:
+	    return "mem";
+	case FB_NULL_MAGIC:
+	    return "null";
+	default:
+	    return NULL;
+    }
+}
+
 fb *fb_get()
 {
     struct fb_internal *new_fb = FB_NULL;
@@ -105,41 +132,6 @@ void fb_set_interface(fb *ifp, const char *interface)
 	    i++;
 	}
     }
-}
-
-const char *
-fb_get_magic_type(uint32_t magic)
-{
-    switch(magic) {
-	case FB_WGL_MAGIC:
-	    return "wgl";
-	    break;
-	case FB_OGL_MAGIC:
-	    return "ogl";
-	    break;
-	case FB_X24_MAGIC:
-	    return "X";
-	    break;
-	case FB_TK_MAGIC:
-	    return "tk";
-	    break;
-	case FB_QT_MAGIC:
-	    return "Qt";
-	    break;
-	case FB_DEBUG_MAGIC:
-	    return "debug";
-	    break;
-	case FB_STK_MAGIC:
-	    return "stack";
-	    break;
-	case FB_MEMORY_MAGIC:
-	    return "mem";
-	    break;
-	case FB_NULL_MAGIC:
-	    return "null";
-	    break;
-    }
-    return NULL;
 }
 
 struct fb_platform_specific *
