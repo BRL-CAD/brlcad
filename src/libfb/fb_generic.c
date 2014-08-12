@@ -107,51 +107,55 @@ void fb_set_interface(fb *ifp, const char *interface)
     }
 }
 
-struct fb_platform_specific *
-fb_get_platform_specific(uint32_t magic)
+const char *
+fb_get_magic_type(uint32_t magic)
 {
     switch(magic) {
 	case FB_WGL_MAGIC:
-#ifdef IF_WGL
-	    return wgl_interface.if_existing_get(magic);
-#endif
+	    return "wgl";
 	    break;
 	case FB_OGL_MAGIC:
-#ifdef IF_OGL
-	    return ogl_interface.if_existing_get(magic);
-#endif
+	    return "ogl";
 	    break;
 	case FB_X24_MAGIC:
-#ifdef IF_X
-	    return X24_interface.if_existing_get(magic);
-#endif
+	    return "X";
 	    break;
 	case FB_TK_MAGIC:
-#ifdef IF_TK
-	    return tk_interface.if_existing_get(magic);
-#endif
+	    return "tk";
 	    break;
 	case FB_QT_MAGIC:
-#ifdef IF_QT
-	    return qt_interface.if_existing_get(magic);
-#endif
+	    return "Qt";
 	    break;
 	case FB_DEBUG_MAGIC:
-	    return debug_interface.if_existing_get(magic);
+	    return "debug";
 	    break;
 	case FB_STK_MAGIC:
-	    return stk_interface.if_existing_get(magic);
+	    return "stack";
 	    break;
 	case FB_MEMORY_MAGIC:
-	    return memory_interface.if_existing_get(magic);
+	    return "mem";
 	    break;
 	case FB_NULL_MAGIC:
-	    return null_interface.if_existing_get(magic);
+	    return "null";
 	    break;
+    }
+    return NULL;
+}
 
-	default:
-	    bu_log("Unknown framebuffer magic %d\n", magic);
-	    break;
+struct fb_platform_specific *
+fb_get_platform_specific(uint32_t magic)
+{
+    const char *type = fb_get_magic_type(magic);
+    int i = 0;
+    if (!type) return NULL;
+    while (_if_list[i] != FB_NULL) {
+	if (bu_strncmp(type, _if_list[i]->if_name+5,
+		    strlen(_if_list[i]->if_name-5)) == 0) {
+	    /* found it, get its specific struct */
+	    return (*(_if_list[i])).if_existing_get(magic);
+	} else {
+	    i++;
+	}
     }
     return NULL;
 }
@@ -159,48 +163,17 @@ fb_get_platform_specific(uint32_t magic)
 void
 fb_put_platform_specific(struct fb_platform_specific *fb_p)
 {
-    switch(fb_p->magic) {
-	case FB_WGL_MAGIC:
-#ifdef IF_WGL
-	    wgl_interface.if_existing_put(fb_p);
-#endif
-	    break;
-	case FB_OGL_MAGIC:
-#ifdef IF_OGL
-	    ogl_interface.if_existing_put(fb_p);
-#endif
-	    break;
-	case FB_X24_MAGIC:
-#ifdef IF_X
-	    X24_interface.if_existing_put(fb_p);
-#endif
-	    break;
-	case FB_TK_MAGIC:
-#ifdef IF_TK
-	    tk_interface.if_existing_put(fb_p);
-#endif
-	    break;
-	case FB_QT_MAGIC:
-#ifdef IF_QT
-	    qt_interface.if_existing_put(fb_p);
-#endif
-	    break;
-	case FB_DEBUG_MAGIC:
-	    debug_interface.if_existing_put(fb_p);
-	    break;
-	case FB_STK_MAGIC:
-	    stk_interface.if_existing_put(fb_p);
-	    break;
-	case FB_MEMORY_MAGIC:
-	    memory_interface.if_existing_put(fb_p);
-	    break;
-	case FB_NULL_MAGIC:
-	    null_interface.if_existing_put(fb_p);
-	    break;
-
-	default:
-	    bu_log("Unknown framebuffer magic %d\n", fb_p->magic);
-	    break;
+    const char *type = fb_get_magic_type(fb_p->magic);
+    int i = 0;
+    while (_if_list[i] != FB_NULL) {
+	if (bu_strncmp(type, _if_list[i]->if_name+5,
+		    strlen(_if_list[i]->if_name-5)) == 0) {
+	    /* found it, clear its specific struct */
+	    (*(_if_list[i])).if_existing_put(fb_p);
+	    return;
+	} else {
+	    i++;
+	}
     }
     return;
 }
@@ -381,17 +354,9 @@ int fb_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const uns
 }
 
 
-
-extern int X24_close_existing(fb *ifp);
-extern int ogl_close_existing(fb *ifp);
-extern int wgl_close_existing(fb *ifp);
-extern int qt_close_existing(fb *ifp);
-
-
 #define Malloc_Bomb(_bytes_)					\
     fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n",	\
 	   __FILE__, __LINE__, _bytes_)
-
 
 /**
  * True if the non-null string s is all digits
