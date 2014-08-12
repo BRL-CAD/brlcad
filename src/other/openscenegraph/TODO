@@ -1,0 +1,6 @@
+openscenegraph/src/osgDB/FileUtils.cpp:505
+
+Ideally, the OSG_RELATIVE_LIBRARY_PATH hack should go away - the
+right way to do that is probably to have the application pass the
+appropriate path to filepath at runtime, if the hooks for that
+exist. (If not, then the right way is to create the hooks.)

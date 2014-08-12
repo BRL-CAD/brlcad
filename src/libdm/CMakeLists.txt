@@ -11,6 +11,7 @@ set(DM_INCLUDE_DIRS
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
   ${Qt5Widgets_INCLUDE_DIRS}
+  ${OPENTHREADS_INCLUDE_DIR}
   ${OSG_INCLUDE_DIR}
   )
 
@@ -67,7 +68,7 @@ if(BRLCAD_ENABLE_QT)
 endif(BRLCAD_ENABLE_QT)
 
 if(BRLCAD_ENABLE_OSG)
-  list(APPEND libdm_DEFINES DM_OSG)
+  list(APPEND libdm_DEFINES DM_OSG IF_OSG)
   set(dmosg_srcs dm-osg.cpp)
   set(OSG_LIBRARIES
     ${OSG_LIBRARY}
@@ -109,9 +110,13 @@ set(LIBDM_SRCS
   tcl.c
   vers.c
   )
-
+set_property(SOURCE dm_obj.c PROPERTY LANGUAGE CXX)
 BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${DM_EXTRA_LIBS}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+if(BRLCAD_ENABLE_OSG)
+  BRLCAD_ADDEXEC(osg-test osg-test.cpp "librt;libbu;${OSG_LIBRARIES}" NO_STRICT NO_INSTALL)
+endif(BRLCAD_ENABLE_OSG)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
   add_dependencies(libdm tk)

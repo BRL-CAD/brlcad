@@ -31,6 +31,7 @@
 #include "common.h"
 
 #include "bu/vls.h"
+#include "dm.h"
 
 #ifdef __cplusplus
 #include <iostream>
@@ -38,9 +39,14 @@
 #include <osg/GraphicsContext>
 #include <osg/Timer>
 
-#include <osgViewer/api/X11/GraphicsWindowX11>
-#if defined(DM_WIN32)
+#include <osgViewer/Viewer>
+#include <osgViewer/CompositeViewer>
+#include <osgViewer/ViewerEventHandlers>
+
+#if defined(_WIN32)
 #  include <osgViewer/api/Win32/GraphicsWindowWin32>
+#else
+#  include <osgViewer/api/X11/GraphicsWindowX11>
 #endif
 
 #include <osgText/Font>
@@ -91,12 +97,20 @@ struct osg_vars {
 #ifdef __cplusplus
     osg::ref_ptr<osg::GraphicsContext> graphicsContext;
     osg::Timer *timer;
+    osgViewer::Viewer *testviewer;
+    osg::Group *osg_root;
 #endif
 };
 
 __BEGIN_DECLS
 
-extern void osg_fogHint();
+#ifdef __cplusplus
+extern "C" {
+#endif
+void osg_fogHint(struct dm *dmp, int fastfog);
+#ifdef __cplusplus
+}
+#endif
 
 __END_DECLS
 

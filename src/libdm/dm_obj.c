@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -37,6 +38,7 @@
 #include "tcl.h"
 
 #include "bu/cmd.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db.h"
@@ -47,6 +49,12 @@
 #include "nurb.h"
 #include "solid.h"
 #include "dm.h"
+}
+
+#ifdef DM_OSG
+#  include "dm/dm_xvars.h"
+#  include "dm/dm-osg.h"
+#endif /* DM_OSG */
 
 #ifdef DM_X
 #  include "dm/dm_xvars.h"
@@ -3244,7 +3252,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 }
 
 
-int
+extern "C" int
 Dmo_Init(Tcl_Interp *interp)
 {
     BU_LIST_INIT(&HeadDMObj.l);
