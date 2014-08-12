@@ -81,12 +81,12 @@ specifying the
 <option>-H</option>
 flag, in addition to changing the title height to 90 scanlines (see above), changes the output size to 1024x1024.</para>
 
-<para>By specifying the
+<para>If the
 <option>-i</option>
-flag, the scanlines will be written out in inverted order
+flag is specified, the scanlines will be written out in inverted order
 (i.e., top to bottom).
 This is mostly useful with programs like
-<citerefentry><refentrytitle>cat-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+<citerefentry><refentrytitle>cat-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 
 <para>The
 <option>-a</option>
