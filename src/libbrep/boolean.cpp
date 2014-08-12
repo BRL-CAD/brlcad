@@ -757,27 +757,6 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
     return out;
 }
 
-#if 0
-void
-plot_trimmed_face(
-    const TrimmedFace *face,
-    const char *prefix,
-    unsigned char *color_in,
-    unsigned char *color_out)
-{
-    bu_log("%d outer curves\n", face->m_outerloop.Count());
-    for (int i = 0; i < face->m_outerloop.Count(); ++i) {
-	plot_curve_to_file(face->m_outerloop[i], prefix, color_in);
-    }
-    for (size_t i = 0; i < face->m_innerloop.size(); ++i) {
-	bu_log("%d curves on inner %d\n", face->m_innerloop[i].Count(), i);
-	for (int j = 0; j < face->m_innerloop[i].Count(); ++j) {
-	    plot_curve_to_file(face->m_innerloop[i][j], prefix, color_out);
-	}
-    }
-}
-#endif
-
 // It might be worth investigating the following approach to building a set of faces from the splitting
 // in order to achieve robustness in the final result:
 //
@@ -826,15 +805,6 @@ split_trimmed_face(
 	return out;
     }
 
-#if 0
-    unsigned char fcolor[3] = {rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55};
-    plot_trimmed_face(orig_face, "fcurve", fcolor, fcolor);
-
-    unsigned char color[3] = {rand() % 200 + 55, rand() % 200 + 55, rand() % 200 + 55};
-    for (int i = 0; i < ssx_curves.Count(); ++i) {
-	plot_curve_to_file(ssx_curves[i].Curve(), "curve", color);
-    }
-#endif
     /* We followed the algorithms described in:
      * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
      * Boolean Combinations of Sculptured Solids. Technical Report TR95-008,
