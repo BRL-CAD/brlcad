@@ -78,25 +78,19 @@ extern int Fbo_Init(Tcl_Interp *interp);
 #ifdef IF_WGL
 extern fb wgl_interface;
 static const char *wgl_device_name = "/dev/wgl";
-extern void wgl_configureWindow(fb *ifp, int width, int height);
 extern int wgl_open_existing(fb *ifp, int argc, const char **argv);
-extern int wgl_refresh(fb *ifp, int x, int y, int w, int h);
 #endif
 
 #ifdef IF_OGL
 extern fb ogl_interface;
 static const char *ogl_device_name = "/dev/ogl";
-extern void ogl_configureWindow(fb *ifp, int width, int height);
 extern int ogl_open_existing(fb *ifp, int argc, const char **argv);
-extern int ogl_refresh(fb *ifp, int x, int y, int w, int h);
 #endif
 
 #ifdef IF_X
 extern fb X24_interface;
 static const char *X_device_name = "/dev/X";
-extern void X24_configureWindow(fb *ifp, int width, int height);
 extern int X24_open_existing(fb *ifp, int argc, const char **argv);
-extern int X24_refresh(fb *ifp, int x, int y, int w, int h);
 #endif
 
 #ifdef IF_TK
@@ -104,16 +98,13 @@ extern fb tk_interface;
 static const char *tk_device_name = "/dev/tk";
 #if 0
 /*XXX TJM implement this interface */
-extern void tk_configureWindow(fb *ifp, int width, int height);
 extern int tk_open_existing(fb *ifp, int argc, const char **argv);
-extern int tk_refresh(fb *ifp, int x, int y, int w, int h);
 #endif
 #endif
 
 #ifdef IF_QT
 extern fb qt_interface;
 static const char *qt_device_name = "/dev/Qt";
-extern void qt_configureWindow(fb *ifp, int width, int height);
 #endif
 
 int
@@ -284,106 +275,6 @@ fb_cmd_close_existing(ClientData UNUSED(clientData), int argc, const char **argv
 
     /* FB_TCL_CK_fb(ifp); */
     return fb_close_existing(ifp);
-}
-
-
-void
-fb_configureWindow(fb *ifp, int width, int height)
-{
-    /* unknown/unset framebuffer */
-    if (!ifp || !ifp->if_name || width < 0 || height < 0) {
-	return;
-    }
-
-#ifdef IF_X
-    if (!bu_strncmp(ifp->if_name, X_device_name, strlen(X_device_name))) {
-	X24_configureWindow(ifp, width, height);
-    }
-#endif /* IF_X */
-#ifdef IF_WGL
-    if (!bu_strncmp(ifp->if_name, wgl_device_name, strlen(wgl_device_name))) {
-	wgl_configureWindow(ifp, width, height);
-    }
-#endif  /* IF_WGL */
-#ifdef IF_OGL
-    if (!bu_strncmp(ifp->if_name, ogl_device_name, strlen(ogl_device_name))) {
-	ogl_configureWindow(ifp, width, height);
-    }
-#endif  /* IF_OGL */
-#ifdef IF_TK
-#if 0
-/* XXX TJM implement tk_configureWindow */
-    if (!bu_strncmp(ifp->if_name, tk_device_name, strlen(tk_device_name))) {
-	tk_configureWindow(ifp, width, height);
-    }
-#endif
-#endif  /* IF_TK */
-#ifdef IF_QT
-    if (!bu_strncmp(ifp->if_name, qt_device_name, strlen(qt_device_name))) {
-	qt_configureWindow(ifp, width, height);
-    }
-#endif
-}
-
-
-int
-fb_refresh(fb *ifp, int x, int y, int w, int h)
-{
-    int status=0;
-
-    /* what does negative mean? */
-    if (x < 0)
-	x = 0;
-    if (y < 0)
-	y = 0;
-    if (w < 0)
-	w = 0;
-    if (h < 0)
-	h = 0;
-
-    if (w == 0 || h == 0) {
-	/* nothing to refresh */
-	return TCL_OK;
-    }
-
-    if (!ifp || !ifp->if_name) {
-	/* unset/unknown framebuffer */
-	return TCL_OK;
-    }
-
-#ifdef IF_X
-    status = -1;
-    if (!bu_strncmp(ifp->if_name, X_device_name, strlen(X_device_name))) {
-	status = X24_refresh(ifp, x, y, w, h);
-    }
-#endif /* IF_X */
-#ifdef IF_WGL
-    status = -1;
-    if (!bu_strncmp(ifp->if_name, wgl_device_name, strlen(wgl_device_name))) {
-	status = wgl_refresh(ifp, x, y, w, h);
-    }
-#endif  /* IF_WGL */
-#ifdef IF_OGL
-    status = -1;
-    if (!bu_strncmp(ifp->if_name, ogl_device_name, strlen(ogl_device_name))) {
-	status = ogl_refresh(ifp, x, y, w, h);
-    }
-#endif  /* IF_OGL */
-#ifdef IF_TK
-#if 0
-/* XXX TJM implement tk_refresh */
-    status = -1;
-    if (!bu_strncmp(ifp->if_name, tk_device_name, strlen(tk_device_name))) {
-	status = tk_refresh(ifp, x, y, w, h);
-    }
-#endif
-#endif  /* IF_TK */
-
-    if (status < 0) {
-	return TCL_ERROR;
-    }
-
-    return TCL_OK;
 }
 
 

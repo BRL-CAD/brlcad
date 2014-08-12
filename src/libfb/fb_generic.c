@@ -236,6 +236,131 @@ fb_open_existing(const char *file, int width, int height, struct fb_platform_spe
     return ifp;
 }
 
+/* TODO - make these part of the struct fb_internal */
+#ifdef IF_X
+extern int X24_refresh(fb *ifp, int x, int y, int w, int h);
+extern void X24_configureWindow(fb *ifp, int width, int height);
+#endif
+#ifdef IF_OGL
+extern int ogl_refresh(fb *ifp, int x, int y, int w, int h);
+extern void ogl_configureWindow(fb *ifp, int width, int height);
+#endif
+#ifdef IF_WGL
+extern int wgl_refresh(fb *ifp, int x, int y, int w, int h);
+extern void wgl_configureWindow(fb *ifp, int width, int height);
+#endif
+#ifdef IF_TK
+#if 0
+/*XXX TJM implement this interface */
+extern void tk_configureWindow(fb *ifp, int width, int height);
+extern int tk_refresh(fb *ifp, int x, int y, int w, int h);
+#endif
+#endif
+#ifdef IF_QT
+extern void qt_configureWindow(fb *ifp, int width, int height);
+#endif
+
+
+int
+fb_refresh(fb *ifp, int x, int y, int w, int h)
+{
+    int status=0;
+
+    /* what does negative mean? */
+    if (x < 0)
+	x = 0;
+    if (y < 0)
+	y = 0;
+    if (w < 0)
+	w = 0;
+    if (h < 0)
+	h = 0;
+
+    if (w == 0 || h == 0) {
+	/* nothing to refresh */
+	return TCL_OK;
+    }
+
+    if (!ifp || !ifp->if_name) {
+	/* unset/unknown framebuffer */
+	return TCL_OK;
+    }
+
+#ifdef IF_X
+    status = -1;
+    if (!bu_strncmp(ifp->if_name, "/dev/X", strlen("/dev/X"))) {
+	status = X24_refresh(ifp, x, y, w, h);
+    }
+#endif /* IF_X */
+#ifdef IF_WGL
+    status = -1;
+    if (!bu_strncmp(ifp->if_name, "/dev/wgl", strlen("/dev/wgl"))) {
+	status = wgl_refresh(ifp, x, y, w, h);
+    }
+#endif  /* IF_WGL */
+#ifdef IF_OGL
+    status = -1;
+    if (!bu_strncmp(ifp->if_name, "/dev/ogl", strlen("/dev/ogl"))) {
+	status = ogl_refresh(ifp, x, y, w, h);
+    }
+#endif  /* IF_OGL */
+#ifdef IF_TK
+#if 0
+    /* XXX TJM implement tk_refresh */
+    status = -1;
+    if (!bu_strncmp(ifp->if_name, "/dev/tk", strlen("/dev/tk"))) {
+	status = tk_refresh(ifp, x, y, w, h);
+    }
+#endif
+#endif  /* IF_TK */
+
+    if (status < 0) {
+	return 1;
+    }
+
+    return 0;
+}
+
+void
+fb_configureWindow(fb *ifp, int width, int height)
+{
+    /* unknown/unset framebuffer */
+    if (!ifp || !ifp->if_name || width < 0 || height < 0) {
+	return;
+    }
+
+#ifdef IF_X
+    if (!bu_strncmp(ifp->if_name, "/dev/X", strlen("/dev/X"))) {
+	X24_configureWindow(ifp, width, height);
+    }
+#endif /* IF_X */
+#ifdef IF_WGL
+    if (!bu_strncmp(ifp->if_name, "/dev/wgl", strlen("/dev/wgl"))) {
+	wgl_configureWindow(ifp, width, height);
+    }
+#endif  /* IF_WGL */
+#ifdef IF_OGL
+    if (!bu_strncmp(ifp->if_name, "/dev/ogl", strlen("/dev/ogl"))) {
+	ogl_configureWindow(ifp, width, height);
+    }
+#endif  /* IF_OGL */
+#ifdef IF_TK
+#if 0
+    /* XXX TJM implement tk_configureWindow */
+    if (!bu_strncmp(ifp->if_name, "/dev/tk", strlen("/dev/tk"))) {
+	tk_configureWindow(ifp, width, height);
+    }
+#endif
+#endif  /* IF_TK */
+#ifdef IF_QT
+    if (!bu_strncmp(ifp->if_name, "/dev/Qt", strlen("/dev/Qt"))) {
+	qt_configureWindow(ifp, width, height);
+    }
+#endif
+}
+
+
+
 #if 0
 void fb_open_existing(fb *ifp, const char *interface)
 {

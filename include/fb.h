@@ -135,6 +135,7 @@ FB_EXPORT extern int fb_tell(fb *ifp, int *xp, int *yp);
 FB_EXPORT extern int fb_rpixel(fb *ifp, unsigned char *pp);
 FB_EXPORT extern int fb_wpixel(fb *ifp, unsigned char *pp);
 FB_EXPORT extern int fb_flush(fb *ifp);
+FB_EXPORT extern int fb_refresh(fb *ifp, int x, int y, int w, int h);
 #if !defined(_WIN32) || defined(__CYGWIN__)
 FB_EXPORT extern void fb_log(const char *fmt, ...) _BU_ATTR_PRINTF12;
 #endif
@@ -192,7 +193,6 @@ FB_EXPORT extern int fb_scursor(fb *ifp, int mode, int x, int y);
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
 FB_EXPORT extern void fb_tcl_setup(void);
 FB_EXPORT extern int Fb_Init(Tcl_Interp *interp);
-FB_EXPORT extern int fb_refresh(fb *ifp, int x, int y, int w, int h);
 
 /**
  * report version information about LIBFB
