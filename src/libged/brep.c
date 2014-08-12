@@ -541,19 +541,23 @@ dplot_erase_overlay(
     struct dplot_info *info,
     const char *name)
 {
-    /* Don't have the real name, so can't actually erase. Instead,
-     * overwrite old plot with empty one.
+    const int NUM_EMPTY_PLOTS = 7;
+    int i;
+
+    /* We can't actually erase the old plot without its real name,
+     * which is unknown. Instead, we'll write a plot with the same
+     * base name and color, which will overwrite the old one. We
+     * don't actually know the color either, so we resort to writing
+     * an empty plot with the given name using every color we created
+     * plots with.
      */
-    int ret = dplot_overlay(info->gedp, info->prefix, "_empty", 0, name);
-    if (ret != GED_OK) {
-	return ret;
+    for (i = 0; i < NUM_EMPTY_PLOTS; ++i) {
+	int ret = dplot_overlay(info->gedp, info->prefix, "_empty", i, name);
+	if (ret != GED_OK) {
+	    return ret;
+	}
     }
-    ret = dplot_overlay(info->gedp, info->prefix, "_empty", 1, name);
-    if (ret != GED_OK) {
-	return ret;
-    }
-    ret = dplot_overlay(info->gedp, info->prefix, "_empty", 2, name);
-    return ret;
+    return GED_OK;
 }
 
 HIDDEN int
@@ -802,6 +806,7 @@ dplot_face_curves(struct dplot_info *info)
 
 	BU_VLS_INIT(&prefix);
 	bu_vls_printf(&prefix, "%s_ssx%d", info->prefix, info->ssx_idx);
+	dplot_erase_overlay(info, "clipped_fcurve");
 	if (info->event_idx < f1_curves) {
 	    bu_vls_printf(&prefix, "_brep1face_clipped_curve");
 	    dplot_overlay(info->gedp, bu_vls_cstr(&prefix), "",

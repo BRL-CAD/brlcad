@@ -109,6 +109,18 @@ DebugPlot::WriteLog()
     filename.str("");
     filename << prefix << "_empty2.plot3";
     write_plot_to_file(filename.str().c_str(), &vhead, overlap_color);
+    filename.str("");
+    filename << prefix << "_empty3.plot3";
+    write_plot_to_file(filename.str().c_str(), &vhead, surface1_color);
+    filename.str("");
+    filename << prefix << "_empty4.plot3";
+    write_plot_to_file(filename.str().c_str(), &vhead, surface2_color);
+    filename.str("");
+    filename << prefix << "_empty5.plot3";
+    write_plot_to_file(filename.str().c_str(), &vhead, surface1_highlight_color);
+    filename.str("");
+    filename << prefix << "_empty6.plot3";
+    write_plot_to_file(filename.str().c_str(), &vhead, surface2_highlight_color);
 
     // create dplot log file
     filename.str("");
