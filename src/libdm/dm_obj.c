@@ -146,7 +146,7 @@ dmo_openFb(struct dm_obj *dmop)
 	    xfb_ps->cmap = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.priv_vars)->cmap;
 	    xfb_ps->vip = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.priv_vars)->vip;
 	    xfb_ps->gc = ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc;
-	    dmop->dmo_fbs.fbs_fbp = fb_open_existing("/dev/X", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height, fb_ps);
+	    dmop->dmo_fbs.fbs_fbp = fb_open_existing("X", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height, fb_ps);
 	    fb_put_platform_specific(fb_ps);
 	    break;
 #endif

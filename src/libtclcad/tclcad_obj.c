@@ -13244,7 +13244,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 	    xfb_ps->vip = ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.priv_vars)->vip;
 	    xfb_ps->gc = ((struct x_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->gc;
 
-	    gdvp->gdv_fbs.fbs_fbp = fb_open_existing("/dev/X", gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height, fb_ps);
+	    gdvp->gdv_fbs.fbs_fbp = fb_open_existing("X", gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height, fb_ps);
 	    fb_put_platform_specific(fb_ps);
 	    break;
 #endif
