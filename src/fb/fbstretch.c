@@ -97,9 +97,9 @@ static float y_scale = -1.0;		/* vertical scaling factor */
 static bool_t x_compress;		/* set if compressing horizontally */
 static bool_t y_compress;		/* set if compressing vertically */
 static char *src_file = NULL;		/* source frame buffer name */
-static FBIO *src_fbp = FBIO_NULL;	/* source frame buffer handle */
+static fb *src_fbp = FB_NULL;	/* source frame buffer handle */
 static char *dst_file = NULL;		/* destination frame buffer name */
-static FBIO *dst_fbp = FBIO_NULL;	/* destination frame buffer handle */
+static fb *dst_fbp = FB_NULL;	/* destination frame buffer handle */
 static int src_width = 512;
 static int src_height = 512;		/* source image size */
 static int dst_width = 0;
@@ -109,23 +109,23 @@ static unsigned char *dst_buf;		/* calloc()ed output scan line buffer */
 
 /* in ioutil.c */
 extern void Message(const char *format, ...);
-extern void Fatal(FBIO *fbiop, const char *format, ...);
+extern void Fatal(fb *fbiop, const char *format, ...);
 
 
 static void
 Stretch_Fatal(const char *str)
 {
-    if (src_fbp != FBIO_NULL && fb_close(src_fbp) == -1) {
+    if (src_fbp != FB_NULL && fb_close(src_fbp) == -1) {
 	Message("Error closing input frame buffer");
-	src_fbp = FBIO_NULL;
+	src_fbp = FB_NULL;
     }
 
-    if (dst_fbp != FBIO_NULL && fb_close(dst_fbp) == -1) {
+    if (dst_fbp != FB_NULL && fb_close(dst_fbp) == -1) {
 	Message("Error closing output frame buffer");
-	src_fbp = FBIO_NULL;
+	src_fbp = FB_NULL;
     }
 
-    Fatal(FBIO_NULL, "%s", str);
+    Fatal(FB_NULL, "%s", str);
     /* NOT REACHED */
 }
 
@@ -298,7 +298,7 @@ main(int argc, char **argv)
     if ((src_fbp = fb_open(src_file == NULL ? dst_file : src_file,
 			   src_width, src_height
 	     )
-	    ) == FBIO_NULL
+	    ) == FB_NULL
 	)
 	Stretch_Fatal("Couldn't open input image");
     else {
@@ -331,7 +331,7 @@ main(int argc, char **argv)
 	    )
 	    dst_fbp = src_fbp;	/* No No No Not a Second Time */
 	else if ((dst_fbp = fb_open(dst_file, dst_width, dst_height))
-		 == FBIO_NULL
+		 == FB_NULL
 	    )
 	    Stretch_Fatal("Couldn't open output frame buffer");
 
@@ -791,7 +791,7 @@ main(int argc, char **argv)
 done:
     /* Close the frame buffers. */
 
-    assert(src_fbp != FBIO_NULL && dst_fbp != FBIO_NULL);
+    assert(src_fbp != FB_NULL && dst_fbp != FB_NULL);
 
     if (fb_close(src_fbp) == -1)
 	Message("Error closing input frame buffer");

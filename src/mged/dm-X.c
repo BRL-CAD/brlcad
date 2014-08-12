@@ -43,11 +43,11 @@
 #include "dm/dm_xvars.h"
 #include "dm/dm-X.h"
 #include "fb.h"
+#include "fb/fb_platform_specific.h"
 
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
-
 
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
@@ -177,30 +177,20 @@ X_dm_init(struct dm_list *o_dm_list,
 void
 X_fb_open(void)
 {
-    char *X_name = "/dev/X";
+    struct fb_platform_specific *fb_ps;
+    struct X24_fb_info *xfb_ps;
 
-    if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
-	Tcl_AppendResult(INTERP, "X_dm_init: failed to allocate framebuffer memory\n",
-			 (char *)NULL);
-	return;
-    }
+    fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
+    xfb_ps = (struct X24_fb_info *)fb_ps->data;
+    xfb_ps->dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
+    xfb_ps->win = ((struct x_vars *)dmp->dm_vars.priv_vars)->pix;
+    xfb_ps->cwinp = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
+    xfb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
+    xfb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
+    xfb_ps->gc = ((struct x_vars *)dmp->dm_vars.priv_vars)->gc;
 
-    *fbp = X24_interface; /* struct copy */
-
-    fbp->if_name = (char *)bu_malloc((unsigned)strlen(X_name)+1, "if_name");
-    bu_strlcpy(fbp->if_name, X_name, strlen(X_name)+1);
-
-    /* Mark OK by filling in magic number */
-    fbp->if_magic = FB_MAGIC;
-
-    _X24_open_existing(fbp,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		       ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
-		       dmp->dm_width, dmp->dm_height,
-		       ((struct x_vars *)dmp->dm_vars.priv_vars)->gc);
+    fbp = fb_open_existing("X", dmp->dm_width, dmp->dm_height, fb_ps);
+    fb_put_platform_specific(fb_ps);
 }
 
 

@@ -187,7 +187,7 @@ null_processEvents(struct dm *dmp);
 
 
 DM_EXPORT extern int
-null_openFb(struct dm *dmp, FBIO *ifp);
+null_openFb(struct dm *dmp, fb *ifp);
 
 __END_DECLS
 

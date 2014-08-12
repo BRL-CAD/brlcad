@@ -87,7 +87,7 @@ usage(const char *argv0)
 }
 
 
-extern FBIO *fbp;			/* Framebuffer handle */
+extern fb *fbp;			/* Framebuffer handle */
 
 extern int curframe;		/* from main.c */
 extern fastf_t frame_delta_t;		/* from main.c */
@@ -118,7 +118,7 @@ extern int srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 void free_scanlines(int, struct scanline *);
 struct scanline* alloc_scanlines(int);
 extern fastf_t** timeTable_init(int x, int y);
-extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *efbp);
+extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *efbp);
 
 static int buf_mode=0;
 #define BUFMODE_UNBUF     1	/* No output buffering */
@@ -332,11 +332,11 @@ view_pixel(struct application *ap)
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		}
 
-		if (fbp != FBIO_NULL) {
+		if (fbp != FB_NULL) {
 		    /* Framebuffer output */
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
 		    npix = fb_write(fbp, ap->a_x, ap->a_y,
-				    (unsigned char *)p, 1);
+				    (const unsigned char *)p, 1);
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		    if (npix < 1)
 			bu_exit(EXIT_FAILURE, "pixel fb_write error");
@@ -519,7 +519,7 @@ view_pixel(struct application *ap)
 		long spread;
 		size_t npix = 0;
 
-		if (fbp == FBIO_NULL)
+		if (fbp == FB_NULL)
 		    bu_exit(EXIT_FAILURE, "Incremental rendering with no framebuffer?");
 
 		spread = (1<<(incr_nlevel-incr_level))-1;
@@ -548,7 +548,7 @@ view_pixel(struct application *ap)
 	case BUFMODE_ACC:
 	case BUFMODE_SCANLINE:
 	case BUFMODE_DYNAMIC:
-	    if (fbp != FBIO_NULL) {
+	    if (fbp != FB_NULL) {
 		size_t npix;
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (sub_grid_mode) {

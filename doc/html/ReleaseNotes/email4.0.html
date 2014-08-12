@@ -3850,7 +3850,7 @@ view_pixel(ap)
 register struct application *ap;
 {
 	....
-	if( fbp != FBIO_NULL )  {
+	if( fbp != fb_NULL )  {
 		/* Framebuffer output */
 		RES_ACQUIRE( &rt_g.res_syscall );
 		fb_write( fbp, ap-&gt;a_x, ap-&gt;a_y, (char *)p, 1 );
@@ -3891,7 +3891,7 @@ followed a little later by the actual output section:
 
 <p>
 	case BUFMODE_DYNAMIC:
-		if( fbp != FBIO_NULL )  {
+		if( fbp != fb_NULL )  {
 			RES_ACQUIRE( &rt_g.res_syscall );
 			fb_write( fbp, 0, ap-&gt;a_y,
 			    scanline[ap-&gt;a_y].sl_buf, width );

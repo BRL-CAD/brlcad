@@ -59,7 +59,7 @@ static int scr_width = 512;		/* screen size */
 static int scr_height = 512;
 static int toggle_pan = 0;		/* Reverse sense of pan commands? */
 static char *framebuffer = NULL;
-static FBIO *fbp;
+static fb *fbp;
 
 static char usage[] = "\
 Usage: fbzoom [-T] [-F framebuffer]\n\

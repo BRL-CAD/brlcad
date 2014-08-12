@@ -151,7 +151,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 	dirty = 1;
 
 	if (fbp)
-	    fb_configureWindow(fbp, conf->width, conf->height);
+	    (void)fb_configure_window(fbp, conf->width, conf->height);
 
 	/* no further processing of this event */
 	status = TCL_RETURN;

@@ -136,19 +136,16 @@ Wgl_fb_open()
 {
     char *wgl_name = "/dev/wgl";
 
-    if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+    if ((fbp = (fb *)calloc(sizeof(fb), 1)) == FB_NULL) {
 	Tcl_AppendResult(INTERP, "Wgl_fb_open: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;
     }
-
-    *fbp = wgl_interface; /* struct copy */
-
-    fbp->if_name = bu_malloc((unsigned)strlen(wgl_name)+1, "if_name");
-    bu_strlcpy(fbp->if_name, wgl_name, strlen(wgl_name)+1);
-
+    fb_set_interface(fbp, "wgl");
+    fb_set_name(fbp, wgl_name);
     /* Mark OK by filling in magic number */
-    fbp->if_magic = FB_MAGIC;
+    fb_set_magic(fbp, FB_MAGIC);
+
     _wgl_open_existing(fbp,
 		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,

@@ -125,7 +125,7 @@ main(int argc, char **argv)
     static int scanpix;			/* # of pixels of scanline */
     static ColorMap cmap;		/* libfb color map */
 
-    FBIO *fbp;
+    fb *fbp;
     int y;
     int got;
     png_structp png_p;

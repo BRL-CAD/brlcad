@@ -17,12 +17,14 @@ set(LINKLIBS "")
 if(BRLCAD_ENABLE_X11 AND X11_FOUND)
   set(FBX11DEFS "-DIF_X")
   set(LINKLIBS ${LINKLIBS} ${X11_LIBRARIES})
-  set(fbX11_srcs if_X.c if_X24.c)
+  set(fbX11_srcs if_X24.c)
+  set_property(SOURCE if_X24.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif()
 if(BRLCAD_ENABLE_OPENGL AND OPENGL_FOUND AND NOT MSVC)
   set(FBOGLDEFS "-DIF_OGL")
   set(LINKLIBS ${LINKLIBS} ${OPENGL_LIBRARIES})
   set(fbogl_srcs if_ogl.c)
+  set_property(SOURCE if_ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif()
 if(WIN32)
   add_definitions(
@@ -30,11 +32,13 @@ if(WIN32)
     )
   set(LINKLIBS ${LINKLIBS} opengl32.lib ${TCL_TK_LIBRARY})
   set(fbwgl_srcs if_wgl.c)
+  set_property(SOURCE if_wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(WIN32)
 if(BRLCAD_ENABLE_TK)
   set(FBTKDEFS "-DIF_TK")
   set(LINKLIBS ${LINKLIBS} ${TK_LIBRARY})
   set(fbtk_srcs if_tk.c)
+  set_property(SOURCE if_tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_TK)
 if(BRLCAD_ENABLE_QT)
   CHECK_CXX_FLAG(Wno-float-equal)
@@ -45,6 +49,7 @@ if(BRLCAD_ENABLE_QT)
   add_definitions(${Qt5Widgets_DEFINITIONS})
   set(LINKLIBS ${LINKLIBS} ${Qt5Widgets_LIBRARIES})
   set(fbqt_srcs if_qt.cpp)
+  set_property(SOURCE if_qt.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_QT)
 
 set(LIBFB_SOURCES
@@ -89,12 +94,12 @@ endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
 
 set(libfb_ignore_files
   if_TEMPLATE.c
-  if_X.c
   if_X24.c
   if_ogl.c
   if_qt.cpp
   if_tk.c
   if_wgl.c
+  fb_private.h
   )
 CMAKEFILES(${libfb_ignore_files})
 

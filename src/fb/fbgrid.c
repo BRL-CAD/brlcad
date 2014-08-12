@@ -31,7 +31,7 @@
 #include "fb.h"
 
 static unsigned char *white_line, *grey_line, *dark_line;
-static FBIO *fbp;
+static fb *fbp;
 static char *framebuffer = NULL;
 
 #define OLD 0
@@ -43,7 +43,7 @@ static int fbheight = 0;
 static int flavor = DECIMAL;
 static int clear = 0;
 
-void grid(FBIO *fbiop, unsigned char *line, int spacing), oldflavor(void);
+void grid(fb *fbiop, unsigned char *line, int spacing), oldflavor(void);
 
 static char usage[] = "\
 Usage: fbgrid [-c] [-b | -d | -o] [-F framebuffer]\n\
@@ -155,7 +155,7 @@ main(int argc, char **argv)
 
 
 void
-grid(FBIO *fbiop, unsigned char *line, int spacing)
+grid(fb *fbiop, unsigned char *line, int spacing)
 {
     int x, y;
 
@@ -170,7 +170,7 @@ grid(FBIO *fbiop, unsigned char *line, int spacing)
 void
 oldflavor(void)
 {
-    FBIO *fbiop;
+    fb *fbiop;
     int x, y;
     int middle;
     int mask;

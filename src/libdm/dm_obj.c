@@ -83,6 +83,8 @@ extern "C" {
 #  include "fb.h"
 #endif
 
+/* Embedding windows requires platform specific information */
+#include "fb/fb_platform_specific.h"
 
 /**
  *@brief
@@ -113,101 +115,76 @@ static struct dm_obj HeadDMObj;	/* head of display manager object list */
 HIDDEN int
 dmo_openFb(struct dm_obj *dmop)
 {
+    struct fb_platform_specific *fb_ps;
+#ifdef DM_X
+    struct X24_fb_info *xfb_ps;
+#endif
+#ifdef DM_OGL
+    struct ogl_fb_info *ofb_ps;
+#endif
+#ifdef DM_WGL
+    struct wgl_fb_info *wfb_ps;
+#endif
+
     if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
     /* already open */
-    if (dmop->dmo_fbs.fbs_fbp != FBIO_NULL)
+    if (dmop->dmo_fbs.fbs_fbp != FB_NULL)
 	return TCL_OK;
-
-    /* don't use bu_calloc so we can fail slightly more gracefully */
-    if ((dmop->dmo_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
-	Tcl_Obj *obj;
-
-	obj = Tcl_GetObjResult(dmop->interp);
-	if (Tcl_IsShared(obj))
-	    obj = Tcl_DuplicateObj(obj);
-
-	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n",
-			       (char *)NULL);
-
-	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_ERROR;
-    }
 
     switch (dmop->dmo_dmp->dm_type) {
 #ifdef DM_X
 	case DM_TYPE_X:
-	    *dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/X", strlen("/dev/X")+1);
-
-	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
-
-	    _X24_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->pix,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc);
+	    fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
+	    xfb_ps = (struct X24_fb_info *)fb_ps->data;
+	    xfb_ps->dpy = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy;
+	    xfb_ps->win = ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->pix;
+	    xfb_ps->cwinp = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.priv_vars)->win;
+	    xfb_ps->cmap = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.priv_vars)->cmap;
+	    xfb_ps->vip = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.priv_vars)->vip;
+	    xfb_ps->gc = ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc;
+	    dmop->dmo_fbs.fbs_fbp = fb_open_existing("X", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height, fb_ps);
+	    fb_put_platform_specific(fb_ps);
 	    break;
 #endif
 
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
-	    *dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/ogl", strlen("/dev/ogl")+1);
-
-	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
-
-	    _ogl_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
-			       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
-			       0);
+	    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
+	    ofb_ps = (struct ogl_fb_info *)fb_ps->data;
+	    ofb_ps->dpy = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy;
+	    ofb_ps->win = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win;
+	    ofb_ps->cmap = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap;
+	    ofb_ps->vip = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip;
+	    ofb_ps->glxc = ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc;
+	    ofb_ps->double_buffer = ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer;
+	    ofb_ps->soft_cmap = 0;
+	    dmop->dmo_fbs.fbs_fbp = fb_open_existing("ogl", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height, fb_ps);
+	    fb_put_platform_specific(fb_ps);
 	    break;
 #endif
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
-	    *dmop->dmo_fbs.fbs_fbp = wgl_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/wgl")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/wgl", strlen("/dev/wgl")+1);
-
-	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
-
-	    _wgl_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->hdc,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
-			       ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
-			       0);
+	    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
+	    wfb_ps = (struct wgl_fb_info *)fb_ps->data;
+	    wfb_ps->dpy =  ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy;
+	    wfb_ps->win =  ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win;
+	    wfb_ps->cmap = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap;
+	    wfb_ps->vip = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip;
+	    wfb_ps->hdc = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->hdc;
+	    wfb_ps->glxc = ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc;
+	    wfb_ps->double_buffer = ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer;
+	    wfb_ps->soft_cmap = 0;
+	    dmop->dmo_fbs.fbs_fbp = fb_open_existing("wgl", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height, fb_ps);
+	    fb_put_platform_specific(fb_ps);
 	    break;
 #endif
 	default: {
 	    Tcl_Obj *obj;
 
 	    free((void*)dmop->dmo_fbs.fbs_fbp);
-	    dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
+	    dmop->dmo_fbs.fbs_fbp = FB_NULL;
 
 	    obj = Tcl_GetObjResult(dmop->interp);
 	    if (Tcl_IsShared(obj))
@@ -219,6 +196,20 @@ dmo_openFb(struct dm_obj *dmop)
 	    Tcl_SetObjResult(dmop->interp, obj);
 	    return TCL_ERROR;
 	}
+    }
+
+    if (dmop->dmo_fbs.fbs_fbp == FB_NULL) {
+	Tcl_Obj *obj;
+
+	obj = Tcl_GetObjResult(dmop->interp);
+	if (Tcl_IsShared(obj))
+	    obj = Tcl_DuplicateObj(obj);
+
+	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n",
+			       (char *)NULL);
+
+	Tcl_SetObjResult(dmop->interp, obj);
+	return TCL_ERROR;
     }
 
     return TCL_OK;
@@ -235,13 +226,13 @@ dmo_openFb(struct dm_obj *dmop)
 HIDDEN int
 dmo_closeFb(struct dm_obj *dmop)
 {
-    if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL)
+    if (dmop->dmo_fbs.fbs_fbp == FB_NULL)
 	return TCL_OK;
 
     fb_flush(dmop->dmo_fbs.fbs_fbp);
     fb_close_existing(dmop->dmo_fbs.fbs_fbp);
 
-    dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
+    dmop->dmo_fbs.fbs_fbp = FB_NULL;
 
     return TCL_OK;
 }
@@ -270,7 +261,7 @@ dmo_listen_tcl(void *clientData, int argc, const char **argv)
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
-    if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL) {
+    if (dmop->dmo_fbs.fbs_fbp == FB_NULL) {
 	bu_vls_printf(&vls, "%s listen: framebuffer not open!\n", argv[0]);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
@@ -335,7 +326,7 @@ dmo_refreshFb_tcl(void *clientData, int argc, const char **argv)
     if (!dmop || !dmop->interp || argc < 1 ||  !argv)
 	return TCL_ERROR;
 
-    if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL) {
+    if (dmop->dmo_fbs.fbs_fbp == FB_NULL) {
 	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(dmop->interp);
@@ -1838,8 +1829,8 @@ dmo_configure_tcl(void *clientData, int argc, const char **argv)
 
 #ifdef USE_FBSERV
     /* configure the framebuffer window */
-    if (dmop->dmo_fbs.fbs_fbp != FBIO_NULL)
-	fb_configureWindow(dmop->dmo_fbs.fbs_fbp,
+    if (dmop->dmo_fbs.fbs_fbp != FB_NULL)
+	(void)fb_configure_window(dmop->dmo_fbs.fbs_fbp,
 			   dmop->dmo_dmp->dm_width,
 			   dmop->dmo_dmp->dm_height);
 #endif
@@ -3218,7 +3209,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     dmop->dmo_fbs.fbs_listener.fbsl_fbsp = &dmop->dmo_fbs;
     dmop->dmo_fbs.fbs_listener.fbsl_fd = -1;
     dmop->dmo_fbs.fbs_listener.fbsl_port = -1;
-    dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
+    dmop->dmo_fbs.fbs_fbp = FB_NULL;
     dmop->dmo_fbs.fbs_callback = dmo_fbs_callback;
     dmop->dmo_fbs.fbs_clientData = dmop;
     dmop->dmo_fbs.fbs_interp = interp;

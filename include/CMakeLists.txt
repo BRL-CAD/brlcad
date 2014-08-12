@@ -1,6 +1,7 @@
 add_subdirectory(bu)
 add_subdirectory(dm)
 add_subdirectory(rt)
+add_subdirectory(fb)
 
 set(public_hdrs
   RtServerImpl.h
@@ -27,7 +28,6 @@ set(public_hdrs
   dm.h
   dvec.h
   fb.h
-  fbio.h
   fbserv_obj.h
   fft.h
   gcv.h
