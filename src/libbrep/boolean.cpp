@@ -543,7 +543,7 @@ replace_curve_with_subcurve(ON_Curve *&curve, const ON_Interval &interval)
 }
 
 HIDDEN ON_SimpleArray<ON_Interval>
-get_curve_intervals_inside_outerloop(
+get_curve_intervals_inside_or_on_outerloop(
     ON_Curve *curve2D,
     ON_SimpleArray<ON_Curve *> outerloop_curves,
     double isect_tol)
@@ -583,7 +583,7 @@ get_curve_intervals_inside_outerloop(
 	}
 	ON_2dPoint pt = curve2D->PointAt(interval.Mid());
 	try {
-	    if (is_point_inside_loop(pt, outerloop_curves)) {
+	    if (!is_point_outside_loop(pt, outerloop_curves)) {
 		intervals_inside_outerloop.Append(interval);
 	    }
 	} catch (InvalidGeometry &e) {
@@ -631,9 +631,9 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
 
     // 2. Find the intervals of the curves that are inside the outerloops.
     ON_SimpleArray<ON_Interval> intervals1, intervals2;
-    intervals1 = get_curve_intervals_inside_outerloop(event->m_curveA,
+    intervals1 = get_curve_intervals_inside_or_on_outerloop(event->m_curveA,
 	    outerloop1, INTERSECTION_TOL);
-    intervals2 = get_curve_intervals_inside_outerloop(event->m_curveB,
+    intervals2 = get_curve_intervals_inside_or_on_outerloop(event->m_curveB,
 	    outerloop2, INTERSECTION_TOL);
 
     // 3. Merge the intervals and get the final result.
