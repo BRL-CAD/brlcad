@@ -49,11 +49,11 @@ int h_start = 240;
 int h_end = 50;
 
 char usage[] = "\
-Usage:  pixbackgnd [-h -i] [-s squaresize] [-w width] [-n height]\n\
+Usage:  pixbackgnd [-H -i] [-s squaresize] [-w width] [-n height]\n\
 	[-t title_height] [-a top_inten] [-b bottom_inten]\n\
 	hue saturation\n\
 or	r g b\n\
-	> file.pix";
+	> file.pix\n";
 
 /* rgbhsv
  *
@@ -168,13 +168,13 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "his:w:n:t:a:b:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "His:w:n:t:a:b:h?")) != -1) {
 	switch (c) {
 	    case 'i':
 		invert = 1;
 		break;
-	    case 'h':
-		/* high-res */
+	    case 'H':
+		/* high-res, and also set title_height to 90 */
 		file_height = file_width = 1024;
 		title_height = 90;
 		break;
@@ -199,7 +199,7 @@ get_args(int argc, char **argv)
 		h_end = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
