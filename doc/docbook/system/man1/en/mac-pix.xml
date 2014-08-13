@@ -63,18 +63,19 @@ flag will output a
 black and white file instead.
 If the
 <option>-c</option>
-flag is specified, the input image is centered in the middle of the output image.
-If the
+flag is specified, the input image is centered in the middle of the output image.</para>
+<para>
+If the output width is set to 0 by the user, the input width is used for the output width; similarly, if the output height is set to 0 by the user,
+the input height is used for the output height.  Those values of 0 can be set simultaneously by use of the
 <option>-l</option>
-flag is specified, the default output size is changed to 512x512.
-Alternatively, the
+flag, so that both width and height of the input are used. Alternatively, the
 <option>-S</option>
 flag can be used to specify the square output size, or
 <option>-W</option>
 and
 <option>-N</option>
-flags can be used to specify the output width and height.
-If no input file is specified, standard input is read instead.</para>
+flags can be used to specify the output width and height.</para>
+<para>If no input file is specified, standard input is read instead.</para>
 
 <para>The <option>-x</option> and <option>-y</option> flags can be used to specify the input x and y offset.
 The <option>-X</option> and <option>-Y</option> flags can be used to specify the output x and y offset.</para>
