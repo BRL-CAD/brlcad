@@ -470,6 +470,7 @@ mem_help(fb *ifp)
 /* This is the ONLY thing that we normally "export" */
 fb memory_interface =  {
     0,
+    FB_MEMORY_MAGIC,
     mem_open,		/* device_open */
     mem_open_existing,	/* existing device_open */
     mem_close_existing,	/* existing device_close */

@@ -2102,6 +2102,7 @@ wgl_refresh(fb *ifp,
 fb wgl_interface =
 {
     0,			/* magic number slot */
+    FB_WGL_MAGIC,
     wgl_open,		/* open device */
     wgl_open_existing,
     wgl_close_existing,

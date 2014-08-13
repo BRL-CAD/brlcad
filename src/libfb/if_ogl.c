@@ -1443,7 +1443,7 @@ ogl_get_fbps(uint32_t magic)
 HIDDEN void
 ogl_put_fbps(struct fb_platform_specific *fbps)
 {
-    BU_CKMAG(fbps, FB_OGL_MAGIC, "X24 framebuffer");
+    BU_CKMAG(fbps, FB_OGL_MAGIC, "ogl framebuffer");
     BU_PUT(fbps->data, struct ogl_fb_info);
     BU_PUT(fbps, struct fb_platform_specific);
     return;
@@ -2369,6 +2369,7 @@ ogl_refresh(fb *ifp, int x, int y, int w, int h)
 fb ogl_interface =
 {
     0,			/* magic number slot */
+    FB_OGL_MAGIC,
     fb_ogl_open,	/* open device */
     ogl_open_existing,    /* existing device_open */
     ogl_close_existing,    /* existing device_close */

@@ -434,6 +434,7 @@ stk_help(fb *ifp)
 /* This is the ONLY thing that we normally "export" */
 fb stk_interface =  {
     0,
+    FB_STK_MAGIC,
     stk_open,		/* device_open */
     stk_open_existing,	/* device_open */
     stk_close_existing,

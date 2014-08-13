@@ -256,6 +256,7 @@ null_help(fb *ifp)
 /* This is the ONLY thing that we normally "export" */
 fb null_interface =  {
     0,
+    FB_NULL_MAGIC,
     null_open,		/* device_open */
     null_open_existing,	/* existing device_open */
     null_close_existing,/* existing device_close */

@@ -3495,6 +3495,7 @@ X24_refresh(fb *ifp, int x, int y, int w, int h)
 /* This is the ONLY thing that we normally "export" */
 fb X24_interface =  {
     0,			/* magic number slot */
+    FB_X24_MAGIC,
     X24_open,		/* open device */
     X24_open_existing,    /* existing device_open */
     X24_close_existing,   /* existing device_close */

@@ -361,6 +361,7 @@ Usage: /dev/debug[#]\n\
 /* This is the ONLY thing that we "export" */
 fb debug_interface = {
     0,
+    FB_DEBUG_MAGIC,
     deb_open,
     deb_open_existing,
     deb_close_existing,
