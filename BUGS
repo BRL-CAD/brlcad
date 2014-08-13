@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* sh_text.c: texture mapping crashes (in txt_render() near line 318)
+  if you specify image dimensions larger than the texture file.  it
+  gets back a mapped file, but indexes directly based on the provided
+  sizes without bounds checking.
+
 * count_non_union_ops() in g-iges crashes with simple conversion case
 
 * gqa bypasses rt_dirbuild() so it never sets rt_bot_mintie nor uses

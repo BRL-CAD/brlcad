@@ -18,9 +18,8 @@
 <cmdsynopsis>
   <command>pixcut</command>
     <arg choice='opt'>-v </arg>
-    <arg choice='opt'>-h </arg>
-    <arg choice='opt'>-H </arg>
     <arg choice='opt'>-a </arg>
+    <arg choice='opt'>-# <replaceable>num_bytes</replaceable></arg>
     <arg choice='opt'>-C <replaceable>red/green/blue</replaceable></arg>
     <arg choice='opt'>-s <replaceable>in_square_size</replaceable></arg>
     <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
@@ -36,7 +35,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixcut</emphasis>
+<para><command>pixcut</command>
 will extract a color
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file from another
@@ -62,16 +61,9 @@ They can both be set to the same value via
 Unspecified dimensions default to 512 pixels.</para>
 
 <para>The
-<option>-h</option>
-and
-<option>-H</option>
-flags indicate that the input and/or output file is high
-resolution (1024x1024) respectfully.</para>
-
-<para>The
 <option>-a</option>
 flag requests that the program attempt to autosize the input file.  Autosizing
-only works with files, pipes can not be autosized.</para>
+only works with files; pipes can not be autosized.</para>
 
 <para>The
 <option>-v</option>
@@ -86,6 +78,10 @@ and
 flags set the horizontal and vertical offsets from the lower left corner
 to use for extracting
 the image.  By default both are set to 0 (zero).</para>
+
+<para>The
+<option>-#</option>
+flag specifies the number of bytes (default is 3).</para>
 
 <para>The
 <option>-C</option>
@@ -133,21 +129,21 @@ will fill with 0/0/1 the net result is that the model image is shifted.</para>
 <para>The command</para>
 
 <literallayout remap='.nf'>
-pixcut -h -x128 -y256 background.pix |
+pixcut -s1024 -x128 -y256 background.pix |
 pixmatte -w512 -e image.pix =0/0/1 - image.pix |
-pixpaste -h -x128 -y256 background.pix - &gt;new.pix
+pixpaste -s1024 -x128 -y256 background.pix - &gt;new.pix
 </literallayout> <!-- .fi -->
 
-<para>will extract the center 512x512 section of the 1024x1024 background image
-composite that section with a foreground image and the place the new
+<para>will extract the center 512x512 section of the 1024x1024 background image,
+composite that section with a foreground image, and then place the new
 composite image into the center of the background image.</para>
 
 <para>The
-<emphasis remap='I'>pixmatte</emphasis>
+<command>pixmatte</command>
 command options instruct the program that for every pixel in image.pix
-which is equal (-e) to 0/0/1 to output the corresponding pixel from
-standard input and for all others, output the corresponding pixel from
-image.pix</para>
+which is equal (-e) to 0/0/1, output the corresponding pixel from
+standard input; and for all others, output the corresponding pixel from
+image.pix .</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
