@@ -785,6 +785,7 @@ pkgerror(struct pkg_conn *UNUSED(pcpp), char *buf)
 
 fb remote_interface = {
     0,
+    FB_REMOTE_MAGIC,
     rem_open,
     rem_open_existing,
     rem_close_existing,

@@ -691,6 +691,7 @@ osg_configureWindow(fb *ifp, int width, int height)
 /* This is the ONLY thing that we normally "export" */
 fb osg_interface =  {
     0,
+    FB_OSG_MAGIC,
     osg_open,		/* device_open */
     osg_open_existing,  /* device_open_existing */
     osg_close_existing,  /* device_close_existing */

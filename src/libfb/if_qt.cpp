@@ -1349,6 +1349,7 @@ qt_help(fb *ifp)
 
 fb qt_interface =  {
     0,
+    FB_QT_MAGIC,
     qt_open,		/* device_open */
     qt_open_existing,
     qt_close_existing,

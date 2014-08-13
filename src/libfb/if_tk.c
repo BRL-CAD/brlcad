@@ -580,6 +580,7 @@ Usage: /dev/tk[#]\n\
 /* This is the ONLY thing that we "export" */
 fb tk_interface = {
     0,
+    FB_TK_MAGIC,
     fb_tk_open,
     tk_open_existing,
     tk_close_existing,

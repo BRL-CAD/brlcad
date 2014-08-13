@@ -74,6 +74,7 @@ __BEGIN_DECLS
  */
 struct fb_internal {
     uint32_t if_magic;
+    uint32_t type_magic;
     /* Static information: per device TYPE.     */
     int (*if_open)(struct fb_internal *ifp, const char *file, int _width, int _height);                       /**< @brief open device */
     int (*if_open_existing)(struct fb_internal *ifp, int width, int height, struct fb_platform_specific *fb_p);                       /**< @brief open device */

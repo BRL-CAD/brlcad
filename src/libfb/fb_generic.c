@@ -80,35 +80,6 @@ fb *_if_list[] = {
     (fb *) 0
 };
 
-const char *
-fb_get_magic_type(uint32_t magic)
-{
-    switch(magic) {
-	case FB_OSG_MAGIC:
-	    return "osg";
-	case FB_WGL_MAGIC:
-	    return "wgl";
-	case FB_OGL_MAGIC:
-	    return "ogl";
-	case FB_X24_MAGIC:
-	    return "X";
-	case FB_TK_MAGIC:
-	    return "tk";
-	case FB_QT_MAGIC:
-	    return "Qt";
-	case FB_DEBUG_MAGIC:
-	    return "debug";
-	case FB_STK_MAGIC:
-	    return "stack";
-	case FB_MEMORY_MAGIC:
-	    return "mem";
-	case FB_NULL_MAGIC:
-	    return "null";
-	default:
-	    return NULL;
-    }
-}
-
 fb *fb_get()
 {
     struct fb_internal *new_fb = FB_NULL;
@@ -142,12 +113,10 @@ void fb_set_interface(fb *ifp, const char *interface)
 struct fb_platform_specific *
 fb_get_platform_specific(uint32_t magic)
 {
-    const char *type = fb_get_magic_type(magic);
     int i = 0;
-    if (!type) return NULL;
+    if (!magic) return NULL;
     while (_if_list[i] != FB_NULL) {
-	if (bu_strncmp(type, _if_list[i]->if_name+5,
-		    strlen(_if_list[i]->if_name-5)) == 0) {
+	if (magic == _if_list[i]->type_magic) {
 	    /* found it, get its specific struct */
 	    return (*(_if_list[i])).if_existing_get(magic);
 	} else {
@@ -160,11 +129,10 @@ fb_get_platform_specific(uint32_t magic)
 void
 fb_put_platform_specific(struct fb_platform_specific *fb_p)
 {
-    const char *type = fb_get_magic_type(fb_p->magic);
     int i = 0;
+    if (!fb_p) return;
     while (_if_list[i] != FB_NULL) {
-	if (bu_strncmp(type, _if_list[i]->if_name+5,
-		    strlen(_if_list[i]->if_name-5)) == 0) {
+	if (fb_p->magic == _if_list[i]->type_magic) {
 	    /* found it, clear its specific struct */
 	    (*(_if_list[i])).if_existing_put(fb_p);
 	    return;

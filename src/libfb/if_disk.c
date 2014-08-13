@@ -357,6 +357,7 @@ dsk_help(fb *ifp)
 
 fb disk_interface = {
     0,
+    FB_DISK_MAGIC,
     dsk_open,
     dsk_open_existing,
     dsk_close_existing,
