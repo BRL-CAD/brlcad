@@ -23,30 +23,6 @@ BRLCAD_LIB_INCLUDE_DIRS(nmg NMG_INCLUDE_DIRS NMG_LOCAL_INCLUDE_DIRS)
 set(LIBNMG_SOURCES
   dspline.c
   globals.c
-  oslo_calc.c
-  oslo_map.c
-  primitives/bspline/nurb_basis.c
-  primitives/bspline/nurb_bezier.c
-  primitives/bspline/nurb_bound.c
-  primitives/bspline/nurb_c2.c
-  primitives/bspline/nurb_copy.c
-  primitives/bspline/nurb_diff.c
-  primitives/bspline/nurb_eval.c
-  primitives/bspline/nurb_flat.c
-  primitives/bspline/nurb_interp.c
-  primitives/bspline/nurb_knot.c
-  primitives/bspline/nurb_norm.c
-  primitives/bspline/nurb_plot.c
-  primitives/bspline/nurb_poly.c
-  primitives/bspline/nurb_ray.c
-  primitives/bspline/nurb_refine.c
-  primitives/bspline/nurb_reverse.c
-  primitives/bspline/nurb_solve.c
-  primitives/bspline/nurb_split.c
-  primitives/bspline/nurb_trim.c
-  primitives/bspline/nurb_trim_util.c
-  primitives/bspline/nurb_util.c
-  primitives/bspline/nurb_xsplit.c
   primitives/nmg/nmg_ck.c
   primitives/nmg/nmg_class.c
   primitives/nmg/nmg_copy.c

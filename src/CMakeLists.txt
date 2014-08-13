@@ -35,6 +35,7 @@ set(level_1_dirs
   libbrep
   librt
   libnmg
+  libnurb
   libwdb
   )
 
@@ -160,6 +161,7 @@ endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 #    $<TARGET_OBJECTS:libbn_OBJECTS>
 #    $<TARGET_OBJECTS:librt_OBJECTS>
 #    $<TARGET_OBJECTS:libnmg_OBJECTS>
+#    $<TARGET_OBJECTS:libnurb_OBJECTS>
 #    $<TARGET_OBJECTS:libwdb_OBJECTS>
 #    $<TARGET_OBJECTS:libicv_OBJECTS>
 #    $<TARGET_OBJECTS:libged_OBJECTS>
