@@ -19,6 +19,7 @@
   <command>pixcut</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-a </arg>
+    <arg choice='opt'>-# <replaceable>num_bytes</replaceable></arg>
     <arg choice='opt'>-C <replaceable>red/green/blue</replaceable></arg>
     <arg choice='opt'>-s <replaceable>in_square_size</replaceable></arg>
     <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
@@ -62,7 +63,7 @@ Unspecified dimensions default to 512 pixels.</para>
 <para>The
 <option>-a</option>
 flag requests that the program attempt to autosize the input file.  Autosizing
-only works with files, pipes can not be autosized.</para>
+only works with files; pipes can not be autosized.</para>
 
 <para>The
 <option>-v</option>
@@ -77,6 +78,10 @@ and
 flags set the horizontal and vertical offsets from the lower left corner
 to use for extracting
 the image.  By default both are set to 0 (zero).</para>
+
+<para>The
+<option>-#</option>
+flag specifies the number of bytes (default is 3).</para>
 
 <para>The
 <option>-C</option>
