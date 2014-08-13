@@ -18,8 +18,6 @@
 <cmdsynopsis>
   <command>pixcut</command>
     <arg choice='opt'>-v </arg>
-    <arg choice='opt'>-h </arg>
-    <arg choice='opt'>-H </arg>
     <arg choice='opt'>-a </arg>
     <arg choice='opt'>-C <replaceable>red/green/blue</replaceable></arg>
     <arg choice='opt'>-s <replaceable>in_square_size</replaceable></arg>
@@ -60,13 +58,6 @@ flags specify the output file width and number of scan lines in pixels.
 They can both be set to the same value via
 <option>-S.</option>
 Unspecified dimensions default to 512 pixels.</para>
-
-<para>The
-<option>-h</option>
-and
-<option>-H</option>
-flags indicate that the input and/or output file is high
-resolution (1024x1024) respectfully.</para>
 
 <para>The
 <option>-a</option>
@@ -133,13 +124,13 @@ will fill with 0/0/1 the net result is that the model image is shifted.</para>
 <para>The command</para>
 
 <literallayout remap='.nf'>
-pixcut -h -x128 -y256 background.pix |
+pixcut -s1024 -x128 -y256 background.pix |
 pixmatte -w512 -e image.pix =0/0/1 - image.pix |
-pixpaste -h -x128 -y256 background.pix - &gt;new.pix
+pixpaste -s1024 -x128 -y256 background.pix - &gt;new.pix
 </literallayout> <!-- .fi -->
 
-<para>will extract the center 512x512 section of the 1024x1024 background image
-composite that section with a foreground image and the place the new
+<para>will extract the center 512x512 section of the 1024x1024 background image,
+composite that section with a foreground image, and then place the new
 composite image into the center of the background image.</para>
 
 <para>The
