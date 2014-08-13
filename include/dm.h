@@ -225,7 +225,6 @@ typedef struct dm_internal dm;
 #define DM_SET_FGCOLOR(_dmp, _r, _g, _b, _strict, _transparency) _dmp->dm_setFGColor(_dmp, _r, _g, _b, _strict, _transparency)
 #define DM_SET_LINE_ATTR(_dmp, _width, _dashed) _dmp->dm_setLineAttr(_dmp, _width, _dashed)
 #define DM_CONFIGURE_WIN(_dmp, _force) _dmp->dm_configureWin((_dmp), (_force))
-#define DM_SET_LIGHT(_dmp, _on) _dmp->dm_setLight(_dmp, _on)
 #define DM_SET_TRANSPARENCY(_dmp, _on) _dmp->dm_setTransparency(_dmp, _on)
 #define DM_SET_DEPTH_MASK(_dmp, _on) _dmp->dm_setDepthMask(_dmp, _on)
 #define DM_SET_ZBUFFER(_dmp, _on) _dmp->dm_setZBuffer(_dmp, _on)
@@ -336,6 +335,7 @@ DM_EXPORT extern const char *dm_version(void);
 DM_EXPORT extern int dm_get_width(dm *dmp);
 DM_EXPORT extern int dm_get_height(dm *dmp);
 DM_EXPORT extern int dm_get_aspect(dm *dmp);
+DM_EXPORT extern int dm_get_type(dm *dmp);
 DM_EXPORT extern int dm_close(dm *dmp);
 DM_EXPORT extern unsigned char *dm_get_bg(dm *dmp);
 DM_EXPORT extern int dm_set_bg(dm *dmp, unsigned char r, unsigned char g, unsigned char b);
@@ -345,6 +345,15 @@ DM_EXPORT extern vect_t *dm_get_clipmax(dm *dmp);
 DM_EXPORT extern void dm_set_bound(dm *dmp, fastf_t val);
 DM_EXPORT extern int dm_set_win_bounds(dm *dmp, fastf_t *w);
 DM_EXPORT extern int dm_configure_win(dm *dmp, int force);
+DM_EXPORT extern struct bu_vls *dm_get_pathname(dm *dmp);
+DM_EXPORT extern int dm_get_fontsize(dm *dmp);
+DM_EXPORT extern void dm_set_fontsize(dm *dmp, int size);
+DM_EXPORT extern int dm_get_light_flag(dm *dmp);
+DM_EXPORT extern void dm_set_light_flag(dm *dmp, int size);
+DM_EXPORT extern int dm_set_light(dm *dmp, int light);
+DM_EXPORT extern void *dm_get_public_vars(dm *dmp);
+DM_EXPORT extern void *dm_get_private_vars(dm *dmp);
+
 
 
 

@@ -1972,7 +1972,7 @@ dmo_light_tcl(void *clientData, int argc, const char **argv)
 	    return TCL_ERROR;
 	}
 
-	DM_SET_LIGHT(dmop->dmo_dmp, light);
+	(void)dm_set_light(dmop->dmo_dmp, light);
 	return TCL_OK;
     }
 

@@ -266,10 +266,45 @@ dm_get_height(dm *dmp)
 }
 
 int
+dm_get_type(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_type;
+}
+
+int
 dm_get_aspect(dm *dmp)
 {
     if (!dmp) return 0;
     return dmp->dm_aspect;
+}
+
+int
+dm_get_fontsize(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_fontsize;
+}
+
+void
+dm_set_fontsize(dm *dmp, int size)
+{
+    if (!dmp) return;
+    dmp->dm_fontsize = size;
+}
+
+int
+dm_get_light_flag(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_light;
+}
+
+void
+dm_set_light_flag(dm *dmp, int val)
+{
+    if (!dmp) return;
+    dmp->dm_light = val;
 }
 
 int
@@ -336,7 +371,34 @@ dm_configure_win(dm *dmp, int force)
     return dmp->dm_configureWin(dmp, force);
 }
 
+struct bu_vls * 
+dm_get_pathname(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return &(dmp->dm_pathName);
+}
 
+
+int
+dm_set_light(dm *dmp, int light)
+{
+    if (!dmp) return 0;
+    return dmp->dm_setLight(dmp, light);
+}
+
+void *
+dm_get_public_vars(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return dmp->dm_vars.pub_vars;
+}
+
+void *
+dm_get_private_vars(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return dmp->dm_vars.priv_vars;
+}
 /*
  * Local Variables:
  * mode: C
