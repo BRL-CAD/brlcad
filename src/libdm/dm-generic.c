@@ -33,62 +33,63 @@
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
+#include "dm_private.h"
 
 #include "dm/dm-Null.h"
 
-extern struct dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
-extern struct dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
-extern struct dm *txt_open(Tcl_Interp *interp, int argc, const char **argv);
+extern dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
+extern dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
+extern dm *txt_open(Tcl_Interp *interp, int argc, const char **argv);
 
 #ifdef DM_X
 #  if defined(HAVE_TK)
-extern struct dm *X_open_dm();
+extern dm *X_open_dm();
 #  endif
 #endif /* DM_X */
 
 #ifdef DM_TK
-extern struct dm *tk_open_dm();
+extern dm *tk_open_dm();
 #endif /* DM_TK */
 
 #ifdef DM_OGL
 #  if defined(HAVE_TK)
-extern struct dm *ogl_open();
+extern dm *ogl_open();
 extern void ogl_fogHint();
 extern int ogl_share_dlist();
 #  endif
 #endif /* DM_OGL */
 
 #ifdef DM_OSG
-extern struct dm *osg_open();
+extern dm *osg_open();
 extern void osg_fogHint();
 extern int osg_share_dlist();
 #endif /* DM_OSG*/
 
 #ifdef DM_RTGL
-extern struct dm *rtgl_open();
+extern dm *rtgl_open();
 extern void rtgl_fogHint();
 extern int rtgl_share_dlist();
 #endif /* DM_RTGL */
 
 #ifdef DM_WGL
-extern struct dm *wgl_open();
+extern dm *wgl_open();
 extern void wgl_fogHint();
 extern int wgl_share_dlist();
 #endif /* DM_WGL */
 
 #ifdef DM_QT
-extern struct dm *qt_open();
+extern dm *qt_open();
 #endif /* DM_QT */
 
-HIDDEN struct dm *
+HIDDEN dm *
 null_open(Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct dm *dmp;
+    dm *dmp;
 
     if (argc < 0 || !argv)
 	return DM_NULL;
 
-    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp, struct dm_internal);
 
     *dmp = dm_null;
     dmp->dm_interp = interp;
@@ -97,7 +98,7 @@ null_open(Tcl_Interp *interp, int argc, const char *argv[])
 }
 
 
-struct dm *
+dm *
 dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 {
     switch (type) {
@@ -153,7 +154,7 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
  * NULL, then dmp1 will no longer share its display lists.
  */
 int
-dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
+dm_share_dlist(dm *dmp1, dm *dmp2)
 {
     if (dmp1 == DM_NULL)
 	return TCL_ERROR;
@@ -190,19 +191,19 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
 }
 
 fastf_t
-dm_Xx2Normal(struct dm *dmp, int x)
+dm_Xx2Normal(dm *dmp, int x)
 {
     return ((x / (fastf_t)dmp->dm_width - 0.5) * 2.0);
 }
 
 int
-dm_Normal2Xx(struct dm *dmp, fastf_t f)
+dm_Normal2Xx(dm *dmp, fastf_t f)
 {
     return (f * 0.5 + 0.5) * dmp->dm_width;
 }
 
 fastf_t
-dm_Xy2Normal(struct dm *dmp, int y, int use_aspect)
+dm_Xy2Normal(dm *dmp, int y, int use_aspect)
 {
     if (use_aspect)
 	return ((0.5 - y / (fastf_t)dmp->dm_height) / dmp->dm_aspect * 2.0);
@@ -211,7 +212,7 @@ dm_Xy2Normal(struct dm *dmp, int y, int use_aspect)
 }
 
 int
-dm_Normal2Xy(struct dm *dmp, fastf_t f, int use_aspect)
+dm_Normal2Xy(dm *dmp, fastf_t f, int use_aspect)
 {
     if (use_aspect)
 	return (0.5 - f * 0.5 * dmp->dm_aspect) * dmp->dm_height;
@@ -220,7 +221,7 @@ dm_Normal2Xy(struct dm *dmp, fastf_t f, int use_aspect)
 }
 
 void
-dm_fogHint(struct dm *dmp, int fastfog)
+dm_fogHint(dm *dmp, int fastfog)
 {
     if (!dmp) {
 	bu_log("WARNING: NULL display (fastfog => %d)\n", fastfog);
@@ -249,6 +250,92 @@ dm_fogHint(struct dm *dmp, int fastfog)
 	    return;
     }
 }
+
+int
+dm_get_width(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_width;
+}
+
+int
+dm_get_height(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_height;
+}
+
+int
+dm_get_aspect(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_aspect;
+}
+
+int
+dm_close(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_close(dmp);
+}
+
+unsigned char *
+dm_get_bg(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return dmp->dm_bg;
+}
+
+int
+dm_set_bg(dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+{
+    if (!dmp) return 0;
+    return dmp->dm_setBGColor(dmp, r, g, b);
+}
+
+int
+dm_make_current(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_makeCurrent(dmp);
+}
+
+vect_t *
+dm_get_clipmin(dm *dmp)
+{
+    if (!dmp) return 0;
+    return  &(dmp->dm_clipmin);
+}
+
+
+vect_t *
+dm_get_clipmax(dm *dmp)
+{
+    if (!dmp) return 0;
+    return  &(dmp->dm_clipmax);
+}
+
+void
+dm_set_bound(dm *dmp, fastf_t val)
+{
+    if (!dmp) return;
+    dmp->dm_bound = val;
+}
+
+int
+dm_set_win_bounds(dm *dmp, fastf_t *w)
+{
+    if (!dmp) return 0;
+    return dmp->dm_setWinBounds(dmp, w);
+}
+
+int
+dm_configure_win(dm *dmp, int force)
+{
+    if (!dmp) return 0;
+    return dmp->dm_configureWin(dmp, force);
+}
+
 
 /*
  * Local Variables:

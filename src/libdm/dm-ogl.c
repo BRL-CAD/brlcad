@@ -80,7 +80,7 @@
 #include "dm/dm_xvars.h"
 #include "solid.h"
 
-#include "./dm_util.h"
+#include "./dm_private.h"
 
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))
@@ -91,52 +91,52 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-HIDDEN XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
+HIDDEN XVisualInfo *ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin);
 
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-struct dm *ogl_open(Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int ogl_close(struct dm *dmp);
-HIDDEN int ogl_drawBegin(struct dm *dmp);
-HIDDEN int ogl_drawEnd(struct dm *dmp);
-HIDDEN int ogl_normal(struct dm *dmp);
-HIDDEN int ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-HIDDEN int ogl_loadPMatrix(struct dm *dmp, fastf_t *mat);
-HIDDEN int ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-HIDDEN int ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2);
-HIDDEN int ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
-HIDDEN int ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag);
-HIDDEN int ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-HIDDEN int ogl_drawPoint3D(struct dm *dmp, point_t point);
-HIDDEN int ogl_drawPoints3D(struct dm *dmp, int npoints, point_t *points);
-HIDDEN int ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);
-HIDDEN int ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-HIDDEN int ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-HIDDEN int ogl_setLineAttr(struct dm *dmp, int width, int style);
-HIDDEN int ogl_configureWin_guts(struct dm *dmp, int force);
-HIDDEN int ogl_configureWin(struct dm *dmp, int force);
-HIDDEN int ogl_setLight(struct dm *dmp, int lighting_on);
-HIDDEN int ogl_setTransparency(struct dm *dmp, int transparency_on);
-HIDDEN int ogl_setDepthMask(struct dm *dmp, int depthMask_on);
-HIDDEN int ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int ogl_setWinBounds(struct dm *dmp, fastf_t *w);
-HIDDEN int ogl_debug(struct dm *dmp, int vl);
-HIDDEN int ogl_logfile(struct dm *dmp, const char *filename);
-HIDDEN int ogl_beginDList(struct dm *dmp, unsigned int list);
-HIDDEN int ogl_endDList(struct dm *dmp);
+struct dm_internal *ogl_open(Tcl_Interp *interp, int argc, char **argv);
+HIDDEN int ogl_close(struct dm_internal *dmp);
+HIDDEN int ogl_drawBegin(struct dm_internal *dmp);
+HIDDEN int ogl_drawEnd(struct dm_internal *dmp);
+HIDDEN int ogl_normal(struct dm_internal *dmp);
+HIDDEN int ogl_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye);
+HIDDEN int ogl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat);
+HIDDEN int ogl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+HIDDEN int ogl_drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2);
+HIDDEN int ogl_drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2);
+HIDDEN int ogl_drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int sflag);
+HIDDEN int ogl_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y);
+HIDDEN int ogl_drawPoint3D(struct dm_internal *dmp, point_t point);
+HIDDEN int ogl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points);
+HIDDEN int ogl_drawVList(struct dm_internal *dmp, register struct bn_vlist *vp);
+HIDDEN int ogl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp);
+HIDDEN int ogl_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), void **data);
+HIDDEN int ogl_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
+HIDDEN int ogl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b);
+HIDDEN int ogl_setLineAttr(struct dm_internal *dmp, int width, int style);
+HIDDEN int ogl_configureWin_guts(struct dm_internal *dmp, int force);
+HIDDEN int ogl_configureWin(struct dm_internal *dmp, int force);
+HIDDEN int ogl_setLight(struct dm_internal *dmp, int lighting_on);
+HIDDEN int ogl_setTransparency(struct dm_internal *dmp, int transparency_on);
+HIDDEN int ogl_setDepthMask(struct dm_internal *dmp, int depthMask_on);
+HIDDEN int ogl_setZBuffer(struct dm_internal *dmp, int zbuffer_on);
+HIDDEN int ogl_setWinBounds(struct dm_internal *dmp, fastf_t *w);
+HIDDEN int ogl_debug(struct dm_internal *dmp, int vl);
+HIDDEN int ogl_logfile(struct dm_internal *dmp, const char *filename);
+HIDDEN int ogl_beginDList(struct dm_internal *dmp, unsigned int list);
+HIDDEN int ogl_endDList(struct dm_internal *dmp);
 HIDDEN void ogl_drawDList(unsigned int list);
-HIDDEN int ogl_freeDLists(struct dm *dmp, unsigned int list, int range);
-HIDDEN int ogl_genDLists(struct dm *dmp, size_t range);
-HIDDEN int ogl_getDisplayImage(struct dm *dmp, unsigned char **image);
-HIDDEN void ogl_reshape(struct dm *dmp, int width, int height);
-HIDDEN int ogl_makeCurrent(struct dm *dmp);
+HIDDEN int ogl_freeDLists(struct dm_internal *dmp, unsigned int list, int range);
+HIDDEN int ogl_genDLists(struct dm_internal *dmp, size_t range);
+HIDDEN int ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image);
+HIDDEN void ogl_reshape(struct dm_internal *dmp, int width, int height);
+HIDDEN int ogl_makeCurrent(struct dm_internal *dmp);
 
 
-struct dm dm_ogl = {
+struct dm_internal dm_ogl = {
     ogl_close,
     ogl_drawBegin,
     ogl_drawEnd,
@@ -246,7 +246,7 @@ ogl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
 
 
 void
-ogl_fogHint(struct dm *dmp, int fastfog)
+ogl_fogHint(struct dm_internal *dmp, int fastfog)
 {
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
@@ -254,7 +254,7 @@ ogl_fogHint(struct dm *dmp, int fastfog)
 
 
 HIDDEN int
-ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+ogl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     if (dmp->dm_debugLevel == 1)
 	bu_log("ogl_setBGColor()\n");
@@ -289,7 +289,7 @@ ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
  * also change font size if necessary
  */
 HIDDEN int
-ogl_configureWin_guts(struct dm *dmp, int force)
+ogl_configureWin_guts(struct dm_internal *dmp, int force)
 {
     XWindowAttributes xwa;
     XFontStruct *newfontstruct;
@@ -425,7 +425,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 
 
 HIDDEN void
-ogl_reshape(struct dm *dmp, int width, int height)
+ogl_reshape(struct dm_internal *dmp, int width, int height)
 {
     GLint mm;
 
@@ -458,7 +458,7 @@ ogl_reshape(struct dm *dmp, int width, int height)
 
 
 HIDDEN int
-ogl_makeCurrent(struct dm *dmp)
+ogl_makeCurrent(struct dm_internal *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_makeCurrent()\n");
@@ -475,7 +475,7 @@ ogl_makeCurrent(struct dm *dmp)
 
 
 HIDDEN int
-ogl_configureWin(struct dm *dmp, int force)
+ogl_configureWin(struct dm_internal *dmp, int force)
 {
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
@@ -489,7 +489,7 @@ ogl_configureWin(struct dm *dmp, int force)
 
 
 HIDDEN int
-ogl_setLight(struct dm *dmp, int lighting_on)
+ogl_setLight(struct dm_internal *dmp, int lighting_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_setLight()\n");
@@ -527,7 +527,7 @@ ogl_setLight(struct dm *dmp, int lighting_on)
  * OpenGL
  */
 HIDDEN XVisualInfo *
-ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
+ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
 {
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
     int tries, baddepth;
@@ -670,7 +670,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
  * Gracefully release the display.
  */
 HIDDEN int
-ogl_close(struct dm *dmp)
+ogl_close(struct dm_internal *dmp)
 {
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
 	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc) {
@@ -702,7 +702,7 @@ ogl_close(struct dm *dmp)
  * Fire up the display manager, and the display processor.
  *
  */
-struct dm *
+struct dm_internal *
 ogl_open(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
@@ -719,7 +719,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     Display *tmp_dpy = (Display *)NULL;
-    struct dm *dmp = (struct dm *)NULL;
+    struct dm_internal *dmp = (struct dm_internal *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     int screen_number = -1;
 
@@ -730,7 +730,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp, struct dm_internal);
 
     *dmp = dm_ogl; /* struct copy */
     dmp->dm_interp = interp;
@@ -1055,16 +1055,16 @@ Done:
 
 
 int
-ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
+ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 {
     GLfloat backgnd[4];
     GLfloat vf;
     GLXContext old_glxContext;
 
-    if (dmp1 == (struct dm *)NULL)
+    if (dmp1 == (struct dm_internal *)NULL)
 	return TCL_ERROR;
 
-    if (dmp2 == (struct dm *)NULL) {
+    if (dmp2 == (struct dm_internal *)NULL) {
 	/* create a new graphics context for dmp1 with private display lists */
 
 	old_glxContext = ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc;
@@ -1222,7 +1222,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
-ogl_drawBegin(struct dm *dmp)
+ogl_drawBegin(struct dm_internal *dmp)
 {
     GLfloat fogdepth;
 
@@ -1308,7 +1308,7 @@ ogl_drawBegin(struct dm *dmp)
 
 
 HIDDEN int
-ogl_drawEnd(struct dm *dmp)
+ogl_drawEnd(struct dm_internal *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawEnd\n");
@@ -1384,7 +1384,7 @@ ogl_drawEnd(struct dm *dmp)
  * many calls to ogl_draw().
  */
 HIDDEN int
-ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
+ogl_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
@@ -1483,7 +1483,7 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  *
  */
 HIDDEN int
-ogl_loadPMatrix(struct dm *dmp, fastf_t *mat)
+ogl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
@@ -1535,7 +1535,7 @@ ogl_loadPMatrix(struct dm *dmp, fastf_t *mat)
 
 
 HIDDEN int
-ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
+ogl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
 {
     register struct bn_vlist *tvp;
     register int first;
@@ -1708,7 +1708,7 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 
 
 HIDDEN int
-ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
+ogl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 {
     struct bn_vlist *tvp;
     register int first;
@@ -1858,7 +1858,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 HIDDEN int
-ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+ogl_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -1882,7 +1882,7 @@ ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **d
  * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
-ogl_normal(struct dm *dmp)
+ogl_normal(struct dm_internal *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_normal\n");
@@ -1936,7 +1936,7 @@ ogl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+ogl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawString2D()\n");
@@ -1954,28 +1954,28 @@ ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUS
 
 
 HIDDEN int
-ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2)
+ogl_drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2)
 {
     return drawLine2D(dmp, X1, Y1, X2, Y2, "ogl_drawLine2D()\n");
 }
 
 
 HIDDEN int
-ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+ogl_drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2)
 {
     return drawLine3D(dmp, pt1, pt2, "ogl_drawLine3D()\n", wireColor);
 }
 
 
 HIDDEN int
-ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
+ogl_drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int sflag)
 {
     return drawLines3D(dmp, npoints, points, sflag, "ogl_drawLine3D()\n", wireColor);
 }
 
 
 HIDDEN int
-ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+ogl_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 {
     if (dmp->dm_debugLevel) {
 	bu_log("ogl_drawPoint2D():\n");
@@ -1991,7 +1991,7 @@ ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
-ogl_drawPoint3D(struct dm *dmp, point_t point)
+ogl_drawPoint3D(struct dm_internal *dmp, point_t point)
 {
     GLdouble dpt[3];
 
@@ -2015,7 +2015,7 @@ ogl_drawPoint3D(struct dm *dmp, point_t point)
 
 
 HIDDEN int
-ogl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
+ogl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points)
 {
     GLdouble dpt[3];
     register int i;
@@ -2041,7 +2041,7 @@ ogl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 
 
 HIDDEN int
-ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+ogl_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     /*if (dmp->dm_debugLevel)
 	bu_log("ogl_setFGColor()\n");*/
@@ -2101,7 +2101,7 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 
 
 HIDDEN int
-ogl_setLineAttr(struct dm *dmp, int width, int style)
+ogl_setLineAttr(struct dm_internal *dmp, int width, int style)
 {
     /*if (dmp->dm_debugLevel)
 	bu_log("ogl_setLineAttr()\n");*/
@@ -2121,7 +2121,7 @@ ogl_setLineAttr(struct dm *dmp, int width, int style)
 
 
 HIDDEN int
-ogl_debug(struct dm *dmp, int lvl)
+ogl_debug(struct dm_internal *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
@@ -2129,7 +2129,7 @@ ogl_debug(struct dm *dmp, int lvl)
 }
 
 HIDDEN int
-ogl_logfile(struct dm *dmp, const char *filename)
+ogl_logfile(struct dm_internal *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
@@ -2137,7 +2137,7 @@ ogl_logfile(struct dm *dmp, const char *filename)
 }
 
 HIDDEN int
-ogl_setWinBounds(struct dm *dmp, fastf_t *w)
+ogl_setWinBounds(struct dm_internal *dmp, fastf_t *w)
 {
     GLint mm;
 
@@ -2164,7 +2164,7 @@ ogl_setWinBounds(struct dm *dmp, fastf_t *w)
 
 
 HIDDEN int
-ogl_setTransparency(struct dm *dmp,
+ogl_setTransparency(struct dm_internal *dmp,
 		    int transparency_on)
 {
     if (dmp->dm_debugLevel)
@@ -2187,7 +2187,7 @@ ogl_setTransparency(struct dm *dmp,
 
 
 HIDDEN int
-ogl_setDepthMask(struct dm *dmp,
+ogl_setDepthMask(struct dm_internal *dmp,
 		 int enable) {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_setDepthMask()\n");
@@ -2204,7 +2204,7 @@ ogl_setDepthMask(struct dm *dmp,
 
 
 HIDDEN int
-ogl_setZBuffer(struct dm *dmp, int zbuffer_on)
+ogl_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_setZBuffer:\n");
@@ -2229,7 +2229,7 @@ ogl_setZBuffer(struct dm *dmp, int zbuffer_on)
 
 
 HIDDEN int
-ogl_beginDList(struct dm *dmp, unsigned int list)
+ogl_beginDList(struct dm_internal *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_beginDList()\n");
@@ -2240,7 +2240,7 @@ ogl_beginDList(struct dm *dmp, unsigned int list)
 
 
 HIDDEN int
-ogl_endDList(struct dm *dmp)
+ogl_endDList(struct dm_internal *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_endDList()\n");
@@ -2258,7 +2258,7 @@ ogl_drawDList(unsigned int list)
 
 
 HIDDEN int
-ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
+ogl_freeDLists(struct dm_internal *dmp, unsigned int list, int range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_freeDLists()\n");
@@ -2269,7 +2269,7 @@ ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
 
 
 HIDDEN int
-ogl_genDLists(struct dm *dmp, size_t range)
+ogl_genDLists(struct dm_internal *dmp, size_t range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_freeDLists()\n");
@@ -2279,7 +2279,7 @@ ogl_genDLists(struct dm *dmp, size_t range)
 
 
 HIDDEN int
-ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
+ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 {
     unsigned char *idata = NULL;
     int width = 0;

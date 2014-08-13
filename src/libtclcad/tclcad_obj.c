@@ -1347,15 +1347,15 @@ static struct to_cmdtab to_cmds[] = {
 };
 
 static fastf_t
-screen_to_view_x(struct dm *dmp, fastf_t x)
+screen_to_view_x(dm *dmp, fastf_t x)
 {
-    return x / dmp->dm_width * 2.0 - 1.0;
+    return x / dm_get_width(dmp) * 2.0 - 1.0;
 }
 
 static fastf_t
-screen_to_view_y(struct dm *dmp, fastf_t y)
+screen_to_view_y(dm *dmp, fastf_t y)
 {
-    return (y / dmp->dm_height * -2.0 + 1.0) / dmp->dm_aspect;
+    return (y / dm_get_height(dmp) * -2.0 + 1.0) / dm_get_aspect(dmp);
 }
 
 /**
@@ -1483,7 +1483,7 @@ to_deleteProc(ClientData clientData)
 	bu_vls_free(&gdvp->gdv_name);
 	bu_vls_free(&gdvp->gdv_callback);
 	bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
-	(void)DM_CLOSE(gdvp->gdv_dmp);
+	(void)dm_close(gdvp->gdv_dmp);
 	bu_free((void *)gdvp->gdv_view, "ged_view");
 
 	to_close_fbs(gdvp);
@@ -2128,10 +2128,11 @@ to_bg(struct ged *gedp,
 
     /* get background color */
     if (argc == 2) {
+	unsigned char *dm_bg = dm_get_bg(gdvp->gdv_dmp);
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-		      gdvp->gdv_dmp->dm_bg[0],
-		      gdvp->gdv_dmp->dm_bg[1],
-		      gdvp->gdv_dmp->dm_bg[2]);
+		      dm_bg[0],
+		      dm_bg[1],
+		      dm_bg[2]);
 	return GED_OK;
     }
 
@@ -2147,11 +2148,8 @@ to_bg(struct ged *gedp,
 	b < 0 || 255 < b)
 	goto bad_color;
 
-    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
-    (void)DM_SET_BGCOLOR(gdvp->gdv_dmp,
-		   (unsigned char)r,
-		   (unsigned char)g,
-		   (unsigned char)b);
+    (void)dm_make_current(gdvp->gdv_dmp);
+    (void)dm_set_bg(gdvp->gdv_dmp, (unsigned char)r, (unsigned char)g, (unsigned char)b);
 
     to_refresh_view(gdvp);
 
@@ -2222,13 +2220,10 @@ to_bounds(struct ged *gedp,
 
     /* get window bounds */
     if (argc == 2) {
+	vect_t *cmin = dm_get_clipmin(gdvp->gdv_dmp);
+	vect_t *cmax = dm_get_clipmax(gdvp->gdv_dmp);
 	bu_vls_printf(gedp->ged_result_str, "%g %g %g %g %g %g",
-		      gdvp->gdv_dmp->dm_clipmin[X],
-		      gdvp->gdv_dmp->dm_clipmax[X],
-		      gdvp->gdv_dmp->dm_clipmin[Y],
-		      gdvp->gdv_dmp->dm_clipmax[Y],
-		      gdvp->gdv_dmp->dm_clipmin[Z],
-		      gdvp->gdv_dmp->dm_clipmax[Z]);
+	       	(*cmin)[X], (*cmax)[X], (*cmin)[Y], (*cmax)[Y], (*cmin)[Z], (*cmax)[Z]);
 	return GED_OK;
     }
 
@@ -2249,13 +2244,13 @@ to_bounds(struct ged *gedp,
      * use it for controlling the location of the zclipping plane in
      * dm-ogl.c. dm-X.c uses dm_clipmin and dm_clipmax.
      */
-    if (gdvp->gdv_dmp->dm_clipmax[2] <= GED_MAX)
-	gdvp->gdv_dmp->dm_bound = 1.0;
+    if ((*dm_get_clipmax(gdvp->gdv_dmp))[2] <= GED_MAX)
+	dm_set_bound(gdvp->gdv_dmp, 1.0);
     else
-	gdvp->gdv_dmp->dm_bound = GED_MAX / gdvp->gdv_dmp->dm_clipmax[2];
+	dm_set_bound(gdvp->gdv_dmp, GED_MAX/((*dm_get_clipmax(gdvp->gdv_dmp))[2]));
 
-    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
-    (void)DM_SET_WIN_BOUNDS(gdvp->gdv_dmp, bounds);
+    (void)dm_make_current(gdvp->gdv_dmp);
+    (void)dm_set_win_bounds(gdvp->gdv_dmp, bounds);
 
     return GED_OK;
 }
@@ -2290,7 +2285,7 @@ to_configure(struct ged *gedp,
     }
 
     /* configure the display manager window */
-    status = DM_CONFIGURE_WIN(gdvp->gdv_dmp, 0);
+    status = dm_configure_win(gdvp->gdv_dmp, 0);
 
     /* configure the framebuffer window */
     if (gdvp->gdv_fbs.fbs_fbp != FB_NULL)
@@ -13196,7 +13191,7 @@ to_close_fbs(struct ged_dm_view *gdvp)
 HIDDEN void to_dm_get_display_image(struct ged *gedp, unsigned char **idata)
 {
     if (gedp->ged_dmp) {
-	(void)DM_GET_DISPLAY_IMAGE(((struct dm *)gedp->ged_dmp), idata);
+	(void)DM_GET_DISPLAY_IMAGE(((dm *)gedp->ged_dmp), idata);
     }
 }
 
@@ -13473,19 +13468,19 @@ to_output_handler(struct ged *gedp, char *line)
 }
 
 
-HIDDEN void go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp, fastf_t sf);
-HIDDEN void go_dm_draw_labels(struct dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2vmat);
-HIDDEN void go_dm_draw_lines(struct dm *dmp, struct ged_data_line_state *gdlsp);
-HIDDEN void go_dm_draw_polys(struct dm *dmp, ged_data_polygon_state *gdpsp, int mode);
+HIDDEN void go_dm_draw_arrows(dm *dmp, struct ged_data_arrow_state *gdasp, fastf_t sf);
+HIDDEN void go_dm_draw_labels(dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2vmat);
+HIDDEN void go_dm_draw_lines(dm *dmp, struct ged_data_line_state *gdlsp);
+HIDDEN void go_dm_draw_polys(dm *dmp, ged_data_polygon_state *gdpsp, int mode);
 
 HIDDEN void go_draw(struct ged_dm_view *gdvp);
-HIDDEN int go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hsp);
+HIDDEN int go_draw_dlist(struct ged_obj *gop, dm *dmp, struct bu_list *hsp);
 HIDDEN void go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp);
-HIDDEN void go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp);
+HIDDEN void go_draw_solid(struct ged_obj *gop, dm *dmp, struct solid *sp);
 
 
 HIDDEN void
-go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp, fastf_t sf)
+go_dm_draw_arrows(dm *dmp, struct ged_data_arrow_state *gdasp, fastf_t sf)
 {
     register int i;
     int saveLineWidth;
@@ -13567,7 +13562,7 @@ go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp, fastf_t sf
 
 
 HIDDEN void
-go_dm_draw_labels(struct dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2vmat)
+go_dm_draw_labels(dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2vmat)
 {
     register int i;
 
@@ -13589,7 +13584,7 @@ go_dm_draw_labels(struct dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2v
 
 
 HIDDEN void
-go_dm_draw_lines(struct dm *dmp, struct ged_data_line_state *gdlsp)
+go_dm_draw_lines(dm *dmp, struct ged_data_line_state *gdlsp)
 {
     int saveLineWidth;
     int saveLineStyle;
@@ -13649,7 +13644,7 @@ go_dm_draw_lines(struct dm *dmp, struct ged_data_line_state *gdlsp)
 
 
 HIDDEN void
-go_dm_draw_polys(struct dm *dmp, ged_data_polygon_state *gdpsp, int mode)
+go_dm_draw_polys(dm *dmp, ged_data_polygon_state *gdpsp, int mode)
 {
     register size_t i, last_poly;
     int saveLineWidth;
@@ -13693,7 +13688,7 @@ go_draw(struct ged_dm_view *gdvp)
 
 /* Draw all display lists */
 HIDDEN int
-go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
+go_draw_dlist(struct ged_obj *gop, dm *dmp, struct bu_list *hdlp)
 {
     register struct ged_display_list *gdlp;
     register struct ged_display_list *next_gdlp;
@@ -13862,7 +13857,7 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
 
 
 HIDDEN void
-go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp)
+go_draw_solid(struct ged_obj *gop, dm *dmp, struct solid *sp)
 {
     if (gop->go_dlist_on) {
 	DM_DRAWDLIST(dmp, sp->s_dlist);

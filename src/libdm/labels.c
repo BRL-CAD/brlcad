@@ -34,6 +34,7 @@
 #include "nurb.h"
 #include "solid.h"
 #include "dm.h"
+#include "dm_private.h"
 
 /*
  * Put labels on the vertices of the currently edited solid.
@@ -542,12 +543,12 @@ dm_label_primitive(struct rt_wdb *wdbp,
 
 
 int
-dm_draw_labels(struct dm *dmp,
+dm_draw_labels(dm *dmp,
 	       struct rt_wdb *wdbp,
 	       const char *name,
 	       mat_t viewmat,
 	       int *labelsColor,
-	       int (*LabelsHook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData),
+	       int (*LabelsHook)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData),
 	       ClientData labelsHookClientdata)
 {
 #define MAX_PL 8+1
@@ -558,7 +559,7 @@ dm_draw_labels(struct dm *dmp,
     struct db_tree_state ts;
     struct db_full_path path;
 
-    if (LabelsHook != (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0)
+    if (LabelsHook != (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0)
 	return LabelsHook(dmp, wdbp, name,
 			  viewmat, labelsColor,
 			  labelsHookClientdata);

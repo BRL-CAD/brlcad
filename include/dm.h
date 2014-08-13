@@ -39,11 +39,11 @@
 
 #include "./dm/defines.h"
 
-#define DM_NULL (struct dm *)NULL
+#define DM_NULL (dm *)NULL
 #define DM_MIN (-2048)
 #define DM_MAX (2047)
 
-#define DM_O(_m) offsetof(struct dm, _m)
+#define DM_O(_m) offsetof(dm, _m)
 
 #define GED_MAX 2047.0
 #define GED_MIN -2048.0
@@ -203,92 +203,10 @@
 #define LIGHT_ON	1
 #define LIGHT_RESET	2		/* all lights out */
 
-struct dm_vars {
-    void *pub_vars;
-    void *priv_vars;
-};
-
-
-/**
- * Interface to a specific Display Manager
- */
-struct dm {
-    int (*dm_close)(struct dm *dmp);
-    int (*dm_drawBegin)(struct dm *dmp);	/**< @brief formerly dmr_prolog */
-    int (*dm_drawEnd)(struct dm *dmp);		/**< @brief formerly dmr_epilog */
-    int (*dm_normal)(struct dm *dmp);
-    int (*dm_loadMatrix)(struct dm *dmp, fastf_t *mat, int which_eye);
-    int (*dm_loadPMatrix)(struct dm *dmp, fastf_t *mat);
-    int (*dm_drawString2D)(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);	/**< @brief formerly dmr_puts */
-    int (*dm_drawLine2D)(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2);	/**< @brief formerly dmr_2d_line */
-    int (*dm_drawLine3D)(struct dm *dmp, point_t pt1, point_t pt2);
-    int (*dm_drawLines3D)(struct dm *dmp, int npoints, point_t *points, int sflag);
-    int (*dm_drawPoint2D)(struct dm *dmp, fastf_t x, fastf_t y);
-    int (*dm_drawPoint3D)(struct dm *dmp, point_t point);
-    int (*dm_drawPoints3D)(struct dm *dmp, int npoints, point_t *points);
-    int (*dm_drawVList)(struct dm *dmp, struct bn_vlist *vp);
-    int (*dm_drawVListHiddenLine)(struct dm *dmp, register struct bn_vlist *vp);
-    int (*dm_draw)(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);	/**< @brief formerly dmr_object */
-    int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-    int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
-    int (*dm_setLineAttr)(struct dm *dmp, int width, int style);	/**< @brief currently - linewidth, (not-)dashed */
-    int (*dm_configureWin)(struct dm *dmp, int force);
-    int (*dm_setWinBounds)(struct dm *dmp, fastf_t *w);
-    int (*dm_setLight)(struct dm *dmp, int light_on);
-    int (*dm_setTransparency)(struct dm *dmp, int transparency_on);
-    int (*dm_setDepthMask)(struct dm *dmp, int depthMask_on);
-    int (*dm_setZBuffer)(struct dm *dmp, int zbuffer_on);
-    int (*dm_debug)(struct dm *dmp, int lvl);		/**< @brief Set DM debug level */
-    int (*dm_logfile)(struct dm *dmp, const char *filename); /**< @brief Set DM log file */
-    int (*dm_beginDList)(struct dm *dmp, unsigned int list);
-    int (*dm_endDList)(struct dm *dmp);
-    void (*dm_drawDList)(unsigned int list);
-    int (*dm_freeDLists)(struct dm *dmp, unsigned int list, int range);
-    int (*dm_genDLists)(struct dm *dmp, size_t range);
-    int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);
-    void (*dm_reshape)(struct dm *dmp, int width, int height);
-    int (*dm_makeCurrent)(struct dm *dmp);
-    int (*dm_openFb)(struct dm *dmp, fb *ifp);
-    unsigned long dm_id;          /**< @brief window id */
-    int dm_displaylist;		/**< @brief !0 means device has displaylist */
-    int dm_stereo;                /**< @brief stereo flag */
-    double dm_bound;		/**< @brief zoom-in limit */
-    int dm_boundFlag;
-    const char *dm_name;		/**< @brief short name of device */
-    const char *dm_lname;		/**< @brief long name of device */
-    int dm_type;			/**< @brief display manager type */
-    int dm_top;                   /**< @brief !0 means toplevel window */
-    int dm_width;
-    int dm_height;
-    int dm_bytes_per_pixel;
-    int dm_bits_per_channel;  /* bits per color channel */
-    int dm_lineWidth;
-    int dm_lineStyle;
-    fastf_t dm_aspect;
-    fastf_t *dm_vp;		/**< @brief (FIXME: ogl still depends on this) Viewscale pointer */
-    struct dm_vars dm_vars;	/**< @brief display manager dependent variables */
-    struct bu_vls dm_pathName;	/**< @brief full Tcl/Tk name of drawing window */
-    struct bu_vls dm_tkName;	/**< @brief short Tcl/Tk name of drawing window */
-    struct bu_vls dm_dName;	/**< @brief Display name */
-    unsigned char dm_bg[3];	/**< @brief background color */
-    unsigned char dm_fg[3];	/**< @brief foreground color */
-    vect_t dm_clipmin;		/**< @brief minimum clipping vector */
-    vect_t dm_clipmax;		/**< @brief maximum clipping vector */
-    int dm_debugLevel;		/**< @brief !0 means debugging */
-    struct bu_vls dm_log;   /**< @brief !NULL && !empty means log debug output to the file */
-    int dm_perspective;		/**< @brief !0 means perspective on */
-    int dm_light;			/**< @brief !0 means lighting on */
-    int dm_transparency;		/**< @brief !0 means transparency on */
-    int dm_depthMask;		/**< @brief !0 means depth buffer is writable */
-    int dm_zbuffer;		/**< @brief !0 means zbuffer on */
-    int dm_zclip;			/**< @brief !0 means zclipping */
-    int dm_clearBufferAfter;	/**< @brief 1 means clear back buffer after drawing and swap */
-    int dm_fontsize;		/**< @brief !0 override's the auto font size */
-    Tcl_Interp *dm_interp;	/**< @brief Tcl interpreter */
-};
+/* Hide the dm structure behind a typedef */
+typedef struct dm_internal dm;
 
 #define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
-#define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
 #define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
 #define DM_DRAW_END(_dmp) _dmp->dm_drawEnd(_dmp)
 #define DM_NORMAL(_dmp) _dmp->dm_normal(_dmp)
@@ -305,10 +223,8 @@ struct dm {
 #define DM_DRAW_VLIST_HIDDEN_LINE(_dmp, _vlist) _dmp->dm_drawVListHiddenLine(_dmp, _vlist)
 #define DM_DRAW(_dmp, _callback, _data) _dmp->dm_draw(_dmp, _callback, _data)
 #define DM_SET_FGCOLOR(_dmp, _r, _g, _b, _strict, _transparency) _dmp->dm_setFGColor(_dmp, _r, _g, _b, _strict, _transparency)
-#define DM_SET_BGCOLOR(_dmp, _r, _g, _b) _dmp->dm_setBGColor(_dmp, _r, _g, _b)
 #define DM_SET_LINE_ATTR(_dmp, _width, _dashed) _dmp->dm_setLineAttr(_dmp, _width, _dashed)
 #define DM_CONFIGURE_WIN(_dmp, _force) _dmp->dm_configureWin((_dmp), (_force))
-#define DM_SET_WIN_BOUNDS(_dmp, _w) _dmp->dm_setWinBounds(_dmp, _w)
 #define DM_SET_LIGHT(_dmp, _on) _dmp->dm_setLight(_dmp, _on)
 #define DM_SET_TRANSPARENCY(_dmp, _on) _dmp->dm_setTransparency(_dmp, _on)
 #define DM_SET_DEPTH_MASK(_dmp, _on) _dmp->dm_setDepthMask(_dmp, _on)
@@ -321,54 +237,53 @@ struct dm {
 #define DM_FREEDLISTS(_dmp, _list, _range) _dmp->dm_freeDLists(_dmp, _list, _range)
 #define DM_GEN_DLISTS(_dmp, _range) _dmp->dm_genDLists(_dmp, _range)
 #define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
-#define DM_MAKE_CURRENT(_dmp) _dmp->dm_makeCurrent(_dmp)
 
 __BEGIN_DECLS
 
-DM_EXPORT extern struct dm dm_ogl;
-DM_EXPORT extern struct dm dm_plot;
-DM_EXPORT extern struct dm dm_ps;
-DM_EXPORT extern struct dm dm_rtgl;
-DM_EXPORT extern struct dm dm_tk;
-DM_EXPORT extern struct dm dm_wgl;
-DM_EXPORT extern struct dm dm_X;
-DM_EXPORT extern struct dm dm_txt;
-DM_EXPORT extern struct dm dm_qt;
+DM_EXPORT extern dm dm_ogl;
+DM_EXPORT extern dm dm_plot;
+DM_EXPORT extern dm dm_ps;
+DM_EXPORT extern dm dm_rtgl;
+DM_EXPORT extern dm dm_tk;
+DM_EXPORT extern dm dm_wgl;
+DM_EXPORT extern dm dm_X;
+DM_EXPORT extern dm dm_txt;
+DM_EXPORT extern dm dm_qt;
 
 DM_EXPORT extern int Dm_Init(void *interp);
-DM_EXPORT extern struct dm *dm_open(Tcl_Interp *interp,
+DM_EXPORT extern dm *dm_open(Tcl_Interp *interp,
 				    int type,
 				    int argc,
 				    const char *argv[]);
-DM_EXPORT extern int dm_share_dlist(struct dm *dmp1,
-				    struct dm *dmp2);
-DM_EXPORT extern fastf_t dm_Xx2Normal(struct dm *dmp,
+DM_EXPORT extern int dm_share_dlist(dm *dmp1,
+				    dm *dmp2);
+DM_EXPORT extern fastf_t dm_Xx2Normal(dm *dmp,
 				      int x);
-DM_EXPORT extern int dm_Normal2Xx(struct dm *dmp,
+DM_EXPORT extern int dm_Normal2Xx(dm *dmp,
 				  fastf_t f);
-DM_EXPORT extern fastf_t dm_Xy2Normal(struct dm *dmp,
+DM_EXPORT extern fastf_t dm_Xy2Normal(dm *dmp,
 				      int y,
 				      int use_aspect);
-DM_EXPORT extern int dm_Normal2Xy(struct dm *dmp,
+DM_EXPORT extern int dm_Normal2Xy(dm *dmp,
 				  fastf_t f,
 				  int use_aspect);
-DM_EXPORT extern void dm_fogHint(struct dm *dmp,
+DM_EXPORT extern void dm_fogHint(dm *dmp,
 				 int fastfog);
-DM_EXPORT extern int dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char **argv);
+DM_EXPORT extern int dm_processOptions(dm *dmp, struct bu_vls *init_proc_vls, int argc, char **argv);
 DM_EXPORT extern int dm_limit(int i);
 DM_EXPORT extern int dm_unlimit(int i);
 DM_EXPORT extern fastf_t dm_wrap(fastf_t f);
 
 /* adc.c */
-DM_EXPORT extern void dm_draw_adc(struct dm *dmp,
+DM_EXPORT extern void dm_draw_adc(dm *dmp,
 				  struct ged_view *gvp);
 
 /* axes.c */
-DM_EXPORT extern void dm_draw_data_axes(struct dm *dmp,
+DM_EXPORT extern void dm_draw_data_axes(dm *dmp,
 					fastf_t viewSize,
 					struct ged_data_axes_state *gdasp);
 
-DM_EXPORT extern void dm_draw_axes(struct dm *dmp,
+DM_EXPORT extern void dm_draw_axes(dm *dmp,
 				   fastf_t viewSize,
 				   const mat_t rmat,
 				   struct ged_axes_state *gasp);
@@ -384,28 +299,28 @@ DM_EXPORT extern int vclip(fastf_t *,
 			   fastf_t *);
 
 /* grid.c */
-DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
+DM_EXPORT extern void dm_draw_grid(dm *dmp,
 				   struct ged_grid_state *ggsp,
 				   struct ged_view *gvp,
 				   fastf_t base2local);
 
 /* labels.c */
-DM_EXPORT extern int dm_draw_labels(struct dm *dmp,
+DM_EXPORT extern int dm_draw_labels(dm *dmp,
 				    struct rt_wdb *wdbp,
 				    const char *name,
 				    mat_t viewmat,
 				    int *labelsColor,
-				    int (*labelsHook)(struct dm *dmp_arg, struct rt_wdb *wdbp_arg,
+				    int (*labelsHook)(dm *dmp_arg, struct rt_wdb *wdbp_arg,
                                                       const char *name_arg, mat_t viewmat_arg,
                                                       int *labelsColor_arg, ClientData labelsHookClientdata_arg),
 				    ClientData labelsHookClientdata);
 
 /* rect.c */
-DM_EXPORT extern void dm_draw_rect(struct dm *dmp,
+DM_EXPORT extern void dm_draw_rect(dm *dmp,
 				   struct ged_rect_state *grsp);
 
 /* scale.c */
-DM_EXPORT extern void dm_draw_scale(struct dm *dmp,
+DM_EXPORT extern void dm_draw_scale(dm *dmp,
 				    fastf_t viewSize,
 				    int *lineColor,
 				    int *textColor);
@@ -414,44 +329,31 @@ DM_EXPORT extern void dm_draw_scale(struct dm *dmp,
 DM_EXPORT extern const char *dm_version(void);
 
 
+
+/* functions to make a dm struct hidable - will need to
+ * sort these out later */
+
+DM_EXPORT extern int dm_get_width(dm *dmp);
+DM_EXPORT extern int dm_get_height(dm *dmp);
+DM_EXPORT extern int dm_get_aspect(dm *dmp);
+DM_EXPORT extern int dm_close(dm *dmp);
+DM_EXPORT extern unsigned char *dm_get_bg(dm *dmp);
+DM_EXPORT extern int dm_set_bg(dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+DM_EXPORT extern int dm_make_current(dm *dmp);
+DM_EXPORT extern vect_t *dm_get_clipmin(dm *dmp);
+DM_EXPORT extern vect_t *dm_get_clipmax(dm *dmp);
+DM_EXPORT extern void dm_set_bound(dm *dmp, fastf_t val);
+DM_EXPORT extern int dm_set_win_bounds(dm *dmp, fastf_t *w);
+DM_EXPORT extern int dm_configure_win(dm *dmp, int force);
+
+
+
+
+
+
+
+
 __END_DECLS
-
-
-/************************************************/
-/* dm-*.c macros for autogenerating common code */
-/************************************************/
-
-#define HIDDEN_DM_FUNCTION_PROTOTYPES(_dmtype) \
-    HIDDEN int _dmtype##_close(struct dm *dmp); \
-    HIDDEN int _dmtype##_drawBegin(struct dm *dmp); \
-    HIDDEN int _dmtype##_drawEnd(struct dm *dmp); \
-    HIDDEN int _dmtype##_normal(struct dm *dmp); \
-    HIDDEN int _dmtype##_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye); \
-    HIDDEN int _dmtype##_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect); \
-    HIDDEN int _dmtype##_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2); \
-    HIDDEN int _dmtype##_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2); \
-    HIDDEN int _dmtype##_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag); \
-    HIDDEN int _dmtype##_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y); \
-    HIDDEN int _dmtype##_drawPoint3D(struct dm *dmp, point_t point); \
-    HIDDEN int _dmtype##_drawPoints3D(struct dm *dmp, int npoints, point_t *points); \
-    HIDDEN int _dmtype##_drawVList(struct dm *dmp, struct bn_vlist *vp); \
-    HIDDEN int _dmtype##_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data); \
-    HIDDEN int _dmtype##_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency); \
-    HIDDEN int _dmtype##_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b); \
-    HIDDEN int _dmtype##_setLineAttr(struct dm *dmp, int width, int style); \
-    HIDDEN int _dmtype##_configureWin_guts(struct dm *dmp, int force); \
-    HIDDEN int _dmtype##_configureWin(struct dm *dmp, int force);		      \
-    HIDDEN int _dmtype##_setLight(struct dm *dmp, int lighting_on); \
-    HIDDEN int _dmtype##_setTransparency(struct dm *dmp, int transparency_on); \
-    HIDDEN int _dmtype##_setDepthMask(struct dm *dmp, int depthMask_on); \
-    HIDDEN int _dmtype##_setZBuffer(struct dm *dmp, int zbuffer_on); \
-    HIDDEN int _dmtype##_setWinBounds(struct dm *dmp, fastf_t *w); \
-    HIDDEN int _dmtype##_debug(struct dm *dmp, int lvl); \
-    HIDDEN int _dmtype##_beginDList(struct dm *dmp, unsigned int list); \
-    HIDDEN int _dmtype##_endDList(struct dm *dmp); \
-    HIDDEN int _dmtype##_drawDList(struct dm *dmp, unsigned int list); \
-    HIDDEN int _dmtype##_freeDLists(struct dm *dmp, unsigned int list, int range); \
-    HIDDEN int _dmtype##_getDisplayImage(struct dm *dmp, unsigned char **image);
 
 #endif /* DM_H */
 

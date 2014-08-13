@@ -47,6 +47,7 @@
 #include "nurb.h"
 #include "solid.h"
 #include "dm.h"
+#include "dm_private.h"
 
 #ifdef DM_X
 #  include "dm/dm_xvars.h"
@@ -85,13 +86,13 @@
 struct dm_obj {
     struct bu_list l;
     struct bu_vls dmo_name;		/**< @brief display manager object name/cmd */
-    struct dm *dmo_dmp;		/**< @brief display manager pointer */
+    dm *dmo_dmp;		/**< @brief display manager pointer */
 #ifdef USE_FBSERV
     struct fbserv_obj dmo_fbs;		/**< @brief fbserv object */
 #endif
     struct bu_observer dmo_observers;		/**< @brief fbserv observers */
     mat_t viewMat;
-    int (*dmo_drawLabelsHook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
+    int (*dmo_drawLabelsHook)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
     void *dmo_drawLabelsHookClientData;
     Tcl_Interp *interp;
 };
@@ -1649,10 +1650,7 @@ dmo_bg_tcl(void *clientData, int argc, const char **argv)
 	    goto bad_color;
 
 	bu_vls_free(&vls);
-	return DM_SET_BGCOLOR(dmop->dmo_dmp,
-			      (unsigned char)r,
-			      (unsigned char)g,
-			      (unsigned char)b);
+	return dm_set_bg(dmop->dmo_dmp, (unsigned char)r, (unsigned char)g, (unsigned char)b);
     }
 
     /* wrong number of arguments */
@@ -2911,7 +2909,7 @@ dmo_getDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 HIDDEN int
 dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 {
-    int (*hook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
+    int (*hook)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
     void *clientData;
 
     if (!dmop || !dmop->interp)
@@ -2934,7 +2932,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	Tcl_DStringAppend(&ds, ": failed to set the drawLabels hook", -1);
 	Tcl_DStringResult(dmop->interp, &ds);
 
-	dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
+	dmop->dmo_drawLabelsHook = (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 	return TCL_ERROR;
     }
@@ -2947,7 +2945,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	Tcl_DStringAppend(&ds, ": failed to set the drawLabels hook", -1);
 	Tcl_DStringResult(dmop->interp, &ds);
 
-	dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
+	dmop->dmo_drawLabelsHook = (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 	return TCL_ERROR;
     }
@@ -2988,7 +2986,7 @@ dmo_deleteProc(ClientData clientData)
 #endif
 
     bu_vls_free(&dmop->dmo_name);
-    DM_CLOSE(dmop->dmo_dmp);
+    (void)dm_close(dmop->dmo_dmp);
     BU_LIST_DEQUEUE(&dmop->l);
     bu_free((void *)dmop, "dmo_deleteProc: dmop");
 
@@ -3075,7 +3073,7 @@ HIDDEN int
 dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct dm_obj *dmop;
-    struct dm *dmp;
+    dm *dmp;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int name_index = 1;
     int type = DM_TYPE_BAD;
@@ -3195,7 +3193,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     dmop->dmo_dmp = dmp;
     VSETALL(dmop->dmo_dmp->dm_clipmin, -2048.0);
     VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
-    dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
+    dmop->dmo_drawLabelsHook = (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 #ifdef USE_FBSERV
     dmop->dmo_fbs.fbs_listener.fbsl_fbsp = &dmop->dmo_fbs;

@@ -35,10 +35,11 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
+#include "dm_private.h"
 
 
 void
-dm_draw_data_axes(struct dm *dmp,
+dm_draw_data_axes(dm *dmp,
 		  fastf_t sf,
 		  struct ged_data_axes_state *gdasp)
 {
@@ -117,7 +118,7 @@ dm_draw_data_axes(struct dm *dmp,
 }
 
 void
-dm_draw_axes(struct dm			*dmp,
+dm_draw_axes(dm				*dmp,
 	     fastf_t			viewSize, /* in mm */
 	     const mat_t		rmat,       /* view rotation matrix */
 	     struct ged_axes_state 	*gasp)

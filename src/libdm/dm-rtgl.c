@@ -59,7 +59,7 @@
 #include "dm/dm_xvars.h"
 #include "solid.h"
 
-#include "./dm_util.h"
+#include "./dm_private.h"
 
 #define VIEWFACTOR (1.0/(*dmp->dm_vp))
 #define VIEWSIZE (2.0*(*dmp->dm_vp))
@@ -76,18 +76,18 @@ extern int vectorThreshold;	/* defined in libdm/tcl.c */
 #endif
 
 static int rtgl_actively_drawing;
-HIDDEN XVisualInfo *rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin);
+HIDDEN XVisualInfo *rtgl_choose_visual(dm *dmp, Tk_Window tkwin);
 
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
 
-struct dm *rtgl_open(Tcl_Interp *interp, int argc, char **argv);
+dm *rtgl_open(Tcl_Interp *interp, int argc, char **argv);
 
 HIDDEN_DM_FUNCTION_PROTOTYPES(rtgl)
 
-struct dm dm_rtgl = {
+dm dm_rtgl = {
     rtgl_close,
     rtgl_drawBegin,
     rtgl_drawEnd,
@@ -214,7 +214,7 @@ freeJobList(struct jobList *jobs)
 
 
 void
-rtgl_fogHint(struct dm *dmp, int fastfog)
+rtgl_fogHint(dm *dmp, int fastfog)
 {
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
@@ -225,7 +225,7 @@ rtgl_fogHint(struct dm *dmp, int fastfog)
  * Fire up the display manager, and the display processor.
  *
  */
-struct dm *
+dm *
 rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
@@ -242,7 +242,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     Display *tmp_dpy = (Display *)NULL;
-    struct dm *dmp = (struct dm *)NULL;
+    dm *dmp = (dm *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     int screen_number = -1;
 
@@ -250,7 +250,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp, struct dm_internal);
 
     *dmp = dm_rtgl; /* struct copy */
     dmp->dm_interp = interp;
@@ -572,16 +572,16 @@ Done:
 
 
 int
-rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
+rtgl_share_dlist(dm *dmp1, dm *dmp2)
 {
     GLfloat backgnd[4];
     GLfloat vf;
     GLXContext old_glxContext;
 
-    if (dmp1 == (struct dm *)NULL)
+    if (dmp1 == (dm *)NULL)
 	return TCL_ERROR;
 
-    if (dmp2 == (struct dm *)NULL) {
+    if (dmp2 == (dm *)NULL) {
 	/* create a new graphics context for dmp1 with private display lists */
 
 	old_glxContext = ((struct rtgl_vars *)dmp1->dm_vars.priv_vars)->glxc;
@@ -741,7 +741,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
  * Gracefully release the display.
  */
 HIDDEN int
-rtgl_close(struct dm *dmp)
+rtgl_close(dm *dmp)
 {
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
 	if (((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc) {
@@ -817,7 +817,7 @@ rtgl_stashTree(struct rtglJobs *job, char *tree)
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
-rtgl_drawBegin(struct dm *dmp)
+rtgl_drawBegin(dm *dmp)
 {
     GLfloat fogdepth;
 
@@ -873,7 +873,7 @@ rtgl_drawBegin(struct dm *dmp)
 
 
 HIDDEN int
-rtgl_drawEnd(struct dm *dmp)
+rtgl_drawEnd(dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_drawEnd\n");
@@ -925,7 +925,7 @@ double startScale = 1;
  * many calls to rtgl_draw().
  */
 HIDDEN int
-rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
+rtgl_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
 {
     mat_t newm;
 
@@ -1559,7 +1559,7 @@ double maxSpan;
 time_t start = 0;
 
 HIDDEN int
-rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
+rtgl_drawVList(dm *dmp, struct bn_vlist *UNUSED(vp))
 {
     size_t i, j, new, numNew, maxPixels, viewSize;
     vect_t span;
@@ -1907,7 +1907,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 
 
 HIDDEN int
-rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+rtgl_draw(dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -1931,7 +1931,7 @@ rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **
  * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
-rtgl_normal(struct dm *dmp)
+rtgl_normal(dm *dmp)
 {
 
     if (dmp->dm_debugLevel)
@@ -1960,7 +1960,7 @@ rtgl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-rtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+rtgl_drawString2D(dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -1981,7 +1981,7 @@ rtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 
 
 HIDDEN int
-rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
+rtgl_drawLine2D(dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
 
     return drawLine2D(dmp, x1, y1, x2, y2, "rtgl_drawLine2D()\n");
@@ -1989,7 +1989,7 @@ rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 
 
 HIDDEN int
-rtgl_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
+rtgl_drawLine3D(dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -1998,7 +1998,7 @@ rtgl_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 
 
 HIDDEN int
-rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
+rtgl_drawLines3D(dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
 	return TCL_ERROR;
@@ -2007,7 +2007,7 @@ rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag)
 
 
 HIDDEN int
-rtgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+rtgl_drawPoint2D(dm *dmp, fastf_t x, fastf_t y)
 {
     if (dmp->dm_debugLevel) {
 	bu_log("rtgl_drawPoint2D():\n");
@@ -2023,7 +2023,7 @@ rtgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
-rtgl_drawPoint3D(struct dm *dmp, point_t point)
+rtgl_drawPoint3D(dm *dmp, point_t point)
 {
     if (!dmp || !point)
 	return TCL_ERROR;
@@ -2042,7 +2042,7 @@ rtgl_drawPoint3D(struct dm *dmp, point_t point)
 
 
 HIDDEN int
-rtgl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
+rtgl_drawPoints3D(dm *dmp, int npoints, point_t *points)
 {
     register int i;
 
@@ -2063,7 +2063,7 @@ rtgl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 
 
 HIDDEN int
-rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+rtgl_setFGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setFGColor()\n");
@@ -2114,7 +2114,7 @@ rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 
 
 HIDDEN int
-rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+rtgl_setBGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setBGColor()\n");
@@ -2149,7 +2149,7 @@ rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 
 
 HIDDEN int
-rtgl_setLineAttr(struct dm *dmp, int width, int style)
+rtgl_setLineAttr(dm *dmp, int width, int style)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setLineAttr()\n");
@@ -2170,7 +2170,7 @@ rtgl_setLineAttr(struct dm *dmp, int width, int style)
 
 /* ARGSUSED */
 HIDDEN int
-rtgl_debug(struct dm *dmp, int lvl)
+rtgl_debug(dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
@@ -2179,7 +2179,7 @@ rtgl_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-rtgl_setWinBounds(struct dm *dmp, fastf_t *w)
+rtgl_setWinBounds(dm *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setWinBounds()\n");
@@ -2205,7 +2205,7 @@ rtgl_setWinBounds(struct dm *dmp, fastf_t *w)
  * OpenGL
  */
 HIDDEN XVisualInfo *
-rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
+rtgl_choose_visual(dm *dmp, Tk_Window tkwin)
 {
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
 #define NGOOD 256
@@ -2356,7 +2356,7 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
  * also change font size if necessary
  */
 HIDDEN int
-rtgl_configureWin_guts(struct dm *dmp, int force)
+rtgl_configureWin_guts(dm *dmp, int force)
 {
     GLint mm;
     XWindowAttributes xwa;
@@ -2493,14 +2493,14 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
 
 
 HIDDEN int
-rtgl_configureWin(struct dm *dmp, int force)
+rtgl_configureWin(dm *dmp, int force)
 {
     return rtgl_configureWin_guts(dmp, force);
 }
 
 
 HIDDEN int
-rtgl_setLight(struct dm *dmp, int lighting_on)
+rtgl_setLight(dm *dmp, int lighting_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setLight()\n");
@@ -2537,7 +2537,7 @@ rtgl_setLight(struct dm *dmp, int lighting_on)
 
 
 HIDDEN int
-rtgl_setTransparency(struct dm *dmp,
+rtgl_setTransparency(dm *dmp,
 		     int transparency_on)
 {
     if (dmp->dm_debugLevel)
@@ -2567,7 +2567,7 @@ rtgl_setTransparency(struct dm *dmp,
 
 
 HIDDEN int
-rtgl_setDepthMask(struct dm *dmp,
+rtgl_setDepthMask(dm *dmp,
 		  int enable) {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setDepthMask()\n");
@@ -2591,7 +2591,7 @@ rtgl_setDepthMask(struct dm *dmp,
 
 
 HIDDEN int
-rtgl_setZBuffer(struct dm *dmp, int zbuffer_on)
+rtgl_setZBuffer(dm *dmp, int zbuffer_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setZBuffer:\n");
@@ -2623,7 +2623,7 @@ rtgl_setZBuffer(struct dm *dmp, int zbuffer_on)
 
 
 int
-rtgl_beginDList(struct dm *dmp, unsigned int list)
+rtgl_beginDList(dm *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_beginDList()\n");
@@ -2641,7 +2641,7 @@ rtgl_beginDList(struct dm *dmp, unsigned int list)
 
 
 int
-rtgl_endDList(struct dm *dmp)
+rtgl_endDList(dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_endDList()\n");
@@ -2652,14 +2652,14 @@ rtgl_endDList(struct dm *dmp)
 
 
 void
-rtgl_drawDList(struct dm *dmp, unsigned int list)
+rtgl_drawDList(dm *dmp, unsigned int list)
 {
     glCallList((GLuint)list);
 }
 
 
 int
-rtgl_freeDLists(struct dm *dmp, unsigned int list, int range)
+rtgl_freeDLists(dm *dmp, unsigned int list, int range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_freeDLists()\n");
@@ -2677,7 +2677,7 @@ rtgl_freeDLists(struct dm *dmp, unsigned int list, int range)
 
 
 int
-rtgl_genDLists(struct dm *dmp, size_t range)
+rtgl_genDLists(dm *dmp, size_t range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_freeDLists()\n");
