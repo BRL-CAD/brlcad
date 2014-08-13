@@ -81,7 +81,8 @@ Usage: mac-pix [-c -l -b]\n\
 	[-s squareMacsize] [-w Mac_width] [-n Mac_height]\n\
 	[-x Mac_xoff] [-y Mac_yoff] [-X outp_xoff] [-Y outp_yoff]\n\
 	[-S squareoutpsize] [-W outp_width] [-N outp_height]\n\
-	[-C r/g/b] [file.mac]\n";
+	[-C r/g/b] [file.mac]\n\
+       (standard output must be redirected)\n";
 
 int
 get_args(int argc, char **argv)
