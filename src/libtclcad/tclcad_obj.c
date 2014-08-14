@@ -13227,106 +13227,11 @@ HIDDEN void to_dm_get_display_image(struct ged *gedp, unsigned char **idata)
 HIDDEN int
 to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 {
-    struct fb_platform_specific *fb_ps;
-#ifdef DM_X
-    struct X24_fb_info *xfb_ps;
-#endif
-#ifdef DM_OGL
-    struct ogl_fb_info *ofb_ps;
-#endif
-#ifdef DM_WGL
-    struct wgl_fb_info *wfb_ps;
-#endif
-#ifdef DM_QT
-    struct qt_fb_info *qtfb_ps;
-#endif
-
     /* already open */
     if (gdvp->gdv_fbs.fbs_fbp != FB_NULL)
 	return TCL_OK;
 
-    switch (dm_get_type(gdvp->gdv_dmp)) {
-#ifdef DM_X
-	case DM_TYPE_X:
-	    fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
-	    xfb_ps = (struct X24_fb_info *)fb_ps->data;
-	    xfb_ps->dpy = ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->dpy;
-	    xfb_ps->win = ((struct x_vars *)(dm_get_private_vars(gdvp->gdv_dmp)))->pix;
-	    xfb_ps->cwinp = ((struct dm_xvars *)(dm_get_private_vars(gdvp->gdv_dmp)))->win;
-	    xfb_ps->cmap = ((struct dm_xvars *)(dm_get_private_vars(gdvp->gdv_dmp)))->cmap;
-	    xfb_ps->vip = ((struct dm_xvars *)(dm_get_private_vars(gdvp->gdv_dmp)))->vip;
-	    xfb_ps->gc = ((struct x_vars *)(dm_get_private_vars(gdvp->gdv_dmp)))->gc;
-	    gdvp->gdv_fbs.fbs_fbp = fb_open_existing("X", dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp), fb_ps);
-	    fb_put_platform_specific(fb_ps);
-	    break;
-#endif
-#ifdef DM_OGL
-	case DM_TYPE_OGL:
-	    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
-	    ofb_ps = (struct ogl_fb_info *)fb_ps->data;
-	    ofb_ps->dpy =  ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->dpy;
-	    ofb_ps->win =  ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->win;
-	    ofb_ps->cmap = ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->cmap;
-	    ofb_ps->vip = ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->vip;
-	    ofb_ps->glxc = ((struct ogl_vars *)(dm_get_private_vars(gdvp->gdv_dmp)))->glxc;
-	    ofb_ps->double_buffer = ((struct ogl_vars *)(dm_get_private_vars(gdvp->gdv_dmp)))->mvars.doublebuffer;
-	    ofb_ps->soft_cmap = 0;
-	    gdvp->gdv_fbs.fbs_fbp = fb_open_existing("ogl", dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp), fb_ps);
-	    fb_put_platform_specific(fb_ps);
-	    break;
-#endif
-#ifdef DM_OSG
-	case DM_TYPE_OSG:
-	    break;
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    fb_ps = fb_get_platform_specific(FB_WGL_MAGIC);
-	    wfb_ps = (struct wgl_fb_info *)fb_ps->data;
-	    wfb_ps->dpy = ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->dpy;
-	    wfb_ps->win = ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->win;
-	    wfb_ps->cmap = ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->cmap;
-	    wfb_ps->vip = ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->vip;
-	    wfb_ps->hdc = ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->hdc;
-	    wfb_ps->glxc = ((struct wgl_vars *)(dm_get_private_vars(gdvp->gdv_dmp)))->glxc;
-	    wfb_ps->double_buffer = ((struct wgl_vars *)(dm_get_private_vars(gdvp->gdv_dmp)))->mvars.doublebuffer
-	    wfb_ps->soft_cmap = 0;
-	    gdvp->gdv_fbs.fbs_fbp = fb_open_existing("wgl", dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp), fb_ps);
-	    fb_put_platform_specific(fb_ps);
-	    break;
-#endif
-#ifdef DM_QT
-	case DM_TYPE_QT:
-	    fb_ps = fb_get_platform_specific(FB_QT_MAGIC);
-	    qtfb_ps = (struct wgl_fb_info *)fb_ps->data;
-	    qtfb_ps->qapp = NULL;
-	    qtfb_ps->qwin = NULL;
-	    qtfb_ps->qpainter = NULL;
-	    qtfb_ps->draw = NULL;
-	    qtfb_ps->qimg = NULL;
-	    /*gdvp->gdv_fbs.fbs_fbp = fb_open_existing("Qt", dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp), fb_ps);*/
-	    fb_put_platform_specific(fb_ps);
-	    gdvp->gdv_dmp->dm_openFb(gdvp->gdv_dmp, gdvp->gdv_fbs.fbs_fbp);
-
-	    break;
-#endif
-	default: {
-	    Tcl_Obj *obj;
-
-	    free((void*)gdvp->gdv_fbs.fbs_fbp);
-	    gdvp->gdv_fbs.fbs_fbp = FB_NULL;
-
-	    obj = Tcl_GetObjResult(interp);
-	    if (Tcl_IsShared(obj))
-		obj = Tcl_DuplicateObj(obj);
-
-	    Tcl_AppendStringsToObj(obj, "openfb: failed to attach framebuffer interface (unsupported display manager type)\n",
-				   (char *)NULL);
-
-	    Tcl_SetObjResult(interp, obj);
-	    return TCL_ERROR;
-	}
-    }
+    gdvp->gdv_fbs.fbs_fbp = dm_get_fb(gdvp->gdv_dmp);
 
     if ((gdvp->gdv_fbs.fbs_fbp == FB_NULL)) {
 	Tcl_Obj *obj;
@@ -13335,8 +13240,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 	if (Tcl_IsShared(obj))
 	    obj = Tcl_DuplicateObj(obj);
 
-	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n",
-			       (char *)NULL);
+	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n", (char *)NULL);
 
 	Tcl_SetObjResult(interp, obj);
 	return TCL_ERROR;

@@ -76,9 +76,6 @@
 #  include "fb.h"
 #endif
 
-/* Embedding windows requires platform specific information */
-#include "fb/fb_platform_specific.h"
-
 /**
  *@brief
  * A display manager object is used for interacting with a display manager.
@@ -108,17 +105,6 @@ static struct dm_obj HeadDMObj;	/* head of display manager object list */
 HIDDEN int
 dmo_openFb(struct dm_obj *dmop)
 {
-    struct fb_platform_specific *fb_ps;
-#ifdef DM_X
-    struct X24_fb_info *xfb_ps;
-#endif
-#ifdef DM_OGL
-    struct ogl_fb_info *ofb_ps;
-#endif
-#ifdef DM_WGL
-    struct wgl_fb_info *wfb_ps;
-#endif
-
     if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
@@ -126,70 +112,7 @@ dmo_openFb(struct dm_obj *dmop)
     if (dmop->dmo_fbs.fbs_fbp != FB_NULL)
 	return TCL_OK;
 
-    switch (dmop->dmo_dmp->dm_type) {
-#ifdef DM_X
-	case DM_TYPE_X:
-	    fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
-	    xfb_ps = (struct X24_fb_info *)fb_ps->data;
-	    xfb_ps->dpy = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy;
-	    xfb_ps->win = ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->pix;
-	    xfb_ps->cwinp = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.priv_vars)->win;
-	    xfb_ps->cmap = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.priv_vars)->cmap;
-	    xfb_ps->vip = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.priv_vars)->vip;
-	    xfb_ps->gc = ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc;
-	    dmop->dmo_fbs.fbs_fbp = fb_open_existing("X", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height, fb_ps);
-	    fb_put_platform_specific(fb_ps);
-	    break;
-#endif
-
-#ifdef DM_OGL
-	case DM_TYPE_OGL:
-	    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
-	    ofb_ps = (struct ogl_fb_info *)fb_ps->data;
-	    ofb_ps->dpy = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy;
-	    ofb_ps->win = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win;
-	    ofb_ps->cmap = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap;
-	    ofb_ps->vip = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip;
-	    ofb_ps->glxc = ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc;
-	    ofb_ps->double_buffer = ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer;
-	    ofb_ps->soft_cmap = 0;
-	    dmop->dmo_fbs.fbs_fbp = fb_open_existing("ogl", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height, fb_ps);
-	    fb_put_platform_specific(fb_ps);
-	    break;
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
-	    wfb_ps = (struct wgl_fb_info *)fb_ps->data;
-	    wfb_ps->dpy =  ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy;
-	    wfb_ps->win =  ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win;
-	    wfb_ps->cmap = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap;
-	    wfb_ps->vip = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip;
-	    wfb_ps->hdc = ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->hdc;
-	    wfb_ps->glxc = ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc;
-	    wfb_ps->double_buffer = ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer;
-	    wfb_ps->soft_cmap = 0;
-	    dmop->dmo_fbs.fbs_fbp = fb_open_existing("wgl", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height, fb_ps);
-	    fb_put_platform_specific(fb_ps);
-	    break;
-#endif
-	default: {
-	    Tcl_Obj *obj;
-
-	    free((void*)dmop->dmo_fbs.fbs_fbp);
-	    dmop->dmo_fbs.fbs_fbp = FB_NULL;
-
-	    obj = Tcl_GetObjResult(dmop->interp);
-	    if (Tcl_IsShared(obj))
-		obj = Tcl_DuplicateObj(obj);
-
-	    Tcl_AppendStringsToObj(obj, "openfb: failed to attach framebuffer interface (unsupported display manager type)\n",
-				   (char *)NULL);
-
-	    Tcl_SetObjResult(dmop->interp, obj);
-	    return TCL_ERROR;
-	}
-    }
+    dmop->dmo_fbs.fbs_fbp = dm_get_fb(dmop->dmo_dmp);
 
     if (dmop->dmo_fbs.fbs_fbp == FB_NULL) {
 	Tcl_Obj *obj;
@@ -198,8 +121,7 @@ dmo_openFb(struct dm_obj *dmop)
 	if (Tcl_IsShared(obj))
 	    obj = Tcl_DuplicateObj(obj);
 
-	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n",
-			       (char *)NULL);
+	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n", (char *)NULL);
 
 	Tcl_SetObjResult(dmop->interp, obj);
 	return TCL_ERROR;
