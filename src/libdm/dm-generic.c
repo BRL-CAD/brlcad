@@ -328,6 +328,20 @@ dm_set_bg(dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     return dmp->dm_setBGColor(dmp, r, g, b);
 }
 
+unsigned char *
+dm_get_fg(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return dmp->dm_fg;
+}
+
+int
+dm_set_fg(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+{
+    if (!dmp) return 0;
+    return dmp->dm_setFGColor(dmp, r, g, b, strict, transparency);
+}
+
 int
 dm_make_current(dm *dmp)
 {
@@ -399,6 +413,225 @@ dm_get_private_vars(dm *dmp)
     if (!dmp) return NULL;
     return dmp->dm_vars.priv_vars;
 }
+
+int
+dm_get_transparency(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_transparency;
+}
+
+int
+dm_set_transparency(dm *dmp, int transparency)
+{
+    if (!dmp) return 0;
+    return dmp->dm_setTransparency(dmp, transparency);
+}
+
+int
+dm_get_zbuffer(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_zbuffer;
+}
+
+int
+dm_set_zbuffer(dm *dmp, int zbuffer)
+{
+    if (!dmp) return 0;
+    return dmp->dm_setZBuffer(dmp, zbuffer);
+}
+
+int
+dm_get_linewidth(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_lineWidth;
+}
+
+void
+dm_set_linewidth(dm *dmp, int linewidth)
+{
+    if (!dmp) return;
+    dmp->dm_lineWidth = linewidth;
+}
+
+int
+dm_get_linestyle(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_lineStyle;
+}
+
+void
+dm_set_linestyle(dm *dmp, int linestyle)
+{
+    if (!dmp) return;
+    dmp->dm_lineStyle = linestyle;
+}
+
+int
+dm_set_line_attr(dm *dmp, int width, int style)
+{
+    if (!dmp) return 0;
+    return dmp->dm_setLineAttr(dmp, width, style);
+}
+
+
+int
+dm_get_zclip(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_zclip;
+}
+
+void
+dm_set_zclip(dm *dmp, int zclip)
+{
+    if (!dmp) return;
+    dmp->dm_zclip = zclip;
+}
+
+int
+dm_get_perspective(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_perspective;
+}
+
+void
+dm_set_perspective(dm *dmp, fastf_t perspective)
+{
+    if (!dmp) return;
+    dmp->dm_perspective = perspective;
+}
+
+int
+dm_get_display_image(struct dm_internal *dmp, unsigned char **image)
+{
+    return dmp->dm_getDisplayImage(dmp, image);
+}
+
+int
+dm_gen_dlists(struct dm_internal *dmp, size_t range)
+{
+    return dmp->dm_genDLists(dmp, range);
+}
+
+int 
+dm_begin_dlist(struct dm_internal *dmp, unsigned int list)
+{
+    return dmp->dm_beginDList(dmp, list);
+}
+void
+dm_draw_dlist(struct dm_internal *dmp, unsigned int list)
+{
+    dmp->dm_drawDList(list);
+}
+int
+dm_end_dlist(struct dm_internal *dmp)
+{
+    return dmp->dm_endDList(dmp);
+}
+int
+dm_free_dlists(struct dm_internal *dmp, unsigned int list, int range)
+{
+    return dmp->dm_freeDLists(dmp, list, range);
+}
+
+int
+dm_draw_vlist(struct dm_internal *dmp, struct bn_vlist *vp)
+{
+    return dmp->dm_drawVList(dmp, vp);
+}
+
+int
+dm_draw_vlist_hidden_line(struct dm_internal *dmp, struct bn_vlist *vp)
+{
+    return dmp->dm_drawVListHiddenLine(dmp, vp);
+}
+int
+dm_draw_begin(dm *dmp)
+{
+    return dmp->dm_drawBegin(dmp);
+}
+int  
+dm_draw_end(dm *dmp) 
+{
+    return dmp->dm_drawEnd(dmp);
+}
+int
+dm_normal(dm *dmp)
+{
+    return dmp->dm_normal(dmp);
+}
+int
+dm_loadmatrix(dm *dmp, fastf_t *mat, int eye)
+{
+    return dmp->dm_loadMatrix(dmp, mat, eye);
+}
+int
+dm_loadpmatrix(dm *dmp, fastf_t *mat)
+{
+    return dmp->dm_loadPMatrix(dmp, mat);
+}
+int
+dm_draw_string_2d(dm *dmp, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect)
+{
+    return dmp->dm_drawString2D(dmp, str, x, y, size, use_aspect);
+}
+int
+dm_draw_line_2d(dm *dmp, fastf_t x1, fastf_t y1_2d, fastf_t x2, fastf_t y2)
+{
+    return dmp->dm_drawLine2D(dmp, x1, y1_2d, x2, y2);
+}
+int
+dm_draw_line_3d(dm *dmp, point_t pt1, point_t pt2)
+{
+    return dmp->dm_drawLine3D(dmp, pt1, pt2);
+}
+int
+dm_draw_lines_3d(dm *dmp, int npoints, point_t *points, int sflag)
+{
+    return dmp->dm_drawLines3D(dmp, npoints, points, sflag);
+}
+int
+dm_draw_point_2d(dm *dmp, fastf_t x, fastf_t y)
+{
+    return dmp->dm_drawPoint2D(dmp, x, y);
+}
+int
+dm_draw_point_3d(dm *dmp, point_t pt)
+{
+    return dmp->dm_drawPoint3D(dmp, pt);
+}
+int
+dm_draw_points_3d(dm *dmp, int npoints, point_t *points)
+{
+    return dmp->dm_drawPoints3D(dmp, npoints, points);
+}
+int
+dm_draw(dm *dmp, struct bn_vlist *(*callback)(void *), void **data)
+{
+    return dmp->dm_draw(dmp, callback, data);
+}
+int
+dm_set_depth_mask(dm *dmp, int d_on)
+{
+    return dmp->dm_setDepthMask(dmp, d_on);
+}
+int
+dm_debug(dm *dmp, int lvl)
+{
+    return dmp->dm_debug(dmp, lvl);
+}
+int
+dm_logfile(dm *dmp, const char *filename)
+{
+    return dmp->dm_logfile(dmp, filename);
+}
+
+
 /*
  * Local Variables:
  * mode: C

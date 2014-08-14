@@ -84,7 +84,7 @@ static struct bu_vls tcl_output_hook = BU_VLS_INIT_ZERO;
 static int
 mged_dm_width(struct ged *gedpp)
 {
-    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
+    dm *dmpp = (dm *)gedpp->ged_dmp;
     return dmpp->dm_width;
 }
 
@@ -92,7 +92,7 @@ mged_dm_width(struct ged *gedpp)
 static int
 mged_dm_height(struct ged *gedpp)
 {
-    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
+    dm *dmpp = (dm *)gedpp->ged_dmp;
     return dmpp->dm_height;
 }
 
@@ -100,7 +100,7 @@ mged_dm_height(struct ged *gedpp)
 static int
 mged_dmp_is_null(struct ged *gedpp)
 {
-    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
+    dm *dmpp = (dm *)gedpp->ged_dmp;
     return dmpp == NULL;
 }
 
@@ -108,8 +108,8 @@ mged_dmp_is_null(struct ged *gedpp)
 static void
 mged_dm_get_display_image(struct ged *gedpp, unsigned char **idata)
 {
-    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
-    DM_GET_DISPLAY_IMAGE(dmpp, idata);
+    dm *dmpp = (dm *)gedpp->ged_dmp;
+    dm_get_display_image(dmpp, idata);
 }
 
 

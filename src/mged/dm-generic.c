@@ -617,8 +617,8 @@ common_dm(int argc, const char *argv[])
 	}
 
 	dirty = 1;
-	(void)DM_MAKE_CURRENT(dmp);
-	return DM_SET_BGCOLOR(dmp, r, g, b);
+	(void)dm_make_current(dmp);
+	return dm_set_bg(dmp, r, g, b);
     }
 
     Tcl_AppendResult(INTERP, "dm: bad command - ", argv[0], "\n", (char *)NULL);

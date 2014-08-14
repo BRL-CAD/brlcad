@@ -117,7 +117,7 @@ Rtgl_dm_init(struct dm_list *o_dm_list,
 
     eventHandler = Rtgl_doevent;
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-    (void)DM_CONFIGURE_WIN(dmp, 0);
+    (void)dm_configure_win(dmp, 0);
 
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&dmp->dm_pathName));
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -240,7 +240,7 @@ establish_zbuffer(const struct bu_structparse *UNUSED(sdp),
 		  void *UNUSED(base),
 		  const char *UNUSED(value))
 {
-    (void)DM_SET_ZBUFFER(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
+    (void)dm_set_zbuffer(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
     view_state->vs_flag = 1;
 }
 
@@ -251,7 +251,7 @@ establish_lighting(const struct bu_structparse *UNUSED(sdp),
 		   void *UNUSED(base),
 		   const char *UNUSED(value))
 {
-    (void)DM_SET_LIGHT(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
+    (void)dm_set_light(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
     view_state->vs_flag = 1;
 }
 
@@ -262,7 +262,7 @@ establish_transparency(const struct bu_structparse *UNUSED(sdp),
 		       void *UNUSED(base),
 		       const char *UNUSED(value))
 {
-    (void)DM_SET_TRANSPARENCY(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on);
+    (void)dm_set_transparency(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on);
     view_state->vs_flag = 1;
 }
 
@@ -305,7 +305,7 @@ zclip_hook(const struct bu_structparse *sdp,
 	bounds[5] = 1.0;
     }
 
-    DM_SET_WIN_BOUNDS(dmp, bounds);
+    dm_set_win_bounds(dmp, bounds);
 }
 
 
@@ -315,7 +315,7 @@ debug_hook(const struct bu_structparse *UNUSED(sdp),
 	   void *UNUSED(base),
 	   const char *UNUSED(value))
 {
-    DM_DEBUG(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.debug);
+    dm_debug(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.debug);
 }
 
 

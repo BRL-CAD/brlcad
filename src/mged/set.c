@@ -428,8 +428,8 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 		    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 			next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-			(void)DM_MAKE_CURRENT(dlp1->dml_dmp);
-			(void)DM_FREEDLISTS(dlp1->dml_dmp,
+			(void)dm_make_current(dlp1->dml_dmp);
+			(void)dm_free_dlists(dlp1->dml_dmp,
 				      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
 				      BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
 				      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);

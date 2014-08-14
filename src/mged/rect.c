@@ -170,28 +170,28 @@ draw_rect(void)
 	adjust_rect_for_zoom();
 
     /* draw rectangle */
-    DM_SET_FGCOLOR(dmp,
+    dm_set_fg(dmp,
 		   color_scheme->cs_rubber_band[0],
 		   color_scheme->cs_rubber_band[1],
 		   color_scheme->cs_rubber_band[2], 1, 1.0);
-    DM_SET_LINE_ATTR(dmp, rubber_band->rb_linewidth, line_style);
+    dm_set_line_attr(dmp, rubber_band->rb_linewidth, line_style);
 
-    DM_DRAW_LINE_2D(dmp,
+    dm_draw_line_2d(dmp,
 		    rubber_band->rb_x,
 		    rubber_band->rb_y * dmp->dm_aspect,
 		    rubber_band->rb_x,
 		    (rubber_band->rb_y + rubber_band->rb_height) * dmp->dm_aspect);
-    DM_DRAW_LINE_2D(dmp,
+    dm_draw_line_2d(dmp,
 		    rubber_band->rb_x,
 		    (rubber_band->rb_y + rubber_band->rb_height) * dmp->dm_aspect,
 		    rubber_band->rb_x + rubber_band->rb_width,
 		    (rubber_band->rb_y + rubber_band->rb_height) * dmp->dm_aspect);
-    DM_DRAW_LINE_2D(dmp,
+    dm_draw_line_2d(dmp,
 		    rubber_band->rb_x + rubber_band->rb_width,
 		    (rubber_band->rb_y + rubber_band->rb_height) * dmp->dm_aspect,
 		    rubber_band->rb_x + rubber_band->rb_width,
 		    rubber_band->rb_y * dmp->dm_aspect);
-    DM_DRAW_LINE_2D(dmp,
+    dm_draw_line_2d(dmp,
 		    rubber_band->rb_x + rubber_band->rb_width,
 		    rubber_band->rb_y * dmp->dm_aspect,
 		    rubber_band->rb_x,

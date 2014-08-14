@@ -93,11 +93,11 @@ dm_draw_grid(dm *dmp, struct ged_grid_state *ggsp, struct ged_view *gvp, fastf_t
 	     0.0);
     }
 
-    DM_SET_FGCOLOR(dmp,
+    dm_set_fg(dmp,
 		   ggsp->ggs_color[0],
 		   ggsp->ggs_color[1],
 		   ggsp->ggs_color[2], 1, 1.0);
-    DM_SET_LINE_ATTR(dmp, 1, 0);		/* solid lines */
+    dm_set_line_attr(dmp, 1, 0);		/* solid lines */
 
     /* draw horizontal dots */
     for (i = 0; i < nv_dots; i += ggsp->ggs_res_major_v) {
@@ -105,7 +105,7 @@ dm_draw_grid(dm *dmp, struct ged_grid_state *ggsp, struct ged_view *gvp, fastf_t
 
 	for (j = 0; j < nh_dots; ++j) {
 	    fx = (view_grid_start_pt_local[X] + (j * ggsp->ggs_res_h * base2local)) * inv_sf;
-	    DM_DRAW_POINT_2D(dmp, fx, fy * dmp->dm_aspect);
+	    dm_draw_point_2d(dmp, fx, fy * dmp->dm_aspect);
 	}
     }
 
@@ -116,7 +116,7 @@ dm_draw_grid(dm *dmp, struct ged_grid_state *ggsp, struct ged_view *gvp, fastf_t
 
 	    for (j = 0; j < nv_dots; ++j) {
 		fy = (view_grid_start_pt_local[Y] + (j * ggsp->ggs_res_v * base2local)) * inv_sf;
-		DM_DRAW_POINT_2D(dmp, fx, fy * dmp->dm_aspect);
+		dm_draw_point_2d(dmp, fx, fy * dmp->dm_aspect);
 	    }
 	}
     }

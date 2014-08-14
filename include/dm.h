@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bn.h"
 #include "ged.h"
 
 #define USE_FBSERV 1
@@ -207,35 +208,6 @@
 typedef struct dm_internal dm;
 
 #define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
-#define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
-#define DM_DRAW_END(_dmp) _dmp->dm_drawEnd(_dmp)
-#define DM_NORMAL(_dmp) _dmp->dm_normal(_dmp)
-#define DM_LOADMATRIX(_dmp, _mat, _eye) _dmp->dm_loadMatrix(_dmp, _mat, _eye)
-#define DM_LOADPMATRIX(_dmp, _mat) _dmp->dm_loadPMatrix(_dmp, _mat)
-#define DM_DRAW_STRING_2D(_dmp, _str, _x, _y, _size, _use_aspect) _dmp->dm_drawString2D(_dmp, _str, _x, _y, _size, _use_aspect)
-#define DM_DRAW_LINE_2D(_dmp, _x1, _y1, _x2, _y2) _dmp->dm_drawLine2D(_dmp, _x1, _y1, _x2, _y2)
-#define DM_DRAW_LINE_3D(_dmp, _pt1, _pt2) _dmp->dm_drawLine3D(_dmp, _pt1, _pt2)
-#define DM_DRAW_LINES_3D(_dmp, _npoints, _points, _sflag) _dmp->dm_drawLines3D(_dmp, _npoints, _points, _sflag)
-#define DM_DRAW_POINT_2D(_dmp, _x, _y) _dmp->dm_drawPoint2D(_dmp, _x, _y)
-#define DM_DRAW_POINT_3D(_dmp, _pt) _dmp->dm_drawPoint3D(_dmp, _pt)
-#define DM_DRAW_POINTS_3D(_dmp, _npoints, _points) _dmp->dm_drawPoints3D(_dmp, _npoints, _points)
-#define DM_DRAW_VLIST(_dmp, _vlist) _dmp->dm_drawVList(_dmp, _vlist)
-#define DM_DRAW_VLIST_HIDDEN_LINE(_dmp, _vlist) _dmp->dm_drawVListHiddenLine(_dmp, _vlist)
-#define DM_DRAW(_dmp, _callback, _data) _dmp->dm_draw(_dmp, _callback, _data)
-#define DM_SET_FGCOLOR(_dmp, _r, _g, _b, _strict, _transparency) _dmp->dm_setFGColor(_dmp, _r, _g, _b, _strict, _transparency)
-#define DM_SET_LINE_ATTR(_dmp, _width, _dashed) _dmp->dm_setLineAttr(_dmp, _width, _dashed)
-#define DM_CONFIGURE_WIN(_dmp, _force) _dmp->dm_configureWin((_dmp), (_force))
-#define DM_SET_TRANSPARENCY(_dmp, _on) _dmp->dm_setTransparency(_dmp, _on)
-#define DM_SET_DEPTH_MASK(_dmp, _on) _dmp->dm_setDepthMask(_dmp, _on)
-#define DM_SET_ZBUFFER(_dmp, _on) _dmp->dm_setZBuffer(_dmp, _on)
-#define DM_DEBUG(_dmp, _lvl) _dmp->dm_debug(_dmp, _lvl)
-#define DM_LOGFILE(_dmp, _lvl) _dmp->dm_logfile(_dmp, _lvl)
-#define DM_BEGINDLIST(_dmp, _list) _dmp->dm_beginDList(_dmp, _list)
-#define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
-#define DM_DRAWDLIST(_dmp, _list) _dmp->dm_drawDList(_list)
-#define DM_FREEDLISTS(_dmp, _list, _range) _dmp->dm_freeDLists(_dmp, _list, _range)
-#define DM_GEN_DLISTS(_dmp, _range) _dmp->dm_genDLists(_dmp, _range)
-#define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
 
 __BEGIN_DECLS
 
@@ -339,6 +311,8 @@ DM_EXPORT extern int dm_get_type(dm *dmp);
 DM_EXPORT extern int dm_close(dm *dmp);
 DM_EXPORT extern unsigned char *dm_get_bg(dm *dmp);
 DM_EXPORT extern int dm_set_bg(dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+DM_EXPORT extern unsigned char *dm_get_fg(dm *dmp);
+DM_EXPORT extern int dm_set_fg(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 DM_EXPORT extern int dm_make_current(dm *dmp);
 DM_EXPORT extern vect_t *dm_get_clipmin(dm *dmp);
 DM_EXPORT extern vect_t *dm_get_clipmax(dm *dmp);
@@ -353,14 +327,43 @@ DM_EXPORT extern void dm_set_light_flag(dm *dmp, int size);
 DM_EXPORT extern int dm_set_light(dm *dmp, int light);
 DM_EXPORT extern void *dm_get_public_vars(dm *dmp);
 DM_EXPORT extern void *dm_get_private_vars(dm *dmp);
-
-
-
-
-
-
-
-
+DM_EXPORT extern int dm_get_transparency(dm *dmp);
+DM_EXPORT extern int dm_set_transparency(dm *dmp, int transparency);
+DM_EXPORT extern int dm_get_zbuffer(dm *dmp);
+DM_EXPORT extern int dm_set_zbuffer(dm *dmp, int zbuffer);
+DM_EXPORT extern int dm_get_linewidth(dm *dmp);
+DM_EXPORT extern void dm_set_linewidth(dm *dmp, int linewidth);
+DM_EXPORT extern int dm_get_linestyle(dm *dmp);
+DM_EXPORT extern void dm_set_linestyle(dm *dmp, int linestyle);
+DM_EXPORT extern int dm_get_zclip(dm *dmp);
+DM_EXPORT extern void dm_set_zclip(dm *dmp, int zclip);
+DM_EXPORT extern int dm_get_perspective(dm *dmp);
+DM_EXPORT extern void dm_set_perspective(dm *dmp, fastf_t perspective);
+DM_EXPORT extern int dm_get_display_image(dm *dmp, unsigned char **image);
+DM_EXPORT extern int dm_gen_dlists(dm *dmp, size_t range);
+DM_EXPORT extern int dm_begin_dlist(dm *dmp, unsigned int list);
+DM_EXPORT extern void dm_draw_dlist(dm *dmp, unsigned int list);
+DM_EXPORT extern int dm_end_dlist(dm *dmp);
+DM_EXPORT extern int dm_free_dlists(dm *dmp, unsigned int list, int range);
+DM_EXPORT extern int dm_draw_vlist(dm *dmp, struct bn_vlist *vp);
+DM_EXPORT extern int dm_draw_vlist_hidden_line(dm *dmp, struct bn_vlist *vp);
+DM_EXPORT extern int dm_set_line_attr(dm *dmp, int width, int style);
+DM_EXPORT extern int dm_draw_begin(dm *dmp);
+DM_EXPORT extern int dm_draw_end(dm *dmp);
+DM_EXPORT extern int dm_normal(dm *dmp);
+DM_EXPORT extern int dm_loadmatrix(dm *dmp, fastf_t *mat, int eye);
+DM_EXPORT extern int dm_loadpmatrix(dm *dmp, fastf_t *mat);
+DM_EXPORT extern int dm_draw_string_2d(dm *dmp, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect);
+DM_EXPORT extern int dm_draw_line_2d(dm *dmp, fastf_t x1, fastf_t y1_2d, fastf_t x2, fastf_t y2);
+DM_EXPORT extern int dm_draw_line_3d(dm *dmp, point_t pt1, point_t pt2);
+DM_EXPORT extern int dm_draw_lines_3d(dm *dmp, int npoints, point_t *points, int sflag);
+DM_EXPORT extern int dm_draw_point_2d(dm *dmp, fastf_t x, fastf_t y);
+DM_EXPORT extern int dm_draw_point_3d(dm *dmp, point_t pt);
+DM_EXPORT extern int dm_draw_points_3d(dm *dmp, int npoints, point_t *points);
+DM_EXPORT extern int dm_draw(dm *dmp, struct bn_vlist *(*callback)(void *), void **data);
+DM_EXPORT extern int dm_set_depth_mask(dm *dmp, int d_on);
+DM_EXPORT extern int dm_debug(dm *dmp, int lvl);
+DM_EXPORT extern int dm_logfile(dm *dmp, const char *filename);
 
 __END_DECLS
 

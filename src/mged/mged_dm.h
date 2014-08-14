@@ -31,6 +31,7 @@
 #include "dm.h"	/* struct dm */
 #include "dm/dm_xvars.h"
 #include "dm/dm-Null.h"
+#include "../libdm/dm_private.h"
 
 #include "fb.h" /* fb */
 #include "pkg.h" /* struct pkg_conn */
@@ -395,7 +396,7 @@ struct _menu_state {
 
 struct dm_list {
     struct bu_list	l;
-    struct dm		*dml_dmp;
+    dm		*dml_dmp;
     fb			*dml_fbp;
     int			dml_netfd;			/* socket used to listen for connections */
 #if defined(_WIN32) && !defined(__CYGWIN__)

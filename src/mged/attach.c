@@ -289,7 +289,7 @@ release(char *name, int need_close)
 	curr_dm_list->dml_tie->cl_tie = (struct dm_list *)NULL;
 
     if (need_close)
-	DM_CLOSE(dmp);
+	dm_close(dmp);
 
     RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
     BU_LIST_DEQUEUE(&curr_dm_list->l);
@@ -515,11 +515,11 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 
     /* Only need to do this once */
     if (tkwin == NULL && NEED_GUI(wp->type)) {
-	struct dm *tmp_dmp;
+	dm *tmp_dmp;
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	/* look for "-d display_string" and use it if provided */
-	BU_ALLOC(tmp_dmp, struct dm);
+	BU_ALLOC(tmp_dmp, struct dm_internal);
 	bu_vls_init(&tmp_dmp->dm_pathName);
 	bu_vls_init(&tmp_dmp->dm_dName);
 
@@ -587,8 +587,8 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 	dlist_state->dl_active = 1;
     }
 
-    (void)DM_MAKE_CURRENT(dmp);
-    (void)DM_SET_WIN_BOUNDS(dmp, windowbounds);
+    (void)dm_make_current(dmp);
+    (void)dm_set_win_bounds(dmp, windowbounds);
     mged_fb_open();
 
     return TCL_OK;
@@ -596,7 +596,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
  Bad:
     Tcl_AppendResult(INTERP, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 
-    if (dmp != (struct dm *)0)
+    if (dmp != (dm *)0)
 	release((char *)NULL, 1);  /* release() will call dm_close */
     else
 	release((char *)NULL, 0);  /* release() will not call dm_close */

@@ -56,7 +56,7 @@ dm_draw_data_axes(dm *dmp,
 	return;
 
     /* set color */
-    DM_SET_FGCOLOR(dmp, gdasp->gdas_color[0], gdasp->gdas_color[1], gdasp->gdas_color[2], 1, 1.0);
+    dm_set_fg(dmp, gdasp->gdas_color[0], gdasp->gdas_color[1], gdasp->gdas_color[2], 1, 1.0);
 
 #if defined(IF_OGL) || defined(IF_WGL)
 #  ifdef HAVE_GL_GL_H
@@ -68,7 +68,7 @@ dm_draw_data_axes(dm *dmp,
 	    glDisable(GL_LIGHTING);
 
 	glPointSize(gdasp->gdas_size);
-	DM_DRAW_POINTS_3D(dmp, gdasp->gdas_num_points, gdasp->gdas_points);
+	dm_draw_points_3d(dmp, gdasp->gdas_num_points, gdasp->gdas_points);
 	glPointSize(1);
 
 	if (dmp->dm_light)
@@ -82,7 +82,7 @@ dm_draw_data_axes(dm *dmp,
     halfAxesSize = gdasp->gdas_size * 0.5 * sf;
 
     /* set linewidth */
-    DM_SET_LINE_ATTR(dmp, gdasp->gdas_line_width, 0);  /* solid lines */
+    dm_set_line_attr(dmp, gdasp->gdas_line_width, 0);  /* solid lines */
 
     for (i = 0, j = -1; i < gdasp->gdas_num_points; ++i) {
 	/* draw X axis with x/y offsets */
@@ -110,11 +110,11 @@ dm_draw_data_axes(dm *dmp,
 	VMOVE(points[j], ptB);
     }
 
-    DM_DRAW_LINES_3D(dmp, npoints, points, 0);
+    dm_draw_lines_3d(dmp, npoints, points, 0);
     bu_free((void *)points, "data axes points");
 
     /* Restore the line attributes */
-    DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
+    dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
 }
 
 void
@@ -140,7 +140,7 @@ dm_draw_axes(dm				*dmp,
     halfAxesSize = gasp->gas_axes_size * 0.5;
 
     /* set axes line width */
-    DM_SET_LINE_ATTR(dmp, gasp->gas_line_width, 0);  /* solid lines */
+    dm_set_line_attr(dmp, gasp->gas_line_width, 0);  /* solid lines */
 
     /* build X axis about view center */
     VSET(v2, halfAxesSize, 0.0, 0.0);
@@ -161,16 +161,16 @@ dm_draw_axes(dm				*dmp,
 
     if (gasp->gas_triple_color) {
 	/* set X axis color - red */
-	DM_SET_FGCOLOR(dmp, 255, 0, 0, 1, 1.0);
+	dm_set_fg(dmp, 255, 0, 0, 1, 1.0);
 
 	/* draw the X label */
-	DM_DRAW_STRING_2D(dmp, "X", xlx + gasp->gas_axes_pos[X], xly + gasp->gas_axes_pos[Y], 1, 1);
+	dm_draw_string_2d(dmp, "X", xlx + gasp->gas_axes_pos[X], xly + gasp->gas_axes_pos[Y], 1, 1);
     } else
 	/* set axes color */
-	DM_SET_FGCOLOR(dmp, gasp->gas_axes_color[0], gasp->gas_axes_color[1], gasp->gas_axes_color[2], 1, 1.0);
+	dm_set_fg(dmp, gasp->gas_axes_color[0], gasp->gas_axes_color[1], gasp->gas_axes_color[2], 1, 1.0);
 
     /* draw X axis with x/y offsets */
-    DM_DRAW_LINE_2D(dmp, rxv1[X] + gasp->gas_axes_pos[X], (rxv1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+    dm_draw_line_2d(dmp, rxv1[X] + gasp->gas_axes_pos[X], (rxv1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 		    rxv2[X] + gasp->gas_axes_pos[X], (rxv2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 
     /* build Y axis about view center */
@@ -192,14 +192,14 @@ dm_draw_axes(dm				*dmp,
 
     if (gasp->gas_triple_color) {
 	/* set Y axis color - green */
-	DM_SET_FGCOLOR(dmp, 0, 255, 0, 1, 1.0);
+	dm_set_fg(dmp, 0, 255, 0, 1, 1.0);
 
 	/* draw the Y label */
-	DM_DRAW_STRING_2D(dmp, "Y", ylx + gasp->gas_axes_pos[X], yly + gasp->gas_axes_pos[Y], 1, 1);
+	dm_draw_string_2d(dmp, "Y", ylx + gasp->gas_axes_pos[X], yly + gasp->gas_axes_pos[Y], 1, 1);
     }
 
     /* draw Y axis with x/y offsets */
-    DM_DRAW_LINE_2D(dmp, ryv1[X] + gasp->gas_axes_pos[X], (ryv1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+    dm_draw_line_2d(dmp, ryv1[X] + gasp->gas_axes_pos[X], (ryv1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 		    ryv2[X] + gasp->gas_axes_pos[X], (ryv2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 
     /* build Z axis about view center */
@@ -221,24 +221,24 @@ dm_draw_axes(dm				*dmp,
 
     if (gasp->gas_triple_color) {
 	/* set Z axis color - blue*/
-	DM_SET_FGCOLOR(dmp, 0, 0, 255, 1, 1.0);
+	dm_set_fg(dmp, 0, 0, 255, 1, 1.0);
 
 	/* draw the Z label */
-	DM_DRAW_STRING_2D(dmp, "Z", zlx + gasp->gas_axes_pos[X], zly + gasp->gas_axes_pos[Y], 1, 1);
+	dm_draw_string_2d(dmp, "Z", zlx + gasp->gas_axes_pos[X], zly + gasp->gas_axes_pos[Y], 1, 1);
     }
 
     /* draw Z axis with x/y offsets */
-    DM_DRAW_LINE_2D(dmp, rzv1[X] + gasp->gas_axes_pos[X], (rzv1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+    dm_draw_line_2d(dmp, rzv1[X] + gasp->gas_axes_pos[X], (rzv1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 		    rzv2[X] + gasp->gas_axes_pos[X], (rzv2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 
     if (!gasp->gas_triple_color) {
 	/* set axes string color */
-	DM_SET_FGCOLOR(dmp, gasp->gas_label_color[0], gasp->gas_label_color[1], gasp->gas_label_color[2], 1, 1.0);
+	dm_set_fg(dmp, gasp->gas_label_color[0], gasp->gas_label_color[1], gasp->gas_label_color[2], 1, 1.0);
 
 	/* draw axes strings/labels with x/y offsets */
-	DM_DRAW_STRING_2D(dmp, "X", xlx + gasp->gas_axes_pos[X], xly + gasp->gas_axes_pos[Y], 1, 1);
-	DM_DRAW_STRING_2D(dmp, "Y", ylx + gasp->gas_axes_pos[X], yly + gasp->gas_axes_pos[Y], 1, 1);
-	DM_DRAW_STRING_2D(dmp, "Z", zlx + gasp->gas_axes_pos[X], zly + gasp->gas_axes_pos[Y], 1, 1);
+	dm_draw_string_2d(dmp, "X", xlx + gasp->gas_axes_pos[X], xly + gasp->gas_axes_pos[Y], 1, 1);
+	dm_draw_string_2d(dmp, "Y", ylx + gasp->gas_axes_pos[X], yly + gasp->gas_axes_pos[Y], 1, 1);
+	dm_draw_string_2d(dmp, "Z", zlx + gasp->gas_axes_pos[X], zly + gasp->gas_axes_pos[Y], 1, 1);
     }
 
     if (gasp->gas_tick_enabled) {
@@ -272,7 +272,7 @@ dm_draw_axes(dm				*dmp,
 
 	    if (dmp->dm_width <= numMajorTicks / halfAxesSize * gasp->gas_tick_threshold * 2) {
 		/* Restore the line attributes */
-		DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
+		dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
 		return;
 	    }
 
@@ -356,18 +356,18 @@ dm_draw_axes(dm				*dmp,
 		    continue;
 
 		/* set tick color */
-		DM_SET_FGCOLOR(dmp, gasp->gas_tick_color[0], gasp->gas_tick_color[1], gasp->gas_tick_color[2], 1, 1.0);
+		dm_set_fg(dmp, gasp->gas_tick_color[0], gasp->gas_tick_color[1], gasp->gas_tick_color[2], 1, 1.0);
 
 		VADD2(t1, yend1, tvec);
 		VADD2(t2, yend2, tvec);
 	    } else {
 		/* set major tick color */
-		DM_SET_FGCOLOR(dmp, gasp->gas_tick_major_color[0], gasp->gas_tick_major_color[1], gasp->gas_tick_major_color[2], 1, 1.0);
+		dm_set_fg(dmp, gasp->gas_tick_major_color[0], gasp->gas_tick_major_color[1], gasp->gas_tick_major_color[2], 1, 1.0);
 
 		VADD2(t1, maj_yend1, tvec);
 		VADD2(t2, maj_yend2, tvec);
 	    }
-	    DM_DRAW_LINE_2D(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+	    dm_draw_line_2d(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 			    t2[X] + gasp->gas_axes_pos[X], (t2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 
 	    /* draw tick in XZ plane */
@@ -378,7 +378,7 @@ dm_draw_axes(dm				*dmp,
 		VADD2(t1, maj_zend1, tvec);
 		VADD2(t2, maj_zend2, tvec);
 	    }
-	    DM_DRAW_LINE_2D(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+	    dm_draw_line_2d(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 			    t2[X] + gasp->gas_axes_pos[X], (t2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 
 	    if (!gasp->gas_pos_only) {
@@ -393,7 +393,7 @@ dm_draw_axes(dm				*dmp,
 		    VADD2(t1, maj_yend1, tvec);
 		    VADD2(t2, maj_yend2, tvec);
 		}
-		DM_DRAW_LINE_2D(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+		dm_draw_line_2d(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 				t2[X] + gasp->gas_axes_pos[X], (t2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 
 		/* draw tick in XZ plane */
@@ -404,7 +404,7 @@ dm_draw_axes(dm				*dmp,
 		    VADD2(t1, maj_zend1, tvec);
 		    VADD2(t2, maj_zend2, tvec);
 		}
-		DM_DRAW_LINE_2D(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+		dm_draw_line_2d(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 				t2[X] + gasp->gas_axes_pos[X], (t2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 	    }
 
@@ -420,7 +420,7 @@ dm_draw_axes(dm				*dmp,
 		VADD2(t1, maj_xend1, tvec);
 		VADD2(t2, maj_xend2, tvec);
 	    }
-	    DM_DRAW_LINE_2D(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+	    dm_draw_line_2d(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 			    t2[X] + gasp->gas_axes_pos[X], (t2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 
 	    /* draw tick in YZ plane */
@@ -431,7 +431,7 @@ dm_draw_axes(dm				*dmp,
 		VADD2(t1, maj_zend1, tvec);
 		VADD2(t2, maj_zend2, tvec);
 	    }
-	    DM_DRAW_LINE_2D(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+	    dm_draw_line_2d(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 			    t2[X] + gasp->gas_axes_pos[X], (t2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 
 	    if (!gasp->gas_pos_only) {
@@ -446,7 +446,7 @@ dm_draw_axes(dm				*dmp,
 		    VADD2(t1, maj_xend1, tvec);
 		    VADD2(t2, maj_xend2, tvec);
 		}
-		DM_DRAW_LINE_2D(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+		dm_draw_line_2d(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 				t2[X] + gasp->gas_axes_pos[X], (t2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 
 		/* draw tick in XZ plane */
@@ -457,7 +457,7 @@ dm_draw_axes(dm				*dmp,
 		    VADD2(t1, maj_zend1, tvec);
 		    VADD2(t2, maj_zend2, tvec);
 		}
-		DM_DRAW_LINE_2D(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+		dm_draw_line_2d(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 				t2[X] + gasp->gas_axes_pos[X], (t2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 	    }
 
@@ -473,7 +473,7 @@ dm_draw_axes(dm				*dmp,
 		VADD2(t1, maj_xend1, tvec);
 		VADD2(t2, maj_xend2, tvec);
 	    }
-	    DM_DRAW_LINE_2D(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+	    dm_draw_line_2d(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 			    t2[X] + gasp->gas_axes_pos[X], (t2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 
 	    /* draw tick in ZY plane */
@@ -484,7 +484,7 @@ dm_draw_axes(dm				*dmp,
 		VADD2(t1, maj_yend1, tvec);
 		VADD2(t2, maj_yend2, tvec);
 	    }
-	    DM_DRAW_LINE_2D(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+	    dm_draw_line_2d(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 			    t2[X] + gasp->gas_axes_pos[X], (t2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 
 	    if (!gasp->gas_pos_only) {
@@ -499,7 +499,7 @@ dm_draw_axes(dm				*dmp,
 		    VADD2(t1, maj_xend1, tvec);
 		    VADD2(t2, maj_xend2, tvec);
 		}
-		DM_DRAW_LINE_2D(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+		dm_draw_line_2d(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 				t2[X] + gasp->gas_axes_pos[X], (t2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 
 		/* draw tick in ZY plane */
@@ -510,14 +510,14 @@ dm_draw_axes(dm				*dmp,
 		    VADD2(t1, maj_yend1, tvec);
 		    VADD2(t2, maj_yend2, tvec);
 		}
-		DM_DRAW_LINE_2D(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
+		dm_draw_line_2d(dmp, t1[X] + gasp->gas_axes_pos[X], (t1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
 				t2[X] + gasp->gas_axes_pos[X], (t2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
 	    }
 	}
     }
 
     /* Restore the line attributes */
-    DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
+    dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
 }
 
 /*

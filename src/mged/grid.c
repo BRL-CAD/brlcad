@@ -194,11 +194,11 @@ draw_grid(void)
 	     0.0);
     }
 
-    DM_SET_FGCOLOR(dmp,
+    dm_set_fg(dmp,
 		   color_scheme->cs_grid[0],
 		   color_scheme->cs_grid[1],
 		   color_scheme->cs_grid[2], 1, 1.0);
-    DM_SET_LINE_ATTR(dmp, 1, 0);		/* solid lines */
+    dm_set_line_attr(dmp, 1, 0);		/* solid lines */
 
     /* draw horizontal dots */
     for (i = 0; i < nv_dots; i += grid_state->gr_res_major_v) {
@@ -206,7 +206,7 @@ draw_grid(void)
 
 	for (j = 0; j < nh_dots; ++j) {
 	    fx = (view_grid_start_pt_local[X] + (j * grid_state->gr_res_h)) * inv_sf;
-	    DM_DRAW_POINT_2D(dmp, fx, fy * dmp->dm_aspect);
+	    dm_draw_point_2d(dmp, fx, fy * dmp->dm_aspect);
 	}
     }
 
@@ -217,7 +217,7 @@ draw_grid(void)
 
 	    for (j = 0; j < nv_dots; ++j) {
 		fy = (view_grid_start_pt_local[Y] + (j * grid_state->gr_res_v)) * inv_sf;
-		DM_DRAW_POINT_2D(dmp, fx, fy * dmp->dm_aspect);
+		dm_draw_point_2d(dmp, fx, fy * dmp->dm_aspect);
 	    }
 	}
     }

@@ -588,7 +588,7 @@ dm_draw_labels(dm *dmp,
 
     dm_label_primitive(wdbp, pl, MAX_PL, viewmat, &intern);
 
-    DM_SET_FGCOLOR(dmp,
+    dm_set_fg(dmp,
 		   (unsigned char)labelsColor[0],
 		   (unsigned char)labelsColor[1],
 		   (unsigned char)labelsColor[2],
@@ -598,7 +598,7 @@ dm_draw_labels(dm *dmp,
 	if (pl[i].str[0] == '\0')
 	    break;
 
-	DM_DRAW_STRING_2D(dmp, pl[i].str,
+	dm_draw_string_2d(dmp, pl[i].str,
 			  (((int)(pl[i].pt[X]*GED_MAX))+15)*INV_GED,
 			  (((int)(pl[i].pt[Y]*GED_MAX))+15)*INV_GED, 0, 1);
     }

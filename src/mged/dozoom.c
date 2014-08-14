@@ -206,7 +206,7 @@ drawSolid(struct solid *sp,
 			   (short)geometry_default_color[0],
 			   (short)geometry_default_color[1],
 			   (short)geometry_default_color[2])) {
-	    DM_SET_FGCOLOR(dmp,
+	    dm_set_fg(dmp,
 			   (short)geometry_default_color[0],
 			   (short)geometry_default_color[1],
 			   (short)geometry_default_color[2],
@@ -222,7 +222,7 @@ drawSolid(struct solid *sp,
 			   (short)sp->s_color[0],
 			   (short)sp->s_color[1],
 			   (short)sp->s_color[2])) {
-	    DM_SET_FGCOLOR(dmp,
+	    dm_set_fg(dmp,
 			   (short)sp->s_color[0],
 			   (short)sp->s_color[1],
 			   (short)sp->s_color[2],
@@ -236,11 +236,11 @@ drawSolid(struct solid *sp,
     }
 
     if (displaylist && mged_variables->mv_dlist) {
-	DM_DRAWDLIST(dmp, sp->s_dlist);
+	dm_draw_dlist(dmp, sp->s_dlist);
 	sp->s_flag = UP;
 	curr_dm_list->dml_ndrawn++;
     } else {
-	if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+	if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
 	    sp->s_flag = UP;
 	    curr_dm_list->dml_ndrawn++;
 	}
@@ -351,7 +351,7 @@ dozoom(int which_eye)
 	mat = newmat;
     }
 
-    DM_LOADMATRIX(dmp, mat, which_eye);
+    dm_loadmatrix(dmp, mat, which_eye);
 
 #ifdef DM_RTGL
     /* dm rtgl has its own way of drawing */
@@ -361,7 +361,7 @@ dozoom(int which_eye)
 	RTGL_GEDP = gedp;
 
 	/* will ray trace visible objects and draw the intersection points */
-	DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
+	dm_draw_vlist(dmp, (struct bn_vlist *)NULL);
 	/* force update if needed */
 	dirty = RTGL_DIRTY;
 
@@ -405,7 +405,7 @@ dozoom(int which_eye)
 
 		if (linestyle != sp->s_soldash) {
 		    linestyle = sp->s_soldash;
-		    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+		    dm_set_line_attr(dmp, mged_variables->mv_linewidth, linestyle);
 		}
 
 		drawSolid(sp, r, g, b);
@@ -415,7 +415,7 @@ dozoom(int which_eye)
 	}
 
 	/* disable write to depth buffer */
-	DM_SET_DEPTH_MASK(dmp, 0);
+	dm_set_depth_mask(dmp, 0);
 
 	/* Second, draw transparent stuff */
 	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
@@ -452,7 +452,7 @@ dozoom(int which_eye)
 
 		if (linestyle != sp->s_soldash) {
 		    linestyle = sp->s_soldash;
-		    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+		    dm_set_line_attr(dmp, mged_variables->mv_linewidth, linestyle);
 		}
 
 		drawSolid(sp, r, g, b);
@@ -462,7 +462,7 @@ dozoom(int which_eye)
 	}
 
 	/* re-enable write of depth buffer */
-	DM_SET_DEPTH_MASK(dmp, 1);
+	dm_set_depth_mask(dmp, 1);
     } else {
 
 	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
@@ -494,7 +494,7 @@ dozoom(int which_eye)
 
 		if (linestyle != sp->s_soldash) {
 		    linestyle = sp->s_soldash;
-		    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+		    dm_set_line_attr(dmp, mged_variables->mv_linewidth, linestyle);
 		}
 
 		drawSolid(sp, r, g, b);
@@ -513,11 +513,11 @@ dozoom(int which_eye)
 
     /* draw predictor vlist */
     if (mged_variables->mv_predictor) {
-	DM_SET_FGCOLOR(dmp,
+	dm_set_fg(dmp,
 		       color_scheme->cs_predictor[0],
 		       color_scheme->cs_predictor[1],
 		       color_scheme->cs_predictor[2], 1, 1.0);
-	DM_DRAW_VLIST(dmp, (struct bn_vlist *)&curr_dm_list->dml_p_vlist);
+	dm_draw_vlist(dmp, (struct bn_vlist *)&curr_dm_list->dml_p_vlist);
     }
 
     /*
@@ -533,9 +533,9 @@ dozoom(int which_eye)
 	bn_mat_mul(newmat, perspective_mat, view_state->vs_model2objview);
 	mat = newmat;
     }
-    DM_LOADMATRIX(dmp, mat, which_eye);
+    dm_loadmatrix(dmp, mat, which_eye);
     inv_viewsize /= modelchanges[15];
-    DM_SET_FGCOLOR(dmp,
+    dm_set_fg(dmp,
 		   color_scheme->cs_geo_hl[0],
 		   color_scheme->cs_geo_hl[1],
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
@@ -567,16 +567,16 @@ dozoom(int which_eye)
 
 	    if (linestyle != sp->s_soldash) {
 		linestyle = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+		dm_set_line_attr(dmp, mged_variables->mv_linewidth, linestyle);
 	    }
 
 	    if (displaylist && mged_variables->mv_dlist) {
-		DM_DRAWDLIST(dmp, sp->s_dlist);
+		dm_draw_dlist(dmp, sp->s_dlist);
 		sp->s_flag = UP;
 		curr_dm_list->dml_ndrawn++;
 	    } else {
 		/* draw in immediate mode */
-		if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+		if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
 		    sp->s_flag = UP;
 		    curr_dm_list->dml_ndrawn++;
 		}
@@ -602,19 +602,19 @@ void
 createDList(struct solid *sp)
 {
     if (sp->s_dlist == 0)
-	sp->s_dlist = DM_GEN_DLISTS(dmp, 1);
+	sp->s_dlist = dm_gen_dlists(dmp, 1);
 
-    (void)DM_MAKE_CURRENT(dmp);
-    (void)DM_BEGINDLIST(dmp, sp->s_dlist);
+    (void)dm_make_current(dmp);
+    (void)dm_begin_dlist(dmp, sp->s_dlist);
     if (sp->s_iflag == UP)
-	(void)DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
+	(void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_transparency);
     else
-	(void)DM_SET_FGCOLOR(dmp,
+	(void)dm_set_fg(dmp,
 		       (unsigned char)sp->s_color[0],
 		       (unsigned char)sp->s_color[1],
 		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
-    (void)DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
-    (void)DM_ENDDLIST(dmp);
+    (void)dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist);
+    (void)dm_end_dlist(dmp);
 }
 
 
@@ -682,8 +682,8 @@ freeDListsAll(unsigned int dlist, int range)
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	if (dlp->dml_dmp->dm_displaylist &&
 	    dlp->dml_mged_variables->mv_dlist) {
-	    (void)DM_MAKE_CURRENT(dmp);
-	    (void)DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
+	    (void)dm_make_current(dmp);
+	    (void)dm_free_dlists(dlp->dml_dmp, dlist, range);
 	}
 
 	dlp->dml_dirty = 1;

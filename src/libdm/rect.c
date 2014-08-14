@@ -42,28 +42,28 @@ dm_draw_rect(dm *dmp, struct ged_rect_state *grsp)
 	return;
 
     /* draw rectangle */
-    DM_SET_FGCOLOR(dmp,
+    dm_set_fg(dmp,
 		   (unsigned char)grsp->grs_color[0],
 		   (unsigned char)grsp->grs_color[1],
 		   (unsigned char)grsp->grs_color[2], 1, 1.0);
-    DM_SET_LINE_ATTR(dmp, grsp->grs_line_width, grsp->grs_line_style);
+    dm_set_line_attr(dmp, grsp->grs_line_width, grsp->grs_line_style);
 
-    DM_DRAW_LINE_2D(dmp,
+    dm_draw_line_2d(dmp,
 		    grsp->grs_x,
 		    grsp->grs_y * dmp->dm_aspect,
 		    grsp->grs_x,
 		    (grsp->grs_y + grsp->grs_height) * dmp->dm_aspect);
-    DM_DRAW_LINE_2D(dmp,
+    dm_draw_line_2d(dmp,
 		    grsp->grs_x,
 		    (grsp->grs_y + grsp->grs_height) * dmp->dm_aspect,
 		    grsp->grs_x + grsp->grs_width,
 		    (grsp->grs_y + grsp->grs_height) * dmp->dm_aspect);
-    DM_DRAW_LINE_2D(dmp,
+    dm_draw_line_2d(dmp,
 		    grsp->grs_x + grsp->grs_width,
 		    (grsp->grs_y + grsp->grs_height) * dmp->dm_aspect,
 		    grsp->grs_x + grsp->grs_width,
 		    grsp->grs_y * dmp->dm_aspect);
-    DM_DRAW_LINE_2D(dmp,
+    dm_draw_line_2d(dmp,
 		    grsp->grs_x + grsp->grs_width,
 		    grsp->grs_y * dmp->dm_aspect,
 		    grsp->grs_x,

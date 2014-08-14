@@ -568,12 +568,12 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
 	return TCL_ERROR;
     }
 
-    DM_SET_FGCOLOR(dmop->dmo_dmp,
+    dm_set_fg(dmop->dmo_dmp,
 		   (unsigned char)color[0],
 		   (unsigned char)color[1],
 		   (unsigned char)color[2], 1, 1.0);
 
-    DM_DRAW_POINT_2D(dmop->dmo_dmp, 0.0, 0.0);
+    dm_draw_point_2d(dmop->dmo_dmp, 0.0, 0.0);
 
     return TCL_OK;
 }
@@ -989,7 +989,7 @@ dmo_drawBegin_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    return DM_DRAW_BEGIN(dmop->dmo_dmp);
+    return dm_draw_begin(dmop->dmo_dmp);
 }
 
 
@@ -1001,7 +1001,7 @@ dmo_drawEnd_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    return DM_DRAW_END(dmop->dmo_dmp);
+    return dm_draw_end(dmop->dmo_dmp);
 }
 
 
@@ -1021,10 +1021,10 @@ dmo_clear_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    if ((status = DM_DRAW_BEGIN(dmop->dmo_dmp)) != TCL_OK)
+    if ((status = dm_draw_begin(dmop->dmo_dmp)) != TCL_OK)
 	return status;
 
-    return DM_DRAW_END(dmop->dmo_dmp);
+    return dm_draw_end(dmop->dmo_dmp);
 }
 
 
@@ -1043,7 +1043,7 @@ dmo_normal_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop || !dmop->interp)
 	return TCL_ERROR;
 
-    return DM_NORMAL(dmop->dmo_dmp);
+    return dm_normal(dmop->dmo_dmp);
 }
 
 
@@ -1091,7 +1091,7 @@ dmo_loadmat_tcl(void *clientData, int argc, const char **argv)
 
     MAT_COPY(dmop->viewMat, mat);
 
-    return DM_LOADMATRIX(dmop->dmo_dmp, mat, which_eye);
+    return dm_loadmatrix(dmop->dmo_dmp, mat, which_eye);
 }
 
 
@@ -1128,7 +1128,7 @@ dmo_drawString_tcl(void *clientData, int argc, const char **argv)
     size = atoi(argv[5]);
     use_aspect = atoi(argv[6]);
 
-    return DM_DRAW_STRING_2D(dmop->dmo_dmp, argv[2], x, y, size, use_aspect);
+    return dm_draw_string_2d(dmop->dmo_dmp, argv[2], x, y, size, use_aspect);
 }
 
 
@@ -1154,7 +1154,7 @@ dmo_drawPoint_tcl(void *clientData, int argc, const char **argv)
     x = atof(argv[2]);
     y = atof(argv[3]);
 
-    return DM_DRAW_POINT_2D(dmop->dmo_dmp, x, y);
+    return dm_draw_point_2d(dmop->dmo_dmp, x, y);
 }
 
 
@@ -1189,7 +1189,7 @@ dmo_drawLine_tcl(void *clientData, int argc, const char **argv)
     xpos2 = atof(argv[4]);
     ypos2 = atof(argv[5]);
 
-    return DM_DRAW_LINE_2D(dmop->dmo_dmp, xpos1, ypos1, xpos2, ypos2);
+    return dm_draw_line_2d(dmop->dmo_dmp, xpos1, ypos1, xpos2, ypos2);
 }
 
 
@@ -1231,7 +1231,7 @@ dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 
     BN_CK_VLIST(vp);
 
-    return DM_DRAW_VLIST(dmop->dmo_dmp, vp);
+    return dm_draw_vlist(dmop->dmo_dmp, vp);
 }
 
 
@@ -1240,13 +1240,13 @@ dmo_drawSolid(struct dm_obj *dmop,
 	      struct solid *sp)
 {
     if (sp->s_iflag == UP)
-	DM_SET_FGCOLOR(dmop->dmo_dmp, 255, 255, 255, 0, sp->s_transparency);
+	dm_set_fg(dmop->dmo_dmp, 255, 255, 255, 0, sp->s_transparency);
     else
-	DM_SET_FGCOLOR(dmop->dmo_dmp,
+	dm_set_fg(dmop->dmo_dmp,
 		       (unsigned char)sp->s_color[0],
 		       (unsigned char)sp->s_color[1],
 		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
-    DM_DRAW_VLIST(dmop->dmo_dmp, (struct bn_vlist *)&sp->s_vlist);
+    dm_draw_vlist(dmop->dmo_dmp, (struct bn_vlist *)&sp->s_vlist);
 }
 
 
@@ -1352,14 +1352,14 @@ dmo_drawSList(struct dm_obj *dmop,
 
 	    if (linestyle != sp->s_soldash) {
 		linestyle = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
+		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
 	    }
 
 	    dmo_drawSolid(dmop, sp);
 	}
 
 	/* disable write to depth buffer */
-	DM_SET_DEPTH_MASK(dmop->dmo_dmp, 0);
+	dm_set_depth_mask(dmop->dmo_dmp, 0);
 
 	/* Second, draw transparent stuff */
 	FOR_ALL_SOLIDS(sp, hsp) {
@@ -1369,20 +1369,20 @@ dmo_drawSList(struct dm_obj *dmop,
 
 	    if (linestyle != sp->s_soldash) {
 		linestyle = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
+		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
 	    }
 
 	    dmo_drawSolid(dmop, sp);
 	}
 
 	/* re-enable write to depth buffer */
-	DM_SET_DEPTH_MASK(dmop->dmo_dmp, 1);
+	dm_set_depth_mask(dmop->dmo_dmp, 1);
     } else {
 
 	FOR_ALL_SOLIDS(sp, hsp) {
 	    if (linestyle != sp->s_soldash) {
 		linestyle = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
+		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
 	    }
 
 	    dmo_drawSolid(dmop, sp);
@@ -1581,7 +1581,7 @@ dmo_fg_tcl(void *clientData, int argc, const char **argv)
 	    goto bad_color;
 
 	bu_vls_free(&vls);
-	return DM_SET_FGCOLOR(dmop->dmo_dmp,
+	return dm_set_fg(dmop->dmo_dmp,
 			      (unsigned char)r,
 			      (unsigned char)g,
 			      (unsigned char)b,
@@ -1710,7 +1710,7 @@ dmo_lineWidth_tcl(void *clientData, int argc, const char **argv)
 	    goto bad_lineWidth;
 
 	bu_vls_free(&vls);
-	return DM_SET_LINE_ATTR(dmop->dmo_dmp, lineWidth, dmop->dmo_dmp->dm_lineStyle);
+	return dm_set_line_attr(dmop->dmo_dmp, lineWidth, dmop->dmo_dmp->dm_lineStyle);
     }
 
     /* wrong number of arguments */
@@ -1770,7 +1770,7 @@ dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
 	    goto bad_linestyle;
 
 	bu_vls_free(&vls);
-	return DM_SET_LINE_ATTR(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
+	return dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
     }
 
     /* wrong number of arguments */
@@ -1815,7 +1815,7 @@ dmo_configure_tcl(void *clientData, int argc, const char **argv)
     }
 
     /* configure the display manager window */
-    status = DM_CONFIGURE_WIN(dmop->dmo_dmp, 0);
+    status = dm_configure_win(dmop->dmo_dmp, 0);
 
 #ifdef USE_FBSERV
     /* configure the framebuffer window */
@@ -1920,7 +1920,7 @@ dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
 	    return TCL_ERROR;
 	}
 
-	DM_SET_ZBUFFER(dmop->dmo_dmp, zbuffer);
+	dm_set_zbuffer(dmop->dmo_dmp, zbuffer);
 	return TCL_OK;
     }
 
@@ -2024,7 +2024,7 @@ dmo_transparency_tcl(void *clientData, int argc, const char **argv)
 	    return TCL_ERROR;
 	}
 
-	DM_SET_TRANSPARENCY(dmop->dmo_dmp, transparency);
+	(void)dm_set_transparency(dmop->dmo_dmp, transparency);
 	return TCL_OK;
     }
 
@@ -2076,7 +2076,7 @@ dmo_depthMask_tcl(void *clientData, int argc, const char **argv)
 	    return TCL_ERROR;
 	}
 
-	DM_SET_DEPTH_MASK(dmop->dmo_dmp, depthMask);
+	dm_set_depth_mask(dmop->dmo_dmp, depthMask);
 	return TCL_OK;
     }
 
@@ -2614,7 +2614,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
 	    return TCL_ERROR;
 	}
 
-	return DM_DEBUG(dmop->dmo_dmp, level);
+	return dm_debug(dmop->dmo_dmp, level);
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_debug %s", argv[1]);
@@ -2655,7 +2655,7 @@ dmo_logfile_tcl(void *clientData, int argc, const char **argv)
 
     /* set log file */
     if (argc == 3) {
-	return DM_LOGFILE(dmop->dmo_dmp, argv[3]);
+	return dm_logfile(dmop->dmo_dmp, argv[3]);
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_debug %s", argv[1]);
