@@ -1275,11 +1275,11 @@ main(int argc, char *argv[])
     predictor_init();
 
     dmp = dm_get();
-    *dmp = dm_null;
-    bu_vls_init(&tkName);
-    bu_vls_init(&dName);
+    dm_set_null(dmp);
+    bu_vls_init(tkName);
+    bu_vls_init(dName);
     bu_vls_strcpy(dm_get_pathname(dmp), "nu");
-    bu_vls_strcpy(&tkName, "nu");
+    bu_vls_strcpy(tkName, "nu");
 
     BU_ALLOC(rubber_band, struct _rubber_band);
     *rubber_band = default_rubber_band;		/* struct copy */

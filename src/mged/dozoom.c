@@ -355,7 +355,7 @@ dozoom(int which_eye)
 
 #ifdef DM_RTGL
     /* dm rtgl has its own way of drawing */
-    if (IS_DM_TYPE_RTGL(dmp->dm_type)) {
+    if (IS_DM_TYPE_RTGL(dm_get_type(dmp))) {
 
 	/* dm-rtgl needs database info for ray tracing */
 	RTGL_GEDP = gedp;

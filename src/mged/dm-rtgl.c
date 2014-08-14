@@ -142,7 +142,7 @@ Rtgl_fb_open()
     ofb_ps->glxc = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc;
     ofb_ps->double_buffer = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer;
     ofb_ps->soft_cmap = 0;
-    fbp = fb_open_existing("ogl", dmp->dm_width, dmp->dm_height, fb_ps);
+    fbp = fb_open_existing("ogl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
     fb_set_name(fbp, "/dev/rtgl");
 }

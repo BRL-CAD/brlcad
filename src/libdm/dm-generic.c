@@ -272,6 +272,13 @@ dm_put(dm *dmp)
     }
 }
 
+void
+dm_set_null(dm *dmp)
+{
+    *dmp = dm_null;
+}
+
+
 const char *
 dm_get_dm_name(dm *dmp)
 {

@@ -387,7 +387,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 		continue;
 	    }
 
-	    if (dlp1->dml_dmp->dm_displaylist &&
+	    if (dm_get_displaylist(dlp1->dml_dmp) &&
 		dlp1->dml_dlist_state->dl_active == 0) {
 		curr_dm_list = dlp1;
 		createDLists(gedp->ged_gdp->gd_headDisplay);
@@ -462,7 +462,7 @@ set_perspective(const struct bu_structparse *sdp,
     view_state->vs_gvp->gv_perspective = mged_variables->mv_perspective;
 
     /* keep display manager in sync */
-    dmp->dm_perspective = mged_variables->mv_perspective_mode;
+    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
 
     set_dirty_flag(sdp, name, base, value);
 }
@@ -481,7 +481,7 @@ establish_perspective(const struct bu_structparse *sdp,
     view_state->vs_gvp->gv_perspective = mged_variables->mv_perspective;
 
     /* keep display manager in sync */
-    dmp->dm_perspective = mged_variables->mv_perspective_mode;
+    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
 
     set_dirty_flag(sdp, name, base, value);
 }
@@ -520,7 +520,7 @@ toggle_perspective(const struct bu_structparse *sdp,
     view_state->vs_gvp->gv_perspective = mged_variables->mv_perspective;
 
     /* keep display manager in sync */
-    dmp->dm_perspective = mged_variables->mv_perspective_mode;
+    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
 
     set_dirty_flag(sdp, name, base, value);
 }

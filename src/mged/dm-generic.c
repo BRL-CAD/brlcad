@@ -542,7 +542,7 @@ common_dm(int argc, const char *argv[])
 
 	/* get the window size */
 	if (argc == 1) {
-	    bu_vls_printf(&vls, "%d %d", dmp->dm_width, dmp->dm_height);
+	    bu_vls_printf(&vls, "%d %d", dm_get_width(dmp), dm_get_height(dmp));
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
