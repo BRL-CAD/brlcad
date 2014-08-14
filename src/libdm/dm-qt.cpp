@@ -1004,6 +1004,7 @@ dm dm_qt = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
+    FB_NULL,
     0				/* Tcl interpreter */
 };
 

@@ -75,7 +75,7 @@ struct dm_internal {
     int (*dm_getDisplayImage)(struct dm_internal *dmp, unsigned char **image);
     void (*dm_reshape)(struct dm_internal *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm_internal *dmp);
-    int (*dm_openFb)(struct dm_internal *dmp, fb *ifp);
+    int (*dm_openFb)(struct dm_internal *dmp);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */
@@ -111,6 +111,7 @@ struct dm_internal {
     int dm_zclip;			/**< @brief !0 means zclipping */
     int dm_clearBufferAfter;	/**< @brief 1 means clear back buffer after drawing and swap */
     int dm_fontsize;		/**< @brief !0 override's the auto font size */
+    fb *fbp;                    /**< @brief Framebuffer associated with this display instance */
     Tcl_Interp *dm_interp;	/**< @brief Tcl interpreter */
 };
 

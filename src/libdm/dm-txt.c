@@ -334,7 +334,7 @@ txt_makeCurrent(dm *UNUSED(dmp))
 
 
 HIDDEN int
-txt_openFb(dm *UNUSED(dmp), fb *UNUSED(ifp))
+txt_openFb(dm *UNUSED(dmp))
 {
     bu_log("openFb called\n");
     return 0;
@@ -413,6 +413,7 @@ dm dm_txt = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
+    FB_NULL,
     0				/* Tcl interpreter */
 };
 

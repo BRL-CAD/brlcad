@@ -178,20 +178,7 @@ X_dm_init(struct dm_list *o_dm_list,
 void
 X_fb_open(void)
 {
-    struct fb_platform_specific *fb_ps;
-    struct X24_fb_info *xfb_ps;
-
-    fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
-    xfb_ps = (struct X24_fb_info *)fb_ps->data;
-    xfb_ps->dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
-    xfb_ps->win = ((struct x_vars *)dmp->dm_vars.priv_vars)->pix;
-    xfb_ps->cwinp = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
-    xfb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
-    xfb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
-    xfb_ps->gc = ((struct x_vars *)dmp->dm_vars.priv_vars)->gc;
-
-    fbp = fb_open_existing("X", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
-    fb_put_platform_specific(fb_ps);
+    fbp = dm_get_fb(dmp);
 }
 
 

@@ -268,6 +268,7 @@ dm_put(dm *dmp)
     if (dmp != DM_NULL) {
 	bu_vls_free(&dmp->dm_pathName);
 	bu_vls_free(&dmp->dm_dName);
+	if (dmp->fbp) fb_put(dmp->fbp);
 	BU_PUT(dmp, struct dm_internal);
     }
 }
@@ -278,6 +279,14 @@ dm_set_null(dm *dmp)
     *dmp = dm_null;
 }
 
+fb *
+dm_get_fb(dm *dmp)
+{
+    if (!dmp) return NULL;
+    if (dmp->fbp == FB_NULL)
+	dmp->dm_openFb(dmp);
+    return dmp->fbp;
+}
 
 const char *
 dm_get_dm_name(dm *dmp)

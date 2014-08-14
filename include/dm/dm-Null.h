@@ -187,7 +187,7 @@ null_processEvents(dm *dmp);
 
 
 DM_EXPORT extern int
-null_openFb(dm *dmp, fb *ifp);
+null_openFb(dm *dmp);
 
 __END_DECLS
 

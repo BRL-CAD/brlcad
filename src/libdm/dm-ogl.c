@@ -208,6 +208,7 @@ struct dm_internal dm_ogl = {
     0,				/* no zclipping */
     0,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
+    FB_NULL,
     0				/* Tcl interpreter */
 };
 

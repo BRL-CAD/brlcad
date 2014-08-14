@@ -376,6 +376,8 @@ DM_EXPORT extern int dm_draw(dm *dmp, struct bn_vlist *(*callback)(void *), void
 DM_EXPORT extern int dm_set_depth_mask(dm *dmp, int d_on);
 DM_EXPORT extern int dm_debug(dm *dmp, int lvl);
 DM_EXPORT extern int dm_logfile(dm *dmp, const char *filename);
+DM_EXPORT extern fb *dm_get_fb(dm *dmp);
+
 
 __END_DECLS
 

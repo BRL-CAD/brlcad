@@ -63,6 +63,9 @@
 #include "dm/dm-X.h"
 #include "dm/dm-Null.h"
 #include "dm/dm_xvars.h"
+#include "fb.h"
+#include "fb/fb_platform_specific.h"
+
 #include "solid.h"
 
 #include "dm_private.h"
@@ -1649,6 +1652,25 @@ X_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
     return TCL_OK;
 }
 
+int
+X_openFb(struct dm_internal *dmp)
+{
+    struct fb_platform_specific *fb_ps;
+    struct X24_fb_info *xfb_ps;
+
+    fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
+    xfb_ps = (struct X24_fb_info *)fb_ps->data;
+    xfb_ps->dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
+    xfb_ps->win = ((struct x_vars *)dmp->dm_vars.priv_vars)->pix;
+    xfb_ps->cwinp = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
+    xfb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
+    xfb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
+    xfb_ps->gc = ((struct x_vars *)dmp->dm_vars.priv_vars)->gc;
+
+    dmp->fbp = fb_open_existing("X", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    fb_put_platform_specific(fb_ps);
+    return 0;
+}
 
 /* Display Manager package interface */
 struct dm_internal dm_X = {
@@ -1687,7 +1709,7 @@ struct dm_internal dm_X = {
     X_getDisplayImage, /* display to image function */
     X_reshape,
     null_makeCurrent,
-    null_openFb,
+    X_openFb,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */
@@ -1723,6 +1745,7 @@ struct dm_internal dm_X = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
+    FB_NULL,
     0				/* Tcl interpreter */
 };
 
