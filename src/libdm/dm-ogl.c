@@ -78,6 +78,8 @@
 #include "dm/dm-ogl.h"
 #include "dm/dm-Null.h"
 #include "dm/dm_xvars.h"
+#include "fb.h"
+#include "fb/fb_platform_specific.h"
 #include "solid.h"
 
 #include "./dm_private.h"
@@ -134,83 +136,6 @@ HIDDEN int ogl_genDLists(struct dm_internal *dmp, size_t range);
 HIDDEN int ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image);
 HIDDEN void ogl_reshape(struct dm_internal *dmp, int width, int height);
 HIDDEN int ogl_makeCurrent(struct dm_internal *dmp);
-
-
-struct dm_internal dm_ogl = {
-    ogl_close,
-    ogl_drawBegin,
-    ogl_drawEnd,
-    ogl_normal,
-    ogl_loadMatrix,
-    ogl_loadPMatrix,
-    ogl_drawString2D,
-    ogl_drawLine2D,
-    ogl_drawLine3D,
-    ogl_drawLines3D,
-    ogl_drawPoint2D,
-    ogl_drawPoint3D,
-    ogl_drawPoints3D,
-    ogl_drawVList,
-    ogl_drawVListHiddenLine,
-    ogl_draw,
-    ogl_setFGColor,
-    ogl_setBGColor,
-    ogl_setLineAttr,
-    ogl_configureWin,
-    ogl_setWinBounds,
-    ogl_setLight,
-    ogl_setTransparency,
-    ogl_setDepthMask,
-    ogl_setZBuffer,
-    ogl_debug,
-    ogl_logfile,
-    ogl_beginDList,
-    ogl_endDList,
-    ogl_drawDList,
-    ogl_freeDLists,
-    ogl_genDLists,
-    ogl_getDisplayImage, /* display to image function */
-    ogl_reshape,
-    ogl_makeCurrent,
-    null_openFb,
-    0,
-    1,				/* has displaylist */
-    0,                          /* no stereo by default */
-    1.0,			/* zoom-in limit */
-    1,				/* bound flag */
-    "ogl",
-    "X Windows with OpenGL graphics",
-    DM_TYPE_OGL,
-    1,
-    0,
-    0,
-    0, /* bytes per pixel */
-    0, /* bits per channel */
-    0,
-    0,
-    1.0, /* aspect ratio */
-    0,
-    {0, 0},
-    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
-    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
-    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
-    {0, 0, 0},			/* bg color */
-    {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
-    0,				/* no debugging */
-    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
-    0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
-    1,				/* depth buffer is writable */
-    1,				/* zbuffer */
-    0,				/* no zclipping */
-    0,                          /* clear back buffer after drawing and swap */
-    0,                          /* not overriding the auto font size */
-    FB_NULL,
-    0				/* Tcl interpreter */
-};
 
 
 static fastf_t default_viewscale = 1000.0;
@@ -2368,6 +2293,102 @@ ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 
     return TCL_OK; /* caller will need to bu_free(idata, "image data"); */
 }
+
+int
+ogl_openFb(struct dm_internal *dmp)
+{
+    struct fb_platform_specific *fb_ps;
+    struct ogl_fb_info *ofb_ps;
+    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
+    ofb_ps = (struct ogl_fb_info *)fb_ps->data;
+    ofb_ps->dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
+    ofb_ps->win = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
+    ofb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
+    ofb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
+    ofb_ps->glxc = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc;
+    ofb_ps->double_buffer = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer;
+    ofb_ps->soft_cmap = 0;
+    dmp->fbp = fb_open_existing("ogl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    fb_put_platform_specific(fb_ps);
+    return 0;
+}
+
+
+struct dm_internal dm_ogl = {
+    ogl_close,
+    ogl_drawBegin,
+    ogl_drawEnd,
+    ogl_normal,
+    ogl_loadMatrix,
+    ogl_loadPMatrix,
+    ogl_drawString2D,
+    ogl_drawLine2D,
+    ogl_drawLine3D,
+    ogl_drawLines3D,
+    ogl_drawPoint2D,
+    ogl_drawPoint3D,
+    ogl_drawPoints3D,
+    ogl_drawVList,
+    ogl_drawVListHiddenLine,
+    ogl_draw,
+    ogl_setFGColor,
+    ogl_setBGColor,
+    ogl_setLineAttr,
+    ogl_configureWin,
+    ogl_setWinBounds,
+    ogl_setLight,
+    ogl_setTransparency,
+    ogl_setDepthMask,
+    ogl_setZBuffer,
+    ogl_debug,
+    ogl_logfile,
+    ogl_beginDList,
+    ogl_endDList,
+    ogl_drawDList,
+    ogl_freeDLists,
+    ogl_genDLists,
+    ogl_getDisplayImage, /* display to image function */
+    ogl_reshape,
+    ogl_makeCurrent,
+    ogl_openFb,
+    0,
+    1,				/* has displaylist */
+    0,                          /* no stereo by default */
+    1.0,			/* zoom-in limit */
+    1,				/* bound flag */
+    "ogl",
+    "X Windows with OpenGL graphics",
+    DM_TYPE_OGL,
+    1,
+    0,
+    0,
+    0, /* bytes per pixel */
+    0, /* bits per channel */
+    0,
+    0,
+    1.0, /* aspect ratio */
+    0,
+    {0, 0},
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
+    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* fg color */
+    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
+    0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
+    0,				/* no perspective */
+    0,				/* no lighting */
+    0,				/* no transparency */
+    1,				/* depth buffer is writable */
+    1,				/* zbuffer */
+    0,				/* no zclipping */
+    0,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
+    FB_NULL,
+    0				/* Tcl interpreter */
+};
 
 
 #endif /* DM_OGL */
