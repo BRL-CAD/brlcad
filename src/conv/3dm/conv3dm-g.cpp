@@ -1033,7 +1033,7 @@ RhinoConverter::create_all_objects()
 	    m_model.m_object_table[i].m_attributes;
 
 	if (m_verbose_mode)
-	    m_log.Print("Object %d of %d...\n", i + 1, m_model.m_object_table.Count());
+	    m_log.Print("Object %d of %d...\n", i + 1, num_objects);
 
 	if (create_object(*m_model.m_object_table[i].m_object, object_attrs))
 	    ++num_created;
