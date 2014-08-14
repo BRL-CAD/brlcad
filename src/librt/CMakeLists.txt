@@ -211,6 +211,9 @@ set(librt_ignored_files
   test_nurbsfit.cpp
   test_bot2nurbs.cpp
   test_root3-subd.cpp
+  timer-nt.c
+  timerhep.c
+  timerunix.c
   search.h
   subd_test_bot.asc
   primitives/bot/btg.h
@@ -230,7 +233,12 @@ set(librt_ignored_files
   )
 CMAKEFILES(${librt_ignored_files})
 
-BRLCAD_ADDDATA(nurb_example.c sample_applications)
+if(MSVC)
+  set(LIBRT_SOURCES ${LIBRT_SOURCES} timer-nt.c)
+else(MSVC)
+  set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
+endif(MSVC)
+
 BRLCAD_ADDDATA(raydebug.tcl sample_applications)
 
 BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${GDIAM_LIBRARY};${VDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;libnmg;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
@@ -242,6 +250,7 @@ if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "NMG_DLL_IMPORTS")
+  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "NURB_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
 

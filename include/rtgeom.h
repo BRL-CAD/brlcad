@@ -42,7 +42,7 @@
 #include "bu/vls.h"
 #include "vmath.h"
 
-#include "nmg.h" /* (temporarily?) needed for knot_vector */
+#include "nurb.h"
 #include "brep.h"
 
 

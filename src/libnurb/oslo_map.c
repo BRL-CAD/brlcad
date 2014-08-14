@@ -31,7 +31,6 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "raytrace.h"
 #include "nurb.h"
 
 /* This routine takes a oslo refinement matrix as described in the

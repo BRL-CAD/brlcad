@@ -42,7 +42,6 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "raytrace.h"
 #include "nurb.h"
 
 #define AMAX(i, j)    ((i) > (j) ? (i) : (j))
@@ -73,7 +72,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 
     struct oslo_mat * head, * o_ptr, *new_o;
 
-    if (res) RT_CK_RESOURCE(res);
+    if (res) NURB_CK_RESOURCE(res);
 
     n1 = t_kv->k_size - order;
 
@@ -216,7 +215,7 @@ rt_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
 {
     register struct oslo_mat * omp;
 
-    if (res) RT_CK_RESOURCE(res);
+    if (res) NURB_CK_RESOURCE(res);
 
     while (om != (struct oslo_mat *) 0) {
 	omp = om;

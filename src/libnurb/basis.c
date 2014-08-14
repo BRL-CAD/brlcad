@@ -31,8 +31,9 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "raytrace.h"
 #include "nurb.h"
+
+extern uint32_t nurb_debug = 0;
 
 /**
  * This uses the traditional De Boor-Cox algorithm,

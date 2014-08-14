@@ -292,47 +292,6 @@ struct hit {
 /* A more powerful interface would be: */
 /* RT_GET_NORMAL(_normal, _partition, inhit/outhit flag, ap) */
 
-
-/**
- * Information about curvature of the surface at a hit point.  The
- * principal direction pdir has unit length and principal curvature
- * c1.  |c1| <= |c2|, i.e. c1 is the most nearly flat principle
- * curvature.  A POSITIVE curvature indicates that the surface bends
- * TOWARD the (outward pointing) normal vector at that point.  c1 and
- * c2 are the inverse radii of curvature.  The other principle
- * direction is implied: pdir2 = normal x pdir1.
- */
-struct curvature {
-    vect_t	crv_pdir;	/**< @brief Principle direction */
-    fastf_t	crv_c1;		/**< @brief curvature in principle dir */
-    fastf_t	crv_c2;		/**< @brief curvature in other direction */
-};
-#define CURVE_NULL	((struct curvature *)0)
-#define RT_CURVATURE_INIT_ZERO { VINIT_ZERO, 0.0, 0.0 }
-
-/**
- * Use this macro after having computed the normal, to compute the
- * curvature at a hit point.
- *
- * In Release 4.4 and earlier, this was called RT_CURVE().  When the
- * extra argument was added the name was changed.
- */
-#define RT_CURVATURE(_curvp, _hitp, _flipflag, _stp) { \
-	RT_CK_HIT(_hitp); \
-	RT_CK_SOLTAB(_stp); \
-	RT_CK_FUNCTAB((_stp)->st_meth); \
-	if ((_stp)->st_meth->ft_curve) { \
-	    (_stp)->st_meth->ft_curve(_curvp, _hitp, _stp); \
-	} \
-	if (_flipflag) { \
-	    (_curvp)->crv_c1 = - (_curvp)->crv_c1; \
-	    (_curvp)->crv_c2 = - (_curvp)->crv_c2; \
-	} \
-    }
-
-/* A more powerful interface would be: */
-/* RT_GET_CURVATURE(_curvp, _partition, inhit/outhit flag, ap) */
-
 /**
  * Mostly for texture mapping, information about parametric space.
  */
@@ -2812,6 +2771,22 @@ RT_EXPORT extern struct soltab *rt_find_solid(const struct rt_i *rtip,
  * sys-calls are used for all timing.
  *
  */
+RT_EXPORT extern void rt_prep_timer(void);
+/* Read global timer, return time + str */
+/**
+ * Reports on the passage of time, since rt_prep_timer() was called.
+ * Explicit return is number of CPU seconds.  String return is
+ * descriptive.  If "elapsed" pointer is non-null, number of elapsed
+ * seconds are returned.  Times returned will never be zero.
+ */
+RT_EXPORT extern double rt_get_timer(struct bu_vls *vp,
+				      double *elapsed);
+/* Return CPU time, text, & wall clock time off the global timer */
+/**
+ * Compatibility routine
+ */
+RT_EXPORT extern double rt_read_timer(char *str, int len);
+ 
 
 /* Plot a solid */
 int rt_plot_solid(

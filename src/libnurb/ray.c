@@ -32,8 +32,6 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "nmg.h"
-#include "raytrace.h"
 #include "nurb.h"
 
 
@@ -49,7 +47,7 @@ rt_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pl
     int rational;
     int i;
 
-    if (nmg_debug & DEBUG_RT_ISECT)
+    if (nurb_debug & DEBUG_NURB_ISECT)
 	bu_log("rt_nurb_project_srf: projecting surface, planes = (%g %g %g %g) (%g %g %g %g)\n",
 	       V4ARGS(plane1), V4ARGS(plane2));
 
@@ -92,7 +90,7 @@ rt_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pl
 		mp1[2] * plane2[2] - plane2[3];
 	}
 
-	if (nmg_debug & DEBUG_RT_ISECT) {
+	if (nurb_debug & DEBUG_NURB_ISECT) {
 	    if (rational)
 		bu_log("\tmesh pt (%g %g %g %g), becomes (%g %g)\n", V4ARGS(mp1), mp2[0], mp2[1]);
 	    else
@@ -348,7 +346,7 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
     psrf->dir = 1;
     BU_LIST_APPEND(plist, &psrf->l);
 
-    if (DEBUG_SPLINE)
+    if (DEBUG_NURB_SPLINE)
 	rt_nurb_s_print("srf", psrf);
 
     /* This list starts out with only a single snurb, but more may be
@@ -369,7 +367,7 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 	    sub++;
 	    dir = (dir == 0)?1:0;	/* change direction */
 
-	    if (DEBUG_SPLINE)
+	    if (DEBUG_NURB_SPLINE)
 		rt_nurb_s_print("psrf", psrf);
 
 	    rt_nurb_pbound(psrf, vmin, vmax);
@@ -377,7 +375,7 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 	    /* Check for origin to be included in the bounding box */
 	    if (!(vmin[0] <= 0.0 && vmin[1] <= 0.0 &&
 		  vmax[0] >= 0.0 && vmax[1] >= 0.0)) {
-		if (DEBUG_SPLINE)
+		if (DEBUG_NURB_SPLINE)
 		    bu_log("this srf doesn't include the origin\n");
 		flat = 1;
 		rt_nurb_free_snurb(psrf, res);
@@ -391,7 +389,7 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 
 		/* Split surf, requeue both sub-surfs at head */
 		/* New surfs will have same dir as arg, here */
-		if (DEBUG_SPLINE)
+		if (DEBUG_NURB_SPLINE)
 		    bu_log("splitting this surface\n");
 		rt_nurb_s_split(plist, psrf, dir, res);
 		rt_nurb_free_snurb(psrf, res);
@@ -400,7 +398,7 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 		return hp;
 	    }
 	    if (smin > 1.0 || smax < 0.0) {
-		if (DEBUG_SPLINE)
+		if (DEBUG_NURB_SPLINE)
 		    bu_log("eliminating this surface (smin=%g, smax=%g)\n", smin, smax);
 		flat = 1;
 		rt_nurb_free_snurb(psrf, res);
@@ -429,7 +427,7 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 	    psrf->dir = dir;
 	    rt_nurb_free_snurb(osrf, res);
 
-	    if (DEBUG_SPLINE) {
+	    if (DEBUG_NURB_SPLINE) {
 		bu_log("After call to rt_nurb_region_from_srf() (smin=%g, smax=%g)\n", smin, smax);
 		rt_nurb_s_print("psrf", psrf);
 	    }
@@ -443,7 +441,7 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 	    if ((u[1] - u[0]) < uv_tol && (v[1] - v[0]) < uv_tol) {
 		struct rt_nurb_uv_hit * hit;
 
-		if (DEBUG_SPLINE) {
+		if (DEBUG_NURB_SPLINE) {
 		    fastf_t p1[4], p2[4];
 		    int coords;
 		    vect_t diff;

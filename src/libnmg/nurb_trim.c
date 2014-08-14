@@ -33,8 +33,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "raytrace.h"
-#include "nurb.h"
+#include "nmg.h"
 
 extern void rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_t v);
 

@@ -34,7 +34,6 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "raytrace.h"
 #include "nurb.h"
 
 /* This doesn't seem to be used anymore: */
