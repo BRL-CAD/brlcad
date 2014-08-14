@@ -135,27 +135,7 @@ Wgl_dm_init(struct dm_list *o_dm_list,
 void
 Wgl_fb_open()
 {
-    char *wgl_name = "/dev/wgl";
-
-    if ((fbp = (fb *)calloc(sizeof(fb), 1)) == FB_NULL) {
-	Tcl_AppendResult(INTERP, "Wgl_fb_open: failed to allocate framebuffer memory\n",
-			 (char *)NULL);
-	return;
-    }
-    fb_set_interface(fbp, "wgl");
-    fb_set_name(fbp, wgl_name);
-    /* Mark OK by filling in magic number */
-    fb_set_magic(fbp, FB_MAGIC);
-
-    _wgl_open_existing(fbp,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-		       dm_get_width(dmp), dm_get_height(dmp),
-		       ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc,
-		       ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer, 0);
+    fbp = dm_get_fb(dmp);
 }
 
 

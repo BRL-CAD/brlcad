@@ -57,6 +57,8 @@
 #include "dm.h"
 #include "dm/dm-rtgl.h"
 #include "dm/dm_xvars.h"
+#include "fb.h"
+#include "fb/fb_platform_specific.h"
 #include "solid.h"
 
 #include "./dm_private.h"
@@ -87,80 +89,6 @@ dm *rtgl_open(Tcl_Interp *interp, int argc, char **argv);
 
 HIDDEN_DM_FUNCTION_PROTOTYPES(rtgl)
 
-dm dm_rtgl = {
-    rtgl_close,
-    rtgl_drawBegin,
-    rtgl_drawEnd,
-    rtgl_normal,
-    rtgl_loadMatrix,
-    null_loadPMatrix,
-    rtgl_drawString2D,
-    rtgl_drawLine2D,
-    rtgl_drawLine3D,
-    rtgl_drawLines3D,
-    rtgl_drawPoint2D,
-    rtgl_drawPoint3D,
-    rtgl_drawPoints3D,
-    rtgl_drawVList,
-    rtgl_drawVList,
-    rtgl_draw,
-    rtgl_setFGColor,
-    rtgl_setBGColor,
-    rtgl_setLineAttr,
-    rtgl_configureWin,
-    rtgl_setWinBounds,
-    rtgl_setLight,
-    rtgl_setTransparency,
-    rtgl_setDepthMask,
-    rtgl_setZBuffer,
-    rtgl_debug,
-    rtgl_beginDList,
-    rtgl_endDList,
-    rtgl_drawDList,
-    rtgl_freeDLists,
-    rtgl_genDLists,
-    null_getDisplayImage,	/* display to image function */
-    null_reshape,
-    null_makeCurrent,
-    null_openFb,
-    0,
-    1,				/* has displaylist */
-    0,                          /* no stereo by default */
-    1.0,			/* zoom-in limit, */
-    1,				/* bound flag */
-    "rtgl",
-    "X Windows with OpenGL graphics",
-    DM_TYPE_RTGL,
-    1,
-    0,
-    0,
-    0, /* bytes per pixel */
-    0, /* bits per channel */
-    0,
-    0,
-    1.0, /* aspect ratio */
-    0,
-    {0, 0},
-    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
-    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
-    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
-    {0, 0, 0},			/* bg color */
-    {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN}, /* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX}, /* clipmax */
-    0,				/* no debugging */
-    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
-    0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
-    1,				/* depth buffer is writable */
-    1,				/* zbuffer */
-    0,				/* no zclipping */
-    0,                          /* clear back buffer after drawing and swap */
-    0,                          /* not overriding the auto font size */
-    FB_NULL,
-    0				/* Tcl interpreter */
-};
 
 
 static fastf_t default_viewscale = 1000.0;
@@ -2692,6 +2620,100 @@ rtgl_genDLists(dm *dmp, size_t range)
 
     return glGenLists((GLsizei)range);
 }
+
+int
+rtgl_openFb(struct dm_internal *dmp)
+{
+    struct fb_platform_specific *fb_ps;
+    struct ogl_fb_info *ofb_ps;
+    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
+    ofb_ps = (struct ogl_fb_info *)fb_ps->data;
+    ofb_ps->dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
+    ofb_ps->win = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
+    ofb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
+    ofb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
+    ofb_ps->glxc = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc;
+    ofb_ps->double_buffer = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer;
+    ofb_ps->soft_cmap = 0;
+    dmp->fbp = fb_open_existing("ogl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    fb_put_platform_specific(fb_ps);
+    return 0;
+}
+
+dm dm_rtgl = {
+    rtgl_close,
+    rtgl_drawBegin,
+    rtgl_drawEnd,
+    rtgl_normal,
+    rtgl_loadMatrix,
+    null_loadPMatrix,
+    rtgl_drawString2D,
+    rtgl_drawLine2D,
+    rtgl_drawLine3D,
+    rtgl_drawLines3D,
+    rtgl_drawPoint2D,
+    rtgl_drawPoint3D,
+    rtgl_drawPoints3D,
+    rtgl_drawVList,
+    rtgl_drawVList,
+    rtgl_draw,
+    rtgl_setFGColor,
+    rtgl_setBGColor,
+    rtgl_setLineAttr,
+    rtgl_configureWin,
+    rtgl_setWinBounds,
+    rtgl_setLight,
+    rtgl_setTransparency,
+    rtgl_setDepthMask,
+    rtgl_setZBuffer,
+    rtgl_debug,
+    rtgl_beginDList,
+    rtgl_endDList,
+    rtgl_drawDList,
+    rtgl_freeDLists,
+    rtgl_genDLists,
+    null_getDisplayImage,	/* display to image function */
+    null_reshape,
+    null_makeCurrent,
+    rtgl_openFb,
+    0,
+    1,				/* has displaylist */
+    0,                          /* no stereo by default */
+    1.0,			/* zoom-in limit, */
+    1,				/* bound flag */
+    "rtgl",
+    "X Windows with OpenGL graphics",
+    DM_TYPE_RTGL,
+    1,
+    0,
+    0,
+    0, /* bytes per pixel */
+    0, /* bits per channel */
+    0,
+    0,
+    1.0, /* aspect ratio */
+    0,
+    {0, 0},
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
+    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* fg color */
+    {GED_MIN, GED_MIN, GED_MIN}, /* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX}, /* clipmax */
+    0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
+    0,				/* no perspective */
+    0,				/* no lighting */
+    0,				/* no transparency */
+    1,				/* depth buffer is writable */
+    1,				/* zbuffer */
+    0,				/* no zclipping */
+    0,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
+    FB_NULL,
+    0				/* Tcl interpreter */
+};
 
 
 #endif /* DM_RTGL */

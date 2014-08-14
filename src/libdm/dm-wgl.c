@@ -47,6 +47,8 @@
 #include "dm/dm-Null.h"
 #include "dm/dm-wgl.h"
 #include "dm/dm_xvars.h"
+#include "fb.h"
+#include "fb/fb_platform_specific.h"
 #include "solid.h"
 
 #include "./dm_private.h"
@@ -2062,6 +2064,23 @@ wgl_genDLists(dm *dmp, size_t range)
     return glGenLists((GLsizei)range);
 }
 
+int
+wgl_openFb(dm *dmp)
+{
+    fb_ps = fb_get_platform_specific(FB_WGL_MAGIC);
+    wfb_ps = (struct wgl_fb_info *)fb_ps->data;
+    wfb_ps->dpy = ((struct dm_xvars *)(dm_get_public_vars(dmp)))->dpy;
+    wfb_ps->win = ((struct dm_xvars *)(dm_get_public_vars(dmp)))->win;
+    wfb_ps->cmap = ((struct dm_xvars *)(dm_get_public_vars(dmp)))->cmap;
+    wfb_ps->vip = ((struct dm_xvars *)(dm_get_public_vars(dmp)))->vip;
+    wfb_ps->hdc = ((struct dm_xvars *)(dm_get_public_vars(dmp)))->hdc;
+    wfb_ps->glxc = ((struct wgl_vars *)(dm_get_private_vars(dmp)))->glxc;
+    wfb_ps->double_buffer = ((struct wgl_vars *)(dm_get_private_vars(dmp)))->mvars.doublebuffer
+	wfb_ps->soft_cmap = 0;
+    gdvp->gdv_fbs.fbs_fbp = fb_open_existing("wgl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    fb_put_platform_specific(fb_ps);
+    return 0;
+}
 
 dm dm_wgl = {
     wgl_close,
@@ -2099,7 +2118,7 @@ dm dm_wgl = {
     null_getDisplayImage,	/* display to image function */
     wgl_reshape,
     wgl_makeCurrent,
-    null_openFb,
+    wgl_openFb,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
