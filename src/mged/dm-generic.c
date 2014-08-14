@@ -41,6 +41,7 @@
 #  include "tk.h"
 #endif
 #include "dm/dm_xvars.h"
+#include "../libdm/dm_private.h"
 
 #include "bu.h"
 #include "vmath.h"

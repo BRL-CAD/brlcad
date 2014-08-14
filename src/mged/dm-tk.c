@@ -39,6 +39,7 @@
 #include "raytrace.h"
 #include "dm/dm_xvars.h"
 #include "dm/dm-tk.h"
+#include "../libdm/dm_private.h"
 #include "fbio.h"
 
 #include "./mged.h"

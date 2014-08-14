@@ -369,7 +369,7 @@ dozoom(int which_eye)
     }
 #endif
 
-    if (dmp->dm_transparency) {
+    if (dm_get_transparency(dmp)) {
 	/* First, draw opaque stuff */
 	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {

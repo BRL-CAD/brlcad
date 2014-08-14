@@ -66,6 +66,7 @@
 #include "raytrace.h"
 #include "dm/dm_xvars.h"
 #include "dm/dm-ogl.h"
+#include "../libdm/dm_private.h"
 
 #include "./mged.h"
 #include "./sedit.h"

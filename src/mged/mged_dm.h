@@ -31,7 +31,6 @@
 #include "dm.h"	/* struct dm */
 #include "dm/dm_xvars.h"
 #include "dm/dm-Null.h"
-#include "../libdm/dm_private.h"
 
 #include "fb.h" /* fb */
 #include "pkg.h" /* struct pkg_conn */
@@ -463,9 +462,9 @@ struct dm_list {
 #define netchan curr_dm_list->dml_netchan
 #endif
 #define clients curr_dm_list->dml_clients
-#define tkName dmp->dm_tkName
-#define dName dmp->dm_dName
-#define displaylist dmp->dm_displaylist
+#define tkName dm_get_tkname(dmp)
+#define dName dm_get_dname(dmp)
+#define displaylist dm_get_displaylist(dmp)
 #define dirty curr_dm_list->dml_dirty
 #define mapped curr_dm_list->dml_mapped
 #define owner curr_dm_list->dml_owner
@@ -566,7 +565,7 @@ struct dm_list {
 		struct dm_list *tp; \
 \
 		FOR_ALL_DISPLAYS(tp, &head_dm_list.l) { \
-			if ((id) == tp->dml_dmp->dm_id) { \
+			if ((id) == dm_get_id(tp->dml_dmp)) { \
 				(p) = tp; \
 				break; \
 			} \

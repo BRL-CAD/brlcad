@@ -51,6 +51,7 @@
 #include "ged.h"
 #include "dm/dm_xvars.h"
 #include "dm/dm-wgl.h"
+#include "../libdm/dm_private.h"
 
 #include "./mged.h"
 #include "./sedit.h"

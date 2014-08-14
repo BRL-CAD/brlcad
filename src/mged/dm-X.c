@@ -42,6 +42,7 @@
 #include "raytrace.h"
 #include "dm/dm_xvars.h"
 #include "dm/dm-X.h"
+#include "../libdm/dm_private.h"
 #include "fb.h"
 #include "fb/fb_platform_specific.h"
 

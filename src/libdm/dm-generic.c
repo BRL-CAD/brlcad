@@ -251,6 +251,41 @@ dm_fogHint(dm *dmp, int fastfog)
     }
 }
 
+dm *
+dm_get()
+{
+    struct dm_internal *new_dm = DM_NULL;
+    BU_GET(new_dm, struct dm_internal);
+    bu_vls_init(&new_dm->dm_pathName);
+    bu_vls_init(&new_dm->dm_dName);
+
+    return new_dm;
+}
+
+void
+dm_put(dm *dmp)
+{
+    if (dmp != DM_NULL) {
+	bu_vls_free(&dmp->dm_pathName);
+	bu_vls_free(&dmp->dm_dName);
+	BU_PUT(dmp, struct dm_internal);
+    }
+}
+
+const char *
+dm_get_dm_name(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return dmp->dm_name;
+}
+
+const char *
+dm_get_dm_lname(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return dmp->dm_lname;
+}
+
 int
 dm_get_width(dm *dmp)
 {
@@ -273,6 +308,13 @@ dm_get_type(dm *dmp)
 }
 
 int
+dm_get_displaylist(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_displaylist;
+}
+
+fastf_t
 dm_get_aspect(dm *dmp)
 {
     if (!dmp) return 0;
@@ -391,6 +433,36 @@ dm_get_pathname(dm *dmp)
     if (!dmp) return NULL;
     return &(dmp->dm_pathName);
 }
+
+
+struct bu_vls * 
+dm_get_dname(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return &(dmp->dm_dName);
+}
+
+struct bu_vls * 
+dm_get_tkname(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return &(dmp->dm_tkName);
+}
+
+unsigned long
+dm_get_id(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_id;
+}
+
+void
+dm_set_id(dm *dmp, unsigned long new_id)
+{
+    if (!dmp) return;
+    dmp->dm_id = new_id;
+}
+
 
 
 int

@@ -304,10 +304,17 @@ DM_EXPORT extern const char *dm_version(void);
 /* functions to make a dm struct hidable - will need to
  * sort these out later */
 
+DM_EXPORT extern dm *dm_get();
+DM_EXPORT extern void dm_put(dm *dmp);
+DM_EXPORT extern const char *dm_get_dm_name(dm *dmp);
+DM_EXPORT extern const char *dm_get_dm_lname(dm *dmp);
 DM_EXPORT extern int dm_get_width(dm *dmp);
 DM_EXPORT extern int dm_get_height(dm *dmp);
-DM_EXPORT extern int dm_get_aspect(dm *dmp);
+DM_EXPORT extern fastf_t dm_get_aspect(dm *dmp);
 DM_EXPORT extern int dm_get_type(dm *dmp);
+DM_EXPORT extern unsigned long dm_get_id(dm *dmp);
+DM_EXPORT extern void dm_set_id(dm *dmp, unsigned long new_id);
+DM_EXPORT extern int dm_get_displaylist(dm *dmp);
 DM_EXPORT extern int dm_close(dm *dmp);
 DM_EXPORT extern unsigned char *dm_get_bg(dm *dmp);
 DM_EXPORT extern int dm_set_bg(dm *dmp, unsigned char r, unsigned char g, unsigned char b);
@@ -320,6 +327,8 @@ DM_EXPORT extern void dm_set_bound(dm *dmp, fastf_t val);
 DM_EXPORT extern int dm_set_win_bounds(dm *dmp, fastf_t *w);
 DM_EXPORT extern int dm_configure_win(dm *dmp, int force);
 DM_EXPORT extern struct bu_vls *dm_get_pathname(dm *dmp);
+DM_EXPORT extern struct bu_vls *dm_get_dname(dm *dmp);
+DM_EXPORT extern struct bu_vls *dm_get_tkname(dm *dmp);
 DM_EXPORT extern int dm_get_fontsize(dm *dmp);
 DM_EXPORT extern void dm_set_fontsize(dm *dmp, int size);
 DM_EXPORT extern int dm_get_light_flag(dm *dmp);

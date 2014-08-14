@@ -32,6 +32,7 @@
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+#include "../libdm/dm_private.h"
 
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 

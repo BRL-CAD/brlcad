@@ -165,7 +165,7 @@ draw_v_axes()
 
     VSET(v_ap,
 	 axes_state->ax_view_pos[X] * INV_GED,
-	 axes_state->ax_view_pos[Y] * INV_GED / dmp->dm_aspect,
+	 axes_state->ax_view_pos[Y] * INV_GED / dm_get_aspect(dmp),
 	 0.0);
 
     memset(&gas, 0, sizeof(struct ged_axes_state));

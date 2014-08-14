@@ -360,9 +360,9 @@ dotitles(struct bu_vls *overlay_vls)
 	for (i=0; i<(size_t)num_lines; i++)
 	    dm_draw_line_2d(dmp,
 			    GED2PM1(((int)(lines[i*2][X]*GED_MAX))),
-			    GED2PM1(((int)(lines[i*2][Y]*GED_MAX)) * dmp->dm_aspect),
+			    GED2PM1(((int)(lines[i*2][Y]*GED_MAX)) * dm_get_aspect(dmp)),
 			    GED2PM1(((int)(lines[i*2+1][X]*GED_MAX))),
-			    GED2PM1(((int)(lines[i*2+1][Y]*GED_MAX)) * dmp->dm_aspect));
+			    GED2PM1(((int)(lines[i*2+1][Y]*GED_MAX)) * dm_get_aspect(dmp)));
 	for (i=0; i<8+1; i++) {
 	    if (pl[i].str[0] == '\0') break;
 	    dm_draw_string_2d(dmp, pl[i].str,
