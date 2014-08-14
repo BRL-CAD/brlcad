@@ -406,6 +406,13 @@ dm_get_clipmax(dm *dmp)
     return  &(dmp->dm_clipmax);
 }
 
+int
+dm_get_bound_flag(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_boundFlag;
+}
+
 void
 dm_set_bound(dm *dmp, fastf_t val)
 {
@@ -420,6 +427,12 @@ dm_set_win_bounds(dm *dmp, fastf_t *w)
     return dmp->dm_setWinBounds(dmp, w);
 }
 
+int
+dm_get_stereo(dm *dmp)
+{
+    if (!dmp) return 0;
+    return dmp->dm_stereo;
+}
 int
 dm_configure_win(dm *dmp, int force)
 {

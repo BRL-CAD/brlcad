@@ -392,7 +392,7 @@ dozoom(int which_eye)
 		if (curr_dm_list != save_dm_list)
 		    curr_dm_list = save_dm_list;
 
-		if (dmp->dm_boundFlag) {
+		if (dm_get_bound_flag(dmp)) {
 		    ratio = sp->s_size * inv_viewsize;
 
 		    /*
@@ -439,7 +439,7 @@ dozoom(int which_eye)
 		if (curr_dm_list != save_dm_list)
 		    curr_dm_list = save_dm_list;
 
-		if (dmp->dm_boundFlag) {
+		if (dm_get_bound_flag(dmp)) {
 		    ratio = sp->s_size * inv_viewsize;
 
 		    /*
@@ -482,7 +482,7 @@ dozoom(int which_eye)
 		if (curr_dm_list != save_dm_list)
 		    curr_dm_list = save_dm_list;
 
-		if (dmp->dm_boundFlag) {
+		if (dm_get_bound_flag(dmp)) {
 		    ratio = sp->s_size * inv_viewsize;
 
 		    /*
@@ -556,7 +556,7 @@ dozoom(int which_eye)
 	    if (curr_dm_list != save_dm_list)
 		curr_dm_list = save_dm_list;
 
-	    if (dmp->dm_boundFlag) {
+	    if (dm_get_bound_flag(dmp)) {
 		ratio = sp->s_size * inv_viewsize;
 		/*
 		 * Check for this object being smaller than a speck.
@@ -658,7 +658,7 @@ createDListAll(struct solid *sp)
     save_dlp = curr_dm_list;
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
-	if (dlp->dml_dmp->dm_displaylist &&
+	if (dm_get_displaylist(dlp->dml_dmp) &&
 	    dlp->dml_mged_variables->mv_dlist) {
 	    createDList(sp);
 	}
@@ -680,7 +680,7 @@ freeDListsAll(unsigned int dlist, int range)
     struct dm_list *dlp;
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
-	if (dlp->dml_dmp->dm_displaylist &&
+	if (dm_get_displaylist(dlp->dml_dmp) &&
 	    dlp->dml_mged_variables->mv_dlist) {
 	    (void)dm_make_current(dmp);
 	    (void)dm_free_dlists(dlp->dml_dmp, dlist, range);

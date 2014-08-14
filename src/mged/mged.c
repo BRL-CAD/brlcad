@@ -1274,12 +1274,11 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
     predictor_init();
 
-    BU_ALLOC(dmp, struct dm_internal);
+    dmp = dm_get();
     *dmp = dm_null;
-    bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&tkName);
     bu_vls_init(&dName);
-    bu_vls_strcpy(&dmp->dm_pathName, "nu");
+    bu_vls_strcpy(dm_get_pathname(dmp), "nu");
     bu_vls_strcpy(&tkName, "nu");
 
     BU_ALLOC(rubber_band, struct _rubber_band);
@@ -2301,7 +2300,7 @@ refresh(void)
 	    int restore_zbuffer = 0;
 
 	    if (mged_variables->mv_fb &&
-		dmp->dm_zbuffer) {
+		dm_get_zbuffer(dmp)) {
 		restore_zbuffer = 1;
 		(void)dm_make_current(dmp);
 		(void)dm_set_zbuffer(dmp, 0);
@@ -2331,7 +2330,7 @@ refresh(void)
 		/* do framebuffer underlay */
 		if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
 		    if (mged_variables->mv_fb_all)
-			fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+			fb_refresh(fbp, 0, 0, dm_get_width(dmp), dm_get_height(dmp));
 		    else if (mged_variables->mv_mouse_behavior != 'z')
 			paint_rect_area();
 		}
@@ -2340,7 +2339,7 @@ refresh(void)
 		if (mged_variables->mv_fb &&
 		    mged_variables->mv_fb_overlay &&
 		    mged_variables->mv_fb_all) {
-		    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+		    fb_refresh(fbp, 0, 0, dm_get_width(dmp), dm_get_height(dmp));
 
 		    if (restore_zbuffer)
 			dm_set_zbuffer(dmp, 1);
@@ -2354,7 +2353,7 @@ refresh(void)
 		     * dm_draw_vlist().
 		     */
 
-		    if (dmp->dm_stereo == 0 ||
+		    if (dm_get_stereo(dmp) == 0 ||
 			mged_variables->mv_eye_sep_dist <= 0) {
 			/* Normal viewing */
 			dozoom(0);

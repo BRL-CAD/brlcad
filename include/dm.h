@@ -323,7 +323,9 @@ DM_EXPORT extern int dm_set_fg(dm *dmp, unsigned char r, unsigned char g, unsign
 DM_EXPORT extern int dm_make_current(dm *dmp);
 DM_EXPORT extern vect_t *dm_get_clipmin(dm *dmp);
 DM_EXPORT extern vect_t *dm_get_clipmax(dm *dmp);
+DM_EXPORT extern int dm_get_bound_flag(dm *dmp);
 DM_EXPORT extern void dm_set_bound(dm *dmp, fastf_t val);
+DM_EXPORT extern int dm_get_stereo(dm *dmp);
 DM_EXPORT extern int dm_set_win_bounds(dm *dmp, fastf_t *w);
 DM_EXPORT extern int dm_configure_win(dm *dmp, int force);
 DM_EXPORT extern struct bu_vls *dm_get_pathname(dm *dmp);
