@@ -76,7 +76,6 @@ check_return(int ret, const std::string &message)
 static inline std::string
 uuid2string(const ON_UUID &uuid)
 {
-    // UUID buffers must be >= 37 chars per openNURBS API
     const std::size_t UUID_LEN = 37;
 
     char buf[UUID_LEN];
@@ -107,7 +106,7 @@ at_ref(const A &array, int index)
 }
 
 
-template <typename T, typename R, R(*Destructor)(T*)>
+template <typename T, typename R, R(*Destructor)(T *)>
 struct AutoDestroyer {
     AutoDestroyer() : ptr(NULL) {}
     AutoDestroyer(T *vptr) : ptr(vptr) {}
