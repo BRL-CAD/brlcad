@@ -26,7 +26,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Fbgrid</emphasis>
+<para><command>fbgrid</command>
 is used to generate a grid on a frame buffer.
 The environment
 variable
