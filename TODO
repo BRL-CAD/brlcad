@@ -67,6 +67,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* get bu_extern out of bu/parse.h into its own header file.
+
 * geometry symbolic links (hard and soft links)
 
 * investigate INFINITY spatial partitioning issue.
