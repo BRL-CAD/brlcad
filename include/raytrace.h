@@ -64,9 +64,6 @@ __BEGIN_DECLS
 
 #include "./rt/defines.h"
 
-
-
-
 /**
  * Each type of debugging support is independently controlled, by a
  * separate bit in the word RT_G_DEBUG
@@ -2415,44 +2412,6 @@ struct ray_data {
     }
 #endif
 
-
-struct nmg_radial {
-    struct bu_list	l;
-    struct edgeuse	*eu;
-    struct faceuse	*fu;		/**< @brief  Derived from eu */
-    struct shell	*s;		/**< @brief  Derived from eu */
-    int			existing_flag;	/**< @brief  !0 if this eu exists on dest edge */
-    int			is_crack;	/**< @brief  This eu is part of a crack. */
-    int			is_outie;	/**< @brief  This crack is an "outie" */
-    int			needs_flip;	/**< @brief  Insert eumate, not eu */
-    fastf_t		ang;		/**< @brief  angle, in radians.  0 to 2pi */
-};
-#define NMG_CK_RADIAL(_p) NMG_CKMAG(_p, NMG_RADIAL_MAGIC, "nmg_radial")
-
-struct nmg_inter_struct {
-    uint32_t		magic;
-    struct bu_ptbl	*l1;		/**< @brief  vertexuses on the line of */
-    struct bu_ptbl	*l2;		/**< @brief  intersection between planes */
-    fastf_t		*mag1;		/**< @brief  Distances along intersection line */
-    fastf_t		*mag2;		/**< @brief  for each vertexuse in l1 and l2. */
-    int			mag_len;	/**< @brief  Array size of mag1 and mag2 */
-    struct shell	*s1;
-    struct shell	*s2;
-    struct faceuse	*fu1;		/**< @brief  null if l1 comes from a wire */
-    struct faceuse	*fu2;		/**< @brief  null if l2 comes from a wire */
-    struct bn_tol	tol;
-    int			coplanar;	/**< @brief  a flag */
-    struct edge_g_lseg	*on_eg;		/**< @brief  edge_g for line of intersection */
-    point_t		pt;		/**< @brief  3D line of intersection */
-    vect_t		dir;
-    point_t		pt2d;		/**< @brief  2D projection of isect line */
-    vect_t		dir2d;
-    fastf_t		*vert2d;	/**< @brief  Array of 2d vertex projections [index] */
-    int			maxindex;	/**< @brief  size of vert2d[] */
-    mat_t		proj;		/**< @brief  Matrix to project onto XY plane */
-    const uint32_t	*twod;		/**< @brief  ptr to face/edge of 2d projection */
-};
-#define NMG_CK_INTER_STRUCT(_p) NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
 
 /*****************************************************************
  *                                                               *

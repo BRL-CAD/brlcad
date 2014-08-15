@@ -365,8 +365,8 @@ get_args(int argc, const char *argv[])
 		finalframe = atoi( bu_optarg );
 		break;
 	    case 'N':
-		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		bu_log("NMG_debug=0x%x\n", RTG.NMG_debug);
+		sscanf( bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		bu_log("NMG_debug=0x%x\n", nmg_debug);
 		break;
 	    case 'M':
 		matflag = 1;
@@ -629,7 +629,7 @@ get_args(int argc, const char *argv[])
     }
 
     /* Compat */
-    if (RT_G_DEBUG || R_DEBUG || RTG.NMG_debug )
+    if (RT_G_DEBUG || R_DEBUG || nmg_debug )
 	bu_debug |= BU_DEBUG_COREDUMP;
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL)

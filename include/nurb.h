@@ -33,7 +33,10 @@
 
 #include "common.h"
 #include "bu.h"
+#include "bn.h"
 #include "vmath.h"
+
+struct resource;
 
 #ifndef NURB_EXPORT
 #  if defined(NURB_DLL_EXPORTS) && defined(NURB_DLL_IMPORTS)

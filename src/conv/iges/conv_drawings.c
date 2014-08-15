@@ -402,7 +402,7 @@ Draw_entities(struct shell *s, int de_list[], int no_of_des, fastf_t x, fastf_t 
     s = nmg_ms();
 
     BU_LIST_INIT(&vhead);
-    BU_LIST_INIT(&RTG.rtg_vlfree);
+    BU_LIST_INIT(&rtg_vlfree);
 
     sina = sin(ang);
     cosa = cos(ang);

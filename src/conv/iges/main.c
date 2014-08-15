@@ -176,7 +176,7 @@ main(int argc, char *argv [])
 		    bu_debug |= BU_DEBUG_MEM_CHECK;
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
 		break;
 	    default:
 		usage(argv[0]);

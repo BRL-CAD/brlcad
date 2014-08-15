@@ -192,7 +192,7 @@ main(int argc, char **argv)
     }
 
 
-    BU_LIST_INIT(&RTG.rtg_vlfree);
+    BU_LIST_INIT(&rtg_vlfree);
 
     outfp = wdb_fopen("tea_nmg.g");
 

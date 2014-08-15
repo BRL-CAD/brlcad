@@ -233,8 +233,8 @@ main(int argc, char **argv)
 		argv += 2;
 		break;
 	    case 'N':
-		sscanf(argv[1], "%x", (unsigned int *)&RTG.NMG_debug);
-		fprintf(stderr, "librt RTG.NMG_debug=x%x\n", RTG.NMG_debug);
+		sscanf(argv[1], "%x", (unsigned int *)&nmg_debug);
+		fprintf(stderr, "librt RTG.NMG_debug=x%x\n", nmg_debug);
 		argc -= 2;
 		argv += 2;
 		break;

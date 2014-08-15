@@ -45,7 +45,6 @@
 #include "nurb.h"
 #include "brep.h"
 
-
 __BEGIN_DECLS
 
 #define NAMELEN 16	/* NAMESIZE from db.h (can't call it NAMESIZE!!!!!) */

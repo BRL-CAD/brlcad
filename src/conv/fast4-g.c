@@ -2952,8 +2952,8 @@ main(int argc, char **argv)
 	bu_printb("librtbu_debug", bu_debug, DEBUG_FORMAT);
 	bu_log("\n");
     }
-    if (RTG.NMG_debug) {
-	bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
+    if (nmg_debug) {
+	bu_printb("librt RTG.NMG_debug", nmg_debug, NMG_DEBUG_FORMAT);
 	bu_log("\n");
     }
 

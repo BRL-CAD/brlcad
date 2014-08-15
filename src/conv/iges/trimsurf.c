@@ -1112,14 +1112,14 @@ find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu
 
 	    next = hp->next;
 
-	    if (RTG.NMG_debug & DEBUG_RT_ISECT)
+	    if (nmg_debug & DEBUG_RT_ISECT)
 		bu_log("\tintersect snurb surface at uv=(%g %g)\n", hp->u, hp->v);
 
 	    /* check if point is in face (trimming curves) */
 	    if (!uv_in_fu(hp->u, hp->v, fu)) {
 		/* not a hit */
 
-		if (RTG.NMG_debug & DEBUG_RT_ISECT)
+		if (nmg_debug & DEBUG_RT_ISECT)
 		    bu_log("\tNot a hit\n");
 
 		bu_free((char *)hp, "nurb_uv_hit");
