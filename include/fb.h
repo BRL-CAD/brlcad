@@ -47,6 +47,7 @@
  * FIXME: would be nice to decouple this interface from fd_set as it's
  * only used in one place right now.
  */
+#include "common.h"
 #if defined(HAVE_SYS_TYPES_H)
 #  include <sys/types.h>
 #endif
