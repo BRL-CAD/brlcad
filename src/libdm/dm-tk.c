@@ -875,6 +875,7 @@ struct dm_internal dm_tk = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
+    BU_STRUCTPARSE_NULL,
     FB_NULL,
     0				/* Tcl interpreter */
 };

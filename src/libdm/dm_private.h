@@ -111,6 +111,7 @@ struct dm_internal {
     int dm_zclip;			/**< @brief !0 means zclipping */
     int dm_clearBufferAfter;	/**< @brief 1 means clear back buffer after drawing and swap */
     int dm_fontsize;		/**< @brief !0 override's the auto font size */
+    struct bu_structparse *vparse;    /**< @brief Table listing settable variables */
     fb *fbp;                    /**< @brief Framebuffer associated with this display instance */
     Tcl_Interp *dm_interp;	/**< @brief Tcl interpreter */
 };
