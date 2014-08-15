@@ -68,10 +68,10 @@ zclip_hook(const struct bu_structparse *sdp,
 	   const char *name,
 	   void *base,
 	   const char *value,
-	   void *UNUSED(data))
+	   void *data)
 {
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook(sdp, name, base, value);
+    dirty_hook(sdp, name, base, value, data);
 }
 
 
@@ -120,7 +120,7 @@ X_dm(int argc, const char *argv[])
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	    bu_vls_putc(&tmp_vls, '\"');
-	    ret = bu_struct_parse(&tmp_vls, X_vparse, (char *)dmp);
+	    ret = bu_struct_parse(&tmp_vls, X_vparse, (char *)dmp, NULL);
 	    bu_vls_free(&tmp_vls);
 	    if (ret < 0) {
 	      bu_vls_free(&vls);

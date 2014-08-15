@@ -115,7 +115,7 @@ common_dm(int argc, const char *argv[])
 		const char name[] = "name";
 		void *base = 0;
 		const char value[] = "value";
-		rb_set_dirty_flag(sdp, name, base, value);
+		rb_set_dirty_flag(sdp, name, base, value, NULL);
 	    }
 	    else if (mged_variables->mv_mouse_behavior == 'r')
 		rt_rect_area();
@@ -205,7 +205,7 @@ common_dm(int argc, const char *argv[])
 		const char name[] = "name";
 		void *base = 0;
 		const char value[] = "value";
-		rb_set_dirty_flag(sdp, name, base, value);
+		rb_set_dirty_flag(sdp, name, base, value, NULL);
 	    }
 	} else if (mged_variables->mv_mouse_behavior == 's' && !stolen) {
 	    bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
