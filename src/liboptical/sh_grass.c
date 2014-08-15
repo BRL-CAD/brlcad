@@ -517,7 +517,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     }
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, grass_parse_tab, (char *)grass_sp) < 0)
+    if (bu_struct_parse(matparm, grass_parse_tab, (char *)grass_sp, NULL) < 0)
 	return -1;
 
     /* The shader needs to operate in a coordinate system which stays

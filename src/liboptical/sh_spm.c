@@ -122,7 +122,7 @@ spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp
 
     spp->sp_file[0] = '\0';
     spp->sp_w = -1;
-    if (bu_struct_parse(matparm, spm_parse, (char *)spp) < 0) {
+    if (bu_struct_parse(matparm, spm_parse, (char *)spp, NULL) < 0) {
 	BU_PUT(spp, struct spm_specific);
 	return -1;
     }

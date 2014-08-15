@@ -144,7 +144,7 @@ cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **d
 
     cp->cl_thresh = 0.35;
     cp->cl_range = 0.3;
-    if (bu_struct_parse(matparm, cloud_parse, (char *)cp) < 0)
+    if (bu_struct_parse(matparm, cloud_parse, (char *)cp, NULL) < 0)
 	return -1;
 
     return 1;

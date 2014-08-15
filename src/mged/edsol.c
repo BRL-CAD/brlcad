@@ -8950,7 +8950,7 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	int ret;
 	struct bu_vls vlog = BU_VLS_INIT_ZERO;
 
-	ret = bu_structparse_argv(&vlog, argc-2, argv+2, ftp->ft_parsetab, (char *)es_int.idb_ptr);
+	ret = bu_structparse_argv(&vlog, argc-2, argv+2, ftp->ft_parsetab, (char *)es_int.idb_ptr, NULL);
 	Tcl_AppendResult(interp, bu_vls_addr(&vlog), (char *)NULL);
 	bu_vls_free(&vlog);
 	if (ret != BRLCAD_OK)

@@ -143,7 +143,7 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
     if (rdebug&RDEBUG_SHADE)
 	bu_log("scloud_setup\n");
 
-    if (bu_struct_parse(matparm, scloud_parse, (char *)scloud) < 0)
+    if (bu_struct_parse(matparm, scloud_parse, (char *)scloud, NULL) < 0)
 	return -1;
 
     if (rdebug&RDEBUG_SHADE)

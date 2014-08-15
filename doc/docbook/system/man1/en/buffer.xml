@@ -22,7 +22,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Buffer</emphasis>
+<para><command>buffer</command>
 is intended to be use as part of a complex pipeline.
 It serves somewhat the same purpose as the Prolog "cut" operator.
 Data from stdin is read and buffered until EOF is detected, and then

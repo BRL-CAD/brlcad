@@ -44,7 +44,6 @@
 #include "dm/dm-X.h"
 #include "../libdm/dm_private.h"
 #include "fb.h"
-#include "fb/fb_platform_specific.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -57,7 +56,8 @@ static void
 dirty_hook(const struct bu_structparse *UNUSED(sdp),
 	   const char *UNUSED(name),
 	   void *UNUSED(base),
-	   const char *UNUSED(value))
+	   const char *UNUSED(value),
+	   void *UNUSED(data))
 {
     dirty = 1;
 }
@@ -67,7 +67,8 @@ static void
 zclip_hook(const struct bu_structparse *sdp,
 	   const char *name,
 	   void *base,
-	   const char *value)
+	   const char *value,
+	   void *UNUSED(data))
 {
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
     dirty_hook(sdp, name, base, value);

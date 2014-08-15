@@ -51,9 +51,9 @@ struct light_specific LightHead;
 
 /* local sp_hook functions */
 /* for light_print_tab and light_parse callbacks */
-HIDDEN void aim_set(const struct bu_structparse *, const char *, void *, const char *);
-HIDDEN void light_cvt_visible(const struct bu_structparse *, const char *, void *, const char *);
-HIDDEN void light_pt_set(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void aim_set(const struct bu_structparse *, const char *, void *, const char *, void *);
+HIDDEN void light_cvt_visible(const struct bu_structparse *, const char *, void *, const char *, void *);
+HIDDEN void light_pt_set(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 HIDDEN int light_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
 HIDDEN int light_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
@@ -147,7 +147,8 @@ HIDDEN void
 aim_set(const struct bu_structparse *UNUSED(sdp),
 	const char *UNUSED(name),
 	void *base,
-	const char *UNUSED(value))
+	const char *UNUSED(value),
+	void *UNUSED(data))
 {
     register struct light_specific *lsp = (struct light_specific *)base;
     if (rdebug & RDEBUG_LIGHT) {
@@ -166,7 +167,8 @@ HIDDEN void
 light_cvt_visible(const struct bu_structparse *sdp,
 		  const char *name,
 		  void *base,
-		  const char *UNUSED(value))
+		  const char *UNUSED(value),
+		  void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -220,7 +222,8 @@ HIDDEN void
 light_pt_set(const struct bu_structparse *sdp,
 	     const char *name,
 	     void *base,
-	     const char *UNUSED(value))
+	     const char *UNUSED(value),
+	     void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -613,7 +616,7 @@ light_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     lsp->lt_sample_pts = (struct light_pt *)NULL;
     lsp->lt_name = bu_strdup(rp->reg_name);
 
-    if (bu_struct_parse(matparm, light_parse, (char *)lsp) < 0) {
+    if (bu_struct_parse(matparm, light_parse, (char *)lsp, NULL) < 0) {
 	light_free((void *)lsp);
 	return -1;
     }

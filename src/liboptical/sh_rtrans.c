@@ -96,7 +96,7 @@ rtrans_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
 
     memcpy(rtrans_sp, &rtrans_defaults, sizeof(struct rtrans_specific));
 
-    if (bu_struct_parse(matparm, rtrans_parse, (char *)rtrans_sp) < 0)
+    if (bu_struct_parse(matparm, rtrans_parse, (char *)rtrans_sp, NULL) < 0)
 	return -1;
 
     BN_RANDSEED(rtrans_sp->next_rand, 3);

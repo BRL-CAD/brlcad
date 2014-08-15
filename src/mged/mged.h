@@ -478,9 +478,9 @@ int mged_cmd(int argc, const char *argv[], struct funtab in_functions[]);
 void mged_print_result(int status);
 
 /* color_scheme.c */
-void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *);
-void cs_update(const struct bu_structparse *, const char *, void *, const char *);
-void cs_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *);
+void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *, void *);
+void cs_update(const struct bu_structparse *, const char *, void *, const char *, void *);
+void cs_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /* columns.c */
 void vls_col_item(struct bu_vls *str, const char *cp);
@@ -572,10 +572,10 @@ void zoom_rect_area(void);
 void paint_rect_area(void);
 void rt_rect_area(void);
 void draw_rect(void);
-void set_rect(const struct bu_structparse *, const char *, void *, const char *);
+void set_rect(const struct bu_structparse *, const char *, void *, const char *, void *);
 void rect_view2image(void);
 void rect_image2view(void);
-void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *);
+void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 
 /* track.c */
@@ -623,7 +623,7 @@ int epain(struct rt_db_internal *ip, fastf_t thick[2]);
 int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
 
 /* set.c */
-extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *);
+extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);
 extern void mged_variable_setup(Tcl_Interp *interpreter);
 
 /* scroll.c */

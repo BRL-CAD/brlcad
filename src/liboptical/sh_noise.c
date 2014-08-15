@@ -49,7 +49,8 @@ void
 noise_deg_to_rad(const struct bu_structparse *sdp,
 		 const char *UNUSED(name),
 		 void *base,
-		 const char *UNUSED(value))
+		 const char *UNUSED(value),
+		 void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -181,7 +182,7 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     memcpy(noise_sp, &noise_defaults, sizeof(struct noise_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, noise_parse_tab, (char *)noise_sp) < 0)
+    if (bu_struct_parse(matparm, noise_parse_tab, (char *)noise_sp, NULL) < 0)
 	return -1;
 
     /* figure out which shader is really being called */
