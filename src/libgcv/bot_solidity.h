@@ -19,7 +19,7 @@
  */
 /** @file libgcv/bot_solidity.h
  *
- * Library of algorithms to determine whether a BoT is solid.
+ * Functions for determining whether a BoT is solid.
  *
  */
 
