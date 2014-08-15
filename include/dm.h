@@ -204,6 +204,22 @@
 #define LIGHT_ON	1
 #define LIGHT_RESET	2		/* all lights out */
 
+/* This is how a parent application can pass a generic
+ * hook function in when setting dm variables.  The dm_hook_data
+ * container holds the bu_structparse hook function and data
+ * needed by it in the dm_hook and dm_hook_data slots.  When
+ * bu_struct_parse or one of the other libbu structure parsing
+ * functions is called, the dm_hook_data container is passed
+ * in as the data slot in that call.
+ *
+ * TODO - need example
+ *
+ */
+struct dm_hook_data {
+    void(*dm_hook)(const struct bu_structparse *, const char *, void *, const char *, void *);
+    void *dm_hook_data;
+};
+
 /* Hide the dm structure behind a typedef */
 typedef struct dm_internal dm;
 

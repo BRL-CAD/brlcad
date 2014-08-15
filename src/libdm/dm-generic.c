@@ -737,6 +737,27 @@ dm_logfile(dm *dmp, const char *filename)
     return dmp->dm_logfile(dmp, filename);
 }
 
+/* This is the generic "catch-all" hook that is used
+ * to run any user supplied callbacks.  If more side
+ * effects are needed at the libdm level, a task-specific
+ * hook should be defined using this function as a
+ * starting point and adding in whatever additional
+ * logic is needed.  The full dm structure should always
+ * be accessable as a slot in the modifiable variables
+ * structure passed in here as "base" */
+void
+dm_generic_hook(const struct bu_structparse *sdp,
+	const char *name, void *base, const char *value, void *data)
+{
+    if (data) {
+	struct dm_hook_data *hook= (struct dm_hook_data *)data;
+
+	/* Call hook function(if it exists) to carry out the
+	 * application requested logic */
+	if (hook->dm_hook)
+	    hook->dm_hook(sdp, name, base, value, hook->dm_hook_data);
+    }
+}
 
 /*
  * Local Variables:

@@ -2313,9 +2313,8 @@ ogl_openFb(struct dm_internal *dmp)
     return 0;
 }
 
-/*
-#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
-*/
+#define Ogl_MV2_O(_m) offsetof(struct modifiable_ogl_vars2, _m)
+
 struct modifiable_ogl_vars2 {
     dm *this_dm;
     int cueing_on;
@@ -2370,26 +2369,25 @@ ogl_put_internal(struct dm_internal *dmp)
     }
 }
 
-#if 0
-static struct bu_structparse Ogl_vparse2[] = {
-    {"%d",  1, "depthcue",              Ogl_MV_O(cueing_on),    Ogl_colorchange, NULL, NULL },
-    {"%d",  1, "zclip",         Ogl_MV_O(zclipping_on), zclip_hook, NULL, NULL },
-    {"%d",  1, "zbuffer",               Ogl_MV_O(zbuffer_on),   establish_zbuffer, NULL, NULL },
-    {"%d",  1, "lighting",              Ogl_MV_O(lighting_on),  establish_lighting, NULL, NULL },
-    {"%d",  1, "transparency",  Ogl_MV_O(transparency_on), establish_transparency, NULL, NULL },
-    {"%d",  1, "fastfog",               Ogl_MV_O(fastfog),      do_fogHint, NULL, NULL },
-    {"%g",  1, "density",               Ogl_MV_O(fogdensity),   dirty_hook, NULL, NULL },
-    {"%d",  1, "has_zbuf",              Ogl_MV_O(zbuf),         BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "has_rgb",               Ogl_MV_O(rgb),          BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "has_doublebuffer",      Ogl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "depth",         Ogl_MV_O(depth),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "debug",         Ogl_MV_O(debug),        debug_hook, NULL, NULL },
-    {"%V",  1, "log",   Ogl_MV_O(log),  logfile_hook, NULL, NULL },
-    {"%g",  1, "bound",         Ogl_MV_O(bound),        bound_hook, NULL, NULL },
-    {"%d",  1, "useBound",              Ogl_MV_O(boundFlag),    boundFlag_hook, NULL, NULL },
+
+struct bu_structparse Ogl_vparse2[] = {
+    {"%d",  1, "depthcue",              Ogl_MV2_O(cueing_on),    dm_generic_hook, NULL, NULL },
+    {"%d",  1, "zclip",         	Ogl_MV2_O(zclipping_on), dm_generic_hook, NULL, NULL },
+    {"%d",  1, "zbuffer",               Ogl_MV2_O(zbuffer_on),   dm_generic_hook, NULL, NULL },
+    {"%d",  1, "lighting",              Ogl_MV2_O(lighting_on),  dm_generic_hook, NULL, NULL },
+    {"%d",  1, "transparency",  	Ogl_MV2_O(transparency_on), dm_generic_hook, NULL, NULL },
+    {"%d",  1, "fastfog",               Ogl_MV2_O(fastfog),      dm_generic_hook, NULL, NULL },
+    {"%g",  1, "density",               Ogl_MV2_O(fogdensity),   dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_zbuf",              Ogl_MV2_O(zbuf),         BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "has_rgb",               Ogl_MV2_O(rgb),          BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "has_doublebuffer",      Ogl_MV2_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "depth",         	Ogl_MV2_O(depth),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "debug",         	Ogl_MV2_O(debug),        dm_generic_hook, NULL, NULL },
+    {"%V",  1, "log",   		Ogl_MV2_O(log),  	 dm_generic_hook, NULL, NULL },
+    {"%g",  1, "bound",         	Ogl_MV2_O(bound),        dm_generic_hook, NULL, NULL },
+    {"%d",  1, "useBound",              Ogl_MV2_O(boundFlag),    dm_generic_hook, NULL, NULL },
     {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
-#endif
 
 struct dm_internal dm_ogl = {
     ogl_close,
@@ -2467,7 +2465,7 @@ struct dm_internal dm_ogl = {
     0,				/* no zclipping */
     0,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
-    BU_STRUCTPARSE_NULL,
+    Ogl_vparse2,
     FB_NULL,
     0				/* Tcl interpreter */
 };

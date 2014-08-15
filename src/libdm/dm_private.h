@@ -134,6 +134,13 @@ drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t 
 int
 draw_Line3D(struct dm_internal *dmp, point_t pt1, point_t pt2);
 
+void
+dm_generic_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data);
+
 __END_DECLS
 
 /************************************************/
