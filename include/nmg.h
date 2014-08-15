@@ -45,6 +45,7 @@ __BEGIN_DECLS
 #include "bu/ptbl.h"
 #include "vmath.h"
 #include "nurb.h"
+#include "raytrace.h"
 
 #ifndef NMG_EXPORT
 #  if defined(NMG_DLL_EXPORTS) && defined(NMG_DLL_IMPORTS)
