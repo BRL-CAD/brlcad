@@ -259,6 +259,9 @@ dm_get()
     bu_vls_init(&new_dm->dm_pathName);
     bu_vls_init(&new_dm->dm_dName);
 
+    if (new_dm->dm_get_internal)
+	new_dm->dm_get_internal(new_dm);
+
     return new_dm;
 }
 
@@ -269,6 +272,8 @@ dm_put(dm *dmp)
 	bu_vls_free(&dmp->dm_pathName);
 	bu_vls_free(&dmp->dm_dName);
 	if (dmp->fbp) fb_put(dmp->fbp);
+	if (dmp->dm_put_internal)
+	    dmp->dm_put_internal(dmp);
 	BU_PUT(dmp, struct dm_internal);
     }
 }

@@ -2313,6 +2313,83 @@ ogl_openFb(struct dm_internal *dmp)
     return 0;
 }
 
+/*
+#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
+*/
+struct modifiable_ogl_vars2 {
+    dm *this_dm;
+    int cueing_on;
+    int zclipping_on;
+    int zbuffer_on;
+    int lighting_on;
+    int transparency_on;
+    int fastfog;
+    double fogdensity;
+    int zbuf;
+    int rgb;
+    int doublebuffer;
+    int depth;
+    int debug;
+    struct bu_vls log;
+    double bound;
+    int boundFlag;
+};
+
+struct ogl_vars2 {
+    GLXContext glxc;
+    GLdouble faceplate_mat[16];
+    int face_flag;
+    int *perspective_mode;
+    int fontOffset;
+    int ovec;           /* Old color map entry number */
+    char is_direct;
+    GLclampf r, g, b;
+    struct modifiable_ogl_vars mvars;
+};
+
+void
+ogl_get_internal(struct dm_internal *dmp)
+{
+    if (!dmp->m_vars) {
+	BU_GET(dmp->m_vars, struct modifiable_ogl_vars2);
+	((struct modifiable_ogl_vars2 *)dmp->m_vars)->this_dm = dmp;
+    }
+    if (!dmp->p_vars) {
+	BU_GET(dmp->p_vars, struct ogl_vars2);
+    }
+}
+
+void
+ogl_put_internal(struct dm_internal *dmp)
+{
+    if (dmp->m_vars) {
+	BU_PUT(dmp->m_vars, struct modifiable_ogl_vars2);
+    }
+    if (dmp->p_vars) {
+	BU_PUT(dmp->p_vars, struct ogl_vars2);
+    }
+}
+
+#if 0
+static struct bu_structparse Ogl_vparse2[] = {
+    {"%d",  1, "depthcue",              Ogl_MV_O(cueing_on),    Ogl_colorchange, NULL, NULL },
+    {"%d",  1, "zclip",         Ogl_MV_O(zclipping_on), zclip_hook, NULL, NULL },
+    {"%d",  1, "zbuffer",               Ogl_MV_O(zbuffer_on),   establish_zbuffer, NULL, NULL },
+    {"%d",  1, "lighting",              Ogl_MV_O(lighting_on),  establish_lighting, NULL, NULL },
+    {"%d",  1, "transparency",  Ogl_MV_O(transparency_on), establish_transparency, NULL, NULL },
+    {"%d",  1, "fastfog",               Ogl_MV_O(fastfog),      do_fogHint, NULL, NULL },
+    {"%g",  1, "density",               Ogl_MV_O(fogdensity),   dirty_hook, NULL, NULL },
+    {"%d",  1, "has_zbuf",              Ogl_MV_O(zbuf),         BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "has_rgb",               Ogl_MV_O(rgb),          BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "has_doublebuffer",      Ogl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "depth",         Ogl_MV_O(depth),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "debug",         Ogl_MV_O(debug),        debug_hook, NULL, NULL },
+    {"%V",  1, "log",   Ogl_MV_O(log),  logfile_hook, NULL, NULL },
+    {"%g",  1, "bound",         Ogl_MV_O(bound),        bound_hook, NULL, NULL },
+    {"%d",  1, "useBound",              Ogl_MV_O(boundFlag),    boundFlag_hook, NULL, NULL },
+    {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+#endif
 
 struct dm_internal dm_ogl = {
     ogl_close,
@@ -2351,6 +2428,8 @@ struct dm_internal dm_ogl = {
     ogl_reshape,
     ogl_makeCurrent,
     ogl_openFb,
+    ogl_get_internal,
+    ogl_put_internal,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
@@ -2369,6 +2448,8 @@ struct dm_internal dm_ogl = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
+    NULL,
+    NULL,
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */

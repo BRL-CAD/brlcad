@@ -378,6 +378,8 @@ dm dm_txt = {
     txt_reshape,
     txt_makeCurrent,
     txt_openFb,
+    NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -396,6 +398,8 @@ dm dm_txt = {
     0,
     0,
     {0, 0},
+    NULL,
+    NULL,
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */

@@ -525,6 +525,8 @@ dm dm_ps = {
     null_reshape,
     null_makeCurrent,
     null_openFb,
+    NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */
@@ -543,6 +545,8 @@ dm dm_ps = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
+    NULL,
+    NULL,
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */

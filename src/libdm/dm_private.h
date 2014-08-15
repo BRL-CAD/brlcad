@@ -76,6 +76,8 @@ struct dm_internal {
     void (*dm_reshape)(struct dm_internal *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm_internal *dmp);
     int (*dm_openFb)(struct dm_internal *dmp);
+    void (*dm_get_internal)(struct dm_internal *dmp);
+    void (*dm_put_internal)(struct dm_internal *dmp);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */
@@ -94,6 +96,8 @@ struct dm_internal {
     fastf_t dm_aspect;
     fastf_t *dm_vp;		/**< @brief (FIXME: ogl still depends on this) Viewscale pointer */
     struct dm_vars dm_vars;	/**< @brief display manager dependent variables */
+    void *m_vars;
+    void *p_vars;
     struct bu_vls dm_pathName;	/**< @brief full Tcl/Tk name of drawing window */
     struct bu_vls dm_tkName;	/**< @brief short Tcl/Tk name of drawing window */
     struct bu_vls dm_dName;	/**< @brief Display name */
