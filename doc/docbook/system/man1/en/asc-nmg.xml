@@ -23,7 +23,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>asc-nmg</emphasis>
+<para><command>asc-nmg</command>
 converts the specified
 <emphasis remap='I'>ascii_file</emphasis>
 (not a .asc geometry database) to a binary BRL-CAD
@@ -88,13 +88,15 @@ l
 	v5	1 -1 1
 </literallayout> <!-- .fi -->
 
-<para>Then, the command:</para>
+<para>the command:</para>
 
 <synopsis>
-$ <emphasis remap='I'>asc-nmg ascii_file sample.g</emphasis>
+$ asc-nmg <emphasis remap='I'>ascii_file sample.g</emphasis>
 </synopsis>
 
-<para>will produce an 'L'-shaped NMG solid to the sample.g database file.</para>
+<para>will produce an 'L'-shaped NMG solid to the
+<emphasis remap='I'>sample.g</emphasis>
+database file.</para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
