@@ -21,7 +21,6 @@ set(NMG_LOCAL_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(nmg NMG_INCLUDE_DIRS NMG_LOCAL_INCLUDE_DIRS)
 
 set(LIBNMG_SOURCES
-  dspline.c
   globals.c
   nurb_trim.c
   primitives/nmg/nmg_ck.c

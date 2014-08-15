@@ -87,6 +87,7 @@ set(LIBRT_SOURCES
   primitives/brep/brep_debug.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_mirror.c
+  primitives/bspline/dspline.c
   primitives/bspline/nurb_brep.cpp
   primitives/bspline/nurb_tess.c
   primitives/cline/cline.c
