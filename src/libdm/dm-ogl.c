@@ -75,7 +75,6 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm/dm-ogl.h"
 #include "dm/dm-Null.h"
 #include "dm/dm_xvars.h"
 #include "fb.h"
@@ -83,6 +82,39 @@
 #include "solid.h"
 
 #include "./dm_private.h"
+
+#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
+
+struct modifiable_ogl_vars {
+    dm *this_dm;
+    int cueing_on;
+    int zclipping_on;
+    int zbuffer_on;
+    int lighting_on;
+    int transparency_on;
+    int fastfog;
+    double fogdensity;
+    int zbuf;
+    int rgb;
+    int doublebuffer;
+    int depth;
+    int debug;
+    struct bu_vls log;
+    double bound;
+    double viewscale;
+    int boundFlag;
+};
+
+struct ogl_vars {
+    GLXContext glxc;
+    GLdouble faceplate_mat[16];
+    int face_flag;
+    int *perspective_mode;
+    int fontOffset;
+    int ovec;           /* Old color map entry number */
+    char is_direct;
+    GLclampf r, g, b;
+};
 
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))
@@ -174,7 +206,7 @@ ogl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
 void
 ogl_fogHint(struct dm_internal *dmp, int fastfog)
 {
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
+    ((struct modifiable_ogl_vars *)dmp->m_vars)->fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
 
@@ -189,16 +221,16 @@ ogl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsign
     dmp->dm_bg[1] = g;
     dmp->dm_bg[2] = b;
 
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->r = r / 255.0;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g = g / 255.0;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
+    ((struct ogl_vars *)dmp->p_vars)->r = r / 255.0;
+    ((struct ogl_vars *)dmp->p_vars)->g = g / 255.0;
+    ((struct ogl_vars *)dmp->p_vars)->b = b / 255.0;
 
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
-	glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
-	glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
-		     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
-		     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
+    if (((struct modifiable_ogl_vars *)dmp->m_vars)->doublebuffer) {
+	glXSwapBuffers(((struct dm_xvars *)dmp->m_vars)->dpy,
+		       ((struct dm_xvars *)dmp->m_vars)->win);
+	glClearColor(((struct ogl_vars *)dmp->p_vars)->r,
+		     ((struct ogl_vars *)dmp->p_vars)->g,
+		     ((struct ogl_vars *)dmp->p_vars)->b,
 		     0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
@@ -223,8 +255,8 @@ ogl_configureWin_guts(struct dm_internal *dmp, int force)
     if (dmp->dm_debugLevel)
 	bu_log("ogl_configureWin_guts()\n");
 
-    XGetWindowAttributes(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			 ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa);
+    XGetWindowAttributes(((struct dm_xvars *)dmp->m_vars)->dpy,
+			 ((struct dm_xvars *)dmp->m_vars)->win, &xwa);
 
     /* nothing to do */
     if (!force &&
@@ -235,31 +267,31 @@ ogl_configureWin_guts(struct dm_internal *dmp, int force)
     ogl_reshape(dmp, xwa.width, xwa.height);
 
     /* First time through, load a font or quit */
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
-	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
-	     XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+    if (((struct dm_xvars *)dmp->m_vars)->fontstruct == NULL) {
+	if ((((struct dm_xvars *)dmp->m_vars)->fontstruct =
+	     XLoadQueryFont(((struct dm_xvars *)dmp->m_vars)->dpy,
 			    FONT9)) == NULL) {
 	    /* Try hardcoded backup font */
-	    if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
-		 XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    if ((((struct dm_xvars *)dmp->m_vars)->fontstruct =
+		 XLoadQueryFont(((struct dm_xvars *)dmp->m_vars)->dpy,
 				FONTBACK)) == NULL) {
 		bu_log("ogl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
 		return TCL_ERROR;
 	    }
 	}
-	glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-		    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+	glXUseXFont(((struct dm_xvars *)dmp->m_vars)->fontstruct->fid,
+		    0, 127, ((struct ogl_vars *)dmp->p_vars)->fontOffset);
     }
 
     if (DM_VALID_FONT_SIZE(dmp->dm_fontsize)) {
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != dmp->dm_fontsize) {
-	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	if (((struct dm_xvars *)dmp->m_vars)->fontstruct->per_char->width != dmp->dm_fontsize) {
+	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->m_vars)->dpy,
 						DM_FONT_SIZE_TO_NAME(dmp->dm_fontsize))) != NULL) {
-		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		XFreeFont(((struct dm_xvars *)dmp->m_vars)->dpy,
+			  ((struct dm_xvars *)dmp->m_vars)->fontstruct);
+		((struct dm_xvars *)dmp->m_vars)->fontstruct = newfontstruct;
+		glXUseXFont(((struct dm_xvars *)dmp->m_vars)->fontstruct->fid,
+			    0, 127, ((struct ogl_vars *)dmp->p_vars)->fontOffset);
 	    }
 	}
     } else {
@@ -267,80 +299,80 @@ ogl_configureWin_guts(struct dm_internal *dmp, int force)
 	 */
 
 	if (dmp->dm_width < 582) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 5) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    if (((struct dm_xvars *)dmp->m_vars)->fontstruct->per_char->width != 5) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->m_vars)->dpy,
 						    FONT5)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->m_vars)->dpy,
+			      ((struct dm_xvars *)dmp->m_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->m_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->m_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->p_vars)->fontOffset);
 		}
 	    }
 	} else if (dmp->dm_width < 679) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 6) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    if (((struct dm_xvars *)dmp->m_vars)->fontstruct->per_char->width != 6) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->m_vars)->dpy,
 						    FONT6)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->m_vars)->dpy,
+			      ((struct dm_xvars *)dmp->m_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->m_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->m_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->p_vars)->fontOffset);
 		}
 	    }
 	} else if (dmp->dm_width < 776) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 7) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    if (((struct dm_xvars *)dmp->m_vars)->fontstruct->per_char->width != 7) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->m_vars)->dpy,
 						    FONT7)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->m_vars)->dpy,
+			      ((struct dm_xvars *)dmp->m_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->m_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->m_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->p_vars)->fontOffset);
 		}
 	    }
 	} else if (dmp->dm_width < 873) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 8) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    if (((struct dm_xvars *)dmp->m_vars)->fontstruct->per_char->width != 8) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->m_vars)->dpy,
 						    FONT8)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->m_vars)->dpy,
+			      ((struct dm_xvars *)dmp->m_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->m_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->m_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->p_vars)->fontOffset);
 		}
 	    }
 	} else if (dmp->dm_width < 1455) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 9) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    if (((struct dm_xvars *)dmp->m_vars)->fontstruct->per_char->width != 9) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->m_vars)->dpy,
 						    FONT9)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->m_vars)->dpy,
+			      ((struct dm_xvars *)dmp->m_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->m_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->m_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->p_vars)->fontOffset);
 		}
 	    }
 	} else if (dmp->dm_width < 2037) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 10) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    if (((struct dm_xvars *)dmp->m_vars)->fontstruct->per_char->width != 10) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->m_vars)->dpy,
 						    FONT10)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->m_vars)->dpy,
+			      ((struct dm_xvars *)dmp->m_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->m_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->m_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->p_vars)->fontOffset);
 		}
 	    }
 	} else {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 12) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    if (((struct dm_xvars *)dmp->m_vars)->fontstruct->per_char->width != 12) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->m_vars)->dpy,
 						    FONT12)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->m_vars)->dpy,
+			      ((struct dm_xvars *)dmp->m_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->m_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->m_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->p_vars)->fontOffset);
 		}
 	    }
 	}
@@ -369,9 +401,9 @@ ogl_reshape(struct dm_internal *dmp, int width, int height)
 
     glViewport(0, 0, dmp->dm_width, dmp->dm_height);
 
-    glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
-		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
-		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
+    glClearColor(((struct ogl_vars *)dmp->p_vars)->r,
+		 ((struct ogl_vars *)dmp->p_vars)->g,
+		 ((struct ogl_vars *)dmp->p_vars)->b,
 		 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -389,9 +421,9 @@ ogl_makeCurrent(struct dm_internal *dmp)
     if (dmp->dm_debugLevel)
 	bu_log("ogl_makeCurrent()\n");
 
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->m_vars)->dpy,
+			((struct dm_xvars *)dmp->m_vars)->win,
+			((struct ogl_vars *)dmp->p_vars)->glxc)) {
 	bu_log("ogl_makeCurrent: Couldn't make context current\n");
 	return TCL_ERROR;
     }
@@ -403,9 +435,9 @@ ogl_makeCurrent(struct dm_internal *dmp)
 HIDDEN int
 ogl_configureWin(struct dm_internal *dmp, int force)
 {
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->m_vars)->dpy,
+			((struct dm_xvars *)dmp->m_vars)->win,
+			((struct ogl_vars *)dmp->p_vars)->glxc)) {
 	bu_log("ogl_configureWin: Couldn't make context current\n");
 	return TCL_ERROR;
     }
@@ -421,7 +453,7 @@ ogl_setLight(struct dm_internal *dmp, int lighting_on)
 	bu_log("ogl_setLight()\n");
 
     dmp->dm_light = lighting_on;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on = dmp->dm_light;
+    ((struct modifiable_ogl_vars *)dmp->m_vars)->lighting_on = dmp->dm_light;
 
     if (!dmp->dm_light) {
 	/* Turn it off */
@@ -484,9 +516,9 @@ ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
     /* Try to satisfy the above desires with a color visual of the
      * greatest depth */
 
-    vibase = XGetVisualInfo(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+    vibase = XGetVisualInfo(((struct dm_xvars *)dmp->m_vars)->dpy,
 			    0, &vitemp, &num);
-    screen = DefaultScreen(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
+    screen = DefaultScreen(((struct dm_xvars *)dmp->m_vars)->dpy);
 
     good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
 
@@ -496,31 +528,31 @@ ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
 	    if (vip->screen != screen)
 		continue;
 
-	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    fail = glXGetConfig(((struct dm_xvars *)dmp->m_vars)->dpy,
 				vip, GLX_USE_GL, &use);
 	    if (fail || !use)
 		continue;
 
-	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    fail = glXGetConfig(((struct dm_xvars *)dmp->m_vars)->dpy,
 				vip, GLX_RGBA, &rgba);
 	    if (fail || !rgba)
 		continue;
 
-	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    fail = glXGetConfig(((struct dm_xvars *)dmp->m_vars)->dpy,
 				vip, GLX_DOUBLEBUFFER, &dbfr);
 	    if (fail || !dbfr)
 		continue;
 
 	    /* desires */
 	    if (m_zbuffer) {
-		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		fail = glXGetConfig(((struct dm_xvars *)dmp->m_vars)->dpy,
 				    vip, GLX_DEPTH_SIZE, &zbuffer);
 		if (fail || !zbuffer)
 		    continue;
 	    }
 
 	    if (m_stereo) {
-		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		fail = glXGetConfig(((struct dm_xvars *)dmp->m_vars)->dpy,
 				    vip, GLX_STEREO, &stereo);
 		if (fail || !stereo) {
 		    bu_log("ogl_choose_visual: failed visual - GLX_STEREO\n");
@@ -544,28 +576,28 @@ ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
 		    }
 		}
 
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap =
-		    XCreateColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				    RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		((struct dm_xvars *)dmp->m_vars)->cmap =
+		    XCreateColormap(((struct dm_xvars *)dmp->m_vars)->dpy,
+				    RootWindow(((struct dm_xvars *)dmp->m_vars)->dpy,
 					       maxvip->screen), maxvip->visual, AllocNone);
 
 		if (Tk_SetWindowVisual(tkwin,
 				       maxvip->visual, maxvip->depth,
-				       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)) {
+				       ((struct dm_xvars *)dmp->m_vars)->cmap)) {
 
-		    glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		    glXGetConfig(((struct dm_xvars *)dmp->m_vars)->dpy,
 				 maxvip, GLX_DEPTH_SIZE,
-				 &((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth);
-		    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth > 0)
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
+				 &((struct modifiable_ogl_vars *)dmp->m_vars)->depth);
+		    if (((struct modifiable_ogl_vars *)dmp->m_vars)->depth > 0)
+			((struct modifiable_ogl_vars *)dmp->m_vars)->zbuf = 1;
 
 		    bu_free(good, "dealloc good visuals");
 		    return maxvip; /* success */
 		} else {
 		    /* retry with lesser depth */
 		    baddepth = maxvip->depth;
-		    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
+		    XFreeColormap(((struct dm_xvars *)dmp->m_vars)->dpy,
+				  ((struct dm_xvars *)dmp->m_vars)->cmap);
 		}
 	    }
 	}
@@ -598,26 +630,26 @@ ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
 HIDDEN int
 ogl_close(struct dm_internal *dmp)
 {
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
-	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc) {
-	    glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, None, NULL);
-	    glXDestroyContext(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
+    if (((struct dm_xvars *)dmp->m_vars)->dpy) {
+	if (((struct ogl_vars *)dmp->p_vars)->glxc) {
+	    glXMakeCurrent(((struct dm_xvars *)dmp->m_vars)->dpy, None, NULL);
+	    glXDestroyContext(((struct dm_xvars *)dmp->m_vars)->dpy,
+			      ((struct ogl_vars *)dmp->p_vars)->glxc);
 	}
 
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
-	    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
+	if (((struct dm_xvars *)dmp->m_vars)->cmap)
+	    XFreeColormap(((struct dm_xvars *)dmp->m_vars)->dpy,
+			  ((struct dm_xvars *)dmp->m_vars)->cmap);
 
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
-	    Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+	if (((struct dm_xvars *)dmp->m_vars)->xtkwin)
+	    Tk_DestroyWindow(((struct dm_xvars *)dmp->m_vars)->xtkwin);
     }
 
     bu_vls_free(&dmp->dm_pathName);
     bu_vls_free(&dmp->dm_tkName);
     bu_vls_free(&dmp->dm_dName);
-    bu_free(dmp->dm_vars.priv_vars, "ogl_close: ogl_vars");
-    bu_free(dmp->dm_vars.pub_vars, "ogl_close: dm_xvars");
+    bu_free(dmp->p_vars, "ogl_close: ogl_vars");
+    bu_free(dmp->m_vars, "ogl_close: dm_xvars");
     bu_free(dmp, "ogl_close: dmp");
 
     return TCL_OK;
@@ -651,6 +683,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
     struct dm_xvars *pubvars = NULL;
     struct ogl_vars *privvars = NULL;
+    struct modifiable_ogl_vars *m_vars = NULL;
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
@@ -665,21 +698,22 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_bits_per_channel = 8;
     bu_vls_init(&(dmp->dm_log));
 
-    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
-    if (dmp->dm_vars.pub_vars == (void *)NULL) {
+    BU_ALLOC(dmp->m_vars, struct dm_xvars);
+    if (dmp->m_vars == (void *)NULL) {
 	bu_free(dmp, "ogl_open: dmp");
 	return DM_NULL;
     }
-    pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    pubvars = (struct dm_xvars *)dmp->m_vars;
 
-    BU_ALLOC(dmp->dm_vars.priv_vars, struct ogl_vars);
-    if (dmp->dm_vars.priv_vars == (void *)NULL) {
-	bu_free(dmp->dm_vars.pub_vars, "ogl_open: dmp->dm_vars.pub_vars");
+    BU_ALLOC(dmp->p_vars, struct ogl_vars);
+    if (dmp->p_vars == (void *)NULL) {
+	bu_free(dmp->m_vars, "ogl_open: dmp->m_vars");
 	bu_free(dmp, "ogl_open: dmp");
 	return DM_NULL;
     }
-    privvars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
-    bu_vls_init(&(privvars->mvars.log));
+    privvars = (struct ogl_vars *)dmp->p_vars;
+    m_vars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    bu_vls_init(&(m_vars->log));
 
     dmp->dm_get_internal(dmp);
 
@@ -713,16 +747,16 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_aspect = 1.0;
 
     /* initialize modifiable variables */
-    privvars->mvars.rgb = 1;
-    privvars->mvars.doublebuffer = 1;
-    privvars->mvars.fastfog = 1;
-    privvars->mvars.fogdensity = 1.0;
-    privvars->mvars.lighting_on = dmp->dm_light;
-    privvars->mvars.zbuffer_on = dmp->dm_zbuffer;
-    privvars->mvars.zclipping_on = dmp->dm_zclip;
-    privvars->mvars.debug = dmp->dm_debugLevel;
-    privvars->mvars.bound = dmp->dm_bound;
-    privvars->mvars.boundFlag = dmp->dm_boundFlag;
+    m_vars->rgb = 1;
+    m_vars->doublebuffer = 1;
+    m_vars->fastfog = 1;
+    m_vars->fogdensity = 1.0;
+    m_vars->lighting_on = dmp->dm_light;
+    m_vars->zbuffer_on = dmp->dm_zbuffer;
+    m_vars->zclipping_on = dmp->dm_zclip;
+    m_vars->debug = dmp->dm_debugLevel;
+    m_vars->bound = dmp->dm_bound;
+    m_vars->boundFlag = dmp->dm_boundFlag;
 
     /* this is important so that ogl_configureWin knows to set the font */
     pubvars->fontstruct = NULL;
@@ -847,7 +881,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    pubvars->depth = privvars->mvars.depth;
+    pubvars->depth = m_vars->depth;
 
     Tk_MakeWindowExist(pubvars->xtkwin);
 
@@ -941,7 +975,7 @@ Done:
     ogl_setBGColor(dmp, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (privvars->mvars.doublebuffer)
+    if (m_vars->doublebuffer)
 	glDrawBuffer(GL_BACK);
     else
 	glDrawBuffer(GL_FRONT);
@@ -995,48 +1029,48 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
     if (dmp2 == (struct dm_internal *)NULL) {
 	/* create a new graphics context for dmp1 with private display lists */
 
-	old_glxContext = ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc;
+	old_glxContext = ((struct ogl_vars *)dmp1->p_vars)->glxc;
 
-	if ((((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc =
-	     glXCreateContext(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp1->dm_vars.pub_vars)->vip,
+	if ((((struct ogl_vars *)dmp1->p_vars)->glxc =
+	     glXCreateContext(((struct dm_xvars *)dmp1->m_vars)->dpy,
+			      ((struct dm_xvars *)dmp1->m_vars)->vip,
 			      (GLXContext)NULL, GL_TRUE))==NULL) {
 	    bu_log("ogl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
-	    ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
+	    ((struct ogl_vars *)dmp1->p_vars)->glxc = old_glxContext;
 
 	    return TCL_ERROR;
 	}
 
-	if (!glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy,
-			    ((struct dm_xvars *)dmp1->dm_vars.pub_vars)->win,
-			    ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc)) {
+	if (!glXMakeCurrent(((struct dm_xvars *)dmp1->m_vars)->dpy,
+			    ((struct dm_xvars *)dmp1->m_vars)->win,
+			    ((struct ogl_vars *)dmp1->p_vars)->glxc)) {
 	    bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
-	    ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
+	    ((struct ogl_vars *)dmp1->p_vars)->glxc = old_glxContext;
 
 	    return TCL_ERROR;
 	}
 
 	/* display list (fontOffset + char) will display a given ASCII char */
-	if ((((struct ogl_vars *)dmp1->dm_vars.priv_vars)->fontOffset = glGenLists(128))==0) {
+	if ((((struct ogl_vars *)dmp1->p_vars)->fontOffset = glGenLists(128))==0) {
 	    bu_log("dm-ogl: Can't make display lists for font.\nUsing old context\n.");
-	    ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
+	    ((struct ogl_vars *)dmp1->p_vars)->glxc = old_glxContext;
 
 	    return TCL_ERROR;
 	}
 
 	/* This is the applications display list offset */
-	dmp1->dm_displaylist = ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->fontOffset + 128;
+	dmp1->dm_displaylist = ((struct ogl_vars *)dmp1->p_vars)->fontOffset + 128;
 
 	ogl_setBGColor(dmp1, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (((struct ogl_vars *)dmp1->dm_vars.priv_vars)->mvars.doublebuffer)
+	if (((struct modifiable_ogl_vars *)dmp1->m_vars)->doublebuffer)
 	    glDrawBuffer(GL_BACK);
 	else
 	    glDrawBuffer(GL_FRONT);
 
 	/* this is important so that ogl_configureWin knows to set the font */
-	((struct dm_xvars *)dmp1->dm_vars.pub_vars)->fontstruct = NULL;
+	((struct dm_xvars *)dmp1->m_vars)->fontstruct = NULL;
 
 	/* do viewport, ortho commands and initialize font */
 	(void)ogl_configureWin_guts(dmp1, 1);
@@ -1060,49 +1094,49 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
-	glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->faceplate_mat);
+	glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp1->p_vars)->faceplate_mat);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glPushMatrix();
 	glLoadIdentity();
-	((struct ogl_vars *)dmp1->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
+	((struct ogl_vars *)dmp1->p_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
-	glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy, None, NULL);
-	glXDestroyContext(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy, old_glxContext);
+	glXMakeCurrent(((struct dm_xvars *)dmp1->m_vars)->dpy, None, NULL);
+	glXDestroyContext(((struct dm_xvars *)dmp1->m_vars)->dpy, old_glxContext);
     } else {
 	/* dmp1 will share its display lists with dmp2 */
 
-	old_glxContext = ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc;
+	old_glxContext = ((struct ogl_vars *)dmp2->p_vars)->glxc;
 
-	if ((((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc =
-	     glXCreateContext(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp2->dm_vars.pub_vars)->vip,
-			      ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc,
+	if ((((struct ogl_vars *)dmp2->p_vars)->glxc =
+	     glXCreateContext(((struct dm_xvars *)dmp2->m_vars)->dpy,
+			      ((struct dm_xvars *)dmp2->m_vars)->vip,
+			      ((struct ogl_vars *)dmp1->p_vars)->glxc,
 			      GL_TRUE))==NULL) {
 	    bu_log("ogl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
-	    ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
+	    ((struct ogl_vars *)dmp2->p_vars)->glxc = old_glxContext;
 
 	    return TCL_ERROR;
 	}
 
-	if (!glXMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy,
-			    ((struct dm_xvars *)dmp2->dm_vars.pub_vars)->win,
-			    ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc)) {
+	if (!glXMakeCurrent(((struct dm_xvars *)dmp2->m_vars)->dpy,
+			    ((struct dm_xvars *)dmp2->m_vars)->win,
+			    ((struct ogl_vars *)dmp2->p_vars)->glxc)) {
 	    bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
-	    ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
+	    ((struct ogl_vars *)dmp2->p_vars)->glxc = old_glxContext;
 
 	    return TCL_ERROR;
 	}
 
-	((struct ogl_vars *)dmp2->dm_vars.priv_vars)->fontOffset = ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->fontOffset;
+	((struct ogl_vars *)dmp2->p_vars)->fontOffset = ((struct ogl_vars *)dmp1->p_vars)->fontOffset;
 	dmp2->dm_displaylist = dmp1->dm_displaylist;
 
 	ogl_setBGColor(dmp2, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (((struct ogl_vars *)dmp2->dm_vars.priv_vars)->mvars.doublebuffer)
+	if (((struct modifiable_ogl_vars *)dmp2->m_vars)->doublebuffer)
 	    glDrawBuffer(GL_BACK);
 	else
 	    glDrawBuffer(GL_FRONT);
@@ -1129,17 +1163,17 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
-	glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->faceplate_mat);
+	glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp2->p_vars)->faceplate_mat);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glPushMatrix();
 	glLoadIdentity();
-	((struct ogl_vars *)dmp2->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
+	((struct ogl_vars *)dmp2->p_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
-	glXMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy, None, NULL);
-	glXDestroyContext(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy, old_glxContext);
+	glXMakeCurrent(((struct dm_xvars *)dmp2->m_vars)->dpy, None, NULL);
+	glXDestroyContext(((struct dm_xvars *)dmp2->m_vars)->dpy, old_glxContext);
     }
 
     return TCL_OK;
@@ -1176,35 +1210,35 @@ ogl_drawBegin(struct dm_internal *dmp)
 
 
 
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->m_vars)->dpy,
+			((struct dm_xvars *)dmp->m_vars)->win,
+			((struct ogl_vars *)dmp->p_vars)->glxc)) {
 	bu_log("ogl_drawBegin: Couldn't make context current\n");
 	return TCL_ERROR;
     }
 
     /* clear back buffer */
     if (!dmp->dm_clearBufferAfter &&
-	((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
-	glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
-		     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
-		     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
+	((struct modifiable_ogl_vars *)dmp->m_vars)->doublebuffer) {
+	glClearColor(((struct ogl_vars *)dmp->p_vars)->r,
+		     ((struct ogl_vars *)dmp->p_vars)->g,
+		     ((struct ogl_vars *)dmp->p_vars)->b,
 		     0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
+    if (((struct ogl_vars *)dmp->p_vars)->face_flag) {
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
-	((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag = 0;
-	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
+	((struct ogl_vars *)dmp->p_vars)->face_flag = 0;
+	if (((struct modifiable_ogl_vars *)dmp->m_vars)->cueing_on) {
 	    glEnable(GL_FOG);
 	    /*XXX Need to do something with Viewscale */
 	    fogdepth = 2.2 * (*dmp->dm_vp); /* 2.2 is heuristic */
 	    glFogf(GL_FOG_END, fogdepth);
-	    fogdepth = (GLfloat) (0.5*((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fogdensity/
+	    fogdepth = (GLfloat) (0.5*((struct modifiable_ogl_vars *)dmp->m_vars)->fogdensity/
 				  (*dmp->dm_vp));
 	    glFogf(GL_FOG_DENSITY, fogdepth);
 	    glFogi(GL_FOG_MODE, dmp->dm_perspective ? GL_EXP : GL_LINEAR);
@@ -1261,15 +1295,15 @@ ogl_drawEnd(struct dm_internal *dmp)
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
     }
 
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
-	glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
+    if (((struct modifiable_ogl_vars *)dmp->m_vars)->doublebuffer) {
+	glXSwapBuffers(((struct dm_xvars *)dmp->m_vars)->dpy,
+		       ((struct dm_xvars *)dmp->m_vars)->win);
 
 	if (dmp->dm_clearBufferAfter) {
 	    /* give Graphics pipe time to work */
-	    glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
-			 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
-			 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
+	    glClearColor(((struct ogl_vars *)dmp->p_vars)->r,
+			 ((struct ogl_vars *)dmp->p_vars)->g,
+			 ((struct ogl_vars *)dmp->p_vars)->b,
 			 0.0);
 	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
@@ -1419,12 +1453,12 @@ ogl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat)
     glMatrixMode(GL_PROJECTION);
 
     if (mat == (fastf_t *)NULL) {
-	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
+	if (((struct ogl_vars *)dmp->p_vars)->face_flag) {
 	    glPopMatrix();
 	    glLoadIdentity();
 	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
 	    glPushMatrix();
-	    glLoadMatrixd(((struct ogl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
+	    glLoadMatrixd(((struct ogl_vars *)dmp->p_vars)->faceplate_mat);
 	} else {
 	    glLoadIdentity();
 	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
@@ -1487,9 +1521,9 @@ ogl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
     glPolygonOffset(1.0, 1.0);
 
     /* Set color to background color for drawing polygons. */
-    glColor3f(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
-	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
-	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b);
+    glColor3f(((struct ogl_vars *)dmp->p_vars)->r,
+	      ((struct ogl_vars *)dmp->p_vars)->g,
+	      ((struct ogl_vars *)dmp->p_vars)->b);
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
@@ -1623,7 +1657,7 @@ ogl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
 	glEnable(GL_LIGHTING);
     }
 
-    if (!((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on)
+    if (!((struct modifiable_ogl_vars *)dmp->m_vars)->zbuffer_on)
 	glDisable(GL_DEPTH_TEST);
 
     if (!dmp->dm_depthMask)
@@ -1828,15 +1862,15 @@ ogl_normal(struct dm_internal *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-    if (!((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
+    if (!((struct ogl_vars *)dmp->p_vars)->face_flag) {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
-	glLoadMatrixd(((struct ogl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
+	glLoadMatrixd(((struct ogl_vars *)dmp->p_vars)->faceplate_mat);
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
-	((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;
-	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on)
+	((struct ogl_vars *)dmp->p_vars)->face_flag = 1;
+	if (((struct modifiable_ogl_vars *)dmp->m_vars)->cueing_on)
 	    glDisable(GL_FOG);
 	if (dmp->dm_light)
 	    glDisable(GL_LIGHTING);
@@ -1874,7 +1908,7 @@ ogl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y,
     else
 	glRasterPos2f(x, y);
 
-    glListBase(((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+    glListBase(((struct ogl_vars *)dmp->p_vars)->fontOffset);
     glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);
 
     return TCL_OK;
@@ -2099,7 +2133,7 @@ ogl_setTransparency(struct dm_internal *dmp,
 	bu_log("ogl_setTransparency()\n");
 
     dmp->dm_transparency = transparency_on;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on = dmp->dm_transparency;
+    ((struct modifiable_ogl_vars *)dmp->m_vars)->transparency_on = dmp->dm_transparency;
 
     if (transparency_on) {
 	/* Turn it on */
@@ -2138,14 +2172,14 @@ ogl_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
 	bu_log("ogl_setZBuffer:\n");
 
     dmp->dm_zbuffer = zbuffer_on;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
+    ((struct modifiable_ogl_vars *)dmp->m_vars)->zbuffer_on = dmp->dm_zbuffer;
 
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf == 0) {
+    if (((struct modifiable_ogl_vars *)dmp->m_vars)->zbuf == 0) {
 	dmp->dm_zbuffer = 0;
-	((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
+	((struct modifiable_ogl_vars *)dmp->m_vars)->zbuffer_on = dmp->dm_zbuffer;
     }
 
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on) {
+    if (((struct modifiable_ogl_vars *)dmp->m_vars)->zbuffer_on) {
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_DEPTH_TEST);
     } else {
@@ -2303,76 +2337,44 @@ ogl_openFb(struct dm_internal *dmp)
     struct ogl_fb_info *ofb_ps;
     fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
     ofb_ps = (struct ogl_fb_info *)fb_ps->data;
-    ofb_ps->dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
-    ofb_ps->win = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
-    ofb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
-    ofb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
-    ofb_ps->glxc = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc;
-    ofb_ps->double_buffer = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer;
+    ofb_ps->dpy = ((struct dm_xvars *)dmp->m_vars)->dpy;
+    ofb_ps->win = ((struct dm_xvars *)dmp->m_vars)->win;
+    ofb_ps->cmap = ((struct dm_xvars *)dmp->m_vars)->cmap;
+    ofb_ps->vip = ((struct dm_xvars *)dmp->m_vars)->vip;
+    ofb_ps->glxc = ((struct ogl_vars *)dmp->p_vars)->glxc;
+    ofb_ps->double_buffer = ((struct modifiable_ogl_vars *)dmp->m_vars)->doublebuffer;
     ofb_ps->soft_cmap = 0;
     dmp->fbp = fb_open_existing("ogl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
     return 0;
 }
 
-#define Ogl_MV2_O(_m) offsetof(struct modifiable_ogl_vars2, _m)
-
-struct modifiable_ogl_vars2 {
-    dm *this_dm;
-    int cueing_on;
-    int zclipping_on;
-    int zbuffer_on;
-    int lighting_on;
-    int transparency_on;
-    int fastfog;
-    double fogdensity;
-    int zbuf;
-    int rgb;
-    int doublebuffer;
-    int depth;
-    int debug;
-    struct bu_vls log;
-    double bound;
-    int boundFlag;
-};
-
-struct ogl_vars2 {
-    GLXContext glxc;
-    GLdouble faceplate_mat[16];
-    int face_flag;
-    int *perspective_mode;
-    int fontOffset;
-    int ovec;           /* Old color map entry number */
-    char is_direct;
-    GLclampf r, g, b;
-};
-
 void
 ogl_get_internal(struct dm_internal *dmp)
 {
-    struct modifiable_ogl_vars2 *mvars = NULL;
+    struct modifiable_ogl_vars *mvars = NULL;
     if (!dmp->m_vars) {
-	BU_GET(dmp->m_vars, struct modifiable_ogl_vars2);
-	mvars = (struct modifiable_ogl_vars2 *)dmp->m_vars;
+	BU_GET(dmp->m_vars, struct modifiable_ogl_vars);
+	mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
 	mvars->this_dm = dmp;
 	bu_vls_init(&(mvars->log));
     }
     if (!dmp->p_vars) {
-	BU_GET(dmp->p_vars, struct ogl_vars2);
+	BU_GET(dmp->p_vars, struct ogl_vars);
     }
 }
 
 void
 ogl_put_internal(struct dm_internal *dmp)
 {
-    struct modifiable_ogl_vars2 *mvars = NULL;
+    struct modifiable_ogl_vars *mvars = NULL;
     if (dmp->m_vars) {
-	mvars = (struct modifiable_ogl_vars2 *)dmp->m_vars;
+	mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
 	bu_vls_free(&(mvars->log));
-	BU_PUT(dmp->m_vars, struct modifiable_ogl_vars2);
+	BU_PUT(dmp->m_vars, struct modifiable_ogl_vars);
     }
     if (dmp->p_vars) {
-	BU_PUT(dmp->p_vars, struct ogl_vars2);
+	BU_PUT(dmp->p_vars, struct ogl_vars);
     }
 }
 
@@ -2383,7 +2385,7 @@ Ogl_colorchange(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars2 *mvars = (struct modifiable_ogl_vars2 *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     if (mvars->cueing_on) {
 	glEnable(GL_FOG);
     } else {
@@ -2400,7 +2402,7 @@ osg_zclip_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars2 *mvars = (struct modifiable_ogl_vars2 *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     dm *dmp = mvars->this_dm;
     fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
 
@@ -2417,24 +2419,147 @@ osg_zclip_hook(const struct bu_structparse *sdp,
     dm_generic_hook(sdp, name, base, value, data);
 }
 
+static void
+osg_debug_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    dm_debug(dmp, mvars->debug);
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+
+static void
+osg_logfile_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    dm_logfile(dmp, bu_vls_addr(&mvars->log));
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_bound_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    dmp->dm_bound = mvars->bound;
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_bound_flag_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    dmp->dm_boundFlag = mvars->boundFlag;
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_zbuffer_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    (void)dm_make_current(dmp);
+    (void)dm_set_zbuffer(dmp, mvars->zbuffer_on);
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_lighting_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    (void)dm_make_current(dmp);
+    (void)dm_set_light(dmp, mvars->lighting_on);
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_transparency_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    (void)dm_make_current(dmp);
+    (void)dm_set_transparency(dmp, mvars->transparency_on);
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_fog_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    dm_fogHint(dmp, mvars->fastfog);
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
 
 struct bu_structparse Ogl_vparse2[] = {
-    {"%d",  1, "depthcue",              Ogl_MV2_O(cueing_on),    Ogl_colorchange, NULL, NULL },
-    {"%d",  1, "zclip",         	Ogl_MV2_O(zclipping_on), osg_zclip_hook, NULL, NULL },
-    {"%d",  1, "zbuffer",               Ogl_MV2_O(zbuffer_on),   dm_generic_hook, NULL, NULL },
-    {"%d",  1, "lighting",              Ogl_MV2_O(lighting_on),  dm_generic_hook, NULL, NULL },
-    {"%d",  1, "transparency",  	Ogl_MV2_O(transparency_on), dm_generic_hook, NULL, NULL },
-    {"%d",  1, "fastfog",               Ogl_MV2_O(fastfog),      dm_generic_hook, NULL, NULL },
-    {"%g",  1, "density",               Ogl_MV2_O(fogdensity),   dm_generic_hook, NULL, NULL },
-    {"%d",  1, "has_zbuf",              Ogl_MV2_O(zbuf),         BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "has_rgb",               Ogl_MV2_O(rgb),          BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "has_doublebuffer",      Ogl_MV2_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "depth",         	Ogl_MV2_O(depth),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "debug",         	Ogl_MV2_O(debug),        dm_generic_hook, NULL, NULL },
-    {"%V",  1, "log",   		Ogl_MV2_O(log),  	 dm_generic_hook, NULL, NULL },
-    {"%g",  1, "bound",         	Ogl_MV2_O(bound),        dm_generic_hook, NULL, NULL },
-    {"%d",  1, "useBound",              Ogl_MV2_O(boundFlag),    dm_generic_hook, NULL, NULL },
-    {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"%d",  1, "depthcue",              Ogl_MV_O(cueing_on),    Ogl_colorchange, NULL, NULL },
+    {"%d",  1, "zclip",         	Ogl_MV_O(zclipping_on), osg_zclip_hook, NULL, NULL },
+    {"%d",  1, "zbuffer",               Ogl_MV_O(zbuffer_on),   osg_zbuffer_hook, NULL, NULL },
+    {"%d",  1, "lighting",              Ogl_MV_O(lighting_on),  osg_lighting_hook, NULL, NULL },
+    {"%d",  1, "transparency",  	Ogl_MV_O(transparency_on), osg_transparency_hook, NULL, NULL },
+    {"%d",  1, "fastfog",               Ogl_MV_O(fastfog),      osg_fog_hook, NULL, NULL },
+    {"%g",  1, "density",               Ogl_MV_O(fogdensity),   dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_zbuf",              Ogl_MV_O(zbuf),         dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_rgb",               Ogl_MV_O(rgb),          dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_doublebuffer",      Ogl_MV_O(doublebuffer), dm_generic_hook, NULL, NULL },
+    {"%d",  1, "depth",         	Ogl_MV_O(depth),        dm_generic_hook, NULL, NULL },
+    {"%d",  1, "debug",         	Ogl_MV_O(debug),        osg_debug_hook, NULL, NULL },
+    {"%V",  1, "log",   		Ogl_MV_O(log),  	 osg_logfile_hook, NULL, NULL },
+    {"%g",  1, "bound",         	Ogl_MV_O(bound),        osg_bound_hook, NULL, NULL },
+    {"%d",  1, "useBound",              Ogl_MV_O(boundFlag),    osg_bound_flag_hook, NULL, NULL },
+    {"",        0,  (char *)0,          0,                       BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 struct dm_internal dm_ogl = {
