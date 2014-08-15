@@ -259,9 +259,6 @@ dm_get()
     bu_vls_init(&new_dm->dm_pathName);
     bu_vls_init(&new_dm->dm_dName);
 
-    if (new_dm->dm_get_internal)
-	new_dm->dm_get_internal(new_dm);
-
     return new_dm;
 }
 
@@ -757,6 +754,37 @@ dm_generic_hook(const struct bu_structparse *sdp,
 	if (hook->dm_hook)
 	    hook->dm_hook(sdp, name, base, value, hook->dm_hook_data);
     }
+}
+
+int
+dm_set_hook(const struct bu_structparse_map *map,
+       	const char *key, struct dm_hook_data *hook)
+{
+    if (UNLIKELY(!map || !key || !hook)) return -1;
+    hook->dm_hook = BU_STRUCTPARSE_FUNC_NULL;
+    hook->dm_hook_data = NULL;
+    for (; map->sp_name != (char *)0; map++) {
+	if (BU_STR_EQUAL(map->sp_name, key)) {
+	    hook->dm_hook = map->sp_hook;
+	    hook->dm_hook_data = map->data;
+	    return 0;
+	}
+    } 
+    return 1;
+}
+
+struct bu_structparse * 
+dm_get_vparse(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return dmp->vparse;
+}
+
+void * 
+dm_get_mvars(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return dmp->m_vars;
 }
 
 /*

@@ -321,6 +321,7 @@ DM_EXPORT extern const char *dm_version(void);
  * sort these out later */
 
 DM_EXPORT extern dm *dm_get();
+DM_EXPORT extern void dm_get_internal(dm *dmp);
 DM_EXPORT extern void dm_put(dm *dmp);
 DM_EXPORT extern void dm_set_null(dm *dmp); /* TODO - HACK, need general set mechanism */
 DM_EXPORT extern const char *dm_get_dm_name(dm *dmp);
@@ -394,6 +395,11 @@ DM_EXPORT extern int dm_debug(dm *dmp, int lvl);
 DM_EXPORT extern int dm_logfile(dm *dmp, const char *filename);
 DM_EXPORT extern fb *dm_get_fb(dm *dmp);
 
+DM_EXPORT extern int dm_set_hook(const struct bu_structparse_map *map,
+       	const char *key, struct dm_hook_data *hook);
+
+DM_EXPORT extern struct bu_structparse *dm_get_vparse(dm *dmp);
+DM_EXPORT extern void *dm_get_mvars(dm *dmp);
 
 __END_DECLS
 

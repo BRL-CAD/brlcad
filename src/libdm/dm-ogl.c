@@ -656,7 +656,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_ALLOC(dmp, struct dm_internal);
+    BU_GET(dmp, struct dm_internal);
 
     *dmp = dm_ogl; /* struct copy */
     dmp->dm_interp = interp;
@@ -680,6 +680,8 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     }
     privvars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
     bu_vls_init(&(privvars->mvars.log));
+
+    dmp->dm_get_internal(dmp);
 
     dmp->dm_vp = &default_viewscale;
 

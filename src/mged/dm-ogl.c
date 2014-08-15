@@ -109,26 +109,6 @@ struct bu_structparse_map ogl_vparse_map[] = {
     {(char *)0,		BU_STRUCTPARSE_FUNC_NULL, NULL }
 };
 
-struct bu_structparse Ogl_vparse[] = {
-    {"%d",  1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange, NULL, NULL },
-    {"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	zclip_hook, NULL, NULL },
-    {"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	establish_zbuffer, NULL, NULL },
-    {"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting, NULL, NULL },
-    {"%d",  1, "transparency",	Ogl_MV_O(transparency_on), establish_transparency, NULL, NULL },
-    {"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fogHint, NULL, NULL },
-    {"%g",  1, "density",		Ogl_MV_O(fogdensity),	dirty_hook, NULL, NULL },
-    {"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "has_rgb",		Ogl_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "depth",		Ogl_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "debug",		Ogl_MV_O(debug),	debug_hook, NULL, NULL },
-    {"%V",  1, "log",	Ogl_MV_O(log),	logfile_hook, NULL, NULL },
-    {"%g",  1, "bound",		Ogl_MV_O(bound),	bound_hook, NULL, NULL },
-    {"%d",  1, "useBound",		Ogl_MV_O(boundFlag),	boundFlag_hook, NULL, NULL },
-    {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
-
-
 int
 Ogl_dm_init(struct dm_list *o_dm_list,
 	    int argc,
@@ -203,6 +183,7 @@ static int
 Ogl_dm(int argc,
        const char *argv[])
 {
+    struct dm_hook_data mged_dm_hook;
     if (BU_STR_EQUAL(argv[0], "set")) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -210,24 +191,25 @@ Ogl_dm(int argc,
 	    /* Bare set command, print out current settings */
 	    bu_vls_struct_print2(&vls,
 				 "dm_ogl internal variables",
-				 Ogl_vparse,
-				 (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars);
+				 dm_get_vparse(dmp),
+				 (const char *)dm_get_mvars(dmp));
 	} else if (argc == 2) {
+	    /* TODO - need to add hook func support to this func, since the one in the libdm structparse isn't enough by itself */
 	    bu_vls_struct_item_named(&vls,
-				     Ogl_vparse,
+				     dm_get_vparse(dmp),
 				     argv[1],
-				     (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars,
+				     (const char *)dm_get_mvars(dmp),
 				     COMMA);
 	} else {
 	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	    int ret;
 
+	    ret = dm_set_hook(ogl_vparse_map, argv[1], &mged_dm_hook);
+
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	    bu_vls_putc(&tmp_vls, '\"');
-	    ret = bu_struct_parse(&tmp_vls,
-			    Ogl_vparse,
-			    (char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars, NULL);
+	    ret = bu_struct_parse(&tmp_vls, dm_get_vparse(dmp), (char *)dm_get_mvars(dmp), (void *)(&mged_dm_hook));
 	    bu_vls_free(&tmp_vls);
 	    if (ret < 0) {
 	      bu_vls_free(&vls);
