@@ -2053,22 +2053,7 @@ NMG_EXPORT extern struct bu_list *rt_vlblock_find(struct bn_vlblock *vbp,
  *									*
  ************************************************************************/
 
-/**
- * Validate an bn_vlist chain for having reasonable values inside.
- * Calls bu_bomb() if not.
- *
- * Returns -
- * npts Number of point/command sets in use.
- */
-NMG_EXPORT extern int rt_ck_vlist(const struct bu_list *vhead);
 
-
-/**
- * Duplicate the contents of a vlist.  Note that the copy may be more
- * densely packed than the source.
- */
-NMG_EXPORT extern void rt_vlist_copy(struct bu_list *dest,
-				     const struct bu_list *src);
 
 
 /**
@@ -2157,6 +2142,49 @@ NMG_EXPORT extern int rt_uplot_to_vlist(struct bn_vlblock *vbp,
 				        FILE *fp,
 				        double char_size,
 				        int mode);
+
+/**
+ * Resources for uniprocessor
+ */
+NMG_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/globals.c */
+#define RESOURCE_NULL	((struct resource *)0)
+#define RT_CK_RESOURCE(_p) BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
+
+/**
+ * Compute the intersections of a ray with a rectangular parallelepiped
+ * (RPP) that has faces parallel to the coordinate planes
+ *
+ * The algorithm here was developed by Gary Kuehl for GIFT.  A good
+ * description of the approach used can be found in "??" by XYZZY and
+ * Barsky, ACM Transactions on Graphics, Vol 3 No 1, January 1984.
+ *
+ * Note: The computation of entry and exit distance is mandatory, as
+ * the final test catches the majority of misses.
+ *
+ * Note: A hit is returned if the intersect is behind the start point.
+ *
+ * Returns -
+ * 0 if ray does not hit RPP,
+ * !0 if ray hits RPP.
+ *
+ * Implicit return -
+ * rp->r_min = dist from start of ray to point at which ray ENTERS solid
+ * rp->r_max = dist from start of ray to point at which ray LEAVES solid
+ */
+NMG_EXPORT extern int rt_in_rpp(struct xray *rp,
+			       const fastf_t *invdir,
+			       const fastf_t *min,
+			       const fastf_t *max);
+
+
+/**
+ * This routine is called by the GET_SEG macro when the freelist is
+ * exhausted.  Rather than simply getting one additional structure, we
+ * get a whole batch, saving overhead.  When this routine is called,
+ * the seg resource must already be locked.  malloc() locking is done
+ * in bu_malloc.
+ */
+NMG_EXPORT extern void rt_alloc_seg_block(struct resource *res);
 
 __END_DECLS
 

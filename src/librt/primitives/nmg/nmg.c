@@ -4098,6 +4098,145 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
 
 struct rt_g RTG = RT_G_INIT_ZERO;
 
+/**
+ * rt vlist command descriptions
+ */
+const char *rt_vlist_cmd_descriptions[] = {
+    "line move ",
+    "line draw ",
+    "poly start",
+    "poly move ",
+    "poly draw ",
+    "poly end  ",
+    "poly vnorm",
+    "tri start",
+    "tri move",
+    "tri draw",
+    "tri end",
+    "tri vnorm",
+    "point draw",
+    "**unknown*"
+};
+
+const struct db_tree_state rt_initial_tree_state = {
+    RT_DBTS_MAGIC,		/* magic */
+    0,				/* ts_dbip */
+    0,				/* ts_sofar */
+    0, 0, 0, 0,			/* region, air, gmater, LOS */
+    { /* struct mater_info ts_mater */
+	VINITALL(1.0),		/* color, RGB */
+	-1.0,			/* Temperature */
+	0,			/* ma_color_valid=0 --> use default */
+	DB_INH_LOWER,		/* color inherit */
+	DB_INH_LOWER,		/* mater inherit */
+	NULL			/* shader */
+    },
+    MAT_INIT_IDN,
+    REGION_NON_FASTGEN,		/* ts_is_fastgen */
+    {
+	/* attribute value set */
+	BU_AVS_MAGIC,
+	0,
+	0,
+	NULL,
+	NULL,
+	NULL
+    },
+    0,				/* ts_stop_at_regions */
+    NULL,			/* ts_region_start_func */
+    NULL,			/* ts_region_end_func */
+    NULL,			/* ts_leaf_func */
+    NULL,			/* ts_ttol */
+    NULL,			/* ts_tol */
+    NULL,			/* ts_m */
+    NULL,			/* ts_rtip */
+    NULL			/* ts_resp */
+};
+
+int
+rt_ck_vlist(const struct bu_list *vhead)
+{
+    register struct bn_vlist *vp;
+    int npts = 0;
+
+    for (BU_LIST_FOR(vp, bn_vlist, vhead)) {
+	register int i;
+	register int nused = vp->nused;
+	register int *cmd = vp->cmd;
+	register point_t *pt = vp->pt;
+
+	BN_CK_VLIST(vp);
+	npts += nused;
+
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    register int j;
+
+	    for (j=0; j < 3; j++) {
+		/*
+		 * If (*pt)[j] is an IEEE NaN, then all comparisons
+		 * between it and any genuine number will return
+		 * FALSE.  This test is formulated so that NaN values
+		 * will activate the "else" clause.
+		 */
+		if ((*pt)[j] > -INFINITY && (*pt)[j] < INFINITY) {
+		    /* Number is good */
+		} else {
+		    bu_log("  %s (%g, %g, %g)\n",
+			   rt_vlist_cmd_descriptions[*cmd],
+			   V3ARGS(*pt));
+		    bu_bomb("rt_ck_vlist() bad coordinate value\n");
+		}
+		/* XXX Need a define for largest command number */
+		if (*cmd < 0 || *cmd > BN_VLIST_CMD_MAX) {
+		    bu_log("cmd = x%x (%d.)\n", *cmd, *cmd);
+		    bu_bomb("rt_ck_vlist() bad vlist command\n");
+		}
+	    }
+	}
+    }
+    return npts;
+}
+
+void
+rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
+{
+    struct bn_vlist *vp;
+
+    for (BU_LIST_FOR(vp, bn_vlist, src)) {
+	register int i;
+	register int nused = vp->nused;
+	register int *cmd = vp->cmd;
+	register point_t *pt = vp->pt;
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    BN_ADD_VLIST(&rtg_vlfree, dest, *pt, *cmd);
+	}
+    }
+}
+
+
+void
+rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, double sz, double mm2local)
+{
+    struct bn_vlist *vp;
+    struct bu_list *vhead;
+    char label[256];
+
+    vhead = rt_vlblock_find(vbp, 255, 255, 255);	/* white */
+
+    for (BU_LIST_FOR(vp, bn_vlist, src)) {
+	register int i;
+	register int nused = vp->nused;
+	register int *cmd = vp->cmd;
+	register point_t *pt = vp->pt;
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    /* XXX Skip polygon markers? */
+	    sprintf(label, " %g, %g, %g",
+		    (*pt)[0]*mm2local, (*pt)[1]*mm2local, (*pt)[2]*mm2local);
+	    bn_vlist_3string(vhead, vbp->free_vlist_hd, label, (*pt), mat, sz);
+	}
+    }
+}
+
 /*
  * Local Variables:
  * mode: C

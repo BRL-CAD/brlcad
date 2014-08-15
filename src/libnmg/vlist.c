@@ -160,68 +160,6 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 }
 
 
-int
-rt_ck_vlist(const struct bu_list *vhead)
-{
-    register struct bn_vlist *vp;
-    int npts = 0;
-
-    for (BU_LIST_FOR(vp, bn_vlist, vhead)) {
-	register int i;
-	register int nused = vp->nused;
-	register int *cmd = vp->cmd;
-	register point_t *pt = vp->pt;
-
-	BN_CK_VLIST(vp);
-	npts += nused;
-
-	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    register int j;
-
-	    for (j=0; j < 3; j++) {
-		/*
-		 * If (*pt)[j] is an IEEE NaN, then all comparisons
-		 * between it and any genuine number will return
-		 * FALSE.  This test is formulated so that NaN values
-		 * will activate the "else" clause.
-		 */
-		if ((*pt)[j] > -INFINITY && (*pt)[j] < INFINITY) {
-		    /* Number is good */
-		} else {
-		    bu_log("  %s (%g, %g, %g)\n",
-			   rt_vlist_cmd_descriptions[*cmd],
-			   V3ARGS(*pt));
-		    bu_bomb("rt_ck_vlist() bad coordinate value\n");
-		}
-		/* XXX Need a define for largest command number */
-		if (*cmd < 0 || *cmd > BN_VLIST_CMD_MAX) {
-		    bu_log("cmd = x%x (%d.)\n", *cmd, *cmd);
-		    bu_bomb("rt_ck_vlist() bad vlist command\n");
-		}
-	    }
-	}
-    }
-    return npts;
-}
-
-
-void
-rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
-{
-    struct bn_vlist *vp;
-
-    for (BU_LIST_FOR(vp, bn_vlist, src)) {
-	register int i;
-	register int nused = vp->nused;
-	register int *cmd = vp->cmd;
-	register point_t *pt = vp->pt;
-	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    BN_ADD_VLIST(&rtg_vlfree, dest, *pt, *cmd);
-	}
-    }
-}
-
-
 void
 bn_vlist_cleanup(struct bu_list *hd)
 {
@@ -814,30 +752,6 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
     }
 
     return 0;
-}
-
-
-void
-rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, double sz, double mm2local)
-{
-    struct bn_vlist *vp;
-    struct bu_list *vhead;
-    char label[256];
-
-    vhead = rt_vlblock_find(vbp, 255, 255, 255);	/* white */
-
-    for (BU_LIST_FOR(vp, bn_vlist, src)) {
-	register int i;
-	register int nused = vp->nused;
-	register int *cmd = vp->cmd;
-	register point_t *pt = vp->pt;
-	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    /* XXX Skip polygon markers? */
-	    sprintf(label, " %g, %g, %g",
-		    (*pt)[0]*mm2local, (*pt)[1]*mm2local, (*pt)[2]*mm2local);
-	    bn_vlist_3string(vhead, vbp->free_vlist_hd, label, (*pt), mat, sz);
-	}
-    }
 }
 
 

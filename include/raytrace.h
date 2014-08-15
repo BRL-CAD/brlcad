@@ -1435,13 +1435,6 @@ struct resource {
     struct bu_ptbl	re_directory_blocks;	/**< @brief  Table of malloc'ed blocks */
 };
 
-/**
- * Resources for uniprocessor
- */
-NMG_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/globals.c */
-#define RESOURCE_NULL	((struct resource *)0)
-#define RT_CK_RESOURCE(_p) BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
-
 
 /**
  * Structure used by the "reprep" routines
@@ -3064,32 +3057,6 @@ RT_EXPORT extern int rt_rpp_region(struct rt_i *rtip,
 				   fastf_t *min_rpp,
 				   fastf_t *max_rpp);
 
-/**
- * Compute the intersections of a ray with a rectangular parallelepiped
- * (RPP) that has faces parallel to the coordinate planes
- *
- * The algorithm here was developed by Gary Kuehl for GIFT.  A good
- * description of the approach used can be found in "??" by XYZZY and
- * Barsky, ACM Transactions on Graphics, Vol 3 No 1, January 1984.
- *
- * Note: The computation of entry and exit distance is mandatory, as
- * the final test catches the majority of misses.
- *
- * Note: A hit is returned if the intersect is behind the start point.
- *
- * Returns -
- * 0 if ray does not hit RPP,
- * !0 if ray hits RPP.
- *
- * Implicit return -
- * rp->r_min = dist from start of ray to point at which ray ENTERS solid
- * rp->r_max = dist from start of ray to point at which ray LEAVES solid
- */
-NMG_EXPORT extern int rt_in_rpp(struct xray *rp,
-			       const fastf_t *invdir,
-			       const fastf_t *min,
-			       const fastf_t *max);
-
 
 /**
  * Return pointer to cell 'n' along a given ray.  Used for debugging
@@ -4617,15 +4584,6 @@ RT_EXPORT extern int db_zapper(struct db_i *,
  */
 RT_EXPORT extern void db_alloc_directory_block(struct resource *resp);
 
-/**
- * This routine is called by the GET_SEG macro when the freelist is
- * exhausted.  Rather than simply getting one additional structure, we
- * get a whole batch, saving overhead.  When this routine is called,
- * the seg resource must already be locked.  malloc() locking is done
- * in bu_malloc.
- */
-NMG_EXPORT extern void rt_alloc_seg_block(struct resource *res);
-
 /* db_tree.c */
 
 /**
@@ -5524,7 +5482,7 @@ RT_EXPORT extern int rt_tree_elim_nops(union tree *,
 /**
  * Used by MGED's "labelvert" command.
  */
-NMG_EXPORT extern void rt_label_vlist_verts(struct bn_vlblock *vbp,
+RT_EXPORT extern void rt_label_vlist_verts(struct bn_vlblock *vbp,
 					   struct bu_list *src,
 					   mat_t mat,
 					   double sz,
@@ -6222,9 +6180,26 @@ RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
  * Also used by converters in conv/ directory.  Don't forget to
  * initialize ts_dbip before use.
  */
-NMG_EXPORT extern const struct db_tree_state rt_initial_tree_state;
-NMG_EXPORT extern const char *rt_vlist_cmd_descriptions[];
+RT_EXPORT extern const struct db_tree_state rt_initial_tree_state;
+RT_EXPORT extern const char *rt_vlist_cmd_descriptions[];
 
+
+/**
+ * Validate an bn_vlist chain for having reasonable values inside.
+ * Calls bu_bomb() if not.
+ *
+ * Returns -
+ * npts Number of point/command sets in use.
+ */
+RT_EXPORT extern int rt_ck_vlist(const struct bu_list *vhead);
+
+
+/**
+ * Duplicate the contents of a vlist.  Note that the copy may be more
+ * densely packed than the source.
+ */
+RT_EXPORT extern void rt_vlist_copy(struct bu_list *dest,
+				     const struct bu_list *src);
 
 /** @file librt/vers.c
  *
