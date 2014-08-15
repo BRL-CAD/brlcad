@@ -2351,9 +2351,12 @@ struct ogl_vars2 {
 void
 ogl_get_internal(struct dm_internal *dmp)
 {
+    struct modifiable_ogl_vars2 *mvars = NULL;
     if (!dmp->m_vars) {
 	BU_GET(dmp->m_vars, struct modifiable_ogl_vars2);
-	((struct modifiable_ogl_vars2 *)dmp->m_vars)->this_dm = dmp;
+	mvars = (struct modifiable_ogl_vars2 *)dmp->m_vars;
+	mvars->this_dm = dmp;
+	bu_vls_init(&(mvars->log));
     }
     if (!dmp->p_vars) {
 	BU_GET(dmp->p_vars, struct ogl_vars2);
@@ -2363,7 +2366,10 @@ ogl_get_internal(struct dm_internal *dmp)
 void
 ogl_put_internal(struct dm_internal *dmp)
 {
+    struct modifiable_ogl_vars2 *mvars = NULL;
     if (dmp->m_vars) {
+	mvars = (struct modifiable_ogl_vars2 *)dmp->m_vars;
+	bu_vls_free(&(mvars->log));
 	BU_PUT(dmp->m_vars, struct modifiable_ogl_vars2);
     }
     if (dmp->p_vars) {
