@@ -48,8 +48,7 @@ static int autosize = 0;	/* !0 to autosize input */
 static size_t file_width = 512; /* default input width */
 
 static char usage[] = "\
-Usage: pixhalve [-h] [-a]\n\
-	[-s squaresize] [-w file_width] [-n file_height] [file.pix]\n";
+Usage: pixhalve [-a] [-s squaresize] [-w file_width] [-n file_height] [file.pix]\n";
 
 int *rlines[5];
 int *glines[5];
@@ -61,15 +60,10 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ahs:w:n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "as:w:n:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		file_width = 1024L;
-		autosize = 0;
 		break;
 	    case 's':
 		/* square file size */
@@ -84,7 +78,7 @@ get_args(int argc, char **argv)
 		autosize = 0;
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }

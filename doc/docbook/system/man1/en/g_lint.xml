@@ -25,7 +25,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>G_lint</emphasis>
+<para><command>g_lint</command>
 uses
 <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 to fire an array of parallel rays
@@ -185,7 +185,7 @@ to produce its reports as
 <emphasis remap='I'>plot3(5)</emphasis>
 drawing commands instead of ASCII text.
 This is useful in conjunction with the "overlay" command of
-<emphasis remap='I'>mged.</emphasis></para>
+<emphasis remap='I'>mged</emphasis>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -283,7 +283,7 @@ ignores air regions.</para>
 <para>Sets the
 <command>g_lint</command>
 debug flags to
-<emphasis remap='I'>bits.</emphasis>
+<emphasis remap='I'>bits</emphasis>.
 See the
 <option>-r</option>
 option
