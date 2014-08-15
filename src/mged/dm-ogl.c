@@ -94,6 +94,21 @@ static void logfile_hook(const struct bu_structparse *, const char *, void *, co
 static void bound_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 static void boundFlag_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
+struct bu_structparse_map ogl_vparse_map[] = {
+    {"depthcue",	Ogl_colorchange,	NULL },
+    {"zclip",		zclip_hook,		NULL },
+    {"zbuffer",		establish_zbuffer,	NULL },
+    {"lighting",	establish_lighting,	NULL },
+    {"transparency",	establish_transparency, NULL },
+    {"fastfog",		do_fogHint, 		NULL },
+    {"density",		dirty_hook, 		NULL },
+    {"debug",		debug_hook, 		NULL },
+    {"log",		logfile_hook, 		NULL },
+    {"bound",		bound_hook, 		NULL },
+    {"useBound",	boundFlag_hook, 	NULL },
+    {(char *)0,		BU_STRUCTPARSE_FUNC_NULL, NULL }
+};
+
 struct bu_structparse Ogl_vparse[] = {
     {"%d",  1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange, NULL, NULL },
     {"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	zclip_hook, NULL, NULL },

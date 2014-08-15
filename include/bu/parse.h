@@ -152,6 +152,20 @@ typedef struct bu_structparse bu_structparse_t;
 
 #define BU_STRUCTPARSE_FUNC_NULL ((void(*)(const struct bu_structparse *, const char *, void *, const char *, void *))0)
 
+/* There are situations (such as the usage pattern in libdm)
+ * where applications may want to associate structparse
+ * functions with variables but not set up a full structparse
+ * table. */
+struct bu_structparse_map {
+    const char *sp_name;
+    void (*sp_hook)(const struct bu_structparse *,
+		    const char *,
+		    void *,
+		    const char *,
+		    void *);	/**< Optional hooked function, or indir ptr */
+    void *data; /* Data (if any) needed by hook function */
+};
+
 /**
  * assert the integrity of a bu_structparse struct.
  */
