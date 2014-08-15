@@ -321,7 +321,6 @@ DM_EXPORT extern const char *dm_version(void);
  * sort these out later */
 
 DM_EXPORT extern dm *dm_get();
-DM_EXPORT extern void dm_get_internal(dm *dmp);
 DM_EXPORT extern void dm_put(dm *dmp);
 DM_EXPORT extern void dm_set_null(dm *dmp); /* TODO - HACK, need general set mechanism */
 DM_EXPORT extern const char *dm_get_dm_name(dm *dmp);
