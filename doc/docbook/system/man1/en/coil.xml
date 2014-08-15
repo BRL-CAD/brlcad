@@ -29,7 +29,7 @@
   <para>
     <command>coil</command> creates a pipe shape within <emphasis remap="I">coil.g</emphasis>
     or a user supplied file that implements a coil according to user provided dimensions.
-    If no dimensions are supplied defaults are used.
+    If no dimensions are supplied, defaults are used.
   </para>
 </refsection>
 

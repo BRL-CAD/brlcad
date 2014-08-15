@@ -24,7 +24,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>cy-g</emphasis>
+<para><command>cy-g</command>
 converts the specified
 <emphasis remap='I'>input_cy_file</emphasis>
 to a BRL-CAD

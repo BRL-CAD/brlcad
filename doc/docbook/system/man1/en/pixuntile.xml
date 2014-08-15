@@ -98,7 +98,7 @@ and place the 128x128 chunks of that file from
 lower left to upper right in the files
 <emphasis remap='I'>out.0</emphasis>
 through
-<emphasis remap='I'>out.15</emphasis>.</para>
+<emphasis remap='I'>out.63</emphasis>.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
