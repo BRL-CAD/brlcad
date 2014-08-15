@@ -163,7 +163,6 @@ struct bu_structparse_map {
 		    void *,
 		    const char *,
 		    void *);	/**< Optional hooked function, or indir ptr */
-    void *data; /* Data (if any) needed by hook function */
 };
 
 /**

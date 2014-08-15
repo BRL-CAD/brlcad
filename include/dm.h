@@ -395,7 +395,7 @@ DM_EXPORT extern int dm_logfile(dm *dmp, const char *filename);
 DM_EXPORT extern fb *dm_get_fb(dm *dmp);
 
 DM_EXPORT extern int dm_set_hook(const struct bu_structparse_map *map,
-       	const char *key, struct dm_hook_data *hook);
+       	const char *key, void *data, struct dm_hook_data *hook);
 
 DM_EXPORT extern struct bu_structparse *dm_get_vparse(dm *dmp);
 DM_EXPORT extern void *dm_get_mvars(dm *dmp);

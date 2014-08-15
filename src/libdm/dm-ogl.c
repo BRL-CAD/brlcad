@@ -2345,7 +2345,6 @@ struct ogl_vars2 {
     int ovec;           /* Old color map entry number */
     char is_direct;
     GLclampf r, g, b;
-    struct modifiable_ogl_vars mvars;
 };
 
 void
@@ -2377,10 +2376,51 @@ ogl_put_internal(struct dm_internal *dmp)
     }
 }
 
+void
+Ogl_colorchange(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars2 *mvars = (struct modifiable_ogl_vars2 *)base;
+    if (mvars->cueing_on) {
+	glEnable(GL_FOG);
+    } else {
+	glDisable(GL_FOG);
+    }
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_zclip_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars2 *mvars = (struct modifiable_ogl_vars2 *)base;
+    dm *dmp = mvars->this_dm;
+    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
+
+    dmp->dm_zclip = mvars->zclipping_on;
+
+    if (dmp->dm_zclip) {
+	bounds[4] = -1.0;
+	bounds[5] = 1.0;
+    }
+
+    (void)dm_make_current(dmp);
+    (void)dm_set_win_bounds(dmp, bounds);
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
 
 struct bu_structparse Ogl_vparse2[] = {
-    {"%d",  1, "depthcue",              Ogl_MV2_O(cueing_on),    dm_generic_hook, NULL, NULL },
-    {"%d",  1, "zclip",         	Ogl_MV2_O(zclipping_on), dm_generic_hook, NULL, NULL },
+    {"%d",  1, "depthcue",              Ogl_MV2_O(cueing_on),    Ogl_colorchange, NULL, NULL },
+    {"%d",  1, "zclip",         	Ogl_MV2_O(zclipping_on), osg_zclip_hook, NULL, NULL },
     {"%d",  1, "zbuffer",               Ogl_MV2_O(zbuffer_on),   dm_generic_hook, NULL, NULL },
     {"%d",  1, "lighting",              Ogl_MV2_O(lighting_on),  dm_generic_hook, NULL, NULL },
     {"%d",  1, "transparency",  	Ogl_MV2_O(transparency_on), dm_generic_hook, NULL, NULL },

@@ -82,8 +82,6 @@ static int Ogl_dm();
 static int Ogl_doevent();
 
 /* local sp_hook functions */
-static void Ogl_colorchange(const struct bu_structparse *, const char *, void *, const char *, void *);
-static void zclip_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 static void establish_zbuffer(const struct bu_structparse *, const char *, void *, const char *, void *);
 static void establish_lighting(const struct bu_structparse *, const char *, void *, const char *, void *);
 static void establish_transparency(const struct bu_structparse *, const char *, void *, const char *, void *);
@@ -94,20 +92,71 @@ static void logfile_hook(const struct bu_structparse *, const char *, void *, co
 static void bound_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 static void boundFlag_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
-struct bu_structparse_map ogl_vparse_map[] = {
-    {"depthcue",	Ogl_colorchange,	NULL },
-    {"zclip",		zclip_hook,		NULL },
-    {"zbuffer",		establish_zbuffer,	NULL },
-    {"lighting",	establish_lighting,	NULL },
-    {"transparency",	establish_transparency, NULL },
-    {"fastfog",		do_fogHint, 		NULL },
-    {"density",		dirty_hook, 		NULL },
-    {"debug",		debug_hook, 		NULL },
-    {"log",		logfile_hook, 		NULL },
-    {"bound",		bound_hook, 		NULL },
-    {"useBound",	boundFlag_hook, 	NULL },
-    {(char *)0,		BU_STRUCTPARSE_FUNC_NULL, NULL }
+struct mged_view_hook_state {
+    dm *hs_dmp;
+    struct _view_state *vs;
+    int *dirty_global;
 };
+
+static void
+view_state_hook(const struct bu_structparse *UNUSED(sdp),
+		const char *UNUSED(name),
+		void *UNUSED(base),
+		const char *UNUSED(value),
+                void *data)
+{
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    if (hs->vs)
+	hs->vs->vs_flag = 1;
+}
+
+static void
+dirty_hook(const struct bu_structparse *UNUSED(sdp),
+	const char *UNUSED(name),
+	void *UNUSED(base),
+	const char *UNUSED(value),
+	void *data)
+{
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    *(hs->dirty_global) = 1;
+}
+
+static void
+zclip_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    hs->vs->vs_gvp->gv_zclip = dm_get_zclip(hs->hs_dmp);
+    dirty_hook(sdp, name, base, value, data);
+}
+
+
+struct bu_structparse_map ogl_vparse_map[] = {
+    {"depthcue",	view_state_hook		  },
+    {"zclip",		zclip_hook		  },
+    {"zbuffer",		establish_zbuffer	  },
+    {"lighting",	establish_lighting 	  },
+    {"transparency",	establish_transparency    },
+    {"fastfog",		do_fogHint  		  },
+    {"density",		dirty_hook  		  },
+    {"debug",		debug_hook  		  },
+    {"log",		logfile_hook  		  },
+    {"bound",		bound_hook  		  },
+    {"useBound",	boundFlag_hook  	  },
+    {(char *)0,		BU_STRUCTPARSE_FUNC_NULL  }
+};
+
+
+void *
+set_hook_data(struct mged_view_hook_state *hs) {
+    hs->hs_dmp = dmp;
+    hs->vs = view_state;
+    hs->dirty_global = &(dirty);
+    return (void *)hs;
+}
 
 int
 Ogl_dm_init(struct dm_list *o_dm_list,
@@ -203,8 +252,10 @@ Ogl_dm(int argc,
 	} else {
 	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	    int ret;
+	    struct mged_view_hook_state global_hs;
+	    void *data = set_hook_data(&global_hs);
 
-	    ret = dm_set_hook(ogl_vparse_map, argv[1], &mged_dm_hook);
+	    ret = dm_set_hook(ogl_vparse_map, argv[1], data, &mged_dm_hook);
 
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
@@ -226,22 +277,6 @@ Ogl_dm(int argc,
     return common_dm(argc, argv);
 }
 
-
-static void
-Ogl_colorchange(const struct bu_structparse *UNUSED(sdp),
-		const char *UNUSED(name),
-		void *UNUSED(base),
-		const char *UNUSED(value),
-                void *UNUSED(data))
-{
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
-	glEnable(GL_FOG);
-    } else {
-	glDisable(GL_FOG);
-    }
-
-    view_state->vs_flag = 1;
-}
 
 
     static void
@@ -295,38 +330,8 @@ do_fogHint(const struct bu_structparse *UNUSED(sdp),
 }
 
 
-    static void
-dirty_hook(const struct bu_structparse *UNUSED(sdp),
-	const char *UNUSED(name),
-	void *UNUSED(base),
-	const char *UNUSED(value),
-	void *UNUSED(data))
-{
-    dirty = 1;
-}
 
 
-    static void
-zclip_hook(const struct bu_structparse *sdp,
-	const char *name,
-	void *base,
-	const char *value,
-	void *data)
-{
-    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
-
-    dmp->dm_zclip = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
-    view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook(sdp, name, base, value, data);
-
-    if (dmp->dm_zclip) {
-	bounds[4] = -1.0;
-	bounds[5] = 1.0;
-    }
-
-    (void)dm_make_current(dmp);
-    (void)dm_set_win_bounds(dmp, bounds);
-}
 
 
     static void

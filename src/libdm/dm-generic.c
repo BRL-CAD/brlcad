@@ -758,7 +758,7 @@ dm_generic_hook(const struct bu_structparse *sdp,
 
 int
 dm_set_hook(const struct bu_structparse_map *map,
-       	const char *key, struct dm_hook_data *hook)
+       	const char *key, void *data, struct dm_hook_data *hook)
 {
     if (UNLIKELY(!map || !key || !hook)) return -1;
     hook->dm_hook = BU_STRUCTPARSE_FUNC_NULL;
@@ -766,7 +766,8 @@ dm_set_hook(const struct bu_structparse_map *map,
     for (; map->sp_name != (char *)0; map++) {
 	if (BU_STR_EQUAL(map->sp_name, key)) {
 	    hook->dm_hook = map->sp_hook;
-	    hook->dm_hook_data = map->data;
+	    if (data)
+		hook->dm_hook_data = data;
 	    return 0;
 	}
     } 
