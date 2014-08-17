@@ -58,12 +58,34 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm/dm-tk.h"
-#include "dm/dm-X.h"
 #include "dm/dm-Null.h"
-#include "dm/dm_xvars.h"
 #include "dm_private.h"
 #include "solid.h"
+
+#define CMAP_BASE 40
+#define CUBE_DIMENSION 6
+#define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */
+#define ColormapNull (Colormap *)NULL
+
+struct tk_vars {
+    Display *dpy;
+    Window win;
+    Tk_Window top;
+    Tk_Window xtkwin;
+    int depth;
+    Colormap cmap;
+    int tkfontset;
+    Tk_Font tkfontstruct;
+    int devmotionnotify;
+    int devbuttonpress;
+    int devbuttonrelease;
+    GC gc;
+    Pixmap pix;
+    mat_t xmat;
+    int is_trueColor;
+    unsigned long bd, bg, fg;   /* color of border, background, foreground */
+    unsigned long pixels[NUM_PIXELS];
+};
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 

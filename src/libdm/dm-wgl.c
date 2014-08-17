@@ -33,7 +33,9 @@
 
 #undef VMIN		/* is used in vmath.h, too */
 
-#include <GL/gl.h>
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -46,12 +48,72 @@
 #include "dm.h"
 #include "dm/dm-Null.h"
 #include "dm/dm-wgl.h"
-#include "dm/dm_xvars.h"
 #include "fb.h"
 #include "fb/fb_platform_specific.h"
 #include "solid.h"
 
 #include "./dm_private.h"
+
+#define CMAP_BASE 40
+
+/* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
+#define GED2IRIS(x)	(((float)(x))*0.00048828125)
+
+#define Wgl_MV_O(_m) offsetof(struct modifiable_wgl_vars, _m)
+
+struct modifiable_wgl_vars {
+    int cueing_on;
+    int zclipping_on;
+    int zbuffer_on;
+    int lighting_on;
+    int transparency_on;
+    int fastfog;
+    double fogdensity;
+    int zbuf;
+    int rgb;
+    int doublebuffer;
+    int depth;
+    int debug;
+    struct bu_vls log;
+    double bound;
+    int boundFlag;
+};
+
+#if !defined(HAVE_TK) && !defined(TK_WINDOW_TYPEDEF)
+typedef void *Tk_Window;
+#  define TK_WINDOW_TYPEDEF 1
+#endif
+
+#ifndef HAVE_X11_TYPES
+typedef long Display;
+typedef long Window;
+typedef long Colormap;
+#endif
+
+struct wgl_vars {
+    Display *dpy;
+    Window win;
+    Tk_Window top;
+    Tk_Window xtkwin;
+    int depth;
+    Colormap cmap;
+    PIXELFORMATDESCRIPTOR *vip;
+    HFONT fontstruct;
+    HDC  hdc;      /* device context of device that OpenGL calls are to be drawn on */
+    int devmotionnotify;
+    int devbuttonpress;
+    int devbuttonrelease;
+    HGLRC glxc;
+    GLdouble faceplate_mat[16];
+    int face_flag;
+    int *perspective_mode;
+    int fontOffset;
+    int ovec;		/* Old color map entry number */
+    char is_direct;
+    GLclampf r, g, b;
+    struct modifiable_wgl_vars mvars;
+};
+
 
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))

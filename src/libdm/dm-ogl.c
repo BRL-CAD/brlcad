@@ -76,7 +76,6 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "dm/dm-Null.h"
-#include "dm/dm_xvars.h"
 #include "fb.h"
 #include "fb/fb_platform_specific.h"
 #include "solid.h"
@@ -105,7 +104,29 @@ struct modifiable_ogl_vars {
     int boundFlag;
 };
 
+#if !defined(HAVE_TK) && !defined(TK_WINDOW_TYPEDEF)
+typedef void *Tk_Window;
+#  define TK_WINDOW_TYPEDEF 1
+#endif
+
+#ifndef HAVE_X11_TYPES
+typedef long Display;
+typedef long Window;
+typedef long Colormap;
+#endif
+
 struct ogl_vars {
+    Display *dpy;
+    Window win;
+    Tk_Window top;
+    Tk_Window xtkwin;
+    int depth;
+    Colormap cmap;
+    XVisualInfo *vip;
+    XFontStruct *fontstruct;
+    int devmotionnotify;
+    int devbuttonpress;
+    int devbuttonrelease;
     GLXContext glxc;
     GLdouble faceplate_mat[16];
     int face_flag;
