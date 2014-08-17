@@ -62,50 +62,13 @@
 #include "dm.h"
 #include "dm/dm-X.h"
 #include "dm/dm-Null.h"
+#include "dm/dm_xvars.h"
 #include "fb.h"
 #include "fb/fb_platform_specific.h"
 
 #include "solid.h"
 
 #include "dm_private.h"
-
-
-#define CMAP_BASE 40
-#define CUBE_DIMENSION 6
-#define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */
-#define ColormapNull (Colormap *)NULL
-
-#if !defined(HAVE_TK) && !defined(TK_WINDOW_TYPEDEF)
-typedef void *Tk_Window;
-#  define TK_WINDOW_TYPEDEF 1
-#endif
-
-#ifndef HAVE_X11_TYPES
-typedef long Display;
-typedef long Window;
-typedef long Colormap;
-#endif
-
-struct x_vars {
-    Display *dpy;
-    Window win;
-    Tk_Window top;
-    Tk_Window xtkwin;
-    int depth;
-    Colormap cmap;
-    XVisualInfo *vip;
-    XFontStruct *fontstruct;
-    int devmotionnotify;
-    int devbuttonpress;
-    int devbuttonrelease;
-    GC gc;
-    Pixmap pix;
-    mat_t xmat;
-    int is_trueColor;
-    unsigned long bd, bg, fg;   /* color of border, background, foreground */
-    unsigned long pixels[NUM_PIXELS];
-};
-
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 

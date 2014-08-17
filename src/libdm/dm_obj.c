@@ -63,6 +63,7 @@
 
 #ifdef DM_OGL
 #  include "dm/dm_xvars.h"
+#  include "dm/dm-ogl.h"
 #endif /* DM_OGL */
 
 #ifdef DM_WGL

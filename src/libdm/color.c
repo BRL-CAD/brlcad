@@ -34,6 +34,9 @@
 
 #include "bu.h"
 
+#include "dm/dm_xvars.h"
+
+
 /* Return the allocated pixel value that most closely represents
    the color requested. */
 unsigned long

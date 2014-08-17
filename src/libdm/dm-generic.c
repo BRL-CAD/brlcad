@@ -35,35 +35,51 @@
 #include "dm.h"
 #include "dm_private.h"
 
-/**
- * First element of list is default device when no name given
- */
-static
-dm *_dm_list[] = {
-#ifdef DM_WGL
-    &dm_wgl,
-#endif
-#ifdef DM_OGL
-    &dm_ogl,
-#endif
+#include "dm/dm-Null.h"
+
+extern dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
+extern dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
+extern dm *txt_open(Tcl_Interp *interp, int argc, const char **argv);
+
 #ifdef DM_X
-    &dm_X,
-#endif
+#  if defined(HAVE_TK)
+extern dm *X_open_dm();
+#  endif
+#endif /* DM_X */
+
 #ifdef DM_TK
-    &dm_tk,
-#endif
+extern dm *tk_open_dm();
+#endif /* DM_TK */
+
+#ifdef DM_OGL
+#  if defined(HAVE_TK)
+extern dm *ogl_open();
+extern void ogl_fogHint();
+extern int ogl_share_dlist();
+#  endif
+#endif /* DM_OGL */
+
+#ifdef DM_OSG
+extern dm *osg_open();
+extern void osg_fogHint();
+extern int osg_share_dlist();
+#endif /* DM_OSG*/
+
+#ifdef DM_RTGL
+extern dm *rtgl_open();
+extern void rtgl_fogHint();
+extern int rtgl_share_dlist();
+#endif /* DM_RTGL */
+
+#ifdef DM_WGL
+extern dm *wgl_open();
+extern void wgl_fogHint();
+extern int wgl_share_dlist();
+#endif /* DM_WGL */
+
 #ifdef DM_QT
-    &dm_qt,
-#endif
-
-    /* never get any of the following by default */
-    &dm_ps,
-    &dm_plot,
-    &dm_Null,
-    (dm *) 0
-};
-
-
+extern dm *qt_open();
+#endif /* DM_QT */
 
 HIDDEN dm *
 null_open(Tcl_Interp *interp, int argc, const char *argv[])
@@ -83,25 +99,54 @@ null_open(Tcl_Interp *interp, int argc, const char *argv[])
 
 
 dm *
-dm_open(const char *type, int argc, const char *argv[], void *interp)
+dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 {
-    dm *dmp = dm_get();
-    int i = 0;
-    while (_if_list[i] != (dm *)NULL) {
-	if (bu_strncmp(type, _dm_list[i]->dm_name,
-		    strlen(_if_list[i]->dm_name)) == 0) {
-	    /* found it, copy its struct in and do some initialization */
-	    *dmp = *(_dm_list[i]);
-	    dmp->dm_interp = interp;
-	    bu_vls_init(&(dmp->dm_log));
-	    (void)dmp->dm_get_modifiable(dmp);
-	    (void)dmp->dm_get_private(dmp);
-	    dmp->dm_open(dm *dmp, int argc, const char *argv[])
-	}
-	i++;
+    switch (type) {
+	case DM_TYPE_NULL:
+	    return null_open(interp, argc, argv);
+	case DM_TYPE_TXT:
+	    return txt_open(interp, argc, argv);
+	case DM_TYPE_PLOT:
+	    return plot_open(interp, argc, argv);
+	case DM_TYPE_PS:
+	    return ps_open(interp, argc, argv);
+#ifdef DM_X
+#  if defined(HAVE_TK)
+	case DM_TYPE_X:
+	    return X_open_dm(interp, argc, argv);
+#  endif
+#endif
+#ifdef DM_TK
+	case DM_TYPE_TK:
+	    return tk_open_dm(interp, argc, argv);
+#endif
+#ifdef DM_OGL
+#  if defined(HAVE_TK)
+	case DM_TYPE_OGL:
+	    return ogl_open(interp, argc, argv);
+#  endif
+#endif
+#ifdef DM_OSG
+	case DM_TYPE_OSG:
+	    return osg_open(interp, argc, argv);
+#endif
+#ifdef DM_RTGL
+	case DM_TYPE_RTGL:
+	    return rtgl_open(interp, argc, argv);
+#endif
+#ifdef DM_WGL
+	case DM_TYPE_WGL:
+	    return wgl_open(interp, argc, argv);
+#endif
+#ifdef DM_QT
+	case DM_TYPE_QT:
+	    return qt_open(interp, argc, argv);
+#endif
+	default:
+	    break;
     }
 
-    return dmp;
+    return DM_NULL;
 }
 
 /*
@@ -462,14 +507,14 @@ void *
 dm_get_public_vars(dm *dmp)
 {
     if (!dmp) return NULL;
-    return dmp->m_vars;
+    return dmp->dm_vars.pub_vars;
 }
 
 void *
 dm_get_private_vars(dm *dmp)
 {
     if (!dmp) return NULL;
-    return dmp->p_vars;
+    return dmp->dm_vars.priv_vars;
 }
 
 int
@@ -689,19 +734,6 @@ dm_logfile(dm *dmp, const char *filename)
     return dmp->dm_logfile(dmp, filename);
 }
 
-fastf_t *
-dm_get_vp(dm *dmp)
-{
-    if (!dmp) return NULL;
-    return dmp->dm_vp;
-}
-
-void
-dm_set_vp(dm *dmp, fastf_t *vp)
-{
-    dmp->dm_vp = vp;
-}
-
 /* This is the generic "catch-all" hook that is used
  * to run any user supplied callbacks.  If more side
  * effects are needed at the libdm level, a task-specific
@@ -738,36 +770,23 @@ dm_set_hook(const struct bu_structparse_map *map,
 		hook->dm_hook_data = data;
 	    return 0;
 	}
-    }
+    } 
     return 1;
 }
 
-struct bu_structparse *
+struct bu_structparse * 
 dm_get_vparse(dm *dmp)
 {
     if (!dmp) return NULL;
     return dmp->vparse;
 }
 
-void *
+void * 
 dm_get_mvars(dm *dmp)
 {
     if (!dmp) return NULL;
     return dmp->m_vars;
 }
-
-
-int
-dm_set_mvar(dm *dmp, const char *key, const char *val)
-{
-    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-    int ret;
-    bu_vls_printf(&tmp_vls, "%s=\"%s\"", key, val);
-    ret = bu_struct_parse(&tmp_vls, dm_get_vparse(dmp), (char *)dm_get_mvars(dmp), NULL);
-    bu_vls_free(&tmp_vls);
-    return ret;
-}
-
 
 /*
  * Local Variables:

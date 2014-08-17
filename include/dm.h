@@ -227,6 +227,16 @@ typedef struct dm_internal dm;
 
 __BEGIN_DECLS
 
+DM_EXPORT extern dm dm_ogl;
+DM_EXPORT extern dm dm_plot;
+DM_EXPORT extern dm dm_ps;
+DM_EXPORT extern dm dm_rtgl;
+DM_EXPORT extern dm dm_tk;
+DM_EXPORT extern dm dm_wgl;
+DM_EXPORT extern dm dm_X;
+DM_EXPORT extern dm dm_txt;
+DM_EXPORT extern dm dm_qt;
+
 DM_EXPORT extern int Dm_Init(void *interp);
 DM_EXPORT extern dm *dm_open(Tcl_Interp *interp,
 				    int type,
@@ -384,22 +394,11 @@ DM_EXPORT extern int dm_debug(dm *dmp, int lvl);
 DM_EXPORT extern int dm_logfile(dm *dmp, const char *filename);
 DM_EXPORT extern fb *dm_get_fb(dm *dmp);
 
-/* TODO - dm_vp is supposed to go away, but until we figure it out
- * expose it here to allow dm hiding */
-DM_EXPORT extern fastf_t *dm_get_vp(dm *dmp);
-DM_EXPORT extern void dm_set_vp(dm *dmp, fastf_t *vp);
-
 DM_EXPORT extern int dm_set_hook(const struct bu_structparse_map *map,
        	const char *key, void *data, struct dm_hook_data *hook);
 
 DM_EXPORT extern struct bu_structparse *dm_get_vparse(dm *dmp);
 DM_EXPORT extern void *dm_get_mvars(dm *dmp);
-
-DM_EXPORT extern int dm_set_mvar(dm *dmp, const char *key, const char *val);
-
-
-DM_EXPORT extern char *dm_gettype(dm *dmp);
-DM_EXPORT extern void dm_set_interface(dm *dmp, const char *interface_type);
 
 __END_DECLS
 

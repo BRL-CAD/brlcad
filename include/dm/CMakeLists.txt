@@ -3,6 +3,7 @@ set(dm_headers
   dm-Null.h
   dm-X.h
   dm-glx.h
+  dm-ogl.h
   dm-osg.h
   dm-pex.h
   dm-plot.h

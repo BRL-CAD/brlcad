@@ -31,32 +31,6 @@
 #include "vmath.h"
 #include "dm.h"
 
-#ifdef DM_X
-DM_EXPORT extern dm dm_X;
-#endif
-#ifdef DM_OGL
-DM_EXPORT extern dm dm_ogl;
-#endif
-#ifdef DM_RTGL
-DM_EXPORT extern dm dm_rtgl;
-#endif
-#ifdef DM_WGL
-DM_EXPORT extern dm dm_wgl;
-#endif
-#ifdef DM_TK
-DM_EXPORT extern dm dm_tk;
-#endif
-#ifdef DM_QT
-DM_EXPORT extern dm dm_qt;
-#endif
-
-DM_EXPORT extern dm dm_ps;
-DM_EXPORT extern dm dm_plot;
-DM_EXPORT extern dm dm_txt;
-DM_EXPORT extern dm dm_Null;
-
-
-
 struct dm_vars {
     void *pub_vars;
     void *priv_vars;
@@ -66,9 +40,6 @@ struct dm_vars {
  * Interface to a specific Display Manager
  */
 struct dm_internal {
-    uint32_t dm_magic;
-    uint32_t type_magic;
-    struct dm_internal *(*dm_open)(void *interp, int argc, const char *argv[]);
     int (*dm_close)(struct dm_internal *dmp);
     int (*dm_drawBegin)(struct dm_internal *dmp);	/**< @brief formerly dmr_prolog */
     int (*dm_drawEnd)(struct dm_internal *dmp);		/**< @brief formerly dmr_epilog */
@@ -105,10 +76,8 @@ struct dm_internal {
     void (*dm_reshape)(struct dm_internal *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm_internal *dmp);
     int (*dm_openFb)(struct dm_internal *dmp);
-    void *(*dm_get_modifiable)(struct dm_internal *dmp);
-    void (*dm_put_modifiable)(struct dm_internal *dmp);
-    void *(*dm_get_private)(struct dm_internal *dmp);
-    void (*dm_put_private)(struct dm_internal *dmp);
+    void (*dm_get_internal)(struct dm_internal *dmp);
+    void (*dm_put_internal)(struct dm_internal *dmp);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */

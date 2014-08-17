@@ -83,6 +83,7 @@
 
 #ifdef DM_OGL
 #  include "dm/dm_xvars.h"
+#  include "dm/dm-ogl.h"
 #endif /* DM_OGL */
 
 #ifdef DM_OSG
@@ -10401,8 +10402,14 @@ to_pix(struct ged *gedp,
     width = dm_get_width(gdvp->gdv_dmp);
     height = dm_get_height(gdvp->gdv_dmp);
 
-    make_ret = dm_make_current(gdvp->gdv_dmp);
-
+#if defined(DM_WGL)
+    make_ret = wglMakeCurrent(((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->hdc,
+			      ((struct wgl_vars *)(dm_get_private_vars(gdvp->gdv_dmp)))->glxc);
+#else
+    make_ret = glXMakeCurrent(((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->dpy,
+			      ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->win,
+			      ((struct ogl_vars *)(dm_get_private_vars(gdvp->gdv_dmp)))->glxc);
+#endif
     if (!make_ret) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't make context current\n", argv[0]);
 	fclose(fp);
@@ -10506,8 +10513,14 @@ to_png(struct ged *gedp,
     width = dm_get_width(gdvp->gdv_dmp);
     height = dm_get_height(gdvp->gdv_dmp);
 
-    make_ret = dm_make_current(gdvp->gdv_dmp);
-
+#if defined(DM_WGL)
+    make_ret = wglMakeCurrent(((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->hdc,
+			      ((struct wgl_vars *)(dm_get_private_vars(gdvp->gdv_dmp)))->glxc);
+#else
+    make_ret = glXMakeCurrent(((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->dpy,
+			      ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->win,
+			      ((struct ogl_vars *)(dm_get_private_vars(gdvp->gdv_dmp)))->glxc);
+#endif
     if (!make_ret) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't make context current\n", argv[0]);
 	fclose(fp);
