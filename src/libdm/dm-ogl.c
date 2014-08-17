@@ -709,7 +709,6 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
     dmp->dm_get_internal(dmp);
     mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
-    /*bu_vls_init(&(mvars->log));*/
 
     dmp->dm_vp = &default_viewscale;
 
@@ -2391,7 +2390,7 @@ Ogl_colorchange(const struct bu_structparse *sdp,
 }
 
 static void
-osg_zclip_hook(const struct bu_structparse *sdp,
+ogl_zclip_hook(const struct bu_structparse *sdp,
 	const char *name,
 	void *base,
 	const char *value,
@@ -2415,7 +2414,7 @@ osg_zclip_hook(const struct bu_structparse *sdp,
 }
 
 static void
-osg_debug_hook(const struct bu_structparse *sdp,
+ogl_debug_hook(const struct bu_structparse *sdp,
 	const char *name,
 	void *base,
 	const char *value,
@@ -2431,7 +2430,7 @@ osg_debug_hook(const struct bu_structparse *sdp,
 
 
 static void
-osg_logfile_hook(const struct bu_structparse *sdp,
+ogl_logfile_hook(const struct bu_structparse *sdp,
 	const char *name,
 	void *base,
 	const char *value,
@@ -2446,7 +2445,7 @@ osg_logfile_hook(const struct bu_structparse *sdp,
 }
 
 static void
-osg_bound_hook(const struct bu_structparse *sdp,
+ogl_bound_hook(const struct bu_structparse *sdp,
 	const char *name,
 	void *base,
 	const char *value,
@@ -2461,7 +2460,7 @@ osg_bound_hook(const struct bu_structparse *sdp,
 }
 
 static void
-osg_bound_flag_hook(const struct bu_structparse *sdp,
+ogl_bound_flag_hook(const struct bu_structparse *sdp,
 	const char *name,
 	void *base,
 	const char *value,
@@ -2476,7 +2475,7 @@ osg_bound_flag_hook(const struct bu_structparse *sdp,
 }
 
 static void
-osg_zbuffer_hook(const struct bu_structparse *sdp,
+ogl_zbuffer_hook(const struct bu_structparse *sdp,
 	const char *name,
 	void *base,
 	const char *value,
@@ -2492,7 +2491,7 @@ osg_zbuffer_hook(const struct bu_structparse *sdp,
 }
 
 static void
-osg_lighting_hook(const struct bu_structparse *sdp,
+ogl_lighting_hook(const struct bu_structparse *sdp,
 	const char *name,
 	void *base,
 	const char *value,
@@ -2508,7 +2507,7 @@ osg_lighting_hook(const struct bu_structparse *sdp,
 }
 
 static void
-osg_transparency_hook(const struct bu_structparse *sdp,
+ogl_transparency_hook(const struct bu_structparse *sdp,
 	const char *name,
 	void *base,
 	const char *value,
@@ -2524,7 +2523,7 @@ osg_transparency_hook(const struct bu_structparse *sdp,
 }
 
 static void
-osg_fog_hook(const struct bu_structparse *sdp,
+ogl_fog_hook(const struct bu_structparse *sdp,
 	const char *name,
 	void *base,
 	const char *value,
@@ -2540,20 +2539,20 @@ osg_fog_hook(const struct bu_structparse *sdp,
 
 struct bu_structparse Ogl_vparse[] = {
     {"%d",  1, "depthcue",              Ogl_MV_O(cueing_on),    Ogl_colorchange, NULL, NULL },
-    {"%d",  1, "zclip",         	Ogl_MV_O(zclipping_on), osg_zclip_hook, NULL, NULL },
-    {"%d",  1, "zbuffer",               Ogl_MV_O(zbuffer_on),   osg_zbuffer_hook, NULL, NULL },
-    {"%d",  1, "lighting",              Ogl_MV_O(lighting_on),  osg_lighting_hook, NULL, NULL },
-    {"%d",  1, "transparency",  	Ogl_MV_O(transparency_on), osg_transparency_hook, NULL, NULL },
-    {"%d",  1, "fastfog",               Ogl_MV_O(fastfog),      osg_fog_hook, NULL, NULL },
+    {"%d",  1, "zclip",         	Ogl_MV_O(zclipping_on), ogl_zclip_hook, NULL, NULL },
+    {"%d",  1, "zbuffer",               Ogl_MV_O(zbuffer_on),   ogl_zbuffer_hook, NULL, NULL },
+    {"%d",  1, "lighting",              Ogl_MV_O(lighting_on),  ogl_lighting_hook, NULL, NULL },
+    {"%d",  1, "transparency",  	Ogl_MV_O(transparency_on), ogl_transparency_hook, NULL, NULL },
+    {"%d",  1, "fastfog",               Ogl_MV_O(fastfog),      ogl_fog_hook, NULL, NULL },
     {"%g",  1, "density",               Ogl_MV_O(fogdensity),   dm_generic_hook, NULL, NULL },
     {"%d",  1, "has_zbuf",              Ogl_MV_O(zbuf),         dm_generic_hook, NULL, NULL },
     {"%d",  1, "has_rgb",               Ogl_MV_O(rgb),          dm_generic_hook, NULL, NULL },
     {"%d",  1, "has_doublebuffer",      Ogl_MV_O(doublebuffer), dm_generic_hook, NULL, NULL },
     {"%d",  1, "depth",         	Ogl_MV_O(depth),        dm_generic_hook, NULL, NULL },
-    {"%d",  1, "debug",         	Ogl_MV_O(debug),        osg_debug_hook, NULL, NULL },
-    {"%V",  1, "log",   		Ogl_MV_O(log),  	 osg_logfile_hook, NULL, NULL },
-    {"%g",  1, "bound",         	Ogl_MV_O(bound),        osg_bound_hook, NULL, NULL },
-    {"%d",  1, "useBound",              Ogl_MV_O(boundFlag),    osg_bound_flag_hook, NULL, NULL },
+    {"%d",  1, "debug",         	Ogl_MV_O(debug),        ogl_debug_hook, NULL, NULL },
+    {"%V",  1, "log",   		Ogl_MV_O(log),  	 ogl_logfile_hook, NULL, NULL },
+    {"%g",  1, "bound",         	Ogl_MV_O(bound),        ogl_bound_hook, NULL, NULL },
+    {"%d",  1, "useBound",              Ogl_MV_O(boundFlag),    ogl_bound_flag_hook, NULL, NULL },
     {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
