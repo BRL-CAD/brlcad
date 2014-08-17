@@ -1672,6 +1672,14 @@ X_openFb(struct dm_internal *dmp)
     return 0;
 }
 
+struct bu_structparse X_vparse[] = {
+    {"%g",  1, "bound",         DM_O(dm_bound),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "useBound",      DM_O(dm_boundFlag),     dm_generic_hook, NULL, NULL},
+    {"%d",  1, "zclip",         DM_O(dm_zclip),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "debug",         DM_O(dm_debugLevel),    dm_generic_hook, NULL, NULL},
+    {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
+};
+
 /* Display Manager package interface */
 struct dm_internal dm_X = {
     X_close,
@@ -1749,7 +1757,7 @@ struct dm_internal dm_X = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
-    BU_STRUCTPARSE_NULL,
+    X_vparse,
     FB_NULL,
     0				/* Tcl interpreter */
 };

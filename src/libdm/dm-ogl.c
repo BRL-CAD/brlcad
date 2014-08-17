@@ -2538,7 +2538,7 @@ osg_fog_hook(const struct bu_structparse *sdp,
     dm_generic_hook(sdp, name, base, value, data);
 }
 
-struct bu_structparse Ogl_vparse2[] = {
+struct bu_structparse Ogl_vparse[] = {
     {"%d",  1, "depthcue",              Ogl_MV_O(cueing_on),    Ogl_colorchange, NULL, NULL },
     {"%d",  1, "zclip",         	Ogl_MV_O(zclipping_on), osg_zclip_hook, NULL, NULL },
     {"%d",  1, "zbuffer",               Ogl_MV_O(zbuffer_on),   osg_zbuffer_hook, NULL, NULL },
@@ -2633,7 +2633,7 @@ struct dm_internal dm_ogl = {
     0,				/* no zclipping */
     0,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
-    Ogl_vparse2,
+    Ogl_vparse,
     FB_NULL,
     0				/* Tcl interpreter */
 };

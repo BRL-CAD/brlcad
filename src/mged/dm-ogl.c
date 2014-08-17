@@ -81,11 +81,6 @@ extern void cs_set_bg(const struct bu_structparse *, const char *, void *, const
 static int Ogl_doevent();
 
 /* local sp_hook functions */
-struct mged_view_hook_state {
-    dm *hs_dmp;
-    struct _view_state *vs;
-    int *dirty_global;
-};
 
 static void
 view_state_flag_hook(const struct bu_structparse *UNUSED(sdp),
@@ -136,7 +131,7 @@ struct bu_structparse_map ogl_vparse_map[] = {
 };
 
 
-void *
+static void *
 set_hook_data(struct mged_view_hook_state *hs) {
     hs->hs_dmp = dmp;
     hs->vs = view_state;

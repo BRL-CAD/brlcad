@@ -605,6 +605,12 @@ extern struct w_dm which_dm[];  /* defined in attach.c */
 #define DM_PLOT_INDEX 0
 #define DM_PS_INDEX 1
 
+struct mged_view_hook_state {
+    dm *hs_dmp;
+    struct _view_state *vs;
+    int *dirty_global;
+};
+
 #endif /* MGED_MGED_DM_H */
 
 /*
