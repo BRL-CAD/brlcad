@@ -661,8 +661,9 @@ ogl_close(struct dm_internal *dmp)
  *
  */
 struct dm_internal *
-ogl_open(Tcl_Interp *interp, int argc, char **argv)
+ogl_open(dm *dmp, int argc, char **argv)
 {
+    Tcl_Interp *interp = (Tcl_Interp *)dmp->interp;
     static int count = 0;
     GLfloat backgnd[4];
     int j, k;
@@ -677,11 +678,10 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     Display *tmp_dpy = (Display *)NULL;
-    struct dm_internal *dmp = (struct dm_internal *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     int screen_number = -1;
 
-    struct dm_xvars *pubvars = NULL;
+    struct modifiable_ogl_vars *pubvars = NULL;
     struct ogl_vars *privvars = NULL;
     struct modifiable_ogl_vars *m_vars = NULL;
 
@@ -689,23 +689,13 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_GET(dmp, struct dm_internal);
-
-    *dmp = dm_ogl; /* struct copy */
-    dmp->dm_interp = interp;
     dmp->dm_lineWidth = 1;
     dmp->dm_bytes_per_pixel = sizeof(GLuint);
     dmp->dm_bits_per_channel = 8;
-    bu_vls_init(&(dmp->dm_log));
+ 
+    pubvars = (struct modifiable_ogl_vars *)dmp->m_vars;
 
-    BU_ALLOC(dmp->m_vars, struct dm_xvars);
-    if (dmp->m_vars == (void *)NULL) {
-	bu_free(dmp, "ogl_open: dmp");
-	return DM_NULL;
-    }
-    pubvars = (struct dm_xvars *)dmp->m_vars;
-
-    BU_ALLOC(dmp->p_vars, struct ogl_vars);
+    BU_GET(dmp->p_vars, struct ogl_vars);
     if (dmp->p_vars == (void *)NULL) {
 	bu_free(dmp->m_vars, "ogl_open: dmp->m_vars");
 	bu_free(dmp, "ogl_open: dmp");
