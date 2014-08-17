@@ -93,6 +93,28 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
+#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
+
+struct modifiable_ogl_vars {
+    dm *this_dm;
+    int cueing_on;
+    int zclipping_on;
+    int zbuffer_on;
+    int lighting_on;
+    int transparency_on;
+    int fastfog;
+    double fogdensity;
+    int zbuf;
+    int rgb;
+    int doublebuffer;
+    int depth;
+    int debug;
+    struct bu_vls log;
+    double bound;
+    int boundFlag;
+};
+
+
 HIDDEN XVisualInfo *ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin);
 
 /* Display Manager package interface */
@@ -174,7 +196,8 @@ ogl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
 void
 ogl_fogHint(struct dm_internal *dmp, int fastfog)
 {
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    mvars->fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
 
@@ -182,6 +205,7 @@ ogl_fogHint(struct dm_internal *dmp, int fastfog)
 HIDDEN int
 ogl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel == 1)
 	bu_log("ogl_setBGColor()\n");
 
@@ -193,7 +217,7 @@ ogl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsign
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g = g / 255.0;
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
 
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
+    if (mvars->doublebuffer) {
 	glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
 	glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
@@ -417,11 +441,12 @@ ogl_configureWin(struct dm_internal *dmp, int force)
 HIDDEN int
 ogl_setLight(struct dm_internal *dmp, int lighting_on)
 {
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
 	bu_log("ogl_setLight()\n");
 
     dmp->dm_light = lighting_on;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on = dmp->dm_light;
+    mvars->lighting_on = dmp->dm_light;
 
     if (!dmp->dm_light) {
 	/* Turn it off */
@@ -455,6 +480,7 @@ ogl_setLight(struct dm_internal *dmp, int lighting_on)
 HIDDEN XVisualInfo *
 ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
 {
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
     int tries, baddepth;
     int num, i, j;
@@ -555,9 +581,9 @@ ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
 
 		    glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				 maxvip, GLX_DEPTH_SIZE,
-				 &((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth);
-		    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth > 0)
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
+				 &mvars->depth);
+		    if (mvars->depth > 0)
+			mvars->zbuf = 1;
 
 		    bu_free(good, "dealloc good visuals");
 		    return maxvip; /* success */
@@ -646,6 +672,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     Display *tmp_dpy = (Display *)NULL;
     struct dm_internal *dmp = (struct dm_internal *)NULL;
+    struct modifiable_ogl_vars *mvars = NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     int screen_number = -1;
 
@@ -679,9 +706,10 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
     privvars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
-    bu_vls_init(&(privvars->mvars.log));
 
     dmp->dm_get_internal(dmp);
+    mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    /*bu_vls_init(&(mvars->log));*/
 
     dmp->dm_vp = &default_viewscale;
 
@@ -713,16 +741,16 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_aspect = 1.0;
 
     /* initialize modifiable variables */
-    privvars->mvars.rgb = 1;
-    privvars->mvars.doublebuffer = 1;
-    privvars->mvars.fastfog = 1;
-    privvars->mvars.fogdensity = 1.0;
-    privvars->mvars.lighting_on = dmp->dm_light;
-    privvars->mvars.zbuffer_on = dmp->dm_zbuffer;
-    privvars->mvars.zclipping_on = dmp->dm_zclip;
-    privvars->mvars.debug = dmp->dm_debugLevel;
-    privvars->mvars.bound = dmp->dm_bound;
-    privvars->mvars.boundFlag = dmp->dm_boundFlag;
+    mvars->rgb = 1;
+    mvars->doublebuffer = 1;
+    mvars->fastfog = 1;
+    mvars->fogdensity = 1.0;
+    mvars->lighting_on = dmp->dm_light;
+    mvars->zbuffer_on = dmp->dm_zbuffer;
+    mvars->zclipping_on = dmp->dm_zclip;
+    mvars->debug = dmp->dm_debugLevel;
+    mvars->bound = dmp->dm_bound;
+    mvars->boundFlag = dmp->dm_boundFlag;
 
     /* this is important so that ogl_configureWin knows to set the font */
     pubvars->fontstruct = NULL;
@@ -847,7 +875,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    pubvars->depth = privvars->mvars.depth;
+    pubvars->depth = mvars->depth;
 
     Tk_MakeWindowExist(pubvars->xtkwin);
 
@@ -941,7 +969,7 @@ Done:
     ogl_setBGColor(dmp, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (privvars->mvars.doublebuffer)
+    if (mvars->doublebuffer)
 	glDrawBuffer(GL_BACK);
     else
 	glDrawBuffer(GL_FRONT);
@@ -985,6 +1013,7 @@ Done:
 int
 ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 {
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp1->m_vars;
     GLfloat backgnd[4];
     GLfloat vf;
     GLXContext old_glxContext;
@@ -1030,7 +1059,7 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 	ogl_setBGColor(dmp1, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (((struct ogl_vars *)dmp1->dm_vars.priv_vars)->mvars.doublebuffer)
+	if (mvars->doublebuffer)
 	    glDrawBuffer(GL_BACK);
 	else
 	    glDrawBuffer(GL_FRONT);
@@ -1102,7 +1131,7 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 	ogl_setBGColor(dmp2, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (((struct ogl_vars *)dmp2->dm_vars.priv_vars)->mvars.doublebuffer)
+	if (mvars->doublebuffer)
 	    glDrawBuffer(GL_BACK);
 	else
 	    glDrawBuffer(GL_FRONT);
@@ -1152,6 +1181,7 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 HIDDEN int
 ogl_drawBegin(struct dm_internal *dmp)
 {
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     GLfloat fogdepth;
 
     if (dmp->dm_debugLevel) {
@@ -1184,8 +1214,7 @@ ogl_drawBegin(struct dm_internal *dmp)
     }
 
     /* clear back buffer */
-    if (!dmp->dm_clearBufferAfter &&
-	((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
+    if (!dmp->dm_clearBufferAfter && mvars->doublebuffer) {
 	glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
 		     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
 		     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
@@ -1199,12 +1228,12 @@ ogl_drawBegin(struct dm_internal *dmp)
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 	((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag = 0;
-	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
+	if (mvars->cueing_on) {
 	    glEnable(GL_FOG);
 	    /*XXX Need to do something with Viewscale */
 	    fogdepth = 2.2 * (*dmp->dm_vp); /* 2.2 is heuristic */
 	    glFogf(GL_FOG_END, fogdepth);
-	    fogdepth = (GLfloat) (0.5*((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fogdensity/
+	    fogdepth = (GLfloat) (0.5*mvars->fogdensity/
 				  (*dmp->dm_vp));
 	    glFogf(GL_FOG_DENSITY, fogdepth);
 	    glFogi(GL_FOG_MODE, dmp->dm_perspective ? GL_EXP : GL_LINEAR);
@@ -1238,6 +1267,7 @@ ogl_drawBegin(struct dm_internal *dmp)
 HIDDEN int
 ogl_drawEnd(struct dm_internal *dmp)
 {
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawEnd\n");
 
@@ -1261,7 +1291,7 @@ ogl_drawEnd(struct dm_internal *dmp)
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
     }
 
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
+    if (mvars->doublebuffer) {
 	glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
 
@@ -1465,6 +1495,7 @@ ogl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat)
 HIDDEN int
 ogl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
 {
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     register struct bn_vlist *tvp;
     register int first;
 
@@ -1623,7 +1654,7 @@ ogl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
 	glEnable(GL_LIGHTING);
     }
 
-    if (!((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on)
+    if (!mvars->zbuffer_on)
 	glDisable(GL_DEPTH_TEST);
 
     if (!dmp->dm_depthMask)
@@ -1812,6 +1843,7 @@ ogl_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *),
 HIDDEN int
 ogl_normal(struct dm_internal *dmp)
 {
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
 	bu_log("ogl_normal\n");
 
@@ -1836,7 +1868,7 @@ ogl_normal(struct dm_internal *dmp)
 	glPushMatrix();
 	glLoadIdentity();
 	((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;
-	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on)
+	if (mvars->cueing_on)
 	    glDisable(GL_FOG);
 	if (dmp->dm_light)
 	    glDisable(GL_LIGHTING);
@@ -2095,11 +2127,12 @@ HIDDEN int
 ogl_setTransparency(struct dm_internal *dmp,
 		    int transparency_on)
 {
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
 	bu_log("ogl_setTransparency()\n");
 
     dmp->dm_transparency = transparency_on;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on = dmp->dm_transparency;
+    mvars->transparency_on = dmp->dm_transparency;
 
     if (transparency_on) {
 	/* Turn it on */
@@ -2134,18 +2167,19 @@ ogl_setDepthMask(struct dm_internal *dmp,
 HIDDEN int
 ogl_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
 {
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
 	bu_log("ogl_setZBuffer:\n");
 
     dmp->dm_zbuffer = zbuffer_on;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
+    mvars->zbuffer_on = dmp->dm_zbuffer;
 
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf == 0) {
+    if (mvars->zbuf == 0) {
 	dmp->dm_zbuffer = 0;
-	((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
+	mvars->zbuffer_on = dmp->dm_zbuffer;
     }
 
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on) {
+    if (mvars->zbuffer_on) {
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_DEPTH_TEST);
     } else {
@@ -2299,6 +2333,7 @@ ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 int
 ogl_openFb(struct dm_internal *dmp)
 {
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     struct fb_platform_specific *fb_ps;
     struct ogl_fb_info *ofb_ps;
     fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
@@ -2308,71 +2343,33 @@ ogl_openFb(struct dm_internal *dmp)
     ofb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
     ofb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
     ofb_ps->glxc = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc;
-    ofb_ps->double_buffer = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer;
+    ofb_ps->double_buffer = mvars->doublebuffer;
     ofb_ps->soft_cmap = 0;
     dmp->fbp = fb_open_existing("ogl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
     return 0;
 }
 
-#define Ogl_MV2_O(_m) offsetof(struct modifiable_ogl_vars2, _m)
-
-struct modifiable_ogl_vars2 {
-    dm *this_dm;
-    int cueing_on;
-    int zclipping_on;
-    int zbuffer_on;
-    int lighting_on;
-    int transparency_on;
-    int fastfog;
-    double fogdensity;
-    int zbuf;
-    int rgb;
-    int doublebuffer;
-    int depth;
-    int debug;
-    struct bu_vls log;
-    double bound;
-    int boundFlag;
-};
-
-struct ogl_vars2 {
-    GLXContext glxc;
-    GLdouble faceplate_mat[16];
-    int face_flag;
-    int *perspective_mode;
-    int fontOffset;
-    int ovec;           /* Old color map entry number */
-    char is_direct;
-    GLclampf r, g, b;
-};
-
 void
 ogl_get_internal(struct dm_internal *dmp)
 {
-    struct modifiable_ogl_vars2 *mvars = NULL;
+    struct modifiable_ogl_vars *mvars = NULL;
     if (!dmp->m_vars) {
-	BU_GET(dmp->m_vars, struct modifiable_ogl_vars2);
-	mvars = (struct modifiable_ogl_vars2 *)dmp->m_vars;
+	BU_GET(dmp->m_vars, struct modifiable_ogl_vars);
+	mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
 	mvars->this_dm = dmp;
 	bu_vls_init(&(mvars->log));
-    }
-    if (!dmp->p_vars) {
-	BU_GET(dmp->p_vars, struct ogl_vars2);
     }
 }
 
 void
 ogl_put_internal(struct dm_internal *dmp)
 {
-    struct modifiable_ogl_vars2 *mvars = NULL;
+    struct modifiable_ogl_vars *mvars = NULL;
     if (dmp->m_vars) {
-	mvars = (struct modifiable_ogl_vars2 *)dmp->m_vars;
+	mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
 	bu_vls_free(&(mvars->log));
-	BU_PUT(dmp->m_vars, struct modifiable_ogl_vars2);
-    }
-    if (dmp->p_vars) {
-	BU_PUT(dmp->p_vars, struct ogl_vars2);
+	BU_PUT(dmp->m_vars, struct modifiable_ogl_vars);
     }
 }
 
@@ -2383,7 +2380,7 @@ Ogl_colorchange(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars2 *mvars = (struct modifiable_ogl_vars2 *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     if (mvars->cueing_on) {
 	glEnable(GL_FOG);
     } else {
@@ -2400,7 +2397,7 @@ osg_zclip_hook(const struct bu_structparse *sdp,
 	const char *value,
 	void *data)
 {
-    struct modifiable_ogl_vars2 *mvars = (struct modifiable_ogl_vars2 *)base;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
     dm *dmp = mvars->this_dm;
     fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
 
@@ -2417,23 +2414,146 @@ osg_zclip_hook(const struct bu_structparse *sdp,
     dm_generic_hook(sdp, name, base, value, data);
 }
 
+static void
+osg_debug_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    dm_debug(dmp, mvars->debug);
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+
+static void
+osg_logfile_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    dm_logfile(dmp, bu_vls_addr(&mvars->log));
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_bound_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    dmp->dm_bound = mvars->bound;
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_bound_flag_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    dmp->dm_boundFlag = mvars->boundFlag;
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_zbuffer_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    (void)dm_make_current(dmp);
+    (void)dm_set_zbuffer(dmp, mvars->zbuffer_on);
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_lighting_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    (void)dm_make_current(dmp);
+    (void)dm_set_light(dmp, mvars->lighting_on);
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_transparency_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    (void)dm_make_current(dmp);
+    (void)dm_set_transparency(dmp, mvars->transparency_on);
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+static void
+osg_fog_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
+    dm *dmp = mvars->this_dm;
+
+    dm_fogHint(dmp, mvars->fastfog);
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
 
 struct bu_structparse Ogl_vparse2[] = {
-    {"%d",  1, "depthcue",              Ogl_MV2_O(cueing_on),    Ogl_colorchange, NULL, NULL },
-    {"%d",  1, "zclip",         	Ogl_MV2_O(zclipping_on), osg_zclip_hook, NULL, NULL },
-    {"%d",  1, "zbuffer",               Ogl_MV2_O(zbuffer_on),   dm_generic_hook, NULL, NULL },
-    {"%d",  1, "lighting",              Ogl_MV2_O(lighting_on),  dm_generic_hook, NULL, NULL },
-    {"%d",  1, "transparency",  	Ogl_MV2_O(transparency_on), dm_generic_hook, NULL, NULL },
-    {"%d",  1, "fastfog",               Ogl_MV2_O(fastfog),      dm_generic_hook, NULL, NULL },
-    {"%g",  1, "density",               Ogl_MV2_O(fogdensity),   dm_generic_hook, NULL, NULL },
-    {"%d",  1, "has_zbuf",              Ogl_MV2_O(zbuf),         BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "has_rgb",               Ogl_MV2_O(rgb),          BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "has_doublebuffer",      Ogl_MV2_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "depth",         	Ogl_MV2_O(depth),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "debug",         	Ogl_MV2_O(debug),        dm_generic_hook, NULL, NULL },
-    {"%V",  1, "log",   		Ogl_MV2_O(log),  	 dm_generic_hook, NULL, NULL },
-    {"%g",  1, "bound",         	Ogl_MV2_O(bound),        dm_generic_hook, NULL, NULL },
-    {"%d",  1, "useBound",              Ogl_MV2_O(boundFlag),    dm_generic_hook, NULL, NULL },
+    {"%d",  1, "depthcue",              Ogl_MV_O(cueing_on),    Ogl_colorchange, NULL, NULL },
+    {"%d",  1, "zclip",         	Ogl_MV_O(zclipping_on), osg_zclip_hook, NULL, NULL },
+    {"%d",  1, "zbuffer",               Ogl_MV_O(zbuffer_on),   osg_zbuffer_hook, NULL, NULL },
+    {"%d",  1, "lighting",              Ogl_MV_O(lighting_on),  osg_lighting_hook, NULL, NULL },
+    {"%d",  1, "transparency",  	Ogl_MV_O(transparency_on), osg_transparency_hook, NULL, NULL },
+    {"%d",  1, "fastfog",               Ogl_MV_O(fastfog),      osg_fog_hook, NULL, NULL },
+    {"%g",  1, "density",               Ogl_MV_O(fogdensity),   dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_zbuf",              Ogl_MV_O(zbuf),         dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_rgb",               Ogl_MV_O(rgb),          dm_generic_hook, NULL, NULL },
+    {"%d",  1, "has_doublebuffer",      Ogl_MV_O(doublebuffer), dm_generic_hook, NULL, NULL },
+    {"%d",  1, "depth",         	Ogl_MV_O(depth),        dm_generic_hook, NULL, NULL },
+    {"%d",  1, "debug",         	Ogl_MV_O(debug),        osg_debug_hook, NULL, NULL },
+    {"%V",  1, "log",   		Ogl_MV_O(log),  	 osg_logfile_hook, NULL, NULL },
+    {"%g",  1, "bound",         	Ogl_MV_O(bound),        osg_bound_hook, NULL, NULL },
+    {"%d",  1, "useBound",              Ogl_MV_O(boundFlag),    osg_bound_flag_hook, NULL, NULL },
     {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

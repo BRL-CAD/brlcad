@@ -734,6 +734,19 @@ dm_logfile(dm *dmp, const char *filename)
     return dmp->dm_logfile(dmp, filename);
 }
 
+fastf_t *
+dm_get_vp(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return dmp->dm_vp;
+}
+
+void
+dm_set_vp(dm *dmp, fastf_t *vp)
+{
+    dmp->dm_vp = vp;
+}
+
 /* This is the generic "catch-all" hook that is used
  * to run any user supplied callbacks.  If more side
  * effects are needed at the libdm level, a task-specific
@@ -770,23 +783,24 @@ dm_set_hook(const struct bu_structparse_map *map,
 		hook->dm_hook_data = data;
 	    return 0;
 	}
-    } 
+    }
     return 1;
 }
 
-struct bu_structparse * 
+struct bu_structparse *
 dm_get_vparse(dm *dmp)
 {
     if (!dmp) return NULL;
     return dmp->vparse;
 }
 
-void * 
+void *
 dm_get_mvars(dm *dmp)
 {
     if (!dmp) return NULL;
     return dmp->m_vars;
 }
+
 
 /*
  * Local Variables:
