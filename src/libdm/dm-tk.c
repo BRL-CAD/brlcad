@@ -802,6 +802,13 @@ tk_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
     return TCL_OK;
 }
 
+struct bu_structparse Tk_vparse[] = {
+    {"%g",  1, "bound",         DM_O(dm_bound),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "useBound",      DM_O(dm_boundFlag),     dm_generic_hook, NULL, NULL},
+    {"%d",  1, "zclip",         DM_O(dm_zclip),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "debug",         DM_O(dm_debugLevel),    dm_generic_hook, NULL, NULL},
+    {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
+};
 
 struct dm_internal dm_tk = {
     tk_close,
@@ -879,7 +886,7 @@ struct dm_internal dm_tk = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
-    BU_STRUCTPARSE_NULL,
+    Tk_vparse,
     FB_NULL,
     0				/* Tcl interpreter */
 };

@@ -52,19 +52,43 @@ extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.
 static int tk_dm(int argc, const char *argv[]);
 
 /* local sp_hook functions */
-static void dirty_hook(const struct bu_structparse *, const char *, void *, const char *);
-static void zclip_hook(const struct bu_structparse *, const char *, void *, const char *);
+static void
+dirty_hook(const struct bu_structparse *UNUSED(sdp),
+	const char *UNUSED(name),
+	void *UNUSED(base),
+	const char *UNUSED(value),
+	void *data)
+{
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    *(hs->dirty_global) = 1;
+}
 
-static Tk_GenericProc tk_doevent;
+static void
+zclip_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    hs->vs->vs_gvp->gv_zclip = dm_get_zclip(hs->hs_dmp);
+    dirty_hook(sdp, name, base, value, data);
+}
 
-struct bu_structparse tk_vparse[] = {
-    {"%g",  1, "bound",		 DM_O(dm_bound),	dirty_hook, NULL, NULL},
-    {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook, NULL, NULL},
-    {"%d",  1, "zclip",		 DM_O(dm_zclip),	zclip_hook, NULL, NULL},
-    {"%d",  1, "debug",		 DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"",    0, NULL,		 0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
+struct bu_structparse_map x_vparse_map[] = {
+    {"bound",		dirty_hook  		  },
+    {"useBound",	dirty_hook  	  	  },
+    {"zclip",		zclip_hook		  },
+    {(char *)0,		BU_STRUCTPARSE_FUNC_NULL  }
 };
 
+static void *
+set_hook_data(struct mged_view_hook_state *hs) {
+    hs->hs_dmp = dmp;
+    hs->vs = view_state;
+    hs->dirty_global = &(dirty);
+    return (void *)hs;
+}
 
 int
 tk_dm_init(struct dm_list *o_dm_list,
@@ -84,13 +108,13 @@ tk_dm_init(struct dm_list *o_dm_list,
 	return TCL_ERROR;
 
     /* keep display manager in sync */
-    dmp->dm_perspective = mged_variables->mv_perspective_mode;
+    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
 
     eventHandler = tk_doevent;
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
     (void)dm_configure_win(dmp, 0);
 
-    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&dmp->dm_pathName));
+    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(dmp)));
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -131,21 +155,26 @@ tk_doevent(ClientData UNUSED(clientData), XEvent *eventPtr)
 static int
 tk_dm(int argc, const char *argv[])
 {
+    struct dm_hook_data mged_dm_hook;
     if (BU_STR_EQUAL(argv[0], "set")) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	if (argc < 2) {
 	    /* Bare set command, print out current settings */
-	    bu_vls_struct_print2(&vls, "dm_Tk internal variables", tk_vparse, (const char *)dmp);
+	    bu_vls_struct_print2(&vls, "dm_Tk internal variables", dm_get_vparse(dmp), (const char *)dmp);
 	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls, tk_vparse, argv[1], (const char *)dmp, COMMA);
+	    bu_vls_struct_item_named(&vls, dm_get_vparse(dmp), argv[1], (const char *)dmp, COMMA);
 	} else {
 	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	    struct mged_view_hook_state global_hs;
+	    void *data = set_hook_data(&global_hs);
+
+	    (void)dm_set_hook(x_vparse_map, argv[1], data, &mged_dm_hook);
 
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	    bu_vls_putc(&tmp_vls, '\"');
-	    bu_struct_parse(&tmp_vls, tk_vparse, (char *)dmp);
+	    bu_struct_parse(&tmp_vls, dm_get_vparse(dmp), (char *)dmp, (void *)(&mged_dm_hook));
 	    bu_vls_free(&tmp_vls);
 	}
 
@@ -158,23 +187,6 @@ tk_dm(int argc, const char *argv[])
     return common_dm(argc, argv);
 }
 
-
-static void
-dirty_hook(void)
-{
-    dirty = 1;
-}
-
-
-static void
-zclip_hook(const struct bu_structparse *sdp,
-	   const char *name,
-	   void *base,
-	   const char *value)
-{
-    view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook(sdp, name, base, value);
-}
 /*
  * Local Variables:
  * mode: C
