@@ -42,26 +42,6 @@ __BEGIN_DECLS
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
-#define Wgl_MV_O(_m) offsetof(struct modifiable_wgl_vars, _m)
-
-struct modifiable_wgl_vars {
-    int cueing_on;
-    int zclipping_on;
-    int zbuffer_on;
-    int lighting_on;
-    int transparency_on;
-    int fastfog;
-    double fogdensity;
-    int zbuf;
-    int rgb;
-    int doublebuffer;
-    int depth;
-    int debug;
-    struct bu_vls log;
-    double bound;
-    int boundFlag;
-};
-
 struct wgl_vars {
     HGLRC glxc;
     GLdouble faceplate_mat[16];
@@ -71,7 +51,6 @@ struct wgl_vars {
     int ovec;		/* Old color map entry number */
     char is_direct;
     GLclampf r, g, b;
-    struct modifiable_wgl_vars mvars;
 };
 
 extern void wgl_fogHint();
