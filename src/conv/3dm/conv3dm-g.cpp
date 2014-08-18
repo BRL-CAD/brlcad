@@ -1026,14 +1026,25 @@ RhinoConverter::create_all_objects()
     int num_created = 0;
 
     for (int i = 0; i < num_objects; ++i) {
+	const ON_Object &object = *m_model.m_object_table[i].m_object;
 	const ON_3dmObjectAttributes &object_attrs =
 	    m_model.m_object_table[i].m_attributes;
 
 	if (m_verbose_mode)
 	    m_log.Print("Object %d of %d...\n", i + 1, num_objects);
 
-	if (create_object(*m_model.m_object_table[i].m_object, object_attrs))
+	if (m_objects.exists(object_attrs.m_uuid)) {
+	    create_object(object, object_attrs);
 	    ++num_created;
+	} else {
+	    m_log.Print("Skipping object of type %s\n", object.ClassId()->ClassName());
+
+	    if (m_verbose_mode) {
+		object.Dump(m_log);
+		m_log.PopIndent();
+		m_log.Print("\n");
+	    }
+	}
     }
 
     if (num_created != num_objects)
@@ -1041,25 +1052,13 @@ RhinoConverter::create_all_objects()
 }
 
 
-bool
+void
 RhinoConverter::create_object(const ON_Object &object,
 			      const ON_3dmObjectAttributes &object_attrs)
 {
-    if (!m_objects.exists(object_attrs.m_uuid)) {
-	m_log.Print("Skipping object of type %s\n", object.ClassId()->ClassName());
-
-	if (m_verbose_mode) {
-	    object.Dump(m_log);
-	    m_log.PopIndent();
-	    m_log.Print("\n");
-	}
-
-	return false;
-    }
-
     if (const ON_Brep *brep = ON_Brep::Cast(&object)) {
 	create_brep(*brep, object_attrs);
-	return true;
+	return;
     }
 
     if (const ON_Geometry *geom = ON_Geometry::Cast(&object))
@@ -1067,21 +1066,20 @@ RhinoConverter::create_object(const ON_Object &object,
 	    ON_Brep *new_brep = geom->BrepForm();
 	    create_brep(*new_brep, object_attrs);
 	    delete new_brep;
-	    return true;
+	    return;
 	}
 
     if (const ON_Mesh *mesh = ON_Mesh::Cast(&object)) {
 	create_mesh(*mesh, object_attrs);
-	return true;
+	return;
     }
 
     if (const ON_InstanceRef *instref = ON_InstanceRef::Cast(&object)) {
 	create_iref(*instref, object_attrs);
-	return true;
+	return;
     }
 
-    bu_bomb("should never get here");
-    return false;
+    bu_bomb("logic error: should never reach here");
 }
 
 
