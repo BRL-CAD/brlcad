@@ -22,7 +22,6 @@ BRLCAD_LIB_INCLUDE_DIRS(nmg NMG_INCLUDE_DIRS NMG_LOCAL_INCLUDE_DIRS)
 
 set(LIBNMG_SOURCES
   globals.c
-  nurb_trim.c
   primitives/nmg/nmg_ck.c
   primitives/nmg/nmg_class.c
   primitives/nmg/nmg_copy.c
@@ -49,12 +48,7 @@ set(LIBNMG_SOURCES
   )
 
 set(libnmg_ignored_files
-  columnparse.c
-  ../librt/librt_private.h
-  namegen.c
-  prcomb.c
   primitives/nmg/nmg_junk.c
-  uvpoints.cpp
   )
 CMAKEFILES(${libnmg_ignored_files})
 

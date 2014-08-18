@@ -2038,8 +2038,7 @@ NMG_EXPORT extern int nmg_mesh_shell_shell(struct shell *s1,
 					  struct shell *s2,
 					  const struct bn_tol *tol);
 
-/* trim.c */
-NMG_EXPORT extern int nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu);
+
 					  
 /**
  * radius of a FASTGEN cline element.

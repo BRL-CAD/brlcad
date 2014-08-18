@@ -41,6 +41,7 @@ set(LIBNURB_SOURCES
   reverse.c
   solve.c
   split.c
+  trim.c
   trim_util.c
   util.c
   xsplit.c

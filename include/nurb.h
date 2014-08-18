@@ -424,6 +424,9 @@ NURB_EXPORT extern void rt_nurb_clean_cnurb(struct edge_g_cnurb *crv);
 NURB_EXPORT extern struct face_g_snurb *rt_nurb_s_xsplit(struct face_g_snurb *srf, fastf_t param, int dir);
 NURB_EXPORT extern struct edge_g_cnurb *rt_nurb_c_xsplit(struct edge_g_cnurb *crv, fastf_t param);
 
+/* trim.c */
+NURB_EXPORT extern int nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu);
+
 __END_DECLS
 
 #endif /* NURB_H */

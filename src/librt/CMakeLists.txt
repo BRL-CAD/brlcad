@@ -208,15 +208,10 @@ set(LIBRT_SOURCES
   )
 
 set(librt_ignored_files
+  columnparse.c
   librt_private.h
-  test_nurbsfit.cpp
-  test_bot2nurbs.cpp
-  test_root3-subd.cpp
-  timer-nt.c
-  timerhep.c
-  timerunix.c
-  search.h
-  subd_test_bot.asc
+  namegen.c
+  prcomb.c
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
   primitives/bot/bot_wireframe.cpp
@@ -231,6 +226,15 @@ set(librt_ignored_files
   primitives/revolve/revolve.h
   primitives/xxx/xxx.c
   primitives/xxx/xxx.h
+  search.h
+  subd_test_bot.asc
+  test_nurbsfit.cpp
+  test_bot2nurbs.cpp
+  test_root3-subd.cpp
+  timer-nt.c
+  timerhep.c
+  timerunix.c
+  uvpoints.cpp
   )
 CMAKEFILES(${librt_ignored_files})
 
