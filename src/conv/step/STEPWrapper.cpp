@@ -64,7 +64,6 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
     MAP_OF_PRODUCT_NAME_TO_ENTITY_ID name2id_map;
     MAP_OF_ENTITY_ID_TO_PRODUCT_NAME id2name_map;
     MAP_OF_ENTITY_ID_TO_PRODUCT_ID id2productid_map;
-    MAP_OF_PRODUCT_NAME_TO_ENTITY_ID::iterator niter = name2id_map.end();
 
     if (!dot_g) {
 	return false;
@@ -781,24 +780,8 @@ STEPWrapper::getSuperType(int STEPid, const char *name)
 std::string
 STEPWrapper::getStringAttribute(int STEPid, const char *name)
 {
-    std::string retValue = "";
     SDAI_Application_instance *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrval;
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = attr->asStr(attrval);
-	    //if (retValue.empty())
-	    //	std::cout << "String retValue:" << retValue << ":" << std::endl;
-	    break;
-	}
-    }
-    return retValue;
+    return getStringAttribute(sse, name);
 }
 
 
