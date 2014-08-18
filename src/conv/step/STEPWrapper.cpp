@@ -58,6 +58,59 @@ STEPWrapper::~STEPWrapper()
     dotg = NULL;
 }
 
+int
+convert_WriteBrep(
+	AdvancedBrepShapeRepresentation *aBrep,
+	BRLCADWrapper *dot_g,
+	std::string *pname,
+	std::string *name)
+{
+    LocalUnits::length = aBrep->GetLengthConversionFactor();
+    LocalUnits::planeangle = aBrep->GetPlaneAngleConversionFactor();
+    LocalUnits::solidangle = aBrep->GetSolidAngleConversionFactor();
+    ON_Brep *onBrep = aBrep->GetONBrep();
+    if (!onBrep) {
+	return 1;
+    } else {
+	ON_TextLog tl;
+
+	if (!onBrep->IsValid(&tl)) {
+	    bu_log("WARNING: %s is not valid\n", name->c_str());
+	}
+
+	//onBrep->SpSplitClosedFaces();
+	//ON_Brep *tbrep = TightenBrep(onBrep);
+
+	mat_t mat;
+	MAT_IDN(mat);
+
+	Axis2Placement3D *axis = aBrep->GetAxis2Placement3d();
+	if (axis != NULL) {
+	    //assign matrix values
+	    double translate_to[3];
+	    const double *toXaxis = axis->GetXAxis();
+	    const double *toYaxis = axis->GetYAxis();
+	    const double *toZaxis = axis->GetZAxis();
+	    mat_t rot_mat;
+
+	    VMOVE(translate_to,axis->GetOrigin());
+	    VSCALE(translate_to,translate_to,LocalUnits::length);
+
+	    MAT_IDN(rot_mat);
+	    VMOVE(&rot_mat[0], toXaxis);
+	    VMOVE(&rot_mat[4], toYaxis);
+	    VMOVE(&rot_mat[8], toZaxis);
+	    bn_mat_inv(mat, rot_mat);
+	    MAT_DELTAS_VEC(mat, translate_to);
+	}
+
+	dot_g->WriteBrep(*pname, onBrep,mat);
+
+	delete onBrep;
+
+	return 0;
+    }
+}
 
 bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 {
@@ -114,50 +167,11 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 			}
 		    }
 
-		    LocalUnits::length = aBrep->GetLengthConversionFactor();
-		    LocalUnits::planeangle = aBrep->GetPlaneAngleConversionFactor();
-		    LocalUnits::solidangle = aBrep->GetSolidAngleConversionFactor();
-		    ON_Brep *onBrep = aBrep->GetONBrep();
-		    if (!onBrep) {
+		    if (convert_WriteBrep(aBrep, dot_g, &pname, &name)) {
 			delete sdr;
 			bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
-		    } else {
-			ON_TextLog tl;
-
-			if (!onBrep->IsValid(&tl)) {
-			    bu_log("WARNING: %s is not valid\n", name.c_str());
-			}
-
-			//onBrep->SpSplitClosedFaces();
-			//ON_Brep *tbrep = TightenBrep(onBrep);
-
-			mat_t mat;
-			MAT_IDN(mat);
-
-			Axis2Placement3D *axis = aBrep->GetAxis2Placement3d();
-			if (axis != NULL) {
-			    //assign matrix values
-			    double translate_to[3];
-			    const double *toXaxis = axis->GetXAxis();
-			    const double *toYaxis = axis->GetYAxis();
-			    const double *toZaxis = axis->GetZAxis();
-			    mat_t rot_mat;
-
-			    VMOVE(translate_to,axis->GetOrigin());
-			    VSCALE(translate_to,translate_to,LocalUnits::length);
-
-			    MAT_IDN(rot_mat);
-			    VMOVE(&rot_mat[0], toXaxis);
-			    VMOVE(&rot_mat[4], toYaxis);
-			    VMOVE(&rot_mat[8], toZaxis);
-			    bn_mat_inv(mat, rot_mat);
-			    MAT_DELTAS_VEC(mat, translate_to);
-			}
-
-			dotg->WriteBrep(pname, onBrep,mat);
-
-			delete onBrep;
 		    }
+
 		} else { // must be an assembly
 		    if (pname.empty() || (pname.compare("''") == 0)) {
 			std::string str = "Assembly@";
@@ -240,49 +254,10 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 				}
 			    }
 
-			    LocalUnits::length = aBrep->GetLengthConversionFactor();
-			    LocalUnits::planeangle = aBrep->GetPlaneAngleConversionFactor();
-			    LocalUnits::solidangle = aBrep->GetSolidAngleConversionFactor();
-			    ON_Brep *onBrep = aBrep->GetONBrep();
-			    if (!onBrep) {
+			    if (convert_WriteBrep(aBrep, dotg, &pname, &name)) {
 				bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
-			    } else {
-				ON_TextLog tl;
-
-				if (!onBrep->IsValid(&tl)) {
-				    bu_log("WARNING: %s is not valid\n", name.c_str());
-				}
-
-				//onBrep->SpSplitClosedFaces();
-				//ON_Brep *tbrep = TightenBrep(onBrep);
-
-				mat_t mat;
-				MAT_IDN(mat);
-
-				Axis2Placement3D *axis = aBrep->GetAxis2Placement3d();
-				if (axis != NULL) {
-				    //assign matrix values
-				    double translate_to[3];
-				    const double *toXaxis = axis->GetXAxis();
-				    const double *toYaxis = axis->GetYAxis();
-				    const double *toZaxis = axis->GetZAxis();
-				    mat_t rot_mat;
-
-				    VMOVE(translate_to,axis->GetOrigin());
-				    VSCALE(translate_to,translate_to,LocalUnits::length);
-
-				    MAT_IDN(rot_mat);
-				    VMOVE(&rot_mat[0], toXaxis);
-				    VMOVE(&rot_mat[4], toYaxis);
-				    VMOVE(&rot_mat[8], toZaxis);
-				    bn_mat_inv(mat, rot_mat);
-				    MAT_DELTAS_VEC(mat, translate_to);
-				}
-
-				dotg->WriteBrep(pname, onBrep,mat);
-
-				delete onBrep;
 			    }
+
 			    if (product_id != brep_id) {
 				mat_t mat;
 
