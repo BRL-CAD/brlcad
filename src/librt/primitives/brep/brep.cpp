@@ -3075,6 +3075,88 @@ extend_over_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint
     return true;
 }
 
+static void
+get_loop_sample_points(
+	ON_SimpleArray<BrepTrimPoint> *points,
+	const ON_BrepFace &face,
+	const ON_BrepLoop *loop,
+	fastf_t max_dist,
+	const struct rt_tess_tol *ttol,
+	const struct bn_tol *tol,
+	const struct rt_view_info *info)
+{
+    int trim_count = loop->TrimCount();
+
+    for (int lti = 0; lti < trim_count; lti++) {
+	ON_BrepTrim *trim = loop->Trim(lti);
+	//ON_BrepEdge *edge = trim->Edge();
+
+	if (trim->m_type == ON_BrepTrim::singular) {
+	    BrepTrimPoint btp;
+	    ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
+	    ON_3dPoint *p3d = new ON_3dPoint(v1.Point());
+	    //ON_2dPoint p2d_begin = trim->PointAt(trim->Domain().m_t[0]);
+	    //ON_2dPoint p2d_end = trim->PointAt(trim->Domain().m_t[1]);
+	    double delta =  trim->Domain().Length() / 10.0;
+	    ON_Interval trim_dom = trim->Domain();
+
+	    for (int i = 1; i <= 10; i++) {
+		btp.p3d = p3d;
+		btp.p2d = v1.Point();
+		btp.t = trim->Domain().m_t[0] + (i - 1) * delta;
+		btp.p2d = trim->PointAt(btp.t);
+		btp.e = ON_UNSET_VALUE;
+		points->Append(btp);
+	    }
+	    // skip last point of trim if not last trim
+	    if (lti < trim_count - 1)
+		continue;
+
+	    ON_BrepVertex& v2 = face.Brep()->m_V[trim->m_vi[1]];
+	    btp.p3d = p3d;
+	    btp.p2d = v2.Point();
+	    btp.t = trim->Domain().m_t[1];
+	    btp.p2d = trim->PointAt(btp.t);
+	    btp.e = ON_UNSET_VALUE;
+	    points->Append(btp);
+
+	    continue;
+	}
+
+	if (!trim->m_trim_user.p) {
+	    (void) getEdgePoints(*trim, max_dist, ttol, tol, info);
+	}
+	if (trim->m_trim_user.p) {
+	    std::map<double, ON_3dPoint *> *param_points3d = (std::map<double, ON_3dPoint *> *) trim->m_trim_user.p;
+
+	    ON_3dPoint boxmin;
+	    ON_3dPoint boxmax;
+
+	    if (trim->GetBoundingBox(boxmin, boxmax, false)) {
+		double t0, t1;
+
+		std::map<double, ON_3dPoint*>::const_iterator i;
+
+		trim->GetDomain(&t0, &t1);
+		for (i = param_points3d->begin();
+		     i != param_points3d->end();) {
+		    BrepTrimPoint btp;
+		    btp.t = (*i).first;
+		    btp.p3d = (*i).second;
+
+		    // skip last point of trim if not last trim
+		    if ((++i == param_points3d->end()) && (lti < trim_count - 1))
+			continue;
+
+		    btp.p2d = trim->PointAt(t0 + (t1 - t0) * btp.t);
+		    btp.e = ON_UNSET_VALUE;
+		    points->Append(btp);
+		}
+	    }
+	}
+    }
+}
+
 
 void
 poly2tri_CDT(struct bu_list *vhead,
@@ -3091,26 +3173,24 @@ poly2tri_CDT(struct bu_list *vhead,
     const ON_Surface *s = face.SurfaceOf();
     double surface_width, surface_height;
     std::vector<ON_3dPoint *> singularity_points;
-    fastf_t max_dist = 0.0;
     p2t::CDT* cdt = NULL;
     ON_BoundingBox loop_bb;
     int fi = face.m_face_index;
 
+    fastf_t max_dist = 0.0;
     if (s->GetSurfaceSize(&surface_width, &surface_height)) {
 	if ((surface_width < tol->dist) || (surface_height < tol->dist)) {
 	    return;
 	}
-	max_dist = sqrt(
-		       surface_width * surface_width + surface_height * surface_height)
-		   / 10.0;
+	max_dist = sqrt(surface_width * surface_width + surface_height *
+		surface_height) / 10.0;
     }
 
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = new std::map<p2t::Point *, ON_3dPoint *>();
 
     int loop_cnt = face.LoopCount();
-    ON_2dPoint loop_start = ON_2dVector::UnsetVector;
-    ON_2dPoint loop_end = ON_2dVector::UnsetVector;
-    bool outer = true;
+    //ON_2dPoint loop_start = ON_2dVector::UnsetVector;
+    //ON_2dPoint loop_end = ON_2dVector::UnsetVector;
     ON_2dPointArray on_loop_points;
     ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
     std::vector<p2t::Point*> polyline;
@@ -3118,76 +3198,7 @@ poly2tri_CDT(struct bu_list *vhead,
     // first simply load loop point samples
     for (int li = 0; li < loop_cnt; li++) {
 	ON_BrepLoop *loop = face.Loop(li);
-	int trim_count = loop->TrimCount();
-	for (int lti = 0; lti < trim_count; lti++) {
-	    ON_BrepTrim *trim = loop->Trim(lti);
-	    //ON_BrepEdge *edge = trim->Edge();
-
-	    if (trim->m_type == ON_BrepTrim::singular) {
-		BrepTrimPoint btp;
-		ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
-		ON_3dPoint *p3d = new ON_3dPoint(v1.Point());
-		ON_2dPoint p2d_begin = trim->PointAt(trim->Domain().m_t[0]);
-		ON_2dPoint p2d_end = trim->PointAt(trim->Domain().m_t[1]);
-		double delta =  trim->Domain().Length() / 10.0;
-		ON_Interval trim_dom = trim->Domain();
-
-
-		for (int i = 1; i <= 10; i++) {
-		    btp.p3d = p3d;
-		    btp.p2d = v1.Point();
-		    btp.t = trim->Domain().m_t[0] + (i - 1) * delta;
-		    btp.p2d = trim->PointAt(btp.t);
-		    btp.e = ON_UNSET_VALUE;
-		    brep_loop_points[li].Append(btp);
-		}
-		// skip last point of trim if not last trim
-		if (lti < trim_count - 1)
-		    continue;
-
-		ON_BrepVertex& v2 = face.Brep()->m_V[trim->m_vi[1]];
-		btp.p3d = p3d;
-		btp.p2d = v2.Point();
-		btp.t = trim->Domain().m_t[1];
-		btp.p2d = trim->PointAt(btp.t);
-		btp.e = ON_UNSET_VALUE;
-		brep_loop_points[li].Append(btp);
-
-		continue;
-	    }
-
-	    if (!trim->m_trim_user.p) {
-		(void) getEdgePoints(*trim, max_dist, ttol, tol, info);
-	    }
-	    if (trim->m_trim_user.p) {
-		std::map<double, ON_3dPoint *> *param_points3d = (std::map<double, ON_3dPoint *> *) trim->m_trim_user.p;
-
-		ON_3dPoint boxmin;
-		ON_3dPoint boxmax;
-
-		if (trim->GetBoundingBox(boxmin, boxmax, false)) {
-		    double t0, t1;
-
-		    std::map<double, ON_3dPoint*>::const_iterator i;
-
-		    trim->GetDomain(&t0, &t1);
-		    for (i = param_points3d->begin();
-			 i != param_points3d->end();) {
-			BrepTrimPoint btp;
-			btp.t = (*i).first;
-			btp.p3d = (*i).second;
-
-			// skip last point of trim if not last trim
-			if ((++i == param_points3d->end()) && (lti < trim_count - 1))
-			    continue;
-
-			btp.p2d = trim->PointAt(t0 + (t1 - t0) * btp.t);
-			btp.e = ON_UNSET_VALUE;
-			brep_loop_points[li].Append(btp);
-		    }
-		}
-	    }
-	}
+	get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol, info);
     }
 
     std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
@@ -3470,6 +3481,7 @@ poly2tri_CDT(struct bu_list *vhead,
 	}
     }
     // process through loops building polygons.
+    bool outer = true;
     for (int li = 0; li < loop_cnt; li++) {
 	int num_loop_points = brep_loop_points[li].Count();
 	if (num_loop_points > 2) {
