@@ -521,7 +521,7 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 
     clean_model();
 
-    m_objects.add(ROOT_UUID, strbasename(path));
+    map_name(ROOT_UUID, clean_name(strbasename(path)), ".c");
 
     map_uuid_names();
     create_all_bitmaps();
@@ -561,14 +561,13 @@ RhinoConverter::clean_model()
 
 
 inline void
-RhinoConverter::map_name(const ON_UUID &uuid, const ON_wString &name,
+RhinoConverter::map_name(const ON_UUID &uuid, const std::string &name,
 			 const char *suffix)
 {
     if (m_use_uuidnames)
 	m_objects.add(uuid, uuid2string(uuid) + suffix);
     else
-	m_objects.add(uuid, unique_name(m_name_count_map, clean_name(w2string(name)),
-					suffix));
+	m_objects.add(uuid, unique_name(m_name_count_map, name, suffix));
 }
 
 
@@ -577,17 +576,20 @@ RhinoConverter::map_uuid_names()
 {
     for (int i = 0; i < m_model.m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = m_model.m_layer_table[i];
-	map_name(layer.m_layer_id, layer.m_name, get_object_suffix(layer));
+	const std::string name = clean_name(w2string(layer.m_name));
+	map_name(layer.m_layer_id, name, get_object_suffix(layer));
     }
 
     for (int i = 0; i < m_model.m_idef_table.Count(); ++i) {
 	const ON_InstanceDefinition &idef = m_model.m_idef_table[i];
-	map_name(idef.m_uuid, idef.m_name, get_object_suffix(idef));
+	const std::string name = clean_name(w2string(idef.m_name));
+	map_name(idef.m_uuid, name, get_object_suffix(idef));
     }
 
     for (int i = 0; i < m_model.m_object_table.Count(); ++i) {
 	const ON_3dmObjectAttributes &object_attrs =
 	    m_model.m_object_table[i].m_attributes;
+	const std::string name = clean_name(w2string(object_attrs.m_name));
 	const char *suffix;
 
 	try {
@@ -596,7 +598,7 @@ RhinoConverter::map_uuid_names()
 	    continue;
 	}
 
-	map_name(object_attrs.m_uuid, object_attrs.m_name, suffix);
+	map_name(object_attrs.m_uuid, name, suffix);
     }
 
     for (int i = 0; i < m_model.m_bitmap_table.Count(); ++i) {
@@ -604,17 +606,12 @@ RhinoConverter::map_uuid_names()
 	const ON_Bitmap &bitmap = *m_model.m_bitmap_table[i];
 	const char * const suffix = ".pix";
 
-	if (m_use_uuidnames)
-	    m_objects.add(bitmap.m_bitmap_id, uuid2string(bitmap.m_bitmap_id) + suffix);
-	else {
-	    std::string bitmap_name = clean_name(w2string(bitmap.m_bitmap_name));
+	std::string bitmap_name = clean_name(w2string(bitmap.m_bitmap_name));
 
-	    if (bitmap_name == DEFAULT_NAME)
-		bitmap_name = clean_name(strbasename(w2string(bitmap.m_bitmap_filename)));
+	if (bitmap_name == DEFAULT_NAME)
+	    bitmap_name = clean_name(strbasename(w2string(bitmap.m_bitmap_filename)));
 
-	    m_objects.add(bitmap.m_bitmap_id,
-			  unique_name(m_name_count_map, bitmap_name, suffix));
-	}
+	map_name(bitmap.m_bitmap_id, bitmap_name, suffix);
     }
 
 
@@ -936,7 +933,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 	    break;
 
 	default:
-	    throw std::out_of_range("unknown orientation");
+	    bu_bomb("unknown orientation");
     }
 
     if (num_vertices == 0 || num_faces == 0) {
@@ -1048,6 +1045,18 @@ bool
 RhinoConverter::create_object(const ON_Object &object,
 			      const ON_3dmObjectAttributes &object_attrs)
 {
+    if (!m_objects.exists(object_attrs.m_uuid)) {
+	m_log.Print("Skipping object of type %s\n", object.ClassId()->ClassName());
+
+	if (m_verbose_mode) {
+	    object.Dump(m_log);
+	    m_log.PopIndent();
+	    m_log.Print("\n");
+	}
+
+	return false;
+    }
+
     if (const ON_Brep *brep = ON_Brep::Cast(&object)) {
 	create_brep(*brep, object_attrs);
 	return true;
@@ -1071,14 +1080,7 @@ RhinoConverter::create_object(const ON_Object &object,
 	return true;
     }
 
-    m_log.Print("Skipping object of type %s\n", object.ClassId()->ClassName());
-
-    if (m_verbose_mode) {
-	object.Dump(m_log);
-	m_log.PopIndent();
-	m_log.Print("\n");
-    }
-
+    bu_bomb("should never get here");
     return false;
 }
 
