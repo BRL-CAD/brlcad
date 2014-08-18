@@ -37,6 +37,7 @@
 #include "vmath.h"
 
 struct resource;
+struct loopuse;
 
 #ifndef NURB_EXPORT
 #  if defined(NURB_DLL_EXPORTS) && defined(NURB_DLL_IMPORTS)
