@@ -3,6 +3,7 @@ style=k&r
 
 # Enable support for mixed tabs and spaces
 indent=spaces=4
+indent=force-tab-x=8
 
 # Indent goto labels rather than making them flush on the left
 indent-labels
