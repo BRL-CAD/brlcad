@@ -2046,10 +2046,6 @@ Circle::LoadONBrep(ON_Brep *brep)
 
 	startpt *= LocalUnits::length;
 	endpt *= LocalUnits::length;
-    } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec
-		  << ">) not endpoints for specified for curve " << entityname << std::endl;
-	return false;
     }
 
     // if we have start and end points, get corresponding t and s
@@ -2253,10 +2249,6 @@ Ellipse::LoadONBrep(ON_Brep *brep)
 
 	startpt *= LocalUnits::length;
 	endpt *= LocalUnits::length;
-    } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec
-		  << ">) not endpoints for specified for curve " << entityname << std::endl;
-	return false;
     }
 
     // if we have start and end points, get corresponding t and s
