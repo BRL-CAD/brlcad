@@ -129,12 +129,6 @@ struct thread_data {
 };
 
 
-/**
- * process id of the initiating thread. used to shutdown bu_parallel
- * threads/procs.
- */
-static int pid_of_initiating_thread = 0;
-
 /* # threads started */
 static int parallel_nthreads_started = 0;
 
@@ -152,8 +146,7 @@ bu_parallel_id(void)
 int
 bu_is_parallel(void)
 {
-    if (pid_of_initiating_thread != 0)
-	return 1;
+    /* this routine is deprecated, do not use. */
     return 0;
 }
 
