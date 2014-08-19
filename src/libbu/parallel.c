@@ -159,21 +159,6 @@ bu_is_parallel(void)
 
 
 void
-bu_kill_parallel(void)
-{
-    if (pid_of_initiating_thread == 0)
-	return;
-
-    if (pid_of_initiating_thread == bu_process_id())
-	return;
-
-    bu_terminate(pid_of_initiating_thread);
-
-    return;
-}
-
-
-void
 bu_nice_set(int newnice)
 {
 #ifdef HAVE_SETPRIORITY
@@ -392,6 +377,9 @@ parallel_interface_arg_stub(struct thread_data *user_thread_data)
 void
 bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 {
+    /* # bu_parallel invocations concurrent */
+    /* static int parallel_nprocess = 0; */
+
     /* avoid using the 'register' keyword in here "just in case" */
 
 #ifndef PARALLEL
@@ -685,20 +673,6 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%d) complete, now serial\n", ncpu);
 
-#  if defined(unix) || defined(__unix)
-    /* Cray is known to wander among various pids, perhaps others.
-     *
-     * At this point, all multi-tasking activity should have ceased,
-     * and we should be just a single UNIX process with our original
-     * PID and open file table (kernel struct u).  If not, then any
-     * output may be written into the wrong file.
-     */
-    x = bu_process_id();
-    if (UNLIKELY(pid_of_initiating_thread != x)) {
-	bu_log("WARNING: bu_parallel():  PID of initiating thread changed from %d to %d, open file table may be botched!\n",
-	       pid_of_initiating_thread, x);
-    }
-#  endif
     pid_of_initiating_thread = 0;	/* No threads any more */
 
     bu_free(user_thread_data_bu, "struct thread_data *user_thread_data_bu");
