@@ -20,8 +20,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * windows smp support
 
-* fix the bu_semaphore unit test
-
 * fix the bn_poly_sub unit test
 
 * fix the bu_heap_test_1 unit test (seen on ia32 fbsd)
