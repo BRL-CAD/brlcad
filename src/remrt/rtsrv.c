@@ -793,12 +793,10 @@ bu_log(const char *fmt, ...)
 }
 
 
-/*
- *  Replacement for the LIBBU routine of the same name.
+/* override libbu's bu_bomb() function.
+ *
+ * FIXME: should register a bu_bomb() handler instead of this hack.
  */
-int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
-jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
-
 void
 bu_bomb(const char *str)
 {
@@ -817,6 +815,7 @@ bu_bomb(const char *str)
     bu_exit(12, NULL);
 }
 
+
 void
 ph_unexp(struct pkg_conn *pc, char *buf)
 {
@@ -833,6 +832,7 @@ ph_unexp(struct pkg_conn *pc, char *buf)
     (void)free(buf);
 }
 
+
 void
 ph_end(struct pkg_conn *UNUSED(pc), char *UNUSED(buf))
 {
@@ -841,12 +841,14 @@ ph_end(struct pkg_conn *UNUSED(pc), char *UNUSED(buf))
     bu_exit(0, NULL);
 }
 
+
 void
 ph_print(struct pkg_conn *UNUSED(pc), char *buf)
 {
     fprintf(stderr, "msg: %s\n", buf);
     (void)free(buf);
 }
+
 
 /* Stub for do.c */
 void

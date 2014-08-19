@@ -39,12 +39,12 @@
 #include "./lgt.h"
 #include "./extern.h"
 #include "./screen.h"
-/*
- *  Abort the LIBRT library
- */
-int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
-jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
 
+
+/* override libbu's bu_bomb() function.
+ *
+ * FIXME: should register a bu_bomb() handler instead of this hack.
+ */
 void
 bu_bomb(const char *str)
 {
@@ -55,6 +55,7 @@ bu_bomb(const char *str)
 	(void) fb_flush( fbiop ); /* Write out buffered image.	*/
     bu_exit(1, NULL);
 }
+
 
 void
 fb_log( const char *fmt, ... )
