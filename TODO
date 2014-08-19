@@ -67,6 +67,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* BU_SETJUMP/BU_UNSETJUMP into macros
+
+* convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
+  logic layout using if/else.
+
 * get bu_extern out of bu/parse.h into its own header file.
 
 * geometry symbolic links (hard and soft links)
@@ -579,9 +584,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make nreed's new bot cleanup interface update interactively without
   resorting to calls to Tcl_DoOneEvent() down in librt.
-
-* convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
-  logic layout using if/else.
 
 * bu_cv_optimize() should be using bu_byteorder().
 
