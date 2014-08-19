@@ -35,7 +35,7 @@
 
     <variablelist>
       <varlistentry>
-	<term><emphasis>match [regular_exp]</emphasis></term>
+	<term><emphasis>match</emphasis><arg choice="opt" rep="norepeat"><replaceable>regular_exp</replaceable></arg></term>
 	<listitem>
 	  <para>
 	    Returns a list of all objects in that database that match the list of regular
@@ -45,7 +45,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><emphasis>get shape_or_path [attribute]</emphasis></term>
+	<term><emphasis>get shape_or_path</emphasis><arg choice="opt" rep="norepeat"><replaceable>attribute</replaceable></arg></term>
 	<listitem>
 	  <para>
 	    Returns information about the primitive shape at the end of the <emphasis>shape_or_path</emphasis>.
@@ -70,7 +70,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><emphasis>adjust shape_name attribute new_value1 [new_value2 new_value3...]</emphasis></term>
+	<term><emphasis>adjust shape_name attribute new_value1</emphasis><arg choice="opt" rep="norepeat"><replaceable>new_value2 new_value3</replaceable>...</arg></term>
 	<listitem>
 	  <para>
 	    Modifies the shape named <emphasis>shape_name</emphasis> by adjusting the value of its
