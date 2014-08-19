@@ -182,13 +182,6 @@ Causes a 1-pixel spacing between cells in the output.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-h</option></term>
-  <listitem>
-<para>Force high-resolution display (1024x1024 pixels).
-See the discussion of autosizing below.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><option>-i</option></term>
   <listitem>
 <para>Round values to the nearest discrete value
