@@ -275,7 +275,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 
 	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_context_dependent_shape_representation))) {
 	    ContextDependentShapeRepresentation *aCDSR = dynamic_cast<ContextDependentShapeRepresentation *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
-	    if (aCDSR) {
+	    if (aCDSR && aCDSR->GetRepresentationRelationshipRep_1() && aCDSR->GetRepresentationRelationshipRep_2()) {
 		int rep_1_id = aCDSR->GetRepresentationRelationshipRep_1()->GetId();
 		int rep_2_id = aCDSR->GetRepresentationRelationshipRep_2()->GetId();
 		int pid_1 = id2productid_map[rep_1_id];
@@ -465,7 +465,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	if (e_it != entity_status.end()) {
 	    switch (e_it->second) {
 		case STEP_LOADED:
-		    std::cout << "Loaded:" << sse->EntityName() << " (ID:" << sse->StepFileId() << ")\n";
+		    //std::cout << "Loaded:" << sse->EntityName() << " (ID:" << sse->StepFileId() << ")\n";
 		    break;
 		case STEP_LOAD_ERROR:
 		    std::cout << "Error loading:" << sse->EntityName() << " (ID:" << sse->StepFileId() << ")\n";
