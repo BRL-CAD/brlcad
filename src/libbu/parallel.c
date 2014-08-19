@@ -355,6 +355,7 @@ parallel_interface_arg(struct thread_data *user_thread_data)
     }
 }
 
+
 #if defined(_WIN32)
 /**
  * A separate stub to call parallel_interface_arg that avoids a
@@ -428,6 +429,9 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
     if (ncpu > MAX_PSW) {
 	bu_log("WARNING: bu_parallel() ncpu(%d) > MAX_PSW(%d), adjusting ncpu\n", ncpu, MAX_PSW);
 	ncpu = MAX_PSW;
+    } else if (ncpu < 1) {
+	/* a zero count means use as many as are available. */
+	ncpu = bu_avail_cpus(); /* !!! need something different here */
     }
     parallel_nthreads_started = 0;
     parallel_nthreads_finished = 0;
