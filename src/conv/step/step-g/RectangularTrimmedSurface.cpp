@@ -72,6 +72,7 @@ RectangularTrimmedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!BoundedSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -85,6 +86,7 @@ RectangularTrimmedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'basis_surface' attribute." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -96,6 +98,8 @@ RectangularTrimmedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     usense = step->getBooleanAttribute(sse, "usense");
     vsense = step->getBooleanAttribute(sse, "vsense");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

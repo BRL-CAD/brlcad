@@ -61,6 +61,7 @@ SweptSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Surface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -74,10 +75,11 @@ SweptSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    swept_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'swept_curve' attribute." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
-
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

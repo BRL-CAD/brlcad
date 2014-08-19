@@ -106,9 +106,12 @@ bool ShapeAspect::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    of_shape = dynamic_cast<ProductDefinitionShape *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'of_shape'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

@@ -59,6 +59,7 @@ bool OrientedClosedShell::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!ClosedShell::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::ConnectedFaceSet." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -74,10 +75,12 @@ bool OrientedClosedShell::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    closed_shell_element = dynamic_cast<ClosedShell *>(Factory::CreateObject(sw, entity));
 	    if (closed_shell_element == NULL) {
 		std::cerr << CLASSNAME << ": Error loading entity attribute 'closed_shell_element'." << std::endl;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading entity attribute 'closed_shell_element'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -85,6 +88,7 @@ bool OrientedClosedShell::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (orientation != 1) {
 	closed_shell_element->ReverseFaceSet();
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

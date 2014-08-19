@@ -66,11 +66,13 @@ FaceSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Face::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Face." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
     if (!GeometricRepresentationItem::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -88,6 +90,8 @@ FaceSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     same_sense = step->getBooleanAttribute(sse, "same_sense");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

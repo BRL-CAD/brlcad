@@ -61,8 +61,11 @@ MassUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	std::string err = CLASSNAME;
 	err += ":Error loading base class ::Unit.";
 	REPORT_ERROR(err);
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

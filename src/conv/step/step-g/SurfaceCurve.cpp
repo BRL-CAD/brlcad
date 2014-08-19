@@ -79,6 +79,7 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Curve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -92,6 +93,7 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    curve_3d = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity)); //CreateCurveObject(sw,entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'curve_3d'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -134,11 +136,13 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    if (!aPCOS->Load(step, p_or_s)) {
 			std::cout << CLASSNAME << ":Error loading PCurveOrSurface select." << std::endl;
 			delete aPCOS;
+			sw->entity_status[id] = STEP_LOAD_ERROR;
 			return false;
 		    }
 		    associated_geometry.push_back(aPCOS);
 		} else {
 		    std::cout << CLASSNAME << ":Unhandled select in attribute 'associated_geometry': " << p_or_s->CurrentUnderlyingType()->Description() << std::endl;
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
 		    return false;
 		}
 		sn = static_cast<SelectNode *>(sn->NextNode());
@@ -147,6 +151,8 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     master_representation = (Preferred_surface_curve_representation)step->getEnumAttribute(sse, "master_representation");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

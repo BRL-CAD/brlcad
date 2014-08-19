@@ -112,6 +112,7 @@ bool ProductDefinitionRelationship::Load(STEPWrapper *sw, SDAI_Application_insta
 	    relating_product_definition = dynamic_cast<ProductDefinition *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'relating_product_definition'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -122,9 +123,12 @@ bool ProductDefinitionRelationship::Load(STEPWrapper *sw, SDAI_Application_insta
 	    related_product_definition = dynamic_cast<ProductDefinition *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'related_product_definition'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

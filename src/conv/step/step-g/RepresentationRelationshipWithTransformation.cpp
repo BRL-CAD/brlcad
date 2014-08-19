@@ -97,6 +97,7 @@ bool RepresentationRelationshipWithTransformation::Load(STEPWrapper *sw, SDAI_Ap
 
     if (!RepresentationRelationship::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RepresentationRelationship." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
     // need to do this for local attributes to makes sure we have
@@ -116,13 +117,15 @@ bool RepresentationRelationshipWithTransformation::Load(STEPWrapper *sw, SDAI_Ap
 		transformation_operator = dynamic_cast<Transformation *>(Factory::CreateObject(sw, (SDAI_Application_instance *) fdt));
 	    } else {
 		std::cerr << CLASSNAME << ": Unknown 'Transformation' type from select." << std::endl;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 	} else {
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
-
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

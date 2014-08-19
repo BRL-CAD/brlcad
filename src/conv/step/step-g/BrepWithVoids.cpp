@@ -59,6 +59,7 @@ bool BrepWithVoids::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!ManifoldSolidBrep::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::ManifoldSolidBrep Item." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -79,12 +80,14 @@ bool BrepWithVoids::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		} else {
 		    std::cerr << CLASSNAME << ": Unhandled entity in attribute 'voids'." << std::endl;
 		    l->clear();
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
 		    delete l;
 		    return false;
 		}
 	    } else {
 		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'voids'." << std::endl;
 		l->clear();
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		delete l;
 		return false;
 	    }
@@ -92,6 +95,8 @@ bool BrepWithVoids::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	l->clear();
 	delete l;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

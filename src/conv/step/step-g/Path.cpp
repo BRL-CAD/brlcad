@@ -97,6 +97,7 @@ Path::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -119,6 +120,7 @@ Path::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 			  << ": Unhandled entity in attribute 'edge_list'."
 			  << std::endl;
 		l->clear();
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		delete l;
 		return false;
 	    }
@@ -126,6 +128,8 @@ Path::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	l->clear();
 	delete l;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

@@ -106,6 +106,7 @@ bool ShapeAspectRelationship::Load(STEPWrapper *sw, SDAI_Application_instance *s
 			relating_shape_aspect = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, entity));
 		} else {
 			std::cout << CLASSNAME << ":Error loading attribute 'relating_shape_aspect'." << std::endl;
+			sw->entity_status[id] = STEP_LOAD_ERROR;
 			return false;
 		}
 	}
@@ -116,9 +117,12 @@ bool ShapeAspectRelationship::Load(STEPWrapper *sw, SDAI_Application_instance *s
 			related_shape_aspect = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, entity));
 		} else {
 			std::cout << CLASSNAME << ":Error loading attribute 'related_shape_aspect'." << std::endl;
+			sw->entity_status[id] = STEP_LOAD_ERROR;
 			return false;
 		}
 	}
+
+	sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

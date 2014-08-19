@@ -98,6 +98,7 @@ BSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!BoundedSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -117,6 +118,8 @@ BSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     u_closed = step->getLogicalAttribute(sse, "u_closed");
     v_closed = step->getLogicalAttribute(sse, "v_closed");
     self_intersect = step->getLogicalAttribute(sse, "self_intersect");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

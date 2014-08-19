@@ -86,6 +86,7 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!BoundedCurve::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -99,6 +100,7 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    basis_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity)); //CreateCurveObject(sw,entity));
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading entity attribute 'basis_curve'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -115,6 +117,7 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		if (p && !aTS->Load(step, p)) {
 		    std::cout << CLASSNAME << ":Error loading TrimmingSelect from list." << std::endl;
 		    delete aTS;
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
 		    return false;
 		}
 		trim_1.push_back(aTS);
@@ -135,6 +138,7 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		if (p && !aTS->Load(step, p)) {
 		    std::cout << CLASSNAME << ":Error loading TrimmingSelect from list." << std::endl;
 		    delete aTS;
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
 		    return false;
 		}
 		trim_2.push_back(aTS);
@@ -145,6 +149,8 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     sense_agreement = step->getBooleanAttribute(sse, "sense_agreement");
     master_representation = (Trimming_preference)step->getEnumAttribute(sse, "master_representation");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

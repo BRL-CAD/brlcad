@@ -63,6 +63,7 @@ Face::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -82,6 +83,7 @@ Face::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'bounds'." << std::endl;
 		l->clear();
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		delete l;
 		return false;
 	    }
@@ -89,6 +91,7 @@ Face::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	l->clear();
 	delete l;
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

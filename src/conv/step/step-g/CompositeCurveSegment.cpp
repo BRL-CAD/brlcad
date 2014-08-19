@@ -73,6 +73,7 @@ CompositeCurveSegment::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!FoundedItem::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -86,6 +87,7 @@ CompositeCurveSegment::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member entity \"parent_curve\"." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -96,6 +98,8 @@ CompositeCurveSegment::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     same_sense = step->getBooleanAttribute(sse, "same_sense");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }
