@@ -23,55 +23,56 @@
  *
  */
 
-
 #include "common.h"
+
 #include "bu.h"
 
-
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#include <signal.h>
-
-
-static void
-_exit_alarm_handler(int sig)
-{
-    if (sig == SIGALRM) exit(0);
-}
-
-
-int
-set_exit_alarm(unsigned seconds)
-{
-    signal(SIGALRM, _exit_alarm_handler);
-    alarm(seconds);
-    return 1;
-}
-
-
+#  include <unistd.h>
+#  include <signal.h>
 #else
-#include <windows.h>
-
-
-static void CALLBACK
-_exit_alarm_handler(UINT UNUSED(uTimerID), UINT UNUSED(uMsg), DWORD_PTR UNUSED(dwUser),
-	DWORD_PTR UNUSED(dw1), DWORD_PTR UNUSED(dw2))
-{
-    exit(0);
-}
-
-
-int
-set_exit_alarm(unsigned seconds)
-{
-    return !!timeSetEvent(seconds*1000, 100, (LPTIMECALLBACK)_exit_alarm_handler, (DWORD_PTR)NULL, TIME_ONESHOT);
-}
-
-
+#  include <windows.h>
 #endif
 
 
 const int SEM = BU_SEM_LAST+1;
+
+
+struct increment_thread_args {
+    int *parallel;
+    int *running;
+    unsigned long reps;
+    unsigned long*counter;
+};
+
+
+#ifdef HAVE_UNISTD_H
+static void
+_exit_alarm_handler(int sig)
+{
+    if (sig == SIGALRM)
+	exit(0);
+}
+#else
+static void CALLBACK
+_exit_alarm_handler(UINT UNUSED(uTimerID), UINT UNUSED(uMsg), DWORD_PTR UNUSED(dwUser),	DWORD_PTR UNUSED(dw1), DWORD_PTR UNUSED(dw2))
+{
+    exit(0);
+}
+#endif
+
+
+static int
+set_exit_alarm(unsigned seconds)
+{
+#ifdef HAVE_UNISTD_H
+    signal(SIGALRM, _exit_alarm_handler);
+    alarm(seconds);
+    return 1;
+#else
+    return !!timeSetEvent(seconds*1000, 100, (LPTIMECALLBACK)_exit_alarm_handler, (DWORD_PTR)NULL, TIME_ONESHOT);
+#endif
+}
 
 
 static int
@@ -79,8 +80,11 @@ repeat_test(unsigned long reps)
 {
     unsigned long i;
 
-    for (i = 0; i < reps; i++) bu_semaphore_init(SEM+1);
-    for (i = 0; i < reps; i++) bu_semaphore_free();
+    for (i = 0; i < reps; i++)
+	bu_semaphore_init(SEM+1);
+
+    for (i = 0; i < reps; i++)
+	bu_semaphore_free();
 
     return 1;
 }
@@ -105,35 +109,42 @@ single_thread_test(void)
 }
 
 
-struct increment_thread_args { int *parallel, *running; unsigned long reps, *counter; };
 static void
-increment_thread(int ncpu, void *pargs)
+increment_thread(int cpu, void *pargs)
 {
     struct increment_thread_args *args = (struct increment_thread_args *)pargs;
-    unsigned long i;
+    unsigned long i = 0;
 
-    (void)ncpu;
-
-    if (*args->running) *args->parallel = 1;
-    *args->running = 1;
+    bu_semaphore_acquire(SEM);
+    if (*args->running)
+	*args->parallel = 1;
+    *args->running = cpu+1;
+    bu_semaphore_release(SEM);
 
     for (i = 0; i < args->reps; i++) {
 	bu_semaphore_acquire(SEM);
 	++*args->counter;
 	bu_semaphore_release(SEM);
     }
-    *args->running = 0;
+
+    while (i++ < UINT32_MAX-1 && !*args->parallel) {
+	bu_semaphore_acquire(SEM);
+	++*args->counter;
+	--*args->counter;
+	bu_semaphore_release(SEM);
+    }
+
+    return;
 }
 
 
 static int
 parallel_test(unsigned long reps)
 {
-    const int nthreads = bu_avail_cpus();
-
+    const int ncpu = bu_avail_cpus();
 
     struct increment_thread_args args;
-    unsigned long counter = 0, expected = reps*nthreads;
+    unsigned long counter = 0, expected = reps * ncpu;
     int parallel = 0, running = 0;
     args.parallel = &parallel;
     args.running = &running;
@@ -141,16 +152,16 @@ parallel_test(unsigned long reps)
     args.counter = &counter;
 
     bu_semaphore_init(SEM+1);
-    bu_parallel(increment_thread, nthreads, &args);
+    bu_parallel(increment_thread, ncpu, &args);
     bu_semaphore_free();
 
     if (counter != expected) {
-	bu_log("parallel-increment bu_semaphore test failed: counter is %lu, expected %lu\n", counter, expected);
+	bu_log("bu_semaphore parallel increment test:  counter is %lu, expected %lu\n [FAIL]", counter, expected);
 	return 0;
     }
 
-    if ((nthreads > 1) && !parallel) {
-	bu_log("parallel-increment bu_semaphore test invalid: threads did not run in parallel\n");
+    if ((ncpu > 1) && !parallel) {
+	bu_log("bu_semaphore parallel thread test:  did not run in parallel [FAIL]\n");
 	return 0;
     }
 
@@ -163,21 +174,25 @@ main(int argc, char **argv)
 {
     const char * const USAGE = "Usage: %s [-n reps]\n";
 
-
-    unsigned long nreps = 10000;
+    uint32_t nreps = 1000;
     int c;
     int success;
 
     while ((c = bu_getopt(argc, argv, "n:")) != -1) {
 	switch (c) {
-	    case 'n': nreps = strtoul(bu_optarg, NULL, 0); break;
-	    default: bu_exit(1, USAGE, argv[0]);
+	    case 'n': nreps = strtoul(bu_optarg, NULL, 0);
+		break;
+	    default:
+		bu_exit(1, USAGE, argv[0]);
 	}
     }
 
+    /* nreps is a minimum */
     success = repeat_test(nreps) && parallel_test(nreps);
 
+    /* single_thread_test should lock up and be killed by alarm */
     return !(success && single_thread_test());
+
 }
 
 
