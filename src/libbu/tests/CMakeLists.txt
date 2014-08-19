@@ -198,6 +198,9 @@ add_test(bu_gettime_test tester_bu_timer)
 #
 BRLCAD_ADDEXEC(tester_bu_semaphore bu_semaphore.c "libbu;${WINMM_LIBRARY}" NO_INSTALL)
 add_test(bu_semaphore_test tester_bu_semaphore)
+add_test(bu_semaphore_test_P1 tester_bu_semaphore -P1)
+add_test(bu_semaphore_test_P2 tester_bu_semaphore -P2)
+add_test(bu_semaphore_test_P3 tester_bu_semaphore -P3)
 
 #
 #  ************ vls_vprintf.c tests *************

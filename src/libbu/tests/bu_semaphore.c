@@ -39,10 +39,11 @@ const int SEM = BU_SEM_LAST+1;
 
 
 struct increment_thread_args {
+    size_t ncpu;
     int *parallel;
     int *running;
-    unsigned long reps;
-    unsigned long*counter;
+    size_t reps;
+    size_t *counter;
 };
 
 
@@ -76,9 +77,9 @@ set_exit_alarm(unsigned seconds)
 
 
 static int
-repeat_test(unsigned long reps)
+repeat_test(size_t reps)
 {
-    unsigned long i;
+    size_t i;
 
     for (i = 0; i < reps; i++)
 	bu_semaphore_init(SEM+1);
@@ -113,7 +114,7 @@ static void
 increment_thread(int cpu, void *pargs)
 {
     struct increment_thread_args *args = (struct increment_thread_args *)pargs;
-    unsigned long i = 0;
+    size_t i = 0;
 
     bu_semaphore_acquire(SEM);
     if (*args->running)
@@ -127,25 +128,33 @@ increment_thread(int cpu, void *pargs)
 	bu_semaphore_release(SEM);
     }
 
-    while (i++ < UINT32_MAX-1 && !*args->parallel) {
+    while (args->ncpu > 1 && i++ < UINT32_MAX-1 && !*args->parallel) {
 	bu_semaphore_acquire(SEM);
 	++*args->counter;
 	--*args->counter;
 	bu_semaphore_release(SEM);
     }
 
+    bu_semaphore_acquire(SEM);
+    *args->running = 0;
+    bu_semaphore_release(SEM);
+
     return;
 }
 
 
 static int
-parallel_test(unsigned long reps)
+parallel_test(size_t ncpu, size_t reps)
 {
-    const int ncpu = bu_avail_cpus();
+    int parallel = 0;
+    int running = 0;
+
+    size_t counter = 0;
+    size_t expected = reps * ncpu;
 
     struct increment_thread_args args;
-    unsigned long counter = 0, expected = reps * ncpu;
-    int parallel = 0, running = 0;
+
+    args.ncpu = ncpu;
     args.parallel = &parallel;
     args.running = &running;
     args.reps = reps;
@@ -172,15 +181,26 @@ parallel_test(unsigned long reps)
 int
 main(int argc, char **argv)
 {
-    const char * const USAGE = "Usage: %s [-n reps]\n";
+    const char * const USAGE = "Usage: %s [-P ncpu] [-n reps]\n";
 
-    uint32_t nreps = 1000;
     int c;
     int success;
+    size_t nreps = 1000;
+    unsigned long nreps_opt;
+    size_t ncpu = bu_avail_cpus();
+    unsigned long ncpu_opt;
 
-    while ((c = bu_getopt(argc, argv, "n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "n:P:")) != -1) {
 	switch (c) {
-	    case 'n': nreps = strtoul(bu_optarg, NULL, 0);
+	    case 'n':
+		nreps_opt = (uint32_t)strtoul(bu_optarg, NULL, 0);
+		if (nreps_opt > 0 && nreps_opt < UINT32_MAX-1)
+		    nreps = (size_t)nreps_opt;
+		break;
+	    case 'P':
+		ncpu_opt = (size_t)strtoul(bu_optarg, NULL, 0);
+		if (ncpu_opt > 0 && ncpu_opt < ncpu)
+		    ncpu = ncpu_opt;
 		break;
 	    default:
 		bu_exit(1, USAGE, argv[0]);
@@ -188,7 +208,7 @@ main(int argc, char **argv)
     }
 
     /* nreps is a minimum */
-    success = repeat_test(nreps) && parallel_test(nreps);
+    success = repeat_test(nreps) && parallel_test(ncpu, nreps);
 
     /* single_thread_test should lock up and be killed by alarm */
     return !(success && single_thread_test());
