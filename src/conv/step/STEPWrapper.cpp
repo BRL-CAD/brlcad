@@ -117,7 +117,6 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
     MAP_OF_PRODUCT_NAME_TO_ENTITY_ID name2id_map;
     MAP_OF_ENTITY_ID_TO_PRODUCT_NAME id2name_map;
     MAP_OF_ENTITY_ID_TO_PRODUCT_ID id2productid_map;
-    MAP_OF_ENTITY_ID_TO_PRODUCT_ID process_map;
 
     if (!dot_g) {
 	return false;
@@ -159,6 +158,19 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 			id2name_map[product_id] = pname;
 		    }
 		    id2productid_map[aBrep->GetId()] = product_id;
+
+		    if (Verbose()) {
+			if (!pname.empty() && (pname.compare("''") != 0)) {
+			    std::cerr << std::endl << "     Generating Product - " << pname ;
+			} else {
+			    std::cerr << std::endl << "     Generating Product";
+			}
+		    }
+
+		    if (convert_WriteBrep(aBrep, dot_g, &pname, &name)) {
+			delete sdr;
+			bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
+		    }
 
 		} else { // must be an assembly
 		    if (pname.empty() || (pname.compare("''") == 0)) {
@@ -233,6 +245,18 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 				id2name_map[aBrep->GetId()] = pname;
 			    }
 			    id2productid_map[brep_id] = product_id;
+
+			    if (Verbose()) {
+				if (!pname.empty() && (pname.compare("''") != 0)) {
+				    std::cerr << std::endl << "     Generating Product - " << pname ;
+				} else {
+				    std::cerr << std::endl << "     Generating Product";
+				}
+			    }
+
+			    if (convert_WriteBrep(aBrep, dotg, &pname, &name)) {
+				bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
+			    }
 
 			    if (product_id != brep_id) {
 				mat_t mat;
@@ -347,94 +371,6 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
     }
     if (!dotg->WriteCombs()) {
 	std::cerr << "Error writing BRL-CAD hierarchy." << std::endl;
-    }
-
-    for (int i = 0; i < num_ents; i++) {
-	SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
-	if (sse == NULL) {
-	    continue;
-	}
-	std::string name = sse->EntityName();
-	std::transform(name.begin(), name.end(), name.begin(), (int(*)(int))std::tolower);
-
-	/* Shape Definition Representation */
-	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shape_definition_representation))) {
-	    ShapeDefinitionRepresentation *sdr = dynamic_cast<ShapeDefinitionRepresentation *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
-	    if (!sdr) {
-		bu_exit(1, "ERROR: unable to allocate a 'ShapeDefinitionRepresentation' entity\n");
-	    } else {
-		std::string pname  = sdr->GetProductName();
-		pname = dotg->CleanBRLCADName(pname);
-
-		AdvancedBrepShapeRepresentation *aBrep = sdr->GetAdvancedBrepShapeRepresentation();
-		if (aBrep) {
-
-		    if (Verbose()) {
-			if (!pname.empty() && (pname.compare("''") != 0)) {
-			    std::cerr << std::endl << "     Generating Product - " << pname ;
-			} else {
-			    std::cerr << std::endl << "     Generating Product";
-			}
-		    }
-
-		    if (convert_WriteBrep(aBrep, dot_g, &pname, &name)) {
-			delete sdr;
-			bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
-		    }
-
-		}
-		Factory::DeleteObjects();
-	    }
-	}
-    }
-    for (int i = 0; i < num_ents; i++) {
-	/* Shape Representation Relationship */
-	SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
-	if (sse == NULL) {
-	    continue;
-	}
-	std::string name = sse->EntityName();
-	std::transform(name.begin(), name.end(), name.begin(), (int(*)(int))std::tolower);
-
-
-	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shape_representation_relationship))) {
-	    ShapeRepresentationRelationship *srr = dynamic_cast<ShapeRepresentationRelationship *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
-	    if (srr) {
-		ShapeRepresentation *aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
-		AdvancedBrepShapeRepresentation *aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
-		if (!aBrep) { //try rep_1
-		    aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
-		    aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
-		}
-		if ((aSR) && (aBrep)) {
-		    int sr_id = aSR->GetId();
-		    MAP_OF_ENTITY_ID_TO_PRODUCT_ID::iterator it = id2productid_map.find(sr_id);
-		    if (it != id2productid_map.end()) { // product found
-			int product_id = (*it).second;
-			int brep_id = aBrep->GetId();
-
-			it = process_map.find(brep_id);
-			if (it == process_map.end()) { // brep not loaded yet so lets do that here.
-			    string pname = id2name_map[brep_id];
-			    if (Verbose()) {
-				if (!pname.empty() && (pname.compare("''") != 0)) {
-				    std::cerr << std::endl << "     Generating Product - " << pname ;
-				} else {
-				    std::cerr << std::endl << "     Generating Product";
-				}
-			    }
-
-			    if (convert_WriteBrep(aBrep, dotg, &pname, &name)) {
-				bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
-			    } else {
-				process_map[brep_id] = product_id;
-			    }
-			}
-		    }/**/
-		}
-		Factory::DeleteObjects();
-	    }
-	}
     }
 
     return true;
