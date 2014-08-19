@@ -166,11 +166,12 @@ BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, void *arg), int ncpu, v
  * pass through, and non-zero when re-entered via a longjmp() from
  * bu_bomb().  This is only safe to use in non-parallel applications.
  */
-#define BU_SETJUMP setjmp((bu_setjmp_valid=1, bu_jmpbuf))
-#define BU_UNSETJUMP (bu_setjmp_valid=0)
+#define BU_SETJUMP setjmp((bu_setjmp_valid[bu_parallel_id()]=1, bu_jmpbuf[bu_parallel_id()]))
+#define BU_UNSETJUMP (bu_setjmp_valid[bu_parallel_id()]=0)
+
 /* These are global because BU_SETJUMP must be macro.  Please don't touch. */
-BU_EXPORT extern int bu_setjmp_valid;           /* !0 = bu_jmpbuf is valid */
-BU_EXPORT extern jmp_buf bu_jmpbuf;                     /* for BU_SETJUMP() */
+BU_EXPORT extern int bu_setjmp_valid[MAX_PSW]; /* !0 = bu_jmpbuf is valid */
+BU_EXPORT extern jmp_buf bu_jmpbuf[MAX_PSW];   /* for BU_SETJUMP() */
 
 
 /**
