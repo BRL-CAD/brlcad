@@ -2287,6 +2287,30 @@ getEdgePoints(ON_BrepTrim &trim,
 		(*param_points)[1.0] = new ON_3dPoint(
 		    s->PointAt(trim.PointAt(range.m_t[1]).x,
 			       trim.PointAt(range.m_t[1]).y));
+	    } else {
+		start_2d = trim.PointAt(range.m_t[0]);
+		end_2d = trim.PointAt(range.m_t[1]);
+		start_3d = s->PointAt(start_2d.x,start_2d.y);
+		end_3d = s->PointAt(end_2d.x,end_2d.y);
+		mid_2d = trim.PointAt(mid_range);
+		mid_3d =  s->PointAt(mid_2d.x, mid_2d.y);
+		(*param_points)[0.0] = new ON_3dPoint(
+		    s->PointAt(trim.PointAt(range.m_t[0]).x,
+			       trim.PointAt(range.m_t[0]).y));
+		getEdgePoints(trim, range.m_t[0], start_2d, start_tang,
+			      start_3d, start_norm, mid_range, mid_2d, mid_tang,
+			      mid_3d, mid_norm, min_dist, max_dist, within_dist,
+			      cos_within_ang, *param_points);
+		(*param_points)[0.5] = new ON_3dPoint(
+		    s->PointAt(trim.PointAt(mid_range).x,
+			       trim.PointAt(mid_range).y));
+		getEdgePoints(trim, mid_range, mid_2d, mid_tang, mid_3d,
+			      mid_norm, range.m_t[1], end_2d, end_tang, end_3d,
+			      end_norm, min_dist, max_dist, within_dist,
+			      cos_within_ang, *param_points);
+		(*param_points)[1.0] = new ON_3dPoint(
+		    s->PointAt(trim.PointAt(range.m_t[1]).x,
+			       trim.PointAt(range.m_t[1]).y));
 	    }
 	} else {
 	    ON_3dPoint start_2d(0.0, 0.0, 0.0);
@@ -2302,6 +2326,17 @@ getEdgePoints(ON_BrepTrim &trim,
 		&& trim.EvTangent(range.m_t[1], end_2d, end_tang)
 		&& surface_EvNormal(s, start_2d.x, start_2d.y, start_3d, start_norm)
 		&& surface_EvNormal(s, end_2d.x, end_2d.y, end_3d, end_norm)) {
+		(*param_points)[0.0] = new ON_3dPoint(start_3d);
+		getEdgePoints(trim, range.m_t[0], start_2d, start_tang,
+			      start_3d, start_norm, range.m_t[1], end_2d, end_tang,
+			      end_3d, end_norm, min_dist, max_dist, within_dist,
+			      cos_within_ang, *param_points);
+		(*param_points)[1.0] = new ON_3dPoint(end_3d);
+	    } else {
+		start_2d = trim.PointAt(range.m_t[0]);
+		end_2d = trim.PointAt(range.m_t[1]);
+		start_3d = s->PointAt(start_2d.x,start_2d.y);
+		end_3d = s->PointAt(end_2d.x,end_2d.y);
 		(*param_points)[0.0] = new ON_3dPoint(start_3d);
 		getEdgePoints(trim, range.m_t[0], start_2d, start_tang,
 			      start_3d, start_norm, range.m_t[1], end_2d, end_tang,

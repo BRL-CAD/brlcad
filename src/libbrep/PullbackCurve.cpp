@@ -209,6 +209,17 @@ surface_EvNormal( // returns false if unable to evaluate
 	    } else if (side == 3) {
 		rc=surf->EvNormal(u.m_t[0], v.m_t[0], point, normal, side, hint);
 	    }
+	} else {
+	    /*
+	     * brute force and try to solve from each side of the surface domain
+	     */
+	    ON_Interval u = surf->Domain(0);
+	    ON_Interval v = surf->Domain(1);
+	    for(int iside=1; iside <= 4; iside++) {
+		rc=surf->EvNormal(s, t, point, normal, iside, hint);
+		if (rc)
+		    break;
+	    }
 	}
     }
     return rc;
