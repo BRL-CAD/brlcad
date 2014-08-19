@@ -117,9 +117,9 @@ BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, void *clientdata);
  *
  * The bu_bomb routine is called on a fatal error, generally where no
  * recovery is possible.  Error handlers may, however, be registered
- * with BU_SETJUMP.  This routine intentionally limits calls to other
- * functions and intentionally uses no stack variables.  Just in case
- * the application is out of memory, bu_bomb deallocates a small
+ * with BU_SETJUMP().  This routine intentionally limits calls to
+ * other functions and intentionally uses no stack variables.  Just in
+ * case the application is out of memory, bu_bomb deallocates a small
  * buffer of memory.
  *
  * Before termination, it optionally performs the following operations
@@ -131,7 +131,7 @@ BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, void *clientdata);
  *    variable with str passed as an argument.
  *
  * 3. Jumps to any user specified error handler registered with the
- *    bu_setjmp_valid/bu_jmpbuf setjmp facility.
+ *    BU_SETJUMP() facility.
  *
  * 4. Outputs str to the terminal device in case standard error is
  *    redirected.
@@ -143,7 +143,7 @@ BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, void *clientdata);
  * Only produce a core-dump when that debugging bit is set.  Note that
  * this function is meant to be a last resort semi-graceful abort.
  *
- * This routine should never return unless there is a bu_setjmp
+ * This routine should never return unless there is a BU_SETJUMP()
  * handler registered.
  */
 BU_EXPORT extern void bu_bomb(const char *str) _BU_ATTR_NORETURN;
