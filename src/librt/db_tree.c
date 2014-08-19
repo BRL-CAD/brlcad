@@ -2169,15 +2169,6 @@ db_walk_tree(struct db_i *dbip,
 	bu_log("end of waiting regions\n");
     }
 
-    /* Fourth, in parallel, for each region, walk the tree to the
-     * leaves.
-     */
-    if (bu_is_parallel() && ncpu != 1) {
-	bu_log("db_walk_tree() recursively invoked while inside parallel section with additional parallelism of ncpu=%d requested.  Running only in one thread.\n",
-	       ncpu);
-	ncpu = 1;
-    }
-
     /* Make state available to the threads */
     wps.magic = DB_WALK_PARALLEL_STATE_MAGIC;
     wps.reg_trees = reg_trees;
