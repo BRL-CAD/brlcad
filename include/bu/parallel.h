@@ -66,12 +66,6 @@ __BEGIN_DECLS
 BU_EXPORT extern int bu_is_parallel(void);
 
 /**
- * Used by bu_bomb() to help terminate parallel threads,
- * without dragging in the whole parallel library if it isn't being used.
- */
-BU_EXPORT extern void bu_kill_parallel(void);
-
-/**
  * returns the CPU number of the current bu_parallel() invoked thread.
  */
 BU_EXPORT extern int bu_parallel_id(void);
