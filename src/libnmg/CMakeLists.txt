@@ -22,33 +22,33 @@ BRLCAD_LIB_INCLUDE_DIRS(nmg NMG_INCLUDE_DIRS NMG_LOCAL_INCLUDE_DIRS)
 
 set(LIBNMG_SOURCES
   globals.c
-  primitives/nmg/nmg_ck.c
-  primitives/nmg/nmg_class.c
-  primitives/nmg/nmg_copy.c
-  primitives/nmg/nmg_eval.c
-  primitives/nmg/nmg_extrude.c
-  primitives/nmg/nmg_fcut.c
-  primitives/nmg/nmg_fuse.c
-  primitives/nmg/nmg_index.c
-  primitives/nmg/nmg_info.c
-  primitives/nmg/nmg_inter.c
-  primitives/nmg/nmg_rt_isect.c
-  primitives/nmg/nmg_rt_segs.c
-  primitives/nmg/nmg_manif.c
-  primitives/nmg/nmg_mesh.c
-  primitives/nmg/nmg_misc.c
-  primitives/nmg/nmg_mk.c
-  primitives/nmg/nmg_mod.c
-  primitives/nmg/nmg_plot.c
-  primitives/nmg/nmg_pr.c
-  primitives/nmg/nmg_pt_fu.c
-  primitives/nmg/nmg_tri.c
-  primitives/nmg/nmg_visit.c
+  ck.c
+  class.c
+  copy.c
+  eval.c
+  extrude.c
+  fcut.c
+  fuse.c
+  index.c
+  info.c
+  inter.c
+  rt_isect.c
+  rt_segs.c
+  manif.c
+  mesh.c
+  misc.c
+  mk.c
+  mod.c
+  plot.c
+  pr.c
+  pt_fu.c
+  tri.c
+  visit.c
   vlist.c
   )
 
 set(libnmg_ignored_files
-  primitives/nmg/nmg_junk.c
+  junk.c
   )
 CMAKEFILES(${libnmg_ignored_files})
 
