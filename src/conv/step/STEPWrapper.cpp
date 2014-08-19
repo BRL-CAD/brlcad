@@ -63,8 +63,10 @@ convert_WriteBrep(
 	AdvancedBrepShapeRepresentation *aBrep,
 	BRLCADWrapper *dot_g,
 	std::string *pname,
-	std::string *name)
+	std::string *name,
+	int dry_run)
 {
+    if (dry_run) return 0;
     LocalUnits::length = aBrep->GetLengthConversionFactor();
     LocalUnits::planeangle = aBrep->GetPlaneAngleConversionFactor();
     LocalUnits::solidangle = aBrep->GetSolidAngleConversionFactor();
@@ -249,7 +251,8 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 
 				MAT_IDN(mat);
 				string comb = id2name_map[product_id];
-				dotg->AddMember(comb,pname,mat);
+				if (!dry_run)
+				    dotg->AddMember(comb,pname,mat);
 			    }
 			}
 		    }
@@ -348,14 +351,17 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 
 			bn_mat_mul(mat, toinv_mat, from_mat);
 		    }
-		    dotg->AddMember(comb,member,mat);
+		    if (!dry_run)
+			dotg->AddMember(comb,member,mat);
 		}
 		Factory::DeleteObjects();
 	    }
 	}
     }
-    if (!dotg->WriteCombs()) {
-	std::cerr << "Error writing BRL-CAD hierarchy." << std::endl;
+    if (!dry_run) {
+	if (!dotg->WriteCombs()) {
+	    std::cerr << "Error writing BRL-CAD hierarchy." << std::endl;
+	}
     }
 
     for (int i = 0; i < num_ents; i++) {
@@ -387,7 +393,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		    }
 
 		    LocalUnits::length = aBrep->GetLengthConversionFactor();
-		    if (convert_WriteBrep(aBrep, dot_g, &pname, &name)) {
+		    if (convert_WriteBrep(aBrep, dot_g, &pname, &name, dry_run)) {
 			delete sdr;
 			bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
 		    }
@@ -435,7 +441,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 			    }
 
 			    LocalUnits::length = aBrep->GetLengthConversionFactor();
-			    if (convert_WriteBrep(aBrep, dotg, &pname, &name)) {
+			    if (convert_WriteBrep(aBrep, dotg, &pname, &name, dry_run)) {
 				bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
 			    } else {
 				process_map[brep_id] = product_id;
@@ -446,6 +452,32 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		Factory::DeleteObjects();
 	    }
 	}
+    }
+
+    if (summary_log) {
+    for (int i = 0; i < num_ents; i++) {
+	if (!i) std::cout << "\n";
+	SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
+	if (sse == NULL) {
+	    continue;
+	}
+	std::map<int, int>::iterator e_it = entity_status.find(sse->StepFileId());
+	if (e_it != entity_status.end()) {
+	    switch (e_it->second) {
+		case STEP_LOADED:
+		    std::cout << "Loaded:" << sse->EntityName() << " (ID:" << sse->StepFileId() << ")\n";
+		    break;
+		case STEP_LOAD_ERROR:
+		    std::cout << "Error loading:" << sse->EntityName() << " (ID:" << sse->StepFileId() << ")\n";
+		    break;
+		default:
+		    std::cout << "Unknown status:" << sse->EntityName() << " (ID:" << sse->StepFileId() << "): " << e_it->second << "\n";
+		    break;
+	    }
+	} else {
+	    std::cout << "Entity " << sse->EntityName() << " (ID:" << sse->StepFileId() << ") was not processed by step-g\n";
+	}
+    }
     }
 
     return true;

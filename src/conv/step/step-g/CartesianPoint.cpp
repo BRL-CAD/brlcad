@@ -62,6 +62,7 @@ CartesianPoint::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!Point::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Point." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -81,6 +82,7 @@ CartesianPoint::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     } else {
 	std::cout << CLASSNAME << ": error loading 'coordinate' attribute." << std::endl;
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 
