@@ -222,6 +222,7 @@ Axis2Placement3D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Placement::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Placement." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -248,6 +249,8 @@ Axis2Placement3D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     BuildAxis();
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

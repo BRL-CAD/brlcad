@@ -61,10 +61,12 @@ VertexPoint::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!Vertex::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Vertex." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
     if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -78,9 +80,11 @@ VertexPoint::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    vertex_geometry = dynamic_cast<Point *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'vertex_geometry'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

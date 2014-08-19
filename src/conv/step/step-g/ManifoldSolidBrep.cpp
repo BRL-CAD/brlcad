@@ -62,6 +62,7 @@ ManifoldSolidBrep::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!SolidModel::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::SolidModel." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -76,9 +77,11 @@ ManifoldSolidBrep::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    outer = dynamic_cast<ClosedShell *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading entity attribute 'outer'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

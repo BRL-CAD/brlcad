@@ -62,6 +62,7 @@ Vector::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -80,6 +81,8 @@ Vector::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
 
     magnitude = step->getRealAttribute(sse, "magnitude");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

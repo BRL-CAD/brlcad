@@ -69,6 +69,7 @@ FaceBound::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -82,10 +83,13 @@ FaceBound::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    bound = dynamic_cast<Loop *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading 'bound' entity." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
     orientation = step->getBooleanAttribute(sse, "orientation");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

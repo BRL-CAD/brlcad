@@ -63,6 +63,7 @@ VertexLoop::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Loop::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Path." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -76,9 +77,12 @@ VertexLoop::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    loop_vertex = dynamic_cast<Vertex *>(Factory::CreateObject(sw, entity)); //CreateCurveObject(sw,entity));
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading entity attribute 'loop_vertex'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

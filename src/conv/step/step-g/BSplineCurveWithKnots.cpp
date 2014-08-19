@@ -69,6 +69,7 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!BSplineCurve::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -89,6 +90,7 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    }
 	} else {
 	    std::cout << CLASSNAME << ": Error loading BSplineCurveWithKnots(knot_multiplicities)." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -105,6 +107,7 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    }
 	} else {
 	    std::cout << CLASSNAME << ": Error loading BSplineCurveWithKnots(knots)." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -113,6 +116,8 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (knot_spec > Knot_type_unset) {
 	knot_spec = Knot_type_unset;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

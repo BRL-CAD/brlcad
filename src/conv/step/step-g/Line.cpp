@@ -85,6 +85,7 @@ Line::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Curve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -98,6 +99,7 @@ Line::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    pnt = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"pnt\"." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -107,9 +109,11 @@ Line::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    dir = dynamic_cast<Vector *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"dir\"." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 /*TODO: remove
