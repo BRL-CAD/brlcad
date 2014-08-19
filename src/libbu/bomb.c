@@ -172,9 +172,6 @@ bu_bomb(const char *str)
     }
 #endif
 
-    /* If in parallel mode, try to signal the leader to die. */
-    bu_kill_parallel();
-
     /* try to save a core dump */
     if (UNLIKELY(bu_debug & BU_DEBUG_COREDUMP)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
