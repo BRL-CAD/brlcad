@@ -286,7 +286,6 @@ bu_avail_cpus(void)
     }
 #  endif
 
-
 #  if defined(_WIN32)
     /* Windows */
     if (ncpu < 0) {
@@ -376,6 +375,9 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
     /* avoid using the 'register' keyword in here "just in case" */
 
+    if (!func)
+	return; /* nothing to do */
+
 #ifndef PARALLEL
 
     bu_log("bu_parallel(%d., %p):  Not compiled for PARALLEL machine, running single-threaded\n", ncpu, arg);
@@ -423,6 +425,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	/* a zero count means use as many as are available. */
 	ncpu = bu_avail_cpus(); /* !!! need something different here */
     }
+
     parallel_nthreads_started = 0;
     parallel_nthreads_finished = 0;
 
