@@ -380,7 +380,8 @@ RhinoConverter::ObjectManager::unique_name(std::string prefix,
 
 
 inline RhinoConverter::ObjectManager::ObjectManager() :
-    m_obj_map()
+    m_obj_map(),
+    m_name_count_map()
 {}
 
 
@@ -660,7 +661,7 @@ RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 	    load_pix(w2string(bmap->m_bitmap_filename),
 		     bitmap->Width(), bitmap->Height());
 	} catch (const std::runtime_error &) {
-	    m_log.Print("Couldn't convert bitmap to pix");
+	    m_log.Print("Couldn't convert bitmap to pix\n");
 	    return;
 	}
     }
