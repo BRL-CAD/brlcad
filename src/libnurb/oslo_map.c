@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file librt/oslo_map.c
+/** @file libnurb/oslo_map.c
  *
  * Map the oslo matrix with the old curve resulting in a new one.
  *
@@ -42,7 +42,7 @@
  */
 
 void
-rt_nurb_map_oslo(struct oslo_mat *oslo, fastf_t *old_pts, fastf_t *new_pts, int o_stride, int n_stride, int lower, int upper, int pt_type)
+nurb_map_oslo(struct oslo_mat *oslo, fastf_t *old_pts, fastf_t *new_pts, int o_stride, int n_stride, int lower, int upper, int pt_type)
 /* Oslo matrix */
 /* Old control points */
 /* New control points */

@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file primitives/bspline/nurb_util.c
+/** @file util.c
  *
  * Utilities for NURB curves and surfaces.
  *
@@ -38,7 +38,7 @@
  * Create a place holder for a nurb surface.
  */
 struct face_g_snurb *
-rt_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_cols, int pt_type, struct resource *res)
+nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_cols, int pt_type, struct resource *res)
 {
     register struct face_g_snurb * srf;
     int pnum;
@@ -59,11 +59,11 @@ rt_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_
     pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
 
     srf->u.knots = (fastf_t *) bu_malloc (
-	n_u * sizeof (fastf_t), "rt_nurb_new_snurb: u kv knot values");
+	n_u * sizeof (fastf_t), "nurb_new_snurb: u kv knot values");
     srf->v.knots = (fastf_t *) bu_malloc (
-	n_v * sizeof (fastf_t), "rt_nurb_new_snurb: v kv knot values");
+	n_v * sizeof (fastf_t), "nurb_new_snurb: v kv knot values");
     srf->ctl_points = (fastf_t *) bu_malloc(
-	pnum, "rt_nurb_new_snurb: control mesh points");
+	pnum, "nurb_new_snurb: control mesh points");
 
     return srf;
 }
@@ -73,7 +73,7 @@ rt_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_
  * Create a place holder for a new nurb curve.
  */
 struct edge_g_cnurb *
-rt_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
+nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
 {
     register struct edge_g_cnurb * crv;
 
@@ -83,7 +83,7 @@ rt_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
     crv->k.k_size = n_knots;
     crv->k.knots = (fastf_t *)
 	bu_malloc(n_knots * sizeof(fastf_t),
-		  "rt_nurb_new_cnurb: knot values");
+		  "nurb_new_cnurb: knot values");
 
     crv->c_size = n_pts;
     crv->pt_type = pt_type;
@@ -91,7 +91,7 @@ rt_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
     crv->ctl_points = (fastf_t *)
 	bu_malloc(sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(pt_type) *
 		  n_pts,
-		  "rt_nurb_new_cnurb: mesh point values");
+		  "nurb_new_cnurb: mesh point values");
 
     return crv;
 }
@@ -103,15 +103,15 @@ rt_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
  * pointers, or use automatic variables to hold one.
  */
 void
-rt_nurb_clean_snurb(struct face_g_snurb *srf, struct resource *res)
+nurb_clean_snurb(struct face_g_snurb *srf, struct resource *res)
 {
     NMG_CK_SNURB(srf);
 
     if (res) NURB_CK_RESOURCE(res);
 
-    bu_free((char *)srf->u.knots, "rt_nurb_clean_snurb() u.knots");
-    bu_free((char *)srf->v.knots, "rt_nurb_free_snurb() v.knots");
-    bu_free((char *)srf->ctl_points, "rt_nurb_free_snurb() ctl_points");
+    bu_free((char *)srf->u.knots, "nurb_clean_snurb() u.knots");
+    bu_free((char *)srf->v.knots, "nurb_free_snurb() v.knots");
+    bu_free((char *)srf->ctl_points, "nurb_free_snurb() ctl_points");
 
     /* Invalidate the structure */
     srf->u.knots = (fastf_t *)NULL;
@@ -123,7 +123,7 @@ rt_nurb_clean_snurb(struct face_g_snurb *srf, struct resource *res)
 
 
 void
-rt_nurb_free_snurb(struct face_g_snurb *srf, struct resource *res)
+nurb_free_snurb(struct face_g_snurb *srf, struct resource *res)
 {
     NMG_CK_SNURB(srf);
 
@@ -133,12 +133,12 @@ rt_nurb_free_snurb(struct face_g_snurb *srf, struct resource *res)
      * deleted.
      */
 
-    bu_free((char *)srf->u.knots, "rt_nurb_free_snurb: u kv knots");
-    bu_free((char *)srf->v.knots, "rt_nurb_free_snurb: v kv knots");
-    bu_free((char *)srf->ctl_points, "rt_nurb_free_snurb: mesh points");
+    bu_free((char *)srf->u.knots, "nurb_free_snurb: u kv knots");
+    bu_free((char *)srf->v.knots, "nurb_free_snurb: v kv knots");
+    bu_free((char *)srf->ctl_points, "nurb_free_snurb: mesh points");
 
     srf->l.magic = 0;
-    bu_free((char *)srf, "rt_nurb_free_snurb: snurb struct");
+    bu_free((char *)srf, "nurb_free_snurb: snurb struct");
 }
 
 
@@ -148,11 +148,11 @@ rt_nurb_free_snurb(struct face_g_snurb *srf, struct resource *res)
  * use automatic variables to hold one.
  */
 void
-rt_nurb_clean_cnurb(struct edge_g_cnurb *crv)
+nurb_clean_cnurb(struct edge_g_cnurb *crv)
 {
     NMG_CK_CNURB(crv);
-    bu_free((char*)crv->k.knots, "rt_nurb_free_cnurb: knots");
-    bu_free((char*)crv->ctl_points, "rt_nurb_free_cnurb: control points");
+    bu_free((char*)crv->k.knots, "nurb_free_cnurb: knots");
+    bu_free((char*)crv->ctl_points, "nurb_free_cnurb: control points");
     /* Invalidate the structure */
     crv->k.knots = (fastf_t *)NULL;
     crv->ctl_points = (fastf_t *)NULL;
@@ -166,18 +166,18 @@ rt_nurb_clean_cnurb(struct edge_g_cnurb *crv)
  * Release a cnurb and all the storage that it references.
  */
 void
-rt_nurb_free_cnurb(struct edge_g_cnurb *crv)
+nurb_free_cnurb(struct edge_g_cnurb *crv)
 {
     NMG_CK_CNURB(crv);
-    bu_free((char*)crv->k.knots, "rt_nurb_free_cnurb: knots");
-    bu_free((char*)crv->ctl_points, "rt_nurb_free_cnurb: control points");
+    bu_free((char*)crv->k.knots, "nurb_free_cnurb: knots");
+    bu_free((char*)crv->ctl_points, "nurb_free_cnurb: control points");
     crv->l.magic = 0;		/* sanity */
-    bu_free((char*)crv, "rt_nurb_free_cnurb: cnurb struct");
+    bu_free((char*)crv, "nurb_free_cnurb: cnurb struct");
 }
 
 
 void
-rt_nurb_c_print(const struct edge_g_cnurb *crv)
+nurb_c_print(const struct edge_g_cnurb *crv)
 {
     register fastf_t * ptr;
     int i, j;
@@ -192,7 +192,7 @@ rt_nurb_c_print(const struct edge_g_cnurb *crv)
 
     bu_log("\n\t}\n");
     bu_log("\t");
-    rt_nurb_print_pt_type(crv->pt_type);
+    nurb_print_pt_type(crv->pt_type);
     bu_log("\tmesh = {\n");
     for (ptr = &crv->ctl_points[0], i= 0;
 	 i < crv->c_size; i++, ptr += RT_NURB_EXTRACT_COORDS(crv->pt_type))
@@ -204,34 +204,25 @@ rt_nurb_c_print(const struct edge_g_cnurb *crv)
 
     }
     bu_log("\t}\n}\n");
-
-
 }
 
 
 void
-rt_nurb_s_print(char *c, const struct face_g_snurb *srf)
+nurb_s_print(char *c, const struct face_g_snurb *srf)
 {
 
     bu_log("%s\n", c);
-
     bu_log("order %d %d\n", srf->order[0], srf->order[1]);
-
     bu_log("u knot vector \n");
-
-    rt_nurb_pr_kv(&srf->u);
-
+    nurb_pr_kv(&srf->u);
     bu_log("v knot vector \n");
-
-    rt_nurb_pr_kv(&srf->v);
-
-    rt_nurb_pr_mesh(srf);
-
+    nurb_pr_kv(&srf->v);
+    nurb_pr_mesh(srf);
 }
 
 
 void
-rt_nurb_pr_kv(const struct knot_vector *kv)
+nurb_pr_kv(const struct knot_vector *kv)
 {
     register fastf_t * ptr = kv->knots;
     int i;
@@ -247,7 +238,7 @@ rt_nurb_pr_kv(const struct knot_vector *kv)
 
 
 void
-rt_nurb_pr_mesh(const struct face_g_snurb *m)
+nurb_pr_mesh(const struct face_g_snurb *m)
 {
     int i, j, k;
     fastf_t * m_ptr = m->ctl_points;
@@ -273,7 +264,7 @@ rt_nurb_pr_mesh(const struct face_g_snurb *m)
 
 
 void
-rt_nurb_print_pt_type(int c)
+nurb_print_pt_type(int c)
 {
     int rat;
 

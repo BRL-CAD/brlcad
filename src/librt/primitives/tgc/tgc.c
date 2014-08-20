@@ -3060,12 +3060,12 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 
 
     if (!flip) {
-	rt_nurb_s_eval(fu->f_p->g.snurb_p,
-		       nmg_uv_unitcircle[0], nmg_uv_unitcircle[1], point);
+	nurb_s_eval(fu->f_p->g.snurb_p,
+		    nmg_uv_unitcircle[0], nmg_uv_unitcircle[1], point);
 	nmg_vertex_gv(eu->vu_p->v_p, point);
     } else {
-	rt_nurb_s_eval(fu->f_p->g.snurb_p,
-		       nmg_uv_unitcircle[12], nmg_uv_unitcircle[13], point);
+	nurb_s_eval(fu->f_p->g.snurb_p,
+		    nmg_uv_unitcircle[12], nmg_uv_unitcircle[13], point);
 	nmg_vertex_gv(eu->vu_p->v_p, point);
     }
 
@@ -3182,7 +3182,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 
     /* March around the fu's loop assigning uv parameter values */
 
-    rt_nurb_s_eval(fg, 0.0, 0.0, hvect);
+    nurb_s_eval(fg, 0.0, 0.0, hvect);
     HDIVIDE(point, hvect);
     nmg_vertex_gv(eu->vu_p->v_p, point);	/* 0, 0 vertex */
 
@@ -3203,7 +3203,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
     VSET(uvw, 0, 1, 0);
     nmg_vertexuse_a_cnurb(eu->eumate_p->vu_p, uvw);
 
-    rt_nurb_s_eval(fg, 1., 1., hvect);
+    nurb_s_eval(fg, 1., 1., hvect);
     HDIVIDE(point, hvect);
     nmg_vertex_gv(eu->vu_p->v_p, point);		/* 4, 1 vertex */
 

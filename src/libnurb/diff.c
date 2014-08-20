@@ -48,13 +48,13 @@
  * knot vector is a subset of the original. (subtract a knot from each
  * of the ends).
  *
- * Arguments to rt_nurb_s_diff() --
+ * Arguments to nurb_s_diff() --
  * srf - NURB surface
  * dir - parametric direction of the split.
  */
 
 struct face_g_snurb *
-rt_nurb_s_diff(const struct face_g_snurb *srf, int dir)
+nurb_s_diff(const struct face_g_snurb *srf, int dir)
 {
     struct face_g_snurb *nsrf;
     int i;
@@ -63,10 +63,10 @@ rt_nurb_s_diff(const struct face_g_snurb *srf, int dir)
 
     if (dir == RT_NURB_SPLIT_ROW) {
 	nsrf = (struct face_g_snurb *)
-	    rt_nurb_new_snurb(srf->order[0] - 1, srf->order[1],
-			      srf->u.k_size - 2, srf->v.k_size,
-			      srf->s_size[0], srf->s_size[1] - 1,
-			      srf->pt_type, (struct resource *)NULL);
+	    nurb_new_snurb(srf->order[0] - 1, srf->order[1],
+			   srf->u.k_size - 2, srf->v.k_size,
+			   srf->s_size[0], srf->s_size[1] - 1,
+			   srf->pt_type, (struct resource *)NULL);
 
 	for (i = 0; i < srf->s_size[0]; i++) {
 	    fastf_t * old_points, *new_points;
@@ -79,11 +79,11 @@ rt_nurb_s_diff(const struct face_g_snurb *srf, int dir)
 		i * RT_NURB_EXTRACT_COORDS(nsrf->pt_type)
 		*nsrf->s_size[1];
 
-	    rt_nurb_mesh_diff(srf->order[0],
-			      old_points, new_points, srf->u.knots,
-			      RT_NURB_EXTRACT_COORDS(srf->pt_type),
-			      RT_NURB_EXTRACT_COORDS(nsrf->pt_type),
-			      srf->s_size[1], srf->pt_type);
+	    nurb_mesh_diff(srf->order[0],
+			   old_points, new_points, srf->u.knots,
+			   RT_NURB_EXTRACT_COORDS(srf->pt_type),
+			   RT_NURB_EXTRACT_COORDS(nsrf->pt_type),
+			   srf->s_size[1], srf->pt_type);
 	}
 
 	for (i = 1; i < srf->u.k_size - 1; i++)
@@ -92,7 +92,7 @@ rt_nurb_s_diff(const struct face_g_snurb *srf, int dir)
 	for (i = 0; i < srf->v.k_size; i++)
 	    nsrf->v.knots[i] = srf->v.knots[i];
     } else {
-	nsrf = (struct face_g_snurb *) rt_nurb_new_snurb(
+	nsrf = (struct face_g_snurb *) nurb_new_snurb(
 	    srf->order[0], srf->order[1] - 1,
 	    srf->u.k_size, srf->v.k_size - 2,
 	    srf->s_size[0] - 1, srf->s_size[1],
@@ -107,13 +107,13 @@ rt_nurb_s_diff(const struct face_g_snurb *srf, int dir)
 	    new_points = nsrf->ctl_points +
 		i * RT_NURB_EXTRACT_COORDS(nsrf->pt_type);
 
-	    rt_nurb_mesh_diff(srf->order[1],
-			      old_points, new_points, srf->v.knots,
-			      RT_NURB_EXTRACT_COORDS(srf->pt_type) *
-			      srf->s_size[1],
-			      RT_NURB_EXTRACT_COORDS(nsrf->pt_type) *
-			      nsrf->s_size[1],
-			      srf->s_size[0], srf->pt_type);
+	    nurb_mesh_diff(srf->order[1],
+			   old_points, new_points, srf->v.knots,
+			   RT_NURB_EXTRACT_COORDS(srf->pt_type) *
+			   srf->s_size[1],
+			   RT_NURB_EXTRACT_COORDS(nsrf->pt_type) *
+			   nsrf->s_size[1],
+			   srf->s_size[0], srf->pt_type);
 	}
 
 	for (i = 0; i < srf->u.k_size; i++)
@@ -129,7 +129,7 @@ rt_nurb_s_diff(const struct face_g_snurb *srf, int dir)
 /* Do the same thing for a curve. */
 
 struct edge_g_cnurb *
-rt_nurb_c_diff(const struct edge_g_cnurb *crv)
+nurb_c_diff(const struct edge_g_cnurb *crv)
 {
 
     struct edge_g_cnurb *ncrv;
@@ -138,28 +138,27 @@ rt_nurb_c_diff(const struct edge_g_cnurb *crv)
 
     NMG_CK_CNURB(crv);
 
-    ncrv = (struct edge_g_cnurb *) rt_nurb_new_cnurb(crv->order - 1,
-						     crv->k.k_size - 2, crv->c_size - 1,
-						     crv->pt_type);
+    ncrv = (struct edge_g_cnurb *) nurb_new_cnurb(crv->order - 1,
+						  crv->k.k_size - 2, crv->c_size - 1,
+						  crv->pt_type);
 
     opts = (fastf_t *) crv->ctl_points;
     npts = (fastf_t *) ncrv->ctl_points;
 
-    rt_nurb_mesh_diff(crv->order, opts, npts, crv->k.knots,
-		      RT_NURB_EXTRACT_COORDS(crv->pt_type),
-		      RT_NURB_EXTRACT_COORDS(ncrv->pt_type),
-		      crv->c_size, crv->pt_type);
+    nurb_mesh_diff(crv->order, opts, npts, crv->k.knots,
+		   RT_NURB_EXTRACT_COORDS(crv->pt_type),
+		   RT_NURB_EXTRACT_COORDS(ncrv->pt_type),
+		   crv->c_size, crv->pt_type);
 
     for (i = 1; i < crv->k.k_size - 1; i++)
 	ncrv->k.knots[ i - 1] = crv->k.knots[i];
 
     return ncrv;
-
 }
 
 
 void
-rt_nurb_mesh_diff(int order, const fastf_t *o_pts, fastf_t *n_pts, const fastf_t *knots, int o_stride, int n_stride, int o_size, int pt_type)
+nurb_mesh_diff(int order, const fastf_t *o_pts, fastf_t *n_pts, const fastf_t *knots, int o_stride, int n_stride, int o_size, int pt_type)
 {
     int i, k;
     int coords;

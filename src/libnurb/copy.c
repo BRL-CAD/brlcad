@@ -35,17 +35,17 @@
 #include "nurb.h"
 
 struct face_g_snurb *
-rt_nurb_scopy(const struct face_g_snurb *srf, struct resource *res)
+nurb_scopy(const struct face_g_snurb *srf, struct resource *res)
 {
     register struct face_g_snurb * n;
     int i;
 
     NMG_CK_SNURB(srf);
 
-    n = (struct face_g_snurb *) rt_nurb_new_snurb(srf->order[0], srf->order[1],
-						  srf->u.k_size, srf->v.k_size,
-						  srf->s_size[0], srf->s_size[1],
-						  srf->pt_type, res);
+    n = (struct face_g_snurb *) nurb_new_snurb(srf->order[0], srf->order[1],
+					       srf->u.k_size, srf->v.k_size,
+					       srf->s_size[0], srf->s_size[1],
+					       srf->pt_type, res);
 
     for (i = 0; i < srf->u.k_size; i++)
 	n->u.knots[i] =  srf->u.knots[i];
@@ -54,7 +54,7 @@ rt_nurb_scopy(const struct face_g_snurb *srf, struct resource *res)
 	n->v.knots[i] =  srf->v.knots[i];
 
     for (i = 0; i < srf->s_size[0] * srf->s_size[1] *
-	     RT_NURB_EXTRACT_COORDS(srf->pt_type); i++)
+	  RT_NURB_EXTRACT_COORDS(srf->pt_type); i++)
     {
 
 	n->ctl_points[i] = srf->ctl_points[i];
@@ -65,15 +65,15 @@ rt_nurb_scopy(const struct face_g_snurb *srf, struct resource *res)
 
 
 struct edge_g_cnurb *
-rt_nurb_crv_copy(const struct edge_g_cnurb *crv)
+nurb_crv_copy(const struct edge_g_cnurb *crv)
 {
     register struct edge_g_cnurb * n;
     int i;
 
     NMG_CK_CNURB(crv);
 
-    n = (struct edge_g_cnurb *) rt_nurb_new_cnurb(crv->order,
-						  crv->k.k_size, crv->c_size, crv->pt_type);
+    n = (struct edge_g_cnurb *) nurb_new_cnurb(crv->order,
+					       crv->k.k_size, crv->c_size, crv->pt_type);
 
     for (i = 0; i < crv->k.k_size; i++)
 	n->k.knots[i] = crv->k.knots[i];

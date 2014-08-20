@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file primitives/nmg/nmg_rt_isect.c
+/** @file rt_isect.c
  *
  * Support routines for raytracing an NMG.
  *
@@ -1790,7 +1790,7 @@ void
 isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snurb *fg)
 {
     plane_t pl, pl1, pl2;
-    struct rt_nurb_uv_hit *hp;
+    struct nurb_uv_hit *hp;
     struct bu_list bezier;
     struct bu_list hit_list;
     struct face_g_snurb *srf;
@@ -1811,7 +1811,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
     BU_LIST_INIT(&bezier);
     BU_LIST_INIT(&hit_list);
 
-    rt_nurb_bezier(&bezier, fg, rd->ap->a_resource);
+    nurb_bezier(&bezier, fg, rd->ap->a_resource);
 
     while (BU_LIST_NON_EMPTY(&bezier)) {
 	point_t srf_min, srf_max;
@@ -1870,12 +1870,12 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	    VCROSS(pl, u_dir, v_dir);
 	    VUNITIZE(pl);
 	    pl[W] = VDOT(pl, ctl_pt[0]);
-	    hp = (struct rt_nurb_uv_hit *)NULL;
+	    hp = (struct nurb_uv_hit *)NULL;
 	    if (bn_isect_line3_plane(&dist,  rd->rp->r_pt,  rd->rp->r_dir, pl, rd->tol) <= 0) {
 		if (nmg_debug & DEBUG_RT_ISECT)
 		    bu_log("\tNo intersection\n");
 
-		rt_nurb_free_snurb(srf, rd->ap->a_resource);
+		nurb_free_snurb(srf, rd->ap->a_resource);
 		continue;
 	    }
 
@@ -1887,8 +1887,8 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	    if (u >= srf->u.knots[0] && u <= srf->u.knots[srf->u.k_size-1] &&
 		v >= srf->v.knots[0] && v <= srf->v.knots[srf->v.k_size-1])
 	    {
-		BU_ALLOC(hp, struct rt_nurb_uv_hit);
-		hp->next = (struct rt_nurb_uv_hit *)NULL;
+		BU_ALLOC(hp, struct nurb_uv_hit);
+		hp->next = (struct nurb_uv_hit *)NULL;
 		hp->sub = 0;
 		hp->u = u;
 		hp->v = v;
@@ -1900,17 +1900,17 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	    if (nmg_debug & DEBUG_RT_ISECT)
 		bu_log("isect_ray_snurb_face: using planes (%g %g %g %g) (%g %g %g %g)\n",
 		       V4ARGS(pl1), V4ARGS(pl2));
-	    (void)rt_nurb_s_bound(srf, srf_min, srf_max);
+	    (void)nurb_s_bound(srf, srf_min, srf_max);
 	    if (!rt_in_rpp(rd->rp, rd->rd_invdir, srf_min, srf_max)) {
-		rt_nurb_free_snurb(srf, rd->ap->a_resource);
+		nurb_free_snurb(srf, rd->ap->a_resource);
 		continue;
 	    }
-	    hp = rt_nurb_intersect(srf, pl1, pl2, UV_TOL, rd->ap->a_resource, NULL);
+	    hp = nurb_intersect(srf, pl1, pl2, UV_TOL, rd->ap->a_resource, NULL);
 	}
 
 	/* process each hit point */
-	while (hp != (struct rt_nurb_uv_hit *)NULL) {
-	    struct rt_nurb_uv_hit *next;
+	while (hp != (struct nurb_uv_hit *)NULL) {
+	    struct nurb_uv_hit *next;
 	    struct hitmiss *myhit;
 	    vect_t to_hit;
 	    fastf_t dot;
@@ -1964,7 +1964,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 		myhit->hit.hit_dist = dist;
 		VMOVE(myhit->hit.hit_normal, pl);
 	    } else {
-		rt_nurb_s_eval(srf, hp->u, hp->v, homo_hit);
+		nurb_s_eval(srf, hp->u, hp->v, homo_hit);
 		if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
 		    fastf_t inv_homo;
 
@@ -1977,7 +1977,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 		myhit->hit.hit_dist = VDOT(to_hit, rd->rp->r_dir);
 
 		/* get surface normal */
-		rt_nurb_s_norm(srf, hp->u, hp->v, myhit->hit.hit_normal);
+		nurb_s_norm(srf, hp->u, hp->v, myhit->hit.hit_normal);
 	    }
 
 	    /* may need to reverse it */
@@ -2045,7 +2045,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	    bu_free((char *)hp, "hit");
 	    hp = next;
 	}
-	rt_nurb_free_snurb(srf, rd->ap->a_resource);
+	nurb_free_snurb(srf, rd->ap->a_resource);
     }
 }
 

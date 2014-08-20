@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file primitives/bspline/nurb_poly.c
+/** @file poly.c
  *
  * Returns two polygons from a NURB surface.
  * Assumes that the surface is flat.
@@ -43,13 +43,13 @@
  * the diagonal from the first and third corner point making sure
  * Homogeneous points are divided.
  */
-struct rt_nurb_poly *
-rt_nurb_to_poly(struct face_g_snurb *srf)
+struct nurb_poly *
+nurb_to_poly(struct face_g_snurb *srf)
 {
     int coords = srf->pt_type;
     fastf_t * p1, *p2, *p3, *p4;
     fastf_t uv1[2], uv2[2], uv3[2], uv4[2];
-    struct rt_nurb_poly *p, *p_head;
+    struct nurb_poly *p, *p_head;
 
     /* Extract the four corners from the mesh */
 
@@ -92,9 +92,9 @@ rt_nurb_to_poly(struct face_g_snurb *srf)
     uv4[0] = srf->u.knots[0];
     uv4[1] = srf->v.knots[srf->v.k_size -1];
 
-    p = rt_nurb_mk_poly(p1, p2, p3, uv1, uv2, uv3);
+    p = nurb_mk_poly(p1, p2, p3, uv1, uv2, uv3);
     p_head = p;
-    p = rt_nurb_mk_poly(p3, p4, p1, uv3, uv4, uv1);
+    p = nurb_mk_poly(p3, p4, p1, uv3, uv4, uv1);
     p->next = p_head;
     p_head = p;
 
@@ -102,13 +102,13 @@ rt_nurb_to_poly(struct face_g_snurb *srf)
 }
 
 
-struct rt_nurb_poly *
-rt_nurb_mk_poly(fastf_t *v1, fastf_t *v2, fastf_t *v3, fastf_t *uv1, fastf_t *uv2, fastf_t *uv3)
+struct nurb_poly *
+nurb_mk_poly(fastf_t *v1, fastf_t *v2, fastf_t *v3, fastf_t *uv1, fastf_t *uv2, fastf_t *uv3)
 {
-    struct rt_nurb_poly *p;
+    struct nurb_poly *p;
 
-    BU_ALLOC(p, struct rt_nurb_poly);
-    p->next = (struct rt_nurb_poly *) 0;
+    BU_ALLOC(p, struct nurb_poly);
+    p->next = (struct nurb_poly *) 0;
 
     VMOVE(p->ply[0], v1);
     VMOVE(p->ply[1], v2);

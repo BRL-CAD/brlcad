@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file primitives/bspline/nurb_plot.c
+/** @file plot.c
  *
  * Utilities for spline debugging.
  *
@@ -39,7 +39,7 @@
 
 
 void
-rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
+nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 {
     int i, j;
     const fastf_t * m_ptr = srf->ctl_points;
@@ -100,7 +100,7 @@ rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 
 
 void
-rt_nurb_plot_cnurb(FILE *fp, const struct edge_g_cnurb *crv)
+nurb_plot_cnurb(FILE *fp, const struct edge_g_cnurb *crv)
 {
     register int i, k;
     const fastf_t * m_ptr = crv->ctl_points;
@@ -130,21 +130,21 @@ rt_nurb_plot_cnurb(FILE *fp, const struct edge_g_cnurb *crv)
 /**
  * Old routines included for backwards compat.  Don't use in new code.
  */
-void rt_nurb_setfile(int n)
+void nurb_setfile(int n)
 {
     pl_color(stdout, n * 25 % 255, n * 50 % 255, n * 75 %255);
 }
 
 
 void
-rt_nurb_closefile(void)
+nurb_closefile(void)
 {
 }
 
 
-void rt_nurb_s_plot(const struct face_g_snurb *srf)
+void nurb_s_plot(const struct face_g_snurb *srf)
 {
-    rt_nurb_plot_snurb(stdout, srf);
+    nurb_plot_snurb(stdout, srf);
 }
 
 

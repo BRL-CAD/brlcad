@@ -49,7 +49,7 @@
  * 1 Original surface was Bezier, only a copy was done.
  */
 int
-rt_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf, struct resource *res)
+nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf, struct resource *res)
 {
     struct face_g_snurb *s;
     int dir;
@@ -57,25 +57,25 @@ rt_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf, 
 
     NMG_CK_SNURB(orig_surf);
 
-    if ((dir = rt_bez_check(orig_surf)) == -1) {
-	s = rt_nurb_scopy(orig_surf, res);
+    if ((dir = nurb_bez_check(orig_surf)) == -1) {
+	s = nurb_scopy(orig_surf, res);
 	BU_LIST_APPEND(bezier_hd, &s->l);
 	return 1;	/* Was already Bezier, nothing done */
     }
 
     BU_LIST_INIT(&todo);
-    rt_nurb_s_split(&todo, orig_surf, dir, res);
+    nurb_s_split(&todo, orig_surf, dir, res);
 
     while (BU_LIST_WHILE(s, face_g_snurb, &todo)) {
-	if ((dir = rt_bez_check(s)) == -1) {
+	if ((dir = nurb_bez_check(s)) == -1) {
 	    /* This snurb is now a Bezier */
 	    BU_LIST_DEQUEUE(&s->l);
 	    BU_LIST_APPEND(bezier_hd, &s->l);
 	} else {
 	    /* Split, and keep going */
 	    BU_LIST_DEQUEUE(&s->l);
-	    rt_nurb_s_split(&todo, s, dir, res);
-	    rt_nurb_free_snurb(s, res);
+	    nurb_s_split(&todo, s, dir, res);
+	    nurb_free_snurb(s, res);
 	}
     }
     return 0;		/* Bezier snurbs on bezier_hd list */
@@ -83,7 +83,7 @@ rt_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf, 
 
 
 int
-rt_bez_check(const struct face_g_snurb *srf)
+nurb_bez_check(const struct face_g_snurb *srf)
 {
     NMG_CK_SNURB(srf);
 
@@ -138,7 +138,7 @@ nurb_c_to_bezier(struct bu_list *clist, struct edge_g_cnurb *crv)
     int done;
 
     /* make a copy of original curve */
-    crv_copy = rt_nurb_crv_copy(crv);
+    crv_copy = nurb_crv_copy(crv);
 
     /* split curve at each knot value */
     done = 0;
@@ -162,9 +162,9 @@ nurb_c_to_bezier(struct bu_list *clist, struct edge_g_cnurb *crv)
 	    break;
 	}
 
-	crv1 = rt_nurb_c_xsplit(crv_copy, split);
+	crv1 = nurb_c_xsplit(crv_copy, split);
 
-	rt_nurb_free_cnurb(crv_copy);
+	nurb_free_cnurb(crv_copy);
 	crv_copy = BU_LIST_PNEXT(edge_g_cnurb, &crv1->l);
 	BU_LIST_DEQUEUE(&crv_copy->l);
 

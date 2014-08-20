@@ -37,14 +37,14 @@
 
 
 /**
- * rt_nurb_kvknot()
+ * nurb_kvknot()
  *
  * Generate a open knot vector with n=order knots at the beginning of
  * the sequence and n knots at the end of the sequence with a lower,
  * and an upper value and num knots in between
  */
 void
-rt_nurb_kvknot(register struct knot_vector *new_knots, int order, fastf_t lower, fastf_t upper, int num, struct resource *res)
+nurb_kvknot(register struct knot_vector *new_knots, int order, fastf_t lower, fastf_t upper, int num, struct resource *res)
 {
     register int i;
     int total;
@@ -59,7 +59,7 @@ rt_nurb_kvknot(register struct knot_vector *new_knots, int order, fastf_t lower,
     new_knots->k_size = total;
 
     new_knots->knots = (fastf_t *) bu_malloc (sizeof(fastf_t) * total,
-					      "rt_nurb_kvknot: new knots values");
+					      "nurb_kvknot: new knots values");
 
     for (i = 0; i < order; i++)
 	new_knots->knots[i] = lower;
@@ -73,14 +73,14 @@ rt_nurb_kvknot(register struct knot_vector *new_knots, int order, fastf_t lower,
 
 
 /**
- * rt_nurb_kvmult()
+ * nurb_kvmult()
  *
  * Construct a new knot vector which is the same as the passed in knot
  * vector except it has multiplicity of num of val. It checks to see
  * if val already is a multiple knot.
  */
 void
-rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num, register fastf_t val, struct resource *res)
+nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num, register fastf_t val, struct resource *res)
 {
     int n;
     register int i;
@@ -88,37 +88,37 @@ rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num
 
     if (res) NURB_CK_RESOURCE(res);
 
-    n = rt_nurb_kvcheck(val, kv);
+    n = nurb_kvcheck(val, kv);
 
     check.k_size = num - n;
     if (check.k_size <= 0) {
-	bu_log("rt_nurb_kvmult(new_kv=%p, kv=%p, num=%d, val=%g)\n",
+	bu_log("nurb_kvmult(new_kv=%p, kv=%p, num=%d, val=%g)\n",
 	       (void *)new_kv, (void *)kv, num, val);
-	rt_nurb_pr_kv(kv);
-	bu_bomb("rt_nurb_kvmult\n");
+	nurb_pr_kv(kv);
+	bu_bomb("nurb_kvmult\n");
     }
 
     check.knots = (fastf_t *) bu_malloc(sizeof(fastf_t) * check.k_size,
-					"rt_nurb_kvmult: check knots");
+					"nurb_kvmult: check knots");
 
     for (i = 0; i < num - n; i++)
 	check.knots[i] = val;
 
-    rt_nurb_kvmerge(new_kv, &check, kv, res);
+    nurb_kvmerge(new_kv, &check, kv, res);
 
     /* free up old knot values */
-    bu_free((char *)check.knots, "rt_nurb_kvmult:check knots");
+    bu_free((char *)check.knots, "nurb_kvmult:check knots");
 }
 
 
 /**
- * rt_nurb_kvgen()
+ * nurb_kvgen()
  *
  * Generate a knot vector with num knots from lower value to the upper
  * value.
  */
 void
-rt_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int num, struct resource *res)
+nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int num, struct resource *res)
 {
     register int i;
     register fastf_t inc;
@@ -130,7 +130,7 @@ rt_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int
     kv->k_size = num;
 
     kv->knots = (fastf_t *) bu_malloc (sizeof(fastf_t) * num,
-				       "rt_nurb_kvgen: kv knots");
+				       "nurb_kvgen: kv knots");
 
     for (i = 1; i <= num; i++)
 	kv->knots[i-1] = lower + i * inc;
@@ -138,13 +138,13 @@ rt_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int
 
 
 /**
- * rt_nurb_kvmerge()
+ * nurb_kvmerge()
  *
  * Merge two knot vectors together and return the new resulting knot
  * vector.
  */
 void
-rt_nurb_kvmerge(struct knot_vector *new_knots, const struct knot_vector *kv1, const struct knot_vector *kv2, struct resource *res)
+nurb_kvmerge(struct knot_vector *new_knots, const struct knot_vector *kv1, const struct knot_vector *kv2, struct resource *res)
 {
     int kv1_ptr = 0;
     int kv2_ptr = 0;
@@ -156,7 +156,7 @@ rt_nurb_kvmerge(struct knot_vector *new_knots, const struct knot_vector *kv1, co
 
     new_knots->knots = (fastf_t *) bu_malloc(
 	sizeof (fastf_t) * new_knots->k_size,
-	"rt_nurb_kvmerge: new knot values");
+	"nurb_kvmerge: new knot values");
 
     for (new_ptr = 0; new_ptr < new_knots->k_size; new_ptr++) {
 	if (kv1_ptr >= kv1->k_size)
@@ -172,13 +172,13 @@ rt_nurb_kvmerge(struct knot_vector *new_knots, const struct knot_vector *kv1, co
 
 
 /**
- * rt_nurb_kvcheck()
+ * nurb_kvcheck()
  *
  * Checks to see if the knot (val) exists in the Knot Vector and
  * returns its multiplicity.
  */
 int
-rt_nurb_kvcheck(fastf_t val, register const struct knot_vector *kv)
+nurb_kvcheck(fastf_t val, register const struct knot_vector *kv)
 {
     register int kv_num = 0;
     register int i;
@@ -193,13 +193,13 @@ rt_nurb_kvcheck(fastf_t val, register const struct knot_vector *kv)
 
 
 /**
- * rt_nurb_kvextract()
+ * nurb_kvextract()
  *
  * Extract the portion of the knot vector from kv->knots[lower] to
  * kv->knots[upper]
  */
 void
-rt_nurb_kvextract(struct knot_vector *new_kv, register const struct knot_vector *kv, int lower, int upper, struct resource *res)
+nurb_kvextract(struct knot_vector *new_kv, register const struct knot_vector *kv, int lower, int upper, struct resource *res)
 {
     register int i;
     register fastf_t *ptr;
@@ -219,12 +219,12 @@ rt_nurb_kvextract(struct knot_vector *new_kv, register const struct knot_vector 
 
 
 /**
- * rt_nurb_kvcopy()
+ * nurb_kvcopy()
  *
  * Generic copy the knot vector and pass a new one in.
  */
 void
-rt_nurb_kvcopy(struct knot_vector *new_kv, register const struct knot_vector *old_kv, struct resource *res)
+nurb_kvcopy(struct knot_vector *new_kv, register const struct knot_vector *old_kv, struct resource *res)
 {
     register int i;
 
@@ -241,14 +241,14 @@ rt_nurb_kvcopy(struct knot_vector *new_kv, register const struct knot_vector *ol
 
 
 /**
- * rt_nurb_kvnorm()
+ * nurb_kvnorm()
  *
  * Normalize the knot vector so its values are from zero to one.
  *
  * XXX Need to check to see if the lower value is zero
  */
 void
-rt_nurb_kvnorm(register struct knot_vector *kv)
+nurb_kvnorm(register struct knot_vector *kv)
 {
     register fastf_t upper;
     register int i;
@@ -265,14 +265,14 @@ rt_nurb_kvnorm(register struct knot_vector *kv)
 
 
 /**
- * knot_index()
+ * nurb_knot_index()
  *
  * Calculates and returns the index of the value for the knot vector
  *
  * XXX It is hard to know what tolerance to use here for the comparisons.
  */
 int
-rt_nurb_knot_index(const struct knot_vector *kv, fastf_t k_value, int order)
+nurb_knot_index(const struct knot_vector *kv, fastf_t k_value, int order)
 {
     int i;
     fastf_t knt;
@@ -309,13 +309,13 @@ rt_nurb_knot_index(const struct knot_vector *kv, fastf_t k_value, int order)
 
 
 /**
- * rt_nurb_gen_knot_vector()
+ * nurb_gen_knot_vector()
  *
  * Generate a open knot vector with n=order knots at the beginning of
  * the sequence and n knots at the end of the sequence.
  */
 void
-rt_nurb_gen_knot_vector(register struct knot_vector *new_knots, int order, fastf_t lower, fastf_t upper, struct resource *res)
+nurb_gen_knot_vector(register struct knot_vector *new_knots, int order, fastf_t lower, fastf_t upper, struct resource *res)
 {
     register int i;
     int total;
@@ -327,7 +327,7 @@ rt_nurb_gen_knot_vector(register struct knot_vector *new_knots, int order, fastf
     new_knots->k_size = total;
 
     new_knots->knots = (fastf_t *) bu_malloc (sizeof(fastf_t) * total,
-					      "rt_nurb_gen_knot_vector: new knots values");
+					      "nurb_gen_knot_vector: new knots values");
 
     for (i = 0; i < order; i++)
 	new_knots->knots[i] = lower;

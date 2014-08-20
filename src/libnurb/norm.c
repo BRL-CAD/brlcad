@@ -41,7 +41,7 @@
  * approximate it.
  */
 void
-rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
+nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 {
     struct face_g_snurb *usrf, *vsrf;
     point_t uvec, vvec;
@@ -52,7 +52,7 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
     /* Case (linear, lienar) find the normal from the polygon */
     if (srf->order[0] == 2 && srf->order[1] == 2) {
 	/* Find the correct span to get the normal */
-	rt_nurb_s_eval(srf, u, v, se);
+	nurb_s_eval(srf, u, v, se);
 
 	p = 0.0;
 	for (i = 0; i < srf->u.k_size -1; i++) {
@@ -67,7 +67,7 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	    }
 	}
 
-	rt_nurb_s_eval(srf, p, v, ue);
+	nurb_s_eval(srf, p, v, ue);
 
 	p = 0.0;
 	for (i = 0; i < srf->v.k_size -1; i++) {
@@ -81,7 +81,7 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	    }
 	}
 
-	rt_nurb_s_eval(srf, u, p, ve);
+	nurb_s_eval(srf, u, p, ve);
 
 	if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
 	    ue[0] = ue[0] / ue[3];
@@ -109,7 +109,7 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
      * the tangent to the surface
      */
     if (srf->order[0] == 2 && srf->order[1] > 2) {
-	rt_nurb_s_eval(srf, u, v, se);
+	nurb_s_eval(srf, u, v, se);
 
 	p = 0.0;
 	for (i = 0; i < srf->u.k_size -1; i++) {
@@ -124,11 +124,11 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	    }
 	}
 
-	rt_nurb_s_eval(srf, p, v, ue);
+	nurb_s_eval(srf, p, v, ue);
 
-	vsrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+	vsrf = (struct face_g_snurb *) nurb_s_diff(srf, RT_NURB_SPLIT_COL);
 
-	rt_nurb_s_eval(vsrf, u, v, ve);
+	nurb_s_eval(vsrf, u, v, ve);
 
 	if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
 	    fastf_t w, inv_w;
@@ -159,11 +159,11 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	VCROSS(norm, uvec, ve);
 	VUNITIZE(norm);
 
-	rt_nurb_free_snurb(vsrf, (struct resource *)NULL);
+	nurb_free_snurb(vsrf, (struct resource *)NULL);
 	return;
     }
     if (srf->order[1] == 2 && srf->order[0] > 2) {
-	rt_nurb_s_eval(srf, u, v, se);
+	nurb_s_eval(srf, u, v, se);
 
 	p = 0.0;
 	for (i = 0; i < srf->v.k_size -1; i++) {
@@ -178,11 +178,11 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	    }
 	}
 
-	rt_nurb_s_eval(srf, u, p, ve);
+	nurb_s_eval(srf, u, p, ve);
 
-	usrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+	usrf = (struct face_g_snurb *) nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
 
-	rt_nurb_s_eval(usrf, u, v, ue);
+	nurb_s_eval(usrf, u, v, ue);
 
 	if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
 	    fastf_t w, inv_w;
@@ -213,24 +213,24 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	VCROSS(norm, ue, vvec);
 	VUNITIZE(norm);
 
-	rt_nurb_free_snurb(usrf, (struct resource *)NULL);
+	nurb_free_snurb(usrf, (struct resource *)NULL);
 	return;
     }
 
     /* Case Non Rational (order > 2, order > 2) */
     if (!RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
 
-	usrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-	vsrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+	usrf = (struct face_g_snurb *) nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+	vsrf = (struct face_g_snurb *) nurb_s_diff(srf, RT_NURB_SPLIT_COL);
 
-	rt_nurb_s_eval(usrf, u, v, ue);
-	rt_nurb_s_eval(vsrf, u, v, ve);
+	nurb_s_eval(usrf, u, v, ue);
+	nurb_s_eval(vsrf, u, v, ve);
 
 	VCROSS(norm, ue, ve);
 	VUNITIZE(norm);
 
-	rt_nurb_free_snurb(usrf, (struct resource *)NULL);
-	rt_nurb_free_snurb(vsrf, (struct resource *)NULL);
+	nurb_free_snurb(usrf, (struct resource *)NULL);
+	nurb_free_snurb(vsrf, (struct resource *)NULL);
 
 	return;
     }
@@ -240,14 +240,13 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	fastf_t w, inv_w;
 	vect_t unorm, vnorm;
 
-	rt_nurb_s_eval(srf, u, v, se);
+	nurb_s_eval(srf, u, v, se);
 
-	usrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-	vsrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+	usrf = (struct face_g_snurb *) nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+	vsrf = (struct face_g_snurb *) nurb_s_diff(srf, RT_NURB_SPLIT_COL);
 
-	rt_nurb_s_eval(usrf, u, v, ue);
-
-	rt_nurb_s_eval(vsrf, u, v, ve);
+	nurb_s_eval(usrf, u, v, ue);
+	nurb_s_eval(vsrf, u, v, ve);
 
 	w = se[3];
 	inv_w = 1.0 / w;
@@ -262,8 +261,8 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	VCROSS(norm, unorm, vnorm);
 	VUNITIZE(norm);
 
-	rt_nurb_free_snurb(usrf, (struct resource *)NULL);
-	rt_nurb_free_snurb(vsrf, (struct resource *)NULL);
+	nurb_free_snurb(usrf, (struct resource *)NULL);
+	nurb_free_snurb(vsrf, (struct resource *)NULL);
 
 	return;
     }

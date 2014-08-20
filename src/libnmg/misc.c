@@ -120,7 +120,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 		t = t1 + (t2 - t1) * 0.2 * (fastf_t)i;
 
 		VSETALLN(crv_pt, 0.0, coords);
-		rt_nurb_c_eval(eg, t, crv_pt);
+		nurb_c_eval(eg, t, crv_pt);
 		if (RT_NURB_IS_PT_RATIONAL(eg->pt_type)) {
 		    VSCALE(pts[edge_no], crv_pt, crv_pt[coords-1]);
 		} else {
@@ -176,7 +176,7 @@ nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, fa
 	bu_bomb("nmg_snurb_fu_get_norm: bad face\n");
     }
 
-    rt_nurb_s_eval(f->g.snurb_p, u, v, tmp_pt);
+    nurb_s_eval(f->g.snurb_p, u, v, tmp_pt);
 
     if (RT_NURB_IS_PT_RATIONAL(f->g.snurb_p->pt_type)) {
 	double d;
@@ -207,7 +207,7 @@ nmg_snurb_fu_get_norm(const struct faceuse *fu, const fastf_t u, const fastf_t v
 	bu_bomb("nmg_snurb_fu_get_norm: bad face\n");
     }
 
-    rt_nurb_s_norm(f->g.snurb_p, u, v, norm);
+    nurb_s_norm(f->g.snurb_p, u, v, norm);
 
     if ((fu->orientation != OT_SAME) != (f->flip != 0))
 	VREVERSE(norm, norm);
@@ -238,7 +238,6 @@ nmg_snurb_fu_get_norm_at_vu(const struct faceuse *fu, const struct vertexuse *vu
     NMG_CK_VERTEXUSE_A_CNURB(va);
 
     nmg_snurb_fu_get_norm(fu, va->param[0], va->param[1], norm);
-
 }
 
 
@@ -7825,7 +7824,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
      */
     for (BU_LIST_FOR (crv, edge_g_cnurb, crv_head)) {
 	curve_count++;
-	rt_nurb_c_print(crv);
+	nurb_c_print(crv);
 	if (crv->order > max_order)
 	    max_order = crv->order;
 
@@ -7833,7 +7832,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	while (ZERO(crv->k.knots[++i] - crv->k.knots[0]));
 	if (i != crv->order) {
 	    bu_log("Curve does not have multiplicity equal to order at start:\n");
-	    rt_nurb_c_print(crv);
+	    nurb_c_print(crv);
 	    return new_crv;
 	}
 
@@ -7841,7 +7840,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	while (ZERO(crv->k.knots[--i] - crv->k.knots[crv->k.k_size - 1]));
 	if (crv->k.k_size - i - 1 != crv->order) {
 	    bu_log("Curve does not have multiplicity equal to order at end:\n");
-	    rt_nurb_c_print(crv);
+	    nurb_c_print(crv);
 	    return new_crv;
 	}
 
@@ -7901,8 +7900,8 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	}
 
 	bu_log("rt_join_cnurbs: Curve endpoints do not match:\n");
-	rt_nurb_c_print(crv);
-	rt_nurb_c_print(next_crv);
+	nurb_c_print(crv);
+	nurb_c_print(next_crv);
 	return new_crv;
     }
 
@@ -7916,7 +7915,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
     }
     knot_length++;
 
-    new_crv = rt_nurb_new_cnurb(max_order, knot_length, ctl_points, pt_type);
+    new_crv = nurb_new_cnurb(max_order, knot_length, ctl_points, pt_type);
 
     crv = BU_LIST_FIRST(edge_g_cnurb, crv_head);
 
@@ -8088,7 +8087,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 	}
 
 	/* Get memory for this curve (order=3, 6 knot values, 3 control points) */
-	crv = rt_nurb_new_cnurb(3, 6, 3, pt_type);
+	crv = nurb_new_cnurb(3, 6, 3, pt_type);
 
 	/* Set knot values */
 	for (i=0; i<3; i++)

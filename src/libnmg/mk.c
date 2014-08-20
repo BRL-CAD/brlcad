@@ -1849,7 +1849,7 @@ nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_
 	eg->k.knots = kv;
     } else {
 	/* Give a default curve, no interior knots */
-	rt_nurb_kvknot(&eg->k, order, 0.0, 1.0, n_knots - (2 * order), (struct resource *)NULL);
+	nurb_kvknot(&eg->k, order, 0.0, 1.0, n_knots - (2 * order), (struct resource *)NULL);
     }
 
     if (n_pts < 2) bu_bomb("nmg_edge_g_cnurb() n_pts < 2\n");
@@ -2374,8 +2374,8 @@ nmg_face_bb(struct face *f, const struct bn_tol *tol)
      */
 
     if (*fu->f_p->g.magic_p == NMG_FACE_G_SNURB_MAGIC) {
-	rt_nurb_s_bound(fu->f_p->g.snurb_p, fu->f_p->g.snurb_p->min_pt,
-			fu->f_p->g.snurb_p->max_pt);
+	nurb_s_bound(fu->f_p->g.snurb_p, fu->f_p->g.snurb_p->min_pt,
+		     fu->f_p->g.snurb_p->max_pt);
 	VMIN(f->min_pt, fu->f_p->g.snurb_p->min_pt);
 	VMAX(f->max_pt, fu->f_p->g.snurb_p->max_pt);
     }

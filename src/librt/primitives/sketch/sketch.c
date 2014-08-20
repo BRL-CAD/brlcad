@@ -737,7 +737,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		    int j;
 
 		    t = nsg->k.knots[0] + i*param_delta;
-		    rt_nurb_c_eval(&eg, t, pt);
+		    nurb_c_eval(&eg, t, pt);
 		    if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 			for (j=0; j<coords-1; j++)
 			    pt[j] /= pt[coords-1];

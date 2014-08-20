@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file primitives/bspline/nurb_ray.c
+/** @file ray.c
  *
  * Functions which support the ray intersection for surfaces.
  *
@@ -35,10 +35,10 @@
 #include "nurb.h"
 
 
-void rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax);
+void nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax);
 
 struct face_g_snurb *
-rt_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, struct resource *res)
+nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, struct resource *res)
 {
 
     register struct face_g_snurb *psrf;
@@ -48,14 +48,14 @@ rt_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pl
     int i;
 
     if (nurb_debug & DEBUG_NURB_ISECT)
-	bu_log("rt_nurb_project_srf: projecting surface, planes = (%g %g %g %g) (%g %g %g %g)\n",
+	bu_log("nurb_project_srf: projecting surface, planes = (%g %g %g %g) (%g %g %g %g)\n",
 	       V4ARGS(plane1), V4ARGS(plane2));
 
     rational = RT_NURB_IS_PT_RATIONAL(srf->pt_type);
 
     n_pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_PROJ, 0);
 
-    psrf = (struct face_g_snurb *) rt_nurb_new_snurb(srf->order[0], srf->order[1],
+    psrf = (struct face_g_snurb *) nurb_new_snurb(srf->order[0], srf->order[1],
 						     srf->u.k_size, srf->v.k_size,
 						     srf->s_size[0], srf->s_size[1], n_pt_type, res);
 
@@ -127,7 +127,7 @@ struct internal_convex_hull {
 #endif
 
 void
-rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t *max)
+nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t *max)
 {
     struct internal_convex_hull ch[20]; /* max order is 10 */
     register fastf_t * mp1;
@@ -280,7 +280,7 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 
 
 struct face_g_snurb *
-rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1, fastf_t param2, struct resource *res)
+nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1, fastf_t param2, struct resource *res)
 {
     register int i;
     struct face_g_snurb *region;
@@ -291,7 +291,7 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
     knot_vec = (fastf_t *)bu_calloc(maxorder * 2, sizeof(fastf_t), "knot vector");
 
     /* Build the new knot vector in a local array, which gets copied
-     * later in rt_nurb_s_refine(). */
+     * later in nurb_s_refine(). */
     new_knots.knots = &knot_vec[0];
 
     if (dir == RT_NURB_SPLIT_ROW) {
@@ -310,31 +310,26 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
 	}
     }
 
-    region = rt_nurb_s_refine(srf, dir, &new_knots, res);
+    region = nurb_s_refine(srf, dir, &new_knots, res);
     bu_free(knot_vec, "knot vector");
 
     return region;
 }
 
 
-struct rt_nurb_uv_hit *
-rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, double uv_tol, struct resource *res, struct bu_list *plist)
+struct nurb_uv_hit *
+nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, double uv_tol, struct resource *res, struct bu_list *plist)
 {
-    struct rt_nurb_uv_hit * h;
-    struct face_g_snurb * psrf,
-	* osrf;
-    int dir,
-	sub;
-
-    point_t vmin,
-	vmax;
-    fastf_t u[2],
-	v[2];
+    struct nurb_uv_hit * h;
+    struct face_g_snurb * psrf, * osrf;
+    int dir, sub;
+    point_t vmin, vmax;
+    fastf_t u[2], v[2];
     struct bu_list rni_plist;
 
     NMG_CK_SNURB(srf);
 
-    h = (struct rt_nurb_uv_hit *) 0;
+    h = (struct nurb_uv_hit *) 0;
     if (plist == NULL) {
 	plist = &rni_plist;
 	BU_LIST_INIT(plist);
@@ -342,12 +337,12 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 
     /* project the surface to a 2 dimensional problem */
     /* NOTE that this gives a single snurb back, NOT a list */
-    psrf = rt_nurb_project_srf(srf, plane2, plane1, res);
+    psrf = nurb_project_srf(srf, plane2, plane1, res);
     psrf->dir = 1;
     BU_LIST_APPEND(plist, &psrf->l);
 
     if (DEBUG_NURB_SPLINE)
-	rt_nurb_s_print("srf", psrf);
+	nurb_s_print("srf", psrf);
 
     /* This list starts out with only a single snurb, but more may be
      * added on as work progresses.
@@ -368,9 +363,9 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 	    dir = (dir == 0)?1:0;	/* change direction */
 
 	    if (DEBUG_NURB_SPLINE)
-		rt_nurb_s_print("psrf", psrf);
+		nurb_s_print("psrf", psrf);
 
-	    rt_nurb_pbound(psrf, vmin, vmax);
+	    nurb_pbound(psrf, vmin, vmax);
 
 	    /* Check for origin to be included in the bounding box */
 	    if (!(vmin[0] <= 0.0 && vmin[1] <= 0.0 &&
@@ -378,30 +373,30 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 		if (DEBUG_NURB_SPLINE)
 		    bu_log("this srf doesn't include the origin\n");
 		flat = 1;
-		rt_nurb_free_snurb(psrf, res);
+		nurb_free_snurb(psrf, res);
 		continue;
 	    }
 
-	    rt_nurb_clip_srf(psrf, dir, &smin, &smax);
+	    nurb_clip_srf(psrf, dir, &smin, &smax);
 
 	    if ((smax - smin) > .8) {
-		struct rt_nurb_uv_hit *hp;
+		struct nurb_uv_hit *hp;
 
 		/* Split surf, requeue both sub-surfs at head */
 		/* New surfs will have same dir as arg, here */
 		if (DEBUG_NURB_SPLINE)
 		    bu_log("splitting this surface\n");
-		rt_nurb_s_split(plist, psrf, dir, res);
-		rt_nurb_free_snurb(psrf, res);
+		nurb_s_split(plist, psrf, dir, res);
+		nurb_free_snurb(psrf, res);
 
-		hp = rt_nurb_intersect(srf, plane1, plane2, uv_tol, res, plist);
+		hp = nurb_intersect(srf, plane1, plane2, uv_tol, res, plist);
 		return hp;
 	    }
 	    if (smin > 1.0 || smax < 0.0) {
 		if (DEBUG_NURB_SPLINE)
 		    bu_log("eliminating this surface (smin=%g, smax=%g)\n", smin, smax);
 		flat = 1;
-		rt_nurb_free_snurb(psrf, res);
+		nurb_free_snurb(psrf, res);
 		continue;
 	    }
 	    if (dir == RT_NURB_SPLIT_ROW) {
@@ -421,15 +416,15 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 	    }
 
 	    osrf = psrf;
-	    psrf = (struct face_g_snurb *) rt_nurb_region_from_srf(
+	    psrf = (struct face_g_snurb *) nurb_region_from_srf(
 		osrf, dir, smin, smax, res);
 
 	    psrf->dir = dir;
-	    rt_nurb_free_snurb(osrf, res);
+	    nurb_free_snurb(osrf, res);
 
 	    if (DEBUG_NURB_SPLINE) {
-		bu_log("After call to rt_nurb_region_from_srf() (smin=%g, smax=%g)\n", smin, smax);
-		rt_nurb_s_print("psrf", psrf);
+		bu_log("After call to nurb_region_from_srf() (smin=%g, smax=%g)\n", smin, smax);
+		nurb_s_print("psrf", psrf);
 	    }
 
 	    u[0] = psrf->u.knots[0];
@@ -439,7 +434,7 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 	    v[1] = psrf->v.knots[psrf->v.k_size -1];
 
 	    if ((u[1] - u[0]) < uv_tol && (v[1] - v[0]) < uv_tol) {
-		struct rt_nurb_uv_hit * hit;
+		struct nurb_uv_hit * hit;
 
 		if (DEBUG_NURB_SPLINE) {
 		    fastf_t p1[4], p2[4];
@@ -447,8 +442,8 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 		    vect_t diff;
 
 		    coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
-		    rt_nurb_s_eval(srf, u[0], v[0], p1);
-		    rt_nurb_s_eval(srf, u[1], v[1], p2);
+		    nurb_s_eval(srf, u[0], v[0], p1);
+		    nurb_s_eval(srf, u[1], v[1], p2);
 
 		    if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
 			fastf_t inv_w;
@@ -465,22 +460,22 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 			   MAGNITUDE(diff), V3ARGS(p1), V3ARGS(p2));
 		}
 
-		hit = (struct rt_nurb_uv_hit *) bu_malloc(
-		    sizeof(struct rt_nurb_uv_hit),  "hit");
+		hit = (struct nurb_uv_hit *) bu_malloc(
+		    sizeof(struct nurb_uv_hit),  "hit");
 
-		hit->next = (struct rt_nurb_uv_hit *)0;
+		hit->next = (struct nurb_uv_hit *)0;
 		hit->sub = sub;
 		hit->u = (u[0] + u[1])/2.0;
 		hit->v = (v[0] + v[1])/2.0;
 
-		if (h == (struct rt_nurb_uv_hit *)0)
+		if (h == (struct nurb_uv_hit *)0)
 		    h = hit;
 		else {
 		    hit->next = h;
 		    h = hit;
 		}
 		flat = 1;
-		rt_nurb_free_snurb(psrf, res);
+		nurb_free_snurb(psrf, res);
 	    }
 	    if ((u[1] - u[0]) > (v[1] - v[0]))
 		dir = 1;
@@ -488,12 +483,12 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 	}
     }
 
-    return (struct rt_nurb_uv_hit *)h;
+    return (struct nurb_uv_hit *)h;
 }
 
 
 void
-rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax)
+nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax)
 {
     register fastf_t * ptr;
     register int coords;

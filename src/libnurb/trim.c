@@ -19,7 +19,7 @@
  */
 /** @addtogroup */
 /** @{ */
-/** @file primitives/bspline/nurb_trim.c
+/** @file trim.c
  *
  * Trimming curve routines.
  *
@@ -35,7 +35,7 @@
 #include "vmath.h"
 #include "nmg.h"
 
-extern void rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_t v);
+extern void clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_t v);
 
 struct _interior_line {
     int axis;
@@ -77,7 +77,7 @@ static int quad_table[16]  = {
  * handles the case of endpoint problems correctly.
  */
 int
-rt_trim_case(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
+trim_case(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 {
     int quadrant;
     int qstats;
@@ -130,7 +130,7 @@ rt_trim_case(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
  * of times (TRIM_OUT).  No further processing is required.
  */
 int
-rt_process_caseb(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
+process_caseb(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 {
     int q1, q2;
     fastf_t * pts;
@@ -174,7 +174,7 @@ rt_process_caseb(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
  * Only check end points of the curve
  */
 int
-rt_nurb_uv_dist(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
+nurb_uv_dist(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 {
 
     fastf_t dist;
@@ -239,7 +239,7 @@ rt_nurb_uv_dist(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
  * this procedure.
  */
 int
-rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
+process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 {
 
     struct edge_g_cnurb * clip;
@@ -250,30 +250,30 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
     /* determine if the u, v values are on the curve */
 
-    if (rt_nurb_uv_dist(trim, u, v)  == TRIM_ON) return TRIM_IN;
+    if (nurb_uv_dist(trim, u, v)  == TRIM_ON) return TRIM_IN;
 
     jordan_hit = 0;
 
     BU_LIST_INIT(&plist);
 
     if (nurb_crv_is_bezier(trim))
-	rt_clip_cnurb(&plist, trim, u, v);
+	clip_cnurb(&plist, trim, u, v);
     else
 	nurb_c_to_bezier(&plist, trim);
 
     while (BU_LIST_WHILE(clip, edge_g_cnurb, &plist)) {
 	BU_LIST_DEQUEUE(&clip->l);
 
-	caset = rt_trim_case(clip, u, v);
+	caset = trim_case(clip, u, v);
 
 	trim_flag = 0;
 
 	if (caset == CASE_B)
-	    trim_flag = rt_process_caseb(clip, u, v);
+	    trim_flag = process_caseb(clip, u, v);
 	if (caset == CASE_C)
-	    trim_flag = rt_process_casec(clip, u, v);
+	    trim_flag = process_casec(clip, u, v);
 
-	rt_nurb_free_cnurb(clip);
+	nurb_free_cnurb(clip);
 
 	if (trim_flag == TRIM_IN) jordan_hit++;
 	if (trim_flag == TRIM_ON) break;
@@ -281,7 +281,7 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
     while (BU_LIST_WHILE(clip, edge_g_cnurb, &plist)) {
 	BU_LIST_DEQUEUE(&clip->l);
-	rt_nurb_free_cnurb(clip);
+	nurb_free_cnurb(clip);
     }
 
     if (trim_flag == TRIM_ON)
@@ -305,22 +305,22 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
  * further processing is required.
  */
 int
-rt_uv_in_trim(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
+uv_in_trim(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 {
 
     int quad_case;
 
-    quad_case = rt_trim_case(trim, u, v);	/* determine quadrants */
+    quad_case = trim_case(trim, u, v);	/* determine quadrants */
 
     /* CASE A */
     if (quad_case == CASE_A)
 	return TRIM_OUT;
     if (quad_case == CASE_B)			/* CASE B */
-	return rt_process_caseb(trim, u, v);
+	return process_caseb(trim, u, v);
     if (quad_case == CASE_C)			/* CASE C */
-	return rt_process_casec(trim, u, v);
+	return process_casec(trim, u, v);
 
-    bu_log("rt_uv_in_trim: rt_trim_case() returned illegal value %d\n", quad_case);
+    bu_log("uv_in_trim: trim_case() returned illegal value %d\n", quad_case);
     return -1;
 }
 
@@ -332,7 +332,7 @@ rt_uv_in_trim(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
  * Equations 3, 4, 5 in Sederberg '90 paper
  */
 fastf_t
-rt_trim_line_pt_dist(struct _interior_line *l, fastf_t *pt, int pt_type)
+trim_line_pt_dist(struct _interior_line *l, fastf_t *pt, int pt_type)
 {
     fastf_t h;
     int h_flag;
@@ -381,7 +381,7 @@ _SIGN(fastf_t f)
  * methods which were prossed.
  */
 void
-rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_t v)
+clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_t v)
 {
     fastf_t ds1, dt1;
     struct _interior_line s_line, t_line;
@@ -409,9 +409,9 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 
     for (i = 0; i < crv->c_size; i++, ptr += coords) {
 	ds1 +=
-	    fabs(rt_trim_line_pt_dist(&s_line, ptr, crv->pt_type));
+	    fabs(trim_line_pt_dist(&s_line, ptr, crv->pt_type));
 	dt1 +=
-	    fabs(rt_trim_line_pt_dist(&t_line, ptr, crv->pt_type));
+	    fabs(trim_line_pt_dist(&t_line, ptr, crv->pt_type));
     }
 
     if (ds1 >= dt1) axis = 0; else axis = 1;
@@ -420,9 +420,9 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 
     for (i = 0; i < crv->c_size; i++) {
 	if (axis == 1)
-	    dist[i] = rt_trim_line_pt_dist(&t_line, ptr, crv->pt_type);
+	    dist[i] = trim_line_pt_dist(&t_line, ptr, crv->pt_type);
 	else
-	    dist[i] = rt_trim_line_pt_dist(&s_line, ptr, crv->pt_type);
+	    dist[i] = trim_line_pt_dist(&s_line, ptr, crv->pt_type);
 
 	ptr += coords;
     }
@@ -480,12 +480,12 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 	crv->k.knots[crv->k.k_size -1] * umax;
 
     /* subdivide the curve */
-    c1 = (struct edge_g_cnurb *) rt_nurb_c_xsplit(crv, m1);
-    c2 = rt_nurb_c_xsplit((struct edge_g_cnurb *) c1->l.forw, m2);
+    c1 = (struct edge_g_cnurb *) nurb_c_xsplit(crv, m1);
+    c2 = nurb_c_xsplit((struct edge_g_cnurb *) c1->l.forw, m2);
 
     tmp = (struct edge_g_cnurb *) c1->l.forw;
     BU_LIST_DEQUEUE(&tmp->l);
-    rt_nurb_free_cnurb(tmp);
+    nurb_free_cnurb(tmp);
 
     BU_LIST_INIT(plist);
     BU_LIST_INSERT(&c2->l, plist);
@@ -578,7 +578,7 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 	    if (u_on_curve > u)
 		crossings++;
 	} else
-	    crossings += rt_uv_in_trim(eg, u, v);
+	    crossings += uv_in_trim(eg, u, v);
     }
 
     if (crossings & 01)

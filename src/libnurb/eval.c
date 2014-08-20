@@ -45,7 +45,7 @@
  * parametric value on a curve. This is expanded to the surface.
  */
 void
-rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *final_value)
+nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *final_value)
 {
     fastf_t * mesh_ptr = srf->ctl_points;
     fastf_t * curves;
@@ -67,20 +67,20 @@ rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *fi
 
     diff_curve = (fastf_t *)
 	bu_malloc(row_size * sizeof(fastf_t) * coords,
-		  "rt_nurb_s__eval: diff_curve");
+		  "nurb_s__eval: diff_curve");
 
     c_ptr = diff_curve;
 
-    k_index = rt_nurb_knot_index(&srf->u, u, srf->order[RT_NURB_SPLIT_ROW]);
+    k_index = nurb_knot_index(&srf->u, u, srf->order[RT_NURB_SPLIT_ROW]);
     if (k_index < 0) {
-	bu_log("rt_nurb_s_eval: u value outside parameter range\n");
+	bu_log("nurb_s_eval: u value outside parameter range\n");
 	bu_log("\tUV = (%g %g)\n", u, v);
-	rt_nurb_s_print("", srf);
-	bu_bomb("rt_nurb_s_eval: u value outside parameter range\n");
+	nurb_s_print("", srf);
+	bu_bomb("nurb_s_eval: u value outside parameter range\n");
     }
 
     curves = (fastf_t *) bu_malloc(col_size * sizeof(fastf_t) * coords,
-				   "rt_nurb_s_eval:crv_ptr");
+				   "nurb_s_eval:crv_ptr");
 
     for (i = 0; i < row_size; i++) {
 	fastf_t * rtr_pt;
@@ -92,31 +92,31 @@ rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *fi
 	    *crv_ptr++ = *mesh_ptr++;
 	}
 
-	rtr_pt =  (fastf_t *) rt_nurb_eval_crv(curves, srf->order[RT_NURB_SPLIT_ROW], u,
-					       &srf->u, k_index, coords);
+	rtr_pt =  (fastf_t *) nurb_eval_crv(curves, srf->order[RT_NURB_SPLIT_ROW], u,
+					    &srf->u, k_index, coords);
 
 	for (k = 0; k < coords; k++)
 	    c_ptr[k] = rtr_pt[k];
 	c_ptr += coords;
     }
 
-    bu_free((char *)curves, "rt_nurb_s_eval: curves");
+    bu_free((char *)curves, "nurb_s_eval: curves");
 
-    k_index = rt_nurb_knot_index(&srf->v, v, srf->order[RT_NURB_SPLIT_COL]);
+    k_index = nurb_knot_index(&srf->v, v, srf->order[RT_NURB_SPLIT_COL]);
     if (k_index < 0) {
-	bu_log("rt_nurb_s_eval: v value outside parameter range\n");
+	bu_log("nurb_s_eval: v value outside parameter range\n");
 	bu_log("\tUV = (%g %g)\n", u, v);
-	rt_nurb_s_print("", srf);
-	bu_bomb("rt_nurb_s_eval: v value outside parameter range\n");
+	nurb_s_print("", srf);
+	bu_bomb("nurb_s_eval: v value outside parameter range\n");
     }
 
-    ev_pt = (fastf_t *) rt_nurb_eval_crv(diff_curve, srf->order[RT_NURB_SPLIT_COL],
+    ev_pt = (fastf_t *) nurb_eval_crv(diff_curve, srf->order[RT_NURB_SPLIT_COL],
 					 v, &srf->v, k_index, coords);
 
     for (k = 0; k < coords; k++)
 	final_value[k] = ev_pt[k];
 
-    bu_free ((char *)diff_curve, "rt_nurb_s_eval: diff curve");
+    bu_free ((char *)diff_curve, "nurb_s_eval: diff curve");
 }
 
 
@@ -132,32 +132,32 @@ rt_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t *final_val
 
     coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
 
-    k_index = rt_nurb_knot_index(&crv->k, param, crv->order);
+    k_index = nurb_knot_index(&crv->k, param, crv->order);
     if (k_index < 0) {
-	bu_log("rt_nurb_c_eval: param value outside parameter range\n");
+	bu_log("nurb_c_eval: param value outside parameter range\n");
 	bu_log("\tparam = (%g)\n", param);
-	rt_nurb_c_print(crv);
-	bu_bomb("rt_nurb_c_eval: param value outside parameter range\n");
+	nurb_c_print(crv);
+	bu_bomb("nurb_c_eval: param value outside parameter range\n");
     }
 
     pnts = (fastf_t *) bu_malloc(coords * sizeof(fastf_t) *
-				 crv->c_size, "diff: rt_nurb_c_eval");
+				 crv->c_size, "diff: nurb_c_eval");
 
     for (i = 0; i < coords * crv->c_size; i++)
 	pnts[i] = crv->ctl_points[i];
 
-    ev_pt = (fastf_t *) rt_nurb_eval_crv(
+    ev_pt = (fastf_t *) nurb_eval_crv(
 	pnts, crv->order, param, &crv->k, k_index, coords);
 
     for (i = 0; i < coords; i++)
 	final_value[i] = ev_pt[i];
 
-    bu_free((char *) pnts, "rt_nurb_c_eval");
+    bu_free((char *) pnts, "nurb_c_eval");
 }
 
 
 fastf_t *
-rt_nurb_eval_crv(register fastf_t *crv, int order, fastf_t param, const struct knot_vector *k_vec, int k_index, int coords)
+nurb_eval_crv(register fastf_t *crv, int order, fastf_t param, const struct knot_vector *k_vec, int k_index, int coords)
 {
     int i, j;
 
@@ -185,13 +185,13 @@ rt_nurb_eval_crv(register fastf_t *crv, int order, fastf_t param, const struct k
 	}
 	j--;
     }
-    return rt_nurb_eval_crv(crv, order - 1, param, k_vec,
-			    k_index, coords);
+    return nurb_eval_crv(crv, order - 1, param, k_vec,
+			 k_index, coords);
 }
 
 
 void
-rt_nurb_pr_crv(fastf_t *crv, int c_size, int coords)
+nurb_pr_crv(fastf_t *crv, int c_size, int coords)
 {
     int i;
 

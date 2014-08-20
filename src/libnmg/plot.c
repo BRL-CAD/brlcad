@@ -2072,22 +2072,22 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
     BU_CK_LIST_HEAD(vhead);
     NMG_CK_FACE_G_SNURB(fg);
 
-    rt_nurb_kvgen(&tkv1,
-		  fg->u.knots[0],
-		  fg->u.knots[fg->u.k_size-1], n_interior, (struct resource *)NULL);
+    nurb_kvgen(&tkv1,
+	       fg->u.knots[0],
+	       fg->u.knots[fg->u.k_size-1], n_interior, (struct resource *)NULL);
 
-    rt_nurb_kvgen(&tkv2,
-		  fg->v.knots[0],
-		  fg->v.knots[fg->v.k_size-1], n_interior, (struct resource *)NULL);
+    nurb_kvgen(&tkv2,
+	       fg->v.knots[0],
+	       fg->v.knots[fg->v.k_size-1], n_interior, (struct resource *)NULL);
 
-    rt_nurb_kvmerge(&tau1, &tkv1, &fg->u, (struct resource *)NULL);
-    rt_nurb_kvmerge(&tau2, &tkv2, &fg->v, (struct resource *)NULL);
+    nurb_kvmerge(&tau1, &tkv1, &fg->u, (struct resource *)NULL);
+    nurb_kvmerge(&tau2, &tkv2, &fg->v, (struct resource *)NULL);
 
 /** nmg_hack_snurb(&n, fg);	/ XXX */
 
-    r = rt_nurb_s_refine(fg, RT_NURB_SPLIT_COL, &tau2, (struct resource *)NULL);
+    r = nurb_s_refine(fg, RT_NURB_SPLIT_COL, &tau2, (struct resource *)NULL);
     NMG_CK_SNURB(r);
-    c = rt_nurb_s_refine(r, RT_NURB_SPLIT_ROW, &tau1, (struct resource *)NULL);
+    c = nurb_s_refine(r, RT_NURB_SPLIT_ROW, &tau1, (struct resource *)NULL);
     NMG_CK_SNURB(c);
 
     coords = RT_NURB_EXTRACT_COORDS(c->pt_type);
@@ -2126,13 +2126,14 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
 	    vp += stride;
 	}
     }
-    rt_nurb_free_snurb(c, (struct resource *)NULL);
-    rt_nurb_free_snurb(r, (struct resource *)NULL);
 
-    bu_free((char *) tau1.knots, "rt_nurb_plot:tau1.knots");
-    bu_free((char *) tau2.knots, "rt_nurb_plot:tau2.knots");
-    bu_free((char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
-    bu_free((char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
+    nurb_free_snurb(c, (struct resource *)NULL);
+    nurb_free_snurb(r, (struct resource *)NULL);
+
+    bu_free((char *) tau1.knots, "nurb_plot:tau1.knots");
+    bu_free((char *) tau2.knots, "nurb_plot:tau2.knots");
+    bu_free((char *) tkv1.knots, "nurb_plot:tkv1>knots");
+    bu_free((char *) tkv2.knots, "nurb_plot:tkv2.knots");
 
     return 0;
 }
@@ -2187,7 +2188,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	n.order = 2;
 	n.l.magic = NMG_EDGE_G_CNURB_MAGIC;
 	n.c_size = 2;
-	rt_nurb_gen_knot_vector(&n.k, n.order, 0.0, 1.0, (struct resource *)NULL);
+	nurb_gen_knot_vector(&n.k, n.order, 0.0, 1.0, (struct resource *)NULL);
 	n.pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT);
 	n.ctl_points = (fastf_t *)bu_malloc(
 	    sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(n.pt_type) *
@@ -2242,7 +2243,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 
 	    VSETALL(uvw, 0);
 
-	    rt_nurb_c_eval(c, crv_param, uvw);
+	    nurb_c_eval(c, crv_param, uvw);
 
 	    if (RT_NURB_IS_PT_RATIONAL(c->pt_type)) {
 		uvw[0] = uvw[0]/uvw[2];
@@ -2250,7 +2251,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	    }
 
 	    /* convert 'uvw' from UV coord to XYZ coord via surf! */
-	    rt_nurb_s_eval(s, uvw[0], uvw[1], final);
+	    nurb_s_eval(s, uvw[0], uvw[1], final);
 
 	    if (RT_NURB_IS_PT_RATIONAL(s->pt_type)) {
 		/* divide out homogeneous coordinate */

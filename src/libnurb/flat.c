@@ -41,7 +41,7 @@
 
 
 int
-rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
+nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
     /* Epsilon value for flatness testing */
 {
@@ -84,16 +84,16 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 	     j++)
 	    crv[j] = *mesh_ptr++;
 
-	rdist = rt_nurb_crv_flat(crv, srf->s_size[1],
+	rdist = nurb_crv_flat(crv, srf->s_size[1],
 				 srf->pt_type);
 	max_row_dist = FMAX(max_row_dist, rdist);
     }
 
-    bu_free((char *)crv, "rt_nurb_s_flat: crv");
+    bu_free((char *)crv, "nurb_s_flat: crv");
 
     crv = (fastf_t *) bu_malloc(sizeof(fastf_t) *
 				RT_NURB_EXTRACT_COORDS(srf->pt_type) *
-				srf->s_size[0], 	"rt_nurb_s_flat: crv");
+				srf->s_size[0], "nurb_s_flat: crv");
 
     for (i = 0; i < (coords * srf->s_size[1]); i += coords) {
 	fastf_t rdist;
@@ -107,13 +107,11 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 		    srf->ctl_points[mesh_elt + k];
 	}
 
-	rdist = rt_nurb_crv_flat(crv,
-				 srf->s_size[0], srf->pt_type);
-
+	rdist = nurb_crv_flat(crv, srf->s_size[0], srf->pt_type);
 	max_col_dist = FMAX(max_col_dist, rdist);
     }
 
-    bu_free((char *)crv, "rt_nurb_s_flat: crv");
+    bu_free((char *)crv, "nurb_s_flat: crv");
 
     max_dist = FMAX(max_row_dist, max_col_dist);
 
@@ -195,7 +193,7 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
 
 fastf_t
-rt_nurb_crv_flat(fastf_t *crv, int size, int pt_type)
+nurb_crv_flat(fastf_t *crv, int size, int pt_type)
 {
     point_t p1, p2;
     vect_t ln;

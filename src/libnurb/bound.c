@@ -45,7 +45,7 @@
  * surface, and returns the minimum and maximum points of the surface.
  */
 int
-rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
+nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
 {
     register fastf_t *p_ptr;	/* Mesh pointer */
     register int coords;		/* Elements per vector */
@@ -62,7 +62,7 @@ rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
 
     p_ptr = srf->ctl_points;
     coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
-    rat =    RT_NURB_IS_PT_RATIONAL(srf->pt_type);
+    rat = RT_NURB_IS_PT_RATIONAL(srf->pt_type);
 
     for (i = (srf->s_size[RT_NURB_SPLIT_ROW] *
 	      srf->s_size[RT_NURB_SPLIT_COL]); i > 0; i--) {
@@ -85,7 +85,7 @@ rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
 
 
 int
-rt_nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
+nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
 {
     register fastf_t *p_ptr;	/* Mesh pointer */
     register int coords;		/* Elements per vector */
@@ -124,14 +124,14 @@ rt_nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
 
 
 /**
- * rt_nurb_s_check(srf)
+ * nurb_s_check(srf)
  *
  * Checks the NURB surface control points to make sure no one point is
  * near INFINITY, which probably means that the surface mesh is bad.
  */
 
 int
-rt_nurb_s_check(register struct face_g_snurb *srf)
+nurb_s_check(register struct face_g_snurb *srf)
 {
     register fastf_t *mp;	/* Mesh pointer */
     register int i;
@@ -152,14 +152,14 @@ rt_nurb_s_check(register struct face_g_snurb *srf)
 
 
 /**
- * rt_nurb_c_check(srf)
+ * nurb_c_check(srf)
  *
  * Checks the NURB curve control points to make sure no one point is
  * near INFINITY, which probably means that the surface mesh is bad.
  */
 
 int
-rt_nurb_c_check(register struct edge_g_cnurb *crv)
+nurb_c_check(register struct edge_g_cnurb *crv)
 {
     register fastf_t *mp;	/* Mesh pointer */
     register int i;
