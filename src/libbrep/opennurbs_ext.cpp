@@ -577,6 +577,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     // face boundary
     bool bGrowBox = false;
     ON_3dPoint min, max;
+    face->SurfaceOf()->GetBoundingBox(min, max);
     for (int li = 0; li < face->LoopCount(); li++) {
 	for (int ti = 0; ti < face->Loop(li)->TrimCount(); ti++) {
 	    ON_BrepTrim *trim = face->Loop(li)->Trim(ti);
@@ -592,7 +593,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     ON_Interval v = surf->Domain(1);
 #else
     ON_Interval dom[2] = { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval };
-    for (int i =0; i < 2; i++) {
+    for (int i = 0; i < 2; i++) {
 	dom[i] = surf->Domain(i);
 #ifdef LOOSEN_UV
 	min[i] -= BREP_EDGE_MISS_TOLERANCE;
