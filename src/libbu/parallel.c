@@ -375,10 +375,10 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
     /* avoid using the 'register' keyword in here "just in case" */
 
+#ifndef PARALLEL
+
     if (!func)
 	return; /* nothing to do */
-
-#ifndef PARALLEL
 
     bu_log("bu_parallel(%d., %p):  Not compiled for PARALLEL machine, running single-threaded\n", ncpu, arg);
     /* do the work anyways */
@@ -414,6 +414,9 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
     int i;
     DWORD returnCode;
 #  endif /* WIN32 */
+
+    if (!func)
+	return; /* nothing to do */
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%d, %p)\n", ncpu, arg);
