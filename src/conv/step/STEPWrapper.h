@@ -100,7 +100,7 @@ public:
     bool convert(BRLCADWrapper *dotg);
 
     std::map<int,int> entity_status;
-    int summary_log;
+    char *summary_log_file;
     int dry_run;
 
     SDAI_Application_instance *getEntity(int STEPid);

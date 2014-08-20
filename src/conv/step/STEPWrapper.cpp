@@ -27,6 +27,9 @@
 #include <cctype>
 #include <algorithm>
 
+#include <iostream>
+#include <fstream>
+
 /* interface header */
 #include "./STEPWrapper.h"
 #include "Factory.h"
@@ -454,30 +457,38 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	}
     }
 
-    if (summary_log) {
-    for (int i = 0; i < num_ents; i++) {
-	if (!i) std::cout << "\n";
-	SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
-	if (sse == NULL) {
-	    continue;
-	}
-	std::map<int, int>::iterator e_it = entity_status.find(sse->StepFileId());
-	if (e_it != entity_status.end()) {
-	    switch (e_it->second) {
-		case STEP_LOADED:
-		    //std::cout << "Loaded:" << sse->EntityName() << " (ID:" << sse->StepFileId() << ")\n";
-		    break;
-		case STEP_LOAD_ERROR:
-		    std::cout << "Error loading:" << sse->EntityName() << " (ID:" << sse->StepFileId() << ")\n";
-		    break;
-		default:
-		    std::cout << "Unknown status:" << sse->EntityName() << " (ID:" << sse->StepFileId() << "): " << e_it->second << "\n";
-		    break;
+    if (summary_log_file) {
+	ofstream step_log;
+	step_log.open(summary_log_file);
+	for (int i = 0; i < num_ents; i++) {
+	    SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
+	    if (sse == NULL) {
+		continue;
 	    }
-	} else {
-	    std::cout << "Entity " << sse->EntityName() << " (ID:" << sse->StepFileId() << ") was not processed by step-g\n";
+	    std::string pname = id2name_map[sse->StepFileId()];
+	    if (!pname.empty() && (pname.compare("''") != 0) && pname.length()) {
+		step_log << pname << ",";
+	    } else {
+		step_log << "''" << ",";
+	    }
+	    std::map<int, int>::iterator e_it = entity_status.find(sse->StepFileId());
+	    if (e_it != entity_status.end()) {
+		switch (e_it->second) {
+		    case STEP_LOADED:
+			step_log << sse->StepFileId() << "," << sse->EntityName() << ",SUCCESS\n";
+			break;
+		    case STEP_LOAD_ERROR:
+			step_log << sse->StepFileId() << "," << sse->EntityName() << ",LOAD_ERROR\n";
+			break;
+		    default:
+			step_log << sse->StepFileId() << "," << sse->EntityName() << ",UNKNOWN_STATUS\n";
+			break;
+		}
+	    } else {
+		step_log << sse->StepFileId() << "," << sse->EntityName() << ",NOT_PROCESSED\n";
+	    }
 	}
-    }
+	step_log.close();
     }
 
     return true;

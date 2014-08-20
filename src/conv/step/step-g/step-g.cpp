@@ -76,14 +76,14 @@ main(int argc, char *argv[])
     char *output_file = (char *)NULL;
     bool verbose = false;
     int dry_run = 0;
-    int summary_log = 0;
-    while ((c = bu_getopt(argc, argv, "DSvo:")) != -1) {
+    char *summary_log_file = (char *)NULL;
+    while ((c = bu_getopt(argc, argv, "DS:vo:")) != -1) {
 	switch (c) {
 	    case 'D':
 		dry_run = 1;
 		break;
 	    case 'S':
-		summary_log = 1;
+		summary_log_file = bu_optarg;
 		break;
 	    case 'o':
 		output_file = bu_optarg;
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
     STEPWrapper *step = new STEPWrapper();
 
     step->dry_run = dry_run;
-    step->summary_log= summary_log;
+    step->summary_log_file= summary_log_file;
 
     step->Verbose(verbose);
 
