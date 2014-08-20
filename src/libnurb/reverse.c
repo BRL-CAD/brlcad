@@ -36,7 +36,7 @@
 #include "nurb.h"
 
 void
-rt_nurb_reverse_srf(struct face_g_snurb *srf)
+nurb_reverse_srf(struct face_g_snurb *srf)
 {
 
     int i, j, k;

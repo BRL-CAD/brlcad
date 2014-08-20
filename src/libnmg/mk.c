@@ -2260,7 +2260,7 @@ nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
  * the pointers are NULL, then the necessary storage is allocated
  * here.
  *
- * This is the NMG parallel to rt_nurb_new_snurb().
+ * This is the NMG parallel to nurb_new_snurb().
  */
 void
 nmg_face_g_snurb(struct faceuse *fu, int u_order, int v_order, int n_u_knots,

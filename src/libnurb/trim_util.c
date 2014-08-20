@@ -43,7 +43,7 @@
  * otherwise it breaks the surface evaluation.
  */
 int
-rt_nurb_crv_in_range(struct edge_g_cnurb *crv, fastf_t u_min, fastf_t u_max, fastf_t v_min, fastf_t v_max)
+nurb_crv_in_range(struct edge_g_cnurb *crv, fastf_t u_min, fastf_t u_max, fastf_t v_min, fastf_t v_max)
 {
     point_t eval;
     fastf_t *pts;

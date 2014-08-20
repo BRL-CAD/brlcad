@@ -68,7 +68,7 @@ nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
     crv = (fastf_t *) bu_malloc(sizeof(fastf_t) *
 				NURB_EXTRACT_COORDS(srf->pt_type) * srf->s_size[1],
-				"rt_nurb_s_flat: crv");
+				"nurb_s_flat: crv");
 
     /* Test Row and NURB_SPLIT_COL curves for flatness, If a curve
      * is not flat than get distance to line

@@ -115,7 +115,7 @@ nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
     nurb_interp_mat(interp_mat, &crv->k, nodes, order, n);
 
     /* Solve the system of equations to get the control points Because
-     * rt_nurb_solve needs to modify the data as it works, and it
+     * nurb_solve needs to modify the data as it works, and it
      * wouldn't be polite to trash our caller's data, make a local
      * copy.  This creates the final ctl_points[] array.
      */

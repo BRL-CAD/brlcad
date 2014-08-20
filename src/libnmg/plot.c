@@ -2229,9 +2229,9 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	if (coords != 2 && !NURB_IS_PT_RATIONAL(c->pt_type)) bu_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
 	s = fu->f_p->g.snurb_p;
 
-	/* This section uses rt_nurb_c_eval(), but rt_nurb_c_refine is likely faster.
+	/* This section uses nurb_c_eval(), but nurb_c_refine is likely faster.
 	 * XXXX Need a way to selectively and recursively refine curve to avoid
-	 * feeding rt_nurb_s_eval() parameters outside domain of surface.
+	 * feeding nurb_s_eval() parameters outside domain of surface.
 	 */
 	param_delta = (c->k.knots[c->k.k_size-1] - c->k.knots[0])/(fastf_t)(n_interior+1);
 	crv_param = c->k.knots[0];
