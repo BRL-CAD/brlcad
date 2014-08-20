@@ -178,21 +178,6 @@ bu_semaphore_free(void)
 
 
 void
-bu_semaphore_reinit(unsigned int nsemaphores)
-{
-#if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
-    if (nsemaphores) /* quellage */
-	return;
-    return;					/* No support on this hardware */
-#else
-
-    bu_semaphore_free();
-    bu_semaphore_init(nsemaphores);
-#endif	/* PARALLEL */
-}
-
-
-void
 bu_semaphore_acquire(unsigned int i)
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
