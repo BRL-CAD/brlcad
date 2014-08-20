@@ -1148,7 +1148,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
 
 /**
  * Obtain the list of ray segments which intersect with the nmg.
- * This routine does all of the "work" for rt_nmg_shot()
+ * This routine does all of the "work" for nmg_shot()
  *
  * Return:
  * # of segments added to list.
