@@ -352,14 +352,15 @@ parallel_interface_arg_stub(struct thread_data *user_thread_data)
 #endif /* PARALLEL */
 
 
+struct parallel_info {
+    int parent;
+    size_t lim;
+};
+
+
 void
 bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 {
-    /* # bu_parallel invocations concurrent */
-    /* static int parallel_nprocess = 0; */
-
-    /* avoid using the 'register' keyword in here "just in case" */
-
 #ifndef PARALLEL
 
     if (!func)
@@ -371,13 +372,16 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
 #else
 
+    /* container for keeping track of recursive invocation data, limits, current values */
+/*    static struct parallel_info mapping[MAX_PSW] = {{0,0}};*/
+
     struct thread_data *user_thread_data_bu;
     int avail_cpus = 1;
     int x;
 
     char *libbu_affinity = NULL;
 
-    /* OFF by default until linux issue is debugged */
+    /* OFF by default as modern schedulers are smarter than this. */
     int affinity = 0;
 
     /*
@@ -424,6 +428,16 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	    bu_log("CPU affinity disabled.\n", affinity);
     }
 
+    /* if we're in debug mode, allow additional cpus */
+    if (!(bu_debug & BU_DEBUG_PARALLEL)) {
+	/* otherwise, limit outselves to what is actually available */
+	avail_cpus = bu_avail_cpus();
+	if (ncpu > avail_cpus) {
+	    bu_log("%d cpus requested, but only %d available\n", ncpu, avail_cpus);
+	    ncpu = avail_cpus;
+	}
+    }
+
     user_thread_data_bu = (struct thread_data *)bu_calloc(ncpu, sizeof(*user_thread_data_bu), "struct thread_data *user_thread_data_bu");
 
     /* Fill in the data of user_thread_data_bu structures of all threads */
@@ -433,15 +447,6 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	user_thread_data_bu[x].cpu_id    = x;
 	user_thread_data_bu[x].counted   = 0;
 	user_thread_data_bu[x].affinity  = affinity;
-    }
-
-    /* if we're in debug mode, allow additional cpus */
-    if (!(bu_debug & BU_DEBUG_PARALLEL)) {
-	avail_cpus = bu_avail_cpus();
-	if (ncpu > avail_cpus) {
-	    bu_log("%d cpus requested, but only %d available\n", ncpu, avail_cpus);
-	    ncpu = avail_cpus;
-	}
     }
 
     /*
