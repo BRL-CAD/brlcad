@@ -370,6 +370,9 @@ typedef enum {
 } parallel_action_t;
 
 
+/* this function provides book-keeping so that we give out unique
+ * thread identifiers and for tracking a thread's parent context.
+ */
 static struct parallel_info *
 parallel_mapping(parallel_action_t action, int id, size_t max)
 {
@@ -388,6 +391,9 @@ parallel_mapping(parallel_action_t action, int id, size_t max)
 		    }
 		}
 		bu_semaphore_release(BU_SEM_THREAD);
+
+		if (got_cpu == MAX_PSW)
+		    bu_bomb("Compile-time parallelism limit reached.  Unable to create more threading.\n");
 
 		mapping[got_cpu].parent = bu_parallel_id();
 		mapping[got_cpu].lim = max;
@@ -577,6 +583,8 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	    if (thread_tbl[i] == thread) {
 		thread_tbl[i] = (rt_thread_t)-1;
 		nthreade++;
+		immediate_parent->finished++;
+		parallel_mapping(PARALLEL_PUT, user_thread_data_bu[x].cpu_id, ncpu);
 		break;
 	    }
 	}
@@ -715,6 +723,8 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
 	nthreade++;
 	thread_tbl[x] = (rt_thread_t)-1;
+	immediate_parent->finished++;
+	parallel_mapping(PARALLEL_PUT, user_thread_data_bu[x].cpu_id, ncpu);
     }
 #  endif /* end if Win32 threads */
 
