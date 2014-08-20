@@ -428,6 +428,8 @@ BRNode*
 CurveTree::initialLoopBBox()
 {
     ON_BoundingBox bb;
+    m_face->SurfaceOf()->GetBBox(bb[0], bb[1]);
+
     for (int i = 0; i < m_face->LoopCount(); i++) {
 	ON_BrepLoop* loop = m_face->Loop(i);
 	if (loop->m_type == ON_BrepLoop::outer) {
