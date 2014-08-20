@@ -148,7 +148,7 @@ main(int argc, char *argv[])
     data.iterations = 1000000;
     bu_parallel(callback, ncpu, &data);
     if (tally(ncpu) != (ncpu-1)*data.iterations) {
-	bu_log("bu_parallel simple callback with data, few iterations [FAIL] (got %zd, expected %zd)\n", tally(ncpu), (ncpu-1)*data.iterations);
+	bu_log("bu_parallel simple callback with data, many iterations [FAIL] (got %zd, expected %zd)\n", tally(ncpu), (ncpu-1)*data.iterations);
 	return 1;
     }
 
@@ -157,7 +157,7 @@ main(int argc, char *argv[])
     data.iterations = 1000000;
     bu_parallel(callback, 0, &data);
     if (tally(MAX_PSW) != (ncpu-1)*data.iterations) {
-	bu_log("bu_parallel simple callback with data, few iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), (ncpu-1)*data.iterations);
+	bu_log("bu_parallel simple callback with data, many iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), (ncpu-1)*data.iterations);
 	return 1;
     }
 
@@ -166,9 +166,8 @@ main(int argc, char *argv[])
     data.iterations = 10;
     data.call = &callback;
     bu_parallel(recursive_callback, ncpu, &data);
-    if (tally(MAX_PSW) != (ncpu-1)*data.iterations*ncpu) {
-	bu_log("bu_parallel recursive callback, few iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), (ncpu-1)*data.iterations*ncpu);
-	bu_log("bu_parallel recursive callback [FAIL]\n");
+    if (tally(MAX_PSW) != ncpu*ncpu*data.iterations) {
+	bu_log("bu_parallel recursive callback, few iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), ncpu*ncpu*data.iterations);
 	return 1;
     }
 
@@ -177,9 +176,8 @@ main(int argc, char *argv[])
     data.iterations = 1000000;
     data.call = &callback;
     bu_parallel(recursive_callback, ncpu, &data);
-    if (tally(MAX_PSW) != (ncpu-1)*data.iterations*ncpu) {
-	bu_log("bu_parallel recursive callback, few iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), (ncpu-1)*data.iterations*ncpu);
-	bu_log("bu_parallel recursive callback [FAIL]\n");
+    if (tally(MAX_PSW) != ncpu*ncpu*data.iterations) {
+	bu_log("bu_parallel recursive callback, many iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), ncpu*ncpu*data.iterations);
 	return 1;
     }
 
