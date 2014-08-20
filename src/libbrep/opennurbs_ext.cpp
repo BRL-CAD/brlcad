@@ -579,13 +579,15 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     // face boundary
     bool bGrowBox = false;
     ON_3dPoint min, max;
-    face->SurfaceOf()->GetBoundingBox(min, max);
     for (int li = 0; li < face->LoopCount(); li++) {
 	for (int ti = 0; ti < face->Loop(li)->TrimCount(); ti++) {
 	    ON_BrepTrim *trim = face->Loop(li)->Trim(ti);
 	    trim->GetBoundingBox(min, max, bGrowBox);
 	    bGrowBox = true;
 	}
+    }
+    if (!bGrowBox) {
+	face->SurfaceOf()->GetBoundingBox(min, max);
     }
 
     TRACE("Creating surface tree for: " << face->m_face_index);
