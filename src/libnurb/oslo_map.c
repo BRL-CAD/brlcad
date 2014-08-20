@@ -59,7 +59,7 @@ nurb_map_oslo(struct oslo_mat *oslo, fastf_t *old_pts, fastf_t *new_pts, int o_s
 	i;				/* oslo loop */
     int coords;
 
-    coords = RT_NURB_EXTRACT_COORDS(pt_type);
+    coords = NURB_EXTRACT_COORDS(pt_type);
 
     c_ptr = new_pts;
 

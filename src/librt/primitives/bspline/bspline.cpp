@@ -108,7 +108,7 @@ rt_nurb_grans(struct face_g_snurb *srf)
     k_gran = ((total_knots * sizeof(dbfloat_t)) + sizeof(union record)-1)
 	/ sizeof(union record);
 
-    total_points = RT_NURB_EXTRACT_COORDS(srf->pt_type) *
+    total_points = NURB_EXTRACT_COORDS(srf->pt_type) *
 	(srf->s_size[0] * srf->s_size[1]);
     p_gran = ((total_points * sizeof(dbfloat_t)) + sizeof(union record)-1)
 	/ sizeof(union record);
@@ -643,21 +643,21 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 
 	if (tkv2.k_size > n->v.k_size) {
-	    r = (struct face_g_snurb *) rt_nurb_s_refine(n, RT_NURB_SPLIT_COL, &tkv2, (struct resource *)NULL);
+	    r = (struct face_g_snurb *) rt_nurb_s_refine(n, NURB_SPLIT_COL, &tkv2, (struct resource *)NULL);
 	    refined_col = 1;
 	} else {
 	    r = n;
 	}
 	if (tkv1.k_size > r->u.k_size) {
-	    c = (struct face_g_snurb *) rt_nurb_s_refine(r, RT_NURB_SPLIT_ROW, &tkv1, (struct resource *)NULL);
+	    c = (struct face_g_snurb *) rt_nurb_s_refine(r, NURB_SPLIT_ROW, &tkv1, (struct resource *)NULL);
 	    refined_row = 1;
 	} else {
 	    c = r;
 	}
 
-	coords = RT_NURB_EXTRACT_COORDS(n->pt_type);
+	coords = NURB_EXTRACT_COORDS(n->pt_type);
 
-	if (RT_NURB_IS_PT_RATIONAL(n->pt_type)) {
+	if (NURB_IS_PT_RATIONAL(n->pt_type)) {
 	    vp = c->ctl_points;
 	    for (i= 0; i < c->s_size[0] * c->s_size[1]; i++) {
 		vp[0] /= vp[3];
@@ -775,9 +775,9 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	}
 
 	if (rp->d.d_geom_type == 3)
-	    pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
+	    pt_type = NURB_MAKE_PT_TYPE(3, NURB_PT_XYZ, NURB_PT_NONRAT);
 	else
-	    pt_type = RT_NURB_MAKE_PT_TYPE(4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL);
+	    pt_type = NURB_MAKE_PT_TYPE(4, NURB_PT_XYZ, NURB_PT_RATIONAL);
 
 	/* fix endianness */
 	d.d.d_id = rp->d.d_id;
@@ -935,7 +935,7 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	rec[rec_ptr].d.d_nknots = (short)(((srf->u.k_size + srf->v.k_size)
 				    * sizeof(dbfloat_t)) + sizeof(union record)-1)/ sizeof(union record);
 	rec[rec_ptr].d.d_nctls = (short)((
-				      RT_NURB_EXTRACT_COORDS(srf->pt_type)
+				      NURB_EXTRACT_COORDS(srf->pt_type)
 				      * (srf->s_size[0] * srf->s_size[1])
 				      * sizeof(dbfloat_t)) + sizeof(union record)-1)
 	    / sizeof(union record);
@@ -947,7 +947,7 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	rec[rec_ptr].d.d_ctl_size[0] = 	srf->s_size[0];
 	rec[rec_ptr].d.d_ctl_size[1] = 	srf->s_size[1];
 	rec[rec_ptr].d.d_geom_type =
-	    RT_NURB_EXTRACT_COORDS(srf->pt_type);
+	    NURB_EXTRACT_COORDS(srf->pt_type);
 
 	vp = (dbfloat_t *) &rec[rec_ptr +1];
 	for (n = 0; n < rec[rec_ptr].d.d_kv_size[0]; n++) {
@@ -984,7 +984,7 @@ rt_nurb_bytes(struct face_g_snurb *srf)
 	+ srf->u.k_size * SIZEOF_NETWORK_DOUBLE	/* u knot vector knots */
 	+ srf->v.k_size * SIZEOF_NETWORK_DOUBLE	/* v knot vector knots */
 	+ 2 * SIZEOF_NETWORK_LONG		/* mesh size */
-	+ RT_NURB_EXTRACT_COORDS(srf->pt_type) *
+	+ NURB_EXTRACT_COORDS(srf->pt_type) *
 	(srf->s_size[0] * srf->s_size[1]) * SIZEOF_NETWORK_DOUBLE;	/* control point mesh */
 
     return total_bytes;
@@ -1034,7 +1034,7 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
 	NMG_CK_SNURB(srf);
 
-	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+	coords = NURB_EXTRACT_COORDS(srf->pt_type);
 	*(uint32_t *)cp = htonl(coords);
 	cp += SIZEOF_NETWORK_LONG;
 	*(uint32_t *)cp = htonl(srf->order[0]);
@@ -1142,9 +1142,9 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	s_size[1] = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
 	if (pt_type == 3)
-	    pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
+	    pt_type = NURB_MAKE_PT_TYPE(3, NURB_PT_XYZ, NURB_PT_NONRAT);
 	else
-	    pt_type = RT_NURB_MAKE_PT_TYPE(4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL);
+	    pt_type = NURB_MAKE_PT_TYPE(4, NURB_PT_XYZ, NURB_PT_RATIONAL);
 
 	sip->srfs[s] = (struct face_g_snurb *) nurb_new_snurb(
 	    order[0], order[1],
@@ -1153,7 +1153,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	    pt_type, (struct resource *)NULL);
 
 	srf = sip->srfs[s];
-	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+	coords = NURB_EXTRACT_COORDS(srf->pt_type);
 
 	uknots = (double *)bu_malloc(srf->u.k_size * sizeof(double), "uknots");
 	vknots = (double *)bu_malloc(srf->v.k_size * sizeof(double), "vknots");
@@ -1260,7 +1260,7 @@ rt_nurb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	np = sip->srfs[surf];
 	NMG_CK_SNURB(np);
 	mp = np->ctl_points;
-	ncoord = RT_NURB_EXTRACT_COORDS(np->pt_type);
+	ncoord = NURB_EXTRACT_COORDS(np->pt_type);
 
 	bu_vls_printf(str,
 		      "\tSurface %d: order %d x %d, mesh %d x %d\n",
@@ -1335,7 +1335,7 @@ rt_nurb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	    }
 	    bu_vls_strcat(logstr, "} P {");
 
-	    coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+	    coords = NURB_EXTRACT_COORDS(srf->pt_type);
 	    for (j=0; j<srf->s_size[0]*srf->s_size[1]; j++) {
 		for (k=0; k<coords; k++) {
 		    bu_vls_printf(logstr, " %.25G",
@@ -1446,7 +1446,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 			bu_free((char *)u_pts, "u_pts");
 			bu_free((char *)v_pts, "v_pts");
 			tmp_len = srf->s_size[0] * srf->s_size[1] *
-			    RT_NURB_EXTRACT_COORDS(srf->pt_type);
+			    NURB_EXTRACT_COORDS(srf->pt_type);
 			tmp2 = tmp_len;
 			if (tcl_obj_to_fastf_array(brlcad_interp, srf_param_array[i+1],
 						   &srf->ctl_points, &tmp_len) != tmp2) {

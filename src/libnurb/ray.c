@@ -51,15 +51,15 @@ nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane
 	bu_log("nurb_project_srf: projecting surface, planes = (%g %g %g %g) (%g %g %g %g)\n",
 	       V4ARGS(plane1), V4ARGS(plane2));
 
-    rational = RT_NURB_IS_PT_RATIONAL(srf->pt_type);
+    rational = NURB_IS_PT_RATIONAL(srf->pt_type);
 
-    n_pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_PROJ, 0);
+    n_pt_type = NURB_MAKE_PT_TYPE(2, NURB_PT_PROJ, 0);
 
     psrf = (struct face_g_snurb *) nurb_new_snurb(srf->order[0], srf->order[1],
 						     srf->u.k_size, srf->v.k_size,
 						     srf->s_size[0], srf->s_size[1], n_pt_type, res);
 
-    psrf->dir = RT_NURB_SPLIT_COL;
+    psrf->dir = NURB_SPLIT_COL;
 
     for (i = 0; i < srf->u.k_size; i++) {
 	psrf->u.knots[i] = srf->u.knots[i];
@@ -97,8 +97,8 @@ nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane
 		bu_log("\tmesh pt (%g %g %g), becomes (%g %g)\n", V3ARGS(mp1), mp2[0], mp2[1]);
 	}
 
-	mp1 += RT_NURB_EXTRACT_COORDS(srf->pt_type);
-	mp2 += RT_NURB_EXTRACT_COORDS(psrf->pt_type);
+	mp1 += NURB_EXTRACT_COORDS(srf->pt_type);
+	mp2 += NURB_EXTRACT_COORDS(psrf->pt_type);
     }
 
     return (struct face_g_snurb *) psrf;
@@ -145,7 +145,7 @@ nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t *ma
     col_size = srf->s_size[1];
     row_size = srf->s_size[0];
 
-    coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+    coords = NURB_EXTRACT_COORDS(srf->pt_type);
 
     p1 = srf->ctl_points;
     p2 = srf->ctl_points + coords * (col_size - 1);
@@ -155,7 +155,7 @@ nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t *ma
 			    (row_size - 1)) +
 	((col_size - 1) * coords);
 
-    if (dir == RT_NURB_SPLIT_ROW) {
+    if (dir == NURB_SPLIT_ROW) {
 	v1[0] = p1[0] - p3[0];
 	v1[1] = p1[1] - p3[1];
 
@@ -179,7 +179,7 @@ nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t *ma
     *min = 1.0e8;
     *max = -1.0e8;
 
-    if (dir == RT_NURB_SPLIT_ROW) {
+    if (dir == NURB_SPLIT_ROW) {
 	for (i = 0; i < col_size; i++) {
 	    ch[i].param = (fastf_t) i / (col_size - 1.0);
 	    ch[i].min = 1.0e8;
@@ -294,7 +294,7 @@ nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1, fa
      * later in nurb_s_refine(). */
     new_knots.knots = &knot_vec[0];
 
-    if (dir == RT_NURB_SPLIT_ROW) {
+    if (dir == NURB_SPLIT_ROW) {
 	new_knots.k_size = srf->order[0] * 2;
 
 	for (i = 0; i < srf->order[0]; i++) {
@@ -399,7 +399,7 @@ nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2,
 		nurb_free_snurb(psrf, res);
 		continue;
 	    }
-	    if (dir == RT_NURB_SPLIT_ROW) {
+	    if (dir == NURB_SPLIT_ROW) {
 		smin = (1.0 - smin) * psrf->u.knots[0] +
 		    smin * psrf->u.knots[
 			psrf->u.k_size -1];
@@ -441,11 +441,11 @@ nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2,
 		    int coords;
 		    vect_t diff;
 
-		    coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+		    coords = NURB_EXTRACT_COORDS(srf->pt_type);
 		    nurb_s_eval(srf, u[0], v[0], p1);
 		    nurb_s_eval(srf, u[1], v[1], p2);
 
-		    if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+		    if (NURB_IS_PT_RATIONAL(srf->pt_type)) {
 			fastf_t inv_w;
 
 			inv_w = 1.0 / p1[coords-1];
@@ -499,10 +499,10 @@ nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax)
 
     ptr = srf->ctl_points;
 
-    coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+    coords = NURB_EXTRACT_COORDS(srf->pt_type);
 
-    for (i = (srf->s_size[RT_NURB_SPLIT_ROW] *
-	      srf->s_size[RT_NURB_SPLIT_COL]); i > 0; i--) {
+    for (i = (srf->s_size[NURB_SPLIT_ROW] *
+	      srf->s_size[NURB_SPLIT_COL]); i > 0; i--) {
 	V_MIN((vmin[0]), (ptr[0]));
 	V_MAX((vmax[0]), (ptr[0]));
 

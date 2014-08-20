@@ -47,7 +47,7 @@ rt_nurb_reverse_srf(struct face_g_snurb *srf)
     fastf_t * ptr2;
 
     p_ptr = srf->ctl_points;
-    coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+    coords = NURB_EXTRACT_COORDS(srf->pt_type);
 
     row = srf->s_size[0];
     col = srf->s_size[1];

@@ -47,8 +47,8 @@ rt_nurb_crv_in_range(struct edge_g_cnurb *crv, fastf_t u_min, fastf_t u_max, fas
 {
     point_t eval;
     fastf_t *pts;
-    int coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
-    int rat = RT_NURB_IS_PT_RATIONAL(crv->pt_type);
+    int coords = NURB_EXTRACT_COORDS(crv->pt_type);
+    int rat = NURB_IS_PT_RATIONAL(crv->pt_type);
     int i;
 
     pts = &crv->ctl_points[0];

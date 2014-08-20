@@ -61,9 +61,9 @@ NURB_EXPORT extern uint32_t nurb_debug;
 
 /* Define parametric directions for splitting. */
 
-#define RT_NURB_SPLIT_ROW 0
-#define RT_NURB_SPLIT_COL 1
-#define RT_NURB_SPLIT_FLAT 2
+#define NURB_SPLIT_ROW 0
+#define NURB_SPLIT_COL 1
+#define NURB_SPLIT_FLAT 2
 
 /* Definition of NURB point types and coordinates
  * Bit:	  8765 4321 0
@@ -80,24 +80,24 @@ NURB_EXPORT extern uint32_t nurb_debug;
  */
 
 /* point types */
-#define RT_NURB_PT_XY 	1			/**< @brief x, y coordinates */
-#define RT_NURB_PT_XYZ	2			/**< @brief x, y, z coordinates */
-#define RT_NURB_PT_UV	3			/**< @brief trim u, v parameter space */
-#define RT_NURB_PT_DATA 4			/**< @brief random data */
-#define RT_NURB_PT_PROJ	5			/**< @brief Projected Surface */
+#define NURB_PT_XY 	1			/**< @brief x, y coordinates */
+#define NURB_PT_XYZ	2			/**< @brief x, y, z coordinates */
+#define NURB_PT_UV	3			/**< @brief trim u, v parameter space */
+#define NURB_PT_DATA	4			/**< @brief random data */
+#define NURB_PT_PROJ	5			/**< @brief Projected Surface */
 
-#define RT_NURB_PT_RATIONAL	1
-#define RT_NURB_PT_NONRAT 	0
+#define NURB_PT_RATIONAL	1
+#define NURB_PT_NONRAT 	0
 
-#define RT_NURB_MAKE_PT_TYPE(n, t, h)	((n<<5) | (t<<1) | h)
-#define RT_NURB_EXTRACT_COORDS(pt)	(pt>>5)
-#define RT_NURB_EXTRACT_PT_TYPE(pt)		((pt>>1) & 0x0f)
-#define RT_NURB_IS_PT_RATIONAL(pt)		(pt & 0x1)
-#define RT_NURB_STRIDE(pt)		(RT_NURB_EXTRACT_COORDS(pt) * sizeof( fastf_t))
+#define NURB_MAKE_PT_TYPE(n, t, h)	((n<<5) | (t<<1) | h)
+#define NURB_EXTRACT_COORDS(pt)		(pt>>5)
+#define NURB_EXTRACT_PT_TYPE(pt)	((pt>>1) & 0x0f)
+#define NURB_IS_PT_RATIONAL(pt)		(pt & 0x1)
+#define NURB_STRIDE(pt)		(NURB_EXTRACT_COORDS(pt) * sizeof( fastf_t))
 
 /* macros to check/validate a structure pointer
  */
-#define NMG_CK_KNOT(_p)		BU_CKMAG(_p, RT_KNOT_VECTOR_MAGIC, "knot_vector")
+#define NMG_CK_KNOT(_p)		BU_CKMAG(_p, KNOT_VECTOR_MAGIC, "knot_vector")
 #define NMG_CK_CNURB(_p)	BU_CKMAG(_p, NMG_EDGE_G_CNURB_MAGIC, "cnurb")
 #define NMG_CK_SNURB(_p)	BU_CKMAG(_p, NMG_FACE_G_SNURB_MAGIC, "snurb")
 

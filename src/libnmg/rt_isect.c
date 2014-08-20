@@ -1844,8 +1844,8 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	    if (nmg_debug & DEBUG_RT_ISECT)
 		bu_log("isect_ray_snurb_face: face is planar\n");
 
-	    rational = RT_NURB_IS_PT_RATIONAL(srf->pt_type);
-	    coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+	    rational = NURB_IS_PT_RATIONAL(srf->pt_type);
+	    coords = NURB_EXTRACT_COORDS(srf->pt_type);
 	    if (coords < 1)
 		continue; /* "pointless" */
 
@@ -1965,7 +1965,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 		VMOVE(myhit->hit.hit_normal, pl);
 	    } else {
 		nurb_s_eval(srf, hp->u, hp->v, homo_hit);
-		if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+		if (NURB_IS_PT_RATIONAL(srf->pt_type)) {
 		    fastf_t inv_homo;
 
 		    inv_homo = 1.0/homo_hit[W];

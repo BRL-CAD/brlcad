@@ -778,7 +778,7 @@ rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
     double *scanp;
 
     if (pt_type)
-	count *= RT_NURB_EXTRACT_COORDS(pt_type);
+	count *= NURB_EXTRACT_COORDS(pt_type);
 
     cp = rt_nmg_fastf_p;
     *(uint32_t *)&cp[0] = htonl(DISK_DOUBLE_ARRAY_MAGIC);
@@ -794,11 +794,11 @@ rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
     } else {
 	/* Need to scale data by 'scale' ! */
 	scanp = (double *)bu_malloc(count*sizeof(double), "scanp");
-	if (RT_NURB_IS_PT_RATIONAL(pt_type)) {
+	if (NURB_IS_PT_RATIONAL(pt_type)) {
 	    /* Don't scale the homogeneous (rational) coord */
 	    int nelem;	/* # elements per tuple */
 
-	    nelem = RT_NURB_EXTRACT_COORDS(pt_type);
+	    nelem = NURB_EXTRACT_COORDS(pt_type);
 	    for (i = 0; i < count; i += nelem) {
 		VSCALEN(&scanp[i], &fp[i], scale, nelem-1);
 		scanp[i+nelem-1] = fp[i+nelem-1];
@@ -847,7 +847,7 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
     }
 
     if (pt_type)
-	len *= RT_NURB_EXTRACT_COORDS(pt_type);
+	len *= NURB_EXTRACT_COORDS(pt_type);
 
     count = ntohl(*(uint32_t*)(cp + 4));
     if (count != len || count < 0) {
@@ -875,15 +875,15 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
     tmp = (double *)bu_malloc(count * sizeof(double), "rt_nmg_import4_fastf tmp[]");
     bu_cv_ntohd((unsigned char *)tmp, cp + (4+4), count);
 
-    switch (RT_NURB_EXTRACT_COORDS(pt_type)) {
+    switch (NURB_EXTRACT_COORDS(pt_type)) {
 	case 3:
-	    if (RT_NURB_IS_PT_RATIONAL(pt_type)) bu_bomb("rt_nmg_import4_fastf() Rational 3-tuple?\n");
+	    if (NURB_IS_PT_RATIONAL(pt_type)) bu_bomb("rt_nmg_import4_fastf() Rational 3-tuple?\n");
 	    for (count -= 3; count >= 0; count -= 3) {
 		MAT4X3PNT(&ret[count], mat, &tmp[count]);
 	    }
 	    break;
 	case 4:
-	    if (!RT_NURB_IS_PT_RATIONAL(pt_type)) bu_bomb("rt_nmg_import4_fastf() non-rational 4-tuple?\n");
+	    if (!NURB_IS_PT_RATIONAL(pt_type)) bu_bomb("rt_nmg_import4_fastf() non-rational 4-tuple?\n");
 	    for (count -= 4; count >= 0; count -= 4) {
 		MAT4X4PNT(&ret[count], mat, &tmp[count]);
 	    }
@@ -1202,7 +1202,7 @@ rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double lo
 		rt_nmg_export4_fastf(eg->ctl_points,
 				     eg->c_size,
 				     eg->pt_type,
-				     RT_NURB_EXTRACT_PT_TYPE(eg->pt_type) == RT_NURB_PT_UV ?
+				     NURB_EXTRACT_PT_TYPE(eg->pt_type) == NURB_PT_UV ?
 				     1.0 : local2mm));
 	}
 	    return;
@@ -1617,7 +1617,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	     * The curve's control points are in parameter space.
 	     * They do NOT get transformed!
 	     */
-	    if (RT_NURB_EXTRACT_PT_TYPE(eg->pt_type) == RT_NURB_PT_UV) {
+	    if (NURB_EXTRACT_PT_TYPE(eg->pt_type) == NURB_PT_UV) {
 		/* UV coords on snurb surface don't get xformed */
 		eg->ctl_points = rt_nmg_import4_fastf(basep,
 						      ecnt,
@@ -2143,7 +2143,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 		ndouble =  fg->u.k_size +
 		    fg->v.k_size +
 		    fg->s_size[0] * fg->s_size[1] *
-		    RT_NURB_EXTRACT_COORDS(fg->pt_type);
+		    NURB_EXTRACT_COORDS(fg->pt_type);
 		double_count += ndouble;
 		ecnt[i].byte_offset = fastf_byte_count;
 		fastf_byte_count += 3*(4+4) + 8*ndouble;
@@ -2158,7 +2158,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 		if (eg->order == 0) break;
 		kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
 		ndouble = eg->k.k_size + eg->c_size *
-		    RT_NURB_EXTRACT_COORDS(eg->pt_type);
+		    NURB_EXTRACT_COORDS(eg->pt_type);
 		double_count += ndouble;
 		ecnt[i].byte_offset = fastf_byte_count;
 		fastf_byte_count += 2*(4+4) + 8*ndouble;
@@ -2489,7 +2489,7 @@ rt_nmg_export5(
 	    ndouble = fg->u.k_size +
 		fg->v.k_size +
 		fg->s_size[0] * fg->s_size[1] *
-		RT_NURB_EXTRACT_COORDS(fg->pt_type);
+		NURB_EXTRACT_COORDS(fg->pt_type);
 	    double_count += ndouble;
 	    ecnt[i].byte_offset = fastf_byte_count;
 	    fastf_byte_count += 3*(4*4) + 89*ndouble;
@@ -2502,7 +2502,7 @@ rt_nmg_export5(
 	    if (eg->order != 0) {
 		kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
 		ndouble = eg->k.k_size +eg->c_size *
-		    RT_NURB_EXTRACT_COORDS(eg->pt_type);
+		    NURB_EXTRACT_COORDS(eg->pt_type);
 		double_count += ndouble;
 		ecnt[i].byte_offset = fastf_byte_count;
 		fastf_byte_count += 2*(4+4) + 8*ndouble;

@@ -224,7 +224,7 @@ struct rt_nurb_internal {
 
 #define RT_NURB_CK_MAGIC(_p) BU_CKMAG(_p, RT_NURB_INTERNAL_MAGIC, "rt_nurb_internal");
 #define RT_NURB_GET_CONTROL_POINT(_s, _u, _v)	((_s)->ctl_points[ \
-						     ((_v)*(_s)->s_size[0]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
+						     ((_v)*(_s)->s_size[0]+(_u))*NURB_EXTRACT_COORDS((_s)->pt_type)])
 
 /* ID_BREP */
 struct rt_brep_internal {

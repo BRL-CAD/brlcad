@@ -61,7 +61,7 @@ nurb_s_diff(const struct face_g_snurb *srf, int dir)
 
     NMG_CK_SNURB(srf);
 
-    if (dir == RT_NURB_SPLIT_ROW) {
+    if (dir == NURB_SPLIT_ROW) {
 	nsrf = (struct face_g_snurb *)
 	    nurb_new_snurb(srf->order[0] - 1, srf->order[1],
 			   srf->u.k_size - 2, srf->v.k_size,
@@ -72,17 +72,17 @@ nurb_s_diff(const struct face_g_snurb *srf, int dir)
 	    fastf_t * old_points, *new_points;
 
 	    old_points = srf->ctl_points +
-		i * RT_NURB_EXTRACT_COORDS(srf->pt_type)
+		i * NURB_EXTRACT_COORDS(srf->pt_type)
 		*srf->s_size[1];
 
 	    new_points = nsrf->ctl_points +
-		i * RT_NURB_EXTRACT_COORDS(nsrf->pt_type)
+		i * NURB_EXTRACT_COORDS(nsrf->pt_type)
 		*nsrf->s_size[1];
 
 	    nurb_mesh_diff(srf->order[0],
 			   old_points, new_points, srf->u.knots,
-			   RT_NURB_EXTRACT_COORDS(srf->pt_type),
-			   RT_NURB_EXTRACT_COORDS(nsrf->pt_type),
+			   NURB_EXTRACT_COORDS(srf->pt_type),
+			   NURB_EXTRACT_COORDS(nsrf->pt_type),
 			   srf->s_size[1], srf->pt_type);
 	}
 
@@ -102,16 +102,16 @@ nurb_s_diff(const struct face_g_snurb *srf, int dir)
 	    fastf_t * old_points, *new_points;
 
 	    old_points = srf->ctl_points +
-		i * RT_NURB_EXTRACT_COORDS(srf->pt_type);
+		i * NURB_EXTRACT_COORDS(srf->pt_type);
 
 	    new_points = nsrf->ctl_points +
-		i * RT_NURB_EXTRACT_COORDS(nsrf->pt_type);
+		i * NURB_EXTRACT_COORDS(nsrf->pt_type);
 
 	    nurb_mesh_diff(srf->order[1],
 			   old_points, new_points, srf->v.knots,
-			   RT_NURB_EXTRACT_COORDS(srf->pt_type) *
+			   NURB_EXTRACT_COORDS(srf->pt_type) *
 			   srf->s_size[1],
-			   RT_NURB_EXTRACT_COORDS(nsrf->pt_type) *
+			   NURB_EXTRACT_COORDS(nsrf->pt_type) *
 			   nsrf->s_size[1],
 			   srf->s_size[0], srf->pt_type);
 	}
@@ -146,8 +146,8 @@ nurb_c_diff(const struct edge_g_cnurb *crv)
     npts = (fastf_t *) ncrv->ctl_points;
 
     nurb_mesh_diff(crv->order, opts, npts, crv->k.knots,
-		   RT_NURB_EXTRACT_COORDS(crv->pt_type),
-		   RT_NURB_EXTRACT_COORDS(ncrv->pt_type),
+		   NURB_EXTRACT_COORDS(crv->pt_type),
+		   NURB_EXTRACT_COORDS(ncrv->pt_type),
 		   crv->c_size, crv->pt_type);
 
     for (i = 1; i < crv->k.k_size - 1; i++)
@@ -164,7 +164,7 @@ nurb_mesh_diff(int order, const fastf_t *o_pts, fastf_t *n_pts, const fastf_t *k
     int coords;
     fastf_t denom;
 
-    coords = RT_NURB_EXTRACT_COORDS(pt_type);
+    coords = NURB_EXTRACT_COORDS(pt_type);
 
     for (i = 1; i < o_size; i++) {
 	denom = knots[ i + order - 1] - knots[i];

@@ -50,11 +50,11 @@ nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t u,
     vect_t norm;
     int i;
 
-    us = nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-    vs = nurb_s_diff(srf, RT_NURB_SPLIT_COL);
-    uus = nurb_s_diff(us, RT_NURB_SPLIT_ROW);
-    vvs = nurb_s_diff(vs, RT_NURB_SPLIT_COL);
-    uvs = nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
+    us = nurb_s_diff(srf, NURB_SPLIT_ROW);
+    vs = nurb_s_diff(srf, NURB_SPLIT_COL);
+    uus = nurb_s_diff(us, NURB_SPLIT_ROW);
+    vvs = nurb_s_diff(vs, NURB_SPLIT_COL);
+    uvs = nurb_s_diff(vs, NURB_SPLIT_ROW);
 
     nurb_s_eval(srf, u, v, se);
     nurb_s_eval(us, u, v, ue);
@@ -69,7 +69,7 @@ nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t u,
     nurb_free_snurb(vvs, (struct resource *)NULL);
     nurb_free_snurb(uvs, (struct resource *)NULL);
 
-    if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+    if (NURB_IS_PT_RATIONAL(srf->pt_type)) {
 	for (i = 0; i < 3; i++) {
 	    ue[i] = (1.0 / se[3] * ue[i]) -
 		(ue[3]/se[3]) * se[0]/se[3];

@@ -65,11 +65,11 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
     fastf_t *pt;
 
 
-    us = nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-    vs = nurb_s_diff(srf, RT_NURB_SPLIT_COL);
-    uus = nurb_s_diff(us, RT_NURB_SPLIT_ROW);
-    vvs = nurb_s_diff(vs, RT_NURB_SPLIT_COL);
-    uvs = nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
+    us = nurb_s_diff(srf, NURB_SPLIT_ROW);
+    vs = nurb_s_diff(srf, NURB_SPLIT_COL);
+    uus = nurb_s_diff(us, NURB_SPLIT_ROW);
+    vvs = nurb_s_diff(vs, NURB_SPLIT_COL);
+    uvs = nurb_s_diff(vs, NURB_SPLIT_ROW);
 
     d1 = 0.0;
     d2 = 0.0;
@@ -86,7 +86,7 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 
 	if (mag > d1) d1 = mag;
 
-	pt += RT_NURB_EXTRACT_COORDS(uus->pt_type);
+	pt += NURB_EXTRACT_COORDS(uus->pt_type);
 
     }
 
@@ -101,7 +101,7 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 
 	if (mag > d2) d2 = mag;
 
-	pt += RT_NURB_EXTRACT_COORDS(uvs->pt_type);
+	pt += NURB_EXTRACT_COORDS(uvs->pt_type);
 
     }
 
@@ -116,7 +116,7 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 
 	if (mag > d3) d3 = mag;
 
-	pt += RT_NURB_EXTRACT_COORDS(vvs->pt_type);
+	pt += NURB_EXTRACT_COORDS(vvs->pt_type);
 
     }
 
@@ -163,7 +163,7 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
     if (crv->order < 3)
 	return -1.0;
 
-    num_coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
+    num_coords = NURB_EXTRACT_COORDS(crv->pt_type);
     if (num_coords > 5) {
 	bu_log("ERROR: rt_cnurb_par_edge() cannot handle curves with more than 5 coordinates (curve has %d)\n",
 	       num_coords);

@@ -660,14 +660,14 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		if (nsg->order < 3) {
 		    /* just straight lines */
 		    VJOIN2(start_pt, V, sketch_ip->verts[nsg->ctl_points[0]][0], u_vec, sketch_ip->verts[nsg->ctl_points[0]][1], v_vec);
-		    if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
+		    if (NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 			inv_weight = 1.0/nsg->weights[0];
 			VSCALE(start_pt, start_pt, inv_weight);
 		    }
 		    RT_ADD_VLIST(vhead, start_pt, BN_VLIST_LINE_MOVE);
 		    for (i=1; i<nsg->c_size; i++) {
 			VJOIN2(pt, V, sketch_ip->verts[nsg->ctl_points[i]][0], u_vec, sketch_ip->verts[nsg->ctl_points[i]][1], v_vec);
-			if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
+			if (NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 			    inv_weight = 1.0/nsg->weights[i];
 			    VSCALE(pt, pt, inv_weight);
 			}
@@ -680,10 +680,10 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		eg.k.k_size = nsg->k.k_size;
 		eg.k.knots = nsg->k.knots;
 		eg.c_size = nsg->c_size;
-		coords = 3 + RT_NURB_IS_PT_RATIONAL(nsg->pt_type);
-		eg.pt_type = RT_NURB_MAKE_PT_TYPE(coords, 2, RT_NURB_IS_PT_RATIONAL(nsg->pt_type));
+		coords = 3 + NURB_IS_PT_RATIONAL(nsg->pt_type);
+		eg.pt_type = NURB_MAKE_PT_TYPE(coords, 2, NURB_IS_PT_RATIONAL(nsg->pt_type));
 		eg.ctl_points = (fastf_t *)bu_malloc(nsg->c_size * coords * sizeof(fastf_t), "eg.ctl_points");
-		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
+		if (NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 		    for (i=0; i<nsg->c_size; i++) {
 			VJOIN2(&eg.ctl_points[i*coords], V, sketch_ip->verts[nsg->ctl_points[i]][0], u_vec, sketch_ip->verts[nsg->ctl_points[i]][1], v_vec);
 			eg.ctl_points[(i+1)*coords - 1] = nsg->weights[i];
@@ -738,7 +738,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 
 		    t = nsg->k.knots[0] + i*param_delta;
 		    nurb_c_eval(&eg, t, pt);
-		    if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
+		    if (NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 			for (j=0; j<coords-1; j++)
 			    pt[j] /= pt[coords-1];
 		    }
@@ -1060,7 +1060,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 		    nsg->ctl_points[i] = ntohl(*(uint32_t *)ptr);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
-		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
+		if (NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 		    nsg->weights = (fastf_t *)bu_malloc(nsg->c_size * sizeof(fastf_t), "nsg->weights");
 		    scanp = (double *)bu_malloc(nsg->c_size * sizeof(double), "scanp");
 		    bu_cv_ntohd((unsigned char *)scanp, ptr, nsg->c_size);
@@ -1160,7 +1160,7 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	    case CURVE_NURB_MAGIC:
 		nseg = (struct nurb_seg *)lng;
 		nbytes += 16 + sizeof(struct knot_vector) + nseg->k.k_size * 8 + nseg->c_size * 4;
-		if (RT_NURB_IS_PT_RATIONAL(nseg->pt_type))
+		if (NURB_IS_PT_RATIONAL(nseg->pt_type))
 		    nbytes += nseg->c_size * 8;	/* weights */
 		break;
 	    case CURVE_BEZIER_MAGIC:
@@ -1272,7 +1272,7 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		    *(uint32_t *)ptr = htonl(nseg->ctl_points[i]);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
-		if (RT_NURB_IS_PT_RATIONAL(nseg->pt_type)) {
+		if (NURB_IS_PT_RATIONAL(nseg->pt_type)) {
 		    scanp = (double *)bu_malloc(nseg->c_size * sizeof(double), "scanp");
 		    /* convert fastf_t to double */
 		    for (i=0; i<(size_t)nseg->c_size; i++) {
@@ -1450,7 +1450,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 		    nsg->ctl_points[i] = ntohl(*(uint32_t *)ptr);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
-		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
+		if (NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 		    nsg->weights = (fastf_t *)bu_malloc(nsg->c_size * sizeof(fastf_t), "nsg->weights");
 		    scanp = (double *)bu_malloc(nsg->c_size * sizeof(double), "scanp");
 		    bu_cv_ntohd((unsigned char *)scanp, ptr, nsg->c_size);
@@ -1561,7 +1561,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		ep->ext_nbytes += SIZEOF_NETWORK_LONG + nseg->k.k_size * SIZEOF_NETWORK_DOUBLE;
 		/* control point count */
 		ep->ext_nbytes += nseg->c_size * SIZEOF_NETWORK_LONG;
-		if (RT_NURB_IS_PT_RATIONAL(nseg->pt_type))
+		if (NURB_IS_PT_RATIONAL(nseg->pt_type))
 		    /* (double)weights */
 		    ep->ext_nbytes += nseg->c_size * SIZEOF_NETWORK_DOUBLE;
 		break;
@@ -1672,7 +1672,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		    *(uint32_t *)cp = htonl(nseg->ctl_points[i]);
 		    cp += SIZEOF_NETWORK_LONG;
 		}
-		if (RT_NURB_IS_PT_RATIONAL(nseg->pt_type)) {
+		if (NURB_IS_PT_RATIONAL(nseg->pt_type)) {
 		    scanp = (double *)bu_malloc(nseg->c_size * sizeof(double), "scanp");
 		    /* convert fastf_t to double */
 		    for (i=0; i<(size_t)nseg->c_size; i++) {
@@ -1844,7 +1844,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 	    case CURVE_NURB_MAGIC:
 		nsg = (struct nurb_seg *)sketch_ip->curve.segment[seg_no];
 		bu_vls_strcat(str, "\t\tNURB Curve:\n");
-		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
+		if (NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 		    sprintf(buf, "\t\t\tCurve is rational\n");
 		    bu_vls_strcat(str, buf);
 		}
@@ -2038,7 +2038,7 @@ rt_copy_curve(struct rt_curve *crv_out, const struct rt_curve *crv_in)
 		nsg_out->ctl_points = (int *)bu_calloc(nsg_in->c_size, sizeof(int), "nsg_out->ctl_points");
 		for (i=0; i<(size_t)nsg_out->c_size; i++)
 		    nsg_out->ctl_points[i] = nsg_in->ctl_points[i];
-		if (RT_NURB_IS_PT_RATIONAL(nsg_in->pt_type)) {
+		if (NURB_IS_PT_RATIONAL(nsg_in->pt_type)) {
 		    nsg_out->weights = (fastf_t *)bu_malloc(nsg_out->c_size * sizeof(fastf_t), "nsg_out->weights");
 		    for (i=0; i<(size_t)nsg_out->c_size; i++)
 			nsg_out->weights[i] = nsg_in->weights[i];

@@ -1670,7 +1670,7 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 		     8, 12,		/* Number of knots, u, v */
 		     NULL, NULL,	/* initial u, v knot vectors */
 		     9, 5,		/* n_rows, n_cols */
-		     RT_NURB_MAKE_PT_TYPE(4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL),
+		     NURB_MAKE_PT_TYPE(4, NURB_PT_XYZ, NURB_PT_RATIONAL),
 		     NULL);		/* initial mesh */
 
     fg = fu->f_p->g.snurb_p;

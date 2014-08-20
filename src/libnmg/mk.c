@@ -1858,7 +1858,7 @@ nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_
     if (points) {
 	eg->ctl_points = points;
     } else {
-	int ncoord = RT_NURB_EXTRACT_COORDS(pt_type);
+	int ncoord = NURB_EXTRACT_COORDS(pt_type);
 
 	eg->ctl_points = (fastf_t *)bu_calloc(
 	    ncoord * n_pts,
@@ -2314,7 +2314,7 @@ nmg_face_g_snurb(struct faceuse *fu, int u_order, int v_order, int n_u_knots,
 	fg->ctl_points = mesh;
     } else {
 	int nwords;
-	nwords = n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
+	nwords = n_rows * n_cols * NURB_EXTRACT_COORDS(pt_type);
 	fg->ctl_points = (fastf_t *)bu_calloc(
 	    nwords, sizeof(fastf_t), "snurb ctl_points[]");
     }

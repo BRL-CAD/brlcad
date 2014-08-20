@@ -95,7 +95,7 @@ nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
 
     crv->order = order;
     crv->c_size = n;
-    crv->pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, 0);
+    crv->pt_type = NURB_MAKE_PT_TYPE(3, NURB_PT_XYZ, 0);
 
     /* First set up Curve data structs */
     /* For now we will assume that all parameterizations are uniform */
@@ -166,7 +166,7 @@ nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ymax,
     srf->s_size[0] = xmax;
     srf->s_size[1] = ymax;
     srf->l.magic = NMG_FACE_G_SNURB_MAGIC;
-    srf->pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
+    srf->pt_type = NURB_MAKE_PT_TYPE(3, NURB_PT_XYZ, NURB_PT_NONRAT);
 
     /* the U knot vector replates to the points in a row therefore you
      * want to determine how many cols there are similar for the V knot

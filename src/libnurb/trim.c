@@ -87,9 +87,9 @@ trim_case(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
     qstats = 0;
 
-    coords = RT_NURB_EXTRACT_COORDS(trim->pt_type);
+    coords = NURB_EXTRACT_COORDS(trim->pt_type);
     pts = trim->ctl_points;
-    rat = RT_NURB_IS_PT_RATIONAL(trim->pt_type);
+    rat = NURB_IS_PT_RATIONAL(trim->pt_type);
 
     /* Handle rational specially since we need to divide the rational
      * portion.
@@ -136,7 +136,7 @@ process_caseb(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
     fastf_t * pts;
     int rat;
 
-    rat = RT_NURB_IS_PT_RATIONAL(trim->pt_type);
+    rat = NURB_IS_PT_RATIONAL(trim->pt_type);
 
     pts = trim->ctl_points;
 
@@ -145,7 +145,7 @@ process_caseb(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	else q1 = (pts[1]/pts[2] >= v)?QUAD2:QUAD3;
 
 
-	pts = trim->ctl_points + RT_NURB_EXTRACT_COORDS(trim->pt_type) *
+	pts = trim->ctl_points + NURB_EXTRACT_COORDS(trim->pt_type) *
 	    (trim->c_size -1);
 	if (pts[0]/pts[2] > u) q2 = (pts[1]/pts[2] >= v)?QUAD1:QUAD4;
 	else q2 = (pts[1]/pts[2] >= v)?QUAD2:QUAD3;
@@ -156,7 +156,7 @@ process_caseb(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
 
 	pts = trim->ctl_points +
-	    RT_NURB_EXTRACT_COORDS(trim->pt_type) 	*
+	    NURB_EXTRACT_COORDS(trim->pt_type) 	*
 	    (trim->c_size -1);
 	if (pts[0] > u) q2 = (pts[1] >= v)?QUAD1:QUAD4;
 	else q2 = (pts[1] >= v)?QUAD2:QUAD3;
@@ -184,8 +184,8 @@ nurb_uv_dist(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
     fastf_t u2, v2;
 
     ptr = trim->ctl_points;
-    coords = RT_NURB_EXTRACT_COORDS(trim->pt_type);
-    rat = RT_NURB_IS_PT_RATIONAL(trim->pt_type);
+    coords = NURB_EXTRACT_COORDS(trim->pt_type);
+    rat = NURB_IS_PT_RATIONAL(trim->pt_type);
 
     u2 = 0.0;
     v2 = 0.0;
@@ -337,7 +337,7 @@ trim_line_pt_dist(struct _interior_line *l, fastf_t *pt, int pt_type)
     fastf_t h;
     int h_flag;
 
-    h_flag = RT_NURB_IS_PT_RATIONAL(pt_type);
+    h_flag = NURB_IS_PT_RATIONAL(pt_type);
 
     if (l->axis == 0) {
 	if (h_flag) h = (pt[1] / pt[2] - l->o_dist) * pt[2]; /* pt[2] is weight */
@@ -394,7 +394,7 @@ clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_t v
     fastf_t *ptr;
     fastf_t dist[10];
 
-    coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
+    coords = NURB_EXTRACT_COORDS(crv->pt_type);
 
     s_line.axis = 0;	s_line.o_dist = v;
     t_line.axis = 1;	t_line.o_dist = u;
@@ -550,7 +550,7 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 	    VMOVE(uv1, vua1->param);
 	    VMOVE(uv2, vua2->param);
 
-	    if (RT_NURB_IS_PT_RATIONAL(eg->pt_type)) {
+	    if (NURB_IS_PT_RATIONAL(eg->pt_type)) {
 		uv1[0] /= uv1[2];
 		uv1[1] /= uv1[2];
 		uv2[0] /= uv2[2];

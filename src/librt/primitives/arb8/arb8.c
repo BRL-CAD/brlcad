@@ -1674,7 +1674,7 @@ rt_arb_tnurb(struct shell **s, struct rt_db_internal *ip, const struct bn_tol *t
 			 4, 4,		/* Number of knots, u, v */
 			 NULL, NULL,	/* initial u, v knot vectors */
 			 2, 2,		/* n_rows, n_cols */
-			 RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT),
+			 NURB_MAKE_PT_TYPE(3, NURB_PT_XYZ, NURB_PT_NONRAT),
 			 NULL);		/* initial mesh */
 
 	fg = fu[i]->f_p->g.snurb_p;

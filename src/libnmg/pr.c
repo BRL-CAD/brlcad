@@ -162,7 +162,7 @@ nmg_pr_fg(const uint32_t *magic, char *h)
 	    for (i=0; i<fgs->v.k_size; i++)
 		bu_log(" %f", fgs->v.knots[i]);
 	    bu_log("\n%s  Mesh size = (%d X %d), pt_type = %d\n", h, fgs->s_size[0], fgs->s_size[1], fgs->pt_type);
-	    ncoords = RT_NURB_EXTRACT_COORDS(fgs->pt_type);
+	    ncoords = NURB_EXTRACT_COORDS(fgs->pt_type);
 	    l = 0;
 	    for (i=0; i<fgs->s_size[0]; i++) {
 		bu_log("%s  ", h);
@@ -467,7 +467,7 @@ nmg_pr_eg(const uint32_t *eg_magic_p, char *h)
 	    for (i = 0; i < eg_c->k.k_size; i++)
 		bu_log(" %f", eg_c->k.knots[i]);
 	    bu_log("\n");
-	    ncoords = RT_NURB_EXTRACT_COORDS(eg_c->pt_type);
+	    ncoords = NURB_EXTRACT_COORDS(eg_c->pt_type);
 	    l = 0;
 	    bu_log("%s  control points: ", h);
 	    for (i = 0; i < eg_c->c_size; i++) {

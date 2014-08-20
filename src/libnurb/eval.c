@@ -50,12 +50,12 @@ nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *final
     fastf_t * mesh_ptr = srf->ctl_points;
     fastf_t * curves;
     int i, j, k;
-    int row_size = srf->s_size[RT_NURB_SPLIT_ROW];
-    int col_size = srf->s_size[RT_NURB_SPLIT_COL];
+    int row_size = srf->s_size[NURB_SPLIT_ROW];
+    int col_size = srf->s_size[NURB_SPLIT_COL];
     fastf_t * c_ptr;
     fastf_t * diff_curve, *ev_pt;
     int k_index;
-    int coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+    int coords = NURB_EXTRACT_COORDS(srf->pt_type);
 
     NMG_CK_SNURB(srf);
 
@@ -71,7 +71,7 @@ nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *final
 
     c_ptr = diff_curve;
 
-    k_index = nurb_knot_index(&srf->u, u, srf->order[RT_NURB_SPLIT_ROW]);
+    k_index = nurb_knot_index(&srf->u, u, srf->order[NURB_SPLIT_ROW]);
     if (k_index < 0) {
 	bu_log("nurb_s_eval: u value outside parameter range\n");
 	bu_log("\tUV = (%g %g)\n", u, v);
@@ -92,7 +92,7 @@ nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *final
 	    *crv_ptr++ = *mesh_ptr++;
 	}
 
-	rtr_pt =  (fastf_t *) nurb_eval_crv(curves, srf->order[RT_NURB_SPLIT_ROW], u,
+	rtr_pt =  (fastf_t *) nurb_eval_crv(curves, srf->order[NURB_SPLIT_ROW], u,
 					    &srf->u, k_index, coords);
 
 	for (k = 0; k < coords; k++)
@@ -102,7 +102,7 @@ nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *final
 
     bu_free((char *)curves, "nurb_s_eval: curves");
 
-    k_index = nurb_knot_index(&srf->v, v, srf->order[RT_NURB_SPLIT_COL]);
+    k_index = nurb_knot_index(&srf->v, v, srf->order[NURB_SPLIT_COL]);
     if (k_index < 0) {
 	bu_log("nurb_s_eval: v value outside parameter range\n");
 	bu_log("\tUV = (%g %g)\n", u, v);
@@ -110,7 +110,7 @@ nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *final
 	bu_bomb("nurb_s_eval: v value outside parameter range\n");
     }
 
-    ev_pt = (fastf_t *) nurb_eval_crv(diff_curve, srf->order[RT_NURB_SPLIT_COL],
+    ev_pt = (fastf_t *) nurb_eval_crv(diff_curve, srf->order[NURB_SPLIT_COL],
 					 v, &srf->v, k_index, coords);
 
     for (k = 0; k < coords; k++)
@@ -121,7 +121,7 @@ nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *final
 
 
 void
-rt_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t *final_value)
+nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t *final_value)
 {
     fastf_t * pnts;
     fastf_t * ev_pt;
@@ -130,7 +130,7 @@ rt_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t *final_val
 
     NMG_CK_CNURB(crv);
 
-    coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
+    coords = NURB_EXTRACT_COORDS(crv->pt_type);
 
     k_index = nurb_knot_index(&crv->k, param, crv->order);
     if (k_index < 0) {

@@ -62,14 +62,14 @@ nurb_to_poly(struct face_g_snurb *srf)
 			    (srf->s_size[0] - 1));
 
     /* If the point is rational then divide out the w component */
-    if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+    if (NURB_IS_PT_RATIONAL(srf->pt_type)) {
 	int w_index;
 
-	if (RT_NURB_EXTRACT_PT_TYPE(srf->pt_type) == RT_NURB_PT_XY)
+	if (NURB_EXTRACT_PT_TYPE(srf->pt_type) == NURB_PT_XY)
 	    w_index = 2;
-	else if (RT_NURB_EXTRACT_PT_TYPE(srf->pt_type) == RT_NURB_PT_UV)
+	else if (NURB_EXTRACT_PT_TYPE(srf->pt_type) == NURB_PT_UV)
 	    w_index = 2;
-	else if (RT_NURB_EXTRACT_PT_TYPE(srf->pt_type) == RT_NURB_PT_XYZ)
+	else if (NURB_EXTRACT_PT_TYPE(srf->pt_type) == NURB_PT_XYZ)
 	    w_index = 3;
 	else /* assume the forth coordinate */
 	    w_index = 3;

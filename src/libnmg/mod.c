@@ -1870,7 +1870,7 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 	    /* Copy mesh */
 	    memcpy(newface->ctl_points, old->ctl_points,
 		   old->s_size[0] * old->s_size[1] *
-		   RT_NURB_EXTRACT_COORDS(old->pt_type) *
+		   NURB_EXTRACT_COORDS(old->pt_type) *
 		   sizeof(fastf_t));
 	}
     }

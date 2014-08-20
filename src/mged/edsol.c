@@ -8532,7 +8532,7 @@ nurb_closest2d(
 	srf = spl->srfs[i];
 	NMG_CK_SNURB(srf);
 	mesh = srf->ctl_points;
-	advance = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+	advance = NURB_EXTRACT_COORDS(srf->pt_type);
 
 	for (v = 0; v < srf->s_size[0]; v++) {
 	    for (u = 0; u < srf->s_size[1]; u++) {

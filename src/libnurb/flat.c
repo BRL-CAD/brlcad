@@ -50,7 +50,7 @@ nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
     register fastf_t max_dist;
     int dir;
     fastf_t * mesh_ptr = srf->ctl_points;
-    int coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+    int coords = NURB_EXTRACT_COORDS(srf->pt_type);
     int j, i, k;
     int mesh_elt;
     vect_t p1, p2, p3, p4, v1, v2, v3;
@@ -62,15 +62,15 @@ nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
     dir = srf->dir;
 
-    otherdir = (dir == RT_NURB_SPLIT_ROW) ? RT_NURB_SPLIT_COL : RT_NURB_SPLIT_ROW;
+    otherdir = (dir == NURB_SPLIT_ROW) ? NURB_SPLIT_COL : NURB_SPLIT_ROW;
 
     max_row_dist = max_col_dist = -INFINITY;
 
     crv = (fastf_t *) bu_malloc(sizeof(fastf_t) *
-				RT_NURB_EXTRACT_COORDS(srf->pt_type) * srf->s_size[1],
+				NURB_EXTRACT_COORDS(srf->pt_type) * srf->s_size[1],
 				"rt_nurb_s_flat: crv");
 
-    /* Test Row and RT_NURB_SPLIT_COL curves for flatness, If a curve
+    /* Test Row and NURB_SPLIT_COL curves for flatness, If a curve
      * is not flat than get distance to line
      */
 
@@ -80,7 +80,7 @@ nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 	fastf_t rdist;
 	for (j = 0;
 	     j < (srf->s_size[1] *
-		  RT_NURB_EXTRACT_COORDS(srf->pt_type));
+		  NURB_EXTRACT_COORDS(srf->pt_type));
 	     j++)
 	    crv[j] = *mesh_ptr++;
 
@@ -92,7 +92,7 @@ nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
     bu_free((char *)crv, "nurb_s_flat: crv");
 
     crv = (fastf_t *) bu_malloc(sizeof(fastf_t) *
-				RT_NURB_EXTRACT_COORDS(srf->pt_type) *
+				NURB_EXTRACT_COORDS(srf->pt_type) *
 				srf->s_size[0], "nurb_s_flat: crv");
 
     for (i = 0; i < (coords * srf->s_size[1]); i += coords) {
@@ -117,9 +117,9 @@ nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
     if (max_dist > epsilon) {
 	if (max_row_dist > max_col_dist)
-	    return RT_NURB_SPLIT_ROW;
+	    return NURB_SPLIT_ROW;
 	else
-	    return RT_NURB_SPLIT_COL;
+	    return NURB_SPLIT_COL;
     }
 
     /* Test the corners to see if they lie in a plane. */
@@ -131,7 +131,7 @@ nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
     mesh_ptr = srf->ctl_points;
 
-    if (!RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+    if (!NURB_IS_PT_RATIONAL(srf->pt_type)) {
 
 	VMOVE(p1, mesh_ptr);
 	VMOVE(p2,
@@ -178,7 +178,7 @@ nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
     nrmln = MAGNITUDE(nrm);
     if (nrmln < 0.0001)			/* XXX Why this constant? */
-	return RT_NURB_SPLIT_FLAT;
+	return NURB_SPLIT_FLAT;
 
     VSUB2(v3, p4, p1);
 
@@ -187,7 +187,7 @@ nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
     if (dist > epsilon)
 	return otherdir;
 
-    return RT_NURB_SPLIT_FLAT;		/* Must be flat */
+    return NURB_SPLIT_FLAT;		/* Must be flat */
 
 }
 
@@ -207,8 +207,8 @@ nurb_crv_flat(fastf_t *crv, int size, int pt_type)
     int coords;
     int rational;
 
-    coords = RT_NURB_EXTRACT_COORDS(pt_type);
-    rational = RT_NURB_IS_PT_RATIONAL(pt_type);
+    coords = NURB_EXTRACT_COORDS(pt_type);
+    rational = NURB_IS_PT_RATIONAL(pt_type);
     max_dist = -INFINITY;
 
     if (!rational) {

@@ -48,7 +48,7 @@ nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_col
     GET_SNURB(srf);
     srf->order[0] = u_order;
     srf->order[1] = v_order;
-    srf->dir = RT_NURB_SPLIT_ROW;
+    srf->dir = NURB_SPLIT_ROW;
 
     srf->u.k_size = n_u;
     srf->v.k_size = n_v;
@@ -56,7 +56,7 @@ nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_col
     srf->s_size[1] = n_cols;
     srf->pt_type = pt_type;
 
-    pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
+    pnum = sizeof (fastf_t) * n_rows * n_cols * NURB_EXTRACT_COORDS(pt_type);
 
     srf->u.knots = (fastf_t *) bu_malloc (
 	n_u * sizeof (fastf_t), "nurb_new_snurb: u kv knot values");
@@ -89,7 +89,7 @@ nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
     crv->pt_type = pt_type;
 
     crv->ctl_points = (fastf_t *)
-	bu_malloc(sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(pt_type) *
+	bu_malloc(sizeof(fastf_t) * NURB_EXTRACT_COORDS(pt_type) *
 		  n_pts,
 		  "nurb_new_cnurb: mesh point values");
 
@@ -195,10 +195,10 @@ nurb_c_print(const struct edge_g_cnurb *crv)
     nurb_print_pt_type(crv->pt_type);
     bu_log("\tmesh = {\n");
     for (ptr = &crv->ctl_points[0], i= 0;
-	 i < crv->c_size; i++, ptr += RT_NURB_EXTRACT_COORDS(crv->pt_type))
+	 i < crv->c_size; i++, ptr += NURB_EXTRACT_COORDS(crv->pt_type))
     {
 	bu_log("\t\t");
-	for (j = 0; j < RT_NURB_EXTRACT_COORDS(crv->pt_type); j++)
+	for (j = 0; j < NURB_EXTRACT_COORDS(crv->pt_type); j++)
 	    bu_log("%4.5f\t", ptr[j]);
 	bu_log("\n");
 
@@ -242,7 +242,7 @@ nurb_pr_mesh(const struct face_g_snurb *m)
 {
     int i, j, k;
     fastf_t * m_ptr = m->ctl_points;
-    int evp = RT_NURB_EXTRACT_COORDS(m->pt_type);
+    int evp = NURB_EXTRACT_COORDS(m->pt_type);
 
     NMG_CK_SNURB(m);
 
@@ -256,7 +256,7 @@ nurb_pr_mesh(const struct face_g_snurb *m)
 		bu_log("%f    ", m_ptr[k]);
 
 	    bu_log("\n");
-	    m_ptr += RT_NURB_EXTRACT_COORDS(m->pt_type);
+	    m_ptr += NURB_EXTRACT_COORDS(m->pt_type);
 	}
 	bu_log("\n");
     }
@@ -268,16 +268,16 @@ nurb_print_pt_type(int c)
 {
     int rat;
 
-    rat = RT_NURB_IS_PT_RATIONAL(c);
+    rat = NURB_IS_PT_RATIONAL(c);
 
-    if (RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XY)
-	bu_log("Point Type = RT_NURB_PT_XY");
+    if (NURB_EXTRACT_PT_TYPE(c) == NURB_PT_XY)
+	bu_log("Point Type = NURB_PT_XY");
     else
-	if (RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XYZ)
-	    bu_log("Point Type = RT_NURB_PT_XYX");
+	if (NURB_EXTRACT_PT_TYPE(c) == NURB_PT_XYZ)
+	    bu_log("Point Type = NURB_PT_XYX");
 	else
-	    if (RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_UV)
-		bu_log("Point Type = RT_NURB_PT_UV");
+	    if (NURB_EXTRACT_PT_TYPE(c) == NURB_PT_UV)
+		bu_log("Point Type = NURB_PT_UV");
 
     if (rat)
 	bu_log("W\n");

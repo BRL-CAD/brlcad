@@ -83,7 +83,7 @@ nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 
 	nurb_s_eval(srf, u, p, ve);
 
-	if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+	if (NURB_IS_PT_RATIONAL(srf->pt_type)) {
 	    ue[0] = ue[0] / ue[3];
 	    ue[1] = ue[1] / ue[3];
 	    ue[2] = ue[2] / ue[3];
@@ -126,11 +126,11 @@ nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 
 	nurb_s_eval(srf, p, v, ue);
 
-	vsrf = (struct face_g_snurb *) nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+	vsrf = (struct face_g_snurb *) nurb_s_diff(srf, NURB_SPLIT_COL);
 
 	nurb_s_eval(vsrf, u, v, ve);
 
-	if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+	if (NURB_IS_PT_RATIONAL(srf->pt_type)) {
 	    fastf_t w, inv_w;
 
 	    w = se[3];
@@ -180,11 +180,11 @@ nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 
 	nurb_s_eval(srf, u, p, ve);
 
-	usrf = (struct face_g_snurb *) nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+	usrf = (struct face_g_snurb *) nurb_s_diff(srf, NURB_SPLIT_ROW);
 
 	nurb_s_eval(usrf, u, v, ue);
 
-	if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+	if (NURB_IS_PT_RATIONAL(srf->pt_type)) {
 	    fastf_t w, inv_w;
 
 	    w = se[3];
@@ -218,10 +218,10 @@ nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
     }
 
     /* Case Non Rational (order > 2, order > 2) */
-    if (!RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+    if (!NURB_IS_PT_RATIONAL(srf->pt_type)) {
 
-	usrf = (struct face_g_snurb *) nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-	vsrf = (struct face_g_snurb *) nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+	usrf = (struct face_g_snurb *) nurb_s_diff(srf, NURB_SPLIT_ROW);
+	vsrf = (struct face_g_snurb *) nurb_s_diff(srf, NURB_SPLIT_COL);
 
 	nurb_s_eval(usrf, u, v, ue);
 	nurb_s_eval(vsrf, u, v, ve);
@@ -236,14 +236,14 @@ nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
     }
 
     /* Case Rational (order > 2, order > 2) */
-    if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+    if (NURB_IS_PT_RATIONAL(srf->pt_type)) {
 	fastf_t w, inv_w;
 	vect_t unorm, vnorm;
 
 	nurb_s_eval(srf, u, v, se);
 
-	usrf = (struct face_g_snurb *) nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-	vsrf = (struct face_g_snurb *) nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+	usrf = (struct face_g_snurb *) nurb_s_diff(srf, NURB_SPLIT_ROW);
+	vsrf = (struct face_g_snurb *) nurb_s_diff(srf, NURB_SPLIT_COL);
 
 	nurb_s_eval(usrf, u, v, ue);
 	nurb_s_eval(vsrf, u, v, ve);

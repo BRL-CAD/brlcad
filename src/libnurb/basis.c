@@ -63,7 +63,7 @@ uint32_t nurb_debug = 0;
  *	Academic Press, New York 1988.
  */
 fastf_t
-rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, fastf_t mu)
+nurb_basis_eval(register struct knot_vector *knts, int interval, int order, fastf_t mu)
 {
 
     register fastf_t den;
@@ -91,7 +91,7 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
 	b1 = 0.0;
     else
 	b1 = ((mu - k1) *
-	      rt_nurb_basis_eval(knts, interval, order - 1, mu)) / den;
+	      nurb_basis_eval(knts, interval, order - 1, mu)) / den;
 
     den = (k3 - k2);
 
@@ -99,7 +99,7 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
 	b2 = 0.0;
     else
 	b2 = ((k3 - mu) *
-	      rt_nurb_basis_eval(knts, interval + 1, order - 1, mu)) / den;
+	      nurb_basis_eval(knts, interval + 1, order - 1, mu)) / den;
 
     return b1 + b2;
 }

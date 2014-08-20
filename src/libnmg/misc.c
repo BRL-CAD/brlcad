@@ -112,7 +112,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 
 	    t1 = eg->k.knots[0];
 	    t2 = eg->k.knots[eg->k.k_size-1];
-	    coords = RT_NURB_EXTRACT_COORDS(eg->pt_type);
+	    coords = NURB_EXTRACT_COORDS(eg->pt_type);
 
 	    for (i = 0; coords > 0 && i < 5; i++) {
 		fastf_t t;
@@ -121,7 +121,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 
 		VSETALLN(crv_pt, 0.0, coords);
 		nurb_c_eval(eg, t, crv_pt);
-		if (RT_NURB_IS_PT_RATIONAL(eg->pt_type)) {
+		if (NURB_IS_PT_RATIONAL(eg->pt_type)) {
 		    VSCALE(pts[edge_no], crv_pt, crv_pt[coords-1]);
 		} else {
 		    VMOVE(pts[edge_no], crv_pt);
@@ -178,7 +178,7 @@ nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, fa
 
     nurb_s_eval(f->g.snurb_p, u, v, tmp_pt);
 
-    if (RT_NURB_IS_PT_RATIONAL(f->g.snurb_p->pt_type)) {
+    if (NURB_IS_PT_RATIONAL(f->g.snurb_p->pt_type)) {
 	double d;
 
 	d = 1.0 / tmp_pt[W];
@@ -7874,7 +7874,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 
     /* Check that endpoints match */
     crv = BU_LIST_FIRST(edge_g_cnurb, crv_head);
-    ncoords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
+    ncoords = NURB_EXTRACT_COORDS(crv->pt_type);
     next_crv = BU_LIST_NEXT(edge_g_cnurb, &crv->l);
     while (BU_LIST_NOT_HEAD(&next_crv->l, crv_head)) {
 	int endpoints_equal;
@@ -7961,8 +7961,8 @@ rt_join_cnurbs(struct bu_list *crv_head)
  *
  * point_type indicates what type of CNURB is requested.  The arc
  * start, end, and center must be at the same Z coordinate value if
- * point_type is RT_NURB_PT_XYZ. For values of point_type of
- * RT_NURB_PT_XY or RT_NURB_PT_UV, the Z coordinate is ignored. (Note
+ * point_type is NURB_PT_XYZ. For values of point_type of
+ * NURB_PT_XY or NURB_PT_UV, the Z coordinate is ignored. (Note
  * that point_type must be one of the point types defined in
  * nurb.h). The arc is constructed counter-clockwise (as viewed from
  * the +Z direction).
@@ -7997,21 +7997,21 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
     VMOVE(center, i_center);
     VMOVE(end, i_end);
     switch (point_type) {
-	case RT_NURB_PT_XY:
-	case RT_NURB_PT_UV:
+	case NURB_PT_XY:
+	case NURB_PT_UV:
 	    ncoords = 3;
 	    start[Z] = 0.0;
 	    center[Z] = 0.0;
 	    end[Z] = 0.0;
 	    break;
-	case RT_NURB_PT_XYZ:
-	case RT_NURB_PT_DATA:
-	case RT_NURB_PT_PROJ:
+	case NURB_PT_XYZ:
+	case NURB_PT_DATA:
+	case NURB_PT_PROJ:
 	    ncoords = 4;
 	    break;
     }
 
-    if (point_type == RT_NURB_PT_XYZ) {
+    if (point_type == NURB_PT_XYZ) {
 	/* check for points at same Z-coordinate value */
 	if (center[Z] - start[Z] > tol->dist) {
 	    bu_log("rt_arc2d_to_cnurb: center and start points not at same Z value (%g vs %g)\n",
@@ -8033,7 +8033,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
     }
 
     /* point type is point_type with weighting factor (rational) */
-    pt_type = RT_NURB_MAKE_PT_TYPE(ncoords, point_type, RT_NURB_PT_RATIONAL);
+    pt_type = NURB_MAKE_PT_TYPE(ncoords, point_type, NURB_PT_RATIONAL);
 
     /* calculate radius twice */
     if (ncoords == 4) {

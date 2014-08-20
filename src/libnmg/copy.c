@@ -83,9 +83,9 @@ nmg_construct_face_g_snurb(const struct face_g_snurb *original, void **structArr
     ret->s_size[1]  = original->s_size[1];
     ret->pt_type    = original->pt_type;
     ret->ctl_points
-	= (fastf_t *)bu_malloc(original->s_size[0] * original->s_size[1] * RT_NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t),
+	= (fastf_t *)bu_malloc(original->s_size[0] * original->s_size[1] * NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t),
 			       "nmg_construct_face_g_snurb(): ctl_points");
-    memcpy(ret->ctl_points, original->ctl_points, original->s_size[0] * original->s_size[1] * RT_NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t));
+    memcpy(ret->ctl_points, original->ctl_points, original->s_size[0] * original->s_size[1] * NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t));
 
     ret->dir = original->dir;
     VMOVE(ret->min_pt, original->min_pt);
@@ -322,9 +322,9 @@ nmg_construct_edge_g_cnurb(const struct edge_g_cnurb *original, void **structArr
 
     ret->c_size     = original->c_size;
     ret->pt_type    = original->pt_type;
-    ret->ctl_points = (fastf_t *)bu_malloc(ret->c_size * RT_NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t),
+    ret->ctl_points = (fastf_t *)bu_malloc(ret->c_size * NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t),
 					   "nmg_construct_edge_g_cnurb(): ctl_points");
-    memcpy(ret->ctl_points, original->ctl_points, ret->c_size * RT_NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t));
+    memcpy(ret->ctl_points, original->ctl_points, ret->c_size * NURB_EXTRACT_COORDS(ret->pt_type) * sizeof(fastf_t));
 
     ret->index              = original->index;
     structArray[ret->index] = ret;

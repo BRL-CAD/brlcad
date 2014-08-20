@@ -387,7 +387,7 @@ nmg_cnurb_is_linear(const struct edge_g_cnurb *cnrb)
 	}
     }
 
-    coords = RT_NURB_EXTRACT_COORDS(cnrb->pt_type);
+    coords = NURB_EXTRACT_COORDS(cnrb->pt_type);
     last_index = (cnrb->c_size - 1)*coords;
 
     /* Check if all control points are either the start point or end point */
@@ -451,7 +451,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
     VSET(vsum, 0.0, 0.0, 0.0);
 
     one_over_vertex_count = 1.0/(double)(srf->s_size[0]*srf->s_size[1]);
-    coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+    coords = NURB_EXTRACT_COORDS(srf->pt_type);
 
     /* calculate an average plane for all control points */
     for (i=0; i<srf->s_size[0]*srf->s_size[1]; i++) {
@@ -570,10 +570,10 @@ nmg_eval_linear_trim_curve(const struct face_g_snurb *snrb, const fastf_t *uvw, 
     if (snrb) {
 	NMG_CK_FACE_G_SNURB(snrb);
 	nurb_s_eval(snrb, uvw[0], uvw[1], xyz1);
-	if (RT_NURB_IS_PT_RATIONAL(snrb->pt_type)) {
+	if (NURB_IS_PT_RATIONAL(snrb->pt_type)) {
 	    fastf_t inverse_weight;
 
-	    coords = RT_NURB_EXTRACT_COORDS(snrb->pt_type);
+	    coords = NURB_EXTRACT_COORDS(snrb->pt_type);
 	    inverse_weight = 1.0/xyz1[coords-1];
 
 	    VSCALE(xyz, xyz1, inverse_weight);
@@ -601,10 +601,10 @@ nmg_eval_trim_curve(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *
 
     nurb_c_eval(cnrb, t, uvw);
 
-    if (RT_NURB_IS_PT_RATIONAL(cnrb->pt_type)) {
+    if (NURB_IS_PT_RATIONAL(cnrb->pt_type)) {
 	fastf_t inverse_weight;
 
-	coords = RT_NURB_EXTRACT_COORDS(cnrb->pt_type);
+	coords = NURB_EXTRACT_COORDS(cnrb->pt_type);
 	inverse_weight = 1.0/uvw[coords-1];
 
 	VSCALE(uvw, uvw, inverse_weight);
@@ -612,10 +612,10 @@ nmg_eval_trim_curve(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *
 
     if (snrb) {
 	nurb_s_eval(snrb, uvw[0], uvw[1], xyz1);
-	if (RT_NURB_IS_PT_RATIONAL(snrb->pt_type)) {
+	if (NURB_IS_PT_RATIONAL(snrb->pt_type)) {
 	    fastf_t inverse_weight;
 
-	    coords = RT_NURB_EXTRACT_COORDS(snrb->pt_type);
+	    coords = NURB_EXTRACT_COORDS(snrb->pt_type);
 	    inverse_weight = 1.0/xyz1[coords-1];
 
 	    VSCALE(xyz, xyz1, inverse_weight);

@@ -54,7 +54,7 @@ nurb_scopy(const struct face_g_snurb *srf, struct resource *res)
 	n->v.knots[i] =  srf->v.knots[i];
 
     for (i = 0; i < srf->s_size[0] * srf->s_size[1] *
-	  RT_NURB_EXTRACT_COORDS(srf->pt_type); i++)
+	  NURB_EXTRACT_COORDS(srf->pt_type); i++)
     {
 
 	n->ctl_points[i] = srf->ctl_points[i];
@@ -79,7 +79,7 @@ nurb_crv_copy(const struct edge_g_cnurb *crv)
 	n->k.knots[i] = crv->k.knots[i];
 
     for (i = 0; i < crv->c_size *
-	     RT_NURB_EXTRACT_COORDS(crv->pt_type); i++)
+	     NURB_EXTRACT_COORDS(crv->pt_type); i++)
 	n->ctl_points[i] = crv->ctl_points[i];
 
     return (struct edge_g_cnurb *) n;

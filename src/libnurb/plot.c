@@ -43,8 +43,8 @@ nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 {
     int i, j;
     const fastf_t * m_ptr = srf->ctl_points;
-    int evp = RT_NURB_EXTRACT_COORDS(srf->pt_type);
-    int rat = RT_NURB_IS_PT_RATIONAL(srf->pt_type);
+    int evp = NURB_EXTRACT_COORDS(srf->pt_type);
+    int rat = NURB_IS_PT_RATIONAL(srf->pt_type);
     point_t pt;
 
     NMG_CK_SNURB(srf);
@@ -104,8 +104,8 @@ nurb_plot_cnurb(FILE *fp, const struct edge_g_cnurb *crv)
 {
     register int i, k;
     const fastf_t * m_ptr = crv->ctl_points;
-    int evp = RT_NURB_EXTRACT_COORDS(crv->pt_type);
-    int rat = RT_NURB_IS_PT_RATIONAL(crv->pt_type);
+    int evp = NURB_EXTRACT_COORDS(crv->pt_type);
+    int rat = NURB_IS_PT_RATIONAL(crv->pt_type);
     point_t ptr;
 
     for (i = 0; i < crv->c_size; i++) {

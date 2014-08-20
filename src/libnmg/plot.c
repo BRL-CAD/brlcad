@@ -2085,14 +2085,14 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
 
 /** nmg_hack_snurb(&n, fg);	/ XXX */
 
-    r = nurb_s_refine(fg, RT_NURB_SPLIT_COL, &tau2, (struct resource *)NULL);
+    r = nurb_s_refine(fg, NURB_SPLIT_COL, &tau2, (struct resource *)NULL);
     NMG_CK_SNURB(r);
-    c = nurb_s_refine(r, RT_NURB_SPLIT_ROW, &tau1, (struct resource *)NULL);
+    c = nurb_s_refine(r, NURB_SPLIT_ROW, &tau1, (struct resource *)NULL);
     NMG_CK_SNURB(c);
 
-    coords = RT_NURB_EXTRACT_COORDS(c->pt_type);
+    coords = NURB_EXTRACT_COORDS(c->pt_type);
 
-    if (RT_NURB_IS_PT_RATIONAL(c->pt_type)) {
+    if (NURB_IS_PT_RATIONAL(c->pt_type)) {
 	vp = c->ctl_points;
 	for (i= 0; i < c->s_size[0] * c->s_size[1]; i++) {
 	    fastf_t one_over_vp;
@@ -2189,9 +2189,9 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	n.l.magic = NMG_EDGE_G_CNURB_MAGIC;
 	n.c_size = 2;
 	nurb_gen_knot_vector(&n.k, n.order, 0.0, 1.0, (struct resource *)NULL);
-	n.pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT);
+	n.pt_type = NURB_MAKE_PT_TYPE(2, NURB_PT_UV, NURB_PT_NONRAT);
 	n.ctl_points = (fastf_t *)bu_malloc(
-	    sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(n.pt_type) *
+	    sizeof(fastf_t) * NURB_EXTRACT_COORDS(n.pt_type) *
 	    n.c_size, "nmg_cnurb_to_vlist() order0 ctl_points[]");
 	/* Set ctl points to parametric values */
 	NMG_CK_VERTEXUSE_A_CNURB(eu->vu_p->a.cnurb_p);
@@ -2207,7 +2207,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 
     NMG_CK_CNURB(c);
 
-    coords = RT_NURB_EXTRACT_COORDS(c->pt_type);
+    coords = NURB_EXTRACT_COORDS(c->pt_type);
 
     if (*fu->f_p->g.magic_p == NMG_FACE_G_PLANE_MAGIC) {
 	/* cnurb on planar face -- ctl points are XYZ */
@@ -2226,7 +2226,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	fastf_t crv_param;
 
 	/* cnurb on spline face -- ctl points are UV or UVW */
-	if (coords != 2 && !RT_NURB_IS_PT_RATIONAL(c->pt_type)) bu_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
+	if (coords != 2 && !NURB_IS_PT_RATIONAL(c->pt_type)) bu_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
 	s = fu->f_p->g.snurb_p;
 
 	/* This section uses rt_nurb_c_eval(), but rt_nurb_c_refine is likely faster.
@@ -2245,7 +2245,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 
 	    nurb_c_eval(c, crv_param, uvw);
 
-	    if (RT_NURB_IS_PT_RATIONAL(c->pt_type)) {
+	    if (NURB_IS_PT_RATIONAL(c->pt_type)) {
 		uvw[0] = uvw[0]/uvw[2];
 		uvw[1] = uvw[1]/uvw[2];
 	    }
@@ -2253,7 +2253,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	    /* convert 'uvw' from UV coord to XYZ coord via surf! */
 	    nurb_s_eval(s, uvw[0], uvw[1], final);
 
-	    if (RT_NURB_IS_PT_RATIONAL(s->pt_type)) {
+	    if (NURB_IS_PT_RATIONAL(s->pt_type)) {
 		/* divide out homogeneous coordinate */
 		inv_homo = 1.0/final[3];
 		VSCALE(final, final, inv_homo);

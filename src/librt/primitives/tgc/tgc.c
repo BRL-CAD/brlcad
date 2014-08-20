@@ -2989,7 +2989,7 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 		     4, 4,			/* number of knots */
 		     NULL, NULL, 		/* initial knot vectors */
 		     2, 2, 			/* n_rows, n_cols */
-		     RT_NURB_MAKE_PT_TYPE(3, 2, 0),
+		     NURB_MAKE_PT_TYPE(3, 2, 0),
 		     NULL);			/* Initial mesh */
 
     fg = fu->f_p->g.snurb_p;
@@ -3069,7 +3069,7 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 	nmg_vertex_gv(eu->vu_p->v_p, point);
     }
 
-    nmg_edge_g_cnurb(eu, 3, 12, NULL, 9, RT_NURB_MAKE_PT_TYPE(3, 3, 1),
+    nmg_edge_g_cnurb(eu, 3, 12, NULL, 9, NURB_MAKE_PT_TYPE(3, 3, 1),
 		     NULL);
 
     eg = eu->g.cnurb_p;
@@ -3130,7 +3130,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 		     12, 4,
 		     NULL, NULL,
 		     2, 9,
-		     RT_NURB_MAKE_PT_TYPE(4, 3, 1),
+		     NURB_MAKE_PT_TYPE(4, 3, 1),
 		     NULL);
 
     fg = fu->f_p->g.snurb_p;
