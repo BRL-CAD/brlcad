@@ -27,13 +27,6 @@
 
 #include "bu.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#  include <signal.h>
-#else
-#  include <windows.h>
-#endif
-
 
 const int SEM = BU_SEM_LAST+1;
 
@@ -45,35 +38,6 @@ struct increment_thread_args {
     size_t reps;
     size_t *counter;
 };
-
-
-#ifdef HAVE_UNISTD_H
-static void
-_exit_alarm_handler(int sig)
-{
-    if (sig == SIGALRM)
-	exit(0);
-}
-#else
-static void CALLBACK
-_exit_alarm_handler(UINT UNUSED(uTimerID), UINT UNUSED(uMsg), DWORD_PTR UNUSED(dwUser),	DWORD_PTR UNUSED(dw1), DWORD_PTR UNUSED(dw2))
-{
-    exit(0);
-}
-#endif
-
-
-static int
-set_exit_alarm(unsigned seconds)
-{
-#ifdef HAVE_UNISTD_H
-    signal(SIGALRM, _exit_alarm_handler);
-    alarm(seconds);
-    return 1;
-#else
-    return !!timeSetEvent(seconds*1000, 100, (LPTIMECALLBACK)_exit_alarm_handler, (DWORD_PTR)NULL, TIME_ONESHOT);
-#endif
-}
 
 
 static int
@@ -90,24 +54,6 @@ repeat_test(size_t reps)
     return 1;
 }
 
-
-
-static int
-single_thread_test(void)
-{
-    if (!set_exit_alarm(1)) {
-	bu_log("failed to start alarm; skipping single-thread bu_semaphore test");
-	return 1;
-    }
-
-    bu_semaphore_init(SEM+1);
-    bu_semaphore_acquire(SEM);
-    bu_semaphore_acquire(SEM);
-    bu_semaphore_free();
-
-    bu_log("single-thread bu_semaphore test failed");
-    return 0;
-}
 
 
 static void
@@ -208,9 +154,7 @@ main(int argc, char **argv)
     /* nreps is a minimum */
     success = repeat_test(nreps) && parallel_test(ncpu, nreps);
 
-    /* single_thread_test should lock up and be killed by alarm */
-    return !(success && single_thread_test());
-
+    return !(success);
 }
 
 
