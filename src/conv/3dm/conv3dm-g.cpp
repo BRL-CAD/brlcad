@@ -704,7 +704,7 @@ RhinoConverter::create_layer(const ON_Layer &layer)
     wmember wmembers;
     BU_LIST_INIT(&wmembers.l);
 
-    for (std::set<ON_UUID>::const_iterator it = members.begin();
+    for (std::set<ON_UUID, UuidCompare>::const_iterator it = members.begin();
 	 it != members.end(); ++it) {
 	if (m_objects.is_idef_member(*it)) continue;
 
@@ -1054,9 +1054,9 @@ RhinoConverter::create_object(const ON_Object &object,
 
     if (const ON_Geometry *geom = ON_Geometry::Cast(&object))
 	if (geom->HasBrepForm()) {
-	    ON_Brep *new_brep = geom->BrepForm();
-	    create_brep(*new_brep, object_attrs);
-	    delete new_brep;
+	    ON_Brep *brep = geom->BrepForm();
+	    create_brep(*brep, object_attrs);
+	    delete brep;
 	    return;
 	}
 
