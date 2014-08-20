@@ -160,9 +160,7 @@ parallel_test(size_t ncpu, size_t reps)
     args.reps = reps;
     args.counter = &counter;
 
-    bu_semaphore_init(SEM+1);
     bu_parallel(increment_thread, ncpu, &args);
-    bu_semaphore_free();
 
     if (counter != expected) {
 	bu_log("bu_semaphore parallel increment test:  counter is %lu, expected %lu\n [FAIL]", counter, expected);

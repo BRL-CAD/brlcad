@@ -1378,8 +1378,6 @@ Go_Init(Tcl_Interp *interp)
     (void)Tcl_CreateCommand(interp, (const char *)"go_open", to_open_tcl,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-    bu_semaphore_reinit(GED_SEM_LAST);
-
     (void)library_initialized(1);
 
     return TCL_OK;

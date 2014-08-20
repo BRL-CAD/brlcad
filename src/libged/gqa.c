@@ -2398,8 +2398,6 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_semaphore_reinit(GED_SEM_LAST);
-
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
 	ged_gqa_plot.vbp = rt_vlblock_init();
 	ged_gqa_plot.vhead = rt_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
