@@ -929,10 +929,32 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     return dmp;
 }
 
+static void
+Qt_zclip_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    dm *dmp = (dm *)base;
+    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
+
+    if (dmp->dm_zclip) {
+	bounds[4] = -1.0;
+	bounds[5] = 1.0;
+    }
+
+    (void)dm_make_current(dmp);
+    (void)dm_set_win_bounds(dmp, bounds);
+
+    dm_generic_hook(sdp, name, base, value, data);
+}
+
+
 struct bu_structparse Qt_vparse[] = {
     {"%g",  1, "bound",         DM_O(dm_bound),         dm_generic_hook, NULL, NULL},
     {"%d",  1, "useBound",      DM_O(dm_boundFlag),     dm_generic_hook, NULL, NULL},
-    {"%d",  1, "zclip",         DM_O(dm_zclip),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "zclip",         DM_O(dm_zclip),         Qt_zclip_hook, NULL, NULL},
     {"%d",  1, "debug",         DM_O(dm_debugLevel),    dm_generic_hook, NULL, NULL},
     {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };

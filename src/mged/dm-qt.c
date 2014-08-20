@@ -32,46 +32,47 @@
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
-#include "../libdm/dm_private.h"
 
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
 static void
 dirty_hook(const struct bu_structparse *UNUSED(sdp),
-	   const char *UNUSED(name),
-	   void *UNUSED(base),
-	   const char *UNUSED(value))
+	const char *UNUSED(name),
+	void *UNUSED(base),
+	const char *UNUSED(value),
+	void *data)
 {
-    dirty = 1;
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    *(hs->dirty_global) = 1;
 }
-
 
 static void
 zclip_hook(const struct bu_structparse *sdp,
-	   const char *name,
-	   void *base,
-	   const char *value)
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
 {
-    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
-
-    view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook(sdp, name, base, value);
-
-    if (dmp->dm_zclip) {
-	bounds[4] = -1.0;
-	bounds[5] = 1.0;
-    }
-
-    dm_set_win_bounds(dmp, bounds);
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    hs->vs->vs_gvp->gv_zclip = dm_get_zclip(hs->hs_dmp);
+    dirty_hook(sdp, name, base, value, data);
 }
 
-struct bu_structparse qt_vparse[] = {
-    {"%g",  1, "bound",		 DM_O(dm_bound),	dirty_hook, NULL, NULL},
-    {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook, NULL, NULL},
-    {"%d",  1, "zclip",		 DM_O(dm_zclip),	zclip_hook, NULL, NULL},
-    {"%d",  1, "debug",		 DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"",    0, NULL,		 0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
+struct bu_structparse_map Qt_vparse_map[] = {
+    {"bound",           dirty_hook                },
+    {"useBound",        dirty_hook                },
+    {"zclip",           zclip_hook                },
+    {(char *)0,         BU_STRUCTPARSE_FUNC_NULL  }
 };
+
+static void *
+set_hook_data(struct mged_view_hook_state *hs) {
+    hs->hs_dmp = dmp;
+    hs->vs = view_state;
+    hs->dirty_global = &(dirty);
+    return (void *)hs;
+}
+
 
 /*
   This routine is being called from doEvent() to handle Expose events.
@@ -98,17 +99,21 @@ qt_dm(int argc, const char *argv[])
 
 	if (argc < 2) {
 	    /* Bare set command, print out current settings */
-	    bu_vls_struct_print2(&vls, "dm_qt internal variables", qt_vparse, (const char *)dmp);
+	    bu_vls_struct_print2(&vls, "dm_qt internal variables", dm_get_vparse(dmp), (const char *)dmp);
 	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls, qt_vparse, argv[1], (const char *)dmp, COMMA);
+	    bu_vls_struct_item_named(&vls, dm_get_vparse(dmp), argv[1], (const char *)dmp, COMMA);
 	} else {
 	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	    int ret;
+	    struct mged_view_hook_state global_hs;
+	    void *data = set_hook_data(&global_hs);
+
+	    ret = dm_set_hook(qt_vparse_map, argv[1], data, &mged_dm_hook);
 
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	    bu_vls_putc(&tmp_vls, '\"');
-	    ret = bu_struct_parse(&tmp_vls, qt_vparse, (char *)dmp);
+	    ret = bu_struct_parse(&tmp_vls, dm_get_vparse(dmp), (char *)dmp, (void *)(&mged_dm_hook));
 	    bu_vls_free(&tmp_vls);
 	    if (ret < 0) {
 	      bu_vls_free(&vls);
@@ -143,14 +148,14 @@ Qt_dm_init(struct dm_list *o_dm_list,
 	return TCL_ERROR;
 
     /* keep display manager in sync */
-    dmp->dm_perspective = mged_variables->mv_perspective_mode;
+    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
 
     eventHandler = qt_doevent;
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
 
     (void)dm_configure_win(dmp, 0);
 
-    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&dmp->dm_pathName));
+    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(dmp)));
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -160,23 +165,7 @@ Qt_dm_init(struct dm_list *o_dm_list,
 void
 Qt_fb_open(void)
 {
-    char *Qt_name = "/dev/Qt";
-
-    if ((fbp = (fb *)calloc(sizeof(fb), 1)) == FB_NULL) {
-	Tcl_AppendResult(INTERP, "Qt_fb_open: failed to allocate framebuffer memory\n",
-			 (char *)NULL);
-	return;
-    }
-
-    *fbp = qt_interface; /* struct copy */
-
-    fbp->if_name = (char *)bu_malloc((unsigned)strlen(Qt_name)+1, "if_name");
-    bu_strlcpy(fbp->if_name, Qt_name, strlen(Qt_name)+1);
-
-    /* Mark OK by filling in magic number */
-    fbp->if_magic = FB_MAGIC;
-
-    dmp->dm_openFb(dmp, fbp);
+    fbp = dm_get_fb(dmp);
 }
 
 
