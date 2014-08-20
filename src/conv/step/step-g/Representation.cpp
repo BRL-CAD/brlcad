@@ -171,6 +171,8 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		RepresentationItem *aRI = dynamic_cast<RepresentationItem *>(Factory::CreateObject(sw, entity));
 		if (aRI != NULL) {
 		    items.push_back(aRI);
+		} else {
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
 		}
 	    } else {
 		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'items'." << std::endl;
@@ -251,6 +253,9 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    return false;
 	}
     }
+
+    if (sw->entity_status[id] == STEP_LOAD_ERROR) return false;
+
     sw->entity_status[id] = STEP_LOADED;
     return true;
 }

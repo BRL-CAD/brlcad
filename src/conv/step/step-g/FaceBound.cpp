@@ -81,6 +81,9 @@ FaceBound::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "bound");
 	if (entity) {
 	    bound = dynamic_cast<Loop *>(Factory::CreateObject(sw, entity));
+	    if (!bound) {
+		sw->entity_status[id] = STEP_LOAD_ERROR;
+	    }
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading 'bound' entity." << std::endl;
 	    sw->entity_status[id] = STEP_LOAD_ERROR;
@@ -88,6 +91,8 @@ FaceBound::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	}
     }
     orientation = step->getBooleanAttribute(sse, "orientation");
+
+    if (sw->entity_status[id] == STEP_LOAD_ERROR) return false;
 
     sw->entity_status[id] = STEP_LOADED;
 

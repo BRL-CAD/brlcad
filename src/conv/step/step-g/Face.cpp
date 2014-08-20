@@ -78,8 +78,14 @@ Face::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		FaceBound *aFB = dynamic_cast<FaceBound *>(Factory::CreateObject(sw, entity));
-
-		bounds.push_back(aFB);
+		if (aFB) {
+		    bounds.push_back(aFB);
+		} else {
+		    l->clear();
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
+		    delete l;
+		    return false;
+		}
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'bounds'." << std::endl;
 		l->clear();
