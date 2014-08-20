@@ -32,6 +32,7 @@
 
 struct parallel_data {
     size_t iterations;
+    void (*call)(int, void*);
 };
 
 /* intentionally not in struct so we can test the data arg,
@@ -48,6 +49,8 @@ callback(int cpu, void *d)
     struct parallel_data *data = (struct parallel_data *)d;
     size_t iterations = 1;
 
+    bu_log("I'm child %d (id=%d)\n", cpu, bu_parallel_id());
+
     if (data)
 	iterations = data->iterations;
 
@@ -58,6 +61,20 @@ callback(int cpu, void *d)
     }
 
     return;
+}
+
+
+static void
+recursive_callback(int cpu, void *d)
+{
+    struct parallel_data *parent = (struct parallel_data *)d;
+    struct parallel_data data;
+    data.iterations = parent->iterations;
+    data.call = NULL;
+
+    bu_log("I'm parent %d (id=%d)\n", cpu, bu_parallel_id());
+
+    bu_parallel(parent->call, 0, &data);
 }
 
 
@@ -126,7 +143,6 @@ main(int argc, char *argv[])
 	return 1;
     }
 
-#if 0
     /* test calling a simple hook function again with data, but lots of collision potential */
     memset(counter, 0, sizeof(counter));
     data.iterations = 1000000;
@@ -144,7 +160,28 @@ main(int argc, char *argv[])
 	bu_log("bu_parallel simple callback with data, few iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), (ncpu-1)*data.iterations);
 	return 1;
     }
-#endif
+
+    /* test calling a recursive hook function without data */
+    memset(counter, 0, sizeof(counter));
+    data.iterations = 10;
+    data.call = &callback;
+    bu_parallel(recursive_callback, ncpu, &data);
+    if (tally(MAX_PSW) != (ncpu-1)*data.iterations*ncpu) {
+	bu_log("bu_parallel recursive callback, few iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), (ncpu-1)*data.iterations*ncpu);
+	bu_log("bu_parallel recursive callback [FAIL]\n");
+	return 1;
+    }
+
+    /* test calling a recursive hook function without data, more collision potential */
+    memset(counter, 0, sizeof(counter));
+    data.iterations = 1000000;
+    data.call = &callback;
+    bu_parallel(recursive_callback, ncpu, &data);
+    if (tally(MAX_PSW) != (ncpu-1)*data.iterations*ncpu) {
+	bu_log("bu_parallel recursive callback, few iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), (ncpu-1)*data.iterations*ncpu);
+	bu_log("bu_parallel recursive callback [FAIL]\n");
+	return 1;
+    }
 
     return 0;
 }
