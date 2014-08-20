@@ -166,8 +166,8 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		    id2productid_map[aBrep->GetId()] = product_id;
 		    /* This length is used in the hierarchy build - this is how
 		     * it was getting set when the Brep build came before the
-		     * hierarch build, so leave it for now, but should there be
-		     * a look-up in the hiearchy build instead of here?*/
+		     * hierarchy build, so leave it for now, but should there be
+		     * a look-up in the hierarchy build instead of here?*/
 		    LocalUnits::length = aBrep->GetLengthConversionFactor();
 
 		} else { // must be an assembly
@@ -245,8 +245,8 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 			    id2productid_map[brep_id] = product_id;
 			    /* This length is used in the hierarchy build - this is how
 			     * it was getting set when the Brep build came before the
-			     * hierarch build, so leave it for now, but should there be
-			     * a look-up in the hiearchy build instead of here?*/
+			     * hierarchy build, so leave it for now, but should there be
+			     * a look-up in the hierarchy build instead of here?*/
 			    LocalUnits::length = aBrep->GetLengthConversionFactor();
 
 			    if (product_id != brep_id) {

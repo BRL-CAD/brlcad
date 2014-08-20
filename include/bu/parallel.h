@@ -61,7 +61,7 @@ __BEGIN_DECLS
 /**
  * This routine is DEPRECATED, do not use it.  If you need a means to
  * determine when an application is running bu_parallel(), please
- * report this to our developers. 
+ * report this to our developers.
  *
  * Previously, this was a library-stateful way for bu_bomb() to tell
  * if a parallel application is running.  This routine now simply
