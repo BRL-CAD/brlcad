@@ -127,7 +127,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
 	memset(&bu_semaphores[i].mu, 0, sizeof(struct bu_semaphores));
 	/* This cannot fail except for very low memory situations in XP. */
-	InitializeCriticalSection(&bu_semaphores[i].m);
+	InitializeCriticalSection(&bu_semaphores[i].mu);
     }
 #	endif
 
@@ -168,7 +168,7 @@ bu_semaphore_free(void)
 
 #	elif defined(_WIN32) && !defined(__CYGWIN__)
     for (i = 0; i < bu_nsemaphores; i++) {
-	DeleteCriticalSection(&bu_semaphores[i].m);
+	DeleteCriticalSection(&bu_semaphores[i].mu);
     }
 #	endif
 
@@ -208,7 +208,7 @@ bu_semaphore_acquire(unsigned int i)
 #	endif
 #	if defined(_WIN32) && !defined(__CYGWIN__)
     /* This only fails if the timeout exceeds 30 days. */
-    EnterCriticalSection(&bu_semaphores[i].m);
+    EnterCriticalSection(&bu_semaphores[i].mu);
 #	endif
 
 #endif
@@ -246,7 +246,7 @@ bu_semaphore_release(unsigned int i)
 #	endif
 
 #	if defined(_WIN32) && !defined(__CYGWIN__)
-    LeaveCriticalSection(&bu_semaphores[i].m);
+    LeaveCriticalSection(&bu_semaphores[i].mu);
 #	endif
 #endif
 }
