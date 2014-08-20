@@ -129,13 +129,6 @@ struct thread_data {
 };
 
 
-/* # threads started */
-static int parallel_nthreads_started = 0;
-
-/* # threads properly finished */
-static int parallel_nthreads_finished = 0;
-
-
 int
 bu_parallel_id(void)
 {
@@ -248,6 +241,7 @@ bu_avail_cpus(void)
     }
 #endif
 
+
 #if defined(_SC_NPROC_ONLN)
     if (ncpu < 0) {
 	ncpu = sysconf(_SC_NPROC_ONLN);
@@ -256,6 +250,7 @@ bu_avail_cpus(void)
 	}
     }
 #endif
+
 
 #  if defined(linux)
     if (ncpu < 0) {
@@ -286,6 +281,7 @@ bu_avail_cpus(void)
     }
 #  endif
 
+
 #  if defined(_WIN32)
     /* Windows */
     if (ncpu < 0) {
@@ -295,6 +291,7 @@ bu_avail_cpus(void)
 	ncpu = (int)sysinfo.dwNumberOfProcessors;
     }
 #  endif
+
 
 #endif /* PARALLEL */
 
@@ -332,19 +329,7 @@ parallel_interface_arg(struct thread_data *user_thread_data)
 	}
     }
 
-    if (!user_thread_data->counted) {
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	parallel_nthreads_started++;
-	bu_semaphore_release(BU_SEM_SYSCALL);
-    }
-
     (*(user_thread_data->user_func))(user_thread_data->cpu_id, user_thread_data->user_arg);
-
-    if (!user_thread_data->counted) {
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	parallel_nthreads_finished++;
-	bu_semaphore_release(BU_SEM_SYSCALL);
-    }
 }
 
 
@@ -428,9 +413,6 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	/* a zero count means use as many as are available. */
 	ncpu = bu_avail_cpus(); /* !!! need something different here */
     }
-
-    parallel_nthreads_started = 0;
-    parallel_nthreads_finished = 0;
 
     libbu_affinity = getenv("LIBBU_AFFINITY");
     if (libbu_affinity)
@@ -657,21 +639,13 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 #  endif /* end if Win32 threads */
 
     /*
-     * Ensure that all the threads are REALLY finished.  On some
+     * TODO: Ensure that all the threads are REALLY finished.  On some
      * systems, if threads core dump, the rest of the gang keeps
-     * going, so this can actually happen (sigh).
+     * going, so this can actually happen.
      */
-    if (UNLIKELY(parallel_nthreads_finished != parallel_nthreads_started)) {
-	bu_log("*** ERROR bu_parallel(%d): %d workers did not finish!\n\n",
-	       ncpu, ncpu - parallel_nthreads_finished);
-    }
-    if (UNLIKELY(parallel_nthreads_started != ncpu)) {
-	bu_log("bu_parallel() NOTICE:  only %d workers started, expected %d\n",
-	       parallel_nthreads_started, ncpu);
-    }
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
-	bu_log("bu_parallel(%d) complete, now serial\n", ncpu);
+	bu_log("bu_parallel(%d) complete\n", ncpu);
 
     bu_free(user_thread_data_bu, "struct thread_data *user_thread_data_bu");
 
