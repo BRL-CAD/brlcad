@@ -64,7 +64,7 @@ struct bu_semaphores {
 #	define SEMAPHORE_INIT {0}
 struct bu_semaphores {
     uint32_t magic;
-    CRITICAL_SECTION m;
+    CRITICAL_SECTION mu;
 };
 #	define DEFINED_BU_SEMAPHORES 1
 #endif
