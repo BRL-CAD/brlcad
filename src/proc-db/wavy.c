@@ -42,13 +42,13 @@ interpolate_data(fastf_t *grid)
 {
     struct face_g_snurb **surfs;
     struct face_g_snurb *srf;
-    fastf_t rt_nurb_par_edge();
+    fastf_t nurb_par_edge();
 
     BU_ALLOC(srf, struct face_g_snurb);
 
-    rt_nurb_sinterp(srf, 4, grid, 10, 10);
-    rt_nurb_kvnorm(&srf->u);
-    rt_nurb_kvnorm(&srf->v);
+    nurb_sinterp(srf, 4, grid, 10, 10);
+    nurb_kvnorm(&srf->u);
+    nurb_kvnorm(&srf->v);
 
     surfs = (struct face_g_snurb **)bu_calloc(2, sizeof(struct face_g_snurb *), "surfaces");
     surfs[0] = srf;

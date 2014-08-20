@@ -113,7 +113,7 @@ dump_patch(int (*patch)[4])
 	    nmg_vertexuse_a_cnurb(vu, uvw);
     }
 
-    pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, 0); /* see nurb.h for details */
+    pt_type = NURB_MAKE_PT_TYPE(3, NURB_PT_XYZ, 0); /* see nurb.h for details */
 
     nmg_face_g_snurb(fu, 4, 4, 8, 8, ukv, vkv, 4, 4, pt_type, mesh);
 
@@ -146,7 +146,7 @@ dump_patch(int (*patch)[4])
     }
 
     /* set eu geometry */
-    pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, 0); /* see nurb.h for details */
+    pt_type = NURB_MAKE_PT_TYPE(2, NURB_PT_UV, 0); /* see nurb.h for details */
     lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
     NMG_CK_LOOPUSE(lu);
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {

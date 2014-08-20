@@ -83,12 +83,12 @@ spline(int entityno, struct face_g_snurb **b_patch)
 	point_size = 3;
     }
 
-    (*b_patch) = rt_nurb_new_snurb(
+    (*b_patch) = nurb_new_snurb(
 	m1+1, m2+1,
 	n1+2*m1+1, n2+2*m2+1,
 	k2+1, k1+1,
-	RT_NURB_MAKE_PT_TYPE(point_size, 2,
-			     (prop3 == 0 ? RT_NURB_PT_RATIONAL : RT_NURB_PT_NONRAT)),
+	NURB_MAKE_PT_TYPE(point_size, 2,
+			 (prop3 == 0 ? NURB_PT_RATIONAL : NURB_PT_NONRAT)),
 	(struct resource *)NULL);
 
     /* U knot vector */

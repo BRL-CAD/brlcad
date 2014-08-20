@@ -63,10 +63,10 @@ Get_cnurb_curve(int curve_de, int *linear)
 	    MAT4X3PNT(end_pt, *dir[curve]->rot, pt1);
 
 	    /* pt_type for rational UVW coords */
-	    pt_type = RT_NURB_MAKE_PT_TYPE(3, 3, 1);
+	    pt_type = NURB_MAKE_PT_TYPE(3, 3, 1);
 
 	    /* make a linear edge_g_cnurb (order=2) */
-	    crv = rt_nurb_new_cnurb(2, 4, 2, pt_type);
+	    crv = nurb_new_cnurb(2, 4, 2, pt_type);
 
 	    /* insert control mesh */
 	    VMOVE(crv->ctl_points, start_pt);

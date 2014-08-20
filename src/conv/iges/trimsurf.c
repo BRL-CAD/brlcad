@@ -90,14 +90,14 @@ Get_nurb_surf(int entityno, struct shell *s)
     rational = !i;
 
     ncoords = 3+rational;
-    pt_type = RT_NURB_MAKE_PT_TYPE(ncoords, RT_NURB_PT_XYZ, rational);
+    pt_type = NURB_MAKE_PT_TYPE(ncoords, NURB_PT_XYZ, rational);
     Readint(&i, "");
     Readint(&i, "");
 
     n_u = n_cols+u_order;
     n_v = n_rows+v_order;
     if (!s) {
-	srf = rt_nurb_new_snurb(u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type, (struct resource *)NULL);
+	srf = nurb_new_snurb(u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type, (struct resource *)NULL);
     } else {
 	int pnum;
 
@@ -107,7 +107,7 @@ Get_nurb_surf(int entityno, struct shell *s)
 	srf->l.magic = NMG_FACE_G_SNURB_MAGIC;
 	srf->order[0] = u_order;
 	srf->order[1] = v_order;
-	srf->dir = RT_NURB_SPLIT_ROW;
+	srf->dir = NURB_SPLIT_ROW;
 	srf->u.magic = NMG_KNOT_VECTOR_MAGIC;
 	srf->v.magic = NMG_KNOT_VECTOR_MAGIC;
 	srf->u.k_size = n_u;
@@ -121,7 +121,7 @@ Get_nurb_surf(int entityno, struct shell *s)
 	srf->s_size[1] = n_cols;
 	srf->pt_type = pt_type;
 
-	pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
+	pnum = sizeof (fastf_t) * n_rows * n_cols * NURB_EXTRACT_COORDS(pt_type);
 	srf->ctl_points = (fastf_t *) bu_malloc(
 	    pnum, "Get_nurb_surf: control mesh points");
 
@@ -202,7 +202,7 @@ Assign_cnurb_to_eu(struct edgeuse *eu, struct edge_g_cnurb *crv)
     NMG_CK_EDGEUSE(eu);
     NMG_CK_CNURB(crv);
 
-    ncoords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
+    ncoords = NURB_EXTRACT_COORDS(crv->pt_type);
 
     ctl_points = (fastf_t *)bu_calloc(ncoords*crv->c_size, sizeof(fastf_t),
 				      "Assign_cnurb_to_eu: ctl_points");
@@ -265,13 +265,13 @@ Get_cnurb(int entity_no)
 
     if (rational) {
 	ncoords = 3;
-	pt_type = RT_NURB_MAKE_PT_TYPE(ncoords, RT_NURB_PT_UV, RT_NURB_PT_RATIONAL);
+	pt_type = NURB_MAKE_PT_TYPE(ncoords, NURB_PT_UV, NURB_PT_RATIONAL);
     } else {
 	ncoords = 2;
-	pt_type = RT_NURB_MAKE_PT_TYPE(ncoords, RT_NURB_PT_UV, RT_NURB_PT_NONRAT);
+	pt_type = NURB_MAKE_PT_TYPE(ncoords, NURB_PT_UV, NURB_PT_NONRAT);
     }
 
-    crv = rt_nurb_new_cnurb(degree+1, num_pts+degree+1, num_pts, pt_type);
+    crv = nurb_new_cnurb(degree+1, num_pts+degree+1, num_pts, pt_type);
     /* knot vector */
     for (i = 0; i < num_pts+degree+1; i++) {
 	Readdbl(&a, "");
@@ -342,8 +342,8 @@ Assign_vu_geom(struct vertexuse *vu, fastf_t u, fastf_t v, struct face_g_snurb *
 	moved = 1;
     }
 
-    rt_nurb_s_eval(srf, u, v, pt_on_srf);
-    if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+    nurb_s_eval(srf, u, v, pt_on_srf);
+    if (NURB_IS_PT_RATIONAL(srf->pt_type)) {
 	fastf_t sca;
 
 	sca = 1.0/pt_on_srf[3];
@@ -459,7 +459,7 @@ Add_trim_curve(int entity_no, struct loopuse *lu, struct face_g_snurb *srf)
 	    VSET(end, y+u_translation, x+v_translation, z);
 
 		/* build edge_g_cnurb arc */
-	    crv = rt_arc2d_to_cnurb(center, start, end, RT_NURB_PT_UV, &tol);
+	    crv = rt_arc2d_to_cnurb(center, start, end, NURB_PT_UV, &tol);
 
 	    /* apply transformation to control points */
 	    for (i = 0; i < crv->c_size; i++) {
@@ -488,7 +488,7 @@ Add_trim_curve(int entity_no, struct loopuse *lu, struct face_g_snurb *srf)
 	    /* Assign edge geometry */
 	    Assign_cnurb_to_eu(eu, crv);
 
-	    rt_nurb_free_cnurb(crv);
+	    nurb_free_cnurb(crv);
 	}
 	    break;
 
@@ -500,7 +500,7 @@ Add_trim_curve(int entity_no, struct loopuse *lu, struct face_g_snurb *srf)
 			/* Get spline curve */
 	    crv = Get_cnurb(entity_no);
 
-	    ncoords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
+	    ncoords = NURB_EXTRACT_COORDS(crv->pt_type);
 
 	    /* add a new edge to loop */
 	    eu = BU_LIST_LAST(edgeuse, &lu->down_hd);
@@ -520,7 +520,7 @@ Add_trim_curve(int entity_no, struct loopuse *lu, struct face_g_snurb *srf)
 	    /* Assign edge geometry */
 	    Assign_cnurb_to_eu(eu, crv);
 
-	    rt_nurb_free_cnurb(crv);
+	    nurb_free_cnurb(crv);
 	    break;
 	default:
 	    bu_log("Curves of type %d are not yet handled for trimmed surfaces\n", entity_type);
@@ -608,11 +608,11 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 	    VSET(end, x+u_translation, y+v_translation, z);
 
 	    /* build edge_g_cnurb circle */
-	    crv = rt_arc2d_to_cnurb(center, start, end, RT_NURB_PT_UV, &tol);
+	    crv = rt_arc2d_to_cnurb(center, start, end, NURB_PT_UV, &tol);
 
 	    /* split circle into two pieces */
 	    BU_LIST_INIT(&curv_hd);
-	    rt_nurb_c_split(&curv_hd, crv);
+	    nurb_c_split(&curv_hd, crv);
 	    crv1 = BU_LIST_FIRST(edge_g_cnurb, &curv_hd);
 	    crv2 = BU_LIST_LAST(edge_g_cnurb, &curv_hd);
 
@@ -640,9 +640,9 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 	    Assign_cnurb_to_eu(eu, crv1);
 	    Assign_cnurb_to_eu(new_eu, crv2);
 
-	    rt_nurb_free_cnurb(crv);
-	    rt_nurb_free_cnurb(crv1);
-	    rt_nurb_free_cnurb(crv2);
+	    nurb_free_cnurb(crv);
+	    nurb_free_cnurb(crv1);
+	    nurb_free_cnurb(crv2);
 	}
 	    break;
 
@@ -659,11 +659,11 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 	    /* Get spline curve */
 	    crv = Get_cnurb(entity_no);
 
-	    ncoords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
+	    ncoords = NURB_EXTRACT_COORDS(crv->pt_type);
 
 	    /* split circle into two pieces */
 	    BU_LIST_INIT(&curv_hd);
-	    rt_nurb_c_split(&curv_hd, crv);
+	    nurb_c_split(&curv_hd, crv);
 	    crv1 = BU_LIST_FIRST(edge_g_cnurb, &curv_hd);
 	    crv2 = BU_LIST_LAST(edge_g_cnurb, &curv_hd);
 	    /* Split last edge in loop */
@@ -674,7 +674,7 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 	    /* if old edge doesn't have vertex geometry, assign some */
 	    if (!vp->vg_p) {
 		/* Don't divide out rational coord */
-		if (RT_NURB_IS_PT_RATIONAL(crv1->pt_type)) {
+		if (NURB_IS_PT_RATIONAL(crv1->pt_type)) {
 		    u = crv1->ctl_points[0]/crv1->ctl_points[ncoords-1];
 		    v = crv1->ctl_points[1]/crv1->ctl_points[ncoords-1];
 		} else {
@@ -687,7 +687,7 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 	    /* Assign geometry to new_eu vertex */
 	    vp = new_eu->vu_p->v_p;
 	    if (!vp->vg_p) {
-		if (RT_NURB_IS_PT_RATIONAL(crv2->pt_type)) {
+		if (NURB_IS_PT_RATIONAL(crv2->pt_type)) {
 		    u = crv2->ctl_points[0]/crv2->ctl_points[ncoords-1];
 		    v = crv2->ctl_points[1]/crv2->ctl_points[ncoords-1];
 		} else {
@@ -701,9 +701,9 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 	    Assign_cnurb_to_eu(eu, crv1);
 	    Assign_cnurb_to_eu(new_eu, crv2);
 
-	    rt_nurb_free_cnurb(crv);
-	    rt_nurb_free_cnurb(crv1);
-	    rt_nurb_free_cnurb(crv2);
+	    nurb_free_cnurb(crv);
+	    nurb_free_cnurb(crv1);
+	    nurb_free_cnurb(crv2);
 	}
 	    break;
 	default:
@@ -770,8 +770,8 @@ Make_default_loop(struct face_g_snurb *srf, struct faceuse *fu)
     NMG_CK_FACEUSE(fu);
     NMG_CK_SNURB(srf);
 
-    pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT);
-    ncoords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+    pt_type = NURB_MAKE_PT_TYPE(2, NURB_PT_UV, NURB_PT_NONRAT);
+    ncoords = NURB_EXTRACT_COORDS(srf->pt_type);
 
     if (srf->order[0] < 3 && srf->order[1] < 3)
 	planar = 1;
@@ -1094,18 +1094,18 @@ find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu
 
     BU_LIST_INIT(&bezier);
 
-    rt_nurb_bezier(&bezier, fg, (struct resource *)NULL);
+    nurb_bezier(&bezier, fg, (struct resource *)NULL);
     while (BU_LIST_NON_EMPTY(&bezier)) {
 	struct face_g_snurb *srf;
-	struct rt_nurb_uv_hit *hp;
+	struct nurb_uv_hit *hp;
 
 	srf = BU_LIST_FIRST(face_g_snurb,  &bezier);
 	BU_LIST_DEQUEUE(&srf->l);
 
-	hp = rt_nurb_intersect(srf, pl1, pl2, UV_TOL, (struct resource *)NULL, NULL);
+	hp = nurb_intersect(srf, pl1, pl2, UV_TOL, (struct resource *)NULL, NULL);
 	/* process each hit point */
-	while (hp != (struct rt_nurb_uv_hit *)NULL) {
-	    struct rt_nurb_uv_hit *next;
+	while (hp != (struct nurb_uv_hit *)NULL) {
+	    struct nurb_uv_hit *next;
 	    struct snurb_hit *myhit;
 	    vect_t to_hit;
 	    fastf_t homo_hit[4];
@@ -1132,8 +1132,8 @@ find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu
 	    myhit->f = f;
 
 	    /* calculate actual hit point (x y z) */
-	    rt_nurb_s_eval(srf, hp->u, hp->v, homo_hit);
-	    if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+	    nurb_s_eval(srf, hp->u, hp->v, homo_hit);
+	    if (NURB_IS_PT_RATIONAL(srf->pt_type)) {
 		fastf_t inv_homo;
 
 		inv_homo = 1.0/homo_hit[3];
@@ -1146,7 +1146,7 @@ find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu
 	    myhit->dist = VDOT(to_hit, ray_dir);
 
 	    /* get surface normal */
-	    rt_nurb_s_norm(srf, hp->u, hp->v, myhit->norm);
+	    nurb_s_norm(srf, hp->u, hp->v, myhit->norm);
 
 	    /* may need to reverse it */
 	    if (f->flip) {
@@ -1173,7 +1173,7 @@ find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu
 	    bu_free((char *)hp, "nurb_uv_hit");
 	    hp = next;
 	}
-	rt_nurb_free_snurb(srf, (struct resource *)NULL);
+	nurb_free_snurb(srf, (struct resource *)NULL);
     }
 }
 
@@ -1285,7 +1285,7 @@ Find_uv_in_fu(fastf_t *u_in, fastf_t *v_in, struct faceuse *fu)
 
 	    eg = eu->g.cnurb_p;
 
-	    if (RT_NURB_IS_PT_RATIONAL(eg->pt_type)) {
+	    if (NURB_IS_PT_RATIONAL(eg->pt_type)) {
 		u = eu->vu_p->a.cnurb_p->param[0] / eu->vu_p->a.cnurb_p->param[2];
 		v = eu->vu_p->a.cnurb_p->param[1] / eu->vu_p->a.cnurb_p->param[2];
 	    } else {
@@ -1329,8 +1329,8 @@ Find_pt_in_fu(struct faceuse *fu, point_t pt, vect_t norm)
 	return 1;
 
     /* calculate actual hit point (x y z) */
-    rt_nurb_s_eval(fg, u, v, homo_hit);
-    if (RT_NURB_IS_PT_RATIONAL(fg->pt_type)) {
+    nurb_s_eval(fg, u, v, homo_hit);
+    if (NURB_IS_PT_RATIONAL(fg->pt_type)) {
 	fastf_t inv_homo;
 
 	inv_homo = 1.0/homo_hit[3];
@@ -1340,7 +1340,7 @@ Find_pt_in_fu(struct faceuse *fu, point_t pt, vect_t norm)
     }
 
     /* get surface normal */
-    rt_nurb_s_norm(fg, u, v, norm);
+    nurb_s_norm(fg, u, v, norm);
 
     /* may need to reverse it */
     if (f->flip) {

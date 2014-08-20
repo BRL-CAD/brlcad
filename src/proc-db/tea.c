@@ -55,9 +55,9 @@ dump_patch(struct face_g_snurb **surfp, pt patch)
      * point size is 3
      */
 
-    pt_type = RT_NURB_MAKE_PT_TYPE(3, 2, 0); /* see nurb.h for details */
+    pt_type = NURB_MAKE_PT_TYPE(3, 2, 0); /* see nurb.h for details */
 
-    b_patch = (struct face_g_snurb *) rt_nurb_new_snurb(4, 4, 8, 8, 4, 4, pt_type, &rt_uniresource);
+    b_patch = (struct face_g_snurb *) nurb_new_snurb(4, 4, 8, 8, 4, 4, pt_type, &rt_uniresource);
     *surfp = b_patch;
 
     /* Now fill in the pieces */
@@ -68,10 +68,10 @@ dump_patch(struct face_g_snurb **surfp, pt patch)
      */
 
     bu_free((char *)b_patch->u.knots, "dumping u knots I'm about to realloc");
-    rt_nurb_kvknot(&b_patch->u, 4, 0.0, 1.0, 0, &rt_uniresource);
+    nurb_kvknot(&b_patch->u, 4, 0.0, 1.0, 0, &rt_uniresource);
 
     bu_free((char *)b_patch->v.knots, "dumping v_kv knots I'm about to realloc");
-    rt_nurb_kvknot(&b_patch->v, 4, 0.0, 1.0, 0, &rt_uniresource);
+    nurb_kvknot(&b_patch->v, 4, 0.0, 1.0, 0, &rt_uniresource);
 
     /* Copy the control points */
 

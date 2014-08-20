@@ -2820,12 +2820,12 @@ process_spline_entities_code(int code)
 
 	    if (flag & SPLINE_RATIONAL) {
 		ncoords = 4;
-		pt_type = RT_NURB_MAKE_PT_TYPE(ncoords, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL);
+		pt_type = NURB_MAKE_PT_TYPE(ncoords, NURB_PT_XYZ, NURB_PT_RATIONAL);
 	    } else {
 		ncoords = 3;
-		pt_type = RT_NURB_MAKE_PT_TYPE(ncoords, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
+		pt_type = NURB_MAKE_PT_TYPE(ncoords, NURB_PT_XYZ, NURB_PT_NONRAT);
 	    }
-	    crv = rt_nurb_new_cnurb(degree+1, numCtlPts+degree+1, numCtlPts, pt_type);
+	    crv = nurb_new_cnurb(degree+1, numCtlPts+degree+1, numCtlPts, pt_type);
 
 	    for (i = 0; i < numKnots; i++) {
 		crv->k.knots[i] = knots[i];
@@ -2844,7 +2844,7 @@ process_spline_entities_code(int code)
 	    startParam = knots[0];
 	    stopParam = knots[numKnots-1];
 	    paramDelta = (stopParam - startParam) / (double)splineSegs;
-	    rt_nurb_c_eval(crv, startParam, pt);
+	    nurb_c_eval(crv, startParam, pt);
 	    for (i = 0; i < splineSegs; i++) {
 		fastf_t param = startParam + paramDelta * (i+1);
 		eu = nmg_me(v1, v2, layers[curr_layer]->s);
@@ -2852,7 +2852,7 @@ process_spline_entities_code(int code)
 		if (i == 0) {
 		    nmg_vertex_gv(v1, pt);
 		}
-		rt_nurb_c_eval(crv, param, pt);
+		nurb_c_eval(crv, param, pt);
 		v2 = eu->eumate_p->vu_p->v_p;
 		nmg_vertex_gv(v2, pt);
 
@@ -2860,7 +2860,7 @@ process_spline_entities_code(int code)
 		v2 = NULL;
 	    }
 
-	    rt_nurb_free_cnurb(crv);
+	    nurb_free_cnurb(crv);
 
 	    if (knots != NULL) bu_free(knots, "spline knots");
 	    if (weights != NULL) bu_free(weights, "spline weights");
