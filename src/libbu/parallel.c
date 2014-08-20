@@ -415,10 +415,6 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%d, %p)\n", ncpu, arg);
-
-    if (pid_of_initiating_thread == 0)
-	pid_of_initiating_thread = bu_process_id();
-
     if (ncpu > MAX_PSW) {
 	bu_log("WARNING: bu_parallel() ncpu(%d) > MAX_PSW(%d), adjusting ncpu\n", ncpu, MAX_PSW);
 	ncpu = MAX_PSW;
@@ -669,8 +665,6 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%d) complete, now serial\n", ncpu);
-
-    pid_of_initiating_thread = 0;	/* No threads any more */
 
     bu_free(user_thread_data_bu, "struct thread_data *user_thread_data_bu");
 
