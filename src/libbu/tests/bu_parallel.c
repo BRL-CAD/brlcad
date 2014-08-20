@@ -27,20 +27,18 @@
 
 #include "bu.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#  include <signal.h>
-#else
-#  include <windows.h>
-#endif
+#include <string.h>
 
 
 struct parallel_data {
     size_t iterations;
 };
 
-/* intentionally not in struct so we can test the data arg */
-size_t counter;
+/* intentionally not in struct so we can test the data arg,
+ * intentionally per-cpu so we can avoid calling
+ * bu_semaphore_acquire().
+ */
+size_t counter[MAX_PSW] = {0};
 
 
 static void
@@ -55,13 +53,25 @@ callback(int cpu, void *d)
 
     for (i=0; i < iterations; i++) {
 	if (cpu > 0) {
-	    bu_semaphore_acquire(BU_SEM_THREAD);
-	    counter += 1;
-	    bu_semaphore_release(BU_SEM_THREAD);
+	    counter[cpu] += 1;
 	}
     }
 
     return;
+}
+
+
+static size_t
+tally(size_t ncpu)
+{
+    size_t total = 0;
+    size_t i;
+
+    for (i = 0; i < ncpu; i++) {
+	total += counter[i];
+    }
+
+    return total;
 }
 
 int
@@ -90,28 +100,46 @@ main(int argc, char *argv[])
     bu_parallel(NULL, ncpu, NULL);
 
     /* test calling a simple hook function */
-    counter = 0;
+    memset(counter, 0, sizeof(counter));
     bu_parallel(callback, ncpu, NULL);
-    if (counter != ncpu-1) {
+    if (tally(ncpu) != ncpu-1) {
 	bu_log("bu_parallel simple callback [FAIL]\n");
 	return 1;
     }
 
     /* test calling a simple hook function with data */
-    counter = 0;
+    memset(counter, 0, sizeof(counter));
     data.iterations = 0;
     bu_parallel(callback, ncpu, &data);
-    if (counter != 0) {
+    if (tally(ncpu) != 0) {
 	bu_log("bu_parallel simple callback with data, no iterations [FAIL]\n");
 	return 1;
     }
 
-    /* test calling a simple hook function again with data */
-    counter = 0;
+    /* test calling a simple hook function with data, minimal potential for collisions */
+    memset(counter, 0, sizeof(counter));
     data.iterations = 10;
     bu_parallel(callback, ncpu, &data);
-    if (counter != (ncpu-1)*data.iterations) {
-	bu_log("bu_parallel simple callback with data, few iterations [FAIL] (got %zd, expected %zd)\n", counter, (ncpu-1)*data.iterations);
+    if (tally(ncpu) != (ncpu-1)*data.iterations) {
+	bu_log("bu_parallel simple callback with data, few iterations [FAIL] (got %zd, expected %zd)\n", tally(ncpu), (ncpu-1)*data.iterations);
+	return 1;
+    }
+
+    /* test calling a simple hook function again with data, but lots of collision potential */
+    memset(counter, 0, sizeof(counter));
+    data.iterations = 1000000;
+    bu_parallel(callback, ncpu, &data);
+    if (tally(ncpu) != (ncpu-1)*data.iterations) {
+	bu_log("bu_parallel simple callback with data, few iterations [FAIL] (got %zd, expected %zd)\n", tally(ncpu), (ncpu-1)*data.iterations);
+	return 1;
+    }
+
+    /* test calling a simple hook function with data, zero cpus, potential for collisions */
+    memset(counter, 0, sizeof(counter));
+    data.iterations = 1000000;
+    bu_parallel(callback, 0, &data);
+    if (tally(MAX_PSW) != (ncpu-1)*data.iterations) {
+	bu_log("bu_parallel simple callback with data, few iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), (ncpu-1)*data.iterations);
 	return 1;
     }
 
