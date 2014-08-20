@@ -1722,7 +1722,7 @@ RT_EXPORT extern struct rt_g RTG;
 #define RT_SEM_RESULTS	(RT_SEM_STATS+1)
 #define RT_SEM_MODEL	(RT_SEM_RESULTS+1)
 
-#define RT_SEM_LAST	(RT_SEM_MODEL+1)	/**< @brief  Call bu_semaphore_init(RT_SEM_LAST); */
+#define RT_SEM_LAST	(RT_SEM_MODEL+1)
 
 
 /**
@@ -4977,8 +4977,7 @@ RT_EXPORT extern int db_tally_subtree_regions(union tree	*tp,
  * must be 1.
  *
  * If ncpu > 1, the caller is responsible for making sure that
- * RTG.rtg_parallel is non-zero, and that the bu_semaphore_init()
- * functions has been performed, first.
+ * RTG.rtg_parallel is non-zero.
  *
  * Plucks per-cpu resources out of rtip->rti_resources[].  They need
  * to have been initialized first.

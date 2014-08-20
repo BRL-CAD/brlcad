@@ -213,12 +213,6 @@ BU_EXPORT extern void bu_semaphore_init(unsigned int nsemaphores);
  */
 BU_EXPORT extern void bu_semaphore_free(void);
 
-/**
- * Prepare 'nsemaphores' independent critical section semaphores.  Die
- * on error.
- */
-BU_EXPORT extern void bu_semaphore_reinit(unsigned int nsemaphores);
-
 BU_EXPORT extern void bu_semaphore_acquire(unsigned int i);
 
 BU_EXPORT extern void bu_semaphore_release(unsigned int i);
