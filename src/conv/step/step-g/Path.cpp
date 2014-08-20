@@ -114,6 +114,8 @@ Path::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		OrientedEdge *aOE = dynamic_cast<OrientedEdge *>(Factory::CreateObject(sw, entity));
 		if (aOE) {
 		    edge_list.push_back(aOE);
+		} else {
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
 		}
 	    } else {
 		std::cerr << CLASSNAME
@@ -128,6 +130,8 @@ Path::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	l->clear();
 	delete l;
     }
+
+    if (sw->entity_status[id] == STEP_LOAD_ERROR) return false;
 
     sw->entity_status[id] = STEP_LOADED;
 
