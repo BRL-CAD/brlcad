@@ -74,6 +74,7 @@ tally(size_t ncpu)
     return total;
 }
 
+
 int
 main(int argc, char *argv[])
 {
@@ -125,6 +126,7 @@ main(int argc, char *argv[])
 	return 1;
     }
 
+#if 0
     /* test calling a simple hook function again with data, but lots of collision potential */
     memset(counter, 0, sizeof(counter));
     data.iterations = 1000000;
@@ -142,6 +144,7 @@ main(int argc, char *argv[])
 	bu_log("bu_parallel simple callback with data, few iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), (ncpu-1)*data.iterations);
 	return 1;
     }
+#endif
 
     return 0;
 }
