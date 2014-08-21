@@ -81,6 +81,8 @@ DimensionalExponents::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     amount_of_substance_exponent = step->getRealAttribute(sse, "amount_of_substance_exponent");
     luminous_intensity_exponent = step->getRealAttribute(sse, "luminous_intensity_exponent");
 
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
 }
 

@@ -59,7 +59,7 @@ of the wheelbase (from the front axle to the rear axle).</para>
   <varlistentry>
   <term><option>-a#</option></term>
   <listitem>
-<para><emphasis remap='I'>Track</emphasis>
+<para><command>anim_turn</command>
 assumes that the truck should initially be oriented
 along the line defined by the first two positions in the input table.
 Otherwise, the desired initial yaw of the truck can be specified with the
@@ -71,12 +71,12 @@ option.</para>
   <term><option>-r#</option></term>
   <listitem>
 <para>Specify the radii of the front wheels. If this option is selected,
-<emphasis remap='I'>track</emphasis>
+<command>anim_turn</command>
 will create an animation script to animate the front wheels. The output
 table would contain four columns: time, swivel-angle, roll, and a zero
 channel. These represent the orientation of the front wheels, in terms
 of yaw, pitch, and roll, and the table can be piped directly to
-<emphasis remap='I'>anim_script</emphasis>.</para>
+<command>anim_script</command>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -85,7 +85,7 @@ of yaw, pitch, and roll, and the table can be piped directly to
 <para>Specify a factor to be used to animate a steering wheel. If this option
 is selected, the output table will contain four columns: time, swivel,
 and two zero columns. This table can be used directly by
-<emphasis remap='I'>anim_script</emphasis>
+<command>anim_script</command>
 to make an animation script for a steering wheel. The argument to the
 option should be the factor by which to exaggerate the swiveling of
 the wheels. For
@@ -106,7 +106,7 @@ frames per second is being created, the user should give an input table
 with a high number of input rows and reduce the output with the
 <option>-p#</option>
 option. For example, if
-<emphasis remap='B'>in.table</emphasis>
+<emphasis remap='I'>in.table</emphasis>
 contains 30 rows for each second of the
 animation, then the command</para>
 

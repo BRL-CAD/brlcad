@@ -79,7 +79,7 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Curve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -90,9 +90,10 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "curve_3d");
 	if (entity) {
 	    curve_3d = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity)); //CreateCurveObject(sw,entity));
-	} else {
+	}
+	if (!entity || !curve_3d) {
 	    std::cout << CLASSNAME << ":Error loading attribute 'curve_3d'." << std::endl;
-	    return false;
+	    goto step_error;
 	}
     }
 
@@ -107,7 +108,7 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
        associated_geometry.push_back(aPCOS);
        } else {
        std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'associated_geometry'." << std::endl;
-       return false;
+       goto step_error;
        }
        }
        l->clear();
@@ -118,11 +119,13 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	STEPattribute *attr = step->getAttribute(sse, "associated_geometry");
 	if (attr) {
 	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->ptr.a);
+	    if (!sa) goto step_error;
 	    SelectNode *sn = static_cast<SelectNode *>(sa->GetHead());
 
 	    SDAI_Select *p_or_s;
 	    while (sn != NULL) {
 		p_or_s = static_cast<SDAI_Select *>(sn->node);
+		if (!p_or_s) goto step_error;
 
 		const TypeDescriptor *underlying_type = p_or_s->CurrentUnderlyingType();
 
@@ -134,21 +137,26 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    if (!aPCOS->Load(step, p_or_s)) {
 			std::cout << CLASSNAME << ":Error loading PCurveOrSurface select." << std::endl;
 			delete aPCOS;
-			return false;
+			goto step_error;
 		    }
 		    associated_geometry.push_back(aPCOS);
 		} else {
 		    std::cout << CLASSNAME << ":Unhandled select in attribute 'associated_geometry': " << p_or_s->CurrentUnderlyingType()->Description() << std::endl;
-		    return false;
+		    goto step_error;
 		}
 		sn = static_cast<SelectNode *>(sn->NextNode());
 	    }
 	}
     }
 
+    /* TODO - is this something to fail on if get isn't successful? */
     master_representation = (Preferred_surface_curve_representation)step->getEnumAttribute(sse, "master_representation");
 
+    sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 const double *

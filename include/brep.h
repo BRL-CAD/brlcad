@@ -458,6 +458,8 @@ BRNode::BRNode(const ON_BoundingBox &node)
 	    m_node.m_max[i] += 0.001;
 	}
     }
+    m_start = m_node.m_min;
+    m_end = m_node.m_max;
 }
 
 inline void

@@ -209,6 +209,17 @@ surface_EvNormal( // returns false if unable to evaluate
 	    } else if (side == 3) {
 		rc=surf->EvNormal(u.m_t[0], v.m_t[0], point, normal, side, hint);
 	    }
+	} else {
+	    /*
+	     * brute force and try to solve from each side of the surface domain
+	     */
+	    ON_Interval u = surf->Domain(0);
+	    ON_Interval v = surf->Domain(1);
+	    for(int iside=1; iside <= 4; iside++) {
+		rc=surf->EvNormal(s, t, point, normal, iside, hint);
+		if (rc)
+		    break;
+	    }
 	}
     }
     return rc;
@@ -455,7 +466,8 @@ double surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
         double current_closest_dist, ON_2dPoint& p2d, ON_3dPoint& p3d,
         double same_point_tol, double within_distance_tol, int level)
 {
-    double min_distance, max_distance;
+    double min_distance = 0;
+    double max_distance = 0;
     ON_Interval new_u_interval = u_interval;
     ON_Interval new_v_interval = v_interval;
 
@@ -1856,7 +1868,7 @@ bool trim_GetClosestPoint3dFirstOrder(
 	    t0 = span_interval[span_index].Mid();
 	    bool closestfound = false;
 	    bool notdone = true;
-	    double current_distance = DBL_MAX;
+	    double span_distance = DBL_MAX;
 	    double previous_distance = DBL_MAX;
 	    ON_3dVector firstDervative, secondDervative;
 	    while (notdone
@@ -1877,11 +1889,11 @@ bool trim_GetClosestPoint3dFirstOrder(
 		delta_t = new_t0 - t0;
 		t0 = new_t0;
 		point = trim.PointAt(t0);
-		current_distance = point.DistanceTo(p2d);
-		if (current_distance < previous_distance) {
+		span_distance = point.DistanceTo(p2d);
+		if (span_distance < previous_distance) {
 		    closestfound = true;
 		    closestT = t0;
-		    previous_distance = current_distance;
+		    previous_distance = span_distance;
 		    if (fabs(delta_t) < same_point_tol) {
 			notdone = false;
 		    }
@@ -1889,8 +1901,8 @@ bool trim_GetClosestPoint3dFirstOrder(
 		    notdone = false;
 		}
 	    }
-	    if (closestfound && (current_distance < closest_distance)) {
-		closest_distance = current_distance;
+	    if (closestfound && (span_distance < closest_distance)) {
+		closest_distance = span_distance;
 		rc = true;
 		t = closestT;
 	    }
@@ -2516,10 +2528,6 @@ GetClosestExtendedPoint(const ON_Surface *surf,ON_2dPoint &pt,ON_2dPoint &prev_p
     if (surf->IsClosed(0)) {
 	double length = surf->Domain(0).Length();
 	double delta=pt.x-prev_pt.x;
-
-	/* FIXME: looks like tol should be taken into consideration
-	 * here when comparing delta against the length.
-	 */
 	while (fabs(delta) > length/2.0) {
 	    if (delta > length/2.0) {
 		pt.x = pt.x - length;
@@ -2534,10 +2542,6 @@ GetClosestExtendedPoint(const ON_Surface *surf,ON_2dPoint &pt,ON_2dPoint &prev_p
     if (surf->IsClosed(1)) {
 	double length = surf->Domain(1).Length();
 	double delta=pt.y-prev_pt.y;
-
-	/* FIXME: looks like tol should be taken into consideration
-	 * here when comparing delta against the length.
-	 */
 	while (fabs(delta) > length/2.0) {
 	    if (delta > length/2.0) {
 		pt.y = pt.y - length;
@@ -4115,9 +4119,6 @@ extend_over_seam_crossings(std::list<PBCData*> &pbcs)
 	if (!data || !data->surf)
 	    continue;
 
-	const ON_Surface *surf = data->surf;
-	ON_Interval udom = surf->Domain(0);
-	ON_Interval vdom = surf->Domain(1);
 	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	while (si != data->segments.end()) {
 	    ON_2dPointArray *samples = (*si);
@@ -4125,7 +4126,7 @@ extend_over_seam_crossings(std::list<PBCData*> &pbcs)
 		pt = &(*samples)[i];
 
 		if (prev_pt != NULL) {
-		    GetClosestExtendedPoint(surf,*pt,*prev_pt,PBC_SEAM_TOL);
+		    GetClosestExtendedPoint(data->surf,*pt,*prev_pt,PBC_SEAM_TOL);
 		}
 		prev_pt = pt;
 	    }

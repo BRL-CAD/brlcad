@@ -99,8 +99,12 @@ AdvancedBrepShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance
 
     if (!ShapeRepresentation::Load(step, sse)) {
 	std::cerr << CLASSNAME << ":Error loading base class ::ShapeRepresentation." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
 }
 

@@ -102,11 +102,15 @@ bool ProductDefinitionFormation::Load(STEPWrapper *sw, SDAI_Application_instance
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "of_product");
 	if (entity) { //this attribute is optional
 	    of_product = dynamic_cast<Product *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !of_product) {
 	    std::cout << CLASSNAME << ":Error loading attribute 'of_product'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

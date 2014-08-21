@@ -75,6 +75,8 @@ typedef std::list<int> LIST_OF_INTEGERS;
 typedef std::list<double> LIST_OF_REALS;
 typedef std::list<LIST_OF_REALS *> LIST_OF_LIST_OF_REALS;
 
+#define STEP_LOADED 1
+#define STEP_LOAD_ERROR 2
 
 class STEPWrapper
 {
@@ -96,6 +98,10 @@ public:
     virtual ~STEPWrapper();
 
     bool convert(BRLCADWrapper *dotg);
+
+    std::map<int,int> entity_status;
+    char *summary_log_file;
+    int dry_run;
 
     SDAI_Application_instance *getEntity(int STEPid);
     SDAI_Application_instance *getEntity(int STEPid, const char *name);

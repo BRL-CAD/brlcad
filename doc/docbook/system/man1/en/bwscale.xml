@@ -36,7 +36,6 @@
 
   <para>
     <command>bwscale</command>
-    <emphasis remap="I">Bwscale</emphasis>
     will take a black and white
     <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
     format file of given dimensions and produce a larger or smaller

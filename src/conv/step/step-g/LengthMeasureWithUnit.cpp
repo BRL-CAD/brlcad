@@ -63,8 +63,10 @@ LengthMeasureWithUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!MeasureWithUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::" << CLASSNAME << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

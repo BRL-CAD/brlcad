@@ -21,7 +21,6 @@
     <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>in_height</replaceable></arg>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'><replaceable>infile.pix</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>
     <arg choice='plain'><replaceable>outfile.pix</replaceable></arg>

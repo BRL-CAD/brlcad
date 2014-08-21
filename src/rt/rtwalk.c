@@ -134,8 +134,6 @@ main(int argc, char **argv)
     int	curstep;
     int	i;
 
-    bu_semaphore_init(RT_SEM_LAST);
-
     if (!get_args(argc, (const char **)argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);

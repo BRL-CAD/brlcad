@@ -57,12 +57,16 @@ BoundedSurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!SurfaceCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::SurfaceCurve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
     if (!BoundedCurve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }
