@@ -7999,7 +7999,10 @@ to_mouse_orotate(struct ged *gedp,
     gedp->ged_gvp = gdvp->gdv_view;
 
     if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
-	tclcad_eval_var(current_top->to_interp, 0, bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback), "orotate", bu_vls_addr(&rot_x_vls), bu_vls_addr(&rot_y_vls), bu_vls_addr(&rot_z_vls), NULL);
+	tclcad_eval_var(current_top->to_interp, 0,
+                bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback), "orotate",
+                bu_vls_addr(&rot_x_vls), bu_vls_addr(&rot_y_vls),
+                bu_vls_addr(&rot_z_vls), NULL);
     } else {
 	char *av[6];
 
