@@ -513,12 +513,12 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	if (affinity)
 	    bu_log("CPU affinity enabled. (LIBBU_AFFINITY=%d)\n", affinity);
 	else
-	    bu_log("CPU affinity disabled.\n", affinity);
+	    bu_log("CPU affinity disabled.\n");
     }
 
     /* if we're in debug mode, allow additional cpus */
     if (!(bu_debug & BU_DEBUG_PARALLEL)) {
-	/* otherwise, limit outselves to what is actually available */
+	/* otherwise, limit ourselves to what is actually available */
 	avail_cpus = bu_avail_cpus();
 	if (ncpu > avail_cpus) {
 	    bu_log("%d cpus requested, but only %d available\n", ncpu, avail_cpus);
