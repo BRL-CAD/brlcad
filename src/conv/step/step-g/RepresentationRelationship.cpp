@@ -113,7 +113,6 @@ bool RepresentationRelationship::Load(STEPWrapper *sw, SDAI_Application_instance
     }
 
     sw->entity_status[id] = STEP_LOADED;
-
     return true;
 }
 

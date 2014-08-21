@@ -73,7 +73,8 @@ SweptSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "swept_curve");
 	if (entity) {
 	    swept_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !swept_curve) {
 	    std::cerr << CLASSNAME << ": error loading 'swept_curve' attribute." << std::endl;
 	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;

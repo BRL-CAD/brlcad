@@ -95,7 +95,6 @@ SphericalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     radius = step->getRealAttribute(sse, "radius");
 
     sw->entity_status[id] = STEP_LOADED;
-
     return true;
 }
 

@@ -84,7 +84,8 @@ RectangularTrimmedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "basis_surface");
 	if (entity) {
 	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !basis_surface) {
 	    std::cerr << CLASSNAME << ": error loading 'basis_surface' attribute." << std::endl;
 	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;

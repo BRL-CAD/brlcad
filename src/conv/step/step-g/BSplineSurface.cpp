@@ -98,8 +98,7 @@ BSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!BoundedSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
-	sw->entity_status[id] = STEP_LOAD_ERROR;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -108,8 +107,17 @@ BSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     u_degree = step->getIntegerAttribute(sse, "u_degree");
     v_degree = step->getIntegerAttribute(sse, "v_degree");
+    if (!u_degree || !v_degree) {
+	/* If we don't have degrees, error */
+	goto step_error;
+    }
+
     if (control_points_list == NULL) {
 	control_points_list = step->getListOfListOfPoints(sse, "control_points_list");
+	if (!control_points_list) {
+	    /* If we had an entity but couldn't load it, error */
+	    goto step_error;
+	}
     }
     surface_form = (B_spline_surface_form)step->getEnumAttribute(sse, "surface_form");
     if (surface_form > B_spline_surface_form_unset) {
@@ -120,8 +128,10 @@ BSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     self_intersect = step->getLogicalAttribute(sse, "self_intersect");
 
     sw->entity_status[id] = STEP_LOADED;
-
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void

@@ -172,14 +172,15 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		if (aRI != NULL) {
 		    items.push_back(aRI);
 		} else {
-		    sw->entity_status[id] = STEP_LOAD_ERROR;
+		    l->clear();
+		    delete l;
+		    goto step_error;
 		}
 	    } else {
 		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'items'." << std::endl;
 		l->clear();
-		sw->entity_status[id] = STEP_LOAD_ERROR;
 		delete l;
-		return false;
+		goto step_error;
 	    }
 	}
 	l->clear();
@@ -197,8 +198,7 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    context_of_items.push_back(aGRC);
 		    if (!aGRC->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading GeometricRepresentationContext" << std::endl;
-			sw->entity_status[id] = STEP_LOAD_ERROR;
-			return false;
+			goto step_error;
 		    }
 		}
 
@@ -209,8 +209,7 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    context_of_items.push_back(aGUAC);
 		    if (!aGUAC->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading GlobalUncertaintyAssignedContext" << std::endl;
-			sw->entity_status[id] = STEP_LOAD_ERROR;
-			return false;
+			goto step_error;
 		    }
 		}
 
@@ -221,8 +220,7 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    context_of_items.push_back(aGUAC);
 		    if (!aGUAC->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading GlobalUnitAssignedContext" << std::endl;
-			sw->entity_status[id] = STEP_LOAD_ERROR;
-			return false;
+			goto step_error;
 		    }
 		}
 
@@ -233,8 +231,7 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    context_of_items.push_back(aPRC);
 		    if (!aPRC->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading ParametricRepresentationContext" << std::endl;
-			sw->entity_status[id] = STEP_LOAD_ERROR;
-			return false;
+			goto step_error;
 		    }
 		}
 	    } else {
@@ -243,21 +240,22 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    context_of_items.push_back(aRC);
 		} else {
 		    std::cout << CLASSNAME << ":Error loading RepresentationContext" << std::endl;
-		    sw->entity_status[id] = STEP_LOAD_ERROR;
-		    return false;
+		    goto step_error;
 		}
 	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading \"context_of_items\"" << std::endl;
-	    sw->entity_status[id] = STEP_LOAD_ERROR;
-	    return false;
+	    goto step_error;
 	}
     }
 
-    if (sw->entity_status[id] == STEP_LOAD_ERROR) return false;
+    if (sw->entity_status[id] == STEP_LOAD_ERROR) goto step_error;
 
     sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 

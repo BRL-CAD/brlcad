@@ -75,7 +75,8 @@ VertexLoop::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "loop_vertex");
 	if (entity) {
 	    loop_vertex = dynamic_cast<Vertex *>(Factory::CreateObject(sw, entity)); //CreateCurveObject(sw,entity));
-	} else {
+	}
+	if (!entity || !loop_vertex) {
 	    std::cerr << CLASSNAME << ": Error loading entity attribute 'loop_vertex'." << std::endl;
 	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;

@@ -79,7 +79,6 @@ Vector::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	}
     }
 
-
     magnitude = step->getRealAttribute(sse, "magnitude");
 
     sw->entity_status[id] = STEP_LOADED;

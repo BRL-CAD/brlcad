@@ -80,7 +80,6 @@ bool ShapeDefinitionRepresentation::Load(STEPWrapper *sw, SDAI_Application_insta
     }
 
     sw->entity_status[id] = STEP_LOADED;
-
     return true;
 }
 

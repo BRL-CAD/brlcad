@@ -100,29 +100,31 @@ bool ShapeAspectRelationship::Load(STEPWrapper *sw, SDAI_Application_instance *s
     name = step->getStringAttribute(sse, "name");
     description = step->getStringAttribute(sse, "description");
 
-	if (relating_shape_aspect == NULL) {
-		SDAI_Application_instance *entity = step->getEntityAttribute(sse,"relating_shape_aspect");
-		if (entity) { //this attribute is optional
-			relating_shape_aspect = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, entity));
-		} else {
-			std::cout << CLASSNAME << ":Error loading attribute 'relating_shape_aspect'." << std::endl;
-			sw->entity_status[id] = STEP_LOAD_ERROR;
-			return false;
-		}
+    if (relating_shape_aspect == NULL) {
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"relating_shape_aspect");
+	if (entity) { //this attribute is optional
+	    relating_shape_aspect = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, entity));
 	}
-
-	if (related_shape_aspect == NULL) {
-		SDAI_Application_instance *entity = step->getEntityAttribute(sse,"related_shape_aspect");
-		if (entity) { //this attribute is optional
-			related_shape_aspect = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, entity));
-		} else {
-			std::cout << CLASSNAME << ":Error loading attribute 'related_shape_aspect'." << std::endl;
-			sw->entity_status[id] = STEP_LOAD_ERROR;
-			return false;
-		}
+	if (!entity || !relating_shape_aspect) {
+	    std::cout << CLASSNAME << ":Error loading attribute 'relating_shape_aspect'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
+	    return false;
 	}
+    }
 
-	sw->entity_status[id] = STEP_LOADED;
+    if (related_shape_aspect == NULL) {
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"related_shape_aspect");
+	if (entity) { //this attribute is optional
+	    related_shape_aspect = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, entity));
+	}
+	if (!entity || !related_shape_aspect) {
+	    std::cout << CLASSNAME << ":Error loading attribute 'related_shape_aspect'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
+	    return false;
+	}
+    }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

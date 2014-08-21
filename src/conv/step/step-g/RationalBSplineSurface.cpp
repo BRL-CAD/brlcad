@@ -78,7 +78,7 @@ RationalBSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
 	if (attr) {
 	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
-
+	    if (!gp) goto step_error;
 	    STEPnode *sn = (STEPnode *)gp->GetHead();
 	    const char *eaStr;
 
@@ -97,12 +97,14 @@ RationalBSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    */
 	} else {
 	    std::cout << CLASSNAME << ": Error loading RationalBSplineSurface(weights_data)." << std::endl;
-	    sw->entity_status[id] = STEP_LOAD_ERROR;
-	    return false;
+	    goto step_error;
 	}
     }
     sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void

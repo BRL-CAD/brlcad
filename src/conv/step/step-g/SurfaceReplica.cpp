@@ -75,7 +75,8 @@ SurfaceReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "parent_surface");
 	if (entity) {
 	    parent_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !parent_surface) {
 	    std::cerr << CLASSNAME << ": error loading 'parent_surface' attribute." << std::endl;
 	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
@@ -85,7 +86,8 @@ SurfaceReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "transformation");
 	if (entity) {
 	    transformation = dynamic_cast<CartesianTransformationOperator3D *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !transformation) {
 	    std::cerr << CLASSNAME << ": error loading 'transformation' attribute." << std::endl;
 	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;

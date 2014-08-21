@@ -73,7 +73,6 @@ ShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     sw->entity_status[id] = STEP_LOADED;
-
     return true;
 }
 

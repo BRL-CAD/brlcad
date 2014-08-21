@@ -59,8 +59,7 @@ SurfaceOfLinearExtrusion::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!SweptSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
-	sw->entity_status[id] = STEP_LOAD_ERROR;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -71,14 +70,17 @@ SurfaceOfLinearExtrusion::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "extrusion_axis");
 	if (entity) {
 	    extrusion_axis = dynamic_cast<Vector *>(Factory::CreateObject(sw, entity));
+	    if (!extrusion_axis) goto step_error;
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'extrusion_axis' attribute." << std::endl;
-	    sw->entity_status[id] = STEP_LOAD_ERROR;
-	    return false;
+	    goto step_error;
 	}
     }
     sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void
