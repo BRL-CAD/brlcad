@@ -932,7 +932,7 @@ HIDDEN void to_autoview_all_views(struct tclcad_obj *top);
 HIDDEN void to_rt_end_callback_internal(int aborted);
 
 HIDDEN void to_output_handler(struct ged *gedp, char *line);
-HIDDEN int to_error_output_handler(void *client_data, void *vpstr);
+HIDDEN int to_log_output_handler(void *client_data, void *vpstr);
 
 HIDDEN int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
 
@@ -1424,9 +1424,9 @@ to_cmd(ClientData clientData,
 	if (ctp->to_name[0] == argv[1][0] &&
 	    BU_STR_EQUAL(ctp->to_name, argv[1])) {
 	    struct ged *gedp = top->to_gop->go_gedp;
-	    bu_log_add_hook(to_error_output_handler, (void *)gedp);
+	    bu_log_add_hook(to_log_output_handler, (void *)gedp);
 	    ret = (*ctp->to_wrapper_func)(gedp, argc-1, (const char **)argv+1, ctp->to_func, ctp->to_usage, ctp->to_maxargs);
-	    bu_log_delete_hook(to_error_output_handler, (void *)gedp);
+	    bu_log_delete_hook(to_log_output_handler, (void *)gedp);
 	    break;
 	}
     }
@@ -13537,7 +13537,7 @@ to_output_handler(struct ged *gedp, char *line)
 }
 
 HIDDEN int
-to_error_output_handler(void *client_data, void *vpstr)
+to_log_output_handler(void *client_data, void *vpstr)
 {
     struct ged *gedp = (struct ged *)client_data;
     char *str = (char *)vpstr;
