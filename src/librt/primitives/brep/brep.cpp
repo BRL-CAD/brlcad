@@ -44,6 +44,7 @@
 #include "vmath.h"
 
 #include "bu/cv.h"
+#include "bu/time.h"
 #include "brep.h"
 #include "dvec.h"
 
@@ -314,50 +315,102 @@ split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, std::list<double>&
 }
 
 
+struct brep_build_bvh_parallel {
+    struct brep_specific *bs;
+    SurfaceTree**faces;
+};
+
+static void
+brep_build_bvh_surface_tree(int cpu, void *data)
+{
+    struct brep_build_bvh_parallel *bbbp = (struct brep_build_bvh_parallel *)data;
+    int index;
+    ON_BrepFaceArray& faces = bbbp->bs->brep->m_F;
+    size_t faceCount = faces.Count();
+
+    do {
+	index = -1;
+
+	/* figure out which face to work on next */
+	bu_semaphore_acquire(BU_SEM_LISTS);
+	for (size_t i = 0; i < faceCount; i++) {
+	    if (bbbp->faces[i] == NULL) {
+		index = i;
+		bbbp->faces[i] = (SurfaceTree*)cpu+1; /* claim this one */
+		break;
+	    }
+	}
+	bu_semaphore_release(BU_SEM_LISTS);
+
+	if (index != -1) {
+	    bu_log("thread %d: preparing face %d of %d\n", cpu, index+1, faceCount);
+	    SurfaceTree* st = new SurfaceTree(&faces[index], true, 8);
+	    bbbp->faces[index] = st;
+	}
+
+	/* iterate until there is no more work left */
+    } while (index != -1);
+}
+
+
 int
 brep_build_bvh(struct brep_specific* bs)
 {
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
+    int64_t start;
+
     if (brep == NULL) {
 	bu_log("NULL Brep");
 	return -1;
     } else {
+	start = bu_gettime();
 	if (!brep->IsValid(&tl)) bu_log("brep is NOT valid\n");
+	bu_log("!!! BREP ISVALID: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
     }
-
-    /* May want to do something about setting orientation?  not used,
-     * commented out for now CY 2009:
-     */
-    // int orientation = brep->SolidOrientation();
 
     /* Initialize the top level Bounding Box node for the entire
      * surface tree.  The purpose of this node is to provide a parent
      * node for the trees to be built on each BREP component surface.
+     * This takes no time.
      */
     bs->bvh = new BBNode(brep->BoundingBox());
 
-    /* For each face in the brep, build its surface tree and add the root
-     * node of that tree as a child of the bvh master node defined above.
-     * A possible future refinement of this approach would be to build
-     * a tree structure on top of the collection of surface trees based
-     * on their 3D bounding volumes, as opposed to the current approach
-     * of simply having all surfaces be child nodes of the master node.
-     * This would allow a ray intersection to avoid checking every surface
-     * tree bounding box, but should probably be undertaken only if this
-     * step proves to be a bottleneck for raytracing.
-     */
     ON_BrepFaceArray& faces = brep->m_F;
-    for (int i = 0; i < faces.Count(); i++) {
+    size_t faceCount = faces.Count();
+
+    struct brep_build_bvh_parallel bbbp;
+    bbbp.bs = bs;
+    bbbp.faces = (SurfaceTree**)bu_calloc(faceCount, sizeof(SurfaceTree*), "alloc face array");
+
+    /* For each face in the brep, build its surface tree and add the
+     * root node of that tree as a child of the bvh master node
+     * defined above.  We do this in parallel in order to divy up work
+     * for objects comprised of many faces.
+     *
+     * A possible future refinement of this approach would be to build
+     * a tree structure on top of the collection of surface trees
+     * based on their 3D bounding volumes, as opposed to the current
+     * approach of simply having all surfaces be child nodes of the
+     * master node.  This would allow a ray intersection to avoid
+     * checking every surface tree bounding box, but should probably
+     * be undertaken only if this step proves to be a bottleneck for
+     * raytracing.
+     */
+
+    start = bu_gettime();
+    bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
+
+    for (int i = 0; (size_t)i < faceCount; i++) {
 	ON_BrepFace& face = faces[i];
-	/*
-	 * bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
-	 */
-	SurfaceTree* st = new SurfaceTree(&face);
-	face.m_face_user.p = st;
-	bs->bvh->addChild(st->getRootNode());
+	face.m_face_user.p = bbbp.faces[i];
+	bs->bvh->addChild(bbbp.faces[i]->getRootNode());
     }
+    bu_log("!!! PREP FACES: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
+
+    bu_free(bbbp.faces, "free face array");
+
     bs->bvh->BuildBBox();
     return 0;
 }
@@ -399,6 +452,8 @@ rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
 int
 rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 {
+    int64_t start;
+
     TRACE1("rt_brep_prep");
     /* This prepares the NURBS specific data structures to be used
      * during intersection... i.e. acceleration data structures and
@@ -421,12 +476,14 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     /* The workhorse routines of BREP prep are called by brep_build_bvh
      */
+    start = bu_gettime();
     if (brep_build_bvh(bs) < 0) {
 	return -1;
     }
+    bu_log("!!! BUILD BVH: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
 
     /* Once a proper SurfaceTree is built, finalize the bounding
-     * volumes */
+     * volumes.  This takes no time. */
     bs->bvh->GetBBox(stp->st_min, stp->st_max);
 
     // expand outer bounding box just a little bit
