@@ -562,12 +562,6 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     : m_removeTrimmed(removeTrimmed),
       m_face(face)
 {
-    // first, build the Curve Tree
-    if (removeTrimmed)
-	ctree = new CurveTree(m_face);
-    else
-	ctree = NULL;
-
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
     if (!surf) {
@@ -587,8 +581,14 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
 	}
     }
     if (!bGrowBox) {
-	face->SurfaceOf()->GetBoundingBox(min, max);
+	surf->GetBoundingBox(min, max);
     }
+
+    // first, build the Curve Tree
+    if (removeTrimmed)
+	ctree = new CurveTree(m_face);
+    else
+	ctree = NULL;
 
     TRACE("Creating surface tree for: " << face->m_face_index);
 
