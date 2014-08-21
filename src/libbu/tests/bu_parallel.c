@@ -49,7 +49,7 @@ callback(int cpu, void *d)
     struct parallel_data *data = (struct parallel_data *)d;
     size_t iterations = 0;
 
-    bu_log("I'm child %d (id=%d)\n", cpu, bu_parallel_id());
+    /* bu_log("I'm child %d (id=%d)\n", cpu, bu_parallel_id()); */
 
     if (data)
 	iterations = data->iterations;
@@ -63,14 +63,14 @@ callback(int cpu, void *d)
 
 
 static void
-recursive_callback(int cpu, void *d)
+recursive_callback(int UNUSED(cpu), void *d)
 {
     struct parallel_data *parent = (struct parallel_data *)d;
     struct parallel_data data;
     data.iterations = parent->iterations;
     data.call = NULL;
 
-    bu_log("I'm parent %d (id=%d)\n", cpu, bu_parallel_id());
+    /* bu_log("I'm parent %d (id=%d)\n", cpu, bu_parallel_id()); */
 
     bu_parallel(parent->call, 0, &data);
 }
@@ -100,12 +100,15 @@ main(int argc, char *argv[])
     unsigned long ncpu_opt;
     struct parallel_data data;
 
-    while ((c = bu_getopt(argc, argv, "P:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "P:!:")) != -1) {
 	switch (c) {
 	    case 'P':
 		ncpu_opt = (size_t)strtoul(bu_optarg, NULL, 0);
 		if (ncpu_opt > 0 && ncpu_opt < MAX_PSW)
 		    ncpu = ncpu_opt;
+		break;
+	    case '!':
+		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);
 		break;
 	    default:
 		bu_exit(1, USAGE, argv[0]);
