@@ -47,7 +47,7 @@ callback(int cpu, void *d)
 {
     size_t i;
     struct parallel_data *data = (struct parallel_data *)d;
-    size_t iterations = 1;
+    size_t iterations = 0;
 
     bu_log("I'm child %d (id=%d)\n", cpu, bu_parallel_id());
 
@@ -55,9 +55,7 @@ callback(int cpu, void *d)
 	iterations = data->iterations;
 
     for (i=0; i < iterations; i++) {
-	if (cpu > 0) {
-	    counter[cpu] += 1;
-	}
+	counter[cpu] += 1;
     }
 
     return;
@@ -106,7 +104,7 @@ main(int argc, char *argv[])
 	switch (c) {
 	    case 'P':
 		ncpu_opt = (size_t)strtoul(bu_optarg, NULL, 0);
-		if (ncpu_opt > 0 && ncpu_opt < ncpu)
+		if (ncpu_opt > 0 && ncpu_opt < MAX_PSW)
 		    ncpu = ncpu_opt;
 		break;
 	    default:
@@ -116,14 +114,20 @@ main(int argc, char *argv[])
 
     /* test calling without a hook function */
     bu_parallel(NULL, ncpu, NULL);
+    if (tally(ncpu) != 0) {
+	bu_log("bu_parallel zero callback [FAIL]\n");
+	return 1;
+    }
+    bu_log("bu_parallel zero callback [PASS]\n");
 
     /* test calling a simple hook function */
     memset(counter, 0, sizeof(counter));
     bu_parallel(callback, ncpu, NULL);
-    if (tally(ncpu) != ncpu-1) {
+    if (tally(ncpu) != 0) {
 	bu_log("bu_parallel simple callback [FAIL]\n");
 	return 1;
     }
+    bu_log("bu_parallel simple callback [PASS]\n");
 
     /* test calling a simple hook function with data */
     memset(counter, 0, sizeof(counter));
@@ -133,33 +137,37 @@ main(int argc, char *argv[])
 	bu_log("bu_parallel simple callback with data, no iterations [FAIL]\n");
 	return 1;
     }
+    bu_log("bu_parallel simple callback with data, no iterations [PASS]\n");
 
     /* test calling a simple hook function with data, minimal potential for collisions */
     memset(counter, 0, sizeof(counter));
     data.iterations = 10;
     bu_parallel(callback, ncpu, &data);
-    if (tally(ncpu) != (ncpu-1)*data.iterations) {
-	bu_log("bu_parallel simple callback with data, few iterations [FAIL] (got %zd, expected %zd)\n", tally(ncpu), (ncpu-1)*data.iterations);
+    if (tally(MAX_PSW) != ncpu*data.iterations) {
+	bu_log("bu_parallel simple callback with data, few iterations [FAIL] (got %zd, expected %zd)\n", tally(ncpu), ncpu*data.iterations);
 	return 1;
     }
+    bu_log("bu_parallel simple callback with data, few iterations [PASS])\n");
 
     /* test calling a simple hook function again with data, but lots of collision potential */
     memset(counter, 0, sizeof(counter));
     data.iterations = 1000000;
     bu_parallel(callback, ncpu, &data);
-    if (tally(ncpu) != (ncpu-1)*data.iterations) {
-	bu_log("bu_parallel simple callback with data, many iterations [FAIL] (got %zd, expected %zd)\n", tally(ncpu), (ncpu-1)*data.iterations);
+    if (tally(MAX_PSW) != ncpu*data.iterations) {
+	bu_log("bu_parallel simple callback with data, many iterations [FAIL] (got %zd, expected %zd)\n", tally(ncpu), ncpu*data.iterations);
 	return 1;
     }
+    bu_log("bu_parallel simple callback with data, many iterations [PASS]\n");
 
     /* test calling a simple hook function with data, zero cpus, potential for collisions */
     memset(counter, 0, sizeof(counter));
     data.iterations = 1000000;
     bu_parallel(callback, 0, &data);
-    if (tally(MAX_PSW) != (ncpu-1)*data.iterations) {
-	bu_log("bu_parallel simple callback with data, many iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), (ncpu-1)*data.iterations);
+    if (tally(MAX_PSW) != bu_avail_cpus()*data.iterations) {
+	bu_log("bu_parallel simple callback with data, many iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), bu_avail_cpus()*data.iterations);
 	return 1;
     }
+    bu_log("bu_parallel simple callback with data, many iterations [PASS]\n");
 
     /* test calling a recursive hook function without data */
     memset(counter, 0, sizeof(counter));
@@ -170,6 +178,7 @@ main(int argc, char *argv[])
 	bu_log("bu_parallel recursive callback, few iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), ncpu*ncpu*data.iterations);
 	return 1;
     }
+    bu_log("bu_parallel recursive callback, few iterations [PASS]\n");
 
     /* test calling a recursive hook function without data, more collision potential */
     memset(counter, 0, sizeof(counter));
@@ -180,6 +189,7 @@ main(int argc, char *argv[])
 	bu_log("bu_parallel recursive callback, many iterations [FAIL] (got %zd, expected %zd)\n", tally(MAX_PSW), ncpu*ncpu*data.iterations);
 	return 1;
     }
+    bu_log("bu_parallel recursive callback, many iterations [PASS]\n");
 
     return 0;
 }
