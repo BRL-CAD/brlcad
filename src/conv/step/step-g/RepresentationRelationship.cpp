@@ -96,6 +96,7 @@ bool RepresentationRelationship::Load(STEPWrapper *sw, SDAI_Application_instance
 	    rep_1 = dynamic_cast<Representation *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'rep_1'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -106,10 +107,12 @@ bool RepresentationRelationship::Load(STEPWrapper *sw, SDAI_Application_instance
 	    rep_2 = dynamic_cast<Representation *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'rep_2'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
 
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

@@ -59,7 +59,7 @@ as a decimal number in the range of 0 to 255.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-s</option> <replaceable>squarefilesize</replaceable></term>
+        <term><option>-s</option> <replaceable>square_file_size</replaceable></term>
         <listitem>
           <para>sets the saved image width and height to the indicated
           value.</para>
@@ -82,12 +82,12 @@ as a decimal number in the range of 0 to 255.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <literallayout remap='RS'>
-<emphasis remap='I'> bw-rle  tank.bw   tank.rle</emphasis>
+bw-rle  <emphasis remap='I'>tank.bw  tank.rle</emphasis>
 </literallayout> <!-- remap='RE' -->
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>

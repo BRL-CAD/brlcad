@@ -79,6 +79,8 @@ RepresentationItem::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     //std::cout << "name:" << name << std::endl;
 
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
 }
 

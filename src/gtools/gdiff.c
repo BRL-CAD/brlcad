@@ -429,6 +429,8 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 
     /* check for keyword value pairs in object 2 that don't appear in object 1 */
     for (i=start_index; i<len2; i+= 2) {
+	int val_len;
+
 	/* get keyword/value pairs from object 2 */
 	if (Tcl_ListObjIndex(INTERP, obj2, i, &key2) == TCL_ERROR) {
 	    fprintf(stderr, "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj(obj2, &junk));
@@ -464,6 +466,13 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 		printf("%s has changed:\n", obj_name);
 	    }
 	}
+
+	if (!val2 || Tcl_ListObjLength(INTERP, val2, &val_len) == TCL_ERROR) {
+	    fprintf(stderr, "Error getting length of TCL object for %s!\n", obj_name);
+	    fprintf(stderr, "%s\n", Tcl_GetStringResult(INTERP));
+	    continue;
+	}
+
 	if (mode == HUMAN) {
 	    if (type == PARAMS) {
 		printf("\t%s has new parameter \"%s\" with value %s\n",
@@ -477,8 +486,6 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 		       Tcl_GetStringFromObj(val2, &junk));
 	    }
 	} else {
-	    int val_len;
-
 	    if (type == ATTRS) {
 		bu_vls_printf(vls, "attr set %s ", obj_name);
 	    } else {
@@ -486,11 +493,6 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 	    }
 	    bu_vls_strcat(vls, Tcl_GetStringFromObj(key2, &junk));
 	    bu_vls_strcat(vls, " ");
-	    if (Tcl_ListObjLength(INTERP, val2, &val_len) == TCL_ERROR) {
-		fprintf(stderr, "Error getting length of TCL object!!\n");
-		fprintf(stderr, "%s\n", Tcl_GetStringResult(INTERP));
-		bu_exit(1, NULL);
-	    }
 	    if (val_len > 1)
 		bu_vls_putc(vls, '{');
 	    bu_vls_strcat(vls, Tcl_GetStringFromObj(val2, &junk));

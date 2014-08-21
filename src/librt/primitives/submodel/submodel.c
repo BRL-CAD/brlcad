@@ -645,10 +645,8 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
     RT_CK_RESOURCE(tsp->ts_resp);
 
     gp = (struct goodies *)tsp->ts_m;	/* hack */
-    if (gp) RT_CK_DBI(gp->dbip);
-
-    /* NON-PARALLEL access to vlist pointed to by vheadp is not semaphored */
-    if (bu_is_parallel()) bu_bomb("rt_submodel_wireframe_leaf() non-parallel code\n");
+    if (gp)
+	RT_CK_DBI(gp->dbip);
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);

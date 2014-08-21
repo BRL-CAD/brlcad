@@ -58,13 +58,15 @@ RationalBSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *
     // load base class attributes
     if (!RationalBSplineCurve::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
     if (!BSplineCurveWithKnots::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurveWithKnots." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
-
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

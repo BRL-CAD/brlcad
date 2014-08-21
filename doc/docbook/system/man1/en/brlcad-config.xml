@@ -78,11 +78,11 @@ creating a program that refers to <emphasis remap='I'>BRL-CAD</emphasis> headers
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libbn</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libwdb</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libbn</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libwdb</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='bugs'><title>BUGS</title>
-<para>No bugs known for <command>brlcad-config</command>.</para>
+<para>No bugs known for <command>brlcad-config</command> .</para>
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>

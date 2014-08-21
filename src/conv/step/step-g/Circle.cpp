@@ -59,6 +59,7 @@ Circle::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Conic::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Conic." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -68,6 +69,7 @@ Circle::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     radius = step->getRealAttribute(sse, "radius");
 
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

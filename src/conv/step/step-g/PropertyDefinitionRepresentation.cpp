@@ -134,11 +134,11 @@ bool PropertyDefinitionRepresentation::Load(STEPWrapper *sw, SDAI_Application_in
 	    definition = aRD;
 	    if (!aRD->Load(step,select)) {
 		std::cout << CLASSNAME << ":Error loading select RepresentedDefinition from PropertyDefinitionRepresentation." << std::endl;
-		return false;
+		goto step_error;
 	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'definition'." << std::endl;
-	    return false;
+	    goto step_error;
 	}
     }
 #else
@@ -148,7 +148,7 @@ bool PropertyDefinitionRepresentation::Load(STEPWrapper *sw, SDAI_Application_in
 	    definition = dynamic_cast<PropertyDefinition *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'definition'." << std::endl;
-	    return false;
+	    goto step_error;
 	}
     }
 #endif
@@ -159,11 +159,15 @@ bool PropertyDefinitionRepresentation::Load(STEPWrapper *sw, SDAI_Application_in
 	    used_representation = dynamic_cast<Representation *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'used_representation'." << std::endl;
-	    return false;
+	    goto step_error;
 	}
     }
 
+    sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void PropertyDefinitionRepresentation::Print(int level)

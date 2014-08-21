@@ -170,17 +170,16 @@ are a good example of this.</para>
 <refsection xml:id="example"><title>EXAMPLE</title>
 <para>The following procedure enlarges an image,
 obtained from a personal computer via the
-<replaceable>gif-fb</replaceable>
+<command>gif-fb</command>
 utility,
 to fill a 1280-by-1024 frame buffer.</para>
   <blockquote remap="RS">
-<para><emphasis remap="I">$</emphasis> gif-fb image.gif	# <emphasis remap="P-&gt;I">displays the 320x200 PC image</emphasis>
-<!-- .br -->
-<emphasis remap="I">$</emphasis> fbstretch -w 320 -n 200 -W 1280 -N 1024</para></blockquote> <!-- remap='RE' -->
+<para>$ gif-fb <emphasis remap="P-&gt;I">image.gif</emphasis> # displays the 320x200 PC image</para>
+<para>$ fbstretch -w 320 -n 200 -W 1280 -N 1024</para></blockquote> <!-- remap='RE' -->
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>gif-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mandel</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>gif-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mandel</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsection>
 
 <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
