@@ -110,15 +110,10 @@ bu_bomb(const char *str)
 	bu_hook_call(&bomb_hook_list, (void *)str);
     }
 
-    if (bu_setjmp_valid) {
+    if (bu_setjmp_valid[bu_parallel_id()]) {
 	/* Application is catching fatal errors */
-	if (bu_is_parallel()) {
-	    fprintf(stderr, "bu_bomb(): in parallel mode, could not longjmp up to application handler\n");
-	} else {
-	    /* Application is non-parallel, so this is safe */
-	    longjmp(bu_jmpbuf, 1);
-	    /* NOTREACHED */
-	}
+	longjmp(bu_jmpbuf[bu_parallel_id()], 1);
+	/* NOTREACHED */
     }
 
 #ifdef HAVE_UNISTD_H
@@ -172,9 +167,6 @@ bu_bomb(const char *str)
     }
 #endif
 
-    /* If in parallel mode, try to signal the leader to die. */
-    bu_kill_parallel();
-
     /* try to save a core dump */
     if (UNLIKELY(bu_debug & BU_DEBUG_COREDUMP)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -210,6 +202,7 @@ bu_exit(int status, const char *fmt, ...)
 
 	bu_vls_vprintf(&message, fmt, ap);
 
+	/* don't dump a backtrace, etc. */
 	if (!BU_SETJUMP) {
 	    bu_bomb(bu_vls_addr(&message));
 	}

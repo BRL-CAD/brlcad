@@ -64,6 +64,7 @@ OffsetSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Surface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -77,12 +78,15 @@ OffsetSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'basis_surface' attribute." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
 
     distance = step->getRealAttribute(sse, "distance");
     self_intersect = step->getLogicalAttribute(sse, "self_intersect");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

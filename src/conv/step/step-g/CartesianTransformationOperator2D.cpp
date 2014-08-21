@@ -56,9 +56,12 @@ CartesianTransformationOperator2D::Load(STEPWrapper *sw, SDAI_Application_instan
     id = sse->STEPfile_id;
 
     if (!CartesianTransformationOperator::Load(sw, sse)) {
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	std::cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << std::endl;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

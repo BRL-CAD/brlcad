@@ -75,8 +75,16 @@ main(int argc, char *argv[])
     int c;
     char *output_file = (char *)NULL;
     bool verbose = false;
-    while ((c = bu_getopt(argc, argv, "vo:")) != -1) {
+    int dry_run = 0;
+    char *summary_log_file = (char *)NULL;
+    while ((c = bu_getopt(argc, argv, "DS:vo:")) != -1) {
 	switch (c) {
+	    case 'D':
+		dry_run = 1;
+		break;
+	    case 'S':
+		summary_log_file = bu_optarg;
+		break;
 	    case 'o':
 		output_file = bu_optarg;
 		break;
@@ -114,6 +122,9 @@ main(int argc, char *argv[])
 
     STEPWrapper *step = new STEPWrapper();
 
+    step->dry_run = dry_run;
+    step->summary_log_file= summary_log_file;
+
     step->Verbose(verbose);
 
     /* load STEP file */
@@ -143,6 +154,7 @@ main(int argc, char *argv[])
 	    ret = 3;
 	} else {
 
+	    dotg->dry_run = dry_run;
 	    std::cerr << "Writing output file [" << oflnm << "] ...";
 	    if (dotg->OpenFile(oflnm)) {
 		step->convert(dotg);

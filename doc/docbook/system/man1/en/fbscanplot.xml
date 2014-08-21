@@ -101,15 +101,14 @@ the selected line.</para>
 <para><userinput>fbscanplot -v -W512 -o `fbpoint -y` &gt; scan.out</userinput>
 <!-- .br -->
 will use
-<emphasis remap="I">fbpoint</emphasis>
+<command>fbpoint</command>
 to select a y scanline, then plot 512 pixel values
 in overlay mode.  These values will also be saved in the file
 <emphasis remap="I">scan.out</emphasis>
 for closer examination.</para>
 
-<para>A handy C-shell alias is:
-<!-- .br -->
-<emphasis remap="I">alias fbsp 'fbscanplot -r `fbpoint -y`'</emphasis></para>
+<para>A handy C-shell alias is:</para>
+<para>alias fbsp 'fbscanplot -r `fbpoint -y`'</para>
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>

@@ -80,6 +80,8 @@ bool ProductCategory::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     name = step->getStringAttribute(sse, "name");
     description = step->getStringAttribute(sse, "description");
 
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
 }
 

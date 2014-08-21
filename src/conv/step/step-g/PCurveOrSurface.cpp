@@ -86,6 +86,8 @@ PCurveOrSurface::Load(STEPWrapper *sw, SDAI_Select *sse)
 	surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, (SDAI_Application_instance *)s)); //CreateSurfaceObject(sw,(SDAI_Application_instance*)s));
     }
 
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
 }
 

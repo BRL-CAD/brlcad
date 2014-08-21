@@ -154,7 +154,7 @@ struct exists_data {
     struct ged *gedp;
     int no_op;
 };
-
+#define EXISTS_DATA_INIT_ZERO {NULL, NULL, NULL, NULL, 0}
 
 static int oexpr(enum token, struct exists_data *);
 static int aexpr(enum token, struct exists_data *);
@@ -446,7 +446,7 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
 {
 /* struct directory *dp;*/
     static const char *usage = "object";
-    struct exists_data ed;
+    struct exists_data ed = EXISTS_DATA_INIT_ZERO;
     struct bu_vls message = BU_VLS_INIT_ZERO;
     int result;
     char **argv = bu_dup_argv(argc, argv_orig);

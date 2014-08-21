@@ -35,9 +35,9 @@ This can also be useful when processing data from and to the
 same framebuffer with a pipeline, without interfering.</para>
 </refsect1>
 
-<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<refsect1 xml:id='examples'><title>EXAMPLE</title>
 <literallayout remap='.nf'>
-munch | crunch | buffer | grind | package
+(munch | crunch | buffer | grind | package)
 
 fb-pix | pixfilter -flo | buffer | pix-fb
 </literallayout> <!-- .fi -->

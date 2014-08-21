@@ -58,8 +58,11 @@ ParametricRepresentationContext::Load(STEPWrapper *sw, SDAI_Application_instance
     // load base class attributes
     if (!RepresentationContext::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

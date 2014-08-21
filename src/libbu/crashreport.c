@@ -87,7 +87,7 @@ bu_crashreport(const char *filename)
     }
 
     /* write out the backtrace */
-    fprintf(fp, "Call stack backtrace:\n");
+    fprintf(fp, "Call stack backtrace (thread %d):\n", bu_parallel_id());
     fflush(fp);
     if (bu_backtrace(fp) == 0) {
 	bu_log("WARNING: Unable to obtain a call stack backtrace\n");

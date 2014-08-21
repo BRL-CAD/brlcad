@@ -64,7 +64,7 @@ bool ProductRelatedProductCategory::Load(STEPWrapper *sw, SDAI_Application_insta
 
     if (!ProductCategory::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::ProductCategory." << std::endl;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -78,20 +78,31 @@ bool ProductRelatedProductCategory::Load(STEPWrapper *sw, SDAI_Application_insta
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		Product *aProd = dynamic_cast<Product *>(Factory::CreateObject(sw, entity));
-
-		products.push_back(aProd);
+		if (aProd) {
+		    products.push_back(aProd);
+		} else {
+		    std::cerr << CLASSNAME << ": Unhandled entity in attribute 'products'." << std::endl;
+		    l->clear();
+		    delete l;
+		    goto step_error;
+		}
 	    } else {
 		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'products'." << std::endl;
 		l->clear();
 		delete l;
-		return false;
+		goto step_error;
 	    }
 	}
 	l->clear();
 	delete l;
     }
 
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void ProductRelatedProductCategory::Print(int level)

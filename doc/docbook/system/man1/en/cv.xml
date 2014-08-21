@@ -41,7 +41,7 @@ Especially for double-precision floating point,
 DEC, Cray, and IBM have peculiar formats and byte orderings.
 The network-independent byte orderings used within BRL-CAD is
 big-endian (most significant bit first, on the left side of the word),
-twos compliment.
+twos complement.
 The network-independent double-precision floating point format used
 within BRL-CAD is 64-bit IEEE 754, transmitted in big-endian order.</para>
 
@@ -59,12 +59,12 @@ format would be "hss", and the output format would be "n32".</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>dpix-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<para><citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>dpix-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>;
 <!-- .br -->
 M. J. Muuss,
 ``<emphasis remap='I'>Workstations, Networking, Distributed Graphics, and Parallel Processing</emphasis>``
 in Computer Graphics Techniques:  Theory and Practice,
-edited by D. F. Rogers, R. A. Earnshaw, Springer-Verlag, 1990.</para>
+edited by D. F. Rogers, R. A. Earnshaw, Springer-Verlag, 1990</para>
 
 </refsect1>
 

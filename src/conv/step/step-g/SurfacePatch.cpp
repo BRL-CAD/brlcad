@@ -80,7 +80,7 @@ SurfacePatch::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!FoundedItem::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -91,9 +91,10 @@ SurfacePatch::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "parent_surface");
 	if (entity != NULL) {
 	    parent_surface = dynamic_cast<BoundedSurface *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !parent_surface) {
 	    std::cout << CLASSNAME << ":Error loading member field \"parent_surface\"." << std::endl;
-	    return false;
+	    goto step_error;
 	}
     }
 
@@ -109,7 +110,12 @@ SurfacePatch::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     u_sense = step->getBooleanAttribute(sse, "u_sense");
     v_sense = step->getBooleanAttribute(sse, "v_sense");
 
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void

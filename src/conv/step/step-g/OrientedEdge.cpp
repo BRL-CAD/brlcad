@@ -61,9 +61,9 @@ OrientedEdge::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     step = sw;
     id = sse->STEPfile_id;
 
-
     if (!Edge::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -87,13 +87,17 @@ OrientedEdge::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		}
 	    } else {
 		std::cerr << CLASSNAME << ": Error loading entity attribute 'edge_element'." << std::endl;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 	} else {
 	    std::cerr << CLASSNAME << ": Error loading entity attribute 'edge_element'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

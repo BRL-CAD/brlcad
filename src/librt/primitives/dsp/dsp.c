@@ -2424,6 +2424,8 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     if (minpt[Z] < min_z && maxpt[Z] < min_z) {
 	/* add hit segment */
 	struct hit seg_in, seg_out;
+	VSETALL(seg_in.hit_vpriv, 0.0);
+	VSETALL(seg_out.hit_vpriv, 0.0);
 
 	seg_in.hit_magic = RT_HIT_MAGIC;
 	seg_in.hit_dist = r->r_min;

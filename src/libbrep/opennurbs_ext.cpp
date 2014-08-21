@@ -428,6 +428,8 @@ BRNode*
 CurveTree::initialLoopBBox()
 {
     ON_BoundingBox bb;
+    m_face->SurfaceOf()->GetBBox(bb[0], bb[1]);
+
     for (int i = 0; i < m_face->LoopCount(); i++) {
 	ON_BrepLoop* loop = m_face->Loop(i);
 	if (loop->m_type == ON_BrepLoop::outer) {
@@ -560,12 +562,6 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     : m_removeTrimmed(removeTrimmed),
       m_face(face)
 {
-    // first, build the Curve Tree
-    if (removeTrimmed)
-	ctree = new CurveTree(m_face);
-    else
-	ctree = NULL;
-
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
     if (!surf) {
@@ -584,6 +580,16 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
 	    bGrowBox = true;
 	}
     }
+    if (!bGrowBox) {
+	surf->GetBoundingBox(min, max);
+	removeTrimmed = false;
+    }
+
+    // first, build the Curve Tree
+    if (removeTrimmed)
+	ctree = new CurveTree(m_face);
+    else
+	ctree = NULL;
 
     TRACE("Creating surface tree for: " << face->m_face_index);
 
@@ -592,7 +598,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     ON_Interval v = surf->Domain(1);
 #else
     ON_Interval dom[2] = { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval };
-    for (int i =0; i < 2; i++) {
+    for (int i = 0; i < 2; i++) {
 	dom[i] = surf->Domain(i);
 #ifdef LOOSEN_UV
 	min[i] -= BREP_EDGE_MISS_TOLERANCE;
@@ -1134,7 +1140,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	const ON_Surface *q2surf = localsurf;
 	const ON_Surface *q3surf = localsurf;
 
-	bool split = true;
 #endif
 
 	/*********************************************************************
