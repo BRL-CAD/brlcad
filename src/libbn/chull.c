@@ -158,7 +158,6 @@ bn_3d_coplanar_chull(point_t **hull, const point_t *points_3d, int n)
     point2d_t *points_tmp = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "points_2d");
 
     const point2d_t *const_points_tmp;
-    const point2d_t *const_hull_2d;
 
     ret += coplanar_2d_coord_sys(&origin_pnt, &u_axis, &v_axis, points_3d, n);
     ret += coplanar_3d_to_2d(&points_tmp, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, points_3d, n);
@@ -171,7 +170,6 @@ bn_3d_coplanar_chull(point_t **hull, const point_t *points_3d, int n)
     hull_cnt = bn_2d_chull(&hull_2d, const_points_tmp, n);
     (*hull) = (point_t *)bu_calloc(hull_cnt + 1, sizeof(point_t), "hull array");
 
-    const_hull_2d = (const point2d_t *)hull_2d;
     ret = coplanar_2d_to_3d(hull, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)hull_2d, hull_cnt);
 
     if (ret)

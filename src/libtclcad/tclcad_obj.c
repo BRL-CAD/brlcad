@@ -13511,16 +13511,17 @@ HIDDEN void
 to_output_handler(struct ged *gedp, char *line)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
+    char *escaped = bu_str_escape(line, "\\{}", NULL, 0);
 
-    if (gedp->ged_output_script != (char *)0) {
-	bu_vls_printf(&vls, "%s \"%s\"", gedp->ged_output_script, line);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-    } else {
-	bu_vls_printf(&vls, "puts \"%s\"", line);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-    }
+    if (gedp->ged_output_script != (char *)0)
+        bu_vls_printf(&vls, "%s [subst -nocommands -novariables {%s}]", gedp->ged_output_script, escaped);
+    else
+        bu_vls_printf(&vls, "puts [subst -nocommands -novariables {%s}]", escaped);
+
+    bu_free(escaped, "escape buffer");
+
+    Tcl_Eval(current_top->to_interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
 }
 
 
