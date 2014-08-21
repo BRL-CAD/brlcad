@@ -150,7 +150,7 @@ main(int argc, char *argv[])
 	bu_log("bu_parallel simple callback with data, few iterations [FAIL] (got %zd, expected %zd)\n", tally(ncpu), ncpu*data.iterations);
 	return 1;
     }
-    bu_log("bu_parallel simple callback with data, few iterations [PASS])\n");
+    bu_log("bu_parallel simple callback with data, few iterations [PASS]\n");
 
     /* test calling a simple hook function again with data, but lots of collision potential */
     memset(counter, 0, sizeof(counter));
