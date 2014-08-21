@@ -143,7 +143,7 @@ main(int argc, char **argv)
 		break;
 	    case 'P':
 		ncpu_opt = (size_t)strtoul(bu_optarg, NULL, 0);
-		if (ncpu_opt > 0 && ncpu_opt < ncpu)
+		if (ncpu_opt > 0 && ncpu_opt < MAX_PSW)
 		    ncpu = ncpu_opt;
 		break;
 	    default:
