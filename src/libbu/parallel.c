@@ -769,11 +769,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
     }
 #  endif /* end if Win32 threads */
 
-    /*
-     * TODO: Ensure that all the threads are REALLY finished.  On some
-     * systems, if threads core dump, the rest of the gang keeps
-     * going, so this can actually happen.
-     */
+    parallel_mapping(PARALLEL_PUT, bu_parallel_id(), 0);
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%d) complete\n", ncpu);
