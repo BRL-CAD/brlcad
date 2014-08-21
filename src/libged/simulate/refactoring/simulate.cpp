@@ -113,6 +113,15 @@ get_bounding_box(db_i &dbi, const std::string &name)
 }
 
 
+static fastf_t
+get_volume(db_i &dbi, const std::string &name)
+{
+    // FIXME: not the true volume
+    const btVector3 lwh = get_bounding_box(dbi, name) * 2;
+    return lwh.getX() * lwh.getY() * lwh.getZ();
+}
+
+
 static void
 world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 {
@@ -133,9 +142,7 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 		mass = 0;
 	    else {
 		const fastf_t DENSITY = 1;
-		const fastf_t area = bounding_box.getX() * bounding_box.getY() *
-				     bounding_box.getZ(); // FIXME not the true area
-		mass = DENSITY * area;
+		mass = DENSITY * get_volume(dbi, vtree.tr_l.tl_name);
 	    }
 
 	    world.add_object(bounding_box, mass, vtree.tr_l.tl_mat);
@@ -149,7 +156,7 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 	    break;
 
 	default:
-	    throw std::runtime_error("unsupported operation in combination");
+	    throw std::runtime_error("unsupported operation in scene comb");
     }
 }
 
