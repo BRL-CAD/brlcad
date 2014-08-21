@@ -6099,8 +6099,11 @@ to_idle_mode(struct ged *gedp,
     if (mode != TCLCAD_POLY_CONTOUR_MODE ||
 	gdvp->gdv_view->gv_data_polygons.gdps_cflag == 0)
     {
-        tclcad_eval_var(current_top->to_interp, 0, "bind",
-                bu_vls_addr(&gdvp->gdv_dmp->dm_pathName), "<Motion>", "", NULL);
+	tclcad_eval_var(current_top->to_interp, 0,
+		"bind",
+		bu_vls_addr(&gdvp->gdv_dmp->dm_pathName),
+		"<Motion>",
+		"", NULL);
     }
 
     if (gdvp->gdv_view->gv_grid.ggs_snap &&
@@ -8000,9 +8003,10 @@ to_mouse_orotate(struct ged *gedp,
 
     if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
 	tclcad_eval_var(current_top->to_interp, 0,
-                bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback), "orotate",
-                bu_vls_addr(&rot_x_vls), bu_vls_addr(&rot_y_vls),
-                bu_vls_addr(&rot_z_vls), NULL);
+		bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback),
+		"orotate",
+		bu_vls_addr(&rot_x_vls), bu_vls_addr(&rot_y_vls),
+		bu_vls_addr(&rot_z_vls), NULL);
     } else {
 	char *av[6];
 
@@ -13501,9 +13505,9 @@ to_output_handler(struct ged *gedp, char *line)
     const char *script;
 
     if (gedp->ged_output_script != (char *)0)
-        script = gedp->ged_output_script;
+	script = gedp->ged_output_script;
     else
-        script = "puts";
+	script = "puts";
 
     tclcad_eval_quiet(current_top->to_interp, script, line);
 }
