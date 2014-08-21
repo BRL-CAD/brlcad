@@ -908,7 +908,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     const std::size_t num_vertices = static_cast<std::size_t>(mesh.m_V.Count());
     const std::size_t num_faces = static_cast<std::size_t>(mesh.m_F.Count());
 
-    unsigned char orientation;
+    unsigned char orientation = RT_BOT_UNORIENTED;
 
     switch (mesh.SolidOrientation()) {
 	case 0:
