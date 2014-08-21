@@ -2179,11 +2179,7 @@ db_walk_tree(struct db_i *dbip,
     wps.client_data = client_data;
     wps.rtip = init_state->ts_rtip;
 
-    if (ncpu <= 1) {
-	_db_walk_dispatcher(0, (void *)&wps);
-    } else {
-	bu_parallel(_db_walk_dispatcher, ncpu, (void *)&wps);
-    }
+    bu_parallel(_db_walk_dispatcher, ncpu, (void *)&wps);
 
     /* Clean up any remaining sub-trees still in reg_trees[] */
     for (i = 0; i < new_reg_count; i++) {
