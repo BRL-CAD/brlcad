@@ -553,6 +553,12 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	if (parent->started > 0)
 	    parent->started--;
 	bu_semaphore_release(BU_SEM_THREAD);
+    } else if (ncpu == 1) {
+	/* single cpu case bypasses nearly everything, just invoke */
+	(*func)(0, arg);
+
+	parallel_mapping(PARALLEL_PUT, bu_parallel_id(), 0);
+	return;
     }
 
     thread_context = (struct thread_data *)bu_calloc(ncpu, sizeof(*thread_context), "struct thread_data *thread_context");
