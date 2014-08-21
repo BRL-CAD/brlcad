@@ -26,9 +26,9 @@ combinatorial solid geometry (CSG)
 models.
 See
 <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-and
+and see also
 <emphasis remap='I'>Understanding the Preparation and Analysis of Solid Models</emphasis>
-by Michael John Muuss (enclosed, in the "paper") directory.</para>
+by Michael John Muuss (enclosed, in the "paper" directory).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -263,7 +263,7 @@ When a local display device is being specified, the
 <emphasis remap='I'>hostname</emphasis>
 should not be specified, for performance reasons; just the
 special string
-<emphasis remap='I'>Device_name</emphasis>
+<emphasis remap='I'>device_name</emphasis>
 is used to select a particular type of framebuffer.
 <emphasis remap='I'>Num</emphasis>
 is type dependent and can either mean a display number or select
@@ -273,7 +273,7 @@ disk file via the remote interface.</para>
 
 <para>If
 <envar>FB_FILE</envar>
-is not set, the default for you system will be used.</para>
+is not set, the default for your system will be used.</para>
 
 <para>The use of
 <filename>/dev/</filename>

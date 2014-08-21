@@ -61,6 +61,7 @@ CartesianTransformationOperator3D::Load(STEPWrapper *sw, SDAI_Application_instan
 
     if (!CartesianTransformationOperator::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -74,6 +75,8 @@ CartesianTransformationOperator3D::Load(STEPWrapper *sw, SDAI_Application_instan
 	    axis3 = dynamic_cast<Direction *>(Factory::CreateObject(sw, entity));
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

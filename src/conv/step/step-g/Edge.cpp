@@ -64,6 +64,7 @@ Edge::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -79,6 +80,7 @@ Edge::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute edge_start" << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -90,9 +92,11 @@ Edge::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute edge_end" << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

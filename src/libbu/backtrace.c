@@ -175,11 +175,15 @@ backtrace(char * const *args, int fd)
 	perror("write [set backtrace past-main on] failed");
     } else if (write(input[1], "bt full\n", 8) != 8) {
 	perror("write [bt full] failed");
+    } else if (write(input[1], "thread apply all bt full\n", 25) != 25) {
+	perror("write [thread apply all bt full] failed");
     }
-    /* can add additional gdb commands here. Output will contain
-     * everything up to the "Detaching from process" statement from
-     * quit.
+
+    /* Can add additional gdb commands above here.  Output will
+     * contain everything up to the "Detaching from process" statement
+     * from the quit command below.
      */
+
     if (write(input[1], "quit\n", 5) != 5) {
 	perror("write [quit] failed");
     }

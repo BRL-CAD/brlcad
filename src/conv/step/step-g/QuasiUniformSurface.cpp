@@ -58,8 +58,10 @@ QuasiUniformSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!BSplineSurface::Load(sw, sse)) {
 	std::cout << "Error loading QuasiUniformSurface." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

@@ -35,7 +35,7 @@ The environment
 variable
 <envar>FB_FILE</envar>
 is used to select the display device (see
-<emphasis remap="I">brlcad(1)</emphasis>).
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 If this variable is not set, the default device for your system will
 be used.
 Alternatively, the framebuffer may be explicitly specified

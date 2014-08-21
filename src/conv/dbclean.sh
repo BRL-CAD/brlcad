@@ -19,8 +19,8 @@
 # information.
 ###
 
-# This shell program compacts mged (.g) databases to remove spaces left
-# by the kill/killall commands.  This is achieved by converting the
+# This shell program compacts mged (.g) databases to remove spaces which resulted
+# from use of the kill/killall commands.  This is achieved by converting the
 # database to ASCII and then back to .g format.
 # Note: when the converters are unable to convert a solid and it is skipped,
 # the conversions will go to completion and a new database --- without those

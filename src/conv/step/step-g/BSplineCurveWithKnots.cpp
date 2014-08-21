@@ -69,7 +69,7 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!BSplineCurve::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -81,7 +81,9 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
 	if (attr) {
 	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
+	    if (!sa) goto step_error;
 	    IntNode *in = (IntNode *)sa->GetHead();
+	    if (!in) goto step_error;
 
 	    while (in != NULL) {
 		knot_multiplicities.push_back(in->value);
@@ -89,7 +91,7 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    }
 	} else {
 	    std::cout << CLASSNAME << ": Error loading BSplineCurveWithKnots(knot_multiplicities)." << std::endl;
-	    return false;
+	    goto step_error;
 	}
     }
 
@@ -97,7 +99,9 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	STEPattribute *attr = step->getAttribute(sse, "knots");
 	if (attr) {
 	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
+	    if (!sa) goto step_error;
 	    RealNode *rn = (RealNode *)sa->GetHead();
+	    if (!rn) goto step_error;
 
 	    while (rn != NULL) {
 		knots.push_back(rn->value);
@@ -105,7 +109,7 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    }
 	} else {
 	    std::cout << CLASSNAME << ": Error loading BSplineCurveWithKnots(knots)." << std::endl;
-	    return false;
+	    goto step_error;
 	}
     }
 
@@ -114,7 +118,11 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	knot_spec = Knot_type_unset;
     }
 
+    sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void

@@ -52,6 +52,8 @@ bool
 BRLCADWrapper::load(std::string &flnm)
 {
 
+    if (dry_run) return true;
+
     /* open brlcad instance */
     if ((dbip = db_open(flnm.c_str(), DB_OPEN_READONLY)) == DBI_NULL) {
 	bu_log("Cannot open input file (%s)\n", flnm.c_str());
@@ -71,6 +73,8 @@ BRLCADWrapper::OpenFile(std::string &flnm)
 {
     //TODO: need to check to make sure we aren't overwriting
 
+    if (dry_run) return true;
+
     /* open brlcad instance */
     if ((outfp = wdb_fopen(flnm.c_str())) == NULL) {
 	bu_log("Cannot open output file (%s)\n", flnm.c_str());
@@ -89,6 +93,7 @@ BRLCADWrapper::OpenFile(std::string &flnm)
 bool
 BRLCADWrapper::WriteHeader()
 {
+    if (dry_run) return true;
     db5_update_attribute("_GLOBAL", "HEADERINFO", "test header attributes", outfp->dbip);
     db5_update_attribute("_GLOBAL", "HEADERCLASS", "test header classification", outfp->dbip);
     db5_update_attribute("_GLOBAL", "HEADERAPPROVED", "test header approval", outfp->dbip);
@@ -99,6 +104,7 @@ BRLCADWrapper::WriteHeader()
 bool
 BRLCADWrapper::WriteSphere(double *center, double radius)
 {
+    if (dry_run) return true;
     point_t pnt;
     center[X] = 0.0;
     center[Y] = 0.0;
@@ -145,9 +151,9 @@ BRLCADWrapper::CleanBRLCADName(std::string &inname)
 {
     std::string retStr = "";
     std::string name = ReplaceAccented(inname);
-    char *cp;
+    unsigned char *cp;
 
-    for (cp = (char *)name.c_str(); *cp != '\0'; ++cp) {
+    for (cp = (unsigned char *)name.c_str(); *cp != '\0'; ++cp) {
 	if (*cp == '\'') {
 	    // remove non-printable
 	    continue;
@@ -199,6 +205,11 @@ BRLCADWrapper::GetBRLCADName(std::string &name)
 
     tp = (char *)((*cp == '\0') ? "" : cp + 1);
 
+    /* TODO - We don't have db_lookup in a dry run */
+    if (dry_run) {
+	return bu_vls_addr(&obj_name);
+    }
+
     do {
 	bu_vls_trunc(&obj_name, len);
 	bu_vls_printf(&obj_name, "%d", start++);
@@ -236,6 +247,7 @@ bool
 BRLCADWrapper::WriteCombs()
 {
     MAP_OF_BU_LIST_HEADS::iterator i = heads.begin();
+    if (dry_run) return true;
     while (i != heads.end()) {
 	std::string combname = (*i).first;
 	struct bu_list *head = (*i++).second;
@@ -272,6 +284,7 @@ BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat)
 {
     std::string sol = name + ".s";
     std::string reg = name;
+    if (dry_run) return true;
 
     mk_brep(outfp, sol.c_str(), brep);
     unsigned char rgb[] = {200, 180, 180};
@@ -299,7 +312,7 @@ BRLCADWrapper::GetDBIP()
 bool
 BRLCADWrapper::Close()
 {
-
+    if (dry_run) return true;
     if (outfp) {
 	wdb_close(outfp);
 	outfp = NULL;

@@ -97,6 +97,10 @@ class SDAI_Application_instance;
 
 #include "brep.h"
 
+//#define _DEBUG_TESTING_
+#ifdef _DEBUG_TESTING_
+extern void print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoints);
+#endif
 
 ON_Brep *
 AdvancedBrepShapeRepresentation::GetONBrep()
@@ -1452,6 +1456,10 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
 }
 
 
+#ifdef _DEBUG_TESTING_
+bool _debug_print_ = false;
+#endif
+
 bool
 Path::LoadONTrimmingCurves(ON_Brep *brep)
 {
@@ -1465,9 +1473,37 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     }
 
     const ON_BrepLoop *loop = &brep->m_L[ON_path_index];
-    const ON_BrepFace *face = loop->Face();
+    ON_BrepFace *face = loop->Face();
     const ON_Surface *surface = face->SurfaceOf();
 
+    if (surface) {
+	double surface_width, surface_height;
+	if (surface->GetSurfaceSize(&surface_width, &surface_height)) {
+	    // reparameterization of the face's surface and transforms the "u"
+	    // and "v" coordinates of all the face's parameter space trimming
+	    // curves to minimize distortion in the map from parameter space to 3d..
+	    face->SetDomain(0, 0.0, surface_width);
+	    face->SetDomain(1, 0.0, surface_height);
+	}
+    }
+#ifdef _DEBUG_TESTING_
+    if (_debug_print_) {
+	int curve_cnt = 0;
+	for (i = edge_list.begin(); i != edge_list.end(); i++) {
+	    // grab the curve for this edge, face and surface
+	    const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
+	    const ON_Curve *curve = edge->EdgeCurveOf();
+
+	    ON_Interval interval = curve->Domain();
+	    double delta = interval.Length()/100.0;
+	    for(int j =0; j < 100; j++) {
+		ON_3dPoint p = curve->PointAt(interval.m_t[0] + j*delta);
+		std::cerr << "in pt_" << curve_cnt << " sph " << p.x << " " << p.y << " " << p.z << " 0.1000"  << std::endl;
+		curve_cnt++;
+	    }
+	}
+    }
+#endif
     // build surface tree making sure not to remove trimmed subsurfaces
     // since currently building trims and need full tree
     // bool removeTrimmed = false;
@@ -1520,10 +1556,24 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    rsegs.clear();
 	}
     }
+#ifdef _DEBUG_TESTING_
+    //TODO: remove debugging
+    if (_debug_print_) {
+	std::cerr << "Face " << face->m_face_index << " id " << id << std::endl;
+	print_pullback_data("Before check_pullback_data", curve_pullback_samples, false);
+    }
+#endif
     // check for seams and singularities
     if (!check_pullback_data(curve_pullback_samples)) {
 	std::cerr << "Error: Can not resolve seam or singularity issues." << std::endl;
     }
+#ifdef _DEBUG_TESTING_
+    //TODO: remove debugging
+    if (_debug_print_) {
+	std::cerr << "Face " << face->m_face_index << " id " << id << std::endl;
+	print_pullback_data("After check_pullback_data", curve_pullback_samples, false);
+    }
+#endif
     list<PBCData *>::iterator cs = curve_pullback_samples.begin();
     list<PBCData *>::iterator next_cs;
 
@@ -2046,10 +2096,6 @@ Circle::LoadONBrep(ON_Brep *brep)
 
 	startpt *= LocalUnits::length;
 	endpt *= LocalUnits::length;
-    } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec
-		  << ">) not endpoints for specified for curve " << entityname << std::endl;
-	return false;
     }
 
     // if we have start and end points, get corresponding t and s
@@ -2253,10 +2299,6 @@ Ellipse::LoadONBrep(ON_Brep *brep)
 
 	startpt *= LocalUnits::length;
 	endpt *= LocalUnits::length;
-    } else {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec
-		  << ">) not endpoints for specified for curve " << entityname << std::endl;
-	return false;
     }
 
     // if we have start and end points, get corresponding t and s

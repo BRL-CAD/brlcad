@@ -166,13 +166,13 @@ qt_updstate(fb *ifp)
 
     /*
      * Set ?wp to the number of whole zoomed image pixels we could display
-     * in the X window.
+     * in the window.
      */
     xwp = qi->qi_qwidth / ifp->if_xzoom;
     ywp = qi->qi_qheight / ifp->if_yzoom;
 
     /*
-     * Set ?rp to the number of leftover X pixels we have, after displaying
+     * Set ?rp to the number of leftover pixels we have, after displaying
      * wp whole zoomed image pixels.
      */
     xrp = qi->qi_qwidth % ifp->if_xzoom;
@@ -183,7 +183,6 @@ qt_updstate(fb *ifp)
      * keeps the image from jumping around when using large zoom
      * factors.
      */
-
     if (xwp && (xwp ^ qi->qi_qwidth) & 1) {
 	xwp--;
 	xrp += ifp->if_xzoom;
@@ -196,7 +195,7 @@ qt_updstate(fb *ifp)
 
     /*
      * Now we calculate the height/width of the outermost image pixel
-     * slots.  If we've got any leftover X pixels, we'll make
+     * slots.  If we've got any leftover pixels, we'll make
      * truncated slots out of them; if not, the outermost ones end up
      * full size.  We'll adjust ?wp to be the number of full and
      * truncated slots available.
@@ -243,11 +242,11 @@ qt_updstate(fb *ifp)
      * We've now divided our Qt window up into image pixel slots as
      * follows:
      *
-     * - All slots are xzoom by yzoom X pixels in size, except:
-     *     slots in the top row are tp_h X pixels high
-     *     slots in the bottom row are bt_h X pixels high
-     *     slots in the left column are lf_w X pixels wide
-     *     slots in the right column are rt_w X pixels wide
+     * - All slots are xzoom by yzoom pixels in size, except:
+     *     slots in the top row are tp_h pixels high
+     *     slots in the bottom row are bt_h pixels high
+     *     slots in the left column are lf_w pixels wide
+     *     slots in the right column are rt_w pixels wide
      * - The window is xwp by ywp slots in size.
      */
 
@@ -257,20 +256,18 @@ qt_updstate(fb *ifp)
      * pixels available on the left half.  We use this information to
      * calculate the remaining parameters as noted.
      */
-
     want = ifp->if_xcenter;
     avail = xwp/2;
     if (want >= avail) {
 	/*
 	 * Just enough or too many pixels to display.  We'll be butted
 	 * up against the left edge, so
-	 *  - the leftmost X pixels will have an x coordinate of 0;
+	 *  - the leftmost pixels will have an x coordinate of 0;
 	 *  - the leftmost column of image pixels will be as wide as the
 	 *    leftmost column of image pixel slots; and
 	 *  - the leftmost image pixel displayed will have an x
 	 *    coordinate equal to the number of pixels that didn't fit.
 	 */
-
 	qi->qi_xlf = 0;
 	qi->qi_ilf_w = lf_w;
 	qi->qi_ilf = want - avail;
@@ -278,7 +275,7 @@ qt_updstate(fb *ifp)
 	/*
 	 * Not enough image pixels to fill the area.  We'll be offset
 	 * from the left edge, so
-	 *  - the leftmost X pixels will have an x coordinate equal
+	 *  - the leftmost pixels will have an x coordinate equal
 	 *    to the number of pixels taken up by the unused image
 	 *    pixel slots;
 	 *  - the leftmost column of image pixels will be as wide as the
@@ -286,28 +283,25 @@ qt_updstate(fb *ifp)
 	 *  - the leftmost image pixel displayed will have a zero
 	 *    x coordinate.
 	 */
-
 	qi->qi_xlf = lf_w + (avail - want - 1) * ifp->if_xzoom;
 	qi->qi_ilf_w = ifp->if_xzoom;
 	qi->qi_ilf = 0;
     }
 
     /* Calculation for bottom edge. */
-
     want = ifp->if_ycenter;
     avail = ywp/2;
     if (want >= avail) {
 	/*
 	 * Just enough or too many pixels to display.  We'll be
 	 * butted up against the bottom edge, so
-	 *  - the bottommost X pixels will have a y coordinate
+	 *  - the bottommost pixels will have a y coordinate
 	 *    equal to the window height minus 1;
 	 *  - the bottommost row of image pixels will be as tall as the
 	 *    bottommost row of image pixel slots; and
 	 *  - the bottommost image pixel displayed will have a y
 	 *    coordinate equal to the number of pixels that didn't fit.
 	 */
-
 	qi->qi_xbt = qi->qi_qheight - 1;
 	qi->qi_ibt_h = bt_h;
 	qi->qi_ibt = want - avail;
@@ -315,7 +309,7 @@ qt_updstate(fb *ifp)
 	/*
 	 * Not enough image pixels to fill the area.  We'll be
 	 * offset from the bottom edge, so
-	 *  - the bottommost X pixels will have a y coordinate equal
+	 *  - the bottommost pixels will have a y coordinate equal
 	 *    to the window height, less the space taken up by the
 	 *    unused image pixel slots, minus 1;
 	 *  - the bottom row of image pixels will be as tall as the
@@ -323,7 +317,6 @@ qt_updstate(fb *ifp)
 	 *  - the bottommost image pixel displayed will have a zero
 	 *    y coordinate.
 	 */
-
 	qi->qi_xbt = qi->qi_qheight - (bt_h + (avail - want - 1) *
 				       ifp->if_yzoom) - 1;
 	qi->qi_ibt_h = ifp->if_yzoom;
@@ -331,14 +324,13 @@ qt_updstate(fb *ifp)
     }
 
     /* Calculation for right edge. */
-
     want = qi->qi_iwidth - ifp->if_xcenter;
     avail =  xwp - xwp/2;
     if (want >= avail) {
 	/*
 	 * Just enough or too many pixels to display.  We'll be
 	 * butted up against the right edge, so
-	 *  - the rightmost X pixels will have an x coordinate equal
+	 *  - the rightmost pixels will have an x coordinate equal
 	 *    to the window width minus 1;
 	 *  - the rightmost column of image pixels will be as wide as
 	 *    the rightmost column of image pixel slots; and
@@ -346,7 +338,6 @@ qt_updstate(fb *ifp)
 	 *    coordinate equal to the center plus the number of pixels
 	 *    that fit, minus 1.
 	 */
-
 	qi->qi_xrt = qi->qi_qwidth - 1;
 	qi->qi_irt_w = rt_w;
 	qi->qi_irt = ifp->if_xcenter + avail - 1;
@@ -354,7 +345,7 @@ qt_updstate(fb *ifp)
 	/*
 	 * Not enough image pixels to fill the area.  We'll be
 	 * offset from the right edge, so
-	 *  - the rightmost X pixels will have an x coordinate equal
+	 *  - the rightmost pixels will have an x coordinate equal
 	 *    to the window width, less the space taken up by the
 	 *    unused image pixel slots, minus 1;
 	 *  - the rightmost column of image pixels will be as wide as
@@ -362,7 +353,6 @@ qt_updstate(fb *ifp)
 	 *  - the rightmost image pixel displayed will have an x
 	 *    coordinate equal to the width of the image minus 1.
 	 */
-
 	qi->qi_xrt = qi->qi_qwidth - (rt_w + (avail - want - 1) *
 				      ifp->if_xzoom) - 1;
 	qi->qi_irt_w = ifp->if_xzoom;
@@ -370,21 +360,19 @@ qt_updstate(fb *ifp)
     }
 
     /* Calculation for top edge. */
-
     want = qi->qi_iheight - ifp->if_ycenter;
     avail = ywp - ywp/2;
     if (want >= avail) {
 	/*
 	 * Just enough or too many pixels to display.  We'll be
 	 * butted up against the top edge, so
-	 *  - the topmost X pixels will have a y coordinate of 0;
+	 *  - the topmost pixels will have a y coordinate of 0;
 	 *  - the topmost row of image pixels will be as tall as
 	 *    the topmost row of image pixel slots; and
 	 *  - the topmost image pixel displayed will have a y
 	 *    coordinate equal to the center plus the number of pixels
 	 *    that fit, minus 1.
 	 */
-
 	qi->qi_xtp = 0;
 	qi->qi_itp_h = tp_h;
 	qi->qi_itp = ifp->if_ycenter + avail - 1;
@@ -392,19 +380,17 @@ qt_updstate(fb *ifp)
 	/*
 	 * Not enough image pixels to fill the area.  We'll be
 	 * offset from the top edge, so
-	 *  - the topmost X pixels will have a y coordinate equal
+	 *  - the topmost pixels will have a y coordinate equal
 	 *    to the space taken up by the unused image pixel slots;
 	 *  - the topmost row of image pixels will be as tall as
 	 *    the yzoom height; and
 	 *  - the topmost image pixel displayed will have a y
 	 *    coordinate equal to the height of the image minus 1.
 	 */
-
 	qi->qi_xtp = tp_h + (avail - want - 1) * ifp->if_yzoom;
 	qi->qi_itp_h = ifp->if_yzoom;
 	qi->qi_itp = qi->qi_iheight - 1;
     }
-
 }
 
 __BEGIN_DECLS
@@ -446,8 +432,18 @@ qt_configureWindow(fb *ifp, int width, int height)
     *qi->qi_parent_img = qi->qi_image;
 
     qt_updstate(ifp);
+}
 
-    fb_log("configure_win %d %d\n", ifp->if_height, ifp->if_width);
+HIDDEN int
+qt_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+{
+    return 0;
+}
+
+HIDDEN int
+qt_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+{
+    return 0;
 }
 
 int
@@ -587,8 +583,7 @@ qt_update(fb *ifp, int x1, int y1, int w, int h)
 	}
 
 	/*
-	 * And again, move to the beginning of the next
-	 * line up in the X server.
+	 * move to the next line
 	 */
 	op -= qi->qi_image->bytesPerLine();
 
@@ -611,8 +606,6 @@ qt_rmap(fb *ifp, ColorMap *cmp)
     FB_CK_fb(ifp);
 
     memcpy(cmp, qi->qi_rgb_cmap, sizeof (ColorMap));
-
-    fb_log("qt_rmap\n");
 
     return 0;
 }
@@ -683,8 +676,6 @@ qt_wmap(fb *ifp, const ColorMap *cmp)
      */
     if (qi->qi_flags & FLG_INIT)
 	qt_update(ifp, 0, 0, qi->qi_iwidth, qi->qi_iheight);
-
-    fb_log("qt_wmap\n");
 
     return 0;
 }
@@ -819,7 +810,7 @@ qt_open(fb *ifp, const char *file, int width, int height)
     qi->qi_blumap = (unsigned char *)malloc(256);
 
     if (!qi->qi_redmap || !qi->qi_grnmap || !qi->qi_blumap) {
-	fb_log("if_X24: Can't allocate colormap memory\n");
+	fb_log("if_qt: Can't allocate colormap memory\n");
 	return -1;
     }
     qi->qi_mem = (unsigned char *) mem + sizeof (*qi->qi_rgb_cmap);
@@ -839,8 +830,6 @@ qt_open(fb *ifp, const char *file, int width, int height)
 
     /* Set up default linear colormap */
     qt_wmap(ifp, NULL);
-
-    fb_log("qt_open\n");
 
     return 0;
 }
@@ -899,7 +888,7 @@ _qt_open_existing(fb *ifp, int width, int height, void *qapp, void *qwin, void *
     qi->qi_blumap = (unsigned char *)malloc(256);
 
     if (!qi->qi_redmap || !qi->qi_grnmap || !qi->qi_blumap) {
-	fb_log("if_X24: Can't allocate colormap memory\n");
+	fb_log("if_qt: Can't allocate colormap memory\n");
 	return -1;
     }
     qi->qi_mem = (unsigned char *) mem + sizeof (*qi->qi_rgb_cmap);
@@ -932,29 +921,14 @@ _qt_open_existing(fb *ifp, int width, int height, void *qapp, void *qwin, void *
     /* Mark display ready */
     qi->qi_flags |= FLG_INIT;
 
-    fb_log("_qt_open_existing %d %d\n", ifp->if_max_height, ifp->if_max_width);
-
     return 0;
 }
 
-HIDDEN int
-qt_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
-{
-    return 0;
-}
-
-HIDDEN int
-qt_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
-{
-    return 0;
-}
 
 HIDDEN int
 qt_close(fb *ifp)
 {
     struct qtinfo *qi = QI(ifp);
-
-    fb_log("qt_close\n");
 
     /* if a window was created wait for user input and process events */
     if (qi->alive == 1) {
@@ -1004,8 +978,6 @@ qt_clear(fb *ifp, unsigned char *pp)
 
     qt_update(ifp, 0, 0, qi->qi_iwidth, qi->qi_iheight);
 
-    fb_log("qt_clear\n");
-
     return 0;
 }
 
@@ -1028,8 +1000,6 @@ qt_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	count = maxcount;
 
     memcpy(pixelp, &(qi->qi_mem[(y*qi->qi_iwidth + x)*sizeof(RGBpixel)]), count*sizeof(RGBpixel));
-
-    fb_log("qt_read\n");
 
     return count;
 }
@@ -1102,8 +1072,6 @@ qt_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
     qt_updstate(ifp);
     qt_update(ifp, 0, 0, qi->qi_iwidth, qi->qi_iheight);
-
-    fb_log("qt_view\n");
 
     return 0;
 }
@@ -1185,8 +1153,6 @@ qt_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *p
 	}
     }
 
-    fb_log("qt_readrect\n");
-
     return width * height;
 }
 
@@ -1228,9 +1194,23 @@ qt_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned 
     /* Flush to screen */
     qt_update(ifp, xmin, ymin, width, height);
 
-    fb_log("qt_writerect\n");
-
     return width * height;
+}
+
+
+HIDDEN int
+qt_help(fb *ifp)
+{
+    fb_log("Description: %s\n", qt_interface.if_type);
+    fb_log("Device: %s\n", ifp->if_name);
+    fb_log("Max width/height: %d %d\n",
+	   qt_interface.if_max_width,
+	   qt_interface.if_max_height);
+    fb_log("Default width/height: %d %d\n",
+	   qt_interface.if_width,
+	   qt_interface.if_height);
+    fb_log("Useful for Benchmarking/Debugging\n");
+    return 0;
 }
 
 
@@ -1292,6 +1272,13 @@ qt_handle_event(fb *ifp, QEvent *event)
 		}
 		break;
 	    }
+	case 6 /* QEvent::KeyPress */:
+	    {
+		QKeyEvent *ev = (QKeyEvent *)event;
+		if (ev->key() == Qt::Key_H)
+		    qt_help(ifp);
+		break;
+	    }
 	default:
 	    break;
     }
@@ -1316,8 +1303,6 @@ qt_flush(fb *ifp)
 
     qi->qapp->processEvents();
 
-    fb_log("qt_flush\n");
-
     return 0;
 }
 
@@ -1327,22 +1312,6 @@ qt_free(fb *UNUSED(ifp))
 {
     fb_log("qt_free\n");
 
-    return 0;
-}
-
-
-HIDDEN int
-qt_help(fb *ifp)
-{
-    fb_log("Description: %s\n", qt_interface.if_type);
-    fb_log("Device: %s\n", ifp->if_name);
-    fb_log("Max width/height: %d %d\n",
-	   qt_interface.if_max_width,
-	   qt_interface.if_max_height);
-    fb_log("Default width/height: %d %d\n",
-	   qt_interface.if_width,
-	   qt_interface.if_height);
-    fb_log("Useful for Benchmarking/Debugging\n");
     return 0;
 }
 

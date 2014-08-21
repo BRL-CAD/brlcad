@@ -40,11 +40,11 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bwcrop</emphasis>
+<para><command>bwcrop</command>
 crops any quadrilateral out of an arbitrarily large
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 input file
-(<emphasis remap='I'>in.bw</emphasis>)<emphasis remap='I'>,</emphasis>
+(<emphasis remap='I'>in.bw</emphasis>),
 squares that region to a given height and width output size,
 and writes the result to
 <emphasis remap='I'>out.bw</emphasis>.
@@ -62,7 +62,7 @@ interpolation is done by this program.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>

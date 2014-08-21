@@ -64,6 +64,8 @@ RepresentationContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     context_identifier = step->getStringAttribute(sse, "context_identifier");
     context_type = step->getStringAttribute(sse, "context_type");
 
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
 }
 
