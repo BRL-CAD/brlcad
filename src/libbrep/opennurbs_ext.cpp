@@ -1139,7 +1139,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	const ON_Surface *q2surf = localsurf;
 	const ON_Surface *q3surf = localsurf;
 
-	bool split = true;
 #endif
 
 	/*********************************************************************
