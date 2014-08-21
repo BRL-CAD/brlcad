@@ -582,6 +582,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     }
     if (!bGrowBox) {
 	surf->GetBoundingBox(min, max);
+	removeTrimmed = false;
     }
 
     // first, build the Curve Tree
