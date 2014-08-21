@@ -62,6 +62,7 @@ Hyperbola::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Conic::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Conic." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -71,6 +72,8 @@ Hyperbola::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     semi_axis = step->getRealAttribute(sse, "semi_axis");
     semi_imag_axis = step->getRealAttribute(sse, "semi_imag_axis");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

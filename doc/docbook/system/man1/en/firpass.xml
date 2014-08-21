@@ -25,11 +25,11 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para>Firpass is an interactive program used to create a PRISM ready input
+<para><command>firpass</command> is an interactive program used to create a PRISM ready input
 file (when used in conjunction with secpass), a generic thermal data
 file, or a
 geometric properties file.  The following information about each region
-of the mged description may be obtained from firpass when creating a
+of the mged description may be obtained from <command>firpass</command> when creating a
 PRISM ready file.</para>
 
 <literallayout remap='.nf'>

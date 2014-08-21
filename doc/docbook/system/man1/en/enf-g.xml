@@ -29,7 +29,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>enf-g</emphasis>
+<para><command>enf-g</command>
 converts the specified
 <emphasis remap='I'>input_enf_facet_file</emphasis>
 to a BRL-CAD
@@ -57,7 +57,7 @@ by a tab.
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>enf-g sample.enf sample.g</emphasis>
+$ enf-g <emphasis remap='I'>sample.enf sample.g</emphasis>
 </synopsis>
 </refsect1>
 

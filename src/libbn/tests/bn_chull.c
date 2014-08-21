@@ -165,7 +165,10 @@ main(int argc, const char **argv)
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test3_hull_pnts[i][0], test3_hull_pnts[i][1], test3_hull_pnts[i][2]);
 	}
-	if (do_plotting) plot_chull(3, (const point_t *)test3_hull_pnts, retval);
+	if (do_plotting) {
+	    const point_t *const_test3_hull_pnts = (const point_t *)test3_hull_pnts;
+	    plot_chull(3, const_test3_hull_pnts, retval);
+	}
 
     }
 
@@ -194,7 +197,10 @@ main(int argc, const char **argv)
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test4_hull_pnts[i][0], test4_hull_pnts[i][1], test4_hull_pnts[i][2]);
 	}
-	if (do_plotting) plot_chull(4, (const point_t *)test4_hull_pnts, retval);
+	if (do_plotting) {
+	    const point_t *const_test4_hull_pnts = (const point_t *)test4_hull_pnts;
+	    plot_chull(4, const_test4_hull_pnts, retval);
+	}
     }
 
     {
@@ -214,7 +220,10 @@ main(int argc, const char **argv)
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test5_hull_pnts[i][0], test5_hull_pnts[i][1], test5_hull_pnts[i][2]);
 	}
-	if (do_plotting) plot_chull(5, (const point_t *)test5_hull_pnts, retval);
+	if (do_plotting) {
+	    const point_t *const_test5_hull_pnts = (const point_t *)test5_hull_pnts;
+	    plot_chull(5, const_test5_hull_pnts, retval);
+	}
 
     }
 

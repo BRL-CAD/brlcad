@@ -34,13 +34,13 @@ This program is provided for compatibility with the old RLE image
 tools, and generally should not be used for saving new images,
 except where compatibility with the old tools is a factor.
 The equivalent new tool is
-<emphasis remap="I">fb-rle(1)</emphasis>.</para>
+<citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 
 <para>The environment
 variable
 <envar>FB_FILE</envar>
 is used to select the display device (see
-<emphasis remap="I">brlcad(1)</emphasis>).
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
 If this variable is not set, the default device for your system will
 be used.
 If
@@ -152,7 +152,7 @@ to 1024.  The default is 512x512.</para>
 
 <refsection xml:id="example"><title>EXAMPLE</title>
 <literallayout remap="RS" class="normal">
-<emphasis remap="I">fb-orle -H tank.rle</emphasis>
+fb-orle -H <emphasis remap="I">tank.rle</emphasis>
 </literallayout> <!-- remap='RE' -->
 
 </refsection>

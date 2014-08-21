@@ -59,6 +59,7 @@ ConnectedFaceSet::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -73,18 +74,27 @@ ConnectedFaceSet::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		Face *aAF = dynamic_cast<Face *>(Factory::CreateObject(sw, entity)); //CreateSurfaceObject(sw,entity));
-
-		cfs_faces.push_back(aAF);
+		if (aAF) {
+		    cfs_faces.push_back(aAF);
+		} else {
+		    l->clear();
+		    delete l;
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
+		    return false;
+		}
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'cfs_faces'." << std::endl;
 		l->clear();
 		delete l;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 	}
 	l->clear();
 	delete l;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

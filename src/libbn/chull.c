@@ -19,12 +19,15 @@
  */
 
 #include "common.h"
+
 #include <stdlib.h>
 
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bn.h"
+
 #include "./bn_private.h"
+
 
 /* isLeft(): test if a point is Left|On|Right of an infinite line.
  *    Input:  three points L0, L1, and p
@@ -33,6 +36,7 @@
  *            <0 for p right of the line
  */
 #define isLeft(L0, L1, p) ((L1[X] - L0[X])*(p[Y] - L0[Y]) - (p[X] - L0[X])*(L1[Y] - L0[Y]))
+
 
 /* The implementation of Melkman's algorithm for convex hulls of simple
  * polylines is a translation of softSurfer's implementation:
@@ -60,8 +64,7 @@ bn_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
     if (isLeft(polyline[0], polyline[1], polyline[2]) > 0) {
 	V2MOVE(D[bot+1],polyline[0]);
 	V2MOVE(D[bot+2],polyline[1]);   /* ccw vertices are: 2,0,1,2 */
-    }
-    else {
+    } else {
 	V2MOVE(D[bot+1],polyline[1]);
 	V2MOVE(D[bot+2],polyline[0]);   /* ccw vertices are: 2,1,0,2 */
     }
@@ -97,18 +100,22 @@ bn_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
     return h-1;
 }
 
+
 /* bu_sort functions for points */
 HIDDEN int
 pnt_compare_2d(const void *pnt1, const void *pnt2, void *UNUSED(arg))
 {
     point2d_t *p1 = (point2d_t *)pnt1;
     point2d_t *p2 = (point2d_t *)pnt2;
+
     if (UNLIKELY(NEAR_ZERO((*p2)[0] - (*p1)[0], SMALL_FASTF) && NEAR_ZERO((*p2)[1] - (*p1)[1], SMALL_FASTF))) return 0;
     if ((*p1)[0] < (*p2)[0]) return 1;
     if ((*p1)[0] > (*p2)[0]) return -1;
     if ((*p1)[1] < (*p2)[1]) return 1;
     if ((*p1)[1] > (*p2)[1]) return -1;
+
     /* should never get here */
+
     return 0;
 }
 
@@ -119,6 +126,7 @@ bn_2d_chull(point2d_t **hull, const point2d_t *points_2d, int n)
     int i = 0;
     int retval = 0;
     point2d_t *points = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "sorted points_2d");
+    const point2d_t *const_points;
 
     /* copy points_2d array to something
        that can be sorted and sort it */
@@ -131,7 +139,8 @@ bn_2d_chull(point2d_t **hull, const point2d_t *points_2d, int n)
     /* Once sorted, the points can be viewed as describing a simple polyline
      * and the Melkman algorithm works for a simple polyline even if it
      * isn't closed. */
-    retval = bn_polyline_2d_chull(hull, (const point2d_t *)points, n);
+    const_points = (const point2d_t *)points; /* quell */
+    retval = bn_polyline_2d_chull(hull, const_points, n);
 
     bu_free(points, "free sorted points");
 
@@ -148,13 +157,24 @@ bn_3d_coplanar_chull(point_t **hull, const point_t *points_3d, int n)
     point2d_t *hull_2d = (point2d_t *)bu_malloc(sizeof(point2d_t *), "hull pointer");
     point2d_t *points_tmp = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "points_2d");
 
+    const point2d_t *const_points_tmp;
+
     ret += coplanar_2d_coord_sys(&origin_pnt, &u_axis, &v_axis, points_3d, n);
     ret += coplanar_3d_to_2d(&points_tmp, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, points_3d, n);
-    if (ret) return 0;
-    hull_cnt = bn_2d_chull(&hull_2d, (const point2d_t *)points_tmp, n);
+
+    if (ret)
+	return 0;
+
+    const_points_tmp = (const point2d_t *)points_tmp;
+
+    hull_cnt = bn_2d_chull(&hull_2d, const_points_tmp, n);
     (*hull) = (point_t *)bu_calloc(hull_cnt + 1, sizeof(point_t), "hull array");
+
     ret = coplanar_2d_to_3d(hull, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)hull_2d, hull_cnt);
-    if (ret) return 0;
+
+    if (ret)
+	return 0;
+
     return hull_cnt;
 }
 

@@ -60,6 +60,7 @@ UncertaintyMeasureWithUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse
     // load base class attributes
     if (!MeasureWithUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::MeasureWithUnit." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -69,6 +70,8 @@ UncertaintyMeasureWithUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse
 
     name = step->getStringAttribute(sse, "name");
     description = step->getStringAttribute(sse, "description");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

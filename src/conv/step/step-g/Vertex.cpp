@@ -62,8 +62,11 @@ Vertex::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	std::cout << CLASSNAME
 		  << ":Error loading base class ::TopologicalRepresentationItem."
 		  << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

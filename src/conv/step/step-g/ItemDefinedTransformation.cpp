@@ -98,6 +98,7 @@ bool ItemDefinedTransformation::Load(STEPWrapper *sw, SDAI_Application_instance 
 
     if (!Transformation::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Transformation." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
     // need to do this for local attributes to makes sure we have
@@ -113,6 +114,7 @@ bool ItemDefinedTransformation::Load(STEPWrapper *sw, SDAI_Application_instance 
 	    transform_item_1 = dynamic_cast<RepresentationItem *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'transform_item_1'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -122,9 +124,12 @@ bool ItemDefinedTransformation::Load(STEPWrapper *sw, SDAI_Application_instance 
 	    transform_item_2 = dynamic_cast<RepresentationItem *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'transform_item_2'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

@@ -58,6 +58,7 @@ FunctionallyDefinedTransformation::Load(STEPWrapper *sw, SDAI_Application_instan
 
     if (!Transformation::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Transformation." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -67,6 +68,8 @@ FunctionallyDefinedTransformation::Load(STEPWrapper *sw, SDAI_Application_instan
 
     name = step->getStringAttribute(sse, "name");
     description = step->getStringAttribute(sse, "description");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }
