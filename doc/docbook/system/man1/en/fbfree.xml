@@ -22,7 +22,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Fbfree</emphasis>
+<para><command>Fbfree</command>
 is used to free any resources associated with a frame buffer.
 Its most common use is to close down an
 <citerefentry><refentrytitle>fbserv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
