@@ -151,9 +151,9 @@ BRLCADWrapper::CleanBRLCADName(std::string &inname)
 {
     std::string retStr = "";
     std::string name = ReplaceAccented(inname);
-    char *cp;
+    unsigned char *cp;
 
-    for (cp = (char *)name.c_str(); *cp != '\0'; ++cp) {
+    for (cp = (unsigned char *)name.c_str(); *cp != '\0'; ++cp) {
 	if (*cp == '\'') {
 	    // remove non-printable
 	    continue;
