@@ -13511,6 +13511,8 @@ HIDDEN void
 to_output_handler(struct ged *gedp, char *line)
 {
     Tcl_DString tcl_command;
+    Tcl_Obj *saved_result;
+
     Tcl_DStringInit(&tcl_command);
 
     if (gedp->ged_output_script != (char *)0)
@@ -13519,9 +13521,15 @@ to_output_handler(struct ged *gedp, char *line)
     else
 	(void)Tcl_DStringAppendElement(&tcl_command, "puts");
 
+    saved_result = Tcl_GetObjResult(current_top->to_interp);
+    Tcl_IncrRefCount(saved_result);
+
     (void)Tcl_DStringAppendElement(&tcl_command, line);
     Tcl_Eval(current_top->to_interp, Tcl_DStringValue(&tcl_command));
     Tcl_DStringFree(&tcl_command);
+
+    Tcl_SetObjResult(current_top->to_interp, saved_result);
+    Tcl_DecrRefCount(saved_result);
 }
 
 
