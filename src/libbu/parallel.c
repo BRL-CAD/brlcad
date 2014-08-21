@@ -390,7 +390,9 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
 
     while (1) {
 	threads = parent->started - parent->finished;
-	bu_log("threads=%d (start %d - done %d)\n", threads, parent->started, parent->finished);
+
+	/* bu_log("threads=%d (start %d - done %d)\n", threads, parent->started, parent->finished); */
+
 	if (threads < max_threads || !throttle) {
 	    return;
 	}
@@ -539,7 +541,6 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
 	/* if the top-most parent is unspecified, use all available cpus */
 	if (parent->lim == 0) {
-	    bu_log("SHOULD NOT BE GETTING HERE!!!\n");
 	    ncpu = bu_avail_cpus();
 	} else {
 	    ncpu = parent->lim;
