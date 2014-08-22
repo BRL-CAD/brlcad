@@ -102,21 +102,21 @@ Tclcad_Init(Tcl_Interp *interp)
     tclcad_auto_path(interp);
 
     /* Initialize [incr Tcl] */
-    if (tclcad_eval(interp, "package require Itcl", NULL) != TCL_OK) {
+    if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
       bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
       return TCL_ERROR;
     }
 
 #ifdef HAVE_TK
     /* Initialize [incr Tk] */
-    if (tclcad_eval(interp, "package require Itk", NULL) != TCL_OK) {
+    if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
       bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
       return TCL_ERROR;
     }
 #endif
 
     /* Initialize the Iwidgets package */
-    if (tclcad_eval(interp, "package require Iwidgets", NULL) != TCL_OK) {
+    if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
 	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }

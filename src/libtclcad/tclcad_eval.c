@@ -30,7 +30,7 @@
 
 
 int
-tclcad_eval_args(Tcl_Interp *interp, int preserve_result, const char *command,
+tclcad_eval(Tcl_Interp *interp, int preserve_result, const char *command,
 		 size_t num_args, const char * const *args)
 {
     int result;
@@ -55,24 +55,6 @@ tclcad_eval_args(Tcl_Interp *interp, int preserve_result, const char *command,
 
     Tcl_DStringFree(&script);
     return result;
-}
-
-
-int
-tclcad_eval(Tcl_Interp *interp, const char *command, const char *arg)
-{
-    const char *args[1];
-    args[0] = arg;
-    return tclcad_eval_args(interp, 0, command, sizeof(args) / sizeof(args[0]), args);
-}
-
-
-int
-tclcad_eval_quiet(Tcl_Interp *interp, const char *command, const char *arg)
-{
-    const char *args[1];
-    args[0] = arg;
-    return tclcad_eval_args(interp, 1, command, sizeof(args) / sizeof(args[0]), args);
 }
 
 

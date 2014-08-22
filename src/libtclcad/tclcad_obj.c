@@ -1365,7 +1365,10 @@ Go_Init(Tcl_Interp *interp)
     if (library_initialized(0))
 	return TCL_OK;
 
-    tclcad_eval(interp, "set brlcad_version", brlcad_version());
+    {
+	const char *version_str = brlcad_version();
+	tclcad_eval(interp, 1, "set brlcad_version", 1, &version_str);
+    }
 
     /*XXX Use of brlcad_interp is temporary */
     brlcad_interp = interp;
@@ -6103,7 +6106,7 @@ to_idle_mode(struct ged *gedp,
 	args[0] = bu_vls_addr(&gdvp->gdv_dmp->dm_pathName);
 	args[1] = "<Motion>";
 	args[2] = "";
-	tclcad_eval_args(current_top->to_interp, 0, "bind", sizeof(args) / sizeof(args[0]), args);
+	tclcad_eval(current_top->to_interp, 0, "bind", sizeof(args) / sizeof(args[0]), args);
     }
 
     if (gdvp->gdv_view->gv_grid.ggs_snap &&
@@ -6119,7 +6122,7 @@ to_idle_mode(struct ged *gedp,
 	ged_grid(gedp, 2, (const char **)av);
 
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), NULL);
+	    tclcad_eval(current_top->to_interp, 1, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
 	}
 
 	need_refresh = 1;
@@ -6141,8 +6144,9 @@ to_is_viewable(struct ged_dm_view *gdvp)
 {
     Tcl_Obj *result_obj;
     int result_int;
+    const char *pathname = bu_vls_addr(&gdvp->gdv_dmp->dm_pathName);
 
-    if (tclcad_eval(current_top->to_interp, "winfo viewable", bu_vls_addr(&gdvp->gdv_dmp->dm_pathName)) != TCL_OK) {
+    if (tclcad_eval(current_top->to_interp, 1, "winfo viewable", 1, &pathname) != TCL_OK) {
 	return 0;
     }
 
@@ -6762,7 +6766,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
     }
 
     /* need to tell front-end that we've modified the db */
-    tclcad_eval(current_top->to_interp, "$::ArcherCore::application setSave", NULL);
+    tclcad_eval(current_top->to_interp, 1, "$::ArcherCore::application setSave", 0, NULL);
 
     gdvp->gdv_view->gv_prevMouseX = screen_end[X];
     gdvp->gdv_view->gv_prevMouseY = screen_end[Y];
@@ -6877,7 +6881,7 @@ to_mouse_constrain_rot(struct ged *gedp,
 
     if (ret == GED_OK) {
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), NULL);
+	    tclcad_eval(current_top->to_interp, 1, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
 	}
 
 	to_refresh_view(gdvp);
@@ -6989,7 +6993,7 @@ to_mouse_constrain_trans(struct ged *gedp,
 
     if (ret == GED_OK) {
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), NULL);
+	    tclcad_eval(current_top->to_interp, 1, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
 	}
 
 	to_refresh_view(gdvp);
@@ -8008,7 +8012,7 @@ to_mouse_orotate(struct ged *gedp,
 	args[1] = bu_vls_addr(&rot_x_vls);
 	args[2] = bu_vls_addr(&rot_y_vls);
 	args[3] = bu_vls_addr(&rot_z_vls);
-	tclcad_eval_args(current_top->to_interp, 0, command, sizeof(args) / sizeof(args[0]), args);
+	tclcad_eval(current_top->to_interp, 0, command, sizeof(args) / sizeof(args[0]), args);
     } else {
 	char *av[6];
 
@@ -13511,7 +13515,7 @@ to_output_handler(struct ged *gedp, char *line)
     else
 	script = "puts";
 
-    tclcad_eval_quiet(current_top->to_interp, script, line);
+    tclcad_eval(current_top->to_interp, 1, script, 1, (const char **)&line);
 }
 
 HIDDEN int
