@@ -446,6 +446,7 @@ bool Sweep::Legalize(SweepContext& tcx, Triangle& t)
 
     if (ot) {
       Point* p = t.GetPoint(i);
+      if (!p) return false;
       Point* op = ot->OppositePoint(t, p);
       int oi = ot->Index(op);
 
@@ -831,6 +832,7 @@ void Sweep::FillLeftConcaveEdgeEvent(SweepContext& tcx, Edge* edge, Node& node)
 int Sweep::FlipEdgeEvent(SweepContext& tcx, Point *ep, Point *eq, Triangle* t, Point *p)
 {
   int ret = 0;
+  if (!ep || !eq || !p) return 1;
   Triangle& ot = *t->NeighborAcross(*p);
   Point *op = ot.OppositePoint(*t, p);
 
@@ -906,6 +908,7 @@ Point* Sweep::NextFlipPoint(Point *ep, Point *eq, Triangle& ot, Point *op)
 int Sweep::FlipScanEdgeEvent(SweepContext& tcx, Point *ep, Point *eq, Triangle& flip_triangle,
                               Triangle& t, Point *p)
 {
+  if (!ep || !eq || !p) return 1;
   Triangle& ot = *t.NeighborAcross(*p);
   Point *op = ot.OppositePoint(t, p);
 
