@@ -6099,11 +6099,11 @@ to_idle_mode(struct ged *gedp,
     if (mode != TCLCAD_POLY_CONTOUR_MODE ||
 	gdvp->gdv_view->gv_data_polygons.gdps_cflag == 0)
     {
-	tclcad_eval_var(current_top->to_interp, 0,
-		"bind",
-		bu_vls_addr(&gdvp->gdv_dmp->dm_pathName),
-		"<Motion>",
-		"", NULL);
+	const char *args[3];
+	args[0] = bu_vls_addr(&gdvp->gdv_dmp->dm_pathName);
+	args[1] = "<Motion>";
+	args[2] = "";
+	tclcad_eval_args(current_top->to_interp, 0, "bind", sizeof(args) / sizeof(args[0]), args);
     }
 
     if (gdvp->gdv_view->gv_grid.ggs_snap &&
@@ -8002,11 +8002,13 @@ to_mouse_orotate(struct ged *gedp,
     gedp->ged_gvp = gdvp->gdv_view;
 
     if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
-	tclcad_eval_var(current_top->to_interp, 0,
-		bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback),
-		"orotate",
-		bu_vls_addr(&rot_x_vls), bu_vls_addr(&rot_y_vls),
-		bu_vls_addr(&rot_z_vls), NULL);
+	const char *command = bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback);
+	const char *args[4];
+	args[0] = "orotate";
+	args[1] = bu_vls_addr(&rot_x_vls);
+	args[2] = bu_vls_addr(&rot_y_vls);
+	args[3] = bu_vls_addr(&rot_z_vls);
+	tclcad_eval_args(current_top->to_interp, 0, command, sizeof(args) / sizeof(args[0]), args);
     } else {
 	char *av[6];
 

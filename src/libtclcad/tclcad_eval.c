@@ -26,33 +26,22 @@
 
 #include "common.h"
 
-#include <stdarg.h>
-#include <string.h>
-
 #include "tclcad_private.h"
 
 
 int
-tclcad_eval_var(Tcl_Interp *interp, int preserve_result,
-		const char *command, ...)
+tclcad_eval_args(Tcl_Interp *interp, int preserve_result, const char *command,
+		 size_t num_args, const char * const *args)
 {
     int result;
+    size_t i;
 
     Tcl_DString script;
     Tcl_DStringInit(&script);
     Tcl_DStringAppend(&script, command, -1);
 
-    {
-	va_list arguments;
-	const char *arg;
-
-	va_start(arguments, command);
-
-	while ((arg = va_arg(arguments, const char *)))
-	    Tcl_DStringAppendElement(&script, arg);
-
-	va_end(arguments);
-    }
+    for (i = 0; i < num_args; ++i)
+	Tcl_DStringAppendElement(&script, args[i]);
 
     if (!preserve_result) {
 	result = Tcl_Eval(interp, Tcl_DStringValue(&script));
@@ -72,20 +61,18 @@ tclcad_eval_var(Tcl_Interp *interp, int preserve_result,
 int
 tclcad_eval(Tcl_Interp *interp, const char *command, const char *arg)
 {
-    if (arg)
-	return tclcad_eval_var(interp, 0, command, arg, NULL);
-    else
-	return tclcad_eval_var(interp, 0, command, NULL);
+    const char *args[1];
+    args[0] = arg;
+    return tclcad_eval_args(interp, 0, command, sizeof(args) / sizeof(args[0]), args);
 }
 
 
 int
 tclcad_eval_quiet(Tcl_Interp *interp, const char *command, const char *arg)
 {
-    if (arg)
-	return tclcad_eval_var(interp, 1, command, arg, NULL);
-    else
-	return tclcad_eval_var(interp, 1, command, NULL);
+    const char *args[1];
+    args[0] = arg;
+    return tclcad_eval_args(interp, 1, command, sizeof(args) / sizeof(args[0]), args);
 }
 
 

@@ -26,6 +26,8 @@
 #ifndef LIBTCLCAD_TCLCAD_PRIVATE_H
 #define LIBTCLCAD_TCLCAD_PRIVATE_H
 
+#include "common.h"
+
 #include <tcl.h>
 
 __BEGIN_DECLS
@@ -52,11 +54,11 @@ extern int tclcad_eval_quiet(Tcl_Interp *interp, const char *command, const char
 
 
 /**
- * Evaluates a TCL command, escaping the list of arguments and optionally
+ * Evaluates a TCL command, escaping the optional list of arguments and optionally
  * preserving the TCL result object.
  */
-extern int tclcad_eval_var(Tcl_Interp *interp, int preserve_result,
-        const char *command, ...);
+extern int tclcad_eval_args(Tcl_Interp *interp, int preserve_result,
+        const char *command, size_t num_args, const char * const *args);
 
 
 __END_DECLS
