@@ -6088,7 +6088,7 @@ struct redraw_edited_path_data {
 HIDDEN int
 redraw_edited_path(struct bu_hash_entry *entry, void *udata)
 {
-    const char *av[4] = {0};
+    const char *av[5] = {0};
     char *draw_path = (char *)bu_get_hash_key(entry);
     struct redraw_edited_path_data *data;
     int ret, dmode = 0;
