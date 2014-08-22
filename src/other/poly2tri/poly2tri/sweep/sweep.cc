@@ -64,6 +64,7 @@ int Sweep::SweepPoints(SweepContext& tcx, int num_points)
   double currentheight = tcx.GetPoint(0)->y;
   for (size_t i = 1; (i < tcx.point_count()) && (i <= num_points); i++) {
     Point *point = tcx.GetPoint(i);
+    if (!point) return 1;
     if (point->y > currentheight) {
       CheckCircleEvent(tcx,point->y);
       currentheight = point->y;
@@ -111,6 +112,7 @@ void Sweep::FinalizationPolygon(SweepContext& tcx)
   tcx.MeshClean(*t);
 }
 
+/* TODO - use Node* here so we can return NULL if point is NULL... */
 Node& Sweep::PointEvent(SweepContext& tcx, Point *point)
 {
   Node& node = tcx.LocateNode(point);
@@ -130,6 +132,7 @@ Node& Sweep::PointEvent(SweepContext& tcx, Point *point)
 
 int Sweep::EdgeEvent(SweepContext& tcx, Edge* edge, Node* node)
 {
+  if (!edge || !node) return 1;
   tcx.edge_event.constrained_edge = edge;
   tcx.edge_event.right = (edge->p->x > edge->q->x);
 
@@ -146,6 +149,7 @@ int Sweep::EdgeEvent(SweepContext& tcx, Edge* edge, Node* node)
 
 int Sweep::EdgeEvent(SweepContext& tcx, Point *ep, Point *eq, Triangle* triangle, Point *point)
 {
+  if (!ep || !eq || !triangle || !point) return 1;
   if (IsEdgeSideOfTriangle(*triangle, ep, eq)) {
     return 0;
   }
@@ -498,6 +502,7 @@ bool Sweep::Legalize(SweepContext& tcx, Triangle& t)
 
 bool Sweep::Circumcircle(const Point *a, const Point *b, const Point *c, Point *center, double &radius)
 {
+  if (!a || !b || !c || !center) return false;
   double cross_product = Cross(*a - *b,*b - *c);
 
   if (cross_product > DBL_MIN) {
@@ -524,6 +529,7 @@ bool Sweep::Circumcircle(const Point *a, const Point *b, const Point *c, Point *
 
 bool Sweep::Incircle(Point *pa, Point *pb, Point *pc, Point *pd)
 {
+  if (!pa || !pb || !pc || !pd) return false;
   double adx = pa->x - pd->x;
   double ady = pa->y - pd->y;
   double bdx = pb->x - pd->x;
@@ -560,6 +566,7 @@ bool Sweep::Incircle(Point *pa, Point *pb, Point *pc, Point *pd)
 
 void Sweep::RotateTrianglePair(Triangle& t, Point *p, Triangle& ot, Point *op)
 {
+  if (!p || !op) return;
   Triangle* n1, *n2, *n3, *n4;
   n1 = t.NeighborCCW(*p);
   n2 = t.NeighborCW(*p);
@@ -843,6 +850,11 @@ int Sweep::FlipEdgeEvent(SweepContext& tcx, Point *ep, Point *eq, Triangle* t, P
     return 1;
   }
 
+  if (!op) {
+    std::cerr << "[BUG:FIXME] FLIP failed due to missing point\n";
+    return 1;
+  }
+
   if (InScanArea(p, t->PointCCW(*p), t->PointCW(*p), op)) {
     // Lets rotate shared edge one vertex CW
     RotateTrianglePair(*t, p, ot, op);
@@ -894,6 +906,7 @@ Triangle& Sweep::NextFlipTriangle(SweepContext& tcx, int o, Triangle& t, Triangl
 
 Point* Sweep::NextFlipPoint(Point *ep, Point *eq, Triangle& ot, Point *op)
 {
+  if (!ep || !eq || !op) return NULL;
   Orientation o2d = Orient2d(eq, op, ep);
   if (o2d == CW) {
     // Right
@@ -911,6 +924,8 @@ int Sweep::FlipScanEdgeEvent(SweepContext& tcx, Point *ep, Point *eq, Triangle& 
   if (!ep || !eq || !p) return 1;
   Triangle& ot = *t.NeighborAcross(*p);
   Point *op = ot.OppositePoint(t, p);
+
+  if (!op) return 1;
 
   if (t.NeighborAcross(*p) == NULL) {
     // If we want to integrate the fillEdgeEvent do it here
