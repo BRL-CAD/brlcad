@@ -36,7 +36,7 @@ writes the bag of triangle (BOT) primitives of the specified
 in a binary array format to
 <emphasis remap='I'>outfile</emphasis>
 or to
-<emphasis remap='I'>stdout.</emphasis></para>
+<emphasis remap='I'>stdout</emphasis>.</para>
 </refsect1>
 
 <refsect1 xml:id='options'><title>OPTIONS</title>
@@ -54,11 +54,11 @@ or to
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-s scale</option></term>
+  <term><option>-s <emphasis remap='I'>scale</emphasis></option></term>
   <listitem>
 <para>Scale the output geometry by factor
-<emphasis remap='B'>scale</emphasis>
-. By default the scale factor is 0.001 (standard transformation
+<emphasis remap='I'>scale</emphasis>.
+By default the scale factor is 0.001 (standard transformation
 from meters to millimeters).</para>
   </listitem>
   </varlistentry>
@@ -69,11 +69,12 @@ from meters to millimeters).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-o outfile</option></term>
+  <term><option>-o </option><emphasis remap='I'>outfile</emphasis></term>
+
   <listitem>
 <para>The output will be written to
-<emphasis remap='B'>outfile</emphasis>
-. By default the output is written to stdout.</para>
+<emphasis remap='I'>outfile</emphasis>.
+By default the output is written to stdout.</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -85,7 +86,7 @@ from meters to millimeters).</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>g-var -o sample.mesh sample.g sample_object</emphasis>
+$ g-var -o <emphasis remap='I'>sample.mesh sample.g sample_object</emphasis>
 </synopsis>
 </refsect1>
 
