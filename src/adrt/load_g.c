@@ -304,7 +304,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
 			&tree_state,		/* initial tree state */
 			nmg_to_adrt_regstart,	/* region start function */
 			gcv_region_end,		/* region end function */
-			nmg_booltree_leaf_tess,	/* leaf func */
+			rt_nmg_booltree_leaf_tess,	/* leaf func */
 			(void *)&gcvwriter);	/* client data */
 
     /* Release dynamic storage */

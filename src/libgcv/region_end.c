@@ -138,7 +138,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	 * curtree to an evaluated result and returns it if the evaluation
 	 * is successful.
 	 */
-	ret_tree = nmg_booltree_evaluate(tp, tsp->ts_tol, &rt_uniresource);
+	ret_tree = rt_nmg_booltree_evaluate(tp, tsp->ts_tol, &rt_uniresource);
 
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 

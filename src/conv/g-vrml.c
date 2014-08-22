@@ -291,7 +291,7 @@ leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct r
 
     if (ip->idb_type != ID_BOT) {
 	pmp->num_nonbots++;
-	return nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
+	return rt_nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
     }
 
     bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -733,7 +733,7 @@ main(int argc, char **argv)
 	       &tree_state,
 	       0,
 	       nmg_region_end,
-	       nmg_booltree_leaf_tess,
+	       rt_nmg_booltree_leaf_tess,
 	       (void *)&pm);	/* in librt/nmg_bool.c */
 	goto out;
     }
@@ -1263,7 +1263,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
 	/* try */
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = rt_nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);

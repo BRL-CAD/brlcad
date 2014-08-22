@@ -343,7 +343,7 @@ main(int argc, char *argv[])
 	    &tree_state,
 	    0,			/* take all regions */
 	    use_mc?gcv_region_end_mc:gcv_region_end,
-	    use_mc?NULL:nmg_booltree_leaf_tess,
+	    use_mc?NULL:rt_nmg_booltree_leaf_tess,
 	    (void *)&gcvwriter);
 
     percent = 0;

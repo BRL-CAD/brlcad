@@ -612,7 +612,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     /* verify face plane calculations */
     if ( debug )
     {
-	nmg_stash_shell_to_file( "before_tri.g", s, "before_tri" );
+	rt_nmg_stash_shell_to_file( "before_tri.g", s, "before_tri" );
 	bu_log( "Verify plane equations:\n" );
     }
 

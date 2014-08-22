@@ -77,7 +77,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
+	ret_tree = rt_nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 
     } else {
 	/* catch */
@@ -161,7 +161,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if (ret_tree) {
 	s = ret_tree->tr_d.td_s;
 	if (do_bots && s) {
-	    bot = nmg_bot(s, tsp->ts_tol);
+	    bot = rt_nmg_bot(s, tsp->ts_tol);
 	}
     } else {
 	if (verbose) {
@@ -282,7 +282,7 @@ csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
 			    &tree_state,
 			    0,
 			    do_region_end,
-			    nmg_booltree_leaf_tess,
+			    rt_nmg_booltree_leaf_tess,
 			    (void *)NULL);
 
 	/* Release dynamic storage */

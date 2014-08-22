@@ -274,7 +274,7 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 
 	printf("Attempting to process region %s\n", db_path_to_string(pathp));
 	fflush(stdout);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = rt_nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 	if (ret_tree != curtree) {
 	    db_free_tree(curtree, &rt_uniresource);
 	}
@@ -586,7 +586,7 @@ main(int argc, char **argv)
 			&tree_state,
 			0,			/* take all regions */
 			do_region_end,
-			nmg_booltree_leaf_tess,
+			rt_nmg_booltree_leaf_tess,
 			(void *)NULL);	/* in librt/nmg_bool.c */
 
     percent = 0;

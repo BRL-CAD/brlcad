@@ -427,7 +427,7 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 		struct shell *nmgs = tr->tr_d.td_s;
 		/* the bot temporary format may be unnecessary if we can walk
 		 * the nmg shells and generate soup from them directly. */
-		struct rt_bot_internal *bot = nmg_bot(nmgs, tol);
+		struct rt_bot_internal *bot = rt_nmg_bot(nmgs, tol);
 
 		/* causes a crash.
 		   nmg_kr(nmgr);
@@ -538,7 +538,7 @@ gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct rt_tess_tol *
     struct db_tree_state tree_state = rt_initial_tree_state;
     tree_state.ts_ttol = ttol;
 
-    if (db_walk_tree(dbip, argc, argv, 1, &tree_state, NULL, gcv_bottess_region_end, nmg_booltree_leaf_tess, NULL) < 0)
+    if (db_walk_tree(dbip, argc, argv, 1, &tree_state, NULL, gcv_bottess_region_end, rt_nmg_booltree_leaf_tess, NULL) < 0)
 	bu_log("gcv_bottess: db_walk_tree failure\n");
 
     return NULL;

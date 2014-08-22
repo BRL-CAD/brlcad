@@ -270,7 +270,7 @@ leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
 
     if ( ip->idb_type != ID_BOT ) {
 	pmp->num_nonbots++;
-	return nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
+	return rt_nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
     }
 
     bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -297,7 +297,7 @@ leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
 
     BARRIER_CHECK;
 
-    return nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
+    return rt_nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
 }
 
 void
@@ -953,7 +953,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if ( !BU_SETJUMP ) {
 	/* try */
 
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = rt_nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
     } else  {
 	/* catch */

@@ -521,7 +521,7 @@ main(int argc, char *argv[])
 			&tree_state,
 			0,			/* take all regions */
 			gcv_region_end,
-			nmg_booltree_leaf_tess,
+			rt_nmg_booltree_leaf_tess,
 			(void *)&gcvwriter);	/* callback for gcv_region_end */
 
     percent = 0;

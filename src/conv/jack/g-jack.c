@@ -223,7 +223,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* try */
 
 	(void)nmg_shell_fuse(*tsp->ts_s, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = rt_nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
     } else  {
 	/* catch */
@@ -541,7 +541,7 @@ main(int argc, char **argv)
 			&jack_tree_state,
 			0,			/* take all regions */
 			do_region_end,
-			nmg_booltree_leaf_tess,
+			rt_nmg_booltree_leaf_tess,
 			(void *)NULL);	/* in librt/nmg_bool.c */
 
     fprintf(fp_fig, "\troot=%s_seg.base;\n", bu_vls_addr(&base_seg));

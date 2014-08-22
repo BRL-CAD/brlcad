@@ -346,7 +346,7 @@ main(int argc, char *argv[])
 			   &tree_state,
 			   0,			/* take all regions */
 			   do_nmg_region_end,
-			   nmg_booltree_leaf_tess,
+			   rt_nmg_booltree_leaf_tess,
 			   (void *)NULL);	/* in librt/nmg_bool.c */
 
 	if (ret)
@@ -393,7 +393,7 @@ main(int argc, char *argv[])
 			   &tree_state,
 			   0,			/* take all regions */
 			   do_nmg_region_end,
-			   nmg_booltree_leaf_tess,
+			   rt_nmg_booltree_leaf_tess,
 			   (void *)NULL);	/* in librt/nmg_bool.c */
 
 	if (ret)
@@ -453,7 +453,7 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
 	/* try */
 
 	(void)nmg_shell_fuse(*tsp->ts_s, tsp->ts_tol);
-	result = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	result = rt_nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */
