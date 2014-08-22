@@ -105,7 +105,7 @@ private:
    * @return
    */
   Node* NewFrontTriangle(SweepContext& tcx, Point *point, Node* node);
-  void UpdateNodeAngleCircum(Node& n);
+  void UpdateNodeAngleCircum(Node* n);
   /**
    * Adds a triangle to the advancing front to fill a hole.
    * @param tcx
@@ -199,7 +199,7 @@ private:
    * @param tcx
    * @param node - starting node, this or next node will be left node
    */
-  void FillBasin(SweepContext& tcx, Node& node);
+  void FillBasin(SweepContext& tcx, Node* node);
 
   /**
    * Recursive algorithm to fill a Basin with triangles
