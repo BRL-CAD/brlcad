@@ -251,9 +251,11 @@ set(LIBGED_SOURCES
   shader.c
   shells.c
   showmats.c
-  simulate/simulate.cpp
-  simulate/physics_world.cpp
-  simulate/collision.cpp
+  simulate/simphysics.cpp
+  simulate/simulate.c
+  simulate/simcollisionalgo.cpp
+  simulate/simutils.c
+  simulate/simrt.c
   size.c
   slew.c
   solids_on_ray.c
@@ -341,8 +343,10 @@ set(ged_ignore_files
   ged_private.h
   joint.h
   qray.h
-  simulate/physics_world.hpp
-  simulate/collision.hpp
+  simulate/simcollisionalgo.h
+  simulate/simrt.h
+  simulate/simulate.h
+  simulate/simutils.h
   wdb_qray.h
   osg.cpp
   )
