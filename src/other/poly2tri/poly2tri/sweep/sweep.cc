@@ -69,7 +69,7 @@ int Sweep::SweepPoints(SweepContext& tcx, int num_points)
       CheckCircleEvent(tcx,point->y);
       currentheight = point->y;
     }
-    Node* node = &PointEvent(tcx, point);
+    Node* node = PointEvent(tcx, point);
     for (size_t j = 0; j < point->edge_list.size(); j++) {
       ret += EdgeEvent(tcx, point->edge_list[j], node);
     }
@@ -113,14 +113,14 @@ void Sweep::FinalizationPolygon(SweepContext& tcx)
 }
 
 /* TODO - use Node* here so we can return NULL if point is NULL... */
-Node& Sweep::PointEvent(SweepContext& tcx, Point *point)
+Node* Sweep::PointEvent(SweepContext& tcx, Point *point)
 {
-  Node& node = tcx.LocateNode(point);
-  Node& new_node = NewFrontTriangle(tcx, point, node);
+  Node* node = tcx.LocateNode(point);
+  Node* new_node = NewFrontTriangle(tcx, point, node);
 
   // Only need to check +epsilon since point never have smaller
   // x value than node due to how we fetch nodes from the front
-  if (point->x <= node.point->x + EPSILON) {
+  if (point->x <= node->point->x + EPSILON) {
     Fill(tcx, node);
   }
 
@@ -216,20 +216,20 @@ bool Sweep::IsEdgeSideOfTriangle(Triangle& triangle, Point *ep, Point *eq)
   return false;
 }
 
-Node& Sweep::NewFrontTriangle(SweepContext& tcx, Point *point, Node& node)
+Node* Sweep::NewFrontTriangle(SweepContext& tcx, Point *point, Node* node)
 {
-  Triangle* triangle = new Triangle(*point, *node.point, *node.next->point);
+  Triangle* triangle = new Triangle(*point, *node->point, *node->next->point);
 
-  triangle->MarkNeighbor(*node.triangle);
+  triangle->MarkNeighbor(*node->triangle);
   tcx.AddToMap(triangle);
 
   Node* new_node = new Node(*point);
   nodes_.push_back(new_node);
 
-  new_node->next = node.next;
-  new_node->prev = &node;
-  node.next->prev = new_node;
-  node.next = new_node;
+  new_node->next = node->next;
+  new_node->prev = node;
+  node->next->prev = new_node;
+  node->next = new_node;
 
   if (new_node->next)
     UpdateNodeAngleCircum(*new_node->next);
@@ -243,7 +243,7 @@ Node& Sweep::NewFrontTriangle(SweepContext& tcx, Point *point, Node& node)
     tcx.MapTriangleToNodes(*triangle);
   }
 
-  return *new_node;
+  return new_node;
 }
 
 void Sweep::UpdateNodeAngleCircum(Node& n)
@@ -265,25 +265,25 @@ void Sweep::UpdateNodeAngleCircum(Node& n)
   }
 }
 
-void Sweep::Fill(SweepContext& tcx, Node& node)
+void Sweep::Fill(SweepContext& tcx, Node* node)
 {
-  Triangle* triangle = new Triangle(*node.prev->point, *node.point, *node.next->point);
+  Triangle* triangle = new Triangle(*node->prev->point, *node->point, *node->next->point);
 
   // TODO: should copy the constrained_edge value from neighbor triangles
   //       for now constrained_edge values are copied during the legalize
-  triangle->MarkNeighbor(*node.prev->triangle);
-  triangle->MarkNeighbor(*node.triangle);
+  triangle->MarkNeighbor(*node->prev->triangle);
+  triangle->MarkNeighbor(*node->triangle);
 
   tcx.AddToMap(triangle);
 
   // Update the advancing front
-  node.prev->next = node.next;
-  node.next->prev = node.prev;
-  if (node.next)
-    UpdateNodeAngleCircum(*node.next);
+  node->prev->next = node->next;
+  node->next->prev = node->prev;
+  if (node->next)
+    UpdateNodeAngleCircum(*node->next);
     
-  if (node.prev)
-    UpdateNodeAngleCircum(*node.prev);
+  if (node->prev)
+    UpdateNodeAngleCircum(*node->prev);
 
   // If it was legalized the triangle has already been mapped
   if (!Legalize(tcx, *triangle)) {
@@ -299,7 +299,7 @@ void Sweep::CheckCircleEvent(SweepContext& tcx, double currentheight)
   while (node->next) {
     // if HoleAngle exceeds 90 degrees then break.
     if (node->circum && (node->circumheight < currentheight)) {
-      Fill(tcx, *node);
+      Fill(tcx, node);
       node = node->prev;
     } else {
       node = node->next;
@@ -307,54 +307,55 @@ void Sweep::CheckCircleEvent(SweepContext& tcx, double currentheight)
   }
 }
 
-void Sweep::FillAdvancingFront(SweepContext& tcx, Node& n)
+void Sweep::FillAdvancingFront(SweepContext& tcx, Node* n)
 {
+  if (!n) return;
 
   // Fill right holes
-  Node* node = n.next;
+  Node* node = n->next;
   Node* leftboundnode = NULL;
 
   while (node->next) {
     // if HoleAngle exceeds 90 degrees then break.
     if (LargeHole_DontFill(node)) break;
-    Fill(tcx, *node);
+    Fill(tcx, node);
     node = node->next;
   }
 
   // Fill left holes
-  node = n.prev;
+  node = n->prev;
 
   while (node->prev) {
     // if HoleAngle exceeds 90 degrees then break.
     if (LargeHole_DontFill(node)) break;
-    Fill(tcx, *node);
+    Fill(tcx, node);
     node = node->prev;
   }
 
-  node = n.prev;
-  if (node->point->x < n.point->x) {
+  node = n->prev;
+  if (node->point->x < n->point->x) {
     node = node->prev;
     while (node) {
       // if HoleAngle exceeds 90 degrees then break.
-      if (node->point->x >= n.point->x) {
+      if (node->point->x >= n->point->x) {
         leftboundnode = node;
       }
       node = node->prev;
     }
     if (leftboundnode) {
-      node = n.prev;
+      node = n->prev;
       while (node != leftboundnode) {
-        Fill(tcx, *node);
+        Fill(tcx, node);
         node = node->prev;
       }
     }
   }
 
   // Fill right basins
-  if (n.next && n.next->next) {
-    double angle = BasinAngle(n);
+  if (n->next && n->next->next) {
+    double angle = BasinAngle(*n);
     if (angle < PI_3div4) {
-      FillBasin(tcx, n);
+      FillBasin(tcx, *n);
     }
   }
 }
@@ -656,7 +657,7 @@ void Sweep::FillBasinReq(SweepContext& tcx, Node* node)
     return;
   }
 
-  Fill(tcx, *node);
+  Fill(tcx, node);
 
   if (node->prev == tcx.basin.left_node && node->next == tcx.basin.right_node) {
     return;
@@ -739,7 +740,7 @@ void Sweep::FillRightBelowEdgeEvent(SweepContext& tcx, Edge* edge, Node& node)
 
 void Sweep::FillRightConcaveEdgeEvent(SweepContext& tcx, Edge* edge, Node& node)
 {
-  Fill(tcx, *node.next);
+  Fill(tcx, node.next);
   if (node.next->point != edge->p) {
     // Next above or below edge?
     if (Orient2d(edge->q, node.next->point, edge->p) == CCW) {
@@ -820,7 +821,7 @@ void Sweep::FillLeftConvexEdgeEvent(SweepContext& tcx, Edge* edge, Node& node)
 
 void Sweep::FillLeftConcaveEdgeEvent(SweepContext& tcx, Edge* edge, Node& node)
 {
-  Fill(tcx, *node.prev);
+  Fill(tcx, node.prev);
   if (node.prev->point != edge->p) {
     // Next above or below edge?
     if (Orient2d(edge->q, node.prev->point, edge->p) == CW) {

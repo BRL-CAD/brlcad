@@ -83,7 +83,7 @@ private:
    * @param point
    * @return
    */
-  Node& PointEvent(SweepContext& tcx, Point *point);
+  Node* PointEvent(SweepContext& tcx, Point *point);
 
    /**
      *
@@ -104,14 +104,14 @@ private:
    * @param node
    * @return
    */
-  Node& NewFrontTriangle(SweepContext& tcx, Point *point, Node& node);
+  Node* NewFrontTriangle(SweepContext& tcx, Point *point, Node* node);
   void UpdateNodeAngleCircum(Node& n);
   /**
    * Adds a triangle to the advancing front to fill a hole.
    * @param tcx
    * @param node - middle node, that is the bottom of the hole
    */
-  void Fill(SweepContext& tcx, Node& node);
+  void Fill(SweepContext& tcx, Node* node);
 
   /**
    * Returns true if triangle was legalized
@@ -169,7 +169,7 @@ private:
    * @param n
    */
   void CheckCircleEvent(SweepContext& tcx, double currentheight);
-  void FillAdvancingFront(SweepContext& tcx, Node& n);
+  void FillAdvancingFront(SweepContext& tcx, Node* n);
 
   // Decision-making about when to Fill hole.
   // Contributed by ToolmakerSteve2
