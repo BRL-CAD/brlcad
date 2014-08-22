@@ -47,7 +47,6 @@
 
 #include <vector>
 #include <cstddef>
-#include <assert.h>
 #include <cfloat>
 #include <cmath>
 
@@ -154,7 +153,7 @@ struct Edge {
         p = &p2;
       } else if (EQ(p1.x, p2.x)) {
         // Repeat points
-        assert(false);
+        return;
       }
     }
 

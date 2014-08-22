@@ -58,7 +58,7 @@ public:
    *
    * @param tcx
    */
-  void Triangulate(SweepContext& tcx, bool finalize = true, int num_points = -1);
+  int Triangulate(SweepContext& tcx, bool finalize = true, int num_points = -1);
 
   /**
    * Destructor - clean up memory
@@ -72,7 +72,7 @@ private:
    *
    * @param tcx
    */
-  void SweepPoints(SweepContext& tcx, int num_points = -1);
+  int SweepPoints(SweepContext& tcx, int num_points = -1);
 
   /**
    * Find closes node to the left of the new point and
@@ -92,9 +92,9 @@ private:
      * @param edge
      * @param node
      */
-  void EdgeEvent(SweepContext& tcx, Edge* edge, Node* node);
+  int EdgeEvent(SweepContext& tcx, Edge* edge, Node* node);
 
-  void EdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle* triangle, Point& point);
+  int EdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle* triangle, Point& point);
 
   /**
    * Creates a new front triangle and legalize it
@@ -232,7 +232,7 @@ private:
 
   void FillLeftConvexEdgeEvent(SweepContext& tcx, Edge* edge, Node& node);
 
-  void FlipEdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle* t, Point& p);
+  int FlipEdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle* t, Point& p);
 
   /**
    * After a flip we have two triangles and know that only one will still be
@@ -259,7 +259,7 @@ private:
      * @param op
      * @return
      */
-  Point& NextFlipPoint(Point& ep, Point& eq, Triangle& ot, Point& op);
+  Point* NextFlipPoint(Point& ep, Point& eq, Triangle& ot, Point& op);
 
    /**
      * Scan part of the FlipScan algorithm<br>
@@ -274,7 +274,7 @@ private:
      * @param t
      * @param p
      */
-  void FlipScanEdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle& flip_triangle, Triangle& t, Point& p);
+  int FlipScanEdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle& flip_triangle, Triangle& t, Point *p);
 
   Triangle* FindInternalTriangle(Triangle* ext_tri);
 
