@@ -117,9 +117,10 @@ void Triangle::ClearDelunayEdges()
   delaunay_edge[0] = delaunay_edge[1] = delaunay_edge[2] = false;
 }
 
-Point* Triangle::OppositePoint(Triangle& t, Point& p)
+Point* Triangle::OppositePoint(Triangle& t, Point *p)
 {
-  Point *cw = t.PointCW(p);
+  if (!p) return NULL;
+  Point *cw = t.PointCW(*p);
   return PointCW(*cw);
 }
 
