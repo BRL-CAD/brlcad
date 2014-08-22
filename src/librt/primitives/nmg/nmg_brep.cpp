@@ -50,7 +50,7 @@ sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, co
 }
 
 HIDDEN int
-nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, long *brepi) {
+rt_nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, long *brepi) {
     const struct face_g_plane *fg = fu->f_p->g.plane_p;
     struct bu_ptbl vert_table;
     struct vertex **pt;
@@ -241,7 +241,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);
 	if (fu->orientation != OT_SAME) continue;
-	if (nmg_brep_face(b, fu, tol, brepi)) return;
+	if (rt_nmg_brep_face(b, fu, tol, brepi)) return;
     }
 
     (*b)->SetTrimIsoFlags();

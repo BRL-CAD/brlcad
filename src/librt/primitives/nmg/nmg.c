@@ -3105,7 +3105,7 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
  * NON-PARALLEL because of rt_uniresource.
  */
 void
-nmg_stash_shell_to_file(const char *filename, const struct shell *s, const char *title)
+rt_nmg_stash_shell_to_file(const char *filename, const struct shell *s, const char *title)
 {
     struct rt_wdb *fp;
     struct rt_db_internal intern;
@@ -3376,7 +3376,7 @@ not_arb:
  * The newly constructed arb is in "arb_int"
  */
 int
-nmg_to_arb(const struct shell *s, struct rt_arb_internal *arb_int)
+rt_nmg_to_arb(const struct shell *s, struct rt_arb_internal *arb_int)
 {
     struct faceuse *fu;
     struct loopuse *lu;
@@ -3585,7 +3585,6 @@ nmg_to_arb(const struct shell *s, struct rt_arb_internal *arb_int)
     return ret_val;
 }
 
-
 /**
  * Converts an NMG to a TGC, if possible.
  *
@@ -3601,7 +3600,7 @@ nmg_to_arb(const struct shell *s, struct rt_arb_internal *arb_int)
  * Currently only supports RCC, and creates circumscribed RCC
  */
 int
-nmg_to_tgc(
+rt_nmg_to_tgc(
     const struct shell *s,
     struct rt_tgc_internal *tgc_int,
     const struct bn_tol *tol)
@@ -3827,7 +3826,7 @@ nmg_to_tgc(
  * XXX This routine is deprecated in favor of BoTs
  */
 int
-nmg_to_poly(const struct shell *s, struct rt_pg_internal *poly_int, const struct bn_tol *tol)
+rt_nmg_to_poly(const struct shell *s, struct rt_pg_internal *poly_int, const struct bn_tol *tol)
 {
     struct faceuse *fu;
     struct loopuse *lu;
@@ -3959,7 +3958,7 @@ nmg_to_poly(const struct shell *s, struct rt_pg_internal *poly_int, const struct
  * Convert an NMG to a BOT solid
  */
 struct rt_bot_internal *
-nmg_bot(struct shell *s, const struct bn_tol *tol)
+rt_nmg_bot(struct shell *s, const struct bn_tol *tol)
 {
     struct rt_bot_internal *bot;
     struct bu_ptbl nmg_vertices;

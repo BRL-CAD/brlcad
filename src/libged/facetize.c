@@ -79,7 +79,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct directory *dp;
     int failed;
-    int nmg_use_tnurbs = 0;
+    int rt_nmg_use_tnurbs = 0;
     struct db_tree_state init_state;
     struct db_i *dbip;
     union tree *facetize_tree;
@@ -138,7 +138,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		triangulate = 1;
 		break;
 	    case 't':
-		nmg_use_tnurbs = 1;
+		rt_nmg_use_tnurbs = 1;
 		break;
 	    default: {
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -181,7 +181,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		     &init_state,
 		     0,			/* take all regions */
 		     facetize_shell_end,
-		     nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+		     rt_nmg_use_tnurbs ? rt_nmg_booltree_leaf_tnurb : rt_nmg_booltree_leaf_tess,
 		     (void *)&facetize_tree
 	);
 
@@ -199,7 +199,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
 	if (!BU_SETJUMP) {
 	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_tree->tr_d.td_s, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
+	    failed = rt_nmg_boolean(facetize_tree, nmg_tree->tr_d.td_s, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
 	    nmg_tree->tr_d.td_s = facetize_tree->tr_d.td_s;
 	} else {
 	    /* catch */
@@ -233,7 +233,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	if (!BU_SETJUMP) {
 	    /* try */
 	    if (marching_cube == 1)
-		nmg_triangulate_shell_mc(nmg_tree->tr_d.td_s, &gedp->ged_wdbp->wdb_tol);
+		rt_nmg_triangulate_shell_mc(nmg_tree->tr_d.td_s, &gedp->ged_wdbp->wdb_tol);
 	    else
 		nmg_triangulate_shell(nmg_tree->tr_d.td_s, &gedp->ged_wdbp->wdb_tol);
 	} else {
@@ -260,7 +260,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
 	if (!BU_SETJUMP) {
 	    /* try */
-	    bot = (struct rt_bot_internal *)nmg_bot(s, &gedp->ged_wdbp->wdb_tol);
+	    bot = (struct rt_bot_internal *)rt_nmg_bot(s, &gedp->ged_wdbp->wdb_tol);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;

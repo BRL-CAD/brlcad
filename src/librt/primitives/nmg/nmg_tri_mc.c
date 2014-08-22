@@ -393,7 +393,7 @@ rt_tri_mc_realize_cube(fastf_t *tris, int pv, point_t *edges)
 }
 
 int
-nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol *tol)
+rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol *tol)
 {
     int *vi, fo, valids = 0;
     struct faceuse *fu;
@@ -641,7 +641,7 @@ rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, f
 
 	/* stuff it into an nmg shell */
 	if (pv != 0 && pv != 0xff && s)	/* && s should go away. */
-	    count += nmg_mc_realize_cube(s, pv, edges, tol);
+	    count += rt_nmg_mc_realize_cube(s, pv, edges, tol);
 
 	last_b = b;
     }
@@ -725,7 +725,7 @@ fire_row(int cpu, void * ptr)
 
 /* rtip needs to be valid, s is where the results are stashed */
 int
-nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct mci_s m;
     int i;
@@ -756,7 +756,7 @@ nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *
 }
 
 void
-nmg_triangulate_shell_mc(struct shell *s, const struct bn_tol *tol)
+rt_nmg_triangulate_shell_mc(struct shell *s, const struct bn_tol *tol)
 {
     BN_CK_TOL(tol);
     NMG_CK_SHELL(s);

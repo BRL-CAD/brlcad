@@ -5559,25 +5559,40 @@ RT_EXPORT extern int rt_brep_plot_poly(struct bu_list		*vhead,
 
 
 /* Triangulation routines with Marching Cube Algorithm (nmg_tri_mc.c) */
-RT_EXPORT extern void nmg_triangulate_shell_mc(struct shell *s,
-					       const struct bn_tol *tol);
-RT_EXPORT extern int nmg_mc_realize_cube(struct shell *s,
-					 int pv,
-					 point_t *edges,
-					 const struct bn_tol *tol);
-RT_EXPORT extern int nmg_mc_evaluate(struct shell *s,
-				     struct rt_i *rtip,
-				     const struct db_full_path *pathp,
-				     const struct rt_tess_tol *ttol,
-				     const struct bn_tol *tol);
+RT_EXPORT extern void rt_nmg_triangulate_shell_mc(struct shell *s,
+						  const struct bn_tol *tol);
+RT_EXPORT extern int rt_nmg_mc_realize_cube(struct shell *s,
+					    int pv,
+					    point_t *edges,
+					    const struct bn_tol *tol);
+RT_EXPORT extern int rt_nmg_mc_evaluate(struct shell *s,
+					struct rt_i *rtip,
+					const struct db_full_path *pathp,
+					const struct rt_tess_tol *ttol,
+					const struct bn_tol *tol);
 
 /* torus.c */
 RT_EXPORT extern int rt_num_circular_segments(double maxerr,
 					      double radius);
 
-RT_EXPORT extern void nmg_stash_shell_to_file(const char *filename,
-					      const struct shell *s,
-					      const char *title);
+/* nmg.c */
+RT_EXPORT extern void rt_nmg_stash_shell_to_file(const char *filename,
+						 const struct shell *s,
+						 const char *title);
+RT_EXPORT extern int rt_nmg_to_arb(const struct shell *s,
+				   struct rt_arb_internal *arb_int);
+RT_EXPORT extern int rt_nmg_to_tgc(const struct shell *s,
+				   struct rt_tgc_internal *tgc_int,
+				   const struct bn_tol *tol);
+RT_EXPORT extern int rt_nmg_to_poly(const struct shell *s,
+				    struct rt_pg_internal *poly_int,
+				    const struct bn_tol *tol);
+RT_EXPORT extern struct rt_bot_internal *rt_nmg_bot(struct shell *s,
+						    const struct bn_tol *tol);
+
+RT_EXPORT extern const int db5_enc_len[4];
+
+RT_EXPORT extern const char *binu_types[];
 
 /* tcl.c */
 /** @addtogroup librt */
@@ -5772,31 +5787,28 @@ RT_EXPORT extern int rt_mk_hyperbola(struct rt_pt_node *pts,
 				     fastf_t ntol);
 
 /* from nmg_bool.c */
-RT_EXPORT extern struct shell *nmg_do_bool(struct shell *s1,
-					       struct shell *s2,
-					       const int oper, const struct bn_tol *tol);
-RT_EXPORT extern int nmg_two_shell_vertex_fuse(struct shell *s1,
-						struct shell *s2,
-						const struct bn_tol *tol);
-RT_EXPORT extern union tree *nmg_booltree_leaf_tess(struct db_tree_state *tsp,
-						    const struct db_full_path *pathp,
-						    struct rt_db_internal *ip,
-						    void * client_data);
-RT_EXPORT extern union tree *nmg_booltree_leaf_tnurb(struct db_tree_state *tsp,
-						     const struct db_full_path *pathp,
-						     struct rt_db_internal *ip,
-						     void * client_data);
-RT_EXPORT extern int nmg_bool_eval_silent;	/* quell output from nmg_booltree_evaluate */
-RT_EXPORT extern union tree *nmg_booltree_evaluate(union tree *tp,
-						   const struct bn_tol *tol,
-						   struct resource *resp);
-RT_EXPORT extern int nmg_boolean(union tree *tp,
-				 struct shell *s,
-				 const struct bn_tol *tol,
-				 struct resource *resp);
-
-
-/* From nmg_rt.c */
+RT_EXPORT extern struct shell *rt_nmg_do_bool(struct shell *s1,
+					      struct shell *s2,
+					      const int oper, const struct bn_tol *tol);
+RT_EXPORT extern int rt_nmg_two_shell_vertex_fuse(struct shell *s1,
+						  struct shell *s2,
+						  const struct bn_tol *tol);
+RT_EXPORT extern union tree *rt_nmg_booltree_leaf_tess(struct db_tree_state *tsp,
+						       const struct db_full_path *pathp,
+						       struct rt_db_internal *ip,
+						       void * client_data);
+RT_EXPORT extern union tree *rt_nmg_booltree_leaf_tnurb(struct db_tree_state *tsp,
+							const struct db_full_path *pathp,
+							struct rt_db_internal *ip,
+							void * client_data);
+RT_EXPORT extern int rt_nmg_bool_eval_silent;	/* quell output from nmg_booltree_evaluate */
+RT_EXPORT extern union tree *rt_nmg_booltree_evaluate(union tree *tp,
+						      const struct bn_tol *tol,
+						      struct resource *resp);
+RT_EXPORT extern int rt_nmg_boolean(union tree *tp,
+				    struct shell *s,
+				    const struct bn_tol *tol,
+				    struct resource *resp);
 
 /* From dspline.c */
 
@@ -6176,27 +6188,12 @@ RT_EXPORT extern const char *rt_version(void);
 /**
  * Merge second combination to the first one.
  */
-RT_EXPORT extern void nmg_comb_merge(struct rt_comb_internal *comb1, struct rt_comb_internal *comb2);
+RT_EXPORT extern void rt_nmg_comb_merge(struct rt_comb_internal *comb1, struct rt_comb_internal *comb2);
 
 /**
  * Union two tree into single one.
  */
-RT_EXPORT extern union tree *nmg_tree_union(union tree *tr1, union tree *tr2);
-
-RT_EXPORT extern const int db5_enc_len[4];
-
-RT_EXPORT extern const char *binu_types[];
-
-RT_EXPORT extern int nmg_to_arb(const struct shell *s,
-				struct rt_arb_internal *arb_int);
-RT_EXPORT extern int nmg_to_tgc(const struct shell *s,
-				struct rt_tgc_internal *tgc_int,
-				const struct bn_tol *tol);
-RT_EXPORT extern int nmg_to_poly(const struct shell *s,
-				 struct rt_pg_internal *poly_int,
-				 const struct bn_tol *tol);
-RT_EXPORT extern struct rt_bot_internal *nmg_bot(struct shell *s,
-						 const struct bn_tol *tol);
+RT_EXPORT extern union tree *rt_nmg_tree_union(union tree *tr1, union tree *tr2);
 
 __END_DECLS
 

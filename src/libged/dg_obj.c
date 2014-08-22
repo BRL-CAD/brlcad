@@ -3642,7 +3642,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	result = nmg_boolean(curtree, *tsp->ts_s, tsp->ts_tol, tsp->ts_resp);
+	result = rt_nmg_boolean(curtree, *tsp->ts_s, tsp->ts_tol, tsp->ts_resp);
 
     } else {
 	/* catch */
@@ -4140,7 +4140,7 @@ dgo_drawtrees(struct dg_obj *dgop, int argc, const char **argv, int kind, struct
 			       &dgop->dgo_wdbp->wdb_initial_tree_state,
 			       dgo_enable_fastpath ? dgo_nmg_region_start : 0,
 			       dgo_nmg_shell_end,
-			       dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+			       dgo_nmg_use_tnurbs ? rt_nmg_booltree_leaf_tnurb : rt_nmg_booltree_leaf_tess,
 			       (void *)dgcdp);
 
 	    if (dgcdp->draw_edge_uses) {

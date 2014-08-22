@@ -5307,8 +5307,8 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 		     0,			/* take all regions */
 		     facetize_region_end,
 		     nmg_use_tnurbs ?
-		     nmg_booltree_leaf_tnurb :
-		     nmg_booltree_leaf_tess,
+		     rt_nmg_booltree_leaf_tnurb :
+		     rt_nmg_booltree_leaf_tess,
 		     (void *)&facetize_tree
 	);
 
@@ -5334,7 +5334,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	    return TCL_ERROR;
 	}
 
-	failed = nmg_boolean(facetize_tree, nmg_shell, &wdbp->wdb_tol, &rt_uniresource);
+	failed = rt_nmg_boolean(facetize_tree, nmg_shell, &wdbp->wdb_tol, &rt_uniresource);
 	BU_UNSETJUMP;
     } else
 	failed = 1;
@@ -5373,7 +5373,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 
 	Tcl_AppendResult(wdbp->wdb_interp, "facetize:  converting to BOT format\n", (char *)NULL);
 
-	bot = (struct rt_bot_internal *)nmg_bot(nmg_shell, &wdbp->wdb_tol);
+	bot = (struct rt_bot_internal *)rt_nmg_bot(nmg_shell, &wdbp->wdb_tol);
 	nmg_ks(nmg_shell);
 	nmg_shell = (struct shell *)NULL;
 
@@ -8730,7 +8730,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
 	BU_ALLOC(arb_int, struct rt_arb_internal);
 
-	if (nmg_to_arb(s, arb_int)) {
+	if (rt_nmg_to_arb(s, arb_int)) {
 	    new_intern.idb_ptr = (void *)(arb_int);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_ARB8;
@@ -8743,7 +8743,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 		(void) nmg_edge_fuse(&s->magic, &wdbp->wdb_tol);
 		(void) nmg_edge_g_fuse(&s->magic, &wdbp->wdb_tol);
 		(void) nmg_unbreak_shell_edges(&s->magic);
-		if (nmg_to_arb(s, arb_int)) {
+		if (rt_nmg_to_arb(s, arb_int)) {
 		    new_intern.idb_ptr = (void *)(arb_int);
 		    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    new_intern.idb_type = ID_ARB8;
@@ -8765,7 +8765,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
 	BU_ALLOC(tgc_int, struct rt_tgc_internal);
 
-	if (nmg_to_tgc(s, tgc_int, &wdbp->wdb_tol)) {
+	if (rt_nmg_to_tgc(s, tgc_int, &wdbp->wdb_tol)) {
 	    new_intern.idb_ptr = (void *)(tgc_int);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_TGC;
@@ -8784,7 +8784,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
 	BU_ALLOC(poly_int, struct rt_pg_internal);
 
-	if (nmg_to_poly(s, poly_int, &wdbp->wdb_tol)) {
+	if (rt_nmg_to_poly(s, poly_int, &wdbp->wdb_tol)) {
 	    new_intern.idb_ptr = (void *)(poly_int);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_POLY;

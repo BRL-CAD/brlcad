@@ -58,7 +58,7 @@ mk_bot_from_nmg(struct rt_wdb *ofp, const char *name, struct shell *s)
 {
     struct rt_bot_internal *botp;
 
-    botp = nmg_bot(s, &ofp->wdb_tol);
+    botp = rt_nmg_bot(s, &ofp->wdb_tol);
 
     /* FIXME: wdb_export is documented as always free'ing the entity
      * passed to it.  that means this routine needs to make a copy of

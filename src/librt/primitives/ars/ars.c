@@ -713,7 +713,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
     rt_ars_ifree(ip);
 
-    bot = nmg_bot(s, &rtip->rti_tol);
+    bot = rt_nmg_bot(s, &rtip->rti_tol);
 
     if (!bot) {
 	bu_log("Failed to convert ARS to BOT (%s)\n", stp->st_dp->d_namep);

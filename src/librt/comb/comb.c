@@ -1102,9 +1102,9 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
  * Merge second combination to the first one.
  */
 void
-nmg_comb_merge(struct rt_comb_internal *comb1, struct rt_comb_internal *comb2)
+rt_nmg_comb_merge(struct rt_comb_internal *comb1, struct rt_comb_internal *comb2)
 {
-    comb1->tree = nmg_tree_union(comb1->tree, comb2->tree);
+    comb1->tree = rt_nmg_tree_union(comb1->tree, comb2->tree);
     comb2->tree = (union tree *)NULL;
 }
 
@@ -1112,7 +1112,7 @@ nmg_comb_merge(struct rt_comb_internal *comb1, struct rt_comb_internal *comb2)
  * Union two tree into single one.
  */
 union tree *
-nmg_tree_union(union tree *tr1, union tree *tr2)
+rt_nmg_tree_union(union tree *tr1, union tree *tr2)
 {
     union tree *union_root;
 

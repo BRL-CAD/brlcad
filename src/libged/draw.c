@@ -942,7 +942,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	result = nmg_boolean(curtree, *tsp->ts_s, tsp->ts_tol, tsp->ts_resp);
+	result = rt_nmg_boolean(curtree, *tsp->ts_s, tsp->ts_tol, tsp->ts_resp);
 
     } else {
 	/* catch */
@@ -1120,7 +1120,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int ret = 0;
     int c;
     int ncpu = 1;
-    int nmg_use_tnurbs = 0;
+    int rt_nmg_use_tnurbs = 0;
     int enable_fastpath = 0;
     struct shell *nmg_shell;
     struct _ged_client_data dgcdp;
@@ -1187,7 +1187,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    dgcdp.draw_solid_lines_only = 1;
 		    break;
 		case 't':
-		    nmg_use_tnurbs = 1;
+		    rt_nmg_use_tnurbs = 1;
 		    break;
 		case 'v':
 		    dgcdp.shade_per_vertex_normals = 1;
@@ -1430,7 +1430,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       &gedp->ged_wdbp->wdb_initial_tree_state,
 				       enable_fastpath ? draw_nmg_region_start : 0,
 				       draw_nmg_shell_end,
-				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+				       rt_nmg_use_tnurbs ? rt_nmg_booltree_leaf_tnurb : rt_nmg_booltree_leaf_tess,
 				       (void *)&dgcdp);
 		}
 

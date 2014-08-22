@@ -273,7 +273,7 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
 	/* try */
 
 	/* convert the nmg model back into a bot */
-	bot = nmg_bot(s, tol);
+	bot = rt_nmg_bot(s, tol);
 
 	bu_vls_sprintf(&name_prefix, "open_edges.%s", argv[i]);
 	bu_log("%s: running show_dangling_edges\n", argv[0]);

@@ -349,7 +349,7 @@ arbin(struct ged *gedp,
 	rt_db_free_internal(ip);
 
 	/* convert the NMG to a BOT */
-	bot = (struct rt_bot_internal *)nmg_bot(s, &gedp->ged_wdbp->wdb_tol);
+	bot = (struct rt_bot_internal *)rt_nmg_bot(s, &gedp->ged_wdbp->wdb_tol);
 	nmg_ks(s);
 
 	/* put new solid in "ip" */

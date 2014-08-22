@@ -68,7 +68,7 @@ int debug_file_count=0;
  * !0 Has open edges, plot file created.
  */
 size_t
-nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
+rt_nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
 {
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -147,7 +147,7 @@ nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
 
 
 static void
-nmg_dangling_handler(uint32_t *longp, void *state, int UNUSED(unused))
+rt_nmg_dangling_handler(uint32_t *longp, void *state, int UNUSED(unused))
 {
     register struct faceuse *fu = (struct faceuse *)longp;
     register struct dangling_faceuse_state *sp =
@@ -173,15 +173,15 @@ nmg_dangling_handler(uint32_t *longp, void *state, int UNUSED(unused))
  * !0 Has dangling faces
  */
 int
-nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds)
+rt_nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds)
 {
     struct shell *s;
     struct dangling_faceuse_state st;
     static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL,
-						       NULL, NULL, NULL, nmg_dangling_handler, NULL,
-						       NULL, NULL, NULL, NULL, NULL,
-						       NULL, NULL, NULL, NULL, NULL,
-						       NULL, NULL, NULL, NULL, NULL};
+							  NULL, NULL, NULL, rt_nmg_dangling_handler, NULL,
+							  NULL, NULL, NULL, NULL, NULL,
+							  NULL, NULL, NULL, NULL, NULL,
+							  NULL, NULL, NULL, NULL, NULL};
     /* handlers.bef_faceuse = nmg_dangling_handler; */
 
     s = nmg_find_shell(magic_p);
@@ -205,7 +205,7 @@ nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds)
  * edge.
  */
 void
-nmg_show_each_loop(struct shell *s, char **classlist, int redraw, int fancy, const char *str)
+rt_nmg_show_each_loop(struct shell *s, char **classlist, int redraw, int fancy, const char *str)
 
 
 /* non-zero means flush previous vlist */
@@ -258,13 +258,13 @@ stash_shell(struct shell *s, char *file_name, char *title, const struct bn_tol *
 
     nmg_rebound(s, tol);
     snprintf(counted_name, 256, "%s%d.g", file_name, debug_file_count);
-    nmg_stash_shell_to_file(counted_name, new_s, title);
+    rt_nmg_stash_shell_to_file(counted_name, new_s, title);
     nmg_ks(new_s);
 }
 
 
 void
-nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
+rt_nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 {
     struct faceuse *fu;
     struct faceuse *fu_next;
@@ -422,7 +422,7 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
  */
 
 void
-nmg_kill_anti_loops(struct shell *s)
+rt_nmg_kill_anti_loops(struct shell *s)
 {
     struct bu_ptbl loops;
     struct faceuse *fu;
@@ -518,7 +518,7 @@ out:
 
 
 void
-nmg_kill_wire_edges(struct shell *s)
+rt_nmg_kill_wire_edges(struct shell *s)
 {
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -542,7 +542,7 @@ nmg_kill_wire_edges(struct shell *s)
  *
  * XXX this probably should operate on regions, not shells.
  */
-static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_tol *tol)
+static struct shell * rt_nmg_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_tol *tol)
 {
     int i;
     long nelem;
@@ -694,7 +694,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	char file_name[256];
 
 	sprintf(file_name, "before%d.g", debug_file_count);
-	nmg_stash_shell_to_file(file_name, sA, "Before crackshells");
+	rt_nmg_stash_shell_to_file(file_name, sA, "Before crackshells");
     }
 
     /* Perform shell/shell intersections */
@@ -712,8 +712,8 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     (void)nmg_vertex_fuse(&sA->magic, tol);
     (void)nmg_vertex_fuse(&sB->magic, tol);
 
-    (void)nmg_kill_anti_loops(sA);
-    (void)nmg_kill_anti_loops(sB);
+    (void)rt_nmg_kill_anti_loops(sA);
+    (void)rt_nmg_kill_anti_loops(sB);
 
     /* clean things up now that the intersections have been built */
     nmg_sanitize_s_lv(sA, OT_BOOLPLACE);
@@ -761,16 +761,16 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     if (nmg_debug & DEBUG_BOOL) {
 	int dangle_error = 0;
-	if (nmg_has_dangling_faces((uint32_t *)sA, (char *)NULL)) {
+	if (rt_nmg_has_dangling_faces((uint32_t *)sA, (char *)NULL)) {
 	    dangle_error = 1;
 	    bu_log("nmg_bool(): Dangling faces detected in sA before classification\n");
 	}
-	if (nmg_has_dangling_faces((uint32_t *)sB, (char *)NULL)) {
+	if (rt_nmg_has_dangling_faces((uint32_t *)sB, (char *)NULL)) {
 	    dangle_error = 1;
 	    bu_log("nmg_bool(): Dangling faces detected in sB before classification\n");
 	}
 	if (dangle_error) {
-	    nmg_stash_shell_to_file("dangle.g", sA, "After Boolean");
+	    rt_nmg_stash_shell_to_file("dangle.g", sA, "After Boolean");
 	    bu_bomb("nmg_bool(): Dangling faces detected before classification\n");
 	}
     }
@@ -792,7 +792,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	char file_name[256];
 
 	sprintf(file_name, "notjoined%d.g", debug_file_count);
-	nmg_stash_shell_to_file(file_name, sA, "Before s_join_touchingloops");
+	rt_nmg_stash_shell_to_file(file_name, sA, "Before s_join_touchingloops");
     }
 
     /* Re-build bounding boxes, edge geometry, as needed. */
@@ -813,7 +813,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	char file_name[256];
 
 	sprintf(file_name, "after%d.g", debug_file_count);
-	nmg_stash_shell_to_file(file_name, sA, "After crackshells");
+	rt_nmg_stash_shell_to_file(file_name, sA, "After crackshells");
     }
 
     if (nmg_debug & DEBUG_BOOL) {
@@ -900,8 +900,8 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
 	/* Show each loop, one at a time, non-fancy */
 	/* XXX Should have its own bit, or combination -- not always wanted */
-	nmg_show_each_loop(sA, &classlist[0], 1, 0, "sA lu");
-	nmg_show_each_loop(sB, &classlist[4], 1, 0, "sB lu");
+	rt_nmg_show_each_loop(sA, &classlist[0], 1, 0, "sA lu");
+	rt_nmg_show_each_loop(sB, &classlist[4], 1, 0, "sB lu");
 
 	/* Show each shell as a whole */
 	nmg_show_broken_classifier_stuff((uint32_t *)sA, &classlist[0], 1, 0, "sA classed");
@@ -946,21 +946,21 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
 	if (nmg_debug & DEBUG_BOOL) {
 	    int dangle_error = 0;
-	    if (nmg_has_dangling_faces((uint32_t *)sA, (char *)NULL)) {
+	    if (rt_nmg_has_dangling_faces((uint32_t *)sA, (char *)NULL)) {
 		dangle_error = 1;
 		bu_log("nmg_bool(): Dangling faces detected in sA after boolean\n");
 	    }
-	    if (nmg_has_dangling_faces((uint32_t *)sB, (char *)NULL)) {
+	    if (rt_nmg_has_dangling_faces((uint32_t *)sB, (char *)NULL)) {
 		dangle_error = 1;
 		bu_log("nmg_bool(): Dangling faces detected in sB after boolean\n");
 	    }
 	    if (dangle_error) {
-		nmg_stash_shell_to_file("dangle.g", sA, "After Boolean");
+		rt_nmg_stash_shell_to_file("dangle.g", sA, "After Boolean");
 		bu_bomb("nmg_bool(): Dangling faces detected after boolean\n");
 	    }
 	} else {
-	    if (nmg_has_dangling_faces((uint32_t *)sA, (char *)NULL)) {
-		(void)nmg_plot_open_edges((const uint32_t *)sA, "open_edges");
+	    if (rt_nmg_has_dangling_faces((uint32_t *)sA, (char *)NULL)) {
+		(void)rt_nmg_plot_open_edges((const uint32_t *)sA, "open_edges");
 		bu_bomb("nmg_bool(): Dangling faces detected in sA after boolean\n");
 	    }
 	}
@@ -1001,7 +1001,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	if (nmg_debug & DEBUG_BOOL) {
 	    char tmp_name[256];
 	    sprintf(tmp_name, "after_bool_%d.g", debug_file_count);
-	    nmg_stash_shell_to_file(tmp_name, sA, "After Boolean");
+	    rt_nmg_stash_shell_to_file(tmp_name, sA, "After Boolean");
 	}
     }
 
@@ -1019,7 +1019,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	nmg_vsshell(sA);
     }
 
-    nmg_kill_wire_edges(sA);
+    rt_nmg_kill_wire_edges(sA);
     nmg_s_reindex(sA, 0);
 
     return sA;
@@ -1030,7 +1030,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
  * BUG: we assume only one shell per region
  */
 struct shell *
-nmg_do_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_tol *tol)
+rt_nmg_do_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_tol *tol)
 {
     struct shell *s;
 
@@ -1040,7 +1040,7 @@ nmg_do_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_
     nmg_shell_v_unique(sA, tol);
     nmg_shell_v_unique(sB, tol);
 
-    s = nmg_bool(sA, sB, oper, tol);
+    s = rt_nmg_bool(sA, sB, oper, tol);
 
     NMG_CK_SHELL(s);
 
@@ -1074,7 +1074,7 @@ nmg_do_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_
  * This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
+rt_nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     struct shell *s;
     union tree *curtree;
@@ -1138,7 +1138,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
  * This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
+rt_nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     union tree *curtree;
     struct directory *dp;
@@ -1202,7 +1202,7 @@ int nmg_bool_eval_silent=0;
  * curtree = nmg_booltree_evaluate(curtree, tol);
  */
 union tree *
-nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct resource *resp)
+rt_nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct resource *resp)
 {
     union tree *tl;
     union tree *tr;
@@ -1242,8 +1242,8 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     }
 
     /* Handle a boolean operation node.  First get its leaves. */
-    tl = nmg_booltree_evaluate(tp->tr_b.tb_left, tol, resp);
-    tr = nmg_booltree_evaluate(tp->tr_b.tb_right, tol, resp);
+    tl = rt_nmg_booltree_evaluate(tp->tr_b.tb_left, tol, resp);
+    tr = rt_nmg_booltree_evaluate(tp->tr_b.tb_right, tol, resp);
 
     if (tl) {
 	RT_CK_TREE(tl);
@@ -1362,7 +1362,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     }
 
     /* input s1 and s2 are destroyed, output is new shell */
-    reg = nmg_do_bool(tl->tr_d.td_s, tr->tr_d.td_s, op, tol);
+    reg = rt_nmg_do_bool(tl->tr_d.td_s, tr->tr_d.td_s, op, tol);
 
     /* build string of result name */
     rem = strlen(tl->tr_d.td_name) + 3 + strlen(tr->tr_d.td_name) + 2 + 1;
@@ -1413,7 +1413,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
  * typically with db_free_tree(tp);
  */
 int
-nmg_boolean(union tree *tp, struct shell *s, const struct bn_tol *tol, struct resource *resp)
+rt_nmg_boolean(union tree *tp, struct shell *s, const struct bn_tol *tol, struct resource *resp)
 {
     union tree *result;
     int ret;
@@ -1443,7 +1443,7 @@ nmg_boolean(union tree *tp, struct shell *s, const struct bn_tol *tol, struct re
      * Evaluate the nodes of the boolean tree one at a time, until
      * only a single region remains.
      */
-    result = nmg_booltree_evaluate(tp, tol, resp);
+    result = rt_nmg_booltree_evaluate(tp, tol, resp);
 
     if (result == TREE_NULL) {
 	bu_log("nmg_boolean(): result of nmg_booltree_evaluate() is NULL\n");

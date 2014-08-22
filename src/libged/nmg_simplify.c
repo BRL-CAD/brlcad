@@ -167,7 +167,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 0);
 	nmg_simplify_shell(s);
 
-	if (nmg_to_arb(s, arb_int)) {
+	if (rt_nmg_to_arb(s, arb_int)) {
 	    success = 1;
 	    ret = GED_OK;
 	    goto out1;
@@ -192,7 +192,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_type = ID_TGC;
 	new_intern.idb_meth = &OBJ[ID_TGC];
 
-	if (nmg_to_tgc(s, tgc_int, &gedp->ged_wdbp->wdb_tol)) {
+	if (rt_nmg_to_tgc(s, tgc_int, &gedp->ged_wdbp->wdb_tol)) {
 	    success = 1;
 	    ret = GED_OK;
 	    goto out1;
@@ -217,7 +217,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_type = ID_POLY;
 	new_intern.idb_meth = &OBJ[ID_POLY];
 
-	if (nmg_to_poly(s, poly_int, &gedp->ged_wdbp->wdb_tol)) {
+	if (rt_nmg_to_poly(s, poly_int, &gedp->ged_wdbp->wdb_tol)) {
 	    success = 1;
 	    ret = GED_OK;
 	    goto out1;

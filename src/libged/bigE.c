@@ -176,7 +176,7 @@ add_solid(const struct directory *dp,
 	if (dgcdp->do_polysolids) {
 	    if (solid_is_plate_mode_bot
 		|| !eptr->l.s
-		|| (bot=nmg_bot(s, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
+		|| (bot = rt_nmg_bot(s, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
 	    {
 		eptr->l.stp->st_id = id;
 		eptr->l.stp->st_meth = &OBJ[id];
@@ -1983,7 +1983,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
 	BU_ALLOC(pg, struct rt_pg_internal);
 
-	if (!nmg_to_poly(tp->l.s, pg, tol)) {
+	if (!rt_nmg_to_poly(tp->l.s, pg, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
 	    bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", tp->l.stp->st_dp->d_namep);
 	} else {
