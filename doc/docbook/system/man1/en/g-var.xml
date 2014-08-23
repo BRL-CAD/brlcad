@@ -54,7 +54,7 @@ or to
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-s <emphasis remap='I'>scale</emphasis></option></term>
+  <term><option>-s</option> <userinput>scale</userinput></term>
   <listitem>
 <para>Scale the output geometry by factor
 <emphasis remap='I'>scale</emphasis>.

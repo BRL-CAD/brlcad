@@ -84,11 +84,11 @@
 		</para>
 	</refsection>
 
-<refsect1 xml:id='example'><title>EXAMPLE</title>
+<refsection xml:id='example'><title>EXAMPLE</title>
 <synopsis>
 $ g-tankill -o <emphasis remap='I'>sample.tankill sample.g sample_object</emphasis>
 </synopsis>
-</refsect1>
+</refsection>
 
 	<refsection xml:id='diagnostics'><title>DIAGNOSTICS</title>
 		<para>Error messages are intended to be self-explanatory.</para>
