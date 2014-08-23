@@ -789,7 +789,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
     vect_t A, Au, B, Bu, Cu;
     vect_t V, Work;
-    vect_t lower_cusp, upper_cusp, upper_cusp_xdir, upper_cusp_ydir;
+    vect_t lower_cusp, upper_cusp, upper_cusp_xdir;
     vect_t highest_point_left, highest_point_right, top_xdir, top_ydir;
     vect_t top01_center, top01_xdir, top01_ydir;
     vect_t top1_center, top1_xdir, top1_ydir;
@@ -880,7 +880,6 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     VSET(ydir4_left, 0, v1_left[Z] * 0.01, 0 );
     VSET(ydir4_right, 0, v1_right[Z] * 0.01, 0 );
     VSET(upper_cusp_xdir, 0 , v3_left[Z] * 0.01 , 0 );
-    VSET(upper_cusp_ydir, 0 , v3_right[Z] * 0.01 , 0 );
 
     rt_hrt_24pts(top, hip->v, top_xdir, top_ydir);
     rt_hrt_24pts(top01, top01_center, top01_xdir, top01_ydir );
