@@ -53,7 +53,7 @@ void Triangle::MarkNeighbor(Point* p1, Point* p2, Triangle* t)
   else if ((p1 == points_[0] && p2 == points_[1]) || (p1 == points_[1] && p2 == points_[0]))
     neighbors_[2] = t;
   else
-    return;
+    assert(0);
 }
 
 // Exhaustive search to update neighbor pointers
@@ -117,10 +117,9 @@ void Triangle::ClearDelunayEdges()
   delaunay_edge[0] = delaunay_edge[1] = delaunay_edge[2] = false;
 }
 
-Point* Triangle::OppositePoint(Triangle& t, Point *p)
+Point* Triangle::OppositePoint(Triangle& t, Point& p)
 {
-  if (!p) return NULL;
-  Point *cw = t.PointCW(*p);
+  Point *cw = t.PointCW(p);
   return PointCW(*cw);
 }
 
@@ -148,7 +147,7 @@ void Triangle::Legalize(Point& opoint, Point& npoint)
     points_[2] = points_[1];
     points_[1] = &npoint;
   } else {
-    return;
+    assert(0);
   }
 }
 
@@ -161,6 +160,7 @@ int Triangle::Index(const Point* p)
   } else if (p == points_[2]) {
     return 2;
   }
+  assert(0);
   return -1;
 }
 
@@ -220,6 +220,7 @@ Point* Triangle::PointCW(Point& point)
   } else if (&point == points_[2]) {
     return points_[1];
   }
+  assert(0);
   return NULL;
 }
 
@@ -233,6 +234,7 @@ Point* Triangle::PointCCW(Point& point)
   } else if (&point == points_[2]) {
     return points_[0];
   }
+  assert(0);
   return NULL;
 }
 
