@@ -37,23 +37,35 @@
 		<variablelist remap="TP">
 			<varlistentry>
 				<term><option>-a</option></term>
-				<listitem><para>Report objects added in model2.g</para></listitem>
+				<listitem>
+                                    <para>(two-way diff) Report objects added in right_model.g</para>
+                                    <para>(three-way diff) Report objects added to both left_model.g and right_model.g which are the same in both left_model.g and right_model.g</para>
+                                </listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>-r</option></term>
-				<listitem><para>Report objects removed in model2.g</para></listitem>
+				<term><option>-d</option></term>
+	                        <listitem>
+                                    <para>(two-way diff) Report objects deleted in right_model.g</para>
+                                    <para>(three-way diff) Report objects deleted in both left_model.g and right_model.g</para>
+                                </listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>-c</option></term>
-				<listitem><para>Report objects changed in model2.g</para></listitem>
+				<term><option>-m</option></term>
+	                        <listitem>
+                                    <para>(two-way diff) Report objects modified in right_model.g</para>
+                                    <para>(three-way diff) Report objects that are different or added in one or more of left_model.g and right_model.g relative to ancestor.g, that were not identically added to or removed from both left_model.g and right_model.g</para>
+                                </listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>-u</option></term>
-				<listitem><para>Report objects that are the same in both model1.g and model2.g</para></listitem>
+	                        <listitem>
+                                    <para>(two-way diff) Report objects that are identical in left_model.g and right_model.g</para>
+                                    <para>(three-way diff) Report objects that are identical in ancestor_model.g, left_model.g and right_model.g</para>
+                                </listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>-C</option></term>
-				<listitem><para>Report objects with conflicts</para></listitem>
+				<term><option>-C #</option></term>
+				<listitem><para>Verbosity setting used when reporting objects with conflicts (3-way diff only)</para></listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>-v #</option></term>
@@ -84,65 +96,210 @@
 
   <example><title>Default Diffing Results</title>
         <para>
-          Running the default options on two pre-prepared examples of Moss World gives us full details:
+          Running the default options on two pre-prepared examples of Moss World gives us a summary of the status of various objects:
           <literallayout>
                 <computeroutput>
 <prompt>~:</prompt><userinput> gdiff2 moss.g moss2.g</userinput>
-tor2 was added.
-
-cone.s was changed:
-   Parameters changed:
-      D: "1.453863143920999911884451 1.453863143920999911884451 0" -> "2.921497127500571444613797 2.921497127500571444613797 0"
-
-box.s was changed:
-   Parameters changed:
-      V2: "30.0283355712900004164112 21.58122539520000060520033 -16.37908935547000055521494" -> "30.0283355712900004164112 19.1837000000000017507773 -16.37908935547000055521494"
-      V3: "30.0283355712900004164112 21.58122539520000060520033 10.41366577147999805674772" -> "30.0283355712900004164112 19.1837000000000017507773 10.41366577147999805674772"
-      V6: "3.235580444340001804448548 21.58122539520000060520033 -16.37908935547000055521494" -> "3.235580444340001804448548 19.1837000000000017507773 -16.37908935547000055521494"
-      V7: "3.235580444340001804448548 21.58122539520000060520033 10.41366577147999805674772" -> "3.235580444340001804448548 19.1837000000000017507773 10.41366577147999805674772"
-
-tor.r was changed:
-   Parameters changed:
-      tree: "l tor" -> "l tor2"
-
-tor was changed:
-   Parameters changed:
-      r_h: "5.079999923705999620437979" -> "8.882757536664964703732039"
-
-                </computeroutput>
+M platform.r
+M ellipse.s
+M light.r
+M _GLOBAL
+M cone.s
+M cone.r
+M box.s
+M tor.r
+D LIGHT
+A eto.s
+		</computeroutput>
           </literallayout>
-          The reporting order is added, removed, and then changed.  So we see that one object was added, none were removed, and four were changed.
+          'M' denotes an object that was modified, 'D' is an object that was deleted, and 'A' is an object that was added.
         </para>
-  </example>
-  <example><title>Quieter Diffing Results</title>
-        <para>
-          Running the same comparison as the previous example with a less verbose output gives us a summary, which is useful when first studying two files to identify differences:
-          <literallayout>
-                <computeroutput>
+   </example>
+
+   <example><title>Alternate Diffing Result Outputs</title>
+	   <para>
+		   The <option>v</option> provides various styles of output, as follows:
+	   </para>
+	   <para>
+		   <option>-v 0</option> (no output except the return code):
+		   <literallayout>
+			   <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -v 0 moss.g moss2.g</userinput>
+			   </computeroutput>
+		   </literallayout>
+	   </para>
+
+	   <para>
+		   <option>-v 1</option>:
+		   <literallayout>
+			   <computeroutput>
 <prompt>~:</prompt><userinput> gdiff2 -v 1 moss.g moss2.g</userinput>
+Added:
+eto.s
 
-Objects added:
-tor2
+Removed:
+LIGHT
 
-Objects changed:
-cone.s, box.s, tor.r, tor
+Changed:
+platform.r, ellipse.s, light.r, _GLOBAL, cone.s, cone.r, box.s, tor.r
+			   </computeroutput>
+		   </literallayout>
+		   Objects are reported in lists, categorized by their status.
+	   </para>
 
+	   <para>
+		   <option>-v 2</option> (default):
+		   <literallayout>
+			   <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -v 2 moss.g moss2.g</userinput>
+M platform.r
+M ellipse.s
+M light.r
+M _GLOBAL
+M cone.s
+M cone.r
+M box.s
+M tor.r
+D LIGHT
+A eto.s
+			   </computeroutput>
+		   </literallayout>
+		   If verbosity is not specificed, this is the default output.
+	   </para>
+
+	   <para>
+		   <option>-v 3</option>:
+		   <literallayout>
+			   <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -v 3 moss.g moss2.g</userinput>
+- "platform.r" tree(p): l platform.s
++ "platform.r" tree(p): - {l platform.s} {l cone.s}
+- "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
++ "ellipse.s" C(p): 0 1.561016355403846755933728 1.561016355403846755933728
+- "ellipse.s" A(p): 14.87607192992999927128039 0 0
++ "ellipse.s" A(p): 5.559274328313033919357622 0 0
+- "light.r" tree(p): l LIGHT
++ "light.r" tree(p): u {l eto.s} {l cone.s}
+- "_GLOBAL" title(a): Gary Moss's "World on a Platter"
++ "_GLOBAL" title(a): Gary Moss's "World on a Platter" - diff 01
+- "cone.s" H(p): 0 0 26.44671630858999833435519
++ "cone.s" H(p): 0 0 37.49945872348094155768194
+- "cone.s" V(p): 16.87542724608999833435519 -34.74353027344000111042988 -16.37908935547000055521494
++ "cone.s" V(p): -23.07777996602787595747941 -46.52170066332633524552875 -19.26697361191882151842947
+- "cone.r" tree(p): l cone.s
++ "cone.r" tree(p): l cone.s {1 0 0 53.2994  0 1 0 10.1428  0 0 1 0  0 0 0 1}
+- "box.s" V4(p): 30.0283355712900004164112 -5.211529731749999783119165 10.41366577147999805674772
++ "box.s" V4(p): 29.46579237282375984818827 -5.211529731749999783119165 10.41366577147999805674772
+- "box.s" V3(p): 30.0283355712900004164112 21.58122539520000060520033 10.41366577147999805674772
++ "box.s" V3(p): 29.46579237282375984818827 21.58122539520000060520033 10.41366577147999805674772
+- "box.s" V2(p): 30.0283355712900004164112 21.58122539520000060520033 -16.37908935547000055521494
++ "box.s" V2(p): 29.46579237282375984818827 21.58122539520000060520033 -16.37908935547000055521494
+- "box.s" V1(p): 30.0283355712900004164112 -5.211529731749999783119165 -16.37908935547000055521494
++ "box.s" V1(p): 29.46579237282375984818827 -5.211529731749999783119165 -16.37908935547000055521494
+- "tor.r" tree(p): l tor
++ "tor.r" tree(p): l tor {1 0 0 8.44652  0 1 0 -56.3571  0 0 1 54.4836  0 0 0 2.71809}
+D LIGHT
+A eto.s
+			   </computeroutput>
+		   </literallayout>
+		   Verbosity 3 is a more detailed version of the previous setting, with each parameter in the modified objects reported in detail.  '-' lines
+                   show what was removed for a given attribute or parameter, and '+' lines contain the data that replaced them.
+	   </para>
+
+
+	   <para>
+		   <option>-v 4</option>:
+		   <literallayout>
+			   <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -v 4 moss.g moss2.g</userinput>
+- "platform.r" tree(p): l platform.s
++ "platform.r" tree(p): - {l platform.s} {l cone.s}
+- "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
++ "ellipse.s" C(p): 0 1.561016355403846755933728 1.561016355403846755933728
+- "ellipse.s" A(p): 14.87607192992999927128039 0 0
++ "ellipse.s" A(p): 5.559274328313033919357622 0 0
+- "light.r" tree(p): l LIGHT
++ "light.r" tree(p): u {l eto.s} {l cone.s}
+- "_GLOBAL" title(a): Gary Moss's "World on a Platter"
++ "_GLOBAL" title(a): Gary Moss's "World on a Platter" - diff 01
+- "cone.s" H(p): 0 0 26.44671630858999833435519
++ "cone.s" H(p): 0 0 37.49945872348094155768194
+- "cone.s" V(p): 16.87542724608999833435519 -34.74353027344000111042988 -16.37908935547000055521494
++ "cone.s" V(p): -23.07777996602787595747941 -46.52170066332633524552875 -19.26697361191882151842947
+- "cone.r" tree(p): l cone.s
++ "cone.r" tree(p): l cone.s {1 0 0 53.2994  0 1 0 10.1428  0 0 1 0  0 0 0 1}
+- "box.s" V4(p): 30.0283355712900004164112 -5.211529731749999783119165 10.41366577147999805674772
++ "box.s" V4(p): 29.46579237282375984818827 -5.211529731749999783119165 10.41366577147999805674772
+- "box.s" V3(p): 30.0283355712900004164112 21.58122539520000060520033 10.41366577147999805674772
++ "box.s" V3(p): 29.46579237282375984818827 21.58122539520000060520033 10.41366577147999805674772
+- "box.s" V2(p): 30.0283355712900004164112 21.58122539520000060520033 -16.37908935547000055521494
++ "box.s" V2(p): 29.46579237282375984818827 21.58122539520000060520033 -16.37908935547000055521494
+- "box.s" V1(p): 30.0283355712900004164112 -5.211529731749999783119165 -16.37908935547000055521494
++ "box.s" V1(p): 29.46579237282375984818827 -5.211529731749999783119165 -16.37908935547000055521494
+- "tor.r" tree(p): l tor
++ "tor.r" tree(p): l tor {1 0 0 8.44652  0 1 0 -56.3571  0 0 1 54.4836  0 0 0 2.71809}
+D "LIGHT" C(p): 0 0 2.539999961852999810218989
+D "LIGHT" B(p): 0 2.539999961852999810218989 0
+D "LIGHT" A(p): 2.539999961852999810218989 0 0
+D "LIGHT" V(p): 20.15756225586000027760747 -13.52595329284999969843284 5.034742355347000319909512
+D "LIGHT" DB5_MINORTYPE(p): ell
+A "eto.s" r_d(p): 1.724149328000026404339451
+A "eto.s" r(p): 13.79319462400021123471561
+A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
+A "eto.s" N(p): 0 0 0.01724149328000028000285049
+A "eto.s" V(p): 8.533195938359670051909234 -11.04524849332910996224655 -1.403988582132086548881489
+A "eto.s" DB5_MINORTYPE(p): eto
+			   </computeroutput>
+		   </literallayout>
+		   Verbosity 4 is a fully detailed diff that containes all information added or removed.
+	   </para>
+
+   </example>
+
+
+  <example><title>Filtering Based on Difference Type</title>
+        <para>
+          The options <option>a</option>, <option>d</option>, <option>m</option>, and <option>u</option> control
+          which categories of diff results (added, deleted, modified, and unchanged) are reported. By default
+          added, deleted and modified items are reported, but once one of these four options is specified only
+          those specified are reported:
+        </para>
+        <para>
+          Report only objects added:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -a moss.g moss2.g</userinput>
+A eto.s
                 </computeroutput>
           </literallayout>
         </para>
-  </example>
-  <example><title>Filtering Results With Search Filters</title>
         <para>
-          Let's say, for example, we want a detailed diff output but only for object of type torus.  We can filter for such results with the <option>F</option> option:
+          Report only objects deleted:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -F "-type tor" moss.g moss2.g</userinput>
-tor2 was added.
-
-tor was changed:
-   Parameters changed:
-      r_h: "5.079999923705999620437979" -> "8.882757536664964703732039"
-
+<prompt>~:</prompt><userinput> gdiff2 -d moss.g moss2.g</userinput>
+D LIGHT
+                </computeroutput>
+          </literallayout>
+        </para>
+        <para>
+          Report both added and deleted objects, but not modified objects:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -a -d moss.g moss2.g</userinput>
+D LIGHT
+A eto.s
+                </computeroutput>
+          </literallayout>
+        </para>
+        <para>
+          Report unmodified objects:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -u moss.g moss2.g</userinput>
+  ellipse.r
+  box.r
+  all.g
                 </computeroutput>
           </literallayout>
         </para>
@@ -150,20 +307,65 @@ tor was changed:
 
   <example><title>Filtering Results With Tolerance</title>
         <para>
-          To eliminate differences that are too small to be of interest, the <option>t</option> is used.  What is "too small" is up to the user - in this example, we will use three millimeters:
+          To eliminate differences in modifications that are too small to be of interest, the <option>t</option> is used.  What
+          difference constitutes "too small" is up to the user - in this example, we will use 30 millimeters:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -t 3.0 moss.g moss2.g</userinput>
-tor2 was added.
+<prompt>~:</prompt><userinput> gdiff2 -v 4 -t 30.0 moss.g moss2.g</userinput>
+- "platform.r" tree(p): l platform.s
++ "platform.r" tree(p): - {l platform.s} {l cone.s}
+- "light.r" tree(p): l LIGHT
++ "light.r" tree(p): u {l eto.s} {l cone.s}
+- "_GLOBAL" title(a): Gary Moss's "World on a Platter"
++ "_GLOBAL" title(a): Gary Moss's "World on a Platter" - diff 01
+- "cone.s" V(p): 16.87542724608999833435519 -34.74353027344000111042988 -16.37908935547000055521494
++ "cone.s" V(p): -23.07777996602787595747941 -46.52170066332633524552875 -19.26697361191882151842947
+- "cone.r" tree(p): l cone.s
++ "cone.r" tree(p): l cone.s {1 0 0 53.2994  0 1 0 10.1428  0 0 1 0  0 0 0 1}
+- "tor.r" tree(p): l tor
++ "tor.r" tree(p): l tor {1 0 0 8.44652  0 1 0 -56.3571  0 0 1 54.4836  0 0 0 2.71809}
+D "LIGHT" C(p): 0 0 2.539999961852999810218989
+D "LIGHT" B(p): 0 2.539999961852999810218989 0
+D "LIGHT" A(p): 2.539999961852999810218989 0 0
+D "LIGHT" V(p): 20.15756225586000027760747 -13.52595329284999969843284 5.034742355347000319909512
+D "LIGHT" DB5_MINORTYPE(p): ell
+A "eto.s" r_d(p): 1.724149328000026404339451
+A "eto.s" r(p): 13.79319462400021123471561
+A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
+A "eto.s" N(p): 0 0 0.01724149328000028000285049
+A "eto.s" V(p): 8.533195938359670051909234 -11.04524849332910996224655 -1.403988582132086548881489
+A "eto.s" DB5_MINORTYPE(p): eto
+		</computeroutput>
+	</literallayout>
+	Notice that ellipse.s, which was on earlier lists, is now filtered out.  cone.s has a difference in the x coordinates
+	of the parameter V that is large enough to satisfy the tolerance filter, so that parameter stays in.  Parameters that
+	are not strictly numerical comparisons, or those that are part of added or deleted objects, remain in the report.
+        </para>
+  </example>
 
-tor.r was changed:
-   Parameters changed:
-      tree: "l tor" -> "l tor2"
 
-tor was changed:
-   Parameters changed:
-      r_h: "5.079999923705999620437979" -> "8.882757536664964703732039"
-
+  <example><title>Filtering Results With Search Filters</title>
+        <para>
+          The <emphasis>search</emphasis> filtering technique can be used to select specific subsets of the database to see
+          in reports, using the <option>F</option> option.  For example, limiting the diff report to only objects of type elliptical torus:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -F "-type eto" moss.g moss2.g</userinput>
+A eto.s
+                </computeroutput>
+          </literallayout>
+        </para>
+        <para>
+          Note that this option will work at all levels of verbosity:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -v 4 -F "-type eto" moss.g moss2.g</userinput>
+A "eto.s" r_d(p): 1.724149328000026404339451
+A "eto.s" r(p): 13.79319462400021123471561
+A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
+A "eto.s" N(p): 0 0 0.01724149328000028000285049
+A "eto.s" V(p): 8.533195938359670051909234 -11.04524849332910996224655 -1.403988582132086548881489
+A "eto.s" DB5_MINORTYPE(p): eto
                 </computeroutput>
           </literallayout>
         </para>
@@ -171,18 +373,52 @@ tor was changed:
 
   <example><title>Combining Multiple Filters</title>
         <para>
-          To return *only* results that are large changes, we can apply multiple filters to the output:
+          The various diff filters can be used together.  For example, repeating the search
+          filter with both rcc and ell types added produces the following:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -c -F "! -type comb" -t 3.0 moss.g moss2.g</userinput>
-tor was changed:
-   Parameters changed:
-      r_h: "5.079999923705999620437979" -> "8.882757536664964703732039"
-
+<prompt>~:</prompt><userinput> gdiff2 -v 4 -F "-type eto -or -type rcc -or -type ell" moss.g moss2.g</userinput>
+- "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
++ "ellipse.s" C(p): 0 1.561016355403846755933728 1.561016355403846755933728
+- "ellipse.s" A(p): 14.87607192992999927128039 0 0
++ "ellipse.s" A(p): 5.559274328313033919357622 0 0
+D "LIGHT" C(p): 0 0 2.539999961852999810218989
+D "LIGHT" B(p): 0 2.539999961852999810218989 0
+D "LIGHT" A(p): 2.539999961852999810218989 0 0
+D "LIGHT" V(p): 20.15756225586000027760747 -13.52595329284999969843284 5.034742355347000319909512
+D "LIGHT" DB5_MINORTYPE(p): ell
+A "eto.s" r_d(p): 1.724149328000026404339451
+A "eto.s" r(p): 13.79319462400021123471561
+A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
+A "eto.s" N(p): 0 0 0.01724149328000028000285049
+A "eto.s" V(p): 8.533195938359670051909234 -11.04524849332910996224655 -1.403988582132086548881489
+A "eto.s" DB5_MINORTYPE(p): eto
                 </computeroutput>
           </literallayout>
         </para>
+        <para>
+          If we now add the tolerance filter, we see the ell is filtered out:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 -v 4 -t 30.0 -F "-type eto -or -type rcc -or -type ell" moss.g moss2.g</userinput>
+D "LIGHT" C(p): 0 0 2.539999961852999810218989
+D "LIGHT" B(p): 0 2.539999961852999810218989 0
+D "LIGHT" A(p): 2.539999961852999810218989 0 0
+D "LIGHT" V(p): 20.15756225586000027760747 -13.52595329284999969843284 5.034742355347000319909512
+D "LIGHT" DB5_MINORTYPE(p): ell
+A "eto.s" r_d(p): 1.724149328000026404339451
+A "eto.s" r(p): 13.79319462400021123471561
+A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
+A "eto.s" N(p): 0 0 0.01724149328000028000285049
+A "eto.s" V(p): 8.533195938359670051909234 -11.04524849332910996224655 -1.403988582132086548881489
+A "eto.s" DB5_MINORTYPE(p): eto
+                </computeroutput>
+          </literallayout>
+          ellipse.s satisfies the search filter, but is filtered by virtue of having no differences larger than 30 in its parameters.
+        </para>
+
   </example>
+
 
 	</refsect1>
 
