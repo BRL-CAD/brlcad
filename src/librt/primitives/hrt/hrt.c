@@ -633,13 +633,284 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
+#define RT_HRT_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
  * This is the Becker vector version
  */
 void
-rt_hrt_vshot(void)
+rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
 {
-    bu_log("rt_hrt_vshot: Not implemented yet!\n");
+    register struct hrt_specific *hrt;
+    vect_t dprime;
+    vect_t pprime;
+    vect_t work;
+    vect_t norm_pprime;
+    bn_poly_t Xsqr, Ysqr, Zsqr;
+    bn_poly_t A, Acube, Zcube;
+    bn_poly_t X2_Y2, Z3_X2_Y2;
+    bn_poly_t *S;
+    bn_complex_t (*complex)[6];
+    int num_roots, num_zero;
+    register int i;
+    fastf_t *cor_proj;
+
+    /* Allocate space for polynomials and roots */
+    S = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t) * 6, "hrt bn_complex_t");
+    complex = (bn_complex_t (*)[6])bu_malloc(n * sizeof(bn_complex_t) * 6, "hrt bn_complex_t");
+    cor_proj = (fastf_t *)bu_malloc(n * sizeof(fastf_t), "hrt_proj");
+    
+    /* Initialize seg_stp to assume hit (zero will then flag a miss) */
+    for (i = 0; i < n; i++ )
+	segp[i].seg_stp = stp[i];
+
+    /* for each ray/heart pair */
+    for (i = 0; i < n; i++) {
+	if (segp[i].seg_stp == 0)
+	    continue;		/* Skip this iteration */
+	
+	hrt = (struct hrt_specific *)stp[i]->st_specific;
+
+	/* Translate ray direction vector */
+	MAT4X3VEC(dprime, hrt->hrt_SoR, rp[i]->r_dir);
+	VUNITIZE(dprime);
+
+	/* Use segp[i].seg_in.hit_normal as tmp to hold dprime */
+	VMOVE(segp[i].seg_in.hit_normal, dprime);
+	VSUB2(work, rp[i]->r_pt, hrt->hrt_V);
+	MAT4X3VEC(pprime, hrt->hrt_SoR, work);
+
+	/* use segp[i].seg_out.hit_normal as tmp to hold pprime */
+	VMOVE(segp[i].seg_out.hit_normal, pprime);
+
+	/* Normalize distance from the heart. Substitutes a corrected ray
+	 * point, which contains a translation along the ray direction to
+	 * the closest approach to vertex of the heart.Translating the ray
+	 * along the direction of the ray to the closest point near the
+	 * heart's center vertex. Thus, the New ray origin is normalized.
+	 */
+	cor_proj[i] = VDOT(pprime, dprime);
+	VSCALE(norm_pprime, dprime, cor_proj[i]);
+	VSUB2(norm_pprime, pprime, norm_pprime);
+	
+	/*
+	 * Generate sexic equation S(t) = 0 to be passed through the root finder
+	 */	
+	/* X**2 */
+	Xsqr.dgr = 2;
+	Xsqr.cf[0] = dprime[X] * dprime[X];
+        Xsqr.cf[1] = 2 * dprime[X] * pprime[X];
+        Xsqr.cf[2] = pprime[X] * pprime[X];
+
+        /* 9/4 * Y**2*/
+        Ysqr.dgr = 2;
+        Ysqr.cf[0] = 9/4 * dprime[Y] * dprime[Y];
+        Ysqr.cf[1] = 9/2 * dprime[Y] * pprime[Y];
+        Ysqr.cf[2] = 9/4 * (pprime[Y] * pprime[Y]);
+
+        /* Z**2 - 1 */
+        Zsqr.dgr = 2;
+        Zsqr.cf[0] = dprime[Z] * dprime[Z];
+        Zsqr.cf[1] = 2 * dprime[Z] * pprime[Z];
+        Zsqr.cf[2] = pprime[Z] * pprime[Z] - 1.0 ;
+
+        /* A = X^2 + 9/4 * Y^2 + Z^2 - 1 */
+        A.dgr = 2;
+        A.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] + Zsqr.cf[0];
+        A.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] + Zsqr.cf[1];
+        A.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] + Zsqr.cf[2];
+
+        /* Z**3 */
+        Zcube.dgr = 3;
+        Zcube.cf[0] = dprime[Z] * Zsqr.cf[0];
+        Zcube.cf[1] = 1.5 * dprime[Z] * Zsqr.cf[1];
+        Zcube.cf[2] = 1.5 * pprime[Z] * Zsqr.cf[1];
+        Zcube.cf[3] = pprime[Z] * ( Zsqr.cf[2] + 1.0 );
+
+        Acube.dgr = 6;
+        Acube.cf[0] = A.cf[0] * A.cf[0] * A.cf[0];
+        Acube.cf[1] = 3.0 * A.cf[0] * A.cf[0] * A.cf[1];
+        Acube.cf[2] = 3.0 * (A.cf[0] * A.cf[0] * A.cf[2] + A.cf[0] * A.cf[1] * A.cf[1]);
+        Acube.cf[3] = 6.0 * A.cf[0] * A.cf[1] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[1];
+        Acube.cf[4] = 3.0 * (A.cf[0] * A.cf[2] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[2]);
+        Acube.cf[5] = 3.0 * A.cf[1] * A.cf[2] * A.cf[2];
+        Acube.cf[6] = A.cf[2] * A.cf[2] * A.cf[2];
+
+        /* X**2 + 9/80 Y**2 */
+        X2_Y2.dgr = 2;
+        X2_Y2.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] / 20 ;
+        X2_Y2.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] / 20 ;
+        X2_Y2.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] / 20 ;
+
+        /* Z**3 * (X**2 + 9/80 * Y**2) */
+        Z3_X2_Y2.dgr = 5;
+        Z3_X2_Y2.cf[0] = Zcube.cf[0] * X2_Y2.cf[0];
+        Z3_X2_Y2.cf[1] = X2_Y2.cf[0] * Zcube.cf[1];
+        Z3_X2_Y2.cf[2] = X2_Y2.cf[0] * Zcube.cf[2] + X2_Y2.cf[1] * Zcube.cf[0] + X2_Y2.cf[1] * Zcube.cf[1] + X2_Y2.cf[2] * Zcube.cf[0];
+        Z3_X2_Y2.cf[3] = X2_Y2.cf[0] * Zcube.cf[3] + X2_Y2.cf[1] * Zcube.cf[2] + X2_Y2.cf[2] * Zcube.cf[1];
+        Z3_X2_Y2.cf[4] = X2_Y2.cf[1] * Zcube.cf[3] + X2_Y2.cf[2] * Zcube.cf[2];
+        Z3_X2_Y2.cf[5] = X2_Y2.cf[2] * Zcube.cf[3];
+
+        S[i].dgr = 6;
+        S[i].cf[0] = Acube.cf[0];
+        S[i].cf[1] = Acube.cf[1] - Z3_X2_Y2.cf[0];
+        S[i].cf[2] = Acube.cf[2] - Z3_X2_Y2.cf[1];
+        S[i].cf[3] = Acube.cf[3] - Z3_X2_Y2.cf[2];
+        S[i].cf[4] = Acube.cf[4] - Z3_X2_Y2.cf[3];
+        S[i].cf[5] = Acube.cf[5] - Z3_X2_Y2.cf[4];
+        S[i].cf[6] = Acube.cf[6] - Z3_X2_Y2.cf[5];
+    
+    }
+    for (i = 0; i < n; i++) {
+	continue;		/* Skip this iteration */
+    /*
+     * It is known that the equation is sextic (of order 6).
+     * Therefore, if the root finder returns other than six roots, Error
+     */
+    if ((num_roots = rt_poly_roots(&(S[i]), &(complex[i][0]), (*stp)->st_dp->d_namep)) != 6) {
+	if (num_roots > 0) {
+	    bu_log("hrt: rt_poly_roots() 6 != %d\n", num_roots);
+	    bn_pr_roots("hrt", complex[i], num_roots);
+	} else if (num_roots < 0) {
+	    static int reported = 0;
+	    bu_log("The root solver failed to converge on a solution for %s\n", stp[i]->st_dp->d_namep);
+	    if (!reported) {
+		VPRINT("while shooting from: \t", rp[i]->r_pt);
+		VPRINT("while shooting at:\t", rp[i]->r_dir);
+		bu_log("Additional heart convergence failuer details will be suppressed.\n");
+		reported = 1;
+	    }
+	}
+	RT_HRT_SEG_MISS(segp[i]);
+    }
+
+    /* for each ray/heart pair */
+    for (i = 0; i < n; i++) {
+	if (segp[i].seg_stp == 0)
+	    continue;		/* Skip current iteration */
+    
+    /* Only real roots indicate an intersection in real space.
+     *
+     * Look at each root returned; if the imaginary part is zero or
+     * sufficiently close, then use the real part as one value of 't'
+     * for the intersections
+     *
+     * Reverse translation by adding distance to all 'real' values
+     * Reuse S to hold 'real' values 
+     */
+    num_zero = 0;
+    if (NEAR_ZERO(complex[i][0].im, ap->a_rt_i->rti_tol.dist)) {
+	S[i].cf[num_zero++] = complex[i][0].re - cor_proj[i];
+    }
+    if (NEAR_ZERO(complex[i][1].im, ap->a_rt_i->rti_tol.dist)) {
+	S[i].cf[num_zero++] = complex[i][1].re - cor_proj[i];
+    }
+    if (NEAR_ZERO(complex[i][2].im, ap->a_rt_i->rti_tol.dist)) {
+	S[i].cf[num_zero++] = complex[i][2].re - cor_proj[i];
+    }
+    if (NEAR_ZERO(complex[i][3].im, ap->a_rt_i->rti_tol.dist)) {
+	S[i].cf[num_zero++] = complex[i][3].re - cor_proj[i];
+    }
+    if (NEAR_ZERO(complex[i][4].im, ap->a_rt_i->rti_tol.dist)) {
+	S[i].cf[num_zero++] = complex[i][4].re - cor_proj[i];
+    }
+    if (NEAR_ZERO(complex[i][5].im, ap->a_rt_i->rti_tol.dist)) {
+	S[i].cf[num_zero++] = complex[i][5].re - cor_proj[i];
+    }
+    S[i].dgr = num_zero;
+
+    /* Here 'i' is the number of points found */
+    if (num_zero == 0) {
+	RT_HRT_SEG_MISS(segp[i]);		/* MISS */
+    } else if ((num_zero != 2 && num_zero != 4 ) && (num_zero != 6)) {
+		RT_HRT_SEG_MISS(segp[i]);	/* MISS */
+	    }
+    }
+
+    /* Process each one segment hit */
+    for (i = 0; i < n; i++) {
+	if (segp[i].seg_stp == 0)
+	    continue;				/* Skip This Iteration */
+	if (S[i].dgr != 2)
+	    continue;				/* Not one segment */
+
+	hrt = (struct hrt_specific *)stp[i]->st_specific;
+
+	/* segp[i].seg_in.hit_normal holds dprime */
+	/* segp[i].seg_out.hit_normal holds pprime */
+	if (S[i].cf[1] < S[i].cf[0]) {
+	    /* S[i].cf[1] is entry point */
+	    segp[i].seg_in.hit_dist = S[i].cf[1];
+	    segp[i].seg_in.hit_dist = S[i].cf[0];
+	    /* Set aside vector for rt_hrt_norm() later */
+	    VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[1], segp[i].seg_in.hit_normal);
+	    VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[0], segp[i].seg_in.hit_normal);
+	    } else {
+		/* S[i].cf[0] is entry point */
+		segp[i].seg_in.hit_dist = S[i].cf[0];
+		segp[i].seg_in.hit_dist = S[i].cf[1];
+		/* Set aside vector for rt_hrt_norm() later */
+		VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[0], segp[i].seg_in.hit_normal);
+		VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[1], segp[i].seg_in.hit_normal);
+	    }
+    }
+
+    /* Process each two segment hit */
+    for (i = 0; i < n; i++) {
+	if (segp[i].seg_stp == 0)
+	    continue;				/* Skip This Iteration */
+	if (S[i].dgr != 4)
+	    continue;				/* Not one segment */
+
+	hrt = (struct hrt_specific *)stp[i]->st_specific;
+
+	/* Sort most distant to least distant */
+	rt_pt_sort(S[i].cf, 4);
+	/* Now, t[0] > t[npts - 1] */
+	/* segp[i].seg_in.hit_normal holds dprime */
+	VMOVE(dprime, segp[i].seg_out.hit_normal);
+	/* segp[i].seg_out.hit_normal holds pprime */
+	VMOVE(pprime, segp[i].seg_out.hit_normal);
+
+	/* S[i].cf[1] is entry point */
+	segp[i].seg_in.hit_dist = S[i].cf[3];
+	segp[i].seg_in.hit_dist = S[i].cf[2];
+	/* Set aside vector for rt_hrt_norm() later */
+	VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[1], segp[i].seg_in.hit_normal);
+	VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[0], segp[i].seg_in.hit_normal);
+    }
+
+    /* Process each two segment hit */
+    for (i = 0; i < n; i++) {
+	if (segp[i].seg_stp == 0)
+	    continue;				/* Skip This Iteration */
+	if (S[i].dgr != 6)
+	    continue;				/* Not one segment */
+
+	hrt = (struct hrt_specific *)stp[i]->st_specific;
+
+	/* Sort most distant to least distant */
+	rt_pt_sort(S[i].cf, 6);
+	/* Now, t[0] > t[npts - 1] */
+	/* segp[i].seg_in.hit_normal holds dprime */
+	VMOVE(dprime, segp[i].seg_out.hit_normal);
+	/* segp[i].seg_out.hit_normal holds pprime */
+	VMOVE(pprime, segp[i].seg_out.hit_normal);
+
+	/* S[i].cf[1] is entry point */
+	segp[i].seg_in.hit_dist = S[i].cf[5];
+	segp[i].seg_in.hit_dist = S[i].cf[4];
+	/* Set aside vector for rt_hrt_norm() later */
+	VJOIN1(segp[i].seg_in.hit_vpriv, pprime, S[i].cf[5], dprime);
+	VJOIN1(segp[i].seg_in.hit_vpriv, pprime, S[i].cf[4], dprime);
+    }
+    
+    }
+
+    /* Free tmp space used */
+    bu_free((char *)S, "hrt S");
+    bu_free((char *)complex, "hrt complex");
+    bu_free((char *)cor_proj, "hrt_cor_proj");
+    	
 }
 
 
