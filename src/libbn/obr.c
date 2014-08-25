@@ -501,6 +501,7 @@ bn_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
     point_t *points_obr_3d = NULL;
     point2d_t *points_tmp = NULL;
     point_t tmp3d;
+    const point2d_t *const_points_tmp;
 
     if (!pnts || pnt_cnt <= 0) return -1;
 
@@ -510,8 +511,11 @@ bn_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
 
     ret += coplanar_2d_coord_sys(&origin_pnt, &u_axis, &v_axis, pnts, pnt_cnt);
     ret += coplanar_3d_to_2d(&points_tmp, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, pnts, pnt_cnt);
-    if (ret) return 0;
-    ret = bn_2d_obr(&obr_2d_center, &obr_2d_v1, &obr_2d_v2, (const point2d_t *)points_tmp, pnt_cnt);
+    if (ret)
+	return 0;
+
+    const_points_tmp = (const point2d_t *)points_tmp;
+    ret = bn_2d_obr(&obr_2d_center, &obr_2d_v1, &obr_2d_v2, const_points_tmp, pnt_cnt);
 
     /* Set up the 2D point list so converting it will result in useful 3D points */
     V2MOVE(points_obr[0], obr_2d_center);

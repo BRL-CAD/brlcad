@@ -61,6 +61,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/log.h"
+
 #include "./count.h"
 #include "./process.h"
 

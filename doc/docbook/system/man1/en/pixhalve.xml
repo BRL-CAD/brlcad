@@ -21,7 +21,6 @@
     <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>in_height</replaceable></arg>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'><replaceable>infile.pix</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>
     <arg choice='plain'><replaceable>outfile.pix</replaceable></arg>
@@ -30,7 +29,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixhalve</emphasis>
+<para><command>pixhalve</command>
 will take a color
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file of given dimensions and reduce the resolution of the file
@@ -46,9 +45,8 @@ They can both be set to the same value via
 Defaults of 512 are assumed for unspecified dimensions.</para>
 
 <para>The
-<option>-h</option>
-flag indicates the input file is
-high resolution (1024x1024).</para>
+<option>-a</option>
+flag indicates autosizing (off by default).</para>
 
 </refsect1>
 

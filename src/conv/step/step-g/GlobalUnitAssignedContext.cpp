@@ -162,6 +162,7 @@ GlobalUnitAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!RepresentationContext::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -190,6 +191,7 @@ GlobalUnitAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		l->clear();
 		delete l;
 		std::cout << CLASSNAME << ":Error unhandled unit type in units list." << std::endl;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 	}
@@ -197,6 +199,7 @@ GlobalUnitAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	l->clear();
 	delete l;
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

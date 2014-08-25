@@ -515,7 +515,7 @@ get_strokes(void)
 /*
  * Take a value which is currently considered "unsigned" with 16 bits
  * of significance, and sign-extend it in a reasonably portable way.
- * We assume the machine is twos-compliment.
+ * We assume the machine is twos-complement.
  */
 long
 sxt16(long int v)

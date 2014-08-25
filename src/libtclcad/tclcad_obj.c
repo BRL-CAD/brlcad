@@ -938,6 +938,7 @@ HIDDEN void to_autoview_all_views(struct tclcad_obj *top);
 HIDDEN void to_rt_end_callback_internal(int aborted);
 
 HIDDEN void to_output_handler(struct ged *gedp, char *line);
+HIDDEN int to_log_output_handler(void *client_data, void *vpstr);
 
 HIDDEN int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
 
@@ -1385,8 +1386,6 @@ Go_Init(Tcl_Interp *interp)
     (void)Tcl_CreateCommand(interp, (const char *)"go_open", to_open_tcl,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-    bu_semaphore_reinit(GED_SEM_LAST);
-
     (void)library_initialized(1);
 
     return TCL_OK;
@@ -1431,7 +1430,10 @@ to_cmd(ClientData clientData,
     for (ctp = to_cmds; ctp->to_name != (char *)0; ctp++) {
 	if (ctp->to_name[0] == argv[1][0] &&
 	    BU_STR_EQUAL(ctp->to_name, argv[1])) {
-	    ret = (*ctp->to_wrapper_func)(top->to_gop->go_gedp, argc-1, (const char **)argv+1, ctp->to_func, ctp->to_usage, ctp->to_maxargs);
+	    struct ged *gedp = top->to_gop->go_gedp;
+	    bu_log_add_hook(to_log_output_handler, (void *)gedp);
+	    ret = (*ctp->to_wrapper_func)(gedp, argc-1, (const char **)argv+1, ctp->to_func, ctp->to_usage, ctp->to_maxargs);
+	    bu_log_delete_hook(to_log_output_handler, (void *)gedp);
 	    break;
 	}
     }
@@ -13653,17 +13655,37 @@ to_rt_end_callback_internal(int aborted)
 HIDDEN void
 to_output_handler(struct ged *gedp, char *line)
 {
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    Tcl_DString tcl_command;
+    Tcl_Obj *saved_result;
 
-    if (gedp->ged_output_script != (char *)0) {
-	bu_vls_printf(&vls, "%s \"%s\"", gedp->ged_output_script, line);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-    } else {
-	bu_vls_printf(&vls, "puts \"%s\"", line);
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-    }
+    Tcl_DStringInit(&tcl_command);
+
+    if (gedp->ged_output_script != (char *)0)
+	(void)Tcl_DStringAppend(&tcl_command, gedp->ged_output_script,
+	    strlen(gedp->ged_output_script));
+    else
+	(void)Tcl_DStringAppendElement(&tcl_command, "puts");
+
+    saved_result = Tcl_GetObjResult(current_top->to_interp);
+    Tcl_IncrRefCount(saved_result);
+
+    (void)Tcl_DStringAppendElement(&tcl_command, line);
+    Tcl_Eval(current_top->to_interp, Tcl_DStringValue(&tcl_command));
+    Tcl_DStringFree(&tcl_command);
+
+    Tcl_SetObjResult(current_top->to_interp, saved_result);
+    Tcl_DecrRefCount(saved_result);
+}
+
+HIDDEN int
+to_log_output_handler(void *client_data, void *vpstr)
+{
+    struct ged *gedp = (struct ged *)client_data;
+    char *str = (char *)vpstr;
+
+    to_output_handler(gedp, str);
+
+    return strlen(str);
 }
 
 

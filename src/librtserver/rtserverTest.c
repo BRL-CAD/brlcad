@@ -151,9 +151,6 @@ main( int argc, char *argv[] )
     point_t mdl_max;
     struct bu_vlb *vlb;
 
-    /* Things like bu_malloc() must have these initialized for use with parallel processing */
-    bu_semaphore_init( RT_SEM_LAST );
-
     /* initialize the list of BRL-CAD objects to be raytraced (this is used for the "-o" option) */
     bu_ptbl_init( &objs, 64, "objects" );
 

@@ -72,18 +72,24 @@ EXTERNVARINIT const char bu_vls_message[] = "bu_vls_str";
 EXTERNVARINIT const char bu_strdup_message[] = "bu_strdup string";
 
 /**
- * bu_setjmp_valid is global because BU_SETJUMP() *must* be a macro.
+ * Marker for knowing if an exception handler is set.  bu_setjmp_valid
+ * is global array because BU_SETJUMP() *must* be a macro (jump calls
+ * must be embedded into the frame they return to).
+ *
  * If you replace bu_bomb() with one of your own, you must also
  * provide these variables, even if you don't use them.
  */
-int bu_setjmp_valid = 0;
+int bu_setjmp_valid[MAX_PSW] = {0};
 
 /**
- * for BU_SETJMP().  bu_jmpbuf is global because BU_SETJUMP() *must*
- * be a macro.  If you replace bu_bomb() with one of your own, you
- * must also provide these variables, even if you don't use them.
+ * Exception handling contexts used by BU_SETJUMP().  bu_jmpbuf is a
+ * global array because BU_SETJUMP() *must* be a macro (jump calls
+ * must be embedded into the frame they return to).
+ *
+ * If you replace bu_bomb() with one of your own, you must also
+ * provide these variables, even if you don't use them.
  */
-jmp_buf bu_jmpbuf;
+jmp_buf bu_jmpbuf[MAX_PSW];
 
 /* externed in bu/ headers */
 int bu_debug = 0;

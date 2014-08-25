@@ -49,7 +49,7 @@ namespace
 
 
 static const ON_UUID &ROOT_UUID = ON_nil_uuid;
-static const std::string DEFAULT_NAME = "noname";
+static const char * const DEFAULT_NAME = "noname";
 
 
 static struct _InitOpenNURBS {
@@ -57,6 +57,7 @@ static struct _InitOpenNURBS {
     {
 	ON::Begin();
     }
+
 
     ~_InitOpenNURBS()
     {
@@ -108,7 +109,9 @@ at_ref(const A &array, int index)
 
 
 template <typename T, typename R, R(*Destructor)(T*)>
-struct AutoDestroyer {
+class AutoDestroyer
+{
+public:
     AutoDestroyer() : ptr(NULL) {}
     AutoDestroyer(T *vptr) : ptr(vptr) {}
 
@@ -173,6 +176,9 @@ get_object_suffix(const ON_Object &object)
 	if (geom->HasBrepForm())
 	    return ".s";
 
+    if (ON_Bitmap::Cast(&object))
+	return ".pix";
+
     switch (object.ObjectType()) {
 	case ON::layer_object:
 	case ON::instance_definition:
@@ -190,7 +196,7 @@ get_object_suffix(const ON_Object &object)
 
 
 static std::string
-strbasename(const std::string &path)
+get_basename(const std::string &path)
 {
     std::vector<char> buf(path.size() + 1);
     bu_basename(&buf[0], path.c_str());
@@ -199,33 +205,21 @@ strbasename(const std::string &path)
 
 
 static std::string
-unique_name(std::map<std::string, int> &count_map,
-	    std::string prefix,
-	    const char *suffix)
+get_dirname(const std::string &path)
 {
-    if (std::isdigit(*prefix.rbegin()))
-	prefix += '_';
-
-    std::string name = prefix + suffix;
-    int number = ++count_map[name];
-
-    if (number > 1) {
-	std::ostringstream ss;
-	ss << prefix << std::setw(3) << std::setfill('0') << number << suffix;
-	return ss.str();
-    } else
-	return name;
+    char *buf = bu_dirname(path.c_str());
+    std::string result = buf;
+    bu_free(buf, "bu_dirname buffer");
+    return result;
 }
 
 
 static void
-xform2mat_t(const ON_Xform &source, mat_t dest)
+xform2mat(const ON_Xform &source, mat_t dest)
 {
-    const int DMAX = 4;
-
-    for (int row = 0; row < DMAX; ++row)
-	for (int col = 0; col < DMAX; ++col)
-	    dest[row * DMAX + col] = source[row][col];
+    for (int row = 0; row < 4; ++row)
+	for (int col = 0; col < 4; ++col)
+	    dest[row * 4 + col] = source[row][col];
 }
 
 
@@ -356,17 +350,52 @@ struct RhinoConverter::ObjectManager::ModelObject {
 };
 
 
+std::string
+RhinoConverter::ObjectManager::unique_name(std::string prefix,
+	const char *suffix)
+{
+    if (std::isdigit(*prefix.rbegin()))
+	prefix += '_';
+
+    std::string name = prefix + suffix;
+    int number = ++m_name_count_map[name];
+
+    if (number > 1) {
+
+	if (number == 2) { // adjust numbering to start from 001
+	    for (std::map<ON_UUID, ObjectManager::ModelObject, UuidCompare>
+		 ::iterator it = m_obj_map.begin(); it != m_obj_map.end(); ++it)
+		if (it->second.m_name == name) {
+		    it->second.m_name.insert(it->second.m_name.find_last_of('.'), "001");
+		    break;
+		}
+	}
+
+	std::ostringstream ss;
+	ss << prefix << std::setw(3) << std::setfill('0') << number << suffix;
+	return ss.str();
+
+    } else
+	return name;
+}
+
+
 inline RhinoConverter::ObjectManager::ObjectManager() :
-    m_obj_map()
+    m_obj_map(),
+    m_name_count_map()
 {}
 
 
 void
-RhinoConverter::ObjectManager::add(const ON_UUID &uuid,
-				   const std::string &name)
+RhinoConverter::ObjectManager::add(bool use_uuid, const ON_UUID &uuid,
+				   const std::string &prefix, const char * suffix)
 {
     ModelObject object;
-    object.m_name = name;
+
+    if (use_uuid)
+	object.m_name = uuid2string(uuid) + suffix;
+    else
+	object.m_name = unique_name(prefix, suffix);
 
     if (!m_obj_map.insert(std::make_pair(uuid, object)).second)
 	throw std::invalid_argument("uuid in use");
@@ -480,21 +509,13 @@ RhinoConverter::Color::get_rgb() const
 RhinoConverter::RhinoConverter(const std::string &output_path,
 			       bool verbose_mode) :
     m_verbose_mode(verbose_mode),
-    m_use_uuidnames(false),
-    m_random_colors(false),
-    m_output_dirname(),
-    m_name_count_map(),
-    m_objects(),
+    m_output_dirname(get_dirname(output_path)),
+    m_db(wdb_fopen(output_path.c_str())),
     m_log(),
-    m_model(),
-    m_db(NULL)
+    m_objects(),
+    m_random_colors(false),
+    m_model()
 {
-    char *buf = bu_dirname(output_path.c_str());
-    m_output_dirname = buf;
-    bu_free(buf, "bu_dirname buffer");
-
-    m_db = wdb_fopen(output_path.c_str());
-
     if (!m_db)
 	throw std::runtime_error("failed to open database");
 
@@ -512,7 +533,6 @@ void
 RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 			    bool random_colors)
 {
-    m_use_uuidnames = use_uuidnames;
     m_random_colors = random_colors;
 
     if (!m_model.Read(path.c_str(), &m_log))
@@ -522,9 +542,9 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 
     clean_model();
 
-    m_objects.add(ROOT_UUID, strbasename(path));
+    m_objects.add(use_uuidnames, ROOT_UUID, clean_name(get_basename(path)), ".c");
 
-    map_uuid_names();
+    map_uuid_names(use_uuidnames);
     create_all_bitmaps();
     create_all_idefs();
     create_all_objects();
@@ -561,34 +581,25 @@ RhinoConverter::clean_model()
 }
 
 
-inline void
-RhinoConverter::map_name(const ON_UUID &uuid, const ON_wString &name,
-			 const char *suffix)
-{
-    if (m_use_uuidnames)
-	m_objects.add(uuid, uuid2string(uuid) + suffix);
-    else
-	m_objects.add(uuid, unique_name(m_name_count_map, clean_name(w2string(name)),
-					suffix));
-}
-
-
 void
-RhinoConverter::map_uuid_names()
+RhinoConverter::map_uuid_names(bool use_uuidnames)
 {
     for (int i = 0; i < m_model.m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = m_model.m_layer_table[i];
-	map_name(layer.m_layer_id, layer.m_name, get_object_suffix(layer));
+	const std::string name = clean_name(w2string(layer.m_name));
+	m_objects.add(use_uuidnames, layer.m_layer_id, name, get_object_suffix(layer));
     }
 
     for (int i = 0; i < m_model.m_idef_table.Count(); ++i) {
 	const ON_InstanceDefinition &idef = m_model.m_idef_table[i];
-	map_name(idef.m_uuid, idef.m_name, get_object_suffix(idef));
+	const std::string name = clean_name(w2string(idef.m_name));
+	m_objects.add(use_uuidnames, idef.m_uuid, name, get_object_suffix(idef));
     }
 
     for (int i = 0; i < m_model.m_object_table.Count(); ++i) {
 	const ON_3dmObjectAttributes &object_attrs =
 	    m_model.m_object_table[i].m_attributes;
+	const std::string name = clean_name(w2string(object_attrs.m_name));
 	const char *suffix;
 
 	try {
@@ -597,41 +608,20 @@ RhinoConverter::map_uuid_names()
 	    continue;
 	}
 
-	map_name(object_attrs.m_uuid, object_attrs.m_name, suffix);
+	m_objects.add(use_uuidnames, object_attrs.m_uuid, name, suffix);
     }
 
     for (int i = 0; i < m_model.m_bitmap_table.Count(); ++i) {
 	m_model.m_bitmap_table[i]->m_bitmap_id = generate_uuid();
 	const ON_Bitmap &bitmap = *m_model.m_bitmap_table[i];
-	const char * const suffix = ".pix";
 
-	if (m_use_uuidnames)
-	    m_objects.add(bitmap.m_bitmap_id, uuid2string(bitmap.m_bitmap_id) + suffix);
-	else {
-	    std::string bitmap_name = clean_name(w2string(bitmap.m_bitmap_name));
+	std::string bitmap_name = clean_name(w2string(bitmap.m_bitmap_name));
 
-	    if (bitmap_name == DEFAULT_NAME)
-		bitmap_name = clean_name(strbasename(w2string(bitmap.m_bitmap_filename)));
+	if (bitmap_name == DEFAULT_NAME)
+	    bitmap_name = clean_name(get_basename(w2string(bitmap.m_bitmap_filename)));
 
-	    m_objects.add(bitmap.m_bitmap_id,
-			  unique_name(m_name_count_map, bitmap_name, suffix));
-	}
-    }
-
-
-    // start numbering from 1 - FIXME
-    for (std::map<std::string, int>::const_iterator it
-	 = m_name_count_map.begin(); it != m_name_count_map.end(); ++it) {
-	if (it->second < 2) continue;
-
-	for (std::map<ON_UUID, ObjectManager::ModelObject, UuidCompare>
-	     ::iterator obj_it = m_objects.m_obj_map.begin();
-	     obj_it != m_objects.m_obj_map.end(); ++obj_it) {
-	    if (obj_it->second.m_name == it->first) {
-		obj_it->second.m_name.insert(obj_it->second.m_name.find_last_of('.'), "001");
-		break;
-	    }
-	}
+	m_objects.add(false, bitmap.m_bitmap_id, bitmap_name,
+		      get_object_suffix(bitmap));
     }
 }
 
@@ -655,7 +645,7 @@ void
 RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 {
     if (const ON_EmbeddedBitmap *bitmap = ON_EmbeddedBitmap::Cast(bmap)) {
-	const std::string filename = strbasename(w2string(bitmap->m_bitmap_filename));
+	const std::string filename = get_basename(w2string(bitmap->m_bitmap_filename));
 	const std::string path = extract_bitmap(m_output_dirname, filename, *bitmap);
 
 	try {
@@ -672,7 +662,7 @@ RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 	    load_pix(w2string(bmap->m_bitmap_filename),
 		     bitmap->Width(), bitmap->Height());
 	} catch (const std::runtime_error &) {
-	    m_log.Print("Couldn't convert bitmap to pix");
+	    m_log.Print("Couldn't convert bitmap to pix\n");
 	    return;
 	}
     }
@@ -715,7 +705,7 @@ RhinoConverter::create_layer(const ON_Layer &layer)
     wmember wmembers;
     BU_LIST_INIT(&wmembers.l);
 
-    for (std::set<ON_UUID>::const_iterator it = members.begin();
+    for (std::set<ON_UUID, UuidCompare>::const_iterator it = members.begin();
 	 it != members.end(); ++it) {
 	if (m_objects.is_idef_member(*it)) continue;
 
@@ -787,7 +777,7 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
 
 
     mat_t matrix;
-    xform2mat_t(iref.m_xform, matrix);
+    xform2mat(iref.m_xform, matrix);
 
     wmember members;
     BU_LIST_INIT(&members.l);
@@ -865,7 +855,6 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
 	return;
     }
 
-
     // stand-alone geometry at high levels of the hierarchy
     // so create material information for it
 
@@ -873,9 +862,9 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
 	m_log.Print("Creating comb for high-level geometry\n");
 
     const std::string &geom_name = m_objects.get_name(geom_attrs.m_uuid);
-    const std::string comb_name =
-	unique_name(m_name_count_map, geom_name, ".c");
     const ON_UUID comb_uuid = generate_uuid();
+    m_objects.add(false, comb_uuid, geom_name, ".c");
+    const std::string &comb_name = m_objects.get_name(comb_uuid);
     const std::pair<std::string, std::string> shader
 	= get_shader(geom_attrs.m_material_index);
 
@@ -891,7 +880,6 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
 
     check_return(ret, "mk_comb()");
 
-    m_objects.add(comb_uuid, comb_name);
     m_objects.register_member(parent_layer.m_layer_id, comb_uuid);
 }
 
@@ -921,7 +909,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
     const std::size_t num_vertices = static_cast<std::size_t>(mesh.m_V.Count());
     const std::size_t num_faces = static_cast<std::size_t>(mesh.m_F.Count());
 
-    unsigned char orientation;
+    unsigned char orientation = RT_BOT_UNORIENTED;
 
     switch (mesh.SolidOrientation()) {
 	case 0:
@@ -937,7 +925,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 	    break;
 
 	default:
-	    throw std::out_of_range("unknown orientation");
+	    bu_bomb("logic error: unknown orientation");
     }
 
     if (num_vertices == 0 || num_faces == 0) {
@@ -1003,9 +991,9 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 	std::vector<int> face_normals(num_faces * 3);
 
 	for (std::size_t i = 0; i < num_faces; ++i) {
-	    face_normals[i * 3] = i;
-	    face_normals[i * 3 + 1] = i;
-	    face_normals[i * 3 + 2] = i;
+	    face_normals[i * 3] = static_cast<int>(i);
+	    face_normals[i * 3 + 1] = static_cast<int>(i);
+	    face_normals[i * 3 + 2] = static_cast<int>(i);
 	}
 
 	int ret = mk_bot_w_normals(m_db, mesh_name.c_str(), mode, orientation,
@@ -1030,14 +1018,25 @@ RhinoConverter::create_all_objects()
     int num_created = 0;
 
     for (int i = 0; i < num_objects; ++i) {
+	const ON_Object &object = *m_model.m_object_table[i].m_object;
 	const ON_3dmObjectAttributes &object_attrs =
 	    m_model.m_object_table[i].m_attributes;
 
 	if (m_verbose_mode)
-	    m_log.Print("Object %d of %d...\n", i + 1, m_model.m_object_table.Count());
+	    m_log.Print("Object %d of %d...\n", i + 1, num_objects);
 
-	if (create_object(*m_model.m_object_table[i].m_object, object_attrs))
+	if (m_objects.exists(object_attrs.m_uuid)) {
+	    create_object(object, object_attrs);
 	    ++num_created;
+	} else {
+	    m_log.Print("Skipping object of type %s\n", object.ClassId()->ClassName());
+
+	    if (m_verbose_mode) {
+		object.Dump(m_log);
+		m_log.PopIndent();
+		m_log.Print("\n");
+	    }
+	}
     }
 
     if (num_created != num_objects)
@@ -1045,42 +1044,34 @@ RhinoConverter::create_all_objects()
 }
 
 
-bool
+void
 RhinoConverter::create_object(const ON_Object &object,
 			      const ON_3dmObjectAttributes &object_attrs)
 {
     if (const ON_Brep *brep = ON_Brep::Cast(&object)) {
 	create_brep(*brep, object_attrs);
-	return true;
+	return;
     }
 
     if (const ON_Geometry *geom = ON_Geometry::Cast(&object))
 	if (geom->HasBrepForm()) {
-	    ON_Brep *new_brep = geom->BrepForm();
-	    create_brep(*new_brep, object_attrs);
-	    delete new_brep;
-	    return true;
+	    ON_Brep *brep = geom->BrepForm();
+	    create_brep(*brep, object_attrs);
+	    delete brep;
+	    return;
 	}
 
     if (const ON_Mesh *mesh = ON_Mesh::Cast(&object)) {
 	create_mesh(*mesh, object_attrs);
-	return true;
+	return;
     }
 
     if (const ON_InstanceRef *instref = ON_InstanceRef::Cast(&object)) {
 	create_iref(*instref, object_attrs);
-	return true;
+	return;
     }
 
-    m_log.Print("Skipping object of type %s\n", object.ClassId()->ClassName());
-
-    if (m_verbose_mode) {
-	object.Dump(m_log);
-	m_log.PopIndent();
-	m_log.Print("\n");
-    }
-
-    return false;
+    bu_bomb("logic error: should never reach here");
 }
 
 

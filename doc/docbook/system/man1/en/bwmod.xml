@@ -27,7 +27,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bwmod</emphasis>
+<para><command>bwmod</command>
 will perform a series of arithmetic operations on each 8-bit pixel
 of its input/output stream.  This is a
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>

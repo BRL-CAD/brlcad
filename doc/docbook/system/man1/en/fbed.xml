@@ -45,9 +45,9 @@ The
 <option>-H</option>
 option is for editing
 1024x1024 or high resolution
-<emphasis remap='SM'>(HIRES)</emphasis>
+(<emphasis remap='SM'>HIRES</emphasis>)
 images;  the default is low resolution, 512x512
-<emphasis remap='SM'>(LORES)</emphasis>.
+(<emphasis remap='SM'>LORES</emphasis>).
 The frame buffer's state can be toggled back and forth between
 <acronym>HIRES</acronym>
 and

@@ -87,6 +87,7 @@ Conic::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!GeometricRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -103,6 +104,7 @@ Conic::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    position = aA2P;
 	    if (!aA2P->Load(step, select)) {
 		std::cout << CLASSNAME << ":Error loading select Axis2Placement from Conic." << std::endl;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 
@@ -112,6 +114,8 @@ Conic::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    //}
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

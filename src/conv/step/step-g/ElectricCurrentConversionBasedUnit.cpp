@@ -62,8 +62,11 @@ ElectricCurrentConversionBasedUnit::Load(STEPWrapper *sw, SDAI_Application_insta
     // load base class attributes
     if (!ElectricCurrentConversionBasedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }
