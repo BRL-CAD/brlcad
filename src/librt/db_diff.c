@@ -347,7 +347,7 @@ avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_t
 	if (errno == EINVAL || *endptr != '\0') num_compare--;
 	if (num_compare == 1) {return NEAR_EQUAL(dval1, dval2, diff_tol->dist);}
 
-	/* If we didn't find numbers, try for numbers (3 floating point numbers) */
+	/* If we didn't find numbers, try for points (3 floating point numbers) */
 	if (sscanf(val1, "%f %f %f", &p1val1, &p1val2, &p1val3) == 3) pnt_compare--;
 	if (sscanf(val2, "%f %f %f", &p2val1, &p2val2, &p2val3) == 3) pnt_compare--;
 
