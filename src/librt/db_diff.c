@@ -324,11 +324,11 @@ avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_t
 {
     /* We need to look for numbers to do tolerance based comparisons */
     int num_compare = 1;
-    int color_compare = 1;
+    /*int color_compare = 1;*/
     int pnt_compare = 1;
     double dval1, dval2;
-    int c1val1, c1val2, c1val3;
-    int c2val1, c2val2, c2val3;
+    /*int c1val1, c1val2, c1val3;
+    int c2val1, c2val2, c2val3;*/
     float p1val1, p1val2, p1val3;
     float p2val1, p2val2, p2val3;
     char *endptr;
@@ -347,16 +347,11 @@ avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_t
 	if (errno == EINVAL || *endptr != '\0') num_compare--;
 	if (num_compare == 1) {return NEAR_EQUAL(dval1, dval2, diff_tol->dist);}
 
-	/* If we didn't find numbers, try for colors (3 integer numbers) */
-	if (sscanf(val1, "%d %d %d", &c1val1, &c1val2, &c1val3) == 3) color_compare--;
-	if (sscanf(val2, "%d %d %d", &c2val1, &c2val2, &c2val3) == 3) color_compare--;
-	if (color_compare == 1) return retval;
-
-	/* If we didn't find numbers, try for points (3 floating point numbers) */
+	/* If we didn't find numbers, try for numbers (3 floating point numbers) */
 	if (sscanf(val1, "%f %f %f", &p1val1, &p1val2, &p1val3) == 3) pnt_compare--;
 	if (sscanf(val2, "%f %f %f", &p2val1, &p2val2, &p2val3) == 3) pnt_compare--;
 
-	if (pnt_compare == 1) {
+	if (pnt_compare == -1) {
 	    vect_t v1, v2;
 	    VSET(v1, p1val1, p1val2, p1val3);
 	    VSET(v2, p2val1, p2val2, p2val3);

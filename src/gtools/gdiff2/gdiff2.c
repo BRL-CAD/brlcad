@@ -244,15 +244,15 @@ main(int argc, char **argv)
     BU_GET(state, struct diff_state);
     diff_state_init(state);
 
-    while ((c = bu_getopt(argc, argv, "aC:cF:M:rt:uv:xh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "aC:mF:M:dt:uv:xh?")) != -1) {
 	switch (c) {
 	    case 'a':
 		state->return_added = 1;
 		break;
-	    case 'r':
+	    case 'd':
 		state->return_removed = 1;
 		break;
-	    case 'c':
+	    case 'm':
 		state->return_changed = 1;
 		break;
 	    case 'u':
