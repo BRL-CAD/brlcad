@@ -942,9 +942,9 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * above equations by six here.
  */
 void
-rt_hrt_norm(register struct hit *UNUSED(hitp), register struct xray *UNUSED(rp))
+rt_hrt_norm(register struct hit *hitp, register struct xray *rp)
 {
-    /*
+    
     fastf_t w, fx, fy, fz;
     vect_t work;
 
@@ -956,7 +956,7 @@ rt_hrt_norm(register struct hit *UNUSED(hitp), register struct xray *UNUSED(rp))
     fy = hitp->hit_vpriv[Y] * (12/27 * w * w - 80/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]);
     fz = (w * w - 0.5 * hitp->hit_vpriv[Z] * (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9/80 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y])) * hitp->hit_vpriv[Z];
     VSET(work, fx, fy, fz);
-    */
+    
 }
 
 
