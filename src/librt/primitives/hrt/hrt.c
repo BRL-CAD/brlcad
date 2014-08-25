@@ -726,6 +726,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
         Zcube.cf[2] = 1.5 * pprime[Z] * Zsqr.cf[1];
         Zcube.cf[3] = pprime[Z] * ( Zsqr.cf[2] + 1.0 );
 
+	/* A**3 */
         Acube.dgr = 6;
         Acube.cf[0] = A.cf[0] * A.cf[0] * A.cf[0];
         Acube.cf[1] = 3.0 * A.cf[0] * A.cf[0] * A.cf[1];
@@ -750,6 +751,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
         Z3_X2_Y2.cf[4] = X2_Y2.cf[1] * Zcube.cf[3] + X2_Y2.cf[2] * Zcube.cf[2];
         Z3_X2_Y2.cf[5] = X2_Y2.cf[2] * Zcube.cf[3];
 
+	/* S(t) = 0 */
         S[i].dgr = 6;
         S[i].cf[0] = Acube.cf[0];
         S[i].cf[1] = Acube.cf[1] - Z3_X2_Y2.cf[0];
@@ -879,7 +881,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[0], segp[i].seg_in.hit_normal);
     }
 
-    /* Process each two segment hit */
+    /* Process each three segment hit */
     for (i = 0; i < n; i++) {
 	if (segp[i].seg_stp == 0)
 	    continue;				/* Skip This Iteration */
