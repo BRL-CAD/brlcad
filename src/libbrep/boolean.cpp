@@ -86,6 +86,28 @@ public:
     IntervalGenerationError(const std::string &msg = "") : std::runtime_error(msg) {}
 };
 
+class CurvePoint {
+public:
+    ON_3dPoint pt;
+
+    enum Location {
+	BOUNDARY,
+	INSIDE,
+	OUTSIDE
+    } location;
+
+    CurvePoint(ON_3dPoint p, CurvePoint::Location l)
+	: pt(p), location(l)
+    {
+    }
+
+    bool
+    operator<(const CurvePoint &other) const
+    {
+	return pt < other.pt;
+    }
+};
+
 struct IntersectPoint {
     ON_3dPoint m_pt;	// 3D intersection point
     double m_seg_t;	// param on the loop curve
@@ -772,6 +794,37 @@ set_closed_curve_direction(LinkedCurve &curve, int dir)
     if (curr_dir != dir) {
 	return curve.Reverse();
     }
+}
+
+CurvePoint::Location
+point_curve_location(ON_2dPoint pt, LinkedCurve &curve)
+{
+    ON_SimpleArray<ON_Curve *> loop;
+    curve.AppendCurvesToArray(loop);
+
+    if (is_point_on_loop(pt, loop)) {
+	return CurvePoint::BOUNDARY;
+    }
+    if (point_loop_location(pt, loop) == OUTSIDE_OR_ON_LOOP) {
+	return CurvePoint::OUTSIDE;
+    }
+    return CurvePoint::INSIDE;
+}
+
+std::multiset<CurvePoint>
+get_classified_curve_points(LinkedCurve &curve1, LinkedCurve &curve2)
+{
+    std::multiset<CurvePoint> points;
+
+    ON_2dPoint pt;
+    for (int i = 0; i < curve1.m_ssi_curves.Count(); ++i) {
+	pt = curve1.m_ssi_curves[i].m_curve->PointAtStart();
+	points.insert(CurvePoint(pt, point_curve_location(pt, curve2)));
+    }
+    pt = curve1.PointAtEnd();
+    points.insert(CurvePoint(pt, point_curve_location(pt, curve2)));
+
+    return points;
 }
 
 ON_ClassArray<LinkedCurve>
