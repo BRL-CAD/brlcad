@@ -49,16 +49,16 @@ interpolate_data()
     struct face_g_snurb *srf2, *srf3;
     struct knot_vector new_kv;
 
-    rt_nurb_sinterp(&srf, 4, (const fastf_t *)grid, 10, 10);
+    nurb_sinterp(&srf, 4, (const fastf_t *)grid, 10, 10);
 
     /* lets take a look at it.  Refine to 100 points in both directions. */
-    rt_nurb_kvknot(&new_kv, srf.order[0], 0.0, 1.0, 100, (struct resource *)NULL);
-    srf2 = (struct face_g_snurb *) rt_nurb_s_refine(&srf, 0, &new_kv, (struct resource *)NULL);
-    srf3 = (struct face_g_snurb *) rt_nurb_s_refine(srf2, 1, &new_kv, (struct resource *)NULL);
+    nurb_kvknot(&new_kv, srf.order[0], 0.0, 1.0, 100, (struct resource *)NULL);
+    srf2 = (struct face_g_snurb *) nurb_s_refine(&srf, 0, &new_kv, (struct resource *)NULL);
+    srf3 = (struct face_g_snurb *) nurb_s_refine(srf2, 1, &new_kv, (struct resource *)NULL);
 
     /* Draw refined mesh in yellow */
     pl_color(stdout, 200, 200, 50);
-    rt_nurb_plot_snurb(stdout, srf3);
+    nurb_plot_snurb(stdout, srf3);
 }
 
 
