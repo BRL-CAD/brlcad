@@ -109,6 +109,7 @@ M cone.r
 M box.s
 M tor.r
 D LIGHT
+A tgc_new.s
 A eto.s
 		</computeroutput>
           </literallayout>
@@ -135,7 +136,7 @@ A eto.s
 			   <computeroutput>
 <prompt>~:</prompt><userinput> gdiff2 -v 1 moss.g moss2.g</userinput>
 Added:
-eto.s
+tgc_new.s, eto.s
 
 Removed:
 LIGHT
@@ -161,6 +162,7 @@ M cone.r
 M box.s
 M tor.r
 D LIGHT
+A tgc_new.s
 A eto.s
 			   </computeroutput>
 		   </literallayout>
@@ -199,6 +201,7 @@ A eto.s
 - "tor.r" tree(p): l tor
 + "tor.r" tree(p): l tor {1 0 0 8.44652  0 1 0 -56.3571  0 0 1 54.4836  0 0 0 2.71809}
 D LIGHT
+A tgc_new.s
 A eto.s
 			   </computeroutput>
 		   </literallayout>
@@ -243,6 +246,13 @@ D "LIGHT" B(p): 0 2.539999961852999810218989 0
 D "LIGHT" A(p): 2.539999961852999810218989 0 0
 D "LIGHT" V(p): 20.15756225586000027760747 -13.52595329284999969843284 5.034742355347000319909512
 D "LIGHT" DB5_MINORTYPE(p): ell
+A "tgc_new.s" D(p): 0 500 0
+A "tgc_new.s" C(p): 250 0 0
+A "tgc_new.s" B(p): 0 250 0
+A "tgc_new.s" A(p): 500 0 0
+A "tgc_new.s" H(p): 0 0 2000
+A "tgc_new.s" V(p): 0 0 -1000
+A "tgc_new.s" DB5_MINORTYPE(p): tgc
 A "eto.s" r_d(p): 1.724149328000026404339451
 A "eto.s" r(p): 13.79319462400021123471561
 A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
@@ -269,6 +279,7 @@ A "eto.s" DB5_MINORTYPE(p): eto
           <literallayout>
                 <computeroutput>
 <prompt>~:</prompt><userinput> gdiff2 -a moss.g moss2.g</userinput>
+A tgc_new.s
 A eto.s
                 </computeroutput>
           </literallayout>
@@ -288,6 +299,7 @@ D LIGHT
                 <computeroutput>
 <prompt>~:</prompt><userinput> gdiff2 -a -d moss.g moss2.g</userinput>
 D LIGHT
+A tgc_new.s
 A eto.s
                 </computeroutput>
           </literallayout>
@@ -311,7 +323,7 @@ A eto.s
           difference constitutes "too small" is up to the user - in this example, we will use 30 millimeters:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 4 -t 30.0 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff2 -v 3 -t 30.0 moss.g moss2.g</userinput>
 - "platform.r" tree(p): l platform.s
 + "platform.r" tree(p): - {l platform.s} {l cone.s}
 - "light.r" tree(p): l LIGHT
@@ -324,17 +336,9 @@ A eto.s
 + "cone.r" tree(p): l cone.s {1 0 0 53.2994  0 1 0 10.1428  0 0 1 0  0 0 0 1}
 - "tor.r" tree(p): l tor
 + "tor.r" tree(p): l tor {1 0 0 8.44652  0 1 0 -56.3571  0 0 1 54.4836  0 0 0 2.71809}
-D "LIGHT" C(p): 0 0 2.539999961852999810218989
-D "LIGHT" B(p): 0 2.539999961852999810218989 0
-D "LIGHT" A(p): 2.539999961852999810218989 0 0
-D "LIGHT" V(p): 20.15756225586000027760747 -13.52595329284999969843284 5.034742355347000319909512
-D "LIGHT" DB5_MINORTYPE(p): ell
-A "eto.s" r_d(p): 1.724149328000026404339451
-A "eto.s" r(p): 13.79319462400021123471561
-A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
-A "eto.s" N(p): 0 0 0.01724149328000028000285049
-A "eto.s" V(p): 8.533195938359670051909234 -11.04524849332910996224655 -1.403988582132086548881489
-A "eto.s" DB5_MINORTYPE(p): eto
+D LIGHT
+A tgc_new.s
+A eto.s
 		</computeroutput>
 	</literallayout>
 	Notice that ellipse.s, which was on earlier lists, is now filtered out.  cone.s has a difference in the x coordinates
@@ -374,10 +378,10 @@ A "eto.s" DB5_MINORTYPE(p): eto
   <example><title>Combining Multiple Filters</title>
         <para>
           The various diff filters can be used together.  For example, repeating the search
-          filter with both rcc and ell types added produces the following:
+          filter with ell types added to the accepted list produces the following:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 4 -F "-type eto -or -type rcc -or -type ell" moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff2 -v 4 -F "-type eto -or -type ell" moss.g moss2.g</userinput>
 - "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
 + "ellipse.s" C(p): 0 1.561016355403846755933728 1.561016355403846755933728
 - "ellipse.s" A(p): 14.87607192992999927128039 0 0
@@ -397,10 +401,10 @@ A "eto.s" DB5_MINORTYPE(p): eto
           </literallayout>
         </para>
         <para>
-          If we now add the tolerance filter, we see the ell is filtered out:
+          If we now add the tolerance filter, we see ellipse.s is filtered out:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 4 -t 30.0 -F "-type eto -or -type rcc -or -type ell" moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff2 -v 4 -t 30.0 -F "-type eto -or -type ell" moss.g moss2.g</userinput>
 D "LIGHT" C(p): 0 0 2.539999961852999810218989
 D "LIGHT" B(p): 0 2.539999961852999810218989 0
 D "LIGHT" A(p): 2.539999961852999810218989 0 0
