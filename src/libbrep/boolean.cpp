@@ -757,13 +757,46 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
     return out;
 }
 
+#define LOOP_DIRECTION_CCW  1
+#define LOOP_DIRECTION_CW  -1
+#define LOOP_DIRECTION_NONE 0
+
+bool
+set_closed_curve_direction(LinkedCurve &curve, int dir)
+{
+    const ON_Curve *pcurve = curve.Curve();
+    int curr_dir = ON_ClosedCurveOrientation(*pcurve, NULL);
+    if (curr_dir == LOOP_DIRECTION_NONE) {
+	return false;
+    }
+    if (curr_dir != dir) {
+	return curve.Reverse();
+    }
+}
+
 ON_ClassArray<LinkedCurve>
-closed_curve_boolean(LinkedCurve &curve1, LinkedCurve &UNUSED(curve2), op_type op)
+closed_curve_boolean(LinkedCurve &curve1, LinkedCurve &curve2, op_type op)
 {
     ON_ClassArray<LinkedCurve> out;
 
     if (op != BOOLEAN_INTERSECT && op != BOOLEAN_DIFF) {
 	bu_log("closed_curve_boolean: unsupported operation\n");
+	out.Append(curve1);
+	return out;
+    }
+
+    // set curve directions based on operation
+    int curve1_dir, curve2_dir;
+
+    curve1_dir = curve2_dir = LOOP_DIRECTION_CW;
+    if (op == BOOLEAN_DIFF) {
+	curve2_dir = LOOP_DIRECTION_CCW;
+    }
+
+    if (!set_closed_curve_direction(curve1, curve1_dir) ||
+	!set_closed_curve_direction(curve2, curve2_dir))
+    {
+	bu_log("closed_curve_boolean: couldn't standardize curve directions\n");
 	out.Append(curve1);
 	return out;
     }
@@ -1193,7 +1226,7 @@ split_trimmed_face(
     }
 
     LinkedCurve outerloop = linked_curve_from_outerloop(orig_face);
-    if (!outerloop.IsClosed()) {
+    if (!outerloop.IsClosed() || !outerloop.IsValid()) {
 	// can't split an unclosed outerloop
 	out.Append(orig_face->Duplicate());
 	return out;
@@ -1212,13 +1245,18 @@ split_trimmed_face(
 	}
 
 	for (int j = 0; j < closed_ssx_curves.Count(); ++j) {
-	    ON_ClassArray<LinkedCurve> intersect_loops, diff_loops;
+	    if (!closed_ssx_curves[j].IsClosed() || !closed_ssx_curves[j].IsValid()) {
+		continue;
+	    }
 
 	    // get the portions of the original outerloop inside and
 	    // outside the closed ssx curve to get the outerloops of
 	    // the split faces
-	    intersect_loops = closed_curve_boolean(outerloop, closed_ssx_curves[j], BOOLEAN_INTERSECT);
-	    diff_loops = closed_curve_boolean(outerloop, closed_ssx_curves[j], BOOLEAN_DIFF);
+	    ON_ClassArray<LinkedCurve> intersect_loops = closed_curve_boolean(
+		    outerloop, closed_ssx_curves[j], BOOLEAN_INTERSECT);
+
+	    ON_ClassArray<LinkedCurve> diff_loops = closed_curve_boolean(
+		    outerloop, closed_ssx_curves[j], BOOLEAN_DIFF);
 
 	    // make a new face from each new outerloop
 	    for (int k = 0; k < intersect_loops.Count(); ++k) {
@@ -2180,9 +2218,6 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 HIDDEN void
 standardize_loop_orientations(ON_Brep *brep)
 {
-#define LOOP_DIRECTION_CCW  1
-#define LOOP_DIRECTION_CW  -1
-#define LOOP_DIRECTION_NONE 0
     std::map<int, int> reversed_curve2d, reversed_edge;
     for (int face_idx = 0; face_idx < brep->m_F.Count(); ++face_idx) {
 	const ON_BrepFace &eb_face = brep->m_F[face_idx];
