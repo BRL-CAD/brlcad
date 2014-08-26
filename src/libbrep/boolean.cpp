@@ -788,12 +788,17 @@ set_closed_curve_direction(LinkedCurve &curve, int dir)
 {
     const ON_Curve *pcurve = curve.Curve();
     int curr_dir = ON_ClosedCurveOrientation(*pcurve, NULL);
+
     if (curr_dir == LOOP_DIRECTION_NONE) {
+	// can't set the correct direction
 	return false;
     }
     if (curr_dir != dir) {
+	// need reverse
 	return curve.Reverse();
     }
+    // curve already has the correct direction
+    return true;
 }
 
 CurvePoint::Location
