@@ -423,6 +423,62 @@ A "eto.s" DB5_MINORTYPE(p): eto
 
   </example>
 
+  <example><title>Three Way Differences</title>
+        <para>
+          A "3-way" diff uses an ancestor file as a basis for evaluating the differences between two
+	  other files.  This ancestor provies a "context" in which it is possible to tell whether a
+          difference between two files is a) the product of a change in one but not the other in
+          comparison to the original or b) whether both have (incompatibaly) changed in comparison
+          to the original.  For example, if we compare moss2.g from the previous examples to a new
+          file moss3.g:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 moss2.g moss3.g</userinput>
+M platform.r
+M ellipse.s
+D ellipse.r
+M light.r
+M _GLOBAL
+M cone.s
+M cone.r
+M box.s
+M tor.r
+M eto.s
+M all.g
+M tor
+A ellipse2.r
+A LIGHT
+                </computeroutput>
+          </literallayout>
+          All we can tell is that these objects differ from each other.  If, however, we add moss.g
+          to the comparison as an ancestor file:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff2 moss2.g moss.g moss3.g</userinput>
+M platform.r
+M ellipse.s
+D(R) ellipse.r
+M light.r
+M _GLOBAL
+M cone.s
+M cone.r
+M box.s
+M tor.r
+M all.g
+D(L) LIGHT
+M tor
+A(B) tgc_new.s
+C eto.s
+A(R) ellipse2.r
+                </computeroutput>
+          </literallayout>
+          We can now see that ellipse.r was deleted only from the right file (moss3.g) and was unchanged in moss2.g.
+          Similarily, we can tell that LIGHT wsa deleted from moss2.g, ellipse2.r was added in moss3.g, tgc_new.s was
+          added identically in both moss2.g and moss3.g, and eto.s was added in both moss2.g and moss3.g but with
+          different parameters (a conflict, denoted by 'C'.)
+        </para>
+  </example>
+
 
 	</refsect1>
 
