@@ -1063,7 +1063,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 	for (int i = 0; i < numhits; i++) {
 	    double closesttrim;
 	    BRNode* trimBR = NULL;
-	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim);
+	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim,BREP_EDGE_MISS_TOLERANCE);
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
