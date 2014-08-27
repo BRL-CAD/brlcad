@@ -816,6 +816,7 @@ CurvePoint::PointCurveLocation(ON_2dPoint pt, ON_Curve *curve)
 
 class CurveSegment {
 public:
+    ON_Curve *orig_curve;
     CurvePoint from, to;
     enum Location {
 	BOUNDARY,
@@ -823,9 +824,19 @@ public:
 	OUTSIDE
     } location;
 
-    CurveSegment(CurvePoint f, CurvePoint t, CurveSegment::Location l)
-	: from(f), to(t), location(l)
+    CurveSegment(
+	ON_Curve *curve,
+	CurvePoint f,
+	CurvePoint t,
+	CurveSegment::Location l)
+	: orig_curve(curve), from(f), to(t), location(l)
     {
+    }
+
+    void
+    Reverse(void)
+    {
+	std::swap(from, to);
     }
 
     bool
@@ -881,7 +892,7 @@ make_segments(
     for (; curr != curve1_points.end(); ++curr, ++next) {
 	CurvePoint from = *curr;
 	CurvePoint to = (next == curve1_points.end()) ? *first : *next;
-	CurveSegment new_seg(from, to, CurveSegment::BOUNDARY);
+	CurveSegment new_seg(curve1, from, to, CurveSegment::BOUNDARY);
 
 	if (from.location == CurvePoint::BOUNDARY &&
 	      to.location == CurvePoint::BOUNDARY)
@@ -918,7 +929,9 @@ set_append_segment(
 {
     // if this segment is a reversed version of an existing
     // segment, it cancels the existing segment out
-    CurveSegment reversed(seg.to, seg.from, seg.location);
+    CurveSegment reversed(seg);
+    reversed.Reverse();
+
     if (out.count(reversed) == 0) {
 	out.insert(seg);
     } else {
@@ -952,7 +965,8 @@ find_similar_segments(
 	out.insert(*i);
     }
 
-    CurveSegment reversed(seg.to, seg.from, seg.location);
+    CurveSegment reversed(seg);
+    reversed.Reverse();
     for (i = set.find(reversed); i != set.end(); ++i) {
 	out.insert(*i);
     }
