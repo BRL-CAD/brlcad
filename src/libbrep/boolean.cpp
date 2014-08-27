@@ -784,10 +784,9 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 #define LOOP_DIRECTION_NONE 0
 
 bool
-set_closed_curve_direction(LinkedCurve &curve, int dir)
+set_closed_curve_direction(ON_Curve *curve, int dir)
 {
-    const ON_Curve *pcurve = curve.Curve();
-    int curr_dir = ON_ClosedCurveOrientation(*pcurve, NULL);
+    int curr_dir = ON_ClosedCurveOrientation(*curve, NULL);
 
     if (curr_dir == LOOP_DIRECTION_NONE) {
 	// can't set the correct direction
@@ -795,7 +794,7 @@ set_closed_curve_direction(LinkedCurve &curve, int dir)
     }
     if (curr_dir != dir) {
 	// need reverse
-	return curve.Reverse();
+	return curve->Reverse();
     }
     // curve already has the correct direction
     return true;
@@ -832,14 +831,14 @@ get_classified_curve_points(LinkedCurve &curve1, LinkedCurve &curve2)
     return points;
 }
 
-ON_ClassArray<LinkedCurve>
-closed_curve_boolean(LinkedCurve &curve1, LinkedCurve &curve2, op_type op)
+std::vector<ON_Curve *>
+closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
 {
-    ON_ClassArray<LinkedCurve> out;
+    std::vector<ON_Curve *> out;
 
     if (op != BOOLEAN_INTERSECT && op != BOOLEAN_DIFF) {
 	bu_log("closed_curve_boolean: unsupported operation\n");
-	out.Append(curve1);
+	out.push_back(curve1);
 	return out;
     }
 
@@ -855,11 +854,51 @@ closed_curve_boolean(LinkedCurve &curve1, LinkedCurve &curve2, op_type op)
 	!set_closed_curve_direction(curve2, curve2_dir))
     {
 	bu_log("closed_curve_boolean: couldn't standardize curve directions\n");
-	out.Append(curve1);
+	out.push_back(curve1);
 	return out;
     }
 
     return out;
+}
+
+std::vector<ON_Curve *>
+innerloops_inside_outerloop(
+    ON_Curve *outerloop_curve,
+    std::vector<ON_Curve *> &innerloop_curves)
+{
+    std::vector<ON_Curve *> out;
+
+    for (size_t i = 0; i < innerloop_curves.size(); ++i) {
+	std::vector<ON_Curve *> new_innerloops = closed_curve_boolean(
+		outerloop_curve, innerloop_curves[i], BOOLEAN_INTERSECT);
+
+	for (size_t j = 0; j < new_innerloops.size(); ++j) {
+	    out.push_back(new_innerloops[i]);
+	}
+    }
+    return out;
+}
+
+TrimmedFace *
+make_face_from_loops(
+	const TrimmedFace *orig_face,
+	std::vector<ON_Curve *> &orig_innerloops,
+	ON_Curve *new_outerloop)
+{
+    TrimmedFace *face = new TrimmedFace();
+
+    face->m_face = orig_face->m_face;
+    face->m_outerloop.Append(new_outerloop);
+
+    std::vector<ON_Curve *> new_innerloops = innerloops_inside_outerloop(
+	    new_outerloop, orig_innerloops);
+
+    for (size_t i = 0; i < new_innerloops.size(); ++i) {
+	ON_SimpleArray<ON_Curve *> loop;
+	loop.Append(new_innerloops[i]);
+	face->m_innerloop.push_back(loop);
+    }
+    return face;
 }
 
 /* Turn an open curve into a closed curve by using segments from the
@@ -867,15 +906,15 @@ closed_curve_boolean(LinkedCurve &curve1, LinkedCurve &curve2, op_type op)
  *
  * Returns false on failure, true otherwise.
  */
-ON_ClassArray<LinkedCurve>
+std::vector<ON_Curve *>
 split_face_into_closed_curves(
     const TrimmedFace *orig_face,
     LinkedCurve &linked_curve)
 {
-    ON_ClassArray<LinkedCurve> out;
+    std::vector<ON_Curve *> out;
 
     if (linked_curve.IsClosed()) {
-	out.Append(linked_curve);
+	out.push_back(linked_curve.Curve()->Duplicate());
 	return out;
     }
 
@@ -917,7 +956,8 @@ split_face_into_closed_curves(
 
     // can't close curves that don't partition the face
     if (!intersects_outerloop || clx_points.Count() < 2) {
-	return false;
+	out.push_back(linked_curve.Curve()->Duplicate());
+	return out;
     }
 
     // rank these intersection points
@@ -1146,12 +1186,11 @@ split_face_into_closed_curves(
 	// Append a trimmed face with newloop as its outerloop
 	// Don't add a face if the outerloop is not valid (e.g. degenerated).
 	if (is_loop_valid(newloop, ON_ZERO_TOLERANCE)) {
-	    LinkedCurve lcurve;
+	    ON_PolyCurve *pcurve = new ON_PolyCurve();
 	    for (int j = 0; j < newloop.Count(); ++j) {
-		SSICurve ssi_curve(newloop[j]);
-		lcurve.Append(ssi_curve);
+		append_to_polycurve(newloop[j], *pcurve);
 	    }
-	    out.Append(lcurve);
+	    out.push_back(pcurve);
 	} else {
 	    for (int j = 0; j < newloop.Count(); j++) {
 		delete newloop[j];
@@ -1168,15 +1207,14 @@ split_face_into_closed_curves(
 	}
     }
 
-    if (out.Count() > 0) {
+    if (out.size() > 0) {
 	// The remaining part after splitting some parts out.
 	if (is_loop_valid(outerloop_segs, ON_ZERO_TOLERANCE)) {
-	    LinkedCurve lcurve;
+	    ON_PolyCurve *pcurve = new ON_PolyCurve();
 	    for (int j = 0; j < outerloop_segs.Count(); ++j) {
-		SSICurve ssi_curve(outerloop_segs[j]);
-		lcurve.Append(ssi_curve);
+		append_to_polycurve(outerloop_segs[j], *pcurve);
 	    }
-	    out.Append(lcurve);
+	    out.push_back(pcurve);
 	} else {
 	    for (int i = 0; i < outerloop_segs.Count(); i++)
 		if (outerloop_segs[i]) {
@@ -1187,52 +1225,29 @@ split_face_into_closed_curves(
     return out;
 }
 
-LinkedCurve
-linked_curve_from_outerloop(const TrimmedFace *face)
+ON_Curve *
+get_face_outerloop_curve(const TrimmedFace *face)
 {
-    LinkedCurve out;
+    ON_PolyCurve *pcurve = new ON_PolyCurve();
     for (int i = 0; i < face->m_outerloop.Count(); ++i) {
-	SSICurve ssi_curve(face->m_outerloop[i]);
-	out.Append(ssi_curve);
+	append_to_polycurve(face->m_outerloop[i], *pcurve);
     }
-    return out;
+    return pcurve;
 }
 
-ON_ClassArray<LinkedCurve>
-linked_curves_from_innerloops(const TrimmedFace *face)
+std::vector<ON_Curve *>
+get_face_innerloop_curves(const TrimmedFace *face)
 {
-    ON_ClassArray<LinkedCurve> out;
+    std::vector<ON_Curve *> loop_curves;
     for (size_t i = 0; i < face->m_innerloop.size(); ++i) {
-	LinkedCurve lcurve;
+	ON_PolyCurve *pcurve = new ON_PolyCurve();
+
 	for (int j = 0; j < face->m_innerloop[i].Count(); ++j) {
-	    SSICurve ssi_curve(face->m_innerloop[i][j]);
-	    lcurve.Append(ssi_curve);
+	    append_to_polycurve(face->m_innerloop[i][j], *pcurve);
 	}
-	if (lcurve.IsClosed()) {
-	    out.Append(lcurve);
-	}
+	loop_curves.push_back(pcurve);
     }
-    return out;
-}
-
-std::vector<ON_SimpleArray<ON_Curve *> >
-innerloops_inside_outerloop(
-    LinkedCurve &outerloop_curve,
-    ON_ClassArray<LinkedCurve> &innerloop_curves)
-{
-    std::vector<ON_SimpleArray<ON_Curve *> > out;
-
-    for (int i = 0; i < innerloop_curves.Count(); ++i) {
-	ON_ClassArray<LinkedCurve> new_innerloops = closed_curve_boolean(
-		outerloop_curve, innerloop_curves[i], BOOLEAN_INTERSECT);
-
-	for (int j = 0; j < new_innerloops.Count(); ++j) {
-	    ON_SimpleArray<ON_Curve *> innerloop;
-	    new_innerloops[j].AppendCurvesToArray(innerloop);
-	    out.push_back(innerloop);
-	}
-    }
-    return out;
+    return loop_curves;
 }
 
 // It might be worth investigating the following approach to building a set of faces from the splitting
@@ -1283,55 +1298,47 @@ split_trimmed_face(
 	return out;
     }
 
-    LinkedCurve outerloop = linked_curve_from_outerloop(orig_face);
-    if (!outerloop.IsClosed() || !outerloop.IsValid()) {
-	// can't split an unclosed outerloop
+    ON_Curve *face_outerloop = get_face_outerloop_curve(orig_face);
+    if (!face_outerloop->IsClosed()) {
+	// need closed outerloop
 	out.Append(orig_face->Duplicate());
 	return out;
     }
 
-    ON_ClassArray<LinkedCurve> innerloops = linked_curves_from_innerloops(orig_face);
+    std::vector<ON_Curve *> face_innerloops = get_face_innerloop_curves(orig_face);
 
     for (int i = 0; i < ssx_curves.Count(); ++i) {
-	ON_ClassArray<LinkedCurve> closed_ssx_curves;
+	std::vector<ON_Curve *> closed_ssx_curves;
 
 	// get closed version of current ssx curve
 	if (ssx_curves[i].IsClosed()) {
-	    closed_ssx_curves.Append(ssx_curves[i]);
+	    closed_ssx_curves.push_back(ssx_curves[i].Curve()->Duplicate());
 	} else {
 	    closed_ssx_curves = split_face_into_closed_curves(orig_face, ssx_curves[i]);
 	}
 
-	for (int j = 0; j < closed_ssx_curves.Count(); ++j) {
-	    if (!closed_ssx_curves[j].IsClosed() || !closed_ssx_curves[j].IsValid()) {
+	for (size_t j = 0; j < closed_ssx_curves.size(); ++j) {
+	    if (!closed_ssx_curves[j]->IsClosed()) {
 		continue;
 	    }
 
 	    // get the portions of the original outerloop inside and
 	    // outside the closed ssx curve to get the outerloops of
 	    // the split faces
-	    ON_ClassArray<LinkedCurve> intersect_loops = closed_curve_boolean(
-		    outerloop, closed_ssx_curves[j], BOOLEAN_INTERSECT);
+	    std::vector<ON_Curve *> intersect_loops = closed_curve_boolean(
+		    face_outerloop, closed_ssx_curves[j], BOOLEAN_INTERSECT);
 
-	    ON_ClassArray<LinkedCurve> diff_loops = closed_curve_boolean(
-		    outerloop, closed_ssx_curves[j], BOOLEAN_DIFF);
+	    std::vector<ON_Curve *> diff_loops = closed_curve_boolean(
+		    face_outerloop, closed_ssx_curves[j], BOOLEAN_DIFF);
 
 	    // make a new face from each new outerloop
-	    for (int k = 0; k < intersect_loops.Count(); ++k) {
-		TrimmedFace *new_face = new TrimmedFace();
-		new_face->m_face = orig_face->m_face;
-		intersect_loops[k].AppendCurvesToArray(new_face->m_outerloop);
-		new_face->m_innerloop = innerloops_inside_outerloop(
-			intersect_loops[k], innerloops);
-		out.Append(new_face);
+	    for (size_t k = 0; k < intersect_loops.size(); ++k) {
+		out.Append(make_face_from_loops(orig_face, face_innerloops,
+			    intersect_loops[k]));
 	    }
-	    for (int k = 0; k < diff_loops.Count(); ++k) {
-		TrimmedFace *new_face = new TrimmedFace();
-		new_face->m_face = orig_face->m_face;
-		diff_loops[k].AppendCurvesToArray(new_face->m_outerloop);
-		new_face->m_innerloop = innerloops_inside_outerloop(
-			diff_loops[k], innerloops);
-		out.Append(new_face);
+	    for (size_t k = 0; k < diff_loops.size(); ++k) {
+		out.Append(make_face_from_loops(orig_face, face_innerloops,
+			    intersect_loops[k]));
 	    }
 	}
     }
