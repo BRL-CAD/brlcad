@@ -824,6 +824,14 @@ set_closed_curve_direction(ON_Curve *curve, int dir)
     return true;
 }
 
+void
+add_point_to_set(std::multiset<CurvePoint> &set, CurvePoint pt)
+{
+    if (set.count(pt) < 2) {
+	set.insert(pt);
+    }
+}
+
 std::vector<ON_Curve *>
 closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
 {
@@ -859,6 +867,25 @@ closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
     curve1_points.insert(CurvePoint(dom1.m_t[1], curve1, curve2));
     curve2_points.insert(CurvePoint(dom1.m_t[0], curve2, curve1));
     curve2_points.insert(CurvePoint(dom1.m_t[1], curve2, curve1));
+
+    ON_SimpleArray<ON_X_EVENT> x_events;
+    ON_Intersect(curve1, curve2, x_events, INTERSECTION_TOL);
+
+    for (int i = 0; i < x_events.Count(); ++i) {
+	add_point_to_set(curve1_points,
+		CurvePoint(x_events[i].m_a[0], curve1, curve2));
+
+	add_point_to_set(curve2_points,
+		CurvePoint(x_events[i].m_b[0], curve2, curve1));
+
+	if (x_events[i].m_type == ON_X_EVENT::ccx_overlap) {
+	    add_point_to_set(curve1_points,
+		    CurvePoint(x_events[i].m_a[1], curve1, curve2));
+
+	    add_point_to_set(curve2_points,
+		    CurvePoint(x_events[i].m_b[2], curve2, curve1));
+	}
+    }
 
     return out;
 }
