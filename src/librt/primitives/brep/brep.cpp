@@ -1063,7 +1063,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 	for (int i = 0; i < numhits; i++) {
 	    double closesttrim;
 	    BRNode* trimBR = NULL;
-	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim);
+	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim,BREP_EDGE_MISS_TOLERANCE);
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
@@ -4181,7 +4181,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 	}
     }
 #endif
-#endif
+#endif /* WATER_TIGHT */
     bool watertight = true;
     int plottype = 0;
     int numpoints = -1;
@@ -4200,7 +4200,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 	    bu_log("Error solid \"%s\" missing surface definition for Face(%d). Will skip this face when drawing.\n", solid_name, index);
 	}
     }
-#else
+#else /* TESTIT */
     for (int index = 0; index < brep->m_F.Count(); index++) {
 	ON_BrepFace& face = brep->m_F[index];
 	SurfaceTree* st = new SurfaceTree(&face, true, 10);
@@ -4209,7 +4209,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 
 	delete st;
     }
-#endif
+#endif /* TESTIT */
 #ifdef WATERTIGHT
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];

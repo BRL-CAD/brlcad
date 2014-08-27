@@ -38,7 +38,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-stl</emphasis>
+<para><command>g-stl</command>
 converts the specified
 <emphasis remap='I'>object(s)</emphasis>
 from a BRL-CAD
@@ -144,7 +144,7 @@ less than this distance apart will be treated as the same vertex.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>g-stl -o sample.stl sample.g sample_object</emphasis>
+$ g-stl -o <emphasis remap='I'>sample.stl sample.g sample_object</emphasis>
 </synopsis>
 </refsect1>
 

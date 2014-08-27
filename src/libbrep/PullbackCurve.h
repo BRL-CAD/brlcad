@@ -91,7 +91,7 @@ pullback_seam_curve(enum seam_direction seam_dir,
 		    double flatness = 1.0e-3);
 
 extern bool
-toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve,  ON_2dPoint& out_pt, double t, double knudge);
+toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve,  ON_2dPoint& out_pt, double t, double knudge, double within_distance_tol);
 
 #endif
 
