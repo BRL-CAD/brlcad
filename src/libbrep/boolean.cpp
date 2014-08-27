@@ -778,6 +778,11 @@ public:
 	location = PointCurveLocation(pt, curve2);
     }
 
+    CurvePoint(double t, ON_2dPoint p, CurvePoint::Location l)
+	: pt(p), curve_t(t), location(l)
+    {
+    }
+
     bool
     operator<(const CurvePoint &other) const
     {
@@ -872,18 +877,18 @@ closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
     ON_Intersect(curve1, curve2, x_events, INTERSECTION_TOL);
 
     for (int i = 0; i < x_events.Count(); ++i) {
-	add_point_to_set(curve1_points,
-		CurvePoint(x_events[i].m_a[0], curve1, curve2));
+	add_point_to_set(curve1_points, CurvePoint(x_events[i].m_a[0],
+		    x_events[i].m_A[0], CurvePoint::BOUNDARY));
 
-	add_point_to_set(curve2_points,
-		CurvePoint(x_events[i].m_b[0], curve2, curve1));
+	add_point_to_set(curve2_points, CurvePoint(x_events[i].m_b[0],
+		    x_events[i].m_B[0], CurvePoint::BOUNDARY));
 
 	if (x_events[i].m_type == ON_X_EVENT::ccx_overlap) {
-	    add_point_to_set(curve1_points,
-		    CurvePoint(x_events[i].m_a[1], curve1, curve2));
+	    add_point_to_set(curve1_points, CurvePoint(x_events[i].m_a[0],
+			x_events[i].m_A[0], CurvePoint::BOUNDARY));
 
-	    add_point_to_set(curve2_points,
-		    CurvePoint(x_events[i].m_b[2], curve2, curve1));
+	    add_point_to_set(curve2_points, CurvePoint(x_events[i].m_b[0],
+			x_events[i].m_B[0], CurvePoint::BOUNDARY));
 	}
     }
 
