@@ -791,6 +791,12 @@ public:
 	}
 	return curve_t < other.curve_t;
     }
+
+    bool
+    operator==(const CurvePoint &other) const
+    {
+	return ON_NearZero(pt.DistanceTo(other.pt), INTERSECTION_TOL);
+    }
 };
 
 CurvePoint::Location
@@ -905,6 +911,129 @@ make_segments(
     return out;
 }
 
+void
+set_append_segment(
+    std::multiset<CurveSegment> &out,
+    const CurveSegment &seg)
+{
+    // if this segment is a reversed version of an existing
+    // segment, it cancels the existing segment out
+    CurveSegment reversed(seg.to, seg.from, seg.location);
+    if (out.count(reversed) == 0) {
+	out.insert(seg);
+    } else {
+	out.erase(reversed);
+    }
+}
+
+void
+set_append_segments_at_location(
+	std::multiset<CurveSegment> &out,
+	std::multiset<CurveSegment> &in,
+	CurveSegment::Location location)
+{
+    std::multiset<CurveSegment>::iterator i;
+    for (i = in.begin(); i != in.end(); ++i) {
+	if (i->location == location) {
+	    set_append_segment(out, *i);
+	}
+    }
+}
+
+std::multiset<CurveSegment>
+find_similar_segments(
+    std::multiset<CurveSegment> &set,
+    const CurveSegment &seg)
+{
+    std::multiset<CurveSegment> out;
+    std::multiset<CurveSegment>::iterator i;
+
+    for (i = set.find(seg); i != set.end(); ++i) {
+	out.insert(*i);
+    }
+
+    CurveSegment reversed(seg.to, seg.from, seg.location);
+    for (i = set.find(reversed); i != set.end(); ++i) {
+	out.insert(*i);
+    }
+    return out;
+}
+
+std::multiset<CurveSegment>
+get_op_segments(
+	std::multiset<CurveSegment> &curve1_segments,
+	std::multiset<CurveSegment> &curve2_segments,
+	op_type op)
+{
+    std::multiset<CurveSegment> out;
+
+    if (op == BOOLEAN_INTERSECT) {
+	set_append_segments_at_location(out, curve1_segments,
+		CurveSegment::INSIDE);
+
+	set_append_segments_at_location(out, curve2_segments,
+		CurveSegment::INSIDE);
+
+	std::multiset<CurveSegment> c1_boundary_segs;
+	set_append_segments_at_location(c1_boundary_segs, curve1_segments,
+		CurveSegment::BOUNDARY);
+
+	std::multiset<CurveSegment> c2_boundary_segs;
+	set_append_segments_at_location(c2_boundary_segs, curve2_segments,
+		CurveSegment::BOUNDARY);
+
+	std::multiset<CurveSegment>::iterator i;
+	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
+	    std::multiset<CurveSegment> curve1_matches =
+		find_similar_segments(c1_boundary_segs, *i);
+
+	    std::multiset<CurveSegment> curve2_matches =
+		find_similar_segments(c2_boundary_segs, *i);
+
+	    if (curve1_matches.size() > 1 || curve2_matches.size() > 1) {
+		continue;
+	    }
+	    if (curve1_matches.begin()->from == curve2_matches.begin()->from) {
+		out.insert(*i);
+	    }
+	}
+    } else if (op == BOOLEAN_DIFF) {
+	set_append_segments_at_location(out, curve1_segments,
+		CurveSegment::OUTSIDE);
+
+	set_append_segments_at_location(out, curve2_segments,
+		CurveSegment::INSIDE);
+
+	std::multiset<CurveSegment> c1_boundary_segs;
+	set_append_segments_at_location(c1_boundary_segs, curve1_segments,
+		CurveSegment::BOUNDARY);
+
+	std::multiset<CurveSegment> c2_boundary_segs;
+	set_append_segments_at_location(c2_boundary_segs, curve2_segments,
+		CurveSegment::BOUNDARY);
+
+	std::multiset<CurveSegment>::iterator i;
+	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
+	    std::multiset<CurveSegment> curve1_matches =
+		find_similar_segments(c1_boundary_segs, *i);
+
+	    std::multiset<CurveSegment> curve2_matches =
+		find_similar_segments(c2_boundary_segs, *i);
+
+	    if (curve1_matches.size() > 1) {
+		continue;
+	    }
+	    if (curve1_matches.begin()->from == curve2_matches.begin()->from ||
+		curve2_matches.size() > 1)
+	    {
+		out.insert(*i);
+	    }
+	}
+    }
+
+    return out;
+}
+
 std::vector<ON_Curve *>
 closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
 {
@@ -963,6 +1092,9 @@ closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
     std::multiset<CurveSegment> curve1_segments, curve2_segments;
     curve1_segments = make_segments(curve1_points, curve1, curve2);
     curve2_segments = make_segments(curve2_points, curve2, curve1);
+
+    std::multiset<CurveSegment> out_segments =
+	get_op_segments(curve1_segments, curve2_segments, op);
 
     return out;
 }
