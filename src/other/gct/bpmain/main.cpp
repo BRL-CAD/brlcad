@@ -46,7 +46,7 @@
 
 /* BRL-CAD libraries */
 /* needed to set uint32_t in ballpivoting.h */
-#include <brlcad/bu.h>
+#include "bu.h"
 
 /* Custom libraries */
 #include "gctcommon.h"

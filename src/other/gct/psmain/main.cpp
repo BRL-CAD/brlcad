@@ -42,7 +42,7 @@
 #include <vector>
 
 /* BRL-CAD libraries */
-#include <brlcad/bu.h>
+#include "bu.h"
 
 /* Custom libraries */
 #include "BRLCAD/BrlcadLoader.h"

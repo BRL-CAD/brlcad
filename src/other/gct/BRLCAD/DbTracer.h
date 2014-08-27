@@ -41,10 +41,10 @@
 
 // BRL-CAD libraries
 extern "C" {
-#include "brlcad/bu.h"
-#include "brlcad/vmath.h"
-#include "brlcad/raytrace.h"
-#include "brlcad/rtgeom.h"
+#include "bu.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "rtgeom.h"
 }
 
 // Local headers

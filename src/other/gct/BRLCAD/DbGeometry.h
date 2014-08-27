@@ -41,8 +41,8 @@
 
 // BRL-CAD headers
 extern "C" {
-#include "brlcad/bu.h"
-#include "brlcad/raytrace.h"
+#include "bu.h"
+#include "raytrace.h"
 }
 
 // Local headers

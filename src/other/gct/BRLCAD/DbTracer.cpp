@@ -190,7 +190,7 @@ namespace GeomConversion {
       VMOVE(m_ap.a_ray.r_pt, ray->point);
       VMOVE(m_ap.a_ray.r_dir, ray->direc);
       m_ap.a_ray_length = ray->length;
-      m_ap.a_uptr = (genptr_t) &(ray->results);
+      m_ap.a_uptr = (void *) &(ray->results);
       m_ap.a_x = ray->results.x;
       m_ap.a_y = ray->results.y;
     

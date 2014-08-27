@@ -45,12 +45,12 @@
 
 /* BRL-CAD libraries */
 extern "C" {
-#include "brlcad/vmath.h"
-#include "brlcad/nmg.h"
-#include "brlcad/rtgeom.h"
-#include "brlcad/bu.h"
-#include "brlcad/raytrace.h"
-#include "brlcad/db.h"
+#include "vmath.h"
+#include "nmg.h"
+#include "rtgeom.h"
+#include "bu.h"
+#include "raytrace.h"
+#include "db.h"
 }
 
 /* Interface headers */

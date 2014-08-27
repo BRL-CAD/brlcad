@@ -42,9 +42,9 @@
 
 /* BRL-CAD libraries */
 extern "C" {
-#include <brlcad/vmath.h>
-#include <brlcad/raytrace.h>
-#include <brlcad/rtgeom.h>
+#include "vmath.h"
+#include "raytrace.h"
+#include "rtgeom.h"
 }
 
 /* Interface headers */

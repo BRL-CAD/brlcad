@@ -59,13 +59,13 @@
 
 #ifndef COMPILE_FOR_VSL
 extern "C" {
-#include "brlcad/common.h"
-#include "brlcad/bu.h"
-#include "brlcad/vmath.h"
-#include "brlcad/bn.h"
-#include "brlcad/raytrace.h"
-#include "brlcad/rtgeom.h"
-#include "brlcad/wdb.h"
+#include "common.h"
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
+#include "raytrace.h"
+#include "rtgeom.h"
+#include "wdb.h"
 }
 #endif
 

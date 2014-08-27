@@ -54,20 +54,20 @@ BrlcadTreeWalker::BrlcadTreeWalker(struct db_i* dbip,
       RT_CK_RESOURCE(m_resp);
     }
 
-  // XXX This dreck is necessary because the ft_plot() functions expect rt_g to be initialized
-  if (BU_LIST_FIRST(bu_list, &rt_g.rtg_vlfree) == 0)
+  // XXX This dreck is necessary because the ft_plot() functions expect RTG to be initialized
+  if (BU_LIST_FIRST(bu_list, &RTG.rtg_vlfree) == 0)
     {
       char *envflags;
       envflags = getenv("LIBRT_DEBUG");
       if (envflags)
 	{
-	  if (rt_g.debug)
+	  if (RTG.debug)
 	    bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application specified flags\n");
 	  else
-	    rt_g.debug = strtol(envflags, NULL, 0x10);
+	    RTG.debug = strtol(envflags, NULL, 0x10);
         }
 
-      BU_LIST_INIT(&rt_g.rtg_vlfree);
+      BU_LIST_INIT(&RTG.rtg_vlfree);
     }
 }
 
