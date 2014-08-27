@@ -175,7 +175,7 @@ BBNode::getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<BBNode *> &out)
 }
 
 int
-BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim) const
+BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, double within_distance_tol) const
 {
     BRNode *br;
     std::list<BRNode *> trims;
@@ -201,7 +201,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim) c
 		br = dynamic_cast<BRNode *>(*i);
 
 		/* skip if trim below */
-		if (br->m_node.m_max[1] + BREP_EDGE_MISS_TOLERANCE < uv[Y]) {
+		if (br->m_node.m_max[1] + within_distance_tol < uv[Y]) {
 		    continue;
 		}
 

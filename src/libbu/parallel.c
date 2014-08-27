@@ -250,6 +250,9 @@ bu_avail_cpus(void)
 #  endif
 
 
+    /*
+     * multithreading support for SunOS 5.X / Solaris 2.x
+     */
 #  if defined(_SC_NPROCESSORS_ONLN)
     /* SUNOS and linux (and now Mac 10.6+) */
     if (ncpu < 0) {
@@ -485,15 +488,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
     struct parallel_info *parent;
 
-    /*
-     * multithreading support for SunOS 5.X / Solaris 2.x
-     */
-#  if defined(SUNOS) && SUNOS >= 52
-    static int concurrency = 0; /* Max concurrency we have set */
-#  endif
-#  if (defined(SUNOS) && SUNOS >= 52) || defined(HAVE_PTHREAD_H)
     rt_thread_t thread;
-#  endif /* SUNOS */
 
     if (!func)
 	return; /* nothing to do */
@@ -582,13 +577,16 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
     nthreadc = 0;
 
     /* Give the thread system a hint... */
-    if (ncpu > concurrency) {
-	if (thr_setconcurrency(ncpu)) {
-	    bu_log("ERROR parallel.c/bu_parallel(): thr_setconcurrency(%d) failed\n",
-		   ncpu);
-	    /* Not much to do, lump it */
-	} else {
-	    concurrency = ncpu;
+    {
+	static int concurrency = 0; /* Max concurrency we have set */
+	if (ncpu > concurrency) {
+	    if (thr_setconcurrency(ncpu)) {
+		bu_log("ERROR parallel.c/bu_parallel(): thr_setconcurrency(%d) failed\n",
+		       ncpu);
+		/* Not much to do, lump it */
+	    } else {
+		concurrency = ncpu;
+	    }
 	}
     }
 

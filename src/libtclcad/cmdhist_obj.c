@@ -26,7 +26,6 @@
 #include "tcl.h"
 #include "bu/cmd.h"
 #include "tclcad.h"
-#include "tclcad_private.h"
 
 
 /* FIXME: this is apparently used by src/tclscripts/lib/Command.tcl so
@@ -125,6 +124,7 @@ int
 cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc == 1) {
 	/* get list of command history objects */
@@ -150,7 +150,9 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **a
 	return TCL_OK;
     }
 
-    tclcad_eval(interp, "helplib ch_open", NULL);
+    bu_vls_printf(&vls, "helplib ch_open");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
 }
 

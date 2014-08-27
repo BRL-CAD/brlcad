@@ -38,7 +38,6 @@
 
 #include "bu.h"
 #include "tclcad.h"
-#include "tclcad_private.h"
 
 #define MAX_BUF 2048
 
@@ -145,6 +144,7 @@ void
 tclcad_auto_path(Tcl_Interp *interp)
 {
     struct bu_vls auto_path = BU_VLS_INIT_ZERO;
+    struct bu_vls lappend = BU_VLS_INIT_ZERO;
     const char *library_path = NULL;
 
     struct bu_vls root_buf = BU_VLS_INIT_ZERO;
@@ -197,7 +197,8 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
 
     /* make sure tcl_library path is in the auto_path */
-    tclcad_eval(interp, "set tcl_library", NULL);
+    snprintf(buffer, MAX_BUF, "set tcl_library");
+    Tcl_Eval(interp, buffer);
     bu_vls_strncat(&auto_path, Tcl_GetStringResult(interp), MAX_BUF);
 
     /* get string of invocation binary */
@@ -336,7 +337,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 	/* make sure it exists before appending */
 	if (bu_file_exists(srcpath, NULL)) {
 	    /*		printf("APPENDING: %s\n", srcpath); */
-            tclcad_eval(interp, "lappend auto_path", srcpath);
+	    bu_vls_sprintf(&lappend, "lappend auto_path {%s}", srcpath);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&lappend));
 	} else {
 	    /*		printf("NOT APPENDING: %s\n", srcpath); */
 	    continue;
@@ -347,7 +349,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    snprintf(buffer, MAX_BUF, "%s%cinit.tcl", srcpath, BU_DIR_SEPARATOR);
 	    if (bu_file_exists(buffer, NULL)) {
 		/* this really sets it */
-		if (tclcad_eval(interp, "set tcl_library", srcpath)) {
+		snprintf(buffer, MAX_BUF, "set tcl_library {%s}", srcpath);
+		if (Tcl_Eval(interp, buffer)) {
 		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_init_tcl=1;
@@ -359,7 +362,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		library_path = getenv("TCL_LIBRARY");
 		if (!library_path) {
 		    /* this REALLY sets it */
-		    if (tclcad_eval(interp, "set env(TCL_LIBRARY)", srcpath)) {
+		    snprintf(buffer, MAX_BUF, "set env(TCL_LIBRARY) {%s}", srcpath);
+		    if (Tcl_Eval(interp, buffer)) {
 			bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		    }
 		}
@@ -371,7 +375,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    snprintf(buffer, MAX_BUF, "%s%ctk.tcl", srcpath, BU_DIR_SEPARATOR);
 	    if (bu_file_exists(buffer, NULL)) {
 		/* this really sets it */
-		if (tclcad_eval(interp, "set tk_library", srcpath)) {
+		snprintf(buffer, MAX_BUF, "set tk_library {%s}", srcpath);
+		if (Tcl_Eval(interp, buffer)) {
 		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_tk_tcl=1;
@@ -384,7 +389,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    snprintf(buffer, MAX_BUF, "%s%citcl.tcl", srcpath, BU_DIR_SEPARATOR);
 	    if (bu_file_exists(buffer, NULL)) {
 		/* this really sets it */
-		if (tclcad_eval(interp, "set env(ITCL_LIBRARY)", srcpath)) {
+		snprintf(buffer, MAX_BUF, "set env(ITCL_LIBRARY) {%s}", srcpath);
+		if (Tcl_Eval(interp, buffer)) {
 		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_itcl_tcl=1;
@@ -397,7 +403,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    snprintf(buffer, MAX_BUF, "%s%citk.tcl", srcpath, BU_DIR_SEPARATOR);
 	    if (bu_file_exists(buffer, NULL)) {
 		/* this really sets it */
-		if (tclcad_eval(interp, "set env(ITK_LIBRARY)", srcpath)) {
+		snprintf(buffer, MAX_BUF, "set env(ITK_LIBRARY) {%s}", srcpath);
+		if (Tcl_Eval(interp, buffer)) {
 		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_itk_tcl=1;
@@ -415,6 +422,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     bu_vls_free(&iwidgets);
 #endif
     bu_vls_free(&auto_path);
+    bu_vls_free(&lappend);
     bu_vls_free(&root_buf);
 
     return;

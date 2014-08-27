@@ -24,11 +24,11 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-step</emphasis>
+<para><command>g-step</command>
 converts the specified objects of the BRL-CAD database,
-<emphasis remap='I'>database.g,</emphasis>
+<emphasis remap='I'>database.g</emphasis>,
 to a STEP AP203 file,
-<emphasis remap='I'>output_file.stp.</emphasis></para>
+<emphasis remap='I'>output_file.stp</emphasis>.</para>
 
 
 <para>The following options are recognized</para>
@@ -63,7 +63,7 @@ to a STEP AP203 file,
 			<userinput>g-step -o m35.stp m35.g</userinput>
 		</para>
 		<para>
-			Writes out the full hierarchy of the .g file to m35.stp.
+			Writes out the full hierarchy of the .g file to m35.stp .
 		</para>
 	</example>
 
@@ -86,7 +86,7 @@ to a STEP AP203 file,
   <listitem>
 	  <para>
 		  <emphasis remap='I'>Recommended Practices for AP203</emphasis>
-		  PDES, Inc. Industry consortium, April 1998.
+		  PDES, Inc. Industry consortium, April 1998
 	  </para>
   </listitem>
   </varlistentry>
@@ -95,7 +95,7 @@ to a STEP AP203 file,
   <listitem>
 	  <para>
 		  <emphasis remap='I'>Usage Guide for the STEP PDM Schema V1.2</emphasis>
-		  PDM Implementer Forum, Release 4.3, January 2002.
+		  PDM Implementer Forum, Release 4.3, January 2002
 	  </para>
   </listitem>
   </varlistentry>

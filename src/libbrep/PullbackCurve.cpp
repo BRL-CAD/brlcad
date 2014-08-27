@@ -46,6 +46,14 @@
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001
 
+#define _DEBUG_TESTING_
+#ifdef _DEBUG_TESTING_
+bool _debug_print_ = false;
+bool _debug_print_mged2d_points_ = true;
+bool _debug_print_mged3d_points_ = false;
+int _debug_point_count_=0;
+#endif
+
 /* FIXME: duplicated with opennurbs_ext.cpp */
 class BSpline
 {
@@ -1920,13 +1928,13 @@ bool trim_GetClosestPoint3dFirstOrder(
 
 
 bool
-toUV(PBCData& data, ON_2dPoint& out_pt, double t, double knudge = 0.0)
+toUV(PBCData& data, ON_2dPoint& out_pt, double t, double knudge = 0.0, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE)
 {
     ON_3dPoint pointOnCurve = data.curve->PointAt(t);
     ON_3dPoint knudgedPointOnCurve = data.curve->PointAt(t + knudge);
 
     ON_2dPoint uv;
-    if (data.surftree->getSurfacePoint((const ON_3dPoint&)pointOnCurve, uv, (const ON_3dPoint&)knudgedPointOnCurve, BREP_EDGE_MISS_TOLERANCE) > 0) {
+    if (data.surftree->getSurfacePoint((const ON_3dPoint&)pointOnCurve, uv, (const ON_3dPoint&)knudgedPointOnCurve, within_distance_tol) > 0) {
 	out_pt.Set(uv.x, uv.y);
 	return true;
     } else {
@@ -2394,7 +2402,9 @@ IsAtSingularity(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
 ON_2dPointArray *
 pullback_samples(PBCData* data,
 		 double t,
-		 double s)
+		 double s,
+		 double same_point_tol,
+		 double within_distance_tol)
 {
     if (!data)
 	return NULL;
@@ -2443,14 +2453,14 @@ pullback_samples(PBCData* data,
 		for (int j = 1; j < samplesperknotinterval; j++) {
 		    p = curve->PointAt(knots[i - 1] + j * delta);
 		    p3d = ON_3dPoint::UnsetPoint;
-		    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,BREP_SAME_POINT_TOLERANCE,BREP_EDGE_MISS_TOLERANCE)) {
+		    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,same_point_tol,within_distance_tol)) {
 			samples->Append(pt);
 		    }
 		}
 	    }
 	    p = curve->PointAt(knots[i]);
 	    p3d = ON_3dPoint::UnsetPoint;
-	    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,BREP_SAME_POINT_TOLERANCE,BREP_EDGE_MISS_TOLERANCE)) {
+	    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,same_point_tol,within_distance_tol)) {
 		samples->Append(pt);
 	    }
 	} else {
@@ -2459,13 +2469,13 @@ pullback_samples(PBCData* data,
 		for (int j = 1; j < samplesperknotinterval; j++) {
 		    p = curve->PointAt(knots[i - 1] + j * delta);
 		    p3d = ON_3dPoint::UnsetPoint;
-		    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,BREP_SAME_POINT_TOLERANCE,BREP_EDGE_MISS_TOLERANCE)) {
+		    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,same_point_tol,within_distance_tol)) {
 			samples->Append(pt);
 		    }
 		}
 		p = curve->PointAt(knots[i]);
 		p3d = ON_3dPoint::UnsetPoint;
-		if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,BREP_SAME_POINT_TOLERANCE,BREP_EDGE_MISS_TOLERANCE)) {
+		if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,same_point_tol,within_distance_tol)) {
 		    samples->Append(pt);
 		}
 	    }
@@ -2729,7 +2739,7 @@ SwapUVSeamPoint(const ON_Surface *surf, ON_2dPoint &p, int hint)
  *  Find where Pullback of 3d curve crosses closed seam of surface UV
  */
 bool
-Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double UNUSED(offset),double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol)
+Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double UNUSED(offset),double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol,double same_point_tol,double within_distance_tol)
 {
     bool rc = true;
     const ON_Surface *surf = data.surf;
@@ -2750,8 +2760,8 @@ Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double UNUSED(offset)
 	ON_3dPoint check_pt_3d = ON_3dPoint::UnsetPoint;
 	int udir=0;
 	int vdir=0;
-	if (surface_GetClosestPoint3dFirstOrder(surf,p0_3d,p0_2d,check_pt_3d,p0_distance,0,BREP_SAME_POINT_TOLERANCE,BREP_EDGE_MISS_TOLERANCE) &&
-		surface_GetClosestPoint3dFirstOrder(surf,p1_3d,p1_2d,check_pt_3d,p1_distance,0,BREP_SAME_POINT_TOLERANCE,BREP_EDGE_MISS_TOLERANCE) ) {
+	if (surface_GetClosestPoint3dFirstOrder(surf,p0_3d,p0_2d,check_pt_3d,p0_distance,0,same_point_tol,within_distance_tol) &&
+		surface_GetClosestPoint3dFirstOrder(surf,p1_3d,p1_2d,check_pt_3d,p1_distance,0,same_point_tol,within_distance_tol) ) {
 	    if (ConsecutivePointsCrossClosedSeam(surf,p0_2d,p1_2d,udir,vdir,tol)) {
 		ON_2dPoint p_2d;
 		//lets check to see if p0 || p1 are already on a seam
@@ -2786,7 +2796,7 @@ Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double UNUSED(offset)
 			    ON_3dPoint p_3d = data.curve->PointAt(t);
 			    double distance;
 
-			    if (surface_GetClosestPoint3dFirstOrder(surf,p_3d,p_2d,check_pt_3d,distance,0,BREP_SAME_POINT_TOLERANCE,BREP_EDGE_MISS_TOLERANCE)) {
+			    if (surface_GetClosestPoint3dFirstOrder(surf,p_3d,p_2d,check_pt_3d,distance,0,same_point_tol,within_distance_tol)) {
 				if ((seam=IsAtSeam(surf,p_2d, tol)) > 0) {
 				    ForceToClosestSeam(surf, p_2d, tol);
 				    from = to = p_2d;
@@ -2922,7 +2932,9 @@ FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,
 void
 pullback_samples_from_closed_surface(PBCData* data,
 		 double t,
-		 double s)
+		 double s,
+		 double same_point_tol,
+		 double within_distance_tol)
 {
     if (!data)
 	return;
@@ -2983,7 +2995,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 	    ON_3dPoint p = curve->PointAt(curr_t);
 	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
 	    double distance;
-	    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,BREP_SAME_POINT_TOLERANCE,BREP_EDGE_MISS_TOLERANCE)) {
+	    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,same_point_tol,within_distance_tol)) {
 		if (IsAtSeam(surf,pt,PBC_SEAM_TOL) > 0) {
 		    ForceToClosestSeam(surf, pt, PBC_SEAM_TOL);
 		}
@@ -3030,7 +3042,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 		    } else if (data->curve->IsClosed()) {
 			ON_2dPoint from,to;
 			double seam_t;
-			if (Find3DCurveSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to,PBC_TOL)) {
+			if (Find3DCurveSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to,PBC_TOL,same_point_tol,within_distance_tol)) {
 			    samples->Append(from);
 			    data->segments.push_back(samples);
 			    samples= new ON_2dPointArray();
@@ -3089,7 +3101,9 @@ PBCData *
 pullback_samples(const ON_Surface* surf,
 		 const ON_Curve* curve,
 		 double tolerance,
-		 double flatness)
+		 double flatness,
+		 double same_point_tol,
+		 double within_distance_tol)
 {
     if (!surf)
 	return NULL;
@@ -3111,10 +3125,10 @@ pullback_samples(const ON_Surface* surf,
 	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
 	    double distance;
 	    int quadrant = 0; // optional - 0 = default, 1 from NE quadrant, 2 from NW quadrant, 3 from SW quadrant, 4 from SE quadrant
-	    if (surface_GetClosestPoint3dFirstOrder(surf,p,uv,p3d,distance,quadrant,BREP_SAME_POINT_TOLERANCE,BREP_EDGE_MISS_TOLERANCE)) {
+	    if (surface_GetClosestPoint3dFirstOrder(surf,p,uv,p3d,distance,quadrant,same_point_tol,within_distance_tol)) {
 		if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
-		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0);
-		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax);
+		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0,same_point_tol,within_distance_tol);
+		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax,same_point_tol,within_distance_tol);
 		    if (samples1 != NULL) {
 			data->segments.push_back(samples1);
 		    }
@@ -3122,7 +3136,7 @@ pullback_samples(const ON_Surface* surf,
 			data->segments.push_back(samples2);
 		    }
 		} else {
-		    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
+		    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax,same_point_tol,within_distance_tol);
 		    if (samples != NULL) {
 			data->segments.push_back(samples);
 		    }
@@ -3133,10 +3147,10 @@ pullback_samples(const ON_Surface* surf,
 		return NULL;
 	    }
 	} else {
-	    pullback_samples_from_closed_surface(data, tmin, tmax);
+	    pullback_samples_from_closed_surface(data, tmin, tmax,same_point_tol,within_distance_tol);
 	}
     } else {
-	ON_2dPointArray *samples = pullback_samples(data, tmin, tmax);
+	ON_2dPointArray *samples = pullback_samples(data, tmin, tmax,same_point_tol,within_distance_tol);
 	if (samples != NULL) {
 	    data->segments.push_back(samples);
 	}
