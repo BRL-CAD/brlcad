@@ -34,7 +34,7 @@
 
 
 <refsect1 xml:id='examples'><title>EXAMPLE</title>
-<para><emphasis remap='B'><command>g2asc</command></emphasis> <emphasis remap='I'>file.g file.asc</emphasis></para>
+<para>g2asc <emphasis remap='I'>file.g file.asc</emphasis></para>
   <blockquote remap='RS'>
   <para>On the local machine, convert the mged databases to ASCII using <emphasis remap='I'><command>g2asc</command></emphasis> .
   </para></blockquote> <!-- remap='RE' -->
@@ -44,7 +44,7 @@
   <para>Transfer the converted databases to the remote machine.
   </para></blockquote> <!-- remap='RE' -->
 
-<para>ssh remote "<emphasis remap='B'><command>asc2g</command></emphasis> <emphasis remap='I'>file.asc file.g</emphasis>"</para>
+<para>ssh remote "asc2g <emphasis remap='I'>file.asc file.g</emphasis>"</para>
   <blockquote remap='RS'>
   <para>On the remote machine, convert the files back to the binary representation for that machine using <emphasis remap='I'><command>asc2g</command></emphasis> .
   </para></blockquote> <!-- remap='RE' -->

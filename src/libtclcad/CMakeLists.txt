@@ -21,7 +21,6 @@ set(LIBTCLCAD_SRCS
   tclcad.c
   tclcadAutoPath.c
   tclcad_obj.c
-  tclcad_eval.c
   tkImgFmtPIX.c
   cmdhist_obj.c
   )
