@@ -808,6 +808,29 @@ CurvePoint::PointCurveLocation(ON_2dPoint pt, ON_Curve *curve)
     return CurvePoint::INSIDE;
 }
 
+class CurveSegment {
+public:
+    CurvePoint from, to;
+    enum Location {
+	BOUNDARY,
+	INSIDE,
+	OUTSIDE
+    } location;
+
+    CurveSegment(CurvePoint f, CurvePoint t, CurveSegment::Location l)
+	: from(f), to(t), location(l)
+    {
+    }
+
+    bool
+    operator<(const CurveSegment &other) const
+    {
+	const CurvePoint &min = std::min(from, to);
+	const CurvePoint &other_min = std::min(other.from, other.to);
+	return min < other_min;
+    }
+};
+
 #define LOOP_DIRECTION_CCW  1
 #define LOOP_DIRECTION_CW  -1
 #define LOOP_DIRECTION_NONE 0
@@ -835,6 +858,51 @@ add_point_to_set(std::multiset<CurvePoint> &set, CurvePoint pt)
     if (set.count(pt) < 2) {
 	set.insert(pt);
     }
+}
+
+std::multiset<CurveSegment>
+make_segments(
+    std::multiset<CurvePoint> &curve1_points,
+    ON_Curve *curve1,
+    ON_Curve *curve2)
+{
+    std::multiset<CurveSegment> out;
+
+    std::multiset<CurvePoint>::iterator first = curve1_points.begin();
+    std::multiset<CurvePoint>::iterator curr = first;
+    std::multiset<CurvePoint>::iterator next = curr++;
+
+    for (; curr != curve1_points.end(); ++curr, ++next) {
+	CurvePoint from = *curr;
+	CurvePoint to = (next == curve1_points.end()) ? *first : *next;
+	CurveSegment new_seg(from, to, CurveSegment::BOUNDARY);
+
+	if (from.location == CurvePoint::BOUNDARY &&
+	      to.location == CurvePoint::BOUNDARY)
+	{
+	    ON_2dPoint seg_midpt = curve1->PointAt(
+		    ON_Interval(from.curve_t, to.curve_t).Mid());
+
+	    CurvePoint::Location midpt_location =
+		CurvePoint::PointCurveLocation(seg_midpt, curve2);
+
+	    if (midpt_location == CurvePoint::INSIDE) {
+		new_seg.location = CurveSegment::INSIDE;
+	    } else if (midpt_location == CurvePoint::OUTSIDE) {
+		new_seg.location = CurveSegment::OUTSIDE;
+	    }
+	} else if (from.location == CurvePoint::INSIDE ||
+		    to.location == CurvePoint::INSIDE)
+	{
+	    new_seg.location = CurveSegment::INSIDE;
+	} else if (from.location == CurvePoint::OUTSIDE ||
+		     to.location == CurvePoint::OUTSIDE)
+	{
+	    new_seg.location = CurveSegment::OUTSIDE;
+	}
+	out.insert(new_seg);
+    }
+    return out;
 }
 
 std::vector<ON_Curve *>
@@ -891,6 +959,10 @@ closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
 			x_events[i].m_B[0], CurvePoint::BOUNDARY));
 	}
     }
+
+    std::multiset<CurveSegment> curve1_segments, curve2_segments;
+    curve1_segments = make_segments(curve1_points, curve1, curve2);
+    curve2_segments = make_segments(curve2_points, curve2, curve1);
 
     return out;
 }
