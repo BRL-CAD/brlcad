@@ -35,7 +35,7 @@
 
 	<refsection xml:id='description'>
 		<title>DESCRIPTION</title>
-		<para><emphasis remap='I'>g-tankill</emphasis>
+		<para><command>g-tankill</command>
 			converts the specified
 			<emphasis remap='I'>object(s)</emphasis>
 			from a BRL-CAD
@@ -84,11 +84,11 @@
 		</para>
 	</refsection>
 
-	<refsection xml:id='example'><title>EXAMPLE</title>
-		<synopsis>
-			$ <emphasis remap='I'>g-tankill -o sample.tankill sample.g sample_object</emphasis>
-		</synopsis>
-	</refsection>
+<refsection xml:id='example'><title>EXAMPLE</title>
+<synopsis>
+$ g-tankill -o <emphasis remap='I'>sample.tankill sample.g sample_object</emphasis>
+</synopsis>
+</refsection>
 
 	<refsection xml:id='diagnostics'><title>DIAGNOSTICS</title>
 		<para>Error messages are intended to be self-explanatory.</para>
