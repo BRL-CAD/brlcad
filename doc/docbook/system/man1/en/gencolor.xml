@@ -24,7 +24,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Gencolor</emphasis>
+<para><command>gencolor</command>
 repeats a pattern of up to 8192 8-bit values on its standard output.
 The values, which range from 0 to 255, are taken either from the command
 line, or in binary from its standard input.  The
@@ -38,9 +38,8 @@ will refuse to write its output to a window; you must redirect the output to a f
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<para><userinput>gencolor -r512 0 255 0 &gt; foo.pix</userinput>
-<!-- .br -->
-Will output 512 "green" pixels</para>
+<para>gencolor -r512 0 255 0 &gt; foo.pix</para>
+<para>Will output 512 "green" pixels.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>

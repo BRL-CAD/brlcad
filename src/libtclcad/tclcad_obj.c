@@ -1362,10 +1362,15 @@ screen_to_view_y(struct dm *dmp, fastf_t y)
 int
 Go_Init(Tcl_Interp *interp)
 {
+    struct bu_vls version_str;
+
     if (library_initialized(0))
 	return TCL_OK;
 
-    tclcad_eval(interp, "set brlcad_version", brlcad_version());
+    bu_vls_init(&version_str);
+    bu_vls_printf(&version_str, "set brlcad_version \"%s\"", brlcad_version());
+    (void)Tcl_Eval(interp, bu_vls_addr(&version_str));
+    bu_vls_free(&version_str);
 
     /*XXX Use of brlcad_interp is temporary */
     brlcad_interp = interp;
@@ -6099,8 +6104,12 @@ to_idle_mode(struct ged *gedp,
     if (mode != TCLCAD_POLY_CONTOUR_MODE ||
 	gdvp->gdv_view->gv_data_polygons.gdps_cflag == 0)
     {
-        tclcad_eval_var(current_top->to_interp, 0, "bind",
-                bu_vls_addr(&gdvp->gdv_dmp->dm_pathName), "<Motion>", "", NULL);
+	struct bu_vls bindings = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&bindings, "bind %s <Motion> {}",
+		      bu_vls_addr(&gdvp->gdv_dmp->dm_pathName));
+	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	bu_vls_free(&bindings);
     }
 
     if (gdvp->gdv_view->gv_grid.ggs_snap &&
@@ -6116,7 +6125,7 @@ to_idle_mode(struct ged *gedp,
 	ged_grid(gedp, 2, (const char **)av);
 
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), NULL);
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
 	}
 
 	need_refresh = 1;
@@ -6136,10 +6145,14 @@ to_idle_mode(struct ged *gedp,
 HIDDEN int
 to_is_viewable(struct ged_dm_view *gdvp)
 {
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     Tcl_Obj *result_obj;
     int result_int;
 
-    if (tclcad_eval(current_top->to_interp, "winfo viewable", bu_vls_addr(&gdvp->gdv_dmp->dm_pathName)) != TCL_OK) {
+    bu_vls_printf(&vls, "winfo viewable %s", bu_vls_addr(&gdvp->gdv_dmp->dm_pathName));
+
+    if (Tcl_Eval(current_top->to_interp, bu_vls_addr(&vls)) != TCL_OK) {
+	bu_vls_free(&vls);
 	return 0;
     }
 
@@ -6147,9 +6160,11 @@ to_is_viewable(struct ged_dm_view *gdvp)
     Tcl_GetIntFromObj(current_top->to_interp, result_obj, &result_int);
 
     if (!result_int) {
+	bu_vls_free(&vls);
 	return 0;
     }
 
+    bu_vls_free(&vls);
     return 1;
 }
 
@@ -6759,7 +6774,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
     }
 
     /* need to tell front-end that we've modified the db */
-    tclcad_eval(current_top->to_interp, "$::ArcherCore::application setSave", NULL);
+    Tcl_Eval(current_top->to_interp, "$::ArcherCore::application setSave");
 
     gdvp->gdv_view->gv_prevMouseX = screen_end[X];
     gdvp->gdv_view->gv_prevMouseY = screen_end[Y];
@@ -6874,7 +6889,7 @@ to_mouse_constrain_rot(struct ged *gedp,
 
     if (ret == GED_OK) {
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), NULL);
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
 	}
 
 	to_refresh_view(gdvp);
@@ -6986,7 +7001,7 @@ to_mouse_constrain_trans(struct ged *gedp,
 
     if (ret == GED_OK) {
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), NULL);
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
 	}
 
 	to_refresh_view(gdvp);
@@ -7999,7 +8014,12 @@ to_mouse_orotate(struct ged *gedp,
     gedp->ged_gvp = gdvp->gdv_view;
 
     if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
-	tclcad_eval_var(current_top->to_interp, 0, bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback), "orotate", bu_vls_addr(&rot_x_vls), bu_vls_addr(&rot_y_vls), bu_vls_addr(&rot_z_vls), NULL);
+	struct bu_vls tcl_cmd;
+
+	bu_vls_init(&tcl_cmd);
+	bu_vls_printf(&tcl_cmd, "%s orotate %s %s %s", bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback), bu_vls_addr(&rot_x_vls), bu_vls_addr(&rot_y_vls), bu_vls_addr(&rot_z_vls));
+	Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
+	bu_vls_free(&tcl_cmd);
     } else {
 	char *av[6];
 
@@ -13152,7 +13172,6 @@ to_dm_func(struct ged *gedp,
 
 /*************************** Local Utility Functions ***************************/
 
-
 HIDDEN void
 to_fbs_callback(void *clientData)
 {
@@ -13495,14 +13514,26 @@ to_rt_end_callback_internal(int aborted)
 HIDDEN void
 to_output_handler(struct ged *gedp, char *line)
 {
-    const char *script;
+    Tcl_DString tcl_command;
+    Tcl_Obj *saved_result;
+
+    Tcl_DStringInit(&tcl_command);
 
     if (gedp->ged_output_script != (char *)0)
-        script = gedp->ged_output_script;
+	(void)Tcl_DStringAppend(&tcl_command, gedp->ged_output_script,
+	    strlen(gedp->ged_output_script));
     else
-        script = "puts";
+	(void)Tcl_DStringAppendElement(&tcl_command, "puts");
 
-    tclcad_eval_quiet(current_top->to_interp, script, line);
+    saved_result = Tcl_GetObjResult(current_top->to_interp);
+    Tcl_IncrRefCount(saved_result);
+
+    (void)Tcl_DStringAppendElement(&tcl_command, line);
+    Tcl_Eval(current_top->to_interp, Tcl_DStringValue(&tcl_command));
+    Tcl_DStringFree(&tcl_command);
+
+    Tcl_SetObjResult(current_top->to_interp, saved_result);
+    Tcl_DecrRefCount(saved_result);
 }
 
 HIDDEN int
