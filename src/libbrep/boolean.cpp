@@ -899,7 +899,7 @@ make_segments(
 
     std::multiset<CurvePoint>::iterator first = curve1_points.begin();
     std::multiset<CurvePoint>::iterator curr = first;
-    std::multiset<CurvePoint>::iterator next = curr++;
+    std::multiset<CurvePoint>::iterator next = ++curve1_points.begin();
 
     for (; curr != curve1_points.end(); ++curr, ++next) {
 	CurvePoint from = *curr;
