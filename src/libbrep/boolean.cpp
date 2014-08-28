@@ -797,6 +797,12 @@ public:
     {
 	return ON_NearZero(pt.DistanceTo(other.pt), INTERSECTION_TOL);
     }
+
+    bool
+    operator!=(const CurvePoint &other) const
+    {
+	return !ON_NearZero(pt.DistanceTo(other.pt), INTERSECTION_TOL);
+    }
 };
 
 CurvePoint::Location
@@ -837,6 +843,12 @@ public:
     Reverse(void)
     {
 	std::swap(from, to);
+    }
+
+    ON_Curve *
+    Curve(void) const
+    {
+	return sub_curve(orig_curve, from.curve_t, to.curve_t);
     }
 
     bool
@@ -1049,6 +1061,72 @@ get_op_segments(
 }
 
 std::vector<ON_Curve *>
+construct_loops_from_segments(
+    std::multiset<CurveSegment> &segments)
+{
+    std::vector<ON_Curve *> out;
+
+    while (!segments.empty()) {
+	std::vector<std::multiset<CurveSegment>::iterator> loop_segs;
+	std::multiset<CurvePoint> visited_points;
+
+	std::multiset<CurveSegment>::iterator curr_seg = segments.begin();
+	loop_segs.push_back(curr_seg);
+	visited_points.insert(curr_seg->from);
+	visited_points.insert(curr_seg->to);
+
+	bool closed_curve = false;
+	while (!closed_curve) {
+	    // look for a segment that connects to the previous one
+	    CurvePoint last_pt = curr_seg->to;
+	    for (; curr_seg != segments.end(); ++curr_seg) {
+		if (curr_seg->from == last_pt) {
+		    break;
+		}
+	    }
+
+	    if (curr_seg == segments.end()) {
+		// no segment connects to the prev one
+		break;
+	    } else {
+		// Extend our loop with the joining segment.
+		// If we've visited its endpoint before, then the loop
+		// is now closed.
+		loop_segs.push_back(curr_seg);
+		visited_points.insert(curr_seg->to);
+		closed_curve = (visited_points.count(curr_seg->to) > 1);
+	    }
+	}
+
+	if (closed_curve) {
+	    // find the segment the closing segment connected to (it
+	    // may not be the first segment)
+	    size_t i;
+	    for (i = 0; i < loop_segs.size(); ++i) {
+		if (loop_segs[i]->from != loop_segs.back()->to) {
+		    continue;
+		}
+	    }
+	    // Form a curve from the closed chain of segments.
+	    // Remove the used segments from the available set.
+	    ON_PolyCurve *pcurve = new ON_PolyCurve();
+	    for (; i < loop_segs.size(); ++i) {
+		append_to_polycurve(loop_segs[i]->Curve(), *pcurve);
+		segments.erase(loop_segs[i]);
+	    }
+	    out.push_back(pcurve);
+	} else {
+	    // couldn't join to the last segment, discard it
+	    segments.erase(loop_segs.back());
+	    bu_log("construct_loops_from_segments: found unconnected segment\n");
+	}
+	loop_segs.clear();
+	visited_points.clear();
+    }
+    return out;
+}
+
+std::vector<ON_Curve *>
 closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
 {
     std::vector<ON_Curve *> out;
@@ -1110,7 +1188,7 @@ closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
     std::multiset<CurveSegment> out_segments =
 	get_op_segments(curve1_segments, curve2_segments, op);
 
-    return out;
+    return construct_loops_from_segments(out_segments);
 }
 
 std::vector<ON_Curve *>
