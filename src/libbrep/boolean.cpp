@@ -1140,9 +1140,9 @@ closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
     // set curve directions based on operation
     int curve1_dir, curve2_dir;
 
-    curve1_dir = curve2_dir = LOOP_DIRECTION_CW;
+    curve1_dir = curve2_dir = LOOP_DIRECTION_CCW;
     if (op == BOOLEAN_DIFF) {
-	curve2_dir = LOOP_DIRECTION_CCW;
+	curve2_dir = LOOP_DIRECTION_CW;
     }
 
     if (!set_closed_curve_direction(curve1, curve1_dir) ||
