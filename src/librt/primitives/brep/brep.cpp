@@ -4436,7 +4436,7 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	bool ok = model.Write(archive, 4, "export5", &err);
 	if (ok) {
 	    void *archive_cp = archive.CreateCopy();
-	    char *brep64 = bu_b64_encode_block((const char *)archive_cp, archive.Size());
+	    signed char *brep64 = bu_b64_encode_block((const signed char *)archive_cp, archive.Size());
 	    bu_vls_printf(logstr, " \"%s\"", brep64);
 	    bu_free(archive_cp, "free archive copy");
 	    bu_free(brep64, "free encoded brep string");
@@ -4450,10 +4450,10 @@ int
 rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_brep_internal *bi = (struct rt_brep_internal *)intern->idb_ptr;
-    char *decoded;
+    signed char *decoded;
     ONX_Model model;
     if (argc == 1 && argv[0]) {
-	int decoded_size = bu_b64_decode(&decoded, argv[0]);
+	int decoded_size = bu_b64_decode(&decoded, (const signed char *)argv[0]);
 	RT_MemoryArchive archive(decoded, decoded_size);
 	ON_wString wonstr;
 	ON_TextLog dump(wonstr);

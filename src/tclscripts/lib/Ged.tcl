@@ -914,6 +914,8 @@ package provide cadwidgets::Ged 1.0
 	method init_button_no_op_prot {{_button 1}}
 	method measure_line_erase {}
 	method multi_pane {args}
+	method hide_view {args}
+	method pane_hide_view {_pane args}
 	method new_view {args}
 	method toggle_multi_pane {}
     }
@@ -6011,6 +6013,21 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
+::itcl::body cadwidgets::Ged::hide_view {args} {
+    set len [llength $args]
+    if {$len == 0} {
+	return [eval $mGed hide_view $itk_component($itk_option(-pane)) $args]
+    }
+
+    foreach dm {ur ul ll lr} {
+	eval $mGed hide_view $itk_component($dm) $args
+    }
+}
+
+::itcl::body cadwidgets::Ged::pane_hide_view {_pane args} {
+    eval $mGed hide_view $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::new_view {args} {
     eval $mGed new_view $args
 }
@@ -6024,18 +6041,34 @@ package provide cadwidgets::Ged 1.0
 	    ul {
 		iwidgets::Panedwindow::hide lower
 		$itk_component(upw) hide urp
+		pane_hide_view ul 0
+		pane_hide_view ur 1
+		pane_hide_view ll 1
+		pane_hide_view lr 1
 	    }
 	    ur {
 		iwidgets::Panedwindow::hide lower
 		$itk_component(upw) hide ulp
+		pane_hide_view ur 0
+		pane_hide_view ul 1
+		pane_hide_view ll 1
+		pane_hide_view lr 1
 	    }
 	    ll {
 		iwidgets::Panedwindow::hide upper
 		$itk_component(lpw) hide lrp
+		pane_hide_view ll 0
+		pane_hide_view lr 1
+		pane_hide_view ul 1
+		pane_hide_view ur 1
 	    }
 	    lr {
 		iwidgets::Panedwindow::hide upper
 		$itk_component(lpw) hide llp
+		pane_hide_view lr 0
+		pane_hide_view ll 1
+		pane_hide_view ul 1
+		pane_hide_view ur 1
 	    }
 	}
     } else {
@@ -6060,6 +6093,8 @@ package provide cadwidgets::Ged 1.0
 		$itk_component(lpw) show llp
 	    }
 	}
+
+	hide_view 1
     }
 }
 

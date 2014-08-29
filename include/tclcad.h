@@ -96,6 +96,7 @@ struct ged_dm_view {
     struct dm			*gdv_dmp;
     struct fbserv_obj		gdv_fbs;
     struct ged_obj		*gdv_gop;
+    int	   			gdv_hide_view;
 };
 
 struct ged_obj {
