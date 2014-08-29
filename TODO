@@ -55,6 +55,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* geometry compiler
+
 * BU_SETJUMP/BU_UNSETJUMP into macros
 
 * convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
