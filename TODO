@@ -55,6 +55,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* need ability to report the smallest feature in a given hierarchy
+  (smallest edge?) and/or largest error in a given boundary model
+  (largest edge gap or distance between two points that should be
+  coincident).
+
 * geometry compiler
 
 * BU_SETJUMP/BU_UNSETJUMP into macros
