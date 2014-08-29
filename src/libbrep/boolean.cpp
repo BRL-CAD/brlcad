@@ -913,9 +913,9 @@ make_segments(
     std::multiset<CurvePoint>::iterator curr = first;
     std::multiset<CurvePoint>::iterator next = ++curve1_points.begin();
 
-    for (; curr != curve1_points.end(); ++curr, ++next) {
+    for (; next != curve1_points.end(); ++curr, ++next) {
 	CurvePoint from = *curr;
-	CurvePoint to = (next == curve1_points.end()) ? *first : *next;
+	CurvePoint to = *next;
 	CurveSegment new_seg(curve1, from, to, CurveSegment::BOUNDARY);
 
 	if (from.location == CurvePoint::BOUNDARY &&
@@ -1087,12 +1087,12 @@ construct_loops_from_segments(
 	visited_points.insert(curr_seg->from);
 	visited_points.insert(curr_seg->to);
 
-	bool closed_curve = false;
+	bool closed_curve = (curr_seg->from == curr_seg->to);
 	while (!closed_curve) {
-	    // look for a segment that connects to the previous one
-	    CurvePoint last_pt = curr_seg->to;
-	    for (; curr_seg != segments.end(); ++curr_seg) {
-		if (curr_seg->from == last_pt) {
+	    // look for a segment that connects to the previous
+	    CurvePoint last_to = curr_seg->to;
+	    for (++curr_seg; curr_seg != segments.end(); ++curr_seg) {
+		if (curr_seg->from == last_to) {
 		    break;
 		}
 	    }
@@ -1115,8 +1115,8 @@ construct_loops_from_segments(
 	    // may not be the first segment)
 	    size_t i;
 	    for (i = 0; i < loop_segs.size(); ++i) {
-		if (loop_segs[i]->from != loop_segs.back()->to) {
-		    continue;
+		if (loop_segs[i]->from == loop_segs.back()->to) {
+		    break;
 		}
 	    }
 	    // Form a curve from the closed chain of segments.
