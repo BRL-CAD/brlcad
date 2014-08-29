@@ -1123,7 +1123,7 @@ construct_loops_from_segments(
 	    // Remove the used segments from the available set.
 	    ON_PolyCurve *pcurve = new ON_PolyCurve();
 	    for (; i < loop_segs.size(); ++i) {
-		append_to_polycurve(loop_segs[i]->Curve(), *pcurve);
+		append_to_polycurve(loop_segs[i]->Curve()->Duplicate(), *pcurve);
 		segments.erase(loop_segs[i]);
 	    }
 	    out.push_back(pcurve);
@@ -1232,7 +1232,7 @@ make_face_from_loops(
     TrimmedFace *face = new TrimmedFace();
 
     face->m_face = orig_face->m_face;
-    face->m_outerloop.Append(outerloop);
+    face->m_outerloop.Append(outerloop->Duplicate());
 
     std::list<ON_Curve *> new_innerloops = innerloops_inside_outerloop(
 	    outerloop, innerloops);
