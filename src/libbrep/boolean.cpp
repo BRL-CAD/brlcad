@@ -864,6 +864,18 @@ public:
 #define LOOP_DIRECTION_CW  -1
 #define LOOP_DIRECTION_NONE 0
 
+std::list<ON_Curve *>::iterator
+find_innerloop(std::list<ON_Curve *> &loops)
+{
+    std::list<ON_Curve *>::iterator k;
+    for (k = loops.begin(); k != loops.end(); ++k) {
+	if (ON_ClosedCurveOrientation(**k, NULL) == LOOP_DIRECTION_CW) {
+	    return k;
+	}
+    }
+    return loops.end();
+}
+
 bool
 set_closed_curve_direction(ON_Curve *curve, int dir)
 {
@@ -1060,11 +1072,11 @@ get_op_segments(
     return out;
 }
 
-std::vector<ON_Curve *>
+std::list<ON_Curve *>
 construct_loops_from_segments(
     std::multiset<CurveSegment> &segments)
 {
-    std::vector<ON_Curve *> out;
+    std::list<ON_Curve *> out;
 
     while (!segments.empty()) {
 	std::vector<std::multiset<CurveSegment>::iterator> loop_segs;
@@ -1126,10 +1138,10 @@ construct_loops_from_segments(
     return out;
 }
 
-std::vector<ON_Curve *>
+std::list<ON_Curve *>
 closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
 {
-    std::vector<ON_Curve *> out;
+    std::list<ON_Curve *> out;
 
     if (op != BOOLEAN_INTERSECT && op != BOOLEAN_DIFF) {
 	bu_log("closed_curve_boolean: unsupported operation\n");
@@ -1191,19 +1203,21 @@ closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
     return construct_loops_from_segments(out_segments);
 }
 
-std::vector<ON_Curve *>
+std::list<ON_Curve *>
 innerloops_inside_outerloop(
     ON_Curve *outerloop_curve,
-    std::vector<ON_Curve *> &innerloop_curves)
+    const std::vector<ON_Curve *> &innerloop_curves)
 {
-    std::vector<ON_Curve *> out;
+    std::list<ON_Curve *> out;
 
     for (size_t i = 0; i < innerloop_curves.size(); ++i) {
-	std::vector<ON_Curve *> new_innerloops = closed_curve_boolean(
+	std::list<ON_Curve *> new_innerloops = closed_curve_boolean(
 		outerloop_curve, innerloop_curves[i], BOOLEAN_INTERSECT);
 
-	for (size_t j = 0; j < new_innerloops.size(); ++j) {
-	    out.push_back(new_innerloops[i]);
+	std::list<ON_Curve *>::iterator j;
+	for (j = new_innerloops.begin(); j != new_innerloops.end(); ++j) {
+	    (*j)->Reverse();
+	    out.push_back(*j);
 	}
     }
     return out;
@@ -1212,23 +1226,47 @@ innerloops_inside_outerloop(
 TrimmedFace *
 make_face_from_loops(
 	const TrimmedFace *orig_face,
-	std::vector<ON_Curve *> &orig_innerloops,
-	ON_Curve *new_outerloop)
+	ON_Curve *outerloop,
+	const std::vector<ON_Curve *> &innerloops)
 {
     TrimmedFace *face = new TrimmedFace();
 
     face->m_face = orig_face->m_face;
-    face->m_outerloop.Append(new_outerloop);
+    face->m_outerloop.Append(outerloop);
 
-    std::vector<ON_Curve *> new_innerloops = innerloops_inside_outerloop(
-	    new_outerloop, orig_innerloops);
+    std::list<ON_Curve *> new_innerloops = innerloops_inside_outerloop(
+	    outerloop, innerloops);
 
-    for (size_t i = 0; i < new_innerloops.size(); ++i) {
+    std::list<ON_Curve *>::iterator i;
+    for (i = new_innerloops.begin(); i != new_innerloops.end(); ++i) {
 	ON_SimpleArray<ON_Curve *> loop;
-	loop.Append(new_innerloops[i]);
+	loop.Append(*i);
 	face->m_innerloop.push_back(loop);
     }
     return face;
+}
+
+void
+append_faces_from_loops(
+	ON_SimpleArray<TrimmedFace *> &out,
+	const TrimmedFace *orig_face,
+	std::vector<ON_Curve *> face_innerloops,
+	std::list<ON_Curve *> &new_loops)
+{
+    // combine new innerloops with original innerloops
+    std::list<ON_Curve *>::iterator innerloop = find_innerloop(new_loops);
+    while (innerloop != new_loops.end()) {
+	face_innerloops.push_back(*innerloop);
+	new_loops.erase(innerloop);
+
+	innerloop = find_innerloop(new_loops);
+    }
+
+    // make a face from each outerloop
+    std::list<ON_Curve *>::iterator i;
+    for (i = new_loops.begin(); i != new_loops.end(); ++i) {
+	out.Append(make_face_from_loops(orig_face, *i, face_innerloops));
+    }
 }
 
 /* Turn an open curve into a closed curve by using segments from the
@@ -1655,21 +1693,18 @@ split_trimmed_face(
 	    // get the portions of the original outerloop inside and
 	    // outside the closed ssx curve to get the outerloops of
 	    // the split faces
-	    std::vector<ON_Curve *> intersect_loops = closed_curve_boolean(
+	    std::list<ON_Curve *> intersect_loops = closed_curve_boolean(
 		    face_outerloop, closed_ssx_curves[j], BOOLEAN_INTERSECT);
 
-	    std::vector<ON_Curve *> diff_loops = closed_curve_boolean(
+	    std::list<ON_Curve *> diff_loops = closed_curve_boolean(
 		    face_outerloop, closed_ssx_curves[j], BOOLEAN_DIFF);
 
-	    // make a new face from each new outerloop
-	    for (size_t k = 0; k < intersect_loops.size(); ++k) {
-		out.Append(make_face_from_loops(orig_face, face_innerloops,
-			    intersect_loops[k]));
-	    }
-	    for (size_t k = 0; k < diff_loops.size(); ++k) {
-		out.Append(make_face_from_loops(orig_face, face_innerloops,
-			    intersect_loops[k]));
-	    }
+	    // make new faces from the loops
+	    append_faces_from_loops(out, orig_face, face_innerloops,
+		    intersect_loops);
+
+	    append_faces_from_loops(out, orig_face, face_innerloops,
+		    intersect_loops);
 	}
     }
 
