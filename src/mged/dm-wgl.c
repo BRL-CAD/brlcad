@@ -57,7 +57,6 @@
 #include "./mged_dm.h"
 
 /* external sp_hook functions */
-extern void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *); /* defined in color_scheme.c */
 
 static int Wgl_dm();
 static int Wgl_doevent();

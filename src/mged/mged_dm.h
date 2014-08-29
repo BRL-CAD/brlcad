@@ -589,7 +589,7 @@ extern int doEvent(ClientData, void *);
 #endif
 
 /* defined in attach.c */
-extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
+extern void dm_var_init(struct dm_list *initial_dm_list);
 
 /* defined in dm-generic.c */
 extern int common_dm(int argc, const char *argv[]);
@@ -599,7 +599,6 @@ extern void zclip_hook(const struct bu_structparse *, const char *, void *,const
 
 /* external sp_hook functions */
 extern void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *, void *); /* defined in color_scheme.c */
-
 
 /* defined in setup.c */
 extern void mged_rtCmdNotify();

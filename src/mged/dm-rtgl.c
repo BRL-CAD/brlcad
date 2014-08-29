@@ -57,9 +57,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-
-extern void cs_set_bg();		/* defined in color_scheme.c */
-
 static int Rtgl_dm();
 static int Rtgl_doevent();
 
