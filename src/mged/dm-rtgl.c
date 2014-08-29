@@ -58,7 +58,6 @@
 #include "./mged_dm.h"
 
 
-extern void dm_var_init();		/* defined in attach.c */
 extern void cs_set_bg();		/* defined in color_scheme.c */
 
 static int Rtgl_dm();

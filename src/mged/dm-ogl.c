@@ -73,8 +73,6 @@
 
 static int Ogl_dm();
 
-extern void dm_var_init();		/* defined in attach.c */
-
 static int Ogl_doevent();
 
 struct bu_structparse_map ogl_vparse_map[] = {

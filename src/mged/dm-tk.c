@@ -47,7 +47,6 @@
 #include "./mged_dm.h"
 
 extern int _tk_open_existing();	/* XXX TJM will be defined in libfb/if_tk.c */
-extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
 static int tk_dm(int argc, const char *argv[]);
 

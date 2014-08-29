@@ -56,9 +56,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-
-extern void dm_var_init();		/* defined in attach.c */
-
 /* external sp_hook functions */
 extern void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *); /* defined in color_scheme.c */
 

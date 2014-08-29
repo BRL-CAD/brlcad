@@ -33,8 +33,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
-
 struct bu_structparse_map Qt_vparse_map[] = {
     {"bound",           dirty_hook                },
     {"useBound",        dirty_hook                },

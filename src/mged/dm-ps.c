@@ -38,8 +38,6 @@
 #include "./mged_dm.h"
 #include "dm/dm-ps.h"
 
-extern void dm_var_init(struct dm_list *initial_dm_list);
-
 int
 PS_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[])
 {

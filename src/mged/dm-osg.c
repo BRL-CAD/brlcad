@@ -41,8 +41,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
-
 static Tk_GenericProc Osg_doevent;
 
 struct bu_structparse osg_vparse[] = {

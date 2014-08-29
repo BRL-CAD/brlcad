@@ -588,6 +588,9 @@ extern int doEvent(ClientData, XEvent *);
 extern int doEvent(ClientData, void *);
 #endif
 
+/* defined in attach.c */
+extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
+
 /* defined in dm-generic.c */
 extern int common_dm(int argc, const char *argv[]);
 extern void view_state_flag_hook(const struct bu_structparse *, const char *, void *,const char *, void *);

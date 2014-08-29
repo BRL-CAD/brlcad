@@ -33,8 +33,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
-
 int
 Txt_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[])
 {
