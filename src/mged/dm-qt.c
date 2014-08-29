@@ -128,13 +128,6 @@ Qt_dm_init(struct dm_list *o_dm_list,
     return TCL_OK;
 }
 
-void
-Qt_fb_open(void)
-{
-    fbp = dm_get_fb(dmp);
-}
-
-
 /*
  * Local Variables:
  * mode: C

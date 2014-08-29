@@ -126,15 +126,6 @@ Rtgl_dm_init(struct dm_list *o_dm_list,
     return TCL_OK;
 }
 
-
-void
-Rtgl_fb_open()
-{
-    fbp = dm_get_fb(dmp);
-    fb_set_name(fbp, "/dev/rtgl");
-}
-
-
 /*
   This routine is being called from doEvent() to handle Expose events.
 */

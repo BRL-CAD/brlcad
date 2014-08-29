@@ -75,47 +75,6 @@ struct bu_structparse_map ogl_vparse_map[] = {
     {(char *)0,		BU_STRUCTPARSE_FUNC_NULL  }
 };
 
-
-int
-Wgl_dm_init(struct dm_list *o_dm_list,
-	    int argc,
-	    char *argv[])
-{
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-    dm_var_init(o_dm_list);
-
-    /* register application provided routines */
-    cmd_hook = Wgl_dm;
-
-    Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
-
-    if ((dmp = dm_open(INTERP, DM_TYPE_WGL, argc-1, argv)) == DM_NULL)
-	return TCL_ERROR;
-
-    /*XXXX this eventually needs to move into Wgl's private structure */
-    dm_set_vp(dmp, &view_state->vs_gvp->gv_scale);
-    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
-
-    eventHandler = Wgl_doevent;
-    Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-    (void)dm_configure_win(dmp, 0);
-
-    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dmp_get_pathname(dmp)));
-    Tcl_Eval(INTERP, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_OK;
-}
-
-
-void
-Wgl_fb_open()
-{
-    fbp = dm_get_fb(dmp);
-}
-
-
 /*
   This routine is being called from doEvent() to handle Expose events.
 */
@@ -187,6 +146,40 @@ Wgl_dm(int argc,
 
     return common_dm(argc, argv);
 }
+
+
+int
+Wgl_dm_init(struct dm_list *o_dm_list,
+	    int argc,
+	    char *argv[])
+{
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+    dm_var_init(o_dm_list);
+
+    /* register application provided routines */
+    cmd_hook = Wgl_dm;
+
+    Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+
+    if ((dmp = dm_open(INTERP, DM_TYPE_WGL, argc-1, argv)) == DM_NULL)
+	return TCL_ERROR;
+
+    /*XXXX this eventually needs to move into Wgl's private structure */
+    dm_set_vp(dmp, &view_state->vs_gvp->gv_scale);
+    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
+
+    eventHandler = Wgl_doevent;
+    Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+    (void)dm_configure_win(dmp, 0);
+
+    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dmp_get_pathname(dmp)));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_OK;
+}
+
 
 /*
  * Local Variables:

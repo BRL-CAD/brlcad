@@ -114,15 +114,6 @@ Ogl_doevent(ClientData UNUSED(clientData),
     return TCL_OK;
 }
 
-
-
-void
-Ogl_fb_open()
-{
-    fbp = dm_get_fb(dmp);
-}
-
-
 /*
  * Implement display-manager specific commands, from MGED "dm" command.
  */

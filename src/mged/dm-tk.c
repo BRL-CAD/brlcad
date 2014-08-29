@@ -88,19 +88,6 @@ tk_dm_init(struct dm_list *o_dm_list,
     return TCL_OK;
 }
 
-
-void
-tk_fb_open(void)
-{
-    fbp = (fb *)calloc(sizeof(fb), 1);
-    if (fbp == FB_NULL) {
-	Tcl_AppendResult(INTERP, "tk_dm_init: failed to allocate framebuffer memory\n",
-			 (char *)NULL);
-	return;
-    }
-}
-
-
 /*
   This routine is being called from doEvent() to handle Expose events.
 */

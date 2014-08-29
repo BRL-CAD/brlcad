@@ -68,37 +68,31 @@ extern int Txt_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
 
 #ifdef DM_X
 extern int X_dm_init();
-extern void X_fb_open();
 #endif /* DM_X */
 
 #if 0
 /* Turn this off until we get it working properly... */
 #ifdef DM_TK
 extern int tk_dm_init();
-extern void tk_fb_open();
 #endif /* DM_TK */
 #endif
 
 #ifdef DM_WGL
 extern int Wgl_dm_init();
-extern void Wgl_fb_open();
 #endif /* DM_WGL */
 
 #ifdef DM_OGL
 # if defined(HAVE_TK)
 extern int Ogl_dm_init();
-extern void Ogl_fb_open();
 # endif
 #endif /* DM_OGL */
 
 #ifdef DM_OSG
 extern int Osg_dm_init();
-extern void Osg_fb_open();
 #endif /* DM_OSG */
 
 #ifdef DM_RTGL
 extern int Rtgl_dm_init();
-extern void Rtgl_fb_open();
 #endif /* DM_RTGL */
 
 #ifdef DM_GLX
@@ -111,7 +105,6 @@ extern int Pex_dm_init();
 
 #ifdef DM_QT
 extern int Qt_dm_init();
-extern void Qt_fb_open();
 #endif /* DM_QT */
 
 extern void fbserv_set_port(void);		/* defined in fbserv.c */
@@ -167,40 +160,7 @@ struct w_dm which_dm[] = {
 void
 mged_fb_open(void)
 {
-#ifdef DM_X
-    if (dm_get_type(dmp) == DM_TYPE_X)
-	X_fb_open();
-#endif /* DM_X */
-#if 0
-#ifdef DM_TK
-    if (dm_get_type(dmp) == DM_TYPE_TK)
-	tk_fb_open();
-#endif /* DM_TK */
-#endif
-#ifdef DM_WGL
-    if (dm_get_type(dmp) == DM_TYPE_WGL)
-	Wgl_fb_open();
-#endif /* DM_WGL */
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-    if (dm_get_type(dmp) == DM_TYPE_OGL)
-	Ogl_fb_open();
-#  endif
-#endif /* DM_OGL */
-#ifdef DM_OSG
-#if 0
-    if (dm_get_type(dmp) == DM_TYPE_OSG)
-	Osg_fb_open();
-#endif
-#endif /* DM_OSG */
-#ifdef DM_RTGL
-    if (dm_get_type(dmp) == DM_TYPE_RTGL)
-	Rtgl_fb_open();
-#endif /* DM_RTGL */
-#ifdef DM_QT
-    if (dm_get_type(dmp) == DM_TYPE_QT)
-	Qt_fb_open();
-#endif /* DM_QT */
+    fbp = dm_get_fb(dmp);
 }
 
 
