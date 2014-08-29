@@ -1171,8 +1171,8 @@ closed_curve_boolean(ON_Curve *curve1, ON_Curve *curve2, op_type op)
 
     curve1_points.insert(CurvePoint(dom1.m_t[0], curve1, curve2));
     curve1_points.insert(CurvePoint(dom1.m_t[1], curve1, curve2));
-    curve2_points.insert(CurvePoint(dom1.m_t[0], curve2, curve1));
-    curve2_points.insert(CurvePoint(dom1.m_t[1], curve2, curve1));
+    curve2_points.insert(CurvePoint(dom2.m_t[0], curve2, curve1));
+    curve2_points.insert(CurvePoint(dom2.m_t[1], curve2, curve1));
 
     ON_SimpleArray<ON_X_EVENT> x_events;
     ON_Intersect(curve1, curve2, x_events, INTERSECTION_TOL);
@@ -1706,7 +1706,7 @@ split_trimmed_face(
 		    intersect_loops);
 
 	    append_faces_from_loops(out, orig_face, face_innerloops,
-		    intersect_loops);
+		    diff_loops);
 	}
     }
 
