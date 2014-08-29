@@ -798,6 +798,7 @@ void *
 dm_get_mvars(dm *dmp)
 {
     if (!dmp) return NULL;
+    if (!dmp->m_vars) return (void *)dmp;
     return dmp->m_vars;
 }
 

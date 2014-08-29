@@ -82,9 +82,9 @@ X_dm(int argc, const char *argv[])
 
 	if (argc < 2) {
 	    /* Bare set command, print out current settings */
-	    bu_vls_struct_print2(&vls, "dm_X internal variables", dm_get_vparse(dmp), (const char *)dmp);
+	    bu_vls_struct_print2(&vls, "dm_X internal variables", dm_get_vparse(dmp), (const char *)dm_get_mvars(dmp));
 	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls, dm_get_vparse(dmp), argv[1], (const char *)dmp, COMMA);
+	    bu_vls_struct_item_named(&vls, dm_get_vparse(dmp), argv[1], (const char *)dm_get_mvars(dmp), COMMA);
 	} else {
 	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	    int ret;
@@ -96,7 +96,7 @@ X_dm(int argc, const char *argv[])
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	    bu_vls_putc(&tmp_vls, '\"');
-	    ret = bu_struct_parse(&tmp_vls, dm_get_vparse(dmp), (char *)dmp, (void *)(&mged_dm_hook));
+	    ret = bu_struct_parse(&tmp_vls, dm_get_vparse(dmp), (char *)dm_get_mvars(dmp), (void *)(&mged_dm_hook));
 	    bu_vls_free(&tmp_vls);
 	    if (ret < 0) {
 	      bu_vls_free(&vls);

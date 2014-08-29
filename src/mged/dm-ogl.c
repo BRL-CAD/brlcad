@@ -114,37 +114,6 @@ Ogl_doevent(ClientData UNUSED(clientData),
     return TCL_OK;
 }
 
-int
-Ogl_dm_init(struct dm_list *o_dm_list,
-	    int argc,
-	    const char *argv[])
-{
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-    dm_var_init(o_dm_list);
-
-    /* register application provided routines */
-    cmd_hook = Ogl_dm;
-
-    Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
-
-    if ((dmp = dm_open(INTERP, DM_TYPE_OGL, argc-1, argv)) == DM_NULL)
-	return TCL_ERROR;
-
-    /*XXXX this eventually needs to move into Ogl's private structure */
-    dm_set_vp(dmp, &view_state->vs_gvp->gv_scale);
-    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
-
-    eventHandler = Ogl_doevent;
-    Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-    (void)dm_configure_win(dmp, 0);
-
-    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(dmp)));
-    Tcl_Eval(INTERP, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_OK;
-}
 
 
 void
@@ -206,6 +175,38 @@ Ogl_dm(int argc,
     return common_dm(argc, argv);
 }
 
+
+int
+Ogl_dm_init(struct dm_list *o_dm_list,
+	    int argc,
+	    const char *argv[])
+{
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+    dm_var_init(o_dm_list);
+
+    /* register application provided routines */
+    cmd_hook = Ogl_dm;
+
+    Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+
+    if ((dmp = dm_open(INTERP, DM_TYPE_OGL, argc-1, argv)) == DM_NULL)
+	return TCL_ERROR;
+
+    /*XXXX this eventually needs to move into Ogl's private structure */
+    dm_set_vp(dmp, &view_state->vs_gvp->gv_scale);
+    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
+
+    eventHandler = Ogl_doevent;
+    Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+    (void)dm_configure_win(dmp, 0);
+
+    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(dmp)));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_OK;
+}
 
 /*
  * Local Variables:
