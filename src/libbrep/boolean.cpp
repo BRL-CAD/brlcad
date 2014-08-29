@@ -1613,7 +1613,9 @@ get_face_innerloop_curves(const TrimmedFace *face)
 	for (int j = 0; j < face->m_innerloop[i].Count(); ++j) {
 	    append_to_polycurve(face->m_innerloop[i][j], *pcurve);
 	}
-	loop_curves.push_back(pcurve);
+	if (pcurve->IsClosed()) {
+	    loop_curves.push_back(pcurve);
+	}
     }
     return loop_curves;
 }
