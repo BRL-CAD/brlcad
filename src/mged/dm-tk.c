@@ -48,15 +48,6 @@
 
 extern int _tk_open_existing();	/* XXX TJM will be defined in libfb/if_tk.c */
 
-static int tk_dm(int argc, const char *argv[]);
-
-struct bu_structparse_map x_vparse_map[] = {
-    {"bound",		dirty_hook  		  },
-    {"useBound",	dirty_hook  	  	  },
-    {"zclip",		zclip_hook		  },
-    {(char *)0,		BU_STRUCTPARSE_FUNC_NULL  }
-};
-
 int
 tk_dm_init(struct dm_list *o_dm_list,
 	   int argc,
@@ -67,7 +58,7 @@ tk_dm_init(struct dm_list *o_dm_list,
     dm_var_init(o_dm_list);
 
     /* register application provided routines */
-    cmd_hook = tk_dm;
+    cmd_hook = dm_commands;
 
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
     dmp = dm_open(INTERP, DM_TYPE_TK, argc-1, argv);
@@ -105,41 +96,6 @@ tk_doevent(ClientData UNUSED(clientData), XEvent *eventPtr)
     return TCL_OK;
 }
 
-
-static int
-tk_dm(int argc, const char *argv[])
-{
-    struct dm_hook_data mged_dm_hook;
-    if (BU_STR_EQUAL(argv[0], "set")) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	if (argc < 2) {
-	    /* Bare set command, print out current settings */
-	    bu_vls_struct_print2(&vls, "dm_Tk internal variables", dm_get_vparse(dmp), (const char *)dmp);
-	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls, dm_get_vparse(dmp), argv[1], (const char *)dmp, COMMA);
-	} else {
-	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-	    struct mged_view_hook_state global_hs;
-	    void *data = set_hook_data(&global_hs);
-
-	    (void)dm_set_hook(x_vparse_map, argv[1], data, &mged_dm_hook);
-
-	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
-	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
-	    bu_vls_putc(&tmp_vls, '\"');
-	    bu_struct_parse(&tmp_vls, dm_get_vparse(dmp), (char *)dmp, (void *)(&mged_dm_hook));
-	    bu_vls_free(&tmp_vls);
-	}
-
-	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-
-	return TCL_OK;
-    }
-
-    return common_dm(argc, argv);
-}
 
 /*
  * Local Variables:

@@ -57,7 +57,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-static int Rtgl_dm();
 static int Rtgl_doevent();
 
 /* local sp_hook functions */
@@ -72,25 +71,6 @@ static void debug_hook(const struct bu_structparse *, const char *, void *, cons
 static void bound_hook(const struct bu_structparse *, const char *, void *, const char *);
 static void boundFlag_hook(const struct bu_structparse *, const char *, void *, const char *);
 
-struct bu_structparse Rtgl_vparse[] = {
-    {"%d", 1, "depthcue",	  Rtgl_MV_O(cueing_on),       Rtgl_colorchange },
-    {"%d", 1, "zclip",		  Rtgl_MV_O(zclipping_on),    zclip_hook },
-    {"%d", 1, "zbuffer",	  Rtgl_MV_O(zbuffer_on),      establish_zbuffer },
-    {"%d", 1, "lighting",	  Rtgl_MV_O(lighting_on),     establish_lighting },
-    {"%d", 1, "transparency",	  Rtgl_MV_O(transparency_on), establish_transparency },
-    {"%d", 1, "fastfog",	  Rtgl_MV_O(fastfog),	      do_fogHint },
-    {"%g", 1, "density",	  Rtgl_MV_O(fogdensity),      dirty_hook },
-    {"%d", 1, "has_zbuf",	  Rtgl_MV_O(zbuf),	      BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "has_rgb",	  Rtgl_MV_O(rgb),	      BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "has_doublebuffer", Rtgl_MV_O(doublebuffer),    BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "depth",		  Rtgl_MV_O(depth),	      BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "debug",		  Rtgl_MV_O(debug),	      debug_hook },
-    {"%g", 1, "bound",		  Rtgl_MV_O(bound),	      bound_hook },
-    {"%d", 1, "useBound",	  Rtgl_MV_O(boundFlag),	      boundFlag_hook },
-    {"",   0,  (char *)0,	  0,			      BU_STRUCTPARSE_FUNC_NULL }
-};
-
-
 int
 Rtgl_dm_init(struct dm_list *o_dm_list,
 	     int argc,
@@ -101,7 +81,7 @@ Rtgl_dm_init(struct dm_list *o_dm_list,
     dm_var_init(o_dm_list);
 
     /* register application provided routines */
-    cmd_hook = Rtgl_dm;
+    cmd_hook = dm_commands;
 
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 
@@ -147,50 +127,6 @@ Rtgl_doevent(ClientData clientData,
 
     /* allow further processing of this event */
     return TCL_OK;
-}
-
-
-/*
- * Implement display-manager specific commands, from MGED "dm" command.
- */
-static int
-Rtgl_dm(int argc,
-	const char *argv[])
-{
-    if (BU_STR_EQUAL(argv[0], "set")) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	if (argc < 2) {
-	    /* Bare set command, print out current settings */
-	    bu_vls_struct_print2(&vls,
-				 "dm_rtgl internal variables",
-				 Rtgl_vparse,
-				 (const char *)&((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars);
-	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls,
-				     Rtgl_vparse,
-				     argv[1],
-				     (const char *)&((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars,
-				     COMMA);
-	} else {
-	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
-	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
-	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
-	    bu_vls_putc(&tmp_vls, '\"');
-	    bu_struct_parse(&tmp_vls,
-			    Rtgl_vparse,
-			    (char *)&((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars);
-	    bu_vls_free(&tmp_vls);
-	}
-
-	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-
-	return TCL_OK;
-    }
-
-    return common_dm(argc, argv);
 }
 
 

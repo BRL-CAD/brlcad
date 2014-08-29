@@ -43,14 +43,6 @@
 
 static Tk_GenericProc Osg_doevent;
 
-struct bu_structparse osg_vparse[] = {
-    {"%g",  1, "bound",		 DM_O(dm_bound),	dirty_hook, NULL, NULL},
-    {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook, NULL, NULL},
-    {"%d",  1, "zclip",		 DM_O(dm_zclip),	zclip_hook, NULL, NULL},
-    {"%d",  1, "debug",		 DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"",    0, NULL,		 0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
-};
-
 /*
   This routine is being called from doEvent() to handle Expose events.
 */
@@ -68,42 +60,6 @@ Osg_doevent(ClientData UNUSED(clientData), XEvent *eventPtr)
     return TCL_OK;
 }
 
-static int
-Osg_dm(int argc, const char *argv[])
-{
-    if (BU_STR_EQUAL(argv[0], "set")) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	if (argc < 2) {
-	    /* Bare set command, print out current settings */
-	    bu_vls_struct_print2(&vls, "dm_osg internal variables", osg_vparse, (const char *)dmp);
-	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls, osg_vparse, argv[1], (const char *)dmp, COMMA);
-	} else {
-	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-	    int ret;
-
-	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
-	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
-	    bu_vls_putc(&tmp_vls, '\"');
-	    ret = bu_struct_parse(&tmp_vls, osg_vparse, (char *)dmp);
-	    bu_vls_free(&tmp_vls);
-	    if (ret < 0) {
-	      bu_vls_free(&vls);
-	      return TCL_ERROR;
-	    }
-	}
-
-	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-
-	return TCL_OK;
-    }
-
-    return common_dm(argc, argv);
-}
-
-
 int
 Osg_dm_init(struct dm_list *o_dm_list,
 	  int argc,
@@ -114,7 +70,7 @@ Osg_dm_init(struct dm_list *o_dm_list,
     dm_var_init(o_dm_list);
 
     /* register application provided routines */
-    cmd_hook = Osg_dm;
+    cmd_hook = dm_commands;
 
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
     if ((dmp = dm_open(INTERP, DM_TYPE_OSG, argc-1, argv)) == DM_NULL)

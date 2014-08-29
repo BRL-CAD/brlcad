@@ -671,6 +671,70 @@ set_hook_data(struct mged_view_hook_state *hs) {
     return (void *)hs;
 }
 
+struct bu_structparse_map vparse_map[] = {
+    {"depthcue",	view_state_flag_hook      },
+    {"zclip",		zclip_hook		  },
+    {"zbuffer",		view_state_flag_hook      },
+    {"lighting",	view_state_flag_hook      },
+    {"transparency",	view_state_flag_hook      },
+    {"fastfog",		view_state_flag_hook      },
+    {"density",		dirty_hook  		  },
+    {"bound",		dirty_hook  		  },
+    {"useBound",	dirty_hook  	  	  },
+    {(char *)0,		BU_STRUCTPARSE_FUNC_NULL  }
+};
+
+int
+dm_commands(int argc,
+       const char *argv[])
+{
+    struct dm_hook_data mged_dm_hook;
+    if (BU_STR_EQUAL(argv[0], "set")) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+	if (argc < 2) {
+	    struct bu_vls report_str = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&report_str, "Display Manager (type %s) internal variables", dm_get_dm_name(dmp));
+	    /* Bare set command, print out current settings */
+	    bu_vls_struct_print2(&vls,
+				 bu_vls_addr(&report_str),
+				 dm_get_vparse(dmp),
+				 (const char *)dm_get_mvars(dmp));
+	    bu_vls_free(&report_str);
+	} else if (argc == 2) {
+	    /* TODO - need to add hook func support to this func, since the one in the libdm structparse isn't enough by itself */
+	    bu_vls_struct_item_named(&vls,
+				     dm_get_vparse(dmp),
+				     argv[1],
+				     (const char *)dm_get_mvars(dmp),
+				     COMMA);
+	} else {
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	    int ret;
+	    struct mged_view_hook_state global_hs;
+	    void *data = set_hook_data(&global_hs);
+
+	    ret = dm_set_hook(vparse_map, argv[1], data, &mged_dm_hook);
+
+	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
+	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
+	    bu_vls_putc(&tmp_vls, '\"');
+	    ret = bu_struct_parse(&tmp_vls, dm_get_vparse(dmp), (char *)dm_get_mvars(dmp), (void *)(&mged_dm_hook));
+	    bu_vls_free(&tmp_vls);
+	    if (ret < 0) {
+	      bu_vls_free(&vls);
+	      return TCL_ERROR;
+	    }
+	}
+
+	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	return TCL_OK;
+    }
+
+    return common_dm(argc, argv);
+}
 
 /*
  * Local Variables:

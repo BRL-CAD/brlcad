@@ -621,6 +621,9 @@ struct mged_view_hook_state {
 };
 extern void *set_hook_data(struct mged_view_hook_state *hs);
 
+int dm_commands(int argc, const char *argv[]);
+
+
 #endif /* MGED_MGED_DM_H */
 
 /*
