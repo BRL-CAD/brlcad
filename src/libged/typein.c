@@ -589,6 +589,20 @@ static char *p_hrt[] = {
     "Enter distance to cusps: "
 };
 
+static char *p_joint[] = {
+    "Enter X, Y, Z of the joint location: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector1: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector2: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter joint value: ",
+    "Reference Path 1: ",
+    "Reference Path 2: "
+};
 
 /**
  * helper function that infers a boolean value from a given string
@@ -2858,6 +2872,43 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
     return GED_OK;
 }
 
+/*
+ * reads joint parameters from keyboard
+ *
+ * returns 0 if successfully read
+ * returns 1 if unsuccessful read
+ */
+static int
+joint_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
+{
+    fastf_t vals[10];
+    int i, n;
+    struct rt_joint_internal *jip;
+    n = 10;
+
+    intern->idb_type = ID_JOINT;
+    intern->idb_meth = &OBJ[ID_JOINT];
+    intern->idb_ptr = bu_malloc(sizeof(struct rt_joint_internal), "rt_joint_internal");
+    jip = (struct rt_joint_internal *)intern->idb_ptr;
+    jip->magic = RT_JOINT_INTERNAL_MAGIC;
+
+    for (i = 0; i < n - 1; i++) {
+	vals[i] = atof(cmd_argv[3 + i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    }
+    vals[n-1] = atof(cmd_argv[3 + n - 1]);
+
+    VMOVE(jip->location, &vals[0]);
+    VMOVE(jip->vector1, &vals[3]);
+    VMOVE(jip->vector2, &vals[6]);
+    jip->value = vals[9];
+    bu_vls_init(&jip->reference_path_1);
+    bu_vls_strcpy(&jip->reference_path_1, cmd_argv[3 + n]);
+    bu_vls_init(&jip->reference_path_2);
+    bu_vls_strcpy(&jip->reference_path_2, cmd_argv[3 + n + 1]);
+
+    return GED_OK;
+}
+
 int
 ged_in(struct ged *gedp, int argc, const char *argv[])
 {
@@ -3119,6 +3170,10 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	nvals = 3*4 + 1;
 	menu = p_hrt;
 	fn_in = hrt_in;
+    }else if (BU_STR_EQUAL(argv[2], "joint")) {
+	nvals = 3*3 + 1 + 2;
+	menu = p_joint;
+	fn_in = joint_in;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:

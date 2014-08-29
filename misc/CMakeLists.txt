@@ -69,6 +69,7 @@ if(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 set(misc_ignore_files
+  Bullet_Box_Chain_Demo.cpp
   CMake
   Description.txt
   doxygen/Doxyfile.in
