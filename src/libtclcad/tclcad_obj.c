@@ -421,6 +421,18 @@ HIDDEN int to_mouse_find_pipept(struct ged *gedp,
 				ged_func_ptr func,
 				const char *usage,
 				int maxargs);
+HIDDEN int to_mouse_joint_select(struct ged *gedp,
+				 int argc,
+				 const char *argv[],
+				 ged_func_ptr func,
+				 const char *usage,
+				 int maxargs);
+HIDDEN int to_mouse_joint_selection_translate(struct ged *gedp,
+					      int argc,
+					      const char *argv[],
+					      ged_func_ptr func,
+					      const char *usage,
+					      int maxargs);
 HIDDEN int to_mouse_move_arb_edge(struct ged *gedp,
 				  int argc,
 				  const char *argv[],
@@ -948,6 +960,11 @@ typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_p
 static struct tclcad_obj HeadTclcadObj;
 static struct tclcad_obj *current_top = TCLCAD_OBJ_NULL;
 
+struct path_edit_params {
+    int edit_mode;
+    mat_t edit_mat;
+};
+
 struct to_cmdtab {
     char *to_name;
     char *to_usage;
@@ -1102,6 +1119,7 @@ static struct to_cmdtab to_cmds[] = {
     {"isize",	"vname", 2, to_view_func, ged_isize},
     {"item",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_item},
     {"joint",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_joint},
+    {"joint2",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_joint2},
     {"keep",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_keep},
     {"keypoint",	"[x y z]", 5, to_view_func, ged_keypoint},
     {"kill",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_kill},
@@ -1158,6 +1176,8 @@ static struct to_cmdtab to_cmds[] = {
     {"mouse_find_botpt",	"obj mx my", TO_UNLIMITED, to_mouse_find_botpt, GED_FUNC_PTR_NULL},
     {"mouse_find_metaballpt",	"obj mx my", TO_UNLIMITED, to_mouse_find_metaballpt, GED_FUNC_PTR_NULL},
     {"mouse_find_pipept",	"obj mx my", TO_UNLIMITED, to_mouse_find_pipept, GED_FUNC_PTR_NULL},
+    {"mouse_joint_select", "obj mx my", 5, to_mouse_joint_select, GED_FUNC_PTR_NULL},
+    {"mouse_joint_selection_translate", "obj mx my", 5, to_mouse_joint_selection_translate, GED_FUNC_PTR_NULL},
     {"mouse_move_arb_edge",	"obj edge mx my", TO_UNLIMITED, to_mouse_move_arb_edge, GED_FUNC_PTR_NULL},
     {"mouse_move_arb_face",	"obj face mx my", TO_UNLIMITED, to_mouse_move_arb_face, GED_FUNC_PTR_NULL},
     {"mouse_move_botpt",	"[-r] obj i mx my", TO_UNLIMITED, to_mouse_move_botpt, GED_FUNC_PTR_NULL},
@@ -1463,6 +1483,13 @@ to_cmd(ClientData clientData,
     return TCL_OK;
 }
 
+HIDDEN int
+free_path_edit_params_entry(struct bu_hash_entry *entry, void *UNUSED(udata))
+{
+    struct path_edit_params *pp = (struct path_edit_params *)bu_get_hash_value(entry);
+    BU_PUT(pp, struct path_edit_params);
+    return 0;
+}
 
 /**
  * @brief
@@ -1482,6 +1509,9 @@ to_deleteProc(ClientData clientData)
     ged_close(top->to_gop->go_gedp);
     if (top->to_gop->go_gedp)
 	BU_PUT(top->to_gop->go_gedp, struct ged);
+
+    bu_hash_tbl_traverse(top->to_gop->go_edited_paths, free_path_edit_params_entry, NULL);
+    bu_hash_tbl_free(top->to_gop->go_edited_paths);
 
     while (BU_LIST_WHILE(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
 	BU_LIST_DEQUEUE(&(gdvp->l));
@@ -1624,6 +1654,7 @@ Usage: go_open\n\
     bu_vls_init(&top->to_gop->go_rt_end_callback);
     BU_LIST_INIT(&top->to_gop->go_observers.l);
     top->to_gop->go_refresh_on = 1;
+    top->to_gop->go_edited_paths = bu_hash_tbl_create(0);
 
     BU_LIST_INIT(&top->to_gop->go_head_views.l);
 
@@ -6109,6 +6140,84 @@ to_hide_view(struct ged *gedp,
     return GED_OK;
 }
 
+struct redraw_edited_path_data {
+    struct ged *gedp;
+    struct ged_dm_view *gdvp;
+    int *need_refresh;
+};
+
+HIDDEN int
+redraw_edited_path(struct bu_hash_entry *entry, void *udata)
+{
+    const char *av[5] = {0};
+    char *draw_path = (char *)bu_get_hash_key(entry);
+    struct redraw_edited_path_data *data;
+    int ret, dmode = 0;
+    struct bu_vls path_dmode = BU_VLS_INIT_ZERO;
+    struct path_edit_params *params;
+
+    data = (struct redraw_edited_path_data *)udata;
+
+    params = (struct path_edit_params *)bu_get_hash_value(entry);
+    if (params->edit_mode == TCLCAD_OTRANSLATE_MODE) {
+	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+	struct bu_vls tran_x_vls = BU_VLS_INIT_ZERO;
+	struct bu_vls tran_y_vls = BU_VLS_INIT_ZERO;
+	struct bu_vls tran_z_vls = BU_VLS_INIT_ZERO;
+	mat_t dvec;
+
+	MAT_DELTAS_GET(dvec, params->edit_mat);
+	VSCALE(dvec, dvec, data->gedp->ged_wdbp->dbip->dbi_base2local);
+
+	bu_vls_printf(&tran_x_vls, "%lf", dvec[X]);
+	bu_vls_printf(&tran_y_vls, "%lf", dvec[Y]);
+	bu_vls_printf(&tran_z_vls, "%lf", dvec[Z]);
+
+	bu_vls_printf(&tcl_cmd, "%s otranslate %s %s %s",
+		bu_vls_addr(&data->gdvp->gdv_edit_motion_delta_callback),
+		bu_vls_addr(&tran_x_vls), bu_vls_addr(&tran_y_vls),
+		bu_vls_addr(&tran_z_vls));
+	Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
+
+	bu_vls_free(&tcl_cmd);
+	bu_vls_free(&tran_x_vls);
+	bu_vls_free(&tran_y_vls);
+	bu_vls_free(&tran_z_vls);
+    }
+
+    Tcl_Eval(current_top->to_interp, "SetWaitCursor $::ArcherCore::application");
+
+    av[0] = "how";
+    av[1] = draw_path;
+    av[2] = NULL;
+    ret = ged_how(data->gedp, 2, av);
+    if (ret == GED_OK) {
+	ret = bu_sscanf(bu_vls_cstr(data->gedp->ged_result_str), "%d", &dmode);
+    }
+    if (dmode == 5) {
+	bu_vls_printf(&path_dmode, "-h");
+    } else {
+	bu_vls_printf(&path_dmode, "-m%d", dmode);
+    }
+
+    av[0] = "erase";
+    ret = ged_erase(data->gedp, 2, av);
+
+    if (ret == GED_OK) {
+	av[0] = "draw";
+	av[1] = "-R";
+	av[2] = bu_vls_cstr(&path_dmode);
+	av[3] = draw_path;
+	av[4] = NULL;
+	ged_draw(data->gedp, 4, av);
+    }
+    Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
+
+    *data->need_refresh = 1;
+
+    return 0;
+}
+
 HIDDEN int
 to_idle_mode(struct ged *gedp,
 	     int argc,
@@ -6119,6 +6228,7 @@ to_idle_mode(struct ged *gedp,
 {
     struct ged_dm_view *gdvp;
     int mode, need_refresh = 0;
+    struct redraw_edited_path_data data;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6186,6 +6296,16 @@ to_idle_mode(struct ged *gedp,
 
 	need_refresh = 1;
     }
+
+    /* redraw any edited paths, then clear them from our table */
+    data.gedp = gedp;
+    data.gdvp = gdvp;
+    data.need_refresh = &need_refresh;
+    bu_hash_tbl_traverse(current_top->to_gop->go_edited_paths, redraw_edited_path, &data);
+
+    bu_hash_tbl_traverse(current_top->to_gop->go_edited_paths, free_path_edit_params_entry, NULL);
+    bu_hash_tbl_free(current_top->to_gop->go_edited_paths);
+    current_top->to_gop->go_edited_paths = bu_hash_tbl_create(0);
 
     if (need_refresh) {
 	to_refresh_all_views(current_top);
@@ -7396,6 +7516,257 @@ to_mouse_find_pipept(struct ged *gedp,
 }
 
 HIDDEN int
+to_mouse_joint_select(
+    struct ged *gedp,
+    int argc,
+    const char *argv[],
+    ged_func_ptr UNUSED(func),
+    const char *usage,
+    int maxargs)
+{
+    const char *cmd_argv[11] = {"joint2", NULL, "selection", "replace", "active"};
+    int ret, cmd_argc = (int)(sizeof(cmd_argv) / sizeof(const char *));
+    struct ged_dm_view *gdvp;
+    char *joint_name;
+    char *end;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
+    struct bu_vls start[] = {BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO};
+    struct bu_vls dir[] = {BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO};
+    point_t screen_pt, view_pt, model_pt;
+    vect_t view_dir, model_dir;
+    mat_t invRot;
+
+    if (argc != maxargs) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    /* parse args */
+    joint_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "joint_name");
+    bu_basename(joint_name, argv[2]);
+
+    screen_pt[X] = strtol(argv[3], &end, 10);
+    if (*end != '\0') {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %d\n", screen_pt[X]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    screen_pt[Y] = strtol(argv[4], &end, 10);
+    if (*end != '\0') {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %d\n", screen_pt[Y]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* stash point coordinates for future drag handling */
+    gdvp->gdv_view->gv_prevMouseX = screen_pt[X];
+    gdvp->gdv_view->gv_prevMouseY = screen_pt[Y];
+
+    /* convert screen point to model-space start point and direction */
+    view_pt[X] = screen_to_view_x(gdvp->gdv_dmp, screen_pt[X]);
+    view_pt[Y] = screen_to_view_y(gdvp->gdv_dmp, screen_pt[Y]);
+    view_pt[Z] = 1.0;
+
+    MAT4X3PNT(model_pt, gdvp->gdv_view->gv_view2model, view_pt);
+
+    VSET(view_dir, 0.0, 0.0, -1.0);
+    bn_mat_inv(invRot, gedp->ged_gvp->gv_rotation);
+    MAT4X3PNT(model_dir, invRot, view_dir);
+
+    /* joint2 joint_name selection append selection_name startx starty startz dirx diry dirz */
+    bu_vls_printf(&start[X], "%f", model_pt[X]);
+    bu_vls_printf(&start[Y], "%f", model_pt[Y]);
+    bu_vls_printf(&start[Z], "%f", model_pt[Z]);
+
+    cmd_argv[1] = joint_name;
+    cmd_argv[5] = bu_vls_addr(&start[X]);
+    cmd_argv[6] = bu_vls_addr(&start[Y]);
+    cmd_argv[7] = bu_vls_addr(&start[Z]);
+
+    bu_vls_printf(&dir[X], "%f", model_dir[X]);
+    bu_vls_printf(&dir[Y], "%f", model_dir[Y]);
+    bu_vls_printf(&dir[Z], "%f", model_dir[Z]);
+
+    cmd_argv[8] = bu_vls_addr(&dir[X]);
+    cmd_argv[9] = bu_vls_addr(&dir[Y]);
+    cmd_argv[10] = bu_vls_addr(&dir[Z]);
+
+    gedp->ged_gvp = gdvp->gdv_view;
+    ret = ged_joint2(gedp, cmd_argc, cmd_argv);
+
+    bu_vls_free(&start[X]);
+    bu_vls_free(&start[Y]);
+    bu_vls_free(&start[Z]);
+    bu_vls_free(&dir[X]);
+    bu_vls_free(&dir[Y]);
+    bu_vls_free(&dir[Z]);
+
+    if (ret != GED_OK) {
+	return GED_ERROR;
+    }
+
+    bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_joint_selection_translate %s %s %%x %%y}",
+		  bu_vls_addr(&gdvp->gdv_dmp->dm_pathName),
+		  bu_vls_addr(&current_top->to_gop->go_name),
+		  bu_vls_addr(&gdvp->gdv_name),
+		  joint_name);
+    Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+    bu_vls_free(&bindings);
+
+    bu_free((void *)joint_name, "joint_name");
+
+    return GED_OK;
+}
+
+HIDDEN int
+to_mouse_joint_selection_translate(
+    struct ged *gedp,
+    int argc,
+    const char *argv[],
+    ged_func_ptr UNUSED(func),
+    const char *usage,
+    int maxargs)
+{
+    const char *cmd_argv[8] = {"joint2", NULL, "selection", "translate", "active"};
+    int ret, cmd_argc = (int)(sizeof(cmd_argv) / sizeof(const char *));
+    struct ged_dm_view *gdvp;
+    char *joint_name;
+    char *end;
+    point_t screen_end, view_start, view_end, model_start, model_end;
+    vect_t model_delta;
+    struct bu_vls delta[] = {BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO};
+
+    if (argc != maxargs) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    joint_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "joint_name");
+    bu_basename(joint_name, argv[2]);
+
+    screen_end[X] = strtol(argv[3], &end, 10);
+    if (*end != '\0') {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %d\n", screen_end[X]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    screen_end[Y] = strtol(argv[4], &end, 10);
+    if (*end != '\0') {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %d\n", screen_end[Y]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* convert screen-space delta to model-space delta */
+    view_start[X] = screen_to_view_x(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseX);
+    view_start[Y] = screen_to_view_y(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseY);
+    view_start[Z] = 1;
+    MAT4X3PNT(model_start, gdvp->gdv_view->gv_view2model, view_start);
+
+    view_end[X] = screen_to_view_x(gdvp->gdv_dmp, screen_end[X]);
+    view_end[Y] = screen_to_view_y(gdvp->gdv_dmp, screen_end[Y]);
+    view_end[Z] = 1;
+    MAT4X3PNT(model_end, gdvp->gdv_view->gv_view2model, view_end);
+
+    VSUB2(model_delta, model_end, model_start);
+
+    bu_vls_printf(&delta[X], "%f", model_delta[X]);
+    bu_vls_printf(&delta[Y], "%f", model_delta[Y]);
+    bu_vls_printf(&delta[Z], "%f", model_delta[Z]);
+
+    cmd_argv[1] = joint_name;
+    cmd_argv[5] = bu_vls_addr(&delta[X]);
+    cmd_argv[6] = bu_vls_addr(&delta[Y]);
+    cmd_argv[7] = bu_vls_addr(&delta[Z]);
+
+    ret = ged_joint2(gedp, cmd_argc, cmd_argv);
+
+    if (ret != GED_OK) {
+	bu_free((void *)joint_name, "joint_name");
+	bu_vls_free(&delta[X]);
+	bu_vls_free(&delta[Y]);
+	bu_vls_free(&delta[Z]);
+	return GED_ERROR;
+    }
+
+    /* need to tell front-end that we've modified the db */
+    Tcl_Eval(current_top->to_interp, "$::ArcherCore::application setSave");
+
+    gdvp->gdv_view->gv_prevMouseX = screen_end[X];
+    gdvp->gdv_view->gv_prevMouseY = screen_end[Y];
+
+    cmd_argc = 3;
+    cmd_argv[0] = "get";
+    cmd_argv[1] = joint_name;
+    cmd_argv[2] = "RP1";
+    cmd_argv[3] = NULL;
+    ret = ged_get(gedp, cmd_argc, cmd_argv);
+
+    if (ret == GED_OK) {
+	char *path_name = bu_strdup(bu_vls_cstr(gedp->ged_result_str));
+	int dmode = 0;
+	struct bu_vls path_dmode = BU_VLS_INIT_ZERO;
+
+	/* get current display mode of path */
+	cmd_argc = 2;
+	cmd_argv[0] = "how";
+	cmd_argv[1] = path_name;
+	cmd_argv[2] = NULL;
+	ret = ged_how(gedp, cmd_argc, cmd_argv);
+
+	if (ret == GED_OK) {
+	    ret = bu_sscanf(bu_vls_cstr(gedp->ged_result_str), "%d", &dmode);
+	}
+	if (dmode == 4) {
+	    bu_vls_printf(&path_dmode, "-h");
+	} else {
+	    bu_vls_printf(&path_dmode, "-m%d", dmode);
+	}
+
+	/* erase path to split it from visible vlists */
+	cmd_argc = 2;
+	cmd_argv[0] = "erase";
+	cmd_argv[1] = path_name;
+	cmd_argv[2] = NULL;
+	ret = ged_erase(gedp, cmd_argc, cmd_argv);
+
+	if (ret == GED_OK) {
+	    /* redraw path with its previous display mode */
+	    cmd_argc = 4;
+	    cmd_argv[0] = "draw";
+	    cmd_argv[1] = "-R";
+	    cmd_argv[2] = bu_vls_cstr(&path_dmode);
+	    cmd_argv[3] = path_name;
+	    cmd_argv[4] = NULL;
+	    ret = ged_draw(gedp, cmd_argc, cmd_argv);
+
+	    to_refresh_all_views(current_top);
+	}
+	bu_vls_free(&path_dmode);
+	bu_free(path_name, "path_name");
+    }
+
+    bu_free((void *)joint_name, "joint_name");
+    bu_vls_free(&delta[X]);
+    bu_vls_free(&delta[Y]);
+    bu_vls_free(&delta[Z]);
+
+    return ret;
+}
+
+HIDDEN int
 to_mouse_move_arb_edge(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
@@ -8287,12 +8658,37 @@ to_mouse_otranslate(struct ged *gedp,
     gedp->ged_gvp = gdvp->gdv_view;
 
     if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
-	struct bu_vls tcl_cmd;
+	const char *path_string = argv[2];
+	struct path_edit_params *params;
+	int is_entry_new;
+	struct bu_hash_entry *entry;
+	mat_t dmat, prev_mat;
+	vect_t dvec;
 
-	bu_vls_init(&tcl_cmd);
-	bu_vls_printf(&tcl_cmd, "%s otranslate %s %s %s", bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback), bu_vls_addr(&tran_x_vls), bu_vls_addr(&tran_y_vls), bu_vls_addr(&tran_z_vls));
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
-	bu_vls_free(&tcl_cmd);
+	entry = bu_hash_tbl_add(current_top->to_gop->go_edited_paths,
+		(unsigned char *)path_string,
+		sizeof(char) * strlen(path_string) + 1,
+		&is_entry_new);
+
+	if (is_entry_new) {
+	    BU_GET(params, struct path_edit_params);
+	    MAT_IDN(params->edit_mat);
+	    params->edit_mode = gdvp->gdv_view->gv_mode;
+
+	    bu_set_hash_value(entry, (unsigned char *)params);
+	} else {
+	    params = (struct path_edit_params *)bu_get_hash_value(entry);
+	}
+
+	MAT_IDN(dmat);
+	VSCALE(dvec, model, gedp->ged_wdbp->dbip->dbi_local2base);
+	MAT_DELTAS_VEC(dmat, dvec);
+
+	MAT_COPY(prev_mat, params->edit_mat);
+	bn_mat_mul(params->edit_mat, prev_mat, dmat);
+
+
+	to_refresh_view(gdvp);
     } else {
 	char *av[6];
 
@@ -13425,6 +13821,20 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 
 	    break;
 #endif
+#ifdef DM_QT
+	case DM_TYPE_QT:
+	    *gdvp->gdv_fbs.fbs_fbp = qt_interface; /* struct copy */
+
+	    gdvp->gdv_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/Qt")+1, "if_name");
+	    bu_strlcpy(gdvp->gdv_fbs.fbs_fbp->if_name, "/dev/Qt", strlen("/dev/Qt")+1);
+
+	    /* Mark OK by filling in magic number */
+	    gdvp->gdv_fbs.fbs_fbp->if_magic = FB_MAGIC;
+
+	    gdvp->gdv_dmp->dm_openFb(gdvp->gdv_dmp, gdvp->gdv_fbs.fbs_fbp);
+
+	    break;
+#endif
 	default: {
 	    Tcl_Obj *obj;
 
@@ -13454,36 +13864,36 @@ to_create_vlist_callback(struct solid *sp)
     register int first = 1;
 
     if (current_top->to_gop->go_dlist_on) {
-	for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
 	    if (!gdvp->gdv_hide_view) {
 
-		(void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
+	    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
 
-		if (first) {
-		    sp->s_dlist = DM_GEN_DLISTS(gdvp->gdv_dmp, 1);
-		    first = 0;
-		}
-
-		(void)DM_BEGINDLIST(gdvp->gdv_dmp, sp->s_dlist);
-
-		if (sp->s_iflag == UP)
-		    (void)DM_SET_FGCOLOR(gdvp->gdv_dmp, 255, 255, 255, 0, sp->s_transparency);
-		else
-		    (void)DM_SET_FGCOLOR(gdvp->gdv_dmp,
-					 (unsigned char)sp->s_color[0],
-					 (unsigned char)sp->s_color[1],
-					 (unsigned char)sp->s_color[2], 0, sp->s_transparency);
-
-		if (sp->s_hiddenLine) {
-		    (void)DM_DRAW_VLIST_HIDDEN_LINE(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
-		} else {
-		    (void)DM_DRAW_VLIST(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
-		}
-
-		(void)DM_ENDDLIST(gdvp->gdv_dmp);
+	    if (first) {
+		sp->s_dlist = DM_GEN_DLISTS(gdvp->gdv_dmp, 1);
+		first = 0;
 	    }
+
+	    (void)DM_BEGINDLIST(gdvp->gdv_dmp, sp->s_dlist);
+
+	    if (sp->s_iflag == UP)
+		(void)DM_SET_FGCOLOR(gdvp->gdv_dmp, 255, 255, 255, 0, sp->s_transparency);
+	    else
+		(void)DM_SET_FGCOLOR(gdvp->gdv_dmp,
+			       (unsigned char)sp->s_color[0],
+			       (unsigned char)sp->s_color[1],
+			       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
+
+	    if (sp->s_hiddenLine) {
+		(void)DM_DRAW_VLIST_HIDDEN_LINE(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
+	    } else {
+		(void)DM_DRAW_VLIST(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
+	    }
+
+	    (void)DM_ENDDLIST(gdvp->gdv_dmp);
 	}
     }
+}
 }
 
 
@@ -13623,9 +14033,9 @@ HIDDEN void go_dm_draw_lines(struct dm *dmp, struct ged_data_line_state *gdlsp);
 HIDDEN void go_dm_draw_polys(struct dm *dmp, ged_data_polygon_state *gdpsp, int mode);
 
 HIDDEN void go_draw(struct ged_dm_view *gdvp);
-HIDDEN int go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hsp);
+HIDDEN int go_draw_dlist(struct ged_dm_view *gdvp);
 HIDDEN void go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp);
-HIDDEN void go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp);
+HIDDEN void go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp);
 
 
 HIDDEN void
@@ -13831,18 +14241,20 @@ go_draw(struct ged_dm_view *gdvp)
     else
 	(void)DM_LOADPMATRIX(gdvp->gdv_dmp, (fastf_t *)NULL);
 
-    go_draw_dlist(gdvp->gdv_gop, gdvp->gdv_dmp, gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay);
+    go_draw_dlist(gdvp);
 }
 
 
 /* Draw all display lists */
 HIDDEN int
-go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
+go_draw_dlist(struct ged_dm_view *gdvp)
 {
     register struct ged_display_list *gdlp;
     register struct ged_display_list *next_gdlp;
     struct solid *sp;
     int line_style = -1;
+    struct dm *dmp = gdvp->gdv_dmp;
+    struct bu_list *hdlp = gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay;
 
     if (dmp->dm_transparency) {
 	/* First, draw opaque stuff */
@@ -13859,7 +14271,7 @@ go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
 		    (void)DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 		}
 
-		go_draw_solid(gop, dmp, sp);
+		go_draw_solid(gdvp, sp);
 	    }
 
 	    gdlp = next_gdlp;
@@ -13883,7 +14295,7 @@ go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
 		    (void)DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 		}
 
-		go_draw_solid(gop, dmp, sp);
+		go_draw_solid(gdvp, sp);
 	    }
 
 	    gdlp = next_gdlp;
@@ -13902,7 +14314,7 @@ go_draw_dlist(struct ged_obj *gop, struct dm *dmp, struct bu_list *hdlp)
 		    (void)DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 		}
 
-		go_draw_solid(gop, dmp, sp);
+		go_draw_solid(gdvp, sp);
 	    }
 
 	    gdlp = next_gdlp;
@@ -14004,10 +14416,56 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect);
 }
 
+struct path_match_data {
+    struct db_full_path *s_fpath;
+    struct db_i *dbip;
+};
+
+HIDDEN int
+key_matches_path(struct bu_hash_entry *entry, void *udata)
+{
+    struct path_match_data *data = (struct path_match_data *)udata;
+    struct db_full_path entry_fpath;
+    char *path_string;
+    int ret;
+
+    path_string = (char *)bu_get_hash_key(entry);
+    if (db_string_to_path(&entry_fpath, data->dbip, path_string) < 0) {
+	return 0;
+    }
+
+    ret = 0;
+    if (db_full_path_match_top(&entry_fpath, data->s_fpath)) {
+	ret = 1;
+    }
+
+    db_free_full_path(&entry_fpath);
+    return ret;
+}
 
 HIDDEN void
-go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp)
+go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp)
 {
+    struct ged_obj *gop = gdvp->gdv_gop;
+    struct dm *dmp = gdvp->gdv_dmp;
+    struct bu_hash_entry *entry;
+    struct path_edit_params *params = NULL;
+    mat_t save_mat, edit_model2view;
+    struct path_match_data data;
+
+    data.s_fpath = &sp->s_fullpath;
+    data.dbip = gop->go_gedp->ged_wdbp->dbip;
+    entry = bu_hash_tbl_traverse(gop->go_edited_paths, key_matches_path, &data);
+
+    if (entry != NULL) {
+	params = (struct path_edit_params *)bu_get_hash_value(entry);
+    }
+    if (params) {
+	MAT_COPY(save_mat, gdvp->gdv_view->gv_model2view);
+	bn_mat_mul(edit_model2view, gdvp->gdv_view->gv_model2view, params->edit_mat);
+	DM_LOADMATRIX(dmp, edit_model2view, 0);
+    }
+
     if (gop->go_dlist_on) {
 	DM_DRAWDLIST(dmp, sp->s_dlist);
     } else {
@@ -14024,6 +14482,9 @@ go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp)
 	} else {
 	    (void)DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
 	}
+    }
+    if (params) {
+	DM_LOADMATRIX(dmp, save_mat, 0);
     }
 }
 
