@@ -48,6 +48,7 @@ RT_DECLARE_MIRROR(ell);
 RT_DECLARE_MIRROR(arb);
 RT_DECLARE_MIRROR(half);
 RT_DECLARE_MIRROR(grip);
+RT_DECLARE_MIRROR(joint);
 RT_DECLARE_MIRROR(poly);
 RT_DECLARE_MIRROR(bspline);
 RT_DECLARE_MIRROR(arbn);
@@ -151,6 +152,10 @@ rt_mirror(struct db_i *dbip,
 	}
 	case ID_GRIP: {
 	    err = rt_grip_mirror(ip, plane);
+	    return err ? NULL : ip;
+	}
+	case ID_JOINT: {
+	    err = rt_joint_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
 	case ID_POLY: {

@@ -23,6 +23,7 @@ set(archer_TCLSCRIPTS
   GripEditFrame.tcl
   HalfEditFrame.tcl
   HypEditFrame.tcl
+  JointEditFrame.tcl
   LoadArcherLibs.tcl
   LODUtility.tcl
   MetaballEditFrame.tcl
