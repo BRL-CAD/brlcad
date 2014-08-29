@@ -854,8 +854,11 @@ public:
     bool
     operator<(const CurveSegment &other) const
     {
-	const CurvePoint &min = std::min(from, to);
-	const CurvePoint &other_min = std::min(other.from, other.to);
+	if (from == other.from && to == other.to) {
+	    return false;
+	}
+	const ON_2dPoint &min = std::min(from.pt, to.pt);
+	const ON_2dPoint &other_min = std::min(other.from.pt, other.to.pt);
 	return min < other_min;
     }
 };
