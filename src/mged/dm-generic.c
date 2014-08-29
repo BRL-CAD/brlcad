@@ -626,6 +626,51 @@ common_dm(int argc, const char *argv[])
     return TCL_ERROR;
 }
 
+/* common sp_hook functions */
+
+void
+view_state_flag_hook(const struct bu_structparse *UNUSED(sdp),
+		const char *UNUSED(name),
+		void *UNUSED(base),
+		const char *UNUSED(value),
+                void *data)
+{
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    if (hs->vs)
+	hs->vs->vs_flag = 1;
+}
+
+void
+dirty_hook(const struct bu_structparse *UNUSED(sdp),
+	const char *UNUSED(name),
+	void *UNUSED(base),
+	const char *UNUSED(value),
+	void *data)
+{
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    *(hs->dirty_global) = 1;
+}
+
+void
+zclip_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    hs->vs->vs_gvp->gv_zclip = dm_get_zclip(hs->hs_dmp);
+    dirty_hook(sdp, name, base, value, data);
+}
+
+void *
+set_hook_data(struct mged_view_hook_state *hs) {
+    hs->hs_dmp = dmp;
+    hs->vs = view_state;
+    hs->dirty_global = &(dirty);
+    return (void *)hs;
+}
+
 
 /*
  * Local Variables:

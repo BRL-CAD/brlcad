@@ -590,6 +590,13 @@ extern int doEvent(ClientData, void *);
 
 /* defined in dm-generic.c */
 extern int common_dm(int argc, const char *argv[]);
+extern void view_state_flag_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
+extern void dirty_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
+extern void zclip_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
+
+/* external sp_hook functions */
+extern void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *, void *); /* defined in color_scheme.c */
+
 
 /* defined in setup.c */
 extern void mged_rtCmdNotify();
@@ -610,6 +617,7 @@ struct mged_view_hook_state {
     struct _view_state *vs;
     int *dirty_global;
 };
+extern void *set_hook_data(struct mged_view_hook_state *hs);
 
 #endif /* MGED_MGED_DM_H */
 

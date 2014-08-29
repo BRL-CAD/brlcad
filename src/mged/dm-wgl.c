@@ -65,43 +65,6 @@ extern void cs_set_bg(const struct bu_structparse *, const char *, void *, const
 static int Wgl_dm();
 static int Wgl_doevent();
 
-/* local sp_hook functions */
-
-static void
-view_state_flag_hook(const struct bu_structparse *UNUSED(sdp),
-		const char *UNUSED(name),
-		void *UNUSED(base),
-		const char *UNUSED(value),
-                void *data)
-{
-    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
-    if (hs->vs)
-	hs->vs->vs_flag = 1;
-}
-
-static void
-dirty_hook(const struct bu_structparse *UNUSED(sdp),
-	const char *UNUSED(name),
-	void *UNUSED(base),
-	const char *UNUSED(value),
-	void *data)
-{
-    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
-    *(hs->dirty_global) = 1;
-}
-
-static void
-zclip_hook(const struct bu_structparse *sdp,
-	const char *name,
-	void *base,
-	const char *value,
-	void *data)
-{
-    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
-    hs->vs->vs_gvp->gv_zclip = dm_get_zclip(hs->hs_dmp);
-    dirty_hook(sdp, name, base, value, data);
-}
-
 struct bu_structparse_map ogl_vparse_map[] = {
     {"depthcue",	view_state_flag_hook      },
     {"zclip",		zclip_hook		  },
@@ -114,15 +77,6 @@ struct bu_structparse_map ogl_vparse_map[] = {
     {"useBound",	dirty_hook  	  	  },
     {(char *)0,		BU_STRUCTPARSE_FUNC_NULL  }
 };
-
-
-static void *
-set_hook_data(struct mged_view_hook_state *hs) {
-    hs->hs_dmp = dmp;
-    hs->vs = view_state;
-    hs->dirty_global = &(dirty);
-    return (void *)hs;
-}
 
 
 int

@@ -35,44 +35,12 @@
 
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
-static void
-dirty_hook(const struct bu_structparse *UNUSED(sdp),
-	const char *UNUSED(name),
-	void *UNUSED(base),
-	const char *UNUSED(value),
-	void *data)
-{
-    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
-    *(hs->dirty_global) = 1;
-}
-
-static void
-zclip_hook(const struct bu_structparse *sdp,
-	const char *name,
-	void *base,
-	const char *value,
-	void *data)
-{
-    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
-    hs->vs->vs_gvp->gv_zclip = dm_get_zclip(hs->hs_dmp);
-    dirty_hook(sdp, name, base, value, data);
-}
-
 struct bu_structparse_map Qt_vparse_map[] = {
     {"bound",           dirty_hook                },
     {"useBound",        dirty_hook                },
     {"zclip",           zclip_hook                },
     {(char *)0,         BU_STRUCTPARSE_FUNC_NULL  }
 };
-
-static void *
-set_hook_data(struct mged_view_hook_state *hs) {
-    hs->hs_dmp = dmp;
-    hs->vs = view_state;
-    hs->dirty_global = &(dirty);
-    return (void *)hs;
-}
-
 
 /*
   This routine is being called from doEvent() to handle Expose events.

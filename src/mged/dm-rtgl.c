@@ -266,38 +266,6 @@ do_fogHint(const struct bu_structparse *UNUSED(sdp),
     view_state->vs_flag = 1;
 }
 
-
-static void
-dirty_hook(const struct bu_structparse *UNUSED(sdp),
-	   const char *UNUSED(name),
-	   void *UNUSED(base),
-	   const char *UNUSED(value))
-{
-    dirty = 1;
-}
-
-
-static void
-zclip_hook(const struct bu_structparse *sdp,
-	   const char *name,
-	   void *base,
-	   const char *value)
-{
-    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
-
-    dmp->dm_zclip = ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
-    view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook(sdp, name, base, value);
-
-    if (dmp->dm_zclip) {
-	bounds[4] = -1.0;
-	bounds[5] = 1.0;
-    }
-
-    dm_set_win_bounds(dmp, bounds);
-}
-
-
 static void
 debug_hook(const struct bu_structparse *UNUSED(sdp),
 	   const char *UNUSED(name),
