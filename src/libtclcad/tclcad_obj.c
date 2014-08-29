@@ -288,6 +288,12 @@ HIDDEN int to_handle_expose(struct ged *gedp,
 			    int maxargs);
 HIDDEN int to_handle_refresh(struct ged *gedp,
 			     const char *name);
+HIDDEN int to_hide_view(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
 HIDDEN int to_idle_mode(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -1082,6 +1088,7 @@ static struct to_cmdtab to_cmds[] = {
     {"grid2view_lu",	"x y", 4, to_view_func_less, ged_grid2view_lu},
     {"handle_expose",	"vname count", TO_UNLIMITED, to_handle_expose, GED_FUNC_PTR_NULL},
     {"hide",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_hide},
+    {"hide_view",	"vname [0|1]", 3, to_hide_view, GED_FUNC_PTR_NULL},
     {"how",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_how},
     {"human",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_human},
     {"i",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_instance},
@@ -6054,6 +6061,55 @@ to_handle_refresh(struct ged *gedp,
 }
 
 HIDDEN int
+to_hide_view(struct ged *gedp,
+	     int argc,
+	     const char *argv[],
+	     ged_func_ptr UNUSED(func),
+	     const char *usage,
+	     int UNUSED(maxargs))
+{
+    struct ged_dm_view *gdvp;
+    int hide_view;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc > 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    /* return the hide view setting */
+    if (argc == 2) {
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_hide_view);
+	return GED_OK;
+    }
+
+    if (bu_sscanf(argv[2], "%d", &hide_view) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad value - %s, should be 0 or 1", argv[1], argv[2]);
+	return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+HIDDEN int
 to_idle_mode(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -10318,8 +10374,19 @@ to_paint_rect_area(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    if (gdvp->gdv_dmp->dm_depthMask) {
+	/* disable write to depth buffer */
+	(void)DM_SET_DEPTH_MASK(gdvp->gdv_dmp, 0);
+    }
+
     (void)fb_refresh(gdvp->gdv_fbs.fbs_fbp, gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
 		     gdvp->gdv_view->gv_rect.grs_dim[X], gdvp->gdv_view->gv_rect.grs_dim[Y]);
+
+    if (gdvp->gdv_dmp->dm_depthMask) {
+	/* enable write to depth buffer */
+	(void)DM_SET_DEPTH_MASK(gdvp->gdv_dmp, 1);
+
+    }
 
     return GED_OK;
 }
@@ -13386,33 +13453,35 @@ to_create_vlist_callback(struct solid *sp)
     struct ged_dm_view *gdvp;
     register int first = 1;
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (current_top->to_gop->go_dlist_on && to_is_viewable(gdvp)) {
+    if (current_top->to_gop->go_dlist_on) {
+	for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	    if (!gdvp->gdv_hide_view) {
 
-	    (void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
+		(void)DM_MAKE_CURRENT(gdvp->gdv_dmp);
 
-	    if (first) {
-		sp->s_dlist = DM_GEN_DLISTS(gdvp->gdv_dmp, 1);
-		first = 0;
+		if (first) {
+		    sp->s_dlist = DM_GEN_DLISTS(gdvp->gdv_dmp, 1);
+		    first = 0;
+		}
+
+		(void)DM_BEGINDLIST(gdvp->gdv_dmp, sp->s_dlist);
+
+		if (sp->s_iflag == UP)
+		    (void)DM_SET_FGCOLOR(gdvp->gdv_dmp, 255, 255, 255, 0, sp->s_transparency);
+		else
+		    (void)DM_SET_FGCOLOR(gdvp->gdv_dmp,
+					 (unsigned char)sp->s_color[0],
+					 (unsigned char)sp->s_color[1],
+					 (unsigned char)sp->s_color[2], 0, sp->s_transparency);
+
+		if (sp->s_hiddenLine) {
+		    (void)DM_DRAW_VLIST_HIDDEN_LINE(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
+		} else {
+		    (void)DM_DRAW_VLIST(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
+		}
+
+		(void)DM_ENDDLIST(gdvp->gdv_dmp);
 	    }
-
-	    (void)DM_BEGINDLIST(gdvp->gdv_dmp, sp->s_dlist);
-
-	    if (sp->s_iflag == UP)
-		(void)DM_SET_FGCOLOR(gdvp->gdv_dmp, 255, 255, 255, 0, sp->s_transparency);
-	    else
-		(void)DM_SET_FGCOLOR(gdvp->gdv_dmp,
-			       (unsigned char)sp->s_color[0],
-			       (unsigned char)sp->s_color[1],
-			       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
-
-	    if (sp->s_hiddenLine) {
-		(void)DM_DRAW_VLIST_HIDDEN_LINE(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
-	    } else {
-		(void)DM_DRAW_VLIST(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
-	    }
-
-	    (void)DM_ENDDLIST(gdvp->gdv_dmp);
 	}
     }
 }
@@ -14045,15 +14114,38 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 
 	    go_draw_other(gop, gdvp);
 
+	    if (gdvp->gdv_dmp->dm_depthMask) {
+		/* disable write to depth buffer */
+		(void)DM_SET_DEPTH_MASK(gdvp->gdv_dmp, 0);
+	    }
+
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp,
 		       gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
 		       gdvp->gdv_view->gv_rect.grs_dim[X], gdvp->gdv_view->gv_rect.grs_dim[Y]);
 
+	    if (gdvp->gdv_dmp->dm_depthMask) {
+		/* enable write to depth buffer */
+		(void)DM_SET_DEPTH_MASK(gdvp->gdv_dmp, 1);
+
+	    }
+
 	    if (gdvp->gdv_view->gv_rect.grs_line_width)
 		dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect);
-	} else
+	} else {
+	    if (gdvp->gdv_dmp->dm_depthMask) {
+		/* disable write to depth buffer */
+		(void)DM_SET_DEPTH_MASK(gdvp->gdv_dmp, 0);
+	    }
+
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
 		       gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
+
+	    if (gdvp->gdv_dmp->dm_depthMask) {
+		/* enable write to depth buffer */
+		(void)DM_SET_DEPTH_MASK(gdvp->gdv_dmp, 1);
+
+	    }
+	}
 
 	if (restore_zbuffer) {
 	    (void)DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
@@ -14063,6 +14155,11 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
     } else if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_INTERLAY) {
 	go_draw(gdvp);
 
+	if (gdvp->gdv_dmp->dm_depthMask) {
+	    /* disable write to depth buffer */
+	    (void)DM_SET_DEPTH_MASK(gdvp->gdv_dmp, 0);
+	}
+
 	if (gdvp->gdv_view->gv_rect.grs_draw) {
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp,
 		       gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
@@ -14071,11 +14168,22 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
 		       gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
 
+	if (gdvp->gdv_dmp->dm_depthMask) {
+	    /* enable write to depth buffer */
+	    (void)DM_SET_DEPTH_MASK(gdvp->gdv_dmp, 1);
+
+	}
+
 	if (restore_zbuffer) {
 	    (void)DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
 	}
     } else {
 	if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_UNDERLAY) {
+	    if (gdvp->gdv_dmp->dm_depthMask) {
+		/* disable write to depth buffer */
+		(void)DM_SET_DEPTH_MASK(gdvp->gdv_dmp, 0);
+	    }
+
 	    if (gdvp->gdv_view->gv_rect.grs_draw) {
 		fb_refresh(gdvp->gdv_fbs.fbs_fbp,
 			   gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
@@ -14084,9 +14192,10 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 		fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
 			   gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
 
-	    if (gdvp->gdv_dmp->dm_zbuffer) {
-		bu_log("Set zbuffer on, after underlay\n");
-		(void)DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
+	    if (gdvp->gdv_dmp->dm_depthMask) {
+		/* enable write to depth buffer */
+		(void)DM_SET_DEPTH_MASK(gdvp->gdv_dmp, 1);
+
 	    }
 	}
 
