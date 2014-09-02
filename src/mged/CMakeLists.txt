@@ -132,7 +132,6 @@ set(mged_ignore_files
   fbserv.h
   htmlLibraryUi.h
   menu.h
-  mgdev.h
   mged.bat
   mged.h
   mged_dm.h
