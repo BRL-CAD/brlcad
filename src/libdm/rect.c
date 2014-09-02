@@ -35,7 +35,7 @@
 #include "dm_private.h"
 
 void
-dm_draw_rect(dm *dmp, struct bn_interactive_rect_state *grsp)
+dm_draw_rect(dm *dmp, struct bview_interactive_rect_state *grsp)
 {
     if (ZERO(grsp->width) &&
 	ZERO(grsp->height))

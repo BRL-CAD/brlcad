@@ -35,13 +35,14 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
+#include "dm/bview.h"
 #include "dm_private.h"
 
 
 void
 dm_draw_data_axes(dm *dmp,
 		  fastf_t sf,
-		  struct bn_data_axes_state *bndasp)
+		  struct bview_data_axes_state *bndasp)
 {
     int i, j;
     fastf_t halfAxesSize;		/* half the length of an axis */
@@ -121,7 +122,7 @@ void
 dm_draw_axes(dm				*dmp,
 	     fastf_t			viewSize, /* in mm */
 	     const mat_t		rmat,       /* view rotation matrix */
-	     struct bn_axes_state 	*bnasp)
+	     struct bview_axes_state 	*bnasp)
 {
     fastf_t halfAxesSize;		/* half the length of an axis */
     fastf_t xlx, xly;			/* X axis label position */

@@ -263,17 +263,17 @@ DM_EXPORT extern fastf_t dm_wrap(fastf_t f);
 
 /* adc.c */
 DM_EXPORT extern void dm_draw_adc(dm *dmp,
-				  struct bn_adc_state *adcp, mat_t view2model, mat_t model2view);
+				  struct bview_adc_state *adcp, mat_t view2model, mat_t model2view);
 
 /* axes.c */
 DM_EXPORT extern void dm_draw_data_axes(dm *dmp,
 					fastf_t viewSize,
-					struct bn_data_axes_state *bndasp);
+					struct bview_data_axes_state *bndasp);
 
 DM_EXPORT extern void dm_draw_axes(dm *dmp,
 				   fastf_t viewSize,
 				   const mat_t rmat,
-				   struct bn_axes_state *bnasp);
+				   struct bview_axes_state *bnasp);
 
 /* clip.c */
 DM_EXPORT extern int clip(fastf_t *,
@@ -287,7 +287,7 @@ DM_EXPORT extern int vclip(fastf_t *,
 
 /* grid.c */
 DM_EXPORT extern void dm_draw_grid(dm *dmp,
-				   struct bn_grid_state *ggsp,
+				   struct bview_grid_state *ggsp,
 				   fastf_t scale,
 				   mat_t model2view,
 				   fastf_t base2local);
@@ -305,7 +305,7 @@ DM_EXPORT extern int dm_draw_labels(dm *dmp,
 
 /* rect.c */
 DM_EXPORT extern void dm_draw_rect(dm *dmp,
-				   struct bn_interactive_rect_state *grsp);
+				   struct bview_interactive_rect_state *grsp);
 
 /* scale.c */
 DM_EXPORT extern void dm_draw_scale(dm *dmp,

@@ -56,6 +56,7 @@
 
 #include "solid.h"
 #include "dm.h"
+#include "dm/bview.h"
 #include "dg.h"
 #include "obj.h"
 
@@ -119,7 +120,7 @@ HIDDEN int to_autoview(struct ged *gedp,
 		       int maxargs);
 HIDDEN int to_axes(struct ged *gedp,
 		   struct ged_dm_view *gdvp,
-		   struct bn_axes_state *gasp,
+		   struct bview_axes_state *gasp,
 		   int argc,
 		   const char *argv[],
 		   const char *usage);
@@ -1707,7 +1708,7 @@ to_autoview(struct ged *gedp,
 HIDDEN int
 to_axes(struct ged *gedp,
 	struct ged_dm_view *gdvp,
-	struct bn_axes_state *gasp,
+	struct bview_axes_state *gasp,
 	int argc,
 	const char *argv[],
 	const char *usage)
@@ -2848,7 +2849,7 @@ to_data_axes(struct ged *gedp,
 	     int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
-    struct bn_data_axes_state *gdasp;
+    struct bview_data_axes_state *gdasp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -4561,7 +4562,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "data_axes")) {
-	struct bn_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
+	struct bview_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_data_axes.num_points)
@@ -4578,7 +4579,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "sdata_axes")) {
-	struct bn_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
+	struct bview_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_sdata_axes.num_points)
@@ -5226,7 +5227,7 @@ to_data_pick(struct ged *gedp,
     /* check for axes points */
     if (gdvp->gdv_view->gv_data_axes.draw &&
 	gdvp->gdv_view->gv_data_axes.num_points) {
-	struct bn_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
+	struct bview_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
 
 	for (i = 0; i < gdasp->num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -5255,7 +5256,7 @@ to_data_pick(struct ged *gedp,
     /* check for selected axes points */
     if (gdvp->gdv_view->gv_sdata_axes.draw &&
 	gdvp->gdv_view->gv_sdata_axes.num_points) {
-	struct bn_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
+	struct bview_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
 
 	for (i = 0; i < gdasp->num_points; ++i) {
 	    fastf_t minX, maxX;

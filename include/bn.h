@@ -4401,10 +4401,10 @@ BN_EXPORT extern int bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max
 /* TODO - find another, more appropriate home for these... may just have to
  * duplicate the logic in libdm and libged */
 #include "dm/bview.h"
-BN_EXPORT void adc_model_to_adc_view(struct bn_adc_state *adcs, mat_t model2view, fastf_t amax);
-BN_EXPORT void adc_grid_to_adc_view(struct bn_adc_state *adcs, mat_t model2view, fastf_t amax);
-BN_EXPORT void adc_view_to_adc_grid(struct bn_adc_state *adcs, mat_t model2view);
-BN_EXPORT void adc_reset(struct bn_adc_state *adcs, mat_t view2model, mat_t model2view);
+BN_EXPORT void adc_model_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax);
+BN_EXPORT void adc_grid_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax);
+BN_EXPORT void adc_view_to_adc_grid(struct bview_adc_state *adcs, mat_t model2view);
+BN_EXPORT void adc_reset(struct bview_adc_state *adcs, mat_t view2model, mat_t model2view);
 
 #endif /* BN_H */
 

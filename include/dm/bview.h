@@ -43,7 +43,7 @@ struct display_list {
     int                 dl_wflag;
 };
 
-struct bn_adc_state {
+struct bview_adc_state {
     int         draw;
     int         dv_x;
     int         dv_y;
@@ -68,7 +68,7 @@ struct bn_adc_state {
     int         line_width;
 };
 
-struct bn_axes_state {
+struct bview_axes_state {
     int       draw;
     point_t   axes_pos;             /* in model coordinates */
     fastf_t   axes_size;            /* in view coordinates */
@@ -87,7 +87,7 @@ struct bn_axes_state {
     int       tick_major_color[3];
 };
 
-struct bn_data_axes_state {
+struct bview_data_axes_state {
     int       draw;
     int       color[3];
     int       line_width;          /* in pixels */
@@ -96,7 +96,7 @@ struct bn_data_axes_state {
     point_t   *points;             /* in model coordinates */
 };
 
-struct bn_grid_state {
+struct bview_grid_state {
     int       draw;               /* draw grid */
     int       snap;               /* snap to grid */
     fastf_t   anchor[3];
@@ -107,7 +107,7 @@ struct bn_grid_state {
     int       color[3];
 };
 
-struct bn_interactive_rect_state {
+struct bview_interactive_rect_state {
     int        active;     /* 1 - actively drawing a rectangle */
     int        draw;       /* draw rubber band rectangle */
     int        line_width;

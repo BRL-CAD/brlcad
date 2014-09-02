@@ -40,6 +40,8 @@
 #include "nmg.h"
 #include "rtgeom.h"
 
+#include "dm/bview.h"
+
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -1141,7 +1143,7 @@ write_data_arrows(struct ged_data_arrow_state *gdasp, FILE *fp, int sflag)
 
 
 static void
-write_data_axes(struct bn_data_axes_state *bndasp, FILE *fp, int sflag)
+write_data_axes(struct bview_data_axes_state *bndasp, FILE *fp, int sflag)
 {
     register int i;
 

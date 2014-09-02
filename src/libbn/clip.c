@@ -187,7 +187,7 @@ bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
 /* TODO - need a proper place for these... */
 
 void
-adc_model_to_adc_view(struct bn_adc_state *adcs, mat_t model2view, fastf_t amax)
+adc_model_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax)
 {
     MAT4X3PNT(adcs->pos_view, model2view, adcs->pos_model);
     adcs->dv_x = adcs->pos_view[X] * amax;
@@ -196,7 +196,7 @@ adc_model_to_adc_view(struct bn_adc_state *adcs, mat_t model2view, fastf_t amax)
 
 
 void
-adc_grid_to_adc_view(struct bn_adc_state *adcs, mat_t model2view, fastf_t amax)
+adc_grid_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax)
 {
     point_t model_pt;
     point_t view_pt;
@@ -210,7 +210,7 @@ adc_grid_to_adc_view(struct bn_adc_state *adcs, mat_t model2view, fastf_t amax)
 
 
 void
-adc_view_to_adc_grid(struct bn_adc_state *adcs, mat_t model2view)
+adc_view_to_adc_grid(struct bview_adc_state *adcs, mat_t model2view)
 {
     point_t model_pt;
     point_t view_pt;
@@ -224,7 +224,7 @@ adc_view_to_adc_grid(struct bn_adc_state *adcs, mat_t model2view)
 #define INV_GED 0.00048828125
 
 void
-adc_reset(struct bn_adc_state *adcs, mat_t view2model, mat_t model2view)
+adc_reset(struct bview_adc_state *adcs, mat_t view2model, mat_t model2view)
 {
     adcs->dv_x = adcs->dv_y = 0;
     adcs->dv_a1 = adcs->dv_a2 = 0;
