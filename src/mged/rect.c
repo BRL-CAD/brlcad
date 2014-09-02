@@ -89,10 +89,12 @@ rb_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 void
 rect_view2image(void)
 {
+    int width;
+    width = dm_get_width(dmp);
     rubber_band->rb_pos[X] = dm_Normal2Xx(dmp, rubber_band->rb_x);
     rubber_band->rb_pos[Y] = dm_get_height(dmp) - dm_Normal2Xy(dmp, rubber_band->rb_y, 1);
-    rubber_band->rb_dim[X] = rubber_band->rb_width * dm_get_width(dmp) * 0.5;
-    rubber_band->rb_dim[Y] = rubber_band->rb_height * dm_get_width(dmp) * 0.5;
+    rubber_band->rb_dim[X] = rubber_band->rb_width * (fastf_t)width * 0.5;
+    rubber_band->rb_dim[Y] = rubber_band->rb_height * (fastf_t)width * 0.5;
 }
 
 
@@ -106,8 +108,8 @@ rect_image2view(void)
     int width = dm_get_width(dmp);
     rubber_band->rb_x = dm_Xx2Normal(dmp, rubber_band->rb_pos[X]);
     rubber_band->rb_y = dm_Xy2Normal(dmp, dm_get_height(dmp) - rubber_band->rb_pos[Y], 1);
-    rubber_band->rb_width = rubber_band->rb_dim[X] * 2.0 / width;
-    rubber_band->rb_height = rubber_band->rb_dim[Y] * 2.0 / width;
+    rubber_band->rb_width = rubber_band->rb_dim[X] * 2.0 / (fastf_t)width;
+    rubber_band->rb_height = rubber_band->rb_dim[Y] * 2.0 / (fastf_t)width;
 }
 
 

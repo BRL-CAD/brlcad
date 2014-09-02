@@ -166,7 +166,7 @@ draw_grid(void)
     /* sanity - don't draw the grid if it would fill the screen */
     {
 	int width = dm_get_width(dmp);
-	fastf_t pixel_size = 2.0 * sf / width;
+	fastf_t pixel_size = 2.0 * sf / (fastf_t)width;
 
 	if (grid_state->gr_res_h < pixel_size || grid_state->gr_res_v < pixel_size)
 	    return;

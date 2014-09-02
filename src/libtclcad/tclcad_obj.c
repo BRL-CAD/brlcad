@@ -1372,13 +1372,15 @@ static struct to_cmdtab to_cmds[] = {
 static fastf_t
 screen_to_view_x(dm *dmp, fastf_t x)
 {
-    return x / dm_get_width(dmp) * 2.0 - 1.0;
+    int width = dm_get_width(dmp);
+    return x / (fastf_t)width * 2.0 - 1.0;
 }
 
 static fastf_t
 screen_to_view_y(dm *dmp, fastf_t y)
 {
-    return (y / dm_get_height(dmp) * -2.0 + 1.0) / dm_get_aspect(dmp);
+    int height = dm_get_height(dmp);
+    return (y / (fastf_t)height * -2.0 + 1.0) / dm_get_aspect(dmp);
 }
 
 /**
@@ -4379,7 +4381,7 @@ to_data_move(struct ged *gedp,
 	     int UNUSED(maxargs))
 {
     int mx, my;
-    int width;
+    int width, height;
     int dindex;
     fastf_t cx, cy;
     fastf_t vx, vy;
@@ -4426,8 +4428,9 @@ to_data_move(struct ged *gedp,
     }
 
     width = dm_get_width(gdvp->gdv_dmp);
-    cx = 0.5 * width;
-    cy = 0.5 * dm_get_height(gdvp->gdv_dmp);
+    cx = 0.5 * (fastf_t)width;
+    height = dm_get_height(gdvp->gdv_dmp);
+    cy = 0.5 * (fastf_t)height;
     sf = 2.0 / width;
     vx = (mx - cx) * sf;
     vy = (cy - my) * sf;
@@ -4913,7 +4916,7 @@ to_data_pick(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    int mx, my, width;
+    int mx, my, width, height;
     fastf_t cx, cy;
     fastf_t vx, vy;
     fastf_t sf;
@@ -4975,8 +4978,9 @@ to_data_pick(struct ged *gedp,
     }
 
     width = dm_get_width(gdvp->gdv_dmp);
-    cx = 0.5 * width;
-    cy = 0.5 * dm_get_height(gdvp->gdv_dmp);
+    cx = 0.5 * (fastf_t)width;
+    height = dm_get_height(gdvp->gdv_dmp);
+    cy = 0.5 * (fastf_t)height;
     sf = 2.0 / width;
     vx = (mx - cx) * sf;
     vy = (cy - my) * sf;
@@ -7142,7 +7146,7 @@ to_mouse_constrain_trans(struct ged *gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     width = dm_get_width(gdvp->gdv_dmp);
-    inv_width = 1.0 / width;
+    inv_width = 1.0 / (fastf_t)width;
     dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
     dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
 
@@ -7832,7 +7836,7 @@ to_mouse_move_arb_edge(struct ged *gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     width = dm_get_width(gdvp->gdv_dmp);
-    inv_width = 1.0 / width;
+    inv_width = 1.0 / (fastf_t)width;
     /* ged_move_arb_edge expects things to be in local units */
     dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
     dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
@@ -7932,7 +7936,7 @@ to_mouse_move_arb_face(struct ged *gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     width = dm_get_width(gdvp->gdv_dmp);
-    inv_width = 1.0 / width;
+    inv_width = 1.0 / (fastf_t)width;
     /* ged_move_arb_face expects things to be in local units */
     dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
     dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
@@ -8033,7 +8037,7 @@ to_mouse_move_botpt(struct ged *gedp,
     }
 
     width = dm_get_width(gdvp->gdv_dmp);
-    inv_width = 1.0 / width;
+    inv_width = 1.0 / (fastf_t)width;
 
     if (rflag) {
 	dx = x - gdvp->gdv_view->gv_prevMouseX;
@@ -8204,7 +8208,7 @@ to_mouse_move_botpts(struct ged *gedp,
     }
 
     width = dm_get_width(gdvp->gdv_dmp);
-    inv_width = 1.0 / width;
+    inv_width = 1.0 / (fastf_t)width;
 
     dx = x - gdvp->gdv_view->gv_prevMouseX;
     dy = gdvp->gdv_view->gv_prevMouseY - y;
@@ -8335,7 +8339,7 @@ to_mouse_move_pt_common(struct ged *gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     width = dm_get_width(gdvp->gdv_dmp);
-    inv_width = 1.0 / width;
+    inv_width = 1.0 / (fastf_t)width;
     /* ged_move_pipept expects things to be in local units */
     dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
     dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
@@ -8542,7 +8546,7 @@ to_mouse_oscale(struct ged *gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     width = dm_get_width(gdvp->gdv_dmp);
-    inv_width = 1.0 / width;
+    inv_width = 1.0 / (fastf_t)width;
     dx *= inv_width * gdvp->gdv_view->gv_sscale;
     dy *= inv_width * gdvp->gdv_view->gv_sscale;
 
@@ -8652,7 +8656,7 @@ to_mouse_otranslate(struct ged *gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     width = dm_get_width(gdvp->gdv_dmp);
-    inv_width = 1.0 / width;
+    inv_width = 1.0 / (fastf_t)width;
     /* ged_otranslate expects things to be in local units */
     dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
     dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
@@ -9496,7 +9500,7 @@ to_mouse_rotate_arb_face(struct ged *gedp,
 	_dy = (_gdvp)->gdv_view->gv_maxMouseDelta; \
  \
     _width = dm_get_width((_gdvp)->gdv_dmp); \
-    _inv_width = 1.0 / _width; \
+    _inv_width = 1.0 / (fastf_t)_width; \
     _dx *= _inv_width * (_gdvp)->gdv_view->gv_sscale; \
     _dy *= _inv_width * (_gdvp)->gdv_view->gv_sscale; \
  \
@@ -9730,7 +9734,7 @@ to_mouse_pscale(struct ged *gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     width = dm_get_width(gdvp->gdv_dmp);
-    inv_width = 1.0 / width;
+    inv_width = 1.0 / (fastf_t)width;
     dx *= inv_width * gdvp->gdv_view->gv_sscale;
     dy *= inv_width * gdvp->gdv_view->gv_sscale;
 
@@ -9830,7 +9834,7 @@ to_mouse_ptranslate(struct ged *gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     width = dm_get_width(gdvp->gdv_dmp);
-    inv_width = 1.0 / width;
+    inv_width = 1.0 / (fastf_t)width;
     /* ged_ptranslate expects things to be in local units */
     dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
     dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
@@ -9927,7 +9931,7 @@ to_mouse_trans(struct ged *gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     width = dm_get_width(gdvp->gdv_dmp);
-    inv_width = 1.0 / width; 
+    inv_width = 1.0 / (fastf_t)width;
     dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
     dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
 
@@ -12903,9 +12907,9 @@ to_view2screen(struct ged *gedp,
 
     width = dm_get_width(gdvp->gdv_dmp);
     height = dm_get_height(gdvp->gdv_dmp);
-    aspect = width/height;
-    x = (view[X] + 1.0) * 0.5 * dm_get_width(gdvp->gdv_dmp);
-    y = (view[Y] * aspect - 1.0) * -0.5 * dm_get_height(gdvp->gdv_dmp);
+    aspect = (fastf_t)width/(fastf_t)height;
+    x = (view[X] + 1.0) * 0.5 * (fastf_t)width;
+    y = (view[Y] * aspect - 1.0) * -0.5 * (fastf_t)height;
 
     bu_vls_printf(gedp->ged_result_str, "%d %d", (int)x, (int)y);
 
@@ -12989,7 +12993,7 @@ to_vslew(struct ged *gedp,
 	 const char *usage,
 	 int UNUSED(maxargs))
 {
-    int ret, width;
+    int ret, width, height;
     int ac;
     char *av[3];
     fastf_t xpos2, ypos2;
@@ -13031,8 +13035,9 @@ to_vslew(struct ged *gedp,
     }
 
     width = dm_get_width(gdvp->gdv_dmp);
-    xpos2 = 0.5 * width;
-    ypos2 = 0.5 * dm_get_height(gdvp->gdv_dmp);
+    xpos2 = 0.5 * (fastf_t)width;
+    height = dm_get_height(gdvp->gdv_dmp);
+    ypos2 = 0.5 * (fastf_t)height;
     sf = 2.0 / width;
 
     bu_vls_printf(&slew_vec, "%lf %lf", (xpos1 - xpos2) * sf, (ypos2 - ypos1) * sf);
@@ -14193,7 +14198,7 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	save_ypos = gdvp->gdv_view->gv_view_axes.axes_pos[Y];
 	width = dm_get_width(gdvp->gdv_dmp);
 	height = dm_get_height(gdvp->gdv_dmp);
-	inv_aspect = height / width;
+	inv_aspect = (fastf_t)height / (fastf_t)width;
 	gdvp->gdv_view->gv_view_axes.axes_pos[Y] = save_ypos * inv_aspect;
 	dm_draw_axes(gdvp->gdv_dmp,
 		     gdvp->gdv_view->gv_size,
@@ -14325,7 +14330,7 @@ HIDDEN void
 go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp)
 {
     int width = dm_get_width(gdvp->gdv_dmp);
-    fastf_t sf = gdvp->gdv_view->gv_size / width;
+    fastf_t sf = (fastf_t)(gdvp->gdv_view->gv_size) / (fastf_t)width;
 
     if (gdvp->gdv_view->gv_data_arrows.gdas_draw)
 	go_dm_draw_arrows(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_arrows, sf);
