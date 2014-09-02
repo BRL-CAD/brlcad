@@ -859,14 +859,14 @@ public:
 	    ON_Curve *seg_curve =
 		sub_curve(from_curve, from.curve_t, to.curve_t);
 
-	    return seg_curve->Duplicate();
+	    return seg_curve;
 	}
 	if (ON_NearZero(to.curve_t - to_curve->Domain().m_t[0],
 		    INTERSECTION_TOL))
 	{
 	    ON_Curve *seg_curve = sub_curve(from_curve, from.curve_t,
 		    from_curve->Domain().m_t[1]);
-	    return seg_curve->Duplicate();
+	    return seg_curve;
 	}
 	ON_PolyCurve *pcurve = new ON_PolyCurve();
 	append_to_polycurve(sub_curve(from_curve, from.curve_t,
@@ -1000,6 +1000,7 @@ make_segments(
 	}
 	out.insert(new_seg);
     }
+    delete loop2_curve;
     return out;
 }
 
@@ -1347,8 +1348,10 @@ append_faces_from_loops(
 
     // add new innerloops, removing them from the input list
     std::list<ON_SimpleArray<ON_Curve *> >::iterator innerloop;
-    innerloop = find_innerloop(new_loops);
 
+    size_t first_new = all_innerloops.size();
+
+    innerloop = find_innerloop(new_loops);
     while (innerloop != new_loops.end()) {
 	all_innerloops.push_back(*innerloop);
 	new_loops.erase(innerloop);
@@ -1360,6 +1363,14 @@ append_faces_from_loops(
     std::list<ON_SimpleArray<ON_Curve *> >::iterator i;
     for (i = new_loops.begin(); i != new_loops.end(); ++i) {
 	out.Append(make_face_from_loops(orig_face, *i, all_innerloops));
+    }
+
+    // delete original innerloops from the new set
+    for (size_t loop = first_new; loop < all_innerloops.size(); ++loop) {
+	for (int j = 0; j < all_innerloops[loop].Count(); ++j) {
+	    delete all_innerloops[loop][j];
+	    all_innerloops[loop][j] = NULL;
+	}
     }
 }
 
@@ -1688,6 +1699,17 @@ split_face_into_loops(
     return out;
 }
 
+void
+free_loops(std::vector<ON_SimpleArray<ON_Curve *> > &loops)
+{
+    for (size_t i = 0; i < loops.size(); ++i) {
+	for (int j = 0; j < loops[i].Count(); ++j) {
+	    delete loops[i][j];
+	    loops[i][j] = NULL;
+	}
+    }
+}
+
 // It might be worth investigating the following approach to building a set of faces from the splitting
 // in order to achieve robustness in the final result:
 //
@@ -1740,6 +1762,7 @@ split_trimmed_face(
     if (!face_outerloop->IsClosed()) {
 	// need closed outerloop
 	out.Append(orig_face->Duplicate());
+	delete face_outerloop;
 	return out;
     }
 
@@ -1771,6 +1794,7 @@ split_trimmed_face(
 	    append_faces_from_loops(out, orig_face, intersect_loops);
 	    append_faces_from_loops(out, orig_face, diff_loops);
 	}
+	free_loops(ssx_loops);
     }
 
     if (DEBUG_BREP_BOOLEAN) {
@@ -1800,6 +1824,7 @@ split_trimmed_face(
 	    }
 	}
     }
+    delete face_outerloop;
     return out;
 }
 
