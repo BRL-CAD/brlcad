@@ -1772,8 +1772,9 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    _ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct _ged_client_data *)0);
 
 	    for (i = 0; i < (size_t)new_argc; ++i) {
-		bu_free(new_argv[i], "ged_draw_guts new_argv");
+		bu_free(new_argv[i], "ged_draw_guts new_argv[i] - bu_strdup(argv[i])");
 	    }
+	    bu_free(new_argv, "ged_draw_guts new_argv");
 	} else {
 	    _ged_drawtrees(gedp, argc, argv, kind, (struct _ged_client_data *)0);
 	}
