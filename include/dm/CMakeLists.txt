@@ -1,6 +1,6 @@
 set(dm_headers
+  bview.h
   defines.h
-  dl.h
   dm_xvars.h
   )
 
