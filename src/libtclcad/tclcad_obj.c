@@ -14236,7 +14236,7 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
     }
 
     /* Draw the angle distance cursor */
-    if (gdvp->gdv_view->gv_adc.gas_draw)
+    if (gdvp->gdv_view->gv_adc.draw)
 	dm_draw_adc(gdvp->gdv_dmp, gdvp->gdv_view);
 
     /* Draw grid */

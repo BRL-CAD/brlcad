@@ -260,31 +260,6 @@ __BEGIN_DECLS
 #define INV_GED 0.00048828125
 #define INV_4096 0.000244140625
 
-struct ged_adc_state {
-    int		gas_draw;
-    int		gas_dv_x;
-    int		gas_dv_y;
-    int		gas_dv_a1;
-    int		gas_dv_a2;
-    int		gas_dv_dist;
-    fastf_t	gas_pos_model[3];
-    fastf_t	gas_pos_view[3];
-    fastf_t	gas_pos_grid[3];
-    fastf_t	gas_a1;
-    fastf_t	gas_a2;
-    fastf_t	gas_dst;
-    int		gas_anchor_pos;
-    int		gas_anchor_a1;
-    int		gas_anchor_a2;
-    int		gas_anchor_dst;
-    fastf_t	gas_anchor_pt_a1[3];
-    fastf_t	gas_anchor_pt_a2[3];
-    fastf_t	gas_anchor_pt_dst[3];
-    int		gas_line_color[3];
-    int		gas_tick_color[3];
-    int		gas_line_width;
-};
-
 struct ged_axes_state {
     int       gas_draw;
     point_t   gas_axes_pos;		/* in model coordinates */
@@ -504,7 +479,7 @@ struct ged_view {
     fastf_t			gv_sscale;
     int				gv_mode;
     int				gv_zclip;
-    struct ged_adc_state 	gv_adc;
+    struct bn_adc_state 	gv_adc;
     struct ged_axes_state 	gv_model_axes;
     struct ged_axes_state 	gv_view_axes;
     struct ged_data_arrow_state gv_data_arrows;

@@ -236,10 +236,10 @@ ged_view_init(struct ged_view *gvp)
     gvp->gv_rscale = 0.4;
     gvp->gv_sscale = 2.0;
 
-    gvp->gv_adc.gas_a1 = 45.0;
-    gvp->gv_adc.gas_a2 = 45.0;
-    VSET(gvp->gv_adc.gas_line_color, 255, 255, 0);
-    VSET(gvp->gv_adc.gas_tick_color, 255, 255, 255);
+    gvp->gv_adc.a1 = 45.0;
+    gvp->gv_adc.a2 = 45.0;
+    VSET(gvp->gv_adc.line_color, 255, 255, 0);
+    VSET(gvp->gv_adc.tick_color, 255, 255, 255);
 
     VSET(gvp->gv_grid.ggs_anchor, 0.0, 0.0, 0.0);
     gvp->gv_grid.ggs_res_h = 1.0;

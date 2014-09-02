@@ -370,7 +370,7 @@ adcursor(void)
 
 
 static void
-adc_reset(void)
+mged_adc_reset(void)
 {
     adc_state->adc_dv_x = adc_state->adc_dv_y = 0;
     adc_state->adc_dv_a1 = adc_state->adc_dv_a2 = 0;
@@ -465,7 +465,7 @@ f_adc (
 	    adc_state->adc_draw = 1;
 
 	if (adc_auto) {
-	    adc_reset();
+	    mged_adc_reset();
 	    adc_auto = 0;
 	}
 
@@ -1019,7 +1019,7 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "reset")) {
 	if (argc == 0) {
-	    adc_reset();
+	    mged_adc_reset();
 
 	    adc_set_dirty_flag();
 	    return TCL_OK;

@@ -4397,6 +4397,40 @@ BN_EXPORT extern int bn_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fast
  */
 BN_EXPORT extern int bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max);
 
+struct bn_adc_state {
+    int         draw;
+    int         dv_x;
+    int         dv_y;
+    int         dv_a1;
+    int         dv_a2;
+    int         dv_dist;
+    fastf_t     pos_model[3];
+    fastf_t     pos_view[3];
+    fastf_t     pos_grid[3];
+    fastf_t     a1;
+    fastf_t     a2;
+    fastf_t     dst;
+    int         anchor_pos;
+    int         anchor_a1;
+    int         anchor_a2;
+    int         anchor_dst;
+    fastf_t     anchor_pt_a1[3];
+    fastf_t     anchor_pt_a2[3];
+    fastf_t     anchor_pt_dst[3];
+    int         line_color[3];
+    int         tick_color[3];
+    int         line_width;
+};
+
+BN_EXPORT void adc_model_to_adc_view(struct bn_adc_state *adcs, mat_t model2view, fastf_t amax);
+
+BN_EXPORT void adc_grid_to_adc_view(struct bn_adc_state *adcs, mat_t model2view, fastf_t amax);
+
+BN_EXPORT void adc_view_to_adc_grid(struct bn_adc_state *adcs, mat_t model2view);
+
+BN_EXPORT void adc_reset(struct bn_adc_state *adcs, mat_t view2model, mat_t model2view);
+
+
 #endif /* BN_H */
 
 /** @} */
