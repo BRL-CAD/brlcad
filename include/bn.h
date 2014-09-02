@@ -4376,7 +4376,7 @@ BN_EXPORT extern int bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
 
 /*----------------------------------------------------------------------*/
 
-/* adc.c */
+/* clip.c */
 
 /**
  * clip a 2-D integer line seg against the size of the display
