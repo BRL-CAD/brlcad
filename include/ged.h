@@ -36,6 +36,7 @@
 #  include <windows.h>
 #endif
 
+#include "./dm/dl.h"
 #include "raytrace.h"
 #include "fbserv_obj.h"
 
@@ -73,7 +74,7 @@ __BEGIN_DECLS
 #define INV_4096_V 0.000244140625
 
 #define GED_NULL ((struct ged *)0)
-#define GED_DISPLAY_LIST_NULL ((struct ged_display_list *)0)
+#define GED_DISPLAY_LIST_NULL ((struct display_list *)0)
 #define GED_DRAWABLE_NULL ((struct ged_drawable *)0)
 #define GED_VIEW_NULL ((struct ged_view *)0)
 #define GED_DM_VIEW_NULL ((struct ged_dm_view *)0)
@@ -447,14 +448,6 @@ struct ged_qray_fmt {
     struct bu_vls fmt;
 };
 
-struct ged_display_list {
-    struct bu_list	l;
-    struct directory	*gdl_dp;
-    struct bu_vls	gdl_path;
-    struct bu_list	gdl_headSolid;		/**< @brief  head of solid list for this object */
-    int			gdl_wflag;
-};
-
 /* FIXME: should be private */
 struct ged_drawable {
     struct bu_list		l;
@@ -652,7 +645,7 @@ GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
 
 /* defined in draw.c */
 GED_EXPORT extern void ged_color_soltab(struct bu_list *hdlp);
-GED_EXPORT extern struct ged_display_list *ged_addToDisplay(struct ged *gedp,
+GED_EXPORT extern struct display_list *ged_addToDisplay(struct ged *gedp,
 							    const char *name);
 
 /* defined in erase.c */

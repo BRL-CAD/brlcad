@@ -56,8 +56,8 @@ _ged_rt_write(struct ged *gedp,
 	      FILE *fp,
 	      vect_t eye_model)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     size_t i;
     quat_t quat;
     struct solid *sp;
@@ -79,11 +79,11 @@ _ged_rt_write(struct ged *gedp,
 
     fprintf(fp, "start 0; clean;\n");
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
 		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	    }
@@ -92,11 +92,11 @@ _ged_rt_write(struct ged *gedp,
 	gdlp = next_gdlp;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
 		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
 		    struct animate *anp;
@@ -112,11 +112,11 @@ _ged_rt_write(struct ged *gedp,
 	gdlp = next_gdlp;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
 		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	    }
@@ -139,8 +139,8 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	MAT4X3PNT(eye_model, gedp->ged_gvp->gv_view2model, temp);
     } else {
 	/* not doing zclipping, so back out of geometry */
-	struct ged_display_list *gdlp;
-	struct ged_display_list *next_gdlp;
+	struct display_list *gdlp;
+	struct display_list *next_gdlp;
 	struct solid *sp;
 	int i;
 	vect_t direction;
@@ -159,11 +159,11 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	    extremum[1][i] = -INFINITY;
 	}
 
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 		minus[X] = sp->s_center[X] - sp->s_size;
 		minus[Y] = sp->s_center[Y] - sp->s_size;
 		minus[Z] = sp->s_center[Z] - sp->s_size;
@@ -472,9 +472,9 @@ _ged_run_rt(struct ged *gedp)
 size_t
 ged_count_tops(struct ged *gedp)
 {
-    struct ged_display_list *gdlp = NULL;
+    struct display_list *gdlp = NULL;
     size_t visibleCount = 0;
-    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
 	visibleCount++;
     }
     return visibleCount;
@@ -487,17 +487,17 @@ ged_count_tops(struct ged *gedp)
 int
 ged_build_tops(struct ged *gedp, char **start, char **end)
 {
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     char **vp = start;
 
-    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
-	if (gdlp->gdl_dp->d_addr == RT_DIR_PHONY_ADDR)
+    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
 
 	if ((vp != NULL) && (vp < end))
-	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->gdl_path));
+	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->dl_path));
 	else {
-	    bu_vls_printf(gedp->ged_result_str, "libged: ran out of command vector space at %s\n", gdlp->gdl_dp->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "libged: ran out of command vector space at %s\n", ((struct directory *)gdlp->dl_dp)->d_namep);
 	    break;
 	}
     }

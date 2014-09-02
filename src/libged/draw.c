@@ -414,7 +414,7 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 
 	/* append solid to display list */
 	bu_semaphore_acquire(RT_SEM_MODEL);
-	BU_LIST_APPEND(dgcdp->gdlp->gdl_headSolid.back, &sp->l);
+	BU_LIST_APPEND(dgcdp->gdlp->dl_headSolid.back, &sp->l);
 	bu_semaphore_release(RT_SEM_MODEL);
     }
 
@@ -566,7 +566,7 @@ append_solid_to_display_list(
 
     /* append solid to display list */
     bu_semaphore_acquire(RT_SEM_MODEL);
-    BU_LIST_APPEND(dgcdp->gdlp->gdl_headSolid.back, &sp->l);
+    BU_LIST_APPEND(dgcdp->gdlp->dl_headSolid.back, &sp->l);
     bu_semaphore_release(RT_SEM_MODEL);
 
     /* indicate success by returning something other than TREE_NULL */
@@ -1343,12 +1343,12 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       (void *)&dgcdp);
 		}
 	    } else {
-		struct ged_display_list **paths_to_draw;
-		struct ged_display_list *gdlp;
+		struct display_list **paths_to_draw;
+		struct display_list *gdlp;
 		struct solid *sp;
 
-		paths_to_draw = (struct ged_display_list **)
-		    bu_malloc(sizeof(struct ged_display_list *) * argc,
+		paths_to_draw = (struct display_list **)
+		    bu_malloc(sizeof(struct display_list *) * argc,
 		    "redraw paths");
 
 		/* create solids */
@@ -1393,7 +1393,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			continue;
 		    }
 
-		    for (BU_LIST_FOR(sp, solid, &gdlp->gdl_headSolid)) {
+		    for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
 			if (sp->s_vlen > 0) {
 			    /* skip previously draw solid */
 			    continue;
@@ -1487,7 +1487,7 @@ _ged_invent_solid(struct ged *gedp,
 {
     struct directory *dp;
     struct solid *sp;
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     unsigned char type='0';
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
@@ -1543,7 +1543,7 @@ _ged_invent_solid(struct ged *gedp,
     sp->s_dmode = dmode;
 
     /* Solid successfully drawn, add to linked list of solid structs */
-    BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
+    BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
 
     _ged_color_soltab(sp);
 
@@ -1561,15 +1561,15 @@ _ged_invent_solid(struct ged *gedp,
 void
 ged_color_soltab(struct bu_list *hdlp)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    _ged_color_soltab(sp);
 	}
 
@@ -1812,12 +1812,12 @@ ged_ev(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-struct ged_display_list *
+struct display_list *
 ged_addToDisplay(struct ged *gedp,
 		 const char *name)
 {
     struct directory *dp = NULL;
-    struct ged_display_list *gdlp = NULL;
+    struct display_list *gdlp = NULL;
     char *cp = NULL;
     int found_namepath = 0;
     struct db_full_path namepath;
@@ -1837,15 +1837,15 @@ ged_addToDisplay(struct ged *gedp,
 	found_namepath = 1;
 
     /* Make sure name is not already in the list */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->gdl_path)))
+	if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->dl_path)))
 	    goto end;
 
 		if (found_namepath) {
 	    struct db_full_path gdlpath;
 
-	    if (db_string_to_path(&gdlpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->gdl_path)) == 0) {
+	    if (db_string_to_path(&gdlpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->dl_path)) == 0) {
 		if (db_full_path_match_top(&gdlpath, &namepath)) {
 		    db_free_full_path(&gdlpath);
 		    goto end;
@@ -1855,16 +1855,16 @@ ged_addToDisplay(struct ged *gedp,
 	    }
 	}
 
-	gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	gdlp = BU_LIST_PNEXT(display_list, gdlp);
     }
 
-    BU_ALLOC(gdlp, struct ged_display_list);
+    BU_ALLOC(gdlp, struct display_list);
     BU_LIST_INIT(&gdlp->l);
     BU_LIST_INSERT(gedp->ged_gdp->gd_headDisplay, &gdlp->l);
-    BU_LIST_INIT(&gdlp->gdl_headSolid);
-    gdlp->gdl_dp = dp;
-    bu_vls_init(&gdlp->gdl_path);
-    bu_vls_printf(&gdlp->gdl_path, "%s", name);
+    BU_LIST_INIT(&gdlp->dl_headSolid);
+    gdlp->dl_dp = (void *)dp;
+    bu_vls_init(&gdlp->dl_path);
+    bu_vls_printf(&gdlp->dl_path, "%s", name);
 
 end:
     if (found_namepath)
@@ -1878,7 +1878,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     struct solid *sp;
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -1889,9 +1889,9 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 1) {
 	/* redraw everything */
-	for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay))
+	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
 	{
-	    for (BU_LIST_FOR(sp, solid, &gdlp->gdl_headSolid)) {
+	    for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
 		ret = redraw_solid(gedp, sp);
 		if (ret < 0) {
 		    bu_vls_printf(gedp->ged_result_str,
@@ -1915,14 +1915,14 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    found_path = 0;
-	    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay))
+	    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
 	    {
 		ret = db_string_to_path(&dl_path, gedp->ged_wdbp->dbip,
-			bu_vls_addr(&gdlp->gdl_path));
+			bu_vls_addr(&gdlp->dl_path));
 		if (ret < 0) {
 		    bu_vls_printf(gedp->ged_result_str,
 			    "%s: %s is not a valid path\n", argv[0],
-			    bu_vls_addr(&gdlp->gdl_path));
+			    bu_vls_addr(&gdlp->dl_path));
 		    return GED_ERROR;
 		}
 
@@ -1931,7 +1931,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 		    found_path = 1;
 		    db_free_full_path(&dl_path);
 
-		    for (BU_LIST_FOR(sp, solid, &gdlp->gdl_headSolid)) {
+		    for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
 			ret = redraw_solid(gedp, sp);
 			if (ret < 0) {
 			    bu_vls_printf(gedp->ged_result_str,

@@ -13244,37 +13244,37 @@ to_edit_redraw(struct ged *gedp,
 	       const char *argv[])
 {
     size_t i;
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    register struct display_list *gdlp;
+    register struct display_list *next_gdlp;
     struct db_full_path subpath;
     int ret = GED_OK;
 
     if (argc != 2)
 	return GED_ERROR;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	gdlp->gdl_wflag = 0;
-	gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	gdlp->dl_wflag = 0;
+	gdlp = BU_LIST_PNEXT(display_list, gdlp);
     }
 
     if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, argv[1]) == 0) {
 	for (i = 0; i < subpath.fp_len; ++i) {
-	    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 		register struct solid *curr_sp;
 
-		next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-		if (gdlp->gdl_wflag) {
+		if (gdlp->dl_wflag) {
 		    gdlp = next_gdlp;
 		    continue;
 		}
 
-		FOR_ALL_SOLIDS(curr_sp, &gdlp->gdl_headSolid) {
+		FOR_ALL_SOLIDS(curr_sp, &gdlp->dl_headSolid) {
 		    if (db_full_path_search(&curr_sp->s_fullpath, subpath.fp_names[i])) {
-			struct ged_display_list *last_gdlp;
-			struct solid *sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
+			struct display_list *last_gdlp;
+			struct solid *sp = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);
 			struct bu_vls mflag = BU_VLS_INIT_ZERO;
 			struct bu_vls xflag = BU_VLS_INIT_ZERO;
 			char *av[5] = {0};
@@ -13289,7 +13289,7 @@ to_edit_redraw(struct ged *gedp,
 			    av[arg++] = bu_vls_addr(&mflag);
 			    av[arg++] = bu_vls_addr(&xflag);
 			}
-			av[arg] = bu_vls_strdup(&gdlp->gdl_path);
+			av[arg] = bu_vls_strdup(&gdlp->dl_path);
 
 			ret = ged_draw(gedp, arg + 1, (const char **)av);
 
@@ -13306,10 +13306,10 @@ to_edit_redraw(struct ged *gedp,
 			 * second to last list items play leap frog
 			 * with the end of list.
 			 */
-			last_gdlp = BU_LIST_PREV(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+			last_gdlp = BU_LIST_PREV(display_list, gedp->ged_gdp->gd_headDisplay);
 			BU_LIST_DEQUEUE(&last_gdlp->l);
 			BU_LIST_INSERT(&next_gdlp->l, &last_gdlp->l);
-			last_gdlp->gdl_wflag = 1;
+			last_gdlp->dl_wflag = 1;
 
 			goto end;
 		    }
@@ -14078,8 +14078,8 @@ go_draw(struct ged_dm_view *gdvp)
 HIDDEN int
 go_draw_dlist(struct ged_dm_view *gdvp)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    register struct display_list *gdlp;
+    register struct display_list *next_gdlp;
     struct solid *sp;
     int line_style = -1;
     dm *dmp = gdvp->gdv_dmp;
@@ -14087,11 +14087,11 @@ go_draw_dlist(struct ged_dm_view *gdvp)
 
     if (dm_get_transparency(dmp)) {
 	/* First, draw opaque stuff */
-	gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
+	gdlp = BU_LIST_NEXT(display_list, hdlp);
 	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 		if (sp->s_transparency < 1.0)
 		    continue;
 
@@ -14110,11 +14110,11 @@ go_draw_dlist(struct ged_dm_view *gdvp)
 	(void)dm_set_depth_mask(dmp, 0);
 
 	/* Second, draw transparent stuff */
-	gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
+	gdlp = BU_LIST_NEXT(display_list, hdlp);
 	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 		/* already drawn above */
 		if (ZERO(sp->s_transparency - 1.0))
 		    continue;
@@ -14133,11 +14133,11 @@ go_draw_dlist(struct ged_dm_view *gdvp)
 	/* re-enable write to depth buffer */
 	(void)dm_set_depth_mask(dmp, 1);
     } else {
-	gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
+	gdlp = BU_LIST_NEXT(display_list, hdlp);
 	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 		if (line_style != sp->s_soldash) {
 		    line_style = sp->s_soldash;
 		    (void)dm_set_line_attr(dmp, dm_get_linewidth(dmp), line_style);

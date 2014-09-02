@@ -1,5 +1,6 @@
 set(dm_headers
   defines.h
+  dl.h
   dm_xvars.h
   )
 

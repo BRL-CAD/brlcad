@@ -37,7 +37,7 @@
 int
 ged_who(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     int skip_real, skip_phony;
     static const char *usage = "[r(eal)|p(hony)|b(oth)]";
 
@@ -75,14 +75,14 @@ ged_who(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
-	if (gdlp->gdl_dp->d_addr == RT_DIR_PHONY_ADDR) {
+    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR) {
 	    if (skip_phony) continue;
 	} else {
 	    if (skip_real) continue;
 	}
 
-	bu_vls_printf(gedp->ged_result_str, "%s ", bu_vls_addr(&gdlp->gdl_path));
+	bu_vls_printf(gedp->ged_result_str, "%s ", bu_vls_addr(&gdlp->dl_path));
     }
 
     return GED_OK;

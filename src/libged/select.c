@@ -35,8 +35,8 @@
 int
 _ged_select(struct ged *gedp, double vx, double vy, double vwidth, double vheight, int rflag)
 {
-    struct ged_display_list *gdlp = NULL;
-    struct ged_display_list *next_gdlp = NULL;
+    struct display_list *gdlp = NULL;
+    struct display_list *next_gdlp = NULL;
     struct solid *sp = NULL;
     fastf_t vr = 0.0;
     fastf_t vmin_x = 0.0;
@@ -65,11 +65,11 @@ _ged_select(struct ged *gedp, double vx, double vy, double vwidth, double vheigh
 	}
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    point_t vmin, vmax;
 	    struct bn_vlist *vp;
 
@@ -155,8 +155,8 @@ _ged_select(struct ged *gedp, double vx, double vy, double vwidth, double vheigh
 int
 _ged_select_partial(struct ged *gedp, double vx, double vy, double vwidth, double vheight, int rflag)
 {
-    struct ged_display_list *gdlp = NULL;
-    struct ged_display_list *next_gdlp = NULL;
+    struct display_list *gdlp = NULL;
+    struct display_list *next_gdlp = NULL;
     struct solid *sp = NULL;
     fastf_t vr = 0.0;
     fastf_t vmin_x = 0.0;
@@ -185,11 +185,11 @@ _ged_select_partial(struct ged *gedp, double vx, double vy, double vwidth, doubl
 	}
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    struct bn_vlist *vp;
 
 	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {

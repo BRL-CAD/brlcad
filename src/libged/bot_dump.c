@@ -1330,7 +1330,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
     FILE *fp = (FILE *)0;
     int fd = -1;
     mat_t mat;
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     const char *cmd_name;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -1507,10 +1507,10 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 
     MAT_IDN(mat);
 
-    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
 	struct solid *sp;
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    struct directory *dp;
 	    struct rt_db_internal intern;
 	    struct rt_bot_internal *bot;

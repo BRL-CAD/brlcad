@@ -38,8 +38,8 @@
 static void
 print_schain(struct ged *gedp, int lvl)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
     struct bn_vlist *vp;
     int nvlist;
@@ -48,11 +48,11 @@ print_schain(struct ged *gedp, int lvl)
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    if (lvl <= -2) {
 		/* print only leaves */
 		bu_vls_printf(gedp->ged_result_str, "%s ", LAST_SOLID(sp)->d_namep);
@@ -130,19 +130,19 @@ print_schain(struct ged *gedp, int lvl)
 static void
 print_schain_vlcmds(struct ged *gedp)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
     struct bn_vlist *vp;
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    bu_vls_printf(gedp->ged_result_str, "-1 %d %d %d\n",
 			  sp->s_color[0],
 			  sp->s_color[1],

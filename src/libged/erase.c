@@ -34,7 +34,7 @@
 #include "./ged_private.h"
 
 
-void ged_splitGDL(struct ged *gedp, struct ged_display_list *gdlp, struct db_full_path *path);
+void ged_splitGDL(struct ged *gedp, struct display_list *gdlp, struct db_full_path *path);
 
 /*
  * Erase objects from the display.
@@ -184,18 +184,18 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
 void
 ged_splitGDL(struct ged *gedp,
-	     struct ged_display_list *gdlp,
+	     struct display_list *gdlp,
 	     struct db_full_path *path)
 {
     struct solid *sp;
     struct solid *nsp;
-    struct ged_display_list *new_gdlp;
+    struct display_list *new_gdlp;
     char *pathname;
     int savelen;
     int newlen = path->fp_len + 1;
 
     if (newlen < 3) {
-	while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
+	while (BU_LIST_WHILE(sp, solid, &gdlp->dl_headSolid)) {
 	    savelen = sp->s_fullpath.fp_len;
 	    sp->s_fullpath.fp_len = newlen;
 	    pathname = db_path_to_string(&sp->s_fullpath);
@@ -205,11 +205,11 @@ ged_splitGDL(struct ged *gedp,
 	    bu_free((void *)pathname, "ged_splitGDL pathname");
 
 	    BU_LIST_DEQUEUE(&sp->l);
-	    BU_LIST_INSERT(&new_gdlp->gdl_headSolid, &sp->l);
+	    BU_LIST_INSERT(&new_gdlp->dl_headSolid, &sp->l);
 	}
     } else {
-	sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
-	while (BU_LIST_NOT_HEAD(sp, &gdlp->gdl_headSolid)) {
+	sp = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);
+	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_headSolid)) {
 	    nsp = BU_LIST_PNEXT(solid, sp);
 
 	    if (db_full_path_match_top(path, &sp->s_fullpath)) {
@@ -222,7 +222,7 @@ ged_splitGDL(struct ged *gedp,
 		bu_free((void *)pathname, "ged_splitGDL pathname");
 
 		BU_LIST_DEQUEUE(&sp->l);
-		BU_LIST_INSERT(&new_gdlp->gdl_headSolid, &sp->l);
+		BU_LIST_INSERT(&new_gdlp->dl_headSolid, &sp->l);
 	    }
 
 	    sp = nsp;
@@ -244,9 +244,9 @@ ged_erasePathFromDisplay(struct ged *gedp,
 			 const char *path,
 			 int allow_split)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    struct ged_display_list *last_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct display_list *last_gdlp;
     struct solid *sp;
     struct directory *dp;
     struct db_full_path subpath;
@@ -257,22 +257,22 @@ ged_erasePathFromDisplay(struct ged *gedp,
     else
 	found_subpath = 0;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    last_gdlp = BU_LIST_LAST(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+    last_gdlp = BU_LIST_LAST(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_STR_EQUAL(path, bu_vls_addr(&gdlp->gdl_path))) {
+	if (BU_STR_EQUAL(path, bu_vls_addr(&gdlp->dl_path))) {
 	    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL) {
 
 		/* We can't assume the display lists are contiguous */
-		FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-		    (*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist, 1);
+		FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+		    (*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist, 1);
 		}
 	    }
 
 	    /* Free up the solids list associated with this display list */
-	    while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
+	    while (BU_LIST_WHILE(sp, solid, &gdlp->dl_headSolid)) {
 		dp = FIRST_SOLID(sp);
 		RT_CK_DIR(dp);
 		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
@@ -286,7 +286,7 @@ ged_erasePathFromDisplay(struct ged *gedp,
 	    }
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
-	    bu_vls_free(&gdlp->gdl_path);
+	    bu_vls_free(&gdlp->dl_path);
 	    free((void *)gdlp);
 
 	    break;
@@ -294,8 +294,8 @@ ged_erasePathFromDisplay(struct ged *gedp,
 	    int need_split = 0;
 	    struct solid *nsp;
 
-	    sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
-	    while (BU_LIST_NOT_HEAD(sp, &gdlp->gdl_headSolid)) {
+	    sp = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);
+	    while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_headSolid)) {
 		nsp = BU_LIST_PNEXT(solid, sp);
 
 		if (db_full_path_match_top(&subpath, &sp->s_fullpath)) {
@@ -310,9 +310,9 @@ ged_erasePathFromDisplay(struct ged *gedp,
 		sp = nsp;
 	    }
 
-	    if (BU_LIST_IS_EMPTY(&gdlp->gdl_headSolid)) {
+	    if (BU_LIST_IS_EMPTY(&gdlp->dl_headSolid)) {
 		BU_LIST_DEQUEUE(&gdlp->l);
-		bu_vls_free(&gdlp->gdl_path);
+		bu_vls_free(&gdlp->dl_path);
 		free((void *)gdlp);
 	    } else if (allow_split && need_split) {
 		BU_LIST_DEQUEUE(&gdlp->l);
@@ -322,13 +322,13 @@ ged_erasePathFromDisplay(struct ged *gedp,
 		++subpath.fp_len;
 
 		/* Free up the display list */
-		bu_vls_free(&gdlp->gdl_path);
+		bu_vls_free(&gdlp->dl_path);
 		free((void *)gdlp);
 	    }
 	}
 
 	if (gdlp == last_gdlp)
-	    gdlp = (struct ged_display_list *)gedp->ged_gdp->gd_headDisplay;
+	    gdlp = (struct display_list *)gedp->ged_gdp->gd_headDisplay;
 	else
 	    gdlp = next_gdlp;
     }
@@ -340,15 +340,15 @@ ged_erasePathFromDisplay(struct ged *gedp,
 
 HIDDEN void
 eraseAllSubpathsFromSolidList(struct ged *gedp,
-			      struct ged_display_list *gdlp,
+			      struct display_list *gdlp,
 			      struct db_full_path *subpath,
 			      const int skip_first)
 {
     struct solid *sp;
     struct solid *nsp;
 
-    sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &gdlp->gdl_headSolid)) {
+    sp = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);
+    while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_headSolid)) {
 	nsp = BU_LIST_PNEXT(solid, sp);
 	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
 	    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
@@ -374,19 +374,19 @@ _ged_eraseAllNamesFromDisplay(struct ged *gedp,
 			      const char *name,
 			      const int skip_first)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
 	char *dup_path;
 	char *tok;
 	int first = 1;
 	int found = 0;
 
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	dup_path = strdup(bu_vls_addr(&gdlp->gdl_path));
+	dup_path = strdup(bu_vls_addr(&gdlp->dl_path));
 	tok = strtok(dup_path, "/");
 	while (tok) {
 	    if (first) {
@@ -426,7 +426,7 @@ _ged_eraseAllNamesFromDisplay(struct ged *gedp,
 
 int
 _ged_eraseFirstSubpath(struct ged *gedp,
-		       struct ged_display_list *gdlp,
+		       struct display_list *gdlp,
 		       struct db_full_path *subpath,
 		       const int skip_first)
 {
@@ -436,8 +436,8 @@ _ged_eraseFirstSubpath(struct ged *gedp,
 
     db_full_path_init(&dup_path);
 
-    sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &gdlp->gdl_headSolid)) {
+    sp = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);
+    while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_headSolid)) {
 	nsp = BU_LIST_PNEXT(solid, sp);
 	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
 	    int ret;
@@ -454,7 +454,7 @@ _ged_eraseFirstSubpath(struct ged *gedp,
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
 
-	    if (!BU_LIST_IS_EMPTY(&gdlp->gdl_headSolid)) {
+	    if (!BU_LIST_IS_EMPTY(&gdlp->dl_headSolid)) {
 		ged_splitGDL(gedp, gdlp, &dup_path);
 		ret = 1;
 	    } else {
@@ -464,7 +464,7 @@ _ged_eraseFirstSubpath(struct ged *gedp,
 	    db_free_full_path(&dup_path);
 
 	    /* Free up the display list */
-	    bu_vls_free(&gdlp->gdl_path);
+	    bu_vls_free(&gdlp->dl_path);
 	    free((void *)gdlp);
 
 	    return ret;
@@ -484,35 +484,35 @@ _ged_eraseAllPathsFromDisplay(struct ged *gedp,
 			      const char *path,
 			      const int skip_first)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct db_full_path fullpath, subpath;
 
     if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, path) == 0) {
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    gdlp->gdl_wflag = 0;
-	    gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    gdlp->dl_wflag = 0;
+	    gdlp = BU_LIST_PNEXT(display_list, gdlp);
 	}
 
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    /* This display list has already been visited. */
-	    if (gdlp->gdl_wflag) {
+	    if (gdlp->dl_wflag) {
 		gdlp = next_gdlp;
 		continue;
 	    }
 
 	    /* Mark as being visited. */
-	    gdlp->gdl_wflag = 1;
+	    gdlp->dl_wflag = 1;
 
-	    if (db_string_to_path(&fullpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->gdl_path)) == 0) {
+	    if (db_string_to_path(&fullpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->dl_path)) == 0) {
 		if (db_full_path_subset(&fullpath, &subpath, skip_first)) {
 		    _ged_freeDisplayListItem(gedp, gdlp);
 		} else if (_ged_eraseFirstSubpath(gedp, gdlp, &subpath, skip_first)) {
-		    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+		    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 		    db_free_full_path(&fullpath);
 		    continue;
 		}
@@ -530,7 +530,7 @@ _ged_eraseAllPathsFromDisplay(struct ged *gedp,
 
 void
 _ged_freeDisplayListItem (struct ged *gedp,
-			  struct ged_display_list *gdlp)
+			  struct display_list *gdlp)
 {
     struct solid *sp;
     struct directory *dp;
@@ -538,13 +538,13 @@ _ged_freeDisplayListItem (struct ged *gedp,
     if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL) {
 
 	/* We can't assume the display lists are contiguous */
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    (*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist, 1);
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    (*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist, 1);
 	}
     }
 
     /* Free up the solids list associated with this display list */
-    while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
+    while (BU_LIST_WHILE(sp, solid, &gdlp->dl_headSolid)) {
 	dp = FIRST_SOLID(sp);
 	RT_CK_DIR(dp);
 	if (dp->d_addr == RT_DIR_PHONY_ADDR) {
@@ -559,7 +559,7 @@ _ged_freeDisplayListItem (struct ged *gedp,
 
     /* Free up the display list */
     BU_LIST_DEQUEUE(&gdlp->l);
-    bu_vls_free(&gdlp->gdl_path);
+    bu_vls_free(&gdlp->dl_path);
     free((void *)gdlp);
 }
 

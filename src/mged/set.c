@@ -423,20 +423,20 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 
 		/* these display lists are not being used, so free them */
 		if (BU_LIST_IS_HEAD(dlp2, &head_dm_list.l)) {
-		    struct ged_display_list *gdlp;
-		    struct ged_display_list *next_gdlp;
+		    struct display_list *gdlp;
+		    struct display_list *next_gdlp;
 
 		    dlp1->dml_dlist_state->dl_active = 0;
 
-		    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+		    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 		    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-			next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+			next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 			(void)dm_make_current(dlp1->dml_dmp);
 			(void)dm_free_dlists(dlp1->dml_dmp,
-				      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
-				      BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
-				      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
+				      BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
+				      BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
+				      BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
 
 			gdlp = next_gdlp;
 		    }
