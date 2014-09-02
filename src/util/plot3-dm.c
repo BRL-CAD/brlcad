@@ -43,8 +43,6 @@
 #include "bu.h"
 #include "bn.h"
 #include "dm.h"
-#include "dm/dm-X.h"
-
 
 struct cmdtab {
     char *ct_name;

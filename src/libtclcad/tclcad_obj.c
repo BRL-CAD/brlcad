@@ -60,9 +60,10 @@
 #include "obj.h"
 
 #include "ged.h"
-#include "dm/dm-Null.h"
 
 #include "fb.h"
+
+#include "dm/dm_xvars.h"
 
 #ifdef DM_X
 #  ifdef WITH_TK
@@ -70,7 +71,6 @@
 #endif
 #  include <X11/Xutil.h>
 #  include "dm/dm_xvars.h"
-#  include "dm/dm-X.h"
 #endif /* DM_X */
 
 #ifdef DM_TK
@@ -78,23 +78,18 @@
 #    include "tk.h"
 #  endif
 #  include "dm/dm_xvars.h"
-#  include "dm/dm-tk.h"
 #endif /* DM_TK */
 
 #ifdef DM_OGL
-#  include "dm/dm_xvars.h"
-#  include "dm/dm-ogl.h"
 #endif /* DM_OGL */
 
 #ifdef DM_OSG
 #  include "dm/dm_xvars.h"
-#  include "dm/dm-osg.h"
 #endif /* DM_OSG */
 
 #ifdef DM_WGL
 #  include <tkwinport.h>
 #  include "dm/dm_xvars.h"
-#  include "dm/dm-wgl.h"
 #endif /* DM_WGL */
 
 #ifdef DM_QT

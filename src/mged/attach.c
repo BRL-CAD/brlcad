@@ -44,7 +44,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "dg.h"
-#include "dm/dm-Null.h"
 #include "ged.h"
 
 #include "./mged.h"

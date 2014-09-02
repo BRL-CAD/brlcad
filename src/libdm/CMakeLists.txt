@@ -133,6 +133,19 @@ set(libdm_ignore_files
   dm-tk.c
   osg.cpp
   TODO
+  dm-glx.h
+  dm-Null.h
+  dm-ogl.h
+  dm-osg.h
+  dm-pex.h
+  dm-plot.h
+  dm_private.h
+  dm-ps.h
+  dm-qt.h
+  dm-rtgl.h
+  dm-tk.h
+  dm-wgl.h
+  dm-X.h
   )
 CMAKEFILES(${libdm_ignore_files})
 CMAKEFILES(dm_private.h)

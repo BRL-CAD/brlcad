@@ -30,7 +30,6 @@
 
 #include "dm.h"	/* struct dm */
 #include "dm/dm_xvars.h"
-#include "dm/dm-Null.h"
 
 #include "fb.h" /* fb */
 #include "pkg.h" /* struct pkg_conn */

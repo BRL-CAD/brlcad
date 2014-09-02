@@ -55,7 +55,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm/dm-rtgl.h"
+#include "dm-rtgl.h"
 #include "dm/dm_xvars.h"
 #include "fb.h"
 #include "fb/fb_platform_specific.h"

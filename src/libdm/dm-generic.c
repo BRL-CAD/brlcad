@@ -35,7 +35,7 @@
 #include "dm.h"
 #include "dm_private.h"
 
-#include "dm/dm-Null.h"
+#include "dm-Null.h"
 
 extern dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
 extern dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
