@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bn.h"
 #include "plot3.h"
 #include "solid.h"
 
@@ -239,7 +240,7 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 			    VMOVE(last, fin);
 			    break;
 		    }
-		    if (ged_vclip(start, fin, clipmin, clipmax) == 0)
+		    if (bn_ray_vclip(start, fin, clipmin, clipmax) == 0)
 			continue;
 
 		    if (Three_D) {

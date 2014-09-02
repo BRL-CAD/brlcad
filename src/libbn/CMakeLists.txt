@@ -7,6 +7,7 @@ set(BN_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(bn BN_INCLUDE_DIRS "")
 
 set(LIBBN_SOURCES
+  adc.c
   anim.c
   axis.c
   complex.c

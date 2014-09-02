@@ -30,6 +30,7 @@
 
 #include "bio.h"
 #include "bu.h"
+#include "bn.h"
 #include "vmath.h"
 #include "ged.h"
 #include "dm.h"
@@ -61,7 +62,7 @@ dm_draw_ticks(dm *dmp, struct ged_view *gvp, fastf_t angle)
     Y1 = gvp->gv_adc.gas_dv_y + d2 - t2;
     x2 = gvp->gv_adc.gas_dv_x + d1 -t1;
     y2 = gvp->gv_adc.gas_dv_y + d2 + t2;
-    if (ged_clip(&x1, &Y1, &x2, &y2) == 0) {
+    if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
 			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
 			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
@@ -72,7 +73,7 @@ dm_draw_ticks(dm *dmp, struct ged_view *gvp, fastf_t angle)
     Y1 = gvp->gv_adc.gas_dv_y + d1 + t1;
     x2 = gvp->gv_adc.gas_dv_x - d2 - t2;
     y2 = gvp->gv_adc.gas_dv_y + d1 - t1;
-    if (ged_clip(&x1, &Y1, &x2, &y2) == 0) {
+    if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
 			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
 			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
@@ -83,7 +84,7 @@ dm_draw_ticks(dm *dmp, struct ged_view *gvp, fastf_t angle)
     Y1 = gvp->gv_adc.gas_dv_y - d2 + t2;
     x2 = gvp->gv_adc.gas_dv_x - d1 + t1;
     y2 = gvp->gv_adc.gas_dv_y - d2 - t2;
-    if (ged_clip(&x1, &Y1, &x2, &y2) == 0) {
+    if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
 			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
 			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
@@ -94,7 +95,7 @@ dm_draw_ticks(dm *dmp, struct ged_view *gvp, fastf_t angle)
     Y1 = gvp->gv_adc.gas_dv_y - d1 - t1;
     x2 = gvp->gv_adc.gas_dv_x + d2 + t2;
     y2 = gvp->gv_adc.gas_dv_y - d1 + t1;
-    if (ged_clip(&x1, &Y1, &x2, &y2) == 0) {
+    if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
 			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
 			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
