@@ -897,7 +897,7 @@ get_loop_curve(const ON_SimpleArray<ON_Curve *> &loop)
 {
     ON_PolyCurve *pcurve = new ON_PolyCurve();
     for (int i = 0; i < loop.Count(); ++i) {
-	append_to_polycurve(loop[i], *pcurve);
+	append_to_polycurve(loop[i]->Duplicate(), *pcurve);
     }
     return pcurve;
 }
@@ -1688,33 +1688,6 @@ split_face_into_loops(
     return out;
 }
 
-ON_Curve *
-get_face_outerloop_curve(const TrimmedFace *face)
-{
-    ON_PolyCurve *pcurve = new ON_PolyCurve();
-    for (int i = 0; i < face->m_outerloop.Count(); ++i) {
-	append_to_polycurve(face->m_outerloop[i], *pcurve);
-    }
-    return pcurve;
-}
-
-std::vector<ON_Curve *>
-get_face_innerloop_curves(const TrimmedFace *face)
-{
-    std::vector<ON_Curve *> loop_curves;
-    for (size_t i = 0; i < face->m_innerloop.size(); ++i) {
-	ON_PolyCurve *pcurve = new ON_PolyCurve();
-
-	for (int j = 0; j < face->m_innerloop[i].Count(); ++j) {
-	    append_to_polycurve(face->m_innerloop[i][j], *pcurve);
-	}
-	if (pcurve->IsClosed()) {
-	    loop_curves.push_back(pcurve);
-	}
-    }
-    return loop_curves;
-}
-
 // It might be worth investigating the following approach to building a set of faces from the splitting
 // in order to achieve robustness in the final result:
 //
@@ -1763,7 +1736,7 @@ split_trimmed_face(
 	return out;
     }
 
-    ON_Curve *face_outerloop = get_face_outerloop_curve(orig_face);
+    ON_Curve *face_outerloop = get_loop_curve(orig_face->m_outerloop);
     if (!face_outerloop->IsClosed()) {
 	// need closed outerloop
 	out.Append(orig_face->Duplicate());
