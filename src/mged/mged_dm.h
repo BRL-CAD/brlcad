@@ -463,7 +463,6 @@ struct dm_list {
 #define clients curr_dm_list->dml_clients
 #define tkName dm_get_tkname(dmp)
 #define dName dm_get_dname(dmp)
-#define displaylist dm_get_displaylist(dmp)
 #define dirty curr_dm_list->dml_dirty
 #define mapped curr_dm_list->dml_mapped
 #define owner curr_dm_list->dml_owner

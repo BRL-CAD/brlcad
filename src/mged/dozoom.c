@@ -235,7 +235,7 @@ drawSolid(struct solid *sp,
 	}
     }
 
-    if (displaylist && mged_variables->mv_dlist) {
+    if (dm_get_displaylist(dmp) && mged_variables->mv_dlist) {
 	dm_draw_dlist(dmp, sp->s_dlist);
 	sp->s_flag = UP;
 	curr_dm_list->dml_ndrawn++;
@@ -570,7 +570,7 @@ dozoom(int which_eye)
 		dm_set_line_attr(dmp, mged_variables->mv_linewidth, linestyle);
 	    }
 
-	    if (displaylist && mged_variables->mv_dlist) {
+	    if (dm_get_displaylist(dmp) && mged_variables->mv_dlist) {
 		dm_draw_dlist(dmp, sp->s_dlist);
 		sp->s_flag = UP;
 		curr_dm_list->dml_ndrawn++;
