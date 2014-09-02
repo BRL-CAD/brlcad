@@ -6277,7 +6277,7 @@ to_idle_mode(struct ged *gedp,
 	bu_vls_free(&bindings);
     }
 
-    if (gdvp->gdv_view->gv_grid.ggs_snap &&
+    if (gdvp->gdv_view->gv_grid.snap &&
 	(mode == TCLCAD_TRANSLATE_MODE ||
 	 mode == TCLCAD_CONSTRAINED_TRANSLATE_MODE))
     {
@@ -6736,7 +6736,7 @@ to_mouse_append_pt_common(struct ged *gedp,
     VSET(view, x, y, 0.0);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    if (gedp->ged_gvp->gv_grid.ggs_snap)
+    if (gedp->ged_gvp->gv_grid.snap)
 	ged_snap_to_grid(gedp, &view[X], &view[Y]);
 
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
@@ -10790,8 +10790,8 @@ to_paint_rect_area(struct ged *gedp,
 
     (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
 
-    (void)fb_refresh(gdvp->gdv_fbs.fbs_fbp, gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
-		     gdvp->gdv_view->gv_rect.grs_dim[X], gdvp->gdv_view->gv_rect.grs_dim[Y]);
+    (void)fb_refresh(gdvp->gdv_fbs.fbs_fbp, gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
+		     gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
 
     (void)dm_set_depth_mask(gdvp->gdv_dmp, 1);
 
@@ -11066,7 +11066,7 @@ to_poly_circ_mode(struct ged *gedp,
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
-    if (gedp->ged_gvp->gv_grid.ggs_snap)
+    if (gedp->ged_gvp->gv_grid.snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
 
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
@@ -11168,7 +11168,7 @@ to_poly_cont_build(struct ged *gedp,
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
-    if (gedp->ged_gvp->gv_grid.ggs_snap)
+    if (gedp->ged_gvp->gv_grid.snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
 
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
@@ -11352,7 +11352,7 @@ to_poly_ell_mode(struct ged *gedp,
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
-    if (gedp->ged_gvp->gv_grid.ggs_snap)
+    if (gedp->ged_gvp->gv_grid.snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
 
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
@@ -11469,7 +11469,7 @@ to_poly_rect_mode(struct ged *gedp,
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
-    if (gedp->ged_gvp->gv_grid.ggs_snap)
+    if (gedp->ged_gvp->gv_grid.snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
 
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
@@ -12516,7 +12516,7 @@ to_snap_view(struct ged *gedp,
     fvy = vy;
 
     gedp->ged_gvp = gdvp->gdv_view;
-    if (!gedp->ged_gvp->gv_grid.ggs_snap) {
+    if (!gedp->ged_gvp->gv_grid.snap) {
 	bu_vls_printf(gedp->ged_result_str, "%lf %lf", fvx, fvy);
 	return GED_OK;
     }
@@ -13052,7 +13052,7 @@ to_vslew(struct ged *gedp,
     bu_vls_free(&slew_vec);
 
     if (ret == GED_OK) {
-	if (gdvp->gdv_view->gv_grid.ggs_snap) {
+	if (gdvp->gdv_view->gv_grid.snap) {
 
 	    gedp->ged_gvp = gdvp->gdv_view;
 	    av[0] = "grid";
@@ -14245,11 +14245,11 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	dm_draw_adc(gdvp->gdv_dmp, &(gdvp->gdv_view->gv_adc), gdvp->gdv_view->gv_view2model, gdvp->gdv_view->gv_model2view);
 
     /* Draw grid */
-    if (gdvp->gdv_view->gv_grid.ggs_draw)
-	dm_draw_grid(gdvp->gdv_dmp, &gdvp->gdv_view->gv_grid, gdvp->gdv_view, gdvp->gdv_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
+    if (gdvp->gdv_view->gv_grid.draw)
+	dm_draw_grid(gdvp->gdv_dmp, &gdvp->gdv_view->gv_grid, gdvp->gdv_view->gv_scale, gdvp->gdv_view->gv_model2view, gdvp->gdv_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
 
     /* Draw rect */
-    if (gdvp->gdv_view->gv_rect.grs_draw && gdvp->gdv_view->gv_rect.grs_line_width)
+    if (gdvp->gdv_view->gv_rect.draw && gdvp->gdv_view->gv_rect.line_width)
 	dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect);
 }
 
@@ -14407,7 +14407,7 @@ void
 go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuffer)
 {
     if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_OVERLAY) {
-	if (gdvp->gdv_view->gv_rect.grs_draw) {
+	if (gdvp->gdv_view->gv_rect.draw) {
 	    go_draw(gdvp);
 
 	    go_draw_other(gop, gdvp);
@@ -14416,13 +14416,13 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
 
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp,
-		       gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
-		       gdvp->gdv_view->gv_rect.grs_dim[X], gdvp->gdv_view->gv_rect.grs_dim[Y]);
+		       gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
+		       gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
 
 	    /* enable write to depth buffer */
 	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 1);
 
-	    if (gdvp->gdv_view->gv_rect.grs_line_width)
+	    if (gdvp->gdv_view->gv_rect.line_width)
 		dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect);
 	} else {
 	    /* disable write to depth buffer */
@@ -14446,10 +14446,10 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 	/* disable write to depth buffer */
 	(void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
 
-	if (gdvp->gdv_view->gv_rect.grs_draw) {
+	if (gdvp->gdv_view->gv_rect.draw) {
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp,
-		       gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
-		       gdvp->gdv_view->gv_rect.grs_dim[X], gdvp->gdv_view->gv_rect.grs_dim[Y]);
+		       gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
+		       gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
 	} else
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
 		       dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));
@@ -14465,10 +14465,10 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
 	    /* disable write to depth buffer */
 	    (void)dm_set_depth_mask(gdvp->gdv_dmp, 0);
 
-	    if (gdvp->gdv_view->gv_rect.grs_draw) {
+	    if (gdvp->gdv_view->gv_rect.draw) {
 		fb_refresh(gdvp->gdv_fbs.fbs_fbp,
-			   gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
-			   gdvp->gdv_view->gv_rect.grs_dim[X], gdvp->gdv_view->gv_rect.grs_dim[Y]);
+			   gdvp->gdv_view->gv_rect.pos[X], gdvp->gdv_view->gv_rect.pos[Y],
+			   gdvp->gdv_view->gv_rect.dim[X], gdvp->gdv_view->gv_rect.dim[Y]);
 	    } else
 		fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
 			   dm_get_width(gdvp->gdv_dmp), dm_get_height(gdvp->gdv_dmp));

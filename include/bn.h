@@ -4397,6 +4397,11 @@ BN_EXPORT extern int bn_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fast
  */
 BN_EXPORT extern int bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max);
 
+/* TODO - the above are probably OK for libbn (in a file called something other than adc.c,
+ * but the adc stuff below really belongs in a view.h header (bn_adc_state) or libdm
+ * (the functions) with libged reworked to pass parameters rather than owning the logic.
+ * In the meantime, this at least avoids duplicating logic in two libraries or making
+ * libdm require libged or vice versa. */
 struct bn_adc_state {
     int         draw;
     int         dv_x;
@@ -4460,6 +4465,43 @@ struct bn_data_axes_state {
     fastf_t   size;                /* in view coordinates */
     int       num_points;
     point_t   *points;             /* in model coordinates */
+};
+
+/*----------------------------------------------------------------------*/
+
+/* grid.c */
+
+struct bn_grid_state {
+    int       draw;               /* draw grid */
+    int       snap;               /* snap to grid */
+    fastf_t   anchor[3];
+    fastf_t   res_h;              /* grid resolution in h */
+    fastf_t   res_v;              /* grid resolution in v */
+    int       res_major_h;        /* major grid resolution in h */
+    int       res_major_v;        /* major grid resolution in v */
+    int       color[3];
+};
+
+
+/*----------------------------------------------------------------------*/
+
+/* rect.c */
+
+struct bn_interactive_rect_state {
+    int        active;     /* 1 - actively drawing a rectangle */
+    int        draw;       /* draw rubber band rectangle */
+    int        line_width;
+    int        line_style;  /* 0 - solid, 1 - dashed */
+    int        pos[2];     /* Position in image coordinates */
+    int        dim[2];     /* Rectangle dimension in image coordinates */
+    fastf_t    x;          /* Corner of rectangle in normalized     */
+    fastf_t    y;          /* ------ view coordinates (i.e. +-1.0). */
+    fastf_t    width;      /* Width and height of rectangle in      */
+    fastf_t    height;     /* ------ normalized view coordinates.   */
+    int        bg[3];      /* Background color */
+    int        color[3];   /* Rectangle color */
+    int        cdim[2];    /* Canvas dimension in pixels */
+    fastf_t    aspect;     /* Canvas aspect ratio */
 };
 
 

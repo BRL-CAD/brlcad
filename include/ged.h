@@ -328,40 +328,11 @@ typedef struct {
     fastf_t		gdps_data_vZ;
 } ged_data_polygon_state;
 
-struct ged_grid_state {
-    int		ggs_draw;		/* draw grid */
-    int		ggs_snap;		/* snap to grid */
-    fastf_t	ggs_anchor[3];
-    fastf_t	ggs_res_h;		/* grid resolution in h */
-    fastf_t	ggs_res_v;		/* grid resolution in v */
-    int		ggs_res_major_h;	/* major grid resolution in h */
-    int		ggs_res_major_v;	/* major grid resolution in v */
-    int		ggs_color[3];
-};
-
 struct ged_other_state {
     int gos_draw;
     int	gos_line_color[3];
     int	gos_text_color[3];
 };
-
-struct ged_rect_state {
-    int		grs_active;	/* 1 - actively drawing a rectangle */
-    int		grs_draw;	/* draw rubber band rectangle */
-    int		grs_line_width;
-    int		grs_line_style;  /* 0 - solid, 1 - dashed */
-    int		grs_pos[2];	/* Position in image coordinates */
-    int		grs_dim[2];	/* Rectangle dimension in image coordinates */
-    fastf_t	grs_x;		/* Corner of rectangle in normalized     */
-    fastf_t	grs_y;		/* ------ view coordinates (i.e. +-1.0). */
-    fastf_t	grs_width;	/* Width and height of rectangle in      */
-    fastf_t	grs_height;	/* ------ normalized view coordinates.   */
-    int		grs_bg[3];	/* Background color */
-    int		grs_color[3];	/* Rectangle color */
-    int		grs_cdim[2];	/* Canvas dimension in pixels */
-    fastf_t	grs_aspect;	/* Canvas aspect ratio */
-};
-
 
 struct ged_run_rt {
     struct bu_list l;
@@ -464,12 +435,12 @@ struct ged_view {
     struct ged_data_label_state gv_sdata_labels;
     struct ged_data_line_state 	gv_sdata_lines;
     ged_data_polygon_state 	gv_sdata_polygons;
-    struct ged_grid_state 	gv_grid;
+    struct bn_grid_state 	gv_grid;
     struct ged_other_state 	gv_center_dot;
     struct ged_other_state 	gv_prim_labels;
     struct ged_other_state 	gv_view_params;
     struct ged_other_state 	gv_view_scale;
-    struct ged_rect_state 	gv_rect;
+    struct bn_interactive_rect_state 	gv_rect;
     int				gv_adaptive_plot;
     int				gv_redraw_on_zoom;
     int				gv_x_samples;

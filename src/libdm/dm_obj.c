@@ -1357,107 +1357,6 @@ dmo_drawSList_tcl(void *clientData, int argc, const char **argv)
 
 
 /*
- * Draw "drawable geometry" objects.
- *
- * Usage:
- * objname drawGeom dg_obj(s)
- */
-HIDDEN int
-dmo_drawGeom_tcl(void *clientData, int argc, const char **argv)
-{
-    struct dm_obj *dmop = (struct dm_obj *)clientData;
-    struct dg_obj *dgop;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-    int i;
-
-    if (!dmop || !dmop->interp)
-	return TCL_ERROR;
-
-    if (argc < 3) {
-	bu_vls_printf(&vls, "helplib_alias dm_drawGeom %s", argv[1]);
-	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    argc -= 2;
-    argv += 2;
-    for (i = 0; i < argc; ++i) {
-	for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l)) {
-	    if (BU_STR_EQUAL(bu_vls_addr(&dgop->dgo_name), argv[i])) {
-		dmo_drawSList(dmop, &dgop->dgo_headSolid);
-		break;
-	    }
-	}
-    }
-
-    return TCL_OK;
-}
-
-
-/*
- * Draw labels for the specified dg_obj's primitive object(s).
- *
- * Usage:
- * objname drawLabels dg_obj color primitive(s)
- */
-HIDDEN int
-dmo_drawLabels_tcl(void *clientData, int argc, const char **argv)
-{
-    struct dm_obj *dmop = (struct dm_obj *)clientData;
-    struct dg_obj *dgop;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-    int i;
-    int labelColor[3];
-
-    if (!dmop || !dmop->interp)
-	return TCL_ERROR;
-
-    if (argc < 5) {
-	bu_vls_printf(&vls, "helplib_alias dm_drawLabels %s", argv[1]);
-	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    if (sscanf(argv[3], "%d %d %d",
-	       &labelColor[0],
-	       &labelColor[1],
-	       &labelColor[2]) != 3) {
-	bu_vls_printf(&vls, "drawLabels: bad label color - %s\n", argv[3]);
-	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
-
-	return TCL_ERROR;
-    }
-
-    /* validate color */
-    if (labelColor[0] < 0 || 255 < labelColor[0] ||
-	labelColor[1] < 0 || 255 < labelColor[1] ||
-	labelColor[2] < 0 || 255 < labelColor[2]) {
-
-	bu_vls_printf(&vls, "drawLabels: bad label color - %s\n", argv[3]);
-	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
-
-	return TCL_ERROR;
-    }
-
-    for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&dgop->dgo_name), argv[2])) {
-	    /* for each primitive */
-	    for (i = 4; i < argc; ++i) {
-		dm_draw_labels(dmop->dmo_dmp, dgop->dgo_wdbp, argv[i], dmop->viewMat,
-			       labelColor, dmop->dmo_drawLabelsHook, dmop->dmo_drawLabelsHookClientData);
-	    }
-
-	    break;
-	}
-    }
-
-    return TCL_OK;
-}
-
-
-/*
  * Get/set the display manager's foreground color.
  *
  * Usage:
@@ -2936,8 +2835,8 @@ dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{"depthMask",		dmo_depthMask_tcl},
 	{"drawBegin",		dmo_drawBegin_tcl},
 	{"drawEnd",		dmo_drawEnd_tcl},
-	{"drawGeom",		dmo_drawGeom_tcl},
-	{"drawLabels",		dmo_drawLabels_tcl},
+	{"drawGeom",	BU_CMD_NULL},
+	{"drawLabels",	BU_CMD_NULL},
 	{"drawLine",		dmo_drawLine_tcl},
 	{"drawPoint",		dmo_drawPoint_tcl},
 	{"drawScale",		dmo_drawScale_tcl},

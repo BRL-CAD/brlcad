@@ -30,7 +30,7 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "ged.h"
+#include "raytrace.h"
 
 #define USE_FBSERV 1
 
@@ -287,8 +287,9 @@ DM_EXPORT extern int vclip(fastf_t *,
 
 /* grid.c */
 DM_EXPORT extern void dm_draw_grid(dm *dmp,
-				   struct ged_grid_state *ggsp,
-				   struct ged_view *gvp,
+				   struct bn_grid_state *ggsp,
+				   fastf_t scale,
+				   mat_t model2view,
 				   fastf_t base2local);
 
 /* labels.c */
@@ -304,7 +305,7 @@ DM_EXPORT extern int dm_draw_labels(dm *dmp,
 
 /* rect.c */
 DM_EXPORT extern void dm_draw_rect(dm *dmp,
-				   struct ged_rect_state *grsp);
+				   struct bn_interactive_rect_state *grsp);
 
 /* scale.c */
 DM_EXPORT extern void dm_draw_scale(dm *dmp,

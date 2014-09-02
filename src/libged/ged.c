@@ -241,19 +241,19 @@ ged_view_init(struct ged_view *gvp)
     VSET(gvp->gv_adc.line_color, 255, 255, 0);
     VSET(gvp->gv_adc.tick_color, 255, 255, 255);
 
-    VSET(gvp->gv_grid.ggs_anchor, 0.0, 0.0, 0.0);
-    gvp->gv_grid.ggs_res_h = 1.0;
-    gvp->gv_grid.ggs_res_v = 1.0;
-    gvp->gv_grid.ggs_res_major_h = 5;
-    gvp->gv_grid.ggs_res_major_v = 5;
-    VSET(gvp->gv_grid.ggs_color, 255, 255, 255);
+    VSET(gvp->gv_grid.anchor, 0.0, 0.0, 0.0);
+    gvp->gv_grid.res_h = 1.0;
+    gvp->gv_grid.res_v = 1.0;
+    gvp->gv_grid.res_major_h = 5;
+    gvp->gv_grid.res_major_v = 5;
+    VSET(gvp->gv_grid.color, 255, 255, 255);
 
-    gvp->gv_rect.grs_draw = 0;
-    gvp->gv_rect.grs_pos[0] = 128;
-    gvp->gv_rect.grs_pos[1] = 128;
-    gvp->gv_rect.grs_dim[0] = 256;
-    gvp->gv_rect.grs_dim[1] = 256;
-    VSET(gvp->gv_rect.grs_color, 255, 255, 255);
+    gvp->gv_rect.draw = 0;
+    gvp->gv_rect.pos[0] = 128;
+    gvp->gv_rect.pos[1] = 128;
+    gvp->gv_rect.dim[0] = 256;
+    gvp->gv_rect.dim[1] = 256;
+    VSET(gvp->gv_rect.color, 255, 255, 255);
 
     gvp->gv_view_axes.draw = 0;
     VSET(gvp->gv_view_axes.axes_pos, 0.85, -0.85, 0.0);

@@ -478,10 +478,10 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
 	int ret;
 
 	ret = _ged_select_botpts(gedp, botip,
-				  gedp->ged_gvp->gv_rect.grs_x,
-				  gedp->ged_gvp->gv_rect.grs_y,
-				  gedp->ged_gvp->gv_rect.grs_width,
-				  gedp->ged_gvp->gv_rect.grs_height,
+				  gedp->ged_gvp->gv_rect.x,
+				  gedp->ged_gvp->gv_rect.y,
+				  gedp->ged_gvp->gv_rect.width,
+				  gedp->ged_gvp->gv_rect.height,
 				  vminz,
 				  0);
 
@@ -490,17 +490,17 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
     } else {
 	if (pflag)
 	    return _ged_select_partial(gedp,
-				       gedp->ged_gvp->gv_rect.grs_x,
-				       gedp->ged_gvp->gv_rect.grs_y,
-				       gedp->ged_gvp->gv_rect.grs_width,
-				       gedp->ged_gvp->gv_rect.grs_height,
+				       gedp->ged_gvp->gv_rect.x,
+				       gedp->ged_gvp->gv_rect.y,
+				       gedp->ged_gvp->gv_rect.width,
+				       gedp->ged_gvp->gv_rect.height,
 				       0);
 	else
 	    return _ged_select(gedp,
-			       gedp->ged_gvp->gv_rect.grs_x,
-			       gedp->ged_gvp->gv_rect.grs_y,
-			       gedp->ged_gvp->gv_rect.grs_width,
-			       gedp->ged_gvp->gv_rect.grs_height,
+			       gedp->ged_gvp->gv_rect.x,
+			       gedp->ged_gvp->gv_rect.y,
+			       gedp->ged_gvp->gv_rect.width,
+			       gedp->ged_gvp->gv_rect.height,
 			       0);
     }
 }
