@@ -606,7 +606,7 @@ extern void mged_rtCmdNotify();
 struct w_dm {
     int	type;
     char	*name;
-    int	(*init)();
+    int	(*doevent)();
 };
 extern struct w_dm which_dm[];  /* defined in attach.c */
 

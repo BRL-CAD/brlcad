@@ -29,6 +29,10 @@
 #  include <sys/time.h>		/* for struct timeval */
 #endif
 
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
+
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
@@ -117,44 +121,150 @@ struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list = (struct dm_list *)NULL;
 static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GED_MAX };
 
-struct w_dm which_dm[] = {
-    { DM_TYPE_PLOT, "plot", Plot_dm_init },  /* DM_PLOT_INDEX defined in mged_dm.h */
-    { DM_TYPE_PS, "ps", PS_dm_init },      /* DM_PS_INDEX defined in mged_dm.h */
-    { DM_TYPE_TXT, "txt", Txt_dm_init },
-#ifdef DM_X
-    { DM_TYPE_X, "X", X_dm_init },
-#endif /* DM_X */
-#if 0
-/* turn off until working */
-#ifdef DM_TK
-    { DM_TYPE_TK, "tk", tk_dm_init },
-#endif /* DM_TK */
+
+#ifdef DM_OGL
+static int
+ogl_doevent(void *UNUSED(vclientData), void *veventPtr)
+{
+    /*ClientData clientData = (ClientData)vclientData;*/
+    XEvent *eventPtr= (XEvent *)veventPtr;
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	if (!dm_make_current(dmp))
+	    /* allow further processing of this event */
+	    return TCL_OK;
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	dirty = 1;
+	/* no further processing for this event */
+	return TCL_RETURN;
+    }
+    /* allow further processing of this event */
+    return TCL_OK;
+}
 #endif
+
 #ifdef DM_WGL
-    { DM_TYPE_WGL, "wgl", Wgl_dm_init },
+/* TODO - is there a reason the dm_make_current is outside the
+ * if clause on Windows but not elsewhere? */
+static int
+wgl_doevent(void *UNUSED(vclientData), void *veventPtr)
+{
+    /*ClientData clientData = (ClientData)vclientData;*/
+    XEvent *eventPtr= (XEvent *)veventPtr;
+    if (!dm_make_current(dmp))
+	/* allow further processing of this event */
+	return TCL_OK;
+
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	dirty = 1;
+	/* no further processing for this event */
+	return TCL_RETURN;
+    }
+    /* allow further processing of this event */
+    return TCL_OK;
+}
+#endif
+
+static int
+x_doevent(void *UNUSED(vclientData), void *veventPtr)
+{
+    /*ClientData clientData = (ClientData)vclientData;*/
+    XEvent *eventPtr= (XEvent *)veventPtr;
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+
+	dirty = 1;
+	/* no further processing for this event */
+	return TCL_RETURN;
+    }
+    /* allow further processing of this event */
+    return TCL_OK;
+}
+
+typedef int (*eventfptr)();
+
+struct w_dm which_dm[] = {
+    { DM_TYPE_PLOT, "plot", NULL},  /* DM_PLOT_INDEX defined in mged_dm.h */
+    { DM_TYPE_PS, "ps", NULL},      /* DM_PS_INDEX defined in mged_dm.h */
+    { DM_TYPE_TXT, "txt", NULL},
+#ifdef DM_X
+    { DM_TYPE_X, "X", x_doevent },
+#endif /* DM_X */
+#ifdef DM_TK
+    { DM_TYPE_TK, "tk", NULL},
+#endif /* DM_TK */
+#ifdef DM_WGL
+    { DM_TYPE_WGL, "wgl", wgl_doevent },
 #endif /* DM_WGL */
 #ifdef DM_OGL
 #  if defined(HAVE_TK)
-    { DM_TYPE_OGL, "ogl", Ogl_dm_init },
+    { DM_TYPE_OGL, "ogl", ogl_doevent },
 #  endif
 #endif /* DM_OGL */
 #ifdef DM_OSG
-    { DM_TYPE_OSG, "osg", Osg_dm_init },
+    { DM_TYPE_OSG, "osg", NULL},
 #endif /* DM_OSG */
 #ifdef DM_RTGL
-    { DM_TYPE_RTGL, "rtgl", Rtgl_dm_init },
+    { DM_TYPE_RTGL, "rtgl", ogl_doevent },
 #endif /* DM_RTGL */
-#ifdef DM_GLX
-    { DM_TYPE_GLX, "glx", Glx_dm_init },
-#endif /* DM_GLX */
 #ifdef DM_PEX
-    { DM_TYPE_PEX, "pex", Pex_dm_init },
+    { DM_TYPE_PEX, "pex", NULL},
 #endif /* DM_PEX */
 #ifdef DM_QT
-    { DM_TYPE_QT, "qt", Qt_dm_init },
+    { DM_TYPE_QT, "qt", x_doevent },
 #endif /* DM_QT */
     { -1, (char *)NULL, (int (*)())NULL}
 };
+
+static eventfptr
+dm_doevent(int dm_type) {
+    int i = 0;
+    while (which_dm[i].type != -1) {
+	if (dm_type == which_dm[i].type) {
+	    return which_dm[i].doevent;
+	}
+	i++;
+    }
+    return NULL;
+}
+
+int
+mged_dm_init(struct dm_list *o_dm_list,
+	int dm_type,
+	int argc,
+	const char *argv[])
+{
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+    dm_var_init(o_dm_list);
+
+    /* register application provided routines */
+    cmd_hook = dm_commands;
+
+    Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+
+    if ((dmp = dm_open(INTERP, dm_type, argc-1, argv)) == DM_NULL)
+	return TCL_ERROR;
+
+    /*XXXX this eventually needs to move into Ogl's private structure */
+    dm_set_vp(dmp, &view_state->vs_gvp->gv_scale);
+    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
+
+    /* TODO - look up event handler based on dm_type */
+    eventHandler = dm_doevent(dm_type);
+
+
+    Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+    (void)dm_configure_win(dmp, 0);
+
+    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(dmp)));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_OK;
+}
+
 
 
 void
@@ -508,11 +618,11 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 
     BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
 
-    if (!wp->name || !wp->init) {
+    if (!wp->name) {
 	return TCL_ERROR;
     }
 
-    if (wp->init(o_dm_list, argc, argv) == TCL_ERROR) {
+    if (mged_dm_init(o_dm_list, wp->type, argc, argv) == TCL_ERROR) {
 	goto Bad;
     }
 
