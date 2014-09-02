@@ -263,7 +263,7 @@ DM_EXPORT extern fastf_t dm_wrap(fastf_t f);
 
 /* adc.c */
 DM_EXPORT extern void dm_draw_adc(dm *dmp,
-				  struct ged_view *gvp);
+				  struct bn_adc_state *adcp, mat_t view2model, mat_t model2view);
 
 /* axes.c */
 DM_EXPORT extern void dm_draw_data_axes(dm *dmp,
