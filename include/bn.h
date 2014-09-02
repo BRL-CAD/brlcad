@@ -4397,113 +4397,14 @@ BN_EXPORT extern int bn_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fast
  */
 BN_EXPORT extern int bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max);
 
-/* TODO - the above are probably OK for libbn (in a file called something other than adc.c,
- * but the adc stuff below really belongs in a view.h header (bn_adc_state) or libdm
- * (the functions) with libged reworked to pass parameters rather than owning the logic.
- * In the meantime, this at least avoids duplicating logic in two libraries or making
- * libdm require libged or vice versa. */
-struct bn_adc_state {
-    int         draw;
-    int         dv_x;
-    int         dv_y;
-    int         dv_a1;
-    int         dv_a2;
-    int         dv_dist;
-    fastf_t     pos_model[3];
-    fastf_t     pos_view[3];
-    fastf_t     pos_grid[3];
-    fastf_t     a1;
-    fastf_t     a2;
-    fastf_t     dst;
-    int         anchor_pos;
-    int         anchor_a1;
-    int         anchor_a2;
-    int         anchor_dst;
-    fastf_t     anchor_pt_a1[3];
-    fastf_t     anchor_pt_a2[3];
-    fastf_t     anchor_pt_dst[3];
-    int         line_color[3];
-    int         tick_color[3];
-    int         line_width;
-};
 
+/* TODO - find another, more appropriate home for these... may just have to
+ * duplicate the logic in libdm and libged */
+#include "dm/bview.h"
 BN_EXPORT void adc_model_to_adc_view(struct bn_adc_state *adcs, mat_t model2view, fastf_t amax);
-
 BN_EXPORT void adc_grid_to_adc_view(struct bn_adc_state *adcs, mat_t model2view, fastf_t amax);
-
 BN_EXPORT void adc_view_to_adc_grid(struct bn_adc_state *adcs, mat_t model2view);
-
 BN_EXPORT void adc_reset(struct bn_adc_state *adcs, mat_t view2model, mat_t model2view);
-
-/*----------------------------------------------------------------------*/
-
-/* axis.c */
-
-struct bn_axes_state {
-    int       draw;
-    point_t   axes_pos;             /* in model coordinates */
-    fastf_t   axes_size;            /* in view coordinates */
-    int       line_width;           /* in pixels */
-    int       pos_only;
-    int       axes_color[3];
-    int       label_color[3];
-    int       triple_color;
-    int       tick_enabled;
-    int       tick_length;          /* in pixels */
-    int       tick_major_length;    /* in pixels */
-    fastf_t   tick_interval;        /* in mm */
-    int       ticks_per_major;
-    int       tick_threshold;
-    int       tick_color[3];
-    int       tick_major_color[3];
-};
-
-struct bn_data_axes_state {
-    int       draw;
-    int       color[3];
-    int       line_width;          /* in pixels */
-    fastf_t   size;                /* in view coordinates */
-    int       num_points;
-    point_t   *points;             /* in model coordinates */
-};
-
-/*----------------------------------------------------------------------*/
-
-/* grid.c */
-
-struct bn_grid_state {
-    int       draw;               /* draw grid */
-    int       snap;               /* snap to grid */
-    fastf_t   anchor[3];
-    fastf_t   res_h;              /* grid resolution in h */
-    fastf_t   res_v;              /* grid resolution in v */
-    int       res_major_h;        /* major grid resolution in h */
-    int       res_major_v;        /* major grid resolution in v */
-    int       color[3];
-};
-
-
-/*----------------------------------------------------------------------*/
-
-/* rect.c */
-
-struct bn_interactive_rect_state {
-    int        active;     /* 1 - actively drawing a rectangle */
-    int        draw;       /* draw rubber band rectangle */
-    int        line_width;
-    int        line_style;  /* 0 - solid, 1 - dashed */
-    int        pos[2];     /* Position in image coordinates */
-    int        dim[2];     /* Rectangle dimension in image coordinates */
-    fastf_t    x;          /* Corner of rectangle in normalized     */
-    fastf_t    y;          /* ------ view coordinates (i.e. +-1.0). */
-    fastf_t    width;      /* Width and height of rectangle in      */
-    fastf_t    height;     /* ------ normalized view coordinates.   */
-    int        bg[3];      /* Background color */
-    int        color[3];   /* Rectangle color */
-    int        cdim[2];    /* Canvas dimension in pixels */
-    fastf_t    aspect;     /* Canvas aspect ratio */
-};
-
 
 #endif /* BN_H */
 

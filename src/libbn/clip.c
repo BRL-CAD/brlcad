@@ -1,4 +1,4 @@
-/*                          A D C . C
+/*                          C L I P . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -182,6 +182,9 @@ bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
     VJOIN1(a, a, mindist, diff);
     return 1;           /* HIT */
 }
+
+
+/* TODO - need a proper place for these... */
 
 void
 adc_model_to_adc_view(struct bn_adc_state *adcs, mat_t model2view, fastf_t amax)
