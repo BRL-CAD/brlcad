@@ -4430,6 +4430,38 @@ BN_EXPORT void adc_view_to_adc_grid(struct bn_adc_state *adcs, mat_t model2view)
 
 BN_EXPORT void adc_reset(struct bn_adc_state *adcs, mat_t view2model, mat_t model2view);
 
+/*----------------------------------------------------------------------*/
+
+/* axis.c */
+
+struct bn_axes_state {
+    int       draw;
+    point_t   axes_pos;             /* in model coordinates */
+    fastf_t   axes_size;            /* in view coordinates */
+    int       line_width;           /* in pixels */
+    int       pos_only;
+    int       axes_color[3];
+    int       label_color[3];
+    int       triple_color;
+    int       tick_enabled;
+    int       tick_length;          /* in pixels */
+    int       tick_major_length;    /* in pixels */
+    fastf_t   tick_interval;        /* in mm */
+    int       ticks_per_major;
+    int       tick_threshold;
+    int       tick_color[3];
+    int       tick_major_color[3];
+};
+
+struct bn_data_axes_state {
+    int       draw;
+    int       color[3];
+    int       line_width;          /* in pixels */
+    fastf_t   size;                /* in view coordinates */
+    int       num_points;
+    point_t   *points;             /* in model coordinates */
+};
+
 
 #endif /* BN_H */
 

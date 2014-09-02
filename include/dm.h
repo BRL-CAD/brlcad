@@ -268,12 +268,12 @@ DM_EXPORT extern void dm_draw_adc(dm *dmp,
 /* axes.c */
 DM_EXPORT extern void dm_draw_data_axes(dm *dmp,
 					fastf_t viewSize,
-					struct ged_data_axes_state *gdasp);
+					struct bn_data_axes_state *bndasp);
 
 DM_EXPORT extern void dm_draw_axes(dm *dmp,
 				   fastf_t viewSize,
 				   const mat_t rmat,
-				   struct ged_axes_state *gasp);
+				   struct bn_axes_state *bnasp);
 
 /* clip.c */
 DM_EXPORT extern int clip(fastf_t *,

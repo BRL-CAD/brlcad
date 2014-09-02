@@ -398,7 +398,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
     int lineWidth;
     int posOnly;
     int tripleColor;
-    struct ged_axes_state gas;
+    struct bn_axes_state bnas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -413,7 +413,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
 	return TCL_ERROR;
     }
 
-    memset(&gas, 0, sizeof(struct ged_axes_state));
+    memset(&bnas, 0, sizeof(struct bn_axes_state));
 
     if (dmo_parseAxesArgs(argc, argv, &viewSize, rmat, axesPos, &axesSize,
 			  axesColor, labelColor, &lineWidth,
@@ -423,15 +423,15 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
 	return TCL_ERROR;
     }
 
-    VMOVE(gas.gas_axes_pos, axesPos);
-    gas.gas_axes_size = axesSize;
-    VMOVE(gas.gas_axes_color, axesColor);
-    VMOVE(gas.gas_label_color, labelColor);
-    gas.gas_line_width = lineWidth;
-    gas.gas_pos_only = posOnly;
-    gas.gas_triple_color = tripleColor;
+    VMOVE(bnas.axes_pos, axesPos);
+    bnas.axes_size = axesSize;
+    VMOVE(bnas.axes_color, axesColor);
+    VMOVE(bnas.label_color, labelColor);
+    bnas.line_width = lineWidth;
+    bnas.pos_only = posOnly;
+    bnas.triple_color = tripleColor;
 
-    dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &gas);
+    dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
 
     bu_vls_free(&vls);
     return TCL_OK;
@@ -614,7 +614,7 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
     fastf_t axesSize;
     int axesColor[3];
     int lineWidth;
-    struct ged_data_axes_state gdas;
+    struct bn_data_axes_state bndas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -644,15 +644,15 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
 	return TCL_ERROR;
     }
 
-    memset(&gdas, 0, sizeof(struct ged_data_axes_state));
-    VMOVE(gdas.gdas_points[0], modelAxesPos);
-    gdas.gdas_size = axesSize;
-    VMOVE(gdas.gdas_color, axesColor);
-    gdas.gdas_line_width = lineWidth;
+    memset(&bndas, 0, sizeof(struct bn_data_axes_state));
+    VMOVE(bndas.points[0], modelAxesPos);
+    bndas.size = axesSize;
+    VMOVE(bndas.color, axesColor);
+    bndas.line_width = lineWidth;
 
     dm_draw_data_axes(dmop->dmo_dmp,
 		      viewSize,
-		      &gdas);
+		      &bndas);
 
     bu_vls_free(&vls);
     return TCL_OK;
@@ -840,7 +840,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
     int tickColor[3];
     int majorTickColor[3];
     int tickThreshold;
-    struct ged_axes_state gas;
+    struct bn_axes_state bnas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -872,24 +872,24 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
 
     MAT4X3PNT(viewAxesPos, model2view, modelAxesPos);
 
-    memset(&gas, 0, sizeof(struct ged_axes_state));
-    VMOVE(gas.gas_axes_pos, viewAxesPos);
-    gas.gas_axes_size = axesSize;
-    VMOVE(gas.gas_axes_color, axesColor);
-    VMOVE(gas.gas_label_color, labelColor);
-    gas.gas_line_width = lineWidth;
-    gas.gas_pos_only = posOnly;
-    gas.gas_triple_color = tripleColor;
-    gas.gas_tick_enabled = tickEnable;
-    gas.gas_tick_length = tickLength;
-    gas.gas_tick_major_length = majorTickLength;
-    gas.gas_tick_interval = tickInterval;
-    gas.gas_ticks_per_major = ticksPerMajor;
-    VMOVE(gas.gas_tick_color, tickColor);
-    VMOVE(gas.gas_tick_major_color, majorTickColor);
-    gas.gas_tick_threshold = tickThreshold;
+    memset(&bnas, 0, sizeof(struct bn_axes_state));
+    VMOVE(bnas.axes_pos, viewAxesPos);
+    bnas.axes_size = axesSize;
+    VMOVE(bnas.axes_color, axesColor);
+    VMOVE(bnas.label_color, labelColor);
+    bnas.line_width = lineWidth;
+    bnas.pos_only = posOnly;
+    bnas.triple_color = tripleColor;
+    bnas.tick_enabled = tickEnable;
+    bnas.tick_length = tickLength;
+    bnas.tick_major_length = majorTickLength;
+    bnas.tick_interval = tickInterval;
+    bnas.ticks_per_major = ticksPerMajor;
+    VMOVE(bnas.tick_color, tickColor);
+    VMOVE(bnas.tick_major_color, majorTickColor);
+    bnas.tick_threshold = tickThreshold;
 
-    dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &gas);
+    dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
 
     bu_vls_free(&vls);
     return TCL_OK;

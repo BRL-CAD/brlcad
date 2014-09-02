@@ -119,7 +119,7 @@ HIDDEN int to_autoview(struct ged *gedp,
 		       int maxargs);
 HIDDEN int to_axes(struct ged *gedp,
 		   struct ged_dm_view *gdvp,
-		   struct ged_axes_state *gasp,
+		   struct bn_axes_state *gasp,
 		   int argc,
 		   const char *argv[],
 		   const char *usage);
@@ -1705,7 +1705,7 @@ to_autoview(struct ged *gedp,
 HIDDEN int
 to_axes(struct ged *gedp,
 	struct ged_dm_view *gdvp,
-	struct ged_axes_state *gasp,
+	struct bn_axes_state *gasp,
 	int argc,
 	const char *argv[],
 	const char *usage)
@@ -1713,7 +1713,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->draw);
 	    return GED_OK;
 	}
 
@@ -1724,9 +1724,9 @@ to_axes(struct ged *gedp,
 		goto bad;
 
 	    if (i)
-		gasp->gas_draw = 1;
+		gasp->draw = 1;
 	    else
-		gasp->gas_draw = 0;
+		gasp->draw = 0;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -1737,7 +1737,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "axes_size")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%lf", gasp->gas_axes_size);
+	    bu_vls_printf(gedp->ged_result_str, "%lf", gasp->axes_size);
 	    return GED_OK;
 	}
 
@@ -1747,7 +1747,7 @@ to_axes(struct ged *gedp,
 	    if (bu_sscanf(argv[3], "%lf", &size) != 1)
 		goto bad;
 
-	    gasp->gas_axes_size = size;
+	    gasp->axes_size = size;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -1759,7 +1759,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "axes_pos")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf",
-			  V3ARGS(gasp->gas_axes_pos));
+			  V3ARGS(gasp->axes_pos));
 	    return GED_OK;
 	}
 
@@ -1771,7 +1771,7 @@ to_axes(struct ged *gedp,
 		bu_sscanf(argv[5], "%lf", &z) != 1)
 		goto bad;
 
-	    VSET(gasp->gas_axes_pos, x, y, z);
+	    VSET(gasp->axes_pos, x, y, z);
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -1783,7 +1783,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "axes_color")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  V3ARGS(gasp->gas_axes_color));
+			  V3ARGS(gasp->axes_color));
 	    return GED_OK;
 	}
 
@@ -1802,7 +1802,7 @@ to_axes(struct ged *gedp,
 		b < 0 || 255 < b)
 		goto bad;
 
-	    VSET(gasp->gas_axes_color, r, g, b);
+	    VSET(gasp->axes_color, r, g, b);
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -1814,7 +1814,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "label_color")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  V3ARGS(gasp->gas_label_color));
+			  V3ARGS(gasp->label_color));
 	    return GED_OK;
 	}
 
@@ -1833,7 +1833,7 @@ to_axes(struct ged *gedp,
 		b < 0 || 255 < b)
 		goto bad;
 
-	    VSET(gasp->gas_label_color, r, g, b);
+	    VSET(gasp->label_color, r, g, b);
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -1844,7 +1844,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "line_width")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_line_width);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->line_width);
 	    return GED_OK;
 	}
 
@@ -1854,7 +1854,7 @@ to_axes(struct ged *gedp,
 	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
 		goto bad;
 
-	    gasp->gas_line_width = line_width;
+	    gasp->line_width = line_width;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -1865,7 +1865,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "pos_only")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_pos_only);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->pos_only);
 	    return GED_OK;
 	}
 
@@ -1876,9 +1876,9 @@ to_axes(struct ged *gedp,
 		goto bad;
 
 	    if (i)
-		gasp->gas_pos_only = 1;
+		gasp->pos_only = 1;
 	    else
-		gasp->gas_pos_only = 0;
+		gasp->pos_only = 0;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -1890,7 +1890,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "tick_color")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  V3ARGS(gasp->gas_tick_color));
+			  V3ARGS(gasp->tick_color));
 	    return GED_OK;
 	}
 
@@ -1909,7 +1909,7 @@ to_axes(struct ged *gedp,
 		b < 0 || 255 < b)
 		goto bad;
 
-	    VSET(gasp->gas_tick_color, r, g, b);
+	    VSET(gasp->tick_color, r, g, b);
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -1920,7 +1920,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_enable")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_tick_enabled);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->tick_enabled);
 	    return GED_OK;
 	}
 
@@ -1931,9 +1931,9 @@ to_axes(struct ged *gedp,
 		goto bad;
 
 	    if (i)
-		gasp->gas_tick_enabled = 1;
+		gasp->tick_enabled = 1;
 	    else
-		gasp->gas_tick_enabled = 0;
+		gasp->tick_enabled = 0;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -1944,7 +1944,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_interval")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%f", gasp->gas_tick_interval);
+	    bu_vls_printf(gedp->ged_result_str, "%f", gasp->tick_interval);
 	    return GED_OK;
 	}
 
@@ -1954,7 +1954,7 @@ to_axes(struct ged *gedp,
 	    if (bu_sscanf(argv[3], "%d", &tick_interval) != 1)
 		goto bad;
 
-	    gasp->gas_tick_interval = tick_interval;
+	    gasp->tick_interval = tick_interval;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -1965,7 +1965,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_length")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_tick_length);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->tick_length);
 	    return GED_OK;
 	}
 
@@ -1975,7 +1975,7 @@ to_axes(struct ged *gedp,
 	    if (bu_sscanf(argv[3], "%d", &tick_length) != 1)
 		goto bad;
 
-	    gasp->gas_tick_length = tick_length;
+	    gasp->tick_length = tick_length;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -1987,7 +1987,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "tick_major_color")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  V3ARGS(gasp->gas_tick_major_color));
+			  V3ARGS(gasp->tick_major_color));
 	    return GED_OK;
 	}
 
@@ -2006,7 +2006,7 @@ to_axes(struct ged *gedp,
 		b < 0 || 255 < b)
 		goto bad;
 
-	    VSET(gasp->gas_tick_major_color, r, g, b);
+	    VSET(gasp->tick_major_color, r, g, b);
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -2017,7 +2017,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_major_length")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_tick_major_length);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->tick_major_length);
 	    return GED_OK;
 	}
 
@@ -2027,7 +2027,7 @@ to_axes(struct ged *gedp,
 	    if (bu_sscanf(argv[3], "%d", &tick_major_length) != 1)
 		goto bad;
 
-	    gasp->gas_tick_major_length = tick_major_length;
+	    gasp->tick_major_length = tick_major_length;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -2038,7 +2038,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "ticks_per_major")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_ticks_per_major);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->ticks_per_major);
 	    return GED_OK;
 	}
 
@@ -2048,7 +2048,7 @@ to_axes(struct ged *gedp,
 	    if (bu_sscanf(argv[3], "%d", &ticks_per_major) != 1)
 		goto bad;
 
-	    gasp->gas_ticks_per_major = ticks_per_major;
+	    gasp->ticks_per_major = ticks_per_major;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -2059,7 +2059,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_threshold")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_tick_threshold);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->tick_threshold);
 	    return GED_OK;
 	}
 
@@ -2072,7 +2072,7 @@ to_axes(struct ged *gedp,
 	    if (tick_threshold < 1)
 		tick_threshold = 1;
 
-	    gasp->gas_tick_threshold = tick_threshold;
+	    gasp->tick_threshold = tick_threshold;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -2083,7 +2083,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "triple_color")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_triple_color);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->triple_color);
 	    return GED_OK;
 	}
 
@@ -2094,9 +2094,9 @@ to_axes(struct ged *gedp,
 		goto bad;
 
 	    if (i)
-		gasp->gas_triple_color = 1;
+		gasp->triple_color = 1;
 	    else
-		gasp->gas_triple_color = 0;
+		gasp->triple_color = 0;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -2846,7 +2846,7 @@ to_data_axes(struct ged *gedp,
 	     int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
-    struct ged_data_axes_state *gdasp;
+    struct bn_data_axes_state *gdasp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -2879,7 +2879,7 @@ to_data_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->draw);
 	    return GED_OK;
 	}
 
@@ -2890,9 +2890,9 @@ to_data_axes(struct ged *gedp,
 		goto bad;
 
 	    if (0 <= i && i <= 2)
-		gdasp->gdas_draw = i;
+		gdasp->draw = i;
 	    else
-		gdasp->gdas_draw = 0;
+		gdasp->draw = 0;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -2904,7 +2904,7 @@ to_data_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "color")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  V3ARGS(gdasp->gdas_color));
+			  V3ARGS(gdasp->color));
 	    return GED_OK;
 	}
 
@@ -2923,7 +2923,7 @@ to_data_axes(struct ged *gedp,
 		b < 0 || 255 < b)
 		goto bad;
 
-	    VSET(gdasp->gdas_color, r, g, b);
+	    VSET(gdasp->color, r, g, b);
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -2934,7 +2934,7 @@ to_data_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "line_width")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_line_width);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->line_width);
 	    return GED_OK;
 	}
 
@@ -2944,7 +2944,7 @@ to_data_axes(struct ged *gedp,
 	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
 		goto bad;
 
-	    gdasp->gdas_line_width = line_width;
+	    gdasp->line_width = line_width;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -2955,7 +2955,7 @@ to_data_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "size")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%lf", gdasp->gdas_size);
+	    bu_vls_printf(gedp->ged_result_str, "%lf", gdasp->size);
 	    return GED_OK;
 	}
 
@@ -2965,7 +2965,7 @@ to_data_axes(struct ged *gedp,
 	    if (bu_sscanf(argv[3], "%lf", &size) != 1)
 		goto bad;
 
-	    gdasp->gdas_size = size;
+	    gdasp->size = size;
 
 	    to_refresh_view(gdvp);
 	    return GED_OK;
@@ -2978,9 +2978,9 @@ to_data_axes(struct ged *gedp,
 	register int i;
 
 	if (argc == 3) {
-	    for (i = 0; i < gdasp->gdas_num_points; ++i) {
+	    for (i = 0; i < gdasp->num_points; ++i) {
 		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ",
-			      V3ARGS(gdasp->gdas_points[i]));
+			      V3ARGS(gdasp->points[i]));
 	    }
 	    return GED_OK;
 	}
@@ -2994,10 +2994,10 @@ to_data_axes(struct ged *gedp,
 		return GED_ERROR;
 	    }
 
-	    if (gdasp->gdas_num_points) {
-		bu_free((void *)gdasp->gdas_points, "data points");
-		gdasp->gdas_points = (point_t *)0;
-		gdasp->gdas_num_points = 0;
+	    if (gdasp->num_points) {
+		bu_free((void *)gdasp->points, "data points");
+		gdasp->points = (point_t *)0;
+		gdasp->num_points = 0;
 	    }
 
 	    /* Clear out data points */
@@ -3007,24 +3007,24 @@ to_data_axes(struct ged *gedp,
 		return GED_OK;
 	    }
 
-	    gdasp->gdas_num_points = ac;
-	    gdasp->gdas_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
+	    gdasp->num_points = ac;
+	    gdasp->points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
 	    for (i = 0; i < ac; ++i) {
 		double scan[3];
 
 		if (bu_sscanf(av[i], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", av[i]);
 
-		    bu_free((void *)gdasp->gdas_points, "data points");
-		    gdasp->gdas_points = (point_t *)0;
-		    gdasp->gdas_num_points = 0;
+		    bu_free((void *)gdasp->points, "data points");
+		    gdasp->points = (point_t *)0;
+		    gdasp->num_points = 0;
 
 		    to_refresh_view(gdvp);
 		    Tcl_Free((char *)av);
 		    return GED_ERROR;
 		}
 		/* convert double to fastf_t */
-		VMOVE(gdasp->gdas_points[i], scan);
+		VMOVE(gdasp->points[i], scan);
 	    }
 
 	    to_refresh_view(gdvp);
@@ -4558,34 +4558,34 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "data_axes")) {
-	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
+	struct bn_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gdv_view->gv_data_axes.gdas_num_points)
+	if (dindex >= gdvp->gdv_view->gv_data_axes.num_points)
 	    return GED_OK;
 
-	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindex]);
+	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->points[dindex]);
 	vpoint[X] = vx;
 	vpoint[Y] = vy;
 	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
-	VMOVE(gdasp->gdas_points[dindex], mpoint);
+	VMOVE(gdasp->points[dindex], mpoint);
 
 	to_refresh_view(gdvp);
 	return GED_OK;
     }
 
     if (BU_STR_EQUAL(argv[2], "sdata_axes")) {
-	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
+	struct bn_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
 
 	/* Silently ignore */
-	if (dindex >= gdvp->gdv_view->gv_sdata_axes.gdas_num_points)
+	if (dindex >= gdvp->gdv_view->gv_sdata_axes.num_points)
 	    return GED_OK;
 
-	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindex]);
+	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->points[dindex]);
 	vpoint[X] = vx;
 	vpoint[Y] = vy;
 	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
-	VMOVE(gdasp->gdas_points[dindex], mpoint);
+	VMOVE(gdasp->points[dindex], mpoint);
 
 	to_refresh_view(gdvp);
 	return GED_OK;
@@ -5220,15 +5220,15 @@ to_data_pick(struct ged *gedp,
     }
 
     /* check for axes points */
-    if (gdvp->gdv_view->gv_data_axes.gdas_draw &&
-	gdvp->gdv_view->gv_data_axes.gdas_num_points) {
-	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
+    if (gdvp->gdv_view->gv_data_axes.draw &&
+	gdvp->gdv_view->gv_data_axes.num_points) {
+	struct bn_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
 
-	for (i = 0; i < gdasp->gdas_num_points; ++i) {
+	for (i = 0; i < gdasp->num_points; ++i) {
 	    fastf_t minX, maxX;
 	    fastf_t minY, maxY;
 
-	    VMOVE(dpoint, gdasp->gdas_points[i]);
+	    VMOVE(dpoint, gdasp->points[i]);
 	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
 
 	    minX = vpoint[X] - tol;
@@ -5249,15 +5249,15 @@ to_data_pick(struct ged *gedp,
     }
 
     /* check for selected axes points */
-    if (gdvp->gdv_view->gv_sdata_axes.gdas_draw &&
-	gdvp->gdv_view->gv_sdata_axes.gdas_num_points) {
-	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
+    if (gdvp->gdv_view->gv_sdata_axes.draw &&
+	gdvp->gdv_view->gv_sdata_axes.num_points) {
+	struct bn_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
 
-	for (i = 0; i < gdasp->gdas_num_points; ++i) {
+	for (i = 0; i < gdasp->num_points; ++i) {
 	    fastf_t minX, maxX;
 	    fastf_t minY, maxY;
 
-	    VMOVE(dpoint, gdasp->gdas_points[i]);
+	    VMOVE(dpoint, gdasp->points[i]);
 	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
 
 	    minX = vpoint[X] - tol;
@@ -14168,39 +14168,39 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
     }
 
     /* Model axes */
-    if (gdvp->gdv_view->gv_model_axes.gas_draw) {
+    if (gdvp->gdv_view->gv_model_axes.draw) {
 	point_t map;
 	point_t save_map;
 
-	VMOVE(save_map, gdvp->gdv_view->gv_model_axes.gas_axes_pos);
-	VSCALE(map, gdvp->gdv_view->gv_model_axes.gas_axes_pos, gop->go_gedp->ged_wdbp->dbip->dbi_local2base);
-	MAT4X3PNT(gdvp->gdv_view->gv_model_axes.gas_axes_pos, gdvp->gdv_view->gv_model2view, map);
+	VMOVE(save_map, gdvp->gdv_view->gv_model_axes.axes_pos);
+	VSCALE(map, gdvp->gdv_view->gv_model_axes.axes_pos, gop->go_gedp->ged_wdbp->dbip->dbi_local2base);
+	MAT4X3PNT(gdvp->gdv_view->gv_model_axes.axes_pos, gdvp->gdv_view->gv_model2view, map);
 
 	dm_draw_axes(gdvp->gdv_dmp,
 		     gdvp->gdv_view->gv_size,
 		     gdvp->gdv_view->gv_rotation,
 		     &gdvp->gdv_view->gv_model_axes);
 
-	VMOVE(gdvp->gdv_view->gv_model_axes.gas_axes_pos, save_map);
+	VMOVE(gdvp->gdv_view->gv_model_axes.axes_pos, save_map);
     }
 
     /* View axes */
-    if (gdvp->gdv_view->gv_view_axes.gas_draw) {
+    if (gdvp->gdv_view->gv_view_axes.draw) {
 	int width, height;
 	fastf_t inv_aspect;
 	fastf_t save_ypos;
 
-	save_ypos = gdvp->gdv_view->gv_view_axes.gas_axes_pos[Y];
+	save_ypos = gdvp->gdv_view->gv_view_axes.axes_pos[Y];
 	width = dm_get_width(gdvp->gdv_dmp);
 	height = dm_get_height(gdvp->gdv_dmp);
 	inv_aspect = height / width;
-	gdvp->gdv_view->gv_view_axes.gas_axes_pos[Y] = save_ypos * inv_aspect;
+	gdvp->gdv_view->gv_view_axes.axes_pos[Y] = save_ypos * inv_aspect;
 	dm_draw_axes(gdvp->gdv_dmp,
 		     gdvp->gdv_view->gv_size,
 		     gdvp->gdv_view->gv_rotation,
 		     &gdvp->gdv_view->gv_view_axes);
 
-	gdvp->gdv_view->gv_view_axes.gas_axes_pos[Y] = save_ypos;
+	gdvp->gdv_view->gv_view_axes.axes_pos[Y] = save_ypos;
     }
 
 
@@ -14333,12 +14333,12 @@ go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp)
     if (gdvp->gdv_view->gv_sdata_arrows.gdas_draw)
 	go_dm_draw_arrows(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_arrows, sf);
 
-    if (gdvp->gdv_view->gv_data_axes.gdas_draw)
+    if (gdvp->gdv_view->gv_data_axes.draw)
 	dm_draw_data_axes(gdvp->gdv_dmp,
 			  sf,
 			  &gdvp->gdv_view->gv_data_axes);
 
-    if (gdvp->gdv_view->gv_sdata_axes.gdas_draw)
+    if (gdvp->gdv_view->gv_sdata_axes.draw)
 	dm_draw_data_axes(gdvp->gdv_dmp,
 			  sf,
 			  &gdvp->gdv_view->gv_sdata_axes);
