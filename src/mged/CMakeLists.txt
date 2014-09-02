@@ -51,7 +51,6 @@ set(MGED_SOURCES
   color_scheme.c
   columns.c
   dir.c
-  ${MGED_DM_SOURCES}
   dm-generic.c
   dodraw.c
   doevent.c
