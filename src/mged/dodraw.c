@@ -73,76 +73,39 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 /*
  * Compute the min, max, and center points of the solid.
  * Also finds s_vlen;
- * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
  */
 static void
 mged_bound_solid(struct solid *sp)
 {
     struct bn_vlist *vp;
-    double xmax, ymax, zmax;
-    double xmin, ymin, zmin;
 
-    xmax = ymax = zmax = -INFINITY;
-    xmin = ymin = zmin =  INFINITY;
+    point_t bmin, bmax;
+    int cmd;
+    VSET(bmin, INFINITY, INFINITY, INFINITY);
+    VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
+
     sp->s_vlen = 0;
-    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	int j;
-	int nused = vp->nused;
-	int *cmd = vp->cmd;
-	point_t *pt = vp->pt;
-	for (j = 0; cmd && j < nused; j++, cmd++, pt++) {
-	    switch (*cmd) {
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_POLY_VERTNORM:
-		case BN_VLIST_TRI_START:
-		case BN_VLIST_TRI_VERTNORM:
-		case BN_VLIST_POINT_SIZE:
-		case BN_VLIST_LINE_WIDTH:
-		    /* attribute, not location */
-		    break;
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_POLY_END:
-		case BN_VLIST_TRI_MOVE:
-		case BN_VLIST_TRI_DRAW:
-		case BN_VLIST_TRI_END:
-		    V_MIN(xmin, (*pt)[X]);
-		    V_MAX(xmax, (*pt)[X]);
-		    V_MIN(ymin, (*pt)[Y]);
-		    V_MAX(ymax, (*pt)[Y]);
-		    V_MIN(zmin, (*pt)[Z]);
-		    V_MAX(zmax, (*pt)[Z]);
-		    break;
-		case BN_VLIST_POINT_DRAW:
-		    V_MIN(xmin, (*pt)[X]-1.0);
-		    V_MAX(xmax, (*pt)[X]+1.0);
-		    V_MIN(ymin, (*pt)[Y]-1.0);
-		    V_MAX(ymax, (*pt)[Y]+1.0);
-		    V_MIN(zmin, (*pt)[Z]-1.0);
-		    V_MAX(zmax, (*pt)[Z]+1.0);
-		    break;
-		default:
-		    {
-			struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-			bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", *cmd);
-			Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-			bu_vls_free(&tmp_vls);
-		    }
-	    }
+
+
+    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+	cmd = bn_vlist_bbox(vp, &bmin, &bmax);
+	if (cmd) {
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", cmd);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
 	}
-	sp->s_vlen += nused;
+	sp->s_vlen += vp->nused;
     }
 
-    sp->s_center[X] = (xmin + xmax) * 0.5;
-    sp->s_center[Y] = (ymin + ymax) * 0.5;
-    sp->s_center[Z] = (zmin + zmax) * 0.5;
+    sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
+    sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
+    sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;
 
-    sp->s_size = xmax - xmin;
-    V_MAX(sp->s_size, ymax - ymin);
-    V_MAX(sp->s_size, zmax - zmin);
+    sp->s_size = bmax[X] - bmin[X];
+    V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
+    V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
 }
 
 
