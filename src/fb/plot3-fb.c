@@ -533,7 +533,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hdoOit:F:s:S:w:W:n:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "doOit:F:s:S:w:W:n:N:h?")) != -1) {
 	switch (c) {
 	    case 't':
 		line_thickness = atoi(bu_optarg);
@@ -553,9 +553,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'F':
 		framebuffer = bu_optarg;
-		break;
-	    case 'h':
-		Nscanlines = Npixels = 1024;
 		break;
 	    case 'S':
 	    case 's':
@@ -598,8 +595,8 @@ get_args(int argc, char **argv)
 
 
 static char usage[] = "\
-Usage: plot3-fb [-h -d -o -i] [-t thickness] [-F framebuffer]\n\
-	[-S squaresize] [-W width] [-N height] [file.plot3]\n";
+Usage: plot3-fb [-d -O|o -i] [-t thickness] [-F framebuffer]\n\
+	[-S|s squaresize] [-W|w width] [-N|n height] [file.plot3]\n";
 
 
 /*
