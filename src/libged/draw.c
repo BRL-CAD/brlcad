@@ -179,25 +179,6 @@ draw_check_leaf(struct db_tree_state *tsp,
     return curtree;
 }
 
-/* returns the sum total number of commands in all nodes of the vlist */
-static int
-vlist_total_commands(struct bn_vlist *vlist)
-{
-    int num_commands;
-    struct bn_vlist *vp;
-
-    if (UNLIKELY(vlist == NULL)) {
-	return 0;
-    }
-
-    num_commands = 0;
-    for (BU_LIST_FOR(vp, bn_vlist, &(vlist->l))) {
-	num_commands += vp->nused;
-    }
-
-    return num_commands;
-}
-
 static void
 solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
 {
@@ -205,7 +186,7 @@ solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
 	sp->s_vlen = 0;
     }
 
-    sp->s_vlen += vlist_total_commands(vlist);
+    sp->s_vlen += bn_vlist_cmd_cnt(vlist);
     BU_LIST_APPEND_LIST(&(sp->s_vlist), &(vlist->l));
 }
 
@@ -214,77 +195,35 @@ solid_copy_vlist(struct solid *sp, struct bn_vlist *vlist)
 {
     BU_LIST_INIT(&(sp->s_vlist));
     rt_vlist_copy(&(sp->s_vlist), (struct bu_list *)vlist);
-    sp->s_vlen = vlist_total_commands((struct bn_vlist *)(&(sp->s_vlist)));
+    sp->s_vlen = bn_vlist_cmd_cnt((struct bn_vlist *)(&(sp->s_vlist)));
 }
 
 /**
  * Compute the min, max, and center points of the solid.
- *
- * XXX Should split out a separate bn_vlist_rpp() routine, for
- * librt/vlist.c
  */
 static void
 bound_solid(struct ged *gedp, struct solid *sp)
 {
     struct bn_vlist *vp;
-    double xmax, ymax, zmax;
-    double xmin, ymin, zmin;
-
-    xmax = ymax = zmax = -INFINITY;
-    xmin = ymin = zmin =  INFINITY;
+    point_t bmin, bmax;
+    int cmd;
+    VSET(bmin, INFINITY, INFINITY, INFINITY);
+    VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
 
     for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	int i;
-	int nused = vp->nused;
-	int *cmd = vp->cmd;
-	point_t *pt = vp->pt;
-
-	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    switch (*cmd) {
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_POLY_VERTNORM:
-		case BN_VLIST_TRI_START:
-		case BN_VLIST_TRI_VERTNORM:
-		case BN_VLIST_POINT_SIZE:
-		case BN_VLIST_LINE_WIDTH:
-		    /* attribute, not location */
-		    break;
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_POLY_END:
-		case BN_VLIST_TRI_MOVE:
-		case BN_VLIST_TRI_DRAW:
-		case BN_VLIST_TRI_END:
-		    V_MIN(xmin, (*pt)[X]);
-		    V_MAX(xmax, (*pt)[X]);
-		    V_MIN(ymin, (*pt)[Y]);
-		    V_MAX(ymax, (*pt)[Y]);
-		    V_MIN(zmin, (*pt)[Z]);
-		    V_MAX(zmax, (*pt)[Z]);
-		    break;
-		case BN_VLIST_POINT_DRAW:
-		    V_MIN(xmin, (*pt)[X]-1.0);
-		    V_MAX(xmax, (*pt)[X]+1.0);
-		    V_MIN(ymin, (*pt)[Y]-1.0);
-		    V_MAX(ymax, (*pt)[Y]+1.0);
-		    V_MIN(zmin, (*pt)[Z]-1.0);
-		    V_MAX(zmax, (*pt)[Z]+1.0);
-		    break;
-		default:
-		    bu_vls_printf(gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
-	    }
+	cmd = bn_vlist_bbox(vp, &bmin, &bmax);
+	if (cmd) {
+	    bu_vls_printf(gedp->ged_result_str, "unknown vlist op %d\n", cmd);
 	}
     }
 
-    sp->s_center[X] = (xmin + xmax) * 0.5;
-    sp->s_center[Y] = (ymin + ymax) * 0.5;
-    sp->s_center[Z] = (zmin + zmax) * 0.5;
+    sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
+    sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
+    sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;
 
-    sp->s_size = xmax - xmin;
-    V_MAX(sp->s_size, ymax - ymin);
-    V_MAX(sp->s_size, zmax - zmin);
+    sp->s_size = bmax[X] - bmin[X];
+    V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
+    V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
 }
 
 

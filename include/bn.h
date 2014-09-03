@@ -4035,6 +4035,10 @@ struct bn_vlist  {
 	_vp->cmd[_vp->nused++] = BN_VLIST_LINE_WIDTH; \
 }
 
+
+BN_EXPORT extern int bn_vlist_cmd_cnt(struct bn_vlist *vlist);
+BN_EXPORT extern int bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax);
+
 /**
  * For plotting, a way of separating plots into separate color vlists:
  * blocks of vlists, each with an associated color.
