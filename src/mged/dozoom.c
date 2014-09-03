@@ -208,7 +208,6 @@ dozoom(int which_eye)
     fastf_t inv_viewsize;
     mat_t newmat;
     matp_t mat = newmat;
-    int linestyle = -1;  /* not dashed */
     short r = -1;
     short g = -1;
     short b = -1;
@@ -317,7 +316,7 @@ dozoom(int which_eye)
 	/* First, draw opaque stuff */
 
 	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
-	       	r, g, b, linestyle, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
+	       	r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 	       	geometry_default_color);
 
 	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
@@ -331,7 +330,7 @@ dozoom(int which_eye)
 	/* Second, draw transparent stuff */
 
 	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 1.0 - SMALL_FASTF, inv_viewsize,
-	       	r, g, b, linestyle, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
+	       	r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 	       	geometry_default_color);
 
 	/* re-enable write of depth buffer */
@@ -340,7 +339,7 @@ dozoom(int which_eye)
     } else {
 
 	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
-	       	r, g, b, linestyle, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
+	       	r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 	       	geometry_default_color);
 
     }
@@ -382,7 +381,7 @@ dozoom(int which_eye)
 
 
     ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, -1.0, inv_viewsize,
-	    r, g, b, linestyle, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
+	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
 	    geometry_default_color);
 
     curr_dm_list->dml_ndrawn += ndrawn;

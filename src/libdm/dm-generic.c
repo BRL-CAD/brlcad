@@ -853,7 +853,6 @@ dm_draw_display_list(dm *dmp,
 	fastf_t transparency_threshold,
 	fastf_t inv_viewsize,
 	short r, short g, short b,
-	int line_style,
 	int line_width,
 	int draw_style,
 	int draw_edit,
@@ -862,7 +861,6 @@ dm_draw_display_list(dm *dmp,
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct solid *sp;
-    int linestyle = line_style;
     fastf_t ratio;
     int ndrawn = 0;
 
@@ -891,10 +889,7 @@ dm_draw_display_list(dm *dmp,
 		    continue;
 	    }
 
-	    if (linestyle != sp->s_soldash) {
-		linestyle = sp->s_soldash;
-		dm_set_line_attr(dmp, line_width, linestyle);
-	    }
+	    dm_set_line_attr(dmp, line_width, sp->s_soldash);
 
 	    ndrawn += dm_drawSolid(dmp, sp, r, g, b, draw_style, gdc);
 	}
