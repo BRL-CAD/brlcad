@@ -43,6 +43,11 @@ class ON_CLASS ON_Surface : public ON_Geometry
 {
   ON_OBJECT_DECLARE(ON_Surface);
 
+#ifdef BRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
+private:
+  void UnwrapUV(double &u, double &v) const;
+#endif
+
 public:
   // virtual ON_Object::DestroyRuntimeCache override
   void DestroyRuntimeCache( bool bDelete = true );
