@@ -720,6 +720,11 @@ dm_draw(dm *dmp, struct bn_vlist *(*callback)(void *), void **data)
     return dmp->dm_draw(dmp, callback, data);
 }
 int
+dm_draw_obj(dm *dmp, struct display_list *obj)
+{
+    return dmp->dm_draw_obj(dmp, obj);
+}
+int
 dm_set_depth_mask(dm *dmp, int d_on)
 {
     return dmp->dm_setDepthMask(dmp, d_on);

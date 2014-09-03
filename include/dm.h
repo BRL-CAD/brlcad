@@ -390,6 +390,7 @@ DM_EXPORT extern int dm_draw_point_2d(dm *dmp, fastf_t x, fastf_t y);
 DM_EXPORT extern int dm_draw_point_3d(dm *dmp, point_t pt);
 DM_EXPORT extern int dm_draw_points_3d(dm *dmp, int npoints, point_t *points);
 DM_EXPORT extern int dm_draw(dm *dmp, struct bn_vlist *(*callback)(void *), void **data);
+DM_EXPORT extern int dm_draw_obj(dm *dmp, struct display_list *obj);
 DM_EXPORT extern int dm_set_depth_mask(dm *dmp, int d_on);
 DM_EXPORT extern int dm_debug(dm *dmp, int lvl);
 DM_EXPORT extern int dm_logfile(dm *dmp, const char *filename);

@@ -1714,6 +1714,7 @@ struct dm_internal dm_X = {
     null_drawDList,
     null_freeDLists,
     null_genDLists,
+    NULL,
     X_getDisplayImage, /* display to image function */
     X_reshape,
     null_makeCurrent,

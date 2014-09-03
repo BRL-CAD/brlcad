@@ -374,6 +374,7 @@ dm dm_txt = {
     txt_drawDList,
     txt_freeDLists,
     txt_genDLists,
+    NULL,
     txt_getDisplayImage,
     txt_reshape,
     txt_makeCurrent,

@@ -243,30 +243,6 @@ dozoom(int which_eye)
     if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
 }
 
-
-/*
- * Create Display List
- */
-void
-createDList(struct solid *sp)
-{
-    if (sp->s_dlist == 0)
-	sp->s_dlist = dm_gen_dlists(dmp, 1);
-
-    (void)dm_make_current(dmp);
-    (void)dm_begin_dlist(dmp, sp->s_dlist);
-    if (sp->s_iflag == UP)
-	(void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_transparency);
-    else
-	(void)dm_set_fg(dmp,
-		       (unsigned char)sp->s_color[0],
-		       (unsigned char)sp->s_color[1],
-		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
-    (void)dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist);
-    (void)dm_end_dlist(dmp);
-}
-
-
 /*
  * Create Display Lists
  */
@@ -275,20 +251,16 @@ createDLists(struct bu_list *hdlp)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct solid *sp;
 
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    createDList(sp);
-	}
+	dm_draw_obj(dmp, gdlp);
 
 	gdlp = next_gdlp;
     }
 }
-
 
 /*
  * Create a display list for "sp" for every display manager
@@ -308,8 +280,21 @@ createDListAll(struct solid *sp)
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	if (dm_get_displaylist(dlp->dml_dmp) &&
-	    dlp->dml_mged_variables->mv_dlist) {
-	    createDList(sp);
+		dlp->dml_mged_variables->mv_dlist) {
+	    if (sp->s_dlist == 0)
+		sp->s_dlist = dm_gen_dlists(dmp, 1);
+
+	    (void)dm_make_current(dmp);
+	    (void)dm_begin_dlist(dmp, sp->s_dlist);
+	    if (sp->s_iflag == UP)
+		(void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_transparency);
+	    else
+		(void)dm_set_fg(dmp,
+			(unsigned char)sp->s_color[0],
+			(unsigned char)sp->s_color[1],
+			(unsigned char)sp->s_color[2], 0, sp->s_transparency);
+	    (void)dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist);
+	    (void)dm_end_dlist(dmp);
 	}
 
 	dlp->dml_dirty = 1;

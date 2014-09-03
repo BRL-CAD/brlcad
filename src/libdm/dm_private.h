@@ -72,6 +72,7 @@ struct dm_internal {
     void (*dm_drawDList)(unsigned int list);
     int (*dm_freeDLists)(struct dm_internal *dmp, unsigned int list, int range);
     int (*dm_genDLists)(struct dm_internal *dmp, size_t range);
+    int (*dm_draw_obj)(struct dm_internal *dmp, struct display_list *obj);
     int (*dm_getDisplayImage)(struct dm_internal *dmp, unsigned char **image);
     void (*dm_reshape)(struct dm_internal *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm_internal *dmp);

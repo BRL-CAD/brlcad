@@ -318,6 +318,7 @@ struct dm_internal dm_null = {
     null_drawDList,
     null_freeDLists,
     null_genDLists,
+    NULL,
     null_getDisplayImage,
     null_reshape,
     null_makeCurrent,
