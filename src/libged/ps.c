@@ -250,13 +250,13 @@ ps_draw_body(struct ged *gedp, FILE *fp)
 
 	if (ZERO(gedp->ged_gvp->gv_eye_pos[Z] - 1.0)) {
 	    /* This way works, with reasonable Z-clipping */
-	    ged_persp_mat(perspective_mat, gedp->ged_gvp->gv_perspective,
+	    persp_mat(perspective_mat, gedp->ged_gvp->gv_perspective,
 			  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
 	} else {
 	    /* This way does not have reasonable Z-clipping,
 	     * but includes shear, for GDurf's testing.
 	     */
-	    ged_deering_persp_mat(perspective_mat, l, h, gedp->ged_gvp->gv_eye_pos);
+	    deering_persp_mat(perspective_mat, l, h, gedp->ged_gvp->gv_eye_pos);
 	}
 
 	bn_mat_mul(newmat, perspective_mat, mat);

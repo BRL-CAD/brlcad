@@ -1198,6 +1198,151 @@ bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t 
     bn_mat_mul3(out, origin_to_pt, zaxis_to_d, t1);
 }
 
+/*
+ * Compute a perspective matrix for a right-handed coordinate system.
+ * Reference: SGI Graphics Reference Appendix C
+ * (Note:  SGI is left-handed, but the fix is done in the Display Manger).
+ */
+void
+persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff)
+{
+    mat_t m2, tra;
+
+    fovy *= DEG2RAD;
+
+    MAT_IDN(m2);
+    m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
+    m2[0] = m2[5]/aspect;
+    m2[10] = (far1+near1) / (far1-near1);
+    m2[11] = 2*far1*near1 / (far1-near1);       /* This should be negative */
+
+    m2[14] = -1;                /* XXX This should be positive */
+    m2[15] = 0;
+
+    /* Move eye to origin, then apply perspective */
+    MAT_IDN(tra);
+    tra[11] = -backoff;
+    bn_mat_mul(m, m2, tra);
+}
+
+/*
+ *
+ * Create a perspective matrix that transforms the +/1 viewing cube,
+ * with the actual eye position (not at Z=+1) specified in viewing coords,
+ * into a related space where the eye has been sheared onto the Z axis
+ * and repositioned at Z=(0, 0, 1), with the same perspective field of view
+ * as before.
+ *
+ * The Zbuffer clips off stuff with negative Z values.
+ *
+ * pmat = persp * xlate * shear
+ */
+void
+mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
+{
+    mat_t shear;
+    mat_t persp;
+    mat_t xlate;
+    mat_t t1, t2;
+    point_t sheared_eye;
+
+    if (eye[Z] < SMALL) {
+        VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
+        return;
+    }
+
+    /* Shear "eye" to +Z axis */
+    MAT_IDN(shear);
+    shear[2] = -eye[X]/eye[Z];
+    shear[6] = -eye[Y]/eye[Z];
+
+    MAT4X3VEC(sheared_eye, shear, eye);
+    if (!NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01)) {
+        VPRINT("ERROR sheared_eye", sheared_eye);
+        return;
+    }
+
+    /* Translate along +Z axis to put sheared_eye at (0, 0, 1). */
+    MAT_IDN(xlate);
+    /* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
+    MAT_DELTAS(xlate, 0, 0, 1-sheared_eye[Z]);
+
+    /* Build perspective matrix inline, substituting fov=2*atan(1, Z) */
+    MAT_IDN(persp);
+    /* From page 492 of Graphics Gems */
+    persp[0] = sheared_eye[Z];  /* scaling: fov aspect term */
+    persp[5] = sheared_eye[Z];  /* scaling: determines fov */
+
+    /* From page 158 of Rogers Mathematical Elements */
+    /* Z center of projection at Z=+1, r=-1/1 */
+    persp[14] = -1;
+
+    bn_mat_mul(t1, xlate, shear);
+    bn_mat_mul(t2, persp, t1);
+    /* Now, move eye from Z=1 to Z=0, for clipping purposes */
+    MAT_DELTAS(xlate, 0, 0, -1);
+    bn_mat_mul(pmat, xlate, t2);
+}
+
+
+/*
+ * Map "display plate coordinates" (which can just be the screen viewing cube),
+ * into [-1, +1] coordinates, with perspective.
+ * Per "High Resolution Virtual Reality" by Michael Deering,
+ * Computer Graphics 26, 2, July 1992, pp 195-201.
+ *
+ * L is lower left corner of screen, H is upper right corner.
+ * L[Z] is the front (near) clipping plane location.
+ * H[Z] is the back (far) clipping plane location.
+ *
+ * This corresponds to the SGI "window()" routine, but taking into account
+ * skew due to the eyepoint being offset parallel to the image plane.
+ *
+ * The gist of the algorithm is to translate the display plate to the
+ * view center, shear the eye point to (0, 0, 1), translate back,
+ * then apply an off-axis perspective projection.
+ *
+ * Another (partial) reference is "A comparison of stereoscopic cursors
+ * for the interactive manipulation of B-splines" by Barham & McAllister,
+ * SPIE Vol 1457 Stereoscopic Display & Applications, 1991, pg 19.
+ */
+void
+deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye)
+    /* lower left corner of screen */
+    /* upper right (high) corner of screen */
+    /* eye location.  Traditionally at (0, 0, 1) */
+{
+    vect_t diff;        /* H - L */
+    vect_t sum; /* H + L */
+
+    VSUB2(diff, h, l);
+    VADD2(sum, h, l);
+
+    m[0] = 2 * eye[Z] / diff[X];
+    m[1] = 0;
+    m[2] = (sum[X] - 2 * eye[X]) / diff[X];
+    m[3] = -eye[Z] * sum[X] / diff[X];
+
+    m[4] = 0;
+    m[5] = 2 * eye[Z] / diff[Y];
+    m[6] = (sum[Y] - 2 * eye[Y]) / diff[Y];
+    m[7] = -eye[Z] * sum[Y] / diff[Y];
+
+    /* Multiplied by -1, to do right-handed Z coords */
+    m[8] = 0;
+    m[9] = 0;
+    m[10] = -(sum[Z] - 2 * eye[Z]) / diff[Z];
+    m[11] = -(-eye[Z] + 2 * h[Z] * eye[Z]) / diff[Z];
+
+    m[12] = 0;
+    m[13] = 0;
+    m[14] = -1;
+    m[15] = eye[Z];
+
+/* XXX May need to flip Z ? (lefthand to righthand?) */
+}
+
+
 
 /** @} */
 /*
