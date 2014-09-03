@@ -195,59 +195,6 @@ deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t 
 }
 
 
-static void
-drawSolid(struct solid *sp,
-	  short r,
-	  short g,
-	  short b) {
-
-    if (sp->s_cflag) {
-	if (!DM_SAME_COLOR(r, g, b,
-			   (short)geometry_default_color[0],
-			   (short)geometry_default_color[1],
-			   (short)geometry_default_color[2])) {
-	    dm_set_fg(dmp,
-			   (short)geometry_default_color[0],
-			   (short)geometry_default_color[1],
-			   (short)geometry_default_color[2],
-			   0,
-			   sp->s_transparency);
-	    DM_COPY_COLOR(r, g, b,
-			  (short)geometry_default_color[0],
-			  (short)geometry_default_color[1],
-			  (short)geometry_default_color[2]);
-	}
-    } else {
-	if (!DM_SAME_COLOR(r, g, b,
-			   (short)sp->s_color[0],
-			   (short)sp->s_color[1],
-			   (short)sp->s_color[2])) {
-	    dm_set_fg(dmp,
-			   (short)sp->s_color[0],
-			   (short)sp->s_color[1],
-			   (short)sp->s_color[2],
-			   0,
-			   sp->s_transparency);
-	    DM_COPY_COLOR(r, g, b,
-			  (short)sp->s_color[0],
-			  (short)sp->s_color[1],
-			  (short)sp->s_color[2]);
-	}
-    }
-
-    if (dm_get_displaylist(dmp) && mged_variables->mv_dlist) {
-	dm_draw_dlist(dmp, sp->s_dlist);
-	sp->s_flag = UP;
-	curr_dm_list->dml_ndrawn++;
-    } else {
-	if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
-	    sp->s_flag = UP;
-	    curr_dm_list->dml_ndrawn++;
-	}
-    }
-}
-
-
 /*
  * This routine reviews all of the solids in the solids table,
  * to see if they are visible within the current viewing
@@ -257,10 +204,7 @@ drawSolid(struct solid *sp,
 void
 dozoom(int which_eye)
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct solid *sp;
-    fastf_t ratio;
+    int ndrawn = 0;
     fastf_t inv_viewsize;
     mat_t newmat;
     matp_t mat = newmat;
@@ -371,145 +315,41 @@ dozoom(int which_eye)
 
     if (dm_get_transparency(dmp)) {
 	/* First, draw opaque stuff */
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-		sp->s_flag = DOWN;		/* Not drawn yet */
+	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+	       	r, g, b, linestyle, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
+	       	geometry_default_color);
 
-		/* If part of object edit, will be drawn below */
-		if (sp->s_iflag == UP)
-		    continue;
+	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
+	if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
 
-		if (sp->s_transparency < 1.0)
-		    continue;
-
-		/*
-		 * The vectorThreshold stuff in libdm may turn the
-		 * Tcl-crank causing curr_dm_list to change.
-		 */
-		if (curr_dm_list != save_dm_list)
-		    curr_dm_list = save_dm_list;
-
-		if (dm_get_bound_flag(dmp)) {
-		    ratio = sp->s_size * inv_viewsize;
-
-		    /*
-		     * Check for this object being bigger than
-		     * dmp->dm_bound * the window size, or smaller than a speck.
-		     */
-		    if (ratio < 0.001)
-			continue;
-		}
-
-		if (linestyle != sp->s_soldash) {
-		    linestyle = sp->s_soldash;
-		    dm_set_line_attr(dmp, mged_variables->mv_linewidth, linestyle);
-		}
-
-		drawSolid(sp, r, g, b);
-	    }
-
-	    gdlp = next_gdlp;
-	}
+	curr_dm_list->dml_ndrawn += ndrawn;
 
 	/* disable write to depth buffer */
 	dm_set_depth_mask(dmp, 0);
 
 	/* Second, draw transparent stuff */
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-
-		/* If part of object edit, will be drawn below */
-		if (sp->s_iflag == UP)
-		    continue;
-
-		/* already drawn above */
-		if (EQUAL(sp->s_transparency, 1.0))
-		    continue;
-
-		/*
-		 * The vectorThreshold stuff in libdm may turn the
-		 * Tcl-crank causing curr_dm_list to change.
-		 */
-		if (curr_dm_list != save_dm_list)
-		    curr_dm_list = save_dm_list;
-
-		if (dm_get_bound_flag(dmp)) {
-		    ratio = sp->s_size * inv_viewsize;
-
-		    /*
-		     * Check for this object being bigger than
-		     * dmp->dm_bound * the window size, or smaller than a speck.
-		     */
-		    if (ratio < 0.001)
-			continue;
-		}
-
-		if (linestyle != sp->s_soldash) {
-		    linestyle = sp->s_soldash;
-		    dm_set_line_attr(dmp, mged_variables->mv_linewidth, linestyle);
-		}
-
-		drawSolid(sp, r, g, b);
-	    }
-
-	    gdlp = next_gdlp;
-	}
+	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 1.0 - SMALL_FASTF, inv_viewsize,
+	       	r, g, b, linestyle, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
+	       	geometry_default_color);
 
 	/* re-enable write of depth buffer */
 	dm_set_depth_mask(dmp, 1);
+
     } else {
 
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
+	       	r, g, b, linestyle, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
+	       	geometry_default_color);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-		sp->s_flag = DOWN;		/* Not drawn yet */
-		/* If part of object edit, will be drawn below */
-		if (sp->s_iflag == UP)
-		    continue;
-
-		/*
-		 * The vectorThreshold stuff in libdm may turn the
-		 * Tcl-crank causing curr_dm_list to change.
-		 */
-		if (curr_dm_list != save_dm_list)
-		    curr_dm_list = save_dm_list;
-
-		if (dm_get_bound_flag(dmp)) {
-		    ratio = sp->s_size * inv_viewsize;
-
-		    /*
-		     * Check for this object being smaller than a speck.
-		     */
-		    if (ratio < 0.001)
-			continue;
-		}
-
-		if (linestyle != sp->s_soldash) {
-		    linestyle = sp->s_soldash;
-		    dm_set_line_attr(dmp, mged_variables->mv_linewidth, linestyle);
-		}
-
-		drawSolid(sp, r, g, b);
-	    }
-
-	    gdlp = next_gdlp;
-	}
     }
 
-    /*
-     * The vectorThreshold stuff in libdm may turn the
-     * Tcl-crank causing curr_dm_list to change.
-     */
-    if (curr_dm_list != save_dm_list)
-	curr_dm_list = save_dm_list;
+    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
+    if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
+
+    curr_dm_list->dml_ndrawn += ndrawn;
+
 
     /* draw predictor vlist */
     if (mged_variables->mv_predictor) {
@@ -540,58 +380,15 @@ dozoom(int which_eye)
 		   color_scheme->cs_geo_hl[1],
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    /* Ignore all objects not being edited */
-	    if (sp->s_iflag != UP)
-		continue;
+    ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, -1.0, inv_viewsize,
+	    r, g, b, linestyle, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
+	    geometry_default_color);
 
-	    /*
-	     * The vectorThreshold stuff in libdm may turn the
-	     * Tcl-crank causing curr_dm_list to change.
-	     */
-	    if (curr_dm_list != save_dm_list)
-		curr_dm_list = save_dm_list;
+    curr_dm_list->dml_ndrawn += ndrawn;
 
-	    if (dm_get_bound_flag(dmp)) {
-		ratio = sp->s_size * inv_viewsize;
-		/*
-		 * Check for this object being smaller than a speck.
-		 */
-		if (ratio < 0.001)
-		    continue;
-	    }
-
-	    if (linestyle != sp->s_soldash) {
-		linestyle = sp->s_soldash;
-		dm_set_line_attr(dmp, mged_variables->mv_linewidth, linestyle);
-	    }
-
-	    if (dm_get_displaylist(dmp) && mged_variables->mv_dlist) {
-		dm_draw_dlist(dmp, sp->s_dlist);
-		sp->s_flag = UP;
-		curr_dm_list->dml_ndrawn++;
-	    } else {
-		/* draw in immediate mode */
-		if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
-		    sp->s_flag = UP;
-		    curr_dm_list->dml_ndrawn++;
-		}
-	    }
-	}
-
-	gdlp = next_gdlp;
-    }
-
-    /*
-     * The vectorThreshold stuff in libdm may turn the
-     * Tcl-crank causing curr_dm_list to change.
-     */
-    if (curr_dm_list != save_dm_list)
-	curr_dm_list = save_dm_list;
+    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
+    if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
 }
 
 
