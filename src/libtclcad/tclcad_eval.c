@@ -26,12 +26,11 @@
 
 #include "common.h"
 
-#include "tclcad_private.h"
+#include <tcl.h>
 
 
 int
-tclcad_eval(Tcl_Interp *interp, int preserve_result, const char *command,
-		 size_t num_args, const char * const *args)
+tclcad_eval(Tcl_Interp *interp, int preserve_result, const char *command, size_t num_args, const char * const *args)
 {
     int result;
     size_t i;
