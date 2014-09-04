@@ -1292,9 +1292,9 @@ loop_boolean(
     loop1_points = get_loop_points(1, loop1, loop2);
     loop2_points = get_loop_points(2, loop2, loop1);
 
-    ON_SimpleArray<ON_X_EVENT> x_events;
     for (int i = 0; i < loop1.Count(); ++i) {
 	for (int j = 0; j < loop2.Count(); ++j) {
+	    ON_SimpleArray<ON_X_EVENT> x_events;
 	    ON_Intersect(loop1[i], loop2[j], x_events, INTERSECTION_TOL);
 
 	    for (int k = 0; k < x_events.Count(); ++k) {
