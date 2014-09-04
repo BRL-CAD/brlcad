@@ -2413,7 +2413,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     /* Initialize all the per-CPU memory resources.  The number of
      * processors can change at runtime, init them all.
      */
-    for (i = 0; i < max_cpus; i++) {
+    for (i = 0; i < MAX_PSW; i++) {
 	rt_init_resource(&resp[i], i, rtip);
 	bn_rand_init(resp[i].re_randptr, i);
     }
