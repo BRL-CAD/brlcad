@@ -52,18 +52,18 @@ static const ON_UUID &ROOT_UUID = ON_nil_uuid;
 static const char * const DEFAULT_NAME = "noname";
 
 
-static struct _InitOpenNURBS {
-    _InitOpenNURBS()
+static struct InitOpenNURBS {
+    InitOpenNURBS()
     {
 	ON::Begin();
     }
 
 
-    ~_InitOpenNURBS()
+    ~InitOpenNURBS()
     {
 	ON::End();
     }
-} _init_opennurbs;
+} init_opennurbs;
 
 
 static inline void
@@ -108,7 +108,7 @@ at_ref(const A &array, int index)
 }
 
 
-template <typename T, typename R, R(*Destructor)(T*)>
+template <typename T, typename R, R(*Destructor)(T *)>
 class AutoDestroyer
 {
 public:
@@ -256,10 +256,10 @@ load_pix(const std::string &path, int width, int height)
     AutoDestroyer<icv_image_t, int, icv_destroy> image(
 	icv_read(path.c_str(), format, width, height));
 
-    if (image.ptr) {
-	// TODO import the image data after adding support to libicv
-    } else
+    if (!image.ptr)
 	throw std::runtime_error("icv_read() failed");
+
+    // TODO import the image data after adding support to libicv
 }
 
 
@@ -360,23 +360,21 @@ RhinoConverter::ObjectManager::unique_name(std::string prefix,
     std::string name = prefix + suffix;
     int number = ++m_name_count_map[name];
 
-    if (number > 1) {
-
-	if (number == 2) { // adjust numbering to start from 001
-	    for (std::map<ON_UUID, ObjectManager::ModelObject, UuidCompare>
-		 ::iterator it = m_obj_map.begin(); it != m_obj_map.end(); ++it)
-		if (it->second.m_name == name) {
-		    it->second.m_name.insert(it->second.m_name.find_last_of('.'), "001");
-		    break;
-		}
-	}
-
-	std::ostringstream ss;
-	ss << prefix << std::setw(3) << std::setfill('0') << number << suffix;
-	return ss.str();
-
-    } else
+    if (number <= 1)
 	return name;
+
+    if (number == 2) { // adjust numbering to start from 001
+	for (std::map<ON_UUID, ObjectManager::ModelObject, UuidCompare>
+	     ::iterator it = m_obj_map.begin(); it != m_obj_map.end(); ++it)
+	    if (it->second.m_name == name) {
+		it->second.m_name.insert(it->second.m_name.find_last_of('.'), "001");
+		break;
+	    }
+    }
+
+    std::ostringstream ss;
+    ss << prefix << std::setw(3) << std::setfill('0') << number << suffix;
+    return ss.str();
 }
 
 
@@ -559,25 +557,26 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 void
 RhinoConverter::clean_model()
 {
-    if (!m_model.IsValid(&m_log)) {
-	m_log.Print("WARNING: Model is NOT valid. Attempting repairs.\n");
+    if (m_model.IsValid(&m_log))
+	return;
 
-	m_model.Polish(); // fill in defaults
+    m_log.Print("WARNING: Model is NOT valid. Attempting repairs.\n");
 
-	int repair_count = 0;
-	ON_SimpleArray<int> warnings;
-	m_model.Audit(true, &repair_count, &m_log, &warnings); // repair
+    m_model.Polish(); // fill in defaults
 
-	m_log.Print("Repaired %d objects.\n", repair_count);
+    int repair_count = 0;
+    ON_SimpleArray<int> warnings;
+    m_model.Audit(true, &repair_count, &m_log, &warnings); // repair
 
-	for (int i = 0; i < warnings.Count(); ++i)
-	    m_log.Print("WARNING: %s\n", warnings[i]);
+    m_log.Print("Repaired %d objects.\n", repair_count);
 
-	if (m_model.IsValid(&m_log))
-	    m_log.Print("Repair successful, model is now valid.\n");
-	else
-	    m_log.Print("WARNING: Repair unsuccessful, model is still NOT valid.\n");
-    }
+    for (int i = 0; i < warnings.Count(); ++i)
+	m_log.Print("WARNING: %s\n", warnings[i]);
+
+    if (m_model.IsValid(&m_log))
+	m_log.Print("Repair successful, model is now valid.\n");
+    else
+	m_log.Print("WARNING: Repair unsuccessful, model is still NOT valid.\n");
 }
 
 
@@ -958,7 +957,7 @@ RhinoConverter::create_mesh(ON_Mesh mesh,
 	bot.num_vertices = num_vertices;
 	bot.faces = &faces[0];
 	bot.vertices = &vertices[0];
-	mode = bot_is_solid(&bot) ? RT_BOT_SOLID : RT_BOT_PLATE;
+	mode = gcv_bot_is_solid(&bot) ? RT_BOT_SOLID : RT_BOT_PLATE;
     }
 
     std::vector<fastf_t> thicknesses;
