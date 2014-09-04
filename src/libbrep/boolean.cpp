@@ -1259,11 +1259,19 @@ get_loop_points(
 
 std::list<ON_SimpleArray<ON_Curve *> >
 loop_boolean(
-    ON_SimpleArray<ON_Curve *> loop1,
-    ON_SimpleArray<ON_Curve *> loop2,
+    const ON_SimpleArray<ON_Curve *> &l1,
+    const ON_SimpleArray<ON_Curve *> &l2,
     op_type op)
 {
     std::list<ON_SimpleArray<ON_Curve *> > out;
+    ON_SimpleArray<ON_Curve *> loop1, loop2;
+
+    for (int i = 0; i < l1.Count(); ++i) {
+	loop1.Append(l1[i]->Duplicate());
+    }
+    for (int i = 0; i < l2.Count(); ++i) {
+	loop1.Append(l2[i]->Duplicate());
+    }
 
     if (op != BOOLEAN_INTERSECT && op != BOOLEAN_DIFF) {
 	bu_log("loop_boolean: unsupported operation\n");
