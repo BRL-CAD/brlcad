@@ -45,7 +45,7 @@ flag.
 By default, the display size is assumed to be 512x512 pixels.
 The
 <option>-S</option>,
-<option>-W</option>, 
+<option>-W</option>,
 and
 <option>-N</option>
 (or <option>-s</option>, <option>-w</option>, and <option>-n</option>)
