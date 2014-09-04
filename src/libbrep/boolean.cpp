@@ -757,11 +757,13 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
     return out;
 }
 
+
 class CurvePoint {
 public:
-    ON_2dPoint pt;
-    double curve_t;
+    int source_loop;
     int loop_index;
+    double curve_t;
+    ON_2dPoint pt;
 
     enum Location {
 	BOUNDARY,
@@ -772,21 +774,40 @@ public:
     static CurvePoint::Location
     PointCurveLocation(ON_2dPoint pt, ON_Curve *curve);
 
-    CurvePoint(int li, double curve1_t, ON_Curve *curve1, ON_Curve *curve2)
-	: curve_t(curve1_t), loop_index(li)
+    CurvePoint(
+	int loop,
+	int li,
+	double curve1_t,
+	ON_Curve *curve1,
+	ON_Curve *curve2)
+	: source_loop(loop), loop_index(li), curve_t(curve1_t)
     {
 	pt = curve1->PointAt(curve1_t);
 	location = PointCurveLocation(pt, curve2);
     }
 
-    CurvePoint(int li, double t, ON_2dPoint p, CurvePoint::Location l)
-	: pt(p), curve_t(t), loop_index(li), location(l)
+    CurvePoint(
+	int loop,
+	int li,
+	double t,
+	ON_2dPoint p,
+	CurvePoint::Location l)
+	: source_loop(loop), loop_index(li), curve_t(t), pt(p), location(l)
     {
     }
 
     bool
     operator<(const CurvePoint &other) const
     {
+	// for points not on the same loop, compare the actual points
+	if (source_loop != other.source_loop) {
+	    if (ON_NearZero(pt.DistanceTo(other.pt), INTERSECTION_TOL)) {
+		return false;
+	    }
+	    return pt < other.pt;
+	}
+
+	// for points on the same loop, compare loop position
 	if (loop_index == other.loop_index) {
 	    if (ON_NearZero(curve_t - other.curve_t, INTERSECTION_TOL)) {
 		return false;
@@ -806,6 +827,18 @@ public:
     operator!=(const CurvePoint &other) const
     {
 	return !ON_NearZero(pt.DistanceTo(other.pt), INTERSECTION_TOL);
+    }
+};
+
+class CurvePointAbsoluteCompare {
+public:
+    bool
+    operator()(const CurvePoint &a, const CurvePoint &b) const
+    {
+	if (ON_NearZero(a.pt.DistanceTo(b.pt), INTERSECTION_TOL)) {
+	    return false;
+	}
+	return a.pt < b.pt;
     }
 };
 
@@ -854,37 +887,41 @@ public:
     {
 	ON_Curve *from_curve = orig_loop[from.loop_index];
 	ON_Curve *to_curve = orig_loop[to.loop_index];
+	ON_Interval from_dom = from_curve->Domain();
+	ON_Interval to_dom = to_curve->Domain();
 
+	// if endpoints are on the same curve, just get the part between them
 	if (from.loop_index == to.loop_index) {
 	    ON_Curve *seg_curve =
 		sub_curve(from_curve, from.curve_t, to.curve_t);
-
 	    return seg_curve;
 	}
-	if (ON_NearZero(to.curve_t - to_curve->Domain().m_t[0],
-		    INTERSECTION_TOL))
-	{
+	// if endpoints are on different curves, we may need a subcurve of
+	// just the 'from' curve, just the 'to' curve, or both
+	if (ON_NearZero(from.curve_t - from_dom.m_t[1], INTERSECTION_TOL)) {
+	    // starting at end of 'from' same as starting at start of 'to'
+	    ON_Curve *seg_curve = sub_curve(to_curve, to_dom.m_t[0],
+		    to.curve_t);
+	    return seg_curve;
+	}
+	if (ON_NearZero(to.curve_t - to_dom.m_t[0], INTERSECTION_TOL)) {
+	    // ending at start of 'to' same as ending at end of 'from'
 	    ON_Curve *seg_curve = sub_curve(from_curve, from.curve_t,
-		    from_curve->Domain().m_t[1]);
+		    from_dom.m_t[1]);
 	    return seg_curve;
 	}
 	ON_PolyCurve *pcurve = new ON_PolyCurve();
 	append_to_polycurve(sub_curve(from_curve, from.curve_t,
-		    from_curve->Domain().m_t[1]), *pcurve);
-	append_to_polycurve(sub_curve(to_curve, to.curve_t,
-		    to_curve->Domain().m_t[1]), *pcurve);
+		    from_dom.m_t[1]), *pcurve);
+	append_to_polycurve(sub_curve(to_curve, to_dom.m_t[0], to.curve_t),
+		*pcurve);
 	return pcurve;
     }
 
     bool
     operator<(const CurveSegment &other) const
     {
-	if (from == other.from && to == other.to) {
-	    return false;
-	}
-	const ON_2dPoint &min = std::min(from.pt, to.pt);
-	const ON_2dPoint &other_min = std::min(other.from.pt, other.to.pt);
-	return min < other_min;
+	return from < other.from;
     }
 };
 
@@ -1138,9 +1175,11 @@ construct_loops_from_segments(
 
     while (!segments.empty()) {
 	std::vector<std::multiset<CurveSegment>::iterator> loop_segs;
-	std::multiset<CurvePoint> visited_points;
+	std::multiset<CurvePoint, CurvePointAbsoluteCompare> visited_points;
 
-	std::multiset<CurveSegment>::iterator curr_seg = segments.begin();
+	std::multiset<CurveSegment>::iterator curr_seg, prev_seg;
+        curr_seg = segments.begin();
+
 	loop_segs.push_back(curr_seg);
 	visited_points.insert(curr_seg->from);
 	visited_points.insert(curr_seg->to);
@@ -1148,9 +1187,8 @@ construct_loops_from_segments(
 	bool closed_curve = (curr_seg->from == curr_seg->to);
 	while (!closed_curve) {
 	    // look for a segment that connects to the previous
-	    CurvePoint last_to = curr_seg->to;
-	    for (++curr_seg; curr_seg != segments.end(); ++curr_seg) {
-		if (curr_seg->from == last_to) {
+	    for (prev_seg = curr_seg++; curr_seg != segments.end(); ++curr_seg) {
+		if (curr_seg->from == prev_seg->to) {
 		    break;
 		}
 	    }
@@ -1198,6 +1236,7 @@ construct_loops_from_segments(
 
 std::multiset<CurvePoint>
 get_loop_points(
+    int source_loop,
     ON_SimpleArray<ON_Curve *> loop1,
     ON_SimpleArray<ON_Curve *> loop2)
 {
@@ -1205,12 +1244,13 @@ get_loop_points(
     ON_Curve *loop2_curve = get_loop_curve(loop2);
 
     ON_Curve *loop1_seg = loop1[0];
-    out.insert(CurvePoint(0, loop1_seg->Domain().m_t[0], loop1_seg, loop2_curve));
+    out.insert(CurvePoint(source_loop, 0, loop1_seg->Domain().m_t[0], loop1_seg,
+		loop2_curve));
 
     for (int i = 0; i < loop1.Count(); ++i) {
 	loop1_seg = loop1[i];
-	out.insert(CurvePoint(i, loop1_seg->Domain().m_t[1], loop1_seg,
-		    loop2_curve));
+	out.insert(CurvePoint(source_loop, i, loop1_seg->Domain().m_t[1],
+		    loop1_seg, loop2_curve));
     }
     delete loop2_curve;
 
@@ -1249,8 +1289,8 @@ loop_boolean(
 
     std::multiset<CurvePoint> loop1_points, loop2_points;
 
-    loop1_points = get_loop_points(loop1, loop2);
-    loop2_points = get_loop_points(loop2, loop1);
+    loop1_points = get_loop_points(1, loop1, loop2);
+    loop2_points = get_loop_points(2, loop2, loop1);
 
     ON_SimpleArray<ON_X_EVENT> x_events;
     for (int i = 0; i < loop1.Count(); ++i) {
@@ -1258,20 +1298,20 @@ loop_boolean(
 	    ON_Intersect(loop1[i], loop2[j], x_events, INTERSECTION_TOL);
 
 	    for (int k = 0; k < x_events.Count(); ++k) {
-		add_point_to_set(loop1_points, CurvePoint(i,
+		add_point_to_set(loop1_points, CurvePoint(1, i,
 			    x_events[k].m_a[0], x_events[k].m_A[0],
 			    CurvePoint::BOUNDARY));
 
-		add_point_to_set(loop2_points, CurvePoint(j,
+		add_point_to_set(loop2_points, CurvePoint(2, j,
 			    x_events[k].m_b[0], x_events[k].m_B[0],
 			    CurvePoint::BOUNDARY));
 
 		if (x_events[k].m_type == ON_X_EVENT::ccx_overlap) {
-		    add_point_to_set(loop1_points,
-			    CurvePoint(i, x_events[k].m_a[0],
-				x_events[k].m_A[0], CurvePoint::BOUNDARY));
+		    add_point_to_set(loop1_points, CurvePoint(1, i,
+				x_events[k].m_a[0], x_events[k].m_A[0],
+				CurvePoint::BOUNDARY));
 
-		    add_point_to_set(loop2_points, CurvePoint(j,
+		    add_point_to_set(loop2_points, CurvePoint(2, j,
 				x_events[k].m_b[0], x_events[k].m_B[0],
 				CurvePoint::BOUNDARY));
 		}
