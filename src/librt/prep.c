@@ -602,24 +602,23 @@ rt_init_resource(struct resource *resp,
 		 int cpu_num,
 		 struct rt_i *rtip)
 {
+    if (!resp)
+	return;
+
+    BU_ASSERT_LONG(cpu_num, >=, 0);
+    BU_ASSERT_LONG(cpu_num, <, MAX_PSW);
+
+    if (rtip)
+	RT_CK_RTI(rtip);
 
     if (resp == &rt_uniresource) {
 	cpu_num = MAX_PSW;		/* array is [MAX_PSW+1] just for this */
-	if (rtip) RT_CK_RTI(rtip);	/* check it if provided */
     } else {
-	BU_ASSERT_PTR(resp, !=, NULL);
-	BU_ASSERT_LONG(cpu_num, >=, 0);
 	if (rtip != NULL && rtip->rti_treetop) {
 	    /* this is a submodel */
 	    BU_ASSERT_LONG(cpu_num, <, (long)rtip->rti_resources.blen);
-	} else {
-	    BU_ASSERT_LONG(cpu_num, <, MAX_PSW);
 	}
-	if (rtip) RT_CK_RTI(rtip);		/* mandatory */
     }
-
-    resp->re_magic = RESOURCE_MAGIC;
-    resp->re_cpu = cpu_num;
 
     /* XXX resp->re_randptr is an "application" (rt) level field. For now. */
 
@@ -647,14 +646,16 @@ rt_init_resource(struct resource *resp,
     resp->re_boolstack = NULL;
     resp->re_boolslen = 0;
 
+    resp->re_cpu = cpu_num;
+    resp->re_magic = RESOURCE_MAGIC;
+
     if (rtip == NULL)
 	return;	/* only in rt_uniresource case */
 
     /* Ensure that this CPU's resource structure is registered in rt_i */
     /* It may already be there when we're called from rt_clean_resource */
     {
-	struct resource *ores = (struct resource *)
-	    BU_PTBL_GET(&rtip->rti_resources, cpu_num);
+	struct resource *ores = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, cpu_num);
 	if (ores != NULL && ores != resp) {
 	    bu_log("rt_init_resource(cpu=%d) re-registering resource, had %p, new=%p\n",
 		   cpu_num,
