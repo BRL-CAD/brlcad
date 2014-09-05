@@ -173,6 +173,21 @@ extern int _ged_combadd2(struct ged *gedp,
 			 int ident,
 			 int air);
 
+/* defined in display_list.c */
+extern void _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
+	        void (*callback)(unsigned int, int),
+					  const char *name,
+					  const int skip_first);
+extern void _dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
+	        void (*callback)(unsigned int, int),
+					  const char *path,
+					  const int skip_first);
+extern void _dl_freeDisplayListItem(struct db_i *dbip,
+	        void (*callback)(unsigned int, int),
+				     struct display_list *gdlp);
+int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
+
+
 /* defined in draw.c */
 extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 				       struct bn_vlblock *vbp,
@@ -225,18 +240,6 @@ extern void _ged_eraseobjall(struct ged *gedp,
 extern void _ged_eraseobj(struct ged *gedp,
 			  struct directory **dpp,
 			  int skip_first);
-extern void _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
-	        void (*callback)(unsigned int, int),
-					  const char *name,
-					  const int skip_first);
-extern void _dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
-	        void (*callback)(unsigned int, int),
-					  const char *path,
-					  const int skip_first);
-extern void _dl_freeDisplayListItem(struct db_i *dbip,
-	        void (*callback)(unsigned int, int),
-				     struct display_list *gdlp);
-
 
 /* defined in get_comb.c */
 extern void _ged_vls_print_matrix(struct bu_vls *vls,
@@ -513,14 +516,6 @@ extern int _ged_results_add(struct ged_results *results, const char *result_stri
 
 /* defined in track.c */
 extern int _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
-
-
-
-
-
-
-int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
-
 
 
 __END_DECLS

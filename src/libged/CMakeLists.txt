@@ -77,6 +77,7 @@ set(LIBGED_SOURCES
   delay.c
   dg_obj.c
   dir2ae.c
+  display_list.c
   draw.c
   draw_calc.cpp
   dump.c
@@ -121,7 +122,6 @@ set(LIBGED_SOURCES
   grid2model_lu.c
   grid2view_lu.c
   group.c
-  headsolid.c
   hide.c
   how.c
   human.c
