@@ -122,6 +122,46 @@ dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max)
     return is_empty;
 }
 
+struct bu_ptbl *
+dl_get_solids(struct display_list *gdlp)
+{
+    struct solid *sp;
+    struct bu_ptbl *solids = NULL;
+    BU_ALLOC(solids, struct bu_ptbl);
+    bu_ptbl_init(solids, 8, "initialize ptr table");
+    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	bu_ptbl_ins(solids, (long *)(&(sp->s_fullpath)));
+    }
+
+    return solids;
+}
+
+int
+dl_get_color(long *curr_solid, int color)
+{
+    struct solid *sp = (struct solid *)curr_solid;
+    if (color == RED) return sp->s_color[0];
+    if (color == GRN) return sp->s_color[1];
+    if (color == BLU) return sp->s_color[2];
+    return 0;
+}
+
+struct directory *
+dl_get_dp(long *curr_solid)
+{
+    struct solid *sp = (struct solid *)curr_solid;
+    if (UNLIKELY(!sp)) return NULL;
+    return sp->s_fullpath.fp_names[sp->s_fullpath.fp_len-1];
+}
+
+
+fastf_t
+dl_get_transparency(long *curr_solid)
+{
+    struct solid *sp = (struct solid *)curr_solid;
+    if (UNLIKELY(!sp)) return 0.0;
+    return sp->s_transparency;
+}
 
 /*
  * Erase/remove the display list item from headDisplay if path matches the list item's path.

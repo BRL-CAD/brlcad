@@ -1327,7 +1327,7 @@ data_dump(struct ged *gedp, FILE *fp)
 int
 ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 {
-    int ret;
+    int ret, i;
     char *file_ext = NULL;
     FILE *fp = (FILE *)0;
     int fd = -1;
@@ -1510,14 +1510,17 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
     MAT_IDN(mat);
 
     for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
-	struct solid *sp;
+	struct bu_ptbl *solids_tbl = dl_get_solids(gdlp);
+	int solids_cnt = (int)BU_PTBL_LEN(solids_tbl);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (i = 0; i < solids_cnt; i++) {
+	    long *solid_item;
 	    struct directory *dp;
 	    struct rt_db_internal intern;
 	    struct rt_bot_internal *bot;
 
-	    dp = sp->s_fullpath.fp_names[sp->s_fullpath.fp_len-1];
+	    solid_item = BU_PTBL_GET(solids_tbl, i);
+	    dp = dl_get_dp(solid_item);
 
 	    /* get the internal form */
 	    ret=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);
@@ -1535,16 +1538,20 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 
 	    /* Write out object color */
 	    if (output_type == OTYPE_OBJ) {
-		curr_obj_red = sp->s_color[0];
-		curr_obj_green = sp->s_color[1];
-		curr_obj_blue = sp->s_color[2];
-		curr_obj_alpha = sp->s_transparency;
+		curr_obj_red = dl_get_color(solid_item, RED);
+		curr_obj_green = dl_get_color(solid_item, GRN);
+		curr_obj_blue = dl_get_color(solid_item, BLU);
+		curr_obj_alpha = dl_get_transparency(solid_item);
 	    }
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
 	    bot_dump(dp, bot, fp, fd, file_ext, gedp->ged_wdbp->dbip->dbi_filename);
 	    rt_db_free_internal(&intern);
+
 	}
+
+	bu_ptbl_free(solids_tbl);
+	bu_free(solids_tbl, "free solids bu_ptbl");
     }
 
     data_dump(gedp, fp);

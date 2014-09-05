@@ -176,6 +176,15 @@ extern void _dl_freeDisplayListItem(struct db_i *dbip,
 				     struct display_list *gdlp);
 int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
 int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max);
+/* Returns a bu_ptbl of all solids referenced by the display list */
+struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
+
+/* Valid inputs for color are RED, GRN and BLU */
+int dl_get_color(long *curr_solid, int color);
+fastf_t dl_get_transparency(long *curr_solid);
+
+struct directory *dl_get_dp(long *curr_solid);
+
 
 /* defined in draw.c */
 extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
