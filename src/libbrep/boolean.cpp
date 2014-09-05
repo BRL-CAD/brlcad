@@ -1270,7 +1270,7 @@ loop_boolean(
 	loop1.Append(l1[i]->Duplicate());
     }
     for (int i = 0; i < l2.Count(); ++i) {
-	loop1.Append(l2[i]->Duplicate());
+	loop2.Append(l2[i]->Duplicate());
     }
 
     if (op != BOOLEAN_INTERSECT && op != BOOLEAN_DIFF) {
