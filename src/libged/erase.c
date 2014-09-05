@@ -67,6 +67,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
     /* check args for options */
     for (i = 0; i < (size_t)argc; i++) {
+		/* Erase all and quit (ignore other options) */
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 
@@ -74,9 +75,8 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	    break;
 
 	if (strchr(argv[i], 'r')) {
-	    /* Erase all and quit (ignore other options) */
-	    for (i = 1; i < (size_t)argc; ++i)
-		_ged_eraseAllPathsFromDisplay(gedp, argv[i], 0);
+		for (i = 1; i < (size_t)argc; ++i)
+		_dl_eraseAllPathsFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[i], 0);
 	    return GED_OK;
 	}
 
@@ -366,7 +366,8 @@ _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
 
 
 int
-_ged_eraseFirstSubpath(struct ged *gedp,
+_ged_eraseFirstSubpath(struct bu_list *hdlp, struct db_i *dbip,
+       	               void (*callback)(unsigned int, int),
 		       struct display_list *gdlp,
 		       struct db_full_path *subpath,
 		       const int skip_first)
@@ -384,8 +385,8 @@ _ged_eraseFirstSubpath(struct ged *gedp,
 	    int ret;
 	    int full_len = sp->s_fullpath.fp_len;
 
-	    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
-		(*gedp->ged_free_vlist_callback)(sp->s_dlist, 1);
+	    if (callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
+		(*callback)(sp->s_dlist, 1);
 
 	    sp->s_fullpath.fp_len = full_len - 1;
 	    db_dup_full_path(&dup_path, &sp->s_fullpath);
@@ -395,7 +396,7 @@ _ged_eraseFirstSubpath(struct ged *gedp,
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
 
-	    ret = headsolid_splitGDL(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gdlp, &dup_path);
+	    ret = headsolid_splitGDL(hdlp, dbip, gdlp, &dup_path);
 
 	    db_free_full_path(&dup_path);
 
@@ -416,7 +417,8 @@ _ged_eraseFirstSubpath(struct ged *gedp,
  * Erase/remove display list item from headDisplay if path is a subset of item's path.
  */
 void
-_ged_eraseAllPathsFromDisplay(struct ged *gedp,
+_dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
+       	                      void (*callback)(unsigned int, int),
 			      const char *path,
 			      const int skip_first)
 {
@@ -424,15 +426,15 @@ _ged_eraseAllPathsFromDisplay(struct ged *gedp,
     struct display_list *next_gdlp;
     struct db_full_path fullpath, subpath;
 
-    if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, path) == 0) {
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    if (db_string_to_path(&subpath, dbip, path) == 0) {
+	gdlp = BU_LIST_NEXT(display_list, hdlp);
+	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	    gdlp->dl_wflag = 0;
 	    gdlp = BU_LIST_PNEXT(display_list, gdlp);
 	}
 
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, hdlp);
+	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    /* This display list has already been visited. */
@@ -444,11 +446,11 @@ _ged_eraseAllPathsFromDisplay(struct ged *gedp,
 	    /* Mark as being visited. */
 	    gdlp->dl_wflag = 1;
 
-	    if (db_string_to_path(&fullpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->dl_path)) == 0) {
+	    if (db_string_to_path(&fullpath, dbip, bu_vls_addr(&gdlp->dl_path)) == 0) {
 		if (db_full_path_subset(&fullpath, &subpath, skip_first)) {
-		    _dl_freeDisplayListItem(gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, gdlp);
-		} else if (_ged_eraseFirstSubpath(gedp, gdlp, &subpath, skip_first)) {
-		    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+		    _dl_freeDisplayListItem(dbip, callback, gdlp);
+		} else if (_ged_eraseFirstSubpath(hdlp, dbip, callback, gdlp, &subpath, skip_first)) {
+		    gdlp = BU_LIST_NEXT(display_list, hdlp);
 		    db_free_full_path(&fullpath);
 		    continue;
 		}

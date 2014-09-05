@@ -229,7 +229,8 @@ extern void _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip
 	        void (*callback)(unsigned int, int),
 					  const char *name,
 					  const int skip_first);
-extern void _ged_eraseAllPathsFromDisplay(struct ged *gedp,
+extern void _dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
+	        void (*callback)(unsigned int, int),
 					  const char *path,
 					  const int skip_first);
 extern void _dl_freeDisplayListItem(struct db_i *dbip,
