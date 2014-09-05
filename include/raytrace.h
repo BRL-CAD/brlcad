@@ -1410,16 +1410,17 @@ struct rt_piecelist {
 /**
  * Per-CPU statistics and resources.
  *
- * One of these structures is allocated per processor.  To prevent
- * excessive competition for free structures, memory is now allocated
- * on a per-processor basis.  The application structure a_resource
- * element specifies the resource structure to be used; if
- * uniprocessing, a null a_resource pointer results in using the
- * internal global structure (&rt_uniresource), making initial
+ * One of these structures is needed per thread of execution, usually
+ * with calling applications creating an array with at least MAX_PSW
+ * elements.  To prevent excessive competition for free structures,
+ * memory is now allocated on a per-processor basis.  The application
+ * structure a_resource element specifies the resource structure to be
+ * used; if uniprocessing, a null a_resource pointer results in using
+ * the internal global structure (&rt_uniresource), making initial
  * application development simpler.
  *
- * Applications are responsible for calling rt_init_resource() for
- * each resource structure before letting LIBRT use them.
+ * Applications are responsible for calling rt_init_resource() on each
+ * resource structure before letting LIBRT use them.
  *
  * Note that if multiple models are being used, the partition and bitv
  * structures (which are variable length) will require there to be
