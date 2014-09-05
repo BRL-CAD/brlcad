@@ -330,7 +330,7 @@ invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy)
     /* set path information -- this is a top level node */
     db_add_node_to_full_path(&sp->s_fullpath, dp);
 
-    gdlp = ged_addToDisplay(gedp, name);
+    gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, name);
 
     sp->s_iflag = DOWN;
     sp->s_soldash = 0;

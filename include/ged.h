@@ -563,8 +563,7 @@ GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
 
 /* defined in draw.c */
 GED_EXPORT extern void ged_color_soltab(struct bu_list *hdlp);
-GED_EXPORT extern struct display_list *ged_addToDisplay(struct ged *gedp,
-							    const char *name);
+GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
 
 /* defined in erase.c */
 GED_EXPORT extern void ged_erasePathFromDisplay(struct ged *gedp,

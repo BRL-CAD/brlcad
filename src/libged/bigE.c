@@ -2102,7 +2102,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     av[1] = (char *)0;
     for (i = 0; i < argc; ++i) {
 	ged_erasePathFromDisplay(gedp, argv[i], 0);
-	dgcdp->gdlp = ged_addToDisplay(dgcdp->gedp, argv[i]);
+	dgcdp->gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
 
 	BU_ALLOC(dgcdp->ap, struct application);
 	RT_APPLICATION_INIT(dgcdp->ap);

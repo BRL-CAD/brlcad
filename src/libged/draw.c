@@ -1265,7 +1265,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    if (_GED_SHADED_MODE_BOTS <= dgcdp.dmode && dgcdp.dmode <= _GED_SHADED_MODE_ALL) {
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp.gdlp = ged_addToDisplay(gedp, argv[i]);
+			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
@@ -1292,7 +1292,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		/* create solids */
 		for (i = 0; i < argc; ++i) {
-		    dgcdp.gdlp = ged_addToDisplay(gedp, argv[i]);
+		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
 
 		    /* store draw path */
 		    paths_to_draw[i] = dgcdp.gdlp;
@@ -1365,7 +1365,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp.gdlp = ged_addToDisplay(gedp, argv[i]);
+			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
@@ -1462,7 +1462,7 @@ _ged_invent_solid(struct ged *gedp,
     /* set path information -- this is a top level node */
     db_add_node_to_full_path(&sp->s_fullpath, dp);
 
-    gdlp = ged_addToDisplay(gedp, name);
+    gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, name);
 
     sp->s_iflag = DOWN;
     sp->s_soldash = 0;
@@ -1752,7 +1752,7 @@ ged_ev(struct ged *gedp, int argc, const char *argv[])
 
 
 struct display_list *
-ged_addToDisplay(struct ged *gedp,
+dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip,
 		 const char *name)
 {
     struct directory *dp = NULL;
@@ -1767,24 +1767,24 @@ ged_addToDisplay(struct ged *gedp,
     else
 	++cp;
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	gdlp = GED_DISPLAY_LIST_NULL;
 	goto end;
     }
 
-    if (db_string_to_path(&namepath, gedp->ged_wdbp->dbip, name) == 0)
+    if (db_string_to_path(&namepath, dbip, name) == 0)
 	found_namepath = 1;
 
     /* Make sure name is not already in the list */
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->dl_path)))
 	    goto end;
 
 		if (found_namepath) {
 	    struct db_full_path gdlpath;
 
-	    if (db_string_to_path(&gdlpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->dl_path)) == 0) {
+	    if (db_string_to_path(&gdlpath, dbip, bu_vls_addr(&gdlp->dl_path)) == 0) {
 		if (db_full_path_match_top(&gdlpath, &namepath)) {
 		    db_free_full_path(&gdlpath);
 		    goto end;
@@ -1799,7 +1799,7 @@ ged_addToDisplay(struct ged *gedp,
 
     BU_ALLOC(gdlp, struct display_list);
     BU_LIST_INIT(&gdlp->l);
-    BU_LIST_INSERT(gedp->ged_gdp->gd_headDisplay, &gdlp->l);
+    BU_LIST_INSERT(hdlp, &gdlp->l);
     BU_LIST_INIT(&gdlp->dl_headSolid);
     gdlp->dl_dp = (void *)dp;
     bu_vls_init(&gdlp->dl_path);

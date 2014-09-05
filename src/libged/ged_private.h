@@ -511,6 +511,15 @@ extern int _ged_results_add(struct ged_results *results, const char *result_stri
 /* defined in track.c */
 extern int _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
 
+
+
+
+
+
+int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
+
+
+
 __END_DECLS
 
 #endif /* LIBGED_GED_PRIVATE_H */

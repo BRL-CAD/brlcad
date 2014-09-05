@@ -121,6 +121,7 @@ set(LIBGED_SOURCES
   grid2model_lu.c
   grid2view_lu.c
   group.c
+  headsolid.c
   hide.c
   how.c
   human.c

@@ -33,9 +33,6 @@
 
 #include "./ged_private.h"
 
-
-void ged_splitGDL(struct ged *gedp, struct display_list *gdlp, struct db_full_path *path);
-
 /*
  * Erase objects from the display.
  *
@@ -182,59 +179,6 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-void
-ged_splitGDL(struct ged *gedp,
-	     struct display_list *gdlp,
-	     struct db_full_path *path)
-{
-    struct solid *sp;
-    struct solid *nsp;
-    struct display_list *new_gdlp;
-    char *pathname;
-    int savelen;
-    int newlen = path->fp_len + 1;
-
-    if (newlen < 3) {
-	while (BU_LIST_WHILE(sp, solid, &gdlp->dl_headSolid)) {
-	    savelen = sp->s_fullpath.fp_len;
-	    sp->s_fullpath.fp_len = newlen;
-	    pathname = db_path_to_string(&sp->s_fullpath);
-	    sp->s_fullpath.fp_len = savelen;
-
-	    new_gdlp = ged_addToDisplay(gedp, pathname);
-	    bu_free((void *)pathname, "ged_splitGDL pathname");
-
-	    BU_LIST_DEQUEUE(&sp->l);
-	    BU_LIST_INSERT(&new_gdlp->dl_headSolid, &sp->l);
-	}
-    } else {
-	sp = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);
-	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_headSolid)) {
-	    nsp = BU_LIST_PNEXT(solid, sp);
-
-	    if (db_full_path_match_top(path, &sp->s_fullpath)) {
-		savelen = sp->s_fullpath.fp_len;
-		sp->s_fullpath.fp_len = newlen;
-		pathname = db_path_to_string(&sp->s_fullpath);
-		sp->s_fullpath.fp_len = savelen;
-
-		new_gdlp = ged_addToDisplay(gedp, pathname);
-		bu_free((void *)pathname, "ged_splitGDL pathname");
-
-		BU_LIST_DEQUEUE(&sp->l);
-		BU_LIST_INSERT(&new_gdlp->dl_headSolid, &sp->l);
-	    }
-
-	    sp = nsp;
-	}
-
-	--path->fp_len;
-	ged_splitGDL(gedp, gdlp, path);
-	++path->fp_len;
-    }
-}
-
-
 /*
  * Erase/remove the display list item from headDisplay if path matches the list item's path.
  *
@@ -318,7 +262,7 @@ ged_erasePathFromDisplay(struct ged *gedp,
 		BU_LIST_DEQUEUE(&gdlp->l);
 
 		--subpath.fp_len;
-		ged_splitGDL(gedp, gdlp, &subpath);
+		(void)headsolid_splitGDL(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gdlp, &subpath);
 		++subpath.fp_len;
 
 		/* Free up the display list */
@@ -454,12 +398,7 @@ _ged_eraseFirstSubpath(struct ged *gedp,
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
 
-	    if (!BU_LIST_IS_EMPTY(&gdlp->dl_headSolid)) {
-		ged_splitGDL(gedp, gdlp, &dup_path);
-		ret = 1;
-	    } else {
-		ret = 0;
-	    }
+	    ret = headsolid_splitGDL(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gdlp, &dup_path);
 
 	    db_free_full_path(&dup_path);
 
