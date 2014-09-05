@@ -1443,7 +1443,7 @@ _ged_invent_solid(struct ged *gedp,
 	 * Name exists from some other overlay,
 	 * zap any associated solids
 	 */
-	ged_erasePathFromDisplay(gedp, name, 0);
+	dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, name, 0);
     }
     /* Need to enter phony name in directory structure */
     dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
@@ -1669,7 +1669,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    if (new_argv[i][0] == '-')
 		continue;
 
-	    ged_erasePathFromDisplay(gedp, new_argv[i], 0);
+	    dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, new_argv[i], 0);
 	}
 
 	_ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct _ged_client_data *)0);
@@ -1692,7 +1692,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    if (argv[i][0] == '-')
 		continue;
 
-	    ged_erasePathFromDisplay(gedp, argv[i], 0);
+	    dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[i], 0);
 	}
 
 	/* if our display is non-empty add -R to keep current view */

@@ -225,13 +225,15 @@ extern void _ged_eraseobjall(struct ged *gedp,
 extern void _ged_eraseobj(struct ged *gedp,
 			  struct directory **dpp,
 			  int skip_first);
-extern void _ged_eraseAllNamesFromDisplay(struct ged *gedp,
+extern void _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
+	        void (*callback)(unsigned int, int),
 					  const char *name,
 					  const int skip_first);
 extern void _ged_eraseAllPathsFromDisplay(struct ged *gedp,
 					  const char *path,
 					  const int skip_first);
-extern void _ged_freeDisplayListItem(struct ged *gedp,
+extern void _dl_freeDisplayListItem(struct db_i *dbip,
+	        void (*callback)(unsigned int, int),
 				     struct display_list *gdlp);
 
 

@@ -310,7 +310,7 @@ invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy)
 	/* Name exists from some other overlay,
 	 * zap any associated solids
 	 */
-	ged_erasePathFromDisplay(gedp, name, 0);
+	dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, name, 0);
     }
     /* Need to enter phony name in directory structure */
     dp = db_diradd(dbip,  name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, &type);

@@ -566,9 +566,11 @@ GED_EXPORT extern void ged_color_soltab(struct bu_list *hdlp);
 GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
 
 /* defined in erase.c */
-GED_EXPORT extern void ged_erasePathFromDisplay(struct ged *gedp,
-						const char *path,
-						int allow_split);
+GED_EXPORT extern void dl_erasePathFromDisplay(struct bu_list *hdlp,
+	                                       struct db_i *dbip,
+					       void (*callback)(unsigned int, int),
+					       const char *path,
+					       int allow_split);
 
 /* defined in ged.c */
 GED_EXPORT extern void ged_close(struct ged *gedp);
