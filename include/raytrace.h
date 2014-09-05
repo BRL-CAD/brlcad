@@ -5489,7 +5489,6 @@ RT_EXPORT extern int rt_find_paths(struct db_i *dbip,
  * rt_clean_resource() releases.  It shouldn't (but currently does for
  * ptbl) allocate any dynamic memory, just init pointers & lists.
  */
- */
 RT_EXPORT extern void rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip);
 
 
