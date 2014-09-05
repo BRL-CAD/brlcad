@@ -175,7 +175,7 @@ extern void _dl_freeDisplayListItem(struct db_i *dbip,
 	        void (*callback)(unsigned int, int),
 				     struct display_list *gdlp);
 int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
-
+int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max);
 
 /* defined in draw.c */
 extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,

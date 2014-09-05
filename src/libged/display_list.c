@@ -86,6 +86,42 @@ headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list 
 }
 
 
+int
+dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct solid *sp;
+    vect_t minus, plus;
+    int is_empty = 1;
+
+    VSETALL((*min),  INFINITY);
+    VSETALL((*max), -INFINITY);
+
+    /* calculate the bounding for of all solids being displayed */
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    minus[X] = sp->s_center[X] - sp->s_size;
+	    minus[Y] = sp->s_center[Y] - sp->s_size;
+	    minus[Z] = sp->s_center[Z] - sp->s_size;
+	    VMIN((*min), minus);
+	    plus[X] = sp->s_center[X] + sp->s_size;
+	    plus[Y] = sp->s_center[Y] + sp->s_size;
+	    plus[Z] = sp->s_center[Z] + sp->s_size;
+	    VMAX((*max), plus);
+
+	    is_empty = 0;
+	}
+
+	gdlp = next_gdlp;
+    }
+
+    return is_empty;
+}
+
 
 /*
  * Erase/remove the display list item from headDisplay if path matches the list item's path.
