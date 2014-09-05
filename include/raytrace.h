@@ -1419,13 +1419,13 @@ struct rt_piecelist {
  * the internal global structure (&rt_uniresource), making initial
  * application development simpler.
  *
- * Applications are responsible for calling rt_init_resource() on each
- * resource structure before letting LIBRT use them.
- *
  * Note that if multiple models are being used, the partition and bitv
  * structures (which are variable length) will require there to be
  * ncpus * nmodels resource structures, the selection of which will be
  * the responsibility of the application.
+ *
+ * Applications are responsible for calling rt_init_resource() on each
+ * resource structure before letting LIBRT use them.
  *
  * Per-processor statistics are initially collected in here, and then
  * posted to rt_i by rt_add_res_stats().
@@ -5469,9 +5469,30 @@ RT_EXPORT extern void rt_plot_all_bboxes(FILE *fp,
 RT_EXPORT extern void rt_plot_all_solids(FILE		*fp,
 					 struct rt_i	*rtip,
 					 struct resource	*resp);
-RT_EXPORT extern void rt_init_resource(struct resource *resp,
-				       int		cpu_num,
-				       struct rt_i	*rtip);
+
+RT_EXPORT extern int rt_find_paths(struct db_i *dbip,
+				   struct directory *start,
+				   struct directory *end,
+				   struct bu_ptbl *paths,
+				   struct resource *resp);
+
+/**
+ * initialize a memory resource structure for use during ray tracing.
+ *
+ * a given resource structure is prepared for use and marked as the
+ * resource for a given thread of execution (indicated by 'cpu_num').
+ * if an 'rtip' ray tracing instance pointer is provided, the resource
+ * structure will be stored within so that it's available to threads
+ * of execution during parallel ray tracing.
+ *
+ * This routine should initialize all the same resources that
+ * rt_clean_resource() releases.  It shouldn't (but currently does for
+ * ptbl) allocate any dynamic memory, just init pointers & lists.
+ */
+ */
+RT_EXPORT extern void rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip);
+
+
 RT_EXPORT extern void rt_clean_resource(struct rt_i *rtip,
 					struct resource *resp);
 RT_EXPORT extern void rt_clean_resource_complete(struct rt_i *rtip,
@@ -5486,11 +5507,6 @@ RT_EXPORT extern int re_prep_solids(struct rt_i *rtip,
 				    int num_solids,
 				    char **solid_names,
 				    struct resource *resp);
-RT_EXPORT extern int rt_find_paths(struct db_i *dbip,
-				   struct directory *start,
-				   struct directory *end,
-				   struct bu_ptbl *paths,
-				   struct resource *resp);
 
 RT_EXPORT extern struct bu_bitv *rt_get_solidbitv(size_t nbits,
 						  struct resource *resp);
