@@ -1436,8 +1436,9 @@ split_face_into_loops(
 
     if (linked_curve.IsClosed()) {
 	ON_SimpleArray<ON_Curve *> loop;
-	loop.Append(orig_face->m_outerloop.Count(),
-		orig_face->m_outerloop.Array());
+	for (int i = 0; i < orig_face->m_outerloop.Count(); ++i) {
+	    loop.Append(orig_face->m_outerloop[i]->Duplicate());
+	}
 	out.push_back(loop);
 	return out;
     }
@@ -1481,8 +1482,9 @@ split_face_into_loops(
     // can't close curves that don't partition the face
     if (!intersects_outerloop || clx_points.Count() < 2) {
 	ON_SimpleArray<ON_Curve *> loop;
-	loop.Append(orig_face->m_outerloop.Count(),
-		orig_face->m_outerloop.Array());
+	for (int i = 0; i < orig_face->m_outerloop.Count(); ++i) {
+	    loop.Append(orig_face->m_outerloop[i]->Duplicate());
+	}
 	out.push_back(loop);
 	return out;
     }
