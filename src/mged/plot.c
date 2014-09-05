@@ -37,7 +37,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"
-#include "dg.h"
 #include "plot3.h"
 
 #include "./mged.h"

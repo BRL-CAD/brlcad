@@ -117,7 +117,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 
     MAT_IDN(gtd.gtd_xform);
 
-    _ged_trace(gtd.gtd_obj[0], 0, bn_mat_identity, &gtd, verbose);
+    ged_trace(gtd.gtd_obj[0], 0, bn_mat_identity, &gtd, verbose);
 
     if (gtd.gtd_prflag == 0) {
 	/* path not found */

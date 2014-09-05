@@ -46,7 +46,6 @@
 
 #include "bu.h"
 #include "vmath.h"
-#include "dg.h"
 #include "mater.h"
 
 #include "./sedit.h"

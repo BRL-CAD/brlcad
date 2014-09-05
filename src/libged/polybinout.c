@@ -27,7 +27,6 @@
 
 #include "vmath.h"
 #include "mater.h"
-#include "dg.h"
 #include "solid.h"
 
 #include "ged.h"

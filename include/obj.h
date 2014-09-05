@@ -67,27 +67,6 @@ struct view_obj {
 };
 #define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
 
-/* DEPRECATED * DEPRECATED * DEPRECATED * DEPRECATED * DEPRECATED * DEPRECATED *
- * DEPRECATED *                                                   * DEPRECATED *
- * DEPRECATED *    Everything in this file should not be used.    * DEPRECATED *
- * DEPRECATED *                                                   * DEPRECATED *
- * DEPRECATED * DEPRECATED * DEPRECATED * DEPRECATED * DEPRECATED * DEPRECATED *
- */
-
-GED_EXPORT extern int Wdb_Init(Tcl_Interp *interp);
-GED_EXPORT extern int Vo_Init(Tcl_Interp *interp);
-
-/* wdb_obj.c (used by g_diff) */
-GED_EXPORT extern int wdb_get_tcl(void *clientData, int argc, const char *argv[]);
-GED_EXPORT extern int wdb_init_obj(Tcl_Interp *interp, struct rt_wdb *wdbp, const char *oname);
-GED_EXPORT extern int wdb_create_cmd(struct rt_wdb *wdbp, const char *oname);
-
-/* wdb_obj.c (used by mged) */
-GED_EXPORT extern int wdb_copy_cmd(struct rt_wdb *wdbp, int argc, const char *argv[]);
-GED_EXPORT extern int wdb_stub_cmd(struct rt_wdb *wdbp, int argc, const char *argv[]);
-GED_EXPORT extern int wdb_rt_gettrees_cmd(struct rt_wdb *wdbp, int argc, const char *argv[]);
-
-
 __END_DECLS
 
 #endif /* OBJ_H */

@@ -30,7 +30,6 @@
 
 #include "vmath.h"
 #include "mater.h"
-#include "dg.h"
 
 #include "./mged.h"
 #include "./sedit.h"

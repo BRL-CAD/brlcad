@@ -80,7 +80,7 @@ ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
 	    if (BU_STR_EQUAL(dp->d_namep, sphdp->d_namep)) continue;
 	    if (!(dp->d_flags & RT_DIR_REGION)) continue;
 	    inside_flag = 0;
-	    if (_ged_get_obj_bounds(gedp, 1, (const char **)&(dp->d_namep), 0, obj_min, obj_max) != GED_ERROR) {
+	    if (ged_get_obj_bounds(gedp, 1, (const char **)&(dp->d_namep), 0, obj_min, obj_max) != GED_ERROR) {
 		VSETALL(rpp_min, INFINITY);
 		VSETALL(rpp_max, -INFINITY);
 		VMINMAX(rpp_min, rpp_max, (double *)obj_min);

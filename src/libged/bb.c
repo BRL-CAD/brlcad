@@ -125,7 +125,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	VSETALL(rpp_min, INFINITY);
 	VSETALL(rpp_max, -INFINITY);
 	for (i = 0; i < argc; i++) {
-	    if (_ged_get_obj_bounds(gedp, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) == GED_ERROR)
+	    if (ged_get_obj_bounds(gedp, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) == GED_ERROR)
 		return GED_ERROR;
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);

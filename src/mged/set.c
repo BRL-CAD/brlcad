@@ -27,7 +27,6 @@
 
 #include "bu.h"
 #include "vmath.h"
-#include "dg.h"
 
 #include "./sedit.h"
 #include "./mged.h"

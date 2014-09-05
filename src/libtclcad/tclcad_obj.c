@@ -57,7 +57,6 @@
 #include "solid.h"
 #include "dm.h"
 #include "dm/bview.h"
-#include "dg.h"
 #include "obj.h"
 
 #include "ged.h"

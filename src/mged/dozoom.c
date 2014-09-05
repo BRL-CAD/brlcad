@@ -29,7 +29,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "dg.h"
 
 #ifdef DM_RTGL
 #  include "dm-rtgl.h"

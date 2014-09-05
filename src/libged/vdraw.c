@@ -105,10 +105,10 @@
 #include "tcl.h"
 
 #include "bu/cmd.h"
+#include "bn.h"
 #include "vmath.h"
 #include "mater.h"
 #include "nmg.h"
-#include "dg.h"
 
 #include "./ged_private.h"
 

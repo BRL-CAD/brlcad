@@ -50,7 +50,6 @@
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"
-#include "dg.h"
 #include "tclcad.h"
 
 #include "./mged.h"
@@ -1795,13 +1794,119 @@ f_bomb(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc,
     return TCL_OK;
 }
 
+/**
+ *@brief
+ * Called when the named proc created by rt_gettrees() is destroyed.
+ */
+static void
+wdb_deleteProc_rt(void *clientData)
+{
+    struct application *ap = (struct application *)clientData;
+    struct rt_i *rtip;
+
+    RT_AP_CHECK(ap);
+    rtip = ap->a_rt_i;
+    RT_CK_RTI(rtip);
+
+    rt_free_rti(rtip);
+    ap->a_rt_i = (struct rt_i *)NULL;
+
+    bu_free((void *)ap, "struct application");
+}
 
 int
 cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
-    CHECK_DBI_NULL;
 
-    return wdb_rt_gettrees_cmd(wdbp, argc, argv);
+    struct rt_i *rtip;
+    struct application *ap;
+    struct resource *resp;
+    const char *newprocname;
+
+    CHECK_DBI_NULL;
+    RT_CK_WDB(wdbp);
+    RT_CK_DBI(wdbp->dbip);
+
+    if (argc < 3) {
+        struct bu_vls vls;
+
+        bu_vls_init(&vls);
+        bu_vls_printf(&vls, "helplib_alias wdb_rt_gettrees %s", argv[0]);
+        Tcl_Eval(wdbp->wdb_interp, bu_vls_addr(&vls));
+        bu_vls_free(&vls);
+        return TCL_ERROR;
+    }
+
+    rtip = rt_new_rti(wdbp->dbip);
+    newprocname = argv[1];
+
+    /* Delete previous proc (if any) to release all that memory, first */
+    (void)Tcl_DeleteCommand(wdbp->wdb_interp, newprocname);
+
+    while (argc > 2 && argv[2][0] == '-') {
+        if (BU_STR_EQUAL(argv[2], "-i")) {
+            rtip->rti_dont_instance = 1;
+            argc--;
+            argv++;
+            continue;
+        }
+        if (BU_STR_EQUAL(argv[2], "-u")) {
+            rtip->useair = 1;
+            argc--;
+            argv++;
+            continue;
+        }
+        break;
+    }
+
+    if (argc-2 < 1) {
+        Tcl_AppendResult(wdbp->wdb_interp,
+                         "rt_gettrees(): no geometry has been specified ", (char *)NULL);
+        return TCL_ERROR;
+    }
+
+    if (rt_gettrees(rtip, argc-2, (const char **)&argv[2], 1) < 0) {
+        Tcl_AppendResult(wdbp->wdb_interp,
+                         "rt_gettrees() returned error", (char *)NULL);
+        rt_free_rti(rtip);
+        return TCL_ERROR;
+    }
+
+    /* Establish defaults for this rt_i */
+    rtip->rti_hasty_prep = 1;   /* Tcl isn't going to fire many rays */
+
+    /*
+     * In case of multiple instances of the library, make sure that
+     * each instance has a separate resource structure,
+     * because the bit vector lengths depend on # of solids.
+     * And the "overwrite" sequence in Tcl is to create the new
+     * proc before running the Tcl_CmdDeleteProc on the old one,
+     * which in this case would trash rt_uniresource.
+     * Once on the rti_resources list, rt_clean() will clean 'em up.
+     */
+    BU_ALLOC(resp, struct resource);
+    rt_init_resource(resp, 0, rtip);
+    BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
+
+    BU_ALLOC(ap, struct application);
+    RT_APPLICATION_INIT(ap);
+    ap->a_magic = RT_AP_MAGIC;
+    ap->a_resource = resp;
+    ap->a_rt_i = rtip;
+    ap->a_purpose = "Conquest!";
+
+    rt_ck(rtip);
+
+    /* Instantiate the proc, with clientData of wdb */
+    /* Beware, returns a "token", not TCL_OK. */
+    (void)Tcl_CreateCommand(wdbp->wdb_interp, newprocname, rt_tcl_rt,
+                            (ClientData)ap, wdb_deleteProc_rt);
+
+    /* Return new function name as result */
+    Tcl_AppendResult(wdbp->wdb_interp, newprocname, (char *)NULL);
+
+    return TCL_OK;
+
 }
 
 
@@ -2175,7 +2280,17 @@ cmd_stub(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int arg
 {
     CHECK_DBI_NULL;
 
-    return wdb_stub_cmd(wdbp, argc, argv);
+    if (argc != 1) {
+        struct bu_vls vls;
+        bu_vls_init(&vls);
+        bu_vls_printf(&vls, "helplib_alias wdb_%s %s", argv[0], argv[0]);
+        Tcl_Eval(wdbp->wdb_interp, bu_vls_addr(&vls));
+        bu_vls_free(&vls);
+        return TCL_ERROR;
+    }
+
+    Tcl_AppendResult(wdbp->wdb_interp, "%s: no database is currently opened!", argv[0], (char *)NULL);
+    return TCL_ERROR;
 }
 
 /*
