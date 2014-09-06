@@ -397,6 +397,7 @@ render_Scan(int cpu, void *UNUSED(data))
        threads of execution, so make copy. */
     struct application a;
 
+    memset(resource+cpu, 0, sizeof(struct resource));
     rt_init_resource(&resource[cpu], cpu, ag.a_rt_i);
 
     for (; ! user_interrupt;) {
