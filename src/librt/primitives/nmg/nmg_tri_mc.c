@@ -662,7 +662,7 @@ struct mci_s {
     double step;
     struct rt_i *rtip;
     const struct bn_tol *tol;
-    struct resource *resources;
+    struct resource resources[MAX_PSW];
     fastf_t endx, endy;
     unsigned long count;
     int ncpu;
@@ -747,8 +747,7 @@ nmg_mc_evaluate(struct shell *s, struct rt_i *rtip, const struct db_full_path *p
 
     m.ncpu = bu_avail_cpus();
     m.ncpu = 1; /* seems to be an issue with confused loop calculation in the NMG code. */
-    m.resources = (struct resource *)bu_malloc(m.ncpu * sizeof(struct resource), "Resource array");
-    for (i = 0; i < m.ncpu; i++)
+    for (i = 0; i < MAX_PSW; i++)
 	rt_init_resource(&m.resources[i], i, rtip);
 
     rt_gettree(rtip, db_path_to_string(pathp));
