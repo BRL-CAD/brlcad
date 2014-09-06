@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lgt/screen.h
-    Author:		Gary S. Moss
-*/
 
 #ifndef LGT_SCREEN_H
 #define  LGT_SCREEN_H

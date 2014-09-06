@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lgt/ascii.h
- *	Author:		Gary S. Moss
- */
 
 #ifndef LGT_ASCII_H
 #define LGT_ASCII_H
