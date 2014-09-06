@@ -397,11 +397,7 @@ render_Scan(int cpu, void *UNUSED(data))
        threads of execution, so make copy. */
     struct application a;
 
-    resource[cpu].re_cpu = cpu;
-#ifdef RESOURCE_MAGIC
-    if (!BU_LIST_IS_INITIALIZED(&resource[cpu].re_parthead))
-	rt_init_resource(&resource[cpu], cpu, rt_ip);
-#endif
+    rt_init_resource(&resource[cpu], cpu, ag.a_rt_i);
 
     for (; ! user_interrupt;) {
 	bu_semaphore_acquire(RT_SEM_WORKER);
