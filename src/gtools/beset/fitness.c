@@ -366,13 +366,6 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     if (rt_gettree(fstate->rtip, obj) < 0)
 	bu_exit(EXIT_FAILURE, "rt_gettree failed");
 
-    /*
-      for (i = 0; i < fstate->max_cpus; i++) {
-      rt_init_resource(&fstate->resource[i], i, fstate->rtip);
-      bn_rand_init(fstate->resource[i].re_randptr, i);
-      }
-    */
-
     /* stash bounding box and if comparing to source
      * calculate the difference between the bounding boxes */
     if (fstate->capture) {
