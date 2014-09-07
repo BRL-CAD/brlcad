@@ -25,6 +25,13 @@ archive_branches.sh has the list of branches that are no longer active in subver
 and (if a sufficiently new bash is available) will do the archiving process when run
 in the BRL-CAD git repository directory.  (Should probably make it more portable...)
 
+For viewing the results of the above with gitk, most users will probably want to filter
+out the git note items - the following works fairly well to see all the branch interactions
+when run in the brlcad git repository directory (gitk --all shows too much "behind the scenes"
+info about note commits): gitk --branches="*"
+
+
+
 Most of the time the rules and account-map file in this directory are the ones
 you want to use - if they are out of date or need tweaking, a helpful resource
 is Jeff Geerling's page:
