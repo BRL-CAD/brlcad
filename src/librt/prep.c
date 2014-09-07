@@ -604,7 +604,11 @@ rt_init_resource(struct resource *resp,
 	}
     }
 
-    /* XXX resp->re_randptr is an "application" (rt) level field. For now. */
+    /* point to the random number table so we can draw.  set to
+     * MAX_PSW*cpu_num just to keep each core a good distance away
+     * from each other, but that's not a really greatreason.
+     */
+    bn_rand_init(resp->re_randptr, MAX_PSW*cpu_num);
 
     if (!BU_LIST_IS_INITIALIZED(&resp->re_seg))
 	BU_LIST_INIT(&resp->re_seg);
