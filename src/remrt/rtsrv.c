@@ -300,13 +300,6 @@ main(int argc, char **argv)
     bu_log("using %d of %d cpus\n",
 	   npsw, avail_cpus);
 
-    /*
-     *  Initialize the non-parallel memory resource.
-     *  The parallel guys are initialized after the rt_dirbuild().
-     */
-    rt_init_resource(&rt_uniresource, MAX_PSW, NULL);
-    bn_rand_init(rt_uniresource.re_randptr, MAX_PSW);
-
     BU_LIST_INIT(&WorkHead);
 
     for (;;)  {
@@ -460,6 +453,7 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
      *  Initialize all the per-CPU memory resources.
      *  Go for the max, as TCL interface may change npsw as we run.
      */
+    memset(resource, 0, sizeof(resource));
     for (n=0; n < MAX_PSW; n++)  {
 	rt_init_resource(&resource[n], n, rtip);
 	bn_rand_init(resource[n].re_randptr, n);
