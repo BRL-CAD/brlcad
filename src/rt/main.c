@@ -97,8 +97,6 @@ extern char	*framebuffer;		/* desired framebuffer */
 
 extern struct command_tab	rt_cmdtab[];
 
-extern struct resource	resource[];	/* from opt.c */
-
 int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
 
 
@@ -285,10 +283,6 @@ int main(int argc, const char **argv)
 	bu_log("\n");
     }
 
-    /* We need this to run rt_dirbuild */
-    rt_init_resource(&rt_uniresource, MAX_PSW, NULL);
-    bn_rand_init(rt_uniresource.re_randptr, 0);
-
     title_file = argv[bu_optind];
     title_obj = argv[bu_optind+1];
     nobjs = argc - bu_optind - 1;
@@ -410,6 +404,7 @@ int main(int argc, const char **argv)
      *  Initialize all the per-CPU memory resources.
      *  The number of processors can change at runtime, init them all.
      */
+    memset(resource, 0, sizeof(resource));
     for (i = 0; i < MAX_PSW; i++) {
 	rt_init_resource(&resource[i], i, rtip);
 	bn_rand_init(resource[i].re_randptr, i);
