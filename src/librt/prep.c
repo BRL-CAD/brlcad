@@ -606,7 +606,7 @@ rt_init_resource(struct resource *resp,
 
     /* point to the random number table so we can draw.  set to
      * MAX_PSW*cpu_num just to keep each core a good distance away
-     * from each other, but that's not a really greatreason.
+     * from each other, but that's not a really great reason.
      */
     bn_rand_init(resp->re_randptr, MAX_PSW*cpu_num);
 
