@@ -480,9 +480,6 @@ fit_prep(struct fitness_state *fstate, int rows, int cols)
     fstate->res[X] = rows;
     fstate->res[Y] = cols;
     fstate->ray = NULL;
-
-    rt_init_resource(&rt_uniresource, fstate->max_cpus, NULL);
-    bn_rand_init(rt_uniresource.re_randptr, 0);
 }
 
 
