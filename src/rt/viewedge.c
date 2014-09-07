@@ -464,7 +464,6 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	memset(occlusion_resources, 0, sizeof(occlusion_resources));
 	for (i=0; i < MAX_PSW; i++) {
 	    rt_init_resource(&occlusion_resources[i], i, occlusion_rtip);
-	    bn_rand_init(occlusion_resources[i].re_randptr, i);
 	}
 
 	db_close(dbip);			 /* releases original dbip */

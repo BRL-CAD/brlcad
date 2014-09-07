@@ -456,7 +456,6 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
     memset(resource, 0, sizeof(resource));
     for (n=0; n < MAX_PSW; n++)  {
 	rt_init_resource(&resource[n], n, rtip);
-	bn_rand_init(resource[n].re_randptr, n);
     }
 
     if (pkg_send(MSG_DIRBUILD_REPLY,

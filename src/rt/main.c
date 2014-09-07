@@ -407,7 +407,6 @@ int main(int argc, const char **argv)
     memset(resource, 0, sizeof(resource));
     for (i = 0; i < MAX_PSW; i++) {
 	rt_init_resource(&resource[i], i, rtip);
-	bn_rand_init(resource[i].re_randptr, i);
     }
     memory_summary();
 
