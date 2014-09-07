@@ -87,8 +87,8 @@ rt_new_rti(struct db_i *dbip)
     BU_LIST_INIT(&rtip->HeadRegion);
 
     /* This table is used for discovering the per-cpu resource structures */
-    bu_ptbl_init(&rtip->rti_resources, MAX_PSW+1, "rti_resources ptbl");
-    BU_PTBL_END(&rtip->rti_resources) = MAX_PSW+1;	/* Make 'em all available */
+    bu_ptbl_init(&rtip->rti_resources, MAX_PSW, "rti_resources ptbl");
+    BU_PTBL_END(&rtip->rti_resources) = MAX_PSW;	/* Make 'em all available */
 
     rt_uniresource.re_magic = RESOURCE_MAGIC;
 
@@ -596,7 +596,7 @@ rt_init_resource(struct resource *resp,
 	RT_CK_RTI(rtip);
 
     if (resp == &rt_uniresource) {
-	cpu_num = MAX_PSW;		/* array is [MAX_PSW+1] just for this */
+	cpu_num = 0;
     } else {
 	if (rtip != NULL && rtip->rti_treetop) {
 	    /* this is a submodel */
