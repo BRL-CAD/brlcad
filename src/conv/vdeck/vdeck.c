@@ -227,8 +227,6 @@ main(int argc, char *argv[])
 	return 1;
     }
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     /* Build directory from object file.	 	*/
     if (db_dirbuild(dbip) < 0) {
 	fprintf(stderr, "db_dirbuild() failure\n");

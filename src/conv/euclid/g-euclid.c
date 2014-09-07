@@ -480,8 +480,6 @@ main(int argc, char **argv)
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     /* For visualization purposes, in the debug plot files */
     {
 	/* WTF: This value is specific to the Bradley */

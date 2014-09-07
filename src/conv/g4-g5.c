@@ -70,8 +70,6 @@ main(int argc, char **argv)
 
     bu_debug = BU_DEBUG_COREDUMP;
 
-    rt_init_resource( &rt_uniresource, 0, NULL );
-
     if ( argc != 3 )  {
 	fprintf(stderr, "Usage: %s v4.g v5.g\n", argv[0]);
 	return 1;
