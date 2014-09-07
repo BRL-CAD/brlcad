@@ -3,3 +3,13 @@ Uses the svn2git code from:  https://www.gitorious.org/svn2git
 rsync -av svn.code.sf.net::p/brlcad/code .
 
 ./svn2git/svn-all-fast-export --identity-map account-map --rules rules code
+
+
+Other utilites that can be helpful when sorting out how to create a rules file:
+
+To get the complete log of BRL-CAD's entire svn history and convert it to csv
+format for processing/filtering, use the rsync'd copy of the repo and the
+svnlog2csv python script in this directory:
+
+svn log --xml file:///home/user/brlcad-svn_repo/code > brlcad_full_log.xml
+svnlog2csv > brlcad_full_log.csv
