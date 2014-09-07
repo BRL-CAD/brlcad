@@ -165,15 +165,12 @@ pull_leaf(struct db_i *dbip, struct directory *dp, void *mp)
 {
     struct rt_db_internal intern;
     struct bn_tol tol;
-    struct resource *resp;
     point_t min;             /* minimum point of bbox */
     point_t max;             /* maximum point of bbox */
     matp_t mat = (matp_t)mp; /* current transformation matrix */
     mat_t matrix, invXform;
 
     BN_TOL_INIT(&tol); /* initializes the tolerance */
-    resp = &rt_uniresource;
-    rt_init_resource( &rt_uniresource, 0, NULL );
 
     if (mat == NULL) {
 	mat = (matp_t)bu_malloc(sizeof(mat_t), "cur_mat");
@@ -201,7 +198,7 @@ pull_leaf(struct db_i *dbip, struct directory *dp, void *mp)
     translate(mat,matrix, min, max);
     bn_mat_inverse(invXform, matrix);/* computes the inverse of transformation matrix. */
 
-    (intern.idb_meth)->ft_xform(&intern, invXform, &intern, 0, dbip, resp);/* restores the primitive */
+    (intern.idb_meth)->ft_xform(&intern, invXform, &intern, 0, dbip, &rt_uniresource);/* restores the primitive */
 
     return;
 }
@@ -211,13 +208,9 @@ int
 ged_pull(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    struct resource *resp;
     mat_t mat;
     int c;
     static const char *usage = "object";
-
-    resp = &rt_uniresource;
-    rt_init_resource( &rt_uniresource, 0, NULL );
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -267,7 +260,7 @@ ged_pull(struct ged *gedp, int argc, const char *argv[])
      * right to the the head of the tree pulling objects.
      * All new changes are immediately written to database
      */
-    db_functree(gedp->ged_wdbp->dbip, dp, pull_comb, pull_leaf, resp, &mat);
+    db_functree(gedp->ged_wdbp->dbip, dp, pull_comb, pull_leaf, &rt_uniresource, &mat);
 
    return  GED_OK;
 }
