@@ -4,7 +4,6 @@ rsync -av svn.code.sf.net::p/brlcad/code .
 
 ./svn2git/svn-all-fast-export --add-metadata --identity-map account-map --rules rules code
 
-
 For tags, if you've used the supplied rules file, follow this post's approach:
 http://blog.smartbear.com/software-quality/migrating-from-subversion-to-git-lessons-learned/
 
@@ -20,19 +19,19 @@ while read tagname; do
   git branch -D "tag--$tagname" >/dev/null 2>/dev/null && echo "deleted branch: tag--$tagname"
 done
 
+Also, probably want to archive inactive branches, since we aren't using them any more but don't
+really want to completely delete them (see http://stackoverflow.com/questions/1307114/how-can-i-archive-git-branches/4292670#4292670)
+archive_branches.sh has the list of branches that are no longer active in subversion
+and (if a sufficiently new bash is available) will do the archiving process when run
+in the BRL-CAD git repository directory.  (Should probably make it more portable...)
+
 Most of the time the rules and account-map file in this directory are the ones
 you want to use - if they are out of date or need tweaking, a helpful resource
 is Jeff Geerling's page:
 
 http://www.midwesternmac.com/blogs/jeff-geerling/switching-svn-repository-svn2git
 
-
-Also, should probably check out this approach for archiving inactive branches, since we don't
-really want to completely delete them:
-
-http://stackoverflow.com/questions/1307114/how-can-i-archive-git-branches/4292670#4292670
-
-A *really* ambituous goal would be to have all the src/other projects be their own
+TODO - A *really* ambituous goal would be to have all the src/other projects be their own
 git projects and have them use whatever the proper git sub-project inclusion mechanism
 is.  We've extracted the utahrle work, so it is possible to do at least the first part
 (albeit a lot of work) but the second bit is unclear.
