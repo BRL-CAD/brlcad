@@ -1,0 +1,31 @@
+#
+# Declare the repositories we know about:
+#
+
+create repository myproject
+end repository
+
+#
+# Declare the rules
+# Note: rules must end in a slash
+#
+
+match /trunk/
+  repository myproject
+  branch master
+end match
+
+# Ignore this branch:
+# We ignore a branch by not telling svn-all-fast-export what to do
+# with this path
+# Note that rules are applied in order of appearance, so this rule
+# must appear before the generic branch rule
+match /branches/abandoned-work/
+end match
+
+match /branches/([^/]+)/
+  repository myproject
+  branch \1
+end match
+
+# No tag processing
