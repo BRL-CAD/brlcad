@@ -177,6 +177,11 @@ struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
 void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, unsigned char *wireframe_color_override, void (*callback)(struct solid *));
 
+void bound_solid(struct solid *sp);
+void solid_append_vlist(struct solid *sp, struct bn_vlist *vlist);
+void solid_set_color_info(struct solid *sp, unsigned char *wireframe_color_override, struct db_tree_state *tsp);
+void color_soltab(struct solid *sp);
+
 
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);

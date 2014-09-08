@@ -180,136 +180,12 @@ draw_check_leaf(struct db_tree_state *tsp,
 }
 
 static void
-solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
-{
-    if (BU_LIST_IS_EMPTY(&(sp->s_vlist))) {
-	sp->s_vlen = 0;
-    }
-
-    sp->s_vlen += bn_vlist_cmd_cnt(vlist);
-    BU_LIST_APPEND_LIST(&(sp->s_vlist), &(vlist->l));
-}
-
-static void
 solid_copy_vlist(struct solid *sp, struct bn_vlist *vlist)
 {
     BU_LIST_INIT(&(sp->s_vlist));
     rt_vlist_copy(&(sp->s_vlist), (struct bu_list *)vlist);
     sp->s_vlen = bn_vlist_cmd_cnt((struct bn_vlist *)(&(sp->s_vlist)));
 }
-
-/**
- * Compute the min, max, and center points of the solid.
- */
-static void
-bound_solid(struct ged *gedp, struct solid *sp)
-{
-    struct bn_vlist *vp;
-    point_t bmin, bmax;
-    int cmd;
-    VSET(bmin, INFINITY, INFINITY, INFINITY);
-    VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
-
-    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	cmd = bn_vlist_bbox(vp, &bmin, &bmax);
-	if (cmd) {
-	    bu_vls_printf(gedp->ged_result_str, "unknown vlist op %d\n", cmd);
-	}
-    }
-
-    sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
-    sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
-    sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;
-
-    sp->s_size = bmax[X] - bmin[X];
-    V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
-    V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
-}
-
-
-void
-_ged_color_soltab(struct solid *sp)
-{
-    const struct mater *mp;
-
-    sp->s_cflag = 0;
-
-    /* the user specified the color, so use it */
-    if (sp->s_uflag) {
-	sp->s_color[0] = sp->s_basecolor[0];
-	sp->s_color[1] = sp->s_basecolor[1];
-	sp->s_color[2] = sp->s_basecolor[2];
-
-	return;
-    }
-
-    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-	if (sp->s_regionid <= mp->mt_high &&
-	    sp->s_regionid >= mp->mt_low) {
-	    sp->s_color[0] = mp->mt_r;
-	    sp->s_color[1] = mp->mt_g;
-	    sp->s_color[2] = mp->mt_b;
-
-	    return;
-	}
-    }
-
-    /*
-     * There is no region-id-based coloring entry in the
-     * table, so use the combination-record ("mater"
-     * command) based color if one was provided. Otherwise,
-     * use the default wireframe color.
-     * This is the "new way" of coloring things.
-     */
-
-    /* use wireframe_default_color */
-    if (sp->s_dflag)
-	sp->s_cflag = 1;
-
-    /* Be conservative and copy color anyway, to avoid black */
-    sp->s_color[0] = sp->s_basecolor[0];
-    sp->s_color[1] = sp->s_basecolor[1];
-    sp->s_color[2] = sp->s_basecolor[2];
-}
-
-/* Set solid's basecolor, color, and color flags based on client data and tree
- * state. If user color isn't set in client data, the solid's region id must be
- * set for proper material lookup.
- */
-static void
-solid_set_color_info(
-	struct solid *sp,
-	struct _ged_client_data *dgcdp,
-	struct db_tree_state *tsp)
-{
-    unsigned char bcolor[3] = {255, 0, 0}; /* default */
-
-    sp->s_uflag = 0;
-    sp->s_dflag = 0;
-
-    if (dgcdp->wireframe_color_override) {
-	sp->s_uflag = 1;
-
-	bcolor[RED] = dgcdp->wireframe_color[RED];
-	bcolor[GRN] = dgcdp->wireframe_color[GRN];
-	bcolor[BLU] = dgcdp->wireframe_color[BLU];
-    } else if (tsp) {
-	if (tsp->ts_mater.ma_color_valid) {
-	    bcolor[RED] = tsp->ts_mater.ma_color[RED] * 255.0;
-	    bcolor[GRN] = tsp->ts_mater.ma_color[GRN] * 255.0;
-	    bcolor[BLU] = tsp->ts_mater.ma_color[BLU] * 255.0;
-	} else {
-	    sp->s_dflag = 1;
-	}
-    }
-
-    sp->s_basecolor[RED] = bcolor[RED];
-    sp->s_basecolor[GRN] = bcolor[GRN];
-    sp->s_basecolor[BLU] = bcolor[BLU];
-
-    _ged_color_soltab(sp);
-}
-
 
 /**
  * Once the vlist has been created, perform the common tasks
@@ -417,7 +293,7 @@ append_solid_to_display_list(
 
 	solid_append_vlist(sp, (struct bn_vlist *)&vhead);
 
-	bound_solid(dgcdp->gedp, sp);
+	bound_solid(sp);
 
 	while (BU_LIST_WHILE(vp, bn_vlist, &(sp->s_vlist))) {
 	    BU_LIST_DEQUEUE(&vp->l);
@@ -453,14 +329,22 @@ append_solid_to_display_list(
 	tsp->ts_mater.ma_color[GRN] = 128;
 	tsp->ts_mater.ma_color[BLU] = 128;
 
-	solid_set_color_info(sp, dgcdp, tsp);
+	if (dgcdp->wireframe_color_override) {
+	    solid_set_color_info(sp, (unsigned char *)&(dgcdp->wireframe_color), tsp);
+	} else {
+	    solid_set_color_info(sp, NULL, tsp);
+	}
 
 	tsp->ts_mater.ma_color[RED] = mater_color[RED];
 	tsp->ts_mater.ma_color[GRN] = mater_color[GRN];
 	tsp->ts_mater.ma_color[BLU] = mater_color[BLU];
 
     } else {
-	solid_set_color_info(sp, dgcdp, tsp);
+	if (dgcdp->wireframe_color_override) {
+	    solid_set_color_info(sp, (unsigned char *)&(dgcdp->wireframe_color), tsp);
+	} else {
+	    solid_set_color_info(sp, NULL, tsp);
+	}
     }
 
     sp->s_dlist = 0;
@@ -1423,7 +1307,7 @@ _ged_invent_solid(struct ged *gedp,
 	solid_append_vlist(sp, (struct bn_vlist *)vhead);
 	BU_LIST_INIT(vhead);
     }
-    bound_solid(gedp, sp);
+    bound_solid(sp);
 
     /* set path information -- this is a top level node */
     db_add_node_to_full_path(&sp->s_fullpath, dp);
@@ -1450,7 +1334,7 @@ _ged_invent_solid(struct ged *gedp,
     /* Solid successfully drawn, add to linked list of solid structs */
     BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
 
-    _ged_color_soltab(sp);
+    color_soltab(sp);
 
     if (gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
 	(*gedp->ged_create_vlist_callback)(sp);
@@ -1475,7 +1359,7 @@ ged_color_soltab(struct bu_list *hdlp)
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    _ged_color_soltab(sp);
+	    color_soltab(sp);
 	}
 
 	gdlp = next_gdlp;
