@@ -519,9 +519,6 @@ shoot_ray(struct rt_i *rtip, point_t pt, point_t dir)
 {
     struct application ap;
 
-    /* Initialize the table of resource structures */
-    /* rt_init_resource(&res_tab, 0, rtip); */
-
     /* initialization of the application structure */
     RT_APPLICATION_INIT(&ap);
     ap.a_hit = if_hit;        /* branch to if_hit routine */

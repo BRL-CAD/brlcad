@@ -87,8 +87,8 @@ rt_new_rti(struct db_i *dbip)
     BU_LIST_INIT(&rtip->HeadRegion);
 
     /* This table is used for discovering the per-cpu resource structures */
-    bu_ptbl_init(&rtip->rti_resources, MAX_PSW+1, "rti_resources ptbl");
-    BU_PTBL_END(&rtip->rti_resources) = MAX_PSW+1;	/* Make 'em all available */
+    bu_ptbl_init(&rtip->rti_resources, MAX_PSW, "rti_resources ptbl");
+    BU_PTBL_END(&rtip->rti_resources) = MAX_PSW;	/* Make 'em all available */
 
     rt_uniresource.re_magic = RESOURCE_MAGIC;
 
@@ -581,47 +581,34 @@ rt_plot_solid(
 }
 
 
-/**
- * initialize memory resources.  This routine should initialize all
- * the same resources that rt_clean_resource() releases.
- *
- * It shouldn't (but does for ptbl) allocate any dynamic memory, just
- * init pointers & lists.
- *
- * if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) indicates that
- * this initialization is needed.
- *
- * Note that this routine is also called as part of
- * rt_clean_resource().
- *
- * Special case, resp == rt_uniresource, rtip may be NULL (but give it
- * if you have it).
- */
 void
 rt_init_resource(struct resource *resp,
 		 int cpu_num,
 		 struct rt_i *rtip)
 {
+    if (!resp)
+	return;
+
+    BU_ASSERT_LONG(cpu_num, >=, 0);
+    BU_ASSERT_LONG(cpu_num, <, MAX_PSW);
+
+    if (rtip)
+	RT_CK_RTI(rtip);
 
     if (resp == &rt_uniresource) {
-	cpu_num = MAX_PSW;		/* array is [MAX_PSW+1] just for this */
-	if (rtip) RT_CK_RTI(rtip);	/* check it if provided */
+	cpu_num = 0;
     } else {
-	BU_ASSERT_PTR(resp, !=, NULL);
-	BU_ASSERT_LONG(cpu_num, >=, 0);
 	if (rtip != NULL && rtip->rti_treetop) {
 	    /* this is a submodel */
 	    BU_ASSERT_LONG(cpu_num, <, (long)rtip->rti_resources.blen);
-	} else {
-	    BU_ASSERT_LONG(cpu_num, <, MAX_PSW);
 	}
-	if (rtip) RT_CK_RTI(rtip);		/* mandatory */
     }
 
-    resp->re_magic = RESOURCE_MAGIC;
-    resp->re_cpu = cpu_num;
-
-    /* XXX resp->re_randptr is an "application" (rt) level field. For now. */
+    /* point to the random number table so we can draw.  set to
+     * MAX_PSW*cpu_num just to keep each core a good distance away
+     * from each other, but that's not a really great reason.
+     */
+    bn_rand_init(resp->re_randptr, MAX_PSW*cpu_num);
 
     if (!BU_LIST_IS_INITIALIZED(&resp->re_seg))
 	BU_LIST_INIT(&resp->re_seg);
@@ -647,14 +634,16 @@ rt_init_resource(struct resource *resp,
     resp->re_boolstack = NULL;
     resp->re_boolslen = 0;
 
+    resp->re_cpu = cpu_num;
+    resp->re_magic = RESOURCE_MAGIC;
+
     if (rtip == NULL)
 	return;	/* only in rt_uniresource case */
 
     /* Ensure that this CPU's resource structure is registered in rt_i */
     /* It may already be there when we're called from rt_clean_resource */
     {
-	struct resource *ores = (struct resource *)
-	    BU_PTBL_GET(&rtip->rti_resources, cpu_num);
+	struct resource *ores = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, cpu_num);
 	if (ores != NULL && ores != resp) {
 	    bu_log("rt_init_resource(cpu=%d) re-registering resource, had %p, new=%p\n",
 		   cpu_num,

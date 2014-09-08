@@ -17,9 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lgt/mat_db.h
-    Author:		Gary S. Moss
-*/
+
 #ifndef LGT_MAT_DB_H
 #define LGT_MAT_DB_H
 #define MAX_MAT_DB	100
