@@ -175,6 +175,9 @@ int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max);
 /* Returns a bu_ptbl of all solids referenced by the display list */
 struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
+void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, unsigned char *wireframe_color_override, void (*callback)(struct solid *));
+
+
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);
 fastf_t dl_get_transparency(long *curr_solid);

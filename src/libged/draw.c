@@ -320,45 +320,11 @@ solid_set_color_info(
 void
 _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct _ged_client_data *dgcdp)
 {
-    struct solid *sp;
 
-    if (!existing_sp) {
-	GET_SOLID(sp);
+    if (dgcdp->wireframe_color_override) {
+	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, existing_sp, (unsigned char *)&(dgcdp->wireframe_color), dgcdp->gedp->ged_create_vlist_callback);
     } else {
-	sp = existing_sp;
-    }
-
-    solid_append_vlist(sp, (struct bn_vlist *)vhead);
-
-    bound_solid(dgcdp->gedp, sp);
-
-    if (!existing_sp) {
-	db_dup_full_path(&sp->s_fullpath, pathp);
-
-	sp->s_flag = DOWN;
-	sp->s_iflag = DOWN;
-	sp->s_soldash = dashflag;
-	sp->s_Eflag = 0;
-
-	if (tsp) {
-	    sp->s_regionid = tsp->ts_regionid;
-	}
-
-	solid_set_color_info(sp, dgcdp, tsp);
-
-	sp->s_dlist = 0;
-	sp->s_transparency = dgcdp->transparency;
-	sp->s_dmode = dgcdp->dmode;
-	sp->s_hiddenLine = dgcdp->hiddenLine;
-
-	/* append solid to display list */
-	bu_semaphore_acquire(RT_SEM_MODEL);
-	BU_LIST_APPEND(dgcdp->gdlp->dl_headSolid.back, &sp->l);
-	bu_semaphore_release(RT_SEM_MODEL);
-    }
-
-    if (dgcdp->gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
-	(*dgcdp->gedp->ged_create_vlist_callback)(sp);
+	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, existing_sp, NULL, dgcdp->gedp->ged_create_vlist_callback);
     }
 }
 
