@@ -1219,6 +1219,28 @@ int invent_solid(struct bu_list *hdlp, struct db_i *dbip,
 
 }
 
+int
+dl_set_illum(struct display_list *gdlp, const char *obj, int illum)
+{
+    int found = 0;
+    struct solid *sp;
+
+    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	size_t i;
+
+	for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
+	    if (*obj == *DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep &&
+		    BU_STR_EQUAL(obj, DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep)) {
+		found = 1;
+		if (illum)
+		    sp->s_iflag = UP;
+		else
+		    sp->s_iflag = DOWN;
+	    }
+	}
+    }
+    return found;
+}
 
 /*
  * Local Variables:
