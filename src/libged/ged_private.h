@@ -170,21 +170,22 @@ extern void _dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip
 extern void _dl_freeDisplayListItem(struct db_i *dbip,
 	        void (*callback)(unsigned int, int),
 				     struct display_list *gdlp);
-int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
-int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max);
+extern int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
+extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max);
 /* Returns a bu_ptbl of all solids referenced by the display list */
-struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
+extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
-void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, unsigned char *wireframe_color_override, void (*callback)(struct solid *));
+extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, unsigned char *wireframe_color_override, void (*callback)(struct solid *));
 
-void bound_solid(struct solid *sp);
-void solid_append_vlist(struct solid *sp, struct bn_vlist *vlist);
-void solid_set_color_info(struct solid *sp, unsigned char *wireframe_color_override, struct db_tree_state *tsp);
-void color_soltab(struct solid *sp);
-void dl_color_soltab(struct bu_list *hdlp);
-int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct solid *));
-int redraw_solid(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct solid *));
-union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
+extern void bound_solid(struct solid *sp);
+extern void solid_append_vlist(struct solid *sp, struct bn_vlist *vlist);
+extern void solid_set_color_info(struct solid *sp, unsigned char *wireframe_color_override, struct db_tree_state *tsp);
+extern void color_soltab(struct solid *sp);
+extern void dl_color_soltab(struct bu_list *hdlp);
+extern int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct solid *));
+extern int redraw_solid(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct solid *));
+extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
+extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct solid *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode);
 
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);
@@ -198,13 +199,6 @@ extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 				       struct bn_vlblock *vbp,
 				       const char *name,
 				       int copy);
-extern int _ged_invent_solid(struct ged *gedp,
-			     char *name,
-			     struct bu_list *vhead,
-			     long int rgb,
-			     int copy,
-			     fastf_t transparency,
-			     int dmode);
 extern int _ged_drawtrees(struct ged *gedp,
 			  int argc,
 			  const char *argv[],

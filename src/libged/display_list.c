@@ -1132,6 +1132,87 @@ append_solid_to_display_list(
     return curtree;
 }
 
+static void
+solid_copy_vlist(struct solid *sp, struct bn_vlist *vlist)
+{
+    BU_LIST_INIT(&(sp->s_vlist));
+    rt_vlist_copy(&(sp->s_vlist), (struct bu_list *)vlist);
+    sp->s_vlen = bn_vlist_cmd_cnt((struct bn_vlist *)(&(sp->s_vlist)));
+}
+
+int invent_solid(struct bu_list *hdlp, struct db_i *dbip,
+       	void (*callback_create)(struct solid *), void (*callback_free)(unsigned int, int),
+       	char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode)
+{
+    struct directory *dp;
+    struct solid *sp;
+    struct display_list *gdlp;
+    unsigned char type='0';
+
+    if (dbip == DBI_NULL)
+	return 0;
+
+    if ((dp = db_lookup(dbip, name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
+	    bu_log("invent_solid(%s) would clobber existing database entry, ignored\n", name);
+	    return -1;
+	}
+
+	/*
+	 * Name exists from some other overlay,
+	 * zap any associated solids
+	 */
+	dl_erasePathFromDisplay(hdlp, dbip, callback_free, name, 0);
+    }
+    /* Need to enter phony name in directory structure */
+    dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
+
+    /* Obtain a fresh solid structure, and fill it in */
+    GET_SOLID(sp);
+
+    if (copy) {
+	solid_copy_vlist(sp, (struct bn_vlist *)vhead);
+    } else {
+	solid_append_vlist(sp, (struct bn_vlist *)vhead);
+	BU_LIST_INIT(vhead);
+    }
+    bound_solid(sp);
+
+    /* set path information -- this is a top level node */
+    db_add_node_to_full_path(&sp->s_fullpath, dp);
+
+    gdlp = dl_addToDisplay(hdlp, dbip, name);
+
+    sp->s_iflag = DOWN;
+    sp->s_soldash = 0;
+    sp->s_Eflag = 1;            /* Can't be solid edited! */
+    sp->s_color[0] = sp->s_basecolor[0] = (rgb>>16) & 0xFF;
+    sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
+    sp->s_color[2] = sp->s_basecolor[2] = (rgb) & 0xFF;
+    sp->s_regionid = 0;
+    sp->s_dlist = 0;
+
+    sp->s_uflag = 0;
+    sp->s_dflag = 0;
+    sp->s_cflag = 0;
+    sp->s_wflag = 0;
+
+    sp->s_transparency = transparency;
+    sp->s_dmode = dmode;
+
+    /* Solid successfully drawn, add to linked list of solid structs */
+    BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
+
+    color_soltab(sp);
+
+    if (callback_create != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+	(*callback_create)(sp);
+
+    return 0;           /* OK */
+
+}
+
+
 /*
  * Local Variables:
  * tab-width: 8

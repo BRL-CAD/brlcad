@@ -176,14 +176,6 @@ draw_check_leaf(struct db_tree_state *tsp,
     return curtree;
 }
 
-static void
-solid_copy_vlist(struct solid *sp, struct bn_vlist *vlist)
-{
-    BU_LIST_INIT(&(sp->s_vlist));
-    rt_vlist_copy(&(sp->s_vlist), (struct bu_list *)vlist);
-    sp->s_vlen = bn_vlist_cmd_cnt((struct bn_vlist *)(&(sp->s_vlist)));
-}
-
 /**
  * Once the vlist has been created, perform the common tasks
  * in handling the drawn solid.
@@ -503,10 +495,8 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, const char 
 
     for (i = 0; i < vbp->nused; i++) {
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
-	    continue;
-
-	snprintf(namebuf, 64, "%s%lx", shortname, vbp->rgb[i]);
-	_ged_invent_solid(gedp, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0, 0);
+		snprintf(namebuf, 64, "%s%lx", shortname, vbp->rgb[i]);
+	invent_solid(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_create_vlist_callback, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0, 0);
     }
 }
 
@@ -747,7 +737,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    } else {
 		struct display_list **paths_to_draw;
 		struct display_list *gdlp;
-		struct solid *sp;
 
 		paths_to_draw = (struct display_list **)
 		    bu_malloc(sizeof(struct display_list *) * argc,
@@ -806,17 +795,11 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			continue;
 		    }
 
-		    for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
-			if (sp->s_vlen > 0) {
-			    /* skip previously draw solid */
-			    continue;
-			}
-			ret = redraw_solid(sp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
-			if (ret < 0) {
-			    bu_vls_printf(gedp->ged_result_str,
-				    "%s: %s redraw failure\n", argv[0], argv[i]);
-			    return GED_ERROR;
-			}
+		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
+		    if (ret < 0) {
+			bu_vls_printf(gedp->ged_result_str,
+				"%s: %s redraw failure\n", argv[0], argv[i]);
+			return GED_ERROR;
 		    }
 		}
 
@@ -879,91 +862,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	return -1;
 
     return 0;	/* OK */
-}
-
-
-/*
- * Invent a solid by adding a fake entry in the database table,
- * adding an entry to the solid table, and populating it with
- * the given vector list.
- *
- * This parallels much of the code in dodraw.c
- */
-int
-_ged_invent_solid(struct ged *gedp,
-		  char *name,
-		  struct bu_list *vhead,
-		  long int rgb,
-		  int copy,
-		  fastf_t transparency,
-		  int dmode)
-{
-    struct directory *dp;
-    struct solid *sp;
-    struct display_list *gdlp;
-    unsigned char type='0';
-
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return 0;
-
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET)) != RT_DIR_NULL) {
-	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-	    bu_vls_printf(gedp->ged_result_str,
-			  "_ged_invent_solid(%s) would clobber existing database entry, ignored\n", name);
-	    return -1;
-	}
-
-	/*
-	 * Name exists from some other overlay,
-	 * zap any associated solids
-	 */
-	dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, name, 0);
-    }
-    /* Need to enter phony name in directory structure */
-    dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
-
-    /* Obtain a fresh solid structure, and fill it in */
-    GET_SOLID(sp);
-
-    if (copy) {
-	solid_copy_vlist(sp, (struct bn_vlist *)vhead);
-    } else {
-	solid_append_vlist(sp, (struct bn_vlist *)vhead);
-	BU_LIST_INIT(vhead);
-    }
-    bound_solid(sp);
-
-    /* set path information -- this is a top level node */
-    db_add_node_to_full_path(&sp->s_fullpath, dp);
-
-    gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, name);
-
-    sp->s_iflag = DOWN;
-    sp->s_soldash = 0;
-    sp->s_Eflag = 1;		/* Can't be solid edited! */
-    sp->s_color[0] = sp->s_basecolor[0] = (rgb>>16) & 0xFF;
-    sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
-    sp->s_color[2] = sp->s_basecolor[2] = (rgb) & 0xFF;
-    sp->s_regionid = 0;
-    sp->s_dlist = 0;
-
-    sp->s_uflag = 0;
-    sp->s_dflag = 0;
-    sp->s_cflag = 0;
-    sp->s_wflag = 0;
-
-    sp->s_transparency = transparency;
-    sp->s_dmode = dmode;
-
-    /* Solid successfully drawn, add to linked list of solid structs */
-    BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
-
-    color_soltab(sp);
-
-    if (gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-	(*gedp->ged_create_vlist_callback)(sp);
-
-    return 0;		/* OK */
 }
 
 
