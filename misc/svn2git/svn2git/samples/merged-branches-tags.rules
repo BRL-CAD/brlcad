@@ -1,0 +1,31 @@
+#
+# Declare the repositories we know about:
+#
+
+create repository myproject
+end repository
+
+#
+# Declare the rules
+# Note: rules must end in a slash
+#
+
+match /trunk/
+  repository myproject
+  branch master
+end match
+
+# Subversion doesn't understand the Git concept of tags
+# In Subversion, tags are really branches
+#
+# Only a post-processing (i.e., after converting to Git) of the tag
+# branches can we be sure that a tag wasn't moved or changed from the
+# branch it was copied from
+#
+# So we don't pretend that SVN tags are Git tags and then import
+# everything as one
+
+match /(branches|tags)/([^/]+)/
+  repository myproject
+  branch \2
+end match

@@ -162,7 +162,7 @@ A tgc_new.s
 A eto.s
 			   </computeroutput>
 		   </literallayout>
-		   If verbosity is not specificed, this is the default output.
+		   If verbosity is not specified, this is the default output.
 	   </para>
 
 	   <para>
@@ -257,7 +257,7 @@ A "eto.s" V(p): 8.533195938359670051909234 -11.04524849332910996224655 -1.403988
 A "eto.s" DB5_MINORTYPE(p): eto
 			   </computeroutput>
 		   </literallayout>
-		   Verbosity 4 is a fully detailed diff that containes all information added or removed.
+		   Verbosity 4 is a fully detailed diff that contains all information added or removed.
 	   </para>
 
    </example>
@@ -422,9 +422,9 @@ A "eto.s" DB5_MINORTYPE(p): eto
   <example><title>Three Way Differences</title>
         <para>
           A "3-way" diff uses an ancestor file as a basis for evaluating the differences between two
-	  other files.  This ancestor provies a "context" in which it is possible to tell whether a
+	  other files.  This ancestor provides a "context" in which it is possible to tell whether a
           difference between two files is a) the product of a change in one but not the other in
-          comparison to the original or b) whether both have (incompatibaly) changed in comparison
+          comparison to the original or b) whether both have (incompatibly) changed in comparison
           to the original.  For example, if we compare moss2.g from the previous examples to a new
           file moss3.g:
           <literallayout>
@@ -469,7 +469,7 @@ A(R) ellipse2.r
                 </computeroutput>
           </literallayout>
           We can now see that ellipse.r was deleted only from the right file (moss3.g) and was unchanged in moss2.g.
-          Similarily, we can tell that LIGHT wsa deleted from moss2.g, ellipse2.r was added in moss3.g, tgc_new.s was
+          Similarly, we can tell that LIGHT wsa deleted from moss2.g, ellipse2.r was added in moss3.g, tgc_new.s was
           added identically in both moss2.g and moss3.g, and eto.s is different in moss2.g and moss3.g in some fashion
           that the ancestor file moss.g cannot help gdiff2 resolve (a conflict, denoted by 'C'.)
         </para>
@@ -536,7 +536,7 @@ C(LM!=RM) ell.s
           </literallayout>
           This notation indicates that a modification in the left side (ell_1.g) does not match a modification made in ell_2.g.
           Unlike the eto.s, which reported an add conflict, this is a modification conflict triggered by incompatible, different
-          paramters.  Indeed a full verbosity inspection:
+          parameters.  Indeed a full verbosity inspection:
           <literallayout>
                 <computeroutput>
 <prompt>~:</prompt><userinput> gdiff2 -v4 ell_1.g ell_0.g ell_2.g</userinput>

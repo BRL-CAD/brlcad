@@ -18,7 +18,6 @@
  * information.
  */
 /** @file lgt/cursors.h
- *	Author:		Gary S. Moss
  * From AT&T's Teletype 5620 $DMD/icon directory, reformatted slightly
  * to be an array of 32 unsigned chars, rather than a Texture16.
  */

@@ -1330,8 +1330,6 @@ main(int argc, char *argv[])
     mged_tol.perp = 1e-6;
     mged_tol.para = 1 - mged_tol.perp;
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     rt_prep_timer();		/* Initialize timer */
 
     es_edflag = -1;		/* no solid editing just now */

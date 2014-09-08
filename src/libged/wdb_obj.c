@@ -2384,7 +2384,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
 {
     struct rt_i *rtip;
     struct application *ap;
-    struct resource *resp;
+    struct resource resp = RT_RESOURCE_INIT_ZERO;
     const char *newprocname;
 
     RT_CK_WDB(wdbp);
@@ -2447,14 +2447,12 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
      * which in this case would trash rt_uniresource.
      * Once on the rti_resources list, rt_clean() will clean 'em up.
      */
-    BU_ALLOC(resp, struct resource);
-    rt_init_resource(resp, 0, rtip);
     BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
 
     BU_ALLOC(ap, struct application);
     RT_APPLICATION_INIT(ap);
     ap->a_magic = RT_AP_MAGIC;
-    ap->a_resource = resp;
+    ap->a_resource = &resp;
     ap->a_rt_i = rtip;
     ap->a_purpose = "Conquest!";
 
@@ -6600,14 +6598,10 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
 	     const char *argv[])
 {
     struct directory *dp;
-    struct resource *resp;
     mat_t mat;
     int c;
     int debug;
     static const char *usage = "object";
-
-    resp = &rt_uniresource;
-    rt_init_resource( &rt_uniresource, 0, NULL );
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -6654,7 +6648,7 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
      * right to the the head of the tree pulling objects.
      * All new changes are immediately written to database
      */
-    db_functree(wdbp->dbip, dp, wdb_pull_comb, wdb_pull_leaf, resp, &mat);
+    db_functree(wdbp->dbip, dp, wdb_pull_comb, wdb_pull_leaf, &rt_uniresource, &mat);
 
     RTG.debug = debug;
 
