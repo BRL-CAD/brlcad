@@ -919,6 +919,26 @@ public:
     }
 
     bool
+    IsDegenerate(void)
+    {
+	ON_Curve *seg_curve = Curve();
+	double length = 0.0;
+
+	if (seg_curve->IsLinear(INTERSECTION_TOL)) {
+	    length = seg_curve->PointAtStart().DistanceTo(
+		    seg_curve->PointAtEnd());
+	} else {
+	    double min[3] = {0.0, 0.0, 0.0};
+	    double max[3] = {0.0, 0.0, 0.0};
+
+	    seg_curve->GetBBox(min, max, true);
+	    length = DIST_PT_PT(min, max);
+	}
+	delete seg_curve;
+	return length < INTERSECTION_TOL;
+    }
+
+    bool
     operator<(const CurveSegment &other) const
     {
 	return from < other.from;
@@ -1006,6 +1026,10 @@ make_segments(
 	CurvePoint to = *next;
 	CurveSegment new_seg(loop1, from, to, CurveSegment::BOUNDARY);
 
+	if (new_seg.IsDegenerate()) {
+	    continue;
+	}
+
 	if (from.location == CurvePoint::BOUNDARY &&
 	      to.location == CurvePoint::BOUNDARY)
 	{
@@ -1078,16 +1102,14 @@ find_similar_segments(
     const CurveSegment &seg)
 {
     std::multiset<CurveSegment> out;
+
     std::multiset<CurveSegment>::iterator i;
-
-    for (i = set.find(seg); i != set.end(); ++i) {
-	out.insert(*i);
-    }
-
-    CurveSegment reversed(seg);
-    reversed.Reverse();
-    for (i = set.find(reversed); i != set.end(); ++i) {
-	out.insert(*i);
+    for (i = set.begin(); i != set.end(); ++i) {
+	if (((i->from == seg.from) && (i->to == seg.to)) ||
+	    ((i->from == seg.to)   && (i->to == seg.from)))
+	{
+	    out.insert(*i);
+	}
     }
     return out;
 }
@@ -1829,6 +1851,9 @@ split_trimmed_face(
 	}
 
 	for (size_t j = 0; j < ssx_loops.size(); ++j) {
+	    if (ssx_loops[j].Count() < 1) {
+		continue;
+	    }
 	    // get the portions of the original outerloop inside and
 	    // outside the closed ssx curve to get the outerloops of
 	    // the split faces
