@@ -171,7 +171,7 @@ extern void _dl_freeDisplayListItem(struct db_i *dbip,
 	        void (*callback)(unsigned int, int),
 				     struct display_list *gdlp);
 extern int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
-extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max);
+extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
 /* Returns a bu_ptbl of all solids referenced by the display list */
 extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 

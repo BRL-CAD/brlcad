@@ -152,7 +152,7 @@ headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list 
 
 
 int
-dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max)
+dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -169,6 +169,13 @@ dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max)
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    /* Skip pseudo-solids unless pflag is set */
+	    if (!pflag &&
+		    sp->s_fullpath.fp_names != (struct directory **)0 &&
+		    sp->s_fullpath.fp_names[0] != (struct directory *)0 &&
+		    sp->s_fullpath.fp_names[0]->d_addr == RT_DIR_PHONY_ADDR)
+		continue;
+
 	    minus[X] = sp->s_center[X] - sp->s_size;
 	    minus[Y] = sp->s_center[Y] - sp->s_size;
 	    minus[Z] = sp->s_center[Z] - sp->s_size;
