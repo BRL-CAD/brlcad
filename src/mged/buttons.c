@@ -152,7 +152,7 @@ static mat_t sav_viewrot, sav_toviewcenter;
 static fastf_t sav_vscale;
 static int vsaved = 0;	/* set if view saved */
 
-extern void color_soltab(void);
+extern void mged_color_soltab(void);
 extern void sl_halt_scroll(void);	/* in scroll.c */
 extern void sl_toggle_scroll(void);
 
@@ -733,7 +733,7 @@ be_accept()
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;
-	color_soltab();
+	mged_color_soltab();
 	(void)chg_state(ST_S_EDIT, ST_VIEW, "Edit Accept");
     }  else if (STATE == ST_O_EDIT) {
 	/* Accept an object edit */
@@ -746,7 +746,7 @@ be_accept()
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;
-	color_soltab();
+	mged_color_soltab();
 	(void)chg_state(ST_O_EDIT, ST_VIEW, "Edit Accept");
     } else {
 	if (not_state(ST_S_EDIT, "Edit Accept"))
@@ -826,7 +826,7 @@ be_reject()
 	gdlp = next_gdlp;
     }
 
-    color_soltab();
+    mged_color_soltab();
     (void)chg_state(STATE, ST_VIEW, "Edit Reject");
 
     FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)

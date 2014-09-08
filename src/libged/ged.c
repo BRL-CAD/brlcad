@@ -210,7 +210,7 @@ ged_init(struct ged *gedp)
 
 
 void
-ged_view_init(struct ged_view *gvp)
+ged_view_init(struct bview *gvp)
 {
     if (gvp == GED_VIEW_NULL)
 	return;

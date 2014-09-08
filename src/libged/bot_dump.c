@@ -1068,7 +1068,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
 
 static void
-write_data_arrows(struct ged_data_arrow_state *gdasp, FILE *fp, int sflag)
+write_data_arrows(struct bview_data_arrow_state *gdasp, FILE *fp, int sflag)
 {
     register int i;
 
@@ -1220,7 +1220,7 @@ write_data_axes(struct bview_data_axes_state *bndasp, FILE *fp, int sflag)
 
 
 static void
-write_data_lines(struct ged_data_line_state *gdlsp, FILE *fp, int sflag)
+write_data_lines(struct bview_data_line_state *gdlsp, FILE *fp, int sflag)
 {
     register int i;
 

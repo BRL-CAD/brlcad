@@ -31,7 +31,7 @@
 
 
 void
-ged_view_update(struct ged_view *gvp)
+ged_view_update(struct bview *gvp)
 {
     vect_t work, work1;
     vect_t temp, temp1;
@@ -80,7 +80,7 @@ ged_view_update(struct ged_view *gvp)
  * during view initialization, the shaders regression test fails.
  */
 void
-_ged_mat_aet(struct ged_view *gvp)
+_ged_mat_aet(struct bview *gvp)
 {
     mat_t tmat;
     fastf_t twist;

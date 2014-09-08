@@ -181,7 +181,9 @@ void bound_solid(struct solid *sp);
 void solid_append_vlist(struct solid *sp, struct bn_vlist *vlist);
 void solid_set_color_info(struct solid *sp, unsigned char *wireframe_color_override, struct db_tree_state *tsp);
 void color_soltab(struct solid *sp);
-
+void dl_color_soltab(struct bu_list *hdlp);
+int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct solid *));
+int redraw_solid(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct solid *));
 
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);
@@ -467,7 +469,7 @@ extern int _ged_translate_tgc(struct ged *gedp,
 			      int rflag);
 
 /* defined in vutil.c */
-extern void _ged_mat_aet(struct ged_view *gvp);
+extern void _ged_mat_aet(struct bview *gvp);
 extern int _ged_do_rot(struct ged *gedp,
 		       char coord,
 		       mat_t rmat,

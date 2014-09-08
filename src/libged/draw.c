@@ -37,9 +37,6 @@
 
 #include "./ged_private.h"
 
-/* defined in draw_calc.cpp */
-extern fastf_t brep_est_avg_curve_len(struct rt_brep_internal *bi);
-
 /* declare our callbacks used by _ged_drawtrees() */
 static int drawtrees_depth = 0;
 
@@ -364,241 +361,6 @@ append_solid_to_display_list(
 
     return curtree;
 }
-
-static fastf_t
-view_avg_size(struct ged_view *gvp)
-{
-    fastf_t view_aspect, x_size, y_size;
-
-    view_aspect = (fastf_t)gvp->gv_x_samples / gvp->gv_y_samples;
-    x_size = gvp->gv_size;
-    y_size = x_size / view_aspect;
-
-    return (x_size + y_size) / 2.0;
-}
-
-static fastf_t
-view_avg_sample_spacing(struct ged_view *gvp)
-{
-    fastf_t avg_view_size, avg_view_samples;
-
-    avg_view_size = view_avg_size(gvp);
-    avg_view_samples = (gvp->gv_x_samples + gvp->gv_y_samples) / 2.0;
-
-    return avg_view_size / avg_view_samples;
-}
-
-static fastf_t
-solid_point_spacing(struct ged_view *gvp, fastf_t solid_width)
-{
-    fastf_t radius, avg_view_size, avg_sample_spacing;
-    point2d_t p1, p2;
-
-    if (solid_width < SQRT_SMALL_FASTF)
-	solid_width = SQRT_SMALL_FASTF;
-
-    avg_view_size = view_avg_size(gvp);
-
-    /* Now, for the sake of simplicity we're going to make
-     * several assumptions:
-     *  - our samples represent a grid of square pixels
-     *  - a circle with a diameter half the width of the solid is a
-     *    good proxy for the kind of curve that will be plotted
-     */
-    radius = solid_width / 4.0;
-    if (avg_view_size < solid_width) {
-	/* If the solid is larger than the view, it is
-	 * probably only partly visible and likely isn't the
-	 * primary focus of the user. We'll cap the point
-	 * spacing and avoid wasting effort.
-	 */
-	radius = avg_view_size / 4.0;
-    }
-
-    /* We imagine our representative circular curve lying in
-     * the XY plane centered at the origin.
-     *
-     * Suppose we're viewing the circle head on, and that the
-     * apex of the curve (0, radius) lies just inside the
-     * top edge of a pixel. Here we place a plotted point p1.
-     *
-     * As we continue clockwise around the circle we pass
-     * through neighboring pixels in the same row, until we
-     * vertically drop a distance equal to the pixel spacing,
-     * in which case we just barely enter a pixel in the next
-     * row. Here we place a plotted point p2 (y = radius -
-     * avg_sample_spacing).
-     *
-     * In theory, the line segment between p1 and p2 passes
-     * through all the same pixels that the actual curve does,
-     * and thus produces the exact same rasterization as if
-     * the curve between p1 and p2 was approximated with an
-     * infinite number of line segments.
-     *
-     * We assume that the distance between p1 and p2 is the
-     * maximum point sampling distance we can use for the
-     * curve which will give a perfect rasterization, i.e.
-     * the same rasterization as if we chose a point distance
-     * of 0.
-    */
-    p1[Y] = radius;
-    p1[X] = 0.0;
-
-    avg_sample_spacing = view_avg_sample_spacing(gvp);
-    if (avg_sample_spacing < radius) {
-	p2[Y] = radius - (avg_sample_spacing);
-    } else {
-	/* no particular reason other than symmetry, just need
-	 * to prevent sqrt(negative).
-	 */
-	p2[Y] = radius;
-    }
-    p2[X] = sqrt((radius * radius) - (p2[Y] * p2[Y]));
-
-    return DIST_PT2_PT2(p1, p2);
-}
-
-/* Choose a point spacing for the given solid (sp, ip) s.t. solid
- * curves plotted with that spacing will look smooth when rasterized
- * in the given view (gvp).
- *
- * TODO: view_avg_sample_spacing() might be sufficient if we can
- * develop a general decimation routine for the resulting plots, in
- * which case, this function could be removed.
- */
-static fastf_t
-solid_point_spacing_for_view(
-	struct solid *sp,
-	struct rt_db_internal *ip,
-	struct ged_view *gvp)
-{
-    fastf_t point_spacing = 0.0;
-
-    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD) {
-	switch (ip->idb_minor_type) {
-	    case DB5_MINORTYPE_BRLCAD_TGC: {
-		struct rt_tgc_internal *tgc;
-		fastf_t avg_diameter;
-		fastf_t tgc_mag_a, tgc_mag_b, tgc_mag_c, tgc_mag_d;
-
-		RT_CK_DB_INTERNAL(ip);
-		tgc = (struct rt_tgc_internal *)ip->idb_ptr;
-		RT_TGC_CK_MAGIC(tgc);
-
-		tgc_mag_a = MAGNITUDE(tgc->a);
-		tgc_mag_b = MAGNITUDE(tgc->b);
-		tgc_mag_c = MAGNITUDE(tgc->c);
-		tgc_mag_d = MAGNITUDE(tgc->d);
-
-		avg_diameter = tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d;
-		avg_diameter /= 2.0;
-		point_spacing = solid_point_spacing(gvp, avg_diameter);
-	    }
-		break;
-	    case DB5_MINORTYPE_BRLCAD_BOT:
-		point_spacing = view_avg_sample_spacing(gvp);
-		break;
-	    case DB5_MINORTYPE_BRLCAD_BREP: {
-		struct rt_brep_internal *bi;
-
-		RT_CK_DB_INTERNAL(ip);
-		bi = (struct rt_brep_internal *)ip->idb_ptr;
-		RT_BREP_CK_MAGIC(bi);
-
-		point_spacing = solid_point_spacing(gvp,
-			brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
-	    }
-		break;
-	    default:
-		point_spacing = solid_point_spacing(gvp, sp->s_size);
-	}
-    } else {
-	point_spacing = solid_point_spacing(gvp, sp->s_size);
-    }
-
-    return point_spacing;
-}
-
-static fastf_t
-draw_solid_wireframe(struct ged *gedp, struct solid *sp)
-{
-    int ret;
-    struct bu_list vhead;
-    struct ged_view *gvp;
-    struct rt_db_internal dbintern;
-    struct rt_db_internal *ip = &dbintern;
-    struct db_tree_state *tsp = &gedp->ged_wdbp->wdb_initial_tree_state;
-
-    BU_LIST_INIT(&vhead);
-    ret = -1;
-
-    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&sp->s_fullpath),
-	    gedp->ged_wdbp->dbip, sp->s_mat, &rt_uniresource);
-
-    if (ret < 0) {
-	return -1;
-    }
-
-    gvp = gedp->ged_gvp;
-    if (gvp && gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
-	struct rt_view_info info;
-
-	info.vhead = &vhead;
-	info.tol = tsp->ts_tol;
-
-	info.point_spacing = solid_point_spacing_for_view(sp, ip, gvp);
-
-	info.curve_spacing = sp->s_size / 2.0;
-
-	info.point_spacing /= gvp->gv_point_scale;
-	info.curve_spacing /= gvp->gv_curve_scale;
-
-	ret = ip->idb_meth->ft_adaptive_plot(ip, &info);
-    } else if (ip->idb_meth->ft_plot) {
-	ret = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
-		tsp->ts_tol, NULL);
-    }
-
-    rt_db_free_internal(ip);
-
-    if (ret < 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s: plot failure\n",
-		DB_FULL_PATH_CUR_DIR(&sp->s_fullpath)->d_namep);
-
-	return -1;
-    }
-
-    /* add plot to solid */
-    solid_append_vlist(sp, (struct bn_vlist *)&vhead);
-
-    if (gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
-	(*gedp->ged_create_vlist_callback)(sp);
-    }
-
-    return 0;
-}
-
-static int
-redraw_solid(struct ged *gedp, struct solid *sp)
-{
-    if (sp->s_dmode == _GED_WIREFRAME) {
-	/* replot wireframe */
-	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
-	    RT_FREE_VLIST(&sp->s_vlist);
-	}
-	return draw_solid_wireframe(gedp, sp);
-    } else {
-	/* non-wireframe replot - let's not and say we did */
-	if (gedp->ged_create_vlist_callback !=
-	    GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-	{
-	    (*gedp->ged_create_vlist_callback)(sp);
-	}
-    }
-
-    return 0;
-}
-
 
 /**
  * When performing "ev" on a region, consider whether to process the
@@ -938,7 +700,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     if (_dgcdp != (struct _ged_client_data *)0) {
 	dgcdp = *_dgcdp;            /* struct copy */
     } else {
-	struct ged_view *gvp;
+	struct bview *gvp;
 
 	memset(&dgcdp, 0, sizeof(struct _ged_client_data));
 	dgcdp.gedp = gedp;
@@ -1187,7 +949,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			    /* skip previously draw solid */
 			    continue;
 			}
-			ret = redraw_solid(gedp, sp);
+			ret = redraw_solid(sp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
 			if (ret < 0) {
 			    bu_vls_printf(gedp->ged_result_str,
 				    "%s: %s redraw failure\n", argv[0], argv[i]);
@@ -1340,30 +1102,6 @@ _ged_invent_solid(struct ged *gedp,
 	(*gedp->ged_create_vlist_callback)(sp);
 
     return 0;		/* OK */
-}
-
-
-/*
- * Pass through the solid table and set pointer to appropriate
- * mater structure.
- */
-void
-ged_color_soltab(struct bu_list *hdlp)
-{
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct solid *sp;
-
-    gdlp = BU_LIST_NEXT(display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    color_soltab(sp);
-	}
-
-	gdlp = next_gdlp;
-    }
 }
 
 
@@ -1600,73 +1338,10 @@ ged_ev(struct ged *gedp, int argc, const char *argv[])
     return ged_draw_guts(gedp, argc, argv, 3);
 }
 
-
-struct display_list *
-dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip,
-		 const char *name)
-{
-    struct directory *dp = NULL;
-    struct display_list *gdlp = NULL;
-    char *cp = NULL;
-    int found_namepath = 0;
-    struct db_full_path namepath;
-
-    cp = strrchr(name, '/');
-    if (!cp)
-	cp = (char *)name;
-    else
-	++cp;
-
-    if ((dp = db_lookup(dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	gdlp = GED_DISPLAY_LIST_NULL;
-	goto end;
-    }
-
-    if (db_string_to_path(&namepath, dbip, name) == 0)
-	found_namepath = 1;
-
-    /* Make sure name is not already in the list */
-    gdlp = BU_LIST_NEXT(display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->dl_path)))
-	    goto end;
-
-		if (found_namepath) {
-	    struct db_full_path gdlpath;
-
-	    if (db_string_to_path(&gdlpath, dbip, bu_vls_addr(&gdlp->dl_path)) == 0) {
-		if (db_full_path_match_top(&gdlpath, &namepath)) {
-		    db_free_full_path(&gdlpath);
-		    goto end;
-		}
-
-		db_free_full_path(&gdlpath);
-	    }
-	}
-
-	gdlp = BU_LIST_PNEXT(display_list, gdlp);
-    }
-
-    BU_ALLOC(gdlp, struct display_list);
-    BU_LIST_INIT(&gdlp->l);
-    BU_LIST_INSERT(hdlp, &gdlp->l);
-    BU_LIST_INIT(&gdlp->dl_headSolid);
-    gdlp->dl_dp = (void *)dp;
-    bu_vls_init(&gdlp->dl_path);
-    bu_vls_printf(&gdlp->dl_path, "%s", name);
-
-end:
-    if (found_namepath)
-	db_free_full_path(&namepath);
-
-    return gdlp;
-}
-
 int
 ged_redraw(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
-    struct solid *sp;
     struct display_list *gdlp;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -1680,14 +1355,10 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 	/* redraw everything */
 	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
 	{
-	    for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
-		ret = redraw_solid(gedp, sp);
-		if (ret < 0) {
-		    bu_vls_printf(gedp->ged_result_str,
-			    "%s: %s redraw failure\n", argv[0],
-			    DB_FULL_PATH_CUR_DIR(&sp->s_fullpath)->d_namep);
-		    return GED_ERROR;
-		}
+	    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
+	    if (ret < 0) {
+		bu_vls_printf(gedp->ged_result_str, "%s: redraw failure\n", argv[0]);
+		return GED_ERROR;
 	    }
 	}
     } else {
@@ -1720,13 +1391,11 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 		    found_path = 1;
 		    db_free_full_path(&dl_path);
 
-		    for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
-			ret = redraw_solid(gedp, sp);
-			if (ret < 0) {
-			    bu_vls_printf(gedp->ged_result_str,
-				    "%s: %s redraw failure\n", argv[0], argv[i]);
-			    return GED_ERROR;
-			}
+		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
+		    if (ret < 0) {
+			bu_vls_printf(gedp->ged_result_str,
+				"%s: %s redraw failure\n", argv[0], argv[i]);
+			return GED_ERROR;
 		    }
 		    break;
 		}

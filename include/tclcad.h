@@ -93,7 +93,7 @@ struct ged_dm_view {
     struct bu_vls		gdv_callback;
     struct bu_vls		gdv_edit_motion_delta_callback;
     struct bu_vls		gdv_name;
-    struct ged_view		*gdv_view;
+    struct bview		*gdv_view;
     dm				*gdv_dmp;
     struct fbserv_obj		gdv_fbs;
     struct ged_obj		*gdv_gop;
