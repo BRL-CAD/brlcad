@@ -6356,9 +6356,11 @@ to_is_viewable(struct ged_dm_view *gdvp)
     Tcl_Obj *our_result;
     Tcl_Obj *saved_result;
     int result_int;
-    const char *pathname = bu_vls_addr(&gdvp->gdv_dmp->dm_pathName);
+    const char *pathname = bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp));
 
-    bu_vls_printf(&vls, "winfo viewable %s", bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+    /* stash any existing result so we can inspect our own */
+    saved_result = Tcl_GetObjResult(current_top->to_interp);
+    Tcl_IncrRefCount(saved_result);
 
     if (tclcad_eval(current_top->to_interp, 0, "winfo viewable", 1, &pathname) != TCL_OK) {
 	return 0;
@@ -13947,11 +13949,6 @@ to_output_handler(struct ged *gedp, char *line)
 
     tclcad_eval(current_top->to_interp, 1, script, 1, (const char **)&line);
 }
-
-
-    Tcl_SetObjResult(current_top->to_interp, saved_result);
-    Tcl_DecrRefCount(saved_result);
-    }
 
 HIDDEN int
 to_log_output_handler(void *client_data, void *vpstr)
