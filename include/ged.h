@@ -36,6 +36,7 @@
 #  include <windows.h>
 #endif
 
+#include "solid.h"
 #include "dm/bview.h"
 #include "raytrace.h"
 #include "fbserv_obj.h"
@@ -385,7 +386,6 @@ struct ged_drawable {
     struct bu_list		*gd_headDisplay;		/**< @brief  head of display list */
     struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
-    struct solid		*gd_freeSolids;		/**< @brief  ptr to head of free solid list */
 
     char			**gd_rt_cmd;
     int				gd_rt_cmd_len;

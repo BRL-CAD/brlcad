@@ -323,7 +323,7 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
     struct solid *sp;
 
     if (!existing_sp) {
-	GET_SOLID(sp, &_FreeSolid.l);
+	GET_SOLID(sp);
     } else {
 	sp = existing_sp;
     }
@@ -408,7 +408,7 @@ append_solid_to_display_list(
     }
 
     /* create solid */
-    GET_SOLID(sp, &_FreeSolid.l);
+    GET_SOLID(sp);
 
     sp->s_size = 0;
     VSETALL(sp->s_center, 0.0);
@@ -1449,7 +1449,7 @@ _ged_invent_solid(struct ged *gedp,
     dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
 
     /* Obtain a fresh solid structure, and fill it in */
-    GET_SOLID(sp, &_FreeSolid.l);
+    GET_SOLID(sp);
 
     if (copy) {
 	solid_copy_vlist(sp, (struct bn_vlist *)vhead);

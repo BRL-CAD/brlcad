@@ -76,7 +76,7 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &_FreeSolid.l);
+	    FREE_SOLID(sp);
 	}
 
 	BU_LIST_DEQUEUE(&gdlp->l);

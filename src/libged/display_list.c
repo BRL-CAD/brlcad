@@ -208,7 +208,7 @@ dl_erasePathFromDisplay(struct bu_list *hdlp,
 		}
 
 		BU_LIST_DEQUEUE(&sp->l);
-		FREE_SOLID(sp, &_FreeSolid.l);
+		FREE_SOLID(sp);
 	    }
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
@@ -229,7 +229,7 @@ dl_erasePathFromDisplay(struct bu_list *hdlp,
 			(*callback)(sp->s_dlist, 1);
 
 		    BU_LIST_DEQUEUE(&sp->l);
-		    FREE_SOLID(sp, &_FreeSolid.l);
+		    FREE_SOLID(sp);
 		    need_split = 1;
 		}
 
@@ -281,7 +281,7 @@ eraseAllSubpathsFromSolidList(struct display_list *gdlp,
 		(*callback)(sp->s_dlist, 1);
 
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &_FreeSolid.l);
+	    FREE_SOLID(sp);
 	}
 	sp = nsp;
     }
@@ -376,7 +376,7 @@ _dl_eraseFirstSubpath(struct bu_list *hdlp, struct db_i *dbip,
 	    db_dup_full_path(&dup_path, &sp->s_fullpath);
 	    sp->s_fullpath.fp_len = full_len;
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &_FreeSolid.l);
+	    FREE_SOLID(sp);
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
 
@@ -475,7 +475,7 @@ _dl_freeDisplayListItem (struct db_i *dbip,
 	}
 
 	BU_LIST_DEQUEUE(&sp->l);
-	FREE_SOLID(sp, &_FreeSolid.l);
+	FREE_SOLID(sp);
     }
 
     /* Free up the display list */

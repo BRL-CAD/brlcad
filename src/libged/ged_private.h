@@ -129,10 +129,6 @@ void vls_col_eol(struct bu_vls *str);
 /* defined in facedef.c */
 extern int edarb_facedef(void *data, int argc, const char *argv[]);
 
-/* defined in globals.c */
-extern struct solid _FreeSolid;
-
-
 /* defined in ged.c */
 extern void _ged_print_node(struct ged *gedp,
 			    struct directory *dp,

@@ -694,8 +694,6 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
  * To return all the free "struct bn_vlist" and "struct solid" items
  * lurking on their respective freelists, back to bu_malloc().
  * Primarily as an aid to tracking memory leaks.
- * WARNING:  This depends on knowledge of the macro GET_SOLID in mged/solid.h
- * and RT_GET_VLIST in h/raytrace.h.
  */
 void
 mged_freemem(void)
@@ -704,8 +702,8 @@ mged_freemem(void)
     struct bn_vlist *vp;
 
     FOR_ALL_SOLIDS(sp, &MGED_FreeSolid.l) {
-	GET_SOLID(sp, &MGED_FreeSolid.l);
-	bu_free((void *)sp, "mged_freemem: struct solid");
+	BU_LIST_DEQUEUE(&((sp)->l));
+	FREE_SOLID(sp);
     }
 
     while (BU_LIST_NON_EMPTY(&RTG.rtg_vlfree)) {
