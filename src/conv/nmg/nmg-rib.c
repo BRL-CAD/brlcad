@@ -179,8 +179,6 @@ int main(int ac, char **av)
      */
     if ((arg_index = parse_args(ac, av)) >= ac) usage("No extra args specified\n");
 
-    rt_init_resource( &rt_uniresource, 0, NULL );
-
     /* open the database */
     if ((dbip = db_open(av[arg_index], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(av[arg_index]);

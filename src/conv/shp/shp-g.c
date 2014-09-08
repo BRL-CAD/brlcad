@@ -202,9 +202,6 @@ main(int argc, char *argv[])
 	bu_log("Writing to [%s]\n\n", bu_vls_addr(&vls_out));
     }
 
-    /* initialize single threaded resource */
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     /* open the input */
     shapefile = SHPOpen(bu_vls_addr(&vls_in), "rb");
     if (!shapefile) {

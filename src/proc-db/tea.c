@@ -114,8 +114,6 @@ main(int argc, char **argv)
     	bu_log("       Program continues running:\n");
     }
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     outfp = wdb_fopen("teapot.g");
 
     /* Setup information
