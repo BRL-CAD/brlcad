@@ -32,7 +32,7 @@
 #include "bu.h"
 #include "icv.h"
 
-int outx=0, outy=0;		/* Number of pixels in new map */
+int outx=0, outy=0;		/* Number of pixels (width, height) in new map */
 int xorig=0, yorig=0;		/* Bottom left corner to extract from */
 int inx=512, iny=512;
 char *out_file = NULL;
@@ -40,7 +40,7 @@ char *in_file = NULL;
 
 
 char usage[] = "\
-Usage:  pixrect [-h] [squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
+Usage:  pixrect [-s squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
 			[-x xorig] [-y yorig] [-S out_squaresize] [-o out_file.pix] [file.pix] > [out_file.pix]\n";
 
 
@@ -81,8 +81,7 @@ get_args(int argc, char **argv)
 	    case '#' :
 		bu_log("pixrect: bytes per pixel is not supported.\n");
 		return 0;
-    	    case 'h' :
-	    default : /* '?' */
+	    default : /* '?' 'h' */
 		return 0;
 	}
     }
