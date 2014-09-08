@@ -224,8 +224,6 @@ main(int argc, char *argv[])
     the_model = nmg_mm();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     prog_name = argv[0];
 
     /* Get command line arguments. */

@@ -62,7 +62,7 @@ int GPM_WIDTH;
 int GPM_HEIGHT;
 int GPM_RAYS;			/* Number of Sample Rays for each Direction in Irradiance Hemi */
 double GPM_ATOL;		/* Angular Tolerance for Photon Gathering */
-struct resource *GPM_RTAB;	/* Resource Table for Multi-threading */
+struct resource GPM_RTAB[MAX_PSW];	/* Resource Table for Multi-threading */
 int HitG, HitB;
 
 
@@ -1459,12 +1459,9 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 	ICSize = 0;
 
 	if (cpus > 1) {
-	    GPM_RTAB = (struct resource*)bu_calloc(cpus, sizeof(struct resource), "resource");
-	    for (i = 0; i < cpus; i++) {
-		GPM_RTAB[i].re_cpu = i;
-		GPM_RTAB[i].re_magic = RESOURCE_MAGIC;
-		BU_PTBL_SET(&ap->a_rt_i->rti_resources, i, &GPM_RTAB[i]);
-		rt_init_resource(&GPM_RTAB[i], GPM_RTAB[i].re_cpu, ap->a_rt_i);
+	    memset(GPM_RTAB, 0, sizeof(GPM_RTAB));
+	    for (i = 0; i < MAX_PSW; i++) {
+		rt_init_resource(&GPM_RTAB[i], i, ap->a_rt_i);
 	    }
 	    bu_parallel(IrradianceThread, cpus, ap);
 	} else {
@@ -1497,8 +1494,6 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 	}
 
     }
-    bu_free(GPM_RTAB, "resource");
-    GPM_RTAB = NULL;
 }
 
 

@@ -1553,8 +1553,6 @@ main(int argc, char *argv[])
 	bu_exit(1, "asc2g: can't open files.");
     }
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     bu_vls_extend(&line, SIZE);
     bu_vls_strcpy(&str_title, "title");
     bu_vls_strcpy(&str_put, "put ");

@@ -38,7 +38,7 @@ struct halfedge {
 };
 
 
-static int
+HIDDEN int
 set_edge(struct halfedge *edge, int va, int vb)
 {
     if (va == vb)
@@ -58,7 +58,7 @@ set_edge(struct halfedge *edge, int va, int vb)
 }
 
 
-static int
+HIDDEN int
 halfedge_compare(const void  *pleft, const void *pright)
 {
     const struct halfedge *left = (const struct halfedge *)pleft;
@@ -69,7 +69,7 @@ halfedge_compare(const void  *pleft, const void *pright)
 }
 
 
-static struct halfedge *
+HIDDEN struct halfedge *
 generate_edge_list(const struct rt_bot_internal *bot)
 {
     const size_t num_edges = 3 * bot->num_faces;
@@ -100,7 +100,7 @@ generate_edge_list(const struct rt_bot_internal *bot)
 
 
 int
-bot_is_solid(const struct rt_bot_internal *bot)
+gcv_bot_is_solid(const struct rt_bot_internal *bot)
 {
     const size_t num_edges = 3 * bot->num_faces;
     struct halfedge *edge_list;
@@ -139,7 +139,7 @@ bot_is_solid(const struct rt_bot_internal *bot)
 
 
 int
-bot_is_closed_fan(const struct rt_bot_internal *bot)
+gcv_bot_is_closed_fan(const struct rt_bot_internal *bot)
 {
     const size_t num_edges = 3 * bot->num_faces;
     struct halfedge *edge_list;
@@ -172,7 +172,7 @@ bot_is_closed_fan(const struct rt_bot_internal *bot)
 
 
 int
-bot_is_orientable(const struct rt_bot_internal *bot)
+gcv_bot_is_orientable(const struct rt_bot_internal *bot)
 {
     const size_t num_edges = 3 * bot->num_faces;
     struct halfedge *edge_list;

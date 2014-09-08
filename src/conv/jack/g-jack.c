@@ -439,8 +439,6 @@ main(int argc, char **argv)
 	nmg_eue_dist = 2.0;
     }
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     the_model = nmg_mm();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
