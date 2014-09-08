@@ -212,155 +212,6 @@ wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp
     return curtree;
 }
 
-static union tree *
-append_solid_to_display_list(
-	struct db_tree_state *tsp,
-	const struct db_full_path *pathp,
-	struct rt_db_internal *ip,
-	void *client_data)
-{
-    point_t min, max;
-    struct solid *sp;
-    union tree *curtree;
-    struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
-
-    RT_CK_DB_INTERNAL(ip);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
-    BN_CK_TOL(tsp->ts_tol);
-    RT_CK_RESOURCE(tsp->ts_resp);
-
-    VSETALL(min, INFINITY);
-    VSETALL(max, -INFINITY);
-
-    if (!dgcdp) {
-	return TREE_NULL;
-    }
-
-    if (RT_G_DEBUG & DEBUG_TREEWALK) {
-	char *sofar = db_path_to_string(pathp);
-
-	bu_vls_printf(dgcdp->gedp->ged_result_str,
-		"append_solid_to_display_list(%s) path='%s'\n",
-		ip->idb_meth->ft_name, sofar);
-
-	bu_free((void *)sofar, "path string");
-    }
-
-    /* create solid */
-    GET_SOLID(sp);
-
-    sp->s_size = 0;
-    VSETALL(sp->s_center, 0.0);
-
-    if (ip->idb_meth->ft_bbox) {
-	if (ip->idb_meth->ft_bbox(ip, &min, &max, tsp->ts_tol) < 0) {
-	    bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n",
-		    DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
-
-	    return TREE_NULL;
-	}
-
-	sp->s_center[X] = (min[X] + max[X]) * 0.5;
-	sp->s_center[Y] = (min[Y] + max[Y]) * 0.5;
-	sp->s_center[Z] = (min[Z] + max[Z]) * 0.5;
-
-	sp->s_size = max[X] - min[X];
-	V_MAX(sp->s_size, max[Y] - min[Y]);
-	V_MAX(sp->s_size, max[Z] - min[Z]);
-    } else if (ip->idb_meth->ft_plot) {
-	/* As a fallback for primitives that don't have a bbox function, use
-	 * the old bounding method of calculating a plot for the primitive and
-	 * using the extent of the plotted segments as the bounds.
-	 */
-	int plot_status;
-	struct bu_list vhead;
-	struct bn_vlist *vp;
-
-	BU_LIST_INIT(&vhead);
-
-	plot_status = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
-		tsp->ts_tol, NULL);
-
-	if (plot_status < 0) {
-	    bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n",
-		    DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
-
-	    return TREE_NULL;
-	}
-
-	solid_append_vlist(sp, (struct bn_vlist *)&vhead);
-
-	bound_solid(sp);
-
-	while (BU_LIST_WHILE(vp, bn_vlist, &(sp->s_vlist))) {
-	    BU_LIST_DEQUEUE(&vp->l);
-	    bu_free(vp, "solid vp");
-	}
-    }
-
-    sp->s_vlen = 0;
-    db_dup_full_path(&sp->s_fullpath, pathp);
-    sp->s_flag = DOWN;
-    sp->s_iflag = DOWN;
-
-    if (dgcdp->draw_solid_lines_only) {
-	sp->s_soldash = 0;
-    } else {
-	sp->s_soldash = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
-    }
-
-    sp->s_Eflag = 0;
-    sp->s_regionid = tsp->ts_regionid;
-
-    if (ip->idb_type == ID_GRIP) {
-	float mater_color[3];
-
-	/* Temporarily change mater color for pseudo solid to get the desired
-	 * default color.
-	 */
-	mater_color[RED] = tsp->ts_mater.ma_color[RED];
-	mater_color[GRN] = tsp->ts_mater.ma_color[GRN];
-	mater_color[BLU] = tsp->ts_mater.ma_color[BLU];
-
-	tsp->ts_mater.ma_color[RED] = 0;
-	tsp->ts_mater.ma_color[GRN] = 128;
-	tsp->ts_mater.ma_color[BLU] = 128;
-
-	if (dgcdp->wireframe_color_override) {
-	    solid_set_color_info(sp, (unsigned char *)&(dgcdp->wireframe_color), tsp);
-	} else {
-	    solid_set_color_info(sp, NULL, tsp);
-	}
-
-	tsp->ts_mater.ma_color[RED] = mater_color[RED];
-	tsp->ts_mater.ma_color[GRN] = mater_color[GRN];
-	tsp->ts_mater.ma_color[BLU] = mater_color[BLU];
-
-    } else {
-	if (dgcdp->wireframe_color_override) {
-	    solid_set_color_info(sp, (unsigned char *)&(dgcdp->wireframe_color), tsp);
-	} else {
-	    solid_set_color_info(sp, NULL, tsp);
-	}
-    }
-
-    sp->s_dlist = 0;
-    sp->s_transparency = dgcdp->transparency;
-    sp->s_dmode = dgcdp->dmode;
-    sp->s_hiddenLine = dgcdp->hiddenLine;
-    MAT_COPY(sp->s_mat, tsp->ts_mat);
-
-    /* append solid to display list */
-    bu_semaphore_acquire(RT_SEM_MODEL);
-    BU_LIST_APPEND(dgcdp->gdlp->dl_headSolid.back, &sp->l);
-    bu_semaphore_release(RT_SEM_MODEL);
-
-    /* indicate success by returning something other than TREE_NULL */
-    RT_GET_TREE(curtree, tsp->ts_resp);
-    curtree->tr_op = OP_NOP;
-
-    return curtree;
-}
 
 /**
  * When performing "ev" on a region, consider whether to process the
@@ -904,7 +755,18 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		/* create solids */
 		for (i = 0; i < argc; ++i) {
+		    struct bview_client_data bview_data;
+		    bview_data.draw_solid_lines_only = dgcdp.draw_solid_lines_only;
+		    bview_data.wireframe_color_override = dgcdp.wireframe_color_override;
+		    bview_data.wireframe_color[0]= dgcdp.wireframe_color[0];
+		    bview_data.wireframe_color[1]= dgcdp.wireframe_color[1];
+		    bview_data.wireframe_color[2]= dgcdp.wireframe_color[2];
+		    bview_data.transparency= dgcdp.transparency;
+		    bview_data.dmode = dgcdp.dmode;
+		    bview_data.hiddenLine = dgcdp.hiddenLine;
+
 		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
+		    bview_data.gdlp = dgcdp.gdlp;
 
 		    /* store draw path */
 		    paths_to_draw[i] = dgcdp.gdlp;
@@ -922,7 +784,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       NULL,
 				       wireframe_region_end,
 				       append_solid_to_display_list,
-				       (void *)&dgcdp);
+				       (void *)&bview_data);
 		}
 
 		/* We need to know the view size in order to choose

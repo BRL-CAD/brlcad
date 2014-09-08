@@ -184,6 +184,7 @@ void color_soltab(struct solid *sp);
 void dl_color_soltab(struct bu_list *hdlp);
 int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct solid *));
 int redraw_solid(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct solid *));
+union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
 
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);

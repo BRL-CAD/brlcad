@@ -255,6 +255,15 @@ struct bview {
 };
 
 
+struct bview_client_data {
+    struct display_list *gdlp;
+    int draw_solid_lines_only;
+    int wireframe_color_override;
+    int wireframe_color[3];
+    int transparency;
+    int dmode;
+    int hiddenLine;
+};
 
 
 #endif /* BVIEW_H */
