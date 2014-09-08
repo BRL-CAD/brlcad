@@ -14,6 +14,13 @@ IF(NOT DEFINED BUILD_STATIC_LIBS)
   set(BUILD_STATIC_LIBS ON)
 ENDIF(NOT DEFINED BUILD_STATIC_LIBS)
 
+# Passed to OpenNURBS build to turn on/off any extentions/modifications to the base code
+# specific to BRLCAD. Initially used for unwrapping UV points in a closed surface to
+# allowing for trims that extend over a closed seam.
+# It's an expert's setting at the moment.
+option(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS "Enables BRLCAD related extensions to OpenNURBS" ON)
+mark_as_advanced(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS)
+
 # these are files no longer in opennurbs but retained for reference
 set(OPENNURBS_REF
 opennurbs_basic.cpp
@@ -263,6 +270,12 @@ endif(HAVE_IEEEFP_H)
 if(HAVE_SYS_STAT_H)
   add_definitions(-DHAVE_SYS_STAT_H)
 endif(HAVE_SYS_STAT_H)
+
+IF(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS)
+  add_definitions(
+    -DBRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
+    )
+ENDIF(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS)
 
 IF(BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY AND ${CMAKE_PROJECT_NAME}_ZLIB_BUILD AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
   set(OPENNURBS_LINKLIBRARIES

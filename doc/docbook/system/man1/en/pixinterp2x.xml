@@ -17,7 +17,6 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>pixinterp2x</command>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>squarefilesize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
@@ -29,7 +28,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixinterp2x</emphasis>
+<para><command>pixinterp2x</command>
 does a bilinear interpolation between the pixels of the
 input
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
@@ -43,14 +42,6 @@ the display at its highest resolution.</para>
 interpolation;  the general tool for interpolation is
 <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 <variablelist remap='TP'>
-  <varlistentry>
-  <term><option>-h</option></term>
-  <listitem>
-<para>"hires" flag.
-Set both the height and width of the input to 1024.
-The default is 512x512.</para>
-  </listitem>
-  </varlistentry>
   <varlistentry>
   <term><option>-w </option><replaceable>file_width</replaceable></term>
   <listitem>
@@ -82,7 +73,7 @@ and bottom edge).  This differs from the behavior of
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='bugs'><title>BUGS</title>

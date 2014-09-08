@@ -439,8 +439,6 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "t:a:n:o:r:bvx:P:X:h?")) != -1) {
 	switch (c) {
