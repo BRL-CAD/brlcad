@@ -219,6 +219,7 @@ void dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmd
 
 void dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag);
 
+void dl_write_animate(struct bu_list *hdlp, FILE *fp);
 
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);

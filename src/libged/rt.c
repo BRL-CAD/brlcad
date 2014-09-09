@@ -56,11 +56,7 @@ _ged_rt_write(struct ged *gedp,
 	      FILE *fp,
 	      vect_t eye_model)
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    size_t i;
     quat_t quat;
-    struct solid *sp;
 
     /* Double-precision IEEE floating point only guarantees 15-17
      * digits of precision; single-precision only 6-9 significant
@@ -81,25 +77,7 @@ _ged_rt_write(struct ged *gedp,
 
     dl_bitwise_and_fullpath(gedp->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
-		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
-		    struct animate *anp;
-		    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
-			 anp=anp->an_forw) {
-			db_write_anim(fp, anp);
-		    }
-		    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= RT_DIR_USED;
-		}
-	    }
-	}
-
-	gdlp = next_gdlp;
-    }
+    dl_write_animate(gedp->ged_gdp->gd_headDisplay, fp);
 
     dl_bitwise_and_fullpath(gedp->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
 

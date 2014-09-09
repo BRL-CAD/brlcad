@@ -2324,6 +2324,34 @@ dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag_val)
     }
 }
 
+void
+dl_write_animate(struct bu_list *hdlp, FILE *fp)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    size_t i;
+    struct solid *sp;
+
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+        FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+            for (i = 0; i < sp->s_fullpath.fp_len; i++) {
+                if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
+                    struct animate *anp;
+                    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
+                         anp=anp->an_forw) {
+                        db_write_anim(fp, anp);
+                    }
+                    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= RT_DIR_USED;
+                }
+            }
+        }
+
+        gdlp = next_gdlp;
+    }
+}
 
 /*
  * Local Variables:
