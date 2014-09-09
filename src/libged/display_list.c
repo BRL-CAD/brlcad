@@ -1281,6 +1281,25 @@ dl_set_flag(struct bu_list *hdlp, int flag)
 }
 
 void
+dl_set_wflag(struct bu_list *hdlp, int wflag)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct solid *sp;
+    /* calculate the bounding for of all solids being displayed */
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    sp->s_wflag = wflag;
+	}
+
+	gdlp = next_gdlp;
+    }
+}
+
+void
 dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int))
 {
     struct solid *sp;
