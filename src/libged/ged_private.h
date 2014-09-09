@@ -196,6 +196,7 @@ void dl_set_wflag(struct bu_list *hdlp, int wflag);
 void dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int));
 int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
 void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
+void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image);
 
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);
