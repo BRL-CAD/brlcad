@@ -1312,6 +1312,53 @@ dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, i
     }
 }
 
+int
+dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both)
+{
+    size_t i;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct solid *sp;
+    struct directory **tmp_dpp;
+
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    for (i = 0, tmp_dpp = dpp;
+		    i < sp->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
+		    ++i, ++tmp_dpp) {
+		if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
+		    break;
+	    }
+
+	    if (*tmp_dpp != RT_DIR_NULL)
+		continue;
+
+
+	    /* found a match */
+	    if (sp->s_hiddenLine) {
+		if (both)
+		    bu_vls_printf(vls, "%d 1", _GED_HIDDEN_LINE);
+		else
+		    bu_vls_printf(vls, "%d", _GED_HIDDEN_LINE);
+	    } else {
+		if (both)
+		    bu_vls_printf(vls, "%d %g", sp->s_dmode, sp->s_transparency);
+		else
+		    bu_vls_printf(vls, "%d", sp->s_dmode);
+	    }
+
+	    return 1;
+	}
+
+	gdlp = next_gdlp;
+    }
+
+    return 0;
+}
+
 /*
  * Local Variables:
  * tab-width: 8
