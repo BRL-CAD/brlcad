@@ -222,22 +222,58 @@ ON_Curve *
 sub_curve(const ON_Curve *in, double a, double b)
 {
     ON_Interval dom = in->Domain();
-    ON_Interval sub(a, b);
-    sub.MakeIncreasing();
-    if (!sub.Intersection(dom)) {
-	throw InvalidInterval("sub_curve() interval outside curve domain\n");
+
+    if (b < a) {
+	std::swap(a, b);
     }
 
     ON_Curve *min_to_a = NULL, *a_to_max = NULL;
-    in->Split(sub.m_t[0], min_to_a, a_to_max);
+    ON_Curve *a_to_b = NULL, *b_to_max = NULL;
+    
+    if (a < dom.m_t[0] || b > dom.m_t[1]) {
+	throw InvalidInterval("sub_curve() interval outside curve domain\n");
+    }
+
+    // Note that ON_SQRT_EPSILON is the tolerance used inside
+    // ON_PolylineCurve::Split() to determine if the split parameter
+    // should snap to an end of the domain.
+    if (ON_NearZero(a - dom.m_t[0], ON_SQRT_EPSILON)) {
+	if (ON_NearZero(dom.m_t[1] - b, ON_SQRT_EPSILON)) {
+	    // a == dom.m_t[0] && b == dom.m_t[1]
+	    a_to_b = in->Duplicate();
+	} else {
+	    // a == dom.m_t[0] && b < dom.m_t[1]
+	    in->Split(b, a_to_b, b_to_max);
+	    delete b_to_max;
+	}
+	if (!a_to_b) {
+	    // dom.m_t[0] == a == b
+	    throw InvalidInterval("sub_curve() degenerate interval\n");
+	}
+	return a_to_b;
+    }
+
+    if (ON_NearZero(dom.m_t[1] - b, ON_SQRT_EPSILON)) {
+	// a > dom.m_t[0] && b == dom.m_t[1]
+	in->Split(a, min_to_a, a_to_b);
+	delete min_to_a;
+
+	if (!a_to_b) {
+	    // a == b == dom.m_t[1]
+	    throw InvalidInterval("sub_curve() degenerate interval\n");
+	}
+	return a_to_b;
+    }
+    
+    // a > dom.m_t[0] && b < dom.m_t[1]
+    in->Split(a, min_to_a, a_to_max);
     delete min_to_a;
 
     if (!a_to_max) {
-	// a == b == max
+	// a == b == dom.m_t[1]
 	throw InvalidInterval("sub_curve() interval is degenerate\n");
     }
-    ON_Curve *a_to_b = NULL, *b_to_max = NULL;
-    a_to_max->Split(sub.m_t[1], a_to_b, b_to_max);
+    a_to_max->Split(b, a_to_b, b_to_max);
     delete a_to_max;
     delete b_to_max;
 
