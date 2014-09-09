@@ -1280,6 +1280,37 @@ dl_set_flag(struct bu_list *hdlp, int flag)
     }
 }
 
+void
+dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int))
+{
+    struct solid *sp;
+    struct display_list *gdlp;
+    struct directory *dp;
+
+    while (BU_LIST_WHILE(gdlp, display_list, hdlp)) {
+	if (callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
+	    (*callback)(BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
+		    BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
+		    BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
+
+	while (BU_LIST_WHILE(sp, solid, &gdlp->dl_headSolid)) {
+	    dp = FIRST_SOLID(sp);
+	    RT_CK_DIR(dp);
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+		if (db_dirdelete(dbip, dp) < 0) {
+		    bu_log("ged_zap: db_dirdelete failed\n");
+		}
+	    }
+
+	    BU_LIST_DEQUEUE(&sp->l);
+	    FREE_SOLID(sp);
+	}
+
+	BU_LIST_DEQUEUE(&gdlp->l);
+	bu_vls_free(&gdlp->dl_path);
+	free((void *)gdlp);
+    }
+}
 
 /*
  * Local Variables:

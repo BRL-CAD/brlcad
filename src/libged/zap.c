@@ -44,10 +44,6 @@
 int
 ged_zap(struct ged *gedp, int argc, const char *argv[])
 {
-    struct solid *sp;
-    struct display_list *gdlp;
-    struct directory *dp;
-
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -60,29 +56,7 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    while (BU_LIST_WHILE(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
-	if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
-	    (*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
-					     BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
-					     BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
-
-	while (BU_LIST_WHILE(sp, solid, &gdlp->dl_headSolid)) {
-	    dp = FIRST_SOLID(sp);
-	    RT_CK_DIR(dp);
-	    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
-		if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
-		    bu_vls_printf(gedp->ged_result_str, "ged_zap: db_dirdelete failed\n");
-		}
-	    }
-
-	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp);
-	}
-
-	BU_LIST_DEQUEUE(&gdlp->l);
-	bu_vls_free(&gdlp->dl_path);
-	free((void *)gdlp);
-    }
+    dl_zap(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback);
 
     return GED_OK;
 }
