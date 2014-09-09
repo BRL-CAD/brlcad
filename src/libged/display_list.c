@@ -712,6 +712,8 @@ dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode
 
 }
 
+
+
 static fastf_t
 view_avg_size(struct bview *gvp)
 {
@@ -869,7 +871,7 @@ solid_point_spacing_for_view(
 
 
 static fastf_t
-draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp,  void (*callback)(struct solid *))
+draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp)
 {
     int ret;
     struct bu_list vhead;
@@ -916,29 +918,20 @@ draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *
     /* add plot to solid */
     solid_append_vlist(sp, (struct bn_vlist *)&vhead);
 
-    if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
-	(*callback)(sp);
-    }
-
     return 0;
 }
 
 
 int
-redraw_solid(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct solid *))
+redraw_solid(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp)
 {
     if (sp->s_dmode == _GED_WIREFRAME) {
 	/* replot wireframe */
 	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
 	    RT_FREE_VLIST(&sp->s_vlist);
 	}
-	return draw_solid_wireframe(sp, dbip, tsp, gvp, callback);
-    } else {
-	/* non-wireframe replot - let's not and say we did */
-	if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-	    (*callback)(sp);
+	return draw_solid_wireframe(sp, dbip, tsp, gvp);
     }
-
     return 0;
 }
 
@@ -949,8 +942,11 @@ dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *ts
     int ret = 0;
     struct solid *sp;
     for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
-	ret = redraw_solid(sp, dbip, tsp, gvp, callback);
-	if (ret < 0) return ret;
+	ret += redraw_solid(sp, dbip, tsp, gvp);
+    }
+    for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
+	if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+	    (*callback)(sp);
     }
     return ret;
 }
@@ -2566,12 +2562,16 @@ dl_set_transparency(struct bu_list *hdlp, struct directory **dpp, double transpa
             if (*tmp_dpp != RT_DIR_NULL)
                 continue;
 
-            /* found a match */
-            sp->s_transparency = transparency;
+	    /* found a match */
+	    sp->s_transparency = transparency;
 
-            if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-                (*callback)(sp);
-        }
+	}
+
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+		(*callback)(sp);
+
+	}
 
         gdlp = next_gdlp;
     }
