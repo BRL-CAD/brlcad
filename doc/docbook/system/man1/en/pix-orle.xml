@@ -38,8 +38,7 @@ This program is provided for compatibility with the old RLE image
 tools, and generally should not be used for saving new images,
 except where compatibility with the old tools is a factor.
 The equivalent new tool is
-<citerefentry><refentrytitle>pix-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-.</para>
+<citerefentry><refentrytitle>pix-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 
 <para>If
 <emphasis remap='I'>file.pix</emphasis>
@@ -114,7 +113,7 @@ on standard error as it proceeds through encoding the image.</para>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>liborle</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>liborle</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 
 </refsect1>
 
