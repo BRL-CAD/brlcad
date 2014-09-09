@@ -165,7 +165,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	    sp->s_regionid = tsp->ts_regionid;
     }
 
-    createDListAll(sp);
+    createDListSolid(sp);
 
     /* Solid is successfully drawn */
     if (!existing_sp) {
@@ -346,7 +346,7 @@ invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy)
     BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
 
     sp->s_dlist = 0;
-    createDListAll(sp);
+    createDListSolid(sp);
 
     return 0;		/* OK */
 }

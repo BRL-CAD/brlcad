@@ -270,7 +270,7 @@ createDLists(struct bu_list *hdlp)
  * display manager that has already created the display list)
  */
 void
-createDListAll(struct solid *sp)
+createDListSolid(struct solid *sp)
 {
     struct dm_list *dlp;
     struct dm_list *save_dlp;
@@ -300,6 +300,20 @@ createDListAll(struct solid *sp)
     }
 
     curr_dm_list = save_dlp;
+}
+
+/*
+ * Create a display list for "sp" for every display manager
+ * manager that:
+ * 1 - supports display lists
+ * 2 - is actively using display lists
+ * 3 - has not already been created (i.e. sharing with a
+ * display manager that has already created the display list)
+ */
+void
+createDListAll(struct solid *sp)
+{
+    createDListSolid(sp);
 }
 
 

@@ -13800,9 +13800,8 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
     return TCL_OK;
 }
 
-
 HIDDEN void
-to_create_vlist_callback(struct solid *sp)
+to_create_vlist_callback_solid(struct solid *sp)
 {
     struct ged_dm_view *gdvp;
     register int first = 1;
@@ -13836,6 +13835,13 @@ to_create_vlist_callback(struct solid *sp)
 	    (void)dm_end_dlist(gdvp->gdv_dmp);
 	}
     }
+}
+
+
+HIDDEN void
+to_create_vlist_callback(struct solid *sp)
+{
+    to_create_vlist_callback_solid(sp);
 }
 
 
