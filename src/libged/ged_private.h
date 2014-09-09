@@ -222,11 +222,14 @@ int dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double
 int dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag);
 void dl_set_transparency(struct bu_list *hdlp, struct directory **dpp, double transparency, void (*callback)(struct solid *));
 
-/* Valid inputs for color are RED, GRN and BLU */
-int dl_get_color(long *curr_solid, int color);
-fastf_t dl_get_transparency(long *curr_solid);
-
-struct directory *dl_get_dp(long *curr_solid);
+enum otype {
+    OTYPE_DXF = 1,
+    OTYPE_OBJ,
+    OTYPE_SAT,
+    OTYPE_STL
+};
+void _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name);
+void dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file_ext, int output_type, int *red, int *green, int *blue, fastf_t *alpha);
 
 
 /* defined in draw.c */

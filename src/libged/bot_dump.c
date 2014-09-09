@@ -59,13 +59,6 @@
 static char usage[] = "\
 Usage: %s [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n";
 
-enum otype {
-    OTYPE_DXF = 1,
-    OTYPE_OBJ,
-    OTYPE_SAT,
-    OTYPE_STL
-};
-
 
 struct _ged_bot_dump_client_data {
     struct ged *gedp;
@@ -602,8 +595,8 @@ stl_write_bot_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 }
 
 
-static void
-bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name)
+void
+_ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name)
 {
     int ret;
 
@@ -731,7 +724,7 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 	    break;
 	}
 	} else {
-	  bu_log("bot_dump: non-binay file requested but fp is NULL!\n");
+	  bu_log("_ged_bot_dump: non-binay file requested but fp is NULL!\n");
 	}
       }
     }
@@ -781,7 +774,7 @@ bot_dump_leaf(struct db_tree_state *tsp,
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
-    bot_dump(dp, bot, gbdcdp->fp, gbdcdp->fd, gbdcdp->file_ext, gbdcdp->gedp->ged_wdbp->dbip->dbi_filename);
+    _ged_bot_dump(dp, bot, gbdcdp->fp, gbdcdp->fd, gbdcdp->file_ext, gbdcdp->gedp->ged_wdbp->dbip->dbi_filename);
     rt_db_free_internal(&intern);
 
     return curtree;
@@ -999,7 +992,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    bot_dump(dp, bot, fp, fd, file_ext, gedp->ged_wdbp->dbip->dbi_filename);
+	    _ged_bot_dump(dp, bot, fp, fd, file_ext, gedp->ged_wdbp->dbip->dbi_filename);
 	    rt_db_free_internal(&intern);
 
 	} FOR_ALL_DIRECTORY_END;
@@ -1327,12 +1320,10 @@ data_dump(struct ged *gedp, FILE *fp)
 int
 ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 {
-    int ret, i;
+    int ret;
     char *file_ext = NULL;
     FILE *fp = (FILE *)0;
     int fd = -1;
-    mat_t mat;
-    struct display_list *gdlp;
     const char *cmd_name;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -1507,52 +1498,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
     }
 
-    MAT_IDN(mat);
-
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
-	struct bu_ptbl *solids_tbl = dl_get_solids(gdlp);
-	int solids_cnt = (int)BU_PTBL_LEN(solids_tbl);
-
-	for (i = 0; i < solids_cnt; i++) {
-	    long *solid_item;
-	    struct directory *dp;
-	    struct rt_db_internal intern;
-	    struct rt_bot_internal *bot;
-
-	    solid_item = BU_PTBL_GET(solids_tbl, i);
-	    dp = dl_get_dp(solid_item);
-
-	    /* get the internal form */
-	    ret=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);
-
-	    if (ret < 0) {
-		bu_log("%s: rt_get_internal failure %d on %s\n", cmd_name, ret, dp->d_namep);
-		continue;
-	    }
-
-	    if (ret != ID_BOT) {
-		bu_log("%s: %s is not a bot (ignored)\n", cmd_name, dp->d_namep);
-		rt_db_free_internal(&intern);
-		continue;
-	    }
-
-	    /* Write out object color */
-	    if (output_type == OTYPE_OBJ) {
-		curr_obj_red = dl_get_color(solid_item, RED);
-		curr_obj_green = dl_get_color(solid_item, GRN);
-		curr_obj_blue = dl_get_color(solid_item, BLU);
-		curr_obj_alpha = dl_get_transparency(solid_item);
-	    }
-
-	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    bot_dump(dp, bot, fp, fd, file_ext, gedp->ged_wdbp->dbip->dbi_filename);
-	    rt_db_free_internal(&intern);
-
-	}
-
-	bu_ptbl_free(solids_tbl);
-	bu_free(solids_tbl, "free solids bu_ptbl");
-    }
+    dl_botdump(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, fp, fd, file_ext, output_type, &curr_obj_red, &curr_obj_green, &curr_obj_blue, &curr_obj_alpha);
 
     data_dump(gedp, fp);
 
