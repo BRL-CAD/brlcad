@@ -198,6 +198,18 @@ int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int
 void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
 void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image);
 
+/* When finalized, this stuff belongs in a header file of its own */
+struct polygon_header {
+    uint32_t magic;             /* magic number */
+    int ident;                  /* identification number */
+    int interior;               /* >0 => interior loop, gives ident # of exterior loop */
+    vect_t normal;                      /* surface normal */
+    unsigned char color[3];     /* Color from containing region */
+    int npts;                   /* number of points */
+};
+#define POLYGON_HEADER_MAGIC 0x8623bad2
+void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
+
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);
 fastf_t dl_get_transparency(long *curr_solid);
