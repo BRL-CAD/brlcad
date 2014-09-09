@@ -2171,6 +2171,140 @@ dl_ps(struct bu_list *hdlp, FILE *fp, int border, char *font, char *title, char 
 
 }
 
+
+void
+dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, struct bu_vls *vls)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct solid *sp;
+    struct bn_vlist *vp;
+
+    if (!vlcmds) {
+	/* 
+	 * Given a pointer to a member of the circularly linked list of solids 
+	 * (typically the head), chase the list and print out the information 
+	 * about each solid structure. 
+	 */ 
+	int nvlist;
+	int npts;
+
+	if (dbip == DBI_NULL) return;
+
+	gdlp = BU_LIST_NEXT(display_list, hdlp);
+	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+		if (lvl <= -2) {
+		    /* print only leaves */
+		    bu_vls_printf(vls, "%s ", LAST_SOLID(sp)->d_namep);
+		    continue;
+		}
+
+		db_path_to_vls(vls, &sp->s_fullpath);
+
+		if ((lvl != -1) && (sp->s_iflag == UP))
+		    bu_vls_printf(vls, " ILLUM");
+
+		bu_vls_printf(vls, "\n");
+
+		if (lvl <= 0)
+		    continue;
+
+		/* convert to the local unit for printing */
+		bu_vls_printf(vls, "  cent=(%.3f, %.3f, %.3f) sz=%g ",
+			sp->s_center[X]*dbip->dbi_base2local,
+			sp->s_center[Y]*dbip->dbi_base2local,
+			sp->s_center[Z]*dbip->dbi_base2local,
+			sp->s_size*dbip->dbi_base2local);
+		bu_vls_printf(vls, "reg=%d\n", sp->s_regionid);
+		bu_vls_printf(vls, "  basecolor=(%d, %d, %d) color=(%d, %d, %d)%s%s%s\n",
+			sp->s_basecolor[0],
+			sp->s_basecolor[1],
+			sp->s_basecolor[2],
+			sp->s_color[0],
+			sp->s_color[1],
+			sp->s_color[2],
+			sp->s_uflag?" U":"",
+			sp->s_dflag?" D":"",
+			sp->s_cflag?" C":"");
+
+		if (lvl <= 1)
+		    continue;
+
+		/* Print the actual vector list */
+		nvlist = 0;
+		npts = 0;
+		for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+		    int i;
+		    int nused = vp->nused;
+		    int *cmd = vp->cmd;
+		    point_t *pt = vp->pt;
+
+		    BN_CK_VLIST(vp);
+		    nvlist++;
+		    npts += nused;
+
+		    if (lvl <= 2)
+			continue;
+
+		    for (i = 0; i < nused; i++, cmd++, pt++) {
+			bu_vls_printf(vls, "  %s (%g, %g, %g)\n",
+				rt_vlist_cmd_descriptions[*cmd],
+				V3ARGS(*pt));
+		    }
+		}
+
+		bu_vls_printf(vls, "  %d vlist structures, %d pts\n", nvlist, npts);
+		bu_vls_printf(vls, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist(&(sp->s_vlist)));
+	    }
+
+	    gdlp = next_gdlp;
+	}
+
+    } else {
+	/* 
+	 * Given a pointer to a member of the circularly linked list of solids 
+	 * (typically the head), chase the list and print out the vlist cmds 
+	 * for each structure. 
+	 */ 
+
+	if (dbip == DBI_NULL) return;
+
+	gdlp = BU_LIST_NEXT(display_list, hdlp);
+	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+		bu_vls_printf(vls, "-1 %d %d %d\n",
+			sp->s_color[0],
+			sp->s_color[1],
+			sp->s_color[2]);
+
+		/* Print the actual vector list */
+		for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+		    int i;
+		    int nused = vp->nused;
+		    int *cmd = vp->cmd;
+		    point_t *pt = vp->pt;
+
+		    BN_CK_VLIST(vp);
+
+		    for (i = 0; i < nused; i++, cmd++, pt++)
+			bu_vls_printf(vls, "%d %g %g %g\n", *cmd, V3ARGS(*pt));
+		}
+	    }
+
+	    gdlp = next_gdlp;
+	}
+
+    }
+}
+
+
+
+
 /*
  * Local Variables:
  * tab-width: 8

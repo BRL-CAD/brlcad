@@ -214,6 +214,10 @@ void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
 #define PS_COLOR(_c) ((_c)*(1.0/255.0))
 void dl_ps(struct bu_list *hdlp, FILE *fp, int border, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset, mat_t model2view, fastf_t perspective, vect_t eye_pos, float red, float green, float blue);
 
+
+void dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, struct bu_vls *vls);
+
+
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);
 fastf_t dl_get_transparency(long *curr_solid);
