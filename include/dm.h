@@ -415,7 +415,9 @@ DM_EXPORT extern int dm_draw_display_list(dm *dmp,
 	int line_width,
 	int draw_style,
 	int draw_edit,
-	unsigned char *gdc
+	unsigned char *gdc,
+	int solids_down,
+	int mv_dlist
 	);
 
 __END_DECLS

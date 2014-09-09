@@ -169,7 +169,7 @@ dozoom(int which_eye)
 
 	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 	       	r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
-	       	geometry_default_color);
+	       	geometry_default_color, 1, mged_variables->mv_dlist);
 
 	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
 	if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
@@ -183,7 +183,7 @@ dozoom(int which_eye)
 
 	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 1.0 - SMALL_FASTF, inv_viewsize,
 	       	r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
-	       	geometry_default_color);
+	       	geometry_default_color, 0, mged_variables->mv_dlist);
 
 	/* re-enable write of depth buffer */
 	dm_set_depth_mask(dmp, 1);
@@ -192,7 +192,7 @@ dozoom(int which_eye)
 
 	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
 	       	r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
-	       	geometry_default_color);
+	       	geometry_default_color, 1, mged_variables->mv_dlist);
 
     }
 
@@ -234,7 +234,7 @@ dozoom(int which_eye)
 
     ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, -1.0, inv_viewsize,
 	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
-	    geometry_default_color);
+	    geometry_default_color, 0, mged_variables->mv_dlist);
 
     curr_dm_list->dml_ndrawn += ndrawn;
 

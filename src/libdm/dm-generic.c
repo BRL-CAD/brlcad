@@ -861,7 +861,10 @@ dm_draw_display_list(dm *dmp,
 	int line_width,
 	int draw_style,
 	int draw_edit,
-	unsigned char *gdc)
+	unsigned char *gdc,
+	int solids_down,
+	int mv_dlist
+	)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -874,7 +877,7 @@ dm_draw_display_list(dm *dmp,
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    sp->s_flag = DOWN;              /* Not drawn yet */
+	    if (solids_down) sp->s_flag = DOWN;              /* Not drawn yet */
 
 	    /* If part of object edit, will be drawn below */
 	    if ((sp->s_iflag == UP && !draw_edit) || (sp->s_iflag != UP && draw_edit))
@@ -896,7 +899,21 @@ dm_draw_display_list(dm *dmp,
 
 	    dm_set_line_attr(dmp, line_width, sp->s_soldash);
 
-	    ndrawn += dm_drawSolid(dmp, sp, r, g, b, draw_style, gdc);
+	    if (!draw_edit) {
+		ndrawn += dm_drawSolid(dmp, sp, r, g, b, draw_style, gdc);
+	    } else {
+		if (dm_get_displaylist(dmp) && mv_dlist) {
+		    dm_draw_dlist(dmp, sp->s_dlist);
+		    sp->s_flag = UP;
+		    ndrawn++;
+		} else {
+		    /* draw in immediate mode */
+		    if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+			sp->s_flag = UP;
+			ndrawn++;
+		    }
+		}
+	    }
 	}
 
 	gdlp = next_gdlp;
