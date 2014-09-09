@@ -719,28 +719,17 @@ mged_freemem(void)
 int
 cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
+    void (*tmp_callback)(unsigned int, int) = gedp->ged_free_vlist_callback;
     char *av[2] = {"zap", (char *)0};
 
     CHECK_DBI_NULL;
 
     update_views = 1;
+    gedp->ged_free_vlist_callback = freeDListsAll;
 
     /* FIRST, reject any editing in progress */
     if (STATE != ST_VIEW) {
 	button(BE_REJECT);
-    }
-
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-	freeDListsAll(BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
-		      BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
-		      BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
-
-	gdlp = next_gdlp;
     }
 
     ged_zap(gedp, 1, (const char **)av);
@@ -752,6 +741,8 @@ cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
 
     (void)chg_state(STATE, STATE, "zap");
     solid_list_callback();
+
+    gedp->ged_free_vlist_callback = tmp_callback;
 
     return TCL_OK;
 }
