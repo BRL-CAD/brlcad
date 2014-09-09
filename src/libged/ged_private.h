@@ -187,6 +187,8 @@ extern int redraw_solid(struct solid *sp, struct db_i *dbip, struct db_tree_stat
 extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
 extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct solid *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode);
 int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
+void dl_set_flag(struct bu_list *hdlp, int flag);
+void dl_set_iflag(struct bu_list *hdlp, int iflag);
 
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);

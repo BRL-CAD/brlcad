@@ -1242,6 +1242,45 @@ dl_set_illum(struct display_list *gdlp, const char *obj, int illum)
     return found;
 }
 
+void
+dl_set_iflag(struct bu_list *hdlp, int iflag)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct solid *sp;
+    /* calculate the bounding for of all solids being displayed */
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    sp->s_iflag = iflag;
+	}
+
+	gdlp = next_gdlp;
+    }
+}
+
+void
+dl_set_flag(struct bu_list *hdlp, int flag)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct solid *sp;
+    /* calculate the bounding for of all solids being displayed */
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    sp->s_flag = flag;
+	}
+
+	gdlp = next_gdlp;
+    }
+}
+
+
 /*
  * Local Variables:
  * tab-width: 8
