@@ -33,7 +33,6 @@
 #include <map>
 #include <algorithm>
 #include <sstream>
-#include <stdexcept>
 #include "bio.h"
 
 #include "vmath.h"
@@ -42,6 +41,7 @@
 #include "brep.h"
 #include "raytrace.h"
 #include "debug_plot.h"
+#include "brep_except.h"
 
 DebugPlot *dplot = NULL;
 
@@ -55,36 +55,6 @@ DebugPlot *dplot = NULL;
 // tol value used in ON_3dVector::IsParallelTo(). We use a smaller tolerance
 // than the default one ON_PI/180.
 #define ANGLE_TOL ON_PI/1800.0
-
-class InvalidBooleanOperation : public std::invalid_argument
-{
-public:
-    InvalidBooleanOperation(const std::string &msg = "") : std::invalid_argument(msg) {}
-};
-
-class InvalidGeometry : public std::invalid_argument
-{
-public:
-    InvalidGeometry(const std::string &msg = "") : std::invalid_argument(msg) {}
-};
-
-class AlgorithmError : public std::runtime_error
-{
-public:
-    AlgorithmError(const std::string &msg = "") : std::runtime_error(msg) {}
-};
-
-class GeometryGenerationError : public std::runtime_error
-{
-public:
-    GeometryGenerationError(const std::string &msg = "") : std::runtime_error(msg) {}
-};
-
-class IntervalGenerationError : public std::runtime_error
-{
-public:
-    IntervalGenerationError(const std::string &msg = "") : std::runtime_error(msg) {}
-};
 
 struct IntersectPoint {
     ON_3dPoint m_pt;	// 3D intersection point
@@ -271,7 +241,12 @@ public:
 	if (c == NULL) {
 	    return NULL;
 	}
-	return sub_curve(c, t1, t2);
+	try {
+	    return sub_curve(c, t1, t2);
+	} catch (InvalidInterval &e) {
+	    bu_log("%s", e.what());
+	    return NULL;
+	}
     }
 };
 
@@ -533,12 +508,13 @@ intersect_intervals(const ON_Interval &interval1, const ON_Interval &interval2)
 HIDDEN void
 replace_curve_with_subcurve(ON_Curve *&curve, const ON_Interval &interval)
 {
-    ON_Curve *subcurve = sub_curve(curve, interval.Min(), interval.Max());
-    delete curve;
-    curve = subcurve;
-
-    if (curve == NULL) {
-	throw GeometryGenerationError("replace_curve_with_subcurve(): NULL subcurve\n");
+    try {
+	ON_Curve *subcurve = sub_curve(curve, interval.Min(), interval.Max());
+	delete curve;
+	curve = subcurve;
+    } catch (InvalidInterval &e) {
+	throw GeometryGenerationError("replace_curve_with_subcurve(): NULL "
+		"subcurve\n");
     }
 }
 
@@ -921,9 +897,14 @@ public:
     bool
     IsDegenerate(void)
     {
-	ON_Curve *seg_curve = Curve();
-	double length = 0.0;
+	ON_Curve *seg_curve = NULL;
+	try {
+	    seg_curve = Curve();
+	} catch (InvalidInterval &e) {
+	    return true;
+	}
 
+	double length = 0.0;
 	if (seg_curve->IsLinear(INTERSECTION_TOL)) {
 	    length = seg_curve->PointAtStart().DistanceTo(
 		    seg_curve->PointAtEnd());
@@ -1241,7 +1222,11 @@ construct_loops_from_segments(
 	    // Remove the used segments from the available set.
 	    ON_SimpleArray<ON_Curve *> loop;
 	    for (; i < loop_segs.size(); ++i) {
-		loop.Append(loop_segs[i]->Curve());
+		try {
+		    loop.Append(loop_segs[i]->Curve());
+		} catch (InvalidInterval &e) {
+		    bu_log("%s", e.what());
+		}
 		segments.erase(loop_segs[i]);
 	    }
 	    out.push_back(loop);

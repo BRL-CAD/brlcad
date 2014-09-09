@@ -33,6 +33,7 @@
 #include "raytrace.h"
 #include "vmath.h"
 #include "debug_plot.h"
+#include "brep_except.h"
 
 static unsigned char surface1_color[] = {0, 0, 62};
 static unsigned char surface2_color[] = {62, 0, 0};
@@ -562,10 +563,13 @@ DebugPlot::IsoCSX(
 	    filename << prefix << "_ssx" << ssx_idx << "_isocsx" << isocsx_idx
 		<< "_event" << plot_count++ << ".plot3";
 
-	    ON_Curve *event_curve = sub_curve(isocurve, events[i].m_a[0],
-		    events[i].m_a[1]);
-
-	    Plot3DCurve(event_curve, filename.str().c_str(), overlap_color);
+	    try {
+		ON_Curve *event_curve = sub_curve(isocurve, events[i].m_a[0],
+			events[i].m_a[1]);
+		Plot3DCurve(event_curve, filename.str().c_str(), overlap_color);
+	    } catch (InvalidInterval &e) {
+		std::cerr << "error: IsoCSX event contains degenerate interval\n";
+	    }
 	}
     }
     if (plot_count) {
