@@ -221,6 +221,9 @@ void dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag);
 
 void dl_write_animate(struct bu_list *hdlp, FILE *fp);
 
+int dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag);
+int dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag);
+
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);
 fastf_t dl_get_transparency(long *curr_solid);

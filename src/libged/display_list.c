@@ -2353,6 +2353,239 @@ dl_write_animate(struct bu_list *hdlp, FILE *fp)
     }
 }
 
+
+
+int
+dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag)
+{
+   struct display_list *gdlp = NULL;
+    struct display_list *next_gdlp = NULL;
+    struct solid *sp = NULL;
+    fastf_t vr = 0.0;
+    fastf_t vmin_x = 0.0;
+    fastf_t vmin_y = 0.0;
+    fastf_t vmax_x = 0.0;
+    fastf_t vmax_y = 0.0;
+
+    if (rflag) {
+        vr = vwidth;
+    } else {
+        vmin_x = vx;
+        vmin_y = vy;
+
+        if (vwidth > 0)
+            vmax_x = vx + vwidth;
+        else {
+            vmin_x = vx + vwidth;
+            vmax_x = vx;
+        }
+
+        if (vheight > 0)
+            vmax_y = vy + vheight;
+        else {
+            vmin_y = vy + vheight;
+            vmax_y = vy;
+        }
+    }
+
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+        FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+            point_t vmin, vmax;
+            struct bn_vlist *vp;
+
+            vmax[X] = vmax[Y] = vmax[Z] = -INFINITY;
+            vmin[X] = vmin[Y] = vmin[Z] =  INFINITY;
+
+            for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+                int j;
+                int nused = vp->nused;
+                int *cmd = vp->cmd;
+                point_t *pt = vp->pt;
+                point_t vpt;
+                for (j = 0; j < nused; j++, cmd++, pt++) {
+                    switch (*cmd) {
+                        case BN_VLIST_POLY_START:
+                        case BN_VLIST_POLY_VERTNORM:
+                        case BN_VLIST_TRI_START:
+                        case BN_VLIST_TRI_VERTNORM:
+                        case BN_VLIST_POINT_SIZE:
+                        case BN_VLIST_LINE_WIDTH:
+                            /* attribute, not location */
+                            break;
+                        case BN_VLIST_LINE_MOVE:
+                        case BN_VLIST_LINE_DRAW:
+                        case BN_VLIST_POLY_MOVE:
+                        case BN_VLIST_POLY_DRAW:
+                        case BN_VLIST_POLY_END:
+                        case BN_VLIST_TRI_MOVE:
+                        case BN_VLIST_TRI_DRAW:
+                        case BN_VLIST_TRI_END:
+                            MAT4X3PNT(vpt, model2view, *pt);
+                            V_MIN(vmin[X], vpt[X]);
+                            V_MAX(vmax[X], vpt[X]);
+                            V_MIN(vmin[Y], vpt[Y]);
+                            V_MAX(vmax[Y], vpt[Y]);
+                            V_MIN(vmin[Z], vpt[Z]);
+                            V_MAX(vmax[Z], vpt[Z]);
+                            break;
+                        default: {
+                            bu_vls_printf(vls, "unknown vlist op %d\n", *cmd);
+                        }
+                    }
+                }
+            }
+
+            if (rflag) {
+                point_t vloc;
+                vect_t diff;
+                fastf_t mag;
+
+                VSET(vloc, vx, vy, vmin[Z]);
+                VSUB2(diff, vmin, vloc);
+                mag = MAGNITUDE(diff);
+
+                if (mag > vr)
+                    continue;
+
+                VSET(vloc, vx, vy, vmax[Z]);
+                VSUB2(diff, vmax, vloc);
+                mag = MAGNITUDE(diff);
+
+                if (mag > vr)
+                    continue;
+
+                db_path_to_vls(vls, &sp->s_fullpath);
+                bu_vls_printf(vls, "\n");
+            } else {
+                if (vmin_x <= vmin[X] && vmax[X] <= vmax_x &&
+                    vmin_y <= vmin[Y] && vmax[Y] <= vmax_y) {
+                    db_path_to_vls(vls, &sp->s_fullpath);
+                    bu_vls_printf(vls, "\n");
+                }
+            }
+        }
+
+        gdlp = next_gdlp;
+    }
+
+    return GED_OK;
+}
+
+int
+dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag)
+{
+    struct display_list *gdlp = NULL;
+    struct display_list *next_gdlp = NULL;
+    struct solid *sp = NULL;
+    fastf_t vr = 0.0;
+    fastf_t vmin_x = 0.0;
+    fastf_t vmin_y = 0.0;
+    fastf_t vmax_x = 0.0;
+    fastf_t vmax_y = 0.0;
+
+    if (rflag) {
+        vr = vwidth;
+    } else {
+        vmin_x = vx;
+        vmin_y = vy;
+
+        if (vwidth > 0)
+            vmax_x = vx + vwidth;
+        else {
+            vmin_x = vx + vwidth;
+            vmax_x = vx;
+        }
+
+        if (vheight > 0)
+            vmax_y = vy + vheight;
+        else {
+            vmin_y = vy + vheight;
+            vmax_y = vy;
+        }
+    }
+
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+        FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+            struct bn_vlist *vp;
+
+            for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+                int j;
+                int nused = vp->nused;
+                int *cmd = vp->cmd;
+                point_t *pt = vp->pt;
+                point_t vpt;
+                for (j = 0; j < nused; j++, cmd++, pt++) {
+                    switch (*cmd) {
+                        case BN_VLIST_POLY_START:
+                        case BN_VLIST_POLY_VERTNORM:
+                        case BN_VLIST_TRI_START:
+                        case BN_VLIST_TRI_VERTNORM:
+                            /* Has normal vector, not location */
+                            break;
+                        case BN_VLIST_LINE_MOVE:
+                        case BN_VLIST_LINE_DRAW:
+                        case BN_VLIST_POLY_MOVE:
+                        case BN_VLIST_POLY_DRAW:
+                        case BN_VLIST_POLY_END:
+                        case BN_VLIST_TRI_MOVE:
+                        case BN_VLIST_TRI_DRAW:
+                        case BN_VLIST_TRI_END:
+                            MAT4X3PNT(vpt, model2view, *pt);
+
+                            if (rflag) {
+                                point_t vloc;
+                                vect_t diff;
+                                fastf_t mag;
+
+                                VSET(vloc, vx, vy, vpt[Z]);
+                                VSUB2(diff, vpt, vloc);
+                                mag = MAGNITUDE(diff);
+
+                                if (mag > vr)
+                                    continue;
+
+                                db_path_to_vls(vls, &sp->s_fullpath);
+                                bu_vls_printf(vls, "\n");
+
+                                goto solid_done;
+                           } else {
+                                if (vmin_x <= vpt[X] && vpt[X] <= vmax_x &&
+                                    vmin_y <= vpt[Y] && vpt[Y] <= vmax_y) {
+                                    db_path_to_vls(vls, &sp->s_fullpath);
+                                    bu_vls_printf(vls, "\n");
+
+                                    goto solid_done;
+                                }
+                            }
+
+                            break;
+                        default: {
+                            bu_vls_printf(vls, "unknown vlist op %d\n", *cmd);
+                        }
+                    }
+                }
+            }
+
+            solid_done:
+            ;
+        }
+
+        gdlp = next_gdlp;
+    }
+
+    return GED_OK;
+}
+
+
+
+
+
 /*
  * Local Variables:
  * tab-width: 8
