@@ -181,10 +181,6 @@ extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
 extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, unsigned char *wireframe_color_override, void (*callback)(struct solid *));
 
-extern void bound_solid(struct solid *sp);
-extern void solid_append_vlist(struct solid *sp, struct bn_vlist *vlist);
-extern void solid_set_color_info(struct solid *sp, unsigned char *wireframe_color_override, struct db_tree_state *tsp);
-extern void color_soltab(struct solid *sp);
 extern void dl_color_soltab(struct bu_list *hdlp);
 extern int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct solid *));
 extern int redraw_solid(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct solid *));

@@ -560,7 +560,7 @@ _dl_freeDisplayListItem (struct db_i *dbip,
 }
 
 
-void
+static void
 color_soltab(struct solid *sp)
 {
     const struct mater *mp;
@@ -634,7 +634,7 @@ dl_color_soltab(struct bu_list *hdlp)
  *  * state. If user color isn't set in client data, the solid's region id must be
  *   * set for proper material lookup.
  *    */
-void
+static void
 solid_set_color_info(
 	struct solid *sp,
 	unsigned char *wireframe_color_override,
@@ -670,7 +670,7 @@ solid_set_color_info(
 /**
  *  * Compute the min, max, and center points of the solid.
  *   */
-void
+static void
 bound_solid(struct solid *sp)
 {
     struct bn_vlist *vp;
@@ -696,7 +696,7 @@ bound_solid(struct solid *sp)
 }
 
 
-void
+static void
 solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
 {
     if (BU_LIST_IS_EMPTY(&(sp->s_vlist))) {
