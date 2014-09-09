@@ -29,9 +29,12 @@
 #include <string.h>
 #include "bio.h"
 
+#include "plot3.h"
 #include "solid.h"
 
 #include "./ged_private.h"
+
+
 
 /* defined in draw_calc.cpp */
 extern fastf_t brep_est_avg_curve_len(struct rt_brep_internal *bi);
@@ -1376,6 +1379,155 @@ dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int bot
     }
 
     return 0;
+}
+
+
+void
+dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct solid *sp;
+    struct bn_vlist *vp;
+    static vect_t clipmin, clipmax;
+    static vect_t last;         /* last drawn point */
+    static vect_t fin;
+    static vect_t start;
+    int Dashing;                        /* linetype is dashed */
+
+    if (floating) {
+        pd_3space(fp,
+                  -center[MDX] - scale,
+                  -center[MDY] - scale,
+                  -center[MDZ] - scale,
+                  -center[MDX] + scale,
+                  -center[MDY] + scale,
+                  -center[MDZ] + scale);
+        Dashing = 0;
+        pl_linmod(fp, "solid");
+
+        gdlp = BU_LIST_NEXT(display_list, hdlp);
+        while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+            next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+            FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+                /* Could check for differences from last color */
+                pl_color(fp,
+                         sp->s_color[0],
+                         sp->s_color[1],
+                         sp->s_color[2]);
+                if (Dashing != sp->s_soldash) {
+                    if (sp->s_soldash)
+                        pl_linmod(fp, "dotdashed");
+                    else
+                        pl_linmod(fp, "solid");
+                    Dashing = sp->s_soldash;
+                }
+                rt_vlist_to_uplot(fp, &(sp->s_vlist));
+            }
+
+            gdlp = next_gdlp;
+        }
+
+        return;
+    }
+    /*
+     * Integer output version, either 2-D or 3-D.
+     * Viewing region is from -1.0 to +1.0
+     * which is mapped to integer space -2048 to +2048 for plotting.
+     * Compute the clipping bounds of the screen in view space.
+     */
+    clipmin[X] = -1.0;
+    clipmax[X] =  1.0;
+    clipmin[Y] = -1.0;
+    clipmax[Y] =  1.0;
+    if (Z_clip) {
+        clipmin[Z] = -1.0;
+        clipmax[Z] =  1.0;
+    } else {
+        clipmin[Z] = -1.0e20;
+        clipmax[Z] =  1.0e20;
+    }
+
+    if (Three_D)
+        pl_3space(fp, (int)DG_GED_MIN, (int)DG_GED_MIN, (int)DG_GED_MIN, (int)DG_GED_MAX, (int)DG_GED_MAX, (int)DG_GED_MAX);
+    else
+        pl_space(fp, (int)DG_GED_MIN, (int)DG_GED_MIN, (int)DG_GED_MAX, (int)DG_GED_MAX);
+    pl_erase(fp);
+    Dashing = 0;
+    pl_linmod(fp, "solid");
+
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+        FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+            if (Dashing != sp->s_soldash) {
+                if (sp->s_soldash)
+                    pl_linmod(fp, "dotdashed");
+                else
+                    pl_linmod(fp, "solid");
+                Dashing = sp->s_soldash;
+            }
+            for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+                int i;
+                int nused = vp->nused;
+                int *cmd = vp->cmd;
+                point_t *pt = vp->pt;
+                for (i = 0; i < nused; i++, cmd++, pt++) {
+                    switch (*cmd) {
+                        case BN_VLIST_POLY_START:
+                        case BN_VLIST_POLY_VERTNORM:
+                        case BN_VLIST_TRI_START:
+                        case BN_VLIST_TRI_VERTNORM:
+                            continue;
+                        case BN_VLIST_POLY_MOVE:
+                        case BN_VLIST_LINE_MOVE:
+                        case BN_VLIST_TRI_MOVE:
+                            /* Move, not draw */
+                            MAT4X3PNT(last, model2view, *pt);
+                            continue;
+                        case BN_VLIST_LINE_DRAW:
+                        case BN_VLIST_POLY_DRAW:
+                        case BN_VLIST_POLY_END:
+                        case BN_VLIST_TRI_DRAW:
+                        case BN_VLIST_TRI_END:
+                            /* draw */
+                            MAT4X3PNT(fin, model2view, *pt);
+                            VMOVE(start, last);
+                            VMOVE(last, fin);
+                            break;
+                    }
+                    if (bn_ray_vclip(start, fin, clipmin, clipmax) == 0)
+                        continue;
+
+                    if (Three_D) {
+                        /* Could check for differences from last color */
+                       /* Could check for differences from last color */
+                        pl_color(fp,
+                                 sp->s_color[0],
+                                 sp->s_color[1],
+                                 sp->s_color[2]);
+                        pl_3line(fp,
+                                 (int)(start[X] * DG_GED_MAX),
+                                 (int)(start[Y] * DG_GED_MAX),
+                                 (int)(start[Z] * DG_GED_MAX),
+                                 (int)(fin[X] * DG_GED_MAX),
+                                 (int)(fin[Y] * DG_GED_MAX),
+                                 (int)(fin[Z] * DG_GED_MAX));
+                    } else {
+                        pl_line(fp,
+                                (int)(start[0] * DG_GED_MAX),
+                                (int)(start[1] * DG_GED_MAX),
+                                (int)(fin[0] * DG_GED_MAX),
+                                (int)(fin[1] * DG_GED_MAX));
+                    }
+                }
+            }
+        }
+
+        gdlp = next_gdlp;
+    }
 }
 
 /*

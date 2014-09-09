@@ -66,6 +66,9 @@ __BEGIN_DECLS
 /* Container for defining sub-command structures */
 #define _GED_FUNTAB_UNLIMITED -1
 
+#define DG_GED_MAX 2047.0
+#define DG_GED_MIN -2048.0
+
 struct _ged_funtab {
     char *ft_name;
     char *ft_parms;
@@ -192,6 +195,7 @@ void dl_set_iflag(struct bu_list *hdlp, int iflag);
 void dl_set_wflag(struct bu_list *hdlp, int wflag);
 void dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int));
 int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
+void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
 
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);
