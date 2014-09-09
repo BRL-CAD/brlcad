@@ -2583,6 +2583,41 @@ dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, do
 }
 
 
+void
+dl_set_transparency(struct bu_list *hdlp, struct directory **dpp, double transparency, void (*callback)(struct solid *))
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct solid *sp;
+    size_t i;
+    struct directory **tmp_dpp;
+
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+        FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+            for (i = 0, tmp_dpp = dpp;
+                 i < sp->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
+                 ++i, ++tmp_dpp) {
+                if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
+                    break;
+            }
+
+            if (*tmp_dpp != RT_DIR_NULL)
+                continue;
+
+            /* found a match */
+            sp->s_transparency = transparency;
+
+            if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+                (*callback)(sp);
+        }
+
+        gdlp = next_gdlp;
+    }
+
+}
 
 
 
