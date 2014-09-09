@@ -210,6 +210,10 @@ struct polygon_header {
 #define POLYGON_HEADER_MAGIC 0x8623bad2
 void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
 
+#define PS_COORD(_x) ((int)((_x)+2048))
+#define PS_COLOR(_c) ((_c)*(1.0/255.0))
+void dl_ps(struct bu_list *hdlp, FILE *fp, int border, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset, mat_t model2view, fastf_t perspective, vect_t eye_pos, float red, float green, float blue);
+
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);
 fastf_t dl_get_transparency(long *curr_solid);
