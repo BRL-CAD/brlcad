@@ -61,13 +61,6 @@ struct solid  {
     mat_t s_mat;		/**< @brief mat to use for internal lookup */
 };
 
-
-/*
- * "Standard" flag settings
- */
-#define UP	0
-#define DOWN	1
-
 #define SOLID_NULL	((struct solid *)0)
 
 #define GET_SOLID(p) { \

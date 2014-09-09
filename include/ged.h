@@ -36,7 +36,6 @@
 #  include <windows.h>
 #endif
 
-#include "solid.h"
 #include "dm/bview.h"
 #include "raytrace.h"
 #include "fbserv_obj.h"

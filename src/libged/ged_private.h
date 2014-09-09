@@ -34,7 +34,6 @@
 #include "mater.h"
 #include "rtgeom.h"
 #include "ged.h"
-#include "solid.h"
 
 __BEGIN_DECLS
 

@@ -35,6 +35,13 @@
 #include "bu/vls.h"
 #include "vmath.h"
 
+#ifndef UP
+#  define UP 0
+#endif
+#ifndef DOWN
+#  define DOWN 1
+#endif
+
 struct display_list {
     struct bu_list      l;
     void               *dl_dp;                 /* Normally this will be a struct directory pointer */
