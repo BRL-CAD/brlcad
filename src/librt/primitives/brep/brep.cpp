@@ -3478,7 +3478,7 @@ CloseOpenLoops(
 				} else if (seam_begin == 2) {
 
 				} else {
-				    //bothf needed
+				    //both needed
 				}
 
 			    } else { //assume on other end
@@ -3735,7 +3735,7 @@ PerformClosedSurfaceChecks(
     // extend loop points over closed seam if needed.
     ExtendPointsOverClosedSeam(s, face, brep_loop_points);
 
-    // shift open loops that straddle a closed seam with the intent of closutre at the surface boundary.
+    // shift open loops that straddle a closed seam with the intent of closure at the surface boundary.
     ShiftLoopsThatStraddleSeam(s, face, brep_loop_points, same_point_tolerance);
 
     // process through closing open loops that begin and end on closed seam

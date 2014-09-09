@@ -40,8 +40,8 @@ char *in_file = NULL;
 
 
 char usage[] = "\
-Usage:  pixrect [-s squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
-			[-x xorig] [-y yorig] [-S out_squaresize] [-o out_file.pix] [file.pix] > [out_file.pix]\n";
+Usage:  pixrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height]\n\
+			[-x xorig] [-y yorig] [-o out_file.pix] [file.pix] > [out_file.pix]\n";
 
 
 static int
@@ -54,20 +54,20 @@ get_args(int argc, char **argv)
 	    case 's':
 		inx = iny = atoi(bu_optarg);
 		break;
-	    case 'W':
-		outx = atoi(bu_optarg);
-		break;
 	    case 'w':
 		inx = atoi(bu_optarg);
-		break;
-	    case 'N':
-		outy = atoi(bu_optarg);
 		break;
 	    case 'n':
 		iny = atoi(bu_optarg);
 		break;
 	    case 'S':
 		outy = outx = atoi(bu_optarg);
+		break;
+	    case 'W':
+		outx = atoi(bu_optarg);
+		break;
+	    case 'N':
+		outy = atoi(bu_optarg);
 		break;
 	    case 'x':
 		xorig = atoi(bu_optarg);
@@ -81,7 +81,7 @@ get_args(int argc, char **argv)
 	    case '#' :
 		bu_log("pixrect: bytes per pixel is not supported.\n");
 		return 0;
-	    default : /* '?' 'h' */
+	    default : /* '?' , 'h' */
 		return 0;
 	}
     }
@@ -125,7 +125,6 @@ main(int argc, char **argv)
     icv_write(img, out_file, ICV_IMAGE_PIX);
 
     icv_destroy(img);
-
     return 0;
 }
 
