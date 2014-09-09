@@ -667,44 +667,37 @@ solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
 }
 
 void
-dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *))
+dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *))
 {
     struct solid *sp;
-
-    if (!existing_sp) {
-	GET_SOLID(sp);
-    } else {
-	sp = existing_sp;
-    }
+    GET_SOLID(sp);
 
     solid_append_vlist(sp, (struct bn_vlist *)vhead);
 
     bound_solid(sp);
 
-    if (!existing_sp) {
-	db_dup_full_path(&sp->s_fullpath, pathp);
+    db_dup_full_path(&sp->s_fullpath, pathp);
 
-	sp->s_flag = DOWN;
-	sp->s_iflag = DOWN;
-	sp->s_soldash = dashflag;
-	sp->s_Eflag = 0;
+    sp->s_flag = DOWN;
+    sp->s_iflag = DOWN;
+    sp->s_soldash = dashflag;
+    sp->s_Eflag = 0;
 
-	if (tsp) {
-	    sp->s_regionid = tsp->ts_regionid;
-	}
-
-	solid_set_color_info(sp, wireframe_color_override, tsp);
-
-	sp->s_dlist = 0;
-	sp->s_transparency = transparency;
-	sp->s_dmode = dmode;
-	sp->s_hiddenLine = hiddenLine;
-
-	/* append solid to display list */
-	bu_semaphore_acquire(RT_SEM_MODEL);
-	BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
-	bu_semaphore_release(RT_SEM_MODEL);
+    if (tsp) {
+	sp->s_regionid = tsp->ts_regionid;
     }
+
+    solid_set_color_info(sp, wireframe_color_override, tsp);
+
+    sp->s_dlist = 0;
+    sp->s_transparency = transparency;
+    sp->s_dmode = dmode;
+    sp->s_hiddenLine = hiddenLine;
+
+    /* append solid to display list */
+    bu_semaphore_acquire(RT_SEM_MODEL);
+    BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
+    bu_semaphore_release(RT_SEM_MODEL);
 
     if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
 	(*callback)(gdlp);

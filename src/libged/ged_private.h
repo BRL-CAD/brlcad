@@ -179,7 +179,7 @@ extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int p
 /* Returns a bu_ptbl of all solids referenced by the display list */
 extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
-extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *));
+extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *));
 
 extern void dl_color_soltab(struct bu_list *hdlp);
 extern int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *));
@@ -245,7 +245,6 @@ extern void _ged_drawH_part2(int dashflag,
 			     struct bu_list *vhead,
 			     const struct db_full_path *pathp,
 			     struct db_tree_state *tsp,
-			     struct solid *existing_sp,
 			     struct _ged_client_data *dgcdp);
 
 /* defined in edbot.c */

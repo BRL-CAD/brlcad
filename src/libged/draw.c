@@ -86,7 +86,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		BU_LIST_INIT(&vhead);
 
 		(void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 	    } else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
 		    (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP)) {
 		struct bu_list vhead;
@@ -94,7 +94,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		BU_LIST_INIT(&vhead);
 
 		(void)rt_brep_plot_poly(&vhead, pathp, ip, tsp->ts_ttol, tsp->ts_tol, NULL);
-		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 	    } else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
 		       ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
 		struct bu_list vhead;
@@ -102,7 +102,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		BU_LIST_INIT(&vhead);
 
 		(void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 	    } else {
 		/* save shaded mode states */
 		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
@@ -132,21 +132,21 @@ draw_check_leaf(struct db_tree_state *tsp,
 		    BU_LIST_INIT(&vhead);
 
 		    (void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		    _ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 		} else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
 			struct bu_list vhead;
 
 			BU_LIST_INIT(&vhead);
 
 			(void)rt_brep_plot_poly(&vhead, pathp, ip, tsp->ts_ttol, tsp->ts_tol, NULL);
-		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		    _ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 		} else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
 		    struct bu_list vhead;
 
 		    BU_LIST_INIT(&vhead);
 
 		    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		    _ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 		} else
 		    _ged_drawtrees(dgcdp->gedp, ac, av, 3, (struct _ged_client_data *)client_data);
 	    } else {
@@ -183,13 +183,13 @@ draw_check_leaf(struct db_tree_state *tsp,
  * This routine must be prepared to run in parallel.
  */
 void
-_ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct _ged_client_data *dgcdp)
+_ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp)
 {
 
     if (dgcdp->wireframe_color_override) {
-	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, existing_sp, (unsigned char *)&(dgcdp->wireframe_color), dgcdp->gedp->ged_create_vlist_callback);
+	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, (unsigned char *)&(dgcdp->wireframe_color), dgcdp->gedp->ged_create_vlist_callback);
     } else {
-	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, existing_sp, NULL, dgcdp->gedp->ged_create_vlist_callback);
+	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, NULL, dgcdp->gedp->ged_create_vlist_callback);
     }
 }
 
@@ -326,7 +326,7 @@ out:
 
 	/* Successful fastpath drawing of this solid */
 	db_add_node_to_full_path(&pp, dp);
-	_ged_drawH_part2(0, &vhead, &pp, tsp, SOLID_NULL, dgcdp);
+	_ged_drawH_part2(0, &vhead, &pp, tsp, dgcdp);
 
 	db_free_full_path(&pp);
     }
@@ -469,7 +469,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	}
 	nmg_r_to_vlist(&vhead, r, style);
 
-	_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+	_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 
 	if (dgcdp->draw_edge_uses) {
 	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1);

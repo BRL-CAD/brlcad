@@ -2153,7 +2153,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 		bu_ptbl_reset(&dgcdp->leaf_list);
 		ts.ts_mater = rp->reg_mater;
 		db_string_to_path(&path, gedp->ged_wdbp->dbip, rp->reg_name);
-		_ged_drawH_part2(0, &vhead, &path, &ts, SOLID_NULL, dgcdp);
+		_ged_drawH_part2(0, &vhead, &path, &ts, dgcdp);
 		db_free_full_path(&path);
 	    }
 	    /* do not do an rt_free_rti() (closes the database!!!!) */
