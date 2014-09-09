@@ -27,7 +27,7 @@
 
 #include "vmath.h"
 #include "mater.h"
-#include "solid.h"
+
 
 #include "ged.h"
 #include "./ged_private.h"

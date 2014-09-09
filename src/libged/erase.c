@@ -29,7 +29,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "solid.h"
+
 
 #include "./ged_private.h"
 

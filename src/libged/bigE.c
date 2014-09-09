@@ -39,7 +39,6 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "rtfunc.h"
-#include "solid.h"
 
 #include "./ged_private.h"
 

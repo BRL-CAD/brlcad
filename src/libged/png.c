@@ -36,7 +36,7 @@
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "bn.h"
-#include "solid.h"
+
 
 #include "./ged_private.h"
 

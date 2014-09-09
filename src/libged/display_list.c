@@ -30,8 +30,8 @@
 #include "bio.h"
 
 #include "plot3.h"
-#include "solid.h"
 
+#include "solid.h"
 #include "./ged_private.h"
 
 

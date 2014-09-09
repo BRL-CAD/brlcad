@@ -25,7 +25,7 @@
 
 #include "bu/getopt.h"
 #include "ged.h"
-#include "solid.h"
+
 
 #include "./ged_private.h"
 

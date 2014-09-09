@@ -33,7 +33,7 @@
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "mater.h"
-#include "solid.h"
+
 
 #include "./ged_private.h"
 

@@ -32,7 +32,7 @@
 
 
 #include "bu/getopt.h"
-#include "solid.h"
+
 #include "raytrace.h"
 
 #include "./joint.h"
