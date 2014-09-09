@@ -217,6 +217,8 @@ void dl_ps(struct bu_list *hdlp, FILE *fp, int border, char *font, char *title, 
 
 void dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, struct bu_vls *vls);
 
+void dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag);
+
 
 /* Valid inputs for color are RED, GRN and BLU */
 int dl_get_color(long *curr_solid, int color);

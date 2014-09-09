@@ -2302,7 +2302,27 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
     }
 }
 
+void
+dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag_val)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    size_t i;
+    struct solid *sp;
 
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+        FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+            for (i = 0; i < sp->s_fullpath.fp_len; i++) {
+                DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= flag_val;
+            }
+        }
+
+        gdlp = next_gdlp;
+    }
+}
 
 
 /*
