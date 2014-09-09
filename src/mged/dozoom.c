@@ -311,9 +311,12 @@ createDListSolid(struct solid *sp)
  * display manager that has already created the display list)
  */
 void
-createDListAll(struct solid *sp)
+createDListAll(struct display_list *gdlp)
 {
-    createDListSolid(sp);
+    struct solid *sp;
+    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	createDListSolid(sp);
+    }
 }
 
 

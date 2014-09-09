@@ -667,7 +667,7 @@ solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
 }
 
 void
-dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, unsigned char *wireframe_color_override, void (*callback)(struct solid *))
+dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *))
 {
     struct solid *sp;
 
@@ -707,7 +707,7 @@ dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode
     }
 
     if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
-	(*callback)(sp);
+	(*callback)(gdlp);
     }
 
 }
@@ -937,17 +937,15 @@ redraw_solid(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, str
 
 
 int
-dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct solid *))
+dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *))
 {
     int ret = 0;
     struct solid *sp;
     for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
 	ret += redraw_solid(sp, dbip, tsp, gvp);
     }
-    for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
-	if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-	    (*callback)(sp);
-    }
+    if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+	(*callback)(gdlp);
     return ret;
 }
 
@@ -1106,7 +1104,7 @@ solid_copy_vlist(struct solid *sp, struct bn_vlist *vlist)
 }
 
 int invent_solid(struct bu_list *hdlp, struct db_i *dbip,
-       	void (*callback_create)(struct solid *), void (*callback_free)(unsigned int, int),
+       	void (*callback_create)(struct display_list *), void (*callback_free)(unsigned int, int),
        	char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode)
 {
     struct directory *dp;
@@ -1171,7 +1169,7 @@ int invent_solid(struct bu_list *hdlp, struct db_i *dbip,
     color_soltab(sp);
 
     if (callback_create != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-	(*callback_create)(sp);
+	(*callback_create)(gdlp);
 
     return 0;           /* OK */
 
@@ -2539,7 +2537,7 @@ dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, do
 
 
 void
-dl_set_transparency(struct bu_list *hdlp, struct directory **dpp, double transparency, void (*callback)(struct solid *))
+dl_set_transparency(struct bu_list *hdlp, struct directory **dpp, double transparency, void (*callback)(struct display_list *))
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -2567,11 +2565,8 @@ dl_set_transparency(struct bu_list *hdlp, struct directory **dpp, double transpa
 
 	}
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-		(*callback)(sp);
-
-	}
+	if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+	    (*callback)(gdlp);
 
         gdlp = next_gdlp;
     }

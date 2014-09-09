@@ -939,7 +939,7 @@ HIDDEN void to_dm_get_display_image(struct ged *gedp, unsigned char **idata);
 HIDDEN void to_fbs_callback();
 HIDDEN int to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 
-HIDDEN void to_create_vlist_callback(struct solid *sp);
+HIDDEN void to_create_vlist_callback(struct display_list *gdlp);
 HIDDEN void to_free_vlist_callback(unsigned int dlist, int range);
 HIDDEN void to_refresh_all_views(struct tclcad_obj *top);
 HIDDEN void to_refresh_view(struct ged_dm_view *gdvp);
@@ -13839,9 +13839,12 @@ to_create_vlist_callback_solid(struct solid *sp)
 
 
 HIDDEN void
-to_create_vlist_callback(struct solid *sp)
+to_create_vlist_callback(struct display_list *gdlp)
 {
-    to_create_vlist_callback_solid(sp);
+    struct solid *sp;
+    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	to_create_vlist_callback_solid(sp);
+    }
 }
 
 
