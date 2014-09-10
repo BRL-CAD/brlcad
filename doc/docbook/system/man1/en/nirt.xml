@@ -24,11 +24,11 @@
 
   <refsection xml:id="description"><title>DESCRIPTION</title>
   <para>
-    <emphasis remap="I">Nirt</emphasis> operates on the specified <emphasis remap="I">objects</emphasis>
+    <command>nirt</command> operates on the specified <emphasis remap="I">objects</emphasis>
     in the database <emphasis remap="I">model.g,</emphasis> using
     <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
     to trace rays according to commands read from the standard input and producing an ASCII report of the results.
-    By default, the user can interact with <emphasis remap="I">NIRT,</emphasis> repeatedly specifying
+    By default, the user can interact with <command>nirt</command>, repeatedly specifying
     origination points and directions for rays and the format and destination for the reports.
     Locations may be input and output in either model coordinates (<emphasis remap="I">x</emphasis>,
     <emphasis remap="I">y</emphasis>, <emphasis remap="I">z</emphasis>) or view (a.k.a. grid-plane)
@@ -59,7 +59,7 @@
 	  view-rotation matrix (old format) from the standard input,
 	  and fire a single ray from the point in the specified direction.
 	  This option allows <command>nirt</command> to be called directly
-	  from within <emphasis remap="I">mged</emphasis>
+	  from within <command>mged</command>
 	  using the <command>nirt</command> and
 	  <emphasis remap="B" role="B">rrt</emphasis> commands.
 	</para>
@@ -206,7 +206,7 @@
   </variablelist>
 
   <para>
-    <command>Nirt</command> will check in two places for a <filename>.nirtrc</filename>
+    <command>nirt</command> will check in two places for a <filename>.nirtrc</filename>
     file - first in the current directory, and if it is not found there, in the user's home directory.
     If found, <command>nirt</command> begins by reading from it.  This start-up file may contain any
     <command>nirt</command> commands and is useful for loading predefined states
@@ -494,7 +494,7 @@
 <refsection xml:id="output_statements"><title>Output Statements</title>
 
   <para>
-    <emphasis remap="I">Nirt</emphasis> allows the user a high degree of control,
+    <command>nirt</command> allows the user a high degree of control,
     via the <emphasis remap="I">fmt</emphasis> command, over what information gets printed
     out for each ray and in what format. There are six types of output statements,
     each of which is executed under appropriate circumstances.
