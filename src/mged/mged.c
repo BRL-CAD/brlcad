@@ -67,7 +67,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "dg.h"
 #include "mater.h"
 #include "libtermio.h"
 #include "db.h"
@@ -2528,7 +2527,6 @@ mged_refresh_handler(void *UNUSED(clientdata))
     refresh();
 }
 
-
 /**
  * Close the current database, if open, and then open a new database.
  * May also open a display manager, if interactive and none selected
@@ -2796,32 +2794,24 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     (void)db_clone_dbi(dbip, NULL);
 
     /* Establish LIBWDB TCL access to both disk and in-memory databases */
-    if (wdb_init_obj(interpreter, wdbp, MGED_DB_NAME) != TCL_OK) {
-	bu_vls_printf(&msg, "%s\n%s\n", Tcl_GetStringResult(interpreter), Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
-	Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
-	bu_vls_free(&msg);
 
-	/* release any allocated memory */
-	ged_free(gedp);
-	bu_free((void *)gedp, "struct ged");
-	gedp = NULL;
+    /* initialize rt_wdb */
+    bu_vls_init(&wdbp->wdb_name);
+    bu_vls_strcpy(&wdbp->wdb_name, MGED_DB_NAME);
 
-	return TCL_ERROR;
-    }
+    BU_LIST_INIT(&wdbp->wdb_observers.l);
+    wdbp->wdb_interp = interpreter;
+
+    /* append to list of rt_wdb's */
+    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &wdbp->l);
 
     /* This creates a "db" command object */
-    if (wdb_create_cmd(wdbp, MGED_DB_NAME) != TCL_OK) {
-	bu_vls_printf(&msg, "%s\n%s\n", Tcl_GetStringResult(interpreter), Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
-	Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
-	bu_vls_free(&msg);
 
-	/* release any allocated memory */
-	ged_free(gedp);
-	bu_free((void *)gedp, "struct ged");
-	gedp = NULL;
+    /* Beware, returns a "token", not TCL_OK. */
+    (void)Tcl_CreateCommand(wdbp->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)wdbp, wdb_deleteProc);
 
-	return TCL_ERROR;
-    }
+    /* Return new function name as result */
+    Tcl_AppendResult(wdbp->wdb_interp, MGED_DB_NAME, (char *)NULL);
 
     /* This creates the ".inmem" in-memory geometry container and sets
      * up the GUI.

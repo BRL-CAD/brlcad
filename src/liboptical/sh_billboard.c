@@ -101,7 +101,7 @@ struct bbd_specific bbd_defaults = {
 #define SHDR_O(m) bu_offsetof(struct bbd_specific, m)
 
 /* local sp_hook function */
-void new_image(const struct bu_structparse *, const char *, void *, const char *);
+void new_image(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 
 /* description of how to parse/print the arguments to the shader
@@ -126,7 +126,8 @@ void
 new_image(const struct bu_structparse *UNUSED(sdp),
 	  const char *UNUSED(name),
 	  void *base,
-	  const char *UNUSED(value))
+	  const char *UNUSED(value),
+	  void *UNUSED(data))
 {
     struct bbd_specific *bbd_sp = (struct bbd_specific *)base;
     struct bbd_img *bbdi;
@@ -214,7 +215,7 @@ bbd_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mf
     bbd_sp->img_count = 0;
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, bbd_parse_tab, (char *)bbd_sp) < 0)
+    if (bu_struct_parse(matparm, bbd_parse_tab, (char *)bbd_sp, NULL) < 0)
 	return -1;
 
     if (bbd_sp->img_count > MAX_IMAGES) {

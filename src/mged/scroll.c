@@ -144,7 +144,7 @@ sl_toggle_scroll(void)
 	const char name[] = "name";
 	void *base = 0;
 	const char value[] = "value";
-	set_scroll_private(sdp, name, base, value);
+	set_scroll_private(sdp, name, base, value, NULL);
     }
 }
 

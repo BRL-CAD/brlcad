@@ -137,7 +137,7 @@ cook_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
     pp->rd[1] = fresnel(0.0, pp->n[1]) * M_1_PI;
     pp->rd[2] = fresnel(0.0, pp->n[2]) * M_1_PI;
 
-    if (bu_struct_parse(matparm, cook_parse, (char *)pp) < 0) {
+    if (bu_struct_parse(matparm, cook_parse, (char *)pp, NULL) < 0) {
 	BU_PUT(pp, struct cook_specific);
 	return -1;
     }
@@ -177,7 +177,7 @@ cmirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, co
     pp->rd[1] = fresnel(0.0, pp->n[1]) * M_1_PI;
     pp->rd[2] = fresnel(0.0, pp->n[2]) * M_1_PI;
 
-    if (bu_struct_parse(matparm, cook_parse, (char *)pp) < 0)
+    if (bu_struct_parse(matparm, cook_parse, (char *)pp, NULL) < 0)
 	return -1;
 
     pp->m2 = (pp->m < 0.001) ? 0.0001 : pp->m * pp->m;
@@ -215,7 +215,7 @@ cglass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
     pp->rd[1] = fresnel(0.0, pp->n[1]) * M_1_PI;
     pp->rd[2] = fresnel(0.0, pp->n[2]) * M_1_PI;
 
-    if (bu_struct_parse(matparm, cook_parse, (char *)pp) < 0)
+    if (bu_struct_parse(matparm, cook_parse, (char *)pp, NULL) < 0)
 	return -1;
 
     pp->m2 = (pp->m < 0.001) ? 0.0001 : pp->m * pp->m;
