@@ -39,7 +39,6 @@ set(public_hdrs
   nurb.h
   obj.h
   optical.h
-  orle.h
   photonmap.h
   pc.h
   pkg.h
