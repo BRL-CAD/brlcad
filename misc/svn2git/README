@@ -41,7 +41,7 @@ http://www.midwesternmac.com/blogs/jeff-geerling/switching-svn-repository-svn2gi
 To incrementally build up a git repo that is mirroring an svn repo without having
 to re-run the whole process, svn2git has a --resume-from option.
 
-TODO - A *really* ambituous goal would be to have all the src/other projects be their own
+TODO - A *really* ambitious goal would be to have all the src/other projects be their own
 git projects and have them use whatever the proper git sub-project inclusion mechanism
 is.  We've extracted the utahrle work, so it is possible to do at least the first part
 (albeit a lot of work) but the second bit is unclear.
