@@ -179,7 +179,7 @@
 	 irrelevant or the purpose of the resulting model is strictly
 	 visualization. Use 'plate bot' or 'plate-nocos bot' when open
 	 surfaces must have a defined thickness. Note: An incorrect
-	 plate thickness can create geometry overlaps. Use the '-h'
+	 plate thickness can create geometry overlaps. Use the '-H'
 	 option to define plate thickness.
 	</para>
       </listitem>
@@ -316,7 +316,7 @@
   <example><title>BOT via NMG Conversion</title>
 
     <para>
-      <userinput>obj-g -m v -o p -h 5 -g o -v -v input.obj output.g 2&gt; output.log</userinput>
+      <userinput>obj-g -m v -o p -H 5 -g o -v -v input.obj output.g 2&gt; output.log</userinput>
     </para>
     <para>
      Convert obj file 'input.obj' to BRL-CAD database file 'output.g' using
