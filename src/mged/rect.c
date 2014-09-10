@@ -71,7 +71,8 @@ void
 rb_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		  const char *UNUSED(name),
 		  void *UNUSED(base),
-		  const char *UNUSED(value))
+		  const char *UNUSED(value),
+		void *UNUSED(data))
 {
     struct dm_list *dmlp;
 
@@ -113,10 +114,11 @@ void
 set_rect(const struct bu_structparse *sdp,
 	 const char *name,
 	 void *base,
-	 const char *value)
+	 const char *value,
+	 void *data)
 {
     rect_image2view();
-    rb_set_dirty_flag(sdp, name, base, value);
+    rb_set_dirty_flag(sdp, name, base, value, data);
 }
 
 
@@ -320,7 +322,7 @@ zoom_rect_area(void)
 	const char name[] = "name";
 	void *base = 0;
 	const char value[] = "value";
-	rb_set_dirty_flag(sdp, name, base, value);
+	rb_set_dirty_flag(sdp, name, base, value, NULL);
     }
 }
 

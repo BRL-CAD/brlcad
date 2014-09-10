@@ -101,7 +101,7 @@ fbm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     if (rdebug&RDEBUG_SHADE)
 	bu_log("fbm_setup\n");
 
-    if (bu_struct_parse(matparm, fbm_parse, (char *)fbm) < 0)
+    if (bu_struct_parse(matparm, fbm_parse, (char *)fbm, NULL) < 0)
 	return -1;
 
     if (rdebug&RDEBUG_SHADE)

@@ -45,7 +45,7 @@ HIDDEN void stxt_print(register struct region *rp, void *dp);
 HIDDEN void stxt_free(void *cp);
 
 /* local sp_hook function */
-HIDDEN void stxt_transp_hook(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void stxt_transp_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 #define STX_NAME_LEN 128
 struct stxt_specific {
@@ -92,7 +92,8 @@ HIDDEN void
 stxt_transp_hook(const struct bu_structparse *ptab,
 		 const char *name,
 		 void *cp,
-		 const char *UNUSED(value))
+		 const char *UNUSED(value),
+		 void *UNUSED(data))
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)cp;
@@ -178,7 +179,7 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 	return -1;
 
     /** Get input values **/
-    if (bu_struct_parse(matparm, stxt_parse, (char *)stp) < 0) {
+    if (bu_struct_parse(matparm, stxt_parse, (char *)stp, NULL) < 0) {
 	BU_PUT(stp, struct stxt_specific);
 	return -1;
     }

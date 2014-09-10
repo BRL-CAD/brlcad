@@ -42,7 +42,7 @@ extern point_t e_axes_pos;
 extern point_t curr_e_axes_pos;
 
 /* local sp_hook function */
-static void ax_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *);
+static void ax_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 struct _axes_state default_axes_state = {
     /* ax_rc */			1,
@@ -85,7 +85,8 @@ static void
 ax_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		  const char *UNUSED(name),
 		  void *UNUSED(base),
-		  const char *UNUSED(value))
+		  const char *UNUSED(value),
+		  void *UNUSED(data))
 {
     struct dm_list *dmlp;
 
