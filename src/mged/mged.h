@@ -242,7 +242,7 @@ void history_setup(void);
 #define ROTARROW 010 /* Object rotation enabled */
 extern int movedir;  /* RARROW | UARROW | SARROW | ROTARROW */
 
-extern struct ged_display_list *illum_gdlp; /* Pointer to solid in solid table to be illuminated */
+extern struct display_list *illum_gdlp; /* Pointer to solid in solid table to be illuminated */
 extern struct solid *illump; /* == 0 if none, else points to ill. solid */
 extern int ipathpos; /* path index of illuminated element */
 extern int sedraw; /* apply solid editing changes */

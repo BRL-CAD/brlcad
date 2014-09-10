@@ -36,6 +36,7 @@
 #  include <windows.h>
 #endif
 
+#include "dm/bview.h"
 #include "raytrace.h"
 #include "fbserv_obj.h"
 
@@ -73,7 +74,7 @@ __BEGIN_DECLS
 #define INV_4096_V 0.000244140625
 
 #define GED_NULL ((struct ged *)0)
-#define GED_DISPLAY_LIST_NULL ((struct ged_display_list *)0)
+#define GED_DISPLAY_LIST_NULL ((struct display_list *)0)
 #define GED_DRAWABLE_NULL ((struct ged_drawable *)0)
 #define GED_VIEW_NULL ((struct ged_view *)0)
 #define GED_DM_VIEW_NULL ((struct ged_dm_view *)0)
@@ -161,7 +162,7 @@ __BEGIN_DECLS
     }
 
 #define GED_CHECK_FBSERV_FBP(_gedp, _flags) \
-    if (_gedp->ged_fbsp->fbs_fbp == FBIO_NULL) { \
+    if (_gedp->ged_fbsp->fbs_fbp == FB_NULL) { \
 	int ged_check_view_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_view_quiet) { \
 	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
@@ -259,65 +260,12 @@ __BEGIN_DECLS
 #define INV_GED 0.00048828125
 #define INV_4096 0.000244140625
 
-struct ged_adc_state {
-    int		gas_draw;
-    int		gas_dv_x;
-    int		gas_dv_y;
-    int		gas_dv_a1;
-    int		gas_dv_a2;
-    int		gas_dv_dist;
-    fastf_t	gas_pos_model[3];
-    fastf_t	gas_pos_view[3];
-    fastf_t	gas_pos_grid[3];
-    fastf_t	gas_a1;
-    fastf_t	gas_a2;
-    fastf_t	gas_dst;
-    int		gas_anchor_pos;
-    int		gas_anchor_a1;
-    int		gas_anchor_a2;
-    int		gas_anchor_dst;
-    fastf_t	gas_anchor_pt_a1[3];
-    fastf_t	gas_anchor_pt_a2[3];
-    fastf_t	gas_anchor_pt_dst[3];
-    int		gas_line_color[3];
-    int		gas_tick_color[3];
-    int		gas_line_width;
-};
-
-struct ged_axes_state {
-    int       gas_draw;
-    point_t   gas_axes_pos;		/* in model coordinates */
-    fastf_t   gas_axes_size; 		/* in view coordinates */
-    int	      gas_line_width;    	/* in pixels */
-    int	      gas_pos_only;
-    int	      gas_axes_color[3];
-    int	      gas_label_color[3];
-    int	      gas_triple_color;
-    int	      gas_tick_enabled;
-    int	      gas_tick_length;		/* in pixels */
-    int	      gas_tick_major_length; 	/* in pixels */
-    fastf_t   gas_tick_interval; 	/* in mm */
-    int	      gas_ticks_per_major;
-    int	      gas_tick_threshold;
-    int	      gas_tick_color[3];
-    int	      gas_tick_major_color[3];
-};
-
 struct ged_data_arrow_state {
     int       gdas_draw;
     int	      gdas_color[3];
     int	      gdas_line_width;    	/* in pixels */
     int       gdas_tip_length;
     int       gdas_tip_width;
-    int       gdas_num_points;
-    point_t   *gdas_points;		/* in model coordinates */
-};
-
-struct ged_data_axes_state {
-    int       gdas_draw;
-    int	      gdas_color[3];
-    int	      gdas_line_width;    	/* in pixels */
-    fastf_t   gdas_size; 		/* in view coordinates */
     int       gdas_num_points;
     point_t   *gdas_points;		/* in model coordinates */
 };
@@ -380,40 +328,11 @@ typedef struct {
     fastf_t		gdps_data_vZ;
 } ged_data_polygon_state;
 
-struct ged_grid_state {
-    int		ggs_draw;		/* draw grid */
-    int		ggs_snap;		/* snap to grid */
-    fastf_t	ggs_anchor[3];
-    fastf_t	ggs_res_h;		/* grid resolution in h */
-    fastf_t	ggs_res_v;		/* grid resolution in v */
-    int		ggs_res_major_h;	/* major grid resolution in h */
-    int		ggs_res_major_v;	/* major grid resolution in v */
-    int		ggs_color[3];
-};
-
 struct ged_other_state {
     int gos_draw;
     int	gos_line_color[3];
     int	gos_text_color[3];
 };
-
-struct ged_rect_state {
-    int		grs_active;	/* 1 - actively drawing a rectangle */
-    int		grs_draw;	/* draw rubber band rectangle */
-    int		grs_line_width;
-    int		grs_line_style;  /* 0 - solid, 1 - dashed */
-    int		grs_pos[2];	/* Position in image coordinates */
-    int		grs_dim[2];	/* Rectangle dimension in image coordinates */
-    fastf_t	grs_x;		/* Corner of rectangle in normalized     */
-    fastf_t	grs_y;		/* ------ view coordinates (i.e. +-1.0). */
-    fastf_t	grs_width;	/* Width and height of rectangle in      */
-    fastf_t	grs_height;	/* ------ normalized view coordinates.   */
-    int		grs_bg[3];	/* Background color */
-    int		grs_color[3];	/* Rectangle color */
-    int		grs_cdim[2];	/* Canvas dimension in pixels */
-    fastf_t	grs_aspect;	/* Canvas aspect ratio */
-};
-
 
 struct ged_run_rt {
     struct bu_list l;
@@ -445,14 +364,6 @@ struct ged_qray_color {
 struct ged_qray_fmt {
     char type;
     struct bu_vls fmt;
-};
-
-struct ged_display_list {
-    struct bu_list	l;
-    struct directory	*gdl_dp;
-    struct bu_vls	gdl_path;
-    struct bu_list	gdl_headSolid;		/**< @brief  head of solid list for this object */
-    int			gdl_wflag;
 };
 
 /* FIXME: leftovers from dg.h */
@@ -524,25 +435,25 @@ struct ged_view {
     fastf_t			gv_sscale;
     int				gv_mode;
     int				gv_zclip;
-    struct ged_adc_state 	gv_adc;
-    struct ged_axes_state 	gv_model_axes;
-    struct ged_axes_state 	gv_view_axes;
+    struct bview_adc_state 	gv_adc;
+    struct bview_axes_state 	gv_model_axes;
+    struct bview_axes_state 	gv_view_axes;
     struct ged_data_arrow_state gv_data_arrows;
-    struct ged_data_axes_state 	gv_data_axes;
+    struct bview_data_axes_state 	gv_data_axes;
     struct ged_data_label_state gv_data_labels;
     struct ged_data_line_state  gv_data_lines;
     ged_data_polygon_state 	gv_data_polygons;
     struct ged_data_arrow_state	gv_sdata_arrows;
-    struct ged_data_axes_state 	gv_sdata_axes;
+    struct bview_data_axes_state 	gv_sdata_axes;
     struct ged_data_label_state gv_sdata_labels;
     struct ged_data_line_state 	gv_sdata_lines;
     ged_data_polygon_state 	gv_sdata_polygons;
-    struct ged_grid_state 	gv_grid;
+    struct bview_grid_state 	gv_grid;
     struct ged_other_state 	gv_center_dot;
     struct ged_other_state 	gv_prim_labels;
     struct ged_other_state 	gv_view_params;
     struct ged_other_state 	gv_view_scale;
-    struct ged_rect_state 	gv_rect;
+    struct bview_interactive_rect_state 	gv_rect;
     int				gv_adaptive_plot;
     int				gv_redraw_on_zoom;
     int				gv_x_samples;
@@ -665,7 +576,7 @@ GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
 
 /* defined in draw.c */
 GED_EXPORT extern void ged_color_soltab(struct bu_list *hdlp);
-GED_EXPORT extern struct ged_display_list *ged_addToDisplay(struct ged *gedp,
+GED_EXPORT extern struct display_list *ged_addToDisplay(struct ged *gedp,
 							    const char *name);
 
 /* defined in erase.c */

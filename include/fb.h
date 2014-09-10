@@ -28,10 +28,17 @@
 #ifndef FB_H
 #define FB_H
 
-#include "common.h"
-
-#include <limits.h>  /* For INT_MAX */
-#include <stdlib.h>
+#ifndef FB_EXPORT
+#  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)
+#    error "Only FB_DLL_EXPORTS or FB_DLL_IMPORTS can be defined, not both."
+#  elif defined(FB_DLL_EXPORTS)
+#    define FB_EXPORT __declspec(dllexport)
+#  elif defined(FB_DLL_IMPORTS)
+#    define FB_EXPORT __declspec(dllimport)
+#  else
+#    define FB_EXPORT
+#  endif
+#endif
 
 /*
  * Needed for fd_set, avoid including sys/select.h outright since it
@@ -40,6 +47,7 @@
  * FIXME: would be nice to decouple this interface from fd_set as it's
  * only used in one place right now.
  */
+#include "common.h"
 #if defined(HAVE_SYS_TYPES_H)
 #  include <sys/types.h>
 #endif
@@ -47,141 +55,127 @@
 #  include <sys/time.h>
 #endif
 
-#include "fbio.h"
-
 #include "bu/bu_tcl.h"
+#include "bu/magic.h"
 #include "bu/vls.h"
 
-/* Library entry points which are macros.
- *
- * FIXME: turn these into proper functions so we can appropriately
- * avoid dereferencing a NULL _ifp or calling an invalid callback.
+/**
+ * Format of disk pixels is .pix raw image files.  Formerly used as
+ * arguments to many of the library routines, but has fallen into
+ * disuse due to the difficulties with ANSI function prototypes, and
+ * the fact that arrays are not real types in C.  The most notable
+ * problem is that of passing a pointer to an array of RGBpixel.  It
+ * looks doubly dimensioned, but isn't.
  */
-#define fb_gettype(_ifp)		(_ifp->if_type)
-#define fb_getwidth(_ifp)		(_ifp->if_width)
-#define fb_getheight(_ifp)		(_ifp->if_height)
-#define fb_poll(_ifp)			(*_ifp->if_poll)(_ifp)
-#define fb_help(_ifp)			(*_ifp->if_help)(_ifp)
-#define fb_free(_ifp)			(*_ifp->if_free)(_ifp)
-#define fb_clear(_ifp, _pp)		(*_ifp->if_clear)(_ifp, _pp)
-#define fb_read(_ifp, _x, _y, _pp, _ct)		(*_ifp->if_read)(_ifp, _x, _y, _pp, _ct)
-#define fb_write(_ifp, _x, _y, _pp, _ct)	(*_ifp->if_write)(_ifp, _x, _y, _pp, _ct)
-#define fb_rmap(_ifp, _cmap)			(*_ifp->if_rmap)(_ifp, _cmap)
-#define fb_wmap(_ifp, _cmap)			(*_ifp->if_wmap)(_ifp, _cmap)
-#define fb_view(_ifp, _xc, _yc, _xz, _yz)	(*_ifp->if_view)(_ifp, _xc, _yc, _xz, _yz)
-#define fb_getview(_ifp, _xcp, _ycp, _xzp, _yzp)	(*_ifp->if_getview)(_ifp, _xcp, _ycp, _xzp, _yzp)
-#define fb_setcursor(_ifp, _bits, _xb, _yb, _xo, _yo) 	(*_ifp->if_setcursor)(_ifp, _bits, _xb, _yb, _xo, _yo)
-#define fb_cursor(_ifp, _mode, _x, _y)			(*_ifp->if_cursor)(_ifp, _mode, _x, _y)
-#define fb_getcursor(_ifp, _modep, _xp, _yp)		(*_ifp->if_getcursor)(_ifp, _modep, _xp, _yp)
-#define fb_readrect(_ifp, _xmin, _ymin, _width, _height, _pp)		(*_ifp->if_readrect)(_ifp, _xmin, _ymin, _width, _height, _pp)
-#define fb_writerect(_ifp, _xmin, _ymin, _width, _height, _pp)		(*_ifp->if_writerect)(_ifp, _xmin, _ymin, _width, _height, _pp)
-#define fb_bwreadrect(_ifp, _xmin, _ymin, _width, _height, _pp) 	(*_ifp->if_bwreadrect)(_ifp, _xmin, _ymin, _width, _height, _pp)
-#define fb_bwwriterect(_ifp, _xmin, _ymin, _width, _height, _pp)	(*_ifp->if_bwwriterect)(_ifp, _xmin, _ymin, _width, _height, _pp)
+typedef unsigned char RGBpixel[3];
+
+
+/**
+ * These generic color maps have up to 16 bits of significance,
+ * left-justified in a short.  Think of this as fixed-point values
+ * from 0 to 1.
+ */
+/* FIXME: ColorMap is same as RLEColorMap defined in 'orle.h' */
+typedef struct {
+    unsigned short cm_red[256];
+    unsigned short cm_green[256];
+    unsigned short cm_blue[256];
+} ColorMap;
+
+
+#define PIXEL_NULL (unsigned char *) 0
+#define RGBPIXEL_NULL (unsigned char *) 0
+#define COLORMAP_NULL (ColorMap *) 0
+
+/* Use a typedef to hide the details of the framebuffer structure */
+typedef struct fb_internal fb;
+#define FB_NULL (fb *) 0
+
+/**
+ * assert the integrity of a framebuffer struct.
+ */
+#define FB_CK_FB(_p) BU_CKMAG(_p, FB_MAGIC, "FB")
 
 __BEGIN_DECLS
 
-/* Library entry points which are true functions. */
-FB_EXPORT extern void fb_configureWindow(FBIO *, int, int);
-FB_EXPORT extern FBIO *fb_open(const char *file, int _width, int _height);
-FB_EXPORT extern int fb_close(FBIO *ifp);
-FB_EXPORT extern int fb_close_existing(FBIO *ifp);
+/* Library entry points */
+
+FB_EXPORT fb *fb_get();
+FB_EXPORT void  fb_put(fb *ifp);
+FB_EXPORT extern char *fb_gettype(fb *ifp);
+FB_EXPORT extern int fb_get_max_width(fb *ifp);
+FB_EXPORT extern int fb_get_max_height(fb *ifp);
+FB_EXPORT extern int fb_getwidth(fb *ifp);
+FB_EXPORT extern int fb_getheight(fb *ifp);
+FB_EXPORT extern int fb_poll(fb *ifp);
+FB_EXPORT extern int fb_help(fb *ifp);
+FB_EXPORT extern int fb_free(fb *ifp);
+FB_EXPORT extern int fb_clear(fb *ifp, unsigned char *pp);
+FB_EXPORT extern ssize_t fb_read(fb *ifp, int x, int y, unsigned char *pp, size_t count);
+FB_EXPORT extern ssize_t fb_write(fb *ifp, int x, int y, const unsigned char *pp, size_t count);
+FB_EXPORT extern int fb_rmap(fb *ifp, ColorMap *cmap);
+FB_EXPORT extern int fb_wmap(fb *ifp, const ColorMap *cmap);
+FB_EXPORT extern int fb_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
+FB_EXPORT extern int fb_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
+FB_EXPORT extern int fb_setcursor(fb *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo);
+FB_EXPORT extern int fb_cursor(fb *ifp, int mode, int x, int y);
+FB_EXPORT extern int fb_getcursor(fb *ifp, int *mode, int *x, int *y);
+FB_EXPORT extern int fb_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
+FB_EXPORT extern int fb_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
+FB_EXPORT extern int fb_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
+FB_EXPORT extern int fb_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
+
+FB_EXPORT extern fb *fb_open(const char *file, int _width, int _height);
+FB_EXPORT extern int fb_close(fb *ifp);
+FB_EXPORT extern int fb_close_existing(fb *ifp);
 FB_EXPORT extern int fb_genhelp(void);
-FB_EXPORT extern int fb_ioinit(FBIO *ifp);
-FB_EXPORT extern int fb_seek(FBIO *ifp, int x, int y);
-FB_EXPORT extern int fb_tell(FBIO *ifp, int *xp, int *yp);
-FB_EXPORT extern int fb_rpixel(FBIO *ifp, unsigned char *pp);
-FB_EXPORT extern int fb_wpixel(FBIO *ifp, unsigned char *pp);
-FB_EXPORT extern int fb_flush(FBIO *ifp);
+FB_EXPORT extern int fb_ioinit(fb *ifp);
+FB_EXPORT extern int fb_seek(fb *ifp, int x, int y);
+FB_EXPORT extern int fb_tell(fb *ifp, int *xp, int *yp);
+FB_EXPORT extern int fb_rpixel(fb *ifp, unsigned char *pp);
+FB_EXPORT extern int fb_wpixel(fb *ifp, unsigned char *pp);
+FB_EXPORT extern int fb_flush(fb *ifp);
+FB_EXPORT extern int fb_configure_window(fb *, int, int);
+FB_EXPORT extern int fb_refresh(fb *ifp, int x, int y, int w, int h);
 #if !defined(_WIN32) || defined(__CYGWIN__)
 FB_EXPORT extern void fb_log(const char *fmt, ...) _BU_ATTR_PRINTF12;
 #endif
-FB_EXPORT extern int fb_null(FBIO *ifp);
-FB_EXPORT extern int fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
+FB_EXPORT extern int fb_null(fb *ifp);
+FB_EXPORT extern int fb_null_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
 
 /* utility functions */
 FB_EXPORT extern int fb_common_file_size(size_t *widthp, size_t *heightp, const char *filename, int pixel_size);
 FB_EXPORT extern int fb_common_image_size(size_t *widthp, size_t *heightp, size_t npixels);
 FB_EXPORT extern int fb_common_name_size(size_t *widthp, size_t *heightp, const char *name);
-FB_EXPORT extern int fb_write_fp(FBIO *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result);
-FB_EXPORT extern int fb_read_fd(FBIO *ifp, int fd,  int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *result);
+FB_EXPORT extern int fb_write_fp(fb *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result);
+FB_EXPORT extern int fb_read_fd(fb *ifp, int fd,  int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *result);
+
+FB_EXPORT extern void fb_set_interface(fb *ifp, const char *interface_type);
+FB_EXPORT extern void fb_set_name(fb *ifp, const char *name);
+FB_EXPORT extern char *fb_get_name(fb *ifp);
+FB_EXPORT extern void fb_set_magic(fb *ifp, uint32_t magic);
+FB_EXPORT extern long fb_get_pagebuffer_pixel_size(fb *ifp);
+
+FB_EXPORT extern int fb_is_set_fd(fb *ifp, fd_set *infds);
+FB_EXPORT extern int fb_set_fd(fb *ifp, fd_set *select_list);
+FB_EXPORT extern int fb_clear_fd(fb *ifp, fd_set *select_list);
 
 /* color mapping */
 FB_EXPORT extern int fb_is_linear_cmap(const ColorMap *cmap);
 FB_EXPORT extern void fb_make_linear_cmap(ColorMap *cmap);
 
+/* open_existing functionality. */
+struct fb_platform_specific {uint32_t magic; void *data;};
+FB_EXPORT extern struct fb_platform_specific *fb_get_platform_specific(uint32_t magic);
+FB_EXPORT extern void fb_put_platform_specific(struct fb_platform_specific *fb_p);
+FB_EXPORT extern fb *fb_open_existing(const char *file, int _width, int _height, struct fb_platform_specific *fb_p);
+
 /* backward compatibility hacks */
-FB_EXPORT extern int fb_reset(FBIO *ifp);
-FB_EXPORT extern int fb_viewport(FBIO *ifp, int left, int top, int right, int bottom);
-FB_EXPORT extern int fb_window(FBIO *ifp, int xcenter, int ycenter);
-FB_EXPORT extern int fb_zoom(FBIO *ifp, int xzoom, int yzoom);
-FB_EXPORT extern int fb_scursor(FBIO *ifp, int mode, int x, int y);
-
-/*
- * Some functions and variables we couldn't hide.
- * Not for general consumption.
- */
-FB_EXPORT extern int _fb_disk_enable;
-FB_EXPORT extern int fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
-FB_EXPORT extern int fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
-FB_EXPORT extern int fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
-FB_EXPORT extern int fb_sim_bwwriterect(FBIO *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
-FB_EXPORT extern int fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
-FB_EXPORT extern int fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
-FB_EXPORT extern int fb_sim_cursor(FBIO *ifp, int mode, int x, int y);
-FB_EXPORT extern int fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y);
-
-/* FIXME:  these IF_* sections need to die.  they don't belong in a public header. */
-
-#ifdef IF_X
-#  ifdef HAVE_X11_XLIB_H
-#    include <X11/Xlib.h>
-#    include <X11/Xutil.h>
-#  endif
-FB_EXPORT extern int _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc);
-#endif
-
-#ifdef IF_OGL
-#  ifdef HAVE_X11_XLIB_H
-#    include <X11/Xlib.h>
-#    include <X11/Xutil.h>
-#  endif
-/* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
- * parameter names that shadow system symbols.  protect the system
- * symbols by redefining the parameters prior to header inclusion.
- */
-#  define j1 J1
-#  define y1 Y1
-#  define read rd
-#  define index idx
-#  define access acs
-#  define remainder rem
-#  ifdef HAVE_GL_GLX_H
-#    include <GL/glx.h>
-#  endif
-#  undef remainder
-#  undef access
-#  undef index
-#  undef read
-#  undef y1
-#  undef j1
-#  ifdef HAVE_GL_GL_H
-#    include <GL/gl.h>
-#  endif
-FB_EXPORT extern int _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap);
-#endif
-
-#ifdef IF_WGL
-#  include <windows.h>
-#  include <tk.h>
-#  ifdef HAVE_GL_GL_H
-#    include <GL/gl.h>
-#  endif
-FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, PIXELFORMATDESCRIPTOR *vip, HDC hdc, int width, int height, HGLRC glxc, int double_buffer, int soft_cmap);
-#endif
-
-#ifdef IF_QT
-FB_EXPORT extern int _qt_open_existing(FBIO *ifp, int width, int height, void *qapp, void *qwin, void *qpainter, void *draw, void **qimg);
-#endif
+FB_EXPORT extern int fb_reset(fb *ifp);
+FB_EXPORT extern int fb_viewport(fb *ifp, int left, int top, int right, int bottom);
+FB_EXPORT extern int fb_window(fb *ifp, int xcenter, int ycenter);
+FB_EXPORT extern int fb_zoom(fb *ifp, int xzoom, int yzoom);
+FB_EXPORT extern int fb_scursor(fb *ifp, int mode, int x, int y);
 
 /*
  * Copy one RGB pixel to another.
@@ -200,13 +194,12 @@ FB_EXPORT extern int _qt_open_existing(FBIO *ifp, int width, int height, void *q
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
 FB_EXPORT extern void fb_tcl_setup(void);
 FB_EXPORT extern int Fb_Init(Tcl_Interp *interp);
-FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
-
 
 /**
  * report version information about LIBFB
  */
 FB_EXPORT extern const char *fb_version(void);
+
 
 __END_DECLS
 

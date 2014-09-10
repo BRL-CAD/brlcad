@@ -262,7 +262,7 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 		    break;
 	    }
 
-	    if (ged_vclip(start, fin, clipmin, clipmax) == 0)
+	    if (bn_ray_vclip(start, fin, clipmin, clipmax) == 0)
 		continue;
 
 	    coord1.x = start[0] * half_size + half_size;
@@ -278,8 +278,8 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 static void
 draw_png_body(struct ged *gedp, unsigned char **image)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     mat_t newmat;
     matp_t mat;
     mat_t perspective_mat;
@@ -308,11 +308,11 @@ draw_png_body(struct ged *gedp, unsigned char **image)
 	mat = newmat;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    draw_png_solid(gedp, image, sp, mat);
 	}
 

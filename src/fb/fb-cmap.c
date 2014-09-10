@@ -40,7 +40,7 @@ Usage: fb-cmap [-H] [colormap]\n";
 int
 main(int argc, char **argv)
 {
-    FBIO *fbp;
+    fb *fbp;
     FILE *fp;
     int fbsize = 512;
     int i;
@@ -69,7 +69,7 @@ main(int argc, char **argv)
 	    fprintf(stderr, "%s       Program continues running:\n", usage);
     }
 
-    if ((fbp = fb_open(NULL, fbsize, fbsize)) == FBIO_NULL)
+    if ((fbp = fb_open(NULL, fbsize, fbsize)) == FB_NULL)
 	bu_exit(2, "Unable to open framebuffer\n");
 
     i = fb_rmap(fbp, &cm);

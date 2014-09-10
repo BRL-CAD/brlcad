@@ -92,7 +92,7 @@ struct _ged_id_to_names {
 
 struct _ged_client_data {
     struct ged *gedp;
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     int wireframe_color_override;
     int wireframe_color[3];
     int draw_nmg_only;
@@ -221,7 +221,7 @@ extern void _ged_eraseAllPathsFromDisplay(struct ged *gedp,
 					  const char *path,
 					  const int skip_first);
 extern void _ged_freeDisplayListItem(struct ged *gedp,
-				     struct ged_display_list *gdlp);
+				     struct display_list *gdlp);
 
 
 /* defined in get_comb.c */

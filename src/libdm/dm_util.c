@@ -24,11 +24,15 @@
 #include "bn.h"
 #include "dm.h"
 
-#include "./dm_util.h"
+#include "./dm_private.h"
+
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
 
 #if defined(DM_OGL) || defined(DM_WGL) || defined(DM_RTGL)
 int
-drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor)
+drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor)
 {
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLdouble pt[3];
@@ -74,7 +78,7 @@ drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *
 }
 
 int
-drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag, const char *log_bu, float *wireColor)
+drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int sflag, const char *log_bu, float *wireColor)
 {
     register int i;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
@@ -129,7 +133,7 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag, const char 
 }
 
 int
-drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu)
+drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu)
 {
     if (dmp->dm_debugLevel)
 	bu_log(log_bu);
@@ -161,7 +165,7 @@ drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const
 #endif
 
 int
-draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2)
+draw_Line3D(struct dm_internal *dmp, point_t pt1, point_t pt2)
 {
     if (!dmp)
 	return TCL_ERROR;

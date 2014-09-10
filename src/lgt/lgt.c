@@ -222,7 +222,7 @@ close_Output_Device(int frame)
     if ((movie.m_noframes > 1 && movie.m_fullscreen) ||
 	(frame == movie.m_endframe)) {
 	(void) fb_close(fbiop);
-	fbiop = FBIO_NULL;
+	fbiop = FB_NULL;
     }
     return;
 }

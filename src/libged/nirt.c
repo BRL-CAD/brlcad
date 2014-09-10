@@ -63,8 +63,8 @@
 int
 ged_nirt(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp = NULL;
-    struct ged_display_list *next_gdlp = NULL;
+    struct display_list *gdlp = NULL;
+    struct display_list *next_gdlp = NULL;
     char **vp = NULL;
     FILE *fp_in = NULL;
     FILE *fp_out = NULL;
@@ -539,11 +539,11 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&line1);
 #endif
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid)
 	    sp->s_wflag = DOWN;
 
 	gdlp = next_gdlp;

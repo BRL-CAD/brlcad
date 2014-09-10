@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bn.h"
 #include "plot3.h"
 #include "solid.h"
 
@@ -45,8 +46,8 @@
 int
 ged_plot(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
     struct bn_vlist *vp;
     FILE *fp;
@@ -146,11 +147,11 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 	Dashing = 0;
 	pl_linmod(fp, "solid");
 
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 		/* Could check for differences from last color */
 		pl_color(fp,
 			 sp->s_color[0],
@@ -198,11 +199,11 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
     Dashing = 0;
     pl_linmod(fp, "solid");
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    if (Dashing != sp->s_soldash) {
 		if (sp->s_soldash)
 		    pl_linmod(fp, "dotdashed");
@@ -239,7 +240,7 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 			    VMOVE(last, fin);
 			    break;
 		    }
-		    if (ged_vclip(start, fin, clipmin, clipmax) == 0)
+		    if (bn_ray_vclip(start, fin, clipmin, clipmax) == 0)
 			continue;
 
 		    if (Three_D) {

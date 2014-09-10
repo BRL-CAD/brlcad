@@ -41,8 +41,8 @@
 int
 ged_autoview(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
     int is_empty = 1;
     vect_t min, max;
@@ -90,11 +90,11 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     VSETALL(sqrt_small, SQRT_SMALL_FASTF);
 
     /* calculate the bounding for of all solids being displayed */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    minus[X] = sp->s_center[X] - sp->s_size;
 	    minus[Y] = sp->s_center[Y] - sp->s_size;
 	    minus[Z] = sp->s_center[Z] - sp->s_size;

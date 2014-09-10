@@ -2625,8 +2625,8 @@ init_sedit_vars(void)
 void
 replot_editing_solid(void)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     mat_t mat;
     struct solid *sp;
     struct directory *illdp;
@@ -2637,11 +2637,11 @@ replot_editing_solid(void)
 
     illdp = LAST_SOLID(illump);
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    if (LAST_SOLID(sp) == illdp) {
 		(void)db_path_to_mat(dbip, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
 		(void)replot_modified_solid(sp, &es_int, mat);
@@ -2776,7 +2776,7 @@ get_rotation_vertex(void)
 
     bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
  {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
-		  bu_vls_addr(&dName), bu_vls_addr(&str), arb_vertices[type][loc]);
+		  bu_vls_addr(dName), bu_vls_addr(&str), arb_vertices[type][loc]);
 
     while (!valid) {
 	if (Tcl_Eval(INTERP, bu_vls_addr(&cmd)) != TCL_OK) {
@@ -2822,7 +2822,7 @@ get_file_name(char *str)
 
     bu_vls_printf(&cmd,
 		  "getFile %s %s {{{All Files} {*}}} {Get File}",
-		  bu_vls_addr(&dmp->dm_pathName),
+		  bu_vls_addr(dm_get_pathname(dmp)),
 		  bu_vls_addr(&varname_vls));
     bu_vls_free(&varname_vls);
 
@@ -4218,7 +4218,7 @@ sedit(void)
 		old_mode = bot->mode;
 		sprintf(mode, " %d", old_mode - 1);
 		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_mode_radio ",
-				      bu_vls_addr(&dmp->dm_pathName), " _bot_mode_result",
+				      bu_vls_addr(dm_get_pathname(dmp)), " _bot_mode_result",
 				      " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
 				      " { surface volume plate plate/nocosine }",
 				      " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
@@ -4256,7 +4256,7 @@ sedit(void)
 		RT_BOT_CK_MAGIC(bot);
 		sprintf(orient, " %d", bot->orientation - 1);
 		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_orient_radio ",
-				      bu_vls_addr(&dmp->dm_pathName), " _bot_orient_result",
+				      bu_vls_addr(dm_get_pathname(dmp)), " _bot_orient_result",
 				      " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
 				      " { none right-hand-rule left-hand-rule }",
 				      " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
@@ -4347,7 +4347,7 @@ sedit(void)
 		ret_tcl = Tcl_VarEval(INTERP,
 				      "cad_list_buts",
 				      " .bot_list_flags ",
-				      bu_vls_addr(&dmp->dm_pathName),
+				      bu_vls_addr(dm_get_pathname(dmp)),
 				      " _bot_flags_result ",
 				      cur_settings,
 				      " \"BOT Flags\"",
@@ -4425,7 +4425,7 @@ sedit(void)
 		else
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
 
-		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(&dmp->dm_pathName),
+		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(dmp)),
 				      " _bot_fmode_result ", "\"BOT Face Mode\"",
 				      " \"Select the desired face mode\"", fmode,
 				      " { {Thickness centered about hit point} {Thickness appended to hit point} }",
@@ -4694,7 +4694,7 @@ sedit(void)
 	    if (inpara) {
 		static mat_t invsolr;
 		static vect_t tempvec;
-		static float rota, fb;
+		static float rota, fb_a;
 
 		/*
 		 * Keyboard parameters in degrees.
@@ -4739,12 +4739,12 @@ sedit(void)
 		} else if (inpara == 2) {
 		    /* 2 parameters:  rot, fb were given */
 		    rota= es_para[0] * DEG2RAD;
-		    fb  = es_para[1] * DEG2RAD;
+		    fb_a  = es_para[1] * DEG2RAD;
 
 		    /* calculate normal vector (length = 1) from rot, fb */
-		    es_peqn[es_menu][0] = cos(fb) * cos(rota);
-		    es_peqn[es_menu][1] = cos(fb) * sin(rota);
-		    es_peqn[es_menu][2] = sin(fb);
+		    es_peqn[es_menu][0] = cos(fb_a) * cos(rota);
+		    es_peqn[es_menu][1] = cos(fb_a) * sin(rota);
+		    es_peqn[es_menu][2] = sin(fb_a);
 		} else {
 		    Tcl_AppendResult(INTERP, "Must be < rot fb | xdeg ydeg zdeg >\n",
 				     (char *)NULL);
@@ -7423,8 +7423,8 @@ void oedit_reject(void);
 static void
 oedit_apply(int continue_editing)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
     /* matrices used to accept editing done from a depth
      * >= 2 from the top of the illuminated path
@@ -7472,11 +7472,11 @@ oedit_apply(int continue_editing)
     modelchanges[15] = 1000000000;	/* => small ratio */
 
     /* Now, recompute new chunks of displaylist */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    if (sp->s_iflag == DOWN)
 		continue;
 	    (void)replot_original_solid(sp);
@@ -7494,8 +7494,8 @@ oedit_apply(int continue_editing)
 void
 oedit_accept(void)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
 
     if (dbip == DBI_NULL)
@@ -7504,11 +7504,11 @@ oedit_accept(void)
     if (dbip->dbi_read_only) {
 	oedit_reject();
 
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 		if (sp->s_iflag == DOWN)
 		    continue;
 		(void)replot_original_solid(sp);
@@ -7749,15 +7749,15 @@ sedit_reject(void)
 
     /* Restore the original solid everywhere */
     {
-	struct ged_display_list *gdlp;
-	struct ged_display_list *next_gdlp;
+	struct display_list *gdlp;
+	struct display_list *next_gdlp;
 	struct solid *sp;
 
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 		if (LAST_SOLID(sp) == LAST_SOLID(illump))
 		    (void)replot_original_solid(sp);
 	    }

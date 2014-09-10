@@ -35,7 +35,7 @@
 
 
 Colors colorids;	/* ident range to color mappings for plots */
-FBIO *fbiop = NULL;	/* frame buffer specific access from libfb */
+fb *fbiop = NULL;	/* frame buffer specific access from libfb */
 FILE *burstfp = NULL;	/* input stream for burst point locations */
 FILE *gridfp = NULL;	/* grid file output stream (2-d shots) */
 FILE *histfp = NULL;	/* histogram output stream (statistics) */

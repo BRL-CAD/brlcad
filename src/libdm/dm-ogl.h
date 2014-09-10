@@ -1,7 +1,7 @@
-/*                        D M _ U T I L . H
+/*                          D M - O G L . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,35 +17,52 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libdm/dm_util.h
+/** @addtogroup libdm */
+/** @{ */
+/** @file dm-ogl.h
+ *
  */
 
-#ifndef LIBDM_DM_UTIL_H
-#define LIBDM_DM_UTIL_H
+#ifndef DM_OGL_H
+#define DM_OGL_H
 
 #include "common.h"
 
-#include "vmath.h"
-#include "dm.h"
+#ifdef HAVE_GL_GLX_H
+#  include <GL/glx.h>
+#endif
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
+
+#include "bu/vls.h"
+
+#define CMAP_BASE 40
+
+/* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
+#define GED2IRIS(x)	(((float)(x))*0.00048828125)
+
+
+struct ogl_vars {
+    GLXContext glxc;
+    GLdouble faceplate_mat[16];
+    int face_flag;
+    int *perspective_mode;
+    int fontOffset;
+    int ovec;		/* Old color map entry number */
+    char is_direct;
+    GLclampf r, g, b;
+};
 
 __BEGIN_DECLS
 
-int
-drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor);
-
-int
-drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag, const char *log_bu, float *wireColor);
-
-int
-drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu);
-
-int
-draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
+extern void ogl_fogHint();
 
 __END_DECLS
 
-#endif /* LIBDM_DM_UTIL_H */
+#endif /* DM_OGL_H */
 
+/** @} */
 /*
  * Local Variables:
  * mode: C

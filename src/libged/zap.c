@@ -45,7 +45,7 @@ int
 ged_zap(struct ged *gedp, int argc, const char *argv[])
 {
     struct solid *sp;
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     struct directory *dp;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -60,13 +60,13 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    while (BU_LIST_WHILE(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_WHILE(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
 	if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
-	    (*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
-					     BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
-					     BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
+	    (*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
+					     BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
+					     BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
 
-	while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
+	while (BU_LIST_WHILE(sp, solid, &gdlp->dl_headSolid)) {
 	    dp = FIRST_SOLID(sp);
 	    RT_CK_DIR(dp);
 	    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
@@ -80,7 +80,7 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	BU_LIST_DEQUEUE(&gdlp->l);
-	bu_vls_free(&gdlp->gdl_path);
+	bu_vls_free(&gdlp->dl_path);
 	free((void *)gdlp);
     }
 

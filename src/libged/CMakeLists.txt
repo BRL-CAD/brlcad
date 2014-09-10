@@ -52,7 +52,6 @@ set(LIBGED_SOURCES
   cat.c
   cc.c
   center.c
-  clip.c
   clone.c
   coil.c
   color.c

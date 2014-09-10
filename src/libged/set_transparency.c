@@ -42,8 +42,8 @@
 int
 ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
     size_t i;
     struct directory **dpp;
@@ -82,11 +82,11 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    for (i = 0, tmp_dpp = dpp;
 		 i < sp->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
 		 ++i, ++tmp_dpp) {
