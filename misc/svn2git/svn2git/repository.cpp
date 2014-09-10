@@ -430,7 +430,7 @@ Repository::Transaction *Repository::newTransaction(const QString &branch, const
         startFastImport();
         // write everything to disk every 10000 commits
         fastImport.write("checkpoint\n");
-        qDebug() << "checkpoint!, marks file trunkated";
+        qDebug() << "checkpoint!, marks file truncated";
     }
     outstandingTransactions++;
     return txn;
@@ -703,7 +703,7 @@ void Repository::Transaction::commit()
     repository->startFastImport();
 
     // We might be tempted to use the SVN revision number as the fast-import commit mark.
-    // However, a single SVN revision can modify multple branches, and thus lead to multiple
+    // However, a single SVN revision can modify multiple branches, and thus lead to multiple
     // commits in the same repo.  So, we need to maintain a separate commit mark counter.
     int mark = ++repository->last_commit_mark;
 

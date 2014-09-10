@@ -1,8 +1,8 @@
 # - Try to find subversion libraries
 #
-#  This macro uses the following variables as preference for seraching the
+#  This macro uses the following variables as preference for searching the
 #  headers and includes:
-#  SUBVERSION_INSTALL_PATH - root directory where subversion is installed (ususally /usr)
+#  SUBVERSION_INSTALL_PATH - root directory where subversion is installed (usually /usr)
 #  APR_CONFIG_PATH - path where apr-config or apr-1-config are located
 #  APU_CONFIG_PATH - path where apu-config or apu-1-config are located
 #
@@ -90,7 +90,7 @@ IF (NOT WIN32)
             ENDIF(${_ARG} MATCHES "^-l")
          ENDFOREACH(_ARG)
     ENDIF(NOT APR_CONFIG)
-    
+
     IF(NOT APU_CONFIG)
         MESSAGE(STATUS "no apu-config found, subversion support will be disabled")
         SET(SUBVERSION_FOUND false)
@@ -118,10 +118,10 @@ IF (NOT WIN32)
         ENDFOREACH(_ARG)
     ENDIF(NOT APU_CONFIG)
 ELSE (NOT WIN32)
-#search libaries for Windows
+#search libraries for Windows
 #this needs more work
 
-# search for pathes
+# search for paths
 
     MACRO(FIND_SUB_INC targetvar libname pathadd)
       IF (SUBVERSION_INSTALL_PATH)

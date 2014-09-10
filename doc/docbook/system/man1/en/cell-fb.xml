@@ -48,10 +48,10 @@ reference, which, through a color map, corresponds to a color.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-F</option><replaceable>fbfile</replaceable></term>
+  <term><option>-F </option><replaceable>fbfile</replaceable></term>
   <listitem>
 <para>Write graphics output to
-<emphasis remap="I">fbfile,</emphasis>
+<emphasis remap="I">fbfile</emphasis>,
 which may be any UNIX file (or frame-buffer device).
 In the absence of the
 <option>-F</option>
@@ -68,51 +68,51 @@ Otherwise, the host's default frame buffer is used
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-N</option><replaceable>scr_height</replaceable></term>
+  <term><option>-N </option><replaceable>scr_height</replaceable></term>
   <listitem>
 <para>Set screen (frame-buffer) height to
 <emphasis remap="I">scr_height</emphasis>
-pixels.
-<emphasis remap="I">Scr_height</emphasis>
+pixels, where
+<emphasis remap="I">scr_height</emphasis>
 may legally be any integer greater than -2.
 See the discussion of autosizing below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-S</option><replaceable>scr_size</replaceable></term>
+  <term><option>-S </option><replaceable>scr_size</replaceable></term>
   <listitem>
 <para>Set screen (frame-buffer) width and height to
 <emphasis remap="I">scr_size</emphasis>
-pixels.
-<emphasis remap="I">Scr_size</emphasis>
+pixels, where
+<emphasis remap="I">scr_size</emphasis>
 may legally be any integer greater than -2.
 See the discussion of autosizing below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-W</option><replaceable>scr_width</replaceable></term>
+  <term><option>-W </option><replaceable>scr_width</replaceable></term>
   <listitem>
 <para>Set screen (frame-buffer) width to
 <emphasis remap="I">scr_width</emphasis>
-pixels.
-<emphasis remap="I">Scr_width</emphasis>
+pixels, where
+<emphasis remap="I">scr_width</emphasis>
 may legally be any integer greater than -2.
 See the discussion of autosizing below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-X</option><replaceable>n</replaceable></term>
+  <term><option>-X </option><replaceable>n</replaceable></term>
   <listitem>
 <para>Set the local debug flag to the hexadecimal value
-<emphasis remap="I">n.</emphasis></para>
+<emphasis remap="I">n</emphasis>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-a</option><replaceable>h v</replaceable><emphasis remap="B"/></term>
+  <term><option>-a </option><replaceable>h v</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Do not display the data,
 simply print out the frame-buffer coordinates of the grid-plane point
-(<emphasis remap="I">h, v</emphasis>).
+(<emphasis remap="I">h</emphasis>, <emphasis remap="I">v</emphasis>).
 This option is useful for outboard manipulation of the
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 data created by
@@ -120,15 +120,15 @@ data created by
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-b</option><replaceable>n</replaceable></term>
+  <term><option>-b </option><replaceable>n</replaceable></term>
   <listitem>
 <para>Ignore values not equal to
-<emphasis remap="I">n.</emphasis>
+<emphasis remap="I">n</emphasis>.
 All other cell-data values are mapped to the background color.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-c</option><replaceable>n</replaceable></term>
+  <term><option>-c </option><replaceable>n</replaceable></term>
   <listitem>
 <para>Assume a cell size of
 <emphasis remap="I">n</emphasis>
@@ -137,10 +137,10 @@ The default cell size is 100 user units.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-d</option><replaceable>m n</replaceable><emphasis remap="B"/></term>
+  <term><option>-d </option><replaceable>m n</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Scale the data values from the interval
-[<emphasis remap="I">m, n</emphasis>]
+[<emphasis remap="I">m</emphasis>, <emphasis remap="I">n</emphasis>]
 into the unit interval [0, 1].
 The scaling is performed before values are mapped to colors,
 so the
@@ -163,7 +163,7 @@ for which no scaling is necessary.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-f</option><replaceable>n</replaceable></term>
+  <term><option>-f </option><replaceable>n</replaceable></term>
   <listitem>
 <para>Display field number
 <emphasis remap="I">n</emphasis>
@@ -209,7 +209,7 @@ See the discussion of autosizing below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-l</option><replaceable>az el</replaceable><emphasis remap="B"/></term>
+  <term><option>-l </option><replaceable>az el</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Write log information to the standard output.
 When given this option,
@@ -234,7 +234,7 @@ it merely writes them to the log.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-m</option><replaceable>n color</replaceable><emphasis remap="B"/></term>
+  <term><option>-m </option><replaceable>n color</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Map cell data value
 <emphasis remap="I">n</emphasis>
@@ -256,7 +256,7 @@ section below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-M</option><replaceable>color1 color2</replaceable><emphasis remap="B"/></term>
+  <term><option>-M </option><replaceable>color1 color2</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Define the color map
 to be a ramp between
@@ -277,7 +277,7 @@ section below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-p</option><replaceable>h v</replaceable><emphasis remap="B"/></term>
+  <term><option>-p </option><replaceable>h v</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Offset the picture from the lower-left corner of the frame buffer display
 by
@@ -290,7 +290,7 @@ then the horizontal and vertical offsets are both set to this value.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-s</option><replaceable>w h</replaceable><emphasis remap="B"/></term>
+  <term><option>-s </option><replaceable>w h</replaceable><emphasis remap="B"/></term>
   <listitem>
 <para>Plot each cell as a rectangle of width
 <emphasis remap="I">w</emphasis>
@@ -306,7 +306,7 @@ then the width and height are both set to this value.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-v</option><replaceable>n</replaceable></term>
+  <term><option>-v </option><replaceable>n</replaceable></term>
   <listitem>
 <para>Display only view number
 <emphasis remap="I">n</emphasis>.
@@ -324,7 +324,7 @@ option above).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-x</option><replaceable>n</replaceable></term>
+  <term><option>-x </option><replaceable>n</replaceable></term>
   <listitem>
 <para>Set the
 <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
