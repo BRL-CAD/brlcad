@@ -180,7 +180,6 @@ extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
 extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *));
 
-extern void dl_color_soltab(struct bu_list *hdlp);
 extern int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *));
 extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
 extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct display_list *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode);
@@ -191,18 +190,6 @@ void dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned i
 int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
 void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
 void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image);
-
-/* When finalized, this stuff belongs in a header file of its own */
-struct polygon_header {
-    uint32_t magic;             /* magic number */
-    int ident;                  /* identification number */
-    int interior;               /* >0 => interior loop, gives ident # of exterior loop */
-    vect_t normal;                      /* surface normal */
-    unsigned char color[3];     /* Color from containing region */
-    int npts;                   /* number of points */
-};
-#define POLYGON_HEADER_MAGIC 0x8623bad2
-void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
 
 #define PS_COORD(_x) ((int)((_x)+2048))
 #define PS_COLOR(_c) ((_c)*(1.0/255.0))

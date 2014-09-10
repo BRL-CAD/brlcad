@@ -444,18 +444,27 @@ GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
 				 int fflag);
 
 /* defined in display_list.c */
-void dl_set_iflag(struct bu_list *hdlp, int iflag);
-
-/* defined in draw.c */
+GED_EXPORT void dl_set_iflag(struct bu_list *hdlp, int iflag);
 GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp);
-GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
-
-/* defined in erase.c */
 GED_EXPORT extern void dl_erasePathFromDisplay(struct bu_list *hdlp,
 	                                       struct db_i *dbip,
 					       void (*callback)(unsigned int, int),
 					       const char *path,
 					       int allow_split);
+GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
+/* When finalized, this stuff belongs in a header file of its own */
+struct polygon_header {
+    uint32_t magic;             /* magic number */
+    int ident;                  /* identification number */
+    int interior;               /* >0 => interior loop, gives ident # of exterior loop */
+    vect_t normal;                      /* surface normal */
+    unsigned char color[3];     /* Color from containing region */
+    int npts;                   /* number of points */
+};
+#define POLYGON_HEADER_MAGIC 0x8623bad2
+extern void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
+
+
 
 /* defined in ged.c */
 GED_EXPORT extern void ged_close(struct ged *gedp);

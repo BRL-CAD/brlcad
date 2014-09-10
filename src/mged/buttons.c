@@ -761,9 +761,6 @@ be_accept()
 int
 be_reject()
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct solid *sp;
     struct dm_list *dmlp;
 
     update_views = 1;
@@ -805,15 +802,7 @@ be_reject()
     illump = SOLID_NULL;		/* None selected */
 
     /* Clear illumination flags */
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid)
-	    sp->s_iflag = DOWN;
-
-	gdlp = next_gdlp;
-    }
+    dl_set_iflag(gedp->ged_gdp->gd_headDisplay, DOWN);
 
     mged_color_soltab();
     (void)chg_state(STATE, ST_VIEW, "Edit Reject");
