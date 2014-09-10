@@ -8,7 +8,7 @@ include developer application programming interface (API) calls as
 well as user application command-line interface (CLI) and graphical
 user interface (GUI) behaviors.  Changes are characterized as:
 
-    1) changing a new interface,
+    1) those affecting a new interface,
     2) being minimally impacting, or
     3) requiring adherence to deprecation policy.
 
@@ -23,10 +23,11 @@ NEW INTERFACE
 -------------
 
 Changes to interfaces that have been recently introduced are often
-subject to change and should not yet be relied upon by application
-developers or users.  They may be changed as needed from release to
-release and are not subject to change policy restrictions until they
-have been included in at least TWO releases without change.
+subject to further change and should not yet be relied upon by
+application developers or users until they stabilize.  They are
+allowed to change from release to release and are not subject to
+change policy restrictions until they have been included in at least
+TWO releases without any change.
 
 
 MINIMALLY IMPACTING
@@ -35,20 +36,21 @@ MINIMALLY IMPACTING
 If a change to an interface has a suitable and completely equivalent
 alternative, the change is deemed to be "minimally impacting" and can
 be made during any release.  Examples of such changes include renaming
-an interface, reordering parameters, adding additional parameters for
-previously implicit behavior, and removing unused parameters.
+an interface, reordering parameters, adding optional parameters,
+adding additional parameters for previously implicit behavior, and
+removing unused parameters.
 
-Basically, the impact can usually be considered minimally impacting if
+Generally, the impact can usually be considered minimally impacting if
 a static regular expression search-and-replace is all that is needed
-to update calling code, and no change is imposed on the user.
+to update calling code, and no manual intervention is required.
 
 
 DEPRECATION POLICY
 ------------------
 
-If a change will intentionally change, replace, or remove
-functionality that has been documented and published in at least TWO
-releases should be first marked as DEPRECATED.  Otherwise, changes to
+If a change will intentionally alter, replace, or remove functionality
+that has been documented and published in at least TWO releases, it
+should mut first be announced as DEPRECATED.  Otherwise, changes to
 interfaces that have not been publicly announced or are not publicly
 documented for at least two releases may be changed without notice.
 
@@ -266,6 +268,8 @@ now no longer a part of BRL-CAD.
 
 7.26.0
 ------
+include/dg.h
+        implementation detail no longer being exposed, use libged [deprecated 7.22]
 autogen.sh && configure
 	GNU Autotools build system -> CMake build system [deprecated 7.20]
 Dunn camera and Canon printer tools
