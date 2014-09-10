@@ -238,7 +238,7 @@
 	<emphasis remap="I">h v</emphasis>
 	<emphasis remap="B" role="B"> [</emphasis>
 	<emphasis remap="I">d</emphasis>
-	<emphasis remap="B" role="B">]</emphasis>
+	<emphasis remap="B" role="B">]]</emphasis>
       </term>
       <listitem>
 	<para>
@@ -293,7 +293,7 @@
     <term><emphasis remap="B" role="B">bot_minpieces [n]</emphasis></term>
     <listitem>
       <para>
-	Sets "rt_bot_minpieces" to the new value <emphasis remap="I">n.</emphasis>
+	Sets "rt_bot_minpieces" to the new value <emphasis remap="I">n</emphasis>.
 	If <emphasis remap="I">n</emphasis> is not provided, the current value of "rt_bot_minpieces"
 	is displayed.  See the discussion of the <option>-B</option> option above for more details.
       </para>
@@ -307,7 +307,7 @@
 	When activated, backs the ray origination point out of the geometry:
 	<emphasis remap="I">h</emphasis> and <emphasis remap="I">v</emphasis>
 	retain their previous values and <emphasis remap="I">d</emphasis> is set to
-	<emphasis remap="I">Dmax,</emphasis> the largest value of
+	<emphasis remap="I">Dmax</emphasis>, the largest value of
 	<emphasis remap="I">d</emphasis>  anywhere in the geometry.  Default is 0 (deactivated),
 	1 is active.
       </para>
@@ -320,7 +320,7 @@
 	Sets the <emphasis remap="I">useair</emphasis> member  of the <emphasis remap="I">rt_i</emphasis>
 	structure to the integer <emphasis remap="I">n</emphasis>.  If <emphasis remap="I">n</emphasis> is 0,
 	then <command>nirt</command> ignores any air in the geometry.  If this command is invoked with no
-	arguments, <command>nirt</command> prints the current value of <emphasis remap="I">useair.</emphasis>
+	arguments, <command>nirt</command> prints the current value of <emphasis remap="I">useair</emphasis>.
 	Default is 0.
       </para>
     </listitem>
@@ -340,8 +340,8 @@
 	but every claimant is recorded. If <emphasis remap="I">n</emphasis> is 1 or "rebuild_fastgen,"
 	then <command>nirt</command> takes on <emphasis remap="I">FASTGEN</emphasis> behavior,
 	so overlaps of plate-mode primitives are rebuilt, but other overlaps are retained.
-	This command is useful with the <emphasis remap="I">claimant_count,</emphasis>
-	<emphasis remap="I">claimant_list,</emphasis> and <emphasis remap="I">claimant_listn</emphasis>
+	This command is useful with the <emphasis remap="I">claimant_count</emphasis>,
+	<emphasis remap="I">claimant_list</emphasis>, and <emphasis remap="I">claimant_listn</emphasis>
 	output items.  Default is "resolve."
       </para>
     </listitem>
@@ -484,7 +484,7 @@
     <term><emphasis remap="B" role="B">q</emphasis></term>
     <listitem>
       <para>
-	Quits <emphasis remap="I">nirt.</emphasis>
+	Quits <command>nirt</command>.
       </para>
     </listitem>
   </varlistentry>
@@ -758,7 +758,7 @@
       <term><emphasis remap="B" role="B">claimant_listn</emphasis></term>
       <listitem>
 	<para>Same as
-	<emphasis remap="I">claimant_list,</emphasis>
+	<emphasis remap="I">claimant_list</emphasis>,
 	except that it is newline-, rather than space-separated.</para>
       </listitem>
     </varlistentry>
