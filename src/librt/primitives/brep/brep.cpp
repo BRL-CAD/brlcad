@@ -3478,7 +3478,7 @@ CloseOpenLoops(
 				} else if (seam_begin == 2) {
 
 				} else {
-				    //bothf needed
+				    //both needed
 				}
 
 			    } else { //assume on other end
@@ -3570,6 +3570,155 @@ CloseOpenLoops(
 }
 
 
+/*
+ * lifted from Clipper private function and rework for brep_loop_points
+ */
+static bool
+PointInPolygon(ON_2dPoint &pt, ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
+{
+    bool result = false;
+
+    for( int i = 0; i < brep_loop_points.Count(); i++){
+	ON_2dPoint curr_pt = brep_loop_points[i].p2d;
+	ON_2dPoint prev_pt = ON_2dPoint::UnsetPoint;
+	if (i == 0) {
+	    prev_pt = brep_loop_points[brep_loop_points.Count()-1].p2d;
+	} else {
+	    prev_pt = brep_loop_points[i-1].p2d;
+	}
+	if ((((curr_pt.y <= pt.y) && (pt.y < prev_pt.y)) ||
+		((prev_pt.y <= pt.y) && (pt.y < curr_pt.y))) &&
+		(pt.x < (prev_pt.x - curr_pt.x) * (pt.y - curr_pt.y) /
+			(prev_pt.y - curr_pt.y) + curr_pt.x ))
+	    result = !result;
+    }
+    return result;
+}
+
+
+static void
+ShiftPoints(ON_SimpleArray<BrepTrimPoint> &brep_loop_points, double ushift, double vshift)
+{
+    for( int i = 0; i < brep_loop_points.Count(); i++){
+	brep_loop_points[i].p2d.x += ushift;
+	brep_loop_points[i].p2d.y += vshift;
+    }
+}
+
+
+// process through to make sure inner hole loops are actually inside of outer polygon
+// need to make sure that any hole polygons are properly shifted over correct closed seams
+// going to try and do an inside test on hole vertex
+static void
+ShiftInnerLoops(
+	const ON_Surface *s,
+	const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> *brep_loop_points)
+{
+    int loop_cnt = face.LoopCount();
+    if (loop_cnt > 1) { // has inner loops or holes
+	for( int li = 1; li < loop_cnt; li++) {
+	    ON_2dPoint p2d((brep_loop_points[li])[0].p2d.x, (brep_loop_points[li])[0].p2d.y);
+	    if (!PointInPolygon(p2d, brep_loop_points[0])) {
+		double ulength = s->Domain(0).Length();
+		double vlength = s->Domain(1).Length();
+		ON_2dPoint sftd_pt = p2d;
+
+		//do shift until inside
+		if (s->IsClosed(0) && s->IsClosed(1)) {
+		    // First just U
+		    for(int iu = 0; iu < 2; iu++) {
+			double ushift = 0.0;
+			if (iu == 0) {
+			    ushift = -ulength;
+			} else {
+			    ushift =  ulength;
+			}
+			sftd_pt.x = p2d.x + ushift;
+			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
+			    // shift all U accordingly
+			    ShiftPoints(brep_loop_points[li], ushift, 0.0);
+			    break;
+			}
+		    }
+		    // Second just V
+		    for(int iv = 0; iv < 2; iv++) {
+			double vshift = 0.0;
+			if (iv == 0) {
+			    vshift = -vlength;
+			} else {
+			    vshift = vlength;
+			}
+			sftd_pt.y = p2d.y + vshift;
+			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
+			    // shift all V accordingly
+			    ShiftPoints(brep_loop_points[li], 0.0, vshift);
+			    break;
+			}
+		    }
+		    // Third both U & V
+		    for(int iu = 0; iu < 2; iu++) {
+			double ushift = 0.0;
+			if (iu == 0) {
+			    ushift = -ulength;
+			} else {
+			    ushift =  ulength;
+			}
+			sftd_pt.x = p2d.x + ushift;
+			for(int iv = 0; iv < 2; iv++) {
+			    double vshift = 0.0;
+			    if (iv == 0) {
+				vshift = -vlength;
+			    } else {
+				vshift = vlength;
+			    }
+			    sftd_pt.y = p2d.y + vshift;
+			    if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
+				// shift all U & V accordingly
+				ShiftPoints(brep_loop_points[li], ushift, vshift);
+				break;
+			    }
+			}
+		    }
+		} else if (s->IsClosed(0)) {
+		    // just U
+		    for(int iu = 0; iu < 2; iu++) {
+			double ushift = 0.0;
+			if (iu == 0) {
+			    ushift = -ulength;
+			} else {
+			    ushift =  ulength;
+			}
+			sftd_pt.x = p2d.x + ushift;
+			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
+			    // shift all U accordingly
+			    ShiftPoints(brep_loop_points[li], ushift, 0.0);
+			    break;
+			}
+		    }
+		} else if (s->IsClosed(1)) {
+		    // just V
+		    for(int iv = 0; iv < 2; iv++) {
+			double vshift = 0.0;
+			if (iv == 0) {
+			    vshift = -vlength;
+			} else {
+			    vshift = vlength;
+			}
+			sftd_pt.y = p2d.y + vshift;
+			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
+			    // shift all V accordingly
+			    ShiftPoints(brep_loop_points[li], 0.0, vshift);
+			    break;
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
+
+
 static void
 PerformClosedSurfaceChecks(
 	const ON_Surface *s,
@@ -3586,11 +3735,15 @@ PerformClosedSurfaceChecks(
     // extend loop points over closed seam if needed.
     ExtendPointsOverClosedSeam(s, face, brep_loop_points);
 
-    // shift open loops that straddle a closed seam with the intent of closutre at the surface boundary.
+    // shift open loops that straddle a closed seam with the intent of closure at the surface boundary.
     ShiftLoopsThatStraddleSeam(s, face, brep_loop_points, same_point_tolerance);
 
     // process through closing open loops that begin and end on closed seam
     CloseOpenLoops(s, face, ttol, tol, info, brep_loop_points, same_point_tolerance);
+
+    // process through to make sure inner hole loops are actually inside of outer polygon
+    // need to make sure that any hole polygons are properly shifted over correct closed seams
+    ShiftInnerLoops(s, face, brep_loop_points);
 }
 
 
