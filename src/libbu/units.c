@@ -386,7 +386,8 @@ void
 bu_mm_cvt(const struct bu_structparse *sdp,
 	  const char *name,
 	  void *base,
-	  const char *value)
+	  const char *value,
+	  void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */

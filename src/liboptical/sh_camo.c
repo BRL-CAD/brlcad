@@ -107,7 +107,7 @@ static struct camo_specific marble_defaults = {
 #define SHDR_O(m) bu_offsetof(struct camo_specific, m)
 
 /* local sp_hook function */
-void color_fix(const struct bu_structparse *, const char *, void *, const char *);
+void color_fix(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 struct bu_structparse camo_print_tab[] = {
     {"%g", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -174,7 +174,8 @@ void
 color_fix(const struct bu_structparse *sdp,
 	  const char *UNUSED(name),
 	  void *base,
-	  const char *UNUSED(value))
+	  const char *UNUSED(value),
+	  void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -221,7 +222,7 @@ setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_
     }
     memcpy(camo_sp, &defaults, sizeof(struct camo_specific));
 
-    if (bu_struct_parse(matparm, camo_parse, (char *)camo_sp) < 0)
+    if (bu_struct_parse(matparm, camo_parse, (char *)camo_sp, NULL) < 0)
 	return -1;
 
     /* Optional:  get the matrix which maps model space into

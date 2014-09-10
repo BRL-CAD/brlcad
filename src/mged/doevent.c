@@ -277,7 +277,7 @@ motion_event_handler(XMotionEvent *xmotion)
 		    const char name[] = "name";
 		    void *base = 0;
 		    const char value[] = "value";
-		    rb_set_dirty_flag(sdp, name, base, value);
+		    rb_set_dirty_flag(sdp, name, base, value, NULL);
 		}
 
 		goto handled;

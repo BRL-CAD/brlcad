@@ -39,7 +39,6 @@
 
 #include "bu.h"
 #include "vmath.h"
-#include "dg.h"
 #include "dm/dm-Null.h"
 #include "ged.h"
 
@@ -571,7 +570,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 	const char name[] = "name";
 	void *base = 0;
 	const char value[] = "value";
-	cs_set_bg(sdp, name, base, value);
+	cs_set_bg(sdp, name, base, value, NULL);
     }
 
     mged_link_vars(curr_dm_list);

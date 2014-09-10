@@ -17,7 +17,6 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>pixscale</command>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-r </arg>
     <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
@@ -33,7 +32,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixscale</emphasis>
+<para><command>pixscale</command>
 will take a color
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file of given dimensions and produce a larger or smaller
@@ -72,19 +71,10 @@ pixel replication.</para>
 
 <para>For 2X interpolation, a much faster alternative is
 <citerefentry><refentrytitle>pixinterp2x</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
-
-<para>The
-<option>-h</option>
-flag causes the frame buffer to be
-used in high resolution mode (1024x1024).
-This is important for frame buffers such as the Adage which operate
-differently depending on the display size.  Without this flag
-the default size for the selected device will be used (usually
-the entire screen).</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixcrop</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixinterp2x</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixcrop</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixinterp2x</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='bugs'><title>BUGS</title>

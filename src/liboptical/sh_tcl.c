@@ -143,7 +143,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     memcpy(tcl_sp, &tcl_defaults, sizeof(struct tcl_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, tcl_parse_tab, (char *)tcl_sp) < 0)
+    if (bu_struct_parse(matparm, tcl_parse_tab, (char *)tcl_sp, NULL) < 0)
 	return -1;
 
     for (cpu=0; cpu < MAX_PSW; cpu++) {

@@ -27,7 +27,6 @@
 
 #include "vmath.h"
 #include "mater.h"
-#include "dg.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"

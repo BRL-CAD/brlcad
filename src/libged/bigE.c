@@ -40,7 +40,6 @@
 #include "rtgeom.h"
 #include "rtfunc.h"
 #include "solid.h"
-#include "dg.h"
 
 #include "./ged_private.h"
 

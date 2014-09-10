@@ -817,7 +817,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 	    return GED_ERROR;
     } else {
 	BU_ASSERT(d->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
-	if (_ged_get_obj_bounds(gedp, 1, (const char **)&d->d_namep, 1,
+	if (ged_get_obj_bounds(gedp, 1, (const char **)&d->d_namep, 1,
 				rpp_min, rpp_max) == GED_ERROR)
 	    return GED_ERROR;
     }
@@ -1402,7 +1402,7 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 				 &gtd, rpp_min, rpp_max) == GED_ERROR)
 	    return GED_ERROR;
 	if (!(d_to_modify->d_flags & RT_DIR_SOLID) &&
-	    (_ged_get_obj_bounds(gedp, 1, (const char **)&d_to_modify->d_namep,
+	    (ged_get_obj_bounds(gedp, 1, (const char **)&d_to_modify->d_namep,
 				 1, rpp_min, rpp_max) == GED_ERROR))
 	    return GED_ERROR;
 

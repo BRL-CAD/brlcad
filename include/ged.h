@@ -455,6 +455,19 @@ struct ged_display_list {
     int			gdl_wflag;
 };
 
+/* FIXME: leftovers from dg.h */
+#define RT_VDRW_PREFIX          "_VDRW"
+#define RT_VDRW_PREFIX_LEN      6
+#define RT_VDRW_MAXNAME         31
+#define RT_VDRW_DEF_COLOR       0xffff00
+struct vd_curve {
+    struct bu_list      l;
+    char                vdc_name[RT_VDRW_MAXNAME+1];    /**< @brief name array */
+    long                vdc_rgb;        /**< @brief color */
+    struct bu_list      vdc_vhd;        /**< @brief head of list of vertices */
+};
+#define VD_CURVE_NULL   ((struct vd_curve *)NULL)
+
 /* FIXME: should be private */
 struct ged_drawable {
     struct bu_list		l;
@@ -2092,6 +2105,43 @@ GED_EXPORT extern int ged_export_polygon(struct ged *gedp, ged_data_polygon_stat
 GED_EXPORT extern ged_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
 GED_EXPORT extern fastf_t ged_find_polygon_area(ged_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size);
 GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB);
+
+
+
+/* defined in trace.c */
+
+#define _GED_MAX_LEVELS 12
+struct _ged_trace_data {
+    struct ged *gtd_gedp;
+    struct directory *gtd_path[_GED_MAX_LEVELS];
+    struct directory *gtd_obj[_GED_MAX_LEVELS];
+    mat_t gtd_xform;
+    int gtd_objpos;
+    int gtd_prflag;
+    int gtd_flag;
+};
+
+
+GED_EXPORT extern void ged_trace(struct directory *dp,
+		       int pathpos,
+		       const mat_t old_xlate,
+		       struct _ged_trace_data *gtdp,
+		       int verbose);
+
+
+/* defined in get_obj_bounds.c */
+GED_EXPORT extern int ged_get_obj_bounds(struct ged *gedp,
+			       int argc,
+			       const char *argv[],
+			       int use_air,
+			       point_t rpp_min,
+			       point_t rpp_max);
+
+
+/* defined in track.c */
+GED_EXPORT extern int ged_track2(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
+
+
 
 
 /***************************************
