@@ -25,6 +25,7 @@
 /*******************************************************************/
 static int
 do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *state) {
+    int i = 0;
     int diff_state = DIFF_EMPTY;
     struct bu_ptbl results;
     BU_PTBL_INIT(&results);
@@ -33,7 +34,6 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 
     /* Now we have our diff results, time to filter (if applicable) and report them */
     if (state->have_search_filter) {
-	int i = 0;
 	int s_flags = 0;
 	int filtered_diff_state = DIFF_EMPTY;
 	struct bu_ptbl results_filtered;
@@ -60,6 +60,7 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 		filtered_diff_state |= dr->attr_state;
 	    } else {
 		diff_free_result(dr);
+		BU_PUT(dr, struct diff_result);
 	    }
 	}
 
@@ -81,7 +82,6 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
     if (state->merge) {
 	struct bu_ptbl diff3_results;
 	struct db_i *inmem_dbip;
-	int i;
 	BU_PTBL_INIT(&diff3_results);
 	BU_GET(inmem_dbip, struct db_i);
 	inmem_dbip->dbi_eof = (off_t)-1L;
@@ -132,6 +132,7 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 		    bu_ptbl_ins(&diff3_results_filtered, (long *)dr);
 		} else {
 		    diff_free_result(dr);
+		    BU_PUT(dr, struct diff_result);
 		}
 	    }
 
@@ -146,11 +147,17 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	for (i = 0; i < (int)BU_PTBL_LEN(&diff3_results); i++) {
 	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&diff3_results, i);
 	    diff_free_result(dr);
+	    BU_PUT(dr, struct diff_result);
 	}
 	bu_ptbl_free(&diff3_results);
 	BU_PUT(inmem_dbip, struct db_i);
     }
 
+    for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
+	struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&results, i);
+	diff_free_result(dr);
+	BU_PUT(dr, struct diff_result);
+    }
     bu_ptbl_free(&results);
 
     return diff_state;
@@ -196,6 +203,7 @@ do_diff3(struct db_i *left_dbip, struct db_i *ancestor_dbip, struct db_i *right_
 		filtered_diff_state |= dr->attr_state;
 	    } else {
 		diff_free_result(dr);
+		BU_PUT(dr, struct diff_result);
 	    }
 	}
 
