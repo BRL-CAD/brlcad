@@ -38,7 +38,6 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "rt/arb_edit.h"
-#include "dg.h"
 #include "nurb.h"
 #include "wdb.h"
 #include "db.h"

@@ -9,7 +9,6 @@ set(GTOOLS_INCLUDE_DIRS
 list(REMOVE_DUPLICATES GTOOLS_INCLUDE_DIRS)
 include_directories(${GTOOLS_INCLUDE_DIRS})
 
-BRLCAD_ADDEXEC(gdiff gdiff.c "libtclcad;librt")
 BRLCAD_ADDEXEC(glint glint.c "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(gqa gqa.c "libged;librt")
 BRLCAD_ADDEXEC(remapid remapid.c "librt;libbu")

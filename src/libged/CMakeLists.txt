@@ -76,7 +76,6 @@ set(LIBGED_SOURCES
   debugnmg.c
   decompose.c
   delay.c
-  dg_obj.c
   dir2ae.c
   draw.c
   draw_calc.cpp
@@ -290,13 +289,7 @@ set(LIBGED_SOURCES
   vrot.c
   vutil.c
   wcodes.c
-  wdb_comb_std.c
   wdb_importFg4Section.c
-  wdb_nirt.c
-  wdb_obj.c
-  wdb_qray.c
-  wdb_track.c
-  wdb_vdraw.c
   whatid.c
   which.c
   which_shader.c

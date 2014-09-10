@@ -34,7 +34,6 @@
 #include "vmath.h"
 #include "bn.h"
 #include "mater.h"
-#include "dg.h"
 #include "nmg.h"
 #include "./sedit.h"
 #include "./mged.h"

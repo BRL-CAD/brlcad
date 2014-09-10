@@ -160,7 +160,7 @@ crregion(struct bu_vls *log_str,
  *
  */
 int
-_ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[])
+ged_track2(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[])
 {
     fastf_t fw[3], lw[3], iw[3], dw[3], tr[3];
     char *solname = NULL;
@@ -598,7 +598,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    return _ged_track(gedp->ged_result_str, gedp->ged_wdbp, argv);
+    return ged_track2(gedp->ged_result_str, gedp->ged_wdbp, argv);
 }
 
 static int

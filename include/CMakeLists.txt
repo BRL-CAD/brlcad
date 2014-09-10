@@ -23,7 +23,6 @@ set(public_hdrs
   brlcad.i
   db.h
   db5.h
-  dg.h
   dm.h
   dvec.h
   fb.h

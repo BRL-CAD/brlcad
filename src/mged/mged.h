@@ -65,7 +65,6 @@
 #include "tcl.h"
 #include "bu/parallel.h"
 #include "wdb.h"
-#include "dg.h"
 
 /* Needed to define struct menu_item */
 #include "./menu.h"
@@ -657,6 +656,9 @@ void color_soltab(void);
 /* utility1.c */
 int editit(const char *command, const char *tempfile);
 
+int Wdb_Init(Tcl_Interp *interp);
+int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
+void wdb_deleteProc(ClientData clientData);
 
 #endif  /* MGED_MGED_H */
 
