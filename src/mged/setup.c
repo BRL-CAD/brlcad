@@ -35,7 +35,6 @@
 #include "bio.h"
 #include "bu.h"
 #include "bn.h"
-#include "dg.h"
 #include "vmath.h"
 #include "tclcad.h"
 #include "ged.h"

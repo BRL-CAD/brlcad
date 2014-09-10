@@ -49,7 +49,6 @@ __BEGIN_DECLS
 #define _GED_TERMINAL_WIDTH 80
 #define _GED_COLUMNS ((_GED_TERMINAL_WIDTH + _GED_V4_MAXNAME - 1) / _GED_V4_MAXNAME)
 
-#define _GED_MAX_LEVELS 12
 #define _GED_CPEVAL      0
 #define _GED_LISTPATH    1
 #define _GED_LISTEVAL    2
@@ -123,16 +122,6 @@ struct _ged_client_data {
     int autoview;
 };
 
-
-struct _ged_trace_data {
-    struct ged *gtd_gedp;
-    struct directory *gtd_path[_GED_MAX_LEVELS];
-    struct directory *gtd_obj[_GED_MAX_LEVELS];
-    mat_t gtd_xform;
-    int gtd_objpos;
-    int gtd_prflag;
-    int gtd_flag;
-};
 
 void vls_col_item(struct bu_vls *str, const char *cp);
 void vls_col_eol(struct bu_vls *str);
@@ -238,14 +227,6 @@ extern void _ged_freeDisplayListItem(struct ged *gedp,
 /* defined in get_comb.c */
 extern void _ged_vls_print_matrix(struct bu_vls *vls,
 				  matp_t matrix);
-
-/* defined in get_obj_bounds.c */
-extern int _ged_get_obj_bounds(struct ged *gedp,
-			       int argc,
-			       const char *argv[],
-			       int use_air,
-			       point_t rpp_min,
-			       point_t rpp_max);
 
 extern int _ged_get_obj_bounds2(struct ged *gedp,
 				int argc,
@@ -452,13 +433,6 @@ struct directory **
 _ged_dir_getspace(struct db_i *dbip,
 		  int num_entries);
 
-/* defined in trace.c */
-extern void _ged_trace(struct directory *dp,
-		       int pathpos,
-		       const mat_t old_xlate,
-		       struct _ged_trace_data *gtdp,
-		       int verbose);
-
 /* defined in translate_extrude.c */
 extern int _ged_translate_extrude(struct ged *gedp,
 				  struct rt_extrude_internal *extrude,
@@ -507,9 +481,6 @@ extern int _ged_results_init(struct ged_results *results);
  *
  */
 extern int _ged_results_add(struct ged_results *results, const char *result_string);
-
-/* defined in track.c */
-extern int _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
 
 __END_DECLS
 

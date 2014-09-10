@@ -52,7 +52,6 @@
 #include "bu/cmd.h"
 #include "vmath.h"
 #include "solid.h"
-#include "dg.h"
 
 #include "./qray.h"
 #include "./ged_private.h"

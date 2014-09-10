@@ -227,7 +227,7 @@ rt_generic_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	return BRLCAD_ERROR;
     }
 
-    return bu_structparse_argv(logstr, argc, argv, ftp->ft_parsetab, (char *)intern->idb_ptr);
+    return bu_structparse_argv(logstr, argc, argv, ftp->ft_parsetab, (char *)intern->idb_ptr, NULL);
 }
 
 
