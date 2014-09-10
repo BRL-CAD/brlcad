@@ -707,9 +707,6 @@ be_o_rotate()
 int
 be_accept()
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct solid *sp;
     struct dm_list *dmlp;
 
     if (STATE == ST_S_EDIT) {
@@ -721,15 +718,7 @@ be_accept()
 	mmenu_set_all(MENU_L1, MENU_NULL);
 	mmenu_set_all(MENU_L2, MENU_NULL);
 
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid)
-		sp->s_iflag = DOWN;
-
-	    gdlp = next_gdlp;
-	}
+	dl_set_iflag(gedp->ged_gdp->gd_headDisplay, DOWN);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;

@@ -443,6 +443,9 @@ GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
 				 const char *to,
 				 int fflag);
 
+/* defined in display_list.c */
+void dl_set_iflag(struct bu_list *hdlp, int iflag);
+
 /* defined in draw.c */
 GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp);
 GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
