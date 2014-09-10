@@ -1,0 +1,26 @@
+svn2git - Importer for one time conversion from svn to git.
+
+Copyright (C) 2007-2013 Thiago Macieira <thiago@kde.org>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+
+
+The version of this program in BRL-CAD's misc directory is included
+for convenience, and defines a CMake build to allow users familiar
+with building BRL-CAD to more easily build this tool.  Users should
+check the main repository to see if a more updated version of this
+code exists (BRL-CAD's copy is not automatically synced):
+
+https://gitorious.org/svn2git/svn2git

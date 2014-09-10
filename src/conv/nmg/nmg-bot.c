@@ -99,8 +99,6 @@ main(int argc, char **argv)
 	}
     }
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     dbip = db_open(argv[argc-2], DB_OPEN_READONLY);
     if (dbip == DBI_NULL) {
 	perror(argv[0]);

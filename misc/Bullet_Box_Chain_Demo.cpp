@@ -22,13 +22,13 @@
  *
  * Bullet Continuous Collision Detection and Physics Library
  * Copyright (c) 2003-2006 Erwin Coumans  http://continuousphysics.com/Bullet/
- * 
+ *
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from the use of this software.
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it freely, 
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it freely,
  * subject to the following restrictions:
- * 
+ *
  * 1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
  * 2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
@@ -151,7 +151,7 @@ void	ConstraintDemo::initPhysics()
 	btTypedConstraint* p4p4 = new btPoint2PointConstraint(*body3, *body4, trans3.inverse() * (body3->getCenterOfMassPosition() + btVector3(hd, 0 , 0)), trans4.inverse() * (body4->getCenterOfMassPosition() + btVector3(-hd-1, 0 , 0)));
 	m_dynamicsWorld->addConstraint(p4p4);
 	p4p4->setDbgDrawSize(btScalar(5.f));
-	
+
 	btTransform trans5;
 	trans5.setIdentity();
 	trans5.setOrigin(btVector3(3*d+(d+2)+xoffset, yoffset, zoffset));
@@ -233,7 +233,7 @@ int run_sim;
 void ConstraintDemo::clientMoveAndDisplay()
 {
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 if (run_sim) {
     float dt = float(getDeltaTimeMicroseconds()) * 0.000001f;
 
@@ -270,7 +270,7 @@ if (run_sim) {
 
 void ConstraintDemo::displayCallback(void) {
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (m_dynamicsWorld)
 	m_dynamicsWorld->debugDrawWorld();
@@ -286,7 +286,7 @@ void ConstraintDemo::keyboardCallback(unsigned char key, int x, int y)
 {
     (void)x;
     (void)y;
-    switch (key) 
+    switch (key)
     {
 	case 'r':
 	    {
@@ -299,7 +299,7 @@ void ConstraintDemo::keyboardCallback(unsigned char key, int x, int y)
 	    }
 	    break;
 
-	default : 
+	default :
 	    {
 		float dt = 1.0f/20.f;
 		run_sim = 0;
