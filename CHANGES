@@ -294,6 +294,7 @@ include/vmath.h
 	VSCALE_2D -> V2SCALE [deprecated 7.14]
 	VJOIN1_2D -> V2JOIN1 [deprecated 7.14]
 liborle
+include/orle.h
 	remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
 	pix-orle [deprecated 7.20]
 mged
