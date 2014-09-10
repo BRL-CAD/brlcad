@@ -406,6 +406,47 @@ DM_EXPORT extern int dm_set_hook(const struct bu_structparse_map *map,
 DM_EXPORT extern struct bu_structparse *dm_get_vparse(dm *dmp);
 DM_EXPORT extern void *dm_get_mvars(dm *dmp);
 
+
+/* For backwards compatibility, define macros and expose struct dm */
+
+#include "../src/libdm/dm_private.h"
+
+#define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
+#define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
+#define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
+#define DM_DRAW_END(_dmp) _dmp->dm_drawEnd(_dmp)
+#define DM_NORMAL(_dmp) _dmp->dm_normal(_dmp)
+#define DM_LOADMATRIX(_dmp, _mat, _eye) _dmp->dm_loadMatrix(_dmp, _mat, _eye)
+#define DM_LOADPMATRIX(_dmp, _mat) _dmp->dm_loadPMatrix(_dmp, _mat)
+#define DM_DRAW_STRING_2D(_dmp, _str, _x, _y, _size, _use_aspect) _dmp->dm_drawString2D(_dmp, _str, _x, _y, _size, _use_aspect)
+#define DM_DRAW_LINE_2D(_dmp, _x1, _y1, _x2, _y2) _dmp->dm_drawLine2D(_dmp, _x1, _y1, _x2, _y2)
+#define DM_DRAW_LINE_3D(_dmp, _pt1, _pt2) _dmp->dm_drawLine3D(_dmp, _pt1, _pt2)
+#define DM_DRAW_LINES_3D(_dmp, _npoints, _points, _sflag) _dmp->dm_drawLines3D(_dmp, _npoints, _points, _sflag)
+#define DM_DRAW_POINT_2D(_dmp, _x, _y) _dmp->dm_drawPoint2D(_dmp, _x, _y)
+#define DM_DRAW_POINT_3D(_dmp, _pt) _dmp->dm_drawPoint3D(_dmp, _pt)
+#define DM_DRAW_POINTS_3D(_dmp, _npoints, _points) _dmp->dm_drawPoints3D(_dmp, _npoints, _points)
+#define DM_DRAW_VLIST(_dmp, _vlist) _dmp->dm_drawVList(_dmp, _vlist)
+#define DM_DRAW_VLIST_HIDDEN_LINE(_dmp, _vlist) _dmp->dm_drawVListHiddenLine(_dmp, _vlist)
+#define DM_DRAW(_dmp, _callback, _data) _dmp->dm_draw(_dmp, _callback, _data)
+#define DM_SET_FGCOLOR(_dmp, _r, _g, _b, _strict, _transparency) _dmp->dm_setFGColor(_dmp, _r, _g, _b, _strict, _transparency)
+#define DM_SET_BGCOLOR(_dmp, _r, _g, _b) _dmp->dm_setBGColor(_dmp, _r, _g, _b)
+#define DM_SET_LINE_ATTR(_dmp, _width, _dashed) _dmp->dm_setLineAttr(_dmp, _width, _dashed)
+#define DM_CONFIGURE_WIN(_dmp, _force) _dmp->dm_configureWin((_dmp), (_force))
+#define DM_SET_WIN_BOUNDS(_dmp, _w) _dmp->dm_setWinBounds(_dmp, _w)
+#define DM_SET_LIGHT(_dmp, _on) _dmp->dm_setLight(_dmp, _on)
+#define DM_SET_TRANSPARENCY(_dmp, _on) _dmp->dm_setTransparency(_dmp, _on)
+#define DM_SET_DEPTH_MASK(_dmp, _on) _dmp->dm_setDepthMask(_dmp, _on)
+#define DM_SET_ZBUFFER(_dmp, _on) _dmp->dm_setZBuffer(_dmp, _on)
+#define DM_DEBUG(_dmp, _lvl) _dmp->dm_debug(_dmp, _lvl)
+#define DM_LOGFILE(_dmp, _lvl) _dmp->dm_logfile(_dmp, _lvl)
+#define DM_BEGINDLIST(_dmp, _list) _dmp->dm_beginDList(_dmp, _list)
+#define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
+#define DM_DRAWDLIST(_dmp, _list) _dmp->dm_drawDList(_list)
+#define DM_FREEDLISTS(_dmp, _list, _range) _dmp->dm_freeDLists(_dmp, _list, _range)
+#define DM_GEN_DLISTS(_dmp, _range) _dmp->dm_genDLists(_dmp, _range)
+#define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
+#define DM_MAKE_CURRENT(_dmp) _dmp->dm_makeCurrent(_dmp)
+
 __END_DECLS
 
 #endif /* DM_H */
