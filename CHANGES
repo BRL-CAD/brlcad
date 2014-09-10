@@ -999,10 +999,14 @@ s/(#[[:space:]]*include[[:space:]]+["<])magic\.h/\1bu\/magic.h/g
         library-specific public headers moved into a subdir [7.24]
 s/([^_])([nh]to[hn][fd])/\1bu_cv_\2/g
         ntohf, ntohd, htonf, htond renamed with bu_cv_ prefix [7.24]
+
+7.26
+----
 s/bu_kill_parallel\([[:space:]]*\);//g
-        didn't do anything unless called from forked process, use bu_terminate() [7.24]
+        didn't do anything unless called from forked process, use bu_terminate() [7.25]
 s/bu_jmpbuf/bu_jmpbuf[0]/g
 s/bu_setjmp_valid/bu_setjmp_valid[0]/g
-        can replace 0 with bu_parallel_id() to get thread-safe jumping [7.24]
+        can replace 0 with bu_parallel_id() to get thread-safe jumping [7.25]
 s/bu_semaphore_reinit/bu_semaphore_init/g
-        no longer need to manually reinitialize (or initialize) semaphores [7.24]
+        no longer need to manually reinitialize (or initialize) semaphores [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])fbio\.h/\1bu\/fb.h/g [7.25]
