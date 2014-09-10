@@ -323,7 +323,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     memcpy(gauss_sp, &gauss_defaults, sizeof(struct gauss_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, gauss_parse_tab, (char *)gauss_sp) < 0)
+    if (bu_struct_parse(matparm, gauss_parse_tab, (char *)gauss_sp, NULL) < 0)
 	return -1;
 
     /* We have to pick up the parameters for the gaussian puff now.

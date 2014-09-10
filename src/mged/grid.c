@@ -42,9 +42,9 @@ extern point_t curr_e_axes_pos;  /* from edsol.c */
 
 void draw_grid(void);
 void snap_to_grid(fastf_t *mx, fastf_t *my);
-static void grid_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *);
-static void set_grid_draw(const struct bu_structparse *, const char *, void *, const char *);
-static void set_grid_res(const struct bu_structparse *, const char *, void *, const char *);
+static void grid_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void set_grid_draw(const struct bu_structparse *, const char *, void *, const char *, void *);
+static void set_grid_res(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 
 struct _grid_state default_grid_state = {
@@ -76,7 +76,8 @@ static void
 grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		    const char *UNUSED(name),
 		    void *UNUSED(base),
-		    const char *UNUSED(value))
+		    const char *UNUSED(value),
+		void *UNUSED(data))
 {
     struct dm_list *dmlp;
 
@@ -90,7 +91,8 @@ static void
 set_grid_draw(const struct bu_structparse *sdp,
 	      const char *name,
 	      void *base,
-	      const char *value)
+	      const char *value,
+		void *data)
 {
     struct dm_list *dlp;
 
@@ -99,7 +101,7 @@ set_grid_draw(const struct bu_structparse *sdp,
 	return;
     }
 
-    grid_set_dirty_flag(sdp, name, base, value);
+    grid_set_dirty_flag(sdp, name, base, value, data);
 
     /* This gets done at most one time. */
     if (grid_auto_size && grid_state->gr_draw) {
@@ -118,11 +120,12 @@ static void
 set_grid_res(const struct bu_structparse *sdp,
 	     const char *name,
 	     void *base,
-	     const char *value)
+	     const char *value,
+		void *data)
 {
     struct dm_list *dlp;
 
-    grid_set_dirty_flag(sdp, name, base, value);
+    grid_set_dirty_flag(sdp, name, base, value, data);
 
     if (grid_auto_size)
 	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)

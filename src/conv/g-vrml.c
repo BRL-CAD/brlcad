@@ -891,7 +891,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     mat.tx_w = -1;
     mat.tx_n = -1;
     bu_vls_strcpy(&vls, &mater->ma_shader[strlen(mat.shader)]);
-    (void)bu_struct_parse(&vls, vrml_mat_parse, (char *)&mat);
+    (void)bu_struct_parse(&vls, vrml_mat_parse, (char *)&mat, NULL);
 
     if (bu_strncmp("light", mat.shader, 5) == 0) {
 	/* this is a light source */

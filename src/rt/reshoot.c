@@ -180,7 +180,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	 */
 	bu_vls_trunc(&v, 0);
 	bu_vls_printf(&v, "val=%g", pp->pt_inhit->hit_dist);
-	if (bu_struct_parse(&v, val_sp, (const char *)&vs) < 0) {
+	if (bu_struct_parse(&v, val_sp, (const char *)&vs, NULL) < 0) {
 	  bu_log("Warning - bu_struct_parse failure in reshoot.c, function hit\n");
 	}
 
@@ -191,7 +191,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
 	bu_vls_trunc(&v, 0);
 	bu_vls_printf(&v, "val=%g", pp->pt_outhit->hit_dist);
-	if (bu_struct_parse(&v, val_sp, (const char *)&vs) < 0) {
+	if (bu_struct_parse(&v, val_sp, (const char *)&vs, NULL) < 0) {
 	  bu_log("Warning - bu_struct_parse failure in reshoot.c, function hit\n");
 	}
 
@@ -367,7 +367,7 @@ main(int argc, char **argv)
 		    status |= do_shot(&sh, &ap);
 		}
 
-		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
+		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh, NULL)) {
 		    bu_exit(EXIT_FAILURE, "error parsing pt");
 		}
 
@@ -375,7 +375,7 @@ main(int argc, char **argv)
 	    }
 	    case 'D' :
 	    {
-		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
+		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh, NULL)) {
 		    bu_exit(EXIT_FAILURE, "error parsing dir");
 		}
 		break;
@@ -389,7 +389,7 @@ main(int argc, char **argv)
 		BU_VLS_INIT(&rh->in_primitive);
 		BU_VLS_INIT(&rh->out_primitive);
 
-		if (bu_struct_parse(&buf, reg_sp, (const char *)rh)) {
+		if (bu_struct_parse(&buf, reg_sp, (const char *)rh, NULL)) {
 		    bu_log("Error parsing region %s\nSkipping to next line\n",
 			   bu_vls_addr(&buf));
 		}

@@ -202,7 +202,7 @@ strsolbld(void)
 	BU_ALLOC(dsp, struct rt_dsp_internal);
 	bu_vls_init(&dsp->dsp_name);
 	bu_vls_strcpy(&str, args);
-	if (bu_struct_parse(&str, OBJ[ID_DSP].ft_parsetab, (char *)dsp) < 0) {
+	if (bu_struct_parse(&str, OBJ[ID_DSP].ft_parsetab, (char *)dsp, NULL) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("dsp");
@@ -225,7 +225,7 @@ strsolbld(void)
 	MAT_IDN(ebm->mat);
 
 	bu_vls_strcpy(&str, args);
-	if (bu_struct_parse(&str, OBJ[ID_EBM].ft_parsetab, (char *)ebm) < 0) {
+	if (bu_struct_parse(&str, OBJ[ID_EBM].ft_parsetab, (char *)ebm, NULL) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("ebm");
@@ -247,7 +247,7 @@ strsolbld(void)
 	MAT_IDN(vol->mat);
 
 	bu_vls_strcpy(&str, args);
-	if (bu_struct_parse(&str, OBJ[ID_VOL].ft_parsetab, (char *)vol) < 0) {
+	if (bu_struct_parse(&str, OBJ[ID_VOL].ft_parsetab, (char *)vol, NULL) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("vol");
