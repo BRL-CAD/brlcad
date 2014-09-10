@@ -123,7 +123,6 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     if (!existing_sp) {
 	/* Handling a new solid */
 	GET_SOLID(sp);
-	BU_LIST_APPEND(&MGED_FreeSolid.l, &((sp)->l) );
 	sp->s_dlist = 0;
     } else {
 	/* Just updating an existing solid.
@@ -318,7 +317,6 @@ invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy)
     /* Obtain a fresh solid structure, and fill it in */
 
     GET_SOLID(sp);
-    BU_LIST_APPEND(&MGED_FreeSolid.l, &((sp)->l) );
 
     if (copy) {
 	BU_LIST_INIT(&(sp->s_vlist));

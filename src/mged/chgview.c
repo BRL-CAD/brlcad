@@ -698,13 +698,7 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 void
 mged_freemem(void)
 {
-    struct solid *sp;
     struct bn_vlist *vp;
-
-    FOR_ALL_SOLIDS(sp, &MGED_FreeSolid.l) {
-	BU_LIST_DEQUEUE(&((sp)->l));
-	FREE_SOLID(sp);
-    }
 
     while (BU_LIST_NON_EMPTY(&RTG.rtg_vlfree)) {
 	vp = BU_LIST_FIRST(bn_vlist, &RTG.rtg_vlfree);

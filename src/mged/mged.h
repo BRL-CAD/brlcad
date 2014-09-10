@@ -161,7 +161,6 @@ extern mat_t acc_rot_sol;	/* accumulate solid rotations */
 extern FILE *infile;
 extern FILE *outfile;
 extern jmp_buf jmp_env;
-extern struct solid MGED_FreeSolid;	/* Head of freelist */
 
 /* FIXME: ugh, main global interpreter */
 extern Tcl_Interp *ged_interp;
