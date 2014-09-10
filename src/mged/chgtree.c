@@ -38,7 +38,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "dg.h"
 #include "wdb.h"
 #include "rtgeom.h"
 

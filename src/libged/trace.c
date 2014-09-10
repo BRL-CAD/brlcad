@@ -74,12 +74,12 @@ trace_do(struct db_i *dbip,
 	MAT_COPY(new_xlate, old_xlate);
     }
 
-    _ged_trace(nextdp, (*pathpos)+1, new_xlate, gtdp, *verbose);
+    ged_trace(nextdp, (*pathpos)+1, new_xlate, gtdp, *verbose);
 }
 
 
 void
-_ged_trace(struct directory *dp,
+ged_trace(struct directory *dp,
 	   int pathpos,
 	   const mat_t old_xlate,
 	   struct _ged_trace_data *gtdp,

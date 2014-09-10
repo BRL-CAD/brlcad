@@ -387,7 +387,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 
 	MS += 7;
 	bu_vls_printf(&matparm, "%s", MS);
-	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0)
+	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp, NULL) < 0)
 	  bu_log("Warning - bu_struct_parse failure (matparm, phone_parse, material = plastic) in GetMaterial!\n");
 	bu_vls_free(&matparm);
 
@@ -419,7 +419,7 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 
 	MS += 5; /* move pointer past "pm " (3 characters) */
 	bu_vls_printf(&matparm, "%s", MS);
-	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0)
+	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp, NULL) < 0)
 	  bu_log("Warning - bu_struct_parse failure (matparm, phone_parse, material = glass) in GetMaterial!\n");
 	bu_vls_free(&matparm);
 

@@ -179,7 +179,7 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **
     bu_strlcpy(tp->material, "junk", sizeof(tp->material));
     VSET(tp->Zenith, 0., 0., 1.0);
 
-    if (bu_struct_parse(matparm, toyota_parse, (char *)tp) < 0) {
+    if (bu_struct_parse(matparm, toyota_parse, (char *)tp, NULL) < 0) {
 	BU_PUT(tp, struct toyota_specific);
 	return -1;
     }

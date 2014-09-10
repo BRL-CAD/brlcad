@@ -236,7 +236,7 @@ temp_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 
     tp->t_file[0] = '\0';
     tp->t_w = tp->t_n = -1;
-    if (bu_struct_parse(matparm, temp_parse, (char *)tp) < 0) {
+    if (bu_struct_parse(matparm, temp_parse, (char *)tp, NULL) < 0) {
 	BU_PUT(tp, struct temp_specific);
 	return -1;
     }

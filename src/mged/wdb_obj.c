@@ -51,9 +51,6 @@
 #include "mater.h"
 #include "obj.h"
 
-#include "./ged_private.h"
-
-
 #define WDB_TCL_READ_ERR { \
 	Tcl_AppendResult(wdbp->wdb_interp, "Database read error, aborting.\n", (char *)NULL); \
     }
@@ -164,21 +161,710 @@ struct concat_data {
 #define CUSTOM_SUFFIX 1<<4
 #define V4_MAXNAME NAMESIZE
 
-/* Defined in wdb_cmd_std.c */
-extern int wdb_comb_std_tcl(void *data,
-			    int argc,
-			    const char *argv[]);
 
-/* Defined in dg_obj.c */
-extern void dgo_impending_wdb_close(struct rt_wdb *wdbp);
-extern void dgo_zapall(struct rt_wdb *wdbp);
-extern void dgo_eraseobjall_callback(struct db_i *dbip,
-				     struct directory *dp,
-				     int notify);
-extern void dgo_notifyWdb(struct rt_wdb *wdbp);
+#define PRINT_USAGE Tcl_AppendResult(interp, "c: usage 'c [-cr] comb_name [bool_expr]'\n", \
+				     (char *)NULL)
+
+struct tokens {
+    struct bu_list l;
+    short type;
+    union tree *tp;
+};
+
+
+/* token types */
+#define WDB_TOK_NULL 0
+#define WDB_TOK_LPAREN 1
+#define WDB_TOK_RPAREN 2
+#define WDB_TOK_UNION 3
+#define WDB_TOK_INTER 4
+#define WDB_TOK_SUBTR 5
+#define WDB_TOK_TREE 6
+
+HIDDEN void
+wdb_free_tokens(struct bu_list *hp)
+{
+    struct tokens *tok;
+
+    BU_CK_LIST_HEAD(hp);
+
+    while (BU_LIST_WHILE(tok, tokens, hp)) {
+	BU_LIST_DEQUEUE(&tok->l);
+	if (tok->type == WDB_TOK_TREE) {
+	    db_free_tree(tok->tp, &rt_uniresource);
+	}
+    }
+}
+
+
+HIDDEN void
+wdb_append_union(struct bu_list *hp)
+{
+    struct tokens *tok;
+
+    BU_CK_LIST_HEAD(hp);
+
+    BU_ALLOC(tok, struct tokens);
+    tok->type = WDB_TOK_UNION;
+    tok->tp = (union tree *)NULL;
+    BU_LIST_INSERT(hp, &tok->l);
+}
+
+
+HIDDEN void
+wdb_append_inter(struct bu_list *hp)
+{
+    struct tokens *tok;
+
+    BU_CK_LIST_HEAD(hp);
+
+    BU_ALLOC(tok, struct tokens);
+    tok->type = WDB_TOK_INTER;
+    tok->tp = (union tree *)NULL;
+    BU_LIST_INSERT(hp, &tok->l);
+}
+
+
+HIDDEN void
+wdb_append_subtr(struct bu_list *hp)
+{
+    struct tokens *tok;
+
+    BU_CK_LIST_HEAD(hp);
+
+    BU_ALLOC(tok, struct tokens);
+    tok->type = WDB_TOK_SUBTR;
+    tok->tp = (union tree *)NULL;
+    BU_LIST_INSERT(hp, &tok->l);
+}
+
+
+HIDDEN void
+wdb_append_lparen(struct bu_list *hp)
+{
+    struct tokens *tok;
+
+    BU_CK_LIST_HEAD(hp);
+
+    BU_ALLOC(tok, struct tokens);
+    tok->type = WDB_TOK_LPAREN;
+    tok->tp = (union tree *)NULL;
+    BU_LIST_INSERT(hp, &tok->l);
+}
+
+
+HIDDEN void
+wdb_append_rparen(struct bu_list *hp)
+{
+    struct tokens *tok;
+
+    BU_CK_LIST_HEAD(hp);
+
+    BU_ALLOC(tok, struct tokens);
+    tok->type = WDB_TOK_RPAREN;
+    tok->tp = (union tree *)NULL;
+    BU_LIST_INSERT(hp, &tok->l);
+}
+
+
+HIDDEN int
+wdb_add_operator(Tcl_Interp *interp, struct bu_list *hp, char ch, short int *last_tok)
+{
+    char illegal[2];
+
+    BU_CK_LIST_HEAD(hp);
+
+    switch (ch) {
+	case 'u':
+	    wdb_append_union(hp);
+	    *last_tok = WDB_TOK_UNION;
+	    break;
+	case '+':
+	    wdb_append_inter(hp);
+	    *last_tok = WDB_TOK_INTER;
+	    break;
+	case '-':
+	    wdb_append_subtr(hp);
+	    *last_tok = WDB_TOK_SUBTR;
+	    break;
+	default:
+	    illegal[0] = ch;
+	    illegal[1] = '\0';
+	    Tcl_AppendResult(interp, "Illegal operator: ", illegal,
+			     ", aborting\n", (char *)NULL);
+	    wdb_free_tokens(hp);
+	    return TCL_ERROR;
+    }
+    return TCL_OK;
+}
+
+
+HIDDEN int
+wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
+{
+    char *ptr_lparen;
+    char *ptr_rparen;
+    int name_len;
+    union tree *node;
+    struct tokens *tok;
+
+    BU_CK_LIST_HEAD(hp);
+
+    ptr_lparen = strchr(name, '(');
+    ptr_rparen = strchr(name, ')');
+
+    RT_GET_TREE(node, &rt_uniresource);
+    node->tr_op = OP_DB_LEAF;
+    node->tr_l.tl_mat = (matp_t)NULL;
+    if (ptr_lparen || ptr_rparen) {
+	int tmp1, tmp2;
+
+	if (ptr_rparen)
+	    tmp1 = ptr_rparen - name;
+	else
+	    tmp1 = (-1);
+	if (ptr_lparen)
+	    tmp2 = ptr_lparen - name;
+	else
+	    tmp2 = (-1);
+
+	if (tmp2 == (-1) && tmp1 > 0)
+	    name_len = tmp1;
+	else if (tmp1 == (-1) && tmp2 > 0)
+	    name_len = tmp2;
+	else if (tmp1 > 0 && tmp2 > 0) {
+	    if (tmp1 < tmp2)
+		name_len = tmp1;
+	    else
+		name_len = tmp2;
+	} else {
+	    Tcl_AppendResult(interp, "Cannot determine length of operand name: ",
+			     name, ", aborting\n", (char *)NULL);
+	    return 0;
+	}
+    } else
+	name_len = (int)strlen(name);
+
+    node->tr_l.tl_name = (char *)bu_malloc(name_len+1, "node name");
+    bu_strlcpy(node->tr_l.tl_name, name, name_len+1);
+
+    BU_ALLOC(tok, struct tokens);
+    tok->type = WDB_TOK_TREE;
+    tok->tp = node;
+    BU_LIST_INSERT(hp, &tok->l);
+    return name_len;
+}
+
+
+HIDDEN void
+wdb_do_inter(struct bu_list *hp)
+{
+    struct tokens *tok;
+
+    for (BU_LIST_FOR(tok, tokens, hp)) {
+	struct tokens *prev, *next;
+	union tree *tp;
+
+	if (tok->type != WDB_TOK_INTER)
+	    continue;
+
+	prev = BU_LIST_PREV(tokens, &tok->l);
+	next = BU_LIST_NEXT(tokens, &tok->l);
+
+	if (prev->type !=WDB_TOK_TREE || next->type != WDB_TOK_TREE)
+	    continue;
+
+	/* this is an eligible intersection operation */
+	BU_ALLOC(tp, union tree);
+	RT_TREE_INIT(tp);
+	tp->tr_b.tb_op = OP_INTERSECT;
+	tp->tr_b.tb_regionp = (struct region *)NULL;
+	tp->tr_b.tb_left = prev->tp;
+	tp->tr_b.tb_right = next->tp;
+	BU_LIST_DEQUEUE(&tok->l);
+	bu_free((char *)tok, "tok");
+	BU_LIST_DEQUEUE(&prev->l);
+	bu_free((char *)prev, "prev");
+	next->tp = tp;
+	tok = next;
+    }
+}
+
+
+HIDDEN void
+wdb_do_union_subtr(struct bu_list *hp)
+{
+    struct tokens *tok;
+
+    for (BU_LIST_FOR(tok, tokens, hp)) {
+	struct tokens *prev, *next;
+	union tree *tp;
+
+	if (tok->type != WDB_TOK_UNION && tok->type != WDB_TOK_SUBTR)
+	    continue;
+
+	prev = BU_LIST_PREV(tokens, &tok->l);
+	next = BU_LIST_NEXT(tokens, &tok->l);
+
+	if (prev->type !=WDB_TOK_TREE || next->type != WDB_TOK_TREE)
+	    continue;
+
+	/* this is an eligible operation */
+	BU_ALLOC(tp, union tree);
+	RT_TREE_INIT(tp);
+	if (tok->type == WDB_TOK_UNION)
+	    tp->tr_b.tb_op = OP_UNION;
+	else
+	    tp->tr_b.tb_op = OP_SUBTRACT;
+	tp->tr_b.tb_regionp = (struct region *)NULL;
+	tp->tr_b.tb_left = prev->tp;
+	tp->tr_b.tb_right = next->tp;
+	BU_LIST_DEQUEUE(&tok->l);
+	bu_free((char *)tok, "tok");
+	BU_LIST_DEQUEUE(&prev->l);
+	bu_free((char *)prev, "prev");
+	next->tp = tp;
+	tok = next;
+    }
+}
+
+
+HIDDEN int
+wdb_do_paren(struct bu_list *hp)
+{
+    struct tokens *tok;
+
+    for (BU_LIST_FOR(tok, tokens, hp)) {
+	struct tokens *prev, *next;
+
+	if (tok->type != WDB_TOK_TREE)
+	    continue;
+
+	prev = BU_LIST_PREV(tokens, &tok->l);
+	next = BU_LIST_NEXT(tokens, &tok->l);
+
+	if (prev->type !=WDB_TOK_LPAREN || next->type != WDB_TOK_RPAREN)
+	    continue;
+
+	/* this is an eligible operand surrounded by parens */
+	BU_LIST_DEQUEUE(&next->l);
+	bu_free((char *)next, "next");
+	BU_LIST_DEQUEUE(&prev->l);
+	bu_free((char *)prev, "prev");
+    }
+
+    if (hp->forw == hp->back && hp->forw != hp)
+	return 1;	/* done */
+    else if (BU_LIST_IS_EMPTY(hp))
+	return -1;	/* empty tree!!!! */
+    else
+	return 0;	/* more to do */
+
+}
+
+
+HIDDEN union tree *
+wdb_eval_bool(struct bu_list *hp)
+{
+    int done=0;
+    union tree *final_tree;
+    struct tokens *tok;
+
+    while (done != 1) {
+	wdb_do_inter(hp);
+	wdb_do_union_subtr(hp);
+	done = wdb_do_paren(hp);
+    }
+
+    tok = BU_LIST_NEXT(tokens, hp);
+    final_tree = tok->tp;
+    BU_LIST_DEQUEUE(&tok->l);
+    bu_free((char *)tok, "tok");
+
+    return final_tree;
+}
+
+
+HIDDEN int
+wdb_check_syntax(Tcl_Interp *interp, struct db_i *dbip, struct bu_list *hp, char *comb_name, struct directory *dp)
+{
+    struct tokens *tok;
+    int paren_count  = 0;
+    int paren_error  = 0;
+    int missing_exp  = 0;
+    int missing_op   = 0;
+    int op_count     = 0;
+    int arg_count    = 0;
+    int circular_ref = 0;
+    int errors       = 0;
+    short last_tok   = WDB_TOK_NULL;
+
+    if (dbip == DBI_NULL)
+	return 0;
+
+    for (BU_LIST_FOR(tok, tokens, hp)) {
+	switch (tok->type) {
+	    case WDB_TOK_LPAREN:
+		paren_count++;
+		if (last_tok == WDB_TOK_RPAREN)
+		    missing_op++;
+		break;
+	    case WDB_TOK_RPAREN:
+		paren_count--;
+		if (last_tok == WDB_TOK_LPAREN)
+		    missing_exp++;
+		break;
+	    case WDB_TOK_UNION:
+	    case WDB_TOK_SUBTR:
+	    case WDB_TOK_INTER:
+		op_count++;
+		break;
+	    case WDB_TOK_TREE:
+		arg_count++;
+		if (!dp && BU_STR_EQUAL(comb_name, tok->tp->tr_l.tl_name))
+		    circular_ref++;
+		else if (db_lookup(dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL)
+		    Tcl_AppendResult(interp, "WARNING: '",
+				     tok->tp->tr_l.tl_name,
+				     "' does not actually exist\n", (char *)NULL);
+		break;
+	}
+	if (paren_count < 0)
+	    paren_error++;
+	last_tok = tok->type;
+    }
+
+    if (paren_count || paren_error) {
+	Tcl_AppendResult(interp, "ERROR: unbalanced parenthesis\n", (char *)NULL);
+	errors++;
+    }
+
+    if (missing_exp) {
+	Tcl_AppendResult(interp, "ERROR: empty parenthesis (missing expression)\n", (char *)NULL);
+	errors++;
+    }
+
+    if (missing_op) {
+	Tcl_AppendResult(interp, "ERROR: must have operator between ')('\n", (char *)NULL);
+	errors++;
+    }
+
+    if (op_count != arg_count-1) {
+	Tcl_AppendResult(interp, "ERROR: mismatch of operators and operands\n", (char *)NULL);
+	errors++;
+    }
+
+    if (circular_ref) {
+	Tcl_AppendResult(interp, "ERROR: combination cannot reference itself during initial creation\n", (char *)NULL);
+	errors++;
+    }
+
+    if (errors) {
+	Tcl_AppendResult(interp, "\t---------aborting!\n", (char *)NULL);
+	return 1;
+    }
+
+    return 0;
+}
+
+
+int
+wdb_comb_std_cmd(struct rt_wdb *wdbp,
+		 Tcl_Interp *interp,
+		 int argc,
+		 char *argv[])
+{
+    char *comb_name;
+    int ch;
+    int region_flag = -1;
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb = NULL;
+    struct tokens tok_hd;
+    short last_tok;
+    int i;
+    union tree *final_tree;
+
+    if (wdbp->dbip->dbi_read_only) {
+	Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    if (argc < 3) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&vls, "helplib_alias wdb_comb_std %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    /* Parse options */
+    bu_optind = 1;	/* re-init bu_getopt() */
+    while ((ch = bu_getopt(argc, argv, "cgr?")) != -1) {
+	switch (ch) {
+	    case 'c':
+	    case 'g':
+		region_flag = 0;
+		break;
+	    case 'r':
+		region_flag = 1;
+		break;
+		/* XXX How about -p and -v for FASTGEN? */
+	    case '?':
+	    default:
+		PRINT_USAGE;
+		return TCL_OK;
+	}
+    }
+    argc -= (bu_optind + 1);
+    argv += bu_optind;
+
+    comb_name = *argv++;
+    if (argc == -1) {
+	PRINT_USAGE;
+	return TCL_OK;
+    }
+
+    if ((region_flag != -1) && (argc == 0)) {
+	/*
+	 * Set/Reset the REGION flag of an existing combination
+	 */
+	if ((dp = db_lookup(wdbp->dbip, comb_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    return TCL_ERROR;
+
+	if (!(dp->d_flags & RT_DIR_COMB)) {
+	    Tcl_AppendResult(interp, comb_name, " is not a combination\n", (char *)0);
+	    return TCL_ERROR;
+	}
+
+	if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB(comb);
+
+	if (region_flag) {
+	    if (!comb->region_flag) {
+		/* assign values from the defaults */
+		comb->region_id = wdbp->wdb_item_default++;
+		comb->aircode = wdbp->wdb_air_default;
+		comb->GIFTmater = wdbp->wdb_mat_default;
+		comb->los = wdbp->wdb_los_default;
+	    }
+	    comb->region_flag = 1;
+	} else
+	    comb->region_flag = 0;
+
+	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	    rt_db_free_internal(&intern);
+	    Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
+	return TCL_OK;
+    }
+    /*
+     * At this point, we know we have a Boolean expression.
+     * If the combination already existed and region_flag is -1,
+     * then leave its region_flag alone.
+     * If the combination didn't exist yet,
+     * then pretend region_flag was 0.
+     * Otherwise, make sure to set its c_flags according to region_flag.
+     */
+
+    dp = db_lookup(wdbp->dbip, comb_name, LOOKUP_QUIET);
+    if (dp != RT_DIR_NULL) {
+	Tcl_AppendResult(interp, "ERROR: ", comb_name, " already exists\n", (char *)0);
+	return TCL_ERROR;
+    }
+
+    /* parse Boolean expression */
+    BU_LIST_INIT(&tok_hd.l);
+    tok_hd.type = WDB_TOK_NULL;
+
+    last_tok = WDB_TOK_LPAREN;
+    for (i = 0; i < argc; i++) {
+	char *ptr;
+
+	ptr = argv[i];
+	while (*ptr) {
+	    while (*ptr == '(' || *ptr == ')') {
+		switch (*ptr) {
+		    case '(':
+			wdb_append_lparen(&tok_hd.l);
+			last_tok = WDB_TOK_LPAREN;
+			break;
+		    case ')':
+			wdb_append_rparen(&tok_hd.l);
+			last_tok = WDB_TOK_RPAREN;
+			break;
+		}
+		ptr++;
+	    }
+
+	    if (*ptr == '\0')
+		continue;
+
+	    if (last_tok == WDB_TOK_RPAREN) {
+		/* next token MUST be an operator */
+		if (wdb_add_operator(interp, &tok_hd.l, *ptr, &last_tok) == TCL_ERROR) {
+		    wdb_free_tokens(&tok_hd.l);
+		    return TCL_ERROR;
+		}
+		ptr++;
+	    } else if (last_tok == WDB_TOK_LPAREN) {
+		/* next token MUST be an operand */
+		int name_len;
+
+		name_len = wdb_add_operand(interp, &tok_hd.l, ptr);
+		if (name_len < 1) {
+		    wdb_free_tokens(&tok_hd.l);
+		    return TCL_ERROR;
+		}
+		last_tok = WDB_TOK_TREE;
+		ptr += name_len;
+	    } else if (last_tok == WDB_TOK_TREE) {
+		/* must be an operator */
+		if (wdb_add_operator(interp, &tok_hd.l, *ptr, &last_tok) == TCL_ERROR) {
+		    wdb_free_tokens(&tok_hd.l);
+		    return TCL_ERROR;
+		}
+		ptr++;
+	    } else if (last_tok == WDB_TOK_UNION ||
+		       last_tok == WDB_TOK_INTER ||
+		       last_tok == WDB_TOK_SUBTR) {
+		/* must be an operand */
+		int name_len;
+
+		name_len = wdb_add_operand(interp, &tok_hd.l, ptr);
+		if (name_len < 1) {
+		    wdb_free_tokens(&tok_hd.l);
+		    return TCL_ERROR;
+		}
+		last_tok = WDB_TOK_TREE;
+		ptr += name_len;
+	    }
+	}
+    }
+
+    if (wdb_check_syntax(interp, wdbp->dbip, &tok_hd.l, comb_name, dp)) {
+	wdb_free_tokens(&tok_hd.l);
+	return TCL_ERROR;
+    }
+
+    final_tree = wdb_eval_bool(&tok_hd.l);
+
+    {
+	int flags;
+
+	flags = RT_DIR_COMB;
+	BU_ALLOC(comb, struct rt_comb_internal);
+	RT_COMB_INTERNAL_INIT(comb);
+
+	comb->tree = final_tree;
+
+	comb->region_id = -1;
+	if (region_flag == (-1))
+	    comb->region_flag = 0;
+	else
+	    comb->region_flag = region_flag;
+
+	if (comb->region_flag) {
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+
+	    comb->region_flag = 1;
+	    comb->region_id = wdbp->wdb_item_default++;
+	    comb->aircode = wdbp->wdb_air_default;
+	    comb->los = wdbp->wdb_los_default;
+	    comb->GIFTmater = wdbp->wdb_mat_default;
+
+	    bu_vls_printf(&tmp_vls,
+			  "Creating region with attrs: region_id=%ld, air=%ld, los=%ld, material_id=%ld\n",
+			  comb->region_id, comb->aircode, comb->los, comb->GIFTmater);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
+
+	    flags |= RT_DIR_REGION;
+	}
+
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_COMBINATION;
+	intern.idb_meth = &OBJ[ID_COMBINATION];
+	intern.idb_ptr = (void *)comb;
+
+	dp=db_diradd(wdbp->dbip, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type);
+	if (dp == RT_DIR_NULL) {
+	    Tcl_AppendResult(interp, "Failed to add ", comb_name,
+			     " to directory, aborting\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
+	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	    Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL);
+	    return TCL_ERROR;
+	}
+    }
+
+    return TCL_OK;
+}
+
+
+/*
+ * Input a combination in standard set-theoretic notation.
+ *
+ * Usage:
+ * procname c [-gr] comb_name boolean_expr
+ *
+ * NON-PARALLEL because of rt_uniresource
+ */
+static int
+wdb_comb_std_tcl(void *clientData,
+		 int argc,
+		 const char *argv[])
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+    /* FIXME: ew - make a copy so we don't lose the const */
+    return wdb_comb_std_cmd(wdbp, wdbp->wdb_interp, argc-1, (char **)argv+1);
+}
+
 
 /* wdb_track.c */
-extern int wdb_track_cmd(void *data, int argc, const char *argv[]);
+
+int
+wdb_track_cmd(void *data,
+	int argc,
+	const char *argv[])
+{
+    struct bu_vls log_str = BU_VLS_INIT_ZERO;
+    struct rt_wdb *wdbp = (struct rt_wdb *)data;
+    int retval;
+
+    if (argc != 15) {
+	bu_log("ERROR: expecting 15 arguments\n");
+	return TCL_ERROR;
+    }
+
+    retval = ged_track2(&log_str, wdbp, argv);
+
+    if (bu_vls_strlen(&log_str) > 0) {
+	bu_log("%s", bu_vls_addr(&log_str));
+    }
+
+    switch (retval) {
+	case GED_OK:
+	    return TCL_OK;
+	case GED_ERROR:
+	    return TCL_ERROR;
+    }
+
+    /* This should never happen */
+    return TCL_ERROR;
+}
+
 
 /* wdb_importFg4Section.c */
 extern int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]);
@@ -1689,10 +2375,6 @@ wdb_reopen_cmd(struct rt_wdb *wdbp,
 	    return TCL_ERROR;
 	}
 
-	/* XXXnotify observers */
-	/* notify drawable geometry objects associated with this database */
-	dgo_zapall(wdbp);
-
 	/* close current database */
 	db_close(wdbp->dbip);
 
@@ -2384,7 +3066,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
 {
     struct rt_i *rtip;
     struct application *ap;
-    struct resource resp = RT_RESOURCE_INIT_ZERO;
+    struct resource *resp;
     const char *newprocname;
 
     RT_CK_WDB(wdbp);
@@ -2447,12 +3129,14 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
      * which in this case would trash rt_uniresource.
      * Once on the rti_resources list, rt_clean() will clean 'em up.
      */
+    BU_ALLOC(resp, struct resource);
+    rt_init_resource(resp, 0, rtip);
     BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
 
     BU_ALLOC(ap, struct application);
     RT_APPLICATION_INIT(ap);
     ap->a_magic = RT_AP_MAGIC;
-    ap->a_resource = &resp;
+    ap->a_resource = resp;
     ap->a_rt_i = rtip;
     ap->a_purpose = "Conquest!";
 
@@ -3045,7 +3729,6 @@ wdb_ls_tcl(void *clientData,
     return wdb_ls_cmd(wdbp, argc-1, argv+1);
 }
 
-
 int
 wdb_pathsum_cmd(struct rt_wdb *wdbp,
 		int argc,
@@ -3076,7 +3759,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 
     /* initialize gtd */
     gtd.gtd_gedp = &ged;
-    gtd.gtd_flag = _GED_CPEVAL;
+    gtd.gtd_flag = 0;
     gtd.gtd_prflag = 0;
 
     pos_in = 1;
@@ -3084,11 +3767,11 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
     /* find out which command was entered */
     if (BU_STR_EQUAL(argv[0], "paths")) {
 	/* want to list all matching paths */
-	gtd.gtd_flag = _GED_LISTPATH;
+	gtd.gtd_flag = 1;
     }
     if (BU_STR_EQUAL(argv[0], "listeval")) {
 	/* want to list evaluated solid[s] */
-	gtd.gtd_flag = _GED_LISTEVAL;
+	gtd.gtd_flag = 2;
     }
 
     argv1 = bu_strdup(argv[1]);
@@ -3127,7 +3810,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 
     MAT_IDN(gtd.gtd_xform);
 
-    _ged_trace(gtd.gtd_obj[0], 0, bn_mat_identity, &gtd, 1);
+    ged_trace(gtd.gtd_obj[0], 0, bn_mat_identity, &gtd, 1);
 
     if (gtd.gtd_prflag == 0) {
 	/* path not found */
@@ -3434,12 +4117,6 @@ wdb_kill_cmd(struct rt_wdb *wdbp,
 	    if (is_phony)
 		continue;
 
-	    /* notify drawable geometry objects associated with this database object */
-	    if (i == argc-1)
-		dgo_eraseobjall_callback(wdbp->dbip, dp, 1 /* notify other interested observers */);
-	    else
-		dgo_eraseobjall_callback(wdbp->dbip, dp, 0);
-
 	    if (db_delete(wdbp->dbip, dp) || db_dirdelete(wdbp->dbip, dp)) {
 		/* Abort kill processing on first error */
 		Tcl_AppendResult(wdbp->wdb_interp, "an error occurred while deleting ", argv[i], (char *)NULL);
@@ -3564,9 +4241,6 @@ wdb_killtree_callback(struct db_i *dbip,
     Tcl_AppendResult(interp, "KILL ", (dp->d_flags & RT_DIR_COMB) ? "COMB" : "Solid",
 		     ":  ", dp->d_namep, "\n", (char *)NULL);
 
-    /* notify drawable geometry objects associated with this database object */
-    dgo_eraseobjall_callback(dbip, dp, ktdp->notify);
-
     if (db_delete(dbip, dp) || db_dirdelete(dbip, dp)) {
 	Tcl_AppendResult(interp, "an error occurred while deleting ", dp->d_namep, "\n", (char *)NULL);
     }
@@ -3627,8 +4301,6 @@ wdb_killtree_cmd(struct rt_wdb *wdbp,
 		    wdb_killtree_callback, wdb_killtree_callback,
 		    wdbp->wdb_resp, (void *)&ktd);
     }
-
-    dgo_notifyWdb(wdbp);
 
     return TCL_OK;
 }
@@ -4444,7 +5116,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 
     /* initialize gtd */
     gtd.gtd_gedp = &ged;
-    gtd.gtd_flag = _GED_CPEVAL;
+    gtd.gtd_flag = 0;
     gtd.gtd_prflag = 0;
 
     /* check if new solid name already exists in description */
@@ -4514,7 +5186,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    _ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd, 1);
+    ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd, 1);
 
     if (gtd.gtd_prflag == 0) {
 	Tcl_AppendResult(wdbp->wdb_interp, "PATH:  ", (char *)NULL);
@@ -6598,10 +7270,14 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
 	     const char *argv[])
 {
     struct directory *dp;
+    struct resource *resp;
     mat_t mat;
     int c;
     int debug;
     static const char *usage = "object";
+
+    resp = &rt_uniresource;
+    rt_init_resource( &rt_uniresource, 0, NULL );
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -6648,7 +7324,7 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
      * right to the the head of the tree pulling objects.
      * All new changes are immediately written to database
      */
-    db_functree(wdbp->dbip, dp, wdb_pull_comb, wdb_pull_leaf, &rt_uniresource, &mat);
+    db_functree(wdbp->dbip, dp, wdb_pull_comb, wdb_pull_leaf, resp, &mat);
 
     RTG.debug = debug;
 
@@ -7935,7 +8611,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (_ged_get_obj_bounds(&ged, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR) {
+    if (ged_get_obj_bounds(&ged, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR) {
 	/* release any allocated memory */
 	ged_free(&ged);
 
@@ -9789,7 +10465,7 @@ do_nothing(void *UNUSED(nada1), void *UNUSED(nada2))
  *
  * @return result of wdb command.
  */
-static int
+int
 wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
@@ -9840,9 +10516,6 @@ wdb_deleteProc(ClientData clientData)
 
     /* free observers */
     bu_observer_free(&wdbp->wdb_observers);
-
-    /* notify drawable geometry objects of the impending close */
-    dgo_impending_wdb_close(wdbp);
 
     /* close up shop */
     wdb_close(wdbp);

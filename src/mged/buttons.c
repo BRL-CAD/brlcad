@@ -30,14 +30,13 @@
 #include "bio.h"
 #include "bu.h"
 #include "vmath.h"
-#include "dg.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 
 /* external sp_hook function */
-extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *);	/* defined in set.c */
+extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);	/* defined in set.c */
 
 extern int mged_svbase(void);
 extern void set_e_axes_pos(int both);
@@ -372,7 +371,7 @@ bv_rate_toggle()
 	const char name[] = "name";
 	void *base = 0;
 	const char value[] = "value";
-	set_scroll_private(sdp, name, base, value);
+	set_scroll_private(sdp, name, base, value, NULL);
     }
 
     return TCL_OK;

@@ -102,7 +102,7 @@ points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **
     /* get or default shader parameters */
     ptp->pt_file[0] = '\0';
     ptp->pt_size = -1;
-    if (bu_struct_parse(matparm, points_parse, (char *)ptp) < 0) {
+    if (bu_struct_parse(matparm, points_parse, (char *)ptp, NULL) < 0) {
 	BU_PUT(ptp, struct points_specific);
 	return -1;
     }

@@ -118,6 +118,7 @@ set(MGED_SOURCES
   usepen.c
   utility1.c
   vparse.c
+  wdb_obj.c
   )
 
 if(NOT WIN32)

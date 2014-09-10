@@ -115,7 +115,7 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     pp->extinction = 0.0;
     pp->mfp = mfp;
 
-    if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
+    if (bu_struct_parse(matparm, phong_parse, (char *)pp, NULL) < 0) {
 	BU_PUT(pp, struct phong_specific);
 	return -1;
     }
@@ -145,7 +145,7 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
     pp->extinction = 0.0;
     pp->mfp = mfp;
 
-    if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
+    if (bu_struct_parse(matparm, phong_parse, (char *)pp, NULL) < 0) {
 	BU_PUT(pp, struct phong_specific);
 	return -1;
     }
@@ -176,7 +176,7 @@ glass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     pp->extinction = 0.0;
     pp->mfp = mfp;
 
-    if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
+    if (bu_struct_parse(matparm, phong_parse, (char *)pp, NULL) < 0) {
 	BU_PUT(pp, struct phong_specific);
 	return -1;
     }
