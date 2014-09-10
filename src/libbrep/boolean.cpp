@@ -1333,11 +1333,11 @@ loop_boolean(
 
 		if (x_events[k].m_type == ON_X_EVENT::ccx_overlap) {
 		    add_point_to_set(loop1_points, CurvePoint(1, i,
-				x_events[k].m_a[0], x_events[k].m_A[0],
+				x_events[k].m_a[1], x_events[k].m_A[1],
 				CurvePoint::BOUNDARY));
 
 		    add_point_to_set(loop2_points, CurvePoint(2, j,
-				x_events[k].m_b[0], x_events[k].m_B[0],
+				x_events[k].m_b[1], x_events[k].m_B[1],
 				CurvePoint::BOUNDARY));
 		}
 	    }
