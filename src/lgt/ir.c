@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lgt/ir.c
-    Author:		Gary S. Moss
-*/
 
 #include "common.h"
 
@@ -82,7 +79,7 @@ ir_Chk_Table(void)
 static int
 adjust_Page(int y)
 {
-    int	scans_per_page = fbiop->if_ppixels/fbiop->if_width;
+    int	scans_per_page = fb_get_pagebuffer_pixel_size(fbiop)/fb_getwidth(fbiop);
     int	newy = y - (y % scans_per_page);
     return	newy;
 }

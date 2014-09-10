@@ -201,7 +201,7 @@ struct servers {
 } servers[MAXSERVERS];
 
 
-FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
+fb *fbp = FB_NULL;		/* Current framebuffer ptr */
 int cur_fbwidth;		/* current fb width */
 int fbwidth;			/* fb width - S command */
 int fbheight;			/* fb height - S command */
@@ -1145,7 +1145,7 @@ init_fb(const char *name)
 {
     size_t xx, yy;
 
-    if (fbp != FBIO_NULL) fb_close(fbp);
+    if (fbp != FB_NULL) fb_close(fbp);
 
     xx = fbwidth;
     yy = fbheight;
@@ -1158,7 +1158,7 @@ init_fb(const char *name)
 	xx <<= 1;
     while (yy < height)
 	yy <<= 1;
-    if ((fbp = fb_open(name?name:framebuffer, xx, yy)) == FBIO_NULL) {
+    if ((fbp = fb_open(name?name:framebuffer, xx, yy)) == FB_NULL) {
 	bu_log("fb_open %zu, %zu failed\n", xx, yy);
 	return -1;
     }
@@ -1177,7 +1177,7 @@ size_display(struct frame *fr)
     CHECK_FRAME(fr);
     if (cur_fbwidth == fr->fr_width)
 	return;
-    if (fbp == FBIO_NULL)
+    if (fbp == FB_NULL)
 	return;
     if (fr->fr_width > fb_getwidth(fbp)) {
 	bu_log("Warning:  fb not big enough for %d pixels, display truncated\n", fr->fr_width);
@@ -1209,7 +1209,7 @@ repaint_fb(struct frame *fr)
     int w;
     int cnt;
 
-    if (fbp == FBIO_NULL) return;
+    if (fbp == FB_NULL) return;
     CHECK_FRAME(fr);
     size_display(fr);
 
@@ -2301,7 +2301,7 @@ cd_attach(const int argc, const char **argv)
 	name = argv[1];
     }
     if (init_fb(name) < 0) return -1;
-    if (fbp == FBIO_NULL) return -1;
+    if (fbp == FB_NULL) return -1;
     if ((fr = FrameHead.fr_forw) == &FrameHead) return -1;
     CHECK_FRAME(fr);
 
@@ -2313,8 +2313,8 @@ cd_attach(const int argc, const char **argv)
 static int
 cd_release(const int UNUSED(argc), const char **UNUSED(argv))
 {
-    if (fbp != FBIO_NULL) fb_close(fbp);
-    fbp = FBIO_NULL;
+    if (fbp != FB_NULL) fb_close(fbp);
+    fbp = FB_NULL;
     return 0;
 }
 
@@ -2439,8 +2439,8 @@ cd_status(const int UNUSED(argc), const char **UNUSED(argv))
 	       s, file_fullname, object_list);
     }
 
-    if (fbp != FBIO_NULL)
-	bu_log("%s Framebuffer is %s\n", s, fbp->if_name);
+    if (fbp != FB_NULL)
+	bu_log("%s Framebuffer is %s\n", s, fb_get_name(fbp));
     else
 	bu_log("%s No framebuffer\n", s);
     if (outputfile)
@@ -2489,7 +2489,7 @@ cd_status(const int UNUSED(argc), const char **UNUSED(argv))
 static int
 cd_clear(const int UNUSED(argc), const char **UNUSED(argv))
 {
-    if (fbp == FBIO_NULL) return -1;
+    if (fbp == FB_NULL) return -1;
     fb_clear(fbp, PIXEL_NULL);
     cur_fbwidth = 0;
     return 0;
@@ -3165,7 +3165,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     (void)gettimeofday(&sp->sr_sendtime, (struct timezone *)0);
     bu_struct_wrap_buf(&ext, (void *) buf);
 
-    cnt = bu_struct_import((void *)&info, desc_line_info, &ext);
+    cnt = bu_struct_import((void *)&info, desc_line_info, &ext, NULL);
     if (cnt < 0) {
 	bu_log("bu_struct_import error, %zu\n", cnt);
 	drop_server(sp, "bu_struct_import error");
@@ -3267,7 +3267,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     }
 
     /* If display attached, also draw it */
-    if (fbp != FBIO_NULL) {
+    if (fbp != FB_NULL) {
 	write_fb((unsigned char *)buf + ext.ext_nbytes, fr,
 		 info.li_startpix, info.li_endpix+1);
     }

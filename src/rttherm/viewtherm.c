@@ -103,7 +103,7 @@ usage(const char *argv0)
 }
 
 
-extern FBIO *fbp;		/* Framebuffer handle */
+extern fb *fbp;		/* Framebuffer handle */
 
 extern int max_bounces;		/* from refract.c */
 extern int max_ireflect;	/* from refract.c */
@@ -241,7 +241,7 @@ view_pixel(struct application *app)
 	    bu_exit(EXIT_FAILURE, "view_pixel:  fwrite failure\n");
     }
 #ifdef MSWISS
-    if (fbp != FBIO_NULL) {
+    if (fbp != FB_NULL) {
 	/* MSWISS -- real-time multi-spectral case */
 	unsigned char obuf[4096];
 	int i;

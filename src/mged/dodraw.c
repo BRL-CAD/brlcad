@@ -31,7 +31,6 @@
 #include "rtgeom.h"		/* for ID_POLY special support */
 #include "raytrace.h"
 #include "db.h"
-#include "dg.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -155,7 +154,7 @@ mged_bound_solid(struct solid *sp)
 void
 drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp)
 {
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     struct solid *sp;
 
     if (!existing_sp) {
@@ -210,8 +209,8 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	bu_semaphore_acquire(RT_SEM_MODEL);
 
 	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-	BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
+	gdlp = BU_LIST_PREV(display_list, gedp->ged_gdp->gd_headDisplay);
+	BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
 
 	bu_semaphore_release(RT_SEM_MODEL);
     } else {
@@ -330,7 +329,7 @@ replot_modified_solid(
 int
 invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy)
 {
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     struct solid *sp;
     struct directory *dp;
     int type = 0;
@@ -378,7 +377,7 @@ invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy)
     sp->s_regionid = 0;
 
     /* Solid successfully drawn, add to linked list of solid structs */
-    BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
+    BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
 
     sp->s_dlist = 0;
     createDListAll(sp);

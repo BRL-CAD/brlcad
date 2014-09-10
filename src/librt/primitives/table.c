@@ -78,7 +78,7 @@
     extern int rt_##name##_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, const fastf_t tol); \
     extern struct rt_selection_set *rt_##name##_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query); \
     extern struct rt_selection *rt_##name##_evaluate_selection(const struct rt_db_internal *ip, int op, const struct rt_selection *a, const struct rt_selection *b); \
-    extern int rt_##name##_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op)
+    extern int rt_##name##_process_selection(struct rt_db_internal *ip, struct db_i *, const struct rt_selection *selection, const struct rt_selection_operation *op)
 
 RT_DECLARE_INTERFACE(tor);
 RT_DECLARE_INTERFACE(tgc);
@@ -121,6 +121,7 @@ RT_DECLARE_INTERFACE(hrt);
 #if OBJ_BREP
 RT_DECLARE_INTERFACE(brep);
 #endif
+RT_DECLARE_INTERFACE(joint);
 
 
 /* generics for object manipulation, in generic.c */
@@ -1195,20 +1196,61 @@ const struct rt_functab OBJ[] = {
     {
 	/* 23 -- XXX unimplemented */
 	RT_FUNCTAB_MAGIC, "ID_JOINT", "joint",
-	0,
+	1,
+	RTFUNCTAB_FUNC_PREP_CAST(rt_joint_prep),
+	RTFUNCTAB_FUNC_SHOT_CAST(rt_joint_shot),
+	RTFUNCTAB_FUNC_PRINT_CAST(rt_joint_print),
+	RTFUNCTAB_FUNC_NORM_CAST(rt_joint_norm),
+	NULL,
+	NULL,
+	RTFUNCTAB_FUNC_UV_CAST(rt_joint_uv),
+	RTFUNCTAB_FUNC_CURVE_CAST(rt_joint_curve),
+	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	RTFUNCTAB_FUNC_FREE_CAST(rt_joint_free),
+	RTFUNCTAB_FUNC_PLOT_CAST(rt_joint_plot),
+	NULL,
+	NULL,
+	RTFUNCTAB_FUNC_TESS_CAST(rt_joint_tess),
+	NULL,
+	RTFUNCTAB_FUNC_BREP_CAST(rt_joint_brep),
+	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_joint_import5),
+	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_joint_export5),
+	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_joint_import4),
+	RTFUNCTAB_FUNC_EXPORT4_CAST(rt_joint_export4),
+	RTFUNCTAB_FUNC_IFREE_CAST(rt_joint_ifree),
+	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_joint_describe),
+	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
+	rt_joint_parse,
+	sizeof(struct rt_joint_internal),
+	RT_JOINT_INTERNAL_MAGIC,
+	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
+	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
+	NULL,
+	RTFUNCTAB_FUNC_PARAMS_CAST(rt_joint_params),
 	NULL,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
+	RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(rt_joint_find_selections),
 	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_joint_process_selection)
+#if 0
+	0, /* ft_use_rpp */
+	NULL,/* prep */
+	NULL,/* shot */
+	NULL,/* print */
+	NULL,/* norm */
+	NULL,/* piece_shot */
+	NULL,/* piece_hitsegs */
+	NULL,/* uv */
+	NULL,/* curve */
+	NULL,/* classify */
+	NULL,/* free */
+	RTFUNCTAB_FUNC_PLOT_CAST(rt_joint_plot),/* plot */
+	NULL,/* adaptive_plot */
+	NULL,/* vshot */
 	NULL,
 	NULL,
 	NULL,
@@ -1235,6 +1277,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL
+#endif
     },
 
     {

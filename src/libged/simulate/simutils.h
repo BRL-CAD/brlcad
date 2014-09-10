@@ -28,25 +28,25 @@
 
 #if defined __cplusplus
 
-    /* If the functions in this header have C linkage, this
-     * will specify linkage for all C++ language compilers */
-    extern "C" {
+/* If the functions in this header have C linkage, this
+ * will specify linkage for all C++ language compilers */
+extern "C" {
 #endif
 
 #include "common.h"
 
-/* System Headers */
+    /* System Headers */
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
 
-/* Public Headers */
+    /* Public Headers */
 #include "vmath.h"
 #include "db.h"
 #include "bu.h"
 
-/* Private Headers */
+    /* Private Headers */
 #include "../ged_private.h"
 #include "simulate.h"
 
@@ -55,180 +55,180 @@
 #define FOUND     1
 
 
-/**
- * How to use simulate.Blissfully simple interface, more options will be added soon
- */
-void
-print_usage(struct bu_vls *str);
+    /**
+     * How to use simulate.Blissfully simple interface, more options will be added soon
+     */
+    void
+    print_usage(struct bu_vls *str);
 
 
-/**
- * Prints a 16 by 16 transform matrix for debugging
- *
- */
-void
-print_matrix(char *rb_namep, mat_t t);
+    /**
+     * Prints a 16 by 16 transform matrix for debugging
+     *
+     */
+    void
+    print_matrix(char *rb_namep, mat_t t);
 
 
-/**
- * Prints a struct rigid_body for debugging, more members will be printed later
- */
-void
-print_rigid_body(struct rigid_body *rb);
+    /**
+     * Prints a struct rigid_body for debugging, more members will be printed later
+     */
+    void
+    print_rigid_body(struct rigid_body *rb);
 
 
-/**
- * Prints the list of contacts in each manifold of a rigid body
- */
-void
-print_manifold_list(struct rigid_body *rb);
+    /**
+     * Prints the list of contacts in each manifold of a rigid body
+     */
+    void
+    print_manifold_list(struct rigid_body *rb);
 
 
-/**
- * Prints the args of a command to be executed using libged
- */
-void
-print_command(char* cmd_args[], int num_args);
+    /**
+     * Prints the args of a command to be executed using libged
+     */
+    void
+    print_command(char* cmd_args[], int num_args);
 
 
-/**
- * This routine is called at the leaf nodes of the comb tree and checks
- * if the leaf contains a prim of the same name as that passed in 'object'
- * Returns SOLID_FOUND if the current(the passed) leaf contains a solid with
- * the same name as that of 'object', otherwise SOLID_NOT_FOUND
- *
- */
-HIDDEN int
-find_solid(struct db_i *dbip,
-		   struct rt_comb_internal *comb,
-		   union tree *comb_leaf,
-		   void *object);
+    /**
+     * This routine is called at the leaf nodes of the comb tree and checks
+     * if the leaf contains a prim of the same name as that passed in 'object'
+     * Returns SOLID_FOUND if the current(the passed) leaf contains a solid with
+     * the same name as that of 'object', otherwise SOLID_NOT_FOUND
+     *
+     */
+    HIDDEN int
+    find_solid(struct db_i *dbip,
+	       struct rt_comb_internal *comb,
+	       union tree *comb_leaf,
+	       void *object);
 
 
-/**
- * This routine traverses a combination (union tree) in LNR order and
- * calls the provided function for each OP_DB_LEAF node.  Note that
- * this routine does not go outside this one combination!!!!
- *
- * similar to db_tree_funcleaf() with just an extra return statement
- */
-int
-check_tree_funcleaf(
-    struct db_i *dbip,
-    struct rt_comb_internal *comb,
-    union tree *comb_tree,
-    int (*leaf_func)(),
-    void *user_ptr1);
+    /**
+     * This routine traverses a combination (union tree) in LNR order and
+     * calls the provided function for each OP_DB_LEAF node.  Note that
+     * this routine does not go outside this one combination!!!!
+     *
+     * similar to db_tree_funcleaf() with just an extra return statement
+     */
+    int
+    check_tree_funcleaf(
+	struct db_i *dbip,
+	struct rt_comb_internal *comb,
+	union tree *comb_tree,
+	int (*leaf_func)(),
+	void *user_ptr1);
 
 
-/**
- * Deletes a prim/comb if it exists.
- *
- * TODO: lower to librt
- */
-int
-sim_kill(struct ged *gedp, char *name);
+    /**
+     * Deletes a prim/comb if it exists.
+     *
+     * TODO: lower to librt
+     */
+    int
+    sim_kill(struct ged *gedp, char *name);
 
 
-/**
- * Deletes and duplicates the prim/comb passed in dp as new_name.
- *
- * TODO : lower to librt
- */
-int
-sim_kill_copy(struct ged *gedp, struct directory *dp, char* new_name);
+    /**
+     * Deletes and duplicates the prim/comb passed in dp as new_name.
+     *
+     * TODO : lower to librt
+     */
+    int
+    sim_kill_copy(struct ged *gedp, struct directory *dp, char* new_name);
 
 
-/**
- * Adds a prim/comb to an existing comb or creates it if not existing.
- *
- * TODO: lower to librt
- */
-int
-add_to_comb(struct ged *gedp, char *target, char *add);
+    /**
+     * Adds a prim/comb to an existing comb or creates it if not existing.
+     *
+     * TODO: lower to librt
+     */
+    int
+    add_to_comb(struct ged *gedp, char *target, char *add);
 
 
-/**
- * Draw a line from,to and color it
- */
-int
-line(struct ged *gedp, char* name, point_t from, point_t to,
-     unsigned char r,
-     unsigned char g,
-     unsigned char b);
+    /**
+     * Draw a line from,to and color it
+     */
+    int
+    line(struct ged *gedp, char* name, point_t from, point_t to,
+	 unsigned char r,
+	 unsigned char g,
+	 unsigned char b);
 
 
-/**
- * Draws an arrow from, to using the BOT primitive & TRC
- * Used to draw manifold normals
- * TODO: find a simpler way
- */
-int
-arrow(struct ged *gedp, char* name, point_t from, point_t to);
+    /**
+     * Draws an arrow from, to using the BOT primitive & TRC
+     * Used to draw manifold normals
+     * TODO: find a simpler way
+     */
+    int
+    arrow(struct ged *gedp, char* name, point_t from, point_t to);
 
 
-/**
- * Applies a material to passed comb using libged
- * TODO: lower to librt
- */
-int
-apply_material(struct ged *gedp,
-	       char* comb,
-	       char* material,
-	       unsigned char r,
-	       unsigned char g,
-	       unsigned char b);
+    /**
+     * Applies a material to passed comb using libged
+     * TODO: lower to librt
+     */
+    int
+    apply_material(struct ged *gedp,
+		   char* comb,
+		   char* material,
+		   unsigned char r,
+		   unsigned char g,
+		   unsigned char b);
 
 
-/**
- * This function colors the passed comb. It's for showing the current
- * state of the object inside the physics engine.
- *
- * TODO : this should be used with a debugging flag
- */
-int
-apply_color(struct ged *gedp,
-	    char* name,
-	    unsigned char r,
-	    unsigned char g,
-	    unsigned char b);
+    /**
+     * This function colors the passed comb. It's for showing the current
+     * state of the object inside the physics engine.
+     *
+     * TODO : this should be used with a debugging flag
+     */
+    int
+    apply_color(struct ged *gedp,
+		char* name,
+		unsigned char r,
+		unsigned char g,
+		unsigned char b);
 
 
-/**
- * This function draws the bounding box around a comb as reported by
- * Bullet.
- *
- * TODO: this should be used with a debugging flag
- * TODO: this function will soon be lowered to librt
- */
-int
-insert_AABB(struct ged *gedp,
-	    struct simulation_params *sim_params,
-	    struct rigid_body *current_node);
+    /**
+     * This function draws the bounding box around a comb as reported by
+     * Bullet.
+     *
+     * TODO: this should be used with a debugging flag
+     * TODO: this function will soon be lowered to librt
+     */
+    int
+    insert_AABB(struct ged *gedp,
+		struct simulation_params *sim_params,
+		struct rigid_body *current_node);
 
 
-/**
- * This function inserts a manifold comb as reported by Bullet.
- *
- * TODO: this should be used with a debugging flag
- * TODO: this function should be lowered to librt
- */
-int
-insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct rigid_body *rb);
+    /**
+     * This function inserts a manifold comb as reported by Bullet.
+     *
+     * TODO: this should be used with a debugging flag
+     * TODO: this function should be lowered to librt
+     */
+    int
+    insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct rigid_body *rb);
 
 
-/**
- * This function creates and inserts a RPP
- * Used to show AABB overlap volume
- *
- * TODO: this function should be lowered to librt
- */
-int
-make_rpp(struct ged *gedp, vect_t max, vect_t min, char* name);
+    /**
+     * This function creates and inserts a RPP
+     * Used to show AABB overlap volume
+     *
+     * TODO: this function should be lowered to librt
+     */
+    int
+    make_rpp(struct ged *gedp, vect_t max, vect_t min, char* name);
 
 
 #if defined __cplusplus
-    }   /* matches the linkage specification at the beginning. */
+}   /* matches the linkage specification at the beginning. */
 #endif
 
 

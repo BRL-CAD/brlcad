@@ -78,7 +78,7 @@ extern void update_Screen();
 extern void user_Interaction();
 
 /* variables */
-extern FBIO *fbiop;
+extern fb *fbiop;
 
 extern RGBpixel bgpixel;
 extern RGBpixel *ir_table;
@@ -166,7 +166,7 @@ extern unsigned char menucursor[];
 extern unsigned char sweeportrack[];
 extern unsigned char target1[];
 
-extern struct resource resource[];
+extern struct resource resource[MAX_PSW];
 extern struct rt_i *rt_ip;
 
 #define C_TAGPIXEL	0

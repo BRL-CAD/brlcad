@@ -46,13 +46,13 @@ diff3_attrs_log(struct diff_result *dr, struct diff_state *state, struct bu_vls 
     if (state->return_added && avp->state == DIFF_ADDED && !avp->left_value) {
 	bu_vls_printf(diff_log, "A(R) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->right_value);
     }
-    if (state->return_changed && avp->state == DIFF_CHANGED && avp->left_value && avp->right_value) {
+    if (state->return_changed && avp->state == DIFF_CHANGED && avp->left_value && avp->right_value && BU_STR_EQUAL(avp->left_value, avp->right_value)) {
 	bu_vls_printf(diff_log, "M(B) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->left_value);
     }
-    if (state->return_changed && avp->state == DIFF_CHANGED && !avp->right_value) {
+    if (state->return_changed && avp->state == DIFF_CHANGED && (!avp->right_value || (avp->ancestor_value && !BU_STR_EQUAL(avp->left_value, avp->ancestor_value)))) {
 	bu_vls_printf(diff_log, "M(L) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->left_value);
     }
-    if (state->return_changed && avp->state == DIFF_CHANGED && !avp->left_value) {
+    if (state->return_changed && avp->state == DIFF_CHANGED && (!avp->left_value || (avp->ancestor_value && !BU_STR_EQUAL(avp->right_value, avp->ancestor_value)))) {
 	bu_vls_printf(diff_log, "M(R) \"%s\" %s(p): %s\n", dr->obj_name, avp->name, avp->right_value);
     }
     if (state->return_conflicts && avp->state == DIFF_CONFLICT && !avp->ancestor_value) {

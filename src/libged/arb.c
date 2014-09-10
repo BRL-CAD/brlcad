@@ -42,7 +42,7 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal internal;
     struct rt_arb_internal *arb;
     int i, j;
-    double rota, fb;
+    double rota, fb_a;
     vect_t norm1, norm2, norm3;
     static const char *usage = "name rot fb";
 
@@ -73,13 +73,13 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* get fallback angle */
-    if (sscanf(argv[3], "%lf", &fb) != 1) {
+    if (sscanf(argv[3], "%lf", &fb_a) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad fallback angle - %s", argv[0], argv[3]);
 	return GED_ERROR;
     }
 
     rota *= DEG2RAD;
-    fb *= DEG2RAD;
+    fb_a *= DEG2RAD;
 
     BU_ALLOC(arb, struct rt_arb_internal);
     RT_DB_INTERNAL_INIT(&internal);
@@ -97,10 +97,10 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
      */
     VSET(arb->pt[0], 0.0, 0.0, 0.0);
 
-    /* calculate normal vector defined by rot, fb */
-    norm1[0] = cos(fb) * cos(rota);
-    norm1[1] = cos(fb) * sin(rota);
-    norm1[2] = sin(fb);
+    /* calculate normal vector defined by rot, fb_a */
+    norm1[0] = cos(fb_a) * cos(rota);
+    norm1[1] = cos(fb_a) * sin(rota);
+    norm1[2] = sin(fb_a);
 
     /* find two perpendicular vectors which are perpendicular to norm */
     j = 0;

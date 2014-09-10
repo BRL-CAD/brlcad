@@ -2,13 +2,14 @@
 # if GED command stuff is pushed into the actual subdirs, the autoconf vs cmake
 # verification (sh/cmakecheck.sh) will fail on dist-hook.  For now, just
 # handle it as part of libged
-if(BULLET_FOUND)
+if(BULLET_LIBRARIES)
   set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${BULLET_LIBRARIES})
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
   # The Bullet headers introduce a lot of shadow warnings - don't stop the
   # build because of them
   set(NO_STRICT_CXX_SETTING "NO_STRICT_CXX")
-endif(BULLET_FOUND)
+  add_definitions(-DHAVE_BULLET=1)
+endif(BULLET_LIBRARIES)
 
 if(ADAPTAGRAMS_FOUND)
   set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${ADAPTAGRAMS_LIBRARIES})
@@ -62,7 +63,6 @@ set(LIBGED_SOURCES
   cat.c
   cc.c
   center.c
-  clip.c
   clone.c
   coil.c
   color.c
@@ -86,7 +86,6 @@ set(LIBGED_SOURCES
   debugnmg.c
   decompose.c
   delay.c
-  dg_obj.c
   dir2ae.c
   draw.c
   draw_calc.cpp
@@ -142,6 +141,7 @@ set(LIBGED_SOURCES
   isize.c
   item.c
   joint.c
+  joint2.c
   keep.c
   keypoint.c
   kill.c
@@ -299,13 +299,7 @@ set(LIBGED_SOURCES
   vrot.c
   vutil.c
   wcodes.c
-  wdb_comb_std.c
   wdb_importFg4Section.c
-  wdb_nirt.c
-  wdb_obj.c
-  wdb_qray.c
-  wdb_track.c
-  wdb_vdraw.c
   whatid.c
   which.c
   which_shader.c

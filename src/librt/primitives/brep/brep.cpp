@@ -1063,7 +1063,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 	for (int i = 0; i < numhits; i++) {
 	    double closesttrim;
 	    BRNode* trimBR = NULL;
-	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim);
+	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim,BREP_EDGE_MISS_TOLERANCE);
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
@@ -3075,7 +3075,7 @@ is_entering(const ON_Surface *surf,  const ON_SimpleArray<BrepTrimPoint> &brep_l
  * shift_closed_curve_split_over_seam
  */
 bool
-shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
+shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_loop_points, double same_point_tolerance)
 {
     if (surf->IsClosed(0) || surf->IsClosed(1)) {
 	ON_Interval dom[2];
@@ -3097,7 +3097,7 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 	bool first_seam_pt = true;
 	for (i = 0; i < numpoints; i++) {
 	    btp = brep_loop_points[i];
-	    if ((seam = IsAtSeam(surf, btp.p2d, BREP_SAME_POINT_TOLERANCE)) > 0) {
+	    if ((seam = IsAtSeam(surf, btp.p2d, same_point_tolerance)) > 0) {
 		if (first_seam_pt) {
 		    part1.Append(btp);
 		    first_seam_pt = false;
@@ -3110,7 +3110,7 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 		    part1.Append(brep_loop_points[i]);
 		} else {
 		    btp = brep_loop_points[i];
-		    btp.p2d = UnwrapUVPoint(surf, brep_loop_points[i].p2d, BREP_SAME_POINT_TOLERANCE);
+		    btp.p2d = UnwrapUVPoint(surf, brep_loop_points[i].p2d, same_point_tolerance);
 		    part2.Append(btp);
 		}
 	    }
@@ -3250,6 +3250,503 @@ get_loop_sample_points(
 }
 
 
+/* force near seam points to seam */
+static void
+ForceNearSeamPointsToSeam(
+	const ON_Surface *s,
+	const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
+	double same_point_tolerance)
+{
+    int loop_cnt = face.LoopCount();
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	if (num_loop_points > 1) {
+	    for (int i = 0; i < num_loop_points; i++) {
+		ON_2dPoint &p = brep_loop_points[li][i].p2d;
+		if (IsAtSeam(s, p, same_point_tolerance)) {
+		    ForceToClosestSeam(s, p, same_point_tolerance);
+		}
+	    }
+	}
+    }
+}
+
+
+static void
+ExtendPointsOverClosedSeam(
+	const ON_Surface *s,
+	const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> *brep_loop_points)
+{
+    int loop_cnt = face.LoopCount();
+    // extend loop points over seam if needed.
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	if (num_loop_points > 1) {
+	    if (!extend_over_seam_crossings(s, brep_loop_points[li])) {
+		std::cerr << "Error: Face(" << face.m_face_index << ") cannot extend loops over closed seams." << std::endl;
+	    }
+	}
+    }
+}
+
+
+// process through loops checking for straddle condition.
+static void
+ShiftLoopsThatStraddleSeam(
+	const ON_Surface *s,
+	const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
+	double same_point_tolerance)
+{
+    int loop_cnt = face.LoopCount();
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	if (num_loop_points > 1) {
+	    ON_2dPoint brep_loop_begin = brep_loop_points[li][0].p2d;
+	    ON_2dPoint brep_loop_end = brep_loop_points[li][num_loop_points - 1].p2d;
+
+	    if (!V2NEAR_EQUAL(brep_loop_begin, brep_loop_end, same_point_tolerance)) {
+		if (LoopStraddlesDomain(s, brep_loop_points[li])) {
+		    // reorder loop points
+		    shift_loop_straddled_over_seam(s, brep_loop_points[li], same_point_tolerance);
+		}
+	    }
+	}
+    }
+}
+
+
+// process through closing open loops that begin and end on closed seam
+static void
+CloseOpenLoops(
+	const ON_Surface *s,
+	const ON_BrepFace &face,
+	const struct rt_tess_tol *ttol,
+	const struct bn_tol *tol,
+	const struct rt_view_info *info,
+	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
+	double same_point_tolerance)
+{
+    std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
+    int loop_cnt = face.LoopCount();
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	if (num_loop_points > 1) {
+	    ON_2dPoint brep_loop_begin = brep_loop_points[li][0].p2d;
+	    ON_2dPoint brep_loop_end = brep_loop_points[li][num_loop_points - 1].p2d;
+	    ON_3dPoint brep_loop_begin3d = s->PointAt(brep_loop_begin.x, brep_loop_begin.y);
+	    ON_3dPoint brep_loop_end3d = s->PointAt(brep_loop_end.x, brep_loop_end.y);
+
+	    if (!V2NEAR_EQUAL(brep_loop_begin, brep_loop_end, same_point_tolerance) &&
+		VNEAR_EQUAL(brep_loop_begin3d, brep_loop_end3d, same_point_tolerance)) {
+		int seam_begin = 0;
+		int seam_end = 0;
+		if ((seam_begin = IsAtSeam(s, brep_loop_begin, same_point_tolerance)) &&
+		    (seam_end = IsAtSeam(s, brep_loop_end, same_point_tolerance))) {
+		    bool loop_not_closed = true;
+		    if ((li + 1) < loop_cnt) {
+			// close using remaining loops
+			for (int rli = li + 1; rli < loop_cnt; rli++) {
+			    int rnum_loop_points = brep_loop_points[rli].Count();
+			    ON_2dPoint rbrep_loop_begin = brep_loop_points[rli][0].p2d;
+			    ON_2dPoint rbrep_loop_end = brep_loop_points[rli][rnum_loop_points - 1].p2d;
+			    if (!V2NEAR_EQUAL(rbrep_loop_begin, rbrep_loop_end, same_point_tolerance)) {
+				if (IsAtSeam(s, rbrep_loop_begin, same_point_tolerance) && IsAtSeam(s, rbrep_loop_end, same_point_tolerance)) {
+				    double t0, t1;
+				    ON_LineCurve line1(brep_loop_end, rbrep_loop_begin);
+				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    bridgePoints.push_back(linepoints3d);
+				    line1.GetDomain(&t0, &t1);
+				    std::map<double, ON_3dPoint*>::const_iterator i;
+				    for (i = linepoints3d->begin();
+					 i != linepoints3d->end(); i++) {
+					BrepTrimPoint btp;
+
+					// skips first point
+					if (i == linepoints3d->begin())
+					    continue;
+
+					btp.t = (*i).first;
+					btp.p3d = (*i).second;
+					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					btp.e = ON_UNSET_VALUE;
+					brep_loop_points[li].Append(btp);
+				    }
+				    //brep_loop_points[li].Append(brep_loop_points[rli].Count(),brep_loop_points[rli].Array());
+				    for (int j = 1; j < rnum_loop_points; j++) {
+					brep_loop_points[li].Append(brep_loop_points[rli][j]);
+				    }
+				    ON_LineCurve line2(rbrep_loop_end, brep_loop_begin);
+				    linepoints3d = getUVCurveSamples(s, &line2, 1000.0, ttol, tol, info);
+				    bridgePoints.push_back(linepoints3d);
+				    line2.GetDomain(&t0, &t1);
+
+				    for (i = linepoints3d->begin();
+					 i != linepoints3d->end(); i++) {
+					BrepTrimPoint btp;
+					// skips first point
+					if (i == linepoints3d->begin())
+					    continue;
+
+					btp.t = (*i).first;
+					btp.p3d = (*i).second;
+					btp.p2d = line2.PointAt(t0 + (t1 - t0) * btp.t);
+					btp.e = ON_UNSET_VALUE;
+					brep_loop_points[li].Append(btp);
+				    }
+				    brep_loop_points[rli].Empty();
+				    loop_not_closed = false;
+				}
+			    }
+			}
+		    }
+		    if (loop_not_closed) {
+			// no matching loops found that would close so use domain boundary
+			ON_Interval u = s->Domain(0);
+			ON_Interval v = s->Domain(1);
+			if (seam_end == 1) {
+			    if (NEAR_EQUAL(brep_loop_end.x, u.m_t[0], same_point_tolerance)) {
+				// low end so decreasing
+
+				// now where do we have to close to
+				if (seam_begin == 1) {
+				    // has to be on opposite seam
+				    double t0, t1;
+				    ON_2dPoint p = brep_loop_end;
+				    p.y = v.m_t[0];
+				    ON_LineCurve line1(brep_loop_end, p);
+				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    bridgePoints.push_back(linepoints3d);
+				    line1.GetDomain(&t0, &t1);
+				    std::map<double, ON_3dPoint*>::const_iterator i;
+				    for (i = linepoints3d->begin();
+					 i != linepoints3d->end(); i++) {
+					BrepTrimPoint btp;
+
+					// skips first point
+					if (i == linepoints3d->begin())
+					    continue;
+
+					btp.t = (*i).first;
+					btp.p3d = (*i).second;
+					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					btp.e = ON_UNSET_VALUE;
+					brep_loop_points[li].Append(btp);
+				    }
+				    line1.SetStartPoint(p);
+				    p.x = u.m_t[1];
+				    line1.SetEndPoint(p);
+				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    bridgePoints.push_back(linepoints3d);
+				    line1.GetDomain(&t0, &t1);
+				    for (i = linepoints3d->begin();
+					 i != linepoints3d->end(); i++) {
+					BrepTrimPoint btp;
+
+					// skips first point
+					if (i == linepoints3d->begin())
+					    continue;
+
+					btp.t = (*i).first;
+					btp.p3d = (*i).second;
+					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					btp.e = ON_UNSET_VALUE;
+					brep_loop_points[li].Append(btp);
+				    }
+				    line1.SetStartPoint(p);
+				    line1.SetEndPoint(brep_loop_begin);
+				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    bridgePoints.push_back(linepoints3d);
+				    line1.GetDomain(&t0, &t1);
+				    for (i = linepoints3d->begin();
+					 i != linepoints3d->end(); i++) {
+					BrepTrimPoint btp;
+
+					// skips first point
+					if (i == linepoints3d->begin())
+					    continue;
+
+					btp.t = (*i).first;
+					btp.p3d = (*i).second;
+					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					btp.e = ON_UNSET_VALUE;
+					brep_loop_points[li].Append(btp);
+				    }
+
+				} else if (seam_begin == 2) {
+
+				} else {
+				    //both needed
+				}
+
+			    } else { //assume on other end
+				// high end so increasing
+				// now where do we have to close to
+				if (seam_begin == 1) {
+				    // has to be on opposite seam
+				    double t0, t1;
+				    ON_2dPoint p = brep_loop_end;
+				    p.y = v.m_t[1];
+				    ON_LineCurve line1(brep_loop_end, p);
+				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    bridgePoints.push_back(linepoints3d);
+				    line1.GetDomain(&t0, &t1);
+				    std::map<double, ON_3dPoint*>::const_iterator i;
+				    for (i = linepoints3d->begin();
+					 i != linepoints3d->end(); i++) {
+					BrepTrimPoint btp;
+
+					// skips first point
+					if (i == linepoints3d->begin())
+					    continue;
+
+					btp.t = (*i).first;
+					btp.p3d = (*i).second;
+					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					btp.e = ON_UNSET_VALUE;
+					brep_loop_points[li].Append(btp);
+				    }
+				    line1.SetStartPoint(p);
+				    p.x = u.m_t[0];
+				    line1.SetEndPoint(p);
+				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    bridgePoints.push_back(linepoints3d);
+				    line1.GetDomain(&t0, &t1);
+				    for (i = linepoints3d->begin();
+					 i != linepoints3d->end(); i++) {
+					BrepTrimPoint btp;
+
+					// skips first point
+					if (i == linepoints3d->begin())
+					    continue;
+
+					btp.t = (*i).first;
+					btp.p3d = (*i).second;
+					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					btp.e = ON_UNSET_VALUE;
+					brep_loop_points[li].Append(btp);
+				    }
+				    line1.SetStartPoint(p);
+				    line1.SetEndPoint(brep_loop_begin);
+				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    bridgePoints.push_back(linepoints3d);
+				    line1.GetDomain(&t0, &t1);
+				    for (i = linepoints3d->begin();
+					 i != linepoints3d->end(); i++) {
+					BrepTrimPoint btp;
+
+					// skips first point
+					if (i == linepoints3d->begin())
+					    continue;
+
+					btp.t = (*i).first;
+					btp.p3d = (*i).second;
+					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
+					btp.e = ON_UNSET_VALUE;
+					brep_loop_points[li].Append(btp);
+				    }
+				} else if (seam_begin == 2) {
+
+				} else {
+				    //both
+				}
+			    }
+			} else if (seam_end == 2) {
+			    if (NEAR_EQUAL(brep_loop_end.y, v.m_t[0], same_point_tolerance)) {
+
+			    } else { //assume on other end
+
+			    }
+			} else {
+			    //both
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
+
+
+/*
+ * lifted from Clipper private function and rework for brep_loop_points
+ */
+static bool
+PointInPolygon(ON_2dPoint &pt, ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
+{
+    bool result = false;
+
+    for( int i = 0; i < brep_loop_points.Count(); i++){
+	ON_2dPoint curr_pt = brep_loop_points[i].p2d;
+	ON_2dPoint prev_pt = ON_2dPoint::UnsetPoint;
+	if (i == 0) {
+	    prev_pt = brep_loop_points[brep_loop_points.Count()-1].p2d;
+	} else {
+	    prev_pt = brep_loop_points[i-1].p2d;
+	}
+	if ((((curr_pt.y <= pt.y) && (pt.y < prev_pt.y)) ||
+		((prev_pt.y <= pt.y) && (pt.y < curr_pt.y))) &&
+		(pt.x < (prev_pt.x - curr_pt.x) * (pt.y - curr_pt.y) /
+			(prev_pt.y - curr_pt.y) + curr_pt.x ))
+	    result = !result;
+    }
+    return result;
+}
+
+
+static void
+ShiftPoints(ON_SimpleArray<BrepTrimPoint> &brep_loop_points, double ushift, double vshift)
+{
+    for( int i = 0; i < brep_loop_points.Count(); i++){
+	brep_loop_points[i].p2d.x += ushift;
+	brep_loop_points[i].p2d.y += vshift;
+    }
+}
+
+
+// process through to make sure inner hole loops are actually inside of outer polygon
+// need to make sure that any hole polygons are properly shifted over correct closed seams
+// going to try and do an inside test on hole vertex
+static void
+ShiftInnerLoops(
+	const ON_Surface *s,
+	const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> *brep_loop_points)
+{
+    int loop_cnt = face.LoopCount();
+    if (loop_cnt > 1) { // has inner loops or holes
+	for( int li = 1; li < loop_cnt; li++) {
+	    ON_2dPoint p2d((brep_loop_points[li])[0].p2d.x, (brep_loop_points[li])[0].p2d.y);
+	    if (!PointInPolygon(p2d, brep_loop_points[0])) {
+		double ulength = s->Domain(0).Length();
+		double vlength = s->Domain(1).Length();
+		ON_2dPoint sftd_pt = p2d;
+
+		//do shift until inside
+		if (s->IsClosed(0) && s->IsClosed(1)) {
+		    // First just U
+		    for(int iu = 0; iu < 2; iu++) {
+			double ushift = 0.0;
+			if (iu == 0) {
+			    ushift = -ulength;
+			} else {
+			    ushift =  ulength;
+			}
+			sftd_pt.x = p2d.x + ushift;
+			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
+			    // shift all U accordingly
+			    ShiftPoints(brep_loop_points[li], ushift, 0.0);
+			    break;
+			}
+		    }
+		    // Second just V
+		    for(int iv = 0; iv < 2; iv++) {
+			double vshift = 0.0;
+			if (iv == 0) {
+			    vshift = -vlength;
+			} else {
+			    vshift = vlength;
+			}
+			sftd_pt.y = p2d.y + vshift;
+			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
+			    // shift all V accordingly
+			    ShiftPoints(brep_loop_points[li], 0.0, vshift);
+			    break;
+			}
+		    }
+		    // Third both U & V
+		    for(int iu = 0; iu < 2; iu++) {
+			double ushift = 0.0;
+			if (iu == 0) {
+			    ushift = -ulength;
+			} else {
+			    ushift =  ulength;
+			}
+			sftd_pt.x = p2d.x + ushift;
+			for(int iv = 0; iv < 2; iv++) {
+			    double vshift = 0.0;
+			    if (iv == 0) {
+				vshift = -vlength;
+			    } else {
+				vshift = vlength;
+			    }
+			    sftd_pt.y = p2d.y + vshift;
+			    if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
+				// shift all U & V accordingly
+				ShiftPoints(brep_loop_points[li], ushift, vshift);
+				break;
+			    }
+			}
+		    }
+		} else if (s->IsClosed(0)) {
+		    // just U
+		    for(int iu = 0; iu < 2; iu++) {
+			double ushift = 0.0;
+			if (iu == 0) {
+			    ushift = -ulength;
+			} else {
+			    ushift =  ulength;
+			}
+			sftd_pt.x = p2d.x + ushift;
+			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
+			    // shift all U accordingly
+			    ShiftPoints(brep_loop_points[li], ushift, 0.0);
+			    break;
+			}
+		    }
+		} else if (s->IsClosed(1)) {
+		    // just V
+		    for(int iv = 0; iv < 2; iv++) {
+			double vshift = 0.0;
+			if (iv == 0) {
+			    vshift = -vlength;
+			} else {
+			    vshift = vlength;
+			}
+			sftd_pt.y = p2d.y + vshift;
+			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
+			    // shift all V accordingly
+			    ShiftPoints(brep_loop_points[li], 0.0, vshift);
+			    break;
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
+
+
+static void
+PerformClosedSurfaceChecks(
+	const ON_Surface *s,
+	const ON_BrepFace &face,
+	const struct rt_tess_tol *ttol,
+	const struct bn_tol *tol,
+	const struct rt_view_info *info,
+	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
+	double same_point_tolerance)
+{
+    // force near seam points to seam.
+    ForceNearSeamPointsToSeam(s, face, brep_loop_points, same_point_tolerance);
+
+    // extend loop points over closed seam if needed.
+    ExtendPointsOverClosedSeam(s, face, brep_loop_points);
+
+    // shift open loops that straddle a closed seam with the intent of closure at the surface boundary.
+    ShiftLoopsThatStraddleSeam(s, face, brep_loop_points, same_point_tolerance);
+
+    // process through closing open loops that begin and end on closed seam
+    CloseOpenLoops(s, face, ttol, tol, info, brep_loop_points, same_point_tolerance);
+
+    // process through to make sure inner hole loops are actually inside of outer polygon
+    // need to make sure that any hole polygons are properly shifted over correct closed seams
+    ShiftInnerLoops(s, face, brep_loop_points);
+}
+
+
 void
 poly2tri_CDT(struct bu_list *vhead,
 	     ON_BrepFace &face,
@@ -3295,282 +3792,8 @@ poly2tri_CDT(struct bu_list *vhead,
 
     std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
     if (s->IsClosed(0) || s->IsClosed(1)) {
-	// force near seam points to seam.
-	for (int li = 0; li < loop_cnt; li++) {
-	    int num_loop_points = brep_loop_points[li].Count();
-	    if (num_loop_points > 1) {
-		for (int i = 0; i < num_loop_points; i++) {
-		    ON_2dPoint &p = brep_loop_points[li][i].p2d;
-		    if (IsAtSeam(s, p, BREP_SAME_POINT_TOLERANCE)) {
-			ForceToClosestSeam(s, p, BREP_SAME_POINT_TOLERANCE);
-		    }
-		}
-	    }
-	}
+	PerformClosedSurfaceChecks(s, face, ttol, tol, info, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
 
-	// extend loop points over seam if needed.
-	for (int li = 0; li < loop_cnt; li++) {
-	    int num_loop_points = brep_loop_points[li].Count();
-	    if (num_loop_points > 1) {
-		if (!extend_over_seam_crossings(s, brep_loop_points[li])) {
-		    std::cerr << "Error: Face(" << fi << ") cannot extend loops over closed seams." << std::endl;
-		}
-	    }
-	}
-
-	// process through loops checking for straddle condition.
-	for (int li = 0; li < loop_cnt; li++) {
-	    int num_loop_points = brep_loop_points[li].Count();
-	    if (num_loop_points > 1) {
-		ON_2dPoint brep_loop_begin = brep_loop_points[li][0].p2d;
-		ON_2dPoint brep_loop_end = brep_loop_points[li][num_loop_points - 1].p2d;
-
-		if (!V2NEAR_EQUAL(brep_loop_begin, brep_loop_end, BREP_SAME_POINT_TOLERANCE)) {
-		    if (LoopStraddlesDomain(s, brep_loop_points[li])) {
-			// reorder loop points
-			shift_loop_straddled_over_seam(s, brep_loop_points[li]);
-		    }
-		}
-	    }
-	}
-
-	// process through closing loops that begin and end on closed seam
-	for (int li = 0; li < loop_cnt; li++) {
-	    int num_loop_points = brep_loop_points[li].Count();
-	    if (num_loop_points > 1) {
-		ON_2dPoint brep_loop_begin = brep_loop_points[li][0].p2d;
-		ON_2dPoint brep_loop_end = brep_loop_points[li][num_loop_points - 1].p2d;
-		ON_3dPoint brep_loop_begin3d = s->PointAt(brep_loop_begin.x, brep_loop_begin.y);
-		ON_3dPoint brep_loop_end3d = s->PointAt(brep_loop_end.x, brep_loop_end.y);
-
-		if (!V2NEAR_EQUAL(brep_loop_begin, brep_loop_end, BREP_SAME_POINT_TOLERANCE) &&
-		    VNEAR_EQUAL(brep_loop_begin3d, brep_loop_end3d, BREP_SAME_POINT_TOLERANCE)) {
-		    int seam_begin = 0;
-		    int seam_end = 0;
-		    if ((seam_begin = IsAtSeam(s, brep_loop_begin, BREP_SAME_POINT_TOLERANCE)) &&
-			(seam_end = IsAtSeam(s, brep_loop_end, BREP_SAME_POINT_TOLERANCE))) {
-			bool loop_not_closed = true;
-			if ((li + 1) < loop_cnt) {
-			    // close using remaining loops
-			    for (int rli = li + 1; rli < loop_cnt; rli++) {
-				int rnum_loop_points = brep_loop_points[rli].Count();
-				ON_2dPoint rbrep_loop_begin = brep_loop_points[rli][0].p2d;
-				ON_2dPoint rbrep_loop_end = brep_loop_points[rli][rnum_loop_points - 1].p2d;
-				if (!V2NEAR_EQUAL(rbrep_loop_begin, rbrep_loop_end, BREP_SAME_POINT_TOLERANCE)) {
-				    if (IsAtSeam(s, rbrep_loop_begin, BREP_SAME_POINT_TOLERANCE) && IsAtSeam(s, rbrep_loop_end, BREP_SAME_POINT_TOLERANCE)) {
-					double t0, t1;
-					ON_LineCurve line1(brep_loop_end, rbrep_loop_begin);
-					std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
-					bridgePoints.push_back(linepoints3d);
-					line1.GetDomain(&t0, &t1);
-					std::map<double, ON_3dPoint*>::const_iterator i;
-					for (i = linepoints3d->begin();
-					     i != linepoints3d->end(); i++) {
-					    BrepTrimPoint btp;
-
-					    // skips first point
-					    if (i == linepoints3d->begin())
-						continue;
-
-					    btp.t = (*i).first;
-					    btp.p3d = (*i).second;
-					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
-					    btp.e = ON_UNSET_VALUE;
-					    brep_loop_points[li].Append(btp);
-					}
-					//brep_loop_points[li].Append(brep_loop_points[rli].Count(),brep_loop_points[rli].Array());
-					for (int j = 1; j < rnum_loop_points; j++) {
-					    brep_loop_points[li].Append(brep_loop_points[rli][j]);
-					}
-					ON_LineCurve line2(rbrep_loop_end, brep_loop_begin);
-					linepoints3d = getUVCurveSamples(s, &line2, 1000.0, ttol, tol, info);
-					bridgePoints.push_back(linepoints3d);
-					line2.GetDomain(&t0, &t1);
-
-					for (i = linepoints3d->begin();
-					     i != linepoints3d->end(); i++) {
-					    BrepTrimPoint btp;
-					    // skips first point
-					    if (i == linepoints3d->begin())
-						continue;
-
-					    btp.t = (*i).first;
-					    btp.p3d = (*i).second;
-					    btp.p2d = line2.PointAt(t0 + (t1 - t0) * btp.t);
-					    btp.e = ON_UNSET_VALUE;
-					    brep_loop_points[li].Append(btp);
-					}
-					brep_loop_points[rli].Empty();
-					loop_not_closed = false;
-				    }
-				}
-			    }
-			}
-			if (loop_not_closed) {
-			    // no matching loops found that would close so use domain boundary
-			    ON_Interval u = s->Domain(0);
-			    ON_Interval v = s->Domain(1);
-			    if (seam_end == 1) {
-				if (NEAR_EQUAL(brep_loop_end.x, u.m_t[0], BREP_SAME_POINT_TOLERANCE)) {
-				    // low end so decreasing
-
-				    // now where do we have to close to
-				    if (seam_begin == 1) {
-					// has to be on opposite seam
-					double t0, t1;
-					ON_2dPoint p = brep_loop_end;
-					p.y = v.m_t[0];
-					ON_LineCurve line1(brep_loop_end, p);
-					std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
-					bridgePoints.push_back(linepoints3d);
-					line1.GetDomain(&t0, &t1);
-					std::map<double, ON_3dPoint*>::const_iterator i;
-					for (i = linepoints3d->begin();
-					     i != linepoints3d->end(); i++) {
-					    BrepTrimPoint btp;
-
-					    // skips first point
-					    if (i == linepoints3d->begin())
-						continue;
-
-					    btp.t = (*i).first;
-					    btp.p3d = (*i).second;
-					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
-					    btp.e = ON_UNSET_VALUE;
-					    brep_loop_points[li].Append(btp);
-					}
-					line1.SetStartPoint(p);
-					p.x = u.m_t[1];
-					line1.SetEndPoint(p);
-					linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
-					bridgePoints.push_back(linepoints3d);
-					line1.GetDomain(&t0, &t1);
-					for (i = linepoints3d->begin();
-					     i != linepoints3d->end(); i++) {
-					    BrepTrimPoint btp;
-
-					    // skips first point
-					    if (i == linepoints3d->begin())
-						continue;
-
-					    btp.t = (*i).first;
-					    btp.p3d = (*i).second;
-					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
-					    btp.e = ON_UNSET_VALUE;
-					    brep_loop_points[li].Append(btp);
-					}
-					line1.SetStartPoint(p);
-					line1.SetEndPoint(brep_loop_begin);
-					linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
-					bridgePoints.push_back(linepoints3d);
-					line1.GetDomain(&t0, &t1);
-					for (i = linepoints3d->begin();
-					     i != linepoints3d->end(); i++) {
-					    BrepTrimPoint btp;
-
-					    // skips first point
-					    if (i == linepoints3d->begin())
-						continue;
-
-					    btp.t = (*i).first;
-					    btp.p3d = (*i).second;
-					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
-					    btp.e = ON_UNSET_VALUE;
-					    brep_loop_points[li].Append(btp);
-					}
-
-				    } else if (seam_begin == 2) {
-
-				    } else {
-					//both
-				    }
-
-				} else { //assume on other end
-				    // high end so increasing
-				    // now where do we have to close to
-				    if (seam_begin == 1) {
-					// has to be on opposite seam
-					double t0, t1;
-					ON_2dPoint p = brep_loop_end;
-					p.y = v.m_t[1];
-					ON_LineCurve line1(brep_loop_end, p);
-					std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
-					bridgePoints.push_back(linepoints3d);
-					line1.GetDomain(&t0, &t1);
-					std::map<double, ON_3dPoint*>::const_iterator i;
-					for (i = linepoints3d->begin();
-					     i != linepoints3d->end(); i++) {
-					    BrepTrimPoint btp;
-
-					    // skips first point
-					    if (i == linepoints3d->begin())
-						continue;
-
-					    btp.t = (*i).first;
-					    btp.p3d = (*i).second;
-					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
-					    btp.e = ON_UNSET_VALUE;
-					    brep_loop_points[li].Append(btp);
-					}
-					line1.SetStartPoint(p);
-					p.x = u.m_t[0];
-					line1.SetEndPoint(p);
-					linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
-					bridgePoints.push_back(linepoints3d);
-					line1.GetDomain(&t0, &t1);
-					for (i = linepoints3d->begin();
-					     i != linepoints3d->end(); i++) {
-					    BrepTrimPoint btp;
-
-					    // skips first point
-					    if (i == linepoints3d->begin())
-						continue;
-
-					    btp.t = (*i).first;
-					    btp.p3d = (*i).second;
-					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
-					    btp.e = ON_UNSET_VALUE;
-					    brep_loop_points[li].Append(btp);
-					}
-					line1.SetStartPoint(p);
-					line1.SetEndPoint(brep_loop_begin);
-					linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
-					bridgePoints.push_back(linepoints3d);
-					line1.GetDomain(&t0, &t1);
-					for (i = linepoints3d->begin();
-					     i != linepoints3d->end(); i++) {
-					    BrepTrimPoint btp;
-
-					    // skips first point
-					    if (i == linepoints3d->begin())
-						continue;
-
-					    btp.t = (*i).first;
-					    btp.p3d = (*i).second;
-					    btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
-					    btp.e = ON_UNSET_VALUE;
-					    brep_loop_points[li].Append(btp);
-					}
-				    } else if (seam_begin == 2) {
-
-				    } else {
-					//both
-				    }
-				}
-			    } else if (seam_end == 2) {
-				if (NEAR_EQUAL(brep_loop_end.y, v.m_t[0], BREP_SAME_POINT_TOLERANCE)) {
-
-				} else { //assume on other end
-
-				}
-			    } else {
-				//both
-			    }
-			}
-		    }
-		}
-	    }
-	}
     }
     // process through loops building polygons.
     bool outer = true;
@@ -4436,7 +4659,7 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	bool ok = model.Write(archive, 4, "export5", &err);
 	if (ok) {
 	    void *archive_cp = archive.CreateCopy();
-	    char *brep64 = bu_b64_encode_block((const char *)archive_cp, archive.Size());
+	    signed char *brep64 = bu_b64_encode_block((const signed char *)archive_cp, archive.Size());
 	    bu_vls_printf(logstr, " \"%s\"", brep64);
 	    bu_free(archive_cp, "free archive copy");
 	    bu_free(brep64, "free encoded brep string");
@@ -4450,10 +4673,10 @@ int
 rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_brep_internal *bi = (struct rt_brep_internal *)intern->idb_ptr;
-    char *decoded;
+    signed char *decoded;
     ONX_Model model;
     if (argc == 1 && argv[0]) {
-	int decoded_size = bu_b64_decode(&decoded, argv[0]);
+	int decoded_size = bu_b64_decode(&decoded, (const signed char *)argv[0]);
 	RT_MemoryArchive archive(decoded, decoded_size);
 	ON_wString wonstr;
 	ON_TextLog dump(wonstr);

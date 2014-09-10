@@ -76,8 +76,6 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    rt_init_resource( &rt_uniresource, 0, NULL );
-
     if ( argc != 3 && argc != 4 )  {
 	usage(argv[0]);
 	return 1;

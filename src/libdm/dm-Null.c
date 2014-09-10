@@ -33,205 +33,206 @@
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
-#include "dm/dm-Null.h"
+#include "dm-Null.h"
+#include "dm_private.h"
 
 
 int
-null_close(struct dm *UNUSED(dmp))
+null_close(struct dm_internal *UNUSED(dmp))
 {
     return 0;
 }
 
 
 int
-null_drawBegin(struct dm *UNUSED(dmp))
+null_drawBegin(struct dm_internal *UNUSED(dmp))
 {
     return 0;
 }
 
 
 int
-null_drawEnd(struct dm *UNUSED(dmp))
+null_drawEnd(struct dm_internal *UNUSED(dmp))
 {
     return 0;
 }
 
 
 int
-null_normal(struct dm *UNUSED(dmp))
+null_normal(struct dm_internal *UNUSED(dmp))
 {
     return 0;
 }
 
 
 int
-null_loadMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_eye))
+null_loadMatrix(struct dm_internal *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_eye))
 {
     return 0;
 }
 
 
 int
-null_loadPMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat))
+null_loadPMatrix(struct dm_internal *UNUSED(dmp), fastf_t *UNUSED(mat))
 {
     return 0;
 }
 
 
 int
-null_drawString2D(struct dm *UNUSED(dmp), const char *UNUSED(str), fastf_t UNUSED(x), fastf_t UNUSED(y), int UNUSED(size), int UNUSED(use_aspect))
+null_drawString2D(struct dm_internal *UNUSED(dmp), const char *UNUSED(str), fastf_t UNUSED(x), fastf_t UNUSED(y), int UNUSED(size), int UNUSED(use_aspect))
 {
     return 0;
 }
 
 
 int
-null_drawLine2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x_1), fastf_t UNUSED(y_1), fastf_t UNUSED(x_2), fastf_t UNUSED(y_2))
+null_drawLine2D(struct dm_internal *UNUSED(dmp), fastf_t UNUSED(x_1), fastf_t UNUSED(y_1), fastf_t UNUSED(x_2), fastf_t UNUSED(y_2))
 {
     return 0;
 }
 
 
 int
-null_drawLine3D(struct dm *UNUSED(dmp), point_t UNUSED(pt1), point_t UNUSED(pt2))
+null_drawLine3D(struct dm_internal *UNUSED(dmp), point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
     return 0;
 }
 
 
 int
-null_drawLines3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points), int UNUSED(sflag))
+null_drawLines3D(struct dm_internal *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points), int UNUSED(sflag))
 {
     return 0;
 }
 
 
 int
-null_drawPoint2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x), fastf_t UNUSED(y))
+null_drawPoint2D(struct dm_internal *UNUSED(dmp), fastf_t UNUSED(x), fastf_t UNUSED(y))
 {
     return 0;
 }
 
 
 int
-null_drawPoint3D(struct dm *UNUSED(dmp), point_t UNUSED(point))
+null_drawPoint3D(struct dm_internal *UNUSED(dmp), point_t UNUSED(point))
 {
     return 0;
 }
 
 
 int
-null_drawPoints3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points))
+null_drawPoints3D(struct dm_internal *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points))
 {
     return 0;
 }
 
 
 int
-null_drawVList(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
+null_drawVList(struct dm_internal *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
 {
     return 0;
 }
 
 
 int
-null_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
+null_drawVListHiddenLine(struct dm_internal *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
 {
     return 0;
 }
 
 
 int
-null_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+null_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     return dmp == NULL && callback_function == NULL && data == NULL;
 }
 
 
 int
-null_setFGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b), int UNUSED(strict), fastf_t UNUSED(transparency))
+null_setFGColor(struct dm_internal *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b), int UNUSED(strict), fastf_t UNUSED(transparency))
 {
     return 0;
 }
 
 
 int
-null_setBGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b))
+null_setBGColor(struct dm_internal *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b))
 {
     return 0;
 }
 
 
 int
-null_setLineAttr(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(style))
+null_setLineAttr(struct dm_internal *UNUSED(dmp), int UNUSED(width), int UNUSED(style))
 {
     return 0;
 }
 
 
 int
-null_configureWin(struct dm *UNUSED(dmp), int UNUSED(force))
+null_configureWin(struct dm_internal *UNUSED(dmp), int UNUSED(force))
 {
     return 0;
 }
 
 
 int
-null_setWinBounds(struct dm *UNUSED(dmp), fastf_t *UNUSED(w))
+null_setWinBounds(struct dm_internal *UNUSED(dmp), fastf_t *UNUSED(w))
 {
     return 0;
 }
 
 
 int
-null_setLight(struct dm *UNUSED(dmp), int UNUSED(light_on))
+null_setLight(struct dm_internal *UNUSED(dmp), int UNUSED(light_on))
 {
     return 0;
 }
 
 
 int
-null_setTransparency(struct dm *UNUSED(dmp), int UNUSED(transparency))
+null_setTransparency(struct dm_internal *UNUSED(dmp), int UNUSED(transparency))
 {
     return 0;
 }
 
 
 int
-null_setDepthMask(struct dm *UNUSED(dmp), int UNUSED(mask))
+null_setDepthMask(struct dm_internal *UNUSED(dmp), int UNUSED(mask))
 {
     return 0;
 }
 
 
 int
-null_setZBuffer(struct dm *UNUSED(dmp), int UNUSED(zbuffer_on))
+null_setZBuffer(struct dm_internal *UNUSED(dmp), int UNUSED(zbuffer_on))
 {
     return 0;
 }
 
 
 int
-null_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
+null_debug(struct dm_internal *UNUSED(dmp), int UNUSED(lvl))
 {
     return 0;
 }
 
 int
-null_logfile(struct dm *UNUSED(dmp), const char *UNUSED(filename))
+null_logfile(struct dm_internal *UNUSED(dmp), const char *UNUSED(filename))
 {
     return 0;
 }
 
 int
-null_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
+null_beginDList(struct dm_internal *UNUSED(dmp), unsigned int UNUSED(list))
 {
     return 0;
 }
 
 
 int
-null_endDList(struct dm *UNUSED(dmp))
+null_endDList(struct dm_internal *UNUSED(dmp))
 {
     return 0;
 }
@@ -244,47 +245,47 @@ null_drawDList(unsigned int UNUSED(list))
 
 
 int
-null_freeDLists(struct dm *UNUSED(dmp), unsigned int UNUSED(list), int UNUSED(range))
+null_freeDLists(struct dm_internal *UNUSED(dmp), unsigned int UNUSED(list), int UNUSED(range))
 {
     return 0;
 }
 
 
 int
-null_genDLists(struct dm *UNUSED(dmp), size_t UNUSED(range))
+null_genDLists(struct dm_internal *UNUSED(dmp), size_t UNUSED(range))
 {
     return 0;
 }
 
 
 int
-null_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
+null_getDisplayImage(struct dm_internal *UNUSED(dmp), unsigned char **UNUSED(image))
 {
     return 0;
 }
 
 
 void
-null_reshape(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(height))
+null_reshape(struct dm_internal *UNUSED(dmp), int UNUSED(width), int UNUSED(height))
 {
 }
 
 
 int
-null_makeCurrent(struct dm *UNUSED(dmp))
+null_makeCurrent(struct dm_internal *UNUSED(dmp))
 {
     return 0;
 }
 
 
 int
-null_openFb(struct dm *UNUSED(dmp), FBIO *UNUSED(ifp))
+null_openFb(struct dm_internal *UNUSED(dmp))
 {
     return 0;
 }
 
 
-struct dm dm_null = {
+struct dm_internal dm_null = {
     null_close,
     null_drawBegin,
     null_drawEnd,
@@ -321,6 +322,8 @@ struct dm dm_null = {
     null_reshape,
     null_makeCurrent,
     null_openFb,
+    NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -339,6 +342,8 @@ struct dm dm_null = {
     0,
     0,
     {0, 0},
+    NULL,
+    NULL,
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
@@ -356,6 +361,8 @@ struct dm dm_null = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
+    BU_STRUCTPARSE_NULL,
+    FB_NULL,
     0				/* Tcl interpreter */
 };
 

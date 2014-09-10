@@ -63,7 +63,6 @@ main(int argc, char **argv)
     solnam[7] = '1';
     solnam[8] = '\0';
 
-    /*rt_init_resource(&rt_uniresource, 0, NULL);*/
     if (argc!=2) {
 	bu_exit(1, "Too few arguments, Please provide output filename\n");
     }

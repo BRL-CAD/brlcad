@@ -34,7 +34,6 @@
 #include "vmath.h"
 #include "bn.h"
 #include "mater.h"
-#include "dg.h"
 #include "nmg.h"
 #include "./sedit.h"
 #include "./mged.h"
@@ -246,8 +245,8 @@ edit_com(int argc,
 	 const char *argv[],
 	 int kind)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct dm_list *dmlp;
     struct dm_list *save_dmlp;
     struct cmd_list *save_cmd_list;
@@ -265,12 +264,12 @@ edit_com(int argc,
     CHECK_DBI_NULL;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
 	    initial_blank_screen = 0;
 	    break;
 	}
@@ -459,12 +458,12 @@ edit_com(int argc,
 
 	gedp->ged_gvp = view_state->vs_gvp;
 
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	    if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
 		non_empty = 1;
 		break;
 	    }
@@ -685,7 +684,7 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 
     Tcl_AppendResult(interp, "regdebug=", debug_str, "\n", (char *)NULL);
 
-    DM_DEBUG(dmp, regdebug);
+    dm_debug(dmp, regdebug);
 
     return TCL_OK;
 }
@@ -722,8 +721,8 @@ mged_freemem(void)
 int
 cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     char *av[2] = {"zap", (char *)0};
 
     CHECK_DBI_NULL;
@@ -735,13 +734,13 @@ cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
 	button(BE_REJECT);
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-	freeDListsAll(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
-		      BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
-		      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+	freeDListsAll(BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
+		      BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
+		      BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
 
 	gdlp = next_gdlp;
     }
@@ -887,8 +886,8 @@ static char **path_parse (char *path);
 int
 f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct directory *dp;
     struct solid *sp;
     struct solid *lastfound = SOLID_NULL;
@@ -1015,12 +1014,12 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	goto bail_out;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    int a_new_match;
 
 	    /* XXX Could this make use of db_full_path_subset()? */
@@ -1132,8 +1131,8 @@ bail_out:
 int
 f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     int is_empty = 1;
 
     CHECK_DBI_NULL;
@@ -1154,12 +1153,12 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
 	    is_empty = 0;
 	    break;
 	}

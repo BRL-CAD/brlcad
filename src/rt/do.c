@@ -449,7 +449,7 @@ int cm_set(const int argc, const char **argv)
     }
 
     bu_vls_from_argv(&str, argc-1, (const char **)argv+1);
-    if (bu_struct_parse(&str, set_parse, (char *)0) < 0) {
+    if (bu_struct_parse(&str, set_parse, (char *)0, NULL) < 0) {
 	bu_vls_free(&str);
 	return -1;
     }

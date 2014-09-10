@@ -30,14 +30,13 @@
 #include "bio.h"
 #include "bu.h"
 #include "vmath.h"
-#include "dg.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 
 /* external sp_hook function */
-extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *);	/* defined in set.c */
+extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);	/* defined in set.c */
 
 extern int mged_svbase(void);
 extern void set_e_axes_pos(int both);
@@ -372,7 +371,7 @@ bv_rate_toggle()
 	const char name[] = "name";
 	void *base = 0;
 	const char value[] = "value";
-	set_scroll_private(sdp, name, base, value);
+	set_scroll_private(sdp, name, base, value, NULL);
     }
 
     return TCL_OK;
@@ -512,16 +511,16 @@ bv_35_25() {
 /* returns 0 if error, !0 if success */
 static int
 ill_common(void) {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     int is_empty = 1;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
 	    is_empty = 0;
 	    break;
 	}
@@ -535,7 +534,7 @@ ill_common(void) {
     }
 
     illum_gdlp = gdlp;
-    illump = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);/* any valid solid would do */
+    illump = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);/* any valid solid would do */
     illump->s_iflag = UP;
     edobj = 0;		/* sanity */
     edsol = 0;		/* sanity */
@@ -708,8 +707,8 @@ be_o_rotate()
 int
 be_accept()
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
     struct dm_list *dmlp;
 
@@ -722,11 +721,11 @@ be_accept()
 	mmenu_set_all(MENU_L1, MENU_NULL);
 	mmenu_set_all(MENU_L2, MENU_NULL);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
+	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid)
 		sp->s_iflag = DOWN;
 
 	    gdlp = next_gdlp;
@@ -773,8 +772,8 @@ be_accept()
 int
 be_reject()
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
     struct dm_list *dmlp;
 
@@ -817,11 +816,11 @@ be_reject()
     illump = SOLID_NULL;		/* None selected */
 
     /* Clear illumination flags */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid)
 	    sp->s_iflag = DOWN;
 
 	gdlp = next_gdlp;

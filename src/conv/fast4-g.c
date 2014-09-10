@@ -2929,8 +2929,6 @@ main(int argc, char **argv)
 	usage();
     }
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     if ((fpin=fopen(argv[bu_optind], "rb")) == (FILE *)NULL) {
 	perror("fast4-g");
 	bu_exit(1, "Cannot open FASTGEN4 file (%s)\n", argv[bu_optind]);

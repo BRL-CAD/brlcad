@@ -34,7 +34,7 @@ that format to include color, three dimensional plotting, machine
 independent floating point coordinates, and a flush command for
 interactive output.</para>
 
-<para><emphasis remap='I'>Plot3-plot3</emphasis>
+<para><command>plot3-plot3</command>
 converts an extended UnixPlot file to the simpler format for
 use by older, and non-extended, programs.  It drops color and
 flush commands, strips the Z coordinate of 3D commands, and

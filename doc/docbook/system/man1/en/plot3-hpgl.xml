@@ -27,7 +27,7 @@
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para>Reads a Unix Plot file from standard input and
-converts it to of HPGL commands which are written to standard output.</para>
+converts it to HPGL commands which are written to standard output.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>

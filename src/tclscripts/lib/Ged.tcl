@@ -275,6 +275,7 @@ package provide cadwidgets::Ged 1.0
 	method isize {args}
 	method item {args}
 	method joint {args}
+	method joint2 {args}
 	method keep {args}
 	method keypoint {args}
 	method kill {args}
@@ -342,6 +343,7 @@ package provide cadwidgets::Ged 1.0
 	method mouse_find_bot_edge {_bot _mx _my}
 	method mouse_find_botpt {_bot _mx _my}
 	method mouse_find_pipept {_pipe _mx _my}
+	method mouse_joint_select {_obj _mx _my}
 	method mouse_move_arb_edge {args}
 	method mouse_move_arb_face {args}
 	method mouse_move_metaballpt {args}
@@ -913,6 +915,8 @@ package provide cadwidgets::Ged 1.0
 	method init_button_no_op_prot {{_button 1}}
 	method measure_line_erase {}
 	method multi_pane {args}
+	method hide_view {args}
+	method pane_hide_view {_pane args}
 	method new_view {args}
 	method toggle_multi_pane {}
     }
@@ -1980,6 +1984,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed joint $args
 }
 
+::itcl::body cadwidgets::Ged::joint2 {args} {
+    eval $mGed joint2 $args
+}
+
 ::itcl::body cadwidgets::Ged::keep {args} {
     eval $mGed keep $args
 }
@@ -2340,6 +2348,10 @@ package provide cadwidgets::Ged 1.0
     set mPrevGedMouseY $_my
 
     $mGed mouse_find_pipept $itk_component($itk_option(-pane)) $_pipe $_mx $_my
+}
+
+::itcl::body cadwidgets::Ged::mouse_joint_select {_obj _mx _my} {
+    eval $mGed mouse_joint_select $itk_component($itk_option(-pane)) $_obj $_mx $_my
 }
 
 ::itcl::body cadwidgets::Ged::mouse_move_arb_edge {args} {
@@ -6006,6 +6018,21 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
+::itcl::body cadwidgets::Ged::hide_view {args} {
+    set len [llength $args]
+    if {$len == 0} {
+	return [eval $mGed hide_view $itk_component($itk_option(-pane)) $args]
+    }
+
+    foreach dm {ur ul ll lr} {
+	eval $mGed hide_view $itk_component($dm) $args
+    }
+}
+
+::itcl::body cadwidgets::Ged::pane_hide_view {_pane args} {
+    eval $mGed hide_view $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::new_view {args} {
     eval $mGed new_view $args
 }
@@ -6019,18 +6046,34 @@ package provide cadwidgets::Ged 1.0
 	    ul {
 		iwidgets::Panedwindow::hide lower
 		$itk_component(upw) hide urp
+		pane_hide_view ul 0
+		pane_hide_view ur 1
+		pane_hide_view ll 1
+		pane_hide_view lr 1
 	    }
 	    ur {
 		iwidgets::Panedwindow::hide lower
 		$itk_component(upw) hide ulp
+		pane_hide_view ur 0
+		pane_hide_view ul 1
+		pane_hide_view ll 1
+		pane_hide_view lr 1
 	    }
 	    ll {
 		iwidgets::Panedwindow::hide upper
 		$itk_component(lpw) hide lrp
+		pane_hide_view ll 0
+		pane_hide_view lr 1
+		pane_hide_view ul 1
+		pane_hide_view ur 1
 	    }
 	    lr {
 		iwidgets::Panedwindow::hide upper
 		$itk_component(lpw) hide llp
+		pane_hide_view lr 0
+		pane_hide_view ll 1
+		pane_hide_view ul 1
+		pane_hide_view ur 1
 	    }
 	}
     } else {
@@ -6055,6 +6098,8 @@ package provide cadwidgets::Ged 1.0
 		$itk_component(lpw) show llp
 	    }
 	}
+
+	hide_view 1
     }
 }
 
@@ -6220,6 +6265,7 @@ package provide cadwidgets::Ged 1.0
     $help add isize		{{} {returns the inverse of view size}}
     $help add item		{{region ident [air [material [los]]]} {set region ident codes}}
     $help add joint		{{?} {}}
+    $help add joint2		{{} {}}
     $help add keep		{{keep_file object(s)} {save named objects in specified file}}
     $help add keypoint		{{[point]} {set/get the keypoint}}
     $help add kill		{{[-f] <objects>} {delete object[s] from file}}

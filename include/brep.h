@@ -365,6 +365,8 @@ private:
 inline
 BRNode::BRNode()
 {
+    m_start = ON_3dPoint::UnsetPoint;
+    m_end = ON_3dPoint::UnsetPoint;
 }
 
 inline
@@ -451,6 +453,8 @@ BRNode::BRNode(const ON_BoundingBox &node)
     m_vdot = 0.0;
     m_face = NULL;
     m_trim = NULL;
+    m_start = ON_3dPoint::UnsetPoint;
+    m_end = ON_3dPoint::UnsetPoint;
     for (int i = 0; i < 3; i++) {
 	double d = m_node.m_max[i] - m_node.m_min[i];
 	if (NEAR_ZERO(d, ON_ZERO_TOLERANCE)) {
@@ -503,8 +507,12 @@ BRNode::GetBBox(fastf_t *min, fastf_t *max) const
 {
     VSETALL(min, INFINITY);
     VSETALL(max, -INFINITY);
-    VMINMAX(min, max, m_start);
-    VMINMAX(min, max, m_end);
+    if (m_start != ON_3dPoint::UnsetPoint) {
+	VMINMAX(min, max, m_start);
+    }
+    if (m_end != ON_3dPoint::UnsetPoint) {
+	VMINMAX(min, max, m_end);
+    }
 }
 
 inline bool
@@ -649,7 +657,7 @@ public:
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt);
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v);
     int getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<BBNode *> &out);
-    int isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim) const;
+    int isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, double within_distance_tol) const;
     bool doTrimming() const;
 
     void getTrimsAbove(const ON_2dPoint &uv, std::list<BRNode *> &out_leaves) const;
@@ -838,7 +846,7 @@ private:
 
 public:
     SurfaceTree();
-    SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH);
+    SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
     ~SurfaceTree();
 
     CurveTree *ctree;
@@ -870,8 +878,8 @@ private:
     bool isStraight(ON_Plane frames[]);
     bool isFlatU(ON_Plane frames[]);
     bool isFlatV(ON_Plane frames[]);
-    BBNode *subdivideSurface(const ON_Surface *localsurf, const ON_Interval &u, const ON_Interval &v, ON_Plane frames[], int depth, int depthLimit, int prev_knot);
-    BBNode *surfaceBBox(const ON_Surface *localsurf, bool leaf, ON_Plane frames[], const ON_Interval &u, const ON_Interval &v);
+    BBNode *subdivideSurface(const ON_Surface *localsurf, const ON_Interval &u, const ON_Interval &v, ON_Plane frames[], int depth, int depthLimit, int prev_knot, double within_distance_tol);
+    BBNode *surfaceBBox(const ON_Surface *localsurf, bool leaf, ON_Plane frames[], const ON_Interval &u, const ON_Interval &v, double within_distance_tol);
 
     const ON_BrepFace *m_face;
     BBNode *m_root;
@@ -960,7 +968,7 @@ extern BREP_EXPORT ON_2dPoint UnwrapUVPoint(const ON_Surface *surf,const ON_2dPo
 extern BREP_EXPORT double DistToNearestClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt);
 extern BREP_EXPORT void SwapUVSeamPoint(const ON_Surface *surf,ON_2dPoint &p, int hint = 3);
 extern BREP_EXPORT void ForceToClosestSeam(const ON_Surface *surf,ON_2dPoint &pt,double tol= 0.0);
-extern BREP_EXPORT bool Find3DCurveSeamCrossing(PBCData &data,double t0,double t1,double offset,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol = 0.0);
+extern BREP_EXPORT bool Find3DCurveSeamCrossing(PBCData &data,double t0,double t1,double offset,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol = 0.0, double same_point_tol=BREP_SAME_POINT_TOLERANCE,double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
 extern BREP_EXPORT bool FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol = 0.0);
 extern BREP_EXPORT bool surface_GetClosestPoint3dFirstOrder(const ON_Surface *surf,const ON_3dPoint& p,ON_2dPoint& p2d,ON_3dPoint& p3d,double &current_distance,int quadrant = 0,double same_point_tol=BREP_SAME_POINT_TOLERANCE,double within_distance_tol=BREP_EDGE_MISS_TOLERANCE);
 extern BREP_EXPORT bool trim_GetClosestPoint3dFirstOrder(const ON_BrepTrim& trim,const ON_3dPoint& p,ON_2dPoint& p2d,double& t,double& distance,const ON_Interval* interval,double same_point_tol=BREP_SAME_POINT_TOLERANCE,double within_distance_tol=BREP_EDGE_MISS_TOLERANCE);
@@ -969,7 +977,7 @@ extern BREP_EXPORT ON_BOOL32 face_GetBoundingBox(const ON_BrepFace &face,ON_Boun
 extern BREP_EXPORT ON_BOOL32 surface_GetBoundingBox(const ON_Surface *surf,const ON_Interval &u_interval,const ON_Interval &v_interval,ON_BoundingBox& bbox,ON_BOOL32 bGrowBox);
 extern BREP_EXPORT ON_BOOL32 surface_EvNormal(const ON_Surface *surf,double s,double t,ON_3dPoint& point,ON_3dVector& normal,int side=0,int* hint=0);
 
-extern BREP_EXPORT PBCData *pullback_samples(const ON_Surface *surf,const ON_Curve *curve,double tolerance = 1.0e-6,double flatness = 1.0e-3);
+extern BREP_EXPORT PBCData *pullback_samples(const ON_Surface *surf,const ON_Curve *curve,double tolerance = 1.0e-6,double flatness = 1.0e-3,double same_point_tol=BREP_SAME_POINT_TOLERANCE,double within_distance_tol=BREP_EDGE_MISS_TOLERANCE);
 
 extern BREP_EXPORT bool check_pullback_data(std::list<PBCData *> &pbcs);
 
