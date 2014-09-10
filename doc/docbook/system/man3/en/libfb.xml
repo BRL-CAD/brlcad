@@ -171,7 +171,7 @@
 			device will be used. On a successful open, the frame buffer I/O (fb)
 			structure pointer is returned. This structure contains size you were
 			actually given, as well as the maximum possible size for the selected
-			device. A return of fb_NULL indicates failure.
+			device. A return of FB_NULL indicates failure.
 		</para>
 		<para><emphasis remap="I">Fb_close</emphasis> simply closes the frame buffer.
 		</para>
@@ -433,7 +433,7 @@
 			<emphasis remap="I">fb_flush</emphasis>
 			return -1 to indicate failure.
 			<emphasis remap="I">Fb_open</emphasis>
-			returns fb_NULL to indicate failure, and a non-null fb structure pointer
+			returns FB_NULL to indicate failure, and a non-null fb structure pointer
 			upon success.
 			<emphasis remap="I">fb_read</emphasis>,
 			and
