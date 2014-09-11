@@ -201,6 +201,13 @@ FB_EXPORT extern int Fb_Init(Tcl_Interp *interp);
 FB_EXPORT extern const char *fb_version(void);
 
 
+/* To avoid breaking things too badly, temporarily expose
+ * what is now internal API */
+#include "../src/libfb/fb_private.h"
+
+typedef struct fb_internal FBIO;
+
+
 __END_DECLS
 
 #endif /* FB_H */
