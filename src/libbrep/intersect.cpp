@@ -1260,8 +1260,8 @@ ON_Intersect(const ON_Curve *curveA,
 			XEventProxy event(ON_X_EVENT::ccx_point);
 			event.SetAPoint(lineA.PointAt(t_a1));
 			event.SetBPoint(lineB.PointAt(t_b1));
-			event.SetACurveParameter(t_a1);
-			event.SetBCurveParameter(t_b1);
+			event.SetACurveParameter(i->first->m_t.ParameterAt(t_a1));
+			event.SetBCurveParameter(i->second->m_t.ParameterAt(t_b1));
 			tmp_x.Append(event.Event());
 		    } else {
 			// overlap intersection
