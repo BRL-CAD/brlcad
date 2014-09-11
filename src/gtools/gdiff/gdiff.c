@@ -18,7 +18,7 @@
  * information.
  */
 
-#include "./gdiff2.h"
+#include "./gdiff.h"
 
 /*******************************************************************/
 /* Primary function for basic diff operation on two .g files */

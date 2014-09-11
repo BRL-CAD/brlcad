@@ -18,7 +18,7 @@
  * information.
  */
 
-#include "./gdiff2.h"
+#include "./gdiff.h"
 
 static int
 dp_copy(struct db_i *merged_dbip, struct db_i *source_dbip, const struct directory *source_dp, const char *new_name)
