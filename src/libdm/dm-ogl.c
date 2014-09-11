@@ -2238,6 +2238,28 @@ ogl_genDLists(struct dm_internal *dmp, size_t range)
     return glGenLists((GLsizei)range);
 }
 
+HIDDEN int
+ogl_draw_obj(struct dm_internal *dmp, struct display_list *obj)
+{
+    struct solid *sp;
+    FOR_ALL_SOLIDS(sp, &obj->dl_headSolid) {
+	if (sp->s_dlist == 0)
+	    sp->s_dlist = dm_gen_dlists(dmp, 1);
+
+	(void)dm_make_current(dmp);
+	(void)dm_begin_dlist(dmp, sp->s_dlist);
+	if (sp->s_iflag == UP)
+	    (void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_transparency);
+	else
+	    (void)dm_set_fg(dmp,
+		    (unsigned char)sp->s_color[0],
+		    (unsigned char)sp->s_color[1],
+		    (unsigned char)sp->s_color[2], 0, sp->s_transparency);
+	(void)dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist);
+	(void)dm_end_dlist(dmp);
+    }
+    return 0;
+}
 
 HIDDEN int
 ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
@@ -2589,6 +2611,7 @@ struct dm_internal dm_ogl = {
     ogl_drawDList,
     ogl_freeDLists,
     ogl_genDLists,
+    ogl_draw_obj,
     ogl_getDisplayImage, /* display to image function */
     ogl_reshape,
     ogl_makeCurrent,

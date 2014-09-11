@@ -2672,6 +2672,7 @@ dm dm_rtgl = {
     rtgl_drawDList,
     rtgl_freeDLists,
     rtgl_genDLists,
+    NULL,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,

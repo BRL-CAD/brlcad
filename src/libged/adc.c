@@ -34,7 +34,7 @@
 #include "ged.h"
 
 static void
-adc_vls_print(struct ged_view *gvp, fastf_t base2local, struct bu_vls *out_vp)
+adc_vls_print(struct bview *gvp, fastf_t base2local, struct bu_vls *out_vp)
 {
     bu_vls_printf(out_vp, "draw = %d\n", gvp->gv_adc.draw);
     bu_vls_printf(out_vp, "a1 = %.15e\n", gvp->gv_adc.a1);
@@ -628,7 +628,7 @@ ged_adc(struct ged *gedp,
 
 
 void
-ged_calc_adc_pos(struct ged_view *gvp)
+ged_calc_adc_pos(struct bview *gvp)
 {
     if (gvp->gv_adc.anchor_pos == 1) {
 	adc_model_to_adc_view(&(gvp->gv_adc), gvp->gv_model2view, GED_MAX);
@@ -644,7 +644,7 @@ ged_calc_adc_pos(struct ged_view *gvp)
 
 
 void
-ged_calc_adc_a1(struct ged_view *gvp)
+ged_calc_adc_a1(struct bview *gvp)
 {
     if (gvp->gv_adc.anchor_a1) {
 	fastf_t dx, dy;
@@ -663,7 +663,7 @@ ged_calc_adc_a1(struct ged_view *gvp)
 
 
 void
-ged_calc_adc_a2(struct ged_view *gvp)
+ged_calc_adc_a2(struct bview *gvp)
 {
     if (gvp->gv_adc.anchor_a2) {
 	fastf_t dx, dy;
@@ -682,7 +682,7 @@ ged_calc_adc_a2(struct ged_view *gvp)
 
 
 void
-ged_calc_adc_dst(struct ged_view *gvp)
+ged_calc_adc_dst(struct bview *gvp)
 {
     if (gvp->gv_adc.anchor_dst) {
 	fastf_t dist;

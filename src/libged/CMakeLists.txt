@@ -76,6 +76,7 @@ set(LIBGED_SOURCES
   decompose.c
   delay.c
   dir2ae.c
+  display_list.c
   draw.c
   draw_calc.cpp
   dump.c
@@ -114,7 +115,6 @@ set(LIBGED_SOURCES
   get_solid_kp.c
   get_type.c
   glob.c
-  globals.c
   gqa.c
   grid.c
   grid2model_lu.c
@@ -339,7 +339,6 @@ set(ged_ignore_files
   simulate/simrt.h
   simulate/simulate.h
   simulate/simutils.h
-  wdb_qray.h
   osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})

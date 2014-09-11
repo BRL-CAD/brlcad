@@ -139,7 +139,7 @@ set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 	       const char *UNUSED(name),
 	       void *UNUSED(base),
 	       const char *UNUSED(value),
-		void *UNUSED(data))
+	       void *UNUSED(data))
 {
     struct dm_list *dmlp;
 
@@ -307,7 +307,7 @@ set_scroll_private(const struct bu_structparse *UNUSED(sdp),
 		   const char *UNUSED(name),
 		   void *UNUSED(base),
 		   const char *UNUSED(value),
-		void *UNUSED(data))
+		   void *UNUSED(data))
 {
     struct dm_list *dmlp;
     struct dm_list *save_dmlp;
@@ -372,7 +372,7 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 	  const char *UNUSED(name),
 	  void *UNUSED(base),
 	  const char *UNUSED(value),
-		void *UNUSED(data))
+	  void *UNUSED(data))
 {
     struct dm_list *dlp1;
     struct dm_list *dlp2;
@@ -477,7 +477,7 @@ establish_perspective(const struct bu_structparse *sdp,
 		      const char *name,
 		      void *base,
 		      const char *value,
-		void *data)
+		      void *data)
 {
     mged_variables->mv_perspective = mged_variables->mv_perspective_mode ?
 	perspective_table[perspective_angle] : -1;
@@ -502,7 +502,7 @@ toggle_perspective(const struct bu_structparse *sdp,
 		   const char *name,
 		   void *base,
 		   const char *value,
-		void *data)
+		   void *data)
 {
     /* set perspective matrix */
     if (mged_variables->mv_toggle_perspective > 0)
@@ -537,7 +537,7 @@ set_coords(const struct bu_structparse *UNUSED(sdp),
 	   const char *UNUSED(name),
 	   void *UNUSED(base),
 	   const char *UNUSED(value),
-		void *UNUSED(data))
+	   void *UNUSED(data))
 {
     view_state->vs_gvp->gv_coord = mged_variables->mv_coords;
 }
@@ -548,7 +548,7 @@ set_rotate_about(const struct bu_structparse *UNUSED(sdp),
 		 const char *UNUSED(name),
 		 void *UNUSED(base),
 		 const char *UNUSED(value),
-		void *UNUSED(data))
+		 void *UNUSED(data))
 {
     view_state->vs_gvp->gv_rotate_about = mged_variables->mv_rotate_about;
 }

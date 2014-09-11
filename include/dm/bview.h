@@ -35,6 +35,13 @@
 #include "bu/vls.h"
 #include "vmath.h"
 
+#ifndef UP
+#  define UP 0
+#endif
+#ifndef DOWN
+#  define DOWN 1
+#endif
+
 struct display_list {
     struct bu_list      l;
     void               *dl_dp;                 /* Normally this will be a struct directory pointer */
@@ -124,6 +131,147 @@ struct bview_interactive_rect_state {
     fastf_t    aspect;     /* Canvas aspect ratio */
 };
 
+
+struct bview_data_arrow_state {
+    int       gdas_draw;
+    int       gdas_color[3];
+    int       gdas_line_width;          /* in pixels */
+    int       gdas_tip_length;
+    int       gdas_tip_width;
+    int       gdas_num_points;
+    point_t   *gdas_points;             /* in model coordinates */
+};
+
+struct bview_data_label_state {
+    int         gdls_draw;
+    int         gdls_color[3];
+    int         gdls_num_labels;
+    int         gdls_size;
+    char        **gdls_labels;
+    point_t     *gdls_points;
+};
+
+struct bview_data_line_state {
+    int       gdls_draw;
+    int       gdls_color[3];
+    int       gdls_line_width;          /* in pixels */
+    int       gdls_num_points;
+    point_t   *gdls_points;             /* in model coordinates */
+};
+
+typedef enum { gctUnion, gctDifference, gctIntersection, gctXor } ClipType;
+
+typedef struct {
+    size_t    gpc_num_points;
+    point_t   *gpc_point;               /* in model coordinates */
+} bview_poly_contour;
+
+typedef struct {
+    size_t              gp_num_contours;
+    int                 gp_color[3];
+    int                 gp_line_width;          /* in pixels */
+    int                 gp_line_style;
+    int                 *gp_hole;
+    bview_poly_contour    *gp_contour;
+} bview_polygon;
+
+typedef struct {
+    size_t      gp_num_polygons;
+    bview_polygon *gp_polygon;
+} bview_polygons;
+
+typedef struct {
+    int                 gdps_draw;
+    int                 gdps_color[3];
+    int                 gdps_line_width;        /* in pixels */
+    int                 gdps_line_style;
+    int                 gdps_cflag;             /* contour flag */
+    size_t              gdps_target_polygon_i;
+    size_t              gdps_curr_polygon_i;
+    size_t              gdps_curr_point_i;
+    point_t             gdps_prev_point;
+    ClipType            gdps_clip_type;
+    fastf_t             gdps_scale;
+    point_t             gdps_origin;
+    mat_t               gdps_rotation;
+    mat_t               gdps_view2model;
+    mat_t               gdps_model2view;
+    bview_polygons        gdps_polygons;
+    fastf_t             gdps_data_vZ;
+} bview_data_polygon_state;
+
+struct bview_other_state {
+    int gos_draw;
+    int gos_line_color[3];
+    int gos_text_color[3];
+};
+
+struct bview {
+    struct bu_list              l;
+    fastf_t                     gv_scale;
+    fastf_t                     gv_size;                /**< @brief  2.0 * scale */
+    fastf_t                     gv_isize;               /**< @brief  1.0 / size */
+    fastf_t                     gv_perspective;         /**< @brief  perspective angle */
+    vect_t                      gv_aet;
+    vect_t                      gv_eye_pos;             /**< @brief  eye position */
+    vect_t                      gv_keypoint;
+    char                        gv_coord;               /**< @brief  coordinate system */
+    char                        gv_rotate_about;        /**< @brief  indicates what point rotations are about */
+    mat_t                       gv_rotation;
+    mat_t                       gv_center;
+    mat_t                       gv_model2view;
+    mat_t                       gv_pmodel2view;
+    mat_t                       gv_view2model;
+    mat_t                       gv_pmat;                /**< @brief  perspective matrix */
+    void                        (*gv_callback)();       /**< @brief  called in ged_view_update with gvp and gv_clientData */
+    void *                      gv_clientData;          /**< @brief  passed to gv_callback */
+    fastf_t                     gv_prevMouseX;
+    fastf_t                     gv_prevMouseY;
+    fastf_t                     gv_minMouseDelta;
+    fastf_t                     gv_maxMouseDelta;
+    fastf_t                     gv_rscale;
+    fastf_t                     gv_sscale;
+    int                         gv_mode;
+    int                         gv_zclip;
+    struct bview_adc_state      gv_adc;
+    struct bview_axes_state     gv_model_axes;
+    struct bview_axes_state     gv_view_axes;
+    struct bview_data_arrow_state gv_data_arrows;
+    struct bview_data_axes_state        gv_data_axes;
+    struct bview_data_label_state gv_data_labels;
+    struct bview_data_line_state  gv_data_lines;
+    bview_data_polygon_state      gv_data_polygons;
+    struct bview_data_arrow_state gv_sdata_arrows;
+    struct bview_data_axes_state        gv_sdata_axes;
+    struct bview_data_label_state gv_sdata_labels;
+    struct bview_data_line_state  gv_sdata_lines;
+    bview_data_polygon_state      gv_sdata_polygons;
+    struct bview_grid_state     gv_grid;
+    struct bview_other_state      gv_center_dot;
+    struct bview_other_state      gv_prim_labels;
+    struct bview_other_state      gv_view_params;
+    struct bview_other_state      gv_view_scale;
+    struct bview_interactive_rect_state         gv_rect;
+    int                         gv_adaptive_plot;
+    int                         gv_redraw_on_zoom;
+    int                         gv_x_samples;
+    int                         gv_y_samples;
+    fastf_t                     gv_point_scale;
+    fastf_t                     gv_curve_scale;
+    fastf_t                     gv_data_vZ;
+};
+
+
+struct bview_client_data {
+    struct display_list *gdlp;
+    int draw_solid_lines_only;
+    int wireframe_color_override;
+    int wireframe_color[3];
+    int transparency;
+    int dmode;
+    int hiddenLine;
+    void *freesolid;
+};
 
 
 #endif /* BVIEW_H */
