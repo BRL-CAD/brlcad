@@ -1777,6 +1777,45 @@ free_loops(std::vector<ON_SimpleArray<ON_Curve *> > &loops)
     }
 }
 
+bool
+loop_is_degenerate(const ON_SimpleArray<ON_Curve *> &loop)
+{
+    if (loop.Count() < 1) {
+	return true;
+    }
+    ON_Curve *loop_curve = get_loop_curve(loop);
+
+    ON_2dPoint joint = loop_curve->PointAtStart();
+    ON_2dPoint mid = loop_curve->PointAt(loop_curve->Domain().Mid());
+
+    ON_Curve *left = NULL, *right = NULL;
+    loop_curve->Split(loop_curve->Domain().Mid(), left, right);
+    delete loop_curve;
+
+    ON_SimpleArray<ON_X_EVENT> events;
+    ON_Intersect(left, right, events, INTERSECTION_TOL);
+    delete left;
+    delete right;
+
+    // two halves of loop should intersect at the start/end point and
+    // the midpoint, and nowhere else
+    if (events.Count() != 2) {
+	return true;
+    }
+    for (int i = 0; i < events.Count(); ++i) {
+	if (events[i].m_type != ON_X_EVENT::ccx_point) {
+	    return true;
+	}
+	
+	ON_2dPoint ipt = events[i].m_A[0];
+	if (!ON_NearZero(ipt.DistanceTo(joint), INTERSECTION_TOL) &&
+	    !ON_NearZero(ipt.DistanceTo(mid), INTERSECTION_TOL)) {
+	    return true;
+	}
+    }
+    return false;
+}
+
 // It might be worth investigating the following approach to building a set of faces from the splitting
 // in order to achieve robustness in the final result:
 //
@@ -1832,6 +1871,7 @@ split_trimmed_face(
 	delete face_outerloop;
 	return out;
     }
+    delete face_outerloop;
 
     for (int i = 0; i < ssx_curves.Count(); ++i) {
 	std::vector<ON_SimpleArray<ON_Curve *> > ssx_loops;
@@ -1846,7 +1886,7 @@ split_trimmed_face(
 	}
 
 	for (size_t j = 0; j < ssx_loops.size(); ++j) {
-	    if (ssx_loops[j].Count() < 1) {
+	    if (loop_is_degenerate(ssx_loops[j])) {
 		continue;
 	    }
 	    // get the portions of the original outerloop inside and
@@ -1865,6 +1905,10 @@ split_trimmed_face(
 	    append_faces_from_loops(out, orig_face, diff_loops);
 	}
 	free_loops(ssx_loops);
+    }
+
+    if (out.Count() == 0) {
+	out.Append(orig_face->Duplicate());
     }
 
     if (DEBUG_BREP_BOOLEAN) {
@@ -1894,7 +1938,6 @@ split_trimmed_face(
 	    }
 	}
     }
-    delete face_outerloop;
     return out;
 }
 
