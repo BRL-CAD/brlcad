@@ -318,7 +318,7 @@ DM_EXPORT extern const char *dm_version(void);
 
 
 
-/* functions to make a dm struct hidable - will need to
+/* functions to make a dm struct hideable - will need to
  * sort these out later */
 
 DM_EXPORT extern dm *dm_get();

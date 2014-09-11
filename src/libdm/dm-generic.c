@@ -459,7 +459,7 @@ dm_configure_win(dm *dmp, int force)
     return dmp->dm_configureWin(dmp, force);
 }
 
-struct bu_vls * 
+struct bu_vls *
 dm_get_pathname(dm *dmp)
 {
     if (!dmp) return NULL;
@@ -467,14 +467,14 @@ dm_get_pathname(dm *dmp)
 }
 
 
-struct bu_vls * 
+struct bu_vls *
 dm_get_dname(dm *dmp)
 {
     if (!dmp) return NULL;
     return &(dmp->dm_dName);
 }
 
-struct bu_vls * 
+struct bu_vls *
 dm_get_tkname(dm *dmp)
 {
     if (!dmp) return NULL;
@@ -622,7 +622,7 @@ dm_gen_dlists(struct dm_internal *dmp, size_t range)
     return dmp->dm_genDLists(dmp, range);
 }
 
-int 
+int
 dm_begin_dlist(struct dm_internal *dmp, unsigned int list)
 {
     return dmp->dm_beginDList(dmp, list);
@@ -659,8 +659,8 @@ dm_draw_begin(dm *dmp)
 {
     return dmp->dm_drawBegin(dmp);
 }
-int  
-dm_draw_end(dm *dmp) 
+int
+dm_draw_end(dm *dmp)
 {
     return dmp->dm_drawEnd(dmp);
 }
@@ -759,7 +759,7 @@ dm_set_vp(dm *dmp, fastf_t *vp)
  * hook should be defined using this function as a
  * starting point and adding in whatever additional
  * logic is needed.  The full dm structure should always
- * be accessable as a slot in the modifiable variables
+ * be accessible as a slot in the modifiable variables
  * structure passed in here as "base" */
 void
 dm_generic_hook(const struct bu_structparse *sdp,
