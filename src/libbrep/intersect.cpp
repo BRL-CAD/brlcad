@@ -1231,7 +1231,8 @@ ON_Intersect(const ON_Curve *curveA,
 	    ON_Line lineB(curveB->PointAt(i->second->m_t.Min()), curveB->PointAt(i->second->m_t.Max()));
 	    if (lineA.Direction().IsParallelTo(lineB.Direction())) {
 		if (lineA.MinimumDistanceTo(lineB) < isect_tol) {
-		    // report a ccx_overlap event
+		    // curves lie on the same line, may be single
+		    // point intersection or overlap
 		    double t_a1, t_a2, t_b1, t_b2;
 		    lineA.ClosestPointTo(lineB.from, &t_a1);
 		    lineA.ClosestPointTo(lineB.to, &t_a2);
@@ -1253,14 +1254,26 @@ ON_Intersect(const ON_Curve *curveA,
 		    if (t_b1 > t_b2) {
 			std::swap(t_b1, t_b2);
 		    }
-		    XEventProxy event(ON_X_EVENT::ccx_overlap);
-		    event.SetAPoints(lineA.PointAt(t_a1), lineA.PointAt(t_a2));
-		    event.SetBPoints(lineB.PointAt(t_b1), lineB.PointAt(t_b2));
-		    event.SetAOverlapRange(i->first->m_t.ParameterAt(t_a1),
-					   i->first->m_t.ParameterAt(t_a2));
-		    event.SetBOverlapRange(i->second->m_t.ParameterAt(t_b1),
-					   i->second->m_t.ParameterAt(t_b2));
-		    tmp_x.Append(event.Event());
+
+		    if (ON_NearZero(t_a2 - t_a2, t1_tol)) {
+			// point intersection
+			XEventProxy event(ON_X_EVENT::ccx_point);
+			event.SetAPoint(lineA.PointAt(t_a1));
+			event.SetBPoint(lineB.PointAt(t_b1));
+			event.SetACurveParameter(t_a1);
+			event.SetBCurveParameter(t_b1);
+			tmp_x.Append(event.Event());
+		    } else {
+			// overlap intersection
+			XEventProxy event(ON_X_EVENT::ccx_overlap);
+			event.SetAPoints(lineA.PointAt(t_a1), lineA.PointAt(t_a2));
+			event.SetBPoints(lineB.PointAt(t_b1), lineB.PointAt(t_b2));
+			event.SetAOverlapRange(i->first->m_t.ParameterAt(t_a1),
+					       i->first->m_t.ParameterAt(t_a2));
+			event.SetBOverlapRange(i->second->m_t.ParameterAt(t_b1),
+					       i->second->m_t.ParameterAt(t_b2));
+			tmp_x.Append(event.Event());
+		    }
 		}
 	    } else {
 		// not parallel, check intersection point
