@@ -433,7 +433,11 @@ main(int argc, char **argv)
     db_close(left_dbip);
     db_close(right_dbip);
     if (argc == 3) db_close(ancestor_dbip);
-    return diff_return;
+    if (diff_return == DIFF_UNCHANGED || diff_return == DIFF_EMPTY) {
+	return 0;
+    } else {
+	return diff_return;
+    }
 }
 
 
