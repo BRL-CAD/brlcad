@@ -363,6 +363,10 @@ main(int argc, char **argv)
     /* diff3 case */
     if (argc == 3) {
 
+	if (bu_same_file(argv[0], argv[1]) && bu_same_file(argv[2], argv[1])) {
+	    bu_exit(1, "Same database file specified for all three inputs: %s\n", argv[0]);
+	}
+
 	if (bu_same_file(argv[0], argv[1])) {
 	    bu_exit(1, "Same database file specified as both ancestor and left diff inputs: %s\n", argv[0]);
 	}
