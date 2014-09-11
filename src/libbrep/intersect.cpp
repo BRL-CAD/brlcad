@@ -1255,7 +1255,7 @@ ON_Intersect(const ON_Curve *curveA,
 			std::swap(t_b1, t_b2);
 		    }
 
-		    if (ON_NearZero(t_a2 - t_a2, t1_tol)) {
+		    if (ON_NearZero(t_a2 - t_a1, t1_tol)) {
 			// point intersection
 			XEventProxy event(ON_X_EVENT::ccx_point);
 			event.SetAPoint(lineA.PointAt(t_a1));
