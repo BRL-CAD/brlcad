@@ -76,7 +76,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
 	if (strchr(argv[i], 'r')) {
 		for (i = 1; i < (size_t)argc; ++i)
-		_dl_eraseAllPathsFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[i], 0);
+		_dl_eraseAllPathsFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[i], 0, gedp->freesolid);
 	    return GED_OK;
 	}
 
@@ -168,11 +168,11 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	    if (new_argv[i][0] == '-')
 		continue;
 
-	    dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, new_argv[i], 1);
+	    dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, new_argv[i], 1, gedp->freesolid);
 	}
     } else {
 	for (i = 0; i < (size_t)argc; ++i)
-	    dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[i], 1);
+	    dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[i], 1, gedp->freesolid);
     }
 
     return GED_OK;

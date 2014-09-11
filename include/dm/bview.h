@@ -270,6 +270,7 @@ struct bview_client_data {
     int transparency;
     int dmode;
     int hiddenLine;
+    void *freesolid;
 };
 
 

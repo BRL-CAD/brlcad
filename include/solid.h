@@ -63,17 +63,20 @@ struct solid  {
 
 #define SOLID_NULL	((struct solid *)0)
 
-#define GET_SOLID(p) { \
-    BU_ALLOC((p), struct solid); \
-    db_full_path_init(&(p)->s_fullpath); \
-    BU_LIST_INIT( &((p)->s_vlist) ); \
-}
+#define GET_SOLID(p, fp) { \
+    if (BU_LIST_IS_EMPTY(fp)) { \
+	BU_ALLOC((p), struct solid); \
+	db_full_path_init(&(p)->s_fullpath); \
+    } else { \
+	p = BU_LIST_NEXT(solid, fp); \
+	BU_LIST_DEQUEUE(&((p)->l)); \
+	(p)->s_fullpath.fp_len = 0; \
+    } \
+    BU_LIST_INIT( &((p)->s_vlist) ); }
 
-#define FREE_SOLID(p) { \
-    RT_FREE_VLIST(&((p)->s_vlist));\
-    db_free_full_path(&(p)->s_fullpath); \
-    BU_FREE((p), struct solid); \
-}
+#define FREE_SOLID(p, fp) { \
+    BU_LIST_APPEND(fp, &((p)->l)); \
+    RT_FREE_VLIST(&((p)->s_vlist)); }
 
 /** Obtain the last node (the solid) on the path */
 #define LAST_SOLID(_sp)	DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )

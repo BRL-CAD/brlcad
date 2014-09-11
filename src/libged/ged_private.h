@@ -113,6 +113,7 @@ struct _ged_client_data {
     fastf_t transparency;
     int dmode;
     int hiddenLine;
+    struct solid *freesolid;
     /* bigE related members */
     struct application *ap;
     struct bu_ptbl leaf_list;
@@ -165,28 +166,28 @@ extern int _ged_combadd2(struct ged *gedp,
 extern void _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
 	        void (*callback)(unsigned int, int),
 					  const char *name,
-					  const int skip_first);
+					  const int skip_first, struct solid *freesolid);
 extern void _dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
 	        void (*callback)(unsigned int, int),
 					  const char *path,
-					  const int skip_first);
+					  const int skip_first, struct solid *freesolid);
 extern void _dl_freeDisplayListItem(struct db_i *dbip,
 	        void (*callback)(unsigned int, int),
-				     struct display_list *gdlp);
+				     struct display_list *gdlp, struct solid *freesolid);
 extern int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
 extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
 /* Returns a bu_ptbl of all solids referenced by the display list */
 extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
-extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *));
+extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *), struct solid *freesolid);
 
 extern int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *));
 extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
-extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct display_list *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode);
+extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct display_list *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, struct solid *freesolid);
 int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
 void dl_set_flag(struct bu_list *hdlp, int flag);
 void dl_set_wflag(struct bu_list *hdlp, int wflag);
-void dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int));
+void dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int), struct solid *freesolid);
 int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
 void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
 void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image);

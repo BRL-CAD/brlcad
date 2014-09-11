@@ -49,6 +49,7 @@
 #include "plot3.h"
 #include "mater.h"
 
+#include "solid.h"
 
 #include "./ged_private.h"
 #include "./qray.h"
@@ -131,6 +132,8 @@ free_object_selections(struct bu_hash_entry *entry, void *UNUSED(arg))
 void
 ged_free(struct ged *gedp)
 {
+    struct solid *sp;
+
     if (gedp == GED_NULL)
 	return;
 
@@ -160,6 +163,12 @@ ged_free(struct ged *gedp)
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
 
+    FOR_ALL_SOLIDS(sp, &gedp->freesolid->l) {
+	BU_LIST_DEQUEUE(&((sp)->l));
+	FREE_SOLID(sp, &gedp->freesolid->l);
+    }
+    BU_PUT(gedp->freesolid, struct solid);
+
     bu_hash_tbl_traverse(gedp->ged_selections, free_object_selections, NULL);
     bu_hash_tbl_free(gedp->ged_selections);
 }
@@ -168,6 +177,8 @@ ged_free(struct ged *gedp)
 void
 ged_init(struct ged *gedp)
 {
+    struct solid *freesolid;
+
     if (gedp == GED_NULL)
 	return;
 
@@ -195,6 +206,12 @@ ged_init(struct ged *gedp)
     qray_init(gedp->ged_gdp);
 
     gedp->ged_selections = bu_hash_tbl_create(0);
+
+    /* init the solid list */
+    BU_GET(freesolid, struct solid);
+    BU_LIST_INIT(&freesolid->l);
+    gedp->freesolid = freesolid;
+    gedp->ged_gdp->gd_freeSolids = freesolid;
 
     /* (in)sanity */
     gedp->ged_gvp = NULL;

@@ -122,7 +122,8 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 
     if (!existing_sp) {
 	/* Handling a new solid */
-	GET_SOLID(sp);
+	GET_SOLID(sp, &gedp->freesolid->l);
+	BU_LIST_APPEND(&gedp->freesolid->l, &((sp)->l) );
 	sp->s_dlist = 0;
     } else {
 	/* Just updating an existing solid.
@@ -309,14 +310,15 @@ invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy)
 	/* Name exists from some other overlay,
 	 * zap any associated solids
 	 */
-	dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, name, 0);
+	dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, name, 0, gedp->freesolid);
     }
     /* Need to enter phony name in directory structure */
     dp = db_diradd(dbip,  name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, &type);
 
     /* Obtain a fresh solid structure, and fill it in */
 
-    GET_SOLID(sp);
+    GET_SOLID(sp, &gedp->freesolid->l);
+    BU_LIST_APPEND(&gedp->freesolid->l, &((sp)->l) );
 
     if (copy) {
 	BU_LIST_INIT(&(sp->s_vlist));

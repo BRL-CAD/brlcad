@@ -36,6 +36,7 @@
 #  include <windows.h>
 #endif
 
+#include "solid.h"
 #include "dm/bview.h"
 #include "raytrace.h"
 #include "fbserv_obj.h"
@@ -311,6 +312,7 @@ struct ged_drawable {
     struct bu_list		*gd_headDisplay;		/**< @brief  head of display list */
     struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
+    struct solid                *gd_freeSolids;         /**< @brief  ptr to head of free solid list */
 
     char			**gd_rt_cmd;
     int				gd_rt_cmd_len;
@@ -344,6 +346,8 @@ struct ged {
 
     /** for catching log messages */
     struct bu_vls		*ged_log;
+
+    struct solid                *freesolid;  /* For now this is a struct solid, but longer term that may not always be true */
 
     /* TODO: add support for returning an array of objects, not just a
      * simple string.
@@ -450,7 +454,8 @@ GED_EXPORT extern void dl_erasePathFromDisplay(struct bu_list *hdlp,
 	                                       struct db_i *dbip,
 					       void (*callback)(unsigned int, int),
 					       const char *path,
-					       int allow_split);
+					       int allow_split,
+					       struct solid *freesolid);
 GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
 /* When finalized, this stuff belongs in a header file of its own */
 struct polygon_header {
