@@ -39,6 +39,12 @@
 #include "dm_private.h"
 
 
+#if defined(IF_OGL) || defined(IF_WGL)
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
+#endif
+
 void
 dm_draw_data_axes(dm *dmp,
 		  fastf_t sf,
@@ -60,10 +66,6 @@ dm_draw_data_axes(dm *dmp,
     dm_set_fg(dmp, bndasp->color[0], bndasp->color[1], bndasp->color[2], 1, 1.0);
 
 #if defined(IF_OGL) || defined(IF_WGL)
-#  ifdef HAVE_GL_GL_H
-#    include <GL/gl.h>
-#  endif
-
     if (bndasp->draw > 1) {
 	if (dmp->dm_light)
 	    glDisable(GL_LIGHTING);
