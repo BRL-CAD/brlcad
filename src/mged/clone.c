@@ -1133,7 +1133,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		    redraw_visible_objects();
 		    size_reset();
 		    new_mats();
-		    color_soltab();
+		    mged_color_soltab();
 		    refresh();
 		}
 		fprintf(stdout, ".");

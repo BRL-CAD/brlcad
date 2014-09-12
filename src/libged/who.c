@@ -24,7 +24,7 @@
  */
 
 #include "ged.h"
-#include "solid.h"
+
 
 
 /*

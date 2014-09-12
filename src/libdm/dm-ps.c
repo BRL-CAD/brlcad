@@ -521,6 +521,7 @@ dm dm_ps = {
     null_drawDList,
     null_freeDLists,
     null_genDLists,
+    NULL,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,

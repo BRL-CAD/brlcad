@@ -39,7 +39,7 @@
 class QTkMainWindow: public QWindow {
 
 public:
-    QTkMainWindow(QPixmap *p, QWindow *parent = 0, struct dm *d = NULL);
+    QTkMainWindow(QPixmap *p, QWindow *parent = 0, void *d = NULL);
     ~QTkMainWindow();
 
     virtual void render(QPainter *painter);
@@ -56,7 +56,7 @@ private:
     QPixmap *pixmap;
     QBackingStore *m_backingStore;
     bool m_update_pending;
-    struct dm *dmp;
+    void *dmp;
 };
 
 

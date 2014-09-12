@@ -25,7 +25,7 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
   <para>
     <command>nirt</command> operates on the specified <emphasis remap="I">objects</emphasis>
-    in the database <emphasis remap="I">model.g,</emphasis> using
+    in the database <emphasis remap="I">model.g</emphasis>, using
     <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
     to trace rays according to commands read from the standard input and producing an ASCII report of the results.
     By default, the user can interact with <command>nirt</command>, repeatedly specifying
@@ -118,15 +118,6 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-E</option></term>
-      <listitem>
-	<para>
-	  Causes <command>nirt</command> to ignore any <option>-e</option> or <option>-f</option>
-	  options specified previously on the command line.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
       <term><option>-f </option><replaceable>sfile</replaceable></term>
       <listitem>
 	<para>
@@ -135,6 +126,15 @@
 	  Scripts specified with either the <option>-e</option> or <option>-f</option>
 	  options are executed in the order in which they are specified
 	  on the command line.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-E</option></term>
+      <listitem>
+	<para>
+	  Causes <command>nirt</command> to ignore any <option>-e</option> or <option>-f</option>
+	  options specified previously on the command line.
 	</para>
       </listitem>
     </varlistentry>
@@ -176,7 +176,7 @@
 	  Causes <command>nirt</command> to handle multiple regions' claims to segments of a ray
 	  according to action <emphasis remap="I">n</emphasis>.	The argument
 	  <emphasis remap="I">n</emphasis> may be any of the values 0, 1, 2, or 3,
-	  or their corresponding key words "resolve," "rebuild_fastgen," "rebuild_all," or "retain."
+	  or their corresponding key words "resolve", "rebuild_fastgen", "rebuild_all", or "retain".
 	  See the discussion of the <emphasis remap="I">overlap_claims</emphasis>
 	  command below.
 	</para>
@@ -238,7 +238,7 @@
 	<emphasis remap="I">h v</emphasis>
 	<emphasis remap="B" role="B"> [</emphasis>
 	<emphasis remap="I">d</emphasis>
-	<emphasis remap="B" role="B">]</emphasis>
+	<emphasis remap="B" role="B">]]</emphasis>
       </term>
       <listitem>
 	<para>
@@ -293,7 +293,7 @@
     <term><emphasis remap="B" role="B">bot_minpieces [n]</emphasis></term>
     <listitem>
       <para>
-	Sets "rt_bot_minpieces" to the new value <emphasis remap="I">n.</emphasis>
+	Sets "rt_bot_minpieces" to the new value <emphasis remap="I">n</emphasis>.
 	If <emphasis remap="I">n</emphasis> is not provided, the current value of "rt_bot_minpieces"
 	is displayed.  See the discussion of the <option>-B</option> option above for more details.
       </para>
@@ -307,7 +307,7 @@
 	When activated, backs the ray origination point out of the geometry:
 	<emphasis remap="I">h</emphasis> and <emphasis remap="I">v</emphasis>
 	retain their previous values and <emphasis remap="I">d</emphasis> is set to
-	<emphasis remap="I">Dmax,</emphasis> the largest value of
+	<emphasis remap="I">Dmax</emphasis>, the largest value of
 	<emphasis remap="I">d</emphasis>  anywhere in the geometry.  Default is 0 (deactivated),
 	1 is active.
       </para>
@@ -320,7 +320,7 @@
 	Sets the <emphasis remap="I">useair</emphasis> member  of the <emphasis remap="I">rt_i</emphasis>
 	structure to the integer <emphasis remap="I">n</emphasis>.  If <emphasis remap="I">n</emphasis> is 0,
 	then <command>nirt</command> ignores any air in the geometry.  If this command is invoked with no
-	arguments, <command>nirt</command> prints the current value of <emphasis remap="I">useair.</emphasis>
+	arguments, <command>nirt</command> prints the current value of <emphasis remap="I">useair</emphasis>.
 	Default is 0.
       </para>
     </listitem>
@@ -340,9 +340,9 @@
 	but every claimant is recorded. If <emphasis remap="I">n</emphasis> is 1 or "rebuild_fastgen,"
 	then <command>nirt</command> takes on <emphasis remap="I">FASTGEN</emphasis> behavior,
 	so overlaps of plate-mode primitives are rebuilt, but other overlaps are retained.
-	This command is useful with the <emphasis remap="I">claimant_count,</emphasis>
-	<emphasis remap="I">claimant_list,</emphasis> and <emphasis remap="I">claimant_listn</emphasis>
-	output items.  Default is "resolve."
+	This command is useful with the <emphasis remap="I">claimant_count</emphasis>,
+	<emphasis remap="I">claimant_list</emphasis>, and <emphasis remap="I">claimant_listn</emphasis>
+	output items.  Default is "resolve".
       </para>
     </listitem>
   </varlistentry>
@@ -371,9 +371,9 @@
       <para>
 	Causes <command>nirt</command> to read and write all distances and locations in units
 	of <emphasis remap="I">u</emphasis>.  Valid choices for <emphasis remap="I">u</emphasis>
-	are "mm"; "cm"; "m"; "in"; and "ft";   If this command is invoked with no arguments,
+	are "mm"; "cm"; "m"; "in"; and "ft".   If this command is invoked with no arguments,
 	<command>nirt</command>  prints the current choice of I/O units.  Default is the units of
-	<emphasis remap="I">model.g.</emphasis>
+	<emphasis remap="I">model.g</emphasis>.
       </para>
     </listitem>
   </varlistentry>
@@ -402,7 +402,7 @@
 	<command>nirt</command> or resets the destination by another invocation of the
 	<emphasis remap="I">dest</emphasis> command. If this command is invoked with no arguments,
 	<command>nirt</command> prints the current value of <emphasis remap="I">d</emphasis>.
-	Default is "default," that is, the standard output.
+	Default is "default", that is, the standard output.
       </para>
     </listitem>
   </varlistentry>
@@ -413,7 +413,7 @@
 	Sets the name of the state file to which to dump and from which to load state information.
 	See the discussion of the <emphasis remap="I">dump</emphasis> and <emphasis remap="I">load</emphasis>
 	commands below.  If this command is invoked with no arguments, <command>nirt</command>
-	prints the current name of the state file.  Default is "nirt_state."
+	prints the current name of the state file.  Default is "nirt_state".
       </para>
     </listitem>
   </varlistentry>
@@ -484,7 +484,7 @@
     <term><emphasis remap="B" role="B">q</emphasis></term>
     <listitem>
       <para>
-	Quits <emphasis remap="I">nirt.</emphasis>
+	Quits <command>nirt</command>.
       </para>
     </listitem>
   </varlistentry>
@@ -758,7 +758,7 @@
       <term><emphasis remap="B" role="B">claimant_listn</emphasis></term>
       <listitem>
 	<para>Same as
-	<emphasis remap="I">claimant_list,</emphasis>
+	<emphasis remap="I">claimant_list</emphasis>,
 	except that it is newline-, rather than space-separated.</para>
       </listitem>
     </varlistentry>
@@ -1000,7 +1000,7 @@
   </para>
 
   <para>
-    The name "nirt" stands for "Natalie's interactive ray tracer."
+    The name "nirt" stands for "Natalie's interactive ray tracer".
   </para>
 </refsection>
 
@@ -1074,7 +1074,7 @@
 <refsection xml:id="bugs"><title>BUGS</title>
 
   <para>
-    The program sometimes complains about "previously unreported overlaps."  To the best of our knowledge, this
+    The program sometimes complains about "previously unreported overlaps".  To the best of our knowledge, this
     complaint may be safely ignored. We hope to fix this soon.
   </para>
 </refsection>

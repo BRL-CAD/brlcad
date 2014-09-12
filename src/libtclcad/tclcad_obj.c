@@ -939,7 +939,7 @@ HIDDEN void to_dm_get_display_image(struct ged *gedp, unsigned char **idata);
 HIDDEN void to_fbs_callback();
 HIDDEN int to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 
-HIDDEN void to_create_vlist_callback(struct solid *sp);
+HIDDEN void to_create_vlist_callback(struct display_list *gdlp);
 HIDDEN void to_free_vlist_callback(unsigned int dlist, int range);
 HIDDEN void to_refresh_all_views(struct tclcad_obj *top);
 HIDDEN void to_refresh_view(struct ged_dm_view *gdvp);
@@ -2637,7 +2637,7 @@ to_data_arrows(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
-    struct ged_data_arrow_state *gdasp;
+    struct bview_data_arrow_state *gdasp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3068,7 +3068,7 @@ to_data_labels(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
-    struct ged_data_label_state *gdlsp;
+    struct bview_data_label_state *gdlsp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3297,7 +3297,7 @@ to_data_lines(struct ged *gedp,
 	      int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
-    struct ged_data_line_state *gdlsp;
+    struct bview_data_line_state *gdlsp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3476,7 +3476,7 @@ bad:
 
 /* These functions should be macros */
 HIDDEN void
-to_polygon_free(ged_polygon *gpp)
+to_polygon_free(bview_polygon *gpp)
 {
     register size_t j;
 
@@ -3493,7 +3493,7 @@ to_polygon_free(ged_polygon *gpp)
 
 
 HIDDEN void
-to_polygons_free(ged_polygons *gpp)
+to_polygons_free(bview_polygons *gpp)
 {
     register size_t i;
 
@@ -3505,13 +3505,13 @@ to_polygons_free(ged_polygons *gpp)
     }
 
     bu_free((void *)gpp->gp_polygon, "data polygons");
-    gpp->gp_polygon = (ged_polygon *)0;
+    gpp->gp_polygon = (bview_polygon *)0;
     gpp->gp_num_polygons = 0;
 }
 
 
 HIDDEN int
-to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *gpp, size_t contour_ac, const char **contour_av, int mode, int vflag)
+to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, bview_polygon *gpp, size_t contour_ac, const char **contour_av, int mode, int vflag)
 {
     register size_t j = 0, k = 0;
 
@@ -3523,7 +3523,7 @@ to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *
 	return GED_OK;
 
     gpp->gp_hole = (int *)bu_calloc(contour_ac, sizeof(int), "gp_hole");
-    gpp->gp_contour = (ged_poly_contour *)bu_calloc(contour_ac, sizeof(ged_poly_contour), "gp_contour");
+    gpp->gp_contour = (bview_poly_contour *)bu_calloc(contour_ac, sizeof(bview_poly_contour), "gp_contour");
 
     for (j = 0; j < contour_ac; ++j) {
 	int ac;
@@ -3582,13 +3582,13 @@ to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *
 
 
 HIDDEN int
-to_extract_polygons_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygons *gpp, size_t polygon_ac, const char **polygon_av, int mode, int vflag)
+to_extract_polygons_av(struct ged *gedp, struct ged_dm_view *gdvp, bview_polygons *gpp, size_t polygon_ac, const char **polygon_av, int mode, int vflag)
 {
     register size_t i;
     int ac;
 
     gpp->gp_num_polygons = polygon_ac;
-    gpp->gp_polygon = (ged_polygon *)bu_calloc(polygon_ac, sizeof(ged_polygon), "data polygons");
+    gpp->gp_polygon = (bview_polygon *)bu_calloc(polygon_ac, sizeof(bview_polygon), "data polygons");
 
     for (i = 0; i < polygon_ac; ++i) {
 	size_t contour_ac;
@@ -3623,7 +3623,7 @@ to_data_polygons(struct ged *gedp,
 		 int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
-    ged_data_polygon_state *gdpsp;
+    bview_data_polygon_state *gdpsp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3693,7 +3693,7 @@ to_data_polygons(struct ged *gedp,
 	    if (bu_sscanf(argv[3], "%d", &op) != 1 || op > gctXor)
 		goto bad;
 
-	    gdpsp->gdps_clip_type = (GedClipType)op;
+	    gdpsp->gdps_clip_type = (ClipType)op;
 
 	    return GED_OK;
 	}
@@ -3996,8 +3996,8 @@ to_data_polygons(struct ged *gedp,
 
 	    i = gdpsp->gdps_polygons.gp_num_polygons;
 	    ++gdpsp->gdps_polygons.gp_num_polygons;
-	    gdpsp->gdps_polygons.gp_polygon = (ged_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
-									gdpsp->gdps_polygons.gp_num_polygons * sizeof(ged_polygon),
+	    gdpsp->gdps_polygons.gp_polygon = (bview_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
+									gdpsp->gdps_polygons.gp_num_polygons * sizeof(bview_polygon),
 									"realloc gp_polygon");
 
 	    if (to_extract_contours_av(gedp, gdvp, &gdpsp->gdps_polygons.gp_polygon[i],
@@ -4025,7 +4025,7 @@ to_data_polygons(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "clip")) {
 	size_t i, j;
 	int op;
-	ged_polygon *gpp;
+	bview_polygon *gpp;
 
 	if (argc > 6)
 	    goto bad;
@@ -4049,7 +4049,7 @@ to_data_polygons(struct ged *gedp,
 	else if (bu_sscanf(argv[5], "%d", &op) != 1 || op > gctXor)
 	    goto bad;
 
-	gpp = ged_clip_polygon((GedClipType)op,
+	gpp = ged_clip_polygon((ClipType)op,
 			       &gdpsp->gdps_polygons.gp_polygon[i],
 			       &gdpsp->gdps_polygons.gp_polygon[j],
 			       CLIPPER_MAX,
@@ -4066,8 +4066,8 @@ to_data_polygons(struct ged *gedp,
 
 	    /* No longer need space for the clip polygon */
 	    --gdpsp->gdps_polygons.gp_num_polygons;
-	    gdpsp->gdps_polygons.gp_polygon = (ged_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
-									gdpsp->gdps_polygons.gp_num_polygons * sizeof(ged_polygon),
+	    gdpsp->gdps_polygons.gp_polygon = (bview_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
+									gdpsp->gdps_polygons.gp_num_polygons * sizeof(bview_polygon),
 									"realloc gp_polygon");
 	}
 
@@ -4110,21 +4110,21 @@ to_data_polygons(struct ged *gedp,
      * Import sketch_name and append
      */
     if (BU_STR_EQUAL(argv[2], "import")) {
-	ged_polygon *gpp;
+	bview_polygon *gpp;
 	size_t i;
 
 	if (argc != 4)
 	    goto bad;
 
-	if ((gpp = ged_import_polygon(gedp, argv[3])) == (ged_polygon *)0) {
+	if ((gpp = ged_import_polygon(gedp, argv[3])) == (bview_polygon *)0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: failed to import sketch %s", argv[0], argv[3]);
 	    return GED_ERROR;
 	}
 
 	i = gdpsp->gdps_polygons.gp_num_polygons;
 	++gdpsp->gdps_polygons.gp_num_polygons;
-	gdpsp->gdps_polygons.gp_polygon = (ged_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
-								    gdpsp->gdps_polygons.gp_num_polygons * sizeof(ged_polygon),
+	gdpsp->gdps_polygons.gp_polygon = (bview_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
+								    gdpsp->gdps_polygons.gp_num_polygons * sizeof(bview_polygon),
 								    "realloc gp_polygon");
 
 	gdpsp->gdps_polygons.gp_polygon[i] = *gpp;  /* struct copy */
@@ -4265,7 +4265,7 @@ to_data_polygons(struct ged *gedp,
 	int ac;
 	size_t contour_ac;
 	const char **contour_av;
-	ged_polygon gp;
+	bview_polygon gp;
 
 	if (argc != 5)
 	    goto bad;
@@ -4461,7 +4461,7 @@ to_data_move(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "data_polygons")) {
 	size_t i, j, k;
-	ged_data_polygon_state *gdpsp = &gdvp->gdv_view->gv_data_polygons;
+	bview_data_polygon_state *gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
 	if (bu_sscanf(argv[3], "%zu %zu %zu", &i, &j, &k) != 3)
 	    goto bad;
@@ -4503,7 +4503,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "data_arrows")) {
-	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows;
+	struct bview_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_data_arrows.gdas_num_points)
@@ -4544,7 +4544,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "sdata_arrows")) {
-	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows;
+	struct bview_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_sdata_arrows.gdas_num_points)
@@ -4620,7 +4620,7 @@ to_data_move(struct ged *gedp,
 
 
     if (BU_STR_EQUAL(argv[2], "data_labels")) {
-	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels;
+	struct bview_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_data_labels.gdls_num_labels)
@@ -4637,7 +4637,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "sdata_labels")) {
-	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels;
+	struct bview_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_sdata_labels.gdls_num_labels)
@@ -4654,7 +4654,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "data_lines")) {
-	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines;
+	struct bview_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_data_lines.gdls_num_points)
@@ -4695,7 +4695,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "sdata_lines")) {
-	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines;
+	struct bview_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_sdata_lines.gdls_num_points)
@@ -4788,7 +4788,7 @@ to_data_scale(struct ged *gedp,
 
     /* scale data arrows */
     {
-	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows;
+	struct bview_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows;
 	point_t vcenter = {0, 0, 0};
 
 	/* Scale the length of each arrow */
@@ -4807,7 +4807,7 @@ to_data_scale(struct ged *gedp,
 
     /* scale data labels */
     {
-	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels;
+	struct bview_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels;
 	point_t vcenter = {0, 0, 0};
 	point_t vpoint;
 
@@ -5016,7 +5016,7 @@ to_data_pick(struct ged *gedp,
 	gdvp->gdv_view->gv_data_polygons.gdps_polygons.gp_num_polygons) {
 	register size_t si, sj, sk;
 
-	ged_data_polygon_state *gdpsp = &gdvp->gdv_view->gv_data_polygons;
+	bview_data_polygon_state *gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
 	for (si = 0; si < gdpsp->gdps_polygons.gp_num_polygons; ++si)
 	    for (sj = 0; sj < gdpsp->gdps_polygons.gp_polygon[si].gp_num_contours; ++sj)
@@ -5054,7 +5054,7 @@ to_data_pick(struct ged *gedp,
     /* check for label points */
     if (gdvp->gdv_view->gv_data_labels.gdls_draw &&
 	gdvp->gdv_view->gv_data_labels.gdls_num_labels) {
-	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels;
+	struct bview_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels;
 
 	for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
 	    fastf_t minX, maxX;
@@ -5085,7 +5085,7 @@ to_data_pick(struct ged *gedp,
     /* check for selected label points */
     if (gdvp->gdv_view->gv_sdata_labels.gdls_draw &&
 	gdvp->gdv_view->gv_sdata_labels.gdls_num_labels) {
-	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels;
+	struct bview_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels;
 
 	for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
 	    fastf_t minX, maxX;
@@ -5122,7 +5122,7 @@ to_data_pick(struct ged *gedp,
     /* check for line points */
     if (gdvp->gdv_view->gv_data_lines.gdls_draw &&
 	gdvp->gdv_view->gv_data_lines.gdls_num_points) {
-	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines;
+	struct bview_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines;
 
 	for (i = 0; i < gdlsp->gdls_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -5153,7 +5153,7 @@ to_data_pick(struct ged *gedp,
     /* check for selected line points */
     if (gdvp->gdv_view->gv_sdata_lines.gdls_draw &&
 	gdvp->gdv_view->gv_sdata_lines.gdls_num_points) {
-	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines;
+	struct bview_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines;
 
 	for (i = 0; i < gdlsp->gdls_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -5188,7 +5188,7 @@ to_data_pick(struct ged *gedp,
     /* check for arrow points */
     if (gdvp->gdv_view->gv_data_arrows.gdas_draw &&
 	gdvp->gdv_view->gv_data_arrows.gdas_num_points) {
-	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows;
+	struct bview_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows;
 
 	for (i = 0; i < gdasp->gdas_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -5217,7 +5217,7 @@ to_data_pick(struct ged *gedp,
     /* check for selected arrow points */
     if (gdvp->gdv_view->gv_sdata_arrows.gdas_draw &&
 	gdvp->gdv_view->gv_sdata_arrows.gdas_num_points) {
-	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows;
+	struct bview_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows;
 
 	for (i = 0; i < gdasp->gdas_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -8801,7 +8801,7 @@ to_mouse_poly_circ(struct ged *gedp,
     struct bu_vls plist = BU_VLS_INIT_ZERO;
     struct bu_vls i_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
-    ged_data_polygon_state *gdpsp;
+    bview_data_polygon_state *gdpsp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -8917,7 +8917,7 @@ to_mouse_poly_cont(struct ged *gedp,
     fastf_t fx, fy;
     point_t v_pt, m_pt;
     struct ged_dm_view *gdvp;
-    ged_data_polygon_state *gdpsp;
+    bview_data_polygon_state *gdpsp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -9011,7 +9011,7 @@ to_mouse_poly_ell(struct ged *gedp,
     struct bu_vls plist = BU_VLS_INIT_ZERO;
     struct bu_vls i_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
-    ged_data_polygon_state *gdpsp;
+    bview_data_polygon_state *gdpsp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -9138,7 +9138,7 @@ to_mouse_poly_rect(struct ged *gedp,
     struct bu_vls plist = BU_VLS_INIT_ZERO;
     struct bu_vls i_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
-    ged_data_polygon_state *gdpsp;
+    bview_data_polygon_state *gdpsp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -10564,7 +10564,7 @@ to_new_view(struct ged *gedp,
     }
 
     BU_ALLOC(new_gdvp, struct ged_dm_view);
-    BU_ALLOC(new_gdvp->gdv_view, struct ged_view);
+    BU_ALLOC(new_gdvp->gdv_view, struct bview);
 
     {
 	int i;
@@ -11085,7 +11085,7 @@ to_poly_circ_mode(struct ged *gedp,
     struct bu_vls plist = BU_VLS_INIT_ZERO;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
-    ged_data_polygon_state *gdpsp;
+    bview_data_polygon_state *gdpsp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11187,7 +11187,7 @@ to_poly_cont_build(struct ged *gedp,
     fastf_t fx, fy;
     point_t v_pt, m_pt;
     struct ged_dm_view *gdvp;
-    ged_data_polygon_state *gdpsp;
+    bview_data_polygon_state *gdpsp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11371,7 +11371,7 @@ to_poly_ell_mode(struct ged *gedp,
     struct bu_vls plist = BU_VLS_INIT_ZERO;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
-    ged_data_polygon_state *gdpsp;
+    bview_data_polygon_state *gdpsp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11476,7 +11476,7 @@ to_poly_rect_mode(struct ged *gedp,
     struct bu_vls plist = BU_VLS_INIT_ZERO;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
-    ged_data_polygon_state *gdpsp;
+    bview_data_polygon_state *gdpsp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -13784,7 +13784,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 
     gdvp->gdv_fbs.fbs_fbp = dm_get_fb(gdvp->gdv_dmp);
 
-    if ((gdvp->gdv_fbs.fbs_fbp == FB_NULL)) {
+    if (gdvp->gdv_fbs.fbs_fbp == FB_NULL) {
 	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(interp);
@@ -13800,9 +13800,8 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
     return TCL_OK;
 }
 
-
 HIDDEN void
-to_create_vlist_callback(struct solid *sp)
+to_create_vlist_callback_solid(struct solid *sp)
 {
     struct ged_dm_view *gdvp;
     register int first = 1;
@@ -13835,6 +13834,16 @@ to_create_vlist_callback(struct solid *sp)
 
 	    (void)dm_end_dlist(gdvp->gdv_dmp);
 	}
+    }
+}
+
+
+HIDDEN void
+to_create_vlist_callback(struct display_list *gdlp)
+{
+    struct solid *sp;
+    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	to_create_vlist_callback_solid(sp);
     }
 }
 
@@ -13962,10 +13971,10 @@ to_log_output_handler(void *client_data, void *vpstr)
 }
 
 
-HIDDEN void go_dm_draw_arrows(dm *dmp, struct ged_data_arrow_state *gdasp, fastf_t sf);
-HIDDEN void go_dm_draw_labels(dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2vmat);
-HIDDEN void go_dm_draw_lines(dm *dmp, struct ged_data_line_state *gdlsp);
-HIDDEN void go_dm_draw_polys(dm *dmp, ged_data_polygon_state *gdpsp, int mode);
+HIDDEN void go_dm_draw_arrows(dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf);
+HIDDEN void go_dm_draw_labels(dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat);
+HIDDEN void go_dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp);
+HIDDEN void go_dm_draw_polys(dm *dmp, bview_data_polygon_state *gdpsp, int mode);
 
 HIDDEN void go_draw(struct ged_dm_view *gdvp);
 HIDDEN int go_draw_dlist(struct ged_dm_view *gdvp);
@@ -13974,7 +13983,7 @@ HIDDEN void go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp);
 
 
 HIDDEN void
-go_dm_draw_arrows(dm *dmp, struct ged_data_arrow_state *gdasp, fastf_t sf)
+go_dm_draw_arrows(dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
 {
     register int i;
     int saveLineWidth;
@@ -14056,7 +14065,7 @@ go_dm_draw_arrows(dm *dmp, struct ged_data_arrow_state *gdasp, fastf_t sf)
 
 
 HIDDEN void
-go_dm_draw_labels(dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2vmat)
+go_dm_draw_labels(dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat)
 {
     register int i;
 
@@ -14078,7 +14087,7 @@ go_dm_draw_labels(dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2vmat)
 
 
 HIDDEN void
-go_dm_draw_lines(dm *dmp, struct ged_data_line_state *gdlsp)
+go_dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp)
 {
     int saveLineWidth;
     int saveLineStyle;
@@ -14138,7 +14147,7 @@ go_dm_draw_lines(dm *dmp, struct ged_data_line_state *gdlsp)
 
 
 HIDDEN void
-go_dm_draw_polys(dm *dmp, ged_data_polygon_state *gdpsp, int mode)
+go_dm_draw_polys(dm *dmp, bview_data_polygon_state *gdpsp, int mode)
 {
     register size_t i, last_poly;
     int saveLineWidth;

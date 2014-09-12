@@ -32,7 +32,7 @@
 #  include <sys/time.h>
 #endif
 
-#include "dm/dm-qt.h"
+#include "dm-qt.h"
 
 #include "tcl.h"
 #include "tk.h"
@@ -40,7 +40,8 @@
 #include "dm.h"
 #include "dm_private.h"
 #include "dm/dm_xvars.h"
-#include "dm/dm-Null.h"
+#include "dm-Null.h"
+#include "fb/fb_platform_specific.h"
 
 #define DM_QT_DEFAULT_POINT_SIZE 1.0
 
@@ -710,12 +711,23 @@ qt_processEvents(dm *dmp)
 
 
 HIDDEN int
-qt_openFb(dm *dmp, fb *ifp)
+qt_openFb(struct dm_internal *dmp)
 {
+
+    struct fb_platform_specific *fb_ps;
+    struct qt_fb_info *qtfb_ps;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
-    _qt_open_existing(ifp, dmp->dm_width, dmp->dm_height, privars->qapp, privars->win, privars->painter, &privars->drawFb, (void **)&privars->img);
+    fb_ps = fb_get_platform_specific(FB_QT_MAGIC);
+    qtfb_ps = (struct qt_fb_info *)fb_ps->data;
+    qtfb_ps->qapp = privars->qapp;
+    qtfb_ps->qwin = privars->win;
+    qtfb_ps->qpainter = privars->painter;
+    qtfb_ps->draw = &privars->drawFb;
+    qtfb_ps->qimg = (void **)&privars->img;
 
+    dmp->fbp = fb_open_existing("Qt", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    fb_put_platform_specific(fb_ps);
     return 0;
 }
 
@@ -961,7 +973,7 @@ struct bu_structparse Qt_vparse[] = {
 
 __END_DECLS
 
-dm dm_qt = {
+struct dm_internal dm_qt = {
     qt_close,
     qt_drawBegin,
     qt_drawEnd,
@@ -994,6 +1006,7 @@ dm dm_qt = {
     null_drawDList,
     null_freeDLists,
     null_genDLists,
+    NULL,
     qt_getDisplayImage,
     qt_reshape,
     null_makeCurrent,
@@ -1226,7 +1239,7 @@ static struct qt_tk_bind qt_bindings[] = {
  * ===================================================== Main window class ===============================================
  */
 
-QTkMainWindow::QTkMainWindow(QPixmap *p, QWindow *win, dm *d)
+QTkMainWindow::QTkMainWindow(QPixmap *p, QWindow *win, void *d)
     : QWindow(win)
     , m_update_pending(false)
 {
@@ -1268,8 +1281,8 @@ bool QTkMainWindow::event(QEvent *ev)
 	char *tk_event = qt_bindings[index].bind_function(ev);
 	if (tk_event != NULL) {
 	    struct bu_vls str = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&str, "event generate %s %s", bu_vls_addr(&dmp->dm_pathName), tk_event);
-	    if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
+	    bu_vls_printf(&str, "event generate %s %s", bu_vls_addr(&((dm *)dmp)->dm_pathName), tk_event);
+	    if (Tcl_Eval(((dm *)dmp)->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
 		bu_log("error generate event %s\n", tk_event);
 	    }
 	    return true;

@@ -8,6 +8,7 @@ branches=(
 	"bobWinPort"
 	"bottie"
 	"brlcad_5_1_alpha_patch"
+	"bullet"
 	"cmake"
 	"dmtogl"
 	"goblin"

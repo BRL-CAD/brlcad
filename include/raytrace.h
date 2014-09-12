@@ -5682,13 +5682,6 @@ RT_EXPORT extern void bn_vlist_cleanup(struct bu_list *hd);
 RT_EXPORT extern void rt_vlist_cleanup(void);
 
 
-/**
- * Given an RPP, draw the outline of it into the vlist.
- */
-RT_EXPORT extern void bn_vlist_rpp(struct bu_list *hd,
-				   const point_t minn,
-				   const point_t maxx);
-
 
 /************************************************************************
  *									*

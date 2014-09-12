@@ -141,8 +141,6 @@ int (*cmdline_hook)() = NULL;
 jmp_buf jmp_env;		/* For non-local gotos */
 double frametime;		/* time needed to draw last frame */
 
-struct solid MGED_FreeSolid;      /* Head of freelist */
-
 void (*cur_sigint)();	/* Current SIGINT status */
 int interactive = 1;	/* >0 means interactive */
 int cbreak_mode = 0;        /* >0 means in cbreak_mode */
@@ -372,7 +370,7 @@ new_edit_mats(void)
 
 
 void
-mged_view_callback(struct ged_view *gvp,
+mged_view_callback(struct bview *gvp,
 		   void *clientData)
 {
     struct _view_state *vsp = (struct _view_state *)clientData;
@@ -1250,7 +1248,6 @@ main(int argc, char *argv[])
 #endif /* HAVE_PIPE */
 
     /* Set up linked lists */
-    BU_LIST_INIT(&MGED_FreeSolid.l);
     BU_LIST_INIT(&RTG.rtg_vlfree);
     BU_LIST_INIT(&RTG.rtg_headwdb.l);
 

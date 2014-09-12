@@ -36,6 +36,7 @@
 #include "dm_private.h"
 
 #include "dm-Null.h"
+#include "solid.h"
 
 extern dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
 extern dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
@@ -458,7 +459,7 @@ dm_configure_win(dm *dmp, int force)
     return dmp->dm_configureWin(dmp, force);
 }
 
-struct bu_vls * 
+struct bu_vls *
 dm_get_pathname(dm *dmp)
 {
     if (!dmp) return NULL;
@@ -466,14 +467,14 @@ dm_get_pathname(dm *dmp)
 }
 
 
-struct bu_vls * 
+struct bu_vls *
 dm_get_dname(dm *dmp)
 {
     if (!dmp) return NULL;
     return &(dmp->dm_dName);
 }
 
-struct bu_vls * 
+struct bu_vls *
 dm_get_tkname(dm *dmp)
 {
     if (!dmp) return NULL;
@@ -621,7 +622,7 @@ dm_gen_dlists(struct dm_internal *dmp, size_t range)
     return dmp->dm_genDLists(dmp, range);
 }
 
-int 
+int
 dm_begin_dlist(struct dm_internal *dmp, unsigned int list)
 {
     return dmp->dm_beginDList(dmp, list);
@@ -658,8 +659,8 @@ dm_draw_begin(dm *dmp)
 {
     return dmp->dm_drawBegin(dmp);
 }
-int  
-dm_draw_end(dm *dmp) 
+int
+dm_draw_end(dm *dmp)
 {
     return dmp->dm_drawEnd(dmp);
 }
@@ -719,6 +720,11 @@ dm_draw(dm *dmp, struct bn_vlist *(*callback)(void *), void **data)
     return dmp->dm_draw(dmp, callback, data);
 }
 int
+dm_draw_obj(dm *dmp, struct display_list *obj)
+{
+    return dmp->dm_draw_obj(dmp, obj);
+}
+int
 dm_set_depth_mask(dm *dmp, int d_on)
 {
     return dmp->dm_setDepthMask(dmp, d_on);
@@ -753,7 +759,7 @@ dm_set_vp(dm *dmp, fastf_t *vp)
  * hook should be defined using this function as a
  * starting point and adding in whatever additional
  * logic is needed.  The full dm structure should always
- * be accessable as a slot in the modifiable variables
+ * be accessible as a slot in the modifiable variables
  * structure passed in here as "base" */
 void
 dm_generic_hook(const struct bu_structparse *sdp,
@@ -800,6 +806,120 @@ dm_get_mvars(dm *dmp)
     if (!dmp) return NULL;
     if (!dmp->m_vars) return (void *)dmp;
     return dmp->m_vars;
+}
+
+
+/* Routines for drawing based on a list of display_list
+ * structures.  This will probably need to be a struct dm
+ * entry to allow it to be customized for various dm
+ * backends, but as a first step get it out of MGED
+ * and into libdm. */
+static int
+dm_drawSolid(dm *dmp,
+          struct solid *sp,
+          short r,
+          short g,
+          short b,
+	  int draw_style,
+          unsigned char *gdc)
+{
+    int ndrawn = 0;
+
+    if (sp->s_cflag) {
+        if (!DM_SAME_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2])) {
+            dm_set_fg(dmp, (short)gdc[0], (short)gdc[1], (short)gdc[2], 0, sp->s_transparency);
+            DM_COPY_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2]);
+        }
+    } else {
+        if (!DM_SAME_COLOR(r, g, b, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2])) {
+            dm_set_fg(dmp, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2], 0, sp->s_transparency);
+            DM_COPY_COLOR(r, g, b, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2]);
+        }
+    }
+
+    if (dm_get_displaylist(dmp) && draw_style) {
+        dm_draw_dlist(dmp, sp->s_dlist);
+        sp->s_flag = UP;
+        ndrawn++;
+    } else {
+        if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+            sp->s_flag = UP;
+            ndrawn++;
+        }
+    }
+
+    return ndrawn;
+}
+
+
+int
+dm_draw_display_list(dm *dmp,
+	struct bu_list *dl,
+	fastf_t transparency_threshold,
+	fastf_t inv_viewsize,
+	short r, short g, short b,
+	int line_width,
+	int draw_style,
+	int draw_edit,
+	unsigned char *gdc,
+	int solids_down,
+	int mv_dlist
+	)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct solid *sp;
+    fastf_t ratio;
+    int ndrawn = 0;
+
+    gdlp = BU_LIST_NEXT(display_list, dl);
+    while (BU_LIST_NOT_HEAD(gdlp, dl)) {
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	    if (solids_down) sp->s_flag = DOWN;              /* Not drawn yet */
+
+	    /* If part of object edit, will be drawn below */
+	    if ((sp->s_iflag == UP && !draw_edit) || (sp->s_iflag != UP && draw_edit))
+		continue;
+
+	    if (!((sp->s_transparency > transparency_threshold) || (EQUAL(sp->s_transparency, transparency_threshold))))
+		continue;
+
+	    if (dm_get_bound_flag(dmp)) {
+		ratio = sp->s_size * inv_viewsize;
+
+		/*
+		 * Check for this object being bigger than
+		 * dmp->dm_bound * the window size, or smaller than a speck.
+		 */
+		if (ratio < 0.001)
+		    continue;
+	    }
+
+	    dm_set_line_attr(dmp, line_width, sp->s_soldash);
+
+	    if (!draw_edit) {
+		ndrawn += dm_drawSolid(dmp, sp, r, g, b, draw_style, gdc);
+	    } else {
+		if (dm_get_displaylist(dmp) && mv_dlist) {
+		    dm_draw_dlist(dmp, sp->s_dlist);
+		    sp->s_flag = UP;
+		    ndrawn++;
+		} else {
+		    /* draw in immediate mode */
+		    if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+			sp->s_flag = UP;
+			ndrawn++;
+		    }
+		}
+	    }
+	}
+
+	gdlp = next_gdlp;
+    }
+
+    return ndrawn;
 }
 
 

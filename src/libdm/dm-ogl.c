@@ -2238,6 +2238,28 @@ ogl_genDLists(struct dm_internal *dmp, size_t range)
     return glGenLists((GLsizei)range);
 }
 
+HIDDEN int
+ogl_draw_obj(struct dm_internal *dmp, struct display_list *obj)
+{
+    struct solid *sp;
+    FOR_ALL_SOLIDS(sp, &obj->dl_headSolid) {
+	if (sp->s_dlist == 0)
+	    sp->s_dlist = dm_gen_dlists(dmp, 1);
+
+	(void)dm_make_current(dmp);
+	(void)dm_begin_dlist(dmp, sp->s_dlist);
+	if (sp->s_iflag == UP)
+	    (void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_transparency);
+	else
+	    (void)dm_set_fg(dmp,
+		    (unsigned char)sp->s_color[0],
+		    (unsigned char)sp->s_color[1],
+		    (unsigned char)sp->s_color[2], 0, sp->s_transparency);
+	(void)dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist);
+	(void)dm_end_dlist(dmp);
+    }
+    return 0;
+}
 
 HIDDEN int
 ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
@@ -2332,16 +2354,19 @@ ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 int
 ogl_openFb(struct dm_internal *dmp)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     struct fb_platform_specific *fb_ps;
     struct ogl_fb_info *ofb_ps;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct ogl_vars *privars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
+
     fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
     ofb_ps = (struct ogl_fb_info *)fb_ps->data;
-    ofb_ps->dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
-    ofb_ps->win = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
-    ofb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
-    ofb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
-    ofb_ps->glxc = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc;
+    ofb_ps->dpy = pubvars->dpy;
+    ofb_ps->win = pubvars->win;
+    ofb_ps->cmap = pubvars->cmap;
+    ofb_ps->vip = pubvars->vip;
+    ofb_ps->glxc = privars->glxc;
     ofb_ps->double_buffer = mvars->doublebuffer;
     ofb_ps->soft_cmap = 0;
     dmp->fbp = fb_open_existing("ogl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
@@ -2589,6 +2614,7 @@ struct dm_internal dm_ogl = {
     ogl_drawDList,
     ogl_freeDLists,
     ogl_genDLists,
+    ogl_draw_obj,
     ogl_getDisplayImage, /* display to image function */
     ogl_reshape,
     ogl_makeCurrent,

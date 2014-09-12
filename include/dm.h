@@ -318,7 +318,7 @@ DM_EXPORT extern const char *dm_version(void);
 
 
 
-/* functions to make a dm struct hidable - will need to
+/* functions to make a dm struct hideable - will need to
  * sort these out later */
 
 DM_EXPORT extern dm *dm_get();
@@ -390,6 +390,7 @@ DM_EXPORT extern int dm_draw_point_2d(dm *dmp, fastf_t x, fastf_t y);
 DM_EXPORT extern int dm_draw_point_3d(dm *dmp, point_t pt);
 DM_EXPORT extern int dm_draw_points_3d(dm *dmp, int npoints, point_t *points);
 DM_EXPORT extern int dm_draw(dm *dmp, struct bn_vlist *(*callback)(void *), void **data);
+DM_EXPORT extern int dm_draw_obj(dm *dmp, struct display_list *obj);
 DM_EXPORT extern int dm_set_depth_mask(dm *dmp, int d_on);
 DM_EXPORT extern int dm_debug(dm *dmp, int lvl);
 DM_EXPORT extern int dm_logfile(dm *dmp, const char *filename);
@@ -405,6 +406,19 @@ DM_EXPORT extern int dm_set_hook(const struct bu_structparse_map *map,
 
 DM_EXPORT extern struct bu_structparse *dm_get_vparse(dm *dmp);
 DM_EXPORT extern void *dm_get_mvars(dm *dmp);
+
+DM_EXPORT extern int dm_draw_display_list(dm *dmp,
+	struct bu_list *dl,
+	fastf_t transparency_threshold,
+	fastf_t inv_viewsize,
+	short r, short g, short b,
+	int line_width,
+	int draw_style,
+	int draw_edit,
+	unsigned char *gdc,
+	int solids_down,
+	int mv_dlist
+	);
 
 
 /* For backwards compatibility, define macros and expose struct dm */

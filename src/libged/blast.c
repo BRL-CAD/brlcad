@@ -24,8 +24,6 @@
  */
 
 #include "ged.h"
-#include "solid.h"
-
 
 /*
  * Erase all currently displayed geometry and draw the specified object(s)
