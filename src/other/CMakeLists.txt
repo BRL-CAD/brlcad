@@ -769,26 +769,21 @@ set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING 
 SetTargetFolder(libgdiam "Third Party Libraries")
 SetTargetFolder(libgdiam-static "Third Party Libraries")
 
-# Bullet is not yet integrated as a src/other subbuild, but there is
-# code that will make use of it if it is available.  If that code
-# becomes sufficiently useful, Bullet will be integrated.  In the
-# meantime, locate the find logic for that package here.
+# Bullet - Real-Time Physics Simulation libraries
 
-# Bullet physics library
-if(BRLCAD_LEVEL2)
-  if (BRLCAD_ENABLE_BULLET)
-    find_package(Bullet)
-    if(BULLET_FOUND)
-      CONFIG_H_APPEND(BRLCAD "#define HAVE_BULLET 1\n")
-    endif(BULLET_FOUND)
-    # Let the rest of the package know the results
-    set(BULLET_LIBRARIES "${BULLET_LIBRARIES}" CACHE STRING "Bullet libs" FORCE) 
-    set(BULLET_FOUND "${BULLET_FOUND}" CACHE BOOL "Bullet status" FORCE) 
-    mark_as_advanced(BULLET_INCLUDE_DIR)
-    mark_as_advanced(BULLET_FOUND)
-    mark_as_advanced(BULLET_LIBRARIES)
-  endif (BRLCAD_ENABLE_BULLET)
-endif(BRLCAD_LEVEL2)
+set(Bullet_ALIASES ENABLE_BULLET)
+set(Bullet_DESCRIPTION "
+Option for enabling and disabling compilation of the Bullet Realtime
+Physics Simulation Libraries provided with BRL-CAD's source
+distribution.  Default is AUTO, responsive to the toplevel
+BRLCAD_BUNDLED_LIBS option and testing first for a system version
+if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS "BRLCAD_ENABLE_BULLET;BRLCAD_LEVEL2" ALIASES ${Bullet_ALIASES})
+if(BRLCAD_BULLET_BUILD)
+  set(BULLET_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/bullet/src" CACHE STRING "Directory containing bullet headers." FORCE)
+  set(BULLET_LIBRARIES "BulletSoftBody;BulletCollision;BulletDynamics;LinearMath" CACHE STRING "Directory containing bullet headers." FORCE)
+endif(BRLCAD_BULLET_BUILD)
 
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
 # is code that will make use of it if it is available.  If that code

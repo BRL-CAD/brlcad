@@ -109,8 +109,9 @@ findjoint(struct ged *gedp, const struct db_full_path *pathp)
 	    if (jp->path.arc_last+i >= pathp->fp_len)
 		break;
 	    for (j=0; j<=(size_t)jp->path.arc_last;j++) {
-		if ((*pathp->fp_names[i+j]->d_namep != *jp->path.arc[j]) ||
-		    (!BU_STR_EQUAL(pathp->fp_names[i+j]->d_namep, jp->path.arc[j]))) {
+		const char *name = DB_FULL_PATH_GET(pathp, i+j)->d_namep;
+		if ((*name != *jp->path.arc[j]) ||
+		    (!BU_STR_EQUAL(name, jp->path.arc[j]))) {
 		    good=0;
 		    break;
 		}
@@ -158,7 +159,7 @@ mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, s
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_SOLID;
     curtree->tr_op = OP_NOP;
-    dp = pathp->fp_names[pathp->fp_len-1];
+    dp = DB_FULL_PATH_CUR_DIR(pathp);
 
     /* get the grip information. */
     gip = (struct rt_grip_internal *) ip->idb_ptr;
