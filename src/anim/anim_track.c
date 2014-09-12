@@ -227,7 +227,7 @@ get_args(int argc, char **argv)
 		one_radius = 1;
 		break;
 	    case 'p':
-		bu_sscanf(bu_optarg, "%z", &num_links);
+		bu_sscanf(bu_optarg, "%zd", &num_links);
 		link_nindex = bu_optind;
 		bu_optind += 1;
 		print_link = 1;
