@@ -2122,17 +2122,22 @@ wgl_draw_obj(struct dm_internal *dmp, struct display_list *obj)
 int
 wgl_openFb(dm *dmp)
 {
+    struct fb_platform_specific *fb_ps;
+    struct wgl_fb_info *wfb_ps;
     struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct wgl_vars *privars = (struct wgl_vars *)dmp->dm_vars.priv_vars;
+
     fb_ps = fb_get_platform_specific(FB_WGL_MAGIC);
     wfb_ps = (struct wgl_fb_info *)fb_ps->data;
-    wfb_ps->dpy = ((struct dm_xvars *)(dm_get_public_vars(dmp)))->dpy;
-    wfb_ps->win = ((struct dm_xvars *)(dm_get_public_vars(dmp)))->win;
-    wfb_ps->cmap = ((struct dm_xvars *)(dm_get_public_vars(dmp)))->cmap;
-    wfb_ps->vip = ((struct dm_xvars *)(dm_get_public_vars(dmp)))->vip;
-    wfb_ps->hdc = ((struct dm_xvars *)(dm_get_public_vars(dmp)))->hdc;
-    wfb_ps->glxc = ((struct wgl_vars *)(dm_get_private_vars(dmp)))->glxc;
-    wfb_ps->double_buffer = ((struct wgl_vars *)(dm_get_private_vars(dmp)))->mvars.doublebuffer
-	wfb_ps->soft_cmap = 0;
+    wfb_ps->dpy = pubvars->dpy;
+    wfb_ps->win = pubvars->win;
+    wfb_ps->cmap = pubvars->cmap;
+    wfb_ps->vip = pubvars->vip;
+    wfb_ps->hdc = pubvars->hdc;
+    wfb_ps->glxc = privars->glxc;
+    wfb_ps->double_buffer = mvars.doublebuffer;
+    wfb_ps->soft_cmap = 0;
     gdvp->gdv_fbs.fbs_fbp = fb_open_existing("wgl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
     return 0;

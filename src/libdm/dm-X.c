@@ -1657,15 +1657,17 @@ X_openFb(struct dm_internal *dmp)
 {
     struct fb_platform_specific *fb_ps;
     struct X24_fb_info *xfb_ps;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
     xfb_ps = (struct X24_fb_info *)fb_ps->data;
-    xfb_ps->dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
-    xfb_ps->win = ((struct x_vars *)dmp->dm_vars.priv_vars)->pix;
-    xfb_ps->cwinp = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
-    xfb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
-    xfb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
-    xfb_ps->gc = ((struct x_vars *)dmp->dm_vars.priv_vars)->gc;
+    xfb_ps->dpy = pubvars->dpy;
+    xfb_ps->win = privars->pix;
+    xfb_ps->cwinp = pubvars->win;
+    xfb_ps->cmap = pubvars->cmap;
+    xfb_ps->vip = pubvars->vip;
+    xfb_ps->gc = privars->gc;
 
     dmp->fbp = fb_open_existing("X", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
