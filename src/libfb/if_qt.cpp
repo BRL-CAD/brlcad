@@ -47,7 +47,7 @@
 #include "bu/str.h"
 
 /* TODO - should be getting this from fb_platform_specific - make the IF_* definitions
- * more precise for the individual if files - in priciple, we don't want to care about
+ * more precise for the individual if files - in principle, we don't want to care about
  * X11 types in a cross-platform Qt fb and right now the fb_platform_specific header
  * isn't behaving */
 struct qt_fb_info {

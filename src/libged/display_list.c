@@ -2128,11 +2128,11 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
     struct bn_vlist *vp;
 
     if (!vlcmds) {
-	/* 
-	 * Given a pointer to a member of the circularly linked list of solids 
-	 * (typically the head), chase the list and print out the information 
-	 * about each solid structure. 
-	 */ 
+	/*
+	 * Given a pointer to a member of the circularly linked list of solids
+	 * (typically the head), chase the list and print out the information
+	 * about each solid structure.
+	 */
 	int nvlist;
 	int npts;
 
@@ -2211,11 +2211,11 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 	}
 
     } else {
-	/* 
-	 * Given a pointer to a member of the circularly linked list of solids 
-	 * (typically the head), chase the list and print out the vlist cmds 
-	 * for each structure. 
-	 */ 
+	/*
+	 * Given a pointer to a member of the circularly linked list of solids
+	 * (typically the head), chase the list and print out the vlist cmds
+	 * for each structure.
+	 */
 
 	if (dbip == DBI_NULL) return;
 
