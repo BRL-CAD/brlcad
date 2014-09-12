@@ -112,6 +112,26 @@ SetTargetFolder(zlib-static "Third Party Libraries")
 SetTargetFolder(example "Third Party Executables")
 SetTargetFolder(minigzip "Third Party Executables")
 
+# FreeType Libraries
+set(freetype_ALIASES ENABLE_FREETYPE)
+set(freetype_DESCRIPTION "
+Option for enabling and disabling compilation of the FreeType
+libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION "BRLCAD_ENABLE_OSG;BRLCAD_LEVEL3" ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
+if(BRLCAD_FREETYPE_BUILD)
+  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
+  set(FREETYPE_INCLUDE_DIR
+    ${CMAKE_CURRENT_BINARY_DIR}/freetype/include
+    ${BRLCAD_SOURCE_DIR}/src/other/freetype/include
+    CACHE STRING "FreeType include dirs" FORCE
+    )
+  set(FREETYPE_INCLUDE_DIRS "${FREETYPE_INCLUDE_DIR}" CACHE STRING "Directory containing FreeType headers." FORCE)
+  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
+endif(BRLCAD_FREETYPE_BUILD)
+
 # --------------------------------------------------------------------
 # The incrtTcl subdirectory isn't directly referenced, but its
 # subdirectories are used - mark incrTcl as ignored
@@ -763,7 +783,7 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(openscenegraph OSG osg openscenegraph_DESCRIPTION
-  ALIASES ${openscenegraph_ALIASES} FIND_NAME OpenSceneGraph FIND_COMPONENTS
+  ALIASES ${openscenegraph_ALIASES} REQUIRED_VARS "BRLCAD_ENABLE_OSG;BRLCAD_LEVEL3" FIND_NAME OpenSceneGraph FIND_COMPONENTS
   osgText osgViewer FLAGS NOSYS)
 if(BRLCAD_OSG_BUILD)
   set(OSG_LIBRARY osg CACHE STRING "libosg" FORCE)
@@ -786,7 +806,9 @@ if(BRLCAD_OSG_BUILD)
   set(OSG_INCLUDE_DIR "${OSG_INCLUDE_DIR}" CACHE STRING "Directory containing OpenSceneGraph headers." FORCE)
   set(OSG_LIBRARIES "${OSG_LIBRARY};${OSGUTIL_LIBRARY};${OSGDB_LIBRARY};${OSGGA_LIBRARY};${OSGTEXT_LIBRARY};${OSGVIEWER_LIBRARY};${OPENTHREADS_LIBRARY}" CACHE STRING "OpenSceneGraph Libraries")
 else(BRLCAD_OSG_BUILD)
-  find_package(OpenThreads)
+  if (BRLCAD_ENABLE_OSG)
+    find_package(OpenThreads)
+  endif (BRLCAD_ENABLE_OSG)
 endif(BRLCAD_OSG_BUILD)
 
 # gdiam
