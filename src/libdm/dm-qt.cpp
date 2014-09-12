@@ -41,6 +41,7 @@
 #include "dm_private.h"
 #include "dm/dm_xvars.h"
 #include "dm-Null.h"
+#include "fb/fb_platform_specific.h"
 
 #define DM_QT_DEFAULT_POINT_SIZE 1.0
 
@@ -710,12 +711,22 @@ qt_processEvents(dm *dmp)
 
 
 HIDDEN int
-qt_openFb(dm *UNUSED(dmp))
+qt_openFb(struct dm_internal *dmp)
 {
-    /*struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;*/
 
-    /*_qt_open_existing(ifp, dmp->dm_width, dmp->dm_height, privars->qapp, privars->win, privars->painter, &privars->drawFb, (void **)&privars->img);*/
+    struct fb_platform_specific *fb_ps;
+    struct qt_fb_info *qtfb_ps;
 
+    fb_ps = fb_get_platform_specific(FB_QT_MAGIC);
+    qtfb_ps = (struct qt_fb_info *)fb_ps->data;
+    qtfb_ps->qapp = ((struct qt_vars *)dmp->dm_vars.priv_vars)->qapp;
+    qtfb_ps->qwin = ((struct qt_vars *)dmp->dm_vars.priv_vars)->win;
+    qtfb_ps->qpainter = ((struct qt_vars *)dmp->dm_vars.priv_vars)->painter;
+    qtfb_ps->draw = &(((struct qt_vars *)dmp->dm_vars.priv_vars)->drawFb);
+    qtfb_ps->qimg = ((struct qt_vars *)dmp->dm_vars.priv_vars)->img;
+
+    dmp->fbp = fb_open_existing("Qt", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    fb_put_platform_specific(fb_ps);
     return 0;
 }
 
