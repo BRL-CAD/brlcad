@@ -113,12 +113,12 @@ void printusage(void)
     bu_log(" -f sfile   run script sfile before interacting\n");
     bu_log(" -E         ignore any -e or -f options specified earlier on the command line\n");
     bu_log(" -L         list output formatting options\n");
-    bu_log(" -O action  handle overlap claims via action\n");
     bu_log(" -s         run in silent (non-verbose) mode\n");
     bu_log(" -v         run in verbose mode\n");
     bu_log(" -H n       flag (n) for enable/disable informational header\n");
     bu_log("            (n=1 [on] by default, always off in silent mode)\n");
     bu_log(" -u n       set use_air=n (default 0)\n");
+    bu_log(" -O action  handle overlap claims via action\n");
     bu_log(" -x v       set librt(3) diagnostic flag=v\n");
     bu_log(" -X v       set nirt diagnostic flag=v\n");
 }

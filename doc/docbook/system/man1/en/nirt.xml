@@ -139,6 +139,14 @@
       </listitem>
     </varlistentry>
     <varlistentry>
+      <term><option>-L</option></term>
+      <listitem>
+	<para>
+	  List output formatting options.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
       <term><option>-s</option></term>
       <listitem>
 	<para>
@@ -155,6 +163,15 @@
 	  Causes <command>nirt</command> to run in verbose mode.
 	  The default is verbose mode, except if standard input has been redirected,
 	  in which case the default is silent mode.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-H </option><replaceable>n</replaceable></term>
+      <listitem>
+	<para>
+          Set flag (<emphasis remap="I">n</emphasis>) for enable/disable informational header
+          (<emphasis remap="I">n</emphasis>=1 [on] by default, always off in silent mode).
 	</para>
       </listitem>
     </varlistentry>
@@ -290,7 +307,7 @@
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap="B" role="B">bot_minpieces [n]</emphasis></term>
+    <term><emphasis remap="B" role="B">bot_minpieces [</emphasis><emphasis remap="I">n</emphasis><emphasis remap="B" role="B">]</emphasis></term>
     <listitem>
       <para>
 	Sets "rt_bot_minpieces" to the new value <emphasis remap="I">n</emphasis>.
@@ -300,7 +317,7 @@
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap="B" role="B">backout [ n ]</emphasis></term>
+    <term><emphasis remap="B" role="B">backout [</emphasis><emphasis remap="I">n</emphasis><emphasis remap="B" role="B">]</emphasis></term>
     <listitem>
       <para>
 	Command to set the backout flag.  With no option, prints the current value.
