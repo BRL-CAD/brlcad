@@ -40,6 +40,9 @@ FB_EXPORT extern fb X24_interface;
 #ifdef IF_OGL
 FB_EXPORT extern fb ogl_interface;
 #endif
+#ifdef IF_OSGL
+FB_EXPORT extern fb osgl_interface;
+#endif
 #ifdef IF_WGL
 FB_EXPORT extern fb wgl_interface;
 #endif

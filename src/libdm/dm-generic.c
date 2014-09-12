@@ -66,6 +66,12 @@ extern void osg_fogHint();
 extern int osg_share_dlist();
 #endif /* DM_OSG*/
 
+#ifdef DM_OSGL
+extern dm *osgl_open();
+extern void osgl_fogHint();
+extern int osgl_share_dlist();
+#endif /* DM_OSGL*/
+
 #ifdef DM_RTGL
 extern dm *rtgl_open();
 extern void rtgl_fogHint();
@@ -130,6 +136,10 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 #ifdef DM_OSG
 	case DM_TYPE_OSG:
 	    return osg_open(interp, argc, argv);
+#endif
+#ifdef DM_OSGL
+	case DM_TYPE_OSGL:
+	    return osgl_open(interp, argc, argv);
 #endif
 #ifdef DM_RTGL
 	case DM_TYPE_RTGL:

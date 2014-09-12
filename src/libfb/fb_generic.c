@@ -68,6 +68,9 @@ fb *_if_list[] = {
 #ifdef IF_QT
     &qt_interface,
 #endif
+#ifdef IF_OSGL
+    &osgl_interface,
+#endif
 
     &debug_interface,
 /* never get any of the following by default */
@@ -113,6 +116,7 @@ fb_get_platform_specific(uint32_t magic)
     int i = 0;
     if (!magic) return NULL;
     while (_if_list[i] != FB_NULL) {
+	bu_log("%s\n", _if_list[i]->if_name);
 	if (magic == _if_list[i]->type_magic) {
 	    /* found it, get its specific struct */
 	    return (*(_if_list[i])).if_existing_get(magic);

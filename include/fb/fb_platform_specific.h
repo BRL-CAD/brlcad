@@ -107,6 +107,15 @@ struct wgl_fb_info {
 };
 #endif /* IF_WGL */
 
+#ifdef IF_OSGL
+struct osgl_fb_info {
+    void *glc;
+    void *traits;
+    int double_buffer;
+    int soft_cmap;
+};
+#endif /* IF_OSGL */
+
 #ifdef IF_QT
 struct qt_fb_info {
     void *qapp;
