@@ -114,7 +114,7 @@ struct qt_fb_info {
     void *qpainter;
     void *draw;
     void *qimg;
-}
+};
 #endif /* IF_QT */
 
 #endif /* FB_USE_INTERNAL_API */
