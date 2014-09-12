@@ -165,6 +165,7 @@ wgl_doevent(void *UNUSED(vclientData), void *veventPtr)
 }
 #endif
 
+#if defined(HAVE_TK)
 static int
 x_doevent(void *UNUSED(vclientData), void *veventPtr)
 {
@@ -179,6 +180,7 @@ x_doevent(void *UNUSED(vclientData), void *veventPtr)
     /* allow further processing of this event */
     return TCL_OK;
 }
+#endif
 
 typedef int (*eventfptr)();
 
@@ -240,7 +242,9 @@ mged_dm_init(struct dm_list *o_dm_list,
     /* register application provided routines */
     cmd_hook = dm_commands;
 
+#ifdef HAVE_TK
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+#endif
 
     if ((dmp = dm_open(INTERP, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
@@ -252,8 +256,9 @@ mged_dm_init(struct dm_list *o_dm_list,
     /* TODO - look up event handler based on dm_type */
     eventHandler = dm_doevent(dm_type);
 
-
+#ifdef HAVE_TK
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+#endif
     (void)dm_configure_win(dmp, 0);
 
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(dmp)));
