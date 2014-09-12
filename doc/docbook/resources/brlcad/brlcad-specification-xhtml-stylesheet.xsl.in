@@ -36,6 +36,7 @@
 		</l:l10n>
 	</l:i18n>
 
+	<xsl:output encoding="ISO-8859-1" />
 
 	<!-- ==================================================================== -->
 	<!-- this is a modified header nav template from html/chunk-common.xsl version 1.76.1 -->
