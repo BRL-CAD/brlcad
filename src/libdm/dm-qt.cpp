@@ -716,14 +716,15 @@ qt_openFb(struct dm_internal *dmp)
 
     struct fb_platform_specific *fb_ps;
     struct qt_fb_info *qtfb_ps;
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
     fb_ps = fb_get_platform_specific(FB_QT_MAGIC);
     qtfb_ps = (struct qt_fb_info *)fb_ps->data;
-    qtfb_ps->qapp = ((struct qt_vars *)dmp->dm_vars.priv_vars)->qapp;
-    qtfb_ps->qwin = ((struct qt_vars *)dmp->dm_vars.priv_vars)->win;
-    qtfb_ps->qpainter = ((struct qt_vars *)dmp->dm_vars.priv_vars)->painter;
-    qtfb_ps->draw = &(((struct qt_vars *)dmp->dm_vars.priv_vars)->drawFb);
-    qtfb_ps->qimg = (void **)&(((struct qt_vars *)dmp->dm_vars.priv_vars)->img);
+    qtfb_ps->qapp = privars->qapp;
+    qtfb_ps->qwin = privars->win;
+    qtfb_ps->qpainter = privars->painter;
+    qtfb_ps->draw = &privars->drawFb;
+    qtfb_ps->qimg = (void **)&privars->img;
 
     dmp->fbp = fb_open_existing("Qt", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
