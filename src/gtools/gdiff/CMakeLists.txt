@@ -10,14 +10,14 @@ include_directories(${GDIFF_INCLUDE_DIRS})
 set(gdiff_srcs
   diff3_summary.c
   diff_summary.c
-  gdiff2.c
+  gdiff.c
   merge.c
   utility.c
   )
 
-BRLCAD_ADDEXEC(gdiff2 "${gdiff_srcs}" "librt")
+BRLCAD_ADDEXEC(gdiff "${gdiff_srcs}" "librt")
 
-CMAKEFILES(gdiff2.h tests)
+CMAKEFILES(gdiff.h tests)
 
 # Local Variables:
 # tab-width: 8

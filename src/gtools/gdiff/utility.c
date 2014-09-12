@@ -18,7 +18,7 @@
  * information.
  */
 
-#include "./gdiff2.h"
+#include "./gdiff.h"
 
 void
 diff_state_init(struct diff_state *state)

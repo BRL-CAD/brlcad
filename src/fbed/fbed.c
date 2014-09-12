@@ -324,7 +324,7 @@ Func_Tab func_tab[] = {
 static Func_Tab	*bindings[DEL+1];
 static Func_Tab	*macro_entry = FT_NULL; /* Last keyboard macro defined. */
 
-FBIO *fbp;				/* Current framebuffer */
+fb *fbp;				/* Current framebuffer */
 static int cur_width = 512;
 
 int
@@ -1721,13 +1721,13 @@ HIDDEN int
 f_Rd_Fb() /* Read frame buffer image from file. */
 {
     static char image[MAX_LN];
-    static FBIO *imp;
+    static fb *imp;
     if (!get_Input(image, MAX_LN, "Enter framebuffer name : "))
 	return 0;
     if (image[0] == NUL) {
 	fb_log("No default.\n");
 	return 0;
-    } else if ((imp = fb_open(image, 512, 512)) == FBIO_NULL) {
+    } else if ((imp = fb_open(image, 512, 512)) == FB_NULL) {
 	/* XXX */
 
 	fb_log(	"Can't open \"%s\" for reading.\n", image);
@@ -1873,7 +1873,7 @@ pars_Argv(int argc, char **argv)
 HIDDEN int
 fb_Setup(void)
 {
-    if ((fbp = fb_open(NULL, cur_width, cur_width)) == FBIO_NULL) {
+    if ((fbp = fb_open(NULL, cur_width, cur_width)) == FB_NULL) {
 	fb_log("Could not open default frame buffer.\n");
 	return -1;
     }

@@ -161,7 +161,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    FBIO *fbp;
+    fb *fbp;
     int i;
     int xout, yout, m, xstart;
     png_structp png_p;

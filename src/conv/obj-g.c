@@ -74,7 +74,14 @@ usage(const char *argv0)
 	);
 
     bu_log("  -d\t\tOutput debug info to stderr.\n"
-	   "  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
+	);
+
+    bu_log("  -f\t\tFuse vertices that are close enough to be considered the\n"
+	   "\t\tsame. Can make the solidity detection more reliable.\n"
+	   "\t\tMay significantly increase processing time during import.\n"
+	  );
+
+    bu_log("  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
 	   "\t\tprimitives:\n"
 	   "\t\t\tg = group (default)\n"
 	   "\t\t\tm = material\n"
@@ -83,7 +90,7 @@ usage(const char *argv0)
 	   "\t\t\tt = texture\n"
 	);
 
-    bu_log("  -h mm\t\tThickness used when a bot is not a closed volume and it's\n"
+    bu_log("  -H mm\t\tThickness used when a bot is not a closed volume and it's\n"
 	   "\t\tconverted as a plate or plate-nocos bot.\n"
 	   "  -i\t\tIgnore the normals defined in the input file when using native\n"
 	   "\t\tbot conversion mode.\n"
@@ -107,13 +114,8 @@ usage(const char *argv0)
 	   "\t\t\t3 = cw\n"
 	);
 
-    bu_log("  -f\t\tFuse vertices that are close enough to be considered the\n"
-	   "\t\tsame. Can make the solidity detection more reliable.\n"
-	   "\t\tMay significantly increase processing time during import.\n"
-	   "  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
-	   "\t\tif they are within this distance of one another. Default is\n"
-	  );
-
+    bu_log("  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
+	   "\t\tif they are within this distance of one another. Default is\n");
     bu_log("\t\t.0005mm. You should not change this value without setting the\n"
 	    "\t\traytracer tolerance to match it.\n"
 	   "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
@@ -3289,7 +3291,7 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    while ((c = bu_getopt(argc, argv, "cpidfx:X:vt:h:m:u:g:o:r:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "cpidfx:X:vt:H:m:u:g:o:r:h?")) != -1) {
 	switch (c) {
 	    case 'c': /* continue processing on nmg bomb */
 		cont_on_nmg_bomb_flag = 1;
@@ -3335,7 +3337,7 @@ main(int argc, char **argv)
 		tol->dist = dist_tmp;
 		tol->dist_sq = tol->dist * tol->dist;
 		break;
-	    case 'h': /* plate-mode-bot thickness in mm units */
+	    case 'H': /* plate-mode-bot thickness in mm units */
 		bot_thickness = (fastf_t)atof(bu_optarg);
 		user_bot_thickness_flag = 1;
 		break;
@@ -3428,7 +3430,8 @@ main(int argc, char **argv)
 		}
 		break;
 	    default:
-		bu_log("Invalid option '%c'.\n", c);
+/*		bu_log("Invalid option '%c'.\n", c); */
+/* The above is believed to be redundant, and anyway should be off if 'h' or '?' was used. */
 		bu_vls_free(&input_file_name);
 		bu_vls_free(&brlcad_file_name);
 		bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);

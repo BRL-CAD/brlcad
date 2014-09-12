@@ -57,7 +57,7 @@ extern const char title[];
 
 
 /***** Variables shared with viewing model *** */
-FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
+fb		*fbp = FB_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
 struct icv_image *bif = NULL;
 mat_t		view2model;
@@ -368,7 +368,7 @@ int main(int argc, const char **argv)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fbp = fb_open(framebuffer, xx, yy);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	if (fbp == FBIO_NULL) {
+	if (fbp == FB_NULL) {
 	    fprintf(stderr, "rt:  can't open frame buffer\n");
 	    return 12;
 	}
@@ -390,7 +390,7 @@ int main(int argc, const char **argv)
 		      zoom, zoom);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
-    if ((outputfile == (char *)0) && (fbp == FBIO_NULL)) {
+    if ((outputfile == (char *)0) && (fbp == FB_NULL)) {
 	/* If not going to framebuffer, or to a file, then use stdout */
 	if (outfp == NULL) outfp = stdout;
 	/* output_is_binary is changed by view_init, as appropriate */
@@ -427,7 +427,7 @@ int main(int argc, const char **argv)
 	frame_retval = do_frame(curframe);
 	if (frame_retval != 0) {
 	    /* Release the framebuffer, if any */
-	    if (fbp != FBIO_NULL) {
+	    if (fbp != FB_NULL) {
 		fb_close(fbp);
 	    }
 
@@ -460,7 +460,7 @@ int main(int argc, const char **argv)
     }
 
     /* Release the framebuffer, if any */
-    if (fbp != FBIO_NULL) {
+    if (fbp != FB_NULL) {
 	fb_close(fbp);
     }
 

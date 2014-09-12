@@ -39,7 +39,7 @@
 #include "./sedit.h"
 
 
-struct ged_display_list *illum_gdlp = GED_DISPLAY_LIST_NULL;
+struct display_list *illum_gdlp = GED_DISPLAY_LIST_NULL;
 struct solid *illump = SOLID_NULL;	/* == 0 if none, else points to ill. solid */
 int ipathpos = 0;	/* path index of illuminated element */
 
@@ -51,8 +51,8 @@ int ipathpos = 0;	/* path index of illuminated element */
  */
 static void
 illuminate(int y) {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     int count;
     struct solid *sp;
 
@@ -63,11 +63,11 @@ illuminate(int y) {
      */
     count = ((fastf_t)y + GED_MAX) * curr_dm_list->dml_ndrawn / GED_RANGE;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    /* Only consider solids which are presently in view */
 	    if (sp->s_flag == UP) {
 		if (count-- == 0) {
@@ -94,7 +94,7 @@ illuminate(int y) {
 int
 f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     struct solid *sp;
 
     if (argc < 1 || 2 < argc) {
@@ -130,26 +130,26 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	sp = illump;
 	sp->s_iflag = DOWN;
 	if (argc == 1 || *argv[1] == 'f') {
-	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->gdl_headSolid)) {
+	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->dl_headSolid)) {
 		/* Advance the gdlp (i.e. display list) */
 		if (BU_LIST_NEXT_IS_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+		    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 		else
-		    gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+		    gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 
-		sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
+		sp = BU_LIST_NEXT(solid, &gdlp->dl_headSolid);
 	    } else
 		sp = BU_LIST_PNEXT(solid, sp);
 	} else if (*argv[1] == 'b') {
-	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->gdl_headSolid)) {
+	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->dl_headSolid)) {
 		/* Advance the gdlp (i.e. display list) */
 		if (BU_LIST_PREV_IS_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_PREV(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+		    gdlp = BU_LIST_PREV(display_list, gedp->ged_gdp->gd_headDisplay);
 		else
-		    gdlp = BU_LIST_PLAST(ged_display_list, gdlp);
+		    gdlp = BU_LIST_PLAST(display_list, gdlp);
 
-		sp = BU_LIST_PREV(solid, &gdlp->gdl_headSolid);
+		sp = BU_LIST_PREV(solid, &gdlp->dl_headSolid);
 	    } else
 		sp = BU_LIST_PLAST(solid, sp);
 	} else {
@@ -218,8 +218,8 @@ wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point)
 int
 f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
     char *cp;
     size_t j;
@@ -277,11 +277,11 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
  got:
     /* Include all solids with same tree top */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    for (j = 0; j <= (size_t)ipathpos; j++) {
 		if (DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
 		    DB_FULL_PATH_GET(&illump->s_fullpath, j))

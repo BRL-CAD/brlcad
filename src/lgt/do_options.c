@@ -987,7 +987,7 @@ f_Cursor_Module()
 		    (void) fb_window(fbiop, cx, cy);
 		    break;
 		case IN :
-		    if (zoom <= fbiop->if_width/2) {
+		    if (zoom <= fb_getwidth(fbiop)/2) {
 			zoom *= 2;
 			cx = x;
 			cy = y;
@@ -1207,14 +1207,14 @@ f_Animate()
 	    return -1;
 	(void) signal(SIGINT, abort_RT);
 	for (frame_no = 0; ! user_interrupt; frame_no++) {
-	    FBIO *movie_fbiop;
+	    fb *movie_fbiop;
 	    int y;
 	    if (frame_no == noframes)
 		frame_no = 0;
 	    (void) sprintf(suffixptr, ".%04d", frame_no);
 	    if (!bu_file_exists(movie_file, NULL))
 		continue;
-	    if ((movie_fbiop = fb_open(movie_file, grid_sz, grid_sz)) == FBIO_NULL) {
+	    if ((movie_fbiop = fb_open(movie_file, grid_sz, grid_sz)) == FB_NULL) {
 		(void) signal(SIGINT, norml_sig);
 		close_Output_Device(0);
 		return -1;
@@ -1359,7 +1359,7 @@ f_Wrt_Fb(char **args)
 {
     int y;
     static char save_fb_file[MAX_LN] = { 0 };
-    FBIO *save_fbiop;
+    fb *save_fbiop;
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(save_fb_file, args[1], MAX_LN);
     else
@@ -1382,7 +1382,7 @@ f_Wrt_Fb(char **args)
 	return -1;
     prnt_Event("Saving image...");
     if ((save_fbiop =
-	 fb_open(save_fb_file, grid_sz, grid_sz))== FBIO_NULL) {
+	 fb_open(save_fb_file, grid_sz, grid_sz))== FB_NULL) {
 	close_Output_Device(0);
 	return -1;
     }
@@ -1421,7 +1421,7 @@ f_Rd_Fb(char **args)
 {
     int y;
     static char save_fb_file[MAX_LN] = { 0 };
-    FBIO *save_fbiop;
+    fb *save_fbiop;
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(save_fb_file, args[1], MAX_LN);
     else
@@ -1443,7 +1443,7 @@ f_Rd_Fb(char **args)
 	return -1;
     prnt_Event("Reading saved image...");
     if ((save_fbiop =
-	 fb_open(save_fb_file, grid_sz, grid_sz)) == FBIO_NULL) {
+	 fb_open(save_fb_file, grid_sz, grid_sz)) == FB_NULL) {
 	close_Output_Device(0);
 	return -1;
     }

@@ -87,7 +87,7 @@ ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
     VSCALE(gedp->ged_gvp->gv_eye_pos, eye_pos, gedp->ged_wdbp->dbip->dbi_local2base);
 
     /* update perspective matrix */
-    ged_mike_persp_mat(gedp->ged_gvp->gv_pmat, gedp->ged_gvp->gv_eye_pos);
+    mike_persp_mat(gedp->ged_gvp->gv_pmat, gedp->ged_gvp->gv_eye_pos);
 
     ged_view_update(gedp->ged_gvp);
 

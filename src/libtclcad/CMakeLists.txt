@@ -25,6 +25,7 @@ set(LIBTCLCAD_SRCS
   tkImgFmtPIX.c
   cmdhist_obj.c
   )
+set_property(SOURCE tclcad_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;${TCLCAD_XLIBS}")
 SET_TARGET_PROPERTIES(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set(tclcad_ignore_files tclcad_private.h)

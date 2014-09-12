@@ -31,7 +31,7 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "solid.h"
+
 
 #include "./ged_private.h"
 
@@ -71,8 +71,8 @@ basename_without_suffix(const char *p1, const char *suff)
 int
 ged_saveview(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     int i;
     FILE *fp;
     char *base;
@@ -167,10 +167,10 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     }
     fprintf(fp, " '%s'\\\n ", inputg);
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-	fprintf(fp, "'%s' ", bu_vls_addr(&gdlp->gdl_path));
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+	fprintf(fp, "'%s' ", bu_vls_addr(&gdlp->dl_path));
 	gdlp = next_gdlp;
     }
 

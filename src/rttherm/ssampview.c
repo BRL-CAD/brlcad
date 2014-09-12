@@ -68,7 +68,7 @@ int nwave = 2;				/* Linked with TCL */
 char *datafile_basename = NULL;
 char spectrum_name[100];
 
-FBIO *fbp;
+fb *fbp;
 
 struct bn_tabdata *data;
 
@@ -320,7 +320,7 @@ getspectxy(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 int
 tcl_fb_cursor(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 {
-    FBIO *ifp;
+    fb *ifp;
     long mode, x, y;
 
     Tcl_ResetResult(interp);
@@ -336,7 +336,7 @@ tcl_fb_cursor(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 
     ifp = fbp;	/* XXX hack, ignore tcl arg. */
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
     if (fb_cursor(ifp, mode, x, y) < 0) {
 	Tcl_AppendResult(interp, "fb_cursor got error from library", (char *)NULL);
 	return TCL_ERROR;
@@ -351,7 +351,7 @@ tcl_fb_cursor(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 int
 tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 {
-    FBIO *ifp;
+    fb *ifp;
     long x, y;
     unsigned char pixel[4];
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -368,7 +368,7 @@ tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **arg
 
     ifp = fbp;	/* XXX hack, ignore tcl arg. */
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
     if (fb_read(ifp, x, y, pixel, 1) < 0) {
 	Tcl_AppendResult(interp, "fb_readpixel got error from library", (char *)NULL);
 	return TCL_ERROR;
@@ -579,7 +579,7 @@ main(int argc, char **argv)
 
     first_command = "doit1 42";
 
-    if ((fbp = fb_open(NULL, width, height)) == FBIO_NULL) {
+    if ((fbp = fb_open(NULL, width, height)) == FB_NULL) {
 	bu_free(datafile_basename, "datafile_basename realpath");
 	bu_exit(EXIT_FAILURE, "Unable to open fb\n");
     }
