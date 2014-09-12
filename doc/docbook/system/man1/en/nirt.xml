@@ -347,14 +347,14 @@
     <listitem>
       <para>
 	Specifies how to handle multiple regions' claims to segments of a ray.
-	If <emphasis remap="I">n</emphasis> is 0 or "resolve," then all overlaps are resolved
+	If <emphasis remap="I">n</emphasis> is 0 or "resolve", then all overlaps are resolved
 	in favor of a single region  and any other claimants are ignored.  If
-	<emphasis remap="I">n</emphasis> is 2 or "rebuild_all," then all overlaps are rebuilt,
+	<emphasis remap="I">n</emphasis> is 2 or "rebuild_all", then all overlaps are rebuilt,
 	so any overlapping regions along the ray create individual (geometrically intersecting)
-	partitions.  If <emphasis remap="I">n</emphasis> is 3 or "retain,"
+	partitions.  If <emphasis remap="I">n</emphasis> is 3 or "retain",
 	then all overlaps are retained. In this case, the resulting partitions are always geometrically
 	disjoint,  each one is owned by a single region according to the current overlap resolution strategy,
-	but every claimant is recorded. If <emphasis remap="I">n</emphasis> is 1 or "rebuild_fastgen,"
+	but every claimant is recorded. If <emphasis remap="I">n</emphasis> is 1 or "rebuild_fastgen",
 	then <command>nirt</command> takes on <emphasis remap="I">FASTGEN</emphasis> behavior,
 	so overlaps of plate-mode primitives are rebuilt, but other overlaps are retained.
 	This command is useful with the <emphasis remap="I">claimant_count</emphasis>,
@@ -412,7 +412,7 @@
 	Sets the destination for subsequent output actions to <emphasis remap="I">d</emphasis>.
 	If the first character of <emphasis remap="I">d</emphasis> is `|', then
 	<emphasis remap="I">d</emphasis> is interpreted as a pipeline to which to write its output.
-	Otherwise, if <emphasis remap="I">d</emphasis> is the string "default,"
+	Otherwise, if <emphasis remap="I">d</emphasis> is the string "default",
 	<command>nirt</command> sets the destination to the standard output.
 	Otherwise, <emphasis remap="I">d</emphasis> is interpreted as a file.
 	In any event, <emphasis remap="I">d</emphasis> is not closed until the user quits
