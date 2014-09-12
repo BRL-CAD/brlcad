@@ -42,8 +42,22 @@
 #include <QImage>
 
 #include "fb.h"
+#include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/str.h"
+
+/* TODO - should be getting this from fb_platform_specific - make the IF_* definitions
+ * more precise for the individual if files - in priciple, we don't want to care about
+ * X11 types in a cross-platform Qt fb and right now the fb_platform_specific header
+ * isn't behaving */
+struct qt_fb_info {
+    void *qapp;
+    void *qwin;
+    void *qpainter;
+    void *draw;
+    void *qimg;
+};
+
 
 class QMainWindow: public QWindow {
 
@@ -834,6 +848,29 @@ qt_open(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
+
+HIDDEN struct fb_platform_specific *
+qt_get_fbps(uint32_t magic)
+{
+    struct fb_platform_specific *fb_ps = NULL;
+    struct qt_fb_info *data = NULL;
+    BU_GET(fb_ps, struct fb_platform_specific);
+    BU_GET(data, struct qt_fb_info);
+    fb_ps->magic = magic;
+    fb_ps->data = data;
+    return fb_ps;
+}
+
+
+HIDDEN void
+qt_put_fbps(struct fb_platform_specific *fbps)
+{
+    BU_CKMAG(fbps, FB_QT_MAGIC, "Qt framebuffer");
+    BU_PUT(fbps->data, struct qt_fb_info);
+    BU_PUT(fbps, struct fb_platform_specific);
+    return;
+}
+
 int
 _qt_open_existing(fb *ifp, int width, int height, void *qapp, void *qwin, void *qpainter, void *draw, void **qimg)
 {
@@ -922,6 +959,15 @@ _qt_open_existing(fb *ifp, int width, int height, void *qapp, void *qwin, void *
     qi->qi_flags |= FLG_INIT;
 
     return 0;
+}
+
+HIDDEN int
+qt_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
+{
+    struct qt_fb_info *qt_internal = (struct qt_fb_info *)fb_p->data;
+    BU_CKMAG(fb_p, FB_QT_MAGIC, "qt framebuffer");
+    return _qt_open_existing(ifp, width, height, qt_internal->qapp, qt_internal->qwin,
+	    qt_internal->qpainter, qt_internal->draw, &(qt_internal->qimg));
 }
 
 
@@ -1320,10 +1366,10 @@ fb qt_interface =  {
     0,
     FB_QT_MAGIC,
     qt_open,		/* device_open */
-    NULL,
+    qt_open_existing,
     qt_close_existing,
-    NULL,
-    NULL,
+    qt_get_fbps,
+    qt_put_fbps,
     qt_close,		/* device_close */
     qt_clear,		/* device_clear */
     qt_read,		/* buffer_read */
