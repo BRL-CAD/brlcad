@@ -398,6 +398,8 @@ DM_EXPORT extern int dm_set_depth_mask(dm *dmp, int d_on);
 DM_EXPORT extern int dm_debug(dm *dmp, int lvl);
 DM_EXPORT extern int dm_logfile(dm *dmp, const char *filename);
 DM_EXPORT extern fb *dm_get_fb(dm *dmp);
+DM_EXPORT extern int dm_get_fb_visible(dm *dmp);
+DM_EXPORT extern int dm_set_fb_visible(dm *dmp, int is_fb_visible);
 
 /* TODO - dm_vp is supposed to go away, but until we figure it out
  * expose it here to allow dm hiding */
