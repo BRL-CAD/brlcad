@@ -55,7 +55,7 @@ struct qt_fb_info {
     void *qwin;
     void *qpainter;
     void *draw;
-    void *qimg;
+    void **qimg;
 };
 
 
@@ -968,7 +968,7 @@ qt_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb
     struct qt_fb_info *qt_internal = (struct qt_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_QT_MAGIC, "qt framebuffer");
     return _qt_open_existing(ifp, width, height, qt_internal->qapp, qt_internal->qwin,
-	    qt_internal->qpainter, qt_internal->draw, &(qt_internal->qimg));
+	    qt_internal->qpainter, qt_internal->draw, qt_internal->qimg);
 }
 
 
