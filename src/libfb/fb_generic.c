@@ -68,6 +68,9 @@ fb *_if_list[] = {
 #ifdef IF_QT
     &qt_interface,
 #endif
+#ifdef IF_OSGL
+    &osgl_interface,
+#endif
 
     &debug_interface,
 /* never get any of the following by default */

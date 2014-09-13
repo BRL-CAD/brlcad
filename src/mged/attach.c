@@ -60,6 +60,7 @@
 	IS_DM_TYPE_TK(_type) || \
 	IS_DM_TYPE_X(_type) || \
 	IS_DM_TYPE_TXT(_type) || \
+	IS_DM_TYPE_OSGL(_type) || \
 	IS_DM_TYPE_QT(_type))
 
 
@@ -109,6 +110,12 @@ extern int Pex_dm_init();
 extern int Qt_dm_init();
 #endif /* DM_QT */
 
+#ifdef DM_OSGL
+# if defined(HAVE_TK)
+extern int Osgl_dm_init();
+# endif
+#endif /* DM_OSGL */
+
 extern void fbserv_set_port(void);		/* defined in fbserv.c */
 extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 
@@ -123,6 +130,27 @@ static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GE
 #ifdef DM_OGL
 static int
 ogl_doevent(void *UNUSED(vclientData), void *veventPtr)
+{
+    /*ClientData clientData = (ClientData)vclientData;*/
+    XEvent *eventPtr= (XEvent *)veventPtr;
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	if (!dm_make_current(dmp))
+	    /* allow further processing of this event */
+	    return TCL_OK;
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	dirty = 1;
+	/* no further processing for this event */
+	return TCL_RETURN;
+    }
+    /* allow further processing of this event */
+    return TCL_OK;
+}
+#endif
+
+#ifdef DM_OSGL
+static int
+osgl_doevent(void *UNUSED(vclientData), void *veventPtr)
 {
     /*ClientData clientData = (ClientData)vclientData;*/
     XEvent *eventPtr= (XEvent *)veventPtr;
@@ -205,6 +233,11 @@ struct w_dm which_dm[] = {
 #ifdef DM_OSG
     { DM_TYPE_OSG, "osg", NULL},
 #endif /* DM_OSG */
+#ifdef DM_OSGL
+#  if defined(HAVE_TK)
+    { DM_TYPE_OSGL, "osgl", osgl_doevent },
+#  endif
+#endif /* DM_OSGL */
 #ifdef DM_RTGL
     { DM_TYPE_RTGL, "rtgl", ogl_doevent },
 #endif /* DM_RTGL */
@@ -435,6 +468,10 @@ print_valid_dm(Tcl_Interp *interpreter)
     Tcl_AppendResult(interpreter, "osg  ", (char *)NULL);
     i++;
 #endif /* DM_OSG*/
+#ifdef DM_OSGL
+    Tcl_AppendResult(interpreter, "osgl  ", (char *)NULL);
+    i++;
+#endif /* DM_OSGL*/
 #ifdef DM_RTGL
     Tcl_AppendResult(interpreter, "rtgl  ", (char *)NULL);
     i++;
@@ -788,6 +825,11 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 	    Tcl_AppendResult(interpreter, "osg", (char *)NULL);
 	}
 #endif /* DM_OSG*/
+#ifdef DM_OSGL
+	if (BU_STR_EQUAL(argv[argc-1], "osgl")) {
+	    Tcl_AppendResult(interpreter, "osgl", (char *)NULL);
+	}
+#endif /* DM_OSGL*/
 #ifdef DM_RTGL
 	if (BU_STR_EQUAL(argv[argc-1], "rtgl")) {
 	    Tcl_AppendResult(interpreter, "rtgl", (char *)NULL);

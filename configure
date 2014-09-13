@@ -126,6 +126,10 @@ do
                                   shift;;
      --disable-libz)                options="$options -DBRLCAD_ZLIB=SYSTEM";
                                   shift;;
+     --enable-freetype)                options="$options -DBRLCAD_FREETYPE=BUNDLED";
+                                  shift;;
+     --disable-freetype)                options="$options -DBRLCAD_FREETYPE=SYSTEM";
+                                  shift;;
      --enable-termlib)                options="$options -DBRLCAD_TERMLIB=BUNDLED";
                                   shift;;
      --disable-termlib)                options="$options -DBRLCAD_TERMLIB=SYSTEM";
@@ -189,6 +193,10 @@ do
      --enable-vds)                options="$options -DBRLCAD_VDS=BUNDLED";
                                   shift;;
      --disable-vds)                options="$options -DBRLCAD_VDS=SYSTEM";
+                                  shift;;
+     --enable-openscenegraph)                options="$options -DBRLCAD_OSG=BUNDLED";
+                                  shift;;
+     --disable-openscenegraph)                options="$options -DBRLCAD_OSG=SYSTEM";
                                   shift;;
      --enable-gdiam)                options="$options -DBRLCAD_GDIAM=BUNDLED";
                                   shift;;

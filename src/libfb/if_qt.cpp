@@ -34,30 +34,11 @@
 #include <sys/types.h>
 #include <ctype.h>
 
-#include <QApplication>
-#include <QPainter>
-#include <QWindow>
-#include <QBackingStore>
-#include <QResizeEvent>
-#include <QImage>
-
 #include "fb.h"
+#include "fb/fb_qt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/str.h"
-
-/* TODO - should be getting this from fb_platform_specific - make the IF_* definitions
- * more precise for the individual if files - in principle, we don't want to care about
- * X11 types in a cross-platform Qt fb and right now the fb_platform_specific header
- * isn't behaving */
-struct qt_fb_info {
-    void *qapp;
-    void *qwin;
-    void *qpainter;
-    void *draw;
-    void *qimg;
-};
-
 
 class QMainWindow: public QWindow {
 
@@ -449,8 +430,9 @@ qt_configureWindow(fb *ifp, int width, int height)
 }
 
 HIDDEN int
-qt_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+qt_configure_window(fb *ifp, int width, int height)
 {
+    qt_configureWindow(ifp, width, height);
     return 0;
 }
 
@@ -970,7 +952,7 @@ qt_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb
     struct qt_fb_info *qt_internal = (struct qt_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_QT_MAGIC, "qt framebuffer");
     return _qt_open_existing(ifp, width, height, qt_internal->qapp, qt_internal->qwin,
-	    qt_internal->qpainter, qt_internal->draw, &(qt_internal->qimg));
+	    qt_internal->qpainter, qt_internal->draw, qt_internal->qimg);
 }
 
 

@@ -10,6 +10,7 @@ set(DM_INCLUDE_DIRS
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
   ${Qt5Widgets_INCLUDE_DIRS}
+  ${OPENTHREADS_INCLUDE_DIR}
   ${OSG_INCLUDE_DIR}
   )
 
@@ -72,9 +73,9 @@ if(BRLCAD_ENABLE_QT)
 endif(BRLCAD_ENABLE_QT)
 
 if(BRLCAD_ENABLE_OSG)
-  list(APPEND libdm_DEFINES DM_OSG)
-  set(dmosg_srcs dm-osg.cpp)
-  set_property(SOURCE dm-osg.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  list(APPEND libdm_DEFINES DM_OSGL IF_OSGL)
+  set(dmosg_srcs dm-osgl.cpp)
+  set_property(SOURCE dm-osgl.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
   set(OSG_LIBRARIES
     ${OSG_LIBRARY}
     ${OSGTEXT_LIBRARY}
@@ -126,7 +127,7 @@ set(libdm_ignore_files
   dm-wgl.c
   dm-X.c
   dm-ogl.c
-  dm-osg.cpp
+  dm-osgl.cpp
   dm-qt.cpp
   dm-rtgl.c
   dm-tk.c
@@ -135,7 +136,7 @@ set(libdm_ignore_files
   dm-glx.h
   dm-Null.h
   dm-ogl.h
-  dm-osg.h
+  dm-osgl.h
   dm-pex.h
   dm-plot.h
   dm_private.h

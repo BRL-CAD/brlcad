@@ -81,14 +81,20 @@
 #endif /* DM_TK */
 
 #ifdef DM_OGL
+#  include "fb/fb_ogl.h"
 #endif /* DM_OGL */
 
 #ifdef DM_OSG
 #  include "dm/dm_xvars.h"
 #endif /* DM_OSG */
 
+#ifdef DM_OSGL
+#  include "dm/dm_xvars.h"
+#endif /* DM_OSGL */
+
 #ifdef DM_WGL
 #  include <tkwinport.h>
+#  include "fb/fb_wgl.h"
 #  include "dm/dm_xvars.h"
 #endif /* DM_WGL */
 
@@ -98,7 +104,6 @@
 
 /* Private headers */
 #include "tclcad_private.h"
-#include "fb/fb_platform_specific.h"
 
 #include "brlcad_version.h"
 
@@ -10548,6 +10553,11 @@ to_new_view(struct ged *gedp,
 	type = DM_TYPE_OSG;
 #endif /* DM_OSG */
 
+#ifdef DM_OSGL
+    if (BU_STR_EQUAL(argv[2], "osgl"))
+	type = DM_TYPE_OSGL;
+#endif /* DM_OSGL */
+
 #ifdef DM_WGL
     if (BU_STR_EQUAL(argv[2], "wgl"))
 	type = DM_TYPE_WGL;
@@ -12940,7 +12950,7 @@ to_view_win_size(struct ged *gedp,
 	}
     }
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_OSG) || defined(DM_WGL) || defined(DM_QT)
+#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_OSG) || defined(DM_OSGL) || defined(DM_WGL) || defined(DM_QT)
 #   if (defined HAVE_TK)
     Tk_GeometryRequest(((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->xtkwin,
 		       width, height);

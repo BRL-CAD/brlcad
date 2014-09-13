@@ -102,6 +102,7 @@
 #define DM_TYPE_TXT	10
 #define DM_TYPE_QT	11
 #define DM_TYPE_OSG	12
+#define DM_TYPE_OSGL	13
 
 /* Line Styles */
 #define DM_SOLID_LINE 0
@@ -120,6 +121,7 @@
 #define IS_DM_TYPE_TXT(_t) ((_t) == DM_TYPE_TXT)
 #define IS_DM_TYPE_QT(_t) ((_t) == DM_TYPE_QT)
 #define IS_DM_TYPE_OSG(_t) ((_t) == DM_TYPE_OSG)
+#define IS_DM_TYPE_OSGL(_t) ((_t) == DM_TYPE_OSGL)
 
 #define GET_DM(p, structure, w, hp) { \
 	register struct structure *tp; \
@@ -236,6 +238,7 @@ DM_EXPORT extern dm dm_wgl;
 DM_EXPORT extern dm dm_X;
 DM_EXPORT extern dm dm_txt;
 DM_EXPORT extern dm dm_qt;
+DM_EXPORT extern dm dm_osgl;
 
 DM_EXPORT extern int Dm_Init(void *interp);
 DM_EXPORT extern dm *dm_open(Tcl_Interp *interp,
@@ -395,6 +398,8 @@ DM_EXPORT extern int dm_set_depth_mask(dm *dmp, int d_on);
 DM_EXPORT extern int dm_debug(dm *dmp, int lvl);
 DM_EXPORT extern int dm_logfile(dm *dmp, const char *filename);
 DM_EXPORT extern fb *dm_get_fb(dm *dmp);
+DM_EXPORT extern int dm_get_fb_visible(dm *dmp);
+DM_EXPORT extern int dm_set_fb_visible(dm *dmp, int is_fb_visible);
 
 /* TODO - dm_vp is supposed to go away, but until we figure it out
  * expose it here to allow dm hiding */
