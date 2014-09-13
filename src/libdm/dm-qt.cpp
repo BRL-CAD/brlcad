@@ -911,11 +911,11 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     Tk_MapWindow(pubvars->xtkwin);
     privars->qapp = new QApplication(argc, argv);
 
-    privars->parent = QWindow::fromWinId(pubvars->win);
+/* privars->parent = QWindow::fromWinId(pubvars->win); */
 
     privars->pix = new QPixmap(dmp->dm_width, dmp->dm_height);
 
-    privars->win = new QTkMainWindow(privars->pix, privars->parent, dmp);
+    privars->win = new QTkMainWindow(privars->pix, 0, dmp);
     privars->win->resize(dmp->dm_width, dmp->dm_height);
     privars->win->show();
 
@@ -933,10 +933,10 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     setlocale(LC_ALL, "POSIX");
 
     /* Make Tcl_DoOneEvent call QApplication::processEvents */
-    Tcl_CreateEventSource(NULL, processQtEvents, NULL);
+    /* Tcl_CreateEventSource(NULL, processQtEvents, NULL);*/
 
     /* Try to process Qt events when idle */
-    Tcl_DoWhenIdle(IdleCall, NULL);
+    /* Tcl_DoWhenIdle(IdleCall, NULL); */
 
     return dmp;
 }
@@ -1219,7 +1219,7 @@ char* qt_keyRelease(QEvent *event) {
 }
 
 static struct qt_tk_bind qt_bindings[] = {
-    {qt_keyPress, "keypress"},
+/*    {qt_keyPress, "keypress"},
     {qt_keyRelease, "keyrelease"},
     {qt_controlMousePress, "controlbutton1"},
     {qt_altMousePress, "altbutton1"},
@@ -1231,7 +1231,7 @@ static struct qt_tk_bind qt_bindings[] = {
     {qt_mouseButton3Release, "button3release"},
     {qt_mouseButton2Press, "button2press"},
     {qt_mouseButton2Release, "button2release"},
-    {qt_mouseMove, "mouseMove"},
+    {qt_mouseMove, "mouseMove"}, */
     {NULL, NULL}
 };
 
