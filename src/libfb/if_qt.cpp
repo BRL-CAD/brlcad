@@ -449,8 +449,9 @@ qt_configureWindow(fb *ifp, int width, int height)
 }
 
 HIDDEN int
-qt_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+qt_configure_window(fb *ifp, int width, int height)
 {
+    qt_configureWindow(ifp, width, height);
     return 0;
 }
 
