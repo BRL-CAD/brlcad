@@ -13794,7 +13794,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 
     gdvp->gdv_fbs.fbs_fbp = dm_get_fb(gdvp->gdv_dmp);
 
-    if ((gdvp->gdv_fbs.fbs_fbp == FB_NULL)) {
+    if (gdvp->gdv_fbs.fbs_fbp == FB_NULL) {
 	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(interp);
