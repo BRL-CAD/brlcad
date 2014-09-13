@@ -64,13 +64,7 @@
 #include "bu.h"
 #include "fb_private.h"
 #include "fb.h"
-
-struct osgl_fb_info {
-    void *glc;
-    void *traits;
-    int double_buffer;
-    int soft_cmap;
-};
+#include "fb/fb_osgl.h"
 
 #define CJDEBUG 0
 #define DIRECT_COLOR_VISUAL_ALLOWED 0

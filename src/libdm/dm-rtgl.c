@@ -58,7 +58,7 @@
 #include "dm-rtgl.h"
 #include "dm/dm_xvars.h"
 #include "fb.h"
-#include "fb/fb_platform_specific.h"
+#include "fb/fb_ogl.h"
 #include "solid.h"
 
 #include "./dm_private.h"

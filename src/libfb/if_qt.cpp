@@ -34,30 +34,11 @@
 #include <sys/types.h>
 #include <ctype.h>
 
-#include <QApplication>
-#include <QPainter>
-#include <QWindow>
-#include <QBackingStore>
-#include <QResizeEvent>
-#include <QImage>
-
 #include "fb.h"
+#include "fb/fb_qt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/str.h"
-
-/* TODO - should be getting this from fb_platform_specific - make the IF_* definitions
- * more precise for the individual if files - in principle, we don't want to care about
- * X11 types in a cross-platform Qt fb and right now the fb_platform_specific header
- * isn't behaving */
-struct qt_fb_info {
-    void *qapp;
-    void *qwin;
-    void *qpainter;
-    void *draw;
-    void **qimg;
-};
-
 
 class QMainWindow: public QWindow {
 

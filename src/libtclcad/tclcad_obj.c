@@ -81,6 +81,7 @@
 #endif /* DM_TK */
 
 #ifdef DM_OGL
+#  include "fb/fb_ogl.h"
 #endif /* DM_OGL */
 
 #ifdef DM_OSG
@@ -93,6 +94,7 @@
 
 #ifdef DM_WGL
 #  include <tkwinport.h>
+#  include "fb/fb_wgl.h"
 #  include "dm/dm_xvars.h"
 #endif /* DM_WGL */
 
@@ -102,7 +104,6 @@
 
 /* Private headers */
 #include "tclcad_private.h"
-#include "fb/fb_platform_specific.h"
 
 #include "brlcad_version.h"
 

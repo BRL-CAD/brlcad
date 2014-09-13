@@ -85,9 +85,8 @@
 
 #include "bu.h"
 #include "fb_private.h"
-#include "fb/fb_platform_specific.h"
 #include "fb.h"
-
+#include "fb/fb_ogl.h"
 
 #define CJDEBUG 0
 #define DIRECT_COLOR_VISUAL_ALLOWED 0

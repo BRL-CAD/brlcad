@@ -64,7 +64,7 @@
 #include "dm-Null.h"
 #include "dm/dm_xvars.h"
 #include "fb.h"
-#include "fb/fb_platform_specific.h"
+#include "fb/fb_X.h"
 
 #include "solid.h"
 

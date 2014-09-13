@@ -57,7 +57,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "fb.h"
-
+#include "fb/fb_wgl.h"
 
 #define CJDEBUG 0
 
