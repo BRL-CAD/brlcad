@@ -1953,6 +1953,22 @@ BRLCAD_FUNCTION_EXISTS(vfork HAVE_VFORK)
 BRLCAD_FUNCTION_EXISTS(vsscanf HAVE_VSSCANF)
 BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 
+# ntohll and htonll maybe harder to spot - do some extra tests
+if("${HAVE_NTOHLL}" STREQUAL "")
+  CHECK_SYMBOL_EXISTS(ntohll "sys/_endian.h" HAVE_NTOHLL_SYS__ENDIAN)
+  if(HAVE_NTOHLL_SYS__ENDIAN AND CONFIG_H_FILE)
+      set(HAVE_NTOHLL 1 CACHE INTERNAL "Have function NTOHLL")
+      CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_NTOHLL 1\n")
+  endif(HAVE_NTOHLL_SYS__ENDIAN AND CONFIG_H_FILE)
+endif("${HAVE_NTOHLL}" STREQUAL "")
+if("${HAVE_HTONLL}" STREQUAL "")
+  CHECK_SYMBOL_EXISTS(htonll "sys/_endian.h" HAVE_HTONLL_SYS__ENDIAN)
+  if(HAVE_HTONLL_SYS__ENDIAN AND CONFIG_H_FILE)
+      set(HAVE_HTONLL 1 CACHE INTERNAL "Have function HTONLL")
+      CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_HTONLL 1\n")
+  endif(HAVE_HTONLL_SYS__ENDIAN AND CONFIG_H_FILE)
+endif("${HAVE_HTONLL}" STREQUAL "")
+
 # we may compile in strict pedantic mode, but still want access to
 # some POSIX functions.  test whether some symbols (below) are
 # declared in addition to whether they resolve (above).
