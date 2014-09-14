@@ -31,6 +31,7 @@
 
 #ifdef FB_USE_INTERNAL_API
 #ifdef IF_WGL
+#  include "common.h"
 #  include <windows.h>
 /* The wgl interface as currently implemented uses some
  * X11 types, supplied by Tk. */
