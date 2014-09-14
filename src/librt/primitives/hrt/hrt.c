@@ -1706,11 +1706,15 @@ rt_hrt_volume(void)
     bu_log("rt_hrt_volume: Not implemented yet!\n");
 }
 
-
+/**
+ * Computes centroid of a heart
+ */
 void
-rt_hrt_centroid(void)
+rt_hrt_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    bu_log("rt_hrt_centroid: Not implemented yet!\n");
+    struct rt_hrt_internal *hip = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(hip);
+    VSET(*cent, hip->xdir[X], hip->ydir[Y], hip->zdir[Z] * 0.125);
 }
 
 
