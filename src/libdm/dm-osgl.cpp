@@ -462,6 +462,12 @@ osgl_close(struct dm_internal *dmp)
     return TCL_OK;
 }
 
+static void
+OSGEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
+{
+    dm *dmp = (dm *)clientData;
+    ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->swapBuffers();
+}
 
 /*
  * Fire up the display manager, and the display processor.
@@ -766,6 +772,8 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 
     osgl_setZBuffer(dmp, dmp->dm_zbuffer);
     osgl_setLight(dmp, dmp->dm_light);
+
+    Tk_CreateEventHandler(pubvars->xtkwin, VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
 
     return dmp;
 }
