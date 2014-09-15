@@ -93,7 +93,6 @@ struct osgl_fb_info {
     void *traits;
     int double_buffer;
     int soft_cmap;
-    int is_embedded;
 };
 #endif /* IF_OSGL */
 
