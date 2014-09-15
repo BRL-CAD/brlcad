@@ -634,30 +634,6 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
  *									*
  ************************************************************************/
 
-/**
- * Take a TCL-style string description of a binary tree, as produced
- * by db_tree_list(), and reconstruct the in-memory form of
- * that tree.
- */
-union tree *
-db_tcl_tree_parse(Tcl_Interp *interp, const char *str, struct resource *resp)
-{
-    struct bu_vls logstr = BU_VLS_INIT_ZERO;
-    union tree *tp;
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
-    RT_CK_RESOURCE(resp);
-
-    tp = db_tree_parse(&logstr, str, resp);
-    Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
-    bu_vls_free(&logstr);
-
-    return tp;
-}
-
-
 int
 rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb)
 {
