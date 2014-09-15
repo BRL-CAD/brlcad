@@ -60,9 +60,10 @@
 #include "pc.h"
 #include "rtgeom.h"
 
-__BEGIN_DECLS
 
 #include "./rt/defines.h"
+
+__BEGIN_DECLS
 
 /**
  * Each type of debugging support is independently controlled, by a
