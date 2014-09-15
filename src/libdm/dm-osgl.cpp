@@ -1,4 +1,4 @@
-/*                     D M - O  S G L . C P P
+/*                     D M - O S G L . C P P
  * BRL-CAD
  *
  * Copyright (c) 1988-2014 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libdm/dm-osgl.c
+/** @file libdm/dm-osgl.cpp
  *
- * An X11 OpenGL Display Manager.
+ * An OpenGL Display Manager using OpenSceneGraph.
  *
  */
 
@@ -27,11 +27,13 @@
 
 #ifdef DM_OSGL
 
+#include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <math.h>
-#include <string.h>
 
+#include <osg/GraphicsContext>
 #include <osgViewer/Viewer>
 
 #if defined(_WIN32)
@@ -40,9 +42,12 @@
 #  include <osgViewer/api/X11/GraphicsWindowX11>
 #endif
 
-
 extern "C" {
+#include "tcl.h"
 #include "tk.h"
+#include "tkPlatDecls.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -76,7 +81,7 @@ extern "C" {
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
 extern "C" {
-struct dm_internal *osgl_open(Tcl_Interp *interp, int argc, char **argv);
+    struct dm_internal *osgl_open(Tcl_Interp *interp, int argc, char **argv);
 }
 HIDDEN int osgl_close(struct dm_internal *dmp);
 HIDDEN int osgl_drawBegin(struct dm_internal *dmp);
@@ -148,7 +153,7 @@ osgl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
     bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[3], m[7], m[11], m[15]);
 }
 
-
+extern "C" {
 void
 osgl_fogHint(struct dm_internal *dmp, int fastfog)
 {
@@ -156,7 +161,7 @@ osgl_fogHint(struct dm_internal *dmp, int fastfog)
     mvars->fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
-
+}
 
 HIDDEN int
 osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b)
@@ -601,7 +606,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 	    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 		bu_vls_free(&init_proc_vls);
 		bu_vls_free(&str);
-                (void)osgl_close(dmp);
+		(void)osgl_close(dmp);
 		return DM_NULL;
 	    } else {
 		Tcl_Obj *tclresult = Tcl_GetObjResult(interp);
@@ -614,7 +619,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 	    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 		bu_vls_free(&init_proc_vls);
 		bu_vls_free(&str);
-                (void)osgl_close(dmp);
+		(void)osgl_close(dmp);
 		return DM_NULL;
 	    } else {
 		Tcl_Obj *tclresult = Tcl_GetObjResult(interp);
