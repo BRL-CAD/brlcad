@@ -1697,52 +1697,51 @@ osgl_flush(fb *ifp)
 HIDDEN int
 fb_osgl_close(fb *ifp)
 {
+    if (!OSGL(ifp)->is_embedded) {
 
-if (!OSGL(ifp)->is_embedded) {
+	return (*OSGL(ifp)->viewer).ViewerBase::run();
 
-    return (*OSGL(ifp)->viewer).ViewerBase::run();
+    } else {
 
-} else {
+	osgl_flush(ifp);
 
-    osgl_flush(ifp);
+	/* only the last open window can linger -
+	 * call final_close if not lingering
+	 */
+	if (osgl_nwindows > 1 ||
+		(ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
+	    return osgl_final_close(ifp);
 
-    /* only the last open window can linger -
-     * call final_close if not lingering
-     */
-    if (osgl_nwindows > 1 ||
-	(ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
-	return osgl_final_close(ifp);
+	if (CJDEBUG)
+	    printf("fb_osgl_close: remaining open to linger awhile.\n");
 
-    if (CJDEBUG)
-	printf("fb_osgl_close: remaining open to linger awhile.\n");
+	/*
+	 * else:
+	 *
+	 * LINGER mode.  Don't return to caller until user mouses "close"
+	 * menu item.  This may delay final processing in the calling
+	 * function for some time, but the assumption is that the user
+	 * wishes to compare this image with others.
+	 *
+	 * Since we plan to linger here, long after our invoker expected
+	 * us to be gone, be certain that no file descriptors remain open
+	 * to associate us with pipelines, network connections, etc., that
+	 * were ALREADY ESTABLISHED before the point that fb_open() was
+	 * called.
+	 *
+	 * The simple for i=0..20 loop will not work, because that smashes
+	 * some window-manager files.  Therefore, we content ourselves
+	 * with eliminating stdin, in the hopes that this will
+	 * successfully terminate any pipes or network connections.
+	 * Standard error/out may be used to print framebuffer debug
+	 * messages, so they're kept around.
+	 */
+	fclose(stdin);
 
-    /*
-     * else:
-     *
-     * LINGER mode.  Don't return to caller until user mouses "close"
-     * menu item.  This may delay final processing in the calling
-     * function for some time, but the assumption is that the user
-     * wishes to compare this image with others.
-     *
-     * Since we plan to linger here, long after our invoker expected
-     * us to be gone, be certain that no file descriptors remain open
-     * to associate us with pipelines, network connections, etc., that
-     * were ALREADY ESTABLISHED before the point that fb_open() was
-     * called.
-     *
-     * The simple for i=0..20 loop will not work, because that smashes
-     * some window-manager files.  Therefore, we content ourselves
-     * with eliminating stdin, in the hopes that this will
-     * successfully terminate any pipes or network connections.
-     * Standard error/out may be used to print framebuffer debug
-     * messages, so they're kept around.
-     */
-    fclose(stdin);
-
-    while (0 < OSGL(ifp)->alive) {
-	osgl_do_event(ifp);
+	while (0 < OSGL(ifp)->alive) {
+	    osgl_do_event(ifp);
+	}
     }
-}
     return 0;
 }
 
@@ -2022,177 +2021,177 @@ osgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 HIDDEN ssize_t
 osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
-if (!OSGL(ifp)->is_embedded) {
-   register int x;
-    register int y;
-    size_t scan_count;  /* # pix on this scanline */
-    size_t pix_count;   /* # pixels to send */
-    ssize_t ret;
+    if (!OSGL(ifp)->is_embedded) {
+	register int x;
+	register int y;
+	size_t scan_count;  /* # pix on this scanline */
+	size_t pix_count;   /* # pixels to send */
+	ssize_t ret;
 
-    //fb_log("write got called!");
+	//fb_log("write got called!");
 
-    FB_CK_FB(ifp);
+	FB_CK_FB(ifp);
 
-    /* fast exit cases */
-    pix_count = count;
-    if (pix_count == 0)
-	return 0;       /* OK, no pixels transferred */
+	/* fast exit cases */
+	pix_count = count;
+	if (pix_count == 0)
+	    return 0;       /* OK, no pixels transferred */
 
-    x = xstart;
-    y = ystart;
+	x = xstart;
+	y = ystart;
 
-    if (x < 0 || x >= ifp->if_width ||
-	    y < 0 || y >= ifp->if_height)
-	return -1;
+	if (x < 0 || x >= ifp->if_width ||
+		y < 0 || y >= ifp->if_height)
+	    return -1;
 
-    ret = 0;
+	ret = 0;
 
-    while (pix_count) {
-	void *scanline;
+	while (pix_count) {
+	    void *scanline;
 
-	if (y >= ifp->if_height)
-	    break;
+	    if (y >= ifp->if_height)
+		break;
 
-	if (pix_count >= (size_t)(ifp->if_width-x))
-	    scan_count = (size_t)(ifp->if_width-x);
-	else
-	    scan_count = pix_count;
+	    if (pix_count >= (size_t)(ifp->if_width-x))
+		scan_count = (size_t)(ifp->if_width-x);
+	    else
+		scan_count = pix_count;
 
-	scanline = (void *)(OSGL(ifp)->image->data(0,y,0));
+	    scanline = (void *)(OSGL(ifp)->image->data(0,y,0));
 
-	memcpy(scanline, pixelp, scan_count*3);
+	    memcpy(scanline, pixelp, scan_count*3);
 
-	ret += scan_count;
-	pix_count -= scan_count;
-	x = 0;
-	if (++y >= ifp->if_height)
-	    break;
-    }
-
-    OSGL(ifp)->image->dirty();
-    if (OSGL(ifp)->timer->time_m() - OSGL(ifp)->last_update_time > 10) {
-	OSGL(ifp)->viewer->frame();
-	OSGL(ifp)->last_update_time = OSGL(ifp)->timer->time_m();
-    }
-    return ret;
-} else {
-    size_t scan_count;	/* # pix on this scanline */
-    register unsigned char *cp;
-    ssize_t ret;
-    int ybase;
-    size_t pix_count;	/* # pixels to send */
-    register int x;
-    register int y;
-
-    if (CJDEBUG) printf("entering osgl_write\n");
-
-    /* fast exit cases */
-    pix_count = count;
-    if (pix_count == 0)
-	return 0;	/* OK, no pixels transferred */
-
-    x = xstart;
-    ybase = y = ystart;
-
-    if (x < 0 || x >= ifp->if_width ||
-	y < 0 || y >= ifp->if_height)
-	return -1;
-
-    ret = 0;
-    cp = (unsigned char *)(pixelp);
-
-    while (pix_count) {
-	size_t n;
-	register struct osgl_pixel *osglp;
-
-	if (y >= ifp->if_height)
-	    break;
-
-	if (pix_count >= (size_t)(ifp->if_width-x))
-	    scan_count = (size_t)(ifp->if_width-x);
-	else
-	    scan_count = pix_count;
-
-	osglp = (struct osgl_pixel *)&ifp->if_mem[
-	    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct osgl_pixel) ];
-
-	n = scan_count;
-	if ((n & 3) != 0) {
-	    /* This code uses 60% of all CPU time */
-	    while (n) {
-		/* alpha channel is always zero */
-		osglp->red   = cp[RED];
-		osglp->green = cp[GRN];
-		osglp->blue  = cp[BLU];
-		osglp++;
-		cp += 3;
-		n--;
-	    }
-	} else {
-	    while (n) {
-		/* alpha channel is always zero */
-		osglp[0].red   = cp[RED+0*3];
-		osglp[0].green = cp[GRN+0*3];
-		osglp[0].blue  = cp[BLU+0*3];
-		osglp[1].red   = cp[RED+1*3];
-		osglp[1].green = cp[GRN+1*3];
-		osglp[1].blue  = cp[BLU+1*3];
-		osglp[2].red   = cp[RED+2*3];
-		osglp[2].green = cp[GRN+2*3];
-		osglp[2].blue  = cp[BLU+2*3];
-		osglp[3].red   = cp[RED+3*3];
-		osglp[3].green = cp[GRN+3*3];
-		osglp[3].blue  = cp[BLU+3*3];
-		osglp += 4;
-		cp += 3*4;
-		n -= 4;
-	    }
+	    ret += scan_count;
+	    pix_count -= scan_count;
+	    x = 0;
+	    if (++y >= ifp->if_height)
+		break;
 	}
-	ret += scan_count;
-	pix_count -= scan_count;
-	x = 0;
-	if (++y >= ifp->if_height)
-	    break;
-    }
 
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
+	OSGL(ifp)->image->dirty();
+	if (OSGL(ifp)->timer->time_m() - OSGL(ifp)->last_update_time > 10) {
+	    OSGL(ifp)->viewer->frame();
+	    OSGL(ifp)->last_update_time = OSGL(ifp)->timer->time_m();
+	}
 	return ret;
+    } else {
+	size_t scan_count;	/* # pix on this scanline */
+	register unsigned char *cp;
+	ssize_t ret;
+	int ybase;
+	size_t pix_count;	/* # pixels to send */
+	register int x;
+	register int y;
 
-    if (!OSGL(ifp)->use_ext_ctrl) {
+	if (CJDEBUG) printf("entering osgl_write\n");
 
-	OSGL(ifp)->glc->makeCurrent();
+	/* fast exit cases */
+	pix_count = count;
+	if (pix_count == 0)
+	    return 0;	/* OK, no pixels transferred */
 
-	if (xstart + count < (size_t)ifp->if_width) {
-	    osgl_xmit_scanlines(ifp, ybase, 1, xstart, count);
-	    if (SGI(ifp)->mi_doublebuffer) {
-		OSGL(ifp)->glc->swapBuffers();
-	    } else if (OSGL(ifp)->copy_flag) {
-		/* repaint one scanline from backbuffer */
-		backbuffer_to_screen(ifp, ybase);
-	    }
-	} else {
-	    /* Normal case -- multi-pixel write */
-	    if (SGI(ifp)->mi_doublebuffer) {
-		/* refresh whole screen */
-		osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-		OSGL(ifp)->glc->swapBuffers();
+	x = xstart;
+	ybase = y = ystart;
+
+	if (x < 0 || x >= ifp->if_width ||
+		y < 0 || y >= ifp->if_height)
+	    return -1;
+
+	ret = 0;
+	cp = (unsigned char *)(pixelp);
+
+	while (pix_count) {
+	    size_t n;
+	    register struct osgl_pixel *osglp;
+
+	    if (y >= ifp->if_height)
+		break;
+
+	    if (pix_count >= (size_t)(ifp->if_width-x))
+		scan_count = (size_t)(ifp->if_width-x);
+	    else
+		scan_count = pix_count;
+
+	    osglp = (struct osgl_pixel *)&ifp->if_mem[
+		(y*SGI(ifp)->mi_memwidth+x)*sizeof(struct osgl_pixel) ];
+
+	    n = scan_count;
+	    if ((n & 3) != 0) {
+		/* This code uses 60% of all CPU time */
+		while (n) {
+		    /* alpha channel is always zero */
+		    osglp->red   = cp[RED];
+		    osglp->green = cp[GRN];
+		    osglp->blue  = cp[BLU];
+		    osglp++;
+		    cp += 3;
+		    n--;
+		}
 	    } else {
-		/* just write rectangle */
-		osgl_xmit_scanlines(ifp, ybase, y-ybase, 0, ifp->if_width);
-		if (OSGL(ifp)->copy_flag) {
-		    backbuffer_to_screen(ifp, -1);
+		while (n) {
+		    /* alpha channel is always zero */
+		    osglp[0].red   = cp[RED+0*3];
+		    osglp[0].green = cp[GRN+0*3];
+		    osglp[0].blue  = cp[BLU+0*3];
+		    osglp[1].red   = cp[RED+1*3];
+		    osglp[1].green = cp[GRN+1*3];
+		    osglp[1].blue  = cp[BLU+1*3];
+		    osglp[2].red   = cp[RED+2*3];
+		    osglp[2].green = cp[GRN+2*3];
+		    osglp[2].blue  = cp[BLU+2*3];
+		    osglp[3].red   = cp[RED+3*3];
+		    osglp[3].green = cp[GRN+3*3];
+		    osglp[3].blue  = cp[BLU+3*3];
+		    osglp += 4;
+		    cp += 3*4;
+		    n -= 4;
 		}
 	    }
+	    ret += scan_count;
+	    pix_count -= scan_count;
+	    x = 0;
+	    if (++y >= ifp->if_height)
+		break;
 	}
-	glFlush();
 
-	/* unattach context for other threads to use */
-	OSGL(ifp)->glc->releaseContext();
+	if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
+	    return ret;
+
+	if (!OSGL(ifp)->use_ext_ctrl) {
+
+	    OSGL(ifp)->glc->makeCurrent();
+
+	    if (xstart + count < (size_t)ifp->if_width) {
+		osgl_xmit_scanlines(ifp, ybase, 1, xstart, count);
+		if (SGI(ifp)->mi_doublebuffer) {
+		    OSGL(ifp)->glc->swapBuffers();
+		} else if (OSGL(ifp)->copy_flag) {
+		    /* repaint one scanline from backbuffer */
+		    backbuffer_to_screen(ifp, ybase);
+		}
+	    } else {
+		/* Normal case -- multi-pixel write */
+		if (SGI(ifp)->mi_doublebuffer) {
+		    /* refresh whole screen */
+		    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+		    OSGL(ifp)->glc->swapBuffers();
+		} else {
+		    /* just write rectangle */
+		    osgl_xmit_scanlines(ifp, ybase, y-ybase, 0, ifp->if_width);
+		    if (OSGL(ifp)->copy_flag) {
+			backbuffer_to_screen(ifp, -1);
+		    }
+		}
+	    }
+	    glFlush();
+
+	    /* unattach context for other threads to use */
+	    OSGL(ifp)->glc->releaseContext();
+	}
+
+	return ret;
     }
-
-    return ret;
-}
-return 0;
+    return 0;
 }
 
 
