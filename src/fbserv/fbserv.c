@@ -328,12 +328,14 @@ main_loop(void)
 	tv.tv_sec = 0L;
 	tv.tv_usec = 250L;
 #else
-	tv.tv_sec = 60L;
-	tv.tv_usec = 0L;
+	/*tv.tv_sec = 60L;*/
+	tv.tv_sec = 0L;
+	tv.tv_usec = 250L;
 #endif
 	if ((select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (struct timeval *)&tv ) == 0)) {
 	    /* Process fb events while waiting for client */
 	    /*printf("select timeout waiting for client\n");*/
+	    bu_log("fb_poll\n");
 	    if (fb_server_fbp) {
 		if (fb_poll(fb_server_fbp)) {
 		    return;

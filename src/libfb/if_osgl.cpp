@@ -1593,6 +1593,9 @@ osgl_poll(fb *ifp)
     fb_log("osgl_poll\n");
     osgl_do_event(ifp);
 
+    if (OSGL(ifp)->viewer)
+	(*OSGL(ifp)->viewer).frame();
+
     if (OSGL(ifp)->alive < 0)
 	return 1;
     else
