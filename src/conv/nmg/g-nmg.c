@@ -368,13 +368,13 @@ csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
 
 	switch (tree_list[i].tl_op) {
 	    case OP_UNION:
-		op = 'u';
+		op = WMOP_UNION;
 		break;
 	    case OP_INTERSECT:
-		op = '+';
+		op = WMOP_INTERSECT;
 		break;
 	    case OP_SUBTRACT:
-		op = '-';
+		op = WMOP_SUBTRACT;
 		break;
 	    default:
 		bu_log("Unrecognized Boolean operator in combination (%s)\n", dp->d_namep);
