@@ -1290,7 +1290,11 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     FB_CK_FB(ifp);
 
     fb_log("open\n");
-    /* Get some memory for the osg specific stuff */
+
+    if ((SGIL(ifp) = (char *)calloc(1, sizeof(struct sgiinfo))) == NULL) {
+	fb_log("fb_osgl_open:  sgiinfo malloc failed\n");
+	return -1;
+    }
     if ((ifp->u6.p = (char *)calloc(1, sizeof(struct osglinfo))) == NULL) {
 	fb_log("fb_osgl_open:  osglinfo malloc failed\n");
 	return -1;
