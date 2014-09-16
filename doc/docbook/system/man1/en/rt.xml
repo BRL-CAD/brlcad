@@ -288,7 +288,7 @@
       <varlistentry>
 	<term><option>-r</option></term>
 	<listitem>
-	  <para>requests that overlapping regions be reported. (conflicts with -R)</para>
+	  <para>Requests that overlapping regions be reported (on by default); opposite of <option>-R</option> .</para>
 	</listitem>
       </varlistentry>
 
@@ -493,7 +493,7 @@
       <varlistentry>
 	<term><option>-R</option></term>
 	<listitem>
-	  <para>requests that overlapping regions not be reported. (conflicts with -r)</para>
+	  <para>Requests that overlapping regions not be reported; opposite of <option>-r</option> .</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
@@ -505,13 +505,9 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-T #</option></term>
+	<term><option>-T #</option> or <option>-T #,#</option> or <option>-T #/#</option></term>
 	<listitem>
-	  <para>or
-	  <option>-T #,#</option>
-	  or
-	  <option>-T #/#</option>
-	  Sets the calculation tolerances used by
+	  <para>Sets the calculation tolerances used by
 	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
 	  If only one number is given, it specifies the distance tolerance.
 	  Any two entities closer than this distance are considered to be the same.
@@ -590,7 +586,7 @@
   </refsection>
 
   <refsection xml:id="signals"><title>SIGNALS</title>
-  <para>You can obtain progress information from a running rt process by
+  <para>You can obtain progress information from a running <command>rt</command> process by
   sending it a SIGUSR1 or SIGINFO signal.  The raytracer will report
   progress via details about the ray sample being processed at the time
   of the signal.  The progress is reported to stderr in a form similar
