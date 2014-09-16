@@ -2152,6 +2152,7 @@ fb wgl_interface =
     0L,			/* page_curpos */
     0L,			/* page_pixels */
     0			/* debug */
+    250			/* refresh rate (from fbserv) */
 };
 
 

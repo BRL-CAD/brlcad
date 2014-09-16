@@ -253,6 +253,12 @@ int fb_poll(fb *ifp)
 {
     return (*ifp->if_poll)(ifp);
 }
+
+long fb_poll_rate(fb *ifp)
+{
+    return ifp->if_poll_refresh_rate;
+}
+
 int fb_help(fb *ifp)
 {
     return (*ifp->if_help)(ifp);

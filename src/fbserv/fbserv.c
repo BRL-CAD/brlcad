@@ -318,24 +318,23 @@ main_loop(void)
     int	ncloses = 0;
 
     while ( !fb_server_got_fb_free ) {
+	long refresh_rate = 60000000; /* old default */
 	fd_set infds;
 	struct timeval tv;
 	int	i;
 
+	if (fb_server_fbp) {
+	    if (fb_poll_rate(fb_server_fbp) > 0)
+		refresh_rate = fb_poll_rate(fb_server_fbp);
+	}
+
 	infds = select_list;	/* struct copy */
 
-#ifdef _WIN32
 	tv.tv_sec = 0L;
-	tv.tv_usec = 250L;
-#else
-	/*tv.tv_sec = 60L;*/
-	tv.tv_sec = 0L;
-	tv.tv_usec = 250L;
-#endif
+	tv.tv_usec = refresh_rate;
 	if ((select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (struct timeval *)&tv ) == 0)) {
 	    /* Process fb events while waiting for client */
 	    /*printf("select timeout waiting for client\n");*/
-	    bu_log("fb_poll\n");
 	    if (fb_server_fbp) {
 		if (fb_poll(fb_server_fbp)) {
 		    return;

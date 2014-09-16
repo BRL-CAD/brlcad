@@ -2416,6 +2416,7 @@ fb ogl_interface =
     0L,			/* page_curpos */
     0L,			/* page_pixels */
     0,			/* debug */
+    60000000,		/* refresh rate (from fbserv, which had 60 seconds as its default... not sure why) */
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */
