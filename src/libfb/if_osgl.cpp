@@ -990,6 +990,7 @@ osgl_clear(fb *ifp, unsigned char *pp)
     }
 
     /* Flood rectangle in shared memory */
+    if (!OSGL(ifp)->viewer && OSGL(ifp)->glc) {
     for (y = 0; y < ifp->if_height; y++) {
 	osglp = (struct osgl_pixel *)&ifp->if_mem[
 	    (y*SGI(ifp)->mi_memwidth+0)*sizeof(struct osgl_pixel) ];
@@ -997,8 +998,15 @@ osgl_clear(fb *ifp, unsigned char *pp)
 	    *osglp++ = bg;	/* struct copy */
 	}
     }
-
-    OSGL(ifp)->image->dirty();
+    } else {
+	for (y = 0; y < ifp->if_height; y++) {
+	    osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+	    for (cnt = ifp->if_width-1; cnt >= 0; cnt--) {
+		*osglp++ = bg;	/* struct copy */
+	    }
+	}
+	OSGL(ifp)->image->dirty();
+    }
 
     if (OSGL(ifp)->use_ext_ctrl) {
 	return 0;
