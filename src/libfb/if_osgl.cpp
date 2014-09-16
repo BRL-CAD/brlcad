@@ -276,7 +276,7 @@ public:
                 }
                 else if (ea.getKey()==osgGA::GUIEventAdapter::KEY_F8)
                 {
-                    // F8 -- Gether stats and display
+                    // F8 -- Gather stats and display
 		    std::cout << "F8!";
                     return true;
                 }
