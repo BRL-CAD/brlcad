@@ -219,10 +219,7 @@ struct combination {
 
 struct member {
     char	m_id;			/* ID_MEMB */
-    char	m_relation;		/* boolean operation */
-#define INTERSECT	'+'
-#define SUBTRACT	'-'
-#define UNION		'u'
+    char	m_relation;		/* boolean operation as u,-,+ char */
     char	m_brname[NAMESIZE];	/* DEPRECATED: name of this branch */
     char	m_instname[NAMESIZE];	/* name of referred-to obj. */
     short	m_pad1;
