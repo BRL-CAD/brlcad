@@ -419,7 +419,6 @@ struct osglinfo {
     long event_mask;		/* event types to be received */
     short front_flag;		/* front buffer being used (b-mode) */
     short copy_flag;		/* pan and zoom copied from backbuffer */
-    short soft_cmap_flag;	/* use software colormapping */
     int cmap_size;		/* hardware colormap size */
     int win_width;		/* actual window width */
     int win_height;		/* actual window height */
@@ -522,13 +521,6 @@ HIDDEN struct modeflags {
 };
 #endif
 
-HIDDEN void
-sigkid(int UNUSED(pid))
-{
-    exit(0);
-}
-
-
 /* BACKBUFFER_TO_SCREEN - copy pixels from copy on the backbuffer to
  * the front buffer. Do one scanline specified by one_y, or whole
  * screen if one_y equals -1.
@@ -537,6 +529,8 @@ HIDDEN void
 backbuffer_to_screen(register fb *ifp, int one_y)
 {
     struct osgl_clip *clp;
+
+    fb_log("backbuffer_to_screen\n");
 
     if (!(OSGL(ifp)->front_flag)) {
 	OSGL(ifp)->front_flag = 1;
@@ -616,11 +610,12 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
     int sw_cmap;	/* !0 => needs software color map */
     struct osgl_clip *clp;
 
+    fb_log("osgl_xmit_scanlines\n");
     /* Caller is expected to handle attaching context, etc. */
 
     clp = &(OSGL(ifp)->clip);
 
-    if (OSGL(ifp)->soft_cmap_flag  && SGI(ifp)->mi_cmap_flag) {
+    if (SGI(ifp)->mi_cmap_flag) {
 	sw_cmap = 1;
     } else {
 	sw_cmap = 0;
@@ -733,6 +728,7 @@ osgl_cminit(register fb *ifp)
 {
     register int i;
 
+    fb_log("osgl_cminit\n");
     for (i = 0; i < 256; i++) {
 	CMR(ifp)[i] = i;
 	CMG(ifp)[i] = i;
@@ -785,6 +781,7 @@ osgl_getmem(fb *ifp)
 
     errno = 0;
 
+    fb_log("osgl_getmem\n");
     if ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) {
 	/*
 	 * In this mode, only malloc as much memory as is needed.
@@ -866,6 +863,8 @@ osgl_zapmem(void)
     int shmid;
     int i;
 
+    fb_log("zapmem\n");
+
     if ((shmid = shmget(SHMEM_KEY, 0, 0)) < 0) {
 	fb_log("osgl_zapmem shmget failed, errno=%d\n", errno);
 	return;
@@ -898,6 +897,7 @@ osgl_clipper(register fb *ifp)
     register int i;
     double pixels;
 
+    fb_log("clipper\n");
     clp = &(OSGL(ifp)->clip);
 
     i = OSGL(ifp)->vp_width/(2*ifp->if_xzoom);
@@ -958,6 +958,7 @@ expose_callback(fb *ifp)
     //XWindowAttributes xwa;
     struct osgl_clip *clp;
 
+    fb_log("expose_callback\n");
     if (CJDEBUG) fb_log("entering expose_callback()\n");
 
     OSGL(ifp)->glc->makeCurrent();
@@ -1079,6 +1080,7 @@ expose_callback(fb *ifp)
 int
 osgl_configureWindow(fb *ifp, int width, int height)
 {
+    fb_log("configureWindow\n");
     if (width == OSGL(ifp)->win_width &&
 	height == OSGL(ifp)->win_height)
 	return 1;
@@ -1104,6 +1106,7 @@ osgl_configureWindow(fb *ifp, int width, int height)
 HIDDEN void
 osgl_do_event(fb *ifp)
 {
+    fb_log("osgl_do_event\n");
     OSGL(ifp)->firstTime = 0;
 #if 0
     XEvent event;
@@ -1204,7 +1207,6 @@ osgl_do_event(fb *ifp)
  *
  * The following flags are set:
  * SGI(ifp)->mi_doublebuffer
- * OSGL(ifp)->soft_cmap_flag
  *
  * Return NULL on failure.
  */
@@ -1285,7 +1287,6 @@ fb_osgl_choose_visual(fb *ifp)
 		}
 	    }
 	    /* set flags and return choice */
-	    OSGL(ifp)->soft_cmap_flag = !m_hard_cmap;
 	    SGI(ifp)->mi_doublebuffer = m_doub_buf;
 	    return maxvip;
 	}
@@ -1326,6 +1327,7 @@ is_linear_cmap(register fb *ifp)
 {
     register int i;
 
+    fb_log("is_linear_cmap\n");
     for (i = 0; i < 256; i++) {
 	if (CMR(ifp)[i] != i) return 0;
 	if (CMG(ifp)[i] != i) return 0;
@@ -1424,35 +1426,15 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     /* Create a colormap for this visual */
 #if 0
     SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-    if (!OSGL(ifp)->soft_cmap_flag) {
-	OSGL(ifp)->xcmap = XCreateColormap(OSGL(ifp)->dispp,
-					  RootWindow(OSGL(ifp)->dispp,
-						     OSGL(ifp)->vip->screen),
-					  OSGL(ifp)->vip->visual,
-					  AllocAll);
-	/* initialize virtual colormap - it will be loaded into
-	 * the hardware. This code has not yet been tested.
-	 */
-	if (CJDEBUG) printf("Loading read/write colormap.\n");
-	for (i = 0; i < 256; i++) {
-	    color_cell[i].pixel = i;
-	    color_cell[i].red = CMR(ifp)[i];
-	    color_cell[i].green = CMG(ifp)[i];
-	    color_cell[i].blue = CMB(ifp)[i];
-	    color_cell[i].flags = DoRed | DoGreen | DoBlue;
-	}
-	XStoreColors(OSGL(ifp)->dispp, OSGL(ifp)->xcmap, color_cell, 256);
-    } else {
-	/* read only colormap */
-	if (CJDEBUG) {
-	    printf("Allocating read-only colormap.");
-	}
-	OSGL(ifp)->xcmap = XCreateColormap(OSGL(ifp)->dispp,
-					  RootWindow(OSGL(ifp)->dispp,
-						     OSGL(ifp)->vip->screen),
-					  OSGL(ifp)->vip->visual,
-					  AllocNone);
+    /* read only colormap */
+    if (CJDEBUG) {
+	printf("Allocating read-only colormap.");
     }
+    OSGL(ifp)->xcmap = XCreateColormap(OSGL(ifp)->dispp,
+	    RootWindow(OSGL(ifp)->dispp,
+		OSGL(ifp)->vip->screen),
+	    OSGL(ifp)->vip->visual,
+	    AllocNone);
 
     XSync(OSGL(ifp)->dispp, 0);
 #endif
@@ -1471,6 +1453,7 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 
     FB_CK_FB(ifp);
 
+    fb_log("open\n");
     /* Get some memory for the osg specific stuff */
     if ((ifp->u6.p = (char *)calloc(1, sizeof(struct osglinfo))) == NULL) {
 	fb_log("fb_osgl_open:  osglinfo malloc failed\n");
@@ -1536,9 +1519,10 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 
 
 int
-_osgl_open_existing(fb *ifp, int width, int height, void *glc, void *traits, int double_buffer, int soft_cmap)
+_osgl_open_existing(fb *ifp, int width, int height, void *glc, void *traits, int double_buffer)
 {
 
+    fb_log("open_existing\n");
     /*XXX for now use private memory */
     ifp->if_mode = MODE_1MALLOC;
 
@@ -1582,7 +1566,6 @@ _osgl_open_existing(fb *ifp, int width, int height, void *glc, void *traits, int
     OSGL(ifp)->glc = (osg::GraphicsContext *)glc;
     OSGL(ifp)->traits = (osg::GraphicsContext::Traits *)traits;
 
-    OSGL(ifp)->soft_cmap_flag = soft_cmap;
     SGI(ifp)->mi_doublebuffer = double_buffer;
 
     ++osgl_nwindows;
@@ -1602,6 +1585,7 @@ osgl_get_fbps(uint32_t magic)
 {
     struct fb_platform_specific *fb_ps = NULL;
     struct osgl_fb_info *data = NULL;
+    fb_log("get_fbps\n");
     BU_GET(fb_ps, struct fb_platform_specific);
     BU_GET(data, struct osgl_fb_info);
     fb_ps->magic = magic;
@@ -1613,6 +1597,7 @@ osgl_get_fbps(uint32_t magic)
 HIDDEN void
 osgl_put_fbps(struct fb_platform_specific *fbps)
 {
+    fb_log("put_fbps\n");
     BU_CKMAG(fbps, FB_OSGL_MAGIC, "osgl framebuffer");
     BU_PUT(fbps->data, struct osgl_fb_info);
     BU_PUT(fbps, struct fb_platform_specific);
@@ -1623,9 +1608,10 @@ HIDDEN int
 osgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct osgl_fb_info *osgl_internal = (struct osgl_fb_info *)fb_p->data;
+    fb_log("open_existing wrapper\n");
     BU_CKMAG(fb_p, FB_OSGL_MAGIC, "osgl framebuffer");
     return _osgl_open_existing(ifp, width, height, osgl_internal->glc, osgl_internal->traits,
-	    osgl_internal->double_buffer, osgl_internal->soft_cmap);
+	    osgl_internal->double_buffer);
 
         return 0;
 }
@@ -1635,6 +1621,7 @@ HIDDEN int
 osgl_final_close(fb *ifp)
 {
 
+    fb_log("final close\n");
     if (CJDEBUG) {
 	printf("osgl_final_close: All done...goodbye!\n");
     }
@@ -1674,6 +1661,7 @@ osgl_final_close(fb *ifp)
 HIDDEN int
 osgl_flush(fb *ifp)
 {
+    fb_log("flush\n");
     if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH) {
 
 	OSGL(ifp)->glc->makeCurrent();
@@ -1697,12 +1685,15 @@ osgl_flush(fb *ifp)
 HIDDEN int
 fb_osgl_close(fb *ifp)
 {
+    fb_log("close\n");
     if (!OSGL(ifp)->is_embedded) {
 
+	fb_log("case 1\n");
 	return (*OSGL(ifp)->viewer).ViewerBase::run();
 
     } else {
 
+	fb_log("case 2\n");
 	osgl_flush(ifp);
 
 	/* only the last open window can linger -
@@ -1749,6 +1740,7 @@ fb_osgl_close(fb *ifp)
 int
 osgl_close_existing(fb *ifp)
 {
+    fb_log("close_existing\n");
     if (SGIL(ifp) != NULL) {
 	/* free up memory associated with image */
 	if (SGI(ifp)->mi_shmid != -1) {
@@ -1782,6 +1774,7 @@ osgl_close_existing(fb *ifp)
 HIDDEN int
 osgl_poll(fb *ifp)
 {
+    fb_log("osgl_poll\n");
     osgl_do_event(ifp);
 
     if (OSGL(ifp)->alive < 0)
@@ -1799,6 +1792,7 @@ osgl_free(fb *ifp)
 {
     int ret;
 
+    fb_log("osgl_free\n");
     if (CJDEBUG) printf("entering osgl_free\n");
     /* Close the framebuffer */
     ret = osgl_final_close(ifp);
@@ -1819,6 +1813,7 @@ osgl_clear(fb *ifp, unsigned char *pp)
     register int cnt;
     register int y;
 
+    fb_log("osgl_clear\n");
     if (CJDEBUG) printf("entering osgl_clear\n");
 
     /* Set clear colors */
@@ -1887,6 +1882,7 @@ osgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct osgl_clip *clp;
 
+    fb_log("osgl_view\n");
     if (CJDEBUG) printf("entering osgl_view\n");
 
     if (xzoom < 1) xzoom = 1;
@@ -1955,6 +1951,7 @@ osgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 HIDDEN int
 osgl_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
+    fb_log("osgl_getview\n");
     if (CJDEBUG) printf("entering osgl_getview\n");
 
     *xcenter = ifp->if_xcenter;
@@ -1977,6 +1974,7 @@ osgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
     register struct osgl_pixel *osglp;
 
     if (CJDEBUG) printf("entering osgl_read\n");
+    fb_log("osgl_read\n");
 
     if (x < 0 || x >= ifp->if_width ||
 	y < 0 || y >= ifp->if_height)
@@ -2021,6 +2019,7 @@ osgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 HIDDEN ssize_t
 osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
+    fb_log("osgl_write\n");
     if (!OSGL(ifp)->is_embedded) {
 	register int x;
 	register int y;
@@ -2210,6 +2209,7 @@ osgl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigne
 
     if (CJDEBUG) printf("entering osgl_writerect\n");
 
+    fb_log("osgl_writerect\n");
 
     if (width <= 0 || height <= 0)
 	return 0;  /* do nothing */
@@ -2272,6 +2272,7 @@ osgl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsig
 
     if (CJDEBUG) printf("entering osgl_bwwriterect\n");
 
+    fb_log("osgl_bwrect\n");
 
     if (width <= 0 || height <= 0)
 	return 0;  /* do nothing */
@@ -2326,6 +2327,7 @@ osgl_rmap(register fb *ifp, register ColorMap *cmp)
 
     if (CJDEBUG) printf("entering osgl_rmap\n");
 
+    fb_log("osgl_rmap\n");
     /* Just parrot back the stored colormap */
     for (i = 0; i < 256; i++) {
 	cmp->cm_red[i]   = CMR(ifp)[i]<<8;
@@ -2344,6 +2346,7 @@ osgl_wmap(register fb *ifp, register const ColorMap *cmp)
 
     if (CJDEBUG) printf("entering osgl_wmap\n");
 
+    fb_log("osgl_wmap\n");
     prev = SGI(ifp)->mi_cmap_flag;
     if (cmp == COLORMAP_NULL) {
 	osgl_cminit(ifp);
@@ -2358,38 +2361,22 @@ osgl_wmap(register fb *ifp, register const ColorMap *cmp)
 
 
     if (!OSGL(ifp)->use_ext_ctrl) {
-	if (OSGL(ifp)->soft_cmap_flag) {
-	    /* if current and previous maps are linear, return */
-	    if (SGI(ifp)->mi_cmap_flag == 0 && prev == 0) return 0;
+	/* if current and previous maps are linear, return */
+	if (SGI(ifp)->mi_cmap_flag == 0 && prev == 0) return 0;
 
-	    /* Software color mapping, trigger a repaint */
+	/* Software color mapping, trigger a repaint */
 
-	    OSGL(ifp)->glc->makeCurrent();
+	OSGL(ifp)->glc->makeCurrent();
 
-	    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	    if (SGI(ifp)->mi_doublebuffer) {
-		OSGL(ifp)->glc->swapBuffers();
-	    } else if (OSGL(ifp)->copy_flag) {
-		backbuffer_to_screen(ifp, -1);
-	    }
-
-	    /* unattach context for other threads to use, also flushes */
-	    OSGL(ifp)->glc->releaseContext();
-	} else {
-#if 0
-	    /* Send color map to hardware */
-	    /* This code has yet to be tested */
-
-	    for (i = 0; i < 256; i++) {
-		color_cell[i].pixel = i;
-		color_cell[i].red = CMR(ifp)[i];
-		color_cell[i].green = CMG(ifp)[i];
-		color_cell[i].blue = CMB(ifp)[i];
-		color_cell[i].flags = DoRed | DoGreen | DoBlue;
-	    }
-	    XStoreColors(OSGL(ifp)->dispp, OSGL(ifp)->xcmap, color_cell, 256);
-#endif
+	osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+	if (SGI(ifp)->mi_doublebuffer) {
+	    OSGL(ifp)->glc->swapBuffers();
+	} else if (OSGL(ifp)->copy_flag) {
+	    backbuffer_to_screen(ifp, -1);
 	}
+
+	/* unattach context for other threads to use, also flushes */
+	OSGL(ifp)->glc->releaseContext();
     }
 
     return 0;
@@ -2465,6 +2452,7 @@ osgl_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), in
 {
     FB_CK_FB(ifp);
 
+    fb_log("osgl_setcursor\n");
     return 0;
 }
 
@@ -2472,6 +2460,8 @@ osgl_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), in
 HIDDEN int
 osgl_cursor(fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
+
+    fb_log("osgl_cursor\n");
 #if 0
     if (mode) {
 	register int xx, xy;
@@ -2549,6 +2539,7 @@ osgl_refresh(fb *ifp, int x, int y, int w, int h)
 	y -= h;
     }
 
+    fb_log("osgl_refresh\n");
 
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
@@ -2611,7 +2602,7 @@ fb osgl_interface =
     osgl_flush,		/* flush output */
     osgl_free,		/* free resources */
     osgl_help,		/* help message */
-    bu_strdup("Silicon Graphics OpenGL"),	/* device description */
+    bu_strdup("OpenSceneGraph OpenGL"),	/* device description */
     XMAXSCREEN+1,	/* max width */
     YMAXSCREEN+1,	/* max height */
     bu_strdup("/dev/osgl"),		/* short device name */
