@@ -60,6 +60,11 @@ FB_EXPORT extern fb remote_interface; /* not in list[] */
 FB_EXPORT extern fb debug_interface, disk_interface, stk_interface;
 FB_EXPORT extern fb memory_interface, null_interface;
 
+
+/* Shared memory (shmget et. al.) key common to multiple framebuffers */
+#define SHMEM_KEY 42
+
+
 __BEGIN_DECLS
 
 /**

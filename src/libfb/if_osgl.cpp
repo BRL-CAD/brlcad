@@ -68,7 +68,7 @@ extern "C" {
  * while some pieces of code were taken from OSG.
  * Thanks to company Cadwork (www.cadwork.ch) and
  * Brno University of Technology (www.fit.vutbr.cz) for open-sourcing this work.
-*/
+ */
 
 #include <osgGA/StandardManipulator>
 
@@ -658,10 +658,9 @@ osgl_cminit(register fb *ifp)
 HIDDEN int
 osgl_getmem(fb *ifp)
 {
-#define SHMEM_KEY 42
+    int shm_result;
     int pixsize;
     int size;
-    long psize = sysconf(_SC_PAGESIZE);
     int i;
     char *sp;
     int new_mem = 0;
@@ -699,29 +698,11 @@ osgl_getmem(fb *ifp)
 
     size = pixsize + sizeof(struct osgl_cmap);
 
-    /* make more portable
-    size = (size + getpagesize()-1) & ~(getpagesize()-1);
-    */
-    size = (size + psize - 1) & ~(psize - 1);
 
-    /* First try to attach to an existing one */
-    if ((SGI(ifp)->mi_shmid = shmget(SHMEM_KEY, size, 0)) < 0) {
-	/* No existing one, create a new one */
-	if ((SGI(ifp)->mi_shmid = shmget(
-		 SHMEM_KEY, size, IPC_CREAT|0666)) < 0) {
-	    fb_log("osgl_getmem: shmget failed, errno=%d\n", errno);
-	    goto fail;
-	}
-	new_mem = 1;
-    }
+    shm_result = bu_shmget(&(SGI(ifp)->mi_shmid), &sp, SHMEM_KEY, (size_t)size);
 
-    /* WWW this is unnecessary in this version? */
-    /* Open the segment Read/Write */
-    /* This gets mapped to a high address on some platforms, so no problem. */
-    if ((sp = (char *)shmat(SGI(ifp)->mi_shmid, 0, 0)) == (char *)(-1L)) {
-	fb_log("osgl_getmem: shmat returned x%x, errno=%d\n", sp, errno);
-	goto fail;
-    }
+    if (shm_result == 1) goto fail;
+    if (shm_result == -1) new_mem = 1;
 
 success:
     ifp->if_mem = sp;
@@ -816,13 +797,13 @@ osgl_clipper(register fb *ifp)
 	clp->ypixmin = 0;
     }
 
-    if (clp->xpixmax > ifp->if_width-1) {
-	clp->xpixmax = ifp->if_width-1;
+	if (clp->xpixmax > ifp->if_width-1) {
+	    clp->xpixmax = ifp->if_width-1;
+	}
+	if (clp->ypixmax > ifp->if_height-1) {
+	    clp->ypixmax = ifp->if_height-1;
+	}
     }
-    if (clp->ypixmax > ifp->if_height-1) {
-	clp->ypixmax = ifp->if_height-1;
-    }
-}
 
 
 HIDDEN void
@@ -881,8 +862,8 @@ expose_callback(fb *ifp)
 	/* clear whole buffer if window larger than framebuffer */
 	glViewport(0, 0, OSGL(ifp)->win_width,
 		OSGL(ifp)->win_height);
-	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
+	    glClearColor(0, 0, 0, 0);
+	    glClear(GL_COLOR_BUFFER_BIT);
 	/* center viewport */
 	glViewport(SGI(ifp)->mi_xoff,
 		   SGI(ifp)->mi_yoff,
@@ -1047,7 +1028,7 @@ osgl_do_event(fb *ifp)
  * Return NULL on failure.
  */
 #if 0
-    HIDDEN XVisualInfo *
+HIDDEN XVisualInfo *
 fb_osgl_choose_visual(fb *ifp)
 {
 
@@ -1262,15 +1243,15 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     /* Create a colormap for this visual */
 #if 0
     SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-    /* read only colormap */
-    if (CJDEBUG) {
-	printf("Allocating read-only colormap.");
-    }
+	/* read only colormap */
+	if (CJDEBUG) {
+	    printf("Allocating read-only colormap.");
+	}
     OSGL(ifp)->xcmap = XCreateColormap(OSGL(ifp)->dispp,
 	    RootWindow(OSGL(ifp)->dispp,
 		OSGL(ifp)->vip->screen),
 	    OSGL(ifp)->vip->visual,
-	    AllocNone);
+					  AllocNone);
 
     XSync(OSGL(ifp)->dispp, 0);
 #endif
@@ -1518,38 +1499,38 @@ fb_osgl_close(fb *ifp)
 	fb_log("case 2\n");
 	osgl_flush(ifp);
 
-	/* only the last open window can linger -
-	 * call final_close if not lingering
-	 */
+    /* only the last open window can linger -
+     * call final_close if not lingering
+     */
 	if (osgl_nwindows > 1 ||
-		(ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
+	(ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
 	    return osgl_final_close(ifp);
 
-	if (CJDEBUG)
+    if (CJDEBUG)
 	    printf("fb_osgl_close: remaining open to linger awhile.\n");
 
-	/*
-	 * else:
-	 *
-	 * LINGER mode.  Don't return to caller until user mouses "close"
-	 * menu item.  This may delay final processing in the calling
-	 * function for some time, but the assumption is that the user
-	 * wishes to compare this image with others.
-	 *
-	 * Since we plan to linger here, long after our invoker expected
-	 * us to be gone, be certain that no file descriptors remain open
-	 * to associate us with pipelines, network connections, etc., that
-	 * were ALREADY ESTABLISHED before the point that fb_open() was
-	 * called.
-	 *
-	 * The simple for i=0..20 loop will not work, because that smashes
-	 * some window-manager files.  Therefore, we content ourselves
-	 * with eliminating stdin, in the hopes that this will
-	 * successfully terminate any pipes or network connections.
-	 * Standard error/out may be used to print framebuffer debug
-	 * messages, so they're kept around.
-	 */
-	fclose(stdin);
+    /*
+     * else:
+     *
+     * LINGER mode.  Don't return to caller until user mouses "close"
+     * menu item.  This may delay final processing in the calling
+     * function for some time, but the assumption is that the user
+     * wishes to compare this image with others.
+     *
+     * Since we plan to linger here, long after our invoker expected
+     * us to be gone, be certain that no file descriptors remain open
+     * to associate us with pipelines, network connections, etc., that
+     * were ALREADY ESTABLISHED before the point that fb_open() was
+     * called.
+     *
+     * The simple for i=0..20 loop will not work, because that smashes
+     * some window-manager files.  Therefore, we content ourselves
+     * with eliminating stdin, in the hopes that this will
+     * successfully terminate any pipes or network connections.
+     * Standard error/out may be used to print framebuffer debug
+     * messages, so they're kept around.
+     */
+    fclose(stdin);
 
 	return (*OSGL(ifp)->viewer).ViewerBase::run();
     }
@@ -1673,7 +1654,7 @@ osgl_clear(fb *ifp, unsigned char *pp)
 	glClearColor(0, 0, 0, 0);
     }
 
-    glClear(GL_COLOR_BUFFER_BIT);
+	    glClear(GL_COLOR_BUFFER_BIT);
     OSGL(ifp)->glc->swapBuffers();
 
     /* unattach context for other threads to use */
@@ -1866,61 +1847,61 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 	}
 	return ret;
     } else {
-	size_t scan_count;	/* # pix on this scanline */
-	register unsigned char *cp;
-	ssize_t ret;
-	int ybase;
-	size_t pix_count;	/* # pixels to send */
-	register int x;
-	register int y;
+    size_t scan_count;	/* # pix on this scanline */
+    register unsigned char *cp;
+    ssize_t ret;
+    int ybase;
+    size_t pix_count;	/* # pixels to send */
+    register int x;
+    register int y;
 
 	if (CJDEBUG) printf("entering osgl_write\n");
 
-	/* fast exit cases */
-	pix_count = count;
-	if (pix_count == 0)
-	    return 0;	/* OK, no pixels transferred */
+    /* fast exit cases */
+    pix_count = count;
+    if (pix_count == 0)
+	return 0;	/* OK, no pixels transferred */
 
-	x = xstart;
-	ybase = y = ystart;
+    x = xstart;
+    ybase = y = ystart;
 
-	if (x < 0 || x >= ifp->if_width ||
-		y < 0 || y >= ifp->if_height)
-	    return -1;
+    if (x < 0 || x >= ifp->if_width ||
+	y < 0 || y >= ifp->if_height)
+	return -1;
 
-	ret = 0;
-	cp = (unsigned char *)(pixelp);
+    ret = 0;
+    cp = (unsigned char *)(pixelp);
 
-	while (pix_count) {
-	    size_t n;
+    while (pix_count) {
+	size_t n;
 	    register struct osgl_pixel *osglp;
 
-	    if (y >= ifp->if_height)
-		break;
+	if (y >= ifp->if_height)
+	    break;
 
-	    if (pix_count >= (size_t)(ifp->if_width-x))
-		scan_count = (size_t)(ifp->if_width-x);
-	    else
-		scan_count = pix_count;
+	if (pix_count >= (size_t)(ifp->if_width-x))
+	    scan_count = (size_t)(ifp->if_width-x);
+	else
+	    scan_count = pix_count;
 
 	    osglp = (struct osgl_pixel *)&ifp->if_mem[
 		(y*SGI(ifp)->mi_memwidth+x)*sizeof(struct osgl_pixel) ];
 
-	    n = scan_count;
-	    if ((n & 3) != 0) {
-		/* This code uses 60% of all CPU time */
-		while (n) {
-		    /* alpha channel is always zero */
+	n = scan_count;
+	if ((n & 3) != 0) {
+	    /* This code uses 60% of all CPU time */
+	    while (n) {
+		/* alpha channel is always zero */
 		    osglp->red   = cp[RED];
 		    osglp->green = cp[GRN];
 		    osglp->blue  = cp[BLU];
 		    osglp++;
-		    cp += 3;
-		    n--;
-		}
-	    } else {
-		while (n) {
-		    /* alpha channel is always zero */
+		cp += 3;
+		n--;
+	    }
+	} else {
+	    while (n) {
+		/* alpha channel is always zero */
 		    osglp[0].red   = cp[RED+0*3];
 		    osglp[0].green = cp[GRN+0*3];
 		    osglp[0].blue  = cp[BLU+0*3];
@@ -1934,36 +1915,36 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 		    osglp[3].green = cp[GRN+3*3];
 		    osglp[3].blue  = cp[BLU+3*3];
 		    osglp += 4;
-		    cp += 3*4;
-		    n -= 4;
-		}
+		cp += 3*4;
+		n -= 4;
 	    }
-	    ret += scan_count;
-	    pix_count -= scan_count;
-	    x = 0;
-	    if (++y >= ifp->if_height)
-		break;
 	}
+	ret += scan_count;
+	pix_count -= scan_count;
+	x = 0;
+	if (++y >= ifp->if_height)
+	    break;
+    }
 
 	if (!OSGL(ifp)->use_ext_ctrl) {
 
 	    OSGL(ifp)->glc->makeCurrent();
 
-	    if (xstart + count < (size_t)ifp->if_width) {
+	if (xstart + count < (size_t)ifp->if_width) {
 		osgl_xmit_scanlines(ifp, ybase, 1, xstart, count);
 		OSGL(ifp)->glc->swapBuffers();
-	    } else {
-		/* Normal case -- multi-pixel write */
+	} else {
+	    /* Normal case -- multi-pixel write */
 		osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
 		OSGL(ifp)->glc->swapBuffers();
-	    }
-	    glFlush();
-
-	    /* unattach context for other threads to use */
-	    OSGL(ifp)->glc->releaseContext();
 	}
+	glFlush();
 
-	return ret;
+	/* unattach context for other threads to use */
+	    OSGL(ifp)->glc->releaseContext();
+    }
+
+    return ret;
     }
     return 0;
 }
@@ -2112,17 +2093,17 @@ osgl_wmap(register fb *ifp, register const ColorMap *cmp)
 
 
     if (!OSGL(ifp)->use_ext_ctrl) {
-	/* if current and previous maps are linear, return */
-	if (SGI(ifp)->mi_cmap_flag == 0 && prev == 0) return 0;
+	    /* if current and previous maps are linear, return */
+	    if (SGI(ifp)->mi_cmap_flag == 0 && prev == 0) return 0;
 
-	/* Software color mapping, trigger a repaint */
+	    /* Software color mapping, trigger a repaint */
 
 	OSGL(ifp)->glc->makeCurrent();
 
 	osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
 	OSGL(ifp)->glc->swapBuffers();
 
-	/* unattach context for other threads to use, also flushes */
+	    /* unattach context for other threads to use, also flushes */
 	OSGL(ifp)->glc->releaseContext();
     }
 

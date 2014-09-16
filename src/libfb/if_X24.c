@@ -82,9 +82,6 @@
 #include "fb/fb_X.h"
 
 
-#define SHMEM_KEY 42
-
-
 /*
  * Per window state information.
  */

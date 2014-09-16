@@ -527,13 +527,12 @@ ogl_cminit(register fb *ifp)
 HIDDEN int
 ogl_getmem(fb *ifp)
 {
-#define SHMEM_KEY 42
     int pixsize;
     int size;
-    long psize = sysconf(_SC_PAGESIZE);
     int i;
     char *sp;
     int new_mem = 0;
+    int shm_result = 0;
 
     errno = 0;
 
@@ -567,29 +566,11 @@ ogl_getmem(fb *ifp)
 
     size = pixsize + sizeof(struct ogl_cmap);
 
-    /* make more portable
-    size = (size + getpagesize()-1) & ~(getpagesize()-1);
-    */
-    size = (size + psize - 1) & ~(psize - 1);
 
-    /* First try to attach to an existing one */
-    if ((SGI(ifp)->mi_shmid = shmget(SHMEM_KEY, size, 0)) < 0) {
-	/* No existing one, create a new one */
-	if ((SGI(ifp)->mi_shmid = shmget(
-		 SHMEM_KEY, size, IPC_CREAT|0666)) < 0) {
-	    fb_log("ogl_getmem: shmget failed, errno=%d\n", errno);
-	    goto fail;
-	}
-	new_mem = 1;
-    }
+    shm_result = bu_shmget(&(SGI(ifp)->mi_shmid), &sp, SHMEM_KEY, (size_t)size);
 
-    /* WWW this is unnecessary in this version? */
-    /* Open the segment Read/Write */
-    /* This gets mapped to a high address on some platforms, so no problem. */
-    if ((sp = (char *)shmat(SGI(ifp)->mi_shmid, 0, 0)) == (char *)(-1L)) {
-	fb_log("ogl_getmem: shmat returned x%x, errno=%d\n", sp, errno);
-	goto fail;
-    }
+    if (shm_result == 1) goto fail;
+    if (shm_result == -1) new_mem = 1;
 
 success:
     ifp->if_mem = sp;
