@@ -819,14 +819,14 @@ addmembers:
 
 	/* insert new member at end */
 	switch (relation) {
-	case '+':
+	case DB_OP_INTERSECT:
 	    tree_list[curr_count].tl_op = OP_INTERSECT;
 	    break;
-	case '-':
+	case DB_OP_SUBTRACT:
 	    tree_list[curr_count].tl_op = OP_SUBTRACT;
 	    break;
 	default:
-	    if (relation != 'u') {
+	    if (relation != DB_OP_UNION) {
 		bu_vls_printf(gedp->ged_result_str, "unrecognized relation (assume UNION)\n");
 	    }
 	    tree_list[curr_count].tl_op = OP_UNION;

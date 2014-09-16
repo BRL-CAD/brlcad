@@ -2607,18 +2607,18 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 	    }
 	    break;
 
-	case 'u':
+	case DB_OP_UNION:
 	    /* Binary: Union: {u {lhs} {rhs}} */
 	    RT_GET_TREE(tp, resp);
 	    tp->tr_b.tb_op = OP_UNION;
 	    goto binary;
 	case 'n':
-	case '+':
+	case DB_OP_INTERSECT:
 	    /* Binary: Intersection */
 	    RT_GET_TREE(tp, resp);
 	    tp->tr_b.tb_op = OP_INTERSECT;
 	    goto binary;
-	case '-':
+	case DB_OP_SUBTRACT:
 	    /* Binary: Union */
 	    RT_GET_TREE(tp, resp);
 	    tp->tr_b.tb_op = OP_SUBTRACT;

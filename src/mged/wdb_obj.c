@@ -275,15 +275,15 @@ wdb_add_operator(Tcl_Interp *interp, struct bu_list *hp, char ch, short int *las
     BU_CK_LIST_HEAD(hp);
 
     switch (ch) {
-	case 'u':
+	case DB_OP_UNION:
 	    wdb_append_union(hp);
 	    *last_tok = WDB_TOK_UNION;
 	    break;
-	case '+':
+	case DB_OP_INTERSECT:
 	    wdb_append_inter(hp);
 	    *last_tok = WDB_TOK_INTER;
 	    break;
-	case '-':
+	case DB_OP_SUBTRACT:
 	    wdb_append_subtr(hp);
 	    *last_tok = WDB_TOK_SUBTR;
 	    break;
@@ -1406,14 +1406,14 @@ wdb_combadd(struct db_i *dbip,
 
     /* insert new member at end */
     switch (relation) {
-	case '+':
+	case DB_OP_INTERSECT:
 	    tree_list[node_count - 1].tl_op = OP_INTERSECT;
 	    break;
-	case '-':
+	case DB_OP_SUBTRACT:
 	    tree_list[node_count - 1].tl_op = OP_SUBTRACT;
 	    break;
 	default:
-	    if (relation != 'u') {
+	    if (relation != DB_OP_UNION) {
 		bu_log("unrecognized relation (assume UNION)\n");
 	    }
 	    tree_list[node_count - 1].tl_op = OP_UNION;
@@ -6618,13 +6618,13 @@ wdb_list_children(struct rt_wdb *wdbp,
 
 	    switch (rt_tree_array[i].tl_op) {
 		case OP_UNION:
-		    op = 'u';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_INTERSECT:
-		    op = '+';
+		    op = DB_OP_INTERSECT;
 		    break;
 		case OP_SUBTRACT:
-		    op = '-';
+		    op = DB_OP_SUBTRACT;
 		    break;
 		default:
 		    op = '?';
@@ -6821,13 +6821,13 @@ wdb_print_node(struct rt_wdb *wdbp,
 
 	    switch (rt_tree_array[i].tl_op) {
 		case OP_UNION:
-		    op = 'u';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_INTERSECT:
-		    op = '+';
+		    op = DB_OP_INTERSECT;
 		    break;
 		case OP_SUBTRACT:
-		    op = '-';
+		    op = DB_OP_SUBTRACT;
 		    break;
 		default:
 		    op = '?';

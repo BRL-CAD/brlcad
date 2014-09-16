@@ -198,14 +198,13 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	    new_tree->tr_b.tb_right = bev_facetize_tree;
 
 	    switch (op) {
-		case 'u':
-		case 'U':
+		case DB_OP_UNION:
 		    new_tree->tr_op = OP_UNION;
 		    break;
-		case '-':
+		case DB_OP_SUBTRACT:
 		    new_tree->tr_op = OP_SUBTRACT;
 		    break;
-		case '+':
+		case DB_OP_INTERSECT:
 		    new_tree->tr_op = OP_INTERSECT;
 		    break;
 		default: {

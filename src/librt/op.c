@@ -30,7 +30,7 @@
 db_op_t
 db_str2op(const char *str)
 {
-    char ret = '\0';
+    db_op_t ret = DB_OP_NULL;
 
     if (!str || str[0] == '\0')
 	return (db_op_t)ret;
@@ -39,16 +39,16 @@ db_str2op(const char *str)
 	/* single byte/char */
 	switch (str[0]) {
 	    case 'u':
-		ret = 'u';
+		ret = DB_OP_UNION;
 		break;
 	    case '-':
 	    case '\\':
-		ret = '-';
+		ret = DB_OP_SUBTRACT;
 		break;
 	    case '+':
 	    case 'n':
 	    case 'x':
-		ret = '+';
+		ret = DB_OP_INTERSECT;
 		break;
 	}
     } else {
@@ -58,7 +58,7 @@ db_str2op(const char *str)
 		   || ((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x8B && (unsigned char)str[2] == 0x83) /* n-ary union */
 	    )
 	{
-	    ret = 'u';
+	    ret = DB_OP_UNION;
 	} else if (((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x80 && (unsigned char)str[2] > 0x89 && (unsigned char)str[2] < 0x96)
 	    /* first check matches unicode symbol variants starting
 	     * with hyphen, non-breaking hypen, figure dash, en dash,
@@ -72,17 +72,17 @@ db_str2op(const char *str)
 	    || ((unsigned char)str[0] == 0xCB && (unsigned char)str[1] == 0x97) /* utf-16, modifier minus sign */
 	    )
 	{
-	    ret = '-';
+	    ret = DB_OP_SUBTRACT;
 	} else if (((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x88 && (unsigned char)str[2] == 0xA9) /* intersection symbol */
 		   || ((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x8B && (unsigned char)str[2] == 0x82) /* n-ary intersection */
 		   || ((unsigned char)str[0] == 0xCB && (unsigned char)str[1] == 0x96) /* utf-16, modifier plus sign */
 		   || ((unsigned char)str[0] == 0xC3 && (unsigned char)str[1] == 0x97) /* utf-16, multiplication sign */
 	    )
 	{
-	    ret = '+';
+	    ret = DB_OP_INTERSECT;
 	}
     }
-    return (db_op_t)ret;
+    return ret;
 }
 
 

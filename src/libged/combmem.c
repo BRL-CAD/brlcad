@@ -395,13 +395,13 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 
 	switch (rt_tree_array[i].tl_op) {
 	    case OP_INTERSECT:
-		op = '+';
+		op = DB_OP_INTERSECT;
 		break;
 	    case OP_SUBTRACT:
-		op = '-';
+		op = DB_OP_SUBTRACT;
 		break;
 	    case OP_UNION:
-		op = 'u';
+		op = DB_OP_UNION;
 		break;
 	    default:
 		bu_bomb("combmem_get() corrupt rt_tree_array");
@@ -440,15 +440,15 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	\
 	/* Add it to the combination */ \
 	switch ((_op)) { \
-	    case '+': \
+	    case DB_OP_INTERSECT: \
 		(_rt_tree_array)[(_tree_index)].tl_op = OP_INTERSECT; \
 		break; \
-	    case '-': \
+	    case DB_OP_SUBTRACT: \
 		(_rt_tree_array)[(_tree_index)].tl_op = OP_SUBTRACT; \
 		break; \
 	    default: \
 		bu_vls_printf((_gedp)->ged_result_str, "combmem_set: unrecognized relation (assume UNION)\n"); \
-	    case 'u': \
+	    case DB_OP_UNION: \
 		(_rt_tree_array)[(_tree_index)].tl_op = OP_UNION; \
 		break; \
 	} \
