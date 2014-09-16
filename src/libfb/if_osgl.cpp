@@ -719,137 +719,6 @@ osgl_do_event(fb *ifp)
 #endif
 }
 
-
-/**
- * Select an appropriate visual, and set flags.
- *
- * The user requires support for:
- *    	-OpenGL rendering in RGBA mode
- *
- * The user may desire support for:
- *	-a single-buffered OpenGL context
- *	-a double-buffered OpenGL context
- *	-hardware colormapping (DirectColor)
- *
- * We first try to satisfy all requirements and desires. If that
- * fails, we remove the desires one at a time until we succeed or
- * until only requirements are left. If at any stage more than one
- * visual meets the current criteria, the visual with the greatest
- * depth is chosen.
- *
- * The following flags are set:
- * SGI(ifp)->mi_doublebuffer
- *
- * Return NULL on failure.
- */
-#if 0
-HIDDEN XVisualInfo *
-fb_osgl_choose_visual(fb *ifp)
-{
-
-    XVisualInfo *vip, *vibase, *maxvip, _template;
-#define NGOOD 200
-    int good[NGOOD];
-    int num, i, j;
-    int m_hard_cmap, m_sing_buf, m_doub_buf;
-    int use, rgba, dbfr;
-
-    m_hard_cmap = ((ifp->if_mode & MODE_7MASK)==MODE_7NORMAL);
-    m_sing_buf  = ((ifp->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
-    m_doub_buf =  !m_sing_buf;
-
-    memset((void *)&_template, 0, sizeof(XVisualInfo));
-
-    /* get a list of all visuals on this display */
-    vibase = XGetVisualInfo(OSGL(ifp)->dispp, 0, &_template, &num);
-    while (1) {
-
-	/* search for all visuals matching current criteria */
-	for (i = 0, j = 0, vip=vibase; i < num; i++, vip++) {
-	    /* requirements */
-	    glXGetConfig(OSGL(ifp)->dispp, vip, GLX_USE_GL, &use);
-	    if (!use) {
-		continue;
-	    }
-	    glXGetConfig(OSGL(ifp)->dispp, vip, GLX_RGBA, &rgba);
-	    if (!rgba) {
-		continue;
-	    }
-	    /* desires */
-	    /* X_CreateColormap needs a DirectColor visual */
-	    /* There should be some way of handling this with TrueColor,
-	     * for example:
-	     visual id:    0x50
-	     class:    TrueColor
-	     depth:    24 planes
-	     available colormap entries:    256 per subfield
-	     red, green, blue masks:    0xff0000, 0xff00, 0xff
-	     significant bits in color specification:    8 bits
-	    */
-	    if ((m_hard_cmap) && (vip->class != DirectColor)) {
-		continue;
-	    }
-	    if ((m_hard_cmap) && (vip->colormap_size < 256)) {
-		continue;
-	    }
-	    glXGetConfig(OSGL(ifp)->dispp, vip, GLX_DOUBLEBUFFER, &dbfr);
-	    if ((m_doub_buf) && (!dbfr)) {
-		continue;
-	    }
-	    if ((m_sing_buf) && (dbfr)) {
-		continue;
-	    }
-
-	    /* this visual meets criteria */
-	    if (j >= NGOOD-1) {
-		fb_log("fb_osgl_open:  More than %d candidate visuals!\n", NGOOD);
-		break;
-	    }
-	    good[j++] = i;
-	}
-
-	/* from list of acceptable visuals,
-	 * choose the visual with the greatest depth */
-	if (j >= 1) {
-	    maxvip = vibase + good[0];
-	    for (i = 1; i < j; i++) {
-		vip = vibase + good[i];
-		if (vip->depth > maxvip->depth) {
-		    maxvip = vip;
-		}
-	    }
-	    /* set flags and return choice */
-	    SGI(ifp)->mi_doublebuffer = m_doub_buf;
-	    return maxvip;
-	}
-
-	/* if no success at this point,
-	 * relax one of the criteria and try again.
-	 */
-	if (m_hard_cmap) {
-	    /* relax hardware colormap requirement */
-	    m_hard_cmap = 0;
-	    fb_log("fb_osgl_open: hardware colormapping not available. Using software colormap.\n");
-	} else if (m_sing_buf) {
-	    /* relax single buffering requirement.
-	     * no need for any warning - we'll just use
-	     * the front buffer
-	     */
-	    m_sing_buf = 0;
-	} else if (m_doub_buf) {
-	    /* relax double buffering requirement. */
-	    m_doub_buf = 0;
-	    fb_log("fb_osgl_open: double buffering not available. Using single buffer.\n");
-	} else {
-	    /* nothing else to relax */
-	    return NULL;
-	}
-
-    }
-
-}
-#endif
-
 /**
  * Check for a color map being linear in R, G, and B.  Returns 1 for
  * linear map, 0 for non-linear map (i.e., non-identity map).
@@ -876,32 +745,7 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 #if 0
     static char title[128];
 
-    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
-
-    // Although we are not making direct use of osgViewer currently, we need its
-    // initialization to make sure we have all the libraries we need loaded and
-    // ready.  TODO Investigate whether GraphicsWindowEmbedded (specifically the version
-    // that takes osg::GraphicsContext::Traits *traits as an argument) would work
-    // better than a raw createGraphicsContext.
-    osgViewer::Viewer *viewer = new osgViewer::Viewer();
-    delete viewer;
-
-    FB_CK_FB(ifp);
-
-    // Setup the traits parameters
-    traits->x = 0;
-    traits->y = 0;
-    traits->depth = 24;
-    traits->windowDecoration = true;
-    traits->doubleBuffer = true;
-    traits->sharedContext = 0;
-
-    /*
-     * Allocate extension memory sections,
-     * addressed by SGI(ifp)->mi_xxx and OSGL(ifp)->xxx
-     */
-
-    if ((SGIL(ifp) = (char *)calloc(1, sizeof(struct sgiinfo))) == NULL) {
+   if ((SGIL(ifp) = (char *)calloc(1, sizeof(struct sgiinfo))) == NULL) {
 	fb_log("fb_osgl_open:  sgiinfo malloc failed\n");
 	return -1;
     }
@@ -910,22 +754,6 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 	return -1;
     }
     SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
-
-    /* use defaults if invalid width and height specified */
-    if (width <= 0)
-	width = ifp->if_width;
-    if (height <= 0)
-	height = ifp->if_height;
-    /* use max values if width and height are greater */
-    if (width > ifp->if_max_width)
-	width = ifp->if_max_width;
-    if (height > ifp->if_max_height)
-	height = ifp->if_max_height;
-
-    ifp->if_width = width;
-    ifp->if_height = height;
-    traits->width = ifp->if_width;
-    traits->height = ifp->if_height;
 
     OSGL(ifp)->cursor_on = 1;
 
@@ -996,19 +824,38 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 	return -1;
     }
 
+    /* use defaults if invalid width and height specified */
     if (width > 0)
 	ifp->if_width = width;
     if (height > 0)
 	ifp->if_height = height;
 
+    /* use max values if width and height are greater */
+    if (width > ifp->if_max_width)
+	ifp->if_width = ifp->if_max_width;
+    if (height > ifp->if_max_height)
+	ifp->if_height = ifp->if_max_height;
+
+    /* initialize window state variables before calling osgl_getmem */
+    ifp->if_zoomflag = 0;
+    ifp->if_xzoom = 1;	/* for zoom fakeout */
+    ifp->if_yzoom = 1;	/* for zoom fakeout */
+    ifp->if_xcenter = width/2;
+    ifp->if_ycenter = height/2;
+    SGI(ifp)->mi_pid = bu_process_id();
+
+    /* Attach to shared memory, potentially with a screen repaint */
+    if (osgl_getmem(ifp) < 0)
+	return -1;
+
     OSGL(ifp)->timer = new osg::Timer;
     OSGL(ifp)->last_update_time = 0;
 
     OSGL(ifp)->viewer = new osgViewer::Viewer();
-    OSGL(ifp)->viewer->setUpViewInWindow(0, 0, width, height);
+    OSGL(ifp)->viewer->setUpViewInWindow(0, 0, ifp->if_width, ifp->if_height);
 
     OSGL(ifp)->image = new osg::Image;
-    OSGL(ifp)->image->allocateImage(width, height, 1, GL_RGB, GL_UNSIGNED_BYTE);
+    OSGL(ifp)->image->setImage(ifp->if_width, ifp->if_height, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)ifp->if_mem, osg::Image::NO_DELETE);
     OSGL(ifp)->image->setPixelBufferObject(new osg::PixelBufferObject(OSGL(ifp)->image));
     OSGL(ifp)->pictureQuad = osg::createTexturedQuadGeometry(osg::Vec3(0.0f,0.0f,0.0f),
 	    osg::Vec3(ifp->if_width,0.0f,0.0f), osg::Vec3(0.0f,0.0f, ifp->if_height), 0.0f, 0.0, OSGL(ifp)->image->s(), OSGL(ifp)->image->t());
@@ -1028,8 +875,8 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 
     camera->setViewMatrix(osg::Matrix::identity());
     osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
-    osg::Vec3 bottomright(width, height, 0.0f);
-    camera->setProjectionMatrixAsOrtho2D(-width/2,width/2,-height/2, height/2);
+    osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
+    camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
     camera->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
 
     OSGL(ifp)->viewer->setSceneData(geode);
