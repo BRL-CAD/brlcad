@@ -339,37 +339,7 @@ osgl_cminit(register fb *ifp)
 }
 
 
-/************************************************************************/
 /******************* Shared Memory Support ******************************/
-/************************************************************************/
-
-/**
- * not changed from sgi_getmem.
- *
- * Because there is no hardware zoom or pan, we need to repaint the
- * screen (with big pixels) to implement these operations.  This means
- * that the actual "contents" of the frame buffer need to be stored
- * somewhere else.  If possible, we allocate a shared memory segment
- * to contain that image.  This has several advantages, the most
- * important being that when operating the display in 12-bit output
- * mode, pixel-readbacks still give the full 24-bits of color.  System
- * V shared memory persists until explicitly killed, so this also
- * means that in MEX mode, the previous contents of the frame buffer
- * still exist, and can be again accessed, even though the MEX windows
- * are transient, per-process.
- *
- * There are a few oddities, however.  The worst is that System V will
- * not allow the break (see sbrk(2)) to be set above a shared memory
- * segment, and shmat(2) does not seem to allow the selection of any
- * reasonable memory address (like 6 Mbytes up) for the shared memory.
- * In the initial version of this routine, that prevented subsequent
- * calls to malloc() from succeeding, quite a drawback.  The
- * work-around used here is to increase the current break to a large
- * value, attach to the shared memory, and then return the break to
- * its original value.  This should allow most reasonable requests for
- * memory to be satisfied.  In special cases, the values used here
- * might need to be increased.
- */
 HIDDEN int
 osgl_getmem(fb *ifp)
 {
