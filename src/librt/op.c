@@ -33,7 +33,7 @@ db_str2op(const char *str)
     char ret = '\0';
 
     if (!str || str[0] == '\0')
-	return ret;
+	return (db_op_t)ret;
 
     if (isprint(str[0])) {
 	/* single byte/char */
@@ -82,7 +82,7 @@ db_str2op(const char *str)
 	    ret = '+';
 	}
     }
-    return ret;
+    return (db_op_t)ret;
 }
 
 
