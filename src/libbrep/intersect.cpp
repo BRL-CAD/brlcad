@@ -1230,7 +1230,20 @@ ON_Intersect(const ON_Curve *curveA,
 	    ON_Line lineA(curveA->PointAt(i->first->m_t.Min()), curveA->PointAt(i->first->m_t.Max()));
 	    ON_Line lineB(curveB->PointAt(i->second->m_t.Min()), curveB->PointAt(i->second->m_t.Max()));
 	    if (lineA.Direction().IsParallelTo(lineB.Direction())) {
-		if (lineA.MinimumDistanceTo(lineB) < isect_tol) {
+		double min_dist = lineA.MinimumDistanceTo(lineB);
+
+		if (min_dist >= isect_tol) {
+		    // min_dist may not be accurate if endpoints are collinear
+		    double d1 = lineA.from.DistanceTo(lineB.from);
+		    double d2 = lineA.from.DistanceTo(lineB.to);
+		    double d3 = lineA.to.DistanceTo(lineB.from);
+		    double d4 = lineA.to.DistanceTo(lineB.to);
+
+		    min_dist = std::min(min_dist, std::min(d1, std::min(d2,
+				    std::min(d3, d4))));
+		}
+
+		if (min_dist < isect_tol) {
 		    // curves lie on the same line, may be single
 		    // point intersection or overlap
 		    double t_a1, t_a2, t_b1, t_b2;
