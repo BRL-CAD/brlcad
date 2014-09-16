@@ -131,6 +131,7 @@ if(BRLCAD_FREETYPE_BUILD)
   set(FREETYPE_INCLUDE_DIRS "${FREETYPE_INCLUDE_DIR}" CACHE STRING "Directory containing FreeType headers." FORCE)
   set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
 endif(BRLCAD_FREETYPE_BUILD)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/freetype/include/ftconfig.h)
 
 # --------------------------------------------------------------------
 # The incrtTcl subdirectory isn't directly referenced, but its
