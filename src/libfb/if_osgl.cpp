@@ -494,15 +494,13 @@ osgl_clipper(register fb *ifp)
 HIDDEN void
 expose_callback(fb *ifp)
 {
-    //XWindowAttributes xwa;
-    struct osgl_clip *clp;
 
-    fb_log("expose_callback\n");
     if (CJDEBUG) fb_log("entering expose_callback()\n");
 
     OSGL(ifp)->glc->makeCurrent();
 
     if (OSGL(ifp)->firstTime) {
+	struct osgl_clip *clp;
 
 	OSGL(ifp)->firstTime = 0;
 
@@ -601,6 +599,8 @@ osgl_configureWindow(fb *ifp, int width, int height)
 
     osgl_getmem(ifp);
     osgl_clipper(ifp);
+
+    glViewport(0, 0, OSGL(ifp)->win_width, OSGL(ifp)->win_height);
     return 0;
 }
 
