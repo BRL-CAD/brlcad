@@ -394,7 +394,6 @@ struct sgiinfo {
     short mi_yoff;		/* Y viewport offset, rel. window*/
     int mi_pid;			/* for multi-cpu check */
     int mi_parent;		/* PID of linger-mode process */
-    int mi_doublebuffer;	/* 0=singlebuffer 1=doublebuffer */
     struct osgl_pixel mi_scanline[XMAXSCREEN+1];	/* one scanline */
 };
 
@@ -417,8 +416,6 @@ struct osglinfo {
     int firstTime;
     int alive;
     long event_mask;		/* event types to be received */
-    short front_flag;		/* front buffer being used (b-mode) */
-    short copy_flag;		/* pan and zoom copied from backbuffer */
     int cmap_size;		/* hardware colormap size */
     int win_width;		/* actual window width */
     int win_height;		/* actual window height */
@@ -458,7 +455,6 @@ struct osglinfo {
  * TRANSIENT -vs- LINGERING windows
  * Windowed -vs- Centered Full screen
  * Suppress dither -vs- dither
- * Double -vs- Single buffered
  * DrawPixels -vs- CopyPixels
  */
 #define MODE_1MASK	(1<<0)
@@ -477,17 +473,6 @@ struct osglinfo {
 #define MODE_7NORMAL	(0<<6)	/* install colormap in hardware if possible*/
 #define MODE_7SWCMAP	(1<<6)	/* use software colormapping */
 
-#define MODE_9MASK	(1<<8)
-#define MODE_9NORMAL	(0<<8)	/* doublebuffer if possible */
-#define MODE_9SINGLEBUF	(1<<8)	/* singlebuffer only */
-
-#define MODE_11MASK	(1<<10)
-#define MODE_11NORMAL	(0<<10)	/* always draw from mem. to window*/
-#define MODE_11COPY	(1<<10)	/* keep full image on back buffer */
-
-#define MODE_12MASK	(1<<11)
-#define MODE_12NORMAL	(0<<11)
-#define MODE_12DELAY_WRITES_TILL_FLUSH	(1<<11)
 /* and copy current view to front */
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
@@ -509,94 +494,11 @@ HIDDEN struct modeflags {
       "Suppress dithering - else dither if not 24-bit buffer" },
     { 'c',	MODE_7MASK, MODE_7SWCMAP,
       "Perform software colormap - else use hardware colormap if possible" },
-    { 's',	MODE_9MASK, MODE_9SINGLEBUF,
-      "Single buffer -  else double buffer if possible" },
-    { 'b',	MODE_11MASK, MODE_11COPY,
-      "Fast pan and zoom using backbuffer copy -  else normal " },
-    { 'D',	MODE_12DELAY_WRITES_TILL_FLUSH, MODE_12DELAY_WRITES_TILL_FLUSH,
-      "Don't update screen until fb_flush() is called.  (Double buffer sim)" },
     { 'z',	MODE_15MASK, MODE_15ZAP,
       "Zap (free) shared memory.  Can also be done with fbfree command" },
     { '\0', 0, 0, "" }
 };
 #endif
-
-/* BACKBUFFER_TO_SCREEN - copy pixels from copy on the backbuffer to
- * the front buffer. Do one scanline specified by one_y, or whole
- * screen if one_y equals -1.
- */
-HIDDEN void
-backbuffer_to_screen(register fb *ifp, int one_y)
-{
-    struct osgl_clip *clp;
-
-    fb_log("backbuffer_to_screen\n");
-
-    if (!(OSGL(ifp)->front_flag)) {
-	OSGL(ifp)->front_flag = 1;
-	glDrawBuffer(GL_FRONT);
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
-    }
-
-    clp = &(OSGL(ifp)->clip);
-
-    if (one_y > clp->ypixmax) {
-	return;
-    } else if (one_y < 0) {
-	/* do whole visible screen */
-
-	/* Blank out area left of image */
-	glColor3b(0, 0, 0);
-	if (clp->xscrmin < 0) glRecti(clp->xscrmin - CLIP_XTRA,
-				      clp->yscrmin - CLIP_XTRA,
-				      CLIP_XTRA,
-				      clp->yscrmax + CLIP_XTRA);
-
-	/* Blank out area below image */
-	if (clp->yscrmin < 0) glRecti(clp->xscrmin - CLIP_XTRA,
-				      clp->yscrmin - CLIP_XTRA,
-				      clp->xscrmax + CLIP_XTRA,
-				      CLIP_XTRA);
-
-	/* We are in copy mode, so we use vp_width rather
-	 * than if_width
-	 */
-	/* Blank out area right of image */
-	if (clp->xscrmax >= OSGL(ifp)->vp_width) glRecti(ifp->if_width - CLIP_XTRA,
-							clp->yscrmin - CLIP_XTRA,
-							clp->xscrmax + CLIP_XTRA,
-							clp->yscrmax + CLIP_XTRA);
-
-	/* Blank out area above image */
-	if (clp->yscrmax >= OSGL(ifp)->vp_height) glRecti(clp->xscrmin - CLIP_XTRA,
-							 OSGL(ifp)->vp_height - CLIP_XTRA,
-							 clp->xscrmax + CLIP_XTRA,
-							 clp->yscrmax + CLIP_XTRA);
-
-	/* copy image from backbuffer */
-	glRasterPos2i(clp->xpixmin, clp->ypixmin);
-	glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
-		     SGI(ifp)->mi_yoff + clp->ypixmin,
-		     clp->xpixmax - clp->xpixmin +1,
-		     clp->ypixmax - clp->ypixmin +1,
-		     GL_COLOR);
-
-
-    } else if (one_y < clp->ypixmin) {
-	return;
-    } else {
-	/* draw one scanline */
-	glRasterPos2i(clp->xpixmin, one_y);
-	glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
-		     SGI(ifp)->mi_yoff + one_y,
-		     clp->xpixmax - clp->xpixmin +1,
-		     1,
-		     GL_COLOR);
-    }
-}
-
 
 /*
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
@@ -634,7 +536,6 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
 	nlines = clp->ypixmax - ybase + 1;
 
     if (!OSGL(ifp)->use_ext_ctrl) {
-	if (!OSGL(ifp)->copy_flag) {
 	    /*
 	     * Blank out areas of the screen around the image, if
 	     * exposed.  In COPY mode, this is done in
@@ -666,20 +567,6 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
 							clp->xscrmax + CLIP_XTRA,
 							clp->yscrmax + CLIP_XTRA);
 
-	} else if (OSGL(ifp)->front_flag) {
-	    /* in COPY mode, always draw full sized image into backbuffer.
-	     * backbuffer_to_screen() is used to update the front buffer
-	     */
-	    glDrawBuffer(GL_BACK);
-	    OSGL(ifp)->front_flag = 0;
-	    glMatrixMode(GL_PROJECTION);
-	    glPushMatrix();	/* store current view clipping matrix*/
-	    glLoadIdentity();
-	    glOrtho(-0.25, ((GLdouble) OSGL(ifp)->vp_width)-0.25,
-		    -0.25, ((GLdouble) OSGL(ifp)->vp_height)-0.25,
-		    -1.0, 1.0);
-	    glPixelZoom(1.0, 1.0);
-	}
     }
 
     if (sw_cmap) {
@@ -929,26 +816,12 @@ osgl_clipper(register fb *ifp)
 	clp->ypixmin = 0;
     }
 
-    /* In copy mode, the backbuffer copy image is limited
-     * to the viewport size; use that for clipping.
-     * Otherwise, use size of framebuffer memory segment
-     */
-    if (OSGL(ifp)->copy_flag) {
-	if (clp->xpixmax > OSGL(ifp)->vp_width-1) {
-	    clp->xpixmax = OSGL(ifp)->vp_width-1;
-	}
-	if (clp->ypixmax > OSGL(ifp)->vp_height-1) {
-	    clp->ypixmax = OSGL(ifp)->vp_height-1;
-	}
-    } else {
-	if (clp->xpixmax > ifp->if_width-1) {
-	    clp->xpixmax = ifp->if_width-1;
-	}
-	if (clp->ypixmax > ifp->if_height-1) {
-	    clp->ypixmax = ifp->if_height-1;
-	}
+    if (clp->xpixmax > ifp->if_width-1) {
+	clp->xpixmax = ifp->if_width-1;
     }
-
+    if (clp->ypixmax > ifp->if_height-1) {
+	clp->ypixmax = ifp->if_height-1;
+    }
 }
 
 
@@ -967,33 +840,9 @@ expose_callback(fb *ifp)
 
 	OSGL(ifp)->firstTime = 0;
 
-	/* just in case the configuration is double buffered but
-	 * we want to pretend it's not
-	 */
-
-	if (!SGI(ifp)->mi_doublebuffer) {
-	    glDrawBuffer(GL_FRONT);
-	}
-
 	if ((ifp->if_mode & MODE_4MASK) == MODE_4NODITH) {
 	    glDisable(GL_DITHER);
 	}
-
-	/* set copy mode if possible and requested */
-	if (SGI(ifp)->mi_doublebuffer &&
-	    ((ifp->if_mode & MODE_11MASK)==MODE_11COPY)) {
-	    /* Copy mode only works if there are two
-	     * buffers to use. It conflicts with
-	     * double buffering
-	     */
-	    OSGL(ifp)->copy_flag = 1;
-	    SGI(ifp)->mi_doublebuffer = 0;
-	    OSGL(ifp)->front_flag = 1;
-	    glDrawBuffer(GL_FRONT);
-	} else {
-	    OSGL(ifp)->copy_flag = 0;
-	}
-
 
 	/* clear entire window */
 	glViewport(0, 0, OSGL(ifp)->win_width, OSGL(ifp)->win_height);
@@ -1030,19 +879,10 @@ expose_callback(fb *ifp)
     } else if ((OSGL(ifp)->win_width > ifp->if_width) ||
 	       (OSGL(ifp)->win_height > ifp->if_height)) {
 	/* clear whole buffer if window larger than framebuffer */
-	if (OSGL(ifp)->copy_flag && !OSGL(ifp)->front_flag) {
-	    glDrawBuffer(GL_FRONT);
-	    glViewport(0, 0, OSGL(ifp)->win_width,
-		       OSGL(ifp)->win_height);
-	    glClearColor(0, 0, 0, 0);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	    glDrawBuffer(GL_BACK);
-	} else {
-	    glViewport(0, 0, OSGL(ifp)->win_width,
-		       OSGL(ifp)->win_height);
-	    glClearColor(0, 0, 0, 0);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	}
+	glViewport(0, 0, OSGL(ifp)->win_width,
+		OSGL(ifp)->win_height);
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
 	/* center viewport */
 	glViewport(SGI(ifp)->mi_xoff,
 		   SGI(ifp)->mi_yoff,
@@ -1052,11 +892,7 @@ expose_callback(fb *ifp)
 
     /* repaint entire image */
     osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-    if (SGI(ifp)->mi_doublebuffer) {
-	OSGL(ifp)->glc->swapBuffers();
-    } else if (OSGL(ifp)->copy_flag) {
-	backbuffer_to_screen(ifp, -1);
-    }
+    OSGL(ifp)->glc->swapBuffers();
 
     if (CJDEBUG) {
 	int dbb, db, view[4], getster, getaux;
@@ -1519,7 +1355,7 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 
 
 int
-_osgl_open_existing(fb *ifp, int width, int height, void *glc, void *traits, int double_buffer)
+_osgl_open_existing(fb *ifp, int width, int height, void *glc, void *traits)
 {
 
     fb_log("open_existing\n");
@@ -1566,8 +1402,6 @@ _osgl_open_existing(fb *ifp, int width, int height, void *glc, void *traits, int
     OSGL(ifp)->glc = (osg::GraphicsContext *)glc;
     OSGL(ifp)->traits = (osg::GraphicsContext::Traits *)traits;
 
-    SGI(ifp)->mi_doublebuffer = double_buffer;
-
     ++osgl_nwindows;
 
     OSGL(ifp)->alive = 1;
@@ -1610,8 +1444,7 @@ osgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *
     struct osgl_fb_info *osgl_internal = (struct osgl_fb_info *)fb_p->data;
     fb_log("open_existing wrapper\n");
     BU_CKMAG(fb_p, FB_OSGL_MAGIC, "osgl framebuffer");
-    return _osgl_open_existing(ifp, width, height, osgl_internal->glc, osgl_internal->traits,
-	    osgl_internal->double_buffer);
+    return _osgl_open_existing(ifp, width, height, osgl_internal->glc, osgl_internal->traits);
 
         return 0;
 }
@@ -1659,24 +1492,9 @@ osgl_final_close(fb *ifp)
 
 
 HIDDEN int
-osgl_flush(fb *ifp)
+osgl_flush(fb *UNUSED(ifp))
 {
     fb_log("flush\n");
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH) {
-
-	OSGL(ifp)->glc->makeCurrent();
-
-	/* Send entire in-memory buffer to the screen, all at once */
-	osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	if (SGI(ifp)->mi_doublebuffer) {
-	    OSGL(ifp)->glc->swapBuffers();
-	} else if (OSGL(ifp)->copy_flag) {
-	    backbuffer_to_screen(ifp, -1);
-	}
-
-	/* unattach context for other threads to use, also flushes */
-	OSGL(ifp)->glc->releaseContext();
-    }
     glFlush();
     return 0;
 }
@@ -1729,9 +1547,7 @@ fb_osgl_close(fb *ifp)
 	 */
 	fclose(stdin);
 
-	while (0 < OSGL(ifp)->alive) {
-	    osgl_do_event(ifp);
-	}
+	return (*OSGL(ifp)->viewer).ViewerBase::run();
     }
     return 0;
 }
@@ -1850,25 +1666,8 @@ osgl_clear(fb *ifp, unsigned char *pp)
 	glClearColor(0, 0, 0, 0);
     }
 
-    if (OSGL(ifp)->copy_flag) {
-	/* COPY mode: clear both buffers */
-	if (OSGL(ifp)->front_flag) {
-	    glDrawBuffer(GL_BACK);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	    glDrawBuffer(GL_FRONT);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	} else {
-	    glDrawBuffer(GL_FRONT);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	    glDrawBuffer(GL_BACK);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	}
-    } else {
-	glClear(GL_COLOR_BUFFER_BIT);
-	if (SGI(ifp)->mi_doublebuffer) {
-	    OSGL(ifp)->glc->swapBuffers();
-	}
-    }
+    glClear(GL_COLOR_BUFFER_BIT);
+    OSGL(ifp)->glc->swapBuffers();
 
     /* unattach context for other threads to use */
     OSGL(ifp)->glc->releaseContext();
@@ -1915,14 +1714,6 @@ osgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 	/* Set clipping matrix and zoom level */
 	glMatrixMode(GL_PROJECTION);
-	if (OSGL(ifp)->copy_flag && !OSGL(ifp)->front_flag) {
-	    /* COPY mode - no changes to backbuffer copy - just
-	     * need to update front buffer
-	     */
-	    glPopMatrix();
-	    glDrawBuffer(GL_FRONT);
-	    OSGL(ifp)->front_flag = 1;
-	}
 	glLoadIdentity();
 
 	osgl_clipper(ifp);
@@ -1930,14 +1721,8 @@ osgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
 	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
 
-	if (OSGL(ifp)->copy_flag) {
-	    backbuffer_to_screen(ifp, -1);
-	} else {
-	    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	    if (SGI(ifp)->mi_doublebuffer) {
-		OSGL(ifp)->glc->swapBuffers();
-	    }
-	}
+	osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+	OSGL(ifp)->glc->swapBuffers();
 	glFlush();
 
 	/* unattach context for other threads to use */
@@ -2153,34 +1938,17 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 		break;
 	}
 
-	if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
-	    return ret;
-
 	if (!OSGL(ifp)->use_ext_ctrl) {
 
 	    OSGL(ifp)->glc->makeCurrent();
 
 	    if (xstart + count < (size_t)ifp->if_width) {
 		osgl_xmit_scanlines(ifp, ybase, 1, xstart, count);
-		if (SGI(ifp)->mi_doublebuffer) {
-		    OSGL(ifp)->glc->swapBuffers();
-		} else if (OSGL(ifp)->copy_flag) {
-		    /* repaint one scanline from backbuffer */
-		    backbuffer_to_screen(ifp, ybase);
-		}
+		OSGL(ifp)->glc->swapBuffers();
 	    } else {
 		/* Normal case -- multi-pixel write */
-		if (SGI(ifp)->mi_doublebuffer) {
-		    /* refresh whole screen */
-		    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-		    OSGL(ifp)->glc->swapBuffers();
-		} else {
-		    /* just write rectangle */
-		    osgl_xmit_scanlines(ifp, ybase, y-ybase, 0, ifp->if_width);
-		    if (OSGL(ifp)->copy_flag) {
-			backbuffer_to_screen(ifp, -1);
-		    }
-		}
+		osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+		OSGL(ifp)->glc->swapBuffers();
 	    }
 	    glFlush();
 
@@ -2231,23 +1999,11 @@ osgl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigne
 	}
     }
 
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
-	return width*height;
-
     if (!OSGL(ifp)->use_ext_ctrl) {
 	OSGL(ifp)->glc->makeCurrent();
 
-	if (SGI(ifp)->mi_doublebuffer) {
-	    /* refresh whole screen */
-	    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	    OSGL(ifp)->glc->swapBuffers();
-	} else {
-	    /* just write rectangle*/
-	    osgl_xmit_scanlines(ifp, ymin, height, xmin, width);
-	    if (OSGL(ifp)->copy_flag) {
-		backbuffer_to_screen(ifp, -1);
-	    }
-	}
+	osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+	OSGL(ifp)->glc->swapBuffers();
 
 	/* unattach context for other threads to use */
 	OSGL(ifp)->glc->releaseContext();
@@ -2294,23 +2050,11 @@ osgl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsig
 	}
     }
 
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
-	return width*height;
-
     if (!OSGL(ifp)->use_ext_ctrl) {
 	OSGL(ifp)->glc->makeCurrent();
 
-	if (SGI(ifp)->mi_doublebuffer) {
-	    /* refresh whole screen */
-	    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	    OSGL(ifp)->glc->swapBuffers();
-	} else {
-	    /* just write rectangle*/
-	    osgl_xmit_scanlines(ifp, ymin, height, xmin, width);
-	    if (OSGL(ifp)->copy_flag) {
-		backbuffer_to_screen(ifp, -1);
-	    }
-	}
+	osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+	OSGL(ifp)->glc->swapBuffers();
 
 	/* unattach context for other threads to use */
 	OSGL(ifp)->glc->releaseContext();
@@ -2369,11 +2113,7 @@ osgl_wmap(register fb *ifp, register const ColorMap *cmp)
 	OSGL(ifp)->glc->makeCurrent();
 
 	osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	if (SGI(ifp)->mi_doublebuffer) {
-	    OSGL(ifp)->glc->swapBuffers();
-	} else if (OSGL(ifp)->copy_flag) {
-	    backbuffer_to_screen(ifp, -1);
-	}
+	OSGL(ifp)->glc->swapBuffers();
 
 	/* unattach context for other threads to use, also flushes */
 	OSGL(ifp)->glc->releaseContext();
@@ -2403,7 +2143,6 @@ osgl_help(fb *ifp)
  //   }
 
     fb_log("\nCurrent internal state:\n");
-    fb_log("	mi_doublebuffer=%d\n", SGI(ifp)->mi_doublebuffer);
     fb_log("	mi_cmap_flag=%d\n", SGI(ifp)->mi_cmap_flag);
     fb_log("	osgl_nwindows=%d\n", osgl_nwindows);
 
