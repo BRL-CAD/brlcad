@@ -31,6 +31,7 @@
 __BEGIN_DECLS
 
 typedef enum {
+    DB_OP_NULL = 0,
     DB_OP_UNION = 'u',
     DB_OP_SUBTRACT = '-',
     DB_OP_INTERSECT = '+'
