@@ -1015,6 +1015,8 @@ s/bu_setjmp_valid/bu_setjmp_valid[0]/g
         can replace 0 with bu_parallel_id() to get thread-safe jumping [7.25]
 s/bu_semaphore_reinit/bu_semaphore_init/g
         no longer need to manually reinitialize (or initialize) semaphores [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])fbio\.h/\1bu\/fb.h/g
+        fbio.h is now part of fb.h [7.25]
 s/UNION/'u'/g
 s/SUBTRACT/'-'/g
 s/INTERSECT/'+'/g
