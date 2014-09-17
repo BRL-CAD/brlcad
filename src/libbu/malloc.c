@@ -22,7 +22,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ipc.h>
+#ifdef HAVE_SYS_IPC_H
+#  include <sys/ipc.h>
+#endif
 #ifdef HAVE_SYS_SHM_H
 #  include <sys/shm.h>
 #endif
