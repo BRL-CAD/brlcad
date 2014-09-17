@@ -161,6 +161,16 @@ DebugPlot::WriteLog()
 	}
 	fprintf(fp, "\n");
     }
+
+    // write out split face count
+    fprintf(fp, "splitfaces %d\n", (int)split_face_outerloop_curves.size());
+
+    // write out split faces
+    for (size_t i = 0; i < split_face_outerloop_curves.size(); ++i) {
+	fprintf(fp, "splitface %d %d %d\n", (int)i,
+		split_face_outerloop_curves[i],
+		split_face_innerloop_curves[i]);
+    }
     fclose(fp);
 }
 

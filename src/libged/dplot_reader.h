@@ -29,14 +29,21 @@ struct ssx {
     int *isocsx_events;
 };
 
+struct split_face {
+    int outerloop_curves;
+    int innerloop_curves;
+};
+
 struct dplot_data {
     token_t token_data;
     int brep1_surface_count;
     int brep2_surface_count;
     int ssx_count;
+    int split_face_count;
     struct bu_list ssx_list; /* struct ssx list */
     struct ssx *ssx;
     struct bu_list isocsx_list; /* struct ssx list */
+    struct split_face *face;
 };
 
 /* lemon prototypes */
