@@ -350,7 +350,10 @@ osgl_getmem(fb *ifp)
 
     errno = 0;
 
-    if ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) {
+#ifdef HAVE_SYS_SHM_H
+    if ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC)
+#endif
+    {
 	/*
 	 * In this mode, only malloc as much memory as is needed.
 	 */
@@ -367,6 +370,7 @@ osgl_getmem(fb *ifp)
 	goto success;
     }
 
+#ifdef HAVE_SYS_SHM_H
     /* The shared memory section never changes size */
     SGI(ifp)->mi_memwidth = ifp->if_max_width;
 
@@ -385,6 +389,7 @@ osgl_getmem(fb *ifp)
 
     if (shm_result == 1) goto fail;
     if (shm_result == -1) new_mem = 1;
+#endif
 
 success:
     ifp->if_mem = sp;
@@ -397,7 +402,9 @@ success:
 	osgl_cminit(ifp);
     return 0;
 fail:
+#ifdef HAVE_SYS_SHM_H
     fb_log("osgl_getmem:  Unable to attach to shared memory.\n");
+#endif
     if ((sp = (char *)calloc(1, size)) == NULL) {
 	fb_log("osgl_getmem:  malloc failure\n");
 	return -1;
@@ -410,6 +417,7 @@ fail:
 void
 osgl_zapmem(void)
 {
+#ifdef HAVE_SYS_SHM_H
     int shmid;
     int i;
 
@@ -424,6 +432,7 @@ osgl_zapmem(void)
 	return;
     }
     fb_log("if_osgl: shared memory released\n");
+#endif
 }
 
 
@@ -822,6 +831,7 @@ osgl_final_close(fb *ifp)
 
     if (SGIL(ifp) != NULL) {
 	/* free up memory associated with image */
+#ifdef HAVE_SYS_SHM_H
 	if (SGI(ifp)->mi_shmid != -1) {
 	    /* detach from shared memory */
 	    if (shmdt(ifp->if_mem) == -1) {
@@ -830,9 +840,12 @@ osgl_final_close(fb *ifp)
 		return -1;
 	    }
 	} else {
+#endif
 	    /* free private memory */
 	    (void)free(ifp->if_mem);
+#ifdef HAVE_SYS_SHM_H
 	}
+#endif
 	/* free state information */
 	(void)free((char *)SGIL(ifp));
 	SGIL(ifp) = NULL;
@@ -908,6 +921,7 @@ int
 osgl_close_existing(fb *ifp)
 {
     if (SGIL(ifp) != NULL) {
+#ifdef HAVE_SYS_SHM_H
 	/* free up memory associated with image */
 	if (SGI(ifp)->mi_shmid != -1) {
 	    /* detach from shared memory */
@@ -917,9 +931,12 @@ osgl_close_existing(fb *ifp)
 		return -1;
 	    }
 	} else {
+#endif
 	    /* free private memory */
 	    (void)free(ifp->if_mem);
+#ifdef HAVE_SYS_SHM_H
 	}
+#endif
 	/* free state information */
 	(void)free((char *)SGIL(ifp));
 	SGIL(ifp) = NULL;
