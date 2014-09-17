@@ -46,8 +46,8 @@ static unsigned char overlap_color[] = {0, 255, 0};
 
 static unsigned char accepted_outerloop_color[] = {0, 255, 0};
 static unsigned char accepted_innerloop_color[] = {255, 0, 0};
-static unsigned char unknown_outerloop_color[] = {0, 158, 0};
-static unsigned char unknown_innerloop_color[] = {158, 0, 0};
+static unsigned char unknown_outerloop_color[] = {158, 158, 0};
+static unsigned char unknown_innerloop_color[] = {158, 158, 0};
 static unsigned char rejected_outerloop_color[] = {0, 62, 0};
 static unsigned char rejected_innerloop_color[] = {62, 0, 0};
 
@@ -129,6 +129,24 @@ DebugPlot::WriteLog()
     filename.str("");
     filename << prefix << "_empty6.plot3";
     write_plot_to_file(filename.str().c_str(), &vhead, surface2_highlight_color);
+    filename.str("");
+    filename << prefix << "_empty7.plot3";
+    write_plot_to_file(filename.str().c_str(), &vhead, accepted_outerloop_color);
+    filename.str("");
+    filename << prefix << "_empty8.plot3";
+    write_plot_to_file(filename.str().c_str(), &vhead, accepted_innerloop_color);
+    filename.str("");
+    filename << prefix << "_empty9.plot3";
+    write_plot_to_file(filename.str().c_str(), &vhead, unknown_outerloop_color);
+    filename.str("");
+    filename << prefix << "_empty10.plot3";
+    write_plot_to_file(filename.str().c_str(), &vhead, unknown_innerloop_color);
+    filename.str("");
+    filename << prefix << "_empty11.plot3";
+    write_plot_to_file(filename.str().c_str(), &vhead, rejected_outerloop_color);
+    filename.str("");
+    filename << prefix << "_empty12.plot3";
+    write_plot_to_file(filename.str().c_str(), &vhead, rejected_innerloop_color);
 
     // create dplot log file
     filename.str("");
@@ -291,7 +309,8 @@ DebugPlot::Plot3DCurveFrom2D(
     const ON_Surface *surf,
     const ON_Curve *crv,
     const char *filename,
-    unsigned char *color)
+    unsigned char *color,
+    bool decorate /* = false */)
 {
     struct bu_list vhead;
     BU_LIST_INIT(&vhead);
@@ -353,7 +372,7 @@ DebugPlot::Plot3DCurveFrom2D(
 	    VSUB2(tangent, pt1, prev_pt);
 	}
 
-	if (first) {
+	if (decorate && first) {
 	    first = false;
 
 	    mag_tan = DIST_PT_PT(prev_pt, pt1);
@@ -379,26 +398,28 @@ DebugPlot::Plot3DCurveFrom2D(
 	}
 	BN_ADD_VLIST(&vlist_free_list, &vhead, pt1, BN_VLIST_LINE_DRAW);
     }
-    VUNITIZE(tangent);
-    VSCALE(tangent, tangent, -mag_tan);
+    if (decorate) {
+	VUNITIZE(tangent);
+	VSCALE(tangent, tangent, -mag_tan);
 
-    VCROSS(perp, tangent, normal);
-    VUNITIZE(perp);
-    VSCALE(perp, perp, mag_tan);
+	VCROSS(perp, tangent, normal);
+	VUNITIZE(perp);
+	VSCALE(perp, perp, mag_tan);
 
-    VADD2(barb, pt1, perp);
-    if (!closed) {
-	VADD2(barb, barb, tangent);
+	VADD2(barb, pt1, perp);
+	if (!closed) {
+	    VADD2(barb, barb, tangent);
+	}
+	BN_ADD_VLIST(&vlist_free_list, &vhead, barb, BN_VLIST_LINE_DRAW);
+	BN_ADD_VLIST(&vlist_free_list, &vhead, pt1, BN_VLIST_LINE_MOVE);
+
+	VSCALE(perp, perp, -1.0);
+	VADD2(barb, pt1, perp);
+	if (!closed) {
+	    VADD2(barb, barb, tangent);
+	}
+	BN_ADD_VLIST(&vlist_free_list, &vhead, barb, BN_VLIST_LINE_DRAW);
     }
-    BN_ADD_VLIST(&vlist_free_list, &vhead, barb, BN_VLIST_LINE_DRAW);
-    BN_ADD_VLIST(&vlist_free_list, &vhead, pt1, BN_VLIST_LINE_MOVE);
-
-    VSCALE(perp, perp, -1.0);
-    VADD2(barb, pt1, perp);
-    if (!closed) {
-	VADD2(barb, barb, tangent);
-    }
-    BN_ADD_VLIST(&vlist_free_list, &vhead, barb, BN_VLIST_LINE_DRAW);
 
     write_plot_to_file(filename, &vhead, color);
 }
@@ -542,15 +563,15 @@ DebugPlot::SSX(
 
 	if (events[i].m_type == ON_SSX_EVENT::ssx_tangent) {
 	    Plot3DCurveFrom2D(surf, events[i].m_curveA,
-		    filename.str().c_str(), tangent_color);
+		    filename.str().c_str(), tangent_color, true);
 	    ++plot_count;
 	} else if (events[i].m_type == ON_SSX_EVENT::ssx_transverse) {
 	    Plot3DCurveFrom2D(surf, events[i].m_curveA,
-		    filename.str().c_str(), transverse_color);
+		    filename.str().c_str(), transverse_color, true);
 	    ++plot_count;
 	} else if (events[i].m_type == ON_SSX_EVENT::ssx_overlap) {
 	    Plot3DCurveFrom2D(surf, events[i].m_curveA,
-		    filename.str().c_str(), overlap_color);
+		    filename.str().c_str(), overlap_color, true);
 	    ++plot_count;
 	}
     }
@@ -630,13 +651,13 @@ DebugPlot::ClippedFaceCurves(
 	std::ostringstream filename;
 	filename << prefix << "_ssx" << ssx_idx << "_brep1face_clipped_curve" << i << ".plot3";
 	Plot3DCurveFrom2D(surf1, face1_curves[i], filename.str().c_str(),
-		surface1_highlight_color);
+		surface1_highlight_color, true);
     }
     for (int i = 0; i < face2_curves.Count(); ++i) {
 	std::ostringstream filename;
 	filename << prefix << "_ssx" << ssx_idx << "_brep2face_clipped_curve" << i << ".plot3";
 	Plot3DCurveFrom2D(surf2, face2_curves[i], filename.str().c_str(),
-		surface2_highlight_color);
+		surface2_highlight_color, true);
     }
 
     while (ssx_clipped_curves.size() < (ssx_idx + 1)) {

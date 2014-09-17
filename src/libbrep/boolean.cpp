@@ -2706,6 +2706,7 @@ categorize_trimmed_faces(
 	    }
 
 	    splitted[j]->m_rev = false;
+	    splitted[j]->m_belong_to_final = TrimmedFace::NOT_BELONG;
 	    switch (face_location) {
 		case INSIDE_BREP:
 		    if (operation == BOOLEAN_INTERSECT ||

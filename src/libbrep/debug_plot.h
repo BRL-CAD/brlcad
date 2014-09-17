@@ -99,7 +99,9 @@ private:
 	const ON_Surface *surf,
 	const ON_Curve *crv,
 	const char *filename,
-	unsigned char *color);
+	unsigned char *color,
+	bool decorate = false
+	);
 
     void
     Plot3DCurve(

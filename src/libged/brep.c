@@ -542,7 +542,7 @@ dplot_erase_overlay(
     struct dplot_info *info,
     const char *name)
 {
-    const int NUM_EMPTY_PLOTS = 7;
+    const int NUM_EMPTY_PLOTS = 13;
     int i;
 
     /* We can't actually erase the old plot without its real name,
@@ -836,24 +836,70 @@ dplot_split_faces(
     int i, j;
     struct bu_vls name = BU_VLS_INIT_ZERO;
     struct bu_vls short_name = BU_VLS_INIT_ZERO;
+    struct split_face split_face;
 
-    for (i = 0; i < info->fdata.split_face_count; ++i) {
-	bu_vls_trunc(&name, 0);
-	bu_vls_printf(&name, "_split_face%d_outerloop_curve", i);
-	for (j = 0; j < info->fdata.face[i].outerloop_curves; ++j) {
+    if (info->event_idx >= info->fdata.split_face_count) {
+	for (i = 0; i < info->fdata.split_face_count; ++i) {
+	    split_face = info->fdata.face[i];
+
+	    bu_vls_trunc(&name, 0);
+	    bu_vls_printf(&name, "_split_face%d_outerloop_curve", i);
+	    for (j = 0; j < split_face.outerloop_curves; ++j) {
+		bu_vls_trunc(&short_name, 0);
+		bu_vls_printf(&short_name, "sf%do%d", i, j);
+		dplot_overlay(info->gedp, info->prefix, bu_vls_cstr(&name), j,
+			bu_vls_cstr(&short_name));
+	    }
+
+	    bu_vls_trunc(&name, 0);
+	    bu_vls_printf(&name, "_split_face%d_innerloop_curve", i);
+	    for (j = 0; j < split_face.innerloop_curves; ++j) {
+		bu_vls_trunc(&short_name, 0);
+		bu_vls_printf(&short_name, "sf%di%d", i, j);
+		dplot_overlay(info->gedp, info->prefix, bu_vls_cstr(&name), j,
+			bu_vls_cstr(&short_name));
+	    }
+	}
+    } else {
+	if (info->event_idx > 0) {
+	    /* erase curves of previous split face */
+	    split_face = info->fdata.face[info->event_idx - 1];
+	    for (i = 0; i < split_face.outerloop_curves; ++i) {
+		bu_vls_trunc(&short_name, 0);
+		bu_vls_printf(&short_name, "sfo%d", i);
+		dplot_erase_overlay(info, bu_vls_cstr(&short_name));
+	    }
+	    for (i = 0; i < split_face.innerloop_curves; ++i) {
+		bu_vls_trunc(&short_name, 0);
+		bu_vls_printf(&short_name, "sfi%d", i);
+		dplot_erase_overlay(info, bu_vls_cstr(&short_name));
+	    }
+	}
+
+	split_face = info->fdata.face[info->event_idx];
+	bu_vls_printf(&name, "_split_face%d_outerloop_curve", info->event_idx);
+	for (i = 0; i < info->fdata.face[info->event_idx].outerloop_curves; ++i) {
 	    bu_vls_trunc(&short_name, 0);
-	    bu_vls_printf(&short_name, "sf%do%d", i, j);
-	    dplot_overlay(info->gedp, info->prefix, bu_vls_cstr(&name), j,
+	    bu_vls_printf(&short_name, "sfo%d", i);
+
+	    dplot_erase_overlay(info, bu_vls_cstr(&short_name));
+	    dplot_overlay(info->gedp, info->prefix, bu_vls_cstr(&name), i,
 		    bu_vls_cstr(&short_name));
 	}
-	bu_vls_trunc(&name, 0);
-	bu_vls_printf(&name, "_split_face%d_innerloop_curve", i);
-	for (j = 0; j < info->fdata.face[i].innerloop_curves; ++j) {
+
+	bu_vls_printf(&name, "_split_face%d_innerloop_curve", info->event_idx);
+	for (i = 0; i < info->fdata.face[info->event_idx].innerloop_curves; ++i) {
 	    bu_vls_trunc(&short_name, 0);
-	    bu_vls_printf(&short_name, "sf%di%d", i, j);
-	    dplot_overlay(info->gedp, info->prefix, bu_vls_cstr(&name), j,
+	    bu_vls_printf(&short_name, "sfi%d", i);
+
+	    dplot_erase_overlay(info, bu_vls_cstr(&short_name));
+	    dplot_overlay(info->gedp, info->prefix, bu_vls_cstr(&name), i,
 		    bu_vls_cstr(&short_name));
 	}
+
+	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show surface-"
+		"surface intersection %d", ++info->event_idx);
+	return GED_MORE;
     }
     return GED_OK;
 }
@@ -1014,6 +1060,7 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
 	    info.event_idx = 0;
 	} else if (BU_STR_EQUAL(cmd, "faces") && argc == 3) {
 	    info.mode = DPLOT_SPLIT_FACES;
+	    info.event_idx = 0;
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "%s is not a recognized "
 		    "command or was given the wrong number of arguments\n",
