@@ -86,7 +86,7 @@ split_face_count ::= SPLIT_FACES count(SPLIT_FACES). {
 
 split_face_info ::= SPLIT_FACE index(I) count(OUTER_COUNT) count(INNER_COUNT). {
     data->face[I].outerloop_curves = OUTER_COUNT;
-    data->face[I].outerloop_curves = INNER_COUNT;
+    data->face[I].innerloop_curves = INNER_COUNT;
 }
 
 count(C) ::= NONNEGATIVE_INT(N). {
