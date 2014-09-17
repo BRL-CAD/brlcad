@@ -473,7 +473,8 @@ enum {
     DPLOT_ISOCSX_FIRST,
     DPLOT_ISOCSX,
     DPLOT_ISOCSX_EVENTS,
-    DPLOT_FACE_CURVES
+    DPLOT_FACE_CURVES,
+    DPLOT_SPLIT_FACES
 };
 
 struct dplot_info {
@@ -828,6 +829,35 @@ dplot_face_curves(struct dplot_info *info)
     return GED_OK;
 }
 
+HIDDEN int
+dplot_split_faces(
+    struct dplot_info *info)
+{
+    int i, j;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls short_name = BU_VLS_INIT_ZERO;
+
+    for (i = 0; i < info->fdata.split_face_count; ++i) {
+	bu_vls_trunc(&name, 0);
+	bu_vls_printf(&name, "_split_face%d_outerloop_curve", i);
+	for (j = 0; j < info->fdata.face[i].outerloop_curves; ++j) {
+	    bu_vls_trunc(&short_name, 0);
+	    bu_vls_printf(&short_name, "sf%do%d", i, j);
+	    dplot_overlay(info->gedp, info->prefix, bu_vls_cstr(&name), j,
+		    bu_vls_cstr(&short_name));
+	}
+	bu_vls_trunc(&name, 0);
+	bu_vls_printf(&name, "_split_face%d_innerloop_curve", i);
+	for (j = 0; j < info->fdata.face[i].innerloop_curves; ++j) {
+	    bu_vls_trunc(&short_name, 0);
+	    bu_vls_printf(&short_name, "sf%di%d", i, j);
+	    dplot_overlay(info->gedp, info->prefix, bu_vls_cstr(&name), j,
+		    bu_vls_cstr(&short_name));
+	}
+    }
+    return GED_OK;
+}
+
 HIDDEN void *
 dplot_malloc(size_t s) {
     return bu_malloc(s, "dplot_malloc");
@@ -922,6 +952,8 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
 		"   isocsx N M (show intersections of ssx pair N, isocsx pair M)\n");
 	bu_vls_printf(gedp->ged_result_str,
 		"  fcurves N   (show clipped face curves of ssx pair N\n");
+	bu_vls_printf(gedp->ged_result_str,
+		"    faces     (show split faces used to construct result\n");
 	return GED_HELP;
     }
     filename = argv[1];
@@ -980,6 +1012,8 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    info.mode = DPLOT_FACE_CURVES;
 	    info.event_idx = 0;
+	} else if (BU_STR_EQUAL(cmd, "faces") && argc == 3) {
+	    info.mode = DPLOT_SPLIT_FACES;
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "%s is not a recognized "
 		    "command or was given the wrong number of arguments\n",
@@ -1061,6 +1095,13 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
     }
 
     ret = dplot_face_curves(&info);
+    if (ret == GED_ERROR) {
+	RETURN_ERROR;
+    } else if (ret == GED_MORE) {
+	RETURN_MORE;
+    }
+
+    ret = dplot_split_faces(&info);
     if (ret == GED_ERROR) {
 	RETURN_ERROR;
     } else if (ret == GED_MORE) {

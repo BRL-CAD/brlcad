@@ -737,7 +737,7 @@ DebugPlot::SplitFaces(
 	    int split_face_count = split_face_outerloop_curves.size();
 	    for (int k = 0; k < face->m_outerloop.Count(); ++k) {
 		std::ostringstream filename;
-		filename << prefix << "_split_face_" << split_face_count <<
+		filename << prefix << "_split_face" << split_face_count <<
 		    "_outerloop_curve" << k << ".plot3";
 
 		Plot3DCurveFrom2D(face->m_face->SurfaceOf(),
@@ -750,7 +750,7 @@ DebugPlot::SplitFaces(
 	    for (size_t k = 0; k < face->m_innerloop.size(); ++k) {
 		for (int l = 0; l < face->m_innerloop[k].Count(); ++l) {
 		    std::ostringstream filename;
-		    filename << prefix << "_split_face_" << split_face_count <<
+		    filename << prefix << "_split_face" << split_face_count <<
 			"_innerloop_curve" << innerloop_count++ << ".plot3";
 
 		    Plot3DCurveFrom2D(face->m_face->SurfaceOf(),
