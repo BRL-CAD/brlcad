@@ -146,6 +146,7 @@ set(libdm_ignore_files
   dm-tk.h
   dm-wgl.h
   dm-X.h
+  fontstash
   )
 CMAKEFILES(${libdm_ignore_files})
 CMAKEFILES(dm_private.h)

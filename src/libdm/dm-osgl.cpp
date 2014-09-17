@@ -198,23 +198,6 @@ osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsig
 HIDDEN int
 osgl_configureWin_guts(struct dm_internal *dmp, int force)
 {
-#if 0
-    XWindowAttributes xwa;
-    XFontStruct *newfontstruct;
-
-    if (dmp->dm_debugLevel)
-	bu_log("osgl_configureWin_guts()\n");
-
-    XGetWindowAttributes(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			 ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa);
-
-    /* nothing to do */
-    if (!force &&
-	dmp->dm_height == xwa.height &&
-	dmp->dm_width == xwa.width)
-	return TCL_OK;
-#endif
-
     int width;
     int height;
 
@@ -570,9 +553,6 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
     mvars->bound = dmp->dm_bound;
     mvars->boundFlag = dmp->dm_boundFlag;
 
-    /* this is important so that osgl_configureWin knows to set the font */
-    pubvars->fontstruct = NULL;
-
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
 	pubvars->xtkwin =
@@ -736,15 +716,19 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
     privvars->last_update_time = 0;
     privvars->timer->setStartTick();
 
-    /* display list (fontOffset + char) will display a given ASCII char */
-    if ((privvars->fontOffset = glGenLists(128))==0) {
-	bu_log("dm-osgl: Can't make display lists for font.\n");
+    /* this is where font information is set up */
+    privvars->fs = glfonsCreate(512, 512, FONS_ZERO_TOPLEFT);
+    if (privvars->fs == NULL) {
+	bu_log("dm-osgl: Failed to create font stash");
+	bu_vls_free(&init_proc_vls);
 	(void)osgl_close(dmp);
 	return DM_NULL;
     }
+    privvars->fontNormal = FONS_INVALID;
+    privvars->fontNormal = fonsAddFont(privvars->fs, "sans", bu_brlcad_data("fonts/ProFont.ttf", 1));
 
     /* This is the applications display list offset */
-    dmp->dm_displaylist = privvars->fontOffset + 128;
+    dmp->dm_displaylist = glGenLists(0);
 
     osgl_setBGColor(dmp, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1675,18 +1659,37 @@ osgl_normal(struct dm_internal *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int UNUSED(use_aspect))
 {
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
     if (dmp->dm_debugLevel)
 	bu_log("osgl_drawString2D()\n");
-
+/*
     if (use_aspect)
 	glRasterPos2f(x, y * dmp->dm_aspect);
     else
 	glRasterPos2f(x, y);
+*/
+    glDisable(GL_TEXTURE_2D);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0,dm_get_width(dmp),dm_get_height(dmp),0,-1,1);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glDisable(GL_DEPTH_TEST);
 
-    glListBase(((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-    glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);
+    unsigned int white = glfonsRGBA(255, 255, 255 ,100);
+    fonsSetFont(privvars->fs, privvars->fontNormal);
+    fonsSetSize(privvars->fs, 12.0f);
+    fonsSetColor(privvars->fs, white);
+    fonsDrawText(privvars->fs, x, y, str, NULL);
+
+    /*glListBase(((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+    glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);*/
+
+    glEnable(GL_DEPTH_TEST);
+
+//    ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->swapBuffers();
 
     return TCL_OK;
 }
