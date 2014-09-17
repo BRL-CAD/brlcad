@@ -673,7 +673,9 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     OSGL(ifp)->last_update_time = 0;
 
     OSGL(ifp)->viewer = new osgViewer::Viewer();
-    OSGL(ifp)->viewer->apply(new osgViewer::SingleWindow(0, 0, ifp->if_width, ifp->if_height));
+    osgViewer::SingleWindow *sw = new osgViewer::SingleWindow(0, 0, ifp->if_width, ifp->if_height);
+    std::cout << sw->getHeight() << "\n";
+    OSGL(ifp)->viewer->apply(sw);
 
     OSGL(ifp)->image = new osg::Image;
     OSGL(ifp)->image->setImage(ifp->if_width, ifp->if_height, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)ifp->if_mem, osg::Image::NO_DELETE);
@@ -1511,9 +1513,6 @@ osgl_wmap(register fb *ifp, register const ColorMap *cmp)
 HIDDEN int
 osgl_help(fb *ifp)
 {
-    //struct modeflags *mfp;
-//    XVisualInfo *visual = OSGL(ifp)->vip;
-
     fb_log("Description: %s\n", ifp->if_type);
     fb_log("Device: %s\n", ifp->if_name);
     fb_log("Max width height: %d %d\n",
@@ -1522,51 +1521,11 @@ osgl_help(fb *ifp)
     fb_log("Default width height: %d %d\n",
 	   ifp->if_width,
 	   ifp->if_height);
-    fb_log("Usage: /dev/osgl[option letters]\n");
-    //for (mfp = modeflags; mfp->c != '\0'; mfp++) {
-//	fb_log("   %c   %s\n", mfp->c, mfp->help);
- //   }
+    fb_log("Usage: /dev/osgl\n");
 
     fb_log("\nCurrent internal state:\n");
     fb_log("	mi_cmap_flag=%d\n", SGI(ifp)->mi_cmap_flag);
     fb_log("	osgl_nwindows=%d\n", osgl_nwindows);
-
-    fb_log("X11 Visual:\n");
-#if 0
-    switch (visual->class) {
-	case DirectColor:
-	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
-	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
-		   visual->green_mask, visual->blue_mask);
-	    break;
-	case TrueColor:
-	    fb_log("\tTrueColor: Fixed RGB maps, pixel RGB subfield indices\n");
-	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
-		   visual->green_mask, visual->blue_mask);
-	    break;
-	case PseudoColor:
-	    fb_log("\tPseudoColor: Alterable RGB maps, single index\n");
-	    break;
-	case StaticColor:
-	    fb_log("\tStaticColor: Fixed RGB maps, single index\n");
-	    break;
-	case GrayScale:
-	    fb_log("\tGrayScale: Alterable map (R=G=B), single index\n");
-	    break;
-	case StaticGray:
-	    fb_log("\tStaticGray: Fixed map (R=G=B), single index\n");
-	    break;
-	default:
-	    fb_log("\tUnknown visual class %d\n", visual->class);
-	    break;
-    }
-    fb_log("\tColormap Size: %d\n", visual->colormap_size);
-    fb_log("\tBits per RGB: %d\n", visual->bits_per_rgb);
-    fb_log("\tscreen: %d\n", visual->screen);
-    fb_log("\tdepth (total bits per pixel): %d\n", visual->depth);
-    if (visual->depth < 24)
-	fb_log("\tWARNING: unable to obtain full 24-bits of color, image will be quantized.\n");
-#endif
     return 0;
 }
 
@@ -1588,63 +1547,6 @@ osgl_cursor(fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
 
     fb_log("osgl_cursor\n");
-#if 0
-    if (mode) {
-	register int xx, xy;
-	register int delta;
-
-	/* If we don't have a cursor, create it */
-	if (!OSGL(ifp)->cursor) {
-	    XSetWindowAttributes xswa;
-	    XColor rgb_db_def;
-	    XColor bg, bd;
-
-	    XAllocNamedColor(OSGL(ifp)->dispp, OSGL(ifp)->xcmap, "black",
-			     &rgb_db_def, &bg);
-	    XAllocNamedColor(OSGL(ifp)->dispp, OSGL(ifp)->xcmap, "white",
-			     &rgb_db_def, &bd);
-	    xswa.background_pixel = bg.pixel;
-	    xswa.border_pixel = bd.pixel;
-	    xswa.colormap = OSGL(ifp)->xcmap;
-	    xswa.save_under = True;
-
-	    OSGL(ifp)->cursor = XCreateWindow(OSGL(ifp)->dispp, OSGL(ifp)->wind,
-					     0, 0, 4, 4, 2, OSGL(ifp)->vip->depth, InputOutput,
-					     OSGL(ifp)->vip->visual, CWBackPixel | CWBorderPixel |
-					     CWSaveUnder | CWColormap, &xswa);
-	}
-
-	delta = ifp->if_width/ifp->if_xzoom/2;
-	xx = x - (ifp->if_xcenter - delta);
-	xx *= ifp->if_xzoom;
-	xx += ifp->if_xzoom/2;  /* center cursor */
-
-	delta = ifp->if_height/ifp->if_yzoom/2;
-	xy = y - (ifp->if_ycenter - delta);
-	xy *= ifp->if_yzoom;
-	xy += ifp->if_yzoom/2;  /* center cursor */
-	xy = OSGL(ifp)->win_height - xy;
-
-	/* Move cursor into place; make it visible if it isn't */
-	XMoveWindow(OSGL(ifp)->dispp, OSGL(ifp)->cursor, xx - 4, xy - 4);
-
-	/* if cursor window is currently not mapped, map it */
-	if (!ifp->if_cursmode)
-	    XMapRaised(OSGL(ifp)->dispp, OSGL(ifp)->cursor);
-    } else {
-	/* If we have a cursor and it's mapped, unmap it */
-	if (OSGL(ifp)->cursor && ifp->if_cursmode)
-	    XUnmapWindow(OSGL(ifp)->dispp, OSGL(ifp)->cursor);
-    }
-
-    /* Without this flush, cursor movement is sluggish */
-    XFlush(OSGL(ifp)->dispp);
-
-    /* Update position of cursor */
-    ifp->if_cursmode = mode;
-    ifp->if_xcurs = x;
-    ifp->if_ycurs = y;
-#endif
     return 0;
 }
 
