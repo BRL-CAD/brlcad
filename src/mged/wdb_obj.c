@@ -268,13 +268,14 @@ wdb_append_rparen(struct bu_list *hp)
 
 
 HIDDEN int
-wdb_add_operator(Tcl_Interp *interp, struct bu_list *hp, char ch, short int *last_tok)
+add_operator(Tcl_Interp *interp, struct bu_list *hp, char *ptr, short int *last_tok)
 {
     char illegal[2];
+    db_op_t op = db_str2op(ptr);
 
     BU_CK_LIST_HEAD(hp);
 
-    switch (ch) {
+    switch (op) {
 	case DB_OP_UNION:
 	    wdb_append_union(hp);
 	    *last_tok = WDB_TOK_UNION;
@@ -288,10 +289,9 @@ wdb_add_operator(Tcl_Interp *interp, struct bu_list *hp, char ch, short int *las
 	    *last_tok = WDB_TOK_SUBTR;
 	    break;
 	default:
-	    illegal[0] = ch;
+	    illegal[0] = ptr[0];
 	    illegal[1] = '\0';
-	    Tcl_AppendResult(interp, "Illegal operator: ", illegal,
-			     ", aborting\n", (char *)NULL);
+	    Tcl_AppendResult(interp, "Illegal operator: ", illegal, ", aborting\n", (char *)NULL);
 	    wdb_free_tokens(hp);
 	    return TCL_ERROR;
     }
@@ -710,7 +710,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 
 	    if (last_tok == WDB_TOK_RPAREN) {
 		/* next token MUST be an operator */
-		if (wdb_add_operator(interp, &tok_hd.l, *ptr, &last_tok) == TCL_ERROR) {
+		if (add_operator(interp, &tok_hd.l, ptr, &last_tok) == TCL_ERROR) {
 		    wdb_free_tokens(&tok_hd.l);
 		    return TCL_ERROR;
 		}
@@ -728,7 +728,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		ptr += name_len;
 	    } else if (last_tok == WDB_TOK_TREE) {
 		/* must be an operator */
-		if (wdb_add_operator(interp, &tok_hd.l, *ptr, &last_tok) == TCL_ERROR) {
+		if (add_operator(interp, &tok_hd.l, ptr, &last_tok) == TCL_ERROR) {
 		    wdb_free_tokens(&tok_hd.l);
 		    return TCL_ERROR;
 		}
