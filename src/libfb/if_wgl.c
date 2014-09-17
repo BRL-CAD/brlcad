@@ -737,6 +737,27 @@ wgl_open(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
+HIDDEN struct fb_platform_specific *
+wgl_get_fbps(uint32_t magic)
+{
+    struct fb_platform_specific *fb_ps = NULL;
+    struct wgl_fb_info *data = NULL;
+    BU_GET(fb_ps, struct fb_platform_specific);
+    BU_GET(data, struct wgl_fb_info);
+    fb_ps->magic = magic;
+    fb_ps->data = data;
+    return fb_ps;
+}
+
+
+HIDDEN void
+wgl_put_fbps(struct fb_platform_specific *fbps)
+{
+    BU_CKMAG(fbps, FB_WGL_MAGIC, "wgl framebuffer");
+    BU_PUT(fbps->data, struct wgl_fb_info);
+    BU_PUT(fbps, struct fb_platform_specific);
+    return;
+}
 
 int
 _wgl_open_existing(fb *ifp,
