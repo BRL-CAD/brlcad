@@ -466,7 +466,12 @@ static void
 OSGEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
 {
     dm *dmp = (dm *)clientData;
-    ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->swapBuffers();
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+
+    if (privvars->timer->time_m() - privvars->last_update_time > 10) {
+	privvars->graphicsContext->swapBuffers();
+	privvars->last_update_time = privvars->timer->time_m();
+    }
 }
 
 /*
@@ -720,6 +725,10 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 
     privvars->graphicsContext->realize();
     privvars->graphicsContext->makeCurrent();
+
+    privvars->timer = new osg::Timer;
+    privvars->last_update_time = 0;
+    privvars->timer->setStartTick();
 
     /* display list (fontOffset + char) will display a given ASCII char */
     if ((privvars->fontOffset = glGenLists(128))==0) {
