@@ -55,7 +55,8 @@ DebugPlot::DebugPlot(const char *basename) :
     prefix(basename),
     have_surfaces(false),
     brep1_surf_count(0),
-    brep2_surf_count(0)
+    brep2_surf_count(0),
+    linked_curve_count(0)
 {
     BU_LIST_INIT(&vlist_free_list);
 }
@@ -781,6 +782,193 @@ DebugPlot::SplitFaces(
 	    }
 	    split_face_innerloop_curves.push_back(innerloop_count);
 	}
+    }
+}
+
+void append_to_polycurve(ON_Curve *curve, ON_PolyCurve &polycurve);
+
+struct SSICurve {
+    ON_Curve *m_curve;
+
+    SSICurve()
+    {
+	m_curve = NULL;
+    }
+
+    SSICurve(ON_Curve *curve)
+    {
+	m_curve = curve;
+    }
+
+    SSICurve *Duplicate() const
+    {
+	SSICurve *out = new SSICurve();
+	if (out != NULL) {
+	    *out = *this;
+	    out->m_curve = m_curve->Duplicate();
+	}
+	return out;
+    }
+};
+
+struct LinkedCurve {
+private:
+    ON_Curve *m_curve;	// an explicit storage of the whole curve
+public:
+    // The curves contained in this LinkedCurve, including
+    // the information needed by the connectivity graph
+    ON_SimpleArray<SSICurve> m_ssi_curves;
+
+    // Default constructor
+    LinkedCurve()
+    {
+	m_curve = NULL;
+    }
+
+    ~LinkedCurve()
+    {
+	if (m_curve) {
+	    delete m_curve;
+	}
+	m_curve = NULL;
+    }
+
+    LinkedCurve &operator= (const LinkedCurve &_lc)
+    {
+	m_curve = _lc.m_curve ? _lc.m_curve->Duplicate() : NULL;
+	m_ssi_curves = _lc.m_ssi_curves;
+	return *this;
+    }
+
+    ON_3dPoint PointAtStart() const
+    {
+	if (m_ssi_curves.Count()) {
+	    return m_ssi_curves[0].m_curve->PointAtStart();
+	} else {
+	    return ON_3dPoint::UnsetPoint;
+	}
+    }
+
+    ON_3dPoint PointAtEnd() const
+    {
+	if (m_ssi_curves.Count()) {
+	    return m_ssi_curves.Last()->m_curve->PointAtEnd();
+	} else {
+	    return ON_3dPoint::UnsetPoint;
+	}
+    }
+
+    bool IsClosed() const
+    {
+	if (m_ssi_curves.Count() == 0) {
+	    return false;
+	}
+	return PointAtStart().DistanceTo(PointAtEnd()) < ON_ZERO_TOLERANCE;
+    }
+
+    bool IsValid() const
+    {
+	// Check whether the curve has "gaps".
+	for (int i = 1; i < m_ssi_curves.Count(); i++) {
+	    if (m_ssi_curves[i].m_curve->PointAtStart().DistanceTo(m_ssi_curves[i - 1].m_curve->PointAtEnd()) >= ON_ZERO_TOLERANCE) {
+		bu_log("The LinkedCurve is not valid.\n");
+		return false;
+	    }
+	}
+	return true;
+    }
+
+    bool Reverse()
+    {
+	ON_SimpleArray<SSICurve> new_array;
+	for (int i = m_ssi_curves.Count() - 1; i >= 0; i--) {
+	    if (!m_ssi_curves[i].m_curve->Reverse()) {
+		return false;
+	    }
+	    new_array.Append(m_ssi_curves[i]);
+	}
+	m_ssi_curves = new_array;
+	return true;
+    }
+
+    void Append(const LinkedCurve &lc)
+    {
+	m_ssi_curves.Append(lc.m_ssi_curves.Count(), lc.m_ssi_curves.Array());
+    }
+
+    void Append(const SSICurve &sc)
+    {
+	m_ssi_curves.Append(sc);
+    }
+
+    void AppendCurvesToArray(ON_SimpleArray<ON_Curve *> &arr) const
+    {
+	for (int i = 0; i < m_ssi_curves.Count(); i++) {
+	    arr.Append(m_ssi_curves[i].m_curve->Duplicate());
+	}
+    }
+
+    const ON_Curve *Curve()
+    {
+	if (m_curve != NULL) {
+	    return m_curve;
+	}
+	if (m_ssi_curves.Count() == 0 || !IsValid()) {
+	    return NULL;
+	}
+	ON_PolyCurve *polycurve = new ON_PolyCurve;
+	for (int i = 0; i < m_ssi_curves.Count(); i++) {
+	    append_to_polycurve(m_ssi_curves[i].m_curve->Duplicate(), *polycurve);
+	}
+	m_curve = polycurve;
+	return m_curve;
+    }
+
+    const ON_3dPoint PointAt(double t)
+    {
+	const ON_Curve *c = Curve();
+	if (c == NULL) {
+	    return ON_3dPoint::UnsetPoint;
+	}
+	return c->PointAt(t);
+    }
+
+    const ON_Interval Domain()
+    {
+	const ON_Curve *c = Curve();
+	if (c == NULL) {
+	    return ON_Interval::EmptyInterval;
+	}
+	return c->Domain();
+    }
+
+    ON_Curve *SubCurve(double t1, double t2)
+    {
+	const ON_Curve *c = Curve();
+	if (c == NULL) {
+	    return NULL;
+	}
+	try {
+	    return sub_curve(c, t1, t2);
+	} catch (InvalidInterval &e) {
+	    bu_log("%s", e.what());
+	    return NULL;
+	}
+    }
+};
+
+void
+DebugPlot::LinkedCurves(
+    const ON_Surface *surf,
+    ON_ClassArray<LinkedCurve> &linked_curves)
+{
+    for (int i = 0; i < linked_curves.Count(); ++i) {
+	const ON_Curve *linked_curve = linked_curves[i].Curve();
+
+	std::ostringstream filename;
+	filename << prefix << "_linked_curve" << linked_curve_count++ << ".plot3";
+
+	Plot3DCurveFrom2D(surf, linked_curve, filename.str().c_str(), transverse_color);
     }
 }
 

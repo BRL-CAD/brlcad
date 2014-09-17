@@ -334,7 +334,7 @@ curve_t_compare(const IntersectPoint *p1, const IntersectPoint *p2)
 }
 
 
-HIDDEN void
+void
 append_to_polycurve(ON_Curve *curve, ON_PolyCurve &polycurve)
 {
     // use this function rather than ON_PolyCurve::Append() to avoid
@@ -2810,6 +2810,7 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
     for (int i = 0; i < original_faces.Count(); i++) {
 	TrimmedFace *first = original_faces[i];
 	ON_ClassArray<LinkedCurve> linked_curves = link_curves(curves_array[i]);
+	dplot->LinkedCurves(first->m_face->SurfaceOf(), linked_curves);
 
 	ON_SimpleArray<TrimmedFace *> splitted = split_trimmed_face(first, linked_curves);
 	trimmed_faces.Append(splitted);

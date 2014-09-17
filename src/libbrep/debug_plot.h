@@ -33,6 +33,7 @@
 #include "raytrace.h"
 
 struct TrimmedFace;
+struct LinkedCurve;
 
 class DebugPlot {
 public:
@@ -75,12 +76,17 @@ public:
     void SplitFaces(
 	const ON_ClassArray<ON_SimpleArray<TrimmedFace *> > &split_faces);
 
+    void LinkedCurves(
+	const ON_Surface *surf,
+	ON_ClassArray<LinkedCurve> &linked_curves);
+
 private:
     struct bu_list vlist_free_list;
     std::string prefix;
     bool have_surfaces;
     int brep1_surf_count;
     int brep2_surf_count;
+    int linked_curve_count;
     std::vector< std::pair<int, int> > intersecting_surfaces; // ssx surface index pairs
     std::vector<int> ssx_events; // num final events of each ssx
     std::vector< std::vector<int> > ssx_isocsx_events; // num events for each isocsx of each ssx
