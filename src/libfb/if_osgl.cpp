@@ -1010,7 +1010,10 @@ osgl_clear(fb *ifp, unsigned char *pp)
 
     if (OSGL(ifp)->viewer) {
 	OSGL(ifp)->image->dirty();
-	OSGL(ifp)->viewer->frame();
+	if (OSGL(ifp)->timer->time_m() - OSGL(ifp)->last_update_time > 10) {
+	    OSGL(ifp)->viewer->frame();
+	    OSGL(ifp)->last_update_time = OSGL(ifp)->timer->time_m();
+	}
     } else {
 	OSGL(ifp)->glc->makeCurrent();
 
@@ -1346,7 +1349,10 @@ osgl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigne
     if (!OSGL(ifp)->use_ext_ctrl) {
 	if (OSGL(ifp)->viewer) {
 	    OSGL(ifp)->image->dirty();
-	    OSGL(ifp)->viewer->frame();
+	    if (OSGL(ifp)->timer->time_m() - OSGL(ifp)->last_update_time > 10) {
+		OSGL(ifp)->viewer->frame();
+		OSGL(ifp)->last_update_time = OSGL(ifp)->timer->time_m();
+	    }
 	} else {
 	    OSGL(ifp)->glc->makeCurrent();
 	    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
@@ -1401,7 +1407,10 @@ osgl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsig
     if (!OSGL(ifp)->use_ext_ctrl) {
 	if (OSGL(ifp)->viewer) {
 	    OSGL(ifp)->image->dirty();
-	    OSGL(ifp)->viewer->frame();
+	    if (OSGL(ifp)->timer->time_m() - OSGL(ifp)->last_update_time > 10) {
+		OSGL(ifp)->viewer->frame();
+		OSGL(ifp)->last_update_time = OSGL(ifp)->timer->time_m();
+	    }
 	} else {
 	    OSGL(ifp)->glc->makeCurrent();
 	    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
@@ -1460,7 +1469,10 @@ osgl_wmap(register fb *ifp, register const ColorMap *cmp)
 	/* Software color mapping, trigger a repaint */
 	if (OSGL(ifp)->viewer) {
 	    OSGL(ifp)->image->dirty();
-	    OSGL(ifp)->viewer->frame();
+	    if (OSGL(ifp)->timer->time_m() - OSGL(ifp)->last_update_time > 10) {
+		OSGL(ifp)->viewer->frame();
+		OSGL(ifp)->last_update_time = OSGL(ifp)->timer->time_m();
+	    }
 	} else {
 	    OSGL(ifp)->glc->makeCurrent();
 	    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
