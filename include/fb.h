@@ -54,7 +54,6 @@
 #if defined(HAVE_SYS_TIME_H)
 #  include <sys/time.h>
 #endif
-#include "bio.h" /* for fd_set on Windows */
 
 #include "bu/bu_tcl.h"
 #include "bu/magic.h"
@@ -162,9 +161,11 @@ FB_EXPORT extern char *fb_get_name(fb *ifp);
 FB_EXPORT extern void fb_set_magic(fb *ifp, uint32_t magic);
 FB_EXPORT extern long fb_get_pagebuffer_pixel_size(fb *ifp);
 
+#if !defined(_WIN32)
 FB_EXPORT extern int fb_is_set_fd(fb *ifp, fd_set *infds);
 FB_EXPORT extern int fb_set_fd(fb *ifp, fd_set *select_list);
 FB_EXPORT extern int fb_clear_fd(fb *ifp, fd_set *select_list);
+#endif
 
 /* color mapping */
 FB_EXPORT extern int fb_is_linear_cmap(const ColorMap *cmap);
