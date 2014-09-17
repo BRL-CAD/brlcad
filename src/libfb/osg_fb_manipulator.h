@@ -27,7 +27,7 @@ namespace osgGA {
 
 
 /** FrameBufferManipulator is base class for interacting with a framebuffer .*/
-class OSGGA_EXPORT FrameBufferManipulator : public StandardManipulator
+class FB_EXPORT FrameBufferManipulator : public StandardManipulator
 {
         typedef StandardManipulator inherited;
 
