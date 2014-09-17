@@ -1588,6 +1588,9 @@ osgl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
     glPointSize(originalPointSize);
     glLineWidth(originalLineWidth);
 
+    /* Need this back off for underlay with framebuffer */
+    glDisable(GL_DEPTH_TEST);
+
     return TCL_OK;
 }
 
