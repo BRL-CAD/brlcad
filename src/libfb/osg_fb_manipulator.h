@@ -212,77 +212,90 @@ public:
                 if (ea.getKey()==osgGA::GUIEventAdapter::KEY_F6)
                 {
                     // F6 -- Toggle osgOQ testing.
-		    std::cout << "F6!";
+		    //std::cout << "F6!";
                     return true;
                 }
                 else if (ea.getKey()==osgGA::GUIEventAdapter::KEY_F7)
                 {
                     // F7 -- Toggle display of OQ test bounding volumes
-		    std::cout << "F7!";
+		    //std::cout << "F7!";
                     return true;
                 }
                 else if (ea.getKey()==osgGA::GUIEventAdapter::KEY_F8)
                 {
                     // F8 -- Gather stats and display
-		    std::cout << "F8!";
+		    //std::cout << "F8!";
                     return true;
                 }
                 else if (ea.getKey()==osgGA::GUIEventAdapter::KEY_F9)
                 {
                     // F9 -- Remove all OcclusionQueryNodes
-		    std::cout << "F9!";
+		    //std::cout << "F9!";
                     return true;
                 }
                 else if (ea.getKey()=='o')
                 {
-		    std::cout << "o!";
+		    //std::cout << "o!";
                     return true;
                 }
                 return false;
             }
             case(osgGA::GUIEventAdapter::PUSH):
             {
-		std::cout << "PUSH! ";
-	        if (osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON & ea.getButton()) std::cout << "Left Button\n";
-	        if (osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON & ea.getButton()) std::cout << "Middle Button\n";
-	        if (osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON & ea.getButton()) std::cout << "Right Button\n";
-		if (osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON & ea.getButton()) {
-		    osg::Vec2 coord(ea.getX(), ea.getY());
-		    osg::Vec4 color = OSGL(fbp)->image->getColor(coord);
-		    std::cout << "(" << ea.getX() << "," << ea.getY() << ") " << color[0] << "," << color[1] << "," << color[2] << "\n";
+		//std::cout << "PUSH! ";
+	        if (osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON & ea.getButton()) {
+		    //std::cout << "Left Button\n";
+		}
+		if (osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON & ea.getButton()) {
+		    bu_exit(0, "framebuffer done.");
+		}
+		if (osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON & ea.getButton()) {
+		    int x = ea.getX();
+		    int y = ea.getY();
+		    register struct osgl_pixel *oglp;
+
+		    if (x < 0 || y < 0) {
+			fb_log("No RGB (outside image viewport)\n");
+			break;
+		    }
+
+		    oglp = (struct osgl_pixel *)&fbp->if_mem[(y*SGI(fbp)->mi_memwidth)*sizeof(struct osgl_pixel)];
+
+		    fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
+			    x, y, (int)oglp[x].red, (int)oglp[x].green, (int)oglp[x].blue);
 		}
 		return false;
 	    }
             case(osgGA::GUIEventAdapter::RELEASE):
             {
-		std::cout << "RELEASE! ";
+		/*std::cout << "RELEASE! ";
 	        if (osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON & ea.getButton()) std::cout << "Left Button\n";
 	        if (osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON & ea.getButton()) std::cout << "Middle Button\n";
-	        if (osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON & ea.getButton()) std::cout << "Right Button\n";
+	        if (osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON & ea.getButton()) std::cout << "Right Button\n";*/
 		return false;
 	    }
             case(osgGA::GUIEventAdapter::DOUBLECLICK):
             {
-		std::cout << "DOUBLECLICK!\n";
+		//std::cout << "DOUBLECLICK!\n";
 		return false;
 	    }
             case(osgGA::GUIEventAdapter::DRAG):
             {
-		std::cout << "DRAG!\n";
+		//std::cout << "DRAG!\n";
 		return false;
 	    }
             case(osgGA::GUIEventAdapter::MOVE):
             {
-		std::cout << "MOVE!\n";
+		//std::cout << "MOVE!\n";
 		return false;
 	    }
             case(osgGA::GUIEventAdapter::SCROLL):
             {
-		std::cout << "SCROLL ";
+		/*std::cout << "SCROLL ";
 	        if (osgGA::GUIEventAdapter::SCROLL_UP == ea.getScrollingMotion()) std::cout << "UP!\n";
 	        if (osgGA::GUIEventAdapter::SCROLL_DOWN == ea.getScrollingMotion()) std::cout << "DOWN!\n";
 	        if (osgGA::GUIEventAdapter::SCROLL_LEFT == ea.getScrollingMotion()) std::cout << "LEFT!\n";
-	        if (osgGA::GUIEventAdapter::SCROLL_RIGHT == ea.getScrollingMotion()) std::cout << "RIGHT!\n";
+	        if (osgGA::GUIEventAdapter::SCROLL_RIGHT == ea.getScrollingMotion()) std::cout << "RIGHT!\n";*/
 		return false;
 	    }
 
