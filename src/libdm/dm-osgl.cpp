@@ -462,16 +462,22 @@ osgl_close(struct dm_internal *dmp)
     return TCL_OK;
 }
 
+HIDDEN
+static void OSGUpdate(dm *dmp, int delta) {
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+
+    if (privvars->timer->time_m() - privvars->last_update_time > delta) {
+	privvars->graphicsContext->swapBuffers();
+	privvars->last_update_time = privvars->timer->time_m();
+    }
+}
+
 static void
 OSGEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
 {
     dm *dmp = (dm *)clientData;
-    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
 
-    if (privvars->timer->time_m() - privvars->last_update_time > 10) {
-	privvars->graphicsContext->swapBuffers();
-	privvars->last_update_time = privvars->timer->time_m();
-    }
+    OSGUpdate(dmp, 10);
 }
 
 /*
@@ -1445,6 +1451,11 @@ osgl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 
     if (dmp->dm_debugLevel == 1)
 	bu_log("osgl_drawVList()\n");
+
+    /* OGL dm appears to have this set already, but we need to
+     * do it here to match the default appearance of the wireframes
+     * with OSG. */
+    glEnable(GL_DEPTH_TEST);
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
