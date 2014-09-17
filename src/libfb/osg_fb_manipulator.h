@@ -246,6 +246,11 @@ public:
 	        if (osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON & ea.getButton()) std::cout << "Left Button\n";
 	        if (osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON & ea.getButton()) std::cout << "Middle Button\n";
 	        if (osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON & ea.getButton()) std::cout << "Right Button\n";
+		if (osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON & ea.getButton()) {
+		    osg::Vec2 coord(ea.getX(), ea.getY());
+		    osg::Vec4 color = OSGL(fbp)->image->getColor(coord);
+		    std::cout << "(" << ea.getX() << "," << ea.getY() << ") " << color[0] << "," << color[1] << "," << color[2] << "\n";
+		}
 		return false;
 	    }
             case(osgGA::GUIEventAdapter::RELEASE):
@@ -290,6 +295,8 @@ public:
     }
 
     osg::Node& _node;
+
+    fb *fbp;
 
     bool _enable, _debug;
 };

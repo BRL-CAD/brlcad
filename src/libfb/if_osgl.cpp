@@ -42,7 +42,6 @@ extern "C" {
 #include "fb_private.h"
 }
 #include "fb/fb_osgl.h"
-#include "osg_fb_manipulator.h"
 
 #define CJDEBUG 0
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
@@ -213,6 +212,9 @@ HIDDEN struct modeflags {
     { '\0', 0, 0, "" }
 };
 #endif
+
+/* OpenSceneGraph interactions for a framebuffer viewer */
+#include "osg_fb_manipulator.h"
 
 /*
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
@@ -701,7 +703,10 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 
     OSGL(ifp)->viewer->setCameraManipulator( new osgGA::FrameBufferManipulator() );
     OSGL(ifp)->viewer->addEventHandler(new osgGA::StateSetManipulator(OSGL(ifp)->viewer->getCamera()->getOrCreateStateSet()));
-    OSGL(ifp)->viewer->addEventHandler(new KeyHandler(*geode));
+
+    KeyHandler *kh = new KeyHandler(*geode);
+    kh->fbp = ifp;
+    OSGL(ifp)->viewer->addEventHandler(kh);
 
     OSGL(ifp)->cursor_on = 1;
 
