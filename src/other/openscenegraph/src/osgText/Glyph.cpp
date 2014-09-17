@@ -11,6 +11,8 @@
  * OpenSceneGraph Public License for more details.
 */
 
+#include <algorithm>    // std::max
+
 #include <osgText/Font>
 #include <osgText/Text>
 
