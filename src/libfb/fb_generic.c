@@ -94,12 +94,12 @@ void fb_put(fb *ifp)
 	BU_PUT(ifp, struct fb_internal);
 }
 
-void fb_set_interface(fb *ifp, const char *interface)
+void fb_set_interface(fb *ifp, const char *interface_type)
 {
     int i = 0;
     if (!ifp) return;
     while (_if_list[i] != FB_NULL) {
-	if (bu_strncmp(interface, _if_list[i]->if_name+5,
+	if (bu_strncmp(interface_type, _if_list[i]->if_name+5,
 		    strlen(_if_list[i]->if_name-5)) == 0) {
 	    /* found it, copy its struct in */
 	    *ifp = *(_if_list[i]);

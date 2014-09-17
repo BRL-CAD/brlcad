@@ -553,7 +553,7 @@ wgl_open(fb *ifp, const char *file, int width, int height)
     DWORD Dword;
     WNDCLASS wndclass;
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     saveifp = ifp;
 
