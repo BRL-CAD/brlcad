@@ -281,6 +281,17 @@ FT_BEGIN_HEADER
   /*                                                                       */
 /* #define FT_EXPORT(x)      extern x */
 /* #define FT_EXPORT_DEF(x)  x */
+#ifndef FT_EXPORT
+#  if defined(FREETYPE_DLL_EXPORTS) && defined(FREETYPE_DLL_IMPORTS)
+#    error "Only FREETYPE_DLL_EXPORTS or FREETYPE_DLL_IMPORTS can be defined, not both."
+#  elif defined(FREETYPE_DLL_EXPORTS)
+#    define FT_EXPORT(x) __declspec(dllexport) x
+#    define FT_EXPORT_DEF(x) __declspec(dllexport) x
+#  elif defined(FREETYPE_DLL_IMPORTS)
+#    define FT_EXPORT __declspec(dllimport) x
+#    define FT_EXPORT_DEF __declspec(dllimport) x
+#  endif
+#endif
 
 
   /*************************************************************************/
