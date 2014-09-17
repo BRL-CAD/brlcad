@@ -229,7 +229,7 @@
 	  string of "light" represent additional light sources
 	  (up to 16 are presently permitted),
 	  and shadow computations will be initiated automatically.
-	  (This mechanism is subject to further change).
+	  (This mechanism is subject to further change.)
 	  Model 1 is a diffuse-lighting model only, and is intended for
 	  debugging.
 	  Model 2 displays the surface normals as colors, and is useful
@@ -364,7 +364,7 @@
 	<listitem>
 	  <para>The "desired frame" flag, specifies frame number to start with.
 	  Specify the desired ending (kill-after) frame with
-	  <option>-K #</option></para>
+	  <option>-K #</option> .</para>
 	</listitem>
       </varlistentry>
 
@@ -373,7 +373,7 @@
 	<listitem>
 	  <para>sets the distance from the eye point to the center of the model RPP.
 	  Only useful with auto-sizing, conflicts with
-	  <option>-M</option></para>
+	  <option>-M</option> .</para>
 	</listitem>
       </varlistentry>
 
@@ -434,7 +434,7 @@
 	<listitem>
 	  <para>sets the final (kill-after) frame number.
 	  Used with animation scripts in conjunction with
-	  <option>-D #</option></para>
+	  <option>-D #</option> .</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
@@ -444,7 +444,7 @@
 	  Conflicts with
 	  <option>-a</option>
 	  and
-	  <option>-e</option></para>
+	  <option>-e</option> .</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
@@ -464,7 +464,7 @@
 	  can be used to later convert the file to
 	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 	  format output.
-	  (Deferred implementation).</para>
+	  (Deferred implementation)</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
