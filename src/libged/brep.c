@@ -838,6 +838,10 @@ dplot_split_faces(
     struct bu_vls short_name = BU_VLS_INIT_ZERO;
     struct split_face split_face;
 
+    if (info->mode != DPLOT_SPLIT_FACES) {
+	return GED_OK;
+    }
+
     if (info->event_idx >= info->fdata.split_face_count) {
 	for (i = 0; i < info->fdata.split_face_count; ++i) {
 	    split_face = info->fdata.face[i];
