@@ -32,8 +32,15 @@ db_str2op(const char *str)
 {
     db_op_t ret = DB_OP_NULL;
 
-    if (!str || str[0] == '\0')
-	return (db_op_t)ret;
+    if (!str)
+	return ret;
+
+    /* skip any leading whitespace */
+    while (*str && isspace((int)(*str)))
+	str++;
+
+    if (str[0] == '\0')
+	return ret;
 
     if (isprint(str[0])) {
 	/* single byte/char */
@@ -51,37 +58,39 @@ db_str2op(const char *str)
 		ret = DB_OP_INTERSECT;
 		break;
 	}
-    } else {
-	/* check if multibyte */
-
-	if (((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x88 && (unsigned char)str[2] == 0xAA) /* union symbol */
-		   || ((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x8B && (unsigned char)str[2] == 0x83) /* n-ary union */
-	    )
-	{
-	    ret = DB_OP_UNION;
-	} else if (((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x80 && (unsigned char)str[2] > 0x89 && (unsigned char)str[2] < 0x96)
-	    /* first check matches unicode symbol variants starting
-	     * with hyphen, non-breaking hypen, figure dash, en dash,
-	     * em dash, and horizontal bar.
-	     */
-	    || ((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x88 && (unsigned char)str[2] == 0x92) /* minus sign */
-	    || ((unsigned char)str[0] == 0xEF && (unsigned char)str[1] == 0xB9 && (unsigned char)str[2] == 0x98) /* small em dash */
-	    || ((unsigned char)str[0] == 0xEF && (unsigned char)str[1] == 0xB9 && (unsigned char)str[2] == 0xA3) /* small hypen minus */
-	    || ((unsigned char)str[0] == 0xEF && (unsigned char)str[1] == 0xBC && (unsigned char)str[2] == 0x8D) /* fullwidth hyphen-minus */
-	    || ((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x88 && (unsigned char)str[2] == 0x96) /* set minus */
-	    || ((unsigned char)str[0] == 0xCB && (unsigned char)str[1] == 0x97) /* utf-16, modifier minus sign */
-	    )
-	{
-	    ret = DB_OP_SUBTRACT;
-	} else if (((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x88 && (unsigned char)str[2] == 0xA9) /* intersection symbol */
-		   || ((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x8B && (unsigned char)str[2] == 0x82) /* n-ary intersection */
-		   || ((unsigned char)str[0] == 0xCB && (unsigned char)str[1] == 0x96) /* utf-16, modifier plus sign */
-		   || ((unsigned char)str[0] == 0xC3 && (unsigned char)str[1] == 0x97) /* utf-16, multiplication sign */
-	    )
-	{
-	    ret = DB_OP_INTERSECT;
-	}
+	return ret;
     }
+
+    /* check if multibyte */
+
+    if (((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x88 && (unsigned char)str[2] == 0xAA) /* union symbol */
+	|| ((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x8B && (unsigned char)str[2] == 0x83) /* n-ary union */
+	)
+    {
+	ret = DB_OP_UNION;
+    } else if (((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x80 && (unsigned char)str[2] > 0x89 && (unsigned char)str[2] < 0x96)
+	       /* first check matches unicode symbol variants starting
+		* with hyphen, non-breaking hypen, figure dash, en dash,
+		* em dash, and horizontal bar.
+		*/
+	       || ((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x88 && (unsigned char)str[2] == 0x92) /* minus sign */
+	       || ((unsigned char)str[0] == 0xEF && (unsigned char)str[1] == 0xB9 && (unsigned char)str[2] == 0x98) /* small em dash */
+	       || ((unsigned char)str[0] == 0xEF && (unsigned char)str[1] == 0xB9 && (unsigned char)str[2] == 0xA3) /* small hypen minus */
+	       || ((unsigned char)str[0] == 0xEF && (unsigned char)str[1] == 0xBC && (unsigned char)str[2] == 0x8D) /* fullwidth hyphen-minus */
+	       || ((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x88 && (unsigned char)str[2] == 0x96) /* set minus */
+	       || ((unsigned char)str[0] == 0xCB && (unsigned char)str[1] == 0x97) /* utf-16, modifier minus sign */
+	)
+    {
+	ret = DB_OP_SUBTRACT;
+    } else if (((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x88 && (unsigned char)str[2] == 0xA9) /* intersection symbol */
+	       || ((unsigned char)str[0] == 0xE2 && (unsigned char)str[1] == 0x8B && (unsigned char)str[2] == 0x82) /* n-ary intersection */
+	       || ((unsigned char)str[0] == 0xCB && (unsigned char)str[1] == 0x96) /* utf-16, modifier plus sign */
+	       || ((unsigned char)str[0] == 0xC3 && (unsigned char)str[1] == 0x97) /* utf-16, multiplication sign */
+	)
+    {
+	ret = DB_OP_INTERSECT;
+    }
+
     return ret;
 }
 
