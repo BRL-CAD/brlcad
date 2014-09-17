@@ -36,6 +36,7 @@ statement_list ::= statement_list statement.
 
 statement ::= surface_counts EOL.
 statement ::= ssx_info EOL.
+statement ::= linked_curve_count EOL.
 statement ::= split_face_count EOL.
 statement ::= split_face_info EOL.
 
@@ -76,6 +77,10 @@ isocsx_event_counts ::= isocsx_event_counts count(C). {
     BU_LIST_INIT(&isocsx->l);
 
     BU_LIST_PUSH(&data->isocsx_list, &isocsx->l);
+}
+
+linked_curve_count ::= LINKED_CURVES count(COUNT). {
+    data->linked_curve_count = COUNT;
 }
 
 split_face_count ::= SPLIT_FACES count(SPLIT_FACES). {

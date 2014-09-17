@@ -154,10 +154,8 @@ DebugPlot::WriteLog()
     filename << prefix << ".dplot";
     FILE *fp = fopen(filename.str().c_str(), "w");
 
-    // write out surface counts
-    fprintf(fp, "surfaces %d %d\n", brep1_surf_count, brep2_surf_count);
-
     // write out surface-surface intersections
+    fprintf(fp, "surfaces %d %d\n", brep1_surf_count, brep2_surf_count);
     for (size_t i = 0; i < intersecting_surfaces.size(); ++i) {
 	std::pair<int, int> pair = intersecting_surfaces[i];
 	int b1_isocurves = 0;
@@ -181,10 +179,11 @@ DebugPlot::WriteLog()
 	fprintf(fp, "\n");
     }
 
-    // write out split face count
-    fprintf(fp, "splitfaces %d\n", (int)split_face_outerloop_curves.size());
+    // write out linked curve count
+    fprintf(fp, "linkedcurves %d\n", linked_curve_count);
 
     // write out split faces
+    fprintf(fp, "splitfaces %d\n", (int)split_face_outerloop_curves.size());
     for (size_t i = 0; i < split_face_outerloop_curves.size(); ++i) {
 	fprintf(fp, "splitface %d %d %d\n", (int)i,
 		split_face_outerloop_curves[i],
