@@ -54,6 +54,7 @@
 #if defined(HAVE_SYS_TIME_H)
 #  include <sys/time.h>
 #endif
+#include "bio.h" /* for fd_set on Windows */
 
 #include "bu/bu_tcl.h"
 #include "bu/magic.h"

@@ -45,7 +45,9 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ipc.h>
+#ifdef HAVE_SYS_IPC_H
+#  include <sys/ipc.h>
+#endif
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>   /* for getpagesize and sysconf */
