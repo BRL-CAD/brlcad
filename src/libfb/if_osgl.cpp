@@ -673,7 +673,7 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     OSGL(ifp)->last_update_time = 0;
 
     OSGL(ifp)->viewer = new osgViewer::Viewer();
-    OSGL(ifp)->viewer->setUpViewInWindow(0, 0, ifp->if_width, ifp->if_height);
+    OSGL(ifp)->viewer->apply(new osgViewer::SingleWindow(0, 0, ifp->if_width, ifp->if_height));
 
     OSGL(ifp)->image = new osg::Image;
     OSGL(ifp)->image->setImage(ifp->if_width, ifp->if_height, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)ifp->if_mem, osg::Image::NO_DELETE);

@@ -77,6 +77,7 @@ extern "C" {
 #include <osgViewer/Viewer>
 #include <osgViewer/GraphicsWindow>
 #include <osgViewer/ViewerEventHandlers>
+#include <osgViewer/config/SingleWindow>
 
 #include <osgGA/StateSetManipulator>
 
