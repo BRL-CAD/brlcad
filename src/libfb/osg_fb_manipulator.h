@@ -242,12 +242,18 @@ public:
             }
             case(osgGA::GUIEventAdapter::PUSH):
             {
-		std::cout << "PUSH!\n";
+		std::cout << "PUSH! ";
+	        if (osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON & ea.getButton()) std::cout << "Left Button\n";
+	        if (osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON & ea.getButton()) std::cout << "Middle Button\n";
+	        if (osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON & ea.getButton()) std::cout << "Right Button\n";
 		return false;
 	    }
             case(osgGA::GUIEventAdapter::RELEASE):
             {
-		std::cout << "RELEASE!\n";
+		std::cout << "RELEASE! ";
+	        if (osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON & ea.getButton()) std::cout << "Left Button\n";
+	        if (osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON & ea.getButton()) std::cout << "Middle Button\n";
+	        if (osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON & ea.getButton()) std::cout << "Right Button\n";
 		return false;
 	    }
             case(osgGA::GUIEventAdapter::DOUBLECLICK):
@@ -265,6 +271,16 @@ public:
 		std::cout << "MOVE!\n";
 		return false;
 	    }
+            case(osgGA::GUIEventAdapter::SCROLL):
+            {
+		std::cout << "SCROLL ";
+	        if (osgGA::GUIEventAdapter::SCROLL_UP == ea.getScrollingMotion()) std::cout << "UP!\n";
+	        if (osgGA::GUIEventAdapter::SCROLL_DOWN == ea.getScrollingMotion()) std::cout << "DOWN!\n";
+	        if (osgGA::GUIEventAdapter::SCROLL_LEFT == ea.getScrollingMotion()) std::cout << "LEFT!\n";
+	        if (osgGA::GUIEventAdapter::SCROLL_RIGHT == ea.getScrollingMotion()) std::cout << "RIGHT!\n";
+		return false;
+	    }
+
 
             default:
                 return false;
