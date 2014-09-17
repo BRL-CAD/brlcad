@@ -78,6 +78,12 @@ DebugPlot::IntersectingIsocurves(int ssx_idx)
     return (int)ssx_isocsx_events[ssx_idx].size();
 }
 
+int
+DebugPlot::LinkedCurves(void)
+{
+    return linked_curve_count;
+}
+
 HIDDEN void
 write_plot_to_file(
     const char *filename,

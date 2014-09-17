@@ -73,6 +73,9 @@ public:
     // given surface pair
     int IntersectingIsocurves(int ssx_idx);
 
+    // get the number of linked curves recorded
+    int LinkedCurves();
+
     void SplitFaces(
 	const ON_ClassArray<ON_SimpleArray<TrimmedFace *> > &split_faces);
 
