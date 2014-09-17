@@ -474,6 +474,7 @@ enum {
     DPLOT_ISOCSX,
     DPLOT_ISOCSX_EVENTS,
     DPLOT_FACE_CURVES,
+    DPLOT_LINKED_CURVES,
     DPLOT_SPLIT_FACES
 };
 
@@ -901,8 +902,31 @@ dplot_split_faces(
 		    bu_vls_cstr(&short_name));
 	}
 
-	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show surface-"
-		"surface intersection %d", ++info->event_idx);
+	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show "
+		"split face %d", ++info->event_idx);
+	return GED_MORE;
+    }
+    return GED_OK;
+}
+
+HIDDEN int
+dplot_linked_curves(
+    struct dplot_info *info)
+{
+    int i;
+    if (info->mode != DPLOT_LINKED_CURVES) {
+	return GED_OK;
+    }
+
+    if (info->event_idx >= info->fdata.linked_curve_count) {
+	for (i = 0; i < info->fdata.linked_curve_count; ++i) {
+	    dplot_overlay(info->gedp, info->prefix, "_linked_curve", i, NULL);
+	}
+    } else {
+	dplot_overlay(info->gedp, info->prefix, "_linked_curve",
+		info->event_idx, "linked_curve");
+	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show "
+		"linked curve %d", ++info->event_idx);
 	return GED_MORE;
     }
     return GED_OK;
@@ -1003,6 +1027,8 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str,
 		"  fcurves N   (show clipped face curves of ssx pair N\n");
 	bu_vls_printf(gedp->ged_result_str,
+		"  lcurves     (show linked ssx curves used to split faces\n");
+	bu_vls_printf(gedp->ged_result_str,
 		"    faces     (show split faces used to construct result\n");
 	return GED_HELP;
     }
@@ -1061,6 +1087,9 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    }
 	    info.mode = DPLOT_FACE_CURVES;
+	    info.event_idx = 0;
+	} else if (BU_STR_EQUAL(cmd, "lcurves") && argc == 3) {
+	    info.mode = DPLOT_LINKED_CURVES;
 	    info.event_idx = 0;
 	} else if (BU_STR_EQUAL(cmd, "faces") && argc == 3) {
 	    info.mode = DPLOT_SPLIT_FACES;
@@ -1153,6 +1182,13 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
     }
 
     ret = dplot_split_faces(&info);
+    if (ret == GED_ERROR) {
+	RETURN_ERROR;
+    } else if (ret == GED_MORE) {
+	RETURN_MORE;
+    }
+
+    ret = dplot_linked_curves(&info);
     if (ret == GED_ERROR) {
 	RETURN_ERROR;
     } else if (ret == GED_MORE) {
