@@ -2837,6 +2837,8 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 
     categorize_trimmed_faces(trimmed_faces, brep1, brep2, surf_tree1, surf_tree2, operation);
 
+    dplot->SplitFaces(trimmed_faces);
+
     for (int i = 0; i < surf_tree1.Count(); i++) {
 	delete surf_tree1[i];
     }

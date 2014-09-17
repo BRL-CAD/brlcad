@@ -32,6 +32,8 @@
 #include "bu.h"
 #include "raytrace.h"
 
+struct TrimmedFace;
+
 class DebugPlot {
 public:
     // prefix all dplot output files with 'basename'
@@ -70,6 +72,9 @@ public:
     // given surface pair
     int IntersectingIsocurves(int ssx_idx);
 
+    void SplitFaces(
+	const ON_ClassArray<ON_SimpleArray<TrimmedFace *> > &split_faces);
+
 private:
     struct bu_list vlist_free_list;
     std::string prefix;
@@ -81,6 +86,8 @@ private:
     std::vector< std::vector<int> > ssx_isocsx_events; // num events for each isocsx of each ssx
     std::vector<int> ssx_isocsx_brep1_curves; // num ssx isocsx events using brep1 isocurves
     std::vector< std::pair<int, int> > ssx_clipped_curves; // num clipped intersection curves
+    std::vector<int> split_face_outerloop_curves;
+    std::vector<int> split_face_innerloop_curves;
 
     void PlotSurface(
 	const ON_Surface &surf,
@@ -107,16 +114,6 @@ private:
 	const ON_Surface &surf,
 	int knot_dir);
 };
-
-#if 0
-
-void
-plot_point(
-    ON_3dPoint pt,
-    double diameter,
-    const char *prefix = "curve",
-    unsigned char *color = NULL);
-#endif
 
 #endif
 

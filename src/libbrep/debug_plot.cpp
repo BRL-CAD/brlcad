@@ -44,6 +44,13 @@ static unsigned char tangent_color[] = {255, 255, 255};
 static unsigned char transverse_color[] = {255, 255, 0};
 static unsigned char overlap_color[] = {0, 255, 0};
 
+static unsigned char accepted_outerloop_color[] = {0, 255, 0};
+static unsigned char accepted_innerloop_color[] = {255, 0, 0};
+static unsigned char unknown_outerloop_color[] = {0, 158, 0};
+static unsigned char unknown_innerloop_color[] = {158, 0, 0};
+static unsigned char rejected_outerloop_color[] = {0, 62, 0};
+static unsigned char rejected_innerloop_color[] = {62, 0, 0};
+
 DebugPlot::DebugPlot(const char *basename) :
     prefix(basename),
     have_surfaces(false),
@@ -627,6 +634,123 @@ DebugPlot::ClippedFaceCurves(
     }
     std::pair<int, int> counts(face1_curves.Count(), face2_curves.Count());
     ssx_clipped_curves[ssx_idx] = counts;
+}
+
+struct TrimmedFace {
+    // curve segments in the face's outer loop
+    ON_SimpleArray<ON_Curve *> m_outerloop;
+    // several inner loops, each has some curves
+    std::vector<ON_SimpleArray<ON_Curve *> > m_innerloop;
+    const ON_BrepFace *m_face;
+    enum {
+	UNKNOWN = -1,
+	NOT_BELONG = 0,
+	BELONG = 1
+    } m_belong_to_final;
+    bool m_rev;
+
+    // Default constructor
+    TrimmedFace()
+    {
+	m_face = NULL;
+	m_belong_to_final = UNKNOWN;
+	m_rev = false;
+    }
+
+    // Destructor
+    ~TrimmedFace()
+    {
+	// Delete the curve segments if it's not belong to the result.
+	if (m_belong_to_final != BELONG) {
+	    for (int i = 0; i < m_outerloop.Count(); i++) {
+		if (m_outerloop[i]) {
+		    delete m_outerloop[i];
+		    m_outerloop[i] = NULL;
+		}
+	    }
+	    for (unsigned int i = 0; i < m_innerloop.size(); i++) {
+		for (int j = 0; j < m_innerloop[i].Count(); j++) {
+		    if (m_innerloop[i][j]) {
+			delete m_innerloop[i][j];
+			m_innerloop[i][j] = NULL;
+		    }
+		}
+	    }
+	}
+    }
+
+    TrimmedFace *Duplicate() const
+    {
+	TrimmedFace *out = new TrimmedFace();
+	out->m_face = m_face;
+	for (int i = 0; i < m_outerloop.Count(); i++) {
+	    if (m_outerloop[i]) {
+		out->m_outerloop.Append(m_outerloop[i]->Duplicate());
+	    }
+	}
+	out->m_innerloop = m_innerloop;
+	for (unsigned int i = 0; i < m_innerloop.size(); i++) {
+	    for (int j = 0; j < m_innerloop[i].Count(); j++) {
+		if (m_innerloop[i][j]) {
+		    out->m_innerloop[i][j] = m_innerloop[i][j]->Duplicate();
+		}
+	    }
+	}
+	return out;
+    }
+};
+
+void
+DebugPlot::SplitFaces(
+    const ON_ClassArray<ON_SimpleArray<TrimmedFace *> > &split_faces)
+{
+    for (int i = 0; i < split_faces.Count(); ++i) {
+	for (int j = 0; j < split_faces[i].Count(); ++j) {
+	    TrimmedFace *face = split_faces[i][j];
+
+	    unsigned char *outerloop_color = unknown_outerloop_color;
+	    unsigned char *innerloop_color = unknown_innerloop_color;
+	    switch (face->m_belong_to_final) {
+		case TrimmedFace::NOT_BELONG:
+		    outerloop_color = rejected_outerloop_color;
+		    innerloop_color = rejected_innerloop_color;
+		    break;
+		case TrimmedFace::BELONG:
+		    outerloop_color = accepted_outerloop_color;
+		    innerloop_color = accepted_innerloop_color;
+		    break;
+		default:
+		    outerloop_color = unknown_outerloop_color;
+		    innerloop_color = unknown_innerloop_color;
+	    }
+
+	    int split_face_count = split_face_outerloop_curves.size();
+	    for (int k = 0; k < face->m_outerloop.Count(); ++k) {
+		std::ostringstream filename;
+		filename << prefix << "_split_face_" << split_face_count <<
+		    "_outerloop_curve" << k << ".plot3";
+
+		Plot3DCurveFrom2D(face->m_face->SurfaceOf(),
+			face->m_outerloop[k], filename.str().c_str(),
+			outerloop_color);
+	    }
+	    split_face_outerloop_curves.push_back(face->m_outerloop.Count());
+
+	    int innerloop_count = 0;
+	    for (size_t k = 0; k < face->m_innerloop.size(); ++k) {
+		for (int l = 0; l < face->m_innerloop[k].Count(); ++l) {
+		    std::ostringstream filename;
+		    filename << prefix << "_split_face_" << split_face_count <<
+			"_innerloop_curve" << innerloop_count++ << ".plot3";
+
+		    Plot3DCurveFrom2D(face->m_face->SurfaceOf(),
+			    face->m_innerloop[k][l], filename.str().c_str(),
+			    innerloop_color);
+		}
+	    }
+	    split_face_innerloop_curves.push_back(innerloop_count);
+	}
+    }
 }
 
 // Local Variables:
