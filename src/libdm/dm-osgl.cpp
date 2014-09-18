@@ -192,8 +192,6 @@ osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsig
  * Either initially, or on resize/reshape of the window,
  * sense the actual size of the window, and perform any
  * other initializations of the window configuration.
- *
- * also change font size if necessary
  */
 HIDDEN int
 osgl_configureWin_guts(struct dm_internal *dmp, int force)
@@ -217,120 +215,6 @@ osgl_configureWin_guts(struct dm_internal *dmp, int force)
 	return TCL_OK;
 
     osgl_reshape(dmp, width, height);
-
-#if 0
-    /* First time through, load a font or quit */
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
-	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
-	     XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			    FONT9)) == NULL) {
-	    /* Try hardcoded backup font */
-	    if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
-		 XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				FONTBACK)) == NULL) {
-		bu_log("osgl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-		return TCL_ERROR;
-	    }
-	}
-	glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-		    0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-    }
-
-    if (DM_VALID_FONT_SIZE(dmp->dm_fontsize)) {
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != dmp->dm_fontsize) {
-	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						DM_FONT_SIZE_TO_NAME(dmp->dm_fontsize))) != NULL) {
-		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			    0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-	    }
-	}
-    } else {
-	/* Always try to choose a the font that best fits the window size.
-	 */
-
-	if (dmp->dm_width < 582) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 5) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT5)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	} else if (dmp->dm_width < 679) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 6) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT6)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	} else if (dmp->dm_width < 776) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 7) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT7)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	} else if (dmp->dm_width < 873) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 8) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT8)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	} else if (dmp->dm_width < 1455) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 9) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT9)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	} else if (dmp->dm_width < 2037) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 10) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT10)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	} else {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 12) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT12)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	}
-    }
-#endif
     return TCL_OK;
 }
 
@@ -725,7 +609,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
     privvars->fontNormal = FONS_INVALID;
-    privvars->fontNormal = fonsAddFont(privvars->fs, "sans", bu_brlcad_data("fonts/ProFont.ttf", 1));
+    privvars->fontNormal = fonsAddFont(privvars->fs, "sans", bu_brlcad_data("fonts/ProFont.ttf", 0));
 
     /* This is the applications display list offset */
     dmp->dm_displaylist = glGenLists(0);
@@ -1670,30 +1554,32 @@ osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y
     if (!(int)font_size) {
 	font_size = dm_get_height(dmp)/60.0;
     }
-    coord_x = (x + 1)/2 * dm_get_width(dmp);
-    coord_y = dm_get_height(dmp) - ((y + 1)/2 * dm_get_height(dmp));
+    if (privvars->fontNormal != FONS_INVALID) {
+	coord_x = (x + 1)/2 * dm_get_width(dmp);
+	coord_y = dm_get_height(dmp) - ((y + 1)/2 * dm_get_height(dmp));
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0,dm_get_width(dmp),dm_get_height(dmp),0,-1,1);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0,dm_get_width(dmp),dm_get_height(dmp),0,-1,1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
-    unsigned int color = glfonsRGBA(dmp->dm_fg[0], dmp->dm_fg[1], dmp->dm_fg[2], 255);
-    fonsSetFont(privvars->fs, privvars->fontNormal);
-    fonsSetSize(privvars->fs, (int)font_size); /* cast to int so we always get a font */
-    fonsSetColor(privvars->fs, color);
-    fonsDrawText(privvars->fs, coord_x, coord_y, str, NULL);
+	unsigned int color = glfonsRGBA(dmp->dm_fg[0], dmp->dm_fg[1], dmp->dm_fg[2], 255);
+	fonsSetFont(privvars->fs, privvars->fontNormal);
+	fonsSetSize(privvars->fs, (int)font_size); /* cast to int so we always get a font */
+	fonsSetColor(privvars->fs, color);
+	fonsDrawText(privvars->fs, coord_x, coord_y, str, NULL);
 
-    if (!blend_state) glDisable(GL_BLEND);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+	if (!blend_state) glDisable(GL_BLEND);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+    }
 
     return TCL_OK;
 }
