@@ -1662,6 +1662,7 @@ HIDDEN int
 osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int UNUSED(use_aspect))
 {
     struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+    int blend_state = glIsEnabled(GL_BLEND);
     fastf_t coord_x, coord_y;
     if (dmp->dm_debugLevel)
 	bu_log("osgl_drawString2D()\n");
@@ -1671,8 +1672,6 @@ osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_DEPTH_TEST);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -1680,16 +1679,13 @@ osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    glEnable(GL_CULL_FACE);
-
     unsigned int white = glfonsRGBA(255, 255, 255 ,255);
     fonsSetFont(privvars->fs, privvars->fontNormal);
     fonsSetSize(privvars->fs, 16.0f);
     fonsSetColor(privvars->fs, white);
     fonsDrawText(privvars->fs, coord_x, coord_y, str, NULL);
 
-    glEnable(GL_DEPTH_TEST);
-
+    if (!blend_state) glDisable(GL_BLEND);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
