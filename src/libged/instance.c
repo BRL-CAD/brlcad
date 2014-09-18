@@ -38,7 +38,7 @@ int
 ged_instance(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    char oper;
+    db_op_t oper;
     static const char *usage = "obj comb [op]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -64,12 +64,10 @@ ged_instance(struct ged *gedp, int argc, const char *argv[])
 
     oper = WMOP_UNION;
     if (argc == 4)
-	oper = argv[3][0];
+	oper = db_str2op(argv[3]);
 
-    if (oper != WMOP_UNION &&
-	oper != WMOP_SUBTRACT &&
-	oper != WMOP_INTERSECT) {
-	bu_vls_printf(gedp->ged_result_str, "bad operation: %c\n", oper);
+    if (oper == DB_OP_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "bad operation: %c (0x%x)\n", argv[3][0], argv[3][0]);
 	return GED_ERROR;
     }
 

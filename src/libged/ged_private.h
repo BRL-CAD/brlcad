@@ -150,7 +150,7 @@ extern struct directory *_ged_combadd(struct ged *gedp,
 				      struct directory *objp,
 				      char *combname,
 				      int region_flag,
-				      int relation,
+				      db_op_t relation,
 				      int ident,
 				      int air);
 extern int _ged_combadd2(struct ged *gedp,
@@ -158,7 +158,7 @@ extern int _ged_combadd2(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
 			 int region_flag,
-			 int relation,
+			 db_op_t relation,
 			 int ident,
 			 int air);
 

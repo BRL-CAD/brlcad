@@ -680,7 +680,7 @@ _ged_combadd(struct ged *gedp,
 	     struct directory *objp,
 	     char *combname,
 	     int region_flag,	/* true if adding region */
-	     int relation,	/* = UNION, SUBTRACT, INTERSECT */
+	     db_op_t relation,	/* = UNION, SUBTRACT, INTERSECT */
 	     int ident,		/* "Region ID" */
 	     int air		/* Air code */)
 {
@@ -710,7 +710,7 @@ _ged_combadd2(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
 	      int region_flag,	/* true if adding region */
-	      int relation,	/* = UNION, SUBTRACT, INTERSECT */
+	      db_op_t relation,	/* = UNION, SUBTRACT, INTERSECT */
 	      int ident,	/* "Region ID" */
 	      int air		/* Air code */)
 {

@@ -5491,8 +5491,7 @@ wdb_group_cmd(struct rt_wdb *wdbp,
     /* get objects to add to group */
     for (i = 2; i < argc; i++) {
 	if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
-	    if (wdb_combadd(wdbp->dbip, dp, argv[1], 0,
-			    WMOP_UNION, 0, 0, wdbp) == RT_DIR_NULL)
+	    if (wdb_combadd(wdbp->dbip, dp, argv[1], 0, WMOP_UNION, 0, 0, wdbp) == RT_DIR_NULL)
 		return TCL_ERROR;
 	}  else
 	    Tcl_AppendResult(wdbp->wdb_interp, "skip member ", argv[i], "\n", (char *)NULL);
@@ -5607,7 +5606,7 @@ wdb_region_cmd(struct rt_wdb *wdbp,
     struct directory *dp;
     int i;
     int ident, air;
-    char oper;
+    db_op_t oper;
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -5646,23 +5645,17 @@ wdb_region_cmd(struct rt_wdb *wdbp,
 
     /* Get operation and solid name for each solid */
     for (i = 2; i < argc; i += 2) {
-	if (argv[i][1] != '\0') {
-	    Tcl_AppendResult(wdbp->wdb_interp, "bad operation: ", argv[i],
-			     " skip member: ", argv[i+1], "\n", (char *)NULL);
-	    continue;
-	}
-	oper = argv[i][0];
 	if ((dp = db_lookup(wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    Tcl_AppendResult(wdbp->wdb_interp, "skipping ", argv[i+1], "\n", (char *)NULL);
 	    continue;
 	}
 
-	if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
+	oper = db_str2op(argv[i]);
+	if (oper == DB_OP_NULL) {
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
-			  oper, dp->d_namep);
+	    bu_vls_printf(&tmp_vls, "bad operation: %c (0x%x) skip member: %s\n", argv[i][0], argv[i][0], dp->d_namep);
 	    Tcl_AppendResult(wdbp->wdb_interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	    continue;
@@ -5713,7 +5706,7 @@ wdb_comb_cmd(struct rt_wdb *wdbp,
     struct directory *dp;
     const char *comb_name;
     int i;
-    char oper;
+    db_op_t oper;
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -5747,24 +5740,18 @@ wdb_comb_cmd(struct rt_wdb *wdbp,
 
     /* Get operation and solid name for each solid */
     for (i = 2; i < argc; i += 2) {
-	if (argv[i][1] != '\0') {
-	    Tcl_AppendResult(wdbp->wdb_interp, "bad operation: ", argv[i],
-			     " skip member: ", argv[i+1], "\n", (char *)NULL);
-	    continue;
-	}
-	oper = argv[i][0];
 	dp = db_lookup(wdbp->dbip,  argv[i+1], LOOKUP_NOISY);
 	if (dp == RT_DIR_NULL) {
 	    Tcl_AppendResult(wdbp->wdb_interp, "skipping ", argv[i+1], "\n", (char *)NULL);
 	    continue;
 	}
 
-	if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
+	oper = db_str2op(argv[i]);
+	if (oper == DB_OP_NULL) {
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
-			  oper, dp->d_namep);
+	    bu_vls_printf(&tmp_vls, "bad operation: %c (0x%x) skip member: %s\n", argv[i][0], argv[i][0], dp->d_namep);
 	    Tcl_AppendResult(wdbp->wdb_interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	    continue;
@@ -8453,7 +8440,7 @@ wdb_instance_cmd(struct rt_wdb *wdbp,
 		 const char *argv[])
 {
     struct directory *dp;
-    char oper;
+    db_op_t oper;
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -8472,15 +8459,13 @@ wdb_instance_cmd(struct rt_wdb *wdbp,
 
     oper = WMOP_UNION;
     if (argc == 4)
-	oper = argv[3][0];
+	oper = db_str2op(argv[3]);
 
-    if (oper != WMOP_UNION &&
-	oper != WMOP_SUBTRACT &&
-	oper != WMOP_INTERSECT) {
+    if (oper == DB_OP_NULL) {
 	struct bu_vls tmp_vls;
 
 	bu_vls_init(&tmp_vls);
-	bu_vls_printf(&tmp_vls, "bad operation: %c\n", oper);
+	bu_vls_printf(&tmp_vls, "bad operation: %c (0x%x)\n", argv[3][0], argv[3][0]);
 	Tcl_AppendResult(wdbp->wdb_interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
 	return TCL_ERROR;
