@@ -1679,10 +1679,10 @@ osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    unsigned int white = glfonsRGBA(255, 255, 255 ,255);
+    unsigned int color = glfonsRGBA(dmp->dm_fg[0], dmp->dm_fg[1], dmp->dm_fg[2], 255);
     fonsSetFont(privvars->fs, privvars->fontNormal);
     fonsSetSize(privvars->fs, 16.0f);
-    fonsSetColor(privvars->fs, white);
+    fonsSetColor(privvars->fs, color);
     fonsDrawText(privvars->fs, coord_x, coord_y, str, NULL);
 
     if (!blend_state) glDisable(GL_BLEND);
