@@ -119,12 +119,17 @@ dm_validXType(char *dpy_string, char *name)
   */
 
 char *
-#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_X) && !defined(DM_TK)
+#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_OSGL) && !defined(DM_X) && !defined(DM_TK)
 dm_bestXType(char *UNUSED(dpy_string))
 #else
 dm_bestXType(char *dpy_string)
 #endif
 {
+
+#ifdef DM_OSGL
+    return "osgl";
+#endif
+
 #ifdef DM_WGL
     /* should probably make sure wgl works */
     return "wgl";
