@@ -85,6 +85,7 @@ extern "C" {
 #include <osg/TextureRectangle>
 #include <osg/Geode>
 #include <osg/Geometry>
+#include <osg/DrawPixels>
 #include <osg/StateSet>
 #include <osg/Timer>
 

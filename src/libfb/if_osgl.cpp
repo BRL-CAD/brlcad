@@ -1230,6 +1230,19 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 
 	    memcpy(scanline, pixelp, scan_count*3);
 
+#if 0
+	    osg::ref_ptr<osg::Image> scanline_image = new osg::Image;
+	    scanline_image->allocateImage(ifp->if_width, 1, 1, GL_RGB, GL_UNSIGNED_BYTE);
+	    scanline = (void *)scanline_image->data();
+	    memcpy(scanline, pixelp, scan_count*3);
+	    osg::ref_ptr<osg::DrawPixels> scanline_obj = new osg::DrawPixels;
+	    scanline_obj->setPosition(osg::Vec3(0, y, 0));
+	    scanline_obj->setImage(scanline_image);
+	    osg::ref_ptr<osg::Geode> new_geode = new osg::Geode;
+	    new_geode->addDrawable(scanline_obj.get());
+	    OSGL(ifp)->root->addChild(new_geode.get());
+#endif
+
 	    ret += scan_count;
 	    pix_count -= scan_count;
 	    x = 0;
