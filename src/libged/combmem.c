@@ -436,7 +436,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 
 
 #define COMBMEM_SET_PART_II(_gedp, _argv, _op, _i, _rt_tree_array, _tree_index, _mat) { \
-	(_op) = (_argv)[(_i)][0]; \
+	(_op) = db_str2op((_argv)[(_i)]); \
 	\
 	/* Add it to the combination */ \
 	switch ((_op)) { \
@@ -447,7 +447,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 		(_rt_tree_array)[(_tree_index)].tl_op = OP_SUBTRACT; \
 		break; \
 	    default: \
-		bu_vls_printf((_gedp)->ged_result_str, "combmem_set: unrecognized relation (assume UNION)\n"); \
+		bu_vls_printf((_gedp)->ged_result_str, "combmem_set: unrecognized relation %c (assuming UNION)\n", (_argv)[(_i)][0]); \
 	    case DB_OP_UNION: \
 		(_rt_tree_array)[(_tree_index)].tl_op = OP_UNION; \
 		break; \
@@ -535,7 +535,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     size_t tree_index;
     union tree *tp;
     union tree *final_tree;
-    char op;
+    db_op_t op;
 
     switch (etype) {
 	case ETYPES_ABS:
@@ -638,7 +638,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     size_t tree_index;
     union tree *tp;
     union tree *final_tree;
-    char op;
+    db_op_t op;
 
     switch (etype) {
 	case ETYPES_ROT_AET:
@@ -729,7 +729,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
     size_t tree_index;
     union tree *tp;
     union tree *final_tree;
-    char op;
+    db_op_t op;
 
     if (etype != ETYPES_ROT_ARBITRARY_AXIS)
 	return GED_ERROR;
@@ -809,7 +809,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     size_t tree_index;
     union tree *tp;
     union tree *final_tree;
-    char op;
+    db_op_t op;
 
     if (etype != ETYPES_TRA)
 	return GED_ERROR;
@@ -872,7 +872,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     size_t tree_index;
     union tree *tp;
     union tree *final_tree;
-    char op;
+    db_op_t op;
 
     if (etype != ETYPES_SCA)
 	return GED_ERROR;
