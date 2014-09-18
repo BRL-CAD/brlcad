@@ -843,7 +843,7 @@ wgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *f
     BU_CKMAG(fb_p, FB_WGL_MAGIC, "wgl framebuffer");
     return _wgl_open_existing(ifp, wgl_internal->dpy, wgl_internal->win, wgl_internal->cmap,
 	    wgl_internal->vip, wgl_internal->hdc, width, height,
-	    wgl->glxc, wgl->double_buffer, wgl->soft_cmap);
+	    wgl_internal->glxc, wgl_internal->double_buffer, wgl_internal->soft_cmap);
     return 0;
 }
 
