@@ -64,9 +64,6 @@
 #include "wdb.h"
 
 
-using namespace std;
-
-
 const int NUM_OF_CPUS_TO_USE = 1;
 
 const int DEBUG_NAMES = 1;
@@ -81,12 +78,12 @@ static rt_tess_tol ttol;   /* tessellation tolerance in mm */
 static bn_tol tol;    /* calculation tolerance */
 
 // Global map for bodies names in the CGM global list
-map<string, int> g_body_id_map;
-map<string, int>::iterator g_itr;
+std::map<std::string, int> g_body_id_map;
+std::map<std::string, int>::iterator g_itr;
 
 int g_body_cnt = 0;
 
-vector <string> g_CsgBoolExp;
+std::vector <std::string> g_CsgBoolExp;
 
 const char *usage_msg = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 const char *options = "t:a:n:o:r:vx:X:";
@@ -95,15 +92,15 @@ const char *output_file = NULL;
 
 
 static void
-tokenize(const string& str, vector<string>& tokens, const string& delimiters)
+tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string& delimiters)
 {
     // Skip delimiters at beginning.
-    string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+    std::string::size_type lastPos = str.find_first_not_of(delimiters, 0);
 
     // Find first "non-delimiter".
-    string::size_type pos     = str.find_first_of(delimiters, lastPos);
+    std::string::size_type pos     = str.find_first_of(delimiters, lastPos);
 
-    while (string::npos != pos || string::npos != lastPos) {
+    while (std::string::npos != pos || std::string::npos != lastPos) {
 	// Found a token, add it to the vector.
 	tokens.push_back(str.substr(lastPos, pos - lastPos));
 
@@ -116,12 +113,12 @@ tokenize(const string& str, vector<string>& tokens, const string& delimiters)
 }
 
 
-static string
-infix_to_postfix(string str)
+static std::string
+infix_to_postfix(std::string str)
 {
 
-    stack <char> s;
-    ostringstream ostr;
+    std::stack <char> s;
+    std::ostringstream ostr;
     char c;
 
     for (int i = 0; i < strlen(str.c_str()); i++) {
@@ -212,7 +209,7 @@ parse_args(int ac, char **av)
 
 // set_body_id function
 static void
-set_body_id(string body_name, int body_id)
+set_body_id(std::string body_name, int body_id)
 {
     g_body_id_map[body_name] = body_id;
 }
@@ -220,12 +217,12 @@ set_body_id(string body_name, int body_id)
 
 // get_body_id function
 static int
-get_body_id(string body_name)
+get_body_id(std::string body_name)
 {
     const int ERR_FLAG = -99;
     int rVal;
 
-    map<string, int>::iterator iter;
+    std::map<std::string, int>::iterator iter;
     iter = g_body_id_map.find(body_name);
 
     if (iter != g_body_id_map.end()) {
@@ -334,8 +331,8 @@ region_start (db_tree_state *tsp,
     rt_comb_internal *comb;
     directory *dp;
     bu_vls str = BU_VLS_INIT_ZERO;
-    ostringstream ostr;
-    string infix, postfix;
+    std::ostringstream ostr;
+    std::string infix, postfix;
 
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -346,7 +343,7 @@ region_start (db_tree_state *tsp,
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
     /* here is where the conversion should be done */
-    cout << "* Here is where the conversion should be done *" << endl;
+    std::cout << "* Here is where the conversion should be done *" << std::endl;
     printf("Write this region (name=%s) as a part in your format:\n", dp->d_namep);
 
     describe_tree(combp->tree, &str);
@@ -358,7 +355,7 @@ region_start (db_tree_state *tsp,
 
     infix = ostr.str();
     postfix = infix_to_postfix(infix);
-    cout << "\tIn postfix: "<< postfix << endl << endl;
+    std::cout << "\tIn postfix: "<< postfix << std::endl << std::endl;
     g_CsgBoolExp.push_back(postfix);
 
     return 0;
@@ -486,10 +483,10 @@ make_bot(nmgregion *r,
 	BotBody = BodyList[i];
 
 	if (status != CUBIT_FAILURE) {
-	    cout << "make_bot made a Body!" << endl;
+	    std::cout << "make_bot made a Body!" << std::endl;
 	    gmt->regularize_body(BotBody, RegBotBody);
 	} else {
-	    cout << "make_bot did not made a Body! Substituted bounding box instead of Body." << endl;
+	    std::cout << "make_bot did not made a Body! Substituted bounding box instead of Body." << std::endl;
 
 	    double bb_width = fabs(bot_max[0] - bot_min[0]);
 	    double bb_depth = fabs(bot_max[1] - bot_min[1]);
@@ -522,8 +519,8 @@ primitive_func(db_tree_state *tsp,
     const double NEARZERO = 0.0001;
 
     int i;
-    ostringstream ostr;
-    string name;
+    std::ostringstream ostr;
+    std::string name;
 
     directory *dp;
 
@@ -630,16 +627,16 @@ primitive_func(db_tree_state *tsp,
 		    if (fabs(fabs(VDOT(tgc->h, axb))-(mh*maxb)) < NEARZERO) {
 			// have a right cylinder or cone
 			if ((fabs(ma - mb) < NEARZERO) && (fabs(mc - md)  < NEARZERO)) {
-			    cout << "DEBUG: This TGC is a rcc or trc" << endl;
+			    std::cout << "DEBUG: This TGC is a rcc or trc" << std::endl;
 			    direct_convert = true;
 			} else if ((fabs(ma - mc) < NEARZERO) && (fabs(mb - md)  < NEARZERO)) {
-			    cout << "DEBUG: This TGC is a rec" << endl;
+			    std::cout << "DEBUG: This TGC is a rec" << std::endl;
 			    direct_convert = true;
 			} else if ((fabs(ma/mc) - fabs(mb/md)) < NEARZERO) {
-			    cout << "DEBUG: This TGC is a tec" << endl;
+			    std::cout << "DEBUG: This TGC is a tec" << std::endl;
 			    direct_convert = true;
 			} else {
-			    cout << "DEBUG: This TGC is a right tgc" << endl;
+			    std::cout << "DEBUG: This TGC is a right tgc" << std::endl;
 			    direct_convert = false;
 			}
 		    }
@@ -654,7 +651,7 @@ primitive_func(db_tree_state *tsp,
 
 			    if ((fabs(ma - mb) > NEARZERO)) {
 				double axbangle = x_axis.interior_angle(tgc_a);
-				cout << "axbangle = " << axbangle << endl;
+				std::cout << "axbangle = " << axbangle << std::endl;
 				if (axbangle > NEARZERO) {
 				    gqt->rotate(gqt->get_last_body(), z_axis, axbangle);
 				}
@@ -662,7 +659,7 @@ primitive_func(db_tree_state *tsp,
 
 			    CubitVector raxis = z_axis * tgc_h;
 			    double rangle = z_axis.interior_angle(tgc_h);
-			    cout << "rangle = " << rangle << endl;
+			    std::cout << "rangle = " << rangle << std::endl;
 			    if (rangle > NEARZERO) {
 				gqt->rotate(gqt->get_last_body(), raxis, rangle);
 			    }
@@ -1139,7 +1136,7 @@ booltree_evaluate(tree *tp, resource *resp)
     if (tr->tr_op != OP_DB_LEAF) bu_exit(2, "booltree_evaluate() bad right tree\n");
 
     bu_log(" {%s} %c {%s}\n", tl->tr_d.td_name, opr, tr->tr_d.td_name);
-    cout << "******" << tl->tr_d.td_name << " " << (char)op << " " << tr->tr_d.td_name << "***********" << endl;
+    std::cout << "******" << tl->tr_d.td_name << " " << (char)op << " " << tr->tr_d.td_name << "***********" << std::endl;
 
     /* Build string of result name */
     namelen = strlen(tl->tr_d.td_name) + 1 /* for op */ + 2 /* for spaces */ + strlen(tr->tr_d.td_name) + 3;
@@ -1229,7 +1226,7 @@ main(int argc, char *argv[])
 
     // Get version number of the geometry engine.
     CubitString version = gqt->get_engine_version_string();
-    cout << "ACIS Engine: " << version << endl;
+    std::cout << "ACIS Engine: " << version << std::endl;
 
     CubitStatus status;
 
@@ -1281,12 +1278,12 @@ main(int argc, char *argv[])
 	usage("No geometry to convert.\n");
     }
 
-    cout << "*** CSG DEBUG BEGIN ***" << endl;
+    std::cout << "*** CSG DEBUG BEGIN ***" << std::endl;
     DLIList<Body*> all_region_bodies, region_bodies, from_bodies;
     Body* region_body;
 
     for (int i=0; i < g_CsgBoolExp.size(); i++) {
-	cout << " R" << i << " = " << g_CsgBoolExp[i] << ": " << get_body_id(g_CsgBoolExp[i]) << endl;
+	std::cout << " R" << i << " = " << g_CsgBoolExp[i] << ": " << get_body_id(g_CsgBoolExp[i]) << std::endl;
 
 	int body_id = get_body_id(g_CsgBoolExp[i]);
 
@@ -1294,39 +1291,39 @@ main(int argc, char *argv[])
 	    all_region_bodies.append(gqt->get_body(body_id));
 	} else if (body_id == -1) {
 	    // {empty}
-	    cout << "DEBUG: {empty}" << endl;
+	    std::cout << "DEBUG: {empty}" << std::endl;
 	} else {
 	    //tokenize
-	    vector <string> csgTokens;
+	    std::vector<std::string> csgTokens;
 	    char csgOp;
 
 	    tokenize(g_CsgBoolExp[i], csgTokens, " ");
 
-	    cout << "DEBUG " << csgTokens.size() << endl;
+	    std::cout << "DEBUG " << csgTokens.size() << std::endl;
 
 	    for (int j = 0; j < csgTokens.size(); j++) {
-		cout <<" T" << j << " = " << csgTokens[j] << ": " << get_body_id(csgTokens[j]) << endl;
+		std::cout <<" T" << j << " = " << csgTokens[j] << ": " << get_body_id(csgTokens[j]) << std::endl;
 
 		if (get_body_id(csgTokens[j]) >= 0) {
 		    region_bodies.append(gqt->get_body(get_body_id(csgTokens[j])));
 		} else {
 		    csgOp = csgTokens[j].at(0);
-		    cout << "*DEBUG* csgOp = " << csgOp << endl;
+		    std::cout << "*DEBUG* csgOp = " << csgOp << std::endl;
 		    switch (csgOp) {
 			case DB_OP_INTERSECT:
-			    cout << "*** DEBUG INTERSECT ***" << endl;
+			    std::cout << "*** DEBUG INTERSECT ***" << std::endl;
 			    tool_body = region_bodies.pop();
 			    from_bodies.append(region_bodies.pop());
 			    gmt->intersect(tool_body, from_bodies, region_bodies, CUBIT_TRUE);
 			    break;
 			case DB_OP_SUBTRACT:
-			    cout << "*** DEBUG SUBTRACT ***" << endl;
+			    std::cout << "*** DEBUG SUBTRACT ***" << std::endl;
 			    tool_body = region_bodies.pop();
 			    from_bodies.append(region_bodies.pop());
 			    gmt->subtract(tool_body, from_bodies, region_bodies, CUBIT_TRUE);
 			    break;
 			case DB_OP_UNION:
-			    cout << "*** DEBUG UNION ***" << endl;
+			    std::cout << "*** DEBUG UNION ***" << std::endl;
 			    if (region_bodies.size() >= 2) {
 				from_bodies.append(region_bodies.pop());
 				from_bodies.append(region_bodies.pop());
@@ -1356,7 +1353,7 @@ main(int argc, char *argv[])
 	} // end if/else on body_id
     } // end for loop over g_CsgBoolExp
 
-    cout << "*** CSG DEBUG END ***" << endl;
+    std::cout << "*** CSG DEBUG END ***" << std::endl;
 
     // Make entities list.
     DLIList<RefEntity*> parent_entities;
@@ -1364,7 +1361,7 @@ main(int argc, char *argv[])
     CAST_LIST_TO_PARENT(all_region_bodies, parent_entities);
 
     int size = parent_entities.size();
-    cout << "Number of bodies to be exported: " << size << endl;
+    std::cout << "Number of bodies to be exported: " << size << std::endl;
 
     // Export geometry
     if (size != 0) {
@@ -1375,7 +1372,7 @@ main(int argc, char *argv[])
 
     CGMApp::instance()->shutdown();
 
-    cout << "Number of primitives processed: " << g_body_cnt << endl;
+    std::cout << "Number of primitives processed: " << g_body_cnt << std::endl;
 
     return 0;
 }
