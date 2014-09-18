@@ -43,6 +43,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+#include "ged.h"
 #include "wdb.h"
 #include "plot3.h"
 
