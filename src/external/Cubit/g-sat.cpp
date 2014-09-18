@@ -75,10 +75,10 @@ const int DEBUG_STATS = 2;
 const long debug = 1;
 int verbose = 0;
 
-static  db_i		*dbip;
+static db_i *dbip;
 
-static  rt_tess_tol     ttol;   /* tessellation tolerance in mm */
-static  bn_tol          tol;    /* calculation tolerance */
+static rt_tess_tol ttol;   /* tessellation tolerance in mm */
+static bn_tol tol;    /* calculation tolerance */
 
 // Global map for bodies names in the CGM global list
 map<string, int> g_body_id_map;
@@ -89,17 +89,17 @@ int g_body_cnt = 0;
 vector <string> g_CsgBoolExp;
 
 // Function prototypes for access of the global map above.
-void set_body_id( string body_name, int body_id );
-int get_body_id( string body_name );
+void set_body_id(string body_name, int body_id);
+int get_body_id(string body_name);
 
-void usage( char* s);
-int parse_args( int ac, char *av[]);
-int region_start ( db_tree_state *tsp,  db_full_path *pathp, const  rt_comb_internal * combp, void *client_data );
-tree *region_end ( db_tree_state *tsp,  db_full_path *pathp, tree *curtree, void *client_data );
-tree *primitive_func( db_tree_state *tsp,  db_full_path *pathp, rt_db_internal *ip, void *client_data);
-void describe_tree( tree *tree,  bu_vls *str);
-void output_triangles( nmgregion *r, model *m, shell *s);
-bool make_bot( nmgregion *r, model *m, shell *s);
+void usage(char* s);
+int parse_args(int ac, char *av[]);
+int region_start (db_tree_state *tsp,  db_full_path *pathp, const rt_comb_internal * combp, void *client_data);
+tree *region_end (db_tree_state *tsp,  db_full_path *pathp, tree *curtree, void *client_data);
+tree *primitive_func(db_tree_state *tsp,  db_full_path *pathp, rt_db_internal *ip, void *client_data);
+void describe_tree(tree *tree,  bu_vls *str);
+void output_triangles(nmgregion *r, model *m, shell *s);
+bool make_bot(nmgregion *r, model *m, shell *s);
 tree *booltree_evaluate(tree *tp, resource *resp);
 
 string infix_to_postfix(string str);
@@ -118,14 +118,14 @@ main(int argc, char *argv[])
 	int info;
     } user_data;
 
-    int		i;
-    register int	c;
+    int i;
+    register int c;
     char idbuf[132];
 
     int arg_count;
     const int MIN_NUM_OF_ARGS = 2;
 
-    bu_setlinebuf( stderr );
+    bu_setlinebuf(stderr);
 
     rt_i *rtip;
     db_tree_state init_state;
@@ -144,9 +144,9 @@ main(int argc, char *argv[])
 
 
     /* parse command line arguments. */
-    arg_count = parse_args( argc, argv );
+    arg_count = parse_args(argc, argv);
 
-    if ( (argc - arg_count) < MIN_NUM_OF_ARGS ) {
+    if ((argc - arg_count) < MIN_NUM_OF_ARGS) {
 	usage("Error: Must specify model and objects on the command line\n");
     }
 
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
     GeometryModifyTool *gmt = GeometryModifyTool::instance();
     GeometryQueryTool *gqt = GeometryQueryTool::instance();
 
-    // Create the  ACIS engines
+    // Create the ACIS engines
     AcisQueryEngine::instance();
     AcisModifyEngine::instance();
 
@@ -185,8 +185,8 @@ main(int argc, char *argv[])
     /* Scan all the records in the database and build a directory */
     rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf));
 
-    if ( rtip == RTI_NULL) {
-	usage( "rt_dirbuild failure\n" );
+    if (rtip == RTI_NULL) {
+	usage("rt_dirbuild failure\n");
     }
 
     init_state = rt_initial_tree_state;
@@ -203,17 +203,17 @@ main(int argc, char *argv[])
      * outputting combinations and primitives
      */
     int walk_tree_status;
-    for ( i = bu_optind ; i < argc ; i++ ) {
+    for (i = bu_optind ; i < argc ; i++) {
 	struct directory *dp;
 
-	dp = db_lookup( rtip->rti_dbip, argv[i], LOOKUP_QUIET );
-	if ( dp == RT_DIR_NULL ) {
-	    bu_log( "Cannot find %s\n", argv[i] );
+	dp = db_lookup(rtip->rti_dbip, argv[i], LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    bu_log("Cannot find %s\n", argv[i]);
 	    continue;
 	}
 
 	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
-		     &init_state ,region_start, region_end, primitive_func, (void *) &user_data);
+		     &init_state , region_start, region_end, primitive_func, (void *) &user_data);
     }
 
     // *************************************************************************************
@@ -226,7 +226,7 @@ main(int argc, char *argv[])
 
     // Export geometry
     if (g_body_cnt == 0) {
-	usage( "No geometry to convert.\n" );
+	usage("No geometry to convert.\n");
     }
 
     cout << "*** CSG DEBUG BEGIN ***" << endl;
@@ -238,31 +238,28 @@ main(int argc, char *argv[])
 
 	int body_id = get_body_id(g_CsgBoolExp[i]);
 
-	if (body_id  >= 0) {
+	if (body_id >= 0) {
 	    all_region_bodies.append(gqt->get_body(body_id));
-	}
-	else if (body_id == -1) {
+	} else if (body_id == -1) {
 	    // {empty}
 	    cout << "DEBUG: {empty}" << endl;
-	}
-	else {
+	} else {
 	    //tokenize
 	    vector <string> csgTokens;
 	    char csgOp;
 
-	    tokenize(g_CsgBoolExp[i],csgTokens," ");
+	    tokenize(g_CsgBoolExp[i], csgTokens, " ");
 
 	    cout << "DEBUG " << csgTokens.size() << endl;
 
 	    for (int j = 0; j < csgTokens.size(); j++) {
-		cout <<"    T" << j << " = " << csgTokens[j] << ": " << get_body_id(csgTokens[j]) << endl;
+		cout <<" T" << j << " = " << csgTokens[j] << ": " << get_body_id(csgTokens[j]) << endl;
 
 		if (get_body_id(csgTokens[j]) >= 0) {
 		    region_bodies.append(gqt->get_body(get_body_id(csgTokens[j])));
-		}
-		else {
+		} else {
 		    csgOp = csgTokens[j].at(0);
-		    cout << "*DEBUG*  csgOp = " << csgOp << endl;
+		    cout << "*DEBUG* csgOp = " << csgOp << endl;
 		    switch (csgOp) {
 			case DB_OP_INTERSECT:
 			    cout << "*** DEBUG INTERSECT ***" << endl;
@@ -284,8 +281,7 @@ main(int argc, char *argv[])
 				if (!gmt->unite(from_bodies, region_bodies, CUBIT_TRUE)) {
 				    region_bodies+=from_bodies;
 				}
-			    }
-			    else {
+			    } else {
 				region_bodies+=from_bodies;
 			    }
 			    break;
@@ -321,9 +317,8 @@ main(int argc, char *argv[])
     // Export geometry
     if (size != 0) {
 	status = gqt->export_solid_model(parent_entities, output_file, ACIS_SAT, size, version);
-    }
-    else {
-	usage( "No geometry to convert.\n" );
+    } else {
+	usage("No geometry to convert.\n");
     }
 
     CGMApp::instance()->shutdown();
@@ -337,8 +332,8 @@ main(int argc, char *argv[])
 void
 usage(char *s)
 {
-    if ( s ) {
-	fputs( s, stderr );
+    if (s) {
+	fputs(s, stderr);
     }
 
     bu_exit(1, usage_msg, prog_name);
@@ -346,11 +341,11 @@ usage(char *s)
 
 
 int
-parse_args( int ac, char **av )
+parse_args(int ac, char **av)
 {
-    int  c;
+    int c;
 
-    if (  ! (prog_name=strrchr(*av, '/'))  )
+    if (! (prog_name=strrchr(*av, '/')))
 	prog_name = *av;
     else
 	++prog_name;
@@ -359,11 +354,11 @@ parse_args( int ac, char **av )
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ( (c = bu_getopt( ac, av, options ) ) != EOF ) {
+    while ((c = bu_getopt(ac, av, options)) != EOF) {
 
 	switch (c) {
 	    case 't':               /* calculational tolerance */
-		tol.dist = atof( bu_optarg );
+		tol.dist = atof(bu_optarg);
 		tol.dist_sq = tol.dist * tol.dist;
 	    case 'o':               /* Output file name */
 		/* grab output file name */
@@ -373,13 +368,13 @@ parse_args( int ac, char **av )
 		verbose++;
 		break;
 	    case 'x':               /* librt debug flag */
-		sscanf( bu_optarg, "%x", &RTG.debug );
-		bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
+		sscanf(bu_optarg, "%x", &RTG.debug);
+		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':               /* NMG debug flag */
-		sscanf( bu_optarg, "%x", &RTG.NMG_debug );
-		bu_printb( "librt RTG.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+		sscanf(bu_optarg, "%x", &RTG.NMG_debug);
+		bu_printb("librt RTG.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    default:
@@ -397,17 +392,17 @@ parse_args( int ac, char **av )
  * @brief This routine is called when a region is first encountered in the
  * hierarchy when processing a tree
  *
- *      @param tsp tree state (for parsing the tree)
- *      @param pathp A listing of all the nodes traversed to get to this node in the database
- *      @param combp the combination record for this region
- *      @param client_data pointer that was passed as last argument to db_walk_tree()
+ * @param tsp tree state (for parsing the tree)
+ * @param pathp A listing of all the nodes traversed to get to this node in the database
+ * @param combp the combination record for this region
+ * @param client_data pointer that was passed as last argument to db_walk_tree()
  *
  */
 int
-region_start ( db_tree_state *tsp,
-	       db_full_path *pathp,
-	       const  rt_comb_internal *combp,
-	       void *client_data )
+region_start (db_tree_state *tsp,
+	      db_full_path *pathp,
+	      const rt_comb_internal *combp,
+	      void *client_data)
 {
     rt_comb_internal *comb;
     directory *dp;
@@ -425,14 +420,14 @@ region_start ( db_tree_state *tsp,
 
     /* here is where the conversion should be done */
     cout << "* Here is where the conversion should be done *" << endl;
-    printf( "Write this region (name=%s) as a part in your format:\n", dp->d_namep );
+    printf("Write this region (name=%s) as a part in your format:\n", dp->d_namep);
 
-    describe_tree( combp->tree, &str );
+    describe_tree(combp->tree, &str);
 
-    printf( "\t%s\n\n", bu_vls_addr( &str ) );
-    ostr <<  bu_vls_addr( &str );
+    printf("\t%s\n\n", bu_vls_addr(&str));
+    ostr << bu_vls_addr(&str);
 
-    bu_vls_free( &str );
+    bu_vls_free(&str);
 
     infix = ostr.str();
     postfix = infix_to_postfix(infix);
@@ -446,23 +441,23 @@ region_start ( db_tree_state *tsp,
 /**
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
- *      @param tsp
- *      @param pathp
- *      @param curtree
- *      @param client_data
+ * @param tsp
+ * @param pathp
+ * @param curtree
+ * @param client_data
  *
- *      @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
- *      clean up the data in the  tree * that is returned
+ * @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
+ * clean up the data in the tree * that is returned
  *
  * If it wants to retain the data in curtree it can by returning TREE_NULL.  Otherwise
- * db_walk_tree will clean up the data in the  tree * that is returned.
+ * db_walk_tree will clean up the data in the tree * that is returned.
  *
  */
 tree *
-region_end ( db_tree_state *tsp,
-	     db_full_path *pathp,
-	     tree *curtree,
-	     void *client_data )
+region_end (db_tree_state *tsp,
+	    db_full_path *pathp,
+	    tree *curtree,
+	    void *client_data)
 {
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -478,8 +473,8 @@ region_end ( db_tree_state *tsp,
  * In a real converter, this would output the tree in the desired format.
  */
 void
-describe_tree(  tree *tree,
-		bu_vls *str)
+describe_tree(tree *tree,
+	      bu_vls *str)
 {
     bu_vls left = BU_VLS_INIT_ZERO;
     bu_vls right = BU_VLS_INIT_ZERO;
@@ -488,10 +483,9 @@ describe_tree(  tree *tree,
 
     BU_CK_VLS(str);
 
-    if ( !tree )
-    {
+    if (!tree) {
 	/* this tree has no members */
-	bu_vls_strcat( str, "{empty}" );
+	bu_vls_strcat(str, "{empty}");
 	set_body_id("{empty}", -1);
 	return;
     }
@@ -502,15 +496,14 @@ describe_tree(  tree *tree,
      * the first four are the most common types, and are typically
      * the only ones found in a BRL-CAD database.
      */
-    switch ( tree->tr_op )
-    {
+    switch (tree->tr_op) {
 	case OP_DB_LEAF:	/* leaf node, this is a member */
 	    /* Note: tree->tr_l.tl_mat is a pointer to a
 	     * transformation matrix to apply to this member
 	     */
-	    bu_vls_strcat( str,  tree->tr_l.tl_name );
+	    bu_vls_strcat(str,  tree->tr_l.tl_name);
 	    break;
-	case OP_UNION:		/*  operator node */
+	case OP_UNION:		/* operator node */
 	    op = DB_OP_UNION;
 	    goto binary;
 	case OP_INTERSECT:	/* intersection operator node */
@@ -521,35 +514,35 @@ describe_tree(  tree *tree,
 	    goto binary;
 	case OP_XOR:		/* exclusive "or" operator node */
 	    op = xor_op;
-    binary:				/* common for all binary nodes */
-	    describe_tree( tree->tr_b.tb_left, &left );
-	    describe_tree( tree->tr_b.tb_right, &right );
-	    bu_vls_putc( str, '(' );
-	    bu_vls_vlscatzap( str, &left );
+	binary:				/* common for all binary nodes */
+	    describe_tree(tree->tr_b.tb_left, &left);
+	    describe_tree(tree->tr_b.tb_right, &right);
+	    bu_vls_putc(str, '(');
+	    bu_vls_vlscatzap(str, &left);
 	    bu_vls_printf(str, " %c ", op);
-	    bu_vls_vlscatzap( str, &right );
-	    bu_vls_putc( str, ')' );
+	    bu_vls_vlscatzap(str, &right);
+	    bu_vls_putc(str, ')');
 	    break;
 	case OP_NOT:
-	    bu_vls_strcat( str, "(!" );
-	    describe_tree( tree->tr_b.tb_left, str );
-	    bu_vls_putc( str, ')' );
+	    bu_vls_strcat(str, "(!");
+	    describe_tree(tree->tr_b.tb_left, str);
+	    bu_vls_putc(str, ')');
 	    break;
 	case OP_GUARD:
-	    bu_vls_strcat( str, "(G" );
-	    describe_tree( tree->tr_b.tb_left, str );
-	    bu_vls_putc( str, ')' );
+	    bu_vls_strcat(str, "(G");
+	    describe_tree(tree->tr_b.tb_left, str);
+	    bu_vls_putc(str, ')');
 	    break;
 	case OP_XNOP:
-	    bu_vls_strcat( str, "(X" );
-	    describe_tree( tree->tr_b.tb_left, str );
-	    bu_vls_putc( str, ')' );
+	    bu_vls_strcat(str, "(X");
+	    describe_tree(tree->tr_b.tb_left, str);
+	    bu_vls_putc(str, ')');
 	    break;
 	case OP_NOP:
-	    bu_vls_strcat( str, "NOP" );
+	    bu_vls_strcat(str, "NOP");
 	    break;
 	default:
-	    bu_exit(2, "ERROR: describe_tree() got unrecognized op (%d)\n", tree->tr_op );
+	    bu_exit(2, "ERROR: describe_tree() got unrecognized op (%d)\n", tree->tr_op);
     }
 }
 
@@ -557,10 +550,10 @@ describe_tree(  tree *tree,
 /* This routine is called by the tree walker (db_walk_tree)
  * for every primitive encountered in the trees specified on the command line */
 tree *
-primitive_func( db_tree_state *tsp,
-		db_full_path *pathp,
-		rt_db_internal *ip,
-		void *client_data)
+primitive_func(db_tree_state *tsp,
+	       db_full_path *pathp,
+	       rt_db_internal *ip,
+	       void *client_data)
 {
     const double NEARZERO = 0.0001;
 
@@ -583,544 +576,537 @@ primitive_func( db_tree_state *tsp,
     }
 
     /* handle each type of primitive (see h/rtgeom.h) */
-    if ( ip->idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
-	switch ( ip->idb_minor_type )
-	{
+    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD) {
+	switch (ip->idb_minor_type) {
 	    /* most commonly used primitives */
 	    case ID_TOR:	/* torus */
-	    {
-		CubitVector x_axis(1.0, 0.0, 0.0);
-		CubitVector y_axis(0.0, 1.0, 0.0);
-		CubitVector z_axis(0.0, 0.0, 1.0);
+		{
+		    CubitVector x_axis(1.0, 0.0, 0.0);
+		    CubitVector y_axis(0.0, 1.0, 0.0);
+		    CubitVector z_axis(0.0, 0.0, 1.0);
 
-		rt_tor_internal *tor = ( rt_tor_internal *)ip->idb_ptr;
+		    rt_tor_internal *tor = (rt_tor_internal *)ip->idb_ptr;
 
-		if (debug&DEBUG_NAMES) {
-		    printf( "Write this torus (name=%s) in your format:\n", dp->d_namep );
-		    printf( "\tV=(%g %g %g)\n", V3ARGS( tor->v ) );
-		    printf( "\tnormal=(%g %g %g)\n", V3ARGS( tor->h ) );
-		    printf( "\tradius1 = %g\n", tor->r_a );
-		    printf( "\tradius2 = %g\n", tor->r_h );
-		}
-
-		CubitVector tor_v( V3ARGS( tor->v ) );
-		CubitVector tor_h( V3ARGS( tor->h ) );
-
-		double tor_ra = tor->r_a;
-		double tor_rh = tor->r_h;
-
-		if (gmt->torus(tor_ra, tor_rh)) {
-		    g_body_cnt++;
-		    ostr << dp->d_namep;
-		    name = ostr.str();
-		    set_body_id(name, g_body_cnt);
-		    ostr.flush();
-
-		    CubitVector raxis = z_axis * tor_h;
-		    double rangle = z_axis.interior_angle(tor_h);
-
-		    gqt->rotate(gqt->get_last_body(), raxis, rangle);
-		    gqt->translate(gqt->get_last_body(), tor_v);
-		}
-
-		break;
-	    }
-	    case ID_TGC: /* truncated general cone frustum */
-	    case ID_REC: /* right elliptical cylinder */
-	    {
-		/* This primitive includes circular cross-section
-		 * cones and cylinders
-		 */
-		CubitVector x_axis(1.0, 0.0, 0.0);
-		CubitVector y_axis(0.0, 1.0, 0.0);
-		CubitVector z_axis(0.0, 0.0, 1.0);
-
-		bool direct_convert = false;
-
-		fastf_t maxb, ma, mb, mc, md, mh;
-		vect_t axb;
-
-		CubitVector bbc[8];  // bounding box corners
-		CubitVector center_of_base;
-
-		rt_tgc_internal *tgc = ( rt_tgc_internal *)ip->idb_ptr;
-
-		if (debug&DEBUG_NAMES) {
-		    printf( "Write this TGC (name=%s) in your format:\n", dp->d_namep );
-		    printf( "\tV=(%g %g %g)\n", V3ARGS( tgc->v ) );
-		    printf( "\tH=(%g %g %g)\n", V3ARGS( tgc->h ) );
-		    printf( "\tA=(%g %g %g)\n", V3ARGS( tgc->a ) );
-		    printf( "\tB=(%g %g %g)\n", V3ARGS( tgc->b ) );
-		    printf( "\tC=(%g %g %g)\n", V3ARGS( tgc->c ) );
-		    printf( "\tD=(%g %g %g)\n", V3ARGS( tgc->d ) );
-		}
-
-		CubitVector tgc_v( V3ARGS( tgc->v ) );
-		CubitVector tgc_h( V3ARGS( tgc->h ) );
-		CubitVector tgc_a( V3ARGS( tgc->a ) );
-		CubitVector tgc_b( V3ARGS( tgc->b ) );
-		CubitVector tgc_c( V3ARGS( tgc->c ) );
-		CubitVector tgc_d( V3ARGS( tgc->d ) );
-
-		VCROSS(axb, tgc->a, tgc->b);
-		maxb = MAGNITUDE(axb);
-		ma = MAGNITUDE( tgc->a );
-		mb = MAGNITUDE( tgc->b );
-		mc = MAGNITUDE( tgc->c );
-		md = MAGNITUDE( tgc->d );
-		mh = MAGNITUDE( tgc->h );
-
-		// check for right cone or cylinder
-		if ( fabs(fabs(VDOT(tgc->h,axb))-(mh*maxb) ) < NEARZERO ) {
-		    // have a right cylinder or cone
-		    if (( fabs(ma - mb) < NEARZERO) && (fabs(mc - md)  < NEARZERO )) {
-			cout << "DEBUG: This TGC is a rcc or trc" << endl;
-			direct_convert = true;
+		    if (debug&DEBUG_NAMES) {
+			printf("Write this torus (name=%s) in your format:\n", dp->d_namep);
+			printf("\tV=(%g %g %g)\n", V3ARGS(tor->v));
+			printf("\tnormal=(%g %g %g)\n", V3ARGS(tor->h));
+			printf("\tradius1 = %g\n", tor->r_a);
+			printf("\tradius2 = %g\n", tor->r_h);
 		    }
-		    else if (( fabs(ma - mc) < NEARZERO) && (fabs(mb - md)  < NEARZERO )) {
-			cout << "DEBUG: This TGC is a rec" << endl;
-			direct_convert = true;
-		    }
-		    else if (( fabs(ma/mc) - fabs(mb/md) ) < NEARZERO ) {
-			cout << "DEBUG: This TGC is a tec" << endl;
-			direct_convert = true;
-		    }
-		    else {
-			cout << "DEBUG: This TGC is a right tgc" << endl;
-			direct_convert = false;
-		    }
-		}
 
-		if (direct_convert) {
-		    if (gmt->cylinder(mh, ma, mb, mc)) {
+		    CubitVector tor_v(V3ARGS(tor->v));
+		    CubitVector tor_h(V3ARGS(tor->h));
+
+		    double tor_ra = tor->r_a;
+		    double tor_rh = tor->r_h;
+
+		    if (gmt->torus(tor_ra, tor_rh)) {
 			g_body_cnt++;
 			ostr << dp->d_namep;
 			name = ostr.str();
 			set_body_id(name, g_body_cnt);
 			ostr.flush();
 
-			if ( (fabs(ma - mb) > NEARZERO )) {
-			    double axbangle = x_axis.interior_angle(tgc_a);
-			    cout << "axbangle = " << axbangle << endl;
-			    if ( axbangle > NEARZERO ) {
+			CubitVector raxis = z_axis * tor_h;
+			double rangle = z_axis.interior_angle(tor_h);
+
+			gqt->rotate(gqt->get_last_body(), raxis, rangle);
+			gqt->translate(gqt->get_last_body(), tor_v);
+		    }
+
+		    break;
+		}
+	    case ID_TGC: /* truncated general cone frustum */
+	    case ID_REC: /* right elliptical cylinder */
+		{
+		    /* This primitive includes circular cross-section
+		     * cones and cylinders
+		     */
+		    CubitVector x_axis(1.0, 0.0, 0.0);
+		    CubitVector y_axis(0.0, 1.0, 0.0);
+		    CubitVector z_axis(0.0, 0.0, 1.0);
+
+		    bool direct_convert = false;
+
+		    fastf_t maxb, ma, mb, mc, md, mh;
+		    vect_t axb;
+
+		    CubitVector bbc[8];  // bounding box corners
+		    CubitVector center_of_base;
+
+		    rt_tgc_internal *tgc = (rt_tgc_internal *)ip->idb_ptr;
+
+		    if (debug&DEBUG_NAMES) {
+			printf("Write this TGC (name=%s) in your format:\n", dp->d_namep);
+			printf("\tV=(%g %g %g)\n", V3ARGS(tgc->v));
+			printf("\tH=(%g %g %g)\n", V3ARGS(tgc->h));
+			printf("\tA=(%g %g %g)\n", V3ARGS(tgc->a));
+			printf("\tB=(%g %g %g)\n", V3ARGS(tgc->b));
+			printf("\tC=(%g %g %g)\n", V3ARGS(tgc->c));
+			printf("\tD=(%g %g %g)\n", V3ARGS(tgc->d));
+		    }
+
+		    CubitVector tgc_v(V3ARGS(tgc->v));
+		    CubitVector tgc_h(V3ARGS(tgc->h));
+		    CubitVector tgc_a(V3ARGS(tgc->a));
+		    CubitVector tgc_b(V3ARGS(tgc->b));
+		    CubitVector tgc_c(V3ARGS(tgc->c));
+		    CubitVector tgc_d(V3ARGS(tgc->d));
+
+		    VCROSS(axb, tgc->a, tgc->b);
+		    maxb = MAGNITUDE(axb);
+		    ma = MAGNITUDE(tgc->a);
+		    mb = MAGNITUDE(tgc->b);
+		    mc = MAGNITUDE(tgc->c);
+		    md = MAGNITUDE(tgc->d);
+		    mh = MAGNITUDE(tgc->h);
+
+		    // check for right cone or cylinder
+		    if (fabs(fabs(VDOT(tgc->h, axb))-(mh*maxb)) < NEARZERO) {
+			// have a right cylinder or cone
+			if ((fabs(ma - mb) < NEARZERO) && (fabs(mc - md)  < NEARZERO)) {
+			    cout << "DEBUG: This TGC is a rcc or trc" << endl;
+			    direct_convert = true;
+			} else if ((fabs(ma - mc) < NEARZERO) && (fabs(mb - md)  < NEARZERO)) {
+			    cout << "DEBUG: This TGC is a rec" << endl;
+			    direct_convert = true;
+			} else if ((fabs(ma/mc) - fabs(mb/md)) < NEARZERO) {
+			    cout << "DEBUG: This TGC is a tec" << endl;
+			    direct_convert = true;
+			} else {
+			    cout << "DEBUG: This TGC is a right tgc" << endl;
+			    direct_convert = false;
+			}
+		    }
+
+		    if (direct_convert) {
+			if (gmt->cylinder(mh, ma, mb, mc)) {
+			    g_body_cnt++;
+			    ostr << dp->d_namep;
+			    name = ostr.str();
+			    set_body_id(name, g_body_cnt);
+			    ostr.flush();
+
+			    if ((fabs(ma - mb) > NEARZERO)) {
+				double axbangle = x_axis.interior_angle(tgc_a);
+				cout << "axbangle = " << axbangle << endl;
+				if (axbangle > NEARZERO) {
+				    gqt->rotate(gqt->get_last_body(), z_axis, axbangle);
+				}
+			    }
+
+			    CubitVector raxis = z_axis * tgc_h;
+			    double rangle = z_axis.interior_angle(tgc_h);
+			    cout << "rangle = " << rangle << endl;
+			    if (rangle > NEARZERO) {
+				gqt->rotate(gqt->get_last_body(), raxis, rangle);
+			    }
+
+			    CubitVector tgc_cp = tgc_v + (tgc_h / 2.0);
+			    gqt->translate(gqt->get_last_body(), tgc_cp);
+			}
+		    } else {
+			goto TESS_CASE;
+		    }
+
+		    break;
+		}
+	    case ID_ELL:
+	    case ID_SPH:
+		{
+		    CubitVector x_axis(1.0, 0.0, 0.0);
+		    CubitVector y_axis(0.0, 1.0, 0.0);
+		    CubitVector z_axis(0.0, 0.0, 1.0);
+
+		    /* spheres and ellipsoids */
+		    rt_ell_internal *ell = (rt_ell_internal *)ip->idb_ptr;
+
+		    if (debug&DEBUG_NAMES) {
+			printf("Write this ellipsoid (name=%s) in your format:\n", dp->d_namep);
+			printf("\tV=(%g %g %g)\n", V3ARGS(ell->v));
+			printf("\tA=(%g %g %g)\n", V3ARGS(ell->a));
+			printf("\tB=(%g %g %g)\n", V3ARGS(ell->b));
+			printf("\tC=(%g %g %g)\n", V3ARGS(ell->c));
+		    }
+
+		    CubitVector ell_v(V3ARGS(ell->v));
+
+		    double magsq_a = MAGSQ (ell->a);
+		    double magsq_b = MAGSQ (ell->b);
+		    double magsq_c = MAGSQ (ell->c);
+
+		    if ((fabs(magsq_a - magsq_b) < NEARZERO) && (fabs(magsq_a - magsq_c) < NEARZERO)) {
+			if (gmt->sphere(sqrt(magsq_a))) {
+			    g_body_cnt++;
+			    ostr << dp->d_namep;
+			    name = ostr.str();
+			    set_body_id(name, g_body_cnt);
+			    ostr.flush();
+
+			    gqt->translate(gqt->get_last_body(), ell_v);
+			}
+		    } else {
+			vect_t unitv;
+			double angles[5];
+			CubitVector rot_axis;
+
+			CubitVector ell_a(V3ARGS(ell->a));
+			CubitVector ell_b(V3ARGS(ell->b));
+			CubitVector ell_c(V3ARGS(ell->c));
+
+			double mag_a = sqrt(magsq_a);
+			double mag_b = sqrt(magsq_b);
+			double mag_c = sqrt(magsq_c);
+
+			if (gmt->sphere(1.0)) {
+			    g_body_cnt++;
+			    ostr << dp->d_namep;
+			    name = ostr.str();
+			    set_body_id(name, g_body_cnt);
+			    ostr.flush();
+
+			    CubitVector scale_vector(mag_a, mag_b, mag_c);
+			    gqt->scale(gqt->get_last_body(), scale_vector, true);
+
+			    if ((fabs(mag_a - mag_b) > NEARZERO)) {
+				double axbangle = x_axis.interior_angle(ell_a);
 				gqt->rotate(gqt->get_last_body(), z_axis, axbangle);
 			    }
+
+			    CubitVector raxis = z_axis * ell_c;
+			    double hangle = z_axis.interior_angle(ell_c);
+			    gqt->rotate(gqt->get_last_body(), raxis, hangle);
+			    gqt->translate(gqt->get_last_body(), ell_v);
 			}
 
-			CubitVector raxis = z_axis * tgc_h;
-			double rangle = z_axis.interior_angle(tgc_h);
-			cout << "rangle = " << rangle << endl;
-			if ( rangle > NEARZERO ) {
-			    gqt->rotate(gqt->get_last_body(), raxis, rangle);
-			}
-
-			CubitVector tgc_cp = tgc_v + (tgc_h / 2.0);
-			gqt->translate(gqt->get_last_body(), tgc_cp);
 		    }
+
+		    break;
 		}
-		else {
+	    case ID_ARB8:	/* convex primitive with from four to six faces */
+		{
+		    /* this primitive may have degenerate faces
+		     * faces are: 0123, 7654, 0347, 1562, 0451, 3267
+		     * (points listed above in counter-clockwise order)
+		     */
+		    rt_arb_internal *arb = (rt_arb_internal *)ip->idb_ptr;
+
+		    if (debug&DEBUG_NAMES) {
+			printf("Write this ARB (name=%s) in your format:\n", dp->d_namep);
+			for (i=0 ; i<8 ; i++) {
+			    printf("\tpoint #%d: (%g %g %g)\n", i, V3ARGS(arb->pt[i]));
+			}
+		    }
+
 		    goto TESS_CASE;
 		}
 
-		break;
-	    }
-	    case ID_ELL:
-	    case ID_SPH:
-	    {
-		CubitVector x_axis(1.0, 0.0, 0.0);
-		CubitVector y_axis(0.0, 1.0, 0.0);
-		CubitVector z_axis(0.0, 0.0, 1.0);
-
-		/* spheres and ellipsoids */
-		rt_ell_internal *ell = ( rt_ell_internal *)ip->idb_ptr;
-
-		if (debug&DEBUG_NAMES) {
-		    printf( "Write this ellipsoid (name=%s) in your format:\n", dp->d_namep );
-		    printf( "\tV=(%g %g %g)\n", V3ARGS( ell->v ) );
-		    printf( "\tA=(%g %g %g)\n", V3ARGS( ell->a ) );
-		    printf( "\tB=(%g %g %g)\n", V3ARGS( ell->b ) );
-		    printf( "\tC=(%g %g %g)\n", V3ARGS( ell->c ) );
-		}
-
-		CubitVector ell_v( V3ARGS( ell->v ) );
-
-		double magsq_a = MAGSQ ( ell->a );
-		double magsq_b = MAGSQ ( ell->b );
-		double magsq_c = MAGSQ ( ell->c );
-
-		if ( ( fabs(magsq_a - magsq_b) < NEARZERO ) && ( fabs(magsq_a - magsq_c) < NEARZERO ) ) {
-		    if (gmt->sphere( sqrt( magsq_a ) )) {
-			g_body_cnt++;
-			ostr << dp->d_namep;
-			name = ostr.str();
-			set_body_id(name, g_body_cnt);
-			ostr.flush();
-
-			gqt->translate(gqt->get_last_body(), ell_v);
-		    }
-		}
-		else {
-		    vect_t unitv;
-		    double angles[5];
-		    CubitVector rot_axis;
-
-		    CubitVector ell_a( V3ARGS( ell->a ) );
-		    CubitVector ell_b( V3ARGS( ell->b ) );
-		    CubitVector ell_c( V3ARGS( ell->c ) );
-
-		    double mag_a = sqrt( magsq_a );
-		    double mag_b = sqrt( magsq_b );
-		    double mag_c = sqrt( magsq_c );
-
-		    if (gmt->sphere(1.0)) {
-			g_body_cnt++;
-			ostr << dp->d_namep;
-			name = ostr.str();
-			set_body_id(name, g_body_cnt);
-			ostr.flush();
-
-			CubitVector scale_vector(mag_a, mag_b, mag_c);
-			gqt->scale(gqt->get_last_body(), scale_vector, true);
-
-			if ( (fabs(mag_a - mag_b) > NEARZERO )) {
-			    double axbangle = x_axis.interior_angle(ell_a);
-			    gqt->rotate(gqt->get_last_body(), z_axis, axbangle);
-			}
-
-			CubitVector raxis = z_axis * ell_c;
-			double hangle = z_axis.interior_angle(ell_c);
-			gqt->rotate(gqt->get_last_body(), raxis, hangle);
-			gqt->translate(gqt->get_last_body(), ell_v);
-		    }
-
-		}
-
-		break;
-	    }
-	    case ID_ARB8:	/* convex primitive with from four to six faces */
-	    {
-		/* this primitive may have degenerate faces
-		 * faces are: 0123, 7654, 0347, 1562, 0451, 3267
-		 * (points listed above in counter-clockwise order)
-		 */
-		rt_arb_internal *arb = ( rt_arb_internal *)ip->idb_ptr;
-
-		if (debug&DEBUG_NAMES) {
-		    printf( "Write this ARB (name=%s) in your format:\n", dp->d_namep );
-		    for ( i=0 ; i<8 ; i++ ) {
-			printf( "\tpoint #%d: (%g %g %g)\n", i, V3ARGS( arb->pt[i] ) );
-		    }
-		}
-
-		goto TESS_CASE;
-	    }
-
 	    case ID_BOT:	/* Bag O' Triangles */
-	    {
-		rt_bot_internal *bot = (rt_bot_internal *)ip->idb_ptr;
+		{
+		    rt_bot_internal *bot = (rt_bot_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
-
-	    /* less commonly used primitives */
-	    case ID_ARS:
-	    {
-		/* series of curves
-		 * each with the same number of points
-		 */
-		rt_ars_internal *ars = ( rt_ars_internal *)ip->idb_ptr;
-
-		goto TESS_CASE;
-
-		break;
-	    }
-	    case ID_HALF:
-	    {
-		/* half universe defined by a plane */
-		rt_half_internal *half = ( rt_half_internal *)ip->idb_ptr;
-
-		goto TESS_CASE;
-
-		break;
-	    }
-	    case ID_POLY:
-	    {
-		/* polygons (up to 5 vertices per) */
-		rt_pg_internal *pg = ( rt_pg_internal *)ip->idb_ptr;
-
-		goto TESS_CASE;
-
-		break;
-	    }
-	    case ID_BSPLINE:
-	    {
-		/* NURB surfaces */
-		rt_nurb_internal *nurb = ( rt_nurb_internal *)ip->idb_ptr;
-
-		goto TESS_CASE;
-
-		break;
-	    }
-	    case ID_NMG:
-	    {
-		nmgregion *r;
-		shell *s;
-
-		/* N-manifold geometry */
-		model *m = ( model *)ip->idb_ptr;
-
-		NMG_CK_MODEL(m);
-
-		/* walk the nmg to convert it to triangular facets */
-		nmg_triangulate_model(m, tsp->ts_tol);
-
-		if (make_bot(r, m, s)) {
-		    g_body_cnt++;
-		    ostr << dp->d_namep;
-		    name = ostr.str();
-		    set_body_id(name, g_body_cnt);
-		    ostr.flush();
+		    break;
 		}
 
-		break;
-	    }
+		/* less commonly used primitives */
+	    case ID_ARS:
+		{
+		    /* series of curves
+		     * each with the same number of points
+		     */
+		    rt_ars_internal *ars = (rt_ars_internal *)ip->idb_ptr;
+
+		    goto TESS_CASE;
+
+		    break;
+		}
+	    case ID_HALF:
+		{
+		    /* half universe defined by a plane */
+		    rt_half_internal *half = (rt_half_internal *)ip->idb_ptr;
+
+		    goto TESS_CASE;
+
+		    break;
+		}
+	    case ID_POLY:
+		{
+		    /* polygons (up to 5 vertices per) */
+		    rt_pg_internal *pg = (rt_pg_internal *)ip->idb_ptr;
+
+		    goto TESS_CASE;
+
+		    break;
+		}
+	    case ID_BSPLINE:
+		{
+		    /* NURB surfaces */
+		    rt_nurb_internal *nurb = (rt_nurb_internal *)ip->idb_ptr;
+
+		    goto TESS_CASE;
+
+		    break;
+		}
+	    case ID_NMG:
+		{
+		    nmgregion *r;
+		    shell *s;
+
+		    /* N-manifold geometry */
+		    model *m = (model *)ip->idb_ptr;
+
+		    NMG_CK_MODEL(m);
+
+		    /* walk the nmg to convert it to triangular facets */
+		    nmg_triangulate_model(m, tsp->ts_tol);
+
+		    if (make_bot(r, m, s)) {
+			g_body_cnt++;
+			ostr << dp->d_namep;
+			name = ostr.str();
+			set_body_id(name, g_body_cnt);
+			ostr.flush();
+		    }
+
+		    break;
+		}
 	    case ID_ARBN:
-	    {
-		rt_arbn_internal *arbn = ( rt_arbn_internal *)ip->idb_ptr;
+		{
+		    rt_arbn_internal *arbn = (rt_arbn_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 
 	    case ID_DSP:
-	    {
-		/* Displacement map (terrain primitive) */
-		/* normally used for terrain only */
-		/* the DSP primitive may reference an external file */
-		rt_dsp_internal *dsp = ( rt_dsp_internal *)ip->idb_ptr;
+		{
+		    /* Displacement map (terrain primitive) */
+		    /* normally used for terrain only */
+		    /* the DSP primitive may reference an external file */
+		    rt_dsp_internal *dsp = (rt_dsp_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 	    case ID_HF:
-	    {
-		/* height field (terrain primitive) */
-		/* the HF primitive references an external file */
-		rt_hf_internal *hf = ( rt_hf_internal *)ip->idb_ptr;
+		{
+		    /* height field (terrain primitive) */
+		    /* the HF primitive references an external file */
+		    rt_hf_internal *hf = (rt_hf_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 
-	    /* rarely used primitives */
+		/* rarely used primitives */
 	    case ID_EBM:
-	    {
-		/* extruded bit-map */
-		/* the EBM primitive references an external file */
-		rt_ebm_internal *ebm = ( rt_ebm_internal *)ip->idb_ptr;
+		{
+		    /* extruded bit-map */
+		    /* the EBM primitive references an external file */
+		    rt_ebm_internal *ebm = (rt_ebm_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 	    case ID_VOL:
-	    {
-		/* the VOL primitive references an external file */
-		rt_vol_internal *vol = ( rt_vol_internal *)ip->idb_ptr;
+		{
+		    /* the VOL primitive references an external file */
+		    rt_vol_internal *vol = (rt_vol_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 	    case ID_PIPE:
-	    {
-		rt_pipe_internal *pipe = ( rt_pipe_internal *)ip->idb_ptr;
+		{
+		    rt_pipe_internal *pipe = (rt_pipe_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 	    case ID_PARTICLE:
-	    {
-		rt_part_internal *part = ( rt_part_internal *)ip->idb_ptr;
+		{
+		    rt_part_internal *part = (rt_part_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 	    case ID_RPC:
-	    {
-		rt_rpc_internal *rpc = ( rt_rpc_internal *)ip->idb_ptr;
+		{
+		    rt_rpc_internal *rpc = (rt_rpc_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 	    case ID_RHC:
-	    {
-		rt_rhc_internal *rhc = ( rt_rhc_internal *)ip->idb_ptr;
+		{
+		    rt_rhc_internal *rhc = (rt_rhc_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 	    case ID_EPA:
-	    {
-		rt_epa_internal *epa = ( rt_epa_internal *)ip->idb_ptr;
+		{
+		    rt_epa_internal *epa = (rt_epa_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 	    case ID_EHY:
-	    {
-		rt_ehy_internal *ehy = ( rt_ehy_internal *)ip->idb_ptr;
+		{
+		    rt_ehy_internal *ehy = (rt_ehy_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 	    case ID_ETO:
-	    {
-		rt_eto_internal *eto = ( rt_eto_internal *)ip->idb_ptr;
+		{
+		    rt_eto_internal *eto = (rt_eto_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 	    case ID_GRIP:
-	    {
-		rt_grip_internal *grip = ( rt_grip_internal *)ip->idb_ptr;
+		{
+		    rt_grip_internal *grip = (rt_grip_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 
 	    case ID_SKETCH:
-	    {
-		rt_sketch_internal *sketch = ( rt_sketch_internal *)ip->idb_ptr;
+		{
+		    rt_sketch_internal *sketch = (rt_sketch_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 	    case ID_EXTRUDE:
-	    {
-		/* note that an extrusion references a sketch, make sure you convert
-		 * the sketch also
-		 */
-		rt_extrude_internal *extrude = ( rt_extrude_internal *)ip->idb_ptr;
+		{
+		    /* note that an extrusion references a sketch, make sure you convert
+		     * the sketch also
+		     */
+		    rt_extrude_internal *extrude = (rt_extrude_internal *)ip->idb_ptr;
 
-		goto TESS_CASE;
+		    goto TESS_CASE;
 
-		break;
-	    }
+		    break;
+		}
 
 	    default:    TESS_CASE:
-		// bu_log( "Primitive %s is unrecognized type (%d)\n", dp->d_namep, ip->idb_type );
+		// bu_log("Primitive %s is unrecognized type (%d)\n", dp->d_namep, ip->idb_type);
 		// break;
-	    {
-		/* This section is for primitives which cannot be directly represented in the
-		 * format we are going to.  So we convert it to triangles
-		 */
-		nmgregion *r;
-		model *m = nmg_mm();
-		shell *s;
+		{
+		    /* This section is for primitives which cannot be directly represented in the
+		     * format we are going to.  So we convert it to triangles
+		     */
+		    nmgregion *r;
+		    model *m = nmg_mm();
+		    shell *s;
 
-		NMG_CK_MODEL(m);
+		    NMG_CK_MODEL(m);
 
-		if (OBJ[ip->idb_type].ft_tessellate(&r, m, ip, tsp->ts_ttol, tsp->ts_tol) != 0) {
-		    bu_exit(1, "Failed to tessellate!\n");
+		    if (OBJ[ip->idb_type].ft_tessellate(&r, m, ip, tsp->ts_ttol, tsp->ts_tol) != 0) {
+			bu_exit(1, "Failed to tessellate!\n");
+		    }
+
+		    //bu_log("triangulate %d\n", ip->idb_minor_type);
+		    /* walk the nmg to convert it to triangular facets */
+		    nmg_triangulate_model(m, tsp->ts_tol);
+
+		    if (make_bot(r, m, s)) {
+			g_body_cnt++;
+			ostr << dp->d_namep;
+			name = ostr.str();
+			set_body_id(name, g_body_cnt);
+			ostr.flush();
+		    }
+
+
+		    break;
 		}
-
-		//bu_log("triangulate %d\n", ip->idb_minor_type);
-		/* walk the nmg to convert it to triangular facets */
-		nmg_triangulate_model(m, tsp->ts_tol);
-
-		if (make_bot(r, m, s)) {
-		    g_body_cnt++;
-		    ostr << dp->d_namep;
-		    name = ostr.str();
-		    set_body_id(name, g_body_cnt);
-		    ostr.flush();
-		}
-
-
-		break;
-	    }
 
 
 	}
-    }
-    else {
-	switch ( ip->idb_major_type ) {
+    } else {
+	switch (ip->idb_major_type) {
 	    case DB5_MAJORTYPE_BINARY_UNIF:
-	    {
-		/* not actually a primitive, just a block of storage for data
-		 * a uniform array of chars, ints, floats, doubles, ...
-		 */
-		rt_binunif_internal *bin = ( rt_binunif_internal *)ip->idb_ptr;
+		{
+		    /* not actually a primitive, just a block of storage for data
+		     * a uniform array of chars, ints, floats, doubles, ...
+		     */
+		    rt_binunif_internal *bin = (rt_binunif_internal *)ip->idb_ptr;
 
-		printf( "Found a binary object (%s)\n\n", dp->d_namep );
-		break;
-	    }
+		    printf("Found a binary object (%s)\n\n", dp->d_namep);
+		    break;
+		}
 	    default:
-		bu_log( "Major type of %s is unrecognized type (%d)\n", dp->d_namep, ip->idb_major_type );
+		bu_log("Major type of %s is unrecognized type (%d)\n", dp->d_namep, ip->idb_major_type);
 		break;
 	}
     }
 
-    return ( tree *) NULL;
+    return (tree *) NULL;
 }
 
 
 /* routine to output the facetted NMG representation of a BRL-CAD region */
 void
-output_triangles( nmgregion *r,
-		  model *m,
-		  shell *s )
+output_triangles(nmgregion *r,
+		 model *m,
+		 shell *s)
 {
     vertex *v;
 
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	faceuse *fu;
 
-	NMG_CK_SHELL( s );
+	NMG_CK_SHELL(s);
 
-	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	    loopuse *lu;
 	    vect_t facet_normal;
 
-	    NMG_CK_FACEUSE( fu );
+	    NMG_CK_FACEUSE(fu);
 
-	    if ( fu->orientation != OT_SAME )
+	    if (fu->orientation != OT_SAME)
 		continue;
 
 	    /* Grab the face normal if needed */
-	    NMG_GET_FU_NORMAL( facet_normal, fu);
+	    NMG_GET_FU_NORMAL(facet_normal, fu);
 
-	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		edgeuse *eu;
 
-		NMG_CK_LOOPUSE( lu );
+		NMG_CK_LOOPUSE(lu);
 
-		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
 
 		/* loop through the edges in this loop (facet) */
-		printf( "\tfacet:\n" );
-		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
-		    NMG_CK_EDGEUSE( eu );
+		printf("\tfacet:\n");
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    NMG_CK_EDGEUSE(eu);
 
 		    v = eu->vu_p->v_p;
-		    NMG_CK_VERTEX( v );
-		    printf( "\t\t(%g %g %g)\n", V3ARGS( v->vg_p->coord ) );
+		    NMG_CK_VERTEX(v);
+		    printf("\t\t(%g %g %g)\n", V3ARGS(v->vg_p->coord));
 		}
 	    }
 	}
@@ -1130,9 +1116,9 @@ output_triangles( nmgregion *r,
 
 /* routine to output the facetted NMG representation of a BRL-CAD region */
 bool
-make_bot( nmgregion *r,
-	  model *m,
-	  shell *s )
+make_bot(nmgregion *r,
+	 model *m,
+	 shell *s)
 {
     // Create the geometry modify and query tool
     GeometryModifyTool *gmt = GeometryModifyTool::instance();
@@ -1148,45 +1134,45 @@ make_bot( nmgregion *r,
     point_t bot_min, bot_max;  // bounding box points
     point_t bot_cp;
 
-    // initialize  bot_min and bot_max
-    VSETALL( bot_min, INFINITY );
-    VSETALL( bot_max, -INFINITY );
+    // initialize bot_min and bot_max
+    VSETALL(bot_min, INFINITY);
+    VSETALL(bot_max, -INFINITY);
 
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	faceuse *fu;
 
-	NMG_CK_SHELL( s );
+	NMG_CK_SHELL(s);
 
-	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	    loopuse *lu;
 	    vect_t facet_normal;
 
-	    NMG_CK_FACEUSE( fu );
+	    NMG_CK_FACEUSE(fu);
 
-	    if ( fu->orientation != OT_SAME )
+	    if (fu->orientation != OT_SAME)
 		continue;
 
 	    /* Grab the face normal if needed */
-	    NMG_GET_FU_NORMAL( facet_normal, fu);
+	    NMG_GET_FU_NORMAL(facet_normal, fu);
 
-	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		edgeuse *eu;
 
-		NMG_CK_LOOPUSE( lu );
+		NMG_CK_LOOPUSE(lu);
 
-		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
 
 		/* loop through the edges in this loop (facet) */
-		// printf( "\tfacet:\n" );
-		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
-		    NMG_CK_EDGEUSE( eu );
+		// printf("\tfacet:\n");
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    NMG_CK_EDGEUSE(eu);
 
 		    v = eu->vu_p->v_p;
-		    NMG_CK_VERTEX( v );
-		    VMINMAX( bot_min, bot_max, v->vg_p->coord );
-		    // printf( "\t\t(%g %g %g)\n", V3ARGS( v->vg_p->coord ) );
-		    cv.set(V3ARGS( v->vg_p->coord ));
+		    NMG_CK_VERTEX(v);
+		    VMINMAX(bot_min, bot_max, v->vg_p->coord);
+		    // printf("\t\t(%g %g %g)\n", V3ARGS(v->vg_p->coord));
+		    cv.set(V3ARGS(v->vg_p->coord));
 		    VertexList.append(gmt->make_RefVertex(cv));
 		}
 		const int MAX_VERTICES = 3;
@@ -1220,8 +1206,7 @@ make_bot( nmgregion *r,
 	if (status != CUBIT_FAILURE) {
 	    cout << "make_bot made a Body!" << endl;
 	    gmt->regularize_body(BotBody, RegBotBody);
-	}
-	else {
+	} else {
 	    cout << "make_bot did not made a Body! Substituted bounding box instead of Body." << endl;
 
 	    double bb_width = fabs(bot_max[0] - bot_min[0]);
@@ -1232,7 +1217,7 @@ make_bot( nmgregion *r,
 
 	    VSUB2SCALE(bot_cp, bot_max, bot_min, 0.5);
 	    VADD2(bot_cp, bot_cp, bot_min);
-	    CubitVector bbox_cp( V3ARGS(bot_cp) );
+	    CubitVector bbox_cp(V3ARGS(bot_cp));
 
 	    status = gqt->translate(gqt->get_last_body(), bbox_cp);
 	}
@@ -1243,11 +1228,13 @@ make_bot( nmgregion *r,
     return status;
 }
 
+
 // set_body_id function
 void set_body_id(string body_name, int body_id)
 {
     g_body_id_map[body_name] = body_id;
 }
+
 
 // get_body_id function
 int get_body_id(string body_name)
@@ -1260,22 +1247,22 @@ int get_body_id(string body_name)
 
     if (iter != g_body_id_map.end()) {
 	rVal = iter->second;
-    }
-    else {
+    } else {
 	rVal = ERR_FLAG;
     }
 
     return rVal;
 }
 
+
 tree *
-booltree_evaluate( tree *tp, resource *resp )
+booltree_evaluate(tree *tp, resource *resp)
 {
-    union tree              *tl;
-    union tree              *tr;
-    char                     op;
-    char                    *name;
-    int			     namelen;
+    union tree *tl;
+    union tree *tr;
+    char op;
+    char *name;
+    int namelen;
 
     RT_CK_TREE(tp);
 
@@ -1305,7 +1292,7 @@ booltree_evaluate( tree *tp, resource *resp )
     if (tl == 0 || !tl->tr_d.td_r) {
 	if (tr == 0 || !tr->tr_d.td_r)
 	    return 0;
-	if ( op == DB_OP_UNION )
+	if (op == DB_OP_UNION)
 	    return tr;
 	/* For sub and intersect, if lhs is 0, result is null */
 	//db_free_tree(tr);
@@ -1316,7 +1303,7 @@ booltree_evaluate( tree *tp, resource *resp )
     if (tr == 0 || !tr->tr_d.td_r) {
 	if (tl == 0 || !tl->tr_d.td_r)
 	    return 0;
-	if ( op == DB_OP_INTERSECT )  {
+	if (op == DB_OP_INTERSECT) {
 	    db_free_tree(tl, resp);
 	    tp->tr_b.tb_left = TREE_NULL;
 	    tp->tr_op = OP_NOP;
@@ -1325,17 +1312,17 @@ booltree_evaluate( tree *tp, resource *resp )
 	/* For sub and add, if rhs is 0, result is lhs */
 	return tl;
     }
-    if ( tl->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad left tree\n");
-    if ( tr->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad right tree\n");
+    if (tl->tr_op != OP_DB_LEAF) bu_exit(2, "booltree_evaluate() bad left tree\n");
+    if (tr->tr_op != OP_DB_LEAF) bu_exit(2, "booltree_evaluate() bad right tree\n");
 
-    bu_log(" {%s} %c {%s}\n", tl->tr_d.td_name, opr, tr->tr_d.td_name );
+    bu_log(" {%s} %c {%s}\n", tl->tr_d.td_name, opr, tr->tr_d.td_name);
     cout << "******" << tl->tr_d.td_name << " " << op << " " << tr->tr_d.td_name << "***********" << endl;
 
     /* Build string of result name */
     namelen = strlen(tl->tr_d.td_name)+strlen(op)+2+strlen(tr->tr_d.td_name)+3;
-    name = (char *)bu_malloc( namelen, "booltree_evaluate name");
+    name = (char *)bu_malloc(namelen, "booltree_evaluate name");
 
-    snprintf(name, namelen, "(%s %c %s)", tl->tr_d.td_name, op, tr->tr_d.td_name );
+    snprintf(name, namelen, "(%s %c %s)", tl->tr_d.td_name, op, tr->tr_d.td_name);
 
     /* Clean up child tree nodes (and their names) */
     db_free_tree(tl, resp);
@@ -1347,6 +1334,7 @@ booltree_evaluate( tree *tp, resource *resp )
     return tp;
 }
 
+
 string infix_to_postfix(string str)
 {
 
@@ -1356,21 +1344,18 @@ string infix_to_postfix(string str)
 
     for (int i = 0; i < strlen(str.c_str()); i++) {
 	c = str[i];
-	if ( c == '(' ) {
+	if (c == '(') {
 	    s.push(c);
-	}
-	else if ( c == ')' ) {
-	    while ( (c = s.top()) != '(' ) {
+	} else if (c == ')') {
+	    while ((c = s.top()) != '(') {
 		ostr << ' ' << c;
 		s.pop();
 	    }
 	    s.pop();
-	}
-	else if (((c == 'u') || (c == '+') || (c == '-')) && (str[i+1] == ' ')) {
+	} else if (((c == 'u') || (c == '+') || (c == '-')) && (str[i+1] == ' ')) {
 	    s.push(c);
 	    i++;
-	}
-	else {
+	} else {
 	    ostr << c ;
 	}
     }
@@ -1383,7 +1368,9 @@ string infix_to_postfix(string str)
     return ostr.str();
 }
 
-void tokenize(const string& str, vector<string>& tokens, const string& delimiters)
+
+static void
+tokenize(const string& str, vector<string>& tokens, const string& delimiters)
 {
     // Skip delimiters at beginning.
     string::size_type lastPos = str.find_first_not_of(delimiters, 0);
@@ -1402,6 +1389,7 @@ void tokenize(const string& str, vector<string>& tokens, const string& delimiter
 	pos = str.find_first_of(delimiters, lastPos);
     }
 }
+
 
 // Local Variables:
 // tab-width: 8
