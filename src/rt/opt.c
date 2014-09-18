@@ -161,6 +161,7 @@ fastf_t		rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
 char		*framebuffer = (char *)NULL;		/* desired framebuffer */
 
 int		space_partition = 	/*space partitioning algorithm to use*/
+/* Do NOT insert value above for space_partition ; it's taken care of below. */
 
 /* TODO: need a run-time mechanism for toggling spatial partitioning
  * methods.  Use this compile-time switch to toggle between different
