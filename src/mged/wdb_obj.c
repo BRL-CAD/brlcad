@@ -866,12 +866,7 @@ wdb_track_cmd(void *data,
     return TCL_ERROR;
 }
 
-
-/* wdb_importFg4Section.c */
-extern int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]);
-
 static int pathListNoLeaf = 0;
-
 
 /**
  * Given two pointers to pointers to directory entries, do a string compare
