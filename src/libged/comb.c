@@ -583,14 +583,9 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    }
 
-	    /* ops are 1-char */
-	    if (argv[i][1] != '\0') {
-		bu_vls_printf(gedp->ged_result_str, "Invalid operation '%s' before object '%s'\n", argv[i], argv[i+1]);
-		continue;
-	    }
-	    oper = argv[i][0];
-	    if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
-		bu_vls_printf(gedp->ged_result_str, "Unknown operator '%c' encountered, invalid syntax.\n", oper);
+	    oper = db_str2op(argv[i]);
+	    if (oper == DB_OP_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "Unknown operator '%c' (0x%x) encountered, invalid syntax.\n", argv[i][0], argv[i][0]);
 		continue;
 	    }
 
