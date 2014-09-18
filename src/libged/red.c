@@ -520,33 +520,6 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     bu_free(result_locations, "free regex results array\n");
     bu_close_mapped_file(redtmpfile);
 
-/* Debugging print stuff */
-/*
-  bu_avs_print(&avs, "Regex based avs build\n");
-  printf("\n");
-  int i, m;
-  fastf_t tmp;
-  for (i = 0; i < tree_index; i++) {
-  char op;
-
-  switch (rt_tree_array[i].tl_op) {
-  case OP_UNION:
-  op = DB_OP_UNION;
-  break;
-  case OP_INTERSECT:
-  op = DB_OP_INTERSECT;
-  break;
-  case OP_SUBTRACT:
-  op = DB_OP_SUBTRACT;
-  break;
-  default:
-  printf("write_comb: Illegal op code in tree\n");
-  }
-  printf(" %c %s\n", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
-  bn_mat_print("in rt_tree_array", rt_tree_array[i].tl_tree->tr_l.tl_mat);
-  printf("\n");
-  }
-*/
     if (nonsubs == 0 && node_count) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot create a combination with all subtraction operators\n");
 	bu_avs_free(&avs);
