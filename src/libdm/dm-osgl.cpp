@@ -1661,12 +1661,15 @@ osgl_normal(struct dm_internal *dmp)
 HIDDEN int
 osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int UNUSED(use_aspect))
 {
+    fastf_t font_size = dm_get_fontsize(dmp);
     struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
     int blend_state = glIsEnabled(GL_BLEND);
     fastf_t coord_x, coord_y;
     if (dmp->dm_debugLevel)
 	bu_log("osgl_drawString2D()\n");
-
+    if (!(int)font_size) {
+	font_size = dm_get_height(dmp)/60.0;
+    }
     coord_x = (x + 1)/2 * dm_get_width(dmp);
     coord_y = dm_get_height(dmp) - ((y + 1)/2 * dm_get_height(dmp));
 
@@ -1681,7 +1684,7 @@ osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y
 
     unsigned int color = glfonsRGBA(dmp->dm_fg[0], dmp->dm_fg[1], dmp->dm_fg[2], 255);
     fonsSetFont(privvars->fs, privvars->fontNormal);
-    fonsSetSize(privvars->fs, 16.0f);
+    fonsSetSize(privvars->fs, (int)font_size); /* cast to int so we always get a font */
     fonsSetColor(privvars->fs, color);
     fonsDrawText(privvars->fs, coord_x, coord_y, str, NULL);
 
