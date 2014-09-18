@@ -123,12 +123,17 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION "BRLCAD_ENABLE_OSG;BRLCAD_LEVEL3" ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
 if(BRLCAD_FREETYPE_BUILD)
   set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
-  set(FREETYPE_INCLUDE_DIR
-    ${CMAKE_CURRENT_BINARY_DIR}/freetype/include
+  set(FREETYPE_INCLUDE_DIR_freetype2
     ${BRLCAD_SOURCE_DIR}/src/other/freetype/include
-    CACHE STRING "FreeType include dirs" FORCE
+    CACHE STRING "FreeType freetype2 include dir" FORCE
     )
-  set(FREETYPE_INCLUDE_DIRS "${FREETYPE_INCLUDE_DIR}" CACHE STRING "Directory containing FreeType headers." FORCE)
+  set(FREETYPE_INCLUDE_DIR_ft2build
+    ${CMAKE_CURRENT_BINARY_DIR}/freetype/include
+    CACHE STRING "FreeType ft2build include dir" FORCE
+    )
+  set(FREETYPE_INCLUDE_DIRS
+    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
+    CACHE STRING "Directories containing FreeType headers." FORCE)
   set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
 endif(BRLCAD_FREETYPE_BUILD)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/freetype/include/ftconfig.h)
