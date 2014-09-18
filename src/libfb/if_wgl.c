@@ -840,7 +840,7 @@ int
 wgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct wgl_fb_info *wgl_internal = (struct wgl_fb_info *)fb_p->data;
-    BU_CKMAG(fb_p, FB_OGL_MAGIC, "ogl framebuffer");
+    BU_CKMAG(fb_p, FB_WGL_MAGIC, "wgl framebuffer");
     return _wgl_open_existing(ifp, wgl_internal->dpy, wgl_internal->win, wgl_internal->cmap,
 	    wgl_internal->vip, wgl_internal->hdc, width, height,
 	    wgl->glxc, wgl->double_buffer, wgl->soft_cmap);
