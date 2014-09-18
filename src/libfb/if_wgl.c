@@ -837,54 +837,14 @@ _wgl_open_existing(fb *ifp,
 
 
 int
-wgl_open_existing(fb *ifp, int argc, const char **argv)
+wgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
-    Display *dpy;
-    Window win;
-    Colormap cmap;
-    PIXELFORMATDESCRIPTOR *vip;
-    HDC hdc;
-    int width;
-    int height;
-    HGLRC glxc;
-    int double_buffer;
-    int soft_cmap;
-
-    if (argc != 11)
-	return -1;
-
-    if (sscanf(argv[1], "%p", (void *)&dpy) != 1)
-	return -1;
-
-    if (sscanf(argv[2], "%p", (void *)&win) != 1)
-	return -1;
-
-    if (sscanf(argv[3], "%p", (void *)&cmap) != 1)
-	return -1;
-
-    if (sscanf(argv[4], "%p", (void *)&vip) != 1)
-	return -1;
-
-    if (sscanf(argv[5], "%p", (void *)&hdc) != 1)
-	return -1;
-
-    if (sscanf(argv[8], "%p", (void *)&glxc) != 1)
-	return -1;
-
-    if (sscanf(argv[6], "%d", &width) != 1)
-	return -1;
-
-    if (sscanf(argv[7], "%d", &height) != 1)
-	return -1;
-
-    if (sscanf(argv[9], "%d", &double_buffer) != 1)
-	return -1;
-
-    if (sscanf(argv[10], "%d", &soft_cmap) != 1)
-	return -1;
-
-    return _wgl_open_existing(ifp, dpy, win, cmap, vip, hdc, width, height,
-			      glxc, double_buffer, soft_cmap);
+    struct wgl_fb_info *wgl_internal = (struct wgl_fb_info *)fb_p->data;
+    BU_CKMAG(fb_p, FB_OGL_MAGIC, "ogl framebuffer");
+    return _wgl_open_existing(ifp, wgl_internal->dpy, wgl_internal->win, wgl_internal->cmap,
+	    wgl_internal->vip, wgl_internal->hdc, width, height,
+	    wgl->glxc, wgl->double_buffer, wgl->soft_cmap);
+    return 0;
 }
 
 
