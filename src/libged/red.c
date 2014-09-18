@@ -404,6 +404,8 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 	/* As long as we have operators ahead of us in the tree, we have comb entries to handle */
 	while (ret == 0) {
+	    db_op_t op;
+
 	    ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
 	    bu_vls_sprintf(&curr_op_vls, "%s", bu_vls_addr(&next_op_vls));
 	    if (ret == 0) {
@@ -460,21 +462,22 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	    if (bu_vls_addr(&curr_op_vls)[0] != '-')
 		nonsubs++;
 
+	    op = db_str2op(bu_vls_addr(&curr_op_vls));
+
 	    /* Add it to the combination */
-	    switch (bu_vls_addr(&curr_op_vls)[0]) {
+	    switch (op) {
 		case DB_OP_INTERSECT:
 		    rt_tree_array[tree_index].tl_op = OP_INTERSECT;
 		    break;
 		case DB_OP_SUBTRACT:
 		    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
 		    break;
+		default:
+		    bu_vls_printf(gedp->ged_result_str, "build_comb: unrecognized relation %c (assume UNION)\n", bu_vls_addr(&curr_op_vls)[0]);
+		    /* fall through */
 		case DB_OP_UNION:
 		    rt_tree_array[tree_index].tl_op = OP_UNION;
 		    break;
-		default:
-		    bu_vls_printf(gedp->ged_result_str,
-			"build_comb: unrecognized relation (assume UNION)\n");
-		    rt_tree_array[tree_index].tl_op = OP_UNION;
 	    }
 	    BU_ALLOC(tp, union tree);
 	    RT_TREE_INIT(tp);
