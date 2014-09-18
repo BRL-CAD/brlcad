@@ -91,7 +91,7 @@ vector <string> g_CsgBoolExp;
 const char *usage_msg = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 const char *options = "t:a:n:o:r:vx:X:";
 char *prog_name = NULL;
-char *output_file = NULL;
+const char *output_file = NULL;
 
 
 static void
@@ -1189,9 +1189,15 @@ main(int argc, char *argv[])
     ttol.rel = 0.01;
     ttol.norm = 0.0;
 
-
     /* parse command line arguments. */
     arg_count = parse_args(argc, argv);
+
+    std::string output;
+    if (!output_file) {
+	output = argv[bu_optind];
+	output += ".sat";
+	output_file = output.c_str();
+    }
 
     if ((argc - arg_count) < MIN_NUM_OF_ARGS) {
 	usage("Error: Must specify model and objects on the command line\n");
@@ -1203,7 +1209,6 @@ main(int argc, char *argv[])
 
     // CGM Initialization
     const char* ACIS_SAT = "ACIS_SAT";
-    const char* OUTPUT_FILE = "test.sat";
 
     int dummy_argc = 0;
     char **dummy_argv =NULL;
