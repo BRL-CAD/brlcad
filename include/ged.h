@@ -467,7 +467,7 @@ struct polygon_header {
     int npts;                   /* number of points */
 };
 #define POLYGON_HEADER_MAGIC 0x8623bad2
-extern void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
+GED_EXPORT extern void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
 
 
 
@@ -1939,7 +1939,8 @@ GED_EXPORT extern int ged_get_obj_bounds(struct ged *gedp,
 /* defined in track.c */
 GED_EXPORT extern int ged_track2(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
 
-
+/* defined in wdb_importFg4Section.c */
+GED_EXPORT int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]);
 
 
 /***************************************
