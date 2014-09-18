@@ -1665,12 +1665,6 @@ osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y
     fastf_t coord_x, coord_y;
     if (dmp->dm_debugLevel)
 	bu_log("osgl_drawString2D()\n");
-/*
-    if (use_aspect)
-	glRasterPos2f(x, y * dmp->dm_aspect);
-    else
-	glRasterPos2f(x, y);
-*/
 
     coord_x = (x + 1)/2 * dm_get_width(dmp);
     coord_y = dm_get_height(dmp) - ((y + 1)/2 * dm_get_height(dmp));
@@ -1679,7 +1673,12 @@ osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
     glOrtho(0,dm_get_width(dmp),dm_get_height(dmp),0,-1,1);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
     glEnable(GL_CULL_FACE);
 
@@ -1689,15 +1688,13 @@ osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y
     fonsSetColor(privvars->fs, white);
     fonsDrawText(privvars->fs, coord_x, coord_y, str, NULL);
 
-    /*glListBase(((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-    glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);*/
-
     glEnable(GL_DEPTH_TEST);
 
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
     glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
-
-
-    ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->swapBuffers();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
     return TCL_OK;
 }
