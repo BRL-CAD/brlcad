@@ -711,7 +711,7 @@ bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
     if (((*shmid) = shmget(key, shmsize, 0)) < 0) {
 	/* No existing one, create a new one */
 	if (((*shmid) = shmget(key, shmsize, flags)) < 0) {
-	    bu_log("bu_shmget failed, errno=%d\n", errno);
+	    printf("bu_shmget failed, errno=%d\n", errno);
 	    return 1;
 	}
 	ret = -1;
@@ -721,7 +721,7 @@ bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
     /* Open the segment Read/Write */
     /* This gets mapped to a high address on some platforms, so no problem. */
     if (((*shared_memory) = (char *)shmat((*shmid), 0, 0)) == (char *)(-1L)) {
-	bu_log("bu_shmget returned x%x, errno=%d\n", (*shared_memory), errno);
+	printf("errno=%d\n", errno);
 	return 1;
     }
 
