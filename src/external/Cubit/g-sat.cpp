@@ -88,249 +88,71 @@ int g_body_cnt = 0;
 
 vector <string> g_CsgBoolExp;
 
-// Function prototypes for access of the global map above.
-void set_body_id(string body_name, int body_id);
-int get_body_id(string body_name);
-
-void usage(char* s);
-int parse_args(int ac, char *av[]);
-int region_start (db_tree_state *tsp,  db_full_path *pathp, const rt_comb_internal * combp, void *client_data);
-tree *region_end (db_tree_state *tsp,  db_full_path *pathp, tree *curtree, void *client_data);
-tree *primitive_func(db_tree_state *tsp,  db_full_path *pathp, rt_db_internal *ip, void *client_data);
-void describe_tree(tree *tree,  bu_vls *str);
-void output_triangles(nmgregion *r, model *m, shell *s);
-bool make_bot(nmgregion *r, model *m, shell *s);
-tree *booltree_evaluate(tree *tp, resource *resp);
-
-string infix_to_postfix(string str);
-void tokenize(const string& str, vector<string>& tokens, const string& delimiters);
-
-
-char *usage_msg = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
-char *options = "t:a:n:o:r:vx:X:";
+const char *usage_msg = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+const char *options = "t:a:n:o:r:vx:X:";
 char *prog_name = NULL;
 char *output_file = NULL;
 
-int
-main(int argc, char *argv[])
+
+static void
+tokenize(const string& str, vector<string>& tokens, const string& delimiters)
 {
-    struct user_data {
-	int info;
-    } user_data;
+    // Skip delimiters at beginning.
+    string::size_type lastPos = str.find_first_not_of(delimiters, 0);
 
-    int i;
-    register int c;
-    char idbuf[132];
+    // Find first "non-delimiter".
+    string::size_type pos     = str.find_first_of(delimiters, lastPos);
 
-    int arg_count;
-    const int MIN_NUM_OF_ARGS = 2;
+    while (string::npos != pos || string::npos != lastPos) {
+	// Found a token, add it to the vector.
+	tokens.push_back(str.substr(lastPos, pos - lastPos));
 
-    bu_setlinebuf(stderr);
+	// Skip delimiters.  Note the "not_of"
+	lastPos = str.find_first_not_of(delimiters, pos);
 
-    rt_i *rtip;
-    db_tree_state init_state;
-
-    /* calculational tolerances mostly used by NMG routines */
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-6;
-    tol.para = 1 - tol.perp;
-
-    /* Defaults, updated by command line options. */
-    ttol.abs = 0.0;
-    ttol.rel = 0.01;
-    ttol.norm = 0.0;
-
-
-    /* parse command line arguments. */
-    arg_count = parse_args(argc, argv);
-
-    if ((argc - arg_count) < MIN_NUM_OF_ARGS) {
-	usage("Error: Must specify model and objects on the command line\n");
+	// Find next "non-delimiter"
+	pos = str.find_first_of(delimiters, lastPos);
     }
-
-    // ***********************************************************************************
-    // Setup Cubit Routines
-    // ***********************************************************************************
-
-    // CGM Initialization
-    const char* ACIS_SAT = "ACIS_SAT";
-    const char* OUTPUT_FILE = "test.sat";
-
-    int dummy_argc = 0;
-    char **dummy_argv =NULL;
-
-    // Initialize the application
-    AppUtil::instance()->startup(dummy_argc, dummy_argv);
-    CGMApp::instance()->startup(dummy_argc, dummy_argv);
-
-    CGMApp::instance()->attrib_manager()->auto_flag(true);
-
-    // Create the geometry modify and query tool
-    GeometryModifyTool *gmt = GeometryModifyTool::instance();
-    GeometryQueryTool *gqt = GeometryQueryTool::instance();
-
-    // Create the ACIS engines
-    AcisQueryEngine::instance();
-    AcisModifyEngine::instance();
-
-    // Get version number of the geometry engine.
-    CubitString version = gqt->get_engine_version_string();
-    cout << "ACIS Engine: " << version << endl;
-
-    CubitStatus status;
-
-    /* Open BRL-CAD database */
-    /* Scan all the records in the database and build a directory */
-    rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf));
-
-    if (rtip == RTI_NULL) {
-	usage("rt_dirbuild failure\n");
-    }
-
-    init_state = rt_initial_tree_state;
-    init_state.ts_dbip = rtip->rti_dbip;
-    init_state.ts_rtip = rtip;
-    init_state.ts_resp = NULL;
-    init_state.ts_tol = &tol;
-    init_state.ts_ttol = &ttol;
-    bu_avs_init(&init_state.ts_attrs, 1, "avs in tree_state");
-
-    bu_optind++;
-
-    /* Walk the trees named on the command line
-     * outputting combinations and primitives
-     */
-    int walk_tree_status;
-    for (i = bu_optind ; i < argc ; i++) {
-	struct directory *dp;
-
-	dp = db_lookup(rtip->rti_dbip, argv[i], LOOKUP_QUIET);
-	if (dp == RT_DIR_NULL) {
-	    bu_log("Cannot find %s\n", argv[i]);
-	    continue;
-	}
-
-	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
-		     &init_state , region_start, region_end, primitive_func, (void *) &user_data);
-    }
-
-    // *************************************************************************************
-    // Write SAT file
-    // *************************************************************************************
-
-    // Make bodies list.
-    DLIList<Body*> all_bodies, old_bodies, new_bodies, tools_bodies;
-    Body* tool_body;
-
-    // Export geometry
-    if (g_body_cnt == 0) {
-	usage("No geometry to convert.\n");
-    }
-
-    cout << "*** CSG DEBUG BEGIN ***" << endl;
-    DLIList<Body*> all_region_bodies, region_bodies, from_bodies;
-    Body* region_body;
-
-    for (int i=0; i < g_CsgBoolExp.size(); i++) {
-	cout << " R" << i << " = " << g_CsgBoolExp[i] << ": " << get_body_id(g_CsgBoolExp[i]) << endl;
-
-	int body_id = get_body_id(g_CsgBoolExp[i]);
-
-	if (body_id >= 0) {
-	    all_region_bodies.append(gqt->get_body(body_id));
-	} else if (body_id == -1) {
-	    // {empty}
-	    cout << "DEBUG: {empty}" << endl;
-	} else {
-	    //tokenize
-	    vector <string> csgTokens;
-	    char csgOp;
-
-	    tokenize(g_CsgBoolExp[i], csgTokens, " ");
-
-	    cout << "DEBUG " << csgTokens.size() << endl;
-
-	    for (int j = 0; j < csgTokens.size(); j++) {
-		cout <<" T" << j << " = " << csgTokens[j] << ": " << get_body_id(csgTokens[j]) << endl;
-
-		if (get_body_id(csgTokens[j]) >= 0) {
-		    region_bodies.append(gqt->get_body(get_body_id(csgTokens[j])));
-		} else {
-		    csgOp = csgTokens[j].at(0);
-		    cout << "*DEBUG* csgOp = " << csgOp << endl;
-		    switch (csgOp) {
-			case DB_OP_INTERSECT:
-			    cout << "*** DEBUG INTERSECT ***" << endl;
-			    tool_body = region_bodies.pop();
-			    from_bodies.append(region_bodies.pop());
-			    gmt->intersect(tool_body, from_bodies, region_bodies, CUBIT_TRUE);
-			    break;
-			case DB_OP_SUBTRACT:
-			    cout << "*** DEBUG SUBTRACT ***" << endl;
-			    tool_body = region_bodies.pop();
-			    from_bodies.append(region_bodies.pop());
-			    gmt->subtract(tool_body, from_bodies, region_bodies, CUBIT_TRUE);
-			    break;
-			case DB_OP_UNION:
-			    cout << "*** DEBUG UNION ***" << endl;
-			    if (region_bodies.size() >= 2) {
-				from_bodies.append(region_bodies.pop());
-				from_bodies.append(region_bodies.pop());
-				if (!gmt->unite(from_bodies, region_bodies, CUBIT_TRUE)) {
-				    region_bodies+=from_bodies;
-				}
-			    } else {
-				region_bodies+=from_bodies;
-			    }
-			    break;
-			default:
-			    // do nothing -- should get here
-			    break;
-		    }
-
-		    from_bodies.clean_out();
-		} // end if on get_body_id
-
-	    } // end for loop over csgTokens
-
-	    csgTokens.clear();
-
-	    if (region_bodies.size() != 0) {
-		all_region_bodies+=region_bodies;
-		region_bodies.clean_out();
-	    }
-	} // end if/else on body_id
-    } // end for loop over g_CsgBoolExp
-
-    cout << "*** CSG DEBUG END ***" << endl;
-
-    // Make entities list.
-    DLIList<RefEntity*> parent_entities;
-
-    CAST_LIST_TO_PARENT(all_region_bodies, parent_entities);
-
-    int size = parent_entities.size();
-    cout << "Number of bodies to be exported: " << size << endl;
-
-    // Export geometry
-    if (size != 0) {
-	status = gqt->export_solid_model(parent_entities, output_file, ACIS_SAT, size, version);
-    } else {
-	usage("No geometry to convert.\n");
-    }
-
-    CGMApp::instance()->shutdown();
-
-    cout << "Number of primitives processed: " << g_body_cnt << endl;
-
-    return 0;
 }
 
 
-void
-usage(char *s)
+static string
+infix_to_postfix(string str)
+{
+
+    stack <char> s;
+    ostringstream ostr;
+    char c;
+
+    for (int i = 0; i < strlen(str.c_str()); i++) {
+	c = str[i];
+	if (c == '(') {
+	    s.push(c);
+	} else if (c == ')') {
+	    while ((c = s.top()) != '(') {
+		ostr << ' ' << c;
+		s.pop();
+	    }
+	    s.pop();
+	} else if (((c == 'u') || (c == '+') || (c == '-')) && (str[i+1] == ' ')) {
+	    s.push(c);
+	    i++;
+	} else {
+	    ostr << c ;
+	}
+    }
+
+    if (!s.empty()) {
+	ostr << s.top();
+	s.pop();
+    }
+
+    return ostr.str();
+}
+
+
+static void
+usage(const char *s)
 {
     if (s) {
 	fputs(s, stderr);
@@ -340,7 +162,7 @@ usage(char *s)
 }
 
 
-int
+static int
 parse_args(int ac, char **av)
 {
     int c;
@@ -374,7 +196,7 @@ parse_args(int ac, char **av)
 		break;
 	    case 'X':               /* NMG debug flag */
 		sscanf(bu_optarg, "%x", &RTG.NMG_debug);
-		bu_printb("librt RTG.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT);
+		bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    default:
@@ -388,6 +210,111 @@ parse_args(int ac, char **av)
 }
 
 
+// set_body_id function
+static void
+set_body_id(string body_name, int body_id)
+{
+    g_body_id_map[body_name] = body_id;
+}
+
+
+// get_body_id function
+static int
+get_body_id(string body_name)
+{
+    const int ERR_FLAG = -99;
+    int rVal;
+
+    map<string, int>::iterator iter;
+    iter = g_body_id_map.find(body_name);
+
+    if (iter != g_body_id_map.end()) {
+	rVal = iter->second;
+    } else {
+	rVal = ERR_FLAG;
+    }
+
+    return rVal;
+}
+
+
+/* This routine just produces an ascii description of the Boolean tree.
+ * In a real converter, this would output the tree in the desired format.
+ */
+static void
+describe_tree(tree *tree, bu_vls *str)
+{
+    bu_vls left = BU_VLS_INIT_ZERO;
+    bu_vls right = BU_VLS_INIT_ZERO;
+    const char op_xor='^';
+    char op='\0';
+
+    BU_CK_VLS(str);
+
+    if (!tree) {
+	/* this tree has no members */
+	bu_vls_strcat(str, "{empty}");
+	set_body_id("{empty}", -1);
+	return;
+    }
+
+    RT_CK_TREE(tree);
+
+    /* Handle all the possible node types.
+     * the first four are the most common types, and are typically
+     * the only ones found in a BRL-CAD database.
+     */
+    switch (tree->tr_op) {
+	case OP_DB_LEAF:	/* leaf node, this is a member */
+	    /* Note: tree->tr_l.tl_mat is a pointer to a
+	     * transformation matrix to apply to this member
+	     */
+	    bu_vls_strcat(str,  tree->tr_l.tl_name);
+	    break;
+	case OP_UNION:		/* operator node */
+	    op = DB_OP_UNION;
+	    goto binary;
+	case OP_INTERSECT:	/* intersection operator node */
+	    op = DB_OP_INTERSECT;
+	    goto binary;
+	case OP_SUBTRACT:	/* subtraction operator node */
+	    op = DB_OP_SUBTRACT;
+	    goto binary;
+	case OP_XOR:		/* exclusive "or" operator node */
+	    op = op_xor;
+	binary:				/* common for all binary nodes */
+	    describe_tree(tree->tr_b.tb_left, &left);
+	    describe_tree(tree->tr_b.tb_right, &right);
+	    bu_vls_putc(str, '(');
+	    bu_vls_vlscatzap(str, &left);
+	    bu_vls_printf(str, " %c ", op);
+	    bu_vls_vlscatzap(str, &right);
+	    bu_vls_putc(str, ')');
+	    break;
+	case OP_NOT:
+	    bu_vls_strcat(str, "(!");
+	    describe_tree(tree->tr_b.tb_left, str);
+	    bu_vls_putc(str, ')');
+	    break;
+	case OP_GUARD:
+	    bu_vls_strcat(str, "(G");
+	    describe_tree(tree->tr_b.tb_left, str);
+	    bu_vls_putc(str, ')');
+	    break;
+	case OP_XNOP:
+	    bu_vls_strcat(str, "(X");
+	    describe_tree(tree->tr_b.tb_left, str);
+	    bu_vls_putc(str, ')');
+	    break;
+	case OP_NOP:
+	    bu_vls_strcat(str, "NOP");
+	    break;
+	default:
+	    bu_exit(2, "ERROR: describe_tree() got unrecognized op (%d)\n", tree->tr_op);
+    }
+}
+
+
 /**
  * @brief This routine is called when a region is first encountered in the
  * hierarchy when processing a tree
@@ -398,9 +325,9 @@ parse_args(int ac, char **av)
  * @param client_data pointer that was passed as last argument to db_walk_tree()
  *
  */
-int
+static int
 region_start (db_tree_state *tsp,
-	      db_full_path *pathp,
+	      const db_full_path *pathp,
 	      const rt_comb_internal *combp,
 	      void *client_data)
 {
@@ -453,9 +380,9 @@ region_start (db_tree_state *tsp,
  * db_walk_tree will clean up the data in the tree * that is returned.
  *
  */
-tree *
+static tree *
 region_end (db_tree_state *tsp,
-	    db_full_path *pathp,
+	    const db_full_path *pathp,
 	    tree *curtree,
 	    void *client_data)
 {
@@ -469,89 +396,126 @@ region_end (db_tree_state *tsp,
 }
 
 
-/* This routine just produces an ascii description of the Boolean tree.
- * In a real converter, this would output the tree in the desired format.
- */
-void
-describe_tree(tree *tree,
-	      bu_vls *str)
+/* routine to output the facetted NMG representation of a BRL-CAD region */
+static bool
+make_bot(nmgregion *r,
+	 model *m,
+	 shell *s)
 {
-    bu_vls left = BU_VLS_INIT_ZERO;
-    bu_vls right = BU_VLS_INIT_ZERO;
-    const char op_xor='^';
-    char op='\0';
+    // Create the geometry modify and query tool
+    GeometryModifyTool *gmt = GeometryModifyTool::instance();
+    GeometryQueryTool *gqt = GeometryQueryTool::instance();
 
-    BU_CK_VLS(str);
+    vertex *v;
 
-    if (!tree) {
-	/* this tree has no members */
-	bu_vls_strcat(str, "{empty}");
-	set_body_id("{empty}", -1);
-	return;
+    CubitVector cv;
+    DLIList <RefVertex*> VertexList;
+    DLIList <RefEdge*> EdgeList;
+    DLIList <RefFace*> FaceList;
+
+    point_t bot_min, bot_max;  // bounding box points
+    point_t bot_cp;
+
+    // initialize bot_min and bot_max
+    VSETALL(bot_min, INFINITY);
+    VSETALL(bot_max, -INFINITY);
+
+    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	faceuse *fu;
+
+	NMG_CK_SHELL(s);
+
+	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	    loopuse *lu;
+	    vect_t facet_normal;
+
+	    NMG_CK_FACEUSE(fu);
+
+	    if (fu->orientation != OT_SAME)
+		continue;
+
+	    /* Grab the face normal if needed */
+	    NMG_GET_FU_NORMAL(facet_normal, fu);
+
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		edgeuse *eu;
+
+		NMG_CK_LOOPUSE(lu);
+
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+		    continue;
+
+		/* loop through the edges in this loop (facet) */
+		// printf("\tfacet:\n");
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    NMG_CK_EDGEUSE(eu);
+
+		    v = eu->vu_p->v_p;
+		    NMG_CK_VERTEX(v);
+		    VMINMAX(bot_min, bot_max, v->vg_p->coord);
+		    // printf("\t\t(%g %g %g)\n", V3ARGS(v->vg_p->coord));
+		    cv.set(V3ARGS(v->vg_p->coord));
+		    VertexList.append(gmt->make_RefVertex(cv));
+		}
+		const int MAX_VERTICES = 3;
+		for (int i=0; i <= MAX_VERTICES-1; i++) {
+		    EdgeList.append(gmt->make_RefEdge(STRAIGHT_CURVE_TYPE,
+						      VertexList[i], VertexList[(i+1)%MAX_VERTICES]));
+		}
+
+		RefFace *face = gmt->make_RefFace(PLANE_SURFACE_TYPE, EdgeList);
+
+		EdgeList.clean_out();
+		VertexList.clean_out();
+
+		FaceList.append(face);
+	    }
+
+	}
+
+    }
+    DLIList <Body*> BodyList;
+
+    CubitStatus status;
+
+    status = gmt->create_solid_bodies_from_surfs(FaceList, BodyList);
+    // status = gmt->create_body_from_surfs(FaceList, BotBody);
+
+    Body *BotBody, *RegBotBody;
+    for (int i=0; i < BodyList.size(); i++) {
+	BotBody = BodyList[i];
+
+	if (status != CUBIT_FAILURE) {
+	    cout << "make_bot made a Body!" << endl;
+	    gmt->regularize_body(BotBody, RegBotBody);
+	} else {
+	    cout << "make_bot did not made a Body! Substituted bounding box instead of Body." << endl;
+
+	    double bb_width = fabs(bot_max[0] - bot_min[0]);
+	    double bb_depth = fabs(bot_max[1] - bot_min[1]);
+	    double bb_height = fabs(bot_max[2] - bot_min[2]);
+
+	    gmt->brick(bb_width, bb_depth, bb_height);
+
+	    VSUB2SCALE(bot_cp, bot_max, bot_min, 0.5);
+	    VADD2(bot_cp, bot_cp, bot_min);
+	    CubitVector bbox_cp(V3ARGS(bot_cp));
+
+	    status = gqt->translate(gqt->get_last_body(), bbox_cp);
+	}
     }
 
-    RT_CK_TREE(tree);
+    FaceList.clean_out();
 
-    /* Handle all the possible node types.
-     * the first four are the most common types, and are typically
-     * the only ones found in a BRL-CAD database.
-     */
-    switch (tree->tr_op) {
-	case OP_DB_LEAF:	/* leaf node, this is a member */
-	    /* Note: tree->tr_l.tl_mat is a pointer to a
-	     * transformation matrix to apply to this member
-	     */
-	    bu_vls_strcat(str,  tree->tr_l.tl_name);
-	    break;
-	case OP_UNION:		/* operator node */
-	    op = DB_OP_UNION;
-	    goto binary;
-	case OP_INTERSECT:	/* intersection operator node */
-	    op = DB_OP_INTERSECT;
-	    goto binary;
-	case OP_SUBTRACT:	/* subtraction operator node */
-	    op = DB_OP_SUBTRACT;
-	    goto binary;
-	case OP_XOR:		/* exclusive "or" operator node */
-	    op = xor_op;
-	binary:				/* common for all binary nodes */
-	    describe_tree(tree->tr_b.tb_left, &left);
-	    describe_tree(tree->tr_b.tb_right, &right);
-	    bu_vls_putc(str, '(');
-	    bu_vls_vlscatzap(str, &left);
-	    bu_vls_printf(str, " %c ", op);
-	    bu_vls_vlscatzap(str, &right);
-	    bu_vls_putc(str, ')');
-	    break;
-	case OP_NOT:
-	    bu_vls_strcat(str, "(!");
-	    describe_tree(tree->tr_b.tb_left, str);
-	    bu_vls_putc(str, ')');
-	    break;
-	case OP_GUARD:
-	    bu_vls_strcat(str, "(G");
-	    describe_tree(tree->tr_b.tb_left, str);
-	    bu_vls_putc(str, ')');
-	    break;
-	case OP_XNOP:
-	    bu_vls_strcat(str, "(X");
-	    describe_tree(tree->tr_b.tb_left, str);
-	    bu_vls_putc(str, ')');
-	    break;
-	case OP_NOP:
-	    bu_vls_strcat(str, "NOP");
-	    break;
-	default:
-	    bu_exit(2, "ERROR: describe_tree() got unrecognized op (%d)\n", tree->tr_op);
-    }
+    return status;
 }
 
 
 /* This routine is called by the tree walker (db_walk_tree)
  * for every primitive encountered in the trees specified on the command line */
-tree *
+static tree *
 primitive_func(db_tree_state *tsp,
-	       db_full_path *pathp,
+	       const db_full_path *pathp,
 	       rt_db_internal *ip,
 	       void *client_data)
 {
@@ -1067,7 +1031,7 @@ primitive_func(db_tree_state *tsp,
 
 
 /* routine to output the facetted NMG representation of a BRL-CAD region */
-void
+static void
 output_triangles(nmgregion *r,
 		 model *m,
 		 shell *s)
@@ -1111,147 +1075,6 @@ output_triangles(nmgregion *r,
 	    }
 	}
     }
-}
-
-
-/* routine to output the facetted NMG representation of a BRL-CAD region */
-bool
-make_bot(nmgregion *r,
-	 model *m,
-	 shell *s)
-{
-    // Create the geometry modify and query tool
-    GeometryModifyTool *gmt = GeometryModifyTool::instance();
-    GeometryQueryTool *gqt = GeometryQueryTool::instance();
-
-    vertex *v;
-
-    CubitVector cv;
-    DLIList <RefVertex*> VertexList;
-    DLIList <RefEdge*> EdgeList;
-    DLIList <RefFace*> FaceList;
-
-    point_t bot_min, bot_max;  // bounding box points
-    point_t bot_cp;
-
-    // initialize bot_min and bot_max
-    VSETALL(bot_min, INFINITY);
-    VSETALL(bot_max, -INFINITY);
-
-    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	faceuse *fu;
-
-	NMG_CK_SHELL(s);
-
-	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	    loopuse *lu;
-	    vect_t facet_normal;
-
-	    NMG_CK_FACEUSE(fu);
-
-	    if (fu->orientation != OT_SAME)
-		continue;
-
-	    /* Grab the face normal if needed */
-	    NMG_GET_FU_NORMAL(facet_normal, fu);
-
-	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		edgeuse *eu;
-
-		NMG_CK_LOOPUSE(lu);
-
-		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		    continue;
-
-		/* loop through the edges in this loop (facet) */
-		// printf("\tfacet:\n");
-		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-		    NMG_CK_EDGEUSE(eu);
-
-		    v = eu->vu_p->v_p;
-		    NMG_CK_VERTEX(v);
-		    VMINMAX(bot_min, bot_max, v->vg_p->coord);
-		    // printf("\t\t(%g %g %g)\n", V3ARGS(v->vg_p->coord));
-		    cv.set(V3ARGS(v->vg_p->coord));
-		    VertexList.append(gmt->make_RefVertex(cv));
-		}
-		const int MAX_VERTICES = 3;
-		for (int i=0; i <= MAX_VERTICES-1; i++) {
-		    EdgeList.append(gmt->make_RefEdge(STRAIGHT_CURVE_TYPE,
-						      VertexList[i], VertexList[(i+1)%MAX_VERTICES]));
-		}
-
-		RefFace *face = gmt->make_RefFace(PLANE_SURFACE_TYPE, EdgeList);
-
-		EdgeList.clean_out();
-		VertexList.clean_out();
-
-		FaceList.append(face);
-	    }
-
-	}
-
-    }
-    DLIList <Body*> BodyList;
-
-    CubitStatus status;
-
-    status = gmt->create_solid_bodies_from_surfs(FaceList, BodyList);
-    // status = gmt->create_body_from_surfs(FaceList, BotBody);
-
-    Body *BotBody, *RegBotBody;
-    for (int i=0; i < BodyList.size(); i++) {
-	BotBody = BodyList[i];
-
-	if (status != CUBIT_FAILURE) {
-	    cout << "make_bot made a Body!" << endl;
-	    gmt->regularize_body(BotBody, RegBotBody);
-	} else {
-	    cout << "make_bot did not made a Body! Substituted bounding box instead of Body." << endl;
-
-	    double bb_width = fabs(bot_max[0] - bot_min[0]);
-	    double bb_depth = fabs(bot_max[1] - bot_min[1]);
-	    double bb_height = fabs(bot_max[2] - bot_min[2]);
-
-	    gmt->brick(bb_width, bb_depth, bb_height);
-
-	    VSUB2SCALE(bot_cp, bot_max, bot_min, 0.5);
-	    VADD2(bot_cp, bot_cp, bot_min);
-	    CubitVector bbox_cp(V3ARGS(bot_cp));
-
-	    status = gqt->translate(gqt->get_last_body(), bbox_cp);
-	}
-    }
-
-    FaceList.clean_out();
-
-    return status;
-}
-
-
-// set_body_id function
-void set_body_id(string body_name, int body_id)
-{
-    g_body_id_map[body_name] = body_id;
-}
-
-
-// get_body_id function
-int get_body_id(string body_name)
-{
-    const int ERR_FLAG = -99;
-    int rVal;
-
-    map<string, int>::iterator iter;
-    iter = g_body_id_map.find(body_name);
-
-    if (iter != g_body_id_map.end()) {
-	rVal = iter->second;
-    } else {
-	rVal = ERR_FLAG;
-    }
-
-    return rVal;
 }
 
 
@@ -1316,10 +1139,10 @@ booltree_evaluate(tree *tp, resource *resp)
     if (tr->tr_op != OP_DB_LEAF) bu_exit(2, "booltree_evaluate() bad right tree\n");
 
     bu_log(" {%s} %c {%s}\n", tl->tr_d.td_name, opr, tr->tr_d.td_name);
-    cout << "******" << tl->tr_d.td_name << " " << op << " " << tr->tr_d.td_name << "***********" << endl;
+    cout << "******" << tl->tr_d.td_name << " " << (char)op << " " << tr->tr_d.td_name << "***********" << endl;
 
     /* Build string of result name */
-    namelen = strlen(tl->tr_d.td_name)+strlen(op)+2+strlen(tr->tr_d.td_name)+3;
+    namelen = strlen(tl->tr_d.td_name) + 1 /* for op */ + 2 /* for spaces */ + strlen(tr->tr_d.td_name) + 3;
     name = (char *)bu_malloc(namelen, "booltree_evaluate name");
 
     snprintf(name, namelen, "(%s %c %s)", tl->tr_d.td_name, op, tr->tr_d.td_name);
@@ -1335,59 +1158,221 @@ booltree_evaluate(tree *tp, resource *resp)
 }
 
 
-string infix_to_postfix(string str)
+int
+main(int argc, char *argv[])
 {
+    struct user_data {
+	int info;
+    } user_data;
 
-    stack <char> s;
-    ostringstream ostr;
-    char c;
+    int i;
+    register int c;
+    char idbuf[132];
 
-    for (int i = 0; i < strlen(str.c_str()); i++) {
-	c = str[i];
-	if (c == '(') {
-	    s.push(c);
-	} else if (c == ')') {
-	    while ((c = s.top()) != '(') {
-		ostr << ' ' << c;
-		s.pop();
-	    }
-	    s.pop();
-	} else if (((c == 'u') || (c == '+') || (c == '-')) && (str[i+1] == ' ')) {
-	    s.push(c);
-	    i++;
-	} else {
-	    ostr << c ;
+    int arg_count;
+    const int MIN_NUM_OF_ARGS = 2;
+
+    bu_setlinebuf(stderr);
+
+    rt_i *rtip;
+    db_tree_state init_state;
+
+    /* calculational tolerances mostly used by NMG routines */
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.0005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-6;
+    tol.para = 1 - tol.perp;
+
+    /* Defaults, updated by command line options. */
+    ttol.abs = 0.0;
+    ttol.rel = 0.01;
+    ttol.norm = 0.0;
+
+
+    /* parse command line arguments. */
+    arg_count = parse_args(argc, argv);
+
+    if ((argc - arg_count) < MIN_NUM_OF_ARGS) {
+	usage("Error: Must specify model and objects on the command line\n");
+    }
+
+    // ***********************************************************************************
+    // Setup Cubit Routines
+    // ***********************************************************************************
+
+    // CGM Initialization
+    const char* ACIS_SAT = "ACIS_SAT";
+    const char* OUTPUT_FILE = "test.sat";
+
+    int dummy_argc = 0;
+    char **dummy_argv =NULL;
+
+    // Initialize the application
+    AppUtil::instance()->startup(dummy_argc, dummy_argv);
+    CGMApp::instance()->startup(dummy_argc, dummy_argv);
+
+    CGMApp::instance()->attrib_manager()->auto_flag(true);
+
+    // Create the geometry modify and query tool
+    GeometryModifyTool *gmt = GeometryModifyTool::instance();
+    GeometryQueryTool *gqt = GeometryQueryTool::instance();
+
+    // Create the ACIS engines
+    AcisQueryEngine::instance();
+    AcisModifyEngine::instance();
+
+    // Get version number of the geometry engine.
+    CubitString version = gqt->get_engine_version_string();
+    cout << "ACIS Engine: " << version << endl;
+
+    CubitStatus status;
+
+    /* Open BRL-CAD database */
+    /* Scan all the records in the database and build a directory */
+    rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf));
+
+    if (rtip == RTI_NULL) {
+	usage("rt_dirbuild failure\n");
+    }
+
+    init_state = rt_initial_tree_state;
+    init_state.ts_dbip = rtip->rti_dbip;
+    init_state.ts_rtip = rtip;
+    init_state.ts_resp = NULL;
+    init_state.ts_tol = &tol;
+    init_state.ts_ttol = &ttol;
+    bu_avs_init(&init_state.ts_attrs, 1, "avs in tree_state");
+
+    bu_optind++;
+
+    /* Walk the trees named on the command line
+     * outputting combinations and primitives
+     */
+    int walk_tree_status;
+    for (i = bu_optind ; i < argc ; i++) {
+	struct directory *dp;
+
+	dp = db_lookup(rtip->rti_dbip, argv[i], LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    bu_log("Cannot find %s\n", argv[i]);
+	    continue;
 	}
+
+	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
+		     &init_state , region_start, region_end, primitive_func, (void *) &user_data);
     }
 
-    if (!s.empty()) {
-	ostr << s.top();
-	s.pop();
+    // *************************************************************************************
+    // Write SAT file
+    // *************************************************************************************
+
+    // Make bodies list.
+    DLIList<Body*> all_bodies, old_bodies, new_bodies, tools_bodies;
+    Body* tool_body;
+
+    // Export geometry
+    if (g_body_cnt == 0) {
+	usage("No geometry to convert.\n");
     }
 
-    return ostr.str();
-}
+    cout << "*** CSG DEBUG BEGIN ***" << endl;
+    DLIList<Body*> all_region_bodies, region_bodies, from_bodies;
+    Body* region_body;
 
+    for (int i=0; i < g_CsgBoolExp.size(); i++) {
+	cout << " R" << i << " = " << g_CsgBoolExp[i] << ": " << get_body_id(g_CsgBoolExp[i]) << endl;
 
-static void
-tokenize(const string& str, vector<string>& tokens, const string& delimiters)
-{
-    // Skip delimiters at beginning.
-    string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+	int body_id = get_body_id(g_CsgBoolExp[i]);
 
-    // Find first "non-delimiter".
-    string::size_type pos     = str.find_first_of(delimiters, lastPos);
+	if (body_id >= 0) {
+	    all_region_bodies.append(gqt->get_body(body_id));
+	} else if (body_id == -1) {
+	    // {empty}
+	    cout << "DEBUG: {empty}" << endl;
+	} else {
+	    //tokenize
+	    vector <string> csgTokens;
+	    char csgOp;
 
-    while (string::npos != pos || string::npos != lastPos) {
-	// Found a token, add it to the vector.
-	tokens.push_back(str.substr(lastPos, pos - lastPos));
+	    tokenize(g_CsgBoolExp[i], csgTokens, " ");
 
-	// Skip delimiters.  Note the "not_of"
-	lastPos = str.find_first_not_of(delimiters, pos);
+	    cout << "DEBUG " << csgTokens.size() << endl;
 
-	// Find next "non-delimiter"
-	pos = str.find_first_of(delimiters, lastPos);
+	    for (int j = 0; j < csgTokens.size(); j++) {
+		cout <<" T" << j << " = " << csgTokens[j] << ": " << get_body_id(csgTokens[j]) << endl;
+
+		if (get_body_id(csgTokens[j]) >= 0) {
+		    region_bodies.append(gqt->get_body(get_body_id(csgTokens[j])));
+		} else {
+		    csgOp = csgTokens[j].at(0);
+		    cout << "*DEBUG* csgOp = " << csgOp << endl;
+		    switch (csgOp) {
+			case DB_OP_INTERSECT:
+			    cout << "*** DEBUG INTERSECT ***" << endl;
+			    tool_body = region_bodies.pop();
+			    from_bodies.append(region_bodies.pop());
+			    gmt->intersect(tool_body, from_bodies, region_bodies, CUBIT_TRUE);
+			    break;
+			case DB_OP_SUBTRACT:
+			    cout << "*** DEBUG SUBTRACT ***" << endl;
+			    tool_body = region_bodies.pop();
+			    from_bodies.append(region_bodies.pop());
+			    gmt->subtract(tool_body, from_bodies, region_bodies, CUBIT_TRUE);
+			    break;
+			case DB_OP_UNION:
+			    cout << "*** DEBUG UNION ***" << endl;
+			    if (region_bodies.size() >= 2) {
+				from_bodies.append(region_bodies.pop());
+				from_bodies.append(region_bodies.pop());
+				if (!gmt->unite(from_bodies, region_bodies, CUBIT_TRUE)) {
+				    region_bodies+=from_bodies;
+				}
+			    } else {
+				region_bodies+=from_bodies;
+			    }
+			    break;
+			default:
+			    // do nothing -- should get here
+			    break;
+		    }
+
+		    from_bodies.clean_out();
+		} // end if on get_body_id
+
+	    } // end for loop over csgTokens
+
+	    csgTokens.clear();
+
+	    if (region_bodies.size() != 0) {
+		all_region_bodies+=region_bodies;
+		region_bodies.clean_out();
+	    }
+	} // end if/else on body_id
+    } // end for loop over g_CsgBoolExp
+
+    cout << "*** CSG DEBUG END ***" << endl;
+
+    // Make entities list.
+    DLIList<RefEntity*> parent_entities;
+
+    CAST_LIST_TO_PARENT(all_region_bodies, parent_entities);
+
+    int size = parent_entities.size();
+    cout << "Number of bodies to be exported: " << size << endl;
+
+    // Export geometry
+    if (size != 0) {
+	status = gqt->export_solid_model(parent_entities, output_file, ACIS_SAT, size, version);
+    } else {
+	usage("No geometry to convert.\n");
     }
+
+    CGMApp::instance()->shutdown();
+
+    cout << "Number of primitives processed: " << g_body_cnt << endl;
+
+    return 0;
 }
 
 
