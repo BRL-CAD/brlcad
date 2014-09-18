@@ -219,7 +219,7 @@
  */
 struct dm_hook_data {
     void(*dm_hook)(const struct bu_structparse *, const char *, void *, const char *, void *);
-    void *dm_hook_data;
+    void *dmh_data;
 };
 
 /* Hide the dm structure behind a typedef */
