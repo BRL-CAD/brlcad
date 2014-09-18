@@ -123,6 +123,9 @@ set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
   add_dependencies(libdm tk)
 endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
+if(BRLCAD_ENABLE_OSG)
+  add_dependencies(libdm profont_ProFont_ttf_cp)
+endif(BRLCAD_ENABLE_OSG)
 set(libdm_ignore_files
   dm-wgl.c
   dm-X.c
