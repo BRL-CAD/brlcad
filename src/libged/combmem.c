@@ -435,11 +435,11 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     }
 
 
-#define COMBMEM_SET_PART_II(_gedp, _argv, _op, _i, _rt_tree_array, _tree_index, _mat) { \
-	(_op) = db_str2op((_argv)[(_i)]); \
+#define COMBMEM_SET_PART_II(_gedp, _argv, _i, _rt_tree_array, _tree_index, _mat) { \
+	db_op_t combmem_set_part_ii_op = db_str2op((_argv)[(_i)]); \
 	\
 	/* Add it to the combination */ \
-	switch ((_op)) { \
+	switch (combmem_set_part_ii_op) { \
 	    case DB_OP_INTERSECT: \
 		(_rt_tree_array)[(_tree_index)].tl_op = OP_INTERSECT; \
 		break; \
@@ -535,7 +535,6 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     size_t tree_index;
     union tree *tp;
     union tree *final_tree;
-    db_op_t op;
 
     switch (etype) {
 	case ETYPES_ABS:
@@ -560,7 +559,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	vect_t aetvec = VINIT_ZERO;
 	vect_t tvec = VINIT_ZERO;
 
-	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
+	COMBMEM_SET_PART_II(gedp, argv, i, rt_tree_array, tree_index, mat);
 
 	if (sscanf(argv[i+2], "%lf", &az) == 1 &&
 	    sscanf(argv[i+3], "%lf", &el) == 1 &&
@@ -638,7 +637,6 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     size_t tree_index;
     union tree *tp;
     union tree *final_tree;
-    db_op_t op;
 
     switch (etype) {
 	case ETYPES_ROT_AET:
@@ -658,7 +656,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	double kx, ky, kz;
 	point_t key_pt = VINIT_ZERO;
 
-	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
+	COMBMEM_SET_PART_II(gedp, argv, i, rt_tree_array, tree_index, mat);
 
 	if (sscanf(argv[i+2], "%lf", &az) == 1 &&
 	    sscanf(argv[i+3], "%lf", &el) == 1 &&
@@ -729,7 +727,6 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
     size_t tree_index;
     union tree *tp;
     union tree *final_tree;
-    db_op_t op;
 
     if (etype != ETYPES_ROT_ARBITRARY_AXIS)
 	return GED_ERROR;
@@ -746,7 +743,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	vect_t dir;
 	point_t pt;
 
-	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
+	COMBMEM_SET_PART_II(gedp, argv, i, rt_tree_array, tree_index, mat);
 
 	if (sscanf(argv[i+2], "%lf", &px) == 1 &&
 	    sscanf(argv[i+3], "%lf", &py) == 1 &&
@@ -809,7 +806,6 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     size_t tree_index;
     union tree *tp;
     union tree *final_tree;
-    db_op_t op;
 
     if (etype != ETYPES_TRA)
 	return GED_ERROR;
@@ -823,7 +819,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	double tx, ty, tz;
 	vect_t tvec = VINIT_ZERO;
 
-	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
+	COMBMEM_SET_PART_II(gedp, argv, i, rt_tree_array, tree_index, mat);
 
 	if (sscanf(argv[i+2], "%lf", &tx) == 1 &&
 	    sscanf(argv[i+3], "%lf", &ty) == 1 &&
@@ -872,7 +868,6 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     size_t tree_index;
     union tree *tp;
     union tree *final_tree;
-    db_op_t op;
 
     if (etype != ETYPES_SCA)
 	return GED_ERROR;
@@ -892,7 +887,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 
 	HSETALL(svec, 0);
 
-	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
+	COMBMEM_SET_PART_II(gedp, argv, i, rt_tree_array, tree_index, mat);
 
 	if (sscanf(argv[i+2], "%lf", &sa) == 1 &&
 	    sscanf(argv[i+3], "%lf", &sx) == 1 &&
