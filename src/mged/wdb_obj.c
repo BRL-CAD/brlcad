@@ -47,6 +47,7 @@
 #include "vmath.h"
 #include "db.h"
 #include "rtgeom.h"
+#include "ged.h"
 #include "wdb.h"
 #include "mater.h"
 #include "obj.h"
