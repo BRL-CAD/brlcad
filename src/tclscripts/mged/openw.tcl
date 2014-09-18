@@ -2480,7 +2480,7 @@ proc update_mged_vars { id } {
     set mged_gui($id,orig_gui) $orig_gui
     set mged_gui($id,forward_keys) $forwarding_key($mged_gui($id,active_dm))
 
-    if {$mged_gui($id,dtype) == "ogl"} {
+    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "ogl"} {
 	set mged_gui($id,depthcue) [dm set depthcue]
 	set mged_gui($id,zbuffer) [dm set zbuffer]
 	set mged_gui($id,lighting) [dm set lighting]

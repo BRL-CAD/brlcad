@@ -454,6 +454,9 @@ namespace eval RtWizard {
 	#
 	#
 	#
+	# TODO - need to be able to do something more
+	# intelligent here based on what devices are
+	# available in BRL-CAD...
 	if {$tcl_platform(platform) == "windows"} {
 	    set fbType "/dev/wglsp"
 	} else {

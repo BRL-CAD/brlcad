@@ -974,8 +974,22 @@ package provide cadwidgets::Ged 1.0
     if {$tcl_platform(platform) == "windows"} {
 	set dmType wgl
     } else {
-	set dmType ogl
+        set dmType ogl
     }
+    # TODO - above needs to be replaced with some sort
+    # of introspective command defined by libtclcad (see go_open)
+    # that can check if various dm types are valid
+    #set have_dm [dm valid osgl]
+    #if {$have_dm == "osgl"} {
+    #	set dmType osgl
+    #} else {
+    #	set have_dm [dm valid wgl]
+    #	if {$have_dm == "wgl"} {
+    #	    set dmType wgl
+    #	} else {
+    #	    set dmType ogl
+    #	}
+    #}
 
     # create four views
     itk_component add ul {
