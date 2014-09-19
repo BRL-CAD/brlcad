@@ -63,6 +63,7 @@
 extern "C" {
 #endif
 #include "bu/color.h"
+#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
@@ -78,6 +79,8 @@ extern "C" {
 #include <osgViewer/GraphicsWindow>
 #include <osgViewer/ViewerEventHandlers>
 #include <osgViewer/config/SingleWindow>
+
+#include <osgDB/Registry>
 
 #include <osgGA/StateSetManipulator>
 
