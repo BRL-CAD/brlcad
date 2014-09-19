@@ -43,6 +43,8 @@ extern "C" {
 }
 #include "fb/fb_osgl.h"
 
+#include <osg/GLExtensions>
+
 #define CJDEBUG 0
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
 
@@ -124,6 +126,7 @@ struct osglinfo {
     osg::Timer *timer;
     int last_update_time;
     int cursor_on;
+    int use_texture;
 
     osg::GraphicsContext *glc;
     osg::GraphicsContext::Traits *traits;
@@ -620,6 +623,18 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     OSGL(ifp)->root = new osg::Group;
     OSGL(ifp)->viewer->setSceneData(OSGL(ifp)->root);
 
+    /* Need to realize and render a frame before we inquire what GL extensions are supported,
+     * or Bad Things happen to the OpenGL state */
+    OSGL(ifp)->use_texture = 0;
+    OSGL(ifp)->viewer->realize();
+    OSGL(ifp)->viewer->frame();
+    OSGL(ifp)->glc = camera->getGraphicsContext();
+    unsigned int contextID = OSGL(ifp)->glc->getState()->getContextID();
+    bool have_pixbuff = osg::isGLExtensionSupported(contextID, "GL_ARB_pixel_buffer_object");
+    if (have_pixbuff) {
+	std::cout << "Have GL_ARB_pixel_buffer_object\n";
+    }
+
     OSGL(ifp)->image = new osg::Image;
     OSGL(ifp)->image->setImage(ifp->if_width, ifp->if_height, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)ifp->if_mem, osg::Image::NO_DELETE);
     OSGL(ifp)->image->setPixelBufferObject(new osg::PixelBufferObject(OSGL(ifp)->image));
@@ -631,24 +646,23 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     OSGL(ifp)->texture->setWrap(osg::Texture::WRAP_R,osg::Texture::REPEAT);
     OSGL(ifp)->pictureQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, OSGL(ifp)->texture, osg::StateAttribute::ON);
 
-#if 1
-    osg::Geode *geode = new osg::Geode;
-    osg::StateSet* stateset = geode->getOrCreateStateSet();
-    stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
-    geode->addDrawable(OSGL(ifp)->pictureQuad);
-    OSGL(ifp)->root->addChild(geode);
-    osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
-    osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
-    camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
-#endif
-
-    /* Trying to repliate xmit_scanlines drawing in OSG as a fallback... */
-#if 0
-    osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
-    osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
-    camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
-#endif
-
+    if (have_pixbuff) {
+	OSGL(ifp)->use_texture = 1;
+	osg::Geode *geode = new osg::Geode;
+	osg::StateSet* stateset = geode->getOrCreateStateSet();
+	stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+	geode->addDrawable(OSGL(ifp)->pictureQuad);
+	OSGL(ifp)->root->addChild(geode);
+	osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
+	osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
+	camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
+    } else {
+	/* Emulate xmit_scanlines drawing in OSG as a fallback... */
+	OSGL(ifp)->use_texture = 0;
+	osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
+	osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
+	camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
+    }
 
     OSGL(ifp)->viewer->setCameraManipulator( new osgGA::FrameBufferManipulator() );
     OSGL(ifp)->viewer->addEventHandler(new osgGA::StateSetManipulator(OSGL(ifp)->viewer->getCamera()->getOrCreateStateSet()));
@@ -659,12 +673,8 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 
     OSGL(ifp)->cursor_on = 1;
 
-    OSGL(ifp)->viewer->realize();
 
     OSGL(ifp)->timer->setStartTick();
-
-    OSGL(ifp)->glc = camera->getGraphicsContext();
-
     /* count windows */
     osgl_nwindows++;
 
@@ -1173,25 +1183,24 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 	    else
 		scan_count = pix_count;
 
-#if 1
-	    scanline = (void *)(OSGL(ifp)->image->data(0,y,0));
-	    memcpy(scanline, pixelp, scan_count*3);
-#endif
-	    /* Emulate xmit_scanlines drawing in OSG as a fallback when textures don't work... */
-#if 0
-	    osg::ref_ptr<osg::Image> scanline_image = new osg::Image;
-	    scanline_image->allocateImage(ifp->if_width, 1, 1, GL_RGB, GL_UNSIGNED_BYTE);
-	    scanline = (void *)scanline_image->data();
-	    memcpy(scanline, pixelp, scan_count*3);
-	    osg::ref_ptr<osg::DrawPixels> scanline_obj = new osg::DrawPixels;
-	    scanline_obj->setPosition(osg::Vec3(-ifp->if_width/2, 0, -ifp->if_height/2 + y));
-	    scanline_obj->setImage(scanline_image);
-	    osg::ref_ptr<osg::Geode> new_geode = new osg::Geode;
-	    osg::StateSet* stateset = new_geode->getOrCreateStateSet();
-	    stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
-	    new_geode->addDrawable(scanline_obj.get());
-	    OSGL(ifp)->root->addChild(new_geode.get());
-#endif
+	    if (OSGL(ifp)->use_texture) {
+		scanline = (void *)(OSGL(ifp)->image->data(0,y,0));
+		memcpy(scanline, pixelp, scan_count*3);
+	    } else {
+		/* Emulate xmit_scanlines drawing in OSG as a fallback when textures don't work... */
+		osg::ref_ptr<osg::Image> scanline_image = new osg::Image;
+		scanline_image->allocateImage(ifp->if_width, 1, 1, GL_RGB, GL_UNSIGNED_BYTE);
+		scanline = (void *)scanline_image->data();
+		memcpy(scanline, pixelp, scan_count*3);
+		osg::ref_ptr<osg::DrawPixels> scanline_obj = new osg::DrawPixels;
+		scanline_obj->setPosition(osg::Vec3(-ifp->if_width/2, 0, -ifp->if_height/2 + y));
+		scanline_obj->setImage(scanline_image);
+		osg::ref_ptr<osg::Geode> new_geode = new osg::Geode;
+		osg::StateSet* stateset = new_geode->getOrCreateStateSet();
+		stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+		new_geode->addDrawable(scanline_obj.get());
+		OSGL(ifp)->root->addChild(new_geode.get());
+	    }
 	    ret += scan_count;
 	    pix_count -= scan_count;
 	    x = 0;
