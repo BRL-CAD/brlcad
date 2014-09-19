@@ -555,7 +555,7 @@ get_args(int argc, const char *argv[])
 		bn_mathtab_constant();
 		break;
 	    case 'b':
-		/* Specify a single pixel to be done */
+		/* Specify a single pixel to be done; X and Y pixel coordinates need enclosing quotes. */
 		/* Actually processed in do_frame() */
 		string_pix_start = bu_optarg;
 		npsw = 1;	/* Cancel running in parallel */

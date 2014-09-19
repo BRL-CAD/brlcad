@@ -42,8 +42,7 @@
       in the option list. The orientation of the rays to be fired may be specified by
       the <option>-a</option> and <option>-e</option> options, in which case the model
       will be autosized, and the grid will be centered on the centroid of the model, with
-
-,      ray spacing chosen to span the entire set of <emphasis remap="I">objects</emphasis>.
+      ray spacing chosen to span the entire set of <emphasis remap="I">objects</emphasis>.
       Alternatively, with the <option>-M</option> option, a transformation matrix may
       be provided on standard input which maps model-space to view-space. In this case,
       the grid ranges from -1.0 = X,Y = +1.0 in view space, with the size of the grid
@@ -98,17 +97,16 @@
       <varlistentry>
 	<term><option>-d #</option></term>
 	<listitem>
-	  <para>turns on the reporting of pixel distances, so that each pixel is
-	  represented by 3 bytes of color information followed by 8 bytes for a
-	  double (in IEEE format) giving the distance to the ray's first hit.
+	  <para>sets flag for reporting of pixel distances: 1 for on, 0 (default) for off.
+          (Each pixel is represented by 3 bytes of color information followed by 8 bytes
+	  for a double, in IEEE format, which gives the distance to the ray's first hit.
 	  If the ray doesn't hit, a zero distance is reported by default
-	  which causes
-	  <emphasis remap="I">rt (1)</emphasis>
+	  which causes <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  to write only the color information.
 	  See
 	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 	  and
-	  <citerefentry><refentrytitle>pixd</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+	  <citerefentry><refentrytitle>pixd</refentrytitle><manvolnum>5</manvolnum></citerefentry>.)</para>
 	</listitem>
       </varlistentry>
 
