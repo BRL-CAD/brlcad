@@ -13,12 +13,6 @@ add_subdirectory(osgText)
 add_subdirectory(osgViewer)
 add_subdirectory(osgPlugins)
 
-# Test application
-if(OSG_ENABLE_VIEWER)
-  add_subdirectory(osgWrappers)
-  add_subdirectory(osgviewerapp)
-endif(OSG_ENABLE_VIEWER)
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake
