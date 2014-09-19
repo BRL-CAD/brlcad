@@ -643,12 +643,11 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 #endif
 
     /* Trying to repliate xmit_scanlines drawing in OSG as a fallback... */
-#if 0   
+#if 0
     osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
     osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
-    //camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
-    camera->setProjectionMatrixAsOrtho2D(-ifp->if_width,ifp->if_width,-ifp->if_height, ifp->if_height);
-#endif 
+    camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
+#endif
 
 
     OSGL(ifp)->viewer->setCameraManipulator( new osgGA::FrameBufferManipulator() );
@@ -1134,7 +1133,7 @@ osgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 /* write count pixels from pixelp starting at xstart, ystart */
-    HIDDEN ssize_t
+HIDDEN ssize_t
 osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     register int x;
@@ -1178,14 +1177,14 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 	    scanline = (void *)(OSGL(ifp)->image->data(0,y,0));
 	    memcpy(scanline, pixelp, scan_count*3);
 #endif
-	    /* Trying to repliate xmit_scanlines drawing in OSG as a fallback... */
+	    /* Emulate xmit_scanlines drawing in OSG as a fallback when textures don't work... */
 #if 0
 	    osg::ref_ptr<osg::Image> scanline_image = new osg::Image;
 	    scanline_image->allocateImage(ifp->if_width, 1, 1, GL_RGB, GL_UNSIGNED_BYTE);
 	    scanline = (void *)scanline_image->data();
 	    memcpy(scanline, pixelp, scan_count*3);
 	    osg::ref_ptr<osg::DrawPixels> scanline_obj = new osg::DrawPixels;
-	    scanline_obj->setPosition(osg::Vec3(0, y, 0));
+	    scanline_obj->setPosition(osg::Vec3(-ifp->if_width/2, 0, -ifp->if_height/2 + y));
 	    scanline_obj->setImage(scanline_image);
 	    osg::ref_ptr<osg::Geode> new_geode = new osg::Geode;
 	    osg::StateSet* stateset = new_geode->getOrCreateStateSet();
