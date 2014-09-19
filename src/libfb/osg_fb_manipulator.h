@@ -18,6 +18,8 @@
  * Brno University of Technology (www.fit.vutbr.cz) for open-sourcing this work.
  */
 
+#include "common.h"
+
 #include <osgGA/StandardManipulator>
 
 using namespace osg;

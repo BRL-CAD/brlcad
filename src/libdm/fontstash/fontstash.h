@@ -19,6 +19,8 @@
 #ifndef FONS_H
 #define FONS_H
 
+#include "common.h"
+
 #define FONS_INVALID -1
 
 enum FONSflags {

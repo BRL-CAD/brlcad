@@ -346,6 +346,8 @@ int main(int arg, char **argv)
 ////   The following sections allow you to supply alternate definitions
 ////   of C library functions used by stb_truetype.
 
+#include "common.h"
+
 #ifndef NEAR_ZERO
 #  define NEAR_ZERO(val, epsilon)       (((val) > -epsilon) && ((val) < epsilon))
 #endif
