@@ -12794,7 +12794,7 @@ to_transparency(struct ged *gedp,
     /* set transparency flag */
     if (argc == 3) {
 	if (bu_sscanf(argv[2], "%d", &transparency) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: invalid transparency value - %s", argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: invalid transparency value - %s", argv[0], argv[2]);
 	    return GED_ERROR;
 	}
 
