@@ -593,23 +593,16 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 
     /* Make sure OpenSceneGraph knows to look in the root lib directory */
     {
+	std::string rel_path = std::string(bu_brlcad_dir("lib", 0)) + std::string("/osgPlugins");
+	std::string libpathstring(bu_brlcad_root(rel_path.c_str(), 0));
 	osgDB::FilePathList paths = osgDB::Registry::instance()->getLibraryFilePathList();
-	struct bu_vls brlcad_rel_path = BU_VLS_INIT_ZERO;
-	struct bu_vls brlcad_final_path = BU_VLS_INIT_ZERO;
-	const char *libdir = bu_brlcad_dir("lib", 0);
-	bu_vls_sprintf(&brlcad_rel_path, "%s/osgPlugins", libdir);
-	const char *brlcad_path = bu_brlcad_root(bu_vls_addr(&brlcad_rel_path), 0);
-	bu_vls_sprintf(&brlcad_final_path, "'%s'", brlcad_path);
-	std::string libpathstring(bu_vls_addr(&brlcad_final_path));
 	/* The first entry is the final installed path - prefer that to the local
 	 * bu_brlcad_root lib directory.  This means our new path should be the
 	 * second entry in the list - insert it accordingly. */
 	osgDB::FilePathList::iterator in_itr=++(paths.begin());
 	paths.insert(in_itr, libpathstring);
 	osgDB::Registry::instance()->setLibraryFilePathList(paths);
-	/* clean up */
-	bu_vls_free(&brlcad_rel_path);
-	bu_vls_free(&brlcad_final_path);
+	//for(osgDB::FilePathList::const_iterator libpath=osgDB::Registry::instance()->getLibraryFilePathList().begin(); libpath!=osgDB::Registry::instance()->getLibraryFilePathList().end(); ++libpath) std::cout << *libpath << "\n";
     }
 
 
