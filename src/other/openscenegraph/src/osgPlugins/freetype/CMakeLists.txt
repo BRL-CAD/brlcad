@@ -1,14 +1,18 @@
-include_directories(${FREETYPE_INCLUDE_DIRS} )
+IF(WIN32)
+    SET(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /NODEFAULTLIB:MSVCRT")
+ENDIF()
+
+INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIRS} )
 
 if(APPLE)
     set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib")
 endif(APPLE)
 
 set(OSG_FREETYPE_PLUGIN_SRCS
-  FreeTypeFont.cpp
-  FreeTypeLibrary.cpp
-  ReaderWriterFreeType.cpp
-  )
+    FreeTypeFont.cpp
+    FreeTypeLibrary.cpp
+    ReaderWriterFreeType.cpp
+)
 
 if(DYNAMIC_OPENSCENEGRAPH)
   add_library(osgdb_freetype MODULE ${OSG_FREETYPE_PLUGIN_SRCS})

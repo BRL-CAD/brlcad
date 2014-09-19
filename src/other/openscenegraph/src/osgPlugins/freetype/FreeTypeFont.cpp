@@ -14,8 +14,10 @@
 #include "FreeTypeFont.h"
 #include "FreeTypeLibrary.h"
 
-#include <ftoutln.h>
-#include <ftbbox.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include FT_OUTLINE_H
+#include FT_BBOX_H
 
 #include <osg/Notify>
 #include <osg/io_utils>

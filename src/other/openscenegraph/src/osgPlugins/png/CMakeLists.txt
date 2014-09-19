@@ -18,6 +18,11 @@ target_link_libraries(osgdb_png osgDB osgUtil osg OpenThreads
   ${MATH_LIBRARY} ${RT_LIBRARY} ${DL_LIBRARY} ${PNG_LIBRARY} ${ZLIB_LIBRARY}
   )
 
+IF(MSVC)
+    SET_TARGET_PROPERTIES(osgdb_png PROPERTIES LINK_FLAGS_DEBUG "/NODEFAULTLIB:MSVCRT")
+ENDIF()
+
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

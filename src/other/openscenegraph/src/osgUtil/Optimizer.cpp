@@ -2003,10 +2003,10 @@ bool Optimizer::MergeGeometryVisitor::mergeGeode(osg::Geode& geode)
             unsigned int numVertices(duplicateList.front()->getVertexArray() ? duplicateList.front()->getVertexArray()->getNumElements() : 0);
             DuplicateList::iterator eachGeom(duplicateList.begin()+1);
             // until all geometries have been checked or _targetMaximumNumberOfVertices is reached
-            for (;eachGeom!=duplicateList.end(); ++eachGeom)
+            for(;eachGeom!=duplicateList.end(); ++eachGeom)
             {
                 unsigned int numAddVertices((*eachGeom)->getVertexArray() ? (*eachGeom)->getVertexArray()->getNumElements() : 0);
-                if (numVertices+numAddVertices<_targetMaximumNumberOfVertices)
+                if ((numVertices+numAddVertices)>_targetMaximumNumberOfVertices)
                 {
                     break;
                 }
@@ -2017,7 +2017,7 @@ bool Optimizer::MergeGeometryVisitor::mergeGeode(osg::Geode& geode)
             }
 
             // push back if bellow the limit
-            if (numVertices<_targetMaximumNumberOfVertices)
+            if (eachGeom==duplicateList.end())
             {
                 if (duplicateList.size()>1) needToDoMerge = true;
                 mergeList.push_back(duplicateList);

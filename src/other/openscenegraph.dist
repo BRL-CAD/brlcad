@@ -9,7 +9,6 @@ CMakeModules/FindCoreMedia.cmake
 CMakeModules/FindCoreVideo.cmake
 CMakeModules/FindDirectInput.cmake
 CMakeModules/FindDirectShow.cmake
-CMakeModules/FindFreeType.cmake
 CMakeModules/FindNVTT.cmake
 CMakeModules/FindOSG.cmake
 CMakeModules/FindOpenThreads.cmake
@@ -397,7 +396,6 @@ include/osgViewer/config/SphericalDisplay
 include/osgViewer/config/WoWVxDisplay
 src/OpenThreads/CMake
 src/OpenThreads/CMake/CheckAtomicOps.cmake
-src/OpenThreads/CMake/Handle_MSVC_DLL.cmake
 src/OpenThreads/PlatformSpecifics
 src/OpenThreads/PlatformSpecifics/Windows
 src/OpenThreads/PlatformSpecifics/Windows/OpenThreadsVersionInfo.rc.in
