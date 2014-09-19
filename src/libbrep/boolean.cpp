@@ -646,6 +646,72 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
     return 0;
 }
 
+HIDDEN double
+bbox_diagonal_length(ON_Curve *curve)
+{
+    double len = 0.0;
+    if (curve) {
+	ON_BoundingBox bbox;
+	if (curve->GetTightBoundingBox(bbox)) {
+	    len = bbox.Diagonal().Length();
+	} else {
+	    len = curve->PointAtStart().DistanceTo(curve->PointAtEnd());
+	}
+    }
+    return len;
+}
+
+HIDDEN void
+split_curve(ON_Curve *&left, ON_Curve *&right, const ON_Curve *in, double t)
+{
+    try {
+	left = sub_curve(in, in->Domain().m_t[0], t);
+    } catch (InvalidInterval &e) {
+	left = NULL;
+    }
+    try {
+	right = sub_curve(in, t, in->Domain().m_t[1]);
+    } catch (InvalidInterval &e) {
+	right = NULL;
+    }
+}
+
+HIDDEN double
+configure_for_linking(
+	LinkedCurve *&first,
+	LinkedCurve *&second,
+	LinkedCurve &in1,
+	LinkedCurve &in2)
+{
+    double dist_s1s2 = in1.PointAtStart().DistanceTo(in2.PointAtStart());
+    double dist_s1e2 = in1.PointAtStart().DistanceTo(in2.PointAtEnd());
+    double dist_e1s2 = in1.PointAtEnd().DistanceTo(in2.PointAtStart());
+    double dist_e1e2 = in1.PointAtEnd().DistanceTo(in2.PointAtEnd());
+
+    double min_dist = std::min(dist_s1s2, dist_s1e2);
+    min_dist = std::min(min_dist, dist_e1s2);
+    min_dist = std::min(min_dist, dist_e1e2);
+
+    first = second = NULL;
+    if (dist_s1e2 <= min_dist) {
+	first = &in2;
+	second = &in1;
+    } else if (dist_e1s2 <= min_dist) {
+	first = &in1;
+	second = &in2;
+    } else if (dist_s1s2 <= min_dist) {
+	if (in1.Reverse()) {
+	    first = &in1;
+	    second = &in2;
+	}
+    } else if (dist_e1e2 <= min_dist) {
+	if (in2.Reverse()) {
+	    first = &in1;
+	    second = &in2;
+	}
+    }
+    return min_dist;
+}
 
 HIDDEN ON_ClassArray<LinkedCurve>
 link_curves(const ON_SimpleArray<SSICurve> &in)
@@ -673,36 +739,75 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 	    }
 
 	    LinkedCurve *c1 = NULL, *c2 = NULL;
-	    double dis;
-	    // Link curves that share an end point.
-	    if ((dis = tmp[i].PointAtStart().DistanceTo(tmp[j].PointAtEnd())) < INTERSECTION_TOL) {
-		// end -- start -- end -- start
-		c1 = &tmp[j];
-		c2 = &tmp[i];
-	    } else if ((dis = tmp[i].PointAtEnd().DistanceTo(tmp[j].PointAtStart())) < INTERSECTION_TOL) {
-		// start -- end -- start -- end
-		c1 = &tmp[i];
-		c2 = &tmp[j];
-	    } else if ((dis = tmp[i].PointAtStart().DistanceTo(tmp[j].PointAtStart())) < INTERSECTION_TOL) {
-		// end -- start -- start -- end
-		if (tmp[i].Reverse()) {
-		    c1 = &tmp[i];
-		    c2 = &tmp[j];
+	    double dist = configure_for_linking(c1, c2, tmp[i], tmp[j]);
+
+	    if (dist > INTERSECTION_TOL) {
+		const ON_Curve *icurve = tmp[i].Curve();
+		const ON_Curve *jcurve = tmp[j].Curve();
+
+		ON_SimpleArray<ON_X_EVENT> events;
+		ON_Intersect(icurve, jcurve, events, INTERSECTION_TOL);
+
+		if (events.Count() == 0 || !icurve || !jcurve) {
+		    continue;
 		}
-	    } else if ((dis = tmp[i].PointAtEnd().DistanceTo(tmp[j].PointAtEnd())) < INTERSECTION_TOL) {
-		// start -- end -- end -- start
-		if (tmp[j].Reverse()) {
-		    c1 = &tmp[i];
-		    c2 = &tmp[j];
+
+		// intersecting ssx curves indicates an error in the curves
+		if (events.Count() > 1) {
+		    bu_log("couldn't link converging intersection curves\n");
+		    continue;
+		} else if (events.Count() == 1) {
+		    // For a single intersection, try to link the
+		    // curves anyway. Assume that one or both curve
+		    // endpoints is just a little past where it should
+		    // be. Split the curves at the intersection, and
+		    // discard the portion with the smaller bbox
+		    // diagonal.
+		    ON_Curve *ileft, *iright, *jleft, *jright;
+		    ileft = iright = jleft = jright = NULL;
+		    split_curve(ileft, iright, icurve, events[0].m_a[0]);
+		    split_curve(jleft, jright, jcurve, events[0].m_b[0]);
+
+		    if (bbox_diagonal_length(ileft) <
+			bbox_diagonal_length(iright))
+		    {
+			std::swap(ileft, iright);
+		    }
+		    ON_Curve *isub = ileft;
+		    delete iright;
+
+		    if (bbox_diagonal_length(jleft) <
+			bbox_diagonal_length(jright))
+		    {
+			std::swap(jleft, jright);
+		    }
+		    ON_Curve *jsub = jleft;
+		    delete jright;
+
+		    if (isub && jsub) {
+			// replace the original linked curves with the
+			// trimmed versions
+			SSICurve issi(isub), jssi(jsub);
+			isub = jsub = NULL;
+
+			tmp[i].m_ssi_curves.Empty();
+			tmp[i].m_ssi_curves.Append(issi);
+
+			tmp[j].m_ssi_curves.Empty();
+			tmp[j].m_ssi_curves.Append(jssi);
+
+			// proceed as if they're linkable
+			configure_for_linking(c1, c2, tmp[i], tmp[j]);
+		    }
+		    delete isub;
+		    delete jsub;
 		}
-	    } else {
-		continue;
 	    }
 
 	    if (c1 != NULL && c2 != NULL) {
 		LinkedCurve new_curve;
 		new_curve.Append(*c1);
-		if (dis > ON_ZERO_TOLERANCE) {
+		if (dist > ON_ZERO_TOLERANCE) {
 		    new_curve.Append(SSICurve(new ON_LineCurve(c1->PointAtEnd(), c2->PointAtStart())));
 		}
 		new_curve.Append(*c2);
