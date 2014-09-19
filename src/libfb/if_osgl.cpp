@@ -120,6 +120,7 @@ struct osglinfo {
     osg::Image *image;
     osg::TextureRectangle *texture;
     osg::Geometry *pictureQuad;
+    osg::Group *root;
     osg::Timer *timer;
     int last_update_time;
     int cursor_on;
@@ -611,8 +612,13 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 
     OSGL(ifp)->viewer = new osgViewer::Viewer();
     osgViewer::SingleWindow *sw = new osgViewer::SingleWindow(0, 0, ifp->if_width, ifp->if_height);
-    std::cout << sw->getHeight() << "\n";
     OSGL(ifp)->viewer->apply(sw);
+    osg::Camera *camera = OSGL(ifp)->viewer->getCamera();
+    camera->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
+    camera->setViewMatrix(osg::Matrix::identity());
+
+    OSGL(ifp)->root = new osg::Group;
+    OSGL(ifp)->viewer->setSceneData(OSGL(ifp)->root);
 
     OSGL(ifp)->image = new osg::Image;
     OSGL(ifp)->image->setImage(ifp->if_width, ifp->if_height, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)ifp->if_mem, osg::Image::NO_DELETE);
@@ -625,25 +631,30 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     OSGL(ifp)->texture->setWrap(osg::Texture::WRAP_R,osg::Texture::REPEAT);
     OSGL(ifp)->pictureQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, OSGL(ifp)->texture, osg::StateAttribute::ON);
 
+#if 1
     osg::Geode *geode = new osg::Geode;
     osg::StateSet* stateset = geode->getOrCreateStateSet();
     stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
     geode->addDrawable(OSGL(ifp)->pictureQuad);
-
-    osg::Camera *camera = OSGL(ifp)->viewer->getCamera();
-
-    camera->setViewMatrix(osg::Matrix::identity());
+    OSGL(ifp)->root->addChild(geode);
     osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
     osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
     camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
-    camera->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
+#endif
 
-    OSGL(ifp)->viewer->setSceneData(geode);
+    /* Trying to repliate xmit_scanlines drawing in OSG as a fallback... */
+#if 0   
+    osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
+    osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
+    //camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
+    camera->setProjectionMatrixAsOrtho2D(-ifp->if_width,ifp->if_width,-ifp->if_height, ifp->if_height);
+#endif 
+
 
     OSGL(ifp)->viewer->setCameraManipulator( new osgGA::FrameBufferManipulator() );
     OSGL(ifp)->viewer->addEventHandler(new osgGA::StateSetManipulator(OSGL(ifp)->viewer->getCamera()->getOrCreateStateSet()));
 
-    KeyHandler *kh = new KeyHandler(*geode);
+    KeyHandler *kh = new KeyHandler(*(OSGL(ifp)->root));
     kh->fbp = ifp;
     OSGL(ifp)->viewer->addEventHandler(kh);
 
@@ -1163,10 +1174,11 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 	    else
 		scan_count = pix_count;
 
+#if 1
 	    scanline = (void *)(OSGL(ifp)->image->data(0,y,0));
-
 	    memcpy(scanline, pixelp, scan_count*3);
-
+#endif
+	    /* Trying to repliate xmit_scanlines drawing in OSG as a fallback... */
 #if 0
 	    osg::ref_ptr<osg::Image> scanline_image = new osg::Image;
 	    scanline_image->allocateImage(ifp->if_width, 1, 1, GL_RGB, GL_UNSIGNED_BYTE);
@@ -1176,10 +1188,11 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 	    scanline_obj->setPosition(osg::Vec3(0, y, 0));
 	    scanline_obj->setImage(scanline_image);
 	    osg::ref_ptr<osg::Geode> new_geode = new osg::Geode;
+	    osg::StateSet* stateset = new_geode->getOrCreateStateSet();
+	    stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
 	    new_geode->addDrawable(scanline_obj.get());
 	    OSGL(ifp)->root->addChild(new_geode.get());
 #endif
-
 	    ret += scan_count;
 	    pix_count -= scan_count;
 	    x = 0;
