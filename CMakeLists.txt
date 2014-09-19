@@ -782,6 +782,12 @@ if(MSVC)
   endif(CMAKE_CL_64)
 endif(MSVC)
 
+if (APPLE)
+	if (${CMAKE_WORD_SIZE} MATCHES "32BIT")
+		set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
+	endif (${CMAKE_WORD_SIZE} MATCHES "32BIT")
+endif (APPLE)
+
 # Based on what we are doing, we may need to constrain our search paths
 #
 # NOTE: Ideally we would set a matching property for 32 bit paths
