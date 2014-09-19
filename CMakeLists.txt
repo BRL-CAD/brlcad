@@ -1035,9 +1035,11 @@ mark_as_advanced(Qt5Widgets_DIR)
 # Enable features requiring OpenSceneGraph
 option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
 mark_as_advanced(BRLCAD_ENABLE_OSG)
-#if(BRLCAD_ENABLE_OSG)
-#  find_package(OpenSceneGraph 3.2.0 REQUIRED osgText osgViewer)
-#endif(BRLCAD_ENABLE_OSG)
+if(BRLCAD_ENABLE_OSG)
+  if(APPLE AND NOT BRLCAD_ENABLE_AQUA)
+    set(OSG_WINDOWING_SYSTEM "X11" CACHE STRING "Use X11" FORCE)
+  endif(APPLE AND NOT BRLCAD_ENABLE_AQUA)
+endif(BRLCAD_ENABLE_OSG)
 
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
