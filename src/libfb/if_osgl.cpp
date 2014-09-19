@@ -606,6 +606,7 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 	 * second entry in the list - insert it accordingly. */
 	osgDB::FilePathList::iterator in_itr=++(paths.begin());
 	paths.insert(in_itr, libpathstring);
+	osgDB::Registry::instance()->setLibraryFilePathList(paths);
 	/* clean up */
 	bu_vls_free(&brlcad_rel_path);
 	bu_vls_free(&brlcad_final_path);
