@@ -622,7 +622,7 @@ get_args(int argc, const char *argv[])
 	    break;
 	    default:		/* '?' */
 		if(bu_optopt != '?')
-		    fprintf(stderr, "ERROR: bad option specified\n");
+		    fprintf(stderr, "ERROR: argument missing or bad option specified\n");
 		return 0;	/* BAD */
 	}
     }
