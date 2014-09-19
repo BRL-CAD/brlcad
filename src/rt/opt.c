@@ -561,15 +561,17 @@ get_args(int argc, const char *argv[])
 		npsw = 1;	/* Cancel running in parallel */
 		break;
 	    case 'f':
-		/* set expected playback rate in frames-per-second.
-		 * This actually gets stored as the delta-t per frame.
+		/* input expected playback rate in frames-per-second;
+		 * actually stored as the delta-t per frame
 		 */
 		frame_delta_t = atof(bu_optarg);
 		if (ZERO(frame_delta_t)) {
-		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0\n",
+		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0; set to default\n",
 			    bu_optarg);
 		    frame_delta_t = 30.0;
 		}
+		/* now convert to delta-t per frame
+		 */
 		frame_delta_t = 1.0 / frame_delta_t;
 		break;
 	    case 'V':

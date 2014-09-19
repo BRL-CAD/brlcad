@@ -123,8 +123,8 @@
       <varlistentry>
 	<term><option>-f #</option></term>
 	<listitem>
-	  <para>sets the expected playback rate in frames-per-second.
-	  The default is 30fps.
+	  <para>sets the expected playback rate in frames-per-second; 
+	  the default is 30.
 	  Several time-evolving shaders
 	  such as
 	  <emphasis remap="I">fire</emphasis>
