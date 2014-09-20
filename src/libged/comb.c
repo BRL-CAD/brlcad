@@ -596,7 +596,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* add it to the comb immediately */
-	    if (_ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == RT_DIR_NULL) {
+	    if (_ged_combadd(gedp, dp, comb_name, 0, (db_op_t)oper, 0, 0) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Error adding '%s' (with op '%c') to '%s'\n", dp->d_namep, oper, comb_name);
 		return GED_ERROR;
 	    }
