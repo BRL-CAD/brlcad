@@ -249,7 +249,10 @@ public:
 		    //std::cout << "Left Button\n";
 		}
 		if (osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON & ea.getButton()) {
-		    bu_exit(0, "framebuffer done.");
+		    ea.setHandled(true);
+		    osgViewer::GraphicsWindow *gw = dynamic_cast<osgViewer::GraphicsWindow*>(OSGL(fbp)->glc);
+		    gw->close();
+		    break;
 		}
 		if (osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON & ea.getButton()) {
 		    int x = ea.getX();

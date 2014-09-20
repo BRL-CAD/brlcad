@@ -619,7 +619,7 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     OSGL(ifp)->last_update_time = 0;
 
     OSGL(ifp)->viewer = new osgViewer::Viewer();
-    osgViewer::SingleWindow *sw = new osgViewer::SingleWindow(0, 0, ifp->if_width, ifp->if_height);
+    osgViewer::SingleWindow *sw = new osgViewer::SingleWindow(0+40, 0+40, ifp->if_width+40, ifp->if_height+40);
     OSGL(ifp)->viewer->apply(sw);
     osg::Camera *camera = OSGL(ifp)->viewer->getCamera();
     camera->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
