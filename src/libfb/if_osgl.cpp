@@ -596,6 +596,8 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 	return -1;
 
     /* Make sure OpenSceneGraph knows to look in the root lib directory */
+    /* TODO - The OpenSceneGraph logic for handling plugins isn't multi-config
+     * aware - we're going to have to add that to make this mechanism work on Windows */
     {
 	std::string rel_path = std::string(bu_brlcad_dir("lib", 0)) + std::string("/osgPlugins");
 	std::string libpathstring(bu_brlcad_root(rel_path.c_str(), 0));
