@@ -600,14 +600,17 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
      * aware - we're going to have to add that to make this mechanism work on Windows */
     {
 	std::string rel_path = std::string(bu_brlcad_dir("lib", 0)) + std::string("/osgPlugins");
-	std::string libpathstring(bu_brlcad_root(rel_path.c_str(), 0));
+	const char *root_path = bu_brlcad_root(rel_path.c_str(), 0);
 	osgDB::FilePathList paths = osgDB::Registry::instance()->getLibraryFilePathList();
-	/* The first entry is the final installed path - prefer that to the local
-	 * bu_brlcad_root lib directory.  This means our new path should be the
-	 * second entry in the list - insert it accordingly. */
-	osgDB::FilePathList::iterator in_itr=++(paths.begin());
-	paths.insert(in_itr, libpathstring);
-	osgDB::Registry::instance()->setLibraryFilePathList(paths);
+	if (root_path) {
+	    std::string libpathstring(root_path);
+	    /* The first entry is the final installed path - prefer that to the local
+	     * bu_brlcad_root lib directory.  This means our new path should be the
+	     * second entry in the list - insert it accordingly. */
+	    osgDB::FilePathList::iterator in_itr=++(paths.begin());
+	    paths.insert(in_itr, libpathstring);
+	    osgDB::Registry::instance()->setLibraryFilePathList(paths);
+	}
 	//for(osgDB::FilePathList::const_iterator libpath=osgDB::Registry::instance()->getLibraryFilePathList().begin(); libpath!=osgDB::Registry::instance()->getLibraryFilePathList().end(); ++libpath) std::cout << *libpath << "\n";
     }
 
