@@ -620,7 +620,7 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 
     OSGL(ifp)->viewer = new osgViewer::Viewer();
     int woffset = 40;
-    osgViewer::SingleWindow *sw = new osgViewer::SingleWindow(0+woffset, 0+woffset, ifp->if_width+woffset, ifp->if_height+woffset);
+    osgViewer::SingleWindow *sw = new osgViewer::SingleWindow(0+woffset, 0+woffset, ifp->if_width, ifp->if_height);
     OSGL(ifp)->viewer->apply(sw);
     osg::Camera *camera = OSGL(ifp)->viewer->getCamera();
     camera->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
@@ -661,13 +661,13 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 	OSGL(ifp)->root->addChild(geode);
 	osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
 	osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
-	camera->setProjectionMatrixAsOrtho2D(-(ifp->if_width+woffset)/2,(ifp->if_width+woffset)/2,-(ifp->if_height+woffset)/2, (ifp->if_height+woffset)/2);
+	camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
     } else {
 	/* Emulate xmit_scanlines drawing in OSG as a fallback... */
 	OSGL(ifp)->use_texture = 0;
 	osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
-	osg::Vec3 bottomright((ifp->if_width+woffset), (ifp->if_height+woffset), 0.0f);
-	camera->setProjectionMatrixAsOrtho2D(-(ifp->if_width+woffset)/2,(ifp->if_width+woffset)/2,-(ifp->if_height+woffset)/2, (ifp->if_height+woffset)/2);
+	osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
+	camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
     }
 
     OSGL(ifp)->viewer->setCameraManipulator( new osgGA::FrameBufferManipulator() );
