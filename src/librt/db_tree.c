@@ -2688,11 +2688,6 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 		RT_GET_TREE(tp, resp);
 		tp->tr_b.tb_op = OP_SUBTRACT;
 		break;
-	    case '^':
-		/* Binary: Xor */
-		RT_GET_TREE(tp, resp);
-		tp->tr_b.tb_op = OP_XOR;
-		break;
 	}
 
 	if (argv[1] == (char *)NULL || argv[2] == (char *)NULL) {
