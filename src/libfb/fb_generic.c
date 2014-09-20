@@ -187,7 +187,6 @@ long fb_get_pagebuffer_pixel_size(fb *ifp)
     return ifp->if_ppixels;
 }
 
-#if !defined(_WIN32)
 int fb_is_set_fd(fb *ifp, fd_set *infds)
 {
     if (!ifp) return 0;
@@ -216,7 +215,6 @@ int fb_clear_fd(fb *ifp, fd_set *list)
     FD_CLR(ifp->if_selfd, list);
     return ifp->if_selfd;
 }
-#endif
 
 void fb_set_magic(fb *ifp, uint32_t magic)
 {
