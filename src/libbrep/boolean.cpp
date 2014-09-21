@@ -3059,14 +3059,17 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
 	    }
 	    evaluated_brep->ShrinkSurfaces();
 	    evaluated_brep->Compact();
+	    dplot->WriteLog();
 	    return 0;
 	}
 	trimmed_faces = get_evaluated_faces(brep1, brep2, operation);
     } catch (InvalidBooleanOperation &e) {
 	bu_log("%s", e.what());
+	dplot->WriteLog();
 	return -1;
     } catch (GeometryGenerationError &e) {
 	bu_log("%s", e.what());
+	dplot->WriteLog();
 	return -1;
     }
 

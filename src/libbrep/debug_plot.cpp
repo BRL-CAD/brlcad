@@ -186,11 +186,16 @@ DebugPlot::WriteLog()
     }
 
     // write out linked curve count
-    fprintf(fp, "linkedcurves %d\n", linked_curve_count);
+    if (linked_curve_count > 0) {
+	fprintf(fp, "linkedcurves %d\n", linked_curve_count);
+    }
 
     // write out split faces
-    fprintf(fp, "splitfaces %d\n", (int)split_face_outerloop_curves.size());
-    for (size_t i = 0; i < split_face_outerloop_curves.size(); ++i) {
+    size_t split_faces = split_face_outerloop_curves.size();
+    if (split_faces > 0) {
+	fprintf(fp, "splitfaces %d\n", (int)split_faces);
+    }
+    for (size_t i = 0; i < split_faces; ++i) {
 	fprintf(fp, "splitface %d %d %d\n", (int)i,
 		split_face_outerloop_curves[i],
 		split_face_innerloop_curves[i]);
@@ -429,35 +434,6 @@ DebugPlot::Plot3DCurveFrom2D(
 
     write_plot_to_file(filename, &vhead, color);
 }
-
-#if 0
-
-void
-plot_point(ON_3dPoint pt, double diameter, const char *prefix, unsigned char *color)
-{
-    ON_3dPoint start, end;
-    double offset = diameter / 2.0;
-
-    start = end = pt;
-    start.x -= offset;
-    end.x += offset;
-    ON_LineCurve xline(start, end);
-
-    start = end = pt;
-    start.y -= offset;
-    end.y += offset;
-    ON_LineCurve yline(start, end);
-
-    start = end = pt;
-    start.z -= offset;
-    end.z += offset;
-    ON_LineCurve zline(start, end);
-
-    plot_curve_to_file(&xline, prefix, color);
-    plot_curve_to_file(&yline, prefix, color);
-    plot_curve_to_file(&zline, prefix, color);
-}
-#endif
 
 void
 DebugPlot::PlotBoundaryIsocurves(

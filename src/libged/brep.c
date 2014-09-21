@@ -1120,20 +1120,34 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
 
     dplot_load_file_data(&info);
 
-    if ((info.mode == DPLOT_SSX ||
-	 info.mode == DPLOT_SSX_EVENTS ||
-	 info.mode == DPLOT_ISOCSX) &&
-	(info.ssx_idx < 0 || info.ssx_idx > (info.fdata.ssx_count - 1)))
+    if (info.mode == DPLOT_SSX_FIRST	||
+	info.mode == DPLOT_SSX		||
+	info.mode == DPLOT_SSX_EVENTS	||
+	info.mode == DPLOT_ISOCSX_FIRST	||
+	info.mode == DPLOT_ISOCSX	||
+	info.mode == DPLOT_ISOCSX_EVENTS)
     {
-	bu_vls_printf(info.gedp->ged_result_str, "no surface pair %d (valid"
-		" range is [0, %d])\n", info.ssx_idx, info.fdata.ssx_count - 1);
-	RETURN_ERROR;
+	if (info.fdata.ssx_count == 0) {
+	    bu_vls_printf(info.gedp->ged_result_str, "no surface surface"
+		    "intersections");
+	    RETURN_ERROR;
+	} else if (info.ssx_idx < 0 ||
+		   info.ssx_idx > (info.fdata.ssx_count - 1))
+	{
+	    bu_vls_printf(info.gedp->ged_result_str, "no surface pair %d (valid"
+		    " range is [0, %d])\n", info.ssx_idx, info.fdata.ssx_count - 1);
+	    RETURN_ERROR;
+	}
     }
-    info.brep1_surf_idx = info.fdata.ssx[info.ssx_idx].brep1_surface;
-    info.brep2_surf_idx = info.fdata.ssx[info.ssx_idx].brep2_surface;
-    info.event_count = info.fdata.ssx[info.ssx_idx].final_curve_events;
-    info.brep1_isocsx_count = info.fdata.ssx[info.ssx_idx].intersecting_brep1_isocurves;
-    info.isocsx_count = info.fdata.ssx[info.ssx_idx].intersecting_isocurves;
+    if (info.fdata.ssx_count > 0) {
+	info.brep1_surf_idx = info.fdata.ssx[info.ssx_idx].brep1_surface;
+	info.brep2_surf_idx = info.fdata.ssx[info.ssx_idx].brep2_surface;
+	info.event_count = info.fdata.ssx[info.ssx_idx].final_curve_events;
+	info.brep1_isocsx_count =
+	    info.fdata.ssx[info.ssx_idx].intersecting_brep1_isocurves;
+	info.isocsx_count =
+	    info.fdata.ssx[info.ssx_idx].intersecting_isocurves;
+    }
     info.brep1_surf_count = info.fdata.brep1_surface_count;
     info.brep2_surf_count = info.fdata.brep2_surface_count;
 
