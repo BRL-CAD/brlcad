@@ -163,9 +163,15 @@ ged_free(struct ged *gedp)
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
 
-    FOR_ALL_SOLIDS(sp, &gedp->freesolid->l) {
-	BU_LIST_DEQUEUE(&((sp)->l));
-	FREE_SOLID(sp, &gedp->freesolid->l);
+    {
+	struct solid *nsp;
+	sp = BU_LIST_NEXT(solid, &gedp->freesolid->l);
+	while (BU_LIST_NOT_HEAD(sp, &gedp->freesolid->l)) {
+	    nsp = BU_LIST_PNEXT(solid, sp);
+	    BU_LIST_DEQUEUE(&((sp)->l));
+	    FREE_SOLID(sp, &gedp->freesolid->l);
+	    sp = nsp;
+	}
     }
     BU_PUT(gedp->freesolid, struct solid);
 
