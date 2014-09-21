@@ -387,7 +387,15 @@ endif()
 ################################################################################
 # Create bin and lib directories if required
 
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin ${CMAKE_BINARY_DIR}/lib ${CMAKE_BINARY_DIR}/lib/${OSG_PLUGINS})
+if(NOT CMAKE_CONFIGURATION_TYPES)
+  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin ${CMAKE_BINARY_DIR}/lib ${CMAKE_BINARY_DIR}/lib/${OSG_PLUGINS})
+else(NOT CMAKE_CONFIGURATION_TYPES)
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir})
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/${OSG_PLUGINS})
+  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 ################################################################################
 # Installation stuff

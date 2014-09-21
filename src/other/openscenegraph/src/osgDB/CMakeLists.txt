@@ -4,7 +4,6 @@ if(DYNAMIC_OPENSCENEGRAPH)
   if(OSG_PLUGIN_SEARCH_INSTALL_DIR_FOR_PLUGINS)
         # Add a default plugin search path component
     add_definitions(-DOSG_DEFAULT_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib${LIB_POSTFIX}/${OSG_PLUGINS})
-    add_definitions(-DOSG_RELATIVE_LIBRARY_PATH=/lib${LIB_POSTFIX}/${OSG_PLUGINS})
   endif()
 else(DYNAMIC_OPENSCENEGRAPH)
   add_definitions(-DOSG_LIBRARY_STATIC)
