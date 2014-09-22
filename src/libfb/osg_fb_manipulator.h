@@ -257,17 +257,19 @@ public:
 		if (osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON & ea.getButton()) {
 		    int x = ea.getX();
 		    int y = ea.getY();
-		    register struct osgl_pixel *oglp;
 
 		    if (x < 0 || y < 0) {
 			fb_log("No RGB (outside image viewport)\n");
 			break;
 		    }
+		    int r = fbp->if_mem[3*(y*fbp->if_width + x)];
+		    int g = fbp->if_mem[3*(y*fbp->if_width + x)+1];
+		    int b = fbp->if_mem[3*(y*fbp->if_width + x)+2];
+		    if (r < 0) r = 255 + r + 1;
+		    if (g < 0) g = 255 + g + 1;
+		    if (b < 0) b = 255 + b + 1;
 
-		    oglp = (struct osgl_pixel *)&fbp->if_mem[(y*SGI(fbp)->mi_memwidth)*sizeof(struct osgl_pixel)];
-
-		    fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
-			    x, y, (int)oglp[x].red, (int)oglp[x].green, (int)oglp[x].blue);
+		    fb_log("At image (%d, %d), real RGB=(%d %d %d)\n", x, y, r, g, b);
 		}
 		return false;
 	    }
