@@ -1963,16 +1963,16 @@ split_trimmed_face(
     ON_ClassArray<LinkedCurve> &ssx_curves)
 {
     ON_SimpleArray<TrimmedFace *> out;
+    out.Append(orig_face->Duplicate());
+
     if (ssx_curves.Count() == 0) {
 	// no curves, no splitting
-	out.Append(orig_face->Duplicate());
 	return out;
     }
 
     ON_Curve *face_outerloop = get_loop_curve(orig_face->m_outerloop);
     if (!face_outerloop->IsClosed()) {
 	// need closed outerloop
-	out.Append(orig_face->Duplicate());
 	delete face_outerloop;
 	return out;
     }
@@ -1990,26 +1990,35 @@ split_trimmed_face(
 	    ssx_loops = split_face_into_loops(orig_face, ssx_curves[i]);
 	}
 
+	ON_SimpleArray<TrimmedFace *> next_out;
 	for (size_t j = 0; j < ssx_loops.size(); ++j) {
 	    if (loop_is_degenerate(ssx_loops[j])) {
 		continue;
 	    }
-	    // get the portions of the original outerloop inside and
-	    // outside the closed ssx curve to get the outerloops of
-	    // the split faces
-	    std::list<ON_SimpleArray<ON_Curve *> > intersect_loops, diff_loops;
 
-	    intersect_loops = loop_boolean(orig_face->m_outerloop,
-		    ssx_loops[j], BOOLEAN_INTERSECT);
+	    for (int k = 0; k < out.Count(); ++k) {
+		// get the portions of the original outerloop inside and
+		// outside the closed ssx curve to get the outerloops of
+		// the split faces
+		std::list<ON_SimpleArray<ON_Curve *> > intersect_loops, diff_loops;
 
-	    diff_loops = loop_boolean(orig_face->m_outerloop, ssx_loops[j],
-		    BOOLEAN_DIFF);
+		intersect_loops = loop_boolean(out[k]->m_outerloop,
+			ssx_loops[j], BOOLEAN_INTERSECT);
 
-	    // make new faces from the loops
-	    append_faces_from_loops(out, orig_face, intersect_loops);
-	    append_faces_from_loops(out, orig_face, diff_loops);
+		diff_loops = loop_boolean(out[k]->m_outerloop, ssx_loops[j],
+			BOOLEAN_DIFF);
+
+		// make new faces from the loops
+		append_faces_from_loops(next_out, out[k], intersect_loops);
+		append_faces_from_loops(next_out, out[k], diff_loops);
+	    }
 	}
 	free_loops(ssx_loops);
+
+	if (next_out.Count() > 0) {
+	    out.Empty();
+	    out.Append(next_out.Count(), next_out.Array());
+	}
     }
 
     if (out.Count() == 0) {
