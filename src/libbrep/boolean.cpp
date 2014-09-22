@@ -1921,6 +1921,35 @@ loop_is_degenerate(const ON_SimpleArray<ON_Curve *> &loop)
     return false;
 }
 
+HIDDEN bool
+close_small_gap(ON_SimpleArray<ON_Curve *> &loop, int curr, int next)
+{
+    ON_3dPoint end_curr = loop[curr]->PointAtEnd();
+    ON_3dPoint start_next = loop[next]->PointAtStart();
+
+    double gap = end_curr.DistanceTo(start_next);
+    if (gap <= INTERSECTION_TOL && gap >= ON_ZERO_TOLERANCE) {
+	ON_Curve *closing_seg = new ON_LineCurve(end_curr, start_next);
+	loop.Insert(next, closing_seg);
+	return true;
+    }
+    return false;
+}
+
+HIDDEN void
+close_small_gaps(ON_SimpleArray<ON_Curve *> &loop)
+{
+    if (loop.Count() == 0) {
+	return;
+    }
+    for (int i = 0; i < loop.Count() - 1; ++i) {
+	if (close_small_gap(loop, i, i + 1)) {
+	    ++i;
+	}
+    }
+    close_small_gap(loop, loop.Count() - 1, 0);
+}
+
 // It might be worth investigating the following approach to building a set of faces from the splitting
 // in order to achieve robustness in the final result:
 //
@@ -2021,8 +2050,11 @@ split_trimmed_face(
 	}
     }
 
-    if (out.Count() == 0) {
-	out.Append(orig_face->Duplicate());
+    for (int i = 0; i < out.Count(); ++i) {
+	close_small_gaps(out[i]->m_outerloop);
+	for (size_t j = 0; j < out[i]->m_innerloop.size(); ++j) {
+	    close_small_gaps(out[i]->m_innerloop[j]);
+	}
     }
 
     if (DEBUG_BREP_BOOLEAN) {
