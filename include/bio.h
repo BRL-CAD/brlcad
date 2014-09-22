@@ -44,7 +44,6 @@
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define NOMINMAX
-#  include <Winsock2.h> /* Must be before windows.h - for fd_set */
 #  include <windows.h>
 #  include <io.h>
 
