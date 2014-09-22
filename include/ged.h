@@ -469,6 +469,7 @@ struct polygon_header {
 #define POLYGON_HEADER_MAGIC 0x8623bad2
 GED_EXPORT extern void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
 
+GED_EXPORT extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct display_list *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, struct solid *freesolid, int csoltab);
 
 
 /* defined in ged.c */

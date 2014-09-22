@@ -505,7 +505,6 @@ int cmd_killtree(
 /* dodraw.c */
 void cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
 int drawtrees(int argc, const char *argv[], int kind);
-int invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy);
 int replot_modified_solid(struct solid *sp, struct rt_db_internal *ip, const mat_t mat);
 int replot_original_solid(struct solid *sp);
 void add_solid_path_to_result(Tcl_Interp *interpreter, struct solid *sp);
