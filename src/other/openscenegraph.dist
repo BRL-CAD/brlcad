@@ -449,6 +449,7 @@ src/OpenThreads/win32/Win32ThreadPrivateData.h
 src/osg/Matrix_implementation.cpp
 src/osg/glu/libtess/README
 src/osg/glu/libtess/priorityq-heap.cpp
+src/osgPlugins/Path_Setup.cmake
 src/osgPlugins/freetype/FreeTypeFont.h
 src/osgPlugins/freetype/FreeTypeLibrary.h
 src/osgPlugins/osg/AsciiStreamOperator.h
