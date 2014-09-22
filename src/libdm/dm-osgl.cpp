@@ -1567,8 +1567,16 @@ osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	unsigned int color = glfonsRGBA(dmp->dm_fg[0], dmp->dm_fg[1], dmp->dm_fg[2], 255);
 	fonsSetFont(privvars->fs, privvars->fontNormal);
+	/* drop shadow */
+	unsigned int black = glfonsRGBA(0, 0, 0, 255);
+	fonsSetColor(privvars->fs, black);
+	fonsDrawText(privvars->fs, coord_x, coord_y-2, str, NULL);
+	fonsDrawText(privvars->fs, coord_x, coord_y+2, str, NULL);
+	fonsDrawText(privvars->fs, coord_x-2, coord_y, str, NULL);
+	fonsDrawText(privvars->fs, coord_x+2, coord_y, str, NULL);
+	/* normal text */
+	unsigned int color = glfonsRGBA(dmp->dm_fg[0], dmp->dm_fg[1], dmp->dm_fg[2], 255);
 	fonsSetSize(privvars->fs, (int)font_size); /* cast to int so we always get a font */
 	fonsSetColor(privvars->fs, color);
 	fonsDrawText(privvars->fs, coord_x, coord_y, str, NULL);
