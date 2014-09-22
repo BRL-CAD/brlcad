@@ -84,8 +84,7 @@
       <varlistentry>
 	<term><option>-c "script_command"</option></term>
 	<listitem>
-	  <para>is used to supply on the command line any command that can appear
-	  in a
+	  <para>supplies, on the command line, any command that can appear in a
 	  <option>-M</option>
 	  command script.
 	  For example,
@@ -123,7 +122,7 @@
       <varlistentry>
 	<term><option>-f #</option></term>
 	<listitem>
-	  <para>sets the expected playback rate in frames-per-second; 
+	  <para>sets the expected playback rate in frames-per-second;
 	  the default is 30.
 	  Several time-evolving shaders
 	  such as
@@ -138,13 +137,13 @@
       <varlistentry>
 	<term><option>-g #</option></term>
 	<listitem>
-	  <para>is used to set the grid cell width, in millimeters.
+	  <para>sets the grid cell width, in millimeters.
 	  Ordinarily, the cell width is computed by dividing the view size by
 	  the number of pixels of width, so this option need not be used.
 	  To obtain exactly 1 inch ray spacing, specify
 	  <option>-g25.4 .</option>
-	  If the grid cell width is specified and
-	  the grid cell height is <emphasis remap="I">not</emphasis> specified,
+	  If the grid cell width is specified and the grid cell height (which
+	  would be set using <option>-G</option>) is <emphasis remap="I">not</emphasis> specified,
 	  the grid cell height defaults to be the same as the width.</para>
 	</listitem>
       </varlistentry>
@@ -157,7 +156,7 @@
 	  with lower performance impact than explicit modeling of the air volume.
 	  The haze is computed using the form:</para>
 
-	  <para>f = e^(-dist * density)</para>
+	  <para>f = e^(-distance * density)</para>
 	  <para>g = 1.0 - f</para>
 	  <para>color = color * f + hazeRGB * g</para>
 
@@ -172,23 +171,23 @@
 	<term><option>-i</option></term>
 	<listitem>
 	  <para>enables <emphasis remap="I">incremental mode</emphasis> processing.
-	  First, a single ray is fired.
+	  (First, a single ray is fired.
 	  Then, the screen is subdivided into four parts by evenly subdividing
 	  in the vertical and horizontal directions.
 	  The previously fired ray was the lower left corner;
 	  three more rays are fired.
 	  This process recurses until full resolution has been reached.
 	  Assumes square image.
-	  Also assumes fast path between CPU and display hardware.</para>
+	  Also assumes fast path between CPU and display hardware.)</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
 	<term><option>-j xmin,ymin,xmax,ymax</option></term>
 	<listitem>
-	  <para>enables <emphasis remap="I">just this sub-rectangle</emphasis> processing.
-	  Specifies the screen coordinates of the lower left and upper right
-	  corner of a rectangle within the rectangle (0,0) (width-1,height-1).
+	  <para>enables processing of <emphasis remap="I">just a sub-rectangle</emphasis>,
+	  located within the rectangle (0,0) (width-1,height-1), and whose screen coordinates
+	  (lower left and upper right corners) are provided in the argument.
 	  Ray-tracing will be limited to just those pixels within the sub-rectangle,
 	  and only those pixels will be transmitted to the framebuffer.
 	  The corner pixels (xmin,ymin) and (xmax,ymax) are included in
@@ -387,7 +386,10 @@
       <varlistentry>
 	<term><option>-G #</option></term>
 	<listitem>
-	  <para>sets the grid cell height, in millimeters.</para>
+	  <para>sets the grid cell height, in millimeters.
+	  If the grid cell height is specified and the grid cell width (which
+	  would be set using <option>-g</option>) is <emphasis remap="I">not</emphasis> specified,
+	  the grid cell width defaults to be the same as the height.</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
@@ -453,10 +455,9 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-O</option></term>
+	<term><option>-O output.dpix</option></term>
 	<listitem>
-	  <para><emphasis remap="B" role="B">output.dpix</emphasis>
-	  Specify the name of a file to store the double-precision floating-point
+	  <para>Specify the name of a file to store the double-precision floating-point
 	  version of the image.
 	  <citerefentry><refentrytitle>dpix-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  can be used to later convert the file to

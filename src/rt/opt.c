@@ -143,7 +143,7 @@ int		use_air = 0;		/* whether librt should handle air */
 
 /***** variables shared with view.c *****/
 fastf_t		frame_delta_t = (fastf_t)(1.0/30.0); /* 1.0 / frames_per_second_playback */
-double		airdensity;    /* is the scene hazy (we shade the void space */
+double		airdensity;    /* is the scene hazy (we shade the void space) */
 double		haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
 int             do_kut_plane = 0;
 plane_t         kut_plane;
