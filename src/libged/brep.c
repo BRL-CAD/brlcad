@@ -892,6 +892,7 @@ dplot_split_faces(
 		    bu_vls_cstr(&short_name));
 	}
 
+	bu_vls_trunc(&name, 0);
 	bu_vls_printf(&name, "_split_face%d_innerloop_curve", info->event_idx);
 	for (i = 0; i < info->fdata.face[info->event_idx].innerloop_curves; ++i) {
 	    bu_vls_trunc(&short_name, 0);
