@@ -20,6 +20,7 @@
 #define FONS_H
 
 #include "common.h"
+#include "bu/str.h"
 
 #define FONS_INVALID -1
 
@@ -895,7 +896,7 @@ int fonsAddFontMem(struct FONScontext* stash, const char* name, unsigned char* d
 
 	font = stash->fonts[idx];
 
-	strncpy(font->name, name, sizeof(font->name));
+	bu_strlcpy(font->name, name, sizeof(font->name));
 	font->name[sizeof(font->name)-1] = '\0';
 
 	// Init hash lookup.
@@ -931,7 +932,7 @@ int fonsGetFontByName(struct FONScontext* s, const char* name)
 {
 	int i;
 	for (i = 0; i < s->nfonts; i++) {
-		if (strcmp(s->fonts[i]->name, name) == 0)
+		if (bu_strcmp(s->fonts[i]->name, name) == 0)
 			return i;
 	}
 	return FONS_INVALID;

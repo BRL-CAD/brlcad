@@ -65,7 +65,9 @@
 //   This software is in the public domain. Where that dedication is not
 //   recognized, you are granted a perpetual, irrevocable license to copy
 //   and modify this file as you see fit.
-//
+
+#include "common.h"
+
 // USAGE
 //
 //   Include this file in whatever places need to refer to it. In ONE C/C++
@@ -345,8 +347,6 @@ int main(int arg, char **argv)
 ////
 ////   The following sections allow you to supply alternate definitions
 ////   of C library functions used by stb_truetype.
-
-#include "common.h"
 
 #ifndef NEAR_ZERO
 #  define NEAR_ZERO(val, epsilon)       (((val) > -epsilon) && ((val) < epsilon))
