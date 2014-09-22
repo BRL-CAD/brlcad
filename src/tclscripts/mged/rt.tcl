@@ -1391,20 +1391,10 @@ proc rt_check_dest {id win} {
 	    # Assume the user knows what he/she is doing
 	    rt_force_cook_dest $id $env(FB_FILE)
 	} else {
-	    # TODO - should be ablue to check the dm type
-	    # for this - need command support
-	    #set have_dm [dm valid osgl]
-	    #if {$have_dm == "osgl"} {
-	#	rt_force_cook_dest $id "/dev/osgl"
-	#	set dmType osgl
-	 #   } else {
-	  #      set have_dm [dm valid wgl]
-	   #     if {$have_dm == "wgl"} {
-	#	    rt_force_cook_dest $id "/dev/wgl"
-	#	} else {
-	            rt_force_cook_dest $id "/dev/ogll"
-	#	}
-	 #   }
+	    set dm_list [split [dm_list] ',']
+	    set devtype "/dev/"
+	    append devtype [lindex $dm_list 0]
+	    rt_force_cook_dest %id $devtype
 	}
     }
 }

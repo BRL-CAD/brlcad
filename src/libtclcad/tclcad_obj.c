@@ -1393,6 +1393,26 @@ screen_to_view_y(dm *dmp, fastf_t y)
 }
 
 
+
+/**
+ * @brief
+ * A TCL interface to dm_list_types()).
+ *
+ * @return a list of available dm types.
+ */
+int
+dm_list_tcl(ClientData UNUSED(clientData),
+	    Tcl_Interp *interp,
+	    int UNUSED(argc),
+	    const char **UNUSED(argv))
+{
+    struct bu_vls *list = dm_list_types(',');
+    Tcl_SetResult(interp, bu_vls_addr(list), TCL_VOLATILE);
+    bu_vls_free(list);
+    BU_PUT(list, struct bu_vls);
+    return TCL_OK;
+}
+
 /**
  * @brief create the Tcl command for to_open
  *
@@ -1413,6 +1433,9 @@ Go_Init(Tcl_Interp *interp)
 
     BU_LIST_INIT(&HeadTclcadObj.l);
     (void)Tcl_CreateCommand(interp, (const char *)"go_open", to_open_tcl,
+			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+
+    (void)Tcl_CreateCommand(interp, (const char *)"dm_list", dm_list_tcl,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
     (void)library_initialized(1);

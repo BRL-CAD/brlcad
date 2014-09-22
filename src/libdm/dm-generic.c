@@ -932,6 +932,57 @@ dm_draw_display_list(dm *dmp,
     return ndrawn;
 }
 
+struct bu_vls *
+dm_list_types(const char separator)
+{
+    struct bu_vls *list;
+    char sep = ' ';
+    if (separator) sep = separator;
+    BU_GET(list, struct bu_vls);
+    bu_vls_init(list);
+
+    bu_vls_trunc(list, 0);
+
+#ifdef DM_OSGL
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "osgl");
+#endif /* DM_OSGL*/
+
+#ifdef DM_WGL
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "wgl");
+#endif /* DM_WGL */
+
+#ifdef DM_OGL
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "ogl");
+#endif /* DM_OGL */
+
+#ifdef DM_QT
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "Qt");
+#endif /* DM_QT */
+
+#ifdef DM_X
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "X");
+#endif /* DM_X */
+
+#ifdef DM_X
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "tk");
+#endif /* DM_X */
+
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "txt");
+    bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "plot");
+    bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "ps");
+    bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "null");
+    return list;
+}
 
 /*
  * Local Variables:
