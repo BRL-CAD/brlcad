@@ -69,12 +69,15 @@ struct osgl_cmap {
 
 
 /*
- * This defines the format of the in-memory framebuffer copy.
+ * This defines the format of the in-memory framebuffer copy.  The
+ * alpha component and reverse order are maintained for compatibility
+ * with /dev/sgi
  */
 struct osgl_pixel {
-    short red;
-    short green;
-    short blue;
+    unsigned char blue;
+    unsigned char green;
+    unsigned char red;
+    unsigned char alpha;
 };
 
 
@@ -965,10 +968,12 @@ osgl_clear(fb *ifp, unsigned char *pp)
 
     /* Set clear colors */
     if (pp != RGBPIXEL_NULL) {
+	bg.alpha = 0;
 	bg.red   = (pp)[RED];
 	bg.green = (pp)[GRN];
 	bg.blue  = (pp)[BLU];
     } else {
+	bg.alpha = 0;
 	bg.red   = 0;
 	bg.green = 0;
 	bg.blue  = 0;
@@ -1247,6 +1252,7 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 	    if ((n & 3) != 0) {
 		/* This code uses 60% of all CPU time */
 		while (n) {
+		    /* alpha channel is always zero */
 		    osglp->red   = cp[RED];
 		    osglp->green = cp[GRN];
 		    osglp->blue  = cp[BLU];
@@ -1256,6 +1262,7 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 		}
 	    } else {
 		while (n) {
+		    /* alpha channel is always zero */
 		    osglp[0].red   = cp[RED+0*3];
 		    osglp[0].green = cp[GRN+0*3];
 		    osglp[0].blue  = cp[BLU+0*3];
@@ -1331,6 +1338,7 @@ osgl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigne
 	    osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
 	}
 	for (x = xmin; x < xmin+width; x++) {
+	    /* alpha channel is always zero */
 	    osglp->red   = cp[RED];
 	    osglp->green = cp[GRN];
 	    osglp->blue  = cp[BLU];
@@ -1389,6 +1397,7 @@ osgl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsig
 	}
 	for (x = xmin; x < xmin+width; x++) {
 	    register int val;
+	    /* alpha channel is always zero */
 	    osglp->red   = (val = *cp++);
 	    osglp->green = val;
 	    osglp->blue  = val;
