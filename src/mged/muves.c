@@ -28,7 +28,6 @@
 
 #include <stdlib.h>
 #include <signal.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>

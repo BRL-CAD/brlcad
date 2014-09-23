@@ -26,7 +26,6 @@
 #include "common.h"
 #include "bio.h"
 
-#include <stdio.h>
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"

@@ -33,7 +33,6 @@ extern "C" {
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <stdio.h>
 #include <math.h>
 
 #include <osg/GraphicsContext>

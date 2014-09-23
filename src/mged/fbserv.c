@@ -27,7 +27,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 
 #if !defined(HAVE_WINSOCK_H) && !defined(HAVE_WINSOCK2_H)

@@ -27,7 +27,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "bio.h"
 #include "bu.h"

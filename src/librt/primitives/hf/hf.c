@@ -47,7 +47,6 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <math.h>
 #include <fcntl.h>
 #include <string.h>

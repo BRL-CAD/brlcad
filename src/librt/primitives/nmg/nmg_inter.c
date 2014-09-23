@@ -55,7 +55,6 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"

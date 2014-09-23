@@ -21,7 +21,6 @@
 #include "common.h"
 #include "bio.h"
 
-#include <stdio.h>
 #include <math.h>
 
 #include "vmath.h"
