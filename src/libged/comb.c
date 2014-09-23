@@ -470,7 +470,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     const char *cmd_name;
     char *comb_name;
     int i,c, sum;
-    char oper;
+    db_op_t oper;
     int set_region = 0;
     int set_comb = 0;
     int standard_comb_build = 1;
@@ -598,8 +598,8 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* add it to the comb immediately */
-	    if (_ged_combadd(gedp, dp, comb_name, 0, (db_op_t)oper, 0, 0) == RT_DIR_NULL) {
-		bu_vls_printf(gedp->ged_result_str, "Error adding '%s' (with op '%c') to '%s'\n", dp->d_namep, oper, comb_name);
+	    if (_ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "Error adding '%s' (with op '%c') to '%s'\n", dp->d_namep, (char)oper, comb_name);
 		return GED_ERROR;
 	    }
 	}
