@@ -38,6 +38,7 @@
 
 #include "bn.h"
 #include "bu/cmd.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "ged.h"
 #include "obj.h"

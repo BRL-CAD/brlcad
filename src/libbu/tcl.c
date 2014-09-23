@@ -28,6 +28,12 @@
 
 #include "tcl.h"
 #include "bu/cmd.h"
+#include "bu/color.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/units.h"
 #include "vmath.h"
 
 

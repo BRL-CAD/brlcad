@@ -42,8 +42,11 @@
 #include "tcl.h"
 
 
-#include "bn.h"
 #include "bu/cmd.h"
+#include "bu/getopt.h"
+#include "bu/sort.h"
+#include "bu/units.h"
+#include "bn.h"
 #include "vmath.h"
 #include "db.h"
 #include "rtgeom.h"

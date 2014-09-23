@@ -54,11 +54,12 @@
 #   undef OUT
 #endif
 
-#include "bu.h"
-
-
 #define BU_CMD_NULL (int (*)(void *, int, const char **))NULL
 
+#include "bu/defines.h"
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 /**
  * Generic keyword-to-command callback interface intended for use with
