@@ -30,10 +30,6 @@
 #include <string.h>
 #include "bio.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
 #include "bu.h"
 #include "fb.h"
 #include "libtermio.h"
