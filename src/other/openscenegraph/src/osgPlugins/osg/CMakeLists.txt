@@ -13,6 +13,10 @@ target_link_libraries(osgdb_osg osgDB osgUtil osg OpenThreads
   ${CMAKE_THREAD_LIBS_INIT}
   ${MATH_LIBRARY} ${RT_LIBRARY} ${DL_LIBRARY} ${COMPRESSION_LIBRARIES}
   )
+install(TARGETS osgdb_osg
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
 # Local Variables:
 # tab-width: 8

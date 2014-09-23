@@ -21,6 +21,10 @@ else(DYNAMIC_OPENSCENEGRAPH)
 endif(DYNAMIC_OPENSCENEGRAPH)
 
 target_link_libraries(osgdb_freetype osgText osgDB osgUtil osg OpenThreads ${FREETYPE_LIBRARY})
+install(TARGETS osgdb_freetype
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
 # Local Variables:
 # tab-width: 8
