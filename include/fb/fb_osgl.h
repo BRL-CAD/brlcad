@@ -49,9 +49,6 @@
 #  include <sys/ipc.h>
 #endif
 #include <errno.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>   /* for getpagesize and sysconf */
-#endif
 
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>

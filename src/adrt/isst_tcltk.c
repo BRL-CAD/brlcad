@@ -26,8 +26,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
-
 #include "bio.h"
 
 #include <GL/gl.h>
@@ -46,10 +44,6 @@
 #include "camera.h"
 #include "isst.h"
 #include "raytrace.h"
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 
 #ifdef HAVE_STRING_H
 #include <string.h>
