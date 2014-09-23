@@ -35,9 +35,6 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* for struct timeval */
 #endif
-#ifdef HAVE_UNISTED_H
-#  include <unistd.h>
-#endif
 #include "bio.h"
 
 #include "tcl.h"

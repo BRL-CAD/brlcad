@@ -110,8 +110,7 @@ if test "x$FOUND" = "x" ; then
     echo "-> bio.h check succeeded"
 else
     echo "-> bio.h check FAILED"
-# TODO: uncomment after fixing the existing cases
-#    FAILED="`expr $FAILED + 1`"
+    FAILED="`expr $FAILED + 1`"
 fi
 
 

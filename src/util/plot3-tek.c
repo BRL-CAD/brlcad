@@ -26,10 +26,6 @@
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h> /* for sleep(3) */
-#endif
-
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
