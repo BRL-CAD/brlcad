@@ -66,7 +66,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   )
 
-set(HEADER_PATH include/OpenThreads)
+set(HEADER_PATH "${OPENTHREADS_SOURCE_DIR}/include/OpenThreads")
 set(OpenThreads_PUBLIC_HEADERS
     ${HEADER_PATH}/Atomic
     ${HEADER_PATH}/Barrier
