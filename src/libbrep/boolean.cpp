@@ -1380,6 +1380,14 @@ get_loop_points(
     return out;
 }
 
+// Get the result of a boolean combination of two loops. Based on the
+// algorithm from this paper:
+//
+// Margalit, Avraham and Gary D. Knott. 1989. "An Algorithm for
+// Computing the Union, Intersection or Difference of two Polygons."
+// Computers & Graphics 13:167-183. 
+//
+// gvu.gatech.edu/people/official/jarek/graphics/papers/04PolygonBooleansMargalit.pdf
 std::list<ON_SimpleArray<ON_Curve *> >
 loop_boolean(
     const ON_SimpleArray<ON_Curve *> &l1,
