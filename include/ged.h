@@ -31,10 +31,7 @@
 
 #include "common.h"
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define NOMINMAX
-#  include <windows.h>
-#endif
+#include "bio.h"
 
 #include "solid.h"
 #include "dm/bview.h"
