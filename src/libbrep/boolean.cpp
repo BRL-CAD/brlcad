@@ -2026,16 +2026,25 @@ split_trimmed_face(
 	    }
 
 	    for (int k = 0; k < out.Count(); ++k) {
-		// get the portions of the original outerloop inside and
-		// outside the closed ssx curve to get the outerloops of
-		// the split faces
 		std::list<ON_SimpleArray<ON_Curve *> > intersect_loops, diff_loops;
 
+		// get the portion of the current outerloop inside the
+		// closed ssx curve
 		intersect_loops = loop_boolean(out[k]->m_outerloop,
 			ssx_loops[j], BOOLEAN_INTERSECT);
 
-		diff_loops = loop_boolean(out[k]->m_outerloop, ssx_loops[j],
-			BOOLEAN_DIFF);
+		if (ssx_curves[i].IsClosed()) {
+		    if (intersect_loops.size() == 0) {
+			// no intersection, just keep the face as-is
+			next_out.Append(out[k]);
+			continue;
+		    }
+
+		    // for a naturally closed intersection curve, we
+		    // also need the portion outside the curve
+		    diff_loops = loop_boolean(out[k]->m_outerloop, ssx_loops[j],
+			    BOOLEAN_DIFF);
+		}
 
 		// make new faces from the loops
 		append_faces_from_loops(next_out, out[k], intersect_loops);
