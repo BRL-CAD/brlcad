@@ -34,7 +34,7 @@
 #ifndef BIN_H
 #define BIN_H
 
-/* make sure this header always comes after bio.h due to system header
+/* make sure this header always comes before bio.h due to system header
  * ordering requirements.  this is mostly a windows issue, but we want
  * to detect the issue early.
  */
