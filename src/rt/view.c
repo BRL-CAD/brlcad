@@ -78,7 +78,8 @@ usage(const char *argv0)
     bu_log(" -V #		View (pixel) aspect ratio (width/height)\n");
     bu_log(" -p #		Perspective angle, degrees side to side\n");
     bu_log(" -P #		Set number of processors\n");
-    bu_log(" -T #/#		Tolerance: distance/angular\n");
+    bu_log(" -T # or -T #,# or -T #/#\n");
+    bu_log("		Tolerance: distance or distance,angular or distance/angular\n");
     bu_log(" -l #		Set lighting model rendering style\n");
     bu_log(" -U #		Use air if # is greater than 0\n");
     bu_log(" -x #		librt debug flags\n");

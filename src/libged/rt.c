@@ -40,7 +40,7 @@
 
 #include "tcl.h"
 #include "bu/cmd.h"
-#include "solid.h"
+
 
 #include "./ged_private.h"
 
@@ -56,11 +56,7 @@ _ged_rt_write(struct ged *gedp,
 	      FILE *fp,
 	      vect_t eye_model)
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    size_t i;
     quat_t quat;
-    struct solid *sp;
 
     /* Double-precision IEEE floating point only guarantees 15-17
      * digits of precision; single-precision only 6-9 significant
@@ -79,51 +75,12 @@ _ged_rt_write(struct ged *gedp,
 
     fprintf(fp, "start 0; clean;\n");
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+    dl_bitwise_and_fullpath(gedp->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
-		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
-	    }
-	}
+    dl_write_animate(gedp->ged_gdp->gd_headDisplay, fp);
 
-	gdlp = next_gdlp;
-    }
+    dl_bitwise_and_fullpath(gedp->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
-		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
-		    struct animate *anp;
-		    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
-			 anp=anp->an_forw) {
-			db_write_anim(fp, anp);
-		    }
-		    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= RT_DIR_USED;
-		}
-	    }
-	}
-
-	gdlp = next_gdlp;
-    }
-
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    for (i = 0; i < sp->s_fullpath.fp_len; i++) {
-		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
-	    }
-	}
-
-	gdlp = next_gdlp;
-    }
     fprintf(fp, "end;\n");
 }
 
@@ -139,13 +96,9 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	MAT4X3PNT(eye_model, gedp->ged_gvp->gv_view2model, temp);
     } else {
 	/* not doing zclipping, so back out of geometry */
-	struct display_list *gdlp;
-	struct display_list *next_gdlp;
-	struct solid *sp;
 	int i;
 	vect_t direction;
 	vect_t extremum[2];
-	vect_t minus, plus;    /* vers of this solid's bounding box */
 	double t_in;
 	vect_t diag1;
 	vect_t diag2;
@@ -159,23 +112,7 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	    extremum[1][i] = -INFINITY;
 	}
 
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-		minus[X] = sp->s_center[X] - sp->s_size;
-		minus[Y] = sp->s_center[Y] - sp->s_size;
-		minus[Z] = sp->s_center[Z] - sp->s_size;
-		VMIN(extremum[0], minus);
-		plus[X] = sp->s_center[X] + sp->s_size;
-		plus[Y] = sp->s_center[Y] + sp->s_size;
-		plus[Z] = sp->s_center[Z] + sp->s_size;
-		VMAX(extremum[1], plus);
-	    }
-
-	    gdlp = next_gdlp;
-	}
+	(void)dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
 
 	VMOVEN(direction, gedp->ged_gvp->gv_rotation + 8, 3);
 	for (i = 0; i < 3; ++i)

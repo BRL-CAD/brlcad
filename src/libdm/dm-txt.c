@@ -24,7 +24,6 @@
 #include "common.h"
 #include "bio.h"
 
-#include <stdio.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -374,6 +373,7 @@ dm dm_txt = {
     txt_drawDList,
     txt_freeDLists,
     txt_genDLists,
+    NULL,
     txt_getDisplayImage,
     txt_reshape,
     txt_makeCurrent,

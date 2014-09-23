@@ -626,6 +626,7 @@ fb tk_interface = {
     0L,			/* page_curpos */
     0L,			/* page_pixels */
     0,			/* debug */
+    0,			/* refresh rate */
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

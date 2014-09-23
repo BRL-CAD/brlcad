@@ -843,6 +843,7 @@ struct dm_internal dm_tk = {
     null_drawDList,
     null_freeDLists,
     null_genDLists,
+    NULL,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,

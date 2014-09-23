@@ -30,13 +30,6 @@
 #include <sys/stat.h>
 #include "bio.h"
 
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
 #include "bu.h"
 #include "fb.h"
 

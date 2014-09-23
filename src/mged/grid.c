@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
 
 #include "bio.h"
 #include "bu.h"
@@ -77,7 +76,7 @@ grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		    const char *UNUSED(name),
 		    void *UNUSED(base),
 		    const char *UNUSED(value),
-		void *UNUSED(data))
+		    void *UNUSED(data))
 {
     struct dm_list *dmlp;
 
@@ -92,7 +91,7 @@ set_grid_draw(const struct bu_structparse *sdp,
 	      const char *name,
 	      void *base,
 	      const char *value,
-		void *data)
+	      void *data)
 {
     struct dm_list *dlp;
 
@@ -121,7 +120,7 @@ set_grid_res(const struct bu_structparse *sdp,
 	     const char *name,
 	     void *base,
 	     const char *value,
-		void *data)
+	     void *data)
 {
     struct dm_list *dlp;
 

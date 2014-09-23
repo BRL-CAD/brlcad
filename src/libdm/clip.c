@@ -28,7 +28,6 @@
 #include "common.h"
 #include "bio.h"
 
-#include <stdio.h>
 
 #include "vmath.h"
 #include "dm.h"

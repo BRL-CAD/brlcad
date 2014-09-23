@@ -34,10 +34,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifdef HAVE_WINSOCK_H
-#  include <process.h>
-#  include <winsock.h>
-#else
+#if !defined(HAVE_WINSOCK_H) && !defined(HAVE_WINSOCK2_H)
 #  include <sys/socket.h>
 #  include <netinet/in.h>		/* For htonl(), etc. */
 #endif
@@ -237,7 +234,7 @@ HIDDEN struct pkg_conn *
 fbs_makeconn(int fd, const struct pkg_switch *switchp)
 {
     register struct pkg_conn *pc;
-#ifdef HAVE_WINSOCK_H
+#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
     WSADATA wsaData;
     WORD wVersionRequested; /* initialize Windows socket networking,
 			     * increment reference count.
@@ -249,7 +246,7 @@ fbs_makeconn(int fd, const struct pkg_switch *switchp)
 	return PKC_ERROR;
     }
 
-#ifdef HAVE_WINSOCK_H
+#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
 	comm_error("fbs_makeconn:  could not find a usable WinSock DLL\n");

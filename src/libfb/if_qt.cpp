@@ -34,14 +34,9 @@
 #include <sys/types.h>
 #include <ctype.h>
 
-#include <QApplication>
-#include <QPainter>
-#include <QWindow>
-#include <QBackingStore>
-#include <QResizeEvent>
-#include <QImage>
-
 #include "fb.h"
+#include "fb/fb_qt.h"
+#include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/str.h"
 
@@ -162,7 +157,7 @@ qt_updstate(fb *ifp)
 
     int want, avail;		/* Wanted/available image pixels */
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     /*
      * Set ?wp to the number of whole zoomed image pixels we could display
@@ -400,7 +395,7 @@ qt_configureWindow(fb *ifp, int width, int height)
 {
     struct qtinfo *qi = QI(ifp);
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     if (!qi) {
 	return;
@@ -435,8 +430,9 @@ qt_configureWindow(fb *ifp, int width, int height)
 }
 
 HIDDEN int
-qt_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+qt_configure_window(fb *ifp, int width, int height)
 {
+    qt_configureWindow(ifp, width, height);
     return 0;
 }
 
@@ -450,7 +446,7 @@ int
 qt_close_existing(fb *ifp)
 {
     struct qtinfo *qi = QI(ifp);
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     if (qi->qi_image)
 	delete qi->qi_image;
@@ -487,7 +483,7 @@ qt_update(fb *ifp, int x1, int y1, int w, int h)
     unsigned char *grn = qi->qi_grnmap;
     unsigned char *blu = qi->qi_blumap;
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     /*
      * Figure out sizes of outermost image pixels
@@ -603,7 +599,7 @@ HIDDEN int
 qt_rmap(fb *ifp, ColorMap *cmp)
 {
     struct qtinfo *qi = QI(ifp);
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     memcpy(cmp, qi->qi_rgb_cmap, sizeof (ColorMap));
 
@@ -622,7 +618,7 @@ qt_wmap(fb *ifp, const ColorMap *cmp)
     unsigned char *grn = qi->qi_grnmap;
     unsigned char *blu = qi->qi_blumap;
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     /* Did we have a linear colormap before this call? */
     waslincmap = qi->qi_flags & FLG_LINCMAP;
@@ -686,7 +682,7 @@ qt_setup(fb *ifp, int width, int height)
     struct qtinfo *qi = QI(ifp);
     int argc = 1;
     char *argv[] = {(char *)"Frame buffer"};
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     qi->qi_qwidth = width;
     qi->qi_qheight = height;
@@ -729,7 +725,7 @@ qt_open(fb *ifp, const char *file, int width, int height)
     size_t size;
     unsigned char *mem = NULL;
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
     mode = MODE1_LINGERING;
 
     if (file != NULL) {
@@ -834,6 +830,29 @@ qt_open(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
+
+HIDDEN struct fb_platform_specific *
+qt_get_fbps(uint32_t magic)
+{
+    struct fb_platform_specific *fb_ps = NULL;
+    struct qt_fb_info *data = NULL;
+    BU_GET(fb_ps, struct fb_platform_specific);
+    BU_GET(data, struct qt_fb_info);
+    fb_ps->magic = magic;
+    fb_ps->data = data;
+    return fb_ps;
+}
+
+
+HIDDEN void
+qt_put_fbps(struct fb_platform_specific *fbps)
+{
+    BU_CKMAG(fbps, FB_QT_MAGIC, "Qt framebuffer");
+    BU_PUT(fbps->data, struct qt_fb_info);
+    BU_PUT(fbps, struct fb_platform_specific);
+    return;
+}
+
 int
 _qt_open_existing(fb *ifp, int width, int height, void *qapp, void *qwin, void *qpainter, void *draw, void **qimg)
 {
@@ -843,7 +862,7 @@ _qt_open_existing(fb *ifp, int width, int height, void *qapp, void *qwin, void *
     size_t size;
     unsigned char *mem = NULL;
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     mode = MODE1_LINGERING;
 
@@ -924,6 +943,15 @@ _qt_open_existing(fb *ifp, int width, int height, void *qapp, void *qwin, void *
     return 0;
 }
 
+HIDDEN int
+qt_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
+{
+    struct qt_fb_info *qt_internal = (struct qt_fb_info *)fb_p->data;
+    BU_CKMAG(fb_p, FB_QT_MAGIC, "qt framebuffer");
+    return _qt_open_existing(ifp, width, height, qt_internal->qapp, qt_internal->qwin,
+	    qt_internal->qpainter, qt_internal->draw, qt_internal->qimg);
+}
+
 
 HIDDEN int
 qt_close(fb *ifp)
@@ -951,7 +979,7 @@ qt_clear(fb *ifp, unsigned char *pp)
     int n;
     unsigned char *cp;
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     if (pp == (unsigned char *)NULL) {
 	red = grn = blu = 0;
@@ -988,7 +1016,7 @@ qt_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
     struct qtinfo *qi = QI(ifp);
     size_t maxcount;
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     /* check origin bounds */
     if (x < 0 || x >= qi->qi_iwidth || y < 0 || y >= qi->qi_iheight)
@@ -1011,7 +1039,7 @@ qt_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
     struct qtinfo *qi = QI(ifp);
     size_t maxcount;
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     /* Check origin bounds */
     if (x < 0 || x >= qi->qi_iwidth || y < 0 || y >= qi->qi_iheight)
@@ -1050,7 +1078,7 @@ qt_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct qtinfo *qi = QI(ifp);
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     /* bypass if no change */
     if (ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
@@ -1080,7 +1108,7 @@ qt_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 HIDDEN int
 qt_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     *xcenter = ifp->if_xcenter;
     *ycenter = ifp->if_ycenter;
@@ -1122,7 +1150,7 @@ HIDDEN int
 qt_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     struct qtinfo *qi = QI(ifp);
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     /* Clip arguments */
     if (xmin < 0)
@@ -1161,7 +1189,7 @@ HIDDEN int
 qt_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     struct qtinfo *qi = QI(ifp);
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     /* Clip arguments */
     if (xmin < 0)
@@ -1218,7 +1246,7 @@ HIDDEN void
 qt_handle_event(fb *ifp, QEvent *event)
 {
     struct qtinfo *qi = QI(ifp);
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     switch (event->type()) {
 	case QEvent::MouseButtonPress:
@@ -1322,6 +1350,8 @@ fb qt_interface =  {
     qt_open,		/* device_open */
     qt_open_existing,
     qt_close_existing,
+    qt_get_fbps,
+    qt_put_fbps,
     qt_close,		/* device_close */
     qt_clear,		/* device_clear */
     qt_read,		/* buffer_read */
@@ -1362,6 +1392,7 @@ fb qt_interface =  {
     0L,			/* page_curpos */
     0L,			/* page_pixels */
     0,			/* debug */
+    50000,		/* refresh rate */
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */
@@ -1375,14 +1406,14 @@ fb qt_interface =  {
  * ===================================================== Main window class ===============================================
  */
 
-QMainWindow::QMainWindow(fb *fb, QImage *img, QWindow *win)
+QMainWindow::QMainWindow(fb *fbp, QImage *img, QWindow *win)
     : QWindow(win)
     , m_update_pending(false)
 {
     m_backingStore = new QBackingStore(this);
     create();
     image = img;
-    ifp = fb;
+    ifp = fbp;
 }
 
 QMainWindow::~QMainWindow()

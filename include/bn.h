@@ -1071,6 +1071,13 @@ BN_EXPORT extern void bn_wrt_point_direc(mat_t out,
 					 const vect_t direc,
 					 const struct bn_tol *tol);
 
+
+/* Matrix stuff from MGED's dozoom.c - somewhat unfinished,
+ * judging by the comments.  Can probably be simplified/combined */
+BN_EXPORT extern void persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff);
+BN_EXPORT extern void mike_persp_mat(fastf_t *pmat, const fastf_t *eye);
+BN_EXPORT extern void deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye);
+
 /** @} */
 
 
@@ -4027,6 +4034,10 @@ struct bn_vlist  {
 	_vp->pt[_vp->nused][0] = (_width); \
 	_vp->cmd[_vp->nused++] = BN_VLIST_LINE_WIDTH; \
 }
+
+
+BN_EXPORT extern int bn_vlist_cmd_cnt(struct bn_vlist *vlist);
+BN_EXPORT extern int bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax);
 
 /**
  * For plotting, a way of separating plots into separate color vlists:

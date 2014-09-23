@@ -29,7 +29,6 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
@@ -198,16 +197,16 @@ static int polyline_vert_indices_max = 0;
 
 static point_t pts[4];
 
-#define UNKNOWN_ENTITY	0
-#define POLYLINE_VERTEX		1
+#define UNKNOWN_ENTITY 0
+#define POLYLINE_VERTEX 1
 
 static int invisible = 0;
 
 #define ERROR_FLAG	-999
 #define EOF_FLAG	-998
 
-#define TOL_SQ	0.00001
-#define MAX_LINE_SIZE	2050
+#define TOL_SQ 0.00001
+#define MAX_LINE_SIZE 2050
 char line[MAX_LINE_SIZE];
 
 static char *usage="Usage: dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_file.dxf output_file.g\n";
@@ -1800,10 +1799,10 @@ process_circle_entities_code(int code)
  * \~ - blank space
  * \f - TrueType font
  * \F - .SHX font
- * 	    ex:
- *		Hello \fArial;World
- *	    or:
- *		Hello {\fArial;World}
+ * ex:
+ * Hello \fArial;World
+ * or:
+ * Hello {\fArial;World}
  */
 
 int
@@ -2522,9 +2521,7 @@ process_dimension_entities_code(int code)
 		    }
 		    layers[curr_layer]->dimension_count++;
 		}
-	    }
-	    else
-	    {
+	    } else {
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		process_entities_code[curr_state->sub_state](code);
 	    }
@@ -3159,10 +3156,8 @@ main(int argc, char *argv[])
 
     /* get command line arguments */
     scale_factor = 1.0;
-    while ((c = bu_getopt(argc, argv, "cdvt:s:h?")) != -1)
-    {
-	switch (c)
-	{
+    while ((c = bu_getopt(argc, argv, "cdvt:s:h?")) != -1) {
+	switch (c) {
 	    case 's':	/* scale factor */
 		scale_factor = atof(bu_optarg);
 		if (scale_factor < SQRT_SMALL_FASTF) {
@@ -3317,8 +3312,7 @@ main(int argc, char *argv[])
 	}
 
 	for (j = 0; j < BU_PTBL_END(&layers[i]->solids); j++) {
-	    (void)mk_addmember((char *)BU_PTBL_GET(&layers[i]->solids, j), &head,
-			       NULL, WMOP_UNION);
+	    (void)mk_addmember((char *)BU_PTBL_GET(&layers[i]->solids, j), &head, NULL, WMOP_UNION);
 	    bu_free((char *)BU_PTBL_GET(&layers[i]->solids, j), "solid_name");
 	}
 

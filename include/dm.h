@@ -102,6 +102,7 @@
 #define DM_TYPE_TXT	10
 #define DM_TYPE_QT	11
 #define DM_TYPE_OSG	12
+#define DM_TYPE_OSGL	13
 
 /* Line Styles */
 #define DM_SOLID_LINE 0
@@ -120,6 +121,7 @@
 #define IS_DM_TYPE_TXT(_t) ((_t) == DM_TYPE_TXT)
 #define IS_DM_TYPE_QT(_t) ((_t) == DM_TYPE_QT)
 #define IS_DM_TYPE_OSG(_t) ((_t) == DM_TYPE_OSG)
+#define IS_DM_TYPE_OSGL(_t) ((_t) == DM_TYPE_OSGL)
 
 #define GET_DM(p, structure, w, hp) { \
 	register struct structure *tp; \
@@ -217,7 +219,7 @@
  */
 struct dm_hook_data {
     void(*dm_hook)(const struct bu_structparse *, const char *, void *, const char *, void *);
-    void *dm_hook_data;
+    void *dmh_data;
 };
 
 /* Hide the dm structure behind a typedef */
@@ -236,6 +238,7 @@ DM_EXPORT extern dm dm_wgl;
 DM_EXPORT extern dm dm_X;
 DM_EXPORT extern dm dm_txt;
 DM_EXPORT extern dm dm_qt;
+DM_EXPORT extern dm dm_osgl;
 
 DM_EXPORT extern int Dm_Init(void *interp);
 DM_EXPORT extern dm *dm_open(Tcl_Interp *interp,
@@ -318,7 +321,7 @@ DM_EXPORT extern const char *dm_version(void);
 
 
 
-/* functions to make a dm struct hidable - will need to
+/* functions to make a dm struct hideable - will need to
  * sort these out later */
 
 DM_EXPORT extern dm *dm_get();
@@ -330,6 +333,7 @@ DM_EXPORT extern int dm_get_width(dm *dmp);
 DM_EXPORT extern int dm_get_height(dm *dmp);
 DM_EXPORT extern fastf_t dm_get_aspect(dm *dmp);
 DM_EXPORT extern int dm_get_type(dm *dmp);
+DM_EXPORT extern struct bu_vls *dm_list_types(const char separator); /* free return list with bu_vls_free(list); BU_PUT(list, struct bu_vls); */
 DM_EXPORT extern unsigned long dm_get_id(dm *dmp);
 DM_EXPORT extern void dm_set_id(dm *dmp, unsigned long new_id);
 DM_EXPORT extern int dm_get_displaylist(dm *dmp);
@@ -390,10 +394,13 @@ DM_EXPORT extern int dm_draw_point_2d(dm *dmp, fastf_t x, fastf_t y);
 DM_EXPORT extern int dm_draw_point_3d(dm *dmp, point_t pt);
 DM_EXPORT extern int dm_draw_points_3d(dm *dmp, int npoints, point_t *points);
 DM_EXPORT extern int dm_draw(dm *dmp, struct bn_vlist *(*callback)(void *), void **data);
+DM_EXPORT extern int dm_draw_obj(dm *dmp, struct display_list *obj);
 DM_EXPORT extern int dm_set_depth_mask(dm *dmp, int d_on);
 DM_EXPORT extern int dm_debug(dm *dmp, int lvl);
 DM_EXPORT extern int dm_logfile(dm *dmp, const char *filename);
 DM_EXPORT extern fb *dm_get_fb(dm *dmp);
+DM_EXPORT extern int dm_get_fb_visible(dm *dmp);
+DM_EXPORT extern int dm_set_fb_visible(dm *dmp, int is_fb_visible);
 
 /* TODO - dm_vp is supposed to go away, but until we figure it out
  * expose it here to allow dm hiding */
@@ -405,6 +412,19 @@ DM_EXPORT extern int dm_set_hook(const struct bu_structparse_map *map,
 
 DM_EXPORT extern struct bu_structparse *dm_get_vparse(dm *dmp);
 DM_EXPORT extern void *dm_get_mvars(dm *dmp);
+
+DM_EXPORT extern int dm_draw_display_list(dm *dmp,
+	struct bu_list *dl,
+	fastf_t transparency_threshold,
+	fastf_t inv_viewsize,
+	short r, short g, short b,
+	int line_width,
+	int draw_style,
+	int draw_edit,
+	unsigned char *gdc,
+	int solids_down,
+	int mv_dlist
+	);
 
 
 /* For backwards compatibility, define macros and expose struct dm */

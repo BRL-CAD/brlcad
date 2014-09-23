@@ -23,7 +23,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 
@@ -152,7 +151,7 @@ static mat_t sav_viewrot, sav_toviewcenter;
 static fastf_t sav_vscale;
 static int vsaved = 0;	/* set if view saved */
 
-extern void color_soltab(void);
+extern void mged_color_soltab(void);
 extern void sl_halt_scroll(void);	/* in scroll.c */
 extern void sl_toggle_scroll(void);
 
@@ -707,9 +706,6 @@ be_o_rotate()
 int
 be_accept()
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct solid *sp;
     struct dm_list *dmlp;
 
     if (STATE == ST_S_EDIT) {
@@ -721,19 +717,11 @@ be_accept()
 	mmenu_set_all(MENU_L1, MENU_NULL);
 	mmenu_set_all(MENU_L2, MENU_NULL);
 
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid)
-		sp->s_iflag = DOWN;
-
-	    gdlp = next_gdlp;
-	}
+	dl_set_iflag(gedp->ged_gdp->gd_headDisplay, DOWN);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;
-	color_soltab();
+	mged_color_soltab();
 	(void)chg_state(ST_S_EDIT, ST_VIEW, "Edit Accept");
     }  else if (STATE == ST_O_EDIT) {
 	/* Accept an object edit */
@@ -746,7 +734,7 @@ be_accept()
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;
-	color_soltab();
+	mged_color_soltab();
 	(void)chg_state(ST_O_EDIT, ST_VIEW, "Edit Accept");
     } else {
 	if (not_state(ST_S_EDIT, "Edit Accept"))
@@ -772,9 +760,6 @@ be_accept()
 int
 be_reject()
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct solid *sp;
     struct dm_list *dmlp;
 
     update_views = 1;
@@ -816,17 +801,9 @@ be_reject()
     illump = SOLID_NULL;		/* None selected */
 
     /* Clear illumination flags */
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+    dl_set_iflag(gedp->ged_gdp->gd_headDisplay, DOWN);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid)
-	    sp->s_iflag = DOWN;
-
-	gdlp = next_gdlp;
-    }
-
-    color_soltab();
+    mged_color_soltab();
     (void)chg_state(STATE, ST_VIEW, "Edit Reject");
 
     FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)

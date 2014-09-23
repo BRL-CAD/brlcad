@@ -55,6 +55,8 @@
 #  include <sys/time.h>
 #endif
 
+#include "bio.h"
+
 #include "bu/bu_tcl.h"
 #include "bu/magic.h"
 #include "bu/vls.h"
@@ -108,6 +110,11 @@ FB_EXPORT extern int fb_get_max_height(fb *ifp);
 FB_EXPORT extern int fb_getwidth(fb *ifp);
 FB_EXPORT extern int fb_getheight(fb *ifp);
 FB_EXPORT extern int fb_poll(fb *ifp);
+/* Returns in microseconds the maximum recommended amount of time to linger
+ * before polling for updates for a specific framebuffer instance (can be
+ * implementation dependent.)  Zero means the fb_poll process does nothing
+ * (for example, the NULL fb). */
+FB_EXPORT extern long fb_poll_rate(fb *ifp);
 FB_EXPORT extern int fb_help(fb *ifp);
 FB_EXPORT extern int fb_free(fb *ifp);
 FB_EXPORT extern int fb_clear(fb *ifp, unsigned char *pp);

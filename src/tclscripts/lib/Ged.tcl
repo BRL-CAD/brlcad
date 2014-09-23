@@ -972,11 +972,8 @@ package provide cadwidgets::Ged 1.0
     $itk_component(lpw) add llp
     $itk_component(lpw) add lrp
 
-    if {$tcl_platform(platform) == "windows"} {
-	set dmType wgl
-    } else {
-	set dmType ogl
-    }
+    set dm_list [split [dm_list] ',']
+    set dmType [lindex $dm_list 0]
 
     # create four views
     itk_component add ul {

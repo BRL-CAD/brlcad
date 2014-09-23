@@ -27,7 +27,7 @@
 
 #include "bio.h"
 
-#include "solid.h"
+
 
 #include "./ged_private.h"
 
@@ -42,12 +42,7 @@
 int
 ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct solid *sp;
-    size_t i;
     struct directory **dpp;
-    struct directory **tmp_dpp;
 
     /* intentionally double for scan */
     double transparency;
@@ -82,30 +77,7 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    for (i = 0, tmp_dpp = dpp;
-		 i < sp->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
-		 ++i, ++tmp_dpp) {
-		if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
-		    break;
-	    }
-
-	    if (*tmp_dpp != RT_DIR_NULL)
-		continue;
-
-	    /* found a match */
-	    sp->s_transparency = transparency;
-
-	    if (gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-		(*gedp->ged_create_vlist_callback)(sp);
-	}
-
-	gdlp = next_gdlp;
-    }
+    dl_set_transparency(gedp->ged_gdp->gd_headDisplay, dpp, transparency, gedp->ged_create_vlist_callback);
 
     if (dpp != (struct directory **)NULL)
 	bu_free((void *)dpp, "ged_set_transparency: directory pointers");

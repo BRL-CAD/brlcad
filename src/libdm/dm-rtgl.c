@@ -58,7 +58,7 @@
 #include "dm-rtgl.h"
 #include "dm/dm_xvars.h"
 #include "fb.h"
-#include "fb/fb_platform_specific.h"
+#include "fb/fb_ogl.h"
 #include "solid.h"
 
 #include "./dm_private.h"
@@ -2626,14 +2626,19 @@ rtgl_openFb(struct dm_internal *dmp)
 {
     struct fb_platform_specific *fb_ps;
     struct ogl_fb_info *ofb_ps;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct ogl_vars *privars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
+
     fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
     ofb_ps = (struct ogl_fb_info *)fb_ps->data;
-    ofb_ps->dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
-    ofb_ps->win = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
-    ofb_ps->cmap = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap;
-    ofb_ps->vip = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip;
-    ofb_ps->glxc = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc;
-    ofb_ps->double_buffer = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer;
+    ofb_ps->dpy = pubvars->dpy;
+    ofb_ps->win = pubvars->win;
+    ofb_ps->cmap = pubvars->cmap;
+    ofb_ps->vip = pubvars->vip;
+    ofb_ps->glxc = privars->glxc;
+    ofb_ps->double_buffer = mvars->doublebuffer;
+
     ofb_ps->soft_cmap = 0;
     dmp->fbp = fb_open_existing("ogl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
@@ -2672,6 +2677,7 @@ dm dm_rtgl = {
     rtgl_drawDList,
     rtgl_freeDLists,
     rtgl_genDLists,
+    NULL,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,

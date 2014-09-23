@@ -29,6 +29,7 @@
 #include "bio.h"
 
 #include "bu/cmd.h"
+#include "bu/getopt.h"
 
 #include "./ged_private.h"
 
@@ -111,7 +112,7 @@ killtree_callback(struct db_i *dbip, struct directory *dp, void *ptr)
 	    bu_vls_printf(gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
 	}
     } else {
-	_ged_eraseAllNamesFromDisplay(gktdp->gedp, dp->d_namep, 0);
+	_dl_eraseAllNamesFromDisplay(gktdp->gedp->ged_gdp->gd_headDisplay, gktdp->gedp->ged_wdbp->dbip, gktdp->gedp->ged_free_vlist_callback, dp->d_namep, 0, gktdp->gedp->freesolid);
 
 	bu_vls_printf(gktdp->gedp->ged_result_str, "KILL %s:  %s\n",
 		      (dp->d_flags & RT_DIR_COMB) ? "COMB" : "Solid",

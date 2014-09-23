@@ -37,6 +37,7 @@
 #include "tcl.h"
 
 #include "bu/cmd.h"
+#include "bu/endian.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db.h"

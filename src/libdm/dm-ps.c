@@ -30,7 +30,6 @@
 #include "common.h"
 #include "bio.h"
 
-#include <stdio.h>
 #include <string.h>
 
 #ifdef HAVE_SYS_TIME_H
@@ -521,6 +520,7 @@ dm dm_ps = {
     null_drawDList,
     null_freeDLists,
     null_genDLists,
+    NULL,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,

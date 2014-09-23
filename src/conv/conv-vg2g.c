@@ -26,7 +26,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -36,7 +35,6 @@
 #  include <sys/stat.h>
 #endif
 #include "bio.h"
-#include <fcntl.h>
 
 #include "db.h"
 #include "bu.h"

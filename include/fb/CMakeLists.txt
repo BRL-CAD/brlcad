@@ -1,5 +1,9 @@
 set(fb_noinstall_headers
-  fb_platform_specific.h
+  fb_ogl.h
+  fb_osgl.h
+  fb_qt.h
+  fb_wgl.h
+  fb_X.h
   )
 
 CMAKEFILES(${fb_noinstall_headers})

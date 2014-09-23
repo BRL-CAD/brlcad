@@ -176,6 +176,14 @@ typedef int (*bu_heap_func_t)(const char *, ...);
  */
 BU_EXPORT extern bu_heap_func_t bu_heap_log(bu_heap_func_t log);
 
+/**
+ * Attempt to get shared memory - returns -1 if new memory was
+ * created, 0 if successfully returning existing memory, and 1
+ * if the attempt failed.
+ * */
+BU_EXPORT extern int bu_shmget(int *shmid, char **shared_memory, int key, size_t size);
+
+
 
 /** @} */
 

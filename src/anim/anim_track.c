@@ -94,7 +94,7 @@ struct all {
 struct all *x;
 
 fastf_t curve_a, curve_b, curve_c, s_start;
-int num_links, num_wheels;
+size_t num_links, num_wheels;
 fastf_t track_y, tracklen;
 
 /* variables set by get_args */
@@ -227,7 +227,7 @@ get_args(int argc, char **argv)
 		one_radius = 1;
 		break;
 	    case 'p':
-		sscanf(bu_optarg, "%d", &num_links);
+		bu_sscanf(bu_optarg, "%zd", &num_links);
 		link_nindex = bu_optind;
 		bu_optind += 1;
 		print_link = 1;
@@ -304,7 +304,7 @@ get_args(int argc, char **argv)
 int
 track_prep(void)
 {
-    int i;
+    size_t i;
     fastf_t phi, costheta, arc_angle;
     fastf_t linearlen, hyperlen;
     vect_t difference;
@@ -414,7 +414,7 @@ track_prep(void)
 int
 get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 {
-    int i;
+    size_t i;
     vect_t temp;
 
     while (dist >= tracklen) /*periodicize*/
@@ -464,7 +464,8 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 int
 main(int argc, char *argv[])
 {
-    int val, frame, i, count;
+    size_t i;
+    int val, frame, count;
     int go;
     fastf_t y_rot, distance, yaw, pch, roll;
     vect_t cent_pos, wheel_now, wheel_prev;
@@ -694,8 +695,8 @@ main(int argc, char *argv[])
 		last_frame = 1;
 	    }
 	    if (print_link) {
-		for (count=0;count<num_links;count++) {
-		    (void) get_link(position, &y_rot, distance+tracklen*count/num_links+init_dist);
+		for (i=0; i<num_links; i++) {
+		    (void) get_link(position, &y_rot, distance+tracklen*i/num_links+init_dist);
 		    anim_y_p_r2mat(wmat, 0.0, y_rot, 0.0);
 		    anim_add_trans(wmat, position, zero);
 		    if (axes || cent) {
@@ -704,30 +705,30 @@ main(int argc, char *argv[])
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
 		    if (print_mode==PRINT_ANIM) {
-			printf("anim %s%d matrix %s\n", *(argv+link_nindex), count, link_cmd);
+			printf("anim %s%d matrix %s\n", *(argv+link_nindex), (int)i, link_cmd);
 			anim_mat_printf(stdout, wmat, "%.10g ", "\n", ";\n");
 		    } else if (print_mode==PRINT_ARCED) {
-			printf("arced %s%d matrix %s ", *(argv+link_nindex), count, link_cmd);
+			printf("arced %s%d matrix %s ", *(argv+link_nindex), (int)i, link_cmd);
 			anim_mat_printf(stdout, wmat, "%.10g ", "", "\n");
 		    }
 		}
 	    }
 	    if (print_wheel) {
-		for (count = 0;count<num_wheels;count++) {
+		for (i = 0; i<num_wheels; i++) {
 		    vect_t xpos;
 
-		    anim_y_p_r2mat(wmat, 0.0, -distance/wh[count].rad, 0.0);
-		    VREVERSE(xpos, wh[count].pos);
-		    anim_add_trans(wmat, x[count].w.pos, xpos);
+		    anim_y_p_r2mat(wmat, 0.0, -distance/wh[i].rad, 0.0);
+		    VREVERSE(xpos, wh[i].pos);
+		    anim_add_trans(wmat, x[i].w.pos, xpos);
 		    if (axes || cent) {
 			bn_mat_mul(mat_x, wmat, m_rev_axes);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
 		    if (print_mode==PRINT_ANIM) {
-			printf("anim %s%d matrix %s\n", *(argv+wheel_nindex), count, wheel_cmd);
+			printf("anim %s%d matrix %s\n", *(argv+wheel_nindex), (int)i, wheel_cmd);
 			anim_mat_printf(stdout, wmat, "%.10g ", "\n", ";\n");
 		    } else if (print_mode==PRINT_ARCED) {
-			printf("arced %s%d matrix %s ", *(argv+wheel_nindex), count, wheel_cmd);
+			printf("arced %s%d matrix %s ", *(argv+wheel_nindex), (int)i, wheel_cmd);
 			anim_mat_printf(stdout, wmat, "%.10g ", "", "\n");
 		    }
 		}

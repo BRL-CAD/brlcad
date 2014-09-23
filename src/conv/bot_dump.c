@@ -26,6 +26,7 @@
 #include "bio.h"
 
 #include "bu/cmd.h"
+#include "bu/getopt.h"
 #include "ged.h"
 
 static char usage[] = "\

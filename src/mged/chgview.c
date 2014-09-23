@@ -24,7 +24,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <math.h>
@@ -41,7 +40,7 @@
 #include "./cmd.h"
 
 
-extern void color_soltab(void);
+extern void mged_color_soltab(void);
 extern void set_absolute_tran(void); /* defined in set.c */
 extern void set_absolute_view_tran(void); /* defined in set.c */
 extern void set_absolute_model_tran(void); /* defined in set.c */
@@ -694,8 +693,6 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
  * To return all the free "struct bn_vlist" and "struct solid" items
  * lurking on their respective freelists, back to bu_malloc().
  * Primarily as an aid to tracking memory leaks.
- * WARNING:  This depends on knowledge of the macro GET_SOLID in mged/solid.h
- * and RT_GET_VLIST in h/raytrace.h.
  */
 void
 mged_freemem(void)
@@ -703,9 +700,9 @@ mged_freemem(void)
     struct solid *sp;
     struct bn_vlist *vp;
 
-    FOR_ALL_SOLIDS(sp, &MGED_FreeSolid.l) {
-	GET_SOLID(sp, &MGED_FreeSolid.l);
-	bu_free((void *)sp, "mged_freemem: struct solid");
+    FOR_ALL_SOLIDS(sp, &gedp->freesolid->l) {
+	BU_LIST_DEQUEUE(&((sp)->l));
+	FREE_SOLID(sp, &gedp->freesolid->l);
     }
 
     while (BU_LIST_NON_EMPTY(&RTG.rtg_vlfree)) {
@@ -721,28 +718,17 @@ mged_freemem(void)
 int
 cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
+    void (*tmp_callback)(unsigned int, int) = gedp->ged_free_vlist_callback;
     char *av[2] = {"zap", (char *)0};
 
     CHECK_DBI_NULL;
 
     update_views = 1;
+    gedp->ged_free_vlist_callback = freeDListsAll;
 
     /* FIRST, reject any editing in progress */
     if (STATE != ST_VIEW) {
 	button(BE_REJECT);
-    }
-
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-	freeDListsAll(BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
-		      BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
-		      BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
-
-	gdlp = next_gdlp;
     }
 
     ged_zap(gedp, 1, (const char **)av);
@@ -754,6 +740,8 @@ cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
 
     (void)chg_state(STATE, STATE, "zap");
     solid_list_callback();
+
+    gedp->ged_free_vlist_callback = tmp_callback;
 
     return TCL_OK;
 }

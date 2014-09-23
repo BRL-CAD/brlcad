@@ -33,12 +33,9 @@
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "mater.h"
-#include "solid.h"
+
 
 #include "./ged_private.h"
-
-/* defined in draw_calc.cpp */
-extern fastf_t brep_est_avg_curve_len(struct rt_brep_internal *bi);
 
 /* declare our callbacks used by _ged_drawtrees() */
 static int drawtrees_depth = 0;
@@ -89,7 +86,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		BU_LIST_INIT(&vhead);
 
 		(void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 	    } else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
 		    (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP)) {
 		struct bu_list vhead;
@@ -97,7 +94,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		BU_LIST_INIT(&vhead);
 
 		(void)rt_brep_plot_poly(&vhead, pathp, ip, tsp->ts_ttol, tsp->ts_tol, NULL);
-		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 	    } else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
 		       ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
 		struct bu_list vhead;
@@ -105,7 +102,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		BU_LIST_INIT(&vhead);
 
 		(void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 	    } else {
 		/* save shaded mode states */
 		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
@@ -135,21 +132,21 @@ draw_check_leaf(struct db_tree_state *tsp,
 		    BU_LIST_INIT(&vhead);
 
 		    (void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		    _ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 		} else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
 			struct bu_list vhead;
 
 			BU_LIST_INIT(&vhead);
 
 			(void)rt_brep_plot_poly(&vhead, pathp, ip, tsp->ts_ttol, tsp->ts_tol, NULL);
-		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		    _ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 		} else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
 		    struct bu_list vhead;
 
 		    BU_LIST_INIT(&vhead);
 
 		    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		    _ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 		} else
 		    _ged_drawtrees(dgcdp->gedp, ac, av, 3, (struct _ged_client_data *)client_data);
 	    } else {
@@ -179,199 +176,6 @@ draw_check_leaf(struct db_tree_state *tsp,
     return curtree;
 }
 
-/* returns the sum total number of commands in all nodes of the vlist */
-static int
-vlist_total_commands(struct bn_vlist *vlist)
-{
-    int num_commands;
-    struct bn_vlist *vp;
-
-    if (UNLIKELY(vlist == NULL)) {
-	return 0;
-    }
-
-    num_commands = 0;
-    for (BU_LIST_FOR(vp, bn_vlist, &(vlist->l))) {
-	num_commands += vp->nused;
-    }
-
-    return num_commands;
-}
-
-static void
-solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
-{
-    if (BU_LIST_IS_EMPTY(&(sp->s_vlist))) {
-	sp->s_vlen = 0;
-    }
-
-    sp->s_vlen += vlist_total_commands(vlist);
-    BU_LIST_APPEND_LIST(&(sp->s_vlist), &(vlist->l));
-}
-
-static void
-solid_copy_vlist(struct solid *sp, struct bn_vlist *vlist)
-{
-    BU_LIST_INIT(&(sp->s_vlist));
-    rt_vlist_copy(&(sp->s_vlist), (struct bu_list *)vlist);
-    sp->s_vlen = vlist_total_commands((struct bn_vlist *)(&(sp->s_vlist)));
-}
-
-/**
- * Compute the min, max, and center points of the solid.
- *
- * XXX Should split out a separate bn_vlist_rpp() routine, for
- * librt/vlist.c
- */
-static void
-bound_solid(struct ged *gedp, struct solid *sp)
-{
-    struct bn_vlist *vp;
-    double xmax, ymax, zmax;
-    double xmin, ymin, zmin;
-
-    xmax = ymax = zmax = -INFINITY;
-    xmin = ymin = zmin =  INFINITY;
-
-    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	int i;
-	int nused = vp->nused;
-	int *cmd = vp->cmd;
-	point_t *pt = vp->pt;
-
-	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    switch (*cmd) {
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_POLY_VERTNORM:
-		case BN_VLIST_TRI_START:
-		case BN_VLIST_TRI_VERTNORM:
-		case BN_VLIST_POINT_SIZE:
-		case BN_VLIST_LINE_WIDTH:
-		    /* attribute, not location */
-		    break;
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_POLY_END:
-		case BN_VLIST_TRI_MOVE:
-		case BN_VLIST_TRI_DRAW:
-		case BN_VLIST_TRI_END:
-		    V_MIN(xmin, (*pt)[X]);
-		    V_MAX(xmax, (*pt)[X]);
-		    V_MIN(ymin, (*pt)[Y]);
-		    V_MAX(ymax, (*pt)[Y]);
-		    V_MIN(zmin, (*pt)[Z]);
-		    V_MAX(zmax, (*pt)[Z]);
-		    break;
-		case BN_VLIST_POINT_DRAW:
-		    V_MIN(xmin, (*pt)[X]-1.0);
-		    V_MAX(xmax, (*pt)[X]+1.0);
-		    V_MIN(ymin, (*pt)[Y]-1.0);
-		    V_MAX(ymax, (*pt)[Y]+1.0);
-		    V_MIN(zmin, (*pt)[Z]-1.0);
-		    V_MAX(zmax, (*pt)[Z]+1.0);
-		    break;
-		default:
-		    bu_vls_printf(gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
-	    }
-	}
-    }
-
-    sp->s_center[X] = (xmin + xmax) * 0.5;
-    sp->s_center[Y] = (ymin + ymax) * 0.5;
-    sp->s_center[Z] = (zmin + zmax) * 0.5;
-
-    sp->s_size = xmax - xmin;
-    V_MAX(sp->s_size, ymax - ymin);
-    V_MAX(sp->s_size, zmax - zmin);
-}
-
-
-void
-_ged_color_soltab(struct solid *sp)
-{
-    const struct mater *mp;
-
-    sp->s_cflag = 0;
-
-    /* the user specified the color, so use it */
-    if (sp->s_uflag) {
-	sp->s_color[0] = sp->s_basecolor[0];
-	sp->s_color[1] = sp->s_basecolor[1];
-	sp->s_color[2] = sp->s_basecolor[2];
-
-	return;
-    }
-
-    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-	if (sp->s_regionid <= mp->mt_high &&
-	    sp->s_regionid >= mp->mt_low) {
-	    sp->s_color[0] = mp->mt_r;
-	    sp->s_color[1] = mp->mt_g;
-	    sp->s_color[2] = mp->mt_b;
-
-	    return;
-	}
-    }
-
-    /*
-     * There is no region-id-based coloring entry in the
-     * table, so use the combination-record ("mater"
-     * command) based color if one was provided. Otherwise,
-     * use the default wireframe color.
-     * This is the "new way" of coloring things.
-     */
-
-    /* use wireframe_default_color */
-    if (sp->s_dflag)
-	sp->s_cflag = 1;
-
-    /* Be conservative and copy color anyway, to avoid black */
-    sp->s_color[0] = sp->s_basecolor[0];
-    sp->s_color[1] = sp->s_basecolor[1];
-    sp->s_color[2] = sp->s_basecolor[2];
-}
-
-/* Set solid's basecolor, color, and color flags based on client data and tree
- * state. If user color isn't set in client data, the solid's region id must be
- * set for proper material lookup.
- */
-static void
-solid_set_color_info(
-	struct solid *sp,
-	struct _ged_client_data *dgcdp,
-	struct db_tree_state *tsp)
-{
-    unsigned char bcolor[3] = {255, 0, 0}; /* default */
-
-    sp->s_uflag = 0;
-    sp->s_dflag = 0;
-
-    if (dgcdp->wireframe_color_override) {
-	sp->s_uflag = 1;
-
-	bcolor[RED] = dgcdp->wireframe_color[RED];
-	bcolor[GRN] = dgcdp->wireframe_color[GRN];
-	bcolor[BLU] = dgcdp->wireframe_color[BLU];
-    } else if (tsp) {
-	if (tsp->ts_mater.ma_color_valid) {
-	    bcolor[RED] = tsp->ts_mater.ma_color[RED] * 255.0;
-	    bcolor[GRN] = tsp->ts_mater.ma_color[GRN] * 255.0;
-	    bcolor[BLU] = tsp->ts_mater.ma_color[BLU] * 255.0;
-	} else {
-	    sp->s_dflag = 1;
-	}
-    }
-
-    sp->s_basecolor[RED] = bcolor[RED];
-    sp->s_basecolor[GRN] = bcolor[GRN];
-    sp->s_basecolor[BLU] = bcolor[BLU];
-
-    _ged_color_soltab(sp);
-}
-
-
 /**
  * Once the vlist has been created, perform the common tasks
  * in handling the drawn solid.
@@ -379,47 +183,13 @@ solid_set_color_info(
  * This routine must be prepared to run in parallel.
  */
 void
-_ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct _ged_client_data *dgcdp)
+_ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp)
 {
-    struct solid *sp;
 
-    if (!existing_sp) {
-	GET_SOLID(sp, &_FreeSolid.l);
+    if (dgcdp->wireframe_color_override) {
+	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, (unsigned char *)&(dgcdp->wireframe_color), dgcdp->gedp->ged_create_vlist_callback, dgcdp->freesolid);
     } else {
-	sp = existing_sp;
-    }
-
-    solid_append_vlist(sp, (struct bn_vlist *)vhead);
-
-    bound_solid(dgcdp->gedp, sp);
-
-    if (!existing_sp) {
-	db_dup_full_path(&sp->s_fullpath, pathp);
-
-	sp->s_flag = DOWN;
-	sp->s_iflag = DOWN;
-	sp->s_soldash = dashflag;
-	sp->s_Eflag = 0;
-
-	if (tsp) {
-	    sp->s_regionid = tsp->ts_regionid;
-	}
-
-	solid_set_color_info(sp, dgcdp, tsp);
-
-	sp->s_dlist = 0;
-	sp->s_transparency = dgcdp->transparency;
-	sp->s_dmode = dgcdp->dmode;
-	sp->s_hiddenLine = dgcdp->hiddenLine;
-
-	/* append solid to display list */
-	bu_semaphore_acquire(RT_SEM_MODEL);
-	BU_LIST_APPEND(dgcdp->gdlp->dl_headSolid.back, &sp->l);
-	bu_semaphore_release(RT_SEM_MODEL);
-    }
-
-    if (dgcdp->gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
-	(*dgcdp->gedp->ged_create_vlist_callback)(sp);
+	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, NULL, dgcdp->gedp->ged_create_vlist_callback, dgcdp->freesolid);
     }
 }
 
@@ -432,382 +202,6 @@ wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp
     if (curtree) RT_CK_TREE(curtree);
 
     return curtree;
-}
-
-static union tree *
-append_solid_to_display_list(
-	struct db_tree_state *tsp,
-	const struct db_full_path *pathp,
-	struct rt_db_internal *ip,
-	void *client_data)
-{
-    point_t min, max;
-    struct solid *sp;
-    union tree *curtree;
-    struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
-
-    RT_CK_DB_INTERNAL(ip);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
-    BN_CK_TOL(tsp->ts_tol);
-    RT_CK_RESOURCE(tsp->ts_resp);
-
-    VSETALL(min, INFINITY);
-    VSETALL(max, -INFINITY);
-
-    if (!dgcdp) {
-	return TREE_NULL;
-    }
-
-    if (RT_G_DEBUG & DEBUG_TREEWALK) {
-	char *sofar = db_path_to_string(pathp);
-
-	bu_vls_printf(dgcdp->gedp->ged_result_str,
-		"append_solid_to_display_list(%s) path='%s'\n",
-		ip->idb_meth->ft_name, sofar);
-
-	bu_free((void *)sofar, "path string");
-    }
-
-    /* create solid */
-    GET_SOLID(sp, &_FreeSolid.l);
-
-    sp->s_size = 0;
-    VSETALL(sp->s_center, 0.0);
-
-    if (ip->idb_meth->ft_bbox) {
-	if (ip->idb_meth->ft_bbox(ip, &min, &max, tsp->ts_tol) < 0) {
-	    bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n",
-		    DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
-
-	    return TREE_NULL;
-	}
-
-	sp->s_center[X] = (min[X] + max[X]) * 0.5;
-	sp->s_center[Y] = (min[Y] + max[Y]) * 0.5;
-	sp->s_center[Z] = (min[Z] + max[Z]) * 0.5;
-
-	sp->s_size = max[X] - min[X];
-	V_MAX(sp->s_size, max[Y] - min[Y]);
-	V_MAX(sp->s_size, max[Z] - min[Z]);
-    } else if (ip->idb_meth->ft_plot) {
-	/* As a fallback for primitives that don't have a bbox function, use
-	 * the old bounding method of calculating a plot for the primitive and
-	 * using the extent of the plotted segments as the bounds.
-	 */
-	int plot_status;
-	struct bu_list vhead;
-	struct bn_vlist *vp;
-
-	BU_LIST_INIT(&vhead);
-
-	plot_status = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
-		tsp->ts_tol, NULL);
-
-	if (plot_status < 0) {
-	    bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n",
-		    DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
-
-	    return TREE_NULL;
-	}
-
-	solid_append_vlist(sp, (struct bn_vlist *)&vhead);
-
-	bound_solid(dgcdp->gedp, sp);
-
-	while (BU_LIST_WHILE(vp, bn_vlist, &(sp->s_vlist))) {
-	    BU_LIST_DEQUEUE(&vp->l);
-	    bu_free(vp, "solid vp");
-	}
-    }
-
-    sp->s_vlen = 0;
-    db_dup_full_path(&sp->s_fullpath, pathp);
-    sp->s_flag = DOWN;
-    sp->s_iflag = DOWN;
-
-    if (dgcdp->draw_solid_lines_only) {
-	sp->s_soldash = 0;
-    } else {
-	sp->s_soldash = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
-    }
-
-    sp->s_Eflag = 0;
-    sp->s_regionid = tsp->ts_regionid;
-
-    if (ip->idb_type == ID_GRIP) {
-	float mater_color[3];
-
-	/* Temporarily change mater color for pseudo solid to get the desired
-	 * default color.
-	 */
-	mater_color[RED] = tsp->ts_mater.ma_color[RED];
-	mater_color[GRN] = tsp->ts_mater.ma_color[GRN];
-	mater_color[BLU] = tsp->ts_mater.ma_color[BLU];
-
-	tsp->ts_mater.ma_color[RED] = 0;
-	tsp->ts_mater.ma_color[GRN] = 128;
-	tsp->ts_mater.ma_color[BLU] = 128;
-
-	solid_set_color_info(sp, dgcdp, tsp);
-
-	tsp->ts_mater.ma_color[RED] = mater_color[RED];
-	tsp->ts_mater.ma_color[GRN] = mater_color[GRN];
-	tsp->ts_mater.ma_color[BLU] = mater_color[BLU];
-
-    } else {
-	solid_set_color_info(sp, dgcdp, tsp);
-    }
-
-    sp->s_dlist = 0;
-    sp->s_transparency = dgcdp->transparency;
-    sp->s_dmode = dgcdp->dmode;
-    sp->s_hiddenLine = dgcdp->hiddenLine;
-    MAT_COPY(sp->s_mat, tsp->ts_mat);
-
-    /* append solid to display list */
-    bu_semaphore_acquire(RT_SEM_MODEL);
-    BU_LIST_APPEND(dgcdp->gdlp->dl_headSolid.back, &sp->l);
-    bu_semaphore_release(RT_SEM_MODEL);
-
-    /* indicate success by returning something other than TREE_NULL */
-    RT_GET_TREE(curtree, tsp->ts_resp);
-    curtree->tr_op = OP_NOP;
-
-    return curtree;
-}
-
-static fastf_t
-view_avg_size(struct ged_view *gvp)
-{
-    fastf_t view_aspect, x_size, y_size;
-
-    view_aspect = (fastf_t)gvp->gv_x_samples / gvp->gv_y_samples;
-    x_size = gvp->gv_size;
-    y_size = x_size / view_aspect;
-
-    return (x_size + y_size) / 2.0;
-}
-
-static fastf_t
-view_avg_sample_spacing(struct ged_view *gvp)
-{
-    fastf_t avg_view_size, avg_view_samples;
-
-    avg_view_size = view_avg_size(gvp);
-    avg_view_samples = (gvp->gv_x_samples + gvp->gv_y_samples) / 2.0;
-
-    return avg_view_size / avg_view_samples;
-}
-
-static fastf_t
-solid_point_spacing(struct ged_view *gvp, fastf_t solid_width)
-{
-    fastf_t radius, avg_view_size, avg_sample_spacing;
-    point2d_t p1, p2;
-
-    if (solid_width < SQRT_SMALL_FASTF)
-	solid_width = SQRT_SMALL_FASTF;
-
-    avg_view_size = view_avg_size(gvp);
-
-    /* Now, for the sake of simplicity we're going to make
-     * several assumptions:
-     *  - our samples represent a grid of square pixels
-     *  - a circle with a diameter half the width of the solid is a
-     *    good proxy for the kind of curve that will be plotted
-     */
-    radius = solid_width / 4.0;
-    if (avg_view_size < solid_width) {
-	/* If the solid is larger than the view, it is
-	 * probably only partly visible and likely isn't the
-	 * primary focus of the user. We'll cap the point
-	 * spacing and avoid wasting effort.
-	 */
-	radius = avg_view_size / 4.0;
-    }
-
-    /* We imagine our representative circular curve lying in
-     * the XY plane centered at the origin.
-     *
-     * Suppose we're viewing the circle head on, and that the
-     * apex of the curve (0, radius) lies just inside the
-     * top edge of a pixel. Here we place a plotted point p1.
-     *
-     * As we continue clockwise around the circle we pass
-     * through neighboring pixels in the same row, until we
-     * vertically drop a distance equal to the pixel spacing,
-     * in which case we just barely enter a pixel in the next
-     * row. Here we place a plotted point p2 (y = radius -
-     * avg_sample_spacing).
-     *
-     * In theory, the line segment between p1 and p2 passes
-     * through all the same pixels that the actual curve does,
-     * and thus produces the exact same rasterization as if
-     * the curve between p1 and p2 was approximated with an
-     * infinite number of line segments.
-     *
-     * We assume that the distance between p1 and p2 is the
-     * maximum point sampling distance we can use for the
-     * curve which will give a perfect rasterization, i.e.
-     * the same rasterization as if we chose a point distance
-     * of 0.
-    */
-    p1[Y] = radius;
-    p1[X] = 0.0;
-
-    avg_sample_spacing = view_avg_sample_spacing(gvp);
-    if (avg_sample_spacing < radius) {
-	p2[Y] = radius - (avg_sample_spacing);
-    } else {
-	/* no particular reason other than symmetry, just need
-	 * to prevent sqrt(negative).
-	 */
-	p2[Y] = radius;
-    }
-    p2[X] = sqrt((radius * radius) - (p2[Y] * p2[Y]));
-
-    return DIST_PT2_PT2(p1, p2);
-}
-
-/* Choose a point spacing for the given solid (sp, ip) s.t. solid
- * curves plotted with that spacing will look smooth when rasterized
- * in the given view (gvp).
- *
- * TODO: view_avg_sample_spacing() might be sufficient if we can
- * develop a general decimation routine for the resulting plots, in
- * which case, this function could be removed.
- */
-static fastf_t
-solid_point_spacing_for_view(
-	struct solid *sp,
-	struct rt_db_internal *ip,
-	struct ged_view *gvp)
-{
-    fastf_t point_spacing = 0.0;
-
-    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD) {
-	switch (ip->idb_minor_type) {
-	    case DB5_MINORTYPE_BRLCAD_TGC: {
-		struct rt_tgc_internal *tgc;
-		fastf_t avg_diameter;
-		fastf_t tgc_mag_a, tgc_mag_b, tgc_mag_c, tgc_mag_d;
-
-		RT_CK_DB_INTERNAL(ip);
-		tgc = (struct rt_tgc_internal *)ip->idb_ptr;
-		RT_TGC_CK_MAGIC(tgc);
-
-		tgc_mag_a = MAGNITUDE(tgc->a);
-		tgc_mag_b = MAGNITUDE(tgc->b);
-		tgc_mag_c = MAGNITUDE(tgc->c);
-		tgc_mag_d = MAGNITUDE(tgc->d);
-
-		avg_diameter = tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d;
-		avg_diameter /= 2.0;
-		point_spacing = solid_point_spacing(gvp, avg_diameter);
-	    }
-		break;
-	    case DB5_MINORTYPE_BRLCAD_BOT:
-		point_spacing = view_avg_sample_spacing(gvp);
-		break;
-	    case DB5_MINORTYPE_BRLCAD_BREP: {
-		struct rt_brep_internal *bi;
-
-		RT_CK_DB_INTERNAL(ip);
-		bi = (struct rt_brep_internal *)ip->idb_ptr;
-		RT_BREP_CK_MAGIC(bi);
-
-		point_spacing = solid_point_spacing(gvp,
-			brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
-	    }
-		break;
-	    default:
-		point_spacing = solid_point_spacing(gvp, sp->s_size);
-	}
-    } else {
-	point_spacing = solid_point_spacing(gvp, sp->s_size);
-    }
-
-    return point_spacing;
-}
-
-static fastf_t
-draw_solid_wireframe(struct ged *gedp, struct solid *sp)
-{
-    int ret;
-    struct bu_list vhead;
-    struct ged_view *gvp;
-    struct rt_db_internal dbintern;
-    struct rt_db_internal *ip = &dbintern;
-    struct db_tree_state *tsp = &gedp->ged_wdbp->wdb_initial_tree_state;
-
-    BU_LIST_INIT(&vhead);
-    ret = -1;
-
-    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&sp->s_fullpath),
-	    gedp->ged_wdbp->dbip, sp->s_mat, &rt_uniresource);
-
-    if (ret < 0) {
-	return -1;
-    }
-
-    gvp = gedp->ged_gvp;
-    if (gvp && gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
-	struct rt_view_info info;
-
-	info.vhead = &vhead;
-	info.tol = tsp->ts_tol;
-
-	info.point_spacing = solid_point_spacing_for_view(sp, ip, gvp);
-
-	info.curve_spacing = sp->s_size / 2.0;
-
-	info.point_spacing /= gvp->gv_point_scale;
-	info.curve_spacing /= gvp->gv_curve_scale;
-
-	ret = ip->idb_meth->ft_adaptive_plot(ip, &info);
-    } else if (ip->idb_meth->ft_plot) {
-	ret = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
-		tsp->ts_tol, NULL);
-    }
-
-    rt_db_free_internal(ip);
-
-    if (ret < 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s: plot failure\n",
-		DB_FULL_PATH_CUR_DIR(&sp->s_fullpath)->d_namep);
-
-	return -1;
-    }
-
-    /* add plot to solid */
-    solid_append_vlist(sp, (struct bn_vlist *)&vhead);
-
-    if (gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
-	(*gedp->ged_create_vlist_callback)(sp);
-    }
-
-    return 0;
-}
-
-static int
-redraw_solid(struct ged *gedp, struct solid *sp)
-{
-    if (sp->s_dmode == _GED_WIREFRAME) {
-	/* replot wireframe */
-	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
-	    RT_FREE_VLIST(&sp->s_vlist);
-	}
-	return draw_solid_wireframe(gedp, sp);
-    } else {
-	/* non-wireframe replot - let's not and say we did */
-	if (gedp->ged_create_vlist_callback !=
-	    GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-	{
-	    (*gedp->ged_create_vlist_callback)(sp);
-	}
-    }
-
-    return 0;
 }
 
 
@@ -932,7 +326,7 @@ out:
 
 	/* Successful fastpath drawing of this solid */
 	db_add_node_to_full_path(&pp, dp);
-	_ged_drawH_part2(0, &vhead, &pp, tsp, SOLID_NULL, dgcdp);
+	_ged_drawH_part2(0, &vhead, &pp, tsp, dgcdp);
 
 	db_free_full_path(&pp);
     }
@@ -1075,7 +469,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	}
 	nmg_r_to_vlist(&vhead, r, style);
 
-	_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+	_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 
 	if (dgcdp->draw_edge_uses) {
 	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1);
@@ -1102,9 +496,8 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, const char 
     for (i = 0; i < vbp->nused; i++) {
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
 	    continue;
-
 	snprintf(namebuf, 64, "%s%lx", shortname, vbp->rgb[i]);
-	_ged_invent_solid(gedp, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0, 0);
+	invent_solid(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_create_vlist_callback, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0, 0, gedp->freesolid, 0);
     }
 }
 
@@ -1149,7 +542,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     if (_dgcdp != (struct _ged_client_data *)0) {
 	dgcdp = *_dgcdp;            /* struct copy */
     } else {
-	struct ged_view *gvp;
+	struct bview *gvp;
 
 	memset(&dgcdp, 0, sizeof(struct _ged_client_data));
 	dgcdp.gedp = gedp;
@@ -1182,6 +575,10 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	/* -1 indicates flag not set */
 	dgcdp.shaded_mode_override = -1;
+
+
+	/* freesolid */
+	dgcdp.freesolid = gedp->freesolid;
 
 	enable_fastpath = 0;
 
@@ -1326,7 +723,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    if (_GED_SHADED_MODE_BOTS <= dgcdp.dmode && dgcdp.dmode <= _GED_SHADED_MODE_ALL) {
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp.gdlp = ged_addToDisplay(gedp, argv[i]);
+			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
@@ -1345,7 +742,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    } else {
 		struct display_list **paths_to_draw;
 		struct display_list *gdlp;
-		struct solid *sp;
 
 		paths_to_draw = (struct display_list **)
 		    bu_malloc(sizeof(struct display_list *) * argc,
@@ -1353,7 +749,19 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		/* create solids */
 		for (i = 0; i < argc; ++i) {
-		    dgcdp.gdlp = ged_addToDisplay(gedp, argv[i]);
+		    struct bview_client_data bview_data;
+		    bview_data.draw_solid_lines_only = dgcdp.draw_solid_lines_only;
+		    bview_data.wireframe_color_override = dgcdp.wireframe_color_override;
+		    bview_data.wireframe_color[0]= dgcdp.wireframe_color[0];
+		    bview_data.wireframe_color[1]= dgcdp.wireframe_color[1];
+		    bview_data.wireframe_color[2]= dgcdp.wireframe_color[2];
+		    bview_data.transparency= dgcdp.transparency;
+		    bview_data.dmode = dgcdp.dmode;
+		    bview_data.hiddenLine = dgcdp.hiddenLine;
+		    bview_data.freesolid = (void *)gedp->freesolid;
+
+		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
+		    bview_data.gdlp = dgcdp.gdlp;
 
 		    /* store draw path */
 		    paths_to_draw[i] = dgcdp.gdlp;
@@ -1371,7 +779,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       NULL,
 				       wireframe_region_end,
 				       append_solid_to_display_list,
-				       (void *)&dgcdp);
+				       (void *)&bview_data);
 		}
 
 		/* We need to know the view size in order to choose
@@ -1393,17 +801,11 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			continue;
 		    }
 
-		    for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
-			if (sp->s_vlen > 0) {
-			    /* skip previously draw solid */
-			    continue;
-			}
-			ret = redraw_solid(gedp, sp);
-			if (ret < 0) {
-			    bu_vls_printf(gedp->ged_result_str,
-				    "%s: %s redraw failure\n", argv[0], argv[i]);
-			    return GED_ERROR;
-			}
+		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
+		    if (ret < 0) {
+			bu_vls_printf(gedp->ged_result_str,
+				"%s: %s redraw failure\n", argv[0], argv[i]);
+			return GED_ERROR;
 		    }
 		}
 
@@ -1426,7 +828,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp.gdlp = ged_addToDisplay(gedp, argv[i]);
+			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
@@ -1466,115 +868,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	return -1;
 
     return 0;	/* OK */
-}
-
-
-/*
- * Invent a solid by adding a fake entry in the database table,
- * adding an entry to the solid table, and populating it with
- * the given vector list.
- *
- * This parallels much of the code in dodraw.c
- */
-int
-_ged_invent_solid(struct ged *gedp,
-		  char *name,
-		  struct bu_list *vhead,
-		  long int rgb,
-		  int copy,
-		  fastf_t transparency,
-		  int dmode)
-{
-    struct directory *dp;
-    struct solid *sp;
-    struct display_list *gdlp;
-    unsigned char type='0';
-
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return 0;
-
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET)) != RT_DIR_NULL) {
-	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-	    bu_vls_printf(gedp->ged_result_str,
-			  "_ged_invent_solid(%s) would clobber existing database entry, ignored\n", name);
-	    return -1;
-	}
-
-	/*
-	 * Name exists from some other overlay,
-	 * zap any associated solids
-	 */
-	ged_erasePathFromDisplay(gedp, name, 0);
-    }
-    /* Need to enter phony name in directory structure */
-    dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
-
-    /* Obtain a fresh solid structure, and fill it in */
-    GET_SOLID(sp, &_FreeSolid.l);
-
-    if (copy) {
-	solid_copy_vlist(sp, (struct bn_vlist *)vhead);
-    } else {
-	solid_append_vlist(sp, (struct bn_vlist *)vhead);
-	BU_LIST_INIT(vhead);
-    }
-    bound_solid(gedp, sp);
-
-    /* set path information -- this is a top level node */
-    db_add_node_to_full_path(&sp->s_fullpath, dp);
-
-    gdlp = ged_addToDisplay(gedp, name);
-
-    sp->s_iflag = DOWN;
-    sp->s_soldash = 0;
-    sp->s_Eflag = 1;		/* Can't be solid edited! */
-    sp->s_color[0] = sp->s_basecolor[0] = (rgb>>16) & 0xFF;
-    sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
-    sp->s_color[2] = sp->s_basecolor[2] = (rgb) & 0xFF;
-    sp->s_regionid = 0;
-    sp->s_dlist = 0;
-
-    sp->s_uflag = 0;
-    sp->s_dflag = 0;
-    sp->s_cflag = 0;
-    sp->s_wflag = 0;
-
-    sp->s_transparency = transparency;
-    sp->s_dmode = dmode;
-
-    /* Solid successfully drawn, add to linked list of solid structs */
-    BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
-
-    _ged_color_soltab(sp);
-
-    if (gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-	(*gedp->ged_create_vlist_callback)(sp);
-
-    return 0;		/* OK */
-}
-
-
-/*
- * Pass through the solid table and set pointer to appropriate
- * mater structure.
- */
-void
-ged_color_soltab(struct bu_list *hdlp)
-{
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct solid *sp;
-
-    gdlp = BU_LIST_NEXT(display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    _ged_color_soltab(sp);
-	}
-
-	gdlp = next_gdlp;
-    }
 }
 
 
@@ -1730,7 +1023,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    if (new_argv[i][0] == '-')
 		continue;
 
-	    ged_erasePathFromDisplay(gedp, new_argv[i], 0);
+	    dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, new_argv[i], 0, gedp->freesolid);
 	}
 
 	_ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct _ged_client_data *)0);
@@ -1753,7 +1046,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    if (argv[i][0] == '-')
 		continue;
 
-	    ged_erasePathFromDisplay(gedp, argv[i], 0);
+	    dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[i], 0, gedp->freesolid);
 	}
 
 	/* if our display is non-empty add -R to keep current view */
@@ -1811,73 +1104,10 @@ ged_ev(struct ged *gedp, int argc, const char *argv[])
     return ged_draw_guts(gedp, argc, argv, 3);
 }
 
-
-struct display_list *
-ged_addToDisplay(struct ged *gedp,
-		 const char *name)
-{
-    struct directory *dp = NULL;
-    struct display_list *gdlp = NULL;
-    char *cp = NULL;
-    int found_namepath = 0;
-    struct db_full_path namepath;
-
-    cp = strrchr(name, '/');
-    if (!cp)
-	cp = (char *)name;
-    else
-	++cp;
-
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	gdlp = GED_DISPLAY_LIST_NULL;
-	goto end;
-    }
-
-    if (db_string_to_path(&namepath, gedp->ged_wdbp->dbip, name) == 0)
-	found_namepath = 1;
-
-    /* Make sure name is not already in the list */
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->dl_path)))
-	    goto end;
-
-		if (found_namepath) {
-	    struct db_full_path gdlpath;
-
-	    if (db_string_to_path(&gdlpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->dl_path)) == 0) {
-		if (db_full_path_match_top(&gdlpath, &namepath)) {
-		    db_free_full_path(&gdlpath);
-		    goto end;
-		}
-
-		db_free_full_path(&gdlpath);
-	    }
-	}
-
-	gdlp = BU_LIST_PNEXT(display_list, gdlp);
-    }
-
-    BU_ALLOC(gdlp, struct display_list);
-    BU_LIST_INIT(&gdlp->l);
-    BU_LIST_INSERT(gedp->ged_gdp->gd_headDisplay, &gdlp->l);
-    BU_LIST_INIT(&gdlp->dl_headSolid);
-    gdlp->dl_dp = (void *)dp;
-    bu_vls_init(&gdlp->dl_path);
-    bu_vls_printf(&gdlp->dl_path, "%s", name);
-
-end:
-    if (found_namepath)
-	db_free_full_path(&namepath);
-
-    return gdlp;
-}
-
 int
 ged_redraw(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
-    struct solid *sp;
     struct display_list *gdlp;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -1891,14 +1121,10 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 	/* redraw everything */
 	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
 	{
-	    for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
-		ret = redraw_solid(gedp, sp);
-		if (ret < 0) {
-		    bu_vls_printf(gedp->ged_result_str,
-			    "%s: %s redraw failure\n", argv[0],
-			    DB_FULL_PATH_CUR_DIR(&sp->s_fullpath)->d_namep);
-		    return GED_ERROR;
-		}
+	    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
+	    if (ret < 0) {
+		bu_vls_printf(gedp->ged_result_str, "%s: redraw failure\n", argv[0]);
+		return GED_ERROR;
 	    }
 	}
     } else {
@@ -1931,13 +1157,11 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 		    found_path = 1;
 		    db_free_full_path(&dl_path);
 
-		    for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
-			ret = redraw_solid(gedp, sp);
-			if (ret < 0) {
-			    bu_vls_printf(gedp->ged_result_str,
-				    "%s: %s redraw failure\n", argv[0], argv[i]);
-			    return GED_ERROR;
-			}
+		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
+		    if (ret < 0) {
+			bu_vls_printf(gedp->ged_result_str,
+				"%s: %s redraw failure\n", argv[0], argv[i]);
+			return GED_ERROR;
 		    }
 		    break;
 		}

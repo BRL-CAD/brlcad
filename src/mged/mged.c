@@ -40,10 +40,6 @@
 /* for select */
 #  include <sys/time.h>
 #endif
-#ifdef HAVE_UNISTD_H
-/* for select */
-#  include <unistd.h>
-#endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
@@ -141,13 +137,11 @@ int (*cmdline_hook)() = NULL;
 jmp_buf jmp_env;		/* For non-local gotos */
 double frametime;		/* time needed to draw last frame */
 
-struct solid MGED_FreeSolid;      /* Head of freelist */
-
 void (*cur_sigint)();	/* Current SIGINT status */
 int interactive = 1;	/* >0 means interactive */
 int cbreak_mode = 0;        /* >0 means in cbreak_mode */
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
+#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL) || defined(DM_OSGL)
 # if defined(HAVE_TK)
 int classic_mged=0;
 #  else
@@ -372,7 +366,7 @@ new_edit_mats(void)
 
 
 void
-mged_view_callback(struct ged_view *gvp,
+mged_view_callback(struct bview *gvp,
 		   void *clientData)
 {
     struct _view_state *vsp = (struct _view_state *)clientData;
@@ -1250,7 +1244,6 @@ main(int argc, char *argv[])
 #endif /* HAVE_PIPE */
 
     /* Set up linked lists */
-    BU_LIST_INIT(&MGED_FreeSolid.l);
     BU_LIST_INIT(&RTG.rtg_vlfree);
     BU_LIST_INIT(&RTG.rtg_headwdb.l);
 

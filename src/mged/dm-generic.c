@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
@@ -564,7 +563,7 @@ common_dm(int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
+#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL) || defined(DM_OSGL)
     if (BU_STR_EQUAL(argv[0], "getx")) {
 	if (argc == 1) {
 	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;

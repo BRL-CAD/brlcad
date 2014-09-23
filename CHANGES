@@ -117,6 +117,16 @@ and new names should be listed for reference.
 
 7.26
 ----
+include/bn.h
+	bn_tcl_mat_print, removal of all tcl-specific API functions [deprecated 7.26]
+include/raytrace.h
+	curve_to_tcl_list rt_tcl_parse_ray rt_tcl_pr_cutter
+	rt_tcl_pr_hit rt_tcl_rt rt_tcl_import_from_path
+	db_full_path_appendresult tcl_obj_to_int_array
+	tcl_obj_to_fastf_array tcl_list_to_int_array
+	tcl_list_to_fastf_array *_tcl_*, removal of all tcl-specific
+	API functions [deprecated 7.26]
+
 pixcut, pixpaste
         copyright cleanup [deprecated 7.26]
 librt, fast4-g
@@ -124,11 +134,6 @@ librt, fast4-g
 
 7.24
 ----
-include/bu
-        hist.h bu_hist bu_hist_t BU_HIST_NULL BU_HIST_INIT_ZERO [deprecated 7.24]
-        BU_HIST_IS_INITIALIZED BU_HIST_TALLY BU_HIST_TALLY_MULTIPLE [deprecated 7.24]
-        bu_hist_free bu_hist_init bu_hist_range bu_hist_pr [deprecated 7.24]
-        functions, macros, and header will be renamed for clarity [deprecated 7.24]
 fbed, pp-fb
         removes termcap use, no known users [deprecated 7.24]
 include/raytrace librt
@@ -995,6 +1000,7 @@ s/bn_sin_scale/(BN_SINTABSIZE \/ M_2PI)/g
         eliminated a number of libbn globals in favor of existing constants [7.24]
 s/(#[[:space:]]*include[[:space:]]+["<])vfont-if\.h/\1bu\/vfont.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])cmd\.h/\1bu\/cmd.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])hist\.h/\1bu\/hist.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])magic\.h/\1bu\/magic.h/g
         library-specific public headers moved into a subdir [7.24]
 s/([^_])([nh]to[hn][fd])/\1bu_cv_\2/g
@@ -1009,4 +1015,9 @@ s/bu_setjmp_valid/bu_setjmp_valid[0]/g
         can replace 0 with bu_parallel_id() to get thread-safe jumping [7.25]
 s/bu_semaphore_reinit/bu_semaphore_init/g
         no longer need to manually reinitialize (or initialize) semaphores [7.25]
-s/(#[[:space:]]*include[[:space:]]+["<])fbio\.h/\1bu\/fb.h/g [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])fbio\.h/\1bu\/fb.h/g
+        fbio.h is now part of fb.h [7.25]
+s/UNION/'u'/g
+s/SUBTRACT/'-'/g
+s/INTERSECT/'+'/g
+        old db.h db4 preprocessor symbols removed, use char or DB_OP_* [7.25]

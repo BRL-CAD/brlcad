@@ -24,6 +24,9 @@
 #include "bio.h"
 
 #include "bu/cmd.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/bu_tcl.h"
 
 /**
  * Attach observer.

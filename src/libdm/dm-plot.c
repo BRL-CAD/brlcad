@@ -35,9 +35,6 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* for struct timeval */
 #endif
-#ifdef HAVE_UNISTED_H
-#  include <unistd.h>
-#endif
 #include "bio.h"
 
 #include "tcl.h"
@@ -531,6 +528,7 @@ dm dm_plot = {
     null_drawDList,
     null_freeDLists,
     null_genDLists,
+    NULL,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,

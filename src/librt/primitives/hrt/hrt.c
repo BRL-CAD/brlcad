@@ -111,7 +111,6 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
@@ -1694,9 +1693,19 @@ rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 
 
 void
-rt_hrt_surf_area(void)
+rt_hrt_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
-    bu_log("rt_hrt_surf_area: Not implemented yet!\n");
+    fastf_t area_hrt_YZ_plane;
+    struct rt_hrt_internal *hip = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(hip);
+
+    /* Area of ellipse in YZ-plane is PI * ydir[Y] *  ( zdir[Z] * 1.125 ) */
+    area_hrt_YZ_plane = M_PI * hip->ydir[Y] * hip->zdir[Z] * 1.125;
+
+    /* Area of heart = 180 * M_PI * Area of ellipse in YZ-plane
+     * The 180 * M_PI scalar comes from http://mathworld.wolfram.com/HeartCurve.html
+     */
+    *area = 180 * M_PI * area_hrt_YZ_plane;
 }
 
 
@@ -1706,11 +1715,15 @@ rt_hrt_volume(void)
     bu_log("rt_hrt_volume: Not implemented yet!\n");
 }
 
-
+/**
+ * Computes centroid of a heart
+ */
 void
-rt_hrt_centroid(void)
+rt_hrt_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    bu_log("rt_hrt_centroid: Not implemented yet!\n");
+    struct rt_hrt_internal *hip = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(hip);
+    VSET(*cent, hip->xdir[X], hip->ydir[Y], hip->zdir[Z] * 0.125);
 }
 
 

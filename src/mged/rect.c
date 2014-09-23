@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
 
 #include "bio.h"
 #include "bu.h"
@@ -72,7 +71,7 @@ rb_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		  const char *UNUSED(name),
 		  void *UNUSED(base),
 		  const char *UNUSED(value),
-		void *UNUSED(data))
+		  void *UNUSED(data))
 {
     struct dm_list *dmlp;
 

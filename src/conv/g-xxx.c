@@ -63,11 +63,8 @@ describe_tree(union tree *tree,
 {
     struct bu_vls left = BU_VLS_INIT_ZERO;
     struct bu_vls right = BU_VLS_INIT_ZERO;
-    char *op_union=" u ";
-    char *op_subtract=" - ";
-    char *op_intersect=" + ";
-    char *op_xor=" ^ ";
-    char *op=NULL;
+    const char op_xor='^';
+    char op='\0';
 
     BU_CK_VLS(str);
 
@@ -91,13 +88,13 @@ describe_tree(union tree *tree,
 	    bu_vls_strcat(str,  tree->tr_l.tl_name);
 	    break;
 	case OP_UNION:		/* union operator node */
-	    op = op_union;
+	    op = DB_OP_UNION;
 	    goto binary;
 	case OP_INTERSECT:	/* intersection operator node */
-	    op = op_intersect;
+	    op = DB_OP_INTERSECT;
 	    goto binary;
 	case OP_SUBTRACT:	/* subtraction operator node */
-	    op = op_subtract;
+	    op = DB_OP_SUBTRACT;
 	    goto binary;
 	case OP_XOR:		/* exclusive "or" operator node */
 	    op = op_xor;
@@ -106,7 +103,7 @@ describe_tree(union tree *tree,
 	    describe_tree(tree->tr_b.tb_right, &right);
 	    bu_vls_putc(str, '(');
 	    bu_vls_vlscatzap(str, &left);
-	    bu_vls_strcat(str, op);
+	    bu_vls_printf(str, " %c ", op);
 	    bu_vls_vlscatzap(str, &right);
 	    bu_vls_putc(str, ')');
 	    break;

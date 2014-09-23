@@ -30,7 +30,8 @@
 
 
 int
-tclcad_eval(Tcl_Interp *interp, int preserve_result, const char *command, size_t num_args, const char * const *args)
+tclcad_eval(Tcl_Interp *interp, const char *command, size_t num_args,
+	    const char * const *args)
 {
     int result;
     size_t i;
@@ -42,17 +43,23 @@ tclcad_eval(Tcl_Interp *interp, int preserve_result, const char *command, size_t
     for (i = 0; i < num_args; ++i)
 	Tcl_DStringAppendElement(&script, args[i]);
 
-    if (!preserve_result) {
-	result = Tcl_Eval(interp, Tcl_DStringValue(&script));
-    } else {
-	Tcl_Obj *saved_result = Tcl_GetObjResult(interp);
-	Tcl_IncrRefCount(saved_result);
-	result = Tcl_Eval(interp, Tcl_DStringValue(&script));
-	Tcl_SetObjResult(interp, saved_result);
-	Tcl_DecrRefCount(saved_result);
-    }
-
+    result = Tcl_Eval(interp, Tcl_DStringValue(&script));
     Tcl_DStringFree(&script);
+    return result;
+}
+
+
+int
+tclcad_eval_noresult(Tcl_Interp *interp, const char *command, size_t num_args,
+		     const char * const *args)
+{
+    int result;
+    Tcl_Obj *saved_result = Tcl_GetObjResult(interp);
+    Tcl_IncrRefCount(saved_result);
+    result = tclcad_eval(interp, command, num_args, args);
+    Tcl_SetObjResult(interp, saved_result);
+    Tcl_DecrRefCount(saved_result);
+
     return result;
 }
 

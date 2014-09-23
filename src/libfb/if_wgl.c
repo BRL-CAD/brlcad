@@ -37,7 +37,6 @@
 
 #ifdef IF_WGL
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
@@ -57,7 +56,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "fb.h"
-
+#include "fb/fb_wgl.h"
 
 #define CJDEBUG 0
 
@@ -553,7 +552,7 @@ wgl_open(fb *ifp, const char *file, int width, int height)
     DWORD Dword;
     WNDCLASS wndclass;
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     saveifp = ifp;
 
@@ -737,6 +736,27 @@ wgl_open(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
+HIDDEN struct fb_platform_specific *
+wgl_get_fbps(uint32_t magic)
+{
+    struct fb_platform_specific *fb_ps = NULL;
+    struct wgl_fb_info *data = NULL;
+    BU_GET(fb_ps, struct fb_platform_specific);
+    BU_GET(data, struct wgl_fb_info);
+    fb_ps->magic = magic;
+    fb_ps->data = data;
+    return fb_ps;
+}
+
+
+HIDDEN void
+wgl_put_fbps(struct fb_platform_specific *fbps)
+{
+    BU_CKMAG(fbps, FB_WGL_MAGIC, "wgl framebuffer");
+    BU_PUT(fbps->data, struct wgl_fb_info);
+    BU_PUT(fbps, struct fb_platform_specific);
+    return;
+}
 
 int
 _wgl_open_existing(fb *ifp,
@@ -816,54 +836,14 @@ _wgl_open_existing(fb *ifp,
 
 
 int
-wgl_open_existing(fb *ifp, int argc, const char **argv)
+wgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
-    Display *dpy;
-    Window win;
-    Colormap cmap;
-    PIXELFORMATDESCRIPTOR *vip;
-    HDC hdc;
-    int width;
-    int height;
-    HGLRC glxc;
-    int double_buffer;
-    int soft_cmap;
-
-    if (argc != 11)
-	return -1;
-
-    if (sscanf(argv[1], "%p", (void *)&dpy) != 1)
-	return -1;
-
-    if (sscanf(argv[2], "%p", (void *)&win) != 1)
-	return -1;
-
-    if (sscanf(argv[3], "%p", (void *)&cmap) != 1)
-	return -1;
-
-    if (sscanf(argv[4], "%p", (void *)&vip) != 1)
-	return -1;
-
-    if (sscanf(argv[5], "%p", (void *)&hdc) != 1)
-	return -1;
-
-    if (sscanf(argv[8], "%p", (void *)&glxc) != 1)
-	return -1;
-
-    if (sscanf(argv[6], "%d", &width) != 1)
-	return -1;
-
-    if (sscanf(argv[7], "%d", &height) != 1)
-	return -1;
-
-    if (sscanf(argv[9], "%d", &double_buffer) != 1)
-	return -1;
-
-    if (sscanf(argv[10], "%d", &soft_cmap) != 1)
-	return -1;
-
-    return _wgl_open_existing(ifp, dpy, win, cmap, vip, hdc, width, height,
-			      glxc, double_buffer, soft_cmap);
+    struct wgl_fb_info *wgl_internal = (struct wgl_fb_info *)fb_p->data;
+    BU_CKMAG(fb_p, FB_WGL_MAGIC, "wgl framebuffer");
+    return _wgl_open_existing(ifp, wgl_internal->dpy, wgl_internal->win, wgl_internal->cmap,
+	    wgl_internal->vip, wgl_internal->hdc, width, height,
+	    wgl_internal->glxc, wgl_internal->double_buffer, wgl_internal->soft_cmap);
+    return 0;
 }
 
 
@@ -2151,7 +2131,8 @@ fb wgl_interface =
     0,			/* page_dirty */
     0L,			/* page_curpos */
     0L,			/* page_pixels */
-    0			/* debug */
+    0,			/* debug */
+    250			/* refresh rate (from fbserv) */
 };
 
 

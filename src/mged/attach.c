@@ -29,10 +29,6 @@
 #  include <sys/time.h>		/* for struct timeval */
 #endif
 
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
-
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
@@ -40,6 +36,11 @@
 
 #include "bio.h"
 #include "bin.h"
+
+/* Make sure this comes after bio.h (for Windows) */
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
 
 #include "bu.h"
 #include "vmath.h"
@@ -60,6 +61,7 @@
 	IS_DM_TYPE_TK(_type) || \
 	IS_DM_TYPE_X(_type) || \
 	IS_DM_TYPE_TXT(_type) || \
+	IS_DM_TYPE_OSGL(_type) || \
 	IS_DM_TYPE_QT(_type))
 
 
@@ -109,6 +111,12 @@ extern int Pex_dm_init();
 extern int Qt_dm_init();
 #endif /* DM_QT */
 
+#ifdef DM_OSGL
+# if defined(HAVE_TK)
+extern int Osgl_dm_init();
+# endif
+#endif /* DM_OSGL */
+
 extern void fbserv_set_port(void);		/* defined in fbserv.c */
 extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 
@@ -123,6 +131,27 @@ static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GE
 #ifdef DM_OGL
 static int
 ogl_doevent(void *UNUSED(vclientData), void *veventPtr)
+{
+    /*ClientData clientData = (ClientData)vclientData;*/
+    XEvent *eventPtr= (XEvent *)veventPtr;
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	if (!dm_make_current(dmp))
+	    /* allow further processing of this event */
+	    return TCL_OK;
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	dirty = 1;
+	/* no further processing for this event */
+	return TCL_RETURN;
+    }
+    /* allow further processing of this event */
+    return TCL_OK;
+}
+#endif
+
+#ifdef DM_OSGL
+static int
+osgl_doevent(void *UNUSED(vclientData), void *veventPtr)
 {
     /*ClientData clientData = (ClientData)vclientData;*/
     XEvent *eventPtr= (XEvent *)veventPtr;
@@ -165,6 +194,7 @@ wgl_doevent(void *UNUSED(vclientData), void *veventPtr)
 }
 #endif
 
+#if defined(HAVE_TK)
 static int
 x_doevent(void *UNUSED(vclientData), void *veventPtr)
 {
@@ -179,6 +209,7 @@ x_doevent(void *UNUSED(vclientData), void *veventPtr)
     /* allow further processing of this event */
     return TCL_OK;
 }
+#endif
 
 typedef int (*eventfptr)();
 
@@ -203,6 +234,11 @@ struct w_dm which_dm[] = {
 #ifdef DM_OSG
     { DM_TYPE_OSG, "osg", NULL},
 #endif /* DM_OSG */
+#ifdef DM_OSGL
+#  if defined(HAVE_TK)
+    { DM_TYPE_OSGL, "osgl", osgl_doevent },
+#  endif
+#endif /* DM_OSGL */
 #ifdef DM_RTGL
     { DM_TYPE_RTGL, "rtgl", ogl_doevent },
 #endif /* DM_RTGL */
@@ -240,7 +276,9 @@ mged_dm_init(struct dm_list *o_dm_list,
     /* register application provided routines */
     cmd_hook = dm_commands;
 
+#ifdef HAVE_TK
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+#endif
 
     if ((dmp = dm_open(INTERP, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
@@ -252,8 +290,9 @@ mged_dm_init(struct dm_list *o_dm_list,
     /* TODO - look up event handler based on dm_type */
     eventHandler = dm_doevent(dm_type);
 
-
+#ifdef HAVE_TK
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+#endif
     (void)dm_configure_win(dmp, 0);
 
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(dmp)));
@@ -430,6 +469,10 @@ print_valid_dm(Tcl_Interp *interpreter)
     Tcl_AppendResult(interpreter, "osg  ", (char *)NULL);
     i++;
 #endif /* DM_OSG*/
+#ifdef DM_OSGL
+    Tcl_AppendResult(interpreter, "osgl  ", (char *)NULL);
+    i++;
+#endif /* DM_OSGL*/
 #ifdef DM_RTGL
     Tcl_AppendResult(interpreter, "rtgl  ", (char *)NULL);
     i++;
@@ -783,6 +826,11 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 	    Tcl_AppendResult(interpreter, "osg", (char *)NULL);
 	}
 #endif /* DM_OSG*/
+#ifdef DM_OSGL
+	if (BU_STR_EQUAL(argv[argc-1], "osgl")) {
+	    Tcl_AppendResult(interpreter, "osgl", (char *)NULL);
+	}
+#endif /* DM_OSGL*/
 #ifdef DM_RTGL
 	if (BU_STR_EQUAL(argv[argc-1], "rtgl")) {
 	    Tcl_AppendResult(interpreter, "rtgl", (char *)NULL);
@@ -868,7 +916,7 @@ dm_var_init(struct dm_list *initial_dm_list)
 
     BU_ALLOC(view_state, struct _view_state);
     *view_state = *initial_dm_list->dml_view_state;			/* struct copy */
-    BU_ALLOC(view_state->vs_gvp, struct ged_view);
+    BU_ALLOC(view_state->vs_gvp, struct bview);
     *view_state->vs_gvp = *initial_dm_list->dml_view_state->vs_gvp;	/* struct copy */
     view_state->vs_gvp->gv_clientData = (void *)view_state;
     view_state->vs_gvp->gv_adaptive_plot = 0;

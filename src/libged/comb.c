@@ -29,6 +29,8 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/getopt.h"
+#include "bu/sort.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
@@ -583,14 +585,9 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    }
 
-	    /* ops are 1-char */
-	    if (argv[i][1] != '\0') {
-		bu_vls_printf(gedp->ged_result_str, "Invalid operation '%s' before object '%s'\n", argv[i], argv[i+1]);
-		continue;
-	    }
-	    oper = argv[i][0];
-	    if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
-		bu_vls_printf(gedp->ged_result_str, "Unknown operator '%c' encountered, invalid syntax.\n", oper);
+	    oper = db_str2op(argv[i]);
+	    if (oper == DB_OP_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "Unknown operator '%c' (0x%x) encountered, invalid syntax.\n", argv[i][0], argv[i][0]);
 		continue;
 	    }
 
@@ -601,7 +598,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* add it to the comb immediately */
-	    if (_ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == RT_DIR_NULL) {
+	    if (_ged_combadd(gedp, dp, comb_name, 0, (db_op_t)oper, 0, 0) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Error adding '%s' (with op '%c') to '%s'\n", dp->d_namep, oper, comb_name);
 		return GED_ERROR;
 	    }
@@ -685,7 +682,7 @@ _ged_combadd(struct ged *gedp,
 	     struct directory *objp,
 	     char *combname,
 	     int region_flag,	/* true if adding region */
-	     int relation,	/* = UNION, SUBTRACT, INTERSECT */
+	     db_op_t relation,	/* = UNION, SUBTRACT, INTERSECT */
 	     int ident,		/* "Region ID" */
 	     int air		/* Air code */)
 {
@@ -715,7 +712,7 @@ _ged_combadd2(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
 	      int region_flag,	/* true if adding region */
-	      int relation,	/* = UNION, SUBTRACT, INTERSECT */
+	      db_op_t relation,	/* = UNION, SUBTRACT, INTERSECT */
 	      int ident,	/* "Region ID" */
 	      int air		/* Air code */)
 {
@@ -819,14 +816,14 @@ addmembers:
 
 	/* insert new member at end */
 	switch (relation) {
-	case '+':
+	case DB_OP_INTERSECT:
 	    tree_list[curr_count].tl_op = OP_INTERSECT;
 	    break;
-	case '-':
+	case DB_OP_SUBTRACT:
 	    tree_list[curr_count].tl_op = OP_SUBTRACT;
 	    break;
 	default:
-	    if (relation != 'u') {
+	    if (relation != DB_OP_UNION) {
 		bu_vls_printf(gedp->ged_result_str, "unrecognized relation (assume UNION)\n");
 	    }
 	    tree_list[curr_count].tl_op = OP_UNION;

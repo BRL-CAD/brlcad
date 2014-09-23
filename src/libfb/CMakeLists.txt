@@ -10,6 +10,8 @@ set(FB_INCLUDE_DIRS
   ${TK_INCLUDE_PATH}
   ${OPENNURBS_INCLUDE_DIR}
   ${Qt5Widgets_INCLUDE_DIRS}
+  ${OPENTHREADS_INCLUDE_DIR}
+  ${OSG_INCLUDE_DIR}
   )
 BRLCAD_LIB_INCLUDE_DIRS(fb FB_INCLUDE_DIRS "")
 
@@ -52,12 +54,25 @@ if(BRLCAD_ENABLE_QT)
   set_property(SOURCE if_qt.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_QT)
 
+if(BRLCAD_ENABLE_OSG)
+  set(FBOSGLDEFS "-DIF_OSGL")
+  set(OSG_LIBRARIES
+    ${OSG_LIBRARY}
+    ${OSGTEXT_LIBRARY}
+    ${OSGVIEWER_LIBRARY}
+    )
+  set(LINKLIBS ${LINKLIBS} ${OSG_LIBRARIES})
+  set(fbosgl_srcs if_osgl.cpp)
+  set_property(SOURCE if_osgl.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+endif()
+
 set(LIBFB_SOURCES
   ${fbX11_srcs}
   ${fbogl_srcs}
   ${fbwgl_srcs}
   ${fbtk_srcs}
   ${fbqt_srcs}
+  ${fbosgl_srcs}
   asize.c
   fb_generic.c
   fb_log.c
@@ -84,6 +99,7 @@ add_definitions(
   ${FBTKDEFS}
   ${XOPEN_DEFINE}
   ${FBQTDEFS}
+  ${FBOSGLDEFS}
   )
 
 BRLCAD_ADDLIB(libfb "${LIBFB_SOURCES}" "libbu;libpkg;${LINKLIBS}")
@@ -96,10 +112,12 @@ set(libfb_ignore_files
   if_TEMPLATE.c
   if_X24.c
   if_ogl.c
+  if_osgl.cpp
   if_qt.cpp
   if_tk.c
   if_wgl.c
   fb_private.h
+  osg_fb_manipulator.h
   )
 CMAKEFILES(${libfb_ignore_files})
 
