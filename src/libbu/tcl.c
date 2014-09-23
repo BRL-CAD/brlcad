@@ -34,6 +34,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/units.h"
+#include "bu/bu_tcl.h"
 #include "vmath.h"
 
 
