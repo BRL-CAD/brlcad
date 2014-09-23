@@ -26,6 +26,9 @@
 #include "common.h"
 
 #ifdef DM_OSGL
+extern "C" {
+#include "bio.h"
+}
 
 #include <string.h>
 #include <stdlib.h>
@@ -46,7 +49,6 @@ extern "C" {
 #include "tcl.h"
 #include "tk.h"
 #include "tkPlatDecls.h"
-#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"
