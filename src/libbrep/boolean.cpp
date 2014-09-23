@@ -66,7 +66,8 @@ struct IntersectPoint {
     enum {
 	UNSET,
 	IN,
-	OUT
+	OUT,
+	TANGENT
     } m_dir;		// dir is going inside/outside
     int m_split_li;	// between clx_points[m_split_li] and
 			// clx_points[m_split_li+1]
@@ -1666,12 +1667,9 @@ split_face_into_loops(
 	if (prev_in && next_in) {
 	    // tangent point, both sides in, duplicate that point
 	    new_pts.Append(*ipt);
-	    new_pts.Last()->m_dir = IntersectPoint::IN;
-	    new_pts.Last()->m_curve_pos = ipt->m_curve_pos + 1;
-	    for (int j = i + 1; j < clx_points.Count(); j++) {
-		clx_points[j].m_curve_pos++;
-	    }
-	    ipt->m_dir = IntersectPoint::OUT;
+	    new_pts.Last()->m_dir = IntersectPoint::TANGENT;
+	    new_pts.Last()->m_curve_pos = ipt->m_curve_pos;
+	    ipt->m_dir = IntersectPoint::TANGENT;
 	} else if (!prev_in && !next_in) {
 	    // tangent point, both sides out, useless
 	    ipt->m_dir = IntersectPoint::UNSET;
@@ -1769,13 +1767,13 @@ split_face_into_loops(
 	    continue;
 	}
 	if (q.m_curve_pos - p.m_curve_pos == 1 &&
-	    q.m_dir == IntersectPoint::OUT &&
-	    p.m_dir == IntersectPoint::IN)
+	    q.m_dir != IntersectPoint::IN &&
+	    p.m_dir != IntersectPoint::OUT)
 	{
 	    s.pop();
 	} else if (p.m_curve_pos - q.m_curve_pos == 1 &&
-		   p.m_dir == IntersectPoint::OUT &&
-		   q.m_dir == IntersectPoint::IN)
+		   p.m_dir != IntersectPoint::IN &&
+		   q.m_dir != IntersectPoint::OUT)
 	{
 	    s.pop();
 	} else {
