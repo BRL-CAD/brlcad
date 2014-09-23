@@ -38,6 +38,7 @@
 # include <strings.h>
 #endif
 
+#include "bin.h"
 #include "bio.h"
 
 #include "bu/color.h"
