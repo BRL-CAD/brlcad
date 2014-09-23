@@ -20,10 +20,6 @@
 
 #include "common.h"
 
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
-
 #include "bio.h"
 #include "bin.h"
 
@@ -35,7 +31,7 @@ bu_gethostname(char *hostname, size_t hostlen)
 {
     int status;
 
-#ifdef HAVE_WINSOCK_H
+#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
     /**
      * Windows requires winsock networking library be initialized
      * before the hostname can be retrieved.
@@ -55,7 +51,7 @@ bu_gethostname(char *hostname, size_t hostlen)
 
 #endif
 
-#ifdef HAVE_WINSOCK_H
+#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
     WSACleanup();
 #endif
 

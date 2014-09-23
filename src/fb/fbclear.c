@@ -34,11 +34,6 @@
 #include "fb.h"
 #include "pkg.h"
 
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
-
-
 static char *framebuffer = NULL;
 static fb *fbp;
 static int scr_width = 0;		/* use default size */
