@@ -438,6 +438,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
     mvars->debug = dmp->dm_debugLevel;
     mvars->bound = dmp->dm_bound;
     mvars->boundFlag = dmp->dm_boundFlag;
+    mvars->text_shadow = 1;
 
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
@@ -1549,6 +1550,7 @@ osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y
 {
     fastf_t font_size = dm_get_fontsize(dmp);
     struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+    struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)dmp->m_vars;
     int blend_state = glIsEnabled(GL_BLEND);
     fastf_t coord_x, coord_y;
     if (dmp->dm_debugLevel)
@@ -1571,12 +1573,14 @@ osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y
 
 	fonsSetFont(privvars->fs, privvars->fontNormal);
 	/* drop shadow */
-	unsigned int black = glfonsRGBA(0, 0, 0, 255);
-	fonsSetColor(privvars->fs, black);
-	fonsDrawText(privvars->fs, coord_x, coord_y-2, str, NULL);
-	fonsDrawText(privvars->fs, coord_x, coord_y+2, str, NULL);
-	fonsDrawText(privvars->fs, coord_x-2, coord_y, str, NULL);
-	fonsDrawText(privvars->fs, coord_x+2, coord_y, str, NULL);
+	if (mvars->text_shadow) {
+	    unsigned int black = glfonsRGBA(0, 0, 0, 255);
+	    fonsSetColor(privvars->fs, black);
+	    fonsDrawText(privvars->fs, coord_x, coord_y-2, str, NULL);
+	    fonsDrawText(privvars->fs, coord_x, coord_y+2, str, NULL);
+	    fonsDrawText(privvars->fs, coord_x-2, coord_y, str, NULL);
+	    fonsDrawText(privvars->fs, coord_x+2, coord_y, str, NULL);
+	}
 	/* normal text */
 	unsigned int color = glfonsRGBA(dmp->dm_fg[0], dmp->dm_fg[1], dmp->dm_fg[2], 255);
 	fonsSetSize(privvars->fs, (int)font_size); /* cast to int so we always get a font */
@@ -2259,6 +2263,7 @@ struct bu_structparse Osgl_vparse[] = {
     {"%V",  1, "log",   		Osgl_MV_O(log),  	 osgl_logfile_hook, NULL, NULL },
     {"%g",  1, "bound",         	Osgl_MV_O(bound),        osgl_bound_hook, NULL, NULL },
     {"%d",  1, "useBound",              Osgl_MV_O(boundFlag),    osgl_bound_flag_hook, NULL, NULL },
+    {"%d",  1, "text_shadow",           Osgl_MV_O(text_shadow),    dm_generic_hook, NULL, NULL },
     {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

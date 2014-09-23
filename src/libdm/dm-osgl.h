@@ -72,6 +72,7 @@ struct modifiable_osgl_vars {
     struct bu_vls log;
     double bound;
     int boundFlag;
+    int text_shadow;
 };
 
 struct osgl_vars {
