@@ -80,7 +80,7 @@ usage(const char *argv0)
     bu_log(" -P #		Set number of processors\n");
     bu_log(" -T # or -T #,# or -T #/#\n");
     bu_log("		Tolerance: distance or distance,angular or distance/angular\n");
-    bu_log(" -l #		Set lighting model rendering style\n");
+    bu_log(" -l #		Set lighting model rendering style (default is 0)\n");
     bu_log(" -U #		Use air if # is greater than 0\n");
     bu_log(" -x #		librt debug flags\n");
     bu_log(" -N #		NMG debug flags\n");
