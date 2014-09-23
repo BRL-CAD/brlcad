@@ -40,6 +40,7 @@
 #endif
 #include <time.h>
 
+#include "bin.h"
 #include "bio.h"
 
 #define BU_CMD_NULL (int (*)(void *, int, const char **))NULL
