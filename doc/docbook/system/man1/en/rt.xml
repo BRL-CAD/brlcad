@@ -278,7 +278,7 @@
       <varlistentry>
 	<term><option>-p #</option></term>
 	<listitem>
-	  <para>Sets the perspective, in degrees, ranging  0 &lt; = # &lt; 180 .</para>
+	  <para>sets the perspective, in degrees, with 0 &lt; = # &lt; 180</para>
 	</listitem>
       </varlistentry>
 
