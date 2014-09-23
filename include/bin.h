@@ -34,6 +34,14 @@
 #ifndef BIN_H
 #define BIN_H
 
+/* make sure this header always comes after bio.h due to system header
+ * ordering requirements.  this is mostly a windows issue, but we want
+ * to detect the issue early.
+ */
+#if defined(BIO_H)
+#  error "The header #include for bio.h must come after bin.h for portability reasons."
+#endif
+
 /* Do not rely on common.h's HAVE_* defines.  Do not include the
  * common.h header.  This is a stand-alone portability header intended
  * to be independent of BRL-CAD and the BRL-CAD build system, reusable
