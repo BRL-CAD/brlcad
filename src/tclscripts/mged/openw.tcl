@@ -181,7 +181,7 @@ if {![info exists mged_default(zbuffer)]} {
 }
 
 if {![info exists mged_default(lighting)]} {
-    set mged_default(lighting) 0
+    set mged_default(lighting) 1
 }
 
 if {![info exists mged_default(perspective_mode)]} {

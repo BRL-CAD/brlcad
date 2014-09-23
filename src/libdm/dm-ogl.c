@@ -688,6 +688,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     *dmp = dm_ogl; /* struct copy */
     dmp->dm_interp = interp;
     dmp->dm_lineWidth = 1;
+    dmp->dm_light = 1;
     dmp->dm_bytes_per_pixel = sizeof(GLuint);
     dmp->dm_bits_per_channel = 8;
     bu_vls_init(&(dmp->dm_log));
