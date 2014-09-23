@@ -44,16 +44,7 @@
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define NOMINMAX
-#  if defined(HAVE_PROCESS_H)
-#    include <process.h>
-#  endif
-#  if defined(HAVE_WINSOCK2_H)
-#    include <winsock2.h>
-#  endif
 #  include <windows.h>
-#  if !defined(HAVE_WINSOCK2_H) && defined(HAVE_WINSOCK_H)
-#    include <winsock.h>
-#  endif
 #  include <io.h>
 
 #  undef rad1 /* Win32 radio button 1 */

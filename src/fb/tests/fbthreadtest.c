@@ -34,6 +34,9 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+#ifdef HAVE_WINSOCK_H
+#  include <winsock.h>
+#endif
 #include "bio.h"
 
 #include "bu.h"
