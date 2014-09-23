@@ -20,6 +20,8 @@ set(OPENSCENEGRAPH_MINOR_VERSION 2)
 set(OPENSCENEGRAPH_PATCH_VERSION 1)
 set(OPENSCENEGRAPH_SOVERSION 100)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules/Path_Setup.cmake)
+
 # set to 0 when not a release candidate, non zero means that any generated
 # svn tags will be treated as release candidates of given number
 set(OPENSCENEGRAPH_RELEASE_CANDIDATE 0)
