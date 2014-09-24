@@ -40,25 +40,15 @@
 #endif
 #include <time.h>
 
-/* for timeval via windows.h */
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define NOMINMAX
-#  include <winsock.h>
-#  include <windows.h>
-#  include <io.h>
-
-#   undef rad1 /* Win32 radio button 1 */
-#   undef rad2 /* Win32 radio button 2 */
-#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
-#   undef IN
-#   undef OUT
-#endif
-
-#include "bu.h"
-
+#include "bin.h"
+#include "bio.h"
 
 #define BU_CMD_NULL (int (*)(void *, int, const char **))NULL
 
+#include "bu/defines.h"
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 /**
  * Generic keyword-to-command callback interface intended for use with

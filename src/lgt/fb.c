@@ -42,7 +42,7 @@ fb_Setup(char *file, int size)
 	file = "/dev/debug";
     prnt_Event( "Opening device..." );
 
-    if (((fbiop = fb_open(file[0] == '\0' ? NULL : file, size, size)) == FBIO_NULL) ||
+    if (((fbiop = fb_open(file[0] == '\0' ? NULL : file, size, size)) == FB_NULL) ||
 	(fb_ioinit( fbiop ) == -1) ||
 	(fb_wmap( fbiop, COLORMAP_NULL ) == -1))
 	return	0;

@@ -31,8 +31,12 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
 
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 #define RED 0
 #define GRN 1

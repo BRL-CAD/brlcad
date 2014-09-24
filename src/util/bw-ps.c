@@ -30,7 +30,8 @@
 #include <time.h>	/* for ctime() */
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 
 #define DEFAULT_SIZE 6.75		/* default output size in inches */
 #define MAX_BYTES (64*128)	/* max bytes per image chunk */

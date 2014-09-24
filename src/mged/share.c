@@ -27,11 +27,8 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 
@@ -117,7 +114,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
     }
 
     FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l)
-	if (BU_STR_EQUAL(argv[2], bu_vls_addr(&dlp1->dml_dmp->dm_pathName)))
+	if (BU_STR_EQUAL(argv[2], bu_vls_addr(dm_get_pathname(dlp1->dml_dmp))))
 	    break;
 
     if (dlp1 == &head_dm_list) {
@@ -130,7 +127,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 
     if (!uflag) {
 	FOR_ALL_DISPLAYS(dlp2, &head_dm_list.l)
-	    if (BU_STR_EQUAL(argv[3], bu_vls_addr(&dlp2->dml_dmp->dm_pathName)))
+	    if (BU_STR_EQUAL(argv[3], bu_vls_addr(dm_get_pathname(dlp2->dml_dmp))))
 		break;
 
 	if (dlp2 == &head_dm_list) {
@@ -170,8 +167,8 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	case 'd':
 	case 'D':
 	    {
-		struct dm *dmp1;
-		struct dm *dmp2 = (struct dm *)NULL;
+		dm *dmp1;
+		dm *dmp2 = (dm *)NULL;
 
 		dmp1 = dlp1->dml_dmp;
 		if (dlp2 != (struct dm_list *)NULL)
@@ -434,13 +431,13 @@ share_dlist(struct dm_list *dlp2)
 {
     struct dm_list *dlp1;
 
-    if (!dlp2->dml_dmp->dm_displaylist)
+    if (!dm_get_displaylist(dlp2->dml_dmp))
 	return;
 
     FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l) {
 	if (dlp1 != dlp2 &&
-	    dlp1->dml_dmp->dm_type == dlp2->dml_dmp->dm_type &&
-	    !bu_vls_strcmp(&dlp1->dml_dmp->dm_dName, &dlp2->dml_dmp->dm_dName)) {
+	    dm_get_type(dlp1->dml_dmp) == dm_get_type(dlp2->dml_dmp) &&
+	    !bu_vls_strcmp(dm_get_dname(dlp1->dml_dmp), dm_get_dname(dlp2->dml_dmp))) {
 	    if (dm_share_dlist(dlp1->dml_dmp, dlp2->dml_dmp) == TCL_OK) {
 		struct bu_vls vls = BU_VLS_INIT_ZERO;
 

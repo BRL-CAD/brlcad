@@ -26,7 +26,6 @@
 #ifdef HAVE_TERMIO_H
 #  include <termio.h>
 #endif
-#include "bio.h"
 
 #include "fb.h"
 

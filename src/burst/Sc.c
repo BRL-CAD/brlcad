@@ -70,7 +70,7 @@
 #  undef VMIN
 #endif
 
-#include "bu.h"
+#include "bu/str.h"
 
 #include "./Sc.h"
 

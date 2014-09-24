@@ -37,6 +37,9 @@
 #  include "tk.h"
 #endif
 
+/* TODO - find more minimal Windows includes, if possible? */
+#include "bin.h"
+#include "bio.h"
 
 #if !defined(HAVE_TK) && !defined(TK_WINDOW_TYPEDEF)
 typedef void *Tk_Window;

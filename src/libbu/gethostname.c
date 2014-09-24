@@ -24,8 +24,8 @@
 #  include <winsock.h>
 #endif
 
-#include "bio.h"
 #include "bin.h"
+#include "bio.h"
 
 #include "bu/log.h"
 #include "bu/str.h"

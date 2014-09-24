@@ -23,7 +23,6 @@
 #include <string.h>
 
 #include "analyze.h"
-#include "bu.h"
 
 int
 parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, struct bu_vls *result_str, int *num_densities)

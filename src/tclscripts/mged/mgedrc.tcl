@@ -195,7 +195,7 @@ proc dump_mged_state {fd} {
     puts $fd "# the geometry, it may cause the machine to thrash."
     puts $fd "set mged_default(dlist) $mged_gui($id,dlist)"
     puts $fd ""
-    puts $fd "# Display manager type (X or possibly ogl)"
+    puts $fd "# Display manager type (X, ogl, wgl, osgl, etc.)"
     puts $fd "set mged_default(dm_type) $mged_gui($id,dtype)"
     puts $fd ""
     puts $fd "# Sets the type of command line editing (emacs or vi)"
@@ -215,14 +215,14 @@ proc dump_mged_state {fd} {
     puts $fd "set mged_default(zclip) $mged_gui($id,zclip)"
     puts $fd ""
     puts $fd "# zbuffer"
-    if { $mged_gui($id,dtype) == "ogl" } {
+    if { $mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "osgl" } {
 	puts $fd "set mged_default(zbuffer) $mged_gui($id,zbuffer)"
     } else {
 	puts $fd "set mged_default(zbuffer) $mged_default(zbuffer)"
     }
     puts $fd ""
     puts $fd "# lighting"
-    if { $mged_gui($id,dtype) == "ogl" } {
+    if { $mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "osgl" } {
 	puts $fd "set mged_default(lighting) $mged_gui($id,lighting)"
     } else {
 	puts $fd "set mged_default(lighting) $mged_default(lighting)"

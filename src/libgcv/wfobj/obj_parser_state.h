@@ -24,7 +24,7 @@
 #include "common.h"
 
 #include "obj_parser.h"
-#include "bu.h"
+#include "bu/str.h"
 
 #include <memory>
 #include <string>

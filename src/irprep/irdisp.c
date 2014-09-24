@@ -27,14 +27,15 @@
 #include "common.h"
 
 #include<stdio.h>
-#include <stdlib.h>
+#include<stdlib.h>
+#include<limits.h>
 #include<string.h>
 #include<math.h>
 #include<X11/Xlib.h>
 #include<X11/Xutil.h>
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/str.h"
 
 int
 main(void)

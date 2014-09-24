@@ -29,9 +29,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "libtermio.h"
 
@@ -47,7 +48,7 @@ ColorMap old_map;
 ColorMap cm;
 
 static char *framebuffer = NULL;
-static FBIO *fbp;
+static fb *fbp;
 static int scr_height;
 static int scr_width;
 
@@ -80,7 +81,7 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FBIO_NULL) {
+    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FB_NULL) {
 	fprintf(stderr, "fbcolor:  fb_open(%s) failure\n", framebuffer);
 	return 1;
     }

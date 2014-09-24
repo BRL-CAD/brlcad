@@ -126,6 +126,10 @@ do
                                   shift;;
      --disable-libz)                options="$options -DBRLCAD_ZLIB=SYSTEM";
                                   shift;;
+     --enable-freetype)                options="$options -DBRLCAD_FREETYPE=BUNDLED";
+                                  shift;;
+     --disable-freetype)                options="$options -DBRLCAD_FREETYPE=SYSTEM";
+                                  shift;;
      --enable-termlib)                options="$options -DBRLCAD_TERMLIB=BUNDLED";
                                   shift;;
      --disable-termlib)                options="$options -DBRLCAD_TERMLIB=SYSTEM";
@@ -194,9 +198,17 @@ do
                                   shift;;
      --disable-vds)                options="$options -DBRLCAD_VDS=SYSTEM";
                                   shift;;
+     --enable-openscenegraph)                options="$options -DBRLCAD_OSG=BUNDLED";
+                                  shift;;
+     --disable-openscenegraph)                options="$options -DBRLCAD_OSG=SYSTEM";
+                                  shift;;
      --enable-gdiam)                options="$options -DBRLCAD_GDIAM=BUNDLED";
                                   shift;;
      --disable-gdiam)                options="$options -DBRLCAD_GDIAM=SYSTEM";
+                                  shift;;
+     --enable-bullet)                options="$options -DBRLCAD_BULLET=BUNDLED";
+                                  shift;;
+     --disable-bullet)                options="$options -DBRLCAD_BULLET=SYSTEM";
                                   shift;;
      --prefix=*)   	          inputstr=$1;
 				  options="$options -DCMAKE_INSTALL_PREFIX=${inputstr#--prefix=}";

@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 
-#include "bu.h"
+#include "bu/defines.h"
 
 fastf_t brlabs(const fastf_t a)
 {

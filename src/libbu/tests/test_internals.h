@@ -22,7 +22,9 @@
 #ifndef LIBBU_TESTS_TEST_INTERNALS_H
 #define LIBBU_TESTS_TEST_INTERNALS_H
 
-#include "bu.h"
+#include "bu/bitv.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 __BEGIN_DECLS
 #ifndef BU_TESTS_EXPORT

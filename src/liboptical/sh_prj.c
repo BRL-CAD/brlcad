@@ -38,7 +38,6 @@
 #include <sys/stat.h>
 #include <math.h>
 
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"

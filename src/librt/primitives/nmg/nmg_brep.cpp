@@ -29,7 +29,8 @@
 #include "rtgeom.h"
 #include "wdb.h"
 #include "bn.h"
-#include "bu.h"
+#include "bu/ptbl.h"
+#include "bu/malloc.h"
 
 /**
  *  Routine to create a planar NURBS surface from 4 points

@@ -1071,6 +1071,13 @@ BN_EXPORT extern void bn_wrt_point_direc(mat_t out,
 					 const vect_t direc,
 					 const struct bn_tol *tol);
 
+
+/* Matrix stuff from MGED's dozoom.c - somewhat unfinished,
+ * judging by the comments.  Can probably be simplified/combined */
+BN_EXPORT extern void persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff);
+BN_EXPORT extern void mike_persp_mat(fastf_t *pmat, const fastf_t *eye);
+BN_EXPORT extern void deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye);
+
 /** @} */
 
 
@@ -4028,6 +4035,10 @@ struct bn_vlist  {
 	_vp->cmd[_vp->nused++] = BN_VLIST_LINE_WIDTH; \
 }
 
+
+BN_EXPORT extern int bn_vlist_cmd_cnt(struct bn_vlist *vlist);
+BN_EXPORT extern int bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax);
+
 /**
  * For plotting, a way of separating plots into separate color vlists:
  * blocks of vlists, each with an associated color.
@@ -4373,6 +4384,38 @@ BN_EXPORT extern int bn_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_
  *@return 1 if calculation failed, e.g. because pts is a NULL-pointer
  */
 BN_EXPORT extern int bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp);
+
+/*----------------------------------------------------------------------*/
+
+/* clip.c */
+
+/**
+ * clip a 2-D integer line seg against the size of the display
+ */
+BN_EXPORT extern int bn_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2, fastf_t clip_min, fastf_t clip_max);
+
+/*
+ * Clip a ray against a rectangular parallelepiped (RPP)
+ * that has faces parallel to the coordinate planes (a clipping RPP).
+ * The RPP is defined by a minimum point and a maximum point.
+ *
+ * Returns -
+ * 0 if ray does not hit RPP,
+ * !0 if ray hits RPP.
+ *
+ * Implicit Return -
+ * if !0 was returned, "a" and "b" have been clipped to the RPP.
+ */
+BN_EXPORT extern int bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max);
+
+
+/* TODO - find another, more appropriate home for these... may just have to
+ * duplicate the logic in libdm and libged */
+#include "dm/bview.h"
+BN_EXPORT void adc_model_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax);
+BN_EXPORT void adc_grid_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax);
+BN_EXPORT void adc_view_to_adc_grid(struct bview_adc_state *adcs, mat_t model2view);
+BN_EXPORT void adc_reset(struct bview_adc_state *adcs, mat_t view2model, mat_t model2view);
 
 #endif /* BN_H */
 

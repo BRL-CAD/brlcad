@@ -46,11 +46,13 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "bio.h"
+
+#include "bu/getopt.h"
+#include "bu/log.h"
+
 #include "icv.h"
-#include "bu.h"
 
 int inx=512, iny=512;
 char *out_file = NULL;

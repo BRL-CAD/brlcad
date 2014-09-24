@@ -27,9 +27,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
+#include "bu/getopt.h"
 #include "rtgeom.h"
 
 #include "./ged_private.h"
@@ -38,7 +38,7 @@ HIDDEN int
 move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new_name)
 {
     int i;
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -172,11 +172,11 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
     if (!nflag) {
 	/* Change object name anywhere in the display list path. */
-	for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
+	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
 	    int first = 1;
 	    int found = 0;
 	    struct bu_vls new_path = BU_VLS_INIT_ZERO;
-	    char *dupstr = strdup(bu_vls_addr(&gdlp->gdl_path));
+	    char *dupstr = strdup(bu_vls_addr(&gdlp->dl_path));
 	    char *tok = strtok(dupstr, "/");
 
 	    while (tok) {
@@ -200,8 +200,8 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	    }
 
 	    if (found) {
-		bu_vls_free(&gdlp->gdl_path);
-		bu_vls_printf(&gdlp->gdl_path, "%s", bu_vls_addr(&new_path));
+		bu_vls_free(&gdlp->dl_path);
+		bu_vls_printf(&gdlp->dl_path, "%s", bu_vls_addr(&new_path));
 	    }
 
 	    free((void *)dupstr);
