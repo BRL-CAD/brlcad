@@ -34,7 +34,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include "bin.h"
+#include "bnetwork.h"
 #include "bio.h"
 
 #include "bu/cv.h"

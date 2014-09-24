@@ -52,7 +52,7 @@
 #  include <poll.h>
 #endif
 
-#include "bselect.h"
+#include "bsocket.h"
 
 #include "tcl.h"
 #ifdef HAVE_TK

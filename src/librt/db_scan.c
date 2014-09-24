@@ -30,7 +30,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "bu/units.h"
 #include "vmath.h"

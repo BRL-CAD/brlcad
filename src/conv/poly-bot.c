@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "bin.h"
+#include "bnetwork.h"
 #include "bio.h"
 
 #include "vmath.h"

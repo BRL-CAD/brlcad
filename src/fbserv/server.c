@@ -33,7 +33,7 @@
 #if defined(HAVE_SYS_TIME_H)
 #  include <sys/time.h>
 #endif
-#include "bselect.h"
+#include "bsocket.h"
 
 #include "bu/color.h"
 #include "fb.h"

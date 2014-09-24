@@ -40,7 +40,7 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#include "bselect.h"
+#include "bsocket.h"
 
 #include "bu/getopt.h"
 #include "bu/log.h"

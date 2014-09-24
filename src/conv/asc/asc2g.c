@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "bin.h"
+#include "bnetwork.h"
 #include "bio.h"
 
 #include "vmath.h"

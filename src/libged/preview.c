@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
-#include "bselect.h"
+#include "bsocket.h"
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"

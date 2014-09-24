@@ -20,7 +20,7 @@
 
 #include "common.h"
 
-#include "bin.h"
+#include "bnetwork.h"
 #include "bio.h"
 
 #include "bu/log.h"

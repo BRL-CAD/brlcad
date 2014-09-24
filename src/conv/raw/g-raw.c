@@ -34,7 +34,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#include "bin.h"
+#include "bnetwork.h"
 #include "bio.h"
 
 /* interface headers */

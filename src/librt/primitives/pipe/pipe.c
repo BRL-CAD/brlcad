@@ -35,7 +35,7 @@
 
 #include <float.h>
 #include <math.h>
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "tcl.h"
 

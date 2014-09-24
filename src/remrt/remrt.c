@@ -49,7 +49,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#include "bselect.h"
+#include "bsocket.h"
 
 /* FIXME: is this basically FD_COPY()? */
 #ifndef FD_MOVE
