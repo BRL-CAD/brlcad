@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include "bu/log.h"
 
 
 int

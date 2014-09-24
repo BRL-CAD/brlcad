@@ -33,6 +33,10 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/cv.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 #define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */

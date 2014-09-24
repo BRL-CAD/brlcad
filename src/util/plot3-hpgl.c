@@ -33,6 +33,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/log.h"
+#include "bu/str.h"
+#include "bu/cv.h"
 
 
 #define ASPECT (9.8/7.1)

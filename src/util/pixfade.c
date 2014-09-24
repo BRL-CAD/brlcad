@@ -48,6 +48,10 @@
 #include <stdlib.h>
 
 #include "bio.h"
+
+#include "bu/getopt.h"
+#include "bu/log.h"
+
 #include "icv.h"
 
 int inx=512, iny=512;

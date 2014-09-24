@@ -29,8 +29,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
-#include "bio.h"
 
+#include "bio.h"   /* for isatty */
+#include "bu/getopt.h"
+#include "bu/str.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "plot3.h"
 #include "bn.h"

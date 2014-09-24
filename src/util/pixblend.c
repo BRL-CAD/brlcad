@@ -42,7 +42,9 @@
 #include <time.h>
 #include "bio.h"
 
-
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 static char *f1_name;
 static char *f2_name;

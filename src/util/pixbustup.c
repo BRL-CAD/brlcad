@@ -30,7 +30,9 @@
 #include <stdlib.h>
 #include "bio.h"
 
-
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/file.h"
 
 int infd;
 unsigned char *in1;

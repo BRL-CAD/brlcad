@@ -32,7 +32,8 @@
 #include <string.h>
 #include "bio.h"
 
-
+#include "bu/getopt.h"
+#include "bu/log.h"
 
 /* declarations to support use of bu_getopt() system call */
 char options[] = "hs:w:n:d";

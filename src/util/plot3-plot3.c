@@ -31,7 +31,9 @@
 #include <string.h>
 #include "bio.h"
 
-
+#include "bu/str.h"
+#include "bu/log.h"
+#include "bu/cv.h"
 
 struct uplot {
     int targ;	/* type of args */

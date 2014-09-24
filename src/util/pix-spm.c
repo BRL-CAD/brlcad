@@ -29,6 +29,9 @@
 #include <stdlib.h>
 
 #include "spm.h"
+
+#include "bu/log.h"
+
 #include "fb.h"
 
 

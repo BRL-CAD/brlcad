@@ -46,7 +46,9 @@
 #include <string.h>
 #include "bio.h"
 
-
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 #define NFILES 4 /* Two in, two out */
 #define EL_WIDTH 32 /* Max width of one element */

@@ -27,9 +27,12 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include "bio.h"
 
 #include "vmath.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "fb.h"
 

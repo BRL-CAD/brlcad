@@ -36,6 +36,9 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
+#include "bu/str.h"
+#include "bu/log.h"
 
 
 static char *f1_name;

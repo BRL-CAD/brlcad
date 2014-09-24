@@ -37,9 +37,12 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#include "bio.h"
 
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/file.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "fb.h"
 

@@ -29,6 +29,11 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/rb.h"
+#include "bu/malloc.h"
 
 
 struct pixel {

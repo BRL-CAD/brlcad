@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "bu/log.h"
 
 
 #define RINTLUM (79)

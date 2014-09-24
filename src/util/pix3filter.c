@@ -31,7 +31,10 @@
 #include <string.h>
 #include "bio.h"
 
-
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 #define MAXLINE (8*1024)
 #define DEFAULT_WIDTH 512

@@ -43,9 +43,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "fb.h"
 

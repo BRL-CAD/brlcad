@@ -31,7 +31,7 @@
 
 #include "vmath.h"
 #include "plot3.h"
-
+#include "bu/log.h"
 
 int
 main(int argc, char *argv[])

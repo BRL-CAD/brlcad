@@ -30,7 +30,8 @@
 #include <stdlib.h>
 #include "bio.h"
 
-
+#include "bu/str.h"
+#include "bu/log.h"
 
 #define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */

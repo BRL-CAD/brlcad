@@ -28,7 +28,8 @@
 #include <stdlib.h>
 #include "bio.h"
 
-
+#include "bu/getopt.h"
+#include "bu/log.h"
 
 FILE *out1;
 FILE *out2;

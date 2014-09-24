@@ -35,6 +35,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/str.h"
+#include "bu/log.h"
 
 int
 main(int argc, char *argv[])

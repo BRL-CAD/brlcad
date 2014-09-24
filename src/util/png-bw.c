@@ -32,6 +32,9 @@
 #include <png.h>
 #include "bio.h"
 
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "bn.h"
 

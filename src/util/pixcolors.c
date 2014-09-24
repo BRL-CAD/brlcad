@@ -31,9 +31,12 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <limits.h>
 #include "bio.h"
 
-
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 
 /* declarations to support use of bu_getopt() system call */
 char options[] = "v";
