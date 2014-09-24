@@ -26,6 +26,9 @@
 
 #include "common.h"
 
+#include "bin.h"
+#include "bio.h"
+
 #include <GL/gl.h>
 
 #include "tcl.h"
