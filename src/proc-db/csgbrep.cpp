@@ -30,7 +30,7 @@
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
 
-#include "bio.h"
+#include "bsocket.h"
 
 #ifdef __cplusplus
 extern "C" {

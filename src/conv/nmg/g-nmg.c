@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
+#include "bsocket.h"
 
 /* interface headers */
 #include "vmath.h"

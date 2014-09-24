@@ -28,7 +28,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/str.h"
 #include "bu/log.h"

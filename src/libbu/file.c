@@ -35,7 +35,7 @@
 #  include <grp.h>
 #endif
 
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/debug.h"
 #include "bu/file.h"

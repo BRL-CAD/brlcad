@@ -34,7 +34,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/getopt.h"
 #include "bu/rb.h"

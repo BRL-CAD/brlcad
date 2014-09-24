@@ -31,7 +31,7 @@
 # include <stdint.h>
 #endif
 
-#include "bio.h"
+#include "bsocket.h"
 
 #include "vmath.h"
 #include "rtgeom.h"

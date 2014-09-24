@@ -53,7 +53,7 @@
 #include <string.h>
 #include <math.h>
 #include <setjmp.h>
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "bu/cv.h"
 #include "bu/parallel.h"

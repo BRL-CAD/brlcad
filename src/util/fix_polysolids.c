@@ -49,7 +49,7 @@
 
 #include "common.h"
 
-#include <bio.h>
+#include <bsocket.h>
 #include <math.h>
 #include <string.h>
 

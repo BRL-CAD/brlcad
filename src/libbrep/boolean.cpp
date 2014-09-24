@@ -35,7 +35,7 @@
 #include <stdexcept>
 
 #include "vmath.h"
-#include "bio.h"
+#include "bsocket.h"
 #include "bu/log.h"
 #include "brep.h"
 #include "raytrace.h"

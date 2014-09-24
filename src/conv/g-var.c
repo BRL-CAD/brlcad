@@ -29,7 +29,7 @@
 /* system headers */
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #ifdef HAVE_STDINT_H
 #  include <stdint.h>

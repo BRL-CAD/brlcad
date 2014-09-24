@@ -4,7 +4,7 @@
 #include <map>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu_arg_parse.h"
 #include "raytrace.h"

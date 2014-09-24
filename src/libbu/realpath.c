@@ -23,7 +23,7 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/file.h"
 #include "bu/malloc.h"

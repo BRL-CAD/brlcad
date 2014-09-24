@@ -26,8 +26,8 @@
 
 #include "common.h"
 
-#include "bin.h"
-#include "bio.h"
+#include "bnetwork.h"
+#include "bsocket.h"
 
 #include <GL/gl.h>
 

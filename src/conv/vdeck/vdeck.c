@@ -63,7 +63,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/parallel.h"
 #include "bu/sort.h"

@@ -29,7 +29,7 @@
 
 #include <stdlib.h>
 #include <sys/stat.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "vmath.h"
 #include "bu/getopt.h"

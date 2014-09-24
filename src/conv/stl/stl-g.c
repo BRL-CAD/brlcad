@@ -34,8 +34,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include "bin.h"
-#include "bio.h"
+#include "bnetwork.h"
+#include "bsocket.h"
 
 #include "bu/cv.h"
 #include "bu/getopt.h"

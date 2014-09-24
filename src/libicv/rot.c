@@ -40,7 +40,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/str.h"
 #include "bu/log.h"

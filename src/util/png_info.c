@@ -29,7 +29,7 @@
 #include <math.h>
 #include <zlib.h>
 #include <png.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "vmath.h"
 #include "bu/log.h"

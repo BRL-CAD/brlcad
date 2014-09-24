@@ -34,8 +34,8 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#include "bin.h"
-#include "bio.h"
+#include "bnetwork.h"
+#include "bsocket.h"
 
 /* interface headers */
 #include "bu/getopt.h"

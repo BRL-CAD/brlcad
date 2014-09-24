@@ -26,7 +26,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <regex.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "vmath.h"
 #include "raytrace.h"

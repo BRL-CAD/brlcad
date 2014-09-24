@@ -28,7 +28,7 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/malloc.h"
 #include "bu/log.h"

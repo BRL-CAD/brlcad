@@ -32,7 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/log.h"
 #include "bu/malloc.h"

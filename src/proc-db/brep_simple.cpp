@@ -56,7 +56,7 @@
 
 #include "twistedcube.h"
 
-#include "bio.h"
+#include "bsocket.h"
 
 #ifdef __cplusplus
 extern "C" {

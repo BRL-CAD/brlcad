@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include "bio.h"
+#include "bsocket.h"
 #include <assert.h>
 #include <vector>
 

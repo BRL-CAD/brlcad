@@ -35,7 +35,7 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/getopt.h"
 #include "bu/log.h"

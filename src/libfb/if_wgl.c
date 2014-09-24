@@ -37,8 +37,8 @@
 
 #ifdef IF_WGL
 
-#include "bin.h"
-#include "bio.h"
+#include "bnetwork.h"
+#include "bsocket.h"
 
 #include <stdlib.h>
 #include <ctype.h>

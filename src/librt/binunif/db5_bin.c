@@ -35,7 +35,7 @@
 #ifdef HAVE_ARPA_INET_H
 # include <arpa/inet.h> /* for ntohl/htonl */
 #endif
-#include "bio.h"
+#include "bsocket.h"
 
 
 #include "bu/cv.h"

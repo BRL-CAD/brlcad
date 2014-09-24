@@ -23,7 +23,7 @@
 #include <cstdlib>
 #include <sys/stat.h>
 #include <cstring> // for strdup
-#include "bio.h"
+#include "bsocket.h"
 
 #include "vmath.h"
 #include "bu/log.h"

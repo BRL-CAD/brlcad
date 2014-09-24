@@ -34,7 +34,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "vmath.h"
 #include "nmg.h"

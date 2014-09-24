@@ -69,8 +69,8 @@ endif(WIN32)
 # headers used by multiple packages but still considered private.
 # public headers should NOT include these headers.
 set(noinst_HEADERS
-  bin.h
-  bio.h
+  bnetwork.h
+  bsocket.h
   brlcad_ident.h
   brlcad_version.h
   bselect.h

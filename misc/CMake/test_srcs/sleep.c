@@ -4,7 +4,7 @@
 #  include <unistd.h>
 #endif
 
-#include "bio.h"
+#include "bsocket.h"
 
 int main(void) {
   sleep(1);

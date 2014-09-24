@@ -57,7 +57,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/file.h"
 #include "bu/log.h"

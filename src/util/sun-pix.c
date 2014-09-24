@@ -28,7 +28,7 @@
 
 #include <stdlib.h>
 #include <limits.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "vmath.h"
 

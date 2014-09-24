@@ -28,7 +28,7 @@
 #include <stdlib.h> /* for atof() */
 #include <math.h>
 #include <time.h>	/* for ctime() */
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/getopt.h"
 #include "bu/log.h"

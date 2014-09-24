@@ -41,7 +41,7 @@
 
 #include <stddef.h>
 #include <math.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/cv.h"
 #include "vmath.h"

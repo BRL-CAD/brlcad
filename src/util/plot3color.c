@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "vmath.h"
 #include "plot3.h"

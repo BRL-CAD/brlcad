@@ -8,7 +8,7 @@
  */
 
 #include "tcl.h"
-#include "bio.h"
+#include "bsocket.h"
 #include <locale.h>
 
 /*

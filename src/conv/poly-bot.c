@@ -30,8 +30,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "bin.h"
-#include "bio.h"
+#include "bnetwork.h"
+#include "bsocket.h"
 
 #include "vmath.h"
 #include "bu/file.h"

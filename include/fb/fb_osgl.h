@@ -54,7 +54,7 @@
 #  include <sys/wait.h>
 #endif
 
-#include "bio.h"
+#include "bsocket.h"
 
 #ifdef __cplusplus
 extern "C" {

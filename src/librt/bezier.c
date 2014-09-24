@@ -34,7 +34,7 @@
 
 #include "common.h"
 
-#include "bio.h"
+#include "bsocket.h"
 
 #include "vmath.h"
 #include "raytrace.h"

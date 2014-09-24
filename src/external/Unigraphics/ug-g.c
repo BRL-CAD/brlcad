@@ -31,7 +31,7 @@
 #include <libexc.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "db.h"
 #include "vmath.h"

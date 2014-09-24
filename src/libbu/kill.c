@@ -22,7 +22,7 @@
 
 /* system headers */
 #include <signal.h>
-#include "bio.h"
+#include "bsocket.h"
 
 /* bu headers */
 #include "bu/parallel.h"

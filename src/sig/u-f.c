@@ -32,7 +32,7 @@
 #include <stdlib.h> /* for atof() */
 #include <math.h>
 #include <string.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/log.h"
 #include "bu/str.h"

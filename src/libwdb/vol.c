@@ -24,7 +24,7 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "vmath.h"
 #include "bn.h"

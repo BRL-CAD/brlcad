@@ -34,7 +34,7 @@
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/file.h"
 #include "bu/getopt.h"

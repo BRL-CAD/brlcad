@@ -25,7 +25,7 @@
 #include <string.h>
 #include <math.h>
 #include <string.h>
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "bu/cv.h"
 #include "vmath.h"

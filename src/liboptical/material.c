@@ -37,7 +37,7 @@
 #  include <sys/param.h>
 #endif
 
-#include "bio.h"
+#include "bsocket.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"

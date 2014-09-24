@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "bio.h"
+#include "bsocket.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "icv.h"

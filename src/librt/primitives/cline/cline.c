@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <math.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "tcl.h"
 #include "bu/cv.h"

@@ -62,7 +62,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <regex.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bn.h"
 #include "db.h"

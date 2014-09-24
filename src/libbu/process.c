@@ -22,7 +22,7 @@
 
 /* system headers */
 #include <sys/types.h>
-#include "bio.h"
+#include "bsocket.h"
 
 /* common headers */
 #include "bu/parallel.h"

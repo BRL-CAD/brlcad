@@ -31,7 +31,7 @@
 #include <math.h>
 #include <string.h>
 #include <errno.h>
-#include "bio.h"
+#include "bsocket.h"
 
 /* interface headers */
 #include "bu/getopt.h"

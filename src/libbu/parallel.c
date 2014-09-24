@@ -113,7 +113,7 @@
 #  define rt_thread_t HANDLE
 #endif
 
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/debug.h"
 #include "bu/log.h"

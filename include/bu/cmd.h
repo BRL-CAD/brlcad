@@ -38,7 +38,7 @@
 #include <time.h>
 
 #include "bselect.h" /* for timeval */
-#include "bio.h"
+#include "bsocket.h"
 
 #define BU_CMD_NULL (int (*)(void *, int, const char **))NULL
 

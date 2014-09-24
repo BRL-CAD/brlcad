@@ -35,7 +35,7 @@
 #include <ctype.h>
 #include <regex.h>
 #include <errno.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "vmath.h"
 #include "bu/getopt.h"

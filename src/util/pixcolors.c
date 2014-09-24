@@ -32,7 +32,7 @@
 
 #include <stdlib.h>
 #include <limits.h>
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/color.h"
 #include "bu/getopt.h"

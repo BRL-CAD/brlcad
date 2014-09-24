@@ -33,7 +33,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
+#include "bsocket.h"
 
 /* Public Headers */
 #include "vmath.h"

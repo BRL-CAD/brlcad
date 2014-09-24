@@ -31,7 +31,7 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include "bio.h"
+#include "bsocket.h"
 
 
 #include "bu/parallel.h"

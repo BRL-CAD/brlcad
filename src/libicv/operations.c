@@ -29,7 +29,7 @@
 
 #include "icv.h"
 
-#include "bio.h"
+#include "bsocket.h"
 #include "bu/log.h"
 #include "bu/magic.h"
 #include "vmath.h"
