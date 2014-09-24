@@ -30,7 +30,6 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <ctype.h>
-#include "bin.h"
 
 #include "bu/cv.h"
 #include "bu/getopt.h"
