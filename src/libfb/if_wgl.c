@@ -37,6 +37,9 @@
 
 #ifdef IF_WGL
 
+#include "bin.h"
+#include "bio.h"
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
