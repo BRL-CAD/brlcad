@@ -43,7 +43,6 @@
 #include "mater.h"
 #include "nmg.h"
 #include "rtgeom.h"
-/*#include "dg.h"*/
 #include "nurb.h"
 #include "solid.h"
 #include "dm.h"
