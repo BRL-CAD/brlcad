@@ -35,12 +35,9 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-#ifdef HAVE_SYS_SELECT_H
-#  include <sys/select.h> /* for timeal */
-#endif
 #include <time.h>
 
-#include "bin.h"
+#include "bselect.h" /* for timeval */
 #include "bio.h"
 
 #define BU_CMD_NULL (int (*)(void *, int, const char **))NULL
