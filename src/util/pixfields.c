@@ -32,7 +32,6 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 
 
 #define DEFAULT_WIDTH 512

@@ -52,7 +52,6 @@
 #include <errno.h>
 #include <time.h>
 
-#include "bu.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "plot3.h"

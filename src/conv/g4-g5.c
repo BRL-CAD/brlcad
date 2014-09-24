@@ -42,8 +42,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/debug.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "rtgeom.h"

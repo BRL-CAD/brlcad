@@ -28,8 +28,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "bio.h"
-
-#include "bu.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
 
 char noname[] = "(noname)";
 char *progname = noname;

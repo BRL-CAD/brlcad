@@ -36,6 +36,9 @@
 #include "./Sc.h"
 #include "./extern.h"
 
+#include "bu/log.h"
+#include "bu/str.h"
+
 /*
  * Log an RT library event
  */

@@ -38,7 +38,6 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
 
 
 #define MAXBUFBYTES 3*1024*1024	/* max bytes to malloc in buffer space */

@@ -31,8 +31,6 @@
 
 #include "common.h"
 
-#include "bio.h"
-
 #include "solid.h"
 #include "dm/bview.h"
 #include "raytrace.h"

@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
 
 
 /* declarations to support use of bu_getopt() system call */

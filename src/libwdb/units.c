@@ -28,8 +28,8 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/units.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"

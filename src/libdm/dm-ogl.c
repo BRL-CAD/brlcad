@@ -70,7 +70,6 @@
 
 #undef VMIN		/* is used in vmath.h, too */
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"

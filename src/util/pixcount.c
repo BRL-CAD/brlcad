@@ -29,7 +29,6 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 
 
 struct pixel {

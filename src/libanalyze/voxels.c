@@ -29,7 +29,6 @@
 #include "raytrace.h"		/* librt interface definitions */
 
 #include "analyze.h"
-#include "bu.h"
 
 
 /**

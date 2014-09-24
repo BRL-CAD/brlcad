@@ -33,10 +33,8 @@
 #include <map>
 #include <algorithm>
 #include <stdexcept>
-#include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
 
 #include "brep.h"
 #include "raytrace.h"

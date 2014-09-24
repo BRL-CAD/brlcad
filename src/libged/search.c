@@ -34,7 +34,6 @@
 #  include <sys/param.h>
 #endif
 
-#include "bio.h"
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 

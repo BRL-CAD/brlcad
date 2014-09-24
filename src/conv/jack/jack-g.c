@@ -30,7 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"

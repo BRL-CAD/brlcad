@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
 
 
 #define TBAD	0	/* no such command */

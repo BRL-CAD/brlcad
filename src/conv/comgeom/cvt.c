@@ -34,9 +34,9 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bu.h"
 
 
 /* defined in region.c */

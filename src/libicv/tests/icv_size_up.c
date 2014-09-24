@@ -29,7 +29,9 @@
 #include <stdlib.h>
 
 #include "bio.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/getopt.h"
+#include "bu/str.h"
 #include "icv.h"
 
 void usage()

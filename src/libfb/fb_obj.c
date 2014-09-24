@@ -35,7 +35,6 @@
 # include <strings.h>
 #endif
 
-#include "bio.h"
 #include "tcl.h"
 #include "bu/cmd.h"
 #include "bu/color.h"

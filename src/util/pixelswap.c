@@ -29,7 +29,6 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "fb.h"
 
 

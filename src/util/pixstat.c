@@ -40,7 +40,6 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 
 
 #define IBUFSIZE 3*1024		/* Max read size in rgb pixels */

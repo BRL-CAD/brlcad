@@ -35,8 +35,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/units.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "optical.h"

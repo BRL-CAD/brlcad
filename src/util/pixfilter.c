@@ -31,7 +31,6 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 
 
 #define MAXLINE (8*1024)

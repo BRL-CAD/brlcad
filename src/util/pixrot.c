@@ -37,7 +37,6 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
 
 
 static const char usage[] = "\

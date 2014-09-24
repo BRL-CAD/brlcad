@@ -32,7 +32,8 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 
 extern FILE *infp;
 

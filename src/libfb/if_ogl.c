@@ -77,9 +77,11 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
 #include "fb_private.h"
 #include "fb.h"
 #include "fb/fb_ogl.h"

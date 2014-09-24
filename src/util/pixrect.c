@@ -29,7 +29,6 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "icv.h"
 
 int outx=0, outy=0;		/* Number of pixels (width, height) in new map */

@@ -35,7 +35,6 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 
 int
 main(int argc, char *argv[])

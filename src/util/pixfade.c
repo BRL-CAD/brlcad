@@ -49,7 +49,6 @@
 
 #include "bio.h"
 #include "icv.h"
-#include "bu.h"
 
 int inx=512, iny=512;
 char *out_file = NULL;

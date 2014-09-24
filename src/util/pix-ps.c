@@ -30,7 +30,6 @@
 #include <time.h> /* for ctime() */
 #include "bio.h"
 
-#include "bu.h"
 
 
 #define DEFAULT_SIZE 6.75	/* default output size in inches */

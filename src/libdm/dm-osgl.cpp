@@ -26,9 +26,6 @@
 #include "common.h"
 
 #ifdef DM_OSGL
-extern "C" {
-#include "bio.h"
-}
 
 #include <string.h>
 #include <stdlib.h>
@@ -49,7 +46,6 @@ extern "C" {
 #include "tk.h"
 #include "tkPlatDecls.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"

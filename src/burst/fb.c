@@ -29,8 +29,8 @@
 #include <memory.h>
 #include <signal.h>
 
+#include "bu/str.h"
 #include "fb.h"
-#include "bu.h"
 
 #include "./burst.h"
 #include "./ascii.h"

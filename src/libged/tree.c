@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"

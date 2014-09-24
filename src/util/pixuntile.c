@@ -31,7 +31,6 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 
 
 size_t out_width = 64;	/* width of input sub-images in pixels (64) */

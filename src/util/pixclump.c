@@ -31,7 +31,6 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
 
 
 #define RED 0

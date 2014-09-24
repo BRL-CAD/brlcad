@@ -32,7 +32,6 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
 #include "bn.h"
 
 const char *usage = "Usage: random [-u] [-g [-c center]] [-s seed] [-v] low high";

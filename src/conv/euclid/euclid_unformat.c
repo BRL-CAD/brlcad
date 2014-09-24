@@ -35,7 +35,6 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "bu.h"
 
 
 #define MAX_PTS	500

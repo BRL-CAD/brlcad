@@ -33,7 +33,6 @@
 
 /* system headers */
 #include <string.h>
-#include "bio.h"
 
 /* interface headers */
 #include "bu/getopt.h"

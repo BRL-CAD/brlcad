@@ -27,8 +27,6 @@
 
 #include <math.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "dm.h"
 #include "dm_private.h"

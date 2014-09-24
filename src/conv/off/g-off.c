@@ -32,7 +32,8 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"

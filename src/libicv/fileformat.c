@@ -27,8 +27,10 @@
 
 #include "bio.h"
 
+#include "bu/str.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
-#include "bu.h"
 #include "vmath.h"
 #include "icv.h"
 

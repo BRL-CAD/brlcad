@@ -27,7 +27,6 @@
 #include <math.h>
 #include <signal.h>
 
-#include "bio.h"
 
 #include "vmath.h"
 #include "rtgeom.h"

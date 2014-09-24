@@ -31,7 +31,6 @@
 #include "bio.h"
 
 #include "fb.h"
-#include "bu.h"
 
 /*
  * system installed RLE reports a re-define, so undef it to quell the

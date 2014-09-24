@@ -42,7 +42,6 @@
 #include <time.h>
 #include "bio.h"
 
-#include "bu.h"
 
 
 static char *f1_name;

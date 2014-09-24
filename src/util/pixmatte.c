@@ -46,7 +46,6 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 
 
 #define NFILES 4 /* Two in, two out */

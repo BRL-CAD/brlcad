@@ -29,7 +29,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <regex.h>
-#include "bio.h"
 
 #include "bu/getopt.h"
 #include "db.h"

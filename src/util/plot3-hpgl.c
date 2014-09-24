@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
 
 
 #define ASPECT (9.8/7.1)

@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
 
 
 int infd;

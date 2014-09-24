@@ -31,7 +31,6 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "plot3.h"
 #include "bn.h"

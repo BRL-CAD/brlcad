@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
 
