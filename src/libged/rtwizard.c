@@ -36,11 +36,10 @@
 #  include <sys/wait.h>
 #endif
 
-#include "bio.h"
 
 #include "tcl.h"
 #include "bu/cmd.h"
-#include "solid.h"
+
 
 #include "./ged_private.h"
 

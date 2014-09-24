@@ -26,10 +26,9 @@
 #include "common.h"
 
 #include <sys/stat.h>  /* for file mode info in WRMODE */
-#include <fcntl.h>
 
 #include "bio.h"
-#include "bu.h"
+#include "bu/log.h"
 #include "icv.h"
 #include "vmath.h"
 

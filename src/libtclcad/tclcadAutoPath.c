@@ -36,7 +36,6 @@
 #  include "tk.h"
 #endif
 
-#include "bu.h"
 #include "tclcad.h"
 
 #define MAX_BUF 2048

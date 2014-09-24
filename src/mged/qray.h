@@ -27,8 +27,8 @@
 #define SEEN_QRAY_H
 
 #include "common.h"
-
-#include "bu.h"
+#include "bu/list.h"
+#include "bu/vls.h"
 
 #define QRAY_BASENAME "query_ray"
 #define QRAY_TEXT (qray_effects == 't' || qray_effects == 'b')

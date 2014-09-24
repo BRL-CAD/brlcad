@@ -27,9 +27,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
 #include "fb.h"
 #include "pkg.h"
 
@@ -45,7 +47,7 @@ int fb_overlay = 0;		/* plot on background, else black with grid */
 int cmap_crunch = 0;	/* Plot values after passing through color map */
 int reverse = 0;		/* highlight chosen line by inverting it */
 char *outframebuffer = NULL;
-FBIO *fbp, *fboutp;
+fb *fbp, *fboutp;
 ColorMap map;
 
 char usage[] = "\

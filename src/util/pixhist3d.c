@@ -33,10 +33,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
+#include "bu/color.h"
+#include "bu/log.h"
 #include "fb.h"
-#include "bu.h"
 
 
 /*
@@ -46,7 +46,7 @@
  */
 #define THRESH 20
 
-FBIO *fbp;
+fb *fbp;
 FILE *fp;
 
 long rxb[256][256], rxg[256][256], bxg[256][256];

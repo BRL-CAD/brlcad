@@ -1391,8 +1391,10 @@ proc rt_check_dest {id win} {
 	    # Assume the user knows what he/she is doing
 	    rt_force_cook_dest $id $env(FB_FILE)
 	} else {
-	    # This should be everywhere by now
-	    rt_force_cook_dest $id "/dev/ogll"
+	    set dm_list [split [dm_list] ',']
+	    set devtype "/dev/"
+	    append devtype [lindex $dm_list 0]
+	    rt_force_cook_dest %id $devtype
 	}
     }
 }

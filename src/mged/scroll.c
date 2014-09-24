@@ -23,13 +23,10 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "tcl.h"
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "ged.h"
 #include "./mged.h"
@@ -300,7 +297,7 @@ scroll_display(int y_top)
     scroll_top = y_top;
     y = y_top;
 
-    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
+    dm_set_line_attr(dmp, mged_variables->mv_linewidth, 0);
 
     for (m = &scroll_array[0]; *m != SCROLL_NULL; m++) {
 	++second_menu;
@@ -312,7 +309,7 @@ scroll_display(int y_top)
 		    if (second_menu) {
 			f = (double)adc_state->adc_dv_x * INV_GED;
 
-			DM_SET_FGCOLOR(dmp,
+			dm_set_fg(dmp,
 				       color_scheme->cs_slider_text2[0],
 				       color_scheme->cs_slider_text2[1],
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -335,7 +332,7 @@ scroll_display(int y_top)
 				    break;
 			    }
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -352,7 +349,7 @@ scroll_display(int y_top)
 				    f = view_state->vs_absolute_tran[X];
 			    }
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -363,7 +360,7 @@ scroll_display(int y_top)
 		    if (second_menu) {
 			f = (double)adc_state->adc_dv_y * INV_GED;
 
-			DM_SET_FGCOLOR(dmp,
+			dm_set_fg(dmp,
 				       color_scheme->cs_slider_text2[0],
 				       color_scheme->cs_slider_text2[1],
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -385,7 +382,7 @@ scroll_display(int y_top)
 				    break;
 			    }
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -402,7 +399,7 @@ scroll_display(int y_top)
 				    f = view_state->vs_absolute_tran[Y];
 			    }
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -413,7 +410,7 @@ scroll_display(int y_top)
 		    if (second_menu) {
 			f = (double)adc_state->adc_dv_a1 * INV_GED;
 
-			DM_SET_FGCOLOR(dmp,
+			dm_set_fg(dmp,
 				       color_scheme->cs_slider_text2[0],
 				       color_scheme->cs_slider_text2[1],
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -435,7 +432,7 @@ scroll_display(int y_top)
 				    break;
 			    }
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -452,7 +449,7 @@ scroll_display(int y_top)
 				    f = view_state->vs_absolute_tran[Z];
 			    }
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -463,7 +460,7 @@ scroll_display(int y_top)
 		    if (second_menu) {
 			f = (double)adc_state->adc_dv_a2 * INV_GED;
 
-			DM_SET_FGCOLOR(dmp,
+			dm_set_fg(dmp,
 				       color_scheme->cs_slider_text2[0],
 				       color_scheme->cs_slider_text2[1],
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -474,7 +471,7 @@ scroll_display(int y_top)
 			    else
 				f = edit_absolute_scale;
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -484,7 +481,7 @@ scroll_display(int y_top)
 			    else
 				f = view_state->vs_absolute_scale;
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -495,7 +492,7 @@ scroll_display(int y_top)
 		    if (second_menu) {
 			f = (double)adc_state->adc_dv_dist * INV_GED;
 
-			DM_SET_FGCOLOR(dmp,
+			dm_set_fg(dmp,
 				       color_scheme->cs_slider_text2[0],
 				       color_scheme->cs_slider_text2[1],
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -523,7 +520,7 @@ scroll_display(int y_top)
 				    break;
 			    }
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -540,7 +537,7 @@ scroll_display(int y_top)
 				    f = view_state->vs_absolute_rotate[X] / ABS_ROT_FACTOR;
 			    }
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -575,7 +572,7 @@ scroll_display(int y_top)
 				    break;
 			    }
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -592,7 +589,7 @@ scroll_display(int y_top)
 				    f = view_state->vs_absolute_rotate[Y] / ABS_ROT_FACTOR;
 			    }
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -627,7 +624,7 @@ scroll_display(int y_top)
 				    break;
 			    }
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -644,7 +641,7 @@ scroll_display(int y_top)
 				    f = view_state->vs_absolute_rotate[Z] / ABS_ROT_FACTOR;
 			    }
 
-			    DM_SET_FGCOLOR(dmp,
+			    dm_set_fg(dmp,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -667,13 +664,13 @@ scroll_display(int y_top)
 	    else
 		xpos = 0;
 
-	    DM_DRAW_STRING_2D(dmp, mptr->scroll_string,
+	    dm_draw_string_2d(dmp, mptr->scroll_string,
 			      GED2PM1(xpos), GED2PM1(y-SCROLL_DY/2), 0, 0);
-	    DM_SET_FGCOLOR(dmp,
+	    dm_set_fg(dmp,
 			   color_scheme->cs_slider_line[0],
 			   color_scheme->cs_slider_line[1],
 			   color_scheme->cs_slider_line[2], 1, 1.0);
-	    DM_DRAW_LINE_2D(dmp,
+	    dm_draw_line_2d(dmp,
 			    GED2PM1(XMAX), GED2PM1(y),
 			    GED2PM1(MENUXLIM), GED2PM1(y));
 	}
@@ -681,11 +678,11 @@ scroll_display(int y_top)
 
     if (y != y_top) {
 	/* Sliders were drawn, so make left vert edge */
-	DM_SET_FGCOLOR(dmp,
+	dm_set_fg(dmp,
 		       color_scheme->cs_slider_line[0],
 		       color_scheme->cs_slider_line[1],
 		       color_scheme->cs_slider_line[2], 1, 1.0);
-	DM_DRAW_LINE_2D(dmp,
+	dm_draw_line_2d(dmp,
 			GED2PM1(MENUXLIM), GED2PM1(scroll_top-1),
 			GED2PM1(MENUXLIM), GED2PM1(y));
     }

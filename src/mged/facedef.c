@@ -24,12 +24,9 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <signal.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "rtgeom.h"
 #include "raytrace.h"
@@ -379,7 +376,7 @@ get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
 static void
 get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 {
-    fastf_t rota, fb;
+    fastf_t rota, fb_a;
     short int i, temp;
     point_t pt;
 
@@ -387,12 +384,12 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 	return;
 
     rota= atof(argv[0]) * DEG2RAD;
-    fb  = atof(argv[1]) * DEG2RAD;
+    fb_a  = atof(argv[1]) * DEG2RAD;
 
     /* calculate normal vector (length=1) from rot, fb */
-    plane[0] = cos(fb) * cos(rota);
-    plane[1] = cos(fb) * sin(rota);
-    plane[2] = sin(fb);
+    plane[0] = cos(fb_a) * cos(rota);
+    plane[1] = cos(fb_a) * sin(rota);
+    plane[2] = sin(fb_a);
 
     if (argv[2][0] == 'v') {
 	/* vertex given */

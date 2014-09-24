@@ -28,13 +28,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 
 
@@ -113,7 +110,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    FBIO *fbp;
+    fb *fbp;
 
     int x, y;
     int xin, yin;		/* number of sceen output lines */

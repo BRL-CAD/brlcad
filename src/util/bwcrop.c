@@ -35,8 +35,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h> /* for INT_MAX */
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
 
 
 #define round(x) ((int)(x+0.5))

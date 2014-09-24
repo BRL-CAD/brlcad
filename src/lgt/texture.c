@@ -149,12 +149,12 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 static struct fb_texture *
 init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 {
-    FBIO		*txfbiop;
+    fb		*txfbiop;
     struct fb_texture	*fbp;
     RGBpixel	*fbmap;
     int		wid = entry->df_rgb[0] << 3;
     int		hgt = entry->df_rgb[1] << 3;
-    if ( (txfbiop = fb_open( file, wid, hgt )) == FBIO_NULL )
+    if ( (txfbiop = fb_open( file, wid, hgt )) == FB_NULL )
 	return	NULL;
     fbmap =	(RGBpixel *) bu_malloc( wid*hgt*sizeof(RGBpixel), "fbmap" );
 #if DEBUG_TEXTURE

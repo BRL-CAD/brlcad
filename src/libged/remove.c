@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
 
@@ -90,7 +89,7 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 	    struct bu_vls path = BU_VLS_INIT_ZERO;
 
 	    bu_vls_printf(&path, "%s/%s", dp->d_namep, argv[i]);
-	    _ged_eraseAllPathsFromDisplay(gedp, bu_vls_addr(&path), 0);
+	    _dl_eraseAllPathsFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, bu_vls_addr(&path), 0, gedp->freesolid);
 	    bu_vls_free(&path);
 	    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[i]);
 	    num_deleted++;

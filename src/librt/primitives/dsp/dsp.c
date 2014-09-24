@@ -4656,6 +4656,7 @@ hook_verify(const struct bu_structparse *sp,
 
 
 const struct bu_structparse fake_dsp_printab[] = {
+    {"%V",  1, "file", DSP_O(dsp_name), hook_file, NULL, NULL },
     {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify, NULL, NULL },
     {"%V",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "w",  DSP_O(dsp_xcnt), hook_verify, NULL, NULL },
@@ -4706,8 +4707,9 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	}
 
 	while (sp && sp->sp_name != NULL) {
-	    bu_vls_printf(logstr, " %s ", sp->sp_name);
+	    bu_vls_printf(logstr, " %s {", sp->sp_name);
 	    bu_vls_struct_item(logstr, sp, (char *)dsp_ip, ' ');
+	    bu_vls_printf(logstr, "}");
 	    ++sp;
 	}
 

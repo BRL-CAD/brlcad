@@ -35,10 +35,8 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
 
 
 #include "vmath.h"

@@ -25,7 +25,8 @@
  */
 
 #include "AP203.h"
-#include "bu.h"
+#include "bu/ptbl.h"
+#include "bu/log.h"
 #include "ON_Brep.h"
 #include "Assembly_Product.h"
 #include "Comb.h"

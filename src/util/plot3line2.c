@@ -30,10 +30,10 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "plot3.h"
 
+#include "bu/log.h"
 
 static const char usage[] = "Usage: plot3line2 x1 y1 x2 y2 [r g b]\n";
 

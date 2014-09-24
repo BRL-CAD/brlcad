@@ -32,7 +32,6 @@
 
 #include <stdio.h>
 #include "vmath.h"
-#include "bu.h"
 #include "raytrace.h"
 #include "optical.h"
 

@@ -30,10 +30,9 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "bn.h"
 #include "fb.h"
 

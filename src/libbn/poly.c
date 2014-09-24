@@ -113,7 +113,7 @@ bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, 
     struct bn_poly tmp;
     register size_t i, offset;
 
-    offset = abs((long)poly1->dgr - (long)poly2->dgr);
+    offset = labs((long)poly1->dgr - (long)poly2->dgr);
 
     tmp = bn_Zero_poly;
 
@@ -142,7 +142,7 @@ bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1,
     struct bn_poly tmp;
     register size_t i, offset;
 
-    offset = abs((long)poly1->dgr - (long)poly2->dgr);
+    offset = labs((long)poly1->dgr - (long)poly2->dgr);
 
     *diff = bn_Zero_poly;
     tmp = bn_Zero_poly;
@@ -264,13 +264,13 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     register int i;
 
     c1 = eqn->cf[1];
-    if (abs(c1) > SQRT_MAX_FASTF) return 0;	/* FAIL */
+    if (fabs(c1) > SQRT_MAX_FASTF) return 0;	/* FAIL */
 
     c1_3rd = c1 * THIRD;
     a = eqn->cf[2] - c1*c1_3rd;
-    if (abs(a) > SQRT_MAX_FASTF) return 0;	/* FAIL */
+    if (fabs(a) > SQRT_MAX_FASTF) return 0;	/* FAIL */
     b = (2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3])*TWENTYSEVENTH;
-    if (abs(b) > SQRT_MAX_FASTF) return 0;	/* FAIL */
+    if (fabs(b) > SQRT_MAX_FASTF) return 0;	/* FAIL */
 
     if ((delta = a*a) > SQRT_MAX_FASTF) return 0;	/* FAIL */
     delta = b*b*0.25 + delta*a*TWENTYSEVENTH;

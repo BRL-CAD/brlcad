@@ -30,13 +30,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include "bselect.h"
-#include "bio.h"
 
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+
 #include "fb.h"
 
 
@@ -45,7 +46,7 @@ int usec;
 
 void newframe(int i);
 
-FBIO *fbp;
+fb *fbp;
 int screen_width;		/* Number of pixels/line in frame buffer */
 int screen_height;
 int verbose = 0;

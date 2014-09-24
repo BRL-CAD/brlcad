@@ -30,8 +30,10 @@
 #include <vector>
 
 #include "vmath.h"
-#include "bu.h"
 
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
 #include "brep.h"
 #include "libbrep_brep_tools.h"
 #include "dvec.h"

@@ -20,7 +20,6 @@
 
 #include "common.h"
 
-#include "bu.h"
 #include "brlcad_ident.h"
 
 const char *

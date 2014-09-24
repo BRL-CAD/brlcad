@@ -20,7 +20,6 @@
 
 #include "common.h"
 
-#include "bio.h"
 
 #include "dm.h"
 #include "brlcad_ident.h"

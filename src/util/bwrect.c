@@ -26,10 +26,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+
 #include "icv.h"
 
 int outx=0, outy=0;		/* Number of pixels (width, height) in new map */

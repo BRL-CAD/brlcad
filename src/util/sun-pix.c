@@ -27,11 +27,13 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <limits.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 
+#include "bu/getopt.h"
+#include "bu/log.h"
 
 /*
  * Description of Sun header for files containing raster images

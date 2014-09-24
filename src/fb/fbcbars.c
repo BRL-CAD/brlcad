@@ -61,9 +61,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 
 #define MAX_LINE (8*1024)	/* Max pixels/line */
@@ -215,7 +216,7 @@ int
 main(int argc, char **argv)
 {
     int x, y;
-    FBIO *fbp;
+    fb *fbp;
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	printusage();

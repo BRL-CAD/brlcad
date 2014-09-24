@@ -30,7 +30,8 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "vmath.h"
 
@@ -382,7 +383,7 @@ main (int argc, char **argv)
     int unit_r = -1;	/* Radius of unit circle (in pixels) */
     int x, y;		/* Cartesian coordinates of current pixel */
     int Xprime, Yprime;		/* Translated pixel */
-    FBIO *fbPtr;		/* Pointer to the frame-buffer file */
+    fb *fbPtr;		/* Pointer to the frame-buffer file */
     unsigned char *fbb;		/* Buffer for current line of frame buffer */
     unsigned char *fbbPtr;	/* Pointer to within fbb */
 
@@ -723,7 +724,7 @@ main (int argc, char **argv)
     arc_max *= Deg2Rad;
 
     /* Prep the frame buffer */
-    if ((fbPtr = fb_open(FB_Name, fb_width, fb_height)) == FBIO_NULL)
+    if ((fbPtr = fb_open(FB_Name, fb_width, fb_height)) == FB_NULL)
 	(void) bu_exit (1, NULL);
     fb_width = fb_getwidth(fbPtr);
     fb_height = fb_getheight(fbPtr);

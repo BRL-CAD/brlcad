@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"

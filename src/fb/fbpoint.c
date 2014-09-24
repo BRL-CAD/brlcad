@@ -28,17 +28,14 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/str.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "libtermio.h"
 
-FBIO *fbp;
+fb *fbp;
 
 int JumpSpeed;		/* # pixels skiped with fast commands. */
 

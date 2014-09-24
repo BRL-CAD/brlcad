@@ -39,7 +39,11 @@
 #include <windows.h>
 #else
 #include <dirent.h>
+#ifdef __FreeBSD__
+#include <sys/iconv.h>
+#else
 #include <iconv.h>
+#endif
 #include <sys/stat.h>
 #ifdef __VMS
 #include <unixlib.h>

@@ -27,7 +27,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 
 #ifdef HAVE_WINSOCK_H
@@ -37,10 +36,8 @@
 #  include <sys/socket.h>
 #  include <netinet/in.h>		/* For htonl(), etc. */
 #endif
-#include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -497,10 +494,10 @@ rfbopen(struct pkg_conn *pcp, char *buf)
 
     /* Don't really open a new framebuffer --- use existing one */
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], 0);	/* ret */
-    (void)pkg_plong(&rbuf[1*NET_LONG_LEN], fbp->if_max_width);
-    (void)pkg_plong(&rbuf[2*NET_LONG_LEN], fbp->if_max_height);
-    (void)pkg_plong(&rbuf[3*NET_LONG_LEN], fbp->if_width);
-    (void)pkg_plong(&rbuf[4*NET_LONG_LEN], fbp->if_height);
+    (void)pkg_plong(&rbuf[1*NET_LONG_LEN], fb_get_max_width(fbp));
+    (void)pkg_plong(&rbuf[2*NET_LONG_LEN], fb_get_max_height(fbp));
+    (void)pkg_plong(&rbuf[3*NET_LONG_LEN], fb_getwidth(fbp));
+    (void)pkg_plong(&rbuf[4*NET_LONG_LEN], fb_getheight(fbp));
 
     want = 5*NET_LONG_LEN;
     if (pkg_send(MSG_RETURN, rbuf, want, pcp) != want)

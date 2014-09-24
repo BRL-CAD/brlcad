@@ -39,15 +39,14 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#include "bio.h"
 
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "bn.h"
 #include "rtgeom.h"
 #include "tclcad.h"
@@ -83,23 +82,23 @@ static struct bu_vls tcl_output_hook = BU_VLS_INIT_ZERO;
 static int
 mged_dm_width(struct ged *gedpp)
 {
-    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
-    return dmpp->dm_width;
+    dm *dmpp = (dm *)gedpp->ged_dmp;
+    return dm_get_width(dmpp);
 }
 
 
 static int
 mged_dm_height(struct ged *gedpp)
 {
-    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
-    return dmpp->dm_height;
+    dm *dmpp = (dm *)gedpp->ged_dmp;
+    return dm_get_height(dmpp);
 }
 
 
 static int
 mged_dmp_is_null(struct ged *gedpp)
 {
-    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
+    dm *dmpp = (dm *)gedpp->ged_dmp;
     return dmpp == NULL;
 }
 
@@ -107,8 +106,8 @@ mged_dmp_is_null(struct ged *gedpp)
 static void
 mged_dm_get_display_image(struct ged *gedpp, unsigned char **idata)
 {
-    struct dm *dmpp = (struct dm *)gedpp->ged_dmp;
-    DM_GET_DISPLAY_IMAGE(dmpp, idata);
+    dm *dmpp = (dm *)gedpp->ged_dmp;
+    dm_get_display_image(dmpp, idata);
 }
 
 
@@ -1495,7 +1494,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	    bu_vls_trunc(&vls, 0);
 	    if (clp->cl_tie) {
 		bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
-			      bu_vls_addr(&clp->cl_tie->dml_dmp->dm_pathName));
+			      bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
 		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
 	    } else {
 		bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
@@ -1506,7 +1505,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	bu_vls_trunc(&vls, 0);
 	if (clp->cl_tie) {
 	    bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
-			  bu_vls_addr(&clp->cl_tie->dml_dmp->dm_pathName));
+			  bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
 	    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
 	} else {
 	    bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
@@ -1555,7 +1554,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     /* print out the display manager that we're tied to */
     if (argc == 2) {
 	if (clp->cl_tie)
-	    Tcl_AppendElement(interpreter, bu_vls_addr(&clp->cl_tie->dml_dmp->dm_pathName));
+	    Tcl_AppendElement(interpreter, bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
 	else
 	    Tcl_AppendElement(interpreter, "");
 
@@ -1569,7 +1568,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	bu_vls_strcpy(&vls, argv[2]);
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	if (!bu_vls_strcmp(&vls, &dlp->dml_dmp->dm_pathName))
+	if (!bu_vls_strcmp(&vls, dm_get_pathname(dlp->dml_dmp)))
 	    break;
 
     if (dlp == &head_dm_list) {
@@ -1718,13 +1717,13 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 
     /* print pathname of drawing window with primary focus */
     if (argc == 1) {
-	Tcl_AppendResult(interpreter, bu_vls_addr(&dmp->dm_pathName), (char *)NULL);
+	Tcl_AppendResult(interpreter, bu_vls_addr(dm_get_pathname(dmp)), (char *)NULL);
 	return TCL_OK;
     }
 
     /* change primary focus to window argv[1] */
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (BU_STR_EQUAL(argv[1], bu_vls_addr(&p->dml_dmp->dm_pathName))) {
+	if (BU_STR_EQUAL(argv[1], bu_vls_addr(dm_get_pathname(p->dml_dmp)))) {
 	    curr_dm_list = p;
 
 	    if (curr_dm_list->dml_tie)
@@ -2140,14 +2139,14 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 int
 cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
-    struct ged_view *gvp = NULL;
+    struct bview *gvp = NULL;
 
     if (gedp)
 	gvp = gedp->ged_gvp;
 
     if (gvp && dmp) {
-	gvp->gv_x_samples = dmp->dm_width;
-	gvp->gv_y_samples = dmp->dm_height;
+	gvp->gv_x_samples = dm_get_width(dmp);
+	gvp->gv_y_samples = dm_get_height(dmp);
     }
 
     return edit_com(argc, argv, 1);

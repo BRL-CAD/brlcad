@@ -37,7 +37,6 @@
 #include "tk.h"
 
 #include "tclcad.h"
-#include "bu.h"
 
 #include "./bombardier.h"
 

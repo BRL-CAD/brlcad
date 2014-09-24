@@ -36,9 +36,11 @@
 #ifdef HAVE_WINSOCK_H
 #  include <winsock.h>
 #endif
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/file.h"
+#include "bu/log.h"
 #include "fb.h"
 
 #include "pkg.h"
@@ -206,7 +208,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    FBIO *fbp;
+    fb *fbp;
     int xout, yout, n, m, xstart, xskip;
 
     if (!get_args(argc, argv)) {

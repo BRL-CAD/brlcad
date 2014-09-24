@@ -26,9 +26,9 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
+#include "bu/getopt.h"
 
 #include "./ged_private.h"
 
@@ -107,7 +107,7 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 	    if (is_phony)
 		continue;
 
-	    _ged_eraseAllNamesFromDisplay(gedp, argv[i], 0);
+	    _dl_eraseAllNamesFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[i], 0, gedp->freesolid);
 
 	    if (db_delete(gedp->ged_wdbp->dbip, dp) != 0 || db_dirdelete(gedp->ged_wdbp->dbip, dp) != 0) {
 		/* Abort kill processing on first error */
