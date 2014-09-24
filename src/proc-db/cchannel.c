@@ -28,8 +28,9 @@
 
 #include <math.h>
 #include <stdio.h>
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "bn.h"
-#include "bu.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "vmath.h"

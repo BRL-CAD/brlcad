@@ -37,7 +37,6 @@
 #include <ctype.h>
 #include <signal.h>
 #include <math.h>
-#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

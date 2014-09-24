@@ -77,13 +77,14 @@
 #  include <sys/time.h>		/* For struct timeval */
 #endif
 #include "bselect.h"
-#include "bio.h"
 #include "bin.h"
+#include "bio.h"
 
 #include "../libfb/fb_private.h" /* for _fb_disk_enable */
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "pkg.h"
-#include "bu.h"
 #include "fbmsg.h"
 
 

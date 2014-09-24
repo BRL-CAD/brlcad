@@ -34,7 +34,6 @@
 #  include <sys/time.h>
 #endif
 #include "bselect.h"
-#include "bio.h"
 
 #include "bu/color.h"
 #include "fb.h"

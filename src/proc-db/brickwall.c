@@ -30,7 +30,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/units.h"
 #include "vmath.h"
 
 /* declarations to support use of bu_getopt() */

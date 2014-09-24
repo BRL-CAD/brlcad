@@ -31,7 +31,9 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/list.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 

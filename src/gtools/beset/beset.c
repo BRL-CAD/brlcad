@@ -33,7 +33,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/sort.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"

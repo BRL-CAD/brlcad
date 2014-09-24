@@ -36,7 +36,9 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/rb.h"
+#include "bu/vls.h"
 #include "bn.h"
 #include "db.h"
 #include "vmath.h"
