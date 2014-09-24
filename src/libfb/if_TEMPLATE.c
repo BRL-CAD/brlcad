@@ -56,127 +56,127 @@
 
 
 HIDDEN int
-DEVNAME_open(FBIO *ifp, const char *file, int width, int height)
+DEVNAME_open(fb *ifp, const char *file, int width, int height)
 {
-    FB_CK_FBIO(ifp);
+    FB_CK_fb(ifp);
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_close(FBIO *ifp)
-{
-    return 0;
-}
-
-
-HIDDEN int
-DEVNAME_clear(FBIO *ifp, unsigned char *pp)
+DEVNAME_close(fb *ifp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
+DEVNAME_clear(fb *ifp, unsigned char *pp)
+{
+    return 0;
+}
+
+
+HIDDEN int
+DEVNAME_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     return (int)count;
 }
 
 
 HIDDEN int
-DEVNAME_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+DEVNAME_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     return (int)count;
 }
 
 
 HIDDEN int
-DEVNAME_rmap(FBIO *ifp, ColorMap *cmp)
+DEVNAME_rmap(fb *ifp, ColorMap *cmp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_wmap(FBIO *ifp, const ColorMap *cmp)
+DEVNAME_wmap(fb *ifp, const ColorMap *cmp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+DEVNAME_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+DEVNAME_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+DEVNAME_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_cursor(FBIO *ifp, int mode, int x, int y)
+DEVNAME_cursor(fb *ifp, int mode, int x, int y)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_getcursor(FBIO *ifp, int *mode, int *x, int *y)
+DEVNAME_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+DEVNAME_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     return width*height;
 }
 
 
 HIDDEN int
-DEVNAME_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+DEVNAME_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     return width*height;
 }
 
 
 HIDDEN int
-DEVNAME_poll(FBIO *ifp)
+DEVNAME_poll(fb *ifp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_flush(FBIO *ifp)
+DEVNAME_flush(fb *ifp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_free(FBIO *ifp)
+DEVNAME_free(fb *ifp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_help(FBIO *ifp)
+DEVNAME_help(fb *ifp)
 {
     fb_log("Description: %s\n", DEVNAME_interface.if_type);
     fb_log("Device: %s\n", ifp->if_name);
@@ -191,7 +191,7 @@ DEVNAME_help(FBIO *ifp)
 
 
 /* This is the ONLY thing that we normally "export" */
-FBIO DEVNAME_interface =  {
+fb DEVNAME_interface =  {
     0,			/* magic number slot */
     DEVNAME_open,		/* open device */
     DEVNAME_close,		/* close device */

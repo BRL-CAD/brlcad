@@ -41,9 +41,12 @@
 #  include <sys/stat.h>
 #endif
 #include "bselect.h"
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/file.h"
+#include "bu/str.h"
 #include "fb.h"
 
 
@@ -55,7 +58,7 @@ char *input_basename;		/* basename of input file(s) */
 int framenumber = 0;	/* starting frame number (default is 0) */
 int fps = 8;		/* frames/second */
 
-FBIO *fbp;
+fb *fbp;
 int verbose = 0;
 int rocking = 0;
 int passes = 100;		/* limit on number of passes */
@@ -189,7 +192,7 @@ main(int argc, char **argv)
 	bu_exit(12, NULL);
     }
 
-    if ((fbp = fb_open(NULL, screen_width, screen_height)) == FBIO_NULL) {
+    if ((fbp = fb_open(NULL, screen_width, screen_height)) == FB_NULL) {
 	fprintf(stderr, "pixflip-fb: fb_open failed\n");
 	bu_exit(12, NULL);
     }

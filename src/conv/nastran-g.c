@@ -34,11 +34,11 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bu.h"
 
 #define COMMA ','
 

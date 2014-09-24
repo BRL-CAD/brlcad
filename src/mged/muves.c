@@ -28,13 +28,10 @@
 
 #include <stdlib.h>
 #include <signal.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"

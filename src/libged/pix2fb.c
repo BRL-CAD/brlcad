@@ -36,7 +36,6 @@
 #ifdef HAVE_WINSOCK_H
 #  include <winsock.h>
 #endif
-#include "bio.h"
 
 #include "bu/getopt.h"
 #include "fb.h"

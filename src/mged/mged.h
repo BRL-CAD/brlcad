@@ -64,6 +64,9 @@
 
 #include "tcl.h"
 #include "bu/parallel.h"
+#include "bu/list.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "wdb.h"
 
 /* Needed to define struct menu_item */
@@ -161,7 +164,6 @@ extern mat_t acc_rot_sol;	/* accumulate solid rotations */
 extern FILE *infile;
 extern FILE *outfile;
 extern jmp_buf jmp_env;
-extern struct solid MGED_FreeSolid;	/* Head of freelist */
 
 /* FIXME: ugh, main global interpreter */
 extern Tcl_Interp *ged_interp;
@@ -219,7 +221,7 @@ extern struct directory **dir_getspace();
 extern void ellipse();
 
 /* mged.c */
-extern void mged_view_callback(struct ged_view *gvp, void *clientData);
+extern void mged_view_callback(struct bview *gvp, void *clientData);
 
 /* buttons.c */
 extern void button(int bnum);
@@ -242,7 +244,7 @@ void history_setup(void);
 #define ROTARROW 010 /* Object rotation enabled */
 extern int movedir;  /* RARROW | UARROW | SARROW | ROTARROW */
 
-extern struct ged_display_list *illum_gdlp; /* Pointer to solid in solid table to be illuminated */
+extern struct display_list *illum_gdlp; /* Pointer to solid in solid table to be illuminated */
 extern struct solid *illump; /* == 0 if none, else points to ill. solid */
 extern int ipathpos; /* path index of illuminated element */
 extern int sedraw; /* apply solid editing changes */
@@ -506,16 +508,15 @@ int cmd_killtree(
 /* dodraw.c */
 void cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
 int drawtrees(int argc, const char *argv[], int kind);
-int invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy);
 int replot_modified_solid(struct solid *sp, struct rt_db_internal *ip, const mat_t mat);
 int replot_original_solid(struct solid *sp);
 void add_solid_path_to_result(Tcl_Interp *interpreter, struct solid *sp);
 int redraw_visible_objects(void);
 
 /* dozoom.c */
-void createDList(struct solid *sp);
 void createDLists(struct bu_list *hdlp);
-void createDListAll(struct solid *sp);
+void createDListSolid(struct solid *sp);
+void createDListAll(struct display_list *gdlp);
 void freeDListsAll(unsigned int dlist, int range);
 
 /* edarb.c */
@@ -651,7 +652,7 @@ extern void mged_vls_struct_parse_old(struct bu_vls *vls, const char *title, str
 int build_tops(char **start, char **end);
 
 /* mater.c */
-void color_soltab(void);
+void mged_color_soltab(void);
 
 /* utility1.c */
 int editit(const char *command, const char *tempfile);

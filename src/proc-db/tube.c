@@ -32,7 +32,6 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "bu.h"
 #include "nurb.h"
 #include "raytrace.h"
 #include "wdb.h"

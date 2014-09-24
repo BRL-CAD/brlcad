@@ -23,12 +23,9 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "ged.h"
@@ -102,7 +99,7 @@ draw_e_axes()
     point_t v_ap1;                 /* axes position in view coordinates */
     point_t v_ap2;                 /* axes position in view coordinates */
     mat_t rot_mat;
-    struct ged_axes_state gas;
+    struct bview_axes_state gas;
 
     if (STATE == ST_S_EDIT) {
 	MAT4X3PNT(v_ap1, view_state->vs_gvp->gv_model2view, e_axes_pos);
@@ -116,21 +113,21 @@ draw_e_axes()
     } else
 	return;
 
-    memset(&gas, 0, sizeof(struct ged_axes_state));
-    VMOVE(gas.gas_axes_pos, v_ap1);
-    gas.gas_axes_size = axes_state->ax_edit_size1 * INV_GED;
-    VMOVE(gas.gas_axes_color, color_scheme->cs_edit_axes1);
-    VMOVE(gas.gas_label_color, color_scheme->cs_edit_axes_label1);
-    gas.gas_line_width = axes_state->ax_edit_linewidth1;
+    memset(&gas, 0, sizeof(struct bview_axes_state));
+    VMOVE(gas.axes_pos, v_ap1);
+    gas.axes_size = axes_state->ax_edit_size1 * INV_GED;
+    VMOVE(gas.axes_color, color_scheme->cs_edit_axes1);
+    VMOVE(gas.label_color, color_scheme->cs_edit_axes_label1);
+    gas.line_width = axes_state->ax_edit_linewidth1;
 
     dm_draw_axes(dmp, view_state->vs_gvp->gv_size, view_state->vs_gvp->gv_rotation, &gas);
 
-    memset(&gas, 0, sizeof(struct ged_axes_state));
-    VMOVE(gas.gas_axes_pos, v_ap2);
-    gas.gas_axes_size = axes_state->ax_edit_size2 * INV_GED;
-    VMOVE(gas.gas_axes_color, color_scheme->cs_edit_axes2);
-    VMOVE(gas.gas_label_color, color_scheme->cs_edit_axes_label2);
-    gas.gas_line_width = axes_state->ax_edit_linewidth2;
+    memset(&gas, 0, sizeof(struct bview_axes_state));
+    VMOVE(gas.axes_pos, v_ap2);
+    gas.axes_size = axes_state->ax_edit_size2 * INV_GED;
+    VMOVE(gas.axes_color, color_scheme->cs_edit_axes2);
+    VMOVE(gas.label_color, color_scheme->cs_edit_axes_label2);
+    gas.line_width = axes_state->ax_edit_linewidth2;
 
     bn_mat_mul(rot_mat, view_state->vs_gvp->gv_rotation, acc_rot_sol);
     dm_draw_axes(dmp, view_state->vs_gvp->gv_size, rot_mat, &gas);
@@ -142,17 +139,17 @@ draw_m_axes()
 {
     point_t m_ap;			/* axes position in model coordinates, mm */
     point_t v_ap;			/* axes position in view coordinates */
-    struct ged_axes_state gas;
+    struct bview_axes_state gas;
 
     VSCALE(m_ap, axes_state->ax_model_pos, local2base);
     MAT4X3PNT(v_ap, view_state->vs_gvp->gv_model2view, m_ap);
 
-    memset(&gas, 0, sizeof(struct ged_axes_state));
-    VMOVE(gas.gas_axes_pos, v_ap);
-    gas.gas_axes_size = axes_state->ax_model_size * INV_GED;
-    VMOVE(gas.gas_axes_color, color_scheme->cs_model_axes);
-    VMOVE(gas.gas_label_color, color_scheme->cs_model_axes_label);
-    gas.gas_line_width = axes_state->ax_model_linewidth;
+    memset(&gas, 0, sizeof(struct bview_axes_state));
+    VMOVE(gas.axes_pos, v_ap);
+    gas.axes_size = axes_state->ax_model_size * INV_GED;
+    VMOVE(gas.axes_color, color_scheme->cs_model_axes);
+    VMOVE(gas.label_color, color_scheme->cs_model_axes_label);
+    gas.line_width = axes_state->ax_model_linewidth;
 
     dm_draw_axes(dmp, view_state->vs_gvp->gv_size, view_state->vs_gvp->gv_rotation, &gas);
 }
@@ -162,19 +159,19 @@ void
 draw_v_axes()
 {
     point_t v_ap;			/* axes position in view coordinates */
-    struct ged_axes_state gas;
+    struct bview_axes_state gas;
 
     VSET(v_ap,
 	 axes_state->ax_view_pos[X] * INV_GED,
-	 axes_state->ax_view_pos[Y] * INV_GED / dmp->dm_aspect,
+	 axes_state->ax_view_pos[Y] * INV_GED / dm_get_aspect(dmp),
 	 0.0);
 
-    memset(&gas, 0, sizeof(struct ged_axes_state));
-    VMOVE(gas.gas_axes_pos, v_ap);
-    gas.gas_axes_size = axes_state->ax_view_size * INV_GED;
-    VMOVE(gas.gas_axes_color, color_scheme->cs_view_axes);
-    VMOVE(gas.gas_label_color, color_scheme->cs_view_axes_label);
-    gas.gas_line_width = axes_state->ax_view_linewidth;
+    memset(&gas, 0, sizeof(struct bview_axes_state));
+    VMOVE(gas.axes_pos, v_ap);
+    gas.axes_size = axes_state->ax_view_size * INV_GED;
+    VMOVE(gas.axes_color, color_scheme->cs_view_axes);
+    VMOVE(gas.label_color, color_scheme->cs_view_axes_label);
+    gas.line_width = axes_state->ax_view_linewidth;
 
     dm_draw_axes(dmp, view_state->vs_gvp->gv_size, view_state->vs_gvp->gv_rotation, &gas);
 }

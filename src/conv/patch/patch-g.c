@@ -53,7 +53,8 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "nmg.h"
 #include "rtgeom.h"

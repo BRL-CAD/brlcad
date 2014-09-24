@@ -33,7 +33,10 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/str.h"
 
 
 /* declarations to support use of bu_getopt() system call */

@@ -37,7 +37,7 @@
 #include <string>
 
 #include "brep.h"
-#include "bu.h"
+#include "bu/parallel.h"
 
 /* interface header */
 #include "PullbackCurve.h"

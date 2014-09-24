@@ -76,9 +76,12 @@
 #include <signal.h>
 #include <string.h>
 #include <ctype.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/cv.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "fb.h"
 #include "plot3.h"
 
@@ -310,7 +313,7 @@ static int sigs[] = {
 
 
 static FILE *pfin;		/* input file FIO block ptr */
-FBIO *fbp;			/* Current framebuffer */
+fb *fbp;			/* Current framebuffer */
 
 
 /*
@@ -1359,7 +1362,7 @@ main(int argc, char **argv)
     }
 
     /* Open frame buffer, adapt to slightly smaller ones */
-    if ((fbp = fb_open(framebuffer, Npixels, Nscanlines)) == FBIO_NULL) {
+    if ((fbp = fb_open(framebuffer, Npixels, Nscanlines)) == FB_NULL) {
 	fprintf(stderr, "plot3-fb: fb_open failed\n");
 	bu_exit(1, NULL);
     }

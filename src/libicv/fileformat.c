@@ -22,14 +22,15 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 #include <sys/stat.h>	/* for file mode info in WRMODE */
 #include <png.h>
 
 #include "bio.h"
 
+#include "bu/str.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
-#include "bu.h"
 #include "vmath.h"
 #include "icv.h"
 

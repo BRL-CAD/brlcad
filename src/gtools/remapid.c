@@ -36,7 +36,9 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/rb.h"
+#include "bu/vls.h"
 #include "bn.h"
 #include "db.h"
 #include "vmath.h"
@@ -71,7 +73,7 @@ extern REMAPID_FILE bu_iob[1];
  * XXX - The following initialization of bu_stdin is essentially
  * an inline version of remapid_fopen() and bu_vls_init().  As
  * such, it depends heavily on the definitions of struct
- * remapid_file and struct bu_vls in ../h/bu.h
+ * remapid_file and struct bu_vls
  */
 char dmy_eos = '\0';
 REMAPID_FILE bu_iob[1] = {

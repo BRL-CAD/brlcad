@@ -29,7 +29,6 @@
 #include "rtgeom.h"
 #include "wdb.h"
 #include "bn.h"
-#include "bu.h"
 
 #include "opennurbs_sphere.h"
 

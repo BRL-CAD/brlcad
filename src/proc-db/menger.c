@@ -30,7 +30,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "wdb.h"
 

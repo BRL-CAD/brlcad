@@ -26,7 +26,6 @@
  */
 
 #include "common.h"
-#include "bu.h"
 
 #include <vector>
 #include <list>
@@ -37,6 +36,12 @@
 
 #include "poly2tri/poly2tri.h"
 
+#include "bu/log.h"
+#include "bu/color.h"
+#include "bu/str.h"
+#include "bu/malloc.h"
+#include "bu/list.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "plot3.h"
 #include "brep.h"

@@ -25,7 +25,9 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#include "bu.h"
+#include "bu/str.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"

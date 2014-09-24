@@ -3,7 +3,6 @@ set(DM_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${RT_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
   ${FB_INCLUDE_DIRS}
   ${X11_INCLUDE_DIR}
   ${OPENGL_INCLUDE_DIR_GL}
@@ -11,6 +10,7 @@ set(DM_INCLUDE_DIRS
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
   ${Qt5Widgets_INCLUDE_DIRS}
+  ${OPENTHREADS_INCLUDE_DIR}
   ${OSG_INCLUDE_DIR}
   )
 
@@ -28,6 +28,7 @@ get_property(libdm_DEFINES GLOBAL PROPERTY libdm_DEFINES)
 if(WIN32 AND BRLCAD_ENABLE_OPENGL)
   list(APPEND libdm_DEFINES DM_WGL IF_WGL)
   set(dmw32_srcs dm-wgl.c)
+  set_property(SOURCE dm-wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
 
 if(BRLCAD_ENABLE_X11)
@@ -37,22 +38,26 @@ endif(BRLCAD_ENABLE_X11)
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
   list(APPEND libdm_DEFINES DM_X IF_X)
   set(dmx11_srcs dm-X.c)
+  set_property(SOURCE dm-X.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   list(APPEND libdm_DEFINES DM_OGL IF_OGL)
   set(dmogl_srcs dm-ogl.c)
+  set_property(SOURCE dm-ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
 if(BRLCAD_ENABLE_RTGL)
   list(APPEND libdm_DEFINES DM_RTGL IF_RTGL)
   set(dmrtgl_srcs dm-rtgl.c)
+  set_property(SOURCE dm-rtgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_RTGL)
 
 if(BRLCAD_ENABLE_TK AND NOT WIN32)
   list(APPEND libdm_DEFINES DM_TK IF_TK)
   set(DM_TKLIB ${TCL_TK_LIBRARY})
   set(dmtk_srcs dm-tk.c)
+  set_property(SOURCE dm-tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 
 if(BRLCAD_ENABLE_QT)
@@ -60,6 +65,7 @@ if(BRLCAD_ENABLE_QT)
 
   list(APPEND libdm_DEFINES DM_QT IF_QT)
   set(dmqt_srcs dm-qt.cpp)
+  set_property(SOURCE dm-qt.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
   set(CMAKE_AUTOMOC ON)
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
   add_definitions(${Qt5Widgets_DEFINITIONS})
@@ -67,8 +73,9 @@ if(BRLCAD_ENABLE_QT)
 endif(BRLCAD_ENABLE_QT)
 
 if(BRLCAD_ENABLE_OSG)
-  list(APPEND libdm_DEFINES DM_OSG)
-  set(dmosg_srcs dm-osg.cpp)
+  list(APPEND libdm_DEFINES DM_OSGL IF_OSGL)
+  set(dmosg_srcs dm-osgl.cpp)
+  set_property(SOURCE dm-osgl.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
   set(OSG_LIBRARIES
     ${OSG_LIBRARY}
     ${OSGTEXT_LIBRARY}
@@ -109,26 +116,43 @@ set(LIBDM_SRCS
   tcl.c
   vers.c
   )
-
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${DM_EXTRA_LIBS}")
+set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libfb;${DM_X_LIBS};${DM_TKLIB};${DM_EXTRA_LIBS};${PNG_LIBRARY}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
   add_dependencies(libdm tk)
 endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
+if(BRLCAD_ENABLE_OSG)
+  add_dependencies(libdm profont_ProFont_ttf_cp)
+endif(BRLCAD_ENABLE_OSG)
 set(libdm_ignore_files
   dm-wgl.c
   dm-X.c
   dm-ogl.c
-  dm-osg.cpp
+  dm-osgl.cpp
   dm-qt.cpp
   dm-rtgl.c
   dm-tk.c
   osg.cpp
   TODO
+  dm-glx.h
+  dm-Null.h
+  dm-ogl.h
+  dm-osgl.h
+  dm-pex.h
+  dm-plot.h
+  dm_private.h
+  dm-ps.h
+  dm-qt.h
+  dm-rtgl.h
+  dm-tk.h
+  dm-wgl.h
+  dm-X.h
+  fontstash
   )
 CMAKEFILES(${libdm_ignore_files})
-CMAKEFILES(dm_util.h)
+CMAKEFILES(dm_private.h)
 
 # Local Variables:
 # tab-width: 8

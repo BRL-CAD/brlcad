@@ -30,7 +30,6 @@
 #include <string.h>
 
 #include "bselect.h"
-#include "bio.h"
 
 #include "./ged_private.h"
 

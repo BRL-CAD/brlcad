@@ -78,7 +78,7 @@ extern void update_Screen();
 extern void user_Interaction();
 
 /* variables */
-extern FBIO *fbiop;
+extern fb *fbiop;
 
 extern RGBpixel bgpixel;
 extern RGBpixel *ir_table;

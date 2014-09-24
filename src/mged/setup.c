@@ -32,8 +32,6 @@
 #include <string.h>
 
 /* common headers */
-#include "bio.h"
-#include "bu.h"
 #include "bn.h"
 #include "vmath.h"
 #include "tclcad.h"
@@ -561,7 +559,7 @@ mged_setup(Tcl_Interp **interpreter)
 	Tcl_ResetResult(*interpreter);
     }
 
-    BU_ALLOC(view_state->vs_gvp, struct ged_view);
+    BU_ALLOC(view_state->vs_gvp, struct bview);
     ged_view_init(view_state->vs_gvp);
 
     view_state->vs_gvp->gv_callback = mged_view_callback;

@@ -20,8 +20,10 @@
 
 #include "./rle_args.h"
 
-#include "bu.h"
 #include "bio.h"
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/log.h"
 
 char hyphen[] = "hyphen";
 

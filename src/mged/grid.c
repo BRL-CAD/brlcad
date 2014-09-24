@@ -26,10 +26,7 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "ged.h"
 
@@ -77,7 +74,7 @@ grid_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		    const char *UNUSED(name),
 		    void *UNUSED(base),
 		    const char *UNUSED(value),
-		void *UNUSED(data))
+		    void *UNUSED(data))
 {
     struct dm_list *dmlp;
 
@@ -92,7 +89,7 @@ set_grid_draw(const struct bu_structparse *sdp,
 	      const char *name,
 	      void *base,
 	      const char *value,
-		void *data)
+	      void *data)
 {
     struct dm_list *dlp;
 
@@ -121,7 +118,7 @@ set_grid_res(const struct bu_structparse *sdp,
 	     const char *name,
 	     void *base,
 	     const char *value,
-		void *data)
+	     void *data)
 {
     struct dm_list *dlp;
 
@@ -165,14 +162,15 @@ draw_grid(void)
 
     /* sanity - don't draw the grid if it would fill the screen */
     {
-	fastf_t pixel_size = 2.0 * sf / dmp->dm_width;
+	int width = dm_get_width(dmp);
+	fastf_t pixel_size = 2.0 * sf / (fastf_t)width;
 
 	if (grid_state->gr_res_h < pixel_size || grid_state->gr_res_v < pixel_size)
 	    return;
     }
 
     inv_sf = 1.0 / sf;
-    inv_aspect = 1.0 / dmp->dm_aspect;
+    inv_aspect = 1.0 / dm_get_aspect(dmp);
 
     nv_dots = 2.0 * inv_aspect * sf * inv_grid_res_v + (2 * grid_state->gr_res_major_v);
     nh_dots = 2.0 * sf * inv_grid_res_h + (2 * grid_state->gr_res_major_h);
@@ -197,11 +195,11 @@ draw_grid(void)
 	     0.0);
     }
 
-    DM_SET_FGCOLOR(dmp,
+    dm_set_fg(dmp,
 		   color_scheme->cs_grid[0],
 		   color_scheme->cs_grid[1],
 		   color_scheme->cs_grid[2], 1, 1.0);
-    DM_SET_LINE_ATTR(dmp, 1, 0);		/* solid lines */
+    dm_set_line_attr(dmp, 1, 0);		/* solid lines */
 
     /* draw horizontal dots */
     for (i = 0; i < nv_dots; i += grid_state->gr_res_major_v) {
@@ -209,7 +207,7 @@ draw_grid(void)
 
 	for (j = 0; j < nh_dots; ++j) {
 	    fx = (view_grid_start_pt_local[X] + (j * grid_state->gr_res_h)) * inv_sf;
-	    DM_DRAW_POINT_2D(dmp, fx, fy * dmp->dm_aspect);
+	    dm_draw_point_2d(dmp, fx, fy * dm_get_aspect(dmp));
 	}
     }
 
@@ -220,7 +218,7 @@ draw_grid(void)
 
 	    for (j = 0; j < nv_dots; ++j) {
 		fy = (view_grid_start_pt_local[Y] + (j * grid_state->gr_res_v)) * inv_sf;
-		DM_DRAW_POINT_2D(dmp, fx, fy * dmp->dm_aspect);
+		dm_draw_point_2d(dmp, fx, fy * dm_get_aspect(dmp));
 	    }
 	}
     }

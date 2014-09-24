@@ -25,8 +25,9 @@
 
 #include "bu/getopt.h"
 #include "ged.h"
-#include "solid.h"
 
+
+#include "./ged_private.h"
 
 /*
  * Get the view size and center such that all displayed solids would be in view
@@ -38,12 +39,8 @@
 int
 ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    struct solid *sp;
     int is_empty = 1;
     vect_t min, max;
-    vect_t minus, plus;
     vect_t center;
     vect_t radial;
     fastf_t size;
@@ -79,35 +76,7 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
 
-    VSETALL(min,  INFINITY);
-    VSETALL(max, -INFINITY);
-
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    /* Skip pseudo-solids unless pflag is set */
-	    if (!pflag &&
-		sp->s_fullpath.fp_names != (struct directory **)0 &&
-		sp->s_fullpath.fp_names[0] != (struct directory *)0 &&
-		sp->s_fullpath.fp_names[0]->d_addr == RT_DIR_PHONY_ADDR)
-		continue;
-
-	    minus[X] = sp->s_center[X] - sp->s_size;
-	    minus[Y] = sp->s_center[Y] - sp->s_size;
-	    minus[Z] = sp->s_center[Z] - sp->s_size;
-	    VMIN(min, minus);
-	    plus[X] = sp->s_center[X] + sp->s_size;
-	    plus[Y] = sp->s_center[Y] + sp->s_size;
-	    plus[Z] = sp->s_center[Z] + sp->s_size;
-	    VMAX(max, plus);
-
-	    is_empty = 0;
-	}
-
-	gdlp = next_gdlp;
-    }
+    is_empty = dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &min, &max, pflag);
 
     if (is_empty) {
 	/* Nothing is in view */

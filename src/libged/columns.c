@@ -27,11 +27,9 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

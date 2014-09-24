@@ -29,10 +29,10 @@
 #include <stdlib.h>
 #include <zlib.h>
 #include <png.h>
-#include "bio.h"
-#include "bin.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "fb.h"
 #include "pkg.h"
 
@@ -161,7 +161,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    FBIO *fbp;
+    fb *fbp;
     int i;
     int xout, yout, m, xstart;
     png_structp png_p;

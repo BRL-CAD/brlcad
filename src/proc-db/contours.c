@@ -26,8 +26,9 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <limits.h>
 
-#include "bu.h"
+#include "bu/log.h"
 #include "plot3.h"
 
 

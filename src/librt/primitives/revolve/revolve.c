@@ -33,6 +33,8 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bu/cv.h"
+#include "bu/debug.h"
 #include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"

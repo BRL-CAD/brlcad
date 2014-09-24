@@ -31,7 +31,11 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/str.h"
+
 #include "icv.h"
 #include "vmath.h"
 

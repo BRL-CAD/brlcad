@@ -21,9 +21,10 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 /**
  * Stores the given command with start and finish times in the

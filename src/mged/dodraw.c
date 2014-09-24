@@ -20,11 +20,8 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
@@ -64,7 +61,8 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
 
 	snprintf(namebuf, 32, "%s%lx",	shortname, vbp->rgb[i]);
-	invent_solid(namebuf, &vbp->head[i], vbp->rgb[i], copy);
+	/*invent_solid(namebuf, &vbp->head[i], vbp->rgb[i], copy);*/
+	invent_solid(gedp->ged_gdp->gd_headDisplay, dbip, createDListAll, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0,0, gedp->freesolid, 0);
     }
 }
 
@@ -72,76 +70,39 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 /*
  * Compute the min, max, and center points of the solid.
  * Also finds s_vlen;
- * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
  */
 static void
 mged_bound_solid(struct solid *sp)
 {
     struct bn_vlist *vp;
-    double xmax, ymax, zmax;
-    double xmin, ymin, zmin;
 
-    xmax = ymax = zmax = -INFINITY;
-    xmin = ymin = zmin =  INFINITY;
+    point_t bmin, bmax;
+    int cmd;
+    VSET(bmin, INFINITY, INFINITY, INFINITY);
+    VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
+
     sp->s_vlen = 0;
-    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	int j;
-	int nused = vp->nused;
-	int *cmd = vp->cmd;
-	point_t *pt = vp->pt;
-	for (j = 0; cmd && j < nused; j++, cmd++, pt++) {
-	    switch (*cmd) {
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_POLY_VERTNORM:
-		case BN_VLIST_TRI_START:
-		case BN_VLIST_TRI_VERTNORM:
-		case BN_VLIST_POINT_SIZE:
-		case BN_VLIST_LINE_WIDTH:
-		    /* attribute, not location */
-		    break;
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_POLY_END:
-		case BN_VLIST_TRI_MOVE:
-		case BN_VLIST_TRI_DRAW:
-		case BN_VLIST_TRI_END:
-		    V_MIN(xmin, (*pt)[X]);
-		    V_MAX(xmax, (*pt)[X]);
-		    V_MIN(ymin, (*pt)[Y]);
-		    V_MAX(ymax, (*pt)[Y]);
-		    V_MIN(zmin, (*pt)[Z]);
-		    V_MAX(zmax, (*pt)[Z]);
-		    break;
-		case BN_VLIST_POINT_DRAW:
-		    V_MIN(xmin, (*pt)[X]-1.0);
-		    V_MAX(xmax, (*pt)[X]+1.0);
-		    V_MIN(ymin, (*pt)[Y]-1.0);
-		    V_MAX(ymax, (*pt)[Y]+1.0);
-		    V_MIN(zmin, (*pt)[Z]-1.0);
-		    V_MAX(zmax, (*pt)[Z]+1.0);
-		    break;
-		default:
-		    {
-			struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-			bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", *cmd);
-			Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-			bu_vls_free(&tmp_vls);
-		    }
-	    }
+
+
+    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+	cmd = bn_vlist_bbox(vp, &bmin, &bmax);
+	if (cmd) {
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", cmd);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
 	}
-	sp->s_vlen += nused;
+	sp->s_vlen += vp->nused;
     }
 
-    sp->s_center[X] = (xmin + xmax) * 0.5;
-    sp->s_center[Y] = (ymin + ymax) * 0.5;
-    sp->s_center[Z] = (zmin + zmax) * 0.5;
+    sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
+    sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
+    sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;
 
-    sp->s_size = xmax - xmin;
-    V_MAX(sp->s_size, ymax - ymin);
-    V_MAX(sp->s_size, zmax - zmin);
+    sp->s_size = bmax[X] - bmin[X];
+    V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
+    V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
 }
 
 
@@ -154,12 +115,13 @@ mged_bound_solid(struct solid *sp)
 void
 drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp)
 {
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     struct solid *sp;
 
     if (!existing_sp) {
 	/* Handling a new solid */
-	GET_SOLID(sp, &MGED_FreeSolid.l);
+	GET_SOLID(sp, &gedp->freesolid->l);
+	BU_LIST_APPEND(&gedp->freesolid->l, &((sp)->l) );
 	sp->s_dlist = 0;
     } else {
 	/* Just updating an existing solid.
@@ -201,7 +163,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	    sp->s_regionid = tsp->ts_regionid;
     }
 
-    createDListAll(sp);
+    createDListSolid(sp);
 
     /* Solid is successfully drawn */
     if (!existing_sp) {
@@ -209,8 +171,8 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	bu_semaphore_acquire(RT_SEM_MODEL);
 
 	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-	BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
+	gdlp = BU_LIST_PREV(display_list, gedp->ged_gdp->gd_headDisplay);
+	BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
 
 	bu_semaphore_release(RT_SEM_MODEL);
     } else {
@@ -317,74 +279,6 @@ replot_modified_solid(
     view_state->vs_flag = 1;
     return 0;
 }
-
-
-/*
- * Invent a solid by adding a fake entry in the database table,
- * adding an entry to the solid table, and populating it with
- * the given vector list.
- *
- * This parallels much of the code in dodraw.c
- */
-int
-invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy)
-{
-    struct ged_display_list *gdlp;
-    struct solid *sp;
-    struct directory *dp;
-    int type = 0;
-
-    if (dbip == DBI_NULL)
-	return 0;
-
-    if ((dp = db_lookup(dbip,  name, LOOKUP_QUIET)) != RT_DIR_NULL) {
-	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-	    Tcl_AppendResult(INTERP, "invent_solid(", name,
-			     ") would clobber existing database entry, ignored\n", (char *)NULL);
-	    return -1;
-	}
-	/* Name exists from some other overlay,
-	 * zap any associated solids
-	 */
-	ged_erasePathFromDisplay(gedp, name, 0);
-    }
-    /* Need to enter phony name in directory structure */
-    dp = db_diradd(dbip,  name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, &type);
-
-    /* Obtain a fresh solid structure, and fill it in */
-    GET_SOLID(sp, &MGED_FreeSolid.l);
-
-    if (copy) {
-	BU_LIST_INIT(&(sp->s_vlist));
-	rt_vlist_copy(&(sp->s_vlist), vhead);
-    } else {
-	BU_LIST_INIT(&(sp->s_vlist));
-	BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
-    }
-    mged_bound_solid(sp);
-
-    /* set path information -- this is a top level node */
-    db_add_node_to_full_path(&sp->s_fullpath, dp);
-
-    gdlp = ged_addToDisplay(gedp, name);
-
-    sp->s_iflag = DOWN;
-    sp->s_soldash = 0;
-    sp->s_Eflag = 1;		/* Can't be solid edited! */
-    sp->s_color[0] = sp->s_basecolor[0] = (rgb>>16) & 0xFF;
-    sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
-    sp->s_color[2] = sp->s_basecolor[2] = (rgb) & 0xFF;
-    sp->s_regionid = 0;
-
-    /* Solid successfully drawn, add to linked list of solid structs */
-    BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
-
-    sp->s_dlist = 0;
-    createDListAll(sp);
-
-    return 0;		/* OK */
-}
-
 
 void
 add_solid_path_to_result(

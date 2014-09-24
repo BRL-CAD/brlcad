@@ -45,7 +45,6 @@ extern "C" {
     /* Public Headers */
 #include "vmath.h"
 #include "db.h"
-#include "bu.h"
 
     /* Private Headers */
 #include "../ged_private.h"

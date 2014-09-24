@@ -28,7 +28,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"

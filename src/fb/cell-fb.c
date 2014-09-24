@@ -27,7 +27,8 @@
 #include <time.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
 #include "fb.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -188,7 +189,7 @@ static int xorigin = 0, yorigin = 0;	/* Pixel location of image low lft */
 static int view_flag = 0;		/* The view that is of interest */
 
 static long maxcells = 10000;	/* Max number of cells in the image */
-static FBIO *fbiop = FBIO_NULL;	/* Frame-buffer device */
+static fb *fbiop = FB_NULL;	/* Frame-buffer device */
 static FILE *filep;		/* Input stream */
 static struct locrec gp_locs;
 
@@ -427,7 +428,7 @@ display_Cells(long int ncells)
 
     zoom = 1;
     fbiop = fb_open((fbfile[0] != '\0') ? fbfile : NULL, fb_width, fb_height);
-    if (fbiop == FBIO_NULL)
+    if (fbiop == FB_NULL)
 	return 0;
     if (compute_fb_height || compute_fb_width) {
 	bu_log("fb_size requested: %d %d\n", fb_width, fb_height);

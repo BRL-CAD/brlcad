@@ -46,13 +46,12 @@
 #  include <sys/wait.h>
 #endif
 #include "bselect.h"
-#include "bio.h"
 
 #ifdef VMIN
 #  undef VMIN
 #endif
 
-#include "bu.h"
+#include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -74,7 +73,7 @@ struct pkg_queue {
 };
 
 /***** Variables shared with viewing model *** */
-FBIO *fbp = FBIO_NULL;	/* Framebuffer handle */
+fb *fbp = FB_NULL;	/* Framebuffer handle */
 FILE *outfp = NULL;		/* optional pixel output file */
 mat_t view2model;
 mat_t model2view;

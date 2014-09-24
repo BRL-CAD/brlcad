@@ -24,10 +24,10 @@
  *
  */
 
-#include "bu.h"
 #include "icv.h"
 #include "vmath.h"
-
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 HIDDEN int
 shrink_image(icv_image_t* bif, unsigned int factor)

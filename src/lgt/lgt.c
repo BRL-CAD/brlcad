@@ -28,7 +28,6 @@
 #include <math.h>
 #include <signal.h>
 #include <assert.h>
-#include "bio.h"
 
 #include "bu/parallel.h"
 #include "vmath.h"
@@ -222,7 +221,7 @@ close_Output_Device(int frame)
     if ((movie.m_noframes > 1 && movie.m_fullscreen) ||
 	(frame == movie.m_endframe)) {
 	(void) fb_close(fbiop);
-	fbiop = FBIO_NULL;
+	fbiop = FB_NULL;
     }
     return;
 }

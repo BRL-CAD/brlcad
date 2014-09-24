@@ -14,7 +14,7 @@ include_directories(
 
 BRLCAD_ADDEXEC(remrt "ihost.c;remrt.c" "libremrt;liboptical;libfb")
 
-BRLCAD_ADDEXEC(rtsrv rtsrv.c "libremrt;liboptical;libpkg;libicv")
+BRLCAD_ADDEXEC(rtsrv rtsrv.c "libremrt;libfb;liboptical;libpkg;libicv")
 SET_TARGET_PROPERTIES(rtsrv PROPERTIES COMPILE_DEFINITIONS "RTSRV")
 
 CMAKEFILES(ihost.h protocol.h)

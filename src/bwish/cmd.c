@@ -38,6 +38,8 @@
 #endif
 
 #include "bu/cmd.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "libtermio.h"
 
 

@@ -25,11 +25,13 @@
 #include <cstring> // for strdup
 #include "bio.h"
 
-/* #include "bu.h" */
 #include "vmath.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "bn.h"
 
-#include "bu_arg_parse_private.h" /* includes bu_arg_parse.h which includes bu.h */
+#include "bu_arg_parse_private.h"
 
 #include <vector>
 #include <string>

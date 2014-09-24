@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
@@ -35,14 +34,13 @@
 #  include <sys/types.h>
 #endif
 
-#include "bio.h"
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
 #include "dm/dm_xvars.h"
+#include "../libdm/dm_private.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
 #include "ged.h"
@@ -541,7 +539,7 @@ common_dm(int argc, const char *argv[])
 
 	/* get the window size */
 	if (argc == 1) {
-	    bu_vls_printf(&vls, "%d %d", dmp->dm_width, dmp->dm_height);
+	    bu_vls_printf(&vls, "%d %d", dm_get_width(dmp), dm_get_height(dmp));
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
@@ -563,7 +561,7 @@ common_dm(int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
+#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL) || defined(DM_OSGL)
     if (BU_STR_EQUAL(argv[0], "getx")) {
 	if (argc == 1) {
 	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
@@ -617,14 +615,123 @@ common_dm(int argc, const char *argv[])
 	}
 
 	dirty = 1;
-	(void)DM_MAKE_CURRENT(dmp);
-	return DM_SET_BGCOLOR(dmp, r, g, b);
+	(void)dm_make_current(dmp);
+	return dm_set_bg(dmp, r, g, b);
     }
 
     Tcl_AppendResult(INTERP, "dm: bad command - ", argv[0], "\n", (char *)NULL);
     return TCL_ERROR;
 }
 
+/* common sp_hook functions */
+
+void
+view_state_flag_hook(const struct bu_structparse *UNUSED(sdp),
+		const char *UNUSED(name),
+		void *UNUSED(base),
+		const char *UNUSED(value),
+                void *data)
+{
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    if (hs->vs)
+	hs->vs->vs_flag = 1;
+}
+
+void
+dirty_hook(const struct bu_structparse *UNUSED(sdp),
+	const char *UNUSED(name),
+	void *UNUSED(base),
+	const char *UNUSED(value),
+	void *data)
+{
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    *(hs->dirty_global) = 1;
+}
+
+void
+zclip_hook(const struct bu_structparse *sdp,
+	const char *name,
+	void *base,
+	const char *value,
+	void *data)
+{
+    struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
+    hs->vs->vs_gvp->gv_zclip = dm_get_zclip(hs->hs_dmp);
+    dirty_hook(sdp, name, base, value, data);
+}
+
+void *
+set_hook_data(struct mged_view_hook_state *hs) {
+    hs->hs_dmp = dmp;
+    hs->vs = view_state;
+    hs->dirty_global = &(dirty);
+    return (void *)hs;
+}
+
+struct bu_structparse_map vparse_map[] = {
+    {"depthcue",	view_state_flag_hook      },
+    {"zclip",		zclip_hook		  },
+    {"zbuffer",		view_state_flag_hook      },
+    {"lighting",	view_state_flag_hook      },
+    {"transparency",	view_state_flag_hook      },
+    {"fastfog",		view_state_flag_hook      },
+    {"density",		dirty_hook  		  },
+    {"bound",		dirty_hook  		  },
+    {"useBound",	dirty_hook  	  	  },
+    {(char *)0,		BU_STRUCTPARSE_FUNC_NULL  }
+};
+
+int
+dm_commands(int argc,
+       const char *argv[])
+{
+    struct dm_hook_data mged_dm_hook;
+    if (BU_STR_EQUAL(argv[0], "set")) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+	if (argc < 2) {
+	    struct bu_vls report_str = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&report_str, "Display Manager (type %s) internal variables", dm_get_dm_name(dmp));
+	    /* Bare set command, print out current settings */
+	    bu_vls_struct_print2(&vls,
+				 bu_vls_addr(&report_str),
+				 dm_get_vparse(dmp),
+				 (const char *)dm_get_mvars(dmp));
+	    bu_vls_free(&report_str);
+	} else if (argc == 2) {
+	    /* TODO - need to add hook func support to this func, since the one in the libdm structparse isn't enough by itself */
+	    bu_vls_struct_item_named(&vls,
+				     dm_get_vparse(dmp),
+				     argv[1],
+				     (const char *)dm_get_mvars(dmp),
+				     COMMA);
+	} else {
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	    int ret;
+	    struct mged_view_hook_state global_hs;
+	    void *data = set_hook_data(&global_hs);
+
+	    ret = dm_set_hook(vparse_map, argv[1], data, &mged_dm_hook);
+
+	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
+	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
+	    bu_vls_putc(&tmp_vls, '\"');
+	    ret = bu_struct_parse(&tmp_vls, dm_get_vparse(dmp), (char *)dm_get_mvars(dmp), (void *)(&mged_dm_hook));
+	    bu_vls_free(&tmp_vls);
+	    if (ret < 0) {
+	      bu_vls_free(&vls);
+	      return TCL_ERROR;
+	    }
+	}
+
+	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	return TCL_OK;
+    }
+
+    return common_dm(argc, argv);
+}
 
 /*
  * Local Variables:
