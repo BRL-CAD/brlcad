@@ -21,7 +21,7 @@
 #include <algorithm> // for std::max
 #define NOMINMAX
 extern "C" {
-#include "bu.h"
+#include "bu/log.h"
 }
 #include "brep.h"
 

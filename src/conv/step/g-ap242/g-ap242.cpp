@@ -27,7 +27,9 @@
 
 #include <iostream>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"

@@ -52,7 +52,9 @@
 
 #include "tk.h"
 #include "tkPlatDecls.h"
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/str.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"

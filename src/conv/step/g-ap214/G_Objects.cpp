@@ -25,7 +25,7 @@
  */
 
 #include "AP_Common.h"
-#include "bu.h"
+#include "bu/log.h"
 #include "ON_Brep.h"
 #include "Trees.h"
 #include "G_Objects.h"

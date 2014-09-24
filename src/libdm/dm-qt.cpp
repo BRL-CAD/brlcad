@@ -35,7 +35,9 @@
 
 #include "tcl.h"
 #include "tk.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/vls.h"
+#include "bu/parse.h"
 #include "dm.h"
 #include "dm_private.h"
 #include "dm/dm_xvars.h"

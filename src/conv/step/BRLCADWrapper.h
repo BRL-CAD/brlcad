@@ -33,7 +33,7 @@
 
 extern "C" {
     /* brlcad headers */
-#include <bu.h>
+#include <bu/list.h>
 #include <wdb.h>
 #include <raytrace.h>
 }
