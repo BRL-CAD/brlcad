@@ -36,7 +36,9 @@
 
 #include "tcl.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"

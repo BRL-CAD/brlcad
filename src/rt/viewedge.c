@@ -92,7 +92,10 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "bu.h"
+#include "bu/parse.h"
+#include "bu/parallel.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 #include "icv.h"
 
 #include "./rtuif.h"

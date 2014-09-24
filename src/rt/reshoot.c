@@ -81,7 +81,10 @@
 #include <stddef.h>
 
 #include "vmath.h"		/* vector math macros */
-#include "bu.h"
+#include "bu/list.h"
+#include "bu/parse.h"
+#include "bu/vls.h"
+#include "bu/log.h"
 #include "raytrace.h"		/* librt interface definitions */
 
 #include "./rtuif.h"

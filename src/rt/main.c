@@ -38,7 +38,14 @@
 #include <signal.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/bitv.h"
+#include "bu/debug.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
+#include "bu/vls.h"
+#include "bu/version.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"

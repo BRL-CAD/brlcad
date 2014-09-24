@@ -52,6 +52,7 @@
 #include "mater.h"
 #include "icv.h"
 #include "raytrace.h"
+#include "bu/cv.h"
 #include "fb.h"
 #include "plot3.h"
 #include "photonmap.h"

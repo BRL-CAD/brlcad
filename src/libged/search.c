@@ -66,7 +66,7 @@ _path_scrub(struct bu_vls *path)
 	char *tbasename = (char *)bu_calloc(strlen(normalized), sizeof(char), "_path_scrub tbasename");
 	bu_basename(tbasename, normalized);
 	bu_vls_sprintf(&tmp, "%s", tbasename);
-	bu_free(tbasename, "free bu_basename string (caller's responsibility per bu.h)");
+	bu_free(tbasename, "free bu_basename string (caller's responsibility per bu/log.h)");
 	bu_vls_sprintf(path, "%s", bu_vls_addr(&tmp));
 	bu_vls_free(&tmp);
     } else {
