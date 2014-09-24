@@ -23,12 +23,17 @@
  * declarations for native and standard system NETWORKING routines.
  *
  * This header is commonly used in leu of including the following:
- * winsock2.h, netinet/in.h, netinet/tcp.h, arpa/inet.h
+ * winsock2.h (not select, fd_set), netinet/in.h, netinet/tcp.h,
+ * arpa/inet.h (htonl, ntohl, etc)
  *
  * This header does not belong to any BRL-CAD library but may used by
  * all of them.  Consider this header PRIVATE and subject to change,
  * NOT TO BE USED BY THIRD PARTIES.
  *
+ * The below logic should not rely on common.h's HAVE_* defines and
+ * should not be including the common.h header.  This is intended to
+ * be a stand-alone portability header intended to be independent of
+ * build system, reusable by external projects.
  */
 
 #ifndef BIN_H
@@ -41,12 +46,6 @@
 #if defined(BIO_H)
 #  error "The header #include for bio.h must come after bin.h for portability reasons."
 #endif
-
-/* Do not rely on common.h's HAVE_* defines.  Do not include the
- * common.h header.  This is a stand-alone portability header intended
- * to be independent of BRL-CAD and the BRL-CAD build system, reusable
- * by external projects.
- */
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  ifndef _WINSOCKAPI_
