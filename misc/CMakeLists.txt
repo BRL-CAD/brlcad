@@ -98,7 +98,7 @@ set(misc_ignore_files
   jove.emacs
   macosx
   nsis
-  wix 
+  wix
   svn2git
   win32-msvc
   )
