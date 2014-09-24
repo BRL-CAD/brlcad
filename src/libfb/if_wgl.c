@@ -42,7 +42,6 @@
 #include <errno.h>
 #include <windowsx.h>
 
-#include "bio.h"
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
