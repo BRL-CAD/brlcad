@@ -68,11 +68,10 @@ endif()
 if(AV_FOUNDATION_FOUND)
   ADD_DEFINITIONS(-DUSE_AV_FOUNDATION)
 endif()
-if( ZLIB_FOUND )
-  add_definitions( -DUSE_ZLIB )
-  include_directories( ${ZLIB_INCLUDE_DIR} )
-  set(COMPRESSION_LIBRARIES ZLIB_LIBRARY)
-endif()
+# We guarantee zlib
+add_definitions(-DUSE_ZLIB)
+include_directories(${ZLIB_INCLUDE_DIR})
+set(COMPRESSION_LIBRARIES ${ZLIB_LIBRARY})
 
 ADD_DEFINITIONS(-DOSG_PLUGIN_EXTENSION=${CMAKE_SHARED_MODULE_SUFFIX})
 
