@@ -23,7 +23,7 @@
 #include <iostream>
 #include <sys/types.h>
 
-#include "bu.h"
+#include "bu/str.h"
 #include "bio.h"
 #include "obj_grammar_decls.h"
 #include "obj_parser_state.h"
