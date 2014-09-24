@@ -96,6 +96,8 @@ struct osgl_vars {
     osg::ref_ptr<osg::GraphicsContext::Traits> traits;
     osg::Timer *timer;
     int last_update_time;
+    osgViewer::Viewer *testviewer;
+    osg::Group *osg_root;
 #endif
 };
 
