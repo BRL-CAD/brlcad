@@ -36,7 +36,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "gcv.h"
 

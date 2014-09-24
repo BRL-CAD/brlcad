@@ -24,7 +24,7 @@
 #include <sys/types.h>
 
 #include "bu/str.h"
-#include "bsocket.h"
+#include "bio.h"
 #include "obj_grammar_decls.h"
 #include "obj_parser_state.h"
 #include "obj_rules.h"

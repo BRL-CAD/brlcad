@@ -38,7 +38,7 @@
 #ifdef HAVE_NETDB_H
 #  include <netdb.h>
 #endif
-#include "bsocket.h"
+#include "bio.h"
 
 #include "tie.h"
 #include "adrt.h"

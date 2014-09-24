@@ -34,7 +34,7 @@
 #include <netdb.h>
 #include <string.h>
 
-#include "bsocket.h"
+#include "bio.h"
 #include "tie.h"
 #include "adrt.h"
 #include "tienet.h"

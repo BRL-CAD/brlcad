@@ -40,7 +40,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/parallel.h"
 #include "bu/sort.h"

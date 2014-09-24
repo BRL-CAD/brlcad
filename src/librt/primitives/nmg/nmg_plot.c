@@ -45,7 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"

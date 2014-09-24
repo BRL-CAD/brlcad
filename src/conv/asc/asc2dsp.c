@@ -42,7 +42,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "bnetwork.h"
+#include "bin.h"
 #include "bu/log.h"
 
 

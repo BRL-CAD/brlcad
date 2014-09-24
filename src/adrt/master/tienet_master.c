@@ -52,7 +52,7 @@
 #include "tienet.h"
 #include "tienet_master.h"
 
-#include "bsocket.h"
+#include "bio.h"
 
 #include "tie.h"
 

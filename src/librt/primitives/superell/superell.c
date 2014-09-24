@@ -35,7 +35,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/cv.h"
 #include "vmath.h"

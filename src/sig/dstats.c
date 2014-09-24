@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/log.h"
 #include "bu/str.h"

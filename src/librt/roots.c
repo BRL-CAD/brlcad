@@ -22,7 +22,7 @@
 #include "common.h"
 
 #include <math.h>
-#include "bsocket.h"
+#include "bio.h"
 
 
 #include "vmath.h"

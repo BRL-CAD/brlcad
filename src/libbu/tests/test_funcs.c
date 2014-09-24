@@ -33,7 +33,7 @@
 #   include <stdint.h>
 #endif
 
-#include "bsocket.h"
+#include "bio.h"
 
 #include "../bu_internals.h"
 #include "./test_internals.h"

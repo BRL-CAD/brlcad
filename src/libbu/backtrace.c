@@ -39,7 +39,7 @@
 #  include <process.h>
 #endif
 #include "bselect.h"
-#include "bsocket.h"
+#include "bio.h"
 
 /* common headers */
 #include "bu/debug.h"

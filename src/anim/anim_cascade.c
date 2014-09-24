@@ -45,7 +45,7 @@
 #include "common.h"
 
 #include <math.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/getopt.h"
 #include "bu/log.h"

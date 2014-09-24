@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "rtgeom.h"
 #include "raytrace.h"

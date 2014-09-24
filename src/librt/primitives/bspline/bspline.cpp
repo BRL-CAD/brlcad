@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "bnetwork.h"
+#include "bin.h"
 
 #include "bu/cv.h"
 #include "vmath.h"

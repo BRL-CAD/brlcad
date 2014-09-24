@@ -31,7 +31,7 @@
 #include <sys/stat.h>
 #include <math.h>
 #include <errno.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu/getopt.h"

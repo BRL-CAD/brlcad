@@ -32,7 +32,7 @@
 #include <math.h>
 #include <limits.h>
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/malloc.h"
 #include "bn.h"

@@ -30,7 +30,7 @@
 
 #include <stddef.h>
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"

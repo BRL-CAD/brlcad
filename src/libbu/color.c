@@ -25,7 +25,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/color.h"
 #include "bu/log.h"

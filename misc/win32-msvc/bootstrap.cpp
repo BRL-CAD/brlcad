@@ -1,5 +1,5 @@
 #include "common.h"
-#include "bsocket.h"
+#include "bio.h"
 
 /*
  * This bootstrap's application static initialization on Windows to

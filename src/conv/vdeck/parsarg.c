@@ -25,7 +25,7 @@
 
 #include <signal.h>
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/getopt.h"
 #include "vmath.h"

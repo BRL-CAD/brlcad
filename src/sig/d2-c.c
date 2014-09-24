@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/log.h"
 #include "bu/str.h"

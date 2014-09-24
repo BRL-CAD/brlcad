@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

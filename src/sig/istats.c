@@ -31,7 +31,7 @@
 #include <string.h>
 #include <limits.h>
 #include <math.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/getopt.h"
 #include "bu/malloc.h"

@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#include "bsocket.h"
+#include "bio.h"
 #include "bu/log.h"
 
 int

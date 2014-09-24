@@ -77,8 +77,8 @@
 #  include <sys/time.h>		/* For struct timeval */
 #endif
 #include "bselect.h"
-#include "bnetwork.h"
-#include "bsocket.h"
+#include "bin.h"
+#include "bio.h"
 
 #include "../libfb/fb_private.h" /* for _fb_disk_enable */
 #include "bu/getopt.h"

@@ -21,7 +21,7 @@
 
 #include "common.h"
 
-#include "bsocket.h"
+#include "bio.h"
 
 #include "raytrace.h"
 #include "brlcad_ident.h"

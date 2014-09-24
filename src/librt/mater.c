@@ -32,7 +32,7 @@
 
 #include "common.h"
 
-#include "bsocket.h"
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

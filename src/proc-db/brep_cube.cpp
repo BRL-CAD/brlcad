@@ -51,7 +51,7 @@
 
 #include "common.h"
 
-#include "bsocket.h"
+#include "bio.h"
 #include "bu/log.h"
 
 /* without OBJ_BREP, this entire procedural example is disabled */

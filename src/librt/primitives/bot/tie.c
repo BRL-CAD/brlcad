@@ -36,7 +36,7 @@
 # include <stdint.h>
 #endif
 
-#include "bsocket.h"
+#include "bio.h"
 
 
 #include "tieprivate.h"

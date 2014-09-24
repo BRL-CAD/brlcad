@@ -35,7 +35,7 @@
 #    define MAP_FAILED ((void *)-1)	/* Error return from mmap() */
 #  endif
 #endif
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/debug.h"
 #include "bu/file.h"

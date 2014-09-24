@@ -44,7 +44,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/sort.h"
 #include "vmath.h"

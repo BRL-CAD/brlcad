@@ -50,7 +50,7 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#include "bsocket.h"
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu/getopt.h"

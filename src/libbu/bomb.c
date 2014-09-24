@@ -24,7 +24,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/debug.h"
 #include "bu/file.h"

@@ -68,7 +68,7 @@
 # include <getopt.h>
 #endif
 
-#include "bsocket.h"
+#include "bio.h"
 
 /* socket structure */
 typedef struct master_socket_s

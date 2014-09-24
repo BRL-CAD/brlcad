@@ -32,7 +32,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/log.h"
 #include "bu/getopt.h"

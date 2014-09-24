@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "bnetwork.h"
+#include "bin.h"
 
 #include "bu/endian.h"
 #include "bu/parse.h"

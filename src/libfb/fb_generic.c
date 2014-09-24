@@ -39,7 +39,7 @@
 #endif
 
 #include "bselect.h"
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/color.h"
 #include "bu/log.h"

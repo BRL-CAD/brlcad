@@ -31,7 +31,7 @@
 #  include <X11/Xlib.h>
 #  include <X11/Xutil.h>
 #endif
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/cv.h"
 #include "bu/log.h"

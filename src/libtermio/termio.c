@@ -37,7 +37,7 @@
 #  endif
 #endif
 
-#include "bsocket.h"
+#include "bio.h"
 
 /*
  * This file will work IFF one of these three flags is set:

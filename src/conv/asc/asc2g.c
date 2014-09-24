@@ -31,8 +31,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "bnetwork.h"
-#include "bsocket.h"
+#include "bin.h"
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu/cv.h"

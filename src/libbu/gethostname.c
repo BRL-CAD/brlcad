@@ -20,8 +20,8 @@
 
 #include "common.h"
 
-#include "bnetwork.h"
-#include "bsocket.h"
+#include "bin.h"
+#include "bio.h"
 
 #include "bu/log.h"
 #include "bu/str.h"

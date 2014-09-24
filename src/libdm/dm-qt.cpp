@@ -25,7 +25,7 @@
 
 #ifdef DM_QT
 
-#include "bsocket.h"
+#include "bio.h"
 
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>

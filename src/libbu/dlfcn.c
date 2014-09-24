@@ -29,7 +29,7 @@
 #  define HAVE_DLOPEN 1
 # endif
 #endif
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/file.h"
 

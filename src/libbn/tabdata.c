@@ -44,7 +44,7 @@
 
 #include <math.h>
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/debug.h"
 #include "bu/log.h"

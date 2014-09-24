@@ -38,7 +38,7 @@
 #include "common.h"
 
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 
 #include "bn.h"

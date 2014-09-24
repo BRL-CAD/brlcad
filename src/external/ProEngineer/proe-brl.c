@@ -27,7 +27,7 @@
  */
 
 #include "common.h"
-#include "bsocket.h"
+#include "bio.h"
 
 #include <stdlib.h>
 #include <math.h>

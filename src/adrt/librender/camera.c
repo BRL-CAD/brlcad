@@ -28,7 +28,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "bsocket.h"
+#include "bio.h"
 #include "bu/parallel.h"
 #include "raytrace.h" /* for last RT_SEM_LAST */
 

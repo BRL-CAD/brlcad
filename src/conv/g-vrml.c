@@ -34,7 +34,7 @@
 #include <sys/stat.h>
 #include <math.h>
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 /* interface headers */
 #include "vmath.h"

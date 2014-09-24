@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include <ctype.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu/units.h"

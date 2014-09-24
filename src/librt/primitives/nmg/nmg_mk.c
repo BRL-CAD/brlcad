@@ -60,7 +60,7 @@
 #include <stddef.h>
 #include <math.h>
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"

@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "plot3.h"
 

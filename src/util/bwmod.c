@@ -34,7 +34,7 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu/log.h"

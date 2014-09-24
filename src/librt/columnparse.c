@@ -29,7 +29,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <regex.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bn.h"
 #include "db.h"

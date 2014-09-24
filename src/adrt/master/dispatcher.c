@@ -28,7 +28,7 @@
 #ifdef HAVE_PTHREAD_H
 #  include <pthread.h>
 #endif
-#include "bsocket.h"
+#include "bio.h"
 
 #include "tie.h"
 #include "adrt.h"

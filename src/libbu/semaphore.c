@@ -25,7 +25,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "bsocket.h"
+#include "bio.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"

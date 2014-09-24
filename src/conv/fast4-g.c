@@ -32,7 +32,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include "bsocket.h"
+#include "bio.h"
 
 /* interface headers */
 #include "bu/debug.h"

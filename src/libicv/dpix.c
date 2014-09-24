@@ -27,7 +27,7 @@
 
 #include <sys/stat.h>  /* for file mode info in WRMODE */
 
-#include "bsocket.h"
+#include "bio.h"
 #include "bu/log.h"
 #include "icv.h"
 #include "vmath.h"

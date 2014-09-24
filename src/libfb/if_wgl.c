@@ -37,19 +37,18 @@
 
 #ifdef IF_WGL
 
+#include "bin.h"
+#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
+#include <windowsx.h>
 
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
 #undef RED
-
-#include "bselect.h"
-#include "bsocket.h"
-#include <windowsx.h> /* this is for window events and LPARAM macros */
 
 #include "tk.h"
 #include "tkPlatDecls.h"

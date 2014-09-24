@@ -29,7 +29,7 @@
 
 #include "common.h"
 
-#include "bsocket.h"
+#include "bio.h"
 #include <string.h>
 #include <stdlib.h>
 

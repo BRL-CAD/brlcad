@@ -37,7 +37,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/getopt.h"
 #include "bu/log.h"

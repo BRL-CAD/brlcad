@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include <math.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/malloc.h"
 #include "vmath.h"

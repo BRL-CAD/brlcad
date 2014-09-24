@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/file.h"
 #include "bu/log.h"

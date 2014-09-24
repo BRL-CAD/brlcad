@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "bnetwork.h"
+#include "bin.h"
 
 #include "bu/cv.h"
 #include "vmath.h"

@@ -34,7 +34,7 @@
 #  include "tk.h"
 #endif
 
-#include "bnetwork.h"
+#include "bin.h"
 
 /* Make sure this comes after bio.h (for Windows) */
 #ifdef HAVE_GL_GL_H

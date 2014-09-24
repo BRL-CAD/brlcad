@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include "bnetwork.h"
+#include "bin.h"
 
 #include "bu/cv.h"
 #include "vmath.h"

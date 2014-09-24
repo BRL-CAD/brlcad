@@ -1033,7 +1033,7 @@ endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
 mark_as_advanced(Qt5Widgets_DIR)
 
 # Enable features requiring OpenSceneGraph
-option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
+option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" ON)
 mark_as_advanced(BRLCAD_ENABLE_OSG)
 if(BRLCAD_ENABLE_OSG)
   if(APPLE AND NOT BRLCAD_ENABLE_AQUA)

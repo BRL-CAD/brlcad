@@ -31,7 +31,7 @@
 
 #include "vmath.h"
 
-#include "bsocket.h"
+#include "bio.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "brep.h"

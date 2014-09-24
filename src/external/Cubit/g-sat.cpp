@@ -39,7 +39,7 @@
 #include <vector>
 #include <stack>
 #include <string.h>
-#include "bsocket.h"
+#include "bio.h"
 
 // CGM headers
 #include "NoAcisQueryEngine.hpp"

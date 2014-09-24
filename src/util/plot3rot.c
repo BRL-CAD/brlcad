@@ -30,7 +30,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "bsocket.h"   /* for isatty */
+#include "bio.h"   /* for isatty */
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/log.h"

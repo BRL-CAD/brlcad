@@ -56,7 +56,7 @@
 #endif
 
 #include "bselect.h"
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/bu_tcl.h"
 #include "bu/magic.h"

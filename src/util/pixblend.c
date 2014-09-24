@@ -40,7 +40,7 @@
 #endif
 #include <string.h>
 #include <time.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/getopt.h"
 #include "bu/log.h"

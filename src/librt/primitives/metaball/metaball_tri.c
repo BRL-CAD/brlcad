@@ -46,7 +46,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "vmath.h"
 #include "db.h"

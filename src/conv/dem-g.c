@@ -69,7 +69,7 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bn.h"
 #include "vmath.h"

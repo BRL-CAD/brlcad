@@ -29,7 +29,7 @@
 #  include <sys/shm.h>
 #endif
 #include "errno.h"
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/debug.h"
 #include "bu/list.h"

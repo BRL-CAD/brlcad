@@ -36,7 +36,7 @@
 #  include <sys/time.h>
 #endif
 
-#include "bsocket.h"
+#include "bio.h"
 #include "bu/log.h"
 #include "bu/vls.h"
 

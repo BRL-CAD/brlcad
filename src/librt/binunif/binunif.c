@@ -41,7 +41,7 @@
 #  include <sys/types.h>
 #endif
 
-#include "bsocket.h"
+#include "bio.h"
 
 
 #include "vmath.h"

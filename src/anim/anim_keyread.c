@@ -40,7 +40,7 @@
 #include "common.h"
 
 #include <math.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bn.h"
 #include "bu/getopt.h"

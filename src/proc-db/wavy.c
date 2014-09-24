@@ -27,7 +27,7 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */

@@ -22,7 +22,7 @@
 
 #include <string.h>
 #include <time.h>
-#include "bsocket.h"
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"
