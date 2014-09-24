@@ -20,10 +20,6 @@
 
 #include "common.h"
 
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
-
 #include "bin.h"
 #include "bio.h"
 
