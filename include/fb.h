@@ -55,7 +55,7 @@
 #  include <sys/time.h>
 #endif
 
-#include "bin.h"
+#include "bselect.h"
 #include "bio.h"
 
 #include "bu/bu_tcl.h"
