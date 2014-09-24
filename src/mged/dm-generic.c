@@ -34,7 +34,6 @@
 #  include <sys/types.h>
 #endif
 
-#include "bio.h"
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"

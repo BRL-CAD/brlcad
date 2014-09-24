@@ -29,9 +29,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"

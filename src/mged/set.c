@@ -23,7 +23,6 @@
 
 #include "common.h"
 
-#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

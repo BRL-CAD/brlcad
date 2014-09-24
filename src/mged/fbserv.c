@@ -36,7 +36,6 @@
 #  include <sys/socket.h>
 #  include <netinet/in.h>		/* For htonl(), etc. */
 #endif
-#include "bio.h"
 
 #include "tcl.h"
 #include "bu.h"

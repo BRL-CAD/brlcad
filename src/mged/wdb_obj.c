@@ -37,7 +37,6 @@
 #include <math.h>
 #include <errno.h>
 #include <assert.h>
-#include "bio.h"
 
 #include "tcl.h"
 

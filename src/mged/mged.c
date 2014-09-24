@@ -53,7 +53,6 @@
 #endif
 
 #include "bselect.h"
-#include "bio.h"
 
 #include "tcl.h"
 #ifdef HAVE_TK

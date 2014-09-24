@@ -46,13 +46,12 @@
 #  include <sys/wait.h>
 #endif
 #include "bselect.h"
-#include "bio.h"
 
 #ifdef VMIN
 #  undef VMIN
 #endif
 
-#include "bu.h"
+#include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"

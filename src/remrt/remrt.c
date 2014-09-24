@@ -50,7 +50,6 @@
 #  include <sys/wait.h>
 #endif
 #include "bselect.h"
-#include "bio.h"
 
 /* FIXME: is this basically FD_COPY()? */
 #ifndef FD_MOVE
@@ -58,7 +57,8 @@
 					       if (FD_ISSET(_i, b)) FD_SET(_i, a); else FD_CLR(_i, a); }
 #endif
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"

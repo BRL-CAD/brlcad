@@ -29,7 +29,6 @@
 #include <math.h>
 #include <signal.h>
 #include <string.h>
-#include "bio.h"
 
 #include "tcl.h"
 #include "bu.h"

@@ -54,7 +54,6 @@
 #include <math.h>
 #include <string.h>
 
-#include "bio.h"
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "db.h"

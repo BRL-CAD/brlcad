@@ -34,7 +34,6 @@
 #  include "tk.h"
 #endif
 
-#include "bio.h"
 #include "bin.h"
 
 /* Make sure this comes after bio.h (for Windows) */

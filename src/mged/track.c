@@ -30,7 +30,6 @@
 #include <math.h>
 #include <string.h>
 
-#include "bio.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"

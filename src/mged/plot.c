@@ -32,7 +32,6 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"

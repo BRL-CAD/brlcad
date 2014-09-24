@@ -39,7 +39,6 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#include "bio.h"
 
 #include "tcl.h"
 #ifdef HAVE_TK
