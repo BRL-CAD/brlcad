@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "tcl.h"
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"

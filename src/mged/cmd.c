@@ -45,8 +45,8 @@
 #  include "tk.h"
 #endif
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "bn.h"
 #include "rtgeom.h"
 #include "tclcad.h"

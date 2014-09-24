@@ -33,8 +33,8 @@
 #  include <sys/wait.h>
 #endif
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/units.h"
 #include "mater.h"
 #include "plot3.h"
 

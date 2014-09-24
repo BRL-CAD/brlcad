@@ -26,8 +26,8 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/units.h"
 #include "bn.h"
 #include "ged.h"
 

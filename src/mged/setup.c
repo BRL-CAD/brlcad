@@ -32,7 +32,6 @@
 #include <string.h>
 
 /* common headers */
-#include "bu.h"
 #include "bn.h"
 #include "vmath.h"
 #include "tclcad.h"

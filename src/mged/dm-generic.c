@@ -41,7 +41,6 @@
 #include "dm/dm_xvars.h"
 #include "../libdm/dm_private.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
 #include "ged.h"

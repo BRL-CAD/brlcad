@@ -32,7 +32,6 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"

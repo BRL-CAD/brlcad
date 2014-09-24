@@ -27,7 +27,6 @@
 
 #include <math.h>
 
-#include "bu.h"
 #include "vmath.h"
 #include "ged.h"
 

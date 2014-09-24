@@ -41,7 +41,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "bu.h"
 #include "vmath.h"
 
 

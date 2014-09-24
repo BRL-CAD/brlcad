@@ -44,7 +44,6 @@
 #  include <X11/keysym.h>
 #endif
 
-#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
 #include "ged.h"

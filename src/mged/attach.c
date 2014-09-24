@@ -41,7 +41,6 @@
 #  include <GL/gl.h>
 #endif
 
-#include "bu.h"
 #include "vmath.h"
 #include "ged.h"
 
