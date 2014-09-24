@@ -56,7 +56,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -65,7 +64,9 @@
 #  include <sys/stat.h>
 #endif
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/str.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "libtermio.h"
 

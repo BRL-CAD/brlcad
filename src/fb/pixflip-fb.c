@@ -41,9 +41,12 @@
 #  include <sys/stat.h>
 #endif
 #include "bselect.h"
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/file.h"
+#include "bu/str.h"
 #include "fb.h"
 
 

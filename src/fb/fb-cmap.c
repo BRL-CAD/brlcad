@@ -28,9 +28,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/str.h"
+#include "bu/log.h"
 #include "fb.h"
 
 ColorMap cm;

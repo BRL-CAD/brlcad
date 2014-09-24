@@ -27,9 +27,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
 #include "fb.h"
 #include "pkg.h"
 

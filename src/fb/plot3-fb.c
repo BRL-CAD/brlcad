@@ -76,9 +76,12 @@
 #include <signal.h>
 #include <string.h>
 #include <ctype.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/cv.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "fb.h"
 #include "plot3.h"
 

@@ -29,7 +29,9 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
 #include "fb.h"
 
 

@@ -27,7 +27,8 @@
 #include <time.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
 #include "fb.h"
 #include "vmath.h"
 #include "raytrace.h"
