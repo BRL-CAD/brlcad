@@ -1,4 +1,4 @@
-/*                           B I N . H
+/*                      B N E T W O R K . H
  * BRL-CAD
  *
  * Copyright (c) 2011-2014 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bin.h
+/** @file bnetwork.h
  *
  * BRL-CAD private system compatibility wrapper header that provides
  * declarations for native and standard system NETWORKING routines.
@@ -36,8 +36,8 @@
  * build system, reusable by external projects.
  */
 
-#ifndef BIN_H
-#define BIN_H
+#ifndef BNETWORK_H
+#define BNETWORK_H
 
 /* make sure this header always comes before bio.h due to system header
  * ordering requirements.  this is mostly a windows issue, but we want
@@ -65,7 +65,7 @@
 #  include <arpa/inet.h> /* hton/ntoh, inet_addr functions */
 #endif
 
-#endif /* BIN_H */
+#endif /* BNETWORK_H */
 
 /*
  * Local Variables:

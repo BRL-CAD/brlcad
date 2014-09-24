@@ -1,4 +1,4 @@
-/*                       B S E L E C T . H
+/*                       B S O C K E T . H
  * BRL-CAD
  *
  * Copyright (c) 2011-2014 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bselect.h
+/** @file bsocket.h
  *
  * BRL-CAD private system compatibility wrapper header that provides
  * declarations for native and standard system select() routines.
@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef BSELECT_H
-#define BSELECT_H
+#ifndef BSOCKET_H
+#define BSOCKET_H
 
 #include "common.h"
 
@@ -79,7 +79,7 @@
 
 #endif /* GCC_PREREQ */
 
-#endif /* BSELECT_H */
+#endif /* BSOCKET_H */
 
 /*
  * Local Variables:
