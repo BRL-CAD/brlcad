@@ -61,7 +61,8 @@ struct IntersectPoint {
     enum {
 	UNSET,
 	IN,
-	OUT
+	OUT,
+	TANGENT
     } m_dir;		// dir is going inside/outside
     int m_split_li;	// between clx_points[m_split_li] and
 			// clx_points[m_split_li+1]
@@ -113,16 +114,21 @@ public:
 	m_curve = NULL;
     }
 
+    void Empty()
+    {
+	m_ssi_curves.Empty();
+	delete m_curve;
+	m_curve = NULL;
+    }
+
     ~LinkedCurve()
     {
-	if (m_curve) {
-	    delete m_curve;
-	}
-	m_curve = NULL;
+	Empty();
     }
 
     LinkedCurve &operator= (const LinkedCurve &_lc)
     {
+	Empty();
 	m_curve = _lc.m_curve ? _lc.m_curve->Duplicate() : NULL;
 	m_ssi_curves = _lc.m_ssi_curves;
 	return *this;
@@ -785,11 +791,11 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 			SSICurve issi(isub), jssi(jsub);
 			isub = jsub = NULL;
 
-			tmp[i].m_ssi_curves.Empty();
-			tmp[i].m_ssi_curves.Append(issi);
+			tmp[i].Empty();
+			tmp[i].Append(issi);
 
-			tmp[j].m_ssi_curves.Empty();
-			tmp[j].m_ssi_curves.Append(jssi);
+			tmp[j].Empty();
+			tmp[j].Append(jssi);
 
 			// proceed as if they're linkable
 			configure_for_linking(c1, c2, tmp[i], tmp[j]);
@@ -1374,6 +1380,14 @@ get_loop_points(
     return out;
 }
 
+// Get the result of a boolean combination of two loops. Based on the
+// algorithm from this paper:
+//
+// Margalit, Avraham and Gary D. Knott. 1989. "An Algorithm for
+// Computing the Union, Intersection or Difference of two Polygons."
+// Computers & Graphics 13:167-183. 
+//
+// gvu.gatech.edu/people/official/jarek/graphics/papers/04PolygonBooleansMargalit.pdf
 std::list<ON_SimpleArray<ON_Curve *> >
 loop_boolean(
     const ON_SimpleArray<ON_Curve *> &l1,
@@ -1386,14 +1400,15 @@ loop_boolean(
     for (int i = 0; i < l1.Count(); ++i) {
 	loop1.Append(l1[i]->Duplicate());
     }
-    for (int i = 0; i < l2.Count(); ++i) {
-	loop2.Append(l2[i]->Duplicate());
-    }
 
     if (op != BOOLEAN_INTERSECT && op != BOOLEAN_DIFF) {
 	bu_log("loop_boolean: unsupported operation\n");
 	out.push_back(loop1);
 	return out;
+    }
+
+    for (int i = 0; i < l2.Count(); ++i) {
+	loop2.Append(l2[i]->Duplicate());
     }
 
     // set curve directions based on operation
@@ -1409,6 +1424,10 @@ loop_boolean(
     {
 	bu_log("loop_boolean: couldn't standardize curve directions\n");
 	out.push_back(loop1);
+
+	for (int i = 0; i < l2.Count(); ++i) {
+	    delete loop2[i];
+	}
 	return out;
     }
 
@@ -1451,7 +1470,15 @@ loop_boolean(
     std::multiset<CurveSegment> out_segments =
 	get_op_segments(loop1_segments, loop2_segments, op);
 
-    return construct_loops_from_segments(out_segments);
+    out = construct_loops_from_segments(out_segments);
+
+    for (int i = 0; i < l1.Count(); ++i) {
+	delete loop1[i];
+    }
+    for (int i = 0; i < l2.Count(); ++i) {
+	delete loop2[i];
+    }
+    return out;
 }
 
 std::list<ON_SimpleArray<ON_Curve *> >
@@ -1661,12 +1688,9 @@ split_face_into_loops(
 	if (prev_in && next_in) {
 	    // tangent point, both sides in, duplicate that point
 	    new_pts.Append(*ipt);
-	    new_pts.Last()->m_dir = IntersectPoint::IN;
-	    new_pts.Last()->m_curve_pos = ipt->m_curve_pos + 1;
-	    for (int j = i + 1; j < clx_points.Count(); j++) {
-		clx_points[j].m_curve_pos++;
-	    }
-	    ipt->m_dir = IntersectPoint::OUT;
+	    new_pts.Last()->m_dir = IntersectPoint::TANGENT;
+	    new_pts.Last()->m_curve_pos = ipt->m_curve_pos;
+	    ipt->m_dir = IntersectPoint::TANGENT;
 	} else if (!prev_in && !next_in) {
 	    // tangent point, both sides out, useless
 	    ipt->m_dir = IntersectPoint::UNSET;
@@ -1764,13 +1788,13 @@ split_face_into_loops(
 	    continue;
 	}
 	if (q.m_curve_pos - p.m_curve_pos == 1 &&
-	    q.m_dir == IntersectPoint::OUT &&
-	    p.m_dir == IntersectPoint::IN)
+	    q.m_dir != IntersectPoint::IN &&
+	    p.m_dir != IntersectPoint::OUT)
 	{
 	    s.pop();
 	} else if (p.m_curve_pos - q.m_curve_pos == 1 &&
-		   p.m_dir == IntersectPoint::OUT &&
-		   q.m_dir == IntersectPoint::IN)
+		   p.m_dir != IntersectPoint::IN &&
+		   q.m_dir != IntersectPoint::OUT)
 	{
 	    s.pop();
 	} else {
@@ -1916,6 +1940,35 @@ loop_is_degenerate(const ON_SimpleArray<ON_Curve *> &loop)
     return false;
 }
 
+HIDDEN bool
+close_small_gap(ON_SimpleArray<ON_Curve *> &loop, int curr, int next)
+{
+    ON_3dPoint end_curr = loop[curr]->PointAtEnd();
+    ON_3dPoint start_next = loop[next]->PointAtStart();
+
+    double gap = end_curr.DistanceTo(start_next);
+    if (gap <= INTERSECTION_TOL && gap >= ON_ZERO_TOLERANCE) {
+	ON_Curve *closing_seg = new ON_LineCurve(end_curr, start_next);
+	loop.Insert(next, closing_seg);
+	return true;
+    }
+    return false;
+}
+
+HIDDEN void
+close_small_gaps(ON_SimpleArray<ON_Curve *> &loop)
+{
+    if (loop.Count() == 0) {
+	return;
+    }
+    for (int i = 0; i < loop.Count() - 1; ++i) {
+	if (close_small_gap(loop, i, i + 1)) {
+	    ++i;
+	}
+    }
+    close_small_gap(loop, loop.Count() - 1, 0);
+}
+
 // It might be worth investigating the following approach to building a set of faces from the splitting
 // in order to achieve robustness in the final result:
 //
@@ -1958,16 +2011,16 @@ split_trimmed_face(
     ON_ClassArray<LinkedCurve> &ssx_curves)
 {
     ON_SimpleArray<TrimmedFace *> out;
+    out.Append(orig_face->Duplicate());
+
     if (ssx_curves.Count() == 0) {
 	// no curves, no splitting
-	out.Append(orig_face->Duplicate());
 	return out;
     }
 
     ON_Curve *face_outerloop = get_loop_curve(orig_face->m_outerloop);
     if (!face_outerloop->IsClosed()) {
 	// need closed outerloop
-	out.Append(orig_face->Duplicate());
 	delete face_outerloop;
 	return out;
     }
@@ -1985,30 +2038,56 @@ split_trimmed_face(
 	    ssx_loops = split_face_into_loops(orig_face, ssx_curves[i]);
 	}
 
+	ON_SimpleArray<TrimmedFace *> next_out;
 	for (size_t j = 0; j < ssx_loops.size(); ++j) {
 	    if (loop_is_degenerate(ssx_loops[j])) {
 		continue;
 	    }
-	    // get the portions of the original outerloop inside and
-	    // outside the closed ssx curve to get the outerloops of
-	    // the split faces
-	    std::list<ON_SimpleArray<ON_Curve *> > intersect_loops, diff_loops;
 
-	    intersect_loops = loop_boolean(orig_face->m_outerloop,
-		    ssx_loops[j], BOOLEAN_INTERSECT);
+	    for (int k = 0; k < out.Count(); ++k) {
+		std::list<ON_SimpleArray<ON_Curve *> > intersect_loops, diff_loops;
 
-	    diff_loops = loop_boolean(orig_face->m_outerloop, ssx_loops[j],
-		    BOOLEAN_DIFF);
+		// get the portion of the current outerloop inside the
+		// closed ssx curve
+		intersect_loops = loop_boolean(out[k]->m_outerloop,
+			ssx_loops[j], BOOLEAN_INTERSECT);
 
-	    // make new faces from the loops
-	    append_faces_from_loops(out, orig_face, intersect_loops);
-	    append_faces_from_loops(out, orig_face, diff_loops);
+		if (ssx_curves[i].IsClosed()) {
+		    if (intersect_loops.size() == 0) {
+			// no intersection, just keep the face as-is
+			next_out.Append(out[k]->Duplicate());
+			continue;
+		    }
+
+		    // for a naturally closed intersection curve, we
+		    // also need the portion outside the curve
+		    diff_loops = loop_boolean(out[k]->m_outerloop, ssx_loops[j],
+			    BOOLEAN_DIFF);
+		}
+
+		// make new faces from the loops
+		append_faces_from_loops(next_out, out[k], intersect_loops);
+		append_faces_from_loops(next_out, out[k], diff_loops);
+	    }
 	}
 	free_loops(ssx_loops);
+
+	if (next_out.Count() > 0) {
+	    // replace previous faces with the new ones
+	    for (int j = 0; j < out.Count(); ++j) {
+		delete out[j];
+	    }
+	    out.Empty();
+
+	    out.Append(next_out.Count(), next_out.Array());
+	}
     }
 
-    if (out.Count() == 0) {
-	out.Append(orig_face->Duplicate());
+    for (int i = 0; i < out.Count(); ++i) {
+	close_small_gaps(out[i]->m_outerloop);
+	for (size_t j = 0; j < out[i]->m_innerloop.size(); ++j) {
+	    close_small_gaps(out[i]->m_innerloop[j]);
+	}
     }
 
     if (DEBUG_BREP_BOOLEAN) {
