@@ -13,6 +13,7 @@ branches=(
 	"dmtogl"
 	"dm-work"
 	"framebuffer-experiment"
+	"gct"
 	"goblin"
 	"libpng"
 	"nurbs"
