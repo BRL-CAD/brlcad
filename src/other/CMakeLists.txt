@@ -890,6 +890,10 @@ mark_as_advanced(P2T_SHARED)
 mark_as_advanced(P2T_STATIC)
 mark_as_advanced(P2T_TESTS)
 
+# GCT is a collection of algorithms for geometry processing and conversion
+#add_subdirectory(gct)
+CMAKEFILES(gct)
+
 # TCLAP is used for option parsing - consists entirely of headers
 # and does not need to be installed, but does need to generate a
 # config file
