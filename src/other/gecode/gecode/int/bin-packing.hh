@@ -3,7 +3,11 @@
  *  Main authors:
  *     Christian Schulte <schulte@gecode.org>
  *
+ *  Contributing authors:
+ *     Stefano Gualandi <stefano.gualandi@gmail.com>
+ *
  *  Copyright:
+ *     Stefano Gualandi, 2013
  *     Christian Schulte, 2010
  *
  *  Last modified:
@@ -174,9 +178,152 @@ namespace Gecode { namespace Int { namespace BinPacking {
     virtual size_t dispose(Space& home);
   };
 
+
+  /// Graph containing conflict information
+  class ConflictGraph {
+  protected:
+    /// Home space
+    Space& home;
+    /// Bin variables
+    const IntVarArgs& b;
+    /// Number of bins
+    unsigned int bins;
+    /// Return number of nodes
+    int nodes(void) const;
+
+    /// Sets of graph nodes
+    class NodeSet : public Support::RawBitSetBase {
+    public:
+      /// Keep uninitialized
+      NodeSet(void);
+      /// Initialize node set for \a n nodes
+      NodeSet(Region& r, int n);
+      /// Initialize node set as copy of \a ns with \a n nodes
+      NodeSet(Region& r, int n, const NodeSet& ns);
+      /// Allocate node set for \a n nodes
+      void allocate(Region& r, int n);
+      /// Initialize node set for \a n nodes
+      void init(Region& r, int n);
+      /// Test whether node \a i is included
+      bool in(int i) const;
+      /// Include node \a i
+      void incl(int i);
+      /// Exclude node \a i
+      void excl(int i);
+      /// Copy elements from node set \a ns with \a n nodes
+      void copy(int n, const NodeSet& ns);
+      /// Clear the whole node set for \a n nodes
+      void empty(int n);
+      /**
+       * Initialize \a ac as intersection of \a a and \a c, 
+       * \a bc as intersection of \a b and \a c where \a n 
+       * is the maximal number of nodes. Return whether both \ac 
+       * and \a bc are empty.
+       */
+      static bool iwn(NodeSet& iwa, const NodeSet& a, 
+                      NodeSet& iwb, const NodeSet& b,
+                      const NodeSet& c, int n);
+    };
+
+    /// Class for node in graph
+    class Node {
+    public:
+      /// The neighbors
+      NodeSet n;
+      /// Degree
+      unsigned int d;
+      /// Weight (initialized with degree before graph is reduced)
+      unsigned int w;
+      /// Default constructor
+      Node(void);
+    };
+    /// The nodes in the graph
+    Node* node;
+
+    /// Iterator over node sets
+    class Nodes {
+    private:
+      /// The node set to iterate over
+      const NodeSet& ns;
+      /// Current node
+      unsigned int c;
+    public:
+      /// Initialize for nodes in \a ns
+      Nodes(const NodeSet& ns);
+      /// \name Iteration control
+      //@{
+      /// Move iterator to next node (if possible)
+      void operator ++(void);
+      //@}
+      
+      /// \name %Node access
+      //@{
+      /// Return current node
+      int operator ()(void) const;
+      //@}
+    };
+    
+    /// \name Routines for Bosch-Kerbron algorithm
+    //@{
+    /// Clique information
+    class Clique {
+    public:
+      /// Nodes in the clique
+      NodeSet n;
+      /// Cardinality of clique
+      unsigned int c;
+      /// Weight of clique
+      unsigned int w;
+      /// Constructor for \a m nodes
+      Clique(Region& r, int m);
+      /// Include node \a i with weight \a w
+      void incl(int i, unsigned int w);
+      /// Exclude node \a i with weight \a w
+      void excl(int i, unsigned int w);
+    };
+
+    /// Find a pivot node with maximal degree from \a a or \a b
+    int pivot(const NodeSet& a, const NodeSet& b) const;
+    /// Run Bosch-Kerbron algorithm for finding max cliques
+    GECODE_INT_EXPORT
+    ExecStatus bk(NodeSet& p, NodeSet& x);
+    //@}
+
+    /// \name Managing cliques
+    //@{
+    /// Current clique
+    Clique cur;
+    /// Largest clique so far
+    Clique max;
+    /// Report the current clique
+    ExecStatus clique(void);
+    /// Found a clique of node \a i
+    ExecStatus clique(int i);
+    /// Found a clique of nodes \a i and \a j
+    ExecStatus clique(int i, int j);
+    /// Found a clique of nodes \a i, \a j, and \a k
+    ExecStatus clique(int i, int j, int k);
+    //@}
+  public:
+    /// Initialize graph
+    ConflictGraph(Space& home, Region& r, const IntVarArgs& b,
+                  int m);
+    /// Add or remove an edge between nodes \a i and \a j (\a i must be less than \a j)
+    void edge(int i, int j, bool add=true);
+    /// Test whether nodes \a i and \a j are adjacent
+    bool adjacent(int i, int j) const;
+    /// Post additional constraints
+    ExecStatus post(void);
+    /// Return maximal clique found
+    IntSet maxclique(void) const;
+    /// Destructor
+    ~ConflictGraph(void);
+  };
+
 }}}
 
 #include <gecode/int/bin-packing/propagate.hpp>
+#include <gecode/int/bin-packing/conflict-graph.hpp>
 
 #endif
 

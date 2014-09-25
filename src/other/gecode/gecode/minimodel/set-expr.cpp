@@ -349,7 +349,22 @@ namespace Gecode {
           } else {
             ss = u.a.x->s;
           }
-          dom(home, s, srt, ss, b);
+          SetRelType invsrt;
+          switch (srt) {
+          case SRT_SUB: invsrt = SRT_SUP; break;
+          case SRT_SUP: invsrt = SRT_SUB; break;
+          case SRT_LQ:  invsrt = SRT_GQ; break;
+          case SRT_LE:  invsrt = SRT_GR; break;
+          case SRT_GQ:  invsrt = SRT_LQ; break;
+          case SRT_GR:  invsrt = SRT_LE; break;
+          case SRT_EQ:
+          case SRT_NQ:
+          case SRT_DISJ:
+          case SRT_CMPL:
+            invsrt = srt;
+            break;
+          }
+          dom(home, s, invsrt, ss, b);
         }
         break;
       case SetExpr::NT_LEXP:
@@ -469,9 +484,9 @@ namespace Gecode {
     }
 
     void
-    NNF::post(Home home, BoolVar b, bool t,
+    NNF::post(Home home, BoolVar b, bool pt,
               SetRelType srt, const NNF* n) const {
-      if (t) {
+      if (pt) {
         if (n->t == SetExpr::NT_VAR && !n->neg) {
           post(home,srt,n->u.a.x->x,b);
         } else if (t == SetExpr::NT_VAR && !neg) {

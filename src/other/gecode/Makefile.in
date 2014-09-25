@@ -304,6 +304,7 @@ INTSRC0 = \
 	channel.cpp channel/link-single.cpp channel/link-multi.cpp \
 	unshare.cpp sequence.cpp \
 	bin-packing.cpp bin-packing/propagate.cpp \
+	bin-packing/conflict-graph.cpp \
 	unary.cpp cumulative.cpp cumulatives.cpp \
 	circuit.cpp no-overlap.cpp nvalues.cpp \
 	member.cpp branch/activity.cpp \
@@ -366,6 +367,7 @@ INTHDR0 = \
 	sequence.hh sequence/int.hpp sequence/view.hpp \
 	sequence/set-op.hpp sequence/violations.hpp \
 	bin-packing.hh bin-packing/propagate.hpp \
+	bin-packing/conflict-graph.hpp \
 	task.hh task/fwd-to-bwd.hpp task/array.hpp task/sort.hpp \
 	task/iter.hpp task/tree.hpp task/purge.hpp task/prop.hpp \
 	task/man-to-opt.hpp \
@@ -823,7 +825,7 @@ INTEXAMPLESRC0 =						\
 	all-interval langford-number warehouses	radiotherapy    \
 	word-square crossword open-shop car-sequencing sat      \
 	bin-packing knights tsp perfect-square schurs-lemma     \
-	dominating-queens colored-matrix
+	dominating-queens colored-matrix multi-bin-packing
 
 INTEXAMPLEHDR  = $(INTEXAMPLEHDR0:%=examples/%.hpp)
 INTEXAMPLESRC  = $(INTEXAMPLESRC0:%=examples/%.cpp)
@@ -1899,7 +1901,7 @@ distdoc: doc
 
 clean:
 	$(RMF) *.stackdump core gmon.out \
-		vc70.pdb vc80.pdb vc90.pdb vc100.pdb vc110.pdb
+		vc70.pdb vc80.pdb vc90.pdb vc100.pdb vc110.pdb vc120.pdb
 	$(RMF) doxygen.log doxygen.hh doxygen.conf.use stat.hh \
 		 changelog.hh doxygen.hh license.hh header.html
 	$(RMF) $(ALLOBJ) $(ALLSBJ) $(ALLOBJ:%$(OBJSUFFIX)=%.pdb)

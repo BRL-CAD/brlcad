@@ -212,6 +212,7 @@ namespace Gecode { namespace FlatZinc {
     std::vector<int> arrays;
     std::vector<AST::SetLit> setvals;
     std::vector<double> floatvals;
+    std::vector<ConExpr*> constraints;
 
     std::vector<ConExpr*> domainConstraints;
 

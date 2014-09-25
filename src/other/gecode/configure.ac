@@ -41,11 +41,11 @@ dnl
 
 AC_REVISION([$Id$])
 AC_PREREQ(2.53)
-AC_INIT(GECODE, 4.2.1, users@gecode.org)
+AC_INIT(GECODE, 4.3.0, users@gecode.org)
 AC_CONFIG_HEADERS([gecode/support/config.hpp])
 AC_CONFIG_SRCDIR(gecode/kernel.hh)
 
-ac_gecode_soversion=36
+ac_gecode_soversion=37
 AC_SUBST(GECODE_SOVERSION, ${ac_gecode_soversion})
 ac_gecode_flatzincversion=1.6
 AC_SUBST(GECODE_FLATZINC_VERSION, ${ac_gecode_flatzincversion})
@@ -322,10 +322,7 @@ AC_SUBST(ALLVIS, ${ac_gecode_vis})
 
 VERSION_DASHES=`echo $PACKAGE_VERSION | sed -e s/\\\\./-/g`
 
-ARR=($(echo $PACKAGE_VERSION | sed 's/\./ /g'))
-changequote(,)
-PACKAGE_VERSION_NUMBER=$(expr $(expr $(expr ${ARR[0]} "*" 100000) + $(expr ${ARR[1]} "*" 100)) + ${ARR[2]})
-changequote([,])
+PACKAGE_VERSION_NUMBER=`echo $PACKAGE_VERSION | awk -F. '{print $1 * 100000 + $2 * 100 + $3}'`
 
 AC_DEFINE_UNQUOTED(GECODE_VERSION,
   "${PACKAGE_VERSION}",

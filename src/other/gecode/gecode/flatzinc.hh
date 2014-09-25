@@ -239,7 +239,7 @@ namespace Gecode { namespace FlatZinc {
       _allSolutions("-a", "return all solutions (equal to -solutions 0)"),
       _threads("-p","number of threads (0 = #processing units)",
                Gecode::Search::Config::threads),
-      _free("--free", "no need to follow search-specification"),
+      _free("-f", "free search, no need to follow search-specification"),
       _decay("-decay","decay factor",0.99),
       _c_d("-c-d","recomputation commit distance",Gecode::Search::Config::c_d),
       _a_d("-a-d","recomputation adaption distance",Gecode::Search::Config::a_d),
@@ -450,7 +450,7 @@ namespace Gecode { namespace FlatZinc {
     void newFloatVar(FloatVarSpec* vs);
   
     /// Post a constraint specified by \a ce
-    void postConstraint(const ConExpr& ce, AST::Node* annotation);
+    void postConstraints(std::vector<ConExpr*>& ces);
   
     /// Post the solve item
     void solve(AST::Array* annotation);
@@ -558,7 +558,7 @@ namespace Gecode { namespace FlatZinc {
   };
 
   /// %Exception class for %FlatZinc errors
-  class Error {
+  class GECODE_VTABLE_EXPORT Error {
   private:
     const std::string msg;
   public:

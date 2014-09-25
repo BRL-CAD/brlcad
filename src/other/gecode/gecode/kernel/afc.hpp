@@ -128,7 +128,7 @@ namespace Gecode {
   forceinline
   AFC::AFC(Home home, const VarArgArray<Var>& x, double d) 
     : n(x.size()) {
-    if ((d <= 0.0) || (d > 1.0))
+    if ((d < 0.0) || (d > 1.0))
       throw IllegalDecay("AFC");
     static_cast<Space&>(home).afc_decay(d);
   }
@@ -136,7 +136,7 @@ namespace Gecode {
   forceinline void
   AFC::init(Home home, const VarArgArray<Var>& x, double d) {
     n = x.size();
-    if ((d <= 0.0) || (d > 1.0))
+    if ((d < 0.0) || (d > 1.0))
       throw IllegalDecay("AFC");
     static_cast<Space&>(home).afc_decay(d);
   }
@@ -160,7 +160,7 @@ namespace Gecode {
 
   forceinline void
   AFC::decay(Space& home, double d) {
-    if ((d <= 0.0) || (d > 1.0))
+    if ((d < 0.0) || (d > 1.0))
       throw IllegalDecay("AFC");
     home.afc_decay(d);
   }

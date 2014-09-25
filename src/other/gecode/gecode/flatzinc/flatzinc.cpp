@@ -277,7 +277,7 @@ namespace Gecode { namespace FlatZinc {
 
   void
   BranchInformation::init(void) {
-    assert(object() == false);
+    assert(object() == NULL);
     object(new BranchInformationO());
   }
 
@@ -820,14 +820,30 @@ namespace Gecode { namespace FlatZinc {
   }
 #endif
 
+  namespace {
+    struct ConExprOrder {
+      bool operator() (ConExpr* ce0, ConExpr* ce1) {
+        return ce0->args->a.size() < ce1->args->a.size();
+      }
+    };
+  }
+
   void
-  FlatZincSpace::postConstraint(const ConExpr& ce, AST::Node* ann) {
-    try {
-      registry().post(*this, ce, ann);
-    } catch (Gecode::Exception& e) {
-      throw FlatZinc::Error("Gecode", e.what());
-    } catch (AST::TypeError& e) {
-      throw FlatZinc::Error("Type error", e.what());
+  FlatZincSpace::postConstraints(std::vector<ConExpr*>& ces) {
+    ConExprOrder ceo;
+    std::sort(ces.begin(), ces.end(), ceo);
+    
+    for (unsigned int i=0; i<ces.size(); i++) {
+      const ConExpr& ce = *ces[i];
+      try {
+        registry().post(*this, ce);
+      } catch (Gecode::Exception& e) {
+        throw FlatZinc::Error("Gecode", e.what());
+      } catch (AST::TypeError& e) {
+        throw FlatZinc::Error("Type error", e.what());
+      }
+      delete ces[i];
+      ces[i] = NULL;
     }
   }
 
@@ -1131,8 +1147,9 @@ namespace Gecode { namespace FlatZinc {
       }
     }
 
-    if (iv_sol.size() > 0)
+    if (iv_sol.size() > 0) {
       branch(*this, iv_sol, def_int_varsel, def_int_valsel);
+    }
     if (bv_sol.size() > 0)
       branch(*this, bv_sol, def_bool_varsel, def_bool_valsel);
 #ifdef GECODE_HAS_FLOAT_VARS

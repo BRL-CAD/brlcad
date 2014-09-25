@@ -98,9 +98,6 @@ namespace Gecode { namespace Gist {
               Qt::BlockingQueuedConnection);
       connect(this, SIGNAL(solution(const Space*)),
               this, SLOT(inspectSolution(const Space*)));
-      connect(&searcher, SIGNAL(solution(const Space*)),
-              this, SLOT(inspectSolution(const Space*)),
-              Qt::BlockingQueuedConnection);
 
       connect(&searcher, SIGNAL(moveToNode(VisualNode*,bool)),
               this, SLOT(setCurrentNode(VisualNode*,bool)),
@@ -414,6 +411,8 @@ namespace Gecode { namespace Gist {
               nodeCount++;
             kids = n->getNumberOfChildNodes(*t->na, t->curBest, t->stats,
                                             t->c_d, t->a_d);
+            if (t->moveDuringSearch)
+              emit moveToNode(n,false);
             if (kids == 0) {
               if (n->getStatus() == SOLVED) {
                 assert(n->hasCopy());
@@ -433,8 +432,6 @@ namespace Gecode { namespace Gist {
                          static_cast<long unsigned int>(depth+stck.size()));
             }
           }
-          if (t->moveDuringSearch)
-            emit moveToNode(n,false);
         }
       }
       node->dirtyUp(*t->na);

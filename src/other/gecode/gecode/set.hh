@@ -1275,7 +1275,7 @@ namespace Gecode {
       SEL_AFC_SIZE_MIN,    ///< With smallest accumulated failure count divided by domain size
       SEL_AFC_SIZE_MAX,    ///< With largest accumulated failure count divided by domain size
       SEL_ACTIVITY_SIZE_MIN, ///< With smallest activity divided by domain size
-      SEL_ACTIVITY_SIZE_MAX, ///< With largest activity divided by domain size
+      SEL_ACTIVITY_SIZE_MAX  ///< With largest activity divided by domain size
     };
   protected:
     /// Which variable to select

@@ -1,9 +1,11 @@
 /* -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*- */
 /*
  *  Main authors:
+ *     Stefano Gualandi <stefano.gualandi@gmail.com>
  *     Christian Schulte <schulte@gecode.org>
  *
  *  Copyright:
+ *     Stefano Gualandi, 2013
  *     Christian Schulte, 2010
  *
  *  Last modified:
@@ -57,21 +59,105 @@ namespace Gecode {
     for (int i=l.size(); i--; )
       lv[i] = OffsetView(l[i],0);
 
-    if (b.size() == 0) {
-      for (int i=l.size(); i--; )
-        GECODE_ME_FAIL(lv[i].eq(home,0));
-      return;
-    }
-
     ViewArray<BinPacking::Item> bs(home,b.size());
     for (int i=bs.size(); i--; )
       bs[i] = BinPacking::Item(b[i],s[i]);
 
-    Support::quicksort(&bs[0], bs.size());
-
     GECODE_ES_FAIL(Int::BinPacking::Pack::post(home,lv,bs));
   }
 
+  IntSet
+  binpacking(Home home, int d,
+             const IntVarArgs& l, const IntVarArgs& b, 
+             const IntArgs& s, const IntArgs& c,
+             IntConLevel) {
+    using namespace Int;
+
+    if (l.same(home,b))
+      throw ArgumentSame("Int::binpacking");
+
+    // The number of items
+    int n = b.size();
+    // The number of bins
+    int m = l.size() / d;
+
+    // Check input sizes
+    if ((n*d != s.size()) || (m*d != l.size()) || (d != c.size()))
+      throw ArgumentSizeMismatch("Int::binpacking");      
+    for (int i=s.size(); i--; )
+      Limits::nonnegative(s[i],"Int::binpacking");
+    for (int i=c.size(); i--; )
+      Limits::nonnegative(c[i],"Int::binpacking");
+
+    if (home.failed()) 
+      return IntSet::empty;
+
+    // Capacity constraint for each dimension
+    for (int k=d; k--; )
+      for (int j=m; j--; ) {
+        IntView li(l[j*d+k]);
+        if (me_failed(li.lq(home,c[k]))) {
+          home.fail();
+          return IntSet::empty;
+        }
+      }
+
+    // Post a binpacking constraint for each dimension
+    for (int k=d; k--; ) {
+      ViewArray<OffsetView> lv(home,m);
+      for (int j=m; j--; )
+        lv[j] = OffsetView(l[j*d+k],0);
+      
+      ViewArray<BinPacking::Item> bv(home,n);
+      for (int i=n; i--; )
+        bv[i] = BinPacking::Item(b[i],s[i*d+k]);
+      
+      if (Int::BinPacking::Pack::post(home,lv,bv) == ES_FAILED) {
+        home.fail();
+        return IntSet::empty;
+      }
+    }
+
+
+    // Clique Finding and distinct posting
+    {
+      // First construct the conflict graph
+      Region r(home);
+      BinPacking::ConflictGraph cg(home,r,b,m);
+
+      for (int i=0; i<n-1; i++) {
+        for (int j=i+1; j<n; j++) {
+          unsigned int nl = 0;
+          unsigned int ds = 0;
+          IntVarValues ii(b[i]), jj(b[j]);
+          while (ii() && jj()) {
+            if (ii.val() < jj.val()) {
+              ++ii;
+            } else if (ii.val() > jj.val()) {
+              ++jj;
+            } else {
+              ds++;
+              for (int k=d; k--; )
+                if (s[i*d+k] + s[j*d+k] > c[k]) {
+                  nl++;
+                  break;
+                }
+              ++ii; ++jj;
+            }
+          }
+          if (nl >= ds)
+            cg.edge(i,j);
+        }
+      }
+
+      if (cg.post() == ES_FAILED)
+        home.fail();
+
+      // The clique can be computed even if home is failed
+      return cg.maxclique();
+    }
+  }
+  
 }
 
 // STATISTICS: int-post

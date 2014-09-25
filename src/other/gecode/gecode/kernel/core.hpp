@@ -389,7 +389,7 @@ namespace Gecode {
 #ifdef GECODE_HAS_VAR_DISPOSE
     /// Return reference to variables (dispose)
     static VarImp<VIC>* vars_d(Space& home);
-    /// Set reference to variables (dispose)
+    /// %Set reference to variables (dispose)
     static void vars_d(Space& home, VarImp<VIC>* x);
 #endif
 
@@ -1008,7 +1008,7 @@ namespace Gecode {
     NGL* next(void) const;
     /// Mark literal as leaf or not
     void leaf(bool l);
-    /// Set pointer to next literal
+    /// %Set pointer to next literal
     void next(NGL* n);
     /// Add node \a n and mark it as leaf \a l and return \a n
     NGL* add(NGL* n, bool l);
@@ -1249,7 +1249,7 @@ namespace Gecode {
     virtual void post(Space& home);
     /// Return number of no-goods posted
     unsigned long int ng(void) const;
-    /// Set number of no-goods posted to \a n
+    /// %Set number of no-goods posted to \a n
     void ng(unsigned long int n);
     /// Destructor
     virtual ~NoGoods(void);
@@ -1418,7 +1418,7 @@ namespace Gecode {
     VarImpBase* _vars_d[AllVarConf::idx_d];
     /// Return reference to variables (dispose)
     template<class VIC> VarImpBase* vars_d(void) const;
-    /// Set reference to variables (dispose)
+    /// %Set reference to variables (dispose)
     template<class VIC> void vars_d(VarImpBase* x);
 #endif
     /// Update all cloned variables
@@ -1444,11 +1444,11 @@ namespace Gecode {
      * one.
      */
     unsigned int _wmp_afc;
-    /// Set that AFC information must be recorded
+    /// %Set that AFC information must be recorded
     void afc_enable(void);
     /// Whether AFC information must be recorded
     bool afc_enabled(void) const;
-    /// Set number of wmp propagators to \a n
+    /// %Set number of wmp propagators to \a n
     void wmp(unsigned int n);
     /// Return number of wmp propagators
     unsigned int wmp(void) const;
@@ -2263,7 +2263,7 @@ namespace Gecode {
 
     /// \name Low-level support for AFC
     //@{
-    /// Set AFC decay factor to \a d
+    /// %Set AFC decay factor to \a d
     GECODE_KERNEL_EXPORT
     void afc_decay(double d);
     /// Return AFC decay factor

@@ -54,7 +54,7 @@ namespace Gecode { namespace FlatZinc {
     /// Add posting function \a p with identifier \a id
     void add(const std::string& id, poster p);
     /// Post constraint specified by \a ce
-    void post(FlatZincSpace& s, const ConExpr& ce, AST::Node* ann);
+    void post(FlatZincSpace& s, const ConExpr& ce);
 
   private:
     /// The actual registry

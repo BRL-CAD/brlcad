@@ -22,7 +22,9 @@
 #elif defined(__i386__) || defined(_M_IX86) || defined(__BORLANDC__) || defined(_M_X64)
 #  include <gecode/third-party/boost/numeric/interval/detail/x86_rounding_control.hpp>
 #elif defined(powerpc) || defined(__powerpc__) || defined(__ppc__)
+#ifndef __NO_FPRS__
 #  include <gecode/third-party/boost/numeric/interval/detail/ppc_rounding_control.hpp>
+#endif
 #elif defined(sparc) || defined(__sparc__)
 #  include <gecode/third-party/boost/numeric/interval/detail/sparc_rounding_control.hpp>
 #elif defined(alpha) || defined(__alpha__)

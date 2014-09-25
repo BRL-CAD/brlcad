@@ -49,6 +49,7 @@ namespace Gecode { namespace FlatZinc {
   public:
     bool operator()(void) const { return _some; }
     const Val& some(void) const { return _v; }
+    Val& some(void) { return _v; }
     static Option<Val> none(void) {
       Option<Val> o;
       o._some = false;

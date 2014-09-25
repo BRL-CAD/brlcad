@@ -356,6 +356,8 @@ namespace Gecode { namespace Int { namespace BinPacking {
 
   ExecStatus
   Pack::post(Home home, ViewArray<OffsetView>& l, ViewArray<Item>& bs) {
+    // Sort according to size
+    Support::quicksort(&bs[0], bs.size());
     // Eliminate zero sized items (which are at the end as the size are sorted)
     {
       int n = bs.size();

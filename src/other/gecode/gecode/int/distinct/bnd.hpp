@@ -132,58 +132,179 @@ namespace Gecode { namespace Int { namespace Distinct {
   };
 
   /// Information on Hall intervals
+  template<class IntType>
   class HallInfo {
   public:
-    int bounds, t, d, h;
+    IntType bounds, t, d, h;
   };
 
+  template<class IntType>
   forceinline void
-  pathset_t(HallInfo hall[], int start, int end, int to) {
-    int k, l;
+  pathset_t(HallInfo<IntType> hall[], 
+            IntType start, IntType end, IntType to) {
+    IntType k, l;
     for (l=start; (k=l) != end; hall[k].t=to) {
       l = hall[k].t;
     }
   }
 
+  template<class IntType>
   forceinline void
-  pathset_h(HallInfo hall[], int start, int end, int to) {
-    int k, l;
+  pathset_h(HallInfo<IntType> hall[], 
+            IntType start, IntType end, IntType to) {
+    IntType k, l;
     for (l=start; (k=l) != end; hall[k].h=to) {
       l = hall[k].h;
     }
   }
 
-  forceinline int
-  pathmin_h(const HallInfo hall[], int i) {
+  template<class IntType>
+  forceinline IntType
+  pathmin_h(const HallInfo<IntType> hall[], IntType i) {
     while (hall[i].h < i)
       i = hall[i].h;
     return i;
   }
 
-  forceinline int
-  pathmin_t(const HallInfo hall[], int i) {
+  template<class IntType>
+  forceinline IntType
+  pathmin_t(const HallInfo<IntType> hall[], IntType i) {
     while (hall[i].t < i)
       i = hall[i].t;
     return i;
   }
 
-  forceinline int
-  pathmax_h(const HallInfo hall[], int i) {
+  template<class IntType>
+  forceinline IntType
+  pathmax_h(const HallInfo<IntType> hall[], IntType i) {
     while (hall[i].h > i)
       i = hall[i].h;
     return i;
   }
 
-  forceinline int
-  pathmax_t(const HallInfo hall[], int i) {
+  template<class IntType>
+  forceinline IntType
+  pathmax_t(const HallInfo<IntType> hall[], IntType i) {
     while (hall[i].t > i)
       i = hall[i].t;
     return i;
   }
 
+  template<class View, class IntType>
+  forceinline ExecStatus
+  prop_bnd(Space& home, ViewArray<View>& x, 
+            int* minsorted, int* maxsorted) {
+    const int n = x.size();
+
+    Region r(home);
+
+    // Setup rank and bounds info
+    HallInfo<IntType>* hall = r.alloc<HallInfo<IntType> >(2*n+2);
+    Rank* rank = r.alloc<Rank>(n);
+
+    int nb = 0;
+    {
+      IntType min  = x[minsorted[0]].min();
+      IntType max  = x[maxsorted[0]].max() + 1;
+      IntType last = min - 2;
+
+      hall[0].bounds = last;
+
+      int i = 0;
+      int j = 0;
+      while (true) {
+        if ((i < n) && (min < max)) {
+          if (min != last)
+            hall[++nb].bounds = last = min;
+          rank[minsorted[i]].min = nb;
+          if (++i < n)
+            min = x[minsorted[i]].min();
+        } else {
+          if (max != last)
+            hall[++nb].bounds = last = max;
+          rank[maxsorted[j]].max = nb;
+          if (++j == n)
+            break;
+          max = x[maxsorted[j]].max() + 1;
+        }
+      }
+      hall[nb+1].bounds = hall[nb].bounds + 2;
+    }
+
+    // If tells cross holes, we do not compute a fixpoint
+    ExecStatus es = ES_FIX;
+
+    // Propagate lower bounds
+    for (int i=nb+2; --i;) {
+      hall[i].t = hall[i].h = i-1;
+      hall[i].d = hall[i].bounds - hall[i-1].bounds;
+    }
+    for (int i=0; i<n; i++) { // visit intervals in increasing max order
+      IntType x0 = rank[maxsorted[i]].min;
+      IntType z = pathmax_t(hall, x0+1);
+      IntType j = hall[z].t;
+      if (--hall[z].d == 0)
+        hall[z = pathmax_t(hall, hall[z].t=z+1)].t = j;
+      pathset_t(hall, x0+1, z, z); // path compression
+      IntType y = rank[maxsorted[i]].max;
+      if (hall[z].d < hall[z].bounds-hall[y].bounds)
+        return ES_FAILED;
+      if (hall[x0].h > x0) {
+        IntType w = pathmax_h(hall, hall[x0].h);
+        IntType m = hall[w].bounds;
+        ModEvent me = x[maxsorted[i]].gq(home,m);
+        if (me_failed(me))
+          return ES_FAILED;
+        if ((me == ME_INT_VAL) ||
+            ((me == ME_INT_BND) && (m != x[maxsorted[i]].min())))
+          es = ES_NOFIX;
+        pathset_h(hall, x0, w, w); // path compression
+      }
+      if (hall[z].d == hall[z].bounds-hall[y].bounds) {
+        pathset_h(hall, hall[y].h, j-1, y); // mark hall interval
+        hall[y].h = j-1;
+      }
+    }
+
+    // Propagate upper bounds
+    for (int i=nb+1; i--;) {
+      hall[i].t = hall[i].h = i+1;
+      hall[i].d = hall[i+1].bounds - hall[i].bounds;
+    }
+    for (int i=n; --i>=0; ) { // visit intervals in decreasing min order
+      IntType x0 = rank[minsorted[i]].max;
+      IntType z = pathmin_t(hall, x0-1);
+      IntType j = hall[z].t;
+      if (--hall[z].d == 0)
+        hall[z = pathmin_t(hall, hall[z].t=z-1)].t = j;
+      pathset_t(hall, x0-1, z, z);
+      IntType y = rank[minsorted[i]].min;
+      if (hall[z].d < hall[y].bounds-hall[z].bounds)
+        return ES_FAILED;
+      if (hall[x0].h < x0) {
+        IntType w = pathmin_h(hall, hall[x0].h);
+        IntType m = hall[w].bounds - 1;
+        ModEvent me = x[minsorted[i]].lq(home,m);
+        if (me_failed(me))
+          return ES_FAILED;
+        if ((me == ME_INT_VAL) ||
+            ((me == ME_INT_BND) && (m != x[maxsorted[i]].min())))
+          es = ES_NOFIX;
+        pathset_h(hall, x0, w, w);
+      }
+      if (hall[z].d == hall[y].bounds-hall[z].bounds) {
+        pathset_h(hall, hall[y].h, j+1, y);
+        hall[y].h = j+1;
+      }
+    }
+
+    return es;
+  }
+
   template<class View>
-  ExecStatus
+  forceinline ExecStatus
   prop_bnd(Space& home, ViewArray<View>& x, int& min_x, int& max_x) {
+
     const int n = x.size();
 
     Region r(home);
@@ -236,107 +357,10 @@ namespace Gecode { namespace Int { namespace Distinct {
     max_x = x[maxsorted[n-1]].max();
 
 
-    // Setup rank and bounds info
-    HallInfo* hall = r.alloc<HallInfo>(2*n+2);
-    Rank* rank = r.alloc<Rank>(n);
-
-    int nb = 0;
-    {
-      int min  = x[minsorted[0]].min();
-      int max  = x[maxsorted[0]].max() + 1;
-      int last = min - 2;
-
-      hall[0].bounds = last;
-
-      int i = 0;
-      int j = 0;
-      while (true) {
-        if ((i < n) && (min < max)) {
-          if (min != last)
-            hall[++nb].bounds = last = min;
-          rank[minsorted[i]].min = nb;
-          if (++i < n)
-            min = x[minsorted[i]].min();
-        } else {
-          if (max != last)
-            hall[++nb].bounds = last = max;
-          rank[maxsorted[j]].max = nb;
-          if (++j == n)
-            break;
-          max = x[maxsorted[j]].max() + 1;
-        }
-      }
-      hall[nb+1].bounds = hall[nb].bounds + 2;
-    }
-
-    // If tells cross holes, we do not compute a fixpoint
-    ExecStatus es = ES_FIX;
-
-    // Propagate lower bounds
-    for (int i=nb+2; --i;) {
-      hall[i].t = hall[i].h = i-1;
-      hall[i].d = hall[i].bounds - hall[i-1].bounds;
-    }
-    for (int i=0; i<n; i++) { // visit intervals in increasing max order
-      int x0 = rank[maxsorted[i]].min;
-      int z = pathmax_t(hall, x0+1);
-      int j = hall[z].t;
-      if (--hall[z].d == 0)
-        hall[z = pathmax_t(hall, hall[z].t=z+1)].t = j;
-      pathset_t(hall, x0+1, z, z); // path compression
-      int y = rank[maxsorted[i]].max;
-      if (hall[z].d < hall[z].bounds-hall[y].bounds)
-        return ES_FAILED;
-      if (hall[x0].h > x0) {
-        int w = pathmax_h(hall, hall[x0].h);
-        int m = hall[w].bounds;
-        ModEvent me = x[maxsorted[i]].gq(home,m);
-        if (me_failed(me))
-          return ES_FAILED;
-        if ((me == ME_INT_VAL) ||
-            ((me == ME_INT_BND) && (m != x[maxsorted[i]].min())))
-          es = ES_NOFIX;
-        pathset_h(hall, x0, w, w); // path compression
-      }
-      if (hall[z].d == hall[z].bounds-hall[y].bounds) {
-        pathset_h(hall, hall[y].h, j-1, y); // mark hall interval
-        hall[y].h = j-1;
-      }
-    }
-
-    // Propagate upper bounds
-    for (int i=nb+1; i--;) {
-      hall[i].t = hall[i].h = i+1;
-      hall[i].d = hall[i+1].bounds - hall[i].bounds;
-    }
-    for (int i=n; --i>=0; ) { // visit intervals in decreasing min order
-      int x0 = rank[minsorted[i]].max;
-      int z = pathmin_t(hall, x0-1);
-      int j = hall[z].t;
-      if (--hall[z].d == 0)
-        hall[z = pathmin_t(hall, hall[z].t=z-1)].t = j;
-      pathset_t(hall, x0-1, z, z);
-      int y = rank[minsorted[i]].min;
-      if (hall[z].d < hall[y].bounds-hall[z].bounds)
-        return ES_FAILED;
-      if (hall[x0].h < x0) {
-        int w = pathmin_h(hall, hall[x0].h);
-        int m = hall[w].bounds - 1;
-        ModEvent me = x[minsorted[i]].lq(home,m);
-        if (me_failed(me))
-          return ES_FAILED;
-        if ((me == ME_INT_VAL) ||
-            ((me == ME_INT_BND) && (m != x[maxsorted[i]].min())))
-          es = ES_NOFIX;
-        pathset_h(hall, x0, w, w);
-      }
-      if (hall[z].d == hall[y].bounds-hall[z].bounds) {
-        pathset_h(hall, hall[y].h, j+1, y);
-        hall[y].h = j+1;
-      }
-    }
-
-    return es;
+    if (d > (static_cast<unsigned int>(Int::Limits::max) / 2U))
+      return prop_bnd<View,long long int>(home,x,minsorted,maxsorted);
+    else
+      return prop_bnd<View,int>(home,x,minsorted,maxsorted);
   }
 
   template<class View>

@@ -60,13 +60,13 @@ namespace Gecode { namespace FlatZinc {
   }
 
   void
-  Registry::post(FlatZincSpace& s, const ConExpr& ce, AST::Node* ann) {
+  Registry::post(FlatZincSpace& s, const ConExpr& ce) {
     std::map<std::string,poster>::iterator i = r.find(ce.id);
     if (i == r.end()) {
       throw FlatZinc::Error("Registry",
         std::string("Constraint ")+ce.id+" not found");
     }
-    i->second(s, ce, ann);
+    i->second(s, ce, ce.ann);
   }
 
   void
@@ -107,10 +107,12 @@ namespace Gecode { namespace FlatZinc {
     void p_distinct(FlatZincSpace& s, const ConExpr& ce, AST::Node* ann) {
       IntVarArgs va = s.arg2intvarargs(ce[0]);
       IntConLevel icl = s.ann2icl(ann);
+      unshare(s, va);
       distinct(s, va, icl == ICL_DEF ? ICL_BND : icl);
     }
     void p_distinctOffset(FlatZincSpace& s, const ConExpr& ce, AST::Node* ann) {
       IntVarArgs va = s.arg2intvarargs(ce[1]);
+      unshare(s, va);
       AST::Array* offs = ce.args->a[0]->getArray();
       IntArgs oa(offs->a.size());
       for (int i=offs->a.size(); i--; ) {
@@ -921,7 +923,11 @@ namespace Gecode { namespace FlatZinc {
       }
       l << load;
       IntArgs sizes = s.arg2intargs(ce[2]);
-      binpacking(s, l, bin, sizes, s.ann2icl(ann));
+
+      IntVarArgs allvars = l + bin;
+      unshare(s, allvars);
+      binpacking(s, allvars.slice(0,1,l.size()), allvars.slice(l.size(),1,bin.size()),
+                 sizes, s.ann2icl(ann));
     }
 
     void p_global_cardinality(FlatZincSpace& s, const ConExpr& ce,
@@ -953,6 +959,7 @@ namespace Gecode { namespace FlatZinc {
                  allvars.slice(iv0.size(),1,iv1.size()),
                  cover, s.ann2icl(ann));
       } else {
+        unshare(s, iv0);
         count(s, iv0, iv1, cover, s.ann2icl(ann));
       }
     }
@@ -962,6 +969,7 @@ namespace Gecode { namespace FlatZinc {
       IntVarArgs iv0 = s.arg2intvarargs(ce[0]);
       IntArgs cover = s.arg2intargs(ce[1]);
       IntVarArgs iv1 = s.arg2intvarargs(ce[2]);
+      unshare(s, iv0);
       count(s, iv0, iv1, cover, s.ann2icl(ann));
     }
 
@@ -989,7 +997,7 @@ namespace Gecode { namespace FlatZinc {
           y << IntSet(0,x.size());
         }
       }
-      
+      unshare(s, x);
       count(s, x, y, cover, s.ann2icl(ann));
     }
 
@@ -1004,7 +1012,7 @@ namespace Gecode { namespace FlatZinc {
       IntSetArgs y(cover.size());
       for (int i=cover.size(); i--;)
         y[i] = IntSet(lbound[i],ubound[i]);
-
+      unshare(s, x);
       count(s, x, y, cover, s.ann2icl(ann));
     }
 
@@ -1065,6 +1073,7 @@ namespace Gecode { namespace FlatZinc {
         
       DFA dfa(q0,t,f);
       free(f);
+      unshare(s, iv);
       extensional(s, iv, dfa, s.ann2icl(ann));
     }
 
@@ -1088,8 +1097,10 @@ namespace Gecode { namespace FlatZinc {
     void
     p_inverse_offsets(FlatZincSpace& s, const ConExpr& ce, AST::Node* ann) {
       IntVarArgs x = s.arg2intvarargs(ce[0]);
+      unshare(s, x);
       int xoff = ce[1]->getInt();
       IntVarArgs y = s.arg2intvarargs(ce[2]);
+      unshare(s, y);
       int yoff = ce[3]->getInt();
       channel(s, x, xoff, y, yoff, s.ann2icl(ann));
     }
@@ -1177,11 +1188,13 @@ namespace Gecode { namespace FlatZinc {
           IntArgs durationI(n);
           for (int i=n; i--;)
             durationI[i] = duration[i].val();
+          unshare(s,start);
           unary(s,start,durationI);
         } else {
           IntVarArgs end(n);
           for (int i=n; i--;)
             end[i] = expr(s,start[i]+duration[i]);
+          unshare(s,start);
           unary(s,start,duration,end);
         }
       } else if (height.assigned()) {
@@ -1235,6 +1248,7 @@ namespace Gecode { namespace FlatZinc {
       int q = ce[2]->getInt();
       int l = ce[3]->getInt();
       int u = ce[4]->getInt();
+      unshare(s, x);
       sequence(s, x, S, q, l, u, s.ann2icl(ann));
     }
 
@@ -1246,12 +1260,14 @@ namespace Gecode { namespace FlatZinc {
       int l = ce[3]->getInt();
       int u = ce[4]->getInt();
       IntSet S(val, val);
+      unshare(s, x);
       sequence(s, x, S, q, l, u, s.ann2icl(ann));
     }
 
     void p_schedule_unary(FlatZincSpace& s, const ConExpr& ce, AST::Node*) {
       IntVarArgs x = s.arg2intvarargs(ce[0]);
       IntArgs p = s.arg2intargs(ce[1]);
+      unshare(s,x);
       unary(s, x, p);
     }
 
@@ -1260,12 +1276,14 @@ namespace Gecode { namespace FlatZinc {
       IntVarArgs x = s.arg2intvarargs(ce[0]);
       IntArgs p = s.arg2intargs(ce[1]);
       BoolVarArgs m = s.arg2boolvarargs(ce[2]);
+      unshare(s,x);
       unary(s, x, p, m);
     }
 
     void p_circuit(FlatZincSpace& s, const ConExpr& ce, AST::Node *ann) {
       int off = ce[0]->getInt();
       IntVarArgs xv = s.arg2intvarargs(ce[1]);
+      unshare(s,xv);
       circuit(s,off,xv,s.ann2icl(ann));
     }
     void p_circuit_cost_array(FlatZincSpace& s, const ConExpr& ce,
@@ -1274,12 +1292,14 @@ namespace Gecode { namespace FlatZinc {
       IntVarArgs xv = s.arg2intvarargs(ce[1]);
       IntVarArgs yv = s.arg2intvarargs(ce[2]);
       IntVar z = s.arg2IntVar(ce[3]);
+      unshare(s,xv);
       circuit(s,c,xv,yv,z,s.ann2icl(ann));
     }
     void p_circuit_cost(FlatZincSpace& s, const ConExpr& ce, AST::Node *ann) {
       IntArgs c = s.arg2intargs(ce[0]);
       IntVarArgs xv = s.arg2intvarargs(ce[1]);
       IntVar z = s.arg2IntVar(ce[2]);
+      unshare(s,xv);
       circuit(s,c,xv,z,s.ann2icl(ann));
     }
 
@@ -1296,6 +1316,27 @@ namespace Gecode { namespace FlatZinc {
         for (int i=h.size(); i--;)
           ih[i] = h[i].val();
         nooverlap(s,x0,iw,y0,ih,s.ann2icl(ann));
+        
+        int miny = y0[0].min();
+        int maxy = y0[0].max();
+        int maxdy = ih[0];
+        for (int i=1; i<y0.size(); i++) {
+          miny = std::min(miny,y0[i].min());
+          maxy = std::max(maxy,y0[i].max());
+          maxdy = std::max(maxdy,ih[i]);
+        }
+        int minx = x0[0].min();
+        int maxx = x0[0].max();
+        int maxdx = iw[0];
+        for (int i=1; i<x0.size(); i++) {
+          minx = std::min(minx,x0[i].min());
+          maxx = std::max(maxx,x0[i].max());
+          maxdx = std::max(maxdx,iw[i]);
+        }
+        if (miny > Int::Limits::min && maxy < Int::Limits::max) {
+          cumulative(s,maxdy+maxy-miny,x0,iw,ih);
+          cumulative(s,maxdx+maxx-minx,y0,ih,iw);
+        }
       } else {
         IntVarArgs x1(x0.size()), y1(y0.size());
         for (int i=x0.size(); i--; )
@@ -1328,8 +1369,10 @@ namespace Gecode { namespace FlatZinc {
       IntSet v = s.arg2intset(ce[2]);
       if (ce[0]->isIntVar()) {
         IntVar n = s.arg2IntVar(ce[0]);
+        unshare(s, x);
         count(s,x,v,IRT_EQ,n,s.ann2icl(ann));
       } else {
+        unshare(s, x);
         count(s,x,v,IRT_EQ,ce[0]->getInt(),s.ann2icl(ann));
       }
     }
@@ -1690,6 +1733,7 @@ namespace Gecode { namespace FlatZinc {
       assert(idx >= 0);
       rel(s, x || IntSet(Set::Limits::min,idx-1));
       BoolVarArgs y = s.arg2boolvarargs(ce[1],idx);
+      unshare(s, y);
       channel(s, y, x);
     }
 

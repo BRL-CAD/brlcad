@@ -149,7 +149,7 @@ namespace Gecode { namespace Int { namespace Branch {
   template<class View>
   ExecStatus
   GqNGL<View>::prune(Space& home) {
-    return me_failed(x.lq(home,n)) ? ES_FAILED : ES_OK;
+    return me_failed(x.le(home,n)) ? ES_FAILED : ES_OK;
   }
 
 }}}

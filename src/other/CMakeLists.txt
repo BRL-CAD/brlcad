@@ -751,6 +751,8 @@ Solving Libraries provided with BRL-CAD's source code.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
+set(GECODE_USE_QT OFF)
+mark_as_advanced(GECODE_USE_QT)
 THIRD_PARTY(gecode GECODE gecode gecode_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL3 ALIASES ${gecode_ALIASES})
 if(BRLCAD_GECODE_BUILD)
   set(GECODE_LIBRARIES gecodesupport gecodekernel gecodesearch gecodeint

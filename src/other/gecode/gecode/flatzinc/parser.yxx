@@ -201,7 +201,7 @@ void addDomainConstraint(ParserState* pp, std::string id, AST::Node* var,
   AST::Array* args = new AST::Array(2);
   args->a[0] = var;
   args->a[1] = dom.some();
-  pp->domainConstraints.push_back(new ConExpr(id, args));
+  pp->domainConstraints.push_back(new ConExpr(id, args, NULL));
 }
 
 void addDomainConstraint(ParserState* pp, AST::Node* var,
@@ -212,16 +212,53 @@ void addDomainConstraint(ParserState* pp, AST::Node* var,
     AST::Array* args = new AST::Array(2);
     args->a[0] = new AST::FloatLit(dom.some()->first);
     args->a[1] = var;
-    pp->domainConstraints.push_back(new ConExpr("float_le", args));
+    pp->domainConstraints.push_back(new ConExpr("float_le", args, NULL));
   }
   {
     AST::Array* args = new AST::Array(2);
     AST::FloatVar* fv = static_cast<AST::FloatVar*>(var);
     args->a[0] = new AST::FloatVar(fv->i,fv->n);
     args->a[1] = new AST::FloatLit(dom.some()->second);
-    pp->domainConstraints.push_back(new ConExpr("float_le", args));
+    pp->domainConstraints.push_back(new ConExpr("float_le", args, NULL));
   }
   delete dom.some();
+}
+
+int getBaseIntVar(ParserState* pp, int i) {
+  int base = i;
+  IntVarSpec* ivs = static_cast<IntVarSpec*>(pp->intvars[base].second);
+  while (ivs->alias) {
+    base = ivs->i;
+    ivs = static_cast<IntVarSpec*>(pp->intvars[base].second);
+  }
+  return base;
+}
+int getBaseBoolVar(ParserState* pp, int i) {
+  int base = i;
+  BoolVarSpec* ivs = static_cast<BoolVarSpec*>(pp->boolvars[base].second);
+  while (ivs->alias) {
+    base = ivs->i;
+    ivs = static_cast<BoolVarSpec*>(pp->boolvars[base].second);
+  }
+  return base;
+}
+int getBaseFloatVar(ParserState* pp, int i) {
+  int base = i;
+  FloatVarSpec* ivs = static_cast<FloatVarSpec*>(pp->floatvars[base].second);
+  while (ivs->alias) {
+    base = ivs->i;
+    ivs = static_cast<FloatVarSpec*>(pp->floatvars[base].second);
+  }
+  return base;
+}
+int getBaseSetVar(ParserState* pp, int i) {
+  int base = i;
+  SetVarSpec* ivs = static_cast<SetVarSpec*>(pp->setvars[base].second);
+  while (ivs->alias) {
+    base = ivs->i;
+    ivs = static_cast<SetVarSpec*>(pp->setvars[base].second);
+  }
+  return base;
 }
 
 /*
@@ -290,17 +327,8 @@ void initfg(ParserState* pp) {
       pp->floatvars[i].second = NULL;
     }
   }
-  for (unsigned int i=pp->domainConstraints.size(); i--;) {
-    if (!pp->hadError) {
-      try {
-        assert(pp->domainConstraints[i]->args->a.size() == 2);
-        pp->fg->postConstraint(*pp->domainConstraints[i], NULL);
-        delete pp->domainConstraints[i];
-      } catch (Gecode::FlatZinc::Error& e) {
-        yyerror(pp, e.toString().c_str());        
-      }
-    }
-  }
+  pp->fg->postConstraints(pp->domainConstraints);
+  pp->fg->postConstraints(pp->constraints);
 }
 
 void fillPrinter(ParserState& pp, Gecode::FlatZinc::Printer& p) {
@@ -538,9 +566,7 @@ preddecl_items_head:
 
 vardecl_items: 
       /* emtpy */
-      { initfg(static_cast<ParserState*>(parm)); }
     | vardecl_items_head
-      { initfg(static_cast<ParserState*>(parm)); }
 
 vardecl_items_head:
       vardecl_item ';'
@@ -614,6 +640,8 @@ vardecl_item:
           "Duplicate symbol");
         if (print) {
           pp->output(std::string($4), new AST::IntVar(pp->intvars.size()));
+        } else {
+          introduced = true;
         }
         if ($6()) {
           AST::Node* arg = $6.some();
@@ -647,6 +675,8 @@ vardecl_item:
           "Duplicate symbol");
         if (print) {
           pp->output(std::string($4), new AST::BoolVar(pp->boolvars.size()));
+        } else {
+          introduced = true;
         }
         if ($6()) {
           AST::Node* arg = $6.some();
@@ -681,6 +711,8 @@ vardecl_item:
         if (print) {
           pp->output(std::string($4),
                      new AST::FloatVar(pp->floatvars.size()));
+        } else {
+          introduced = true;
         }
         if ($6()) {
           AST::Node* arg = $6.some();
@@ -720,6 +752,8 @@ vardecl_item:
           "Duplicate symbol");
         if (print) {
           pp->output(std::string($6), new AST::SetVar(pp->setvars.size()));
+        } else {
+          introduced = true;
         }
         if ($8()) {
           AST::Node* arg = $8.some();
@@ -800,8 +834,12 @@ vardecl_item:
                 for (int i=0; i<$5; i++) {
                   IntVarSpec* ivsv = static_cast<IntVarSpec*>((*vsv)[i]);
                   if (ivsv->alias) {
+                    if (print)
+                      static_cast<IntVarSpec*>(pp->intvars[ivsv->i].second)->introduced = false;
                     vars[i] = ivsv->i;
                   } else {
+                    if (print)
+                      ivsv->introduced = false;
                     vars[i] = pp->intvars.size();
                     pp->intvars.push_back(varspec($11, ivsv));
                   }
@@ -817,7 +855,7 @@ vardecl_item:
               delete vsv;
             } else {
               if ($5>0) {
-                IntVarSpec* ispec = new IntVarSpec($9,false,false);
+                IntVarSpec* ispec = new IntVarSpec($9,!print,false);
                 string arrayname = "["; arrayname += $11;
                 for (int i=0; i<$5-1; i++) {
                   vars[i] = pp->intvars.size();
@@ -863,9 +901,13 @@ vardecl_item:
             if (!pp->hadError) {
               for (int i=0; i<$5; i++) {
                 BoolVarSpec* bvsv = static_cast<BoolVarSpec*>((*vsv)[i]);
-                if (bvsv->alias)
+                if (bvsv->alias) {
+                  if (print)
+                    static_cast<BoolVarSpec*>(pp->boolvars[bvsv->i].second)->introduced = false;
                   vars[i] = bvsv->i;
-                else {
+                } else {
+                  if (print)
+                    bvsv->introduced = false;
                   vars[i] = pp->boolvars.size();
                   pp->boolvars.push_back(varspec($11, (*vsv)[i]));
                 }
@@ -883,7 +925,7 @@ vardecl_item:
             for (int i=0; i<$5; i++) {
               vars[i] = pp->boolvars.size();
               pp->boolvars.push_back(varspec($11,
-                                       new BoolVarSpec($9,false,false)));
+                                       new BoolVarSpec($9,!print,false)));
             }          
           }
           if (print) {
@@ -924,8 +966,12 @@ vardecl_item:
                 for (int i=0; i<$5; i++) {
                   FloatVarSpec* ivsv = static_cast<FloatVarSpec*>((*vsv)[i]);
                   if (ivsv->alias) {
+                    if (print)
+                      static_cast<FloatVarSpec*>(pp->floatvars[ivsv->i].second)->introduced = false;
                     vars[i] = ivsv->i;
                   } else {
+                    if (print)
+                      ivsv->introduced = false;
                     vars[i] = pp->floatvars.size();
                     pp->floatvars.push_back(varspec($11, ivsv));
                   }
@@ -944,7 +990,7 @@ vardecl_item:
                 Option<std::pair<double,double> > dom =
                   $9() ? Option<std::pair<double,double> >::some(*$9.some())
                        : Option<std::pair<double,double> >::none();
-                FloatVarSpec* ispec = new FloatVarSpec(dom,false,false);
+                FloatVarSpec* ispec = new FloatVarSpec(dom,!print,false);
                 string arrayname = "["; arrayname += $11;
                 for (int i=0; i<$5-1; i++) {
                   vars[i] = pp->floatvars.size();
@@ -991,9 +1037,13 @@ vardecl_item:
             if (!pp->hadError) {
               for (int i=0; i<$5; i++) {
                 SetVarSpec* svsv = static_cast<SetVarSpec*>((*vsv)[i]);
-                if (svsv->alias)
+                if (svsv->alias) {
+                  if (print)
+                    static_cast<SetVarSpec*>(pp->setvars[svsv->i].second)->introduced = false;
                   vars[i] = svsv->i;
-                else {
+                } else {
+                  if (print)
+                    svsv->introduced = false;
                   vars[i] = pp->setvars.size();
                   pp->setvars.push_back(varspec($13, (*vsv)[i]));
                 }
@@ -1009,7 +1059,7 @@ vardecl_item:
             delete vsv;
           } else {
             if ($5>0) {
-              SetVarSpec* ispec = new SetVarSpec($11,false,false);
+              SetVarSpec* ispec = new SetVarSpec($11,!print,false);
               string arrayname = "["; arrayname += $13;
               for (int i=0; i<$5-1; i++) {
                 vars[i] = pp->setvars.size();
@@ -1372,19 +1422,95 @@ constraint_item :
       { 
         ParserState *pp = static_cast<ParserState*>(parm);
         if (!pp->hadError) {
-          ConExpr c($2, $4);
-          try {
-            pp->fg->postConstraint(c, $6);
-          } catch (Gecode::FlatZinc::Error& e) {
-            yyerror(pp, e.toString().c_str());
+          std::string cid($2);
+          if (cid=="int_eq" && $4->a[0]->isIntVar() && $4->a[1]->isIntVar()) {
+            int base0 = getBaseIntVar(pp,$4->a[0]->getIntVar());
+            int base1 = getBaseIntVar(pp,$4->a[1]->getIntVar());
+            if (base0 > base1) {
+              std::swap(base0, base1);
+            }
+            if (base0==base1) {
+              // do nothing, already aliased
+            } else {
+              IntVarSpec* ivs1 = static_cast<IntVarSpec*>(pp->intvars[base1].second);
+              ivs1->alias = true;
+              ivs1->i = base0;
+              if (ivs1->domain()) {
+                addDomainConstraint(pp, "int_in",
+                                    new AST::IntVar(base0), ivs1->domain);
+                ivs1->domain = Option<AST::SetLit*>::none();
+              }
+            }
+          } else if (cid=="bool_eq" && $4->a[0]->isBoolVar() && $4->a[1]->isBoolVar()) {
+            int base0 = getBaseBoolVar(pp,$4->a[0]->getBoolVar());
+            int base1 = getBaseBoolVar(pp,$4->a[1]->getBoolVar());
+            if (base0 > base1) {
+              std::swap(base0, base1);
+            }
+            if (base0==base1) {
+              // do nothing, already aliased
+            } else {
+              BoolVarSpec* ivs1 = static_cast<BoolVarSpec*>(pp->boolvars[base1].second);
+              ivs1->alias = true;
+              ivs1->i = base0;
+              if (ivs1->domain()) {
+                addDomainConstraint(pp, "bool_in",
+                                    new AST::BoolVar(base0), ivs1->domain);
+                ivs1->domain = Option<AST::SetLit*>::none();
+              }
+            }
+          } else if (cid=="float_eq" && $4->a[0]->isFloatVar() && $4->a[1]->isFloatVar()) {
+            int base0 = getBaseFloatVar(pp,$4->a[0]->getFloatVar());
+            int base1 = getBaseFloatVar(pp,$4->a[1]->getFloatVar());
+            if (base0 > base1) {
+              std::swap(base0, base1);
+            }
+            if (base0==base1) {
+              // do nothing, already aliased
+            } else {
+              FloatVarSpec* ivs1 = static_cast<FloatVarSpec*>(pp->floatvars[base1].second);
+              ivs1->alias = true;
+              ivs1->i = base0;
+              if (ivs1->domain()) {
+                addDomainConstraint(pp, new AST::FloatVar(base0), Option<std::pair<double,double>* >::some(&ivs1->domain.some()));
+                ivs1->domain = Option<std::pair<double,double> >::none();
+              }
+            }
+          } else if (cid=="set_eq" && $4->a[0]->isSetVar() && $4->a[1]->isSetVar()) {
+            int base0 = getBaseSetVar(pp,$4->a[0]->getSetVar());
+            int base1 = getBaseSetVar(pp,$4->a[1]->getSetVar());
+            if (base0 > base1) {
+              std::swap(base0, base1);
+            }
+            if (base0==base1) {
+              // do nothing, already aliased
+            } else {
+              SetVarSpec* ivs1 = static_cast<SetVarSpec*>(pp->setvars[base1].second);
+              ivs1->alias = true;
+              ivs1->i = base0;
+              if (ivs1->upperBound()) {
+                addDomainConstraint(pp, "set_subset",
+                                    new AST::SetVar(base0), ivs1->upperBound);
+                ivs1->upperBound = Option<AST::SetLit*>::none();
+              }
+            }
+          } else if ( (cid=="int_le" || cid=="int_lt" || cid=="int_ge" || cid=="int_gt"  ||
+                       cid=="int_eq" || cid=="int_ne") &&
+                      ($4->a[0]->isInt() || $4->a[1]->isInt()) ) {
+            pp->domainConstraints.push_back(new ConExpr($2, $4, $6));
+          } else if ( cid=="set_in" && ($4->a[0]->isSet() || $4->a[1]->isSet()) ) {
+            pp->domainConstraints.push_back(new ConExpr($2, $4, $6));
+          } else {
+            pp->constraints.push_back(new ConExpr($2, $4, $6));
           }
         }
-        delete $6; free($2);
+        free($2);
       }
 solve_item :
       FZ_SOLVE annotations FZ_SATISFY
       { 
         ParserState *pp = static_cast<ParserState*>(parm);
+        initfg(pp);
         if (!pp->hadError) {
           try {
             pp->fg->solve($2);
@@ -1398,6 +1524,7 @@ solve_item :
     | FZ_SOLVE annotations minmax solve_expr
       { 
         ParserState *pp = static_cast<ParserState*>(parm);
+        initfg(pp);
         if (!pp->hadError) {
           try {
             int v = $4 < 0 ? (-$4-1) : $4;
@@ -1672,10 +1799,27 @@ solve_expr:
         ParserState *pp = static_cast<ParserState*>(parm);
         SymbolEntry e;
         bool haveSym = pp->symbols.get($1,e);
-        if (haveSym && e.t == ST_INTVAR) {
-          $$ = e.i;
-        } else if (haveSym && e.t == ST_FLOATVAR) {
-          $$ = -e.i-1;
+        if (haveSym) {
+          switch (e.t) {
+          case ST_INTVAR:
+            $$ = e.i;
+            break;
+          case ST_FLOATVAR:
+            $$ = -e.i-1;
+            break;
+          case ST_INT:
+          case ST_FLOAT:
+            pp->intvars.push_back(varspec("OBJ_CONST_INTRODUCED",
+              new IntVarSpec(0,true,false)));
+            $$ = pp->intvars.size()-1;
+            break;
+          default:
+            pp->err << "Error: unknown int or float variable " << $1
+                    << " in line no. "
+                    << yyget_lineno(pp->yyscanner) << std::endl;
+            pp->hadError = true;
+            break;
+          }
         } else {
           pp->err << "Error: unknown int or float variable " << $1
                   << " in line no. "
@@ -1683,6 +1827,20 @@ solve_expr:
           pp->hadError = true;
         }
         free($1);
+      }
+    | FZ_INT_LIT
+      {
+        ParserState *pp = static_cast<ParserState*>(parm);
+        pp->intvars.push_back(varspec("OBJ_CONST_INTRODUCED",
+          new IntVarSpec(0,true,false)));
+        $$ = pp->intvars.size()-1;
+      }
+    | FZ_FLOAT_LIT
+      {
+        ParserState *pp = static_cast<ParserState*>(parm);
+        pp->intvars.push_back(varspec("OBJ_CONST_INTRODUCED",
+          new IntVarSpec(0,true,false)));
+        $$ = pp->intvars.size()-1;
       }
     | var_par_id '[' FZ_INT_LIT ']'
       {
