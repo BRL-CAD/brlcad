@@ -2762,8 +2762,10 @@ get_face_intersection_curves(
 		}
 		ON_SimpleArray<ON_Curve *> curve_uv, curve_st;
 		for (int k = 0; k < events.Count(); k++) {
-		    if (events[k].m_type == ON_SSX_EVENT::ssx_tangent
-			|| events[k].m_type == ON_SSX_EVENT::ssx_transverse) {
+		    if (events[k].m_type == ON_SSX_EVENT::ssx_tangent ||
+			events[k].m_type == ON_SSX_EVENT::ssx_transverse ||
+			events[k].m_type == ON_SSX_EVENT::ssx_overlap)
+		    {
 			if (get_subcurve_inside_faces(brep1, brep2, i, j, &events[k]) < 0) {
 			    continue;
 			}
