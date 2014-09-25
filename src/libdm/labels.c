@@ -19,13 +19,10 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
-#include <stdio.h>
 #include <math.h>
 
 #include "vmath.h"
-#include "bu.h"
 #include "bn.h"
 #include "db.h"
 #include "mater.h"

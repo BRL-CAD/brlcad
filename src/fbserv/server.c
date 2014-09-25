@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #if defined(HAVE_SYS_TYPES_H)
 #  include <sys/types.h>
@@ -34,8 +33,7 @@
 #if defined(HAVE_SYS_TIME_H)
 #  include <sys/time.h>
 #endif
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/color.h"
 #include "fb.h"

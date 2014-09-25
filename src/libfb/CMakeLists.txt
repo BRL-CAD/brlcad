@@ -117,6 +117,7 @@ set(libfb_ignore_files
   if_tk.c
   if_wgl.c
   fb_private.h
+  osg_fb_manipulator.h
   )
 CMAKEFILES(${libfb_ignore_files})
 

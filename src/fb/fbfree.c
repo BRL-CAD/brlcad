@@ -28,9 +28,8 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
 #include "fb.h"
 
 

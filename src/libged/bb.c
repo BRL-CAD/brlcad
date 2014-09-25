@@ -28,9 +28,10 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "rtgeom.h"
 
 #include "./ged_private.h"

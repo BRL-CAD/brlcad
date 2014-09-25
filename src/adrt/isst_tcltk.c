@@ -26,15 +26,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
-
-#include "bio.h"
+#include "bnetwork.h"
 
 #include <GL/gl.h>
 
 #include "tcl.h"
 #include "tk.h"
-
 
 #include "bu/parallel.h"
 #include "bu/time.h"
@@ -46,10 +43,6 @@
 #include "camera.h"
 #include "isst.h"
 #include "raytrace.h"
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 
 #ifdef HAVE_STRING_H
 #include <string.h>

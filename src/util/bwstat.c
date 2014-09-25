@@ -39,8 +39,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/str.h"
 
 #define IBUFSIZE 1024		/* Max read size in pixels */
 unsigned char buf[IBUFSIZE];	/* Input buffer */

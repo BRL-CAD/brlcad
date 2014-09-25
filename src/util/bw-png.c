@@ -29,10 +29,11 @@
 #include <math.h>
 #include <zlib.h>
 #include <png.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "fb.h"
 

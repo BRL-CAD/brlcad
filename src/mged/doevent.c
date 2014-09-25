@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 
 #ifdef HAVE_GL_DEVICE_H
@@ -45,8 +44,6 @@
 #  include <X11/keysym.h>
 #endif
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
 #include "ged.h"

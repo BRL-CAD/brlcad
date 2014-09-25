@@ -20,8 +20,8 @@
 
 #include "common.h"
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/file.h"
 
 void
 read_pdb(char *fileName)

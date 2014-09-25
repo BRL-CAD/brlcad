@@ -37,8 +37,9 @@
 #include <errno.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"

@@ -39,9 +39,6 @@
 #include <time.h>
 #include <sys/types.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -72,7 +69,6 @@
 #include <X11/Xatom.h>
 
 #include <ctype.h>
-#include "bio.h"
 
 #include "bu/color.h"
 #include "bu/file.h"
@@ -80,9 +76,6 @@
 #include "bu/str.h"
 #include "fb_private.h"
 #include "fb/fb_X.h"
-
-
-#define SHMEM_KEY 42
 
 
 /*
@@ -3541,6 +3534,7 @@ fb X24_interface =  {
     0L,			/* page_curpos */
     0L,			/* page_pixels */
     0,			/* debug */
+    60000000,		/* refresh rate - from fbserv, which had 60 seconds as a default (not sure why) */
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

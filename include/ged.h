@@ -31,11 +31,6 @@
 
 #include "common.h"
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define NOMINMAX
-#  include <windows.h>
-#endif
-
 #include "solid.h"
 #include "dm/bview.h"
 #include "raytrace.h"
@@ -467,8 +462,9 @@ struct polygon_header {
     int npts;                   /* number of points */
 };
 #define POLYGON_HEADER_MAGIC 0x8623bad2
-extern void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
+GED_EXPORT extern void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
 
+GED_EXPORT extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct display_list *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, struct solid *freesolid, int csoltab);
 
 
 /* defined in ged.c */
@@ -1939,7 +1935,8 @@ GED_EXPORT extern int ged_get_obj_bounds(struct ged *gedp,
 /* defined in track.c */
 GED_EXPORT extern int ged_track2(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
 
-
+/* defined in wdb_importFg4Section.c */
+GED_EXPORT int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]);
 
 
 /***************************************

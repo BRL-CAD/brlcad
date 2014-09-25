@@ -31,6 +31,9 @@
 
 #include "common.h"
 
+#include "./rt/defines.h"
+#include "./rt/op.h"
+
 __BEGIN_DECLS
 
 #ifndef RT_EXPORT

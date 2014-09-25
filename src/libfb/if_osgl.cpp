@@ -1,7 +1,7 @@
-/*                        I F _ O G L . C
+/*                     I F _ O S G L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,9 +19,9 @@
  */
 /** @addtogroup if */
 /** @{ */
-/** @file if_osgl.c
+/** @file if_osgl.cpp
  *
- * Frame Buffer Library interface for OpenGL.
+ * An OpenGL framebuffer using OpenSceneGraph.
  *
  * There are several different Frame Buffer modes supported.  Set your
  * environment FB_FILE to the appropriate type.
@@ -29,42 +29,21 @@
  * (see the modeflag definitions below).  /dev/osgl[options]
  *
  * This code is basically a port of the 4d Framebuffer interface from
- * IRIS GL to OpenGL.
+ * IRIS GL to OpenGL, using OpenSceneGraph for portability.
  *
  */
 /** @} */
 
-#include "common.h"
 
 #ifdef IF_OSGL
 
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
-#include <sys/ipc.h>
-#include <sys/shm.h>
-
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <signal.h>
-#include <errno.h>
-
-#include <osgViewer/Viewer>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>	/* for getpagesize and sysconf */
-#endif
-
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-#include "bio.h"
-
-#include "bu.h"
+#include "common.h"
+extern "C" {
 #include "fb_private.h"
-#include "fb.h"
+}
 #include "fb/fb_osgl.h"
+
+#include <osg/GLExtensions>
 
 #define CJDEBUG 0
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
@@ -124,7 +103,6 @@ struct osgl_clip {
  * Per window state information, overflow area.
  */
 struct sgiinfo {
-    short mi_curs_on;
     short mi_cmap_flag;		/* enabled when there is a non-linear map in memory */
     int mi_shmid;
     int mi_memwidth;		/* width of scanline in if_mem */
@@ -132,7 +110,6 @@ struct sgiinfo {
     short mi_yoff;		/* Y viewport offset, rel. window*/
     int mi_pid;			/* for multi-cpu check */
     int mi_parent;		/* PID of linger-mode process */
-    int mi_doublebuffer;	/* 0=singlebuffer 1=doublebuffer */
     struct osgl_pixel mi_scanline[XMAXSCREEN+1];	/* one scanline */
 };
 
@@ -141,14 +118,21 @@ struct sgiinfo {
  * Per window state information particular to the OpenGL interface
  */
 struct osglinfo {
+    osgViewer::Viewer *viewer;
+    osg::Image *image;
+    osg::TextureRectangle *texture;
+    osg::Geometry *pictureQuad;
+    osg::Group *root;
+    osg::Timer *timer;
+    int last_update_time;
+    int cursor_on;
+    int use_texture;
+
     osg::GraphicsContext *glc;
     osg::GraphicsContext::Traits *traits;
     int firstTime;
     int alive;
     long event_mask;		/* event types to be received */
-    short front_flag;		/* front buffer being used (b-mode) */
-    short copy_flag;		/* pan and zoom copied from backbuffer */
-    short soft_cmap_flag;	/* use software colormapping */
     int cmap_size;		/* hardware colormap size */
     int win_width;		/* actual window width */
     int win_height;		/* actual window height */
@@ -188,7 +172,6 @@ struct osglinfo {
  * TRANSIENT -vs- LINGERING windows
  * Windowed -vs- Centered Full screen
  * Suppress dither -vs- dither
- * Double -vs- Single buffered
  * DrawPixels -vs- CopyPixels
  */
 #define MODE_1MASK	(1<<0)
@@ -207,17 +190,6 @@ struct osglinfo {
 #define MODE_7NORMAL	(0<<6)	/* install colormap in hardware if possible*/
 #define MODE_7SWCMAP	(1<<6)	/* use software colormapping */
 
-#define MODE_9MASK	(1<<8)
-#define MODE_9NORMAL	(0<<8)	/* doublebuffer if possible */
-#define MODE_9SINGLEBUF	(1<<8)	/* singlebuffer only */
-
-#define MODE_11MASK	(1<<10)
-#define MODE_11NORMAL	(0<<10)	/* always draw from mem. to window*/
-#define MODE_11COPY	(1<<10)	/* keep full image on back buffer */
-
-#define MODE_12MASK	(1<<11)
-#define MODE_12NORMAL	(0<<11)
-#define MODE_12DELAY_WRITES_TILL_FLUSH	(1<<11)
 /* and copy current view to front */
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
@@ -239,99 +211,14 @@ HIDDEN struct modeflags {
       "Suppress dithering - else dither if not 24-bit buffer" },
     { 'c',	MODE_7MASK, MODE_7SWCMAP,
       "Perform software colormap - else use hardware colormap if possible" },
-    { 's',	MODE_9MASK, MODE_9SINGLEBUF,
-      "Single buffer -  else double buffer if possible" },
-    { 'b',	MODE_11MASK, MODE_11COPY,
-      "Fast pan and zoom using backbuffer copy -  else normal " },
-    { 'D',	MODE_12DELAY_WRITES_TILL_FLUSH, MODE_12DELAY_WRITES_TILL_FLUSH,
-      "Don't update screen until fb_flush() is called.  (Double buffer sim)" },
     { 'z',	MODE_15MASK, MODE_15ZAP,
       "Zap (free) shared memory.  Can also be done with fbfree command" },
     { '\0', 0, 0, "" }
 };
 #endif
 
-HIDDEN void
-sigkid(int UNUSED(pid))
-{
-    exit(0);
-}
-
-
-/* BACKBUFFER_TO_SCREEN - copy pixels from copy on the backbuffer to
- * the front buffer. Do one scanline specified by one_y, or whole
- * screen if one_y equals -1.
- */
-HIDDEN void
-backbuffer_to_screen(register fb *ifp, int one_y)
-{
-    struct osgl_clip *clp;
-
-    if (!(OSGL(ifp)->front_flag)) {
-	OSGL(ifp)->front_flag = 1;
-	glDrawBuffer(GL_FRONT);
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
-    }
-
-    clp = &(OSGL(ifp)->clip);
-
-    if (one_y > clp->ypixmax) {
-	return;
-    } else if (one_y < 0) {
-	/* do whole visible screen */
-
-	/* Blank out area left of image */
-	glColor3b(0, 0, 0);
-	if (clp->xscrmin < 0) glRecti(clp->xscrmin - CLIP_XTRA,
-				      clp->yscrmin - CLIP_XTRA,
-				      CLIP_XTRA,
-				      clp->yscrmax + CLIP_XTRA);
-
-	/* Blank out area below image */
-	if (clp->yscrmin < 0) glRecti(clp->xscrmin - CLIP_XTRA,
-				      clp->yscrmin - CLIP_XTRA,
-				      clp->xscrmax + CLIP_XTRA,
-				      CLIP_XTRA);
-
-	/* We are in copy mode, so we use vp_width rather
-	 * than if_width
-	 */
-	/* Blank out area right of image */
-	if (clp->xscrmax >= OSGL(ifp)->vp_width) glRecti(ifp->if_width - CLIP_XTRA,
-							clp->yscrmin - CLIP_XTRA,
-							clp->xscrmax + CLIP_XTRA,
-							clp->yscrmax + CLIP_XTRA);
-
-	/* Blank out area above image */
-	if (clp->yscrmax >= OSGL(ifp)->vp_height) glRecti(clp->xscrmin - CLIP_XTRA,
-							 OSGL(ifp)->vp_height - CLIP_XTRA,
-							 clp->xscrmax + CLIP_XTRA,
-							 clp->yscrmax + CLIP_XTRA);
-
-	/* copy image from backbuffer */
-	glRasterPos2i(clp->xpixmin, clp->ypixmin);
-	glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
-		     SGI(ifp)->mi_yoff + clp->ypixmin,
-		     clp->xpixmax - clp->xpixmin +1,
-		     clp->ypixmax - clp->ypixmin +1,
-		     GL_COLOR);
-
-
-    } else if (one_y < clp->ypixmin) {
-	return;
-    } else {
-	/* draw one scanline */
-	glRasterPos2i(clp->xpixmin, one_y);
-	glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
-		     SGI(ifp)->mi_yoff + one_y,
-		     clp->xpixmax - clp->xpixmin +1,
-		     1,
-		     GL_COLOR);
-    }
-}
-
+/* OpenSceneGraph interactions for a framebuffer viewer */
+#include "osg_fb_manipulator.h"
 
 /*
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
@@ -349,7 +236,7 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
 
     clp = &(OSGL(ifp)->clip);
 
-    if (OSGL(ifp)->soft_cmap_flag  && SGI(ifp)->mi_cmap_flag) {
+    if (SGI(ifp)->mi_cmap_flag) {
 	sw_cmap = 1;
     } else {
 	sw_cmap = 0;
@@ -368,7 +255,6 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
 	nlines = clp->ypixmax - ybase + 1;
 
     if (!OSGL(ifp)->use_ext_ctrl) {
-	if (!OSGL(ifp)->copy_flag) {
 	    /*
 	     * Blank out areas of the screen around the image, if
 	     * exposed.  In COPY mode, this is done in
@@ -400,20 +286,6 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
 							clp->xscrmax + CLIP_XTRA,
 							clp->yscrmax + CLIP_XTRA);
 
-	} else if (OSGL(ifp)->front_flag) {
-	    /* in COPY mode, always draw full sized image into backbuffer.
-	     * backbuffer_to_screen() is used to update the front buffer
-	     */
-	    glDrawBuffer(GL_BACK);
-	    OSGL(ifp)->front_flag = 0;
-	    glMatrixMode(GL_PROJECTION);
-	    glPushMatrix();	/* store current view clipping matrix*/
-	    glLoadIdentity();
-	    glOrtho(-0.25, ((GLdouble) OSGL(ifp)->vp_width)-0.25,
-		    -0.25, ((GLdouble) OSGL(ifp)->vp_height)-0.25,
-		    -1.0, 1.0);
-	    glPixelZoom(1.0, 1.0);
-	}
     }
 
     if (sw_cmap) {
@@ -427,9 +299,11 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
 	/* Perform software color mapping into temp scanline */
 	op = SGI(ifp)->mi_scanline;
 	for (n=nlines; n>0; n--, y++) {
-	    osglp = (struct osgl_pixel *)&ifp->if_mem[
-		(y*SGI(ifp)->mi_memwidth)*
-		sizeof(struct osgl_pixel) ];
+	    if (!OSGL(ifp)->viewer) {
+		osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*sizeof(struct osgl_pixel) ];
+	    } else {
+		osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+	    }
 	    for (x=xbase+npix-1; x>=xbase; x--) {
 		op[x].red   = CMR(ifp)[osglp[x].red];
 		op[x].green = CMG(ifp)[osglp[x].green];
@@ -439,20 +313,19 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
 	    glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
 	    glRasterPos2i(xbase, y);
 	    glDrawPixels(npix, 1, GL_BGRA_EXT, GL_UNSIGNED_BYTE,
-			 (const GLvoid *) op);
+		    (const GLvoid *) op);
 
 	}
 
     } else {
 	/* No need for software colormapping */
-
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, SGI(ifp)->mi_memwidth);
 	glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
 	glPixelStorei(GL_UNPACK_SKIP_ROWS, ybase);
 
 	glRasterPos2i(xbase, ybase);
 	glDrawPixels(npix, nlines, GL_BGRA_EXT, GL_UNSIGNED_BYTE,
-		     (const GLvoid *) ifp->if_mem);
+		(const GLvoid *) ifp->if_mem);
     }
 }
 
@@ -470,51 +343,23 @@ osgl_cminit(register fb *ifp)
 }
 
 
-/************************************************************************/
 /******************* Shared Memory Support ******************************/
-/************************************************************************/
-
-/**
- * not changed from sgi_getmem.
- *
- * Because there is no hardware zoom or pan, we need to repaint the
- * screen (with big pixels) to implement these operations.  This means
- * that the actual "contents" of the frame buffer need to be stored
- * somewhere else.  If possible, we allocate a shared memory segment
- * to contain that image.  This has several advantages, the most
- * important being that when operating the display in 12-bit output
- * mode, pixel-readbacks still give the full 24-bits of color.  System
- * V shared memory persists until explicitly killed, so this also
- * means that in MEX mode, the previous contents of the frame buffer
- * still exist, and can be again accessed, even though the MEX windows
- * are transient, per-process.
- *
- * There are a few oddities, however.  The worst is that System V will
- * not allow the break (see sbrk(2)) to be set above a shared memory
- * segment, and shmat(2) does not seem to allow the selection of any
- * reasonable memory address (like 6 Mbytes up) for the shared memory.
- * In the initial version of this routine, that prevented subsequent
- * calls to malloc() from succeeding, quite a drawback.  The
- * work-around used here is to increase the current break to a large
- * value, attach to the shared memory, and then return the break to
- * its original value.  This should allow most reasonable requests for
- * memory to be satisfied.  In special cases, the values used here
- * might need to be increased.
- */
 HIDDEN int
 osgl_getmem(fb *ifp)
 {
-#define SHMEM_KEY 42
+    int shm_result;
     int pixsize;
     int size;
-    long psize = sysconf(_SC_PAGESIZE);
     int i;
     char *sp;
     int new_mem = 0;
 
     errno = 0;
 
-    if ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) {
+#ifdef HAVE_SYS_SHM_H
+    if ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC)
+#endif
+    {
 	/*
 	 * In this mode, only malloc as much memory as is needed.
 	 */
@@ -531,6 +376,7 @@ osgl_getmem(fb *ifp)
 	goto success;
     }
 
+#ifdef HAVE_SYS_SHM_H
     /* The shared memory section never changes size */
     SGI(ifp)->mi_memwidth = ifp->if_max_width;
 
@@ -544,29 +390,12 @@ osgl_getmem(fb *ifp)
 
     size = pixsize + sizeof(struct osgl_cmap);
 
-    /* make more portable
-    size = (size + getpagesize()-1) & ~(getpagesize()-1);
-    */
-    size = (size + psize - 1) & ~(psize - 1);
 
-    /* First try to attach to an existing one */
-    if ((SGI(ifp)->mi_shmid = shmget(SHMEM_KEY, size, 0)) < 0) {
-	/* No existing one, create a new one */
-	if ((SGI(ifp)->mi_shmid = shmget(
-		 SHMEM_KEY, size, IPC_CREAT|0666)) < 0) {
-	    fb_log("osgl_getmem: shmget failed, errno=%d\n", errno);
-	    goto fail;
-	}
-	new_mem = 1;
-    }
+    shm_result = bu_shmget(&(SGI(ifp)->mi_shmid), &sp, SHMEM_KEY, (size_t)size);
 
-    /* WWW this is unnecessary in this version? */
-    /* Open the segment Read/Write */
-    /* This gets mapped to a high address on some platforms, so no problem. */
-    if ((sp = (char *)shmat(SGI(ifp)->mi_shmid, 0, 0)) == (char *)(-1L)) {
-	fb_log("osgl_getmem: shmat returned x%x, errno=%d\n", sp, errno);
-	goto fail;
-    }
+    if (shm_result == 1) goto fail;
+    if (shm_result == -1) new_mem = 1;
+#endif
 
 success:
     ifp->if_mem = sp;
@@ -579,7 +408,9 @@ success:
 	osgl_cminit(ifp);
     return 0;
 fail:
+#ifdef HAVE_SYS_SHM_H
     fb_log("osgl_getmem:  Unable to attach to shared memory.\n");
+#endif
     if ((sp = (char *)calloc(1, size)) == NULL) {
 	fb_log("osgl_getmem:  malloc failure\n");
 	return -1;
@@ -592,6 +423,7 @@ fail:
 void
 osgl_zapmem(void)
 {
+#ifdef HAVE_SYS_SHM_H
     int shmid;
     int i;
 
@@ -606,6 +438,7 @@ osgl_zapmem(void)
 	return;
     }
     fb_log("if_osgl: shared memory released\n");
+#endif
 }
 
 
@@ -658,18 +491,6 @@ osgl_clipper(register fb *ifp)
 	clp->ypixmin = 0;
     }
 
-    /* In copy mode, the backbuffer copy image is limited
-     * to the viewport size; use that for clipping.
-     * Otherwise, use size of framebuffer memory segment
-     */
-    if (OSGL(ifp)->copy_flag) {
-	if (clp->xpixmax > OSGL(ifp)->vp_width-1) {
-	    clp->xpixmax = OSGL(ifp)->vp_width-1;
-	}
-	if (clp->ypixmax > OSGL(ifp)->vp_height-1) {
-	    clp->ypixmax = OSGL(ifp)->vp_height-1;
-	}
-    } else {
 	if (clp->xpixmax > ifp->if_width-1) {
 	    clp->xpixmax = ifp->if_width-1;
 	}
@@ -677,133 +498,6 @@ osgl_clipper(register fb *ifp)
 	    clp->ypixmax = ifp->if_height-1;
 	}
     }
-
-}
-
-
-HIDDEN void
-expose_callback(fb *ifp)
-{
-    //XWindowAttributes xwa;
-    struct osgl_clip *clp;
-
-    if (CJDEBUG) fb_log("entering expose_callback()\n");
-
-    OSGL(ifp)->glc->makeCurrent();
-
-    if (OSGL(ifp)->firstTime) {
-
-	OSGL(ifp)->firstTime = 0;
-
-	/* just in case the configuration is double buffered but
-	 * we want to pretend it's not
-	 */
-
-	if (!SGI(ifp)->mi_doublebuffer) {
-	    glDrawBuffer(GL_FRONT);
-	}
-
-	if ((ifp->if_mode & MODE_4MASK) == MODE_4NODITH) {
-	    glDisable(GL_DITHER);
-	}
-
-	/* set copy mode if possible and requested */
-	if (SGI(ifp)->mi_doublebuffer &&
-	    ((ifp->if_mode & MODE_11MASK)==MODE_11COPY)) {
-	    /* Copy mode only works if there are two
-	     * buffers to use. It conflicts with
-	     * double buffering
-	     */
-	    OSGL(ifp)->copy_flag = 1;
-	    SGI(ifp)->mi_doublebuffer = 0;
-	    OSGL(ifp)->front_flag = 1;
-	    glDrawBuffer(GL_FRONT);
-	} else {
-	    OSGL(ifp)->copy_flag = 0;
-	}
-
-
-	/* clear entire window */
-	glViewport(0, 0, OSGL(ifp)->win_width, OSGL(ifp)->win_height);
-	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	/* Set normal viewport size to minimum of actual window
-	 * size and requested framebuffer size
-	 */
-	OSGL(ifp)->vp_width = (OSGL(ifp)->win_width < ifp->if_width) ?
-	    OSGL(ifp)->win_width : ifp->if_width;
-	OSGL(ifp)->vp_height = (OSGL(ifp)->win_height < ifp->if_height) ?
-	    OSGL(ifp)->win_height : ifp->if_height;
-	ifp->if_xcenter = OSGL(ifp)->vp_width/2;
-	ifp->if_ycenter = OSGL(ifp)->vp_height/2;
-
-	OSGL(ifp)->glc->resized(0, 0, OSGL(ifp)->win_width, OSGL(ifp)->win_height);
-
-	/* center viewport in window */
-	SGI(ifp)->mi_xoff=(OSGL(ifp)->win_width-OSGL(ifp)->vp_width)/2;
-	SGI(ifp)->mi_yoff=(OSGL(ifp)->win_height-OSGL(ifp)->vp_height)/2;
-	glViewport(SGI(ifp)->mi_xoff,
-		   SGI(ifp)->mi_yoff,
-		   OSGL(ifp)->vp_width,
-		   OSGL(ifp)->vp_height);
-	/* initialize clipping planes and zoom */
-	osgl_clipper(ifp);
-	clp = &(OSGL(ifp)->clip);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop,
-		-1.0, 1.0);
-	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
-    } else if ((OSGL(ifp)->win_width > ifp->if_width) ||
-	       (OSGL(ifp)->win_height > ifp->if_height)) {
-	/* clear whole buffer if window larger than framebuffer */
-	if (OSGL(ifp)->copy_flag && !OSGL(ifp)->front_flag) {
-	    glDrawBuffer(GL_FRONT);
-	    glViewport(0, 0, OSGL(ifp)->win_width,
-		       OSGL(ifp)->win_height);
-	    glClearColor(0, 0, 0, 0);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	    glDrawBuffer(GL_BACK);
-	} else {
-	    glViewport(0, 0, OSGL(ifp)->win_width,
-		       OSGL(ifp)->win_height);
-	    glClearColor(0, 0, 0, 0);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	}
-	/* center viewport */
-	glViewport(SGI(ifp)->mi_xoff,
-		   SGI(ifp)->mi_yoff,
-		   OSGL(ifp)->vp_width,
-		   OSGL(ifp)->vp_height);
-    }
-
-    /* repaint entire image */
-    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-    if (SGI(ifp)->mi_doublebuffer) {
-	OSGL(ifp)->glc->swapBuffers();
-    } else if (OSGL(ifp)->copy_flag) {
-	backbuffer_to_screen(ifp, -1);
-    }
-
-    if (CJDEBUG) {
-	int dbb, db, view[4], getster, getaux;
-	glGetIntegerv(GL_VIEWPORT, view);
-	glGetIntegerv(GL_DOUBLEBUFFER, &dbb);
-	glGetIntegerv(GL_DRAW_BUFFER, &db);
-	fb_log("Viewport: x %d y %d width %d height %d\n", view[0],
-	       view[1], view[2], view[3]);
-	fb_log("expose: double buffered: %d, draw buffer %d\n", dbb, db);
-	fb_log("front %d\tback%d\n", GL_FRONT, GL_BACK);
-	glGetIntegerv(GL_STEREO, &getster);
-	glGetIntegerv(GL_AUX_BUFFERS, &getaux);
-	fb_log("double %d, stereo %d, aux %d\n", dbb, getster, getaux);
-    }
-
-    /* unattach context for other threads to use */
-    OSGL(ifp)->glc->releaseContext();
-}
-
 
 int
 osgl_configureWindow(fb *ifp, int width, int height)
@@ -826,6 +520,8 @@ osgl_configureWindow(fb *ifp, int width, int height)
 
     osgl_getmem(ifp);
     osgl_clipper(ifp);
+
+    glViewport(0, 0, OSGL(ifp)->win_width, OSGL(ifp)->win_height);
     return 0;
 }
 
@@ -833,218 +529,13 @@ osgl_configureWindow(fb *ifp, int width, int height)
 HIDDEN void
 osgl_do_event(fb *ifp)
 {
-    OSGL(ifp)->firstTime = 0;
-#if 0
-    XEvent event;
-
-    while (XCheckWindowEvent(OSGL(ifp)->dispp, OSGL(ifp)->wind,
-			     OSGL(ifp)->event_mask, &event)) {
-	switch (event.type) {
-	    case Expose:
-		if (!OSGL(ifp)->use_ext_ctrl)
-		    expose_callback(ifp);
-		break;
-	    case ButtonPress:
-		{
-		    int button = (int) event.xbutton.button;
-		    if (button == Button1) {
-			/* Check for single button mouse remap.
-			 * ctrl-1 => 2
-			 * meta-1 => 3
-			 * cmdkey => 3
-			 */
-			if (event.xbutton.state & ControlMask) {
-			    button = Button2;
-			} else if (event.xbutton.state & Mod1Mask) {
-			    button = Button3;
-			} else if (event.xbutton.state & Mod2Mask) {
-			    button = Button3;
-			}
-		    }
-
-		    switch (button) {
-			case Button1:
-			    break;
-			case Button2:
-			    {
-				int x, y;
-				register struct osgl_pixel *osglp;
-
-				x = event.xbutton.x;
-				y = ifp->if_height - event.xbutton.y - 1;
-
-				if (x < 0 || y < 0) {
-				    fb_log("No RGB (outside image viewport)\n");
-				    break;
-				}
-
-				osglp = (struct osgl_pixel *)&ifp->if_mem[
-				    (y*SGI(ifp)->mi_memwidth)*
-				    sizeof(struct osgl_pixel) ];
-
-				fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
-				       x, y, (int)osglp[x].red, (int)osglp[x].green, (int)osglp[x].blue);
-
-				break;
-			    }
-			case Button3:
-			    OSGL(ifp)->alive = 0;
-			    break;
-			default:
-			    fb_log("unhandled mouse event\n");
-			    break;
-		    }
-		    break;
-		}
-	    case ConfigureNotify:
-		{
-		    XConfigureEvent *conf = (XConfigureEvent *)&event;
-
-		    if (conf->width == OSGL(ifp)->win_width &&
-			conf->height == OSGL(ifp)->win_height)
-			return;
-
-		    osgl_configureWindow(ifp, conf->width, conf->height);
-		}
-	    default:
-		break;
-	}
-    }
-#endif
-}
-
-
-/**
- * Select an appropriate visual, and set flags.
- *
- * The user requires support for:
- *    	-OpenGL rendering in RGBA mode
- *
- * The user may desire support for:
- *	-a single-buffered OpenGL context
- *	-a double-buffered OpenGL context
- *	-hardware colormapping (DirectColor)
- *
- * We first try to satisfy all requirements and desires. If that
- * fails, we remove the desires one at a time until we succeed or
- * until only requirements are left. If at any stage more than one
- * visual meets the current criteria, the visual with the greatest
- * depth is chosen.
- *
- * The following flags are set:
- * SGI(ifp)->mi_doublebuffer
- * OSGL(ifp)->soft_cmap_flag
- *
- * Return NULL on failure.
- */
-#if 0
-    HIDDEN XVisualInfo *
-fb_osgl_choose_visual(fb *ifp)
-{
-
-    XVisualInfo *vip, *vibase, *maxvip, _template;
-#define NGOOD 200
-    int good[NGOOD];
-    int num, i, j;
-    int m_hard_cmap, m_sing_buf, m_doub_buf;
-    int use, rgba, dbfr;
-
-    m_hard_cmap = ((ifp->if_mode & MODE_7MASK)==MODE_7NORMAL);
-    m_sing_buf  = ((ifp->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
-    m_doub_buf =  !m_sing_buf;
-
-    memset((void *)&_template, 0, sizeof(XVisualInfo));
-
-    /* get a list of all visuals on this display */
-    vibase = XGetVisualInfo(OSGL(ifp)->dispp, 0, &_template, &num);
-    while (1) {
-
-	/* search for all visuals matching current criteria */
-	for (i = 0, j = 0, vip=vibase; i < num; i++, vip++) {
-	    /* requirements */
-	    glXGetConfig(OSGL(ifp)->dispp, vip, GLX_USE_GL, &use);
-	    if (!use) {
-		continue;
-	    }
-	    glXGetConfig(OSGL(ifp)->dispp, vip, GLX_RGBA, &rgba);
-	    if (!rgba) {
-		continue;
-	    }
-	    /* desires */
-	    /* X_CreateColormap needs a DirectColor visual */
-	    /* There should be some way of handling this with TrueColor,
-	     * for example:
-	     visual id:    0x50
-	     class:    TrueColor
-	     depth:    24 planes
-	     available colormap entries:    256 per subfield
-	     red, green, blue masks:    0xff0000, 0xff00, 0xff
-	     significant bits in color specification:    8 bits
-	    */
-	    if ((m_hard_cmap) && (vip->class != DirectColor)) {
-		continue;
-	    }
-	    if ((m_hard_cmap) && (vip->colormap_size < 256)) {
-		continue;
-	    }
-	    glXGetConfig(OSGL(ifp)->dispp, vip, GLX_DOUBLEBUFFER, &dbfr);
-	    if ((m_doub_buf) && (!dbfr)) {
-		continue;
-	    }
-	    if ((m_sing_buf) && (dbfr)) {
-		continue;
-	    }
-
-	    /* this visual meets criteria */
-	    if (j >= NGOOD-1) {
-		fb_log("fb_osgl_open:  More than %d candidate visuals!\n", NGOOD);
-		break;
-	    }
-	    good[j++] = i;
-	}
-
-	/* from list of acceptable visuals,
-	 * choose the visual with the greatest depth */
-	if (j >= 1) {
-	    maxvip = vibase + good[0];
-	    for (i = 1; i < j; i++) {
-		vip = vibase + good[i];
-		if (vip->depth > maxvip->depth) {
-		    maxvip = vip;
-		}
-	    }
-	    /* set flags and return choice */
-	    OSGL(ifp)->soft_cmap_flag = !m_hard_cmap;
-	    SGI(ifp)->mi_doublebuffer = m_doub_buf;
-	    return maxvip;
-	}
-
-	/* if no success at this point,
-	 * relax one of the criteria and try again.
-	 */
-	if (m_hard_cmap) {
-	    /* relax hardware colormap requirement */
-	    m_hard_cmap = 0;
-	    fb_log("fb_osgl_open: hardware colormapping not available. Using software colormap.\n");
-	} else if (m_sing_buf) {
-	    /* relax single buffering requirement.
-	     * no need for any warning - we'll just use
-	     * the front buffer
-	     */
-	    m_sing_buf = 0;
-	} else if (m_doub_buf) {
-	    /* relax double buffering requirement. */
-	    m_doub_buf = 0;
-	    fb_log("fb_osgl_open: double buffering not available. Using single buffer.\n");
-	} else {
-	    /* nothing else to relax */
-	    return NULL;
-	}
-
+    if (OSGL(ifp)->firstTime) {
+	OSGL(ifp)->firstTime = 0;
     }
 
+    if (OSGL(ifp)->viewer)
+	(*OSGL(ifp)->viewer).frame();
 }
-#endif
 
 /**
  * Check for a color map being linear in R, G, and B.  Returns 1 for
@@ -1067,69 +558,30 @@ is_linear_cmap(register fb *ifp)
 HIDDEN int
 fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 {
-    static char title[128];
-
-    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
-
-    // Although we are not making direct use of osgViewer currently, we need its
-    // initialization to make sure we have all the libraries we need loaded and
-    // ready.  TODO Investigate whether GraphicsWindowEmbedded (specifically the version
-    // that takes osg::GraphicsContext::Traits *traits as an argument) would work
-    // better than a raw createGraphicsContext.
-    osgViewer::Viewer *viewer = new osgViewer::Viewer();
-    delete viewer;
-
     FB_CK_FB(ifp);
 
-    // Setup the traits parameters
-    traits->x = 0;
-    traits->y = 0;
-    traits->depth = 24;
-    traits->windowDecoration = true;
-    traits->doubleBuffer = true;
-    traits->sharedContext = 0;
-
-    /*
-     * Allocate extension memory sections,
-     * addressed by SGI(ifp)->mi_xxx and OSGL(ifp)->xxx
-     */
+    ifp->if_mode = MODE_2LINGERING;
 
     if ((SGIL(ifp) = (char *)calloc(1, sizeof(struct sgiinfo))) == NULL) {
 	fb_log("fb_osgl_open:  sgiinfo malloc failed\n");
 	return -1;
     }
-    if ((OSGLL(ifp) = (char *)calloc(1, sizeof(struct osglinfo))) == NULL) {
+    if ((ifp->u6.p = (char *)calloc(1, sizeof(struct osglinfo))) == NULL) {
 	fb_log("fb_osgl_open:  osglinfo malloc failed\n");
 	return -1;
     }
-    SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
 
     /* use defaults if invalid width and height specified */
-    if (width <= 0)
-	width = ifp->if_width;
-    if (height <= 0)
-	height = ifp->if_height;
+    if (width > 0)
+	ifp->if_width = width;
+    if (height > 0)
+	ifp->if_height = height;
+
     /* use max values if width and height are greater */
     if (width > ifp->if_max_width)
-	width = ifp->if_max_width;
+	ifp->if_width = ifp->if_max_width;
     if (height > ifp->if_max_height)
-	height = ifp->if_max_height;
-
-    ifp->if_width = width;
-    ifp->if_height = height;
-    traits->width = ifp->if_width;
-    traits->height = ifp->if_height;
-
-    SGI(ifp)->mi_curs_on = 1;
-
-    /* Build a descriptive window title bar */
-    (void)snprintf(title, 128, "BRL-CAD /dev/osgl %s, %s",
-		   ((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
-		   "Transient Win":
-		   "Lingering Win",
-		   ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) ?
-		   "Private Mem" :
-		   "Shared Mem");
+	ifp->if_height = ifp->if_max_height;
 
     /* initialize window state variables before calling osgl_getmem */
     ifp->if_zoomflag = 0;
@@ -1143,63 +595,106 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     if (osgl_getmem(ifp) < 0)
 	return -1;
 
-    // Create the Graphics Context
-    OSGL(ifp)->glc = osg::GraphicsContext::createGraphicsContext(traits.get());
-    OSGL(ifp)->glc->realize();
-    OSGL(ifp)->glc->makeCurrent();
-
-    /* Create a colormap for this visual */
-#if 0
-    SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-    if (!OSGL(ifp)->soft_cmap_flag) {
-	OSGL(ifp)->xcmap = XCreateColormap(OSGL(ifp)->dispp,
-					  RootWindow(OSGL(ifp)->dispp,
-						     OSGL(ifp)->vip->screen),
-					  OSGL(ifp)->vip->visual,
-					  AllocAll);
-	/* initialize virtual colormap - it will be loaded into
-	 * the hardware. This code has not yet been tested.
-	 */
-	if (CJDEBUG) printf("Loading read/write colormap.\n");
-	for (i = 0; i < 256; i++) {
-	    color_cell[i].pixel = i;
-	    color_cell[i].red = CMR(ifp)[i];
-	    color_cell[i].green = CMG(ifp)[i];
-	    color_cell[i].blue = CMB(ifp)[i];
-	    color_cell[i].flags = DoRed | DoGreen | DoBlue;
+    /* Make sure OpenSceneGraph knows to look in the root lib directory */
+    /* TODO - The OpenSceneGraph logic for handling plugins isn't multi-config
+     * aware - we're going to have to add that to make this mechanism work on Windows */
+    {
+	std::string rel_path = std::string(bu_brlcad_dir("lib", 0)) + std::string("/osgPlugins");
+	const char *root_path = bu_brlcad_root(rel_path.c_str(), 0);
+	osgDB::FilePathList paths = osgDB::Registry::instance()->getLibraryFilePathList();
+	if (root_path) {
+	    std::string libpathstring(root_path);
+	    /* The first entry is the final installed path - prefer that to the local
+	     * bu_brlcad_root lib directory.  This means our new path should be the
+	     * second entry in the list - insert it accordingly. */
+	    osgDB::FilePathList::iterator in_itr=++(paths.begin());
+	    paths.insert(in_itr, libpathstring);
+	    osgDB::Registry::instance()->setLibraryFilePathList(paths);
 	}
-	XStoreColors(OSGL(ifp)->dispp, OSGL(ifp)->xcmap, color_cell, 256);
-    } else {
-	/* read only colormap */
-	if (CJDEBUG) {
-	    printf("Allocating read-only colormap.");
-	}
-	OSGL(ifp)->xcmap = XCreateColormap(OSGL(ifp)->dispp,
-					  RootWindow(OSGL(ifp)->dispp,
-						     OSGL(ifp)->vip->screen),
-					  OSGL(ifp)->vip->visual,
-					  AllocNone);
+	//for(osgDB::FilePathList::const_iterator libpath=osgDB::Registry::instance()->getLibraryFilePathList().begin(); libpath!=osgDB::Registry::instance()->getLibraryFilePathList().end(); ++libpath) std::cout << *libpath << "\n";
     }
 
-    XSync(OSGL(ifp)->dispp, 0);
-#endif
+
+    OSGL(ifp)->timer = new osg::Timer;
+    OSGL(ifp)->last_update_time = 0;
+
+    OSGL(ifp)->viewer = new osgViewer::Viewer();
+    int woffset = 40;
+    osgViewer::SingleWindow *sw = new osgViewer::SingleWindow(0+woffset, 0+woffset, ifp->if_width, ifp->if_height);
+    OSGL(ifp)->viewer->apply(sw);
+    osg::Camera *camera = OSGL(ifp)->viewer->getCamera();
+    camera->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
+    camera->setViewMatrix(osg::Matrix::identity());
+
+    OSGL(ifp)->root = new osg::Group;
+    OSGL(ifp)->viewer->setSceneData(OSGL(ifp)->root);
+
+    /* Need to realize and render a frame before we inquire what GL extensions are supported,
+     * or Bad Things happen to the OpenGL state */
+    OSGL(ifp)->use_texture = 0;
+    OSGL(ifp)->viewer->realize();
+    OSGL(ifp)->viewer->frame();
+    OSGL(ifp)->glc = camera->getGraphicsContext();
+    unsigned int contextID = OSGL(ifp)->glc->getState()->getContextID();
+    bool have_pixbuff = osg::isGLExtensionSupported(contextID, "GL_ARB_pixel_buffer_object");
+    if (have_pixbuff) {
+	std::cout << "Have GL_ARB_pixel_buffer_object\n";
+    }
+
+    OSGL(ifp)->image = new osg::Image;
+    OSGL(ifp)->image->setImage(ifp->if_width, ifp->if_height, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)ifp->if_mem, osg::Image::NO_DELETE);
+    OSGL(ifp)->image->setPixelBufferObject(new osg::PixelBufferObject(OSGL(ifp)->image));
+    OSGL(ifp)->pictureQuad = osg::createTexturedQuadGeometry(osg::Vec3(0.0f,0.0f,0.0f),
+	    osg::Vec3(ifp->if_width,0.0f,0.0f), osg::Vec3(0.0f,0.0f, ifp->if_height), 0.0f, 0.0, OSGL(ifp)->image->s(), OSGL(ifp)->image->t());
+    OSGL(ifp)->texture = new osg::TextureRectangle(OSGL(ifp)->image);
+    /*OSGL(ifp)->texture->setFilter(osg::Texture::MIN_FILTER,osg::Texture::LINEAR);
+    OSGL(ifp)->texture->setFilter(osg::Texture::MAG_FILTER,osg::Texture::LINEAR);
+    OSGL(ifp)->texture->setWrap(osg::Texture::WRAP_R,osg::Texture::REPEAT);*/
+    OSGL(ifp)->pictureQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, OSGL(ifp)->texture, osg::StateAttribute::ON);
+
+    if (have_pixbuff) {
+	OSGL(ifp)->use_texture = 1;
+	osg::Geode *geode = new osg::Geode;
+	osg::StateSet* stateset = geode->getOrCreateStateSet();
+	stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+	geode->addDrawable(OSGL(ifp)->pictureQuad);
+	OSGL(ifp)->root->addChild(geode);
+	osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
+	osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
+	camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
+    } else {
+	/* Emulate xmit_scanlines drawing in OSG as a fallback... */
+	OSGL(ifp)->use_texture = 0;
+	osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
+	osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
+	camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
+    }
+
+    OSGL(ifp)->viewer->setCameraManipulator( new osgGA::FrameBufferManipulator() );
+    OSGL(ifp)->viewer->addEventHandler(new osgGA::StateSetManipulator(OSGL(ifp)->viewer->getCamera()->getOrCreateStateSet()));
+
+    KeyHandler *kh = new KeyHandler(*(OSGL(ifp)->root));
+    kh->fbp = ifp;
+    OSGL(ifp)->viewer->addEventHandler(kh);
+
+    OSGL(ifp)->cursor_on = 1;
+
+
+    OSGL(ifp)->timer->setStartTick();
     /* count windows */
     osgl_nwindows++;
 
     OSGL(ifp)->alive = 1;
     OSGL(ifp)->firstTime = 1;
 
-    /* Loop through events until first exposure event is processed */
-    while (OSGL(ifp)->firstTime == 1)
-	osgl_do_event(ifp);
-
     return 0;
+
 }
 
 
 
 int
-_osgl_open_existing(fb *ifp, int width, int height, void *glc, void *traits, int double_buffer, int soft_cmap)
+_osgl_open_existing(fb *ifp, int width, int height, void *glc, void *traits)
 {
 
     /*XXX for now use private memory */
@@ -1228,7 +723,7 @@ _osgl_open_existing(fb *ifp, int width, int height, void *glc, void *traits, int
     OSGL(ifp)->win_width = OSGL(ifp)->vp_width = width;
     OSGL(ifp)->win_height = OSGL(ifp)->vp_height = height;
 
-    SGI(ifp)->mi_curs_on = 1;
+    OSGL(ifp)->cursor_on = 1;
 
     /* initialize window state variables before calling osgl_getmem */
     ifp->if_zoomflag = 0;
@@ -1242,11 +737,9 @@ _osgl_open_existing(fb *ifp, int width, int height, void *glc, void *traits, int
     if (osgl_getmem(ifp) < 0)
 	return -1;
 
+    OSGL(ifp)->viewer = NULL;
     OSGL(ifp)->glc = (osg::GraphicsContext *)glc;
     OSGL(ifp)->traits = (osg::GraphicsContext::Traits *)traits;
-
-    OSGL(ifp)->soft_cmap_flag = soft_cmap;
-    SGI(ifp)->mi_doublebuffer = double_buffer;
 
     ++osgl_nwindows;
 
@@ -1285,10 +778,7 @@ osgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *
 {
     struct osgl_fb_info *osgl_internal = (struct osgl_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_OSGL_MAGIC, "osgl framebuffer");
-    return _osgl_open_existing(ifp, width, height, osgl_internal->glc, osgl_internal->traits,
-	    osgl_internal->double_buffer, osgl_internal->soft_cmap);
-
-        return 0;
+    return _osgl_open_existing(ifp, width, height, osgl_internal->glc, osgl_internal->traits);
 }
 
 
@@ -1300,12 +790,18 @@ osgl_final_close(fb *ifp)
 	printf("osgl_final_close: All done...goodbye!\n");
     }
 
-    OSGL(ifp)->glc->makeCurrent();
-    OSGL(ifp)->glc->releaseContext();
-    OSGL(ifp)->glc->close();
+    if (OSGL(ifp)->viewer) {
+	OSGL(ifp)->viewer->setDone(true);
+    } else {
+	if (OSGL(ifp)->glc) {
+	    OSGL(ifp)->glc->makeCurrent();
+	    OSGL(ifp)->glc->releaseContext();
+	}
+    }
 
     if (SGIL(ifp) != NULL) {
 	/* free up memory associated with image */
+#ifdef HAVE_SYS_SHM_H
 	if (SGI(ifp)->mi_shmid != -1) {
 	    /* detach from shared memory */
 	    if (shmdt(ifp->if_mem) == -1) {
@@ -1314,9 +810,12 @@ osgl_final_close(fb *ifp)
 		return -1;
 	    }
 	} else {
+#endif
 	    /* free private memory */
 	    (void)free(ifp->if_mem);
+#ifdef HAVE_SYS_SHM_H
 	}
+#endif
 	/* free state information */
 	(void)free((char *)SGIL(ifp));
 	SGIL(ifp) = NULL;
@@ -1333,23 +832,8 @@ osgl_final_close(fb *ifp)
 
 
 HIDDEN int
-osgl_flush(fb *ifp)
+osgl_flush(fb *UNUSED(ifp))
 {
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH) {
-
-	OSGL(ifp)->glc->makeCurrent();
-
-	/* Send entire in-memory buffer to the screen, all at once */
-	osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	if (SGI(ifp)->mi_doublebuffer) {
-	    OSGL(ifp)->glc->swapBuffers();
-	} else if (OSGL(ifp)->copy_flag) {
-	    backbuffer_to_screen(ifp, -1);
-	}
-
-	/* unattach context for other threads to use, also flushes */
-	OSGL(ifp)->glc->releaseContext();
-    }
     glFlush();
     return 0;
 }
@@ -1358,14 +842,13 @@ osgl_flush(fb *ifp)
 HIDDEN int
 fb_osgl_close(fb *ifp)
 {
-
     osgl_flush(ifp);
 
     /* only the last open window can linger -
      * call final_close if not lingering
      */
     if (osgl_nwindows > 1 ||
-	(ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
+	    (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
 	return osgl_final_close(ifp);
 
     if (CJDEBUG)
@@ -1394,11 +877,13 @@ fb_osgl_close(fb *ifp)
      */
     fclose(stdin);
 
-    while (0 < OSGL(ifp)->alive) {
-	osgl_do_event(ifp);
+    if (OSGL(ifp)->viewer) {
+	return (*OSGL(ifp)->viewer).ViewerBase::run();
+    } else {
+	/* Shouldn't get here - lingering windows should be using the viewer,
+	 * and embedded ones should use osgl_close_existing */
+	return 0;
     }
-
-    return 0;
 }
 
 
@@ -1406,6 +891,7 @@ int
 osgl_close_existing(fb *ifp)
 {
     if (SGIL(ifp) != NULL) {
+#ifdef HAVE_SYS_SHM_H
 	/* free up memory associated with image */
 	if (SGI(ifp)->mi_shmid != -1) {
 	    /* detach from shared memory */
@@ -1415,9 +901,12 @@ osgl_close_existing(fb *ifp)
 		return -1;
 	    }
 	} else {
+#endif
 	    /* free private memory */
 	    (void)free(ifp->if_mem);
+#ifdef HAVE_SYS_SHM_H
 	}
+#endif
 	/* free state information */
 	(void)free((char *)SGIL(ifp));
 	SGIL(ifp) = NULL;
@@ -1492,8 +981,11 @@ osgl_clear(fb *ifp, unsigned char *pp)
 
     /* Flood rectangle in shared memory */
     for (y = 0; y < ifp->if_height; y++) {
-	osglp = (struct osgl_pixel *)&ifp->if_mem[
-	    (y*SGI(ifp)->mi_memwidth+0)*sizeof(struct osgl_pixel) ];
+	if (!OSGL(ifp)->viewer) {
+	    osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+0)*sizeof(struct osgl_pixel) ];
+	} else {
+	    osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+	}
 	for (cnt = ifp->if_width-1; cnt >= 0; cnt--) {
 	    *osglp++ = bg;	/* struct copy */
 	}
@@ -1503,36 +995,27 @@ osgl_clear(fb *ifp, unsigned char *pp)
 	return 0;
     }
 
-    OSGL(ifp)->glc->makeCurrent();
-
-    if (pp != RGBPIXEL_NULL) {
-	glClearColor(pp[RED]/255.0, pp[GRN]/255.0, pp[BLU]/255.0, 0.0);
+    if (OSGL(ifp)->viewer) {
+	OSGL(ifp)->image->dirty();
+	if (OSGL(ifp)->timer->time_m() - OSGL(ifp)->last_update_time > 10) {
+	    OSGL(ifp)->viewer->frame();
+	    OSGL(ifp)->last_update_time = OSGL(ifp)->timer->time_m();
+	}
     } else {
-	glClearColor(0, 0, 0, 0);
-    }
+	OSGL(ifp)->glc->makeCurrent();
 
-    if (OSGL(ifp)->copy_flag) {
-	/* COPY mode: clear both buffers */
-	if (OSGL(ifp)->front_flag) {
-	    glDrawBuffer(GL_BACK);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	    glDrawBuffer(GL_FRONT);
-	    glClear(GL_COLOR_BUFFER_BIT);
+	if (pp != RGBPIXEL_NULL) {
+	    glClearColor(pp[RED]/255.0, pp[GRN]/255.0, pp[BLU]/255.0, 0.0);
 	} else {
-	    glDrawBuffer(GL_FRONT);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	    glDrawBuffer(GL_BACK);
-	    glClear(GL_COLOR_BUFFER_BIT);
+	    glClearColor(0, 0, 0, 0);
 	}
-    } else {
-	glClear(GL_COLOR_BUFFER_BIT);
-	if (SGI(ifp)->mi_doublebuffer) {
-	    OSGL(ifp)->glc->swapBuffers();
-	}
-    }
 
-    /* unattach context for other threads to use */
-    OSGL(ifp)->glc->releaseContext();
+	glClear(GL_COLOR_BUFFER_BIT);
+	OSGL(ifp)->glc->swapBuffers();
+
+	/* unattach context for other threads to use */
+	OSGL(ifp)->glc->releaseContext();
+    }
 
     return 0;
 }
@@ -1571,37 +1054,26 @@ osgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     if (OSGL(ifp)->use_ext_ctrl) {
 	osgl_clipper(ifp);
     } else {
-	OSGL(ifp)->glc->makeCurrent();
 
-	/* Set clipping matrix and zoom level */
-	glMatrixMode(GL_PROJECTION);
-	if (OSGL(ifp)->copy_flag && !OSGL(ifp)->front_flag) {
-	    /* COPY mode - no changes to backbuffer copy - just
-	     * need to update front buffer
-	     */
-	    glPopMatrix();
-	    glDrawBuffer(GL_FRONT);
-	    OSGL(ifp)->front_flag = 1;
-	}
-	glLoadIdentity();
+	if (!OSGL(ifp)->viewer && OSGL(ifp)->glc) {
+	    OSGL(ifp)->glc->makeCurrent();
 
-	osgl_clipper(ifp);
-	clp = &(OSGL(ifp)->clip);
-	glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
-	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
+	    /* Set clipping matrix and zoom level */
+	    glMatrixMode(GL_PROJECTION);
+	    glLoadIdentity();
 
-	if (OSGL(ifp)->copy_flag) {
-	    backbuffer_to_screen(ifp, -1);
-	} else {
+	    osgl_clipper(ifp);
+	    clp = &(OSGL(ifp)->clip);
+	    glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
+	    glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
+
 	    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	    if (SGI(ifp)->mi_doublebuffer) {
-		OSGL(ifp)->glc->swapBuffers();
-	    }
-	}
-	glFlush();
+	    OSGL(ifp)->glc->swapBuffers();
+	    glFlush();
 
-	/* unattach context for other threads to use */
-	OSGL(ifp)->glc->releaseContext();
+	    /* unattach context for other threads to use */
+	    OSGL(ifp)->glc->releaseContext();
+	}
     }
 
     return 0;
@@ -1650,8 +1122,11 @@ osgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	else
 	    scan_count = count;
 
-	osglp = (struct osgl_pixel *)&ifp->if_mem[
-	    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct osgl_pixel) ];
+	if (!OSGL(ifp)->viewer) {
+	    osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+x)*sizeof(struct osgl_pixel) ];
+	} else {
+	    osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+	}
 
 	n = scan_count;
 	while (n) {
@@ -1677,13 +1152,13 @@ osgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 HIDDEN ssize_t
 osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
-    size_t scan_count;	/* # pix on this scanline */
-    register unsigned char *cp;
-    ssize_t ret;
-    int ybase;
-    size_t pix_count;	/* # pixels to send */
     register int x;
     register int y;
+    size_t scan_count;  /* # pix on this scanline */
+    size_t pix_count;   /* # pixels to send */
+    ssize_t ret;
+
+    FB_CK_FB(ifp);
 
     if (CJDEBUG) printf("entering osgl_write\n");
 
@@ -1693,106 +1168,144 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 	return 0;	/* OK, no pixels transferred */
 
     x = xstart;
-    ybase = y = ystart;
+    y = ystart;
 
     if (x < 0 || x >= ifp->if_width ||
-	y < 0 || y >= ifp->if_height)
+	    y < 0 || y >= ifp->if_height)
 	return -1;
 
     ret = 0;
-    cp = (unsigned char *)(pixelp);
 
-    while (pix_count) {
-	size_t n;
-	register struct osgl_pixel *osglp;
+    if (OSGL(ifp)->viewer) {
 
-	if (y >= ifp->if_height)
-	    break;
+	while (pix_count) {
+	    void *scanline;
 
-	if (pix_count >= (size_t)(ifp->if_width-x))
-	    scan_count = (size_t)(ifp->if_width-x);
-	else
-	    scan_count = pix_count;
+	    if (y >= ifp->if_height)
+		break;
 
-	osglp = (struct osgl_pixel *)&ifp->if_mem[
-	    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct osgl_pixel) ];
+	    if (pix_count >= (size_t)(ifp->if_width-x))
+		scan_count = (size_t)(ifp->if_width-x);
+	    else
+		scan_count = pix_count;
 
-	n = scan_count;
-	if ((n & 3) != 0) {
-	    /* This code uses 60% of all CPU time */
-	    while (n) {
-		/* alpha channel is always zero */
-		osglp->red   = cp[RED];
-		osglp->green = cp[GRN];
-		osglp->blue  = cp[BLU];
-		osglp++;
-		cp += 3;
-		n--;
+	    if (OSGL(ifp)->use_texture) {
+		scanline = (void *)(OSGL(ifp)->image->data(0,y,0));
+		memcpy(scanline, pixelp, scan_count*3);
+	    } else {
+		/* Emulate xmit_scanlines drawing in OSG as a fallback when textures don't work... */
+		osg::ref_ptr<osg::Image> scanline_image = new osg::Image;
+		scanline_image->allocateImage(ifp->if_width, 1, 1, GL_RGB, GL_UNSIGNED_BYTE);
+		scanline = (void *)scanline_image->data();
+		memcpy(scanline, pixelp, scan_count*3);
+		osg::ref_ptr<osg::DrawPixels> scanline_obj = new osg::DrawPixels;
+		scanline_obj->setPosition(osg::Vec3(-ifp->if_width/2, 0, -ifp->if_height/2 + y));
+		scanline_obj->setImage(scanline_image);
+		osg::ref_ptr<osg::Geode> new_geode = new osg::Geode;
+		osg::StateSet* stateset = new_geode->getOrCreateStateSet();
+		stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+		new_geode->addDrawable(scanline_obj.get());
+		OSGL(ifp)->root->addChild(new_geode.get());
 	    }
-	} else {
-	    while (n) {
-		/* alpha channel is always zero */
-		osglp[0].red   = cp[RED+0*3];
-		osglp[0].green = cp[GRN+0*3];
-		osglp[0].blue  = cp[BLU+0*3];
-		osglp[1].red   = cp[RED+1*3];
-		osglp[1].green = cp[GRN+1*3];
-		osglp[1].blue  = cp[BLU+1*3];
-		osglp[2].red   = cp[RED+2*3];
-		osglp[2].green = cp[GRN+2*3];
-		osglp[2].blue  = cp[BLU+2*3];
-		osglp[3].red   = cp[RED+3*3];
-		osglp[3].green = cp[GRN+3*3];
-		osglp[3].blue  = cp[BLU+3*3];
-		osglp += 4;
-		cp += 3*4;
-		n -= 4;
-	    }
+	    ret += scan_count;
+	    pix_count -= scan_count;
+	    x = 0;
+	    if (++y >= ifp->if_height)
+		break;
 	}
-	ret += scan_count;
-	pix_count -= scan_count;
-	x = 0;
-	if (++y >= ifp->if_height)
-	    break;
-    }
 
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
+	OSGL(ifp)->image->dirty();
+	if (OSGL(ifp)->timer->time_m() - OSGL(ifp)->last_update_time > 10) {
+	    OSGL(ifp)->viewer->frame();
+	    OSGL(ifp)->last_update_time = OSGL(ifp)->timer->time_m();
+	}
+
 	return ret;
 
-    if (!OSGL(ifp)->use_ext_ctrl) {
+    } else {
 
-	OSGL(ifp)->glc->makeCurrent();
+	register unsigned char *cp;
+	int ybase;
 
-	if (xstart + count < (size_t)ifp->if_width) {
-	    osgl_xmit_scanlines(ifp, ybase, 1, xstart, count);
-	    if (SGI(ifp)->mi_doublebuffer) {
-		OSGL(ifp)->glc->swapBuffers();
-	    } else if (OSGL(ifp)->copy_flag) {
-		/* repaint one scanline from backbuffer */
-		backbuffer_to_screen(ifp, ybase);
-	    }
-	} else {
-	    /* Normal case -- multi-pixel write */
-	    if (SGI(ifp)->mi_doublebuffer) {
-		/* refresh whole screen */
-		osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-		OSGL(ifp)->glc->swapBuffers();
+	ybase = ystart;
+	cp = (unsigned char *)(pixelp);
+
+	while (pix_count) {
+	    size_t n;
+	    register struct osgl_pixel *osglp;
+
+	    if (y >= ifp->if_height)
+		break;
+
+	    if (pix_count >= (size_t)(ifp->if_width-x))
+		scan_count = (size_t)(ifp->if_width-x);
+	    else
+		scan_count = pix_count;
+
+	    if (!OSGL(ifp)->viewer) {
+		osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+x)*sizeof(struct osgl_pixel) ];
 	    } else {
-		/* just write rectangle */
-		osgl_xmit_scanlines(ifp, ybase, y-ybase, 0, ifp->if_width);
-		if (OSGL(ifp)->copy_flag) {
-		    backbuffer_to_screen(ifp, -1);
+		osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+	    }
+
+	    n = scan_count;
+	    if ((n & 3) != 0) {
+		/* This code uses 60% of all CPU time */
+		while (n) {
+		    /* alpha channel is always zero */
+		    osglp->red   = cp[RED];
+		    osglp->green = cp[GRN];
+		    osglp->blue  = cp[BLU];
+		    osglp++;
+		    cp += 3;
+		    n--;
+		}
+	    } else {
+		while (n) {
+		    /* alpha channel is always zero */
+		    osglp[0].red   = cp[RED+0*3];
+		    osglp[0].green = cp[GRN+0*3];
+		    osglp[0].blue  = cp[BLU+0*3];
+		    osglp[1].red   = cp[RED+1*3];
+		    osglp[1].green = cp[GRN+1*3];
+		    osglp[1].blue  = cp[BLU+1*3];
+		    osglp[2].red   = cp[RED+2*3];
+		    osglp[2].green = cp[GRN+2*3];
+		    osglp[2].blue  = cp[BLU+2*3];
+		    osglp[3].red   = cp[RED+3*3];
+		    osglp[3].green = cp[GRN+3*3];
+		    osglp[3].blue  = cp[BLU+3*3];
+		    osglp += 4;
+		    cp += 3*4;
+		    n -= 4;
 		}
 	    }
+	    ret += scan_count;
+	    pix_count -= scan_count;
+	    x = 0;
+	    if (++y >= ifp->if_height)
+		break;
 	}
-	glFlush();
 
-	/* unattach context for other threads to use */
-	OSGL(ifp)->glc->releaseContext();
+	if (!OSGL(ifp)->use_ext_ctrl) {
+	    OSGL(ifp)->glc->makeCurrent();
+	    if (xstart + count < (size_t)ifp->if_width) {
+		osgl_xmit_scanlines(ifp, ybase, 1, xstart, count);
+	    } else {
+		/* Normal case -- multi-pixel write */
+		osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+	    }
+	    OSGL(ifp)->glc->swapBuffers();
+	    glFlush();
+	    /* unattach context for other threads to use */
+	    OSGL(ifp)->glc->releaseContext();
+	}
+
+	return ret;
+
     }
 
-    return ret;
-
+    return 0;
 }
 
 
@@ -1811,7 +1324,6 @@ osgl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigne
 
     if (CJDEBUG) printf("entering osgl_writerect\n");
 
-
     if (width <= 0 || height <= 0)
 	return 0;  /* do nothing */
     if (xmin < 0 || xmin+width > ifp->if_width ||
@@ -1820,8 +1332,11 @@ osgl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigne
 
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
-	osglp = (struct osgl_pixel *)&ifp->if_mem[
-	    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct osgl_pixel) ];
+	if (!OSGL(ifp)->viewer) {
+	    osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct osgl_pixel) ];
+	} else {
+	    osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+	}
 	for (x = xmin; x < xmin+width; x++) {
 	    /* alpha channel is always zero */
 	    osglp->red   = cp[RED];
@@ -1832,26 +1347,20 @@ osgl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigne
 	}
     }
 
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
-	return width*height;
-
     if (!OSGL(ifp)->use_ext_ctrl) {
-	OSGL(ifp)->glc->makeCurrent();
-
-	if (SGI(ifp)->mi_doublebuffer) {
-	    /* refresh whole screen */
+	if (OSGL(ifp)->viewer) {
+	    OSGL(ifp)->image->dirty();
+	    if (OSGL(ifp)->timer->time_m() - OSGL(ifp)->last_update_time > 10) {
+		OSGL(ifp)->viewer->frame();
+		OSGL(ifp)->last_update_time = OSGL(ifp)->timer->time_m();
+	    }
+	} else {
+	    OSGL(ifp)->glc->makeCurrent();
 	    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
 	    OSGL(ifp)->glc->swapBuffers();
-	} else {
-	    /* just write rectangle*/
-	    osgl_xmit_scanlines(ifp, ymin, height, xmin, width);
-	    if (OSGL(ifp)->copy_flag) {
-		backbuffer_to_screen(ifp, -1);
-	    }
+	    /* unattach context for other threads to use */
+	    OSGL(ifp)->glc->releaseContext();
 	}
-
-	/* unattach context for other threads to use */
-	OSGL(ifp)->glc->releaseContext();
     }
 
     return width*height;
@@ -1873,7 +1382,6 @@ osgl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsig
 
     if (CJDEBUG) printf("entering osgl_bwwriterect\n");
 
-
     if (width <= 0 || height <= 0)
 	return 0;  /* do nothing */
     if (xmin < 0 || xmin+width > ifp->if_width ||
@@ -1882,8 +1390,11 @@ osgl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsig
 
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
-	osglp = (struct osgl_pixel *)&ifp->if_mem[
-	    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct osgl_pixel) ];
+	if (!OSGL(ifp)->viewer) {
+	    osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct osgl_pixel) ];
+	} else {
+	    osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+	}
 	for (x = xmin; x < xmin+width; x++) {
 	    register int val;
 	    /* alpha channel is always zero */
@@ -1894,26 +1405,20 @@ osgl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsig
 	}
     }
 
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
-	return width*height;
-
     if (!OSGL(ifp)->use_ext_ctrl) {
-	OSGL(ifp)->glc->makeCurrent();
-
-	if (SGI(ifp)->mi_doublebuffer) {
-	    /* refresh whole screen */
+	if (OSGL(ifp)->viewer) {
+	    OSGL(ifp)->image->dirty();
+	    if (OSGL(ifp)->timer->time_m() - OSGL(ifp)->last_update_time > 10) {
+		OSGL(ifp)->viewer->frame();
+		OSGL(ifp)->last_update_time = OSGL(ifp)->timer->time_m();
+	    }
+	} else {
+	    OSGL(ifp)->glc->makeCurrent();
 	    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
 	    OSGL(ifp)->glc->swapBuffers();
-	} else {
-	    /* just write rectangle*/
-	    osgl_xmit_scanlines(ifp, ymin, height, xmin, width);
-	    if (OSGL(ifp)->copy_flag) {
-		backbuffer_to_screen(ifp, -1);
-	    }
+	    /* unattach context for other threads to use */
+	    OSGL(ifp)->glc->releaseContext();
 	}
-
-	/* unattach context for other threads to use */
-	OSGL(ifp)->glc->releaseContext();
     }
 
     return width*height;
@@ -1959,37 +1464,22 @@ osgl_wmap(register fb *ifp, register const ColorMap *cmp)
 
 
     if (!OSGL(ifp)->use_ext_ctrl) {
-	if (OSGL(ifp)->soft_cmap_flag) {
-	    /* if current and previous maps are linear, return */
-	    if (SGI(ifp)->mi_cmap_flag == 0 && prev == 0) return 0;
+	/* if current and previous maps are linear, return */
+	if (SGI(ifp)->mi_cmap_flag == 0 && prev == 0) return 0;
 
-	    /* Software color mapping, trigger a repaint */
-
-	    OSGL(ifp)->glc->makeCurrent();
-
-	    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
-	    if (SGI(ifp)->mi_doublebuffer) {
-		OSGL(ifp)->glc->swapBuffers();
-	    } else if (OSGL(ifp)->copy_flag) {
-		backbuffer_to_screen(ifp, -1);
+	/* Software color mapping, trigger a repaint */
+	if (OSGL(ifp)->viewer) {
+	    OSGL(ifp)->image->dirty();
+	    if (OSGL(ifp)->timer->time_m() - OSGL(ifp)->last_update_time > 10) {
+		OSGL(ifp)->viewer->frame();
+		OSGL(ifp)->last_update_time = OSGL(ifp)->timer->time_m();
 	    }
-
+	} else {
+	    OSGL(ifp)->glc->makeCurrent();
+	    osgl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+	    OSGL(ifp)->glc->swapBuffers();
 	    /* unattach context for other threads to use, also flushes */
 	    OSGL(ifp)->glc->releaseContext();
-	} else {
-#if 0
-	    /* Send color map to hardware */
-	    /* This code has yet to be tested */
-
-	    for (i = 0; i < 256; i++) {
-		color_cell[i].pixel = i;
-		color_cell[i].red = CMR(ifp)[i];
-		color_cell[i].green = CMG(ifp)[i];
-		color_cell[i].blue = CMB(ifp)[i];
-		color_cell[i].flags = DoRed | DoGreen | DoBlue;
-	    }
-	    XStoreColors(OSGL(ifp)->dispp, OSGL(ifp)->xcmap, color_cell, 256);
-#endif
 	}
     }
 
@@ -2000,9 +1490,6 @@ osgl_wmap(register fb *ifp, register const ColorMap *cmp)
 HIDDEN int
 osgl_help(fb *ifp)
 {
-    //struct modeflags *mfp;
-//    XVisualInfo *visual = OSGL(ifp)->vip;
-
     fb_log("Description: %s\n", ifp->if_type);
     fb_log("Device: %s\n", ifp->if_name);
     fb_log("Max width height: %d %d\n",
@@ -2011,52 +1498,11 @@ osgl_help(fb *ifp)
     fb_log("Default width height: %d %d\n",
 	   ifp->if_width,
 	   ifp->if_height);
-    fb_log("Usage: /dev/osgl[option letters]\n");
-    //for (mfp = modeflags; mfp->c != '\0'; mfp++) {
-//	fb_log("   %c   %s\n", mfp->c, mfp->help);
- //   }
+    fb_log("Usage: /dev/osgl\n");
 
     fb_log("\nCurrent internal state:\n");
-    fb_log("	mi_doublebuffer=%d\n", SGI(ifp)->mi_doublebuffer);
     fb_log("	mi_cmap_flag=%d\n", SGI(ifp)->mi_cmap_flag);
     fb_log("	osgl_nwindows=%d\n", osgl_nwindows);
-
-    fb_log("X11 Visual:\n");
-#if 0
-    switch (visual->class) {
-	case DirectColor:
-	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
-	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
-		   visual->green_mask, visual->blue_mask);
-	    break;
-	case TrueColor:
-	    fb_log("\tTrueColor: Fixed RGB maps, pixel RGB subfield indices\n");
-	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
-		   visual->green_mask, visual->blue_mask);
-	    break;
-	case PseudoColor:
-	    fb_log("\tPseudoColor: Alterable RGB maps, single index\n");
-	    break;
-	case StaticColor:
-	    fb_log("\tStaticColor: Fixed RGB maps, single index\n");
-	    break;
-	case GrayScale:
-	    fb_log("\tGrayScale: Alterable map (R=G=B), single index\n");
-	    break;
-	case StaticGray:
-	    fb_log("\tStaticGray: Fixed map (R=G=B), single index\n");
-	    break;
-	default:
-	    fb_log("\tUnknown visual class %d\n", visual->class);
-	    break;
-    }
-    fb_log("\tColormap Size: %d\n", visual->colormap_size);
-    fb_log("\tBits per RGB: %d\n", visual->bits_per_rgb);
-    fb_log("\tscreen: %d\n", visual->screen);
-    fb_log("\tdepth (total bits per pixel): %d\n", visual->depth);
-    if (visual->depth < 24)
-	fb_log("\tWARNING: unable to obtain full 24-bits of color, image will be quantized.\n");
-#endif
     return 0;
 }
 
@@ -2066,6 +1512,9 @@ osgl_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), in
 {
     FB_CK_FB(ifp);
 
+    // If it should ever prove desirable to alter the cursor or disable it, here's how it is done:
+    // dynamic_cast<osgViewer::GraphicsWindow*>(camera->getGraphicsContext()))->setCursor(osgViewer::GraphicsWindow::NoCursor);
+
     return 0;
 }
 
@@ -2073,63 +1522,8 @@ osgl_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), in
 HIDDEN int
 osgl_cursor(fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
-#if 0
-    if (mode) {
-	register int xx, xy;
-	register int delta;
 
-	/* If we don't have a cursor, create it */
-	if (!OSGL(ifp)->cursor) {
-	    XSetWindowAttributes xswa;
-	    XColor rgb_db_def;
-	    XColor bg, bd;
-
-	    XAllocNamedColor(OSGL(ifp)->dispp, OSGL(ifp)->xcmap, "black",
-			     &rgb_db_def, &bg);
-	    XAllocNamedColor(OSGL(ifp)->dispp, OSGL(ifp)->xcmap, "white",
-			     &rgb_db_def, &bd);
-	    xswa.background_pixel = bg.pixel;
-	    xswa.border_pixel = bd.pixel;
-	    xswa.colormap = OSGL(ifp)->xcmap;
-	    xswa.save_under = True;
-
-	    OSGL(ifp)->cursor = XCreateWindow(OSGL(ifp)->dispp, OSGL(ifp)->wind,
-					     0, 0, 4, 4, 2, OSGL(ifp)->vip->depth, InputOutput,
-					     OSGL(ifp)->vip->visual, CWBackPixel | CWBorderPixel |
-					     CWSaveUnder | CWColormap, &xswa);
-	}
-
-	delta = ifp->if_width/ifp->if_xzoom/2;
-	xx = x - (ifp->if_xcenter - delta);
-	xx *= ifp->if_xzoom;
-	xx += ifp->if_xzoom/2;  /* center cursor */
-
-	delta = ifp->if_height/ifp->if_yzoom/2;
-	xy = y - (ifp->if_ycenter - delta);
-	xy *= ifp->if_yzoom;
-	xy += ifp->if_yzoom/2;  /* center cursor */
-	xy = OSGL(ifp)->win_height - xy;
-
-	/* Move cursor into place; make it visible if it isn't */
-	XMoveWindow(OSGL(ifp)->dispp, OSGL(ifp)->cursor, xx - 4, xy - 4);
-
-	/* if cursor window is currently not mapped, map it */
-	if (!ifp->if_cursmode)
-	    XMapRaised(OSGL(ifp)->dispp, OSGL(ifp)->cursor);
-    } else {
-	/* If we have a cursor and it's mapped, unmap it */
-	if (OSGL(ifp)->cursor && ifp->if_cursmode)
-	    XUnmapWindow(OSGL(ifp)->dispp, OSGL(ifp)->cursor);
-    }
-
-    /* Without this flush, cursor movement is sluggish */
-    XFlush(OSGL(ifp)->dispp);
-
-    /* Update position of cursor */
-    ifp->if_cursmode = mode;
-    ifp->if_xcurs = x;
-    ifp->if_ycurs = y;
-#endif
+    fb_log("osgl_cursor\n");
     return 0;
 }
 
@@ -2149,7 +1543,6 @@ osgl_refresh(fb *ifp, int x, int y, int w, int h)
 	h = -h;
 	y -= h;
     }
-
 
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
@@ -2212,7 +1605,7 @@ fb osgl_interface =
     osgl_flush,		/* flush output */
     osgl_free,		/* free resources */
     osgl_help,		/* help message */
-    bu_strdup("Silicon Graphics OpenGL"),	/* device description */
+    bu_strdup("OpenSceneGraph OpenGL"),	/* device description */
     XMAXSCREEN+1,	/* max width */
     YMAXSCREEN+1,	/* max height */
     bu_strdup("/dev/osgl"),		/* short device name */
@@ -2231,6 +1624,7 @@ fb osgl_interface =
     0L,			/* page_curpos */
     0L,			/* page_pixels */
     0,			/* debug */
+    50000,		/* refresh rate */
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

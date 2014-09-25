@@ -27,15 +27,12 @@
 #include "common.h"
 
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 
 #include "tcl.h"
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "wdb.h"

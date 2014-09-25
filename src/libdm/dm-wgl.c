@@ -39,7 +39,6 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -239,6 +238,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 
     *dmp = dm_wgl; /* struct copy */
     dmp->dm_interp = interp;
+    dmp->dm_light = 1;
 
     BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
     BU_ALLOC(dmp->dm_vars.priv_vars, struct wgl_vars);
@@ -504,6 +504,7 @@ wgl_share_dlist(dm *dmp1, dm *dmp2)
     GLfloat backgnd[4];
     GLfloat vf;
     HGLRC old_glxContext;
+	struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp1->m_vars;
 
     if (dmp1 == (dm *)NULL)
 	return TCL_ERROR;
@@ -542,7 +543,7 @@ wgl_share_dlist(dm *dmp1, dm *dmp2)
 	wgl_setBGColor(dmp1, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (((struct wgl_vars *)dmp1->dm_vars.priv_vars)->mvars.doublebuffer)
+	if (mvars->doublebuffer)
 	    glDrawBuffer(GL_BACK);
 	else
 	    glDrawBuffer(GL_FRONT);
@@ -611,7 +612,7 @@ wgl_share_dlist(dm *dmp1, dm *dmp2)
 	wgl_setBGColor(dmp2, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (((struct wgl_vars *)dmp2->dm_vars.priv_vars)->mvars.doublebuffer)
+	if (mvars->doublebuffer)
 	    glDrawBuffer(GL_BACK);
 	else
 	    glDrawBuffer(GL_FRONT);
@@ -943,6 +944,7 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
 {
     register struct bn_vlist	*tvp;
     register int		first;
+	struct modifiable_wgl_vars *mvars = (struct modifiable_wgl_vars *)dmp->m_vars;
 
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawVList()\n");
@@ -1101,7 +1103,7 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
 	glEnable(GL_LIGHTING);
     }
 
-    if (!mvars->zbuffer_on)
+    if (mvars->zbuffer_on)
 	glDisable(GL_DEPTH_TEST);
 
     if (!dmp->dm_depthMask)
@@ -2136,9 +2138,9 @@ wgl_openFb(dm *dmp)
     wfb_ps->vip = pubvars->vip;
     wfb_ps->hdc = pubvars->hdc;
     wfb_ps->glxc = privars->glxc;
-    wfb_ps->double_buffer = mvars.doublebuffer;
+    wfb_ps->double_buffer = mvars->doublebuffer;
     wfb_ps->soft_cmap = 0;
-    gdvp->gdv_fbs.fbs_fbp = fb_open_existing("wgl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    dmp->fbp = fb_open_existing("wgl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
     return 0;
 }
@@ -2408,6 +2410,8 @@ dm dm_wgl = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
+    NULL,
+    NULL,
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */

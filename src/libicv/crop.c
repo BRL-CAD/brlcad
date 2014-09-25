@@ -23,9 +23,10 @@
  * There are two types of cropping: rectangular and skeyed.
  *
  */
-#include "bu.h"
-#include "icv.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "vmath.h"
+#include "icv.h"
 
 int
 icv_rect(icv_image_t *img, int xorig, int yorig, int xnum, int ynum)

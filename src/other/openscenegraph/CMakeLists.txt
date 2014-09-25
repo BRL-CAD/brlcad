@@ -17,8 +17,10 @@ PROJECT(OpenSceneGraph)
 
 set(OPENSCENEGRAPH_MAJOR_VERSION 3)
 set(OPENSCENEGRAPH_MINOR_VERSION 2)
-set(OPENSCENEGRAPH_PATCH_VERSION 0)
+set(OPENSCENEGRAPH_PATCH_VERSION 1)
 set(OPENSCENEGRAPH_SOVERSION 100)
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules/Path_Setup.cmake)
 
 # set to 0 when not a release candidate, non zero means that any generated
 # svn tags will be treated as release candidates of given number
@@ -26,16 +28,16 @@ set(OPENSCENEGRAPH_RELEASE_CANDIDATE 0)
 
 set(OPENSCENEGRAPH_VERSION ${OPENSCENEGRAPH_MAJOR_VERSION}.${OPENSCENEGRAPH_MINOR_VERSION}.${OPENSCENEGRAPH_PATCH_VERSION})
 
-set(OSG_PLUGINS osgPlugins-${OPENSCENEGRAPH_VERSION})
+set(OSG_PLUGINS osgPlugins)
 
 set(OSG_PLUGIN_PREFIX "")
 
 if(CYGWIN)
-  set(OSG_PLUGIN_PREFIX "cygwin_")
+    set(OSG_PLUGIN_PREFIX "cygwin_")
 endif()
 
 if(MINGW)
-  set(OSG_PLUGIN_PREFIX "mingw_")
+    set(OSG_PLUGIN_PREFIX "mingw_")
 endif()
 
 add_definitions(-g)
@@ -64,25 +66,59 @@ if(NOT ANDROID)
   find_package(Threads)
 endif()
 if(CMAKE_SYSTEM MATCHES IRIX)
-  # Erase CMAKE_THREAD_LIBS_INIT and hope it works
-  set(CMAKE_THREAD_LIBS_INIT "" CACHE INTERNAL "")
+    # Erase CMAKE_THREAD_LIBS_INIT and hope it works
+    set(CMAKE_THREAD_LIBS_INIT "" CACHE INTERNAL "")
 endif()
 
 if(NOT ANDROID)
   if(APPLE)
     # Determine the canonical name of the selected Platform SDK
     execute_process(COMMAND "/usr/bin/sw_vers" "-productVersion"
-      OUTPUT_VARIABLE OSG_OSX_SDK_NAME
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
+                    OUTPUT_VARIABLE OSG_OSX_SDK_NAME
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
     string(SUBSTRING "${OSG_OSX_SDK_NAME}" 0 4 OSG_OSX_SDK_NAME)
     set(OSG_OSX_SDK_NAME "macosx${OSG_OSX_SDK_NAME}")
 
-    find_library(CARBON_LIBRARY Carbon)
-    find_library(COCOA_LIBRARY Cocoa)
+    # Trying to get CMake to generate an XCode IPhone project, current efforts are to get iphoneos sdk 3.1 working
+    # Added option which needs manually setting to select the IPhone SDK for building. We can only have one of the below
+    # set to true. Should realy have an OSG_BUILD_PLATFORM variable that we set to our desired platform
+    OPTION(OSG_BUILD_PLATFORM_IPHONE "Enable IPhoneSDK Device support" OFF)
+    OPTION(OSG_BUILD_PLATFORM_IPHONE_SIMULATOR "Enable IPhoneSDK Simulator support" OFF)
 
-    # Apple OS X: Find OpenGL and AGL
-    find_package(OpenGL)
-    find_library(AGL_LIBRARY AGL)
+    IF(OSG_BUILD_PLATFORM_IPHONE OR OSG_BUILD_PLATFORM_IPHONE_SIMULATOR)
+
+        #you need to manually set the default sdk version here
+        SET (IPHONE_SDKVER "6.0" CACHE STRING "IOS SDK-Version")
+        SET (IPHONE_VERSION_MIN "4.2" CACHE STRING "IOS minimum os version, use 7.0 or greater to get 64bit support")
+
+        #the below is taken from ogre, it states the gcc stuff needs to happen before PROJECT() is called. I've no clue if we even need it
+        # Force gcc <= 4.2 on iPhone
+        IF(IPHONE_VERSION_MIN LESS "6.0")
+            include(CMakeForceCompiler)
+            CMAKE_FORCE_C_COMPILER(llvm-gcc-4.2 GNU)
+            CMAKE_FORCE_CXX_COMPILER(llvm-gcc-4.2 GNU)
+            set(GCC_THUMB_SUPPORT NO)
+        ENDIF()
+
+        #set either the device sdk or the simulator sdk. Can't find away to separate these in the same project
+        IF(OSG_BUILD_PLATFORM_IPHONE)
+            SET (IPHONE_DEVROOT "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer")
+            SET (IPHONE_SDKROOT "${IPHONE_DEVROOT}/SDKs/iPhoneOS${IPHONE_SDKVER}.sdk")
+        ELSE()
+            SET (IPHONE_DEVROOT "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer")
+            SET (IPHONE_SDKROOT "${IPHONE_DEVROOT}/SDKs/iPhoneSimulator${IPHONE_SDKVER}.sdk")
+        ENDIF()
+
+        # Apple iOS: Find OpenGLES
+        FIND_LIBRARY(OPENGLES_LIBRARY OpenGLES)
+    ELSE ()
+        FIND_LIBRARY(CARBON_LIBRARY Carbon)
+        FIND_LIBRARY(COCOA_LIBRARY Cocoa)
+
+        # Apple OS X: Find OpenGL and AGL
+        FIND_PACKAGE(OpenGL)
+        FIND_LIBRARY(AGL_LIBRARY AGL)
+    ENDIF ()
 
     option(OSG_COMPILE_FRAMEWORKS "compile frameworks instead of dylibs (experimental)" OFF)
     set(OSG_COMPILE_FRAMEWORKS_INSTALL_NAME_DIR "@executable_path/../Frameworks" CACHE STRING "install name dir for compiled frameworks")
@@ -93,15 +129,15 @@ if(NOT ANDROID)
 endif()
 
 if(UNIX AND NOT ANDROID)
-  # Not sure what this will do on Cygwin and Msys
-  # Also, remember OS X X11 is a user installed option so it may not exist.
+    # Not sure what this will do on Cygwin and Msys
+    # Also, remember OS X X11 is a user installed option so it may not exist.
   find_package(X11)
-  # Some Unicies need explicit linkage to the Math library or the build fails.
+    # Some Unicies need explicit linkage to the Math library or the build fails.
   find_library(MATH_LIBRARY m)
 
   find_library(DL_LIBRARY dl)
   if(NOT DL_LIBRARY)
-    set(DL_LIBRARY "") # change from NOTFOUND to empty when passed to linker
+        set(DL_LIBRARY "") # change from NOTFOUND to empty when passed to linker
   endif()
 
   if( CMAKE_SYSTEM MATCHES "Linux" )
@@ -112,92 +148,92 @@ endif()
 
 include_directories(
   ${OpenSceneGraph_BINARY_DIR}/include
-  ${OpenSceneGraph_SOURCE_DIR}/include
-  ${OPENGL_INCLUDE_DIR}
-  )
+    ${OpenSceneGraph_SOURCE_DIR}/include
+    ${OPENGL_INCLUDE_DIR}
+)
 
 if(WIN32 AND NOT ANDROID)
 
   if(MSVC)
-    # This option is to enable the /MP switch for Visual Studio 2005 and above compilers
+        # This option is to enable the /MP switch for Visual Studio 2005 and above compilers
     option(WIN32_USE_MP "Set to ON to build OpenSceneGraph with the /MP option (Visual Studio 2005 and above)." OFF)
-    MARK_AS_ADVANCED(WIN32_USE_MP)
+        MARK_AS_ADVANCED(WIN32_USE_MP)
     if(WIN32_USE_MP)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
     endif(WIN32_USE_MP)
 
-    # turn off various warnings
-    # foreach(warning 4244 4251 4267 4275 4290 4786 4305 4996)
-    #     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd${warning}")
-    # endforeach(warning)
+        # turn off various warnings
+        # foreach(warning 4244 4251 4267 4275 4290 4786 4305 4996)
+        #     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd${warning}")
+        # endforeach(warning)
 
-    # This option is to enable the /DYNAMICBASE switch
-    # It is used to workaround a bug in Windows 7 when linking in release, which results in corrupt
-    # binaries. See this page for details: http://www.wintellect.com/CS/blogs/jrobbins/archive/2009/01/24/the-case-of-the-corrupt-pe-binaries.aspx
+        # This option is to enable the /DYNAMICBASE switch
+        # It is used to workaround a bug in Windows 7 when linking in release, which results in corrupt
+        # binaries. See this page for details: http://www.wintellect.com/CS/blogs/jrobbins/archive/2009/01/24/the-case-of-the-corrupt-pe-binaries.aspx
     option(WIN32_USE_DYNAMICBASE "Set to ON to build OpenSceneGraph with the /DYNAMICBASE option to work around a bug when linking release executables on Windows 7." OFF)
-    MARK_AS_ADVANCED(WIN32_USE_DYNAMICBASE)
+        MARK_AS_ADVANCED(WIN32_USE_DYNAMICBASE)
     if(WIN32_USE_DYNAMICBASE)
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DYNAMICBASE")
+            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DYNAMICBASE")
     endif(WIN32_USE_DYNAMICBASE)
 
-    # More MSVC specific compilation flags
-    ADD_DEFINITIONS(-D_SCL_SECURE_NO_WARNINGS)
-    ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE)
+        # More MSVC specific compilation flags
+        ADD_DEFINITIONS(-D_SCL_SECURE_NO_WARNINGS)
+        ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE)
 
     option(MSVC_DISABLE_CHECKED_ITERATORS "Set to ON to disable Visual C++ checked iterators. If you do this you must ensure that every other project in your solution and all dependencies are compiled with _SECURE_SCL=0." OFF)
-    MARK_AS_ADVANCED(MSVC_DISABLE_CHECKED_ITERATORS)
+        MARK_AS_ADVANCED(MSVC_DISABLE_CHECKED_ITERATORS)
     if(MSVC_DISABLE_CHECKED_ITERATORS)
-      ADD_DEFINITIONS(-D_SECURE_SCL=0)
+            ADD_DEFINITIONS(-D_SECURE_SCL=0)
     endif(MSVC_DISABLE_CHECKED_ITERATORS)
 
     option(MSVC_USE_DEFAULT_STACK_SIZE "Set to ON to use the default Visual C++ stack size. CMake forces a high stack size by default, which can cause problems for applications with large number of threads." OFF)
-    MARK_AS_ADVANCED(MSVC_USE_DEFAULT_STACK_SIZE)
+        MARK_AS_ADVANCED(MSVC_USE_DEFAULT_STACK_SIZE)
     if(MSVC_USE_DEFAULT_STACK_SIZE)
-      STRING(REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
-      STRING(REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
-      STRING(REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
+            STRING(REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+            STRING(REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+            STRING(REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
     endif(MSVC_USE_DEFAULT_STACK_SIZE)
-    get_filename_component( CMAKE_MAKE_PROGRAM_NAME ${CMAKE_MAKE_PROGRAM} NAME)
-    IF (CMAKE_MAKE_PROGRAM_NAME STREQUAL "VCExpress.exe")
+        get_filename_component( CMAKE_MAKE_PROGRAM_NAME ${CMAKE_MAKE_PROGRAM} NAME)
+        IF (CMAKE_MAKE_PROGRAM_NAME STREQUAL "VCExpress.exe")
       option(MSVC_BUILD_USE_SOLUTION_FOLDERS "Enable project grouping in VS - VCExpress detected, not supported in VCExpress )" OFF)
-    ELSE()
+        ELSE()
       option(MSVC_BUILD_USE_SOLUTION_FOLDERS "Enable project grouping in VS" ON)
     endif()
-    SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ${MSVC_BUILD_USE_SOLUTION_FOLDERS})
+        SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ${MSVC_BUILD_USE_SOLUTION_FOLDERS})
   endif()
 
-  #needed for net plugin
+    #needed for net plugin
   set(OSG_SOCKET_LIBS wsock32)
-  # Both Cygwin and Msys need -DNOMINMAX ???
+    # Both Cygwin and Msys need -DNOMINMAX ???
   if(UNIX)
-    ADD_DEFINITIONS(-DNOMINMAX)
+        ADD_DEFINITIONS(-DNOMINMAX)
   endif()
 
-  ########################################################################################################
-  # the following options are MSVC specific,
-  # the first OSG_MSVC_VERSIONED_DLL activate a custom build-time layout that should allow to run examples and application
-  # fron bin folder without requiring installation step.
-  # it also prepend "osg${OPENSCENEGRAPH_SOVERSION}-" to only .dll files, leaving .lib files untouched in lib
-  # it also use a hack to get rid of Debug and Release folder in MSVC projects
-  # all the .dll and .pdb are in bin and all the .lib and .exp are in lib
-  #
-  # the second option disable incremental linking in debug build , that is enabled by default by CMake
-  ##########################################################################################################
+########################################################################################################
+# the following options are MSVC specific,
+# the first OSG_MSVC_VERSIONED_DLL activate a custom build-time layout that should allow to run examples and application
+# fron bin folder without requiring installation step.
+# it also prepend "osg${OPENSCENEGRAPH_SOVERSION}-" to only .dll files, leaving .lib files untouched in lib
+# it also use a hack to get rid of Debug and Release folder in MSVC projects
+# all the .dll and .pdb are in bin and all the .lib and .exp are in lib
+#
+# the second option disable incremental linking in debug build , that is enabled by default by CMake
+##########################################################################################################
 
   if(MSVC)
     if(${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} EQUAL 4 AND ${CMAKE_PATCH_VERSION} LESS 7)
-      MESSAGE("Warning:  disabling versioned options 2.4.6 exibits inconsintencies in .pdb naming, at least under MSVC, suggested upgrading at least to 2.4.7")
-      set(OSG_MSVC_VERSIONED_DLL OFF)
-      set(OSG_MSVC_DEBUG_INCREMENTAL_LINK ON)
-    ELSE()
+            MESSAGE("Warning:  disabling versioned options 2.4.6 exibits inconsintencies in .pdb naming, at least under MSVC, suggested upgrading at least to 2.4.7")
+            set(OSG_MSVC_VERSIONED_DLL OFF)
+            set(OSG_MSVC_DEBUG_INCREMENTAL_LINK ON)
+        ELSE()
       option(OSG_MSVC_VERSIONED_DLL "Set to ON to build OpenSceneGraph with versioned dll names" ON)
-      MARK_AS_ADVANCED(OSG_MSVC_VERSIONED_DLL)
+            MARK_AS_ADVANCED(OSG_MSVC_VERSIONED_DLL)
       option(OSG_MSVC_DEBUG_INCREMENTAL_LINK "Set to OFF to build OpenSceneGraph without incremental linking in debug (release is off by default)" ON)
-      MARK_AS_ADVANCED(OSG_MSVC_DEBUG_INCREMENTAL_LINK)
+            MARK_AS_ADVANCED(OSG_MSVC_DEBUG_INCREMENTAL_LINK)
       if(NOT OSG_MSVC_DEBUG_INCREMENTAL_LINK)
-	set(CMAKE_MODULE_LINKER_FLAGS_DEBUG "/debug /INCREMENTAL:NO")
-	set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "/debug /INCREMENTAL:NO")
-	set(CMAKE_EXE_LINKER_FLAGS_DEBUG "/debug /INCREMENTAL:NO")
+                set(CMAKE_MODULE_LINKER_FLAGS_DEBUG "/debug /INCREMENTAL:NO")
+                set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "/debug /INCREMENTAL:NO")
+                set(CMAKE_EXE_LINKER_FLAGS_DEBUG "/debug /INCREMENTAL:NO")
       endif(NOT OSG_MSVC_DEBUG_INCREMENTAL_LINK)
     endif()
   endif(MSVC)
@@ -219,7 +255,7 @@ MARK_AS_ADVANCED(OSG_USE_FLOAT_BOUNDINGBOX)
 
 if(WIN32)
   option(OSG_USE_UTF8_FILENAME "Set to ON to use a UTF8 locale for filenames instead of the default locale." OFF)
-  MARK_AS_ADVANCED(OSG_USE_UTF8_FILENAME)
+    MARK_AS_ADVANCED(OSG_USE_UTF8_FILENAME)
 endif()
 
 option(OSG_DISABLE_MSVC_WARNINGS "Set to OFF to not disable MSVC warnings generated by OSG headers." ON)
@@ -255,11 +291,11 @@ option(OSG_CPP_EXCEPTIONS_AVAILABLE "Set to OFF to disable compile of OSG compon
 
 set(OPENSCENEGRAPH_CONFIG_HEADER "${PROJECT_BINARY_DIR}/include/osg/Config")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/osg/Config.in"
-  "${OPENSCENEGRAPH_CONFIG_HEADER}")
+               "${OPENSCENEGRAPH_CONFIG_HEADER}")
 
 set(OPENSCENEGRAPH_VERSION_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/osg/Version")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/osg/Version.in"
-  "${OPENSCENEGRAPH_VERSION_HEADER}")
+               "${OPENSCENEGRAPH_VERSION_HEADER}")
 
 # INSTALL_FILES(/include/osg/ FILES "${OPENSCENEGRAPH_CONFIG_HEADER}")
 
@@ -268,9 +304,9 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/osg/Version.in"
 # Set Version Info resource file
 
 if(MSVC)
-  set(OPENSCENEGRAPH_VERSIONINFO_RC "${PROJECT_BINARY_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc")
+    set(OPENSCENEGRAPH_VERSIONINFO_RC "${PROJECT_BINARY_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc")
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc.in"
-    "${OPENSCENEGRAPH_VERSIONINFO_RC}")
+                   "${OPENSCENEGRAPH_VERSIONINFO_RC}")
 endif()
 
 ################################################################################
@@ -279,7 +315,7 @@ if(WIN32 AND NOT ANDROID)
   include(Find3rdPartyDependencies)
 endif()
 
-find_package(FreeType)
+find_package(Freetype)
 if(NOT ZLIB_LIBRARY)
   find_package(ZLIB)
 endif(NOT ZLIB_LIBRARY)
@@ -292,9 +328,9 @@ find_package(ZeroConf)
 option(OSG_USE_QT "Enable to use Qt (build Qt-dependent libraries, plugins and examples)" ON)
 
 if(OSG_USE_QT)
-  # To select a specific version of QT define DESIRED_QT_VERSION
-  # via cmake -DDESIRED_QT_VERSION=5
-  # QUIET option disables messages if the package cannot be found.
+# To select a specific version of QT define DESIRED_QT_VERSION
+# via cmake -DDESIRED_QT_VERSION=5
+# QUIET option disables messages if the package cannot be found.
 
   if(DESIRED_QT_VERSION)
     if(DESIRED_QT_VERSION MATCHES 5)
@@ -309,7 +345,7 @@ if(OSG_USE_QT)
     endif()
   endif()
 
-  #If we have found Qt5, let's try to top off by getting the webkit as well
+    #If we have found Qt5, let's try to top off by getting the webkit as well
   if( Qt5Widgets_FOUND )
     find_package(Qt5WebKitWidgets)
   endif()
@@ -335,12 +371,12 @@ if(NOT PNG_LIBRARY)
   find_package(PNG)
 endif(NOT PNG_LIBRARY)
   find_package(TIFF)
-  # QuickTime is required for OS X, but optional for Windows.
+        # QuickTime is required for OS X, but optional for Windows.
   if(WIN32)
     find_package(QuickTime)
   endif()
 
-ELSE()
+    ELSE()
   find_package(TIFF)
   find_package(QuickTime)
   find_package(QTKit)
@@ -353,7 +389,15 @@ endif()
 ################################################################################
 # Create bin and lib directories if required
 
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin ${CMAKE_BINARY_DIR}/lib ${CMAKE_BINARY_DIR}/lib/${OSG_PLUGINS})
+if(NOT CMAKE_CONFIGURATION_TYPES)
+  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin ${CMAKE_BINARY_DIR}/lib ${CMAKE_BINARY_DIR}/lib/${OSG_PLUGINS})
+else(NOT CMAKE_CONFIGURATION_TYPES)
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir})
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/${OSG_PLUGINS})
+  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 ################################################################################
 # Installation stuff
@@ -366,9 +410,9 @@ include(${OpenSceneGraph_SOURCE_DIR}/CMakeModules/Path_Setup.cmake)
 # Dynamic vs Static Linking
 option(DYNAMIC_OPENSCENEGRAPH "Set to ON to build OpenSceneGraph for dynamic linking.  Use OFF for static." ON)
 if(DYNAMIC_OPENSCENEGRAPH)
-  set(OPENSCENEGRAPH_USER_DEFINED_DYNAMIC_OR_STATIC "SHARED")
+    set(OPENSCENEGRAPH_USER_DEFINED_DYNAMIC_OR_STATIC "SHARED")
 else()
-  set(OPENSCENEGRAPH_USER_DEFINED_DYNAMIC_OR_STATIC "STATIC")
+    set(OPENSCENEGRAPH_USER_DEFINED_DYNAMIC_OR_STATIC "STATIC")
 endif()
 
 
@@ -377,41 +421,41 @@ add_subdirectory(src)
 
 if(APPLE AND NOT ANDROID)
 
-  # Set defaults for Universal Binaries. We want 32-bit Intel/PPC on 10.4
-  # and 32/64-bit Intel/PPC on >= 10.5. Anything <= 10.3 doesn't support.
+        # Set defaults for Universal Binaries. We want 32-bit Intel/PPC on 10.4
+        # and 32/64-bit Intel/PPC on >= 10.5. Anything <= 10.3 doesn't support.
 
-  # These are just defaults/recommendations, but how we want to build
-  # out of the box. But the user needs to be able to change these options.
-  # So we must only set the values the first time CMake is run, or we
-  # will overwrite any changes the user sets.
-  # FORCE is used because the options are not reflected in the UI otherwise.
-  # Seems like a good place to add version specific compiler flags too.
+        # These are just defaults/recommendations, but how we want to build
+        # out of the box. But the user needs to be able to change these options.
+        # So we must only set the values the first time CMake is run, or we
+        # will overwrite any changes the user sets.
+        # FORCE is used because the options are not reflected in the UI otherwise.
+        # Seems like a good place to add version specific compiler flags too.
   if(NOT OSG_CONFIG_HAS_BEEN_RUN_BEFORE)
     if(${OSG_OSX_SDK_NAME} STREQUAL "macosx10.8")
-      set(OSG_DEFAULT_IMAGE_PLUGIN_FOR_OSX "imageio" CACHE STRING "Forced imageio default image plugin for OSX" FORCE)
-      # 64 Bit Works, i386,ppc is not supported any more
-      set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "Build architectures for OSX" FORCE)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.8 -fvisibility-inlines-hidden" CACHE STRING "Flags used by the compiler during all build types." FORCE)
+                set(OSG_DEFAULT_IMAGE_PLUGIN_FOR_OSX "imageio" CACHE STRING "Forced imageio default image plugin for OSX" FORCE)
+                # 64 Bit Works, i386,ppc is not supported any more
+                set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "Build architectures for OSX" FORCE)
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.8 -fvisibility-inlines-hidden" CACHE STRING "Flags used by the compiler during all build types." FORCE)
     elseif(${OSG_OSX_SDK_NAME} STREQUAL "macosx10.7")
-      set(OSG_DEFAULT_IMAGE_PLUGIN_FOR_OSX "imageio" CACHE STRING "Forced imageio default image plugin for OSX" FORCE)
-      # 64 Bit Works, PPC is not supported any more
-      set(CMAKE_OSX_ARCHITECTURES "i386;x86_64" CACHE STRING "Build architectures for OSX" FORCE)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.7 -fvisibility-inlines-hidden" CACHE STRING "Flags used by the compiler during all build types." FORCE)
+                set(OSG_DEFAULT_IMAGE_PLUGIN_FOR_OSX "imageio" CACHE STRING "Forced imageio default image plugin for OSX" FORCE)
+                # 64 Bit Works, PPC is not supported any more
+                set(CMAKE_OSX_ARCHITECTURES "i386;x86_64" CACHE STRING "Build architectures for OSX" FORCE)
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.7 -fvisibility-inlines-hidden" CACHE STRING "Flags used by the compiler during all build types." FORCE)
     elseif(${OSG_OSX_SDK_NAME} STREQUAL "macosx10.6" OR ${OSG_OSX_SDK_NAME} STREQUAL "macosx10.5")
-      set(OSG_DEFAULT_IMAGE_PLUGIN_FOR_OSX "imageio" CACHE STRING "Forced imageio default image plugin for OSX" FORCE)
-      # 64-bit compiles are not supported with Carbon.
-      set(CMAKE_OSX_ARCHITECTURES "ppc;i386" CACHE STRING "Build architectures for OSX" FORCE)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.5 -ftree-vectorize -fvisibility-inlines-hidden" CACHE STRING "Flags used by the compiler during all build types." FORCE)
+                set(OSG_DEFAULT_IMAGE_PLUGIN_FOR_OSX "imageio" CACHE STRING "Forced imageio default image plugin for OSX" FORCE)
+                # 64-bit compiles are not supported with Carbon.
+                set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Build architectures for OSX" FORCE)
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.5 -ftree-vectorize -fvisibility-inlines-hidden" CACHE STRING "Flags used by the compiler during all build types." FORCE)
     elseif(${OSG_OSX_SDK_NAME} STREQUAL "macosx10.4")
-      set(OSG_DEFAULT_IMAGE_PLUGIN_FOR_OSX "quicktime" CACHE STRING "Forced imageio default image plugin for OSX" FORCE)
-      set(CMAKE_OSX_ARCHITECTURES "ppc;i386" CACHE STRING "Build architectures for OSX" FORCE)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4 -ftree-vectorize -fvisibility-inlines-hidden" CACHE STRING "Flags used by the compiler during all build types." FORCE)
+                set(OSG_DEFAULT_IMAGE_PLUGIN_FOR_OSX "quicktime" CACHE STRING "Forced imageio default image plugin for OSX" FORCE)
+                set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Build architectures for OSX" FORCE)
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4 -ftree-vectorize -fvisibility-inlines-hidden" CACHE STRING "Flags used by the compiler during all build types." FORCE)
     else()
-      # No Universal Binary support
-      # Should break down further to set the -mmacosx-version-min,
-      # but the SDK detection is too unreliable here.
+                # No Universal Binary support
+                # Should break down further to set the -mmacosx-version-min,
+                # but the SDK detection is too unreliable here.
     endif()
-  endif()
+    endif()
 
   option(OSG_BUILD_APPLICATION_BUNDLES "Enable the building of applications and examples as OSX Bundles" OFF)
 
@@ -421,7 +465,7 @@ endif()
 # This needs to be run very last so other parts of the scripts can take
 # advantage of this.
 if(NOT OSG_CONFIG_HAS_BEEN_RUN_BEFORE)
-  set(OSG_CONFIG_HAS_BEEN_RUN_BEFORE 1 CACHE INTERNAL "Flag to track whether this is the first time running CMake or if CMake has been configured before")
+    set(OSG_CONFIG_HAS_BEEN_RUN_BEFORE 1 CACHE INTERNAL "Flag to track whether this is the first time running CMake or if CMake has been configured before")
 endif()
 
 # Local Variables:

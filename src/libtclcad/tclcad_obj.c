@@ -37,16 +37,15 @@
 #include <math.h>
 #include <errno.h>
 #include <assert.h>
-#include "bio.h"
 
 #include <zlib.h>
 #include <png.h>
 
 #include "tcl.h"
 
-#include "bu.h"
 #include "bn.h"
 #include "bu/cmd.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "db.h"
 #include "rtgeom.h"
@@ -1393,6 +1392,26 @@ screen_to_view_y(dm *dmp, fastf_t y)
 }
 
 
+
+/**
+ * @brief
+ * A TCL interface to dm_list_types()).
+ *
+ * @return a list of available dm types.
+ */
+int
+dm_list_tcl(ClientData UNUSED(clientData),
+	    Tcl_Interp *interp,
+	    int UNUSED(argc),
+	    const char **UNUSED(argv))
+{
+    struct bu_vls *list = dm_list_types(',');
+    Tcl_SetResult(interp, bu_vls_addr(list), TCL_VOLATILE);
+    bu_vls_free(list);
+    BU_PUT(list, struct bu_vls);
+    return TCL_OK;
+}
+
 /**
  * @brief create the Tcl command for to_open
  *
@@ -1405,7 +1424,7 @@ Go_Init(Tcl_Interp *interp)
 
     {
 	const char *version_str = brlcad_version();
-	tclcad_eval(interp, 1, "set brlcad_version", 1, &version_str);
+	tclcad_eval_noresult(interp, "set brlcad_version", 1, &version_str);
     }
 
     /*XXX Use of brlcad_interp is temporary */
@@ -1413,6 +1432,9 @@ Go_Init(Tcl_Interp *interp)
 
     BU_LIST_INIT(&HeadTclcadObj.l);
     (void)Tcl_CreateCommand(interp, (const char *)"go_open", to_open_tcl,
+			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+
+    (void)Tcl_CreateCommand(interp, (const char *)"dm_list", dm_list_tcl,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
     (void)library_initialized(1);
@@ -6328,7 +6350,7 @@ to_idle_mode(struct ged *gedp,
 	ged_grid(gedp, 2, (const char **)av);
 
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval(current_top->to_interp, 1, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
+	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
 	}
 
 	need_refresh = 1;
@@ -6367,7 +6389,7 @@ to_is_viewable(struct ged_dm_view *gdvp)
     saved_result = Tcl_GetObjResult(current_top->to_interp);
     Tcl_IncrRefCount(saved_result);
 
-    if (tclcad_eval(current_top->to_interp, 0, "winfo viewable", 1, &pathname) != TCL_OK) {
+    if (tclcad_eval(current_top->to_interp, "winfo viewable", 1, &pathname) != TCL_OK) {
 	return 0;
     }
 
@@ -7000,7 +7022,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
     }
 
     /* need to tell front-end that we've modified the db */
-    tclcad_eval(current_top->to_interp, 1, "$::ArcherCore::application setSave", 0, NULL);
+    tclcad_eval_noresult(current_top->to_interp, "$::ArcherCore::application setSave", 0, NULL);
 
     gdvp->gdv_view->gv_prevMouseX = screen_end[X];
     gdvp->gdv_view->gv_prevMouseY = screen_end[Y];
@@ -7116,7 +7138,7 @@ to_mouse_constrain_rot(struct ged *gedp,
 
     if (ret == GED_OK) {
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval(current_top->to_interp, 1, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
+	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
 	}
 
 	to_refresh_view(gdvp);
@@ -7231,7 +7253,7 @@ to_mouse_constrain_trans(struct ged *gedp,
 
     if (ret == GED_OK) {
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
-	    tclcad_eval(current_top->to_interp, 1, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
+	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback), 0, NULL);
 	}
 
 	to_refresh_view(gdvp);
@@ -8515,7 +8537,7 @@ to_mouse_orotate(struct ged *gedp,
 	args[1] = bu_vls_addr(&rot_x_vls);
 	args[2] = bu_vls_addr(&rot_y_vls);
 	args[3] = bu_vls_addr(&rot_z_vls);
-	tclcad_eval(current_top->to_interp, 0, command, sizeof(args) / sizeof(args[0]), args);
+	tclcad_eval(current_top->to_interp, command, sizeof(args) / sizeof(args[0]), args);
     } else {
 	char *av[6];
 
@@ -12794,7 +12816,7 @@ to_transparency(struct ged *gedp,
     /* set transparency flag */
     if (argc == 3) {
 	if (bu_sscanf(argv[2], "%d", &transparency) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: invalid transparency value - %s", argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: invalid transparency value - %s", argv[0], argv[2]);
 	    return GED_ERROR;
 	}
 
@@ -13966,7 +13988,7 @@ to_output_handler(struct ged *gedp, char *line)
     else
 	script = "puts";
 
-    tclcad_eval(current_top->to_interp, 1, script, 1, (const char **)&line);
+    tclcad_eval_noresult(current_top->to_interp, script, 1, (const char **)&line);
 }
 
 HIDDEN int

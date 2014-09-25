@@ -34,11 +34,9 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "bio.h"
 
 
 #include "bu/sort.h"
@@ -163,9 +161,15 @@ ged_free(struct ged *gedp)
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
 
-    FOR_ALL_SOLIDS(sp, &gedp->freesolid->l) {
-	BU_LIST_DEQUEUE(&((sp)->l));
-	FREE_SOLID(sp, &gedp->freesolid->l);
+    {
+	struct solid *nsp;
+	sp = BU_LIST_NEXT(solid, &gedp->freesolid->l);
+	while (BU_LIST_NOT_HEAD(sp, &gedp->freesolid->l)) {
+	    nsp = BU_LIST_PNEXT(solid, sp);
+	    BU_LIST_DEQUEUE(&((sp)->l));
+	    FREE_SOLID(sp, &gedp->freesolid->l);
+	    sp = nsp;
+	}
     }
     BU_PUT(gedp->freesolid, struct solid);
 
@@ -597,13 +601,13 @@ _ged_print_node(struct ged *gedp,
 
 	    switch (rt_tree_array[i].tl_op) {
 		case OP_UNION:
-		    op = 'u';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_INTERSECT:
-		    op = '+';
+		    op = DB_OP_INTERSECT;
 		    break;
 		case OP_SUBTRACT:
-		    op = '-';
+		    op = DB_OP_SUBTRACT;
 		    break;
 		default:
 		    op = '?';

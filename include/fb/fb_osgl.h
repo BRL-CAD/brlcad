@@ -33,6 +33,65 @@
 #ifdef IF_OSGL
 #include "common.h"
 
+#ifdef HAVE_SIGNAL_H
+#  include <signal.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SHM_H
+#  include <sys/shm.h>
+#endif
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+#ifdef HAVE_SYS_IPC_H
+#  include <sys/ipc.h>
+#endif
+#include <errno.h>
+
+#ifdef HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+#endif
+
+#include "bio.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "bu/color.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
+#include "fb.h"
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+#include <osg/GraphicsContext>
+#include <osgViewer/Viewer>
+#include <osgViewer/GraphicsWindow>
+#include <osgViewer/ViewerEventHandlers>
+#include <osgViewer/config/SingleWindow>
+
+#include <osgDB/Registry>
+
+#include <osgGA/StateSetManipulator>
+
+#include <osg/ImageUtils>
+#include <osg/TextureRectangle>
+#include <osg/Geode>
+#include <osg/Geometry>
+#include <osg/DrawPixels>
+#include <osg/StateSet>
+#include <osg/Timer>
+
+#include <iostream>
+#endif
+
 struct osgl_fb_info {
     void *glc;
     void *traits;

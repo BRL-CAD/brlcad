@@ -57,6 +57,10 @@ include_directories("tristripper/include")
 add_library(osgUtil ${OPENSCENEGRAPH_USER_DEFINED_DYNAMIC_OR_STATIC} ${OSGUTIL_SRCS})
 target_link_libraries(osgUtil OpenThreads osg ${CMAKE_THREAD_LIBS_INIT}
   ${MATH_LIBRARY} ${RT_LIBRARY} ${DL_LIBRARY})
+install(TARGETS osgUtil
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
 # Local Variables:
 # tab-width: 8

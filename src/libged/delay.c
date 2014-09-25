@@ -29,8 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
 #include "./ged_private.h"
 

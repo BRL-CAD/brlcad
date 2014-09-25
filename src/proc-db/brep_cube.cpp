@@ -52,6 +52,7 @@
 #include "common.h"
 
 #include "bio.h"
+#include "bu/log.h"
 
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
@@ -306,7 +307,7 @@ main(int argc, char** argv)
 
 #else /* !OBJ_BREP */
 
-#include "bu.h"
+#include "bu/log.h"
 
 int
 main(int UNUSED(argc), char *UNUSED(argv[]))

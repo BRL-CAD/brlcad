@@ -60,6 +60,11 @@ FB_EXPORT extern fb remote_interface; /* not in list[] */
 FB_EXPORT extern fb debug_interface, disk_interface, stk_interface;
 FB_EXPORT extern fb memory_interface, null_interface;
 
+
+/* Shared memory (shmget et. al.) key common to multiple framebuffers */
+#define SHMEM_KEY 42
+
+
 __BEGIN_DECLS
 
 /**
@@ -127,6 +132,7 @@ struct fb_internal {
     long if_pixcur;     /**< @brief Current pixel number in framebuffer. */
     long if_ppixels;    /**< @brief Sizeof page buffer (pixels).                */
     int if_debug;       /**< @brief Buffered IO debug flag.             */
+    long if_poll_refresh_rate; /**< @brief Recommended polling rate for interactive framebuffers in microseconds. */
     /* State variables for individual interface modules */
     union {
         char *p;

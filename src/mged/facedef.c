@@ -24,12 +24,9 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <signal.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "rtgeom.h"
 #include "raytrace.h"

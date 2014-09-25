@@ -52,8 +52,10 @@
 #include <errno.h>
 #include <time.h>
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/sort.h"
+#include "bu/units.h"
 #include "nmg.h"
 #include "plot3.h"
 #include "rtgeom.h"

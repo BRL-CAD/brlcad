@@ -29,19 +29,18 @@
 #  include <sys/time.h>		/* for struct timeval */
 #endif
 
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
-
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
 
-#include "bio.h"
-#include "bin.h"
+#include "bnetwork.h"
 
-#include "bu.h"
+/* Make sure this comes after bio.h (for Windows) */
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
+
 #include "vmath.h"
 #include "ged.h"
 

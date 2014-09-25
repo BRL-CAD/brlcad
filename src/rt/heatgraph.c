@@ -36,7 +36,8 @@
 #  include <sys/time.h>
 #endif
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"

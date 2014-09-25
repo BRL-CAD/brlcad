@@ -28,7 +28,6 @@
 #include "common.h"
 
 #include <limits.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"

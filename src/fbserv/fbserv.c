@@ -76,14 +76,15 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
-#include "bselect.h"
+#include "bsocket.h"
+#include "bnetwork.h"
 #include "bio.h"
-#include "bin.h"
 
 #include "../libfb/fb_private.h" /* for _fb_disk_enable */
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "pkg.h"
-#include "bu.h"
 #include "fbmsg.h"
 
 
@@ -318,19 +319,20 @@ main_loop(void)
     int	ncloses = 0;
 
     while ( !fb_server_got_fb_free ) {
+	long refresh_rate = 60000000; /* old default */
 	fd_set infds;
 	struct timeval tv;
 	int	i;
 
+	if (fb_server_fbp) {
+	    if (fb_poll_rate(fb_server_fbp) > 0)
+		refresh_rate = fb_poll_rate(fb_server_fbp);
+	}
+
 	infds = select_list;	/* struct copy */
 
-#ifdef _WIN32
 	tv.tv_sec = 0L;
-	tv.tv_usec = 250L;
-#else
-	tv.tv_sec = 60L;
-	tv.tv_usec = 0L;
-#endif
+	tv.tv_usec = refresh_rate;
 	if ((select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (struct timeval *)&tv ) == 0)) {
 	    /* Process fb events while waiting for client */
 	    /*printf("select timeout waiting for client\n");*/

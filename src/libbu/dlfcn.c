@@ -20,7 +20,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 
 #ifdef HAVE_DLFCN_H

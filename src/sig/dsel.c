@@ -29,7 +29,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 
 static void

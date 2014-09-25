@@ -30,7 +30,6 @@
 #include <string.h>
 #include <zlib.h>
 #include <png.h>
-#include "bio.h"
 
 
 #include "bu/getopt.h"

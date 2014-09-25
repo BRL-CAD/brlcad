@@ -35,9 +35,12 @@
 # include <strings.h>
 #endif
 
-#include "bio.h"
 #include "tcl.h"
 #include "bu/cmd.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "fb_private.h"
 #include "fb.h"
 #include "fbserv_obj.h"

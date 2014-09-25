@@ -209,8 +209,13 @@ bool osgDB::makeDirectory( const std::string &path )
         if( mkdir( dir.c_str(), 0755 )< 0 )
 #endif
         {
-            OSG_DEBUG << "osgDB::makeDirectory(): "  << strerror(errno) << std::endl;
-            return false;
+            // Only return an error if the directory actually doesn't exist.  It's possible that the directory was created
+            // by another thread or process
+            if (!osgDB::fileExists(dir))
+            {
+                OSG_DEBUG << "osgDB::makeDirectory(): "  << strerror(errno) << std::endl;
+                return false;
+            }
         }
         paths.pop();
     }
@@ -501,18 +506,6 @@ static void appendInstallationLibraryFilePaths(osgDB::FilePathList& filepath)
 
     // Append the install prefix path to the library search path if configured
     filepath.push_back(ADDQUOTES(OSG_DEFAULT_LIBRARY_PATH));
-#endif
-#ifdef OSG_RELATIVE_LIBRARY_PATH
-    char *cwd = (char *)calloc(1024, sizeof(char));
-    std::cout << "relative path: " ;
-    if(getcwd(cwd,1024 * sizeof(char)) != NULL) {
-	    std::string cwdstring(cwd);
-	    std::string relstring(ADDQUOTES(OSG_RELATIVE_LIBRARY_PATH));
-	    cwdstring.append(relstring);
-	    filepath.push_back(cwdstring);
-	    std::cout << cwdstring << "\n";
-    }
-    free(cwd);
 #endif
 }
 

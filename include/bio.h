@@ -29,16 +29,14 @@
  * all of them.  Consider this header PRIVATE and subject to change,
  * NOT TO BE USED BY THIRD PARTIES.
  *
+ * The below logic should not rely on common.h's HAVE_* defines and
+ * should not be including the common.h header.  This is intended to
+ * be a stand-alone portability header intended to be independent of
+ * build system, reusable by external projects.
  */
 
 #ifndef BIO_H
 #define BIO_H
-
-/* Do not rely on common.h's HAVE_* defines.  Do not include the
- * common.h header.  This is a stand-alone portability header intended
- * to be independent of BRL-CAD and the BRL-CAD build system, reusable
- * by external projects.
- */
 
 #include <stdio.h>
 

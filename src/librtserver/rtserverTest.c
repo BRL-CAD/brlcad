@@ -30,7 +30,13 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "bu.h"
+#include "bu/cv.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
+#include "bu/ptbl.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/vlb.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"

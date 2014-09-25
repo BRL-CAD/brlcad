@@ -27,7 +27,6 @@
 
 #include "bio.h"
 
-#include <stdio.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -36,7 +35,9 @@
 
 #include "tcl.h"
 #include "tk.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/vls.h"
+#include "bu/parse.h"
 #include "dm.h"
 #include "dm_private.h"
 #include "dm/dm_xvars.h"

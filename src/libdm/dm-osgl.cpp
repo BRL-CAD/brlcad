@@ -1,4 +1,4 @@
-/*                     D M - O  S G L . C P P
+/*                     D M - O S G L . C P P
  * BRL-CAD
  *
  * Copyright (c) 1988-2014 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libdm/dm-osgl.c
+/** @file libdm/dm-osgl.cpp
  *
- * An X11 OpenGL Display Manager.
+ * An OpenGL Display Manager using OpenSceneGraph.
  *
  */
 
@@ -27,11 +27,12 @@
 
 #ifdef DM_OSGL
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 #include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <math.h>
 
+#include <osg/GraphicsContext>
 #include <osgViewer/Viewer>
 
 #if defined(_WIN32)
@@ -40,10 +41,11 @@
 #  include <osgViewer/api/X11/GraphicsWindowX11>
 #endif
 
-
 extern "C" {
+#include "tcl.h"
 #include "tk.h"
-#include "bu.h"
+#include "tkPlatDecls.h"
+
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -76,7 +78,7 @@ extern "C" {
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
 extern "C" {
-struct dm_internal *osgl_open(Tcl_Interp *interp, int argc, char **argv);
+    struct dm_internal *osgl_open(Tcl_Interp *interp, int argc, char **argv);
 }
 HIDDEN int osgl_close(struct dm_internal *dmp);
 HIDDEN int osgl_drawBegin(struct dm_internal *dmp);
@@ -148,7 +150,7 @@ osgl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
     bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[3], m[7], m[11], m[15]);
 }
 
-
+extern "C" {
 void
 osgl_fogHint(struct dm_internal *dmp, int fastfog)
 {
@@ -156,7 +158,7 @@ osgl_fogHint(struct dm_internal *dmp, int fastfog)
     mvars->fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
-
+}
 
 HIDDEN int
 osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b)
@@ -187,29 +189,10 @@ osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsig
  * Either initially, or on resize/reshape of the window,
  * sense the actual size of the window, and perform any
  * other initializations of the window configuration.
- *
- * also change font size if necessary
  */
 HIDDEN int
 osgl_configureWin_guts(struct dm_internal *dmp, int force)
 {
-#if 0
-    XWindowAttributes xwa;
-    XFontStruct *newfontstruct;
-
-    if (dmp->dm_debugLevel)
-	bu_log("osgl_configureWin_guts()\n");
-
-    XGetWindowAttributes(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			 ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa);
-
-    /* nothing to do */
-    if (!force &&
-	dmp->dm_height == xwa.height &&
-	dmp->dm_width == xwa.width)
-	return TCL_OK;
-#endif
-
     int width;
     int height;
 
@@ -229,120 +212,6 @@ osgl_configureWin_guts(struct dm_internal *dmp, int force)
 	return TCL_OK;
 
     osgl_reshape(dmp, width, height);
-
-#if 0
-    /* First time through, load a font or quit */
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
-	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
-	     XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			    FONT9)) == NULL) {
-	    /* Try hardcoded backup font */
-	    if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
-		 XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				FONTBACK)) == NULL) {
-		bu_log("osgl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-		return TCL_ERROR;
-	    }
-	}
-	glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-		    0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-    }
-
-    if (DM_VALID_FONT_SIZE(dmp->dm_fontsize)) {
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != dmp->dm_fontsize) {
-	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						DM_FONT_SIZE_TO_NAME(dmp->dm_fontsize))) != NULL) {
-		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			    0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-	    }
-	}
-    } else {
-	/* Always try to choose a the font that best fits the window size.
-	 */
-
-	if (dmp->dm_width < 582) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 5) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT5)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	} else if (dmp->dm_width < 679) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 6) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT6)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	} else if (dmp->dm_width < 776) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 7) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT7)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	} else if (dmp->dm_width < 873) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 8) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT8)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	} else if (dmp->dm_width < 1455) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 9) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT9)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	} else if (dmp->dm_width < 2037) {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 10) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT10)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	} else {
-	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 12) {
-		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						    FONT12)) != NULL) {
-		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-				0, 127, ((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		}
-	    }
-	}
-    }
-#endif
     return TCL_OK;
 }
 
@@ -377,6 +246,32 @@ osgl_reshape(struct dm_internal *dmp, int width, int height)
     glLoadIdentity();
     glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
     glMatrixMode(mm);
+#ifdef OSG_VIEWER_TEST
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+
+    struct osg_vars *privvars = (struct osg_vars *)dmp->dm_vars.priv_vars;
+    if (privvars->testviewer) {
+
+	osgViewer::Viewer::Windows    windows;
+	privvars->testviewer->getWindows(windows);
+	for(osgViewer::Viewer::Windows::iterator itr = windows.begin();
+		itr != windows.end();
+		++itr)
+	{
+	    (*itr)->setWindowRectangle(0, 0, dmp->dm_width, dmp->dm_height);
+	}
+
+	privvars->testviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
+
+	osg::Matrixf orthom;
+	orthom.makeIdentity();
+	orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	privvars->testviewer->getCamera()->setProjectionMatrix(orthom);
+
+	privvars->testviewer->frame();
+
+    }
+#endif
 }
 
 
@@ -457,6 +352,23 @@ osgl_close(struct dm_internal *dmp)
     return TCL_OK;
 }
 
+HIDDEN
+static void OSGUpdate(dm *dmp, int delta) {
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+
+    if (privvars->timer->time_m() - privvars->last_update_time > delta) {
+	privvars->graphicsContext->swapBuffers();
+	privvars->last_update_time = privvars->timer->time_m();
+    }
+}
+
+static void
+OSGEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
+{
+    dm *dmp = (dm *)clientData;
+
+    OSGUpdate(dmp, 10);
+}
 
 /*
  * Fire up the display manager, and the display processor.
@@ -485,6 +397,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
     *dmp = dm_osgl; /* struct copy */
     dmp->dm_interp = interp;
     dmp->dm_lineWidth = 1;
+    dmp->dm_light = 1;
     dmp->dm_bytes_per_pixel = sizeof(GLuint);
     dmp->dm_bits_per_channel = 8;
     bu_vls_init(&(dmp->dm_log));
@@ -547,9 +460,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
     mvars->debug = dmp->dm_debugLevel;
     mvars->bound = dmp->dm_bound;
     mvars->boundFlag = dmp->dm_boundFlag;
-
-    /* this is important so that osgl_configureWin knows to set the font */
-    pubvars->fontstruct = NULL;
+    mvars->text_shadow = 1;
 
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
@@ -601,7 +512,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 	    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 		bu_vls_free(&init_proc_vls);
 		bu_vls_free(&str);
-                (void)osgl_close(dmp);
+		(void)osgl_close(dmp);
 		return DM_NULL;
 	    } else {
 		Tcl_Obj *tclresult = Tcl_GetObjResult(interp);
@@ -614,7 +525,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 	    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 		bu_vls_free(&init_proc_vls);
 		bu_vls_free(&str);
-                (void)osgl_close(dmp);
+		(void)osgl_close(dmp);
 		return DM_NULL;
 	    } else {
 		Tcl_Obj *tclresult = Tcl_GetObjResult(interp);
@@ -686,9 +597,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 
     // Although we are not making direct use of osgViewer currently, we need its
     // initialization to make sure we have all the libraries we need loaded and
-    // ready.  TODO Investigate whether GraphicsWindowEmbedded (specifically the version
-    // that takes osg::GraphicsContext::Traits *traits as an argument) would work
-    // better than a raw createGraphicsContext.
+    // ready.
     osgViewer::Viewer *viewer = new osgViewer::Viewer();
     delete viewer;
 
@@ -712,15 +621,23 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
     privvars->graphicsContext->realize();
     privvars->graphicsContext->makeCurrent();
 
-    /* display list (fontOffset + char) will display a given ASCII char */
-    if ((privvars->fontOffset = glGenLists(128))==0) {
-	bu_log("dm-osgl: Can't make display lists for font.\n");
+    privvars->timer = new osg::Timer;
+    privvars->last_update_time = 0;
+    privvars->timer->setStartTick();
+
+    /* this is where font information is set up */
+    privvars->fs = glfonsCreate(512, 512, FONS_ZERO_TOPLEFT);
+    if (privvars->fs == NULL) {
+	bu_log("dm-osgl: Failed to create font stash");
+	bu_vls_free(&init_proc_vls);
 	(void)osgl_close(dmp);
 	return DM_NULL;
     }
+    privvars->fontNormal = FONS_INVALID;
+    privvars->fontNormal = fonsAddFont(privvars->fs, "sans", bu_brlcad_data("fonts/ProFont.ttf", 0));
 
     /* This is the applications display list offset */
-    dmp->dm_displaylist = privvars->fontOffset + 128;
+    dmp->dm_displaylist = glGenLists(0);
 
     osgl_setBGColor(dmp, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -762,6 +679,19 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
     osgl_setZBuffer(dmp, dmp->dm_zbuffer);
     osgl_setLight(dmp, dmp->dm_light);
 
+    Tk_CreateEventHandler(pubvars->xtkwin, PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
+
+#ifdef OSG_VIEWER_TEST
+    privvars->testviewer = new osgViewer::Viewer();
+    privvars->testviewer->setUpViewInWindow(0, 0, 1, 1);
+    privvars->testviewer->realize();
+
+    privvars->osg_root = new osg::Group();
+    privvars->testviewer->setSceneData(privvars->osg_root);
+    privvars->testviewer->getCamera()->setCullingMode(osg::CullSettings::NO_CULLING);
+
+    privvars->testviewer->frame();
+#endif
     return dmp;
 }
 
@@ -1077,7 +1007,9 @@ osgl_drawEnd(struct dm_internal *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-
+#ifdef OSG_VIEWER_TEST
+    privvars->testviewer->frame();
+#endif
     return TCL_OK;
 }
 
@@ -1177,6 +1109,40 @@ osgl_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 	bu_vls_free(&tmp_vls);
     }
 
+
+#ifdef OSG_VIEWER_TEST
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+    mat_t glmat;
+    glmat[0] = mat[0];
+    glmat[4] = mat[1];
+    glmat[8] = mat[2];
+    glmat[12] = mat[3];
+
+    glmat[1] = mat[4] * dmp->dm_aspect;
+    glmat[5] = mat[5] * dmp->dm_aspect;
+    glmat[9] = mat[6] * dmp->dm_aspect;
+    glmat[13] = mat[7] * dmp->dm_aspect;
+
+    glmat[2] = mat[8];
+    glmat[6] = mat[9];
+    glmat[10] = mat[10];
+    glmat[14] = mat[11];
+
+    glmat[3] = mat[12];
+    glmat[7] = mat[13];
+    glmat[11] = mat[14];
+    glmat[15] = mat[15];
+
+    osg::Matrix osg_mp(
+	    glmat[0], glmat[1], glmat[2],  glmat[3],
+	    glmat[4], glmat[5], glmat[6],  glmat[7],
+	    glmat[8], glmat[9], glmat[10], glmat[11],
+	    glmat[12], glmat[13], glmat[14], glmat[15]);
+
+    privvars->testviewer->getCamera()->getViewMatrix().set(osg_mp);
+    privvars->testviewer->frame();
+#endif
+
     return TCL_OK;
 }
 
@@ -1233,6 +1199,38 @@ osgl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat)
     glLoadIdentity();
     glLoadMatrixf(gtmat);
 
+#ifdef OSG_VIEWER_TEST
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+    mat_t glmat;
+    glmat[0] = mat[0];
+    glmat[4] = mat[1];
+    glmat[8] = mat[2];
+    glmat[12] = mat[3];
+
+    glmat[1] = mat[4];
+    glmat[5] = mat[5];
+    glmat[9] = mat[6];
+    glmat[13] = mat[7];
+
+    glmat[2] = mat[8];
+    glmat[6] = mat[9];
+    glmat[10] = -mat[10];
+    glmat[14] = -mat[11];
+
+    glmat[3] = mat[12];
+    glmat[7] = mat[13];
+    glmat[11] = mat[14];
+    glmat[15] = mat[15];
+
+    osg::Matrix osg_mp(
+	    glmat[0], glmat[1], glmat[2], glmat[3],
+	    glmat[4], glmat[5], glmat[6], glmat[7],
+	    glmat[8], glmat[9], glmat[10], glmat[11],
+	    glmat[12], glmat[13], glmat[14], glmat[15]);
+
+    privvars->testviewer->getCamera()->setProjectionMatrix(osg_mp);
+    privvars->testviewer->frame();
+#endif
     return TCL_OK;
 }
 
@@ -1407,8 +1405,90 @@ osgl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
 
     glDisable(GL_POLYGON_OFFSET_FILL);
 
-    return TCL_OK;
+#ifdef OSG_VIEWER_TEST
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+
+    glPointSize(originalPointSize);
+    glLineWidth(originalLineWidth);
+
+    // create the osg containers to hold our data.
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode(); // Maybe create this at drawBegin?
+    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+    osg::ref_ptr<osg::Vec3dArray> vertices = new osg::Vec3dArray;
+    osg::ref_ptr<osg::Vec3dArray> normals = new osg::Vec3dArray;
+
+    // Set line color
+    osg::Vec4Array* line_color = new osg::Vec4Array;
+    line_color->push_back(osg::Vec4(255, 255, 100, 70));
+    geom->setColorArray(line_color, osg::Array::BIND_OVERALL);
+
+    // Set wireframe state
+    osg::StateSet *geom_state = geom->getOrCreateStateSet();
+    osg::ref_ptr<osg::PolygonMode> geom_polymode = new osg::PolygonMode;
+    geom_polymode->setMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
+    geom_state->setAttributeAndModes(geom_polymode);
+    geom_state->setMode(GL_LIGHTING,osg::StateAttribute::OVERRIDE|osg::StateAttribute::OFF);
+
+    /* Viewing region is from -1.0 to +1.0 */
+    int begin = 0;
+    int nverts = 0;
+    first = 1;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+        int i;
+        int nused = tvp->nused;
+        int *cmd = tvp->cmd;
+        point_t *pt = tvp->pt;
+        for (i = 0; i < nused; i++, cmd++, pt++) {
+            switch (*cmd) {
+                case BN_VLIST_LINE_MOVE:
+                    /* Move, start line */
+                    if (first == 0) {
+                        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
+
+                    } else
+                        first = 0;
+
+                    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+                    normals->push_back(osg::Vec3(0.0f,0.0f,1.0f));
+                    begin += nverts;
+                    nverts = 1;
+                    break;
+                case BN_VLIST_POLY_START:
+                    normals->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+                    begin += nverts;
+                    nverts = 0;
+                    break;
+                case BN_VLIST_LINE_DRAW:
+                case BN_VLIST_POLY_MOVE:
+                case BN_VLIST_POLY_DRAW:
+                    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+                    ++nverts;
+                    break;
+                case BN_VLIST_POLY_END:
+                    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,begin,nverts));
+                    first = 1;
+                    break;
+                case BN_VLIST_POLY_VERTNORM:
+                    break;
+            }
+        }
     }
+
+    if (first == 0) {
+        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
+    }
+
+    geom->setVertexArray(vertices);
+    geom->setNormalArray(normals, osg::Array::BIND_OVERALL);
+    //geom->setNormalBinding(osg::Geometry::BIND_PER_PRIMITIVE_SET);
+
+    geom->setUseDisplayList(true);
+    geode->addDrawable(geom);
+    privvars->osg_root->addChild(geode);
+#endif
+
+    return TCL_OK;
+}
 
 
 HIDDEN int
@@ -1425,6 +1505,11 @@ osgl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 
     if (dmp->dm_debugLevel == 1)
 	bu_log("osgl_drawVList()\n");
+
+    /* OGL dm appears to have this set already, but we need to
+     * do it here to match the default appearance of the wireframes
+     * with OSG. */
+    glEnable(GL_DEPTH_TEST);
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
@@ -1557,6 +1642,9 @@ osgl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
     glPointSize(originalPointSize);
     glLineWidth(originalLineWidth);
 
+    /* Need this back off for underlay with framebuffer */
+    glDisable(GL_DEPTH_TEST);
+
     return TCL_OK;
 }
 
@@ -1641,18 +1729,54 @@ osgl_normal(struct dm_internal *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int UNUSED(use_aspect))
 {
+    fastf_t font_size = dm_get_fontsize(dmp);
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+    struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)dmp->m_vars;
+    int blend_state = glIsEnabled(GL_BLEND);
+    fastf_t coord_x, coord_y;
     if (dmp->dm_debugLevel)
 	bu_log("osgl_drawString2D()\n");
+    if (!(int)font_size) {
+	font_size = dm_get_height(dmp)/60.0;
+    }
+    if (privvars->fontNormal != FONS_INVALID) {
+	coord_x = (x + 1)/2 * dm_get_width(dmp);
+	coord_y = dm_get_height(dmp) - ((y + 1)/2 * dm_get_height(dmp));
 
-    if (use_aspect)
-	glRasterPos2f(x, y * dmp->dm_aspect);
-    else
-	glRasterPos2f(x, y);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glListBase(((struct osgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-    glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0,dm_get_width(dmp),dm_get_height(dmp),0,-1,1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	fonsSetFont(privvars->fs, privvars->fontNormal);
+	/* drop shadow */
+	if (mvars->text_shadow) {
+	    unsigned int black = glfonsRGBA(0, 0, 0, 255);
+	    fonsSetColor(privvars->fs, black);
+	    fonsDrawText(privvars->fs, coord_x, coord_y-2, str, NULL);
+	    fonsDrawText(privvars->fs, coord_x, coord_y+2, str, NULL);
+	    fonsDrawText(privvars->fs, coord_x-2, coord_y, str, NULL);
+	    fonsDrawText(privvars->fs, coord_x+2, coord_y, str, NULL);
+	}
+	/* normal text */
+	unsigned int color = glfonsRGBA(dmp->dm_fg[0], dmp->dm_fg[1], dmp->dm_fg[2], 255);
+	fonsSetSize(privvars->fs, (int)font_size); /* cast to int so we always get a font */
+	fonsSetColor(privvars->fs, color);
+	fonsDrawText(privvars->fs, coord_x, coord_y, str, NULL);
+
+	if (!blend_state) glDisable(GL_BLEND);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+    }
 
     return TCL_OK;
 }
@@ -2322,6 +2446,7 @@ struct bu_structparse Osgl_vparse[] = {
     {"%V",  1, "log",   		Osgl_MV_O(log),  	 osgl_logfile_hook, NULL, NULL },
     {"%g",  1, "bound",         	Osgl_MV_O(bound),        osgl_bound_hook, NULL, NULL },
     {"%d",  1, "useBound",              Osgl_MV_O(boundFlag),    osgl_bound_flag_hook, NULL, NULL },
+    {"%d",  1, "text_shadow",           Osgl_MV_O(text_shadow),    dm_generic_hook, NULL, NULL },
     {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

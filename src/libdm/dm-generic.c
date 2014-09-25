@@ -24,13 +24,11 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <string.h>
 
 #include "tcl.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "dm.h"
 #include "dm_private.h"
@@ -781,7 +779,7 @@ dm_generic_hook(const struct bu_structparse *sdp,
 	/* Call hook function(if it exists) to carry out the
 	 * application requested logic */
 	if (hook->dm_hook)
-	    hook->dm_hook(sdp, name, base, value, hook->dm_hook_data);
+	    hook->dm_hook(sdp, name, base, value, hook->dmh_data);
     }
 }
 
@@ -791,12 +789,12 @@ dm_set_hook(const struct bu_structparse_map *map,
 {
     if (UNLIKELY(!map || !key || !hook)) return -1;
     hook->dm_hook = BU_STRUCTPARSE_FUNC_NULL;
-    hook->dm_hook_data = NULL;
+    hook->dmh_data = NULL;
     for (; map->sp_name != (char *)0; map++) {
 	if (BU_STR_EQUAL(map->sp_name, key)) {
 	    hook->dm_hook = map->sp_hook;
 	    if (data)
-		hook->dm_hook_data = data;
+		hook->dmh_data = data;
 	    return 0;
 	}
     }
@@ -932,6 +930,57 @@ dm_draw_display_list(dm *dmp,
     return ndrawn;
 }
 
+struct bu_vls *
+dm_list_types(const char separator)
+{
+    struct bu_vls *list;
+    char sep = ' ';
+    if (separator) sep = separator;
+    BU_GET(list, struct bu_vls);
+    bu_vls_init(list);
+
+    bu_vls_trunc(list, 0);
+
+#ifdef DM_OSGL
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "osgl");
+#endif /* DM_OSGL*/
+
+#ifdef DM_WGL
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "wgl");
+#endif /* DM_WGL */
+
+#ifdef DM_OGL
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "ogl");
+#endif /* DM_OGL */
+
+#ifdef DM_QT
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "Qt");
+#endif /* DM_QT */
+
+#ifdef DM_X
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "X");
+#endif /* DM_X */
+
+#ifdef DM_X
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "tk");
+#endif /* DM_X */
+
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "txt");
+    bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "plot");
+    bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "ps");
+    bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "null");
+    return list;
+}
 
 /*
  * Local Variables:

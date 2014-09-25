@@ -37,11 +37,16 @@
 
 #include <osg/GraphicsContext>
 #include <osg/Timer>
-
-#include <osgText/Font>
-#include <osgText/Text>
-
 #endif /* __cplusplus */
+
+extern "C" {
+/* For portable text in OpenGL, use fontstash */
+#define FONTSTASH_IMPLEMENTATION
+#include "./fontstash/fontstash.h"
+
+#define GLFONTSTASH_IMPLEMENTATION
+#include "./fontstash/glfontstash.h"
+}
 
 #define CMAP_BASE 40
 
@@ -67,6 +72,7 @@ struct modifiable_osgl_vars {
     struct bu_vls log;
     double bound;
     int boundFlag;
+    int text_shadow;
 };
 
 struct osgl_vars {
@@ -75,7 +81,8 @@ struct osgl_vars {
 #endif
     int face_flag;
     int *perspective_mode;
-    int fontOffset;
+    struct FONScontext *fs;
+    int fontNormal;
     int ovec;		/* Old color map entry number */
 #ifdef __cplusplus
     GLclampf r, g, b;
@@ -88,6 +95,9 @@ struct osgl_vars {
     osg::ref_ptr<osg::GraphicsContext> graphicsContext;
     osg::ref_ptr<osg::GraphicsContext::Traits> traits;
     osg::Timer *timer;
+    int last_update_time;
+    osgViewer::Viewer *testviewer;
+    osg::Group *osg_root;
 #endif
 };
 

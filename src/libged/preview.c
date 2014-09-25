@@ -29,10 +29,10 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/cmd.h"
+#include "bu/getopt.h"
 
 #include "./ged_private.h"
 

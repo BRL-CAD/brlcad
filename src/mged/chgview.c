@@ -24,14 +24,12 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <math.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "bn.h"
 #include "mater.h"
 #include "nmg.h"

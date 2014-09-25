@@ -27,11 +27,8 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 

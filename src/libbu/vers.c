@@ -20,8 +20,8 @@
 
 #include "common.h"
 
-#include "bu.h"
 #include "brlcad_ident.h"
+#include "bu/version.h"
 
 const char *
 bu_version(void)

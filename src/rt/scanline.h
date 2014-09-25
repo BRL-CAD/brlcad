@@ -26,8 +26,6 @@
 #ifndef RT_SCANLINE_H
 #define RT_SCANLINE_H
 
-#include "bu.h"
-
 struct scanline {
     int	sl_left;		/* # pixels left on this scanline */
     unsigned char *sl_buf;	/* ptr to buffer for scanline */

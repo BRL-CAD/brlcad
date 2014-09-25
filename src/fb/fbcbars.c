@@ -61,9 +61,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 
 #define MAX_LINE (8*1024)	/* Max pixels/line */

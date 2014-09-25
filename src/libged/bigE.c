@@ -31,7 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "bio.h"
 
 #include "bu/debug.h"
 #include "bu/getopt.h"

@@ -60,8 +60,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "fb.h"
 #include "tk.h"

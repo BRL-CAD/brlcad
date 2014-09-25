@@ -42,9 +42,7 @@
 #  include <netinet/in.h>		/* For htonl(), etc. */
 #endif
 #include <tcl.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"

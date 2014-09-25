@@ -123,14 +123,21 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION "BRLCAD_ENABLE_OSG;BRLCAD_LEVEL3" ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
 if(BRLCAD_FREETYPE_BUILD)
   set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
-  set(FREETYPE_INCLUDE_DIR
-    ${CMAKE_CURRENT_BINARY_DIR}/freetype/include
+  set(FREETYPE_INCLUDE_DIR_freetype2
     ${BRLCAD_SOURCE_DIR}/src/other/freetype/include
-    CACHE STRING "FreeType include dirs" FORCE
+    CACHE STRING "FreeType freetype2 include dir" FORCE
     )
-  set(FREETYPE_INCLUDE_DIRS "${FREETYPE_INCLUDE_DIR}" CACHE STRING "Directory containing FreeType headers." FORCE)
+  set(FREETYPE_INCLUDE_DIR_ft2build
+    ${CMAKE_CURRENT_BINARY_DIR}/freetype/include
+    CACHE STRING "FreeType ft2build include dir" FORCE
+    )
+  set(FREETYPE_INCLUDE_DIRS
+    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
+    CACHE STRING "Directories containing FreeType headers." FORCE)
   set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
+  SetTargetFolder(freetype "Third Party Libraries")
 endif(BRLCAD_FREETYPE_BUILD)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/freetype/include/ftconfig.h)
 
 # --------------------------------------------------------------------
 # The incrtTcl subdirectory isn't directly referenced, but its
@@ -805,6 +812,14 @@ if(BRLCAD_OSG_BUILD)
     )
   set(OSG_INCLUDE_DIR "${OSG_INCLUDE_DIR}" CACHE STRING "Directory containing OpenSceneGraph headers." FORCE)
   set(OSG_LIBRARIES "${OSG_LIBRARY};${OSGUTIL_LIBRARY};${OSGDB_LIBRARY};${OSGGA_LIBRARY};${OSGTEXT_LIBRARY};${OSGVIEWER_LIBRARY};${OPENTHREADS_LIBRARY}" CACHE STRING "OpenSceneGraph Libraries")
+  SetTargetFolder(osg "Third Party Libraries")
+  SetTargetFolder(osgDB "Third Party Libraries")
+  SetTargetFolder(osgGA "Third Party Libraries")
+  SetTargetFolder(osgText "Third Party Libraries")
+  SetTargetFolder(osgViewer "Third Party Libraries")
+  SetTargetFolder(osgdb_freetype "Third Party Libraries")
+  SetTargetFolder(osgdb_osg "Third Party Libraries")
+  SetTargetFolder(osgdb_png "Third Party Libraries")
 else(BRLCAD_OSG_BUILD)
   if (BRLCAD_ENABLE_OSG)
     find_package(OpenThreads)
@@ -874,6 +889,10 @@ mark_as_advanced(P2T_INCLUDE_DIR)
 mark_as_advanced(P2T_SHARED)
 mark_as_advanced(P2T_STATIC)
 mark_as_advanced(P2T_TESTS)
+
+# GCT is a collection of algorithms for geometry processing and conversion
+#add_subdirectory(gct)
+CMAKEFILES(gct)
 
 # TCLAP is used for option parsing - consists entirely of headers
 # and does not need to be installed, but does need to generate a

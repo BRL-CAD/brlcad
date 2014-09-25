@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "tcl.h"
 #include "bu/cv.h"

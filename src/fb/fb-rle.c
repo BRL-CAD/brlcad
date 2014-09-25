@@ -28,13 +28,11 @@
 #include "common.h"
 
 #include <time.h>
-#include "bio.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
 #include "fb.h"
 #include "rle.h"
 

@@ -55,8 +55,8 @@
 #  include "tk.h"
 #endif
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/endian.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"

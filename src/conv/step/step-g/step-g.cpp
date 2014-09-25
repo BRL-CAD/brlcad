@@ -27,7 +27,11 @@
 
 #include <iostream>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/time.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 //
 // step-g related headers

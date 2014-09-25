@@ -51,11 +51,9 @@
 
 #include <stdlib.h>
 #include <signal.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 
-#include "bio.h"
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "db.h"

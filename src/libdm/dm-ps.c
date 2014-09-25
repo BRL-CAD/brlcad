@@ -28,9 +28,7 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
-#include <stdio.h>
 #include <string.h>
 
 #ifdef HAVE_SYS_TIME_H
@@ -39,7 +37,6 @@
 
 #include "tcl.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "mater.h"

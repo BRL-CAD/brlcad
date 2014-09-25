@@ -105,7 +105,8 @@ FBOExtensions::FBOExtensions(unsigned int contextID)
 #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
     _supported = _supported &&
         glFramebufferTexture1D != 0 &&
-        glFramebufferTexture3D != 0;
+        glFramebufferTexture3D != 0 &&
+        isGLExtensionOrVersionSupported(contextID, "GL_EXT_framebuffer_object",3.0f);
 #endif
 
     LOAD_FBO_EXT(glBlitFramebuffer);
@@ -913,16 +914,19 @@ void FrameBufferObject::apply(State &state, BindTarget target) const
     ext->glBindFramebuffer(target, fboID);
 
     // enable drawing buffers to render the result to fbo
-    if (_drawBuffers.size() > 0)
+    if ( (target == READ_DRAW_FRAMEBUFFER) || (target == DRAW_FRAMEBUFFER) )
     {
-        GL2Extensions *gl2e = GL2Extensions::Get(state.getContextID(), true );
-        if (gl2e && gl2e->isDrawBuffersSupported())
+        if (_drawBuffers.size() > 0)
         {
-            gl2e->glDrawBuffers(_drawBuffers.size(), &(_drawBuffers[0]));
-        }
-        else
-        {
-            OSG_WARN <<"Warning: FrameBufferObject: could not set draw buffers, glDrawBuffers is not supported!" << std::endl;
+            GL2Extensions *gl2e = GL2Extensions::Get(state.getContextID(), true );
+            if (gl2e && gl2e->isDrawBuffersSupported())
+            {
+                gl2e->glDrawBuffers(_drawBuffers.size(), &(_drawBuffers[0]));
+            }
+            else
+            {
+                OSG_WARN <<"Warning: FrameBufferObject: could not set draw buffers, glDrawBuffers is not supported!" << std::endl;
+            }
         }
     }
 

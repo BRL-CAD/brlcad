@@ -28,13 +28,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 
 

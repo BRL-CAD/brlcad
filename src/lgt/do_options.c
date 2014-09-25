@@ -34,7 +34,9 @@
 #  include <unistd.h>
 #endif
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/file.h"
 #include "fb.h"
 #include "vmath.h"
 #include "raytrace.h"

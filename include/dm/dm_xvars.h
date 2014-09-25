@@ -37,7 +37,6 @@
 #  include "tk.h"
 #endif
 
-
 #if !defined(HAVE_TK) && !defined(TK_WINDOW_TYPEDEF)
 typedef void *Tk_Window;
 #  define TK_WINDOW_TYPEDEF 1

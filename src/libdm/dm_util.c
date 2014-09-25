@@ -20,7 +20,6 @@
 /** @file libdm/dm_util.c
  */
 
-#include "bu.h"
 #include "bn.h"
 #include "dm.h"
 

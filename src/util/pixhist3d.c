@@ -33,10 +33,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
+#include "bu/color.h"
+#include "bu/log.h"
 #include "fb.h"
-#include "bu.h"
 
 
 /*

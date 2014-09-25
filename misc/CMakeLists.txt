@@ -12,6 +12,7 @@ set(datadir "\${datarootdir}")
 add_subdirectory(pkgconfig)
 add_subdirectory(perl)
 add_subdirectory(attributes)
+add_subdirectory(opencl-raytracer-tests)
 
 if(NOT CMAKE_CONFIGURATION_TYPES)
   configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/misc/brlcad-config @ONLY)
@@ -43,6 +44,8 @@ set(density_DATAFILES
   NIST_DENSITIES
   )
 BRLCAD_ADDDATA(density_DATAFILES data)
+
+BRLCAD_ADDDATA(profont/ProFont.ttf fonts)
 
 BRLCAD_ADDDATA(nsis/brlcad.ico icons)
 BRLCAD_ADDDATA(nsis/archer.ico icons)
@@ -80,6 +83,10 @@ set(misc_ignore_files
   doxygen/DoxyfileLibs.in
   doxygen/DoxyfileLibs-defaults.in
   doxygen/doxygen_structure_libs.txt
+  profont/LICENSE
+  profont/profont-IIx-charmap.png
+  profont/profont_IIx_readme.pdf
+  profont/readme.txt
   Makefile.defs
   archlinux
   astyle.opt
@@ -92,6 +99,7 @@ set(misc_ignore_files
   jove.emacs
   macosx
   nsis
+  wix
   svn2git
   win32-msvc
   )

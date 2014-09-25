@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <signal.h>
@@ -40,11 +39,9 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#include "bio.h"
 
 #include "tcl.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
 

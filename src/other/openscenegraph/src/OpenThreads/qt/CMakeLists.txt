@@ -62,14 +62,13 @@ ENDIF()
 
 INSTALL(
     TARGETS OpenThreads
-    ARCHIVE DESTINATION lib${LIB_POSTFIX} COMPONENT libopenthreads-dev
-    LIBRARY DESTINATION lib${LIB_POSTFIX} COMPONENT libopenthreads
-    RUNTIME DESTINATION bin COMPONENT libopenthreads
+	 ARCHIVE DESTINATION ${LIB_DIR}
+	 LIBRARY DESTINATION ${LIB_DIR}
+	 RUNTIME DESTINATION ${BIN_DIR}
 )
 INSTALL(
     FILES ${OpenThreads_PUBLIC_HEADERS}
     DESTINATION include/OpenThreads
-    COMPONENT libopenthreads-dev
 )
 
 #commented out# INCLUDE(ModuleInstall OPTIONAL)

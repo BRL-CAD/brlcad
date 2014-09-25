@@ -26,8 +26,6 @@
 
 #include "common.h"
 
-#include "bio.h"
-
 #include "bu/color.h"
 #include "bu/file.h"
 #include "bu/log.h"
@@ -403,6 +401,7 @@ fb disk_interface = {
     0L,
     0L,
     0,			/* debug */
+    0,			/* refresh rate */
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

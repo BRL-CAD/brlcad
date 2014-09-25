@@ -31,11 +31,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "bio.h"
-#include "bin.h"
+#include "bnetwork.h" 
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/cv.h"
+#include "bu/debug.h"
+#include "bu/vls.h"
+#include "bu/units.h"
 #include "bn.h"
 #include "db.h"
 #include "nmg.h"

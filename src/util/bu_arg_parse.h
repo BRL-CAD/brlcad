@@ -27,8 +27,6 @@
 #  include <string.h>
 #endif
 
-#include "bu.h"
-
 #define BU_ARG_PARSE_BUFSZ 256
 
 enum { BU_TRUE  = 1 };

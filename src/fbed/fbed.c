@@ -28,9 +28,12 @@
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
 #include "fb.h"
 
 /* FIXME */

@@ -24,12 +24,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 
-#include "bio.h"
-#include "bu.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "ged.h"
 #include "./mged.h"
