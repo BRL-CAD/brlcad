@@ -1041,6 +1041,17 @@ if(BRLCAD_ENABLE_OSG)
   endif(APPLE AND NOT BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_OSG)
 
+# Enable features requiring OpenCL
+option(BRLCAD_ENABLE_OPENCL "Enable features requiring OpenCL" OFF)
+mark_as_advanced(BRLCAD_ENABLE_OPENCL)
+if(BRLCAD_ENABLE_OPENCL)
+  find_package(OpenCL)
+  if(NOT OPENCL_FOUND)
+    message("OpenCL enablement requested, but OpenCL is not found - disabling")
+    set(BRLCAD_ENABLE_OPENCL OFF)
+  endif(NOT OPENCL_FOUND)
+endif(BRLCAD_ENABLE_OPENCL)
+
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to
