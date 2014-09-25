@@ -28,6 +28,7 @@
 
 #include "bnetwork.h"
 
+#include <GL/gl.h>
 
 #include "tcl.h"
 #include "tk.h"
@@ -35,8 +36,6 @@
 #include "bu/parallel.h"
 #include "bu/time.h"
 #include "dm.h"
-
-#include <GL/gl.h>
 
 #include "tie.h"
 #include "adrt.h"
