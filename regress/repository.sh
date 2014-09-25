@@ -93,7 +93,7 @@ done
 echo "running bio.h redundancy check..."
 
 # limit our search to files containing bio.h
-FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'bio.h' | grep -v 'bio.h:' | sed 's/:.*//g' | sort | uniq`"
+FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'bio.h' | grep -v 'bio.h:' | grep -v 'obj_rules.cpp' | sed 's/:.*//g' | sort | uniq`"
 FOUND=
 for file in $FILES ; do
 
