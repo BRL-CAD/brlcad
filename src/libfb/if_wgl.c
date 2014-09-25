@@ -37,12 +37,13 @@
 
 #ifdef IF_WGL
 
-#include "bnetwork.h"
-#include "bio.h"
-
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
+
+/* winsock (bselect.h) first, ordering matters */
+#include "bselect.h"
+#include "bio.h"
 #include <windowsx.h>
 
 #ifdef HAVE_GL_GL_H
