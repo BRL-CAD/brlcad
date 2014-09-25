@@ -1046,28 +1046,37 @@ set_append_segment(
     std::multiset<CurveSegment> &out,
     const CurveSegment &seg)
 {
-    // if this segment is a reversed version of an existing
-    // segment, it cancels the existing segment out
-    CurveSegment reversed(seg);
-    reversed.Reverse();
-
-    if (out.count(reversed) == 0) {
-	out.insert(seg);
-    } else {
-	out.erase(reversed);
+    std::multiset<CurveSegment>::iterator i;
+    for (i = out.begin(); i != out.end(); ++i) {
+	if ((i->from == seg.to) && (i->to == seg.from)) {
+	    // if this segment is a reversed version of an existing
+	    // segment, it cancels the existing segment out
+	    out.erase(i);
+	    return;
+	}
     }
+    out.insert(seg);
 }
 
 void
 set_append_segments_at_location(
 	std::multiset<CurveSegment> &out,
 	std::multiset<CurveSegment> &in,
-	CurveSegment::Location location)
+	CurveSegment::Location location,
+	bool reversed_segs_cancel)
 {
     std::multiset<CurveSegment>::iterator i;
-    for (i = in.begin(); i != in.end(); ++i) {
-	if (i->location == location) {
-	    set_append_segment(out, *i);
+    if (reversed_segs_cancel) {
+	for (i = in.begin(); i != in.end(); ++i) {
+	    if (i->location == location) {
+		set_append_segment(out, *i);
+	    }
+	}
+    } else {
+	for (i = in.begin(); i != in.end(); ++i) {
+	    if (i->location == location) {
+		out.insert(*i);
+	    }
 	}
     }
 }
@@ -1100,18 +1109,18 @@ get_op_segments(
 
     if (op == BOOLEAN_INTERSECT) {
 	set_append_segments_at_location(out, curve1_segments,
-		CurveSegment::INSIDE);
+		CurveSegment::INSIDE, true);
 
 	set_append_segments_at_location(out, curve2_segments,
-		CurveSegment::INSIDE);
+		CurveSegment::INSIDE, true);
 
 	std::multiset<CurveSegment> c1_boundary_segs;
 	set_append_segments_at_location(c1_boundary_segs, curve1_segments,
-		CurveSegment::BOUNDARY);
+		CurveSegment::BOUNDARY, false);
 
 	std::multiset<CurveSegment> c2_boundary_segs;
 	set_append_segments_at_location(c2_boundary_segs, curve2_segments,
-		CurveSegment::BOUNDARY);
+		CurveSegment::BOUNDARY, false);
 
 	std::multiset<CurveSegment>::iterator i;
 	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
@@ -1130,18 +1139,18 @@ get_op_segments(
 	}
     } else if (op == BOOLEAN_DIFF) {
 	set_append_segments_at_location(out, curve1_segments,
-		CurveSegment::OUTSIDE);
+		CurveSegment::OUTSIDE, true);
 
 	set_append_segments_at_location(out, curve2_segments,
-		CurveSegment::INSIDE);
+		CurveSegment::INSIDE, true);
 
 	std::multiset<CurveSegment> c1_boundary_segs;
 	set_append_segments_at_location(c1_boundary_segs, curve1_segments,
-		CurveSegment::BOUNDARY);
+		CurveSegment::BOUNDARY, false);
 
 	std::multiset<CurveSegment> c2_boundary_segs;
 	set_append_segments_at_location(c2_boundary_segs, curve2_segments,
-		CurveSegment::BOUNDARY);
+		CurveSegment::BOUNDARY, false);
 
 	std::multiset<CurveSegment>::iterator i;
 	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
@@ -1185,7 +1194,8 @@ construct_loops_from_segments(
 	bool closed_curve = (curr_seg->from == curr_seg->to);
 	while (!closed_curve) {
 	    // look for a segment that connects to the previous
-	    for (prev_seg = curr_seg++; curr_seg != segments.end(); ++curr_seg) {
+	    prev_seg = curr_seg;
+	    for (curr_seg = segments.begin(); curr_seg != segments.end(); ++curr_seg) {
 		if (curr_seg->from == prev_seg->to) {
 		    break;
 		}
@@ -1318,11 +1328,11 @@ loop_boolean(
 
 		if (x_events[k].m_type == ON_X_EVENT::ccx_overlap) {
 		    add_point_to_set(loop1_points, CurvePoint(1, i,
-				x_events[k].m_a[0], x_events[k].m_A[0],
+				x_events[k].m_a[1], x_events[k].m_A[1],
 				CurvePoint::BOUNDARY));
 
 		    add_point_to_set(loop2_points, CurvePoint(2, j,
-				x_events[k].m_b[0], x_events[k].m_B[0],
+				x_events[k].m_b[1], x_events[k].m_B[1],
 				CurvePoint::BOUNDARY));
 		}
 	    }
@@ -1762,6 +1772,45 @@ free_loops(std::vector<ON_SimpleArray<ON_Curve *> > &loops)
     }
 }
 
+bool
+loop_is_degenerate(const ON_SimpleArray<ON_Curve *> &loop)
+{
+    if (loop.Count() < 1) {
+	return true;
+    }
+    ON_Curve *loop_curve = get_loop_curve(loop);
+
+    ON_2dPoint joint = loop_curve->PointAtStart();
+    ON_2dPoint mid = loop_curve->PointAt(loop_curve->Domain().Mid());
+
+    ON_Curve *left = NULL, *right = NULL;
+    loop_curve->Split(loop_curve->Domain().Mid(), left, right);
+    delete loop_curve;
+
+    ON_SimpleArray<ON_X_EVENT> events;
+    ON_Intersect(left, right, events, INTERSECTION_TOL);
+    delete left;
+    delete right;
+
+    // two halves of loop should intersect at the start/end point and
+    // the midpoint, and nowhere else
+    if (events.Count() != 2) {
+	return true;
+    }
+    for (int i = 0; i < events.Count(); ++i) {
+	if (events[i].m_type != ON_X_EVENT::ccx_point) {
+	    return true;
+	}
+	
+	ON_2dPoint ipt = events[i].m_A[0];
+	if (!ON_NearZero(ipt.DistanceTo(joint), INTERSECTION_TOL) &&
+	    !ON_NearZero(ipt.DistanceTo(mid), INTERSECTION_TOL)) {
+	    return true;
+	}
+    }
+    return false;
+}
+
 // It might be worth investigating the following approach to building a set of faces from the splitting
 // in order to achieve robustness in the final result:
 //
@@ -1817,6 +1866,7 @@ split_trimmed_face(
 	delete face_outerloop;
 	return out;
     }
+    delete face_outerloop;
 
     for (int i = 0; i < ssx_curves.Count(); ++i) {
 	std::vector<ON_SimpleArray<ON_Curve *> > ssx_loops;
@@ -1831,7 +1881,7 @@ split_trimmed_face(
 	}
 
 	for (size_t j = 0; j < ssx_loops.size(); ++j) {
-	    if (ssx_loops[j].Count() < 1) {
+	    if (loop_is_degenerate(ssx_loops[j])) {
 		continue;
 	    }
 	    // get the portions of the original outerloop inside and
@@ -1850,6 +1900,10 @@ split_trimmed_face(
 	    append_faces_from_loops(out, orig_face, diff_loops);
 	}
 	free_loops(ssx_loops);
+    }
+
+    if (out.Count() == 0) {
+	out.Append(orig_face->Duplicate());
     }
 
     if (DEBUG_BREP_BOOLEAN) {
@@ -1879,7 +1933,6 @@ split_trimmed_face(
 	    }
 	}
     }
-    delete face_outerloop;
     return out;
 }
 
