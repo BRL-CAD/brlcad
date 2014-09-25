@@ -23,7 +23,8 @@
  *
  */
 
-#include "bu.h"
+#include "bu/magic.h"
+#include "bu/malloc.h"
 #include "icv.h"
 
 HIDDEN size_t **

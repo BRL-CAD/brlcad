@@ -37,16 +37,15 @@
 #include <math.h>
 #include <errno.h>
 #include <assert.h>
-#include "bio.h"
 
 #include <zlib.h>
 #include <png.h>
 
 #include "tcl.h"
 
-#include "bu.h"
 #include "bn.h"
 #include "bu/cmd.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "db.h"
 #include "rtgeom.h"

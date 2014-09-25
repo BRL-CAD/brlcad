@@ -30,7 +30,8 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "vmath.h"
 

@@ -30,8 +30,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"

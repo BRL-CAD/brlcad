@@ -12,8 +12,7 @@
 
 #include "common.h"
 
-#include "bu.h"
-
+#include "bu/defines.h"
 
 /* TODO: it'd be useful to figure out which random number generator
  * created this table so we could create a substantially bigger one

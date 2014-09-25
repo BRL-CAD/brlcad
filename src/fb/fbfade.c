@@ -58,9 +58,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
 #include "fb.h"			/* BRL-CAD package libfb.a interface */
 #include "pkg.h"
 

@@ -32,10 +32,9 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/units.h"
 #include "mater.h"
 #include "plot3.h"
 

@@ -38,11 +38,12 @@
 #  include <sys/stat.h>
 #endif
 
-#include "bio.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "bu.h"
 #include "icv.h"
 
 #include "./rtuif.h"

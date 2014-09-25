@@ -64,6 +64,9 @@
 
 #include "tcl.h"
 #include "bu/parallel.h"
+#include "bu/list.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "wdb.h"
 
 /* Needed to define struct menu_item */

@@ -38,9 +38,10 @@
 #include "tk.h"
 
 #include "vmath.h"
+#include "bu/getopt.h"
+
 #include "db.h"
 #include "raytrace.h"
-#include "bu.h"
 #include "bn.h"
 #include "dm.h"
 

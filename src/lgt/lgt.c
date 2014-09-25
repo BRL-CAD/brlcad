@@ -28,7 +28,6 @@
 #include <math.h>
 #include <signal.h>
 #include <assert.h>
-#include "bio.h"
 
 #include "bu/parallel.h"
 #include "vmath.h"

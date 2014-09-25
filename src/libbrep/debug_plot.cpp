@@ -27,7 +27,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "bu.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "plot3.h"
 #include "raytrace.h"

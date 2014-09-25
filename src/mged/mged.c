@@ -52,16 +52,18 @@
 #  include <poll.h>
 #endif
 
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
+#include "bu/units.h"
+#include "bu/version.h"
 #include "bn.h"
 #include "mater.h"
 #include "libtermio.h"

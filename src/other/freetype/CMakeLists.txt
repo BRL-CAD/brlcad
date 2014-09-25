@@ -164,6 +164,6 @@ set(CPACK_GENERATOR TGZ)
 include(CPack)
 
 # add make dist target
-add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+#add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
 # eof

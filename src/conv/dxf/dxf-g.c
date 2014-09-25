@@ -35,7 +35,9 @@
 #include "bio.h"
 
 /* interface headers */
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"

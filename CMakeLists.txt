@@ -1041,6 +1041,17 @@ if(BRLCAD_ENABLE_OSG)
   endif(APPLE AND NOT BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_OSG)
 
+# Enable features requiring OpenCL
+option(BRLCAD_ENABLE_OPENCL "Enable features requiring OpenCL" OFF)
+mark_as_advanced(BRLCAD_ENABLE_OPENCL)
+if(BRLCAD_ENABLE_OPENCL)
+  find_package(OpenCL)
+  if(NOT OPENCL_FOUND)
+    message("OpenCL enablement requested, but OpenCL is not found - disabling")
+    set(BRLCAD_ENABLE_OPENCL OFF)
+  endif(NOT OPENCL_FOUND)
+endif(BRLCAD_ENABLE_OPENCL)
+
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to
@@ -1822,9 +1833,6 @@ BRLCAD_INCLUDE_FILE(tinfo.h HAVE_TINFO_H)
 BRLCAD_INCLUDE_FILE(ulocks.h HAVE_ULOCKS_H)
 BRLCAD_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
-BRLCAD_INCLUDE_FILE(winsock.h HAVE_WINSOCK_H)
-BRLCAD_INCLUDE_FILE(winsock2.h HAVE_WINSOCK2_H)
-BRLCAD_INCLUDE_FILE(process.h HAVE_PROCESS_H)
 
 # C++
 BRLCAD_INCLUDE_FILE_CXX(istream HAVE_ISTREAM)
@@ -2669,6 +2677,13 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\uninstall.ico")
     set(CPACK_NSIS_DISPLAY_NAME "BRL-CAD")
     set(CPACK_NSIS_MODIFY_PATH ON)
+    if(BRLCAD_ENABLE_WIX)
+      set(CPACK_GENERATOR ${CPACK_GENERATOR} WIX)
+      set(CPACK_WIX_LICENSE_RTF ${CMAKE_SOURCE_DIR}/misc/wix/License.rtf)
+      set(CPACK_WIX_PRODUCT_ICON ${CMAKE_SOURCE_DIR}/misc/wix/brlcad_product.ico)
+      set(CPACK_WIX_UI_BANNER ${CMAKE_SOURCE_DIR}/misc/wix/brlcad_banner.bmp)
+      set(CPACK_WIX_UI_DIALOG ${CMAKE_SOURCE_DIR}/misc/wix/brlcad_dialog.bmp)
+    endif(BRLCAD_ENABLE_WIX)
   endif(WIN32)
   if(CMAKE_CL_64)
     set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_x64")

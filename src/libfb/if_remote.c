@@ -52,7 +52,8 @@
 #  include <sys/socket.h>
 #endif
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/str.h"
 #include "pkg.h"
 #include "fb_private.h"
 #include "fb.h"

@@ -28,9 +28,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/getopt.h"
 #include "fb.h"
 
 char *Usage="[-F framebuffer] [-s|S squareframesize] [-w|W frame_width] [-n|N frame_height]\n";

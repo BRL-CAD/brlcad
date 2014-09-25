@@ -26,7 +26,7 @@
 #include "common.h"
 
 /* system headers */
-#include "bin.h"
+#include "bnetwork.h"
 
 /* common headers */
 #include "bu/cv.h"

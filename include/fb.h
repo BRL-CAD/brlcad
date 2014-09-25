@@ -55,6 +55,7 @@
 #  include <sys/time.h>
 #endif
 
+#include "bsocket.h"
 #include "bio.h"
 
 #include "bu/bu_tcl.h"

@@ -30,8 +30,10 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/cv.h"
+#include "bu/log.h"
+#include "bu/str.h"
 #include "bn.h"
 
 

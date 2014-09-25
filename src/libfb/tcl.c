@@ -36,12 +36,12 @@
 # include <strings.h>
 #endif
 
-#include "bio.h"
 #include "tcl.h"
 #include "bu/cmd.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 #include "fb_private.h"
 #include "fb.h"
-#include "bu.h"
 
 /* private headers */
 #include "brlcad_version.h"

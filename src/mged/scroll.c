@@ -27,8 +27,6 @@
 
 #include "tcl.h"
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "ged.h"
 #include "./mged.h"

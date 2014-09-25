@@ -33,11 +33,10 @@
 #include <map>
 #include <algorithm>
 #include <sstream>
-#include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
-
+#include "bio.h"
+#include "bu/log.h"
 #include "brep.h"
 #include "raytrace.h"
 #include "debug_plot.h"

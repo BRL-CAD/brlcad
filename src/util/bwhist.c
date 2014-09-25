@@ -29,10 +29,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
+
+#include "bu/log.h"
+#include "bu/str.h"
 
 #include "fb.h"
-#include "bu.h"
 
 
 long bin[256];

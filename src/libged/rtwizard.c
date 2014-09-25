@@ -36,7 +36,6 @@
 #  include <sys/wait.h>
 #endif
 
-#include "bio.h"
 
 #include "tcl.h"
 #include "bu/cmd.h"

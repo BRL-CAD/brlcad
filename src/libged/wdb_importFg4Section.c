@@ -35,7 +35,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include "bio.h"
 
 #include "bu/debug.h"
 #include "db.h"

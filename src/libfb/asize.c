@@ -34,7 +34,6 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "bu.h"
 #include "fb.h"
 
 

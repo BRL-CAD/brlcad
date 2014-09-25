@@ -30,8 +30,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "bnetwork.h"
 #include "bio.h"
-#include "bin.h"
 
 #include "bu/debug.h"
 #include "bu/units.h"

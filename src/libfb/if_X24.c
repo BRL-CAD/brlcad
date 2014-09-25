@@ -69,7 +69,6 @@
 #include <X11/Xatom.h>
 
 #include <ctype.h>
-#include "bio.h"
 
 #include "bu/color.h"
 #include "bu/file.h"

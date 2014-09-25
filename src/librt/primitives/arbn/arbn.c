@@ -33,7 +33,7 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "tcl.h"
 #include "bu/cv.h"

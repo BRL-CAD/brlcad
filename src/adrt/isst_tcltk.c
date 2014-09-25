@@ -26,13 +26,12 @@
 
 #include "common.h"
 
-#include "bio.h"
+#include "bnetwork.h"
 
 #include <GL/gl.h>
 
 #include "tcl.h"
 #include "tk.h"
-
 
 #include "bu/parallel.h"
 #include "bu/time.h"

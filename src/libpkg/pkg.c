@@ -45,9 +45,10 @@
 #  include <sys/stat.h>
 #endif
 
-#include "bio.h"
-
-#if !defined(HAVE_WINSOCK_H) && !defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
+#  include <process.h>
+#  include <winsock.h>
+#else
 #  include <sys/socket.h>
 #  include <sys/ioctl.h>	/* for FIONBIO */
 #  include <netinet/in.h>	/* for htons(), etc. */
@@ -60,6 +61,7 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #else
+#  include <windows.h>
 #  include <io.h>
 #  include <fcntl.h>
 #endif
@@ -109,7 +111,7 @@
 /* XXX is this really necessary?  the _read() and _write()
  * compatibility macros should take care of this.
  */
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
 #  define PKG_READ(d, buf, nbytes) recv((d), (buf), (int)(nbytes), 0)
 #  define PKG_SEND(d, buf, nbytes) send((d), (buf), (int)(nbytes), 0)
 #else
@@ -340,7 +342,7 @@ _pkg_ck_debug(void)
 struct pkg_conn *
 pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *UNUSED(passwd), const struct pkg_switch *switchp, void (*errlog)(const char *msg))
 {
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
     LPHOSTENT lpHostEntry;
     SOCKET netfd;
     SOCKADDR_IN saServer;
@@ -372,7 +374,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     if (errlog == NULL)
 	errlog = _pkg_errlog;
 
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
 	_pkg_perror(errlog, "pkg_open: could not find a usable WinSock DLL");
@@ -483,7 +485,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 
     if (connect(netfd, addr, addrlen) < 0) {
 	_pkg_perror(errlog, "pkg_open: client connect");
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
 	(void)closesocket(netfd);
 #else
 	(void)close(netfd);
@@ -526,7 +528,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 {
     struct servent *sp;
     int pkg_listenfd;
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
     SOCKADDR_IN saServer;
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
     WSADATA wsaData;
@@ -556,7 +558,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     if (errlog == NULL)
 	errlog = _pkg_errlog;
 
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
 	_pkg_perror(errlog, "pkg_open: could not find a usable WinSock DLL");
@@ -664,7 +666,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 
     if (bind(pkg_listenfd, addr, addrlen) < 0) {
 	_pkg_perror(errlog, "pkg_permserver: bind");
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#  ifdef HAVE_WINSOCK_H
 	(void)closesocket(pkg_listenfd);
 #  else
 	close(pkg_listenfd);
@@ -675,7 +677,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     if (backlog > 5)  backlog = 5;
     if (listen(pkg_listenfd, backlog) < 0) {
 	_pkg_perror(errlog, "pkg_permserver: listen");
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#  ifdef HAVE_WINSOCK_H
 	(void)closesocket(pkg_listenfd);
 #  else
 	close(pkg_listenfd);
@@ -722,7 +724,7 @@ struct pkg_conn *
 pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const char *msg), int nodelay)
 {
     int s2;
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
     WSADATA wsaData;
 #else
@@ -751,7 +753,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
     }
 #endif
 
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
 	_pkg_perror(errlog, "pkg_open: could not find a usable WinSock DLL");
@@ -760,7 +762,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
 #endif
 
     do  {
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
 	s2 = accept(fd, (struct sockaddr *)NULL, NULL);
 #else
 	s2 = accept(fd, (struct sockaddr *)&from, &fromlen);
@@ -768,7 +770,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
 	if (s2 < 0) {
 	    if (errno == EINTR)
 		continue;
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
 	    if (errno == WSAEWOULDBLOCK)
 		return PKC_NULL;
 #else
@@ -822,13 +824,13 @@ pkg_close(struct pkg_conn *pc)
 	pc->pkc_inbuf = (char *)0;
 	pc->pkc_inlen = 0;
     }
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
     (void)closesocket(pc->pkc_fd);
 #else
     (void)close(pc->pkc_fd);
 #endif
 
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifdef HAVE_WINSOCK_H
     /* deinitialize Windows socket networking, decrements ref count */
     WSACleanup();
 #endif
@@ -1790,7 +1792,7 @@ pkg_suckin(struct pkg_conn *pc)
 	    ret = 0;	/* EOF */
 	    goto out;
 	}
-#if defined(HAVE_WINSOCK_H) || defined(HAVE_WINSOCK2_H)
+#ifndef HAVE_WINSOCK_H
 	_pkg_perror(pc->pkc_errlog, "pkg_suckin: read");
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_suckin: read(%d, x%lx, %ld) ret=%d inbuf=x%lx, inend=%d\n",
 		 pc->pkc_fd, (long)(&pc->pkc_inbuf[pc->pkc_inend]), (long)avail,

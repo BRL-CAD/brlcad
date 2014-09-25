@@ -27,7 +27,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 #include "plot3.h"
 

@@ -278,7 +278,7 @@
       <varlistentry>
 	<term><option>-p #</option></term>
 	<listitem>
-	  <para>Sets the perspective, in degrees, ranging  0 &lt; = # &lt; 180 .</para>
+	  <para>sets the perspective, in degrees, with 0 &lt; = # &lt; 180</para>
 	</listitem>
       </varlistentry>
 
@@ -299,9 +299,25 @@
       </varlistentry>
 
       <varlistentry>
+	<term><option>-t #</option></term>
+	<listitem>
+	  <para>causes reversal of the order of grid traversal (default is not to do that)
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-u units</option></term>
+	<listitem>
+	  <para>specify units, with "model" being used for the units of the local model
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
 	<term><option>-v #</option></term>
 	<listitem>
-	  <para>sets the verbosity bit vector flags for rt.
+	  <para>sets the verbosity bit vector flags for <command>rt</command> .
 	  Use -v 0 for no output or -v fff for all available output.
 	  See include/brlcad/rtprivate.h for various bit definitions.</para>
 	</listitem>
@@ -341,8 +357,8 @@
       <varlistentry>
 	<term><option>-B</option></term>
 	<listitem>
-	  <para>The "benchmark" flag.  When specified, all intentional random effects
-	  such as ray dither, color dither, etc., are turned off to allow
+	  <para>turns on the "benchmark" flag. This causes all intentional random effects
+	  such as ray dither, color dither, etc., to be turned off to allow
 	  benchmark timing comparison and benchmark result comparison.</para>
 	</listitem>
       </varlistentry>

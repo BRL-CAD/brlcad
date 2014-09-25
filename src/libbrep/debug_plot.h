@@ -29,7 +29,7 @@
 
 #ifndef DEBUG_PLOT_H
 #define DEBUG_PLOT_H
-#include "bu.h"
+#include "bu/list.h"
 #include "raytrace.h"
 
 struct TrimmedFace;

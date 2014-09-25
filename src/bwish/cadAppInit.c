@@ -26,20 +26,19 @@
 
 #include "common.h"
 
-#include "bin.h"
-#include "bio.h"
+#include "bnetwork.h"
 
 #include "itcl.h"
-
 #ifdef BWISH
 #  include "itk.h"
+#endif
+
+#include "vmath.h"
+#include "bn.h"
+#ifdef BWISH
 #  include "dm.h"
 #  include "fb.h"
 #endif
-
-#include "bu.h"
-#include "vmath.h"
-#include "bn.h"
 #include "ged.h"
 #include "tclcad.h"
 

@@ -39,7 +39,6 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -239,6 +238,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 
     *dmp = dm_wgl; /* struct copy */
     dmp->dm_interp = interp;
+    dmp->dm_light = 1;
 
     BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
     BU_ALLOC(dmp->dm_vars.priv_vars, struct wgl_vars);

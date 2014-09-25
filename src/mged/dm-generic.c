@@ -34,15 +34,15 @@
 #  include <sys/types.h>
 #endif
 
-#include "bio.h"
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
-#include "dm/dm_xvars.h"
-#include "../libdm/dm_private.h"
 
-#include "bu.h"
+#include "../libdm/dm_private.h"
+#include "bio.h"
+#include "dm/dm_xvars.h"
+
 #include "vmath.h"
 #include "mater.h"
 #include "ged.h"

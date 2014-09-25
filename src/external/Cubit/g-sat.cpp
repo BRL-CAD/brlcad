@@ -57,9 +57,14 @@
 
 // interface headers
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/avs.h"
+#include "bu/bitv.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "nmg.h"
 #include "rtgeom.h"
-#include "bu.h"
 #include "raytrace.h"
 #include "wdb.h"
 

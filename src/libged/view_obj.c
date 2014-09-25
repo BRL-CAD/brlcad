@@ -31,7 +31,6 @@
 
 #include <string.h>
 #include <math.h>
-#include "bio.h"
 
 #include "tcl.h"
 

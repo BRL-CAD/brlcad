@@ -35,7 +35,7 @@
 
 /* interface headers */
 #include "vmath.h"
-#include "bu.h"
+#include "bu/getopt.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"

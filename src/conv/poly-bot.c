@@ -30,10 +30,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include "bnetwork.h"
 #include "bio.h"
-#include "bin.h"
 
 #include "vmath.h"
+#include "bu/file.h"
 #include "nmg.h"
 #include "db.h"
 #include "rtgeom.h"

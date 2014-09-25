@@ -32,8 +32,10 @@
 #include "bio.h"
 
 /* interface headers */
-#include "bu.h"
 #include "vmath.h"
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/endian.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"

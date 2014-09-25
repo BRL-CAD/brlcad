@@ -27,7 +27,6 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "tcl.h"
 

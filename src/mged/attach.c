@@ -34,15 +34,13 @@
 #  include "tk.h"
 #endif
 
-#include "bio.h"
-#include "bin.h"
+#include "bnetwork.h"
 
 /* Make sure this comes after bio.h (for Windows) */
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
 
-#include "bu.h"
 #include "vmath.h"
 #include "ged.h"
 

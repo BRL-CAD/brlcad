@@ -27,8 +27,6 @@
 #include <math.h>
 #include <signal.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "rtgeom.h"
 #include "raytrace.h"

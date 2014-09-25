@@ -40,9 +40,12 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
+
+/* winsock (bsocket.h) first, ordering matters */
+#include "bsocket.h"
+#include "bio.h"
 #include <windowsx.h>
 
-#include "bio.h"
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
@@ -50,7 +53,9 @@
 
 #include "tk.h"
 #include "tkPlatDecls.h"
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/str.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"

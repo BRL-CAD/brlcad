@@ -37,8 +37,11 @@
 #include "bio.h"
 
 #include "db.h"
-#include "bu.h"
 
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 int
 main(int argc, char **argv)

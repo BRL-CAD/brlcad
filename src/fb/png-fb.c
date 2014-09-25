@@ -29,10 +29,10 @@
 #include <stdlib.h>
 #include <zlib.h>
 #include <png.h>
-#include "bio.h"
-#include "bin.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "fb.h"
 #include "pkg.h"
 

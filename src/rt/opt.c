@@ -479,7 +479,7 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'p':
 		rt_perspective = atof( bu_optarg );
-		if ( rt_perspective < 0 || rt_perspective > 179 ) {
+		if ( rt_perspective < 0 || rt_perspective >= 180 ) {
 		    fprintf(stderr, "persp=%g out of range\n", rt_perspective);
 		    rt_perspective = 0;
 		}

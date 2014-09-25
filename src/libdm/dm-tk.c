@@ -53,7 +53,6 @@
 #  undef X_NOT_POSIX
 #endif
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"

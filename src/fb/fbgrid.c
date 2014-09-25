@@ -25,9 +25,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 
 static unsigned char *white_line, *grey_line, *dark_line;

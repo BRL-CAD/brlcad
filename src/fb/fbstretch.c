@@ -76,9 +76,12 @@
 #include <signal.h>
 #include <string.h>
 #include <stdarg.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/str.h"
 #include "fb.h"			/* BRL-CAD package libfb.a interface */
 
 

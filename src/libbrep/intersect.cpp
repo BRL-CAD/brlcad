@@ -28,11 +28,12 @@
 #include <assert.h>
 #include <vector>
 #include <algorithm>
-#include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
 
+#include "bio.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "brep.h"
 #include "debug_plot.h"
 #include "brep_except.h"

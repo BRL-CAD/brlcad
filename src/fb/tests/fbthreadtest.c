@@ -34,9 +34,11 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#include "bio.h"
+#ifdef HAVE_WINSOCK_H
+#  include <winsock.h>
+#endif
 
-#include "bu.h"
+#include "bu/getopt.h"
 #include "fb.h"
 
 #include <tcl.h>

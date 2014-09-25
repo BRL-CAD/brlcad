@@ -34,7 +34,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"

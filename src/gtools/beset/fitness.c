@@ -41,7 +41,9 @@
 #include <math.h>
 #include <limits.h>                     /* home of INT_MAX aka MAXINT */
 
-#include "bu.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"

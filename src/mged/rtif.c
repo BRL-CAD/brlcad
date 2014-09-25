@@ -39,11 +39,9 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#include "bio.h"
 
 #include "tcl.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
 
