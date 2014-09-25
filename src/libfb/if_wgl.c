@@ -41,8 +41,8 @@
 #include <ctype.h>
 #include <errno.h>
 
-/* winsock (bselect.h) first, ordering matters */
-#include "bselect.h"
+/* winsock (bsocket.h) first, ordering matters */
+#include "bsocket.h"
 #include "bio.h"
 #include <windowsx.h>
 
