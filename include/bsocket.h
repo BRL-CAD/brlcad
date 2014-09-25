@@ -36,21 +36,20 @@
 
 #include "common.h"
 
+/* make sure this header always comes before bio.h due to system
+ * header ordering requirements.  this is mostly a windows issue, but
+ * we want to detect the issue early.
+ */
+#if defined(BIO_H)
+#  error "The #include for bio.h must come after this header (Windows Sockets portability)."
+#endif
+
 #ifdef HAVE_SYS_SELECT_H
 #  include <sys/select.h>
 #endif
 
 /* Windows Sockets provides select() and friends */
 #if defined(_WIN32) && !defined(__CYGWIN__)
-
-  /* make sure this header always comes before bio.h due to system
-   * header ordering requirements.  this is mostly a windows issue,
-   * but we want to detect the issue early.
-   */
-#  if defined(BIO_H)
-#    error "The header #include for bio.h must come after bselect.h for portability reasons."
-#  endif
-
 #  ifndef _WINSOCKAPI_
 #    include <winsock2.h>
 #  endif
