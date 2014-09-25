@@ -429,7 +429,7 @@
       <varlistentry>
 	<term><option>-J #</option></term>
 	<listitem>
-	  <para>The "jitter" flag is a bit vector.
+	  <para>This is the "jitter" flag, which is a bit vector.
 	  If one (<option>-J 1</option>), it randomizes the point from which each ray
 	  is fired by +/- one half of the pixel size.  Useful if doing your own
 	  post-filtering for antialiasing, or to eliminate systematic
