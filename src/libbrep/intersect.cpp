@@ -2580,7 +2580,7 @@ is_pt_in_surf_overlap(
     {
 	return false;
     }
-    bool surf1_pt_intersects_surf2, surfs_parallel_at_pt;
+    bool surf1_pt_intersects_surf2, surfs_parallel_at_pt = false;
     ON_ClassArray<ON_PX_EVENT> px_event;
 
     surf1_pt_intersects_surf2 = ON_Intersect(surf1->PointAt(surf1_pt.x, surf1_pt.y),
