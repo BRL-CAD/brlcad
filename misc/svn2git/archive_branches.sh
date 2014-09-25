@@ -17,6 +17,7 @@ branches=(
 	"goblin"
 	"libpng"
 	"nurbs"
+	"opencl"
 	"openscenegraph"
 	"osg"
 	"phong-branch"
