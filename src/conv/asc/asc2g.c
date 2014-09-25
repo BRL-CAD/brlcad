@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "bnetwork.h" 
+#include "bnetwork.h"
 
 #include "vmath.h"
 #include "bu/cv.h"

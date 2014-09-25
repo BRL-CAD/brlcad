@@ -28,6 +28,7 @@ branches=(
 	"rel-7-4-branch"
 	"rel-7-6-branch"
 	"scriptics"
+	"surfacetree"
 	"trimnurbs-branch"
 	"unlabeled-1.1.1"
 	"unlabeled-1.1.2"

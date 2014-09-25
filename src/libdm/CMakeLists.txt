@@ -139,6 +139,7 @@ set(libdm_ignore_files
   dm-rtgl.c
   dm-tk.c
   osg_bob.cpp
+  osg-test.cpp
   TODO
   dm-glx.h
   dm-Null.h
