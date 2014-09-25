@@ -119,16 +119,21 @@ public:
 	m_curve = NULL;
     }
 
+    void Empty()
+    {
+	m_ssi_curves.Empty();
+	delete m_curve;
+	m_curve = NULL;
+    }
+
     ~LinkedCurve()
     {
-	if (m_curve) {
-	    delete m_curve;
-	}
-	m_curve = NULL;
+	Empty();
     }
 
     LinkedCurve &operator= (const LinkedCurve &_lc)
     {
+	Empty();
 	m_curve = _lc.m_curve ? _lc.m_curve->Duplicate() : NULL;
 	m_ssi_curves = _lc.m_ssi_curves;
 	return *this;
@@ -791,11 +796,11 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 			SSICurve issi(isub), jssi(jsub);
 			isub = jsub = NULL;
 
-			tmp[i].m_ssi_curves.Empty();
-			tmp[i].m_ssi_curves.Append(issi);
+			tmp[i].Empty();
+			tmp[i].Append(issi);
 
-			tmp[j].m_ssi_curves.Empty();
-			tmp[j].m_ssi_curves.Append(jssi);
+			tmp[j].Empty();
+			tmp[j].Append(jssi);
 
 			// proceed as if they're linkable
 			configure_for_linking(c1, c2, tmp[i], tmp[j]);
