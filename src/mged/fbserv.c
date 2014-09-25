@@ -29,13 +29,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#ifdef HAVE_WINSOCK_H
-#  include <process.h>
-#  include <winsock.h>
-#else
-#  include <sys/socket.h>
-#  include <netinet/in.h>		/* For htonl(), etc. */
-#endif
+#include "bnetwork.h"
 
 #include "tcl.h"
 #include "vmath.h"
