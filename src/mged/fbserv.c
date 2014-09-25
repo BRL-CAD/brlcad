@@ -30,6 +30,9 @@
 #include <ctype.h>
 
 #include "bnetwork.h"
+#ifndef HAVE_WINSOCK_H
+#  include <sys/socket.h> /* TODO - should this be in bsocket.h? */
+#endif
 
 #include "tcl.h"
 #include "vmath.h"
