@@ -1693,7 +1693,7 @@ ON_Intersect(const ON_Curve *curveA,
 		if (line.Direction().IsPerpendicularTo(plane.Normal())) {
 		    // they are parallel (or overlap)
 
-		    if (line.InPlane(plane, isect_tol)) {
+		    if (plane.DistanceTo(line.from) < isect_tol) {
 			// The line is on the surface's plane. The end-points of
 			// the overlap must be the linecurve's end-points or
 			// the intersection between the linecurve and the boundary
@@ -1785,6 +1785,15 @@ ON_Intersect(const ON_Curve *curveA,
 			if (intersections == 0) {
 			    continue;
 			}
+
+			// if we have coincident intersection points,
+			// treat as point intersection, not overlap
+			if (intersections == 2 &&
+			    event.m_A[0].DistanceTo(event.m_A[1]) < isect_tol)
+			{
+			    intersections = 1;
+			}
+
 			if (intersections == 1) {
 			    event.m_type = ON_X_EVENT::csx_point;
 			    event.m_A[1] = event.m_A[0];
