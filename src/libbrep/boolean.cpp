@@ -2060,7 +2060,7 @@ split_trimmed_face(
 		if (ssx_curves[i].IsClosed()) {
 		    if (intersect_loops.size() == 0) {
 			// no intersection, just keep the face as-is
-			next_out.Append(out[k]);
+			next_out.Append(out[k]->Duplicate());
 			continue;
 		    }
 
@@ -2078,7 +2078,12 @@ split_trimmed_face(
 	free_loops(ssx_loops);
 
 	if (next_out.Count() > 0) {
+	    // replace previous faces with the new ones
+	    for (int j = 0; j < out.Count(); ++j) {
+		delete out[j];
+	    }
 	    out.Empty();
+
 	    out.Append(next_out.Count(), next_out.Array());
 	}
     }
