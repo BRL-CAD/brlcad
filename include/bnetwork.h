@@ -39,12 +39,12 @@
 #ifndef BNETWORK_H
 #define BNETWORK_H
 
-/* make sure this header always comes before bio.h due to system header
- * ordering requirements.  this is mostly a windows issue, but we want
- * to detect the issue early.
+/* make sure this header always comes before bio.h due to system
+ * header ordering requirements.  this is mostly a windows issue, but
+ * we want to detect the issue early.
  */
 #if defined(BIO_H)
-#  error "The header #include for bio.h must come after bin.h for portability reasons."
+#  error "The #include for bio.h must come after this header (Windows Sockets portability)."
 #endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
