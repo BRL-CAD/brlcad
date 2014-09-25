@@ -1400,14 +1400,15 @@ loop_boolean(
     for (int i = 0; i < l1.Count(); ++i) {
 	loop1.Append(l1[i]->Duplicate());
     }
-    for (int i = 0; i < l2.Count(); ++i) {
-	loop2.Append(l2[i]->Duplicate());
-    }
 
     if (op != BOOLEAN_INTERSECT && op != BOOLEAN_DIFF) {
 	bu_log("loop_boolean: unsupported operation\n");
 	out.push_back(loop1);
 	return out;
+    }
+
+    for (int i = 0; i < l2.Count(); ++i) {
+	loop2.Append(l2[i]->Duplicate());
     }
 
     // set curve directions based on operation
@@ -1423,6 +1424,10 @@ loop_boolean(
     {
 	bu_log("loop_boolean: couldn't standardize curve directions\n");
 	out.push_back(loop1);
+
+	for (int i = 0; i < l2.Count(); ++i) {
+	    delete loop2[i];
+	}
 	return out;
     }
 
@@ -1465,7 +1470,15 @@ loop_boolean(
     std::multiset<CurveSegment> out_segments =
 	get_op_segments(loop1_segments, loop2_segments, op);
 
-    return construct_loops_from_segments(out_segments);
+    out = construct_loops_from_segments(out_segments);
+
+    for (int i = 0; i < l1.Count(); ++i) {
+	delete loop1[i];
+    }
+    for (int i = 0; i < l2.Count(); ++i) {
+	delete loop2[i];
+    }
+    return out;
 }
 
 std::list<ON_SimpleArray<ON_Curve *> >
