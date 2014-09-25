@@ -39,7 +39,7 @@
 
 #include "tcl.h"
 
-#include "bu.h"
+#include "bu/cv.h"
 #include "vmath.h"
 
 #include "bn.h"
