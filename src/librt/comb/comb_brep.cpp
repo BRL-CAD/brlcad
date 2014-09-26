@@ -94,7 +94,10 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 		    if (ret == 0 && *b != NULL) {
 			if (t->tr_l.tl_mat != NULL && !bn_mat_is_identity(t->tr_l.tl_mat)) {
 			    ON_Xform xform(t->tr_l.tl_mat);
-			    ret = (*b)->Transform(xform);
+			    ret = -1;
+			    if ((*b)->Transform(xform)) {
+				ret = 0;
+			    }
 			}
 		    }
 		    rt_db_free_internal(&intern);
