@@ -395,12 +395,15 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 		return GED_OK;
 	    }
 	    ret = brep_conversion(&intern, &brep_db_internal, gedp->ged_wdbp->dbip);
-	    brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
 	    if (ret == -1) {
-		bu_vls_printf(gedp->ged_result_str, "%s doesn't have a brep-conversion function yet. Type: %s", solid_name, intern.idb_meth->ft_label);
-	    } else if ((ret == -2) || (brep == NULL)) {
-		bu_vls_printf(gedp->ged_result_str, "%s cannot be converted to brep correctly.", solid_name);
+		bu_vls_printf(gedp->ged_result_str, "%s doesn't have a "
+			"brep-conversion function yet. Type: %s", solid_name,
+			intern.idb_meth->ft_label);
+	    } else if (ret == -2) {
+		bu_vls_printf(gedp->ged_result_str, "%s cannot be converted "
+			"to brep correctly.", solid_name);
 	    } else {
+		brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
 		ret = mk_brep(gedp->ged_wdbp, bu_vls_addr(&bname), brep);
 		if (ret == 0) {
 		    bu_vls_printf(gedp->ged_result_str, "%s is made.", bu_vls_addr(&bname));
