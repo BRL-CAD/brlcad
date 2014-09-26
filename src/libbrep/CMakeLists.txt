@@ -35,9 +35,11 @@ set(LIBBREP_SOURCES
 
 set(libbrep_ignored_files
   libbrep_brep_tools.h
+  brep_except.h
   opennurbs_fit.h
   opennurbs_fit.cpp
   PullbackCurve.h
+  surface_tree_queue_tests.patch
   )
 CMAKEFILES(${libbrep_ignored_files})
 

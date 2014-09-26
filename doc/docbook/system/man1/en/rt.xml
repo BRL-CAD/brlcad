@@ -375,8 +375,8 @@
       <varlistentry>
 	<term><option>-D #</option></term>
 	<listitem>
-	  <para>The "desired frame" flag, specifies frame number to start with.
-	  Specify the desired ending (kill-after) frame with
+	  <para>This is the "desired frame" flag, specifying the frame number to start with.
+           Used with animation scripts; specify the desired ending (kill-after) frame with
 	  <option>-K #</option> .</para>
 	</listitem>
       </varlistentry>
@@ -384,8 +384,9 @@
       <varlistentry>
 	<term><option>-E #</option></term>
 	<listitem>
-	  <para>sets the distance from the eye point to the center of the model RPP.
-	  Only useful with auto-sizing, conflicts with
+	  <para>sets the distance from the eye point to the center of the model RPP; default is
+          the square root of 2.
+	  Only useful with auto-sizing, and conflicts with
 	  <option>-M</option> .</para>
 	</listitem>
       </varlistentry>
@@ -411,38 +412,33 @@
       <varlistentry>
 	<term><option>-H #</option></term>
 	<listitem>
-	  <para>The "hypersample" flag specifies number of extra rays to fire
-	  for each pixel to obtain more accurate results
-	  without needing to store the extra pixels.
-	  Causes
-	  <option>-J1</option>
-	  to be set.
-	  The final colors of all rays are averaged together.
-	  Better results can be obtained by simply increasing the resolution,
-	  and decimating the results with a filter such as
+          <para>This is the "hypersample" flag, specifying number of extra rays to fire for each pixel to
+          obtain more accurate results without needing to store the extra pixels. Automatically invokes
+	  <option>-J 1</option>. The final colors of all rays are averaged together. Better results can be
+         obtained by simply increasing the resolution, and decimating the results with a filter such as
 	  <citerefentry><refentrytitle>pixhalve</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
 	<term><option>-I</option></term>
 	<listitem>
-	  <para>Turns on interactive mode.  If this flag is off and your image is
-	  "large" (&gt; = 256 x 256), it will lower the priority of the rt process.</para>
+	  <para>turns on interactive mode.  If this flag is off and your image is
+	  "large" (&gt; = 256 x 256), it will lower the priority of the <option>rt</option> process.</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
 	<term><option>-J #</option></term>
 	<listitem>
-	  <para>The "jitter" flag is a bit vector.
-	  If one (-J1), it randomizes the point from which each ray
+	  <para>This is the "jitter" flag, which is a bit vector.
+	  If one (<option>-J 1</option>), it randomizes the point from which each ray
 	  is fired by +/- one half of the pixel size.  Useful if doing your own
 	  post-filtering for antialiasing, or to eliminate systematic
 	  errors.  This has been useful in obtaining more accurate results
 	  in a volume-calculating raytrace as well.
-	  If two (-J2), it shifts the origin of the output frame once for each frame.
+	  If two (<option>-J 2</option>), it shifts the origin of the output frame once for each frame.
 	  The shift is along a circular path in the plane of the frame,
 	  with a period of ten seconds, and a radius of +/- 1/4 pixel width.
-	  If three (-J3), it performs both operations.</para>
+	  If three (<option>-J 3</option>), it performs both operations.</para>
 	</listitem>
       </varlistentry>
       <varlistentry>

@@ -322,7 +322,7 @@ add_comb_child(osg::Group *comb, osg::Group *child, struct db_full_path *child_p
 
 /* In the case of regions, we need to be able to remove and restore the individual
  * comb children, because for normal display (as opposed to editing mode) we need to
- * use a single compositite wireframe for regions */
+ * use a single composite wireframe for regions */
 osg::ref_ptr<osg::Group>
 full_comb_node(
 	std::map<const struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,
@@ -445,7 +445,7 @@ full_region_node(
 
 /* In the case of regions, we need to be able to remove and restore the individual
  * comb children, because for normal display (as opposed to editing mode) we need to
- * use a single compositite wireframe for regions */
+ * use a single composite wireframe for regions */
 osg::ref_ptr<osg::Group>
 full_assembly_node(
 	std::map<const struct directory *, osg::ref_ptr<osg::Group> > *osg_nodes,

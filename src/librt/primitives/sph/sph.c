@@ -466,11 +466,8 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     fastf_t root;		/* root of radical */
 
     VSUB2(ov, sph->sph_V, rp->r_pt);
-    bu_log("TZ: ov: %0.30f\t%0.30f\t%0.30f\n", ov[X], ov[Y], ov[Z]);
     b = VDOT(rp->r_dir, ov);
-    bu_log("TZ: b: %0.30f\n", b);
     magsq_ov = MAGSQ(ov);
-    bu_log("TZ: magsq_ov: %0.30f\n", magsq_ov);
 
     if (magsq_ov >= sph->sph_radsq) {
 	/* ray origin is outside of sphere */
@@ -479,18 +476,14 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    return 0;		/* No hit */
 	}
 	root = b*b - magsq_ov + sph->sph_radsq;
-	bu_log("TZ: root1: %0.30f\n", root);
 	if (root <= 0) {
 	    /* no real roots */
 	    return 0;		/* No hit */
 	}
     } else {
 	root = b*b - magsq_ov + sph->sph_radsq;
-	bu_log("TZ: root2: %0.30f\n", root);
     }
     root = sqrt(root);
-    bu_log("TZ: sqrt_root: %0.30f\n", root);
-    bu_log("TZ: b-root=%0.30f\nb+root=%0.30f\n", b-root, b+root);
 
     RT_GET_SEG(segp, ap->a_resource);
     segp->seg_stp = stp;
