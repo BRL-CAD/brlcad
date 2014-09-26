@@ -121,7 +121,6 @@ db_tree_nleaves(const union tree *tp)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* This node is known to be a binary op */
 	    return db_tree_nleaves(tp->tr_b.tb_left) +
 		db_tree_nleaves(tp->tr_b.tb_right);
@@ -742,9 +741,6 @@ db_tree_describe(
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
 	    bu_vls_printf(vls, "%c ", DB_OP_SUBTRACT);
 	    goto bin;
-	case OP_XOR:
-	    if (!indented) bu_vls_spaces(vls, 2*lvl);
-	    bu_vls_strcat(vls, "^ ");
 	bin:
 	    db_tree_describe(vls, tp->tr_b.tb_left, 1, lvl+1, mm2local);
 	    db_tree_describe(vls, tp->tr_b.tb_right, 0, lvl+1, mm2local);
@@ -910,7 +906,6 @@ db_ck_left_heavy_tree(
 	    /* else fall through */
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    if (db_ck_left_heavy_tree(tp->tr_b.tb_right, no_unions) < 0)
 		return -1;
 	    return db_ck_left_heavy_tree(tp->tr_b.tb_left, no_unions);
@@ -939,7 +934,6 @@ db_ck_v4gift_tree(const union tree *tp)
 
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    return db_ck_left_heavy_tree(tp, 1);
 
 	default:

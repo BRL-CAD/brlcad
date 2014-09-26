@@ -567,7 +567,6 @@ copy_v5_comb_tree(struct ged_clone_state *state, union tree *tree, size_t idx)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* copy right */
 	    copy_v5_comb_tree(state, tree->tr_b.tb_right, idx);
 

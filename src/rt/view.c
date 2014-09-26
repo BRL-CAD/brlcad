@@ -1593,7 +1593,6 @@ collect_soltabs(struct bu_ptbl *stp_list, union tree *tr)
     switch (tr->tr_op) {
 	case OP_UNION:
 	case OP_INTERSECT:
-	case OP_XOR:
 	    collect_soltabs(stp_list, tr->tr_b.tb_left);
 	    collect_soltabs(stp_list, tr->tr_b.tb_right);
 	    break;

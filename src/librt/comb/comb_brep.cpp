@@ -45,7 +45,6 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* convert right */
 	    old = right = ON_Brep::New();
 	    ret = conv_tree(&right, t->tr_b.tb_right, dbip);
@@ -69,8 +68,6 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 		    ret = ON_Boolean(*b, left, right, BOOLEAN_INTERSECT);
 		else if (t->tr_op == OP_SUBTRACT)
 		    ret = ON_Boolean(*b, left, right, BOOLEAN_DIFF);
-		else if (t->tr_op == OP_XOR)
-		    ret = ON_Boolean(*b, left, right, BOOLEAN_XOR);
 		else {
 		    bu_log("operation %d isn't supported yet.\n", t->tr_op);
 		    ret = -1;

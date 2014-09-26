@@ -248,7 +248,6 @@ describe_tree(tree *tree, bu_vls *str)
 {
     bu_vls left = BU_VLS_INIT_ZERO;
     bu_vls right = BU_VLS_INIT_ZERO;
-    const char op_xor='^';
     char op='\0';
 
     BU_CK_VLS(str);
@@ -282,8 +281,6 @@ describe_tree(tree *tree, bu_vls *str)
 	case OP_SUBTRACT:	/* subtraction operator node */
 	    op = DB_OP_SUBTRACT;
 	    goto binary;
-	case OP_XOR:		/* exclusive "or" operator node */
-	    op = op_xor;
 	binary:				/* common for all binary nodes */
 	    describe_tree(tree->tr_b.tb_left, &left);
 	    describe_tree(tree->tr_b.tb_right, &right);

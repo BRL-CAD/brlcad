@@ -370,7 +370,6 @@ db_apply_state_from_one_member(
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    ret = db_apply_state_from_one_member(tsp, pathp, cp, sofar,
 						 tp->tr_b.tb_left);
 	    if (ret != 0) return ret;
@@ -406,7 +405,6 @@ db_find_named_leaf(union tree *tp, const char *cp)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    ret = db_find_named_leaf(tp->tr_b.tb_left, cp);
 	    if (ret != TREE_NULL) return ret;
 	    return db_find_named_leaf(tp->tr_b.tb_right, cp);
@@ -435,7 +433,6 @@ db_find_named_leafs_parent(int *side, union tree *tp, const char *cp)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    if (tp->tr_b.tb_left->tr_op == OP_DB_LEAF) {
 		if (BU_STR_EQUAL(cp, tp->tr_b.tb_left->tr_l.tl_name)) {
 		    *side = 1;
@@ -481,7 +478,6 @@ db_tree_del_lhs(union tree *tp, struct resource *resp)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    switch (tp->tr_b.tb_left->tr_op) {
 		case OP_NOP:
 		case OP_SOLID:
@@ -527,7 +523,6 @@ db_tree_del_rhs(union tree *tp, struct resource *resp)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    switch (tp->tr_b.tb_right->tr_op) {
 		case OP_NOP:
 		case OP_SOLID:
@@ -624,7 +619,6 @@ db_tree_mul_dbleaf(union tree *tp, const mat_t mat)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    db_tree_mul_dbleaf(tp->tr_b.tb_left, mat);
 	    db_tree_mul_dbleaf(tp->tr_b.tb_right, mat);
 	    break;
@@ -666,7 +660,6 @@ db_tree_funcleaf(
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    db_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
 	    db_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
 	    break;
@@ -948,7 +941,6 @@ _db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_pa
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    _db_recurse_subtree(tp->tr_b.tb_left, &memb_state, pathp, region_start_statepp, client_data);
 	    if (tp->tr_op == OP_SUBTRACT)
 		memb_state.ts_sofar |= TS_SOFAR_MINUS;
@@ -1230,7 +1222,6 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* This node is known to be a binary op */
 	    new_tp->tr_b.tb_left = db_dup_subtree(tp->tr_b.tb_left, resp);
 	    new_tp->tr_b.tb_right = db_dup_subtree(tp->tr_b.tb_right, resp);
@@ -1279,7 +1270,6 @@ db_ck_tree(const union tree *tp)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* This node is known to be a binary op */
 	    db_ck_tree(tp->tr_b.tb_left);
 	    db_ck_tree(tp->tr_b.tb_right);
@@ -1373,7 +1363,6 @@ db_free_tree(union tree *tp, struct resource *resp)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    {
 		union tree *fp;
 
@@ -1645,7 +1634,6 @@ db_count_tree_nodes(const union tree *tp, int count)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* This node is known to be a binary op */
 	    count = db_count_tree_nodes(tp->tr_b.tb_left, count);
 	    count = db_count_tree_nodes(tp->tr_b.tb_right, count);
@@ -1687,7 +1675,6 @@ db_is_tree_all_unions(const union tree *tp)
 	case OP_SUBTRACT:
 	    return 0;		/* nope */
 
-	case OP_XOR:
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
@@ -1721,7 +1708,6 @@ db_count_subtree_regions(const union tree *tp)
 
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
@@ -1775,7 +1761,6 @@ db_tally_subtree_regions(
 
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
@@ -1921,7 +1906,6 @@ _db_walk_subtree(
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* This node is known to be a binary op */
 	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, resp);
 	    _db_walk_subtree(tp->tr_b.tb_right, region_start_statepp, leaf_func, client_data, resp);
@@ -2516,8 +2500,6 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 	case OP_SUBTRACT:
 	    tree_list_append(vls, "-");
 	    goto bin;
-	case OP_XOR:
-	    tree_list_append(vls, "^");
 	bin:
 	    tree_list_sublist_begin(vls);
 	    count += db_tree_list(vls, tp->tr_b.tb_left);

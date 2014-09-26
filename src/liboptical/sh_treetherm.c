@@ -189,7 +189,6 @@ tree_parse(struct bu_list *UNUSED(br), union tree *tr)
 	case OP_UNION: break;
 	case OP_INTERSECT: break;
 	case OP_SUBTRACT: break;
-	case OP_XOR: break;
 	case OP_REGION: break;
 	case OP_NOP: break;
 /* Internal to library routines */

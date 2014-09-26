@@ -272,7 +272,6 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* XXX this can get us in trouble if 1 solid is subtracted
 	     * from less than all the "union" solids of the region.
 	     */

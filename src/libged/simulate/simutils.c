@@ -162,7 +162,6 @@ check_tree_funcleaf(
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1);
 	    if (rv == NOT_FOUND)
 		rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1);

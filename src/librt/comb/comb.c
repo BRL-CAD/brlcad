@@ -112,7 +112,6 @@ db_tree_counter(const union tree *tp, struct db_tree_counter_state *tcsp)
 
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* This node is known to be a binary op */
 	    tcsp->n_oper++;
 	    tcsp->non_union_seen = 1;
@@ -135,7 +134,6 @@ db_tree_counter(const union tree *tp, struct db_tree_counter_state *tcsp)
 #define DB5COMB_TOKEN_UNION		2
 #define DB5COMB_TOKEN_INTERSECT		3
 #define DB5COMB_TOKEN_SUBTRACT		4
-#define DB5COMB_TOKEN_XOR		5
 #define DB5COMB_TOKEN_NOT		6
 
 struct rt_comb_v5_serialize_state {
@@ -232,13 +230,6 @@ rt_comb_v5_serialize(
 	    rt_comb_v5_serialize(tp->tr_b.tb_right, ssp);
 	    if (ssp->exprp)
 		*ssp->exprp++ = DB5COMB_TOKEN_SUBTRACT;
-	    return;
-	case OP_XOR:
-	    /* This node is known to be a binary op */
-	    rt_comb_v5_serialize(tp->tr_b.tb_left, ssp);
-	    rt_comb_v5_serialize(tp->tr_b.tb_right, ssp);
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_XOR;
 	    return;
 
 	default:
@@ -675,7 +666,6 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	    case DB5COMB_TOKEN_UNION:
 	    case DB5COMB_TOKEN_INTERSECT:
 	    case DB5COMB_TOKEN_SUBTRACT:
-	    case DB5COMB_TOKEN_XOR:
 		/* These are all binary operators */
 		tp->tr_b.tb_regionp = REGION_NULL;
 		tp->tr_b.tb_right = *--sp;
@@ -691,9 +681,6 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 			break;
 		    case DB5COMB_TOKEN_SUBTRACT:
 			tp->tr_b.tb_op = OP_SUBTRACT;
-			break;
-		    case DB5COMB_TOKEN_XOR:
-			tp->tr_b.tb_op = OP_XOR;
 			break;
 		}
 		break;

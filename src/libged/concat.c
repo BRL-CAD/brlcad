@@ -196,7 +196,6 @@ adjust_names(union tree *trp,
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    adjust_names(trp->tr_b.tb_left, dbip,
 			     name_tbl, used_names_tbl, cc_data);
 	    adjust_names(trp->tr_b.tb_right, dbip,

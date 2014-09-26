@@ -189,9 +189,6 @@ ged_clip_polygon(ClipType op, bview_polygon *subj, bview_polygon *clip, fastf_t 
     case gctDifference:
 	ctOp = ClipperLib::ctDifference;
 	break;
-    default:
-	ctOp = ClipperLib::ctXor;
-	break;
     }
 
     /* Clip'em */
@@ -231,9 +228,6 @@ ged_clip_polygons(ClipType op, bview_polygons *subj, bview_polygons *clip, fastf
 	break;
     case gctDifference:
 	ctOp = ClipperLib::ctDifference;
-	break;
-    default:
-	ctOp = ClipperLib::ctXor;
 	break;
     }
 

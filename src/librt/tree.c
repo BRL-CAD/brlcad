@@ -89,7 +89,6 @@ _rt_tree_region_assign(union tree *tp, const struct region *regionp)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    tp->tr_b.tb_regionp = (struct region *)regionp;
 	    _rt_tree_region_assign(tp->tr_b.tb_left, regionp);
 	    _rt_tree_region_assign(tp->tr_b.tb_right, regionp);
@@ -677,7 +676,6 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 		   (void *)tp, tp->tr_op);
 	    return;
 
-	case OP_XOR:
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
@@ -917,7 +915,6 @@ top:
 		   (void *)tp, tp->tr_op);
 	    return -1;
 
-	case OP_XOR:
 	case OP_UNION:
 	    /* BINARY type -- rewrite tp as surviving side */
 	    left = tp->tr_b.tb_left;
@@ -1046,7 +1043,6 @@ rt_optim_tree(union tree *tp, struct resource *resp)
 		break;
 	    case OP_UNION:
 	    case OP_INTERSECT:
-	    case OP_XOR:
 		/* Need to look at 3-level optimizations here, both sides */
 		/* push both nodes - search left first */
 		*sp++ = tp->tr_b.tb_right;

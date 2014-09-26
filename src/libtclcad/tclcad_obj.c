@@ -3717,7 +3717,7 @@ to_data_polygons(struct ged *gedp,
 	if (argc == 4) {
 	    int op;
 
-	    if (bu_sscanf(argv[3], "%d", &op) != 1 || op > gctXor)
+	    if (bu_sscanf(argv[3], "%d", &op) != 1 || op > gctIntersection)
 		goto bad;
 
 	    gdpsp->gdps_clip_type = (ClipType)op;
@@ -4073,7 +4073,7 @@ to_data_polygons(struct ged *gedp,
 
 	if (argc != 6)
 	    op = gdpsp->gdps_clip_type;
-	else if (bu_sscanf(argv[5], "%d", &op) != 1 || op > gctXor)
+	else if (bu_sscanf(argv[5], "%d", &op) != 1 || op > gctIntersection)
 	    goto bad;
 
 	gpp = ged_clip_polygon((ClipType)op,

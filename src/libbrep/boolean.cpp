@@ -1949,18 +1949,16 @@ categorize_trimmed_faces(
 	    switch (face_location) {
 		case INSIDE_BREP:
 		    if (operation == BOOLEAN_INTERSECT ||
-			operation == BOOLEAN_XOR ||
 			(operation == BOOLEAN_DIFF && i >= face_count1))
 		    {
 			splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
 		    }
-		    if (operation == BOOLEAN_DIFF || operation == BOOLEAN_XOR) {
+		    if (operation == BOOLEAN_DIFF) {
 			splitted[j]->m_rev = true;
 		    }
 		    break;
 		case OUTSIDE_BREP:
 		    if (operation == BOOLEAN_UNION ||
-			operation == BOOLEAN_XOR ||
 			(operation == BOOLEAN_DIFF && i < face_count1))
 		    {
 			splitted[j]->m_belong_to_final = TrimmedFace::BELONG;

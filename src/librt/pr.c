@@ -330,9 +330,6 @@ rt_pr_tree(register const union tree *tp, int lvl)
 	case OP_SUBTRACT:
 	    bu_log("MINUS\n");
 	    break;
-	case OP_XOR:
-	    bu_log("XOR\n");
-	    break;
 	case OP_NOT:
 	    bu_log("NOT\n");
 	    break;
@@ -342,7 +339,6 @@ rt_pr_tree(register const union tree *tp, int lvl)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* BINARY type */
 	    rt_pr_tree(tp->tr_b.tb_left, lvl+1);
 	    rt_pr_tree(tp->tr_b.tb_right, lvl+1);
@@ -418,14 +414,6 @@ rt_pr_tree_vls(struct bu_vls *vls, register const union tree *tp)
 	    bu_vls_strcat(vls, " (");
 	    rt_pr_tree_vls(vls, tp->tr_b.tb_left);
 	    bu_vls_printf(vls, ") %c (", DB_OP_SUBTRACT);
-	    rt_pr_tree_vls(vls, tp->tr_b.tb_right);
-	    bu_vls_strcat(vls, ") ");
-	    break;
-	case OP_XOR:
-	    /* BINARY type */
-	    bu_vls_strcat(vls, " (");
-	    rt_pr_tree_vls(vls, tp->tr_b.tb_left);
-	    bu_vls_strcat(vls, ") ^ (");
 	    rt_pr_tree_vls(vls, tp->tr_b.tb_right);
 	    bu_vls_strcat(vls, ") ");
 	    break;
@@ -599,13 +587,6 @@ rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int
 	    bu_log("(");
 	    rt_pr_tree_val(tp->tr_b.tb_left,  partp, pr_name, lvl+1);
 	    bu_log(" %c ", DB_OP_SUBTRACT);
-	    rt_pr_tree_val(tp->tr_b.tb_right, partp, pr_name, lvl+1);
-	    bu_log(")");
-	    break;
-	case OP_XOR:
-	    bu_log("(");
-	    rt_pr_tree_val(tp->tr_b.tb_left,  partp, pr_name, lvl+1);
-	    bu_log(" XOR ");
 	    rt_pr_tree_val(tp->tr_b.tb_right, partp, pr_name, lvl+1);
 	    bu_log(")");
 	    break;

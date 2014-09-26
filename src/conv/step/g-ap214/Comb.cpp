@@ -102,7 +102,6 @@ _db_tree_get_child(union tree *tp) {
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    ret = _db_tree_get_child(tp->tr_b.tb_left);
 	    if (ret != TREE_NULL) return ret;
 	    return _db_tree_get_child(tp->tr_b.tb_right);

@@ -159,7 +159,7 @@ struct bview_data_line_state {
     point_t   *gdls_points;             /* in model coordinates */
 };
 
-typedef enum { gctUnion, gctDifference, gctIntersection, gctXor } ClipType;
+typedef enum { gctUnion, gctDifference, gctIntersection } ClipType;
 
 typedef struct {
     size_t    gpc_num_points;

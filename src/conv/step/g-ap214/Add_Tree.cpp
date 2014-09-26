@@ -132,7 +132,6 @@ conv_tree(struct directory **d, int depth, int UNUSED(parent_branch), struct dir
         case OP_UNION:
         case OP_INTERSECT:
         case OP_SUBTRACT:
-        case OP_XOR:
             /* convert right */
             ret = conv_tree(d, depth+1, 1, &right, &rightstep, t->tr_b.tb_right, sc);
 	    right_ret = ret;

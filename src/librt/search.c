@@ -182,7 +182,6 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    if (tp->tr_op == OP_UNION) bool_val = 2;
 	    if (tp->tr_op == OP_INTERSECT) bool_val = 3;
 	    if (tp->tr_op == OP_SUBTRACT) bool_val = 4;

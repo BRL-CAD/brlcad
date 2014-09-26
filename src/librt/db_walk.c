@@ -66,7 +66,6 @@ db_traverse_subtree(union tree *tp,
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    db_traverse_subtree(tp->tr_b.tb_left, traverse_func, dtp);
 	    db_traverse_subtree(tp->tr_b.tb_right, traverse_func, dtp);
 	    break;
@@ -185,7 +184,6 @@ db_functree_subtree(struct db_i *dbip,
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    db_functree_subtree(dbip, tp->tr_b.tb_left, comb_func, leaf_func, resp, client_data);
 	    db_functree_subtree(dbip, tp->tr_b.tb_right, comb_func, leaf_func, resp, client_data);
 	    break;

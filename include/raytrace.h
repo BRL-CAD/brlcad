@@ -1121,7 +1121,7 @@ struct combined_tree_state {
 #define OP_UNION	MKOP(2)		/**< @brief  Binary: L union R */
 #define OP_INTERSECT	MKOP(3)		/**< @brief  Binary: L intersect R */
 #define OP_SUBTRACT	MKOP(4)		/**< @brief  Binary: L subtract R */
-#define OP_XOR		MKOP(5)		/**< @brief  Binary: L xor R, not both*/
+/* 5 used to be XOR */
 #define OP_REGION	MKOP(6)		/**< @brief  Leaf: tr_stp -> combined_tree_state */
 #define OP_NOP		MKOP(7)		/**< @brief  Leaf with no effect */
 /* Internal to library routines */

@@ -70,7 +70,6 @@ rt_bound_tree(const union tree *tp, fastf_t *tree_min, fastf_t *tree_max)
 		   (void *)tp, tp->tr_op);
 	    return -1;
 
-	case OP_XOR:
 	case OP_UNION:
 	    /* BINARY type -- expand to contain both */
 	    if (rt_bound_tree(tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
@@ -286,7 +285,6 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 	    bu_log("rt_traverse_tree(%p): unknown op=x%x\n", (void *)tp, (tp->tr_op));
 	    return -1;
 
-	case OP_XOR:
 	case OP_UNION:
 	    /* BINARY type -- expand to contain both */
 	    if (rt_traverse_tree(rtip, tp->tr_b.tb_left, tree_min, tree_max) < 0 ||

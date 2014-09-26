@@ -252,7 +252,6 @@ pop_find_nodes(	union tree *tp)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    crossover_parent = &tp->tr_b.tb_left;
 	    n1 = pop_find_nodes(tp->tr_b.tb_left);
 	    if (n1 == crossover_node) {
@@ -378,7 +377,6 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* mutate CSG operation */
 	    if (mutate)
 		if (node_idx == crossover_node) {
@@ -455,8 +453,8 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 		crossover_op = crossover_point->tr_op;
 
-		if (crossover_op & (OP_UNION | OP_XOR | OP_SUBTRACT| OP_INTERSECT))
-		    crossover_op = (OP_UNION | OP_XOR | OP_SUBTRACT| OP_INTERSECT);
+		if (crossover_op & (OP_UNION | OP_SUBTRACT| OP_INTERSECT))
+		    crossover_op = (OP_UNION | OP_SUBTRACT| OP_INTERSECT);
 
 		crossover_node = db_count_tree_nodes(crossover_point, 0);
 		if (pop_find_nodes(parent2->tree) == crossover_node) {

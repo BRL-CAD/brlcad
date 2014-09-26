@@ -599,7 +599,6 @@ copy_v5_comb_tree(union tree *tree, int idx)
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
-	case OP_XOR:
 	    /* copy right */
 	    copy_v5_comb_tree(tree->tr_b.tb_right, idx);
 	case OP_NOT:

@@ -1250,7 +1250,6 @@ rt_find_path(struct db_i *dbip,
 	case OP_UNION:
 	case OP_SUBTRACT:
 	case OP_INTERSECT:
-	case OP_XOR:
 	    /* binary, process both subtrees */
 	    rt_find_path(dbip, tp->tr_b.tb_left, end, paths, curr_path, resp);
 	    (*curr_path)->fp_len = curr_path_index;
