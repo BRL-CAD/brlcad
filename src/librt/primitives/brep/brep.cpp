@@ -4871,19 +4871,23 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     brep2 = bip2->brep;
     brep_out = ON_Brep::New();
 
-    int ret;
     op_type operation_type;
-    if (BU_STR_EQUAL(operation, "u"))
-	operation_type = BOOLEAN_UNION;
-    else if (BU_STR_EQUAL(operation, "i"))
-	operation_type = BOOLEAN_INTERSECT;
-    else if (BU_STR_EQUAL(operation, "-"))
-	operation_type = BOOLEAN_DIFF;
-    else if (BU_STR_EQUAL(operation, "x"))
-	operation_type = BOOLEAN_XOR;
-    else
-	return -1;
+    db_op_t op = db_str2op(operation);
+    switch (op) {
+	case DB_OP_UNION:
+	    operation_type = BOOLEAN_UNION;
+	    break;
+	case DB_OP_SUBTRACT:
+	    operation_type = BOOLEAN_DIFF;
+	    break;
+	case DB_OP_INTERSECT:
+	    operation_type = BOOLEAN_INTERSECT;
+	    break;
+	default:
+	    return -1;
+    }
 
+    int ret;
     if ((ret = ON_Boolean(brep_out, brep1, brep2, operation_type)) < 0)
 	return ret;
 
