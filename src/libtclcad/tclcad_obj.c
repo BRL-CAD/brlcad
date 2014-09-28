@@ -6873,14 +6873,14 @@ to_mouse_brep_selection_append(struct ged *gedp,
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %d\n", screen_pt[X]);
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %f\n", screen_pt[X]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     screen_pt[Y] = strtol(argv[4], &end, 10);
     if (*end != '\0') {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %d\n", screen_pt[Y]);
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %f\n", screen_pt[Y]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -6981,14 +6981,14 @@ to_mouse_brep_selection_translate(struct ged *gedp,
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %d\n", screen_end[X]);
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %f\n", screen_end[X]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     screen_end[Y] = strtol(argv[4], &end, 10);
     if (*end != '\0') {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %d\n", screen_end[Y]);
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %f\n", screen_end[Y]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -7635,14 +7635,14 @@ to_mouse_joint_select(
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %d\n", screen_pt[X]);
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %f\n", screen_pt[X]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     screen_pt[Y] = strtol(argv[4], &end, 10);
     if (*end != '\0') {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %d\n", screen_pt[Y]);
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %f\n", screen_pt[Y]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -7741,14 +7741,14 @@ to_mouse_joint_selection_translate(
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %d\n", screen_end[X]);
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %f\n", screen_end[X]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     screen_end[Y] = strtol(argv[4], &end, 10);
     if (*end != '\0') {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %d\n", screen_end[Y]);
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %f\n", screen_end[Y]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -10643,7 +10643,7 @@ to_new_view(struct ged *gedp,
     bu_vls_init(&new_gdvp->gdv_name);
     bu_vls_init(&new_gdvp->gdv_callback);
     bu_vls_init(&new_gdvp->gdv_edit_motion_delta_callback);
-    bu_vls_printf(&new_gdvp->gdv_name, argv[name_index]);
+    bu_vls_printf(&new_gdvp->gdv_name, "%s", argv[name_index]);
     ged_view_init(new_gdvp->gdv_view);
     BU_LIST_INSERT(&current_top->to_gop->go_head_views.l, &new_gdvp->l);
 
@@ -10677,7 +10677,7 @@ to_new_view(struct ged *gedp,
 			    (ClientData)new_gdvp,
 			    to_deleteViewProc);
 
-    bu_vls_printf(gedp->ged_result_str, bu_vls_addr(&new_gdvp->gdv_name));
+    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&new_gdvp->gdv_name));
     return GED_OK;
 }
 
@@ -13506,7 +13506,7 @@ to_more_args_func(struct ged *gedp,
 	    }
 
 	    bu_vls_trunc(&temp, 0);
-	    bu_vls_printf(&temp, Tcl_GetStringResult(current_top->to_interp));
+	    bu_vls_printf(&temp, "%s", Tcl_GetStringResult(current_top->to_interp));
 	    Tcl_ResetResult(current_top->to_interp);
 	} else {
 	    bu_log("\r%s", bu_vls_addr(gedp->ged_result_str));
