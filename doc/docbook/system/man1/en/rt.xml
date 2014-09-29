@@ -53,7 +53,26 @@
     </para>
 
     <para>The following options are recognized:</para>
+
+      <varlistentry>
+	<term><option>-. #</option></term>
+	<listitem>
+	  <para>
+            selects the factor used in NUgrid algorithm. Default is 1.5 .
+	  </para>
+	</listitem>
+      </varlistentry>
+
     <variablelist remap="TP">
+      <varlistentry>
+	<term><option>-, #</option></term>
+	<listitem>
+	  <para>
+           selects which space partitioning algorithm to use
+	  </para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><option>-a #</option></term>
 	<listitem>
