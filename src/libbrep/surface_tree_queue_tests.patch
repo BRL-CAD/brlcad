@@ -699,7 +699,7 @@ Index: src/libbrep/libbrep_surfacetree.cpp
 +    std::vector<int> *q3f = NULL;
 +    std::vector<int> *q4f = NULL;
 +
-+    // Add the midpoint U and V coordiates, which will be the
++    // Add the midpoint U and V coordinates, which will be the
 +    // only UV values not already present in the double array
 +    uv_coords.push_back(u_mid);
 +    int umid_id = uv_coords.size() - 1;
@@ -765,7 +765,7 @@ Index: src/libbrep/libbrep_surfacetree.cpp
 +    std::vector<int> *q1f = NULL;
 +    std::vector<int> *q2f = NULL;
 +
-+    // Add the midpoint U coordiate, which will be the
++    // Add the midpoint U coordinate, which will be the
 +    // only UV value not already present in the double array
 +    uv_coords.push_back(u_mid);
 +    int umid_id = uv_coords.size() - 1;
@@ -808,7 +808,7 @@ Index: src/libbrep/libbrep_surfacetree.cpp
 +    std::vector<int> *q1f = NULL;
 +    std::vector<int> *q2f = NULL;
 +
-+    // Add the midpoint V coordiate, which will be the
++    // Add the midpoint V coordinate, which will be the
 +    // only UV value not already present in the double array
 +    uv_coords.push_back(v_mid);
 +    int vmid_id = uv_coords.size() - 1;
@@ -975,7 +975,7 @@ Index: src/libbrep/libbrep_surfacetree.cpp
 +
 +
 +	    // Pull the NURBS surface for this patch and test the
-+	    // "unrolled" width and height - too distored, and we will need to split in just U
++	    // "unrolled" width and height - too distorted, and we will need to split in just U
 +	    // or just V to try and keep reasonably close to "square" patches.
 +	    if (split_success)
 +		split += ON_Surface_Width_vs_Height(sub_surface, 5.0, &u_split, &v_split);
@@ -1429,7 +1429,7 @@ Index: src/libbrep/libbrep_surfacetree.h
 +//                intersect this node, and 3 means a test must
 +//                be made to determine if a particular point within
 +//                this patch is trimmed or untrimmed.  Matters only
-+//                for leaf nodes - those with childeren will ask them.
++//                for leaf nodes - those with children will ask them.
 +//  index + 11 :  The index of a temporary child node created
 +//                using this node as a starting point.  The default
 +//                value is zero, indicating no such node exists.
@@ -2044,7 +2044,7 @@ Index: src/libbrep/CMakeLists.txt
 +  libbrep_surfacetree.cpp
 +  libbrep_util.cpp
    )
- 
+
  set(libbrep_ignored_files
 @@ -34,6 +37,9 @@
    opennurbs_fit.h
@@ -2055,7 +2055,7 @@ Index: src/libbrep/CMakeLists.txt
 +  libbrep_util.h
    )
  CMAKEFILES(${libbrep_ignored_files})
- 
+
 Index: src/librt/test_surfacetree.cpp
 ===================================================================
 --- src/librt/test_surfacetree.cpp	(revision 0)
@@ -2154,6 +2154,6 @@ Index: src/librt/CMakeLists.txt
  #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 -#BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 +BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
- 
+
  add_subdirectory(tests)
- 
+

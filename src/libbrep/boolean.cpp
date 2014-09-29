@@ -1385,7 +1385,7 @@ get_loop_points(
 //
 // Margalit, Avraham and Gary D. Knott. 1989. "An Algorithm for
 // Computing the Union, Intersection or Difference of two Polygons."
-// Computers & Graphics 13:167-183. 
+// Computers & Graphics 13:167-183.
 //
 // gvu.gatech.edu/people/official/jarek/graphics/papers/04PolygonBooleansMargalit.pdf
 std::list<ON_SimpleArray<ON_Curve *> >
@@ -1930,7 +1930,7 @@ loop_is_degenerate(const ON_SimpleArray<ON_Curve *> &loop)
 	if (events[i].m_type != ON_X_EVENT::ccx_point) {
 	    return true;
 	}
-	
+
 	ON_2dPoint ipt = events[i].m_A[0];
 	if (!ON_NearZero(ipt.DistanceTo(joint), INTERSECTION_TOL) &&
 	    !ON_NearZero(ipt.DistanceTo(mid), INTERSECTION_TOL)) {

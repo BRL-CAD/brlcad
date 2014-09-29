@@ -227,7 +227,7 @@ sub_curve(const ON_Curve *in, double a, double b)
 
     ON_Curve *min_to_a = NULL, *a_to_max = NULL;
     ON_Curve *a_to_b = NULL, *b_to_max = NULL;
-    
+
     if (a < dom.m_t[0] || b > dom.m_t[1]) {
 	throw InvalidInterval("sub_curve() interval outside curve domain\n");
     }
@@ -262,7 +262,7 @@ sub_curve(const ON_Curve *in, double a, double b)
 	}
 	return a_to_b;
     }
-    
+
     // a > dom.m_t[0] && b < dom.m_t[1]
     in->Split(a, min_to_a, a_to_max);
     delete min_to_a;
