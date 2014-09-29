@@ -54,6 +54,7 @@
 
     <para>The following options are recognized:</para>
 
+    <variablelist remap="TP">
       <varlistentry>
 	<term><option>-. #</option></term>
 	<listitem>
@@ -63,7 +64,6 @@
 	</listitem>
       </varlistentry>
 
-    <variablelist remap="TP">
       <varlistentry>
 	<term><option>-, #</option></term>
 	<listitem>
