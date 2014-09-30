@@ -511,7 +511,7 @@
       <varlistentry>
 	<term><option>-Q x,y</option></term>
 	<listitem>
-	  <para>queries pixel ray with debugging.  The option is used to
+	  <para>selects pixel ray for query with debugging.  The option is used to
 	  specify a single pixel for which the debug flags should be turned on.
 	  The computation of all other pixels will be performed without debugging.
 	  This is similar to the -b option, except that it does not limit rendering
@@ -586,7 +586,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-!#</option></term>
+	<term><option>-! #</option></term>
 	<listitem>
 	  <para>turns on the
 	  <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
@@ -601,6 +601,14 @@
 	  or
 	  <citerefentry><refentrytitle>gdb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  for debugging.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-+ #</option></term>
+	<listitem>
+	  <para>specifies (setting argument to "t") that output is NOT binary (default is that it is).
+          <option>-+</option> is otherwise not implemented.
+	  </para>
 	</listitem>
       </varlistentry>
     </variablelist>
