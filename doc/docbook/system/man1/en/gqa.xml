@@ -82,7 +82,7 @@
 
     <variablelist>
       <varlistentry>
-	<term><emphasis>An integer index value.</emphasis></term>
+	<term><emphasis>An integer index value</emphasis>.</term>
 	<listitem>
 	  <para>
 	    This is the value to which the <emphasis remap="I">GIFTmater</emphasis> attribute
@@ -91,7 +91,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><emphasis>A floating point density value.</emphasis></term>
+	<term><emphasis>A floating point density value</emphasis>.</term>
 	<listitem>
 	  <para>
 	    This is the density for the material, and is specified in
@@ -100,7 +100,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><emphasis>A name string.</emphasis></term>
+	<term><emphasis>A name string</emphasis>.</term>
 	<listitem>
 	  <para>
 	  This is a name or description the material.
@@ -295,7 +295,7 @@
       <varlistentry>
 	<term><option>-a </option><emphasis remap="I">azimuth_deg</emphasis></term>
 	<listitem>
-	  <para><emphasis remap="B" role="bold">Not Implemented.</emphasis></para>
+	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis>.</para>
 	  <para>
 	    Sets a rotation (in degrees) of the coordinate system by a given amount about
 	    the Z axis. The default is 0.  See also: <option>-e</option>
@@ -305,7 +305,7 @@
       <varlistentry>
 	<term><option>-e </option><emphasis remap="I">elevation_deg</emphasis></term>
 	<listitem>
-	  <para><emphasis remap="B" role="bold">Not Implemented.</emphasis></para>
+	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis>.</para>
 	  <para>
 	    Sets a rotation (in degrees) of the coordinate system by a given elevation
 	    from the XY plane (rotation about X axis?). The default is 0.
@@ -365,7 +365,7 @@
       <varlistentry>
 	<term><option>-G</option></term>
 	<listitem>
-	  <para><emphasis remap="B" role="bold">Not Implemented.</emphasis></para>
+	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis>.</para>
 	  <para>
 	    Specifies that the program should create new
 	    <emphasis remap="I">assembly combinations</emphasis> in the geometry database to
