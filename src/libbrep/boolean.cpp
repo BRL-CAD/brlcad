@@ -858,18 +858,18 @@ public:
     } location;
 
     static CurvePoint::Location
-    PointCurveLocation(ON_2dPoint pt, ON_Curve *curve);
+    PointLoopLocation(ON_2dPoint pt, const ON_SimpleArray<ON_Curve *> &loop);
 
     CurvePoint(
 	int loop,
 	int li,
-	double curve1_t,
-	ON_Curve *curve1,
-	ON_Curve *curve2)
-	: source_loop(loop), loop_index(li), curve_t(curve1_t)
+	double pt_t,
+	ON_Curve *curve,
+	const ON_SimpleArray<ON_Curve *> &other_loop)
+	: source_loop(loop), loop_index(li), curve_t(pt_t)
     {
-	pt = curve1->PointAt(curve1_t);
-	location = PointCurveLocation(pt, curve2);
+	pt = curve->PointAt(curve_t);
+	location = PointLoopLocation(pt, other_loop);
     }
 
     CurvePoint(
@@ -929,11 +929,10 @@ public:
 };
 
 CurvePoint::Location
-CurvePoint::PointCurveLocation(ON_2dPoint pt, ON_Curve *curve)
+CurvePoint::PointLoopLocation(
+    ON_2dPoint pt,
+    const ON_SimpleArray<ON_Curve *> &loop)
 {
-    ON_SimpleArray<ON_Curve *> loop;
-    loop.Append(curve);
-
     if (is_point_on_loop(pt, loop)) {
 	return CurvePoint::BOUNDARY;
     }
@@ -1104,8 +1103,6 @@ make_segments(
     ON_SimpleArray<ON_Curve *> &loop1,
     ON_SimpleArray<ON_Curve *> &loop2)
 {
-    ON_Curve *loop2_curve = get_loop_curve(loop2);
-
     std::multiset<CurveSegment> out;
 
     std::multiset<CurvePoint>::iterator first = curve1_points.begin();
@@ -1134,7 +1131,7 @@ make_segments(
 		    ON_Interval(from.curve_t, end_t).Mid());
 
 	    CurvePoint::Location midpt_location =
-		CurvePoint::PointCurveLocation(seg_midpt, loop2_curve);
+		CurvePoint::PointLoopLocation(seg_midpt, loop2);
 
 	    if (midpt_location == CurvePoint::INSIDE) {
 		new_seg.location = CurveSegment::INSIDE;
@@ -1152,7 +1149,6 @@ make_segments(
 	}
 	out.insert(new_seg);
     }
-    delete loop2_curve;
     return out;
 }
 
@@ -1368,18 +1364,16 @@ get_loop_points(
     ON_SimpleArray<ON_Curve *> loop2)
 {
     std::multiset<CurvePoint> out;
-    ON_Curve *loop2_curve = get_loop_curve(loop2);
 
     ON_Curve *loop1_seg = loop1[0];
     out.insert(CurvePoint(source_loop, 0, loop1_seg->Domain().m_t[0], loop1_seg,
-		loop2_curve));
+		loop2));
 
     for (int i = 0; i < loop1.Count(); ++i) {
 	loop1_seg = loop1[i];
 	out.insert(CurvePoint(source_loop, i, loop1_seg->Domain().m_t[1],
-		    loop1_seg, loop2_curve));
+		    loop1_seg, loop2));
     }
-    delete loop2_curve;
 
     return out;
 }
