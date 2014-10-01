@@ -327,22 +327,17 @@ DebugPlot::Plot3DCurveFrom2D(
     BU_LIST_INIT(&vhead);
 
     ON_Interval crv_dom = crv->Domain();
-    ON_Interval surf_udom = surf->Domain(0);
-    ON_Interval surf_vdom = surf->Domain(1);
 
-    ON_3dPoint p, uv, tmp_uv;
-#define UV_AT_T(_t) \
-    (tmp_uv = crv->PointAt(crv_dom.ParameterAt((_t))), \
-    ON_3dPoint(surf_udom.ParameterAt(tmp_uv.x), surf_vdom.ParameterAt(tmp_uv.y), 0.0))
+    ON_3dPoint p, uv;
 
     // Insert first point.
     point_t pt1, first_pt, last_pt, prev_pt;
     ON_3dVector normal;
-    uv = UV_AT_T(0.0);
+    uv = crv->PointAt(crv_dom.ParameterAt(0.0));
     surf->EvNormal(uv.x, uv.y, p, normal);
     VMOVE(first_pt, p);
 
-    uv = UV_AT_T(1.0);
+    uv = crv->PointAt(crv_dom.ParameterAt(1.0));
     surf->EvNormal(uv.x, uv.y, p, normal);
     VMOVE(last_pt, p);
 
@@ -374,7 +369,7 @@ DebugPlot::Plot3DCurveFrom2D(
     while (t < 1.0) {
 	t = find_next_t(crv, t, 0.1, BN_TOL_DIST * 100);
 
-	uv = UV_AT_T(t);
+	uv = crv->PointAt(crv_dom.ParameterAt(t));
 	surf->EvNormal(uv.x, uv.y, p, normal);
 	VMOVE(prev_pt, pt1);
 	VMOVE(pt1, p);
