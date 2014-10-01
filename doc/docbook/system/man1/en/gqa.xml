@@ -325,7 +325,8 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-g </option>[<emphasis remap="I">initial_grid_spacing</emphasis>-]<emphasis remap="I">grid_spacing_limit</emphasis></term>
+	<term><option>-g </option>[<emphasis remap="I">initial_grid_spacing</emphasis>-]<emphasis remap="I">grid_spacing_limit</emphasis> or
+	                          [<emphasis remap="I">initial_grid_spacing</emphasis>,]<emphasis remap="I">grid_spacing_limit</emphasis></term>
 	<listitem>
 	  <para>
 	    Specifies a limit on how far the grid can be refined and optionally the initial spacing
