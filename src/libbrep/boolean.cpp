@@ -446,18 +446,40 @@ point_loop_location(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop
     // out must be outside the closed region (and the bbox).
     ON_2dPoint out = pt + ON_2dVector(bbox.Diagonal());
     ON_LineCurve linecurve(pt, out);
+    ON_3dVector line_dir = linecurve.m_line.Direction();
+
+    ON_SimpleArray<ON_X_EVENT> tmp_x;
+    for (int i = 0; i < loop.Count(); ++i) {
+	ON_SimpleArray<ON_X_EVENT> li_x;
+	ON_Intersect(&linecurve, loop[i], li_x, INTERSECTION_TOL);
+
+	for (int j = 0; j < li_x.Count(); ++j) {
+	    // ignore tangent and overlap intersections
+	    if (li_x[j].m_type != ON_X_EVENT::ccx_overlap &&
+		!loop[i]->TangentAt(li_x[j].m_b[0]).IsParallelTo(line_dir, ANGLE_TOL))
+	    {
+		tmp_x.Append(li_x[j]);
+	    }
+	}
+    }
     ON_SimpleArray<ON_X_EVENT> x_event;
-    ON_Intersect(&linecurve, &polycurve, x_event, INTERSECTION_TOL);
-    int count = x_event.Count();
-    for (int i = 0; i < x_event.Count(); i++) {
-	// Find tangent intersections.
-	// What should we do if it's ccx_overlap?
-	if (polycurve.TangentAt(x_event[i].m_b[0]).IsParallelTo(linecurve.m_line.Direction(), ANGLE_TOL)) {
-	    count++;
+    for (int i = 0; i < tmp_x.Count(); i++) {
+	int j;
+	for (j = 0; j < x_event.Count(); j++) {
+	    if (tmp_x[i].m_A[0].DistanceTo(x_event[j].m_A[0]) < INTERSECTION_TOL &&
+		tmp_x[i].m_A[1].DistanceTo(x_event[j].m_A[1]) < INTERSECTION_TOL &&
+		tmp_x[i].m_B[0].DistanceTo(x_event[j].m_B[0]) < INTERSECTION_TOL &&
+		tmp_x[i].m_B[1].DistanceTo(x_event[j].m_B[1]) < INTERSECTION_TOL)
+	    {
+		break;
+	    }
+	}
+	if (j == x_event.Count()) {
+	    x_event.Append(tmp_x[i]);
 	}
     }
 
-    return (count % 2) ? INSIDE_OR_ON_LOOP : OUTSIDE_OR_ON_LOOP;
+    return (x_event.Count() % 2) ? INSIDE_OR_ON_LOOP : OUTSIDE_OR_ON_LOOP;
 }
 
 
@@ -471,8 +493,14 @@ is_point_on_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 	throw InvalidGeometry("is_point_on_loop() given invalid loop\n");
     }
 
-    ON_ClassArray<ON_PX_EVENT> px_event;
-    return ON_Intersect(ON_3dPoint(pt), polycurve, px_event, INTERSECTION_TOL) ? 1 : 0;
+    ON_3dPoint pt3d(pt);
+    for (int i = 0; i < loop.Count(); ++i) {
+	ON_ClassArray<ON_PX_EVENT> px_event;
+	if (ON_Intersect(pt3d, *loop[i], px_event, INTERSECTION_TOL)) {
+	    return true;
+	}
+    }
+    return false;
 }
 
 HIDDEN bool
