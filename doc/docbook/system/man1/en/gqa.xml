@@ -227,7 +227,7 @@
 	  </para>
 	  <para>
 	    Only those reports requested will be provided. The default is
-	    <option>-AA</option> to produce all reports.
+	    <option>-A A</option>, to produce all reports.
 	  </para>
 
 	  <para>
@@ -295,7 +295,7 @@
       <varlistentry>
 	<term><option>-a </option><emphasis remap="I">azimuth_deg</emphasis></term>
 	<listitem>
-	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis>.</para>
+	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis></para>
 	  <para>
 	    Sets a rotation (in degrees) of the coordinate system by a given amount about
 	    the Z axis. The default is 0.  See also: <option>-e</option>
@@ -305,7 +305,7 @@
       <varlistentry>
 	<term><option>-e </option><emphasis remap="I">elevation_deg</emphasis></term>
 	<listitem>
-	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis>.</para>
+	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis></para>
 	  <para>
 	    Sets a rotation (in degrees) of the coordinate system by a given elevation
 	    from the XY plane (rotation about X axis?). The default is 0.
@@ -325,12 +325,12 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-g </option><emphasis remap="I">[initial_grid_spacing-]grid_spacing_limit</emphasis></term>
+	<term><option>-g </option>[<emphasis remap="I">initial_grid_spacing</emphasis>-]<emphasis remap="I">grid_spacing_limit</emphasis></term>
 	<listitem>
 	  <para>
 	    Specifies a limit on how far the grid can be refined and optionally the initial spacing
 	    between rays in the grids. The first value (if present) indicates the initial spacing
-	    between grid rays.  The mandatory argument, "<emphasis remap="I">grid_spacing_limit</emphasis>,"
+	    between grid rays.  The mandatory argument, <emphasis remap="I">grid_spacing_limit</emphasis>,
 	    indicates a lower bound on how fine the grid spacing may get before computation is
 	    terminated.  In general, the <emphasis remap="I">initial_grid_spacing</emphasis> value
 	    should be an integer power of the <emphasis remap="I">grid_spacing_limit</emphasis>.  So
@@ -365,7 +365,7 @@
       <varlistentry>
 	<term><option>-G</option></term>
 	<listitem>
-	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis>.</para>
+	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis></para>
 	  <para>
 	    Specifies that the program should create new
 	    <emphasis remap="I">assembly combinations</emphasis> in the geometry database to
