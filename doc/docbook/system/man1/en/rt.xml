@@ -168,7 +168,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-h density,r,g,b</option></term>
+	<term><option>-m density,r,g,b</option></term>
 	<listitem>
 	  <para>enables an exponential shading of the void between the eye and the
 	  first hit location.  This allows a cheap simulation of atmospheric haze
@@ -182,7 +182,7 @@
 	  <para>The color values are optional.  If not specified, they will have the passable
 	  values 0.8 .9 .99 .</para>
 
-	  <para>Example usage: -h '2.5e-8,.75,.95,.99'</para>
+	  <para>Example usage: -m '2.5e-8,.75,.95,.99'</para>
 	</listitem>
       </varlistentry>
 
