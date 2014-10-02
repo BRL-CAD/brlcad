@@ -550,7 +550,7 @@
 	<term><option>-W </option><emphasis remap="I">weight_tolerance[units]</emphasis></term>
 	<listitem>
 	  <para>
-	    This is like the volume tolerance, <option>-T</option>, but is applied to the weight
+	    This is like the volume tolerance, <option>-V</option>, but is applied to the weight
 	    computation results, not the volume computation results.
 	  </para>
 	  <para>
