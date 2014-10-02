@@ -1101,7 +1101,7 @@ polyhbld(void)
 	cp = nxt_spc(cp);		/* skip the space */
 
 	fp->npts = (char)atoi(cp);
-	if (fp->npts > pg->max_npts) pg->max_npts = fp->npts;
+	CLAMP(pg->max_npts, fp->npts, pg->npoly * 3);
 
 	for (i = 0; i < 5*3; i++) {
 	    cp = nxt_spc(cp);
