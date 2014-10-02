@@ -1608,7 +1608,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 /**
  * clamp a value to a low/high number.
  */
-#define CLAMP(_v, _l, _h) V_MIN((_v), (_l)); else V_MAX((_v), (_h))
+#define CLAMP(_v, _l, _h) V_MAX((_v), (_l)); else V_MIN((_v), (_h))
 
 
 /**
