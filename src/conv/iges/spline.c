@@ -129,8 +129,7 @@ spline(int entityno, struct face_g_snurb **b_patch)
 	    if (point_size == 4) {
 		Readdbl(&scan, "");
 		(*b_patch)->ctl_points[count*4 + 3] = scan; /* double to fastf_t */
-		if ((*b_patch)->ctl_points[count*4 + 3] > max_wt)
-		    max_wt = (*b_patch)->ctl_points[count*4 + 3];
+		V_MAX(max_wt, (*b_patch)->ctl_points[count*4 + 3]);
 	    } else {
 		Readdbl(&max_wt, "");
 	    }

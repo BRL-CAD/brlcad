@@ -330,14 +330,8 @@ Assign_vu_geom(struct vertexuse *vu, fastf_t u, fastf_t v, struct face_g_snurb *
 	       srf->u.knots[0], srf->v.knots[0],
 	       srf->u.knots[srf->u.k_size-1], srf->v.knots[srf->v.k_size-1]);
 
-	if (u < srf->u.knots[0])
-	    u = srf->u.knots[0];
-	if (v < srf->v.knots[0])
-	    v = srf->v.knots[0];
-	if (u > srf->u.knots[srf->u.k_size-1])
-	    u = srf->u.knots[srf->u.k_size-1];
-	if (v > srf->v.knots[srf->v.k_size-1])
-	    v = srf->v.knots[srf->v.k_size-1];
+	CLAMP(u, srf->u.knots[0], srf->u.knots[srf->u.k_size-1]);
+	CLAMP(v, srf->v.knots[0], srf->v.knots[srf->v.k_size-1]);
 
 	moved = 1;
     }
