@@ -351,11 +351,6 @@
 	    <emphasis remap="B" role="bold">10 in.</emphasis>  If units are not provided, millimeters
 	    are presumed to be the units.
 	  </para>
-	</listitem>
-      </varlistentry>
-    </variablelist>
-
-
     <para>
       The default values are 50.0 mm and 0.5 mm, which is equivalent to specifying:
       <option>-g 50.0mm-0.5mm</option> or <option>-g 50.0mm,0.5mm</option>
@@ -369,6 +364,9 @@
       chosen for the initial values.  This would result in testing 16, 8, 4, 2, 1
       grid spacing values.
     </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
 
     <variablelist remap="TP">
       <varlistentry>
@@ -411,14 +409,13 @@
 	    rather per-analysis. So, for example, it is accepted that a thin object might not be hit
 	    at all from one view, but might be hit when it is shot from other views.
 	  </para>
-	</listitem>
-      </varlistentry>
-    </variablelist>
-
     <para>
       The default is 1.  Hence, each region must be intersected by a ray at least once during
       the analysis.
     </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
     <variablelist remap="TP">
       <varlistentry>
 	<term><option>-N </option><emphasis remap="I">num_views</emphasis></term>
@@ -510,12 +507,12 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-u </option><emphasis remap="I">distance,volume,weight</emphasis></term>
+	<term><option>-u </option><emphasis remap="I">distance_units,volume_units,weight_units</emphasis></term>
 	<listitem>
 	  <para>
 	    Specify the units used when reporting values.  Values must be comma delimited and provided
-	    in the order <emphasis remap="I">distance</emphasis>,<emphasis remap="I">volume</emphasis>,
-	    <emphasis remap="I">weight</emphasis>.  For example: <option>-u "cm,cu ft,kg"</option>
+	    in the order <emphasis remap="I">distance_units</emphasis>,<emphasis remap="I">volume_units</emphasis>,
+	    <emphasis remap="I">weight_units</emphasis>.  For example: <option>-u "cm,cu ft,kg"</option>
 	    or <option>-u ,,kg</option> (The latter example sets only the weight units.)
 	    Note that unit values with spaces in their names such as <emphasis remap="I">cu ft</emphasis>
 	    must be contained in quotes for the shell to keep the values together.
