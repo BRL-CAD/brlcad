@@ -110,12 +110,12 @@ static FILE *plot_adjair;
 static FILE *plot_gaps;
 static FILE *plot_expair;
 
-static int overlap_color[3] = { 255, 255, 0 };	 /* yellow */
+static int overlap_color[3] = { 255, 255, 0 };	/* yellow */
 static int gap_color[3] = { 128, 192, 255 };    /* cyan */
 static int adjAir_color[3] = { 128, 255, 192 }; /* pale green */
 static int expAir_color[3] = { 255, 128, 255 }; /* magenta */
 
-static int debug;
+static int debug = 0;
 #define DLOG if (debug) bu_vls_printf
 
 /* Some defines for re-using the values from the application structure

@@ -314,6 +314,14 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><option>-d</option></term>
+	<listitem>
+	  <para>
+            Enables debugging (off by default).
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>-f </option><emphasis remap="I">filename</emphasis></term>
 	<listitem>
 	  <para>
