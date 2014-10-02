@@ -1276,7 +1276,8 @@ process_solid_entities_code(int code)
 	case 23:
 	case 33:
 	    vert_no = code % 10;
-	    if (vert_no > last_vert_no) last_vert_no = vert_no;
+	    V_MAX(last_vert_no, vert_no);
+
 	    coord = code / 10 - 1;
 	    solid_pt[vert_no][coord] = atof(line) * units_conv[units] * scale_factor;
 	    if (verbose) {
