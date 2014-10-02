@@ -61,6 +61,15 @@ DebugPlot::DebugPlot(const char *basename) :
     BU_LIST_INIT(&vlist_free_list);
 }
 
+DebugPlot::~DebugPlot()
+{
+    struct bn_vlist *vp;
+    while (BU_LIST_WHILE(vp, bn_vlist, &vlist_free_list)) {
+	BU_LIST_DEQUEUE(&(vp->l));
+	bu_free((char *)vp, "bn_vlist");
+    }
+}
+
 int
 DebugPlot::SurfacePairs(void)
 {
@@ -201,6 +210,7 @@ DebugPlot::WriteLog()
 		split_face_innerloop_curves[i]);
     }
     fclose(fp);
+    BN_FREE_VLIST(&vlist_free_list, &vhead);
 }
 
 HIDDEN void
@@ -311,7 +321,7 @@ DebugPlot::Plot3DCurve(
 
     if (!vlist) {
 	write_plot_to_file(filename, vhead, color);
-	bu_list_free(vhead);
+	BN_FREE_VLIST(&vlist_free_list, vhead);
     }
 }
 
@@ -428,6 +438,7 @@ DebugPlot::Plot3DCurveFrom2D(
     }
 
     write_plot_to_file(filename, &vhead, color);
+    BN_FREE_VLIST(&vlist_free_list, &vhead);
 }
 
 void
@@ -450,6 +461,8 @@ DebugPlot::PlotBoundaryIsocurves(
 	    surf_bknots.Append(surf_knots[i]);
 	}
     }
+    delete[] surf_knots;
+
     if (surf.IsClosed(surf_dir)) {
 	surf_bknots.Remove();
     }
@@ -457,6 +470,7 @@ DebugPlot::PlotBoundaryIsocurves(
     for (int i = 0; i < surf_bknots.Count(); i++) {
 	ON_Curve *surf_boundary_iso = surf.IsoCurve(knot_dir, surf_bknots[i]);
 	Plot3DCurve(surf_boundary_iso, NULL, NULL, vlist);
+	delete surf_boundary_iso;
     }
 }
 
@@ -473,7 +487,8 @@ DebugPlot::PlotSurface(
     PlotBoundaryIsocurves(&vhead, surf, 1);
 
     write_plot_to_file(filename, &vhead, color);
-    return;
+
+    BN_FREE_VLIST(&vlist_free_list, &vhead);
 }
 
 

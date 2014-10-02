@@ -40,6 +40,8 @@ public:
     // prefix all dplot output files with 'basename'
     DebugPlot(const char *basename);
 
+    ~DebugPlot();
+
     // write plot files for all surfaces of two breps
     void Surfaces(const ON_Brep *brep1, const ON_Brep *brep2);
 
