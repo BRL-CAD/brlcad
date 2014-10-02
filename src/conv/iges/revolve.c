@@ -169,10 +169,8 @@ revolve(int entityno)
 
 	/* Height along axis of rotation */
 	h1 = VDOT(v1, adir);
-	if (h1 < hmin)
-	    hmin = h1;
-	if (h1 > hmax)
-	    hmax = h1;
+	V_MIN(hmin, h1);
+	V_MAX(hmax, h1);
 
 	/* Radius at base is top radius from previous TRC */
 	trcptr->r1 = r2;
@@ -181,11 +179,10 @@ revolve(int entityno)
 	VSUB2(v1, ptr->next->pt, pt);
 	VCROSS(tmp, v1, adir);
 	trcptr->r2 = MAGNITUDE(tmp);
-	if (trcptr->r2 < TOL)
-	    trcptr->r2 = TOL;
+	V_MAX(trcptr->r2, TOL);
+
 	r2 = trcptr->r2;
-	if (r2 > rmax)
-	    rmax = r2;
+	V_MIN(rmax, r2);
 
 	/* Calculate height of TRC */
 	VSUB2(v1, ptr->next->pt, pt);
