@@ -37,12 +37,7 @@
 
 /* Error incurred while converting from double to float and back.	*/
 #define F2D_EPSILON 1.0e-1
-#define FABS(a)		((a) > 0 ? (a) : -(a))
-#define SamePoint(p, q, e) \
-    (FABS((p)[X]-(q)[X]) < (e) \
-     &&	FABS((p)[Y]-(q)[Y]) < (e) \
-     &&	FABS((p)[Z]-(q)[Z]) < (e) \
-	)
+
 #define NewPoint(p) \
     (((p) = (PtList *) malloc(sizeof(PtList))) != PTLIST_NULL)
 #define NewOctree(p) \
@@ -176,13 +171,11 @@ add_Region_Octree(Octree *parentp, fastf_t *pt, Trie *triep, int temp, int level
 			    return OCTREE_NULL;
 		    } else
 			if (newp->o_points->c_next->c_next == PTLIST_NULL
-			    &&	SamePoint(newp->o_points->c_next->c_point,
-					  pt,
-					  F2D_EPSILON
-				)
-			    ) /* Only point in leaf node is this point.	*/
+			    && VNEAR_EQUAL(newp->o_points->c_next->c_point, pt, F2D_EPSILON))
+			{
+			    /* Only point in leaf node is this point.	*/
 			    newp->o_temp = temp;
-			else {
+			} else {
 			    /* Temperature collision, must subdivide.	*/
 			    if (! subdivide_Octree(newp, level))
 				return OCTREE_NULL;
@@ -197,7 +190,7 @@ int
 append_PtList(fastf_t *pt, PtList *ptlist)
 {
     for (; ptlist->c_next != PTLIST_NULL; ptlist = ptlist->c_next) {
-	if (SamePoint(ptlist->c_next->c_point, pt, F2D_EPSILON)) {
+	if (VNEAR_EQUAL(ptlist->c_next->c_point, pt, F2D_EPSILON)) {
 	    /* Point already in list.		*/
 	    return 1;
 	}
