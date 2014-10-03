@@ -42,11 +42,6 @@
 #define DEBUG_GRID	0
 #define DEBUG_SHOT	1
 
-#define AproxEq(a, b, e)	(fabs((a)-(b)) < (e))
-#define AproxEqVec(A, B, e) (AproxEq((A)[X], (B)[X], (e)) && \
-			     AproxEq((A)[Y], (B)[Y], (e)) &&	\
-			     AproxEq((A)[Z], (B)[Z], (e)))
-
 /* local communication with multitasking process */
 static int currshot;	/* current shot index */
 static int lastshot;	/* final shot index */
@@ -1560,8 +1555,8 @@ spallVec(fastf_t *dvec, fastf_t *s_rdir, fastf_t phi, fastf_t gammaval)
     fastf_t			fvec[3];
     fastf_t			evec[3];
 
-    if (AproxEqVec(dvec, zaxis, VEC_TOL)
-	||	AproxEqVec(dvec, negzaxis, VEC_TOL)
+    if (VNEAR_EQUAL(dvec, zaxis, VEC_TOL)
+	||	VNEAR_EQUAL(dvec, negzaxis, VEC_TOL)
 	) {
 	VMOVE(evec, xaxis);
     } else {
