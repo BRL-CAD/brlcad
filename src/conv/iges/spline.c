@@ -96,8 +96,7 @@ spline(int entityno, struct face_g_snurb **b_patch)
     for (i = 0; i <= n1+2*m1; i++) {
 	Readdbl(&scan, "");
 	(*b_patch)->u.knots[i] = scan; /* double to fastf_t */
-	if ((*b_patch)->u.knots[i] < min_knot)
-	    min_knot = (*b_patch)->u.knots[i];
+	V_MIN(min_knot, (*b_patch)->u.knots[i]);
     }
 
     if (min_knot < 0.0) {
@@ -111,8 +110,7 @@ spline(int entityno, struct face_g_snurb **b_patch)
     for (i = 0; i <= n2+2*m2; i++) {
 	Readdbl(&scan, "");
 	(*b_patch)->v.knots[i] = scan; /* double to fastf_t */
-	if ((*b_patch)->v.knots[i] < min_knot)
-	    min_knot = (*b_patch)->v.knots[i];
+	V_MIN(min_knot, (*b_patch)->v.knots[i]);
     }
     if (min_knot < 0.0) {
 	for (i = 0; i <= n2+2*m2; i++) {

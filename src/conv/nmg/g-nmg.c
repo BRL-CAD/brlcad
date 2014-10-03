@@ -394,7 +394,8 @@ csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
     endp = strchr(bu_vls_addr(&comb->shader), ' ');
     if (endp) {
 	len = endp - bu_vls_addr(&comb->shader);
-	if (len > sizeof(matname)) len = sizeof(matname);
+	V_MIN(len, sizeof(matname));
+
 	bu_strlcpy(matname, bu_vls_addr(&comb->shader), len);
 	bu_strlcpy(matparm, endp+1, sizeof(matparm));
     }

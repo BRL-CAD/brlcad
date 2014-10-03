@@ -528,9 +528,7 @@ Insert_region_name(char *name, int reg_id)
     new_ptr->name = bu_strdup(name);
     new_ptr->magic = NAME_TREE_MAGIC;
 
-    if (reg_id > region_id_max) {
-	region_id_max = reg_id;
-    }
+    V_MAX(region_id_max, reg_id);
 
     if (!name_root) {
 	name_root = new_ptr;
@@ -988,8 +986,8 @@ f4_do_grid(void)
 
     VSET(grid_points[grid_no], x*25.4, y*25.4, z*25.4);
 
-    if (grid_no > max_grid_no)
-	max_grid_no = grid_no;
+    V_MAX(max_grid_no, grid_no);
+
     if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
 	bu_log("ERROR: bu_mem_barriercheck failed at end of f4_do_grid\n");
 }
@@ -1250,10 +1248,8 @@ f4_do_ccone1(void)
     }
 
     /* BRL_CAD doesn't allow zero radius, so use a very small radius */
-    if (r1 < min_radius)
-	r1 = min_radius;
-    if (r2 < min_radius)
-	r2 = min_radius;
+    V_MAX(r1, min_radius);
+    V_MAX(r2, min_radius);
 
     VSUB2(height, grid_points[pt2], grid_points[pt1]);
 
@@ -1305,8 +1301,8 @@ f4_do_ccone1(void)
 	    dist_to_new_base = inner_r1 * length/(r1 - r2);
 	    inner_r1 = min_radius;
 	    VJOIN1(base, base, dist_to_new_base, height_dir);
-	} else if (inner_r1 < min_radius) {
-	    inner_r1 = min_radius;
+	} else {
+	    V_MAX(inner_r1, min_radius);
 	}
 
 	if (end2 == END_OPEN) {
@@ -1325,8 +1321,8 @@ f4_do_ccone1(void)
 	    dist_to_new_top = inner_r2 * length/(r2 - r1);
 	    inner_r2 = min_radius;
 	    VJOIN1(top, top, -dist_to_new_top, height_dir);
-	} else if (inner_r2 < min_radius) {
-	    inner_r2 = min_radius;
+	} else {
+	    V_MAX(inner_r2, min_radius);
 	}
 
 	VSUB2(inner_height, top, base);
@@ -1430,11 +1426,8 @@ f4_do_ccone2(void)
 	return;
     }
 
-    if (ro1 < min_radius)
-	ro1 = min_radius;
-
-    if (ro2 < min_radius)
-	ro2 = min_radius;
+    V_MAX(ro1, min_radius);
+    V_MAX(ro2, min_radius);
 
     BU_LIST_INIT(&r_head.l);
 
@@ -1452,11 +1445,8 @@ f4_do_ccone2(void)
 	    bu_exit(1, "mk_addmember failed!\n");
 	bu_free(name, "solid_name");
 
-	if (ri1 < min_radius)
-	    ri1 = min_radius;
-
-	if (ri2 < min_radius)
-	    ri2 = min_radius;
+	V_MAX(ri1, min_radius);
+	V_MAX(ri2, min_radius);
 
 	name = make_solid_name(CCONE2, element_id, comp_id, group_id, 2);
 	mk_trc_h(fpout, name, grid_points[pt1], height, ri1, ri2);
@@ -1600,10 +1590,8 @@ f4_do_ccone3(void)
     }
 
     for (i=0; i<4; i++) {
-	if (ro[i] < min_radius)
-	    ro[i] = min_radius;
-	if (ri[i] < min_radius)
-	    ri[i] = min_radius;
+	V_MAX(ro[i], min_radius);
+	V_MAX(ri[i], min_radius);
     }
 
     BU_LIST_INIT(&r_head.l);
@@ -1804,8 +1792,7 @@ f4_do_hole_wall(int type)
 	line[s_len] = '\0';
 
     s_len = strlen(line);
-    if (s_len > 80)
-	s_len = 80;
+    V_MIN(s_len, 80);
 
     bu_strlcpy(field, &line[8], sizeof(field));
     group = atoi(field);

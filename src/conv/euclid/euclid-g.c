@@ -269,8 +269,7 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 
     gift_ident = reg_id % 100000;
     group_id = gift_ident/1000;
-    if (group_id > 10)
-	group_id = 10;
+    V_MIN(group_id, 10);
 
     snprintf(rname, 80, "%s.r", id);
 

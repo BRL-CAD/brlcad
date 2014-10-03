@@ -726,8 +726,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    dot = VDOT(norm, norm1);
 	    if (dot < 0.0)
 		dot = (-dot);
-	    if (dot < min_dot)
-		min_dot = dot;
+	    V_MIN(min_dot, dot);
 	}
     }
 
@@ -2158,18 +2157,16 @@ proc_donut(int cnt)
 	 * on non-zero radii
 	 */
 	rbase1 = in[k+2].x;
-	if (rbase1 < TOL.dist)
-	    rbase1 = TOL.dist;
+	V_MAX(rbase1, TOL.dist);
+
 	rtop1 = in[k+2].y;
-	if (rtop1 < TOL.dist)
-	    rtop1 = TOL.dist;
+	V_MAX(rtop1, TOL.dist);
 
 	rbase2 = in[k+5].x;
-	if (rbase2 < TOL.dist)
-	    rbase2 = TOL.dist;
+	V_MAX(rbase2, TOL.dist);
+
 	rtop2 = in[k+5].y;
-	if (rtop2 < TOL.dist)
-	    rtop2 = TOL.dist;
+	V_MAX(rtop2, TOL.dist);
 
 	if (rbase2 > rbase1) {
 	    bu_log("Bad Donut: inner base radius bigger than outer for component #%d\n", in[k].cc);

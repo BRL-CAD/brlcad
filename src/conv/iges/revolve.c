@@ -137,8 +137,8 @@ revolve(int entityno)
     VSUB2(v1, ptr->pt, pt);
     VCROSS(tmp, v1, adir);
     r2 = MAGNITUDE(tmp);
-    if (r2 < TOL)
-	r2 = TOL;
+    V_MAX(r2, TOL);
+
     rmax = r2;
     hmax = VDOT(v1, adir);
     hmin = hmax;

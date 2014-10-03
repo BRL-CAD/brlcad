@@ -1108,8 +1108,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
     for (BU_LIST_FOR(rpp, refine_rpp, &add_rpp_head)) {
 	if (V3PT_IN_RPP(hit_pt, rpp->min, rpp->max)) {
-	    if (rpp->tolerance < use_tolerance)
-		use_tolerance = rpp->tolerance;
+	    V_MIN(use_tolerance, rpp->tolerance);
 	}
     }
 

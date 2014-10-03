@@ -583,7 +583,7 @@ solbld(void)
 	    VUNITIZE(n);
 
 	    /* Prevent illegal torii from floating point fuzz */
-	    if (rad2 > rad1) rad2 = rad1;
+	    V_MIN(rad2, rad1);
 
 	    mk_tor(ofp, NAME, center, n, rad1, rad2);
 	    break;
