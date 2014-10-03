@@ -38,11 +38,69 @@
 /* Error incurred while converting from double to float and back.	*/
 #define F2D_EPSILON 1.0e-1
 
-#define NewPoint(p) \
-    (((p) = (PtList *) malloc(sizeof(PtList))) != PTLIST_NULL)
-#define NewOctree(p) \
-    (((p) = (Octree *) malloc(sizeof(Octree))) != OCTREE_NULL)
-static int subdivide_Octree(Octree *parentp, int level);
+#define L_MAX_POWER_TWO 31
+
+
+static void
+delete_PtList(PtList **ptlistp)
+{
+    PtList *pp = *ptlistp, *np;
+    *ptlistp = PTLIST_NULL;
+    for (; pp != PTLIST_NULL; pp = np) {
+	np = pp->c_next;
+	BU_PUT(pp, PtList);
+    }
+}
+
+
+static int
+subdivide_Octree(Octree *parentp, int level)
+{
+    PtList *points = parentp->o_points->c_next;
+    Trie *triep = parentp->o_triep;
+    int temp = parentp->o_temp;
+    /* Ward against integer overflow in 2^level.			*/
+    if (level > L_MAX_POWER_TWO) {
+	bu_log("Can not subdivide, level = %d\n", level);
+	prnt_Octree(&ir_octree, 0);
+	return 0;
+    }
+    /* Remove datum from parent, it only belongs in leaves.		*/
+    parentp->o_triep = TRIE_NULL;
+    parentp->o_temp = ABSOLUTE_ZERO;
+    parentp->o_points->c_next = PTLIST_NULL;
+    /* Delete reference in trie tree to parent node.		*/
+    delete_Node_OcList(&triep->l.t_octp, parentp);
+    {
+	PtList *cp;
+	/* Shove data down to sub-levels.				*/
+	for (cp = points; cp != PTLIST_NULL; cp = cp->c_next) {
+	    fastf_t c_point[3];
+	    Octree *octreep;
+	    VMOVE(c_point, cp->c_point);
+	    if ((octreep =
+		 add_Region_Octree(parentp, c_point, triep, temp, level)
+		    ) != OCTREE_NULL
+		)
+		append_Octp(triep, octreep);
+	    else
+		return 0;
+	}
+    }
+    delete_PtList(&points);
+    return 1;
+}
+
+
+fastf_t
+pow_Of_2(int power)
+{
+    long value = 1;
+    for (; power > 0; power--)
+	value *= 2;
+    return (fastf_t) value;
+}
+
 
 Octree *
 new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
@@ -51,11 +109,8 @@ new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
     fastf_t delta = modl_radius / pow_Of_2(level);
     float *origin = parentp->o_points->c_point;
     /* Create child node, filling in parent's pointer.		*/
-    if (! NewOctree(*childpp)) {
-	Malloc_Bomb(sizeof(Octree));
-	fatal_error = TRUE;
-	return OCTREE_NULL;
-    }
+    BU_GET(*childpp, Octree);
+
     /* Fill in fields in child node.				*/
     childp = *childpp;
     childp->o_bitv = bitv;
@@ -65,11 +120,8 @@ new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
     childp->o_child = OCTREE_NULL;	  /* No children yet.		*/
 
     /* Create list node for origin of leaf octant.			*/
-    if (! NewPoint(childp->o_points)) {
-	Malloc_Bomb(sizeof(PtList));
-	fatal_error = TRUE;
-	return OCTREE_NULL;
-    }
+    BU_GET(childp->o_points, PtList);
+
     childp->o_points->c_next = PTLIST_NULL; /* End of pt. chain.	*/
     /* Compute origin relative to parent, based on bit vector.	*/
     if (bitv & 1<<X)
@@ -126,6 +178,24 @@ find_Octant(Octree *parentp, fastf_t *pt, int *levelp)
 }
 
 
+int
+append_PtList(fastf_t *pt, PtList *ptlist)
+{
+    for (; ptlist->c_next != PTLIST_NULL; ptlist = ptlist->c_next) {
+	if (VNEAR_EQUAL(ptlist->c_next->c_point, pt, F2D_EPSILON)) {
+	    /* Point already in list.		*/
+	    return 1;
+	}
+    }
+    BU_GET(ptlist->c_next, PtList);
+
+    ptlist = ptlist->c_next;
+    VMOVE(ptlist->c_point, pt);
+    ptlist->c_next = PTLIST_NULL;
+    return 1;
+}
+
+
 Octree *
 add_Region_Octree(Octree *parentp, fastf_t *pt, Trie *triep, int temp, int level)
 {
@@ -140,11 +210,8 @@ add_Region_Octree(Octree *parentp, fastf_t *pt, Trie *triep, int temp, int level
     if (newp->o_points->c_next == PTLIST_NULL) {
 	/* Octant empty, so place region here.		*/
 	newp->o_triep = triep;
-	if (! NewPoint(newp->o_points->c_next)) {
-	    Malloc_Bomb(sizeof(PtList));
-	    fatal_error = TRUE;
-	    return OCTREE_NULL;
-	}
+	BU_GET(newp->o_points->c_next, PtList);
+
 	VMOVE(newp->o_points->c_next->c_point, pt);
 	newp->o_points->c_next->c_next = PTLIST_NULL;
 	if (temp != AMBIENT-1)
@@ -185,88 +252,6 @@ add_Region_Octree(Octree *parentp, fastf_t *pt, Trie *triep, int temp, int level
 		if (! append_PtList(pt, newp->o_points))
 		    return OCTREE_NULL;
     return newp;
-}
-int
-append_PtList(fastf_t *pt, PtList *ptlist)
-{
-    for (; ptlist->c_next != PTLIST_NULL; ptlist = ptlist->c_next) {
-	if (VNEAR_EQUAL(ptlist->c_next->c_point, pt, F2D_EPSILON)) {
-	    /* Point already in list.		*/
-	    return 1;
-	}
-    }
-    if (! NewPoint(ptlist->c_next)) {
-	Malloc_Bomb(sizeof(PtList));
-	fatal_error = TRUE;
-	return 0;
-    }
-    ptlist = ptlist->c_next;
-    VMOVE(ptlist->c_point, pt);
-    ptlist->c_next = PTLIST_NULL;
-    return 1;
-}
-
-
-void
-delete_PtList(PtList **ptlistp)
-{
-    PtList *pp = *ptlistp, *np;
-    *ptlistp = PTLIST_NULL;
-    for (; pp != PTLIST_NULL; pp = np) {
-	np = pp->c_next;
-	free((char *) pp);
-    }
-}
-
-
-#define L_MAX_POWER_TWO 31
-
-static int
-subdivide_Octree(Octree *parentp, int level)
-{
-    PtList *points = parentp->o_points->c_next;
-    Trie *triep = parentp->o_triep;
-    int temp = parentp->o_temp;
-    /* Ward against integer overflow in 2^level.			*/
-    if (level > L_MAX_POWER_TWO) {
-	bu_log("Can not subdivide, level = %d\n", level);
-	prnt_Octree(&ir_octree, 0);
-	return 0;
-    }
-    /* Remove datum from parent, it only belongs in leaves.		*/
-    parentp->o_triep = TRIE_NULL;
-    parentp->o_temp = ABSOLUTE_ZERO;
-    parentp->o_points->c_next = PTLIST_NULL;
-    /* Delete reference in trie tree to parent node.		*/
-    delete_Node_OcList(&triep->l.t_octp, parentp);
-    {
-	PtList *cp;
-	/* Shove data down to sub-levels.				*/
-	for (cp = points; cp != PTLIST_NULL; cp = cp->c_next) {
-	    fastf_t c_point[3];
-	    Octree *octreep;
-	    VMOVE(c_point, cp->c_point);
-	    if ((octreep =
-		 add_Region_Octree(parentp, c_point, triep, temp, level)
-		    ) != OCTREE_NULL
-		)
-		append_Octp(triep, octreep);
-	    else
-		return 0;
-	}
-    }
-    delete_PtList(&points);
-    return 1;
-}
-
-
-fastf_t
-pow_Of_2(int power)
-{
-    long value = 1;
-    for (; power > 0; power--)
-	value *= 2;
-    return (fastf_t) value;
 }
 
 
