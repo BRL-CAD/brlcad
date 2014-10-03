@@ -1,7 +1,7 @@
 /*                        O C T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/*
-  Originally extracted from SCCS archive:
-  SCCS id:	@(#) octree.c 2.1
-  Modified: 	12/10/86 at 16:03:58 G S M
-  Retrieved: 	2/4/87 at 08:53:45
-  SCCS archive:	/vld/moss/src/lgt/s.octree.c
-*/
 
 #include "common.h"
 
