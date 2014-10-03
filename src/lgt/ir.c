@@ -41,8 +41,6 @@
 #define Kelvin2Fah( f )	(9.0/5.0)*((f)-273.15) + 32.0
 #define S_BINS		10
 #define HUE_TOL		0.5
-#define FABS(a)		((a) > 0 ? (a) : -(a))
-#define AproxEq(a,b,e)	(FABS((a)-(b)) < (e))
 
 extern fastf_t epsilon;
 
@@ -419,7 +417,7 @@ same_Hue(RGBpixel (*pixel1p), RGBpixel (*pixel2p))
 	    if ( ZERO(bratio) )
 		return	1;
 	    else
-		if ( AproxEq( gratio, bratio, HUE_TOL ) )
+		if ( NEAR_EQUAL( gratio, bratio, HUE_TOL ) )
 		    return	1;
 		else
 		    return	0;
@@ -430,7 +428,7 @@ same_Hue(RGBpixel (*pixel1p), RGBpixel (*pixel2p))
 	    if ( ZERO(bratio) )
 		return	1;
 	    else
-		if ( AproxEq( bratio, rratio, HUE_TOL ) )
+		if ( NEAR_EQUAL( bratio, rratio, HUE_TOL ) )
 		    return	1;
 		else
 		    return	0;
@@ -438,15 +436,15 @@ same_Hue(RGBpixel (*pixel1p), RGBpixel (*pixel2p))
 	else
 	    if ( ZERO(bratio) )
 	    {
-		if ( AproxEq( rratio, gratio, HUE_TOL ) )
+		if ( NEAR_EQUAL( rratio, gratio, HUE_TOL ) )
 		    return	1;
 		else
 		    return	0;
 	    }
 	    else
 	    {
-		if (	AproxEq( rratio, gratio, HUE_TOL )
-			&&	AproxEq( gratio, bratio, HUE_TOL )
+		if (	NEAR_EQUAL( rratio, gratio, HUE_TOL )
+			&&	NEAR_EQUAL( gratio, bratio, HUE_TOL )
 		    )
 		    return	1;
 		else
@@ -490,7 +488,7 @@ f_IR_Model(struct application *ap, Octree *op)
     octnt_max[Y] = op->o_points->c_point[Y] + delta;
     octnt_max[Z] = op->o_points->c_point[Z] + delta;
 
-    if ( AproxEq( point[X], octnt_min[X], epsilon ) )
+    if ( NEAR_EQUAL( point[X], octnt_min[X], epsilon ) )
 	/* Intersection point lies on plane whose normal is the
 	   negative X-axis.
 	*/
@@ -500,7 +498,7 @@ f_IR_Model(struct application *ap, Octree *op)
 	norml[Z] =  0.0;
     }
     else
-	if ( AproxEq( point[X], octnt_max[X], epsilon ) )
+	if ( NEAR_EQUAL( point[X], octnt_max[X], epsilon ) )
 	    /* Intersection point lies on plane whose normal is the
 	       positive X-axis.
 	    */
@@ -510,7 +508,7 @@ f_IR_Model(struct application *ap, Octree *op)
 	    norml[Z] = 0.0;
 	}
 	else
-	    if ( AproxEq( point[Y], octnt_min[Y], epsilon ) )
+	    if ( NEAR_EQUAL( point[Y], octnt_min[Y], epsilon ) )
 		/* Intersection point lies on plane whose normal is the
 		   negative Y-axis.
 		*/
@@ -520,7 +518,7 @@ f_IR_Model(struct application *ap, Octree *op)
 		norml[Z] =  0.0;
 	    }
 	    else
-		if ( AproxEq( point[Y], octnt_max[Y], epsilon ) )
+		if ( NEAR_EQUAL( point[Y], octnt_max[Y], epsilon ) )
 		    /* Intersection point lies on plane whose normal is the
 		       positive Y-axis.
 		    */
@@ -530,7 +528,7 @@ f_IR_Model(struct application *ap, Octree *op)
 		    norml[Z] = 0.0;
 		}
 		else
-		    if ( AproxEq( point[Z], octnt_min[Z], epsilon ) )
+		    if ( NEAR_EQUAL( point[Z], octnt_min[Z], epsilon ) )
 			/* Intersection point lies on plane whose normal is the
 			   negative Z-axis.
 			*/
@@ -540,7 +538,7 @@ f_IR_Model(struct application *ap, Octree *op)
 			norml[Z] = -1.0;
 		    }
 		    else
-			if ( AproxEq( point[Z], octnt_max[Z], epsilon ) )
+			if ( NEAR_EQUAL( point[Z], octnt_max[Z], epsilon ) )
 			    /* Intersection point lies on plane whose normal is the
 			       positive Z-axis.
 			    */
