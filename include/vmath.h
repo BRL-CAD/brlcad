@@ -478,12 +478,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define HEQUAL(_a, _b)  HNEAR_EQUAL((_a), (_b), SMALL_FASTF)
 
 
-/**
- * clamp a value to a low/high number.
- */
-#define CLAMP(_v, _l, _h) if ((_v) < (_l)) _v = _l; else if ((_v) > (_h)) _v = _h
-
-
 /** @brief Compute distance from a point to a plane. */
 #define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[W])
 
@@ -1610,6 +1604,12 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define V2MINMAX(min, max, pt) do { \
 	V2MIN((min), (pt)); V2MAX((max), (pt)); \
     } while (0)
+
+/**
+ * clamp a value to a low/high number.
+ */
+#define CLAMP(_v, _l, _h) V_MAX((_v), (_l)); else V_MIN((_v), (_h))
+
 
 /**
  * @brief Divide out homogeneous parameter from hvect_t, creating

@@ -41,6 +41,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
+#include "vmath.h"
 #include "fb.h"
 
 
@@ -228,17 +229,14 @@ main(int argc, char **argv)
 	xskip = 0;
 	xstart = scr_xoff;
     }
-    if (xout < 0) xout = 0;
-    if ((unsigned)xout > (file_width-file_xoff))
-	xout = (file_width-file_xoff);
+    CLAMP(xout, 0, (long)(file_width-file_xoff));
 
     if (inverse)
 	scr_yoff = (-scr_yoff);
 
     yout = scr_height - scr_yoff;
-    if (yout < 0) yout = 0;
-    if ((unsigned)yout > (file_height-file_yoff))
-	yout = (file_height-file_yoff);
+    CLAMP(yout, 0, (long)(file_height-file_yoff));
+
     if (xout > MAX_LINE) {
 	fprintf(stderr, "bw-fb: can't output %ld pixel lines.\n", xout);
 	return 2;

@@ -51,7 +51,7 @@ RT_EXPORT extern int brep_intersect_point_surface(struct rt_db_internal *intern1
 RT_EXPORT extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 RT_EXPORT extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 RT_EXPORT extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
-RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
+RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 
 static int
 selection_command(
@@ -188,6 +188,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     int i, j, real_flag, valid_command, ret;
     const char *commands[] = {"info", "plot", "translate", "intersect", "u", "i", "-"};
     int num_commands = (int)(sizeof(commands) / sizeof(const char *));
+    db_op_t op = DB_OP_NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -295,7 +296,12 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    if (BU_STR_EQUAL(argv[2], "u") || BU_STR_EQUAL(argv[2], "i") || BU_STR_EQUAL(argv[2], "-") || BU_STR_EQUAL(argv[2], "x")) {
+    /* make sure arg isn't --no-evaluate */
+    if (argv[2][1] != '-') {
+	op = db_str2op(argv[2]);
+    }
+
+    if (op != DB_OP_NULL) {
 	/* test booleans on brep.
 	 * u: union, i: intersect, -: diff, x: xor
 	 */
@@ -323,7 +329,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
 	GED_DB_GET_INTERNAL(gedp, &intern2, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-	rt_brep_boolean(&intern_res, &intern, &intern2, argv[2]);
+	rt_brep_boolean(&intern_res, &intern, &intern2, op);
 	bip = (struct rt_brep_internal*)intern_res.idb_ptr;
 	mk_brep(gedp->ged_wdbp, argv[4], bip->brep);
 	rt_db_free_internal(&intern);
@@ -395,12 +401,15 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 		return GED_OK;
 	    }
 	    ret = brep_conversion(&intern, &brep_db_internal, gedp->ged_wdbp->dbip);
-	    brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
 	    if (ret == -1) {
-		bu_vls_printf(gedp->ged_result_str, "%s doesn't have a brep-conversion function yet. Type: %s", solid_name, intern.idb_meth->ft_label);
-	    } else if ((ret == -2) || (brep == NULL)) {
-		bu_vls_printf(gedp->ged_result_str, "%s cannot be converted to brep correctly.", solid_name);
+		bu_vls_printf(gedp->ged_result_str, "%s doesn't have a "
+			"brep-conversion function yet. Type: %s", solid_name,
+			intern.idb_meth->ft_label);
+	    } else if (ret == -2) {
+		bu_vls_printf(gedp->ged_result_str, "%s cannot be converted "
+			"to brep correctly.", solid_name);
 	    } else {
+		brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
 		ret = mk_brep(gedp->ged_wdbp, bu_vls_addr(&bname), brep);
 		if (ret == 0) {
 		    bu_vls_printf(gedp->ged_result_str, "%s is made.", bu_vls_addr(&bname));

@@ -82,10 +82,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	if (!result) return result;
 	for (i=0; i<size*num; i++) {
 	    idx = buf[i];
-	    if (idx < 0)
-		idx = 0;
-	    if (idx > size*num)
-		idx = size*num;
+	    CLAMP(idx, 0, size*num);
 	    buf[i] = Map[idx];
 	}
 	return result;
@@ -112,10 +109,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	result = fread(cur, 1, linelen, file);
 	for (i=0; i<linelen;i++) {
 	    idx = cur[i];
-	    if (idx < 0)
-		idx = 0;
-	    if (idx > size*num)
-		idx = size*num;
+	    CLAMP(idx, 0, size*num);
 	    cur[i] = Map[idx];
 	}
 	if (!result) return result;	/* nothing there! */
@@ -126,10 +120,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	} else {
 	    for (i=0; i<linelen;i++) {
 		idx = cur[i];
-		if (idx < 0)
-		    idx = 0;
-		if (idx > size*num)
-		    idx = size*num;
+		CLAMP(idx, 0, size*num);
 		cur[i] = Map[idx];
 	    }
 	}
@@ -158,10 +149,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	} else {
 	    for (i=0; i<linelen;i++) {
 		idx = cur[i];
-		if (idx < 0)
-		    idx = 0;
-		if (idx > size*num)
-		    idx = size*num;
+		CLAMP(idx, 0, size*num);
 		cur[i] = Map[idx];
 	    }
 	}

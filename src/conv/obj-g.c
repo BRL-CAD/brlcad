@@ -2217,23 +2217,15 @@ fuse_vertex(struct ga_t *ga,
 		/* set max and min */
 		if (vertex_type == FUSE_VERT) {
 		    vertex_index_list[num_index_list] = vofi;
-		    if (vofi > max_vert_idx) {
-			max_vert_idx = vofi;
-		    }
-		    if (vofi < min_vert_idx) {
-			min_vert_idx = vofi;
-		    }
+		    V_MAX(max_vert_idx, vofi);
+		    V_MIN(min_vert_idx, vofi);
 		}
 		if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
 		    (vertex_type == FUSE_TEX_VERT))
 		{
 		    texture_vertex_index_list[num_index_list] = tofi;
-		    if (tofi > max_tex_vert_idx) {
-			max_tex_vert_idx = tofi;
-		    }
-		    if (tofi < min_tex_vert_idx) {
-			min_tex_vert_idx = tofi;
-		    }
+		    V_MAX(max_tex_vert_idx, tofi);
+		    V_MIN(min_tex_vert_idx, tofi);
 		}
 	    }
 	    num_index_list++;

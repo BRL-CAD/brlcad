@@ -50,8 +50,7 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 	    old = right = ON_Brep::New();
 	    ret = conv_tree(&right, t->tr_b.tb_right, dbip);
 	    if (ret) {
-		if (right && old)
-		    delete old;
+		delete old;
 		break;
 	    }
 	    /* fall through */
@@ -75,11 +74,11 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 		    bu_log("operation %d isn't supported yet.\n", t->tr_op);
 		    ret = -1;
 		}
-		if (left) delete left;
-		if (right) delete right;
+		delete left;
+		delete right;
 	    } else {
-		if (old) delete old;
-		if (right) delete right;
+		delete old;
+		delete right;
 	    }
 	    break;
 	case OP_DB_LEAF:
@@ -95,7 +94,10 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 		    if (ret == 0 && *b != NULL) {
 			if (t->tr_l.tl_mat != NULL && !bn_mat_is_identity(t->tr_l.tl_mat)) {
 			    ON_Xform xform(t->tr_l.tl_mat);
-			    ret = (*b)->Transform(xform);
+			    ret = -1;
+			    if ((*b)->Transform(xform)) {
+				ret = 0;
+			    }
 			}
 		    }
 		    rt_db_free_internal(&intern);
@@ -108,6 +110,9 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 	default:
 	    bu_log("OPCODE NOT IMPLEMENTED: %d\n", t->tr_op);
 	    ret = -1;
+    }
+    if (ret) {
+	*b = NULL;
     }
 
     return ret;

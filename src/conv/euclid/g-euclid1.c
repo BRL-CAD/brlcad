@@ -42,23 +42,23 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-static char	usage[] = "Usage: %s [-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_CPUs] brlcad_db.g object(s)\n";
+static char usage[] = "Usage: %s [-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_CPUs] brlcad_db.g object(s)\n";
 
-static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
-static int	verbose;
-static int	ncpu = 1;		/* Number of processors */
-static int	face_count;		/* Count of faces output for a region id */
-static int	alarm_secs;		/* Number of seconds to allow for conversion, 0 means no limit */
-static struct db_i		*dbip;
-static struct rt_tess_tol	ttol;
-static struct bn_tol		tol;
-static struct model		*the_model;
+static int NMG_debug;		/* saved arg of -X, for longjmp handling */
+static int verbose;
+static int ncpu = 1;		/* Number of processors */
+static int face_count;		/* Count of faces output for a region id */
+static int alarm_secs;		/* Number of seconds to allow for conversion, 0 means no limit */
+static struct db_i *dbip;
+static struct rt_tess_tol ttol;
+static struct bn_tol tol;
+static struct model *the_model;
 
-static struct db_tree_state	tree_state;	/* includes tol & model */
+static struct db_tree_state tree_state;	/* includes tol & model */
 
-static int	regions_tried = 0;
-static int	regions_converted = 0;
-static int	regions_written = 0;
+static int regions_tried = 0;
+static int regions_converted = 0;
+static int regions_written = 0;
 
 struct facets
 {
@@ -67,6 +67,7 @@ struct facets
     fastf_t diag_len;
     int facet_type;
 };
+
 
 void
 fastf_print(FILE *fp_out, size_t length, fastf_t f)
@@ -100,6 +101,7 @@ fastf_print(FILE *fp_out, size_t length, fastf_t f)
 	fputc(buffer[i], fp_out);
 }
 
+
 /* only used with SIGALRM */
 void
 handler(int UNUSED(code))
@@ -120,7 +122,7 @@ Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regi
 
     if (verbose)
 	bu_log("Write_euclid_face: lu=%p, facet_type=%d, regionid=%d, face_number=%d\n",
-		(void *)lu, facet_type, regionid, face_number);
+	       (void *)lu, facet_type, regionid, face_number);
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 	return;
@@ -141,7 +143,7 @@ Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regi
 	NMG_CK_EDGEUSE(eu);
 	v = eu->vu_p->v_p;
 	NMG_CK_VERTEX(v);
-/*		fprintf(fp_out, "%10d%8f%8f%8f", ++vertex_count, V3ARGS(v->vg_p->coord)); */
+/* fprintf(fp_out, "%10d%8f%8f%8f", ++vertex_count, V3ARGS(v->vg_p->coord)); */
 	vertex_count++;
 	fprintf(fp_out, "%10d", vertex_count);
 
@@ -155,7 +157,8 @@ Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regi
     fprintf(fp_out, "%10d%15.5f%15.5f%15.5f%15.5f", face_number, V4ARGS(plane));
 }
 
-/*	Routine to write an nmgregion in the Euclid "decoded" format */
+
+/* Routine to write an nmgregion in the Euclid "decoded" format */
 static void
 Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp, FILE *fp_out)
 {
@@ -276,7 +279,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp, FILE *fp_out
 			    continue;
 
 			nmg_class = nmg_classify_lu_lu(faces[loop1].lu,
-						   faces[loop2].lu, &tol);
+						       faces[loop2].lu, &tol);
 
 			if (nmg_class != NMG_CLASS_AinB)
 			    continue;
@@ -300,7 +303,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp, FILE *fp_out
 				    continue;
 
 				if (nmg_classify_lu_lu(faces[i].lu,
-							 faces[loop2].lu, &tol)) {
+						       faces[loop2].lu, &tol)) {
 				    if (faces[i].facet_type != (-2))
 					continue;
 
@@ -372,7 +375,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp, FILE *fp_out
 
     regions_written++;
 
- outt:
+outt:
     if (faces)
 	bu_free((char *)faces, "g-euclid: faces");
     return;
@@ -391,7 +394,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
-    } else  {
+    } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
 
@@ -426,18 +429,18 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- *  Called from db_walk_tree().
+ * Called from db_walk_tree().
  *
- *  This routine must be prepared to run in parallel.
+ * This routine must be prepared to run in parallel.
  */
 union tree *
 do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
-    FILE			*fp_out;
-    struct nmgregion	*r;
-    struct bu_list		vhead;
-    struct directory	*dir;
-    union tree		*ret_tree;
+    FILE *fp_out;
+    struct nmgregion *r;
+    struct bu_list vhead;
+    struct directory *dir;
+    union tree *ret_tree;
 
     if (verbose)
 	bu_log("do_region_end: regionid = %d\n", tsp->ts_regionid);
@@ -449,7 +452,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     BU_LIST_INIT(&vhead);
 
     if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
-	char	*sofar = db_path_to_string(pathp);
+	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
 	       regions_tried,
 	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
@@ -524,10 +527,10 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     }
 
     /*
-     *  Dispose of original tree, so that all associated dynamic
-     *  memory is released now, not at the end of all regions.
-     *  A return of TREE_NULL from this routine signals an error,
-     *  so we need to cons up an OP_NOP node to return.
+     * Dispose of original tree, so that all associated dynamic
+     * memory is released now, not at the end of all regions.
+     * A return of TREE_NULL from this routine signals an error,
+     * so we need to cons up an OP_NOP node to return.
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
@@ -545,8 +548,8 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 int
 main(int argc, char **argv)
 {
-    int	c;
-    double		percent;
+    int c;
+    double percent;
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -644,12 +647,12 @@ main(int argc, char **argv)
     if (regions_tried > 0)
 	percent = ((double)regions_converted * 100) / regions_tried;
     printf("Tried %d regions, %d converted successfully.  %g%%\n",
-	    regions_tried, regions_converted, percent);
+	   regions_tried, regions_converted, percent);
     percent = 0;
     if (regions_tried > 0)
 	percent = ((double)regions_written * 100) / regions_tried;
     printf("                  %d written successfully. %g%%\n",
-	    regions_written, percent);
+	   regions_written, percent);
 
     /* Release dynamic storage */
     rt_vlist_cleanup();

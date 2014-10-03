@@ -54,8 +54,7 @@ imageInit()
     }
     if (zoom * gridsz == devwid)
 	zoom--;
-    if (zoom < 1)
-	zoom = 1;
+    V_MAX(zoom, 1);
 
     /* Determine whether it is necessary to open fbfile. */
     if (fbiop == FB_NULL || fb_getwidth(fbiop) != devwid)

@@ -416,9 +416,8 @@ RationalBSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	while (m != knot_multiplicities.end()) {
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if (multiplicity > degree) {
-		multiplicity = degree;
-	    }
+	    V_MIN(multiplicity, degree);
+
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		curve->SetKnot(knot_index, knot_value);
 	    }
@@ -620,9 +619,8 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 		break;
 	    }
 
-	    if (multiplicity > u_degree) {
-		multiplicity = u_degree;
-	    }
+	    V_MIN(multiplicity, u_degree);
+
 	    for (int j = 0; j < multiplicity; j++) {
 		surf->SetKnot(0, knot_index++, knot_value);
 	    }
@@ -636,9 +634,9 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 	while (m != u_multiplicities.end()) {
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if (multiplicity > u_degree) {
-		multiplicity = u_degree;
-	    }
+
+	    V_MIN(multiplicity, u_degree);
+
 	    for (int j = 0; j < multiplicity; j++) {
 		surf->SetKnot(0, knot_index++, knot_value);
 	    }
@@ -669,9 +667,8 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 		break;
 	    }
 
-	    if (multiplicity > v_degree) {
-		multiplicity = v_degree;
-	    }
+	    V_MIN(multiplicity, v_degree);
+
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		surf->SetKnot(1, knot_index, knot_value);
 	    }
@@ -685,9 +682,9 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 	while (m != v_multiplicities.end()) {
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if (multiplicity > v_degree) {
-		multiplicity = v_degree;
-	    }
+
+	    V_MIN(multiplicity, v_degree);
+
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		surf->SetKnot(1, knot_index, knot_value);
 	    }
@@ -837,9 +834,9 @@ RationalBSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
     while (m != u_multiplicities.end()) {
 	int multiplicity = (*m);
 	double knot_value = (*r);
-	if (multiplicity > u_degree) {
-	    multiplicity = u_degree;
-	}
+
+	V_MIN(multiplicity, u_degree);
+
 	for (int j = 0; j < multiplicity; j++, knot_index++) {
 	    surf->SetKnot(0, knot_index, knot_value);
 	}
@@ -852,9 +849,9 @@ RationalBSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
     while (m != v_multiplicities.end()) {
 	int multiplicity = (*m);
 	double knot_value = (*r);
-	if (multiplicity > v_degree) {
-	    multiplicity = v_degree;
-	}
+
+	V_MIN(multiplicity, v_degree);
+
 	for (int j = 0; j < multiplicity; j++) {
 	    surf->SetKnot(1, knot_index++, knot_value);
 	}
@@ -1440,9 +1437,7 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
 	    curve->GetDomain(&tmin, &tmax);
 
 	    if (((tmin < 0.0) && (tmax > 0.0)) && ((tmin > smin) || (tmax < smax))) {
-		if (tmin < ang_min) {
-		    ang_min = tmin;
-		}
+		V_MIN(ang_min, tmin);
 	    }
 
 	}

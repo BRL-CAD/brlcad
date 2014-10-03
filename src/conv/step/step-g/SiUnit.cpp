@@ -197,14 +197,10 @@ SiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     sse = step->getEntity(sse, ENTITYNAME);
 
     prefix = (Si_prefix)step->getEnumAttribute(sse, "prefix");
-    if (prefix > Si_prefix_unset) {
-	prefix = Si_prefix_unset;
-    }
+    V_MIN(prefix, Si_prefix_unset);
 
     name = (Si_unit_name)step->getEnumAttribute(sse, "name");
-    if (name > Si_unit_name_unset) {
-	name = Si_unit_name_unset;
-    }
+    V_MIN(name, Si_unit_name_unset);
 
     sw->entity_status[id] = STEP_LOADED;
 

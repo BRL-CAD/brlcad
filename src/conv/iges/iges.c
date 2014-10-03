@@ -1020,14 +1020,9 @@ nmg_loop_to_tcurve(
 	VSUB2(from_base, vg->coord, base_pt);
 	u = VDOT(u_dir, from_base)/u_max;
 	v = VDOT(v_dir, from_base)/v_max;
-	if (u < 0.0)
-	    u = 0.0;
-	if (u > 1.0)
-	    u = 1.0;
-	if (v < 0.0)
-	    v = 0.0;
-	if (v > 1.0)
-	    v = 1.0;
+	CLAMP(u, 0.0, 1.0);
+	CLAMP(v, 0.0, 1.0);
+
 	VSET(param_pts[i], u, v, 0.0);
 
 	i++;

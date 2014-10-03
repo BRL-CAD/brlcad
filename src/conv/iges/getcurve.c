@@ -126,8 +126,8 @@ Getcurve(int curve, struct ptlist **curv_pts)
 
 	    npts = (ang2 - ang1)/delta;
 	    npts++;
-	    if (npts < 3)
-		npts = 3;
+	    V_MAX(npts, 3);
+
 	    delta = (ang2 - ang1)/(npts-1);
 	    cosdel = cos(delta);
 	    sindel = sin(delta);
@@ -421,8 +421,8 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		a = fabs(A);
 		if (fabs(B) < a && !ZERO(B))
 		    a = fabs(B);
-		if (fabs(C) < a)
-		    a = fabs(C);
+		V_MIN(a, fabs(C));
+
 		A = A/a;
 		B = B/a;
 		C = C/a;
