@@ -44,8 +44,7 @@
 #ifndef	EPSILON
 #  define EPSILON	0.000001
 #endif
-#define FABS(a)		((a) > 0 ? (a) : -(a))
-#define AproxEq(a, b, e)	(FABS((a)-(b)) < (e))
+#define AproxEq(a, b, e)	(fabs((a)-(b)) < (e))
 #define AproxEqVec(A, B, e) (AproxEq((A)[X], (B)[X], (e)) && \
 			     AproxEq((A)[Y], (B)[Y], (e)) &&	\
 			     AproxEq((A)[Z], (B)[Z], (e)))
@@ -1489,7 +1488,7 @@ spallInit()
 	fastf_t	sinphi = sin(phi);
 	fastf_t	gammaval, gammainc, gammalast;
 	int m;
-	sinphi = FABS(sinphi);
+	sinphi = fabs(sinphi);
 	m = (M_2PI * sinphi)/delta + 1;
 	gammainc = M_2PI / m;
 	gammalast = M_2PI-gammainc+EPSILON;
@@ -1603,7 +1602,7 @@ burstRay()
 	if (done)
 	    break;
 	sinphi = sin(phi);
-	sinphi = FABS(sinphi);
+	sinphi = fabs(sinphi);
 	m = (M_2PI * sinphi)/delta + 1;
 	gammainc = M_2PI / m;
 	gammalast = M_2PI - gammainc + EPSILON;
