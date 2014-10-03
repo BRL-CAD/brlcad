@@ -56,6 +56,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "vmath.h"
 
 #define	DLEVEL	1
 extern int Debug;
@@ -152,8 +153,7 @@ eq_cubic(int x)
     y = ((p->D * (x - p->x) + p->C) * (x - p->x) + p->B)
 	* (x - p->x) + p->A;
 
-    if (y<0) y = 0;
-    if (y>255) y = 255;
+    CLAMP(y, 0, 255);
     return y;
 }
 
