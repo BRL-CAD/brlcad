@@ -816,19 +816,13 @@ FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, ON
 	ON_3dPoint p(ep (0), ep (1), ep(2));
 	m_data->interior_param.push_back (ON_2dPoint(p[0], p[1]));
 
-	if (p[0] > v_max[0])
-	    v_max[0] = p[0];
-	if (p[1] > v_max[1])
-	    v_max[1] = p[1];
-	if (p[2] > v_max[2])
-	    v_max[2] = p[2];
+	V_MAX(v_max[0], p[0]);
+	V_MAX(v_max[1], p[1]);
+	V_MAX(v_max[2], p[2]);
 
-	if (p[0] < v_min[0])
-	    v_min[0] = p[0];
-	if (p[1] < v_min[1])
-	    v_min[1] = p[1];
-	if (p[2] < v_min[2])
-	    v_min[2] = p[2];
+	V_MIN(v_min[0], p[0]);
+	V_MIN(v_min[1], p[1]);
+	V_MIN(v_min[2], p[2]);
     }
 
     for (unsigned i = 0; i < s; i++)
@@ -1325,16 +1319,8 @@ FittingSurface::inverseMapping (const ON_NurbsSurface &nurbs, const ON_3dPoint &
 	{
 	    current = current + delta;
 
-	    if (current[0] < minU)
-		current[0] = minU;
-	    else if (current[0] > maxU)
-		current[0] = maxU;
-
-	    if (current[1] < minV)
-		current[1] = minV;
-	    else if (current[1] > maxV)
-		current[1] = maxV;
-
+	    CLAMP(current[0], minU, maxU);
+	    CLAMP(current[1], minV, maxV);
 	}
 
     }
