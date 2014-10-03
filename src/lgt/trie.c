@@ -36,8 +36,58 @@
 #include "./tree.h"
 
 
-static OcList *copy_OcList(OcList *orp);
-static OcList *match_Trie(Trie *triep);
+#define MAX_TRIE_LEVEL (32*16)
+
+
+static OcList *
+copy_OcList(OcList *orp)
+/* Input list read pointer.	*/
+{
+    OcList *oclistp = OCLIST_NULL;	/* Output list pointer.	*/
+    OcList **owpp = &oclistp; /* Write pointer.	*/
+    /* Make copy of Octree pointer list.				*/
+    for (owpp = &oclistp;
+	 orp != OCLIST_NULL;
+	 orp = orp->p_next,
+	     owpp = &(*owpp)->p_next
+	)
+    {
+	if ((*owpp = (OcList *) malloc(sizeof(OcList))) == OCLIST_NULL) {
+	    Malloc_Bomb(sizeof(OcList));
+	    fatal_error = TRUE;
+	    return OCLIST_NULL;
+	}
+	(*owpp)->p_octp = orp->p_octp;
+	(*owpp)->p_next = OCLIST_NULL;
+    }
+    return oclistp;
+}
+
+
+static OcList *
+match_Trie(Trie *triep)
+{
+    OcList *oclist = OCLIST_NULL;
+    OcList **oclistp = &oclist;
+    if (triep == TRIE_NULL)
+	return OCLIST_NULL;
+    if (triep->n.t_altr != TRIE_NULL)
+	/* Traverse alternate character pointer.		*/
+	*oclistp = match_Trie(triep->n.t_altr);
+    /* Advance ptr to end of list.					*/
+    for (;
+	 *oclistp != OCLIST_NULL;
+	 oclistp = &(*oclistp)->p_next
+	)
+	;
+    if (triep->n.t_next == TRIE_NULL)
+	/* At leaf node, return copy of list.			*/
+	*oclistp = copy_OcList(triep->l.t_octp);
+    else
+	/* Traverse next character pointer.			*/
+	*oclistp = match_Trie(triep->n.t_next);
+    return oclist;
+}
 
 
 void
@@ -73,6 +123,8 @@ delete_Node_OcList(OcList **oclistp, Octree *octreep)
     bu_log("\"%s\"(%d) Couldn't find node.\n", __FILE__, __LINE__);
     return 0;
 }
+
+
 void
 delete_OcList(OcList **oclistp)
 {
@@ -172,59 +224,6 @@ get_Trie(char *name, Trie *triep)
     return copy_OcList(curp->l.t_octp);
 }
 
-
-static OcList *
-match_Trie(Trie *triep)
-{
-    OcList *oclist = OCLIST_NULL;
-    OcList **oclistp = &oclist;
-    if (triep == TRIE_NULL)
-	return OCLIST_NULL;
-    if (triep->n.t_altr != TRIE_NULL)
-	/* Traverse alternate character pointer.		*/
-	*oclistp = match_Trie(triep->n.t_altr);
-    /* Advance ptr to end of list.					*/
-    for (;
-	 *oclistp != OCLIST_NULL;
-	 oclistp = &(*oclistp)->p_next
-	)
-	;
-    if (triep->n.t_next == TRIE_NULL)
-	/* At leaf node, return copy of list.			*/
-	*oclistp = copy_OcList(triep->l.t_octp);
-    else
-	/* Traverse next character pointer.			*/
-	*oclistp = match_Trie(triep->n.t_next);
-    return oclist;
-}
-
-
-static OcList *
-copy_OcList(OcList *orp)
-/* Input list read pointer.	*/
-{
-    OcList *oclistp = OCLIST_NULL;	/* Output list pointer.	*/
-    OcList **owpp = &oclistp; /* Write pointer.	*/
-    /* Make copy of Octree pointer list.				*/
-    for (owpp = &oclistp;
-	 orp != OCLIST_NULL;
-	 orp = orp->p_next,
-	     owpp = &(*owpp)->p_next
-	)
-    {
-	if ((*owpp = (OcList *) malloc(sizeof(OcList))) == OCLIST_NULL) {
-	    Malloc_Bomb(sizeof(OcList));
-	    fatal_error = TRUE;
-	    return OCLIST_NULL;
-	}
-	(*owpp)->p_octp = orp->p_octp;
-	(*owpp)->p_next = OCLIST_NULL;
-    }
-    return oclistp;
-}
-
-
-#define MAX_TRIE_LEVEL (32*16)
 
 void
 prnt_Trie(Trie *triep, int level)
