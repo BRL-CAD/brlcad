@@ -236,7 +236,7 @@ intr_sig(int UNUSED(sig))
 
 
 /*
-   Set certain default lighting info.
+  Set certain default lighting info.
 */
 static void
 init_Lgts(void)
