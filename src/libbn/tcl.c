@@ -969,7 +969,7 @@ bn_cmd_random(ClientData UNUSED(clientData),
     }
     val = atoi(str);
 
-    if (val < 0) val = 0;
+    V_MAX(val, 0);
 
     rnd = BN_RANDOM(val);
 

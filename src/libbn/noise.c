@@ -712,7 +712,7 @@ bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, dou
     for (i=1; i < octaves; i++) {
 	PSCALE(pt, lacunarity);
 
-	if (weight > 1.0) weight = 1.0;
+	V_MIN(weight, 1.0);
 
 	noise_signal = (bn_noise_perlin(pt) + offset) * spec_wgts[i];
 

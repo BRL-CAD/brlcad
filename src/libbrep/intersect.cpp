@@ -634,9 +634,7 @@ ON_Intersect(const ON_3dPoint &pointA,
 	     ON_ClassArray<ON_PX_EVENT> &x,
 	     double tol)
 {
-    if (tol <= 0.0) {
-	tol = ON_ZERO_TOLERANCE;
-    }
+    V_MAX(tol, ON_ZERO_TOLERANCE);
 
     if (pointA.DistanceTo(pointB) <= tol) {
 	ON_PX_EVENT event;
@@ -717,9 +715,8 @@ ON_Intersect(const ON_3dPoint &pointA,
 	     const ON_Interval *curveB_domain,
 	     Subcurve *treeB)
 {
-    if (tol <= 0.0) {
-	tol = PCI_DEFAULT_TOLERANCE;
-    }
+    V_MAX(tol, PCI_DEFAULT_TOLERANCE);
+
     check_domain(curveB_domain, curveB.Domain(), "curveB_domain");
 
     Subcurve *root = treeB;
@@ -885,9 +882,7 @@ ON_Intersect(const ON_3dPoint &pointA,
 	     const ON_Interval *surfaceB_vdomain,
 	     Subsurface *treeB)
 {
-    if (tol <= 0.0) {
-	tol = PCI_DEFAULT_TOLERANCE;
-    }
+    V_MAX(tol, PCI_DEFAULT_TOLERANCE);
 
     ON_Interval u_domain, v_domain;
     u_domain = check_domain(surfaceB_udomain, surfaceB.Domain(0), "surfaceB_udomain");
@@ -1100,9 +1095,8 @@ ON_Intersect(const ON_Curve *curveA,
 
     int original_count = x.Count();
 
-    if (isect_tol <= 0.0) {
-	isect_tol = CCI_DEFAULT_TOLERANCE;
-    }
+    V_MAX(isect_tol, CCI_DEFAULT_TOLERANCE);
+
     if (overlap_tol < isect_tol) {
 	overlap_tol = 2.0 * isect_tol;
     }
@@ -1613,9 +1607,8 @@ ON_Intersect(const ON_Curve *curveA,
 
     int original_count = x.Count();
 
-    if (isect_tol <= 0.0) {
-	isect_tol = CSI_DEFAULT_TOLERANCE;
-    }
+    V_MAX(isect_tol, CSI_DEFAULT_TOLERANCE);
+
     if (overlap_tol < isect_tol) {
 	overlap_tol = 2.0 * isect_tol;
     }
@@ -3188,15 +3181,12 @@ ON_Intersect(const ON_Surface *surfA,
 
     int original_count = x.Count();
 
-    if (isect_tol <= 0.0) {
-	isect_tol = SSI_DEFAULT_TOLERANCE;
-    }
+    V_MAX(isect_tol, SSI_DEFAULT_TOLERANCE);
+
     if (overlap_tol < isect_tol) {
 	overlap_tol = 2.0 * isect_tol;
     }
-    if (fitting_tol < isect_tol) {
-	fitting_tol = isect_tol;
-    }
+    V_MAX(fitting_tol, isect_tol);
 
     check_domain(surfaceA_udomain, surfA->Domain(0), "surfaceA_udomain");
     check_domain(surfaceA_vdomain, surfA->Domain(1), "surfaceA_vdomain");
