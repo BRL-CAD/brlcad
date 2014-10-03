@@ -36,20 +36,9 @@
 #include "./tree.h"
 
 
-#define NewTrie(p) \
-    if (((p) = (Trie *) malloc(sizeof(Trie))) == TRIE_NULL) { \
-	Malloc_Bomb(sizeof(Trie)); \
-	fatal_error = TRUE; \
-	return TRIE_NULL; \
-							    }
-#define NewOcList(p) \
-    if (((p) = (OcList *) malloc(sizeof(OcList))) == OCLIST_NULL) { \
-	Malloc_Bomb(sizeof(OcList)); \
-	fatal_error = TRUE; \
-	return; \
-								  }
 static OcList *copy_OcList(OcList *orp);
 static OcList *match_Trie(Trie *triep);
+
 
 void
 append_Octp(Trie *triep, Octree *octp)
@@ -63,7 +52,8 @@ append_Octp(Trie *triep, Octree *octp)
 	    return;
 	}
     }
-    NewOcList(*opp);
+    BU_GET(*opp, OcList);
+
     (*opp)->p_octp = octp;
     (*opp)->p_next = OCLIST_NULL;
     return;
@@ -77,7 +67,7 @@ delete_Node_OcList(OcList **oclistp, Octree *octreep)
 	if ((*oclistp)->p_octp == octreep) {
 	    OcList *tmp = *oclistp;
 	    *oclistp = (*oclistp)->p_next;
-	    free((char *) tmp);
+	    BU_PUT(tmp, OcList);
 	    return 1;
 	}
     bu_log("\"%s\"(%d) Couldn't find node.\n", __FILE__, __LINE__);
@@ -90,7 +80,7 @@ delete_OcList(OcList **oclistp)
     *oclistp = OCLIST_NULL;
     for (; op != OCLIST_NULL; op = np) {
 	np = op->p_next;
-	free((char *) op);
+	BU_PUT(op, OcList);
     }
     return;
 }
@@ -104,7 +94,7 @@ add_Trie(const char *name, Trie **triepp)
 	/* See if name already exists.			*/
 	if (*triepp == TRIE_NULL) {
 	    /* Name does not exist, make leaf node.	*/
-	    NewTrie(*triepp);
+	    BU_GET(*triepp, Trie);
 	    (*triepp)->l.t_altr = (*triepp)->l.t_next = TRIE_NULL;
 	    (*triepp)->l.t_octp = OCLIST_NULL;
 	} else
@@ -123,7 +113,8 @@ add_Trie(const char *name, Trie **triepp)
     if (curp == TRIE_NULL) {
 	/* No Match, this level, so create new alternate.	*/
 	curp = *triepp;
-	NewTrie(*triepp);
+	BU_GET(*triepp, Trie);
+
 	(*triepp)->n.t_altr = curp;
 	(*triepp)->n.t_char = *name;
 	(*triepp)->n.t_next = TRIE_NULL;
