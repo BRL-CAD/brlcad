@@ -552,16 +552,19 @@ replace_curve_with_subcurve(ON_Curve *&curve, const ON_Interval &interval)
 }
 
 HIDDEN ON_SimpleArray<ON_Interval>
-get_curve_intervals_inside_or_on_outerloop(
+get_curve_intervals_inside_or_on_face(
     ON_Curve *curve2D,
-    ON_SimpleArray<ON_Curve *> outerloop_curves,
+    const ON_ClassArray<ON_SimpleArray<ON_Curve *> > &face_loops,
     double isect_tol)
 {
-    // get curve-curve intersections
+    // get curve-loop intersections
     ON_SimpleArray<double> isect_curve_t;
     ON_SimpleArray<ON_X_EVENT> ccx_events;
-    for (int i = 0; i < outerloop_curves.Count(); i++) {
-	ON_Intersect(curve2D, outerloop_curves[i], ccx_events, isect_tol);
+
+    for (int i = 0; i < face_loops.Count(); ++i) {
+	for (int j = 0; j < face_loops[i].Count(); ++j) {
+	    ON_Intersect(curve2D, face_loops[i][j], ccx_events, isect_tol);
+	}
     }
 
     // get a sorted list of just the parameters on the first curve
@@ -575,108 +578,519 @@ get_curve_intervals_inside_or_on_outerloop(
     }
     isect_curve_t.QuickSort(ON_CompareIncreasing);
 
-    // find the intervals delimiting segments inside the outerloop
-    ON_SimpleArray<ON_Interval> intervals_inside_outerloop;
 
     // insert start and end parameters so every part of the curve is tested
     isect_curve_t.Insert(0, curve2D->Domain().Min());
     isect_curve_t.Append(curve2D->Domain().Max());
 
-    // Check if the midpoint of each non-degenerate interval is
-    // inside the outerloop. Record the entire interval as being
-    // inside the outerloop.
+    // if the midpoint of an interval is inside/on the face, keep the
+    // entire interval
+    ON_SimpleArray<ON_Interval> included_intervals;
     for (int i = 0; i < isect_curve_t.Count() - 1; i++) {
 	ON_Interval interval(isect_curve_t[i], isect_curve_t[i + 1]);
-	if (ON_NearZero(interval.Length())) {
+	if (ON_NearZero(interval.Length(), ON_ZERO_TOLERANCE)) {
 	    continue;
 	}
 	ON_2dPoint pt = curve2D->PointAt(interval.Mid());
+
+	bool point_included = false;
 	try {
-	    if (!is_point_outside_loop(pt, outerloop_curves)) {
-		intervals_inside_outerloop.Append(interval);
+	    // inside/on outerloop
+	    if (!is_point_outside_loop(pt, face_loops[0])) {
+
+		// outside/on innerloops
+		point_included = true;
+		for (int j = 1; j < face_loops.Count(); ++j) {
+		    if (is_point_inside_loop(pt, face_loops[j])) {
+			point_included = false;
+			break;
+		    }
+		}
 	    }
 	} catch (InvalidGeometry &e) {
 	    bu_log("%s", e.what());
 	}
+	if (point_included) {
+	    included_intervals.Append(interval);
+	}
     }
-    return intervals_inside_outerloop;
+
+    // merge continuous intervals
+    ON_SimpleArray<ON_Interval> final_intervals;
+    for (int j, i = 0; i < included_intervals.Count(); i = j) {
+	ON_Interval merged_interval = included_intervals[i];
+
+	for (j = i + 1; j < included_intervals.Count(); ++j) {
+	    ON_Interval &next = included_intervals[j];
+
+	    if (ON_NearZero(next.Min() - merged_interval.Max(), ON_ZERO_TOLERANCE)) {
+		ON_Interval new_interval = merged_interval;
+
+		if (new_interval.Union(next)) {
+		    merged_interval = new_interval;
+		} else {
+		    break;
+		}
+	    } else {
+		break;
+	    }
+	}
+	final_intervals.Append(merged_interval);
+    }
+
+    return final_intervals;
 }
 
 HIDDEN int
-get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i1, int face_i2, ON_SSX_EVENT *event)
+compare_interval(const ON_Interval *a, const ON_Interval *b)
+{
+    return a->Compare(*b);
+}
+
+struct IntervalPoints {
+    ON_3dPoint min;
+    ON_3dPoint mid;
+    ON_3dPoint max;
+};
+
+class IntervalParams {
+public:
+    double min;
+    double mid;
+    double max;
+
+    void
+    MakeIncreasing(void)
+    {
+	if (min > mid) {
+	    std::swap(min, mid);
+	}
+	if (mid > max) {
+	    std::swap(mid, max);
+
+	    if (min > mid) {
+		std::swap(min, mid);
+	    }
+	}
+    }
+};
+
+// given parameters in a curve interval, create new interval
+// parameters that reflect the the non-degenerate (different
+// dimensioned) curve interval used to generate the curve parameters
+HIDDEN IntervalParams
+curve_interval_from_params(
+    IntervalParams interval_t,
+    const ON_Curve *curve)
+{
+    if (!curve->IsClosed()) {
+	return interval_t;
+    }
+
+    if (interval_t.min > interval_t.max) {
+	std::swap(interval_t.min, interval_t.max);
+    }
+    double min_t = interval_t.min;
+    double max_t = interval_t.max;
+
+    ON_Interval cdom = curve->Domain();
+    if (!(min_t < max_t || min_t > max_t)) {
+	// if endpoints are both at closed curve joint, put them at
+	// either end of the curve domain
+	if (ON_NearZero(cdom.Min() - min_t, ON_ZERO_TOLERANCE)) {
+	    interval_t.max = cdom.Max();
+	} else if (ON_NearZero(cdom.Max() - min_t, ON_ZERO_TOLERANCE)) {
+	    interval_t.min = cdom.Min();
+	}
+    } else {
+	// if interval doesn't include midpt, assume the point nearest
+	// the seam needs to be on the opposite side of the domain
+	ON_Interval curr(min_t, max_t);
+	if (!curr.Includes(interval_t.mid)) {
+	    if (fabs(cdom.Min() - min_t) > fabs(cdom.Max() - max_t)) {
+		interval_t.max = cdom.Min();
+	    } else {
+		interval_t.min = cdom.Max();
+	    }
+	}
+    }
+    interval_t.MakeIncreasing();
+
+    return interval_t;
+}
+
+// given interval points in surface uv space, create new interval
+// points that reflect the non-degenerate curve parameter interval
+// used to generate the input points
+HIDDEN IntervalPoints
+uv_interval_from_points(
+    IntervalPoints interval_pts,
+    const ON_Surface *surf)
+{
+    ON_3dPoint &min_uv = interval_pts.min;
+    ON_3dPoint &max_uv = interval_pts.max;
+
+    ON_Interval udom = surf->Domain(0);
+    ON_Interval vdom = surf->Domain(1);
+
+    enum seam_location {SEAM_NONE, SEAM_ALONG_V, SEAM_ALONG_U,
+	SEAM_ALONG_UV};
+
+    int seam_min = IsAtSeam(surf, min_uv, ON_ZERO_TOLERANCE);
+    int seam_max = IsAtSeam(surf, max_uv, ON_ZERO_TOLERANCE);
+
+    if ((seam_min && seam_max) && (min_uv == max_uv)) {
+	// if uv endpoints are identical and on a seam
+	// they need to be on opposite sides of the domain
+	if (ON_NearZero(udom.Min() - min_uv[0], ON_ZERO_TOLERANCE) ||
+	    ON_NearZero(udom.Max() - min_uv[0], ON_ZERO_TOLERANCE))
+	{
+	    // point on west/east edge becomes one point on west
+	    // edge, one point on east edge
+	    min_uv[0] = udom.Min();
+	    max_uv[0] = udom.Max();
+	} else if (ON_NearZero(vdom.Min() - min_uv[1], ON_ZERO_TOLERANCE) ||
+		   ON_NearZero(vdom.Max() - min_uv[1], ON_ZERO_TOLERANCE))
+	{
+	    // point on south/north edge becomes one point on
+	    // south edge, one point on north edge
+	    min_uv[1] = vdom.Min();
+	    max_uv[1] = vdom.Max();
+	}
+    } else if (!seam_min != !seam_max) { // XOR
+	// if just one point is on a seam, make sure it's on the
+	// correct side of the domain
+
+	// get interval midpoint in uv space
+	ON_ClassArray<ON_PX_EVENT> events;
+	ON_3dPoint midpt = surf->PointAt(interval_pts.mid.x,
+		interval_pts.mid.y);
+	ON_Intersect(midpt, *surf, events, INTERSECTION_TOL);
+
+	if (events.Count() == 1) {
+	    // Check that the non-seam parameter of the
+	    // midpoint is between the non-seam parameters of
+	    // the interval uv on the seam and the other
+	    // interval uv. If the midpoint non-seam parameter
+	    // is outside the interval we'll move the seam_uv
+	    // to the other side of the domain.
+	    //
+	    // For example, if the surface has a seam at the
+	    // west/east edge and we have seam_uv (0.0, .1)
+	    // and other_uv (.5, .6) we'll check that the
+	    // interval midpoint uv has a u in [0.0, .5]. 
+	    //
+	    // A midpoint of (.25, .25) would be okay. A
+	    // midpoint of (.75, .25) would necessitate us
+	    // moving the seam_uv from the west edge to the
+	    // east edge, e.g (1.0, .1).
+	    int seam = seam_min ? seam_min : seam_max;
+	    ON_3dPoint &seam_uv = seam_min ? min_uv : max_uv;
+	    ON_3dPoint other_uv = seam_min ? max_uv : min_uv;
+
+	    double *seam_t = &seam_uv[1];
+	    double seam_opp_t = vdom.Max() - seam_uv[1];
+	    double other_t = other_uv[1];
+	    double midpt_t = events[0].m_b[1];
+	    if (seam != SEAM_ALONG_U) {
+		seam_t = &seam_uv[0];
+		seam_opp_t = udom.Max() - seam_uv[0];
+		other_t = other_uv[0];
+		midpt_t = events[0].m_b[0];
+	    }
+
+	    ON_Interval curr(*seam_t, other_t);
+	    if (!curr.Includes(midpt_t)) {
+		// need to flip the seam point to the other
+		// side of the domain
+		*seam_t = seam_opp_t;
+	    }
+	}
+    }
+    return interval_pts;
+}
+
+HIDDEN IntervalPoints
+interval_2d_to_uv(
+    const ON_Interval &interval_2d,
+    const ON_Curve *curve2d,
+    const ON_Surface *surf)
+{
+    // initialize endpoints from evaluated surface uv points
+    IntervalPoints pts;
+    pts.min = curve2d->PointAt(interval_2d.Min());
+    pts.mid = curve2d->PointAt(interval_2d.Mid());
+    pts.max = curve2d->PointAt(interval_2d.Max());
+
+    return uv_interval_from_points(pts, surf);
+}
+
+HIDDEN ON_Interval
+interval_2d_to_3d(
+    const ON_Interval &interval,
+    const ON_Curve *curve2d,
+    const ON_Curve *curve3d,
+    const ON_Surface *surf)
+{
+    ON_Interval interval_3d;
+
+    ON_Interval whole_domain = curve2d->Domain();
+    whole_domain.MakeIncreasing();
+    if (ON_NearZero(interval.Min() - whole_domain.Min(), ON_ZERO_TOLERANCE) &&
+	ON_NearZero(interval.Max() - whole_domain.Max(), ON_ZERO_TOLERANCE))
+    {
+	interval_3d = curve3d->Domain();
+	interval_3d.MakeIncreasing();
+    } else {
+	// get 2d curve interval endpoints as uv points
+	IntervalPoints interval_uv =
+	    interval_2d_to_uv(interval, curve2d, surf);
+
+	// evaluate surface at uv points to get 3d interval points
+	IntervalPoints pts_3d;
+	pts_3d.min = surf->PointAt(interval_uv.min.x, interval_uv.min.y);
+	pts_3d.mid = surf->PointAt(interval_uv.mid.x, interval_uv.mid.y);
+	pts_3d.max = surf->PointAt(interval_uv.max.x, interval_uv.max.y);
+
+	// convert 3d points into 3d curve parameters
+	ON_ClassArray<ON_PX_EVENT> events;
+	ON_Intersect(pts_3d.min, *curve3d, events, INTERSECTION_TOL);
+	ON_Intersect(pts_3d.mid, *curve3d, events, INTERSECTION_TOL);
+	ON_Intersect(pts_3d.max, *curve3d, events, INTERSECTION_TOL);
+
+	if (events.Count() == 3) {
+	    IntervalParams curve_t;
+	    curve_t.min = events[0].m_b[0];
+	    curve_t.mid = events[1].m_b[0];
+	    curve_t.max = events[2].m_b[0];
+
+	    curve_t = curve_interval_from_params(curve_t, curve3d);
+	    interval_3d.Set(curve_t.min, curve_t.max);
+	}
+    }
+    return interval_3d;
+}
+
+
+// Convert parameter intervals of a 2d face curve into equivalent
+// parameter intervals on a matching 3d curve.
+HIDDEN ON_SimpleArray<ON_Interval>
+intervals_2d_to_3d(
+    const ON_SimpleArray<ON_Interval> &intervals_2d,
+    const ON_Curve *curve2d,
+    const ON_Curve *curve3d,
+    const ON_BrepFace *face)
+{
+    ON_SimpleArray<ON_Interval> out;
+    const ON_Surface *surf = face->SurfaceOf();
+
+    for (int i = 0; i < intervals_2d.Count(); ++i) {
+	ON_Interval interval_3d = interval_2d_to_3d(intervals_2d[i], curve2d,
+		curve3d, surf);
+
+	if (interval_3d.IsValid()) {
+	    out.Append(interval_3d);
+	}
+    }
+    out.QuickSort(compare_interval);
+    return out;
+}
+
+// Convert parameter interval of a 3d curve into the equivalent parameter
+// interval on a matching 2d face curve.
+HIDDEN ON_Interval
+interval_3d_to_2d(
+    const ON_Interval &interval,
+    const ON_Curve *curve2d,
+    const ON_Curve *curve3d,
+    const ON_BrepFace *face)
+{
+    ON_Interval interval_2d;
+
+    ON_Interval whole_domain = curve3d->Domain();
+    whole_domain.MakeIncreasing();
+
+    if (ON_NearZero(interval.Min() - whole_domain.Min(), ON_ZERO_TOLERANCE) &&
+	ON_NearZero(interval.Max() - whole_domain.Max(), ON_ZERO_TOLERANCE))
+    {
+	interval_2d = curve2d->Domain();
+	interval_2d.MakeIncreasing();
+    } else {
+	const ON_Surface *surf = face->SurfaceOf();
+
+	IntervalPoints pts;
+	pts.min = curve3d->PointAt(interval.Min());
+	pts.mid = curve3d->PointAt(interval.Mid());
+	pts.max = curve3d->PointAt(interval.Max());
+	
+	ON_ClassArray<ON_PX_EVENT> events;
+	ON_Intersect(pts.min, *surf, events, INTERSECTION_TOL);
+	ON_Intersect(pts.mid, *surf, events, INTERSECTION_TOL);
+	ON_Intersect(pts.max, *surf, events, INTERSECTION_TOL);
+
+	if (events.Count() == 3) {
+	    IntervalPoints interval_uv;
+	    interval_uv.min = events[0].m_b;
+	    interval_uv.mid = events[1].m_b;
+	    interval_uv.max = events[2].m_b;
+
+	    interval_uv = uv_interval_from_points(interval_uv, surf);
+
+	    // intersect surface uv parameters with 2d curve to convert
+	    // surface uv parameters to 2d curve parameters
+	    events.Empty();
+	    ON_Intersect(interval_uv.min, *curve2d, events, INTERSECTION_TOL);
+	    ON_Intersect(interval_uv.mid, *curve2d, events, INTERSECTION_TOL);
+	    ON_Intersect(interval_uv.max, *curve2d, events, INTERSECTION_TOL);
+
+	    if (events.Count() == 3) {
+		IntervalParams curve_t;
+		curve_t.min = events[0].m_b[0];
+		curve_t.mid = events[1].m_b[0];
+		curve_t.max = events[2].m_b[0];
+
+		curve_t = curve_interval_from_params(curve_t, curve2d);
+		interval_2d.Set(curve_t.min, curve_t.max);
+	    }
+	}
+    }
+    return interval_2d;
+}
+
+HIDDEN ON_SimpleArray<ON_SSX_EVENT *>
+get_subcurves_inside_faces(
+    const ON_Brep *brep1,
+    const ON_Brep *brep2,
+    int face_i1,
+    int face_i2,
+    ON_SSX_EVENT *event)
 {
     // The ON_SSX_EVENT from SSI is the intersection of two whole surfaces.
     // We need to get the part that lies inside both trimmed patches.
     // (brep1's face[face_i1] and brep2's face[face_i2])
-    // returns 0 for success, -1 for error.
+    ON_SimpleArray<ON_SSX_EVENT *> out;
 
     if (event == NULL) {
-	return -1;
+	return out;
     }
 
     if (event->m_curve3d == NULL || event->m_curveA == NULL || event->m_curveB == NULL) {
-	return -1;
+	return out;
     }
 
-    // 1. Get the outerloops.
-    ON_SimpleArray<ON_Curve *> outerloop1, outerloop2;
+    // get the face loops
     if (face_i1 < 0 || face_i1 >= brep1->m_F.Count()) {
-	bu_log("get_subcurve_inside_faces(): invalid face_i1 (%d).\n", face_i1);
-	return -1;
+	bu_log("get_subcurves_inside_faces(): invalid face_i1 (%d).\n", face_i1);
+	return out;
     }
     if (face_i2 < 0 || face_i2 >= brep2->m_F.Count()) {
-	bu_log("get_subcurve_inside_faces(): invalid face_i2 (%d).\n", face_i2);
-	return -1;
-    }
-    const ON_BrepLoop &loop1 = brep1->m_L[brep1->m_F[face_i1].m_li[0]];
-    const ON_BrepLoop &loop2 = brep2->m_L[brep2->m_F[face_i2].m_li[0]];
-
-    for (int i = 0; i < loop1.TrimCount(); i++) {
-	outerloop1.Append(brep1->m_C2[brep1->m_T[loop1.m_ti[i]].m_c2i]);
-    }
-    for (int i = 0; i < loop2.TrimCount(); i++) {
-	outerloop2.Append(brep2->m_C2[brep2->m_T[loop2.m_ti[i]].m_c2i]);
+	bu_log("get_subcurves_inside_faces(): invalid face_i2 (%d).\n", face_i2);
+	return out;
     }
 
-    // 2. Find the intervals of the curves that are inside the outerloops.
+    const ON_SimpleArray<int> &face1_li = brep1->m_F[face_i1].m_li;
+    ON_ClassArray<ON_SimpleArray<ON_Curve *> > face1_loops;
+    for (int i = 0; i < face1_li.Count(); ++i) {
+	const ON_BrepLoop &brep_loop = brep1->m_L[face1_li[i]];
+
+	ON_SimpleArray<ON_Curve *> loop_curves;
+	for (int j = 0; j < brep_loop.m_ti.Count(); ++j) {
+	    ON_Curve *trim2d =
+		brep1->m_C2[brep1->m_T[brep_loop.m_ti[j]].m_c2i];
+	    loop_curves.Append(trim2d);
+	}
+	face1_loops.Append(loop_curves);
+    }
+
+    const ON_SimpleArray<int> &face2_li = brep2->m_F[face_i2].m_li;
+    ON_ClassArray<ON_SimpleArray<ON_Curve *> > face2_loops;
+    for (int i = 0; i < face2_li.Count(); ++i) {
+	const ON_BrepLoop &brep_loop = brep2->m_L[face2_li[i]];
+	ON_SimpleArray<ON_Curve *> loop_curves;
+
+	for (int j = 0; j < brep_loop.m_ti.Count(); ++j) {
+	    ON_Curve *trim2d =
+		brep2->m_C2[brep2->m_T[brep_loop.m_ti[j]].m_c2i];
+	    loop_curves.Append(trim2d);
+	}
+	face2_loops.Append(loop_curves);
+    }
+
+    // find the intervals of the curves that are inside/on each face
     ON_SimpleArray<ON_Interval> intervals1, intervals2;
-    intervals1 = get_curve_intervals_inside_or_on_outerloop(event->m_curveA,
-	    outerloop1, INTERSECTION_TOL);
-    intervals2 = get_curve_intervals_inside_or_on_outerloop(event->m_curveB,
-	    outerloop2, INTERSECTION_TOL);
+    intervals1 = get_curve_intervals_inside_or_on_face(event->m_curveA,
+	    face1_loops, INTERSECTION_TOL);
+    intervals2 = get_curve_intervals_inside_or_on_face(event->m_curveB,
+	    face2_loops, INTERSECTION_TOL);
 
-    // 3. Merge the intervals and get the final result.
-    try {
-	ON_Interval merged_interval1, merged_interval2, shared_interval;
-
-	if (intervals1.Count() > 0 && intervals2.Count() > 0) {
-	    merged_interval1 = union_intervals(intervals1);
-	    merged_interval2 = union_intervals(intervals2);
-	    shared_interval = intersect_intervals(merged_interval1, merged_interval2);
-	} else if (intervals1.Count() > 0) {
-	    shared_interval = union_intervals(intervals1);
-	} else if (intervals2.Count() > 0) {
-	    shared_interval = union_intervals(intervals2);
-	} else {
-	    return -1;
-	}
-
-	if (DEBUG_BREP_BOOLEAN) {
-	    bu_log("shared_interval: [%g, %g]\n", shared_interval.Min(), shared_interval.Max());
-	}
-
-	// 4. Replace with the sub-curves.
-	replace_curve_with_subcurve(event->m_curve3d, shared_interval);
-	replace_curve_with_subcurve(event->m_curveA, shared_interval);
-	replace_curve_with_subcurve(event->m_curveB, shared_interval);
-    } catch (IntervalGenerationError &e) {
-	bu_log("%s", e.what());
-	return -1;
-    } catch (GeometryGenerationError &e) {
-	bu_log("%s", e.what());
-	return -1;
+    if (intervals1.Count() == 0 && intervals2.Count() == 0) {
+	return out;
     }
-    return 0;
+
+    // merge the trimmed subcurves in 3d to get the final intervals
+    ON_SimpleArray<ON_Interval> final_intervals;
+    if (intervals1.Count() == 0) {
+	final_intervals = intervals_2d_to_3d(intervals2, event->m_curveB,
+		event->m_curve3d, &brep2->m_F[face_i2]);
+    } else if (intervals2.Count() == 0) {
+	final_intervals = intervals_2d_to_3d(intervals1, event->m_curveA,
+		event->m_curve3d, &brep1->m_F[face_i1]);
+    } else {
+	ON_SimpleArray<ON_Interval> intervals1_3d, intervals2_3d;
+
+	intervals1_3d = intervals_2d_to_3d(intervals1, event->m_curveA,
+		event->m_curve3d, &brep1->m_F[face_i1]);
+	intervals2_3d = intervals_2d_to_3d(intervals2, event->m_curveB,
+		event->m_curve3d, &brep1->m_F[face_i1]);
+
+	for (int i = 0; i < intervals1_3d.Count(); ++i) {
+	    for (int j = 0; j < intervals2_3d.Count(); ++j) {
+		try {
+		    ON_Interval shared = intersect_intervals(intervals1_3d[i],
+			    intervals2_3d[j]);
+		    if (!ON_NearZero(shared.Length())) {
+			final_intervals.Append(shared);
+		    }
+		} catch (IntervalGenerationError &e) {
+		    // empty intersection
+		    continue;
+		}
+	    }
+	}
+    }
+
+    // create new curves
+    for (int i = 0; i < final_intervals.Count(); ++i) {
+	ON_Interval intervalA = interval_3d_to_2d(final_intervals[i],
+		event->m_curveA, event->m_curve3d, &brep1->m_F[face_i1]);
+
+	ON_Interval intervalB = interval_3d_to_2d(final_intervals[i],
+		event->m_curveB, event->m_curve3d, &brep2->m_F[face_i2]);
+
+	if (!intervalA.IsValid() || !intervalB.IsValid()) {
+	    continue;
+	}
+
+	ON_SSX_EVENT *new_event = new ON_SSX_EVENT(*event);
+	try {
+	    new_event->m_curve3d = NULL;
+	    new_event->m_curveA = new_event->m_curveB = NULL;
+	    new_event->m_curveA = sub_curve(event->m_curveA, intervalA.Min(),
+		    intervalA.Max());
+	    new_event->m_curveB = sub_curve(event->m_curveB, intervalB.Min(),
+		    intervalB.Max());
+	    out.Append(new_event);
+	} catch (InvalidInterval &e) {
+	    bu_log("%s", e.what());
+	    delete new_event;
+	    for (int j = 0; j < out.Count(); ++j) {
+		delete out[j];
+	    }
+	    out.Empty();
+	    break;
+	}
+    }
+    return out;
 }
 
 HIDDEN double
@@ -2824,19 +3238,25 @@ get_face_intersection_curves(
 			events[k].m_type == ON_SSX_EVENT::ssx_transverse ||
 			events[k].m_type == ON_SSX_EVENT::ssx_overlap)
 		    {
-			if (get_subcurve_inside_faces(brep1, brep2, i, j, &events[k]) < 0) {
-			    continue;
+			ON_SimpleArray<ON_SSX_EVENT *> subcurves;
+			subcurves = get_subcurves_inside_faces(brep1, brep2,
+				i, j, &events[k]);
+
+			for (int l = 0; l < subcurves.Count(); ++l) {
+			    SSICurve c1, c2;
+			    c1.m_curve = subcurves[l]->m_curveA;
+			    c2.m_curve = subcurves[l]->m_curveB;
+			    curves_array[i].Append(c1);
+			    curves_array[face_count1 + j].Append(c2);
+			    face1_curves.Append(subcurves[l]->m_curveA);
+			    face2_curves.Append(subcurves[l]->m_curveB);
+
+			    // delete ON_SSX_EVENT, but prevent
+			    // ~ON_SSX_EVENT() from deleting curves
+			    // we're using
+			    subcurves[l]->m_curveA = subcurves[l]->m_curveB = NULL;
+			    delete subcurves[l];
 			}
-			SSICurve c1, c2;
-			c1.m_curve = events[k].m_curveA;
-			c2.m_curve = events[k].m_curveB;
-			curves_array[i].Append(c1);
-			curves_array[face_count1 + j].Append(c2);
-			face1_curves.Append(events[k].m_curveA);
-			face2_curves.Append(events[k].m_curveB);
-			// Set m_curveA and m_curveB to NULL, in case that they are
-			// deleted by ~ON_SSX_EVENT().
-			events[k].m_curveA = events[k].m_curveB = NULL;
 		    }
 		}
 		dplot->ClippedFaceCurves(surf1, surf2, face1_curves, face2_curves);
