@@ -1,5 +1,8 @@
 #ifndef BREP_EXCEPT_H
 #define BREP_EXCEPT_H
+
+#include "common.h"
+
 #include <stdexcept>
 
 class InvalidBooleanOperation : public std::invalid_argument
