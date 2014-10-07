@@ -941,7 +941,7 @@ CurvePoint::PointCurveLocation(ON_2dPoint pt, ON_Curve *curve)
 
 class CurveSegment {
 public:
-    ON_SimpleArray<ON_Curve *> &orig_loop;
+    ON_SimpleArray<ON_Curve *> orig_loop;
     CurvePoint from, to;
     enum Location {
 	BOUNDARY,
