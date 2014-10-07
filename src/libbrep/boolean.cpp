@@ -2709,7 +2709,7 @@ get_face_intersection_curves(
     // determine which of the "fully used/fully non-used" faces are needed?
 
     if (DEBUG_BREP_BOOLEAN) {
-	bu_log("Summary of brep status: \n unused1: %d\n unused2: %d\n finalform1: %d\n finalform2 %d\nintersection_candidates(%d):\n", unused1.size(), unused2.size(), finalform1.size(), finalform2.size(), intersection_candidates.size());
+	bu_log("Summary of brep status: \n unused1: %zd\n unused2: %zd\n finalform1: %zd\n finalform2 %zd\nintersection_candidates(%zd):\n", unused1.size(), unused2.size(), finalform1.size(), finalform2.size(), intersection_candidates.size());
 	for (std::set<std::pair<int, int> >::iterator it = intersection_candidates.begin(); it != intersection_candidates.end(); ++it) {
 	    bu_log("     (%d,%d)\n", (*it).first, (*it).second);
 	}
