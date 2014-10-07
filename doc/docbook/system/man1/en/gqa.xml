@@ -139,7 +139,7 @@
       For example, if a material index is left out of the table, it is easier to rectify
       the situation using the external file. Once the table has been verified as correct
       and complete, it is imported to the database as the binary object
-      <emphasis remap="B" role="bold">_DENSITIES</emphasis>.
+      <emphasis remap="B" role="bold">_DENSITIES</emphasis> .
       To import the text file into the database, the following command is used:
     </para>
 
@@ -298,7 +298,7 @@
 	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis></para>
 	  <para>
 	    Sets a rotation (in degrees) of the coordinate system by a given amount about
-	    the Z axis. The default is 0.  See also: <option>-e</option>
+	    the Z axis. The default is 0.  See also <option>-e</option> .
 	  </para>
 	</listitem>
       </varlistentry>
@@ -309,7 +309,7 @@
 	  <para>
 	    Sets a rotation (in degrees) of the coordinate system by a given elevation
 	    from the XY plane (rotation about X axis?). The default is 0.
-	    See also <option>-a</option>
+	    See also <option>-a</option> .
 	  </para>
 	</listitem>
       </varlistentry>
@@ -348,7 +348,7 @@
 	    sequence 2, 4, 8, 16, 32... so that the grid will refine to precisely the lower limit.
 	    The grid spacing may be specified with units.  For example:
 	    <emphasis remap="B" role="bold">5 mm</emphasis> or
-	    <emphasis remap="B" role="bold">10 in.</emphasis>  If units are not provided, millimeters
+	    <emphasis remap="B" role="bold">10 in</emphasis> .  If units are not provided, millimeters
 	    are presumed to be the units.
 	  </para>
     <para>
@@ -661,7 +661,7 @@ grid spacing 50mm  199 x 199 x 199
 Summary:
 Weight:
     closed_box.r  3.6375e+06 kg
-  Average total weight: 3.67541e+06 kg
+    Average total weight: 3.67541e+06 kg
 	  </literallayout>
 	</listitem>
       </varlistentry>
