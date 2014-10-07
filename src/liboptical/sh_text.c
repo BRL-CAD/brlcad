@@ -228,6 +228,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
     register fastf_t r, g, b;
     struct uvcoord uvc;
     long tmp;
+    char color_warn = 0;
 
     RT_CK_AP(ap);
     RT_CHECK_PT(pp);
@@ -305,15 +306,21 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 	/* No averaging necessary */
 
 	register unsigned char *cp=NULL;
+	unsigned int offset;
 
+	offset = (int)(ymin * (tp->tx_n-1)) * tp->tx_w * 3 + (int)(xmin * (tp->tx_w-1)) * 3;
 	if (tp->tx_mp) {
-	    cp = ((unsigned char *)(tp->tx_mp->buf)) +
-		(int)(ymin * (tp->tx_n-1)) * tp->tx_w * 3 +
-		(int)(xmin * (tp->tx_w-1)) * 3;
+	    if (offset >= tp->tx_mp->buflen) {
+		offset %= tp->tx_mp->buflen;
+		color_warn = 1;
+	    }
+	    cp = ((unsigned char *)(tp->tx_mp->buf)) + offset;
 	} else if (tp->tx_binunifp) {
-	    cp = ((unsigned char *)(tp->tx_binunifp->u.uint8)) +
-		(int)(ymin * (tp->tx_n-1)) * tp->tx_w * 3 +
-		(int)(xmin * (tp->tx_w-1)) * 3;
+	    if (offset >= tp->tx_binunifp->count) {
+		offset %= tp->tx_binunifp->count;
+		color_warn = 1;
+	    }
+	    cp = ((unsigned char *)(tp->tx_binunifp->u.uint8)) + offset;
 	} else {
 	    bu_bomb("sh_text.c -- No texture data found\n");
 	}
@@ -328,6 +335,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 	int start_line, stop_line, line;
 	int start_col, stop_col, col;
 	fastf_t xstart, xstop, ystart, ystop;
+	unsigned int max_offset;
 
 	xstart = xmin * (tp->tx_w-1);
 	xstop = xmax * (tp->tx_w-1);
@@ -347,10 +355,22 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 	    bu_log("\tcontributions to average:\n");
 	}
 
+	max_offset = stop_line * tp->tx_w * 3 + (int)(xstart) * 3 + (dx + 1) * 3;
+	if (tp->tx_mp) {
+	    if (max_offset > tp->tx_mp->buflen) {
+		color_warn = 1;
+	    }
+	} else if (tp->tx_binunifp) {
+	    if (max_offset > tp->tx_binunifp->count) {
+		color_warn = 1;
+	    }
+	}
+
 	for (line = start_line; line <= stop_line; line++) {
 	    register unsigned char *cp=NULL;
 	    fastf_t line_factor;
 	    fastf_t line_upper, line_lower;
+	    unsigned int offset;
 
 	    line_upper = line + 1.0;
 	    if (line_upper > ystop)
@@ -360,12 +380,17 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 		line_lower = ystart;
 	    line_factor = line_upper - line_lower;
 
+	    offset = line * tp->tx_w * 3 + (int)(xstart) * 3;
 	    if (tp->tx_mp) {
-		cp = ((unsigned char *)(tp->tx_mp->buf)) +
-		    line * tp->tx_w * 3 + (int)(xstart) * 3;
+		if (offset >= tp->tx_mp->buflen) {
+		    offset %= tp->tx_mp->buflen;
+		}
+		cp = ((unsigned char *)(tp->tx_mp->buf)) + offset;
 	    } else if (tp->tx_binunifp) {
-		cp = ((unsigned char *)(tp->tx_binunifp->u.uint8)) +
-		    line * tp->tx_w * 3 + (int)(xstart) * 3;
+		if (offset >= tp->tx_binunifp->count) {
+		    offset %= tp->tx_binunifp->count;
+                }
+		cp = ((unsigned char *)(tp->tx_binunifp->u.uint8)) + offset;
 	    } else {
 		/* not reachable */
 		bu_bomb("sh_text.c -- Unable to read datasource\n");
@@ -394,6 +419,16 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 	r /= tot_area;
 	g /= tot_area;
 	b /= tot_area;
+    }
+
+    /*
+     * If the actual image file size is less than the provided size,
+     * warn the user by displaying a color closer to red.
+     */
+    if (color_warn == 1) {
+	r = (r + 255.0) / 2;
+	g /= 2;
+	b /= 2;
     }
 
     if (rdebug & RDEBUG_SHADE)
