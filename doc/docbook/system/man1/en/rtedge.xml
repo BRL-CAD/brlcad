@@ -81,7 +81,7 @@
 	<listitem>
 	  <para>
 	    Select azimuth in degrees.  Used with <option>-e</option> option
-	    and conflicts with <option>-M</option> option
+	    and conflicts with <option>-M</option> option.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -108,7 +108,7 @@
 	<listitem>
 	  <para>
 	    Read model2view matrix from standard input.  Conflicts with
-	    <option>-a</option> and <option>-e</option> options
+	    <option>-a</option> and <option>-e</option> options.
 	  </para>
 	</listitem>
       </varlistentry>
