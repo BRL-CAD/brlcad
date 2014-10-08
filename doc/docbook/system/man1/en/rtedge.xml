@@ -53,10 +53,27 @@
       <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry> <emphasis remap="I">saveview</emphasis> command.
     </para>
 
-    <para>
-      The following options are recognized.
-    </para>
+    <para>The following options are recognized:</para>
+
     <variablelist remap="TP">
+      <varlistentry>
+	<term><option>-. #</option></term>
+	<listitem>
+	  <para>
+            selects the factor used in NUgrid algorithm. Default is 1.5 .
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-, #</option></term>
+	<listitem>
+	  <para>
+           selects which space partitioning algorithm to use
+	  </para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><option>-s#</option></term>
 	<listitem>
