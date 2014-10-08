@@ -89,7 +89,7 @@ usage(const char *argv0)
     bu_log(" -. #		Select factor in NUgrid algorithm (default is 1.5)\n");
     bu_log(" -, #		Selection of which space partitioning algorithm to use\n");
     bu_log(" -@ #		Set limit to each dimension of the nugrid\n");
-    bu_log(" -b '# #'		Specify X and Y pixel coordinates (need quotes) for single ray to be fired, for debugging\n");
+    bu_log(" -b '# #'	Specify X and Y pixel coordinates (need quotes) for single ray to be fired, for debugging\n");
     bu_log(" -c script_command\n");
     bu_log("		Supply, on command line, command which can appear in -M command script\n");
     bu_log(" -d #		Set flag for reporting of pixel distances\n");
