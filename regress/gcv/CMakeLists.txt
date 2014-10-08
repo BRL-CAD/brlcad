@@ -1,14 +1,14 @@
 # This should get rolled into a macro as more formats are added
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dem/dem-regress.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/dem/dem-regress.cmake @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dem/regress-dem.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/dem/regress-dem.cmake @ONLY)
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/dem/hawaii-c.done
-  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/dem/dem-regress.cmake
+  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/dem/regress-dem.cmake
   DEPENDS dem-g ${CMAKE_CURRENT_SOURCE_DIR}/dem/hawaii-c.tar.bz2 ${CMAKE_CURRENT_SOURCE_DIR}/dem/hawaii-c-control.tar.bz2
   )
 
-add_custom_target(dem-regress DEPENDS dem-g ${CMAKE_CURRENT_BINARY_DIR}/dem/hawaii-c.done)
-set_target_properties(dem-regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
+add_custom_target(regress-dem DEPENDS dem-g ${CMAKE_CURRENT_BINARY_DIR}/dem/hawaii-c.done)
+set_target_properties(regress-dem PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
 CMAKEFILES(dem)
 
