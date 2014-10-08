@@ -75,6 +75,197 @@
       </varlistentry>
 
       <varlistentry>
+	<term><option>-a#</option></term>
+	<listitem>
+	  <para>
+	    selects auto-sizing, and gives the view azimuth in degrees.  Used with
+	    <option>-e</option>
+	    and conflicts with
+	    <option>-M </option>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-b "# #"</option></term>
+	<listitem>
+	  <para>
+	    is sometimes useful for debugging.  A single ray is fired at the pixel
+	    coordinates specified. This is best when accompanied by debugging options.
+	    Note that the standard
+	    <citerefentry><refentrytitle>getopt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	    routine only allows options to have one parameter, so the X and Y
+	    pixel coordinates need to be combined into one string parameter by enclosing
+	    them in double quotes.  This option must follow any viewing parameters.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-d #</option></term>
+	<listitem>
+	  <para>sets flag for reporting of pixel distances: 1 for on, 0 (default) for off.
+          (Each pixel is represented by 3 bytes of color information followed by 8 bytes
+	  for a double, in IEEE format, which gives the distance to the ray's first hit.
+	  If the ray doesn't hit, a zero distance is reported by default
+	  which causes <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+	  to write only the color information.
+	  See
+	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+	  and
+	  <citerefentry><refentrytitle>pixd</refentrytitle><manvolnum>5</manvolnum></citerefentry>.)</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-e#</option></term>
+	<listitem>
+	  <para>selects auto-sizing, and gives the view elevation in degrees.  Used with
+	  <option>-a</option>
+	  and conflicts with
+	  <option>-M </option>.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-f #</option></term>
+	<listitem>
+	  <para>sets the expected playback rate in frames-per-second;
+	  the default is 30.
+	  Several time-evolving shaders
+	  such as
+	  <emphasis remap="I">fire</emphasis>
+	  and
+	  <emphasis remap="I">grass</emphasis>
+	  need to know the time at which each frame and pixel occur to drive their
+	  evolution.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-g #</option></term>
+	<listitem>
+	  <para>sets the grid cell width, in millimeters.
+	  Ordinarily, the cell width is computed by dividing the view size by
+	  the number of pixels of width, so this option need not be used.
+	  To obtain exactly 1 inch ray spacing, specify
+	  <option>-g25.4 .</option>
+	  If the grid cell width is specified and the grid cell height (which
+	  would be set using <option>-G</option>) is <emphasis remap="I">not</emphasis> specified,
+	  the grid cell height defaults to be the same as the width.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-m density,r,g,b</option></term>
+	<listitem>
+	  <para>enables an exponential shading of the void between the eye and the
+	  first hit location.  This allows a cheap simulation of atmospheric haze
+	  with lower performance impact than explicit modeling of the air volume.
+	  The haze is computed using the form:</para>
+
+	  <para>f = e^(-distance * density)</para>
+	  <para>g = 1.0 - f</para>
+	  <para>color = color * f + hazeRGB * g</para>
+
+	  <para>The color values are optional.  If not specified, they will have the passable
+	  values 0.8 .9 .99 .</para>
+
+	  <para>Example usage: -m '2.5e-8,.75,.95,.99'</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-j xmin,ymin,xmax,ymax</option></term>
+	<listitem>
+	  <para>enables processing of <emphasis remap="I">just a sub-rectangle</emphasis>,
+	  located within the rectangle (0,0) (width-1,height-1), and whose screen coordinates
+	  (lower left and upper right corners) are provided in the argument.
+	  Ray-tracing will be limited to just those pixels within the sub-rectangle,
+	  and only those pixels will be transmitted to the framebuffer.
+	  The corner pixels (xmin,ymin) and (xmax,ymax) are included in
+	  the sub-rectangle.
+	  This option exists primarily for
+	  <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+	  to allow sweeping out a rectangular portion of the view for ray-tracing.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-k xdir,ydir,zdir,dist</option></term>
+	<listitem>
+	  <para>enables the use of a <emphasis remap="I">cutting plane</emphasis>. The xdir, ydir, zdir, and dist
+	  define a plane (equivalent to a halfspace primitive with the same parameters).
+	  The vector (xdir, ydir, zdir) is normal to the plane and points away from
+	  the space to be subtracted. The dist parameter specifies the distance from
+	  the origin to the plane in the normal direction.
+	  The resulting image approximates subtracting the halfspace from the objects
+	  being raytraced. Note that this is not exactly the same as actually
+	  subtracting the halfspace, but it is faster. If explicit lights are used,
+	  objects that are cut away by the cutting plane will still cast shadows.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-l #</option></term>
+	<listitem>
+	  <para>selects lighting model.  Default is 0.
+	  Model 0 is a full lighting model with the ability to implement
+	  Phong shading, transparent and reflective objects, shadow penumbras,
+	  texture maps, etc.
+	  In addition to ambient light, a small amount of light is
+	  supplied from eye position.
+	  All objects in the active model space with a material property
+	  string of "light" represent additional light sources
+	  (up to 16 are presently permitted),
+	  and shadow computations will be initiated automatically.
+	  (This mechanism is subject to further change.)
+	  Model 1 is a diffuse-lighting model only, and is intended for
+	  debugging.
+	  Model 2 displays the surface normals as colors, and is useful
+	  for examining curvature and surface orientation.
+	  Model 3 is a three-light diffuse-lighting model, and is intended
+	  for debugging.
+	  Model 4 is a curvature debugging display, showing the inverse
+	  radius of curvature.
+	  Model 5 is a curvature debugging display, showing the principal
+	  direction vector.
+	  Model 6 is for debugging the UV parameterization used for surface
+	  texturing.  It is exactly the same as applying the texture 'testmap'
+	  to every region.  The U parameter is displayed in the red channel
+	  and the V parameter is displayed in the blue channel.
+	  Model 7 is for using photon mapping to simulate global illumination
+	  and caustics in a given scene.  Options to photon mapping are passed
+	  through the -l parameter in the following format:</para>
+	  <para>-l7,Num_Photons,Caustics_Percent,Irradiance_Rays,Angular_Tolerance,
+	  Random_Seed,Importance_Mapping_Toggle,Irradiance_Hypersampling_Toggle,
+	  Visual_Irradiance_Toggle,Scale_Lumens,Load_Save_File</para>
+	  <para>Example: -l7,16384,0,10,60.0,0,0,0,0,1.0,scene.pm</para>
+	  <para>
+	  Note: If just -l7 is used, then the default values above will be applied.  Light sources
+	  must also be explicitly defined with lumens defined for each source, i.e., default light
+	  sources will not work.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-n #</option></term>
+	<listitem>
+	  <para>defines the height of the image as a number of scanlines.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-o output.pix</option></term>
+	<listitem>
+	  <para>
+	    specifies a named file for output. Note that using -o disables
+	    parallel processing.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
 	<term><option>-s#</option></term>
 	<listitem>
 	  <para>
@@ -94,29 +285,11 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-a#</option></term>
-	<listitem>
-	  <para>
-	    Select azimuth in degrees.  Used with <option>-e</option> option
-	    and conflicts with <option>-M</option> option.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
 	<term><option>-A#</option></term>
 	<listitem>
 	  <para>
 	    Select angle for shading.  Default is 5.0 degrees; 89.0 will produce
 	    an image where only steep drops and rises are shaded.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>-e#</option></term>
-	<listitem>
-	  <para>
-	    Select elevation in degrees.  Used with <option>-a</option> option
-	    and conflicts with <option>-M</option> option.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -127,12 +300,6 @@
 	    Read model2view matrix from standard input.  Conflicts with
 	    <option>-a</option> and <option>-e</option> options.
 	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>-g#</option></term>
-	<listitem>
-	  <para>Select grid cell width.</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
@@ -159,15 +326,6 @@
 	  <para>
 	    sets the Boolean variable <emphasis remap="I">use_air</emphasis>
 	    to the given value.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>-o output.pix</option></term>
-	<listitem>
-	  <para>
-	    specifies a named file for output. Note that using -o disables
-	    parallel processing.
 	  </para>
 	</listitem>
       </varlistentry>
