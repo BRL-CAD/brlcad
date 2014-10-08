@@ -313,7 +313,7 @@
 	<listitem>
 	  <para>specifies the
 	  number of rays to fire in the X and Y directions on a square grid.
-	  The default size is 512 pixels.</para>
+	  The default size is 512 (i.e., 512 x 512).</para>
 	</listitem>
       </varlistentry>
 

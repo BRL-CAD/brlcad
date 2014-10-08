@@ -266,14 +266,28 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-s#</option></term>
+	<term><option>-p #</option></term>
 	<listitem>
-	  <para>
-	    Number of rays to fire in X and Y directions (square grid).
-	    Default is 512 (512 x 512).
-	  </para>
+	  <para>sets the perspective, in degrees, with 0 &lt; = # &lt; 180</para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term><option>-r</option></term>
+	<listitem>
+	  <para>requests that overlapping regions be reported (on by default); opposite of <option>-R</option> .</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-s#</option></term>
+	<listitem>
+	  <para>specifies the
+	  number of rays to fire in the X and Y directions on a square grid.
+	  The default size is 512 (i.e., 512 x 512).</para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><option>-F framebuffer</option></term>
 	<listitem>
