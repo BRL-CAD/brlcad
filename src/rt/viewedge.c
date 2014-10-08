@@ -296,7 +296,7 @@ usage(const char *argv0)
     bu_log(" -. #		Select factor in NUgrid algorithm (default is 1.5)\n");
     bu_log(" -, #		Selection of which space partitioning algorithm to use\n");
     bu_log(" -@ #		Set limit to each dimension of the nugrid\n");
-    bu_log(" -b '# #'	Specify X and Y pixel coordinates (need quotes) for single ray to be fired, for debugging\n");
+    bu_log(" -b \"# #\"	Specify X and Y pixel coordinates (need quotes) for single ray to be fired, for debugging\n");
     bu_log(" -c		Auxiliary commands (see man page)\n");
     bu_log(" -d #		Set flag for reporting of pixel distances\n");
     bu_log(" -f #		Set expected playback rate in frames-per-second (default is 30)\n");
@@ -310,10 +310,10 @@ usage(const char *argv0)
     bu_log("		Enable use of a cutting plane\n");
     bu_log(" -l #		Select lighting model (default is 0)\n");
     bu_log(" -t		Reverse the order of grid traversal (default is not to do that)\n");
-    bu_log(" -u units	Specify the units (or use 'model' for the local model's units)\n");
+    bu_log(" -u units	Specify the units (or use \"model\" for the local model's units)\n");
     bu_log(" -v #		Set the verbosity bit vector flags\n");
     bu_log(" -A #		Set the ambient light intensity\n");
-    bu_log(" -B		Turn on the 'benchmark' flag (default is off)\n");
+    bu_log(" -B		Turn on the \"benchmark\" flag (default is off)\n");
     bu_log(" -C #/#/#	Set the background color to the RGB value #/#/#\n");
     bu_log(" -D #		Specify the starting frame number (ending frame number is specified via -K #)\n");
     bu_log(" -E #           Set the distance from eye point to center of the model RPP (default is sqrt(2))\n");
@@ -321,7 +321,7 @@ usage(const char *argv0)
     bu_log(" -G #		Set grid cell height, in millimeters\n");
     bu_log(" -H #		Set number of extra rays to fire\n");
     bu_log(" -I		Turn on interactive mode\n");
-    bu_log(" -J #		Set a bit vector for 'jitter'\n");
+    bu_log(" -J #		Set a bit vector for \"jitter\"\n");
     bu_log(" -K #		Specify the ending frame number (starting frame number is specified via -D #)\n");
     bu_log(" -O model.pix	Output .pix format file, double precision format\n");
     bu_log(" -Q x,y		Select pixel ray for query with debugging; compute other pixels without debugging\n");
