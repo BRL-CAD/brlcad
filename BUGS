@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* report of mged command history not working with the down arrow key
+  in 7.25.0 (on Windows, unknown on other platforms).  Up arrow works
+  fine.
+
 * wgl framebuffer is not lingering on windows (regardless of using
   wgll or default) when it should
 
