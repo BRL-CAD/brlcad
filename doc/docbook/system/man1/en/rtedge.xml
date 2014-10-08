@@ -75,7 +75,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-a#</option></term>
+	<term><option>-a #</option></term>
 	<listitem>
 	  <para>
 	    selects auto-sizing, and gives the view azimuth in degrees.  Used with
@@ -118,7 +118,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-e#</option></term>
+	<term><option>-e #</option></term>
 	<listitem>
 	  <para>selects auto-sizing, and gives the view elevation in degrees.  Used with
 	  <option>-a</option>
@@ -280,11 +280,50 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-s#</option></term>
+	<term><option>-s #</option></term>
 	<listitem>
 	  <para>specifies the
 	  number of rays to fire in the X and Y directions on a square grid.
 	  The default size is 512 (i.e., 512 x 512).</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-t</option></term>
+	<listitem>
+	  <para>causes reversal of the order of grid traversal (default is not to do that)
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-u units</option></term>
+	<listitem>
+	  <para>specifies units, with "model" being used for the units of the local model
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-v #</option></term>
+	<listitem>
+	  <para>sets the verbosity bit vector flags for <command>rtedge</command> .
+	  Use -v 0 for no output or -v fff for all available output.
+	  See include/brlcad/rtprivate.h for various bit definitions.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-w #</option></term>
+	<listitem>
+	  <para>defines the width of each scanline in pixels.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-x#</option></term>
+	<listitem>
+	  <para>Set librt debug flags to (hexadecimal) number.</para>
 	</listitem>
       </varlistentry>
 
@@ -351,12 +390,6 @@
 	    white lines on a black background to black lines on a white
 	    background.
 	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>-x#</option></term>
-	<listitem>
-	  <para>Set librt debug flags to (hexadecimal) number.</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
