@@ -95,7 +95,7 @@
 
 /* hide INFINITY in case there's a math.h conflict */
 #ifdef INFINITY
-#  define INFINITY_ INFINITY
+#  pragma push_macro("INFINITY")
 #  undef INFINITY
 #endif
 
@@ -108,7 +108,7 @@
 #  ifdef INFINITY
 #    undef INFINITY
 #  endif
-#  define INFINITY INFINITY_
+#  pragma pop_macro("INFINITY")
 #  undef INFINITY_
 #endif
 
