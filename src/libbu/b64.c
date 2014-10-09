@@ -54,7 +54,7 @@ signed char bu_b64_encode_value(signed char value_in)
 }
 
 HIDDEN
-int bu_b64_encode_block_internal(const signed char* plaintext_in, int length_in, signed char* code_out, bu_b64_encodestate* state_in)
+int bu_b64_encode_block_internal(const signed char* plaintext_in, size_t length_in, signed char* code_out, bu_b64_encodestate* state_in)
 {
     const signed char* plainchar = plaintext_in;
     const signed char* const plaintextend = plaintext_in + length_in;
@@ -157,7 +157,7 @@ void bu_b64_init_decodestate(bu_b64_decodestate* state_in)
 }
 
 HIDDEN
-int bu_b64_decode_block_internal(const signed char* code_in, const int length_in, signed char* plaintext_out, bu_b64_decodestate* state_in)
+int bu_b64_decode_block_internal(const signed char* code_in, const size_t length_in, signed char* plaintext_out, bu_b64_decodestate* state_in)
 {
     const signed char* codechar = code_in;
     signed char* plainchar = plaintext_out;
@@ -222,7 +222,7 @@ int bu_b64_decode_block_internal(const signed char* code_in, const int length_in
 }
 
 signed char *
-bu_b64_encode_block(const signed char *input, int len)
+bu_b64_encode_block(const signed char *input, size_t len)
 {
     /* Calculate size of output needed and calloc the memory */
     signed char *output = (signed char *)bu_calloc((((int)(4*len/3)) + 4), 8, "Calloc b64 buffer");
@@ -257,7 +257,7 @@ bu_b64_encode(const signed char *input)
 
 
 int
-bu_b64_decode_block(signed char **output, const signed char *input, int len)
+bu_b64_decode_block(signed char **output, const signed char *input, size_t len)
 {
     /* Calculate size of output needed and calloc the memory */
     int cnt = 0;
