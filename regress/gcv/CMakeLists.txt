@@ -9,6 +9,7 @@ add_custom_command(
 
 add_custom_target(regress-dem DEPENDS dem-g ${CMAKE_CURRENT_BINARY_DIR}/dem/hawaii-c.done)
 set_target_properties(regress-dem PROPERTIES FOLDER "BRL-CAD Regression Tests")
+set_target_properties(regress-dem PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
 CMAKEFILES(dem)
 
