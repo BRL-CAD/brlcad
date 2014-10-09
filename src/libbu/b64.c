@@ -64,13 +64,10 @@ int bu_b64_encode_block_internal(const signed char* plaintext_in, size_t length_
 
     result = state_in->result;
 
-    switch (state_in->step)
-    {
-	while (1)
-	{
+    switch (state_in->step) {
+	while (1) {
 	    case step_A:
-		if (plainchar == plaintextend)
-		{
+		if (plainchar == plaintextend) {
 		    state_in->result = result;
 		    state_in->step = step_A;
 		    return codechar - code_out;
@@ -80,8 +77,7 @@ int bu_b64_encode_block_internal(const signed char* plaintext_in, size_t length_
 		*codechar++ = bu_b64_encode_value(result);
 		result = (fragment & 0x003) << 4;
 	    case step_B:
-		if (plainchar == plaintextend)
-		{
+		if (plainchar == plaintextend) {
 		    state_in->result = result;
 		    state_in->step = step_B;
 		    return codechar - code_out;
@@ -91,8 +87,7 @@ int bu_b64_encode_block_internal(const signed char* plaintext_in, size_t length_
 		*codechar++ = bu_b64_encode_value(result);
 		result = (fragment & 0x00f) << 2;
 	    case step_C:
-		if (plainchar == plaintextend)
-		{
+		if (plainchar == plaintextend) {
 		    state_in->result = result;
 		    state_in->step = step_C;
 		    return codechar - code_out;
@@ -104,8 +99,7 @@ int bu_b64_encode_block_internal(const signed char* plaintext_in, size_t length_
 		*codechar++ = bu_b64_encode_value(result);
 
 		++(state_in->stepcount);
-		if (state_in->stepcount == CHARS_PER_LINE/4)
-		{
+		if (state_in->stepcount == CHARS_PER_LINE/4) {
 		    *codechar++ = '\n';
 		    state_in->stepcount = 0;
 		}
@@ -120,8 +114,7 @@ int bu_b64_encode_blockend(signed char* code_out, bu_b64_encodestate* state_in)
 {
     signed char* codechar = code_out;
 
-    switch (state_in->step)
-    {
+    switch (state_in->step) {
 	case step_B:
 	    *codechar++ = bu_b64_encode_value(state_in->result);
 	    *codechar++ = '=';
@@ -165,14 +158,11 @@ int bu_b64_decode_block_internal(const signed char* code_in, const size_t length
 
     *plainchar = state_in->plainchar;
 
-    switch (state_in->step)
-    {
-	while (1)
-	{
+    switch (state_in->step) {
+	while (1) {
 	    case step_a:
 		do {
-		    if (codechar == code_in+length_in)
-		    {
+		    if (codechar == code_in+length_in) {
 			state_in->step = step_a;
 			state_in->plainchar = *plainchar;
 			return plainchar - plaintext_out;
@@ -182,8 +172,7 @@ int bu_b64_decode_block_internal(const signed char* code_in, const size_t length
 		*plainchar    = (fragment & 0x03f) << 2;
 	    case step_b:
 		do {
-		    if (codechar == code_in+length_in)
-		    {
+		    if (codechar == code_in+length_in) {
 			state_in->step = step_b;
 			state_in->plainchar = *plainchar;
 			return plainchar - plaintext_out;
@@ -194,8 +183,7 @@ int bu_b64_decode_block_internal(const signed char* code_in, const size_t length
 		*plainchar    = (fragment & 0x00f) << 4;
 	    case step_c:
 		do {
-		    if (codechar == code_in+length_in)
-		    {
+		    if (codechar == code_in+length_in) {
 			state_in->step = step_c;
 			state_in->plainchar = *plainchar;
 			return plainchar - plaintext_out;
@@ -206,8 +194,7 @@ int bu_b64_decode_block_internal(const signed char* code_in, const size_t length
 		*plainchar    = (fragment & 0x003) << 6;
 	    case step_d:
 		do {
-		    if (codechar == code_in+length_in)
-		    {
+		    if (codechar == code_in+length_in) {
 			state_in->step = step_d;
 			state_in->plainchar = *plainchar;
 			return plainchar - plaintext_out;
@@ -241,7 +228,7 @@ bu_b64_encode_block(const signed char *input, size_t len)
      * finalise the encoding */
     cnt = bu_b64_encode_blockend(c, &s);
     c += cnt;
-    /*---------- STOP ENCODING  ----------*/
+    /*---------- STOP ENCODING ----------*/
 
     /* we want to print the encoded data, so null-terminate it: */
     *c = '\0';
@@ -274,7 +261,7 @@ bu_b64_decode_block(signed char **output, const signed char *input, size_t len)
     cnt = bu_b64_decode_block_internal(input, len, c, &s);
     c += cnt;
     /* note: there is no bu_b64_decode_blockend! */
-    /*---------- STOP DECODING  ----------*/
+    /*---------- STOP DECODING ----------*/
 
     /* we want to print the decoded data, so null-terminate it: */
     *c = '\0';
