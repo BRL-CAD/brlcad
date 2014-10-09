@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* iges exporter is writing out corrupted output due to spaces after
+  commas.
+
 * report of mged command history not working with the down arrow key
   in 7.25.0 (on Windows, unknown on other platforms).  Up arrow works
   fine.
