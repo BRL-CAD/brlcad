@@ -1,6 +1,10 @@
+#define _CRT_SECURE_NO_WARNINGS 1
+
 #include <time.h>
 #include <stdio.h>
-int main(void) {
+
+int main(void)
+{
   time_t t;
   struct tm *currenttime;
   t = time(NULL);
