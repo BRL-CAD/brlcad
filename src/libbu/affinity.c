@@ -104,7 +104,7 @@ parallel_set_affinity(int cpu)
     return 0;
 
 #elif defined(HAVE_WINDOWS_H)
-    DWORD_PTR cpumask = 1 << cpu % bu_avail_cpus();
+    DWORD_PTR cpumask = (DWORD_PTR)1 << cpu % bu_avail_cpus();
     BOOL ret = SetThreadAffinityMask(GetCurrentThread(), cpumask);
     if (ret  == 0)
 	return -1;
