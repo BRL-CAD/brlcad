@@ -92,8 +92,10 @@
 
 #include "common.h"
 
-/* include math.h for sqrt(), sin(), cos(), rint(), M_PI and more on Windows */
+/* needed for additional math defines on Windows when including math.h */
 #define _USE_MATH_DEFINES 1
+
+/* for sqrt(), sin(), cos(), rint(), M_PI, INFINITY (HUGE_VAL), and more */
 #include <math.h>
 
 /* for floating point tolerances and other math constants */
@@ -186,6 +188,7 @@ __BEGIN_DECLS
  * point, this may print as 'inf' and is represented with all 1 bits
  * in the biased-exponent field and all 0 bits in the fraction with
  * the sign indicating positive (0) or negative (1) infinity.
+ * However, we do not assume or rely on IEEE 754 floating point.
  */
 #ifndef INFINITY
 #  if defined(HUGE_VAL)
