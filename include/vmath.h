@@ -92,26 +92,9 @@
 
 #include "common.h"
 
-
-/* hide INFINITY in case there's a math.h conflict */
-#ifdef INFINITY
-#  pragma push_macro("INFINITY")
-#  define INFINITY_ INFINITY
-#  undef INFINITY
-#endif
-
 /* include math.h for sqrt(), sin(), cos(), rint(), M_PI and more on Windows */
 #define _USE_MATH_DEFINES 1
 #include <math.h>
-
-/* unhide INFINITY after including math.h */
-#ifdef INFINITY_
-#  ifdef INFINITY
-#    undef INFINITY
-#  endif
-#  pragma pop_macro("INFINITY")
-#  undef INFINITY_
-#endif
 
 /* for floating point tolerances and other math constants */
 #include <float.h>
