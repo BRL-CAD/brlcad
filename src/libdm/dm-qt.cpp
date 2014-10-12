@@ -115,15 +115,15 @@ qt_drawBegin(dm *dmp)
 HIDDEN int
 qt_drawEnd(dm *dmp)
 {
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
-
+    /*struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    */
     if (dmp->dm_debugLevel) {
 	bu_log("qt_drawEnd\n");
     }
-    privars->qapp->processEvents();
+    /*privars->qapp->processEvents();
     qt_sendRepaintEvent(dmp);
     privars->qapp->processEvents();
-
+     */
     return TCL_OK;
 }
 
