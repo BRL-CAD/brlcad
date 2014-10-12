@@ -1032,7 +1032,7 @@ main(int argc, char *argv[])
     int pipe_err[2];
 #endif
 
-    int rateflag = 0;
+    /* int rateflag = 0; */
     int c;
     int read_only_flag=0;
 
@@ -1663,20 +1663,25 @@ main(int argc, char *argv[])
 
     mged_init_flag = 0;	/* all done with initialization */
 
+    return qt_exec(dmp);
     /**************** M A I N   L O O P *********************/
-    while (1) {
+    /*while (1) { */
+
 	/* This test stops optimizers from complaining about an
 	 * infinite loop.
 	 */
-	if ((rateflag = event_check(rateflag)) < 0) break;
+
+	/*if ((rateflag = event_check(rateflag)) < 0) break;
+	 */
 
 	/*
 	 * Cause the control portion of the displaylist to be updated
 	 * to reflect the changes made above.
 	 */
-	refresh();
+
+	/*refresh();
     }
-    return 0;
+    return 0;*/
 }
 
 

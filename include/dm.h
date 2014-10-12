@@ -426,6 +426,7 @@ DM_EXPORT extern int dm_draw_display_list(dm *dmp,
 	int mv_dlist
 	);
 
+DM_EXPORT extern int qt_exec(dm *dmp);
 
 /* For backwards compatibility, define macros and expose struct dm */
 

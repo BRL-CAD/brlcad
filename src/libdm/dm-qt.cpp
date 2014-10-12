@@ -127,6 +127,14 @@ qt_drawEnd(dm *dmp)
     return TCL_OK;
 }
 
+int
+qt_exec(dm *dmp)
+{
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    return privars->qapp->exec();
+}
+
 /**
  * Restore the display processor to a normal mode of operation (i.e.,
  * not scaled, rotated, displaced, etc.).
