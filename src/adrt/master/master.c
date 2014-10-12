@@ -422,7 +422,7 @@ master_networking(void *ptr)
 		    master.socklist->prev = NULL;
 		    tienet_sem_init(&(master.socklist->frame_sem), 0);
 		    tmp->prev = master.socklist;
-		    V_MAX(higest_fd, new_socket);
+		    V_MAX(highest_fd, new_socket);
 		    master.active_connections++;
 		}
 		continue;

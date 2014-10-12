@@ -78,9 +78,7 @@ filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 
     for (i=0; i < 3; i++) {
 	/* assure values are positive */
-	if (src[i] < 0) dst[i] = -src[i];
-	else dst[i] = src[i];
-
+	dst[i] = fabs(src[i]);
 
 	/* fold space */
 	while (dst[i] > max || dst[i]<0) {
@@ -714,7 +712,7 @@ bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, dou
     for (i=1; i < octaves; i++) {
 	PSCALE(pt, lacunarity);
 
-	if (weight > 1.0) weight = 1.0;
+	V_MIN(weight, 1.0);
 
 	noise_signal = (bn_noise_perlin(pt) + offset) * spec_wgts[i];
 

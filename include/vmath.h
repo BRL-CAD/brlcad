@@ -92,9 +92,10 @@
 
 #include "common.h"
 
-/* for sqrt(), sin(), cos(), rint(), M_PI and more on Windows */
+/* needed for additional math defines on Windows when including math.h */
 #define _USE_MATH_DEFINES 1
 
+/* for sqrt(), sin(), cos(), rint(), M_PI, INFINITY (HUGE_VAL), and more */
 #include <math.h>
 
 /* for floating point tolerances and other math constants */
@@ -176,6 +177,36 @@ __BEGIN_DECLS
 #endif
 #ifndef RAD2DEG
 #  define RAD2DEG	57.2957795130823208767981548141051703   /**< 180/pi */
+#endif
+
+
+/**
+ * It is necessary to have a representation of 1.0/0.0 or log(0),
+ * i.e., "infinity" that fits within the dynamic range of the machine
+ * being used.  This constant places an upper bound on the size object
+ * which can be represented in the model.  With IEEE 754 floating
+ * point, this may print as 'inf' and is represented with all 1 bits
+ * in the biased-exponent field and all 0 bits in the fraction with
+ * the sign indicating positive (0) or negative (1) infinity.
+ * However, we do not assume or rely on IEEE 754 floating point.
+ */
+#ifndef INFINITY
+#  if defined(HUGE_VAL)
+#    define INFINITY ((fastf_t)HUGE_VAL)
+#  elif defined(HUGE_VALF)
+#    define INFINITY ((fastf_t)HUGE_VALF)
+#  elif defined(HUGE)
+#    define INFINITY ((fastf_t)HUGE)
+#  elif defined(MAXDOUBLE)
+#    define INFINITY ((fastf_t)MAXDOUBLE)
+#  elif defined(MAXFLOAT)
+#    define INFINITY ((fastf_t)MAXFLOAT)
+#  else
+     /* all else fails, just pick something big slightly over 32-bit
+      * single-precision floating point that has worked well before.
+      */
+#    define INFINITY ((fastf_t)1.0e40)
+#  endif
 #endif
 
 

@@ -123,10 +123,8 @@ tp_scale(int *idata,
 		? idoublep[i]
 		: idata[i]
 		);
-	if ( x > xmax )
-	    xmax = x;
-	if ( x < xmin )
-	    xmin = x;
+	V_MAX(xmax, x);
+	V_MIN(xmin, x);
     }
 
     /* Split initial DX into integral and fractional exponents of 10 */

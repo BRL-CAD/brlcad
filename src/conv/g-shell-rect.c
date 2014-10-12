@@ -48,8 +48,6 @@
 
 #define MAKE_TRIANGLES 0
 
-#define ABS(_x)	((_x)<0.0?(-(_x)):(_x))
-
 #define IN_SEG(_x, _a, _b)	(((_x) > _a + tol.dist && (_x) < _b - tol.dist) || \
 				 ((_x) < _a - tol.dist && (_x) > _b + tol.dist))
 
@@ -352,7 +350,7 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 	    ave_y /= 4.0;
 	    for (i = 0; i < 4; i++) {
 		diff[i] = lpart[i]->in->pt[Y] - ave_y;
-		diff[i] = ABS(diff[i]);
+		diff[i] = fabs(diff[i]);
 	    }
 	    max_diff = 0;
 	    for (i = 1; i < 4; i++) {
@@ -373,7 +371,7 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 	    ave_y /= 4.0;
 	    for (i = 0; i < 4; i++) {
 		diff[i] = lpart[i]->out->pt[Y] - ave_y;
-		diff[i] = ABS(diff[i]);
+		diff[i] = fabs(diff[i]);
 	    }
 	    max_diff = 0;
 	    for (i = 1; i < 4; i++) {
@@ -1059,9 +1057,9 @@ shrink_wrap(struct shell *s)
 
 	VUNITIZE(dir);
 
-	abs_dir[X] = ABS(dir[X]);
-	abs_dir[Y] = ABS(dir[Y]);
-	abs_dir[Z] = ABS(dir[Z]);
+	abs_dir[X] = fabs(dir[X]);
+	abs_dir[Y] = fabs(dir[Y]);
+	abs_dir[Z] = fabs(dir[Z]);
 
 	dir_index = X;
 	if (abs_dir[Y] > abs_dir[dir_index])

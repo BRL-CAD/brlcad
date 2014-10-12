@@ -46,9 +46,6 @@
 
 #define PHANTOM_ARMOR 111
 
-#define FABS(a)		((a) > 0 ? (a) : -(a))
-#define AproxEq(a, b, e)	(FABS((a)-(b)) < (e))
-
 
 int
 doMore(int *linesp)
@@ -354,7 +351,7 @@ getNormThickness(struct application *ap, struct partition *pp, fastf_t cosobliqu
     brst_log("getNormThickness() pp 0x%x normal %g, %g, %g\n",
 	     pp, normvec[X], normvec[Y], normvec[Z]);
 #endif
-    if (AproxEq(cosobliquity, 1.0, COS_TOL)) {
+    if (NEAR_EQUAL(cosobliquity, 1.0, COS_TOL)) {
 	/* Trajectory was normal to surface, so no need
 	   to shoot another ray. */
 	fastf_t thickness = pp->pt_outhit->hit_dist -
@@ -458,7 +455,7 @@ prntSeg(struct application *ap, struct partition *cpp /* component partition */,
     }
     if (shotlnfile[0] == NUL)
 	return;
-    entryangle = AproxEq(icosobliquity, 1.0, COS_TOL) ?
+    entryangle = NEAR_EQUAL(icosobliquity, 1.0, COS_TOL) ?
 	0.0 : acos(icosobliquity) * RAD2DEG;
     if ((normthickness =
 	 getNormThickness(ap, cpp, icosobliquity, entrynorm)) <= 0.0
@@ -473,7 +470,7 @@ prntSeg(struct application *ap, struct partition *cpp /* component partition */,
 		 cpp->pt_inseg->seg_stp->st_name);
 	return;
     }
-    exitangle = AproxEq(ocosobliquity, 1.0, COS_TOL) ?
+    exitangle = NEAR_EQUAL(ocosobliquity, 1.0, COS_TOL) ?
 	0.0 : acos(ocosobliquity) * RAD2DEG;
     if (fprintf(shotlnfp,
 		"%c % 8.2f % 7.3f % 7.2f %4d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",

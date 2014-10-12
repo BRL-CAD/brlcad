@@ -734,19 +734,12 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 
 	//Check for closed surface wrap around
 	if (surf->IsClosed(0)) {
-	    if (new_uv[0] < umin) {
-		new_uv[0] = umin;
-	    } else if (new_uv[0] > umax) {
-		new_uv[0] = umax;
-	    }
+	    CLAMP(new_uv[0], umin, umax);
 	}
 	if (surf->IsClosed(1)) {
-	    if (new_uv[1] < vmin) {
-		new_uv[1] = vmin;
-	    } else if (new_uv[1] > vmax) {
-		new_uv[1] = vmax;
-	    }
+	    CLAMP(new_uv[1], vmin, vmax);
 	}
+
 #ifdef HOOD
 	//push answer back to within node bounds
 	double ufluff = (node->m_u[1] - node->m_u[0])*0.01;
@@ -756,6 +749,7 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 	double ufluff = 0.0;
 	double vfluff = 0.0;
 #endif
+
 	if (new_uv[0] < node->m_u[0] - ufluff)
 	    new_uv[0] = node->m_u[0];
 	else if (new_uv[0] > node->m_u[1] + ufluff)
@@ -1799,11 +1793,10 @@ try_again:
 	// check to see if we've left the surface domain
 	double l, h;
 	data.surf->GetDomain(0, &l, &h);
-	if (uv[0] < l) uv[0] = l; // clamp if out of range!
-	if (uv[0] > h) uv[0] = h;
+	CLAMP(uv[0], l, h); // make sure in range
+
 	data.surf->GetDomain(1, &l, &h);
-	if (uv[1] < l) uv[1] = l;
-	if (uv[1] > h) uv[1] = h;
+	CLAMP(uv[1], l, h);
 
 	outpt[0] = uv[0];
 	outpt[1] = uv[1];

@@ -941,7 +941,7 @@ CurvePoint::PointCurveLocation(ON_2dPoint pt, ON_Curve *curve)
 
 class CurveSegment {
 public:
-    ON_SimpleArray<ON_Curve *> &orig_loop;
+    ON_SimpleArray<ON_Curve *> orig_loop;
     CurvePoint from, to;
     enum Location {
 	BOUNDARY,
@@ -2102,7 +2102,7 @@ split_trimmed_face(
 		textlog.Print("Curve %d\n", j);
 		out[i]->m_outerloop[j]->Dump(textlog);
 	    }
-	    bu_log(ON_String(wstr).Array());
+	    bu_log("%s", ON_String(wstr).Array());
 
 	    for (unsigned int j = 0; j < out[i]->m_innerloop.size(); j++) {
 		bu_log("innerloop %d:\n", j);
@@ -2113,7 +2113,7 @@ split_trimmed_face(
 		    textlog2.Print("Curve %d\n", k);
 		    out[i]->m_innerloop[j][k]->Dump(textlog2);
 		}
-		bu_log(ON_String(wstr2).Array());
+		bu_log("%s", ON_String(wstr2).Array());
 	    }
 	}
     }
@@ -2709,7 +2709,7 @@ get_face_intersection_curves(
     // determine which of the "fully used/fully non-used" faces are needed?
 
     if (DEBUG_BREP_BOOLEAN) {
-	bu_log("Summary of brep status: \n unused1: %d\n unused2: %d\n finalform1: %d\n finalform2 %d\nintersection_candidates(%d):\n", unused1.size(), unused2.size(), finalform1.size(), finalform2.size(), intersection_candidates.size());
+	bu_log("Summary of brep status: \n unused1: %zd\n unused2: %zd\n finalform1: %zd\n finalform2 %zd\nintersection_candidates(%zd):\n", unused1.size(), unused2.size(), finalform1.size(), finalform2.size(), intersection_candidates.size());
 	for (std::set<std::pair<int, int> >::iterator it = intersection_candidates.begin(); it != intersection_candidates.end(); ++it) {
 	    bu_log("     (%d,%d)\n", (*it).first, (*it).second);
 	}
@@ -3178,7 +3178,7 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
     ON_wString ws;
     ON_TextLog log(ws);
     evaluated_brep->IsValid(&log);
-    bu_log(ON_String(ws).Array());
+    bu_log("%s", ON_String(ws).Array());
 
     return 0;
 }
