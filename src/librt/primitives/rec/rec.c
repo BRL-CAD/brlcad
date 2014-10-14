@@ -481,7 +481,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
      */
     if (nhits != 2) {
 	fastf_t b;		/* coeff of polynomial */
-	fastf_t descriminant;		/* root of radical, the descriminant */
+	fastf_t descriminant;		/* root of radical, the descriminant (misspelling of "discriminant") */
 	fastf_t dx2dy2;
 
 	dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]);
