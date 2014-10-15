@@ -21,7 +21,6 @@
       <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
       <arg choice="plain" rep="norepeat"><replaceable>model.g</replaceable></arg>
       <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg>
-
     </cmdsynopsis>
   </refsynopsisdiv>
 

@@ -19,7 +19,8 @@
       <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
       <arg choice="plain" rep="norepeat"><replaceable>model.g</replaceable></arg>
       <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg>
-      <arg choice="plain" rep="norepeat"><replaceable>&lt; model.pix</replaceable></arg>
+      <arg choice="plain" rep="norepeat">&lt;</arg>
+      <arg choice="plain" rep="norepeat"><replaceable>model.pix</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -176,6 +177,21 @@
       </varlistentry>
 
       <varlistentry>
+	<term><option>-i</option></term>
+	<listitem>
+	  <para>enables <emphasis remap="I">incremental mode</emphasis> processing.
+	  (First, a single ray is fired.
+	  Then, the screen is subdivided into four parts by evenly subdividing
+	  in the vertical and horizontal directions.
+	  The previously fired ray was the lower left corner;
+	  three more rays are fired.
+	  This process recurses until full resolution has been reached.
+	  Assumes square image.
+	  Also assumes fast path between CPU and display hardware.)</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
 	<term><option>-j xmin,ymin,xmax,ymax</option></term>
 	<listitem>
 	  <para>enables processing of <emphasis remap="I">just a sub-rectangle</emphasis>,
@@ -328,24 +344,62 @@
       </varlistentry>
 
       <varlistentry>
+	<term><option>-A #</option></term>
+	<listitem>
+	  <para>sets the ambient light intensity,
+	  as a fraction of the total light in the scene
+	  in the range of 0.0 to 1.0 .</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-B</option></term>
+	<listitem>
+	  <para>turns on the "benchmark" flag. This causes all intentional random effects
+	  such as ray dither, color dither, etc., to be turned off to allow
+	  benchmark timing comparison and benchmark result comparison.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-C #/#/#</option></term>
+	<listitem>
+	  <para>sets the background color to the RGB value #/#/#, where each #
+	  is in the range of 0 to 255.
+	  All non-background colors will be dithered away from this value.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-D #</option></term>
+	<listitem>
+	  <para>This is the "desired frame" flag, specifying the frame number to start with.
+           Used with animation scripts; specify the desired ending (kill-after) frame with
+	  <option>-K #</option> .</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-E #</option></term>
+	<listitem>
+	  <para>sets the distance from the eye point to the center of the model RPP; default is
+          the square root of 2.
+	  Only useful with auto-sizing, and conflicts with
+	  <option>-M</option> .</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
 	<term><option>-F framebuffer</option></term>
 	<listitem>
 	  <para>
-	    Indicates that the output should be sent to the
+	    indicates that the output should be sent to the
 	    indicated framebuffer. See
 	    <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry> for more details on the specification of a framebuffer.
 	  </para>
 	</listitem>
       </varlistentry>
-      <varlistentry>
-	<term><option>-A#</option></term>
-	<listitem>
-	  <para>
-	    Select angle for shading.  Default is 5.0 degrees; 89.0 will produce
-	    an image where only steep drops and rises are shaded.
-	  </para>
-	</listitem>
-      </varlistentry>
+
       <varlistentry>
 	<term><option>-M</option></term>
 	<listitem>
