@@ -1285,7 +1285,7 @@ ON_Intersect(const ON_Curve *curveA,
 		// not parallel, check intersection point
 		double t_lineA, t_lineB;
 		double t_a, t_b;
-		if (ON_IntersectLineLine(lineA, lineB, &t_lineA, &t_lineB, ON_ZERO_TOLERANCE, true)) {
+		if (ON_IntersectLineLine(lineA, lineB, &t_lineA, &t_lineB, isect_tol, true)) {
 		    t_a = i->first->m_t.ParameterAt(t_lineA);
 		    t_b = i->second->m_t.ParameterAt(t_lineB);
 
