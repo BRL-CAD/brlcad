@@ -481,17 +481,17 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
      */
     if (nhits != 2) {
 	fastf_t b;		/* coeff of polynomial */
-	fastf_t descriminant;		/* root of radical, the descriminant (misspelling of "discriminant") */
+	fastf_t discriminant;		/* root of radical, the discriminant */
 	fastf_t dx2dy2;
 
 	dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]);
 	b = 2 * (dprime[X]*pprime[X] + dprime[Y]*pprime[Y]) * dx2dy2;
-	descriminant = b*b - 4 * dx2dy2 * (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1);
+	discriminant = b*b - 4 * dx2dy2 * (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1);
 
 	/* might want compare against tol_dist here? */
 
-	if (NEAR_ZERO(descriminant, SMALL_FASTF)) {
-	    /* if the descriminant is zero, it's a double-root grazer */
+	if (NEAR_ZERO(discriminant, SMALL_FASTF)) {
+	    /* if the discriminant is zero, it's a double-root grazer */
 	    k1 = -b * 0.5;
 	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime); /* hit' */
 	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {
@@ -501,12 +501,12 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 		hitp++; nhits++;
 	    }
 
-	} else if (descriminant > SMALL_FASTF) {
-	    /* if the descriminant is positive, there are two roots */
+	} else if (discriminant > SMALL_FASTF) {
+	    /* if the discriminant is positive, there are two roots */
 
-	    descriminant = sqrt(descriminant);
-	    k1 = (-b+descriminant) * 0.5;
-	    k2 = (-b-descriminant) * 0.5;
+	    discriminant = sqrt(discriminant);
+	    k1 = (-b+discriminant) * 0.5;
+	    k2 = (-b-discriminant) * 0.5;
 
 	    /*
 	     * k1 and k2 are potential solutions to intersection with side.
