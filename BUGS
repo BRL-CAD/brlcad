@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* typing 'comb -f -r assembly_name' shuts down mged with the error:
+  ERROR: bad pointer 0000000000B4CA50: s/b bu_external(x768dbbd0), was bu_vls(x89333bbb), file ..\..\..\brlcad_src\src\libbu\parse.c, line 2443"
+  And on the mged command line:
+  rt_db_cvt_to_external5 expecting non-NULL name parameter
+  wdb_export((null)): solid export failure
+
 * running "draw -C 0/255/0" in archer dies with a bu_malloc(0) error.
 
 * iges exporter is writing out corrupted output due to spaces after
