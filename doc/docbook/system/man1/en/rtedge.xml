@@ -275,8 +275,13 @@
 	<term><option>-o output.pix</option></term>
 	<listitem>
 	  <para>
-	    specifies a named file for output. Note that using -o disables
-	    parallel processing.
+	  specifies the name of a file to store the
+	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+	  format output.
+	  The
+	  <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+	  utility can be used later to display ".pix" files.
+	  Note that using -o disables parallel processing.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -337,55 +342,9 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-x#</option></term>
+	<term><option>-x #</option></term>
 	<listitem>
 	  <para>Set librt debug flags to (hexadecimal) number.</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term><option>-A #</option></term>
-	<listitem>
-	  <para>sets the ambient light intensity,
-	  as a fraction of the total light in the scene
-	  in the range of 0.0 to 1.0 .</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term><option>-B</option></term>
-	<listitem>
-	  <para>turns on the "benchmark" flag. This causes all intentional random effects
-	  such as ray dither, color dither, etc., to be turned off to allow
-	  benchmark timing comparison and benchmark result comparison.</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term><option>-C #/#/#</option></term>
-	<listitem>
-	  <para>sets the background color to the RGB value #/#/#, where each #
-	  is in the range of 0 to 255.
-	  All non-background colors will be dithered away from this value.</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term><option>-D #</option></term>
-	<listitem>
-	  <para>This is the "desired frame" flag, specifying the frame number to start with.
-           Used with animation scripts; specify the desired ending (kill-after) frame with
-	  <option>-K #</option> .</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term><option>-E #</option></term>
-	<listitem>
-	  <para>sets the distance from the eye point to the center of the model RPP; default is
-          the square root of 2.
-	  Only useful with auto-sizing, and conflicts with
-	  <option>-M</option> .</para>
 	</listitem>
       </varlistentry>
 
@@ -393,13 +352,21 @@
 	<term><option>-F framebuffer</option></term>
 	<listitem>
 	  <para>
-	    indicates that the output should be sent to the
+	    Indicates that the output should be sent to the
 	    indicated framebuffer. See
 	    <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry> for more details on the specification of a framebuffer.
 	  </para>
 	</listitem>
       </varlistentry>
-
+      <varlistentry>
+	<term><option>-A #</option></term>
+	<listitem>
+	  <para>
+	    Select angle for shading.  Default is 5.0 degrees; 89.0 will produce
+	    an image where only steep drops and rises are shaded.
+	  </para>
+	</listitem>
+      </varlistentry>
       <varlistentry>
 	<term><option>-M</option></term>
 	<listitem>
