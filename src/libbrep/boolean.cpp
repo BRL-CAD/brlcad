@@ -100,6 +100,28 @@ struct SSICurve {
     }
 };
 
+enum seam_location {SEAM_NONE, SEAM_ALONG_V, SEAM_ALONG_U, SEAM_ALONG_UV};
+
+HIDDEN double
+shortest_parameter_distance(
+    const ON_Surface *surf,
+    const ON_2dPoint &uv1,
+    const ON_2dPoint &uv2)
+{
+    int seam1 = IsAtSeam(surf, uv1, ON_ZERO_TOLERANCE);
+    int seam2 = IsAtSeam(surf, uv2, ON_ZERO_TOLERANCE);
+
+    // TODO: check for singularity, SEAM_ALONG_UV
+    if (seam1 != SEAM_NONE && seam1 == seam2) {
+	if (seam1 == SEAM_ALONG_V) {
+	    return fabs(uv1.y - uv2.y);
+	} else if (seam1 == SEAM_ALONG_U) {
+	    return fabs(uv1.x - uv2.x);
+	}
+    }
+    return uv1.DistanceTo(uv2);
+}
+
 HIDDEN void
 append_to_polycurve(ON_Curve *curve, ON_PolyCurve &polycurve);
 // We link the SSICurves that share an endpoint, and form this new structure,
@@ -108,6 +130,9 @@ struct LinkedCurve {
 private:
     ON_Curve *m_curve;	// an explicit storage of the whole curve
 public:
+    int m_dim;		// curve dimension
+    const ON_Surface *m_surf;
+
     // The curves contained in this LinkedCurve, including
     // the information needed by the connectivity graph
     ON_SimpleArray<SSICurve> m_ssi_curves;
@@ -116,6 +141,8 @@ public:
     LinkedCurve()
     {
 	m_curve = NULL;
+	m_surf = NULL;
+	m_dim = 2;
     }
 
     void Empty()
@@ -123,6 +150,7 @@ public:
 	m_ssi_curves.Empty();
 	delete m_curve;
 	m_curve = NULL;
+	m_surf = NULL;
     }
 
     ~LinkedCurve()
@@ -134,6 +162,8 @@ public:
     {
 	Empty();
 	m_curve = _lc.m_curve ? _lc.m_curve->Duplicate() : NULL;
+	m_dim = _lc.m_dim;
+	m_surf = _lc.m_surf;
 	m_ssi_curves = _lc.m_ssi_curves;
 	return *this;
     }
@@ -156,19 +186,52 @@ public:
 	}
     }
 
-    bool IsClosed() const
+    bool IsClosed(double dist_tol = ON_ZERO_TOLERANCE) const
     {
 	if (m_ssi_curves.Count() == 0) {
 	    return false;
 	}
-	return PointAtStart().DistanceTo(PointAtEnd()) < ON_ZERO_TOLERANCE;
+
+	ON_3dPoint start_pt = PointAtStart();
+	ON_3dPoint end_pt = PointAtEnd();
+
+	if (start_pt == ON_3dPoint::UnsetPoint ||
+	    end_pt == ON_3dPoint::UnsetPoint)
+	{
+	    return false;
+	}
+
+	double dist = 0.0;
+	if (m_dim == 2 && m_surf != NULL) {
+	    ON_2dPoint start_uv(start_pt.x, start_pt.y);
+	    ON_2dPoint end_uv(end_pt.x, end_pt.y);
+
+	    dist = shortest_parameter_distance(m_surf, start_uv, end_uv);
+	} else {
+	    dist = PointAtStart().DistanceTo(PointAtEnd());
+	}
+	return dist < dist_tol;
     }
 
     bool IsValid() const
     {
 	// Check whether the curve has "gaps".
+	double gap = 0.0;
+
 	for (int i = 1; i < m_ssi_curves.Count(); i++) {
-	    if (m_ssi_curves[i].m_curve->PointAtStart().DistanceTo(m_ssi_curves[i - 1].m_curve->PointAtEnd()) >= ON_ZERO_TOLERANCE) {
+	    ON_3dPoint start_curr = m_ssi_curves[i].m_curve->PointAtStart();
+	    ON_3dPoint end_prev = m_ssi_curves[i - 1].m_curve->PointAtEnd();
+
+	    if (m_dim == 2) {
+		ON_2dPoint start_uv(start_curr.x, start_curr.y);
+		ON_2dPoint end_uv(end_prev.x, end_prev.y);
+
+		gap = shortest_parameter_distance(m_surf, start_uv, end_uv);
+	    } else {
+		gap = start_curr.DistanceTo(end_prev);
+	    }
+
+	    if (gap >= ON_ZERO_TOLERANCE) {
 		bu_log("The LinkedCurve is not valid.\n");
 		return false;
 	    }
@@ -733,9 +796,7 @@ uv_interval_from_points(
     ON_Interval udom = surf->Domain(0);
     ON_Interval vdom = surf->Domain(1);
 
-    enum seam_location {SEAM_NONE, SEAM_ALONG_V, SEAM_ALONG_U,
-	SEAM_ALONG_UV};
-
+    // TODO: check for singularity
     int seam_min = IsAtSeam(surf, min_uv, ON_ZERO_TOLERANCE);
     int seam_max = IsAtSeam(surf, max_uv, ON_ZERO_TOLERANCE);
 
@@ -1125,15 +1186,20 @@ split_curve(ON_Curve *&left, ON_Curve *&right, const ON_Curve *in, double t)
 
 HIDDEN double
 configure_for_linking(
-	LinkedCurve *&first,
-	LinkedCurve *&second,
-	LinkedCurve &in1,
-	LinkedCurve &in2)
+    const ON_Surface *surf,
+    LinkedCurve *&first,
+    LinkedCurve *&second,
+    LinkedCurve &in1,
+    LinkedCurve &in2)
 {
-    double dist_s1s2 = in1.PointAtStart().DistanceTo(in2.PointAtStart());
-    double dist_s1e2 = in1.PointAtStart().DistanceTo(in2.PointAtEnd());
-    double dist_e1s2 = in1.PointAtEnd().DistanceTo(in2.PointAtStart());
-    double dist_e1e2 = in1.PointAtEnd().DistanceTo(in2.PointAtEnd());
+    double dist_s1s2 = shortest_parameter_distance(surf, in1.PointAtStart(),
+	    in2.PointAtStart());
+    double dist_s1e2 = shortest_parameter_distance(surf, in1.PointAtStart(),
+	    in2.PointAtEnd());
+    double dist_e1s2 = shortest_parameter_distance(surf, in1.PointAtEnd(),
+	    in2.PointAtStart());
+    double dist_e1e2 = shortest_parameter_distance(surf, in1.PointAtEnd(),
+	    in2.PointAtEnd());
 
     double min_dist = std::min(dist_s1s2, dist_s1e2);
     min_dist = std::min(min_dist, dist_e1s2);
@@ -1186,7 +1252,7 @@ intersect_linked_curves(const LinkedCurve &a, const LinkedCurve &b)
 }
 
 HIDDEN ON_ClassArray<LinkedCurve>
-link_curves(const ON_SimpleArray<SSICurve> &in)
+link_curves(const ON_Surface *surf, const ON_SimpleArray<SSICurve> &in)
 {
     // There might be two reasons why we need to link these curves.
     // 1) They are from intersections with two different surfaces.
@@ -1195,6 +1261,7 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
     ON_ClassArray<LinkedCurve> tmp;
     for (int i = 0; i < in.Count(); i++) {
 	LinkedCurve linked;
+	linked.m_surf = surf;
 	linked.m_ssi_curves.Append(in[i]);
 	tmp.Append(linked);
     }
@@ -1211,7 +1278,7 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 	    }
 
 	    LinkedCurve *c1 = NULL, *c2 = NULL;
-	    double dist = configure_for_linking(c1, c2, tmp[i], tmp[j]);
+	    double dist = configure_for_linking(surf, c1, c2, tmp[i], tmp[j]);
 
 	    if (dist > INTERSECTION_TOL) {
 		std::vector<LinkedCurveX> lc_events =
@@ -1273,7 +1340,7 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 			tmp[j].m_ssi_curves[lcx.ssi_idx_b] = jssi;
 
 			// proceed as if they're linkable
-			configure_for_linking(c1, c2, tmp[i], tmp[j]);
+			configure_for_linking(surf, c1, c2, tmp[i], tmp[j]);
 		    }
 		    delete isub;
 		    delete jsub;
@@ -1282,6 +1349,7 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 
 	    if (c1 != NULL && c2 != NULL) {
 		LinkedCurve new_curve;
+		new_curve.m_surf = surf;
 		new_curve.Append(*c1);
 		if (dist > ON_ZERO_TOLERANCE) {
 		    new_curve.Append(SSICurve(new ON_LineCurve(c1->PointAtEnd(), c2->PointAtStart())));
@@ -1292,9 +1360,74 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 	    }
 
 	    // Check whether tmp[i] is closed within a tolerance
-	    if (tmp[i].PointAtStart().DistanceTo(tmp[i].PointAtEnd()) < INTERSECTION_TOL && !tmp[i].IsClosed()) {
+	    if (tmp[i].IsClosed(INTERSECTION_TOL) && !tmp[i].IsClosed(ON_ZERO_TOLERANCE)) {
 		// make IsClosed() true
-		tmp[i].Append(SSICurve(new ON_LineCurve(tmp[i].PointAtEnd(), tmp[i].PointAtStart())));
+		ON_3dPoint start_pt = tmp[i].PointAtStart();
+		ON_3dPoint end_pt = tmp[i].PointAtEnd();
+
+		ON_2dPoint start_uv(start_pt.x, start_pt.y);
+		ON_2dPoint end_uv(end_pt.x, end_pt.y);
+
+		int seam_start = IsAtSeam(tmp[i].m_surf, start_uv, INTERSECTION_TOL / 2.0);
+		int seam_end = IsAtSeam(tmp[i].m_surf, end_uv, INTERSECTION_TOL / 2.0);
+
+		if (seam_start != SEAM_NONE && seam_start == seam_end) {
+		    if (seam_start == SEAM_ALONG_V) {
+			ON_Interval udom = tmp[i].m_surf->Domain(0);
+
+			bool start_on_west = false;
+			if (ON_NearZero(start_pt.x - udom.Min(), INTERSECTION_TOL / 2.0)) {
+			    start_on_west = true;
+			}
+			bool end_on_west = false;
+			if (ON_NearZero(end_pt.x - udom.Min(), INTERSECTION_TOL / 2.0)) {
+			    end_on_west = true;
+			}
+
+			double avg_y = (start_pt.y + end_pt.y) / 2.0;
+			ON_3dPoint east_edge(udom.Max(), avg_y, 0.0);
+			ON_3dPoint west_edge(udom.Min(), avg_y, 0.0);
+
+			if (start_on_west && !end_on_west) {
+			    tmp[i].Append(SSICurve(new ON_LineCurve(end_pt, east_edge)));
+			    tmp[i].Append(SSICurve(new ON_LineCurve(west_edge, start_pt)));
+			} else if (!start_on_west && end_on_west) {
+			    tmp[i].Append(SSICurve(new ON_LineCurve(end_pt, west_edge)));
+			    tmp[i].Append(SSICurve(new ON_LineCurve(east_edge, start_pt)));
+			}  else {
+			    // same side
+			    tmp[i].Append(SSICurve(new ON_LineCurve(end_pt, start_pt)));
+			}
+		    } else if (seam_start == SEAM_ALONG_U) {
+			ON_Interval vdom = tmp[i].m_surf->Domain(1);
+
+			bool start_on_south = false;
+			if (ON_NearZero(start_pt.y - vdom.Min(), INTERSECTION_TOL / 2.0)) {
+			    start_on_south = true;
+			}
+			bool end_on_south = false;
+			if (ON_NearZero(end_pt.y - vdom.Min(), INTERSECTION_TOL / 2.0)) {
+			    end_on_south = true;
+			}
+
+			double avg_x = (start_pt.x + end_pt.x) / 2.0;
+			ON_3dPoint north_edge(avg_x, vdom.Max(), 0.0);
+			ON_3dPoint south_edge(avg_x, vdom.Min(), 0.0);
+
+			if (start_on_south && !end_on_south) {
+			    tmp[i].Append(SSICurve(new ON_LineCurve(end_pt, north_edge)));
+			    tmp[i].Append(SSICurve(new ON_LineCurve(south_edge, start_pt)));
+			} else if (!start_on_south && end_on_south) {
+			    tmp[i].Append(SSICurve(new ON_LineCurve(end_pt, south_edge)));
+			    tmp[i].Append(SSICurve(new ON_LineCurve(south_edge, start_pt)));
+			}  else {
+			    // same side
+			    tmp[i].Append(SSICurve(new ON_LineCurve(end_pt, start_pt)));
+			}
+		    }
+		} else {
+		    tmp[i].Append(SSICurve(new ON_LineCurve(end_pt, start_pt)));
+		}
 	    }
 	}
     }
@@ -3469,7 +3602,10 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
     ON_ClassArray<ON_SimpleArray<TrimmedFace *> > trimmed_faces;
     for (int i = 0; i < original_faces.Count(); i++) {
 	TrimmedFace *first = original_faces[i];
-	ON_ClassArray<LinkedCurve> linked_curves = link_curves(curves_array[i]);
+
+	ON_ClassArray<LinkedCurve> linked_curves =
+	    link_curves(first->m_face->SurfaceOf(), curves_array[i]);
+
 	dplot->LinkedCurves(first->m_face->SurfaceOf(), linked_curves);
 
 	ON_SimpleArray<TrimmedFace *> splitted = split_trimmed_face(first, linked_curves);
