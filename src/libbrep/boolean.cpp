@@ -186,7 +186,7 @@ public:
 	}
     }
 
-    bool IsClosed(double dist_tol = ON_ZERO_TOLERANCE) const
+    bool IsClosed(double dist_tol = ON_ZERO_TOLERANCE, bool wrap = true) const
     {
 	if (m_ssi_curves.Count() == 0) {
 	    return false;
@@ -202,7 +202,7 @@ public:
 	}
 
 	double dist = 0.0;
-	if (m_dim == 2 && m_surf != NULL) {
+	if (wrap && m_dim == 2 && m_surf != NULL) {
 	    ON_2dPoint start_uv(start_pt.x, start_pt.y);
 	    ON_2dPoint end_uv(end_pt.x, end_pt.y);
 
@@ -213,16 +213,15 @@ public:
 	return dist < dist_tol;
     }
 
-    bool IsValid() const
+    bool IsValid(double dist_tol = ON_ZERO_TOLERANCE, bool wrap = true) const
     {
 	// Check whether the curve has "gaps".
 	double gap = 0.0;
-
 	for (int i = 1; i < m_ssi_curves.Count(); i++) {
 	    ON_3dPoint start_curr = m_ssi_curves[i].m_curve->PointAtStart();
 	    ON_3dPoint end_prev = m_ssi_curves[i - 1].m_curve->PointAtEnd();
 
-	    if (m_dim == 2) {
+	    if (wrap && m_dim == 2 && m_surf != NULL) {
 		ON_2dPoint start_uv(start_curr.x, start_curr.y);
 		ON_2dPoint end_uv(end_prev.x, end_prev.y);
 
@@ -231,7 +230,7 @@ public:
 		gap = start_curr.DistanceTo(end_prev);
 	    }
 
-	    if (gap >= ON_ZERO_TOLERANCE) {
+	    if (gap >= dist_tol) {
 		bu_log("The LinkedCurve is not valid.\n");
 		return false;
 	    }
@@ -1018,8 +1017,10 @@ interval_3d_to_2d(
     return interval_2d;
 }
 
-HIDDEN ON_SimpleArray<ON_SSX_EVENT *>
+HIDDEN void
 get_subcurves_inside_faces(
+    ON_SimpleArray<ON_Curve *> &subcurves_on1,
+    ON_SimpleArray<ON_Curve *> &subcurves_on2,
     const ON_Brep *brep1,
     const ON_Brep *brep2,
     int face_i1,
@@ -1032,21 +1033,21 @@ get_subcurves_inside_faces(
     ON_SimpleArray<ON_SSX_EVENT *> out;
 
     if (event == NULL) {
-	return out;
+	return;
     }
 
     if (event->m_curve3d == NULL || event->m_curveA == NULL || event->m_curveB == NULL) {
-	return out;
+	return;
     }
 
     // get the face loops
     if (face_i1 < 0 || face_i1 >= brep1->m_F.Count()) {
 	bu_log("get_subcurves_inside_faces(): invalid face_i1 (%d).\n", face_i1);
-	return out;
+	return;
     }
     if (face_i2 < 0 || face_i2 >= brep2->m_F.Count()) {
 	bu_log("get_subcurves_inside_faces(): invalid face_i2 (%d).\n", face_i2);
-	return out;
+	return;
     }
 
     const ON_SimpleArray<int> &face1_li = brep1->m_F[face_i1].m_li;
@@ -1079,79 +1080,62 @@ get_subcurves_inside_faces(
 
     // find the intervals of the curves that are inside/on each face
     ON_SimpleArray<ON_Interval> intervals1, intervals2;
+
     intervals1 = get_curve_intervals_inside_or_on_face(event->m_curveA,
 	    face1_loops, INTERSECTION_TOL);
+
     intervals2 = get_curve_intervals_inside_or_on_face(event->m_curveB,
 	    face2_loops, INTERSECTION_TOL);
 
-    if (intervals1.Count() == 0 && intervals2.Count() == 0) {
-	return out;
-    }
-
-    // merge the trimmed subcurves in 3d to get the final intervals
-    ON_SimpleArray<ON_Interval> final_intervals;
-    if (intervals1.Count() == 0) {
-	final_intervals = intervals_2d_to_3d(intervals2, event->m_curveB,
-		event->m_curve3d, &brep2->m_F[face_i2]);
-    } else if (intervals2.Count() == 0) {
-	final_intervals = intervals_2d_to_3d(intervals1, event->m_curveA,
-		event->m_curve3d, &brep1->m_F[face_i1]);
-    } else {
-	ON_SimpleArray<ON_Interval> intervals1_3d, intervals2_3d;
-
-	intervals1_3d = intervals_2d_to_3d(intervals1, event->m_curveA,
-		event->m_curve3d, &brep1->m_F[face_i1]);
-	intervals2_3d = intervals_2d_to_3d(intervals2, event->m_curveB,
-		event->m_curve3d, &brep1->m_F[face_i1]);
-
-	for (int i = 0; i < intervals1_3d.Count(); ++i) {
-	    for (int j = 0; j < intervals2_3d.Count(); ++j) {
-		try {
-		    ON_Interval shared = intersect_intervals(intervals1_3d[i],
-			    intervals2_3d[j]);
-		    if (!ON_NearZero(shared.Length())) {
-			final_intervals.Append(shared);
-		    }
-		} catch (IntervalGenerationError &e) {
-		    // empty intersection
-		    continue;
-		}
-	    }
-	}
-    }
-
-    // create new curves
-    for (int i = 0; i < final_intervals.Count(); ++i) {
-	ON_Interval intervalA = interval_3d_to_2d(final_intervals[i],
+    // get subcurves for each face
+    for (int i = 0; i < intervals1.Count(); ++i) {
+	// convert interval on face 1 to equivalent interval on face 2
+	ON_Interval interval3d = interval_2d_to_3d(intervals1[i],
 		event->m_curveA, event->m_curve3d, &brep1->m_F[face_i1]);
-
-	ON_Interval intervalB = interval_3d_to_2d(final_intervals[i],
-		event->m_curveB, event->m_curve3d, &brep2->m_F[face_i2]);
-
-	if (!intervalA.IsValid() || !intervalB.IsValid()) {
+	if (!interval3d.IsValid()) {
 	    continue;
 	}
 
-	ON_SSX_EVENT *new_event = new ON_SSX_EVENT(*event);
+	ON_Interval interval_on2 = interval_3d_to_2d(interval3d,
+		event->m_curveB, event->m_curve3d, &brep2->m_F[face_i2]);
+	if (!interval_on2.IsValid()) {
+	    continue;
+	}
+	
+	// create subcurve from interval
 	try {
-	    new_event->m_curve3d = NULL;
-	    new_event->m_curveA = new_event->m_curveB = NULL;
-	    new_event->m_curveA = sub_curve(event->m_curveA, intervalA.Min(),
-		    intervalA.Max());
-	    new_event->m_curveB = sub_curve(event->m_curveB, intervalB.Min(),
-		    intervalB.Max());
-	    out.Append(new_event);
+	    ON_Curve *subcurve_on2 = sub_curve(event->m_curveB,
+		    interval_on2.Min(), interval_on2.Max());
+
+	    subcurves_on2.Append(subcurve_on2);
 	} catch (InvalidInterval &e) {
 	    bu_log("%s", e.what());
-	    delete new_event;
-	    for (int j = 0; j < out.Count(); ++j) {
-		delete out[j];
-	    }
-	    out.Empty();
-	    break;
 	}
     }
-    return out;
+    for (int i = 0; i < intervals2.Count(); ++i) {
+	// convert interval on face 2 to equivalent interval on face 1
+	ON_Interval interval3d = interval_2d_to_3d(intervals2[i],
+		event->m_curveB, event->m_curve3d, &brep2->m_F[face_i2]);
+	if (!interval3d.IsValid()) {
+	    continue;
+	}
+
+	ON_Interval interval_on1 = interval_3d_to_2d(interval3d,
+		event->m_curveA, event->m_curve3d, &brep1->m_F[face_i1]);
+	if (!interval_on1.IsValid()) {
+	    continue;
+	}
+	
+	// create subcurve from interval
+	try {
+	    ON_Curve *subcurve_on1 = sub_curve(event->m_curveA,
+		    interval_on1.Min(), interval_on1.Max());
+
+	    subcurves_on1.Append(subcurve_on1);
+	} catch (InvalidInterval &e) {
+	    bu_log("%s", e.what());
+	}
+    }
 }
 
 HIDDEN double
@@ -2213,7 +2197,7 @@ split_face_into_loops(
 {
     std::vector<ON_SimpleArray<ON_Curve *> > out;
 
-    if (linked_curve.IsClosed()) {
+    if (linked_curve.IsClosed(ON_ZERO_TOLERANCE, false)) {
 	ON_SimpleArray<ON_Curve *> loop;
 	for (int i = 0; i < orig_face->m_outerloop.Count(); ++i) {
 	    loop.Append(orig_face->m_outerloop[i]->Duplicate());
@@ -2638,7 +2622,7 @@ split_trimmed_face(
 	std::vector<ON_SimpleArray<ON_Curve *> > ssx_loops;
 
 	// get closed version of current ssx curve
-	if (ssx_curves[i].IsClosed()) {
+	if (ssx_curves[i].IsClosed(ON_ZERO_TOLERANCE, false)) {
 	    ON_SimpleArray<ON_Curve *> loop;
 	    loop.Append(ssx_curves[i].Curve()->Duplicate());
 	    ssx_loops.push_back(loop);
@@ -2660,7 +2644,7 @@ split_trimmed_face(
 		intersect_loops = loop_boolean(out[k]->m_outerloop,
 			ssx_loops[j], BOOLEAN_INTERSECT);
 
-		if (ssx_curves[i].IsClosed()) {
+		if (ssx_curves[i].IsClosed(ON_ZERO_TOLERANCE, false)) {
 		    if (intersect_loops.size() == 0) {
 			// no intersection, just keep the face as-is
 			next_out.Append(out[k]->Duplicate());
@@ -3377,24 +3361,24 @@ get_face_intersection_curves(
 			events[k].m_type == ON_SSX_EVENT::ssx_transverse ||
 			events[k].m_type == ON_SSX_EVENT::ssx_overlap)
 		    {
-			ON_SimpleArray<ON_SSX_EVENT *> subcurves;
-			subcurves = get_subcurves_inside_faces(brep1, brep2,
-				i, j, &events[k]);
+			ON_SimpleArray<ON_Curve *> subcurves_on1, subcurves_on2;
 
-			for (int l = 0; l < subcurves.Count(); ++l) {
-			    SSICurve c1, c2;
-			    c1.m_curve = subcurves[l]->m_curveA;
-			    c2.m_curve = subcurves[l]->m_curveB;
-			    curves_array[i].Append(c1);
-			    curves_array[face_count1 + j].Append(c2);
-			    face1_curves.Append(subcurves[l]->m_curveA);
-			    face2_curves.Append(subcurves[l]->m_curveB);
+			get_subcurves_inside_faces(subcurves_on1,
+				subcurves_on2, brep1, brep2, i, j, &events[k]);
 
-			    // delete ON_SSX_EVENT, but prevent
-			    // ~ON_SSX_EVENT() from deleting curves
-			    // we're using
-			    subcurves[l]->m_curveA = subcurves[l]->m_curveB = NULL;
-			    delete subcurves[l];
+			for (int l = 0; l < subcurves_on1.Count(); ++l) {
+			    SSICurve ssi_on1;
+			    ssi_on1.m_curve = subcurves_on1[l];
+			    curves_array[i].Append(ssi_on1);
+
+			    face1_curves.Append(subcurves_on1[l]);
+			}
+			for (int l = 0; l < subcurves_on2.Count(); ++l) {
+			    SSICurve ssi_on2;
+			    ssi_on2.m_curve = subcurves_on2[l];
+			    curves_array[face_count1 + j].Append(ssi_on2);
+
+			    face2_curves.Append(subcurves_on2[l]);
 			}
 		    }
 		}
