@@ -420,6 +420,7 @@
 	  for more details on the specification of a framebuffer.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-G #</option></term>
 	<listitem>
@@ -429,6 +430,7 @@
 	  the grid cell width defaults to be the same as the height.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-H #</option></term>
 	<listitem>
@@ -439,6 +441,7 @@
 	  <citerefentry><refentrytitle>pixhalve</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-I</option></term>
 	<listitem>
@@ -446,6 +449,7 @@
 	  "large" (&gt; = 256 x 256), it will lower the priority of the <option>rt</option> process.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-J #</option></term>
 	<listitem>
@@ -461,6 +465,7 @@
 	  If three (<option>-J 3</option>), it performs both operations.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-K #</option></term>
 	<listitem>
@@ -469,16 +474,18 @@
 	  <option>-D #</option> .</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-M</option></term>
 	<listitem>
-	  <para>causes reading of animation matrix or animation script from standard input.
+	  <para>causes reading of animation (model2view) matrix or animation script from standard input.
 	  Conflicts with
 	  <option>-a</option>
 	  and
-	  <option>-e</option> .</para>
+	  <option>-e</option> options.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-N #</option></term>
 	<listitem>
@@ -486,6 +493,7 @@
 	  See h/nmg.h for the bit definitions.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-O output.dpix</option></term>
 	<listitem>
@@ -498,6 +506,7 @@
 	  (Deferred implementation)</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-P #</option></term>
 	<listitem>
@@ -521,12 +530,14 @@
 	  the order of random numbers previously drawn).</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-R</option></term>
 	<listitem>
 	  <para>requests that overlapping regions not be reported; opposite of <option>-r</option> .</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-S</option></term>
 	<listitem>
@@ -535,6 +546,7 @@
 	  and the right-eye image is drawn in blue.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-T #</option> or <option>-T #,#</option> or <option>-T #/#</option></term>
 	<listitem>
@@ -554,13 +566,17 @@
 	  on the command line.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-U #</option></term>
 	<listitem>
-	  <para>sets the "use_air" value.
+	  <para>
+	    sets the Boolean variable <emphasis remap="I">use_air</emphasis>
+	    to the given value.
 	  The default is 0, which ignores regions that have non-zero aircode values.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-V #</option></term>
 	<listitem>
@@ -572,12 +588,14 @@
 	  <option>-V4:3</option> .</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-W</option></term>
 	<listitem>
 	  <para>sets the background image color to white.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-X #</option></term>
 	<listitem>
@@ -586,6 +604,7 @@
 	  program debugging flags.  See raytrace.h for the meaning of these bits.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-! #</option></term>
 	<listitem>

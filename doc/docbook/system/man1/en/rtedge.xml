@@ -416,16 +416,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-M</option></term>
-	<listitem>
-	  <para>
-	    Read model2view matrix from standard input.  Conflicts with
-	    <option>-a</option> and <option>-e</option> options.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>-G#</option></term>
+	<term><option>-G #</option></term>
 	<listitem>
 	  <para>
 	    Select grid cell height.  If <emphasis remap="I">not</emphasis>
@@ -433,6 +424,83 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term><option>-H #</option></term>
+	<listitem>
+          <para>This is the "hypersample" flag, specifying number of extra rays to fire for each pixel to
+          obtain more accurate results without needing to store the extra pixels. Automatically invokes
+	  <option>-J 1</option>. The final colors of all rays are averaged together. Better results can be
+         obtained by simply increasing the resolution, and decimating the results with a filter such as
+	  <citerefentry><refentrytitle>pixhalve</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-I</option></term>
+	<listitem>
+	  <para>turns on interactive mode.  If this flag is off and your image is
+	  "large" (&gt; = 256 x 256), it will lower the priority of the <option>rt</option> process.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-J #</option></term>
+	<listitem>
+	  <para>This is the "jitter" flag, which is a bit vector.
+	  If one (<option>-J 1</option>), it randomizes the point from which each ray
+	  is fired by +/- one half of the pixel size.  Useful if doing your own
+	  post-filtering for antialiasing, or to eliminate systematic
+	  errors.  This has been useful in obtaining more accurate results
+	  in a volume-calculating raytrace as well.
+	  If two (<option>-J 2</option>), it shifts the origin of the output frame once for each frame.
+	  The shift is along a circular path in the plane of the frame,
+	  with a period of ten seconds, and a radius of +/- 1/4 pixel width.
+	  If three (<option>-J 3</option>), it performs both operations.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-K #</option></term>
+	<listitem>
+	  <para>sets the final (kill-after) frame number.
+	  Used with animation scripts in conjunction with
+	  <option>-D #</option> .</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-M</option></term>
+	<listitem>
+	  <para>causes reading of animation (model2view) matrix or animation script from standard input.
+	  Conflicts with
+	  <option>-a</option>
+	  and
+	  <option>-e</option> options.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-N #</option></term>
+	<listitem>
+	  <para>sets the NMG_debug flags to the given hexadecimalbit vector.
+	  See h/nmg.h for the bit definitions.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-O output.dpix</option></term>
+	<listitem>
+	  <para>specifies the name of a file to store the double-precision floating-point
+	  version of the image.
+	  <citerefentry><refentrytitle>dpix-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+	  can be used to later convert the file to
+	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+	  format output.
+	  (Deferred implementation)</para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><option>-P#</option></term>
 	<listitem>
@@ -442,15 +510,65 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
-	<term><option>-U#</option></term>
+	<term><option>-R</option></term>
+	<listitem>
+	  <para>requests that overlapping regions not be reported; opposite of <option>-r</option> .</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-S</option></term>
+	<listitem>
+	  <para>turns on stereo viewing.
+	  The left-eye image is drawn in red,
+	  and the right-eye image is drawn in blue.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-T #</option> or <option>-T #,#</option> or <option>-T #/#</option></term>
+	<listitem>
+	  <para>sets the calculation tolerances used by
+	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+	  If only one number is given, it specifies the distance tolerance.
+	  Any two entities closer than this distance are considered to be the same.
+	  The default distance tolerance is 0.005mm.
+	  If the second number is given, it specifies the value of the dot product
+	  below which two lines are to be considered perpendicular.
+	  This number should be near zero, but in any case should be less than 1.
+	  The default perpendicular tolerance is 1e-6.
+	  If both calculation tolerances are provided, they shall be separated
+	  by either a slash ("/") or a comma (","), with no white space between them.
+	  For example, the default tolerances would be specified as
+	  <option>-T0.005/1e-6</option>
+	  on the command line.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-U #</option></term>
 	<listitem>
 	  <para>
 	    sets the Boolean variable <emphasis remap="I">use_air</emphasis>
 	    to the given value.
-	  </para>
+	  The default is 0, which ignores regions that have non-zero aircode values.</para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term><option>-V #</option></term>
+	<listitem>
+	  <para>sets the view aspect.  This is the ratio of width over height and can
+	  be specified as either a fraction or a colon-separated ratio.
+	  For example, the NTSC aspect ratio can be specified by either
+	  <option>-V1.33</option>
+	  or
+	  <option>-V4:3</option> .</para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><option>-W</option></term>
 	<listitem>
@@ -461,6 +579,48 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term><option>-X #</option></term>
+	<listitem>
+	  <para>turns on the
+	  <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+	  program debugging flags.  See raytrace.h for the meaning of these bits.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-! #</option></term>
+	<listitem>
+	  <para>turns on the
+	  <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	  library debugging flags.  See bu.h for the meaning of these bits.
+	  In particular, specifying
+	  <option>-!1</option>
+	  will cause
+	  <function>bu_bomb()</function>
+	  to dump core, rather than logging the error and exiting.
+	  This is useful with
+	  <citerefentry><refentrytitle>dbx</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+	  or
+	  <citerefentry><refentrytitle>gdb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+	  for debugging.
+	  (Notice that <option>-x #</option>
+	  sets the
+	  <citerefentry><refentrytitle>libbt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	  debug flags to the given hexadecimal bit vector.
+	  See raytrace.h for the bit definitions.)</para>
+	</listitem>
+     </varlistentry>
+
+      <varlistentry>
+	<term><option>-+ #</option></term>
+	<listitem>
+	  <para>specifies (setting argument to "t") that output is NOT binary (default is that it is).
+          <option>-+</option> is otherwise not implemented.
+	  </para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><option>-c</option></term>
 	<listitem>
