@@ -414,8 +414,7 @@
       <varlistentry>
 	<term><option>-F framebuffer</option></term>
 	<listitem>
-	  <para>indicates that the output should be sent to the indicated framebuffer.
-	  See
+	  <para>indicates that the output should be sent to the indicated framebuffer. See
 	  <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  for more details on the specification of a framebuffer.</para>
 	</listitem>
@@ -518,6 +517,7 @@
 	  usually just one processor is used by default.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-Q x,y</option></term>
 	<listitem>

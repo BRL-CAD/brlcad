@@ -406,22 +406,19 @@
       <varlistentry>
 	<term><option>-F framebuffer</option></term>
 	<listitem>
-	  <para>
-	    Indicates that the output should be sent to the
-	    indicated framebuffer. See
-	    <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-	    for more details on the specification of a framebuffer.
-	  </para>
+	  <para>indicates that the output should be sent to the indicated framebuffer. See
+	  <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	  for more details on the specification of a framebuffer.</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
 	<term><option>-G #</option></term>
 	<listitem>
-	  <para>
-	    Select grid cell height.  If <emphasis remap="I">not</emphasis>
-	    specified, cell height equals cell width.
-	  </para>
+	  <para>sets the grid cell height, in millimeters.
+	  If the grid cell height is specified and the grid cell width (which
+	  would be set using <option>-g</option>) is <emphasis remap="I">not</emphasis> specified,
+	  the grid cell width defaults to be the same as the height.</para>
 	</listitem>
       </varlistentry>
 
@@ -502,12 +499,27 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-P#</option></term>
+	<term><option>-P #</option></term>
 	<listitem>
-	  <para>
-	    Specify the maximum number of processors (in a multi-processor
-	    system) to be used for this execution.
-	  </para>
+	  <para>specifies the maximum number of processors (in a multi-processor system) to be
+	  used for this execution.  The default is system dependent.
+	  On "dedicated" multi-processors, such as workstations and super-minis,
+	  the default is usually set for the maximum number of processors,
+	  while on shared multi-processors, such as SuperComputers,
+	  usually just one processor is used by default.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-Q x,y</option></term>
+	<listitem>
+	  <para>selects pixel ray for query with debugging.  The option is used to
+	  specify a single pixel for which the debug flags should be turned on.
+	  The computation of all other pixels will be performed without debugging.
+	  This is similar to the -b option, except that it does not limit rendering
+	  to the single ray.  The entire image is computed.  This option is useful in
+	  debugging problems which arise from specific computation sequences (such as
+	  the order of random numbers previously drawn).</para>
 	</listitem>
       </varlistentry>
 
@@ -588,6 +600,7 @@
 	  program debugging flags.  See raytrace.h for the meaning of these bits.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-! #</option></term>
 	<listitem>
