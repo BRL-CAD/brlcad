@@ -1779,8 +1779,14 @@ set_append_segment(
 	if ((i->from == seg.to) && (i->to == seg.from)) {
 	    // if this segment is a reversed version of an existing
 	    // segment, it cancels the existing segment out
-	    out.erase(i);
-	    return;
+	    ON_Curve *prev_curve = i->Curve();
+	    ON_Curve *seg_curve = seg.Curve();
+	    ON_SimpleArray<ON_X_EVENT> events;
+	    ON_Intersect(prev_curve, seg_curve, events, INTERSECTION_TOL);
+	    if (events.Count() == 1 && events[0].m_type == ON_X_EVENT::ccx_overlap) {
+		out.erase(i);
+		return;
+	    }
 	}
     }
     out.insert(seg);
