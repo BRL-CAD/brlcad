@@ -357,11 +357,11 @@
 	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  debug flags to the given hexadecimal bit vector.
 	  See raytrace.h for the bit definitions.
-	  <option>-!#</option>
+	  (Notice that <option>-! #</option>
 	  sets the
 	  <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  debug flags to the given hexadecimal bit vector.
-	  See h/bu.h for the bit definitions.</para>
+	  See bu.h for the bit definitions.)</para>
 	</listitem>
       </varlistentry>
 
@@ -601,7 +601,12 @@
 	  <citerefentry><refentrytitle>dbx</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  or
 	  <citerefentry><refentrytitle>gdb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-	  for debugging.</para>
+	  for debugging.
+	  (Notice that <option>-x #</option>
+	  sets the
+	  <citerefentry><refentrytitle>libbt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	  debug flags to the given hexadecimal bit vector.
+	  See raytrace.h for the bit definitions.)</para>
 	</listitem>
       </varlistentry>
       <varlistentry>

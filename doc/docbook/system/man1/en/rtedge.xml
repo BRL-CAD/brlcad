@@ -344,20 +344,18 @@
       <varlistentry>
 	<term><option>-x #</option></term>
 	<listitem>
-	  <para>Set librt debug flags to (hexadecimal) number.</para>
+	  <para>sets the
+	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	  debug flags to the given hexadecimal bit vector.
+	  See raytrace.h for the bit definitions.
+	  (Notice that <option>-! #</option>
+	  sets the
+	  <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	  debug flags to the given hexadecimal bit vector.
+	  See bu.h for the bit definitions.)</para>
 	</listitem>
       </varlistentry>
 
-      <varlistentry>
-	<term><option>-F framebuffer</option></term>
-	<listitem>
-	  <para>
-	    Indicates that the output should be sent to the
-	    indicated framebuffer. See
-	    <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry> for more details on the specification of a framebuffer.
-	  </para>
-	</listitem>
-      </varlistentry>
       <varlistentry>
 	<term><option>-A #</option></term>
 	<listitem>
@@ -367,6 +365,56 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term><option>-B</option></term>
+	<listitem>
+	  <para>turns on the "benchmark" flag. This causes all intentional random effects
+	  such as ray dither, color dither, etc., to be turned off to allow
+	  benchmark timing comparison and benchmark result comparison.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-C #/#/#</option></term>
+	<listitem>
+	  <para>sets the background color to the RGB value #/#/#, where each #
+	  is in the range of 0 to 255.
+	  All non-background colors will be dithered away from this value.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-D #</option></term>
+	<listitem>
+	  <para>This is the "desired frame" flag, specifying the frame number to start with.
+           Used with animation scripts; specify the desired ending (kill-after) frame with
+	  <option>-K #</option> .</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-E #</option></term>
+	<listitem>
+	  <para>sets the distance from the eye point to the center of the model RPP; default is
+          the square root of 2.
+	  Only useful with auto-sizing, and conflicts with
+	  <option>-M</option> .</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-F framebuffer</option></term>
+	<listitem>
+	  <para>
+	    Indicates that the output should be sent to the
+	    indicated framebuffer. See
+	    <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	    for more details on the specification of a framebuffer.
+	  </para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><option>-M</option></term>
 	<listitem>
