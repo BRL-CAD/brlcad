@@ -4,7 +4,7 @@
 # handle it as part of libged
 if(BULLET_LIBRARIES)
   set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${BULLET_LIBRARIES})
-  set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
+  #set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
   # The Bullet headers introduce a lot of shadow warnings - don't stop the
   # build because of them
   set(NO_STRICT_CXX_SETTING "NO_STRICT_CXX")
@@ -249,11 +249,11 @@ set(LIBGED_SOURCES
   shader.c
   shells.c
   showmats.c
-  simulate/simphysics.cpp
-  simulate/simulate.c
-  simulate/simcollisionalgo.cpp
-  simulate/simutils.c
-  simulate/simrt.c
+  #simulate/simphysics.cpp
+  #simulate/simulate.c
+  #simulate/simcollisionalgo.cpp
+  #simulate/simutils.c
+  #simulate/simrt.c
   size.c
   slew.c
   solids_on_ray.c
@@ -335,10 +335,10 @@ set(ged_ignore_files
   ged_private.h
   joint.h
   qray.h
-  simulate/simcollisionalgo.h
-  simulate/simrt.h
-  simulate/simulate.h
-  simulate/simutils.h
+  #simulate/simcollisionalgo.h
+  #simulate/simrt.h
+  #simulate/simulate.h
+  #simulate/simutils.h
   osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})
