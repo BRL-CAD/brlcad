@@ -1,7 +1,7 @@
-/*              S I M C O L L I S I O N A L G O . C P P
+/*                   C O L L I S I O N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,126 +17,129 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/*
- * Routines related to performing collision detection using rt.  This
- * is a custom algorithm that replaces the box-box collision algorithm
- * in Bullet.
+/** @file collision.cpp
+ *
+ * Brief description
+ *
  */
+
 
 #include "common.h"
 
-#ifdef HAVE_BULLET
+#include "collision.hpp"
 
-/* system headers */
+#include <BulletCollision/CollisionDispatch/btCollisionObjectWrapper.h>
+#include <BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
 
-/* quell warnings */
-#if HAVE_GCC_DIAG_PRAGMAS
-#  pragma GCC diagnostic push /* begin ignoring warnings */
-#  pragma GCC diagnostic ignored "-Wshadow"
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#elif HAVE_CLANG_DIAG_PRAGMAS
-#  pragma clang diagnostic push /* begin ignoring warnings */
-#  pragma clang diagnostic ignored "-Wshadow"
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
 
-#include "./simcollisionalgo.h"
-#include "BulletCollision/CollisionDispatch/btCollisionDispatcher.h"
-#include "BulletCollision/CollisionShapes/btBoxShape.h"
-#include "BulletCollision/CollisionDispatch/btCollisionObject.h"
-#include "BulletCollision/CollisionDispatch/btBoxBoxDetector.h"
-#include "BulletCollision/CollisionDispatch/btCollisionObjectWrapper.h"
-
-#if HAVE_GCC_DIAG_PRAGMAS
-#  pragma GCC diagnostic pop /* end ignoring warnings */
-#elif HAVE_CLANG_DIAG_PRAGMAS
-#  pragma clang diagnostic pop /* end ignoring warnings */
-#endif
-
-#define USE_PERSISTENT_CONTACTS 1
-
-btRTCollisionAlgorithm::btRTCollisionAlgorithm(btPersistentManifold* mf, const btCollisionAlgorithmConstructionInfo& ci, const btCollisionObjectWrapper* col0Wrap, const btCollisionObjectWrapper* col1Wrap)
-    : btActivatingCollisionAlgorithm(ci, col0Wrap, col1Wrap),
-      m_ownManifold(false),
-      m_manifoldPtr(mf)
+namespace simulate
 {
-    if (!m_manifoldPtr && m_dispatcher->needsCollision(col0Wrap->getCollisionObject(), col1Wrap->getCollisionObject())) {
-	m_manifoldPtr = m_dispatcher->getNewManifold(col0Wrap->getCollisionObject(), col1Wrap->getCollisionObject());
-	m_ownManifold = true;
+
+
+namespace collision
+{
+
+
+RtArbitraryShape::RtArbitraryShape(const btVector3 &half_extents) :
+    btBoxShape(half_extents)
+{}
+
+
+RtArbitraryShape::~RtArbitraryShape()
+{}
+
+
+btCollisionAlgorithm *
+RtCollisionAlgorithm::CreateFunc::CreateCollisionAlgorithm(
+    btCollisionAlgorithmConstructionInfo &cinfo,
+    const btCollisionObjectWrapper *body_a_wrap,
+    const btCollisionObjectWrapper *body_b_wrap)
+{
+    int bbsize = sizeof(RtCollisionAlgorithm);
+    void *ptr = cinfo.m_dispatcher1->allocateCollisionAlgorithm(bbsize);
+    return new(ptr) RtCollisionAlgorithm(NULL, cinfo, body_a_wrap, body_b_wrap);
+}
+
+
+RtCollisionAlgorithm::RtCollisionAlgorithm(btPersistentManifold *manifold,
+	const btCollisionAlgorithmConstructionInfo &cinfo,
+	const btCollisionObjectWrapper *body_a_wrap,
+	const btCollisionObjectWrapper *body_b_wrap) :
+    btActivatingCollisionAlgorithm(cinfo, body_a_wrap, body_b_wrap),
+    m_owns_manifold(false),
+    m_manifold(manifold)
+{
+    const btCollisionObject &body_a = *body_a_wrap->getCollisionObject();
+    const btCollisionObject &body_b = *body_b_wrap->getCollisionObject();
+
+    if (!m_manifold && m_dispatcher->needsCollision(&body_a, &body_b)) {
+	m_manifold = m_dispatcher->getNewManifold(&body_a, &body_b);
+	m_owns_manifold = true;
     }
 }
 
-btRTCollisionAlgorithm::~btRTCollisionAlgorithm()
+
+RtCollisionAlgorithm::~RtCollisionAlgorithm()
 {
-    if (m_ownManifold) {
-	if (m_manifoldPtr)
-	    m_dispatcher->releaseManifold(m_manifoldPtr);
-    }
+    if (m_owns_manifold && m_manifold)
+	m_dispatcher->releaseManifold(m_manifold);
 }
 
-void btRTCollisionAlgorithm::processCollision(const btCollisionObjectWrapper* col0Wrap, const btCollisionObjectWrapper* col1Wrap, const btDispatcherInfo& dispatchInfo, btManifoldResult* resultOut)
+
+void
+RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper *,
+				       const btCollisionObjectWrapper *,
+				       const btDispatcherInfo &, btManifoldResult *result)
 {
-    if (!m_manifoldPtr)
+    if (!m_manifold)
 	return;
 
-    //quellage
-    // unquell: otherwise get unused param dispatchInfo warning
-    bu_log("%d\n", dispatchInfo.m_stepCount);
-
-    /// report a contact. internally this will be kept persistent, and contact reduction is done
-    resultOut->setPersistentManifold(m_manifoldPtr);
+    result->setPersistentManifold(m_manifold);
 #ifndef USE_PERSISTENT_CONTACTS
-    m_manifoldPtr->clearManifold();
-#endif //USE_PERSISTENT_CONTACTS
+    m_manifold->clearManifold();
+#endif
 
+    // calculations
 
-    //------------------- DEBUG ---------------------------
+    const std::size_t num_contacts = 1;
 
-    int i;
+    for (std::size_t i = 0; i < num_contacts; ++i) {
+	const btVector3 pt_b(0, 0, 0);
+	const btVector3 normal_world_on_b(0, 0, 0);
+	const btScalar depth = 0;
+	result->addContactPoint(normal_world_on_b, pt_b, depth);
+    }
 
-    //Get the user pointers to struct rigid_body, for printing the body name
-    struct rigid_body *rbA = (struct rigid_body *)col0Wrap->getCollisionObject()->getUserPointer();
-    struct rigid_body *rbB = (struct rigid_body *)col1Wrap->getCollisionObject()->getUserPointer();
+#ifdef USE_PERSISTENT_CONTACTS
 
-    if (rbA != NULL && rbB != NULL) {
+    if (m_owns_manifold)
+	result->refreshContactPoints();
 
-	struct sim_manifold *rt_mf = &(rbB->rt_manifold);
-
-	// Now add the RT contact pairs
-	for (i = 0; i < rt_mf->num_contacts; i++) {
-
-	    btVector3 ptA, ptB, normalWorldOnB;
-
-	    VMOVE(ptA, rt_mf->contacts[i].ptA);
-	    VMOVE(ptB, rt_mf->contacts[i].ptB);
-	    VMOVE(normalWorldOnB, rt_mf->contacts[i].normalWorldOnB);
-
-	    //Negative depth for penetration
-	    resultOut->addContactPoint(normalWorldOnB, ptB, rt_mf->contacts[i].depth);
-
-	    bu_log("processCollision: Added RT contact %d, A(ignore): %s(%f, %f, %f) , \
-				   B: %s(%f, %f, %f), n(%f, %f, %f), depth=%f\n",
-		   i+1,
-		   rt_mf->rbA->rb_namep, V3ARGS(ptA),
-		   rt_mf->rbB->rb_namep, V3ARGS(ptB),
-		   V3ARGS(normalWorldOnB),
-		   rt_mf->contacts[i].depth);
-	}
-
-    } //end- if (rbA != NULL && rbB...
-
+#endif
 }
 
 
 btScalar
-btRTCollisionAlgorithm::calculateTimeOfImpact(btCollisionObject* /*body0*/, btCollisionObject* /*body1*/, const btDispatcherInfo& /*dispatchInfo*/, btManifoldResult* /*resultOut*/)
+RtCollisionAlgorithm::calculateTimeOfImpact(btCollisionObject *,
+	btCollisionObject *, const btDispatcherInfo &, btManifoldResult *)
 {
-    //not yet
-    return 1.f;
+    return 1;
 }
 
 
-#endif
+void
+RtCollisionAlgorithm::getAllContactManifolds(btManifoldArray &manifold_array)
+{
+    if (m_owns_manifold && m_manifold)
+	manifold_array.push_back(m_manifold);
+}
+
+
+}
+
+
+}
+
 
 // Local Variables:
 // tab-width: 8

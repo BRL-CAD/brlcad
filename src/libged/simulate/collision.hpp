@@ -1,7 +1,7 @@
-/*                S I M C O L L I S I O N A L G O . H
+/*                   C O L L I S I O N . H P P
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,78 +17,88 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/*
- * Routines related to performing collision detection using rt. This
- * is a custom algorithm that replaces the box-box collision algorithm
- * in bullet
+/** @file collision.hpp
+ *
+ * Brief description
  *
  */
 
-#ifndef LIBGED_SIMULATE_SIMCOLLISIONALGO_H_
-#define LIBGED_SIMULATE_SIMCOLLISIONALGO_H_
 
-#include "common.h"
+#ifndef COLLISION_H
+#define COLLISION_H
 
-#ifdef HAVE_BULLET
 
-/* system headers */
-#include <iostream>
+#include <BulletCollision/CollisionShapes/btBoxShape.h>
+#include <BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h>
+#include <BulletCollision/CollisionDispatch/btCollisionCreateFunc.h>
 
-/* public headers */
-#include "db.h"
-#include "vmath.h"
 
-/* private headers */
-#include "./simulate.h"
-
-#include "BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h"
-#include "BulletCollision/BroadphaseCollision/btBroadphaseProxy.h"
-#include "BulletCollision/BroadphaseCollision/btDispatcher.h"
-#include "BulletCollision/CollisionDispatch/btCollisionCreateFunc.h"
-
-class btPersistentManifold;
-
-///Raytrace based collision detection
-class btRTCollisionAlgorithm : public btActivatingCollisionAlgorithm
+namespace simulate
 {
-    bool m_ownManifold;
-    btPersistentManifold* m_manifoldPtr;
 
+
+namespace collision
+{
+
+
+static const int RT_ARBITRARY_SHAPE_TYPE =
+    CUSTOM_POLYHEDRAL_SHAPE_TYPE;
+
+
+class RtArbitraryShape : public btBoxShape
+{
 public:
-    btRTCollisionAlgorithm(const btCollisionAlgorithmConstructionInfo& ci)
-	: btActivatingCollisionAlgorithm(ci) {}
+    RtArbitraryShape(const btVector3 &half_extents);
+    virtual ~RtArbitraryShape();
+};
 
-    virtual void processCollision(const btCollisionObjectWrapper* body0Wrap, const btCollisionObjectWrapper* body1Wrap, const btDispatcherInfo& dispatchInfo, btManifoldResult* resultOut);
 
-    virtual btScalar calculateTimeOfImpact(btCollisionObject* body0, btCollisionObject* body1, const btDispatcherInfo& dispatchInfo, btManifoldResult* resultOut);
+class RtCollisionAlgorithm : public btActivatingCollisionAlgorithm
+{
+public:
+    RtCollisionAlgorithm(btPersistentManifold *manifold,
+			 const btCollisionAlgorithmConstructionInfo &cinfo,
+			 const btCollisionObjectWrapper *body_a_wrap,
+			 const btCollisionObjectWrapper *body_b_wrap);
 
-    btRTCollisionAlgorithm(btPersistentManifold* mf, const btCollisionAlgorithmConstructionInfo& ci, const btCollisionObjectWrapper* body0Wrap, const btCollisionObjectWrapper* body1Wrap);
+    virtual ~RtCollisionAlgorithm();
 
-    virtual ~btRTCollisionAlgorithm();
+    virtual void processCollision(const btCollisionObjectWrapper *body_a_wrap,
+				  const btCollisionObjectWrapper *body_b_wrap,
+				  const btDispatcherInfo &dispatch_info, btManifoldResult *result);
 
-    virtual void    getAllContactManifolds(btManifoldArray& manifoldArray)
-    {
-	if (m_manifoldPtr && m_ownManifold) {
-	    manifoldArray.push_back(m_manifoldPtr);
-	}
-    }
+    virtual btScalar calculateTimeOfImpact(btCollisionObject *body_a,
+					   btCollisionObject *body_b, const btDispatcherInfo &dispatch_info,
+					   btManifoldResult *result);
+
+    virtual void getAllContactManifolds(btManifoldArray &manifold_array);
 
 
     struct CreateFunc : public btCollisionAlgorithmCreateFunc {
-	virtual btCollisionAlgorithm* CreateCollisionAlgorithm(btCollisionAlgorithmConstructionInfo& ci, const btCollisionObjectWrapper* body0Wrap, const btCollisionObjectWrapper* body1Wrap)
-	{
-	    int bbsize = sizeof(btRTCollisionAlgorithm);
-	    void* ptr = ci.m_dispatcher1->allocateCollisionAlgorithm(bbsize);
-	    return new(ptr) btRTCollisionAlgorithm(0, ci, body0Wrap, body1Wrap);
-	}
+	virtual btCollisionAlgorithm *CreateCollisionAlgorithm(
+	    btCollisionAlgorithmConstructionInfo &cinfo,
+	    const btCollisionObjectWrapper *body_a_wrap,
+	    const btCollisionObjectWrapper *body_b_wrap);
     };
 
+
+private:
+    bool m_owns_manifold;
+    btPersistentManifold *m_manifold;
+
+    RtCollisionAlgorithm(const RtCollisionAlgorithm &);
+    RtCollisionAlgorithm &operator=(const RtCollisionAlgorithm &);
 };
+
+
+}
+
+
+}
 
 
 #endif
 
-#endif /* LIBGED_SIMULATE_SIMCOLLISIONALGO_H_ */
 
 // Local Variables:
 // tab-width: 8
