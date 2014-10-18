@@ -97,7 +97,7 @@ private:
     void create_all_idefs();
     void create_all_objects();
 
-    void create_bitmap(const ON_Bitmap *bitmap);
+    void create_bitmap(const ON_Bitmap &bitmap);
     void create_layer(const ON_Layer &layer);
     void create_idef(const ON_InstanceDefinition &idef);
 
