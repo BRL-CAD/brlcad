@@ -33,7 +33,6 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
 
 /* Public Headers */
 #include "vmath.h"
@@ -43,6 +42,7 @@
 
 /* Private Headers */
 #include "../ged_private.h"
+#include "bio.h"
 #include "simulate.h"
 #include "simutils.h"
 
