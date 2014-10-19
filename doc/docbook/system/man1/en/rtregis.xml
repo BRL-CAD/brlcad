@@ -80,8 +80,6 @@ the rendered shaded image that was in the framebuffer.
 The result can then be converted to Impress or PostScript and sent
 to a printer:</para>
 
-<emphasis remap='I'>
-</emphasis>
 <literallayout remap='.nf'>
 	fb-pix | pix-bw | bw-impress (<emphasis remap='I'>or</emphasis> bw-ps) | qpr
 </literallayout> <!-- .fi -->
