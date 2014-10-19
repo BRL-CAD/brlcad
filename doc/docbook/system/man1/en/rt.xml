@@ -21,7 +21,6 @@
       <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
       <arg choice="plain" rep="norepeat"><replaceable>model.g</replaceable></arg>
       <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg>
-
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -53,7 +52,26 @@
     </para>
 
     <para>The following options are recognized:</para>
+
     <variablelist remap="TP">
+      <varlistentry>
+	<term><option>-. #</option></term>
+	<listitem>
+	  <para>
+            selects the factor used in NUgrid algorithm. Default is 1.5 .
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-, #</option></term>
+	<listitem>
+	  <para>
+           selects which space partitioning algorithm to use
+	  </para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><option>-a #</option></term>
 	<listitem>
@@ -149,7 +167,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-h density,r,g,b</option></term>
+	<term><option>-m density,r,g,b</option></term>
 	<listitem>
 	  <para>enables an exponential shading of the void between the eye and the
 	  first hit location.  This allows a cheap simulation of atmospheric haze
@@ -163,7 +181,7 @@
 	  <para>The color values are optional.  If not specified, they will have the passable
 	  values 0.8 .9 .99 .</para>
 
-	  <para>Example usage: -h '2.5e-8,.75,.95,.99'</para>
+	  <para>Example usage: -m '2.5e-8,.75,.95,.99'</para>
 	</listitem>
       </varlistentry>
 
@@ -216,7 +234,7 @@
       <varlistentry>
 	<term><option>-l #</option></term>
 	<listitem>
-	  <para>Select lighting model.  Default is 0.
+	  <para>selects lighting model.  Default is 0.
 	  Model 0 is a full lighting model with the ability to implement
 	  Phong shading, transparent and reflective objects, shadow penumbras,
 	  texture maps, etc.
@@ -266,12 +284,14 @@
 	<term><option>-o output.pix</option></term>
 	<listitem>
 	  <para>
-	  Specify the name of a file to store the
+	  specifies the name of a file to store the
 	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 	  format output.
 	  The
 	  <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-	  utility can be used later to display ".pix" files.</para>
+	  utility can be used later to display ".pix" files.
+	  Note that using -o disables parallel processing.
+	  </para>
 	</listitem>
       </varlistentry>
 
@@ -285,7 +305,7 @@
       <varlistentry>
 	<term><option>-r</option></term>
 	<listitem>
-	  <para>Requests that overlapping regions be reported (on by default); opposite of <option>-R</option> .</para>
+	  <para>requests that overlapping regions be reported (on by default); opposite of <option>-R</option> .</para>
 	</listitem>
       </varlistentry>
 
@@ -294,12 +314,12 @@
 	<listitem>
 	  <para>specifies the
 	  number of rays to fire in the X and Y directions on a square grid.
-	  The default size is 512 pixels.</para>
+	  The default size is 512 (i.e., 512 x 512).</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
-	<term><option>-t #</option></term>
+	<term><option>-t</option></term>
 	<listitem>
 	  <para>causes reversal of the order of grid traversal (default is not to do that)
 	  </para>
@@ -309,7 +329,7 @@
       <varlistentry>
 	<term><option>-u units</option></term>
 	<listitem>
-	  <para>specify units, with "model" being used for the units of the local model
+	  <para>specifies units, with "model" being used for the units of the local model
 	  </para>
 	</listitem>
       </varlistentry>
@@ -337,11 +357,11 @@
 	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  debug flags to the given hexadecimal bit vector.
 	  See raytrace.h for the bit definitions.
-	  <option>-!#</option>
+	  (Notice that <option>-! #</option>
 	  sets the
 	  <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  debug flags to the given hexadecimal bit vector.
-	  See h/bu.h for the bit definitions.</para>
+	  See bu.h for the bit definitions.)</para>
 	</listitem>
       </varlistentry>
 
@@ -394,12 +414,12 @@
       <varlistentry>
 	<term><option>-F framebuffer</option></term>
 	<listitem>
-	  <para>indicates that the output should be sent to the indicated framebuffer.
-	  See
+	  <para>indicates that the output should be sent to the indicated framebuffer. See
 	  <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  for more details on the specification of a framebuffer.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-G #</option></term>
 	<listitem>
@@ -409,6 +429,7 @@
 	  the grid cell width defaults to be the same as the height.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-H #</option></term>
 	<listitem>
@@ -419,6 +440,7 @@
 	  <citerefentry><refentrytitle>pixhalve</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-I</option></term>
 	<listitem>
@@ -426,6 +448,7 @@
 	  "large" (&gt; = 256 x 256), it will lower the priority of the <option>rt</option> process.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-J #</option></term>
 	<listitem>
@@ -441,6 +464,7 @@
 	  If three (<option>-J 3</option>), it performs both operations.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-K #</option></term>
 	<listitem>
@@ -449,27 +473,30 @@
 	  <option>-D #</option> .</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-M</option></term>
 	<listitem>
-	  <para>Reads animation matrix or animation script from standard input.
+	  <para>causes reading of animation (model2view) matrix or animation script from standard input.
 	  Conflicts with
 	  <option>-a</option>
 	  and
-	  <option>-e</option> .</para>
+	  <option>-e</option> options.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-N #</option></term>
 	<listitem>
-	  <para>Sets the NMG_debug flags to the given hexadecimalbit vector.
+	  <para>sets the NMG_debug flags to the given hexadecimalbit vector.
 	  See h/nmg.h for the bit definitions.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-O output.dpix</option></term>
 	<listitem>
-	  <para>Specify the name of a file to store the double-precision floating-point
+	  <para>specifies the name of a file to store the double-precision floating-point
 	  version of the image.
 	  <citerefentry><refentrytitle>dpix-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  can be used to later convert the file to
@@ -478,10 +505,11 @@
 	  (Deferred implementation)</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-P #</option></term>
 	<listitem>
-	  <para>Specify the maximum number of processors (in a multi-processor system) to be
+	  <para>specifies the maximum number of processors (in a multi-processor system) to be
 	  used for this execution.  The default is system dependent.
 	  On "dedicated" multi-processors, such as workstations and super-minis,
 	  the default is usually set for the maximum number of processors,
@@ -489,10 +517,11 @@
 	  usually just one processor is used by default.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-Q x,y</option></term>
 	<listitem>
-	  <para>Query pixel ray with debugging.  The option is used to
+	  <para>selects pixel ray for query with debugging.  The option is used to
 	  specify a single pixel for which the debug flags should be turned on.
 	  The computation of all other pixels will be performed without debugging.
 	  This is similar to the -b option, except that it does not limit rendering
@@ -501,24 +530,27 @@
 	  the order of random numbers previously drawn).</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-R</option></term>
 	<listitem>
-	  <para>Requests that overlapping regions not be reported; opposite of <option>-r</option> .</para>
+	  <para>requests that overlapping regions not be reported; opposite of <option>-r</option> .</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-S</option></term>
 	<listitem>
-	  <para>Turns on stereo viewing.
+	  <para>turns on stereo viewing.
 	  The left-eye image is drawn in red,
 	  and the right-eye image is drawn in blue.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-T #</option> or <option>-T #,#</option> or <option>-T #/#</option></term>
 	<listitem>
-	  <para>Sets the calculation tolerances used by
+	  <para>sets the calculation tolerances used by
 	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
 	  If only one number is given, it specifies the distance tolerance.
 	  Any two entities closer than this distance are considered to be the same.
@@ -534,17 +566,21 @@
 	  on the command line.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-U #</option></term>
 	<listitem>
-	  <para>Sets the "use_air" value.
+	  <para>
+	    sets the Boolean variable <emphasis remap="I">use_air</emphasis>
+	    to the given value.
 	  The default is 0, which ignores regions that have non-zero aircode values.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-V #</option></term>
 	<listitem>
-	  <para>Sets the view aspect.  This is the ratio of width over height and can
+	  <para>sets the view aspect.  This is the ratio of width over height and can
 	  be specified as either a fraction or a colon-separated ratio.
 	  For example, the NTSC aspect ratio can be specified by either
 	  <option>-V1.33</option>
@@ -552,24 +588,27 @@
 	  <option>-V4:3</option> .</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-W</option></term>
 	<listitem>
-	  <para>Sets the background image color to white.</para>
+	  <para>sets the background image color to white.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-X #</option></term>
 	<listitem>
-	  <para>Turns on the
+	  <para>turns on the
 	  <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  program debugging flags.  See raytrace.h for the meaning of these bits.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
-	<term><option>-!#</option></term>
+	<term><option>-! #</option></term>
 	<listitem>
-	  <para>Turns on the
+	  <para>turns on the
 	  <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  library debugging flags.  See bu.h for the meaning of these bits.
 	  In particular, specifying
@@ -581,7 +620,20 @@
 	  <citerefentry><refentrytitle>dbx</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  or
 	  <citerefentry><refentrytitle>gdb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-	  for debugging.</para>
+	  for debugging.
+	  (Notice that <option>-x #</option>
+	  sets the
+	  <citerefentry><refentrytitle>libbt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	  debug flags to the given hexadecimal bit vector.
+	  See raytrace.h for the bit definitions.)</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-+ #</option></term>
+	<listitem>
+	  <para>specifies (setting argument to "t") that output is NOT binary (default is that it is).
+          <option>-+</option> is otherwise not implemented.
+	  </para>
 	</listitem>
       </varlistentry>
     </variablelist>

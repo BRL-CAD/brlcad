@@ -380,11 +380,11 @@ BU_EXPORT extern void bu_cv_ntohf(unsigned char *out,
  */
 BU_EXPORT extern signed char *bu_b64_encode(const signed char *input);
 
-BU_EXPORT extern signed char *bu_b64_encode_block(const signed char* input, int length_in);
+BU_EXPORT extern signed char *bu_b64_encode_block(const signed char* input, size_t length_in);
 
 BU_EXPORT extern int bu_b64_decode(signed char **output_buffer, const signed char *input);
 
-BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const signed char* input, int length_in);
+BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const signed char* input, size_t length_in);
 
 /** @} */
 

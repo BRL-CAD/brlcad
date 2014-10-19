@@ -34,6 +34,7 @@
 #include "bu/color.h"
 #include "bu/log.h"
 #include "bu/getopt.h"
+#include "vmath.h"
 #include "fb.h"
 #include "pkg.h"
 
@@ -82,11 +83,8 @@ Usage: fbline [-c ] [-F framebuffer]\n\
 void
 edgelimit(struct coords *ppos)
 {
-    if (ppos->x >= screen_width)
-	ppos->x = screen_width -1;
-
-    if (ppos->y >= screen_height)
-	ppos->y = screen_height -1;
+    V_MIN(ppos->x, screen_width-1);
+    V_MIN(ppos->y, screen_height-1);
 }
 
 

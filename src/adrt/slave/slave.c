@@ -500,10 +500,7 @@ main(int argc, char **argv)
 	    case 't':
 		bu_strlcpy(temp, bu_optarg, 5);
 		threads = atoi(temp);
-		if (threads < 0)
-			threads = 0;
-		else if (threads > 32)
-			threads = 32;
+		CLAMP(threads, 0, 32);
 		break;
 
 	    case 'v':

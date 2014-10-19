@@ -190,9 +190,7 @@ output_elevation(long int in_value, FILE *fp)
     int status = BRLCAD_ERROR;
 
     /* allow for clipping */
-    if (in_value > DSP_MAX_RAW_ELEVATION) {
-	in_value = DSP_MAX_RAW_ELEVATION;
-    }
+    CLAMP(in_value, 0, DSP_MAX_RAW_ELEVATION);
 
     if (flip_high_low_bytes(in_value, buf) == BRLCAD_OK) {
 	if (fwrite(buf, 2, 1, fp) == 1) {

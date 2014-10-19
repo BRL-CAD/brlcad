@@ -43,7 +43,6 @@
 #endif
 #include <tcl.h>
 
-#include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"
 

@@ -246,8 +246,8 @@ get_large_field_input(FILE *fp, int write_flag)
     last_field = (card_len - 8)/16 + 1;
     if (((last_field - 1) * 16 + 8) < card_len)
 	last_field++;
-    if (last_field > 5)
-	last_field = 5;
+    CLAMP(last_field, 1, 5);
+
     bu_strlcpy(curr_rec[0], line, 8);
     curr_rec[0][8] = '\0';
     for (field_no=1; field_no < last_field; field_no++) {
@@ -270,8 +270,8 @@ get_large_field_input(FILE *fp, int write_flag)
 	last_field = (card_len - 8)/16 + 1;
 	if (((last_field - 1) * 16 + 8) < card_len)
 	    last_field++;
-	if (last_field > 5)
-	    last_field = 5;
+	CLAMP(last_field, 1, 5);
+
 	last_field += 4;
 	for (field_no=5; field_no < last_field; field_no++) {
 	    bu_strlcpy(curr_rec[field_no], &line[(field_no-4)*16 - 8], 16);
@@ -303,8 +303,8 @@ get_small_field_input(FILE *fp, int write_flag)
     last_field = card_len/8 + 1;
     if ((last_field * 8) < card_len)
 	last_field++;
-    if (last_field > 9)
-	last_field = 9;
+    CLAMP(last_field, 1, 9);
+
     bu_strlcpy(curr_rec[0], line, 8);
     curr_rec[0][8] = '\0';
     for (field_no=2; field_no < last_field+1; field_no++) {
@@ -321,8 +321,8 @@ get_small_field_input(FILE *fp, int write_flag)
 	last_field = card_len/8 + 1;
 	if ((last_field * 8) < card_len)
 	    last_field++;
-	if (last_field > 9)
-	    last_field = 9;
+	CLAMP(last_field, 1, 9);
+
 	last_field += 9;
 	for (field_no=10; field_no < last_field+1; field_no++) {
 	    bu_strlcpy(curr_rec[field_no-1], &line[(field_no-9)*8], 8);

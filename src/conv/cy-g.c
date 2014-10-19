@@ -455,12 +455,12 @@ main(int argc, char **argv)
 	    } else {
 		long radius;
 
-		if (y < first_non_zero)
-		    first_non_zero = y;
+		V_MIN(first_non_zero, y);
+
 		radius = (long)(r) << rshift;
 		rad = (fastf_t)radius/rprop;
-		if (y > last_non_zero)
-		    last_non_zero = y;
+
+		V_MAX(last_non_zero, y);
 	    }
 	    *ptr = rad * coss[x];
 	    *(ptr+1) = rad * sins[x];

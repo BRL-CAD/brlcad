@@ -95,7 +95,7 @@ int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 int rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
 int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
 int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
-RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
+RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
 int rt_brep_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op);
 #ifdef __cplusplus
@@ -4856,7 +4856,7 @@ rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
 
 
 int
-rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation)
+rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation)
 {
     RT_CK_DB_INTERNAL(ip1);
     RT_CK_DB_INTERNAL(ip2);
@@ -4872,8 +4872,7 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     brep_out = ON_Brep::New();
 
     op_type operation_type;
-    db_op_t op = db_str2op(operation);
-    switch (op) {
+    switch (operation) {
 	case DB_OP_UNION:
 	    operation_type = BOOLEAN_UNION;
 	    break;

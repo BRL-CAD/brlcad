@@ -526,10 +526,9 @@ display_Cells(long int ncells)
 	 */
 	scr_min = H2SCRX(xmin);
 	scr_max = H2SCRX(xmax);
-	if (scr_min < 0) scr_min = 0;
-	if (scr_min > fb_width) scr_min = fb_width;
-	if (scr_max < 0) scr_max = 0;
-	if (scr_max > fb_width) scr_max = fb_width;
+	CLAMP(scr_min, 0, fb_width);
+	CLAMP(scr_max, 0, fb_width);
+
 	scr_center = (scr_max + scr_min)/2;
 	if ((center_cell = VPX2CX(SCRX2VPX(scr_center))) < 5)
 	    center_cell = 5;

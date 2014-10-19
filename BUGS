@@ -15,13 +15,23 @@ on-going issues.
 Recent Bugs
 -----------
 
+* typing 'comb -f -r assembly_name' shuts down mged with the error:
+  ERROR: bad pointer 0000000000B4CA50: s/b bu_external(x768dbbd0), was bu_vls(x89333bbb), file ..\..\..\brlcad_src\src\libbu\parse.c, line 2443"
+  And on the mged command line:
+  rt_db_cvt_to_external5 expecting non-NULL name parameter
+  wdb_export((null)): solid export failure
+
+* running "draw -C 0/255/0" in archer dies with a bu_malloc(0) error.
+
+* iges exporter is writing out corrupted output due to spaces after
+  commas.
+
+* report of mged command history not working with the down arrow key
+  in 7.25.0 (on Windows, unknown on other platforms).  Up arrow works
+  fine.
+
 * wgl framebuffer is not lingering on windows (regardless of using
   wgll or default) when it should
-
-* sh_text.c: texture mapping crashes (in txt_render() near line 318)
-  if you specify image dimensions larger than the texture file.  it
-  gets back a mapped file, but indexes directly based on the provided
-  sizes without bounds checking.
 
 * count_non_union_ops() in g-iges crashes with simple conversion case
 

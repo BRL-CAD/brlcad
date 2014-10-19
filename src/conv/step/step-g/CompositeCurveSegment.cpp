@@ -93,9 +93,7 @@ CompositeCurveSegment::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     transition = (Transition_code)step->getEnumAttribute(sse, "transition");
-    if (transition > Transition_code_unset) {
-	transition = Transition_code_unset;
-    }
+    V_MIN(transition, Transition_code_unset);
 
     same_sense = step->getBooleanAttribute(sse, "same_sense");
 

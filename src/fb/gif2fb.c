@@ -44,6 +44,7 @@
 
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "vmath.h"
 #include "fb.h"
 
 
@@ -304,8 +305,7 @@ main(int argc, char **argv)
 	    lineNumber += lineInc;
 	    if (lineNumber >= ih_height) {
 		++lineIdx;
-		if (lineIdx > (int)(sizeof(lace)/sizeof(lace[0]))-1)
-		    lineIdx = (sizeof(lace)/sizeof(lace[0]))-1;
+		V_MIN(lineIdx, (int)(sizeof(lace)/sizeof(lace[0]))-1);
 		lineInc = lace[lineIdx];
 		lineNumber = offs[lineIdx];
 	    }

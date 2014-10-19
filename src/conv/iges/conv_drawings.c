@@ -154,8 +154,7 @@ Note_to_vlist(int entno, struct bu_list *vhead)
 
 
 	local_scale = width/str_len;
-	if (height < local_scale)
-	    local_scale = height;
+	V_MIN(local_scale, height);
 
 	if (local_scale < height)
 	    loc[Y] += (height - local_scale)/2.0;

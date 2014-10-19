@@ -100,6 +100,8 @@ typedef struct
     double radius;	/* Radius of beam.				*/
     struct soltab *stp;	/* Solid table pointer to LIGHT solid.	*/
 }
+
+
     Lgt_Source;
 #define LGT_NULL (Lgt_Source *) NULL
 
@@ -127,8 +129,10 @@ typedef struct
     double m_pers_beg;
     double m_pers_end;
 }
+
+
     Movie;
-#define MovieSize(sz, nf)	lrint(sqrt((double)(nf)+0.5))*(sz)
+#define MovieSize(sz, nf) lrint(sqrt((double)(nf)+0.5))*(sz)
 #define IK_INTENSITY	255.0
 #define RGB_INVERSE	(1.0 / IK_INTENSITY)
 #define EYE_SIZE	12.7

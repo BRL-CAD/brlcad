@@ -142,9 +142,7 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     knot_spec = (Knot_type)step->getEnumAttribute(sse, "knot_spec");
-    if (knot_spec > Knot_type_unset) {
-	knot_spec = Knot_type_unset;
-    }
+    V_MIN(knot_spec, Knot_type_unset);
 
     sw->entity_status[id] = STEP_LOADED;
     return true;
