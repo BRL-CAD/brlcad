@@ -24,6 +24,9 @@
  */
 
 
+#ifdef HAVE_BULLET
+
+
 #include "common.h"
 
 #include "collision.hpp"
@@ -40,12 +43,12 @@ namespace collision
 {
 
 
-RtArbitraryShape::RtArbitraryShape(const btVector3 &half_extents) :
+RtCollisionShape::RtCollisionShape(const btVector3 &half_extents) :
     btBoxShape(half_extents)
 {}
 
 
-RtArbitraryShape::~RtArbitraryShape()
+RtCollisionShape::~RtCollisionShape()
 {}
 
 
@@ -139,6 +142,9 @@ RtCollisionAlgorithm::getAllContactManifolds(btManifoldArray &manifold_array)
 
 
 }
+
+
+#endif
 
 
 // Local Variables:

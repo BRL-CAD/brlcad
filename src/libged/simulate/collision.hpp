@@ -41,15 +41,15 @@ namespace collision
 {
 
 
-static const int RT_ARBITRARY_SHAPE_TYPE =
+static const int RT_SHAPE_TYPE =
     CUSTOM_POLYHEDRAL_SHAPE_TYPE;
 
 
-class RtArbitraryShape : public btBoxShape
+class RtCollisionShape : public btBoxShape
 {
 public:
-    RtArbitraryShape(const btVector3 &half_extents);
-    virtual ~RtArbitraryShape();
+    RtCollisionShape(const btVector3 &half_extents);
+    virtual ~RtCollisionShape();
 };
 
 
@@ -83,11 +83,11 @@ public:
 
 
 private:
-    bool m_owns_manifold;
-    btPersistentManifold *m_manifold;
-
     RtCollisionAlgorithm(const RtCollisionAlgorithm &);
     RtCollisionAlgorithm &operator=(const RtCollisionAlgorithm &);
+
+    bool m_owns_manifold;
+    btPersistentManifold *m_manifold;
 };
 
 

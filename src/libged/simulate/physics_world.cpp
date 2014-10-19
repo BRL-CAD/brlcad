@@ -24,27 +24,14 @@
  */
 
 
+#ifdef HAVE_BULLET
+
+
 #include "physics_world.hpp"
 #include "collision.hpp"
 
 #include <stdexcept>
 #include <limits>
-
-
-namespace
-{
-
-
-static btVector3
-calculate_inertia(const btCollisionShape &collision_shape, btScalar mass)
-{
-    btVector3 result;
-    collision_shape.calculateLocalInertia(mass, result);
-    return result;
-}
-
-
-}
 
 
 namespace simulate
@@ -62,15 +49,27 @@ public:
 
 
 private:
+    WorldObject(const WorldObject &source);
+    WorldObject &operator=(const WorldObject &source);
+    static btVector3 calculate_inertia(const btCollisionShape &collision_shape,
+				       btScalar mass);
+
     bool m_in_world;
     matp_t m_matrix;
     btDefaultMotionState m_motion_state;
-    collision::RtArbitraryShape m_collision_shape;
+    collision::RtCollisionShape m_collision_shape;
     btRigidBody m_rigid_body;
-
-    WorldObject(const WorldObject &source);
-    WorldObject &operator=(const WorldObject &source);
 };
+
+
+btVector3
+PhysicsWorld::WorldObject::calculate_inertia(const btCollisionShape
+	&collision_shape, btScalar mass)
+{
+    btVector3 result;
+    collision_shape.calculateLocalInertia(mass, result);
+    return result;
+}
 
 
 PhysicsWorld::WorldObject::WorldObject(const btVector3 &bounding_box,
@@ -101,9 +100,9 @@ PhysicsWorld::WorldObject::read_matrix()
 {
     btTransform xform;
     {
-    btScalar bt_matrix[16];
-    MAT_TRANSPOSE(bt_matrix, m_matrix);
-    xform.setFromOpenGLMatrix(bt_matrix);
+	btScalar bt_matrix[16];
+	MAT_TRANSPOSE(bt_matrix, m_matrix);
+	xform.setFromOpenGLMatrix(bt_matrix);
     }
 
     m_motion_state.setWorldTransform(xform);
@@ -131,8 +130,8 @@ PhysicsWorld::PhysicsWorld() :
     m_objects()
 {
     m_collision_dispatcher.registerCollisionCreateFunc(
-	collision::RT_ARBITRARY_SHAPE_TYPE,
-	collision::RT_ARBITRARY_SHAPE_TYPE,
+	collision::RT_SHAPE_TYPE,
+	collision::RT_SHAPE_TYPE,
 	new collision::RtCollisionAlgorithm::CreateFunc);
     m_world.setGravity(btVector3(0, 0, -9.8));
 }
@@ -149,8 +148,9 @@ PhysicsWorld::~PhysicsWorld()
 void
 PhysicsWorld::step(fastf_t seconds)
 {
-    for (std::vector<WorldObject *>::iterator it = m_objects.begin(); it != m_objects.end(); ++it)
-        (*it)->read_matrix();
+    for (std::vector<WorldObject *>::iterator it = m_objects.begin();
+	 it != m_objects.end(); ++it)
+	(*it)->read_matrix();
 
     m_world.stepSimulation(seconds, std::numeric_limits<int>::max());
 
@@ -170,6 +170,9 @@ PhysicsWorld::add_object(const btVector3 &bounding_box, btScalar mass,
 
 
 }
+
+
+#endif
 
 
 // Local Variables:
