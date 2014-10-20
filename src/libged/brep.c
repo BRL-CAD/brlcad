@@ -299,7 +299,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* make sure arg isn't --no-evaluate */
-    if (argv[2][1] != '-') {
+    if (argc > 2 && argv[2][1] != '-') {
 	op = db_str2op(argv[2]);
     }
 

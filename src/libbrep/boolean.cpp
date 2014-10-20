@@ -2700,7 +2700,9 @@ split_trimmed_face(
 		textlog.Print("Curve %d\n", j);
 		out[i]->m_outerloop[j]->Dump(textlog);
 	    }
-	    bu_log("%s", ON_String(wstr).Array());
+	    if (ON_String(wstr).Array()) {
+		bu_log("%s", ON_String(wstr).Array());
+	    }
 
 	    for (unsigned int j = 0; j < out[i]->m_innerloop.size(); j++) {
 		bu_log("innerloop %d:\n", j);
@@ -2711,7 +2713,9 @@ split_trimmed_face(
 		    textlog2.Print("Curve %d\n", k);
 		    out[i]->m_innerloop[j][k]->Dump(textlog2);
 		}
-		bu_log("%s", ON_String(wstr2).Array());
+		if (ON_String(wstr2).Array()) {
+		    bu_log("%s", ON_String(wstr2).Array());
+		}
 	    }
 	}
     }
@@ -3804,7 +3808,9 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
     ON_wString ws;
     ON_TextLog log(ws);
     evaluated_brep->IsValid(&log);
-    bu_log("%s", ON_String(ws).Array());
+    if (ON_String(ws).Array()) {
+	bu_log("%s", ON_String(ws).Array());
+    }
 
     dplot->WriteLog();
     delete dplot;
