@@ -712,8 +712,12 @@
   </refsection>
 
   <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
-  <para>Numerous error conditions are possible.
-  Descriptive messages are printed on stderr.</para>
+
+    <para>
+      Numerous error conditions are possible, usually due to errors in
+      the geometry database. Descriptive messages are printed on stderr
+      (file descriptor 2).
+    </para>
   </refsection>
 
   <refsection xml:id="author"><title>AUTHOR</title>
