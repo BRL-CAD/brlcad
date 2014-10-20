@@ -885,76 +885,189 @@ interval_2d_to_uv(
     return uv_interval_from_points(pts, surf);
 }
 
-HIDDEN ON_Interval
+HIDDEN std::pair<IntervalPoints, IntervalPoints>
+interval_2d_to_2uv(
+    const ON_Interval &interval_2d,
+    const ON_Curve *curve2d,
+    const ON_Surface *surf,
+    double split_t)
+{
+    std::pair<IntervalPoints, IntervalPoints> out;
+
+    ON_Interval left(interval_2d.Min(), split_t);
+    ON_Interval right(split_t, interval_2d.Max());
+
+    out.first = interval_2d_to_uv(left, curve2d, surf);
+    out.second = interval_2d_to_uv(right, curve2d, surf);
+
+    return out;
+}
+
+HIDDEN IntervalPoints
+points_uv_to_3d(
+    const IntervalPoints &interval_uv,
+    const ON_Surface *surf)
+{
+    // evaluate surface at uv points to get 3d interval points
+    IntervalPoints pts_3d;
+    pts_3d.min = surf->PointAt(interval_uv.min.x, interval_uv.min.y);
+    pts_3d.mid = surf->PointAt(interval_uv.mid.x, interval_uv.mid.y);
+    pts_3d.max = surf->PointAt(interval_uv.max.x, interval_uv.max.y);
+
+    return pts_3d;
+}
+
+HIDDEN IntervalParams
+points_3d_to_params_3d(
+    const IntervalPoints &pts_3d,
+    const ON_Curve *curve3d)
+{
+    ON_ClassArray<ON_PX_EVENT> events;
+    ON_Intersect(pts_3d.min, *curve3d, events, INTERSECTION_TOL);
+    ON_Intersect(pts_3d.mid, *curve3d, events, INTERSECTION_TOL);
+    ON_Intersect(pts_3d.max, *curve3d, events, INTERSECTION_TOL);
+
+    if (events.Count() != 3) {
+	throw AlgorithmError("points_3d_to_params_3d: conversion failed\n");
+    }
+
+    IntervalParams params_3d;
+    params_3d.min = events[0].m_b[0];
+    params_3d.mid = events[1].m_b[0];
+    params_3d.max = events[2].m_b[0];
+
+    return params_3d;
+}
+
+HIDDEN std::vector<ON_Interval>
 interval_2d_to_3d(
     const ON_Interval &interval,
     const ON_Curve *curve2d,
     const ON_Curve *curve3d,
     const ON_Surface *surf)
 {
-    ON_Interval interval_3d;
+    std::vector<ON_Interval> intervals_3d;
 
-    ON_Interval whole_domain = curve2d->Domain();
-    whole_domain.MakeIncreasing();
-    if (ON_NearZero(interval.Min() - whole_domain.Min(), ON_ZERO_TOLERANCE) &&
-	ON_NearZero(interval.Max() - whole_domain.Max(), ON_ZERO_TOLERANCE))
+    ON_Interval c2_dom = curve2d->Domain();
+    ON_Interval c3_dom = curve3d->Domain();
+
+    c2_dom.MakeIncreasing();
+    if (ON_NearZero(interval.Min() - c2_dom.Min(), ON_ZERO_TOLERANCE) &&
+	ON_NearZero(interval.Max() - c2_dom.Max(), ON_ZERO_TOLERANCE))
     {
-	interval_3d = curve3d->Domain();
-	interval_3d.MakeIncreasing();
+	// entire 2d domain equates to entire 3d domain
+	c3_dom.MakeIncreasing();
+	if (c3_dom.IsValid()) {
+	    intervals_3d.push_back(c3_dom);
+	}
     } else {
-	// get 2d curve interval endpoints as uv points
+	// get 2d curve interval points as uv points
 	IntervalPoints interval_uv =
 	    interval_2d_to_uv(interval, curve2d, surf);
 
 	// evaluate surface at uv points to get 3d interval points
-	IntervalPoints pts_3d;
-	pts_3d.min = surf->PointAt(interval_uv.min.x, interval_uv.min.y);
-	pts_3d.mid = surf->PointAt(interval_uv.mid.x, interval_uv.mid.y);
-	pts_3d.max = surf->PointAt(interval_uv.max.x, interval_uv.max.y);
+	IntervalPoints pts_3d = points_uv_to_3d(interval_uv, surf);
 
 	// convert 3d points into 3d curve parameters
-	ON_ClassArray<ON_PX_EVENT> events;
-	ON_Intersect(pts_3d.min, *curve3d, events, INTERSECTION_TOL);
-	ON_Intersect(pts_3d.mid, *curve3d, events, INTERSECTION_TOL);
-	ON_Intersect(pts_3d.max, *curve3d, events, INTERSECTION_TOL);
+	try {
+	    std::vector<IntervalParams> int_params;
 
-	if (events.Count() == 3) {
-	    IntervalParams curve_t;
-	    curve_t.min = events[0].m_b[0];
-	    curve_t.mid = events[1].m_b[0];
-	    curve_t.max = events[2].m_b[0];
+	    IntervalParams curve_t = points_3d_to_params_3d(pts_3d, curve3d);
 
-	    curve_t = curve_interval_from_params(curve_t, curve3d);
-	    interval_3d.Set(curve_t.min, curve_t.max);
+	    if (curve3d->IsClosed()) {
+		// get 3d seam point as surf point
+		ON_3dPoint seam_pt = curve3d->PointAt(c3_dom.Min());
+
+		ON_ClassArray<ON_PX_EVENT> events;
+		ON_Intersect(seam_pt, *surf, events, INTERSECTION_TOL);
+
+		if (events.Count() == 1) {
+		    ON_3dPoint surf_pt = events[0].m_B;
+		    std::vector<double> split_t;
+
+		    // get surf point as 2d curve t
+		    events.Empty();
+		    ON_Intersect(surf_pt, *curve2d, events, INTERSECTION_TOL);
+		    if (events.Count() == 1) {
+			split_t.push_back(events[0].m_b[0]);
+		    }
+
+		    int surf_seam = IsAtSeam(surf, surf_pt, ON_ZERO_TOLERANCE);
+		    if (surf_seam != SEAM_NONE) {
+			// move surf_pt to other side of seam
+			if (surf_seam == SEAM_ALONG_U || surf_seam == SEAM_ALONG_UV) {
+			    ON_Interval vdom = surf->Domain(1);
+			    if (ON_NearZero(surf_pt.y - vdom.Min(),
+					ON_ZERO_TOLERANCE)) {
+				surf_pt.y = vdom.Max();
+			    } else {
+				surf_pt.y = vdom.Min();
+			    }
+			}
+			if (surf_seam == SEAM_ALONG_V || surf_seam == SEAM_ALONG_UV) {
+			    ON_Interval udom = surf->Domain(0);
+			    if (ON_NearZero(surf_pt.x - udom.Min(),
+					ON_ZERO_TOLERANCE)) {
+				surf_pt.x = udom.Max();
+			    } else {
+				surf_pt.x = udom.Min();
+			    }
+			}
+			// get alternative surf point as 2d curve t
+			events.Empty();
+			ON_Intersect(surf_pt, *curve2d, events, INTERSECTION_TOL);
+			if (events.Count() == 1) {
+			    split_t.push_back(events[0].m_b[0]);
+			}
+		    }
+
+		    // see if 3d curve seam point is in the 2d curve interval
+		    for (size_t i = 0; i < split_t.size(); ++i) {
+			double min2split = fabs(curve_t.min - split_t[i]);
+			double max2split = fabs(curve_t.max - split_t[i]);
+
+			if (min2split > ON_ZERO_TOLERANCE ||
+			    max2split > ON_ZERO_TOLERANCE)
+			{
+			    // split 2d interval at seam point
+			    std::pair<IntervalPoints, IntervalPoints> halves =
+				interval_2d_to_2uv(interval, curve2d, surf,
+					split_t[i]);
+
+			    // convert new intervals to 3d curve intervals
+			    IntervalPoints left_3d, right_3d;
+			    IntervalParams left_t, right_t;
+
+			    left_3d = points_uv_to_3d(halves.first, surf);
+			    left_t = points_3d_to_params_3d(left_3d, curve3d);
+			    int_params.push_back(left_t);
+
+			    right_3d = points_uv_to_3d(halves.second, surf);
+			    right_t = points_3d_to_params_3d(left_3d, curve3d);
+			    int_params.push_back(right_t);
+			}
+		    }
+		}
+	    }
+	    if (int_params.size() == 0) {
+		int_params.push_back(curve_t);
+	    }
+
+	    // get final 3d intervals
+	    for (size_t i = 0; i < int_params.size(); ++i) {
+		curve_t = curve_interval_from_params(int_params[i], curve3d);
+		ON_Interval interval_3d(curve_t.min, curve_t.max);
+		if (interval_3d.IsValid()) {
+		    intervals_3d.push_back(interval_3d);
+		}
+	    }
+	} catch (AlgorithmError &e) {
+	    bu_log("%s", e.what());
 	}
     }
-    return interval_3d;
+    return intervals_3d;
 }
 
-
-// Convert parameter intervals of a 2d face curve into equivalent
-// parameter intervals on a matching 3d curve.
-HIDDEN ON_SimpleArray<ON_Interval>
-intervals_2d_to_3d(
-    const ON_SimpleArray<ON_Interval> &intervals_2d,
-    const ON_Curve *curve2d,
-    const ON_Curve *curve3d,
-    const ON_BrepFace *face)
-{
-    ON_SimpleArray<ON_Interval> out;
-    const ON_Surface *surf = face->SurfaceOf();
-
-    for (int i = 0; i < intervals_2d.Count(); ++i) {
-	ON_Interval interval_3d = interval_2d_to_3d(intervals_2d[i], curve2d,
-		curve3d, surf);
-
-	if (interval_3d.IsValid()) {
-	    out.Append(interval_3d);
-	}
-    }
-    out.QuickSort(compare_interval);
-    return out;
-}
 
 // Convert parameter interval of a 3d curve into the equivalent parameter
 // interval on a matching 2d face curve.
@@ -1090,51 +1203,49 @@ get_subcurves_inside_faces(
     // get subcurves for each face
     for (int i = 0; i < intervals1.Count(); ++i) {
 	// convert interval on face 1 to equivalent interval on face 2
-	ON_Interval interval3d = interval_2d_to_3d(intervals1[i],
-		event->m_curveA, event->m_curve3d, &brep1->m_F[face_i1]);
-	if (!interval3d.IsValid()) {
-	    continue;
-	}
+	std::vector<ON_Interval> intervals_3d;
+	intervals_3d = interval_2d_to_3d(intervals1[i], event->m_curveA,
+		event->m_curve3d, &brep1->m_F[face_i1]);
 
-	ON_Interval interval_on2 = interval_3d_to_2d(interval3d,
-		event->m_curveB, event->m_curve3d, &brep2->m_F[face_i2]);
-	if (!interval_on2.IsValid()) {
-	    continue;
+	for (size_t j = 0; j < intervals_3d.size(); ++j) {
+	    ON_Interval interval_on2 = interval_3d_to_2d(intervals_3d[j],
+		    event->m_curveB, event->m_curve3d, &brep2->m_F[face_i2]);
+	    if (interval_on2.IsValid()) {
+		// create subcurve from interval
+		try {
+		    ON_Curve *subcurve_on2 = sub_curve(event->m_curveB,
+			    interval_on2.Min(), interval_on2.Max());
+
+		    subcurves_on2.Append(subcurve_on2);
+		} catch (InvalidInterval &e) {
+		    bu_log("%s", e.what());
+		}
+	    }
 	}
 	
-	// create subcurve from interval
-	try {
-	    ON_Curve *subcurve_on2 = sub_curve(event->m_curveB,
-		    interval_on2.Min(), interval_on2.Max());
-
-	    subcurves_on2.Append(subcurve_on2);
-	} catch (InvalidInterval &e) {
-	    bu_log("%s", e.what());
-	}
     }
     for (int i = 0; i < intervals2.Count(); ++i) {
-	// convert interval on face 2 to equivalent interval on face 1
-	ON_Interval interval3d = interval_2d_to_3d(intervals2[i],
-		event->m_curveB, event->m_curve3d, &brep2->m_F[face_i2]);
-	if (!interval3d.IsValid()) {
-	    continue;
-	}
+	// convert interval on face 1 to equivalent interval on face 2
+	std::vector<ON_Interval> intervals_3d;
+	intervals_3d = interval_2d_to_3d(intervals2[i], event->m_curveB,
+		event->m_curve3d, &brep2->m_F[face_i2]);
 
-	ON_Interval interval_on1 = interval_3d_to_2d(interval3d,
-		event->m_curveA, event->m_curve3d, &brep1->m_F[face_i1]);
-	if (!interval_on1.IsValid()) {
-	    continue;
+	for (size_t j = 0; j < intervals_3d.size(); ++j) {
+	    ON_Interval interval_on1 = interval_3d_to_2d(intervals_3d[j],
+		    event->m_curveA, event->m_curve3d, &brep1->m_F[face_i1]);
+	    if (interval_on1.IsValid()) {
+		// create subcurve from interval
+		try {
+		    ON_Curve *subcurve_on1 = sub_curve(event->m_curveA,
+			    interval_on1.Min(), interval_on1.Max());
+
+		    subcurves_on1.Append(subcurve_on1);
+		} catch (InvalidInterval &e) {
+		    bu_log("%s", e.what());
+		}
+	    }
 	}
 	
-	// create subcurve from interval
-	try {
-	    ON_Curve *subcurve_on1 = sub_curve(event->m_curveA,
-		    interval_on1.Min(), interval_on1.Max());
-
-	    subcurves_on1.Append(subcurve_on1);
-	} catch (InvalidInterval &e) {
-	    bu_log("%s", e.what());
-	}
     }
 }
 
