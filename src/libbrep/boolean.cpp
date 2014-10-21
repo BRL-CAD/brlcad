@@ -650,7 +650,7 @@ get_curve_intervals_inside_or_on_face(
     ON_SimpleArray<ON_Interval> included_intervals;
     for (int i = 0; i < isect_curve_t.Count() - 1; i++) {
 	ON_Interval interval(isect_curve_t[i], isect_curve_t[i + 1]);
-	if (ON_NearZero(interval.Length(), ON_ZERO_TOLERANCE)) {
+	if (ON_NearZero(interval.Length(), isect_tol)) {
 	    continue;
 	}
 	ON_2dPoint pt = curve2D->PointAt(interval.Mid());
@@ -685,7 +685,7 @@ get_curve_intervals_inside_or_on_face(
 	for (j = i + 1; j < included_intervals.Count(); ++j) {
 	    ON_Interval &next = included_intervals[j];
 
-	    if (ON_NearZero(next.Min() - merged_interval.Max(), ON_ZERO_TOLERANCE)) {
+	    if (ON_NearZero(next.Min() - merged_interval.Max(), isect_tol)) {
 		ON_Interval new_interval = merged_interval;
 
 		if (new_interval.Union(next)) {
