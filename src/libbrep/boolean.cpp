@@ -982,7 +982,7 @@ interval_2d_to_3d(
 		ON_Intersect(seam_pt, *surf, events, INTERSECTION_TOL);
 
 		if (events.Count() == 1) {
-		    ON_3dPoint surf_pt = events[0].m_B;
+		    ON_3dPoint surf_pt = events[0].m_b;
 		    std::vector<double> split_t;
 
 		    // get surf point as 2d curve t
