@@ -1043,7 +1043,7 @@ interval_2d_to_3d(
 			    int_params.push_back(left_t);
 
 			    right_3d = points_uv_to_3d(halves.second, surf);
-			    right_t = points_3d_to_params_3d(left_3d, curve3d);
+			    right_t = points_3d_to_params_3d(right_3d, curve3d);
 			    int_params.push_back(right_t);
 			}
 		    }
