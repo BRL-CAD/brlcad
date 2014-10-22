@@ -1082,20 +1082,20 @@ EOF
   </refsection>
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
-
-    <para>This software is Copyright (c) 2001-2014 United States Government as
-    represented by the U.S. Army Research Laboratory.</para>
+  <para>This software is Copyright (c) 2001-2014 United States Government as
+  represented by the U.S. Army Research Laboratory.</para>
   </refsection>
 
   <refsection xml:id="bugs"><title>BUGS</title>
-
-    <para>Most deficiencies observed while using the <command>rtedge</command>
-    program are a consequence of problems in <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+  <para>Most deficiencies observed while using the
+  <command>rtedge</command>
+  program are a consequence of problems in
+  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+  </para>
   </refsection>
 
   <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
-
-    <para>Reports of bugs or problems should be submitted via electronic
-    mail to &lt;devs@brlcad.org&gt;.</para>
+  <para>Reports of bugs or problems should be submitted via electronic
+  mail to &lt;devs@brlcad.org&gt;.</para>
   </refsection>
 </refentry>
