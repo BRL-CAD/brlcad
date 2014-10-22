@@ -2246,7 +2246,7 @@ combine_loops(
     LoopBooleanResult out;
     for (size_t i = 0; i < new_loops.outerloops.size(); ++i) {
 
-	std::list<ON_SimpleArray<ON_Curve *> >::iterator part;
+	std::list<ON_SimpleArray<ON_Curve *> >::iterator part, next_part;
 	std::list<ON_SimpleArray<ON_Curve *> > outerloop_parts;
 
 	// start with the original outerloop
@@ -2257,9 +2257,12 @@ combine_loops(
 	for (size_t j = 0; j < merged_innerloops.size(); ++j) {
 
 	    part = outerloop_parts.begin();
-	    for (; part != outerloop_parts.end(); ++part) {
+	    for (; part != outerloop_parts.end(); part = next_part) {
 		LoopBooleanResult diffed = loop_boolean(*part,
 			merged_innerloops[j], BOOLEAN_DIFF);
+
+		next_part = part;
+		++next_part;
 
 		if (diffed.innerloops.size() == 1) {
 		    // The outerloop part contains the innerloop, so
