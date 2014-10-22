@@ -1833,7 +1833,7 @@ find_similar_segments(
     return out;
 }
 
-std::multiset<CurveSegment>
+HIDDEN std::multiset<CurveSegment>
 get_op_segments(
 	std::multiset<CurveSegment> &curve1_segments,
 	std::multiset<CurveSegment> &curve2_segments,
@@ -1841,20 +1841,20 @@ get_op_segments(
 {
     std::multiset<CurveSegment> out;
 
+    std::multiset<CurveSegment> c1_boundary_segs;
+    set_append_segments_at_location(c1_boundary_segs, curve1_segments,
+	    CurveSegment::BOUNDARY, false);
+
+    std::multiset<CurveSegment> c2_boundary_segs;
+    set_append_segments_at_location(c2_boundary_segs, curve2_segments,
+	    CurveSegment::BOUNDARY, false);
+
     if (op == BOOLEAN_INTERSECT) {
 	set_append_segments_at_location(out, curve1_segments,
 		CurveSegment::INSIDE, true);
 
 	set_append_segments_at_location(out, curve2_segments,
 		CurveSegment::INSIDE, true);
-
-	std::multiset<CurveSegment> c1_boundary_segs;
-	set_append_segments_at_location(c1_boundary_segs, curve1_segments,
-		CurveSegment::BOUNDARY, false);
-
-	std::multiset<CurveSegment> c2_boundary_segs;
-	set_append_segments_at_location(c2_boundary_segs, curve2_segments,
-		CurveSegment::BOUNDARY, false);
 
 	std::multiset<CurveSegment>::iterator i;
 	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
@@ -1878,14 +1878,6 @@ get_op_segments(
 	set_append_segments_at_location(out, curve2_segments,
 		CurveSegment::INSIDE, true);
 
-	std::multiset<CurveSegment> c1_boundary_segs;
-	set_append_segments_at_location(c1_boundary_segs, curve1_segments,
-		CurveSegment::BOUNDARY, false);
-
-	std::multiset<CurveSegment> c2_boundary_segs;
-	set_append_segments_at_location(c2_boundary_segs, curve2_segments,
-		CurveSegment::BOUNDARY, false);
-
 	std::multiset<CurveSegment>::iterator i;
 	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
 	    std::multiset<CurveSegment> curve1_matches =
@@ -1901,6 +1893,36 @@ get_op_segments(
 		curve2_matches.size() > 1)
 	    {
 		out.insert(*i);
+	    }
+	}
+    } else if (op == BOOLEAN_UNION) {
+	set_append_segments_at_location(out, curve1_segments,
+		CurveSegment::OUTSIDE, true);
+
+	set_append_segments_at_location(out, curve2_segments,
+		CurveSegment::OUTSIDE, true);
+
+	std::multiset<CurveSegment>::iterator i;
+	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
+	    std::multiset<CurveSegment> curve1_matches =
+		find_similar_segments(c1_boundary_segs, *i);
+
+	    std::multiset<CurveSegment> curve2_matches =
+		find_similar_segments(c2_boundary_segs, *i);
+
+	    if (curve1_matches.size() > 1 && curve2_matches.size() > 1) {
+		continue;
+	    }
+
+	    std::multiset<CurveSegment>::iterator a, b;
+	    for (a = curve1_matches.begin(); a != curve1_matches.end(); ++a) {
+
+		b = curve2_matches.begin();
+		for (; b != curve2_matches.end(); ++b) {
+		    if (a->from == b->from) {
+			out.insert(*i);
+		    }
+		}
 	    }
 	}
     }
@@ -2041,7 +2063,10 @@ loop_boolean(
 {
     LoopBooleanResult out;
 
-    if (op != BOOLEAN_INTERSECT && op != BOOLEAN_DIFF) {
+    if (op != BOOLEAN_INTERSECT &&
+	op != BOOLEAN_DIFF &&
+	op != BOOLEAN_UNION)
+    {
 	bu_log("loop_boolean: unsupported operation\n");
 	return out;
     }
