@@ -2173,6 +2173,9 @@ make_face_from_loops(
     face->m_face = orig_face->m_face;
     face->m_outerloop.Append(outerloop.Count(), outerloop.Array());
 
+    // TODO: the innerloops found here can't be inside any other
+    // outerloop, and should be removed from the innerloop set in the
+    // interest of efficiency
     std::list<ON_SimpleArray<ON_Curve *> > new_innerloops;
     new_innerloops = innerloops_inside_outerloop(outerloop, innerloops);
 
@@ -2183,29 +2186,137 @@ make_face_from_loops(
     return face;
 }
 
-void
+HIDDEN LoopBooleanResult
+combine_loops(
+    const TrimmedFace *orig_face,
+    const LoopBooleanResult &new_loops)
+{
+    // Intersections always produce a single outerloop.
+    //
+    // Subtractions may produce multiple outerloops, or a single
+    // outerloop that optionally includes a single innerloop. 
+    //
+    // So, the possible results are:
+    // 1) Single outerloop.
+    // 2) Multiple outerloops.
+    // 3) Single outerloop with single innerloop.
+
+    // First we'll combine the old and new innerloops.
+    std::vector<ON_SimpleArray<ON_Curve *> > merged_innerloops;
+    if (new_loops.innerloops.size() == 1) {
+	// If the result has an innerloop, it may overlap any of the
+	// original innerloops. We'll union all overlapping loops with
+	// the new innerloop.
+	ON_SimpleArray<ON_Curve *> candidate_innerloop(new_loops.innerloops[0]);
+
+	for (size_t i = 0; i < orig_face->m_innerloop.size(); ++i) {
+#if 0
+	    // TODO: need to implement BOOLEAN_UNION before enabling
+	    LoopBooleanResult merged = loop_boolean(candidate_innerloop,
+		    orig_face->m_innerloop[i], BOOLEAN_UNION);
+
+	    if (merged.outerloops.size() == 1) {
+		candidate_innerloop = merged.outerloops[0];
+	    } else {
+		merged_innerloops.push_back(orig_face->m_innerloop[i]);
+		merged.ClearOuterloops();
+	    }
+#else
+	    merged_innerloops.push_back(orig_face->m_innerloop[i]);
+#endif
+	}
+	merged_innerloops.push_back(candidate_innerloop);
+    } else if (orig_face->m_innerloop.size() > 0) {
+	for (size_t i = 0; i < orig_face->m_innerloop.size(); ++i) {
+	    merged_innerloops.push_back(orig_face->m_innerloop[i]);
+	}
+    }
+
+    // Next we'll attempt to subtract all merged innerloops from each
+    // new outerloop to get the final set of loops. For each
+    // subtraction, there are four possibilities:
+    // 1) The innerloop is outside the outerloop, and the result is
+    //    the original outerloop.
+    // 2) The innerloop completely encloses the outerloop, and the
+    //    result is empty.
+    // 3) The innerloop is completely contained by the outerloop, and
+    //    the result is the input outerloop and innerloop.
+    // 4) The innerloop overlaps the outerloop, and the result is one
+    //    or more outerloops.
+    LoopBooleanResult out;
+    for (size_t i = 0; i < new_loops.outerloops.size(); ++i) {
+
+	std::list<ON_SimpleArray<ON_Curve *> >::iterator part;
+	std::list<ON_SimpleArray<ON_Curve *> > outerloop_parts;
+
+	// start with the original outerloop
+	outerloop_parts.push_back(new_loops.outerloops[i]);
+
+	// attempt to subtract all innerloops from it, and from
+	// whatever subparts of it are created along the way
+	for (size_t j = 0; j < merged_innerloops.size(); ++j) {
+
+	    part = outerloop_parts.begin();
+	    for (; part != outerloop_parts.end(); ++part) {
+		LoopBooleanResult diffed = loop_boolean(*part,
+			merged_innerloops[j], BOOLEAN_DIFF);
+
+		if (diffed.innerloops.size() == 1) {
+		    // The outerloop part contains the innerloop, so
+		    // the innerloop belongs in the final set.
+		    //
+		    // Note that any innerloop added here will remains
+		    // completely inside an outerloop part even if the
+		    // part list changes. In order for a subsequent
+		    // subtraction to put any part of it outside an
+		    // outerloop, that later innerloop would have to
+		    // overlap this one, in which case, the innerloops
+		    // would have been unioned together in the
+		    // previous merging step.
+		    out.innerloops.push_back(diffed.innerloops[0]);
+		} else {
+		    // outerloop part has been erased, modified, or
+		    // split, so we need to remove it
+		    for (int k = 0; k < part->Count(); ++k) {
+			delete (*part)[k];
+		    }
+		    outerloop_parts.erase(part);
+
+		    // add any new parts for subsequent subtractions
+		    for (size_t k = 0; k < diffed.outerloops.size(); ++k) {
+			outerloop_parts.push_front(diffed.outerloops[k]);
+		    }
+		}
+	    }
+	}
+
+	// whatever parts of the outerloop that remain after
+	// subtracting all innerloops belong in the final set
+	part = outerloop_parts.begin();
+	for (; part != outerloop_parts.end(); ++part) {
+	    out.outerloops.push_back(*part);
+	}
+    }
+    return out;
+    // Only thing left to do is make a face from each outerloop. If
+    // one of the innerloops is inside the outerloop, make it part of
+    // the face and remove it for consideration for other faces.
+}
+
+
+HIDDEN void
 append_faces_from_loops(
 	ON_SimpleArray<TrimmedFace *> &out,
 	const TrimmedFace *orig_face,
 	const LoopBooleanResult &new_loops)
 {
-    // consolidate previously made and new innerloops
-    std::vector<ON_SimpleArray<ON_Curve *> > all_innerloops;
-    for (size_t i = 0; i < orig_face->m_innerloop.size(); ++i) {
-	ON_SimpleArray<ON_Curve *> loop;
-	loop.Append(orig_face->m_innerloop[i].Count(),
-		orig_face->m_innerloop[i].Array());
-	all_innerloops.push_back(loop);
-    }
-
-    for (size_t i = 0; i < new_loops.innerloops.size(); ++i) {
-	all_innerloops.push_back(new_loops.innerloops[i]);
-    }
+    LoopBooleanResult combined_loops = combine_loops(orig_face, new_loops);
 
     // make a face from each outerloop, using appropriate innerloops
-    for (size_t i = 0; i < new_loops.outerloops.size(); ++i) {
-	out.Append(make_face_from_loops(orig_face, new_loops.outerloops[i],
-		    all_innerloops));
+    for (size_t i = 0; i < combined_loops.outerloops.size(); ++i) {
+	out.Append(make_face_from_loops(orig_face,
+		    combined_loops.outerloops[i],
+		    combined_loops.innerloops));
     }
 }
 
