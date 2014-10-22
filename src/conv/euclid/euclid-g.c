@@ -373,22 +373,22 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 
     /* skip first string in file (what is it??) */
     if (fscanf(fpin, "%80s", str) == EOF) {
-	bu_log("ERROR: Failed on first attempt to read input");
+	bu_log("ERROR: euclid-g: failed on first attempt to read input\n");
 	return 1;
     }
 
     /* Id of first region. */
     if (fscanf(fpin, "%d", &reg_id) != 1) {
-	bu_log("euclid_to_brlcad: no region id\n");
+	bu_log("ERROR: euclid-g: no region id\n");
 	return 2;
     }
 
     if (reg_id <= -INT_MAX) {
-	bu_log("ERROR: Magnitude of negative region_id too large.\n");
+	bu_log("ERROR: euclid-g: magnitude of negative region_id too large\n");
 	return 3;
     }
     if (reg_id >= INT_MAX) {
-	bu_log("region_id too large.\n");
+	bu_log("ERROR: euclid-g: region_id too large\n");
 	return 4;
     }
 
