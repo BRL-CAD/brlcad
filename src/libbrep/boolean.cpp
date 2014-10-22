@@ -2235,8 +2235,6 @@ combine_loops(
 	ON_SimpleArray<ON_Curve *> candidate_innerloop(new_loops.innerloops[0]);
 
 	for (size_t i = 0; i < orig_face->m_innerloop.size(); ++i) {
-#if 0
-	    // TODO: need to implement BOOLEAN_UNION before enabling
 	    LoopBooleanResult merged = loop_boolean(candidate_innerloop,
 		    orig_face->m_innerloop[i], BOOLEAN_UNION);
 
@@ -2246,9 +2244,6 @@ combine_loops(
 		merged_innerloops.push_back(orig_face->m_innerloop[i]);
 		merged.ClearOuterloops();
 	    }
-#else
-	    merged_innerloops.push_back(orig_face->m_innerloop[i]);
-#endif
 	}
 	merged_innerloops.push_back(candidate_innerloop);
     } else if (orig_face->m_innerloop.size() > 0) {
