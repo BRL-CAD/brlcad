@@ -159,7 +159,8 @@ Draw(fb *fbp, int x_1, int y_1, int x_2, int y_2)
     s2 = sign(y_2 - y_1);
 
     /* check for swap of deltx and delty */
-    if (( interchange = ( delty > deltx ) )) {
+    interchange = ( delty > deltx );
+    if (interchange) {
 	temp = deltx;
 	deltx = delty;
 	delty = temp;
