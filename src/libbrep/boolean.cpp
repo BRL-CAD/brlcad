@@ -2686,37 +2686,15 @@ loop_is_degenerate(const ON_SimpleArray<ON_Curve *> &loop)
     if (loop.Count() < 1) {
 	return true;
     }
+    // want sufficient distance between non-adjacent curve points
     ON_Curve *loop_curve = get_loop_curve(loop);
+    ON_Interval dom = loop_curve->Domain();
 
-    ON_2dPoint joint = loop_curve->PointAtStart();
-    ON_2dPoint mid = loop_curve->PointAt(loop_curve->Domain().Mid());
-
-    ON_Curve *left = NULL, *right = NULL;
-    loop_curve->Split(loop_curve->Domain().Mid(), left, right);
+    ON_3dPoint pt1 = loop_curve->PointAt(dom.ParameterAt(.25));
+    ON_3dPoint pt2 = loop_curve->PointAt(dom.ParameterAt(.75));
     delete loop_curve;
 
-    ON_SimpleArray<ON_X_EVENT> events;
-    ON_Intersect(left, right, events, INTERSECTION_TOL);
-    delete left;
-    delete right;
-
-    // two halves of loop should intersect at the start/end point and
-    // the midpoint, and nowhere else
-    if (events.Count() != 2) {
-	return true;
-    }
-    for (int i = 0; i < events.Count(); ++i) {
-	if (events[i].m_type != ON_X_EVENT::ccx_point) {
-	    return true;
-	}
-
-	ON_2dPoint ipt = events[i].m_A[0];
-	if (!ON_NearZero(ipt.DistanceTo(joint), INTERSECTION_TOL) &&
-	    !ON_NearZero(ipt.DistanceTo(mid), INTERSECTION_TOL)) {
-	    return true;
-	}
-    }
-    return false;
+    return pt1.DistanceTo(pt2) < INTERSECTION_TOL;
 }
 
 // It might be worth investigating the following approach to building a set of faces from the splitting
