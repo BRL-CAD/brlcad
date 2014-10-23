@@ -1262,20 +1262,142 @@ struct LinkedCurveX {
     ON_SimpleArray<ON_X_EVENT> events;
 };
 
-HIDDEN std::vector<LinkedCurveX>
-intersect_linked_curves(const LinkedCurve &a, const LinkedCurve &b)
+HIDDEN ON_ClassArray<LinkedCurve>
+get_joinable_ssi_curves(const ON_SimpleArray<SSICurve> &in)
 {
-    std::vector<LinkedCurveX> out;
-    for (int i = 0; i < a.m_ssi_curves.Count(); ++i) {
-	for (int j = 0; j < b.m_ssi_curves.Count(); ++j) {
-	    ON_SimpleArray<ON_X_EVENT> events;
-	    ON_Intersect(a.m_ssi_curves[i].m_curve, b.m_ssi_curves[j].m_curve,
-		    events, INTERSECTION_TOL);
+    ON_SimpleArray<SSICurve> curves;
+    for (int i = 0; i < in.Count(); ++i) {
+	curves.Append(in[i]);
+    }
 
-	    if (events.Count() > 0) {
-		LinkedCurveX new_lcx = {i, j, events};
-		out.push_back(new_lcx);
+    for (int i = 0; i < curves.Count(); ++i) {
+	if (curves[i].m_curve == NULL || curves[i].m_curve->IsClosed()) {
+	    continue;
+	}
+	for (int j = i + 1; j < curves.Count(); j++) {
+	    if (curves[j].m_curve == NULL || curves[j].m_curve->IsClosed()) {
+		continue;
 	    }
+	    ON_Curve *icurve = curves[i].m_curve;
+	    ON_Curve *jcurve = curves[j].m_curve;
+
+	    ON_SimpleArray<ON_X_EVENT> events;
+	    ON_Intersect(icurve, jcurve, events, INTERSECTION_TOL);
+
+	    if (events.Count() != 1) {
+		if (events.Count() > 1) {
+		    bu_log("unexpected intersection between curves\n");
+		}
+		continue;
+	    }
+
+	    ON_X_EVENT event = events[0];
+	    if (event.m_type == ON_X_EVENT::ccx_overlap) {
+		// curves from adjacent surfaces may overlap and have
+		// common endpoints, but we don't want the linked
+		// curve to double back on itself creating a
+		// degenerate section
+		ON_Interval dom[2], range[2];
+		dom[0] = icurve->Domain();
+		dom[1] = jcurve->Domain();
+		range[0].Set(event.m_a[0], event.m_a[1]);
+		range[1].Set(event.m_b[0], event.m_b[1]);
+
+		// overlap endpoints that are near the endpoints
+		// should be snapped to the endpoints
+		for (int k = 0; k < 2; ++k) {
+		    dom[k].MakeIncreasing();
+		    range[k].MakeIncreasing();
+
+		    for (int l = 0; l < 2; ++l) {
+			if (ON_NearZero(dom[k].m_t[l] - range[k].m_t[l],
+			    ON_ZERO_TOLERANCE)) {
+			    range[k].m_t[l] = dom[k].m_t[l];
+			}
+		    }
+		}
+
+		if (dom[0].Includes(range[0], true) ||
+		    dom[1].Includes(range[1], true))
+		{
+		    // overlap is in the middle of one or both curves
+		    continue;
+		}
+
+		// if one curve is completely contained by the other,
+		// keep just the larger curve (or the first curve if
+		// they're the same)
+		if (dom[1] == range[1]) {
+		    curves[j].m_curve = NULL;
+		    continue;
+		}
+		if (dom[0] == range[0]) {
+		    curves[i].m_curve = NULL;
+		    continue;
+		}
+
+		// remove the overlapping portion from the end of one
+		// curve so the curves meet at just a single point
+		try {
+		    double start = dom[0].m_t[0];
+		    double end = range[0].m_t[0];
+		    if (ON_NearZero(start - end, ON_ZERO_TOLERANCE)) {
+			start = range[0].m_t[1];
+			end = dom[0].m_t[1];
+		    }
+		    ON_Curve *isub = sub_curve(icurve, start, end);
+
+		    delete curves[i].m_curve;
+		    curves[i] = isub;
+		} catch (InvalidInterval &e) {
+		    bu_log("%s", e.what());
+		}
+	    } else {
+		// For a single intersection, assume that one or both
+		// curve endpoints is just a little past where it
+		// should be. Split the curves at the intersection,
+		// and discard the portion with the smaller bbox
+		// diagonal.
+		ON_Curve *ileft, *iright, *jleft, *jright;
+		ileft = iright = jleft = jright = NULL;
+		split_curve(ileft, iright, icurve, event.m_a[0]);
+		split_curve(jleft, jright, jcurve, event.m_b[0]);
+
+		if (bbox_diagonal_length(ileft) <
+		    bbox_diagonal_length(iright))
+		{
+		    std::swap(ileft, iright);
+		}
+		ON_Curve *isub = ileft;
+		delete iright;
+
+		if (bbox_diagonal_length(jleft) <
+		    bbox_diagonal_length(jright))
+		{
+		    std::swap(jleft, jright);
+		}
+		ON_Curve *jsub = jleft;
+		delete jright;
+
+		if (isub && jsub) {
+		    // replace the original ssi curves with the
+		    // trimmed versions
+		    curves[i].m_curve = isub;
+		    curves[j].m_curve = jsub;
+		    isub = jsub = NULL;
+		}
+		delete isub;
+		delete jsub;
+	    }
+	}
+    }
+
+    ON_ClassArray<LinkedCurve> out;
+    for (int i = 0; i < curves.Count(); ++i) {
+	if (curves[i].m_curve != NULL) {
+	    LinkedCurve linked;
+	    linked.Append(curves[i]);
+	    out.Append(linked);
 	}
     }
     return out;
@@ -1288,12 +1410,7 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
     // 1) They are from intersections with two different surfaces.
     // 2) They are not continuous in the other surface's UV domain.
 
-    ON_ClassArray<LinkedCurve> tmp;
-    for (int i = 0; i < in.Count(); i++) {
-	LinkedCurve linked;
-	linked.m_ssi_curves.Append(in[i]);
-	tmp.Append(linked);
-    }
+    ON_ClassArray<LinkedCurve> tmp = get_joinable_ssi_curves(in);
 
     // As usual, we use a greedy approach.
     for (int i = 0; i < tmp.Count(); i++) {
@@ -1305,75 +1422,11 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 	    if (tmp[j].m_ssi_curves.Count() == 0 || tmp[j].IsClosed() || j == i) {
 		continue;
 	    }
-
 	    LinkedCurve *c1 = NULL, *c2 = NULL;
 	    double dist = configure_for_linking(c1, c2, tmp[i], tmp[j]);
 
 	    if (dist > INTERSECTION_TOL) {
-		std::vector<LinkedCurveX> lc_events =
-		    intersect_linked_curves(tmp[i], tmp[j]);
-
-		if (lc_events.size() == 0) {
-		    continue;
-		}
-
-		LinkedCurveX lcx = lc_events[0];
-		ON_X_EVENT event = lcx.events[0];
-
-		// intersecting ssx curves indicates an error in the curves
-		if (lc_events.size() > 1 || lcx.events.Count() > 1) {
-		    bu_log("couldn't link converging intersection curves\n");
-		    continue;
-		} else {
-		    // For a single intersection, try to link the
-		    // curves anyway. Assume that one or both curve
-		    // endpoints is just a little past where it should
-		    // be. Split the curves at the intersection, and
-		    // discard the portion with the smaller bbox
-		    // diagonal.
-		    ON_Curve *icurve, *jcurve;
-		    icurve = tmp[i].m_ssi_curves[lcx.ssi_idx_a].m_curve;
-		    jcurve = tmp[j].m_ssi_curves[lcx.ssi_idx_b].m_curve;
-
-		    ON_Curve *ileft, *iright, *jleft, *jright;
-		    ileft = iright = jleft = jright = NULL;
-		    split_curve(ileft, iright, icurve, event.m_a[0]);
-		    split_curve(jleft, jright, jcurve, event.m_b[0]);
-
-		    if (bbox_diagonal_length(ileft) <
-			bbox_diagonal_length(iright))
-		    {
-			std::swap(ileft, iright);
-		    }
-		    ON_Curve *isub = ileft;
-		    delete iright;
-
-		    if (bbox_diagonal_length(jleft) <
-			bbox_diagonal_length(jright))
-		    {
-			std::swap(jleft, jright);
-		    }
-		    ON_Curve *jsub = jleft;
-		    delete jright;
-
-		    if (isub && jsub) {
-			// replace the original ssi curves with the
-			// trimmed versions
-			SSICurve issi(isub), jssi(jsub);
-			isub = jsub = NULL;
-
-			delete tmp[i].m_ssi_curves[lcx.ssi_idx_a].m_curve;
-			tmp[i].m_ssi_curves[lcx.ssi_idx_a] = issi;
-
-			delete tmp[j].m_ssi_curves[lcx.ssi_idx_b].m_curve;
-			tmp[j].m_ssi_curves[lcx.ssi_idx_b] = jssi;
-
-			// proceed as if they're linkable
-			configure_for_linking(c1, c2, tmp[i], tmp[j]);
-		    }
-		    delete isub;
-		    delete jsub;
-		}
+		continue;
 	    }
 
 	    if (c1 != NULL && c2 != NULL) {
