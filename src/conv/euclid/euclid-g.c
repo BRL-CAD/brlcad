@@ -73,7 +73,7 @@ struct bu_ptbl groups[11];
 
 static int polysolids;
 static int debug;
-static const char usage[] = "Usage: %s [-v] [-i euclid_db] [-o brlcad_db] [-d tolerance] [-p] [-xX lvl]\n\t\t(-p indicates write as polysolids)\n ";
+static const char usage[] = "Usage: %s [-vpn] [-i euclid_db] [-o brlcad_db] [-d tolerance] [-xX lvl]\n\t\t(-p indicates write as polysolids; -n negates this)\n ";
 static struct bn_tol tol;
 
 void
@@ -147,7 +147,7 @@ main(int argc, char **argv)
 
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "d:vi:o:nx:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "d:vi:o:npx:X:h?")) != -1) {
 	switch (c) {
 	    case 'd':
 		tol.dist = atof(bu_optarg);
@@ -169,6 +169,9 @@ main(int argc, char **argv)
 		break;
 	    case 'n':
 		polysolids = 0;
+		break;
+	    case 'p':
+		polysolids = 1;
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
