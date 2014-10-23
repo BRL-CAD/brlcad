@@ -39,6 +39,62 @@ This converter creates a region for each object ID number by unioning
 together all the objects with the same ID number.</para>
 </refsect1>
 
+    <para>The following options are recognized:</para>
+
+      <varlistentry>
+	<term><option>-v</option></term>
+	<listitem>
+	  <para>
+	    turns on verbose mode, for debugging; its output is to standard error
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-i euclid_file_name</option></term>
+	<listitem>
+	  <para>
+	    sets input file name; default is to take standard input
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-o filename.g</option></term>
+	<listitem>
+	  <para>
+	    sets output file name; default file name is euclid.g
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-n</option></term>
+	<listitem>
+	  <para>
+	    indicates NOT to write as polysolids; opposite of <option>-p</option>
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-p</option></term>
+	<listitem>
+	  <para>
+	    indicates to write as polysolids (this is default); opposite of <option>-n</option>
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-x #</option> and <option>-X #</option></term>
+	<listitem>
+	  <para>
+	    sets debug flags
+	  </para>
+	</listitem>
+      </varlistentry>
+
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
 $ euclid-g <emphasis remap='I'>sample.euclid sample.g</emphasis>
