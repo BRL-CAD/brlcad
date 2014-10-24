@@ -37,10 +37,9 @@ of polygonal faces. Each face may be one of either a simple face (no holes),
 a complex face (contains at least one hole), or a simple hole.
 This converter creates a region for each object ID number by unioning
 together all the objects with the same ID number.</para>
-</refsect1>
 
     <para>The following options are recognized:</para>
-
+    <variablelist remap='TP'>
       <varlistentry>
 	<term><option>-v</option></term>
 	<listitem>
@@ -93,7 +92,9 @@ together all the objects with the same ID number.</para>
 	    sets debug flags
 	  </para>
 	</listitem>
-      </varlistentry>
+    </varlistentry>
+</variablelist>
+</refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
