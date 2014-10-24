@@ -17,8 +17,8 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>euclid-g</command>
-    <arg choice='plain'><replaceable>euclid_file</replaceable></arg>
-    <arg choice='plain'><replaceable>database.g</replaceable></arg>
+    <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
+    <arg choice="opt">&lt; <replaceable>euclid_file</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
