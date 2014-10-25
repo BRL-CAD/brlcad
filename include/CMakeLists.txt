@@ -4,6 +4,8 @@ add_subdirectory(rt)
 add_subdirectory(fb)
 
 set(public_hdrs
+  bio.h
+  bsocket.h
   RtServerImpl.h
   bn.h
   bu.h
@@ -70,10 +72,8 @@ endif(WIN32)
 # public headers should NOT include these headers.
 set(noinst_HEADERS
   bnetwork.h
-  bio.h
   brlcad_ident.h
   brlcad_version.h
-  bsocket.h
   conf.h
   fbmsg.h
   sysv.h
