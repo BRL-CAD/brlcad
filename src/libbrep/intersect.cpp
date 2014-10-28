@@ -3323,7 +3323,7 @@ ON_Intersect(const ON_Surface *surfA,
 	int surf_dir = 1 - knot_dir;
 
 	std::vector<double> surf1_knots, surf1_bezier_knots;
-        surf1_bezier_knots = get_knots(surf1, surf_dir);
+        surf1_knots = get_knots(surf1, surf_dir);
 	surf1_bezier_knots = get_bezier_knots(surf1, surf_dir);
 
 	for (size_t j = 0; j < surf1_bezier_knots.size(); ++j) {
