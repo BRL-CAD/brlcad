@@ -3396,12 +3396,10 @@ ON_Intersect(const ON_Surface *surfA,
 			    try {
 				seg->m_curve3d = sub_curve(surf1_boundary_iso,
 					overlap_start, overlap_end);
+				seg->m_curveA = overlap2d[k];
+				seg->m_curveB = new ON_LineCurve(iso_pt1, iso_pt2);
 				if (is_surfA_iso) {
-				    seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
-				    seg->m_curveB = overlap2d[k];
-				} else {
-				    seg->m_curveB = new ON_LineCurve(iso_pt1, iso_pt2);
-				    seg->m_curveA = overlap2d[k];
+				    std::swap(seg->m_curveA, seg->m_curveB);
 				}
 				seg->m_dir = surf_dir;
 				seg->m_fix = surf1_knot;
@@ -3416,12 +3414,10 @@ ON_Intersect(const ON_Surface *surfA,
 				    iso_pt1 = point_xy_or_yx(overlap_start, surf1_knot, swap_xy);
 				    iso_pt2 = point_xy_or_yx(overlap_end, surf1_knot, swap_xy);
 				    seg->m_curve3d = (*overlaps.Last())->m_curve3d->Duplicate();
+				    seg->m_curveA = overlap2d[k]->Duplicate();
+				    seg->m_curveB = new ON_LineCurve(iso_pt1, iso_pt2);
 				    if (is_surfA_iso) {
-					seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
-					seg->m_curveB = overlap2d[k]->Duplicate();
-				    } else {
-					seg->m_curveB = new ON_LineCurve(iso_pt1, iso_pt2);
-					seg->m_curveA = overlap2d[k]->Duplicate();
+					std::swap(seg->m_curveA, seg->m_curveB);
 				    }
 				    seg->m_dir = surf_dir;
 				    seg->m_fix = surf1_knots.back();
