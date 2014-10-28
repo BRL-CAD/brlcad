@@ -41,6 +41,15 @@ together all the objects with the same ID number.</para>
     <para>The following options are recognized:</para>
     <variablelist remap='TP'>
       <varlistentry>
+	<term><option>-d tolerance</option></term>
+	<listitem>
+	  <para>
+	    sets tolerance (units of mm); default value is 0.0005
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
 	<term><option>-v</option></term>
 	<listitem>
 	  <para>
