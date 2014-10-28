@@ -2494,6 +2494,15 @@ struct OverlapSegment {
 	m_curve3d = m_curveA = m_curveB = NULL;
     }
 
+    OverlapSegment(const OverlapSegment *other)
+	: m_from(other->m_from), m_dir(other->m_dir), m_fix(other->m_fix),
+	  m_min(other->m_min), m_max(other->m_max)
+    {
+	m_curve3d = other->m_curve3d->Duplicate();
+	m_curveA = other->m_curveA->Duplicate();
+	m_curveB = other->m_curveB->Duplicate();
+    }
+
     ON_2dPoint Get2DParam(double t)
     {
 	return m_dir ? ON_2dPoint(t, m_fix) : ON_2dPoint(m_fix, t);
@@ -3409,18 +3418,14 @@ ON_Intersect(const ON_Surface *surfA,
 				    // If the domain is closed, the iso-curve on the
 				    // first knot and the last knot is the same, so
 				    // we don't need to compute the intersections twice.
-				    seg = new OverlapSegment;
-				    surf1_knot = surf1_knots.back();
+				    seg = new OverlapSegment(seg);
+				    seg->m_fix = surf1_knot = surf1_knots.back();
 				    iso_pt1 = point_xy_or_yx(overlap_start, surf1_knot, swap_xy);
 				    iso_pt2 = point_xy_or_yx(overlap_end, surf1_knot, swap_xy);
-				    seg->m_curve3d = (*overlaps.Last())->m_curve3d->Duplicate();
-				    seg->m_curveA = overlap2d[k]->Duplicate();
-				    seg->m_curveB = new ON_LineCurve(iso_pt1, iso_pt2);
-				    if (is_surfA_iso) {
-					std::swap(seg->m_curveA, seg->m_curveB);
-				    }
-				    seg->m_dir = surf_dir;
-				    seg->m_fix = surf1_knots.back();
+				    ON_Curve *&surf1_curve = is_surfA_iso ?
+					seg->m_curveA : seg->m_curveB;
+				    delete surf1_curve;
+				    surf1_curve = new ON_LineCurve(iso_pt1, iso_pt2);
 				    overlaps.Append(seg);
 				}
 				// We set overlap2d[k] to NULL in case the curve
