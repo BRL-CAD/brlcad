@@ -145,9 +145,12 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-
+    if (argc == 1) {
+	bu_log(usage, argv[0]);
+	bu_log("       Program continues running (waiting for standard input):\n");
+    }
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "d:vi:o:npx:X:h?")) != -1) {
+    else while ((c = bu_getopt(argc, argv, "d:vi:o:npx:X:h?")) != -1) {
 	switch (c) {
 	    case 'd':
 		tol.dist = atof(bu_optarg);
