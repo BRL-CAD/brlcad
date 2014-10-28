@@ -18,7 +18,7 @@
 <cmdsynopsis>
   <command>nmg-rib</command>
     <arg choice='opt'>-t </arg>
-    <arg choice='plain' rep='repeat'><replaceable>database.nmgnmg_solid</replaceable></arg>
+    <arg choice='plain' rep='repeat'><replaceable>database.nmg nmg_solid</replaceable></arg>
 
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -34,7 +34,7 @@ and converts the named polygonal NMG solids to RIB format polygons.
 If the
 <option>-t</option>
 option is given, the NMG solid will be triangulated first.
-If NMG a vertexuse normal is present for a vertexuse, it is used as the RIB
+If an NMG vertexuse normal is present for a vertexuse, it is used as the RIB
 vertex normal.  Otherwise, the NMG face normal is used.</para>
 </refsect1>
 
