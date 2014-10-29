@@ -30,7 +30,8 @@
 program
 reads the geometry database
 <emphasis remap='I'>database.nmg</emphasis>
-and converts the named polygonal NMG solids to RIB format polygons.
+and converts the named polygonal NMG solids to RIB format polygons,
+described in lines written to standard output.
 If the
 <option>-t</option>
 option is given, the NMG solid will be triangulated first.
