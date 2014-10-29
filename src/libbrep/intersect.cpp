@@ -3252,6 +3252,25 @@ append_overlap_segments(
     }
 }
 
+HIDDEN void
+append_csx_event_points(
+    ON_3dPointArray &curveA_3d,
+    ON_2dPointArray &surfB_2d,
+    const ON_SimpleArray<ON_X_EVENT> &events)
+{
+    for (int i = 0; i < events.Count(); ++i) {
+	const ON_X_EVENT &event = events[i];
+
+	curveA_3d.Append(event.m_A[0]);
+	surfB_2d.Append(ON_2dPoint(event.m_b[0], event.m_b[1]));
+
+	if (event.m_type == ON_X_EVENT::csx_overlap) {
+	    curveA_3d.Append(event.m_A[1]);
+	    surfB_2d.Append(ON_2dPoint(event.m_b[2], event.m_b[3]));
+	}
+    }
+}
+
 // Algorithm Overview
 //
 // 1) Find overlap intersections (regions where the two surfaces are
@@ -3440,18 +3459,7 @@ ON_Intersect(const ON_Surface *surfA,
 
 	    dplot->IsoCSX(x_event, surf1_boundary_iso, is_surfA_iso);
 
-	    // stash surf1 points and surf2 parameters
-	    for (int k = 0; k < x_event.Count(); k++) {
-		ON_X_EVENT &event = x_event[k];
-
-		tmp_curvept.Append(event.m_A[0]);
-		ptarray2.Append(ON_2dPoint(event.m_b[0], event.m_b[1]));
-
-		if (event.m_type == ON_X_EVENT::csx_overlap) {
-		    tmp_curvept.Append(event.m_A[1]);
-		    ptarray2.Append(ON_2dPoint(event.m_b[2], event.m_b[3]));
-		}
-	    }
+	    append_csx_event_points(tmp_curvept, ptarray2, x_event);
 
 	    for (int k = 0; k < x_event.Count(); k++) {
 		ON_X_EVENT &event = x_event[k];
