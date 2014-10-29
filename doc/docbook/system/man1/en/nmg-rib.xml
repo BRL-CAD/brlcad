@@ -40,7 +40,7 @@ vertex normal.  Otherwise, the NMG face normal is used.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <literallayout remap='.nf'>
-% <emphasis remap='B'>mged box.g</emphasis>
+% <emphasis remap='B'>mged -c box.g</emphasis>
 BRL-CAD Release 4.1   Graphics Editor (MGED)
     Tue Dec 15 15:49:30 EST 1992, Compilation 9
     stay@wolf:/m/dist4.1/mged
@@ -55,11 +55,11 @@ box.s:  ARB8
 	6 (-0.5, 0.5, -0.5)
 	7 (-0.5, 0.5, 0.5)
 	8 (-0.5, -0.5, 0.5)
-mged&gt; <emphasis remap='B'>facetize box.nmg box.s</emphasis>
+mged&gt; <emphasis remap='B'>facetize -n box.nmg box.s</emphasis>
 facetize:  tessellating primitives with tolerances a=0, r=0.01, n=0
 facetize:  evaluating Boolean expressions
+facetize:  box.s
 facetize:  converting NMG to database format
-facetize:  wrote 6.38 Kbytes to database
 mged&gt; <emphasis remap='B'>q</emphasis>
 % <emphasis remap='B'>nmg-rib box.g box.nmg</emphasis>
 Polygon "P" [ -0.5 -0.5 0.5  0.5 -0.5 0.5  0.5 0.5 0.5  -0.5 0.5 0.5   ] "N" [ 0 0 1  0 0 1  0 0 1  0 0 1   ]
