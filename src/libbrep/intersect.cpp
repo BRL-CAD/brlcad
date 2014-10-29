@@ -3271,6 +3271,79 @@ append_csx_event_points(
     }
 }
 
+HIDDEN void
+find_overlap_boundary_curves(
+	ON_SimpleArray<OverlapSegment *> &overlaps,
+	ON_3dPointArray &isocurve_3d,
+	ON_2dPointArray &isocurveA_2d,
+	ON_2dPointArray &isocurveB_2d,
+	const ON_Surface *surfA,
+	const ON_Surface *surfB,
+	Subsurface *treeA,
+	Subsurface *treeB,
+	double isect_tol,
+	double overlap_tol)
+{
+    for (int i = 0; i < 4; i++) {
+	const ON_Surface *surf1 = i >= 2 ? surfB : surfA;
+	const ON_Surface *surf2 = i >= 2 ? surfA : surfB;
+	Subsurface *tree2 = i >= 2 ? treeA : treeB;
+	ON_2dPointArray &isocurve1_2d = i >= 2 ? isocurveB_2d : isocurveA_2d;
+	ON_2dPointArray &isocurve2_2d = i >= 2 ? isocurveA_2d : isocurveB_2d;
+	bool is_surfA_iso = i < 2;
+	int knot_dir = i % 2;
+	int surf_dir = 1 - knot_dir;
+
+	std::vector<double> surf1_knots, surf1_bezier_knots;
+        surf1_knots = get_knots(surf1, surf_dir);
+	surf1_bezier_knots = get_bezier_knots(surf1, surf_dir);
+
+	for (size_t j = 0; j < surf1_bezier_knots.size(); ++j) {
+	    double surf1_knot = surf1_bezier_knots[j];
+	    ON_Curve *surf1_isocurve = surf1->IsoCurve(knot_dir, surf1_knot);
+	    ON_SimpleArray<ON_X_EVENT> x_event;
+	    ON_CurveArray overlap2d;
+	    ON_Intersect(surf1_isocurve, surf2, x_event, isect_tol,
+		    overlap_tol, 0, 0, 0, &overlap2d);
+
+	    dplot->IsoCSX(x_event, surf1_isocurve, is_surfA_iso);
+
+	    append_csx_event_points(isocurve_3d, isocurve2_2d, x_event);
+
+	    for (int k = 0; k < x_event.Count(); k++) {
+		ON_X_EVENT &event = x_event[k];
+		bool swap_xy = knot_dir;
+
+		ON_2dPoint iso_pt1;
+	        iso_pt1 = point_xy_or_yx(event.m_a[0], surf1_knot, swap_xy);
+		isocurve1_2d.Append(iso_pt1);
+
+		if (event.m_type == ON_X_EVENT::csx_overlap) {
+		    double overlap_start = event.m_a[0];
+		    double overlap_end = event.m_a[1];
+
+		    ON_2dPoint iso_pt2;
+		    iso_pt2 = point_xy_or_yx(overlap_end, surf1_knot, swap_xy);
+		    isocurve1_2d.Append(iso_pt2);
+
+		    bool curve_on_overlap_boundary =
+			is_curve_on_overlap_boundary(surf1, surf1_bezier_knots,
+				j, surf1_knot, knot_dir, overlap_start,
+				overlap_end, surf2, tree2);
+
+		    if (curve_on_overlap_boundary) {
+			append_overlap_segments(overlaps, overlap2d[k],
+				surf1_isocurve, overlap_start,
+				overlap_end, iso_pt1, iso_pt2, is_surfA_iso,
+				surf_dir, j, surf1_knot, surf1, surf1_knots);
+		    }
+		}
+	    }
+	    delete surf1_isocurve;
+	}
+    }
+}
+
 // Algorithm Overview
 //
 // 1) Find overlap intersections (regions where the two surfaces are
@@ -3435,64 +3508,8 @@ ON_Intersect(const ON_Surface *surfA,
     // Deal with boundaries with curve-surface intersections.
 
     ON_SimpleArray<OverlapSegment *> overlaps;
-    for (int i = 0; i < 4; i++) {
-	const ON_Surface *surf1 = i >= 2 ? surfB : surfA;
-	const ON_Surface *surf2 = i >= 2 ? surfA : surfB;
-	Subsurface *tree2 = i >= 2 ? treeA : treeB;
-	ON_2dPointArray &ptarray1 = i >= 2 ? tmp_curve_uvB : tmp_curve_uvA;
-	ON_2dPointArray &ptarray2 = i >= 2 ? tmp_curve_uvA : tmp_curve_uvB;
-	bool is_surfA_iso = i < 2;
-	int knot_dir = i % 2;
-	int surf_dir = 1 - knot_dir;
-
-	std::vector<double> surf1_knots, surf1_bezier_knots;
-        surf1_knots = get_knots(surf1, surf_dir);
-	surf1_bezier_knots = get_bezier_knots(surf1, surf_dir);
-
-	for (size_t j = 0; j < surf1_bezier_knots.size(); ++j) {
-	    double surf1_knot = surf1_bezier_knots[j];
-	    ON_Curve *surf1_boundary_iso = surf1->IsoCurve(knot_dir, surf1_knot);
-	    ON_SimpleArray<ON_X_EVENT> x_event;
-	    ON_CurveArray overlap2d;
-	    ON_Intersect(surf1_boundary_iso, surf2, x_event, isect_tol,
-		    overlap_tol, 0, 0, 0, &overlap2d);
-
-	    dplot->IsoCSX(x_event, surf1_boundary_iso, is_surfA_iso);
-
-	    append_csx_event_points(tmp_curvept, ptarray2, x_event);
-
-	    for (int k = 0; k < x_event.Count(); k++) {
-		ON_X_EVENT &event = x_event[k];
-		bool swap_xy = knot_dir;
-
-		ON_2dPoint iso_pt1;
-	        iso_pt1 = point_xy_or_yx(event.m_a[0], surf1_knot, swap_xy);
-		ptarray1.Append(iso_pt1);
-
-		if (event.m_type == ON_X_EVENT::csx_overlap) {
-		    double overlap_start = event.m_a[0];
-		    double overlap_end = event.m_a[1];
-
-		    ON_2dPoint iso_pt2;
-		    iso_pt2 = point_xy_or_yx(overlap_end, surf1_knot, swap_xy);
-		    ptarray1.Append(iso_pt2);
-
-		    bool curve_on_overlap_boundary =
-			is_curve_on_overlap_boundary(surf1, surf1_bezier_knots,
-				j, surf1_knot, knot_dir, overlap_start,
-				overlap_end, surf2, tree2);
-
-		    if (curve_on_overlap_boundary) {
-			append_overlap_segments(overlaps, overlap2d[k],
-				surf1_boundary_iso, overlap_start,
-				overlap_end, iso_pt1, iso_pt2, is_surfA_iso,
-				surf_dir, j, surf1_knot, surf1, surf1_knots);
-		    }
-		}
-	    }
-	    delete surf1_boundary_iso;
-	}
-    }
+    find_overlap_boundary_curves(overlaps, tmp_curvept, tmp_curve_uvA,
+	    tmp_curve_uvB, surfA, surfB, treeA, treeB, isect_tol, overlap_tol);
 
     split_overlaps_at_intersections(overlaps, surfA, surfB, treeA, treeB,
 				    isect_tol, isect_tolA, isect_tolB);
