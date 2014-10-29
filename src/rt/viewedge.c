@@ -569,16 +569,16 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
      * foreground and background colors.
      */
     if (!default_background) {
-	color tmp;
-	tmp[RED] = fgcolor[RED];
-	tmp[GRN] = fgcolor[GRN];
-	tmp[BLU] = fgcolor[BLU];
+	int tmp;
+	tmp = fgcolor[RED];
 	fgcolor[RED] = bgcolor[RED];
+	bgcolor[RED] = tmp;
+	tmp = fgcolor[GRN];
 	fgcolor[GRN] = bgcolor[GRN];
+	bgcolor[GRN] = tmp;
+	tmp = fgcolor[BLU];
 	fgcolor[BLU] = bgcolor[BLU];
-	bgcolor[RED] = tmp[RED];
-	bgcolor[GRN] = tmp[GRN];
-	bgcolor[BLU] = tmp[BLU];
+	bgcolor[BLU] = tmp;
     }
 
     if (minus_o && (overlay || blend)) {

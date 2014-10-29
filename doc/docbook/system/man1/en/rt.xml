@@ -592,7 +592,11 @@
       <varlistentry>
 	<term><option>-W</option></term>
 	<listitem>
-	  <para>sets the background image color to white.</para>
+	  <para>
+	    inverts the foreground and background colors, changing the default from
+	    white lines on a black background to black lines on a white
+	    background
+	  </para>
 	</listitem>
       </varlistentry>
 
@@ -628,6 +632,7 @@
 	  See raytrace.h for the bit definitions.)</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-+ #</option></term>
 	<listitem>
@@ -707,8 +712,12 @@
   </refsection>
 
   <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
-  <para>Numerous error conditions are possible.
-  Descriptive messages are printed on stderr.</para>
+
+    <para>
+      Numerous error conditions are possible, usually due to errors in
+      the geometry database. Descriptive messages are printed on stderr
+      (file descriptor 2).
+    </para>
   </refsection>
 
   <refsection xml:id="author"><title>AUTHOR</title>

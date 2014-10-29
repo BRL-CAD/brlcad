@@ -1228,6 +1228,11 @@ if(BRLCAD_ENABLE_SMP)
   CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
 endif(BRLCAD_ENABLE_SMP)
 
+if(BRLCAD_HEADERS_OLD_COMPAT)
+  add_definitions(-DEXPOSE_FB_HEADER)
+  add_definitions(-DEXPOSE_DM_HEADER)
+endif(BRLCAD_HEADERS_OLD_COMPAT)
+
 #----------------------------------------------------------------------
 # Some generators in CMake support generating folders in IDEs for
 # organizing build targets.  We want to use them if they are there.

@@ -73,7 +73,7 @@ struct bu_ptbl groups[11];
 
 static int polysolids;
 static int debug;
-static const char usage[] = "Usage: %s [-v] [-i euclid_db] [-o brlcad_db] [-d tolerance] [-p] [-xX lvl]\n\t\t(-p indicates write as polysolids)\n ";
+static const char usage[] = "Usage: %s [-vpn] [-i euclid_db] [-o brlcad_db] [-d tolerance] [-xX lvl]\n\t\t(-p indicates write as polysolids; -n negates this)\n ";
 static struct bn_tol tol;
 
 void
@@ -145,9 +145,12 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-
+    if (argc == 1) {
+	bu_log(usage, argv[0]);
+	bu_log("       Program continues running (waiting for standard input):\n");
+    }
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "d:vi:o:nx:X:")) != -1) {
+    else while ((c = bu_getopt(argc, argv, "d:vi:o:npx:X:h?")) != -1) {
 	switch (c) {
 	    case 'd':
 		tol.dist = atof(bu_optarg);
@@ -169,6 +172,9 @@ main(int argc, char **argv)
 		break;
 	    case 'n':
 		polysolids = 0;
+		break;
+	    case 'p':
+		polysolids = 1;
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
@@ -373,22 +379,22 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 
     /* skip first string in file (what is it??) */
     if (fscanf(fpin, "%80s", str) == EOF) {
-	bu_log("ERROR: Failed on first attempt to read input");
+	bu_log("ERROR: euclid-g: failed on first attempt to read input\n");
 	return 1;
     }
 
     /* Id of first region. */
     if (fscanf(fpin, "%d", &reg_id) != 1) {
-	bu_log("euclid_to_brlcad: no region id\n");
+	bu_log("ERROR: euclid-g: no region id\n");
 	return 2;
     }
 
     if (reg_id <= -INT_MAX) {
-	bu_log("ERROR: Magnitude of negative region_id too large.\n");
+	bu_log("ERROR: euclid-g: magnitude of negative region_id too large\n");
 	return 3;
     }
     if (reg_id >= INT_MAX) {
-	bu_log("region_id too large.\n");
+	bu_log("ERROR: euclid-g: region_id too large\n");
 	return 4;
     }
 

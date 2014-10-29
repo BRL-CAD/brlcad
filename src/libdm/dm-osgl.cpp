@@ -27,6 +27,8 @@
 
 #ifdef DM_OSGL
 
+//#define OSG_VIEWER_TEST 1
+
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -249,7 +251,7 @@ osgl_reshape(struct dm_internal *dmp, int width, int height)
 #ifdef OSG_VIEWER_TEST
     struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
 
-    struct osg_vars *privvars = (struct osg_vars *)dmp->dm_vars.priv_vars;
+    //struct osg_vars *privvars = (struct osg_vars *)dmp->dm_vars.priv_vars;
     if (privvars->testviewer) {
 
 	osgViewer::Viewer::Windows    windows;
@@ -1008,6 +1010,7 @@ osgl_drawEnd(struct dm_internal *dmp)
     }
 
 #ifdef OSG_VIEWER_TEST
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
     privvars->testviewer->frame();
 #endif
     return TCL_OK;
@@ -1405,88 +1408,6 @@ osgl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
 
     glDisable(GL_POLYGON_OFFSET_FILL);
 
-#ifdef OSG_VIEWER_TEST
-    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
-
-    glPointSize(originalPointSize);
-    glLineWidth(originalLineWidth);
-
-    // create the osg containers to hold our data.
-    osg::ref_ptr<osg::Geode> geode = new osg::Geode(); // Maybe create this at drawBegin?
-    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
-    osg::ref_ptr<osg::Vec3dArray> vertices = new osg::Vec3dArray;
-    osg::ref_ptr<osg::Vec3dArray> normals = new osg::Vec3dArray;
-
-    // Set line color
-    osg::Vec4Array* line_color = new osg::Vec4Array;
-    line_color->push_back(osg::Vec4(255, 255, 100, 70));
-    geom->setColorArray(line_color, osg::Array::BIND_OVERALL);
-
-    // Set wireframe state
-    osg::StateSet *geom_state = geom->getOrCreateStateSet();
-    osg::ref_ptr<osg::PolygonMode> geom_polymode = new osg::PolygonMode;
-    geom_polymode->setMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
-    geom_state->setAttributeAndModes(geom_polymode);
-    geom_state->setMode(GL_LIGHTING,osg::StateAttribute::OVERRIDE|osg::StateAttribute::OFF);
-
-    /* Viewing region is from -1.0 to +1.0 */
-    int begin = 0;
-    int nverts = 0;
-    first = 1;
-    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-        int i;
-        int nused = tvp->nused;
-        int *cmd = tvp->cmd;
-        point_t *pt = tvp->pt;
-        for (i = 0; i < nused; i++, cmd++, pt++) {
-            switch (*cmd) {
-                case BN_VLIST_LINE_MOVE:
-                    /* Move, start line */
-                    if (first == 0) {
-                        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
-
-                    } else
-                        first = 0;
-
-                    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
-                    normals->push_back(osg::Vec3(0.0f,0.0f,1.0f));
-                    begin += nverts;
-                    nverts = 1;
-                    break;
-                case BN_VLIST_POLY_START:
-                    normals->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
-                    begin += nverts;
-                    nverts = 0;
-                    break;
-                case BN_VLIST_LINE_DRAW:
-                case BN_VLIST_POLY_MOVE:
-                case BN_VLIST_POLY_DRAW:
-                    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
-                    ++nverts;
-                    break;
-                case BN_VLIST_POLY_END:
-                    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,begin,nverts));
-                    first = 1;
-                    break;
-                case BN_VLIST_POLY_VERTNORM:
-                    break;
-            }
-        }
-    }
-
-    if (first == 0) {
-        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
-    }
-
-    geom->setVertexArray(vertices);
-    geom->setNormalArray(normals, osg::Array::BIND_OVERALL);
-    //geom->setNormalBinding(osg::Geometry::BIND_PER_PRIMITIVE_SET);
-
-    geom->setUseDisplayList(true);
-    geode->addDrawable(geom);
-    privvars->osg_root->addChild(geode);
-#endif
-
     return TCL_OK;
 }
 
@@ -1641,6 +1562,89 @@ osgl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 
     glPointSize(originalPointSize);
     glLineWidth(originalLineWidth);
+
+#ifdef OSG_VIEWER_TEST
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+
+    glPointSize(originalPointSize);
+    glLineWidth(originalLineWidth);
+
+    // create the osg containers to hold our data.
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode(); // Maybe create this at drawBegin?
+    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+    osg::ref_ptr<osg::Vec3dArray> vertices = new osg::Vec3dArray;
+    osg::ref_ptr<osg::Vec3dArray> normals = new osg::Vec3dArray;
+
+    // Set line color
+    osg::Vec4Array* line_color = new osg::Vec4Array;
+    line_color->push_back(osg::Vec4(255, 255, 100, 70));
+    geom->setColorArray(line_color, osg::Array::BIND_OVERALL);
+
+    // Set wireframe state
+    osg::StateSet *geom_state = geom->getOrCreateStateSet();
+    osg::ref_ptr<osg::PolygonMode> geom_polymode = new osg::PolygonMode;
+    geom_polymode->setMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
+    geom_state->setAttributeAndModes(geom_polymode);
+    geom_state->setMode(GL_LIGHTING,osg::StateAttribute::OVERRIDE|osg::StateAttribute::OFF);
+
+    /* Viewing region is from -1.0 to +1.0 */
+    int begin = 0;
+    int nverts = 0;
+    first = 1;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+        int i;
+        int nused = tvp->nused;
+        int *cmd = tvp->cmd;
+        point_t *pt = tvp->pt;
+        for (i = 0; i < nused; i++, cmd++, pt++) {
+            switch (*cmd) {
+                case BN_VLIST_LINE_MOVE:
+                    /* Move, start line */
+                    if (first == 0) {
+                        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
+
+                    } else
+                        first = 0;
+
+                    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+                    normals->push_back(osg::Vec3(0.0f,0.0f,1.0f));
+                    begin += nverts;
+                    nverts = 1;
+                    break;
+                case BN_VLIST_POLY_START:
+                    normals->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+                    begin += nverts;
+                    nverts = 0;
+                    break;
+                case BN_VLIST_LINE_DRAW:
+                case BN_VLIST_POLY_MOVE:
+                case BN_VLIST_POLY_DRAW:
+                    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+                    ++nverts;
+                    break;
+                case BN_VLIST_POLY_END:
+                    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,begin,nverts));
+                    first = 1;
+                    break;
+                case BN_VLIST_POLY_VERTNORM:
+                    break;
+            }
+        }
+    }
+
+    if (first == 0) {
+        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
+    }
+
+    geom->setVertexArray(vertices);
+    geom->setNormalArray(normals, osg::Array::BIND_OVERALL);
+    //geom->setNormalBinding(osg::Geometry::BIND_PER_PRIMITIVE_SET);
+
+    geom->setUseDisplayList(true);
+    geode->addDrawable(geom);
+    privvars->osg_root->addChild(geode);
+#endif
+
 
     /* Need this back off for underlay with framebuffer */
     glDisable(GL_DEPTH_TEST);
