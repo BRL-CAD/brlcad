@@ -1073,7 +1073,9 @@ OrientedFace::LoadONBrep(ON_Brep *brep)
     // need edge bounds to determine extents for some of the infinitely
     // defined surfaces like cones/cylinders/planes
     if (!face_element->LoadONBrep(brep)) {
+#ifndef AP242
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+#endif
 	return false;
     }
 
