@@ -159,13 +159,12 @@ Draw(fb *fbp, int x_1, int y_1, int x_2, int y_2)
     s2 = sign(y_2 - y_1);
 
     /* check for swap of deltx and delty */
-    if (delty > deltx) {
+    interchange = ( delty > deltx );
+    if (interchange) {
 	temp = deltx;
 	deltx = delty;
 	delty = temp;
-	interchange = 1;
-    } else
-	interchange = 0;
+    }
 
     /* init error term */
     error = 2 * delty - deltx;
@@ -173,13 +172,13 @@ Draw(fb *fbp, int x_1, int y_1, int x_2, int y_2)
     for (i = 0; i < deltx; i++) {
 	fb_write(fbp, x, y, white, 1);
 	while (error >= 0) {
-	    if (interchange == 1)
+	    if (interchange)
 		x += s1;
 	    else
 		y += s2;
 	    error -= 2 * deltx;
 	}
-	if (interchange == 1)
+	if (interchange)
 	    y += s2;
 	else
 	    x += s1;

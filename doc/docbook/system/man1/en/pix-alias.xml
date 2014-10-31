@@ -29,7 +29,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>pix-alias</emphasis>
+<para><command>pix-alias</command>
 converts the
 <emphasis remap='I'>brl pix(5)</emphasis>
 format file on the standard input to an
@@ -43,7 +43,7 @@ format file on the standard output.</para>
   <term><option>-n </option><replaceable>file_height</replaceable></term>
   <listitem>
 <para>tells
-<emphasis remap='I'>pix-alias</emphasis>
+<command>pix-alias</command>
 that the input is
 <emphasis remap='I'>file_height</emphasis>
 scanlines tall</para>
@@ -60,7 +60,7 @@ scanlines tall</para>
   <term><option>-w </option><replaceable>file_width</replaceable></term>
   <listitem>
 <para>tells
-<emphasis remap='I'>pix-alias</emphasis>
+<command>pix-alias</command>
 that the input is
 <emphasis remap='I'>file_width</emphasis>
 pixels wide</para>

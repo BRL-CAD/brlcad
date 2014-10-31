@@ -21,7 +21,6 @@
       <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
       <arg choice="plain" rep="norepeat"><replaceable>model.g</replaceable></arg>
       <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg>
-
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -290,7 +289,9 @@
 	  format output.
 	  The
 	  <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-	  utility can be used later to display ".pix" files.</para>
+	  utility can be used later to display ".pix" files.
+	  Note that using -o disables parallel processing.
+	  </para>
 	</listitem>
       </varlistentry>
 
@@ -356,11 +357,11 @@
 	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  debug flags to the given hexadecimal bit vector.
 	  See raytrace.h for the bit definitions.
-	  <option>-!#</option>
+	  (Notice that <option>-! #</option>
 	  sets the
 	  <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  debug flags to the given hexadecimal bit vector.
-	  See h/bu.h for the bit definitions.</para>
+	  See bu.h for the bit definitions.)</para>
 	</listitem>
       </varlistentry>
 
@@ -413,12 +414,12 @@
       <varlistentry>
 	<term><option>-F framebuffer</option></term>
 	<listitem>
-	  <para>indicates that the output should be sent to the indicated framebuffer.
-	  See
+	  <para>indicates that the output should be sent to the indicated framebuffer. See
 	  <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  for more details on the specification of a framebuffer.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-G #</option></term>
 	<listitem>
@@ -428,6 +429,7 @@
 	  the grid cell width defaults to be the same as the height.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-H #</option></term>
 	<listitem>
@@ -438,6 +440,7 @@
 	  <citerefentry><refentrytitle>pixhalve</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-I</option></term>
 	<listitem>
@@ -445,6 +448,7 @@
 	  "large" (&gt; = 256 x 256), it will lower the priority of the <option>rt</option> process.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-J #</option></term>
 	<listitem>
@@ -460,6 +464,7 @@
 	  If three (<option>-J 3</option>), it performs both operations.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-K #</option></term>
 	<listitem>
@@ -468,16 +473,18 @@
 	  <option>-D #</option> .</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-M</option></term>
 	<listitem>
-	  <para>causes reading of animation matrix or animation script from standard input.
+	  <para>causes reading of animation (model2view) matrix or animation script from standard input.
 	  Conflicts with
 	  <option>-a</option>
 	  and
-	  <option>-e</option> .</para>
+	  <option>-e</option> options.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-N #</option></term>
 	<listitem>
@@ -485,6 +492,7 @@
 	  See h/nmg.h for the bit definitions.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-O output.dpix</option></term>
 	<listitem>
@@ -497,6 +505,7 @@
 	  (Deferred implementation)</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-P #</option></term>
 	<listitem>
@@ -508,6 +517,7 @@
 	  usually just one processor is used by default.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-Q x,y</option></term>
 	<listitem>
@@ -520,12 +530,14 @@
 	  the order of random numbers previously drawn).</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-R</option></term>
 	<listitem>
 	  <para>requests that overlapping regions not be reported; opposite of <option>-r</option> .</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-S</option></term>
 	<listitem>
@@ -534,6 +546,7 @@
 	  and the right-eye image is drawn in blue.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-T #</option> or <option>-T #,#</option> or <option>-T #/#</option></term>
 	<listitem>
@@ -553,13 +566,17 @@
 	  on the command line.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-U #</option></term>
 	<listitem>
-	  <para>sets the "use_air" value.
+	  <para>
+	    sets the Boolean variable <emphasis remap="I">use_air</emphasis>
+	    to the given value.
 	  The default is 0, which ignores regions that have non-zero aircode values.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-V #</option></term>
 	<listitem>
@@ -571,12 +588,18 @@
 	  <option>-V4:3</option> .</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-W</option></term>
 	<listitem>
-	  <para>sets the background image color to white.</para>
+	  <para>
+	    inverts the foreground and background colors, changing the default from
+	    white lines on a black background to black lines on a white
+	    background
+	  </para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-X #</option></term>
 	<listitem>
@@ -585,6 +608,7 @@
 	  program debugging flags.  See raytrace.h for the meaning of these bits.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-! #</option></term>
 	<listitem>
@@ -600,9 +624,15 @@
 	  <citerefentry><refentrytitle>dbx</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  or
 	  <citerefentry><refentrytitle>gdb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-	  for debugging.</para>
+	  for debugging.
+	  (Notice that <option>-x #</option>
+	  sets the
+	  <citerefentry><refentrytitle>libbt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	  debug flags to the given hexadecimal bit vector.
+	  See raytrace.h for the bit definitions.)</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-+ #</option></term>
 	<listitem>
@@ -682,8 +712,12 @@
   </refsection>
 
   <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
-  <para>Numerous error conditions are possible.
-  Descriptive messages are printed on stderr.</para>
+
+    <para>
+      Numerous error conditions are possible, usually due to errors in
+      the geometry database. Descriptive messages are printed on stderr
+      (file descriptor 2).
+    </para>
   </refsection>
 
   <refsection xml:id="author"><title>AUTHOR</title>

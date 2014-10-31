@@ -4715,14 +4715,14 @@ rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
 	    switch (overlap) {
 		case 0: /* no overlap between the cross sections, the areas are both added, nothing to fix */
 		    break;
-		case 3: /* start cross section contained completely by the prev cross section, we swap start_ir with prev_or */
-		case 9: /* section between start_ir and prev_or overlap, we swap them */
-		case 12: /* prev cross section contained completely by the start cross section, we swap start_ir with prev_or */
+		case 3: /* start cross section contained completely by the prev cross section; we swap start_ir with prev_or */
+		case 9: /* section between start_ir and prev_or overlap; we swap them */
+		case 12: /* prev cross section contained completely by the start cross section; we swap start_ir with prev_or */
 		    tmpval = start_ir;
 		    start_ir = prev_or;
 		    prev_or = tmpval;
 		    break;
-		case 6: /* section between prev_ir and start_or overlap, we swap them */
+		case 6: /* section between prev_ir and start_or overlap; we swap them */
 		    tmpval = prev_ir;
 		    prev_ir = start_or;
 		    start_or = tmpval;

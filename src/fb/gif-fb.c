@@ -70,6 +70,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #include "bu/color.h"
 #include "bu/getopt.h"

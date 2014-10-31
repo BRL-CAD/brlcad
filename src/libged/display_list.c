@@ -1064,7 +1064,11 @@ append_solid_to_display_list(
 
     } else {
         if (bview_data->wireframe_color_override) {
-            solid_set_color_info(sp, (unsigned char *)&(bview_data->wireframe_color), tsp);
+	    unsigned char wire_color[3];
+	    wire_color[RED] = (unsigned char)bview_data->wireframe_color[RED];
+	    wire_color[GRN] = (unsigned char)bview_data->wireframe_color[GRN];
+	    wire_color[BLU] = (unsigned char)bview_data->wireframe_color[BLU];
+            solid_set_color_info(sp, wire_color, tsp);
         } else {
             solid_set_color_info(sp, NULL, tsp);
         }

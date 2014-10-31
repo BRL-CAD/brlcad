@@ -53,6 +53,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make Lighting enabled by default in mged and archer (this is a libdm
+  issue).  currently unable to set/override in .mgedrc either.
+
 * need ability to report the smallest feature in a given hierarchy
   (smallest edge?) and/or largest error in a given boundary model
   (largest edge gap or distance between two points that should be

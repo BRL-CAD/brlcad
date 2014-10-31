@@ -429,8 +429,9 @@ DM_EXPORT extern int dm_draw_display_list(dm *dmp,
 DM_EXPORT extern int qt_exec(dm *dmp);
 
 /* For backwards compatibility, define macros and expose struct dm */
-
-#include "../src/libdm/dm_private.h"
+#ifdef EXPOSE_DM_HEADER
+#  include "../src/libdm/dm_private.h"
+#endif
 
 #define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
 #define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
