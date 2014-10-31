@@ -53,7 +53,7 @@ CADApp::gedp()
 }
 
 int
-CADApp::open(QString filename)
+CADApp::opendb(QString filename)
 {
     struct db_i *f_dbip = DBI_NULL;
     struct rt_wdb *f_wdbp = RT_WDB_NULL;
@@ -75,7 +75,7 @@ CADApp::open(QString filename)
     }
 
     // If we've already got an open file, close it.
-    if (ged_pointer != GED_NULL) (void)close();
+    if (ged_pointer != GED_NULL) (void)closedb();
 
     // Call BRL-CAD's database open function
     if ((f_dbip = db_open(filename.toLocal8Bit(), DB_OPEN_READONLY)) == DBI_NULL) {
@@ -106,7 +106,7 @@ CADApp::open(QString filename)
 }
 
 void
-CADApp::close()
+CADApp::closedb()
 {
     if (ged_pointer && ged_pointer != GED_NULL) {
         ged_close(ged_pointer);

@@ -29,10 +29,19 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
     setUnifiedTitleAndToolBarOnMac(true); // Not sure yet if we want this, but put it in as a reminder
 
+    // Create Menus
+
+    file_menu = menuBar()->addMenu("&File");
+    cad_exit = new QAction("Exit", this);
+    connect(cad_exit, SIGNAL(triggered()), this, SLOT(close()));
+    file_menu->addAction(cad_exit);
+
+
     // Set up OpenGL canvas
     canvas = new QGLWidget();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
     setCentralWidget(canvas);
 
+    // Define dock layout
     console_dock = new QDockWidget("Console", this);
     addDockWidget(Qt::BottomDockWidgetArea, console_dock);
     console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);

@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     }
 
     if (args.size() == 1) {
-	if (app.open(args.at(0))) {
+	if (app.opendb(args.at(0))) {
 	    fprintf(stderr, "%s%s%s\n", "Error: opening ", (const char *)args.at(0).toLocal8Bit(), " failed.");
 	    exit(1);
 	}

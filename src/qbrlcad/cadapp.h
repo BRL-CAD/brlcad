@@ -45,8 +45,8 @@ class CADApp : public QApplication
 	~CADApp() {};
 
 	void initialize();
-	int open(QString filename);
-	void close();
+	int opendb(QString filename);
+	void closedb();
 
 	int register_command(QString cmdname, ged_func_ptr func, int db_changer = 0, int view_changer = 0);
 	int exec_command(QString *command, QString *result);

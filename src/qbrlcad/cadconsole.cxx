@@ -95,7 +95,7 @@ void CADConsole::executeCADCommand(const QString &command)
     if (!substr) exit(0);
 
     if (command == "quit" || command == "q" || command == "exit") {
-	((CADApp *)qApp)->close();
+	((CADApp *)qApp)->closedb();
 	qApp->quit();
 	/*
     } else if (command.length() > 7 && !command.left(6).compare("opendb")) {
