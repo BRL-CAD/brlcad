@@ -75,12 +75,12 @@ usage(const char *argv0)
 	   "\t\tbot via nmg modes.\n"
 	);
 
-    bu_log("  -d\t\tOutput debug info to stderr.\n"
+    bu_log("  -d\t\tOutput debug info to standard error.\n"
 	);
 
     bu_log("  -f\t\tFuse vertices that are close enough to be considered the\n"
-	   "\t\tsame. Can make the solidity detection more reliable.\n"
-	   "\t\tMay significantly increase processing time during import.\n"
+	   "\t\tsame. Can make the solidity detection more reliable, but\n"
+	   "\t\tmay significantly increase processing time during import.\n"
 	  );
 
     bu_log("  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"

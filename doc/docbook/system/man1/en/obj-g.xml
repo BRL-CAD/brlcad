@@ -86,9 +86,9 @@
       <term><option>-d</option></term>
       <listitem>
 	<para>
-	 Output debug information to stderr stream. An extremely large
-	 amount of information will be output. It is strongly
-	 suggested stderr be redirected to a file.
+	 Output debug information to standard error. Because <option>-d</option>
+	 results in an extremely large amount of information, it is strongly
+	 suggested that standard error be redirected to a file.
 	</para>
       </listitem>
     </varlistentry>
@@ -350,12 +350,6 @@
   <para>
     This software is Copyright (c) 2010-2014 United States Government as
     represented by the U.S. Army Research Laboratory.
-  </para>
-</refsection>
-
-<refsection xml:id="objg_bugs"><title>BUGS</title>
-
-  <para>
   </para>
 </refsection>
 
