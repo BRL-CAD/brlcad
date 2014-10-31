@@ -26,14 +26,12 @@
 
 #include "common.h"
 
-#include "bin.h"
-#include "bio.h"
+#include "bnetwork.h"
 
 #include <GL/gl.h>
 
 #include "tcl.h"
 #include "tk.h"
-
 
 #include "bu/parallel.h"
 #include "bu/time.h"
@@ -266,13 +264,12 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
 	return TCL_ERROR;
     }
 
-    if (resolution < 1) resolution = 1;
-    if (resolution > 20) {
-	resolution = 20;
+    CLAMP(resolution, 1, 20);
+    if (resolution == 20)
 	isst->gs = 0;
-    } else {
+    else
 	isst->gs = lrint(floor(isst->w * .05 * resolution));
-    }
+
     resize_isst(isst);
 
     return TCL_OK;

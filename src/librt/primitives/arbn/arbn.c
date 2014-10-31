@@ -33,7 +33,7 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "tcl.h"
 #include "bu/cv.h"
@@ -498,7 +498,7 @@ Sort_edges(struct arbn_edges *edges, size_t *edge_count, const struct rt_arbn_in
 	edge2 = 0;
 	while (!done) {
 	    size_t edge3;
-	    size_t tmp_v1, tmp_v2;
+	    size_t tmp;
 
 	    /* Look for out of order edge (edge2) */
 	    while (++edge2 < edge_count[face] &&
@@ -521,18 +521,18 @@ Sort_edges(struct arbn_edges *edges, size_t *edge_count, const struct rt_arbn_in
 
 	    if (edge2 != edge3) {
 		/* swap edge2 and edge3 */
-		tmp_v1 = edges[LOC(face, edge2)].v1_no;
-		tmp_v2 = edges[LOC(face, edge2)].v2_no;
+		tmp = edges[LOC(face, edge2)].v1_no;
 		edges[LOC(face, edge2)].v1_no = edges[LOC(face, edge3)].v1_no;
+		edges[LOC(face, edge3)].v1_no = tmp;
+		tmp = edges[LOC(face, edge2)].v2_no;
 		edges[LOC(face, edge2)].v2_no = edges[LOC(face, edge3)].v2_no;
-		edges[LOC(face, edge3)].v1_no = tmp_v1;
-		edges[LOC(face, edge3)].v2_no = tmp_v2;
+		edges[LOC(face, edge3)].v2_no = tmp;
 	    }
 	    if (edges[LOC(face, edge1)].v2_no == edges[LOC(face, edge2)].v2_no) {
 		/* reverse order of edge */
-		tmp_v1 = edges[LOC(face, edge2)].v1_no;
+		tmp = edges[LOC(face, edge2)].v1_no;
 		edges[LOC(face, edge2)].v1_no = edges[LOC(face, edge2)].v2_no;
-		edges[LOC(face, edge2)].v2_no = tmp_v1;
+		edges[LOC(face, edge2)].v2_no = tmp;
 	    }
 
 	    edge1 = edge2;

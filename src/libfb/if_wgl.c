@@ -37,12 +37,13 @@
 
 #ifdef IF_WGL
 
-#include "bin.h"
-#include "bio.h"
-
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
+
+/* winsock (bsocket.h) first, ordering matters */
+#include "bsocket.h"
+#include "bio.h"
 #include <windowsx.h>
 
 #ifdef HAVE_GL_GL_H
@@ -55,8 +56,6 @@
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/parallel.h"
-#include "vmath.h"
-#include "bn.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "fb.h"

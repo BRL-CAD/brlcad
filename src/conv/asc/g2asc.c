@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "bin.h"
+#include "bnetwork.h"
 #include "bio.h"
 
 #include "bu/debug.h"
@@ -1141,8 +1141,7 @@ char *strchop(char *str, size_t len)
     int warn = 0;
     char *ep;
 
-    if (len > sizeof(buf)-2)
-	len=sizeof(buf)-2;
+    CLAMP(len, 1, sizeof(buf)-2);
 
     ep = &buf[len-1];		/* Leave room for null */
     while (op < ep) {

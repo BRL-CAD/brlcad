@@ -966,9 +966,8 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 			long readval;
 
 			bytes_to_go = tex_len - bytes_read;
-			if (bytes_to_go > TXT_BUF_LEN * 3) {
-			    bytes_to_go = TXT_BUF_LEN * 3;
-			}
+			CLAMP(bytes_to_go, 0, TXT_BUF_LEN * 3);
+
 			nbytes = 0;
 			while (nbytes < bytes_to_go) {
 			    readval = read(tex_fd, &tex_buf[nbytes], bytes_to_go-nbytes);

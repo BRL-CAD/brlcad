@@ -38,7 +38,7 @@
 # include <strings.h>
 #endif
 
-#include "bin.h"
+#include "bsocket.h"
 #include "bio.h"
 
 #include "bu/color.h"

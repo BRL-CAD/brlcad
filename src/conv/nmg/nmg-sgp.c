@@ -135,7 +135,7 @@ main(int argc, char *argv[])
     tol.para = 1 - tol.perp;
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "do:vx:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "do:vx:X:h?")) != -1) {
 	switch (c) {
 	    case 'd':		/* increment debug level */
 		debug++;

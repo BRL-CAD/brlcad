@@ -29,11 +29,12 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bselect.h"
+#include "bsocket.h"
 
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
+#include <limits.h>
 
 #include "bu/getopt.h"
 #include "bu/log.h"

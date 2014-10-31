@@ -27,6 +27,8 @@
 
 #ifdef DM_OSGL
 
+//#define OSG_VIEWER_TEST 1
+
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -246,6 +248,32 @@ osgl_reshape(struct dm_internal *dmp, int width, int height)
     glLoadIdentity();
     glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
     glMatrixMode(mm);
+#ifdef OSG_VIEWER_TEST
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+
+    //struct osg_vars *privvars = (struct osg_vars *)dmp->dm_vars.priv_vars;
+    if (privvars->testviewer) {
+
+	osgViewer::Viewer::Windows    windows;
+	privvars->testviewer->getWindows(windows);
+	for(osgViewer::Viewer::Windows::iterator itr = windows.begin();
+		itr != windows.end();
+		++itr)
+	{
+	    (*itr)->setWindowRectangle(0, 0, dmp->dm_width, dmp->dm_height);
+	}
+
+	privvars->testviewer->getCamera()->setViewport(0, 0, dmp->dm_width, dmp->dm_height);
+
+	osg::Matrixf orthom;
+	orthom.makeIdentity();
+	orthom.makeOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+	privvars->testviewer->getCamera()->setProjectionMatrix(orthom);
+
+	privvars->testviewer->frame();
+
+    }
+#endif
 }
 
 
@@ -655,6 +683,17 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 
     Tk_CreateEventHandler(pubvars->xtkwin, PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
 
+#ifdef OSG_VIEWER_TEST
+    privvars->testviewer = new osgViewer::Viewer();
+    privvars->testviewer->setUpViewInWindow(0, 0, 1, 1);
+    privvars->testviewer->realize();
+
+    privvars->osg_root = new osg::Group();
+    privvars->testviewer->setSceneData(privvars->osg_root);
+    privvars->testviewer->getCamera()->setCullingMode(osg::CullSettings::NO_CULLING);
+
+    privvars->testviewer->frame();
+#endif
     return dmp;
 }
 
@@ -970,7 +1009,10 @@ osgl_drawEnd(struct dm_internal *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-
+#ifdef OSG_VIEWER_TEST
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+    privvars->testviewer->frame();
+#endif
     return TCL_OK;
 }
 
@@ -1070,6 +1112,40 @@ osgl_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 	bu_vls_free(&tmp_vls);
     }
 
+
+#ifdef OSG_VIEWER_TEST
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+    mat_t glmat;
+    glmat[0] = mat[0];
+    glmat[4] = mat[1];
+    glmat[8] = mat[2];
+    glmat[12] = mat[3];
+
+    glmat[1] = mat[4] * dmp->dm_aspect;
+    glmat[5] = mat[5] * dmp->dm_aspect;
+    glmat[9] = mat[6] * dmp->dm_aspect;
+    glmat[13] = mat[7] * dmp->dm_aspect;
+
+    glmat[2] = mat[8];
+    glmat[6] = mat[9];
+    glmat[10] = mat[10];
+    glmat[14] = mat[11];
+
+    glmat[3] = mat[12];
+    glmat[7] = mat[13];
+    glmat[11] = mat[14];
+    glmat[15] = mat[15];
+
+    osg::Matrix osg_mp(
+	    glmat[0], glmat[1], glmat[2],  glmat[3],
+	    glmat[4], glmat[5], glmat[6],  glmat[7],
+	    glmat[8], glmat[9], glmat[10], glmat[11],
+	    glmat[12], glmat[13], glmat[14], glmat[15]);
+
+    privvars->testviewer->getCamera()->getViewMatrix().set(osg_mp);
+    privvars->testviewer->frame();
+#endif
+
     return TCL_OK;
 }
 
@@ -1126,6 +1202,38 @@ osgl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat)
     glLoadIdentity();
     glLoadMatrixf(gtmat);
 
+#ifdef OSG_VIEWER_TEST
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+    mat_t glmat;
+    glmat[0] = mat[0];
+    glmat[4] = mat[1];
+    glmat[8] = mat[2];
+    glmat[12] = mat[3];
+
+    glmat[1] = mat[4];
+    glmat[5] = mat[5];
+    glmat[9] = mat[6];
+    glmat[13] = mat[7];
+
+    glmat[2] = mat[8];
+    glmat[6] = mat[9];
+    glmat[10] = -mat[10];
+    glmat[14] = -mat[11];
+
+    glmat[3] = mat[12];
+    glmat[7] = mat[13];
+    glmat[11] = mat[14];
+    glmat[15] = mat[15];
+
+    osg::Matrix osg_mp(
+	    glmat[0], glmat[1], glmat[2], glmat[3],
+	    glmat[4], glmat[5], glmat[6], glmat[7],
+	    glmat[8], glmat[9], glmat[10], glmat[11],
+	    glmat[12], glmat[13], glmat[14], glmat[15]);
+
+    privvars->testviewer->getCamera()->setProjectionMatrix(osg_mp);
+    privvars->testviewer->frame();
+#endif
     return TCL_OK;
 }
 
@@ -1301,7 +1409,7 @@ osgl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
     glDisable(GL_POLYGON_OFFSET_FILL);
 
     return TCL_OK;
-    }
+}
 
 
 HIDDEN int
@@ -1454,6 +1562,89 @@ osgl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 
     glPointSize(originalPointSize);
     glLineWidth(originalLineWidth);
+
+#ifdef OSG_VIEWER_TEST
+    struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+
+    glPointSize(originalPointSize);
+    glLineWidth(originalLineWidth);
+
+    // create the osg containers to hold our data.
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode(); // Maybe create this at drawBegin?
+    osg::ref_ptr<osg::Geometry> geom = new osg::Geometry();
+    osg::ref_ptr<osg::Vec3dArray> vertices = new osg::Vec3dArray;
+    osg::ref_ptr<osg::Vec3dArray> normals = new osg::Vec3dArray;
+
+    // Set line color
+    osg::Vec4Array* line_color = new osg::Vec4Array;
+    line_color->push_back(osg::Vec4(255, 255, 100, 70));
+    geom->setColorArray(line_color, osg::Array::BIND_OVERALL);
+
+    // Set wireframe state
+    osg::StateSet *geom_state = geom->getOrCreateStateSet();
+    osg::ref_ptr<osg::PolygonMode> geom_polymode = new osg::PolygonMode;
+    geom_polymode->setMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
+    geom_state->setAttributeAndModes(geom_polymode);
+    geom_state->setMode(GL_LIGHTING,osg::StateAttribute::OVERRIDE|osg::StateAttribute::OFF);
+
+    /* Viewing region is from -1.0 to +1.0 */
+    int begin = 0;
+    int nverts = 0;
+    first = 1;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+        int i;
+        int nused = tvp->nused;
+        int *cmd = tvp->cmd;
+        point_t *pt = tvp->pt;
+        for (i = 0; i < nused; i++, cmd++, pt++) {
+            switch (*cmd) {
+                case BN_VLIST_LINE_MOVE:
+                    /* Move, start line */
+                    if (first == 0) {
+                        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
+
+                    } else
+                        first = 0;
+
+                    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+                    normals->push_back(osg::Vec3(0.0f,0.0f,1.0f));
+                    begin += nverts;
+                    nverts = 1;
+                    break;
+                case BN_VLIST_POLY_START:
+                    normals->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+                    begin += nverts;
+                    nverts = 0;
+                    break;
+                case BN_VLIST_LINE_DRAW:
+                case BN_VLIST_POLY_MOVE:
+                case BN_VLIST_POLY_DRAW:
+                    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+                    ++nverts;
+                    break;
+                case BN_VLIST_POLY_END:
+                    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,begin,nverts));
+                    first = 1;
+                    break;
+                case BN_VLIST_POLY_VERTNORM:
+                    break;
+            }
+        }
+    }
+
+    if (first == 0) {
+        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
+    }
+
+    geom->setVertexArray(vertices);
+    geom->setNormalArray(normals, osg::Array::BIND_OVERALL);
+    //geom->setNormalBinding(osg::Geometry::BIND_PER_PRIMITIVE_SET);
+
+    geom->setUseDisplayList(true);
+    geode->addDrawable(geom);
+    privvars->osg_root->addChild(geode);
+#endif
+
 
     /* Need this back off for underlay with framebuffer */
     glDisable(GL_DEPTH_TEST);

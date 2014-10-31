@@ -48,46 +48,48 @@
 
 /* convenient macro for building regions */
 #define	MK_REGION(fp, headp, name, r_id, rgb) {\
-    if (mode == 1) {\
-	if (!quiet)\
-	    bu_log("Making region: %s (PLATE)\n", name); \
+	if (mode == 1) {\
+	    if (!quiet)\
+		bu_log("Making region: %s (PLATE)\n", name); \
 	    mk_comb(fp, name, &((headp)->l), 'P', (char *)NULL, (char *)NULL, rgb, r_id, 0, 1, 100, 0, 0, 0); \
-    } else if (mode == 2) {\
-	if (!quiet) \
-	    bu_log("Making region: %s (VOLUME)\n", name); \
+	} else if (mode == 2) {\
+	    if (!quiet) \
+		bu_log("Making region: %s (VOLUME)\n", name); \
 	    mk_comb(fp, name, &((headp)->l), 'V', (char *)NULL, (char *)NULL, rgb, r_id, 0, 1, 100, 0, 0, 0); \
-    } else {\
-	bu_log("Illegal mode (%d), while trying to make region (%s)\n", mode, name);\
-	bu_log("\tRegion not made!\n");\
-    }\
-}
+	} else {\
+	    bu_log("Illegal mode (%d), while trying to make region (%s)\n", mode, name);\
+	    bu_log("\tRegion not made!\n");\
+	}\
+    }
 
-#define	PUSH(ptr)	bu_ptbl_ins(&stack, (long *)ptr)
+
+#define	PUSH(ptr) bu_ptbl_ins(&stack, (long *)ptr)
 #define POP(structure, ptr) { \
-    if (BU_PTBL_END(&stack) == 0) \
-	ptr = (struct structure *)NULL; \
-    else { \
-	ptr = (struct structure *)BU_PTBL_GET(&stack, BU_PTBL_END(&stack)-1); \
-	bu_ptbl_rm(&stack, (long *)ptr); \
-    } \
-}
-#define	PUSH2(ptr)	bu_ptbl_ins(&stack2, (long *)ptr)
-#define POP2(structure, ptr)	{ \
-    if (BU_PTBL_END(&stack2) == 0) \
-	ptr = (struct structure *)NULL; \
-    else { \
-	ptr = (struct structure *)BU_PTBL_GET(&stack2, BU_PTBL_END(&stack2)-1); \
-	bu_ptbl_rm(&stack2, (long *)ptr); \
-    } \
-}
+	if (BU_PTBL_END(&stack) == 0) \
+	    ptr = (struct structure *)NULL; \
+	else { \
+	    ptr = (struct structure *)BU_PTBL_GET(&stack, BU_PTBL_END(&stack)-1); \
+	    bu_ptbl_rm(&stack, (long *)ptr); \
+	} \
+    }
+#define	PUSH2(ptr) bu_ptbl_ins(&stack2, (long *)ptr)
+#define POP2(structure, ptr) { \
+	if (BU_PTBL_END(&stack2) == 0) \
+	    ptr = (struct structure *)NULL; \
+	else { \
+	    ptr = (struct structure *)BU_PTBL_GET(&stack2, BU_PTBL_END(&stack2)-1); \
+	    bu_ptbl_rm(&stack2, (long *)ptr); \
+	} \
+    }
+
 
 #define	NAME_TREE_MAGIC	0x55555555
 #define CK_TREE_MAGIC(ptr) {\
-    if (!ptr)\
-	bu_log("ERROR: Null name_tree pointer, file=%s, line=%d\n", __FILE__, __LINE__);\
-    else if (ptr->magic != NAME_TREE_MAGIC)\
-	bu_log("ERROR: bad name_tree pointer (%p), file=%s, line=%d\n", (void *)ptr, __FILE__, __LINE__);\
-}
+	if (!ptr)\
+	    bu_log("ERROR: Null name_tree pointer, file=%s, line=%d\n", __FILE__, __LINE__);\
+	else if (ptr->magic != NAME_TREE_MAGIC)\
+	    bu_log("ERROR: bad name_tree pointer (%p), file=%s, line=%d\n", (void *)ptr, __FILE__, __LINE__);\
+    }
 
 
 #define	PLATE_MODE	1
@@ -128,6 +130,7 @@ struct fast4_color {
     unsigned char rgb[3];
 };
 
+
 struct cline {
     int pt1, pt2;
     int element_id;
@@ -160,6 +163,7 @@ struct hole_list {
     struct hole_list *next;
 };
 
+
 struct holes {
     int group;
     int component;
@@ -183,6 +187,7 @@ static int hex_faces[12][3]={
     { 0, 1, 2 }, /* 11 */
     { 0, 2, 3 }  /* 12 */
 };
+
 
 static struct fast4_color HeadColor;
 
@@ -331,6 +336,7 @@ plot_tri(int pt1, int pt2, int pt3)
     pdv_3cont(fp_plot, grid_points[pt3]);
     pdv_3cont(fp_plot, grid_points[pt1]);
 }
+
 
 static void
 Check_names(void)
@@ -522,9 +528,7 @@ Insert_region_name(char *name, int reg_id)
     new_ptr->name = bu_strdup(name);
     new_ptr->magic = NAME_TREE_MAGIC;
 
-    if (reg_id > region_id_max) {
-	region_id_max = reg_id;
-    }
+    V_MAX(region_id_max, reg_id);
 
     if (!name_root) {
 	name_root = new_ptr;
@@ -640,6 +644,7 @@ make_region_name(int g_id, int c_id)
     Insert_region_name(name, r_id);
 }
 
+
 static char *
 get_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 {
@@ -716,97 +721,6 @@ make_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 
     return name;
 }
-
-
-/*
-  static void
-  insert_int(int in)
-  {
-  int i;
-
-  for (i=0; i<int_list_count; i++) {
-  if (int_list[i] == in)
-  return;
-  }
-
-  if (int_list_count == int_list_length) {
-  if (int_list_length == 0)
-  int_list = (int *)bu_malloc(INT_LIST_BLOCK*sizeof(int), "insert_id: int_list");
-  else
-  int_list = (int *)bu_realloc((char *)int_list, (int_list_length + INT_LIST_BLOCK)*sizeof(int), "insert_id: int_list");
-  int_list_length += INT_LIST_BLOCK;
-  }
-
-  int_list[int_list_count] = in;
-  int_list_count++;
-
-  if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-  bu_log("ERROR: bu_mem_barriercheck failed in insert_int\n");
-  }
-*/
-
-
-/*
-  static void
-  Subtract_holes(struct wmember *head, int comp_id, int group_id)
-  {
-  struct holes *hole_ptr;
-  struct hole_list *list_ptr;
-
-  if (debug)
-  bu_log("Subtract_holes(comp_id=%d, group_id=%d)\n", comp_id, group_id);
-
-  hole_ptr = hole_root;
-  while (hole_ptr) {
-  if (hole_ptr->group == group_id && hole_ptr->component == comp_id) {
-  list_ptr = hole_ptr->holes;
-  while (list_ptr) {
-  struct name_tree *ptr;
-  int reg_id;
-
-  reg_id = list_ptr->group * 1000 + list_ptr->component;
-  ptr = name_root;
-  while (ptr && ptr->region_id != reg_id) {
-  int diff;
-
-  diff = reg_id - ptr->region_id;
-  if (diff > 0)
-  ptr = ptr->rright;
-  else if (diff < 0)
-  ptr = ptr->rleft;
-  }
-
-  bu_ptbl_reset(&stack);
-
-  while (ptr && ptr->region_id == reg_id) {
-
-  while (ptr && ptr->region_id == reg_id) {
-  PUSH(ptr);
-  ptr = ptr->rleft;
-  }
-  POP(name_tree, ptr);
-  if (!ptr ||  ptr->region_id != reg_id)
-  break;
-
-  if (debug)
-  bu_log("\tSubtracting %s\n", ptr->name);
-
-  if (mk_addmember(ptr->name, &(head->l), NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
-  bu_exit(1, "Subtract_holes: mk_addmember failed\n");
-
-  ptr = ptr->rright;
-  }
-
-  list_ptr = list_ptr->next;
-  }
-  break;
-  }
-  hole_ptr = hole_ptr->next;
-  }
-  if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-  bu_log("ERROR: bu_mem_barriercheck failed in subtract_holes\n");
-  }
-*/
 
 
 static void
@@ -1009,7 +923,7 @@ f4_do_name(void)
 
     /* eliminate trailing blanks */
     i = sizeof(comp_name) - i;
-    while ( --i >= 0 && isspace((int)comp_name[i]))
+    while (--i >= 0 && isspace((int)comp_name[i]))
 	comp_name[i] = '\0';
 
     /* copy comp_name to tmp_name while replacing white space with "_" */
@@ -1072,8 +986,8 @@ f4_do_grid(void)
 
     VSET(grid_points[grid_no], x*25.4, y*25.4, z*25.4);
 
-    if (grid_no > max_grid_no)
-	max_grid_no = grid_no;
+    V_MAX(max_grid_no, grid_no);
+
     if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
 	bu_log("ERROR: bu_mem_barriercheck failed at end of f4_do_grid\n");
 }
@@ -1334,10 +1248,8 @@ f4_do_ccone1(void)
     }
 
     /* BRL_CAD doesn't allow zero radius, so use a very small radius */
-    if (r1 < min_radius)
-	r1 = min_radius;
-    if (r2 < min_radius)
-	r2 = min_radius;
+    V_MAX(r1, min_radius);
+    V_MAX(r2, min_radius);
 
     VSUB2(height, grid_points[pt2], grid_points[pt1]);
 
@@ -1389,8 +1301,8 @@ f4_do_ccone1(void)
 	    dist_to_new_base = inner_r1 * length/(r1 - r2);
 	    inner_r1 = min_radius;
 	    VJOIN1(base, base, dist_to_new_base, height_dir);
-	} else if (inner_r1 < min_radius) {
-	    inner_r1 = min_radius;
+	} else {
+	    V_MAX(inner_r1, min_radius);
 	}
 
 	if (end2 == END_OPEN) {
@@ -1409,8 +1321,8 @@ f4_do_ccone1(void)
 	    dist_to_new_top = inner_r2 * length/(r2 - r1);
 	    inner_r2 = min_radius;
 	    VJOIN1(top, top, -dist_to_new_top, height_dir);
-	} else if (inner_r2 < min_radius) {
-	    inner_r2 = min_radius;
+	} else {
+	    V_MAX(inner_r2, min_radius);
 	}
 
 	VSUB2(inner_height, top, base);
@@ -1514,11 +1426,8 @@ f4_do_ccone2(void)
 	return;
     }
 
-    if (ro1 < min_radius)
-	ro1 = min_radius;
-
-    if (ro2 < min_radius)
-	ro2 = min_radius;
+    V_MAX(ro1, min_radius);
+    V_MAX(ro2, min_radius);
 
     BU_LIST_INIT(&r_head.l);
 
@@ -1536,11 +1445,8 @@ f4_do_ccone2(void)
 	    bu_exit(1, "mk_addmember failed!\n");
 	bu_free(name, "solid_name");
 
-	if (ri1 < min_radius)
-	    ri1 = min_radius;
-
-	if (ri2 < min_radius)
-	    ri2 = min_radius;
+	V_MAX(ri1, min_radius);
+	V_MAX(ri2, min_radius);
 
 	name = make_solid_name(CCONE2, element_id, comp_id, group_id, 2);
 	mk_trc_h(fpout, name, grid_points[pt1], height, ri1, ri2);
@@ -1684,10 +1590,8 @@ f4_do_ccone3(void)
     }
 
     for (i=0; i<4; i++) {
-	if (ro[i] < min_radius)
-	    ro[i] = min_radius;
-	if (ri[i] < min_radius)
-	    ri[i] = min_radius;
+	V_MAX(ro[i], min_radius);
+	V_MAX(ri[i], min_radius);
     }
 
     BU_LIST_INIT(&r_head.l);
@@ -1888,8 +1792,7 @@ f4_do_hole_wall(int type)
 	line[s_len] = '\0';
 
     s_len = strlen(line);
-    if (s_len > 80)
-	s_len = 80;
+    V_MIN(s_len, 80);
 
     bu_strlcpy(field, &line[8], sizeof(field));
     group = atoi(field);
@@ -3024,6 +2927,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

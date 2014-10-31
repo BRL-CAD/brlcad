@@ -32,7 +32,7 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "tcl.h"
 #include "bu/cv.h"
@@ -4709,8 +4709,7 @@ rt_bot_sync_func(struct rt_bot_internal *bot,
 		BU_LIST_DEQUEUE(&neighbor_tep->l);
 		BU_LIST_APPEND(&usedTep->l, &neighbor_tep->l);
 
-		/* Swap any two vertex references. Here we're swapping
-		 * 1 and 2. */
+		/* Swap any two vertex references. Here we're swapping 1 and 2. */
 		tmp_index = bot->faces[neighbor_tep->tri*3+1];
 		bot->faces[neighbor_tep->tri*3+1] = bot->faces[neighbor_tep->tri*3+2];
 		bot->faces[neighbor_tep->tri*3+2] = tmp_index;

@@ -635,15 +635,15 @@ RhinoConverter::create_all_bitmaps()
 	const std::string &bitmap_name = m_objects.get_name(bitmap.m_bitmap_id);
 
 	m_log.Print("Creating bitmap: %s\n", bitmap_name.c_str());
-	create_bitmap(&bitmap);
+	create_bitmap(bitmap);
     }
 }
 
 
 void
-RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
+RhinoConverter::create_bitmap(const ON_Bitmap &bmap)
 {
-    if (const ON_EmbeddedBitmap *bitmap = ON_EmbeddedBitmap::Cast(bmap)) {
+    if (const ON_EmbeddedBitmap *bitmap = ON_EmbeddedBitmap::Cast(&bmap)) {
 	const std::string filename = get_basename(w2string(bitmap->m_bitmap_filename));
 	const std::string path = extract_bitmap(m_output_dirname, filename, *bitmap);
 
@@ -658,8 +658,8 @@ RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 	std::remove(path.c_str());
     } else {
 	try {
-	    load_pix(w2string(bmap->m_bitmap_filename),
-		     bitmap->Width(), bitmap->Height());
+	    load_pix(w2string(bmap.m_bitmap_filename),
+		     bmap.Width(), bmap.Height());
 	} catch (const std::runtime_error &) {
 	    m_log.Print("Couldn't convert bitmap to pix\n");
 	    return;

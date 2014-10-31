@@ -2,6 +2,8 @@
 set(DM_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
+  ${BU_INCLUDE_DIRS}
+  ${BN_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${FB_INCLUDE_DIRS}
   ${X11_INCLUDE_DIR}
@@ -72,7 +74,7 @@ if(BRLCAD_ENABLE_QT)
   set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${Qt5Widgets_LIBRARIES})
 endif(BRLCAD_ENABLE_QT)
 
-if(BRLCAD_ENABLE_OSG)
+if(BRLCAD_ENABLE_OSG AND BRLCAD_ENABLE_TK)
   list(APPEND libdm_DEFINES DM_OSGL IF_OSGL)
   set(dmosg_srcs dm-osgl.cpp)
   set_property(SOURCE dm-osgl.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
@@ -82,7 +84,7 @@ if(BRLCAD_ENABLE_OSG)
     ${OSGVIEWER_LIBRARY}
     )
   set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${OSG_LIBRARIES})
-endif(BRLCAD_ENABLE_OSG)
+endif(BRLCAD_ENABLE_OSG AND BRLCAD_ENABLE_TK)
 
 
 set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
@@ -120,6 +122,10 @@ set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL
 BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libfb;${DM_X_LIBS};${DM_TKLIB};${DM_EXTRA_LIBS};${PNG_LIBRARY}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
+if(BRLCAD_ENABLE_OSG)
+  BRLCAD_ADDEXEC(osg-test osg-test.cpp "librt;libbu;${OSG_LIBRARIES}" NO_STRICT NO_INSTALL)
+endif(BRLCAD_ENABLE_OSG)
+
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
   add_dependencies(libdm tk)
 endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
@@ -134,7 +140,8 @@ set(libdm_ignore_files
   dm-qt.cpp
   dm-rtgl.c
   dm-tk.c
-  osg.cpp
+  osg_bob.cpp
+  osg-test.cpp
   TODO
   dm-glx.h
   dm-Null.h

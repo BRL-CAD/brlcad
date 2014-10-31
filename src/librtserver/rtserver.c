@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "bu/cv.h"
 #include "vmath.h"
@@ -40,6 +40,10 @@
 #include "rtgeom.h"
 #include "rtserver.h"
 
+#ifdef UNUSED
+#  undef UNUSED /* we conflict with jni_md.h */
+#endif
+
 #ifdef HAVE_JAVAVM_JNI_H
 #  include <JavaVM/jni.h>
 #elif defined(HAVE_JNI_H)
@@ -48,6 +52,11 @@
 #  include "ERROR: jni.h could not be found"
 #endif
 #include "RtServerImpl.h"
+
+/* just in case older versions of jni_md.h don't provide */
+#ifndef UNUSED
+#  define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
+#endif
 
 /* private structures not used outside this file */
 struct rtserver_rti {

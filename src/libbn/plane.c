@@ -466,10 +466,7 @@ bn_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fas
 	/* intersect or closest approach between a and b */
 	outside_segment = 0;
 	dist[1] = dist[1]/len_ab;
-	if (dist[1] < 0.0)
-	    dist[1] = 0.0;
-	if (dist[1] > 1.0)
-	    dist[1] = 1.0;
+	CLAMP(dist[1], 0.0, 1.0);
     } else {
 	outside_segment = 1;
 	dist[1] = dist[1]/len_ab;
@@ -2481,19 +2478,23 @@ bn_isect_lseg_rpp(fastf_t *a,
 
     for (i=0; i < 3; i++, pt++, dir++, max++, min++) {
 	if (*dir < -SQRT_SMALL_FASTF) {
-	    if ((sv = (*min - *pt) / *dir) < 0.0)
+	    sv = (*min - *pt) / *dir;
+	    if (sv < 0.0)
 		return 0;	/* MISS */
-	    if (maxdist > sv)
-		maxdist = sv;
-	    if (mindist < (st = (*max - *pt) / *dir))
-		mindist = st;
+
+	    st = (*max - *pt) / *dir;
+	    V_MAX(mindist, st);
+	    V_MIN(maxdist, sv);
+
 	}  else if (*dir > SQRT_SMALL_FASTF) {
-	    if ((st = (*max - *pt) / *dir) < 0.0)
+	    st = (*max - *pt) / *dir;
+	    if (st < 0.0)
 		return 0;	/* MISS */
-	    if (maxdist > st)
-		maxdist = st;
-	    if (mindist < ((sv = (*min - *pt) / *dir)))
-		mindist = sv;
+
+	    sv = (*min - *pt) / *dir;
+	    V_MAX(mindist, sv);
+	    V_MIN(maxdist, st);
+
 	} else {
 	    /* If direction component along this axis is NEAR 0,
 	     * (i.e., this ray is aligned with this axis), merely
@@ -2513,10 +2514,8 @@ bn_isect_lseg_rpp(fastf_t *a,
 	return 1;	/* HIT within box, no clipping needed */
 
     /* Don't grow one end of a contained segment */
-    if (mindist < 0)
-	mindist = 0;
-    if (maxdist > 1)
-	maxdist = 1;
+    V_MAX(mindist, 0);
+    V_MIN(maxdist, 1);
 
     /* Compute actual intercept points */
     VJOIN1(b, a, maxdist, diff);		/* b must go first */

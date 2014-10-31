@@ -706,8 +706,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	{
 	    if ( mat.shininess < 0 )
 		mat.shininess = 10;
-	    if ( mat.transparency < 0.0 )
-		mat.transparency = 0.0;
+	    V_MAX(mat.transparency, 0.0);
 
 	    fprintf( fp, "\t\t\t<Material diffuseColor=\"%g %g %g\" shininess=\"%g\" transparency=\"%g\" specularColor=\"%g %g %g\"/>\n", r, g, b, 1.0-exp(-(double)mat.shininess/20.0), mat.transparency, 1.0, 1.0, 1.0);
 	}

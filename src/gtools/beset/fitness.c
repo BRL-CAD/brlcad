@@ -141,12 +141,17 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     bu_semaphore_acquire(SEM_DIFF);
 
     while (pp != partHeadp && mp != fstate->ray[ap->a_user]) {
-	if (status & STATUS_PP)	xp = pp->pt_outhit->hit_dist;
-	else			xp = pp->pt_inhit->hit_dist;
-	if (status & STATUS_MP)	yp = mp->outhit_dist;
-	else			yp = mp->inhit_dist;
-	if (xp < 0) xp = 0;
-	if (yp < 0) yp = 0;
+	if (status & STATUS_PP)
+	    xp = pp->pt_outhit->hit_dist;
+	else
+	    xp = pp->pt_inhit->hit_dist;
+	if (status & STATUS_MP)
+	    yp = mp->outhit_dist;
+	else
+	    yp = mp->inhit_dist;
+
+	V_MAX(xp, 0);
+	V_MAX(yp, 0);
 
 	if (status==STATUS_EMPTY) {
 	    if (NEAR_EQUAL(xp, yp, 1.0e-5)) {
@@ -436,7 +441,8 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	/* scale fitness to the unon of the sources and individual's bounding boxes */
 	/* FIXME: sloppy
 	   fastf_t tmp = (diff[X]/fstate->gridSpacing[X]-1) * (diff[Y]/fstate->gridSpacing[Y] * diff[Z] - 1);
-	   if (tmp < 0) tmp = 0;*/
+	   V_MAX(tmp, 0);
+	*/
     }
 
 

@@ -29,12 +29,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#ifdef HAVE_WINSOCK_H
-#  include <process.h>
-#  include <winsock.h>
-#else
-#  include <sys/socket.h>
-#  include <netinet/in.h>		/* For htonl(), etc. */
+#include "bnetwork.h"
+#ifndef HAVE_WINSOCK_H
+#  include <sys/socket.h> /* TODO - should this be in bsocket.h? */
 #endif
 
 #include "tcl.h"

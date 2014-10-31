@@ -1041,6 +1041,17 @@ if(BRLCAD_ENABLE_OSG)
   endif(APPLE AND NOT BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_OSG)
 
+# Enable features requiring OpenCL
+option(BRLCAD_ENABLE_OPENCL "Enable features requiring OpenCL" OFF)
+mark_as_advanced(BRLCAD_ENABLE_OPENCL)
+if(BRLCAD_ENABLE_OPENCL)
+  find_package(OpenCL)
+  if(NOT OPENCL_FOUND)
+    message("OpenCL enablement requested, but OpenCL is not found - disabling")
+    set(BRLCAD_ENABLE_OPENCL OFF)
+  endif(NOT OPENCL_FOUND)
+endif(BRLCAD_ENABLE_OPENCL)
+
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to
@@ -1216,6 +1227,11 @@ mark_as_advanced(BRLCAD_ENABLE_SMP)
 if(BRLCAD_ENABLE_SMP)
   CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
 endif(BRLCAD_ENABLE_SMP)
+
+if(BRLCAD_HEADERS_OLD_COMPAT)
+  add_definitions(-DEXPOSE_FB_HEADER)
+  add_definitions(-DEXPOSE_DM_HEADER)
+endif(BRLCAD_HEADERS_OLD_COMPAT)
 
 #----------------------------------------------------------------------
 # Some generators in CMake support generating folders in IDEs for
@@ -2529,9 +2545,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif()
     if(NOT ${custtarget} MATCHES "buildtimedelta")
       get_target_property(not_in_all ${custtarget} EXCLUDE_FROM_ALL)
-      if(NOT not_in_all)
+      get_target_property(not_in_default ${custtarget} EXCLUDE_FROM_DEFAULT_BUILD)
+      if(NOT not_in_all AND NOT not_in_default)
 	add_dependencies(buildtimedelta ${custtarget})
-      endif(NOT not_in_all)
+      endif(NOT not_in_all AND NOT not_in_default)
     endif(NOT ${custtarget} MATCHES "buildtimedelta")
   endforeach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
   foreach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})

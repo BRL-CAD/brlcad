@@ -31,8 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "bin.h"
-#include "bio.h"
+#include "bnetwork.h"
 
 #include "vmath.h"
 #include "bu/cv.h"
@@ -584,7 +583,7 @@ solbld(void)
 	    VUNITIZE(n);
 
 	    /* Prevent illegal torii from floating point fuzz */
-	    if (rad2 > rad1) rad2 = rad1;
+	    V_MIN(rad2, rad1);
 
 	    mk_tor(ofp, NAME, center, n, rad1, rad2);
 	    break;
@@ -1102,7 +1101,7 @@ polyhbld(void)
 	cp = nxt_spc(cp);		/* skip the space */
 
 	fp->npts = (char)atoi(cp);
-	if (fp->npts > pg->max_npts) pg->max_npts = fp->npts;
+	CLAMP(pg->max_npts, fp->npts, pg->npoly * 3);
 
 	for (i = 0; i < 5*3; i++) {
 	    cp = nxt_spc(cp);

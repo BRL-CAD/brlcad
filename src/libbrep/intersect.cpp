@@ -35,6 +35,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "brep.h"
+#include "brep_except.h"
 
 // Whether to output the debug messages about b-rep intersections.
 #define DEBUG_BREP_INTERSECT 0
@@ -215,45 +216,71 @@ XEventProxy::Event(void)
     return event;
 }
 
-
 ON_Curve *
 sub_curve(const ON_Curve *in, double a, double b)
 {
-    // approach: call ON_Curve::Split() twice with a and b respectively.
-    // [min, max] -> [min, a] & [a, max]
-    // [a, max] -> [a, b] & [b, max]
-
     ON_Interval dom = in->Domain();
-    ON_Interval sub(a, b);
-    sub.MakeIncreasing();
-    if (!sub.Intersection(dom)) {
-	return NULL;
-    }
-    ON_Curve *left = NULL, *right = NULL, *three = NULL;
 
-    in->Split(sub.m_t[0], left, right);
-    if (left) {
-	delete left;
-    }
-    left = NULL;
-    if (!right) {
-	right = in->Duplicate();
+    if (b < a) {
+	std::swap(a, b);
     }
 
-    right->Split(sub.m_t[1], left, three);
-    if (!left) {
-	left = right->Duplicate();
+    ON_Curve *min_to_a = NULL, *a_to_max = NULL;
+    ON_Curve *a_to_b = NULL, *b_to_max = NULL;
+
+    if (a < dom.m_t[0] || b > dom.m_t[1]) {
+	throw InvalidInterval("sub_curve() interval outside curve domain\n");
     }
 
-    if (right) {
-	delete right;
+    // Note that ON_SQRT_EPSILON is the tolerance used inside
+    // ON_PolylineCurve::Split() to determine if the split parameter
+    // should snap to an end of the domain.
+    if (ON_NearZero(a - dom.m_t[0], ON_SQRT_EPSILON)) {
+	if (ON_NearZero(dom.m_t[1] - b, ON_SQRT_EPSILON)) {
+	    // a == dom.m_t[0] && b == dom.m_t[1]
+	    a_to_b = in->Duplicate();
+	} else {
+	    // a == dom.m_t[0] && b < dom.m_t[1]
+	    in->Split(b, a_to_b, b_to_max);
+	    delete b_to_max;
+	}
+	if (!a_to_b) {
+	    // dom.m_t[0] == a == b
+	    throw InvalidInterval("sub_curve() degenerate interval\n");
+	}
+	return a_to_b;
     }
-    if (three) {
-	delete three;
+
+    if (ON_NearZero(dom.m_t[1] - b, ON_SQRT_EPSILON)) {
+	// a > dom.m_t[0] && b == dom.m_t[1]
+	in->Split(a, min_to_a, a_to_b);
+	delete min_to_a;
+
+	if (!a_to_b) {
+	    // a == b == dom.m_t[1]
+	    throw InvalidInterval("sub_curve() degenerate interval\n");
+	}
+	return a_to_b;
     }
-    return left;
+
+    // a > dom.m_t[0] && b < dom.m_t[1]
+    in->Split(a, min_to_a, a_to_max);
+    delete min_to_a;
+
+    if (!a_to_max) {
+	// a == b == dom.m_t[1]
+	throw InvalidInterval("sub_curve() interval is degenerate\n");
+    }
+    a_to_max->Split(b, a_to_b, b_to_max);
+    delete a_to_max;
+    delete b_to_max;
+
+    if (!a_to_b) {
+	// a == b
+	throw InvalidInterval("sub_curve() interval is degenerate\n");
+    }
+    return a_to_b;
 }
-
 
 ON_Surface *
 sub_surface(const ON_Surface *in, int dir, double a, double b)
@@ -333,7 +360,11 @@ build_curve_root(const ON_Curve *curve, const ON_Interval *domain, Subcurve &roo
 	root.m_t = curve->Domain();
     } else {
 	// Call sub_curve() to get the curve segment inside the input domain.
-	root.m_curve = sub_curve(curve, domain->Min(), domain->Max());
+	try {
+	    root.m_curve = sub_curve(curve, domain->Min(), domain->Max());
+	} catch (InvalidInterval &e) {
+	    root.m_curve = NULL;
+	}
 	root.m_t = *domain;
     }
 
@@ -689,6 +720,7 @@ ON_Intersect(const ON_3dPoint &pointA,
     if (tol <= 0.0) {
 	tol = PCI_DEFAULT_TOLERANCE;
     }
+
     check_domain(curveB_domain, curveB.Domain(), "curveB_domain");
 
     Subcurve *root = treeB;
@@ -1197,8 +1229,22 @@ ON_Intersect(const ON_Curve *curveA,
 	    ON_Line lineA(curveA->PointAt(i->first->m_t.Min()), curveA->PointAt(i->first->m_t.Max()));
 	    ON_Line lineB(curveB->PointAt(i->second->m_t.Min()), curveB->PointAt(i->second->m_t.Max()));
 	    if (lineA.Direction().IsParallelTo(lineB.Direction())) {
-		if (lineA.MinimumDistanceTo(lineB) < isect_tol) {
-		    // report a ccx_overlap event
+		double min_dist = lineA.MinimumDistanceTo(lineB);
+
+		if (min_dist >= isect_tol) {
+		    // min_dist may not be accurate if endpoints are collinear
+		    double d1 = lineA.from.DistanceTo(lineB.from);
+		    double d2 = lineA.from.DistanceTo(lineB.to);
+		    double d3 = lineA.to.DistanceTo(lineB.from);
+		    double d4 = lineA.to.DistanceTo(lineB.to);
+
+		    min_dist = std::min(min_dist, std::min(d1, std::min(d2,
+				    std::min(d3, d4))));
+		}
+
+		if (min_dist < isect_tol) {
+		    // curves lie on the same line, may be single
+		    // point intersection or overlap
 		    double t_a1, t_a2, t_b1, t_b2;
 		    lineA.ClosestPointTo(lineB.from, &t_a1);
 		    lineA.ClosestPointTo(lineB.to, &t_a2);
@@ -1220,14 +1266,26 @@ ON_Intersect(const ON_Curve *curveA,
 		    if (t_b1 > t_b2) {
 			std::swap(t_b1, t_b2);
 		    }
-		    XEventProxy event(ON_X_EVENT::ccx_overlap);
-		    event.SetAPoints(lineA.PointAt(t_a1), lineA.PointAt(t_a2));
-		    event.SetBPoints(lineB.PointAt(t_b1), lineB.PointAt(t_b2));
-		    event.SetAOverlapRange(i->first->m_t.ParameterAt(t_a1),
-					   i->first->m_t.ParameterAt(t_a2));
-		    event.SetBOverlapRange(i->second->m_t.ParameterAt(t_b1),
-					   i->second->m_t.ParameterAt(t_b2));
-		    tmp_x.Append(event.Event());
+
+		    if (ON_NearZero(t_a2 - t_a1, t1_tol)) {
+			// point intersection
+			XEventProxy event(ON_X_EVENT::ccx_point);
+			event.SetAPoint(lineA.PointAt(t_a1));
+			event.SetBPoint(lineB.PointAt(t_b1));
+			event.SetACurveParameter(i->first->m_t.ParameterAt(t_a1));
+			event.SetBCurveParameter(i->second->m_t.ParameterAt(t_b1));
+			tmp_x.Append(event.Event());
+		    } else {
+			// overlap intersection
+			XEventProxy event(ON_X_EVENT::ccx_overlap);
+			event.SetAPoints(lineA.PointAt(t_a1), lineA.PointAt(t_a2));
+			event.SetBPoints(lineB.PointAt(t_b1), lineB.PointAt(t_b2));
+			event.SetAOverlapRange(i->first->m_t.ParameterAt(t_a1),
+					       i->first->m_t.ParameterAt(t_a2));
+			event.SetBOverlapRange(i->second->m_t.ParameterAt(t_b1),
+					       i->second->m_t.ParameterAt(t_b2));
+			tmp_x.Append(event.Event());
+		    }
 		}
 	    } else {
 		// not parallel, check intersection point
@@ -1693,7 +1751,7 @@ ON_Intersect(const ON_Curve *curveA,
 		if (line.Direction().IsPerpendicularTo(plane.Normal())) {
 		    // they are parallel (or overlap)
 
-		    if (line.InPlane(plane, isect_tol)) {
+		    if (plane.DistanceTo(line.from) < isect_tol) {
 			// The line is on the surface's plane. The end-points of
 			// the overlap must be the linecurve's end-points or
 			// the intersection between the linecurve and the boundary
@@ -1785,6 +1843,15 @@ ON_Intersect(const ON_Curve *curveA,
 			if (intersections == 0) {
 			    continue;
 			}
+
+			// if we have coincident intersection points,
+			// treat as point intersection, not overlap
+			if (intersections == 2 &&
+			    event.m_A[0].DistanceTo(event.m_A[1]) < isect_tol)
+			{
+			    intersections = 1;
+			}
+
 			if (intersections == 1) {
 			    event.m_type = ON_X_EVENT::csx_point;
 			    event.m_A[1] = event.m_A[0];
@@ -2412,6 +2479,11 @@ struct OverlapSegment {
     double m_min;   // minimum of the variable param in the iso-curve
     double m_max;   // maximum of the variable param in the iso-curve
 
+    OverlapSegment(void)
+    {
+	m_curve3d = m_curveA = m_curveB = NULL;
+    }
+
     ON_2dPoint Get2DParam(double t)
     {
 	return m_dir ? ON_2dPoint(t, m_fix) : ON_2dPoint(m_fix, t);
@@ -2571,7 +2643,7 @@ is_pt_in_surf_overlap(
     {
 	return false;
     }
-    bool surf1_pt_intersects_surf2, surfs_parallel_at_pt;
+    bool surf1_pt_intersects_surf2, surfs_parallel_at_pt = false;
     ON_ClassArray<ON_PX_EVENT> px_event;
 
     surf1_pt_intersects_surf2 = ON_Intersect(surf1->PointAt(surf1_pt.x, surf1_pt.y),
@@ -2858,8 +2930,11 @@ split_overlaps_at_intersections(
 	    if (params[i][j].x - params[i][start].x < isect_tol) {
 		continue;
 	    }
-	    ON_Curve *subcurveA = sub_curve(overlaps[i]->m_curveA, params[i][start].y, params[i][j].y);
-	    if (subcurveA == NULL) {
+	    ON_Curve *subcurveA = NULL;
+	    try {
+		subcurveA = sub_curve(overlaps[i]->m_curveA,
+			params[i][start].y, params[i][j].y);
+	    } catch (InvalidInterval &e) {
 		continue;
 	    }
 	    bool isvalid = false, isreversed = false;
@@ -3120,9 +3195,7 @@ ON_Intersect(const ON_Surface *surfA,
     if (overlap_tol < isect_tol) {
 	overlap_tol = 2.0 * isect_tol;
     }
-    if (fitting_tol < isect_tol) {
-	fitting_tol = isect_tol;
-    }
+    V_MAX(fitting_tol, isect_tol);
 
     check_domain(surfaceA_udomain, surfA->Domain(0), "surfaceA_udomain");
     check_domain(surfaceA_vdomain, surfA->Domain(1), "surfaceA_vdomain");
@@ -3264,43 +3337,52 @@ ON_Intersect(const ON_Surface *surfA,
 			if (curve_on_overlap_boundary) {
 			    // one side of it is shared and the other side is non-shared
 			    OverlapSegment *seg = new OverlapSegment;
-			    seg->m_curve3d = sub_curve(surf1_boundary_iso,
-				    event.m_a[0], event.m_a[1]);
-			    if (i < 2) {
-				seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
-				seg->m_curveB = overlap2d[k];
-			    } else {
-				seg->m_curveB = new ON_LineCurve(iso_pt1, iso_pt2);
-				seg->m_curveA = overlap2d[k];
-			    }
-			    seg->m_dir = surf_dir;
-			    seg->m_fix = surf1_knot;
-			    overlaps.Append(seg);
-			    if (j == 0 && surf1->IsClosed(surf_dir)) {
-				// Something like close_domain().
-				// If the domain is closed, the iso-curve on the
-				// first knot and the last knot is the same, so
-				// we don't need to compute the intersections twice.
-				seg = new OverlapSegment;
-				iso_pt1.x = knot_dir ? surf1_knots[knot_count - 1] : event.m_a[0];
-				iso_pt1.y = knot_dir ? event.m_a[0] : surf1_knots[knot_count - 1];
-				iso_pt2.x = knot_dir ? surf1_knots[knot_count - 1] : event.m_a[1];
-				iso_pt2.y = knot_dir ? event.m_a[1] : surf1_knots[knot_count - 1];
-				seg->m_curve3d = (*overlaps.Last())->m_curve3d->Duplicate();
+			    try {
+				seg->m_curve3d = sub_curve(surf1_boundary_iso,
+					event.m_a[0], event.m_a[1]);
 				if (i < 2) {
 				    seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
-				    seg->m_curveB = overlap2d[k]->Duplicate();
+				    seg->m_curveB = overlap2d[k];
 				} else {
 				    seg->m_curveB = new ON_LineCurve(iso_pt1, iso_pt2);
-				    seg->m_curveA = overlap2d[k]->Duplicate();
+				    seg->m_curveA = overlap2d[k];
 				}
 				seg->m_dir = surf_dir;
-				seg->m_fix = surf1_knots[knot_count - 1];
+				seg->m_fix = surf1_knot;
 				overlaps.Append(seg);
+				if (j == 0 && surf1->IsClosed(surf_dir)) {
+				    // Something like close_domain().
+				    // If the domain is closed, the iso-curve on the
+				    // first knot and the last knot is the same, so
+				    // we don't need to compute the intersections twice.
+				    seg = new OverlapSegment;
+				    iso_pt1.x = knot_dir ?
+					surf1_knots[knot_count - 1] : event.m_a[0];
+				    iso_pt1.y = knot_dir ?
+					event.m_a[0] : surf1_knots[knot_count - 1];
+				    iso_pt2.x = knot_dir ?
+					surf1_knots[knot_count - 1] : event.m_a[1];
+				    iso_pt2.y = knot_dir ?
+					event.m_a[1] : surf1_knots[knot_count - 1];
+				    seg->m_curve3d = (*overlaps.Last())->m_curve3d->Duplicate();
+				    if (i < 2) {
+					seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
+					seg->m_curveB = overlap2d[k]->Duplicate();
+				    } else {
+					seg->m_curveB = new ON_LineCurve(iso_pt1, iso_pt2);
+					seg->m_curveA = overlap2d[k]->Duplicate();
+				    }
+				    seg->m_dir = surf_dir;
+				    seg->m_fix = surf1_knots[knot_count - 1];
+				    overlaps.Append(seg);
+				}
+				// We set overlap2d[k] to NULL in case the curve
+				// is delete by the destructor of overlap2d. (See ~ON_CurveArray())
+				overlap2d[k] = NULL;
+			    } catch (InvalidInterval &e) {
+				bu_log("%s", e.what());
+				delete seg;
 			    }
-			    // We set overlap2d[k] to NULL in case the curve
-			    // is delete by the destructor of overlap2d. (See ~ON_CurveArray())
-			    overlap2d[k] = NULL;
 			}
 		    }
 		}
@@ -3976,62 +4058,60 @@ ON_Intersect(const ON_Surface *surfA,
     bu_free(endpt, "int");
 
     // generate ON_SSX_EVENTs
-    if (intersect3d.Count()) {
-	for (int i = 0; i < intersect3d.Count(); i++) {
-	    ON_SSX_EVENT event;
-	    event.m_curve3d = intersect3d[i];
-	    event.m_curveA = intersect_uvA[i];
-	    event.m_curveB = intersect_uvB[i];
-	    // Normalize the curves, so that their domains are the same,
-	    // which is required by ON_SSX_EVENT::IsValid().
-	    event.m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
-	    event.m_curveA->SetDomain(ON_Interval(0.0, 1.0));
-	    event.m_curveB->SetDomain(ON_Interval(0.0, 1.0));
-	    // If the surfA and surfB normals of all points are
-	    // parallel, the intersection is considered tangent.
-	    bool is_tangent = true;
-	    int count = std::min(event.m_curveA->SpanCount(), event.m_curveB->SpanCount());
-	    for (int j = 0; j <= count; ++j) {
-		ON_3dVector normalA, normalB;
-		ON_3dPoint pointA = event.m_curveA->PointAt((double)j / count);
-		ON_3dPoint pointB = event.m_curveB->PointAt((double)j / count);
-		if (!(surfA->EvNormal(pointA.x, pointA.y, normalA) &&
-		      surfB->EvNormal(pointB.x, pointB.y, normalB) &&
-		      normalA.IsParallelTo(normalB)))
-		{
-		    is_tangent = false;
-		    break;
-		}
+    for (int i = 0; i < intersect3d.Count(); i++) {
+	ON_SSX_EVENT event;
+	event.m_curve3d = intersect3d[i];
+	event.m_curveA = intersect_uvA[i];
+	event.m_curveB = intersect_uvB[i];
+	// Normalize the curves, so that their domains are the same,
+	// which is required by ON_SSX_EVENT::IsValid().
+	event.m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
+	event.m_curveA->SetDomain(ON_Interval(0.0, 1.0));
+	event.m_curveB->SetDomain(ON_Interval(0.0, 1.0));
+	// If the surfA and surfB normals of all points are
+	// parallel, the intersection is considered tangent.
+	bool is_tangent = true;
+	int count = std::min(event.m_curveA->SpanCount(), event.m_curveB->SpanCount());
+	for (int j = 0; j <= count; ++j) {
+	    ON_3dVector normalA, normalB;
+	    ON_3dPoint pointA = event.m_curveA->PointAt((double)j / count);
+	    ON_3dPoint pointB = event.m_curveB->PointAt((double)j / count);
+	    if (!(surfA->EvNormal(pointA.x, pointA.y, normalA) &&
+		  surfB->EvNormal(pointB.x, pointB.y, normalB) &&
+		  normalA.IsParallelTo(normalB)))
+	    {
+		is_tangent = false;
+		break;
 	    }
-	    if (is_tangent) {
-		// For ssx_tangent events, the 3d curve direction may
-		// not agree with SurfaceNormalA x SurfaceNormalB
-		// (See opennurbs/opennurbs_x.h).
-		ON_3dVector direction = event.m_curve3d->TangentAt(0);
-		ON_3dVector SurfaceNormalA = surfA->NormalAt(
-		    event.m_curveA->PointAtStart().x,
-		    event.m_curveA->PointAtStart().y);
-		ON_3dVector SurfaceNormalB = surfB->NormalAt(
-		    event.m_curveB->PointAtStart().x,
-		    event.m_curveB->PointAtStart().y);
-		if (ON_DotProduct(direction, ON_CrossProduct(SurfaceNormalB, SurfaceNormalA)) < 0) {
-		    if (!(event.m_curve3d->Reverse() &&
-			  event.m_curveA->Reverse() &&
-			  event.m_curveB->Reverse()))
-		    {
-			bu_log("warning: reverse failed. The direction of %d might be wrong.\n",
-			       x.Count() - original_count);
-		    }
-		}
-		event.m_type = ON_SSX_EVENT::ssx_tangent;
-	    } else {
-		event.m_type = ON_SSX_EVENT::ssx_transverse;
-	    }
-	    // ssx_overlap is handled above
-	    x.Append(event);
-	    // set the curves to NULL in case they are deleted by ~ON_SSX_EVENT()
-	    event.m_curve3d = event.m_curveA = event.m_curveB = NULL;
 	}
+	if (is_tangent) {
+	    // For ssx_tangent events, the 3d curve direction may
+	    // not agree with SurfaceNormalA x SurfaceNormalB
+	    // (See opennurbs/opennurbs_x.h).
+	    ON_3dVector direction = event.m_curve3d->TangentAt(0);
+	    ON_3dVector SurfaceNormalA = surfA->NormalAt(
+		event.m_curveA->PointAtStart().x,
+		event.m_curveA->PointAtStart().y);
+	    ON_3dVector SurfaceNormalB = surfB->NormalAt(
+		event.m_curveB->PointAtStart().x,
+		event.m_curveB->PointAtStart().y);
+	    if (ON_DotProduct(direction, ON_CrossProduct(SurfaceNormalB, SurfaceNormalA)) < 0) {
+		if (!(event.m_curve3d->Reverse() &&
+		      event.m_curveA->Reverse() &&
+		      event.m_curveB->Reverse()))
+		{
+		    bu_log("warning: reverse failed. The direction of %d might be wrong.\n",
+			   x.Count() - original_count);
+		}
+	    }
+	    event.m_type = ON_SSX_EVENT::ssx_tangent;
+	} else {
+	    event.m_type = ON_SSX_EVENT::ssx_transverse;
+	}
+	// ssx_overlap is handled above
+	x.Append(event);
+	// set the curves to NULL in case they are deleted by ~ON_SSX_EVENT()
+	event.m_curve3d = event.m_curveA = event.m_curveB = NULL;
     }
 
     for (int i = 0; i < single_pts.Count(); i++) {

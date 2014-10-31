@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
+#include <limits.h>
 #ifdef HAVE_SYS_TYPES_H
 /* for select */
 #  include <sys/types.h>
@@ -52,7 +53,7 @@
 #  include <poll.h>
 #endif
 
-#include "bselect.h"
+#include "bsocket.h"
 
 #include "tcl.h"
 #ifdef HAVE_TK

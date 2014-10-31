@@ -72,7 +72,7 @@ CMakeLists.txt"
 # public header
 echo "running public header private header checks..."
 
-for i in bio.h bin.h bselect.h ; do
+for i in bio.h bnetwork.h bsocket.h ; do
     if test ! -f "include/$i" ; then
 	echo "Unable to find include/$i, aborting"
 	exit 1
@@ -93,7 +93,7 @@ done
 echo "running bio.h redundancy check..."
 
 # limit our search to files containing bio.h
-FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'bio.h' | grep -v 'bio.h:' | sed 's/:.*//g' | sort | uniq`"
+FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'bio.h' | grep -v 'bio.h:' | grep -v 'obj_rules.cpp' | sed 's/:.*//g' | sort | uniq`"
 FOUND=
 for file in $FILES ; do
 
@@ -115,27 +115,27 @@ fi
 
 
 ###
-# TEST: make sure bin.h isn't redundant with system headers
-echo "running bin.h redundancy check..."
+# TEST: make sure bnetwork.h isn't redundant with system headers
+echo "running bnetwork.h redundancy check..."
 
-# limit our search to files containing bin.h
-FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'bin.h' | grep -v 'bin.h:' | sed 's/:.*//g' | sort | uniq`"
+# limit our search to files containing bnetwork.h
+FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'bnetwork.h' | grep -v 'bnetwork.h:' | sed 's/:.*//g' | sort | uniq`"
 FOUND=
 for file in $FILES ; do
 
     for header in "<winsock2.h>" "<netinet/in.h>" "<netinet/tcp.h>" "<arpa/inet.h>" ; do
 	MATCH="`grep -n -I -e '#[[:space:]]*include' $file /dev/null | grep $header`"
 	if test ! "x$MATCH" = "x" ; then
-	    echo "ERROR: #include $header is unnecessary with bin.h; remove $MATCH"
+	    echo "ERROR: #include $header is unnecessary with bnetwork.h; remove $MATCH"
 	    FOUND=1
 	    continue
 	fi
     done
 done
 if test "x$FOUND" = "x" ; then
-    echo "-> bin.h check succeeded"
+    echo "-> bnetwork.h check succeeded"
 else
-    echo "-> bin.h check FAILED"
+    echo "-> bnetwork.h check FAILED"
 # TODO: uncomment after fixing the existing cases
 #    FAILED="`expr $FAILED + 1`"
 fi
@@ -158,7 +158,7 @@ FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'common.
 #done`"
 
 LEXERS="schema.h obj_grammar.c obj_grammar.cpp obj_scanner.h points_scan.c script.c"
-EXEMPT="bin.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c $LEXERS"
+EXEMPT="bnetwork.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c $LEXERS"
 
 FOUND=
 for file in $FILES ; do
