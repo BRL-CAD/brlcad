@@ -44,6 +44,8 @@
 #endif
 #undef Success
 #include <QMainWindow>
+#undef Success
+#include <QGLWidget>
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -56,6 +58,7 @@ class BRLCAD_MainWindow : public QMainWindow
     Q_OBJECT
     public:
 	BRLCAD_MainWindow();
+	QGLWidget *canvas;
 
     private:
 

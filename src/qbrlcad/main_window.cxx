@@ -28,6 +28,11 @@
 BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
     setUnifiedTitleAndToolBarOnMac(true); // Not sure yet if we want this, but put it in as a reminder
+
+    // Set up OpenGL canvas
+    canvas = new QGLWidget();
+    setCentralWidget(canvas);
+
 }
 
 /*
