@@ -9,12 +9,21 @@ include_directories(
 
 add_definitions(${Qt5Widgets_DEFINITIONS})
 
-# We can't use the CMake global values for automoc et. al. because most of
-# BRL-CAD's targets are not Qt targets and we don't want to run the
-# automatic logic for all of them.
+# NOTE: We can't use the CMake global values for automoc et. al.
+# because most of BRL-CAD's targets are not Qt targets.  We don't
+# want to run the automatic moc logic for all of them.
 
+set(qbrlcad_srcs
+  main.cxx
+  main_window.cxx
+  )
 
-add_executable(qbrlcad main.cxx)
+set(moc_headers
+  main_window.h
+  )
+QT5_WRAP_CPP(moc_srcs ${moc_headers})
+
+add_executable(qbrlcad ${qbrlcad_srcs} ${moc_srcs})
 target_link_libraries(qbrlcad Qt5::Widgets libbu)
 install(TARGETS qbrlcad
   RUNTIME DESTINATION ${BIN_DIR}

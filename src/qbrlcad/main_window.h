@@ -1,4 +1,4 @@
-/*                        M A I N . C X X
+/*                   M A I N _ W I N D O W . H
  * BRL-CAD
  *
  * Copyright (c) 2014 United States Government as represented by
@@ -17,16 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main.cxx
+/** @file main_window.h
  *
- * Command line parsing and main application launching for qbrlcad
+ * Defines the toplevel window for the BRL-CAD GUI, into which other
+ * windows are docked.
  *
  */
 
-#include "brlcad_version.h"
-#include "bu/log.h"
-
-#include <iostream>
+#ifndef BRLCAD_MAINWINDOW_H
+#define BRLCAD_MAINWINDOW_H
 
 #if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
 #  pragma message "Disabling GCC float equality comparison warnings via pragma due to Qt headers..."
@@ -44,12 +43,7 @@
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 #undef Success
-#include <QCommandLineOption>
-#undef Success
-#include <QCommandLineParser>
-#undef Success
-#include <QApplication>
-#undef Success
+#include <QMainWindow>
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -57,38 +51,18 @@
 #  pragma clang diagnostic pop
 #endif
 
-#include "main_window.h"
-
-int main(int argc, char *argv[])
+class BRLCAD_MainWindow : public QMainWindow
 {
-    QApplication app(argc, argv);
-    BRLCAD_MainWindow mainWin;
+    Q_OBJECT
+    public:
+	BRLCAD_MainWindow();
 
-    QCoreApplication::setApplicationName("BRL-CAD");
-    QCoreApplication::setApplicationVersion(brlcad_version());
+    private:
 
-    QCommandLineParser parser;
-    parser.setApplicationDescription("BRL-CAD: Interactive Solid Modeling and Computer Aided Design");
-    parser.addHelpOption();
-    parser.addVersionOption();
+	QString db_file;
+};
 
-    QCommandLineOption consoleOption(QStringList() << "c" << "console", "Run in command-line mode");
-    parser.addOption(consoleOption);
-    parser.process(app);
-
-    const QStringList args = parser.positionalArguments();
-
-    if (args.size() > 1) {
-	bu_exit(1, "Error: Only one .g file at a time may be opened.");
-    }
-
-    if (parser.isSet(consoleOption)) {
-	bu_exit(1, "Console mode unimplemented\n");
-    } else {
-	mainWin.show();
-	return app.exec();
-    }
-}
+#endif /* BRLCAD_MAINWINDOW_H */
 
 /*
  * Local Variables:
@@ -100,3 +74,4 @@ int main(int argc, char *argv[])
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
