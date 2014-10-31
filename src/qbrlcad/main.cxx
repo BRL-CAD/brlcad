@@ -82,6 +82,9 @@ int main(int argc, char *argv[])
 	bu_exit(1, "Error: Only one .g file at a time may be opened.");
     }
 
+    // TODO - this needs to be a setting that is saved and restored
+    mainWin.resize(1100, 800);
+
     if (parser.isSet(consoleOption)) {
 	bu_exit(1, "Console mode unimplemented\n");
     } else {
