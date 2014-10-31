@@ -107,6 +107,12 @@ set(level_3_dirs
   mged
   )
 
+if(BRLCAD_ENABLE_QT)
+  set(level_3_dirs ${level_3_dirs} qbrlcad)
+else(BRLCAD_ENABLE_QT)
+  CMAKEFILES(qbrlcad)
+endif(BRLCAD_ENABLE_QT)
+
 # Now that we have our lists, proceed with the actual
 # add_subdirectory commands.  We find the highest
 # number used to define a level_#_dir, and add the
