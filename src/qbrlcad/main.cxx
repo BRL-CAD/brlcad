@@ -23,6 +23,9 @@
  *
  */
 
+#include "brlcad_version.h"
+#include "bu/log.h"
+
 #include <iostream>
 
 #if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
@@ -41,6 +44,10 @@
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 #undef Success
+#include <QCommandLineOption>
+#undef Success
+#include <QCommandLineParser>
+#undef Success
 #include <QApplication>
 #undef Success
 #include <QMainWindow>
@@ -56,8 +63,30 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QMainWindow mainWin;
 
-    mainWin.show();
-    return app.exec();
+    QCoreApplication::setApplicationName("BRL-CAD");
+    QCoreApplication::setApplicationVersion(brlcad_version());
+
+    QCommandLineParser parser;
+    parser.setApplicationDescription("BRL-CAD: Interactive Solid Modeling and Computer Aided Design");
+    parser.addHelpOption();
+    parser.addVersionOption();
+
+    QCommandLineOption consoleOption(QStringList() << "c" << "console", "Run in command-line mode");
+    parser.addOption(consoleOption);
+    parser.process(app);
+
+    const QStringList args = parser.positionalArguments();
+
+    if (args.size() > 1) {
+	bu_exit(1, "Error: Only one .g file at a time may be opened.");
+    }
+
+    if (parser.isSet(consoleOption)) {
+	bu_exit(1, "Console mode unimplemented\n");
+    } else {
+	mainWin.show();
+	return app.exec();
+    }
 }
 
 /*

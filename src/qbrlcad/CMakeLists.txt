@@ -1,6 +1,9 @@
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
+  ${BRLCAD_SOURCE_DIR}/include
+  ${BU_INCLUDE_DIRS}
   ${Qt5Widgets_INCLUDE_DIRS}
   )
 
@@ -12,7 +15,7 @@ add_definitions(${Qt5Widgets_DEFINITIONS})
 
 
 add_executable(qbrlcad main.cxx)
-target_link_libraries(qbrlcad Qt5::Widgets)
+target_link_libraries(qbrlcad Qt5::Widgets libbu)
 install(TARGETS qbrlcad
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
