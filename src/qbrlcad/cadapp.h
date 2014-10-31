@@ -2,10 +2,12 @@
 #define CADAPP_H
 
 #include <QApplication>
+#include <QObject>
+#include <QString>
 #include <QMap>
 #include <QSet>
 
-#include "qdbi.h"
+#include "raytrace.h"
 #include "ged.h"
 
 class CADApp : public QApplication
@@ -16,10 +18,24 @@ class CADApp : public QApplication
 	CADApp(int &argc, char *argv[]) :QApplication(argc, argv) {};
 	~CADApp() {};
 
-	int register_command(QString cmdname, ged_func_ptr func, int db_changer = 0, int view_changer = 0);
-	int exec_command(QDBI *dbi, QString *command, QString *result);
+	void initialize();
+	int open(QString filename);
+	void close();
 
-    public:
+	int register_command(QString cmdname, ged_func_ptr func, int db_changer = 0, int view_changer = 0);
+	int exec_command(QString *command, QString *result);
+
+	struct ged *gedp();
+	struct db_i *dbip();
+	struct rt_wdb *wdbp();
+
+    signals:
+	void db_change();  // TODO - need this to carry some information about what has changed, if possible...
+	void view_change();
+
+    private:
+	struct ged *ged_pointer;
+	QString current_file;
 	QMap<QString, ged_func_ptr> cmd_map;
 	QSet<QString> edit_cmds;  // Commands that potentially change the database contents */
 	QSet<QString> view_cmds;  // Commands that potentially change the view, but not the database contents */

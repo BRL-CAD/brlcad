@@ -23,8 +23,8 @@
  *
  */
 
-#include "brlcad_version.h"
 #include "bu/log.h"
+#include "brlcd_version.h"
 
 #include <iostream>
 
@@ -64,7 +64,8 @@ int main(int argc, char *argv[])
 {
     CADApp app(argc, argv);
     BRLCAD_MainWindow mainWin;
-    QDBI g_database;
+
+    app.initialize();
 
     QCoreApplication::setApplicationName("BRL-CAD");
     QCoreApplication::setApplicationVersion(brlcad_version());
@@ -84,7 +85,7 @@ int main(int argc, char *argv[])
 	bu_exit(1, "Error: Only one .g file at a time may be opened.");
     }
 
-    int ret = g_database.open(args.at(0));
+    int ret = app.open(args.at(0));
     if (ret) {
 	fprintf(stderr, "%s%s%s\n", "Error: opening ", (const char *)args.at(0).toLocal8Bit(), " failed.");
 	exit(1);
@@ -97,7 +98,7 @@ int main(int argc, char *argv[])
 	app.register_command(QString("ls"), ged_ls);
 	QString cmd("ls");
 	QString result;
-	app.exec_command(&g_database, &cmd, &result);
+	app.exec_command(&cmd, &result);
 	fprintf(stdout, "%s\n", (const char *)result.toLocal8Bit());
 	bu_exit(1, "Console mode unimplemented\n");
     } else {

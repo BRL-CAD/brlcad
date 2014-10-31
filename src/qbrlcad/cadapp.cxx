@@ -1,6 +1,96 @@
 #include "cadapp.h"
-#include "qdbi.h"
+#include <QFileInfo>
 #include "bu/malloc.h"
+#include "bu/file.h"
+#include "brlcad_version.h"
+
+void
+CADApp::initialize()
+{
+    ged_pointer = GED_NULL;
+}
+
+struct db_i *
+CADApp::dbip()
+{
+    return ged_pointer->ged_wdbp->dbip;
+}
+
+struct rt_wdb *
+CADApp::wdbp()
+{
+    return ged_pointer->ged_wdbp;
+}
+
+struct ged *
+CADApp::gedp()
+{
+    return ged_pointer;
+}
+
+int
+CADApp::open(QString filename)
+{
+    struct db_i *f_dbip = DBI_NULL;
+    struct rt_wdb *f_wdbp = RT_WDB_NULL;
+
+    /* First, make sure the file is actually there */
+    QFileInfo *fileinfo = new QFileInfo(filename);
+    if (!fileinfo->exists()) {
+        delete fileinfo;
+        return 1;
+    }
+
+    // TODO - somewhere in here we'll need to handle
+    // starting the conversion process if we don't have
+    // a .g file.  For now, punt unless it's a .g file.
+    if (fileinfo->suffix() != "g") {
+        std::cout << "unsupported file type!\n";
+        delete fileinfo;
+        return 1;
+    }
+
+    // If we've already got an open file, close it.
+    if (ged_pointer != GED_NULL) (void)close();
+
+    // Call BRL-CAD's database open function
+    if ((f_dbip = db_open(filename.toLocal8Bit(), DB_OPEN_READONLY)) == DBI_NULL) {
+        delete fileinfo;
+        return 2;
+    }
+
+    // Do the rest of the standard initialization steps
+    RT_CK_DBI(f_dbip);
+    if (db_dirbuild(f_dbip) < 0) {
+        db_close(f_dbip);
+        delete fileinfo;
+        return 3;
+    }
+    db_update_nref(f_dbip, &rt_uniresource);
+
+    f_wdbp = wdb_dbopen(f_dbip, RT_WDB_TYPE_DB_DISK);
+    BU_GET(ged_pointer, struct ged);
+    GED_INIT(ged_pointer, f_wdbp);
+
+    current_file = filename;
+
+    // Inform the world the database has changed
+    emit db_change();
+
+    delete fileinfo;
+    return 0;
+}
+
+void
+CADApp::close()
+{
+    if (ged_pointer && ged_pointer != GED_NULL) {
+        ged_close(ged_pointer);
+        BU_PUT(ged_pointer, struct ged);
+    }
+    ged_pointer = GED_NULL;
+    current_file.clear();
+}
 
 int
 CADApp::register_command(QString cmdname, ged_func_ptr func, int db_changer, int view_changer)
@@ -18,20 +108,26 @@ CADApp::register_command(QString cmdname, ged_func_ptr func, int db_changer, int
 }
 
 int
-CADApp::exec_command(QDBI *dbi, QString *command, QString *result)
+CADApp::exec_command(QString *command, QString *result)
 {
     int ret = 0;
-    if (dbi->gedp != GED_NULL && dbi && command && command->length() > 0) {
+    if (ged_pointer != GED_NULL && command && command->length() > 0) {
 	char *lcmd = bu_strdup(command->toLocal8Bit());
 	char **largv = (char **)bu_calloc(command->length()/2+1, sizeof(char *), "cmd_eval argv");
 	int largc = bu_argv_from_string(largv, command->length()/2, lcmd);
 
 	QMap<QString, ged_func_ptr>::iterator cmd_itr = cmd_map.find(QString(largv[0]));
 	if (cmd_itr != cmd_map.end()) {
-	    bu_vls_trunc(dbi->gedp->ged_result_str, 0);
-	    ret = (*(cmd_itr.value()))(dbi->gedp, largc, (const char **)largv);
-	    if (result && bu_vls_strlen(dbi->gedp->ged_result_str) > 0) {
-		*result = QString(QLatin1String(bu_vls_addr(dbi->gedp->ged_result_str)));
+	    bu_vls_trunc(ged_pointer->ged_result_str, 0);
+	    ret = (*(cmd_itr.value()))(ged_pointer, largc, (const char **)largv);
+	    if (result && bu_vls_strlen(ged_pointer->ged_result_str) > 0) {
+		*result = QString(QLatin1String(bu_vls_addr(ged_pointer->ged_result_str)));
+	    }
+	    if (edit_cmds.find(QString(largv[0])) != edit_cmds.end()) {
+		emit db_change();
+	    }
+	    if (view_cmds.find(QString(largv[0])) != edit_cmds.end()) {
+		emit view_change();
 	    }
 	} else {
 	    *result = QString("command not found");

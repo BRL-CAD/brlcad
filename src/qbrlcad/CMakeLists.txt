@@ -19,13 +19,11 @@ set(qbrlcad_srcs
   main.cxx
   main_window.cxx
   cadapp.cxx
-  qdbi.cxx
   )
 
 set(moc_headers
   main_window.h
   cadapp.h
-  qdbi.h
   )
 QT5_WRAP_CPP(moc_srcs ${moc_headers})
 
