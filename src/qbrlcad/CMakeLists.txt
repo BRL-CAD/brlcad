@@ -19,11 +19,15 @@ set(qbrlcad_srcs
   main.cxx
   main_window.cxx
   cadapp.cxx
+  cadconsole.cxx
+  pqConsoleWidget.cxx
   )
 
 set(moc_headers
   main_window.h
   cadapp.h
+  cadconsole.h
+  pqConsoleWidget.h
   )
 QT5_WRAP_CPP(moc_srcs ${moc_headers})
 

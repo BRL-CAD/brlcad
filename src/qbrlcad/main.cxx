@@ -59,6 +59,7 @@
 
 #include "main_window.h"
 #include "cadapp.h"
+#include "cadconsole.h"
 
 int main(int argc, char *argv[])
 {
@@ -95,14 +96,17 @@ int main(int argc, char *argv[])
     // TODO - this needs to be a setting that is saved and restored
     mainWin.resize(1100, 800);
 
+    app.register_command(QString("ls"), ged_ls);
+
     if (parser.isSet(consoleOption)) {
-	app.register_command(QString("ls"), ged_ls);
 	QString cmd("ls");
 	QString result;
 	app.exec_command(&cmd, &result);
 	fprintf(stdout, "%s\n", (const char *)result.toLocal8Bit());
 	bu_exit(1, "Console mode unimplemented\n");
     } else {
+	CADConsole *console = new CADConsole(mainWin.console_dock);
+	mainWin.console_dock->setWidget(console);
 	mainWin.show();
 	return app.exec();
     }
