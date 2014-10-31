@@ -92,7 +92,7 @@ fonsDrawText() {
 			updateTexture()
 			render()
 		}
-		add glyph to interal draw buffer
+		add glyph to internal draw buffer
 	}
 	updateTexture()
 	render()
