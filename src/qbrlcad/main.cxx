@@ -58,11 +58,13 @@
 #endif
 
 #include "main_window.h"
+#include "cadapp.h"
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    CADApp app(argc, argv);
     BRLCAD_MainWindow mainWin;
+    QDBI g_database;
 
     QCoreApplication::setApplicationName("BRL-CAD");
     QCoreApplication::setApplicationVersion(brlcad_version());
@@ -82,10 +84,21 @@ int main(int argc, char *argv[])
 	bu_exit(1, "Error: Only one .g file at a time may be opened.");
     }
 
+    int ret = g_database.open(args.at(0));
+    if (ret) {
+	fprintf(stderr, "%s%s%s\n", "Error: opening ", (const char *)args.at(0).toLocal8Bit(), " failed.");
+	exit(1);
+    }
+
     // TODO - this needs to be a setting that is saved and restored
     mainWin.resize(1100, 800);
 
     if (parser.isSet(consoleOption)) {
+	app.register_command(QString("ls"), ged_ls);
+	QString cmd("ls");
+	QString result;
+	app.exec_command(&g_database, &cmd, &result);
+	fprintf(stdout, "%s\n", (const char *)result.toLocal8Bit());
 	bu_exit(1, "Console mode unimplemented\n");
     } else {
 	mainWin.show();

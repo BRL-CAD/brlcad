@@ -3,6 +3,8 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
   ${BRLCAD_SOURCE_DIR}/include
+  ${GED_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
   ${Qt5Widgets_INCLUDE_DIRS}
   )
@@ -16,16 +18,20 @@ add_definitions(${Qt5Widgets_DEFINITIONS})
 set(qbrlcad_srcs
   main.cxx
   main_window.cxx
+  cadapp.cxx
+  qdbi.cxx
   )
 
 set(moc_headers
   main_window.h
+  cadapp.h
+  qdbi.h
   )
 QT5_WRAP_CPP(moc_srcs ${moc_headers})
 
 add_executable(qbrlcad ${qbrlcad_srcs} ${moc_srcs})
 qt5_use_modules(qbrlcad Widgets OpenGL)
-target_link_libraries(qbrlcad libbu ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
+target_link_libraries(qbrlcad libbu librt libged ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
 install(TARGETS qbrlcad
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
