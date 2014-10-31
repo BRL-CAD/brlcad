@@ -354,8 +354,14 @@ static int occlusion_miss(struct application *ap)
 
 static int occludes(struct application *ap, struct cell *here)
 {
-    int cpu = ap->a_resource->re_cpu;
+    int cpu;
     int oc_hit = 0;
+
+    if (ap->a_resource->re_cpu > 0)
+	cpu = ap->a_resource->re_cpu - 1;
+    else
+	cpu = ap->a_resource->re_cpu;
+
     /*
      * Test the hit distance on the second geometry.  If the second
      * geometry is closer, do not color pixel
@@ -693,8 +699,13 @@ void view_pixel(struct application *UNUSED(ap))
 void
 view_eol(struct application *ap)
 {
-    int cpu = ap->a_resource->re_cpu;
+    int cpu;
     int i;
+
+    if (ap->a_resource->re_cpu > 0)
+	cpu = ap->a_resource->re_cpu - 1;
+    else
+	cpu = ap->a_resource->re_cpu;
 
     if (overlay) {
 	/*
@@ -1256,7 +1267,10 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     memset(&below, 0, sizeof(struct cell));
     memset(&left, 0, sizeof(struct cell));
 
-    cpu = ap->a_resource->re_cpu;
+    if (ap->a_resource->re_cpu > 0)
+	cpu = ap->a_resource->re_cpu - 1;
+    else
+	cpu = ap->a_resource->re_cpu;
 
     if (PartHeadp == NULL || segp == NULL) {
 	/* The main shotline missed.  pack the application struct
