@@ -46,6 +46,8 @@
 #include <QMainWindow>
 #undef Success
 #include <QGLWidget>
+#undef Success
+#include <QDockWidget>  //TODO - this will need to be replaced with a customized version that makes detached windows full toplevel windows
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -58,7 +60,11 @@ class BRLCAD_MainWindow : public QMainWindow
     Q_OBJECT
     public:
 	BRLCAD_MainWindow();
+
 	QGLWidget *canvas;
+	QDockWidget *console_dock;
+	QDockWidget *tree_dock;
+	QDockWidget *panel_dock;
 
     private:
 

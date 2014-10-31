@@ -33,6 +33,24 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     canvas = new QGLWidget();
     setCentralWidget(canvas);
 
+    console_dock = new QDockWidget("Console", this);
+    addDockWidget(Qt::BottomDockWidgetArea, console_dock);
+    console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);
+
+    tree_dock = new QDockWidget("Hierarchy", this);
+    addDockWidget(Qt::LeftDockWidgetArea, tree_dock);
+    tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+
+    panel_dock = new QDockWidget("Edit Panel", this);
+    addDockWidget(Qt::RightDockWidgetArea, panel_dock);
+    panel_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+
+    /* Because the console usually doesn't need a huge amount of
+     * horizontal space and the tree can use all the vertical space
+     * it can get, give the bottom corners to the left/right docks */
+    setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+    setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
+
 }
 
 /*
