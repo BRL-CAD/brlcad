@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 
+#include "fb_private.h"
 #include "fb.h"
 #include "fb/fb_qt.h"
 #include "bu/malloc.h"
