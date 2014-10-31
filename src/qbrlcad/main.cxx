@@ -97,6 +97,8 @@ int main(int argc, char *argv[])
     mainWin.resize(1100, 800);
 
     app.register_command(QString("ls"), ged_ls);
+    app.register_command(QString("tops"), ged_tops);
+    app.register_command(QString("search"), ged_search);
 
     if (parser.isSet(consoleOption)) {
 	QString cmd("ls");
