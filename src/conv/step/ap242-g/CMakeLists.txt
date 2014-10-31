@@ -82,13 +82,13 @@ set(ap242g_SOURCES
   ../step-g/FaceBound.cpp
   ../step-g/FaceOuterBound.cpp
   ../step-g/FaceSurface.cpp
-  ../step-g/Factory.cpp
+  Factory.cpp
   ../step-g/FoundedItem.cpp
   ../step-g/FunctionallyDefinedTransformation.cpp
   ../step-g/GeometricRepresentationContext.cpp
   ../step-g/GeometricRepresentationItem.cpp
   ../step-g/GlobalUncertaintyAssignedContext.cpp
-  ../step-g/GlobalUnitAssignedContext.cpp
+  GlobalUnitAssignedContext.cpp
   ../step-g/Hyperbola.cpp
   ../step-g/IntersectionCurve.cpp
   ../step-g/ItemDefinedTransformation.cpp
@@ -109,8 +109,8 @@ set(ap242g_SOURCES
   ../step-g/MassConversionBasedUnit.cpp
   ../step-g/MassSiUnit.cpp
   ../step-g/MassUnit.cpp
-  ../step-g/MeasureValue.cpp
-  ../step-g/MeasureWithUnit.cpp
+  MeasureValue.cpp
+  MeasureWithUnit.cpp
   ../step-g/MechanicalContext.cpp
   ../step-g/NamedUnit.cpp
   ../step-g/OffsetCurve2D.cpp
@@ -146,7 +146,7 @@ set(ap242g_SOURCES
   ../step-g/ProductDefinitionShape.cpp
   ../step-g/ProductRelatedProductCategory.cpp
   ../step-g/PropertyDefinition.cpp
-  ../step-g/PropertyDefinitionRepresentation.cpp
+  PropertyDefinitionRepresentation.cpp
   ../step-g/QuasiUniformCurve.cpp
   ../step-g/QuasiUniformSurface.cpp
   ../step-g/RatioContextDependentUnit.cpp
@@ -170,7 +170,7 @@ set(ap242g_SOURCES
   ../step-g/RepresentationItem.cpp
   ../step-g/RepresentationRelationship.cpp
   ../step-g/RepresentationRelationshipWithTransformation.cpp
-  ../step-g/RepresentedDefinition.cpp
+  RepresentedDefinition.cpp
   ../step-g/STEPEntity.cpp
   ../step-g/SeamCurve.cpp
   ../step-g/ShapeAspect.cpp
