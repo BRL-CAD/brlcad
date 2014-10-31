@@ -24,7 +24,7 @@
  */
 
 #include "bu/log.h"
-#include "brlcd_version.h"
+#include "brlcad_version.h"
 
 #include <iostream>
 

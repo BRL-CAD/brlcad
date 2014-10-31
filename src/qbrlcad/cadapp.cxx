@@ -2,7 +2,6 @@
 #include <QFileInfo>
 #include "bu/malloc.h"
 #include "bu/file.h"
-#include "brlcad_version.h"
 
 void
 CADApp::initialize()
