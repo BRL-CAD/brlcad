@@ -85,10 +85,11 @@ int main(int argc, char *argv[])
 	bu_exit(1, "Error: Only one .g file at a time may be opened.");
     }
 
-    int ret = app.open(args.at(0));
-    if (ret) {
-	fprintf(stderr, "%s%s%s\n", "Error: opening ", (const char *)args.at(0).toLocal8Bit(), " failed.");
-	exit(1);
+    if (args.size() == 1) {
+	if (app.open(args.at(0))) {
+	    fprintf(stderr, "%s%s%s\n", "Error: opening ", (const char *)args.at(0).toLocal8Bit(), " failed.");
+	    exit(1);
+	}
     }
 
     // TODO - this needs to be a setting that is saved and restored
