@@ -116,6 +116,7 @@ CADApp::closedb()
     current_file.clear();
 }
 
+// TODO - make the type an enum or bit flag or something, instead of multiple integers...
 int
 CADApp::register_command(QString cmdname, ged_func_ptr func, int db_changer, int view_changer)
 {
@@ -142,17 +143,24 @@ CADApp::exec_command(QString *command, QString *result)
 
 	QMap<QString, ged_func_ptr>::iterator cmd_itr = cmd_map.find(QString(largv[0]));
 	if (cmd_itr != cmd_map.end()) {
+	    int is_edit_cmd = 0;
+	    int is_view_cmd = 0;
+	    if (edit_cmds.find(QString(largv[0])) != edit_cmds.end()) is_edit_cmd = 1;
+	    if (view_cmds.find(QString(largv[0])) != view_cmds.end()) is_view_cmd = 1;
+	    // TODO - launch commands in a separate thread.  Need some locks:
+	    // edit_lock - view and regular commands can run, but not other edit commands until the locking command is done
+	    // view_lock - a command is trying to update the view already, wait for it (maybe override it?)
+	    // all_lock - waiting on a normal command - need some sort of "special" command to abort long running commands
+	    // io_lock? - need to figure out how to keep output on console at least semi coherent
+	    //
+	    // also use a timer - wait at least a second or two before allowing commands in so most simple cases will be linear.  Also need some way to make sure scripts execute serially...
 	    bu_vls_trunc(ged_pointer->ged_result_str, 0);
 	    ret = (*(cmd_itr.value()))(ged_pointer, largc, (const char **)largv);
 	    if (result && bu_vls_strlen(ged_pointer->ged_result_str) > 0) {
 		*result = QString(QLatin1String(bu_vls_addr(ged_pointer->ged_result_str)));
 	    }
-	    if (edit_cmds.find(QString(largv[0])) != edit_cmds.end()) {
-		emit db_change();
-	    }
-	    if (view_cmds.find(QString(largv[0])) != edit_cmds.end()) {
-		emit view_change();
-	    }
+	    if (is_edit_cmd) emit db_change();
+	    if (is_view_cmd) emit view_change();
 	} else {
 	    *result = QString("command not found");
 	    ret = -1;

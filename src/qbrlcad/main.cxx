@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion(brlcad_version());
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("BRL-CAD: Interactive Solid Modeling and Computer Aided Design");
+    parser.setApplicationDescription("BRL-CAD - an Open Source Solid Modeling Computer Aided Design System");
     parser.addHelpOption();
     parser.addVersionOption();
 
