@@ -50,6 +50,11 @@
 #undef Success
 #include <QApplication>
 #undef Success
+#include <QTreeView>
+#undef Success
+#include <QHeaderView>
+#undef Success
+#include <QObject>
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -60,6 +65,7 @@
 #include "main_window.h"
 #include "cadapp.h"
 #include "cadconsole.h"
+#include "cadtreemodel.h"
 
 int main(int argc, char *argv[])
 {
@@ -107,8 +113,18 @@ int main(int argc, char *argv[])
 	fprintf(stdout, "%s\n", (const char *)result.toLocal8Bit());
 	bu_exit(1, "Console mode unimplemented\n");
     } else {
+	/* This setup should probably go in main_window.cxx... */
 	CADConsole *console = new CADConsole(mainWin.console_dock);
 	mainWin.console_dock->setWidget(console);
+	CADTreeModel *treemodel = new CADTreeModel();
+	QTreeView *treeview = new QTreeView(mainWin.tree_dock);
+	mainWin.tree_dock->setWidget(treeview);
+	treeview->setModel(treemodel);
+	treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+	treeview->header()->setStretchLastSection(false);
+	QObject::connect(&app, SIGNAL(db_change()), treemodel, SLOT(refresh()));
+	treemodel->populate(app.dbip());
+
 	mainWin.show();
 	return app.exec();
     }

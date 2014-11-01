@@ -37,12 +37,15 @@ CADApp::initialize()
 struct db_i *
 CADApp::dbip()
 {
+    if (!ged_pointer || ged_pointer == GED_NULL) return DBI_NULL;
+    if (!ged_pointer->ged_wdbp || ged_pointer->ged_wdbp == RT_WDB_NULL) return DBI_NULL;
     return ged_pointer->ged_wdbp->dbip;
 }
 
 struct rt_wdb *
 CADApp::wdbp()
 {
+    if (!ged_pointer || ged_pointer == GED_NULL) return RT_WDB_NULL;
     return ged_pointer->ged_wdbp;
 }
 
@@ -147,13 +150,13 @@ CADApp::exec_command(QString *command, QString *result)
 	    int is_view_cmd = 0;
 	    if (edit_cmds.find(QString(largv[0])) != edit_cmds.end()) is_edit_cmd = 1;
 	    if (view_cmds.find(QString(largv[0])) != view_cmds.end()) is_view_cmd = 1;
-	    // TODO - launch commands in a separate thread.  Need some locks:
-	    // edit_lock - view and regular commands can run, but not other edit commands until the locking command is done
-	    // view_lock - a command is trying to update the view already, wait for it (maybe override it?)
-	    // all_lock - waiting on a normal command - need some sort of "special" command to abort long running commands
-	    // io_lock? - need to figure out how to keep output on console at least semi coherent
-	    //
-	    // also use a timer - wait at least a second or two before allowing commands in so most simple cases will be linear.  Also need some way to make sure scripts execute serially...
+	    // TODO - need a way to launch commands in a separate thread, or some other non-blocking
+	    // fashion as far as the rest of the gui is concerned.  Also need to support Ctrl-C
+	    // to abort a command on the terminal.  Don't worry about allowing other commands to
+	    // execute from the command prompt while one is running, since that will confuse the
+	    // text output quite a lot.  However, view commands should return while allowing long
+	    // drawing routines to execute in the background - using something like Z or B should
+	    // abort drawing and clear the view, but otherwise let it complete...
 	    bu_vls_trunc(ged_pointer->ged_result_str, 0);
 	    ret = (*(cmd_itr.value()))(ged_pointer, largc, (const char **)largv);
 	    if (result && bu_vls_strlen(ged_pointer->ged_result_str) > 0) {
