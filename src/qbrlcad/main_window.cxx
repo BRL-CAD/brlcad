@@ -27,10 +27,11 @@
 
 BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
-    setUnifiedTitleAndToolBarOnMac(true); // Not sure yet if we want this, but put it in as a reminder
+    //setUnifiedTitleAndToolBarOnMac(true); // Not sure yet if we want this, but put it in as a reminder
 
     // Create Menus
 
+    menuBar()->setNativeMenuBar(false);// This solves the disappearing menubar problem on Ubuntu + fluxbox - suspect Unity's "global toolbar" settings are being used even when the Qt app isn't being run under unity - this is probably a quirk of this particular setup, but it sure is an annoying one...
     file_menu = menuBar()->addMenu("&File");
     cad_exit = new QAction("Exit", this);
     connect(cad_exit, SIGNAL(triggered()), this, SLOT(close()));
