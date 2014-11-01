@@ -54,6 +54,10 @@
 #include <QMenuBar>
 #undef Success
 #include <QAction>
+#undef Success
+#include <QStatusBar>
+#undef Success
+#include <QFileDialog>
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -72,8 +76,12 @@ class BRLCAD_MainWindow : public QMainWindow
 	QDockWidget *tree_dock;
 	QDockWidget *panel_dock;
 
+    private slots:
+	void open_file();
+
     private:
 	QMenu *file_menu;
+	QAction *cad_open;
 	QAction *cad_exit;
 	QString db_file;
 };

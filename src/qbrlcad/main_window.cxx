@@ -24,15 +24,22 @@
  */
 
 #include "main_window.h"
+#include "cadapp.h"
 
 BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
-    //setUnifiedTitleAndToolBarOnMac(true); // Not sure yet if we want this, but put it in as a reminder
+    // This solves the disappearing menubar problem on Ubuntu + fluxbox -
+    // suspect Unity's "global toolbar" settings are being used even when
+    // the Qt app isn't being run under unity - this is probably a quirk
+    // of this particular setup, but it sure is an annoying one...
+    menuBar()->setNativeMenuBar(false);
 
     // Create Menus
+    file_menu = menuBar()->addMenu("File");
+    cad_open = new QAction("Open", this);
+    connect(cad_open, SIGNAL(triggered()), this, SLOT(open_file()));
+    file_menu->addAction(cad_open);
 
-    menuBar()->setNativeMenuBar(false);// This solves the disappearing menubar problem on Ubuntu + fluxbox - suspect Unity's "global toolbar" settings are being used even when the Qt app isn't being run under unity - this is probably a quirk of this particular setup, but it sure is an annoying one...
-    file_menu = menuBar()->addMenu("&File");
     cad_exit = new QAction("Exit", this);
     connect(cad_exit, SIGNAL(triggered()), this, SLOT(close()));
     file_menu->addAction(cad_exit);
@@ -61,6 +68,23 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
     setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
 
+}
+
+void
+BRLCAD_MainWindow::open_file()
+{
+    QString fileName = QFileDialog::getOpenFileName(this,
+	    "Open Geometry File",
+	    qApp->applicationDirPath(),
+	    "BRL-CAD (*.g *.asc);;STEP (*.stp *.step);;All Files (*)");
+    if (!fileName.isEmpty()) {
+	int ret = ((CADApp *)qApp)->opendb(fileName.toLocal8Bit());
+	if (ret) {
+	    statusBar()->showMessage("open failed");
+	} else {
+	    statusBar()->showMessage(fileName);
+	}
+    }
 }
 
 /*
