@@ -1,6 +1,7 @@
 #include <queue>
 #include "cadtreemodel.h"
 #include "cadtreenode.h"
+#include "cadapp.h"
 #include "bu/sort.h"
 
 CADTreeModel::CADTreeModel(QObject *parentobj)
@@ -170,7 +171,7 @@ bool CADTreeModel::hasChildren(const QModelIndex &idx) const
 
 void CADTreeModel::refresh()
 {
-    populate(current_dbip);
+    populate(((CADApp *)qApp)->dbip());
 }
 
 HIDDEN int
