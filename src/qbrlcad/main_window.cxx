@@ -68,6 +68,18 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
     setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
 
+    /* Create and add the widgets that inhabit the dock */
+    console = new CADConsole(console_dock);
+    console_dock->setWidget(console);
+    treemodel = new CADTreeModel();
+    treeview = new QTreeView(tree_dock);
+    tree_dock->setWidget(treeview);
+    treeview->setModel(treemodel);
+    treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    treeview->header()->setStretchLastSection(false);
+    QObject::connect((CADApp *)qApp, SIGNAL(db_change()), treemodel, SLOT(refresh()));
+    treemodel->populate(DBI_NULL);
+
 }
 
 void

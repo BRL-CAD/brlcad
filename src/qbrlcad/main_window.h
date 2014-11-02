@@ -58,12 +58,21 @@
 #include <QStatusBar>
 #undef Success
 #include <QFileDialog>
+#undef Success
+#include <QTreeView>
+#undef Success
+#include <QHeaderView>
+#undef Success
+#include <QObject>
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
 #if defined(__clang__)
 #  pragma clang diagnostic pop
 #endif
+
+#include "cadconsole.h"
+#include "cadtreemodel.h"
 
 class BRLCAD_MainWindow : public QMainWindow
 {
@@ -72,9 +81,6 @@ class BRLCAD_MainWindow : public QMainWindow
 	BRLCAD_MainWindow();
 
 	QGLWidget *canvas;
-	QDockWidget *console_dock;
-	QDockWidget *tree_dock;
-	QDockWidget *panel_dock;
 
     private slots:
 	void open_file();
@@ -83,6 +89,14 @@ class BRLCAD_MainWindow : public QMainWindow
 	QMenu *file_menu;
 	QAction *cad_open;
 	QAction *cad_exit;
+
+	QDockWidget *console_dock;
+	QDockWidget *tree_dock;
+	QDockWidget *panel_dock;
+
+	CADConsole *console;
+	CADTreeModel *treemodel;
+	QTreeView *treeview;
 	QString db_file;
 };
 
