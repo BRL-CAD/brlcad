@@ -252,6 +252,7 @@ set(LIBGED_SOURCES
   simulate/collision.cpp
   simulate/physics_world.cpp
   simulate/simulate.cpp
+  simulate/simrt.c
   size.c
   slew.c
   solids_on_ray.c
