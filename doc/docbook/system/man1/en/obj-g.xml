@@ -205,7 +205,7 @@
       <listitem>
 	<para>
 	 Orientation type to use for bot primitives. bot_orientation
-	 can be (1|2|3) where 1 = unoriented, 2 = ccw, and 3 = cw.
+	 can be (1|2|3), where 1 = unoriented, 2 = ccw, and 3 = cw; 1 is default.
 	</para>
       </listitem>
     </varlistentry>
@@ -238,14 +238,14 @@
       <term><option>-v</option></term>
       <listitem>
 	<para>
-	 Output verbose user information to stderr stream. There are
+	 Output verbose user information to standard error (stderr) stream. There are
 	 different levels of verbose output where higher levels
 	 increase the amount of output information. Each occurrence of
 	 this option in the parameter list increases the verbosity level (two levels currently). A
 	 large amount of information will be output so redirecting stderr
 	 to a file is highly recommended. Verbose messages add warning
 	 and detailed conversion status messages to the default status
-	 and error messages. Verbose must be enabled for warning
+	 and error messages. <option>-v</option> must be enabled for warning
 	 messages to be reported.
 	</para>
       </listitem>
@@ -325,7 +325,7 @@
      output as volume-mode bots.  BRL-CAD primitives will be created based on
      the obj file 'object' grouping. The obj file units are assumed to be
      meters (implies conversion factor of 1000.0). Level two verbose messages
-     are enabled. All stderr messages are sent to the log file 'output.log'.
+     are enabled. All standard-error messages are sent to the log file 'output.log'.
     </para>
   </example>
 
@@ -335,8 +335,8 @@
 
   <para>
    Numerous warning and error conditions are possible, usually due to
-   invalid source geometry. Descriptive messages are printed on stderr
-   (file descriptor 2). Verbose messages must be enabled for warning
+   invalid source geometry. Descriptive messages are printed on standard error
+   (file descriptor 2). <option>-v</option> must be enabled for warning
    messages to be printed.
   </para>
 </refsection>
