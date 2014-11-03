@@ -336,7 +336,7 @@ brep_build_bvh_surface_tree(int cpu, void *data)
 	for (size_t i = 0; i < faceCount; i++) {
 	    if (bbbp->faces[i] == NULL) {
 		index = i;
-		bbbp->faces[i] = (SurfaceTree*)cpu+1; /* claim this one */
+		bbbp->faces[i] = (SurfaceTree*)(intptr_t)(cpu+1); /* claim this one */
 		break;
 	    }
 	}
