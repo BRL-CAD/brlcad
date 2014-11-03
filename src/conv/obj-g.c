@@ -119,7 +119,7 @@ usage(const char *argv0)
 
     bu_log("  -t distance_tolerance\n"
 	   "\t\tDistance tolerance (mm); default is .0005. Two vertices are\n"
-	   "\t\tconsidered to be the same they are within this distance of\n"
+	   "\t\tconsidered to be the same if they are within this distance of\n"
 	   "\t\teach other. You should not change this value without setting\n"
 	   "\t\tthe raytracer tolerance to match it.\n");
     bu_log("  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
