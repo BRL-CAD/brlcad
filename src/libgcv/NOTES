@@ -58,6 +58,12 @@ catch errors earlier in the pipeline.  Lossy or context-sensitivie
 translations, e.g., exporting an infinite halfspace to polygonal
 format, are example considerations.
 
+Normalization.  Whether a prescribed output format supports a
+hierarchy and/or matrices or is modeled far from floating-point origin
+can influence conversion results.  Supporting normalization is not a
+priority, but may influence design options.
+
+
 NEW FORMATS
 ===========
 
