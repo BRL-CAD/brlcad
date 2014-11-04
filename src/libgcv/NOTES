@@ -51,6 +51,12 @@ mesh geometry), n-Manifold polgyonal meshes, volumetric data, NURBS,
 and implicit primitives with constructive solid geometry (CSG) Boolean
 operations.
 
+Multipass processing.  First check if all geometry records can be
+processed, e.g., whether a given geometry subtree or a particular
+geometry object will convert given a prescribed request.  This is to
+catch errors earlier in the pipeline.  Lossy or context-sensitivie
+translations, e.g., exporting an infinite halfspace to polygonal
+format, are example considerations.
 
 NEW FORMATS
 ===========
