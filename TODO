@@ -68,7 +68,18 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   (largest edge gap or distance between two points that should be
   coincident).
 
-* geometry compiler
+* geometry compiler.  provides different levels of "optimization"
+  (ways of reducing the geometry complexity with or without
+  introducing 3D changes.  provides different stages of compilation
+  (e.g., similar to preprocessing, compilation, AST reduction,
+  optimization, encoding transformation, etc).  name ideas: bcg, cg
+
+* geometry debugger.  low-level geometry database tool with minimal/no
+  run-time dependencies on our own libraries.  the idea is a tool that
+  can inspect/repair a potentially corrupted/invalid .g file or help
+  debug library robustness issues.  using headers for identifiers and
+  codes in the implementation is okay (as are library functions, but
+  just don't rely on any).  name ideas: gdbg, dbadmin, dbtool, dbmaint
 
 * BU_SETJUMP/BU_UNSETJUMP into macros
 
