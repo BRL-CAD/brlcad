@@ -170,6 +170,13 @@ CADApp::exec_command(QString *command, QString *result)
 
 QDialog_App::QDialog_App(QWidget *pparent) : QDialog(pparent)
 {
+    QVBoxLayout *dlayout = new QVBoxLayout;
+    buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel);
+    connect(buttonBox, SIGNAL(rejected()), this, SLOT(process_abort()));
+    console = new pqConsoleWidget(this);
+    setLayout(dlayout);
+    dlayout->addWidget(console);
+    dlayout->addWidget(buttonBox);
 }
 
 void QDialog_App::read_stdout()
@@ -182,15 +189,31 @@ void QDialog_App::read_stderr()
     console->printString(proc->readAllStandardError());
 }
 
+void QDialog_App::process_abort()
+{
+    proc->kill();
+    console->printString("\nAborted!\n");
+    process_done(0, QProcess::NormalExit);
+}
+
+void QDialog_App::process_done(int , QProcess::ExitStatus)
+{
+    buttonBox->clear();
+    buttonBox->addButton(QDialogButtonBox::Ok);
+    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+    setWindowTitle("Process Finished");
+}
+
 int
 CADApp::exec_console_app_in_window(QString command, QStringList options)
 {
     if (command.length() > 0) {
 
 	QDialog_App *out_win = new QDialog_App();
-	QVBoxLayout *layout = new QVBoxLayout;
+	QString win_title("Running ");
+	win_title.append(command);
+	out_win->setWindowTitle(win_title);
 	out_win->proc = new QProcess(out_win);
-	out_win->console = new pqConsoleWidget(out_win);
 	out_win->console->setMinimumHeight(800);
 	out_win->console->setMinimumWidth(800);
 	out_win->console->printString(command);
@@ -201,8 +224,7 @@ CADApp::exec_console_app_in_window(QString command, QStringList options)
 	out_win->proc->setArguments(options);
 	connect(out_win->proc, SIGNAL(readyReadStandardOutput()), out_win, SLOT(read_stdout()) );
 	connect(out_win->proc, SIGNAL(readyReadStandardError()), out_win, SLOT(read_stderr()) );
-	layout->addWidget(out_win->console);
-	out_win->setLayout(layout);
+	connect(out_win->proc, SIGNAL(finished(int, QProcess::ExitStatus)), out_win, SLOT(process_done(int, QProcess::ExitStatus)) );
 	out_win->proc->start();
 	out_win->exec();
     }

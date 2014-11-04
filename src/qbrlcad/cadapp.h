@@ -36,6 +36,7 @@
 #include <QVBoxLayout>
 #include <QProcess>
 #include <QDialog>
+#include <QDialogButtonBox>
 
 #include "pqConsoleWidget.h" 
 #include "raytrace.h"
@@ -86,10 +87,13 @@ class QDialog_App : public QDialog
     public slots:
 	void read_stdout();
 	void read_stderr();
+	void process_abort();
+	void process_done(int, QProcess::ExitStatus);
 
     public:
         pqConsoleWidget *console;
         QProcess *proc;
+        QDialogButtonBox *buttonBox;
 };
 
 QString import_db(QString filename);

@@ -75,6 +75,7 @@ RhinoImportDialog::RhinoImportDialog(QString filename)
     mainLayout->addWidget(formGroupBox);
     mainLayout->addWidget(buttonBox);
     setLayout(mainLayout);
+    resize(600,300);
     setWindowTitle(tr("Rhino 3DM Importer (3dm-g)"));
 
 }
