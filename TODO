@@ -53,6 +53,29 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* establish the Basic Application Runtime (BAR), only consisting of
+  libbu and libbn, as a stand-alone self-contained project.  provide
+  an API that supports most C/C++ application development and
+  documents our facilities that help simplify code portability,
+  performance, and maintainability.  the scope is basic application
+  utility and numerics only.  this scope is particularly tailored
+  towards 3D and scientific application development.
+
+  the basic utility routines encapsulate platform-specific constructs
+  portably.  the basic numeric routines provide general math
+  facilities common to scientific application development with a
+  particular emphasis on being platform agnostic, high performance,
+  and validated.
+
+  the Apache Portable Runtime (APR) and GIMP Toolkit (GTK) are similar
+  alternatives (particularly to BAR's basic utility routines) but have
+  different emphases, scope, and development philosophies.
+
+  BAR API design aims to be minimally intrusive on application
+  developers, not requiring them to be aware of or adapt types or
+  functions until it provides some clear advantage (e.g., portability,
+  performance, and/or maintainability).
+
 * object error heuristic.  implement a function/command to report how
   big of an error a given geometry object has.  the intent is to help
   prioritize geometry modeling errors based on their spatial impact.
