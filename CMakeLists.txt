@@ -703,6 +703,8 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_MAJOR ${BRLCAD_VERSION_MAJOR}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_MINOR ${BRLCAD_VERSION_MINOR}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_PATCH ${BRLCAD_VERSION_PATCH}\n")
 
+# Let programs know what the executable suffix is on this platform, if any
+CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
 
 #----------------------------------------------------------------------
 # Decide whether to do a 32 or a 64 bit build.

@@ -75,12 +75,12 @@ usage(const char *argv0)
 	   "\t\tbot via nmg modes.\n"
 	);
 
-    bu_log("  -d\t\tOutput debug info to stderr.\n"
+    bu_log("  -d\t\tOutput debug info to standard error.\n"
 	);
 
     bu_log("  -f\t\tFuse vertices that are close enough to be considered the\n"
-	   "\t\tsame. Can make the solidity detection more reliable.\n"
-	   "\t\tMay significantly increase processing time during import.\n"
+	   "\t\tsame. Can make the solidity detection more reliable, but\n"
+	   "\t\tmay significantly increase processing time during import.\n"
 	  );
 
     bu_log("  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
@@ -92,7 +92,8 @@ usage(const char *argv0)
 	   "\t\t\tt = texture\n"
 	);
 
-    bu_log("  -H mm\t\tThickness used when a bot is not a closed volume and it's\n"
+    bu_log("  -H plate_thickness\n"
+	   "\t\tThickness (mm) used when a bot is not a closed volume and it's\n"
 	   "\t\tconverted as a plate or plate-nocos bot.\n"
 	   "  -i\t\tIgnore the normals defined in the input file when using native\n"
 	   "\t\tbot conversion mode.\n"
@@ -116,16 +117,17 @@ usage(const char *argv0)
 	   "\t\t\t3 = cw\n"
 	);
 
-    bu_log("  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
-	   "\t\tif they are within this distance of one another. Default is\n");
-    bu_log("\t\t.0005mm. You should not change this value without setting the\n"
-	    "\t\traytracer tolerance to match it.\n"
-	   "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
+    bu_log("  -t distance_tolerance\n"
+	   "\t\tDistance tolerance (mm); default is .0005. Two vertices are\n"
+	   "\t\tconsidered to be the same if they are within this distance of\n"
+	   "\t\teach other. You should not change this value without setting\n"
+	   "\t\tthe raytracer tolerance to match it.\n");
+    bu_log("  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
 	   "\t\tYou can also provide a custom conversion factor from file units\n"
 	   "\t\tto mm.\n"
 	);
 
-    bu_log("  -v\t\tOut verbose user info to stderr. Each occurrence of this option\n"
+    bu_log("  -v\t\tOutput verbose user info to standard error. Each occurrence of this option\n"
 	   "\t\tin the option list increases the verbosity level (two levels currently).\n"
 	   "  -x flag\tSpecify rt debug flag bits (see raytrace.h).\n"
 	   "  -X flag\tSpecify nmg debug flag bits (see nmg.h).\n"

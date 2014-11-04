@@ -1854,7 +1854,6 @@ nmg_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
 		    continue;
 		}
 
-		/* A good candidate for inline expansion */
 		code = bn_isect_pt_lseg(&dist,
 					va->vg_p->coord,
 					vb->vg_p->coord,

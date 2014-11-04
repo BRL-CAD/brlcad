@@ -4124,7 +4124,6 @@ extend_over_seam_crossings(std::list<PBCData*> &pbcs)
     std::list<PBCData*>::iterator cs;
     ON_2dPoint *pt = NULL;
     ON_2dPoint *prev_pt = NULL;
-    // ON_2dVector curr_uv_offsets = ON_2dVector::ZeroVector;
 
     ///// Loop through and fix any seam ambiguities
     cs = pbcs.begin();
