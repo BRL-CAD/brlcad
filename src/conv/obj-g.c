@@ -3274,7 +3274,7 @@ main(int argc, char **argv)
     tol = &tol_struct;
     tol->magic = BN_TOL_MAGIC;
     /* default which should be equal to the raytracer default tolerance */
-    tol->dist = 0.0005;
+    tol->dist = BN_TOL_DIST;
     tol->dist_sq = tol->dist * tol->dist;
     /* default which should be equal to the raytracer default tolerance */
     tol->perp = 1e-6;
