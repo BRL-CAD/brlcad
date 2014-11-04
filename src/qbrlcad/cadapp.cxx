@@ -62,18 +62,15 @@ CADApp::opendb(QString filename)
     struct rt_wdb *f_wdbp = RT_WDB_NULL;
 
     /* First, make sure the file is actually there */
-    QFileInfo *fileinfo = new QFileInfo(filename);
-    if (!fileinfo->exists()) {
-        delete fileinfo;
-        return 1;
-    }
+    QFileInfo fileinfo(filename);
+    if (!fileinfo.exists()) return 1;
 
-    // TODO - somewhere in here we'll need to handle
-    // starting the conversion process if we don't have
-    // a .g file.  For now, punt unless it's a .g file.
-    if (fileinfo->suffix() != "g") {
+    /* If we've got something other than a .g, run a conversion if we have it */
+    QString g_path = import_db(filename);
+
+    /* If we couldn't open or convert it, we're done */
+    if (g_path == "") {
         std::cout << "unsupported file type!\n";
-        delete fileinfo;
         return 1;
     }
 
@@ -81,8 +78,7 @@ CADApp::opendb(QString filename)
     if (ged_pointer != GED_NULL) (void)closedb();
 
     // Call BRL-CAD's database open function
-    if ((f_dbip = db_open(filename.toLocal8Bit(), DB_OPEN_READONLY)) == DBI_NULL) {
-        delete fileinfo;
+    if ((f_dbip = db_open(g_path.toLocal8Bit(), DB_OPEN_READONLY)) == DBI_NULL) {
         return 2;
     }
 
@@ -90,7 +86,6 @@ CADApp::opendb(QString filename)
     RT_CK_DBI(f_dbip);
     if (db_dirbuild(f_dbip) < 0) {
         db_close(f_dbip);
-        delete fileinfo;
         return 3;
     }
     db_update_nref(f_dbip, &rt_uniresource);
@@ -104,7 +99,6 @@ CADApp::opendb(QString filename)
     // Inform the world the database has changed
     emit db_change();
 
-    delete fileinfo;
     return 0;
 }
 
@@ -172,6 +166,77 @@ CADApp::exec_command(QString *command, QString *result)
 	bu_free(largv, "free tmp argv");
     }
     return ret;
+}
+
+QDialog_App::QDialog_App(QWidget *pparent) : QDialog(pparent)
+{
+}
+
+void QDialog_App::read_stdout()
+{
+    console->printString(proc->readAllStandardOutput());
+}
+
+void QDialog_App::read_stderr()
+{
+    console->printString(proc->readAllStandardError());
+}
+
+int
+CADApp::exec_console_app_in_window(QString *command)
+{
+    if (command && command->length() > 0) {
+	char *lcmd = bu_strdup(command->toLocal8Bit());
+	char **largv = (char **)bu_calloc(command->length()/2+1, sizeof(char *), "cmd_eval argv");
+	int largc = bu_argv_from_string(largv, command->length()/2, lcmd);
+
+	QDialog_App *out_win = new QDialog_App();
+	QVBoxLayout *layout = new QVBoxLayout;
+	out_win->proc = new QProcess(out_win);
+	out_win->console = new pqConsoleWidget(out_win);
+	out_win->console->setMinimumHeight(800);
+	out_win->console->setMinimumWidth(800);
+	QStringList proc_args;
+	for (int i = 1; i < largc; i++) {
+	    proc_args.append(largv[i]);
+	}
+
+	QString prog_name;
+	QFileInfo argv0_info(largv[0]);
+	if (!argv0_info.exists()) {
+	    prog_name = bu_brlcad_dir("bin", 1);
+	    prog_name.append("/");
+	    prog_name.append(largv[0]);
+	    prog_name = QString(bu_brlcad_root((const char *)prog_name.toLocal8Bit(), 1));
+	    // TODO - is there a better way to do this?
+	    QFileInfo proginfo(prog_name);
+	    if (!proginfo.exists()) {
+		prog_name.append(".exe");
+		proginfo.setFile(prog_name);
+		if (!proginfo.exists()) {
+		    return -1;
+		}
+	    }
+	} else {
+	    prog_name = largv[0];
+	}
+
+	out_win->console->printString(*command);
+	out_win->console->printString("\n");
+	out_win->proc->setProgram(prog_name);
+	out_win->proc->setArguments(proc_args);
+	connect(out_win->proc, SIGNAL(readyReadStandardOutput()), out_win, SLOT(read_stdout()) );
+	connect(out_win->proc, SIGNAL(readyReadStandardError()), out_win, SLOT(read_stderr()) );
+	layout->addWidget(out_win->console);
+	out_win->setLayout(layout);
+	out_win->proc->start();
+	out_win->exec();
+
+	bu_free(lcmd, "free tmp cmd str");
+	bu_free(largv, "free tmp argv");
+
+    }
+    return 0;
 }
 
 /*

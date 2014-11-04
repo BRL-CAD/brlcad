@@ -99,10 +99,6 @@ int main(int argc, char *argv[])
     app.register_command(QString("search"), ged_search);
 
     if (parser.isSet(consoleOption)) {
-	QString cmd("ls");
-	QString result;
-	app.exec_command(&cmd, &result);
-	fprintf(stdout, "%s\n", (const char *)result.toLocal8Bit());
 	bu_exit(1, "Console mode unimplemented\n");
     } else {
 	mainWin.show();

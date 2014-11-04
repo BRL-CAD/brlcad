@@ -20,6 +20,7 @@ set(qbrlcad_srcs
   main_window.cxx
   cadapp.cxx
   cadconsole.cxx
+  cadimport.cxx
   cadtreemodel.cxx
   cadtreenode.cxx
   pqConsoleWidget.cxx
@@ -28,6 +29,7 @@ set(qbrlcad_srcs
 set(moc_headers
   main_window.h
   cadapp.h
+  cadimport.h
   cadconsole.h
   cadtreemodel.h
   pqConsoleWidget.h
