@@ -53,6 +53,16 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* object error heuristic.  implement a function/command to report how
+  big of an error a given geometry object has.  the intent is to help
+  prioritize geometry modeling errors based on their spatial impact.
+  this is particularly relevant for nurbs/brep and nmg geometry where
+  there may be solidity gaps in the topology that need to be sealed or
+  dangling faces/surfaces of different sizes.  this is meant to be a
+  relative heuristic applicable across all geometry, not necessary an
+  exact measure.  this may make more sense added as an output option
+  to glint or as a warning category for a geometry debugger.
+
 * create a joint articulation (manually is good, automatic is better)
   for the tin woodsman so he can move his arms, legs, neck, and head.
 
