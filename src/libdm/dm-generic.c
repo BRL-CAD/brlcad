@@ -158,6 +158,12 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
     return DM_NULL;
 }
 
+void *
+dm_interp(dm *dmp)
+{
+    return (void *)dmp->dm_interp;
+}
+
 /*
  * Provides a way to (un)share display lists. If dmp2 is
  * NULL, then dmp1 will no longer share its display lists.
@@ -326,6 +332,21 @@ dm_get_height(dm *dmp)
     if (!dmp) return 0;
     return dmp->dm_height;
 }
+
+void
+dm_set_width(dm *dmp, int width)
+{
+    if (!dmp) return;
+    dmp->dm_width = width;
+}
+
+void
+dm_set_height(dm *dmp, int height)
+{
+    if (!dmp) return;
+    dmp->dm_height = height;
+}
+
 
 int
 dm_get_type(dm *dmp)

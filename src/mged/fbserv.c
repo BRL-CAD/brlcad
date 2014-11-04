@@ -99,7 +99,7 @@ fbserv_drop_client(int sub)
 	Tcl_DeleteChannelHandler(clients[sub].c_chan,
 				 clients[sub].c_handler,
 				 (ClientData)clients[sub].c_fd);
-	Tcl_Close(dmp->dm_interp, clients[sub].c_chan);
+	Tcl_Close((Tcl_Interp *)dm_interp(dmp), clients[sub].c_chan);
 	clients[sub].c_chan = NULL;
 #else
 	Tcl_DeleteFileHandler(clients[sub].c_fd);
