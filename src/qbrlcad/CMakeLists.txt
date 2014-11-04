@@ -38,13 +38,17 @@ set(moc_headers
   )
 QT5_WRAP_CPP(moc_srcs ${moc_headers})
 
-add_executable(qbrlcad ${qbrlcad_srcs} ${moc_srcs})
+QT5_ADD_RESOURCES(cad_qrc cadresources.qrc)
+
+add_executable(qbrlcad ${qbrlcad_srcs} ${moc_srcs} ${cad_qrc})
 qt5_use_modules(qbrlcad Widgets OpenGL)
 target_link_libraries(qbrlcad libbu librt libged ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
 install(TARGETS qbrlcad
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
+
+CMAKEFILES(images)
 
 # Local Variables:
 # tab-width: 8

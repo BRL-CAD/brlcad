@@ -1,0 +1,10 @@
+ <!DOCTYPE RCC><RCC version="1.0">
+ <qresource>
+     <file>images/tree/branch-closed.png</file>
+     <file>images/tree/branch-end.png</file>
+     <file>images/tree/branch-more.png</file>
+     <file>images/tree/branch-open.png</file>
+     <file>images/tree/vline.png</file>
+     <file>cadtreestyle.qss</file>
+ </qresource>
+ </RCC>

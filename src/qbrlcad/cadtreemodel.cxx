@@ -25,7 +25,6 @@
  *
  */
 
-#include <queue>
 #include "cadtreemodel.h"
 #include "cadtreenode.h"
 #include "cadapp.h"

@@ -49,6 +49,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     canvas = new QGLWidget();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
     setCentralWidget(canvas);
 
+
     // Define dock layout
     console_dock = new QDockWidget("Console", this);
     addDockWidget(Qt::BottomDockWidgetArea, console_dock);
@@ -68,9 +69,14 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
     setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
 
-    /* Create and add the widgets that inhabit the dock */
+
+    /***** Create and add the widgets that inhabit the dock *****/
+
+    /* Console */
     console = new CADConsole(console_dock);
     console_dock->setWidget(console);
+
+    /* Geometry Tree */
     treemodel = new CADTreeModel();
     treeview = new QTreeView(tree_dock);
     tree_dock->setWidget(treeview);
@@ -79,7 +85,13 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     treeview->header()->setStretchLastSection(false);
     QObject::connect((CADApp *)qApp, SIGNAL(db_change()), treemodel, SLOT(refresh()));
     treemodel->populate(DBI_NULL);
+    QFile stylesheet(":/cadtreestyle.qss");
+    if (stylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
+	treeview->setStyleSheet(stylesheet.readAll());
+	stylesheet.close();
+    }
 
+    /* TODO - edit panel */
 }
 
 void
