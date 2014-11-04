@@ -53,6 +53,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* create a joint articulation (manually is good, automatic is better)
+  for the tin woodsman so he can move his arms, legs, neck, and head.
+
+* create a joint articulation (manually is good, automatic is probably
+  impossible) for ktank so the turret can spin and the gun barrel may
+  be raised up/down within a given range.
+
 * make Lighting enabled by default in mged and archer (this is a libdm
   issue).  currently unable to set/override in .mgedrc either.
 
