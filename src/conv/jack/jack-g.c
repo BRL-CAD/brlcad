@@ -21,6 +21,15 @@
  *
  * Program to convert JACK Psurf file into a BRL-CAD NMG object.
  *
+ * Jack, originally from the University of Pennsylvania's Computer
+ * Graphics Research Laboratory, is a package used for human figure
+ * animation and ergonomic analysis.
+ *
+ * It is not known whether this converter, developed prior to Jack
+ * becoming a commercial product in 1996, is compatible with the more
+ * modern Tecnomatix Jack version distributed by Siemens (maintainers
+ * of the NX and Parasolid CAD software).
+ *
  */
 
 #include "common.h"
