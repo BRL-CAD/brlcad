@@ -91,7 +91,7 @@ vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 /***** end variables shared with worker() *****/
 
-/* Variables shared within mainline pieces */
+/* Variables shared elsewhere */
 extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
 extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 extern int	rdebug;			/* RT program debugging (not library) */

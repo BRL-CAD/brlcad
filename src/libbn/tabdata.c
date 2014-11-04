@@ -612,7 +612,6 @@ bn_tabdata_resample_max(const struct bn_table *newtable, const struct bn_tabdata
 	     *  Simple case, ends of output span are completely
 	     *  contained within one input span.
 	     *  Interpolate for both ends, take max.
-	     *  XXX this could be more efficiently written inline here.
 	     */
 	    newsamp->y[i] = bn_table_lin_interp(olddata, newtable->x[i]);
 	    tmp = bn_table_lin_interp(olddata, newtable->x[i+1]);
@@ -671,7 +670,6 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 	     *  Simple case, ends of output span are completely
 	     *  contained within one input span.
 	     *  Interpolate for both ends, take average.
-	     *  XXX this could be more efficiently written inline here.
 	     */
 	    newsamp->y[i] = 0.5 * (
 				bn_table_lin_interp(olddata, newtable->x[i]) +
