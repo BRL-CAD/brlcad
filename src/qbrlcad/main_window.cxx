@@ -85,13 +85,24 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     treeview->header()->setStretchLastSection(false);
     QObject::connect((CADApp *)qApp, SIGNAL(db_change()), treemodel, SLOT(refresh()));
     treemodel->populate(DBI_NULL);
-    QFile stylesheet(":/cadtreestyle.qss");
+
+    /* TODO - edit panel */
+
+    /* Set default style for the application */
+    QString allstyle;
+    QFile stylesheet(":/cadstyle.qss");
     if (stylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
-	treeview->setStyleSheet(stylesheet.readAll());
+	allstyle.append(stylesheet.readAll());
 	stylesheet.close();
     }
 
-    /* TODO - edit panel */
+    QFile treestylesheet(":/cadtreestyle.qss");
+    if (treestylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
+	allstyle.append(treestylesheet.readAll());
+	treestylesheet.close();
+    }
+    qApp->setStyleSheet(allstyle);
+
 }
 
 void

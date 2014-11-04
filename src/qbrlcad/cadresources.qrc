@@ -6,5 +6,6 @@
      <file>images/tree/branch-open.png</file>
      <file>images/tree/vline.png</file>
      <file>cadtreestyle.qss</file>
+     <file>cadstyle.qss</file>
  </qresource>
  </RCC>

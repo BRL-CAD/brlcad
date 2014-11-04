@@ -49,6 +49,7 @@ install(TARGETS qbrlcad
   ARCHIVE DESTINATION ${LIB_DIR})
 
 CMAKEFILES(images)
+CMAKEFILES(cadstyle.qss)
 
 # Local Variables:
 # tab-width: 8
