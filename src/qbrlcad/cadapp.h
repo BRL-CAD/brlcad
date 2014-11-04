@@ -33,12 +33,7 @@
 #include <QStringList>
 #include <QMap>
 #include <QSet>
-#include <QVBoxLayout>
-#include <QProcess>
-#include <QDialog>
-#include <QDialogButtonBox>
 
-#include "pqConsoleWidget.h" 
 #include "raytrace.h"
 #include "ged.h"
 
@@ -57,7 +52,7 @@ class CADApp : public QApplication
 	int register_command(QString cmdname, ged_func_ptr func, int db_changer = 0, int view_changer = 0);
 	int exec_command(QString *command, QString *result);
 
-	int exec_console_app_in_window(QString command, QStringList options);
+	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
 
 	struct ged *gedp();
 	struct db_i *dbip();
@@ -74,26 +69,6 @@ class CADApp : public QApplication
 	QSet<QString> edit_cmds;  // Commands that potentially change the database contents */
 	QSet<QString> view_cmds;  // Commands that potentially change the view, but not the database contents */
 
-};
-
-class QDialog_App : public QDialog
-{
-    Q_OBJECT
-
-    public:
-	QDialog_App(QWidget *pparent = 0);
-	~QDialog_App() {}
-
-    public slots:
-	void read_stdout();
-	void read_stderr();
-	void process_abort();
-	void process_done(int, QProcess::ExitStatus);
-
-    public:
-        pqConsoleWidget *console;
-        QProcess *proc;
-        QDialogButtonBox *buttonBox;
 };
 
 QString import_db(QString filename);

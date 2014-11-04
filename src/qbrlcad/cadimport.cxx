@@ -127,6 +127,7 @@ import_db(QString filename) {
 
     QFileInfo fileinfo(filename);
     QString g_path("");
+    QString l_path("");
     QString conversion_command;
 
     if (!fileinfo.suffix().compare("g", Qt::CaseInsensitive)) return filename;
@@ -137,8 +138,9 @@ import_db(QString filename) {
        RhinoImportDialog dialog(filename);
        dialog.exec();
        g_path = dialog.db_path->text();
+       l_path = dialog.log_path->text();
        // TODO - integrate logging mechanism into command execution
-       ((CADApp *)qApp)->exec_console_app_in_window(dialog.command(),dialog.options());
+       ((CADApp *)qApp)->exec_console_app_in_window(dialog.command(),dialog.options(), l_path);
     }
 
     return g_path;

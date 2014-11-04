@@ -1,4 +1,4 @@
-/*                     C A D I M P O R T . H
+/*                  C A D A P P E X E C . H
  * BRL-CAD
  *
  * Copyright (c) 2014 United States Government as represented by
@@ -17,54 +17,48 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadimport.h
+/** @file cadappexec.h
  *
- * Import dialogs for specific geometry file format types
+ *  Support for running external programs.
  *
  */
 
-#ifndef CADIMPORT_H
-#define CADIMPORT_H
+#ifndef CADAPPEXEC_H
+#define CADAPPEXEC_H
 
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QVBoxLayout>
+#include <QProcess>
 #include <QDialog>
-#include <QLineEdit>
-#include <QCheckBox>
-#include <QGroupBox>
 #include <QDialogButtonBox>
-#include <QLabel>
+#include <QTextStream>
 
-class RhinoImportDialog : public QDialog
+#include "pqConsoleWidget.h" 
+
+class QDialog_App : public QDialog
 {
     Q_OBJECT
 
     public:
-	RhinoImportDialog(QString filename);
+	QDialog_App(QWidget *pparent, QString executable, QStringList args, QString lfile = "");
+	~QDialog_App() {}
 
-	QString command();
-	QStringList options();
-	QLineEdit *db_path;
-	QLineEdit *log_path;
+    public slots:
+	void read_stdout();
+	void read_stderr();
+	void process_abort();
+	void process_done(int, QProcess::ExitStatus);
 
-    private:
-
-	QString input_file;
-
-	QLineEdit *scaling_factor;
-	QLineEdit *tolerance;
-	QLineEdit *verbosity;
-	QCheckBox *debug_printing;
-	QCheckBox *random_colors;
-	QCheckBox *uuid;
-
-
-	QGroupBox *formGroupBox;
-	QDialogButtonBox *buttonBox;
+    public:
+	QFile *log;
+        pqConsoleWidget *console;
+        QProcess *proc;
+        QDialogButtonBox *buttonBox;
 };
 
-#endif // CADIMPORT_H
+#endif // CADAPPEXEC_H
 
 /*
  * Local Variables:

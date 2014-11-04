@@ -19,6 +19,7 @@ set(qbrlcad_srcs
   main.cxx
   main_window.cxx
   cadapp.cxx
+  cadappexec.cxx
   cadconsole.cxx
   cadimport.cxx
   cadtreemodel.cxx
@@ -29,6 +30,7 @@ set(qbrlcad_srcs
 set(moc_headers
   main_window.h
   cadapp.h
+  cadappexec.h
   cadimport.h
   cadconsole.h
   cadtreemodel.h

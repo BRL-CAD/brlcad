@@ -24,7 +24,11 @@
  */
 
 #include "cadapp.h"
+#include "cadappexec.h"
 #include <QFileInfo>
+#include <QFile>
+#include <QPlainTextEdit>
+#include <QTextStream>
 #include "bu/malloc.h"
 #include "bu/file.h"
 
@@ -168,48 +172,12 @@ CADApp::exec_command(QString *command, QString *result)
     return ret;
 }
 
-QDialog_App::QDialog_App(QWidget *pparent) : QDialog(pparent)
-{
-    QVBoxLayout *dlayout = new QVBoxLayout;
-    buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel);
-    connect(buttonBox, SIGNAL(rejected()), this, SLOT(process_abort()));
-    console = new pqConsoleWidget(this);
-    setLayout(dlayout);
-    dlayout->addWidget(console);
-    dlayout->addWidget(buttonBox);
-}
-
-void QDialog_App::read_stdout()
-{
-    console->printString(proc->readAllStandardOutput());
-}
-
-void QDialog_App::read_stderr()
-{
-    console->printString(proc->readAllStandardError());
-}
-
-void QDialog_App::process_abort()
-{
-    proc->kill();
-    console->printString("\nAborted!\n");
-    process_done(0, QProcess::NormalExit);
-}
-
-void QDialog_App::process_done(int , QProcess::ExitStatus)
-{
-    buttonBox->clear();
-    buttonBox->addButton(QDialogButtonBox::Ok);
-    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-    setWindowTitle("Process Finished");
-}
-
 int
-CADApp::exec_console_app_in_window(QString command, QStringList options)
+CADApp::exec_console_app_in_window(QString command, QStringList options, QString lfile)
 {
     if (command.length() > 0) {
 
-	QDialog_App *out_win = new QDialog_App();
+	QDialog_App *out_win = new QDialog_App(0, command, options, lfile);
 	QString win_title("Running ");
 	win_title.append(command);
 	out_win->setWindowTitle(win_title);
