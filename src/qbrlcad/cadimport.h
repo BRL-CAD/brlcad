@@ -28,6 +28,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QDialog>
 #include <QLineEdit>
 #include <QCheckBox>
@@ -42,7 +43,8 @@ class RhinoImportDialog : public QDialog
     public:
 	RhinoImportDialog(QString filename);
 
-	QString command_string();
+	QString command();
+	QStringList options();
 	QLineEdit *db_path;
 
     private:

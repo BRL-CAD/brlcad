@@ -30,6 +30,7 @@
 
 #include "cadapp.h"
 #include "cadimport.h"
+#include "brlcad_config.h" // For EXECUTABLE_SUFFIX
 
 RhinoImportDialog::RhinoImportDialog(QString filename)
 {
@@ -79,39 +80,46 @@ RhinoImportDialog::RhinoImportDialog(QString filename)
 }
 
 QString
-RhinoImportDialog::command_string()
+RhinoImportDialog::command()
 {
     QString prog_name(bu_brlcad_dir("bin", 1));
     prog_name.append("/3dm-g");
+    prog_name.append(EXECUTABLE_SUFFIX);
     prog_name = QString(bu_brlcad_root((const char *)prog_name.toLocal8Bit(), 1));
+    return prog_name;
+}
 
-    QString cmd(prog_name);
 
-    if (debug_printing->isChecked()) cmd.append(" -d");
+QStringList
+RhinoImportDialog::options()
+{
+    QStringList process_args;
+
+    if (debug_printing->isChecked()) process_args.append(" -d");
     if (verbosity->text().length() > 0) {
-	cmd.append(" -v ");
-	cmd.append(verbosity->text());
+	process_args.append("-v");
+	process_args.append(verbosity->text());
     }
     if (scaling_factor->text().length() > 0) {
-	cmd.append(" -s ");
-	cmd.append(scaling_factor->text());
+	process_args.append("-s");
+	process_args.append(scaling_factor->text());
     }
     if (tolerance->text().length() > 0) {
-	cmd.append(" -t ");
-	cmd.append(tolerance->text());
+	process_args.append("-t");
+	process_args.append(tolerance->text());
     }
-    if (random_colors->isChecked()) cmd.append(" -r");
-    if (uuid->isChecked()) cmd.append(" -u");
+    if (random_colors->isChecked()) process_args.append("-r");
+    if (uuid->isChecked()) process_args.append("-u");
 
     // TODO - pop up a message and quit if we don't have an output file
-    cmd.append(" -o ");
-    cmd.append(db_path->text());
+    process_args.append("-o");
+    process_args.append(db_path->text());
 
-    cmd.append(" ");
-    cmd.append(input_file);
+    process_args.append(input_file);
 
-    return cmd;
+    return process_args;
 }
+
 
 QString
 import_db(QString filename) {
@@ -128,9 +136,8 @@ import_db(QString filename) {
        RhinoImportDialog dialog(filename);
        dialog.exec();
        g_path = dialog.db_path->text();
-       conversion_command = dialog.command_string();
        // TODO - integrate logging mechanism into command execution
-       ((CADApp *)qApp)->exec_console_app_in_window(&conversion_command);
+       ((CADApp *)qApp)->exec_console_app_in_window(dialog.command(),dialog.options());
     }
 
     return g_path;

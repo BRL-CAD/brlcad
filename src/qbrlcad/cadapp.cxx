@@ -183,12 +183,9 @@ void QDialog_App::read_stderr()
 }
 
 int
-CADApp::exec_console_app_in_window(QString *command)
+CADApp::exec_console_app_in_window(QString command, QStringList options)
 {
-    if (command && command->length() > 0) {
-	char *lcmd = bu_strdup(command->toLocal8Bit());
-	char **largv = (char **)bu_calloc(command->length()/2+1, sizeof(char *), "cmd_eval argv");
-	int largc = bu_argv_from_string(largv, command->length()/2, lcmd);
+    if (command.length() > 0) {
 
 	QDialog_App *out_win = new QDialog_App();
 	QVBoxLayout *layout = new QVBoxLayout;
@@ -196,45 +193,18 @@ CADApp::exec_console_app_in_window(QString *command)
 	out_win->console = new pqConsoleWidget(out_win);
 	out_win->console->setMinimumHeight(800);
 	out_win->console->setMinimumWidth(800);
-	QStringList proc_args;
-	for (int i = 1; i < largc; i++) {
-	    proc_args.append(largv[i]);
-	}
-
-	QString prog_name;
-	QFileInfo argv0_info(largv[0]);
-	if (!argv0_info.exists()) {
-	    prog_name = bu_brlcad_dir("bin", 1);
-	    prog_name.append("/");
-	    prog_name.append(largv[0]);
-	    prog_name = QString(bu_brlcad_root((const char *)prog_name.toLocal8Bit(), 1));
-	    // TODO - is there a better way to do this?
-	    QFileInfo proginfo(prog_name);
-	    if (!proginfo.exists()) {
-		prog_name.append(".exe");
-		proginfo.setFile(prog_name);
-		if (!proginfo.exists()) {
-		    return -1;
-		}
-	    }
-	} else {
-	    prog_name = largv[0];
-	}
-
-	out_win->console->printString(*command);
+	out_win->console->printString(command);
+	out_win->console->printString(" ");
+	out_win->console->printString(options.join(" "));
 	out_win->console->printString("\n");
-	out_win->proc->setProgram(prog_name);
-	out_win->proc->setArguments(proc_args);
+	out_win->proc->setProgram(command);
+	out_win->proc->setArguments(options);
 	connect(out_win->proc, SIGNAL(readyReadStandardOutput()), out_win, SLOT(read_stdout()) );
 	connect(out_win->proc, SIGNAL(readyReadStandardError()), out_win, SLOT(read_stderr()) );
 	layout->addWidget(out_win->console);
 	out_win->setLayout(layout);
 	out_win->proc->start();
 	out_win->exec();
-
-	bu_free(lcmd, "free tmp cmd str");
-	bu_free(largv, "free tmp argv");
-
     }
     return 0;
 }

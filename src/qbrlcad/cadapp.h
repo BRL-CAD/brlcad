@@ -30,6 +30,7 @@
 #include <QApplication>
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QMap>
 #include <QSet>
 #include <QVBoxLayout>
@@ -55,7 +56,7 @@ class CADApp : public QApplication
 	int register_command(QString cmdname, ged_func_ptr func, int db_changer = 0, int view_changer = 0);
 	int exec_command(QString *command, QString *result);
 
-	int exec_console_app_in_window(QString *command);
+	int exec_console_app_in_window(QString command, QStringList options);
 
 	struct ged *gedp();
 	struct db_i *dbip();
