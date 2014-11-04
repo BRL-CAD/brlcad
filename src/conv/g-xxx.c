@@ -376,7 +376,7 @@ main(int argc, char *argv[])
      * mostly used by NMG routines
      */
     your_data.tol.magic = BN_TOL_MAGIC;
-    your_data.tol.dist = 0.0005;
+    your_data.tol.dist = BN_TOL_DIST;
     your_data.tol.dist_sq = your_data.tol.dist * your_data.tol.dist;
     your_data.tol.perp = 1e-6;
     your_data.tol.para = 1 - your_data.tol.perp;
