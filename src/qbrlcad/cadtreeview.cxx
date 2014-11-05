@@ -15,10 +15,10 @@ void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
 		text.prepend("u ");
 		break;
 	    case OP_INTERSECT:
-		text.prepend("+ ");
+		text.prepend("  + ");
 		break;
 	    case OP_SUBTRACT:
-		text.prepend("- ");
+		text.prepend("  - ");
 		break;
 	}
 	text.prepend(" ");
