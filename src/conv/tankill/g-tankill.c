@@ -45,20 +45,23 @@
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static const char usage[] = "Usage:\n\
-	%s [-v] [-xX lvl] [-P dummy_arg] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code]\n\
-	[-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n";
-static const char usage2[] = "\
-		v - verbose\n\
-		x - librt debug level\n\
-		X - NMG debug level\n\
-		P - enable core dumps (dummy argument is currently-disabled # of processors)\n\
-		a - absolute tolerance for tessellation\n\
-		r - relative tolerance for tessellation\n\
-		n - surface normal tolerance for tessellation\n\
-		s - surroundings code to use in tankill file\n\
-		i - assign new idents sequentially and output ident list\n\
-		o - TANKILL output file\n";
+/* usage string length is longer than ISO C90 compilers are required
+ * to support, hence it is split into two parts
+ */
+static const char usage[] =
+    "[-v] [-xX lvl] [-P dummy_arg] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code]\n"
+    "\t[-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n";
+static const char usage2[] =
+    "\t\tv - verbose\n"
+    "\t\tx - librt debug level\n"
+    "\t\tX - NMG debug level\n"
+    "\t\tP - enable core dumps (dummy argument is currently-disabled # of processors)\n"
+    "\t\ta - absolute tolerance for tessellation\n"
+    "\t\tr - relative tolerance for tessellation\n"
+    "\t\tn - surface normal tolerance for tessellation\n"
+    "\t\ts - surroundings code to use in tankill file\n"
+    "\t\ti - assign new idents sequentially and output ident list\n"
+    "\t\to - TANKILL output file\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -389,9 +392,8 @@ outt:	bu_free( (char *)flags, "g-tankill: flags" );
 
 
 static void
-printusage(const char *arg) {
-	fprintf(stderr,usage,arg);
-	bu_exit(1, usage2);
+printusage(const char *progname) {
+    bu_exit(1, "Usage:\n%s %s\n%s", progname, usage, usage2);
 }
 
 int
