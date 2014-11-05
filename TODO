@@ -1515,7 +1515,7 @@ NEW OBJECTS
   a malformed procedure (e.g., an infinite loop, fork bomb, syntax
   error, thrashing condition, etc).
 
-* spheroid (quadradic) - special performance case of ell
+* spheroid (quadratic) - special performance case of ell
 
 * conical edge (cubic) - unsure of this one's practical utility except
   as a means to construct a pinched tgc (unioning two halves).
