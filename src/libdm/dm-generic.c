@@ -305,6 +305,13 @@ dm_get_fb(dm *dmp)
     return dmp->fbp;
 }
 
+void *
+dm_get_xvars(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return (void *)(dmp->dm_vars.pub_vars);
+}
+
 const char *
 dm_get_dm_name(dm *dmp)
 {

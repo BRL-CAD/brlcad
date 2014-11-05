@@ -39,8 +39,6 @@
 #  include "tk.h"
 #endif
 
-#include "../libdm/dm_private.h"
-#include "bio.h"
 #include "dm/dm_xvars.h"
 
 #include "vmath.h"
@@ -569,11 +567,11 @@ common_dm(int argc, const char *argv[])
 
 	    /* Bare set command, print out current settings */
 	    bu_vls_struct_print2(&tmp_vls, "dm internal X variables", dm_xvars_vparse,
-				 (const char *)dmp->dm_vars.pub_vars);
+				 (const char *)dm_get_xvars(dmp));
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1], (const char *)dmp->dm_vars.pub_vars, COMMA);
+	    bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1], (const char *)dm_get_xvars(dmp), COMMA);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 	}

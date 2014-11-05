@@ -336,6 +336,7 @@ DM_EXPORT extern void dm_set_width(dm *dmp, int width);
 DM_EXPORT extern void dm_set_height(dm *dmp, int height);
 DM_EXPORT extern fastf_t dm_get_aspect(dm *dmp);
 DM_EXPORT extern int dm_get_type(dm *dmp);
+DM_EXPORT void *dm_get_xvars(dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_list_types(const char separator); /* free return list with bu_vls_free(list); BU_PUT(list, struct bu_vls); */
 DM_EXPORT extern unsigned long dm_get_id(dm *dmp);
 DM_EXPORT extern void dm_set_id(dm *dmp, unsigned long new_id);
