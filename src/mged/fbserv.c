@@ -248,7 +248,7 @@ fbserv_set_port(void)
 	fd = (ClientData)netfd;
 	Tcl_DeleteChannelHandler(netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
 
-	Tcl_Close(dmp->dm_interp, netchan);
+	Tcl_Close((Tcl_Interp *)dm_interp(dmp), netchan);
 	netchan = NULL;
 
 	closesocket(netfd);
@@ -282,7 +282,7 @@ fbserv_set_port(void)
 	/*
 	 * Hang an unending listen for PKG connections
 	 */
-	netchan = Tcl_OpenTcpServer(dmp->dm_interp, port, hostname, fbserv_new_client_handler, (ClientData)curr_dm_list);
+	netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(dmp), port, hostname, fbserv_new_client_handler, (ClientData)curr_dm_list);
 
 	if (netchan == NULL)
 	    ++port;
