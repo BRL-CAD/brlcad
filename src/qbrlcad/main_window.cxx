@@ -25,6 +25,7 @@
 
 #include "main_window.h"
 #include "cadapp.h"
+#include "cadtreeview.h"
 
 BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
@@ -44,6 +45,11 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     connect(cad_exit, SIGNAL(triggered()), this, SLOT(close()));
     file_menu->addAction(cad_exit);
 
+    view_menu = menuBar()->addMenu("View");
+
+    menuBar()->addSeparator();
+
+    help_menu = menuBar()->addMenu("Help");
 
     // Set up OpenGL canvas
     canvas = new QGLWidget();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
@@ -54,14 +60,17 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     console_dock = new QDockWidget("Console", this);
     addDockWidget(Qt::BottomDockWidgetArea, console_dock);
     console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);
+    view_menu->addAction(console_dock->toggleViewAction());
 
     tree_dock = new QDockWidget("Hierarchy", this);
     addDockWidget(Qt::LeftDockWidgetArea, tree_dock);
     tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    view_menu->addAction(tree_dock->toggleViewAction());
 
     panel_dock = new QDockWidget("Edit Panel", this);
     addDockWidget(Qt::RightDockWidgetArea, panel_dock);
     panel_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    view_menu->addAction(panel_dock->toggleViewAction());
 
     /* Because the console usually doesn't need a huge amount of
      * horizontal space and the tree can use all the vertical space
@@ -78,12 +87,14 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 
     /* Geometry Tree */
     treemodel = new CADTreeModel();
-    treeview = new QTreeView(tree_dock);
+    treeview = new CADTreeView(tree_dock);
     tree_dock->setWidget(treeview);
     treeview->setModel(treemodel);
     treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    treeview->header()->setStretchLastSection(false);
+    treeview->header()->setStretchLastSection(true);
     QObject::connect((CADApp *)qApp, SIGNAL(db_change()), treemodel, SLOT(refresh()));
+    QObject::connect(treeview, SIGNAL(expanded(const QModelIndex &)), treeview, SLOT(tree_column_size(const QModelIndex &)));
+    QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treeview, SLOT(tree_column_size(const QModelIndex &)));
     treemodel->populate(DBI_NULL);
 
     /* TODO - edit panel */

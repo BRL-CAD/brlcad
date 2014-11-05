@@ -1,4 +1,4 @@
-/*                   M A I N _ W I N D O W . H
+/*                  C A D T R E E V I E W . H
  * BRL-CAD
  *
  * Copyright (c) 2014 United States Government as represented by
@@ -17,15 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main_window.h
+/** @file cadtreemodel.h
  *
- * Defines the toplevel window for the BRL-CAD GUI, into which other
- * windows are docked.
+ * Defines a Qt tree view for BRL-CAD's geometry database format.
  *
  */
 
-#ifndef BRLCAD_MAINWINDOW_H
-#define BRLCAD_MAINWINDOW_H
+#ifndef CAD_TREEVIEW_H
+#define CAD_TREEVIEW_H
 
 #if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
 #  pragma message "Disabling GCC float equality comparison warnings via pragma due to Qt headers..."
@@ -43,27 +42,15 @@
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 #undef Success
-#include <QMainWindow>
-#undef Success
-#include <QGLWidget>
-#undef Success
-#include <QDockWidget>  //TODO - this will need to be replaced with a customized version that makes detached windows full toplevel windows
-#undef Success
-#include <QMenu>
-#undef Success
-#include <QMenuBar>
-#undef Success
-#include <QAction>
-#undef Success
-#include <QStatusBar>
-#undef Success
-#include <QFileDialog>
-#undef Success
 #include <QTreeView>
+#undef Success
+#include <QModelIndex>
 #undef Success
 #include <QHeaderView>
 #undef Success
 #include <QObject>
+#undef Success
+#include <QResizeEvent>
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -71,44 +58,31 @@
 #  pragma clang diagnostic pop
 #endif
 
-#include "cadconsole.h"
-#include "cadtreemodel.h"
 
-class BRLCAD_MainWindow : public QMainWindow
+class CADTreeView : public QTreeView
 {
     Q_OBJECT
+
     public:
-	BRLCAD_MainWindow();
+	CADTreeView(QWidget *pparent);
+	~CADTreeView() {};
 
-	QGLWidget *canvas;
+    protected:
+	void resizeEvent(QResizeEvent *pevent);
 
-    private slots:
-	void open_file();
+    public slots:
+	void tree_column_size(const QModelIndex &index);
 
     private:
-	QMenu *file_menu;
-	QAction *cad_open;
-	QAction *cad_exit;
-	QMenu *view_menu;
-	QMenu *help_menu;
-
-	QDockWidget *console_dock;
-	QDockWidget *tree_dock;
-	QDockWidget *panel_dock;
-
-	CADConsole *console;
-	CADTreeModel *treemodel;
-	QTreeView *treeview;
-	QString db_file;
+        void header_state();
 };
 
-#endif /* BRLCAD_MAINWINDOW_H */
+#endif
 
 /*
  * Local Variables:
- * mode: C++
+ * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

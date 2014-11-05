@@ -23,6 +23,7 @@ set(qbrlcad_srcs
   cadconsole.cxx
   cadimport.cxx
   cadtreemodel.cxx
+  cadtreeview.cxx
   cadtreenode.cxx
   pqConsoleWidget.cxx
   )
@@ -34,6 +35,7 @@ set(moc_headers
   cadimport.h
   cadconsole.h
   cadtreemodel.h
+  cadtreeview.h
   pqConsoleWidget.h
   )
 QT5_WRAP_CPP(moc_srcs ${moc_headers})

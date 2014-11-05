@@ -40,6 +40,14 @@ CADTreeModel::~CADTreeModel()
     delete m_root;
 }
 
+QVariant
+CADTreeModel::headerData(int section, Qt::Orientation, int role) const
+{
+    if (role != Qt::DisplayRole) return QVariant();
+    if (section == 0) return QString("Object Names");
+    return QVariant();
+}
+
 void CADTreeModel::setRootNode(CADTreeNode *root)
 {
     m_root = root;

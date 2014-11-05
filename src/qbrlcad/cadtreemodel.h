@@ -83,6 +83,7 @@ class CADTreeModel : public QAbstractItemModel
 
 	int populate(struct db_i *new_dbip);
 	bool hasChildren(const QModelIndex &parent) const;
+	QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
     public slots:
 	void refresh();
