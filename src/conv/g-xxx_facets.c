@@ -53,7 +53,7 @@ extern double nmg_eue_dist;		/* from nmg_plot.c */
 
 static char	usage[] = "\
 Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n\
-  [-n norm_tess_tol (default: 0.0)][-D dist_calc_tol (default: 0.0005)]\n\
+  [-n norm_tess_tol (default: 0.0)][-D dist_calc_tol (default: %lf)]\n\
    -o output_file_name brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
@@ -135,12 +135,12 @@ main(int argc, char **argv)
 		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		bu_exit(1, usage, argv[0],BN_TOL_DIST);
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	bu_exit(1, usage, argv[0],BN_TOL_DIST);
 
     /* Open output file */
 
