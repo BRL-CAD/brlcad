@@ -49,12 +49,11 @@
 #include "plot3.h"
 
 
-static const char usage[] =
-  "Usage: %s [-v] [-d] [-f] [-xX lvl] [-u eu_dist]\n"
-  "       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"
-  "       [-D dist_calc_tol] [-p prefix]\n"
-  "       [-P #_of_cpus] brlcad_db.g object(s)\n"
-  ;
+static const char *usage =
+    "[-v] [-d] [-f] [-xX lvl] [-u eu_dist]\n"
+    "\t[-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"
+    "\t[-D dist_calc_tol] [-p prefix]\n"
+    "\t[-P #_of_cpus] brlcad_db.g object(s)\n";
 
 static const char optstring[] = "a:dfn:p:r:u:vx:D:P:X:h?";
 
@@ -76,6 +75,11 @@ static struct db_tree_state	jack_tree_state;	/* includes tol & model */
 static int	regions_tried = 0;
 static int	regions_done = 0;
 
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 /*
  *	Continues the conversion of an nmg into Jack format.  Before
@@ -494,13 +498,13 @@ main(int argc, char **argv)
 		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 		break;
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     /* Open BRL-CAD database */
     argc -= bu_optind;
