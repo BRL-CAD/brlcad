@@ -354,12 +354,17 @@ primitive_func(struct db_tree_state *tsp,
     return (union tree *) NULL;
 }
 
+static void
+print_usage(const char *progname)
+{
+    const char *usage = "[-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] "
+	"[-o out_file] brlcad_db.g object(s)\n";
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 int
 main(int argc, char *argv[])
 {
-    static const char usage[] = "Usage: %s [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
-
     struct user_data your_data = {0, BN_TOL_INIT_ZERO};
 
     int i;
@@ -401,13 +406,13 @@ main(int argc, char *argv[])
 		bu_log("\n");
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 		break;
 	}
     }
 
     if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
     }
 
     /* Open BRL-CAD database */
