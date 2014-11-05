@@ -51,6 +51,8 @@
 #include <QObject>
 #undef Success
 #include <QResizeEvent>
+#undef Success
+#include <QStyledItemDelegate>
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -58,6 +60,16 @@
 #  pragma clang diagnostic pop
 #endif
 
+class GObjectDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+
+    public:
+	GObjectDelegate(QWidget *pparent = 0) : QStyledItemDelegate(pparent) {}
+
+	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+	QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
+};
 
 class CADTreeView : public QTreeView
 {

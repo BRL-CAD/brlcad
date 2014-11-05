@@ -90,6 +90,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     treeview = new CADTreeView(tree_dock);
     tree_dock->setWidget(treeview);
     treeview->setModel(treemodel);
+    treeview->setItemDelegate(new GObjectDelegate());
     treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     treeview->header()->setStretchLastSection(true);
     QObject::connect((CADApp *)qApp, SIGNAL(db_change()), treemodel, SLOT(refresh()));
