@@ -39,8 +39,6 @@
 #  include "tk.h"
 #endif
 
-#include "../libdm/dm_private.h"
-#include "bio.h"
 #include "dm/dm_xvars.h"
 
 #include "vmath.h"
@@ -179,7 +177,7 @@ common_dm(int argc, const char *argv[])
 
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
-	    if (dmp->dm_zclip)
+	    if (dm_get_zclip(dmp))
 		bu_vls_printf(&vls, "qray_nirt %lf %lf %lf",
 			      model_pt[X], model_pt[Y], model_pt[Z]);
 	    else
@@ -553,9 +551,8 @@ common_dm(int argc, const char *argv[])
 	    width = atoi(argv[1]);
 	    height = atoi(argv[2]);
 
-	    dmp->dm_width = width;
-	    dmp->dm_height = height;
-
+	    dm_set_width(dmp, width);
+	    dm_set_height(dmp, height);
 	    return TCL_OK;
 	}
 
@@ -570,11 +567,11 @@ common_dm(int argc, const char *argv[])
 
 	    /* Bare set command, print out current settings */
 	    bu_vls_struct_print2(&tmp_vls, "dm internal X variables", dm_xvars_vparse,
-				 (const char *)dmp->dm_vars.pub_vars);
+				 (const char *)dm_get_xvars(dmp));
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1], (const char *)dmp->dm_vars.pub_vars, COMMA);
+	    bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1], (const char *)dm_get_xvars(dmp), COMMA);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 	}
@@ -596,10 +593,7 @@ common_dm(int argc, const char *argv[])
 
 	/* return background color of current display manager */
 	if (argc == 1) {
-	    bu_vls_printf(&vls, "%d %d %d",
-			  dmp->dm_bg[0],
-			  dmp->dm_bg[1],
-			  dmp->dm_bg[2]);
+	    bu_vls_printf(&vls, "%d %d %d", dm_get_bg(dmp)[0], dm_get_bg(dmp)[1], dm_get_bg(dmp)[2]);
 	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 

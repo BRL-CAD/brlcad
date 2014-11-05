@@ -102,8 +102,9 @@ static struct xray *xz_rays;
 static struct xray *yz_rays;
 static struct rt_i *rtip;
 static struct bn_tol tol;
-static char *usage="Usage: %s [-a rpp_args] [-R edge_tol] [-p plotfile] [-X lvl]\n\
-	[-d debug_level] [-b] [-n] [-i initial_ray_dir] [-g cell_size] -o brlcad_output_file database.g object1 object2...\n";
+static const char *usage=
+    "[-a rpp_args] [-R edge_tol] [-p plotfile] [-X lvl]\n"
+    "\t[-d debug_level] [-b] [-n] [-i initial_ray_dir] [-g cell_size] -o brlcad_output_file database.g object1 object2...\n";
 static char dir_ch[3]={ 'X', 'Y', 'Z' };
 
 static struct local_part *xy_parts=(struct local_part *)NULL;
@@ -217,6 +218,12 @@ static int bot=0;
 #define ON_SURFACE 1
 #define OUTSIDE 2
 #define INSIDE 3
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 /* routine to replace default overlap handler.
  * overlaps are irrelevant to this application
@@ -1653,7 +1660,7 @@ main(int argc, char **argv)
 
     /* These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -1766,12 +1773,12 @@ main(int argc, char **argv)
 		bu_log("%s: setting RTG.NMG_debug to x%x\n", argv[0], RTG.NMG_debug);
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     if (!output_file)
 	bu_exit(1, "ERROR: Output file must be specified!\n");

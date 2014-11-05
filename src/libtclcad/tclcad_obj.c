@@ -11212,7 +11212,7 @@ to_png(struct ged *gedp,
     width = dm_get_width(gdvp->gdv_dmp);
     height = dm_get_height(gdvp->gdv_dmp);
     make_ret = dm_make_current(gdvp->gdv_dmp);
-    if (!make_ret) {
+    if (make_ret) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Couldn't make context current\n", argv[0]);
 	fclose(fp);
 	return GED_ERROR;

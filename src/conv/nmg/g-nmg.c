@@ -45,7 +45,7 @@
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static char	usage[] = "Usage: %s [-v] [-b] [-xX lvl] [-a abs_tol] [-r rel_tol] [-t dist_tol] [-n norm_tol] [-P #_of_CPUs] [-o out_file] brlcad_db.g object(s)\n";
+static const char *usage = "[-v] [-b] [-xX lvl] [-a abs_tol] [-r rel_tol] [-t dist_tol] [-n norm_tol] [-P #_of_CPUs] [-o out_file] brlcad_db.g object(s)\n";
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
@@ -67,6 +67,11 @@ static int	regions_converted = 0;
 
 /* extern struct mater* rt_material_head; */
 
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
@@ -482,12 +487,12 @@ main(int argc, char **argv)
 		bu_log("\n");
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     /* Open BRL-CAD database */
     if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL) {

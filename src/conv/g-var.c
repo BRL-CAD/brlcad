@@ -54,7 +54,13 @@ struct mesh {
 };
 
 
-static const char usage[] = "Usage: %s [-v] [-y] [-s scale] [-f] [-o out_file] tgm.g object\n";
+static const char usage[] = "[-v] [-y] [-s scale] [-f] [-o out_file] tgm.g object\n";
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 static int verbose = 0;
 static int yup = 0;
@@ -429,12 +435,12 @@ int main(int argc, char *argv[])
 		break;
 
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
     /* param check */
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     /* get database filename and object */
     db_file = argv[bu_optind++];

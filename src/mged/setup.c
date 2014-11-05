@@ -28,7 +28,6 @@
 /* system headers */
 #include <stdlib.h>
 #include <tcl.h>
-#include <itcl.h>
 #include <string.h>
 
 /* common headers */
@@ -40,6 +39,9 @@
 /* local headers */
 #include "./mged.h"
 #include "./cmd.h"
+
+/* avoid including itcl.h due to their usage of internal headers */
+extern int Itcl_Init(Tcl_Interp *);
 
 
 /* catch auto-formatting errors in this file.  be careful as there are

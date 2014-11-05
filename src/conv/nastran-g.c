@@ -106,7 +106,7 @@ static char *output_file = "nastran.g";
 static struct rt_wdb *fpout;		/* brlcad output file */
 static FILE *fpin;			/* NASTRAN input file */
 static FILE *fptmp;			/* temporary version of NASTRAN input */
-static char *Usage="Usage: %s [-xX lvl] [-t tol.dist] [-n] [-m] [-i NASTRAN_file] -o BRL-CAD_file\n";
+static char *usage = "[-xX lvl] [-t tol.dist] [-n] [-m] [-i NASTRAN_file] -o BRL-CAD_file\n";
 static off_t start_off;
 static char *delims=", \t";
 static struct coord_sys coord_head;	/* head of linked list of coordinate systems */
@@ -143,6 +143,12 @@ HIDDEN int convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt);
 
 #define NO_OF_FIELDS 20
 #define FIELD_LENGTH 17
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 HIDDEN void
 reset_input(void)
@@ -1111,18 +1117,13 @@ main(int argc, char **argv)
     char *nastran_file = "Converted from NASTRAN file (stdin)";
 
     bu_setprogname(argv[0]);
-/*
-    if (argc < 2) {
-	bu_exit(1, Usage, argv[0]);
-    }
-*/
     fpin = stdin;
 
     units = INCHES;
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -1153,7 +1154,7 @@ main(int argc, char **argv)
 		fpin = fopen(bu_optarg, "rb");
 		if (fpin == (FILE *)NULL) {
 		    bu_log("Cannot open NASTRAN file (%s) for reading!\n", bu_optarg);
-		    bu_exit(1, Usage, argv[0]);
+		    print_usage(argv[0]);
 		}
 		nastran_file = bu_optarg;
 		break;
@@ -1161,18 +1162,18 @@ main(int argc, char **argv)
 		output_file = bu_optarg;
 		break;
 	    default:
-		bu_exit(1, Usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
 
     fpout = wdb_fopen(output_file);
     if (fpout == NULL) {
 	bu_log("Cannot open BRL-CAD file (%s) for writing!\n", output_file);
-	bu_exit(1, Usage, argv[0]);
+	print_usage(argv[0]);
     }
 
     if (!fpin || !fpout) {
-	bu_exit(1, Usage, argv[0]);
+	print_usage(argv[0]);
     }
 
     line = (char *)bu_malloc(MAX_LINE_SIZE, "line");
@@ -1199,7 +1200,7 @@ main(int argc, char **argv)
 
     if (start_off < 0) {
 	bu_log("Cannot find start of bulk data in NASTRAN file!\n");
-	bu_exit(1, Usage, argv[0]);
+	print_usage(argv[0]);
     }
 
     /* convert BULK data deck into something reasonable */

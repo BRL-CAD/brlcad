@@ -93,8 +93,9 @@ extern union tree *do_region_end1(struct db_tree_state *tsp, const struct db_ful
 extern union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static const char usage[] = "Usage: %s [-b] [-e] [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n\
-(units default to mm)\n";
+static const char *usage =
+"[-b] [-e] [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n"
+"(units default to mm)\n";
 
 static char *tok_sep = " \t";
 static int NMG_debug; /* saved arg of -X, for longjmp handling */
@@ -117,6 +118,12 @@ static int bomb_cnt = 0;
 
 static int bot_dump = 0;
 static int eval_all = 0;
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 static void
 clean_pmp(struct plate_mode *pmp)
@@ -657,12 +664,12 @@ main(int argc, char **argv)
 		scale_factor = 1.0 / scale_factor;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
 
     if (bu_optind + 1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     if ((bot_dump == 1) && (eval_all == 1)) {
 	bu_exit(1, "BOT Dump and Evaluate All are mutually exclusive\n");

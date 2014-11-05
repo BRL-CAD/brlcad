@@ -653,7 +653,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     }
 
     /* Unfortunately finding the 4th order roots are too ugly to
-     * inline.
+     * expand the root solving manually.
      */
     for (i = 0; i < n; i++) {
 	if (segp[i].seg_stp == 0) continue;	/* Skip */

@@ -45,7 +45,7 @@ if(BRLCAD_ENABLE_TK)
   else(WIN32)
     # If we're not on Windows, bwish is just btclsh with more libraries and
     # an extra compilation definition
-    BRLCAD_ADDEXEC(bwish "${btclsh_srcs}" "libtclcad;libdm;libtermio;${X11_LIBRARIES};${X11_Xi_LIB};libdm;${ITCL_LIBRARY};${ITK_LIBRARY}")
+    BRLCAD_ADDEXEC(bwish "${btclsh_srcs}" "libtclcad;libdm;libtermio;libdm;${ITCL_LIBRARY};${ITK_LIBRARY}")
   endif(WIN32)
   # Both platform cases get the compilation flag
   set_target_properties(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")

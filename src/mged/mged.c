@@ -19,7 +19,7 @@
  */
 /** @file mged/mged.c
  *
- * Mainline portion of the Multiple-display Graphics EDitor (MGED)
+ * Main logic of the Multiple-display Graphics EDitor (MGED)
  *
  */
 
