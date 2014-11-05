@@ -79,7 +79,13 @@ static long max_faces = 0;
 static long num_faces = 0;
 #define FACES_BLOCK	512
 
-static char *usage = "Usage: %s [-m] [-n] [-d debug_level] [-g cell_size] -o vtk_polydata_output_file database.g object1 object2...\n";
+static const char *usage = "[-m] [-n] [-d debug_level] [-g cell_size] -o vtk_polydata_output_file database.g object1 object2...\n";
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 /* routine to replace default overlap handler.
  * overlaps are irrelevant to this application
@@ -418,12 +424,12 @@ main(int argc, char *argv[])
 		use_normals = 1;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
 
     if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
     }
 
     if (output_file) {
