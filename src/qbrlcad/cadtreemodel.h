@@ -76,14 +76,16 @@ class CADTreeModel : public QAbstractItemModel
 	int rowCount(const QModelIndex &child) const;
 	int columnCount(const QModelIndex &child) const;
 
-	QVariant data(const QModelIndex &index, int role) const;
-
 	void setRootNode(CADTreeNode *root);
 	CADTreeNode* rootNode();
 
 	int populate(struct db_i *new_dbip);
 	bool hasChildren(const QModelIndex &parent) const;
 	QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+
+	QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
+	bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
+
 
     public slots:
 	void refresh();
@@ -96,6 +98,8 @@ class CADTreeModel : public QAbstractItemModel
 	int NodeRow(CADTreeNode *node) const;
 	bool canFetchMore(const QModelIndex &parent) const;
 	void fetchMore(const QModelIndex &parent);
+	void cad_add_children(union tree *tp, int op, CADTreeNode *curr_node);
+	void cad_add_child(const char *name, CADTreeNode *curr_node, int op);
 
     private:
 	struct db_i *current_dbip;

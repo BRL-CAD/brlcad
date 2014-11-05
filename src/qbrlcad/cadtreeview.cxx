@@ -1,20 +1,35 @@
+#include "cadtreemodel.h"
 #include "cadtreeview.h"
 
 #include <QPainter>
 #include <qmath.h>
+#include "raytrace.h"
 
 void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    /*
+        QString text = index.data().toString();
+	int bool_op = index.data(1000).toInt();
+
+	switch (bool_op) {
+	    case OP_UNION:
+		text.prepend("u ");
+		break;
+	    case OP_INTERSECT:
+		text.prepend("+ ");
+		break;
+	    case OP_SUBTRACT:
+		text.prepend("- ");
+		break;
+	}
+	text.prepend(" ");
+
         // rect with width proportional to value
-        QRect rect(option.rect.adjusted(4,4,-4,-4));
+        //QRect rect(option.rect.adjusted(4,4,-4,-4));
 
         // draw the value bar
-        painter->fillRect(rect, QBrush(QColor("steelblue")));
-*/
-        // calculate text min width
-        QString text = index.data().toString();
-        // draw value text centered
+        //painter->fillRect(rect, QBrush(QColor("steelblue")));
+	//
+        // draw text label
         painter->drawText(option.rect, text, QTextOption(Qt::AlignLeft));
 }
 

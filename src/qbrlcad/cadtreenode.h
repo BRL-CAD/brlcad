@@ -46,6 +46,7 @@ public:
     QVariant data() const;
 
     QString name;
+    int boolean;
     struct directory *node_dp;
     CADTreeNode *parent;
     QList<CADTreeNode*> children;

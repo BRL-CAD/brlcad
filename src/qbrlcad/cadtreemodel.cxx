@@ -24,7 +24,6 @@
  * .g information and structures into Qt tree elements.
  *
  */
-
 #include "cadtreemodel.h"
 #include "cadtreenode.h"
 #include "cadapp.h"
@@ -46,6 +45,33 @@ CADTreeModel::headerData(int section, Qt::Orientation, int role) const
     if (role != Qt::DisplayRole) return QVariant();
     if (section == 0) return QString("Object Names");
     return QVariant();
+}
+
+
+QVariant
+CADTreeModel::data(const QModelIndex & idx, int role) const
+{
+    if (!idx.isValid()) return QVariant();
+    CADTreeNode *curr_node = IndexNode(idx);
+    if (role == Qt::DisplayRole) return QVariant(curr_node->name);
+    if (role == 1000) return QVariant(curr_node->boolean);
+    return QVariant();
+}
+
+bool
+CADTreeModel::setData(const QModelIndex & idx, const QVariant & value, int role)
+{
+    if (!idx.isValid()) return false;
+    QVector<int> roles;
+    bool ret = false;
+    CADTreeNode *curr_node = IndexNode(idx);
+    if (role == 1000) {
+	curr_node->boolean = value.toInt();
+	roles.append(1000);
+	ret = true;
+    }
+    if (ret) emit dataChanged(idx, idx, roles);
+    return ret;
 }
 
 void CADTreeModel::setRootNode(CADTreeNode *root)
@@ -82,14 +108,6 @@ int CADTreeModel::columnCount(const QModelIndex &parent_idx) const
     return 1;
 }
 
-QVariant CADTreeModel::data(const QModelIndex &idx, int role) const
-{
-    if (idx.isValid() && role == Qt:: DisplayRole) {
-	return IndexNode(idx)->data();
-    }
-    return QVariant();
-}
-
 QModelIndex CADTreeModel::NodeIndex(CADTreeNode *node) const
 {
     if (node == m_root) return QModelIndex();
@@ -120,7 +138,7 @@ bool CADTreeModel::canFetchMore(const QModelIndex &idx) const
 }
 
 void
-qtcad_count_children(union tree *tp, int *cnt)
+cad_count_children(union tree *tp, int *cnt)
 {
     if (!tp) return;
     RT_CK_TREE(tp);
@@ -132,8 +150,8 @@ qtcad_count_children(union tree *tp, int *cnt)
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	    /* This node is known to be a binary op */
-	    qtcad_count_children(tp->tr_b.tb_left, cnt);
-	    qtcad_count_children(tp->tr_b.tb_right, cnt);
+	    cad_count_children(tp->tr_b.tb_left, cnt);
+	    cad_count_children(tp->tr_b.tb_right, cnt);
 	    return;
 	default:
 	    bu_log("qtcad_cnt_children: bad op %d\n", tp->tr_op);
@@ -143,22 +161,28 @@ qtcad_count_children(union tree *tp, int *cnt)
 }
 
 void
-qtcad_add_children(union tree *tp, /*int op,*/ CADTreeNode *curr_node)
+CADTreeModel::cad_add_child(const char *name, CADTreeNode *curr_node, int op)
+{
+    CADTreeNode *new_node = new CADTreeNode(QString(name), curr_node);
+    QModelIndex idx = NodeIndex(new_node);
+    setData(idx, QVariant(op), 1000);
+}
+
+void
+CADTreeModel::cad_add_children(union tree *tp, int op, CADTreeNode *curr_node)
 {
     if (!tp) return;
     RT_CK_TREE(tp);
     switch (tp->tr_op) {
 	case OP_DB_LEAF:
-	    new CADTreeNode(QString(tp->tr_l.tl_name), curr_node);
-	    //rt_tree_array->tl_op = op;
-	    //rt_tree_array->tl_tree = tp;
+	    cad_add_child(tp->tr_l.tl_name, curr_node, op);
 	    return;
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	    /* This node is known to be a binary op */
-	    qtcad_add_children(tp->tr_b.tb_left, /*op,*/ curr_node);
-	    qtcad_add_children(tp->tr_b.tb_right, /*tp->tr_op,*/ curr_node);
+	    cad_add_children(tp->tr_b.tb_left, op, curr_node);
+	    cad_add_children(tp->tr_b.tb_right, tp->tr_op, curr_node);
 	    return;
 	default:
 	    bu_log("qtcad_add_children: bad op %d\n", tp->tr_op);
@@ -179,13 +203,13 @@ void CADTreeModel::fetchMore(const QModelIndex &idx)
     if (rt_db_get_internal(&intern, curr_node->node_dp, current_dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
-    qtcad_count_children(comb->tree, &cnt);
+    cad_count_children(comb->tree, &cnt);
     /* TODO - need to actually check whether the child list matches the current search results,
      * and clear/rebuild things if there has been a change - the below check works only for a
      * static tree */
     if (cnt && !idx.child(cnt-1, 0).isValid()) {
 	beginInsertRows(idx, 0, cnt);
-	qtcad_add_children(comb->tree, curr_node);
+	cad_add_children(comb->tree, OP_UNION, curr_node);
 	endInsertRows();
     }
     rt_db_free_internal(&intern);
@@ -229,7 +253,9 @@ int CADTreeModel::populate(struct db_i *new_dbip)
 	    bu_sort(db_objects, path_cnt, sizeof(struct directory *), dp_cmp, NULL);
 	    for (int i = 0; i < path_cnt; i++) {
 		struct directory *curr_dp = db_objects[i];
-		new CADTreeNode(QString(curr_dp->d_namep), m_root);
+		CADTreeNode *new_node = new CADTreeNode(QString(curr_dp->d_namep), m_root);
+		QModelIndex idx = NodeIndex(new_node);
+		setData(idx, QVariant(OP_UNION), 1000);
 	    }
 	}
 	endResetModel();
