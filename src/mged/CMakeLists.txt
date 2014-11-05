@@ -6,18 +6,20 @@ set(MGED_INCLUDE_DIRS
   ${WDB_INCLUDE_DIRS}
   ${DM_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
+  ${TK_INCLUDE_PATH}
+  ${TCL_INCLUDE_PATH}
   ${TERMIO_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
 # Until we figure out how to properly use package require,
 # we need the internal Tcl headers
-set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
-  ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
-  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
-  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
-  )
+#set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS}
+#  ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
+#  ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
+#  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
+#  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
+#  )
 
 # process.h in points dir makes Windows unhappy,
 # and the TERMLIB_INCLUDE_DIR isn't set there
