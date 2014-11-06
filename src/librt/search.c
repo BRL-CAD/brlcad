@@ -999,6 +999,32 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp) return 0;
     if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) return 0;
+
+    /* We can handle combs without needing to perform the rt_db_internal unpacking - do so
+     * to help performance. */
+    if (dp->d_flags & RT_DIR_COMB) {
+	if (dp->d_flags & RT_DIR_REGION) {
+	    if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0))) {
+		return 1;
+	    } else {
+		db_node->matched_filters = 0;
+		return 0;
+	    }
+	}
+	if ((!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
+	    return 1;
+	} else {
+	    db_node->matched_filters = 0;
+	    return 0;
+	}
+    } else {
+	if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0)) || (!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
+	    db_node->matched_filters = 0;
+	    return 0;
+	}
+
+    }
+
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || !intern.idb_meth->ft_label) {
 	rt_db_free_internal(&intern);
@@ -1028,16 +1054,6 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 		default:
 		    type_match = (!bu_fnmatch(plan->type_data, "invalid", 0));
 		    break;
-	    }
-	    break;
-	case DB5_MINORTYPE_BRLCAD_COMBINATION:
-	    if (dp->d_flags & RT_DIR_REGION) {
-		if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0))) {
-		    type_match = 1;
-		}
-	    }
-	    if ((!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
-		type_match = 1;
 	    }
 	    break;
 	case DB5_MINORTYPE_BRLCAD_METABALL:
