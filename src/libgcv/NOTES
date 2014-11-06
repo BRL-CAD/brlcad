@@ -47,9 +47,21 @@ the following formats: OBJ, STL, VRML, FASTGEN4, and BRL-CAD.
 
 The library includes support for a number of implicit and explicit
 geometry representation types including Bags o' Triangles (triangle
-mesh geometry), n-Manifold polgyonal meshes, volumetric data, NURBS,
+mesh geometry), n-Manifold polygonal meshes, volumetric data, NURBS,
 and implicit primitives with constructive solid geometry (CSG) Boolean
 operations.
+
+Multipass processing.  First check if all geometry records can be
+processed, e.g., whether a given geometry subtree or a particular
+geometry object will convert given a prescribed request.  This is to
+catch errors earlier in the pipeline.  Lossy or context-sensitive
+translations, e.g., exporting an infinite halfspace to polygonal
+format, are example considerations.
+
+Normalization.  Whether a prescribed output format supports a
+hierarchy and/or matrices or is modeled far from floating-point origin
+can influence conversion results.  Supporting normalization is not a
+priority, but may influence design options.
 
 
 NEW FORMATS

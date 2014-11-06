@@ -42,7 +42,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-static char usage[] = "Usage: %s [-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_CPUs] brlcad_db.g object(s)\n";
+static char usage[] = "[-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_CPUs] brlcad_db.g object(s)\n";
 
 static int NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int verbose;
@@ -68,6 +68,11 @@ struct facets
     int facet_type;
 };
 
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 void
 fastf_print(FILE *fp_out, size_t length, fastf_t f)
@@ -606,13 +611,13 @@ main(int argc, char **argv)
 		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 		break;
 	}
     }
 
     if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
     }
 
     /* Open BRL-CAD database */

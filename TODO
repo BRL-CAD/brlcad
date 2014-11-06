@@ -53,6 +53,46 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* establish the Basic Application Runtime (BAR), only consisting of
+  libbu and libbn, as a stand-alone self-contained project.  provide
+  an API that supports most C/C++ application development and
+  documents our facilities that help simplify code portability,
+  performance, and maintainability.  the scope is basic application
+  utility and numerics only.  this scope is particularly tailored
+  towards 3D and scientific application development.
+
+  the basic utility routines encapsulate platform-specific constructs
+  portably.  the basic numeric routines provide general math
+  facilities common to scientific application development with a
+  particular emphasis on being platform agnostic, high performance,
+  and validated.
+
+  the Apache Portable Runtime (APR) and GIMP Toolkit (GTK) are similar
+  alternatives (particularly to BAR's basic utility routines) but have
+  different emphases, scope, and development philosophies.
+
+  BAR API design aims to be minimally intrusive on application
+  developers, not requiring them to be aware of or adapt types or
+  functions until it provides some clear advantage (e.g., portability,
+  performance, and/or maintainability).
+
+* object error heuristic.  implement a function/command to report how
+  big of an error a given geometry object has.  the intent is to help
+  prioritize geometry modeling errors based on their spatial impact.
+  this is particularly relevant for nurbs/brep and nmg geometry where
+  there may be solidity gaps in the topology that need to be sealed or
+  dangling faces/surfaces of different sizes.  this is meant to be a
+  relative heuristic applicable across all geometry, not necessary an
+  exact measure.  this may make more sense added as an output option
+  to glint or as a warning category for a geometry debugger.
+
+* create a joint articulation (manually is good, automatic is better)
+  for the tin woodsman so he can move his arms, legs, neck, and head.
+
+* create a joint articulation (manually is good, automatic is probably
+  impossible) for ktank so the turret can spin and the gun barrel may
+  be raised up/down within a given range.
+
 * make Lighting enabled by default in mged and archer (this is a libdm
   issue).  currently unable to set/override in .mgedrc either.
 
@@ -61,7 +101,18 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   (largest edge gap or distance between two points that should be
   coincident).
 
-* geometry compiler
+* geometry compiler.  provides different levels of "optimization"
+  (ways of reducing the geometry complexity with or without
+  introducing 3D changes.  provides different stages of compilation
+  (e.g., similar to preprocessing, compilation, AST reduction,
+  optimization, encoding transformation, etc).  name ideas: bcg, cg
+
+* geometry debugger.  low-level geometry database tool with minimal/no
+  run-time dependencies on our own libraries.  the idea is a tool that
+  can inspect/repair a potentially corrupted/invalid .g file or help
+  debug library robustness issues.  using headers for identifiers and
+  codes in the implementation is okay (as are library functions, but
+  just don't rely on any).  name ideas: gdbg, dbadmin, dbtool, dbmaint
 
 * BU_SETJUMP/BU_UNSETJUMP into macros
 
@@ -1443,6 +1494,51 @@ NEW OBJECTS
 	arc := center point, radius, start angle, end angle
 	spline := degree, control points, knot values
 	text := string, insertion point, size, style, alignment
+
+* procedural geometry objects.  database objects that are described at
+  run-time by a scripted definition.  at core, this is a means to
+  define geometry via outboard descriptions that conform with a
+  particular syntax (e.g., tcl or python).
+
+  minimally, an object will need to define what parameters are
+  required, what parameters are optional, and what default values will
+  be used.  the object will also need to provide a procedural
+  definition (e.g., a function or set of functions/objects) that
+  receives parameter values in order to describe geometry on-demand.
+
+  similar to shader, material, and other object constructs, it'll
+  likely be desirable to support embedding of the procedural
+  definition within a .g file as well as the ability to reference an
+  external file that may be more conveniently edited.
+
+  care will need to be taken to avoid bad behavior when presented with
+  a malformed procedure (e.g., an infinite loop, fork bomb, syntax
+  error, thrashing condition, etc).
+
+* spheroid (quadratic) - special performance case of ell
+
+* conical edge (cubic) - unsure of this one's practical utility except
+  as a means to construct a pinched tgc (unioning two halves).
+
+* apple (quartic) - this is basically a continuation of torus where
+  the ID > OD/2.
+
+* cushion (quartic) - bowl shape, related to elliptical torus with
+  filled interior.
+
+* eight/piriform (quartic) - a conic/ellipsoid blending shape.
+
+* goursat/tanglecube/tooth (quartic) - related to superellipsoid
+  surface, provides corner/edge blending and rounding shapes.
+
+* lemon (quartic) - elliptical nose cap (requested shape) shape.
+
+* box-spline blend - blending object that is defined by an arb8
+  volume, blending any entities within that volume that intersect
+
+* lipschitz blend - means to procedurally blend surface edges based on
+  a blend function and sphere tracing. see "Combining CSG modeling
+  with soft blending using Lipschitz-based implicit surfaces".
 
 
 WINDOWS

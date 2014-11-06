@@ -107,8 +107,8 @@ usage(const char *argv0)
 	   "\t\t\tn = plate nocos\n"
 	   "\t\t\tp = plate\n"
 	   "\t\t\ts = surface (default)\n"
-	   "  -p\t\tCreates a plot/overlay (.pl) file of open edges for bots that\n"
-	   "\t\taren't closed volumes. <bot_name>.pl will be created in the\n"
+	   "  -p\t\tCreates a plot/overlay (.plot3) file of open edges for bots that\n"
+	   "\t\taren't closed volumes. <bot_name>.plot3 will be created in the\n"
 	   "\t\tcurrent directory and will overwrite any existing file with the\n"
 	   "\t\tsame name.\n"
 	   "  -r orient\tSelect the bot orientation mode:\n"
@@ -118,10 +118,10 @@ usage(const char *argv0)
 	);
 
     bu_log("  -t distance_tolerance\n"
-	   "\t\tDistance tolerance (mm); default is .0005. Two vertices are\n"
+	   "\t\tDistance tolerance (mm); default is %lf. Two vertices are\n"
 	   "\t\tconsidered to be the same if they are within this distance of\n"
 	   "\t\teach other. You should not change this value without setting\n"
-	   "\t\tthe raytracer tolerance to match it.\n");
+	   "\t\tthe raytracer tolerance to match it.\n",BN_TOL_DIST);
     bu_log("  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
 	   "\t\tYou can also provide a custom conversion factor from file units\n"
 	   "\t\tto mm.\n"
@@ -3274,7 +3274,7 @@ main(int argc, char **argv)
     tol = &tol_struct;
     tol->magic = BN_TOL_MAGIC;
     /* default which should be equal to the raytracer default tolerance */
-    tol->dist = 0.0005;
+    tol->dist = BN_TOL_DIST;
     tol->dist_sq = tol->dist * tol->dist;
     /* default which should be equal to the raytracer default tolerance */
     tol->perp = 1e-6;
