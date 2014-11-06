@@ -30,6 +30,7 @@
 #include <QVariant>
 #include <QString>
 #include <QList>
+#include <QImage>
 
 #ifndef Q_MOC_RUN
 #include "bu/file.h"
@@ -48,6 +49,7 @@ public:
     QString name;
     int boolean;
     struct directory *node_dp;
+    QImage icon;
     CADTreeNode *parent;
     QList<CADTreeNode*> children;
 };

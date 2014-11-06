@@ -37,7 +37,7 @@ get_comb_type(struct directory *dp, struct db_i *dbip)
 	air_flag = 1;
     }
 
-    const char *assembly_search = "-type comb -above -type region ! -type region";
+    const char *assembly_search = "-depth 0 -type comb -above -type region ! -type region";
     int search_results = db_search(NULL, DB_SEARCH_QUIET, assembly_search, 1, &dp, dbip);
     //std::cout << "search results(" << dp->d_namep << "): " << search_results << "\n";
     if (search_results) assembly_flag = 1;
@@ -53,7 +53,7 @@ get_comb_type(struct directory *dp, struct db_i *dbip)
 void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
         QString text = index.data().toString();
-	int bool_op = index.data(1000).toInt();
+	int bool_op = index.data(BoolInternalRole).toInt();
 	int type;
 	switch (bool_op) {
 	    case OP_UNION:
@@ -257,7 +257,7 @@ QSize GObjectDelegate::sizeHint(const QStyleOptionViewItem &option, const QModel
 {
     QSize name_size = option.fontMetrics.size(Qt::TextSingleLine, index.data().toString());
     QSize bool_size;
-    int bool_op = index.data(1000).toInt();
+    int bool_op = index.data(BoolInternalRole).toInt();
     switch (bool_op) {
 	case OP_UNION:
 	    bool_size = option.fontMetrics.size(Qt::TextSingleLine, " u ");

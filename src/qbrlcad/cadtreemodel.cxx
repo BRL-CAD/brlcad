@@ -54,7 +54,7 @@ CADTreeModel::data(const QModelIndex & idx, int role) const
     if (!idx.isValid()) return QVariant();
     CADTreeNode *curr_node = IndexNode(idx);
     if (role == Qt::DisplayRole) return QVariant(curr_node->name);
-    if (role == 1000) return QVariant(curr_node->boolean);
+    if (role == BoolInternalRole) return QVariant(curr_node->boolean);
     return QVariant();
 }
 
@@ -65,9 +65,9 @@ CADTreeModel::setData(const QModelIndex & idx, const QVariant & value, int role)
     QVector<int> roles;
     bool ret = false;
     CADTreeNode *curr_node = IndexNode(idx);
-    if (role == 1000) {
+    if (role == BoolInternalRole) {
 	curr_node->boolean = value.toInt();
-	roles.append(1000);
+	roles.append(BoolInternalRole);
 	ret = true;
     }
     if (ret) emit dataChanged(idx, idx, roles);
@@ -165,7 +165,8 @@ CADTreeModel::cad_add_child(const char *name, CADTreeNode *curr_node, int op)
 {
     CADTreeNode *new_node = new CADTreeNode(QString(name), curr_node);
     QModelIndex idx = NodeIndex(new_node);
-    setData(idx, QVariant(op), 1000);
+    //struct directory *dp = db_lookup(current_dbip, new_node->name.toLocal8Bit(), LOOKUP_QUIET);
+    setData(idx, QVariant(op), BoolInternalRole);
 }
 
 void
@@ -253,9 +254,7 @@ int CADTreeModel::populate(struct db_i *new_dbip)
 	    bu_sort(db_objects, path_cnt, sizeof(struct directory *), dp_cmp, NULL);
 	    for (int i = 0; i < path_cnt; i++) {
 		struct directory *curr_dp = db_objects[i];
-		CADTreeNode *new_node = new CADTreeNode(QString(curr_dp->d_namep), m_root);
-		QModelIndex idx = NodeIndex(new_node);
-		setData(idx, QVariant(OP_UNION), 1000);
+		cad_add_child(curr_dp->d_namep, m_root, OP_UNION);
 	    }
 	}
 	endResetModel();
