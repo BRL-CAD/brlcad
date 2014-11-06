@@ -13,9 +13,6 @@ void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
         QString text = index.data().toString();
 	int bool_op = index.data(BoolInternalRole).toInt();
 	switch (bool_op) {
-	    case OP_UNION:
-		text.prepend("u ");
-		break;
 	    case OP_INTERSECT:
 		text.prepend("  + ");
 		break;
@@ -51,7 +48,7 @@ QSize GObjectDelegate::sizeHint(const QStyleOptionViewItem &option, const QModel
     int bool_op = index.data(BoolInternalRole).toInt();
     switch (bool_op) {
 	case OP_UNION:
-	    bool_size = option.fontMetrics.size(Qt::TextSingleLine, " u ");
+	    bool_size = option.fontMetrics.size(Qt::TextSingleLine, " ");
 	    break;
 	case OP_INTERSECT:
 	    bool_size = option.fontMetrics.size(Qt::TextSingleLine, "   + ");
