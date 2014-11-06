@@ -2823,23 +2823,20 @@ isocurve_surface_overlap_location(
     double test_distance = 0.01;
 
     // TODO: more sample points
-    double u1, v1, u2, v2;
     double midpt = (iso.overlap_t[0] + iso.overlap_t[1]) * 0.5;
-    if (iso.src.knot.dir == 0) {
-	u1 = u2 = midpt;
-	v1 = iso.src.knot.c - test_distance;
-	v2 = iso.src.knot.c + test_distance;
-    } else {
-	u1 = iso.src.knot.c - test_distance;
-	u2 = iso.src.knot.c + test_distance;
-	v1 = v2 = midpt;
-    }
+    double knot = iso.src.knot.c;
+
+    ON_2dPoint test_pt1, test_pt2;
+    bool swap_xy = iso.src.knot.dir == 1;
+
+    test_pt1 = point_xy_or_yx(midpt, knot - test_distance, swap_xy);
+    test_pt2 = point_xy_or_yx(midpt, knot + test_distance, swap_xy);
 
     bool in1, in2;
     ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
 
-    in1 = is_pt_in_surf_overlap(ON_2dPoint(u1, v1), surf1, surf2, surf2_tree);
-    in2 = is_pt_in_surf_overlap(ON_2dPoint(u2, v2), surf1, surf2, surf2_tree);
+    in1 = is_pt_in_surf_overlap(test_pt1, surf1, surf2, surf2_tree);
+    in2 = is_pt_in_surf_overlap(test_pt2, surf1, surf2, surf2_tree);
 
     if (in1 && in2) {
 	return INSIDE_OVERLAP;
