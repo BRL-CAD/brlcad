@@ -77,7 +77,7 @@ enum CADDataRoles {
     BoolInternalRole = Qt::UserRole + 1000,
     BoolDisplayRole = Qt::UserRole + 1001,
     DirectoryInternalRole = Qt::UserRole + 1002,
-    TypeIconDisplayRole = Qt::UserRole + 1002
+    TypeIconDisplayRole = Qt::UserRole + 1003
 };
 
 

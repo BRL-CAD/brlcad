@@ -49,7 +49,7 @@ public:
     QString name;
     int boolean;
     struct directory *node_dp;
-    QImage icon;
+    QVariant icon;
     CADTreeNode *parent;
     QList<CADTreeNode*> children;
 };
