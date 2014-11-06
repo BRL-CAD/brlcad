@@ -3307,6 +3307,28 @@ append_csx_event_points(
     }
 }
 
+// Find curves that contain the boundaries of overlap regions.
+//
+// The portion of a NURBS surface inside a span defined by two pairs
+// of strictly increasing knots (one in each of the u and v
+// directions) is a rational Bezier surface [1].
+//
+// Thus a NURBS surface can be decomposed into Bezier patches whose
+// boundaries coincide with the isocurves at the surface's strictly
+// increasing (Bezier) knots.
+//
+// When two Bezier patches overlap, the boundary of the overlap region
+// is formed completely from the boundaries of the patches [2].
+//
+// Therefore, the boundaries of the overlap regions between two NURBS
+// surfaces are formed completely from the isocurves at the surfaces'
+// Bezier knots. More narrowly, the subcurves of said isocurves which
+// overlap the opposing surface contain all subcurves needed to bound
+// the overlap regions. 
+//
+// 1. See ON_NurbsSurface::ConvertSpanToBezier().
+// 2. Theorem 3 in
+// http://libgen.org/scimag1/10.1016/S0010-4485%252896%252900099-1.pdf
 HIDDEN void
 find_overlap_boundary_curves(
 	ON_SimpleArray<OverlapSegment *> &overlaps,
@@ -3529,19 +3551,6 @@ ON_Intersect(const ON_Surface *surfA,
 
     ON_3dPointArray curvept, tmp_curvept;
     ON_2dPointArray curve_uvA, curve_uvB, tmp_curve_uvA, tmp_curve_uvB;
-
-    // Overlap detection:
-    // According to the Theorem 3 in paper:
-    // http://libgen.org/scimag1/10.1016/S0010-4485%252896%252900099-1.pdf
-    // For two Bezier patches, if they overlap over a region, then the overlap
-    // region must be bounded by parts of the boundaries of the two patches.
-    // The Bezier patches for a NURBS surface are always bounded at the knots.
-    // In other words, given two pairs of neighbor knots (in two dimensions),
-    // we can get a Bezier patch between them.
-    // (See ON_NurbsSurface::ConvertSpanToBezier()).
-    // So we actually don't need to generate the Bezier patches explicitly,
-    // and we can get the boundaries of them using IsoCurve() on knots.
-    // Deal with boundaries with curve-surface intersections.
 
     ON_SimpleArray<OverlapSegment *> overlaps;
     find_overlap_boundary_curves(overlaps, tmp_curvept, tmp_curve_uvA,
