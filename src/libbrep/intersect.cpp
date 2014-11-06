@@ -3245,8 +3245,7 @@ append_overlap_segments(
     ON_SimpleArray<OverlapSegment *> &overlaps,
     OverlapIsocurve iso,
     const ON_Curve *overlap2d,
-    const ON_Surface *surf1,
-    const std::vector<double> &surf1_knots)
+    const ON_Surface *surf1)
 {
     OverlapSegment *seg = new OverlapSegment;
     try {
@@ -3275,7 +3274,7 @@ append_overlap_segments(
 	// the same, so we don't need to compute
 	// the intersections twice.
 	seg = new OverlapSegment(seg);
-	seg->m_fix = surf1_knots.back();
+	seg->m_fix = get_knots(surf1, surf_dir).back();
 	bool swap_xy = 1 - surf_dir;
 	ON_2dPoint iso_pt1 = point_xy_or_yx(iso.overlap_t[0], seg->m_fix, swap_xy);
 	ON_2dPoint iso_pt2 = point_xy_or_yx(iso.overlap_t[1], seg->m_fix, swap_xy);
@@ -3357,8 +3356,7 @@ find_overlap_boundary_curves(
 	ON_2dPointArray &isocurve2_2d = is_surfA_iso ? isocurveB_2d :
 	    isocurveA_2d;
 
-	std::vector<double> surf1_knots, surf1_bezier_knots;
-        surf1_knots = get_knots(surf1, surf_dir);
+	std::vector<double> surf1_bezier_knots;
 	surf1_bezier_knots = get_bezier_knots(surf1, surf_dir);
 
 	for (size_t j = 0; j < surf1_bezier_knots.size(); ++j) {
@@ -3393,7 +3391,7 @@ find_overlap_boundary_curves(
 
 		    if (curve_on_overlap_boundary) {
 			append_overlap_segments(overlaps, iso, overlap2d[k],
-				surf1, surf1_knots);
+				surf1);
 		    }
 		}
 	    }
