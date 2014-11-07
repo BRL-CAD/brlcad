@@ -151,9 +151,10 @@ package.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-c X Y Z</option></term>
+  <term><option>-c "X Y Z"</option></term>
   <listitem>
-<para>Specifies centroid for some plate mode surface normal calculations.</para>
+<para>Specifies centroid, in inches, for some plate mode surface normal calculations.
+      Quotation marks are needed to provide for the embedded blanks.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
