@@ -133,15 +133,13 @@ package.</para>
   <varlistentry>
   <term><option>-t title</option></term>
   <listitem>
-<para>Specifies a title for the output model.</para>
+<para>Specifies a title for the output model (default is "patch-g conversion").</para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term><option>-o top_level_name</option></term>
   <listitem>
-<para>Specifies a name for the top level object (default is
-<emphasis remap='B'>all</emphasis>
-).</para>
+<para>Specifies a name for the top level object (default is "all").</para>
   </listitem>
   </varlistentry>
   <varlistentry>
