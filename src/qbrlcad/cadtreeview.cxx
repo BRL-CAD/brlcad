@@ -10,35 +10,39 @@
 
 void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-        QString text = index.data().toString();
-	int bool_op = index.data(BoolInternalRole).toInt();
-	switch (bool_op) {
-	    case OP_INTERSECT:
-		text.prepend("  + ");
-		break;
-	    case OP_SUBTRACT:
-		text.prepend("  - ");
-		break;
-	}
-	text.prepend(" ");
 
-        // rect with width proportional to value
-        //QRect rect(option.rect.adjusted(4,4,-4,-4));
+    if (option.state & QStyle::State_Selected)
+	painter->fillRect(option.rect, option.palette.highlight());
 
-        // draw the value bar
-        //painter->fillRect(rect, QBrush(QColor("steelblue")));
-	//
-        // draw text label
+    QString text = index.data().toString();
+    int bool_op = index.data(BoolInternalRole).toInt();
+    switch (bool_op) {
+	case OP_INTERSECT:
+	    text.prepend("  + ");
+	    break;
+	case OP_SUBTRACT:
+	    text.prepend("  - ");
+	    break;
+    }
+    text.prepend(" ");
 
-	QImage type_icon = index.data(TypeIconDisplayRole).value<QImage>().scaledToHeight(option.rect.height()-2);
-	QRect image_rect = type_icon.rect();
-	image_rect.moveTo(option.rect.topLeft());
-	QRect text_rect(type_icon.rect().topRight(), option.rect.bottomRight());
-	text_rect.moveTo(image_rect.topRight());
-	image_rect.translate(0, 1);
-        painter->drawImage(image_rect, type_icon);
+    // rect with width proportional to value
+    //QRect rect(option.rect.adjusted(4,4,-4,-4));
 
-        painter->drawText(text_rect, text, QTextOption(Qt::AlignLeft));
+    // draw the value bar
+    //painter->fillRect(rect, QBrush(QColor("steelblue")));
+    //
+    // draw text label
+
+    QImage type_icon = index.data(TypeIconDisplayRole).value<QImage>().scaledToHeight(option.rect.height()-2);
+    QRect image_rect = type_icon.rect();
+    image_rect.moveTo(option.rect.topLeft());
+    QRect text_rect(type_icon.rect().topRight(), option.rect.bottomRight());
+    text_rect.moveTo(image_rect.topRight());
+    image_rect.translate(0, 1);
+    painter->drawImage(image_rect, type_icon);
+
+    painter->drawText(text_rect, text, QTextOption(Qt::AlignLeft));
 }
 
 QSize GObjectDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
