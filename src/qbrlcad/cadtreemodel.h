@@ -89,7 +89,9 @@ class CADTreeModel : public QAbstractItemModel
 
     public slots:
 	void refresh();
-	void update_current_node_relationships(const QModelIndex & index);
+	void update_selected_node_relationships(const QModelIndex & index);
+	void expand_tree_node_relationships(const QModelIndex&);
+	void close_tree_node_relationships(const QModelIndex&);
 
     protected:
 

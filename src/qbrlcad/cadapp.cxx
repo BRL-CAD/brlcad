@@ -36,7 +36,7 @@ void
 CADApp::initialize()
 {
     ged_pointer = GED_NULL;
-    current_object = RT_DIR_NULL;
+    current_idx = QModelIndex();
 }
 
 struct db_i *
@@ -198,14 +198,6 @@ CADApp::exec_console_app_in_window(QString command, QStringList options, QString
 	out_win->exec();
     }
     return 0;
-}
-
-void
-CADApp::update_current_object(const QModelIndex & index)
-{
-    current_idx = index;
-    current_object = (struct directory *)(index.data(DirectoryInternalRole).value<void *>());
-    emit treeview_needs_update(index);
 }
 
 /*

@@ -60,18 +60,12 @@ class CADApp : public QApplication
 	struct db_i *dbip();
 	struct rt_wdb *wdbp();
 
-	QModelIndex current_idx;
-	struct directory *current_object;
-
 	CADTreeView *cadtreeview;
+	QModelIndex current_idx;
 
     signals:
 	void db_change();  // TODO - need this to carry some information about what has changed, if possible...
 	void view_change();
-	void treeview_needs_update(const QModelIndex & index);
-
-    public slots:
-	void update_current_object(const QModelIndex & index);
 
     private:
 	struct ged *ged_pointer;

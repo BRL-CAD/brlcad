@@ -96,11 +96,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     QObject::connect((CADApp *)qApp, SIGNAL(db_change()), treemodel, SLOT(refresh()));
     QObject::connect(treeview, SIGNAL(expanded(const QModelIndex &)), treeview, SLOT(tree_column_size(const QModelIndex &)));
     QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treeview, SLOT(tree_column_size(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), ((CADApp *)qApp), SLOT(update_current_object(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), ((CADApp *)qApp), SLOT(update_current_object(const QModelIndex &)));
-    QObject::connect((CADApp *)qApp, SIGNAL(treeview_needs_update(const QModelIndex &)), treemodel, SLOT(update_current_node_relationships(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(expanded(const QModelIndex &)), treemodel, SLOT(update_current_node_relationships(const QModelIndex &)));
-    //QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treemodel, SLOT(update_current_node_relationships(const QModelIndex &)));
+    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), treemodel, SLOT(update_selected_node_relationships(const QModelIndex &)));
+    QObject::connect(treeview, SIGNAL(expanded(const QModelIndex &)), treemodel, SLOT(expand_tree_node_relationships(const QModelIndex &)));
+    QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treemodel, SLOT(close_tree_node_relationships(const QModelIndex &)));
     treemodel->populate(DBI_NULL);
     ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
 

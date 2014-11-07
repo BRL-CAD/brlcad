@@ -422,7 +422,7 @@ db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, i
     return;
 }
 
-HIDDEN void 
+HIDDEN void
 db_find_obj(int *ret, const char *name, struct directory *search, struct db_i *dbip, int *depth, int max_depth)
 {
     /* If we have a match, we need look no further */
@@ -430,8 +430,8 @@ db_find_obj(int *ret, const char *name, struct directory *search, struct db_i *d
 	(*ret)++;
 	return;
     }
-   
-   /* If we have a comb, open it up.  Otherwise, we're done */ 
+
+   /* If we have a comb, open it up.  Otherwise, we're done */
     if (search->d_flags & RT_DIR_COMB) {
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
@@ -450,32 +450,115 @@ db_find_obj(int *ret, const char *name, struct directory *search, struct db_i *d
 // but when we're opening and closing branches there's no need to check everything - in
 // that case should iterate over all the children of the node being expanded.
 void
-CADTreeModel::update_current_node_relationships(const QModelIndex & idx)
+CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 {
-    struct directory *selected_dp = ((CADApp *)qApp)->current_object;
+    struct directory *selected_dp = RT_DIR_NULL;
+    ((CADApp *)qApp)->current_idx = idx;
+    if (idx.isValid())
+	selected_dp = (struct directory *)(idx.data(DirectoryInternalRole).value<void *>());
+
     if (selected_dp != RT_DIR_NULL) {
 	foreach (CADTreeNode *test_node, all_nodes) {
-	    QModelIndex test_index = NodeIndex(test_node); 
+	    QModelIndex test_index = NodeIndex(test_node);
 	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
 	    if (selected_dp != test_node->node_dp) {
 		if (test_node->node_dp != RT_DIR_NULL && test_node->node_dp->d_flags & RT_DIR_COMB) {
-		    int depth = 0;
-		    int search_results = 0;
-		    db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, ((CADApp *)qApp)->dbip(), &depth, 1000); 
-		    if (search_results && !hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
-		    if (!search_results && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
-		} else {
-		    if (test_node->node_dp == selected_dp) {
-			if (!hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
+		    if (!((CADApp *)qApp)->cadtreeview->isExpanded(test_index)) {
+			int depth = 0;
+			int search_results = 0;
+			db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, ((CADApp *)qApp)->dbip(), &depth, 1000);
+			if (search_results && !hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
+			if (!search_results && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		    } else {
 			if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		    }
+		} else {
+		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		}
 	    } else {
 		if (test_index != idx) {
 		    if (!hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
 		} else {
 		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+		}
+	    }
+	}
+    }
+}
+
+void
+CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
+{
+    struct directory *selected_dp = RT_DIR_NULL;
+    if (((CADApp *)qApp)->current_idx.isValid())
+	selected_dp = (struct directory *)(((CADApp *)qApp)->current_idx .data(DirectoryInternalRole).value<void *>());
+
+    if (selected_dp != RT_DIR_NULL) {
+	CADTreeNode *expanded_node = IndexNode(idx);
+
+	QQueue<CADTreeNode *> test_nodes;
+	foreach (CADTreeNode *test_node, expanded_node->children) {
+	    test_nodes.enqueue(test_node);
+	}
+
+	while (!test_nodes.isEmpty()) {
+	    CADTreeNode *test_node = test_nodes.dequeue();
+	    QModelIndex test_index = NodeIndex(test_node);
+	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
+	    if (selected_dp != test_node->node_dp) {
+		if (test_node->node_dp != RT_DIR_NULL && test_node->node_dp->d_flags & RT_DIR_COMB) {
+		    if (!((CADApp *)qApp)->cadtreeview->isExpanded(test_index)) {
+			int depth = 0;
+			int search_results = 0;
+			db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, ((CADApp *)qApp)->dbip(), &depth, 1000);
+			if (search_results && !hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
+			if (!search_results && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+		    } else {
+			if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+		    }
+		} else {
+		    foreach (CADTreeNode *new_node, test_node->children) {
+			test_nodes.enqueue(new_node);
+		    }
+		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+		}
+	    } else {
+		if (test_index != idx) {
+		    if (!hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
+		} else {
+		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+		}
+	    }
+	}
+    }
+}
+
+
+void
+CADTreeModel::close_tree_node_relationships(const QModelIndex & idx)
+{
+    struct directory *selected_dp = RT_DIR_NULL;
+    if (((CADApp *)qApp)->current_idx.isValid())
+	selected_dp = (struct directory *)(((CADApp *)qApp)->current_idx .data(DirectoryInternalRole).value<void *>());
+
+    if (selected_dp != RT_DIR_NULL) {
+	CADTreeNode *closed_node = IndexNode(idx);
+
+	QQueue<CADTreeNode *> test_nodes;
+	foreach (CADTreeNode *test_node, closed_node->children) {
+	    test_nodes.enqueue(test_node);
+	}
+
+	while (!test_nodes.isEmpty()) {
+	    CADTreeNode *test_node = test_nodes.dequeue();
+	    QModelIndex test_index = NodeIndex(test_node);
+	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
+	    if (hs) {
+		setData(idx, QVariant(1), RelatedHighlightDisplayRole);
+		return;
+	    } else {
+		foreach (CADTreeNode *new_node, test_node->children) {
+		    test_nodes.enqueue(new_node);
 		}
 	    }
 	}
@@ -649,6 +732,7 @@ bool CADTreeModel::hasChildren(const QModelIndex &idx) const
 
 void CADTreeModel::refresh()
 {
+    all_nodes.clear();
     populate(((CADApp *)qApp)->dbip());
 }
 
