@@ -271,6 +271,7 @@ CADTreeModel::data(const QModelIndex & idx, int role) const
     if (role == BoolInternalRole) return QVariant(curr_node->boolean);
     if (role == DirectoryInternalRole) return QVariant::fromValue((void *)(curr_node->node_dp));
     if (role == TypeIconDisplayRole) return curr_node->icon;
+    if (role == RelatedHighlightDisplayRole) return curr_node->is_highlighted;
     return QVariant();
 }
 
@@ -296,9 +297,52 @@ CADTreeModel::setData(const QModelIndex & idx, const QVariant & value, int role)
 	roles.append(TypeIconDisplayRole);
 	ret = true;
     }
+    if (role == RelatedHighlightDisplayRole) {
+	curr_node->is_highlighted = value.toInt();
+	roles.append(RelatedHighlightDisplayRole);
+	roles.append(Qt::DisplayRole);
+	ret = true;
+    }
     if (ret) emit dataChanged(idx, idx, roles);
     return ret;
 }
+
+// TODO - need two versions of this.  This one is needed when we're changing selections,
+// but when we're opening and closing branches there's no need to check everything - in
+// that case should iterate over all the children of the node being expanded.
+void
+CADTreeModel::update_current_node_relationships(const QModelIndex & idx)
+{
+    struct directory *selected_dp = ((CADApp *)qApp)->current_object;
+    if (selected_dp != RT_DIR_NULL) {
+	foreach (CADTreeNode *test_node, all_nodes) {
+	    QModelIndex test_index = NodeIndex(test_node); 
+	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
+	    if (selected_dp != test_node->node_dp) {
+		if (test_node->node_dp != RT_DIR_NULL && test_node->node_dp->d_flags & RT_DIR_COMB) {
+		    QString search_str("-depth 0 -above -name ");
+		    search_str.append(selected_dp->d_namep);
+		    int search_results = db_search(NULL, DB_SEARCH_QUIET, search_str.toLocal8Bit(), 1, &(test_node->node_dp), ((CADApp *)qApp)->dbip());
+		    if (search_results && !hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
+		    if (!search_results && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+		} else {
+		    if (test_node->node_dp == selected_dp) {
+			if (!hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
+		    } else {
+			if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+		    }
+		}
+	    } else {
+		if (test_index != idx) {
+		    if (!hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
+		} else {
+		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+		}
+	    }
+	}
+    }
+}
+
 
 void CADTreeModel::setRootNode(CADTreeNode *root)
 {
@@ -395,6 +439,8 @@ CADTreeModel::cad_add_child(const char *name, CADTreeNode *curr_node, int op)
     setData(idx, QVariant(op), BoolInternalRole);
     setData(idx, QVariant::fromValue((void *)dp), DirectoryInternalRole);
     setData(idx, QVariant(get_type_icon(dp, current_dbip)), TypeIconDisplayRole);
+    setData(idx, QVariant(0), RelatedHighlightDisplayRole);
+    all_nodes.insert(new_node);
 }
 
 void

@@ -79,11 +79,14 @@ class CADTreeView : public QTreeView
 	CADTreeView(QWidget *pparent);
 	~CADTreeView() {};
 
+	QModelIndex selected();
+
     protected:
 	void resizeEvent(QResizeEvent *pevent);
 
     public slots:
 	void tree_column_size(const QModelIndex &index);
+	void repaint(const QModelIndex &index);
 
     private:
         void header_state();

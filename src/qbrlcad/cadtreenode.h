@@ -48,6 +48,7 @@ public:
 
     QString name;
     int boolean;
+    int is_highlighted;
     struct directory *node_dp;
     QVariant icon;
     CADTreeNode *parent;

@@ -1,5 +1,6 @@
 #include "cadtreemodel.h"
 #include "cadtreeview.h"
+#include "cadtreenode.h"
 
 #include <iostream>
 #include <QPainter>
@@ -10,9 +11,21 @@
 
 void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-
-    if (option.state & QStyle::State_Selected)
+    struct directory *cdp = RT_DIR_NULL;
+    QModelIndex selected = ((CADApp *)qApp)->cadtreeview->selected();
+    if (selected.isValid())
+	cdp = (struct directory *)(selected.data(DirectoryInternalRole).value<void *>());
+    struct directory *pdp = (struct directory *)(index.data(DirectoryInternalRole).value<void *>());
+    if (option.state & QStyle::State_Selected) {
 	painter->fillRect(option.rect, option.palette.highlight());
+    } else {
+	if (!((CADApp *)qApp)->cadtreeview->isExpanded(index) && index.data(RelatedHighlightDisplayRole).toInt()) {
+	    painter->fillRect(option.rect, QBrush(QColor(220, 200, 30)));
+	}
+	if (cdp == pdp && index.data(RelatedHighlightDisplayRole).toInt()) {
+	    painter->fillRect(option.rect, QBrush(QColor(220, 200, 30)));
+	}
+    }
 
     QString text = index.data().toString();
     int bool_op = index.data(BoolInternalRole).toInt();
@@ -97,6 +110,19 @@ void CADTreeView::tree_column_size(const QModelIndex &)
     header_state();
 }
 
+void CADTreeView::repaint(const QModelIndex &)
+{
+    ((QTreeView *)this)->repaint();
+}
+
+QModelIndex CADTreeView::selected()
+{
+    if (selectedIndexes().count() == 1) {
+	return selectedIndexes().first();
+    } else {
+	return QModelIndex();
+    }
+}
 
 /*
  * Local Variables:
