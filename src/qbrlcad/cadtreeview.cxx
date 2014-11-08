@@ -152,6 +152,32 @@ QModelIndex CADTreeView::selected()
     }
 }
 
+void CADTreeView::expand_path(QString path)
+{
+    int i = 0;
+    QStringList path_items = path.split("/", QString::SkipEmptyParts);
+    CADTreeModel *view_model = (CADTreeModel *)model();
+    QList<CADTreeNode*> *tree_children = &(view_model->m_root->children);
+    while (i < path_items.size()) {
+	for (int j = 0; j < tree_children->size(); ++j) {
+	    CADTreeNode *test_node = tree_children->at(j);
+	    if (test_node->name == path_items.at(i)) {
+		QModelIndex path_component = view_model->NodeIndex(test_node);
+		if (i == path_items.size() - 1) {
+		    selectionModel()->clearSelection();
+		    selectionModel()->select(path_component, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+		    emit (clicked(path_component));
+		} else {
+		    expand(path_component);
+		    tree_children = &(test_node->children);
+		}
+		break;
+	    }
+	}
+	i++;
+    }
+}
+
 /*
  * Local Variables:
  * mode: C
