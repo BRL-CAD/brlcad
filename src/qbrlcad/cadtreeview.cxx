@@ -8,6 +8,8 @@
 #include "raytrace.h"
 #include "cadapp.h"
 
+#include <QAction>
+#include <QMenu>
 
 void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
@@ -85,6 +87,7 @@ QSize GObjectDelegate::sizeHint(const QStyleOptionViewItem &option, const QModel
 
 CADTreeView::CADTreeView(QWidget *pparent) : QTreeView(pparent)
 {
+    this->setContextMenuPolicy(Qt::CustomContextMenu);
 }
 
 void
@@ -132,9 +135,13 @@ void CADTreeView::tree_column_size(const QModelIndex &)
     header_state();
 }
 
-void CADTreeView::repaint(const QModelIndex &)
+void CADTreeView::context_menu(const QPoint &point)
 {
-    ((QTreeView *)this)->repaint();
+    QModelIndex index = indexAt(point);
+    QAction* act = new QAction(index.data().toString(), NULL);
+    QMenu *menu = new QMenu("Object Actions", NULL);
+    menu->addAction(act);
+    menu->exec(mapToGlobal(point));
 }
 
 QModelIndex CADTreeView::selected()

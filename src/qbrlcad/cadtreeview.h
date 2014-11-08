@@ -88,7 +88,7 @@ class CADTreeView : public QTreeView
 
     public slots:
 	void tree_column_size(const QModelIndex &index);
-	void repaint(const QModelIndex &index);
+	void context_menu(const QPoint &point);
 
     private:
         void header_state();

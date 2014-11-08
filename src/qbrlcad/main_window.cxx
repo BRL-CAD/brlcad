@@ -99,6 +99,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), treemodel, SLOT(update_selected_node_relationships(const QModelIndex &)));
     QObject::connect(treeview, SIGNAL(expanded(const QModelIndex &)), treemodel, SLOT(expand_tree_node_relationships(const QModelIndex &)));
     QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treemodel, SLOT(close_tree_node_relationships(const QModelIndex &)));
+    QObject::connect(treeview, SIGNAL(customContextMenuRequested(const QPoint&)), treeview, SLOT(context_menu(const QPoint&)));
     treemodel->populate(DBI_NULL);
     ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
 
