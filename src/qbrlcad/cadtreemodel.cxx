@@ -553,7 +553,7 @@ CADTreeModel::close_tree_node_relationships(const QModelIndex & idx)
 	    CADTreeNode *test_node = test_nodes.dequeue();
 	    QModelIndex test_index = NodeIndex(test_node);
 	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
-	    if (hs) {
+	    if (hs || selected_dp == test_node->node_dp) {
 		setData(idx, QVariant(1), RelatedHighlightDisplayRole);
 		return;
 	    } else {
