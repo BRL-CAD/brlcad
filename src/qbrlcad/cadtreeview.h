@@ -81,6 +81,8 @@ class CADTreeView : public QTreeView
 
 	QModelIndex selected();
 
+	void drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const;
+
     protected:
 	void resizeEvent(QResizeEvent *pevent);
 

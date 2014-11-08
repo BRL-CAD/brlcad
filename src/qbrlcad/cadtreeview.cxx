@@ -56,6 +56,9 @@ void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
     painter->drawImage(image_rect, type_icon);
 
     painter->drawText(text_rect, text, QTextOption(Qt::AlignLeft));
+
+    /* Need to make sure the drawBranches() custom logic is also triggered when we're doing this */
+    emit ((CADApp *)qApp)->cadtreeview->update();
 }
 
 QSize GObjectDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
@@ -82,6 +85,25 @@ QSize GObjectDelegate::sizeHint(const QStyleOptionViewItem &option, const QModel
 
 CADTreeView::CADTreeView(QWidget *pparent) : QTreeView(pparent)
 {
+}
+
+void
+CADTreeView::drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const
+{
+    struct directory *cdp = RT_DIR_NULL;
+    QModelIndex selected_idx = ((CADTreeView *)this)->selected();
+    if (selected_idx.isValid())
+	cdp = (struct directory *)(selected_idx.data(DirectoryInternalRole).value<void *>());
+    struct directory *pdp = (struct directory *)(index.data(DirectoryInternalRole).value<void *>());
+    if (!(index == selected_idx)) {
+	if (!((CADApp *)qApp)->cadtreeview->isExpanded(index) && index.data(RelatedHighlightDisplayRole).toInt()) {
+	    painter->fillRect(rrect, QBrush(QColor(220, 200, 30)));
+	}
+	if (cdp == pdp && index.data(RelatedHighlightDisplayRole).toInt()) {
+	    painter->fillRect(rrect, QBrush(QColor(220, 200, 30)));
+	}
+    }
+    QTreeView::drawBranches(painter, rrect, index);
 }
 
 void CADTreeView::header_state()
