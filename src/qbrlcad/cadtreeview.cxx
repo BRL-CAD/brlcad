@@ -21,11 +21,13 @@ void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
     if (option.state & QStyle::State_Selected) {
 	painter->fillRect(option.rect, option.palette.highlight());
     } else {
-	if (!((CADApp *)qApp)->cadtreeview->isExpanded(index) && index.data(RelatedHighlightDisplayRole).toInt()) {
+	if ((!((CADApp *)qApp)->cadtreeview->isExpanded(index) && index.data(RelatedHighlightDisplayRole).toInt())
+		|| (cdp == pdp && index.data(RelatedHighlightDisplayRole).toInt())) {
 	    painter->fillRect(option.rect, QBrush(QColor(220, 200, 30)));
-	}
-	if (cdp == pdp && index.data(RelatedHighlightDisplayRole).toInt()) {
-	    painter->fillRect(option.rect, QBrush(QColor(220, 200, 30)));
+	    /* Need to make sure the drawBranches() custom logic is also triggered
+	     * when we're doing this - fake a collapse event to make sure everything
+	     * gets updated*/
+	    emit ((CADApp *)qApp)->cadtreeview->collapsed(index);
 	}
     }
 
@@ -58,9 +60,6 @@ void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
     painter->drawImage(image_rect, type_icon);
 
     painter->drawText(text_rect, text, QTextOption(Qt::AlignLeft));
-
-    /* Need to make sure the drawBranches() custom logic is also triggered when we're doing this */
-    emit ((CADApp *)qApp)->cadtreeview->update();
 }
 
 QSize GObjectDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
