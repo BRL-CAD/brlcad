@@ -51,6 +51,7 @@ install(TARGETS qbrlcad
   ARCHIVE DESTINATION ${LIB_DIR})
 
 CMAKEFILES(images)
+CMAKEFILES(fonts)
 CMAKEFILES(cadstyle.qss)
 
 # Local Variables:

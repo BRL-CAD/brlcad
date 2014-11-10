@@ -3,6 +3,8 @@
 #include <QVBoxLayout>
 #include <QScrollArea>
 #include <QScrollBar>
+#include <QFontDatabase>
+#include <QFont>
 
 ConsoleInput::ConsoleInput(QWidget *pparent) : QTextEdit(pparent)
 {
@@ -17,13 +19,48 @@ void ConsoleInput::resizeEvent(QResizeEvent *e)
     QTextEdit::resizeEvent(e);
 }
 
-void ConsoleInput::keyPressEvent(QKeyEvent *e)
+void ConsoleInput::DoCommand()
 {
     QTextCursor itc= textCursor();
-    QString buffer;
     QString command;
     int end_pos;
-    switch(e->key())
+
+    //capture command text
+    end_pos = textCursor().position();
+    itc.setPosition(anchor_pos, QTextCursor::MoveAnchor);
+    itc.setPosition(end_pos, QTextCursor::KeepAnchor);
+    command = itc.selectedText();
+
+    // Add the command to the log
+    if (parent_console->log->is_empty) {
+	parent_console->log->clear();
+	parent_console->log->is_empty = 0;
+    } else {
+	parent_console->log->insertHtml("<br>");
+    }
+
+    parent_console->log->textCursor().insertHtml(parent_console->console_prompt);
+    parent_console->log->textCursor().insertHtml(command.trimmed());
+    parent_console->log->textCursor().insertHtml("<br>");
+
+    // Update the size of the log
+    parent_console->log->setMinimumHeight(parent_console->log->document()->size().height());
+    parent_console->log->setMaximumHeight(parent_console->log->document()->size().height());
+
+    // Reset the input buffer
+    clear();
+    insertHtml(parent_console->console_prompt);
+    itc= textCursor();
+    anchor_pos = itc.position();
+    setMinimumHeight(document()->size().height());
+
+    // Emit the command - up to the application to run it and return results
+    emit parent_console->executeCommand(command);
+}
+
+void ConsoleInput::keyPressEvent(QKeyEvent *e)
+{
+   switch(e->key())
     {
 	case Qt::Key_Delete:
 	case Qt::Key_Backspace:
@@ -35,42 +72,7 @@ void ConsoleInput::keyPressEvent(QKeyEvent *e)
 	case Qt::Key_Return:
 	case Qt::Key_Enter:
 	    e->accept();
-	    //capture command text
-	    end_pos = textCursor().position();
-	    itc.setPosition(anchor_pos, QTextCursor::MoveAnchor);
-	    itc.setPosition(end_pos, QTextCursor::KeepAnchor);
-	    command = itc.selectedText();
-
-	    // Add the command to the log
-	    if (parent_console->log->is_empty) {
-		parent_console->log->clear();
-		parent_console->log->is_empty = 0;
-	    } else {
-		if (command.length() == 0)
-		    parent_console->log->insertHtml("<br>");
-	    }
-
-	    buffer.append("<html><body><head>");
-	    buffer.append("</head><p>\n");
-	    buffer.append(parent_console->console_prompt);
-	    buffer.append(command.trimmed());
-	    buffer.append("</p></body></html>");
-	    parent_console->log->insertHtml(buffer);
-
-	    // Update the size of the log
-	    parent_console->log->setMinimumHeight(parent_console->log->document()->size().height());
-	    parent_console->log->setMaximumHeight(parent_console->log->document()->size().height());
-
-	    // Reset the input buffer
-	    clear();
-	    insertHtml(parent_console->console_prompt);
-	    itc= textCursor();
-	    anchor_pos = itc.position();
-	    setMinimumHeight(document()->size().height());
-
-	    // Emit the command - up to the application to run it and return results
-	    emit parent_console->executeCommand(command);
-
+	    DoCommand();
 	    break;
 	default:
 	    e->accept();
@@ -134,12 +136,22 @@ Console::Console(QWidget *pparent) : QWidget(pparent)
     input->parent_console = this;
 
     log->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    input->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     log->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     log->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    input->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     input->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     input->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
+    log->document()->setMaximumBlockCount(1000);
+
+    int font_id = QFontDatabase::addApplicationFont(":/fonts/ProFont.ttf");
+    QString family = QFontDatabase::applicationFontFamilies(font_id).at(0);
+    QFont profont(family);
+    profont.setStyleHint(QFont::Monospace);
+    profont.setPointSize(9);
+    profont.setFixedPitch(true);
+    log->setFont(profont);
+    input->setFont(profont);
 
     setFocusProxy(input);
 
@@ -167,6 +179,7 @@ Console::~Console()
 
 void Console::keyPressEvent(QKeyEvent *e)
 {
+    QMutexLocker locker(&writemutex);
     switch(e->key())
     {
 	default:
@@ -187,22 +200,12 @@ void Console::prompt(QString new_prompt)
 
 void Console::append_results(const QString &results)
 {
+    QMutexLocker locker(&writemutex);
+    log->textCursor().movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
     if (results.length()) {
-	QString buffer;
-	buffer.clear();
-	buffer.append("<html><head>");
-	buffer.append("<style>pre { display: block; white-space pre; margin: 1em 0; } </style>");
-	buffer.append("</head><body><pre>\n\n");
-	buffer.append(results.trimmed());
-	buffer.append("\n</pre></body></html>");
-	log->append(buffer);
-	buffer.clear();
-	buffer.append("<html><head>");
-	buffer.append("<style>p { line-height: 10% } </style>");
-	buffer.append("</head><body><p>\n</p></body></html>");
-	log->append(buffer);
-
+	log->textCursor().insertText(results.trimmed());
     }
+    log->textCursor().insertHtml("<br>");
     // Update the size of the log
     log->setMinimumHeight(log->document()->size().height());
     log->setMaximumHeight(log->document()->size().height());

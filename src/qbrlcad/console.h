@@ -2,6 +2,7 @@
 #include <QTextBrowser>
 #include <QKeyEvent>
 #include <QScrollArea>
+#include <QMutex>
 
 #ifndef CONSOLE_H
 #define CONSOLE_H
@@ -18,6 +19,7 @@ class ConsoleInput : public QTextEdit
 
 	void resizeEvent(QResizeEvent *pevent);
 
+	void DoCommand();
 	void keyPressEvent(QKeyEvent *e);
 
 	Console *parent_console;
@@ -72,6 +74,8 @@ class Console : public QWidget
 	ConsoleInput *input;
 	ConsoleLog *log;
 	QString console_prompt;
+	QMutex writemutex;
+
 };
 
 #endif /* CONSOLE_H */
