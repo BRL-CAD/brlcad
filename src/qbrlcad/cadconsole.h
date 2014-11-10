@@ -71,7 +71,7 @@
 #  pragma clang diagnostic pop
 #endif
 
-class pqConsoleWidget;
+#include "console.h"
 
 /**
    Qt widget that provides an interactive "shell" interface to a PV Blot
@@ -100,7 +100,7 @@ public slots:
   virtual void printMessage(const QString &text);
 
 protected:
-  pqConsoleWidget *Console;
+  Console *console;
 
   QString FileName;
 

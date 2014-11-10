@@ -44,7 +44,7 @@ met:
   the U.S. Government retains certain rights in this software.
   -------------------------------------------------------------------------*/
 
-#include "pqConsoleWidget.h"
+#include "console.h"
 #include "cadconsole.h"
 #include <QVBoxLayout>
 #include <QApplication>
@@ -54,23 +54,22 @@ met:
 CADConsole::CADConsole(QWidget *Parent) :
     QWidget(Parent)
 {
-    this->Console = new pqConsoleWidget(this);
+    this->console = new Console(this);
     QVBoxLayout *const l = new QVBoxLayout(this);
     l->setMargin(0);
-    l->addWidget(this->Console);
+    l->addWidget(this->console);
 
-    //this->Console->printString("");
     QString newPrompt = "cad> ";
-    this->Console->prompt(newPrompt);
+    this->console->prompt(newPrompt);
 
-    QObject::connect(this->Console, SIGNAL(executeCommand(const QString &)),
+    QObject::connect(this->console, SIGNAL(executeCommand(const QString &)),
 	    this, SLOT(executeCADCommand(const QString &)));
 
 }
 
 CADConsole::~CADConsole()
 {
-    delete this->Console;
+    delete this->console;
 }
 
 
@@ -112,32 +111,32 @@ void CADConsole::executeCADCommand(const QString &command)
     } else {
 	((CADApp *)qApp)->exec_command(&cmd, &result);
     }
-    this->Console->printString(result);
+    this->console->append_results(result);
 
-    this->promptForInput();
+    //this->promptForInput();
 }
 
 //-----------------------------------------------------------------------------
 void CADConsole::printStderr(const QString &text)
 {
-    this->Console->printString(text);
+    this->console->append_results(text);
 }
 
 void CADConsole::printStdout(const QString &text)
 {
-    this->Console->printString(text);
+    this->console->append_results(text);
 }
 
 void CADConsole::printMessage(const QString &text)
 {
-    this->Console->printString(text);
+    this->console->append_results(text);
 }
 
 //-----------------------------------------------------------------------------
 void CADConsole::promptForInput()
 {
     QString newPrompt = "cad> ";
-    this->Console->prompt(newPrompt);
+    this->console->prompt(newPrompt);
 }
 
 /*

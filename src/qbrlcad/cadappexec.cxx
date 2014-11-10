@@ -23,6 +23,7 @@
  *
  */
 
+#include "console.h"
 #include "cadappexec.h"
 #include <QFileInfo>
 #include <QFile>
@@ -34,7 +35,7 @@ QDialog_App::QDialog_App(QWidget *pparent, QString executable, QStringList args,
     QVBoxLayout *dlayout = new QVBoxLayout;
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel);
     connect(buttonBox, SIGNAL(rejected()), this, SLOT(process_abort()));
-    console = new pqConsoleWidget(this);
+    console = new Console(this);
     setLayout(dlayout);
     dlayout->addWidget(console);
     dlayout->addWidget(buttonBox);
@@ -53,7 +54,7 @@ QDialog_App::QDialog_App(QWidget *pparent, QString executable, QStringList args,
 void QDialog_App::read_stdout()
 {
     QString std_output = proc->readAllStandardOutput();
-    console->printString(std_output);
+    console->append_results(std_output);
     if (log) {
 	QTextStream log_stream(log);
 	log_stream << std_output;
@@ -64,7 +65,7 @@ void QDialog_App::read_stdout()
 void QDialog_App::read_stderr()
 {
     QString err_output = proc->readAllStandardError();
-    console->printString(err_output);
+    console->append_results(err_output);
     if (log) {
 	QTextStream log_stream(log);
 	log_stream << err_output;
@@ -75,7 +76,7 @@ void QDialog_App::read_stderr()
 void QDialog_App::process_abort()
 {
     proc->kill();
-    console->printString("\nAborted!\n");
+    console->append_results(QString("\nAborted!\n"));
     if (log) {
 	QTextStream log_stream(log);
 	log_stream << "\nAborted!\n";
