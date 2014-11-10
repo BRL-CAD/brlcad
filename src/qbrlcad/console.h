@@ -48,10 +48,18 @@ class ConsoleLog : public QTextBrowser
 };
 
 //TODO - investigate whether it might not be better
-//to create one QTextBrowser object per command output
+//to create one ConsoleLog object per command output
 //and stack those in a QVBoxLayout dynamically (if that
 //can be done) - with any luck there would be some performance
-//benefit rendering wise to smaller individual HTML docs
+//benefit rendering wise to smaller individual HTML docs, and
+//it might be cleaner making sure output goes where it is
+//intended in the console.
+//
+//Possibly even more beneficial, each command - once executed -
+//would have its own dedicated output canvas into which its
+//output would be written.  This may neatly solve the problem
+//of keeping output ordered if we go the route of forking off
+//commands to run in their own threads as non-blocking.
 class Console : public QWidget
 {
     Q_OBJECT
