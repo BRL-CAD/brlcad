@@ -61,11 +61,11 @@ class ConsoleLog : public QTextBrowser
 //of keeping output ordered if we go the route of forking off
 //commands to run in their own threads as non-blocking.
 //
-//Something else to investigate - with the idea of links being
-//clickable for the tree view, see if we can also allow drag-and-drop
-//of anchors from the QTextBrowsers into the input widget that
-//would result in the appropriate text being added to the command
-//prompt (saves typing long pathnames for things like editing commands)
+//With the above structure however, it would be important to have
+//a way to save a .txt version of the log - it probably wouldn't
+//be practical to select and copy the text between multiple
+//widgets the way one could in a single widget.  Maybe such a
+//log could be made available in a second tab or some such...
 class Console : public QWidget
 {
     Q_OBJECT
