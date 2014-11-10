@@ -26,6 +26,7 @@ set(qbrlcad_srcs
   cadtreeview.cxx
   cadtreenode.cxx
   console.cxx
+  pqConsoleWidget.cxx
   )
 
 set(moc_headers
@@ -37,6 +38,7 @@ set(moc_headers
   cadtreemodel.h
   cadtreeview.h
   console.h
+  pqConsoleWidget.h
   )
 QT5_WRAP_CPP(moc_srcs ${moc_headers})
 
@@ -53,6 +55,7 @@ install(TARGETS qbrlcad
 CMAKEFILES(images)
 CMAKEFILES(fonts)
 CMAKEFILES(cadstyle.qss)
+CMAKEFILES(pqConsoleWidget_LICENSE.txt)
 
 # Local Variables:
 # tab-width: 8

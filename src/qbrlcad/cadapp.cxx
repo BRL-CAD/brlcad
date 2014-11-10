@@ -185,10 +185,10 @@ CADApp::exec_console_app_in_window(QString command, QStringList options, QString
 	out_win->proc = new QProcess(out_win);
 	out_win->console->setMinimumHeight(800);
 	out_win->console->setMinimumWidth(800);
-	out_win->console->append_results(command);
-	out_win->console->append_results(QString(" "));
-	out_win->console->append_results(options.join(" "));
-	out_win->console->append_results(QString("\n"));
+	out_win->console->printString(command);
+	out_win->console->printString(QString(" "));
+	out_win->console->printString(options.join(" "));
+	out_win->console->printString(QString("\n"));
 	out_win->proc->setProgram(command);
 	out_win->proc->setArguments(options);
 	connect(out_win->proc, SIGNAL(readyReadStandardOutput()), out_win, SLOT(read_stdout()) );

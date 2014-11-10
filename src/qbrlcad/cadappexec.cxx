@@ -23,7 +23,6 @@
  *
  */
 
-#include "console.h"
 #include "cadappexec.h"
 #include <QFileInfo>
 #include <QFile>
@@ -35,18 +34,19 @@ QDialog_App::QDialog_App(QWidget *pparent, QString executable, QStringList args,
     QVBoxLayout *dlayout = new QVBoxLayout;
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel);
     connect(buttonBox, SIGNAL(rejected()), this, SLOT(process_abort()));
-    console = new Console(this);
+    console = new pqConsoleWidget(this);
+    console->prompt("");
     setLayout(dlayout);
     dlayout->addWidget(console);
     dlayout->addWidget(buttonBox);
-    log = NULL;
+    logfile = NULL;
     if (lfile.length() > 0) {
-	log = new QFile(lfile);
-	if (!log->open(QIODevice::Append | QIODevice::Text)) {
-	    log = NULL;
+	logfile = new QFile(lfile);
+	if (!logfile->open(QIODevice::Append | QIODevice::Text)) {
+	    logfile = NULL;
 	    return;
 	}
-	QTextStream log_stream(log);
+	QTextStream log_stream(logfile);
 	log_stream << executable << " " << args.join(" ") << "\n";
     }
 }
@@ -54,39 +54,40 @@ QDialog_App::QDialog_App(QWidget *pparent, QString executable, QStringList args,
 void QDialog_App::read_stdout()
 {
     QString std_output = proc->readAllStandardOutput();
-    console->append_results(std_output);
-    if (log) {
-	QTextStream log_stream(log);
+    console->printString(std_output);
+    if (logfile) {
+	QTextStream log_stream(logfile);
 	log_stream << std_output;
-	log->flush();
+	logfile->flush();
     }
 }
 
 void QDialog_App::read_stderr()
 {
     QString err_output = proc->readAllStandardError();
-    console->append_results(err_output);
-    if (log) {
-	QTextStream log_stream(log);
+    console->printString(err_output);
+    if (logfile) {
+	QTextStream log_stream(logfile);
 	log_stream << err_output;
-	log->flush();
+	logfile->flush();
     }
 }
 
 void QDialog_App::process_abort()
 {
     proc->kill();
-    console->append_results(QString("\nAborted!\n"));
-    if (log) {
-	QTextStream log_stream(log);
+    console->printString("\nAborted!\n");
+    if (logfile) {
+	QTextStream log_stream(logfile);
 	log_stream << "\nAborted!\n";
+	logfile->flush();
     }
     process_done(0, QProcess::NormalExit);
 }
 
 void QDialog_App::process_done(int , QProcess::ExitStatus)
 {
-    if (log) log->close();
+    if (logfile) logfile->close();
     buttonBox->clear();
     buttonBox->addButton(QDialogButtonBox::Ok);
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));

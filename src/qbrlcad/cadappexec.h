@@ -34,9 +34,8 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QTextStream>
-#include <QFile>
 
-#include "console.h"
+#include "pqConsoleWidget.h" 
 
 class QDialog_App : public QDialog
 {
@@ -53,8 +52,8 @@ class QDialog_App : public QDialog
 	void process_done(int, QProcess::ExitStatus);
 
     public:
-	QFile *log;
-        Console *console;
+	QFile *logfile;
+        pqConsoleWidget *console;
         QProcess *proc;
         QDialogButtonBox *buttonBox;
 };
