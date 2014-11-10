@@ -43,6 +43,8 @@ class ConsoleLog : public QTextBrowser
 	int is_empty;
 	int offset;
 
+	QMutex writemutex;
+
 };
 
 
@@ -74,7 +76,6 @@ class Console : public QWidget
 	ConsoleInput *input;
 	ConsoleLog *log;
 	QString console_prompt;
-	QMutex writemutex;
 
 };
 

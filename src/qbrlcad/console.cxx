@@ -24,6 +24,7 @@ void ConsoleInput::DoCommand()
     QTextCursor itc= textCursor();
     QString command;
     int end_pos;
+    QMutexLocker locker(&parent_console->log->writemutex);
 
     //capture command text
     end_pos = textCursor().position();
@@ -46,6 +47,8 @@ void ConsoleInput::DoCommand()
     // Update the size of the log
     parent_console->log->setMinimumHeight(parent_console->log->document()->size().height());
     parent_console->log->setMaximumHeight(parent_console->log->document()->size().height());
+
+    locker.unlock();
 
     // Reset the input buffer
     clear();
@@ -179,7 +182,6 @@ Console::~Console()
 
 void Console::keyPressEvent(QKeyEvent *e)
 {
-    QMutexLocker locker(&writemutex);
     switch(e->key())
     {
 	default:
@@ -200,7 +202,7 @@ void Console::prompt(QString new_prompt)
 
 void Console::append_results(const QString &results)
 {
-    QMutexLocker locker(&writemutex);
+    QMutexLocker locker(&log->writemutex);
     log->textCursor().movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
     if (results.length()) {
 	log->textCursor().insertText(results.trimmed());
@@ -209,6 +211,7 @@ void Console::append_results(const QString &results)
     // Update the size of the log
     log->setMinimumHeight(log->document()->size().height());
     log->setMaximumHeight(log->document()->size().height());
+    locker.unlock();
 }
 
 
