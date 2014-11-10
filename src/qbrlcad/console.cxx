@@ -83,6 +83,11 @@ void ConsoleInput::keyPressEvent(QKeyEvent *e)
 	    break;
 	default:
 	    e->accept();
+	    if (textCursor().position() < anchor_pos) {
+		QTextCursor itc= textCursor();
+		itc.setPosition(anchor_pos);
+		setTextCursor(itc);
+	    }
 	    QTextEdit::keyPressEvent(e);
 	    setMinimumHeight(document()->size().height());
 	    break;
