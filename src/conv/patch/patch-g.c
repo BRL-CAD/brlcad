@@ -3421,7 +3421,7 @@ main(int argc, char **argv)
      */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "6A:T:x:X:pf:i:m:anu:t:o:rc:d:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "6A:T:x:X:pf:i:m:anu:t:o:rc:d:h?")) != -1) {
 	switch (c) {
 	    case '6':  /* use arb6 solids for plate mode */
 		arb6 = 1;
