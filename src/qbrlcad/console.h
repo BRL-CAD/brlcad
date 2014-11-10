@@ -47,7 +47,11 @@ class ConsoleLog : public QTextBrowser
 
 };
 
-
+//TODO - investigate whether it might not be better
+//to create one QTextBrowser object per command output
+//and stack those in a QVBoxLayout dynamically (if that
+//can be done) - with any luck there would be some performance
+//benefit rendering wise to smaller individual HTML docs
 class Console : public QWidget
 {
     Q_OBJECT
