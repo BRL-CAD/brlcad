@@ -87,7 +87,8 @@ usage(int status, const char *argv0)
     bu_log("	-x #		librt debug flag\n");
     bu_log("	-X #		librt NMG debug flags\n");
     bu_log("	-T #		distance tolerance (inches) (two points within this distance are the same point)\n");
-    bu_log("	-A #		parallel tolerance (if A dot B (unit vectors) is less than this value, they are perpendicular)\n");
+    bu_log("	-A #		perpendicular tolerance (given unit vectors V1 and V2, if V1 dot V2 is less than\n");
+    bu_log("			this value, V1 and V2 are considered perpendicular)\n");
     bu_log("Note: fastgen.rp is the pre-processed (through rpatch) FASTGEN file\n\n");
     if (status == 0)
 	exit(0);
