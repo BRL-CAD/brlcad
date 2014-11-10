@@ -228,6 +228,10 @@ void Console::prompt(QString new_prompt)
     input->insertHtml(console_prompt);
     input->anchor_pos = input->textCursor().position();
     input->setMinimumHeight(input->document()->size().height());
+    input->setMaximumWidth(scrollarea->width());
+    int scrollbar_width = scrollarea->verticalScrollBar()->size().width();
+    input->setMinimumWidth(size().width() - 2*scrollbar_width);
+    input->setMaximumWidth(size().width() - 2*scrollbar_width);
 }
 
 
@@ -239,7 +243,12 @@ void Console::do_update_scrollbars(int min, int max)
 
 void Console::resizeEvent(QResizeEvent *e)
 {
+    input->setMinimumWidth(0);
+    input->setMaximumWidth(0);
     input->resizeEvent(e);
+    int scrollbar_width = scrollarea->verticalScrollBar()->size().width();
+    input->setMinimumWidth(size().width() - 2*scrollbar_width);
+    input->setMaximumWidth(size().width() - 2*scrollbar_width);
     scrollarea->verticalScrollBar()->setValue(scrollarea->verticalScrollBar()->maximum());
 }
 
