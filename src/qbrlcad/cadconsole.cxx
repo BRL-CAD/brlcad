@@ -62,8 +62,8 @@ CADConsole::CADConsole(QWidget *Parent) :
     QString newPrompt = "cad> ";
     this->console->prompt(newPrompt);
 
-    QObject::connect(this->console, SIGNAL(executeCommand(const QString &)),
-	    this, SLOT(executeCADCommand(const QString &)));
+    QObject::connect(this->console, SIGNAL(executeCommand(const QString &, ConsoleLog *)),
+	    this, SLOT(executeCADCommand(const QString &, ConsoleLog *)));
 
 }
 
@@ -83,7 +83,7 @@ void CADConsole::initialize()
 }
 
 //-----------------------------------------------------------------------------
-void CADConsole::executeCADCommand(const QString &command)
+void CADConsole::executeCADCommand(const QString &command, ConsoleLog *results_log)
 {
     QString cmd = command;
     QString result;
@@ -111,11 +111,11 @@ void CADConsole::executeCADCommand(const QString &command)
     } else {
 	((CADApp *)qApp)->exec_command(&cmd, &result);
     }
-    this->console->append_results(result);
+    results_log->append_results(result);
 
     //this->promptForInput();
 }
-
+#if 0
 //-----------------------------------------------------------------------------
 void CADConsole::printStderr(const QString &text)
 {
@@ -131,6 +131,7 @@ void CADConsole::printMessage(const QString &text)
 {
     this->console->append_results(text);
 }
+#endif
 
 //-----------------------------------------------------------------------------
 void CADConsole::promptForInput()

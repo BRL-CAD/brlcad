@@ -6,9 +6,11 @@
 #include <QFontDatabase>
 #include <QFont>
 
+#include "cadapp.h"
+#include "cadtreeview.h"
+
 ConsoleInput::ConsoleInput(QWidget *pparent, Console *pc) : QTextEdit(pparent)
 {
-    append("console>");
     anchor_pos = textCursor().position();
     document()->setDocumentMargin(0);
     setMinimumHeight(document()->size().height());
@@ -30,7 +32,6 @@ void ConsoleInput::DoCommand()
     QTextCursor itc= textCursor();
     QString command;
     int end_pos;
-    QMutexLocker locker(&parent_console->log->writemutex);
 
     //capture command text
     end_pos = textCursor().position();
@@ -38,21 +39,18 @@ void ConsoleInput::DoCommand()
     itc.setPosition(end_pos, QTextCursor::KeepAnchor);
     command = itc.selectedText();
 
-    // Add the command to the log
-    if (parent_console->log->is_empty) {
-	parent_console->log->clear();
-	parent_console->log->is_empty = 0;
-    } else {
-	parent_console->log->insertHtml("<br>");
-    }
-
-    parent_console->log->textCursor().insertHtml(parent_console->console_prompt);
-    parent_console->log->textCursor().insertHtml(command.trimmed());
-    parent_console->log->textCursor().insertHtml("<br>");
-
+    ConsoleLog *new_log = new ConsoleLog(parent_console, parent_console);
+    parent_console->logs.insert(new_log);
+    QMutexLocker locker(&(new_log->writemutex));
+    new_log->clear();
+    new_log->textCursor().insertHtml(parent_console->console_prompt);
+    new_log->textCursor().insertHtml(command.trimmed());
+    new_log->textCursor().insertHtml("<br>");
     // Update the size of the log
-    parent_console->log->setMinimumHeight(parent_console->log->document()->size().height());
-    parent_console->log->setMaximumHeight(parent_console->log->document()->size().height());
+    new_log->setMinimumHeight(new_log->document()->size().height());
+    new_log->setMaximumHeight(new_log->document()->size().height());
+
+    parent_console->vlayout->insertWidget(parent_console->vlayout->count()-1, new_log);
 
     locker.unlock();
 
@@ -64,7 +62,7 @@ void ConsoleInput::DoCommand()
     setMinimumHeight(document()->size().height());
 
     // Emit the command - up to the application to run it and return results
-    emit parent_console->executeCommand(command);
+    emit parent_console->executeCommand(command, new_log);
 }
 
 void ConsoleInput::keyPressEvent(QKeyEvent *e)
@@ -94,30 +92,33 @@ void ConsoleInput::keyPressEvent(QKeyEvent *e)
 
 ConsoleLog::ConsoleLog(QWidget *pparent, Console *pc) : QTextBrowser(pparent)
 {
-    is_empty = 1;
-    offset = 0;
     document()->setDocumentMargin(0);
     parent_console = pc;
     setFrameStyle(QFrame::NoFrame);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    document()->setMaximumBlockCount(5000);
-    setWordWrapMode(QTextOption::NoWrap);
+    /* Note - this limit may be necessary, but a better approach would be to
+     * automatically "fold" older consolelog outputs and just show their
+     * commands and maybe the first few lines of output unless the user
+     * specifically clicks them open (and allow them to close again...) */
+    //document()->setMaximumBlockCount(50000);
     setOpenExternalLinks(false);
     setOpenLinks(false);
+    setMinimumHeight(1);
+    setMaximumHeight(1);
+    setFont(pc->terminalfont);
+    CADTreeView *tview = ((CADApp *)qApp)->cadtreeview;
+    if (tview) {
+	QObject::connect(this, SIGNAL(anchorClicked(const QUrl &)), tview, SLOT(expand_link(const QUrl &)));
+    }
 }
 
 void ConsoleLog::resizeEvent(QResizeEvent *e)
 {
     QTextBrowser::resizeEvent(e);
-    if (!is_empty) {
-	setMinimumHeight(document()->size().height() - offset);
-	setMaximumHeight(document()->size().height() - offset);
-    } else {
-	setMinimumHeight(1);
-	setMaximumHeight(1);
-    }
+    setMinimumHeight(document()->size().height());
+    setMaximumHeight(document()->size().height());
 }
 
 void ConsoleLog::keyPressEvent(QKeyEvent *e)
@@ -131,12 +132,37 @@ void ConsoleLog::keyPressEvent(QKeyEvent *e)
     }
 }
 
+
+void ConsoleLog::append_results(const QString &results)
+{
+    QMutexLocker locker(&writemutex);
+    textCursor().movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
+    if (results.length()) {
+	textCursor().insertText(results.trimmed());
+    } else {
+	textCursor().insertHtml("<a href=\"/pinewood/tire1.r/outer-tire.c/wheel-outer-bump.s\">/pinewood/tire1.r/outer-tire.c/wheel-outer-bump.s</a><br><a href=\"/pinewood/tire4.r/inner-cones.c\">/pinewood/tire4.r/inner-cones.c</a><br><a href=\"/pinewood/axel2.r/axel-cut-2.c/axel-cutout-2a.s\">/pinewood/axel2.r/axel-cut-2.c/axel-cutout-2a.s</a><br><a href=\"/pinewood/pinewood_car_body.r/side-cut-left.s\">/pinewood/pinewood_car_body.r/side-cut-left.s</a>");
+    }
+    textCursor().insertHtml("<br>");
+    // Update the size of the log
+    setMinimumHeight(document()->size().height());
+    setMaximumHeight(document()->size().height());
+    int scrollbar_width = parent_console->scrollarea->verticalScrollBar()->size().width();
+    setMinimumWidth(parent_console->scrollarea->size().width() - 2*scrollbar_width);
+    setMaximumWidth(parent_console->scrollarea->size().width() - 2*scrollbar_width);
+    locker.unlock();
+    // Once we've added the result, this log's size is now fixed and will not change.
+    // This lets us display large logs while minimizing rendering performance issues.
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+}
+
+
 Console::Console(QWidget *pparent) : QWidget(pparent)
 {
 
 
     QVBoxLayout *mlayout = new QVBoxLayout(pparent);
     scrollarea= new QScrollArea();
+    scrollarea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
     mlayout->addWidget(scrollarea);
     mlayout->setSpacing(5);
@@ -149,20 +175,17 @@ Console::Console(QWidget *pparent) : QWidget(pparent)
     vlayout->setContentsMargins(0,0,0,0);
 
     input = new ConsoleInput(this, this);
-    log = new ConsoleLog(this, this);
 
     int font_id = QFontDatabase::addApplicationFont(":/fonts/Inconsolata.otf");
     QString family = QFontDatabase::applicationFontFamilies(font_id).at(0);
-    QFont terminalfont(family);
+    terminalfont = QFont(family);
     terminalfont.setStyleHint(QFont::Monospace);
     terminalfont.setPointSize(10);
     terminalfont.setFixedPitch(true);
-    log->setFont(terminalfont);
     input->setFont(terminalfont);
 
     setFocusProxy(input);
 
-    vlayout->addWidget(log);
     vlayout->addWidget(input);
     vlayout->setSizeConstraint(QLayout::SetMinimumSize);
 
@@ -180,7 +203,9 @@ Console::Console(QWidget *pparent) : QWidget(pparent)
 Console::~Console()
 {
     delete input;
-    delete log;
+    foreach(ConsoleLog *rlog, logs) {
+	delete rlog;
+    }
 }
 
 
@@ -205,22 +230,6 @@ void Console::prompt(QString new_prompt)
     input->setMinimumHeight(input->document()->size().height());
 }
 
-void Console::append_results(const QString &results)
-{
-    QMutexLocker locker(&log->writemutex);
-    log->textCursor().movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
-    if (results.length()) {
-	log->textCursor().insertText(results.trimmed());
-    } else {
-	log->textCursor().insertHtml("<a href=\"/pinewood/tire1.r/outer-tire.c/wheel-outer-bump.s\">/pinewood/tire1.r/outer-tire.c/wheel-outer-bump.s</a><br><a href=\"/pinewood/tire4.r/inner-cones.c\">/pinewood/tire4.r/inner-cones.c</a><br><a href=\"/pinewood/axel2.r/axel-cut-2.c/axel-cutout-2a.s\">/pinewood/axel2.r/axel-cut-2.c/axel-cutout-2a.s</a><br><a href=\"/pinewood/pinewood_car_body.r/side-cut-left.s\">/pinewood/pinewood_car_body.r/side-cut-left.s</a>");
-    }
-    log->textCursor().insertHtml("<br>");
-    // Update the size of the log
-    log->setMinimumHeight(log->document()->size().height());
-    log->setMaximumHeight(log->document()->size().height());
-    locker.unlock();
-}
-
 
 void Console::do_update_scrollbars(int min, int max)
 {
@@ -230,7 +239,6 @@ void Console::do_update_scrollbars(int min, int max)
 
 void Console::resizeEvent(QResizeEvent *e)
 {
-    log->resizeEvent(e);
     input->resizeEvent(e);
     scrollarea->verticalScrollBar()->setValue(scrollarea->verticalScrollBar()->maximum());
 }
@@ -240,8 +248,10 @@ void Console::mouseMoveEvent(QMouseEvent *e)
     if (input->geometry().contains(e->pos())) {
 	setFocusProxy(input);
     }
-    if (log->geometry().contains(e->pos())) {
-	setFocusProxy(log);
+    foreach(ConsoleLog *rlog, logs) {
+	if (rlog->geometry().contains(e->pos())) {
+	    setFocusProxy(rlog);
+	}
     }
 }
 

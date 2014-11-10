@@ -94,11 +94,13 @@ signals:
 
 public slots:
   virtual void initialize();
-  virtual void executeCADCommand(const QString &command);
+  virtual void executeCADCommand(const QString &command, ConsoleLog *results_log);
 
+#if 0
   virtual void printStderr(const QString &text);
   virtual void printStdout(const QString &text);
   virtual void printMessage(const QString &text);
+#endif
 
 protected:
 

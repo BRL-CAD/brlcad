@@ -4,6 +4,7 @@
 #include <QScrollArea>
 #include <QVBoxLayout>
 #include <QMutex>
+#include <QFont>
 
 #ifndef CONSOLE_H
 #define CONSOLE_H
@@ -39,34 +40,16 @@ class ConsoleLog : public QTextBrowser
 
 	void keyPressEvent(QKeyEvent *e);
 	void resizeEvent(QResizeEvent *pevent);
+	void append_results(const QString &results);
 
 	Console *parent_console;
-	int is_empty;
-	int offset;
 
 	QMutex writemutex;
 
 };
 
-//TODO - investigate whether it might not be better
-//to create one ConsoleLog object per command output
-//and stack those in a QVBoxLayout dynamically (if that
-//can be done) - with any luck there would be some performance
-//benefit rendering wise to smaller individual HTML docs, and
-//it might be cleaner making sure output goes where it is
-//intended in the console.
-//
-//Possibly even more beneficial, each command - once executed -
-//would have its own dedicated output canvas into which its
-//output would be written.  This may neatly solve the problem
-//of keeping output ordered if we go the route of forking off
-//commands to run in their own threads as non-blocking.
-//
-//With the above structure however, it would be important to have
-//a way to save a .txt version of the log - it probably wouldn't
-//be practical to select and copy the text between multiple
-//widgets the way one could in a single widget.  Maybe such a
-//log could be made available in a second tab or some such...
+
+// TODO - add a way to save a .txt version of the log...
 class Console : public QWidget
 {
     Q_OBJECT
@@ -80,10 +63,9 @@ class Console : public QWidget
 	QScrollArea *scrollarea;
 	void keyPressEvent(QKeyEvent *e);
 	void prompt(QString new_prompt);
-	void append_results(const QString &results);
 
     signals:
-	void executeCommand(const QString &);
+	void executeCommand(const QString &, ConsoleLog *rlog);
 
     public slots:
 	void do_update_scrollbars(int, int);
@@ -93,9 +75,10 @@ class Console : public QWidget
 
     public:
 	ConsoleInput *input;
-	ConsoleLog *log;
 	QString console_prompt;
 	QVBoxLayout *vlayout;
+	QFont terminalfont;
+	QSet<ConsoleLog *> logs;
 
 };
 
