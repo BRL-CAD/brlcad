@@ -228,6 +228,7 @@ void Console::resizeEvent(QResizeEvent *e)
 {
     log->resizeEvent(e);
     input->resizeEvent(e);
+    scrollarea->verticalScrollBar()->setValue(scrollarea->verticalScrollBar()->maximum());
 }
 
 void Console::mouseMoveEvent(QMouseEvent *e)
