@@ -962,7 +962,6 @@ typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_p
 
 static struct tclcad_obj HeadTclcadObj;
 static struct tclcad_obj *current_top = TCLCAD_OBJ_NULL;
-static struct resource to_resourcep;
 
 struct path_edit_params {
     int edit_mode;
@@ -14645,6 +14644,7 @@ to_rt_gettrees_application(struct ged *gedp,
 {
     struct rt_i *rtip;
     struct application *ap;
+    static struct resource resp = RT_RESOURCE_INIT_ZERO;
 
     if (argc < 1) {
 	return RT_APPLICATION_NULL;
@@ -14686,13 +14686,13 @@ to_rt_gettrees_application(struct ged *gedp,
      * trash rt_uniresource.  Once on the rti_resources list,
      * rt_clean() will clean 'em up.
      */
-    rt_init_resource(&to_resourcep, 0, rtip);
+    rt_init_resource(&resp, 0, rtip);
     BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
 
     BU_ALLOC(ap, struct application);
     RT_APPLICATION_INIT(ap);
     ap->a_magic = RT_AP_MAGIC;
-    ap->a_resource = &to_resourcep;
+    ap->a_resource = &resp;
     ap->a_rt_i = rtip;
     ap->a_purpose = "Conquest!";
 
