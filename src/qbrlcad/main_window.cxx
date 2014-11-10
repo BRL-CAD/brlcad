@@ -101,6 +101,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treemodel, SLOT(close_tree_node_relationships(const QModelIndex &)));
     QObject::connect(treeview, SIGNAL(customContextMenuRequested(const QPoint&)), treeview, SLOT(context_menu(const QPoint&)));
     treemodel->populate(DBI_NULL);
+    QObject::connect(console->console->log, SIGNAL(anchorClicked(const QUrl &)), treeview, SLOT(expand_link(const QUrl &)));
     ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
 
     /* TODO - edit panel */

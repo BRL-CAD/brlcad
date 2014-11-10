@@ -53,6 +53,8 @@
 #include <QResizeEvent>
 #undef Success
 #include <QStyledItemDelegate>
+#undef Success
+#include <QUrl>
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -90,6 +92,7 @@ class CADTreeView : public QTreeView
 	void tree_column_size(const QModelIndex &index);
 	void context_menu(const QPoint &point);
 	void expand_path(QString path);
+	void expand_link(const QUrl &link);
 
     private:
         void header_state();

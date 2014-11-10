@@ -178,6 +178,11 @@ void CADTreeView::expand_path(QString path)
     }
 }
 
+void CADTreeView::expand_link(const QUrl &link)
+{
+    expand_path(link.path());
+}
+
 /*
  * Local Variables:
  * mode: C

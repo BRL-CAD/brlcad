@@ -85,6 +85,7 @@ class CADConsole : public QWidget
 public:
   CADConsole(QWidget* Parent);
   ~CADConsole();
+  Console *console;
 
 signals:
   /// Emitted whenever this widget starts or stops executing something.  The
@@ -100,7 +101,6 @@ public slots:
   virtual void printMessage(const QString &text);
 
 protected:
-  Console *console;
 
   QString FileName;
 

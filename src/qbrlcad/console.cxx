@@ -150,6 +150,8 @@ Console::Console(QWidget *pparent) : QWidget(pparent)
 
     log->document()->setMaximumBlockCount(5000);
     log->setWordWrapMode(QTextOption::NoWrap);
+    log->setOpenExternalLinks(false);
+    log->setOpenLinks(false);
 
     int font_id = QFontDatabase::addApplicationFont(":/fonts/Inconsolata.otf");
     QString family = QFontDatabase::applicationFontFamilies(font_id).at(0);
@@ -211,6 +213,8 @@ void Console::append_results(const QString &results)
     log->textCursor().movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
     if (results.length()) {
 	log->textCursor().insertText(results.trimmed());
+    } else {
+	log->textCursor().insertHtml("<a href=\"/pinewood/tire4.r/inner-cones.c/inner-detail-1.s\">/pinewood/tire4.r/inner-cones.c/inner-detail-1.s</a><br><a href=\"/pinewood/tire4.r/inner-cones.c\">/pinewood/tire4.r/inner-cones.c</a><br><a href=\"/pinewood/axel2.r/axel-cut-2.c/axel-cutout-2a.s\">/pinewood/axel2.r/axel-cut-2.c/axel-cutout-2a.s</a><br><a href=\"/pinewood/pinewood_car_body.r/side-cut-left.s\">/pinewood/pinewood_car_body.r/side-cut-left.s</a>");
     }
     log->textCursor().insertHtml("<br>");
     // Update the size of the log
