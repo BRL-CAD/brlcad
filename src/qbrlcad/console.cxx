@@ -186,6 +186,7 @@ void Console::keyPressEvent(QKeyEvent *e)
     {
 	default:
 	    e->accept();
+	    scrollarea->verticalScrollBar()->setValue(scrollarea->verticalScrollBar()->maximum());
 	    input->keyPressEvent(e);
 	    break;
     }
