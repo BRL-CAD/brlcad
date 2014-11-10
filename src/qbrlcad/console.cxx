@@ -124,6 +124,9 @@ Console::Console(QWidget *pparent) : QWidget(pparent)
     scrollarea= new QScrollArea();
 
     mlayout->addWidget(scrollarea);
+    mlayout->setSpacing(5);
+    mlayout->setContentsMargins(5,5,5,5);
+
 
     QWidget *contents = new QWidget;
     QVBoxLayout *vlayout = new QVBoxLayout(contents);
@@ -145,16 +148,17 @@ Console::Console(QWidget *pparent) : QWidget(pparent)
     input->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     input->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    log->document()->setMaximumBlockCount(1000);
+    log->document()->setMaximumBlockCount(5000);
+    log->setWordWrapMode(QTextOption::NoWrap);
 
-    int font_id = QFontDatabase::addApplicationFont(":/fonts/ProFont.ttf");
+    int font_id = QFontDatabase::addApplicationFont(":/fonts/Inconsolata.otf");
     QString family = QFontDatabase::applicationFontFamilies(font_id).at(0);
-    QFont profont(family);
-    profont.setStyleHint(QFont::Monospace);
-    profont.setPointSize(9);
-    profont.setFixedPitch(true);
-    log->setFont(profont);
-    input->setFont(profont);
+    QFont terminalfont(family);
+    terminalfont.setStyleHint(QFont::Monospace);
+    terminalfont.setPointSize(10);
+    terminalfont.setFixedPitch(true);
+    log->setFont(terminalfont);
+    input->setFont(terminalfont);
 
     setFocusProxy(input);
 
