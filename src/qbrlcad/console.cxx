@@ -230,8 +230,11 @@ void Console::prompt(QString new_prompt)
     input->setMinimumHeight(input->document()->size().height());
     input->setMaximumWidth(scrollarea->width());
     int scrollbar_width = scrollarea->verticalScrollBar()->size().width();
-    input->setMinimumWidth(size().width() - 2*scrollbar_width);
-    input->setMaximumWidth(size().width() - 2*scrollbar_width);
+    int wwidth = size().width() - 2*scrollbar_width;
+    if (wwidth > 0) {
+	input->setMinimumWidth(wwidth);
+	input->setMaximumWidth(wwidth);
+    }
 }
 
 
@@ -247,8 +250,11 @@ void Console::resizeEvent(QResizeEvent *e)
     input->setMaximumWidth(0);
     input->resizeEvent(e);
     int scrollbar_width = scrollarea->verticalScrollBar()->size().width();
-    input->setMinimumWidth(size().width() - 2*scrollbar_width);
-    input->setMaximumWidth(size().width() - 2*scrollbar_width);
+    int wwidth = size().width() - 2*scrollbar_width;
+    if (wwidth > 0) {
+	input->setMinimumWidth(wwidth);
+	input->setMaximumWidth(wwidth);
+    }
     scrollarea->verticalScrollBar()->setValue(scrollarea->verticalScrollBar()->maximum());
 }
 
