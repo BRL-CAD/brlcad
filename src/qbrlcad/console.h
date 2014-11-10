@@ -2,6 +2,7 @@
 #include <QTextBrowser>
 #include <QKeyEvent>
 #include <QScrollArea>
+#include <QVBoxLayout>
 #include <QMutex>
 
 #ifndef CONSOLE_H
@@ -14,7 +15,7 @@ class ConsoleInput : public QTextEdit
     Q_OBJECT
 
     public:
-	ConsoleInput(QWidget *pparent);
+	ConsoleInput(QWidget *pparent, Console *pc);
 	~ConsoleInput(){};
 
 	void resizeEvent(QResizeEvent *pevent);
@@ -33,7 +34,7 @@ class ConsoleLog : public QTextBrowser
     Q_OBJECT
 
     public:
-	ConsoleLog(QWidget *pparent);
+	ConsoleLog(QWidget *pparent, Console *pc);
 	~ConsoleLog(){};
 
 	void keyPressEvent(QKeyEvent *e);
@@ -94,6 +95,7 @@ class Console : public QWidget
 	ConsoleInput *input;
 	ConsoleLog *log;
 	QString console_prompt;
+	QVBoxLayout *vlayout;
 
 };
 

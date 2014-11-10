@@ -6,12 +6,18 @@
 #include <QFontDatabase>
 #include <QFont>
 
-ConsoleInput::ConsoleInput(QWidget *pparent) : QTextEdit(pparent)
+ConsoleInput::ConsoleInput(QWidget *pparent, Console *pc) : QTextEdit(pparent)
 {
     append("console>");
     anchor_pos = textCursor().position();
     document()->setDocumentMargin(0);
     setMinimumHeight(document()->size().height());
+    parent_console = pc;
+
+    setFrameStyle(QFrame::NoFrame);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
 void ConsoleInput::resizeEvent(QResizeEvent *e)
@@ -86,11 +92,20 @@ void ConsoleInput::keyPressEvent(QKeyEvent *e)
 }
 
 
-ConsoleLog::ConsoleLog(QWidget *pparent) : QTextBrowser(pparent)
+ConsoleLog::ConsoleLog(QWidget *pparent, Console *pc) : QTextBrowser(pparent)
 {
     is_empty = 1;
     offset = 0;
     document()->setDocumentMargin(0);
+    parent_console = pc;
+    setFrameStyle(QFrame::NoFrame);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    document()->setMaximumBlockCount(5000);
+    setWordWrapMode(QTextOption::NoWrap);
+    setOpenExternalLinks(false);
+    setOpenLinks(false);
 }
 
 void ConsoleLog::resizeEvent(QResizeEvent *e)
@@ -129,29 +144,12 @@ Console::Console(QWidget *pparent) : QWidget(pparent)
 
 
     QWidget *contents = new QWidget;
-    QVBoxLayout *vlayout = new QVBoxLayout(contents);
+    vlayout = new QVBoxLayout(contents);
     vlayout->setSpacing(0);
     vlayout->setContentsMargins(0,0,0,0);
 
-    input = new ConsoleInput(this);
-    log = new ConsoleLog(this);
-    input->setFrameStyle(QFrame::NoFrame);
-    log->setFrameStyle(QFrame::NoFrame);
-
-    log->parent_console = this;
-    input->parent_console = this;
-
-    log->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    log->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    log->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    input->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    input->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    input->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
-    log->document()->setMaximumBlockCount(5000);
-    log->setWordWrapMode(QTextOption::NoWrap);
-    log->setOpenExternalLinks(false);
-    log->setOpenLinks(false);
+    input = new ConsoleInput(this, this);
+    log = new ConsoleLog(this, this);
 
     int font_id = QFontDatabase::addApplicationFont(":/fonts/Inconsolata.otf");
     QString family = QFontDatabase::applicationFontFamilies(font_id).at(0);
@@ -214,7 +212,7 @@ void Console::append_results(const QString &results)
     if (results.length()) {
 	log->textCursor().insertText(results.trimmed());
     } else {
-	log->textCursor().insertHtml("<a href=\"/pinewood/tire4.r/inner-cones.c/inner-detail-1.s\">/pinewood/tire4.r/inner-cones.c/inner-detail-1.s</a><br><a href=\"/pinewood/tire4.r/inner-cones.c\">/pinewood/tire4.r/inner-cones.c</a><br><a href=\"/pinewood/axel2.r/axel-cut-2.c/axel-cutout-2a.s\">/pinewood/axel2.r/axel-cut-2.c/axel-cutout-2a.s</a><br><a href=\"/pinewood/pinewood_car_body.r/side-cut-left.s\">/pinewood/pinewood_car_body.r/side-cut-left.s</a>");
+	log->textCursor().insertHtml("<a href=\"/pinewood/tire1.r/outer-tire.c/wheel-outer-bump.s\">/pinewood/tire1.r/outer-tire.c/wheel-outer-bump.s</a><br><a href=\"/pinewood/tire4.r/inner-cones.c\">/pinewood/tire4.r/inner-cones.c</a><br><a href=\"/pinewood/axel2.r/axel-cut-2.c/axel-cutout-2a.s\">/pinewood/axel2.r/axel-cut-2.c/axel-cutout-2a.s</a><br><a href=\"/pinewood/pinewood_car_body.r/side-cut-left.s\">/pinewood/pinewood_car_body.r/side-cut-left.s</a>");
     }
     log->textCursor().insertHtml("<br>");
     // Update the size of the log
@@ -228,8 +226,6 @@ void Console::do_update_scrollbars(int min, int max)
 {
     Q_UNUSED(min);
     scrollarea->verticalScrollBar()->setValue(max);
-
-    //scrollarea->ensureVisible(0, scrollAreaHeight, 0, 0);
 }
 
 void Console::resizeEvent(QResizeEvent *e)
