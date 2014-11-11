@@ -446,9 +446,10 @@ db_find_obj(int *ret, const char *name, struct directory *search, struct db_i *d
 }
 
 
-// TODO - need two versions of this.  This one is needed when we're changing selections,
-// but when we're opening and closing branches there's no need to check everything - in
-// that case should iterate over all the children of the node being expanded.
+// These functions tell the related-object highlighting logic what the current status is.
+
+// This function is needed when the selected object is changed - highlighted items may change
+// anywhere in the tree view
 void
 CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 {
@@ -486,6 +487,7 @@ CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
     }
 }
 
+// When an item is expanded but the selection hasn't changed, scope for highlighting changes is more mimimal
 void
 CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
 {
@@ -534,6 +536,8 @@ CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
 }
 
 
+// When an item is closed but the selection hasn't changed, the closed item is highlighted if any of its
+// children were highlighted
 void
 CADTreeModel::close_tree_node_relationships(const QModelIndex & idx)
 {
