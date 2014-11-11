@@ -103,7 +103,27 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     treemodel->populate(DBI_NULL);
     ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
 
-    /* TODO - edit panel */
+    /* Edit panel */
+    panel = new QAccordianWidget(panel_dock);
+    panel_dock->setWidget(panel);
+
+    QPushButton *obj1_c = new QPushButton("contents 1");
+    obj1_c->setMinimumHeight(300);
+    QAccordianObject *obj1 = new QAccordianObject(panel, obj1_c, "Accordian Object 1");
+    panel->addObject(obj1);
+
+    QPushButton *obj2_c = new QPushButton("contents 2");
+    obj2_c->setMinimumHeight(340);
+    QAccordianObject *obj2 = new QAccordianObject(panel, obj2_c, "Accordian Object 2");
+    panel->addObject(obj2);
+
+    QPushButton *obj3_c = new QPushButton("contents 3");
+    obj3_c->setMinimumHeight(100);
+    QAccordianObject *obj3 = new QAccordianObject(panel, obj3_c, "Accordian Object 3");
+    panel->addObject(obj3);
+
+    /* For testing - don't want uniqueness here, but may need or want it elsewhere */
+    //panel->setUniqueVisibility(1);
 
     /* Set default style for the application */
     QString allstyle;
