@@ -597,8 +597,10 @@ common_dm(int argc, const char *argv[])
 
 	/* return background color of current display manager */
 	if (argc == 1) {
-	    bu_vls_printf(&vls, "%d %d %d", dm_get_bg(dmp)[0], dm_get_bg(dmp)[1], dm_get_bg(dmp)[2]);
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    if (dm_get_bg(dmp)) {
+		bu_vls_printf(&vls, "%d %d %d", dm_get_bg(dmp)[0], dm_get_bg(dmp)[1], dm_get_bg(dmp)[2]);
+		Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    }
 	    bu_vls_free(&vls);
 
 	    return TCL_OK;
