@@ -172,7 +172,7 @@ dm_interp(dm *dmp)
 int
 dm_share_dlist(dm *dmp1, dm *dmp2)
 {
-    if (UNLIKELY(!dmp)) return TCL_ERROR;
+    if (UNLIKELY(!dmp1) || UNLIKELY(!dmp2)) return TCL_ERROR;
 
     /*
      * Only display managers of the same type and using the
@@ -242,7 +242,7 @@ dm_Normal2Xy(dm *dmp, fastf_t f, int use_aspect)
 void
 dm_fogHint(dm *dmp, int fastfog)
 {
-    if (UNLIKELY(!dmp)) return;
+    if (UNLIKELY(!dmp)) {
 	bu_log("WARNING: NULL display (fastfog => %d)\n", fastfog);
 	return;
     }
