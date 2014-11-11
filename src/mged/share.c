@@ -114,7 +114,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
     }
 
     FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l)
-	if (BU_STR_EQUAL(argv[2], bu_vls_addr(dm_get_pathname(dlp1->dml_dmp))))
+	if (dm_get_pathname(dlp1->dml_dmp) && BU_STR_EQUAL(argv[2], bu_vls_addr(dm_get_pathname(dlp1->dml_dmp))))
 	    break;
 
     if (dlp1 == &head_dm_list) {
@@ -127,7 +127,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 
     if (!uflag) {
 	FOR_ALL_DISPLAYS(dlp2, &head_dm_list.l)
-	    if (BU_STR_EQUAL(argv[3], bu_vls_addr(dm_get_pathname(dlp2->dml_dmp))))
+	    if (dm_get_pathname(dlp2->dml_dmp) && BU_STR_EQUAL(argv[3], bu_vls_addr(dm_get_pathname(dlp2->dml_dmp))))
 		break;
 
 	if (dlp2 == &head_dm_list) {
