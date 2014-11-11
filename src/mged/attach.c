@@ -678,8 +678,10 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     mged_link_vars(curr_dm_list);
 
     Tcl_ResetResult(INTERP);
-    Tcl_AppendResult(INTERP, "ATTACHING ", dm_get_dm_name(dmp), " (", dm_get_dm_lname(dmp),
-		     ")\n", (char *)NULL);
+    if (dm_get_dm_name(dmp) && dm_get_dm_lname(dmp)) {
+	Tcl_AppendResult(INTERP, "ATTACHING ", dm_get_dm_name(dmp), " (", dm_get_dm_lname(dmp),
+		")\n", (char *)NULL);
+    }
 
     share_dlist(curr_dm_list);
 
@@ -848,9 +850,11 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
     }
 
     if (!cmd_hook) {
-	Tcl_AppendResult(interpreter, "The '", dm_get_dm_name(dmp),
-			 "' display manager does not support local commands.\n",
-			 (char *)NULL);
+	if (dm_get_dm_name(dmp)) {
+	    Tcl_AppendResult(interpreter, "The '", dm_get_dm_name(dmp),
+		    "' display manager does not support local commands.\n",
+		    (char *)NULL);
+	}
 	return TCL_ERROR;
     }
 
