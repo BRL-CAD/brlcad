@@ -242,7 +242,7 @@ dm_Normal2Xy(dm *dmp, fastf_t f, int use_aspect)
 void
 dm_fogHint(dm *dmp, int fastfog)
 {
-    if (UNLIKELY(!dmp)) return NULL;
+    if (UNLIKELY(!dmp)) return;
 	bu_log("WARNING: NULL display (fastfog => %d)\n", fastfog);
 	return;
     }
