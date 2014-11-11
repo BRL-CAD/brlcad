@@ -637,7 +637,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 	dm_processOptions(tmp_dmp, &tmp_vls, opt_argc, opt_argv);
 	bu_free_argv(opt_argc, opt_argv);
 
-	if (strlen(bu_vls_addr(dm_get_dname(tmp_dmp)))) {
+	if (dm_get_dname(tmp_dmp) && strlen(bu_vls_addr(dm_get_dname(tmp_dmp)))) {
 	    if (gui_setup(bu_vls_addr(dm_get_dname(tmp_dmp))) == TCL_ERROR) {
 		bu_free((void *)curr_dm_list, "f_attach: dm_list");
 		curr_dm_list = o_dm_list;
