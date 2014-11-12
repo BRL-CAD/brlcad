@@ -47,6 +47,8 @@
 #include <QAbstractItemModel>
 #undef Success
 #include <QObject>
+#undef Success
+#include <QHash>
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic pop
 #endif
@@ -92,7 +94,7 @@ class CADTreeModel : public QAbstractItemModel
 	QModelIndex NodeIndex(CADTreeNode *node) const;
 	CADTreeNode *IndexNode(const QModelIndex &index) const;
 
-	QMap<struct directory *, struct rt_db_internal *> combinternals;
+	QHash<struct directory *, struct rt_db_internal *> combinternals;
 
     public slots:
 	void refresh();

@@ -379,8 +379,8 @@ CADTreeModel::setData(const QModelIndex & idx, const QVariant & value, int role)
 }
 
 HIDDEN void 
-db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, int *depth, int max_depth, QMap<struct directory *, struct rt_db_internal *> *combinternals,
-	void (*traverse_func) (int *ret, const char *, struct directory *, struct db_i *, int *, int, QMap<struct directory *, struct rt_db_internal *> *))
+db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, int *depth, int max_depth, QHash<struct directory *, struct rt_db_internal *> *combinternals,
+	void (*traverse_func) (int *ret, const char *, struct directory *, struct db_i *, int *, int, QHash<struct directory *, struct rt_db_internal *> *))
 {
     struct directory *dp;
     if (!tp) return;
@@ -423,7 +423,7 @@ db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, i
 }
 
 HIDDEN void
-db_find_obj(int *ret, const char *name, struct directory *search, struct db_i *dbip, int *depth, int max_depth, QMap<struct directory *, struct rt_db_internal *> *combinternals)
+db_find_obj(int *ret, const char *name, struct directory *search, struct db_i *dbip, int *depth, int max_depth, QHash<struct directory *, struct rt_db_internal *> *combinternals)
 {
     /* If we have a match, we need look no further */
     if (BU_STR_EQUAL(search->d_namep, name)) {
