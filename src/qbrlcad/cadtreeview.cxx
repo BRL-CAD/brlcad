@@ -24,10 +24,15 @@ void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
 	if ((!((CADApp *)qApp)->cadtreeview->isExpanded(index) && index.data(RelatedHighlightDisplayRole).toInt())
 		|| (cdp == pdp && index.data(RelatedHighlightDisplayRole).toInt())) {
 	    painter->fillRect(option.rect, QBrush(QColor(220, 200, 30)));
+#if 0
+	    // TODO - this approach is too expensive - it forces repainting every time we scroll by
+	    // highlighted rows, which kills performance - how can we directly trigger drawBranch just when we need it??
+
 	    /* Need to make sure the drawBranches() custom logic is also triggered
 	     * when we're doing this - fake a collapse event to make sure everything
 	     * gets updated*/
 	    emit ((CADApp *)qApp)->cadtreeview->collapsed(index);
+#endif
 	}
     }
 
@@ -89,6 +94,9 @@ CADTreeView::CADTreeView(QWidget *pparent) : QTreeView(pparent)
     this->setContextMenuPolicy(Qt::CustomContextMenu);
 }
 
+// TODO - this code works, when properly triggered, but we need a way to trigger it at the right
+// time that does not kill rendering performance for large trees
+#if 0
 void
 CADTreeView::drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const
 {
@@ -107,6 +115,7 @@ CADTreeView::drawBranches(QPainter* painter, const QRect& rrect, const QModelInd
     }
     QTreeView::drawBranches(painter, rrect, index);
 }
+#endif
 
 void CADTreeView::header_state()
 {

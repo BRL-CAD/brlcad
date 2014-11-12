@@ -61,7 +61,7 @@
 #include "ged.h"
 #endif
 
-#define CADTREE_RECURSION_LIMIT 10000
+#define CADTREE_RECURSION_LIMIT 100000
 
 class CADTreeNode;
 
