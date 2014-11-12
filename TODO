@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
++ merge rel8, minmax.grep @ clip.c
+
 * fix iges exporter (spaces after commas)
 
 * fix the bn_poly_sub unit test
@@ -1417,6 +1419,11 @@ NEW OBJECTS
   into multiple objects without changing the cumulative volume.  a
   linear offset from a given surface or set of surfaces is usually
   desired.
+
+* minkowski and hull operations/objects.  These would be
+  meta-combination objects similar to blending where objects are
+  specified and a resulting operation is run on them.  minkowski sum
+  provides an intuitive means to blend and hull a means to simplify.
 
 * Cache objects.  These are proper non-geometric geometry database
   objects intended to store binary results that have a dependency on
