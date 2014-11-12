@@ -1,4 +1,5 @@
 #include <QPainter>
+#include <QString>
 #include "cadstdproperties.h"
 #include "cadapp.h"
 #include "bu/sort.h"
@@ -25,13 +26,19 @@ CADStdPropertiesNode::~CADStdPropertiesNode()
 CADStdPropertiesModel::CADStdPropertiesModel(QObject *parentobj, struct db_i *dbip, struct directory *dp)
     : QAbstractItemModel(parentobj)
 {
+    int i = 0;
     current_dbip = dbip;
     current_dp = dp;
     m_root = new CADStdPropertiesNode();
     BU_GET(avs, struct bu_attribute_value_set);
     bu_avs_init_empty(avs);
-    if (dbip != DBI_NULL && dp != RT_DIR_NULL)
-	(void)db5_get_attributes(dbip, avs, dp);
+    while (i != ATTR_NULL) {
+	add_attribute(db5_standard_attribute(i), "", m_root, i);
+	i++;
+    }
+    if (dbip != DBI_NULL && dp != RT_DIR_NULL) {
+	update(dbip, dp);
+    }
 }
 
 CADStdPropertiesModel::~CADStdPropertiesModel()
@@ -148,7 +155,7 @@ bool CADStdPropertiesModel::canFetchMore(const QModelIndex &idx) const
     return false;
 }
 
-void
+CADStdPropertiesNode *
 CADStdPropertiesModel::add_attribute(const char *name, const char *value, CADStdPropertiesNode *curr_node, int type)
 {
     CADStdPropertiesNode *new_node = new CADStdPropertiesNode(curr_node);
@@ -156,6 +163,7 @@ CADStdPropertiesModel::add_attribute(const char *name, const char *value, CADStd
     new_node->value = value;
     new_node->attr_type = type;
     QModelIndex idx = NodeIndex(new_node);
+    return new_node;
 }
 
 void
@@ -164,12 +172,12 @@ CADStdPropertiesModel::add_Children(const char *name, CADStdPropertiesNode *curr
     if (BU_STR_EQUAL(name, "color")) {
 	QString val(bu_avs_get(avs, name));
 	QStringList vals = val.split(QRegExp("/"));
-	add_attribute("r", vals.at(0).toLocal8Bit(), curr_node, db5_standardize_attribute(name));
-	add_attribute("g", vals.at(1).toLocal8Bit(), curr_node, db5_standardize_attribute(name));
-	add_attribute("b", vals.at(2).toLocal8Bit(), curr_node, db5_standardize_attribute(name));
+	(void)add_attribute("r", vals.at(0).toLocal8Bit(), curr_node, db5_standardize_attribute(name));
+	(void)add_attribute("g", vals.at(1).toLocal8Bit(), curr_node, db5_standardize_attribute(name));
+	(void)add_attribute("b", vals.at(2).toLocal8Bit(), curr_node, db5_standardize_attribute(name));
 	return;
     }
-    add_attribute(name, bu_avs_get(avs, name), curr_node, db5_standardize_attribute(name));
+    (void)add_attribute(name, bu_avs_get(avs, name), curr_node, db5_standardize_attribute(name));
 }
 
 
@@ -180,7 +188,7 @@ void CADStdPropertiesModel::fetchMore(const QModelIndex &idx)
     int cnt = attr_children(curr_node->name.toLocal8Bit());
     if (cnt && !idx.child(cnt-1, 0).isValid()) {
 	beginInsertRows(idx, 0, cnt);
-	add_Children(curr_node->name.toLocal8Bit(),curr_node); 
+	add_Children(curr_node->name.toLocal8Bit(),curr_node);
 	endInsertRows();
     }
 }
@@ -199,6 +207,8 @@ int CADStdPropertiesModel::update(struct db_i *new_dbip, struct directory *new_d
     current_dp = new_dp;
     current_dbip = new_dbip;
     if (current_dbip != DBI_NULL && current_dp != RT_DIR_NULL) {
+	QMap<QString, CADStdPropertiesNode*> standard_nodes;
+	int i = 0;
 	m_root = new CADStdPropertiesNode();
 	beginResetModel();
 	struct bu_attribute_value_pair *avpp;
@@ -206,9 +216,19 @@ int CADStdPropertiesModel::update(struct db_i *new_dbip, struct directory *new_d
 	    bu_avs_remove(avs, avpp->name);
 	}
 	(void)db5_get_attributes(current_dbip, avs, current_dp);
+	while (i != ATTR_NULL) {
+	    standard_nodes.insert(db5_standard_attribute(i), add_attribute(db5_standard_attribute(i), "", m_root, i));
+	    i++;
+	}
 	for (BU_AVS_FOR(avpp, avs)) {
 	    if (db5_is_standard_attribute(avpp->name)) {
-		add_attribute(avpp->name, avpp->value, m_root, db5_standardize_attribute(avpp->name));
+		if (standard_nodes.find(avpp->name) != standard_nodes.end()) {
+		    QString new_value(avpp->value);
+		    CADStdPropertiesNode *snode = standard_nodes.find(avpp->name).value();
+		    snode->value = new_value;
+		} else {
+		    add_attribute(avpp->name, avpp->value, m_root, db5_standardize_attribute(avpp->name));
+		}
 	    }
 	}
 	endResetModel();

@@ -72,7 +72,7 @@ class CADStdPropertiesModel : public QAbstractItemModel
 	void fetchMore(const QModelIndex &parent);
 
     private:
-	void add_attribute(const char *name, const char *value, CADStdPropertiesNode *curr_node, int type);
+	CADStdPropertiesNode *add_attribute(const char *name, const char *value, CADStdPropertiesNode *curr_node, int type);
 	void add_Children(const char *name, CADStdPropertiesNode *curr_node);
 	struct db_i *current_dbip;
 	struct directory *current_dp;
