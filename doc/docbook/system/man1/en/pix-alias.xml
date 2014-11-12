@@ -50,13 +50,6 @@ scanlines tall</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-s </option><replaceable>squaresize</replaceable></term>
-  <listitem>
-<para>sets both the width and the height for the input to be
-<emphasis remap='I'>squaresize</emphasis></para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><option>-w </option><replaceable>file_width</replaceable></term>
   <listitem>
 <para>tells
@@ -64,7 +57,13 @@ scanlines tall</para>
 that the input is
 <emphasis remap='I'>file_width</emphasis>
 pixels wide</para>
-
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s </option><replaceable>squaresize</replaceable></term>
+  <listitem>
+<para>sets both the width and the height for the input to be
+<emphasis remap='I'>squaresize</emphasis></para>
   </listitem>
   </varlistentry>
 </variablelist>
