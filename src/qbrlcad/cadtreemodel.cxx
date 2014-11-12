@@ -484,6 +484,12 @@ CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 	    }
 	}
     }
+
+    // For the case of a selection change, emit a layout change signal so the drawBranches call updates
+    // the portions of the row colors not handled by the itemDelegate painting.  For expand and close
+    // operations on items this is already handled by Qt, but layout updating is not a normal part of the selection
+    // process in most tree views so for the customized selection drawing we do we need to call it manually.
+    emit layoutChanged();
 }
 
 // When an item is expanded but the selection hasn't changed, scope for highlighting changes is more mimimal

@@ -83,10 +83,7 @@ class CADTreeView : public QTreeView
 
 	QModelIndex selected();
 
-	// TODO - disabled until we can find a way to do this that doesn't kill performance -
-	// it may be necessary to live with highlighting that does not span the whole row in
-	// the tree...
-	//void drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const;
+	void drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const;
 
     protected:
 	void resizeEvent(QResizeEvent *pevent);
