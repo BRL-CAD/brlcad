@@ -92,6 +92,8 @@ class CADTreeModel : public QAbstractItemModel
 	QModelIndex NodeIndex(CADTreeNode *node) const;
 	CADTreeNode *IndexNode(const QModelIndex &index) const;
 
+	QMap<struct directory *, struct rt_db_internal *> combinternals;
+
     public slots:
 	void refresh();
 	void update_selected_node_relationships(const QModelIndex & index);

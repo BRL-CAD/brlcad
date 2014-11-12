@@ -379,8 +379,8 @@ CADTreeModel::setData(const QModelIndex & idx, const QVariant & value, int role)
 }
 
 HIDDEN void 
-db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, int *depth, int max_depth,
-	void (*traverse_func) (int *ret, const char *, struct directory *, struct db_i *, int *, int))
+db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, int *depth, int max_depth, QMap<struct directory *, struct rt_db_internal *> *combinternals,
+	void (*traverse_func) (int *ret, const char *, struct directory *, struct db_i *, int *, int, QMap<struct directory *, struct rt_db_internal *> *))
 {
     struct directory *dp;
     if (!tp) return;
@@ -397,11 +397,11 @@ db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, i
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    db_find_subtree(ret, name, tp->tr_b.tb_right, dbip, depth, max_depth, traverse_func);
+	    db_find_subtree(ret, name, tp->tr_b.tb_right, dbip, depth, max_depth, combinternals, traverse_func);
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-	    db_find_subtree(ret, name, tp->tr_b.tb_left, dbip, depth, max_depth, traverse_func);
+	    db_find_subtree(ret, name, tp->tr_b.tb_left, dbip, depth, max_depth, combinternals, traverse_func);
 	    break;
 	case OP_DB_LEAF:
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
@@ -409,7 +409,7 @@ db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, i
 		return;
 	    } else {
 		if (!(dp->d_flags & RT_DIR_HIDDEN)) {
-		    traverse_func(ret, name, dp, dbip, depth, max_depth);
+		    traverse_func(ret, name, dp, dbip, depth, max_depth, combinternals);
 		}
 		(*depth)--;
 		break;
@@ -423,7 +423,7 @@ db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, i
 }
 
 HIDDEN void
-db_find_obj(int *ret, const char *name, struct directory *search, struct db_i *dbip, int *depth, int max_depth)
+db_find_obj(int *ret, const char *name, struct directory *search, struct db_i *dbip, int *depth, int max_depth, QMap<struct directory *, struct rt_db_internal *> *combinternals)
 {
     /* If we have a match, we need look no further */
     if (BU_STR_EQUAL(search->d_namep, name)) {
@@ -433,14 +433,11 @@ db_find_obj(int *ret, const char *name, struct directory *search, struct db_i *d
 
    /* If we have a comb, open it up.  Otherwise, we're done */
     if (search->d_flags & RT_DIR_COMB) {
-	struct rt_db_internal in;
-	struct rt_comb_internal *comb;
-
-	if (rt_db_get_internal(&in, search, dbip, NULL, &rt_uniresource) < 0) return;
-
-	comb = (struct rt_comb_internal *)in.idb_ptr;
-	db_find_subtree(ret, name, comb->tree, dbip, depth, max_depth, db_find_obj);
-	rt_db_free_internal(&in);
+	struct rt_db_internal *in = combinternals->find(search).value();
+	if (in) {
+	    struct rt_comb_internal *comb = (struct rt_comb_internal *)in->idb_ptr;
+	    db_find_subtree(ret, name, comb->tree, dbip, depth, max_depth, combinternals, db_find_obj);
+	}
     }
     return;
 }
@@ -467,7 +464,7 @@ CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 		    if (!((CADApp *)qApp)->cadtreeview->isExpanded(test_index)) {
 			int depth = 0;
 			int search_results = 0;
-			db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, ((CADApp *)qApp)->dbip(), &depth, CADTREE_RECURSION_LIMIT);
+			db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, ((CADApp *)qApp)->dbip(), &depth, CADTREE_RECURSION_LIMIT, &combinternals);
 			if (search_results && !hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
 			if (!search_results && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		    } else {
@@ -512,7 +509,7 @@ CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
 		    if (!((CADApp *)qApp)->cadtreeview->isExpanded(test_index)) {
 			int depth = 0;
 			int search_results = 0;
-			db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, ((CADApp *)qApp)->dbip(), &depth, CADTREE_RECURSION_LIMIT);
+			db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, ((CADApp *)qApp)->dbip(), &depth, CADTREE_RECURSION_LIMIT, &combinternals);
 			if (search_results && !hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
 			if (!search_results && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		    } else {
@@ -750,6 +747,7 @@ dp_cmp(const void *d1, const void *d2, void *UNUSED(arg))
 
 int CADTreeModel::populate(struct db_i *new_dbip)
 {
+    struct directory *cdp;
     current_dbip = new_dbip;
     m_root = new CADTreeNode();
 
@@ -765,7 +763,22 @@ int CADTreeModel::populate(struct db_i *new_dbip)
 	    }
 	}
 	endResetModel();
+
+	/* build a map with all the comb internals */
+	combinternals.clear();
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    for (cdp = new_dbip->dbi_Head[i]; cdp != RT_DIR_NULL; cdp = cdp->d_forw) {
+		if (cdp->d_flags & RT_DIR_COMB) {
+		    struct rt_db_internal *intern;
+		    BU_GET(intern, struct rt_db_internal);
+		    if (rt_db_get_internal(intern, cdp, new_dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+			combinternals.insert(cdp, intern);
+		    }
+		}
+	    }
+	}
     }
+
     return 0;
 }
 
