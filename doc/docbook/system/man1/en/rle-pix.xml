@@ -115,7 +115,7 @@ one each for the red, green, and blue channels.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <literallayout remap='RS'>
-<emphasis remap='I'> rle-pix  tank.rle   tank.pix</emphasis>
+rle-pix tank.rle tank.pix
 </literallayout> <!-- remap='RE' -->
 </refsect1>
 
