@@ -47,11 +47,6 @@ CADTreeNode::~CADTreeNode()
     qDeleteAll(children);
 }
 
-QVariant CADTreeNode::data() const
-{
-    return name;
-}
-
 /*
  * Local Variables:
  * mode: C++

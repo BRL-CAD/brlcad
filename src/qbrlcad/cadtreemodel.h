@@ -61,6 +61,8 @@
 #include "ged.h"
 #endif
 
+#define CADTREE_RECURSION_LIMIT 10000
+
 class CADTreeNode;
 
 class CADTreeModel : public QAbstractItemModel

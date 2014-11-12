@@ -105,7 +105,7 @@ db_find_subregion(int *ret, union tree *tp, struct db_i *dbip, int *depth, int m
     return;
 }
 
-HIDDEN void 
+HIDDEN void
 db_find_region(int *ret, struct directory *search, struct db_i *dbip, int *depth, int max_depth)
 {
 
@@ -114,8 +114,8 @@ db_find_region(int *ret, struct directory *search, struct db_i *dbip, int *depth
 	(*ret)++;
 	return;
     }
-   
-   /* If we have a comb, open it up.  Otherwise, we're done */ 
+
+   /* If we have a comb, open it up.  Otherwise, we're done */
     if (search->d_flags & RT_DIR_COMB) {
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
@@ -150,7 +150,7 @@ get_comb_type(struct directory *dp, struct db_i *dbip)
     if (!region_flag && !air_flag) {
 	int search_results = 0;
 	int depth = 0;
-	db_find_region(&search_results, dp, dbip, &depth, 1000); 
+	db_find_region(&search_results, dp, dbip, &depth, CADTREE_RECURSION_LIMIT);
 	if (search_results) assembly_flag = 1;
     }
 
@@ -467,7 +467,7 @@ CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 		    if (!((CADApp *)qApp)->cadtreeview->isExpanded(test_index)) {
 			int depth = 0;
 			int search_results = 0;
-			db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, ((CADApp *)qApp)->dbip(), &depth, 1000);
+			db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, ((CADApp *)qApp)->dbip(), &depth, CADTREE_RECURSION_LIMIT);
 			if (search_results && !hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
 			if (!search_results && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		    } else {
@@ -512,7 +512,7 @@ CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
 		    if (!((CADApp *)qApp)->cadtreeview->isExpanded(test_index)) {
 			int depth = 0;
 			int search_results = 0;
-			db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, ((CADApp *)qApp)->dbip(), &depth, 1000);
+			db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, ((CADApp *)qApp)->dbip(), &depth, CADTREE_RECURSION_LIMIT);
 			if (search_results && !hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
 			if (!search_results && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		    } else {

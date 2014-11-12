@@ -44,13 +44,13 @@ public:
     CADTreeNode(struct directory *in_dp = RT_DIR_NULL, CADTreeNode *aParent=0);
     CADTreeNode(QString dp_name, CADTreeNode *aParent=0);
     ~CADTreeNode();
-    QVariant data() const;
 
     QString name;
     int boolean;
     int is_highlighted;
     struct directory *node_dp;
     QVariant icon;
+
     CADTreeNode *parent;
     QList<CADTreeNode*> children;
 };
