@@ -85,6 +85,7 @@ db_find_subregion(int *ret, union tree *tp, struct db_i *dbip, int *depth, int m
 	case OP_GUARD:
 	case OP_XNOP:
 	    db_find_subregion(ret, tp->tr_b.tb_left, dbip, depth, max_depth, traverse_func);
+	    (*depth)--;
 	    break;
 	case OP_DB_LEAF:
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
@@ -402,6 +403,7 @@ db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, i
 	case OP_GUARD:
 	case OP_XNOP:
 	    db_find_subtree(ret, name, tp->tr_b.tb_left, dbip, depth, max_depth, combinternals, traverse_func);
+	    (*depth)--;
 	    break;
 	case OP_DB_LEAF:
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {

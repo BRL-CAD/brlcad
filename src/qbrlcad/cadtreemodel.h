@@ -63,7 +63,11 @@
 #include "ged.h"
 #endif
 
-#define CADTREE_RECURSION_LIMIT 100000
+/* Need to have a sense of how deep to go before bailing - a cyclic
+ * path is a possibility and would be infinite recursion, so we need
+ * some limit.  If there is a limit in BRL-CAD go with that, but until
+ * it is found use this */
+#define CADTREE_RECURSION_LIMIT 10000
 
 class CADTreeNode;
 
