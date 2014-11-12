@@ -25,7 +25,7 @@
 
 #include "main_window.h"
 #include "cadapp.h"
-#include "cadtreeview.h"
+#include "cadstdproperties.h"
 
 BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
@@ -112,9 +112,13 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     QAccordianObject *obj1 = new QAccordianObject(panel, obj1_c, "Accordian Object 1");
     panel->addObject(obj1);
 
-    QPushButton *obj2_c = new QPushButton("contents 2");
-    obj2_c->setMinimumHeight(340);
-    QAccordianObject *obj2 = new QAccordianObject(panel, obj2_c, "Accordian Object 2");
+    CADStdPropertiesModel *stdpropmodel = new CADStdPropertiesModel();
+    CADStdPropertiesView *stdpropview = new CADStdPropertiesView(0);
+    stdpropview->setModel(stdpropmodel);
+    //stdpropview->setItemDelegate(new GStdPropertyDelegate());
+    stdpropview->setMinimumHeight(340);
+    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), stdpropmodel, SLOT(refresh(const QModelIndex &)));
+    QAccordianObject *obj2 = new QAccordianObject(panel, stdpropview, "Standard Attributes");
     panel->addObject(obj2);
 
     QPushButton *obj3_c = new QPushButton("contents 3");
