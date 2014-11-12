@@ -59,9 +59,9 @@ char *out_file = NULL;
 char *in_file = NULL;
 
 static const char usage[] = "\
-pix-bw [-h] [-s squaresize] [-w width] [-n height] \n\
-            [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
-	    [-o out_file.bw] [file.bw] > [out_file.bw] \n";
+pix-bw [-s squaresize] [-w width] [-n height] \n\
+       [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
+       [-o out_file.bw] [file.bw] > [out_file.bw] \n";
 
 double multiplier = 0.5;
 
@@ -115,8 +115,7 @@ get_args(int argc, char **argv)
             case 'n' :
                iny = atoi(bu_optarg);
                break;
-	    case 'h' :
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
