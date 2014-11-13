@@ -55,6 +55,38 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Integrate ADRT into Archer as a visualization mode.
+
+* Document a GUI feature list (prioritized).
+
+* Document a CLI feature list (prioritized).
+
+* create a catalog of all possible entity types.  including distinct
+  parameterizations with sufficient variety that conveys the object's
+  parameterization options (e.g. ell as sphere, flat disc, long spike,
+  etc).  this is necessarily defined per object type and possibly
+  programmable.  see src/proc-db/csgbrep.cpp for a basic start.
+
+* create a catalog of all possible/distinct/useful shader settings.
+  see regress/shaders.sh for a basic start.
+
+* high-performance VOL for medical data visualization.  consider
+  leveraging OpenVDB, PCL, Paraview/VTK, etc
+
+* multi-region VOL objects.  this basically will either introduce a
+  notion of data-reuse where multiple regions reference the same VOL
+  and get different spatial results, or a single primitive reports
+  distinct material/region/spatial information that will get
+  propagated up into separate region hits.  the prior is probably
+  easier and less error-prone.
+
+* BoT mesh editing command.  Subtasks:
+  
+  - enumerate functions desireable
+  - catalog features of other mesh manipulation tools
+  - investigate mesh editing libraries and/or relying on NMG editing
+  - bind GUI editing to the BoT mesh editing command
+
 * establish the Basic Application Runtime (BAR), only consisting of
   libbu and libbn, as a stand-alone self-contained project.  provide
   an API that supports most C/C++ application development and
@@ -193,6 +225,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
     Up to 129600 random views: -a #:#:# -e #:#:#
     Comprehensive "front" view, 1-degree increments: -a -90:90 -e -90:90
     Comprehensive orbital, 1/2-degree increments: -a 0:360:720
+
+* implement an overlap reporting function (boolean and volume)
 
 * have gqa calculate the volume of overlapping regions, not just
   shotline overlap distances.  that will allow output to be sorted by
@@ -1457,7 +1491,9 @@ NEW OBJECTS
 
 * support for fillets and chamfers as object/combination operations
 
-* image objects (tbd objects) for v5 geometry files
+* image objects (tbd objects) for v5 geometry files.  not only the
+  ability to have images in the 3D space, but to view-align them for
+  image underlay modeling.
 
 * material objects (non-geometric attribute-only objects) for v5
   geometry files.  instead of material attribute value becomes
@@ -1688,6 +1724,9 @@ BREP/NURBS
   mode BoTs, 'brep' objects need the ability to have a thickness
   described so you could automatically handle non-solid NURBS and
   sheet-metal style geometry without requiring surface solidity.
+
+* NURBS editing command, let you interactively
+  add/update/join/split/remove component points, edges, surfaces.
 
 
 NMG/BoT
