@@ -59,9 +59,9 @@ char *out_file = NULL;
 char *in_file = NULL;
 
 static const char usage[] = "\
-pix-bw [-s squaresize] [-w width] [-n height] \n\
+pix-bw [-s squaresize] [-w width] [-n height]\n\
        [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
-       [-o out_file.bw] [file.bw] > [out_file.bw] \n";
+       [-o out_file.bw] [file.bw] > [out_file.bw]\n";
 
 double multiplier = 0.5;
 

@@ -44,6 +44,15 @@ file from its standard input
 and produce a black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 file on its standard output.</para>
+<para>The
+<option>-w </option><replaceable>file_width</replaceable>
+flag specifies the width of each scanline in the input file, in pixels.
+The
+<option>-n </option><replaceable>file_height</replaceable>
+flag specifies the height in scanlines of the input file.
+They are set to the same value using
+<option>-s </option><replaceable>squarefilesize</replaceable>.
+</para>
 <para>By default all three colors are weighted equally.
 The
 <option>-e </option><replaceable>type</replaceable>
@@ -83,12 +92,11 @@ are 1.0 divided by the number of colors selected.</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
-<para><emphasis remap='I'>pix-bw -R0.0 -B0.0 &lt; file.pix &gt; file.bw</emphasis>
-<!-- .br -->
-will equally blend the red and blue color planes.</para>
+<para>pix-bw -R0.0 -B0.0 &lt; <emphasis remap='I'>file.pix</emphasis> &gt; <emphasis remap='I'>file.bw</emphasis></para>
+<para>will equally blend the red and blue color planes.</para>
 
-<para><emphasis remap='I'>pix-bw -R0.30 -G0.59 -B0.11 &lt; file.pix &gt; file.bw</emphasis>
-<!-- .br -->
+<para>pix-bw -R0.30 -G0.59 -B0.11 &lt; <emphasis remap='I'>file.pix</emphasis> &gt; <emphasis remap='I'>file.bw</emphasis></para>
+<para>
 has the same effect as the
 <option>-ntsc</option>
 flag.
@@ -118,4 +126,3 @@ Government as represented by U.S. Army Research Laboratory.</para>
 mail to &lt;devs@brlcad.org&gt;.</para>
 </refsect1>
 </refentry>
-
