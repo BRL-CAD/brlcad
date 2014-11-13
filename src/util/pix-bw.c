@@ -71,7 +71,7 @@ get_args(int argc, char **argv)
     int c;
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "e:s:w:n:R:G:B:o:h?NC")) != -1) {
+    while ((c = bu_getopt(argc, argv, "e:s:w:n:R:G:B:o:h?")) != -1) {
 	switch (c) {
 	    case 'e' :
 	        if (BU_STR_EQUAL(bu_optarg, "ntsc")) {
