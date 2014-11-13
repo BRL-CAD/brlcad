@@ -23,6 +23,7 @@
  *
  */
 
+#include <iostream>
 #include "QAccordianWidget.h"
 
 
@@ -30,16 +31,20 @@ QAccordianObject::QAccordianObject(QWidget *pparent, QWidget *object, QString he
 {
     visible = 1;
     title = header_title;
-    child_object = object;
     toggle = new QPushButton(title, this);
     toggle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
+    QScrollArea *objscrollarea= new QScrollArea();
     objlayout = new QVBoxLayout(this);
     objlayout->setSpacing(0);
     objlayout->setContentsMargins(0,0,0,0);
+    objlayout->setAlignment(Qt::AlignTop);
     objlayout->addWidget(toggle);
-    objlayout->addWidget(child_object);
+    objscrollarea->setWidget(object);
+    objlayout->addWidget(objscrollarea);
     this->setLayout(objlayout);
+
+    child_object = objscrollarea;
 
     QObject::connect(toggle, SIGNAL(clicked()), this, SLOT(toggleVisibility()));
 }
@@ -89,6 +94,7 @@ QAccordianObject::toggleVisibility()
     if (visible) {
 	visible = 0;
 	child_object->hide();
+	emit made_hidden(this);
 	return;
     }
 
@@ -105,19 +111,10 @@ QAccordianWidget::QAccordianWidget(QWidget *pparent) : QWidget(pparent)
     mlayout->setSpacing(0);
     mlayout->setContentsMargins(1,1,1,1);
 
-    scrollarea= new QScrollArea();
-    mlayout->addWidget(scrollarea);
-
-    QWidget *contents = new QWidget;
-    contents->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    alayout = new QVBoxLayout(contents);
-    alayout->setSpacing(0);
-    alayout->setContentsMargins(0,0,0,0);
-    alayout->setAlignment(Qt::AlignTop);
-
-    scrollarea->setWidget(contents);
-    scrollarea->setWidgetResizable(true);
-    scrollarea->setMinimumWidth(200);
+    splitter = new QSplitter();
+    splitter->setOrientation(Qt::Vertical);
+    splitter->setChildrenCollapsible(false);
+    mlayout->addWidget(splitter);
 
     this->setLayout(mlayout);
 }
@@ -125,7 +122,6 @@ QAccordianWidget::QAccordianWidget(QWidget *pparent) : QWidget(pparent)
 QAccordianWidget::~QAccordianWidget()
 {
     foreach(QAccordianObject *object, objects) {
-	alayout->removeWidget(object);
 	delete object;
     }
 }
@@ -133,23 +129,30 @@ QAccordianWidget::~QAccordianWidget()
     void
 QAccordianWidget::addObject(QAccordianObject *object)
 {
-    alayout->addWidget(object);
+    splitter->addWidget(object);
+    object->idx = splitter->count() - 1;
     objects.insert(object);
     QObject::connect(object, SIGNAL(made_visible(QAccordianObject *)), this, SLOT(setOpenObject(QAccordianObject *)));
+    QObject::connect(object, SIGNAL(made_hidden(QAccordianObject *)), this, SLOT(setOpenObject(QAccordianObject *)));
 }
 
     void
 QAccordianWidget::insertObject(int idx, QAccordianObject *object)
 {
-    alayout->insertWidget(idx, object);
+    splitter->insertWidget(idx, object);
+    object->idx = splitter->count() - 1;
     objects.insert(object);
     QObject::connect(object, SIGNAL(made_visible(QAccordianObject *)), this, SLOT(setOpenObject(QAccordianObject *)));
+    QObject::connect(object, SIGNAL(made_hidden(QAccordianObject *)), this, SLOT(setOpenObject(QAccordianObject *)));
+    foreach(QAccordianObject *obj, objects) {
+	if (obj->idx >= idx)
+	    obj->idx++;
+    }
 }
 
     void
 QAccordianWidget::deleteObject(QAccordianObject *object)
 {
-    alayout->removeWidget(object);
     objects.remove(object);
     delete object;
 }
@@ -186,6 +189,20 @@ QAccordianWidget::setOpenObject(QAccordianObject *new_obj)
 	open_object->setVisibility(1);
 	syncVisibility();
     }
+    foreach(QAccordianObject *obj, objects) {
+	if (obj->visible || obj->idx == splitter->count() - 1) {
+	    splitter->setStretchFactor(obj->idx, 100000);
+	} else {
+	    splitter->setStretchFactor(obj->idx, 0);
+	}
+    }
+    QList<int> currentSizes = splitter->sizes();
+    QList<int> newsizes;
+    int spsize;
+    foreach(spsize, currentSizes) {
+	newsizes.push_back(1);
+    }
+    splitter->setSizes(newsizes);
 }
 
 /*

@@ -30,6 +30,7 @@
 #include <QPushButton>
 #include <QSet>
 #include <QScrollArea>
+#include <QSplitter>
 
 class QAccordianWidget;
 
@@ -46,9 +47,11 @@ class QAccordianObject : public QWidget
 	QPushButton *toggle;
 	QVBoxLayout *objlayout;
 	int visible;
+	int idx;
 
     signals:
 	void made_visible(QAccordianObject *);
+	void made_hidden(QAccordianObject *);
 
     public slots:
 	void toggleVisibility();
@@ -81,8 +84,7 @@ class QAccordianWidget : public QWidget
 	QAccordianObject *open_object;
 
     private:
-	QScrollArea *scrollarea;
-	QVBoxLayout *alayout;
+	QSplitter *splitter;
 	QSet<QAccordianObject *> objects;
 };
 
