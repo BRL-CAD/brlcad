@@ -24,6 +24,9 @@
  */
 
 #include <iostream>
+#include <QIcon>
+#include <QImage>
+#include <QPixmap>
 #include "QAccordianWidget.h"
 
 QAccordianObject::QAccordianObject(QWidget *pparent, QWidget *object, QString header_title) : QWidget(pparent)
@@ -32,7 +35,12 @@ QAccordianObject::QAccordianObject(QWidget *pparent, QWidget *object, QString he
     title = header_title;
     toggle = new QPushButton(title, this);
     toggle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-
+    QImage iconimage;
+    iconimage.load(":/images/tree/branch-open.png");
+    QPixmap iconpixmap;
+    iconpixmap.convertFromImage(iconimage);
+    QIcon buttonicon(iconpixmap);
+    toggle->setIcon(buttonicon);
     QScrollArea *objscrollarea= new QScrollArea();
     objlayout = new QVBoxLayout(this);
     objlayout->setSpacing(0);
@@ -76,30 +84,33 @@ QAccordianObject::getWidget()
 QAccordianObject::setVisibility(int val)
 {
     visible = val;
-    if (!visible) child_object->hide();
-    if (visible) child_object->show();
+    if (!visible) {
+	QImage iconimage;
+	iconimage.load(":/images/tree/branch-closed.png");
+	QPixmap iconpixmap;
+	iconpixmap.convertFromImage(iconimage);
+	QIcon buttonicon(iconpixmap);
+	toggle->setIcon(buttonicon);
+	child_object->hide();
+	emit made_hidden(this);
+    }
+    if (visible) {
+	QImage iconimage;
+	iconimage.load(":/images/tree/branch-open.png");
+	QPixmap iconpixmap;
+	iconpixmap.convertFromImage(iconimage);
+	QIcon buttonicon(iconpixmap);
+	toggle->setIcon(buttonicon);
+	child_object->show();
+	emit made_visible(this);
+    }
 }
 
 void
 QAccordianObject::toggleVisibility()
 {
-    if (!visible) {
-	visible = 1;
-	child_object->show();
-	emit made_visible(this);
-	return;
-    }
-
-    if (visible) {
-	visible = 0;
-	child_object->hide();
-	emit made_hidden(this);
-	return;
-    }
-
+    setVisibility(!visible);
 }
-
-
 
 
 QAccordianWidget::QAccordianWidget(QWidget *pparent) : QWidget(pparent)
