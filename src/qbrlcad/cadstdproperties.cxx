@@ -138,7 +138,7 @@ int CADStdPropertiesModel::NodeRow(CADStdPropertiesNode *node) const
 }
 
 
-int
+HIDDEN int
 attr_children(const char *attr)
 {
     if (BU_STR_EQUAL(attr, "color")) return 3;
@@ -197,6 +197,7 @@ bool CADStdPropertiesModel::hasChildren(const QModelIndex &idx) const
 {
     CADStdPropertiesNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return true;
+    if (curr_node->value == QString("")) return false;
     int cnt = attr_children(curr_node->name.toLocal8Bit());
     if (cnt > 0) return true;
     return false;

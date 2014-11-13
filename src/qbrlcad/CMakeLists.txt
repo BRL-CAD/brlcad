@@ -23,6 +23,7 @@ set(qbrlcad_srcs
   cadconsole.cxx
   cadimport.cxx
   cadstdproperties.cxx
+  caduserproperties.cxx
   cadtreemodel.cxx
   cadtreeview.cxx
   cadtreenode.cxx
@@ -38,6 +39,7 @@ set(moc_headers
   cadimport.h
   cadconsole.h
   cadstdproperties.h
+  caduserproperties.h
   cadtreemodel.h
   cadtreeview.h
   console.h

@@ -26,6 +26,7 @@
 #include "main_window.h"
 #include "cadapp.h"
 #include "cadstdproperties.h"
+#include "caduserproperties.h"
 
 BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
@@ -121,9 +122,13 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     QAccordianObject *obj2 = new QAccordianObject(panel, stdpropview, "Standard Attributes");
     panel->addObject(obj2);
 
-    QPushButton *obj3_c = new QPushButton("contents 3");
-    obj3_c->setMinimumHeight(100);
-    QAccordianObject *obj3 = new QAccordianObject(panel, obj3_c, "Accordian Object 3");
+    CADUserPropertiesModel *userpropmodel = new CADUserPropertiesModel();
+    CADUserPropertiesView *userpropview = new CADUserPropertiesView(0);
+    userpropview->setModel(userpropmodel);
+    //userpropview->setItemDelegate(new GUserPropertyDelegate());
+    userpropview->setMinimumHeight(340);
+    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), userpropmodel, SLOT(refresh(const QModelIndex &)));
+    QAccordianObject *obj3 = new QAccordianObject(panel, userpropview, "User Attributes");
     panel->addObject(obj3);
 
     /* For testing - don't want uniqueness here, but may need or want it elsewhere */
