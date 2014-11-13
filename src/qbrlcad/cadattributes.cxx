@@ -1,6 +1,6 @@
 #include <QPainter>
 #include <QString>
-#include "cadstdproperties.h"
+#include "cadattributes.h"
 #include "cadapp.h"
 #include "bu/sort.h"
 #include "bu/avs.h"
@@ -8,7 +8,7 @@
 
 // *********** Node **************
 
-CADStdPropertiesNode::CADStdPropertiesNode(CADStdPropertiesNode *aParent)
+CADAttributesNode::CADAttributesNode(CADAttributesNode *aParent)
 : parent(aParent)
 {
     if(parent) {
@@ -16,32 +16,36 @@ CADStdPropertiesNode::CADStdPropertiesNode(CADStdPropertiesNode *aParent)
     }
 }
 
-CADStdPropertiesNode::~CADStdPropertiesNode()
+CADAttributesNode::~CADAttributesNode()
 {
     qDeleteAll(children);
 }
 
 // *********** Model **************
 
-CADStdPropertiesModel::CADStdPropertiesModel(QObject *parentobj, struct db_i *dbip, struct directory *dp)
+CADAttributesModel::CADAttributesModel(QObject *parentobj, struct db_i *dbip, struct directory *dp, int show_standard, int show_user)
     : QAbstractItemModel(parentobj)
 {
     int i = 0;
     current_dbip = dbip;
     current_dp = dp;
-    m_root = new CADStdPropertiesNode();
+    if (show_standard) std_visible = 1;
+    if (show_user) user_visible = 1;
+    m_root = new CADAttributesNode();
     BU_GET(avs, struct bu_attribute_value_set);
     bu_avs_init_empty(avs);
-    while (i != ATTR_NULL) {
-	add_attribute(db5_standard_attribute(i), "", m_root, i);
-	i++;
+    if (std_visible) {
+	while (i != ATTR_NULL) {
+	    add_attribute(db5_standard_attribute(i), "", m_root, i);
+	    i++;
+	}
     }
     if (dbip != DBI_NULL && dp != RT_DIR_NULL) {
 	update(dbip, dp);
     }
 }
 
-CADStdPropertiesModel::~CADStdPropertiesModel()
+CADAttributesModel::~CADAttributesModel()
 {
     delete m_root;
     bu_avs_free(avs);
@@ -49,7 +53,7 @@ CADStdPropertiesModel::~CADStdPropertiesModel()
 }
 
 QVariant
-CADStdPropertiesModel::headerData(int section, Qt::Orientation, int role) const
+CADAttributesModel::headerData(int section, Qt::Orientation, int role) const
 {
     if (role != Qt::DisplayRole) return QVariant();
     if (section == 0) return QString("Property");
@@ -58,10 +62,10 @@ CADStdPropertiesModel::headerData(int section, Qt::Orientation, int role) const
 }
 
 QVariant
-CADStdPropertiesModel::data(const QModelIndex & idx, int role) const
+CADAttributesModel::data(const QModelIndex & idx, int role) const
 {
     if (!idx.isValid()) return QVariant();
-    CADStdPropertiesNode *curr_node = IndexNode(idx);
+    CADAttributesNode *curr_node = IndexNode(idx);
     if (role == Qt::DisplayRole && idx.column() == 0) return QVariant(curr_node->name);
     if (role == Qt::DisplayRole && idx.column() == 1) return QVariant(curr_node->value);
     //if (role == DirectoryInternalRole) return QVariant::fromValue((void *)(curr_node->node_dp));
@@ -69,12 +73,12 @@ CADStdPropertiesModel::data(const QModelIndex & idx, int role) const
 }
 
 bool
-CADStdPropertiesModel::setData(const QModelIndex & idx, const QVariant & value, int role)
+CADAttributesModel::setData(const QModelIndex & idx, const QVariant & value, int role)
 {
     if (!idx.isValid()) return false;
     QVector<int> roles;
     bool ret = false;
-    CADStdPropertiesNode *curr_node = IndexNode(idx);
+    CADAttributesNode *curr_node = IndexNode(idx);
     if (role == Qt::DisplayRole) {
 	curr_node->name = value.toString();
 	roles.append(Qt::DisplayRole);
@@ -84,55 +88,55 @@ CADStdPropertiesModel::setData(const QModelIndex & idx, const QVariant & value, 
     return ret;
 }
 
-void CADStdPropertiesModel::setRootNode(CADStdPropertiesNode *root)
+void CADAttributesModel::setRootNode(CADAttributesNode *root)
 {
     m_root = root;
     beginResetModel();
     endResetModel();
 }
 
-QModelIndex CADStdPropertiesModel::index(int row, int column, const QModelIndex &parent_idx) const
+QModelIndex CADAttributesModel::index(int row, int column, const QModelIndex &parent_idx) const
 {
     if (hasIndex(row, column, parent_idx)) {
-	CADStdPropertiesNode *cnode = IndexNode(parent_idx)->children.at(row);
+	CADAttributesNode *cnode = IndexNode(parent_idx)->children.at(row);
 	return createIndex(row, column, cnode);
     }
     return QModelIndex();
 }
 
-QModelIndex CADStdPropertiesModel::parent(const QModelIndex &child) const
+QModelIndex CADAttributesModel::parent(const QModelIndex &child) const
 {
-    CADStdPropertiesNode *pnode = IndexNode(child)->parent;
+    CADAttributesNode *pnode = IndexNode(child)->parent;
     if (pnode == m_root) return QModelIndex();
     return createIndex(NodeRow(pnode), 0, pnode);
 }
 
-int CADStdPropertiesModel::rowCount(const QModelIndex &parent_idx) const
+int CADAttributesModel::rowCount(const QModelIndex &parent_idx) const
 {
     return IndexNode(parent_idx)->children.count();
 }
 
-int CADStdPropertiesModel::columnCount(const QModelIndex &parent_idx) const
+int CADAttributesModel::columnCount(const QModelIndex &parent_idx) const
 {
     Q_UNUSED(parent_idx);
     return 2;
 }
 
-QModelIndex CADStdPropertiesModel::NodeIndex(CADStdPropertiesNode *node) const
+QModelIndex CADAttributesModel::NodeIndex(CADAttributesNode *node) const
 {
     if (node == m_root) return QModelIndex();
     return createIndex(NodeRow(node), 0, node);
 }
 
-CADStdPropertiesNode * CADStdPropertiesModel::IndexNode(const QModelIndex &idx) const
+CADAttributesNode * CADAttributesModel::IndexNode(const QModelIndex &idx) const
 {
     if (idx.isValid()) {
-	return static_cast<CADStdPropertiesNode *>(idx.internalPointer());
+	return static_cast<CADAttributesNode *>(idx.internalPointer());
     }
     return m_root;
 }
 
-int CADStdPropertiesModel::NodeRow(CADStdPropertiesNode *node) const
+int CADAttributesModel::NodeRow(CADAttributesNode *node) const
 {
     return node->parent->children.indexOf(node);
 }
@@ -146,19 +150,19 @@ attr_children(const char *attr)
 }
 
 
-bool CADStdPropertiesModel::canFetchMore(const QModelIndex &idx) const
+bool CADAttributesModel::canFetchMore(const QModelIndex &idx) const
 {
-    CADStdPropertiesNode *curr_node = IndexNode(idx);
+    CADAttributesNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return false;
     int cnt = attr_children(curr_node->name.toLocal8Bit());
     if (cnt > 0) return true;
     return false;
 }
 
-CADStdPropertiesNode *
-CADStdPropertiesModel::add_attribute(const char *name, const char *value, CADStdPropertiesNode *curr_node, int type)
+CADAttributesNode *
+CADAttributesModel::add_attribute(const char *name, const char *value, CADAttributesNode *curr_node, int type)
 {
-    CADStdPropertiesNode *new_node = new CADStdPropertiesNode(curr_node);
+    CADAttributesNode *new_node = new CADAttributesNode(curr_node);
     new_node->name = name;
     new_node->value = value;
     new_node->attr_type = type;
@@ -167,7 +171,7 @@ CADStdPropertiesModel::add_attribute(const char *name, const char *value, CADStd
 }
 
 void
-CADStdPropertiesModel::add_Children(const char *name, CADStdPropertiesNode *curr_node)
+CADAttributesModel::add_Children(const char *name, CADAttributesNode *curr_node)
 {
     if (BU_STR_EQUAL(name, "color")) {
 	QString val(bu_avs_get(avs, name));
@@ -181,9 +185,9 @@ CADStdPropertiesModel::add_Children(const char *name, CADStdPropertiesNode *curr
 }
 
 
-void CADStdPropertiesModel::fetchMore(const QModelIndex &idx)
+void CADAttributesModel::fetchMore(const QModelIndex &idx)
 {
-    CADStdPropertiesNode *curr_node = IndexNode(idx);
+    CADAttributesNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return;
     int cnt = attr_children(curr_node->name.toLocal8Bit());
     if (cnt && !idx.child(cnt-1, 0).isValid()) {
@@ -193,9 +197,9 @@ void CADStdPropertiesModel::fetchMore(const QModelIndex &idx)
     }
 }
 
-bool CADStdPropertiesModel::hasChildren(const QModelIndex &idx) const
+bool CADAttributesModel::hasChildren(const QModelIndex &idx) const
 {
-    CADStdPropertiesNode *curr_node = IndexNode(idx);
+    CADAttributesNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return true;
     if (curr_node->value == QString("")) return false;
     int cnt = attr_children(curr_node->name.toLocal8Bit());
@@ -203,38 +207,48 @@ bool CADStdPropertiesModel::hasChildren(const QModelIndex &idx) const
     return false;
 }
 
-int CADStdPropertiesModel::update(struct db_i *new_dbip, struct directory *new_dp)
+int CADAttributesModel::update(struct db_i *new_dbip, struct directory *new_dp)
 {
     current_dp = new_dp;
     current_dbip = new_dbip;
     if (current_dbip != DBI_NULL && current_dp != RT_DIR_NULL) {
-	QMap<QString, CADStdPropertiesNode*> standard_nodes;
+	QMap<QString, CADAttributesNode*> standard_nodes;
 	int i = 0;
-	m_root = new CADStdPropertiesNode();
+	m_root = new CADAttributesNode();
 	beginResetModel();
 	struct bu_attribute_value_pair *avpp;
 	for (BU_AVS_FOR(avpp, avs)) {
 	    bu_avs_remove(avs, avpp->name);
 	}
 	(void)db5_get_attributes(current_dbip, avs, current_dp);
-	while (i != ATTR_NULL) {
-	    standard_nodes.insert(db5_standard_attribute(i), add_attribute(db5_standard_attribute(i), "", m_root, i));
-	    i++;
+
+	if (std_visible) {
+	    while (i != ATTR_NULL) {
+		standard_nodes.insert(db5_standard_attribute(i), add_attribute(db5_standard_attribute(i), "", m_root, i));
+		i++;
+	    }
+	    for (BU_AVS_FOR(avpp, avs)) {
+		if (db5_is_standard_attribute(avpp->name)) {
+		    if (standard_nodes.find(avpp->name) != standard_nodes.end()) {
+			QString new_value(avpp->value);
+			CADAttributesNode *snode = standard_nodes.find(avpp->name).value();
+			snode->value = new_value;
+		    } else {
+			add_attribute(avpp->name, avpp->value, m_root, db5_standardize_attribute(avpp->name));
+		    }
+		}
+	    }
 	}
-	for (BU_AVS_FOR(avpp, avs)) {
-	    if (db5_is_standard_attribute(avpp->name)) {
-		if (standard_nodes.find(avpp->name) != standard_nodes.end()) {
-		    QString new_value(avpp->value);
-		    CADStdPropertiesNode *snode = standard_nodes.find(avpp->name).value();
-		    snode->value = new_value;
-		} else {
-		    add_attribute(avpp->name, avpp->value, m_root, db5_standardize_attribute(avpp->name));
+	if (user_visible) {
+	    for (BU_AVS_FOR(avpp, avs)) {
+		if (!db5_is_standard_attribute(avpp->name)) {
+		    add_attribute(avpp->name, avpp->value, m_root, ATTR_NULL);
 		}
 	    }
 	}
 	endResetModel();
     } else {
-	m_root = new CADStdPropertiesNode();
+	m_root = new CADAttributesNode();
 	beginResetModel();
 	endResetModel();
     }
@@ -242,7 +256,7 @@ int CADStdPropertiesModel::update(struct db_i *new_dbip, struct directory *new_d
 }
 
 void
-CADStdPropertiesModel::refresh(const QModelIndex &idx)
+CADAttributesModel::refresh(const QModelIndex &idx)
 {
     current_dbip = ((CADApp *)qApp)->dbip();
     current_dp = (struct directory *)(idx.data(DirectoryInternalRole).value<void *>());
@@ -250,22 +264,25 @@ CADStdPropertiesModel::refresh(const QModelIndex &idx)
 }
 
 // *********** View **************
-void GStdPropertyDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void GAttributeDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     QString text = index.data().toString();
     painter->drawText(option.rect, text, QTextOption(Qt::AlignLeft));
 }
 
-QSize GStdPropertyDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
+QSize GAttributeDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     QSize name_size = option.fontMetrics.size(Qt::TextSingleLine, index.data().toString());
     return name_size;
 }
 
 
-CADStdPropertiesView::CADStdPropertiesView(QWidget *pparent) : QTreeView(pparent)
+CADAttributesView::CADAttributesView(QWidget *pparent, int tree_decorate) : QTreeView(pparent)
 {
     //this->setContextMenuPolicy(Qt::CustomContextMenu);
+    if (!tree_decorate) {
+	setRootIsDecorated(false);
+    }
 }
 
 /*

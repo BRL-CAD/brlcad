@@ -25,8 +25,7 @@
 
 #include "main_window.h"
 #include "cadapp.h"
-#include "cadstdproperties.h"
-#include "caduserproperties.h"
+#include "cadattributes.h"
 
 BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
@@ -113,8 +112,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     QAccordianObject *obj1 = new QAccordianObject(panel, obj1_c, "Accordian Object 1");
     panel->addObject(obj1);
 
-    CADStdPropertiesModel *stdpropmodel = new CADStdPropertiesModel();
-    CADStdPropertiesView *stdpropview = new CADStdPropertiesView(0);
+    CADAttributesModel *stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
+    CADAttributesView *stdpropview = new CADAttributesView(0, 1);
     stdpropview->setModel(stdpropmodel);
     //stdpropview->setItemDelegate(new GStdPropertyDelegate());
     stdpropview->setMinimumHeight(340);
@@ -122,8 +121,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     QAccordianObject *obj2 = new QAccordianObject(panel, stdpropview, "Standard Attributes");
     panel->addObject(obj2);
 
-    CADUserPropertiesModel *userpropmodel = new CADUserPropertiesModel();
-    CADUserPropertiesView *userpropview = new CADUserPropertiesView(0);
+    CADAttributesModel *userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
+    CADAttributesView *userpropview = new CADAttributesView(0);
     userpropview->setModel(userpropmodel);
     //userpropview->setItemDelegate(new GUserPropertyDelegate());
     userpropview->setMinimumHeight(340);

@@ -1,5 +1,5 @@
-#ifndef CAD_STD_PROPERTIES_H
-#define CAD_STD_PROPERTIES_H
+#ifndef CAD_ATTRIBUTES_H
+#define CAD_ATTRIBUTES_H
 
 #include <QVariant>
 #include <QString>
@@ -19,35 +19,35 @@
 #include "ged.h"
 #endif
 
-class CADStdPropertiesNode
+class CADAttributesNode
 {
 public:
-    CADStdPropertiesNode(CADStdPropertiesNode *aParent=0);
-    ~CADStdPropertiesNode();
+    CADAttributesNode(CADAttributesNode *aParent=0);
+    ~CADAttributesNode();
 
     QString name;
     QString value;
     int attr_type;
 
-    CADStdPropertiesNode *parent;
-    QList<CADStdPropertiesNode*> children;
+    CADAttributesNode *parent;
+    QList<CADAttributesNode*> children;
 };
 
-class CADStdPropertiesModel : public QAbstractItemModel
+class CADAttributesModel : public QAbstractItemModel
 {
     Q_OBJECT
 
     public:  // "standard" custom tree model functions
-	explicit CADStdPropertiesModel(QObject *parent = 0, struct db_i *dbip = DBI_NULL, struct directory *dp = RT_DIR_NULL);
-	~CADStdPropertiesModel();
+	explicit CADAttributesModel(QObject *parent = 0, struct db_i *dbip = DBI_NULL, struct directory *dp = RT_DIR_NULL, int show_std = 0, int show_user = 0);
+	~CADAttributesModel();
 
 	QModelIndex index(int row, int column, const QModelIndex &parent) const;
 	QModelIndex parent(const QModelIndex &child) const;
 	int rowCount(const QModelIndex &child) const;
 	int columnCount(const QModelIndex &child) const;
 
-	void setRootNode(CADStdPropertiesNode *root);
-	CADStdPropertiesNode* rootNode();
+	void setRootNode(CADAttributesNode *root);
+	CADAttributesNode* rootNode();
 
 	bool hasChildren(const QModelIndex &parent) const;
 	QVariant headerData(int section, Qt::Orientation orientation, int role) const;
@@ -55,9 +55,9 @@ class CADStdPropertiesModel : public QAbstractItemModel
 	QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
 	bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
 
-	CADStdPropertiesNode *m_root;
-	QModelIndex NodeIndex(CADStdPropertiesNode *node) const;
-	CADStdPropertiesNode *IndexNode(const QModelIndex &index) const;
+	CADAttributesNode *m_root;
+	QModelIndex NodeIndex(CADAttributesNode *node) const;
+	CADAttributesNode *IndexNode(const QModelIndex &index) const;
 
     public:  // BRL-CAD specific operations
 	int update(struct db_i *new_dbip, struct directory *dp);
@@ -67,39 +67,41 @@ class CADStdPropertiesModel : public QAbstractItemModel
 
     protected:
 
-	int NodeRow(CADStdPropertiesNode *node) const;
+	int NodeRow(CADAttributesNode *node) const;
 	bool canFetchMore(const QModelIndex &parent) const;
 	void fetchMore(const QModelIndex &parent);
 
     private:
-	CADStdPropertiesNode *add_attribute(const char *name, const char *value, CADStdPropertiesNode *curr_node, int type);
-	void add_Children(const char *name, CADStdPropertiesNode *curr_node);
+	CADAttributesNode *add_attribute(const char *name, const char *value, CADAttributesNode *curr_node, int type);
+	void add_Children(const char *name, CADAttributesNode *curr_node);
 	struct db_i *current_dbip;
 	struct directory *current_dp;
 	struct bu_attribute_value_set *avs;
+	int std_visible;
+	int user_visible;
 };
 
-class GStdPropertyDelegate : public QStyledItemDelegate
+class GAttributeDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 
     public:
-	GStdPropertyDelegate(QWidget *pparent = 0) : QStyledItemDelegate(pparent) {}
+	GAttributeDelegate(QWidget *pparent = 0) : QStyledItemDelegate(pparent) {}
 
 	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
 	QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
 };
 
-class CADStdPropertiesView : public QTreeView
+class CADAttributesView : public QTreeView
 {
     Q_OBJECT
 
     public:
-	CADStdPropertiesView(QWidget *pparent);
-	~CADStdPropertiesView() {};
+	CADAttributesView(QWidget *pparent, int decorate_tree = 0);
+	~CADAttributesView() {};
 };
 
-#endif /*CAD_STD_PROPERTIES_H*/
+#endif /*CAD_ATTRIBUTES_H*/
 
 /*
  * Local Variables:
