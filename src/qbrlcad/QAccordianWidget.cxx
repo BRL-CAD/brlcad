@@ -26,7 +26,6 @@
 #include <iostream>
 #include "QAccordianWidget.h"
 
-
 QAccordianObject::QAccordianObject(QWidget *pparent, QWidget *object, QString header_title) : QWidget(pparent)
 {
     visible = 1;
@@ -114,6 +113,7 @@ QAccordianWidget::QAccordianWidget(QWidget *pparent) : QWidget(pparent)
     splitter = new QSplitter();
     splitter->setOrientation(Qt::Vertical);
     splitter->setChildrenCollapsible(false);
+    QObject::connect(splitter, SIGNAL(splitterMoved(int, int)), this, SLOT(update_sizes(int, int)));
     mlayout->addWidget(splitter);
 
     this->setLayout(mlayout);
@@ -126,49 +126,41 @@ QAccordianWidget::~QAccordianWidget()
     }
 }
 
-    void
+void
 QAccordianWidget::addObject(QAccordianObject *object)
 {
     splitter->addWidget(object);
     object->idx = splitter->count() - 1;
     objects.insert(object);
-    QObject::connect(object, SIGNAL(made_visible(QAccordianObject *)), this, SLOT(setOpenObject(QAccordianObject *)));
-    QObject::connect(object, SIGNAL(made_hidden(QAccordianObject *)), this, SLOT(setOpenObject(QAccordianObject *)));
+    QObject::connect(object, SIGNAL(made_visible(QAccordianObject *)), this, SLOT(stateUpdate(QAccordianObject *)));
+    QObject::connect(object, SIGNAL(made_hidden(QAccordianObject *)), this, SLOT(stateUpdate(QAccordianObject *)));
+    size_states.clear();
 }
 
-    void
+void
 QAccordianWidget::insertObject(int idx, QAccordianObject *object)
 {
     splitter->insertWidget(idx, object);
     object->idx = splitter->count() - 1;
     objects.insert(object);
-    QObject::connect(object, SIGNAL(made_visible(QAccordianObject *)), this, SLOT(setOpenObject(QAccordianObject *)));
-    QObject::connect(object, SIGNAL(made_hidden(QAccordianObject *)), this, SLOT(setOpenObject(QAccordianObject *)));
+    QObject::connect(object, SIGNAL(made_visible(QAccordianObject *)), this, SLOT(stateUpdate(QAccordianObject *)));
+    QObject::connect(object, SIGNAL(made_hidden(QAccordianObject *)), this, SLOT(stateUpdate(QAccordianObject *)));
     foreach(QAccordianObject *obj, objects) {
 	if (obj->idx >= idx)
 	    obj->idx++;
     }
+    size_states.clear();
 }
 
-    void
+void
 QAccordianWidget::deleteObject(QAccordianObject *object)
 {
     objects.remove(object);
+    size_states.clear();
     delete object;
 }
 
-    void
-QAccordianWidget::syncVisibility()
-{
-    if (unique_visibility) {
-	foreach(QAccordianObject *obj, objects) {
-	    if (obj != open_object)
-		obj->setVisibility(0);
-	}
-    }
-}
-
-    void
+void
 QAccordianWidget::setUniqueVisibility(int val)
 {
     unique_visibility = val;
@@ -177,32 +169,62 @@ QAccordianWidget::setUniqueVisibility(int val)
 	    open_object = *(objects.begin());
 	    open_object->setVisibility(1);
 	}
-	syncVisibility();
+	stateUpdate(open_object);
     }
 }
 
 void
-QAccordianWidget::setOpenObject(QAccordianObject *new_obj)
-{
-    if (unique_visibility) {
-	open_object = new_obj;
-	open_object->setVisibility(1);
-	syncVisibility();
-    }
+QAccordianWidget::update_sizes(int, int) {
+    QList<int> currentSizes = splitter->sizes();
+    QString statekey;
     foreach(QAccordianObject *obj, objects) {
-	if (obj->visible || obj->idx == splitter->count() - 1) {
-	    splitter->setStretchFactor(obj->idx, 100000);
+	if (obj->visible) {
+	    statekey.append("1");
 	} else {
-	    splitter->setStretchFactor(obj->idx, 0);
+	    statekey.append("0");
 	}
     }
-    QList<int> currentSizes = splitter->sizes();
-    QList<int> newsizes;
-    int spsize;
-    foreach(spsize, currentSizes) {
-	newsizes.push_back(1);
+    size_states.insert(statekey, currentSizes);
+}
+
+void
+QAccordianWidget::stateUpdate(QAccordianObject *new_obj)
+{
+    if (unique_visibility && new_obj) {
+	open_object = new_obj;
+	open_object->setVisibility(1);
+	foreach(QAccordianObject *obj, objects) {
+	    if (obj != open_object)
+		obj->setVisibility(0);
+	}
     }
-    splitter->setSizes(newsizes);
+    QString statekey;
+    foreach(QAccordianObject *obj, objects) {
+	if (obj->visible) {
+	    statekey.append("1");
+	} else {
+	    statekey.append("0");
+	}
+    }
+
+    if (size_states.find(statekey) != size_states.end()) {
+	splitter->setSizes(size_states.find(statekey).value());
+    } else {
+	foreach(QAccordianObject *obj, objects) {
+	    if (obj->visible || obj->idx == splitter->count() - 1) {
+		splitter->setStretchFactor(obj->idx, 100000);
+	    } else {
+		splitter->setStretchFactor(obj->idx, 0);
+	    }
+	}
+	QList<int> currentSizes = splitter->sizes();
+	QList<int> newsizes;
+	int spsize;
+	foreach(spsize, currentSizes) {
+	    newsizes.push_back(1);
+	}
+	splitter->setSizes(newsizes);
+    }
 }
 
 /*

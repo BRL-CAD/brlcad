@@ -29,6 +29,7 @@
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QSet>
+#include <QMap>
 #include <QScrollArea>
 #include <QSplitter>
 
@@ -76,8 +77,8 @@ class QAccordianWidget : public QWidget
 	int count();
 
     public slots:
-	void syncVisibility();
-	void setOpenObject(QAccordianObject *);
+	void update_sizes(int, int);
+	void stateUpdate(QAccordianObject *);
 
     public:
 	int unique_visibility;
@@ -86,6 +87,7 @@ class QAccordianWidget : public QWidget
     private:
 	QSplitter *splitter;
 	QSet<QAccordianObject *> objects;
+	QMap<QString, QList<int> > size_states;
 };
 
 
