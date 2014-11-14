@@ -161,6 +161,6 @@ W. Abrams, former Army Chief of Staff and a battalion commander of the
 
 Development on BRL-CAD as a package subsequently began in 1983; the
 first public release was made in 1984. BRL-CAD became an open source
-project on December 21]], 2004. BRL-CAD now continues to be developed
+project on 21 December 2004. BRL-CAD now continues to be developed
 and maintained by a core community of open source developers ever
 since.
