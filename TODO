@@ -81,7 +81,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   easier and less error-prone.
 
 * BoT mesh editing command.  Subtasks:
-  
+
   - enumerate functions desireable
   - catalog features of other mesh manipulation tools
   - investigate mesh editing libraries and/or relying on NMG editing
