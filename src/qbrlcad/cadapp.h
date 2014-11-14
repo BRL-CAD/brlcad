@@ -43,7 +43,7 @@
 class CADApp;
 
 typedef void (*gui_cmd_ptr)(QString *command_string, CADApp *app);
-
+#define GUI_CMD_PTR_NULL ((gui_cmd_ptr)0)
 
 class CADApp : public QApplication
 {
