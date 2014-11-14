@@ -72,18 +72,18 @@ D6500 alignment white.</para>
   <term><emphasis remap='B'>crt</emphasis></term>
   <listitem>
 <para>weighting scheme used will be for "typical" CRT phosphor chromaticities
-and the D6500 white</para>
+and the D6500 white.</para>
   </listitem>
   </varlistentry>
 </variablelist>
 <para>
 Individual color plane(s) can be selected via the
-<option>-R1.0 -G1.0</option>
+<option>-R#</option>, <option>-G#</option>,
 and
-<option>-B1.0</option>
-options
-If one or more of these flags is followed by a value,
-the value will be treated as a weight
+<option>-B#</option>
+options.
+The value used with each flag
+will be treated as a weight
 to be applied to that color.
 </para>
 <para>
