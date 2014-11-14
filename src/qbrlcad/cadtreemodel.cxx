@@ -136,6 +136,7 @@ get_comb_type(struct directory *dp, struct db_i *dbip)
     struct bu_attribute_value_set avs;
     int region_flag = 0;
     int air_flag = 0;
+    int region_id_flag = 0;
     int assembly_flag = 0;
     if (dp->d_flags & RT_DIR_REGION) {
 	region_flag = 1;
@@ -147,6 +148,11 @@ get_comb_type(struct directory *dp, struct db_i *dbip)
     if (airval && !BU_STR_EQUAL(airval, "0")) {
 	air_flag = 1;
     }
+    const char *region_id = bu_avs_get(&avs, "region_id");
+    if (region_id && !BU_STR_EQUAL(region_id, "0")) {
+	region_id_flag = 1;
+    }
+
 
     if (!region_flag && !air_flag) {
 	int search_results = 0;
@@ -156,8 +162,8 @@ get_comb_type(struct directory *dp, struct db_i *dbip)
     }
 
     if (region_flag && !air_flag) return 2;
-    if (!region_flag && air_flag) return 3;
-    if (region_flag && air_flag) return 4;
+    if (!region_id_flag && air_flag) return 3;
+    if (region_id_flag && air_flag) return 4;
     if (assembly_flag) return 5;
 
     return 0;
