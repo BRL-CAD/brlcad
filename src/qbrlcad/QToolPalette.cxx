@@ -77,6 +77,7 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
 {
     icon_width = 30;
     icon_height = 30;
+    columns = 6;
     QVBoxLayout *mlayout = new QVBoxLayout();
     mlayout->setSpacing(0);
     mlayout->setContentsMargins(1,1,1,1);
@@ -93,14 +94,18 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     button_layout->setVerticalSpacing(0);
     button_layout->setContentsMargins(0,0,0,0);
     button_container->setMinimumHeight(icon_height);
-    button_container->setMinimumWidth(icon_width);
+    button_container->setMinimumWidth(icon_width * columns);
     button_container->setLayout(button_layout);
+    button_container->show();
     control_container = new QWidget();
     //control_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     control_layout = new QVBoxLayout();
     control_layout->setSpacing(0);
     control_layout->setContentsMargins(0,0,0,0);
     control_container->setLayout(control_layout);
+    control_container->setMinimumHeight(icon_height);
+    control_container->setMinimumWidth(icon_width * columns);
+    control_container->show();
 
     splitter->addWidget(button_container);
     splitter->setStretchFactor(0, 0);
@@ -148,9 +153,6 @@ QToolPalette::addElement(QToolPaletteElement *element)
     button_layout->addWidget(element->button);
     elements.insert(element);
     QObject::connect(element->button, SIGNAL(element_selected(QToolPaletteElement *)), this, SLOT(displayElement(QToolPaletteElement *)));
-    if (elements.count() == 1) {
-	displayElement(element);
-    }
 }
 
 void
@@ -168,17 +170,23 @@ void
 QToolPalette::displayElement(QToolPaletteElement *element)
 {
     if (element) {
-	if (!element->button->isChecked()) element->button->setChecked(true);
-	if (selected) {
-	    control_layout->removeWidget(selected->controls);
-	    selected->controls->hide();
-	    if (selected->button->isChecked()) selected->button->setChecked(false);
-	}
-	control_layout->addWidget(element->controls);
-	element->controls->show();
-	selected = element;
-	foreach(QToolPaletteElement *el, elements) {
-	    if (el != selected)	el->button->setDown(false);
+	if (element == selected) {
+	    if (element->button->isChecked()) element->button->setChecked(false);
+	    element->controls->hide();
+	    selected = NULL;
+	} else {
+	    if (!element->button->isChecked()) element->button->setChecked(true);
+	    if (selected) {
+		control_layout->removeWidget(selected->controls);
+		selected->controls->hide();
+		if (selected->button->isChecked()) selected->button->setChecked(false);
+	    }
+	    control_layout->addWidget(element->controls);
+	    element->controls->show();
+	    selected = element;
+	    foreach(QToolPaletteElement *el, elements) {
+		if (el != selected)	el->button->setDown(false);
+	    }
 	}
     }
 }
