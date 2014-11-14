@@ -58,12 +58,13 @@
 
 #include "main_window.h"
 #include "cadapp.h"
+#include "cadhelp.h"
 
 int main(int argc, char *argv[])
 {
     CADApp app(argc, argv);
     BRLCAD_MainWindow mainWin;
-    
+
     app.initialize();
 
     QCoreApplication::setApplicationName("BRL-CAD");
@@ -97,6 +98,7 @@ int main(int argc, char *argv[])
     app.register_command(QString("ls"), ged_ls);
     app.register_command(QString("tops"), ged_tops);
     app.register_command(QString("search"), ged_search);
+    app.register_gui_command(QString("man"), cad_man_view);
 
     if (parser.isSet(consoleOption)) {
 	bu_exit(1, "Console mode unimplemented\n");

@@ -135,18 +135,29 @@ CADApp::register_command(QString cmdname, ged_func_ptr func, int db_changer, int
 }
 
 int
+CADApp::register_gui_command(QString cmdname, gui_cmd_ptr func)
+{
+    if (gui_cmd_map.find(cmdname) != gui_cmd_map.end()) return -1;
+    gui_cmd_map.insert(cmdname, func);
+    return 0;
+}
+
+int
 CADApp::exec_command(QString *command, QString *result)
 {
     int ret = 0;
     if (ged_pointer != GED_NULL && command && command->length() > 0) {
+	int found_cmd = 0;
 	char *lcmd = bu_strdup(command->toLocal8Bit());
 	char **largv = (char **)bu_calloc(command->length()/2+1, sizeof(char *), "cmd_eval argv");
 	int largc = bu_argv_from_string(largv, command->length()/2, lcmd);
 
 	QMap<QString, ged_func_ptr>::iterator cmd_itr = cmd_map.find(QString(largv[0]));
+	QMap<QString, gui_cmd_ptr>::iterator gui_cmd_itr = gui_cmd_map.find(QString(largv[0]));
 	if (cmd_itr != cmd_map.end()) {
 	    int is_edit_cmd = 0;
 	    int is_view_cmd = 0;
+	    found_cmd++;
 	    if (edit_cmds.find(QString(largv[0])) != edit_cmds.end()) is_edit_cmd = 1;
 	    if (view_cmds.find(QString(largv[0])) != view_cmds.end()) is_view_cmd = 1;
 	    // TODO - need a way to launch commands in a separate thread, or some other non-blocking
@@ -163,7 +174,14 @@ CADApp::exec_command(QString *command, QString *result)
 	    }
 	    if (is_edit_cmd) emit db_change();
 	    if (is_view_cmd) emit view_change();
-	} else {
+	}
+	if (gui_cmd_itr != gui_cmd_map.end()) {
+	    found_cmd++;
+	    QString args(*command);
+	    args.replace(0, strlen(largv[0])+1, QString(""));
+	    (*(gui_cmd_itr.value()))(&args, (CADApp *)qApp);
+	}
+	if (!found_cmd) {
 	    *result = QString("command not found");
 	    ret = -1;
 	}
@@ -172,6 +190,7 @@ CADApp::exec_command(QString *command, QString *result)
     }
     return ret;
 }
+
 
 int
 CADApp::exec_console_app_in_window(QString command, QStringList options, QString lfile)

@@ -39,6 +39,12 @@
 #include "raytrace.h"
 #include "ged.h"
 
+
+class CADApp;
+
+typedef void (*gui_cmd_ptr)(QString *command_string, CADApp *app);
+
+
 class CADApp : public QApplication
 {
     Q_OBJECT
@@ -52,6 +58,7 @@ class CADApp : public QApplication
 	void closedb();
 
 	int register_command(QString cmdname, ged_func_ptr func, int db_changer = 0, int view_changer = 0);
+	int register_gui_command(QString cmdname, gui_cmd_ptr func);
 	int exec_command(QString *command, QString *result);
 
 	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
@@ -71,6 +78,7 @@ class CADApp : public QApplication
 	struct ged *ged_pointer;
 	QString current_file;
 	QMap<QString, ged_func_ptr> cmd_map;
+	QMap<QString, gui_cmd_ptr> gui_cmd_map;
 	QSet<QString> edit_cmds;  // Commands that potentially change the database contents */
 	QSet<QString> view_cmds;  // Commands that potentially change the view, but not the database contents */
 
