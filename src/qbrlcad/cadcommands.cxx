@@ -225,6 +225,63 @@ void cad_register_commands(CADApp *app)
     app->register_gui_command(QString("Z"), GUI_CMD_PTR_NULL); // cmd_zap
     app->register_gui_command(QString("zoom"), GUI_CMD_PTR_NULL); // cmd_zoom
 
+    // Archer only commands
+#if 0
+
+    blast
+    cd
+    clear
+    closedb
+    combmem
+    copy
+    cpi
+    dbExpand
+    delete
+    draw
+    edarb
+    edcodes
+    edcolor
+    edit
+    edmater
+    erase
+    ev
+    exit
+    group
+    human
+    igraph
+    importFg4Section
+    make
+    move
+    move_arb_edge
+    move_arb_face
+    nmg_simplify
+    ocenter
+    opendb
+    orotate
+    oscale
+    otranslate
+    p
+    prefix
+    protate
+    pscale
+    ptranslate
+    pwd
+    q
+    quit
+    red
+    rfarb
+    rtabort
+    rotate
+    rotate_arb_face
+    scale
+    sed
+    track
+    translate
+    unhide
+    vmake
+    zap
+
+#endif
 
 }
 
