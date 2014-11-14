@@ -63,7 +63,8 @@ void ConsoleInput::DoCommand()
 
     // Emit the command - up to the application to run it and return results
     QStringList command_items = command.split(" ", QString::SkipEmptyParts);
-    new_log->command = command_items.at(0);
+    if (command_items.count() > 0)
+	new_log->command = command_items.at(0);
     emit parent_console->executeCommand(command, new_log);
 }
 
