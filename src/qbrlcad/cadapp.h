@@ -79,6 +79,8 @@ class CADApp : public QApplication
 	QString current_file;
 	QMap<QString, ged_func_ptr> cmd_map;
 	QMap<QString, gui_cmd_ptr> gui_cmd_map;
+	QMap<QString, gui_cmd_ptr> preprocess_cmd_map;
+	QMap<QString, gui_cmd_ptr> postprocess_cmd_map;
 	QSet<QString> edit_cmds;  // Commands that potentially change the database contents */
 	QSet<QString> view_cmds;  // Commands that potentially change the view, but not the database contents */
 

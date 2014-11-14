@@ -142,24 +142,44 @@ CADApp::register_gui_command(QString cmdname, gui_cmd_ptr func)
     return 0;
 }
 
+// TODO - the function below does not take into account the possibility of
+// different command prompt languages - the "exec_command" call needs to
+// be a set of such calls, one per language, with the console switching
+// which one it calls based on a language setting.
 int
 CADApp::exec_command(QString *command, QString *result)
 {
-    int ret = 0;
-    if (ged_pointer != GED_NULL && command && command->length() > 0) {
-	int found_cmd = 0;
-	char *lcmd = bu_strdup(command->toLocal8Bit());
-	char **largv = (char **)bu_calloc(command->length()/2+1, sizeof(char *), "cmd_eval argv");
-	int largc = bu_argv_from_string(largv, command->length()/2, lcmd);
+    int ret = -1;
+    QString lcommand = *command;
+    QMap<QString, gui_cmd_ptr>::iterator preprocess_cmd_itr;
+    QMap<QString, ged_func_ptr>::iterator ged_cmd_itr;
+    QMap<QString, gui_cmd_ptr>::iterator gui_cmd_itr;
+    QMap<QString, gui_cmd_ptr>::iterator postprocess_cmd_itr;
+    char *lcmd = NULL;
+    char **largv = NULL;
+    int largc = 0;
 
-	QMap<QString, ged_func_ptr>::iterator cmd_itr = cmd_map.find(QString(largv[0]));
-	QMap<QString, gui_cmd_ptr>::iterator gui_cmd_itr = gui_cmd_map.find(QString(largv[0]));
-	if (cmd_itr != cmd_map.end()) {
-	    int is_edit_cmd = 0;
-	    int is_view_cmd = 0;
-	    found_cmd++;
-	    if (edit_cmds.find(QString(largv[0])) != edit_cmds.end()) is_edit_cmd = 1;
-	    if (view_cmds.find(QString(largv[0])) != view_cmds.end()) is_view_cmd = 1;
+    if (ged_pointer != GED_NULL && command && command->length() > 0) {
+
+	QStringList command_items = lcommand.split(" ", QString::SkipEmptyParts);
+
+	QString cargv0 = command_items.at(0);
+
+	// First, see if the command needs any extra information from the application
+	// before being run (list of items in view, for example.)
+	preprocess_cmd_itr = preprocess_cmd_map.find(cargv0);
+	if (preprocess_cmd_itr != preprocess_cmd_map.end()) {
+	    (*(preprocess_cmd_itr.value()))(&lcommand, (CADApp *)qApp);
+	}
+
+	ged_cmd_itr = cmd_map.find(cargv0);
+	if (ged_cmd_itr != cmd_map.end()) {
+	    // Prepare libged arguments
+	    lcmd = bu_strdup(lcommand.toLocal8Bit());
+	    largv = (char **)bu_calloc(lcommand.length()/2+1, sizeof(char *), "cmd_eval argv");
+	    largc = bu_argv_from_string(largv, lcommand.length()/2, lcmd);
+	    bu_vls_trunc(ged_pointer->ged_result_str, 0);
+
 	    // TODO - need a way to launch commands in a separate thread, or some other non-blocking
 	    // fashion as far as the rest of the gui is concerned.  Also need to support Ctrl-C
 	    // to abort a command on the terminal.  Don't worry about allowing other commands to
@@ -167,26 +187,41 @@ CADApp::exec_command(QString *command, QString *result)
 	    // text output quite a lot.  However, view commands should return while allowing long
 	    // drawing routines to execute in the background - using something like Z or B should
 	    // abort drawing and clear the view, but otherwise let it complete...
-	    bu_vls_trunc(ged_pointer->ged_result_str, 0);
-	    ret = (*(cmd_itr.value()))(ged_pointer, largc, (const char **)largv);
+	    ret = (*(ged_cmd_itr.value()))(ged_pointer, largc, (const char **)largv);
+
 	    if (result && bu_vls_strlen(ged_pointer->ged_result_str) > 0) {
 		*result = QString(QLatin1String(bu_vls_addr(ged_pointer->ged_result_str)));
 	    }
-	    if (is_edit_cmd) emit db_change();
-	    if (is_view_cmd) emit view_change();
+
+	    // Now that the command is run, emit any signals that need emitting.  What would
+	    // really handle this properly is for the ged structure to contain a list of directory
+	    // pointers that were impacted by the command, so we could emit signals with the
+	    // specifics of what objects need updating.
+	    if (edit_cmds.find(QString(largv[0])) != edit_cmds.end()) emit db_change();
+	    if (view_cmds.find(QString(largv[0])) != view_cmds.end()) emit view_change();
+	    bu_free(lcmd, "free tmp cmd str");
+	    bu_free(largv, "free tmp argv");
+	    goto postprocess;
 	}
+
+	gui_cmd_itr = gui_cmd_map.find(cargv0);
 	if (gui_cmd_itr != gui_cmd_map.end()) {
-	    found_cmd++;
-	    QString args(*command);
-	    args.replace(0, strlen(largv[0])+1, QString(""));
+	    QString args(lcommand);
+	    args.replace(0, cargv0.length()+1, QString(""));
 	    (*(gui_cmd_itr.value()))(&args, (CADApp *)qApp);
+	    ret = 0;
+	    goto postprocess;
 	}
-	if (!found_cmd) {
+
+postprocess:
+	// Take care of any results post-processing needed
+	postprocess_cmd_itr = postprocess_cmd_map.find(cargv0);
+	if (postprocess_cmd_itr != postprocess_cmd_map.end()) {
+	    (*(postprocess_cmd_itr.value()))(result, (CADApp *)qApp);
+	}
+
+	if (ret == -1)
 	    *result = QString("command not found");
-	    ret = -1;
-	}
-	bu_free(lcmd, "free tmp cmd str");
-	bu_free(largv, "free tmp argv");
     }
     return ret;
 }
