@@ -120,25 +120,42 @@ CADApp::closedb()
 
 // TODO - make the type an enum or bit flag or something, instead of multiple integers...
 int
-CADApp::register_command(QString cmdname, ged_func_ptr func, int db_changer, int view_changer)
+CADApp::register_command(QString cmdname, ged_func_ptr func, QString role)
 {
-    if (cmd_map.find(cmdname) != cmd_map.end()) return -1;
-    cmd_map.insert(cmdname, func);
-    if (db_changer) {
-	edit_cmds.insert(cmdname);
-	view_cmds.insert(cmdname);
+    if (role == QString()) {
+	if (cmd_map.find(cmdname) != cmd_map.end()) return -1;
+	cmd_map.insert(cmdname, func);
     }
-    if (view_changer && !db_changer) {
+    if (role == QString("edit")) {
+	edit_cmds.insert(cmdname);
+    }
+    if (role == QString("view")) {
 	view_cmds.insert(cmdname);
     }
     return 0;
 }
 
 int
-CADApp::register_gui_command(QString cmdname, gui_cmd_ptr func)
+CADApp::register_gui_command(QString cmdname, gui_cmd_ptr func, QString role)
 {
-    if (gui_cmd_map.find(cmdname) != gui_cmd_map.end()) return -1;
-    gui_cmd_map.insert(cmdname, func);
+    if (role == QString()) {
+	if (gui_cmd_map.find(cmdname) != gui_cmd_map.end()) return -1;
+	gui_cmd_map.insert(cmdname, func);
+    }
+    if (role == QString("edit")) {
+	edit_cmds.insert(cmdname);
+    }
+    if (role == QString("view")) {
+	view_cmds.insert(cmdname);
+    }
+    if (role == QString("preprocess")) {
+	if (preprocess_cmd_map.find(cmdname) != preprocess_cmd_map.end()) return -1;
+	preprocess_cmd_map.insert(cmdname, func);
+    }
+    if (role == QString("postprocess")) {
+	if (postprocess_cmd_map.find(cmdname) != postprocess_cmd_map.end()) return -1;
+	postprocess_cmd_map.insert(cmdname, func);
+    }
     return 0;
 }
 
@@ -208,8 +225,7 @@ CADApp::exec_command(QString *command, QString *result)
 	if (gui_cmd_itr != gui_cmd_map.end()) {
 	    QString args(lcommand);
 	    args.replace(0, cargv0.length()+1, QString(""));
-	    (*(gui_cmd_itr.value()))(&args, (CADApp *)qApp);
-	    ret = 0;
+	    ret = (*(gui_cmd_itr.value()))(&args, (CADApp *)qApp);
 	    goto postprocess;
 	}
 
@@ -217,7 +233,7 @@ postprocess:
 	// Take care of any results post-processing needed
 	postprocess_cmd_itr = postprocess_cmd_map.find(cargv0);
 	if (postprocess_cmd_itr != postprocess_cmd_map.end()) {
-	    (*(postprocess_cmd_itr.value()))(result, (CADApp *)qApp);
+	    ret = (*(postprocess_cmd_itr.value()))(result, (CADApp *)qApp);
 	}
 
 	if (ret == -1)

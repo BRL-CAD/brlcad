@@ -62,6 +62,8 @@ void ConsoleInput::DoCommand()
     setMinimumHeight(document()->size().height());
 
     // Emit the command - up to the application to run it and return results
+    QStringList command_items = command.split(" ", QString::SkipEmptyParts);
+    new_log->command = command_items.at(0);
     emit parent_console->executeCommand(command, new_log);
 }
 
@@ -138,14 +140,16 @@ void ConsoleLog::keyPressEvent(QKeyEvent *e)
 }
 
 
-void ConsoleLog::append_results(const QString &results)
+void ConsoleLog::append_results(const QString &results, int format)
 {
     QMutexLocker locker(&writemutex);
     textCursor().movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
     if (results.length()) {
-	textCursor().insertText(results.trimmed());
-    } else {
-	textCursor().insertHtml("<a href=\"/pinewood/tire1.r/outer-tire.c/wheel-outer-bump.s\">/pinewood/tire1.r/outer-tire.c/wheel-outer-bump.s</a><br><a href=\"/pinewood/tire4.r/inner-cones.c\">/pinewood/tire4.r/inner-cones.c</a><br><a href=\"/pinewood/axel2.r/axel-cut-2.c/axel-cutout-2a.s\">/pinewood/axel2.r/axel-cut-2.c/axel-cutout-2a.s</a><br><a href=\"/pinewood/pinewood_car_body.r/side-cut-left.s\">/pinewood/pinewood_car_body.r/side-cut-left.s</a>");
+	if (((CADApp *)qApp)->postprocess_cmd_map.find(command) != ((CADApp *)qApp)->postprocess_cmd_map.end() && format == 2) {
+	  textCursor().insertHtml(results);
+	} else {
+	  textCursor().insertText(results.trimmed());
+	}
     }
     textCursor().insertHtml("<br>");
     // Update the size of the log

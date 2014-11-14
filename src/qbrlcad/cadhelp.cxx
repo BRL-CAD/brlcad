@@ -31,7 +31,7 @@ CADManViewer::~CADManViewer()
     delete browser;
 }
 
-void cad_man_view(QString *args, CADApp *app)
+int cad_man_view(QString *args, CADApp *app)
 {
     Q_UNUSED(app);
     // TODO - a language setting in the application would be appropriate here so we can select language appropriate docs...
@@ -41,6 +41,7 @@ void cad_man_view(QString *args, CADApp *app)
     QString man_file(bu_brlcad_data(man_path_root.toLocal8Bit(), 1));
     CADManViewer *viewer = new CADManViewer(0, &man_file);
     viewer->show();
+    return 0;
 }
 
 /*

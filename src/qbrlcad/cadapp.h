@@ -42,7 +42,7 @@
 
 class CADApp;
 
-typedef void (*gui_cmd_ptr)(QString *command_string, CADApp *app);
+typedef int (*gui_cmd_ptr)(QString *command_string, CADApp *app);
 #define GUI_CMD_PTR_NULL ((gui_cmd_ptr)0)
 
 class CADApp : public QApplication
@@ -57,8 +57,8 @@ class CADApp : public QApplication
 	int opendb(QString filename);
 	void closedb();
 
-	int register_command(QString cmdname, ged_func_ptr func, int db_changer = 0, int view_changer = 0);
-	int register_gui_command(QString cmdname, gui_cmd_ptr func);
+	int register_command(QString cmdname, ged_func_ptr func, QString role = QString());
+	int register_gui_command(QString cmdname, gui_cmd_ptr func, QString role = QString());
 	int exec_command(QString *command, QString *result);
 
 	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
@@ -74,7 +74,7 @@ class CADApp : public QApplication
 	void db_change();  // TODO - need this to carry some information about what has changed, if possible...
 	void view_change();
 
-    private:
+    public:
 	struct ged *ged_pointer;
 	QString current_file;
 	QMap<QString, ged_func_ptr> cmd_map;

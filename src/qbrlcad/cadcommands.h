@@ -5,6 +5,10 @@
 
 void cad_register_commands(CADApp *app);
 
+
+int search_postprocess(QString *results, CADApp *app);
+
+
 #endif //QCADCOMMANDS_H
 
 /*

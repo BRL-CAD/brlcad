@@ -91,6 +91,8 @@ void CADConsole::executeCADCommand(const QString &command, ConsoleLog *results_l
     QString subcmd = cmd.left(6);
     const char *substr = subcmd.toLocal8Bit().data();
 
+    int format = 0;
+
     if (!substr) exit(0);
 
     if (command == "quit" || command == "q" || command == "exit") {
@@ -109,9 +111,9 @@ void CADConsole::executeCADCommand(const QString &command, ConsoleLog *results_l
 	}
 	*/
     } else {
-	((CADApp *)qApp)->exec_command(&cmd, &result);
+	format = ((CADApp *)qApp)->exec_command(&cmd, &result);
     }
-    results_log->append_results(result);
+    results_log->append_results(result, format);
 
     //this->promptForInput();
 }

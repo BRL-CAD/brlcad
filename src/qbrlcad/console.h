@@ -40,11 +40,13 @@ class ConsoleLog : public QTextBrowser
 
 	void keyPressEvent(QKeyEvent *e);
 	void resizeEvent(QResizeEvent *pevent);
-	void append_results(const QString &results);
+	void append_results(const QString &results, int format);
 
 	Console *parent_console;
 
 	QMutex writemutex;
+
+	QString command;
 
 };
 

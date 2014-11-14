@@ -20,8 +20,8 @@ public:
   QDialogButtonBox *buttons;
 };
 
-void cad_man_view(QString *args, CADApp *app);
-    
+int cad_man_view(QString *args, CADApp *app);
+
 #endif //QCADHELP_H
 
 /*

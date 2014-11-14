@@ -283,7 +283,43 @@ void cad_register_commands(CADApp *app)
 
 #endif
 
+    app->register_gui_command(QString("search"), search_postprocess, QString("postprocess"));
+
 }
+
+
+
+int search_postprocess(QString *results, CADApp *app)
+{
+    Q_UNUSED(app);
+    QStringList result_items = results->split("\n", QString::SkipEmptyParts);
+    QStringList formatted_results;
+
+    if (QString(results->at(0)) != QString("/")) return 1;
+
+    int i = 0;
+    int count = result_items.count();
+    while (i < count) {
+	QString new_item("<a href=\"");
+	new_item.append(result_items.at(i));
+	new_item.append("\">");
+	new_item.append(result_items.at(i));
+	new_item.append("</a>");
+	if (i < count - 1) {
+	    new_item.append("<br>");
+	}
+	formatted_results.push_back(new_item);
+	i++;
+    }
+
+    QString local = formatted_results.join(QString(""));
+
+    *results = formatted_results.join(QString(""));
+
+    return 2;
+}
+
+
 
 /*
  * Local Variables:
