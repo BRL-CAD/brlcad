@@ -26,6 +26,7 @@
 #include "main_window.h"
 #include "cadapp.h"
 #include "cadattributes.h"
+#include "QToolPalette.h"
 
 BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
@@ -107,9 +108,16 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     panel = new QAccordianWidget(panel_dock);
     panel_dock->setWidget(panel);
 
-    QPushButton *obj1_c = new QPushButton("contents 1");
-    obj1_c->setMinimumHeight(300);
-    QAccordianObject *obj1 = new QAccordianObject(panel, obj1_c, "Accordian Object 1");
+    QToolPalette *tpalette = new QToolPalette();
+    QIcon *obj1_i = new QIcon();
+    QPushButton *obj1_c = new QPushButton("control 1");
+    QToolPaletteElement *el1 = new QToolPaletteElement(0, obj1_i, obj1_c);
+    QIcon *obj2_i = new QIcon();
+    QPushButton *obj2_c = new QPushButton("control 2");
+    QToolPaletteElement *el2 = new QToolPaletteElement(0, obj2_i, obj2_c);
+    tpalette->addElement(el1);
+    tpalette->addElement(el2);
+    QAccordianObject *obj1 = new QAccordianObject(panel, tpalette, "Tools");
     panel->addObject(obj1);
 
     CADAttributesModel *stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);

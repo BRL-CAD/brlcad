@@ -29,6 +29,8 @@ set(qbrlcad_srcs
   console.cxx
   pqConsoleWidget.cxx
   QAccordianWidget.cxx
+  QToolPalette.cxx
+  QFlowLayout.cxx
   )
 
 set(moc_headers
@@ -43,6 +45,8 @@ set(moc_headers
   console.h
   pqConsoleWidget.h
   QAccordianWidget.h
+  QToolPalette.h
+  QFlowLayout.h
   )
 QT5_WRAP_CPP(moc_srcs ${moc_headers})
 
