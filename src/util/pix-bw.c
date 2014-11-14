@@ -61,7 +61,7 @@ char *in_file = NULL;
 static const char usage[] = "\
 pix-bw [-s squaresize] [-w width] [-n height]\n\
        [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
-       [-o out_file.bw] [file.bw] > [out_file.bw]\n";
+       [-o out_file.bw] [file.pix] > [out_file.bw]\n";
 
 double multiplier = 0.5;
 
@@ -136,7 +136,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind) {
-	bu_log("pixfade: excess argument(s) ignored\n");
+	bu_log("pix-bw: excess argument(s) ignored\n");
     }
 
     return 1;		/* OK */
@@ -175,7 +175,10 @@ main(int argc, char **argv)
 	color = ICV_COLOR_B;
     else if (green)
 	color = ICV_COLOR_G;
-    else bu_exit(1, "%s",usage);
+    else {
+    	bu_log("no color scheme specified\n");
+	bu_exit(1, "%s",usage);
+    }
 
     icv_rgb2gray(img, color, rweight, gweight, bweight);
 
