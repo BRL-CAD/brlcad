@@ -54,6 +54,8 @@ public:
     void addItem(QLayoutItem *item);
     int horizontalSpacing() const;
     int verticalSpacing() const;
+    void setHorizontalSpacing(int);
+    void setVerticalSpacing(int);
     Qt::Orientations expandingDirections() const;
     bool hasHeightForWidth() const;
     int heightForWidth(int) const;

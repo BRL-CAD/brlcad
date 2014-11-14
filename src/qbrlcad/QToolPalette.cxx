@@ -89,7 +89,8 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     button_container = new QWidget();
     //button_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     button_layout = new QFlowLayout();
-    button_layout->setSpacing(0);
+    button_layout->setHorizontalSpacing(0);
+    button_layout->setVerticalSpacing(0);
     button_layout->setContentsMargins(0,0,0,0);
     button_container->setMinimumHeight(icon_height);
     button_container->setMinimumWidth(icon_width);

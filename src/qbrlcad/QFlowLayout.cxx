@@ -87,6 +87,16 @@ int QFlowLayout::verticalSpacing() const
     }
 }
 
+void QFlowLayout::setHorizontalSpacing(int hspacing)
+{
+    m_hSpace = hspacing;
+}
+
+void QFlowLayout::setVerticalSpacing(int vspacing)
+{
+    m_vSpace = vspacing;
+}
+
 int QFlowLayout::count() const
 {
     return itemList.size();
