@@ -48,10 +48,14 @@ QAccordianObject::QAccordianObject(QWidget *pparent, QWidget *object, QString he
     objlayout->setAlignment(Qt::AlignTop);
     objlayout->addWidget(toggle);
     objscrollarea->setWidget(object);
+    objscrollarea->setWidgetResizable(true);
     objlayout->addWidget(objscrollarea);
     this->setLayout(objlayout);
 
     child_object = objscrollarea;
+    child_object->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    object->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     QObject::connect(toggle, SIGNAL(clicked()), this, SLOT(toggleVisibility()));
 }

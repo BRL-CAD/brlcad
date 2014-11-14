@@ -109,14 +109,15 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     panel_dock->setWidget(panel);
 
     QToolPalette *tpalette = new QToolPalette();
-    QIcon *obj1_i = new QIcon();
-    QPushButton *obj1_c = new QPushButton("control 1");
-    QToolPaletteElement *el1 = new QToolPaletteElement(0, obj1_i, obj1_c);
-    QIcon *obj2_i = new QIcon();
-    QPushButton *obj2_c = new QPushButton("control 2");
-    QToolPaletteElement *el2 = new QToolPaletteElement(0, obj2_i, obj2_c);
-    tpalette->addElement(el1);
-    tpalette->addElement(el2);
+    tpalette->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    for(int i = 1; i <23; i++) {
+	QIcon *obj_icon = new QIcon();
+	QString obj_label("control ");
+	obj_label.append(QString::number(i));
+	QPushButton *obj_control = new QPushButton(obj_label);
+	QToolPaletteElement *el = new QToolPaletteElement(0, obj_icon, obj_control);
+	tpalette->addElement(el);
+    }
     QAccordianObject *obj1 = new QAccordianObject(panel, tpalette, "Tools");
     panel->addObject(obj1);
 

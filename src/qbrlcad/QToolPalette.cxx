@@ -53,6 +53,8 @@ QToolPaletteElement::QToolPaletteElement(QWidget *eparent, QIcon *iicon, QWidget
     button = new QToolPaletteButton(this, iicon, this);
     button->setCheckable(true);
     controls = control;
+    controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
 QToolPaletteElement::~QToolPaletteElement()
@@ -72,12 +74,10 @@ QToolPaletteElement::setControls(QWidget *n_control)
     controls = n_control;
 }
 
-
 QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
 {
     icon_width = 30;
     icon_height = 30;
-    columns = 6;
     QVBoxLayout *mlayout = new QVBoxLayout();
     mlayout->setSpacing(0);
     mlayout->setContentsMargins(1,1,1,1);
@@ -88,38 +88,60 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     mlayout->addWidget(splitter);
 
     button_container = new QWidget();
-    //button_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     button_layout = new QFlowLayout();
     button_layout->setHorizontalSpacing(0);
     button_layout->setVerticalSpacing(0);
     button_layout->setContentsMargins(0,0,0,0);
-    button_container->setMinimumHeight(icon_height);
-    button_container->setMinimumWidth(icon_width * columns);
+    button_container->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     button_container->setLayout(button_layout);
     button_container->show();
     control_container = new QWidget();
-    //control_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     control_layout = new QVBoxLayout();
     control_layout->setSpacing(0);
     control_layout->setContentsMargins(0,0,0,0);
     control_container->setLayout(control_layout);
     control_container->setMinimumHeight(icon_height);
-    control_container->setMinimumWidth(icon_width * columns);
+    control_container->setMinimumWidth(icon_width);
+    control_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     control_container->show();
 
     splitter->addWidget(button_container);
-    splitter->setStretchFactor(0, 0);
+    splitter->setStretchFactor(0, 1);
     splitter->addWidget(control_container);
-    splitter->setStretchFactor(1, 1);
+    splitter->setStretchFactor(1, 100000);
+    splitter->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     selected = NULL;
 
+    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     this->setLayout(mlayout);
 }
 
 QToolPalette::~QToolPalette()
 {
     delete splitter;
+}
+
+void
+QToolPalette::button_layout_resize()
+{
+    button_container->setMinimumWidth(control_container->minimumWidth());
+    div_t layout_dim = div(button_container->size().width(), icon_width);
+    div_t layout_grid = div(elements.count(), layout_dim.quot);
+    if (layout_grid.rem > 0) {
+	button_container->setMinimumHeight((layout_grid.quot + 1) * icon_height);
+	button_container->setMaximumHeight((layout_grid.quot + 1) * icon_height);
+    } else {
+	button_container->setMinimumHeight((layout_grid.quot) * icon_height);
+	button_container->setMaximumHeight((layout_grid.quot) * icon_height);
+    }
+}
+
+void
+QToolPalette::resizeEvent(QResizeEvent *pevent)
+{
+    QWidget::resizeEvent(pevent);
+    button_layout_resize();
 }
 
 void
@@ -130,7 +152,7 @@ QToolPalette::setIconWidth(int iwidth)
 	el->button->setMinimumWidth(icon_height);
 	el->button->setMaximumWidth(icon_height);
     }
-
+    updateGeometry();
 }
 
 void
@@ -141,6 +163,7 @@ QToolPalette::setIconHeight(int iheight)
 	el->button->setMinimumHeight(icon_height);
 	el->button->setMaximumHeight(icon_height);
     }
+    updateGeometry();
 }
 
 void
@@ -153,6 +176,7 @@ QToolPalette::addElement(QToolPaletteElement *element)
     button_layout->addWidget(element->button);
     elements.insert(element);
     QObject::connect(element->button, SIGNAL(element_selected(QToolPaletteElement *)), this, SLOT(displayElement(QToolPaletteElement *)));
+    updateGeometry();
 }
 
 void
@@ -163,6 +187,7 @@ QToolPalette::deleteElement(QToolPaletteElement *element)
 	displayElement(*elements.begin());
     }
     button_layout->removeWidget(element->button);
+    updateGeometry();
     delete element;
 }
 

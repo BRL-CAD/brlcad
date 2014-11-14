@@ -58,13 +58,15 @@ class QToolPalette: public QWidget
 	void setIconWidth(int iwidth);
 	void setIconHeight(int iheight);
 
+	void resizeEvent(QResizeEvent *pevent);
+
    public slots:
 	void displayElement(QToolPaletteElement *);
+	void button_layout_resize();
 
    private:
       int icon_width;
       int icon_height;
-      int columns;
       QSplitter *splitter;
       QWidget *button_container;
       QFlowLayout *button_layout;
