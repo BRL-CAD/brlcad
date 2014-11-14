@@ -21,6 +21,7 @@ set(qbrlcad_srcs
   cadapp.cxx
   cadappexec.cxx
   cadattributes.cxx
+  cadcommands.cxx
   cadconsole.cxx
   cadhelp.cxx
   cadimport.cxx
@@ -39,6 +40,7 @@ set(moc_headers
   cadapp.h
   cadappexec.h
   cadattributes.h
+  cadcommands.h
   cadhelp.h
   cadimport.h
   cadconsole.h

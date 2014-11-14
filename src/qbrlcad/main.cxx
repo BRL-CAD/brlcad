@@ -58,7 +58,7 @@
 
 #include "main_window.h"
 #include "cadapp.h"
-#include "cadhelp.h"
+#include "cadcommands.h"
 
 int main(int argc, char *argv[])
 {
@@ -95,10 +95,8 @@ int main(int argc, char *argv[])
     // TODO - this needs to be a setting that is saved and restored
     mainWin.resize(1100, 800);
 
-    app.register_command(QString("ls"), ged_ls);
-    app.register_command(QString("tops"), ged_tops);
-    app.register_command(QString("search"), ged_search);
-    app.register_gui_command(QString("man"), cad_man_view);
+    // Set up the command prompt's commands
+    cad_register_commands(&app);
 
     if (parser.isSet(consoleOption)) {
 	bu_exit(1, "Console mode unimplemented\n");
