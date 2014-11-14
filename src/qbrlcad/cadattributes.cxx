@@ -166,7 +166,6 @@ CADAttributesModel::add_attribute(const char *name, const char *value, CADAttrib
     new_node->name = name;
     new_node->value = value;
     new_node->attr_type = type;
-    QModelIndex idx = NodeIndex(new_node);
     return new_node;
 }
 

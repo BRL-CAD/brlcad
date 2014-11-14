@@ -230,9 +230,10 @@ QAccordianWidget::stateUpdate(QAccordianObject *new_obj)
 	}
 	QList<int> currentSizes = splitter->sizes();
 	QList<int> newsizes;
-	int spsize;
-	foreach(spsize, currentSizes) {
+	int spsize = 0;
+	while (spsize < currentSizes.count()) {
 	    newsizes.push_back(1);
+	    spsize++;
 	}
 	splitter->setSizes(newsizes);
     }
