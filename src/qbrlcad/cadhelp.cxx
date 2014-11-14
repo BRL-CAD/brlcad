@@ -22,6 +22,8 @@ CADManViewer::CADManViewer(QWidget *pparent, QString *file) : QDialog(pparent)
     // TODO - find something smarter to do for size
     setMinimumWidth(800);
     setMinimumHeight(600);
+
+    setWindowModality(Qt::NonModal);
 }
 
 CADManViewer::~CADManViewer()
