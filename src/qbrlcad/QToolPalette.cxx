@@ -198,6 +198,7 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 	if (element == selected) {
 	    if (element->button->isChecked()) element->button->setChecked(false);
 	    element->controls->hide();
+	    control_container->setMinimumHeight(icon_height);
 	    selected = NULL;
 	} else {
 	    if (!element->button->isChecked()) element->button->setChecked(true);
@@ -207,6 +208,7 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 		if (selected->button->isChecked()) selected->button->setChecked(false);
 	    }
 	    control_layout->addWidget(element->controls);
+	    control_container->setMinimumHeight(element->controls->minimumHeight());
 	    element->controls->show();
 	    selected = element;
 	    foreach(QToolPaletteElement *el, elements) {
