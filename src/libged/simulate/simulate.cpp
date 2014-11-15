@@ -108,7 +108,8 @@ get_bounding_box(db_i &dbi, const std::string &name)
 
     point_t lwh; // bb dimensions
     VSUB2(lwh, bb_max, bb_min);
-    return btVector3(lwh[0] / 2, lwh[1] / 2, lwh[2] / 2);
+    return btVector3(static_cast<btScalar>(lwh[0]), static_cast<btScalar>(lwh[1]),
+		     static_cast<btScalar>(lwh[2])) / 2;
 }
 
 
@@ -132,7 +133,7 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 	    }
 
 	    const btVector3 bounding_box = get_bounding_box(dbi, vtree.tr_l.tl_name);
-	    fastf_t mass;
+	    btScalar mass;
 
 	    std::map<std::string, std::string> attributes = get_attributes(dbi,
 		    vtree.tr_l.tl_name);
@@ -140,12 +141,11 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 	    if (attributes["simulate::type"] == "static")
 		mass = 0;
 	    else {
-		const fastf_t DENSITY = 1;
-		mass = DENSITY * get_volume(dbi, vtree.tr_l.tl_name);
+		const btScalar DENSITY = 1;
+		mass = DENSITY * static_cast<btScalar>(get_volume(dbi, vtree.tr_l.tl_name));
 	    }
 
 	    world.add_object(bounding_box, mass, vtree.tr_l.tl_mat);
-
 	    break;
 	}
 
@@ -170,7 +170,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     if (argc != 2) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: USAGE:", argv[0]);
+	bu_vls_sprintf(gedp->ged_result_str, "%s: USAGE: %s <comb>", argv[0], argv[0]);
 	return GED_ERROR;
     }
 

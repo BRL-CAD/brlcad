@@ -44,13 +44,14 @@ public:
     WorldObject(const btVector3 &bounding_box, btScalar mass, matp_t matrix);
 
     void add_to_world(btDiscreteDynamicsWorld &world);
-    void read_matrix();
+    void update_matrix();
     void write_matrix();
 
 
 private:
     WorldObject(const WorldObject &source);
     WorldObject &operator=(const WorldObject &source);
+    static btTransform read_matrix(const matp_t matrix);
     static btVector3 calculate_inertia(const btCollisionShape &collision_shape,
 				       btScalar mass);
 
@@ -72,11 +73,25 @@ PhysicsWorld::WorldObject::calculate_inertia(const btCollisionShape
 }
 
 
+btTransform
+PhysicsWorld::WorldObject::read_matrix(const matp_t matrix)
+{
+    btTransform xform;
+    {
+	btScalar bt_matrix[16];
+	MAT_TRANSPOSE(bt_matrix, matrix);
+	xform.setFromOpenGLMatrix(bt_matrix);
+    }
+
+    return xform;
+}
+
+
 PhysicsWorld::WorldObject::WorldObject(const btVector3 &bounding_box,
 				       btScalar mass, matp_t matrix) :
     m_in_world(false),
     m_matrix(matrix),
-    m_motion_state(),
+    m_motion_state(read_matrix(m_matrix)),
     m_collision_shape(bounding_box),
     m_rigid_body(mass, &m_motion_state, &m_collision_shape,
 		 calculate_inertia(m_collision_shape, mass))
@@ -96,16 +111,9 @@ PhysicsWorld::WorldObject::add_to_world(btDiscreteDynamicsWorld &world)
 
 
 void
-PhysicsWorld::WorldObject::read_matrix()
+PhysicsWorld::WorldObject::update_matrix()
 {
-    btTransform xform;
-    {
-	btScalar bt_matrix[16];
-	MAT_TRANSPOSE(bt_matrix, m_matrix);
-	xform.setFromOpenGLMatrix(bt_matrix);
-    }
-
-    m_motion_state.setWorldTransform(xform);
+    m_motion_state.setWorldTransform(read_matrix(m_matrix));
 }
 
 
@@ -146,11 +154,11 @@ PhysicsWorld::~PhysicsWorld()
 
 
 void
-PhysicsWorld::step(fastf_t seconds)
+PhysicsWorld::step(btScalar seconds)
 {
     for (std::vector<WorldObject *>::iterator it = m_objects.begin();
 	 it != m_objects.end(); ++it)
-	(*it)->read_matrix();
+	(*it)->update_matrix();
 
     m_world.stepSimulation(seconds, std::numeric_limits<int>::max());
 
