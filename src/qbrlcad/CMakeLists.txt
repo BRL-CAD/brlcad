@@ -28,6 +28,7 @@ set(qbrlcad_srcs
   cadtreemodel.cxx
   cadtreeview.cxx
   cadtreenode.cxx
+  cadview.cxx
   console.cxx
   pqConsoleWidget.cxx
   QAccordianWidget.cxx
@@ -46,6 +47,7 @@ set(moc_headers
   cadconsole.h
   cadtreemodel.h
   cadtreeview.h
+  cadview.h
   console.h
   pqConsoleWidget.h
   QAccordianWidget.h
