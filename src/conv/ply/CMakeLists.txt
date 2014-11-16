@@ -9,7 +9,15 @@ set(ply-g_SRCS
   rply.c
   ply-g.c
   )
+
+set(g-ply_SRCS
+  rply.c
+  g-ply.c
+  )
+
+
 BRLCAD_ADDEXEC(ply-g "${ply-g_SRCS}" "librt;libbu;libwdb")
+BRLCAD_ADDEXEC(g-ply "${g-ply_SRCS}" "librt;libbu")
 
 CMAKEFILES(rply.h)
 
