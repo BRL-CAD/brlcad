@@ -890,6 +890,18 @@ mark_as_advanced(P2T_SHARED)
 mark_as_advanced(P2T_STATIC)
 mark_as_advanced(P2T_TESTS)
 
+# RPLY I/O library
+add_subdirectory(rply)
+include(${CMAKE_CURRENT_SOURCE_DIR}/rply.dist)
+CMAKEFILES_IN_DIR(rply_ignore_files rply)
+DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/rply/Makefile)
+set(RPLY_LIBRARIES "rply" CACHE STRING "RPLY library" FORCE)
+set(RPLY_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/rply" CACHE STRING "Directory containing rply header" FORCE)
+SetTargetFolder(rply "Third Party Libraries")
+SetTargetFolder(rply_static "Third Party Libraries")
+mark_as_advanced(RPLY_LIBRARYIES)
+mark_as_advanced(RPLY_INCLUDE_DIRS)
+
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)
 CMAKEFILES(gct)
