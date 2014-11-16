@@ -1,0 +1,19 @@
+For editing in this interface, need to have three "tool palette" objects in the accordian on the right.
+
+First one will be a view controller, with the available options for view manipulation and reporting on the current view information.   Selecting tools from that palette puts the GUI in view manipulation (the default) and no related object highlighting will be present in the tree.  This will avoid the work of identifying and highlighting related tree entities when no actual editing is taking place, which is when awareness of those relationships is most important.
+
+Second will be an instance editor, which will offer controls related to manipulating a specific instance of an object in a comb.  For top level geometry this accordian object will be hidden, since by definition top level objects are not part of any comb.  For all other cases, the current selection in the tree will inform the GUI what the parent comb of the current instance is.  This editing panel will not offer any solid editing tools, but only manipulations possible in the comb "matrix-above-object" feature.  The highlighting, when any tool is selected in this panel, will highlight database items using not the selected object, but the parent of the selected object - when an instance is edited but the solid is not, only objects using the parent comb of the instance will be impacted by changes.  This will be the gui equalivent to MGED's "oed" command, and the qbrlcad implementation of oed will in fact have the same impact as selecting an object and activating something in the instance edit panel.
+
+The third will be a primitive editor, which will expose the object parameters (tree objects a.l.a the l command for combs, and primitive parameters for solids.  When this dialog is active, the "related objects" highlighting will identify every path that uses the primitive itself, regardless of what its current parent is in the path.  This will be equalivent to MGED's "sed" command, and the qbrlcad implementation of sed will activate the primitive edit panel for the specified selection (if no path is given to sed, there will be no active selection identified in the tree and no instance edit panel show - just the primitive panel and the "related object" highlighting in the tree.  If a selection of one of the specific instances in the tree view is made by the user, the instance panel will appear and the highlighting on that selected instance will change from yellow (related) to the "selected item" highlighting.
+
+For combs, there will be a standard attributes accordian object that offers the standard attribute keys, even if they are not set.  All objects, comb and primitive, will have a "User attributes" accordian object which will show non-standard attributes and allow the user to add, delete and edit such attributes.
+
+
+
+The per-solid toolboxes will have most of the custom tools and logic - many (such as the facetize and brep conversion tools) will be common to most solids, but some (like bot sync, bot flip, etc.) will be very specific to individual object types.
+
+
+Will need to think about how to handle multi-object selection - in theory, if all selected objects are of a single type, a subset of the tool box might be applicable in "batch" mode - for example, selecting all bots and running sync on them.  Such selections could be achieved with the select command, which is another command that would benefit from having the option to use search filters...  The way to handle that may be to flag tools in the various toolboxes as "safe" for multi-selection scenarios... have to think about that.
+
+
+The "Esc" character should always return the application to view manipulation mode.
