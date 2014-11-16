@@ -101,6 +101,7 @@ set(misc_ignore_files
   nsis
   wix
   svn2git
+  uncpowerplant2g.sh
   win32-msvc
   )
 CMAKEFILES(${misc_ignore_files})
