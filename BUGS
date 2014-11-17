@@ -37,9 +37,6 @@ Recent Bugs
 
 * count_non_union_ops() in g-iges crashes with simple conversion case
 
-* gqa bypasses rt_dirbuild() so it never sets rt_bot_mintie nor uses
-  TIE when the environment variable is set.
-
 * nirt -e "xyz val val val" doesn't work due to the space after the -e
   and how the nirt/rt commands parse quoted args.
 

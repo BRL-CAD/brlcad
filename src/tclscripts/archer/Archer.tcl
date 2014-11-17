@@ -3051,19 +3051,6 @@ proc title_node_handler {node} {
 	"Comp Select Mode:" \
 	$COMP_SELECT_MODE_NAMES
 
-    itk_component add rtbotmintieL {
-	::ttk::label $itk_component(generalF).rtbotmintieL \
-	    -anchor e \
-	    -text "rt_bot_mintie"
-    } {}
-    itk_component add rtbotmintieE {
-	::ttk::entry $itk_component(generalF).rtbotmintieE \
-	    -width 12 \
-	    -textvariable [::itcl::scope mRtBotMintiePref] \
-	    -validate key \
-	    -validatecommand {::cadwidgets::Ged::validateDigit %P}
-    } {}
-
     itk_component add maxcombmembL {
 	::ttk::label $itk_component(generalF).maxcombmembL \
 	    -anchor e \
@@ -3165,9 +3152,6 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(selGroupModeL) -column 0 -row $i -sticky e
     grid $itk_component(selGroupModeF) -column 1 -row $i -sticky ew
-    incr i
-    grid $itk_component(rtbotmintieL) -column 0 -row $i -sticky e
-    grid $itk_component(rtbotmintieE) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(maxcombmembL) -column 0 -row $i -sticky e
     grid $itk_component(maxcombmembE) -column 1 -row $i -sticky ew
@@ -8774,10 +8758,6 @@ proc title_node_handler {node} {
 	units $mDbUnits
     }
 
-    if {$mRtBotMintiePref != $mRtBotMintie} {
-	set mRtBotMintie $mRtBotMintiePref
-    }
-
     if {$mCompSelectGroupPref != $mCompSelectGroup} {
 	set mCompSelectGroup $mCompSelectGroupPref
     }
@@ -9237,7 +9217,6 @@ proc title_node_handler {node} {
     set mEnableAffectedNodeHighlightPref $mEnableAffectedNodeHighlight
     set mSeparateCommandWindowPref $mSeparateCommandWindow
     set mDbUnits [gedCmd units -s]
-    set mRtBotMintiePref $mRtBotMintie
     set mCompSelectGroupPref $mCompSelectGroup
     set mMaxCombMembersShownPref $mMaxCombMembersShown
 
@@ -9326,11 +9305,6 @@ proc title_node_handler {node} {
 	}
     }
 
-    if {[info exists env(LIBRT_BOT_MINTIE)]} {
-	# triggers a set of librt's global tcl variable (i.e., rt_bot_mintie) via ArcherCore::watchVar{}
-	set mRtBotMintie $env(LIBRT_BOT_MINTIE)
-    }
-
     # This feature has been disabled.
     set mTreeAttrColumns ""
 
@@ -9414,7 +9388,6 @@ proc title_node_handler {node} {
     puts $_pfile "set mEnableListViewAllAffected $mEnableListViewAllAffected"
     puts $_pfile "set mEnableAffectedNodeHighlight $mEnableAffectedNodeHighlight"
     puts $_pfile "set mSeparateCommandWindow $mSeparateCommandWindow"
-    puts $_pfile "set mRtBotMintie $mRtBotMintie"
     puts $_pfile "set mCompSelectGroup $mCompSelectGroup"
     puts $_pfile "set mCompSelectMode $mCompSelectMode"
     puts $_pfile "set mMaxCombMembersShown $mMaxCombMembersShown"
