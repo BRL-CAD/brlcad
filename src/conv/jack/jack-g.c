@@ -25,10 +25,11 @@
  * Graphics Research Laboratory, is a package used for human figure
  * animation and ergonomic analysis.
  *
- * It is not known whether this converter, developed prior to Jack
- * becoming a commercial product in 1996, is compatible with the more
- * modern Tecnomatix Jack version distributed by Siemens (maintainers
- * of the NX and Parasolid CAD software).
+ * This converter was written prior to JACK becoming a commercial
+ * product in 1996, but it should be compatible with the more modern
+ * Tecnomatix Jack version distributed by Siemens (maintainers of the
+ * NX and Parasolid CAD software).  It reportedly still supports JACK
+ * 5.1 JT files.
  *
  */
 

@@ -25,11 +25,6 @@ Recent Bugs
   rt_db_cvt_to_external5 expecting non-NULL name parameter
   wdb_export((null)): solid export failure
 
-* running "draw -C 0/255/0" in archer dies with a bu_malloc(0) error.
-
-* iges exporter is writing out corrupted output due to spaces after
-  commas.
-
 * report of mged command history not working with the down arrow key
   in 7.25.0 (on Windows, unknown on other platforms).  Up arrow works
   fine.
@@ -37,19 +32,8 @@ Recent Bugs
 * wgl framebuffer is not lingering on windows (regardless of using
   wgll or default) when it should
 
-* count_non_union_ops() in g-iges crashes with simple conversion case
-
-* gqa bypasses rt_dirbuild() so it never sets rt_bot_mintie nor uses
-  TIE when the environment variable is set.
-
 * nirt -e "xyz val val val" doesn't work due to the space after the -e
   and how the nirt/rt commands parse quoted args.
-
-* probably related, there is a big parsing difference between nirt
-  with "xyz 1.0 2.0 3.0; dir 0 -1 0;" and "xyz 1. 2. 3. ; dir 0 -1
-  0;".  note the intentional space.  problem observed is that center
-  point ended up being "0.0 2.0 0.0" with there clearly being a
-  parsing error depending on where the semicolon was positioned.
 
 * calling "attr set obj key value" should always result in key getting
   set to value, no matter what, as it is the lowest-level attribute

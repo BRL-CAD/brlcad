@@ -157,7 +157,7 @@ proc lbdcHack {w x y t id type path} {
 	    }
 	    m1 {
 		_mged_press oill
-		_mged_ill -i 1 $path
+		_mged_ill -e -i 1 $path
 		_mged_matpick $item
 	    }
 	    m2 {

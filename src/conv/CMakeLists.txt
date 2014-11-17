@@ -14,6 +14,7 @@ add_subdirectory(step)
 
 add_subdirectory(iges)
 add_subdirectory(intaval)
+add_subdirectory(ply)
 add_subdirectory(raw)
 add_subdirectory(vdeck)
 
@@ -142,8 +143,6 @@ BRLCAD_ADDEXEC(nmg-bot nmg/nmg-bot.c libwdb)
 BRLCAD_ADDEXEC(nmg-rib nmg/nmg-rib.c libwdb)
 
 BRLCAD_ADDEXEC(nmg-sgp nmg/nmg-sgp.c libwdb)
-
-BRLCAD_ADDEXEC(ply-g ply-g.c "librt;libbu")
 
 BRLCAD_ADDEXEC(poly-bot poly-bot.c "libwdb;${WINSOCK_LIB}")
 

@@ -169,7 +169,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 	status = TCL_RETURN;
     }
 #ifdef IR_KNOBS
-    else if (eventPtr->type == ((struct dm_xvars *)dm_get_xvars(dmp))->devmotionnotify) {
+    else if (dm_get_xvars(dmp) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(dmp))->devmotionnotify) {
 	dials_event_handler((XDeviceMotionEvent *)eventPtr);
 
 	/* no further processing of this event */
@@ -177,12 +177,12 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     }
 #endif
 #ifdef IR_BUTTONS
-    else if (eventPtr->type == ((struct dm_xvars *)dm_get_xvars(dmp))->devbuttonpress) {
+    else if (dm_get_xvars(dmp) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(dmp))->devbuttonpress) {
 	buttons_event_handler((XDeviceButtonEvent *)eventPtr, 1);
 
 	/* no further processing of this event */
 	status = TCL_RETURN;
-    } else if (eventPtr->type == ((struct dm_xvars *)dm_get_xvars(dmp))->devbuttonrelease) {
+    } else if (dm_get_xvars(dmp) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(dmp))->devbuttonrelease) {
 	buttons_event_handler((XDeviceButtonEvent *)eventPtr, 0);
 
 	/* no further processing of this event */

@@ -75,6 +75,15 @@ tolerance, then the vectors are considered perpendicular.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><option>-u number_of_unions</option></term>
+  <listitem>
+<para>The
+<emphasis remap='I'>number_of_unions</emphasis>
+is the number of union operations per region, and has a pre-specified default value.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><option>-x librt_debug_flag</option></term>
   <listitem>
 <para>Specifies a flag for debugging the
@@ -133,15 +142,13 @@ package.</para>
   <varlistentry>
   <term><option>-t title</option></term>
   <listitem>
-<para>Specifies a title for the output model.</para>
+<para>Specifies a title for the output model (default is "patch-g conversion").</para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term><option>-o top_level_name</option></term>
   <listitem>
-<para>Specifies a name for the top level object (default is
-<emphasis remap='B'>all</emphasis>
-).</para>
+<para>Specifies a name for the top level object (default is "all").</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -151,9 +158,10 @@ package.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-c X Y Z</option></term>
+  <term><option>-c "X Y Z"</option></term>
   <listitem>
-<para>Specifies centroid for some plate mode surface normal calculations.</para>
+<para>Specifies centroid, in inches, for some plate mode surface normal calculations.
+      Quotation marks are needed to provide for the embedded blanks.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
