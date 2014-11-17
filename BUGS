@@ -25,17 +25,12 @@ Recent Bugs
   rt_db_cvt_to_external5 expecting non-NULL name parameter
   wdb_export((null)): solid export failure
 
-* iges exporter is writing out corrupted output due to spaces after
-  commas.
-
 * report of mged command history not working with the down arrow key
   in 7.25.0 (on Windows, unknown on other platforms).  Up arrow works
   fine.
 
 * wgl framebuffer is not lingering on windows (regardless of using
   wgll or default) when it should
-
-* count_non_union_ops() in g-iges crashes with simple conversion case
 
 * nirt -e "xyz val val val" doesn't work due to the space after the -e
   and how the nirt/rt commands parse quoted args.
