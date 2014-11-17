@@ -18,6 +18,7 @@ add_definitions(${Qt5Widgets_DEFINITIONS})
 set(qbrlcad_srcs
   main.cxx
   main_window.cxx
+  cadaccordian.cxx
   cadapp.cxx
   cadappexec.cxx
   cadattributes.cxx
@@ -38,6 +39,7 @@ set(qbrlcad_srcs
 
 set(moc_headers
   main_window.h
+  cadaccordian.h
   cadapp.h
   cadappexec.h
   cadattributes.h
@@ -54,8 +56,8 @@ set(moc_headers
   QToolPalette.h
   QFlowLayout.h
   )
-QT5_WRAP_CPP(moc_srcs ${moc_headers})
 
+QT5_WRAP_CPP(moc_srcs ${moc_headers})
 QT5_ADD_RESOURCES(cad_qrc cadresources.qrc)
 
 add_executable(qbrlcad ${qbrlcad_srcs} ${moc_srcs} ${cad_qrc})

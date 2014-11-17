@@ -73,7 +73,7 @@
 
 #include "cadconsole.h"
 #include "cadtreemodel.h"
-#include "QAccordianWidget.h"
+#include "cadaccordian.h"
 
 class BRLCAD_MainWindow : public QMainWindow
 {
@@ -100,7 +100,7 @@ class BRLCAD_MainWindow : public QMainWindow
 	CADConsole *console;
 	CADTreeModel *treemodel;
 	QTreeView *treeview;
-	QAccordianWidget *panel;
+	CADAccordian *panel;
 	QString db_file;
 };
 

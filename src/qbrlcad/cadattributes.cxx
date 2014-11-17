@@ -29,8 +29,16 @@ CADAttributesModel::CADAttributesModel(QObject *parentobj, struct db_i *dbip, st
     int i = 0;
     current_dbip = dbip;
     current_dp = dp;
-    if (show_standard) std_visible = 1;
-    if (show_user) user_visible = 1;
+    if (show_standard) {
+	std_visible = 1;
+    } else {
+	std_visible = 0;
+    }
+    if (show_user) {
+	user_visible = 1;
+    } else {
+	user_visible = 0;
+    }
     m_root = new CADAttributesNode();
     BU_GET(avs, struct bu_attribute_value_set);
     bu_avs_init_empty(avs);

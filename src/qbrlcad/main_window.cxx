@@ -25,8 +25,7 @@
 
 #include "main_window.h"
 #include "cadapp.h"
-#include "cadattributes.h"
-#include "QToolPalette.h"
+#include "cadaccordian.h"
 
 BRLCAD_MainWindow::BRLCAD_MainWindow()
 {
@@ -105,39 +104,14 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
 
     /* Edit panel */
-    panel = new QAccordianWidget(panel_dock);
+    panel = new CADAccordian(panel_dock);
     panel_dock->setWidget(panel);
 
-    QToolPalette *tpalette = new QToolPalette();
-    tpalette->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    for(int i = 1; i <23; i++) {
-	QIcon *obj_icon = new QIcon();
-	QString obj_label("control ");
-	obj_label.append(QString::number(i));
-	QPushButton *obj_control = new QPushButton(obj_label);
-	QToolPaletteElement *el = new QToolPaletteElement(0, obj_icon, obj_control);
-	tpalette->addElement(el);
-    }
-    QAccordianObject *obj1 = new QAccordianObject(panel, tpalette, "Tools");
-    panel->addObject(obj1);
+    //stdpropview->setMinimumHeight(340);
+    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->stdpropmodel, SLOT(refresh(const QModelIndex &)));
 
-    CADAttributesModel *stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
-    CADAttributesView *stdpropview = new CADAttributesView(0, 1);
-    stdpropview->setModel(stdpropmodel);
-    //stdpropview->setItemDelegate(new GStdPropertyDelegate());
-    stdpropview->setMinimumHeight(340);
-    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), stdpropmodel, SLOT(refresh(const QModelIndex &)));
-    QAccordianObject *obj2 = new QAccordianObject(panel, stdpropview, "Standard Attributes");
-    panel->addObject(obj2);
-
-    CADAttributesModel *userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
-    CADAttributesView *userpropview = new CADAttributesView(0);
-    userpropview->setModel(userpropmodel);
-    //userpropview->setItemDelegate(new GUserPropertyDelegate());
-    userpropview->setMinimumHeight(340);
-    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), userpropmodel, SLOT(refresh(const QModelIndex &)));
-    QAccordianObject *obj3 = new QAccordianObject(panel, userpropview, "User Attributes");
-    panel->addObject(obj3);
+    //userpropview->setMinimumHeight(340);
+    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->userpropmodel, SLOT(refresh(const QModelIndex &)));
 
     /* For testing - don't want uniqueness here, but may need or want it elsewhere */
     //panel->setUniqueVisibility(1);
