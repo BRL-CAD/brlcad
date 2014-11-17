@@ -167,7 +167,7 @@ face_cb(p_ply_argument argument)
 	    pbot->faces[cur_face*3+5] = pbot->faces[cur_face*3+2];
 	    cur_face++;
 	    break;
-	default: 
+	default:
 	    /* will never execute because lists of length > 4 are not allowed */
 	    break;
     }

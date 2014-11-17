@@ -97,7 +97,7 @@ write_vert(struct bu_hash_entry *v_entry, void *UNUSED(arg))
     ply_write(ply_fp, coords[1] / 1000);
     ply_write(ply_fp, coords[2] / 1000);
 
-    /* keeping track of the order the vertices are inputed to write the faces */
+    /* keeping track of the order in which the vertices are input, to write the faces */
     coords[3] = v_order;
     v_order++;
     return 0;
@@ -337,7 +337,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    }
 	    bu_free(f_regs[cur_region][fi], "v_ind");
 	}
- 
+
 	v_order = 0;
 	ply_close(ply_fp);
     }
