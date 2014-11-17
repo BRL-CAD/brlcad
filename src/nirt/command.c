@@ -153,6 +153,8 @@ az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	return;
     }
     i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
     if (*(buffer+i) != '\0') {
 	/* check for garbage at the end of the line */
 	com_usage(ctp);
@@ -210,6 +212,8 @@ grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	return;
     }
     i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
     if (*(buffer+i) != '\0') {
 	/* check for garbage at the end of the line */
 	com_usage(ctp);
@@ -261,6 +265,8 @@ target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	return;
     }
     i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
     if (*(buffer+i) != '\0') {
 	/* check for garbage at the end of the line */
 	com_usage(ctp);
@@ -310,6 +316,8 @@ dir_vect(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	return;
     }
     i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
     if (*(buffer+i) != '\0') {
 	/* check for garbage at the end of the line */
 	com_usage(ctp);
