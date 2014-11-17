@@ -25,8 +25,6 @@ Recent Bugs
   rt_db_cvt_to_external5 expecting non-NULL name parameter
   wdb_export((null)): solid export failure
 
-* running "draw -C 0/255/0" in archer dies with a bu_malloc(0) error.
-
 * iges exporter is writing out corrupted output due to spaces after
   commas.
 
