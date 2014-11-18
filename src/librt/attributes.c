@@ -178,7 +178,7 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
 	}
 	need += 1; /* include room for nul byte */
 	if (avpp->value) {
-	    need += strlen(avpp->value); 
+	    need += strlen(avpp->value);
 	}
 	need += 1; /* include room for nul byte */
     }
