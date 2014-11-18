@@ -95,19 +95,14 @@ CADAccordian::CADAccordian(QWidget *pparent)
     view_ctrls = new CADViewControls(this);
     instance_ctrls = new CADInstanceEdit(this);
     primitive_ctrls = new CADPrimitiveEdit(this);
-    view_ctrls->installEventFilter(this);
-    instance_ctrls->installEventFilter(this);
-    primitive_ctrls->installEventFilter(this);
 
     stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
     stdpropview = new CADAttributesView(this, 1);
     stdpropview->setModel(stdpropmodel);
-    stdpropview->installEventFilter(this);
 
     userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
     userpropview = new CADAttributesView(this, 0);
     userpropview->setModel(userpropmodel);
-    userpropview->installEventFilter(this);
 
     view_obj = new QAccordianObject(this, view_ctrls, "View Controls");
     this->addObject(view_obj);
@@ -120,6 +115,16 @@ CADAccordian::CADAccordian(QWidget *pparent)
     userprop_obj = new QAccordianObject(this, userpropview, "User Attributes");
     this->addObject(userprop_obj);
 
+}
+
+void CADAccordian::childEvent(QChildEvent *e)
+{
+    if (e->child()->isWidgetType()) {
+	if (e->type() == QEvent::ChildAdded) {
+	    std::cout << "added widget\n";
+	    e->child()->installEventFilter(this);
+	}
+    }
 }
 
 bool CADAccordian::eventFilter(QObject *target, QEvent *e)
