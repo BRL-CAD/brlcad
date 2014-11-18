@@ -104,6 +104,7 @@ main(int argc, char **argv)
     char **attrs = (char **)NULL;
     const char *argv0 = argv[0];
     int atoival;
+    struct resource res = RT_RESOURCE_INIT_ZERO;
 
     if (argc < 3) {
 	usage(argv0);
@@ -323,7 +324,6 @@ main(int argc, char **argv)
     else if (bundle_radius > INFINITY-1.0)
 	bundle_radius = INFINITY-1.0;
 
-
     /* Load database */
     title_file = argv[0];
     argv++;
@@ -354,6 +354,10 @@ main(int argc, char **argv)
 	}
 	pdv_3space(plotfp, rtip->rti_pmin, rtip->rti_pmax);
     }
+
+    /* set up our resources */
+    rt_init_resource(&res, 0, rtip);
+    ap.a_resource = &res;
 
     /* Compute r_dir and r_pt from the inputs */
     if (set_at) {
