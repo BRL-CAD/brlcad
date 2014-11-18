@@ -52,7 +52,8 @@ PPX_Output::Equals(std::string &log, const PPX_Output &other)
     std::stringstream out;
 
     if (status != other.status) {
-	out << "return status: " << status << " vs " << other.status << "\n";
+	out << "return status: " << std::boolalpha << status << " vs " <<
+	    other.status << "\n";
 	ret = false;
     }
 
@@ -70,7 +71,7 @@ PPX_Output::Equals(std::string &log, const PPX_Output &other)
 	}
     }
 
-    out >> log;
+    log = out.str();
 
     return ret;
 }
@@ -89,8 +90,8 @@ test_intersection(PPX_Input in, PPX_Output expected_out)
     }
 
     std::string err_msg;
-    if (expected_out.Equals(err_msg, out)) {
-	bu_exit(1, "intersection output doesn't match expected:\n%s",
+    if (!expected_out.Equals(err_msg, out)) {
+	bu_exit(1, "Unexpected intersection result. Expected vs actual:\n%s",
 		err_msg.c_str());
     }
 }
