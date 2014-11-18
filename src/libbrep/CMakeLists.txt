@@ -1,3 +1,5 @@
+add_subdirectory(tests)
+
 # Include directories needed by libbrep users
 set(BREP_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
