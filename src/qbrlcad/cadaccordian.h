@@ -51,7 +51,7 @@ class CADAccordian : public QAccordianWidget
 	CADAccordian(QWidget *pparent);
 	~CADAccordian();
 
-	void mousePressEvent(QMouseEvent *e);
+	bool eventFilter(QObject *target, QEvent *e);
 	CADViewControls *view_ctrls;
 	QAccordianObject *view_obj;
 	CADInstanceEdit *instance_ctrls;
