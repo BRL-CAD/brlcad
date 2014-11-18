@@ -460,6 +460,7 @@ CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 {
     struct directory *selected_dp = RT_DIR_NULL;
     ((CADApp *)qApp)->current_idx = idx;
+    //int interaction_mode = ((CADApp *)qApp)->interaction_mode;
     if (idx.isValid())
 	selected_dp = (struct directory *)(idx.data(DirectoryInternalRole).value<void *>());
 

@@ -1,4 +1,5 @@
 #include "cadaccordian.h"
+#include "cadapp.h"
 
 CADViewControls::CADViewControls(QWidget *pparent)
     : QWidget(pparent)
@@ -95,7 +96,6 @@ CADAccordian::CADAccordian(QWidget *pparent)
     instance_ctrls = new CADInstanceEdit(this);
     primitive_ctrls = new CADPrimitiveEdit(this);
 
-
     stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
     stdpropview = new CADAttributesView(this, 1);
     stdpropview->setModel(stdpropmodel);
@@ -114,6 +114,37 @@ CADAccordian::CADAccordian(QWidget *pparent)
     this->addObject(stdprop_obj);
     userprop_obj = new QAccordianObject(this, userpropview, "User Attributes");
     this->addObject(userprop_obj);
+}
+
+// TODO - this is wrong.  Need to use an event filter for this - child widgets
+// get events first and by the time we get here we don't see anything
+void CADAccordian::mousePressEvent(QMouseEvent *e)
+{
+    if (view_ctrls->geometry().contains(e->pos())) {
+	((CADApp *)qApp)->interaction_mode = 0;
+    }
+
+    if (instance_ctrls->geometry().contains(e->pos())) {
+	((CADApp *)qApp)->interaction_mode = 1;
+    }
+
+    if (primitive_ctrls->geometry().contains(e->pos())) {
+	((CADApp *)qApp)->interaction_mode = 2;
+    }
+
+    if (stdpropview->geometry().contains(e->pos())) {
+	((CADApp *)qApp)->interaction_mode = 2;
+    }
+
+    if (userpropview->geometry().contains(e->pos())) {
+	((CADApp *)qApp)->interaction_mode = 2;
+    }
+
+    CADTreeView *tview = (CADTreeView *)(((CADApp *)qApp)->cadtreeview);
+    CADTreeModel *tmodel = (CADTreeModel *)(tview->model());
+
+    tmodel->update_selected_node_relationships(tview->selected());
+
 }
 
 CADAccordian::~CADAccordian()

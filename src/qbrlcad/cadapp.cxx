@@ -37,6 +37,7 @@ CADApp::initialize()
 {
     ged_pointer = GED_NULL;
     current_idx = QModelIndex();
+    interaction_mode = 0;
 }
 
 struct db_i *

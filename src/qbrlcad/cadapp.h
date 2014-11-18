@@ -77,6 +77,7 @@ class CADApp : public QApplication
     public:
 	struct ged *ged_pointer;
 	QString current_file;
+	int interaction_mode;  // 0 = view, 1 = instance edit, 2 = primitive edit
 	QMap<QString, ged_func_ptr> cmd_map;
 	QMap<QString, gui_cmd_ptr> gui_cmd_map;
 	QMap<QString, gui_cmd_ptr> preprocess_cmd_map;
