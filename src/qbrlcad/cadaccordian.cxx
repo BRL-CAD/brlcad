@@ -17,6 +17,7 @@ CADViewControls::CADViewControls(QWidget *pparent)
 	QPushButton *obj_control = new QPushButton(obj_label);
 	QToolPaletteElement *el = new QToolPaletteElement(0, obj_icon, obj_control);
 	tpalette->addElement(el);
+	QObject::connect(el->button, SIGNAL(clicked()), this, SLOT(update_treeview()));
     }
     mlayout->addWidget(tpalette);
     mlayout->addWidget(info_view);
@@ -29,6 +30,20 @@ CADViewControls::~CADViewControls()
     delete tpalette;
     delete info_view;
 }
+
+void
+CADViewControls::update_treeview()
+{
+    int interaction_mode = ((CADApp *)qApp)->interaction_mode;
+    ((CADApp *)qApp)->interaction_mode = 0;
+
+    CADTreeView *tview = (CADTreeView *)(((CADApp *)qApp)->cadtreeview);
+    CADTreeModel *tmodel = (CADTreeModel *)(tview->model());
+    if (interaction_mode != ((CADApp *)qApp)->interaction_mode) {
+	tmodel->update_selected_node_relationships(tview->selected());
+    }
+}
+
 
 CADInstanceEdit::CADInstanceEdit(QWidget *pparent)
     : QWidget(pparent)
@@ -46,6 +61,7 @@ CADInstanceEdit::CADInstanceEdit(QWidget *pparent)
 	QPushButton *obj_control = new QPushButton(obj_label);
 	QToolPaletteElement *el = new QToolPaletteElement(0, obj_icon, obj_control);
 	tpalette->addElement(el);
+	QObject::connect(el->button, SIGNAL(clicked()), this, SLOT(update_treeview()));
     }
     mlayout->addWidget(tpalette);
     mlayout->addWidget(info_view);
@@ -53,12 +69,26 @@ CADInstanceEdit::CADInstanceEdit(QWidget *pparent)
     this->setLayout(mlayout);
 }
 
+
 CADInstanceEdit::~CADInstanceEdit()
 {
     delete tpalette;
     delete info_view;
 }
 
+void
+CADInstanceEdit::update_treeview()
+{
+    int interaction_mode = ((CADApp *)qApp)->interaction_mode;
+    ((CADApp *)qApp)->interaction_mode = 1;
+
+    CADTreeView *tview = (CADTreeView *)(((CADApp *)qApp)->cadtreeview);
+    CADTreeModel *tmodel = (CADTreeModel *)(tview->model());
+
+    if (interaction_mode != ((CADApp *)qApp)->interaction_mode) {
+	tmodel->update_selected_node_relationships(tview->selected());
+    }
+}
 
 CADPrimitiveEdit::CADPrimitiveEdit(QWidget *pparent)
     : QWidget(pparent)
@@ -76,6 +106,7 @@ CADPrimitiveEdit::CADPrimitiveEdit(QWidget *pparent)
 	QPushButton *obj_control = new QPushButton(obj_label);
 	QToolPaletteElement *el = new QToolPaletteElement(0, obj_icon, obj_control);
 	tpalette->addElement(el);
+	QObject::connect(el->button, SIGNAL(clicked()), this, SLOT(update_treeview()));
     }
     mlayout->addWidget(tpalette);
     mlayout->addWidget(shape_properties);
@@ -88,6 +119,22 @@ CADPrimitiveEdit::~CADPrimitiveEdit()
     delete tpalette;
     delete shape_properties;
 }
+
+
+void
+CADPrimitiveEdit::update_treeview()
+{
+    int interaction_mode = ((CADApp *)qApp)->interaction_mode;
+    ((CADApp *)qApp)->interaction_mode = 2;
+
+    CADTreeView *tview = (CADTreeView *)(((CADApp *)qApp)->cadtreeview);
+    CADTreeModel *tmodel = (CADTreeModel *)(tview->model());
+
+    if (interaction_mode != ((CADApp *)qApp)->interaction_mode) {
+	tmodel->update_selected_node_relationships(tview->selected());
+    }
+}
+
 
 CADAccordian::CADAccordian(QWidget *pparent)
     : QAccordianWidget(pparent)
@@ -117,16 +164,7 @@ CADAccordian::CADAccordian(QWidget *pparent)
 
 }
 
-void CADAccordian::childEvent(QChildEvent *e)
-{
-    if (e->child()->isWidgetType()) {
-	if (e->type() == QEvent::ChildAdded) {
-	    std::cout << "added widget\n";
-	    e->child()->installEventFilter(this);
-	}
-    }
-}
-
+#if 0
 bool CADAccordian::eventFilter(QObject *target, QEvent *e)
 {
     int interaction_mode = ((CADApp *)qApp)->interaction_mode;
@@ -160,8 +198,9 @@ bool CADAccordian::eventFilter(QObject *target, QEvent *e)
 	    tmodel->update_selected_node_relationships(tview->selected());
 	}
     }
-    return QAccordianWidget::eventFilter(target, e);
+    return QWidget::eventFilter(target, e);
 }
+#endif
 
 CADAccordian::~CADAccordian()
 {

@@ -13,6 +13,9 @@ class CADViewControls : public QWidget
 	CADViewControls(QWidget *pparent = 0);
 	~CADViewControls();
 
+    public slots:
+	void update_treeview();
+
     private:
 	QToolPalette *tpalette;
 	QWidget *info_view;
@@ -25,6 +28,9 @@ class CADInstanceEdit : public QWidget
     public:
 	CADInstanceEdit(QWidget *pparent = 0);
 	~CADInstanceEdit();
+
+    public slots:
+	void update_treeview();
 
     private:
 	QToolPalette *tpalette;
@@ -39,6 +45,9 @@ class CADPrimitiveEdit : public QWidget
 	CADPrimitiveEdit(QWidget *pparent = 0);
 	~CADPrimitiveEdit();
 
+    public slots:
+	void update_treeview();
+
     private:
 	QToolPalette *tpalette;
 	QWidget *shape_properties;
@@ -50,9 +59,6 @@ class CADAccordian : public QAccordianWidget
     public:
 	CADAccordian(QWidget *pparent);
 	~CADAccordian();
-
-	bool eventFilter(QObject *target, QEvent *e);
-	void childEvent(QChildEvent *e);
 
 	CADViewControls *view_ctrls;
 	QAccordianObject *view_obj;

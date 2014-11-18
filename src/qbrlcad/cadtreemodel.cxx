@@ -460,8 +460,8 @@ CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 {
     struct directory *selected_dp = RT_DIR_NULL;
     ((CADApp *)qApp)->current_idx = idx;
-    //int interaction_mode = ((CADApp *)qApp)->interaction_mode;
-    if (idx.isValid())
+    int interaction_mode = ((CADApp *)qApp)->interaction_mode;
+    if (interaction_mode && idx.isValid())
 	selected_dp = (struct directory *)(idx.data(DirectoryInternalRole).value<void *>());
 
     if (selected_dp != RT_DIR_NULL) {
@@ -490,6 +490,12 @@ CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 		}
 	    }
 	}
+    } else {
+	foreach (CADTreeNode *test_node, all_nodes) {
+	    QModelIndex test_index = NodeIndex(test_node);
+	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
+	    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+	}
     }
 
     // For the case of a selection change, emit a layout change signal so the drawBranches call updates
@@ -504,7 +510,8 @@ void
 CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
 {
     struct directory *selected_dp = RT_DIR_NULL;
-    if (((CADApp *)qApp)->current_idx.isValid())
+    int interaction_mode = ((CADApp *)qApp)->interaction_mode;
+    if (interaction_mode && ((CADApp *)qApp)->current_idx.isValid())
 	selected_dp = (struct directory *)(((CADApp *)qApp)->current_idx .data(DirectoryInternalRole).value<void *>());
 
     if (selected_dp != RT_DIR_NULL) {
@@ -544,6 +551,20 @@ CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
 		}
 	    }
 	}
+    } else {
+	CADTreeNode *expanded_node = IndexNode(idx);
+
+	QQueue<CADTreeNode *> test_nodes;
+	foreach (CADTreeNode *test_node, expanded_node->children) {
+	    test_nodes.enqueue(test_node);
+	}
+
+	while (!test_nodes.isEmpty()) {
+	    CADTreeNode *test_node = test_nodes.dequeue();
+	    QModelIndex test_index = NodeIndex(test_node);
+	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
+	    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+	}
     }
 }
 
@@ -554,7 +575,8 @@ void
 CADTreeModel::close_tree_node_relationships(const QModelIndex & idx)
 {
     struct directory *selected_dp = RT_DIR_NULL;
-    if (((CADApp *)qApp)->current_idx.isValid())
+    int interaction_mode = ((CADApp *)qApp)->interaction_mode;
+    if (interaction_mode && ((CADApp *)qApp)->current_idx.isValid())
 	selected_dp = (struct directory *)(((CADApp *)qApp)->current_idx .data(DirectoryInternalRole).value<void *>());
 
     if (selected_dp != RT_DIR_NULL) {
