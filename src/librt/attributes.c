@@ -156,6 +156,7 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     const struct bu_attribute_value_pair *avpp;
     char *cp;
     size_t i;
+    size_t len;
 
     BU_CK_AVS(avs);
     BU_EXTERNAL_INIT(ext);
@@ -173,15 +174,13 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     avpp = avs->avp;
     for (i = 0; i < avs->count; i++, avpp++) {
 	if (avpp->name) {
-	    need += strlen(avpp->name) + 1; /* include room for nul byte */
-	} else {
-	    need += 1;
+	    need += strlen(avpp->name);
 	}
+	need += 1; /* include room for nul byte */
 	if (avpp->value) {
-	    need += strlen(avpp->value) + 1; /* include room for nul byte */
-	} else {
-	    need += 1;
+	    need += strlen(avpp->value); 
 	}
+	need += 1; /* include room for nul byte */
     }
     /* include a final nul byte */
     need += 1;
@@ -198,8 +197,6 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     cp = (char *)ext->ext_buf;
     avpp = avs->avp;
     for (i = 0; i < avs->count; i++, avpp++) {
-	size_t len;
-
 	if (avpp->name) {
 	    len = strlen(avpp->name);
 	    memcpy(cp, avpp->name, len);
