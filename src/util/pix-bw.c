@@ -120,6 +120,11 @@ get_args(int argc, char **argv)
 	}
     }
 
+    if (!isatty(fileno(stdout)) && out_file!=NULL) {
+    	bu_log("pix-bw: cannot use both -o and >\n");
+	return 0;
+    }
+
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin))) {
 	    return 0;
@@ -128,11 +133,6 @@ get_args(int argc, char **argv)
 	in_file = argv[bu_optind];
 	bu_optind++;
 	return 1;
-    }
-
-
-    if (!isatty(fileno(stdout)) && out_file!=NULL) {
-	return 0;
     }
 
     if (argc > ++bu_optind) {
@@ -176,7 +176,7 @@ main(int argc, char **argv)
     else if (green)
 	color = ICV_COLOR_G;
     else {
-    	bu_log("no color scheme specified\n");
+    	bu_log("pix-bw: no color scheme specified\n");
 	bu_exit(1, "%s",usage);
     }
 
