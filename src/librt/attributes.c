@@ -44,8 +44,9 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
     cp = (const char *)ap->ext_buf;
     ep = (const char *)ap->ext_buf+ap->ext_nbytes;
 
-    /* Null "name" string (a pair of NULLs) indicates end of attribute
-     * list (for the original ASCII-valued attributes) */
+    /* An empty "name" string (a pair of nul bytes) indicates end of
+     * attribute list (for the original ASCII-valued attributes).
+     */
     while (*cp != '\0') {
 	if (cp >= ep) {
 	    bu_log("db5_import_attributes() ran off end of buffer, database is probably corrupted\n");
@@ -172,17 +173,17 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     avpp = avs->avp;
     for (i = 0; i < avs->count; i++, avpp++) {
 	if (avpp->name) {
-	    need += strlen(avpp->name) + 1; /* include room for NULL */
+	    need += strlen(avpp->name) + 1; /* include room for nul byte */
 	} else {
 	    need += 1;
 	}
 	if (avpp->value) {
-	    need += strlen(avpp->value) + 1; /* include room for NULL */
+	    need += strlen(avpp->value) + 1; /* include room for nul byte */
 	} else {
 	    need += 1;
 	}
     }
-    /* include final null */
+    /* include a final nul byte */
     need += 1;
 
     if (need <= 1) {
@@ -204,16 +205,16 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
 	    memcpy(cp, avpp->name, len);
 	    cp += len;
 	}
-	*(cp++) = '\0'; /* pad null */
+	*(cp++) = '\0'; /* pad nul byte */
 
 	if (avpp->value) {
 	    len = strlen(avpp->value);
 	    memcpy(cp, avpp->value, strlen(avpp->value));
 	    cp += len;
 	}
-	*(cp++) = '\0'; /* pad null */
+	*(cp++) = '\0'; /* pad nul byte */
     }
-    *(cp++) = '\0'; /* final null */
+    *(cp++) = '\0'; /* final nul byte */
 
     /* sanity check */
     need = cp - ((char *)ext->ext_buf);
