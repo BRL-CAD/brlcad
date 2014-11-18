@@ -41,19 +41,12 @@
 #include "raytrace.h"
 #include "debug_plot.h"
 #include "brep_except.h"
+#include "brep_defines.h"
 
 DebugPlot *dplot = NULL;
 
 // Whether to output the debug messages about b-rep booleans.
 #define DEBUG_BREP_BOOLEAN 0
-
-// tol value used in ON_Intersect()s. We use a smaller tolerance than the
-// default one 0.001.
-#define INTERSECTION_TOL 1e-4
-
-// tol value used in ON_3dVector::IsParallelTo(). We use a smaller tolerance
-// than the default one ON_PI/180.
-#define ANGLE_TOL ON_PI/1800.0
 
 struct IntersectPoint {
     ON_3dPoint m_pt;	// 3D intersection point

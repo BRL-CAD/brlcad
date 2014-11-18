@@ -37,41 +37,12 @@
 #include "brep.h"
 #include "debug_plot.h"
 #include "brep_except.h"
+#include "brep_defines.h"
 
 extern DebugPlot *dplot;
 
 // Whether to output the debug messages about b-rep intersections.
 #define DEBUG_BREP_INTERSECT 0
-
-// The maximal depth for subdivision - trade-off between accuracy and
-// performance.
-#define NR_MAX_DEPTH 8
-#define MAX_PCI_DEPTH NR_MAX_DEPTH
-#define MAX_PSI_DEPTH NR_MAX_DEPTH
-#define MAX_CCI_DEPTH NR_MAX_DEPTH
-#define MAX_CSI_DEPTH NR_MAX_DEPTH
-#define MAX_SSI_DEPTH NR_MAX_DEPTH
-
-
-// We make the default tolerance for PSI the same as that of curve and
-// surface intersections defined by openNURBS (see opennurbs_curve.h
-// and opennurbs_surface.h).
-#define NR_DEFAULT_TOLERANCE 0.001
-#define PCI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
-#define PSI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
-#define CCI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
-#define CSI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
-#define SSI_DEFAULT_TOLERANCE NR_DEFAULT_TOLERANCE
-
-// Used to prevent an infinite loop in the unlikely event that we
-// can't provide a good starting point for the Newton-Raphson
-// Iteration.
-#define NR_MAX_ITERATIONS 100
-#define PCI_MAX_ITERATIONS NR_MAX_ITERATIONS
-#define PSI_MAX_ITERATIONS NR_MAX_ITERATIONS
-#define CCI_MAX_ITERATIONS NR_MAX_ITERATIONS
-#define CSI_MAX_ITERATIONS NR_MAX_ITERATIONS
-#define SSI_MAX_ITERATIONS NR_MAX_ITERATIONS
 
 class XEventProxy {
 public:
