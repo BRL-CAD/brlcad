@@ -170,14 +170,14 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     /* First pass -- determine how much space is required */
     need = 0;
     avpp = avs->avp;
-    for (i = 0; i < (size_t)avs->count; i++, avpp++) {
+    for (i = 0; i < avs->count; i++, avpp++) {
 	if (avpp->name) {
-	    need += (int)strlen(avpp->name) + 1; /* include room for NULL */
+	    need += strlen(avpp->name) + 1; /* include room for NULL */
 	} else {
 	    need += 1;
 	}
 	if (avpp->value) {
-	    need += (int)strlen(avpp->value) + 1; /* include room for NULL */
+	    need += strlen(avpp->value) + 1; /* include room for NULL */
 	} else {
 	    need += 1;
 	}
@@ -197,21 +197,21 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     cp = (char *)ext->ext_buf;
     avpp = avs->avp;
     for (i = 0; i < avs->count; i++, avpp++) {
-	int len;
+	size_t len;
 
 	if (avpp->name) {
-	    len = (int)strlen(avpp->name);
+	    len = strlen(avpp->name);
 	    memcpy(cp, avpp->name, len);
-	    cp += len + 1;
+	    cp += len;
 	}
-	*cp = '\0'; /* pad null */
+	*(cp++) = '\0'; /* pad null */
 
 	if (avpp->value) {
-	    len = (int)strlen(avpp->value);
+	    len = strlen(avpp->value);
 	    memcpy(cp, avpp->value, strlen(avpp->value));
-	    cp += len + 1;
+	    cp += len;
 	}
-	*cp = '\0'; /* pad null */
+	*(cp++) = '\0'; /* pad null */
     }
     *(cp++) = '\0'; /* final null */
 
