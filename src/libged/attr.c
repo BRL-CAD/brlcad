@@ -249,13 +249,20 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		bu_free(largv, "free largv");
+		bu_free(dplist, "free dplist");
+		bu_vls_free(&objs);
 		return GED_ERROR;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
 
 	    /* pretty print */
-	    if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK)
+	    if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK) {
+		bu_free(largv, "free largv");
+		bu_free(dplist, "free dplist");
+		bu_vls_free(&objs);
 		return GED_ERROR;
+	    }
 	    if (argc == 3) {
 		/* just list the already sorted attribute-value pairs */
 		attr_print(gedp, &avs, max_attr_name_len);
@@ -284,6 +291,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		bu_free(largv, "free largv");
+		bu_free(dplist, "free dplist");
+		bu_vls_free(&objs);
 		return GED_ERROR;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
@@ -305,6 +315,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 				dp->d_namep,
 				argv[i]);
 			bu_avs_free(&avs);
+			bu_free(largv, "free largv");
+			bu_free(dplist, "free dplist");
+			bu_vls_free(&objs);
 			return GED_ERROR;
 		    }
 		    if (do_separators) {
@@ -325,6 +338,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 		if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		    bu_free(largv, "free largv");
+		    bu_free(dplist, "free dplist");
+		    bu_vls_free(&objs);
 		    return GED_ERROR;
 		}
 		bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
@@ -372,6 +388,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    GED_DB_LOOKUP(gedp, dp, largv[i], LOOKUP_QUIET, GED_ERROR);
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &lavs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		bu_free(largv, "free largv");
+		bu_free(dplist, "free dplist");
+		bu_vls_free(&objs);
 		return GED_ERROR;
 	    }
 	    bu_avs_merge(&avs, &lavs);
@@ -390,6 +409,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	if ((argc - 3) % 2) {
 	    bu_vls_printf(gedp->ged_result_str,
 		    "Error: attribute names and values must be in pairs!!!\n");
+	    bu_free(largv, "free largv");
+	    bu_free(dplist, "free dplist");
+	    bu_vls_free(&objs);
 	    return GED_ERROR;
 	}
 	for (i = 0; i < largc; i++) {
@@ -400,6 +422,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		bu_free(largv, "free largv");
+		bu_free(dplist, "free dplist");
+		bu_vls_free(&objs);
 		return GED_ERROR;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
@@ -415,6 +440,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str,
 			"Error: failed to update attributes\n");
 		bu_avs_free(&avs);
+		bu_free(largv, "free largv");
+		bu_free(dplist, "free dplist");
+		bu_vls_free(&objs);
 		return GED_ERROR;
 	    }
 	    /* avs is freed by db5_update_attributes() */
@@ -430,6 +458,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		bu_free(largv, "free largv");
+		bu_free(dplist, "free dplist");
+		bu_vls_free(&objs);
 		return GED_ERROR;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
@@ -445,6 +476,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str,
 			"Error: failed to update attributes\n");
 		bu_avs_free(&avs);
+		bu_free(largv, "free largv");
+		bu_free(dplist, "free dplist");
+		bu_vls_free(&objs);
 		return GED_ERROR;
 	    }
 	    /* avs is freed by db5_replace_attributes() */
@@ -455,6 +489,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	if ((argc-3) % 2) {
 	    bu_vls_printf(gedp->ged_result_str,
 			  "Error: attribute names and values must be in pairs!!!\n");
+	    bu_free(largv, "free largv");
+	    bu_free(dplist, "free dplist");
+	    bu_vls_free(&objs);
 	    return GED_ERROR;
 	}
 	for (i = 0; i < largc; i++) {
@@ -465,6 +502,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		bu_free(largv, "free largv");
+		bu_free(dplist, "free dplist");
+		bu_vls_free(&objs);
 		return GED_ERROR;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
@@ -492,6 +532,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str,
 			"Error: failed to update attributes\n");
 		bu_avs_free(&avs);
+		bu_free(largv, "free largv");
+		bu_free(dplist, "free dplist");
+		bu_vls_free(&objs);
 		return GED_ERROR;
 	    }
 
@@ -505,14 +548,21 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+	    bu_free(largv, "free largv");
+	    bu_free(dplist, "free dplist");
+	    bu_vls_free(&objs);
 	    return GED_ERROR;
 	}
 
 
 
 	/* pretty print */
-	if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK)
+	if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK) {
+	    bu_free(largv, "free largv");
+	    bu_free(dplist, "free dplist");
+	    bu_vls_free(&objs);
 	    return GED_ERROR;
+	}
 
 	if (argc == 3) {
 	    /* just display all attributes */
@@ -541,6 +591,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 				  dp->d_namep,
 				  argv[i]);
 		    bu_avs_free(&avs);
+		    bu_free(largv, "free largv");
+		    bu_free(dplist, "free dplist");
+		    bu_vls_free(&objs);
 		    return GED_ERROR;
 		}
 		bu_vls_printf(gedp->ged_result_str, "\t%s", argv[i]);
