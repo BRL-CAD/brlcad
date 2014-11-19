@@ -55,6 +55,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* translate lc command to libged
+
 * Integrate ADRT into Archer as a visualization mode.
 
 * Document a GUI feature list (prioritized).
@@ -1290,6 +1292,13 @@ ARCHER
 
 ATTRIBUTES
 ----------
+
+* attr command option to output to a file
+
+* attr command change to only output non-standard attributes
+
+* attr command change to have an optional object argument and to work
+  with multiple objects.  make output format scriptable.
 
 * implement an attribute versioning system.  can hang attribute
   version off of _GLOBAL (ideally) or per-object so application codes
