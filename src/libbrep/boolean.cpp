@@ -3544,6 +3544,7 @@ get_face_intersection_curves(
 		}
 
 		dplot->SSX(events, brep1, brep1->m_F[i].m_si, brep2, brep2->m_F[j].m_si);
+		dplot->WriteLog();
 
 		ON_SimpleArray<ON_Curve *> face1_curves, face2_curves;
 		for (int k = 0; k < events.Count(); k++) {
@@ -3573,6 +3574,7 @@ get_face_intersection_curves(
 		    }
 		}
 		dplot->ClippedFaceCurves(surf1, surf2, face1_curves, face2_curves);
+		dplot->WriteLog();
 
 		if (DEBUG_BREP_BOOLEAN) {
 		    // Look for coplanar faces
@@ -3778,6 +3780,7 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 	TrimmedFace *first = original_faces[i];
 	ON_ClassArray<LinkedCurve> linked_curves = link_curves(curves_array[i]);
 	dplot->LinkedCurves(first->m_face->SurfaceOf(), linked_curves);
+	dplot->WriteLog();
 
 	ON_SimpleArray<TrimmedFace *> splitted = split_trimmed_face(first, linked_curves);
 	trimmed_faces.Append(splitted);
@@ -3807,6 +3810,7 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
     categorize_trimmed_faces(trimmed_faces, brep1, brep2, surf_tree1, surf_tree2, operation);
 
     dplot->SplitFaces(trimmed_faces);
+    dplot->WriteLog();
 
     for (int i = 0; i < surf_tree1.Count(); i++) {
 	delete surf_tree1[i];
@@ -3900,6 +3904,7 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
     prefix << "bool" << calls;
     dplot = new DebugPlot(prefix.str().c_str());
     dplot->Surfaces(brep1, brep2);
+    dplot->WriteLog();
 
     ON_ClassArray<ON_SimpleArray<TrimmedFace *> > trimmed_faces;
     try {

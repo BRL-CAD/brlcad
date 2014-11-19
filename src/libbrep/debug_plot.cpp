@@ -172,19 +172,37 @@ DebugPlot::WriteLog()
     // write out surface-surface intersections
     fprintf(fp, "surfaces %d %d\n", brep1_surf_count, brep2_surf_count);
     for (size_t i = 0; i < intersecting_surfaces.size(); ++i) {
-	std::pair<int, int> pair = intersecting_surfaces[i];
-	int b1_isocurves = 0;
-	if (ssx_isocsx_brep1_curves.size() > i) {
-	    b1_isocurves = (int)ssx_isocsx_brep1_curves[i];
+	std::pair<int, int> intersecting = intersecting_surfaces[i];
+
+	int events, b1_isocurves, intersecting_isocurves, b1_clipped, b2_clipped;
+
+	try {
+	    events = ssx_events.at(i);
+	} catch (std::out_of_range &e) {
+	    events = 0;
 	}
-	int intersecting_isocurves = 0;
-	if (ssx_isocsx_events.size() > i) {
-	    intersecting_isocurves = (int)ssx_isocsx_events[i].size();
+	try {
+	    std::pair<int, int> ccount = ssx_clipped_curves.at(i);
+	    b1_clipped = ccount.first;
+	    b2_clipped = ccount.second;
+	} catch (std::out_of_range &e) {
+	    b1_clipped = b2_clipped = 0;
 	}
+	try {
+	    b1_isocurves = ssx_isocsx_brep1_curves.at(i);
+	} catch (std::out_of_range &e) {
+	    b1_isocurves = 0;
+	}
+	try {
+	    intersecting_isocurves = (int)ssx_isocsx_events.at(i).size();
+	} catch (std::out_of_range &e) {
+	    intersecting_isocurves = 0;
+	}
+
 	// b1si b2si finalevents b1ccurves b2ccurves b1_isocurve_xs total_isocurve_xs isocsx0_event0 ...
-	fprintf(fp, "ssx %d %d %d %d %d %d %d", pair.first, pair.second,
-		ssx_events[i], ssx_clipped_curves[i].first,
-		ssx_clipped_curves[i].second, b1_isocurves, intersecting_isocurves);
+	fprintf(fp, "ssx %d %d %d %d %d %d %d", intersecting.first,
+		intersecting.second, events, b1_clipped, b2_clipped,
+		b1_isocurves, intersecting_isocurves);
 
 	if (ssx_isocsx_events.size() > i) {
 	    for (size_t j = 0; j < ssx_isocsx_events[i].size(); ++j) {

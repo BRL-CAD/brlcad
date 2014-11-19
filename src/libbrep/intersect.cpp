@@ -3344,6 +3344,7 @@ find_overlap_boundary_curves(
 		    overlap_tol, 0, 0, 0, &overlap2d);
 
 	    dplot->IsoCSX(events, surf1_isocurve, is_surfA_iso);
+	    dplot->WriteLog();
 
 	    append_csx_event_points(isocurve_3d, isocurve2_2d, events);
 
