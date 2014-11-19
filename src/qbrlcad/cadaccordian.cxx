@@ -191,6 +191,7 @@ CADAccordian::CADAccordian(QWidget *pparent)
 	w->installEventFilter(efilter);
     }
 
+    highlight_selected(view_obj);
 }
 
 void
