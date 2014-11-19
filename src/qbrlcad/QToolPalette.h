@@ -57,6 +57,7 @@ class QToolPalette: public QWidget
 	void deleteElement(QToolPaletteElement *element);
 	void setIconWidth(int iwidth);
 	void setIconHeight(int iheight);
+	void setAlwaysSelected(int iheight);  // If 0 can disable all tools, if 1 some tool is always selected
 
 	void resizeEvent(QResizeEvent *pevent);
 
@@ -65,6 +66,7 @@ class QToolPalette: public QWidget
 	void button_layout_resize();
 
    private:
+      int always_selected;
       int icon_width;
       int icon_height;
       QSplitter *splitter;

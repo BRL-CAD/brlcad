@@ -76,6 +76,7 @@ QToolPaletteElement::setControls(QWidget *n_control)
 
 QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
 {
+    always_selected = 1;
     icon_width = 30;
     icon_height = 30;
     QVBoxLayout *mlayout = new QVBoxLayout();
@@ -166,6 +167,17 @@ QToolPalette::setIconHeight(int iheight)
     updateGeometry();
 }
 
+
+void
+QToolPalette::setAlwaysSelected(int toggle)
+{
+    always_selected = toggle;
+    if (always_selected && selected == NULL) {
+	displayElement(*(elements.begin()));
+    }
+}
+
+
 void
 QToolPalette::addElement(QToolPaletteElement *element)
 {
@@ -177,6 +189,9 @@ QToolPalette::addElement(QToolPaletteElement *element)
     elements.insert(element);
     QObject::connect(element->button, SIGNAL(element_selected(QToolPaletteElement *)), this, SLOT(displayElement(QToolPaletteElement *)));
     updateGeometry();
+    if (!selected && always_selected) {
+	displayElement(element);
+    }
 }
 
 void
@@ -195,14 +210,14 @@ void
 QToolPalette::displayElement(QToolPaletteElement *element)
 {
     if (element) {
-	if (element == selected) {
+	if (element == selected && !always_selected) {
 	    if (element->button->isChecked()) element->button->setChecked(false);
 	    element->controls->hide();
 	    control_container->setMinimumHeight(icon_height);
 	    selected = NULL;
 	} else {
 	    if (!element->button->isChecked()) element->button->setChecked(true);
-	    if (selected) {
+	    if (selected && element != selected) {
 		control_layout->removeWidget(selected->controls);
 		selected->controls->hide();
 		if (selected->button->isChecked()) selected->button->setChecked(false);
