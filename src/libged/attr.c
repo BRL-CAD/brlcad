@@ -169,10 +169,13 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 {
     size_t i;
     struct directory *dp;
-    struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
     static const char *usage = "{set|get|show|rm|append|sort} object [key [value] ... ]";
     attr_cmd_t scmd;
+    struct bu_vls objs = BU_VLS_INIT_ZERO;
+    unsigned int largc = 0;
+    char *dplist = NULL;
+    char **largv = NULL;
 
     /* sort types */
     const char CASE[]         = "case";
@@ -182,7 +185,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
     /* for pretty printing */
     int max_attr_name_len  = 0;
-    int max_attr_value_len = 0;
+    /*int max_attr_value_len = 0;*/
 
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
@@ -212,17 +215,16 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
     scmd = attr_cmd(argv[1]);
 
-    bu_avs_init_empty(&avs);
-
-    if (scmd != ATTR_LIST) {
-	GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, GED_ERROR);
-
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	    return GED_ERROR;
-	}
+    if (db_regexp_match_all(&objs, gedp->ged_wdbp->dbip, argv[2]) == 0) {
+	bu_vls_free(&objs);
+	bu_vls_printf(gedp->ged_result_str, "Cannot locate objects matching %s\n", argv[2]);
+	return GED_ERROR;
     }
+    dplist = bu_strdup(bu_vls_addr(&objs));
+    largv = (char **)bu_calloc(strlen(bu_vls_addr(&objs))/2+1, sizeof(char *), "attr list argv");
+    largc = bu_argv_from_string(largv, strlen(bu_vls_addr(&objs))/2, dplist);
 
+#if 0
     if ((scmd == ATTR_SHOW && argc == 3) || scmd == ATTR_SORT) {
 	/* get a jump on calculating name and value lengths */
 	for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
@@ -236,75 +238,133 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
     }
-
-    if (scmd != ATTR_LIST) {
-	/* default: sort attribute-value set array by attribute name (case sensitive) */
-	bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
-    }
+#endif
 
     if (scmd == ATTR_SORT) {
-	/* pretty print */
-	if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK)
-	    return GED_ERROR;
+	for (i = 0; i < largc; i++) {
+	    struct bu_attribute_value_set avs;
+	    bu_avs_init_empty(&avs);
 
-	if (argc == 3) {
-	    /* just list the already sorted attribute-value pairs */
-	    attr_print(gedp, &avs, max_attr_name_len);
-	} else {
-	    /* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
-	    if (BU_STR_EQUIV(argv[3], NOCASE)) {
-		bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_nocase, NULL);
-	    } else if (BU_STR_EQUIV(argv[3], VALUE)) {
-		bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_value, NULL);
-	    } else if (BU_STR_EQUIV(argv[3], VALUE_NOCASE)) {
-		bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_value_nocase, NULL);
-	    } else if (BU_STR_EQUIV(argv[3], CASE)) {
-		; /* don't need to do anything since this is the existing (default) sort */
+	    GED_DB_LOOKUP(gedp, dp, largv[i], LOOKUP_QUIET, GED_ERROR);
+
+	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		return GED_ERROR;
 	    }
-	    /* just list the already sorted attribute-value pairs */
-	    attr_print(gedp, &avs, max_attr_name_len);
+	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
+
+	    /* pretty print */
+	    if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK)
+		return GED_ERROR;
+	    if (argc == 3) {
+		/* just list the already sorted attribute-value pairs */
+		attr_print(gedp, &avs, max_attr_name_len);
+	    } else {
+		/* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
+		if (BU_STR_EQUIV(argv[3], NOCASE)) {
+		    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_nocase, NULL);
+		} else if (BU_STR_EQUIV(argv[3], VALUE)) {
+		    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_value, NULL);
+		} else if (BU_STR_EQUIV(argv[3], VALUE_NOCASE)) {
+		    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_value_nocase, NULL);
+		} else if (BU_STR_EQUIV(argv[3], CASE)) {
+		    ; /* don't need to do anything since this is the existing (default) sort */
+		}
+		/* just list the already sorted attribute-value pairs */
+		attr_print(gedp, &avs, max_attr_name_len);
+	    }
+	    bu_avs_free(&avs);
 	}
     } else if (scmd == ATTR_GET) {
-	if (argc == 3) {
-	    /* just list all the attributes */
-	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-		bu_vls_printf(gedp->ged_result_str, "%s {%s} ", avpp->name, avpp->value);
-	    }
-	} else {
-	    const char *val;
-	    int do_separators=argc-4; /* if more than one attribute */
+	if (largc == 1) {
+	    struct bu_attribute_value_set avs;
+	    bu_avs_init_empty(&avs);
 
-	    for (i = 3; i < (size_t)argc; i++) {
-		val = bu_avs_get(&avs, argv[i]);
-		if (!val) {
-		    bu_vls_printf(gedp->ged_result_str,
-				  "Object %s does not have a %s attribute\n",
-				  dp->d_namep,
-				  argv[i]);
-		    bu_avs_free(&avs);
+	    GED_DB_LOOKUP(gedp, dp, largv[0], LOOKUP_QUIET, GED_ERROR);
+
+	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		return GED_ERROR;
+	    }
+	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
+
+	    if (argc == 3) {
+		/* just list all the attributes */
+		for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+		    bu_vls_printf(gedp->ged_result_str, "%s {%s} ", avpp->name, avpp->value);
+		}
+	    } else {
+		const char *val;
+		int do_separators=argc-4; /* if more than one attribute */
+
+		for (i = 3; i < (size_t)argc; i++) {
+		    val = bu_avs_get(&avs, argv[i]);
+		    if (!val) {
+			bu_vls_printf(gedp->ged_result_str,
+				"Object %s does not have a %s attribute\n",
+				dp->d_namep,
+				argv[i]);
+			bu_avs_free(&avs);
+			return GED_ERROR;
+		    }
+		    if (do_separators) {
+			bu_vls_printf(gedp->ged_result_str, "{%s} ", val);
+		    } else {
+			bu_vls_printf(gedp->ged_result_str, "%s", val);
+		    }
+		}
+	    }
+	    bu_avs_free(&avs);
+	} else {
+	    for (i = 0; i < largc; i++) {
+		unsigned int j = 0;
+		struct bu_vls obj_vals = BU_VLS_INIT_ZERO;
+		struct bu_attribute_value_set avs;
+		bu_avs_init_empty(&avs);
+		GED_DB_LOOKUP(gedp, dp, largv[i], LOOKUP_QUIET, GED_ERROR);
+
+		if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 		    return GED_ERROR;
 		}
-		if (do_separators) {
-		    bu_vls_printf(gedp->ged_result_str, "{%s} ", val);
+		bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
+
+		if (argc == 3) {
+		    /* just list all the attributes */
+		    for (j = 0, avpp = avs.avp; j < avs.count; j++, avpp++) {
+			bu_vls_printf(&obj_vals, "%s {%s} ", avpp->name, avpp->value);
+		    }
 		} else {
-		    bu_vls_printf(gedp->ged_result_str, "%s", val);
+		    const char *val;
+		    int do_separators=argc-4; /* if more than one attribute */
+
+		    for (j = 3; j < (size_t)argc; j++) {
+			val = bu_avs_get(&avs, argv[j]);
+			if (val) {
+			    if (do_separators) {
+				bu_vls_printf(&obj_vals, "{%s} ", val);
+			    } else {
+				bu_vls_printf(&obj_vals, "%s", val);
+			    }
+			}
+		    }
 		}
+		if (strlen(bu_vls_addr(&obj_vals)) > 0) {
+		    bu_vls_printf(gedp->ged_result_str, "%s: ", dp->d_namep);
+		    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&obj_vals));
+
+		    if (i > 0 && i < largc-1) {
+			bu_vls_printf(gedp->ged_result_str, "\n");
+		    }
+		}
+
+		bu_vls_free(&obj_vals);
+		bu_avs_free(&avs);
 	    }
 	}
-
-	bu_avs_free(&avs);
     } else if (scmd == ATTR_LIST) {
-	struct bu_vls objs = BU_VLS_INIT_ZERO;
-	unsigned int largc = 0;
-	char *dplist = NULL;
-	char **largv = NULL;
-	if (db_regexp_match_all(&objs, gedp->ged_wdbp->dbip, argv[2]) == 0) {
-	    bu_vls_free(&objs);
-	    return GED_OK;
-	}
-	dplist = bu_strdup(bu_vls_addr(&objs));
-	largv = (char **)bu_calloc(strlen(bu_vls_addr(&objs))/2+1, sizeof(char *), "attr list argv");
-	largc = bu_argv_from_string(largv, strlen(bu_vls_addr(&objs))/2, dplist);
+	struct bu_attribute_value_set avs;
+	bu_avs_init_empty(&avs);
 
 	for (i = 0; i < largc; i++) {
 	    struct bu_attribute_value_set lavs;
@@ -323,96 +383,132 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", avpp->name);
 	}
-	bu_free(largv, "free largv");
-	bu_free(dplist, "free dplist");
-	bu_vls_free(&objs);
 	bu_avs_free(&avs);
     } else if (scmd == ATTR_SET) {
 	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 	/* setting attribute/value pairs */
 	if ((argc - 3) % 2) {
 	    bu_vls_printf(gedp->ged_result_str,
-			  "Error: attribute names and values must be in pairs!!!\n");
-	    bu_avs_free(&avs);
+		    "Error: attribute names and values must be in pairs!!!\n");
 	    return GED_ERROR;
 	}
+	for (i = 0; i < largc; i++) {
+	    size_t j = 3;
+	    struct bu_attribute_value_set avs;
+	    bu_avs_init_empty(&avs);
+	    GED_DB_LOOKUP(gedp, dp, largv[i], LOOKUP_QUIET, GED_ERROR);
 
-	i = 3;
-	while (i < (size_t)argc) {
-	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
-		dp->d_flags |= RT_DIR_REGION;
+	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		return GED_ERROR;
 	    }
-	    (void)bu_avs_add(&avs, argv[i], argv[i+1]);
-	    i += 2;
+	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
+	    while (j < (size_t)argc) {
+		if (BU_STR_EQUAL(argv[j], "region") && BU_STR_EQUAL(argv[j+1], "R")) {
+		    dp->d_flags |= RT_DIR_REGION;
+		}
+		(void)bu_avs_add(&avs, argv[j], argv[j+1]);
+		j += 2;
+	    }
+	    db5_standardize_avs(&avs);
+	    if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+		bu_vls_printf(gedp->ged_result_str,
+			"Error: failed to update attributes\n");
+		bu_avs_free(&avs);
+		return GED_ERROR;
+	    }
+	    /* avs is freed by db5_update_attributes() */
 	}
-	db5_standardize_avs(&avs);
-	if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
-	    bu_vls_printf(gedp->ged_result_str,
-			  "Error: failed to update attributes\n");
-	    bu_avs_free(&avs);
-	    return GED_ERROR;
-	}
-
-	/* avs is freed by db5_update_attributes() */
 
     } else if (scmd == ATTR_RM) {
 	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-	i = 3;
-	while (i < (size_t)argc) {
-	    if (BU_STR_EQUAL(argv[i], "region")) {
-		dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
-	    }
-	    (void)bu_avs_remove(&avs, argv[i]);
-	    i++;
-	}
-	if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
-	    bu_vls_printf(gedp->ged_result_str,
-			  "Error: failed to update attributes\n");
-	    bu_avs_free(&avs);
-	    return GED_ERROR;
-	}
+	for (i = 0; i < largc; i++) {
+	    size_t j = 3;
+	    struct bu_attribute_value_set avs;
+	    bu_avs_init_empty(&avs);
+	    GED_DB_LOOKUP(gedp, dp, largv[i], LOOKUP_QUIET, GED_ERROR);
 
-	/* avs is freed by db5_replace_attributes() */
+	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		return GED_ERROR;
+	    }
+	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
+
+	    while (j < (size_t)argc) {
+		if (BU_STR_EQUAL(argv[j], "region")) {
+		    dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
+		}
+		(void)bu_avs_remove(&avs, argv[j]);
+		j++;
+	    }
+	    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+		bu_vls_printf(gedp->ged_result_str,
+			"Error: failed to update attributes\n");
+		bu_avs_free(&avs);
+		return GED_ERROR;
+	    }
+	    /* avs is freed by db5_replace_attributes() */
+	}
 
     } else if (scmd == ATTR_APPEND) {
 	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 	if ((argc-3) % 2) {
 	    bu_vls_printf(gedp->ged_result_str,
 			  "Error: attribute names and values must be in pairs!!!\n");
-	    bu_avs_free(&avs);
 	    return GED_ERROR;
 	}
-	i = 3;
-	while (i < (size_t)argc) {
-	    const char *old_val;
-	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
-		dp->d_flags |= RT_DIR_REGION;
+	for (i = 0; i < largc; i++) {
+	    size_t j = 3;
+	    struct bu_attribute_value_set avs;
+	    bu_avs_init_empty(&avs);
+	    GED_DB_LOOKUP(gedp, dp, largv[i], LOOKUP_QUIET, GED_ERROR);
+
+	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		return GED_ERROR;
 	    }
-	    old_val = bu_avs_get(&avs, argv[i]);
-	    if (!old_val) {
-		(void)bu_avs_add(&avs, argv[i], argv[i+1]);
-	    } else {
-		struct bu_vls vls = BU_VLS_INIT_ZERO;
+	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
 
-		bu_vls_strcat(&vls, old_val);
-		bu_vls_strcat(&vls, argv[i+1]);
-		bu_avs_add_vls(&avs, argv[i], &vls);
-		bu_vls_free(&vls);
+	    while (j < (size_t)argc) {
+		const char *old_val;
+		if (BU_STR_EQUAL(argv[j], "region") && BU_STR_EQUAL(argv[j+1], "R")) {
+		    dp->d_flags |= RT_DIR_REGION;
+		}
+		old_val = bu_avs_get(&avs, argv[j]);
+		if (!old_val) {
+		    (void)bu_avs_add(&avs, argv[j], argv[j+1]);
+		} else {
+		    struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+		    bu_vls_strcat(&vls, old_val);
+		    bu_vls_strcat(&vls, argv[j+1]);
+		    bu_avs_add_vls(&avs, argv[j], &vls);
+		    bu_vls_free(&vls);
+		}
+
+		j += 2;
+	    }
+	    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+		bu_vls_printf(gedp->ged_result_str,
+			"Error: failed to update attributes\n");
+		bu_avs_free(&avs);
+		return GED_ERROR;
 	    }
 
-	    i += 2;
+	    /* avs is freed by db5_replace_attributes() */
 	}
-	if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
-	    bu_vls_printf(gedp->ged_result_str,
-			  "Error: failed to update attributes\n");
-	    bu_avs_free(&avs);
-	    return GED_ERROR;
-	}
-
-	/* avs is freed by db5_replace_attributes() */
-
     } else if (scmd == ATTR_SHOW) {
 	int tabs1 = 0;
+	struct bu_attribute_value_set avs;
+	bu_avs_init_empty(&avs);
+	GED_DB_LOOKUP(gedp, dp, largv[0], LOOKUP_QUIET, GED_ERROR);
+
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+	    return GED_ERROR;
+	}
+
+
 
 	/* pretty print */
 	if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK)
@@ -470,9 +566,16 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     } else {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: unrecognized attr subcommand %s\n", argv[1]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_free(largv, "free largv");
+	bu_free(dplist, "free dplist");
+	bu_vls_free(&objs);
 
 	return GED_ERROR;
     }
+
+    bu_free(largv, "free largv");
+    bu_free(dplist, "free dplist");
+    bu_vls_free(&objs);
 
     return GED_OK;
 }
