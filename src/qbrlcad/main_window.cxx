@@ -112,6 +112,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 
     //userpropview->setMinimumHeight(340);
     QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->userpropmodel, SLOT(refresh(const QModelIndex &)));
+    ((CADApp *)qApp)->cadaccordian= (CADAccordian *)panel;
 
     /* For testing - don't want uniqueness here, but may need or want it elsewhere */
     //panel->setUniqueVisibility(1);
