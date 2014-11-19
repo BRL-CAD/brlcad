@@ -1,5 +1,7 @@
 #include "cadaccordian.h"
 #include "cadapp.h"
+#include <QPalette>
+#include <QColor>
 
 CADViewControls::CADViewControls(QWidget *pparent)
     : QWidget(pparent)
@@ -90,7 +92,9 @@ CADPrimitiveEdit::~CADPrimitiveEdit()
     delete shape_properties;
 }
 
-
+// TODO - if we're over one of the accordian toggles, don't change any state - hidden
+// panels complicate the logic, so if we're over a toggle assume the business of the
+// click is *just* to open and close the panel
 bool EditStateFilter::eventFilter(QObject *target, QEvent *e)
 {
     int interaction_mode = ((CADApp *)qApp)->interaction_mode;
@@ -122,21 +126,26 @@ bool EditStateFilter::eventFilter(QObject *target, QEvent *e)
 
 	if (view_ctrls_rect.contains(mpos)) {
 	    ((CADApp *)qApp)->interaction_mode = 0;
+	    accordian->highlight_selected(accordian->view_obj);
 	}
 	if (instance_ctrls_rect.contains(mpos)) {
 	    ((CADApp *)qApp)->interaction_mode = 1;
+	    accordian->highlight_selected(accordian->instance_obj);
 	}
 
 	if (primitive_ctrls_rect.contains(mpos)) {
 	    ((CADApp *)qApp)->interaction_mode = 2;
+	    accordian->highlight_selected(accordian->primitive_obj);
 	}
 
 	if (stdpropview_rect.contains(mpos)) {
 	    ((CADApp *)qApp)->interaction_mode = 2;
+	    accordian->highlight_selected(accordian->stdprop_obj);
 	}
 
 	if (userpropview_rect.contains(mpos)) {
 	    ((CADApp *)qApp)->interaction_mode = 2;
+	    accordian->highlight_selected(accordian->userprop_obj);
 	}
 
 	CADTreeView *tview = (CADTreeView *)(((CADApp *)qApp)->cadtreeview);
@@ -182,6 +191,43 @@ CADAccordian::CADAccordian(QWidget *pparent)
 	w->installEventFilter(efilter);
     }
 
+}
+
+void
+CADAccordian::highlight_selected(QAccordianObject *selected)
+{
+    QString highlight_style("background-color: rgb(10,10,200);");
+    if (view_obj == selected) {
+	view_obj->toggle->setStyleSheet(highlight_style);
+    } else {
+	view_obj->toggle->setStyleSheet("");
+    }
+    if (instance_obj == selected) {
+	instance_obj->toggle->setStyleSheet(highlight_style);
+    } else {
+	instance_obj->toggle->setStyleSheet("");
+    }
+    if (primitive_obj == selected) {
+	primitive_obj->toggle->setStyleSheet(highlight_style);
+    } else {
+	primitive_obj->toggle->setStyleSheet("");
+    }
+    if (stdprop_obj == selected) {
+	stdprop_obj->toggle->setStyleSheet(highlight_style);
+    } else {
+	stdprop_obj->toggle->setStyleSheet("");
+    }
+    if (userprop_obj == selected) {
+	userprop_obj->toggle->setStyleSheet(highlight_style);
+    } else {
+	userprop_obj->toggle->setStyleSheet("");
+    }
+
+    view_obj->toggle->update();
+    instance_obj->toggle->update();
+    primitive_obj->toggle->update();
+    stdprop_obj->toggle->update();
+    userprop_obj->toggle->update();
 }
 
 CADAccordian::~CADAccordian()

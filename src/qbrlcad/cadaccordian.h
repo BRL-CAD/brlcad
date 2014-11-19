@@ -59,6 +59,8 @@ class CADAccordian : public QAccordianWidget
 	CADAccordian(QWidget *pparent);
 	~CADAccordian();
 
+	void highlight_selected(QAccordianObject *);
+
 	CADViewControls *view_ctrls;
 	QAccordianObject *view_obj;
 	CADInstanceEdit *instance_ctrls;
