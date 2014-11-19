@@ -135,6 +135,11 @@ get_args(int argc, char **argv)
 	return 1;
     }
 
+    if (isatty(fileno(stdout)) && out_file == NULL) {
+    	bu_log("pix-bw: cannot send output to a tty\n");
+	return 0;
+    }
+
     if (argc > ++bu_optind) {
 	bu_log("pix-bw: excess argument(s) ignored\n");
     }
