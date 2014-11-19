@@ -82,9 +82,7 @@ get_args(int argc, char *argv[], long *width, long *height)
 		break;
 	    }
 
-	    case '?':
-	    case 'h':
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
