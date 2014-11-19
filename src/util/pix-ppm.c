@@ -161,8 +161,8 @@ main(int argc, char *argv[])
     long int file_width = 512L; /* default input width */
     long int file_height = 512L; /* default input height */
 
-    char usage[] = "Usage: pix-ppm [-a] [-#bytes] [-w file_width] [-n file_height]\n\
-	[-s square_file_size] [-o file.ppm] [file.pix] [> file.ppm]";
+    char usage[] = "Usage: pix-ppm [-a] [-# bytes_per_pixel] [-w file_width] [-n file_height]\n\
+               [-s square_file_size] [-o file.ppm] [file.pix] [> file.ppm]";
 
     long size;
 
