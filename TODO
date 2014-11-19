@@ -55,6 +55,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* improve performance of these commands that seem to have exponential
+  cost: bot_split, killtree
+
 * translate lc command to libged
 
 * Integrate ADRT into Archer as a visualization mode.
