@@ -476,7 +476,6 @@ CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 	}
 	if (interaction_mode == 2)
 	    selected_dp = (struct directory *)(idx.data(DirectoryInternalRole).value<void *>());
-	std::cout << "name: " << selected_dp->d_namep << "\n";
     }
 
 
@@ -552,7 +551,6 @@ CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
 	    instance_dp = (struct directory *)(((CADApp *)qApp)->current_idx.data(DirectoryInternalRole).value<void *>());
 	if (interaction_mode == 2)
 	    selected_dp = (struct directory *)(((CADApp *)qApp)->current_idx.data(DirectoryInternalRole).value<void *>());
-	std::cout << "name: " << selected_dp->d_namep << "\n";
     }
 
     if (selected_dp != RT_DIR_NULL) {
@@ -586,7 +584,6 @@ CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
 		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		}
 	    } else {
-		std::cout << "got this far\n";
 		if (interaction_mode == 1) {
 		    int node_state = 0;
 
@@ -633,7 +630,6 @@ CADTreeModel::close_tree_node_relationships(const QModelIndex & idx)
 	    selected_dp = (struct directory *)(((CADApp *)qApp)->current_idx.parent().data(DirectoryInternalRole).value<void *>());
 	if (interaction_mode == 2)
 	    selected_dp = (struct directory *)(((CADApp *)qApp)->current_idx.data(DirectoryInternalRole).value<void *>());
-	std::cout << "name: " << selected_dp->d_namep << "\n";
     }
 
 
