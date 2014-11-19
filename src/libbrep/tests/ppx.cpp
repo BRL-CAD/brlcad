@@ -27,9 +27,14 @@
 #include "brep.h"
 #include <sstream>
 #include <string>
+#include "../brep_defines.h"
 
 class PPX_Input {
 public:
+    PPX_Input()
+	: tol(0.0)
+    {
+    }
     ON_3dPoint ptA;
     ON_3dPoint ptB;
     ON_ClassArray<ON_PX_EVENT> events;
@@ -44,6 +49,32 @@ public:
 
     bool Equals(std::string &log, const PPX_Output &other);
 };
+
+#define EVENT_EQUAL_TOL INTERSECTION_TOL / 4.0
+
+static bool
+point_events_equal(ON_PX_EVENT a, ON_PX_EVENT b)
+{
+    if (a.m_type != b.m_type) {
+	return false;
+    }
+    if (a.m_A.DistanceTo(b.m_A) >= EVENT_EQUAL_TOL) {
+	return false;
+    }
+    if (a.m_B.DistanceTo(b.m_B) >= EVENT_EQUAL_TOL) {
+	return false;
+    }
+    if (a.m_b.DistanceTo(b.m_b) >= EVENT_EQUAL_TOL) {
+	return false;
+    }
+    if (a.m_Mid.DistanceTo(b.m_Mid) >= EVENT_EQUAL_TOL) {
+	return false;
+    }
+    if (!ON_NearZero(a.m_radius - b.m_radius, EVENT_EQUAL_TOL)) {
+	return false;
+    }
+    return true;
+}
 
 bool
 PPX_Output::Equals(std::string &log, const PPX_Output &other)
@@ -63,7 +94,7 @@ PPX_Output::Equals(std::string &log, const PPX_Output &other)
 	ret = false;
     } else {
 	for (int i = 0; i < events.Count(); ++i) {
-	    if (ON_PX_EVENT::Compare(&other.events[i], &events[i]) != 0) {
+	    if (!point_events_equal(other.events[i], events[i])) {
 		out << "event arrays don't match\n";
 		ret = false;
 		break;
@@ -96,18 +127,51 @@ test_intersection(PPX_Input in, PPX_Output expected_out)
     }
 }
 
-int
-main(void)
+static ON_PX_EVENT
+ppx_point_event(ON_3dPoint ptA, ON_3dPoint ptB)
 {
-    PPX_Input input;
-    input.ptA = ON_3dPoint(0, 0, 0);
-    input.ptB = ON_3dPoint(0, 0, 0);
-    input.default_tol = true;
+    ON_PX_EVENT event;
+    event.m_type = ON_PX_EVENT::ppx_point;
+    event.m_A = ptA;
+    event.m_B = ptB;
+    event.m_b = ON_2dPoint(0.0, 0.0);
+    event.m_Mid = (ptA + ptB) * 0.5;
+    event.m_radius = ptA.DistanceTo(ptB) * 0.5;
+    return event;
+}
+
+static void
+test_equal_points(ON_3dPoint pt)
+{
+    ON_ClassArray<ON_PX_EVENT> events;
+    events.Append(ppx_point_event(pt, pt));
 
     PPX_Output expected_output;
     expected_output.status = true;
+    expected_output.events = events;
+
+    PPX_Input input;
+    input.ptA = input.ptB = pt;
+    input.default_tol = true;
 
     test_intersection(input, expected_output);
+}
+
+static void
+do_equal_point_tests(void)
+{
+    std::vector<ON_3dPoint> points;
+    points.push_back(ON_3dPoint(0.0, 0.0, 0.0));
+
+    for (size_t i = 0; i < points.size(); ++i) {
+	test_equal_points(points[i]);
+    }
+}
+
+int
+main(void)
+{
+    do_equal_point_tests();
 
     return 0;
 }
