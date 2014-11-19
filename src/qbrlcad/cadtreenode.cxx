@@ -31,6 +31,8 @@ CADTreeNode::CADTreeNode(struct directory *in_dp, CADTreeNode *aParent)
     if(parent) {
 	parent->children.append(this);
     }
+    is_highlighted = 0;
+    instance_highlight = 0;
 }
 
 CADTreeNode::CADTreeNode(QString dp_name, CADTreeNode *aParent)

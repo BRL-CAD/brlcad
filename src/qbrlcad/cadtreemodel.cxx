@@ -350,6 +350,7 @@ CADTreeModel::data(const QModelIndex & idx, int role) const
     if (role == DirectoryInternalRole) return QVariant::fromValue((void *)(curr_node->node_dp));
     if (role == TypeIconDisplayRole) return curr_node->icon;
     if (role == RelatedHighlightDisplayRole) return curr_node->is_highlighted;
+    if (role == InstanceHighlightDisplayRole) return curr_node->instance_highlight;
     return QVariant();
 }
 
@@ -381,11 +382,17 @@ CADTreeModel::setData(const QModelIndex & idx, const QVariant & value, int role)
 	roles.append(Qt::DisplayRole);
 	ret = true;
     }
+    if (role == InstanceHighlightDisplayRole) {
+	curr_node->instance_highlight = value.toInt();
+	roles.append(InstanceHighlightDisplayRole);
+	roles.append(Qt::DisplayRole);
+	ret = true;
+    }
     if (ret) emit dataChanged(idx, idx, roles);
     return ret;
 }
 
-HIDDEN void 
+HIDDEN void
 db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, int *depth, int max_depth, QHash<struct directory *, struct rt_db_internal *> *combinternals,
 	void (*traverse_func) (int *ret, const char *, struct directory *, struct db_i *, int *, int, QHash<struct directory *, struct rt_db_internal *> *))
 {
@@ -459,11 +466,14 @@ void
 CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 {
     struct directory *selected_dp = RT_DIR_NULL;
+    struct directory *instance_dp = RT_DIR_NULL;
     ((CADApp *)qApp)->current_idx = idx;
     int interaction_mode = ((CADApp *)qApp)->interaction_mode;
     if (interaction_mode && idx.isValid()) {
-	if (interaction_mode == 1)
+	if (interaction_mode == 1) {
 	    selected_dp = (struct directory *)(idx.parent().data(DirectoryInternalRole).value<void *>());
+	    instance_dp = (struct directory *)(idx.data(DirectoryInternalRole).value<void *>());
+	}
 	if (interaction_mode == 2)
 	    selected_dp = (struct directory *)(idx.data(DirectoryInternalRole).value<void *>());
 	std::cout << "name: " << selected_dp->d_namep << "\n";
@@ -474,7 +484,9 @@ CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 	foreach (CADTreeNode *test_node, all_nodes) {
 	    QModelIndex test_index = NodeIndex(test_node);
 	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
-	    if (selected_dp != test_node->node_dp) {
+	    int is = test_index.data(InstanceHighlightDisplayRole).toInt();
+	    if (selected_dp != test_node->node_dp && instance_dp != test_node->node_dp) {
+		if (is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
 		if (test_node->node_dp != RT_DIR_NULL && test_node->node_dp->d_flags & RT_DIR_COMB) {
 		    if (!((CADApp *)qApp)->cadtreeview->isExpanded(test_index)) {
 			int depth = 0;
@@ -489,10 +501,24 @@ CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		}
 	    } else {
-		if (test_index != idx) {
-		    if (!hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
-		} else {
-		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+		if (interaction_mode == 1) {
+		    int node_state = 0;
+
+		    if (instance_dp == test_node->node_dp && IndexNode(test_index.parent())->node_dp == selected_dp) node_state = 1;
+		    if (selected_dp == test_node->node_dp) node_state = 1;
+		    if (test_index == idx) node_state = 0;
+		    if (node_state && instance_dp == test_node->node_dp && test_index.row() != idx.row()) node_state = 0;
+		    if (node_state && !is) setData(test_index, QVariant(1), InstanceHighlightDisplayRole);
+		    if (!node_state && is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
+		    if (node_state && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+		}
+		if (interaction_mode == 2) {
+		    if (is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
+		    if (test_index != idx) {
+			if (!hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
+		    } else {
+			if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+		    }
 		}
 	    }
 	}
@@ -501,6 +527,8 @@ CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 	    QModelIndex test_index = NodeIndex(test_node);
 	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
 	    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+	    int is = test_index.data(InstanceHighlightDisplayRole).toInt();
+	    if (is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
 	}
     }
 
@@ -516,10 +544,12 @@ void
 CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
 {
     struct directory *selected_dp = RT_DIR_NULL;
+    struct directory *instance_dp = RT_DIR_NULL;
     int interaction_mode = ((CADApp *)qApp)->interaction_mode;
     if (interaction_mode && ((CADApp *)qApp)->current_idx.isValid()) {
 	if (interaction_mode == 1)
 	    selected_dp = (struct directory *)(((CADApp *)qApp)->current_idx.parent().data(DirectoryInternalRole).value<void *>());
+	    instance_dp = (struct directory *)(((CADApp *)qApp)->current_idx.data(DirectoryInternalRole).value<void *>());
 	if (interaction_mode == 2)
 	    selected_dp = (struct directory *)(((CADApp *)qApp)->current_idx.data(DirectoryInternalRole).value<void *>());
 	std::cout << "name: " << selected_dp->d_namep << "\n";
@@ -537,7 +567,8 @@ CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
 	    CADTreeNode *test_node = test_nodes.dequeue();
 	    QModelIndex test_index = NodeIndex(test_node);
 	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
-	    if (selected_dp != test_node->node_dp) {
+	    int is = test_index.data(InstanceHighlightDisplayRole).toInt();
+	    if (selected_dp != test_node->node_dp && instance_dp != test_node->node_dp) {
 		if (test_node->node_dp != RT_DIR_NULL && test_node->node_dp->d_flags & RT_DIR_COMB) {
 		    if (!((CADApp *)qApp)->cadtreeview->isExpanded(test_index)) {
 			int depth = 0;
@@ -555,10 +586,20 @@ CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
 		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		}
 	    } else {
-		if (test_index != idx) {
+		std::cout << "got this far\n";
+		if (interaction_mode == 1) {
+		    int node_state = 0;
+
+		    if (instance_dp == test_node->node_dp && IndexNode(test_index.parent())->node_dp == selected_dp) node_state = 1;
+		    if (selected_dp == test_node->node_dp) node_state = 1;
+		    if (node_state && instance_dp == test_node->node_dp && test_index.row() != ((CADApp *)qApp)->current_idx.row()) node_state = 0;
+		    if (node_state && !is) setData(test_index, QVariant(1), InstanceHighlightDisplayRole);
+		    if (!node_state && is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
+		    if (node_state && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
+		}
+		if (interaction_mode == 2) {
+		    if (is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
 		    if (!hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
-		} else {
-		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		}
 	    }
 	}
@@ -717,6 +758,7 @@ CADTreeModel::cad_add_child(const char *name, CADTreeNode *curr_node, int op)
     setData(idx, QVariant::fromValue((void *)dp), DirectoryInternalRole);
     setData(idx, QVariant(get_type_icon(dp, current_dbip)), TypeIconDisplayRole);
     setData(idx, QVariant(0), RelatedHighlightDisplayRole);
+    setData(idx, QVariant(0), InstanceHighlightDisplayRole);
     all_nodes.insert(new_node);
 }
 

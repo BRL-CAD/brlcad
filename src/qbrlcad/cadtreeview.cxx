@@ -20,13 +20,19 @@ void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
     struct directory *pdp = (struct directory *)(index.data(DirectoryInternalRole).value<void *>());
     if (option.state & QStyle::State_Selected) {
 	painter->fillRect(option.rect, option.palette.highlight());
-    } else {
-	if ((!((CADApp *)qApp)->cadtreeview->isExpanded(index) && index.data(RelatedHighlightDisplayRole).toInt())
-		|| (cdp == pdp && index.data(RelatedHighlightDisplayRole).toInt())) {
-	    painter->fillRect(option.rect, QBrush(QColor(220, 200, 30)));
-	}
+	goto text_string;
+    }
+    if ((!((CADApp *)qApp)->cadtreeview->isExpanded(index) && index.data(RelatedHighlightDisplayRole).toInt())
+	    || (cdp == pdp && index.data(RelatedHighlightDisplayRole).toInt())) {
+	painter->fillRect(option.rect, QBrush(QColor(220, 200, 30)));
+	goto text_string;
+    }
+    if (index.data(InstanceHighlightDisplayRole).toInt()) {
+	painter->fillRect(option.rect, QBrush(QColor(10, 10, 50)));
+	goto text_string;
     }
 
+text_string:
     QString text = index.data().toString();
     int bool_op = index.data(BoolInternalRole).toInt();
     switch (bool_op) {
@@ -99,6 +105,9 @@ CADTreeView::drawBranches(QPainter* painter, const QRect& rrect, const QModelInd
 	}
 	if (cdp == pdp && index.data(RelatedHighlightDisplayRole).toInt()) {
 	    painter->fillRect(rrect, QBrush(QColor(220, 200, 30)));
+	}
+	if (index.data(InstanceHighlightDisplayRole).toInt()) {
+	    painter->fillRect(rrect, QBrush(QColor(10, 10, 50)));
 	}
     }
     QTreeView::drawBranches(painter, rrect, index);

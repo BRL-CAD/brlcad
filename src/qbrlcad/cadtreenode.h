@@ -48,6 +48,7 @@ public:
     QString name;
     int boolean;
     int is_highlighted;
+    int instance_highlight;
     struct directory *node_dp;
     QVariant icon;
 
