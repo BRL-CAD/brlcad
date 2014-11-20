@@ -502,14 +502,13 @@ CADTreeModel::update_selected_node_relationships(const QModelIndex & idx)
 	    } else {
 		if (interaction_mode == 1) {
 		    int node_state = 0;
-
+		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		    if (instance_dp == test_node->node_dp && IndexNode(test_index.parent())->node_dp == selected_dp) node_state = 1;
 		    if (selected_dp == test_node->node_dp) node_state = 1;
 		    if (test_index == idx) node_state = 0;
 		    if (node_state && instance_dp == test_node->node_dp && test_index.row() != idx.row()) node_state = 0;
 		    if (node_state && !is) setData(test_index, QVariant(1), InstanceHighlightDisplayRole);
 		    if (!node_state && is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
-		    if (node_state && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
 		}
 		if (interaction_mode == 2) {
 		    if (is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
