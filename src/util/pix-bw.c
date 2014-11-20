@@ -104,6 +104,10 @@ get_args(int argc, char **argv)
 		bweight = atof(bu_optarg);
 		break;
 	    case 'o' :
+		if ( !isatty(fileno(stdout)) ) {
+		    bu_log("pix-bw: cannot use both -o and >\n");
+		    return 0;
+		}
 		out_file = bu_optarg;
 		break;
             case 's' :
@@ -126,11 +130,6 @@ get_args(int argc, char **argv)
  */
     if (argc == 1)
 	return 0;
-
-    if (!isatty(fileno(stdout)) && out_file!=NULL) {
-    	bu_log("pix-bw: cannot use both -o and >\n");
-	return 0;
-    }
 
     if (isatty(fileno(stdout)) && out_file == NULL) {
     	bu_log("pix-bw: cannot send output to a tty\n");
