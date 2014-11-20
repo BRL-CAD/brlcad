@@ -4577,28 +4577,13 @@ RT_EXPORT extern void db_update_nref(struct db_i *dbip,
 
 
 /**
- * DEPRECATED: Use bu_fnmatch() instead of this function.
+ * DEPRECATED: Use db_ls() instead of this function.
  *
- * If string matches pattern, return 1, else return 0
- *
- * special characters:
- *	*	Matches any string including the null string.
- *	?	Matches any single character.
- *	[...]	Matches any one of the characters enclosed.
- *	-	May be used inside brackets to specify range
- *		(i.e. str[1-58] matches str1, str2, ... str5, str8)
- *	\	Escapes special characters.
- */
-DEPRECATED RT_EXPORT extern int db_regexp_match(const char *pattern,
-						const char *string);
-
-
-/**
  * Appends a list of all database matches to the given vls, or the
  * pattern itself if no matches are found.  Returns the number of
  * matches.
  */
-RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
+DEPRECATED RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 					 struct db_i *dbip,
 					 const char *pattern);
 
@@ -4606,7 +4591,9 @@ RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 /**
  * db_ls takes a database instance pointer and assembles a directory
  * pointer array of objects in the database according to a set of
- * flags.
+ * flags.  An optional pattern can be supplied for match filtering
+ * via globbing rules (see bu_fnmatch).  If pattern is NULL, filtering
+ * is performed using only the flags.
  *
  * The caller is responsible for freeing the array.
  *
@@ -4614,9 +4601,6 @@ RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
  * integer count of objects in dpv
  * struct directory ** array of objects in dpv via argument
  *
- * WARNING: THIS FUNCTION IS STILL IN DEVELOPMENT - IT IS NOT YET
- * ASSUMED THAT THIS IS ITS FINAL FORM - DO NOT DEPEND ON IT REMAINING
- * THE SAME UNTIL THIS WARNING IS REMOVED
  */
 #define DB_LS_PRIM         0x1    /* filter for primitives (solids)*/
 #define DB_LS_COMB         0x2    /* filter for combinations */
@@ -4624,8 +4608,12 @@ RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 #define DB_LS_HIDDEN       0x8    /* include hidden objects in results */
 #define DB_LS_NON_GEOM     0x10   /* filter for non-geometry objects */
 #define DB_LS_TOPS         0x20   /* filter for objects un-referenced by other objects */
+/* TODO - implement this flag
+#define DB_LS_REGEX	   0x40*/ /* interpret pattern using regex rules, instead of
+				     globbing rules (default) */
 RT_EXPORT extern int db_ls(const struct db_i *dbip,
 		           int flags,
+			   const char *pattern,
 			   struct directory ***dpv);
 
 /**

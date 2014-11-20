@@ -55,7 +55,7 @@ dp_eval_flags(struct directory *dp, int flags)
 }
 
 int
-db_ls(const struct db_i *dbip, int flags, struct directory ***dpv)
+db_ls(const struct db_i *dbip, int flags, const char *pattern, struct directory ***dpv)
 {
     int i;
     int objcount = 0;
@@ -74,8 +74,10 @@ db_ls(const struct db_i *dbip, int flags, struct directory ***dpv)
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (dp_eval_flags(dp,flags)) {
-		    (*dpv)[objcount] = dp;
-		    objcount++;
+		    if (!pattern || !bu_fnmatch(pattern, dp->d_namep, 0)) {
+			(*dpv)[objcount] = dp;
+			objcount++;
+		    }
 		}
 	    }
 	}
