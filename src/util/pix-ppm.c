@@ -75,6 +75,10 @@ get_args(int argc, char *argv[], long *width, long *height)
 		autosize = 0;
 		break;
 	    case 'o': {
+		if ( !isatty(fileno(stdout)) ) {
+		    bu_log("ERROR: %s cannot use both -o and >\n",bu_getprogname());
+		    return 0;
+		}
 		outfp = fopen(bu_optarg, "w+");
 		if (outfp == (FILE *)NULL) {
 		    bu_exit(1, "%s: cannot open \"%s\" for writing\n", bu_getprogname(), bu_optarg);
