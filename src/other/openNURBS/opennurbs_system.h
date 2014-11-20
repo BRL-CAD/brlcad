@@ -434,7 +434,8 @@ typedef unsigned long long ON__UINT64;
 #endif
 
 // 32 bit boolean (true/false) value
-typedef bool ON_BOOL32;
+// When we can break the SDK, this will be replaced with "bool", which is 1 byte on windows.
+typedef int ON_BOOL32;
 
 // ON_INT_PTR must be an integer type with sizeof(ON_INT_PTR) = sizeof(void*).
 #if 8 == ON_SIZEOF_POINTER
