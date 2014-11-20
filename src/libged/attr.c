@@ -183,10 +183,6 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     const char VALUE[]        = "value";
     const char VALUE_NOCASE[] = "value-nocase";
 
-    /* for pretty printing */
-    int max_attr_name_len  = 0;
-    /*int max_attr_value_len = 0;*/
-
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
@@ -226,22 +222,16 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 #if 0
     if ((scmd == ATTR_SHOW && argc == 3) || scmd == ATTR_SORT) {
-	/* get a jump on calculating name and value lengths */
-	for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-	    int len = (int)strlen(avpp->name);
-	    if (len > max_attr_name_len)
-		max_attr_name_len = len;
-	    if (avpp->value) {
-		len = (int)strlen(avpp->value);
-		if (len > max_attr_value_len)
-		    max_attr_value_len = len;
-	    }
-	}
     }
 #endif
 
     if (scmd == ATTR_SORT) {
 	for (i = 0; i < largc; i++) {
+	    /* for pretty printing */
+	    unsigned int j = 0;
+	    int max_attr_name_len  = 0;
+	    int max_attr_value_len = 0;
+
 	    struct bu_attribute_value_set avs;
 	    bu_avs_init_empty(&avs);
 
@@ -255,6 +245,17 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
+	    /* get a jump on calculating name and value lengths */
+	    for (j = 0, avpp = avs.avp; j < avs.count; j++, avpp++) {
+		int len = (int)strlen(avpp->name);
+		if (len > max_attr_name_len)
+		    max_attr_name_len = len;
+		if (avpp->value) {
+		    len = (int)strlen(avpp->value);
+		    if (len > max_attr_value_len)
+			max_attr_value_len = len;
+		}
+	    }
 
 	    /* pretty print */
 	    if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK) {
@@ -541,81 +542,100 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    /* avs is freed by db5_replace_attributes() */
 	}
     } else if (scmd == ATTR_SHOW) {
-	int tabs1 = 0;
-	struct bu_attribute_value_set avs;
-	bu_avs_init_empty(&avs);
-	GED_DB_LOOKUP(gedp, dp, largv[0], LOOKUP_QUIET, GED_ERROR);
+	for (i = 0; i < largc; i++) {
+	    /* for pretty printing */
+	    int max_attr_name_len  = 0;
+	    int max_attr_value_len = 0;
 
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	    bu_free(largv, "free largv");
-	    bu_free(dplist, "free dplist");
-	    bu_vls_free(&objs);
-	    return GED_ERROR;
-	}
+	    unsigned int j = 0;
+	    int tabs1 = 0;
+	    struct bu_attribute_value_set avs;
+	    bu_avs_init_empty(&avs);
+	    GED_DB_LOOKUP(gedp, dp, largv[i], LOOKUP_QUIET, GED_ERROR);
 
+	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		bu_free(largv, "free largv");
+		bu_free(dplist, "free dplist");
+		bu_vls_free(&objs);
+		return GED_ERROR;
+	    }
 
-
-	/* pretty print */
-	if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK) {
-	    bu_free(largv, "free largv");
-	    bu_free(dplist, "free dplist");
-	    bu_vls_free(&objs);
-	    return GED_ERROR;
-	}
-
-	if (argc == 3) {
-	    /* just display all attributes */
-	    attr_print(gedp, &avs, max_attr_name_len);
-	} else {
-	    const char *val;
-	    int len;
-
-	    /* show just the specified attributes */
-	    for (i = 0; i < (size_t)argc; i++) {
-		len = (int)strlen(argv[i]);
-		if (len > max_attr_name_len) {
+	    /* get a jump on calculating name and value lengths */
+	    for (j = 0, avpp = avs.avp; j < avs.count; j++, avpp++) {
+		int len = (int)strlen(avpp->name);
+		if (len > max_attr_name_len)
 		    max_attr_name_len = len;
+		if (avpp->value) {
+		    len = (int)strlen(avpp->value);
+		    if (len > max_attr_value_len)
+			max_attr_value_len = len;
 		}
 	    }
-	    tabs1 = 2 + max_attr_name_len/8;
-	    for (i = 3; i < (size_t)argc; i++) {
-		int tabs2;
-		int k;
-		const char *c;
 
-		val = bu_avs_get(&avs, argv[i]);
-		if (!val) {
-		    bu_vls_printf(gedp->ged_result_str,
-				  "Object %s does not have a %s attribute\n",
-				  dp->d_namep,
-				  argv[i]);
-		    bu_avs_free(&avs);
-		    bu_free(largv, "free largv");
-		    bu_free(dplist, "free dplist");
-		    bu_vls_free(&objs);
-		    return GED_ERROR;
+	    /* pretty print */
+	    if ((attr_pretty_print(gedp, dp, largv[i])) != GED_OK) {
+		bu_free(largv, "free largv");
+		bu_free(dplist, "free dplist");
+		bu_vls_free(&objs);
+		return GED_ERROR;
+	    }
+
+	    if (argc == 3) {
+		/* just display all attributes */
+		attr_print(gedp, &avs, max_attr_name_len);
+	    } else {
+		const char *val;
+		int len;
+
+		/* show just the specified attributes */
+		for (j = 0; j < (size_t)argc; j++) {
+		    len = (int)strlen(argv[j]);
+		    if (len > max_attr_name_len) {
+			max_attr_name_len = len;
+		    }
 		}
-		bu_vls_printf(gedp->ged_result_str, "\t%s", argv[i]);
-		len = (int)strlen(val);
-		tabs2 = tabs1 - 1 - len/8;
-		for (k = 0; k < tabs2; k++) {
-		    bu_vls_putc(gedp->ged_result_str, '\t');
-		}
-		c = val;
-		while (*c) {
-		    bu_vls_putc(gedp->ged_result_str, *c);
-		    if (*c == '\n') {
-			for (k = 0; k < tabs1; k++) {
-			    bu_vls_putc(gedp->ged_result_str, '\t');
+		tabs1 = 2 + max_attr_name_len/8;
+		for (j = 3; j < (size_t)argc; j++) {
+		    int tabs2;
+		    int k;
+		    const char *c;
+
+		    val = bu_avs_get(&avs, argv[j]);
+		    if (!val && largc == 1) {
+			bu_vls_printf(gedp->ged_result_str,
+				"Object %s does not have a %s attribute\n",
+				dp->d_namep,
+				argv[j]);
+			bu_avs_free(&avs);
+			bu_free(largv, "free largv");
+			bu_free(dplist, "free dplist");
+			bu_vls_free(&objs);
+			return GED_ERROR;
+		    } else {
+			if (val) {
+			    bu_vls_printf(gedp->ged_result_str, "\t%s", argv[j]);
+			    len = (int)strlen(val);
+			    tabs2 = tabs1 - 1 - len/8;
+			    for (k = 0; k < tabs2; k++) {
+				bu_vls_putc(gedp->ged_result_str, '\t');
+			    }
+			    c = val;
+			    while (*c) {
+				bu_vls_putc(gedp->ged_result_str, *c);
+				if (*c == '\n') {
+				    for (k = 0; k < tabs1; k++) {
+					bu_vls_putc(gedp->ged_result_str, '\t');
+				    }
+				}
+				c++;
+			    }
+			    bu_vls_putc(gedp->ged_result_str, '\n');
 			}
 		    }
-		    c++;
 		}
-		bu_vls_putc(gedp->ged_result_str, '\n');
 	    }
 	}
-
     } else {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: unrecognized attr subcommand %s\n", argv[1]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
