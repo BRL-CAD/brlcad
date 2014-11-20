@@ -513,7 +513,7 @@ replace_curve_with_subcurve(ON_Curve *&curve, const ON_Interval &interval)
 	ON_Curve *subcurve = sub_curve(curve, interval.Min(), interval.Max());
 	delete curve;
 	curve = subcurve;
-    } catch (InvalidInterval &e) {
+    } catch (InvalidInterval &) {
 	throw GeometryGenerationError("replace_curve_with_subcurve(): NULL "
 		"subcurve\n");
     }
@@ -667,12 +667,12 @@ split_curve(ON_Curve *&left, ON_Curve *&right, const ON_Curve *in, double t)
 {
     try {
 	left = sub_curve(in, in->Domain().m_t[0], t);
-    } catch (InvalidInterval &e) {
+    } catch (InvalidInterval &) {
 	left = NULL;
     }
     try {
 	right = sub_curve(in, t, in->Domain().m_t[1]);
-    } catch (InvalidInterval &e) {
+    } catch (InvalidInterval &) {
 	right = NULL;
     }
 }
@@ -1006,7 +1006,7 @@ public:
 	ON_Curve *seg_curve = NULL;
 	try {
 	    seg_curve = Curve();
-	} catch (InvalidInterval &e) {
+	} catch (InvalidInterval &) {
 	    return true;
 	}
 
