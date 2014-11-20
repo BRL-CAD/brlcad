@@ -120,24 +120,32 @@ get_args(int argc, char **argv)
 	}
     }
 
+/* Immediately check for the run-with-no-arguments condition.  This
+ * eliminates the "cannot send output to a tty" message.  For an
+ * actual run, we would need a least a color-scheme argument.
+ */
+    if (argc == 1)
+	return 0;
+
     if (!isatty(fileno(stdout)) && out_file!=NULL) {
     	bu_log("pix-bw: cannot use both -o and >\n");
 	return 0;
     }
 
+    if (isatty(fileno(stdout)) && out_file == NULL) {
+    	bu_log("pix-bw: cannot send output to a tty\n");
+	return 0;
+    }
+
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin))) {
+	    bu_log("pix-bw: cannot receive input from a tty\n");
 	    return 0;
 	}
     } else {
 	in_file = argv[bu_optind];
 	bu_optind++;
 	return 1;
-    }
-
-    if (isatty(fileno(stdout)) && out_file == NULL) {
-    	bu_log("pix-bw: cannot send output to a tty\n");
-	return 0;
     }
 
     if (argc > ++bu_optind) {
