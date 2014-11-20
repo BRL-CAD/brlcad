@@ -346,7 +346,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "%s: ", dp->d_namep);
 		    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&obj_vals));
 
-		    if (i > 0 && i < path_cnt-1) {
+		    if (i < path_cnt-1) {
 			bu_vls_printf(gedp->ged_result_str, "\n");
 		    }
 		}
