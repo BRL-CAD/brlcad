@@ -61,7 +61,9 @@
 #include "rtgeom.h"
 
 
-#include "./rt/defines.h"
+#include "rt/defines.h"
+#include "rt/db_fullpath.h"
+
 
 __BEGIN_DECLS
 
@@ -204,7 +206,6 @@ struct rt_db_internal {
     }
 #define RT_CK_DB_INTERNAL(_p) BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
-#include "rt/db_fullpath.h"
 
 /**
  * All necessary information about a ray.
@@ -5003,19 +5004,6 @@ RT_EXPORT extern int db_walk_tree(struct db_i *dbip,
 				  void *client_data);
 
 /**
- * Returns -
- * 1 OK, path matrix written into 'mat'.
- * 0 FAIL
- *
- * Called in librt/db_tree.c, mged/dodraw.c, and mged/animedit.c
- */
-RT_EXPORT extern int db_path_to_mat(struct db_i		*dbip,
-				    struct db_full_path	*pathp,
-				    mat_t			mat,		/* result */
-				    int			depth,		/* number of arcs */
-				    struct resource		*resp);
-
-/**
  * 'arc' may be a null pointer, signifying an identity matrix.
  * 'materp' may be a null pointer, signifying that the region has
  * already been finalized above this point in the tree.
@@ -6652,6 +6640,8 @@ RT_EXPORT extern int Rt_Init(Tcl_Interp *interp);
 
 /**
  * Take a db_full_path and append it to the TCL result string.
+ *
+ * NOT moving to db_fullpath.h because it is evil Tcl_Interp api
  */
 RT_EXPORT extern void db_full_path_appendresult(Tcl_Interp *interp,
 						const struct db_full_path *pp);
