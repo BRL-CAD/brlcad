@@ -25,9 +25,41 @@
 #include "common.h"
 #include "bu.h"
 #include "brep.h"
+#include <limits>
 #include <sstream>
 #include <string>
 #include "../brep_defines.h"
+
+// Here we determine an upper limit on the magnitude of coordinate
+// values for test points.
+//
+// We need to be able to calculate point to point distance as:
+//     sqrt((x2 - x1)^2 + (y2 - y1)^2 + (z2 - z1)^2)
+//
+// To prevent overflow, we must restrict the coordinate values such
+// that:
+//     (x2 - x1)^2 + (y2 - y1)^2 + (z2 - z1)^2 <= DBL_MAX
+//
+// If we want to choose an upper limit M on the magnitude of a
+// coordinate value to enforce this constraint, the restriction
+// simplifies to:
+//     coord1, coord2 in [-M, M] s.t.
+//     (coord2 - coord1)^2 <= DBL_MAX / 3.0
+//  => (coord2 - coord1) <= sqrt(DBL_MAX / 3.0)
+//
+// Knowing that the maximum value of (coord2 - coord1) is 2M, we can
+// solve for M:
+//     2M <= sqrt(DBL_MAX / 3.0)
+//  => M <= sqrt(DBL_MAX / 3.0) / 2.0
+//
+// We choose to use a value slightly less than the true DBL_MAX for
+// the calculation to avoid the possibility that floating point error
+// causes [3.0 * sqrt(DBL_MAX / 3.0)^2 <= DBL_MAX] to be false.
+static const double NEAR_DBL_MAX =
+    std::numeric_limits<double>::max() -
+    std::numeric_limits<double>::round_error();
+
+static const double COORD_MAG_MAX = sqrt(NEAR_DBL_MAX / 3.0) / 2.0;
 
 class PPX_Input {
 public:
@@ -50,7 +82,8 @@ public:
     bool Equals(std::string &log, const PPX_Output &other);
 };
 
-#define EVENT_EQUAL_TOL INTERSECTION_TOL / 4.0
+static const double EVENT_EQUAL_TOL =
+    std::numeric_limits<double>::round_error();
 
 static bool
 point_events_equal(ON_PX_EVENT a, ON_PX_EVENT b)
