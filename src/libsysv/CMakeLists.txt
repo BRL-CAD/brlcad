@@ -8,6 +8,7 @@ BRLCAD_LIB_INCLUDE_DIRS(sysv SYSV_INCLUDE_DIRS "")
 
 set(LIBSYSV_SOURCES
   memset.c
+  setenv.c
   strchr.c
   strdup.c
   strsep.c
