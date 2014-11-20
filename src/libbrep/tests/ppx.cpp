@@ -193,11 +193,22 @@ test_equal_points(ON_3dPoint pt)
 static void
 do_equal_point_tests(void)
 {
-    std::vector<ON_3dPoint> points;
-    points.push_back(ON_3dPoint(0.0, 0.0, 0.0));
+    std::vector<double> coord_vals;
+    coord_vals.push_back(-COORD_MAG_MAX);
+    coord_vals.push_back(-INTERSECTION_TOL);
+    coord_vals.push_back(0.0);
+    coord_vals.push_back(INTERSECTION_TOL);
+    coord_vals.push_back(COORD_MAG_MAX);
 
-    for (size_t i = 0; i < points.size(); ++i) {
-	test_equal_points(points[i]);
+    for (size_t i = 0; i < coord_vals.size(); ++i) {
+	for (size_t j = 0; j < coord_vals.size(); ++j) {
+	    for (size_t k = 0; k < coord_vals.size(); ++k) {
+		ON_3dPoint test_pt(coord_vals[i], coord_vals[j],
+			coord_vals[k]);
+
+		test_equal_points(test_pt);
+	    }
+	}
     }
 }
 
