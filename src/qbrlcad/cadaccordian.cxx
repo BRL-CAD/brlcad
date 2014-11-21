@@ -102,9 +102,14 @@ bool EditStateFilter::eventFilter(QObject *target, QEvent *e)
 	QPoint mpos = target_widget->mapTo(accordian, me->pos());
 
 	for (int i = 0; i < accordian->active_objects.size(); i++) {
+	    int margin = accordian->splitter->handleWidth()/2;
 	    QPushButton *obj_toggle = accordian->active_objects.at(i)->toggle;
 	    QPoint obj_topleft = obj_toggle->mapTo(accordian, obj_toggle->geometry().topLeft());
+	    obj_topleft.setX(obj_topleft.x() - margin);
+	    obj_topleft.setY(obj_topleft.y() - margin);
 	    QPoint obj_bottomright = obj_toggle->mapTo(accordian, obj_toggle->geometry().bottomRight());
+	    obj_bottomright.setX(obj_bottomright.x() + margin);
+	    obj_bottomright.setY(obj_bottomright.y() + margin);
 	    QRect obj_rect(obj_topleft, obj_bottomright);
 	    if (obj_rect.contains(mpos)) {
 		return QObject::eventFilter(target, e);

@@ -83,9 +83,9 @@ class QAccordianWidget : public QWidget
     public:
 	int unique_visibility;
 	QAccordianObject *open_object;
+	QSplitter *splitter;
 
     private:
-	QSplitter *splitter;
 	QSet<QAccordianObject *> objects;
 	QMap<QString, QList<int> > size_states;
 };
