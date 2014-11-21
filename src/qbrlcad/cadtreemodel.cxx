@@ -845,7 +845,7 @@ int CADTreeModel::populate(struct db_i *new_dbip)
     if (current_dbip != DBI_NULL) {
 	beginResetModel();
 	struct directory **db_objects = NULL;
-	int path_cnt = db_ls(current_dbip, DB_LS_TOPS, &db_objects);
+	int path_cnt = db_ls(current_dbip, DB_LS_TOPS, NULL, &db_objects);
 	if (path_cnt) {
 	    bu_sort(db_objects, path_cnt, sizeof(struct directory *), dp_cmp, NULL);
 	    for (int i = 0; i < path_cnt; i++) {
