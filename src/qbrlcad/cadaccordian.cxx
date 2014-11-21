@@ -92,9 +92,6 @@ CADPrimitiveEdit::~CADPrimitiveEdit()
     delete shape_properties;
 }
 
-// TODO - if we're over one of the accordian toggles, don't change any state - hidden
-// panels complicate the logic, so if we're over a toggle assume the business of the
-// click is *just* to open and close the panel
 bool EditStateFilter::eventFilter(QObject *target, QEvent *e)
 {
     int interaction_mode = ((CADApp *)qApp)->interaction_mode;
@@ -103,6 +100,16 @@ bool EditStateFilter::eventFilter(QObject *target, QEvent *e)
 	QMouseEvent *me = (QMouseEvent *)e;
 	QWidget *target_widget = static_cast<QWidget *>(target);
 	QPoint mpos = target_widget->mapTo(accordian, me->pos());
+
+	for (int i = 0; i < accordian->active_objects.size(); i++) {
+	    QPushButton *obj_toggle = accordian->active_objects.at(i)->toggle;
+	    QPoint obj_topleft = obj_toggle->mapTo(accordian, obj_toggle->geometry().topLeft());
+	    QPoint obj_bottomright = obj_toggle->mapTo(accordian, obj_toggle->geometry().bottomRight());
+	    QRect obj_rect(obj_topleft, obj_bottomright);
+	    if (obj_rect.contains(mpos)) {
+		return QObject::eventFilter(target, e);
+	    }
+	}
 
 	QPoint view_ctrls_topleft = accordian->view_ctrls->mapTo(accordian, accordian->view_ctrls->geometry().topLeft());
 	QPoint view_ctrls_bottomright = accordian->view_ctrls->mapTo(accordian, accordian->view_ctrls->geometry().bottomRight());
@@ -155,6 +162,7 @@ bool EditStateFilter::eventFilter(QObject *target, QEvent *e)
 	    tmodel->update_selected_node_relationships(tview->selected());
 	}
     }
+
     return QObject::eventFilter(target, e);
 }
 
@@ -176,14 +184,19 @@ CADAccordian::CADAccordian(QWidget *pparent)
 
     view_obj = new QAccordianObject(this, view_ctrls, "View Controls");
     this->addObject(view_obj);
+    active_objects.push_back(view_obj);
     instance_obj = new QAccordianObject(this, instance_ctrls, "Instance Editing");
     this->addObject(instance_obj);
+    active_objects.push_back(instance_obj);
     primitive_obj = new QAccordianObject(this, primitive_ctrls, "Primitive Editing");
     this->addObject(primitive_obj);
+    active_objects.push_back(primitive_obj);
     stdprop_obj = new QAccordianObject(this, stdpropview, "Standard Attributes");
     this->addObject(stdprop_obj);
+    active_objects.push_back(stdprop_obj);
     userprop_obj = new QAccordianObject(this, userpropview, "User Attributes");
     this->addObject(userprop_obj);
+    active_objects.push_back(userprop_obj);
 
     QList<QWidget*> list = this->findChildren<QWidget *>();
     EditStateFilter *efilter = new EditStateFilter();

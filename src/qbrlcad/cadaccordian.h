@@ -73,6 +73,16 @@ class CADAccordian : public QAccordianWidget
 	CADAttributesModel *userpropmodel;
 	CADAttributesView *userpropview;
 	QAccordianObject *userprop_obj;
+	// Need to create the following
+#if 0
+	CADAttributesModel *globalpropmodel;
+	CADAttributesView *globalpropview;
+	QAccordianObject *globalprop_obj;
+
+	Tools Palette (measurement, nirt, raytracing(maybe), etc.)
+	Primitive and procedural object creation (would be cool if we could do a wireframe-follows-mouse thing where each click of the mouse inserted a copy of the primitive with the current values at the specified point...)
+#endif
+	QVector<QAccordianObject *> active_objects;
 };
 
 #endif /* CADACCORDIAN_H */
