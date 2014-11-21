@@ -261,7 +261,7 @@ comb_flatten(struct ged *gedp, struct directory *dp)
 
 
     /* Find the combs NOT in the tree */
-    obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &all_paths);
+    obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
     bu_vls_init(&plan_string);
     bu_vls_sprintf(&plan_string, "-mindepth 1 ! -below -name %s -type comb", dp->d_namep);
     (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp->dbip);
@@ -347,7 +347,7 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
     }
 
     /* Find the combs NOT in the tree */
-    obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &all_paths);
+    obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
     bu_vls_init(&plan_string);
     bu_vls_sprintf(&plan_string, "-mindepth 1 ! -below -name %s -type comb", dp->d_namep);
     (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp->dbip);

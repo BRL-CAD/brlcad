@@ -2280,9 +2280,9 @@ db_search(struct bu_ptbl *search_results,
 
     if (!paths) {
 	if (search_flags & DB_SEARCH_HIDDEN) {
-	    path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_HIDDEN, &top_level_objects);
+	    path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_HIDDEN, NULL, &top_level_objects);
 	} else {
-	    path_cnt = db_ls(dbip, DB_LS_TOPS, &top_level_objects);
+	    path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &top_level_objects);
 	}
 	paths = top_level_objects;
     }

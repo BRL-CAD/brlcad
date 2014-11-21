@@ -30,7 +30,7 @@
      <arg choice='opt'><arg choice='plain'>-B </arg><replaceable>b_weight</replaceable></arg> </arg> </arg>
      <arg choice='opt'>-o <replaceable>out.bw</replaceable></arg>
    <arg choice='opt'><replaceable>in.pix</replaceable></arg>
-   <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+   <arg choice='plain'>&gt;</arg>
    <arg choice='plain'><replaceable>out.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

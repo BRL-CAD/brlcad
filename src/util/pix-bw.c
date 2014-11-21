@@ -59,9 +59,9 @@ char *out_file = NULL;
 char *in_file = NULL;
 
 static const char usage[] = "\
-pix-bw [-s squaresize] [-w width] [-n height]\n\
-       [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
-       [-o out_file.bw] [file.pix] > [out_file.bw]\n";
+Usage: pix-bw [-s squaresize] [-w width] [-n height]\n\
+              [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
+              [-o out_file.bw] [file.pix] [> out_file.bw]\n";
 
 double multiplier = 0.5;
 
@@ -104,6 +104,10 @@ get_args(int argc, char **argv)
 		bweight = atof(bu_optarg);
 		break;
 	    case 'o' :
+		if ( !isatty(fileno(stdout)) ) {
+		    bu_log("pix-bw: cannot use both -o and >\n");
+		    return 0;
+		}
 		out_file = bu_optarg;
 		break;
             case 's' :
@@ -120,19 +124,27 @@ get_args(int argc, char **argv)
 	}
     }
 
+/* Immediately check for the run-with-no-arguments condition.  This
+ * eliminates the "cannot send output to a tty" message.  For an
+ * actual run, we would need a least a color-scheme argument.
+ */
+    if (argc == 1)
+	return 0;
+
+    if (isatty(fileno(stdout)) && out_file == NULL) {
+    	bu_log("pix-bw: cannot send output to a tty\n");
+	return 0;
+    }
+
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin))) {
+	    bu_log("pix-bw: cannot receive input from a tty\n");
 	    return 0;
 	}
     } else {
 	in_file = argv[bu_optind];
 	bu_optind++;
 	return 1;
-    }
-
-
-    if (!isatty(fileno(stdout)) && out_file!=NULL) {
-	return 0;
     }
 
     if (argc > ++bu_optind) {
@@ -176,7 +188,7 @@ main(int argc, char **argv)
     else if (green)
 	color = ICV_COLOR_G;
     else {
-    	bu_log("no color scheme specified\n");
+    	bu_log("pix-bw: no color scheme specified\n");
 	bu_exit(1, "%s",usage);
     }
 

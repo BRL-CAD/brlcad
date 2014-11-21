@@ -40,6 +40,8 @@
 #undef WIN32_LEAN_AND_MEAN
 #include <locale.h>
 
+#include "bu.h"
+
 
 /*
  * Forward declarations for procedures defined later in this file:

@@ -144,7 +144,7 @@ public:
   //
   // Remarks:
   //   This overrides the virtual ON_Geometry::GetBBox() function.
-  ON_BOOL32 GetBBox( // returns true if successful
+  virtual ON_BOOL32 GetBBox( // returns true if successful
          double*, // boxmin
          double*, // boxmax
          ON_BOOL32 = false // bGrowBox
