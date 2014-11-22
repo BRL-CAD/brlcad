@@ -28,6 +28,8 @@ class ConsoleInput : public QTextEdit
 
 	int anchor_pos;
 
+	int history_pos;
+	QStringList history;
 };
 
 class ConsoleLog : public QTextBrowser

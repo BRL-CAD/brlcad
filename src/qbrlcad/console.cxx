@@ -20,6 +20,9 @@ ConsoleInput::ConsoleInput(QWidget *pparent, Console *pc) : QTextEdit(pparent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    history_pos = 0;
+    history.push_back("");
 }
 
 void ConsoleInput::resizeEvent(QResizeEvent *e)
@@ -70,8 +73,26 @@ void ConsoleInput::DoCommand()
 
 void ConsoleInput::keyPressEvent(QKeyEvent *e)
 {
+    QStringList slist;
+    QString new_line;
    switch(e->key())
     {
+	case Qt::Key_Up:
+	    e->accept();
+	    if (history_pos > 0) {
+		clear();
+		history_pos--;
+		insertPlainText(history.at(history_pos));
+	    }
+	    break;
+	case Qt::Key_Down:
+	    e->accept();
+	    if (history_pos < history.size() - 1) {
+		clear();
+		history_pos++;
+		insertPlainText(history.at(history_pos));
+	    }
+	    break;
 	case Qt::Key_Delete:
 	case Qt::Key_Backspace:
 	    e->accept();
@@ -82,6 +103,10 @@ void ConsoleInput::keyPressEvent(QKeyEvent *e)
 	case Qt::Key_Return:
 	case Qt::Key_Enter:
 	    e->accept();
+	    history_pos = history.size() - 1;
+	    history.replace(history_pos, toPlainText());
+	    history_pos++;
+	    history.push_back(parent_console->console_prompt);
 	    DoCommand();
 	    break;
 	default:
@@ -93,6 +118,7 @@ void ConsoleInput::keyPressEvent(QKeyEvent *e)
 	    }
 	    QTextEdit::keyPressEvent(e);
 	    setMinimumHeight(document()->size().height());
+	    history.replace(history_pos, toPlainText());
 	    break;
     }
 }
