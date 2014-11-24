@@ -41,6 +41,7 @@
 #  include <GL/gl.h>
 #endif
 
+#include "sysv.h"
 #include "vmath.h"
 #include "ged.h"
 
