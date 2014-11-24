@@ -1040,6 +1040,86 @@ dm_list_types(const char separator)
     return list;
 }
 
+/* Generic DM functions from libtclcad - add these to the "need to
+ * sort out the API" list, but in the meantime put them in dm
+ * instead of tclcad so they're more generally usable */
+
+fastf_t
+dm_screen_to_view_x(dm *dmp, fastf_t x)
+{
+    int width = dm_get_width(dmp);
+    return x / (fastf_t)width * 2.0 - 1.0;
+}
+
+
+fastf_t
+dm_screen_to_view_y(dm *dmp, fastf_t y)
+{
+    int height = dm_get_height(dmp);
+    return (y / (fastf_t)height * -2.0 + 1.0) / dm_get_aspect(dmp);
+}
+
+#define DM_DRAW_POLY(_dmp, _gdpsp, _i, _last_poly, _mode) {  \
+        size_t _j; \
+        \
+        /* set color */ \
+        (void)dm_set_fg((_dmp), \
+                             (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[0], \
+                             (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[1], \
+                             (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[2], \
+                             1, 1.0);                                   \
+        \
+        /* set the linewidth and linestyle for polygon i */ \
+        (void)dm_set_line_attr((_dmp), \
+                               (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_line_width, \
+                               (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_line_style); \
+        \
+        for (_j = 0; _j < (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_num_contours; ++_j) { \
+            size_t _last = (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_num_points-1; \
+            \
+            (void)dm_draw_lines_3d((_dmp),                              \
+                                   (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_num_points, \
+                                   (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_point, 1); \
+            \
+            if (_mode != DM_POLY_CONTOUR_MODE || _i != _last_poly || (_gdpsp)->gdps_cflag == 0) { \
+                (void)dm_draw_line_3d((_dmp),                           \
+                                      (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_point[_last], \
+                                      (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_point[0]); \
+            } \
+        }}
+
+
+HIDDEN void
+dm_draw_polys(dm *dmp, bview_data_polygon_state *gdpsp, int mode)
+{
+    register size_t i, last_poly;
+    int saveLineWidth;
+    int saveLineStyle;
+
+    if (gdpsp->gdps_polygons.gp_num_polygons < 1)
+	return;
+
+    saveLineWidth = dm_get_linewidth(dmp);
+    saveLineStyle = dm_get_linestyle(dmp);
+
+    last_poly = gdpsp->gdps_polygons.gp_num_polygons - 1;
+    for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
+	if (i == gdpsp->gdps_target_polygon_i)
+	    continue;
+
+	DM_DRAW_POLY(dmp, gdpsp, i, last_poly, mode);
+    }
+
+    /* draw the target poly last */
+    DM_DRAW_POLY(dmp, gdpsp, gdpsp->gdps_target_polygon_i, last_poly, mode);
+
+    /* Restore the line attributes */
+    (void)dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
+}
+
+
+
+
 /*
  * Local Variables:
  * mode: C

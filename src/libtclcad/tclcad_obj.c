@@ -1374,23 +1374,6 @@ static struct to_cmdtab to_cmds[] = {
     {(char *)0,	(char *)0, 0, TO_WRAPPER_FUNC_PTR_NULL, GED_FUNC_PTR_NULL}
 };
 
-
-static fastf_t
-screen_to_view_x(dm *dmp, fastf_t x)
-{
-    int width = dm_get_width(dmp);
-    return x / (fastf_t)width * 2.0 - 1.0;
-}
-
-
-static fastf_t
-screen_to_view_y(dm *dmp, fastf_t y)
-{
-    int height = dm_get_height(dmp);
-    return (y / (fastf_t)height * -2.0 + 1.0) / dm_get_aspect(dmp);
-}
-
-
 /**
  * @brief
  * A TCL interface to dm_list_types()).
@@ -6818,8 +6801,8 @@ to_mouse_append_pt_common(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x(gdvp->gdv_dmp, x);
-    y = screen_to_view_y(gdvp->gdv_dmp, y);
+    x = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    y = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -6901,8 +6884,8 @@ to_mouse_brep_selection_append(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = screen_pt[Y];
 
     /* convert screen point to model-space start point and direction */
-    view_pt[X] = screen_to_view_x(gdvp->gdv_dmp, screen_pt[X]);
-    view_pt[Y] = screen_to_view_y(gdvp->gdv_dmp, screen_pt[Y]);
+    view_pt[X] = dm_screen_to_view_x(gdvp->gdv_dmp, screen_pt[X]);
+    view_pt[Y] = dm_screen_to_view_y(gdvp->gdv_dmp, screen_pt[Y]);
     view_pt[Z] = 1.0;
 
     MAT4X3PNT(model_pt, gdvp->gdv_view->gv_view2model, view_pt);
@@ -7007,13 +6990,13 @@ to_mouse_brep_selection_translate(struct ged *gedp,
     }
 
     /* convert screen-space delta to model-space delta */
-    view_start[X] = screen_to_view_x(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseX);
-    view_start[Y] = screen_to_view_y(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseY);
+    view_start[X] = dm_screen_to_view_x(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseX);
+    view_start[Y] = dm_screen_to_view_y(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseY);
     view_start[Z] = 1;
     MAT4X3PNT(model_start, gdvp->gdv_view->gv_view2model, view_start);
 
-    view_end[X] = screen_to_view_x(gdvp->gdv_dmp, screen_end[X]);
-    view_end[Y] = screen_to_view_y(gdvp->gdv_dmp, screen_end[Y]);
+    view_end[X] = dm_screen_to_view_x(gdvp->gdv_dmp, screen_end[X]);
+    view_end[Y] = dm_screen_to_view_y(gdvp->gdv_dmp, screen_end[Y]);
     view_end[Z] = 1;
     MAT4X3PNT(model_end, gdvp->gdv_view->gv_view2model, view_end);
 
@@ -7327,8 +7310,8 @@ to_mouse_find_arb_edge(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x(gdvp->gdv_dmp, x);
-    y = screen_to_view_y(gdvp->gdv_dmp, y);
+    x = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    y = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
@@ -7393,8 +7376,8 @@ to_mouse_find_bot_edge(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x(gdvp->gdv_dmp, x);
-    y = screen_to_view_y(gdvp->gdv_dmp, y);
+    x = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    y = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
@@ -7458,8 +7441,8 @@ to_mouse_find_botpt(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x(gdvp->gdv_dmp, x);
-    y = screen_to_view_y(gdvp->gdv_dmp, y);
+    x = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    y = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
@@ -7524,8 +7507,8 @@ to_mouse_find_metaballpt(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x(gdvp->gdv_dmp, x);
-    y = screen_to_view_y(gdvp->gdv_dmp, y);
+    x = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    y = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
     MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
 
@@ -7591,8 +7574,8 @@ to_mouse_find_pipept(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x(gdvp->gdv_dmp, x);
-    y = screen_to_view_y(gdvp->gdv_dmp, y);
+    x = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    y = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
     MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
 
@@ -7665,8 +7648,8 @@ to_mouse_joint_select(
     gdvp->gdv_view->gv_prevMouseY = screen_pt[Y];
 
     /* convert screen point to model-space start point and direction */
-    view_pt[X] = screen_to_view_x(gdvp->gdv_dmp, screen_pt[X]);
-    view_pt[Y] = screen_to_view_y(gdvp->gdv_dmp, screen_pt[Y]);
+    view_pt[X] = dm_screen_to_view_x(gdvp->gdv_dmp, screen_pt[X]);
+    view_pt[Y] = dm_screen_to_view_y(gdvp->gdv_dmp, screen_pt[Y]);
     view_pt[Z] = 1.0;
 
     MAT4X3PNT(model_pt, gdvp->gdv_view->gv_view2model, view_pt);
@@ -7769,13 +7752,13 @@ to_mouse_joint_selection_translate(
     }
 
     /* convert screen-space delta to model-space delta */
-    view_start[X] = screen_to_view_x(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseX);
-    view_start[Y] = screen_to_view_y(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseY);
+    view_start[X] = dm_screen_to_view_x(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseX);
+    view_start[Y] = dm_screen_to_view_y(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseY);
     view_start[Z] = 1;
     MAT4X3PNT(model_start, gdvp->gdv_view->gv_view2model, view_start);
 
-    view_end[X] = screen_to_view_x(gdvp->gdv_dmp, screen_end[X]);
-    view_end[Y] = screen_to_view_y(gdvp->gdv_dmp, screen_end[Y]);
+    view_end[X] = dm_screen_to_view_x(gdvp->gdv_dmp, screen_end[X]);
+    view_end[Y] = dm_screen_to_view_y(gdvp->gdv_dmp, screen_end[Y]);
     view_end[Z] = 1;
     MAT4X3PNT(model_end, gdvp->gdv_view->gv_view2model, view_end);
 
@@ -8207,8 +8190,8 @@ to_mouse_move_botpt(struct ged *gedp,
 	MAT4X3PNT(view, gdvp->gdv_view->gv_model2view, &botip->vertices[vertex_i*3]);
 	MAT_COPY(v2m_mat, gdvp->gdv_view->gv_view2model);
 
-	dx = screen_to_view_x(gdvp->gdv_dmp, x);
-	dy = screen_to_view_y(gdvp->gdv_dmp, y);
+	dx = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+	dy = dm_screen_to_view_y(gdvp->gdv_dmp, y);
 	dz = view[Z];
 
 	rt_db_free_internal(&intern);
@@ -8888,8 +8871,8 @@ to_mouse_poly_circ(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
 
-    fx = screen_to_view_x(gdvp->gdv_dmp, x);
-    fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    fx = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = dm_screen_to_view_y(gdvp->gdv_dmp, y);
 
     bu_vls_printf(&plist, "{0 ");
 
@@ -9004,8 +8987,8 @@ to_mouse_poly_cont(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
 
-    fx = screen_to_view_x(gdvp->gdv_dmp, x);
-    fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    fx = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
 
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
@@ -9098,8 +9081,8 @@ to_mouse_poly_ell(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
 
-    fx = screen_to_view_x(gdvp->gdv_dmp, x);
-    fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    fx = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = dm_screen_to_view_y(gdvp->gdv_dmp, y);
 
     bu_vls_printf(&plist, "{0 ");
 
@@ -9225,8 +9208,8 @@ to_mouse_poly_rect(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
 
-    fx = screen_to_view_x(gdvp->gdv_dmp, x);
-    fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    fx = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = dm_screen_to_view_y(gdvp->gdv_dmp, y);
 
     if (gdvp->gdv_view->gv_mode == TCLCAD_POLY_SQUARE_MODE) {
 	fastf_t dx, dy;
@@ -11206,8 +11189,8 @@ to_poly_circ_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_POLY_CIRCLE_MODE;
 
-    fx = screen_to_view_x(gdvp->gdv_dmp, x);
-    fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    fx = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
     if (gedp->ged_gvp->gv_grid.snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
@@ -11310,8 +11293,8 @@ to_poly_cont_build(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_POLY_CONTOUR_MODE;
 
-    fx = screen_to_view_x(gdvp->gdv_dmp, x);
-    fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    fx = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
     if (gedp->ged_gvp->gv_grid.snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
@@ -11496,8 +11479,8 @@ to_poly_ell_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_POLY_ELLIPSE_MODE;
 
-    fx = screen_to_view_x(gdvp->gdv_dmp, x);
-    fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    fx = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
     if (gedp->ged_gvp->gv_grid.snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
@@ -11615,8 +11598,8 @@ to_poly_rect_mode(struct ged *gedp,
     else
 	gdvp->gdv_view->gv_mode = TCLCAD_POLY_RECTANGLE_MODE;
 
-    fx = screen_to_view_x(gdvp->gdv_dmp, x);
-    fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    fx = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
     if (gedp->ged_gvp->gv_grid.snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
@@ -12477,8 +12460,8 @@ to_screen2model(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x(gdvp->gdv_dmp, x);
-    y = screen_to_view_y(gdvp->gdv_dmp, y);
+    x = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    y = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
     MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
 
@@ -12532,8 +12515,8 @@ to_screen2view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    x = screen_to_view_x(gdvp->gdv_dmp, x);
-    y = screen_to_view_y(gdvp->gdv_dmp, y);
+    x = dm_screen_to_view_x(gdvp->gdv_dmp, x);
+    y = dm_screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf", V3ARGS(view));
@@ -14074,7 +14057,6 @@ to_log_output_handler(void *client_data, void *vpstr)
 HIDDEN void go_dm_draw_arrows(dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf);
 HIDDEN void go_dm_draw_labels(dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat);
 HIDDEN void go_dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp);
-HIDDEN void go_dm_draw_polys(dm *dmp, bview_data_polygon_state *gdpsp, int mode);
 
 HIDDEN void go_draw(struct ged_dm_view *gdvp);
 HIDDEN int go_draw_dlist(struct ged_dm_view *gdvp);
@@ -14245,34 +14227,6 @@ go_dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp)
 	    } \
 	}}
 
-
-HIDDEN void
-go_dm_draw_polys(dm *dmp, bview_data_polygon_state *gdpsp, int mode)
-{
-    register size_t i, last_poly;
-    int saveLineWidth;
-    int saveLineStyle;
-
-    if (gdpsp->gdps_polygons.gp_num_polygons < 1)
-	return;
-
-    saveLineWidth = dm_get_linewidth(dmp);
-    saveLineStyle = dm_get_linestyle(dmp);
-
-    last_poly = gdpsp->gdps_polygons.gp_num_polygons - 1;
-    for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
-	if (i == gdpsp->gdps_target_polygon_i)
-	    continue;
-
-	GO_DM_DRAW_POLY(dmp, gdpsp, i, last_poly, mode);
-    }
-
-    /* draw the target poly last */
-    GO_DM_DRAW_POLY(dmp, gdpsp, gdpsp->gdps_target_polygon_i, last_poly, mode);
-
-    /* Restore the line attributes */
-    (void)dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
-}
 
 
 HIDDEN void
@@ -14568,10 +14522,10 @@ go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	go_dm_draw_lines(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_lines);
 
     if (gdvp->gdv_view->gv_data_polygons.gdps_draw)
-	go_dm_draw_polys(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_polygons, gdvp->gdv_view->gv_mode);
+	dm_draw_polys(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_polygons, gdvp->gdv_view->gv_mode);
 
     if (gdvp->gdv_view->gv_sdata_polygons.gdps_draw)
-	go_dm_draw_polys(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_polygons, gdvp->gdv_view->gv_mode);
+	dm_draw_polys(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_polygons, gdvp->gdv_view->gv_mode);
 
     /* Restore to non-rotated, full brightness */
     (void)dm_normal(gdvp->gdv_dmp);

@@ -473,6 +473,17 @@ DM_EXPORT extern int qt_exec(dm *dmp);
 #define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
 #define DM_MAKE_CURRENT(_dmp) _dmp->dm_makeCurrent(_dmp)
 
+
+/* Functions from libtclcad */
+
+DM_EXPORT extern fastf_t dm_screen_to_view_x(dm *dmp, fastf_t x);
+DM_EXPORT extern fastf_t dm_screen_to_view_y(dm *dmp, fastf_t y);
+
+#define DM_POLY_CONTOUR_MODE 16
+
+DM_EXPORT void dm_draw_polys(dm *dmp, bview_data_polygon_state *gdpsp, int mode);
+
+
 __END_DECLS
 
 #endif /* DM_H */
