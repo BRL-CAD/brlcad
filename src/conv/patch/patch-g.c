@@ -613,10 +613,8 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    }
 
 	    /* phantom armor */
-	    if (aflg > 0) {
-		if (ZERO(in[0].rsurf_thick)) {
-		    in[0].rsurf_thick = 1;
-		}
+	    if (ZERO(in[0].rsurf_thick)) {
+	        in[0].rsurf_thick = 1;
 	    }
 	}
     }
@@ -1367,8 +1365,7 @@ proc_plate(int cnt)
 	mir_count = 0;
     }
 
-    /* include the check for phantom armor */
-    if ((in[0].rsurf_thick > 0)||(aflg > 0)) {
+    if ( in[0].rsurf_thick > 0 ) {
 
 	for (k=0; k < (cnt); k++) {
 	    for (l=0; l<= 7; l++) {
@@ -3421,7 +3418,7 @@ main(int argc, char **argv)
      */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "6A:T:x:X:pf:i:m:anu:t:o:rc:d:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "6A:T:x:X:pf:i:m:nu:t:o:rc:d:h?")) != -1) {
 	switch (c) {
 	    case '6':  /* use arb6 solids for plate mode */
 		arb6 = 1;
@@ -3475,11 +3472,6 @@ main(int argc, char **argv)
 	    case 'm':  /* materials information file */
 
 		matfile = bu_optarg;
-		break;
-
-	    case 'a':  /* process phantom armor ? */
-
-		aflg++;
 		break;
 
 	    case 'n':  /* process volume mode as plate mode ? */
