@@ -72,7 +72,6 @@ usage(int status, const char *argv0)
 {
     bu_log("Usage: %s [options] model.g\n", argv0);
     bu_log("	-f fastgen.rp	specify pre-processed FASTGEN file (default stdin)\n");
-    bu_log("	-a		process phantom armor?\n");
     bu_log("	-n		process volume mode as plate mode?\n");
     bu_log("	-u #		number of union operations per region (default %d)\n", num_unions);
     bu_log("	-c \"x y z\"	center of object in inches (for some surface normal calculations)\n");
