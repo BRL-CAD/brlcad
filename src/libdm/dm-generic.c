@@ -29,6 +29,7 @@
 
 #include "tcl.h"
 
+#include "bu/units.h"
 #include "vmath.h"
 #include "dm.h"
 #include "dm_private.h"
@@ -1247,6 +1248,100 @@ dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp)
 
     /* Restore the line attributes */
     (void)dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
+}
+
+void
+dm_draw_faceplate(dm *dmp, struct bview *view, double local2base, double base2local)
+{
+    /* Center dot */
+    if (view->gv_center_dot.gos_draw) {
+	(void)dm_set_fg(dmp,
+		view->gv_center_dot.gos_line_color[0],
+		view->gv_center_dot.gos_line_color[1],
+		view->gv_center_dot.gos_line_color[2],
+		1, 1.0);
+	(void)dm_draw_point_2d(dmp, 0.0, 0.0);
+    }
+
+    /* Model axes */
+    if (view->gv_model_axes.draw) {
+	point_t map;
+	point_t save_map;
+
+	VMOVE(save_map, view->gv_model_axes.axes_pos);
+	VSCALE(map, view->gv_model_axes.axes_pos, local2base);
+	MAT4X3PNT(view->gv_model_axes.axes_pos, view->gv_model2view, map);
+
+	dm_draw_axes(dmp,
+		view->gv_size,
+		view->gv_rotation,
+		&view->gv_model_axes);
+
+	VMOVE(view->gv_model_axes.axes_pos, save_map);
+    }
+
+    /* View axes */
+    if (view->gv_view_axes.draw) {
+	int width, height;
+	fastf_t inv_aspect;
+	fastf_t save_ypos;
+
+	save_ypos = view->gv_view_axes.axes_pos[Y];
+	width = dm_get_width(dmp);
+	height = dm_get_height(dmp);
+	inv_aspect = (fastf_t)height / (fastf_t)width;
+	view->gv_view_axes.axes_pos[Y] = save_ypos * inv_aspect;
+	dm_draw_axes(dmp,
+		view->gv_size,
+		view->gv_rotation,
+		&view->gv_view_axes);
+
+	view->gv_view_axes.axes_pos[Y] = save_ypos;
+    }
+
+
+    /* View scale */
+    if (view->gv_view_scale.gos_draw)
+	dm_draw_scale(dmp,
+		view->gv_size*base2local,
+		view->gv_view_scale.gos_line_color,
+		view->gv_view_params.gos_text_color);
+
+    /* View parameters */
+    if (view->gv_view_params.gos_draw) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+	point_t center;
+	char *ustr;
+
+	MAT_DELTAS_GET_NEG(center, view->gv_center);
+	VSCALE(center, center, base2local);
+
+	ustr = (char *)bu_units_string(local2base);
+	bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f) az:%.2f  el:%.2f  tw::%.2f",
+		ustr,
+		view->gv_size * base2local,
+		V3ARGS(center),
+		V3ARGS(view->gv_aet));
+	(void)dm_set_fg(dmp,
+		view->gv_view_params.gos_text_color[0],
+		view->gv_view_params.gos_text_color[1],
+		view->gv_view_params.gos_text_color[2],
+		1, 1.0);
+	(void)dm_draw_string_2d(dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
+	bu_vls_free(&vls);
+    }
+
+    /* Draw the angle distance cursor */
+    if (view->gv_adc.draw)
+	dm_draw_adc(dmp, &(view->gv_adc), view->gv_view2model, view->gv_model2view);
+
+    /* Draw grid */
+    if (view->gv_grid.draw)
+	dm_draw_grid(dmp, &view->gv_grid, view->gv_scale, view->gv_model2view, base2local);
+
+    /* Draw rect */
+    if (view->gv_rect.draw && view->gv_rect.line_width)
+	dm_draw_rect(dmp, &view->gv_rect);
 }
 
 
