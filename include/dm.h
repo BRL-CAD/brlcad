@@ -485,7 +485,7 @@ DM_EXPORT void dm_draw_polys(dm *dmp, bview_data_polygon_state *gdpsp, int mode)
 DM_EXPORT void dm_draw_arrows(dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf);
 DM_EXPORT void dm_draw_labels2(dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat);
 DM_EXPORT void dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp);
-
+DM_EXPORT void dm_draw_faceplate(dm *dmp, struct bview *view, double local2base, double base2local);
 
 __END_DECLS
 
