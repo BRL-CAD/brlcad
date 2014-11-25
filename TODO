@@ -55,6 +55,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement a means to store per object, face, and vertex information
+  on BoT mesh geometry.  useful for per-face/vertex shading as well as
+  storing analytic information during conversion (e.g., per-face
+  fastgen material codes)
+
+* import CTRI material information in fast4-g as per-face data.
+
 * improve performance of these commands that seem to have exponential
   cost: bot_split, killtree
 
