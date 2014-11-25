@@ -64,6 +64,29 @@ class RhinoImportDialog : public QDialog
 	QDialogButtonBox *buttonBox;
 };
 
+class STEPImportDialog : public QDialog
+{
+    Q_OBJECT
+
+    public:
+	STEPImportDialog(QString filename);
+
+	QString command();
+	QStringList options();
+	QLineEdit *db_path;
+	QLineEdit *log_path;
+
+    private:
+
+	QString input_file;
+
+	QCheckBox *verbosity;
+
+	QGroupBox *formGroupBox;
+	QDialogButtonBox *buttonBox;
+};
+
+
 #endif // CADIMPORT_H
 
 /*

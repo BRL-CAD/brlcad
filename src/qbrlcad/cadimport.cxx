@@ -122,6 +122,74 @@ RhinoImportDialog::options()
 }
 
 
+STEPImportDialog::STEPImportDialog(QString filename)
+{
+    input_file = filename;
+    QFileInfo fileinfo(filename);
+    QString g_path(fileinfo.path());
+    g_path.append("/");
+    g_path.append(fileinfo.baseName());
+    QString l_path(g_path);
+    g_path.append(".g");
+    l_path.append(".log");
+
+    db_path = new QLineEdit;
+    db_path->insert(g_path);
+    log_path = new QLineEdit;
+    log_path->insert(l_path);
+    verbosity = new QCheckBox;
+    verbosity->setCheckState(Qt::Checked);
+
+    formGroupBox = new QGroupBox("Import Options");
+    QFormLayout *flayout = new QFormLayout;
+    flayout->addRow(new QLabel("Output File"), db_path);
+    flayout->addRow(new QLabel("Printing Verbosity"), verbosity);
+    flayout->addRow(new QLabel("Log File"), log_path);
+    formGroupBox->setLayout(flayout);
+
+    buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+	    | QDialogButtonBox::Cancel);
+
+    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+    connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->addWidget(formGroupBox);
+    mainLayout->addWidget(buttonBox);
+    setLayout(mainLayout);
+    resize(600,300);
+    setWindowTitle(tr("AP203 STEP Importer (step-g)"));
+
+}
+
+QString
+STEPImportDialog::command()
+{
+    QString prog_name(bu_brlcad_dir("bin", 1));
+    prog_name.append("/step-g");
+    prog_name.append(EXECUTABLE_SUFFIX);
+    prog_name = QString(bu_brlcad_root((const char *)prog_name.toLocal8Bit(), 1));
+    return prog_name;
+}
+
+
+QStringList
+STEPImportDialog::options()
+{
+    QStringList process_args;
+
+    if (verbosity->isChecked()) process_args.append("-v");
+
+    // TODO - pop up a message and quit if we don't have an output file
+    process_args.append("-o");
+    process_args.append(db_path->text());
+
+    process_args.append(input_file);
+
+    return process_args;
+}
+
+
+
 QString
 import_db(QString filename) {
 
@@ -143,8 +211,19 @@ import_db(QString filename) {
        ((CADApp *)qApp)->exec_console_app_in_window(dialog.command(),dialog.options(), l_path);
     }
 
+    if (!fileinfo.suffix().compare("stp", Qt::CaseInsensitive) || !fileinfo.suffix().compare("step", Qt::CaseInsensitive)) {
+       STEPImportDialog dialog(filename);
+       dialog.exec();
+       g_path = dialog.db_path->text();
+       l_path = dialog.log_path->text();
+       // TODO - integrate logging mechanism into command execution
+       ((CADApp *)qApp)->exec_console_app_in_window(dialog.command(),dialog.options(), l_path);
+    }
+
     return g_path;
 }
+
+
 
 /*
  * Local Variables:
