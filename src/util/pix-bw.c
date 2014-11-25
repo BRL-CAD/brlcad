@@ -104,10 +104,11 @@ get_args(int argc, char **argv)
 		bweight = atof(bu_optarg);
 		break;
 	    case 'o' :
-		if ( !isatty(fileno(stdout)) ) {
+/*		if ( !isatty(fileno(stdout)) ) {
 		    bu_log("pix-bw: cannot use both -o and >\n");
 		    return 0;
 		}
+*/
 		out_file = bu_optarg;
 		break;
             case 's' :
@@ -193,6 +194,10 @@ main(int argc, char **argv)
     icv_rgb2gray(img, color, rweight, gweight, bweight);
 
     icv_write(img, out_file, ICV_IMAGE_BW);
+
+    if (!isatty(fileno(stdout)) && out_file != NULL) {
+	icv_write(img, NULL, ICV_IMAGE_BW);
+    }
 
     return 0;
 }
