@@ -8,6 +8,7 @@
 #include "QFlowLayout.h"
 
 class QToolPaletteElement;
+class QToolControlContainer;
 
 class QToolPaletteButton: public QPushButton
 {
@@ -46,12 +47,25 @@ class QToolPaletteElement: public QWidget
 	QWidget *controls;
 };
 
+class QToolControlContainer: public QWidget
+{
+    Q_OBJECT
+
+    public:
+	QToolControlContainer(QWidget *eparent = 0, QWidget *control = 0);
+	~QToolControlContainer() {};
+
+    public:
+	QVBoxLayout *control_layout;
+};
+
+
 class QToolPalette: public QWidget
 {
     Q_OBJECT
 
     public:
-	QToolPalette(QWidget *pparent = 0);
+	QToolPalette(QWidget *pparent = 0, QToolControlContainer *ccontainer = 0);
 	~QToolPalette();
 	void addElement(QToolPaletteElement *element);
 	void deleteElement(QToolPaletteElement *element);
@@ -59,6 +73,8 @@ class QToolPalette: public QWidget
 	void setIconHeight(int iheight);
 	void setAlwaysSelected(int iheight);  // If 0 can disable all tools, if 1 some tool is always selected
 
+	// TODO - do we need to change containers or is assign-at-creation sufficient?
+	//void setControlContainer(QToolControlContainer *container);
 	void resizeEvent(QResizeEvent *pevent);
 
    public slots:
@@ -72,8 +88,7 @@ class QToolPalette: public QWidget
       QSplitter *splitter;
       QWidget *button_container;
       QFlowLayout *button_layout;
-      QWidget *control_container;
-      QVBoxLayout *control_layout;
+      QToolControlContainer *control_container;
       QToolPaletteElement *selected;
       QSet<QToolPaletteElement *> elements;
 };
