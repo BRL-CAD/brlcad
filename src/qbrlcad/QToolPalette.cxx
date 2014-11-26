@@ -74,23 +74,7 @@ QToolPaletteElement::setControls(QWidget *n_control)
     controls = n_control;
 }
 
-
-QToolControlContainer::QToolControlContainer(QWidget *eparent, QWidget *control) : QWidget(eparent)
-{
-    control_layout = new QVBoxLayout();
-    control_layout->setSpacing(0);
-    control_layout->setContentsMargins(0,0,0,0);
-    this->setLayout(control_layout);
-    this->setMinimumHeight(30);
-    this->setMinimumWidth(30);
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    if (control) {
-	control_layout->addWidget(control);
-	setMinimumHeight(control->minimumHeight());
-    }
-}
-
-QToolPalette::QToolPalette(QWidget *pparent, QToolControlContainer *ccontainer) : QWidget(pparent)
+QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
 {
     always_selected = 1;
     icon_width = 30;
@@ -112,11 +96,14 @@ QToolPalette::QToolPalette(QWidget *pparent, QToolControlContainer *ccontainer) 
     button_container->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     button_container->setLayout(button_layout);
     button_container->show();
-    if (ccontainer) {
-	control_container = ccontainer;
-    } else {
-	control_container = new QToolControlContainer(this);
-    }
+    control_container = new QWidget();
+    control_layout = new QVBoxLayout();
+    control_layout->setSpacing(0);
+    control_layout->setContentsMargins(0,0,0,0);
+    control_container->setLayout(control_layout);
+    control_container->setMinimumHeight(icon_height);
+    control_container->setMinimumWidth(icon_width);
+    control_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     control_container->show();
 
     splitter->addWidget(button_container);
@@ -231,11 +218,11 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 	} else {
 	    if (!element->button->isChecked()) element->button->setChecked(true);
 	    if (selected && element != selected) {
-		control_container->control_layout->removeWidget(selected->controls);
+		control_layout->removeWidget(selected->controls);
 		selected->controls->hide();
 		if (selected->button->isChecked()) selected->button->setChecked(false);
 	    }
-	    control_container->control_layout->addWidget(element->controls);
+	    control_layout->addWidget(element->controls);
 	    control_container->setMinimumHeight(element->controls->minimumHeight());
 	    element->controls->show();
 	    selected = element;
