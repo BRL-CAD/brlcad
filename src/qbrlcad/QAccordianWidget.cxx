@@ -225,21 +225,47 @@ QAccordianWidget::stateUpdate(QAccordianObject *new_obj)
     if (size_states.find(statekey) != size_states.end()) {
 	splitter->setSizes(size_states.find(statekey).value());
     } else {
+
+	QVector<int> newsizes;
+	newsizes.resize(splitter->count());
+	QList<int> prevSizes = splitter->sizes();
+	QList<int>::const_iterator stlIter;
+	int sheight = splitter->height();
+	int scount = splitter->count();
+	int found_hidden = splitter->count() + 1;
 	foreach(QAccordianObject *obj, objects) {
-	    if (obj->visible || obj->idx == splitter->count() - 1) {
-		splitter->setStretchFactor(obj->idx, 100000);
+	    if (!obj->visible) {
+		if (obj->idx < found_hidden) found_hidden = obj->idx;
+		sheight = sheight - obj->toggle->height();
+		scount--;
 	    } else {
-		splitter->setStretchFactor(obj->idx, 0);
+		if (!found_hidden && obj->idx < new_obj->idx) {
+		    sheight = sheight - prevSizes.at(obj->idx);
+		    scount--;
+		}
 	    }
 	}
-	QList<int> currentSizes = splitter->sizes();
-	QList<int> newsizes;
-	int spsize = 0;
-	while (spsize < currentSizes.count()) {
-	    newsizes.push_back(1);
-	    spsize++;
+	foreach(QAccordianObject *obj, objects) {
+	    if (obj->visible) {
+		if (obj->idx < found_hidden && obj->idx < new_obj->idx) {
+		    splitter->setStretchFactor(obj->idx, 0);
+		    newsizes[obj->idx] = prevSizes.at(obj->idx);
+		} else {
+		    splitter->setStretchFactor(obj->idx, 100000);
+		    newsizes[obj->idx] = sheight/scount - 1;
+		}
+	    } else {
+		splitter->setStretchFactor(obj->idx, 0);
+		newsizes[obj->idx] = obj->toggle->height();
+	    }
 	}
-	splitter->setSizes(newsizes);
+	QList<int> newsizesl;
+	QVector<int>::const_iterator v_it;
+	for( v_it = newsizes.begin(); v_it != newsizes.end(); ++v_it ) {
+	    newsizesl.push_back(*v_it);
+	}
+
+	splitter->setSizes(newsizesl);
     }
 }
 
