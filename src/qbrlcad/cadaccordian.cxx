@@ -193,7 +193,7 @@ CADAccordian::CADAccordian(QWidget *pparent)
     instance_obj = new QAccordianObject(this, instance_ctrls, "Instance Editing");
     this->addObject(instance_obj);
     active_objects.push_back(instance_obj);
-    primitive_obj = new QAccordianObject(this, primitive_ctrls, "Primitive Editing");
+    primitive_obj = new QAccordianObject(this, primitive_ctrls, "Object Editing");
     this->addObject(primitive_obj);
     active_objects.push_back(primitive_obj);
     stdprop_obj = new QAccordianObject(this, stdpropview, "Standard Attributes");
