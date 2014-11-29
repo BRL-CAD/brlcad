@@ -19,12 +19,13 @@ GetCurveType(ON_Curve *curve)
     if (curve->IsLinear()) return CURVE_LINE;
 
     ON_Arc arc;
-    if (curve->IsArc(NULL, &arc)) {
+    if (curve->IsArc(NULL, &arc, 0.01)) {
 	if (arc.IsCircle()) return CURVE_CIRCLE;
        	return CURVE_ARC;
     }
 
-    if (curve->IsEllipse()) return CURVE_ELLIPSE;
+    // TODO - looks like we need a better test for this...
+    if (curve->IsEllipse(NULL, NULL, 0.01)) return CURVE_ELLIPSE;
 
     return CURVE_GENERAL;
 }

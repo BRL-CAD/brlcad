@@ -23,7 +23,6 @@ main(int argc, char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
-    struct rt_wdb *wdbp;
 
     if (argc != 3) {
 	bu_exit(1, "Usage: %s file.g object", argv[0]);
@@ -63,13 +62,37 @@ main(int argc, char *argv[])
 	if (curve_type != 1 && curve_type != 6)
 	std::cout << "Curve type: " << GetCurveType(brep->m_C3[i]) << "\n";
     }
-#endif
 
     for (int i = 0; i < brep->m_S.Count(); i++) {
 	int surface_type = (int)GetSurfaceType(brep->m_S[i]);
 	if (surface_type != 1 && surface_type != 6)
 	std::cout << "Surface type: " << GetSurfaceType(brep->m_S[i]) << "\n";
     }
+#endif
+
+    for (int i = 0; i < brep->m_F.Count(); i++) {
+	ON_BrepFace *face = &(brep->m_F[i]);
+	ON_Surface *temp_surface = (ON_Surface *)face->SurfaceOf();
+	int surface_type = (int)GetSurfaceType(temp_surface);
+	std::cout << "Surface type: " << surface_type << "\n";
+	for (int li = 0; li < face->LoopCount(); li++) {
+	    bool innerLoop = (li > 0) ? true : false;
+	    ON_BrepLoop* loop = face->Loop(li);
+	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+		//const ON_Curve* trimCurve = trim.TrimCurveOf();
+		const ON_Curve* edgeCurve = edge.EdgeCurveOf();
+		int curve_type = (int)GetCurveType((ON_Curve *)edgeCurve);
+		if (innerLoop) {
+		std::cout << "  Inner Curve type: " << curve_type << "\n";
+		} else {
+		std::cout << "  Outer Curve type: " << curve_type << "\n";
+		}
+	    }
+	}
+    }
+
 
     return 0;
 }
