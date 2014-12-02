@@ -67,9 +67,10 @@ get_args(int argc, char **argv)
 {
     int c;
 
-/* Notice that the default width & length are 720 & 485 respectively (NOT 512 & 512).
- * For high-res, use 1024x1024 (i.e. -s 1024).
- */
+    /* Notice that the default width & length are 720 & 485
+     * respectively (NOT 512 & 512).  For high-res, use 1024x1024
+     * (i.e. -s 1024).
+     */
     while ((c = bu_getopt(argc, argv, "as:w:n:h?")) != -1) {
 	switch (c) {
 	    case 'a':
