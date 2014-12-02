@@ -128,8 +128,9 @@ get_args(int argc, char **argv)
 	(void) fprintf(stderr,
 		       "pix3filter: must supply a file name\n");
 	return 0;
-    } else if (bu_optind + 3 <= argc) {
+    }
 
+    if (bu_optind + 3 <= argc) {
 	if ((oldfp = fopen(argv[bu_optind], "r")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading\n",
