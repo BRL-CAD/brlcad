@@ -905,6 +905,37 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt
     return myret;
 }
 
+void
+rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    const int PRECISION = 1000;
+    fastf_t bounds[4];
+    fastf_t x_inc, y_inc;
+    fastf_t i, j;
+    long n = 0;
+    struct rt_sketch_internal *sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
+    RT_SKETCH_CK_MAGIC(sketch_ip);
+
+    VSETALL(*cent, 0.0);
+
+    rt_sketch_bounds(sketch_ip, bounds);
+    x_inc = (bounds[1]-bounds[0])/PRECISION;
+    y_inc = (bounds[3]-bounds[2])/PRECISION;
+    for (i = bounds[0]; i < bounds[1]; i += x_inc) {
+	for (j = bounds[2]; j < bounds[3]; j += y_inc) {
+	    point2d_t pt;
+	    point_t pt3d;
+	    V2SET(pt, i, j);
+	    VSET(pt3d, i, j, 0);
+	    if (rt_sketch_contains(sketch_ip, pt)) {
+		VADD2(*cent, *cent, pt3d);
+		n++;
+	    }
+	}
+    }
+    VSCALE(*cent, *cent, 1.0 / (fastf_t)n);
+}
+
 
 /**
  * Returns -
