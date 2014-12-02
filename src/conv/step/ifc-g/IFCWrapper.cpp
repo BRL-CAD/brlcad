@@ -1,4 +1,4 @@
-/*                 S T E P W R A P P E R . C P P
+/*                 I F C W R A P P E R . C P P
  * BRL-CAD
  *
  * Copyright (c) 1994-2014 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/STEPWrapper.cpp
+/** @file step/ifc-g/IFCWrapper.cpp
  *
  * C++ wrapper to NIST STEP parser/database functions.
  *

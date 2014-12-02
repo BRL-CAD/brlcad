@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/IFCWrapper.h
+/** @file step/ifc-g/IFCWrapper.h
  *
  * Class definition for C++ wrapper to NIST STEP parser/database
  * functions.
