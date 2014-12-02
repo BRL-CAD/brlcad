@@ -85,7 +85,7 @@ FILE *oldfp, *curfp, *newfp;
 void select_filter(const char *str), dousage(void);
 
 char usage[] = "\
-Usage: pix3filter [-f<type>] [-v] [-d#] [-o#]\n\
+Usage: pix3filter [-f type] [-v] [-d #] [-o #]\n\
 	[-s squaresize] [-w width] [-n height]\n\
 	file.pix.n | file.pix1 file.pix2 file.pix3 > file.pix\n";
 
@@ -429,6 +429,7 @@ dousage(void)
     int i;
 
     fputs(usage, stderr);
+    fprintf(stderr,"Possible types:\n");
     i = 0;
     while (kernel[i].name != NULL) {
 	fprintf(stderr, "%-10s%s\n", kernel[i].uname, kernel[i].name);
