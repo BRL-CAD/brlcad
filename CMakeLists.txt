@@ -492,12 +492,18 @@ endif(NOT BRLCAD_IS_SUBBUILD)
 # To support "make check" (which will build the required targets for testing
 # in the style of GNU Autotools, we define a "check" target per
 # http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
-# automatically assemble its targets into the check dependency list
+# automatically assemble its targets into the check dependency list.
+# We do this only for tests defined using the style:
+#
+#          add_test(testname Exename arg1 arg2 ... )
+#
 if(NOT BRLCAD_IS_SUBBUILD)
   add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
   function(add_test test_name test_prog)
     _add_test(${test_name} ${test_prog} ${ARGN})
-    add_dependencies(check ${test_prog})
+    if (NOT "${test_name}" STREQUAL "NAME")
+      add_dependencies(check ${test_prog})
+    endif (NOT "${test_name}" STREQUAL "NAME")
   endfunction(add_test)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
