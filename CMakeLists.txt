@@ -489,6 +489,18 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endfunction(message)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
+# To support "make check" (which will build the required targets for testing
+# in the style of GNU Autotools, we define a "check" target per
+# http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
+# automatically assemble its targets into the check dependency list
+if(NOT BRLCAD_IS_SUBBUILD)
+  add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
+  function(add_test test_name test_prog)
+    _add_test(${test_name} ${test_prog} ${ARGN})
+    add_dependencies(check ${test_prog})
+  endfunction(add_test)
+endif(NOT BRLCAD_IS_SUBBUILD)
+
 #---------------------------------------------------------------------
 # Load macros that will be used to define the BRL-CAD
 # build logic
