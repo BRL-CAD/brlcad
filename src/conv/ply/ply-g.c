@@ -293,8 +293,8 @@ main(int argc, char *argv[])
     bot_name = (char *)bu_calloc(size + 5, sizeof(char), "bot_name");
     region_name = (char *)bu_calloc(size + 7, sizeof(char), "region_name");
 
-    strncat(bot_name, slashpos, size);
-    strncat(bot_name, ".bot", 4);
+    bu_strlcat(bot_name, slashpos, size);
+    bu_strlcat(bot_name, ".bot", 4);
     sprintf(region_name, "%s.r", bot_name);
 
     if (mk_bot(out_fp, bot_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, NULL, NULL)) {
