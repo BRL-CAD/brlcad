@@ -11,7 +11,7 @@ endmacro(Regression_Test)
 
 # Define the toplevel regression target - unless specifically excluded
 # via a macro argument, this should collect all regression targets.
-# TODO - need to generalize it to accomidate regressions not using sh
+# TODO - need to generalize it to accommodate regressions not using sh
 include(ProcessorCount)
 ProcessorCount(N)
 if(NOT N EQUAL 0)
