@@ -445,6 +445,7 @@ set(regress_outfiles
 foreach(outfile ${regress_outfiles})
   set(regress_outfiles_fullpaths ${regress_outfiles_fullpaths} ${CMAKE_CURRENT_BINARY_DIR}/${outfile})
 endforeach(outfile ${regress_outfiles})
+set(regress_outfiles_fullpaths ${regress_outfiles_fullpaths} ${CMAKE_BINARY_DIR}/regress_output.log)
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${regress_outfiles_fullpaths}")
 
