@@ -493,10 +493,6 @@ endif(NOT BRLCAD_IS_SUBBUILD)
 # in the style of GNU Autotools, we define a "check" target per
 # http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
 # automatically assemble its targets into the check dependency list.
-# We do this only for tests defined using the style:
-#
-#          add_test(testname Exename arg1 arg2 ... )
-#
 if(NOT BRLCAD_IS_SUBBUILD)
   include(ProcessorCount)
   ProcessorCount(N)
@@ -509,9 +505,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
   add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -LE Regression -E ^regress- ${JFLAG})
   function(add_test test_name test_prog)
     _add_test(${test_name} ${test_prog} ${ARGN})
-    if (NOT "${test_name}" STREQUAL "NAME")
+    if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
       add_dependencies(check ${test_prog})
-    endif (NOT "${test_name}" STREQUAL "NAME")
+    endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
   endfunction(add_test)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
