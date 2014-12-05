@@ -936,6 +936,9 @@ sketch_centroid_check_precision(const struct rt_sketch_internal *skt,
 	int j;
 	point2d_t min_pt, max_pt;
 
+	V2SETALL(min_pt, INFINITY);
+	V2SETALL(max_pt, -INFINITY);
+
 	lng = (uint32_t *)crv->segment[i];
 
 	switch (*lng) {
