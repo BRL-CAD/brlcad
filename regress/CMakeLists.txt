@@ -1,6 +1,7 @@
 macro(Regression_Test testname depends_list)
   CMAKE_PARSE_ARGUMENTS(${testname} "EXCLUDE_FROM_REGRESS" "" "" ${ARGN})
   add_test(NAME regress-${testname} COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/${testname}.sh ${CMAKE_SOURCE_DIR})
+  add_custom_target(regress-${testname} COMMAND ${CMAKE_CTEST_COMMAND} -R ^regress-${testname} --output-on-failure)
   if(NOT ${testname}_EXCLUDE_FROM_REGRESS)
     set_tests_properties(regress-${testname} PROPERTIES LABELS "Regression")
   endif(NOT ${testname}_EXCLUDE_FROM_REGRESS)
