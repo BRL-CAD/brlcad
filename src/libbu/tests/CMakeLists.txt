@@ -253,7 +253,7 @@ BRLCAD_ADDEXEC(tester_bu_color bu_color.c libbu NO_INSTALL)
 # integers, and hsv colors are represented by comma-separated triples
 # of floats.
 
-add_test(bu_rgb_to_hsv_1 tester_bu_color 1 192,78,214 290,0.636,0.839)
+add_test(bu_rgb_to_hsv_1 tester_bu_color 1 192,78,214 290.294,0.636,0.839)
 
 # For function #2 (bu_hsv_to_rgb) the <args> format is as follows:
 #
@@ -263,7 +263,7 @@ add_test(bu_rgb_to_hsv_1 tester_bu_color 1 192,78,214 290,0.636,0.839)
 # integers, and hsv colors are represented by comma-separated triples
 # of floats.
 
-add_test(bu_hsv_to_rgb_1 tester_bu_color 2 290,0.636,0.839 192,78,214)
+add_test(bu_hsv_to_rgb_1 tester_bu_color 2 290.294,0.636,0.839 192,78,214)
 
 # For function #3 (bu_str_to_rgb) the <args> format is as follows:
 #
@@ -284,6 +284,115 @@ add_test(bu_str_to_rgb_3 tester_bu_color 3 "192 78 214" 192,78,214)
 # integers or floats.
 
 add_test(bu_color_to_rgb_floats_1 tester_bu_color 4 192,78,214)
+#
+# ************ str.c tests ************
+#
+
+# For tester_bu_str, the input format is as follows:
+#
+# tester_bu_str <function number> <args>
+BRLCAD_ADDEXEC(tester_bu_str bu_str.c libbu NO_INSTALL)
+
+# For function #1 (bu_strlcatm) the <args> format is as follows:
+#
+# string1 string2 result_size expected_ret expected_result
+#
+# Where string1 and string2 are the strings to concatenate,
+# result_size is the size for the buffer that the result will be
+# stored in, expected_ret is the expected return value of the
+# function, and expected_result is the expected resultant string in
+# dst.
+
+add_test(bu_strlcatm_valid_1 tester_bu_str 1 "abc" "def" 7 6 "abcdef")
+add_test(bu_strlcatm_valid_2 tester_bu_str 1 "abc" "def" 8 6 "abcdef")
+add_test(bu_strlcatm_bad_size_1 tester_bu_str 1 "abc" "def" 0 0 "")
+add_test(bu_strlcatm_bad_size_2 tester_bu_str 1 "abc" "def" 5 4 "abcd")
+
+# For function #2 (bu_strlcpym) the <args> format is as follows:
+#
+# string result_size expected_ret expected_result
+#
+# Where string is the string to copy, result_size is the size of the
+# result buffer, expected_ret is the expected return value of the
+# function, and expected_result is the expected contents of the copied
+# string.
+
+add_test(bu_strlcpym_valid_1 tester_bu_str 2 "abcdef" 7 6 "abcdef")
+add_test(bu_strlcpym_valid_2 tester_bu_str 2 "abcdef" 8 6 "abcdef")
+add_test(bu_strlcpym_bad_size_1 tester_bu_str 2 "abcdef" 0 0 "")
+add_test(bu_strlcpym_bad_size_2 tester_bu_str 2 "abcdef" 5 4 "abcd")
+
+# For function #3 (bu_strdupm) the <args> format is as follows:
+#
+# string
+#
+# Where string is the string to duplicate.
+
+add_test(bu_strdupm_1 tester_bu_str 3 "abcdef")
+
+# For function #4 (bu_strcmp) the <args> format is as follows:
+#
+# string1 string2 expected_ret
+#
+# Where string1 and string2 are the strings to compare, and
+# expected_ret is a number of the same sign as the expected comparison
+# result.
+
+add_test(bu_strcmp_equal_1 tester_bu_str 4 "abcd" "abcd" 0)
+add_test(bu_strcmp_less_1 tester_bu_str 4 "a" "b" -1)
+add_test(bu_strcmp_less_2 tester_bu_str 4 "abCD" "abcd" -1)
+add_test(bu_strcmp_greater_1 tester_bu_str 4 "b" "a" 1)
+add_test(bu_strcmp_greater_2 tester_bu_str 4 "abcd" "abCD" 1)
+
+# For function #5 (bu_strncmp) the <args> format is as follows:
+#
+# string1 string2 n expected_ret
+#
+# Where string1 and string2 are the strings to compare, n is the
+# length to give strncmp, and expected_ret is a number of the same
+# sign as the expected comparison result.
+
+add_test(bu_strncmp_equal_1 tester_bu_str 5 "abcd" "abcd" 4 0)
+add_test(bu_strncmp_equal_2 tester_bu_str 5 "abcd" "abcd" 3 0)
+add_test(bu_strncmp_equal_3 tester_bu_str 5 "abcd" "abcd" 5 0)
+add_test(bu_strncmp_equal_4 tester_bu_str 5 "abcd" "abc" 3 0)
+add_test(bu_strncmp_equal_5 tester_bu_str 5 "abcd" "abce" 3 0)
+add_test(bu_strncmp_less_1 tester_bu_str 5 "abcd" "abce" 4 -1)
+add_test(bu_strncmp_less_2 tester_bu_str 5 "abCD" "abcd" 4 -1)
+add_test(bu_strncmp_greater_1 tester_bu_str 5 "abcd" "abc" 4 1)
+add_test(bu_strncmp_greater_2 tester_bu_str 5 "abcd" "abCD" 4 1)
+
+# For function #6 (bu_strcasecmp) the <args> format is as follows:
+#
+# string1 string2 expected_ret
+#
+# Where string1 and string2 are the strings to compare, and
+# expected_ret is a number of the same sign as the expected comparison
+# result.
+
+add_test(bu_strcasecmp_equal_1 tester_bu_str 6 "abcd" "abcd" 0)
+add_test(bu_strcasecmp_equal_2 tester_bu_str 6 "abCD" "abcd" 0)
+add_test(bu_strcasecmp_equal_3 tester_bu_str 6 "abcd" "abCD" 0)
+add_test(bu_strcasecmp_less_1 tester_bu_str 4 "a" "b" -1)
+add_test(bu_strcasecmp_greater_1 tester_bu_str 4 "b" "a" 1)
+
+# For function #7 (bu_strncasecmp) the <args> format is as follows:
+#
+# string1 string2 n expected_ret
+#
+# Where string1 and string2 are the strings to compare, n is the
+# length to give strncmp, and expected_ret is a number of the same
+# sign as the expected comparison result.
+
+add_test(bu_strncasecmp_equal_1 tester_bu_str 7 "abcd" "abcd" 4 0)
+add_test(bu_strncasecmp_equal_2 tester_bu_str 7 "abcd" "abcd" 3 0)
+add_test(bu_strncasecmp_equal_3 tester_bu_str 7 "abcd" "abcd" 5 0)
+add_test(bu_strncasecmp_equal_4 tester_bu_str 7 "abcd" "abc" 3 0)
+add_test(bu_strncasecmp_equal_5 tester_bu_str 7 "abcd" "abce" 3 0)
+add_test(bu_strncasecmp_equal_6 tester_bu_str 7 "abCD" "abcd" 4 0)
+add_test(bu_strncasecmp_equal_7 tester_bu_str 7 "abcd" "abCD" 4 0)
+add_test(bu_strncasecmp_less_1 tester_bu_str 7 "abcd" "abce" 4 -1)
+add_test(bu_strncasecmp_greater_1 tester_bu_str 7 "abcd" "abc" 4 1)
 
 #
 #  *********** badmagic.c tests ************
