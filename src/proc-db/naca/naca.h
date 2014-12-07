@@ -135,6 +135,24 @@ extern void SplineZero(struct fortran_array *x, struct fortran_array *f, struct 
  */
 extern fastf_t TableLookup(struct fortran_array *x, struct fortran_array *y, int order, fastf_t u);
 
+
+extern const fastf_t EPS1[];
+extern const fastf_t EPS2[];
+extern const fastf_t EPS3[];
+extern const fastf_t EPS4[];
+extern const fastf_t EPS5[];
+extern const fastf_t EPS6[];
+extern const fastf_t EPS7[];
+extern const fastf_t EPS8[];
+extern const fastf_t PSI1[];
+extern const fastf_t PSI2[];
+extern const fastf_t PSI3[];
+extern const fastf_t PSI4[];
+extern const fastf_t PSI5[];
+extern const fastf_t PSI6[];
+extern const fastf_t PSI7[];
+extern const fastf_t PSI8[];
+
 /*
  * Local Variables:
  * tab-width: 8
