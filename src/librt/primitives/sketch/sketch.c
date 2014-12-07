@@ -973,31 +973,63 @@ sketch_centroid_check_precision(const struct rt_sketch_internal *skt,
     return (min_size < min_inc);
 }
 
-static void
+static long
+sketch_update_centroid_with_coords(point_t *cent,
+				   struct rt_sketch_internal *skt,
+				   long n,
+				   fastf_t i,
+				   fastf_t j)
+{
+    point2d_t pt;
+    point_t pt3d;
+    V2SET(pt, i, j);
+    VSET(pt3d, i, j, 0);
+    if (rt_sketch_contains(skt, pt)) {
+	VADD2(*cent, *cent, pt3d);
+	n++;
+    }
+    return n;
+}
+
+
+static long
 sketch_centroid_with_precision(point_t *cent,
-				  struct rt_sketch_internal *skt,
-				  fastf_t precision,
-				  fastf_t bounds[4])
+			       struct rt_sketch_internal *skt,
+			       fastf_t precision,
+			       long n,
+			       fastf_t bounds[4])
 {
     fastf_t x_inc, y_inc;
+    fastf_t x_skip, y_skip;
     fastf_t i, j;
-    long n = 0;
 
-    x_inc = (bounds[1]-bounds[0])/precision;
-    y_inc = (bounds[3]-bounds[2])/precision;
-    for (i = bounds[0]; i < bounds[1]; i += x_inc) {
-	for (j = bounds[2]; j < bounds[3]; j += y_inc) {
-	    point2d_t pt;
-	    point_t pt3d;
-	    V2SET(pt, i, j);
-	    VSET(pt3d, i, j, 0);
-	    if (rt_sketch_contains(skt, pt)) {
-		VADD2(*cent, *cent, pt3d);
-		n++;
+    x_inc = (bounds[1] - bounds[0])/precision;
+    y_inc = (bounds[3] - bounds[2])/precision;
+
+    x_skip = 2 * x_inc;
+    y_skip = 2 * y_inc;
+
+    if (n > 0) {
+	VSCALE(*cent, *cent, n);
+	for (i = bounds[0] + x_inc; i < bounds[1]; i += x_skip) {
+	    for (j = bounds[2]; j < bounds[3]; j += y_inc) {
+		n = sketch_update_centroid_with_coords(cent, skt, n, i, j);
+	    }
+	}
+	for (i = bounds[0]; i < bounds[1]; i += x_skip) {
+	    for (j = bounds[2] + y_inc; j < bounds[3]; j += y_skip) {
+		n = sketch_update_centroid_with_coords(cent, skt, n, i, j);
+	    }
+	}
+    } else {
+	for (i = bounds[0]; i < bounds[1]; i += x_inc) {
+	    for (j = bounds[2]; j < bounds[3]; j += y_inc) {
+		n = sketch_update_centroid_with_coords(cent, skt, n, i, j);
 	    }
 	}
     }
     VSCALE(*cent, *cent, 1.0 / (fastf_t)n);
+    return n;
 }
 
 void
@@ -1023,13 +1055,15 @@ rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip)
     fastf_t precision = 1024;
     fastf_t bounds[4];
     struct rt_sketch_internal *sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
-    point_t current_cent, previous_cent;
+    point_t current_cents[2];
     point_t difference = {INFINITY, INFINITY, INFINITY};
+    long n[2] = {0, 0};
+    int i = 1;
     RT_SKETCH_CK_MAGIC(sketch_ip);
 
     VSETALL(*cent, 0.0);
-    VSETALL(current_cent, 0.0);
-    VSETALL(previous_cent, 0.0);
+    VSETALL(current_cents[0], 0.0);
+    VSETALL(current_cents[1], 0.0);
 
     rt_sketch_bounds(sketch_ip, bounds);
     while (sketch_centroid_check_precision(sketch_ip, precision, bounds)) {
@@ -1037,13 +1071,13 @@ rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
 
     while (!NEAR_ZERO(MAGNITUDE(difference), TOLERANCE)) {
-	VMOVE(previous_cent, current_cent);
-	sketch_centroid_with_precision(&current_cent, sketch_ip, precision, bounds);
+	n[i] = sketch_centroid_with_precision(&current_cents[i], sketch_ip, precision, n[i], bounds);
 	precision *= M_SQRT2;
-	VSUB2(difference, current_cent, previous_cent);
+	VSUB2(difference, current_cents[i], current_cents[!i]);
+	i = !i;
     }
 
-    VMOVE(*cent, current_cent);
+    VMOVE(*cent, current_cents[!i]);
 }
 
 
