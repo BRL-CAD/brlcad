@@ -43,7 +43,7 @@
 int
 main(int argc, const char **argv)
 {
-    return (int)EvaluateCubic(-1);
+    return 0;
 }
 
 /*
