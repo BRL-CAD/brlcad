@@ -1,6 +1,7 @@
 set(naca_srcs
   splprocs.c
   epspsi.c
+  nacax.c
   naca456.c
   )
 
