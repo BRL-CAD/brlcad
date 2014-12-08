@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
++ merge rel8, minmax.grep @ clip.c
+
 * fix iges exporter (spaces after commas)
 
 * fix the bn_poly_sub unit test
@@ -52,6 +54,50 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* implement a means to store per object, face, and vertex information
+  on BoT mesh geometry.  useful for per-face/vertex shading as well as
+  storing analytic information during conversion (e.g., per-face
+  fastgen material codes)
+
+* import CTRI material information in fast4-g as per-face data.
+
+* improve performance of these commands that seem to have exponential
+  cost: bot_split, killtree
+
+* translate lc command to libged
+
+* Integrate ADRT into Archer as a visualization mode.
+
+* Document a GUI feature list (prioritized).
+
+* Document a CLI feature list (prioritized).
+
+* create a catalog of all possible entity types.  including distinct
+  parameterizations with sufficient variety that conveys the object's
+  parameterization options (e.g. ell as sphere, flat disc, long spike,
+  etc).  this is necessarily defined per object type and possibly
+  programmable.  see src/proc-db/csgbrep.cpp for a basic start.
+
+* create a catalog of all possible/distinct/useful shader settings.
+  see regress/shaders.sh for a basic start.
+
+* high-performance VOL for medical data visualization.  consider
+  leveraging OpenVDB, PCL, Paraview/VTK, etc
+
+* multi-region VOL objects.  this basically will either introduce a
+  notion of data-reuse where multiple regions reference the same VOL
+  and get different spatial results, or a single primitive reports
+  distinct material/region/spatial information that will get
+  propagated up into separate region hits.  the prior is probably
+  easier and less error-prone.
+
+* BoT mesh editing command.  Subtasks:
+
+  - enumerate functions desireable
+  - catalog features of other mesh manipulation tools
+  - investigate mesh editing libraries and/or relying on NMG editing
+  - bind GUI editing to the BoT mesh editing command
 
 * establish the Basic Application Runtime (BAR), only consisting of
   libbu and libbn, as a stand-alone self-contained project.  provide
@@ -164,12 +210,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * merge get_eyemodel's functionality  as a "view eyemodel"
   sub-command in MGED/Archer.
 
-* make gqa (and other apps that initialize similarly via libged or a
-  wdbip) utilize TIE if LIBRT_BOT_MINTIE is set.  it's bypassing
-  rt_dirbuild() so it never gets to where the environment variable is
-  read.  another case for pushing the environment variable check a
-  little lower (or somewhere in the path that gqa currently takes).
-
 * document gqa centroid and moments of inertia options
 
 * add support for custom and random views to gqa.  provide an option
@@ -191,6 +231,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
     Up to 129600 random views: -a #:#:# -e #:#:#
     Comprehensive "front" view, 1-degree increments: -a -90:90 -e -90:90
     Comprehensive orbital, 1/2-degree increments: -a 0:360:720
+
+* implement an overlap reporting function (boolean and volume)
 
 * have gqa calculate the volume of overlapping regions, not just
   shotline overlap distances.  that will allow output to be sorted by
@@ -1261,6 +1303,13 @@ ARCHER
 ATTRIBUTES
 ----------
 
+* attr command option to output to a file
+
+* attr command change to only output non-standard attributes
+
+* attr command change to have an optional object argument and to work
+  with multiple objects.  make output format scriptable.
+
 * implement an attribute versioning system.  can hang attribute
   version off of _GLOBAL (ideally) or per-object so application codes
   (including our own tools) know whether they're compatible or whether
@@ -1418,6 +1467,11 @@ NEW OBJECTS
   linear offset from a given surface or set of surfaces is usually
   desired.
 
+* minkowski and hull operations/objects.  These would be
+  meta-combination objects similar to blending where objects are
+  specified and a resulting operation is run on them.  minkowski sum
+  provides an intuitive means to blend and hull a means to simplify.
+
 * Cache objects.  These are proper non-geometric geometry database
   objects intended to store binary results that have a dependency on
   other object(s).  A named hash (e.g. md5) is recorded for each
@@ -1450,7 +1504,9 @@ NEW OBJECTS
 
 * support for fillets and chamfers as object/combination operations
 
-* image objects (tbd objects) for v5 geometry files
+* image objects (tbd objects) for v5 geometry files.  not only the
+  ability to have images in the 3D space, but to view-align them for
+  image underlay modeling.
 
 * material objects (non-geometric attribute-only objects) for v5
   geometry files.  instead of material attribute value becomes
@@ -1681,6 +1737,9 @@ BREP/NURBS
   mode BoTs, 'brep' objects need the ability to have a thickness
   described so you could automatically handle non-solid NURBS and
   sheet-metal style geometry without requiring surface solidity.
+
+* NURBS editing command, let you interactively
+  add/update/join/split/remove component points, edges, surfaces.
 
 
 NMG/BoT
@@ -1997,7 +2056,6 @@ DOCUMENTATION
     g-off
     g-step
     g-voxel
-    gqa
     gastank
     globe
     handle

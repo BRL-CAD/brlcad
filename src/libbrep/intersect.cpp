@@ -336,7 +336,7 @@ build_curve_root(const ON_Curve *curve, const ON_Interval *domain, Subcurve &roo
 	// Call sub_curve() to get the curve segment inside the input domain.
 	try {
 	    root.m_curve = sub_curve(curve, domain->Min(), domain->Max());
-	} catch (InvalidInterval &e) {
+	} catch (InvalidInterval &) {
 	    root.m_curve = NULL;
 	}
 	root.m_t = *domain;
@@ -3007,7 +3007,7 @@ split_overlaps_at_intersections(
 	    try {
 		subcurveA = sub_curve(overlaps[i]->m_curveA,
 			params[i][start].y, params[i][j].y);
-	    } catch (InvalidInterval &e) {
+	    } catch (InvalidInterval &) {
 		continue;
 	    }
 	    bool isvalid = false, isreversed = false;

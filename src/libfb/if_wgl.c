@@ -71,7 +71,6 @@
 /* Internal callbacks etc.*/
 HIDDEN void wgl_do_event(fb *ifp);
 HIDDEN void expose_callback(fb *ifp, int eventPtr);
-void wgl_configureWindow(fb *ifp, int width, int height);
 
 /* Other Internal routines */
 HIDDEN void wgl_clipper(fb *ifp);
@@ -1861,7 +1860,7 @@ expose_callback(fb *ifp, int eventPtr)
 }
 
 
-void
+int
 wgl_configureWindow(fb *ifp, int width, int height)
 {
     if (width == WGL(ifp)->win_width &&
@@ -1882,6 +1881,8 @@ wgl_configureWindow(fb *ifp, int width, int height)
 
     wgl_getmem(ifp);
     wgl_clipper(ifp);
+
+    return 0;
 }
 
 

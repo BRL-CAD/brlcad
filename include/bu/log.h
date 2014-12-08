@@ -370,6 +370,25 @@ BU_EXPORT extern int bu_vsscanf(const char *src, const char *fmt, va_list ap);
  */
 BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_SCANF23;
 
+/**
+ * Scans a sequence of fastf_t numbers from a string or stdin
+ *
+ * Scanning fastf_t numbers with bu_sscanf() is difficult, because
+ * doing so requires scanning to some intermediate type like double
+ * and then assigning to the fastf_t variable to convert the value to
+ * whatever type fastf_t really is.  This function makes it possible
+ * to scan a series of fastf_t numbers separated by some delimiter
+ * easily, by doing the required conversion internally to the
+ * functions.
+ *
+ * @param[out] c The number of characters scanned by the function
+ * @param[in] src A string to scan from, or NULL to read from stdin.
+ * @param[in] delim The delimiter between values on the input
+ * @param[in] n The number of fastf_t values to scan for
+ *
+ */
+BU_EXPORT extern int bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...);
+
 /** @file libbu/dirname.c
  *
  * @brief

@@ -271,6 +271,7 @@ set(librt_ignored_files
   test_nurbsfit.cpp
   test_bot2nurbs.cpp
   test_root3-subd.cpp
+  test_shape_recognition.cpp
   subd_test_bot.asc
   prcomb.c
   primitives/bot/btg.h
@@ -333,6 +334,7 @@ endif(CPP_DLL_DEFINES)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_shape_recognition test_shape_recognition.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 
 add_subdirectory(tests)
 

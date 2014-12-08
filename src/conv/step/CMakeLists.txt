@@ -104,6 +104,11 @@ if(BRLCAD_ENABLE_AP242)
   add_subdirectory(g-ap242)
 endif(BRLCAD_ENABLE_AP242)
 
+# IFC work is experimental
+if(BRLCAD_ENABLE_IFC)
+  add_subdirectory(ifc-g)
+endif(BRLCAD_ENABLE_IFC)
+
 CMAKEFILES(
   AP_Common.h
   BRLCADWrapper.h
@@ -118,6 +123,7 @@ CMAKEFILES(
   g-ap203e2
   g-ap214
   g-ap242
+  ifc-g
   )
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)

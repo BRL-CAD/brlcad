@@ -34,7 +34,9 @@
 # a region and the region is subtracted within the parent. The '-r'
 # option can be combined with any other option.
 #
-# Options '-2', '-3', '-4', '-5' specify to sort by column 2, 3, 4 or 5.
+# Options '-1', '-2', '-3', '-4', '-5' specify to sort by column 1, 2,
+# 3, 4 or 5.  Option '-0' implies to leave objects listed in tree
+# order.
 #
 # Option '-z' specifies descending (z-a) sort order. By default, the
 # list is sorted in ascending (a-z) order by 'region_id'.
@@ -58,7 +60,7 @@ proc lc {args} {
     set sort_column_flag_cnt 0
 
     if { [llength $args] == 0 } {
-	puts stdout "Usage: \[-d|-s|-r\] \[-z\] \[-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
+	puts stdout "Usage: \[-d|-s|-r\] \[-z\] \[-0|-1|-2|-3|-4|-5\] \[-f {FileName}\] {GroupName}"
 	return
     }
 
@@ -66,7 +68,7 @@ proc lc {args} {
     foreach arg $args {
 	if { $arg == "-f" } {
 	    incr file_name_flag_cnt
-	} elseif { [string is integer $arg] && $arg <= -2 && $arg >= -5 } {
+	} elseif { [string is integer $arg] && $arg <= -0 && $arg >= -5 } {
 	    incr sort_column_flag_cnt
 	} elseif { $arg != "-d" && $arg != "-z" && $arg != "-s" && $arg != "-r"} {
 	    incr name_cnt
@@ -105,7 +107,6 @@ proc lc {args} {
     set skip_subtracted_regions_flag_cnt 0
     set descending_sort_flag_cnt 0
     set file_name_flag_cnt 0
-    set sort_column_flag_cnt 0
     set error_cnt 0
     set sort_column 1
     set group_name_set 0
@@ -140,9 +141,8 @@ proc lc {args} {
 	    set descending_sort_flag_cnt 1
 	    continue
 	}
-	if { $arg <= -2 && $arg >= -5 } {
+	if { $arg <= -0 && $arg >= -5 } {
 	    set sort_column [expr abs($arg)]
-	    set sort_column_flag_cnt 1
 	    continue
 	}
 	set group_name_set 1
@@ -388,13 +388,22 @@ proc lc {args} {
     }
     unset lines
 
-    # convert columns from 1-5 to 0-4
-    set sort_column [expr ($sort_column - 1)]
 
-    if { $descending_sort_flag_cnt == 1 } {
-	set lines2 [lsort -dictionary -decreasing -index $sort_column $lines2]
+    if { $sort_column == 0 } {
+	if { $descending_sort_flag_cnt == 1 } {
+	    set lines2 [lreverse $lines2]
+	} else {
+	    # do nothing, leave in search order
+	}
     } else {
-	set lines2 [lsort -dictionary -index $sort_column $lines2]
+	# convert columns from 1-5 to 0-4
+	set sort_column [expr ($sort_column - 1)]
+
+	if { $descending_sort_flag_cnt == 1 } {
+	    set lines2 [lsort -dictionary -decreasing -index $sort_column $lines2]
+	} else {
+	    set lines2 [lsort -dictionary -index $sort_column $lines2]
+	}
     }
 
     set list_len [llength $lines2]

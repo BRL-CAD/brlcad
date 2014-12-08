@@ -1159,6 +1159,7 @@ HIDDEN void
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t area = -1;
+    point_t centroid;
 
     if (OBJ[ID_SKETCH].ft_surf_area)
 	OBJ[ID_SKETCH].ft_surf_area(&area, ip);
@@ -1169,6 +1170,14 @@ analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 		      * gedp->ged_wdbp->dbip->dbi_local2base
 		      * gedp->ged_wdbp->dbip->dbi_local2base
 	    );
+    }
+
+    if (OBJ[ID_SKETCH].ft_centroid) {
+	OBJ[ID_SKETCH].ft_centroid(&centroid, ip);
+	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
+		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
+		      centroid[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
+		      centroid[Z] * gedp->ged_wdbp->dbip->dbi_base2local);
     }
 }
 
@@ -1248,6 +1257,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	    break;
 
 	case ID_VOL:
+	    analyze_general(gedp, ip);
+	    break;
+
+        case ID_EXTRUDE:
 	    analyze_general(gedp, ip);
 	    break;
 

@@ -47,7 +47,7 @@ public:
     PhysicsWorld();
     ~PhysicsWorld();
 
-    void step(fastf_t seconds);
+    void step(btScalar seconds);
     void add_object(const btVector3 &bounding_box, btScalar mass, matp_t matrix);
 
 

@@ -59,9 +59,9 @@ char *out_file = NULL;
 char *in_file = NULL;
 
 static const char usage[] = "\
-pix-bw [-h] [-s squaresize] [-w width] [-n height] \n\
-            [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
-	    [-o out_file.bw] [file.bw] > [out_file.bw] \n";
+Usage: pix-bw [-s squaresize] [-w width] [-n height]\n\
+              [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
+              [-o out_file.bw] [file.pix] [> out_file.bw]\n";
 
 double multiplier = 0.5;
 
@@ -71,7 +71,7 @@ get_args(int argc, char **argv)
     int c;
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "e:s:w:n:R:G:B:o:h?NC")) != -1) {
+    while ((c = bu_getopt(argc, argv, "e:s:w:n:R:G:B:o:h?")) != -1) {
 	switch (c) {
 	    case 'e' :
 	        if (BU_STR_EQUAL(bu_optarg, "ntsc")) {
@@ -115,14 +115,24 @@ get_args(int argc, char **argv)
             case 'n' :
                iny = atoi(bu_optarg);
                break;
-	    case 'h' :
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
 
+/* Eliminate the "cannot send output to a tty" message if we
+ * detect the run-with-no-arguments situation.  For an actual
+ * run, we would need a least a color-scheme argument.
+ */
+    if (isatty(fileno(stdout)) && out_file == NULL) {
+	if (argc != 1)
+    	    bu_log("pix-bw: cannot send output to a tty\n");
+	return 0;
+    }
+
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin))) {
+	    bu_log("pix-bw: cannot receive input from a tty\n");
 	    return 0;
 	}
     } else {
@@ -131,13 +141,8 @@ get_args(int argc, char **argv)
 	return 1;
     }
 
-
-    if (!isatty(fileno(stdout)) && out_file!=NULL) {
-	return 0;
-    }
-
     if (argc > ++bu_optind) {
-	bu_log("pixfade: excess argument(s) ignored\n");
+	bu_log("pix-bw: excess argument(s) ignored\n");
     }
 
     return 1;		/* OK */
@@ -176,11 +181,18 @@ main(int argc, char **argv)
 	color = ICV_COLOR_B;
     else if (green)
 	color = ICV_COLOR_G;
-    else bu_exit(1, "%s",usage);
+    else {
+    	bu_log("pix-bw: no color scheme specified\n");
+	bu_exit(1, "%s",usage);
+    }
 
     icv_rgb2gray(img, color, rweight, gweight, bweight);
 
     icv_write(img, out_file, ICV_IMAGE_BW);
+
+    if (!isatty(fileno(stdout)) && out_file != NULL) {
+	icv_write(img, NULL, ICV_IMAGE_BW);
+    }
 
     return 0;
 }

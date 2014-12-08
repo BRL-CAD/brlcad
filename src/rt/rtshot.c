@@ -47,15 +47,17 @@
 void
 usage(const char *argv0)
 {
-    bu_log("Usage:  %s [options] model.g objects...\n", argv0);
+    bu_log("Usage:  %s {-p|-d|-a} # # # {-p|-d|-a} # # # [options] model.g objects...\n\n", argv0);
+    bu_log(" Shot options, must set two:\n");
+    bu_log(" -p # # #		Set starting point\n");
+    bu_log(" -d # # #		Set direction vector\n");
+    bu_log(" -a # # #		Set shoot-at point\n\n");
+    bu_log(" Other options:\n");
     bu_log(" -U #		Set reporting of air regions (default=1)\n");
     bu_log(" -u #		Set libbu debug flag\n");
     bu_log(" -x #		Set librt debug flags\n");
     bu_log(" -X #		Set rt program debug flags\n");
     bu_log(" -N #		Set NMG debug flags\n");
-    bu_log(" -d # # #	Set direction vector\n");
-    bu_log(" -p # # #	Set starting point\n");
-    bu_log(" -a # # #	Set shoot-at point\n");
     bu_log(" -t #		Set number of triangles per piece for BOT's (default is 4)\n");
     bu_log(" -b #		Set threshold number of triangles to use pieces (default is 32)\n");
     bu_log(" -O #		Set overlap-claimant handling\n");
@@ -102,6 +104,7 @@ main(int argc, char **argv)
     char **attrs = (char **)NULL;
     const char *argv0 = argv[0];
     int atoival;
+    struct resource res = RT_RESOURCE_INIT_ZERO;
 
     if (argc < 3) {
 	usage(argv0);
@@ -302,17 +305,24 @@ main(int argc, char **argv)
 	bu_exit(1, "%s: BRL-CAD geometry database not specified\n", argv0);
     }
 
-    if (set_dir + set_pt + set_at != 2) goto err;
-
-    /* explicit input sanitization */
-    if (num_rings <= 0 || rays_per_ring <= 0 || bundle_radius <= 0.0) {
-	fprintf(stderr, "Must have all of \"-R\", \"-n\", and \"-c\" set\n");
+    if (set_dir + set_pt + set_at != 2) {
+	fprintf(stderr, "ERROR: Must set exactly two: starting point, direction vector, or shoot-at point.\n\n");
 	goto err;
     }
-    if (num_rings > INT_MAX)
+
+    /* explicit input sanitization */
+    if (num_rings < 0)
+	num_rings = 0;
+    else if (num_rings > INT_MAX)
 	num_rings = INT_MAX;
-    if (rays_per_ring > INT_MAX)
+    if (rays_per_ring < 0)
+	rays_per_ring = 0;
+    else if (rays_per_ring > INT_MAX)
 	rays_per_ring = INT_MAX;
+    if (bundle_radius < 0.0)
+	bundle_radius = 0.0;
+    else if (bundle_radius > INFINITY-1.0)
+	bundle_radius = INFINITY-1.0;
 
     /* Load database */
     title_file = argv[0];
@@ -344,6 +354,10 @@ main(int argc, char **argv)
 	}
 	pdv_3space(plotfp, rtip->rti_pmin, rtip->rti_pmax);
     }
+
+    /* set up our resources */
+    rt_init_resource(&res, 0, rtip);
+    ap.a_resource = &res;
 
     /* Compute r_dir and r_pt from the inputs */
     if (set_at) {

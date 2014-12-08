@@ -81,6 +81,7 @@ set(LIBBU_SOURCES
   simd.c
   sort.c
   sscanf.c
+  scan.c
   str.c
   tcl.c
   temp.c

@@ -284,6 +284,7 @@ f_expr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     for (p = plan->p_data[0]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
 	; /* do nothing */
 
+    if (!state) db_node->matched_filters = 0;
     return state;
 }
 
@@ -323,6 +324,7 @@ f_not(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, stru
     for (p = plan->p_data[0]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
 	; /* do nothing */
 
+    if (!state && db_node->matched_filters == 0) db_node->matched_filters = 1;
     return !state;
 }
 
@@ -376,6 +378,7 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 
     db_free_full_path(&parent_path);
 
+    if (!state) db_node->matched_filters = 0;
     return (state > 0) ? 1 : 0;
 }
 
@@ -423,6 +426,7 @@ f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 	}
     }
 
+    db_node->matched_filters = 0;
     return 0;
 }
 
@@ -456,6 +460,7 @@ f_or(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struc
     for (p = plan->p_data[1]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
 	; /* do nothing */
 
+    if (!state) db_node->matched_filters = 0;
     return state;
 }
 
@@ -477,13 +482,19 @@ c_or(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct d
 HIDDEN int
 f_name(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
+    int ret = 0;
     struct directory *dp;
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
-    if (!dp)
+    if (!dp) {
+	db_node->matched_filters = 0;
 	return 0;
+    }
 
-    return !bu_fnmatch(plan->c_data, dp->d_namep, 0);
+    ret = !bu_fnmatch(plan->c_data, dp->d_namep, 0);
+
+    if (!ret) db_node->matched_filters = 0;
+    return ret;
 }
 
 
@@ -509,13 +520,18 @@ HIDDEN int
 f_iname(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
     struct directory *dp;
+    int ret = 0;
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
 
-    if (!dp)
+    if (!dp) {
+	db_node->matched_filters = 0;
 	return 0;
+    }
 
-    return !bu_fnmatch(plan->c_data, dp->d_namep, BU_FNMATCH_CASEFOLD);
+    ret = !bu_fnmatch(plan->c_data, dp->d_namep, BU_FNMATCH_CASEFOLD);
+    if (!ret) db_node->matched_filters = 0;
+    return ret;
 }
 
 
@@ -542,7 +558,10 @@ c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pl
 HIDDEN int
 f_regex(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
-    return !(regexec(&plan->regexp_data, db_path_to_string(db_node->path), 0, NULL, 0));
+    int ret = 0;
+    ret = !(regexec(&plan->regexp_data, db_path_to_string(db_node->path), 0, NULL, 0));
+    if (!ret) db_node->matched_filters = 0;
+    return ret;
 }
 
 
@@ -764,18 +783,22 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
      */
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
-    if (!dp)
+    if (!dp) {
+	db_node->matched_filters = 0;
 	return 0;
+    }
 
     RT_DB_INTERNAL_INIT(&in);
     if (rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	rt_db_free_internal(&in);
+	db_node->matched_filters = 0;
 	return 0;
     }
 
 
     if ((&in)->idb_meth->ft_get(&s_tcl, &in, NULL) == BRLCAD_ERROR) {
 	rt_db_free_internal(&in);
+	db_node->matched_filters = 0;
 	return 0;
     }
     rt_db_free_internal(&in);
@@ -784,6 +807,7 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
     if (tcl_list_to_avs(bu_vls_addr(&s_tcl), &avs, 1)) {
 	bu_avs_free(&avs);
 	bu_vls_free(&s_tcl);
+	db_node->matched_filters = 0;
 	return 0;
     }
 
@@ -791,6 +815,7 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
     bu_avs_free(&avs);
     bu_vls_free(&paramname);
     bu_vls_free(&value);
+    if (!ret) db_node->matched_filters = 0;
     return ret;
 }
 
@@ -848,12 +873,15 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
      */
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
-    if (!dp)
+    if (!dp) {
+	db_node->matched_filters = 0;
 	return 0;
+    }
 
     bu_avs_init_empty(&avs);
     if (db5_get_attributes(dbip, &avs, dp) < 0) {
 	bu_avs_free(&avs);
+	db_node->matched_filters = 0;
 	return 0;
     }
 
@@ -861,6 +889,7 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     bu_avs_free(&avs);
     bu_vls_free(&attribname);
     bu_vls_free(&value);
+    if (!ret) db_node->matched_filters = 0;
     return ret;
 }
 
@@ -900,12 +929,15 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i
      */
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
-    if (!dp)
+    if (!dp) {
+	db_node->matched_filters = 0;
 	return 0;
+    }
 
     bu_avs_init_empty(&avs);
     if (db5_get_attributes(dbip, &avs, dp) < 0) {
 	bu_avs_free(&avs);
+	db_node->matched_filters = 0;
 	return 0;
     }
 
@@ -927,8 +959,12 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i
 
     bu_avs_free(&avs);
 
-    if (!found_nonstd_attr && found_attr) return 1;
-    return 0;
+    if (!found_nonstd_attr && found_attr) {
+	return 1;
+    } else {
+	db_node->matched_filters = 0;
+	return 0;
+    }
 }
 
 
@@ -963,9 +999,36 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp) return 0;
     if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) return 0;
+
+    /* We can handle combs without needing to perform the rt_db_internal unpacking - do so
+     * to help performance. */
+    if (dp->d_flags & RT_DIR_COMB) {
+	if (dp->d_flags & RT_DIR_REGION) {
+	    if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0))) {
+		return 1;
+	    } else {
+		db_node->matched_filters = 0;
+		return 0;
+	    }
+	}
+	if ((!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
+	    return 1;
+	} else {
+	    db_node->matched_filters = 0;
+	    return 0;
+	}
+    } else {
+	if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0)) || (!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
+	    db_node->matched_filters = 0;
+	    return 0;
+	}
+
+    }
+
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || !intern.idb_meth->ft_label) {
 	rt_db_free_internal(&intern);
+	db_node->matched_filters = 0;
 	return 0;
     }
 
@@ -993,16 +1056,6 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 		    break;
 	    }
 	    break;
-	case DB5_MINORTYPE_BRLCAD_COMBINATION:
-	    if (dp->d_flags & RT_DIR_REGION) {
-		if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0))) {
-		    type_match = 1;
-		}
-	    }
-	    if ((!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
-		type_match = 1;
-	    }
-	    break;
 	case DB5_MINORTYPE_BRLCAD_METABALL:
 	    /* Because ft_label is only 8 characters, ft_label doesn't work in fnmatch for metaball*/
 	    type_match = (!bu_fnmatch(plan->type_data, "metaball", 0));
@@ -1026,6 +1079,7 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 
     rt_db_free_internal(&intern);
 
+    if (!type_match) db_node->matched_filters = 0;
     return type_match;
 }
 
@@ -1056,6 +1110,7 @@ f_bool(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
     int bool_match = 0;
     int bool_type = DB_FULL_PATH_CUR_BOOL(db_node->path);
     if (plan->bool_data == bool_type) bool_match = 1;
+    if (!bool_match) db_node->matched_filters = 0;
     return bool_match;
 }
 
@@ -1088,7 +1143,9 @@ c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 HIDDEN int
 f_maxdepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
-    return ((int)db_node->path->fp_len - 1 <= plan->max_data) ? 1 : 0;
+    int ret = ((int)db_node->path->fp_len - 1 <= plan->max_data) ? 1 : 0;
+    if (!ret) db_node->matched_filters = 0;
+    return ret;
 }
 
 
@@ -1115,7 +1172,9 @@ c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
 HIDDEN int
 f_mindepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
-    return ((int)db_node->path->fp_len - 1 >= plan->min_data) ? 1 : 0;
+    int ret = ((int)db_node->path->fp_len - 1 >= plan->min_data) ? 1 : 0;
+    if (!ret) db_node->matched_filters = 0;
+    return ret;
 }
 
 
@@ -1185,6 +1244,7 @@ f_depth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
     bu_vls_free(&name);
     bu_vls_free(&value);
 
+    if (!ret) db_node->matched_filters = 0;
     return ret;
 }
 
@@ -1260,8 +1320,10 @@ f_nnodes(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, s
      */
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
-    if (!dp)
+    if (!dp) {
+	db_node->matched_filters = 0;
 	return 0;
+    }
 
     if (dp->d_flags & RT_DIR_COMB) {
 	rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL, &rt_uniresource);
@@ -1273,6 +1335,7 @@ f_nnodes(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, s
 	}
 	rt_db_free_internal(&in);
     } else {
+	db_node->matched_filters = 0;
 	return 0;
     }
 
@@ -1291,6 +1354,7 @@ f_nnodes(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, s
 	}
     }
 
+    db_node->matched_filters = 0;
     return 0;
 }
 
@@ -1317,7 +1381,9 @@ c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
 HIDDEN int
 f_path(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
-    return !bu_fnmatch(plan->path_data, db_path_to_string(db_node->path), 0);
+    int ret = !bu_fnmatch(plan->path_data, db_path_to_string(db_node->path), 0);
+    if (!ret) db_node->matched_filters = 0;
+    return ret;
 }
 
 
@@ -2214,9 +2280,9 @@ db_search(struct bu_ptbl *search_results,
 
     if (!paths) {
 	if (search_flags & DB_SEARCH_HIDDEN) {
-	    path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_HIDDEN, &top_level_objects);
+	    path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_HIDDEN, NULL, &top_level_objects);
 	} else {
-	    path_cnt = db_ls(dbip, DB_LS_TOPS, &top_level_objects);
+	    path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &top_level_objects);
 	}
 	paths = top_level_objects;
     }
@@ -2268,7 +2334,7 @@ db_search(struct bu_ptbl *search_results,
 		    /* by convention, a top level node is "unioned" into the global database */
 		    curr_node.path = start_path;
 		    curr_node.flags = search_flags;
-		    curr_node.matched_filters = 0;
+		    curr_node.matched_filters = 1;
 		    find_execute_plans(dbip, search_results, &curr_node, dbplan);
 		    result_cnt += curr_node.matched_filters;
 		    DB_FULL_PATH_POP(start_path);
@@ -2288,7 +2354,7 @@ db_search(struct bu_ptbl *search_results,
 		curr_node.path = (struct db_full_path *)BU_PTBL_GET(full_paths, i);
 		curr_node.full_paths = full_paths;
 		curr_node.flags = search_flags;
-		curr_node.matched_filters = 0;
+		curr_node.matched_filters = 1;
 		find_execute_plans(dbip, search_results, &curr_node, dbplan);
 		result_cnt += curr_node.matched_filters;
 	    }
