@@ -127,7 +127,7 @@ extern void SplineZero(struct fortran_array *x, struct fortran_array *f, struct 
 
 /**
  * Use polynomial evaluation for table lookup.  Find points ahead and
- * behind evaluation point to match order of interpolatin desired.
+ * behind evaluation point to match order of interpolation desired.
  *
  * @param[in] x, y Data tables
  * @param[in] order Order of interpolation (1 = linear, 2 = quadratic ...)
@@ -160,7 +160,7 @@ void CombineThicknessAndCamber(struct fortran_array *x, struct fortran_array *th
 void GetRk1(fastf_t x, fastf_t *r, fastf_t *k1);
 
 /**
- * Compute the r, k1, and k2 facators used in the calculation of
+ * Compute the r, k1, and k2 factors used in the calculation of
  * ordinates of a three-digit-reflex mean line
  *
  * REF - Table, upper right, of p.8 of NASA Technical Memorandum 4741.
@@ -178,7 +178,7 @@ void GetRk1(fastf_t x, fastf_t *r, fastf_t *k1);
 void GetRk1k2(fastf_t x, fastf_t *r, fastf_t *k1, fastf_t *k2);
 
 /**
- * Compute the upper and lower cordinates of an airfoil defined by the
+ * Compute the upper and lower coordinates of an airfoil defined by the
  * thickness (x,yt) and the mean line (x,ymean,ymeanp)
  */
 void InterpolateCombinedAirfoil(struct fortran_array *x, struct fortran_array *yt, struct fortran_array *ymean, struct fortran_array *ymeanp,
@@ -188,7 +188,7 @@ void InterpolateCombinedAirfoil(struct fortran_array *x, struct fortran_array *y
 /**
  * Using the airfoil defined by (xupper, yupper) for upper surface and
  * (xlower, ylower) for the lower surface, interpolate at each point
- * of array x to lield yu and yup on upper surface and yl and ylp on
+ * of array x to yield yu and yup on upper surface and yl and ylp on
  * lower.
  *
  * NOTE - xupper and xlower do not need to be the same size.
@@ -259,7 +259,7 @@ void MeanLine2(fastf_t cmax,
  *
  * REF - Eq. 6.6 p.115 of Abbot and von Doenhoff
  *
- * NOTE - The constant 1.8 
+ * NOTE - The constant 1.8
  *
  * @param[in] cl design lift coefficient
  * @param[in] xmaxc x-coor of maximum camber
@@ -378,8 +378,8 @@ void Thickness4M(fastf_t toc, fastf_t leIndex, fastf_t xmaxt,
  * Compute the values of y, dy/dx, d2y/d2x at each point of x.  The
  * equation used gives an airfoil that is very similar to the
  * four-digit airfoil profile, but has a sharp trailing edge.  This
- * airfoil does not have any NACA blessing, so it is strsictly
- * unnofficial.  Lots of folks want to compute a four-digit section,
+ * airfoil does not have any NACA blessing, so it is strictly
+ * unofficial.  Lots of folks want to compute a four-digit section,
  * but are using a theory that assumes a zero trailing edge.
  */
 void Thickness4sharpTE(fastf_t toc, struct fortran_array *x, struct fortran_array *y, struct fortran_array *yp, struct fortran_array *ypp);
