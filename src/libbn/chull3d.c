@@ -244,10 +244,9 @@ new_block_simplex(struct chull3d_data *cdata, int make_blocks)
 {
     int i;
     simplex *xlm, *xbt;
-    static int num_simplex_blocks;
     if (make_blocks && cdata) {
-	((num_simplex_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_simplex_blocks<max_blocks", "chull3d.c", 31, __PRETTY_FUNCTION__));
-	xbt = cdata->simplex_block_table[num_simplex_blocks++] = (simplex*)malloc(max_blocks * cdata->simplex_size);
+	((cdata->num_simplex_blocks<max_blocks) ? (void) (0) : __assert_fail ("cdata->num_simplex_blocks<max_blocks", "chull3d.c", 31, __PRETTY_FUNCTION__));
+	xbt = cdata->simplex_block_table[(cdata->num_simplex_blocks)++] = (simplex*)malloc(max_blocks * cdata->simplex_size);
 	memset(xbt,0,max_blocks * cdata->simplex_size);
 	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 31, __PRETTY_FUNCTION__));
 	xlm = ((simplex*) ( (char*)xbt + (max_blocks) * cdata->simplex_size));
@@ -258,8 +257,8 @@ new_block_simplex(struct chull3d_data *cdata, int make_blocks)
 	}
 	return cdata->simplex_list;
     };
-    for (i=0; i<num_simplex_blocks; i++) free(cdata->simplex_block_table[i]);
-    num_simplex_blocks = 0;
+    for (i=0; i<cdata->num_simplex_blocks; i++) free(cdata->simplex_block_table[i]);
+    cdata->num_simplex_blocks = 0;
     if (cdata) cdata->simplex_list = 0;
     return 0;
 }
@@ -275,10 +274,9 @@ new_block_basis_s(struct chull3d_data *cdata, int make_blocks)
 {
     int i;
     basis_s *xlm, *xbt;
-    static int num_basis_s_blocks;
     if (make_blocks && cdata) {
-	((num_basis_s_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_basis_s_blocks<max_blocks", "chull3d.c", 32, __PRETTY_FUNCTION__));
-	xbt = cdata->basis_s_block_table[num_basis_s_blocks++] = (basis_s*)malloc(max_blocks * cdata->basis_s_size);
+	((cdata->num_basis_s_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_basis_s_blocks<max_blocks", "chull3d.c", 32, __PRETTY_FUNCTION__));
+	xbt = cdata->basis_s_block_table[(cdata->num_basis_s_blocks)++] = (basis_s*)malloc(max_blocks * cdata->basis_s_size);
 	memset(xbt,0,max_blocks * cdata->basis_s_size);
 	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 32, __PRETTY_FUNCTION__));
 	xlm = ((basis_s*) ( (char*)xbt + (max_blocks) * cdata->basis_s_size));
@@ -289,8 +287,8 @@ new_block_basis_s(struct chull3d_data *cdata, int make_blocks)
 	}
 	return cdata->basis_s_list;
     };
-    for (i=0; i<num_basis_s_blocks; i++) free(cdata->basis_s_block_table[i]);
-    num_basis_s_blocks = 0;
+    for (i=0; i<cdata->num_basis_s_blocks; i++) free(cdata->basis_s_block_table[i]);
+    cdata->num_basis_s_blocks = 0;
     if (cdata) cdata->basis_s_list = 0;
     return 0;
 }
@@ -306,10 +304,9 @@ new_block_Tree(struct chull3d_data *cdata, int make_blocks)
 {
     int i;
     Tree *xlm, *xbt;
-    static int num_Tree_blocks;
     if (make_blocks && cdata) {
-	((num_Tree_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_Tree_blocks<max_blocks", "chull3d.c", 33, __PRETTY_FUNCTION__));
-	xbt = cdata->Tree_block_table[num_Tree_blocks++] = (Tree*)malloc(max_blocks * cdata->Tree_size);
+	((cdata->num_Tree_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_Tree_blocks<max_blocks", "chull3d.c", 33, __PRETTY_FUNCTION__));
+	xbt = cdata->Tree_block_table[cdata->num_Tree_blocks++] = (Tree*)malloc(max_blocks * cdata->Tree_size);
 	memset(xbt,0,max_blocks * cdata->Tree_size);
 	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 33, __PRETTY_FUNCTION__));
 	xlm = ((Tree*) ( (char*)xbt + (max_blocks) * cdata->Tree_size));
@@ -320,8 +317,8 @@ new_block_Tree(struct chull3d_data *cdata, int make_blocks)
 	}
 	return cdata->Tree_list;
     };
-    for (i=0; i<num_Tree_blocks; i++) free(cdata->Tree_block_table[i]);
-    num_Tree_blocks = 0;
+    for (i=0; i<cdata->num_Tree_blocks; i++) free(cdata->Tree_block_table[i]);
+    cdata->num_Tree_blocks = 0;
     if (cdata) cdata->Tree_list = 0;
     return 0;
 }
@@ -387,16 +384,12 @@ HIDDEN double
 sc(struct chull3d_data *cdata, basis_s *v,simplex *s, int k, int j)
 {
     double labound;
-    static int lscale;
-    static double max_scale;
-    static double ldetbound;
-    static double Sb;
 
     if (j<10) {
 	labound = logb(v->sqa)/2;
-	max_scale = cdata->exact_bits - labound - 0.66*(k-2)-1  -DELIFT;
-	if (max_scale<1) {
-	    max_scale = 1;
+	cdata->max_scale = cdata->exact_bits - labound - 0.66*(k-2)-1  -DELIFT;
+	if (cdata->max_scale<1) {
+	    cdata->max_scale = 1;
 	}
 
 	if (j==0) {
@@ -404,26 +397,26 @@ sc(struct chull3d_data *cdata, basis_s *v,simplex *s, int k, int j)
 	    neighbor *sni;
 	    basis_s *snib;
 
-	    ldetbound = DELIFT;
+	    cdata->ldetbound = DELIFT;
 
-	    Sb = 0;
+	    cdata->Sb = 0;
 	    for (i=k-1,sni=s->neigh+k-1;i>0;i--,sni--) {
 		snib = sni->basis;
-		Sb += snib->sqb;
-		ldetbound += logb(snib->sqb)/2 + 1;
-		ldetbound -= snib->lscale;
+		cdata->Sb += snib->sqb;
+		cdata->ldetbound += logb(snib->sqb)/2 + 1;
+		cdata->ldetbound -= snib->lscale;
 	    }
 	}
     }
-    if (ldetbound - v->lscale + logb(v->sqb)/2 + 1 < 0) {
+    if (cdata->ldetbound - v->lscale + logb(v->sqb)/2 + 1 < 0) {
 	return 0;
     } else {
-	lscale = (int)floor(logb(2*Sb/(v->sqb + v->sqa*cdata->b_err_min)))/2;
-	if (lscale > max_scale) {
-	    lscale = (int)floor(max_scale);
-	} else if (lscale<0) lscale = 0;
-	v->lscale += lscale;
-	return ( ((lscale)<20) ? 1<<(lscale) : ldexp(1,(lscale)) );
+	cdata->lscale = (int)floor(logb(2*cdata->Sb/(v->sqb + v->sqa*cdata->b_err_min)))/2;
+	if (cdata->lscale > cdata->max_scale) {
+	    cdata->lscale = (int)floor(cdata->max_scale);
+	} else if (cdata->lscale<0) cdata->lscale = 0;
+	v->lscale += cdata->lscale;
+	return ( ((cdata->lscale)<20) ? 1<<(cdata->lscale) : ldexp(1,(cdata->lscale)) );
     }
 }
 
@@ -513,16 +506,15 @@ get_basis_sede(struct chull3d_data *cdata, simplex *s)
 HIDDEN int
 out_of_flat(struct chull3d_data *cdata, simplex *root, point p)
 {
-    static neighbor p_neigh={0,0,0};
-    if (!p_neigh.basis) p_neigh.basis = (basis_s*) malloc(cdata->basis_s_size);
-    p_neigh.vert = p;
+    if (!cdata->p_neigh.basis) cdata->p_neigh.basis = (basis_s*) malloc(cdata->basis_s_size);
+    cdata->p_neigh.vert = p;
     (cdata->cdim)++;
     root->neigh[(cdata->cdim)-1].vert = root->peak.vert;
     NULLIFY(cdata, basis_s,root->neigh[(cdata->cdim)-1].basis);
     get_basis_sede(cdata, root);
     if (cdata->vd && root->neigh[0].vert == cdata->hull_infinity) return 1;
-    reduce(cdata, &p_neigh.basis,p,root,(cdata->cdim));
-    if (p_neigh.basis->sqa != 0) return 1;
+    reduce(cdata, &cdata->p_neigh.basis,p,root,(cdata->cdim));
+    if (cdata->p_neigh.basis->sqa != 0) return 1;
     (cdata->cdim)--;
     return 0;
 }
@@ -572,15 +564,13 @@ HIDDEN void get_normal(struct chull3d_data *cdata, simplex *s) {get_normal_sede(
 HIDDEN int
 sees(struct chull3d_data *cdata, site p, simplex *s) {
 
-    static basis_s *b = NULL;
     point	tt,zz;
     double	dd,dds;
     int i;
 
-
-    if (!b) b = (basis_s*)malloc(cdata->basis_s_size);
-    else b->lscale = 0;
-    zz = VB(b);
+    if (!cdata->b) cdata->b = (basis_s*)malloc(cdata->basis_s_size);
+    else cdata->b->lscale = 0;
+    zz = VB(cdata->b);
     if ((cdata->cdim)==0) return 0;
     if (!s->normal) {
 	get_normal_sede(cdata, s);
@@ -588,7 +578,7 @@ sees(struct chull3d_data *cdata, site p, simplex *s) {
     }
     tt = s->neigh[0].vert;
     if (cdata->vd) {
-	if (p==cdata->hull_infinity) memcpy(b,cdata->infinity_basis,cdata->basis_s_size);
+	if (p==cdata->hull_infinity) memcpy(cdata->b,cdata->infinity_basis,cdata->basis_s_size);
 	else {trans(zz,p,tt); lift(cdata,zz,s);}
     } else trans(zz,p,tt);
     for (i=0;i<3;i++) {
@@ -599,7 +589,7 @@ sees(struct chull3d_data *cdata, site p, simplex *s) {
 	dds = dd*dd/s->normal->sqb/Norm2(cdata, zz);
 	if (dds > cdata->b_err_min_sq) return (dd<0);
 	get_basis_sede(cdata, s);
-	reduce_inner(cdata,b,s,(cdata->cdim));
+	reduce_inner(cdata,cdata->b,s,(cdata->cdim));
     }
     return 0;
 }
@@ -850,8 +840,7 @@ visit_fg_i(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data *,Tree *
 HIDDEN void
 visit_fg(struct chull3d_data *cdata, fg *faces_gr, void (*v_fg)(struct chull3d_data *, Tree *, int, int))
 {
-    static int fg_vn;
-    visit_fg_i(cdata, v_fg, faces_gr->facets, 0, ++fg_vn, 1);
+    visit_fg_i(cdata, v_fg, faces_gr->facets, 0, ++(cdata->fg_vn), 1);
 }
 
 HIDDEN int
@@ -877,8 +866,7 @@ visit_fg_i_far(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data *, T
 HIDDEN void
 visit_fg_far(struct chull3d_data *cdata, fg *faces_gr, void (*v_fg)(struct chull3d_data *, Tree *, int))
 {
-    static int fg_vn;
-    visit_fg_i_far(cdata, v_fg,faces_gr->facets, 0, --fg_vn);
+    visit_fg_i_far(cdata, v_fg,faces_gr->facets, 0, --(cdata->fg_vn));
 }
 
 /* hull.c : "combinatorial" functions for hull computation */
@@ -898,24 +886,22 @@ visit_triang_gen(struct chull3d_data *cdata, simplex *s, visit_func *visit, test
     simplex *t;
     int i;
     long tms = 0;
-    static long vnum = -1;
-    static long ss = 2000;
     static simplex **st;
 
-    vnum--;
-    if (!st) st=(simplex**)malloc((ss+MAXDIM+1)*sizeof(simplex*));
+    (cdata->vnum)--;
+    if (!st) st=(simplex**)malloc((cdata->ss+MAXDIM+1)*sizeof(simplex*));
     if (s) push(s);
     while (tms) {
 
-	if (tms>ss) {
-	    st=(simplex**)realloc(st,((ss+=ss)+MAXDIM+1)*sizeof(simplex*));
+	if (tms>cdata->ss) {
+	    st=(simplex**)realloc(st,((cdata->ss+=cdata->ss)+MAXDIM+1)*sizeof(simplex*));
 	}
 	pop(t);
-	if (!t || t->visit == vnum) continue;
-	t->visit = vnum;
+	if (!t || t->visit == cdata->vnum) continue;
+	t->visit = cdata->vnum;
 	if ((v=(*visit)(cdata,t,0))) {return v;}
 	for (i=-1,sn = t->neigh-1;i<(cdata->cdim);i++,sn++)
-	    if ((sn->simp->visit != vnum) && sn->simp && test(cdata,t,i,0))
+	    if ((sn->simp->visit != cdata->vnum) && sn->simp && test(cdata,t,i,0))
 		push(sn->simp);
     }
     return NULL;
@@ -1438,8 +1424,11 @@ chull3d_data_init(struct chull3d_data *data)
     /* These were static variables in functions */
 
     data->simplex_block_table = (simplex **)bu_calloc(100, sizeof(simplex *), "simplex_block_table");
+    data->num_simplex_blocks = 0;
     data->basis_s_block_table = (basis_s **)bu_calloc(100, sizeof(basis_s *), "basis_s_block_table");
+    data->num_basis_s_blocks = 0;
     data->Tree_block_table = (Tree **)bu_calloc(100, sizeof(Tree *), "Tree_block_table");
+    data->num_Tree_blocks = 0;
     data->p_neigh.vert = 0;
     data->p_neigh.simp = NULL;
     data->p_neigh.basis = NULL;
@@ -1449,6 +1438,7 @@ chull3d_data_init(struct chull3d_data *data)
     data->buf = (char *)bu_calloc(100, sizeof(char), "buf");
     data->s_num = 0;
     data->out_func_here = (void *)off_out;
+    data->fg_vn = 0;
 }
 
 HIDDEN void
