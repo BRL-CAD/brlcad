@@ -1577,38 +1577,6 @@ void check_triang(struct chull3d_data *cdata, simplex *root){visit_triang(cdata,
 
 /* outfuncs: given a list of points, output in a given format */
 
-
-void vlist_out(struct chull3d_data *cdata, point *v, int vdim, FILE *Fin, int amble) {
-
-    static FILE *F;
-    int j;
-
-    if (Fin) {F=Fin; if (!v) return;}
-
-    for (j=0;j<vdim;j++) fprintf(F, "%ld ", (cdata->site_num)((void *)cdata, v[j]));
-    fprintf(F,"\n");
-
-    return;
-}
-
-
-void cpr_out(struct chull3d_data *cdata, point *v, int vdim, FILE *Fin, int amble) {
-
-    static FILE *F;
-    int i;
-
-    if (Fin) {F=Fin; if (!v) return;}
-
-    for (i=0;i<vdim;i++) if (v[i]==cdata->hull_infinity) return;
-
-    fprintf(F, "t %G %G %G %G %G %G %G %G %G 3 128\n",
-	    v[0][0]/cdata->mult_up,v[0][1]/cdata->mult_up,v[0][2]/cdata->mult_up,
-	    v[1][0]/cdata->mult_up,v[1][1]/cdata->mult_up,v[1][2]/cdata->mult_up,
-	    v[2][0]/cdata->mult_up,v[2][1]/cdata->mult_up,v[2][2]/cdata->mult_up
-	   );
-}
-
-
 void off_out(struct chull3d_data *cdata, point *v, int vdim, FILE *Fin, int amble) {
 
     static FILE *F, *G;
@@ -2106,11 +2074,6 @@ simplex *build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *si
 
 /* hullmain.c */
 
-/* int	getopt(int, char**, char*); */
-extern char	*optarg;
-extern int optind;
-extern int opterr;
-
 FILE *INFILE, *OUTFILE, *TFILE;
 
 static long site_numm(void *data, site p) {
@@ -2196,36 +2159,6 @@ static void tell_options(void) {
     errline( "-oN  no main output;");
     errline( "-ov volumes of Voronoi facets");
     errline( "-oh incidence histograms");
-}
-
-
-static void echo_command_line(FILE *F, int argc, char **argv) {
-    fprintf(F,"%%");
-    while (--argc>=0)
-	fprintf(F, "%s%s", *argv++, (argc>0) ? " " : "");
-    fprintf(F,"\n");
-}
-
-char *output_forms[] = {"vn", "cpr", "off"};
-
-out_func *out_funcs[] = {&vlist_out, &cpr_out, &off_out};
-
-
-static int set_out_func(char *s) {
-
-    int i;
-
-#ifdef WIN32
-    if (strcmp(s, "off")==0) {
-	errline("Sorry, no OFF output on WIN32");
-	return 0;
-    }
-#endif
-
-    for (i=0;i< sizeof(out_funcs)/(sizeof (out_func*)); i++)
-	if (strcmp(s,output_forms[i])==0) return i;
-    tell_options();
-    return 0;
 }
 
 static void make_output(struct chull3d_data *cdata, simplex *root, void *(visit_gen)(struct chull3d_data *, simplex*, visit_func* visit),
@@ -2320,18 +2253,18 @@ bn_3d_chull(int *faces, int *num_faces, point_t **vertices, int *num_vertices,
 }
 
 
+extern char *optarg;
+extern int optind;
+extern int opterr;
+
 /* TODO - replace this with a top level function using libbn types */
 int main(int argc, char **argv) {
 
-
-    short	output = 1,
-		ofn = 0,
+    short	ofn = 0,
 		ifn = 0;
     int	option;
-    char	ofile[50] = "",
-		ifile[50] = "",
-		ofilepre[50] = "";
-    int	main_out_form=0;
+    char	ifile[50] = "";
+
     simplex *root;
 
 
@@ -2339,17 +2272,12 @@ int main(int argc, char **argv) {
     BU_GET(cdata, struct chull3d_data);
     chull3d_data_init(cdata);
 
-    cdata->mult_up = 1;
     cdata->DFILE = stderr;
-    cdata->vd = 1;
 
-    while ((option = getopt(argc, argv, "i:f:")) != EOF) {
+    while ((option = getopt(argc, argv, "i:")) != EOF) {
 	switch (option) {
 	    case 'i' :
 		strcpy(ifile, optarg);
-		break;
-	    case 'f' :
-		main_out_form = set_out_func(optarg);
 		break;
 	    default :
 		      tell_options();
@@ -2359,15 +2287,8 @@ int main(int argc, char **argv) {
 
     ifn = (strlen(ifile)!=0);
     INFILE = ifn ? efopen(cdata, ifile, "r") : stdin;
-    fprintf(cdata->DFILE, "reading from %s\n", ifn ? ifile : "stdin");
 
-    ofn = (strlen(ofile)!=0);
-
-    strcpy(ofilepre, ofn ? ofile : (ifn ? ifile : "hout") );
-
-    if (output) {
-	OUTFILE = stdout;
-    }
+    OUTFILE = stdout;
 
     TFILE = bu_temp_file(cdata->tmpfilenam, MAXPATHLEN);
 
@@ -2381,13 +2302,7 @@ int main(int argc, char **argv) {
 
     fclose(TFILE);
 
-    if (output) {
-	out_func* mof = out_funcs[main_out_form];
-	visit_func *pr = facets_print;
-	if (main_out_form==0) echo_command_line(OUTFILE,argc,argv);
-	else if (cdata->vd) pr = ridges_print;
-	make_output(cdata, root, visit_hull, pr, mof, OUTFILE);
-    }
+    make_output(cdata, root, visit_hull, ridges_print, &off_out, OUTFILE);
 
     free_hull_storage(cdata);
     chull3d_data_free(cdata);
