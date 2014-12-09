@@ -176,8 +176,8 @@ struct chull3d_data {
 #define node_size(x) ((x) ? ((x)->size) : 0 )
 
 #define snkey(cdata, x) cdata->site_num((void *)cdata, (x)->vert)
-#define push(x) *(st+tms++) = x;
-#define pop(x)  x = *(st + --tms);
+#define push(x) *(cdata->st+tms++) = x;
+#define pop(x)  x = *(cdata->st + --tms);
 
 #define lookup(cdata, a,b,what,whatt) \
 {                                     \
@@ -886,15 +886,12 @@ visit_triang_gen(struct chull3d_data *cdata, simplex *s, visit_func *visit, test
     simplex *t;
     int i;
     long tms = 0;
-    static simplex **st;
 
     (cdata->vnum)--;
-    if (!st) st=(simplex**)malloc((cdata->ss+MAXDIM+1)*sizeof(simplex*));
     if (s) push(s);
     while (tms) {
-
 	if (tms>cdata->ss) {
-	    st=(simplex**)realloc(st,((cdata->ss+=cdata->ss)+MAXDIM+1)*sizeof(simplex*));
+	    cdata->st=(simplex**)realloc(cdata->st,((cdata->ss+=cdata->ss)+MAXDIM+1)*sizeof(simplex*));
 	}
 	pop(t);
 	if (!t || t->visit == cdata->vnum) continue;
@@ -1139,7 +1136,6 @@ HIDDEN simplex *
 make_facets(struct chull3d_data *cdata, simplex *seen)
 {
     simplex *n;
-    static simplex *ns;
     neighbor *bn;
     int i;
 
@@ -1154,16 +1150,16 @@ make_facets(struct chull3d_data *cdata, simplex *seen)
 	    if (sees(cdata, cdata->p,n)) make_facets(cdata, n);
 	}
 	if (n->peak.vert) continue;
-	copy_simp(cdata, ns,seen,cdata->simplex_list,cdata->simplex_size);
-	ns->visit = 0;
-	ns->peak.vert = 0;
-	ns->normal = 0;
-	ns->peak.simp = seen;
-	NULLIFY(cdata, basis_s,ns->neigh[i].basis);
-	ns->neigh[i].vert = cdata->p;
-	bn->simp = op_simp(cdata,n,seen)->simp = ns;
+	copy_simp(cdata, cdata->ns,seen,cdata->simplex_list,cdata->simplex_size);
+	cdata->ns->visit = 0;
+	cdata->ns->peak.vert = 0;
+	cdata->ns->normal = 0;
+	cdata->ns->peak.simp = seen;
+	NULLIFY(cdata, basis_s,cdata->ns->neigh[i].basis);
+	cdata->ns->neigh[i].vert = cdata->p;
+	bn->simp = op_simp(cdata,n,seen)->simp = cdata->ns;
     }
-    return ns;
+    return cdata->ns;
 }
 
 
@@ -1205,21 +1201,17 @@ HIDDEN simplex *
 search(struct chull3d_data *cdata, simplex *root)
 {
     simplex *s;
-    static simplex **st;
-    static long ss = MAXDIM;
     neighbor *sn;
     int i;
     long tms = 0;
 
-    if (!st) st = (simplex **)malloc((ss+MAXDIM+1)*sizeof(simplex*));
     push(root->peak.simp);
     root->visit = cdata->pnum;
     if (!sees(cdata, cdata->p,root))
 	for (i=0,sn=root->neigh;i<(cdata->cdim);i++,sn++) push(sn->simp);
     while (tms) {
-	if (tms>ss)
-	    st=(simplex**)realloc(st,
-		    ((ss+=ss)+MAXDIM+1)*sizeof(simplex*));
+	if (tms>cdata->ss)
+	    cdata->st=(simplex**)realloc(cdata->st, ((cdata->ss+=cdata->ss)+MAXDIM+1)*sizeof(simplex*));
 	pop(s);
 	if (s->visit == cdata->pnum) continue;
 	s->visit = cdata->pnum;
@@ -1439,6 +1431,8 @@ chull3d_data_init(struct chull3d_data *data)
     data->s_num = 0;
     data->out_func_here = (void *)off_out;
     data->fg_vn = 0;
+    data->st=(simplex**)malloc((data->ss+MAXDIM+1)*sizeof(simplex*));
+    data->ns = NULL;
 }
 
 HIDDEN void
