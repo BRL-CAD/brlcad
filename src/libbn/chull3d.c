@@ -1030,7 +1030,23 @@ void off_out(struct chull3d_data *cdata, point *v, int vdim, FILE *Fin, int ambl
 /* vist_funcs for different kinds of output: facets, alpha shapes, etc. */
 typedef void out_func(struct chull3d_data *, point *, int, FILE*, int);
 
+void *facets_print(struct chull3d_data *cdata, simplex *s, void *p) {
 
+    static out_func *out_func_here;
+    point v[MAXDIM];
+    int j;
+
+    if (p) {out_func_here = (out_func*)p; if (!s) return NULL;}
+
+    for (j=0;j<(cdata->cdim);j++) v[j] = s->neigh[j].vert;
+
+    out_func_here(cdata, v,(cdata->cdim),0,0);
+
+    return NULL;
+}
+
+#if 0
+/* swap this with facets_print when printing out triangulation */
 void *ridges_print(struct chull3d_data *cdata, simplex *s, void *p) {
 
     out_func *out_func_here = (out_func *)cdata->out_func_here;
@@ -1049,7 +1065,7 @@ void *ridges_print(struct chull3d_data *cdata, simplex *s, void *p) {
     }
     return NULL;
 }
-
+#endif
 
 /* TODO -make contingent on test */
 #ifdef WIN32
@@ -1267,7 +1283,6 @@ build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, 
     cdata->get_site = get_s;
     cdata->site_num = site_numm;
     cdata->pdim = dim;
-    cdata->vd = vdd;
 
     cdata->exact_bits = (int)floor(DBL_MANT_DIG*log(FLT_RADIX)/log(2));
     cdata->b_err_min = (float)(DBL_EPSILON*MAXDIM*(1<<MAXDIM)*MAXDIM*3.01);
@@ -1408,7 +1423,7 @@ chull3d_data_init(struct chull3d_data *data)
     data->tmpfilenam = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "tmpfilenam");
     data->pdim = 3;
     data->mult_up = 1;
-    data->vd = 1;  /* we're using the triangulation by default */
+    data->vd = 0;  /* we're not using the triangulation by default */
 
     /* These were static variables in functions */
 
@@ -1462,8 +1477,8 @@ bn_3d_chull(int *faces, int *num_faces, point_t **vertices, int *num_vertices,
     if (!root) return -1;
 
     off_out(cdata, 0,0,stdout,-1);
-    ridges_print(cdata, 0, off_out);
-    visit_hull(cdata, root, ridges_print);
+    facets_print(cdata, 0, off_out);
+    visit_hull(cdata, root, facets_print);
     off_out(cdata, 0,0,stdout,1);
 
     free_hull_storage(cdata);
@@ -1517,8 +1532,8 @@ int main(int argc, char **argv) {
     fclose(TFILE);
 
     off_out(cdata, 0,0,stdout,-1);
-    ridges_print(cdata, 0, off_out);
-    visit_hull(cdata, root, ridges_print);
+    facets_print(cdata, 0, off_out);
+    visit_hull(cdata, root, facets_print);
     off_out(cdata, 0,0,stdout,1);
 
     free_hull_storage(cdata);
