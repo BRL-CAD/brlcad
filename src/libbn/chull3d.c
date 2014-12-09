@@ -1397,7 +1397,6 @@ HIDDEN void
 chull3d_data_init(struct chull3d_data *data)
 {
     int i = 0;
-    data->mult_up = 1.0;
     data->simplex_list = 0;
     data->basis_s_list = 0;
     data->Tree_list = 0;
@@ -1417,12 +1416,11 @@ chull3d_data_init(struct chull3d_data *data)
     for(i = 0; i < MAXDIM; i++) data->mins[i] = DBL_MAX;
     data->maxs = (Coord *)bu_calloc(MAXDIM, sizeof(Coord), "maxs");
     for(i = 0; i < MAXDIM; i++) data->maxs[i] = -DBL_MAX;
-    data->mult_up = 1.0;
+    data->mult_up = 1000.0; /* we'll need to multiply based on a tolerance parameter at some point... */
     data->mi = (short *)bu_calloc(MAXPOINTS, sizeof(short), "mi");
     data->mo = (short *)bu_calloc(MAXPOINTS, sizeof(short), "mo");
     data->tmpfilenam = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "tmpfilenam");
     data->pdim = 3;
-    data->mult_up = 1;
     data->vd = 0;  /* we're not using the triangulation by default */
 
     /* These were static variables in functions */
