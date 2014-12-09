@@ -26,6 +26,7 @@
 
 /*#include "chull3d.h"*/
 #include "bu/file.h"
+#include "bu/log.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bn.h"
@@ -140,6 +141,10 @@ struct chull3d_data {
     short *mi;
     short *mo;
     char *tmpfilenam;
+    int *face_cnt;
+    int *face_array;
+    int *vert_cnt;
+    point_t *vert_array;
 };
 
 
@@ -2106,8 +2111,6 @@ extern char	*optarg;
 extern int optind;
 extern int opterr;
 
-static long num_sites;
-
 FILE *INFILE, *OUTFILE, *TFILE;
 
 static long site_numm(void *data, site p) {
@@ -2147,6 +2150,7 @@ site read_next_site(struct chull3d_data *cdata, long j){
     }
     if (!s) return 0;
     if (j!=0) fprintf(TFILE, "%s", buf+k);
+    if (j!=0) bu_log("TFILE: %s\n", buf+k);
     while (buf[k]) {
 	while (buf[k] && isspace(buf[k])) k++;
 	if (buf[k] && j!=-1) {
@@ -2167,38 +2171,10 @@ site read_next_site(struct chull3d_data *cdata, long j){
     return cdata->p;
 }
 
-static site get_site_offline(struct chull3d_data *cdata, long i) {
-
-    if (i>=num_sites) return NULL;
-    else return cdata->site_blocks[i/BLOCKSIZE]+(i%BLOCKSIZE)*cdata->pdim;
-}
-
-
-long *shufmat;
-static void make_shuffle(void){
-    long i,t,j;
-    static long mat_size = 0;
-
-    if (mat_size<=num_sites) {
-	mat_size = num_sites+1;
-	shufmat = (long*)malloc(mat_size*sizeof(long));
-    }
-    for (i=0;i<=num_sites;i++) shufmat[i] = i;
-    for (i=0;i<num_sites;i++){
-	t = shufmat[i];
-	shufmat[i] = shufmat[j = i + (num_sites-i)*(long)bn_randmt()];
-	shufmat[j] = t;
-    }
-}
-
-static long (*shuf)(long);
-long noshuffle(long i) {return i;}
-long shufflef(long i) {return shufmat[i];}
-
 static site (*get_site_n)(struct chull3d_data *cdata, long);
 site get_next_site(void *data) {
     static long s_num = 0;
-    return (*get_site_n)((struct chull3d_data *)data, (*shuf)(s_num++));
+    return (*get_site_n)((struct chull3d_data *)data, s_num++);
 }
 
 
@@ -2208,8 +2184,6 @@ static void tell_options(void) {
     errline("options:");
     errline( "-m mult  multiply by mult before rounding;");
     errline( "-d compute delaunay triangulation;");
-    errline( "-s seed  shuffle with srand(seed);");
-    errline( "-r 	  shuffle with srand(time(0));");
     errline( "-i<name> read input from <name>;");
     errline( "-X<name> chatter to <name>;");
     errline( "-f<fmt> main output in <fmt>:");
@@ -2302,6 +2276,9 @@ void chull3d_data_init(struct chull3d_data *data)
     data->mi = (short *)bu_calloc(MAXPOINTS, sizeof(short), "mi");
     data->mo = (short *)bu_calloc(MAXPOINTS, sizeof(short), "mo");
     data->tmpfilenam = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "tmpfilenam");
+    data->pdim = 3;
+    data->mult_up = 1;
+    data->vd = 1;  /* we're using the triangulation by default */
 }
 
 void chull3d_data_free(struct chull3d_data *data)
@@ -2320,27 +2297,42 @@ void chull3d_data_free(struct chull3d_data *data)
     bu_free(data->tmpfilenam, "tmpfilenam");
 }
 
+int
+bn_3d_chull(int *faces, int *num_faces, point_t **vertices, int *num_vertices,
+            const point_t *input_points_3d, int num_input_pnts)
+{
+    struct chull3d_data *cdata;
+    simplex *root = NULL;
+
+    BU_GET(cdata, struct chull3d_data);
+    chull3d_data_init(cdata);
+    root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim, cdata->vd);
+
+    if (!root) return -1;
+
+    make_output(cdata, root, visit_hull, ridges_print, off_out, stdout);
+
+    free_hull_storage(cdata);
+    chull3d_data_free(cdata);
+    BU_PUT(cdata, struct chull3d_data);
+
+    return 0;
+}
+
+
 /* TODO - replace this with a top level function using libbn types */
 int main(int argc, char **argv) {
 
 
-    long	seed = 0;
-    short	shuffle = 0,
-		output = 1,
-		hist = 0,
-		vol = 0,
-		ahull = 0,
+    short	output = 1,
 		ofn = 0,
 		ifn = 0;
     int	option;
-    double	alpha = 0;
     char	ofile[50] = "",
 		ifile[50] = "",
 		ofilepre[50] = "";
-    FILE	*T;
-    int	main_out_form=0, alpha_out_form=0;
+    int	main_out_form=0;
     simplex *root;
-    fg 	*faces_gr;
 
 
     struct chull3d_data *cdata;
@@ -2349,55 +2341,16 @@ int main(int argc, char **argv) {
 
     cdata->mult_up = 1;
     cdata->DFILE = stderr;
+    cdata->vd = 1;
 
-    while ((option = getopt(argc, argv, "i:m:rs:do:X:a:Af:")) != EOF) {
+    while ((option = getopt(argc, argv, "i:f:")) != EOF) {
 	switch (option) {
-	    case 'm' :
-		sscanf(optarg,"%lf",&cdata->mult_up);
-		DEBEXP(-4,cdata->mult_up);
-		break;
-	    case 'r':
-		shuffle = 1;
-		break;
-	    case 's':
-		seed = atol(optarg);
-		shuffle = 1;
-		break;
-	    case 'd' :
-		cdata->vd = 1;
-		break;
 	    case 'i' :
 		strcpy(ifile, optarg);
-		break;
-	    case 'X' :
-		cdata->DFILE = efopen(cdata, optarg, "w");
 		break;
 	    case 'f' :
 		main_out_form = set_out_func(optarg);
 		break;
-	    case 'A':
-		cdata->vd = ahull = 1;
-		break;
-	    case 'a' :
-		cdata->vd = ahull = 1;
-		switch(optarg[0]) {
-		    case 'a': sscanf(optarg+1,"%lf",&alpha); break;
-		    case 'f':alpha_out_form=set_out_func(optarg+1);
-			     break;
-		    case '\0': break;
-		    default: tell_options();
-		}
-		break;
-	    case 'o': switch (optarg[0]) {
-			  case 'o': output=1; break;
-			  case 'N': output=0; break;
-			  case 'v': cdata->vd = vol = 1; break;
-			  case 'h': hist = 1; break;
-			  case 'F': strcpy(ofile, optarg+1); break;
-			  default: errline("illegal output option");
-				   exit(1);
-		      }
-		      break;
 	    default :
 		      tell_options();
 		      exit(1);
@@ -2413,44 +2366,20 @@ int main(int argc, char **argv) {
     strcpy(ofilepre, ofn ? ofile : (ifn ? ifile : "hout") );
 
     if (output) {
-	if (ofn && main_out_form > 0) {
-	    strcat(ofile, ".");
-	    strcat(ofile, output_forms[main_out_form]);
-	}
-	OUTFILE = ofn ? efopen(cdata, ofile, "w") : stdout;
-	fprintf(cdata->DFILE, "main output to %s\n", ofn ? ofile : "stdout");
-    } else fprintf(cdata->DFILE, "no main output\n");
+	OUTFILE = stdout;
+    }
 
     TFILE = bu_temp_file(cdata->tmpfilenam, MAXPATHLEN);
 
     read_next_site(cdata, -1);
-    /*	fprintf(DFILE,"dim=%d\n",dim);fflush(DFILE); */
-    if (cdata->pdim > MAXDIM) chull3d_panic(cdata, "dimension bound MAXDIM exceeded");
 
     cdata->point_size = cdata->site_size = sizeof(Coord)*cdata->pdim;
 
-    if (shuffle) {
-	fprintf(cdata->DFILE, "reading sites...");
-	for (num_sites=0; read_next_site(cdata, num_sites); num_sites++);
-	fprintf(cdata->DFILE,"done; num_sites=%ld\n", num_sites);fflush(cdata->DFILE);
-	fprintf(cdata->DFILE,"shuffling...");
-	bn_randmt_seed(seed);
-	make_shuffle();
-	shuf = &shufflef;
-	get_site_n = get_site_offline;
-    } else {
-	fprintf(cdata->DFILE,"not shuffling\n");
-	shuf = &noshuffle;
-	get_site_n = read_next_site;
-    }
-
-    fprintf(cdata->DFILE, "finding %s...",
-	    cdata->vd ? "Delaunay triangulation" : "convex hull");
+    get_site_n = read_next_site;
 
     root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim, cdata->vd);
 
     fclose(TFILE);
-    fprintf(cdata->DFILE, "done\n"); fflush(cdata->DFILE);
 
     if (output) {
 	out_func* mof = out_funcs[main_out_form];
@@ -2458,42 +2387,6 @@ int main(int argc, char **argv) {
 	if (main_out_form==0) echo_command_line(OUTFILE,argc,argv);
 	else if (cdata->vd) pr = ridges_print;
 	make_output(cdata, root, visit_hull, pr, mof, OUTFILE);
-    }
-
-    if (ahull) {
-	char ahname[50];
-	out_func* aof = out_funcs[alpha_out_form];
-	if (alpha_out_form==0)
-	    sprintf(ahname, "%s-alf", ofilepre);
-	else	sprintf(ahname, "%s-alf.%s", ofilepre,
-		output_forms[alpha_out_form]);
-
-	T = efopen(cdata, ahname,"w");
-	fprintf(cdata->DFILE, "finding alpha shape; output to %s\n", ahname);
-	fflush(cdata->DFILE);
-	if (alpha==0) alpha=find_alpha(cdata, root);
-	DEBEXP(-10, alpha)
-	    if (alpha_out_form==0) echo_command_line(T,argc,argv);
-	alph_test(cdata,0,0,&alpha);
-	make_output(cdata,root, visit_outside_ashape, afacets_print, aof, T);
-    }
-
-
-    if (vol) {
-	char volnam[50];
-	sprintf(volnam, "%s-vol", ofilepre);
-	fprintf(cdata->DFILE, "finding volumes; output to %s\n", volnam);
-	fflush(cdata->DFILE);
-	find_volumes(cdata, faces_gr=build_fg(cdata,root), efopen(cdata, volnam,"w"));
-    }
-
-    if (cdata->vd && hist) {
-	char hnam[50];
-	sprintf(hnam, "%s-hist", ofilepre);
-	fprintf(cdata->DFILE,"finding incidence histograms; output to %s\n", hnam);
-	fflush(cdata->DFILE);
-	if (!faces_gr) faces_gr = build_fg(cdata,root);
-	print_hist_fg(cdata, root, faces_gr, efopen(cdata, hnam,"w"));
     }
 
     free_hull_storage(cdata);
