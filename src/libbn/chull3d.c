@@ -1032,7 +1032,7 @@ typedef void out_func(struct chull3d_data *, point *, int, FILE*, int);
 
 void *facets_print(struct chull3d_data *cdata, simplex *s, void *p) {
 
-    static out_func *out_func_here;
+    out_func *out_func_here = (out_func *)cdata->out_func_here;
     point v[MAXDIM];
     int j;
 
