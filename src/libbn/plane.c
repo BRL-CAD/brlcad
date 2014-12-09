@@ -1457,6 +1457,7 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 
 	dist1 = fabs(dist1); /* sanity */
 	VSCALE(isect_pt, d_unit, dist1);
+	VADD2(isect_pt, isect_pt, p);
 	VSUB2(a_to_isect_pt, isect_pt, a);
 	VSUB2(b_to_isect_pt, isect_pt, b);
 

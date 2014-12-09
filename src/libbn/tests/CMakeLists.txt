@@ -236,22 +236,13 @@ add_test(bn_plane_dist_pt3_pt3_1      tester_bn_plane_dist 3 0,0,0 1,1,1 1.73205
 # numbers separated by commas.
 
 add_test(bn_plane_isect_line_lseg_case-4_1   tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,0 0,0,0 -4 0)
-# This test fails because it thinks that there is an intersection
-# between a and b, even though the intersection is less than a.
-add_test(bn_plane_isect_line_lseg_case-3_1   tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,1 0,0,5 -3 6)
-# This test fails because it does not return the correct t.
-add_test(bn_plane_isect_line_lseg_case-2_1   tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,-5 0,0,1 -2 6)
+add_test(bn_plane_isect_line_lseg_case-3_1   tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,1 0,0,5 -3 8.660)
+add_test(bn_plane_isect_line_lseg_case-2_1   tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,-5 0,0,-1 -2 8.660)
 add_test(bn_plane_isect_line_lseg_case-1_1   tester_bn_plane_isect 1 -5,-5,-5 1,1,1 -5,-5,-6 0,0,-1 -1 0)
-# This test fails because it does not return the correct t for a
-add_test(bn_plane_isect_line_lseg_case0_1    tester_bn_plane_isect 1 -5,-5,-5 1,1,1 1,1,1 5,5,5 0 6)
-# This test fails because it thinks that there is an intersection
-# between a and be even though they intersect at a
-add_test(bn_plane_isect_line_lseg_case1_1    tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,0 0,0,5 1 5)
-# This test fails because it thinks that the intersection is past b
-# even though it is at b
-add_test(bn_plane_isect_line_lseg_case2_1    tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,-5 0,0,0 2 5)
-# This test fails because it does not return the correct t for the intersection
-add_test(bn_plane_isect_line_lseg_case3_1    tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,-5 0,0,5 3 5)
+add_test(bn_plane_isect_line_lseg_case0_1    tester_bn_plane_isect 1 -5,-5,-5 1,1,1 1,1,1 5,5,5 0 10.392)
+add_test(bn_plane_isect_line_lseg_case1_1    tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,0 0,0,5 1 8.660)
+add_test(bn_plane_isect_line_lseg_case2_1    tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,-5 0,0,0 2 8.660)
+add_test(bn_plane_isect_line_lseg_case3_1    tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,-5 0,0,5 3 8.660)
 
 # For function #2 (bn_isect_lseg3_lseg3), the <args> format is as follows:
 #

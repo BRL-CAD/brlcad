@@ -2260,20 +2260,21 @@ BN_EXPORT extern int bn_isect_2lines(fastf_t *t,
  * @return -3	Intersection exists, < A (t is returned)
  * @return -2	Intersection exists, > B (t is returned)
  * @return -1	Lines do not intersect
- * @return 0	Lines are co-linear (t for A is returned)
+ * @return 0	Lines are co-linear (t for closest point/whichever is on the
+                                     ray returned)
  * @return 1	Intersection at vertex A
  * @return 2	Intersection at vertex B
  * @return 3	Intersection between A and B
  *
  * @par Implicit Returns -
  *
- * t When explicit return >= 0, t is the parameter that describes the
- * intersection of the line and the line segment.  The actual
- * intersection coordinates can be found by solving P + t * D.
- * However, note that for return codes 1 and 2 (intersection exactly
- * at a vertex), it is strongly recommended that the original values
- * passed in A or B are used instead of solving P + t * D, to prevent
- * numeric error from creeping into the position of the endpoints.
+ * t When explicit return >= 0, t is the distance from P to the
+ * intersection point.  The actual intersection coordinates can be
+ * found by solving P + t.  However, note that for return codes 1 and
+ * 2 (intersection exactly at a vertex), it is strongly recommended
+ * that the original values passed in A or B are used instead of
+ * solving P + t, to prevent numeric error from creeping into the
+ * position of the endpoints.
  *
  * XXX should probably be called bn_isect_line3_lseg3()
  * XXX should probably be changed to return dist[2]
