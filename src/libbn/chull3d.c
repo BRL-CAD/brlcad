@@ -133,11 +133,11 @@ struct chull3d_data {
 
     /* these were static variables in functions */
 
-    simplex *simplex_block_table;
+    simplex **simplex_block_table;
     int num_simplex_blocks;
-    basis_s *basis_s_block_table;
+    basis_s **basis_s_block_table;
     int num_basis_s_blocks;
-    Tree *Tree_block_table;
+    Tree **Tree_block_table;
     int num_Tree_blocks;
     int lscale;
     double max_scale;
@@ -243,12 +243,11 @@ HIDDEN simplex *
 new_block_simplex(struct chull3d_data *cdata, int make_blocks)
 {
     int i;
-    static simplex *simplex_block_table[max_blocks];
     simplex *xlm, *xbt;
     static int num_simplex_blocks;
     if (make_blocks && cdata) {
 	((num_simplex_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_simplex_blocks<max_blocks", "chull3d.c", 31, __PRETTY_FUNCTION__));
-	xbt = simplex_block_table[num_simplex_blocks++] = (simplex*)malloc(max_blocks * cdata->simplex_size);
+	xbt = cdata->simplex_block_table[num_simplex_blocks++] = (simplex*)malloc(max_blocks * cdata->simplex_size);
 	memset(xbt,0,max_blocks * cdata->simplex_size);
 	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 31, __PRETTY_FUNCTION__));
 	xlm = ((simplex*) ( (char*)xbt + (max_blocks) * cdata->simplex_size));
@@ -259,7 +258,7 @@ new_block_simplex(struct chull3d_data *cdata, int make_blocks)
 	}
 	return cdata->simplex_list;
     };
-    for (i=0; i<num_simplex_blocks; i++) free(simplex_block_table[i]);
+    for (i=0; i<num_simplex_blocks; i++) free(cdata->simplex_block_table[i]);
     num_simplex_blocks = 0;
     if (cdata) cdata->simplex_list = 0;
     return 0;
@@ -275,12 +274,11 @@ HIDDEN basis_s *
 new_block_basis_s(struct chull3d_data *cdata, int make_blocks)
 {
     int i;
-    static basis_s *basis_s_block_table[max_blocks];
     basis_s *xlm, *xbt;
     static int num_basis_s_blocks;
     if (make_blocks && cdata) {
 	((num_basis_s_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_basis_s_blocks<max_blocks", "chull3d.c", 32, __PRETTY_FUNCTION__));
-	xbt = basis_s_block_table[num_basis_s_blocks++] = (basis_s*)malloc(max_blocks * cdata->basis_s_size);
+	xbt = cdata->basis_s_block_table[num_basis_s_blocks++] = (basis_s*)malloc(max_blocks * cdata->basis_s_size);
 	memset(xbt,0,max_blocks * cdata->basis_s_size);
 	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 32, __PRETTY_FUNCTION__));
 	xlm = ((basis_s*) ( (char*)xbt + (max_blocks) * cdata->basis_s_size));
@@ -291,7 +289,7 @@ new_block_basis_s(struct chull3d_data *cdata, int make_blocks)
 	}
 	return cdata->basis_s_list;
     };
-    for (i=0; i<num_basis_s_blocks; i++) free(basis_s_block_table[i]);
+    for (i=0; i<num_basis_s_blocks; i++) free(cdata->basis_s_block_table[i]);
     num_basis_s_blocks = 0;
     if (cdata) cdata->basis_s_list = 0;
     return 0;
@@ -307,12 +305,11 @@ HIDDEN Tree *
 new_block_Tree(struct chull3d_data *cdata, int make_blocks)
 {
     int i;
-    static Tree *Tree_block_table[max_blocks];
     Tree *xlm, *xbt;
     static int num_Tree_blocks;
     if (make_blocks && cdata) {
 	((num_Tree_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_Tree_blocks<max_blocks", "chull3d.c", 33, __PRETTY_FUNCTION__));
-	xbt = Tree_block_table[num_Tree_blocks++] = (Tree*)malloc(max_blocks * cdata->Tree_size);
+	xbt = cdata->Tree_block_table[num_Tree_blocks++] = (Tree*)malloc(max_blocks * cdata->Tree_size);
 	memset(xbt,0,max_blocks * cdata->Tree_size);
 	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 33, __PRETTY_FUNCTION__));
 	xlm = ((Tree*) ( (char*)xbt + (max_blocks) * cdata->Tree_size));
@@ -323,7 +320,7 @@ new_block_Tree(struct chull3d_data *cdata, int make_blocks)
 	}
 	return cdata->Tree_list;
     };
-    for (i=0; i<num_Tree_blocks; i++) free(Tree_block_table[i]);
+    for (i=0; i<num_Tree_blocks; i++) free(cdata->Tree_block_table[i]);
     num_Tree_blocks = 0;
     if (cdata) cdata->Tree_list = 0;
     return 0;
@@ -1439,6 +1436,10 @@ chull3d_data_init(struct chull3d_data *data)
     data->vd = 1;  /* we're using the triangulation by default */
 
     /* These were static variables in functions */
+
+    data->simplex_block_table = (simplex **)bu_calloc(100, sizeof(simplex *), "simplex_block_table");
+    data->basis_s_block_table = (basis_s **)bu_calloc(100, sizeof(basis_s *), "basis_s_block_table");
+    data->Tree_block_table = (Tree **)bu_calloc(100, sizeof(Tree *), "Tree_block_table");
     data->p_neigh.vert = 0;
     data->p_neigh.simp = NULL;
     data->p_neigh.basis = NULL;
@@ -1460,6 +1461,9 @@ chull3d_data_free(struct chull3d_data *data)
     bu_free(data->maxs, "maxs");
     bu_free(data->mi, "mi");
     bu_free(data->mo, "mo");
+    bu_free(data->simplex_block_table, "simplex_block_table");
+    bu_free(data->basis_s_block_table, "basis_s_block_table");
+    bu_free(data->Tree_block_table, "Tree_block_table");
     BU_PUT(data->tt_basis, basis_s);
     bu_free(data->tmpfilenam, "tmpfilenam");
 }
