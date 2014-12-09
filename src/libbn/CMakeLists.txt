@@ -57,6 +57,7 @@ CMAKEFILES(
   README
   bn_private.h
   bntester.dat
+  chull3d.c
   )
 
 # Local Variables:
