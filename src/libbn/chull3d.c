@@ -67,7 +67,6 @@ typedef struct simplex {
     neighbor neigh[1];  /* neighbors of simplex */
 } simplex;
 
-
 typedef struct fg_node fg;
 typedef struct tree_node Tree;
 struct tree_node {
@@ -96,8 +95,6 @@ struct chull3d_data {
     basis_s *basis_s_list;
     size_t Tree_size;
     Tree *Tree_list;
-    size_t fg_size;
-    fg *fg_list;
     int pdim;   /* point dimension */
     point *site_blocks;
     int num_blocks;
@@ -105,31 +102,20 @@ struct chull3d_data {
     double Huge;
     int basis_vec_size;
     int exact_bits;
-    float b_err_min, b_err_min_sq;
-
+    float b_err_min;
+    float b_err_min_sq;
     short vd;
     basis_s *tt_basis;
     basis_s *infinity_basis;
     Coord *hull_infinity;
     int *B;
-    int tot;
-    int totinf;
-    int bigt;
     gsitef *get_site;
     site_n *site_num;
     fg *faces_gr_t;
-    FILE *FG_OUT;
-    /*double fg_hist[100][100], fg_hist_bad[100][100],fg_hist_far[100][100];*/
-    double **fg_hist;
-    double **fg_hist_bad;
-    double **fg_hist_far;
-    /*double mult_up = 1.0;*/
     double mult_up;
-    /*Coord mins[MAXDIM] = {DBL_MAX,DBL_MAX,DBL_MAX,DBL_MAX,DBL_MAX,DBL_MAX,DBL_MAX,DBL_MAX};
-     *       Coord maxs[MAXDIM] = {-DBL_MAX,-DBL_MAX,-DBL_MAX,-DBL_MAX,-DBL_MAX,-DBL_MAX,-DBL_MAX,-DBL_MAX};*/
     Coord *mins;
     Coord *maxs;
-    unsigned short X[3];
+    /*unsigned short X[3];*/
     site p;         /* the current site */
     long pnum;
     int rdim;   /* region dimension: (max) number of sites specifying region */
@@ -319,34 +305,6 @@ void free_Tree_storage(struct chull3d_data *cdata) {
     new_block_Tree(cdata, 0);
 }
 
-fg *new_block_fg(struct chull3d_data *cdata, int make_blocks) {
-    int i;
-    static fg *fg_block_table[max_blocks];
-    fg *xlm, *xbt;
-    static int num_fg_blocks;
-    if (make_blocks && cdata) {
-	((num_fg_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_fg_blocks<max_blocks", "chull3d.c", 34, __PRETTY_FUNCTION__));
-	xbt = fg_block_table[num_fg_blocks++] = (fg*)malloc(max_blocks * cdata->fg_size);
-	memset(xbt,0,max_blocks * cdata->fg_size);
-	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 34, __PRETTY_FUNCTION__));
-	xlm = ((fg*) ( (char*)xbt + (max_blocks) * cdata->fg_size));
-	for (i=0; i<max_blocks; i++) {
-	    xlm = ((fg*) ( (char*)xlm + ((-1)) * cdata->fg_size));
-	    xlm->next = cdata->fg_list;
-	    cdata->fg_list = xlm;
-	}
-	return cdata->fg_list;
-    };
-    for (i=0; i<num_fg_blocks; i++) free(fg_block_table[i]);
-    num_fg_blocks = 0;
-    if (cdata) cdata->fg_list = 0;
-    return 0;
-}
-void free_fg_storage(struct chull3d_data *cdata) {
-    new_block_fg(cdata, 0);
-}
-
-
 /* ch.c : numerical functions for hull computation */
 
 static Coord Vec_dot(struct chull3d_data *cdata, point x, point y) {
@@ -389,107 +347,6 @@ static void Vec_scale(struct chull3d_data *cdata, int n, Coord a, Coord *x)
     }
 }
 
-
-static void print_simplex_num(FILE *F, simplex *s) {
-    fprintf(F, "simplex ");
-    if(!s) fprintf(F, "NULL ");
-    else fprintf(F, "%p  ", (void*)s);
-}
-
-void print_neighbor_snum(struct chull3d_data *cdata, FILE* F, neighbor *n){
-
-    assert(cdata->site_num!=NULL);
-    if (n->vert)
-	fprintf(F, "%ld ", (*(cdata->site_num))((void *)cdata, n->vert));
-    else
-	fprintf(F, "NULL vert ");
-    fflush(stdout);
-}
-
-void print_point(FILE *F, int dim, point p) {
-    int j;
-    if (!p) {
-	fprintf(F, "NULL");
-	return;
-    }
-    for (j=0;j<dim;j++) fprintf(F, "%g  ", *p++);
-}
-
-void print_point_int(FILE *F, int dim, point p) {
-    int j;
-    if (!p) {
-	fprintf(F, "NULL");
-	return;
-    }
-    for (j=0;j<dim;j++) fprintf(F, "%.20g  ", *p++);
-}
-
-void print_basis(struct chull3d_data *cdata, FILE *F, basis_s* b) {
-    if (!b) {fprintf(F, "NULL basis ");fflush(stdout);return;}
-    if (b->lscale<0) {fprintf(F, "\nbasis computed");return;}
-    fprintf(F, "\n%p  %d \n b=",(void*)b,b->lscale);
-    print_point(F, cdata->rdim, b->vecs);
-    fprintf(F, "\n a= ");
-    print_point_int(F, cdata->rdim, b->vecs+cdata->rdim); fprintf(F, "   ");
-    fflush(F);
-}
-
-void print_neighbor_full(struct chull3d_data *cdata, FILE *F, neighbor *n){
-
-    if (!n) {fprintf(F, "null neighbor\n");return;}
-
-    print_simplex_num(F, n->simp);
-    print_neighbor_snum(cdata,F, n);fprintf(F, ":  ");fflush(F);
-    if (n->vert) {
-	/*		if (n->basis && n->basis->lscale <0) fprintf(F, "trans ");*/
-	/* else */ print_point(F, cdata->pdim,n->vert);
-	fflush(F);
-    }
-    print_basis(cdata, F, n->basis);
-    fflush(F);
-    fprintf(F, "\n");
-}
-
-
-typedef void print_neighbor_f(struct chull3d_data *, FILE*, neighbor*);
-
-void *print_facet(struct chull3d_data *cdata, FILE *F, simplex *s, print_neighbor_f *pnfin) {
-    int i;
-    neighbor *sn = s->neigh;
-
-    /*	fprintf(F, "%d ", s->mark);*/
-    for (i=0; i<(cdata->cdim);i++,sn++) (*pnfin)(cdata, F, sn);
-    fprintf(F, "\n");
-    fflush(F);
-    return NULL;
-}
-
-
-
-
-void *print_simplex_f(struct chull3d_data *cdata, simplex *s, FILE *F, print_neighbor_f *pnfin){
-
-    static print_neighbor_f *pnf;
-
-    if (pnfin) {pnf=pnfin; if (!s) return NULL;}
-
-    print_simplex_num(F, s);
-    fprintf(F, "\n");
-    if (!s) return NULL;
-    fprintf(F, "normal ="); print_basis(cdata, F, s->normal); fprintf(F, "\n");
-    fprintf(F, "peak ="); (*pnf)(cdata,F, &(s->peak));
-    fprintf (F, "facet =\n");fflush(F);
-    return print_facet(cdata, F, s, pnf);
-}
-
-void *print_simplex(struct chull3d_data *cdata, simplex *s, void *Fin) {
-    static FILE *F;
-
-    if (Fin) {F=(FILE*)Fin; if (!s) return NULL;}
-
-    return print_simplex_f(cdata, s, F, 0);
-
-}
 
 /* amount by which to scale up vector, for reduce_inner */
 static double sc(struct chull3d_data *cdata, basis_s *v,simplex *s, int k, int j) {
@@ -633,44 +490,6 @@ int out_of_flat(struct chull3d_data *cdata, simplex *root, point p) {
     return 0;
 }
 
-
-static double cosangle_sq(struct chull3d_data *cdata, basis_s* v,basis_s* w)  {
-    double dd;
-    point	vv=v->vecs,
-		wv=w->vecs;
-    dd = Vec_dot(cdata, vv,wv);
-    return dd*dd/Norm2(cdata, vv)/Norm2(cdata, wv);
-}
-
-
-int check_perps(struct chull3d_data *cdata, simplex *s) {
-
-    static basis_s *b = NULL;
-    point 	z,y;
-    point	tt;
-    int i,j;
-
-    for (i=1; i<(cdata->cdim); i++) if (NEARZERO(s->neigh[i].basis->sqb)) return 0;
-    if (!b) b = (basis_s*)malloc(cdata->basis_s_size);
-    else b->lscale = 0;
-    z = VB(b);
-    tt = s->neigh[0].vert;
-    for (i=1;i<(cdata->cdim);i++) {
-	y = s->neigh[i].vert;
-	if (cdata->vd && y==cdata->hull_infinity) memcpy(b, cdata->infinity_basis, cdata->basis_s_size);
-	else {trans(z,y,tt); lift(cdata,z,s);}
-	if (s->normal && cosangle_sq(cdata,b,s->normal)>cdata->b_err_min_sq) {
-	    return 0;
-	}
-	for (j=i+1;j<(cdata->cdim);j++) {
-	    if (cosangle_sq(cdata,b,s->neigh[j].basis)>cdata->b_err_min_sq) {
-		return 0;
-	    }
-	}
-    }
-    return 1;
-}
-
 int sees(struct chull3d_data *, site, simplex *);
 
 void get_normal_sede(struct chull3d_data *cdata, simplex *s) {
@@ -712,10 +531,6 @@ void get_normal_sede(struct chull3d_data *cdata, simplex *s) {
 
 void get_normal(struct chull3d_data *cdata, simplex *s) {get_normal_sede(cdata,s); return;}
 
-
-void print_site(struct chull3d_data *cdata, site p, FILE* F)
-{print_point(F, cdata->pdim,p);fprintf(F, "\n");}
-
 int sees(struct chull3d_data *cdata, site p, simplex *s) {
 
     static basis_s *b = NULL;
@@ -751,142 +566,10 @@ int sees(struct chull3d_data *cdata, site p, simplex *s) {
 }
 
 
-static double radsq(struct chull3d_data *cdata, simplex *s) {
-
-    point n;
-    neighbor *sn;
-    int i;
-
-    /* square of ratio of circumcircle radius to
-       max edge length for Delaunay tetrahedra */
-
-    for (i=0,sn=s->neigh;i<(cdata->cdim);i++,sn++)
-	if (sn->vert == cdata->hull_infinity) return cdata->Huge;
-
-    if (!s->normal) get_normal_sede(cdata, s);
-
-    /* compute circumradius */
-    n = s->normal->vecs;
-
-    if (NEARZERO(n[cdata->rdim-1])) {return cdata->Huge;}
-
-    return Vec_dot_pdim(cdata,n,n)/4/n[cdata->rdim-1]/n[cdata->rdim-1];
-}
-
-
-int alph_test(struct chull3d_data *cdata, simplex *s, int i, void *alphap) {
-    /*returns 1 if not an alpha-facet */
-
-    simplex *si;
-    double	rs,rsi,rsfi;
-    neighbor *scn, *sin;
-    int k, nsees, ssees;
-    static double alpha;
-
-    if (alphap) {alpha=*(double*)alphap; if (!s) return 1;}
-    if (i==-1) return 0;
-
-    si = s->neigh[i].simp;
-    scn = s->neigh+(cdata->cdim)-1;
-    sin = s->neigh+i;
-    nsees = 0;
-
-    for (k=0;k<(cdata->cdim);k++) if (s->neigh[k].vert==cdata->hull_infinity && k!=i) return 1;
-    rs = radsq(cdata, s);
-    rsi = radsq(cdata, si);
-
-    if (rs < alpha &&  rsi < alpha) return 1;
-
-    swap_points(scn->vert,sin->vert);
-    NULLIFY(cdata, basis_s, s->neigh[i].basis);
-    (cdata->cdim)--;
-    get_basis_sede(cdata, s);
-    reduce(cdata, &s->normal,cdata->hull_infinity,s,(cdata->cdim));
-    rsfi = radsq(cdata, s);
-
-    for (k=0;k<(cdata->cdim);k++) if (si->neigh[k].simp==s) break;
-
-    ssees = sees(cdata, scn->vert,s);
-    if (!ssees) nsees = sees(cdata, si->neigh[k].vert,s);
-    swap_points(scn->vert,sin->vert);
-    (cdata->cdim)++;
-    NULLIFY(cdata, basis_s, s->normal);
-    NULLIFY(cdata, basis_s, s->neigh[i].basis);
-
-    if (ssees) return alpha<rs;
-    if (nsees) return alpha<rsi;
-
-    assert(rsfi<=rs+FLT_EPSILON && rsfi<=rsi+FLT_EPSILON);
-
-    return alpha<=rsfi;
-}
-
-
-static void *conv_facetv(struct chull3d_data *cdata, simplex *s, void *dum) {
-    int i;
-    for (i=0;i<(cdata->cdim);i++) if (s->neigh[i].vert==cdata->hull_infinity) {return s;}
-    return NULL;
-}
-
-
-static void vols(struct chull3d_data *cdata, fg *f, Tree *t, basis_s* n, int depth) {
-
-    static simplex *s;
-    static neighbor *sn;
-    int tdim = (cdata->cdim);
-    basis_s *nn = 0;
-    int signum;
-    point nnv;
-    double sqq;
-
-
-    if (!t) {return;}
-
-    if (!s) {NEWL(cdata, cdata->simplex_list,simplex,s); sn = s->neigh;}
-    (cdata->cdim) = depth;
-    s->normal = n;
-    if (depth>1 && sees(cdata, t->key,s)) signum = -1; else signum = 1;
-    (cdata->cdim) = tdim;
-
-    if (t->fgs->dist == 0) {
-	sn[depth-1].vert = t->key;
-	NULLIFY(cdata, basis_s,sn[depth-1].basis);
-	(cdata->cdim) = depth; get_basis_sede(cdata, s); (cdata->cdim) = tdim;
-	reduce(cdata, &nn, cdata->hull_infinity, s, depth);
-	nnv = nn->vecs;
-	if (t->key==cdata->hull_infinity || f->dist==cdata->Huge || NEARZERO(nnv[cdata->rdim-1]))
-	    t->fgs->dist = cdata->Huge;
-	else
-	    t->fgs->dist = Vec_dot_pdim(cdata,nnv,nnv)
-		/4/nnv[cdata->rdim-1]/nnv[cdata->rdim-1];
-	if (!t->fgs->facets) t->fgs->vol = 1;
-	else vols(cdata, t->fgs, t->fgs->facets, nn, depth+1);
-    }
-
-    assert(f->dist!=cdata->Huge || t->fgs->dist==cdata->Huge);
-    if (t->fgs->dist==cdata->Huge || t->fgs->vol==cdata->Huge) f->vol = cdata->Huge;
-    else {
-	sqq = t->fgs->dist - f->dist;
-	if (NEARZERO(sqq)) f->vol = 0;
-	else f->vol += signum
-	    *sqrt(sqq)
-		*t->fgs->vol
-		/((cdata->cdim)-depth+1);
-    }
-    vols(cdata, f, t->left, n, depth);
-    vols(cdata, f, t->right, n, depth);
-
-    return;
-}
-
-
-
-
 void free_hull_storage(struct chull3d_data *cdata) {
     free_basis_s_storage(cdata);
     free_simplex_storage(cdata);
     free_Tree_storage(cdata);
-    free_fg_storage(cdata);
 }
 
 /*
@@ -1126,51 +809,6 @@ void printtree(Tree * t, int d) {
 }
 
 
-fg *find_fg(struct chull3d_data *cdata, simplex *s,int q) {
-
-    fg *f;
-    neighbor *si, *sn = s->neigh;
-    Tree *t;
-
-    if (q==0) return cdata->faces_gr_t;
-    if (!cdata->faces_gr_t) NEWLRC(cdata, cdata->fg_list, fg, cdata->faces_gr_t);
-    f = cdata->faces_gr_t;
-    for (si=sn; si<sn+(cdata->cdim); si++) if (q & (1<<(si-sn))) {
-	t = f->facets = insert(cdata, si->vert,f->facets);
-	if (!t->fgs) NEWLRC(cdata, cdata->fg_list, fg, (t->fgs))
-	    f = t->fgs;
-    }
-    return f;
-}
-
-void *add_to_fg(struct chull3d_data *cdata, simplex *s, void *dum) {
-
-    neighbor t, *si, *sj, *sn = s->neigh;
-    fg *fq;
-    int q,m,Q=1<<(cdata->cdim);
-    /* sort neigh by site number */
-    for (si=sn+2;si<sn+(cdata->cdim);si++)
-	for (sj=si; sj>sn+1 && snkey(cdata, sj-1) > snkey(cdata, sj); sj--)
-	{t=*(sj-1); *(sj-1) = *sj; *sj = t;}
-
-    NULLIFY(cdata, basis_s,s->normal);
-    NULLIFY(cdata, basis_s,s->neigh[0].basis);
-
-    /* insert subsets */
-    for (q=1; q<Q; q++) find_fg(cdata, s,q);
-
-    /* include all superset relations */
-    for (q=1; q<Q; q++) {
-	fq = find_fg(cdata,s,q);
-	assert(fq);
-	for (m=1,si=sn;si<sn+(cdata->cdim);si++,m<<=1) if (!(q&m)) {
-	    fq->facets = insert(cdata, si->vert,fq->facets);
-	    fq->facets->fgs = find_fg(cdata,s, q|m);
-	}
-    }
-    return NULL;
-}
-
 void visit_fg_i(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data *,Tree *, int, int),
 	Tree *t, int depth, int vn, int boundary) {
     int	boundaryc = boundary;
@@ -1216,54 +854,6 @@ void visit_fg_far(struct chull3d_data *cdata, fg *faces_gr, void (*v_fg)(struct 
     visit_fg_i_far(cdata, v_fg,faces_gr->facets, 0, --fg_vn);
 }
 
-void p_fg(struct chull3d_data *cdata, Tree* t, int depth, int bad) {
-    static int fa[MAXDIM];
-    int i;
-    static double mults[MAXDIM];
-
-    if (mults[0]==0) {
-	mults[cdata->pdim] = 1;
-	for (i=cdata->pdim-1; i>=0; i--) mults[i] = cdata->mult_up*mults[i+1];
-    }
-
-    fa[depth] = cdata->site_num((void *)cdata, t->key);
-    for (i=0;i<=depth;i++)
-	fprintf(cdata->FG_OUT, "%d ", fa[i]);
-    fprintf(cdata->FG_OUT, "	%G\n", t->fgs->vol/mults[depth]);
-}
-
-void print_fg(struct chull3d_data *cdata, fg *faces_gr, FILE *F) {cdata->FG_OUT=F; visit_fg(cdata,faces_gr, p_fg);}
-
-void find_volumes(struct chull3d_data *cdata, fg *faces_gr, FILE *F) {
-    if (!faces_gr) return;
-    vols(cdata, faces_gr, faces_gr->facets, 0, 1);
-    print_fg(cdata,faces_gr, F);
-}
-
-void h_fg(struct chull3d_data *cdata, Tree *t, int depth, int bad) {
-    if (!t->fgs->facets) return;
-    if (bad) {
-	cdata->fg_hist_bad[depth][t->fgs->facets->size]++;
-	return;
-    }
-    cdata->fg_hist[depth][t->fgs->facets->size]++;
-}
-
-void h_fg_far(struct chull3d_data *cdata, Tree* t, int depth) {
-    if (t->fgs->facets) cdata->fg_hist_far[depth][t->fgs->facets->size]++;
-}
-
-
-/* visit all simplices with facets of the current hull */
-typedef void* visit_func(struct chull3d_data *, simplex *, void *);
-
-static void *facet_test(struct chull3d_data *cdata, simplex *s, void *dummy) {return (!s->peak.vert) ? s : NULL;}
-static int hullt(struct chull3d_data *cdata, simplex *s, int i, void *dummy) {return i>-1;}
-
-
-
-
-
 FILE* efopen(struct chull3d_data *cdata, char *file, char *mode) {
     FILE* fp;
     if ((fp = fopen(file, mode))) return fp;
@@ -1285,6 +875,7 @@ FILE* epopen(char *com, char *mode) {
 /* hull.c : "combinatorial" functions for hull computation */
 
 typedef int test_func(struct chull3d_data *, simplex *, int, void *);
+typedef void* visit_func(struct chull3d_data *, simplex *, void *);
 
 void *visit_triang_gen(struct chull3d_data *cdata, simplex *s, visit_func *visit, test_func *test) {
     /*
@@ -1322,28 +913,15 @@ void *visit_triang_gen(struct chull3d_data *cdata, simplex *s, visit_func *visit
 }
 
 static int truet(struct chull3d_data *cdata, simplex *s, int i, void *dum) {return 1;}
-
 void *visit_triang(struct chull3d_data *cdata, simplex *root, visit_func *visit)
     /* visit the whole triangulation */
 {return visit_triang_gen(cdata, root, visit, truet);}
 
 
+static int hullt(struct chull3d_data *cdata, simplex *s, int i, void *dummy) {return i>-1;}
+static void *facet_test(struct chull3d_data *cdata, simplex *s, void *dummy) {return (!s->peak.vert) ? s : NULL;}
 void *visit_hull(struct chull3d_data *cdata, simplex *root, visit_func *visit){
     return visit_triang_gen(cdata, visit_triang(cdata, root, &facet_test), visit, hullt);}
-
-
-fg *build_fg(struct chull3d_data *cdata, simplex *root) {
-    cdata->faces_gr_t= 0;
-    visit_hull(cdata, root, add_to_fg);
-    return cdata->faces_gr_t;
-}
-
-void print_triang(struct chull3d_data *cdata, simplex *root, FILE *F, print_neighbor_f *pnf) {
-    print_simplex(cdata, 0,F);
-    print_simplex_f(cdata, 0,0,pnf);
-    visit_triang(cdata, root, print_simplex);
-}
-
 
 void *check_simplex(struct chull3d_data *cdata, simplex *s, void *dum){
 
@@ -1378,11 +956,6 @@ void *check_simplex(struct chull3d_data *cdata, simplex *s, void *dum){
     }
     return NULL;
 }
-
-static int p_neight(struct chull3d_data *cdata, simplex *s, int i, void *dum) {return s->neigh[i].vert !=cdata->p;}
-
-void check_triang(struct chull3d_data *cdata, simplex *root){visit_triang(cdata, root, &check_simplex);}
-
 
 /* outfuncs: given a list of points, output in a given format */
 
@@ -1482,13 +1055,6 @@ Coord maxdist(int dim, point p1, point p2) {
     }
 
     return d;
-}
-
-
-void check_new_triangs(struct chull3d_data *cdata, simplex *s){visit_triang_gen(cdata, s, check_simplex, p_neight);}
-
-void* visit_outside_ashape(struct chull3d_data *cdata, simplex *root, visit_func visit) {
-    return visit_triang_gen(cdata, visit_hull(cdata, root, conv_facetv), visit, alph_test);
 }
 
 /* the neighbor entry of a containing b */
@@ -1698,7 +1264,6 @@ build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, 
     cdata->basis_s_size = sizeof(basis_s)+ (2*cdata->rdim-1)*sizeof(Coord);
     cdata->simplex_size = sizeof(simplex) + (cdata->rdim-1)*sizeof(neighbor);
     cdata->Tree_size = sizeof(Tree);
-    cdata->fg_size = sizeof(fg);
 
     root = NULL;
     if (cdata->vd) {
@@ -1790,46 +1355,10 @@ read_next_site(struct chull3d_data *cdata, long j)
     return cdata->p;
 }
 
-static site (*get_site_n)(struct chull3d_data *cdata, long);
-
 site get_next_site(void *data) {
     static long s_num = 0;
-    return (*get_site_n)((struct chull3d_data *)data, s_num++);
+    return read_next_site((struct chull3d_data *)data, s_num++);
 }
-
-
-static void errline(char *s) {fprintf(stderr, s); fprintf(stderr,"\n"); return;}
-static void tell_options(void) {
-
-    errline("options:");
-    errline( "-m mult  multiply by mult before rounding;");
-    errline( "-d compute delaunay triangulation;");
-    errline( "-i<name> read input from <name>;");
-    errline( "-X<name> chatter to <name>;");
-    errline( "-f<fmt> main output in <fmt>:");
-    errline("	ps->postscript, mp->metapost, cpr->cpr format, off->OFF format, vn->vertex numbers(default)");
-    errline( "-A alpha shape, find suitable alpha");
-    errline( "-aa<alpha> alpha shape, alpha=<alpha>;");
-    errline( "-af<fmt> output alpha shape in <fmt>;");
-    errline( "-oo  opt==o (default) list of simplices;");
-    errline( "-oF<name>  prefix of output files is <name>;");
-    errline( "-oN  no main output;");
-    errline( "-ov volumes of Voronoi facets");
-    errline( "-oh incidence histograms");
-}
-
-static void make_output(struct chull3d_data *cdata, simplex *root, void *(visit_gen)(struct chull3d_data *, simplex*, visit_func* visit),
-	visit_func* visit,
-	out_func* out_funcp,
-	FILE *F){
-
-    out_funcp(cdata, 0,0,F,-1);
-    visit(cdata, 0, out_funcp);
-    visit_gen(cdata, root, visit);
-    out_funcp(cdata, 0,0,F,1);
-    fclose(F);
-}
-
 
 void chull3d_data_init(struct chull3d_data *data)
 {
@@ -1838,7 +1367,6 @@ void chull3d_data_init(struct chull3d_data *data)
     data->simplex_list = 0;
     data->basis_s_list = 0;
     data->Tree_list = 0;
-    data->fg_list = 0;
     data->site_blocks = (point *)bu_calloc(MAXBLOCKS, sizeof(point), "site_blocks");
     BU_GET(data->tt_basis, basis_s);
     data->tt_basis->next = 0;
@@ -1851,12 +1379,6 @@ void chull3d_data_init(struct chull3d_data *data)
     data->hull_infinity = (Coord *)bu_calloc(10, sizeof(Coord), "hull_infinity");
     data->hull_infinity[0] = 57.2;
     data->B = (int *)bu_calloc(100, sizeof(int), "A");
-    data->tot = 0;
-    data->totinf = 0;
-    data->bigt = 0;
-    data->fg_hist = (double **)bu_calloc(100*100, sizeof(double), "fg_hist");
-    data->fg_hist_bad = (double **)bu_calloc(100*100, sizeof(double), "cdata->fg_hist_bad");
-    data->fg_hist_far = (double **)bu_calloc(100*100, sizeof(double), "cdata->fg_hist_far");
     data->mins = (Coord *)bu_calloc(MAXDIM, sizeof(Coord), "mins");
     for(i = 0; i < MAXDIM; i++) data->mins[i] = DBL_MAX;
     data->maxs = (Coord *)bu_calloc(MAXDIM, sizeof(Coord), "maxs");
@@ -1875,9 +1397,6 @@ void chull3d_data_free(struct chull3d_data *data)
     bu_free(data->site_blocks, "site_blocks");
     bu_free(data->hull_infinity, "hull_infinity");
     bu_free(data->B, "B");
-    bu_free(data->fg_hist, "fg_hist");
-    bu_free(data->fg_hist_bad, "fg_hist_bad");
-    bu_free(data->fg_hist_far, "fg_hist_far");
     bu_free(data->mins, "mins");
     bu_free(data->maxs, "maxs");
     bu_free(data->mi, "mi");
@@ -1899,7 +1418,10 @@ bn_3d_chull(int *faces, int *num_faces, point_t **vertices, int *num_vertices,
 
     if (!root) return -1;
 
-    make_output(cdata, root, visit_hull, ridges_print, off_out, stdout);
+    off_out(cdata, 0,0,stdout,-1);
+    ridges_print(cdata, 0, off_out);
+    visit_hull(cdata, root, ridges_print);
+    off_out(cdata, 0,0,stdout,1);
 
     free_hull_storage(cdata);
     chull3d_data_free(cdata);
@@ -1928,12 +1450,11 @@ int main(int argc, char **argv) {
 
     while ((option = getopt(argc, argv, "i:")) != EOF) {
 	switch (option) {
-	    case 'i' :
+	    case 'i':
 		strcpy(ifile, optarg);
 		break;
-	    default :
-		      tell_options();
-		      exit(1);
+	    default:
+		exit(1);
 	}
     }
 
@@ -1948,13 +1469,14 @@ int main(int argc, char **argv) {
 
     cdata->point_size = cdata->site_size = sizeof(Coord)*cdata->pdim;
 
-    get_site_n = read_next_site;
-
     root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim, cdata->vd);
 
     fclose(TFILE);
 
-    make_output(cdata, root, visit_hull, ridges_print, &off_out, OUTFILE);
+    off_out(cdata, 0,0,stdout,-1);
+    ridges_print(cdata, 0, off_out);
+    visit_hull(cdata, root, ridges_print);
+    off_out(cdata, 0,0,stdout,1);
 
     free_hull_storage(cdata);
     chull3d_data_free(cdata);
