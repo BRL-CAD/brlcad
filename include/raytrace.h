@@ -5635,6 +5635,11 @@ RT_EXPORT extern struct bu_list *rt_vlblock_find(struct bn_vlblock *vbp,
  ************************************************************************/
 
 /**
+ * Returns the description of a vlist cmd.
+ */
+RT_EXPORT extern const char *rt_vlist_get_cmd_description(int cmd);
+
+/**
  * Validate an bn_vlist chain for having reasonable values inside.
  * Calls bu_bomb() if not.
  *
@@ -7817,7 +7822,6 @@ RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
  * initialize ts_dbip before use.
  */
 RT_EXPORT extern const struct db_tree_state rt_initial_tree_state;
-RT_EXPORT extern const char *rt_vlist_cmd_descriptions[];
 
 
 /** @file librt/vers.c
