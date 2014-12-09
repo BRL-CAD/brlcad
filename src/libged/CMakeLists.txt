@@ -138,6 +138,7 @@ set(LIBGED_SOURCES
   killrefs.c
   killtree.c
   label.c
+  lc.c
   list.c
   loadview.c
   lod.c
