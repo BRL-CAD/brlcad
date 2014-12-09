@@ -109,7 +109,8 @@ draw_check_leaf(struct db_tree_state *tsp,
 		dgcdp->shaded_mode_override = _GED_SHADED_MODE_UNSET;
 		dgcdp->dmode = _GED_WIREFRAME;
 
-		_ged_drawtrees(dgcdp->gedp, ac, av, 1, (struct _ged_client_data *)client_data);
+		_ged_drawtrees(dgcdp->gedp, ac, av, _GED_DRAW_WIREFRAME,
+			(struct _ged_client_data *)client_data);
 
 		/* restore shaded mode states */
 		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
@@ -143,7 +144,9 @@ draw_check_leaf(struct db_tree_state *tsp,
 		    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 		    _ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 		} else
-		    _ged_drawtrees(dgcdp->gedp, ac, av, 3, (struct _ged_client_data *)client_data);
+		    _ged_drawtrees(dgcdp->gedp, ac, av,
+			    _GED_DRAW_NMG_POLY,
+			    (struct _ged_client_data *)client_data);
 	    } else {
 		/* save shaded mode states */
 		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
@@ -155,7 +158,8 @@ draw_check_leaf(struct db_tree_state *tsp,
 		dgcdp->shaded_mode_override = _GED_SHADED_MODE_UNSET;
 		dgcdp->dmode = _GED_WIREFRAME;
 
-		_ged_drawtrees(dgcdp->gedp, ac, av, 1, (struct _ged_client_data *)client_data);
+		_ged_drawtrees(dgcdp->gedp, ac, av, _GED_DRAW_WIREFRAME,
+			(struct _ged_client_data *)client_data);
 
 		/* restore shaded mode states */
 		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
@@ -502,11 +506,6 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, const char 
  * Add a set of tree hierarchies to the active set.
  * Note that argv[0] should be ignored, it has the command name in it.
  *
- * Kind =
- * 1 regular wireframes
- * 2 big-E
- * 3 NMG polygons
- *
  * Returns -
  * 0 Ordinarily
  * -1 On major error
@@ -692,7 +691,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	argv += bu_optind;
 
 	switch (kind) {
-	    case 1:
+	    case _GED_DRAW_WIREFRAME:
 		dgcdp.dmode = _GED_WIREFRAME;
 		if (dgcdp.shaded_mode_override != _GED_SHADED_MODE_UNSET) {
 		    dgcdp.dmode = dgcdp.shaded_mode_override;
@@ -700,8 +699,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
  		    dgcdp.dmode = gedp->ged_gdp->gd_shaded_mode;
 		}
 		break;
-	    case 2:
-	    case 3:
+	    case _GED_DRAW_NMG_POLY:
 		dgcdp.dmode = _GED_BOOL_EVAL;
 		break;
 	}
@@ -719,7 +717,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    bu_vls_printf(gedp->ged_result_str, "ERROR, bad kind\n");
 	    --drawtrees_depth;
 	    return -1;
-	case 1:		/* Wireframes */
+	case _GED_DRAW_WIREFRAME:
 	    /*
 	     * If asking for wireframe and in shaded_mode and no shaded mode override,
 	     * or asking for wireframe and shaded mode is being overridden with a value
@@ -825,13 +823,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		bu_free(paths_to_draw, "draw paths");
 	    }
 	    break;
-	case 2:		/* Big-E */
-	    bu_vls_printf(gedp->ged_result_str, "drawtrees:  can't do big-E here\n");
-	    --drawtrees_depth;
-	    return -1;
-	case 3:
+	case _GED_DRAW_NMG_POLY:
 	    {
-		/* NMG */
 		nmg_model = nmg_mm();
 		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
 		if (dgcdp.draw_edge_uses) {
@@ -1130,14 +1123,14 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 int
 ged_draw(struct ged *gedp, int argc, const char *argv[])
 {
-    return ged_draw_guts(gedp, argc, argv, 1);
+    return ged_draw_guts(gedp, argc, argv, _GED_DRAW_WIREFRAME);
 }
 
 
 int
 ged_ev(struct ged *gedp, int argc, const char *argv[])
 {
-    return ged_draw_guts(gedp, argc, argv, 3);
+    return ged_draw_guts(gedp, argc, argv, _GED_DRAW_NMG_POLY);
 }
 
 int

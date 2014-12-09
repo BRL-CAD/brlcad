@@ -61,6 +61,9 @@ __BEGIN_DECLS
 #define _GED_BOOL_EVAL          3
 #define _GED_HIDDEN_LINE        4
 
+#define _GED_DRAW_WIREFRAME 1
+#define _GED_DRAW_NMG_POLY  3
+
 #define _GED_TREE_AFLAG 0x01
 #define _GED_TREE_CFLAG 0x02
 
