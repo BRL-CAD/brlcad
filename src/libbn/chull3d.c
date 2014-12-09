@@ -150,8 +150,6 @@ struct chull3d_data {
     simplex *ns;
     simplex **st;
     long ss;
-    char *buf;
-    char *s;
     long s_num;
     void *out_func_here;
 };
@@ -1377,8 +1375,7 @@ read_next_site(struct chull3d_data *cdata, long j)
 
 HIDDEN site
 get_next_site(void *data) {
-    static long s_num = 0;
-    return read_next_site((struct chull3d_data *)data, s_num++);
+    return read_next_site((struct chull3d_data *)data, (((struct chull3d_data *)data)->s_num)++);
 }
 
 HIDDEN void
@@ -1427,7 +1424,6 @@ chull3d_data_init(struct chull3d_data *data)
     data->b = NULL;
     data->vnum = -1;
     data->ss = 2000 + MAXDIM;
-    data->buf = (char *)bu_calloc(100, sizeof(char), "buf");
     data->s_num = 0;
     data->out_func_here = (void *)off_out;
     data->fg_vn = 0;
