@@ -130,6 +130,30 @@ struct chull3d_data {
     int *face_array;
     int *vert_cnt;
     point_t *vert_array;
+
+    /* these were static variables in functions */
+
+    simplex *simplex_block_table;
+    int num_simplex_blocks;
+    basis_s *basis_s_block_table;
+    int num_basis_s_blocks;
+    Tree *Tree_block_table;
+    int num_Tree_blocks;
+    int lscale;
+    double max_scale;
+    double ldetbound;
+    double Sb;
+    neighbor p_neigh;
+    basis_s *b;
+    int fg_vn;
+    long vnum;
+    simplex *ns;
+    simplex **st;
+    long ss;
+    char *buf;
+    char *s;
+    long s_num;
+    void *out_func_here;
 };
 
 
@@ -1031,7 +1055,7 @@ typedef void out_func(struct chull3d_data *, point *, int, FILE*, int);
 
 void *ridges_print(struct chull3d_data *cdata, simplex *s, void *p) {
 
-    static out_func *out_func_here;
+    out_func *out_func_here = (out_func *)cdata->out_func_here;
     point v[MAXDIM];
     int j,k,vnum;
 
@@ -1413,6 +1437,17 @@ chull3d_data_init(struct chull3d_data *data)
     data->pdim = 3;
     data->mult_up = 1;
     data->vd = 1;  /* we're using the triangulation by default */
+
+    /* These were static variables in functions */
+    data->p_neigh.vert = 0;
+    data->p_neigh.simp = NULL;
+    data->p_neigh.basis = NULL;
+    data->b = NULL;
+    data->vnum = -1;
+    data->ss = 2000 + MAXDIM;
+    data->buf = (char *)bu_calloc(100, sizeof(char), "buf");
+    data->s_num = 0;
+    data->out_func_here = (void *)off_out;
 }
 
 HIDDEN void
