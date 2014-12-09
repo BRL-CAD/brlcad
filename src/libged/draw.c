@@ -72,10 +72,6 @@ draw_check_leaf(struct db_tree_state *tsp,
     RT_GET_TREE(curtree, tsp->ts_resp);
     curtree->tr_op = OP_NOP;
 
-    /*
-     * Use gedp->ged_gdp->gd_shaded_mode if set and not being overridden. Otherwise use dgcdp->shaded_mode_override.
-     */
-
     switch (dgcdp->dmode) {
 	case _GED_SHADED_MODE_BOTS:
 	    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
@@ -110,7 +106,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 
 		/* turn shaded mode off for this non-bot/non-poly object */
 		dgcdp->gedp->ged_gdp->gd_shaded_mode = 0;
-		dgcdp->shaded_mode_override = -1;
+		dgcdp->shaded_mode_override = _GED_SHADED_MODE_UNSET;
 		dgcdp->dmode = _GED_WIREFRAME;
 
 		_ged_drawtrees(dgcdp->gedp, ac, av, 1, (struct _ged_client_data *)client_data);
@@ -156,7 +152,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 
 		/* turn shaded mode off for this pipe object */
 		dgcdp->gedp->ged_gdp->gd_shaded_mode = 0;
-		dgcdp->shaded_mode_override = -1;
+		dgcdp->shaded_mode_override = _GED_SHADED_MODE_UNSET;
 		dgcdp->dmode = _GED_WIREFRAME;
 
 		_ged_drawtrees(dgcdp->gedp, ac, av, 1, (struct _ged_client_data *)client_data);
@@ -563,6 +559,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	dgcdp.draw_edge_uses = 0;
 	dgcdp.wireframe_color_override = 0;
 	dgcdp.fastpath_count = 0;
+	dgcdp.shaded_mode_override = _GED_SHADED_MODE_UNSET;
 
 	/* default color - red */
 	dgcdp.wireframe_color[0] = 255;
@@ -571,10 +568,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	/* default transparency - opaque */
 	dgcdp.transparency = 1.0;
-
-	/* -1 indicates flag not set */
-	dgcdp.shaded_mode_override = -1;
-
 
 	/* freesolid */
 	dgcdp.freesolid = gedp->freesolid;
@@ -649,11 +642,25 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    dgcdp.shaded_mode_override = _GED_SHADED_MODE_ALL;
 		    break;
 		case 'm':
-		    /* clamp it to [-infinity, 2] */
 		    dgcdp.shaded_mode_override = atoi(bu_optarg);
-		    if (2 < dgcdp.shaded_mode_override)
-			dgcdp.shaded_mode_override = 2;
 
+		    switch (dgcdp.shaded_mode_override) {
+			case 0:
+			    dgcdp.shaded_mode_override = _GED_WIREFRAME;
+			    break;
+			case 1:
+			    dgcdp.shaded_mode_override = _GED_SHADED_MODE_BOTS;
+			    break;
+			case 2:
+			    dgcdp.shaded_mode_override = _GED_SHADED_MODE_ALL;
+			    break;
+			default:
+			    if (dgcdp.shaded_mode_override < 0) {
+				dgcdp.shaded_mode_override = _GED_SHADED_MODE_UNSET;
+			    } else {
+				dgcdp.shaded_mode_override = _GED_SHADED_MODE_ALL;
+			    }
+		    }
 		    break;
 		case 'x':
 		    dgcdp.transparency = atof(bu_optarg);
@@ -686,13 +693,12 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	switch (kind) {
 	    case 1:
-		if (gedp->ged_gdp->gd_shaded_mode && dgcdp.shaded_mode_override < 0) {
-		    dgcdp.dmode = gedp->ged_gdp->gd_shaded_mode;
-		} else if (0 <= dgcdp.shaded_mode_override)
+		dgcdp.dmode = _GED_WIREFRAME;
+		if (dgcdp.shaded_mode_override != _GED_SHADED_MODE_UNSET) {
 		    dgcdp.dmode = dgcdp.shaded_mode_override;
-		else
-		    dgcdp.dmode = _GED_WIREFRAME;
-
+		} else if (gedp->ged_gdp->gd_shaded_mode) {
+ 		    dgcdp.dmode = gedp->ged_gdp->gd_shaded_mode;
+		}
 		break;
 	    case 2:
 	    case 3:
@@ -725,7 +731,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	     * If shaded_mode is _GED_SHADED_MODE_ALL, everything except pipe solids
 	     * are drawn as shaded polygons.
 	     */
-	    if (_GED_SHADED_MODE_BOTS <= dgcdp.dmode && dgcdp.dmode <= _GED_SHADED_MODE_ALL) {
+	    if (dgcdp.dmode == _GED_SHADED_MODE_BOTS ||
+		dgcdp.dmode == _GED_SHADED_MODE_ALL)
+	    {
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
 			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
