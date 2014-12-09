@@ -431,10 +431,11 @@ bn_aet_vec(
 void
 bn_vec_ae(vect_t vect, fastf_t az, fastf_t el)
 {
-    fastf_t vx, vy, vz;
+    fastf_t vx, vy, vz, rtemp;
     vz = sin(el);
-    vy = fabs(vz) * sin(az);
-    vx = fabs(vz) * cos(az);
+    rtemp = cos(el);
+    vy = rtemp * sin(az);
+    vx = rtemp * cos(az);
     VSET(vect, vx, vy , vz);
     VUNITIZE(vect);
 }
