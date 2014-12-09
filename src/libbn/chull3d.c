@@ -130,8 +130,6 @@ struct chull3d_data {
      *       Coord maxs[MAXDIM] = {-DBL_MAX,-DBL_MAX,-DBL_MAX,-DBL_MAX,-DBL_MAX,-DBL_MAX,-DBL_MAX,-DBL_MAX};*/
     Coord *mins;
     Coord *maxs;
-    /*char tmpfilenam[L_tmpnam];*/
-    char *tmpfilenam;
     unsigned short X[3];
     site p;         /* the current site */
     long pnum;
@@ -141,6 +139,7 @@ struct chull3d_data {
     int point_size;  /* size of malloc needed for a point */
     short *mi;
     short *mo;
+    char *tmpfilenam;
 };
 
 
@@ -1605,6 +1604,60 @@ void cpr_out(struct chull3d_data *cdata, point *v, int vdim, FILE *Fin, int ambl
 }
 
 
+void off_out(struct chull3d_data *cdata, point *v, int vdim, FILE *Fin, int amble) {
+
+    static FILE *F, *G;
+    static FILE *OFFFILE;
+    static char offfilenam[MAXPATHLEN];
+    char comst[100], buf[200];
+    int j,i;
+
+    if (Fin) {F=Fin;}
+
+    if (cdata->pdim!=3) { warning(-10, off apparently for 3d points only); return;}
+
+    if (amble==0) {
+	for (i=0;i<vdim;i++) if (v[i]==cdata->hull_infinity) return;
+	fprintf(OFFFILE, "%d ", vdim);
+	for (j=0;j<vdim;j++) fprintf(OFFFILE, "%ld ", (cdata->site_num)((void *)cdata, v[j]));
+	fprintf(OFFFILE,"\n");
+    } else if (amble==-1) {
+	OFFFILE = bu_temp_file((char *)&offfilenam, MAXPATHLEN);
+    } else {
+	fclose(OFFFILE);
+
+	fprintf(F, "    OFF\n");
+
+	sprintf(comst, "wc %s", cdata->tmpfilenam);
+	G = epopen(comst, "r");
+	fscanf(G, "%d", &i);
+	fprintf(F, " %d", i);
+	pclose(G);
+
+	sprintf(comst, "wc %s", offfilenam);
+	G = epopen(comst, "r");
+	fscanf(G, "%d", &i);
+	fprintf(F, " %d", i);
+	pclose(G);
+
+	fprintf (F, " 0\n");
+
+
+	G = efopen(cdata, cdata->tmpfilenam, "r");
+	while (fgets(buf, sizeof(buf), G)) fprintf(F, "%s", buf);
+	fclose(G);
+
+	G = efopen(cdata, offfilenam, "r");
+
+
+	while (fgets(buf, sizeof(buf), G)) fprintf(F, "%s", buf);
+	fclose(G);
+    }
+
+}
+
+
+
 /* vist_funcs for different kinds of output: facets, alpha shapes, etc. */
 typedef void out_func(struct chull3d_data *, point *, int, FILE*, int);
 
@@ -2179,9 +2232,9 @@ static void echo_command_line(FILE *F, int argc, char **argv) {
     fprintf(F,"\n");
 }
 
-char *output_forms[] = {"vn", "ps", "mp", "cpr", "off"};
+char *output_forms[] = {"vn", "cpr", "off"};
 
-out_func *out_funcs[] = {&vlist_out, &cpr_out};
+out_func *out_funcs[] = {&vlist_out, &cpr_out, &off_out};
 
 
 static int set_out_func(char *s) {
@@ -2248,9 +2301,9 @@ void chull3d_data_init(struct chull3d_data *data)
     data->mult_up = 1.0;
     data->mi = (short *)bu_calloc(MAXPOINTS, sizeof(short), "mi");
     data->mo = (short *)bu_calloc(MAXPOINTS, sizeof(short), "mo");
+    data->tmpfilenam = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "tmpfilenam");
 }
 
-/* TODO */
 void chull3d_data_free(struct chull3d_data *data)
 {
     bu_free(data->site_blocks, "site_blocks");
@@ -2264,6 +2317,7 @@ void chull3d_data_free(struct chull3d_data *data)
     bu_free(data->mi, "mi");
     bu_free(data->mo, "mo");
     BU_PUT(data->tt_basis, basis_s);
+    bu_free(data->tmpfilenam, "tmpfilenam");
 }
 
 /* TODO - replace this with a top level function using libbn types */
@@ -2367,8 +2421,7 @@ int main(int argc, char **argv) {
 	fprintf(cdata->DFILE, "main output to %s\n", ofn ? ofile : "stdout");
     } else fprintf(cdata->DFILE, "no main output\n");
 
-    char tmpfilenam[MAXPATHLEN];
-    TFILE = bu_temp_file((char *)&tmpfilenam, MAXPATHLEN);
+    TFILE = bu_temp_file(cdata->tmpfilenam, MAXPATHLEN);
 
     read_next_site(cdata, -1);
     /*	fprintf(DFILE,"dim=%d\n",dim);fflush(DFILE); */
