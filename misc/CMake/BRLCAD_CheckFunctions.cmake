@@ -52,7 +52,7 @@ include(CheckCInline)
 # HAVE_* define to config header.
 ###
 macro(BRLCAD_FUNCTION_EXISTS function var)
-  if("${var}" MATCHES "^${var}$")
+  if(NOT DEFINED ${var})
     set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
     set(CMAKE_C_FLAGS "")
     if(${ARGC} GREATER 2)
@@ -139,7 +139,7 @@ macro(BRLCAD_FUNCTION_EXISTS function var)
     # Put C_FLAGS back where we found it
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 
-  endif("${var}" MATCHES "^${var}$")
+  endif(NOT DEFINED ${var})
 
   if(CONFIG_H_FILE AND ${var})
     CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
