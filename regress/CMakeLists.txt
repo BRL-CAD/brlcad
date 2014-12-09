@@ -53,10 +53,7 @@ if(SH_EXEC)
   Regression_Test(quote "" EXCLUDE_FROM_REGRESS)
 
   set(rtwizard_deps btclsh rt rtedge fbclear fbserv pix-fb fb-pix pix-bw bw-pix
-    pixmatte asc2g asc2pix pixdiff util_tclIndex util_pkgIndex.tcl
-    rtwizard_lib_tclIndex rtwizard_lib_pkgIndex.tcl rtwizard_tclIndex
-    rtwizard_pkgIndex.tcl rtwizard_TCLSCRIPTS_cp lib_tclIndex
-    lib_pkgIndex.tcl)
+    pixmatte asc2g asc2pix pixdiff rtwizard_TCLSCRIPTS_cp)
   Regression_Test(rtwizard "${rtwizard_deps}" EXCLUDE_FROM_REGRESS)
 
   Regression_Test(dsp "mged;cv;asc2pix;rt;pix-bw")
