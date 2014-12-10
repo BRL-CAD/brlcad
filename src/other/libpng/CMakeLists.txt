@@ -1,16 +1,17 @@
 # CMakeLists.txt
 
-# Copyright (C) 2007-2013 Glenn Randers-Pehrson
+# Copyright (C) 2007-2014 Glenn Randers-Pehrson
 
 # This code is released under the libpng license.
 # For conditions of distribution and use, see the disclaimer
 # and license in png.h
 
 cmake_minimum_required(VERSION 2.4.4)
+
 if(COMMAND CMAKE_POLICY)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-     CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+	if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+		CMAKE_POLICY(SET CMP0026 OLD)
+	endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
 endif(COMMAND CMAKE_POLICY)
 
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
@@ -22,7 +23,7 @@ enable_testing()
 
 set(PNGLIB_MAJOR 1)
 set(PNGLIB_MINOR 6)
-set(PNGLIB_RELEASE 10)
+set(PNGLIB_RELEASE 15)
 set(PNGLIB_NAME libpng${PNGLIB_MAJOR}${PNGLIB_MINOR})
 set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_RELEASE})
 
@@ -165,14 +166,14 @@ if(PNG_TESTS AND PNG_SHARED)
   # does not work with msvc due to png_lib_ver issue
   add_executable(pngtest ${pngtest_sources})
   target_link_libraries(pngtest ${PNG_LIB_NAME})
-  add_test(pngtest ./pngtest ${CMAKE_CURRENT_SOURCE_DIR}/pngtest.png)
+  add_test(pngtest pngtest ${CMAKE_CURRENT_SOURCE_DIR}/pngtest.png)
   #
   add_executable(pngvalid ${pngvalid_sources})
   target_link_libraries(pngvalid ${PNG_LIB_NAME})
-  add_test(pngvalid ./pngvalid)
+  add_test(pngvalid pngvalid)
   add_executable(pngstest ${pngstest_sources})
   target_link_libraries(pngstest ${PNG_LIB_NAME})
-  add_test(pngstest ./pngstest
+  add_test(pngstest pngstest
     ${CMAKE_CURRENT_SOURCE_DIR}/contrib/pngsuite/basn0g01.png
     ${CMAKE_CURRENT_SOURCE_DIR}/contrib/pngsuite/basn0g02.png
     ${CMAKE_CURRENT_SOURCE_DIR}/contrib/pngsuite/basn0g04.png
@@ -226,6 +227,7 @@ macro(CREATE_SYMLINK SRC_FILE DEST_FILE)
     ADD_CUSTOM_TARGET(${DEST_FILE}_COPY ALL DEPENDS ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${DEST_FILE})
   else(WIN32 AND NOT CYGWIN AND NOT MSYS)
     get_filename_component(LINK_TARGET "${SRC_FILE}" NAME)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
     execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${LINK_TARGET}" ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${DEST_FILE} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${LINK_TARGET}" ${DEST_FILE} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   endif(WIN32 AND NOT CYGWIN AND NOT MSYS)
@@ -258,7 +260,7 @@ endif(NOT WIN32 OR CYGWIN OR MINGW)
 # SET UP LINKS
 if(PNG_SHARED)
   set_target_properties(${PNG_LIB_NAME} PROPERTIES
-#   VERSION 16.${PNGLIB_RELEASE}.1.6.10
+#   VERSION 16.${PNGLIB_RELEASE}.1.6.15
     VERSION 16.${PNGLIB_RELEASE}.0
     SOVERSION 16
     CLEAN_DIRECT_OUTPUT 1)
@@ -356,7 +358,7 @@ if(PNG_EXPORT_RULE AND NOT SKIP_INSTALL_EXPORT AND NOT SKIP_INSTALL_ALL )
   install(EXPORT libpng DESTINATION lib/libpng FILE lib${PNG_LIB_NAME}.cmake)
 endif()
 
-# what's with libpng-$VER%.txt and all the extra files?
+# what's with libpng-manual.txt and all the extra files?
 
 # UNINSTALL
 # do we need this?

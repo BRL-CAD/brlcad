@@ -107,7 +107,6 @@ char space[2];
 
 int numobj = 0;
 int nflg = 1;
-int aflg = 1;				/* use phantom armor */
 int num_unions = 5;			/* number of unions per region */
 char *title = "patch-g conversion";	/* database title */
 char *top_level = "all";		/* top-level node name in the database */

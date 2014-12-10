@@ -104,10 +104,6 @@ get_args(int argc, char **argv)
 		bweight = atof(bu_optarg);
 		break;
 	    case 'o' :
-		if ( !isatty(fileno(stdout)) ) {
-		    bu_log("pix-bw: cannot use both -o and >\n");
-		    return 0;
-		}
 		out_file = bu_optarg;
 		break;
             case 's' :
@@ -124,15 +120,13 @@ get_args(int argc, char **argv)
 	}
     }
 
-/* Immediately check for the run-with-no-arguments condition.  This
- * eliminates the "cannot send output to a tty" message.  For an
- * actual run, we would need a least a color-scheme argument.
+/* Eliminate the "cannot send output to a tty" message if we
+ * detect the run-with-no-arguments situation.  For an actual
+ * run, we would need a least a color-scheme argument.
  */
-    if (argc == 1)
-	return 0;
-
     if (isatty(fileno(stdout)) && out_file == NULL) {
-    	bu_log("pix-bw: cannot send output to a tty\n");
+	if (argc != 1)
+    	    bu_log("pix-bw: cannot send output to a tty\n");
 	return 0;
     }
 
@@ -195,6 +189,10 @@ main(int argc, char **argv)
     icv_rgb2gray(img, color, rweight, gweight, bweight);
 
     icv_write(img, out_file, ICV_IMAGE_BW);
+
+    if (!isatty(fileno(stdout)) && out_file != NULL) {
+	icv_write(img, NULL, ICV_IMAGE_BW);
+    }
 
     return 0;
 }

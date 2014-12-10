@@ -640,13 +640,13 @@ main(int argc, char **argv)
 		ply_file = bu_optarg;
 		break;
 	    case 't':
-		if (!strcmp(bu_optarg, "asc"))
+		if (!bu_strcmp(bu_optarg, "asc"))
 		    storage_type = 0;
-		else if (!strcmp(bu_optarg, "le"))
+		else if (!bu_strcmp(bu_optarg, "le"))
 		    storage_type = 1;
-		else if (!strcmp(bu_optarg, "be"))
+		else if (!bu_strcmp(bu_optarg, "be"))
 		    storage_type = 2;
-		else if (!strcmp(bu_optarg, "de"))
+		else if (!bu_strcmp(bu_optarg, "de"))
 		    storage_type = 3;
 		break;
 	    case 's':		/* Merge all objects into one ply file */

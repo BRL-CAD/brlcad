@@ -50,6 +50,7 @@ extern int seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, p
 			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, void *seg);
 
 extern void rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+extern void rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip);
 
 struct extrude_specific {
     mat_t rot, irot;	/* rotation and translation to get extrusion vector in +z direction with V at origin */
@@ -1460,6 +1461,28 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     }
 
     return 0;
+}
+
+void
+rt_extrude_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_extrude_internal *eip;
+    struct rt_sketch_internal *skt;
+    struct rt_db_internal db_skt;
+    point_t skt_cent;
+    point_t middle_h;
+    eip = (struct rt_extrude_internal *)ip->idb_ptr;
+    RT_EXTRUDE_CK_MAGIC(eip);
+    skt = eip->skt;
+    RT_SKETCH_CK_MAGIC(skt);
+
+    RT_DB_INTERNAL_INIT(&db_skt);
+    db_skt.idb_ptr = (void *)skt;
+
+    rt_sketch_centroid(&skt_cent, &db_skt);
+
+    VSCALE(middle_h, eip->h, 0.5);
+    VADD2(*cent, skt_cent, middle_h);
 }
 
 

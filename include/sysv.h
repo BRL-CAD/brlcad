@@ -73,6 +73,10 @@ SYSV_EXPORT extern char *strsep(char **stringp, const char *delim);
 SYSV_EXPORT extern char *strtok(char *s, const char *delim);
 #endif
 
+#ifndef HAVE_SETENV
+SYSV_EXPORT extern int setenv(const char *name, const char *value, int overwrite);
+#endif
+
 __END_DECLS
 
 #endif /* SYSV_H */

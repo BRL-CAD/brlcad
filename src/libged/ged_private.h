@@ -54,11 +54,15 @@ __BEGIN_DECLS
 #define _GED_LISTEVAL    2
 #define _GED_EVAL_ONLY   3
 
-#define _GED_WIREFRAME        0
-#define _GED_SHADED_MODE_BOTS 1
-#define _GED_SHADED_MODE_ALL  2
-#define _GED_BOOL_EVAL        3
-#define _GED_HIDDEN_LINE      4
+#define _GED_SHADED_MODE_UNSET -1
+#define _GED_WIREFRAME          0
+#define _GED_SHADED_MODE_BOTS   1
+#define _GED_SHADED_MODE_ALL    2
+#define _GED_BOOL_EVAL          3
+#define _GED_HIDDEN_LINE        4
+
+#define _GED_DRAW_WIREFRAME 1
+#define _GED_DRAW_NMG_POLY  3
 
 #define _GED_TREE_AFLAG 0x01
 #define _GED_TREE_CFLAG 0x02

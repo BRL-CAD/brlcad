@@ -641,6 +641,14 @@ test_bu_vls_substr(int argc, char **argv)
     struct bu_vls vsubstr       = BU_VLS_INIT_ZERO;
     int test_results            = CTEST_FAIL;
 
+    /* CMake won't pass empty strings as test parameters properly;
+     * assume expected_result is supposed to be empty.
+     */
+    if (argc == 5) {
+	expected_result = "";
+	argc++;
+    }
+
     if (argc != 6)
 	bu_exit(1, "ERROR: input format is <func num> <source string> <begin index> <num chars> <expected result string> [%s]\n", argv[0]);
 

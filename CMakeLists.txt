@@ -129,6 +129,7 @@ if(COMMAND CMAKE_POLICY)
     CMAKE_POLICY(SET CMP0042 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
   if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+    CMAKE_POLICY(SET CMP0046 NEW)
     CMAKE_POLICY(SET CMP0053 OLD)
     CMAKE_POLICY(SET CMP0054 NEW)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
@@ -487,6 +488,28 @@ if(NOT BRLCAD_IS_SUBBUILD)
     string(REPLACE ";" ": " msg "${ARGV}")
     file(APPEND ${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${msg}\n")
   endfunction(message)
+endif(NOT BRLCAD_IS_SUBBUILD)
+
+# To support "make check" (which will build the required targets for testing
+# in the style of GNU Autotools, we define a "check" target per
+# http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
+# automatically assemble its targets into the check dependency list.
+if(NOT BRLCAD_IS_SUBBUILD)
+  include(ProcessorCount)
+  ProcessorCount(N)
+  if(NOT N EQUAL 0)
+    set(JFLAG "-j${N}")
+  else(NOT N EQUAL 0)
+    # Huh?  No j flag if we can't get a processor count
+    set(JFLAG)
+  endif(NOT N EQUAL 0)
+  add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -LE Regression -E ^regress- ${JFLAG})
+  function(add_test test_name test_prog)
+    _add_test(${test_name} ${test_prog} ${ARGN})
+    if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
+      add_dependencies(check ${test_prog})
+    endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
+  endfunction(add_test)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 #---------------------------------------------------------------------

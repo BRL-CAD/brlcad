@@ -248,6 +248,7 @@ namespace eval ArcherCore {
 	method killtree            {args}
 	method l                   {args}
 	method ls                  {args}
+	method lc                  {args}
 	method make		   {args}
 	method make_name           {args}
 	method make_pnts           {args}
@@ -578,7 +579,7 @@ namespace eval ArcherCore {
 	    delete draw e E edarb edcodes edcolor edcomb edit edmater d erase ev exists \
 	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
-	    killtree l ls make make_name make_pnts man mater mirror move \
+	    killtree l lc ls make make_name make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
 	    nmg_simplify ocenter opendb orotate oscale otranslate p q \
 	    quit packTree prefix protate pscale ptranslate pull push put \
@@ -6562,6 +6563,9 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::l {args} {
     eval gedWrapper l 1 0 0 0 $args
+}
+::itcl::body ArcherCore::lc {args} {
+    eval gedWrapper lc 1 0 0 0 $args
 }
 ::itcl::body ArcherCore::ls {args} {
     eval gedWrapper ls 1 0 0 0 $args
