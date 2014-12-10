@@ -1175,6 +1175,11 @@ GED_EXPORT extern int ged_killrefs(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_killtree(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * List attributes of regions within a group/combination.
+ */
+GED_EXPORT extern int ged_lc(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * List object information, verbose.
  */
 GED_EXPORT extern int ged_list(struct ged *gedp, int argc, const char *argv[]);

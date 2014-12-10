@@ -28,7 +28,7 @@
 #include "bu/list.h"
 #include "bu/log.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/vlist.h"
 
 int
 bn_vlist_cmd_cnt(struct bn_vlist *vlist)

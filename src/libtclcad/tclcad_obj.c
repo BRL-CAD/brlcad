@@ -1138,6 +1138,7 @@ static struct to_cmdtab to_cmds[] = {
     {"killrefs",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_killrefs},
     {"killtree",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_killtree},
     {"l",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_list},
+    {"lc",      "[-d|-s|-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {FileName}] {GroupName}", TO_UNLIMITED, to_pass_through_func, ged_lc},
     {"light",	"[0|1]", TO_UNLIMITED, to_light, GED_FUNC_PTR_NULL},
     {"list_views",	(char *)0, TO_UNLIMITED, to_list_views, GED_FUNC_PTR_NULL},
     {"listen",	"[port]", TO_UNLIMITED, to_listen, GED_FUNC_PTR_NULL},

@@ -129,6 +129,7 @@ if(COMMAND CMAKE_POLICY)
     CMAKE_POLICY(SET CMP0042 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
   if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+    CMAKE_POLICY(SET CMP0046 NEW)
     CMAKE_POLICY(SET CMP0053 OLD)
     CMAKE_POLICY(SET CMP0054 NEW)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
@@ -2295,7 +2296,7 @@ endforeach(req_var ${CMAKE_REQUIRED_FLAG_VARS})
 # Enable CTest Testing support - this is done after src/other is
 # added to avoid incorporating src/other CTests into BRL-CAD's own
 # testing.  TODO - probably should control this with an option.
-ENABLE_TESTING()
+INCLUDE(CTest)
 
 # We've done the toplevel configure steps, now add the subdirectories
 macro(verbose_add_subdirectory root dir)

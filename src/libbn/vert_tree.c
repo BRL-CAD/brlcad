@@ -39,9 +39,10 @@
 #include <ctype.h>
 #include <errno.h>
 
+#include "vmath.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
-#include "bn.h"
+#include "bn/vert_tree.h"
 
 
 /**

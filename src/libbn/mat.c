@@ -39,7 +39,8 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/mat.h"
+#include "bn/plane_calc.h"
 
 
 const mat_t bn_mat_identity = MAT_INIT_IDN;
@@ -431,10 +432,11 @@ bn_aet_vec(
 void
 bn_vec_ae(vect_t vect, fastf_t az, fastf_t el)
 {
-    fastf_t vx, vy, vz;
+    fastf_t vx, vy, vz, rtemp;
     vz = sin(el);
-    vy = fabs(vz) * sin(az);
-    vx = fabs(vz) * cos(az);
+    rtemp = cos(el);
+    vy = rtemp * sin(az);
+    vx = rtemp * cos(az);
     VSET(vect, vx, vy , vz);
     VUNITIZE(vect);
 }

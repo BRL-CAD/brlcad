@@ -2858,6 +2858,12 @@ proc title_node_handler {node} {
 	    -value $DISPLAY_MODE_SHADED_ALL \
 	    -variable [::itcl::scope mDefaultDisplayModePref]
     } {}
+    itk_component add displayModeShadedEvalRB {
+	::ttk::radiobutton $itk_component(displayModeF).displayModeShadedEvalRB \
+	    -text "Shaded (Evaluated)" \
+	    -value $DISPLAY_MODE_SHADED_EVAL \
+	    -variable [::itcl::scope mDefaultDisplayModePref]
+    } {}
     itk_component add displayModeHiddenRB {
 	::ttk::radiobutton $itk_component(displayModeF).displayModeHiddenRB \
 	    -text "Hidden" \
@@ -2890,6 +2896,8 @@ proc title_node_handler {node} {
     grid $itk_component(displayModeWireRB) -row $i -sticky nsew
     incr i
     grid $itk_component(displayModeShadedRB) -row $i -sticky nsew
+    incr i
+    grid $itk_component(displayModeShadedEvalRB) -row $i -sticky nsew
     incr i
     grid $itk_component(displayModeHiddenRB) -row $i -sticky nsew
 

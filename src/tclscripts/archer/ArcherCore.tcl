@@ -84,6 +84,7 @@ namespace eval ArcherCore {
 	common DISPLAY_MODE_SHADED_ALL 2
 	common DISPLAY_MODE_EVALUATED 3
 	common DISPLAY_MODE_HIDDEN 4
+	common DISPLAY_MODE_SHADED_EVAL 5
 
 	common MATRIX_ABOVE_MODE 0
 	common MATRIX_BELOW_MODE 1
@@ -248,6 +249,7 @@ namespace eval ArcherCore {
 	method killtree            {args}
 	method l                   {args}
 	method ls                  {args}
+	method lc                  {args}
 	method make		   {args}
 	method make_name           {args}
 	method make_pnts           {args}
@@ -578,7 +580,7 @@ namespace eval ArcherCore {
 	    delete draw e E edarb edcodes edcolor edcomb edit edmater d erase ev exists \
 	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
-	    killtree l ls make make_name make_pnts man mater mirror move \
+	    killtree l lc ls make make_name make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
 	    nmg_simplify ocenter opendb orotate oscale otranslate p q \
 	    quit packTree prefix protate pscale ptranslate pull push put \
@@ -3768,6 +3770,9 @@ namespace eval ArcherCore {
 		$DISPLAY_MODE_SHADED_ALL {
 		    gedCmd draw -m2 -x$_trans $_node
 		} \
+		$DISPLAY_MODE_SHADED_EVAL {
+		    gedCmd draw -m3 -x$_trans $_node
+		} \
 		$DISPLAY_MODE_EVALUATED {
 		    gedCmd E $_node
 		} \
@@ -3789,6 +3794,10 @@ namespace eval ArcherCore {
 		} \
 		$DISPLAY_MODE_SHADED_ALL {
 		    gedCmd draw -m2 -x$_trans \
+			-C$displayColor $_node
+		} \
+		$DISPLAY_MODE_SHADED_EVAL {
+		    gedCmd draw -m3 -x$_trans \
 			-C$displayColor $_node
 		} \
 		$DISPLAY_MODE_EVALUATED {
@@ -4322,6 +4331,11 @@ namespace eval ArcherCore {
 	$_menu add radiobutton -label "Shaded" \
 	    -indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
 	    -command [::itcl::code $this render $_node $DISPLAY_MODE_SHADED_ALL 1 1 1 $_node_id]
+
+	$_menu add radiobutton -label "Shaded (Evaluated)" \
+	    -indicatoron 1 -value 5 -variable [::itcl::scope mRenderMode] \
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_SHADED_EVAL 1 1 1 $_node_id]
+
 	$_menu add radiobutton -label "Hidden Line" \
 	    -indicatoron 1 -value 4 -variable [::itcl::scope mRenderMode] \
 	    -command [::itcl::code $this render $_node $DISPLAY_MODE_HIDDEN 1 1 1 $_node_id]
@@ -4344,6 +4358,10 @@ namespace eval ArcherCore {
 
 	$_menu add command -label "Shaded" \
 	    -command [::itcl::code $this render $_node $DISPLAY_MODE_SHADED_ALL 1 1 1 $_node_id]
+
+	$_menu add command -label "Shaded (Evaluated)" \
+	    -command [::itcl::code $this render $_node $DISPLAY_MODE_SHADED_EVAL 1 1 1 $_node_id]
+
 	$_menu add command -label "Hidden Line" \
 	    -command [::itcl::code $this render $_node $DISPLAY_MODE_HIDDEN 1 1 1 $_node_id]
 
@@ -6562,6 +6580,9 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::l {args} {
     eval gedWrapper l 1 0 0 0 $args
+}
+::itcl::body ArcherCore::lc {args} {
+    eval gedWrapper lc 1 0 0 0 $args
 }
 ::itcl::body ArcherCore::ls {args} {
     eval gedWrapper ls 1 0 0 0 $args

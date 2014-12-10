@@ -34,9 +34,18 @@ static int
 test_bu_strlcatm(int argc, char *argv[])
 {
     char *dst;
+    char *expected_result = argv[6];
     int ret, expected_ret;
     int size;
     int len;
+
+    /* CMake won't pass empty strings as test parameters properly;
+     * assume expected_result is supposed to be empty.
+     */
+    if (argc == 6) {
+	expected_result = "";
+	argc++;
+    }
 
     if (argc != 7) {
 	bu_exit(1, "ERROR: input format is string1 string2 result_size expected_ret expected_result [%s]\n", argv[0]);
@@ -57,7 +66,7 @@ test_bu_strlcatm(int argc, char *argv[])
 
     printf("Result: \"%s\" (return value %d)", dst, ret);
 
-    return !(BU_STR_EQUAL(argv[6], dst)
+    return !(BU_STR_EQUAL(expected_result, dst)
 	     && (expected_ret == ret)
 	     && len <= size
 	     && dst[len] == '\0');
@@ -67,9 +76,18 @@ static int
 test_bu_strlcpym(int argc, char *argv[])
 {
     char *dst;
+    char *expected_result = argv[5];
     int ret, expected_ret;
     int size;
     int len;
+
+    /* CMake won't pass empty strings as test parameters properly;
+     * assume expected_result is supposed to be empty.
+     */
+    if (argc == 5) {
+	expected_result = "";
+	argc++;
+    }
 
     if (argc != 6) {
 	bu_exit(1, "ERROR: input format is string result_size expected_ret expected_result [%s]\n", argv[0]);
@@ -89,7 +107,7 @@ test_bu_strlcpym(int argc, char *argv[])
 
     printf("Result: \"%s\" (return value %d)", dst, ret);
 
-    return !(BU_STR_EQUAL(argv[5], dst)
+    return !(BU_STR_EQUAL(expected_result, dst)
 	     && (expected_ret == ret)
 	     && len <= size
 	     && dst[len] == '\0');

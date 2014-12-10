@@ -19,7 +19,9 @@
  */
 
 #include "bu/sort.h"
-#include "bn.h"
+#include "bn/polygon.h"
+#include "bn/plane_struct.h"
+#include "bn/plane_calc.h"
 
 
 int

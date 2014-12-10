@@ -97,26 +97,6 @@ size_t rt_bot_minpieces = RT_DEFAULT_MINPIECES;
  */
 size_t rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;
 
-/**
- * rt vlist command descriptions
- */
-const char *rt_vlist_cmd_descriptions[] = {
-    "line move ",
-    "line draw ",
-    "poly start",
-    "poly move ",
-    "poly draw ",
-    "poly end  ",
-    "poly vnorm",
-    "tri start",
-    "tri move",
-    "tri draw",
-    "tri end",
-    "tri vnorm",
-    "point draw",
-    "**unknown*"
-};
-
 const struct db_tree_state rt_initial_tree_state = {
     RT_DBTS_MAGIC,		/* magic */
     0,				/* ts_dbip */
