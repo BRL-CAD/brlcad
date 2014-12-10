@@ -75,6 +75,46 @@ draw_forced_wireframe(
     bu_free((void *)av[0], "draw_forced_wireframe: av[0]");
 }
 
+static void
+plot_shaded(
+    struct db_tree_state *tsp,
+    const struct db_full_path *pathp,
+    struct rt_db_internal *ip,
+    struct _ged_client_data *dgcdp)
+{
+    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
+	(ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT   ||
+	 ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY  ||
+	 ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP))
+    {
+	struct bu_list vhead;
+	BU_LIST_INIT(&vhead);
+
+	switch (ip->idb_minor_type) {
+	    case DB5_MINORTYPE_BRLCAD_BOT:
+		(void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+		break;
+	    case DB5_MINORTYPE_BRLCAD_POLY:
+		(void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+		break;
+	    case DB5_MINORTYPE_BRLCAD_BREP:
+		(void)rt_brep_plot_poly(&vhead, pathp, ip, tsp->ts_ttol,
+			tsp->ts_tol, NULL);
+	}
+	_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
+    } else {
+	int ac = 1;
+	const char *av[2];
+ 
+	av[0] = db_path_to_string(pathp);
+	av[1] = (char *)0;
+ 
+	_ged_drawtrees(dgcdp->gedp, ac, av, _GED_DRAW_NMG_POLY, dgcdp);
+ 
+	bu_free((void *)av[0], "plot_shaded: av[0]");
+    }
+}
+
 static union tree *
 draw_check_leaf(struct db_tree_state *tsp,
 		   const struct db_full_path *pathp,
@@ -82,12 +122,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		   void *client_data)
 {
     union tree *curtree;
-    int ac = 1;
-    const char *av[2];
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
-
-    av[0] = db_path_to_string(pathp);
-    av[1] = (char *)0;
 
     /* Indicate success by returning something other than TREE_NULL */
     RT_GET_TREE(curtree, tsp->ts_resp);
@@ -96,71 +131,26 @@ draw_check_leaf(struct db_tree_state *tsp,
     switch (dgcdp->dmode) {
 	case _GED_SHADED_MODE_BOTS:
 	    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
-		ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
-		struct bu_list vhead;
-
-		BU_LIST_INIT(&vhead);
-
-		(void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
-	    } else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
-		    (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP)) {
-		struct bu_list vhead;
-
-		BU_LIST_INIT(&vhead);
-
-		(void)rt_brep_plot_poly(&vhead, pathp, ip, tsp->ts_ttol, tsp->ts_tol, NULL);
-		_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
-	    } else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
-		       ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
-		struct bu_list vhead;
-
-		BU_LIST_INIT(&vhead);
-
-		(void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
+		(ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT   ||
+		 ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY  ||
+		 ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP))
+	    {
+		plot_shaded(tsp, pathp, ip, dgcdp);
 	    } else {
 		draw_forced_wireframe(pathp, dgcdp);
 	    }
-
 	    break;
 	case _GED_SHADED_MODE_ALL:
 	    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
-		ip->idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE) {
-		if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
-		    struct bu_list vhead;
-
-		    BU_LIST_INIT(&vhead);
-
-		    (void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		    _ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
-		} else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
-			struct bu_list vhead;
-
-			BU_LIST_INIT(&vhead);
-
-			(void)rt_brep_plot_poly(&vhead, pathp, ip, tsp->ts_ttol, tsp->ts_tol, NULL);
-		    _ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
-		} else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
-		    struct bu_list vhead;
-
-		    BU_LIST_INIT(&vhead);
-
-		    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		    _ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
-		} else
-		    _ged_drawtrees(dgcdp->gedp, ac, av,
-			    _GED_DRAW_NMG_POLY,
-			    (struct _ged_client_data *)client_data);
+		ip->idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE)
+	    {
+		plot_shaded(tsp, pathp, ip, dgcdp);
 	    } else {
 		draw_forced_wireframe(pathp, dgcdp);
 	    }
 
 	    break;
     }
-
-    bu_free((void *)av[0], "bot_check_leaf: av[0]");
-
     return curtree;
 }
 
