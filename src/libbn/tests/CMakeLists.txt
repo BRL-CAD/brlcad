@@ -1,3 +1,7 @@
+# TODO - convert this into the scheme used by other tests below
+BRLCAD_ADDEXEC(bntester bntester.c "libbu;libbn" NO_INSTALL)
+
+
 BRLCAD_ADDEXEC(tester_bn_tri_tri_isect_coplanar bn_tri_tri_isect_coplanar.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_tri_tri_isect bn_tri_tri_isect.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_list bn_list.c "libbu;libbn" NO_INSTALL)
@@ -995,6 +999,7 @@ add_test(bn_tabdata_dup tester_bn_tabdata 19 5,0,20,40,60,80,100 1,2,3,4,5)
 
 add_test(bn_tabdata_get_constval tester_bn_tabdata 20 5,0,20,40,60,80,100 3 3,3,3,3,3)
 
+CMAKEFILES(bntester.dat)
 
 # Local Variables:
 # tab-width: 8
