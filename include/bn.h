@@ -37,6 +37,7 @@
 #include "common.h"
 
 #include "bn/defines.h"
+#include "bn/version.h"
 #include "bn/tol.h"
 #include "bn/anim.h"
 #include "bn/tcl.h"

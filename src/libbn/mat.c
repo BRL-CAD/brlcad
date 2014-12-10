@@ -39,7 +39,8 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/mat.h"
+#include "bn/plane_calc.h"
 
 
 const mat_t bn_mat_identity = MAT_INIT_IDN;

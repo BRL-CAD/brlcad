@@ -28,7 +28,9 @@
 #include "bu/list.h"
 #include "bu/log.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/mat.h"
+#include "bn/vectfont.h"
+#include "bn/vlist.h"
 #include "vectfont.h"
 
 

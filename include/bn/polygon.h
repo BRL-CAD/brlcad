@@ -31,7 +31,9 @@
 #define BN_POLYGON_H
 
 #include "common.h"
+#include "vmath.h"
 #include "bn/defines.h"
+#include "bn/tol.h"
 
 __BEGIN_DECLS
 

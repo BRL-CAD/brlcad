@@ -31,8 +31,9 @@
 #define BN_POLY_H
 
 #include "common.h"
-#include "bn/defines.h"
 #include "bu/magic.h"
+#include "bn/defines.h"
+#include "bn/complex.h"
 
 __BEGIN_DECLS
 

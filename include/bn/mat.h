@@ -33,8 +33,9 @@
 #include "common.h"
 #include <stdio.h> /* For FILE */
 #include "vmath.h"
-#include "bn/defines.h"
 #include "bu/vls.h"
+#include "bn/defines.h"
+#include "bn/tol.h"
 
 __BEGIN_DECLS
 

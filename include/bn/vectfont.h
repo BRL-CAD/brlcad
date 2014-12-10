@@ -61,11 +61,6 @@ __BEGIN_DECLS
  */
 BN_EXPORT extern void tp_setup(void);
 
-/**
- * report version information about LIBBN
- */
-BN_EXPORT extern const char *bn_version(void);
-
 __END_DECLS
 
 #endif  /* BN_VECTFONT_H */

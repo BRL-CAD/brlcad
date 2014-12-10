@@ -1,7 +1,7 @@
-/*                          V E R S . C
+/*                       V E R S I O N . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,31 +17,33 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libbn/vers.c
- *
- * version information about LIBBN
- *
- */
+
+/*----------------------------------------------------------------------*/
+/* @file version.h */
+/** @addtogroup version */
+/** @{ */
+
+#ifndef BN_VERSION_H
+#define BN_VERSION_H
 
 #include "common.h"
+#include "bn/defines.h"
 
-#include "bn/version.h"
-#include "brlcad_ident.h"
-
+__BEGIN_DECLS
 
 /**
- * returns the compile-time version of libbn
+ * report version information about LIBBN
  */
-const char *
-bn_version(void)
-{
-    return brlcad_ident("The BRL-CAD Numerical Computation Library");
-}
+BN_EXPORT extern const char *bn_version(void);
 
+__END_DECLS
+
+#endif  /* BN_VERSION_H */
+/** @} */
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

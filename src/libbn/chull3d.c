@@ -29,7 +29,7 @@
 #include "bu/log.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
-#include "bn.h"
+#include "bn/chull.h"
 
 #define MAXBLOCKS 10000
 #define max_blocks 10000

@@ -33,6 +33,8 @@
 #include "common.h"
 #include "vmath.h"
 #include "bn/defines.h"
+#include "bn/plane_struct.h"
+#include "bn/tol.h"
 
 __BEGIN_DECLS
 
