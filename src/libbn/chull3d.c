@@ -1044,6 +1044,7 @@ void *facets_print(struct chull3d_data *cdata, simplex *s, void *p) {
     if (p) {out_func_here = (out_func*)p; if (!s) return NULL;}
 
     for (j=0;j<(cdata->cdim);j++) v[j] = s->neigh[j].vert;
+    bu_log("f: %ld, %ld, %ld\n", (cdata->site_num)((void *)cdata, v[0]), (cdata->site_num)((void *)cdata, v[1]), (cdata->site_num)((void *)cdata, v[2]));
 
     out_func_here(cdata, v,(cdata->cdim),0,0);
 
