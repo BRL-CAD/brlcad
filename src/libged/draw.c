@@ -53,6 +53,27 @@ draw_check_region_end(struct db_tree_state *tsp,
     return curtree;
 }
 
+static void
+draw_forced_wireframe(
+    const struct db_full_path *pathp,
+    const struct _ged_client_data *dgcdp)
+{
+    int ac = 1;
+    const char *av[2];
+
+    /* draw the path with the given client data, but force wireframe mode */
+    struct _ged_client_data dgcd = *dgcdp;
+    dgcd.gedp->ged_gdp->gd_shaded_mode = 0;
+    dgcd.shaded_mode_override = _GED_SHADED_MODE_UNSET;
+    dgcd.dmode = _GED_WIREFRAME;
+
+    av[0] = db_path_to_string(pathp);
+    av[1] = (char *)0;
+
+    _ged_drawtrees(dgcd.gedp, ac, av, _GED_DRAW_WIREFRAME, &dgcd);
+
+    bu_free((void *)av[0], "draw_forced_wireframe: av[0]");
+}
 
 static union tree *
 draw_check_leaf(struct db_tree_state *tsp,
@@ -99,23 +120,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		(void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 		_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 	    } else {
-		/* save shaded mode states */
-		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
-		int save_shaded_mode_override = dgcdp->shaded_mode_override;
-		int save_dmode = dgcdp->dmode;
-
-		/* turn shaded mode off for this non-bot/non-poly object */
-		dgcdp->gedp->ged_gdp->gd_shaded_mode = 0;
-		dgcdp->shaded_mode_override = _GED_SHADED_MODE_UNSET;
-		dgcdp->dmode = _GED_WIREFRAME;
-
-		_ged_drawtrees(dgcdp->gedp, ac, av, _GED_DRAW_WIREFRAME,
-			(struct _ged_client_data *)client_data);
-
-		/* restore shaded mode states */
-		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
-		dgcdp->shaded_mode_override = save_shaded_mode_override;
-		dgcdp->dmode = save_dmode;
+		draw_forced_wireframe(pathp, dgcdp);
 	    }
 
 	    break;
@@ -148,23 +153,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 			    _GED_DRAW_NMG_POLY,
 			    (struct _ged_client_data *)client_data);
 	    } else {
-		/* save shaded mode states */
-		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
-		int save_shaded_mode_override = dgcdp->shaded_mode_override;
-		int save_dmode = dgcdp->dmode;
-
-		/* turn shaded mode off for this pipe object */
-		dgcdp->gedp->ged_gdp->gd_shaded_mode = 0;
-		dgcdp->shaded_mode_override = _GED_SHADED_MODE_UNSET;
-		dgcdp->dmode = _GED_WIREFRAME;
-
-		_ged_drawtrees(dgcdp->gedp, ac, av, _GED_DRAW_WIREFRAME,
-			(struct _ged_client_data *)client_data);
-
-		/* restore shaded mode states */
-		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
-		dgcdp->shaded_mode_override = save_shaded_mode_override;
-		dgcdp->dmode = save_dmode;
+		draw_forced_wireframe(pathp, dgcdp);
 	    }
 
 	    break;
