@@ -130,6 +130,7 @@ struct chull3d_data {
     int *face_array;
     int *vert_cnt;
     point_t *vert_array;
+    int next_vert;
 
     /* these were static variables in functions */
 
@@ -989,14 +990,16 @@ void off_out(struct chull3d_data *cdata, point *v, int vdim, FILE *Fin, int ambl
     if (amble==0) {
 	for (i=0;i<vdim;i++) if (v[i]==cdata->hull_infinity) return;
 	fprintf(OFFFILE, "%d ", vdim);
-	for (j=0;j<vdim;j++) fprintf(OFFFILE, "%ld ", (cdata->site_num)((void *)cdata, v[j]));
+	for (j=0;j<vdim;j++) {
+	    fprintf(OFFFILE, "%ld ", (cdata->site_num)((void *)cdata, v[j]));
+	}
 	fprintf(OFFFILE,"\n");
     } else if (amble==-1) {
 	OFFFILE = bu_temp_file((char *)&offfilenam, MAXPATHLEN);
     } else {
 	fclose(OFFFILE);
 
-	fprintf(F, "    OFF\n");
+	fprintf(F, "OFF\n");
 
 	sprintf(comst, "wc %s", cdata->tmpfilenam);
 	G = epopen(comst, "r");
@@ -1014,13 +1017,15 @@ void off_out(struct chull3d_data *cdata, point *v, int vdim, FILE *Fin, int ambl
 
 
 	G = efopen(cdata, cdata->tmpfilenam, "r");
-	while (fgets(buf, sizeof(buf), G)) fprintf(F, "%s", buf);
+	while (fgets(buf, sizeof(buf), G)) {
+	    fprintf(F, "%s", buf);
+	}
 	fclose(G);
 
 	G = efopen(cdata, offfilenam, "r");
-
-
-	while (fgets(buf, sizeof(buf), G)) fprintf(F, "%s", buf);
+	while (fgets(buf, sizeof(buf), G)) {
+	    fprintf(F, "%s", buf);
+	}
 	fclose(G);
     }
 
@@ -1326,7 +1331,7 @@ build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, 
 
 /* hullmain.c */
 
-FILE *INFILE, *OUTFILE, *TFILE;
+FILE *OUTFILE, *TFILE;
 
 HIDDEN long
 site_numm(void *data, site p)
@@ -1358,33 +1363,22 @@ HIDDEN site
 read_next_site(struct chull3d_data *cdata, long j)
 {
     int i=0, k=0;
-    static char buf[100], *s;
 
-    if (j!=-1) cdata->p = new_site(cdata, cdata->p,j);
-    if (j!=0) while ((s=fgets(buf,sizeof(buf),INFILE))) {
-	if (buf[0]=='%') continue;
-	for (k=0; buf[k] && isspace(buf[k]); k++);
-	if (buf[k]) break;
-    }
-    if (!s) return 0;
-    if (j!=0) fprintf(TFILE, "%s", buf+k);
-    if (j!=0) bu_log("TFILE: %s\n", buf+k);
-    while (buf[k]) {
-	while (buf[k] && isspace(buf[k])) k++;
-	if (buf[k] && j!=-1) {
-	    if (sscanf(buf+k,"%lf",(cdata->p)+i)==EOF) {
-		exit(1);
-	    }
-	    (cdata->p)[i] = floor(cdata->mult_up*(cdata->p)[i]+0.5);
-	    cdata->mins[i] = (cdata->mins[i]<(cdata->p)[i]) ? cdata->mins[i] : (cdata->p)[i];
-	    cdata->maxs[i] = (cdata->maxs[i]>(cdata->p)[i]) ? cdata->maxs[i] : (cdata->p)[i];
-	}
-	if (buf[k]) i++;
-	while (buf[k] && !isspace(buf[k])) k++;
+    cdata->p = new_site(cdata, cdata->p,j);
+
+    if (cdata->next_vert == 9) return 0;
+
+    cdata->p[0] = cdata->vert_array[cdata->next_vert][0];
+    cdata->p[1] = cdata->vert_array[cdata->next_vert][1];
+    cdata->p[2] = cdata->vert_array[cdata->next_vert][2];
+    fprintf(TFILE, "%f %f %f\n", cdata->p[0], cdata->p[1], cdata->p[2]);
+    (cdata->next_vert)++;
+    for(i = 0; i < 3; i++) {
+	(cdata->p)[i] = floor(cdata->mult_up*(cdata->p)[i]+0.5);
+	cdata->mins[i] = (cdata->mins[i]<(cdata->p)[i]) ? cdata->mins[i] : (cdata->p)[i];
+	cdata->maxs[i] = (cdata->maxs[i]>(cdata->p)[i]) ? cdata->maxs[i] : (cdata->p)[i];
     }
 
-    if (!cdata->pdim) cdata->pdim = i;
-    if (i!=cdata->pdim) exit(1);
     return cdata->p;
 }
 
@@ -1442,6 +1436,9 @@ chull3d_data_init(struct chull3d_data *data)
     data->fg_vn = 0;
     data->st=(simplex**)malloc((data->ss+MAXDIM+1)*sizeof(simplex*));
     data->ns = NULL;
+
+    data->vert_array = (point_t *)bu_calloc(9, sizeof(point_t), "vertex array");
+    data->next_vert = 0;
 }
 
 HIDDEN void
@@ -1514,14 +1511,21 @@ int main(int argc, char **argv) {
 	}
     }
 
-    ifn = (strlen(ifile)!=0);
-    INFILE = ifn ? efopen(cdata, ifile, "r") : stdin;
+    VSET(cdata->vert_array[0], 0.0, 0.0, 0.0);
+    VSET(cdata->vert_array[1], 2.0, 0.0, 0.0);
+    VSET(cdata->vert_array[2], 2.0, 2.0, 0.0);
+    VSET(cdata->vert_array[3], 0.0, 2.0, 0.0);
+    VSET(cdata->vert_array[4], 0.0, 0.0, 2.0);
+    VSET(cdata->vert_array[5], 2.0, 0.0, 2.0);
+    VSET(cdata->vert_array[6], 2.0, 2.0, 2.0);
+    VSET(cdata->vert_array[7], 0.0, 2.0, 2.0);
+    VSET(cdata->vert_array[8], 1.0, 1.0, 1.0);
 
     OUTFILE = stdout;
 
     TFILE = bu_temp_file(cdata->tmpfilenam, MAXPATHLEN);
 
-    read_next_site(cdata, -1);
+    /*read_next_site(cdata, -1);*/
 
     cdata->point_size = cdata->site_size = sizeof(Coord)*cdata->pdim;
 
