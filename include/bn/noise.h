@@ -39,6 +39,7 @@
 #define BN_NOISE_H
 
 #include "common.h"
+#include "vmath.h"
 #include "bn/defines.h"
 
 __BEGIN_DECLS

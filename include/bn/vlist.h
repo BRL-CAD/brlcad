@@ -36,8 +36,9 @@
 
 #include "common.h"
 #include "vmath.h"
-#include "bn/defines.h"
 #include "bu/magic.h"
+#include "bu/list.h"
+#include "bn/defines.h"
 
 __BEGIN_DECLS
 

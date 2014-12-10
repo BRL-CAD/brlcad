@@ -35,6 +35,7 @@
 #define BN_TRI_TRI_H
 
 #include "common.h"
+#include "vmath.h"
 #include "bn/defines.h"
 
 __BEGIN_DECLS
