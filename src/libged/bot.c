@@ -41,13 +41,13 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     const char *cmd = argv[0];
-    const char *sub;
-    const char *arg;
-    const char *primitive = argv[argc - 1];
+    const char *sub = NULL;
+    const char *arg = NULL;
+    const char *primitive = NULL;
     size_t len;
     fastf_t tmp;
     fastf_t propVal;
-    static const char *usage = "get (faces|minEdge|maxEdge|orientation|type|vertices) bot\n";
+    static const char *usage = "get (faces|minEdge|maxEdge|orientation|type|vertices) bot\nchull bot_in bot_out\n";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -62,9 +62,23 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    /* determine subcommand */
+    sub = argv[1];
+    len = strlen(sub);
+    if (bu_strncmp(sub, "get", len) == 0) {
+	primitive = argv[argc - 1];
+    }
+    if (bu_strncmp(sub, "chull", len) == 0) {
+	primitive = argv[2];
+    }
+    if (primitive == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
+	return GED_ERROR;
+    }
+
     /* get bot */
     GED_DB_LOOKUP(gedp, bot_dp, primitive, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern,  bot_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!", cmd, primitive);
@@ -74,13 +88,9 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    /* determine subcommand */
-    sub = argv[1];
-    arg = argv[2];
-    len = strlen(sub);
-
     if (bu_strncmp(sub, "get", len) == 0) {
 
+	arg = argv[2];
 	propVal = rt_bot_propget(bot, arg);
 
 	/* print result string */
@@ -101,9 +111,15 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a valid argument!", sub, arg);
 	    return GED_ERROR;
 	}
-    } else {
-	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
-	return GED_ERROR;
+    }
+    if (bu_strncmp(sub, "chull", len) == 0) {
+
+	/* must be wanting help */
+	if (argc < 4) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	    return GED_ERROR;
+	}
+
     }
 
     return GED_OK;
