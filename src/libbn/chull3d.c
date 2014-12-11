@@ -1071,7 +1071,7 @@ chull3d_read_next_site(struct chull3d_data *cdata, long j)
 
     cdata->p = chull3d_new_site(cdata, cdata->p,j);
 
-    if (cdata->next_vert == 9) return 0;
+    if (cdata->next_vert == cdata->input_vert_cnt) return 0;
 
     cdata->p[0] = cdata->input_vert_array[cdata->next_vert][0];
     cdata->p[1] = cdata->input_vert_array[cdata->next_vert][1];
