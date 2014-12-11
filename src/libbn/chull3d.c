@@ -995,6 +995,7 @@ chull3d_buildhull(struct chull3d_data *cdata, simplex *root)
 HIDDEN simplex *
 chull3d_build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, short dim)
 {
+    double febits;
     simplex *s = NULL;
     simplex *root = NULL;
 
@@ -1005,7 +1006,8 @@ chull3d_build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *sit
     cdata->site_num = site_numm;
     cdata->pdim = dim;
 
-    cdata->exact_bits = (int)floor(DBL_MANT_DIG*log(FLT_RADIX)/log(2));
+    febits = floor(DBL_MANT_DIG*log(FLT_RADIX)/log(2));
+    cdata->exact_bits = (int)febits;
     cdata->b_err_min = (float)(DBL_EPSILON*MAXDIM*(1<<MAXDIM)*MAXDIM*3.01);
     cdata->b_err_min_sq = cdata->b_err_min * cdata->b_err_min;
 
