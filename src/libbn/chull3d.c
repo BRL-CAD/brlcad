@@ -947,73 +947,46 @@ void *add_simplex(struct chull3d_data *cdata, simplex *s, void *p) {
 
     point v[MAXDIM];
     int j;
-    long int ip1, ip2, ip3;
-    point_t p1, p2, p3;
-    const point_t *pp1;
-    const point_t *pp2;
-    const point_t *pp3;
-    int f1, f2, f3;
+    long int ip[3];
+    /*point_t p1, p2, p3;*/
+    const point_t *pp[3];
+    int f[3];
 
     if (!s) return NULL;
 
     for (j=0;j<(cdata->cdim);j++) v[j] = s->neigh[j].vert;
+    for (j=0;j<(cdata->cdim);j++) ip[j] = (cdata->site_num)((void *)cdata, v[j]);
+    for (j=0;j<(cdata->cdim);j++) pp[j] = &(cdata->input_vert_array[ip[j]]);
 
-    ip1 = (cdata->site_num)((void *)cdata, v[0]);
-    ip2 = (cdata->site_num)((void *)cdata, v[1]);
-    ip3 = (cdata->site_num)((void *)cdata, v[2]);
-
-    pp1 = &(cdata->input_vert_array[ip1]);
-    pp2 = &(cdata->input_vert_array[ip2]);
-    pp3 = &(cdata->input_vert_array[ip3]);
-
-    f1 = bu_ptbl_locate(cdata->output_pnts, (long *)pp1);
-    if (f1 == -1) {
-	f1 = bu_ptbl_ins(cdata->output_pnts, (long *)pp1);
-	VMOVE(cdata->vert_array[f1],*pp1);
-	(*cdata->vert_cnt)++;
-    }
-
-    f2 = bu_ptbl_locate(cdata->output_pnts, (long *)pp2);
-    if (f2 == -1) {
-	f2 = bu_ptbl_ins(cdata->output_pnts, (long *)pp2);
-	VMOVE(cdata->vert_array[f2],*pp2);
-	(*cdata->vert_cnt)++;
-    }
-
-    f3 = bu_ptbl_locate(cdata->output_pnts, (long *)pp3);
-    if (f3 == -1) {
-	f3 = bu_ptbl_ins(cdata->output_pnts, (long *)pp3);
-	VMOVE(cdata->vert_array[f3],*pp3);
-	(*cdata->vert_cnt)++;
+    /* Don't add a point if it's already added */
+    for (j=0;j<(cdata->cdim);j++){
+	f[j] = bu_ptbl_locate(cdata->output_pnts, (long *)pp[j]);
+	if (f[j] == -1) {
+	    f[j] = bu_ptbl_ins(cdata->output_pnts, (long *)pp[j]);
+	    VMOVE(cdata->vert_array[f[j]],*pp[j]);
+	    (*cdata->vert_cnt)++;
+	}
     }
 #if 0
-    VMOVE(p1,cdata->input_vert_array[ip1]);
-    VMOVE(p2,cdata->input_vert_array[ip2]);
-    VMOVE(p3,cdata->input_vert_array[ip3]);
-    VMOVE(p1,*(point_t *)BU_PTBL_GET(cdata->output_pnts, f1));
-    VMOVE(p2,*(point_t *)BU_PTBL_GET(cdata->output_pnts, f2));
-    VMOVE(p3,*(point_t *)BU_PTBL_GET(cdata->output_pnts, f3));
-    VMOVE(cdata->vert_array[f1],*(point_t *)BU_PTBL_GET(cdata->output_pnts, f1));
-    VMOVE(cdata->vert_array[f2],*(point_t *)BU_PTBL_GET(cdata->output_pnts, f2));
-    VMOVE(cdata->vert_array[f3],*(point_t *)BU_PTBL_GET(cdata->output_pnts, f3));
+    VMOVE(p1,cdata->vert_array[f[0]]);
+    VMOVE(p2,cdata->vert_array[f[1]]);
+    VMOVE(p3,cdata->vert_array[f[2]]);
 #endif
-    VMOVE(p1,cdata->vert_array[f1]);
-    VMOVE(p2,cdata->vert_array[f2]);
-    VMOVE(p3,cdata->vert_array[f3]);
+    cdata->faces[(*cdata->face_cnt)*3] = f[0];
+    cdata->faces[(*cdata->face_cnt)*3+1] = f[1];
+    cdata->faces[(*cdata->face_cnt)*3+2] = f[2];
 
-    cdata->faces[(*cdata->face_cnt)*3] = f1;
-    cdata->faces[(*cdata->face_cnt)*3+1] = f2;
-    cdata->faces[(*cdata->face_cnt)*3+2] = f3;
-
-    bu_log("f(old indices): %ld, %ld, %ld\n", ip1, ip2, ip3);
-    bu_log("f(new indices): %d, %d, %d\n", f1, f2, f3);
+#if 0
+    bu_log("f(old indices): %ld, %ld, %ld\n", ip[0], ip[1], ip[2]);
+    bu_log("f(new indices): %d, %d, %d\n", f[0], f[1], f[2]);
     bu_log("  p1: %f, %f, %f\n", p1[0], p1[1], p1[2]);
     bu_log("  p2: %f, %f, %f\n", p2[0], p2[1], p2[2]);
     bu_log("  p3: %f, %f, %f\n", p3[0], p3[1], p3[2]);
+#endif
 
     (*cdata->face_cnt)++;
 
-    bu_log("face_cnt: %d, vert_cnt: %d\n", *cdata->face_cnt, *cdata->vert_cnt);
+    /*bu_log("face_cnt: %d, vert_cnt: %d\n", *cdata->face_cnt, *cdata->vert_cnt);*/
 
     return NULL;
 }
@@ -1349,7 +1322,6 @@ chull3d_data_init(struct chull3d_data *data, int vert_cnt)
     data->pdim = 3;
 
     /* These were static variables in functions */
-
     data->simplex_block_table = (simplex **)bu_calloc(100, sizeof(simplex *), "simplex_block_table");
     data->num_simplex_blocks = 0;
     data->basis_s_block_table = (basis_s **)bu_calloc(100, sizeof(basis_s *), "basis_s_block_table");
@@ -1466,7 +1438,7 @@ int main(int argc, char **argv) {
 
     visit_hull(cdata, root, add_simplex);
 
-    bu_log("\n\nOFF\n");
+    bu_log("OFF\n");
 
     bu_log("%d %d 0\n", *cdata->vert_cnt, *cdata->face_cnt);
     for(i = 0; i < (int)BU_PTBL_LEN(cdata->output_pnts); i++) {
