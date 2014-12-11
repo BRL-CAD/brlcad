@@ -182,8 +182,6 @@ struct chull3d_data {
 #define push(x) *(cdata->st+tms++) = x;
 #define pop(x)  x = *(cdata->st + --tms);
 
-#define INCP(X,p,k) ((X*) ( (char*)p + (k) * X##_size)) /* portability? */
-
 #define NEWL(cdata, list, X, p)                                 \
 {                                                               \
         p = list ? list : new_block_##X(cdata, 1);              \
@@ -216,12 +214,6 @@ struct chull3d_data {
         neighbor *mrsn;                                          \
         for (mi=-1,mrsn=s->neigh-1;mi<(cdata->cdim);mi++,mrsn++)    \
         op##_ref(cdata, basis_s, mrsn->basis);                          \
-}
-
-#define free_simp(cdata, s)                            \
-{       mod_refs(cdata, dec,s);                               \
-        FREEL(cdata, basis_s,s->normal);               \
-        FREEL(cdata, simplex, s);                      \
 }
 
 #define copy_simp(cdata, cnew, s) \
