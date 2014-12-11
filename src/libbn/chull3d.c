@@ -27,6 +27,7 @@
 /*#include "chull3d.h"*/
 #include "bu/file.h"
 #include "bu/log.h"
+#include "bu/ptbl.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bn/chull.h"
@@ -125,12 +126,15 @@ struct chull3d_data {
     int point_size; /* size of malloc needed for a point */
     short *mi;
     short *mo;
-    char *tmpfilenam;
-    int *face_cnt;
-    int *face_array;
-    int *vert_cnt;
+    const point_t *input_vert_array;
+    int input_vert_cnt;
+    struct bu_ptbl *output_pnts;
+    /* Output containers */
     point_t *vert_array;
+    int *vert_cnt;
     int next_vert;
+    int *faces;
+    int *face_cnt;
 
     /* these were static variables in functions */
 
@@ -977,65 +981,10 @@ FILE* epopen(char *com, char *mode) {
 #endif
 
 
-void off_out(struct chull3d_data *cdata, point *v, int vdim, FILE *Fin, int amble) {
-
-    static FILE *F, *G;
-    static FILE *OFFFILE;
-    static char offfilenam[MAXPATHLEN];
-    char comst[100], buf[200];
-    int j,i;
-
-    if (Fin) {F=Fin;}
-
-    if (amble==0) {
-	for (i=0;i<vdim;i++) if (v[i]==cdata->hull_infinity) return;
-	fprintf(OFFFILE, "%d ", vdim);
-	for (j=0;j<vdim;j++) {
-	    fprintf(OFFFILE, "%ld ", (cdata->site_num)((void *)cdata, v[j]));
-	}
-	fprintf(OFFFILE,"\n");
-    } else if (amble==-1) {
-	OFFFILE = bu_temp_file((char *)&offfilenam, MAXPATHLEN);
-    } else {
-	fclose(OFFFILE);
-
-	fprintf(F, "OFF\n");
-
-	sprintf(comst, "wc %s", cdata->tmpfilenam);
-	G = epopen(comst, "r");
-	fscanf(G, "%d", &i);
-	fprintf(F, " %d", i);
-	pclose(G);
-
-	sprintf(comst, "wc %s", offfilenam);
-	G = epopen(comst, "r");
-	fscanf(G, "%d", &i);
-	fprintf(F, " %d", i);
-	pclose(G);
-
-	fprintf (F, " 0\n");
-
-
-	G = efopen(cdata, cdata->tmpfilenam, "r");
-	while (fgets(buf, sizeof(buf), G)) {
-	    fprintf(F, "%s", buf);
-	}
-	fclose(G);
-
-	G = efopen(cdata, offfilenam, "r");
-	while (fgets(buf, sizeof(buf), G)) {
-	    fprintf(F, "%s", buf);
-	}
-	fclose(G);
-    }
-
-}
-
-
 /* vist_funcs for different kinds of output: facets, alpha shapes, etc. */
 typedef void out_func(struct chull3d_data *, point *, int, FILE*, int);
 
-void *facets_print(struct chull3d_data *cdata, simplex *s, void *p) {
+void *add_facet(struct chull3d_data *cdata, simplex *s, void *p) {
 
     out_func *out_func_here = (out_func *)cdata->out_func_here;
     point v[MAXDIM];
@@ -1051,27 +1000,81 @@ void *facets_print(struct chull3d_data *cdata, simplex *s, void *p) {
     return NULL;
 }
 
-#if 0
-/* swap this with facets_print when printing out triangulation */
-void *ridges_print(struct chull3d_data *cdata, simplex *s, void *p) {
+void *facets_print(struct chull3d_data *cdata, simplex *s, void *p) {
 
-    out_func *out_func_here = (out_func *)cdata->out_func_here;
     point v[MAXDIM];
-    int j,k,vnum;
+    int j;
+    long int ip1, ip2, ip3;
+    point_t p1, p2, p3;
+    const point_t *pp1;
+    const point_t *pp2;
+    const point_t *pp3;
+    int f1, f2, f3;
 
-    if (p) {out_func_here = (out_func*)p; if (!s) return NULL;}
+    if (!s) return NULL;
 
-    for (j=0;j<(cdata->cdim);j++) {
-	vnum=0;
-	for (k=0;k<(cdata->cdim);k++) {
-	    if (k==j) continue;
-	    v[vnum++] = (s->neigh[k].vert);
-	}
-	out_func_here(cdata, v,(cdata->cdim)-1,0,0);
+    for (j=0;j<(cdata->cdim);j++) v[j] = s->neigh[j].vert;
+
+    ip1 = (cdata->site_num)((void *)cdata, v[0]);
+    ip2 = (cdata->site_num)((void *)cdata, v[1]);
+    ip3 = (cdata->site_num)((void *)cdata, v[2]);
+
+    pp1 = &(cdata->input_vert_array[ip1]);
+    pp2 = &(cdata->input_vert_array[ip2]);
+    pp3 = &(cdata->input_vert_array[ip3]);
+
+    f1 = bu_ptbl_locate(cdata->output_pnts, (long *)pp1);
+    if (f1 == -1) {
+	f1 = bu_ptbl_ins(cdata->output_pnts, (long *)pp1);
+	VMOVE(cdata->vert_array[f1],*pp1);
+	(*cdata->vert_cnt)++;
     }
+
+    f2 = bu_ptbl_locate(cdata->output_pnts, (long *)pp2);
+    if (f2 == -1) {
+	f2 = bu_ptbl_ins(cdata->output_pnts, (long *)pp2);
+	VMOVE(cdata->vert_array[f2],*pp2);
+	(*cdata->vert_cnt)++;
+    }
+
+    f3 = bu_ptbl_locate(cdata->output_pnts, (long *)pp3);
+    if (f3 == -1) {
+	f3 = bu_ptbl_ins(cdata->output_pnts, (long *)pp3);
+	VMOVE(cdata->vert_array[f3],*pp3);
+	(*cdata->vert_cnt)++;
+    }
+#if 0
+    VMOVE(p1,cdata->input_vert_array[ip1]);
+    VMOVE(p2,cdata->input_vert_array[ip2]);
+    VMOVE(p3,cdata->input_vert_array[ip3]);
+    VMOVE(p1,*(point_t *)BU_PTBL_GET(cdata->output_pnts, f1));
+    VMOVE(p2,*(point_t *)BU_PTBL_GET(cdata->output_pnts, f2));
+    VMOVE(p3,*(point_t *)BU_PTBL_GET(cdata->output_pnts, f3));
+    VMOVE(cdata->vert_array[f1],*(point_t *)BU_PTBL_GET(cdata->output_pnts, f1));
+    VMOVE(cdata->vert_array[f2],*(point_t *)BU_PTBL_GET(cdata->output_pnts, f2));
+    VMOVE(cdata->vert_array[f3],*(point_t *)BU_PTBL_GET(cdata->output_pnts, f3));
+#endif
+    VMOVE(p1,cdata->vert_array[f1]);
+    VMOVE(p2,cdata->vert_array[f2]);
+    VMOVE(p3,cdata->vert_array[f3]);
+
+    cdata->faces[(*cdata->face_cnt)*3] = f1;
+    cdata->faces[(*cdata->face_cnt)*3+1] = f2;
+    cdata->faces[(*cdata->face_cnt)*3+2] = f3;
+
+    bu_log("f(old indices): %ld, %ld, %ld\n", ip1, ip2, ip3);
+    bu_log("f(new indices): %ld, %ld, %ld\n", f1, f2, f3);
+    bu_log("  p1: %f, %f, %f\n", p1[0], p1[1], p1[2]);
+    bu_log("  p2: %f, %f, %f\n", p2[0], p2[1], p2[2]);
+    bu_log("  p3: %f, %f, %f\n", p3[0], p3[1], p3[2]);
+
+    (*cdata->face_cnt)++;
+
+    bu_log("face_cnt: %d, vert_cnt: %d\n", *cdata->face_cnt, *cdata->vert_cnt);
+
     return NULL;
 }
-#endif
+
 
 /* TODO -make contingent on test */
 #ifdef WIN32
@@ -1332,8 +1335,6 @@ build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, 
 
 /* hullmain.c */
 
-FILE *OUTFILE, *TFILE;
-
 HIDDEN long
 site_numm(void *data, site p)
 {
@@ -1363,16 +1364,15 @@ new_site(struct chull3d_data *cdata, site p, long j)
 HIDDEN site
 read_next_site(struct chull3d_data *cdata, long j)
 {
-    int i=0, k=0;
+    int i=0;
 
     cdata->p = new_site(cdata, cdata->p,j);
 
     if (cdata->next_vert == 9) return 0;
 
-    cdata->p[0] = cdata->vert_array[cdata->next_vert][0];
-    cdata->p[1] = cdata->vert_array[cdata->next_vert][1];
-    cdata->p[2] = cdata->vert_array[cdata->next_vert][2];
-    fprintf(TFILE, "%f %f %f\n", cdata->p[0], cdata->p[1], cdata->p[2]);
+    cdata->p[0] = cdata->input_vert_array[cdata->next_vert][0];
+    cdata->p[1] = cdata->input_vert_array[cdata->next_vert][1];
+    cdata->p[2] = cdata->input_vert_array[cdata->next_vert][2];
     (cdata->next_vert)++;
     for(i = 0; i < 3; i++) {
 	(cdata->p)[i] = floor(cdata->mult_up*(cdata->p)[i]+0.5);
@@ -1389,7 +1389,7 @@ get_next_site(void *data) {
 }
 
 HIDDEN void
-chull3d_data_init(struct chull3d_data *data)
+chull3d_data_init(struct chull3d_data *data, int vert_cnt)
 {
     int i = 0;
     data->simplex_list = 0;
@@ -1414,7 +1414,6 @@ chull3d_data_init(struct chull3d_data *data)
     data->mult_up = 1000.0; /* we'll need to multiply based on a tolerance parameter at some point... */
     data->mi = (short *)bu_calloc(MAXPOINTS, sizeof(short), "mi");
     data->mo = (short *)bu_calloc(MAXPOINTS, sizeof(short), "mo");
-    data->tmpfilenam = (char *)bu_calloc(MAXPATHLEN, sizeof(char), "tmpfilenam");
     data->pdim = 3;
     data->vd = 0;  /* we're not using the triangulation by default */
 
@@ -1433,13 +1432,20 @@ chull3d_data_init(struct chull3d_data *data)
     data->vnum = -1;
     data->ss = 2000 + MAXDIM;
     data->s_num = 0;
-    data->out_func_here = (void *)off_out;
     data->fg_vn = 0;
     data->st=(simplex**)malloc((data->ss+MAXDIM+1)*sizeof(simplex*));
     data->ns = NULL;
+    BU_GET(data->output_pnts, struct bu_ptbl);
+    bu_ptbl_init(data->output_pnts, 8, "output pnts container");
+    data->input_vert_cnt = vert_cnt;
 
-    data->vert_array = (point_t *)bu_calloc(9, sizeof(point_t), "vertex array");
+    /* Output containers */
+    if (data->vert_cnt) (*data->vert_cnt) = 0;
+    data->vert_array = (point_t *)bu_calloc(vert_cnt, sizeof(point_t), "vertex array");
     data->next_vert = 0;
+
+    data->faces = (int *)bu_calloc(3*vert_cnt, sizeof(int), "face array");
+    if (data->face_cnt) (*data->face_cnt) = 0;
 }
 
 HIDDEN void
@@ -1456,7 +1462,8 @@ chull3d_data_free(struct chull3d_data *data)
     bu_free(data->basis_s_block_table, "basis_s_block_table");
     bu_free(data->Tree_block_table, "Tree_block_table");
     BU_PUT(data->tt_basis, basis_s);
-    bu_free(data->tmpfilenam, "tmpfilenam");
+    bu_ptbl_free(data->output_pnts);
+    BU_PUT(data->output_pnts, struct bu_ptbl);
 }
 
 int
@@ -1467,15 +1474,17 @@ bn_3d_chull(int *faces, int *num_faces, point_t **vertices, int *num_vertices,
     simplex *root = NULL;
 
     BU_GET(cdata, struct chull3d_data);
-    chull3d_data_init(cdata);
+    cdata->faces = faces;
+    cdata->vert_array = *vertices;
+    chull3d_data_init(cdata, num_input_pnts);
+    cdata->input_vert_array = input_points_3d;
+    cdata->vert_cnt = num_vertices;
+    cdata->face_cnt = num_faces;
     root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim, cdata->vd);
 
     if (!root) return -1;
 
-    off_out(cdata, 0,0,stdout,-1);
-    facets_print(cdata, 0, off_out);
     visit_hull(cdata, root, facets_print);
-    off_out(cdata, 0,0,stdout,1);
 
     free_hull_storage(cdata);
     chull3d_data_free(cdata);
@@ -1492,39 +1501,34 @@ extern int opterr;
 /* TODO - replace this with a top level function using libbn types */
 int main(int argc, char **argv) {
 
+    int i = 0;
     short ifn = 0;
     int	option;
+    int	fc, vc;
     char ifile[50] = "";
     simplex *root;
 
 
     struct chull3d_data *cdata;
     BU_GET(cdata, struct chull3d_data);
-    chull3d_data_init(cdata);
 
-    while ((option = getopt(argc, argv, "i:")) != EOF) {
-	switch (option) {
-	    case 'i':
-		strcpy(ifile, optarg);
-		break;
-	    default:
-		exit(1);
-	}
-    }
+    /* cdata->input_vert_array = input; */
+    cdata->vert_cnt = &fc;
+    cdata->face_cnt = &vc;
+    chull3d_data_init(cdata, 9);
 
-    VSET(cdata->vert_array[0], 0.0, 0.0, 0.0);
-    VSET(cdata->vert_array[1], 2.0, 0.0, 0.0);
-    VSET(cdata->vert_array[2], 2.0, 2.0, 0.0);
-    VSET(cdata->vert_array[3], 0.0, 2.0, 0.0);
-    VSET(cdata->vert_array[4], 0.0, 0.0, 2.0);
-    VSET(cdata->vert_array[5], 2.0, 0.0, 2.0);
-    VSET(cdata->vert_array[6], 2.0, 2.0, 2.0);
-    VSET(cdata->vert_array[7], 0.0, 2.0, 2.0);
-    VSET(cdata->vert_array[8], 1.0, 1.0, 1.0);
-
-    OUTFILE = stdout;
-
-    TFILE = bu_temp_file(cdata->tmpfilenam, MAXPATHLEN);
+    /* TODO - this will be passed in in the final version */
+    point_t *input_verts = (point_t *)bu_calloc(cdata->input_vert_cnt, sizeof(point_t), "vertex array");
+    VSET(input_verts[0], 0.0, 0.0, 0.0);
+    VSET(input_verts[1], 2.0, 0.0, 0.0);
+    VSET(input_verts[2], 2.0, 2.0, 0.0);
+    VSET(input_verts[3], 0.0, 2.0, 0.0);
+    VSET(input_verts[4], 0.0, 0.0, 2.0);
+    VSET(input_verts[5], 2.0, 0.0, 2.0);
+    VSET(input_verts[6], 2.0, 2.0, 2.0);
+    VSET(input_verts[7], 0.0, 2.0, 2.0);
+    VSET(input_verts[8], 1.0, 1.0, 1.0);
+    cdata->input_vert_array = (const point_t *)input_verts;
 
     /*read_next_site(cdata, -1);*/
 
@@ -1532,12 +1536,20 @@ int main(int argc, char **argv) {
 
     root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim, cdata->vd);
 
-    fclose(TFILE);
-
-    off_out(cdata, 0,0,stdout,-1);
-    facets_print(cdata, 0, off_out);
     visit_hull(cdata, root, facets_print);
-    off_out(cdata, 0,0,stdout,1);
+
+    bu_log("\n\nOFF\n");
+
+    bu_log("%d %d 0\n", *cdata->vert_cnt, *cdata->face_cnt);
+    for(i = 0; i < (int)BU_PTBL_LEN(cdata->output_pnts); i++) {
+	point_t p1;
+	VMOVE(p1,cdata->vert_array[i]);
+	bu_log("%f %f %f\n", p1[0], p1[1], p1[2]);
+    }
+    for(i = 0; i < *cdata->face_cnt; i++) {
+	bu_log("%d %d %d\n", cdata->faces[i*3], cdata->faces[i*3+1], cdata->faces[i*3+2]);
+    }
+
 
     free_hull_storage(cdata);
     chull3d_data_free(cdata);
