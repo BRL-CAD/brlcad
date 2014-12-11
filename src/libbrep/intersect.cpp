@@ -431,7 +431,22 @@ build_surface_root(const ON_Surface *surf, const ON_Interval *u_domain, const ON
     }
 
     if (root.m_surf) {
-	root.SetBBox(root.m_surf->BoundingBox());
+	ON_BoundingBox surf_bbox;
+	int ret = root.m_surf->GetBoundingBox(surf_bbox.m_min,
+		surf_bbox.m_max);
+	if (!ret) {
+	    double corners_min[3], corners_max[3];
+	    for (int i = 0; i < 2; ++i) {
+		for (int j = 0; j < 2; ++j) {
+		    ON_3dPoint corner = root.m_surf->PointAt(root.m_u.m_t[i],
+			    root.m_v.m_t[i]);
+		    VMINMAX(corners_min, corners_max, corner);
+		}
+	    }
+	    surf_bbox.m_min = ON_3dPoint(corners_min);
+	    surf_bbox.m_max = ON_3dPoint(corners_max);
+	}
+	root.SetBBox(surf_bbox);
 	root.m_isplanar = root.m_surf->IsPlanar();
 	return true;
     } else {
