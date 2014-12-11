@@ -1598,6 +1598,27 @@ public:
     }
 };
 
+class LoopBooleanResult {
+public:
+    std::vector<ON_SimpleArray<ON_Curve *> > outerloops;
+    std::vector<ON_SimpleArray<ON_Curve *> > innerloops;
+
+    void ClearOuterloops() {
+	for (size_t i = 0; i < outerloops.size(); ++i) {
+	    for (int j = 0; j < outerloops[i].Count(); ++j) {
+		delete outerloops[i][j];
+	    }
+	}
+    }
+    void ClearInnerloops() {
+	for (size_t i = 0; i < innerloops.size(); ++i) {
+	    for (int j = 0; j < innerloops[i].Count(); ++j) {
+		delete innerloops[i][j];
+	    }
+	}
+    }
+};
+
 #define LOOP_DIRECTION_CCW  1
 #define LOOP_DIRECTION_CW  -1
 #define LOOP_DIRECTION_NONE 0
@@ -1754,8 +1775,14 @@ set_append_segment(
 	if ((i->from == seg.to) && (i->to == seg.from)) {
 	    // if this segment is a reversed version of an existing
 	    // segment, it cancels the existing segment out
-	    out.erase(i);
-	    return;
+	    ON_Curve *prev_curve = i->Curve();
+	    ON_Curve *seg_curve = seg.Curve();
+	    ON_SimpleArray<ON_X_EVENT> events;
+	    ON_Intersect(prev_curve, seg_curve, events, INTERSECTION_TOL);
+	    if (events.Count() == 1 && events[0].m_type == ON_X_EVENT::ccx_overlap) {
+		out.erase(i);
+		return;
+	    }
 	}
     }
     out.insert(seg);
@@ -1802,7 +1829,7 @@ find_similar_segments(
     return out;
 }
 
-std::multiset<CurveSegment>
+HIDDEN std::multiset<CurveSegment>
 get_op_segments(
 	std::multiset<CurveSegment> &curve1_segments,
 	std::multiset<CurveSegment> &curve2_segments,
@@ -1810,20 +1837,20 @@ get_op_segments(
 {
     std::multiset<CurveSegment> out;
 
+    std::multiset<CurveSegment> c1_boundary_segs;
+    set_append_segments_at_location(c1_boundary_segs, curve1_segments,
+	    CurveSegment::BOUNDARY, false);
+
+    std::multiset<CurveSegment> c2_boundary_segs;
+    set_append_segments_at_location(c2_boundary_segs, curve2_segments,
+	    CurveSegment::BOUNDARY, false);
+
     if (op == BOOLEAN_INTERSECT) {
 	set_append_segments_at_location(out, curve1_segments,
 		CurveSegment::INSIDE, true);
 
 	set_append_segments_at_location(out, curve2_segments,
 		CurveSegment::INSIDE, true);
-
-	std::multiset<CurveSegment> c1_boundary_segs;
-	set_append_segments_at_location(c1_boundary_segs, curve1_segments,
-		CurveSegment::BOUNDARY, false);
-
-	std::multiset<CurveSegment> c2_boundary_segs;
-	set_append_segments_at_location(c2_boundary_segs, curve2_segments,
-		CurveSegment::BOUNDARY, false);
 
 	std::multiset<CurveSegment>::iterator i;
 	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
@@ -1847,14 +1874,6 @@ get_op_segments(
 	set_append_segments_at_location(out, curve2_segments,
 		CurveSegment::INSIDE, true);
 
-	std::multiset<CurveSegment> c1_boundary_segs;
-	set_append_segments_at_location(c1_boundary_segs, curve1_segments,
-		CurveSegment::BOUNDARY, false);
-
-	std::multiset<CurveSegment> c2_boundary_segs;
-	set_append_segments_at_location(c2_boundary_segs, curve2_segments,
-		CurveSegment::BOUNDARY, false);
-
 	std::multiset<CurveSegment>::iterator i;
 	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
 	    std::multiset<CurveSegment> curve1_matches =
@@ -1870,6 +1889,36 @@ get_op_segments(
 		curve2_matches.size() > 1)
 	    {
 		out.insert(*i);
+	    }
+	}
+    } else if (op == BOOLEAN_UNION) {
+	set_append_segments_at_location(out, curve1_segments,
+		CurveSegment::OUTSIDE, true);
+
+	set_append_segments_at_location(out, curve2_segments,
+		CurveSegment::OUTSIDE, true);
+
+	std::multiset<CurveSegment>::iterator i;
+	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
+	    std::multiset<CurveSegment> curve1_matches =
+		find_similar_segments(c1_boundary_segs, *i);
+
+	    std::multiset<CurveSegment> curve2_matches =
+		find_similar_segments(c2_boundary_segs, *i);
+
+	    if (curve1_matches.size() > 1 && curve2_matches.size() > 1) {
+		continue;
+	    }
+
+	    std::multiset<CurveSegment>::iterator a, b;
+	    for (a = curve1_matches.begin(); a != curve1_matches.end(); ++a) {
+
+		b = curve2_matches.begin();
+		for (; b != curve2_matches.end(); ++b) {
+		    if (a->from == b->from) {
+			out.insert(*i);
+		    }
+		}
 	    }
 	}
     }
@@ -1970,6 +2019,30 @@ get_loop_points(
     return out;
 }
 
+// separate outerloops and innerloops
+HIDDEN LoopBooleanResult
+make_result_from_loops(const std::list<ON_SimpleArray<ON_Curve *> > &loops)
+{
+    LoopBooleanResult out;
+
+    std::list<ON_SimpleArray<ON_Curve *> >::const_iterator li;
+    for (li = loops.begin(); li != loops.end(); ++li) {
+	ON_Curve *loop_curve = get_loop_curve(*li);
+
+	int dir = ON_ClosedCurveOrientation(*loop_curve, NULL);
+
+	if (dir == LOOP_DIRECTION_CCW) {
+	    out.outerloops.push_back(*li);
+	} else if (dir == LOOP_DIRECTION_CW) {
+	    out.innerloops.push_back(*li);
+	}
+	delete loop_curve;
+    }
+
+    return out;
+}
+
+
 // Get the result of a boolean combination of two loops. Based on the
 // algorithm from this paper:
 //
@@ -1978,25 +2051,27 @@ get_loop_points(
 // Computers & Graphics 13:167-183.
 //
 // gvu.gatech.edu/people/official/jarek/graphics/papers/04PolygonBooleansMargalit.pdf
-std::list<ON_SimpleArray<ON_Curve *> >
+LoopBooleanResult
 loop_boolean(
     const ON_SimpleArray<ON_Curve *> &l1,
     const ON_SimpleArray<ON_Curve *> &l2,
     op_type op)
 {
-    std::list<ON_SimpleArray<ON_Curve *> > out;
-    ON_SimpleArray<ON_Curve *> loop1, loop2;
+    LoopBooleanResult out;
 
-    for (int i = 0; i < l1.Count(); ++i) {
-	loop1.Append(l1[i]->Duplicate());
-    }
-
-    if (op != BOOLEAN_INTERSECT && op != BOOLEAN_DIFF) {
+    if (op != BOOLEAN_INTERSECT &&
+	op != BOOLEAN_DIFF &&
+	op != BOOLEAN_UNION)
+    {
 	bu_log("loop_boolean: unsupported operation\n");
-	out.push_back(loop1);
 	return out;
     }
 
+    // copy input loops
+    ON_SimpleArray<ON_Curve *> loop1, loop2;
+    for (int i = 0; i < l1.Count(); ++i) {
+	loop1.Append(l1[i]->Duplicate());
+    }
     for (int i = 0; i < l2.Count(); ++i) {
 	loop2.Append(l2[i]->Duplicate());
     }
@@ -2013,14 +2088,17 @@ loop_boolean(
 	!set_loop_direction(loop2, loop2_dir))
     {
 	bu_log("loop_boolean: couldn't standardize curve directions\n");
-	out.push_back(loop1);
 
+	for (int i = 0; i < l1.Count(); ++i) {
+	    delete loop1[i];
+	}
 	for (int i = 0; i < l2.Count(); ++i) {
 	    delete loop2[i];
 	}
 	return out;
     }
 
+    // get curve endpoints and intersection points for each loop
     std::multiset<CurvePoint> loop1_points, loop2_points;
 
     loop1_points = get_loop_points(1, loop1, loop2);
@@ -2053,6 +2131,7 @@ loop_boolean(
 	}
     }
 
+    // classify segments and determine which belong in the result
     std::multiset<CurveSegment> loop1_segments, loop2_segments;
     loop1_segments = make_segments(loop1_points, loop1, loop2);
     loop2_segments = make_segments(loop2_points, loop2, loop1);
@@ -2060,38 +2139,46 @@ loop_boolean(
     std::multiset<CurveSegment> out_segments =
 	get_op_segments(loop1_segments, loop2_segments, op);
 
-    out = construct_loops_from_segments(out_segments);
-    std::list<ON_SimpleArray<ON_Curve *> >::iterator li;
-    for (li = out.begin(); li != out.end(); ++li) {
-	close_small_gaps(*li);
-    }
+    // build result
+    std::list<ON_SimpleArray<ON_Curve *> > new_loops;
 
+    new_loops = construct_loops_from_segments(out_segments);
     for (int i = 0; i < l1.Count(); ++i) {
 	delete loop1[i];
     }
     for (int i = 0; i < l2.Count(); ++i) {
 	delete loop2[i];
     }
+
+    std::list<ON_SimpleArray<ON_Curve *> >::iterator li;
+    for (li = new_loops.begin(); li != new_loops.end(); ++li) {
+	close_small_gaps(*li);
+    }
+
+    out = make_result_from_loops(new_loops); 
+
     return out;
 }
 
 std::list<ON_SimpleArray<ON_Curve *> >
 innerloops_inside_outerloop(
-    ON_SimpleArray<ON_Curve *> &outerloop_curve,
+    const ON_SimpleArray<ON_Curve *> &outerloop_curve,
     const std::vector<ON_SimpleArray<ON_Curve *> > &innerloop_curves)
 {
     std::list<ON_SimpleArray<ON_Curve *> > out;
 
     for (size_t i = 0; i < innerloop_curves.size(); ++i) {
 	std::list<ON_SimpleArray<ON_Curve *> > new_innerloops;
-	new_innerloops = loop_boolean(outerloop_curve, innerloop_curves[i],
+	LoopBooleanResult new_loops;
+	new_loops = loop_boolean(outerloop_curve, innerloop_curves[i],
 		BOOLEAN_INTERSECT);
 
-	std::list<ON_SimpleArray<ON_Curve *> >::iterator j;
-	for (j = new_innerloops.begin(); j != new_innerloops.end(); ++j) {
-	    set_loop_direction(*j, LOOP_DIRECTION_CW);
-	    out.push_back(*j);
+	// grab outerloops
+	for (size_t j = 0; j < new_loops.outerloops.size(); ++j) {
+	    set_loop_direction(new_loops.outerloops[j], LOOP_DIRECTION_CW);
+	    out.push_back(new_loops.outerloops[j]);
 	}
+	new_loops.ClearInnerloops();
     }
     return out;
 }
@@ -2099,7 +2186,7 @@ innerloops_inside_outerloop(
 TrimmedFace *
 make_face_from_loops(
 	const TrimmedFace *orig_face,
-	ON_SimpleArray<ON_Curve *> &outerloop,
+	const ON_SimpleArray<ON_Curve *> &outerloop,
 	const std::vector<ON_SimpleArray<ON_Curve *> > &innerloops)
 {
     TrimmedFace *face = new TrimmedFace();
@@ -2107,6 +2194,9 @@ make_face_from_loops(
     face->m_face = orig_face->m_face;
     face->m_outerloop.Append(outerloop.Count(), outerloop.Array());
 
+    // TODO: the innerloops found here can't be inside any other
+    // outerloop, and should be removed from the innerloop set in the
+    // interest of efficiency
     std::list<ON_SimpleArray<ON_Curve *> > new_innerloops;
     new_innerloops = innerloops_inside_outerloop(outerloop, innerloops);
 
@@ -2117,46 +2207,135 @@ make_face_from_loops(
     return face;
 }
 
-void
+HIDDEN LoopBooleanResult
+combine_loops(
+    const TrimmedFace *orig_face,
+    const LoopBooleanResult &new_loops)
+{
+    // Intersections always produce a single outerloop.
+    //
+    // Subtractions may produce multiple outerloops, or a single
+    // outerloop that optionally includes a single innerloop. 
+    //
+    // So, the possible results are:
+    // 1) Single outerloop.
+    // 2) Multiple outerloops.
+    // 3) Single outerloop with single innerloop.
+
+    // First we'll combine the old and new innerloops.
+    std::vector<ON_SimpleArray<ON_Curve *> > merged_innerloops;
+    if (new_loops.innerloops.size() == 1) {
+	// If the result has an innerloop, it may overlap any of the
+	// original innerloops. We'll union all overlapping loops with
+	// the new innerloop.
+	ON_SimpleArray<ON_Curve *> candidate_innerloop(new_loops.innerloops[0]);
+
+	for (size_t i = 0; i < orig_face->m_innerloop.size(); ++i) {
+	    LoopBooleanResult merged = loop_boolean(candidate_innerloop,
+		    orig_face->m_innerloop[i], BOOLEAN_UNION);
+
+	    if (merged.outerloops.size() == 1) {
+		candidate_innerloop = merged.outerloops[0];
+	    } else {
+		merged_innerloops.push_back(orig_face->m_innerloop[i]);
+		merged.ClearOuterloops();
+	    }
+	}
+	merged_innerloops.push_back(candidate_innerloop);
+    } else if (orig_face->m_innerloop.size() > 0) {
+	for (size_t i = 0; i < orig_face->m_innerloop.size(); ++i) {
+	    merged_innerloops.push_back(orig_face->m_innerloop[i]);
+	}
+    }
+
+    // Next we'll attempt to subtract all merged innerloops from each
+    // new outerloop to get the final set of loops. For each
+    // subtraction, there are four possibilities:
+    // 1) The innerloop is outside the outerloop, and the result is
+    //    the original outerloop.
+    // 2) The innerloop completely encloses the outerloop, and the
+    //    result is empty.
+    // 3) The innerloop is completely contained by the outerloop, and
+    //    the result is the input outerloop and innerloop.
+    // 4) The innerloop overlaps the outerloop, and the result is one
+    //    or more outerloops.
+    LoopBooleanResult out;
+    for (size_t i = 0; i < new_loops.outerloops.size(); ++i) {
+
+	std::list<ON_SimpleArray<ON_Curve *> >::iterator part, next_part;
+	std::list<ON_SimpleArray<ON_Curve *> > outerloop_parts;
+
+	// start with the original outerloop
+	outerloop_parts.push_back(new_loops.outerloops[i]);
+
+	// attempt to subtract all innerloops from it, and from
+	// whatever subparts of it are created along the way
+	for (size_t j = 0; j < merged_innerloops.size(); ++j) {
+
+	    part = outerloop_parts.begin();
+	    for (; part != outerloop_parts.end(); part = next_part) {
+		LoopBooleanResult diffed = loop_boolean(*part,
+			merged_innerloops[j], BOOLEAN_DIFF);
+
+		next_part = part;
+		++next_part;
+
+		if (diffed.innerloops.size() == 1) {
+		    // The outerloop part contains the innerloop, so
+		    // the innerloop belongs in the final set.
+		    //
+		    // Note that any innerloop added here will remains
+		    // completely inside an outerloop part even if the
+		    // part list changes. In order for a subsequent
+		    // subtraction to put any part of it outside an
+		    // outerloop, that later innerloop would have to
+		    // overlap this one, in which case, the innerloops
+		    // would have been unioned together in the
+		    // previous merging step.
+		    out.innerloops.push_back(diffed.innerloops[0]);
+		} else {
+		    // outerloop part has been erased, modified, or
+		    // split, so we need to remove it
+		    for (int k = 0; k < part->Count(); ++k) {
+			delete (*part)[k];
+		    }
+		    outerloop_parts.erase(part);
+
+		    // add any new parts for subsequent subtractions
+		    for (size_t k = 0; k < diffed.outerloops.size(); ++k) {
+			outerloop_parts.push_front(diffed.outerloops[k]);
+		    }
+		}
+	    }
+	}
+
+	// whatever parts of the outerloop that remain after
+	// subtracting all innerloops belong in the final set
+	part = outerloop_parts.begin();
+	for (; part != outerloop_parts.end(); ++part) {
+	    out.outerloops.push_back(*part);
+	}
+    }
+    return out;
+    // Only thing left to do is make a face from each outerloop. If
+    // one of the innerloops is inside the outerloop, make it part of
+    // the face and remove it for consideration for other faces.
+}
+
+
+HIDDEN void
 append_faces_from_loops(
 	ON_SimpleArray<TrimmedFace *> &out,
 	const TrimmedFace *orig_face,
-	std::list<ON_SimpleArray<ON_Curve *> > &new_loops)
+	const LoopBooleanResult &new_loops)
 {
-    // copy face inner loops
-    std::vector<ON_SimpleArray<ON_Curve *> > all_innerloops;
-    for (size_t i = 0; i < orig_face->m_innerloop.size(); ++i) {
-	ON_SimpleArray<ON_Curve *> loop;
-	loop.Append(orig_face->m_innerloop[i].Count(),
-		orig_face->m_innerloop[i].Array());
-	all_innerloops.push_back(loop);
-    }
-
-    // add new innerloops, removing them from the input list
-    std::list<ON_SimpleArray<ON_Curve *> >::iterator innerloop;
-
-    size_t first_new = all_innerloops.size();
-
-    innerloop = find_innerloop(new_loops);
-    while (innerloop != new_loops.end()) {
-	all_innerloops.push_back(*innerloop);
-	new_loops.erase(innerloop);
-
-	innerloop = find_innerloop(new_loops);
-    }
+    LoopBooleanResult combined_loops = combine_loops(orig_face, new_loops);
 
     // make a face from each outerloop, using appropriate innerloops
-    std::list<ON_SimpleArray<ON_Curve *> >::iterator i;
-    for (i = new_loops.begin(); i != new_loops.end(); ++i) {
-	out.Append(make_face_from_loops(orig_face, *i, all_innerloops));
-    }
-
-    // delete original innerloops from the new set
-    for (size_t loop = first_new; loop < all_innerloops.size(); ++loop) {
-	for (int j = 0; j < all_innerloops[loop].Count(); ++j) {
-	    delete all_innerloops[loop][j];
-	    all_innerloops[loop][j] = NULL;
-	}
+    for (size_t i = 0; i < combined_loops.outerloops.size(); ++i) {
+	out.Append(make_face_from_loops(orig_face,
+		    combined_loops.outerloops[i],
+		    combined_loops.innerloops));
     }
 }
 
@@ -2503,37 +2682,15 @@ loop_is_degenerate(const ON_SimpleArray<ON_Curve *> &loop)
     if (loop.Count() < 1) {
 	return true;
     }
+    // want sufficient distance between non-adjacent curve points
     ON_Curve *loop_curve = get_loop_curve(loop);
+    ON_Interval dom = loop_curve->Domain();
 
-    ON_2dPoint joint = loop_curve->PointAtStart();
-    ON_2dPoint mid = loop_curve->PointAt(loop_curve->Domain().Mid());
-
-    ON_Curve *left = NULL, *right = NULL;
-    loop_curve->Split(loop_curve->Domain().Mid(), left, right);
+    ON_3dPoint pt1 = loop_curve->PointAt(dom.ParameterAt(.25));
+    ON_3dPoint pt2 = loop_curve->PointAt(dom.ParameterAt(.75));
     delete loop_curve;
 
-    ON_SimpleArray<ON_X_EVENT> events;
-    ON_Intersect(left, right, events, INTERSECTION_TOL);
-    delete left;
-    delete right;
-
-    // two halves of loop should intersect at the start/end point and
-    // the midpoint, and nowhere else
-    if (events.Count() != 2) {
-	return true;
-    }
-    for (int i = 0; i < events.Count(); ++i) {
-	if (events[i].m_type != ON_X_EVENT::ccx_point) {
-	    return true;
-	}
-
-	ON_2dPoint ipt = events[i].m_A[0];
-	if (!ON_NearZero(ipt.DistanceTo(joint), INTERSECTION_TOL) &&
-	    !ON_NearZero(ipt.DistanceTo(mid), INTERSECTION_TOL)) {
-	    return true;
-	}
-    }
-    return false;
+    return pt1.DistanceTo(pt2) < INTERSECTION_TOL;
 }
 
 // It might be worth investigating the following approach to building a set of faces from the splitting
@@ -2596,7 +2753,7 @@ split_trimmed_face(
     for (int i = 0; i < ssx_curves.Count(); ++i) {
 	std::vector<ON_SimpleArray<ON_Curve *> > ssx_loops;
 
-	// get closed version of current ssx curve
+	// get current ssx curve as closed loops
 	if (ssx_curves[i].IsClosed()) {
 	    ON_SimpleArray<ON_Curve *> loop;
 	    loop.Append(ssx_curves[i].Curve()->Duplicate());
@@ -2605,6 +2762,9 @@ split_trimmed_face(
 	    ssx_loops = split_face_into_loops(orig_face, ssx_curves[i]);
 	}
 
+	// combine each intersection loop with the original face (or
+	// the previous iteration of split faces) to create new split
+	// faces
 	ON_SimpleArray<TrimmedFace *> next_out;
 	for (size_t j = 0; j < ssx_loops.size(); ++j) {
 	    if (loop_is_degenerate(ssx_loops[j])) {
@@ -2612,29 +2772,30 @@ split_trimmed_face(
 	    }
 
 	    for (int k = 0; k < out.Count(); ++k) {
-		std::list<ON_SimpleArray<ON_Curve *> > intersect_loops, diff_loops;
+		LoopBooleanResult intersect_loops, diff_loops;
 
-		// get the portion of the current outerloop inside the
-		// closed ssx curve
+		// get the portion of the face outerloop inside the
+		// ssx loop
 		intersect_loops = loop_boolean(out[k]->m_outerloop,
 			ssx_loops[j], BOOLEAN_INTERSECT);
 
 		if (ssx_curves[i].IsClosed()) {
-		    if (intersect_loops.size() == 0) {
+		    if (intersect_loops.outerloops.size() == 0) {
 			// no intersection, just keep the face as-is
 			next_out.Append(out[k]->Duplicate());
 			continue;
 		    }
 
-		    // for a naturally closed intersection curve, we
-		    // also need the portion outside the curve
+		    // for a naturally closed ssx curve, we also need
+		    // the portion outside the loop
 		    diff_loops = loop_boolean(out[k]->m_outerloop, ssx_loops[j],
 			    BOOLEAN_DIFF);
-		}
 
-		// make new faces from the loops
+		    append_faces_from_loops(next_out, out[k], diff_loops);
+		    diff_loops.ClearInnerloops();
+		}
 		append_faces_from_loops(next_out, out[k], intersect_loops);
-		append_faces_from_loops(next_out, out[k], diff_loops);
+		intersect_loops.ClearInnerloops();
 	    }
 	}
 	free_loops(ssx_loops);
