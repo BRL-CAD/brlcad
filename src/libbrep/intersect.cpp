@@ -768,20 +768,12 @@ ON_Intersect(const ON_3dPoint &pointA,
     for (size_t i = 0; i < candidates.size(); i++) {
 	// use linear approximation to get an estimated intersection point
 	ON_Line line(candidates[i]->m_curve->PointAtStart(), candidates[i]->m_curve->PointAtEnd());
-	double t;
-	line.ClosestPointTo(pointA, &t);
+	double line_t;
+	line.ClosestPointTo(pointA, &line_t);
 
 	// make sure line_t belongs to [0, 1]
-	double line_t;
-	if (t < 0) {
-	    line_t = 0;
-	} else if (t > 1) {
-	    line_t = 1;
-	} else {
-	    line_t = t;
-	}
-
-	double closest_point_t = candidates[i]->m_t.Min() + candidates[i]->m_t.Length() * line_t;
+	CLAMP(line_t, 0.0, 1.0);
+	double closest_point_t = candidates[i]->m_t.ParameterAt(line_t);
 
 	// use Newton iterations to get an accurate intersection point
 	if (newton_pci(closest_point_t, pointA, curveB, tol)) {
