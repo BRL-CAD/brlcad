@@ -204,9 +204,10 @@ struct chull3d_data {
         cdata->X##_list = p;                                    \
 }
 
-#define dec_ref(cdata, X,v)    {if ((v) && --(v)->ref_count == 0) FREEL(cdata, X,(v));}
-#define inc_ref(cdata, X,v)    {if (v) v->ref_count++;}
-#define NULLIFY(cdata, X,v)    {dec_ref(cdata, X,v); v = NULL;}
+#define NULLIFY(cdata, X,v)    { \
+    if ((v) && --(v)->ref_count == 0) FREEL(cdata, X,(v)); \
+    v = NULL;\
+}
 
 #define copy_simp(cdata, cnew, s) \
 {       int mi;                                                   \
@@ -214,7 +215,7 @@ struct chull3d_data {
         NEWL(cdata, cdata->simplex_list, simplex, cnew);             \
         memcpy(cnew,s,cdata->simplex_size);                          \
         for (mi=-1,mrsn=s->neigh-1;mi<(cdata->cdim);mi++,mrsn++)    \
-        inc_ref(cdata, basis_s, mrsn->basis);                          \
+        if (mrsn->basis) mrsn->basis->ref_count++; \
 }
 
 HIDDEN simplex *
@@ -934,7 +935,7 @@ extend_simplices(struct chull3d_data *cdata, simplex *s)
 	ns->peak.vert = NULL;
 	ns->peak.simp = s;
 	ns->neigh[ocdim] = s->peak;
-	inc_ref(cdata,basis_s,s->peak.basis);
+	if (s->peak.basis) s->peak.basis->ref_count++;
 	for (i=0,nsn=ns->neigh;i<(cdata->cdim);i++,nsn++)
 	    nsn->simp = extend_simplices(cdata, nsn->simp);
     }
