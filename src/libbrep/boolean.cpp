@@ -1296,18 +1296,18 @@ public:
     } location;
 
     static CurvePoint::Location
-    PointCurveLocation(ON_2dPoint pt, ON_Curve *curve);
+    PointLoopLocation(ON_2dPoint pt, const ON_SimpleArray<ON_Curve *> &loop);
 
     CurvePoint(
 	int loop,
 	int li,
-	double curve1_t,
-	ON_Curve *curve1,
-	ON_Curve *curve2)
-	: source_loop(loop), loop_index(li), curve_t(curve1_t)
+	double pt_t,
+	ON_Curve *curve,
+	const ON_SimpleArray<ON_Curve *> &other_loop)
+	: source_loop(loop), loop_index(li), curve_t(pt_t)
     {
-	pt = curve1->PointAt(curve1_t);
-	location = PointCurveLocation(pt, curve2);
+	pt = curve->PointAt(curve_t);
+	location = PointLoopLocation(pt, other_loop);
     }
 
     CurvePoint(
@@ -1367,11 +1367,10 @@ public:
 };
 
 CurvePoint::Location
-CurvePoint::PointCurveLocation(ON_2dPoint pt, ON_Curve *curve)
+CurvePoint::PointLoopLocation(
+    ON_2dPoint pt,
+    const ON_SimpleArray<ON_Curve *> &loop)
 {
-    ON_SimpleArray<ON_Curve *> loop;
-    loop.Append(curve);
-
     if (is_point_on_loop(pt, loop)) {
 	return CurvePoint::BOUNDARY;
     }
@@ -1478,6 +1477,35 @@ public:
 #define LOOP_DIRECTION_CW  -1
 #define LOOP_DIRECTION_NONE 0
 
+HIDDEN bool
+close_small_gap(ON_SimpleArray<ON_Curve *> &loop, int curr, int next)
+{
+    ON_3dPoint end_curr = loop[curr]->PointAtEnd();
+    ON_3dPoint start_next = loop[next]->PointAtStart();
+
+    double gap = end_curr.DistanceTo(start_next);
+    if (gap <= INTERSECTION_TOL && gap >= ON_ZERO_TOLERANCE) {
+	ON_Curve *closing_seg = new ON_LineCurve(end_curr, start_next);
+	loop.Insert(next, closing_seg);
+	return true;
+    }
+    return false;
+}
+
+HIDDEN void
+close_small_gaps(ON_SimpleArray<ON_Curve *> &loop)
+{
+    if (loop.Count() == 0) {
+	return;
+    }
+    for (int i = 0; i < loop.Count() - 1; ++i) {
+	if (close_small_gap(loop, i, i + 1)) {
+	    ++i;
+	}
+    }
+    close_small_gap(loop, loop.Count() - 1, 0);
+}
+
 ON_Curve *
 get_loop_curve(const ON_SimpleArray<ON_Curve *> &loop)
 {
@@ -1542,8 +1570,6 @@ make_segments(
     ON_SimpleArray<ON_Curve *> &loop1,
     ON_SimpleArray<ON_Curve *> &loop2)
 {
-    ON_Curve *loop2_curve = get_loop_curve(loop2);
-
     std::multiset<CurveSegment> out;
 
     std::multiset<CurvePoint>::iterator first = curve1_points.begin();
@@ -1572,7 +1598,7 @@ make_segments(
 		    ON_Interval(from.curve_t, end_t).Mid());
 
 	    CurvePoint::Location midpt_location =
-		CurvePoint::PointCurveLocation(seg_midpt, loop2_curve);
+		CurvePoint::PointLoopLocation(seg_midpt, loop2);
 
 	    if (midpt_location == CurvePoint::INSIDE) {
 		new_seg.location = CurveSegment::INSIDE;
@@ -1590,7 +1616,6 @@ make_segments(
 	}
 	out.insert(new_seg);
     }
-    delete loop2_curve;
     return out;
 }
 
@@ -1806,18 +1831,16 @@ get_loop_points(
     ON_SimpleArray<ON_Curve *> loop2)
 {
     std::multiset<CurvePoint> out;
-    ON_Curve *loop2_curve = get_loop_curve(loop2);
 
     ON_Curve *loop1_seg = loop1[0];
     out.insert(CurvePoint(source_loop, 0, loop1_seg->Domain().m_t[0], loop1_seg,
-		loop2_curve));
+		loop2));
 
     for (int i = 0; i < loop1.Count(); ++i) {
 	loop1_seg = loop1[i];
 	out.insert(CurvePoint(source_loop, i, loop1_seg->Domain().m_t[1],
-		    loop1_seg, loop2_curve));
+		    loop1_seg, loop2));
     }
-    delete loop2_curve;
 
     return out;
 }
@@ -1913,6 +1936,10 @@ loop_boolean(
 	get_op_segments(loop1_segments, loop2_segments, op);
 
     out = construct_loops_from_segments(out_segments);
+    std::list<ON_SimpleArray<ON_Curve *> >::iterator li;
+    for (li = out.begin(); li != out.end(); ++li) {
+	close_small_gaps(*li);
+    }
 
     for (int i = 0; i < l1.Count(); ++i) {
 	delete loop1[i];
@@ -2273,6 +2300,7 @@ split_face_into_loops(
 	    }
 	}
 	newloop.Append(seg_on_SSI);
+	close_small_gaps(newloop);
 
 	ON_Curve *rev_seg_on_SSI = seg_on_SSI->Duplicate();
 	if (!rev_seg_on_SSI || !rev_seg_on_SSI->Reverse()) {
@@ -2318,6 +2346,7 @@ split_face_into_loops(
 
     if (out.size() > 0) {
 	// The remaining part after splitting some parts out.
+	close_small_gaps(outerloop_segs);
 	if (is_loop_valid(outerloop_segs, ON_ZERO_TOLERANCE)) {
 	    ON_SimpleArray<ON_Curve *> loop;
 	    loop.Append(outerloop_segs.Count(), outerloop_segs.Array());
@@ -2380,35 +2409,6 @@ loop_is_degenerate(const ON_SimpleArray<ON_Curve *> &loop)
 	}
     }
     return false;
-}
-
-HIDDEN bool
-close_small_gap(ON_SimpleArray<ON_Curve *> &loop, int curr, int next)
-{
-    ON_3dPoint end_curr = loop[curr]->PointAtEnd();
-    ON_3dPoint start_next = loop[next]->PointAtStart();
-
-    double gap = end_curr.DistanceTo(start_next);
-    if (gap <= INTERSECTION_TOL && gap >= ON_ZERO_TOLERANCE) {
-	ON_Curve *closing_seg = new ON_LineCurve(end_curr, start_next);
-	loop.Insert(next, closing_seg);
-	return true;
-    }
-    return false;
-}
-
-HIDDEN void
-close_small_gaps(ON_SimpleArray<ON_Curve *> &loop)
-{
-    if (loop.Count() == 0) {
-	return;
-    }
-    for (int i = 0; i < loop.Count() - 1; ++i) {
-	if (close_small_gap(loop, i, i + 1)) {
-	    ++i;
-	}
-    }
-    close_small_gap(loop, loop.Count() - 1, 0);
 }
 
 // It might be worth investigating the following approach to building a set of faces from the splitting
