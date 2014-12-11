@@ -48,7 +48,7 @@ is determined by the following options:</para>
   <term><option>-r</option><replaceable> VALUE</replaceable></term>
   <listitem>
 <para>This specifies random blending; for each pixel of the output stream,
-a number will be chosen uniformly from the interval [0, 1). If this
+a number will be chosen uniformly from the interval [0, 1]. If this
 number exceeds VALUE,
 then the pixel from the first image will be output; otherwise, the pixel
 from the second image will be output.  Note that if VALUE is 0, then
@@ -67,7 +67,7 @@ stream, the interpolated pixel
 ((1.0 - VALUE) * pixel1 + VALUE * pixel2)
 will be output (where
 pixel1 and pixel2 are the corresponding pixels from file1 and file2,
-respectively.)  Note that if VALUE is 0, then the output will equal the
+respectively).  Note that if VALUE is 0, then the output will equal the
 first image; if VALUE is 1, then the output will equal the second
 image.</para>
   </listitem>
