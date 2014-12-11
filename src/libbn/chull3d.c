@@ -208,18 +208,13 @@ struct chull3d_data {
 #define inc_ref(cdata, X,v)    {if (v) v->ref_count++;}
 #define NULLIFY(cdata, X,v)    {dec_ref(cdata, X,v); v = NULL;}
 
-#define mod_refs(cdata, op,s)                                           \
-{                                                                \
-        int mi;                                                   \
-        neighbor *mrsn;                                          \
-        for (mi=-1,mrsn=s->neigh-1;mi<(cdata->cdim);mi++,mrsn++)    \
-        op##_ref(cdata, basis_s, mrsn->basis);                          \
-}
-
 #define copy_simp(cdata, cnew, s) \
-{       NEWL(cdata, cdata->simplex_list, simplex, cnew);             \
+{       int mi;                                                   \
+        neighbor *mrsn;                                          \
+        NEWL(cdata, cdata->simplex_list, simplex, cnew);             \
         memcpy(cnew,s,cdata->simplex_size);                          \
-        mod_refs(cdata, inc,s);                                     \
+        for (mi=-1,mrsn=s->neigh-1;mi<(cdata->cdim);mi++,mrsn++)    \
+        inc_ref(cdata, basis_s, mrsn->basis);                          \
 }
 
 HIDDEN simplex *
