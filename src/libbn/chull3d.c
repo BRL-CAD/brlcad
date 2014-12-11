@@ -165,7 +165,7 @@ struct chull3d_data {
 #define SWAP(X,a,b) {X t; t = a; a = b; b = t;}
 #define VA(x) ((x)->vecs+cdata->rdim)
 #define VB(x) ((x)->vecs)
-#define trans(z,p,q) {int i; for (i=0;i<cdata->pdim;i++) z[i+cdata->rdim] = z[i] = p[i] - q[i];}
+#define trans(z,p,q) {int ti; for (ti=0;ti<cdata->pdim;ti++) z[ti+cdata->rdim] = z[ti] = p[ti] - q[ti];}
 #define DELIFT 0
 #define swap_points(a,b) {point t; t=a; a=b; b=t;}
 
@@ -224,9 +224,9 @@ struct chull3d_data {
 
 #define mod_refs(op,s)                                           \
 {                                                                \
-        int i;                                                   \
+        int mi;                                                   \
         neighbor *mrsn;                                          \
-        for (i=-1,mrsn=s->neigh-1;i<(cdata->cdim);i++,mrsn++)    \
+        for (mi=-1,mrsn=s->neigh-1;mi<(cdata->cdim);mi++,mrsn++)    \
         op##_ref(basis_s, mrsn->basis);                          \
 }
 
@@ -370,7 +370,7 @@ Ax_plus_y(struct chull3d_data *cdata, Coord a, point x, point y)
 }
 
 HIDDEN void
-Vec_scale(struct chull3d_data *cdata, int n, Coord a, Coord *x)
+Vec_scale(struct chull3d_data *UNUSED(cdata), int n, Coord a, Coord *x)
 {
     register Coord *xx = x;
     register Coord *xend = xx + n;
@@ -414,9 +414,11 @@ sc(struct chull3d_data *cdata, basis_s *v,simplex *s, int k, int j)
     if (cdata->ldetbound - v->lscale + logb(v->sqb)/2 + 1 < 0) {
 	return 0;
     } else {
-	cdata->lscale = (int)floor(logb(2*cdata->Sb/(v->sqb + v->sqa*cdata->b_err_min)))/2;
+	double dlscale = floor(logb(2*cdata->Sb/(v->sqb + v->sqa*cdata->b_err_min)))/2;
+	cdata->lscale = (int)dlscale;
 	if (cdata->lscale > cdata->max_scale) {
-	    cdata->lscale = (int)floor(cdata->max_scale);
+	    dlscale = floor(cdata->max_scale);
+	    cdata->lscale = (int)dlscale;
 	} else if (cdata->lscale<0) cdata->lscale = 0;
 	v->lscale += cdata->lscale;
 	return ( ((cdata->lscale)<20) ? 1<<(cdata->lscale) : ldexp(1,(cdata->lscale)) );
@@ -505,7 +507,8 @@ out_of_flat(struct chull3d_data *cdata, simplex *root, point p)
     NULLIFY(cdata, basis_s,root->neigh[(cdata->cdim)-1].basis);
     get_basis_sede(cdata, root);
     reduce(cdata, &cdata->p_neigh.basis,p,root,(cdata->cdim));
-    if (cdata->p_neigh.basis->sqa != 0) return 1;
+    /*if (cdata->p_neigh.basis->sqa != 0) return 1;*/
+    if (!ZERO(cdata->p_neigh.basis->sqa)) return 1;
     (cdata->cdim)--;
     return 0;
 }
@@ -545,7 +548,7 @@ get_normal_sede(struct chull3d_data *cdata, simplex *s)
 	for (j = 0; j<(cdata->cdim) && rn->vert != s->neigh[j].vert;j++);
 	if (j<(cdata->cdim)) continue;
 	reduce(cdata, &s->normal,rn->vert,s,(cdata->cdim));
-	if (s->normal->sqb != 0) break;
+	if (!ZERO(s->normal->sqb)) break;
     }
 }
 
@@ -571,7 +574,7 @@ sees(struct chull3d_data *cdata, site p, simplex *s) {
     trans(zz,p,tt);
     for (i=0;i<3;i++) {
 	dd = Vec_dot(cdata, zz,s->normal->vecs);
-	if (dd == 0.0) {
+	if (ZERO(dd)) {
 	    return 0;
 	}
 	dds = dd*dd/s->normal->sqb/Norm2(cdata, zz);
@@ -588,222 +591,6 @@ free_hull_storage(struct chull3d_data *cdata)
     free_basis_s_storage(cdata);
     free_simplex_storage(cdata);
     free_Tree_storage(cdata);
-}
-
-/*
-   An implementation of top-down splaying with sizes
-   D. Sleator <sleator@cs.cmu.edu>, January 1994.
-
-   This extends top-down-splay.c to maintain a size field in each node.
-   This is the number of nodes in the subtree rooted there.  This makes
-   it possible to efficiently compute the rank of a key.  (The rank is
-   the number of nodes to the left of the given key.)  It it also
-   possible to quickly find the node of a given rank.  Both of these
-   operations are illustrated in the code below.  The remainder of this
-   introduction is taken from top-down-splay.c.
-
-   "Splay trees", or "self-adjusting search trees" are a simple and
-   efficient data structure for storing an ordered set.  The data
-   structure consists of a binary tree, with no additional fields.  It
-   allows searching, insertion, deletion, deletemin, deletemax,
-   splitting, joining, and many other operations, all with amortized
-   logarithmic performance.  Since the trees adapt to the sequence of
-   requests, their performance on real access patterns is typically even
-   better.  Splay trees are described in a number of texts and papers
-   [1,2,3,4].
-
-   The code here is adapted from simple top-down splay, at the bottom of
-   page 669 of [2].  It can be obtained via anonymous ftp from
-   spade.pc.cs.cmu.edu in directory /usr/sleator/public.
-
-   The chief modification here is that the splay operation works even if the
-   item being splayed is not in the tree, and even if the tree root of the
-   tree is NULL.  So the line:
-
-   t = splay(cdata, i, t);
-
-   causes it to search for item with key i in the tree rooted at t.  If it's
-   there, it is splayed to the root.  If it isn't there, then the node put
-   at the root is the last one before NULL that would have been reached in a
-   normal binary search for i.  (It's a neighbor of i in the tree.)  This
-   allows many other operations to be easily implemented, as shown below.
-
-   [1] "Data Structures and Their Algorithms", Lewis and Denenberg,
-   Harper Collins, 1991, pp 243-251.
-   [2] "Self-adjusting Binary Search Trees" Sleator and Tarjan,
-   JACM Volume 32, No 3, July 1985, pp 652-686.
-   [3] "Data Structure and Algorithm Analysis", Mark Weiss,
-   Benjamin Cummins, 1992, pp 119-130.
-   [4] "Data Structures, Algorithms, and Performance", Derick Wood,
-   Addison-Wesley, 1993, pp 367-375
-
-   Adding the following notice, which appears in the version of this file at
-   http://www.cs.cmu.edu/afs/cs.cmu.edu/user/sleator/public/splaying/ but
-   did not originally appear in the hull version:
-
-   The following code was written by Daniel Sleator, and is released
-   in the public domain.
-
-   Fri Oct 21 21:15:01 EDT 1994
-   style changes, removed Sedgewickized...
-   Ken Clarkson
-
-   The reworking for hull, insofar as copyright protection applies, would
-   thus be under the same license as hull.
-*/
-
-
-/* Splay using the key i (which may or may not be in the tree.)
-   The starting root is t, and the tree used is defined by rat
-   size fields are maintained */
-HIDDEN Tree *
-splay(struct chull3d_data *cdata, site i, Tree *t)
-{
-    Tree N, *l, *r, *y;
-    int comp, root_size, l_size, r_size;
-
-    if (!t) return t;
-    N.left = N.right = NULL;
-    l = r = &N;
-    root_size = node_size(t);
-    l_size = r_size = 0;
-
-    for (;;) {
-	comp = compare(cdata, i, t->key);
-	if (comp < 0) {
-	    if (!t->left) break;
-	    if (compare(cdata, i, t->left->key) < 0) {
-		y = t->left;                           /* rotate right */
-		t->left = y->right;
-		y->right = t;
-		t->size = node_size(t->left) + node_size(t->right) + 1;
-		t = y;
-		if (!t->left) break;
-	    }
-	    r->left = t;                               /* link right */
-	    r = t;
-	    t = t->left;
-	    r_size += 1+node_size(r->right);
-	} else if (comp > 0) {
-	    if (!t->right) break;
-	    if (compare(cdata, i, t->right->key) > 0) {
-		y = t->right;                          /* rotate left */
-		t->right = y->left;
-		y->left = t;
-		t->size = node_size(t->left) + node_size(t->right) + 1;
-		t = y;
-		if (!t->right) break;
-	    }
-	    l->right = t;                              /* link left */
-	    l = t;
-	    t = t->right;
-	    l_size += 1+node_size(l->left);
-	} else break;
-    }
-    l_size += node_size(t->left);  /* Now l_size and r_size are the sizes of */
-    r_size += node_size(t->right); /* the left and right trees we just built.*/
-    t->size = l_size + r_size + 1;
-
-    l->right = r->left = NULL;
-
-    /* The following two loops correct the size fields of the right path  */
-    /* from the left child of the root and the right path from the left   */
-    /* child of the root.                                                 */
-    for (y = N.right; y != NULL; y = y->right) {
-	y->size = l_size;
-	l_size -= 1+node_size(y->left);
-    }
-    for (y = N.left; y != NULL; y = y->left) {
-	y->size = r_size;
-	r_size -= 1+node_size(y->right);
-    }
-
-    l->right = t->left;                                /* assemble */
-    r->left = t->right;
-    t->left = N.right;
-    t->right = N.left;
-
-    return t;
-}
-
-/* Insert key i into the tree t, if it is not already there. */
-/* Return a pointer to the resulting tree.                   */
-HIDDEN Tree *
-insert(struct chull3d_data *cdata, site i, Tree * t)
-{
-    Tree * new;
-
-    if (t != NULL) {
-	t = splay(cdata, i,t);
-	if (compare(cdata, i, t->key)==0) {
-	    return t;  /* it's already there */
-	}
-    }
-    NEWL(cdata, cdata->Tree_list, Tree,new)
-	if (!t) {
-	    new->left = new->right = NULL;
-	} else if (compare(cdata, i, t->key) < 0) {
-	    new->left = t->left;
-	    new->right = t;
-	    t->left = NULL;
-	    t->size = 1+node_size(t->right);
-	} else {
-	    new->right = t->right;
-	    new->left = t;
-	    t->right = NULL;
-	    t->size = 1+node_size(t->left);
-	}
-    new->key = i;
-    new->size = 1 + node_size(new->left) + node_size(new->right);
-    return new;
-}
-
-/* Deletes i from the tree if it's there.               */
-/* Return a pointer to the resulting tree.              */
-HIDDEN Tree *
-delete(struct chull3d_data *cdata, site i, Tree *t)
-{
-    Tree * x;
-    int tsize;
-
-    if (!t) return NULL;
-    tsize = t->size;
-    t = splay(cdata, i,t);
-    if (compare(cdata, i, t->key) == 0) {               /* found it */
-	if (!t->left) {
-	    x = t->right;
-	} else {
-	    x = splay(cdata, i, t->left);
-	    x->right = t->right;
-	}
-	FREEL(cdata, Tree,t);
-	if (x) x->size = tsize-1;
-	return x;
-    } else {
-	return t;                         /* It wasn't there */
-    }
-}
-
-/* Returns a pointer to the node in the tree with the given rank.  */
-/* Returns NULL if there is no such node.                          */
-/* Does not change the tree.  To guarantee logarithmic behavior,   */
-/* the node found here should be splayed to the root.              */
-HIDDEN Tree *
-find_rank(int r, Tree *t)
-{
-    int lsize;
-    if ((r < 0) || (r >= node_size(t))) return NULL;
-    for (;;) {
-	lsize = node_size(t->left);
-	if (r < lsize) {
-	    t = t->left;
-	} else if (r > lsize) {
-	    r = r - lsize -1;
-	    t = t->right;
-	} else {
-	    return t;
-	}
-    }
 }
 
 HIDDEN void
@@ -893,7 +680,7 @@ visit_triang_gen(struct chull3d_data *cdata, simplex *s, visit_func *visit, test
 }
 
 /* visit the whole triangulation */
-HIDDEN int truet(struct chull3d_data *cdata, simplex *s, int i, void *dum) {return 1;}
+HIDDEN int truet(struct chull3d_data *UNUSED(cdata), simplex *UNUSED(s), int UNUSED(i), void *UNUSED(dum)) {return 1;}
 HIDDEN void *
 visit_triang(struct chull3d_data *cdata, simplex *root, visit_func *visit)
 {
@@ -901,16 +688,16 @@ visit_triang(struct chull3d_data *cdata, simplex *root, visit_func *visit)
 }
 
 
-HIDDEN int hullt(struct chull3d_data *cdata, simplex *s, int i, void *dummy) {return i>-1;}
-HIDDEN void *facet_test(struct chull3d_data *cdata, simplex *s, void *dummy) {return (!s->peak.vert) ? s : NULL;}
+HIDDEN int hullt(struct chull3d_data *UNUSED(cdata), simplex *UNUSED(s), int i, void *UNUSED(dummy)) {return i>-1;}
+HIDDEN void *facet_test(struct chull3d_data *UNUSED(cdata), simplex *s, void *UNUSED(dummy)) {return (!s->peak.vert) ? s : NULL;}
 HIDDEN void *
 visit_hull(struct chull3d_data *cdata, simplex *root, visit_func *visit)
 {
-    return visit_triang_gen(cdata, visit_triang(cdata, root, &facet_test), visit, hullt);
+    return visit_triang_gen(cdata, (struct simplex *)visit_triang(cdata, root, &facet_test), visit, hullt);
 }
 
 HIDDEN void *
-check_simplex(struct chull3d_data *cdata, simplex *s, void *dum)
+check_simplex(struct chull3d_data *cdata, simplex *s, void *UNUSED(dum))
 {
     int i,j,k,l;
     neighbor *sn, *snn, *sn2;
@@ -944,7 +731,7 @@ check_simplex(struct chull3d_data *cdata, simplex *s, void *dum)
     return NULL;
 }
 
-void *collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *p) {
+void *collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
 
     point v[MAXDIM];
     int j;
@@ -972,7 +759,7 @@ void *collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *p) {
 }
 
 
-void *collect_faces(struct chull3d_data *cdata, simplex *s, void *p) {
+void *collect_faces(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
 
     point v[MAXDIM];
     int j;
@@ -1020,8 +807,7 @@ void *collect_faces(struct chull3d_data *cdata, simplex *s, void *p) {
 }
 
 
-/* TODO -make contingent on test */
-#ifdef WIN32
+#ifndef HAVE_LOGB
 double logb(double x) {
     if (x<=0) return -1e305;
     return log(x)/log(2);
@@ -1229,7 +1015,7 @@ build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, 
 {
     simplex *s, *root;
 
-    if (!cdata->Huge) cdata->Huge = DBL_MAX*DBL_MAX;
+    if (ZERO(cdata->Huge)) cdata->Huge = DBL_MAX*DBL_MAX;
 
     (cdata->cdim) = 0;
     cdata->get_site = get_s;
@@ -1414,6 +1200,8 @@ bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     cdata->input_vert_array = input_points_3d;
     cdata->vert_cnt = num_vertices;
     cdata->face_cnt = num_faces;
+    (*cdata->vert_cnt) = 0;
+    (*cdata->face_cnt) = 0;
     root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim);
 
     if (!root) return -1;
@@ -1438,6 +1226,7 @@ bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     return 0;
 }
 
+#if 0
 int main(int argc, char **argv) {
 
     int i = 0;
@@ -1459,8 +1248,7 @@ int main(int argc, char **argv) {
 
     bu_log("OFF\n");
 
-    bu_log("%d %d 0\n", vc, fc);
-    for(i = 0; i < vc; i++) {
+    bu_log("%d %d 0\n", vc, fc); for(i = 0; i < vc; i++) {
 	point_t p1;
 	VMOVE(p1,vert_array[i]);
 	bu_log("%f %f %f\n", p1[0], p1[1], p1[2]);
@@ -1471,7 +1259,7 @@ int main(int argc, char **argv) {
 
     exit(0);
 }
-
+#endif
 
 /*
  * Local Variables:

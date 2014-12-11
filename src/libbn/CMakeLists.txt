@@ -11,6 +11,7 @@ set(LIBBN_SOURCES
   axis.c
   complex.c
   chull.c
+  chull3d.c
   clip.c
   font.c
   globals.c
