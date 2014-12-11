@@ -1156,6 +1156,31 @@ configure_for_linking(
     return min_dist;
 }
 
+struct LinkedCurveX {
+    int ssi_idx_a;
+    int ssi_idx_b;
+    ON_SimpleArray<ON_X_EVENT> events;
+};
+
+HIDDEN std::vector<LinkedCurveX>
+intersect_linked_curves(const LinkedCurve &a, const LinkedCurve &b)
+{
+    std::vector<LinkedCurveX> out;
+    for (int i = 0; i < a.m_ssi_curves.Count(); ++i) {
+	for (int j = 0; j < b.m_ssi_curves.Count(); ++j) {
+	    ON_SimpleArray<ON_X_EVENT> events;
+	    ON_Intersect(a.m_ssi_curves[i].m_curve, b.m_ssi_curves[j].m_curve,
+		    events, INTERSECTION_TOL);
+
+	    if (events.Count() > 0) {
+		LinkedCurveX new_lcx = {i, j, events};
+		out.push_back(new_lcx);
+	    }
+	}
+    }
+    return out;
+}
+
 HIDDEN ON_ClassArray<LinkedCurve>
 link_curves(const ON_SimpleArray<SSICurve> &in)
 {
@@ -1185,31 +1210,35 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 	    double dist = configure_for_linking(c1, c2, tmp[i], tmp[j]);
 
 	    if (dist > INTERSECTION_TOL) {
-		const ON_Curve *icurve = tmp[i].Curve();
-		const ON_Curve *jcurve = tmp[j].Curve();
+		std::vector<LinkedCurveX> lc_events =
+		    intersect_linked_curves(tmp[i], tmp[j]);
 
-		ON_SimpleArray<ON_X_EVENT> events;
-		ON_Intersect(icurve, jcurve, events, INTERSECTION_TOL);
-
-		if (events.Count() == 0 || !icurve || !jcurve) {
+		if (lc_events.size() == 0) {
 		    continue;
 		}
 
+		LinkedCurveX lcx = lc_events[0];
+		ON_X_EVENT event = lcx.events[0];
+
 		// intersecting ssx curves indicates an error in the curves
-		if (events.Count() > 1) {
+		if (lc_events.size() > 1 || lcx.events.Count() > 1) {
 		    bu_log("couldn't link converging intersection curves\n");
 		    continue;
-		} else if (events.Count() == 1) {
+		} else {
 		    // For a single intersection, try to link the
 		    // curves anyway. Assume that one or both curve
 		    // endpoints is just a little past where it should
 		    // be. Split the curves at the intersection, and
 		    // discard the portion with the smaller bbox
 		    // diagonal.
+		    ON_Curve *icurve, *jcurve;
+		    icurve = tmp[i].m_ssi_curves[lcx.ssi_idx_a].m_curve;
+		    jcurve = tmp[j].m_ssi_curves[lcx.ssi_idx_b].m_curve;
+
 		    ON_Curve *ileft, *iright, *jleft, *jright;
 		    ileft = iright = jleft = jright = NULL;
-		    split_curve(ileft, iright, icurve, events[0].m_a[0]);
-		    split_curve(jleft, jright, jcurve, events[0].m_b[0]);
+		    split_curve(ileft, iright, icurve, event.m_a[0]);
+		    split_curve(jleft, jright, jcurve, event.m_b[0]);
 
 		    if (bbox_diagonal_length(ileft) <
 			bbox_diagonal_length(iright))
@@ -1228,16 +1257,16 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 		    delete jright;
 
 		    if (isub && jsub) {
-			// replace the original linked curves with the
+			// replace the original ssi curves with the
 			// trimmed versions
 			SSICurve issi(isub), jssi(jsub);
 			isub = jsub = NULL;
 
-			tmp[i].Empty();
-			tmp[i].Append(issi);
+			delete tmp[i].m_ssi_curves[lcx.ssi_idx_a].m_curve;
+			tmp[i].m_ssi_curves[lcx.ssi_idx_a] = issi;
 
-			tmp[j].Empty();
-			tmp[j].Append(jssi);
+			delete tmp[j].m_ssi_curves[lcx.ssi_idx_b].m_curve;
+			tmp[j].m_ssi_curves[lcx.ssi_idx_b] = jssi;
 
 			// proceed as if they're linkable
 			configure_for_linking(c1, c2, tmp[i], tmp[j]);
