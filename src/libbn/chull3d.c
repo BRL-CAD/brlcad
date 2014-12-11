@@ -224,9 +224,9 @@ struct chull3d_data {
         FREEL(cdata, simplex, s);                      \
 }
 
-#define copy_simp(cdata, cnew, s, simplex_list, simplex_size) \
-{       NEWL(cdata, simplex_list, simplex, cnew);             \
-        memcpy(cnew,s,simplex_size);                          \
+#define copy_simp(cdata, cnew, s) \
+{       NEWL(cdata, cdata->simplex_list, simplex, cnew);             \
+        memcpy(cnew,s,cdata->simplex_size);                          \
         mod_refs(cdata, inc,s);                                     \
 }
 
@@ -908,7 +908,7 @@ make_facets(struct chull3d_data *cdata, simplex *seen)
 	    if (sees(cdata, cdata->p,n)) make_facets(cdata, n);
 	}
 	if (n->peak.vert) continue;
-	copy_simp(cdata, cdata->ns,seen,cdata->simplex_list,cdata->simplex_size);
+	copy_simp(cdata, cdata->ns, seen);
 	cdata->ns->visit = 0;
 	cdata->ns->peak.vert = 0;
 	cdata->ns->normal = 0;
@@ -930,8 +930,8 @@ extend_simplices(struct chull3d_data *cdata, simplex *s)
 {
     int	i;
     int ocdim=(cdata->cdim)-1;
-    simplex *ns;
-    neighbor *nsn;
+    simplex *ns = NULL;
+    neighbor *nsn = NULL;
 
     if (s->visit == cdata->pnum) return s->peak.vert ? s->neigh[ocdim].simp : s;
     s->visit = cdata->pnum;
@@ -942,7 +942,7 @@ extend_simplices(struct chull3d_data *cdata, simplex *s)
 	s->neigh[ocdim].simp = extend_simplices(cdata, s->peak.simp);
 	return s;
     } else {
-	copy_simp(cdata, ns,s,cdata->simplex_list,cdata->simplex_size);
+	copy_simp(cdata, ns, s);
 	s->neigh[ocdim].simp = ns;
 	ns->peak.vert = NULL;
 	ns->peak.simp = s;
@@ -1020,7 +1020,8 @@ buildhull(struct chull3d_data *cdata, simplex *root)
 HIDDEN simplex *
 build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, short dim)
 {
-    simplex *s, *root;
+    simplex *s = NULL;
+    simplex *root = NULL;
 
     if (ZERO(cdata->Huge)) cdata->Huge = DBL_MAX*DBL_MAX;
 
@@ -1050,7 +1051,7 @@ build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, 
 
     cdata->ch_root = root;
 
-    copy_simp(cdata, s,root,cdata->simplex_list,cdata->simplex_size);
+    copy_simp(cdata, s, root);
     root->peak.vert = cdata->p;
     root->peak.simp = s;
     s->peak.simp = root;
