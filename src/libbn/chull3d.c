@@ -980,6 +980,7 @@ void *collect_faces(struct chull3d_data *cdata, simplex *s, void *p) {
     /*point_t p1, p2, p3;*/
     const point_t *pp[3];
     int f[3];
+    vect_t a, b, normal, center_to_edge;
 
     if (!s) return NULL;
 
@@ -991,7 +992,6 @@ void *collect_faces(struct chull3d_data *cdata, simplex *s, void *p) {
 	f[j] = bu_ptbl_locate(cdata->output_pnts, (long *)pp[j]);
     }
 
-    /* TODO */
     /* Use cdata->center_pnt and the center pnt of the triangle to construct
      * a vector, and find the normal of the proposed face.  If the face normal
      * does not point in the same direction (dot product is positive) then
@@ -999,11 +999,22 @@ void *collect_faces(struct chull3d_data *cdata, simplex *s, void *p) {
      * won't need a bot sync.  Since by definition the chull is convex, the
      * center point should be "inside" relative to all faces and this test
      * should be reliable. */
+    VSUB2(a, cdata->vert_array[f[1]], cdata->vert_array[f[0]]);
+    VSUB2(b, cdata->vert_array[f[2]], cdata->vert_array[f[0]]);
+    VCROSS(normal, a, b);
+    VUNITIZE(normal);
 
+    VSUB2(center_to_edge, cdata->vert_array[f[0]], cdata->center_pnt);
+    VUNITIZE(center_to_edge);
 
     cdata->faces[(*cdata->face_cnt)*3] = f[0];
-    cdata->faces[(*cdata->face_cnt)*3+1] = f[1];
-    cdata->faces[(*cdata->face_cnt)*3+2] = f[2];
+    if(VDOT(normal, center_to_edge) < 0) {
+	cdata->faces[(*cdata->face_cnt)*3+1] = f[2];
+	cdata->faces[(*cdata->face_cnt)*3+2] = f[1];
+    } else {
+	cdata->faces[(*cdata->face_cnt)*3+1] = f[1];
+	cdata->faces[(*cdata->face_cnt)*3+2] = f[2];
+    }
     (*cdata->face_cnt)++;
     return NULL;
 }
