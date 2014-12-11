@@ -107,7 +107,6 @@ struct chull3d_data {
     int exact_bits;
     float b_err_min;
     float b_err_min_sq;
-    short vd;
     basis_s *tt_basis;
     basis_s *infinity_basis;
     Coord *hull_infinity;
@@ -126,18 +125,8 @@ struct chull3d_data {
     int point_size; /* size of malloc needed for a point */
     short *mi;
     short *mo;
-    const point_t *input_vert_array;
-    int input_vert_cnt;
-    struct bu_ptbl *output_pnts;
-    /* Output containers */
-    point_t *vert_array;
-    int *vert_cnt;
-    int next_vert;
-    int *faces;
-    int *face_cnt;
 
     /* these were static variables in functions */
-
     simplex **simplex_block_table;
     int num_simplex_blocks;
     basis_s **basis_s_block_table;
@@ -156,6 +145,17 @@ struct chull3d_data {
     simplex **st;
     long ss;
     long s_num;
+
+    /* libbn style inputs and outputs */
+    const point_t *input_vert_array;
+    int input_vert_cnt;
+    struct bu_ptbl *output_pnts;
+    /* Output containers */
+    point_t *vert_array;
+    int *vert_cnt;
+    int next_vert;
+    int *faces;
+    int *face_cnt;
 };
 
 
@@ -165,7 +165,6 @@ struct chull3d_data {
 #define VB(x) ((x)->vecs)
 #define trans(z,p,q) {int i; for (i=0;i<cdata->pdim;i++) z[i+cdata->rdim] = z[i] = p[i] - q[i];}
 #define DELIFT 0
-#define lift(cdata,z,s) {if (cdata->vd) z[2*(cdata->rdim)-1] =z[(cdata->rdim)-1]= ldexp(Vec_dot_pdim(cdata,z,z), -DELIFT);}
 #define swap_points(a,b) {point t; t=a; a=b; b=t;}
 
 /* This is the comparison.                                       */
@@ -473,10 +472,7 @@ reduce(struct chull3d_data *cdata, basis_s **v, point p, simplex *s, int k)
     if (!*v) NEWLRC(cdata, cdata->basis_s_list,basis_s,(*v))
     else (*v)->lscale = 0;
     z = VB(*v);
-    if (cdata->vd) {
-	if (p==cdata->hull_infinity) memcpy(*v,cdata->infinity_basis,cdata->basis_s_size);
-	else {trans(z,p,tt); lift(cdata,z,s);}
-    } else trans(z,p,tt);
+    trans(z,p,tt);
     return reduce_inner(cdata,*v,s,k);
 }
 
@@ -486,18 +482,10 @@ get_basis_sede(struct chull3d_data *cdata, simplex *s)
     int	k=1;
     neighbor *sn = s->neigh+1,
 	     *sn0 = s->neigh;
-
-    if (cdata->vd && sn0->vert == cdata->hull_infinity && (cdata->cdim) >1) {
-	SWAP(neighbor, *sn0, *sn );
-	NULLIFY(cdata, basis_s,sn0->basis);
+    if (!sn0->basis) {
 	sn0->basis = cdata->tt_basis;
 	cdata->tt_basis->ref_count++;
-    } else {
-	if (!sn0->basis) {
-	    sn0->basis = cdata->tt_basis;
-	    cdata->tt_basis->ref_count++;
-	} else while (k < (cdata->cdim) && sn->basis) {k++;sn++;}
-    }
+    } else while (k < (cdata->cdim) && sn->basis) {k++;sn++;}
     while (k<(cdata->cdim)) {
 	NULLIFY(cdata, basis_s,sn->basis);
 	reduce(cdata, &sn->basis,sn->vert,s,k);
@@ -514,7 +502,6 @@ out_of_flat(struct chull3d_data *cdata, simplex *root, point p)
     root->neigh[(cdata->cdim)-1].vert = root->peak.vert;
     NULLIFY(cdata, basis_s,root->neigh[(cdata->cdim)-1].basis);
     get_basis_sede(cdata, root);
-    if (cdata->vd && root->neigh[0].vert == cdata->hull_infinity) return 1;
     reduce(cdata, &cdata->p_neigh.basis,p,root,(cdata->cdim));
     if (cdata->p_neigh.basis->sqa != 0) return 1;
     (cdata->cdim)--;
@@ -579,10 +566,7 @@ sees(struct chull3d_data *cdata, site p, simplex *s) {
 	for (i=0;i<(cdata->cdim);i++) NULLIFY(cdata, basis_s,s->neigh[i].basis);
     }
     tt = s->neigh[0].vert;
-    if (cdata->vd) {
-	if (p==cdata->hull_infinity) memcpy(cdata->b,cdata->infinity_basis,cdata->basis_s_size);
-	else {trans(zz,p,tt); lift(cdata,zz,s);}
-    } else trans(zz,p,tt);
+    trans(zz,p,tt);
     for (i=0;i<3;i++) {
 	dd = Vec_dot(cdata, zz,s->normal->vecs);
 	if (dd == 0.0) {
@@ -1238,10 +1222,9 @@ buildhull(struct chull3d_data *cdata, simplex *root)
    hull construction stops when NULL returned;
    site_numm         returns number of site when given site;
    dim               dimension of point set;
-   vdd               if (vdd) then return Delaunay triangulation
 */
 HIDDEN simplex *
-build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, short dim, short vdd)
+build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, short dim)
 {
     simplex *s, *root;
 
@@ -1258,7 +1241,7 @@ build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, 
 
     assert(cdata->get_site!=NULL); assert(cdata->site_num!=NULL);
 
-    cdata->rdim = cdata->vd ? cdata->pdim+1 : cdata->pdim;
+    cdata->rdim = cdata->pdim;
 
     cdata->point_size = cdata->site_size = sizeof(Coord)*cdata->pdim;
     cdata->basis_vec_size = sizeof(Coord)*cdata->rdim;
@@ -1267,16 +1250,7 @@ build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, 
     cdata->Tree_size = sizeof(Tree);
 
     root = NULL;
-    if (cdata->vd) {
-	cdata->p = cdata->hull_infinity;
-	NEWLRC(cdata, cdata->basis_s_list, basis_s, cdata->infinity_basis);
-	cdata->infinity_basis->vecs[2*cdata->rdim-1]
-	    = cdata->infinity_basis->vecs[cdata->rdim-1]
-	    = 1;
-	cdata->infinity_basis->sqa
-	    = cdata->infinity_basis->sqb
-	    = 1;
-    } else if (!(cdata->p = (*(cdata->get_site))((void *)cdata))) return 0;
+    if (!(cdata->p = (*(cdata->get_site))((void *)cdata))) return 0;
 
     NEWL(cdata, cdata->simplex_list, simplex,root);
 
@@ -1300,7 +1274,6 @@ site_numm(void *data, site p)
     long i,j;
     struct chull3d_data *cdata = (struct chull3d_data *)data;
 
-    if (cdata->vd && p==cdata->hull_infinity) return -1;
     if (!p) return -2;
     for (i=0; i<cdata->num_blocks; i++)
 	if ((j=p-cdata->site_blocks[i])>=0 && j < BLOCKSIZE*cdata->pdim)
@@ -1374,7 +1347,6 @@ chull3d_data_init(struct chull3d_data *data, int vert_cnt)
     data->mi = (short *)bu_calloc(MAXPOINTS, sizeof(short), "mi");
     data->mo = (short *)bu_calloc(MAXPOINTS, sizeof(short), "mo");
     data->pdim = 3;
-    data->vd = 0;  /* we're not using the triangulation by default */
 
     /* These were static variables in functions */
 
@@ -1439,7 +1411,7 @@ bn_3d_chull(int *faces, int *num_faces, point_t **vertices, int *num_vertices,
     cdata->input_vert_array = input_points_3d;
     cdata->vert_cnt = num_vertices;
     cdata->face_cnt = num_faces;
-    root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim, cdata->vd);
+    root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim);
 
     if (!root) return -1;
 
@@ -1490,7 +1462,7 @@ int main(int argc, char **argv) {
 
     cdata->point_size = cdata->site_size = sizeof(Coord)*cdata->pdim;
 
-    root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim, cdata->vd);
+    root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim);
 
     visit_hull(cdata, root, add_simplex);
 
@@ -1503,7 +1475,7 @@ int main(int argc, char **argv) {
 	bu_log("%f %f %f\n", p1[0], p1[1], p1[2]);
     }
     for(i = 0; i < *cdata->face_cnt; i++) {
-	bu_log("%d %d %d\n", cdata->faces[i*3], cdata->faces[i*3+1], cdata->faces[i*3+2]);
+	bu_log("3 %d %d %d\n", cdata->faces[i*3], cdata->faces[i*3+1], cdata->faces[i*3+2]);
     }
 
 
