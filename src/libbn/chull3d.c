@@ -169,43 +169,43 @@ struct chull3d_data {
 
 #define CHULL3D_NEWL(cdata, list, X, p)                                 \
 {                                                               \
-        p = list ? list : new_block_##X(cdata, 1);              \
-        assert(p);                                              \
-        list = p->next;                                         \
+    p = list ? list : chull3d_new_block_##X(cdata, 1);              \
+    assert(p);                                              \
+    list = p->next;                                         \
 }
 
 #define CHULL3D_NEWLRC(cdata, list, X, p)                               \
 {                                                               \
-        p = list ? list : new_block_##X(cdata, 1);              \
-        assert(p);                                              \
-        list = p->next;                                         \
-        p->ref_count = 1;                                       \
+    p = list ? list : chull3d_new_block_##X(cdata, 1);              \
+    assert(p);                                              \
+    list = p->next;                                         \
+    p->ref_count = 1;                                       \
 }
 
 #define CHULL3D_NULLIFY(cdata, X,v)    { \
     if ((v) && --(v)->ref_count == 0) { \
 	memset((v),0,cdata->X##_size);                          \
 	(v)->next = cdata->X##_list;                            \
-        cdata->X##_list = v;                                    \
+	cdata->X##_list = v;                                    \
     } \
     v = NULL;\
 }
 
 #define CHULL3D_copy_simp(cdata, cnew, s) \
-{       int mi;                                                   \
-        neighbor *mrsn;                                          \
-        CHULL3D_NEWL(cdata, cdata->simplex_list, simplex, cnew);             \
-        memcpy(cnew,s,cdata->simplex_size);                          \
-        for (mi=-1,mrsn=s->neigh-1;mi<(cdata->cdim);mi++,mrsn++)    \
-        if (mrsn->basis) mrsn->basis->ref_count++; \
+{ \
+    int mi;                                                   \
+    neighbor *mrsn;                                          \
+    CHULL3D_NEWL(cdata, cdata->simplex_list, simplex, cnew);             \
+    memcpy(cnew,s,cdata->simplex_size);                          \
+    for (mi=-1,mrsn=s->neigh-1;mi<(cdata->cdim);mi++,mrsn++)    \
+    if (mrsn->basis) mrsn->basis->ref_count++; \
 }
 
 HIDDEN simplex *
-new_block_simplex(struct chull3d_data *cdata, int make_blocks)
+chull3d_new_block_simplex(struct chull3d_data *cdata, int make_blocks)
 {
     int i;
     simplex *xlm, *xbt;
-    bu_log("new_block_simplex\n");
     if (make_blocks && cdata) {
 	((cdata->num_simplex_blocks<max_blocks) ? (void) (0) : __assert_fail ("cdata->num_simplex_blocks<max_blocks", "chull3d.c", 31, __PRETTY_FUNCTION__));
 	xbt = cdata->simplex_block_table[(cdata->num_simplex_blocks)++] = (simplex*)malloc(max_blocks * cdata->simplex_size);
@@ -218,7 +218,7 @@ new_block_simplex(struct chull3d_data *cdata, int make_blocks)
 	    cdata->simplex_list = xlm;
 	}
 	return cdata->simplex_list;
-    };
+    }
     for (i=0; i<cdata->num_simplex_blocks; i++) free(cdata->simplex_block_table[i]);
     cdata->num_simplex_blocks = 0;
     if (cdata) cdata->simplex_list = 0;
@@ -226,18 +226,16 @@ new_block_simplex(struct chull3d_data *cdata, int make_blocks)
 }
 
 HIDDEN void
-free_simplex_storage(struct chull3d_data *cdata)
+chull3d_free_simplex_storage(struct chull3d_data *cdata)
 {
-    bu_log("free_block_simplex\n");
-    new_block_simplex(cdata, 0);
+    chull3d_new_block_simplex(cdata, 0);
 }
 
 HIDDEN basis_s *
-new_block_basis_s(struct chull3d_data *cdata, int make_blocks)
+chull3d_new_block_basis_s(struct chull3d_data *cdata, int make_blocks)
 {
     int i;
     basis_s *xlm, *xbt;
-    bu_log("new_block_basis_s\n");
     if (make_blocks && cdata) {
 	((cdata->num_basis_s_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_basis_s_blocks<max_blocks", "chull3d.c", 32, __PRETTY_FUNCTION__));
 	xbt = cdata->basis_s_block_table[(cdata->num_basis_s_blocks)++] = (basis_s*)malloc(max_blocks * cdata->basis_s_size);
@@ -250,26 +248,24 @@ new_block_basis_s(struct chull3d_data *cdata, int make_blocks)
 	    cdata->basis_s_list = xlm;
 	}
 	return cdata->basis_s_list;
-    };
+    }
     for (i=0; i<cdata->num_basis_s_blocks; i++) free(cdata->basis_s_block_table[i]);
     cdata->num_basis_s_blocks = 0;
     if (cdata) cdata->basis_s_list = 0;
     return 0;
 }
+
 HIDDEN void
-free_basis_s_storage(struct chull3d_data *cdata)
+chull3d_free_basis_s_storage(struct chull3d_data *cdata)
 {
-    bu_log("free_block_basis_s\n");
-    new_block_basis_s(cdata, 0);
+    chull3d_new_block_basis_s(cdata, 0);
 }
 
 
 HIDDEN Tree *
-new_block_Tree(struct chull3d_data *cdata, int make_blocks)
-{
+chull3d_new_block_Tree(struct chull3d_data *cdata, int make_blocks) {
     int i;
     Tree *xlm, *xbt;
-    bu_log("new_block_Tree\n");
     if (make_blocks && cdata) {
 	((cdata->num_Tree_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_Tree_blocks<max_blocks", "chull3d.c", 33, __PRETTY_FUNCTION__));
 	xbt = cdata->Tree_block_table[cdata->num_Tree_blocks++] = (Tree*)malloc(max_blocks * cdata->Tree_size);
@@ -282,67 +278,62 @@ new_block_Tree(struct chull3d_data *cdata, int make_blocks)
 	    cdata->Tree_list = xlm;
 	}
 	return cdata->Tree_list;
-    };
+    }
     for (i=0; i<cdata->num_Tree_blocks; i++) free(cdata->Tree_block_table[i]);
     cdata->num_Tree_blocks = 0;
     if (cdata) cdata->Tree_list = 0;
     return 0;
 }
+
 HIDDEN void
-free_Tree_storage(struct chull3d_data *cdata)
+chull3d_free_Tree_storage(struct chull3d_data *cdata)
 {
-    bu_log("free_Tree_storage\n");
-    new_block_Tree(cdata, 0);
+    chull3d_new_block_Tree(cdata, 0);
 }
 
 /* ch.c : numerical functions for hull computation */
 
 HIDDEN Coord
-Vec_dot(struct chull3d_data *cdata, point x, point y)
+chull3d_Vec_dot(struct chull3d_data *cdata, point x, point y)
 {
     int i;
     Coord sum = 0;
-    bu_log("Vec_dot\n");
     for (i=0;i<cdata->rdim;i++) sum += x[i] * y[i];
     return sum;
 }
 
-HIDDEN Coord
-Vec_dot_pdim(struct chull3d_data *cdata, point x, point y)
+    HIDDEN Coord
+chull3d_Vec_dot_pdim(struct chull3d_data *cdata, point x, point y)
 {
     int i;
     Coord sum = 0;
-    bu_log("Vec_dot_pdim\n");
     for (i=0;i<cdata->pdim;i++) sum += x[i] * y[i];
     return sum;
 }
 
-HIDDEN Coord
-Norm2(struct chull3d_data *cdata, point x)
+    HIDDEN Coord
+chull3d_Norm2(struct chull3d_data *cdata, point x)
 {
     int i;
     Coord sum = 0;
-    bu_log("Norm2\n");
     for (i=0;i<cdata->rdim;i++) sum += x[i] * x[i];
     return sum;
 }
 
-HIDDEN void
-Ax_plus_y(struct chull3d_data *cdata, Coord a, point x, point y)
+    HIDDEN void
+chull3d_Ax_plus_y(struct chull3d_data *cdata, Coord a, point x, point y)
 {
     int i;
-    bu_log("Ax_plus_y\n");
     for (i=0;i<cdata->rdim;i++) {
 	*y++ += a * *x++;
     }
 }
 
-HIDDEN void
-Vec_scale(struct chull3d_data *UNUSED(cdata), int n, Coord a, Coord *x)
+    HIDDEN void
+chull3d_Vec_scale(struct chull3d_data *UNUSED(cdata), int n, Coord a, Coord *x)
 {
     register Coord *xx = x;
     register Coord *xend = xx + n;
-    bu_log("Vec_scale\n");
 
     while (xx!=xend) {
 	*xx *= a;
@@ -352,11 +343,10 @@ Vec_scale(struct chull3d_data *UNUSED(cdata), int n, Coord a, Coord *x)
 
 
 /* amount by which to scale up vector, for reduce_inner */
-HIDDEN double
-sc(struct chull3d_data *cdata, basis_s *v,simplex *s, int k, int j)
+    HIDDEN double
+chull3d_sc(struct chull3d_data *cdata, basis_s *v,simplex *s, int k, int j)
 {
     double labound;
-    bu_log("sc\n");
 
     if (j<10) {
 	labound = logb(v->sqa)/2;
@@ -396,8 +386,8 @@ sc(struct chull3d_data *cdata, basis_s *v,simplex *s, int k, int j)
 }
 
 
-HIDDEN int
-reduce_inner(struct chull3d_data *cdata, basis_s *v, simplex *s, int k)
+    HIDDEN int
+chull3d_reduce_inner(struct chull3d_data *cdata, basis_s *v, simplex *s, int k)
 {
     point	va = CHULL3D_VA(v);
     point	vb = CHULL3D_VB(v);
@@ -406,9 +396,8 @@ reduce_inner(struct chull3d_data *cdata, basis_s *v, simplex *s, int k)
     double	scale;
     basis_s	*snibv;
     neighbor *sni;
-    bu_log("reduce_inner\n");
 
-    v->sqa = v->sqb = Norm2(cdata, vb);
+    v->sqa = v->sqb = chull3d_Norm2(cdata, vb);
     if (k<=1) {
 	memcpy(vb,va,cdata->basis_vec_size);
 	return 1;
@@ -418,85 +407,81 @@ reduce_inner(struct chull3d_data *cdata, basis_s *v, simplex *s, int k)
 	memcpy(vb,va,cdata->basis_vec_size);
 	for (i=k-1,sni=s->neigh+k-1;i>0;i--,sni--) {
 	    snibv = sni->basis;
-	    dd = -Vec_dot(cdata, CHULL3D_VB(snibv),vb)/ snibv->sqb;
-	    Ax_plus_y(cdata, dd, CHULL3D_VA(snibv), vb);
+	    dd = -chull3d_Vec_dot(cdata, CHULL3D_VB(snibv),vb)/ snibv->sqb;
+	    chull3d_Ax_plus_y(cdata, dd, CHULL3D_VA(snibv), vb);
 	}
-	v->sqb = Norm2(cdata, vb);
-	v->sqa = Norm2(cdata, va);
+	v->sqb = chull3d_Norm2(cdata, vb);
+	v->sqa = chull3d_Norm2(cdata, va);
 
 	if (2*v->sqb >= v->sqa) {cdata->B[j]++; return 1;}
 
-	Vec_scale(cdata, cdata->rdim,scale = sc(cdata,v,s,k,j),va);
+	chull3d_Vec_scale(cdata, cdata->rdim,scale = chull3d_sc(cdata,v,s,k,j),va);
 
 	for (i=k-1,sni=s->neigh+k-1;i>0;i--,sni--) {
 	    snibv = sni->basis;
-	    dd = -Vec_dot(cdata, CHULL3D_VB(snibv),va)/snibv->sqb;
+	    dd = -chull3d_Vec_dot(cdata, CHULL3D_VB(snibv),va)/snibv->sqb;
 	    dd = floor(dd+0.5);
-	    Ax_plus_y(cdata, dd, CHULL3D_VA(snibv), va);
+	    chull3d_Ax_plus_y(cdata, dd, CHULL3D_VA(snibv), va);
 	}
     }
     return 0;
 }
 
 HIDDEN int
-reduce(struct chull3d_data *cdata, basis_s **v, point p, simplex *s, int k)
+chull3d_reduce(struct chull3d_data *cdata, basis_s **v, point p, simplex *s, int k)
 {
     point	z;
     point	tt = s->neigh[0].vert;
-    bu_log("reduce\n");
 
     if (!*v) CHULL3D_NEWLRC(cdata, cdata->basis_s_list,basis_s,(*v))
     else (*v)->lscale = 0;
     z = CHULL3D_VB(*v);
     CHULL3D_trans(z,p,tt);
-    return reduce_inner(cdata,*v,s,k);
+    return chull3d_reduce_inner(cdata,*v,s,k);
 }
 
-HIDDEN void
-get_basis_sede(struct chull3d_data *cdata, simplex *s)
+    HIDDEN void
+chull3d_get_basis_sede(struct chull3d_data *cdata, simplex *s)
 {
     int	k=1;
     neighbor *sn = s->neigh+1,
 	     *sn0 = s->neigh;
-    bu_log("get_basis_sede\n");
     if (!sn0->basis) {
 	sn0->basis = cdata->tt_basis;
 	cdata->tt_basis->ref_count++;
     } else while (k < (cdata->cdim) && sn->basis) {k++;sn++;}
     while (k<(cdata->cdim)) {
 	CHULL3D_NULLIFY(cdata, basis_s,sn->basis);
-	reduce(cdata, &sn->basis,sn->vert,s,k);
+	chull3d_reduce(cdata, &sn->basis,sn->vert,s,k);
 	k++; sn++;
     }
 }
 
-HIDDEN int
-out_of_flat(struct chull3d_data *cdata, simplex *root, point p)
+    HIDDEN int
+chull3d_out_of_flat(struct chull3d_data *cdata, simplex *root, point p)
 {
-    bu_log("out_of_flat\n");
     if (!cdata->p_neigh.basis) cdata->p_neigh.basis = (basis_s*) malloc(cdata->basis_s_size);
     cdata->p_neigh.vert = p;
     (cdata->cdim)++;
     root->neigh[(cdata->cdim)-1].vert = root->peak.vert;
     CHULL3D_NULLIFY(cdata, basis_s,root->neigh[(cdata->cdim)-1].basis);
-    get_basis_sede(cdata, root);
-    reduce(cdata, &cdata->p_neigh.basis,p,root,(cdata->cdim));
+    chull3d_get_basis_sede(cdata, root);
+    chull3d_reduce(cdata, &cdata->p_neigh.basis,p,root,(cdata->cdim));
     /*if (cdata->p_neigh.basis->sqa != 0) return 1;*/
     if (!ZERO(cdata->p_neigh.basis->sqa)) return 1;
     (cdata->cdim)--;
     return 0;
 }
 
-HIDDEN int sees(struct chull3d_data *, site, simplex *);
+HIDDEN int chull3d_sees(struct chull3d_data *, site, simplex *);
 
 HIDDEN void
-get_normal_sede(struct chull3d_data *cdata, simplex *s)
+chull3d_get_normal_sede(struct chull3d_data *cdata, simplex *s)
 {
     neighbor *rn;
     int i,j;
-    bu_log("get_normal_sede\n");
 
-    get_basis_sede(cdata, s);
+    chull3d_get_basis_sede(cdata, s);
     if (cdata->rdim==3 && (cdata->cdim)==3) {
 	point	c;
 	point	a = CHULL3D_VB(s->neigh[1].basis);
@@ -506,13 +491,13 @@ get_normal_sede(struct chull3d_data *cdata, simplex *s)
 	c[0] = a[1]*b[2] - a[2]*b[1];
 	c[1] = a[2]*b[0] - a[0]*b[2];
 	c[2] = a[0]*b[1] - a[1]*b[0];
-	s->normal->sqb = Norm2(cdata, c);
+	s->normal->sqb = chull3d_Norm2(cdata, c);
 	for (i=(cdata->cdim)+1,rn = cdata->ch_root->neigh+(cdata->cdim)-1; i; i--, rn--) {
 	    for (j = 0; j<(cdata->cdim) && rn->vert != s->neigh[j].vert;j++);
 	    if (j<(cdata->cdim)) continue;
 	    if (rn->vert==cdata->hull_infinity) {
 		if (c[2] > -cdata->b_err_min) continue;
-	    } else  if (!sees(cdata, rn->vert,s)) continue;
+	    } else  if (!chull3d_sees(cdata, rn->vert,s)) continue;
 	    c[0] = -c[0]; c[1] = -c[1]; c[2] = -c[2];
 	    break;
 	}
@@ -522,59 +507,57 @@ get_normal_sede(struct chull3d_data *cdata, simplex *s)
     for (i=(cdata->cdim)+1,rn = cdata->ch_root->neigh+(cdata->cdim)-1; i; i--, rn--) {
 	for (j = 0; j<(cdata->cdim) && rn->vert != s->neigh[j].vert;j++);
 	if (j<(cdata->cdim)) continue;
-	reduce(cdata, &s->normal,rn->vert,s,(cdata->cdim));
+	chull3d_reduce(cdata, &s->normal,rn->vert,s,(cdata->cdim));
 	if (!ZERO(s->normal->sqb)) break;
     }
 }
 
 
-HIDDEN void get_normal(struct chull3d_data *cdata, simplex *s) {get_normal_sede(cdata,s); return;}
+HIDDEN void chull3d_get_normal(struct chull3d_data *cdata, simplex *s) {chull3d_get_normal_sede(cdata,s); return;}
 
 HIDDEN int
-sees(struct chull3d_data *cdata, site p, simplex *s) {
+chull3d_sees(struct chull3d_data *cdata, site p, simplex *s) {
 
     point	tt,zz;
     double	dd,dds;
     int i;
-    bu_log("sees\n");
 
     if (!cdata->b) cdata->b = (basis_s*)malloc(cdata->basis_s_size);
     else cdata->b->lscale = 0;
     zz = CHULL3D_VB(cdata->b);
     if ((cdata->cdim)==0) return 0;
     if (!s->normal) {
-	get_normal_sede(cdata, s);
+	chull3d_get_normal_sede(cdata, s);
 	for (i=0;i<(cdata->cdim);i++) CHULL3D_NULLIFY(cdata, basis_s,s->neigh[i].basis);
     }
     tt = s->neigh[0].vert;
     CHULL3D_trans(zz,p,tt);
     for (i=0;i<3;i++) {
-	dd = Vec_dot(cdata, zz,s->normal->vecs);
+	dd = chull3d_Vec_dot(cdata, zz,s->normal->vecs);
 	if (ZERO(dd)) {
 	    return 0;
 	}
-	dds = dd*dd/s->normal->sqb/Norm2(cdata, zz);
+	dds = dd*dd/s->normal->sqb/chull3d_Norm2(cdata, zz);
 	if (dds > cdata->b_err_min_sq) return (dd<0);
-	get_basis_sede(cdata, s);
-	reduce_inner(cdata,cdata->b,s,(cdata->cdim));
+	chull3d_get_basis_sede(cdata, s);
+	chull3d_reduce_inner(cdata,cdata->b,s,(cdata->cdim));
     }
     return 0;
 }
 
 HIDDEN void
-free_hull_storage(struct chull3d_data *cdata)
+chull3d_free_hull_storage(struct chull3d_data *cdata)
 {
-    free_basis_s_storage(cdata);
-    free_simplex_storage(cdata);
-    free_Tree_storage(cdata);
+    chull3d_free_basis_s_storage(cdata);
+    chull3d_free_simplex_storage(cdata);
+    chull3d_free_Tree_storage(cdata);
 }
 
 HIDDEN void
-visit_fg_i(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data *,Tree *, int, int),
+chull3d_visit_fg_i(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data *,Tree *, int, int),
 	Tree *t, int depth, int vn, int boundary)
 {
     int	boundaryc = boundary;
-    bu_log("visit_fg_i\n");
 
     if (!t) return;
 
@@ -583,25 +566,23 @@ visit_fg_i(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data *,Tree *
 	t->fgs->mark = vn;
 	if (t->key!=cdata->hull_infinity && !cdata->mo[cdata->site_num((void *)cdata, t->key)]) boundaryc = 0;
 	v_fg(cdata, t,depth, boundaryc);
-	visit_fg_i(cdata, v_fg, t->fgs->facets,depth+1, vn, boundaryc);
+	chull3d_visit_fg_i(cdata, v_fg, t->fgs->facets,depth+1, vn, boundaryc);
     }
-    visit_fg_i(cdata, v_fg, t->left,depth,vn, boundary);
-    visit_fg_i(cdata, v_fg, t->right,depth,vn,boundary);
+    chull3d_visit_fg_i(cdata, v_fg, t->left,depth,vn, boundary);
+    chull3d_visit_fg_i(cdata, v_fg, t->right,depth,vn,boundary);
 }
 
 HIDDEN void
-visit_fg(struct chull3d_data *cdata, fg *faces_gr, void (*v_fg)(struct chull3d_data *, Tree *, int, int))
+chull3d_visit_fg(struct chull3d_data *cdata, fg *faces_gr, void (*v_fg)(struct chull3d_data *, Tree *, int, int))
 {
-    bu_log("visit_fg\n");
-    visit_fg_i(cdata, v_fg, faces_gr->facets, 0, ++(cdata->fg_vn), 1);
+    chull3d_visit_fg_i(cdata, v_fg, faces_gr->facets, 0, ++(cdata->fg_vn), 1);
 }
 
 HIDDEN int
-visit_fg_i_far(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data *, Tree *, int),
+chull3d_visit_fg_i_far(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data *, Tree *, int),
 	Tree *t, int depth, int vn)
 {
     int nb = 0;
-    bu_log("visit_fg_i_far\n");
 
     if (!t) return 0;
 
@@ -609,39 +590,37 @@ visit_fg_i_far(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data *, T
     if (t->fgs->mark!=vn) {
 	t->fgs->mark = vn;
 	nb = (t->key==cdata->hull_infinity) || cdata->mo[cdata->site_num((void *)cdata, t->key)];
-	if (!nb && !visit_fg_i_far(cdata, v_fg, t->fgs->facets,depth+1,vn))
+	if (!nb && !chull3d_visit_fg_i_far(cdata, v_fg, t->fgs->facets,depth+1,vn))
 	    v_fg(cdata, t,depth);
     }
-    nb = visit_fg_i_far(cdata, v_fg, t->left,depth,vn) || nb;
-    nb = visit_fg_i_far(cdata, v_fg, t->right,depth,vn) || nb;
+    nb = chull3d_visit_fg_i_far(cdata, v_fg, t->left,depth,vn) || nb;
+    nb = chull3d_visit_fg_i_far(cdata, v_fg, t->right,depth,vn) || nb;
     return nb;
 }
 
 HIDDEN void
-visit_fg_far(struct chull3d_data *cdata, fg *faces_gr, void (*v_fg)(struct chull3d_data *, Tree *, int))
+chull3d_visit_fg_far(struct chull3d_data *cdata, fg *faces_gr, void (*v_fg)(struct chull3d_data *, Tree *, int))
 {
-    bu_log("visit_fg_far\n");
-    visit_fg_i_far(cdata, v_fg,faces_gr->facets, 0, --(cdata->fg_vn));
+    chull3d_visit_fg_i_far(cdata, v_fg,faces_gr->facets, 0, --(cdata->fg_vn));
 }
 
 /* hull.c : "combinatorial" functions for hull computation */
 
-typedef int test_func(struct chull3d_data *, simplex *, int, void *);
-typedef void* visit_func(struct chull3d_data *, simplex *, void *);
+typedef int chull3d_test_func(struct chull3d_data *, simplex *, int, void *);
+typedef void* chull3d_visit_func(struct chull3d_data *, simplex *, void *);
 
 /* starting at s, visit simplices t such that test(s,i,0) is true,
  * and t is the i'th neighbor of s;
  * apply visit function to all visited simplices;
  * when visit returns nonNULL, exit and return its value */
 HIDDEN void *
-visit_triang_gen(struct chull3d_data *cdata, simplex *s, visit_func *visit, test_func *test)
+chull3d_visit_triang_gen(struct chull3d_data *cdata, simplex *s, chull3d_visit_func *visit, chull3d_test_func *test)
 {
     neighbor *sn;
     void *v;
     simplex *t;
     int i;
     long tms = 0;
-    bu_log("visit_triang_gen\n");
 
     (cdata->vnum)--;
     if (s) CHULL3D_push(s);
@@ -661,32 +640,29 @@ visit_triang_gen(struct chull3d_data *cdata, simplex *s, visit_func *visit, test
 }
 
 /* visit the whole triangulation */
-HIDDEN int truet(struct chull3d_data *UNUSED(cdata), simplex *UNUSED(s), int UNUSED(i), void *UNUSED(dum)) {return 1;}
+HIDDEN int chull3d_truet(struct chull3d_data *UNUSED(cdata), simplex *UNUSED(s), int UNUSED(i), void *UNUSED(dum)) {return 1;}
 HIDDEN void *
-visit_triang(struct chull3d_data *cdata, simplex *root, visit_func *visit)
+chull3d_visit_triang(struct chull3d_data *cdata, simplex *root, chull3d_visit_func *visit)
 {
-    bu_log("visit_triang\n");
-    return visit_triang_gen(cdata, root, visit, truet);
+    return chull3d_visit_triang_gen(cdata, root, visit, chull3d_truet);
 }
 
 
-HIDDEN int hullt(struct chull3d_data *UNUSED(cdata), simplex *UNUSED(s), int i, void *UNUSED(dummy)) {return i>-1;}
-HIDDEN void *facet_test(struct chull3d_data *UNUSED(cdata), simplex *s, void *UNUSED(dummy)) {return (!s->peak.vert) ? s : NULL;}
+HIDDEN int chull3d_hullt(struct chull3d_data *UNUSED(cdata), simplex *UNUSED(s), int i, void *UNUSED(dummy)) {return i>-1;}
+HIDDEN void *chull3d_facet_test(struct chull3d_data *UNUSED(cdata), simplex *s, void *UNUSED(dummy)) {return (!s->peak.vert) ? s : NULL;}
 HIDDEN void *
-visit_hull(struct chull3d_data *cdata, simplex *root, visit_func *visit)
+chull3d_visit_hull(struct chull3d_data *cdata, simplex *root, chull3d_visit_func *visit)
 {
-    bu_log("visit_hull\n");
-    return visit_triang_gen(cdata, (struct simplex *)visit_triang(cdata, root, &facet_test), visit, hullt);
+    return chull3d_visit_triang_gen(cdata, (struct simplex *)chull3d_visit_triang(cdata, root, &chull3d_facet_test), visit, chull3d_hullt);
 }
 
 HIDDEN void *
-check_simplex(struct chull3d_data *cdata, simplex *s, void *UNUSED(dum))
+chull3d_check_simplex(struct chull3d_data *cdata, simplex *s, void *UNUSED(dum))
 {
     int i,j,k,l;
     neighbor *sn, *snn, *sn2;
     simplex *sns;
     site vn;
-    bu_log("check_simplex\n");
 
     for (i=-1,sn=s->neigh-1;i<(cdata->cdim);i++,sn++) {
 	sns = sn->simp;
@@ -715,7 +691,8 @@ check_simplex(struct chull3d_data *cdata, simplex *s, void *UNUSED(dum))
     return NULL;
 }
 
-void *collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
+HIDDEN void *
+chull3d_collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
 
     point v[MAXDIM];
     int j;
@@ -725,7 +702,6 @@ void *collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *UNUSED(p))
     int f[3];
 
     if (!s) return NULL;
-    bu_log("collect_hull_pnts\n");
 
     for (j=0;j<(cdata->cdim);j++) v[j] = s->neigh[j].vert;
     for (j=0;j<(cdata->cdim);j++) ip[j] = (cdata->site_num)((void *)cdata, v[j]);
@@ -744,7 +720,8 @@ void *collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *UNUSED(p))
 }
 
 
-void *collect_faces(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
+HIDDEN void *
+chull3d_collect_faces(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
 
     point v[MAXDIM];
     int j;
@@ -755,7 +732,6 @@ void *collect_faces(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
     vect_t a, b, normal, center_to_edge;
 
     if (!s) return NULL;
-    bu_log("collect_faces\n");
 
     for (j=0;j<(cdata->cdim);j++) v[j] = s->neigh[j].vert;
     for (j=0;j<(cdata->cdim);j++) ip[j] = (cdata->site_num)((void *)cdata, v[j]);
@@ -801,13 +777,12 @@ double logb(double x) {
 #endif
 
 HIDDEN Coord
-maxdist(int dim, point p1, point p2)
+chull3d_maxdist(int dim, point p1, point p2)
 {
     Coord x = 0;
     Coord y = 0;
     Coord d = 0;
     int i = dim;
-    bu_log("maxdist\n");
     while (i--) {
 	x = *p1++;
 	y = *p2++;
@@ -818,11 +793,10 @@ maxdist(int dim, point p1, point p2)
 
 /* the neighbor entry of a containing b */
 HIDDEN neighbor *
-op_simp(struct chull3d_data *cdata, simplex *a, simplex *b)
+chull3d_op_simp(struct chull3d_data *cdata, simplex *a, simplex *b)
 {
     int i;
     neighbor *x;
-    bu_log("op_simp\n");
     for (i=0, x = a->neigh; (x->simp != b) && (i<(cdata->cdim)) ; i++, x++);
     if (i<(cdata->cdim))
 	return x;
@@ -832,11 +806,10 @@ op_simp(struct chull3d_data *cdata, simplex *a, simplex *b)
 }
 
 HIDDEN neighbor *
-op_vert(struct chull3d_data *cdata, simplex *a, site b)
+chull3d_op_vert(struct chull3d_data *cdata, simplex *a, site b)
 {
     int i;
     neighbor *x;
-    bu_log("op_vert\n");
     for (i=0, x = a->neigh; (x->vert != b) && (i<(cdata->cdim)) ; i++, x++);
     if (i<(cdata->cdim))
 	return x;
@@ -848,7 +821,7 @@ op_vert(struct chull3d_data *cdata, simplex *a, site b)
 
 /* make neighbor connections between newly created simplices incident to p */
 HIDDEN void
-connect(struct chull3d_data *cdata, simplex *s)
+chull3d_connect(struct chull3d_data *cdata, simplex *s)
 {
     site xf,xb,xfi;
     simplex *sb, *sf, *seen;
@@ -856,14 +829,13 @@ connect(struct chull3d_data *cdata, simplex *s)
     neighbor *sn;
 
     if (!s) return;
-    bu_log("connect\n");
     assert(!s->peak.vert
 	    && s->peak.simp->peak.vert==cdata->p
-	    && !op_vert(cdata,s,cdata->p)->simp->peak.vert);
+	    && !chull3d_op_vert(cdata,s,cdata->p)->simp->peak.vert);
     if (s->visit==cdata->pnum) return;
     s->visit = cdata->pnum;
     seen = s->peak.simp;
-    xfi = op_simp(cdata,seen,s)->vert;
+    xfi = chull3d_op_simp(cdata,seen,s)->vert;
     for (i=0, sn = s->neigh; i<(cdata->cdim); i++,sn++) {
 	xb = sn->vert;
 	if (cdata->p == xb) continue;
@@ -871,19 +843,19 @@ connect(struct chull3d_data *cdata, simplex *s)
 	sf = sn->simp;
 	xf = xfi;
 	if (!sf->peak.vert) {	/* are we done already? */
-	    sf = op_vert(cdata,seen,xb)->simp;
+	    sf = chull3d_op_vert(cdata,seen,xb)->simp;
 	    if (sf->peak.vert) continue;
 	} else do {
 	    xb = xf;
-	    xf = op_simp(cdata,sf,sb)->vert;
+	    xf = chull3d_op_simp(cdata,sf,sb)->vert;
 	    sb = sf;
-	    sf = op_vert(cdata,sb,xb)->simp;
+	    sf = chull3d_op_vert(cdata,sb,xb)->simp;
 	} while (sf->peak.vert);
 
 	sn->simp = sf;
-	op_vert(cdata,sf,xf)->simp = s;
+	chull3d_op_vert(cdata,sf,xf)->simp = s;
 
-	connect(cdata, sf);
+	chull3d_connect(cdata, sf);
     }
 }
 
@@ -891,13 +863,12 @@ connect(struct chull3d_data *cdata, simplex *s)
 /* visit simplices s with sees(p,s), and make a facet for every neighbor
  * of s not seen by p */
 HIDDEN simplex *
-make_facets(struct chull3d_data *cdata, simplex *seen)
+chull3d_make_facets(struct chull3d_data *cdata, simplex *seen)
 {
     simplex *n;
     neighbor *bn;
     int i;
 
-    bu_log("make_facets\n");
 
     if (!seen) return NULL;
     seen->peak.vert = cdata->p;
@@ -907,7 +878,7 @@ make_facets(struct chull3d_data *cdata, simplex *seen)
 	n = bn->simp;
 	if (cdata->pnum != n->visit) {
 	    n->visit = cdata->pnum;
-	    if (sees(cdata, cdata->p,n)) make_facets(cdata, n);
+	    if (chull3d_sees(cdata, cdata->p,n)) chull3d_make_facets(cdata, n);
 	}
 	if (n->peak.vert) continue;
 	CHULL3D_copy_simp(cdata, cdata->ns, seen);
@@ -918,7 +889,7 @@ make_facets(struct chull3d_data *cdata, simplex *seen)
 	CHULL3D_NULLIFY(cdata, basis_s,cdata->ns->neigh[i].basis);
 	cdata->ns->neigh[i].vert = cdata->p;
 	bn->simp = cdata->ns;
-	ns = op_simp(cdata,n,seen);
+	ns = chull3d_op_simp(cdata,n,seen);
 	ns->simp = cdata->ns;
     }
     return cdata->ns;
@@ -928,14 +899,13 @@ make_facets(struct chull3d_data *cdata, simplex *seen)
 /* p lies outside flat containing previous sites;
  * make p a vertex of every current simplex, and create some new simplices */
 HIDDEN simplex *
-extend_simplices(struct chull3d_data *cdata, simplex *s)
+chull3d_extend_simplices(struct chull3d_data *cdata, simplex *s)
 {
     int	i;
     int ocdim=(cdata->cdim)-1;
     simplex *ns = NULL;
     neighbor *nsn = NULL;
 
-    bu_log("extend_simplices\n");
 
     if (s->visit == cdata->pnum) return s->peak.vert ? s->neigh[ocdim].simp : s;
     s->visit = cdata->pnum;
@@ -943,7 +913,7 @@ extend_simplices(struct chull3d_data *cdata, simplex *s)
     CHULL3D_NULLIFY(cdata, basis_s,s->normal);
     CHULL3D_NULLIFY(cdata, basis_s,s->neigh[0].basis);
     if (!s->peak.vert) {
-	s->neigh[ocdim].simp = extend_simplices(cdata, s->peak.simp);
+	s->neigh[ocdim].simp = chull3d_extend_simplices(cdata, s->peak.simp);
 	return s;
     } else {
 	CHULL3D_copy_simp(cdata, ns, s);
@@ -953,7 +923,7 @@ extend_simplices(struct chull3d_data *cdata, simplex *s)
 	ns->neigh[ocdim] = s->peak;
 	if (s->peak.basis) s->peak.basis->ref_count++;
 	for (i=0,nsn=ns->neigh;i<(cdata->cdim);i++,nsn++)
-	    nsn->simp = extend_simplices(cdata, nsn->simp);
+	    nsn->simp = chull3d_extend_simplices(cdata, nsn->simp);
     }
     return ns;
 }
@@ -962,18 +932,17 @@ extend_simplices(struct chull3d_data *cdata, simplex *s)
 /* return a simplex s that corresponds to a facet of the
  * current hull, and sees(p, s) */
 HIDDEN simplex *
-search(struct chull3d_data *cdata, simplex *root)
+chull3d_search(struct chull3d_data *cdata, simplex *root)
 {
     simplex *s;
     neighbor *sn;
     int i;
     long tms = 0;
 
-    bu_log("search\n");
 
     CHULL3D_push(root->peak.simp);
     root->visit = cdata->pnum;
-    if (!sees(cdata, cdata->p,root))
+    if (!chull3d_sees(cdata, cdata->p,root))
 	for (i=0,sn=root->neigh;i<(cdata->cdim);i++,sn++) CHULL3D_push(sn->simp);
     while (tms) {
 	if (tms>cdata->ss)
@@ -981,7 +950,7 @@ search(struct chull3d_data *cdata, simplex *root)
 	CHULL3D_pop(s);
 	if (s->visit == cdata->pnum) continue;
 	s->visit = cdata->pnum;
-	if (!sees(cdata, cdata->p,s)) continue;
+	if (!chull3d_sees(cdata, cdata->p,s)) continue;
 	if (!s->peak.vert) return s;
 	for (i=0, sn=s->neigh; i<(cdata->cdim); i++,sn++) CHULL3D_push(sn->simp);
     }
@@ -990,10 +959,9 @@ search(struct chull3d_data *cdata, simplex *root)
 
 
 HIDDEN point
-get_another_site(struct chull3d_data *cdata)
+chull3d_get_another_site(struct chull3d_data *cdata)
 {
     point pnext;
-    bu_log("get_another_site\n");
     pnext = (*(cdata->get_site))((void *)cdata);
     if (!pnext) return NULL;
     cdata->pnum = cdata->site_num((void *)cdata, pnext)+2;
@@ -1003,19 +971,18 @@ get_another_site(struct chull3d_data *cdata)
 
 
 HIDDEN void
-buildhull(struct chull3d_data *cdata, simplex *root)
+chull3d_buildhull(struct chull3d_data *cdata, simplex *root)
 {
-    bu_log("buildhull\n");
     while ((cdata->cdim) < cdata->rdim) {
-	cdata->p = get_another_site(cdata);
+	cdata->p = chull3d_get_another_site(cdata);
 	if (!cdata->p) return;
-	if (out_of_flat(cdata, root,cdata->p))
-	    extend_simplices(cdata, root);
+	if (chull3d_out_of_flat(cdata, root,cdata->p))
+	    chull3d_extend_simplices(cdata, root);
 	else
-	    connect(cdata, make_facets(cdata, search(cdata, root)));
+	    chull3d_connect(cdata, chull3d_make_facets(cdata, chull3d_search(cdata, root)));
     }
-    while ((cdata->p = get_another_site(cdata)))
-	connect(cdata, make_facets(cdata, search(cdata, root)));
+    while ((cdata->p = chull3d_get_another_site(cdata)))
+	chull3d_connect(cdata, chull3d_make_facets(cdata, chull3d_search(cdata, root)));
 }
 
 
@@ -1024,9 +991,9 @@ buildhull(struct chull3d_data *cdata, simplex *root)
    hull construction stops when NULL returned;
    site_numm         returns number of site when given site;
    dim               dimension of point set;
-*/
+   */
 HIDDEN simplex *
-build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, short dim)
+chull3d_build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, short dim)
 {
     simplex *s = NULL;
     simplex *root = NULL;
@@ -1064,7 +1031,7 @@ build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, 
     root->peak.simp = s;
     s->peak.simp = root;
 
-    buildhull(cdata, root);
+    chull3d_buildhull(cdata, root);
     return root;
 }
 
@@ -1072,12 +1039,11 @@ build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *site_numm, 
 /* hullmain.c */
 
 HIDDEN long
-site_numm(void *data, site p)
+chull3d_site_numm(void *data, site p)
 {
     long i,j;
     struct chull3d_data *cdata = (struct chull3d_data *)data;
 
-    bu_log("site_numm\n");
     if (!p) return -2;
     for (i=0; i<cdata->num_blocks; i++)
 	if ((j=p-cdata->site_blocks[i])>=0 && j < BLOCKSIZE*cdata->pdim)
@@ -1085,11 +1051,9 @@ site_numm(void *data, site p)
     return -3;
 }
 
-
 HIDDEN site
-new_site(struct chull3d_data *cdata, site p, long j)
+chull3d_new_site(struct chull3d_data *cdata, site p, long j)
 {
-    bu_log("new_site\n");
     assert(cdata->num_blocks+1<MAXBLOCKS);
     if (0==(j%BLOCKSIZE)) {
 	assert(cdata->num_blocks < MAXBLOCKS);
@@ -1099,12 +1063,11 @@ new_site(struct chull3d_data *cdata, site p, long j)
 }
 
 HIDDEN site
-read_next_site(struct chull3d_data *cdata, long j)
+chull3d_read_next_site(struct chull3d_data *cdata, long j)
 {
     int i=0;
 
-    bu_log("read_next_site\n");
-    cdata->p = new_site(cdata, cdata->p,j);
+    cdata->p = chull3d_new_site(cdata, cdata->p,j);
 
     if (cdata->next_vert == 9) return 0;
 
@@ -1122,8 +1085,8 @@ read_next_site(struct chull3d_data *cdata, long j)
 }
 
 HIDDEN site
-get_next_site(void *data) {
-    return read_next_site((struct chull3d_data *)data, (((struct chull3d_data *)data)->s_num)++);
+chull3d_get_next_site(void *data) {
+    return chull3d_read_next_site((struct chull3d_data *)data, (((struct chull3d_data *)data)->s_num)++);
 }
 
 HIDDEN void
@@ -1186,7 +1149,7 @@ chull3d_data_init(struct chull3d_data *data, int vert_cnt)
     if (data->face_cnt) (*data->face_cnt) = 0;
 }
 
-HIDDEN void
+    HIDDEN void
 chull3d_data_free(struct chull3d_data *data)
 {
     bu_free(data->site_blocks, "site_blocks");
@@ -1206,7 +1169,7 @@ chull3d_data_free(struct chull3d_data *data)
 
 int
 bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
-            const point_t *input_points_3d, int num_input_pnts)
+	const point_t *input_points_3d, int num_input_pnts)
 {
     int i;
     struct chull3d_data *cdata;
@@ -1219,11 +1182,11 @@ bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     cdata->face_cnt = num_faces;
     (*cdata->vert_cnt) = 0;
     (*cdata->face_cnt) = 0;
-    root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim);
+    root = chull3d_build_convex_hull(cdata, chull3d_get_next_site, chull3d_site_numm, cdata->pdim);
 
     if (!root) return -1;
 
-    visit_hull(cdata, root, collect_hull_pnts);
+    chull3d_visit_hull(cdata, root, chull3d_collect_hull_pnts);
     for(i = 0; i < (int)BU_PTBL_LEN(cdata->output_pnts); i++) {
 	point_t p1;
 	VMOVE(p1,cdata->vert_array[i]);
@@ -1234,11 +1197,11 @@ bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     cdata->center_pnt[0] = cdata->center_pnt[0]/(*cdata->vert_cnt);
     cdata->center_pnt[1] = cdata->center_pnt[1]/(*cdata->vert_cnt);
     cdata->center_pnt[2] = cdata->center_pnt[2]/(*cdata->vert_cnt);
-    visit_hull(cdata, root, collect_faces);
+    chull3d_visit_hull(cdata, root, chull3d_collect_faces);
     (*vertices) = cdata->vert_array;
     (*faces) = cdata->faces;
 
-    free_hull_storage(cdata);
+    chull3d_free_hull_storage(cdata);
     chull3d_data_free(cdata);
     BU_PUT(cdata, struct chull3d_data);
 
