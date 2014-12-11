@@ -182,18 +182,6 @@ struct chull3d_data {
 #define push(x) *(cdata->st+tms++) = x;
 #define pop(x)  x = *(cdata->st + --tms);
 
-#define lookup(cdata, a,b,what,whatt) \
-{                                     \
-        int i;                        \
-        neighbor *x;                  \
-        for (i=0, x = a->neigh; (x->what != b) && (i<(cdata->cdim)) ; i++, x++); \
-        if (i<(cdata->cdim))          \
-          return x;                   \
-        else {                        \
-	  return 0;                   \
-	}                             \
-}
-
 #define INCP(X,p,k) ((X*) ( (char*)p + (k) * X##_size)) /* portability? */
 
 #define NEWL(cdata, list, X, p)                                 \
@@ -219,27 +207,27 @@ struct chull3d_data {
 }
 
 #define dec_ref(cdata, X,v)    {if ((v) && --(v)->ref_count == 0) FREEL(cdata, X,(v));}
-#define inc_ref(X,v)    {if (v) v->ref_count++;}
+#define inc_ref(cdata, X,v)    {if (v) v->ref_count++;}
 #define NULLIFY(cdata, X,v)    {dec_ref(cdata, X,v); v = NULL;}
 
-#define mod_refs(op,s)                                           \
+#define mod_refs(cdata, op,s)                                           \
 {                                                                \
         int mi;                                                   \
         neighbor *mrsn;                                          \
         for (mi=-1,mrsn=s->neigh-1;mi<(cdata->cdim);mi++,mrsn++)    \
-        op##_ref(basis_s, mrsn->basis);                          \
+        op##_ref(cdata, basis_s, mrsn->basis);                          \
 }
 
 #define free_simp(cdata, s)                            \
-{       mod_refs(dec,s);                               \
+{       mod_refs(cdata, dec,s);                               \
         FREEL(cdata, basis_s,s->normal);               \
         FREEL(cdata, simplex, s);                      \
 }
 
-#define copy_simp(cdata, new, s, simplex_list, simplex_size) \
-{       NEWL(cdata, simplex_list, simplex, new);             \
-        memcpy(new,s,simplex_size);                          \
-        mod_refs(inc,s);                                     \
+#define copy_simp(cdata, cnew, s, simplex_list, simplex_size) \
+{       NEWL(cdata, simplex_list, simplex, cnew);             \
+        memcpy(cnew,s,simplex_size);                          \
+        mod_refs(cdata, inc,s);                                     \
 }
 
 HIDDEN simplex *
@@ -833,12 +821,28 @@ maxdist(int dim, point p1, point p2)
 HIDDEN neighbor *
 op_simp(struct chull3d_data *cdata, simplex *a, simplex *b)
 {
-    lookup(cdata, a,b,simp,simplex)
+    int i;
+    neighbor *x;
+    for (i=0, x = a->neigh; (x->simp != b) && (i<(cdata->cdim)) ; i++, x++);
+    bu_log("i: %d\n", i);
+    if (i<(cdata->cdim))
+	return x;
+    else {
+	return 0;
+    }
 }
+
 HIDDEN neighbor *
 op_vert(struct chull3d_data *cdata, simplex *a, site b)
 {
-    lookup(cdata, a,b,vert,site)
+    int i;
+    neighbor *x;
+    for (i=0, x = a->neigh; (x->vert != b) && (i<(cdata->cdim)) ; i++, x++);
+    if (i<(cdata->cdim))
+	return x;
+    else {
+	return 0;
+    }
 }
 
 
@@ -897,6 +901,7 @@ make_facets(struct chull3d_data *cdata, simplex *seen)
     seen->peak.vert = cdata->p;
 
     for (i=0,bn = seen->neigh; i<(cdata->cdim); i++,bn++) {
+	neighbor *ns;
 	n = bn->simp;
 	if (cdata->pnum != n->visit) {
 	    n->visit = cdata->pnum;
@@ -910,7 +915,9 @@ make_facets(struct chull3d_data *cdata, simplex *seen)
 	cdata->ns->peak.simp = seen;
 	NULLIFY(cdata, basis_s,cdata->ns->neigh[i].basis);
 	cdata->ns->neigh[i].vert = cdata->p;
-	bn->simp = op_simp(cdata,n,seen)->simp = cdata->ns;
+	bn->simp = cdata->ns;
+	ns = op_simp(cdata,n,seen);
+	ns->simp = cdata->ns;
     }
     return cdata->ns;
 }
@@ -940,7 +947,7 @@ extend_simplices(struct chull3d_data *cdata, simplex *s)
 	ns->peak.vert = NULL;
 	ns->peak.simp = s;
 	ns->neigh[ocdim] = s->peak;
-	inc_ref(basis_s,s->peak.basis);
+	inc_ref(cdata,basis_s,s->peak.basis);
 	for (i=0,nsn=ns->neigh;i<(cdata->cdim);i++,nsn++)
 	    nsn->simp = extend_simplices(cdata, nsn->simp);
     }
