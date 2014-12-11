@@ -154,9 +154,9 @@ struct chull3d_data {
     point_t center_pnt;
 
     /* Output containers */
-    point_t *vert_array;
+    point_t **vert_array;
     int *vert_cnt;
-    int *faces;
+    int **faces;
     int *face_cnt;
 };
 
@@ -964,7 +964,7 @@ void *collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *p) {
 	f[j] = bu_ptbl_locate(cdata->output_pnts, (long *)pp[j]);
 	if (f[j] == -1) {
 	    f[j] = bu_ptbl_ins(cdata->output_pnts, (long *)pp[j]);
-	    VMOVE(cdata->vert_array[f[j]],*pp[j]);
+	    VMOVE((*cdata->vert_array)[f[j]],*pp[j]);
 	    (*cdata->vert_cnt)++;
 	}
     }
@@ -999,21 +999,21 @@ void *collect_faces(struct chull3d_data *cdata, simplex *s, void *p) {
      * won't need a bot sync.  Since by definition the chull is convex, the
      * center point should be "inside" relative to all faces and this test
      * should be reliable. */
-    VSUB2(a, cdata->vert_array[f[1]], cdata->vert_array[f[0]]);
-    VSUB2(b, cdata->vert_array[f[2]], cdata->vert_array[f[0]]);
+    VSUB2(a, (*cdata->vert_array)[f[1]], (*cdata->vert_array)[f[0]]);
+    VSUB2(b, (*cdata->vert_array)[f[2]], (*cdata->vert_array)[f[0]]);
     VCROSS(normal, a, b);
     VUNITIZE(normal);
 
-    VSUB2(center_to_edge, cdata->vert_array[f[0]], cdata->center_pnt);
+    VSUB2(center_to_edge, (*cdata->vert_array)[f[0]], cdata->center_pnt);
     VUNITIZE(center_to_edge);
 
-    cdata->faces[(*cdata->face_cnt)*3] = f[0];
+    (*cdata->faces)[(*cdata->face_cnt)*3] = f[0];
     if(VDOT(normal, center_to_edge) < 0) {
-	cdata->faces[(*cdata->face_cnt)*3+1] = f[2];
-	cdata->faces[(*cdata->face_cnt)*3+2] = f[1];
+	(*cdata->faces)[(*cdata->face_cnt)*3+1] = f[2];
+	(*cdata->faces)[(*cdata->face_cnt)*3+2] = f[1];
     } else {
-	cdata->faces[(*cdata->face_cnt)*3+1] = f[1];
-	cdata->faces[(*cdata->face_cnt)*3+2] = f[2];
+	(*cdata->faces)[(*cdata->face_cnt)*3+1] = f[1];
+	(*cdata->faces)[(*cdata->face_cnt)*3+2] = f[2];
     }
     (*cdata->face_cnt)++;
     return NULL;
@@ -1374,10 +1374,10 @@ chull3d_data_init(struct chull3d_data *data, int vert_cnt)
 
     /* Output containers */
     if (data->vert_cnt) (*data->vert_cnt) = 0;
-    data->vert_array = (point_t *)bu_calloc(vert_cnt, sizeof(point_t), "vertex array");
+    (*data->vert_array) = (point_t *)bu_calloc(vert_cnt, sizeof(point_t), "vertex array");
     data->next_vert = 0;
 
-    data->faces = (int *)bu_calloc(3*vert_cnt, sizeof(int), "face array");
+    (*data->faces) = (int *)bu_calloc(3*vert_cnt, sizeof(int), "face array");
     if (data->face_cnt) (*data->face_cnt) = 0;
 }
 
@@ -1400,7 +1400,7 @@ chull3d_data_free(struct chull3d_data *data)
 }
 
 int
-bn_3d_chull(int *faces, int *num_faces, point_t **vertices, int *num_vertices,
+bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
             const point_t *input_points_3d, int num_input_pnts)
 {
     int i;
@@ -1409,7 +1409,7 @@ bn_3d_chull(int *faces, int *num_faces, point_t **vertices, int *num_vertices,
 
     BU_GET(cdata, struct chull3d_data);
     cdata->faces = faces;
-    cdata->vert_array = *vertices;
+    cdata->vert_array = vertices;
     chull3d_data_init(cdata, num_input_pnts);
     cdata->input_vert_array = input_points_3d;
     cdata->vert_cnt = num_vertices;
@@ -1421,7 +1421,7 @@ bn_3d_chull(int *faces, int *num_faces, point_t **vertices, int *num_vertices,
     visit_hull(cdata, root, collect_hull_pnts);
     for(i = 0; i < (int)BU_PTBL_LEN(cdata->output_pnts); i++) {
 	point_t p1;
-	VMOVE(p1,cdata->vert_array[i]);
+	VMOVE(p1,(*cdata->vert_array)[i]);
 	cdata->center_pnt[0] += p1[0];
 	cdata->center_pnt[1] += p1[1];
 	cdata->center_pnt[2] += p1[2];
@@ -1438,29 +1438,13 @@ bn_3d_chull(int *faces, int *num_faces, point_t **vertices, int *num_vertices,
     return 0;
 }
 
-
-extern char *optarg;
-extern int optind;
-extern int opterr;
-
-/* TODO - replace this with a top level function using libbn types */
 int main(int argc, char **argv) {
 
     int i = 0;
     int	fc, vc;
-    simplex *root;
-
-
-    struct chull3d_data *cdata;
-    BU_GET(cdata, struct chull3d_data);
-
-    /* cdata->input_vert_array = input; */
-    cdata->vert_cnt = &fc;
-    cdata->face_cnt = &vc;
-    chull3d_data_init(cdata, 9);
-
-    /* TODO - this will be passed in in the final version */
-    point_t *input_verts = (point_t *)bu_calloc(cdata->input_vert_cnt, sizeof(point_t), "vertex array");
+    point_t *vert_array;
+    int *faces;
+    point_t *input_verts = (point_t *)bu_calloc(9, sizeof(point_t), "vertex array");
     VSET(input_verts[0], 0.0, 0.0, 0.0);
     VSET(input_verts[1], 2.0, 0.0, 0.0);
     VSET(input_verts[2], 2.0, 2.0, 0.0);
@@ -1470,44 +1454,20 @@ int main(int argc, char **argv) {
     VSET(input_verts[6], 2.0, 2.0, 2.0);
     VSET(input_verts[7], 0.0, 2.0, 2.0);
     VSET(input_verts[8], 1.0, 1.0, 1.0);
-    cdata->input_vert_array = (const point_t *)input_verts;
 
-    /*read_next_site(cdata, -1);*/
-
-    cdata->point_size = cdata->site_size = sizeof(Coord)*cdata->pdim;
-
-    root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim);
-
-    visit_hull(cdata, root, collect_hull_pnts);
-    for(i = 0; i < (int)BU_PTBL_LEN(cdata->output_pnts); i++) {
-	point_t p1;
-	VMOVE(p1,cdata->vert_array[i]);
-	cdata->center_pnt[0] += p1[0];
-	cdata->center_pnt[1] += p1[1];
-	cdata->center_pnt[2] += p1[2];
-    }
-    cdata->center_pnt[0] = cdata->center_pnt[0]/(*cdata->vert_cnt);
-    cdata->center_pnt[1] = cdata->center_pnt[1]/(*cdata->vert_cnt);
-    cdata->center_pnt[2] = cdata->center_pnt[2]/(*cdata->vert_cnt);
-    bu_log("center_pnt: %f %f %f\n", cdata->center_pnt[0], cdata->center_pnt[1], cdata->center_pnt[2]);
-    visit_hull(cdata, root, collect_faces);
+    (void)bn_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)input_verts, 9);
 
     bu_log("OFF\n");
 
-    bu_log("%d %d 0\n", *cdata->vert_cnt, *cdata->face_cnt);
-    for(i = 0; i < (int)BU_PTBL_LEN(cdata->output_pnts); i++) {
+    bu_log("%d %d 0\n", vc, fc);
+    for(i = 0; i < vc; i++) {
 	point_t p1;
-	VMOVE(p1,cdata->vert_array[i]);
+	VMOVE(p1,vert_array[i]);
 	bu_log("%f %f %f\n", p1[0], p1[1], p1[2]);
     }
-    for(i = 0; i < *cdata->face_cnt; i++) {
-	bu_log("3 %d %d %d\n", cdata->faces[i*3], cdata->faces[i*3+1], cdata->faces[i*3+2]);
+    for(i = 0; i < fc; i++) {
+	bu_log("3 %d %d %d\n", faces[i*3], faces[i*3+1], faces[i*3+2]);
     }
-
-
-    free_hull_storage(cdata);
-    chull3d_data_free(cdata);
-    BU_PUT(cdata, struct chull3d_data);
 
     exit(0);
 }
