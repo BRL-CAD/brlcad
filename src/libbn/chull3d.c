@@ -156,7 +156,6 @@ struct chull3d_data {
     simplex **st;
     long ss;
     long s_num;
-    void *out_func_here;
 };
 
 
@@ -959,48 +958,8 @@ check_simplex(struct chull3d_data *cdata, simplex *s, void *dum)
     return NULL;
 }
 
-/* outfuncs: given a list of points, output in a given format */
 
-
-FILE* efopen(struct chull3d_data *cdata, char *file, char *mode) {
-    FILE* fp;
-    if ((fp = fopen(file, mode))) return fp;
-    exit(1);
-    return NULL;
-}
-
-
-#ifndef WIN32
-FILE* epopen(char *com, char *mode) {
-    FILE* fp;
-    if ((fp = popen(com, mode))) return fp;
-    fprintf(stderr, "couldn't open stream %s mode %s\n",com,mode);
-    exit(1);
-    return 0;
-}
-#endif
-
-
-/* vist_funcs for different kinds of output: facets, alpha shapes, etc. */
-typedef void out_func(struct chull3d_data *, point *, int, FILE*, int);
-
-void *add_facet(struct chull3d_data *cdata, simplex *s, void *p) {
-
-    out_func *out_func_here = (out_func *)cdata->out_func_here;
-    point v[MAXDIM];
-    int j;
-
-    if (p) {out_func_here = (out_func*)p; if (!s) return NULL;}
-
-    for (j=0;j<(cdata->cdim);j++) v[j] = s->neigh[j].vert;
-    bu_log("f: %ld, %ld, %ld\n", (cdata->site_num)((void *)cdata, v[0]), (cdata->site_num)((void *)cdata, v[1]), (cdata->site_num)((void *)cdata, v[2]));
-
-    out_func_here(cdata, v,(cdata->cdim),0,0);
-
-    return NULL;
-}
-
-void *facets_print(struct chull3d_data *cdata, simplex *s, void *p) {
+void *add_simplex(struct chull3d_data *cdata, simplex *s, void *p) {
 
     point v[MAXDIM];
     int j;
@@ -1063,7 +1022,7 @@ void *facets_print(struct chull3d_data *cdata, simplex *s, void *p) {
     cdata->faces[(*cdata->face_cnt)*3+2] = f3;
 
     bu_log("f(old indices): %ld, %ld, %ld\n", ip1, ip2, ip3);
-    bu_log("f(new indices): %ld, %ld, %ld\n", f1, f2, f3);
+    bu_log("f(new indices): %d, %d, %d\n", f1, f2, f3);
     bu_log("  p1: %f, %f, %f\n", p1[0], p1[1], p1[2]);
     bu_log("  p2: %f, %f, %f\n", p2[0], p2[1], p2[2]);
     bu_log("  p3: %f, %f, %f\n", p3[0], p3[1], p3[2]);
@@ -1484,7 +1443,7 @@ bn_3d_chull(int *faces, int *num_faces, point_t **vertices, int *num_vertices,
 
     if (!root) return -1;
 
-    visit_hull(cdata, root, facets_print);
+    visit_hull(cdata, root, add_simplex);
 
     free_hull_storage(cdata);
     chull3d_data_free(cdata);
@@ -1502,10 +1461,7 @@ extern int opterr;
 int main(int argc, char **argv) {
 
     int i = 0;
-    short ifn = 0;
-    int	option;
     int	fc, vc;
-    char ifile[50] = "";
     simplex *root;
 
 
@@ -1536,7 +1492,7 @@ int main(int argc, char **argv) {
 
     root = build_convex_hull(cdata, get_next_site, site_numm, cdata->pdim, cdata->vd);
 
-    visit_hull(cdata, root, facets_print);
+    visit_hull(cdata, root, add_simplex);
 
     bu_log("\n\nOFF\n");
 
