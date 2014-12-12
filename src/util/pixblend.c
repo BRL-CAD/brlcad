@@ -76,27 +76,23 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "r:i:Ss:g:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "r:i:Ss:g:h?")) != -1) {
 	switch (c) {
 	    case 'r':
 		if (iflg)
 		    return 0;
-		else {
-		    value = atof(bu_optarg);
-		    ++rflg;
-		}
+		value = atof(bu_optarg);
+		++rflg;
 		break;
 	    case 'i':
 		if (rflg)
 		    return 0;
-		else {
-		    if (gflg) {
+    		if (gflg) {
 			fprintf(stderr, "The -g and -i options do not make sense together.\n");
 			return 0;
-		    }
-		    value = atof(bu_optarg);
-		    ++iflg;
 		}
+		value = atof(bu_optarg);
+		++iflg;
 		break;
 	    case 'S':
 		seed = timeseed();
@@ -112,7 +108,7 @@ get_args(int argc, char **argv)
 		++gflg;
 		gvalue = atof(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
