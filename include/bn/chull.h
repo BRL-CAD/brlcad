@@ -109,7 +109,7 @@ BN_EXPORT int bn_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int
  * well as the numerical count of vertices and faces in the hull.
  *
  * @param[out]	faces set of faces in the convex hull, stored as integer indices to the vertices.  The first three indices are the vertices of the face, the second three define the second face, and so forth.
- * @param[out]  num_faces the number of faces in the faces array 
+ * @param[out]  num_faces the number of faces in the faces array
  * @param[out]  vertices the set of vertices used by the convex hull.
  * @param[out]  num_vertices the number of vertices in the convex hull.
  * @param	input_points_3d The input points for which a convex hull will be built

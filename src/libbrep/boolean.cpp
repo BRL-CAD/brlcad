@@ -1158,7 +1158,7 @@ get_subcurves_inside_faces(
 		}
 	    }
 	}
-	
+
     }
     for (int i = 0; i < intervals2.Count(); ++i) {
 	// convert interval on face 1 to equivalent interval on face 2
@@ -1181,7 +1181,7 @@ get_subcurves_inside_faces(
 		}
 	    }
 	}
-	
+
     }
 }
 
@@ -2208,7 +2208,7 @@ loop_boolean(
 	close_small_gaps(*li);
     }
 
-    out = make_result_from_loops(new_loops); 
+    out = make_result_from_loops(new_loops);
 
     return out;
 }
@@ -2268,7 +2268,7 @@ combine_loops(
     // Intersections always produce a single outerloop.
     //
     // Subtractions may produce multiple outerloops, or a single
-    // outerloop that optionally includes a single innerloop. 
+    // outerloop that optionally includes a single innerloop.
     //
     // So, the possible results are:
     // 1) Single outerloop.
