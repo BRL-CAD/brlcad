@@ -29,13 +29,10 @@
 #include "bu/ptbl.h"
 #include "bu/malloc.h"
 #include "bn/chull.h"
+#include "bn/randmt.h"
 
-#define MAXBLOCKS 10000
-#define max_blocks 10000
-#define Nobj 10000
-#define MAXPOINTS 10000
 #define BLOCKSIZE 100000
-#define MAXDIM 8
+#define MAXDIM 3
 
 typedef double Coord;
 typedef Coord* point;
@@ -123,6 +120,7 @@ struct chull3d_data {
     int point_size; /* size of malloc needed for a point */
     short *mi;
     short *mo;
+    long *shufmat;
 
     /* these were static variables in functions */
     simplex **simplex_block_table;
@@ -207,12 +205,12 @@ chull3d_new_block_simplex(struct chull3d_data *cdata, int make_blocks)
     int i;
     simplex *xlm, *xbt;
     if (make_blocks && cdata) {
-	((cdata->num_simplex_blocks<max_blocks) ? (void) (0) : __assert_fail ("cdata->num_simplex_blocks<max_blocks", "chull3d.c", 31, __PRETTY_FUNCTION__));
-	xbt = cdata->simplex_block_table[(cdata->num_simplex_blocks)++] = (simplex*)malloc(max_blocks * cdata->simplex_size);
-	memset(xbt,0,max_blocks * cdata->simplex_size);
+	((cdata->num_simplex_blocks<cdata->input_vert_cnt) ? (void) (0) : __assert_fail ("cdata->num_simplex_blocks<cdata->input_vert_cnt", "chull3d.c", 31, __PRETTY_FUNCTION__));
+	xbt = cdata->simplex_block_table[(cdata->num_simplex_blocks)++] = (simplex*)malloc(cdata->input_vert_cnt * cdata->simplex_size);
+	memset(xbt,0,cdata->input_vert_cnt * cdata->simplex_size);
 	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 31, __PRETTY_FUNCTION__));
-	xlm = ((simplex*) ( (char*)xbt + (max_blocks) * cdata->simplex_size));
-	for (i=0; i<max_blocks; i++) {
+	xlm = ((simplex*) ( (char*)xbt + (cdata->input_vert_cnt) * cdata->simplex_size));
+	for (i=0; i<cdata->input_vert_cnt; i++) {
 	    xlm = ((simplex*) ( (char*)xlm + ((-1)) * cdata->simplex_size));
 	    xlm->next = cdata->simplex_list;
 	    cdata->simplex_list = xlm;
@@ -237,12 +235,12 @@ chull3d_new_block_basis_s(struct chull3d_data *cdata, int make_blocks)
     int i;
     basis_s *xlm, *xbt;
     if (make_blocks && cdata) {
-	((cdata->num_basis_s_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_basis_s_blocks<max_blocks", "chull3d.c", 32, __PRETTY_FUNCTION__));
-	xbt = cdata->basis_s_block_table[(cdata->num_basis_s_blocks)++] = (basis_s*)malloc(max_blocks * cdata->basis_s_size);
-	memset(xbt,0,max_blocks * cdata->basis_s_size);
+	((cdata->num_basis_s_blocks<cdata->input_vert_cnt) ? (void) (0) : __assert_fail ("num_basis_s_blocks<cdata->input_vert_cnt", "chull3d.c", 32, __PRETTY_FUNCTION__));
+	xbt = cdata->basis_s_block_table[(cdata->num_basis_s_blocks)++] = (basis_s*)malloc(cdata->input_vert_cnt * cdata->basis_s_size);
+	memset(xbt,0,cdata->input_vert_cnt * cdata->basis_s_size);
 	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 32, __PRETTY_FUNCTION__));
-	xlm = ((basis_s*) ( (char*)xbt + (max_blocks) * cdata->basis_s_size));
-	for (i=0; i<max_blocks; i++) {
+	xlm = ((basis_s*) ( (char*)xbt + (cdata->input_vert_cnt) * cdata->basis_s_size));
+	for (i=0; i<cdata->input_vert_cnt; i++) {
 	    xlm = ((basis_s*) ( (char*)xlm + ((-1)) * cdata->basis_s_size));
 	    xlm->next = cdata->basis_s_list;
 	    cdata->basis_s_list = xlm;
@@ -267,12 +265,12 @@ chull3d_new_block_Tree(struct chull3d_data *cdata, int make_blocks) {
     int i;
     Tree *xlm, *xbt;
     if (make_blocks && cdata) {
-	((cdata->num_Tree_blocks<max_blocks) ? (void) (0) : __assert_fail ("num_Tree_blocks<max_blocks", "chull3d.c", 33, __PRETTY_FUNCTION__));
-	xbt = cdata->Tree_block_table[cdata->num_Tree_blocks++] = (Tree*)malloc(max_blocks * cdata->Tree_size);
-	memset(xbt,0,max_blocks * cdata->Tree_size);
+	((cdata->num_Tree_blocks<cdata->input_vert_cnt) ? (void) (0) : __assert_fail ("num_Tree_blocks<cdata->input_vert_cnt", "chull3d.c", 33, __PRETTY_FUNCTION__));
+	xbt = cdata->Tree_block_table[cdata->num_Tree_blocks++] = (Tree*)malloc(cdata->input_vert_cnt * cdata->Tree_size);
+	memset(xbt,0,cdata->input_vert_cnt * cdata->Tree_size);
 	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 33, __PRETTY_FUNCTION__));
-	xlm = ((Tree*) ( (char*)xbt + (max_blocks) * cdata->Tree_size));
-	for (i=0; i<max_blocks; i++) {
+	xlm = ((Tree*) ( (char*)xbt + (cdata->input_vert_cnt) * cdata->Tree_size));
+	for (i=0; i<cdata->input_vert_cnt; i++) {
 	    xlm = ((Tree*) ( (char*)xlm + ((-1)) * cdata->Tree_size));
 	    xlm->next = cdata->Tree_list;
 	    cdata->Tree_list = xlm;
@@ -1056,9 +1054,9 @@ chull3d_site_numm(void *data, site p)
 HIDDEN site
 chull3d_new_site(struct chull3d_data *cdata, site p, long j)
 {
-    assert(cdata->num_blocks+1<MAXBLOCKS);
+    assert(cdata->num_blocks+1<cdata->input_vert_cnt);
     if (0==(j%BLOCKSIZE)) {
-	assert(cdata->num_blocks < MAXBLOCKS);
+	assert(cdata->num_blocks < cdata->input_vert_cnt);
 	return(cdata->site_blocks[cdata->num_blocks++]=(site)malloc(BLOCKSIZE*cdata->site_size));
     } else
 	return p+cdata->pdim;
@@ -1086,9 +1084,24 @@ chull3d_read_next_site(struct chull3d_data *cdata, long j)
     return cdata->p;
 }
 
+HIDDEN void 
+chull3d_make_shuffle(struct chull3d_data *cdata)
+{
+    long i, j, t;
+    for (i=0;i<cdata->input_vert_cnt;i++) cdata->shufmat[i] = i;
+    for (i=0;i<cdata->input_vert_cnt;i++) {
+	double random_num = bn_randmt();
+	t = cdata->shufmat[i];
+	j = i + (cdata->input_vert_cnt - i) * (long)random_num;
+	cdata->shufmat[i] = cdata->shufmat[j];
+	cdata->shufmat[j] = t;
+    }
+}
+
 HIDDEN site
 chull3d_get_next_site(void *data) {
-    return chull3d_read_next_site((struct chull3d_data *)data, (((struct chull3d_data *)data)->s_num)++);
+    struct chull3d_data *cdata = (struct chull3d_data *)data;
+    return chull3d_read_next_site(cdata, cdata->shufmat[(cdata->s_num)++]);
 }
 
 HIDDEN void
@@ -1098,7 +1111,7 @@ chull3d_data_init(struct chull3d_data *data, int vert_cnt)
     data->simplex_list = 0;
     data->basis_s_list = 0;
     data->Tree_list = 0;
-    data->site_blocks = (point *)bu_calloc(MAXBLOCKS, sizeof(point), "site_blocks");
+    data->site_blocks = (point *)bu_calloc(vert_cnt * 3, sizeof(point), "site_blocks");
     BU_GET(data->tt_basis, basis_s);
     data->tt_basis->next = 0;
     data->tt_basis->ref_count = 1;
@@ -1109,29 +1122,30 @@ chull3d_data_init(struct chull3d_data *data, int vert_cnt)
     /* point at infinity for Delaunay triang; value not used */
     data->hull_infinity = (Coord *)bu_calloc(10, sizeof(Coord), "hull_infinity");
     data->hull_infinity[0] = 57.2;
-    data->B = (int *)bu_calloc(100, sizeof(int), "A");
+    data->B = (int *)bu_calloc(vert_cnt, sizeof(int), "A");
     data->mins = (Coord *)bu_calloc(MAXDIM, sizeof(Coord), "mins");
     for(i = 0; i < MAXDIM; i++) data->mins[i] = DBL_MAX;
     data->maxs = (Coord *)bu_calloc(MAXDIM, sizeof(Coord), "maxs");
     for(i = 0; i < MAXDIM; i++) data->maxs[i] = -DBL_MAX;
     data->mult_up = 1000.0; /* we'll need to multiply based on a tolerance parameter at some point... */
-    data->mi = (short *)bu_calloc(MAXPOINTS, sizeof(short), "mi");
-    data->mo = (short *)bu_calloc(MAXPOINTS, sizeof(short), "mo");
+    data->mi = (short *)bu_calloc(vert_cnt, sizeof(short), "mi");
+    data->mo = (short *)bu_calloc(vert_cnt, sizeof(short), "mo");
     data->pdim = 3;
+    data->shufmat = (long*)bu_calloc(vert_cnt+1, sizeof(long), "shufmat");
 
     /* These were static variables in functions */
-    data->simplex_block_table = (simplex **)bu_calloc(100, sizeof(simplex *), "simplex_block_table");
+    data->simplex_block_table = (simplex **)bu_calloc(vert_cnt, sizeof(simplex *), "simplex_block_table");
     data->num_simplex_blocks = 0;
-    data->basis_s_block_table = (basis_s **)bu_calloc(100, sizeof(basis_s *), "basis_s_block_table");
+    data->basis_s_block_table = (basis_s **)bu_calloc(vert_cnt, sizeof(basis_s *), "basis_s_block_table");
     data->num_basis_s_blocks = 0;
-    data->Tree_block_table = (Tree **)bu_calloc(100, sizeof(Tree *), "Tree_block_table");
+    data->Tree_block_table = (Tree **)bu_calloc(vert_cnt, sizeof(Tree *), "Tree_block_table");
     data->num_Tree_blocks = 0;
     data->p_neigh.vert = 0;
     data->p_neigh.simp = NULL;
     data->p_neigh.basis = NULL;
     data->b = NULL;
     data->vnum = -1;
-    data->ss = 2000 + MAXDIM;
+    data->ss = vert_cnt + MAXDIM;
     data->s_num = 0;
     data->fg_vn = 0;
     data->st=(simplex**)malloc((data->ss+MAXDIM+1)*sizeof(simplex*));
@@ -1184,6 +1198,7 @@ bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     cdata->face_cnt = num_faces;
     (*cdata->vert_cnt) = 0;
     (*cdata->face_cnt) = 0;
+    chull3d_make_shuffle(cdata);
     root = chull3d_build_convex_hull(cdata, chull3d_get_next_site, chull3d_site_numm, cdata->pdim);
 
     if (!root) return -1;
