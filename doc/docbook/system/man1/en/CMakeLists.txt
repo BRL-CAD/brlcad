@@ -102,7 +102,6 @@ set(docbook_man1_EN
   g-var.xml
   g-vrml.xml
   g-x3d.xml
-  g-dot.xml
   g2asc.xml
   g_diff.xml
   g_lint.xml
