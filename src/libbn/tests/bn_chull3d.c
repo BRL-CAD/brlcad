@@ -65,7 +65,6 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	if (retval) {return -1;} else {bu_log("Cube Test Passed!\n");}
     }
 
-#if 0
     /* Cube with center point */
     {
 	int i = 0;
@@ -99,7 +98,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	}
 	if (retval) {return -1;} else {bu_log("Cube With Center Point Test Passed!\n");}
     }
-#endif
+
     return 0;
 }
 
