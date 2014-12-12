@@ -129,7 +129,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 
 	retval = bn_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)bot->vertices, (int)bot->num_vertices);
 
-	if (retval) return GED_ERROR;
+	if (retval != 3) return GED_ERROR;
 
 	retval = mk_bot(gedp->ged_wdbp, argv[3], RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
 

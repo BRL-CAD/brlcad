@@ -1280,6 +1280,7 @@ bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     struct chull3d_data *cdata;
     simplex *root = NULL;
     int output_dim = 0;
+    point_t* hull_2d;
 
     const point_t *iv_1;
     point_t *iv_2, *iva;
@@ -1310,21 +1311,43 @@ bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     root = chull3d_build_convex_hull(cdata, chull3d_get_next_site, chull3d_site_numm, cdata->pdim);
     if (!root) return -1;
     chull3d_visit_hull(cdata, root, chull3d_collect_hull_pnts);
-    for(i = 0; i < (int)BU_PTBL_LEN(cdata->output_pnts); i++) {
-	point_t p1;
-	VMOVE(p1,cdata->vert_array[i]);
-	cdata->center_pnt[0] += p1[0];
-	cdata->center_pnt[1] += p1[1];
-	cdata->center_pnt[2] += p1[2];
+    switch(cdata->cdim) {
+	case 0:
+	    bu_log("point?\n");
+	    break;
+	case 1:
+	    bu_log("line?\n");
+	    break;
+	case 2:
+	    /* We already have the hull points, but we need to assemble them into a CCW hull */
+	    bn_3d_coplanar_chull(&hull_2d, (const point_t *)cdata->vert_array, (*cdata->vert_cnt));
+	    (*vertices) = hull_2d;
+	    bu_free(cdata->vert_array, "using 2d vertex list from coplanar_chull");
+	    (*faces) = NULL; /* Should we tessellate the hull and make faces? */
+	    bu_free(cdata->faces, "free face list - not used in 2d");
+	    break;
+	case 3:
+	    /* 3d hull - calculate the center point so we can correctly add triangle faces
+	     * with normals outward from the convex hull */
+	    for(i = 0; i < (int)BU_PTBL_LEN(cdata->output_pnts); i++) {
+		point_t p1;
+		VMOVE(p1,cdata->vert_array[i]);
+		cdata->center_pnt[0] += p1[0];
+		cdata->center_pnt[1] += p1[1];
+		cdata->center_pnt[2] += p1[2];
+	    }
+	    cdata->center_pnt[0] = cdata->center_pnt[0]/(*cdata->vert_cnt);
+	    cdata->center_pnt[1] = cdata->center_pnt[1]/(*cdata->vert_cnt);
+	    cdata->center_pnt[2] = cdata->center_pnt[2]/(*cdata->vert_cnt);
+	    /* Build the faces list and assign the results */
+	    chull3d_visit_hull(cdata, root, chull3d_collect_faces);
+	    (*vertices) = cdata->vert_array;
+	    (*faces) = cdata->faces;
+	    break;
+	default:
+	    break;
     }
-    cdata->center_pnt[0] = cdata->center_pnt[0]/(*cdata->vert_cnt);
-    cdata->center_pnt[1] = cdata->center_pnt[1]/(*cdata->vert_cnt);
-    cdata->center_pnt[2] = cdata->center_pnt[2]/(*cdata->vert_cnt);
-    chull3d_visit_hull(cdata, root, chull3d_collect_faces);
-    (*vertices) = cdata->vert_array;
-    (*faces) = cdata->faces;
     output_dim = cdata->cdim;
-
     chull3d_free_hull_storage(cdata);
     chull3d_data_free(cdata);
     bu_free(iva, "intermediate_vert_array");

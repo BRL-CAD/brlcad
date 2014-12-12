@@ -114,7 +114,7 @@ BN_EXPORT int bn_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int
  * @param[out]  num_vertices the number of vertices in the convex hull.
  * @param	input_points_3d The input points for which a convex hull will be built
  * @param	num_input_points the number of points in the input set
- * @return 0 on success, otherwise failure
+ * @return dimension of output (3 is three dimensional faces and hulls, 2 is a polygon hull in a plane, etc.)
  *
  * This routine is based off of Ken Clarkson's hull program from
  * http://www.netlib.org/voronoi/hull.html - see the file chull3d.c

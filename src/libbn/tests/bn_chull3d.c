@@ -62,7 +62,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	for(i = 0; i < fc; i++) {
 	    bu_log("      face %d: %d, %d, %d\n", i, faces[i*3], faces[i*3+1], faces[i*3+2]);
 	}
-	if (retval) {return -1;} else {bu_log("Cube Test Passed!\n");}
+	if (retval != 3) {return -1;} else {bu_log("Cube Test Passed!\n");}
     }
 
     /* Cube with center point */
@@ -96,7 +96,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	for(i = 0; i < fc; i++) {
 	    bu_log("      face %d: %d, %d, %d\n", i, faces[i*3], faces[i*3+1], faces[i*3+2]);
 	}
-	if (retval) {return -1;} else {bu_log("Cube With Center Point Test Passed!\n");}
+	if (retval != 3) {return -1;} else {bu_log("Cube With Center Point Test Passed!\n");}
     }
 
     /* Flat triangles */
@@ -122,11 +122,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	    VMOVE(p1,vert_array[i]);
 	    bu_log("      actual[%d]: %f, %f, %f\n", i, p1[0], p1[1], p1[2]);
 	}
-	bu_log("  Faces:\n");
-	for(i = 0; i < fc; i++) {
-	    bu_log("      face %d: %d, %d, %d\n", i, faces[i*3], faces[i*3+1], faces[i*3+2]);
-	}
-	if (retval) {return -1;} else {bu_log("Flat Triangles Passed!\n");}
+	if (retval != 2) {return -1;} else {bu_log("Flat Triangles Passed!\n");}
     }
 
 
