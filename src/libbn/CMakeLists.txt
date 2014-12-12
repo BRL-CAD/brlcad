@@ -56,7 +56,6 @@ add_subdirectory(tests)
 CMAKEFILES(
   README
   bn_private.h
-  chull3d.c
   )
 
 # Local Variables:
