@@ -724,7 +724,6 @@ chull3d_collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *UNUSED(p
     for (j=0;j<(cdata->cdim);j++) pp[j] = &(cdata->input_vert_array[ip[j]]);
 
     /* Don't add a point if it's already added */
-    /* TODO - the lookup time may become a problem for large point sets */
     for (j=0;j<(cdata->cdim);j++){
 	std::map<long *, int>::iterator pli;
 	pli = cdata->point_lookup->find((long *)pp[j]);
@@ -756,7 +755,6 @@ chull3d_collect_faces(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
     for (j=0;j<(cdata->cdim);j++) ip[j] = (cdata->site_num)((void *)cdata, v[j]);
     for (j=0;j<(cdata->cdim);j++) pp[j] = &(cdata->input_vert_array[ip[j]]);
 
-    /* TODO - the lookup time may become a problem for large point sets */
     for (j=0;j<(cdata->cdim);j++){
 	std::map<long *, int>::iterator pli;
 	pli = cdata->point_lookup->find((long *)pp[j]);
@@ -1235,8 +1233,10 @@ chull3d_intermediate_set(point_t **vertices, int *num_vertices, const point_t *i
     bu_ptbl_init(opnts, num_input_pnts, "output pnts container");
     pnt_stp = (num_input_pnts < pnts_per_stp) ? num_input_pnts : pnts_per_stp;
     last_stp = num_input_pnts / pnts_per_stp;
+    //bu_log("input point cnt: %d\n", num_input_pnts);
     while (curr_stp <= last_stp) {
 	struct chull3d_data *cdata;
+	//bu_log("step %d of %d\n", curr_stp, last_stp);
 	curr_inputs = input_points_3d + curr_stp * pnt_stp;
 	if (curr_stp == last_stp) pnt_stp = num_input_pnts - curr_stp * pnt_stp;
 	BU_GET(cdata, struct chull3d_data);
@@ -1255,7 +1255,9 @@ chull3d_intermediate_set(point_t **vertices, int *num_vertices, const point_t *i
 	chull3d_data_free(cdata);
 	BU_PUT(cdata, struct chull3d_data);
 	curr_stp++;
+	//bu_log("points accumulated: %d\n", nv);
     }
+    //bu_log("output pnt cnt: %d\n", nv);
     bu_ptbl_free(opnts);
     BU_PUT(opnts, struct bu_ptbl);
     delete pl;
