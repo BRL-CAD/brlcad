@@ -78,10 +78,12 @@ add_test(bu_hexstr_to_binstr_test5 tester_bu_bitv 12  "0x03 04" "0b0000001100000
 add_test(bu_binstr_to_hexstr_test1 tester_bu_bitv 13        " 0011"    "03")
 add_test(bu_binstr_to_hexstr_test2 tester_bu_bitv 13   "0b0000011 "  "0x03")
 add_test(bu_binstr_to_hexstr_test3 tester_bu_bitv 13   "0b000 0011"  "0x03")
-add_test(bu_binstr_to_hexstr_test4 tester_bu_bitv 13             ""    "00")
 add_test(bu_binstr_to_hexstr_test5 tester_bu_bitv 13           "0b"  "0x00")
 add_test(bu_binstr_to_hexstr_test6 tester_bu_bitv 13   "0b000_0011"  "0x03")
 add_test(bu_binstr_to_hexstr_test7 tester_bu_bitv 13   "0b000|0011"  "0x03")
+
+# args: function number, expected hex string - tests null input case
+add_test(bu_binstr_to_hexstr_test4 tester_bu_bitv 14                   "00")
 
 # some tests are expected to fail:
 set_tests_properties(
