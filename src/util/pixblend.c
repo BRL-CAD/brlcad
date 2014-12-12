@@ -62,7 +62,7 @@ int iflg, rflg, gflg;
 int seed;
 
 static char usage[] = "\
-Usage: pixblend [-{r|i} value] [-s [seed]] file1.pix file2.pix > out.pix\n";
+Usage: pixblend [-{r|i} value] [-s seed] [-S] [-g gvalue] file1.pix file2.pix > out.pix\n";
 
 int
 timeseed(void)
