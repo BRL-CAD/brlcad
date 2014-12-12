@@ -34,6 +34,19 @@
 #define BLOCKSIZE 100000
 #define MAXDIM 3
 
+/* It is faster, when dealing with large point sets, to
+ * repeatedly calculate the convex hull for subsets of
+ * the total set and then fine the hull of that set of
+ * hulls.  These parameters control that process - see
+ * chull3d_intermediate_set and bn-3d_chull.  In the
+ * worst case this approach will slow the calculation,
+ * but so long as some significant percentage of the
+ * bot's vertices are not part of the hull it should
+ * help */
+#define CHULL3D_COUNT_THRESHOLD 1000
+#define CHULL3D_DELTA_THRESHOLD 500
+#define CHULL3D_SUBSET_SIZE 500
+
 typedef double Coord;
 typedef Coord* point;
 typedef point site;
@@ -146,6 +159,7 @@ struct chull3d_data {
     const point_t *input_vert_array;
     int input_vert_cnt;
     struct bu_ptbl *output_pnts;
+    int free_output_pnts;
     int next_vert;
     point_t center_pnt;
 
@@ -706,6 +720,7 @@ chull3d_collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *UNUSED(p
     for (j=0;j<(cdata->cdim);j++) pp[j] = &(cdata->input_vert_array[ip[j]]);
 
     /* Don't add a point if it's already added */
+    /* TODO - the lookup time may become a problem for large point sets */
     for (j=0;j<(cdata->cdim);j++){
 	f[j] = bu_ptbl_locate(cdata->output_pnts, (long *)pp[j]);
 	if (f[j] == -1) {
@@ -735,6 +750,7 @@ chull3d_collect_faces(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
     for (j=0;j<(cdata->cdim);j++) ip[j] = (cdata->site_num)((void *)cdata, v[j]);
     for (j=0;j<(cdata->cdim);j++) pp[j] = &(cdata->input_vert_array[ip[j]]);
 
+    /* TODO - the lookup time may become a problem for large point sets */
     for (j=0;j<(cdata->cdim);j++){
 	f[j] = bu_ptbl_locate(cdata->output_pnts, (long *)pp[j]);
     }
@@ -1150,19 +1166,20 @@ chull3d_data_init(struct chull3d_data *data, int vert_cnt)
     data->fg_vn = 0;
     data->st=(simplex**)malloc((data->ss+MAXDIM+1)*sizeof(simplex*));
     data->ns = NULL;
-    BU_GET(data->output_pnts, struct bu_ptbl);
-    bu_ptbl_init(data->output_pnts, 8, "output pnts container");
+    data->free_output_pnts = 0;
+    if (!data->output_pnts) {
+	BU_GET(data->output_pnts, struct bu_ptbl);
+	bu_ptbl_init(data->output_pnts, vert_cnt, "output pnts container");
+	data->free_output_pnts = 1;
+    }
     data->input_vert_cnt = vert_cnt;
 
     VSET(data->center_pnt,0,0,0);
 
     /* Output containers */
-    if (data->vert_cnt) (*data->vert_cnt) = 0;
-    data->vert_array = (point_t *)bu_calloc(vert_cnt, sizeof(point_t), "vertex array");
+    if (!data->vert_array) data->vert_array = (point_t *)bu_calloc(vert_cnt, sizeof(point_t), "vertex array");
     data->next_vert = 0;
-
-    data->faces = (int *)bu_calloc(3*vert_cnt, sizeof(int), "face array");
-    if (data->face_cnt) (*data->face_cnt) = 0;
+    if (!data->faces) data->faces = (int *)bu_calloc(3*vert_cnt, sizeof(int), "face array");
 }
 
     HIDDEN void
@@ -1179,8 +1196,54 @@ chull3d_data_free(struct chull3d_data *data)
     bu_free(data->basis_s_block_table, "basis_s_block_table");
     bu_free(data->Tree_block_table, "Tree_block_table");
     BU_PUT(data->tt_basis, basis_s);
-    bu_ptbl_free(data->output_pnts);
-    BU_PUT(data->output_pnts, struct bu_ptbl);
+    if (data->free_output_pnts) {
+	bu_ptbl_free(data->output_pnts);
+	BU_PUT(data->output_pnts, struct bu_ptbl);
+    }
+}
+
+HIDDEN
+int
+chull3d_intermediate_set(point_t **vertices, int *num_vertices, const point_t *input_points_3d, int num_input_pnts)
+{
+    int nv = 0;
+    int nf = 0;
+    int curr_stp = 0;
+    int pnt_stp = 0;
+    int last_stp = 0;
+    int pnts_per_stp = CHULL3D_SUBSET_SIZE;
+    const point_t *curr_inputs;
+    struct bu_ptbl *opnts;
+    point_t *intermediate_vert_array = (point_t *)bu_calloc(num_input_pnts, sizeof(point_t), "vertex array");
+    simplex *root = NULL;
+    BU_GET(opnts, struct bu_ptbl);
+    bu_ptbl_init(opnts, num_input_pnts, "output pnts container");
+    pnt_stp = (num_input_pnts < pnts_per_stp) ? num_input_pnts : pnts_per_stp;
+    last_stp = num_input_pnts / pnts_per_stp;
+    while (curr_stp <= last_stp) {
+	struct chull3d_data *cdata;
+	curr_inputs = input_points_3d + curr_stp * pnt_stp;
+	if (curr_stp == last_stp) pnt_stp = num_input_pnts - curr_stp * pnt_stp;
+	BU_GET(cdata, struct chull3d_data);
+	cdata->output_pnts = opnts;
+	cdata->vert_array = intermediate_vert_array;
+	chull3d_data_init(cdata, pnt_stp);
+	cdata->input_vert_array = curr_inputs;
+	cdata->vert_cnt = &nv;
+	cdata->face_cnt = &nf;
+	chull3d_make_shuffle(cdata);
+	root = chull3d_build_convex_hull(cdata, chull3d_get_next_site, chull3d_site_numm, cdata->pdim);
+	if (!root) return -1;
+	chull3d_visit_hull(cdata, root, chull3d_collect_hull_pnts);
+	chull3d_free_hull_storage(cdata);
+	chull3d_data_free(cdata);
+	BU_PUT(cdata, struct chull3d_data);
+	curr_stp++;
+    }
+
+    (*vertices) = intermediate_vert_array;
+    (*num_vertices) = nv;
+    return 0;
 }
 
 int
@@ -1191,18 +1254,34 @@ bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     struct chull3d_data *cdata;
     simplex *root = NULL;
 
+    const point_t *iv_1;
+    point_t *iv_2, *iva;
+    int nv_1, nv_2, nva;
+    iv_1 = input_points_3d;
+    nv_1 = num_input_pnts;
+
+    (void)chull3d_intermediate_set(&iv_2, &nv_2, (const point_t *)iv_1, nv_1);
+    iva = iv_2;
+    nva = nv_2;
+    while (nva > CHULL3D_COUNT_THRESHOLD && abs(nv_1 - nv_2) > CHULL3D_DELTA_THRESHOLD) {
+	nv_1 = nv_2;
+	iv_1 = (const point_t *)iv_2;
+	(void)chull3d_intermediate_set(&iv_2, &nv_2, (const point_t *)iv_1, nv_1);
+	bu_free(iv_1, "free old set");
+	iva = iv_2;
+	nva = nv_2;
+    }
+
     BU_GET(cdata, struct chull3d_data);
-    chull3d_data_init(cdata, num_input_pnts);
-    cdata->input_vert_array = input_points_3d;
+    chull3d_data_init(cdata, nva);
+    cdata->input_vert_array = (const point_t *)iva;
     cdata->vert_cnt = num_vertices;
     cdata->face_cnt = num_faces;
     (*cdata->vert_cnt) = 0;
     (*cdata->face_cnt) = 0;
     chull3d_make_shuffle(cdata);
     root = chull3d_build_convex_hull(cdata, chull3d_get_next_site, chull3d_site_numm, cdata->pdim);
-
     if (!root) return -1;
-
     chull3d_visit_hull(cdata, root, chull3d_collect_hull_pnts);
     for(i = 0; i < (int)BU_PTBL_LEN(cdata->output_pnts); i++) {
 	point_t p1;
@@ -1220,6 +1299,7 @@ bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
 
     chull3d_free_hull_storage(cdata);
     chull3d_data_free(cdata);
+    bu_free(iva, "intermediate_vert_array");
     BU_PUT(cdata, struct chull3d_data);
 
     return 0;
