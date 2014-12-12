@@ -99,6 +99,38 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	if (retval) {return -1;} else {bu_log("Cube With Center Point Test Passed!\n");}
     }
 
+    /* Flat triangles */
+    {
+	int i = 0;
+	int retval = 0;
+	int fc = 0;
+	int vc = 0;
+	point_t *vert_array;
+	int *faces;
+	point_t *input_verts = (point_t *)bu_calloc(5, sizeof(point_t), "vertex array");
+	VSET(input_verts[0], 0.0, 0.0, 0.0);
+	VSET(input_verts[1], 3.0, 3.0, 3.0);
+	VSET(input_verts[2], 1.0, 1.0, 1.0);
+	VSET(input_verts[3], 5.0, 1.0, 1.0);
+	VSET(input_verts[4], 2.0, 2.0, 2.0);
+
+	retval = bn_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)input_verts, 9);
+	bu_log("Test #003:  Flat Triangles:\n");
+	bu_log("  Vertices:\n");
+	for(i = 0; i < vc; i++) {
+	    point_t p1;
+	    VMOVE(p1,vert_array[i]);
+	    bu_log("      actual[%d]: %f, %f, %f\n", i, p1[0], p1[1], p1[2]);
+	}
+	bu_log("  Faces:\n");
+	for(i = 0; i < fc; i++) {
+	    bu_log("      face %d: %d, %d, %d\n", i, faces[i*3], faces[i*3+1], faces[i*3+2]);
+	}
+	if (retval) {return -1;} else {bu_log("Flat Triangles Passed!\n");}
+    }
+
+
+
     return 0;
 }
 

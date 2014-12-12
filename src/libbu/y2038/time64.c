@@ -505,8 +505,8 @@ void copy_TM64_to_tm(const struct TM *src, struct tm *dest) {
 
 
 /* Simulate localtime_r() to the best of our ability */
-struct tm * fake_localtime_r(const time_t *time, struct tm *result) {
-    const struct tm *static_result = localtime(time);
+struct tm * fake_localtime_r(const time_t *ytime, struct tm *result) {
+    const struct tm *static_result = localtime(ytime);
 
     assert(result != NULL);
 
@@ -522,8 +522,8 @@ struct tm * fake_localtime_r(const time_t *time, struct tm *result) {
 
 
 /* Simulate gmtime_r() to the best of our ability */
-struct tm * fake_gmtime_r(const time_t *time, struct tm *result) {
-    const struct tm *static_result = gmtime(time);
+struct tm * fake_gmtime_r(const time_t *ytime, struct tm *result) {
+    const struct tm *static_result = gmtime(ytime);
 
     assert(result != NULL);
 
@@ -566,7 +566,7 @@ static Time64_T seconds_between_years(Year left_year, Year right_year) {
 Time64_T mktime64(struct TM *input_date) {
     struct tm safe_date;
     struct TM date;
-    Time64_T  time;
+    Time64_T  ytime;
     Year      year = input_date->tm_year + 1900;
 
     /* MODIFIED: this check added, used to make sure that the mktime()
@@ -580,11 +580,11 @@ Time64_T mktime64(struct TM *input_date) {
     if( date_in_safe_range(input_date, &SYSTEM_MKTIME_MIN, &SYSTEM_MKTIME_MAX) )
     {
         copy_TM64_to_tm(input_date, &safe_date);
-        time = (Time64_T)mktime(&safe_date);
+        ytime = (Time64_T)mktime(&safe_date);
 
         /* Correct the possibly out of bound input date */
         copy_tm_to_TM64(&safe_date, input_date);
-        return time;
+        return ytime;
     }
 
     /* Have to make the year safe in date else it won't fit in safe_date */
@@ -592,14 +592,14 @@ Time64_T mktime64(struct TM *input_date) {
     date.tm_year = safe_year(year) - 1900;
     copy_TM64_to_tm(&date, &safe_date);
 
-    time = (Time64_T)mktime(&safe_date);
+    ytime = (Time64_T)mktime(&safe_date);
 
     /* Correct the user's possibly out of bound input date */
     copy_tm_to_TM64(&safe_date, input_date);
 
-    time += seconds_between_years(year, (Year)(safe_date.tm_year + 1900));
+    ytime += seconds_between_years(year, (Year)(safe_date.tm_year + 1900));
 
-    return time;
+    return ytime;
 }
 
 
@@ -615,7 +615,7 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
     Time64_T v_tm_tday;
     int leap;
     Time64_T m;
-    Time64_T time = *in_time;
+    Time64_T ytime = *in_time;
     Year year = 70;
     int cycles = 0;
 
@@ -642,13 +642,13 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
     p->tm_zone   = "UTC";
 #endif
 
-    v_tm_sec =  (int)(time % 60);
-    time /= 60;
-    v_tm_min =  (int)(time % 60);
-    time /= 60;
-    v_tm_hour = (int)(time % 24);
-    time /= 24;
-    v_tm_tday = time;
+    v_tm_sec =  (int)(ytime % 60);
+    ytime /= 60;
+    v_tm_min =  (int)(ytime % 60);
+    ytime /= 60;
+    v_tm_hour = (int)(ytime % 24);
+    ytime /= 24;
+    v_tm_tday = ytime;
 
     WRAP (v_tm_sec, v_tm_min, 60);
     WRAP (v_tm_min, v_tm_hour, 60);
@@ -736,7 +736,7 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
 }
 
 
-struct TM *localtime64_r (const Time64_T *time, struct TM *local_tm)
+struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
 {
     time_t safe_time;
     struct tm safe_date;
@@ -747,10 +747,10 @@ struct TM *localtime64_r (const Time64_T *time, struct TM *local_tm)
     assert(local_tm != NULL);
 
     /* Use the system localtime() if time_t is small enough */
-    if( SHOULD_USE_SYSTEM_LOCALTIME(*time) ) {
-        safe_time = (time_t)*time;
+    if( SHOULD_USE_SYSTEM_LOCALTIME(*ytime) ) {
+        safe_time = (time_t)*ytime;
 
-        TIME64_TRACE1("Using system localtime for %lld\n", *time);
+        TIME64_TRACE1("Using system localtime for %lld\n", *ytime);
 
         LOCALTIME_R(&safe_time, &safe_date);
 
@@ -760,8 +760,8 @@ struct TM *localtime64_r (const Time64_T *time, struct TM *local_tm)
         return local_tm;
     }
 
-    if( gmtime64_r(time, &gm_tm) == NULL ) {
-        TIME64_TRACE1("gmtime64_r returned null for %lld\n", *time);
+    if( gmtime64_r(ytime, &gm_tm) == NULL ) {
+        TIME64_TRACE1("gmtime64_r returned null for %lld\n", *ytime);
         return NULL;
     }
 
@@ -858,29 +858,29 @@ char *asctime64_r( const struct TM* date, char *result ) {
 }
 
 
-char *ctime64_r( const Time64_T* time, char* result ) {
+char *ctime64_r( const Time64_T* ytime, char* result ) {
     struct TM date;
 
-    localtime64_r( time, &date );
+    localtime64_r(ytime, &date );
     return asctime64_r( &date, result );
 }
 
 
 /* Non-thread safe versions of the above */
-struct TM *localtime64(const Time64_T *time) {
+struct TM *localtime64(const Time64_T *ytime) {
     tzset();
-    return localtime64_r(time, &Static_Return_Date);
+    return localtime64_r(ytime, &Static_Return_Date);
 }
 
-struct TM *gmtime64(const Time64_T *time) {
-    return gmtime64_r(time, &Static_Return_Date);
+struct TM *gmtime64(const Time64_T *ytime) {
+    return gmtime64_r(ytime, &Static_Return_Date);
 }
 
 char *asctime64( const struct TM* date ) {
     return asctime64_r( date, Static_Return_String );
 }
 
-char *ctime64( const Time64_T* time ) {
+char *ctime64( const Time64_T* ytime ) {
     tzset();
-    return asctime64(localtime64(time));
+    return asctime64(localtime64(ytime));
 }
