@@ -1,0 +1,5 @@
+set(Y2038_SOURCES
+  time64.c
+  )
+
+BRLCAD_ADDLIB(y2038 "${Y2038_SOURCES}" "")
