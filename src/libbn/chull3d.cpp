@@ -13,6 +13,8 @@
 
 #include "common.h"
 
+#include <map>
+
 #include <assert.h>
 #include <float.h>
 #include <locale.h>
@@ -154,6 +156,8 @@ struct chull3d_data {
     simplex **st;
     long ss;
     long s_num;
+    std::map<long *, int> *point_lookup;
+    int free_point_lookup;
 
     /* libbn style inputs and outputs */
     const point_t *input_vert_array;
@@ -711,7 +715,7 @@ chull3d_collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *UNUSED(p
     long int ip[3];
     /*point_t p1, p2, p3;*/
     const point_t *pp[3];
-    int f[3];
+    int f;
 
     if (!s) return NULL;
 
@@ -722,10 +726,12 @@ chull3d_collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *UNUSED(p
     /* Don't add a point if it's already added */
     /* TODO - the lookup time may become a problem for large point sets */
     for (j=0;j<(cdata->cdim);j++){
-	f[j] = bu_ptbl_locate(cdata->output_pnts, (long *)pp[j]);
-	if (f[j] == -1) {
-	    f[j] = bu_ptbl_ins(cdata->output_pnts, (long *)pp[j]);
-	    VMOVE(cdata->vert_array[f[j]],*pp[j]);
+	std::map<long *, int>::iterator pli;
+	pli = cdata->point_lookup->find((long *)pp[j]);
+	if (pli == cdata->point_lookup->end()) {
+	    f = bu_ptbl_ins(cdata->output_pnts, (long *)pp[j]);
+	    cdata->point_lookup->insert(std::make_pair((long *)pp[j], f));
+	    VMOVE(cdata->vert_array[f],*pp[j]);
 	    (*cdata->vert_cnt)++;
 	}
     }
@@ -752,7 +758,9 @@ chull3d_collect_faces(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
 
     /* TODO - the lookup time may become a problem for large point sets */
     for (j=0;j<(cdata->cdim);j++){
-	f[j] = bu_ptbl_locate(cdata->output_pnts, (long *)pp[j]);
+	std::map<long *, int>::iterator pli;
+	pli = cdata->point_lookup->find((long *)pp[j]);
+	f[j] = pli->second;
     }
 
     /* Use cdata->center_pnt and the center pnt of the triangle to construct
@@ -1166,7 +1174,12 @@ chull3d_data_init(struct chull3d_data *data, int vert_cnt)
     data->fg_vn = 0;
     data->st=(simplex**)malloc((data->ss+MAXDIM+1)*sizeof(simplex*));
     data->ns = NULL;
+    data->free_point_lookup = 0;
     data->free_output_pnts = 0;
+    if (!data->point_lookup) {
+	data->point_lookup = new std::map<long *, int>;
+	data->free_point_lookup = 1;
+    }
     if (!data->output_pnts) {
 	BU_GET(data->output_pnts, struct bu_ptbl);
 	bu_ptbl_init(data->output_pnts, vert_cnt, "output pnts container");
@@ -1200,6 +1213,7 @@ chull3d_data_free(struct chull3d_data *data)
 	bu_ptbl_free(data->output_pnts);
 	BU_PUT(data->output_pnts, struct bu_ptbl);
     }
+    if (data->free_point_lookup) delete data->point_lookup;
 }
 
 HIDDEN
@@ -1214,6 +1228,7 @@ chull3d_intermediate_set(point_t **vertices, int *num_vertices, const point_t *i
     int pnts_per_stp = CHULL3D_SUBSET_SIZE;
     const point_t *curr_inputs;
     struct bu_ptbl *opnts;
+    std::map<long *, int> *pl = new std::map<long *, int>;
     point_t *intermediate_vert_array = (point_t *)bu_calloc(num_input_pnts, sizeof(point_t), "vertex array");
     simplex *root = NULL;
     BU_GET(opnts, struct bu_ptbl);
@@ -1226,6 +1241,7 @@ chull3d_intermediate_set(point_t **vertices, int *num_vertices, const point_t *i
 	if (curr_stp == last_stp) pnt_stp = num_input_pnts - curr_stp * pnt_stp;
 	BU_GET(cdata, struct chull3d_data);
 	cdata->output_pnts = opnts;
+	cdata->point_lookup = pl;
 	cdata->vert_array = intermediate_vert_array;
 	chull3d_data_init(cdata, pnt_stp);
 	cdata->input_vert_array = curr_inputs;
@@ -1240,6 +1256,9 @@ chull3d_intermediate_set(point_t **vertices, int *num_vertices, const point_t *i
 	BU_PUT(cdata, struct chull3d_data);
 	curr_stp++;
     }
+    bu_ptbl_free(opnts);
+    BU_PUT(opnts, struct bu_ptbl);
+    delete pl;
 
     (*vertices) = intermediate_vert_array;
     (*num_vertices) = nv;
@@ -1260,14 +1279,14 @@ bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     iv_1 = input_points_3d;
     nv_1 = num_input_pnts;
 
-    (void)chull3d_intermediate_set(&iv_2, &nv_2, (const point_t *)iv_1, nv_1);
+    (void)chull3d_intermediate_set(&iv_2, &nv_2, iv_1, nv_1);
     iva = iv_2;
     nva = nv_2;
     while (nva > CHULL3D_COUNT_THRESHOLD && abs(nv_1 - nv_2) > CHULL3D_DELTA_THRESHOLD) {
 	nv_1 = nv_2;
 	iv_1 = (const point_t *)iv_2;
-	(void)chull3d_intermediate_set(&iv_2, &nv_2, (const point_t *)iv_1, nv_1);
-	bu_free(iv_1, "free old set");
+	(void)chull3d_intermediate_set(&iv_2, &nv_2, iv_1, nv_1);
+	bu_free((point_t *)iv_1, "free old set");
 	iva = iv_2;
 	nva = nv_2;
     }
