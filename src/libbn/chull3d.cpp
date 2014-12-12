@@ -751,9 +751,7 @@ chull3d_collect_faces(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
 
     if (!s) return NULL;
 
-    /* TODO: We should return the polygonal hull in this case - we
-     * have the information to do it. For now, do nothing so we
-     * at least don't segfault... */
+    /* If we're not 3d, it doesn't make sense to do this */
     if (cdata->cdim != 3) return NULL;
 
     for (j=0;j<(cdata->cdim);j++) v[j] = s->neigh[j].vert;
