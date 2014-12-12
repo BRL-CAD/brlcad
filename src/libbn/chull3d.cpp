@@ -1279,6 +1279,7 @@ bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     int i;
     struct chull3d_data *cdata;
     simplex *root = NULL;
+    int output_dim = 0;
 
     const point_t *iv_1;
     point_t *iv_2, *iva;
@@ -1322,13 +1323,14 @@ bn_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     chull3d_visit_hull(cdata, root, chull3d_collect_faces);
     (*vertices) = cdata->vert_array;
     (*faces) = cdata->faces;
+    output_dim = cdata->cdim;
 
     chull3d_free_hull_storage(cdata);
     chull3d_data_free(cdata);
     bu_free(iva, "intermediate_vert_array");
     BU_PUT(cdata, struct chull3d_data);
 
-    return 0;
+    return output_dim;
 }
 
 /*
