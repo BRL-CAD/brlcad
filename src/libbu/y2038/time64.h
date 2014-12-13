@@ -7,9 +7,8 @@
 #include "time64_config.h"
 
 /* Set our custom types */
-typedef INT_64_T       int64_t;
-typedef int64_t        Time64_T;
-typedef int64_t        Year;
+typedef INT_64_T       Time64_T;
+typedef INT_64_T       Year;
 
 /* A copy of the tm struct but with a 64 bit year */
 struct TM64 {
