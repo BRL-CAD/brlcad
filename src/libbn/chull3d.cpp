@@ -46,8 +46,8 @@
  * bot's vertices are not part of the hull it should
  * help */
 #define CHULL3D_COUNT_THRESHOLD 1000
-#define CHULL3D_DELTA_THRESHOLD 500
-#define CHULL3D_SUBSET_SIZE 500
+#define CHULL3D_DELTA_THRESHOLD 200
+#define CHULL3D_SUBSET_SIZE 275
 
 typedef double Coord;
 typedef Coord* point;
