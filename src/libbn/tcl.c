@@ -44,7 +44,7 @@
 #include "bn/plane_calc.h"
 #include "bn/qmath.h"
 #include "bn/rand.h"
-#include "bn/tcl.h"
+#include "bn/bn_tcl.h"
 #include "bn/tcl_encode.h"
 
 int
