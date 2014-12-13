@@ -1,14 +1,15 @@
 #ifndef TIME64_H
 #    define TIME64_H
 
+#include "common.h"
+
 #include <time.h>
 #include "time64_config.h"
 
 /* Set our custom types */
-typedef INT_64_T        Int64;
-typedef Int64           Time64_T;
-typedef Int64           Year;
-
+typedef INT_64_T       int64_t;
+typedef int64_t        Time64_T;
+typedef int64_t        Year;
 
 /* A copy of the tm struct but with a 64 bit year */
 struct TM64 {
@@ -31,14 +32,12 @@ struct TM64 {
 #endif
 };
 
-
 /* Decide which tm struct to use */
 #ifdef USE_TM64
 #define TM      TM64
 #else
 #define TM      tm
-#endif   
-
+#endif
 
 /* Declare public functions */
 struct TM *gmtime64_r    (const Time64_T *, struct TM *);
