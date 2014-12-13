@@ -15,7 +15,6 @@
 
 #include <map>
 
-#include <assert.h>
 #include <float.h>
 #include <locale.h>
 #include <math.h>
@@ -186,14 +185,14 @@ struct chull3d_data {
 #define CHULL3D_NEWL(cdata, list, X, p)                                 \
 {                                                               \
     p = list ? list : chull3d_new_block_##X(cdata, 1);              \
-    assert(p);                                              \
+    /*assert(p);*/                                              \
     list = p->next;                                         \
 }
 
 #define CHULL3D_NEWLRC(cdata, list, X, p)                               \
 {                                                               \
     p = list ? list : chull3d_new_block_##X(cdata, 1);              \
-    assert(p);                                              \
+    /*assert(p);*/                                             \
     list = p->next;                                         \
     p->ref_count = 1;                                       \
 }
@@ -223,10 +222,8 @@ chull3d_new_block_simplex(struct chull3d_data *cdata, int make_blocks)
     int i;
     simplex *xlm, *xbt;
     if (make_blocks && cdata) {
-	((cdata->num_simplex_blocks<cdata->input_vert_cnt) ? (void) (0) : __assert_fail ("cdata->num_simplex_blocks<cdata->input_vert_cnt", "chull3d.c", 31, __PRETTY_FUNCTION__));
 	xbt = cdata->simplex_block_table[(cdata->num_simplex_blocks)++] = (simplex*)malloc(cdata->input_vert_cnt * cdata->simplex_size);
 	memset(xbt,0,cdata->input_vert_cnt * cdata->simplex_size);
-	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 31, __PRETTY_FUNCTION__));
 	xlm = ((simplex*) ( (char*)xbt + (cdata->input_vert_cnt) * cdata->simplex_size));
 	for (i=0; i<cdata->input_vert_cnt; i++) {
 	    xlm = ((simplex*) ( (char*)xlm + ((-1)) * cdata->simplex_size));
@@ -253,10 +250,8 @@ chull3d_new_block_basis_s(struct chull3d_data *cdata, int make_blocks)
     int i;
     basis_s *xlm, *xbt;
     if (make_blocks && cdata) {
-	((cdata->num_basis_s_blocks<cdata->input_vert_cnt) ? (void) (0) : __assert_fail ("num_basis_s_blocks<cdata->input_vert_cnt", "chull3d.c", 32, __PRETTY_FUNCTION__));
 	xbt = cdata->basis_s_block_table[(cdata->num_basis_s_blocks)++] = (basis_s*)malloc(cdata->input_vert_cnt * cdata->basis_s_size);
 	memset(xbt,0,cdata->input_vert_cnt * cdata->basis_s_size);
-	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 32, __PRETTY_FUNCTION__));
 	xlm = ((basis_s*) ( (char*)xbt + (cdata->input_vert_cnt) * cdata->basis_s_size));
 	for (i=0; i<cdata->input_vert_cnt; i++) {
 	    xlm = ((basis_s*) ( (char*)xlm + ((-1)) * cdata->basis_s_size));
@@ -283,10 +278,8 @@ chull3d_new_block_Tree(struct chull3d_data *cdata, int make_blocks) {
     int i;
     Tree *xlm, *xbt;
     if (make_blocks && cdata) {
-	((cdata->num_Tree_blocks<cdata->input_vert_cnt) ? (void) (0) : __assert_fail ("num_Tree_blocks<cdata->input_vert_cnt", "chull3d.c", 33, __PRETTY_FUNCTION__));
 	xbt = cdata->Tree_block_table[cdata->num_Tree_blocks++] = (Tree*)malloc(cdata->input_vert_cnt * cdata->Tree_size);
 	memset(xbt,0,cdata->input_vert_cnt * cdata->Tree_size);
-	((xbt) ? (void) (0) : __assert_fail ("xbt", "chull3d.c", 33, __PRETTY_FUNCTION__));
 	xlm = ((Tree*) ( (char*)xbt + (cdata->input_vert_cnt) * cdata->Tree_size));
 	for (i=0; i<cdata->input_vert_cnt; i++) {
 	    xlm = ((Tree*) ( (char*)xlm + ((-1)) * cdata->Tree_size));
@@ -577,7 +570,7 @@ chull3d_visit_fg_i(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data 
 
     if (!t) return;
 
-    assert(t->fgs);
+    //assert(t->fgs);
     if (t->fgs->mark!=vn) {
 	t->fgs->mark = vn;
 	if (t->key!=cdata->hull_infinity && !cdata->mo[cdata->site_num((void *)cdata, t->key)]) boundaryc = 0;
@@ -602,7 +595,7 @@ chull3d_visit_fg_i_far(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_d
 
     if (!t) return 0;
 
-    assert(t->fgs);
+    //assert(t->fgs);
     if (t->fgs->mark!=vn) {
 	t->fgs->mark = vn;
 	nb = (t->key==cdata->hull_infinity) || cdata->mo[cdata->site_num((void *)cdata, t->key)];
@@ -852,9 +845,7 @@ chull3d_connect(struct chull3d_data *cdata, simplex *s)
     neighbor *sn;
 
     if (!s) return;
-    assert(!s->peak.vert
-	    && s->peak.simp->peak.vert==cdata->p
-	    && !chull3d_op_vert(cdata,s,cdata->p)->simp->peak.vert);
+    //assert(!s->peak.vert && s->peak.simp->peak.vert==cdata->p && !chull3d_op_vert(cdata,s,cdata->p)->simp->peak.vert);
     if (s->visit==cdata->pnum) return;
     s->visit = cdata->pnum;
     seen = s->peak.simp;
@@ -1034,7 +1025,7 @@ chull3d_build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *sit
     cdata->b_err_min = (float)(DBL_EPSILON*MAXDIM*(1<<MAXDIM)*MAXDIM*3.01);
     cdata->b_err_min_sq = cdata->b_err_min * cdata->b_err_min;
 
-    assert(cdata->get_site!=NULL); assert(cdata->site_num!=NULL);
+    //assert(cdata->get_site!=NULL); assert(cdata->site_num!=NULL);
 
     cdata->rdim = cdata->pdim;
 
@@ -1079,9 +1070,9 @@ chull3d_site_numm(void *data, site p)
 HIDDEN site
 chull3d_new_site(struct chull3d_data *cdata, site p, long j)
 {
-    assert(cdata->num_blocks+1<cdata->input_vert_cnt);
+    //assert(cdata->num_blocks+1<cdata->input_vert_cnt);
     if (0==(j%BLOCKSIZE)) {
-	assert(cdata->num_blocks < cdata->input_vert_cnt);
+	//assert(cdata->num_blocks < cdata->input_vert_cnt);
 	return(cdata->site_blocks[cdata->num_blocks++]=(site)malloc(BLOCKSIZE*cdata->site_size));
     } else
 	return p+cdata->pdim;
