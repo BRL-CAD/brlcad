@@ -3,8 +3,22 @@
 
 #include "common.h"
 
+#ifndef Y2038_EXPORT
+#  if defined(Y2038_DLL_EXPORTS) && defined(Y2038_DLL_IMPORTS)
+#    error "Only Y2038_DLL_EXPORTS or Y2038_DLL_IMPORTS can be defined, not both."
+#  elif defined(Y2038_DLL_EXPORTS)
+#    define Y2038_EXPORT __declspec(dllexport)
+#  elif defined(Y2038_DLL_IMPORTS)
+#    define Y2038_EXPORT __declspec(dllimport)
+#  else
+#    define Y2038_EXPORT
+#  endif
+#endif
+
 #include <time.h>
 #include "time64_config.h"
+
+
 
 /* Set our custom types */
 typedef INT_64_T       Time64_T;
@@ -39,20 +53,20 @@ struct TM64 {
 #endif
 
 /* Declare public functions */
-struct TM *gmtime64_r    (const Time64_T *, struct TM *);
-struct TM *localtime64_r (const Time64_T *, struct TM *);
-struct TM *gmtime64      (const Time64_T *);
-struct TM *localtime64   (const Time64_T *);
+Y2038_EXPORT struct TM *gmtime64_r    (const Time64_T *, struct TM *);
+Y2038_EXPORT struct TM *localtime64_r (const Time64_T *, struct TM *);
+Y2038_EXPORT struct TM *gmtime64      (const Time64_T *);
+Y2038_EXPORT struct TM *localtime64   (const Time64_T *);
 
-char *asctime64          (const struct TM *);
-char *asctime64_r        (const struct TM *, char *);
+Y2038_EXPORT char *asctime64          (const struct TM *);
+Y2038_EXPORT char *asctime64_r        (const struct TM *, char *);
 
-char *ctime64            (const Time64_T*);
-char *ctime64_r          (const Time64_T*, char*);
+Y2038_EXPORT char *ctime64            (const Time64_T*);
+Y2038_EXPORT char *ctime64_r          (const Time64_T*, char*);
 
-Time64_T   timegm64      (const struct TM *);
-Time64_T   mktime64      (struct TM *);
-Time64_T   timelocal64   (struct TM *);
+Y2038_EXPORT Time64_T   timegm64      (const struct TM *);
+Y2038_EXPORT Time64_T   mktime64      (struct TM *);
+Y2038_EXPORT Time64_T   timelocal64   (struct TM *);
 
 
 /* Not everyone has gm/localtime_r(), provide a replacement */

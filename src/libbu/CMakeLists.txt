@@ -104,6 +104,9 @@ get_directory_property(BRLCAD_TCL_BUILD DIRECTORY ${BRLCAD_SOURCE_DIR}/src/other
 if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
   add_dependencies(libbu tcl)
 endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
+if(CPP_DLL_DEFINES)
+  set_property(TARGET libbu APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_IMPORTS")
+endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
