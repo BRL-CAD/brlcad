@@ -1,7 +1,7 @@
 #include "common.h"
 #include "brep.h"
 #include "shape_recognition.h"
-
+#include "bu/log.h"
 curve_t
 GetCurveType(ON_Curve *curve)
 {
@@ -21,6 +21,8 @@ GetCurveType(ON_Curve *curve)
     ON_Arc arc;
     if (curve->IsArc(NULL, &arc, 0.01)) {
 	if (arc.IsCircle()) return CURVE_CIRCLE;
+	ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	bu_log("arc's circle: center %f, %f, %f   radius %f\n", circ.Center().x, circ.Center().y, circ.Center().z, circ.Radius());
        	return CURVE_ARC;
     }
 
