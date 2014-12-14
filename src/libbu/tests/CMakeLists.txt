@@ -1,3 +1,6 @@
+# a local library for this directory
+BRLCAD_ADDLIB(libbu_tests "test_funcs.c" libbu NO_INSTALL)
+
 BRLCAD_ADDEXEC(tester_bu_sscanf bu_sscanf.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bu_gethostname bu_gethostname.c libbu NO_INSTALL)
 
