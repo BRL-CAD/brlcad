@@ -503,7 +503,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     # Huh?  No j flag if we can't get a processor count
     set(JFLAG)
   endif(NOT N EQUAL 0)
-  add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE Regression -E ^regress- ${JFLAG})
+  add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE Regression -E ^regress- ${JFLAG})
   set_target_properties(check PROPERTIES FOLDER "BRL-CAD Unit Tests")
   function(add_test test_name test_prog)
     _add_test(${test_name} ${test_prog} ${ARGN})
