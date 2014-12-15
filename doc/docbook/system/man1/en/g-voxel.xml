@@ -14,13 +14,13 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>g-voxel</command>    
+  <command>g-voxel</command>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-s <replaceable>"dx</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>dy</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>dz"</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat">-d <replaceable>n</replaceable></arg>
     <arg choice="opt" rep="norepeat">-t <replaceable>f</replaceable></arg>
     <arg choice="plain" rep="norepeat"><replaceable>model.g</replaceable></arg>
     <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg>
-    
+
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -29,8 +29,8 @@
 <para>The <command>g-voxel</command> command generates a list of voxels from a .g file (BRL-CAD database)
 and writes them to a voxels.txt file.</para>
 
-<para>The command takes two compulsary arguments - a BRL-CAD database and at least one
-geometry object (though there can be as many as you like)</para>
+<para>The command takes two compulsory arguments: a BRL-CAD database and at least one
+geometry object (though there can be as many as you like).</para>
 </refsect1>
 
 <refsect1 xml:id="options"><title>OPTIONS</title>
@@ -50,7 +50,7 @@ geometry object (though there can be as many as you like)</para>
   <varlistentry>
   <term><option>-t f</option></term>
   <listitem>
-<para>The threshhold upon which the voxel is considered.</para>
+<para>The threshold upon which the voxel is considered.</para>
   </listitem>
   </varlistentry>
 </variablelist>
