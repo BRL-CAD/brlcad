@@ -4612,10 +4612,10 @@ DEPRECATED RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 /* TODO - implement this flag
 #define DB_LS_REGEX	   0x40*/ /* interpret pattern using regex rules, instead of
 				     globbing rules (default) */
-RT_EXPORT extern int db_ls(const struct db_i *dbip,
-		           int flags,
-			   const char *pattern,
-			   struct directory ***dpv);
+RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
+			      int flags,
+			      const char *pattern,
+			      struct directory ***dpv);
 
 /**
  * convert an argv list of names to a directory pointer array.
