@@ -38,11 +38,11 @@ Limitations, Issues, etc...
 ---------------------------
 
 localtime64_r() gets its time zone and daylight savings time
-information by mappping the future year back to a similar one between
+information by mapping the future year back to a similar one between
 2010 and 2037, safe for localtime_r().  The calculations are accurate
 according to current time zone and daylight savings information, but
 may become inaccurate if a change is made that takes place after 2010.
-But its better to be off by an hour than 137 years.
+But it's better to be off by an hour than 137 years.
 
 Future versions will probe for a 64 bit safe system localtime_r() and
 gmtime_r() and use that.  You can manually set the safe range of your

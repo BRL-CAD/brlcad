@@ -1100,7 +1100,7 @@ chull3d_read_next_site(struct chull3d_data *cdata, long j)
     return cdata->p;
 }
 
-HIDDEN void 
+HIDDEN void
 chull3d_make_shuffle(struct chull3d_data *cdata)
 {
     long i, j, t;
