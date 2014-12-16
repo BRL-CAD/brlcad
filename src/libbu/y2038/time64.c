@@ -257,7 +257,7 @@ int cmp_date( const struct TM* left, const struct tm* right ) {
 
 
 /* Check if a date is safely inside a range.
-   The intention is to check if its a few days inside.
+   The intention is to check if it's a few days inside.
 */
 int date_in_safe_range( const struct TM* date, const struct tm* min, const struct tm* max ) {
     if( cmp_date(date, min) == -1 )

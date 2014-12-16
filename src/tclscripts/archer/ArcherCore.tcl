@@ -5205,7 +5205,7 @@ namespace eval ArcherCore {
 # Note -_name is expected to exist in the database.
 #
 ::itcl::body ArcherCore::updateTreeTopWithName {_name} {
-    # Check to see if its okay to add a toplevel node
+    # Check to see if it's okay to add a toplevel node
     set toplist {}
     foreach item [$itk_component(ged) tops] {
 	lappend toplist [regsub {/.*} $item {}]

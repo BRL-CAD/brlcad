@@ -113,9 +113,9 @@ struct rayshot_results {
      * enables the logic for creating contact pairs using overlap info.
      *
      * Also rt_result.overlap_found is set to FALSE, before even a single
-    * ray is shot and its value is valid across all the different ray shots,
-    * so if an overlap has been detected in a ray, all subsequent air gap processing is
-    * skipped.
+     * ray is shot and its value is valid across all the different ray shots,
+     * so if an overlap has been detected in a ray, all subsequent air gap processing is
+     * skipped.
      */
     int overlap_found;
 
@@ -671,7 +671,7 @@ traverse_normalray_lists(
 	if (rv == NOT_FOUND)
 	    continue;
 
-	/* Overlap confirmed, set overlap_found here, because only here its known
+	/* Overlap confirmed, set overlap_found here, because only here it's known
 	 * that at least one of detected overlaps was between A & B */
 	rt_result.overlap_found = 1;
 
