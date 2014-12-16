@@ -19,6 +19,7 @@ BRLCAD_ADDEXEC(tester_bn_plane_isect bn_plane_isect.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_complex bn_complex.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_mat bn_mat.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_tabdata bn_tabdata.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_qmath bn_qmath.c "libbu;libbn" NO_INSTALL)
 CMAKEFILES(bn_chull_test003_bot.asc)
 CMAKEFILES(bn_chull_test004_bot.asc)
 CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c bn_obr.c)
@@ -1000,7 +1001,144 @@ add_test(NAME bn_tabdata_dup COMMAND tester_bn_tabdata 19 5,0,20,40,60,80,100 1,
 
 add_test(NAME bn_tabdata_get_constval COMMAND tester_bn_tabdata 20 5,0,20,40,60,80,100 3 3,3,3,3,3)
 
+#
+#  *************** qmath.c tests ***************
+#
+# For tester_bn_qmath, input is as follows:
+# tester_bn_qmath <function_number> <args>
+
+# For function #1 (quat_mat2quat), the <args> format is as follows:
+#
+# mat expected_quat
+#
+# where mat is a sequence of 16 comma-separated numbers representing a
+# mat_t matrix, and expected_quat is a sequence of 4 comma-separated
+# numbers representing a quaternion (X, Y, Z, W).
+
+add_test(NAME bn_quat_mat2quat_identity COMMAND tester_bn_qmath 1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 0,0,0,1)
+add_test(NAME bn_quat_mat2quat_trace_0_1 COMMAND tester_bn_qmath 1 1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,-1 1,0,0,0)
+add_test(NAME bn_quat_mat2quat_trace_0_2 COMMAND tester_bn_qmath 1 -1,0,0,0,0,1,0,0,0,0,-1,0,0,0,0,-1 0,1,0,0)
+add_test(NAME bn_quat_mat2quat_trace_0_3 COMMAND tester_bn_qmath 1 -1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,-1 0,0,1,0)
+
+# For function #2 (quat_quat2mat), the <args> format is as follows:
+#
+# quat expected_mat
+#
+# where quat is a sequence of 4 comma-separated numbers representing a
+# quaternion (X, Y, Z, W), and expected_mat is a sequence of 16
+# comma-separated numbers representing a mat_t matrix.
+
+add_test(NAME bn_quat_quat2mat_identity COMMAND tester_bn_qmath 2 0,0,0,1 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1)
+add_test(NAME bn_quat_quat2mat_trace_0_1 COMMAND tester_bn_qmath 2 1,0,0,0 1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,1)
+add_test(NAME bn_quat_quat2mat_trace_0_2 COMMAND tester_bn_qmath 2 0,1,0,0 -1,0,0,0,0,1,0,0,0,0,-1,0,0,0,0,1)
+add_test(NAME bn_quat_quat2mat_trace_0_3 COMMAND tester_bn_qmath 2 0,0,1,0 -1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1)
+
+# For function #3 (quat_distance), the <args> format is as follows:
+#
+# q1 q2 expected_distance
+#
+# where q1 and q2 are sequences of 4 comma-separated numbers each
+# representing a quaternion (X, Y, Z, W), and expected_distance is the
+# correct distance between q1 and q2.
+
+add_test(NAME bn_quat_distance_0 COMMAND tester_bn_qmath 3 1,2,0,3 1,2,0,3 0)
+add_test(NAME bn_quat_distance_1 COMMAND tester_bn_qmath 3 1,2,0,3 -1,-2,0,-3 7.483)
+add_test(NAME bn_quat_distance_2 COMMAND tester_bn_qmath 3 4,2,3,1 0,0,2,3 5)
+
+# For function #4 (quat_double), the <args> format is as follows:
+#
+# q1 q2 expected_quat
+#
+# where q1, q2, and expected_quat are sequences of 4 comma-separated
+# numbers each representing a quaternion (X, Y, Z, W).
+
+add_test(NAME bn_quat_double_0 COMMAND tester_bn_qmath 4 0,2,0,1 0,2,0,1 0,0.894,0,0.447)
+add_test(NAME bn_quat_double_1 COMMAND tester_bn_qmath 4 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 0.900,0.177,0.355,0.179)
+
+# For function #5 (quat_bisect), the <args> format is as follows:
+#
+# q1 q2 expected_quat
+#
+# where q1, q2, and expected_quat are sequences of 4 comma-separated
+# numbers each representing a quaternion (X, Y, Z, W).
+
+add_test(NAME bn_quat_bisect_0 COMMAND tester_bn_qmath 5 0,0.894,0,0.447 0,0.894,0,0.447 0,0.894,0,0.447)
+add_test(NAME bn_quat_bisect_1 COMMAND tester_bn_qmath 5 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 0.657,0.327,0.653,0.187)
+
+# For function #6 (quat_slerp), the <args> format is as follows:
+#
+# q1 q2 f expected_quat
+#
+# where q1, q2, and expected_quat are sequences of 4 comma-separated
+# numbers each representing a quaternion (X, Y, Z, W), and f is a
+# single number which is the fraction between q1 and q2 to interpolate
+# for.
+
+add_test(NAME bn_quat_slerp_same_0 COMMAND tester_bn_qmath 6 0,0.894,0,0.447 0,0.894,0,0.447 0 0,0.894,0,0.447)
+add_test(NAME bn_quat_slerp_same_0.5 COMMAND tester_bn_qmath 6 0,0.894,0,0.447 0,0.894,0,0.447 0.5 0,0.894,0,0.447)
+add_test(NAME bn_quat_slerp_same_0.783 COMMAND tester_bn_qmath 6 0,0.894,0,0.447 0,0.894,0,0.447 0.783 0,0.894,0,0.447)
+add_test(NAME bn_quat_slerp_same_1 COMMAND tester_bn_qmath 6 0,0.894,0,0.447 0,0.894,0,0.447 1 0,0.894,0,0.447)
+add_test(NAME bn_quat_slerp_diff_0 COMMAND tester_bn_qmath 6 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 0 0.548,0.365,0.730,0.183)
+add_test(NAME bn_quat_slerp_diff_0.5 COMMAND tester_bn_qmath 6 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 0.5 0.657,0.327,0.653,0.187)
+add_test(NAME bn_quat_slerp_diff_0.783 COMMAND tester_bn_qmath 6 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 0.783 0.713,0.302,0.604,0.188)
+add_test(NAME bn_quat_slerp_diff_1 COMMAND tester_bn_qmath 6 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 1 0.753,0.282,0.564,0.188)
+
+# For function #7 (quat_sberp), the <args> format is as follows:
+#
+# q1 qa qb q2 f expected_quat
+#
+# where q1, qa, qb, q2, and expected_quat are sequences of 4
+# comma-separated numbers representing a quaternion (X, Y, Z, W), and
+# f is a single number which is the fraction between q1 and q2 to
+# interpolate for.
+
+add_test(NAME bn_quat_sberp_same_0 COMMAND tester_bn_qmath 7 0,0.894,0,0.447 1,0,0,0 0.5,0.5,0.5,0.5  0,0.894,0,0.447 0 0,0.894,0,0.447)
+add_test(NAME bn_quat_sberp_same_0.5 COMMAND tester_bn_qmath 7 0,0.894,0,0.447 1,0,0,0 0.5,0.5,0.5,0.5 0,0.894,0,0.447 0.5 0.723,0.529,0.230,0.380)
+add_test(NAME bn_quat_sberp_same_0.783 COMMAND tester_bn_qmath 7 0,0.894,0,0.447 1,0,0,0 0.5,0.5,0.5,0.5 0,0.894,0,0.447 0.783 0.391,0.740,0.241,0.491)
+add_test(NAME bn_quat_sberp_same_1 COMMAND tester_bn_qmath 7 0,0.894,0,0.447 1,0,0,0 0.5,0.5,0.5,0.5 0,0.894,0,0.447 1 0,0.894,0,0.447)
+add_test(NAME bn_quat_sberp_diff_0 COMMAND tester_bn_qmath 7 0.548,0.365,0.730,0.183 1,0,0,0 0.5,0.5,0.5,0.5 0.753,0.282,0.564,0.188 0 0.548,0.365,0.730,0.183)
+add_test(NAME bn_quat_sberp_diff_0.5 COMMAND tester_bn_qmath 7 0.548,0.365,0.730,0.183 1,0,0,0 0.5,0.5,0.5,0.5 0.753,0.282,0.564,0.188 0.5 0.828,0.302,0.392,0.264)
+add_test(NAME bn_quat_sberp_diff_0.783 COMMAND tester_bn_qmath 7 0.548,0.365,0.730,0.183 1,0,0,0 0.5,0.5,0.5,0.5 0.753,0.282,0.564,0.188 0.783 0.724,0.358,0.501,0.310)
+add_test(NAME bn_quat_sberp_diff_1 COMMAND tester_bn_qmath 7 0.548,0.365,0.730,0.183 1,0,0,0 0.5,0.5,0.5,0.5 0.753,0.282,0.564,0.188 1 0.753,0.282,0.564,0.188)
+
+# For function #8 (quat_make_nearest), the <args> format is as follows:
+#
+# q1 q2 f expected_result
+#
+# where q1, q2, and expected_result are sequences of 4 comma-separated
+# numbers, each representing a quaternion (X, Y, Z, W).
+
+add_test(NAME bn_quat_make_nearest_same_0 COMMAND tester_bn_qmath 8 0,0.894,0,0.447 0,0.894,0,0.447 0,0.894,0,0.447)
+add_test(NAME bn_quat_make_nearest_same_1 COMMAND tester_bn_qmath 8 0,-0.894,0,-0.447 0,0.894,0,0.447 0,0.894,0,0.447)
+add_test(NAME bn_quat_make_nearest_diff_0 COMMAND tester_bn_qmath 8 0.548,0.365,0.730,0.183 0.753,0.282,0.564,0.188 0.548,0.365,0.730,0.183)
+add_test(NAME bn_quat_make_nearest_diff_1 COMMAND tester_bn_qmath 8 -0.548,-0.365,-0.730,-0.183 0.753,0.282,0.564,0.188 0.548,0.365,0.730,0.183)
+
+# For function #9 (quat_exp), the <args> format is as follows:
+#
+# in expected_out
+#
+# where in and expected_out are sequences of 4 comma-separated
+# numbers, each representing a quaternion (X, Y, Z, W).
+
+add_test(NAME bn_quat_exp_0 COMMAND tester_bn_qmath 9 0,0,0,0 0,0,0,1)
+add_test(NAME bn_quat_exp_1 COMMAND tester_bn_qmath 9 0.577,0.577,0.577,0 0.486,0.486,0.486,0.541)
+add_test(NAME bn_quat_exp_2 COMMAND tester_bn_qmath 9 0.365,0.730,0.183,0 0.324,0.648,0.162,0.670)
+
+# For function #10 (quat_exp), the <args> format is as follows:
+#
+# in expected_out
+#
+# where in and expected_out are sequences of 4 comma-separated
+# numbers, each representing a quaternion (X, Y, Z, W).
+
+add_test(NAME bn_quat_log_0 COMMAND tester_bn_qmath 10 1,0,0,0 1.571,0,0,0)
+add_test(NAME bn_quat_log_1 COMMAND tester_bn_qmath 10 0.5,0.5,0.5,0.5 0.605,0.605,0.605,0)
+add_test(NAME bn_quat_log_2 COMMAND tester_bn_qmath 10 0.548,0.365,0.730,0.183 0.773,0.515,1.030,0)
+
+
 CMAKEFILES(bntester.dat)
+
+
 
 # Local Variables:
 # tab-width: 8
