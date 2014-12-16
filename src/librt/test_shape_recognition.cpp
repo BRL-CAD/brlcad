@@ -16,6 +16,169 @@
 #include "brep.h"
 #include "../libbrep/shape_recognition.h"
 
+std::string
+face_set_key(std::set<int> fset)
+{
+    std::set<int>::iterator s_it;
+    std::set<int>::iterator s_it2;
+    std::string key;
+    struct bu_vls vls_key = BU_VLS_INIT_ZERO;
+    for (s_it = fset.begin(); s_it != fset.end(); s_it++) {
+	bu_vls_printf(&vls_key, "%d", (*s_it));
+	s_it2 = s_it;
+	s_it2++;
+	if (s_it2 != fset.end()) bu_vls_printf(&vls_key, "_");
+    }
+    bu_vls_printf(&vls_key, ".s");
+    key.append(bu_vls_addr(&vls_key));
+    bu_vls_free(&vls_key);
+    return key;
+}
+
+void
+build_face_sets(std::map<int, std::set<int> > *face_sets, ON_Brep *brep)
+{
+    for (int i = 0; i < brep->m_F.Count(); i++) {
+	std::queue<int> local_loops;
+	ON_BrepFace *face = &(brep->m_F[i]);
+	(*face_sets)[i].insert(i);
+	local_loops.push(face->OuterLoop()->m_loop_index);
+	while(!local_loops.empty()) {
+	    ON_BrepLoop* loop = &(brep->m_L[local_loops.front()]);
+	    local_loops.pop();
+	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+		if (edge.TrimCount() > 1) {
+		    for (int j = 0; j < edge.TrimCount(); j++) {
+			if (edge.m_ti[j] != ti && edge.Trim(j)->FaceIndexOf()!= -1) {
+			    (*face_sets)[i].insert(edge.Trim(j)->FaceIndexOf());
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
+
+void
+build_object_face_sets(std::map<std::string, std::set<int> > *face_sets, ON_Brep *brep)
+{
+    std::map<int, std::set<int> > int_face_sets;
+    std::set<int>::iterator s_it;
+    build_face_sets(&int_face_sets, brep);
+    for (int i = 0; i < brep->m_F.Count(); i++) {
+	struct bu_vls key = BU_VLS_INIT_ZERO;
+	for (s_it = int_face_sets[i].begin(); s_it != int_face_sets[i].end(); s_it++) {
+	    bu_vls_printf(&key, "%d", (*s_it));
+	}
+	//bu_log("key: %s\n", bu_vls_addr(&key));
+	(*face_sets).insert(std::make_pair(face_set_key(int_face_sets[i]), int_face_sets[i]));
+	bu_vls_free(&key);
+    }
+}
+
+
+void
+build_loop_sets(std::map<int, std::set<int> > *loop_sets, ON_Brep *brep)
+{
+    for (int i = 0; i < brep->m_F.Count(); i++) {
+	std::queue<int> local_loops;
+	std::set<int> processed_loops;
+	ON_BrepFace *face = &(brep->m_F[i]);
+	local_loops.push(face->OuterLoop()->m_loop_index);
+	processed_loops.insert(face->OuterLoop()->m_loop_index);
+	//std::cout << "Face " << i <<  " outer loop " << face->OuterLoop()->m_loop_index << "\n";
+	while(!local_loops.empty()) {
+	    (*loop_sets)[i].insert(local_loops.front());
+	    ON_BrepLoop* loop = &(brep->m_L[local_loops.front()]);
+	    local_loops.pop();
+	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+		if (edge.TrimCount() > 1) {
+		    for (int j = 0; j < edge.TrimCount(); j++) {
+			if (edge.m_ti[j] != ti && edge.Trim(j)->FaceIndexOf()!= -1) {
+			    if (processed_loops.find(edge.Trim(j)->Loop()->m_loop_index) == processed_loops.end()) {
+				local_loops.push(edge.Trim(j)->Loop()->m_loop_index);
+				processed_loops.insert(edge.Trim(j)->Loop()->m_loop_index);
+				//std::cout << "Face " << i <<  " network pulls in loop " << edge.Trim(j)->Loop()->m_loop_index << " in face " << edge.Trim(j)->FaceIndexOf() << "\n";
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
+
+void
+print_face_set(std::map<int, std::set<int> > *face_sets, int i)
+{
+    std::set<int>::iterator s_it;
+    std::set<int>::iterator s_it2;
+    std::cout << "Face set for face " << i << ": ";
+    for (s_it = (*face_sets)[i].begin(); s_it != (*face_sets)[i].end(); s_it++) {
+	std::cout << (int)(*s_it);
+	s_it2 = s_it;
+	s_it2++;
+	if (s_it2 != (*face_sets)[i].end()) std::cout << ",";
+    }
+    std::cout << "\n";
+}
+
+void
+print_object_face_sets(std::map<std::string, std::set<int> > *face_sets)
+{
+    std::map<std::string, std::set<int> >::iterator f_it;
+    for (f_it = face_sets->begin(); f_it != face_sets->end(); f_it++) {
+	std::set<int>::iterator s_it;
+	std::set<int>::iterator s_it2;
+	std::cout << "Face set for object " << (*f_it).first.c_str() << ": ";
+	for (s_it = (*f_it).second.begin(); s_it != (*f_it).second.end(); s_it++) {
+	    std::cout << (int)(*s_it);
+	    s_it2 = s_it;
+	    s_it2++;
+	    if (s_it2 != (*f_it).second.end()) std::cout << ",";
+	}
+	std::cout << "\n";
+    }
+}
+
+void
+print_face_set_surface_types(std::map<int, std::set<int> > *face_sets, ON_Brep *brep, int i)
+{
+    std::set<int>::iterator s_it;
+    std::cout << "Surface types for face set " << i << ": \n";
+    for (s_it = (*face_sets)[i].begin(); s_it != (*face_sets)[i].end(); s_it++) {
+	ON_BrepFace *used_face = &(brep->m_F[(*s_it)]);
+	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
+	int surface_type = (int)GetSurfaceType(temp_surface);
+	std::cout << "  Face " << (*s_it) << " surface type: " << surface_type << "\n";
+    }
+}
+
+void
+build_edge_set(std::set<std::pair<int, int> > *edge_set, std::map<int, std::set<int> > *loop_sets, ON_Brep *brep, int i)
+{
+    std::set<int>::iterator s_it;
+    ON_BrepFace *face = &(brep->m_F[i]);
+    for (s_it = (*loop_sets)[i].begin(); s_it != (*loop_sets)[i].end(); s_it++) {
+	ON_BrepLoop* loop = &(brep->m_L[(*s_it)]);
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+	    ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+	    if (edge.TrimCount() > 1) {
+		for (int j = 0; j < edge.TrimCount(); j++) {
+		    if (edge.m_ti[j] != ti) {
+			(*edge_set).insert(std::make_pair(loop->Face()->m_face_index, edge.m_edge_index));
+		    }
+		}
+	    }
+	}
+    }
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -56,121 +219,38 @@ main(int argc, char *argv[])
 
     ON_Brep *brep = brep_ip->brep;
 
-#if 0
-    for (int i = 0; i < brep->m_C3.Count(); i++) {
-	int curve_type = (int)GetCurveType(brep->m_C3[i]);
-	if (curve_type != 1 && curve_type != 6)
-	std::cout << "Curve type: " << GetCurveType(brep->m_C3[i]) << "\n";
-    }
-
-    for (int i = 0; i < brep->m_S.Count(); i++) {
-	int surface_type = (int)GetSurfaceType(brep->m_S[i]);
-	if (surface_type != 1 && surface_type != 6)
-	std::cout << "Surface type: " << GetSurfaceType(brep->m_S[i]) << "\n";
-    }
-#endif
-#if 0
-    for (int i = 0; i < brep->m_F.Count(); i++) {
-	ON_BrepFace *face = &(brep->m_F[i]);
-	ON_Surface *temp_surface = (ON_Surface *)face->SurfaceOf();
-	int surface_type = (int)GetSurfaceType(temp_surface);
-	std::cout << "Surface type: " << surface_type << "\n";
-	for (int li = 0; li < face->LoopCount(); li++) {
-	    bool innerLoop = (li > 0) ? true : false;
-	    ON_BrepLoop* loop = face->Loop(li);
-	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
-		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-		//const ON_Curve* trimCurve = trim.TrimCurveOf();
-		const ON_Curve* edgeCurve = edge.EdgeCurveOf();
-		int curve_type = (int)GetCurveType((ON_Curve *)edgeCurve);
-		if (innerLoop) {
-		std::cout << "  Inner Curve type: " << curve_type << "\n";
-		} else {
-		std::cout << "  Outer Curve type: " << curve_type << "\n";
-		}
-	    }
-	}
-    }
-#endif
-
     std::map<int, std::set<int> > face_sets;
+    std::map<std::string, std::set<int> > object_face_sets;
     std::map<int, std::set<int> > loop_sets;
+    build_face_sets(&face_sets, brep);
+    build_object_face_sets(&object_face_sets, brep);
+    build_loop_sets(&loop_sets, brep);
+
+    /*
+    for (int i = 0; i < brep->m_F.Count(); i++) {
+	print_face_set(&face_sets, i);
+	print_face_set_surface_types(&face_sets, brep, i);
+    }
+    */
+    print_object_face_sets(&object_face_sets);
 
     for (int i = 0; i < brep->m_F.Count(); i++) {
-	std::queue<int> local_loops;
-	std::set<int> processed_loops;
-	ON_BrepFace *face = &(brep->m_F[i]);
-	face_sets[i].insert(i);
-	local_loops.push(face->OuterLoop()->m_loop_index);
-	processed_loops.insert(face->OuterLoop()->m_loop_index);
-	std::cout << "Face " << i <<  " outer loop " << face->OuterLoop()->m_loop_index << "\n";
-	while(!local_loops.empty()) {
-	    loop_sets[i].insert(local_loops.front());
-	    ON_BrepLoop* loop = &(brep->m_L[local_loops.front()]);
-	    local_loops.pop();
-	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
-		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-		if (edge.TrimCount() > 1) {
-		    for (int j = 0; j < edge.TrimCount(); j++) {
-			if (edge.m_ti[j] != ti && edge.Trim(j)->FaceIndexOf()!= -1) {
-			    face_sets[i].insert(edge.Trim(j)->FaceIndexOf());
-			    if (processed_loops.find(edge.Trim(j)->Loop()->m_loop_index) == processed_loops.end()) {
-				local_loops.push(edge.Trim(j)->Loop()->m_loop_index);
-				processed_loops.insert(edge.Trim(j)->Loop()->m_loop_index);
-				std::cout << "Face " << i <<  " network pulls in loop " << edge.Trim(j)->Loop()->m_loop_index << " in face " << edge.Trim(j)->FaceIndexOf() << "\n";
-			    }
-			}
-		    }
-		}
+	std::set<std::pair<int, int> > edge_set;
+	std::set<std::pair<int, int> >::iterator c_it;
+	build_edge_set(&edge_set, &loop_sets, brep, i);
+	for (c_it = edge_set.begin(); c_it != edge_set.end(); c_it++) {
+	    ON_Curve *curve = (ON_Curve *)(brep->m_C3[brep->m_E[(*c_it).second].EdgeCurveIndexOf()]);
+	    int curve_type = (int)GetCurveType(curve);
+	    std::cout << "  Curve " << (*c_it).second << " type: " << curve_type << " in face " << (*c_it).first << "\n";
+	    if (curve_type == CURVE_ARC) {
+		ON_Arc arc;
+		(void)curve->IsArc(NULL, &arc, 0.01);
+		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		bu_log("    arc's circle: center %0.2f, %0.2f, %0.2f   radius %f\n", circ.Center().x, circ.Center().y, circ.Center().z, circ.Radius());
 	    }
-	}
-    }
-    for (int i = 0; i < brep->m_F.Count(); i++) {
-	std::set<int>::iterator s_it;
-	std::set<int>::iterator s_it2;
-	ON_BrepFace *face = &(brep->m_F[i]);
-	std::cout << "Face set for face " << i << ": ";
-	for (s_it = face_sets[i].begin(); s_it != face_sets[i].end(); s_it++) {
-	    std::cout << (int)(*s_it);
-	    s_it2 = s_it;
-	    s_it2++;
-	    if (s_it2 != face_sets[i].end()) std::cout << ",";
-	}
-	std::cout << "\n";
-	for (s_it = face_sets[i].begin(); s_it != face_sets[i].end(); s_it++) {
-	    ON_BrepFace *used_face = &(brep->m_F[(*s_it)]);
-	    ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
-	    int surface_type = (int)GetSurfaceType(temp_surface);
-	    std::cout << "Face " << (*s_it) << " surface type: " << surface_type << "\n";
-	}
-	std::set<int> curve_set;
-	std::set<int>::iterator c_it;
-	for (s_it = loop_sets[i].begin(); s_it != loop_sets[i].end(); s_it++) {
-	    ON_BrepLoop* loop = &(brep->m_L[(*s_it)]);
-	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
-		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-		if (edge.TrimCount() > 1) {
-		    for (int j = 0; j < edge.TrimCount(); j++) {
-			if (edge.m_ti[j] != ti) {
-			    curve_set.insert(edge.EdgeCurveIndexOf());
-			    //const ON_Curve* edgeCurve = edge.EdgeCurveOf();
-			    //int curve_type = (int)GetCurveType((ON_Curve *)edgeCurve);
-			    //std::cout << "Loop " << (*s_it) << " curve type: " << curve_type << "\n";
-			}
-		    }
-		}
-	    }
-	}
-	for (c_it = curve_set.begin(); c_it != curve_set.end(); c_it++) {
-	    int curve_type = (int)GetCurveType((ON_Curve *)(brep->m_C3[(*c_it)]));
-	    std::cout << "Curve " << (*c_it) << " type: " << curve_type << "\n";
 	}
 	std::cout << "\n";
     }
-
 
 
     return 0;
