@@ -17,9 +17,10 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>pixblend</command>
-    <arg choice='opt'><arg choice='plain'>- </arg><group choice='opt'><arg choice='plain'><replaceable>r</replaceable></arg><arg choice='plain'><replaceable>i</replaceable></arg></group><arg choice='plain'><replaceable>value</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-</arg><group choice='opt'><arg choice='plain'><replaceable>r</replaceable></arg><arg choice='plain'><replaceable>i</replaceable></arg></group><arg choice='plain'><replaceable>value</replaceable></arg></arg>
     <arg choice='opt'>-s <replaceable>seedval</replaceable></arg>
     <arg choice='opt'>-S</arg>
+    <arg choice='opt'>-g <replaceable>gvalue</replaceable></arg>
     <arg choice='plain'><replaceable>file1.pix</replaceable></arg>
     <arg choice='plain'><replaceable>file2.pix</replaceable></arg>
     <arg choice='plain'>&gt;</arg>
