@@ -220,8 +220,6 @@ struct db5_raw_internal {
  */
 #define DB5_ENC_LEN(len) (1 << len)
 
-RT_EXPORT extern const int db5_enc_len[4];	/* convert wid to nbytes */
-
 RT_EXPORT extern unsigned char *db5_encode_length(unsigned char	*cp,
 						   size_t		val,
 						   int		format);
