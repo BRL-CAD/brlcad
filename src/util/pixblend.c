@@ -57,9 +57,9 @@ static char *b1;			/* fg input buffer */
 static char *b2;			/* bg input buffer */
 static char *b3;			/* output buffer */
 
-double value, gvalue;
-int iflg, rflg, gflg;
-int seed;
+double value = 0.0 , gvalue = 0.0;
+int iflg = 0 , rflg = 0 , gflg = 0;
+int seed = 0;
 
 static char usage[] = "\
 Usage: pixblend [-{r|i} value] [-s seed] [-S] [-g gvalue] file1.pix file2.pix > out.pix\n";
@@ -163,18 +163,17 @@ main(int argc, char **argv)
 	bu_exit (1, NULL);
     }
 
-    gvalue = 0.0;
     if (!iflg && !rflg) {
 	/* Default action: interpolate by 50% */
 	iflg = 1;
 	value = 0.5;
     }
-
-    if (value < 0.0 || value > 1.0) {
+    else if (value < 0.0 || value > 1.0) {
 	fprintf(stderr, "pixblend: Blend value must be between 0.0 and 1.0\n");
 	bu_exit (0, NULL);
-
     }
+
+    gvalue = 0.0;
 
     if (rflg) {
 #ifdef HAVE_DRAND48
