@@ -121,8 +121,7 @@
     </variablelist>
     <variablelist>
       <cmdsynopsis>
-        <command>info</command>
-        <command>T</command>
+        <command>info T</command>
         <group choice="opt" rep="norepeat">
           <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
           <arg choice="plain" rep="norepeat">
