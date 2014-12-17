@@ -549,7 +549,15 @@ proc ::conversion_config { } {
    }
 }
 
-::conversion_config
+proc ::run_conversion_config {input_file log_file} {
+    set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
+    [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
+    catch {eval exec $gui_cmd} _conv_log
+}
+
+if {$argv0 == [info script]} {
+   ::conversion_config
+}
 
 # Local Variables:
 # tab-width: 8
