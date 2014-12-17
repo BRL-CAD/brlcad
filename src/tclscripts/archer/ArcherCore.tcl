@@ -4184,12 +4184,19 @@ namespace eval ArcherCore {
 	return
     }
 
-    if {[catch {$itk_component(ged) get $_ctext} cgdata]} {
-	set ctype invalid
+    set ctype [$itk_component(ged) get_type $_ctext]
+    set isregion [lsearch [$itk_component(ged) form $ctype] region]
+
+    if {$isregion == -1} {
 	set isregion 0
     } else {
-	set ctype [lindex $cgdata 0]
-	set isregion [isRegion $cgdata]
+	if {[catch {$itk_component(ged) get $_ctext} cgdata]} {
+	    set ctype invalid
+	    set isregion 0
+	} else {
+	    set ctype [lindex $cgdata 0]
+	    set isregion [isRegion $cgdata]
+	}
     }
 
     set ptext $mNode2Text($_pnode)

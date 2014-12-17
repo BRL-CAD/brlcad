@@ -130,7 +130,7 @@
 	method handleEnter {_row _col}
 	method highlightCurrentBotElements {}
 	method initPointHighlight {}
-	method loadTables {_gdata {_lflag 1}}
+	method loadTables {{_lflag 1}}
 	method manageTables {}
 	method multiEdgeSelectCallback {}
 	method multiFaceSelectCallback {}
@@ -225,7 +225,7 @@
 	set lflag 0
     }
 
-    loadTables $_gdata $lflag
+    loadTables $lflag
 
     $itk_component(edgeTab) unselectAllRows
     $itk_component(faceTab) unselectAllRows
@@ -987,9 +987,8 @@
 }
 
 
-::itcl::body BotEditFrame::loadTables {_gdata {_lflag 1}} {
-    set vl [$itk_option(-mged) get $itk_option(-geometryObject) V]
-    set vlen [llength $vl]
+::itcl::body BotEditFrame::loadTables {{_lflag 1}} {
+    set vlen [$itk_option(-mged) bot get vertices $itk_option(-geometryObject)]
     if {$mIgnoreMaxVertThreshold || $vlen <= $mMaxVertThreshold} {
 	set mShowTables 1
     } else {
@@ -1000,29 +999,26 @@
 	return
     }
 
+    SetWaitCursor $::ArcherCore::application
+
+    set mPointList {}
+    set index 1
+    set vl [$itk_option(-mged) get $itk_option(-geometryObject) V]
+    foreach item $vl {
+	set mVertDetail($index,$SELECT_COL) ""
+	set mVertDetail($index,$X_COL) [lindex $item 0]
+	set mVertDetail($index,$Y_COL) [lindex $item 1]
+	set mVertDetail($index,$Z_COL) [lindex $item 2]
+	incr index
+
+	lappend mPointList $item
+    }
+
     if {!$_lflag} {
-	set mPointList {}
-	foreach {attr val} $_gdata {
-	    switch -- $attr {
-		"V" {
-		    set index 1
-		    foreach item $val {
-			set mVertDetail($index,$SELECT_COL) ""
-			set mVertDetail($index,$X_COL) [lindex $item 0]
-			set mVertDetail($index,$Y_COL) [lindex $item 1]
-			set mVertDetail($index,$Z_COL) [lindex $item 2]
-			incr index
-
-			lappend mPointList $item
-		    }
-		}
-	    }
-	}
-
+	SetNormalCursor $::ArcherCore::application
 	return
     }
 
-    SetWaitCursor $::ArcherCore::application
     unset mVertDetail
     unset mEdgeDetail
     unset mFaceDetail
@@ -1049,48 +1045,20 @@
 	incr col
     }
 
-    set mPointList {}
-    set mEdgeList {}
+    set fl [$itk_option(-mged) get $itk_option(-geometryObject) F]
     set mFaceList {}
-    foreach {attr val} $_gdata {
-	switch -- $attr {
-	    "mode" {
-	    }
-	    "orient" {
-	    }
-	    "flags" {
-	    }
-	    "V" {
-		set index 1
-		foreach item $val {
-		    set mVertDetail($index,$SELECT_COL) ""
-		    set mVertDetail($index,$X_COL) [lindex $item 0]
-		    set mVertDetail($index,$Y_COL) [lindex $item 1]
-		    set mVertDetail($index,$Z_COL) [lindex $item 2]
-		    incr index
+    set index 1
+    foreach item $fl {
+	set mFaceDetail($index,$SELECT_COL) ""
+	set mFaceDetail($index,$A_COL) [lindex $item 0]
+	set mFaceDetail($index,$B_COL) [lindex $item 1]
+	set mFaceDetail($index,$C_COL) [lindex $item 2]
+	incr index
 
-		    lappend mPointList $item
-		}
-	    }
-	    "F" {
-		set index 1
-		foreach item $val {
-		    set mFaceDetail($index,$SELECT_COL) ""
-		    set mFaceDetail($index,$A_COL) [lindex $item 0]
-		    set mFaceDetail($index,$B_COL) [lindex $item 1]
-		    set mFaceDetail($index,$C_COL) [lindex $item 2]
-		    incr index
-
-		    lappend mFaceList [lsort -integer $item]
-		}
-	    }
-	    default {
-		# Shouldn't get here
-		puts "Encountered bad one - $attr"
-	    }
-	}
+	lappend mFaceList [lsort -integer $item]
     }
 
+    set mEdgeList {}
     set tmpEdgeList [$itk_option(-mged) get_bot_edges $itk_option(-geometryObject)]
     set index 1
     foreach item $tmpEdgeList {
