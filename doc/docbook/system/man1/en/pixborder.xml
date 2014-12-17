@@ -29,7 +29,7 @@
     <arg choice='opt'>-y <replaceable>bottom_edge</replaceable></arg>
     <arg choice='opt'>-X <replaceable>right_edge</replaceable></arg>
     <arg choice='opt'>-Y <replaceable>top_edge</replaceable></arg>
-    <arg choice='opt'>-ah </arg>
+    <arg choice='opt'>-a</arg>
     <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>

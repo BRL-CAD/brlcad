@@ -73,14 +73,14 @@ fastf_t exterior_hsv[3];
 fastf_t interior_hsv[3];
 fastf_t hsv_tol[3];
 
-#define OPT_STRING "ab:e:hi:n:s:t:w:x:y:B:E:I:T:X:Y:?"
+#define OPT_STRING "ab:e:i:n:s:t:w:x:y:B:E:I:T:X:Y:h?"
 
 static char usage[] = "\
 Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
 		 [-B 'H S V'] [-E 'H S V'] [-I 'H S V'] [-T 'H S V']\n\
 		 [-x left_edge]  [-y bottom_edge]\n\
 		 [-X right_edge] [-Y top_edge]\n\
-		 [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
+		 [-a] [-s squaresize] [-w file_width] [-n file_height]\n\
 		 [file.pix]\n";
 
 /*
@@ -361,10 +361,6 @@ get_args (int argc, char **argv)
 		}
 		rgb_to_hsv(exterior_rgb, exterior_hsv);
 		colors_specified |= COLORS_EXTERIOR;
-		break;
-	    case 'h':
-		file_height = file_width = 1024L;
-		autosize = 0;
 		break;
 	    case 'i':
 		if (! bu_str_to_rgb(bu_optarg, interior_rgb)) {
