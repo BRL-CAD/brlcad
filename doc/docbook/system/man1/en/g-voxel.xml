@@ -30,7 +30,7 @@
 and writes them to a voxels.txt file.</para>
 
 <para>The command takes two compulsory arguments: a BRL-CAD database and at least one
-geometry object (though there can be as many as you like).</para>
+geometry object (though there can be as many of the latter as you like).</para>
 </refsect1>
 
 <refsect1 xml:id="options"><title>OPTIONS</title>
