@@ -824,8 +824,7 @@
     $itk_option(-mged) bot_edge_split $itk_option(-geometryObjectPath) $_edge
     $::ArcherCore::application setSave
 
-    set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
-    loadTables $gdata
+    loadTables
 
     # Select one of the newly created edges (i.e. one with the largest vertex index)
     set selist [lsort -integer -index 1 $mEdgeList]
@@ -870,8 +869,7 @@
     $itk_option(-mged) bot_face_split $itk_option(-geometryObjectPath) $_face
     $::ArcherCore::application setSave
 
-    set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
-    loadTables $gdata
+    loadTables
 
     if {1} {
 	clearAllTables
@@ -999,26 +997,23 @@
 	return
     }
 
-    SetWaitCursor $::ArcherCore::application
-
-    set mPointList {}
-    set index 1
-    set vl [$itk_option(-mged) get $itk_option(-geometryObject) V]
-    foreach item $vl {
-	set mVertDetail($index,$SELECT_COL) ""
-	set mVertDetail($index,$X_COL) [lindex $item 0]
-	set mVertDetail($index,$Y_COL) [lindex $item 1]
-	set mVertDetail($index,$Z_COL) [lindex $item 2]
-	incr index
-
-	lappend mPointList $item
-    }
-
     if {!$_lflag} {
-	SetNormalCursor $::ArcherCore::application
+	set mPointList {}
+	set index 1
+	set vl [$itk_option(-mged) get $itk_option(-geometryObject) V]
+	foreach item $vl {
+	    set mVertDetail($index,$SELECT_COL) ""
+	    set mVertDetail($index,$X_COL) [lindex $item 0]
+	    set mVertDetail($index,$Y_COL) [lindex $item 1]
+	    set mVertDetail($index,$Z_COL) [lindex $item 2]
+	    incr index
+
+	    lappend mPointList $item
+	}
 	return
     }
 
+    SetWaitCursor $::ArcherCore::application
     unset mVertDetail
     unset mEdgeDetail
     unset mFaceDetail
@@ -1045,9 +1040,21 @@
 	incr col
     }
 
-    set fl [$itk_option(-mged) get $itk_option(-geometryObject) F]
+    set mPointList {}
+    set index 1
+    set vl [$itk_option(-mged) get $itk_option(-geometryObject) V]
+    foreach item $vl {
+	set mVertDetail($index,$SELECT_COL) ""
+	set mVertDetail($index,$X_COL) [lindex $item 0]
+	set mVertDetail($index,$Y_COL) [lindex $item 1]
+	set mVertDetail($index,$Z_COL) [lindex $item 2]
+	incr index
+
+	lappend mPointList $item
+    }
     set mFaceList {}
     set index 1
+    set fl [$itk_option(-mged) get $itk_option(-geometryObject) F]
     foreach item $fl {
 	set mFaceDetail($index,$SELECT_COL) ""
 	set mFaceDetail($index,$A_COL) [lindex $item 0]
@@ -1057,7 +1064,6 @@
 
 	lappend mFaceList [lsort -integer $item]
     }
-
     set mEdgeList {}
     set tmpEdgeList [$itk_option(-mged) get_bot_edges $itk_option(-geometryObject)]
     set index 1
@@ -1152,8 +1158,7 @@
 
 
 ::itcl::body BotEditFrame::reloadTables {} {
-    set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
-    loadTables $gdata
+    loadTables
 }
 
 
