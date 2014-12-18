@@ -27,20 +27,6 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 
-HIDDEN int
-scan_str(const char *str, int offset, const char *format, ...)
-{
-    va_list ap;
-    int n;
-    va_start(ap, format);
-    if (str) {
-	n = vsscanf(str + offset, format, ap);
-    } else {
-	n = vscanf(format, ap);
-    }
-    va_end(ap);
-    return n;
-}
 
 int
 bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...)
@@ -70,7 +56,12 @@ bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...)
 	/* Read in the next fastf_t */
 	double scan = 0;
 	fastf_t *arg;
-	part_n = scan_str(src, offset, "%lf%n", &scan, &len);
+
+	if (src)
+	    part_n = sscanf(src + offset, "%lf%n", &scan, &len);
+	else
+	    part_n = scanf("%lf%n", &scan, &len);
+
 	current_n += part_n;
 	offset += len;
 	if (part_n != 1) { break; }
@@ -78,8 +69,13 @@ bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...)
 	if (arg) { *arg = scan; }
 	/* Don't scan an extra delimiter at the end of the string */
 	if (i == n - 1) { break; }
+
 	/* Make sure that a delimiter is present */
-	scan_str(src, offset, delim_fmt, &len);
+	if (src)
+	    sscanf(src + offset, delim_fmt, &len);
+	else
+	    scanf(delim_fmt, &len);
+
 	offset += len;
 	if (len != delim_len) { break; }
     }
