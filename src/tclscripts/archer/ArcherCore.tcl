@@ -689,10 +689,26 @@ namespace eval ArcherCore {
 	variable mImage_arb8Inter ""
 	variable mImage_arb8Sub ""
 	variable mImage_arb8Union ""
-	variable mImage_arb7Labeled ""
-	variable mImage_arb6Labeled ""
-	variable mImage_arb5Labeled ""
-	variable mImage_arb4Labeled ""
+ 	variable mImage_arb7 ""
+        variable mImage_arb7Labeled ""
+ 	variable mImage_arb7Inter ""
+ 	variable mImage_arb7Sub ""
+ 	variable mImage_arb7Union ""
+ 	variable mImage_arb6 ""
+        variable mImage_arb6Labeled ""
+ 	variable mImage_arb6Inter ""
+ 	variable mImage_arb6Sub ""
+ 	variable mImage_arb6Union ""
+ 	variable mImage_arb5 ""
+        variable mImage_arb5Labeled ""
+ 	variable mImage_arb5Inter ""
+ 	variable mImage_arb5Sub ""
+ 	variable mImage_arb5Union ""
+ 	variable mImage_arb4 ""
+        variable mImage_arb4Labeled ""
+ 	variable mImage_arb4Inter ""
+ 	variable mImage_arb4Sub ""
+ 	variable mImage_arb4Union ""
 	variable mImage_arbn ""
 	variable mImage_arbnLabeled ""
 	variable mImage_arbnInter ""
@@ -1776,10 +1792,29 @@ namespace eval ArcherCore {
     set mImage_arb8Sub [image create photo -file [file join $mImgDir arb8_subtract.png]]
     set mImage_arb8Union [image create photo -file [file join $mImgDir arb8_union.png]]
 
+    set mImage_arb7 [image create photo -file [file join $mImgDir arb7.png]]
     set mImage_arb7Labeled [image create photo -file [file join $mImgDir arb7_labeled.png]]
+    set mImage_arb7Inter [image create photo -file [file join $mImgDir arb7_intersect.png]]
+    set mImage_arb7Sub [image create photo -file [file join $mImgDir arb7_subtract.png]]
+    set mImage_arb7Union [image create photo -file [file join $mImgDir arb7_union.png]]
+
+    set mImage_arb6 [image create photo -file [file join $mImgDir arb6.png]]
     set mImage_arb6Labeled [image create photo -file [file join $mImgDir arb6_labeled.png]]
+    set mImage_arb6Inter [image create photo -file [file join $mImgDir arb6_intersect.png]]
+    set mImage_arb6Sub [image create photo -file [file join $mImgDir arb6_subtract.png]]
+    set mImage_arb6Union [image create photo -file [file join $mImgDir arb6_union.png]]
+
+    set mImage_arb5 [image create photo -file [file join $mImgDir arb5.png]]
     set mImage_arb5Labeled [image create photo -file [file join $mImgDir arb5_labeled.png]]
+    set mImage_arb5Inter [image create photo -file [file join $mImgDir arb5_intersect.png]]
+    set mImage_arb5Sub [image create photo -file [file join $mImgDir arb5_subtract.png]]
+    set mImage_arb5Union [image create photo -file [file join $mImgDir arb5_union.png]]
+
+    set mImage_arb4 [image create photo -file [file join $mImgDir arb4.png]]
     set mImage_arb4Labeled [image create photo -file [file join $mImgDir arb4_labeled.png]]
+    set mImage_arb4Inter [image create photo -file [file join $mImgDir arb4_intersect.png]]
+    set mImage_arb4Sub [image create photo -file [file join $mImgDir arb4_subtract.png]]
+    set mImage_arb4Union [image create photo -file [file join $mImgDir arb4_union.png]]
 
     set mImage_arbn [image create photo -file [file join $mImgDir arbn.png]]
     set mImage_arbnLabeled [image create photo -file [file join $mImgDir arbn_labeled.png]]
@@ -2508,7 +2543,7 @@ namespace eval ArcherCore {
 
 		    set mlist [lreplace $mlist $i $i]
 
-		    if {[catch {$itk_component(ged) get $ctext} cgdata]} {
+		    if {[catch {$itk_component(ged) get_type $ctext} cgdata]} {
 			# In here, the child node refers to non-existent geometry
 			# so update the image and remove any grandchildren etc.
 
@@ -4584,6 +4619,10 @@ namespace eval ArcherCore {
 		}
 	    }
 	}
+	arb4 -
+	arb5 -
+	arb6 -
+	arb7 -
 	arb8 -
 	arbn -
 	ars -
@@ -4745,10 +4784,11 @@ namespace eval ArcherCore {
 
     set cnode [$itk_component(newtree) focus]
     set ctext [$itk_component(newtree) item $cnode -text]
-    set cgdata [$itk_component(ged) get $ctext]
+    set cgdata [$itk_component(ged) get_type $ctext]
     set ctype [lindex $cgdata 0]
 
     if {($ctype == "comb" ||
+	 $ctype == "region" ||
 	 $ctype == "dsp" ||
 	 $ctype == "ebm" ||
 	 $ctype == "extrude" ||
@@ -4763,10 +4803,11 @@ namespace eval ArcherCore {
 	    unset mPNode2CList($cnode)
 
 	    switch -- $ctype {
+		"region" -
 		"comb" {
 		    #set tree [getTreeFromGData $cgdata]
 		    foreach gctext [getTreeMembers $ctext 1] {
-			if {[catch {$itk_component(ged) get $gctext} gcgdata]} {
+			if {[catch {$itk_component(ged) get_type $gctext} gcgdata]} {
 			    set op [getTreeOp $ctext $gctext]
 			    set img [getTreeImage $gctext "invalid" $op]
 
