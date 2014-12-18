@@ -73,8 +73,10 @@ bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...)
 	/* Make sure that a delimiter is present */
 	if (src)
 	    sscanf(src + offset, delim_fmt, &len);
-	else
-	    scanf(delim_fmt, &len);
+	else {
+	    int unused; /* glibc marks scanf() with attribute 'warn_unused_result' */
+	    unused = scanf(delim_fmt, &len);
+	}
 
 	offset += len;
 	if (len != delim_len) { break; }
