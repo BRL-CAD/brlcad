@@ -226,14 +226,14 @@ main(int argc, char *argv[])
     build_object_face_sets(&object_face_sets, brep);
     build_loop_sets(&loop_sets, brep);
 
-    /*
+    ///*
     for (int i = 0; i < brep->m_F.Count(); i++) {
 	print_face_set(&face_sets, i);
 	print_face_set_surface_types(&face_sets, brep, i);
     }
-    */
+    //*/
     print_object_face_sets(&object_face_sets);
-
+#if 0
     for (int i = 0; i < brep->m_F.Count(); i++) {
 	std::set<std::pair<int, int> > edge_set;
 	std::set<std::pair<int, int> >::iterator c_it;
@@ -251,7 +251,7 @@ main(int argc, char *argv[])
 	}
 	std::cout << "\n";
     }
-
+#endif
 
     return 0;
 }
