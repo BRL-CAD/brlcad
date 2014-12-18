@@ -39,6 +39,8 @@ gmtime64_r() is a 64-bit equivalent of gmtime_r().
 
 */
 
+#include "common.h"
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
