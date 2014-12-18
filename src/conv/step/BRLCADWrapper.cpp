@@ -40,6 +40,7 @@ int BRLCADWrapper::sol_reg_cnt = 0;
 BRLCADWrapper::BRLCADWrapper()
     : outfp(NULL), dbip(NULL)
 {
+    dry_run = 0; /* by default we're doing a real run */
 }
 
 
