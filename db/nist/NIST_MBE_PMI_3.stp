@@ -4751,8 +4751,7 @@ SURFACE()
 #2468=APPLICATION_PROTOCOL_DEFINITION('International Standard',
 'config_control_design',1994,#2469);
 #2469=APPLICATION_CONTEXT(
-'configuration controlled 3d designs of mechanical parts and assemblie
-s');
+'configuration controlled 3d designs of mechanical parts and assemblies');
 #2470=PRODUCT_CONTEXT('3D Mechanical Parts',#2469,'mechanical');
 #2471=PRODUCT('Document','Document','Rhino converted to STEP',(#2470));
 #2472=(
@@ -4787,8 +4786,7 @@ SOLID_ANGLE_UNIT()
 );
 #2481=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(0.000393700787402),#2474,
 'DISTANCE_ACCURACY_VALUE',
-'Maximum model space distance between geometric entities at asserted c
-onnectivities');
+'Maximum model space distance between geometric entities at asserted connectivities');
 #2482=(
 GEOMETRIC_REPRESENTATION_CONTEXT(3)
 GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#2481))
