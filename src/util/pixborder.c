@@ -431,10 +431,7 @@ get_args (int argc, char **argv)
 	    case 'Y':
 		top_edge = atoi(bu_optarg);
 		break;
-	    case '?':
-		(void) fputs(usage, stderr);
-		bu_exit (0, NULL);
-	    default:
+	    default:  /* 'h' '?' */
 		return 0;
 	}
     }
