@@ -58,6 +58,7 @@ int
 main(int argc, char *argv[])
 {
     int ret = 0;
+    int overwrite_existing = 0;
     int64_t elapsedtime;
 
     elapsedtime = bu_gettime();
@@ -81,13 +82,17 @@ main(int argc, char *argv[])
     bool verbose = false;
     int dry_run = 0;
     char *summary_log_file = (char *)NULL;
-    while ((c = bu_getopt(argc, argv, "DS:vo:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "DS:vO:o:")) != -1) {
 	switch (c) {
 	    case 'D':
 		dry_run = 1;
 		break;
 	    case 'S':
 		summary_log_file = bu_optarg;
+		break;
+	    case 'O':
+		overwrite_existing = 1;
+		output_file = bu_optarg;
 		break;
 	    case 'o':
 		output_file = bu_optarg;
@@ -110,12 +115,12 @@ main(int argc, char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
 
-#ifndef OVERWRITE_WHILE_DEBUGGING
-    /* check our inputs/outputs */
-    if (bu_file_exists(output_file, NULL)) {
-	bu_exit(1, "ERROR: refusing to overwrite existing output file:\"%s\". Please remove file or change output file name and try again.", output_file);
+    if (!overwrite_existing) {
+	/* check our inputs/outputs */
+	if (bu_file_exists(output_file, NULL)) {
+	    bu_exit(1, "ERROR: refusing to overwrite existing output file:\"%s\". Please remove file or change output file name and try again.", output_file);
+	}
     }
-#endif
 
     if (!bu_file_exists(argv[0], NULL) && !BU_STR_EQUAL(argv[0], "-")) {
 	bu_exit(2, "ERROR: unable to read input \"%s\" STEP file", argv[0]);
