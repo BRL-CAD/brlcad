@@ -44,19 +44,19 @@ public:
     WorldObject(const btVector3 &bounding_box, btScalar mass, matp_t matrix);
 
     void add_to_world(btDiscreteDynamicsWorld &world);
-    void update_matrix();
+    void read_matrix();
     void write_matrix();
 
 
 private:
     WorldObject(const WorldObject &source);
     WorldObject &operator=(const WorldObject &source);
-    static btTransform read_matrix(const matp_t matrix);
+    static btTransform matrix_to_transform(const mat_t matrix);
     static btVector3 calculate_inertia(const btCollisionShape &collision_shape,
 				       btScalar mass);
 
     bool m_in_world;
-    matp_t m_matrix;
+    const matp_t m_matrix;
     btDefaultMotionState m_motion_state;
     collision::RtCollisionShape m_collision_shape;
     btRigidBody m_rigid_body;
@@ -74,7 +74,7 @@ PhysicsWorld::WorldObject::calculate_inertia(const btCollisionShape
 
 
 btTransform
-PhysicsWorld::WorldObject::read_matrix(const matp_t matrix)
+PhysicsWorld::WorldObject::matrix_to_transform(const mat_t matrix)
 {
     btTransform xform;
     {
@@ -91,7 +91,7 @@ PhysicsWorld::WorldObject::WorldObject(const btVector3 &bounding_box,
 				       btScalar mass, matp_t matrix) :
     m_in_world(false),
     m_matrix(matrix),
-    m_motion_state(read_matrix(m_matrix)),
+    m_motion_state(matrix_to_transform(m_matrix)),
     m_collision_shape(bounding_box),
     m_rigid_body(mass, &m_motion_state, &m_collision_shape,
 		 calculate_inertia(m_collision_shape, mass))
@@ -111,9 +111,9 @@ PhysicsWorld::WorldObject::add_to_world(btDiscreteDynamicsWorld &world)
 
 
 void
-PhysicsWorld::WorldObject::update_matrix()
+PhysicsWorld::WorldObject::read_matrix()
 {
-    m_motion_state.setWorldTransform(read_matrix(m_matrix));
+    m_motion_state.setWorldTransform(matrix_to_transform(m_matrix));
 }
 
 
@@ -141,7 +141,7 @@ PhysicsWorld::PhysicsWorld() :
 	collision::RT_SHAPE_TYPE,
 	collision::RT_SHAPE_TYPE,
 	new collision::RtCollisionAlgorithm::CreateFunc);
-    m_world.setGravity(btVector3(0, 0, -9.8));
+    m_world.setGravity(btVector3(0, 0, static_cast<btScalar>(-9.8)));
 }
 
 
@@ -158,7 +158,7 @@ PhysicsWorld::step(btScalar seconds)
 {
     for (std::vector<WorldObject *>::iterator it = m_objects.begin();
 	 it != m_objects.end(); ++it)
-	(*it)->update_matrix();
+	(*it)->read_matrix();
 
     m_world.stepSimulation(seconds, std::numeric_limits<int>::max());
 
