@@ -41,7 +41,8 @@ namespace simulate
 class PhysicsWorld::WorldObject
 {
 public:
-    WorldObject(const btVector3 &bounding_box, btScalar mass, matp_t matrix);
+    WorldObject(const btVector3 &bounding_box_dimensions, btScalar mass,
+		matp_t matrix);
 
     void add_to_world(btDiscreteDynamicsWorld &world);
     void read_matrix();
@@ -80,6 +81,10 @@ PhysicsWorld::WorldObject::matrix_to_transform(const mat_t matrix)
     {
 	btScalar bt_matrix[16];
 	MAT_TRANSPOSE(bt_matrix, matrix);
+	// scale mm to m
+	bt_matrix[12] /= 1000;
+	bt_matrix[13] /= 1000;
+	bt_matrix[14] /= 1000;
 	xform.setFromOpenGLMatrix(bt_matrix);
     }
 
@@ -87,12 +92,12 @@ PhysicsWorld::WorldObject::matrix_to_transform(const mat_t matrix)
 }
 
 
-PhysicsWorld::WorldObject::WorldObject(const btVector3 &bounding_box,
+PhysicsWorld::WorldObject::WorldObject(const btVector3 &bounding_box_dimensions,
 				       btScalar mass, matp_t matrix) :
     m_in_world(false),
     m_matrix(matrix),
     m_motion_state(matrix_to_transform(m_matrix)),
-    m_collision_shape(bounding_box),
+    m_collision_shape(bounding_box_dimensions / 2),
     m_rigid_body(mass, &m_motion_state, &m_collision_shape,
 		 calculate_inertia(m_collision_shape, mass))
 {}
@@ -124,6 +129,10 @@ PhysicsWorld::WorldObject::write_matrix()
     m_motion_state.getWorldTransform(xform);
     btScalar bt_matrix[16];
     xform.getOpenGLMatrix(bt_matrix);
+    //scale m to mm
+    bt_matrix[12] *= 1000;
+    bt_matrix[13] *= 1000;
+    bt_matrix[14] *= 1000;
     MAT_TRANSPOSE(m_matrix, bt_matrix);
 }
 
@@ -169,10 +178,14 @@ PhysicsWorld::step(btScalar seconds)
 
 
 void
-PhysicsWorld::add_object(const btVector3 &bounding_box, btScalar mass,
+PhysicsWorld::add_object(const vect_t &cad_bounding_box_dimensions,
+			 fastf_t mass,
 			 matp_t matrix)
 {
-    m_objects.push_back(new WorldObject(bounding_box, mass, matrix));
+    btVector3 bounding_box_dimensions;
+    // scale mm to m
+    VSCALE(bounding_box_dimensions, cad_bounding_box_dimensions, 1e-3);
+    m_objects.push_back(new WorldObject(bounding_box_dimensions, mass, matrix));
     m_objects.back()->add_to_world(m_world);
 }
 

@@ -48,7 +48,8 @@ public:
     ~PhysicsWorld();
 
     void step(btScalar seconds);
-    void add_object(const btVector3 &bounding_box, btScalar mass, matp_t matrix);
+    void add_object(const vect_t &bounding_box_dimensions, fastf_t mass,
+		    matp_t matrix);
 
 
 private:

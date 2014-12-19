@@ -110,8 +110,8 @@ get_attributes(const db_i &dbi, const std::string &name)
 }
 
 
-static btVector3
-get_bounding_box(db_i &dbi, const std::string &name)
+static void
+get_bounding_box_dimensions(db_i &dbi, const std::string &name, vect_t &dest)
 {
     directory *dir = db_lookup(&dbi, name.c_str(), false);
 
@@ -123,19 +123,17 @@ get_bounding_box(db_i &dbi, const std::string &name)
     if (rt_bound_internal(&dbi, dir, bb_min, bb_max))
 	throw std::runtime_error("failed to get bounding box");
 
-    point_t lwh; // bb dimensions
-    VSUB2(lwh, bb_max, bb_min);
-    return btVector3(static_cast<btScalar>(lwh[0]), static_cast<btScalar>(lwh[1]),
-		     static_cast<btScalar>(lwh[2])) / 2;
+    VSUB2(dest, bb_max, bb_min);
 }
 
 
-static btScalar
+static fastf_t
 get_volume(db_i &dbi, const std::string &name)
 {
     // FIXME: not the true volume
-    const btVector3 lwh = get_bounding_box(dbi, name) * 2;
-    return lwh.getX() * lwh.getY() * lwh.getZ();
+    vect_t lwh;
+    get_bounding_box_dimensions(dbi, name, lwh);
+    return lwh[X] * lwh[Y] * lwh[Z];
 }
 
 
@@ -149,9 +147,10 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 		MAT_IDN(vtree.tr_l.tl_mat);
 	    }
 
-	    const btVector3 bounding_box = get_bounding_box(dbi, vtree.tr_l.tl_name);
-	    const btScalar density = 1;
-	    btScalar mass = density * get_volume(dbi, vtree.tr_l.tl_name);
+	    vect_t bounding_box_dimensions;
+	    get_bounding_box_dimensions(dbi, vtree.tr_l.tl_name, bounding_box_dimensions);
+	    const fastf_t density = 1;
+	    fastf_t mass = density * get_volume(dbi, vtree.tr_l.tl_name);
 
 	    std::map<std::string, std::string> attributes = get_attributes(dbi,
 		    vtree.tr_l.tl_name);
@@ -159,7 +158,7 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 	    for (std::map<std::string, std::string>::const_iterator it = attributes.begin();
 		 it != attributes.end(); ++it) {
 		if (it->first == "mass") {
-		    mass = lexical_cast<btScalar>(it->second);
+		    mass = lexical_cast<fastf_t>(it->second);
 
 		    if (mass < 0) throw std::invalid_argument(
 			    std::string("invalid attribute 'mass' on object '")
@@ -168,7 +167,7 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 						       "' on object '" + vtree.tr_l.tl_name  + "'");
 	    }
 
-	    world.add_object(bounding_box, mass, vtree.tr_l.tl_mat);
+	    world.add_object(bounding_box_dimensions, mass, vtree.tr_l.tl_mat);
 	    break;
 	}
 
@@ -219,7 +218,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 
 	simulate::PhysicsWorld world;
 	world_add_tree(world, *vtree, *gedp->ged_wdbp->dbip);
-	world.step(5);
+	world.step(1);
     } catch (const std::logic_error &e) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s: ERROR: %s", argv[0], e.what());
 	return GED_ERROR;
@@ -234,8 +233,6 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 		       argv[0]);
 	return GED_ERROR;
     }
-
-    bu_vls_sprintf(gedp->ged_result_str, "%s done", argv[0]);
 
     return GED_OK;
 }
@@ -254,7 +251,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     bu_vls_sprintf(gedp->ged_result_str,
-		   "%s: ERROR: This command is disabled due to the absence of a physics library",
+		   "%s: ERROR: This build of BRL-CAD was not compiled with Bullet support",
 		   argv[0]);
 
     return GED_ERROR;
