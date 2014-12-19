@@ -862,6 +862,7 @@ char *asctime64_r( const struct TM* date, char *result ) {
 
 char *ctime64_r( const Time64_T* ytime, char* result ) {
     struct TM date;
+    memset(&date, 0, sizeof(struct TM));
 
     localtime64_r(ytime, &date );
     return asctime64_r( &date, result );
