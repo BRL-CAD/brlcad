@@ -80,8 +80,8 @@ object_data::object_data(int face_index, ON_Brep *brep)
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
 	    ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-	    edges.insert(trim.m_ei);
-	    if (edge.TrimCount() > 1) {
+	    if (trim.m_ei != -1 && edge.TrimCount() > 1) {
+		edges.insert(trim.m_ei);
 		for (int j = 0; j < edge.TrimCount(); j++) {
 		    int fio = edge.Trim(j)->FaceIndexOf();
 		    if (edge.m_ti[j] != ti && fio != -1) {
