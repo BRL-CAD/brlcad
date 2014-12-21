@@ -11,7 +11,7 @@ macro(ADD_NIST_G_TARGET step_model folder)
   set(output_file ${bin_root}/${DATA_DIR}/db/${step_model_root}.g)
   add_custom_command(
     OUTPUT ${output_file}
-    COMMAND step-g -O ${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${step_model}
+    COMMAND step-g -O ${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${step_model} >> ${CMAKE_BINARY_DIR}/CMakeTmp/${step_model_root}.log
     DEPENDS step-g ${CMAKE_CURRENT_SOURCE_DIR}/${step_model}
   )
   add_custom_target(${step_model_root}.g ALL DEPENDS ${output_file})
