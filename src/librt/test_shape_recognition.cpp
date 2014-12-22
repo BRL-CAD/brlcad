@@ -68,6 +68,7 @@ object_data::object_data(int face_index, ON_Brep *brep)
 {
     std::queue<int> local_loops;
     std::set<int> processed_loops;
+    std::set<int>::iterator s_it;
     ON_BrepFace *face = &(brep->m_F[face_index]);
     faces.insert(face_index);
     fol.insert(face_index);
@@ -100,6 +101,11 @@ object_data::object_data(int face_index, ON_Brep *brep)
 	}
     }
     key = face_set_key(faces);
+    for (s_it = faces.begin(); s_it != faces.end(); s_it++) {
+	if (fol.find(*s_it) == fol.end()) {
+	    fil.insert(*s_it);
+	}
+    }
 }
 
 object_data::~object_data()
@@ -109,11 +115,13 @@ object_data::~object_data()
 void
 print_objects(std::set<object_data> *object_set)
 {
+    int cnt = 0;
     std::set<object_data>::iterator o_it;
     for (o_it = object_set->begin(); o_it != object_set->end(); o_it++) {
 	std::set<int>::iterator s_it;
 	std::set<int>::iterator s_it2;
-	std::cout << "Face set for object " << (*o_it).key.c_str() << ": ";
+	std::cout << "\n";
+	std::cout << "Face set for object " << cnt << ": ";
 	for (s_it = (*o_it).faces.begin(); s_it != (*o_it).faces.end(); s_it++) {
 	    std::cout << (int)(*s_it);
 	    s_it2 = s_it;
@@ -121,7 +129,7 @@ print_objects(std::set<object_data> *object_set)
 	    if (s_it2 != (*o_it).faces.end()) std::cout << ",";
 	}
 	std::cout << "\n";
-	std::cout << "Outer Face set for object " << (*o_it).key.c_str() << ": ";
+	std::cout << "Outer Face set for object " << cnt << ": ";
 	for (s_it = (*o_it).fol.begin(); s_it != (*o_it).fol.end(); s_it++) {
 	    std::cout << (int)(*s_it);
 	    s_it2 = s_it;
@@ -129,14 +137,23 @@ print_objects(std::set<object_data> *object_set)
 	    if (s_it2 != (*o_it).fol.end()) std::cout << ",";
 	}
 	std::cout << "\n";
-	std::cout << "Edge set for object " << (*o_it).key.c_str() << ": ";
+	std::cout << "Inner Face set for object " << cnt << ": ";
+	for (s_it = (*o_it).fil.begin(); s_it != (*o_it).fil.end(); s_it++) {
+	    std::cout << (int)(*s_it);
+	    s_it2 = s_it;
+	    s_it2++;
+	    if (s_it2 != (*o_it).fil.end()) std::cout << ",";
+	}
+	std::cout << "\n";
+	std::cout << "Edge set for object " << cnt << ": ";
 	for (s_it = (*o_it).edges.begin(); s_it != (*o_it).edges.end(); s_it++) {
 	    std::cout << (int)(*s_it);
 	    s_it2 = s_it;
 	    s_it2++;
 	    if (s_it2 != (*o_it).edges.end()) std::cout << ",";
 	}
-
+	std::cout << "\n";
+	cnt++;
 	std::cout << "\n";
     }
 }
