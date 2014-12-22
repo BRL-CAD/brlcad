@@ -25,8 +25,6 @@
  */
 
 
-#include "common.h"
-
 #ifdef HAVE_BULLET
 
 /* Private Header */
@@ -191,7 +189,8 @@ cleanup_lists(void)
  * Gets the exact overlap volume between 2 AABBs
  */
 static int
-get_overlap(struct rigid_body *rbA, struct rigid_body *rbB, vect_t overlap_min, vect_t overlap_max)
+get_overlap(struct rigid_body *rbA, struct rigid_body *rbB, vect_t overlap_min,
+	    vect_t overlap_max)
 {
     bu_log("Calculating overlap between BB of %s(%f, %f, %f):(%f, %f, %f) \
 			and %s(%f, %f, %f):(%f, %f, %f)",
@@ -225,7 +224,8 @@ get_overlap(struct rigid_body *rbA, struct rigid_body *rbB, vect_t overlap_min, 
  * queried.
  */
 static int
-if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(segs))
+if_hit(struct application *ap, struct partition *part_headp,
+       struct seg *UNUSED(segs))
 {
     /* iterating over partitions, this will keep track of the current
      * partition we're working on.
@@ -259,7 +259,7 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
      * each partition corresponds to a specific homogeneous region of
      * material.
      */
-    for (pp=part_headp->pt_forw; pp != part_headp; pp = pp->pt_forw) {
+    for (pp = part_headp->pt_forw; pp != part_headp; pp = pp->pt_forw) {
 
 	if (num_hits < MAX_HITS) {
 
@@ -319,6 +319,7 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 		int rj = -1;
 
 		bu_log("    Claiming regions:\n");
+
 		while ((pp_reg = pp->pt_overlap_reg[++rj]))
 		    bu_log("        %s\n", pp_reg->reg_name);
 	    }
@@ -386,7 +387,7 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 	     * we do not check that here. We just record the points and prims in the airgap_list[].
 	     */
 	    if ((num_hits > 1) &&
-		(!VEQUAL(hit_list[i].in_point, hit_list[i-1].out_point))
+		(!VEQUAL(hit_list[i].in_point, hit_list[i - 1].out_point))
 	       ) {
 		/* There has been at least 1 out_point recorded and the
 		 * in_point of current hit reg. does not match out_point of previous hit reg.
@@ -396,12 +397,12 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 		    j = num_airgaps;
 
 		    VMOVE(airgap_list[j].in_point,  hit_list[i].in_point);
-		    VMOVE(airgap_list[j].out_point, hit_list[i-1].out_point); /* Note: i-1 */
+		    VMOVE(airgap_list[j].out_point, hit_list[i - 1].out_point); /* Note: i-1 */
 		    VSUB2(v, airgap_list[j].out_point, airgap_list[j].in_point);
 		    airgap_list[j].out_dist = MAGNITUDE(v);
 
 		    airgap_list[j].in_stp   = hit_list[i].in_stp;
-		    airgap_list[j].out_stp  = hit_list[i-1].out_stp; /* Note: i-1 */
+		    airgap_list[j].out_stp  = hit_list[i - 1].out_stp; /* Note: i-1 */
 
 		    airgap_list[j].index = j;
 
@@ -442,7 +443,8 @@ if_miss(struct application *UNUSED(ap))
 
 
 static void
-if_multioverlap(struct application *ap, struct partition *pp1, struct bu_ptbl *pptbl,
+if_multioverlap(struct application *ap, struct partition *pp1,
+		struct bu_ptbl *pptbl,
 		struct partition *pp2)
 {
     int i = 0;
@@ -451,7 +453,8 @@ if_multioverlap(struct application *ap, struct partition *pp1, struct bu_ptbl *p
     reg1 = (struct region *)BU_PTBL_GET(pptbl, 0);
     reg2 = (struct region *)BU_PTBL_GET(pptbl, 1);
 
-    bu_log("if_overlap: OVERLAP between %s and %s\n", reg1->reg_name, reg2->reg_name);
+    bu_log("if_overlap: OVERLAP between %s and %s\n", reg1->reg_name,
+	   reg2->reg_name);
 
 
     if (num_overlaps < MAX_OVERLAPS) {
@@ -489,10 +492,12 @@ if_multioverlap(struct application *ap, struct partition *pp1, struct bu_ptbl *p
 	overlap_list[i].outsol = pp1->pt_outseg->seg_stp;
 
 	/* Entry curvature */
-	RT_CURVATURE(&overlap_list[i].incur, pp1->pt_inhit, pp1->pt_inflip, pp1->pt_inseg->seg_stp);
+	RT_CURVATURE(&overlap_list[i].incur, pp1->pt_inhit, pp1->pt_inflip,
+		     pp1->pt_inseg->seg_stp);
 
 	/* Exit curvature */
-	RT_CURVATURE(&overlap_list[i].outcur, pp1->pt_outhit, pp1->pt_outflip, pp1->pt_outseg->seg_stp);
+	RT_CURVATURE(&overlap_list[i].outcur, pp1->pt_outhit, pp1->pt_outflip,
+		     pp1->pt_outseg->seg_stp);
 
 	overlap_list[i].index = i;
 	num_overlaps++;
@@ -576,7 +581,7 @@ clear_bad_chars(struct bu_vls *vp)
     char *str = bu_vls_addr(vp);
     size_t len = bu_vls_strlen(vp);
 
-    for (i = 0; i<len; i++) {
+    for (i = 0; i < len; i++) {
 	if (str[i] == '-' || str[i] == '/') {
 	    str[i] = 'R';
 	}
@@ -584,6 +589,74 @@ clear_bad_chars(struct bu_vls *vp)
 }
 #endif
 
+#define FOUND 1
+
+int
+check_tree_funcleaf(
+    struct db_i *dbip,
+    struct rt_comb_internal *comb,
+    union tree *comb_tree,
+    int (*leaf_func)(),
+    void *user_ptr1)
+{
+    int rv = NOT_FOUND;
+
+    RT_CK_DBI(dbip);
+
+    if (!comb_tree)
+	return NOT_FOUND;
+
+    RT_CK_TREE(comb_tree);
+
+    switch (comb_tree->tr_op) {
+	case OP_DB_LEAF:
+	    rv = (*leaf_func)(dbip, comb, comb_tree, user_ptr1);
+	    break;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func,
+				     user_ptr1);
+
+	    if (rv == NOT_FOUND)
+		rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func,
+					 user_ptr1);
+
+	    break;
+
+	default:
+	    bu_log("check_tree_funcleaf: bad op %d\n", comb_tree->tr_op);
+	    bu_bomb("check_tree_funcleaf: bad op\n");
+	    break;
+    }
+
+    return rv;
+}
+
+
+int
+find_solid(struct db_i *dbip,
+	   struct rt_comb_internal *comb,
+	   union tree *comb_leaf,
+	   void *object)
+{
+    char *obj_name;
+
+    if (dbip) RT_CK_DBI(dbip);
+
+    if (comb) RT_CK_COMB(comb);
+
+    RT_CK_TREE(comb_leaf);
+
+    obj_name = (char *)object;
+
+    if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj_name))
+	return FOUND;
+    else
+	return NOT_FOUND;
+}
 
 
 
@@ -598,8 +671,6 @@ static int
 traverse_normalray_lists(
     struct sim_manifold *mf,
     struct simulation_params *sim_params,
-    point_t pt,
-    point_t dir,
     vect_t overlap_min,
     vect_t overlap_max)
 {
@@ -608,36 +679,13 @@ traverse_normalray_lists(
     /*struct hit_reg *hrp;*/
     struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
     fastf_t depth;
-    struct rt_comb_internal *comb =(struct rt_comb_internal *)NULL;
+    struct rt_comb_internal *comb = (struct rt_comb_internal *)NULL;
 
 
     /* Draw all the overlap regions : lines are added for overlap segments
      * to help visual debugging
      */
     for (i = 0; i < num_overlaps; i++) {
-
-#ifdef DEBUG_DRAW_LINES
-	bu_vls_sprintf(&reg_vls, "ray_ovrlp_%s_%s_%d_%f_%f_%f_%f_%f_%f",
-		       overlap_list[i].reg1->reg_name,
-		       overlap_list[i].reg2->reg_name,
-		       overlap_list[i].index,
-		       V3ARGS(pt), V3ARGS(dir));
-
-	clear_bad_chars(&reg_vls);
-
-	line(sim_params->gedp, bu_vls_addr(&reg_vls),
-	     overlap_list[i].in_point,
-	     overlap_list[i].out_point,
-	     0, 210, 0);
-
-	/* bu_log("traverse_normalray_lists: %s\n", bu_vls_addr(&reg_vls)); */
-
-	add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
-#else
-/* unused */
-(void)pt;
-(void)dir;
-#endif
 
 	/* Check of both points are within the overlap RPP */
 	if (!V3PT_IN_RPP(overlap_list[i].in_point,  overlap_min, overlap_max) ||
@@ -690,7 +738,8 @@ traverse_normalray_lists(
 	 * Bullet should handle contact point minimization and area maximization
 	 */
 	if (mf->num_contacts == MAX_CONTACTS_PER_MANIFOLD) {
-	    bu_log("Contact point skipped as %d points are the maximum allowed per manifold\n", mf->num_contacts);
+	    bu_log("Contact point skipped as %d points are the maximum allowed per manifold\n",
+		   mf->num_contacts);
 	    continue;
 	}
 
@@ -700,9 +749,12 @@ traverse_normalray_lists(
 	mf->contacts[j].depth = -depth;
 	mf->num_contacts++;
 
-	bu_log("traverse_normalray_lists : ptB set to (%f, %f, %f)\n", V3ARGS((mf->contacts[j].ptB)));
-	bu_log("traverse_normalray_lists : normalWorldOnB set to (%f, %f, %f)\n", V3ARGS(mf->contacts[j].normalWorldOnB));
-	bu_log("traverse_normalray_lists : Penetration depth set to %f\n", mf->contacts[j].depth);
+	bu_log("traverse_normalray_lists : ptB set to (%f, %f, %f)\n",
+	       V3ARGS((mf->contacts[j].ptB)));
+	bu_log("traverse_normalray_lists : normalWorldOnB set to (%f, %f, %f)\n",
+	       V3ARGS(mf->contacts[j].normalWorldOnB));
+	bu_log("traverse_normalray_lists : Penetration depth set to %f\n",
+	       mf->contacts[j].depth);
 
 
     } /* end-for overlap */
@@ -717,55 +769,6 @@ traverse_normalray_lists(
     if (!rt_result.overlap_found) {
 
 	bu_log("traverse_normalray_lists : No overlap found yet, checking hit regions\n");
-
-
-#ifdef DEBUG_DRAW_LINES
-	/* Draw the hit regions */
-	for (i = 0; i < num_hits; i++) {
-	    bu_vls_sprintf(&reg_vls, "ray_hit_%s_%d_%d_%d_%f_%f_%f_%f_%f_%f_%d",
-			   hit_list[i].reg_name,
-			   hit_list[i].pp->pt_regionp->reg_regionid,
-			   hit_list[i].pp->pt_regionp->reg_aircode,
-			   hit_list[i].pp->pt_regionp->reg_gmater,
-			   V3ARGS(pt), V3ARGS(dir),
-			   hit_list[i].index);
-
-	    clear_bad_chars(&reg_vls);
-
-	    line(sim_params->gedp, bu_vls_addr(&reg_vls),
-		 hit_list[i].in_point,
-		 hit_list[i].out_point,
-		 0, 210, 0);
-
-
-	    add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
-
-	} /* end-for hits */
-
-
-	/* Draw the AIR regions */
-	for (i = 0; i < num_airgaps; i++) {
-
-	    bu_vls_sprintf(&reg_vls, "ray_airgap_%s_%f_%f_%f_%s_%f_%f_%f_%d",
-			   airgap_list[i].in_stp->st_name,
-			   V3ARGS(airgap_list[i].in_point),
-			   airgap_list[i].out_stp->st_name,
-			   V3ARGS(airgap_list[i].out_point),
-			   airgap_list[i].index);
-
-	    clear_bad_chars(&reg_vls);
-
-	    line(sim_params->gedp, bu_vls_addr(&reg_vls),
-		 airgap_list[i].in_point,
-		 airgap_list[i].out_point,
-		 0, 210, 0);
-
-
-	    add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
-
-
-	} /* end-for hits */
-#endif
     }
 
     bu_vls_free(&reg_vls);
@@ -803,7 +806,7 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
      */
     VSUB2(diff, overlap_max, overlap_min);
     d = MAGNITUDE(diff);
-    r = d/2;
+    r = d / 2;
 
     /* Get overlap volume position in 3D space */
     VCOMB2(overlap_center, 1, overlap_min, 0.5, overlap_max);
@@ -845,7 +848,7 @@ shoot_normal_rays(struct sim_manifold *current_manifold,
 	VUNITIZE(entry->ray.r_dir);
 	shoot_ray(sim_params->rtip, entry->ray.r_pt, entry->ray.r_dir);
 
-	traverse_normalray_lists(current_manifold, sim_params, entry->ray.r_pt, entry->ray.r_dir,
+	traverse_normalray_lists(current_manifold, sim_params,
 				 overlap_min, overlap_max);
 
 	cleanup_lists();
@@ -935,14 +938,10 @@ generate_manifolds(struct simulation_params *sim_params,
 		   rbA->rb_namep,
 		   rbB->rb_namep);
 
-    /* Make the overlap volume RPP */
-    make_rpp(sim_params->gedp, overlap_min, overlap_max, bu_vls_addr(&overlap_name));
-
     /* Add the region to the result of the sim so it will be drawn too */
-    add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));
-
-    /* Clear ray visualization primitives */
-    sim_kill(sim_params->gedp, "ray_*");
+    /* FIXME disabled -- jon
+     * add_to_comb(sim_params->gedp, sim_params->sim_comb_name,
+    	bu_vls_addr(&overlap_name));*/
 
     /* Initialize the rayshot results structure, has to be done for each manifold */
     init_rayshot_results();

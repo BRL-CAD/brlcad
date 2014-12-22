@@ -39,13 +39,11 @@ namespace simulate
 {
 
 
-namespace collision
-{
-
-
 RtCollisionShape::RtCollisionShape(const btVector3 &half_extents) :
     btBoxShape(half_extents)
-{}
+{
+    m_shapeType = RT_SHAPE_TYPE;
+}
 
 
 RtCollisionShape::~RtCollisionShape()
@@ -58,8 +56,8 @@ RtCollisionAlgorithm::CreateFunc::CreateCollisionAlgorithm(
     const btCollisionObjectWrapper *body_a_wrap,
     const btCollisionObjectWrapper *body_b_wrap)
 {
-    int bbsize = sizeof(RtCollisionAlgorithm);
-    void *ptr = cinfo.m_dispatcher1->allocateCollisionAlgorithm(bbsize);
+    void *ptr = cinfo.m_dispatcher1->allocateCollisionAlgorithm(sizeof(
+		    RtCollisionAlgorithm));
     return new(ptr) RtCollisionAlgorithm(NULL, cinfo, body_a_wrap, body_b_wrap);
 }
 
@@ -110,6 +108,7 @@ RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper *,
 	const btVector3 pt_b(0, 0, 0);
 	const btVector3 normal_world_on_b(0, 0, 0);
 	const btScalar depth = 0;
+
 	result->addContactPoint(normal_world_on_b, pt_b, depth);
     }
 
@@ -135,9 +134,6 @@ RtCollisionAlgorithm::getAllContactManifolds(btManifoldArray &manifold_array)
 {
     if (m_owns_manifold && m_manifold)
 	manifold_array.push_back(m_manifold);
-}
-
-
 }
 
 

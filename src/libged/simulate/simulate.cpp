@@ -200,7 +200,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
     directory *dir = db_lookup(gedp->ged_wdbp->dbip, argv[1], false);
 
     if (!dir || dir->d_minor_type != ID_COMBINATION) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: ERROR: '%s' is not a combination",
+	bu_vls_sprintf(gedp->ged_result_str, "%s: '%s' is not a combination",
 		       argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -220,16 +220,16 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 	world_add_tree(world, *vtree, *gedp->ged_wdbp->dbip);
 	world.step(1);
     } catch (const std::logic_error &e) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: ERROR: %s", argv[0], e.what());
+	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], e.what());
 	return GED_ERROR;
     } catch (const std::runtime_error &e) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: ERROR: %s", argv[0], e.what());
+	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], e.what());
 	return GED_ERROR;
     }
 
     if (rt_db_put_internal(dir, gedp->ged_wdbp->dbip, &internal,
 			   &rt_uniresource) < 0) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: ERROR: rt_db_put_internal() failed",
+	bu_vls_sprintf(gedp->ged_result_str, "%s: rt_db_put_internal() failed",
 		       argv[0]);
 	return GED_ERROR;
     }
@@ -251,8 +251,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     bu_vls_sprintf(gedp->ged_result_str,
-		   "%s: ERROR: This build of BRL-CAD was not compiled with Bullet support",
-		   argv[0]);
+		   "%s: This build of BRL-CAD was not compiled with Bullet support", argv[0]);
 
     return GED_ERROR;
 }

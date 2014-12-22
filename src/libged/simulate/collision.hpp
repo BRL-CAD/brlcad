@@ -37,17 +37,12 @@ namespace simulate
 {
 
 
-namespace collision
-{
-
-
-static const int RT_SHAPE_TYPE =
-    CUSTOM_POLYHEDRAL_SHAPE_TYPE;
-
-
 class RtCollisionShape : public btBoxShape
 {
 public:
+    static const int RT_SHAPE_TYPE = CUSTOM_POLYHEDRAL_SHAPE_TYPE;
+
+
     RtCollisionShape(const btVector3 &half_extents);
     virtual ~RtCollisionShape();
 };
@@ -89,9 +84,6 @@ private:
     bool m_owns_manifold;
     btPersistentManifold *m_manifold;
 };
-
-
-}
 
 
 }
