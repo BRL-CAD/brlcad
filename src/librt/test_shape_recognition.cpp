@@ -123,11 +123,32 @@ is_arbn(const object_data *data)
     // If all surfaces are planes, then the verdict is yes.
     std::set<int>::iterator f_it;
     for (f_it = data->faces.begin(); f_it != data->faces.end(); f_it++) {
+	ON_Plane plane;
 	ON_BrepFace *used_face = &(data->brep->m_F[(*f_it)]);
 	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
-	int surface_type = (int)GetSurfaceType(temp_surface);
-	if (surface_type != SURFACE_PLANE) ret = 0;
+	if (!temp_surface->IsPlanar(&plane)) return 0;
     }
+
+    // BRL-CAD's arbn primitive does not support concave shapes, and we want to use
+    // simpler primitives than the generic nmg if the opportunity arises.  A heuristic
+    // along the following lines may help:
+    //
+    // Step 1.  Check the number of vertices.  If the number is small enough that the
+    //          volume might conceivably be expressed by an arb4-arb8, try that first.
+    //
+    // Step 2.  If the arb4-arb8 test fails, do the convex hull and see if all points
+    //          are used by the hull.  If so, the shape is convex and may be expressed
+    //          as an arbn.
+    //
+    // Step 3.  If the arbn test fails, construct sets of contiguous convex faces using
+    //          the set of edges with one or more vertices not in the convex hull.  If
+    //          those shapes are all convex, construct an arbn tree (or use simpler arb
+    //          shapes if the subtractions may be so expressed).  If the subtraction
+    //          volumes are still not convex, cut our losses and proceed to the nmg
+    //          primitive.  It may conceivably be worth some additional searches to spot
+    //          subsets of shapes that are convex, but that is not particularly simple
+    //          and should wait until it is clear we would get a benefit from it.
+
     return ret;
 }
 
