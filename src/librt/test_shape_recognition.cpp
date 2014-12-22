@@ -61,14 +61,17 @@ class object_data {
 	{
 	    return key == a.key;
 	}
+
+	ON_Brep *brep;
 };
 
-object_data::object_data(int face_index, ON_Brep *brep)
+object_data::object_data(int face_index, ON_Brep *in_brep)
     : negative_object(false)
 {
     std::queue<int> local_loops;
     std::set<int> processed_loops;
     std::set<int>::iterator s_it;
+    brep = in_brep;
     ON_BrepFace *face = &(brep->m_F[face_index]);
     faces.insert(face_index);
     fol.insert(face_index);
@@ -112,6 +115,51 @@ object_data::~object_data()
 {
 }
 
+int
+is_arbn(const object_data *data)
+{
+    int ret = 1;
+    // Check surfaces.  If a surface is anything other than a plane the verdict is no.
+    // If all surfaces are planes, then the verdict is yes.
+    std::set<int>::iterator f_it;
+    for (f_it = data->faces.begin(); f_it != data->faces.end(); f_it++) {
+	ON_BrepFace *used_face = &(data->brep->m_F[(*f_it)]);
+	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
+	int surface_type = (int)GetSurfaceType(temp_surface);
+	if (surface_type != SURFACE_PLANE) ret = 0;
+    }
+    return ret;
+}
+
+int
+is_cylinder(const object_data *data)
+{
+    int ret = 1;
+    std::set<int> planar_surfaces;
+    std::set<int> cylindrical_surfaces;
+    // First, check surfaces.  If a surface is anything other than a plane or cylindrical,
+    // the verdict is no.
+
+    // Second, check if all cylindrical surfaces share the same center line and all planar
+    // faces fit into either of two planes.
+
+    // Third, check that the two planes are parallel to each other.
+    //
+    // Fourth, sort the edges into coplanar arcs/circles and lines.  In principle more general curves
+    // might be present in the cylindrical face of the cylinder, but for the moment assume
+    // the definitions consist of only circular arcs and lines for simplicity.
+    //
+    // Fifth, check if the coplanar arcs all lie on the same circle.
+    //
+    // Six, assemble the arcs (if possible) into complete circles.  If one or both of the
+    // edge loops in a planar face contains non-degenerate linear components, we do not have
+    // a simple cylinder.  A degenerate liner component is defined as two linear segments having
+    // the same two vertices - they are assumed to be mating edges in a larger shape.
+
+    return ret;
+}
+
+
 void
 print_objects(std::set<object_data> *object_set)
 {
@@ -153,6 +201,7 @@ print_objects(std::set<object_data> *object_set)
 	    if (s_it2 != (*o_it).edges.end()) std::cout << ",";
 	}
 	std::cout << "\n";
+	if (is_arbn(&(*o_it))) std::cout << "Object is arbn\n";
 	cnt++;
 	std::cout << "\n";
     }
@@ -203,7 +252,6 @@ main(int argc, char *argv[])
 	object_data face_object(i, brep);
 	object_set.insert(face_object);
     }
-
 
     print_objects(&object_set);
 
