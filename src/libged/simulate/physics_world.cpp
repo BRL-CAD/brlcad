@@ -52,26 +52,17 @@ public:
 private:
     WorldObject(const WorldObject &source);
     WorldObject &operator=(const WorldObject &source);
+
     static btTransform matrix_to_transform(const mat_t matrix);
-    static btVector3 calculate_inertia(const btCollisionShape &collision_shape,
-				       btScalar mass);
+    static btRigidBody::btRigidBodyConstructionInfo build_construction_info(
+	btCollisionShape &collision_shape, matp_t const matrix, btScalar mass);
+
 
     bool m_in_world;
     const matp_t m_matrix;
-    btDefaultMotionState m_motion_state;
     collision::RtCollisionShape m_collision_shape;
     btRigidBody m_rigid_body;
 };
-
-
-btVector3
-PhysicsWorld::WorldObject::calculate_inertia(const btCollisionShape
-	&collision_shape, btScalar mass)
-{
-    btVector3 result;
-    collision_shape.calculateLocalInertia(mass, result);
-    return result;
-}
 
 
 btTransform
@@ -92,14 +83,26 @@ PhysicsWorld::WorldObject::matrix_to_transform(const mat_t matrix)
 }
 
 
+btRigidBody::btRigidBodyConstructionInfo
+PhysicsWorld::WorldObject::build_construction_info(btCollisionShape
+	&collision_shape, matp_t const matrix, btScalar mass)
+{
+    btVector3 inertia;
+    collision_shape.calculateLocalInertia(mass, inertia);
+    btRigidBody::btRigidBodyConstructionInfo construction_info(mass, NULL,
+	    &collision_shape, inertia);
+    construction_info.m_startWorldTransform = matrix_to_transform(matrix);
+
+    return construction_info;
+}
+
+
 PhysicsWorld::WorldObject::WorldObject(const btVector3 &bounding_box_dimensions,
 				       btScalar mass, matp_t matrix) :
     m_in_world(false),
     m_matrix(matrix),
-    m_motion_state(matrix_to_transform(m_matrix)),
     m_collision_shape(bounding_box_dimensions / 2),
-    m_rigid_body(mass, &m_motion_state, &m_collision_shape,
-		 calculate_inertia(m_collision_shape, mass))
+    m_rigid_body(build_construction_info(m_collision_shape, m_matrix, mass))
 {}
 
 
@@ -118,17 +121,15 @@ PhysicsWorld::WorldObject::add_to_world(btDiscreteDynamicsWorld &world)
 void
 PhysicsWorld::WorldObject::read_matrix()
 {
-    m_motion_state.setWorldTransform(matrix_to_transform(m_matrix));
+    m_rigid_body.setCenterOfMassTransform(matrix_to_transform(m_matrix));
 }
 
 
 void
 PhysicsWorld::WorldObject::write_matrix()
 {
-    btTransform xform;
-    m_motion_state.getWorldTransform(xform);
     btScalar bt_matrix[16];
-    xform.getOpenGLMatrix(bt_matrix);
+    m_rigid_body.getCenterOfMassTransform().getOpenGLMatrix(bt_matrix);
     //scale m to mm
     bt_matrix[12] *= 1000;
     bt_matrix[13] *= 1000;
