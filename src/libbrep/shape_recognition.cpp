@@ -35,11 +35,11 @@ GetCurveType(ON_Curve *curve)
 surface_t
 GetSurfaceType(ON_Surface *surface)
 {
-    if (surface->IsPlanar()) return SURFACE_PLANE;
-    if (surface->IsSphere()) return SURFACE_SPHERE;
-    if (surface->IsCylinder()) return SURFACE_CYLINDER;
-    if (surface->IsCone()) return SURFACE_CONE;
-    if (surface->IsTorus()) return SURFACE_TORUS;
+    if (surface->IsPlanar(NULL, 0.01)) return SURFACE_PLANE;
+    if (surface->IsSphere(NULL, 0.01)) return SURFACE_SPHERE;
+    if (surface->IsCylinder(NULL, 0.01)) return SURFACE_CYLINDER;
+    if (surface->IsCone(NULL, 0.01)) return SURFACE_CONE;
+    if (surface->IsTorus(NULL, 0.01)) return SURFACE_TORUS;
     return SURFACE_GENERAL;
 }
 
