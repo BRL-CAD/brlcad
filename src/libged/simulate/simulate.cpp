@@ -85,7 +85,7 @@ static std::map<std::string, std::string>
 get_attributes(const db_i &dbi, const std::string &name)
 {
     const char * const prefix = "simulate::";
-    const std::size_t prefix_len = sizeof(prefix) - 1;
+    const std::size_t prefix_len = strlen(prefix);
 
     directory *dir = db_lookup(&dbi, name.c_str(), false);
 
@@ -165,7 +165,7 @@ world_add_tree(simulate::PhysicsWorld &world, rt_i &rt_instance, tree &vtree,
 		    if (mass < 0) throw std::invalid_argument(
 			    std::string("invalid attribute 'mass' on object '")
 			    + vtree.tr_l.tl_name + "'");
-		} else throw std::invalid_argument("invalid attribute '" + it->second +
+		} else throw std::invalid_argument("invalid attribute '" + it->first +
 						       "' on object '" + vtree.tr_l.tl_name  + "'");
 	    }
 
