@@ -197,9 +197,9 @@ ged_simulate(ged *gedp, int argc, const char **argv)
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    if (argc != 2) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: USAGE: %s <scene_comb>", argv[0],
-		       argv[0]);
+    if (argc != 3) {
+	bu_vls_sprintf(gedp->ged_result_str, "%s: USAGE: %s <scene_comb> <seconds>",
+		       argv[0], argv[0]);
 	return GED_ERROR;
     }
 
@@ -218,6 +218,10 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 	&internal);
 
     try {
+	fastf_t seconds = lexical_cast<fastf_t>(argv[2]);
+
+	if (seconds < 0) throw std::runtime_error("invalid value for 'seconds'");
+
 	tree * const vtree = static_cast<rt_comb_internal *>(internal.idb_ptr)->tree;
 
 	if (!vtree) throw std::invalid_argument("combination has no members");
@@ -230,7 +234,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 	world_add_tree(world, *rt_instance.ptr, *vtree, *gedp->ged_wdbp->dbip);
 	rt_prep(rt_instance.ptr);
 	rt_instance_data::rt_instance = rt_instance.ptr;
-	world.step(1);
+	world.step(seconds);
     } catch (const std::logic_error &e) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], e.what());
 	return GED_ERROR;

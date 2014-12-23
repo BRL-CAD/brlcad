@@ -104,7 +104,7 @@ calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 	btVector3 center_point;
 	{
 	    // center of the overlap volume
-	    btVector3 overlap_center = overlap_min + 0.5 * overlap_max;
+	    btVector3 overlap_center = overlap_min + overlap_max / 2;
 
 	    // step back from overlap_center, along the normal by `radius`,
 	    // to ensure that rays start from outside of the overlap region
