@@ -116,7 +116,7 @@ object_data::~object_data()
 }
 
 int
-is_arbn(const object_data *data)
+is_planar(const object_data *data)
 {
     int ret = 1;
     // Check surfaces.  If a surface is anything other than a plane the verdict is no.
@@ -354,7 +354,7 @@ print_objects(std::set<object_data> *object_set)
 	    if (s_it2 != (*o_it).edges.end()) std::cout << ",";
 	}
 	std::cout << "\n";
-	if (is_arbn(&(*o_it))) std::cout << "Object is arbn\n";
+	if (is_planar(&(*o_it))) std::cout << "Object is planar\n";
 	if (is_cylinder(&(*o_it))) std::cout << "Object is rcc\n";
 	cnt++;
 	std::cout << "\n";
