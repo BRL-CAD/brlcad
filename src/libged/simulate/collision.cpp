@@ -43,10 +43,24 @@ static void
 on_multioverlap(application *app, partition *partition1, bu_ptbl *ptbl,
 		partition *partition2)
 {
-    (void)app;
-    (void)partition1;
-    (void)ptbl;
-    (void)partition2;
+    // TODO check that A and B are the geometry we are checking
+
+    btManifoldResult &result = *static_cast<btManifoldResult *>(app->a_uptr);
+
+    btVector3 point_on_a, point_on_b;
+    VJOIN1(point_on_a, app->a_ray.r_pt, partition1->pt_inhit->hit_dist,
+	   app->a_ray.r_dir);
+    VJOIN1(point_on_b, app->a_ray.r_pt, partition1->pt_outhit->hit_dist,
+	   app->a_ray.r_dir);
+
+    btScalar depth = -DIST_PT_PT(point_on_a, point_on_b);
+
+    btVector3 normal_world_on_b;
+    VMOVE(normal_world_on_b, app->a_uvec);
+    result.addContactPoint(normal_world_on_b, point_on_b, depth);
+
+    // handle the overlap
+    rt_default_multioverlap(app, partition1, ptbl, partition2);
 }
 
 
@@ -70,6 +84,7 @@ calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 	BU_LIST_INIT(&rays->l);
 
 	// calculate the overlap volume between the AABBs
+	// TODO: these are not the correct AABBs
 	btVector3 overlap_min, overlap_max;
 	{
 	    btVector3 rb_a_aabb_min, rb_a_aabb_max, rb_b_aabb_min, rb_b_aabb_max;
@@ -123,6 +138,9 @@ calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 	RT_APPLICATION_INIT(&app);
 	app.a_rt_i = rt_instance_data::rt_instance;
 	app.a_multioverlap = on_multioverlap;
+	app.a_logoverlap = rt_silent_logoverlap;
+	app.a_uptr = &result;
+	VMOVE(app.a_uvec, normal_world_on_b);
     }
 
     xrays *entry;
@@ -135,13 +153,6 @@ calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 	BU_LIST_DEQUEUE(&entry->l);
 	bu_free(entry, "xrays entry");
     }
-
-    // TODO: collect contact points
-
-    // for each contact point:
-    const btVector3 pt_b(0, 0, 0);
-    const btScalar depth = 0;
-    result.addContactPoint(normal_world_on_b, pt_b, depth);
 }
 
 
