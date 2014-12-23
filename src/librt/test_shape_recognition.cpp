@@ -38,7 +38,7 @@ face_set_key(std::set<int> fset)
 
 class object_data {
     public:
-	object_data(int face, ON_Brep *brep);
+	object_data(int face, ON_Brep *in_brep, struct rt_wdb *in_wdbp);
 	~object_data();
 
 	bool operator=(const object_data &a);
@@ -63,15 +63,17 @@ class object_data {
 	}
 
 	ON_Brep *brep;
+	struct rt_wdb *wdbp;
 };
 
-object_data::object_data(int face_index, ON_Brep *in_brep)
+object_data::object_data(int face_index, ON_Brep *in_brep, struct rt_wdb *in_wdb)
     : negative_object(false)
 {
     std::queue<int> local_loops;
     std::set<int> processed_loops;
     std::set<int>::iterator s_it;
     brep = in_brep;
+    wdbp = in_wdb;
     ON_BrepFace *face = &(brep->m_F[face_index]);
     faces.insert(face_index);
     fol.insert(face_index);
@@ -307,10 +309,20 @@ is_cylinder(const object_data *data)
 	    }
 	}
     }
+
+    point_t base; // base of cylinder
+    vect_t hv; // height vector of cylinder
     ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
-    std::cout << "rcc: in " << data->key.c_str() << " rcc " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << " " << hvect.x << " " << hvect.y << " " << hvect.z << " " << set1_c.Radius() << "\n";
+    base[0] = set1_c.Center().x;
+    base[1] = set1_c.Center().y;
+    base[2] = set1_c.Center().z;
+    hv[0] = hvect.x;
+    hv[1] = hvect.y;
+    hv[2] = hvect.z;
 
+    //std::cout << "rcc: in " << data->key.c_str() << " rcc " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << " " << hvect.x << " " << hvect.y << " " << hvect.z << " " << set1_c.Radius() << "\n";
+    mk_rcc(data->wdbp, data->key.c_str(), base, hv, set1_c.Radius());
 
     // TODO - check for different radius values between the two circles - for a pure cylinder test should reject, but we can easily handle it with the tgc...
 
@@ -370,6 +382,7 @@ int
 main(int argc, char *argv[])
 {
     struct db_i *dbip;
+    struct rt_wdb *wdbp;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
@@ -382,6 +395,8 @@ main(int argc, char *argv[])
     if (dbip == DBI_NULL) {
 	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
     }
+
+    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 
     if (db_dirbuild(dbip) < 0)
 	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
@@ -408,7 +423,7 @@ main(int argc, char *argv[])
 
     std::set<object_data> object_set;
     for (int i = 0; i < brep->m_F.Count(); i++) {
-	object_data face_object(i, brep);
+	object_data face_object(i, brep, wdbp);
 	object_set.insert(face_object);
     }
 
