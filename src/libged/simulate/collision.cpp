@@ -31,8 +31,95 @@
 
 #include "collision.hpp"
 
-#include <BulletCollision/CollisionDispatch/btCollisionObjectWrapper.h>
-#include <BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
+#include "raytrace.h"
+
+
+namespace
+{
+
+
+static void
+calculate_contact_points(btManifoldResult &result,
+			 const btCollisionObjectWrapper &body_a_wrap,
+			 const btCollisionObjectWrapper &body_b_wrap)
+{
+    const btRigidBody &rb_a = *btRigidBody::upcast(
+				  body_a_wrap.getCollisionObject());
+    const btRigidBody &rb_b = *btRigidBody::upcast(
+				  body_b_wrap.getCollisionObject());
+
+    const btScalar grid_size = 0.1;
+
+    // calculate the normal of the contact points as the resultant of the velocities -A and B
+    btVector3 normal_world_on_b = (rb_b.getLinearVelocity() -
+				   rb_a.getLinearVelocity());
+
+    if (normal_world_on_b != btVector3(0, 0, 0))
+	normal_world_on_b.normalize();
+
+    // shoot a circular grid of rays about `normal_world_on_b`
+    xrays rays;
+    {
+	BU_LIST_INIT(&rays.l);
+
+	// calculate the overlap volume between the AABBs
+	btVector3 overlap_min, overlap_max;
+	{
+	    btVector3 rb_a_aabb_min, rb_a_aabb_max, rb_b_aabb_min, rb_b_aabb_max;
+	    rb_a.getAabb(rb_a_aabb_min, rb_a_aabb_max);
+	    rb_b.getAabb(rb_b_aabb_min, rb_b_aabb_max);
+
+	    VMOVE(overlap_max, rb_a_aabb_max);
+	    VMIN(overlap_max, rb_b_aabb_max);
+	    VMOVE(overlap_min, rb_a_aabb_min);
+	    VMAX(overlap_min, rb_b_aabb_min);
+	}
+
+	// radius of the circle of rays
+	btScalar radius = (overlap_max - overlap_min).length() / 2;
+
+	// calculate the origin of the center ray
+	btVector3 center_point;
+	{
+	    // center of the overlap volume
+	    btVector3 overlap_center = overlap_min + 0.5 * overlap_max;
+
+	    // step back from overlap_center, along the normal by `radius`,
+	    // to ensure that rays start from outside of the overlap region
+	    center_point = overlap_center - radius * normal_world_on_b;
+	}
+
+	xray &center_ray = rays.ray;
+	center_ray.magic = RT_RAY_MAGIC;
+	center_ray.index = 0;
+	VMOVE(center_ray.r_pt, center_point);
+	VMOVE(center_ray.r_dir, normal_world_on_b);
+
+	// calculate the 'up' vector
+	vect_t up_vect;
+	{
+	    btVector3 up = normal_world_on_b.cross(btVector3(1, 0, 0));
+
+	    // use the y-axis if parallel to x-axis
+	    if (up == btVector3(0, 0, 0))
+		up = normal_world_on_b.cross(btVector3(0, 1, 0));
+
+	    VMOVE(up_vect, up);
+	}
+
+	rt_gen_circular_grid(&rays, &center_ray, radius, up_vect, grid_size);
+    }
+
+    // TODO: shoot the rays
+
+    // for each contact point:
+    const btVector3 pt_b(0, 0, 0);
+    const btScalar depth = 0;
+    result.addContactPoint(normal_world_on_b, pt_b, depth);
+}
+
+
+}
 
 
 namespace simulate
@@ -88,8 +175,9 @@ RtCollisionAlgorithm::~RtCollisionAlgorithm()
 
 
 void
-RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper *,
-				       const btCollisionObjectWrapper *,
+RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper
+				       *body_a_wrap,
+				       const btCollisionObjectWrapper *body_b_wrap,
 				       const btDispatcherInfo &, btManifoldResult *result)
 {
     if (!m_manifold)
@@ -100,17 +188,7 @@ RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper *,
     m_manifold->clearManifold();
 #endif
 
-    // calculations
-
-    const std::size_t num_contacts = 1;
-
-    for (std::size_t i = 0; i < num_contacts; ++i) {
-	const btVector3 pt_b(0, 0, 0);
-	const btVector3 normal_world_on_b(0, 0, 0);
-	const btScalar depth = 0;
-
-	result->addContactPoint(normal_world_on_b, pt_b, depth);
-    }
+    calculate_contact_points(*result, *body_a_wrap, *body_b_wrap);
 
 #ifdef USE_PERSISTENT_CONTACTS
 

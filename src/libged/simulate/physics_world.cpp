@@ -26,6 +26,7 @@
 
 #ifdef HAVE_BULLET
 
+#include "common.h"
 
 #include "physics_world.hpp"
 #include "collision.hpp"
@@ -74,10 +75,7 @@ PhysicsWorld::WorldObject::matrix_to_transform(const mat_t matrix)
     {
 	btScalar bt_matrix[16];
 	MAT_TRANSPOSE(bt_matrix, matrix);
-	// scale mm to m
-	bt_matrix[12] /= 1000;
-	bt_matrix[13] /= 1000;
-	bt_matrix[14] /= 1000;
+	VSCALE(&bt_matrix[12], &bt_matrix[12], 1e-3); // scale millimeters to meters
 	xform.setFromOpenGLMatrix(bt_matrix);
     }
 
@@ -134,10 +132,7 @@ PhysicsWorld::WorldObject::write_matrix()
 
     btScalar bt_matrix[16];
     m_rigid_body.getCenterOfMassTransform().getOpenGLMatrix(bt_matrix);
-    //scale m to mm
-    bt_matrix[12] *= 1000;
-    bt_matrix[13] *= 1000;
-    bt_matrix[14] *= 1000;
+    VSCALE(&bt_matrix[12], &bt_matrix[12], 1e3); // scale millimeters to meters
     MAT_TRANSPOSE(m_matrix, bt_matrix);
 }
 
@@ -186,7 +181,7 @@ PhysicsWorld::add_object(const vect_t &cad_bounding_box_dimensions,
 			 fastf_t mass, matp_t matrix)
 {
     btVector3 bounding_box_dimensions;
-    // scale mm to m
+    // scale millimeters to meters
     VSCALE(bounding_box_dimensions, cad_bounding_box_dimensions, 1e-3);
     m_objects.push_back(new WorldObject(bounding_box_dimensions, mass, matrix));
     m_objects.back()->add_to_world(m_world);

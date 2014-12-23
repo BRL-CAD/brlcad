@@ -28,9 +28,7 @@
 #define COLLISION_H
 
 
-#include <BulletCollision/CollisionShapes/btBoxShape.h>
-#include <BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h>
-#include <BulletCollision/CollisionDispatch/btCollisionCreateFunc.h>
+#include <btBulletDynamicsCommon.h>
 
 
 namespace simulate

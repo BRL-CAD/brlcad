@@ -28,8 +28,6 @@
 #define PHYSICS_WORLD_H
 
 
-#include "common.h"
-
 #include <vector>
 
 #include <btBulletDynamicsCommon.h>
