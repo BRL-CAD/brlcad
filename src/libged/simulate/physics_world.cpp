@@ -75,7 +75,7 @@ PhysicsWorld::WorldObject::matrix_to_transform(const mat_t matrix)
     {
 	btScalar bt_matrix[16];
 	MAT_TRANSPOSE(bt_matrix, matrix);
-	VSCALE(&bt_matrix[12], &bt_matrix[12], 1e-3); // scale millimeters to meters
+	VSCALE(&bt_matrix[12], &bt_matrix[12], MM_TO_METERS);
 	xform.setFromOpenGLMatrix(bt_matrix);
     }
 
@@ -101,7 +101,7 @@ PhysicsWorld::WorldObject::WorldObject(const btVector3 &bounding_box_dimensions,
 				       btScalar mass, matp_t matrix) :
     m_in_world(false),
     m_matrix(matrix),
-    m_collision_shape(bounding_box_dimensions / 2),
+    m_collision_shape(bounding_box_dimensions / 2.0),
     m_rigid_body(build_construction_info(m_collision_shape, m_matrix, mass))
 {}
 
@@ -132,7 +132,7 @@ PhysicsWorld::WorldObject::write_matrix()
 
     btScalar bt_matrix[16];
     m_rigid_body.getCenterOfMassTransform().getOpenGLMatrix(bt_matrix);
-    VSCALE(&bt_matrix[12], &bt_matrix[12], 1e3); // scale meters to millimeters
+    VSCALE(&bt_matrix[12], &bt_matrix[12], METERS_TO_MM);
     MAT_TRANSPOSE(m_matrix, bt_matrix);
 }
 
@@ -149,7 +149,7 @@ PhysicsWorld::PhysicsWorld() :
     m_collision_dispatcher.registerCollisionCreateFunc(
 	RtCollisionShape::RT_SHAPE_TYPE, RtCollisionShape::RT_SHAPE_TYPE,
 	new RtCollisionAlgorithm::CreateFunc);
-    m_world.setGravity(btVector3(0, 0, static_cast<btScalar>(-9.8)));
+    m_world.setGravity(btVector3(0.0, 0.0, -9.8));
 }
 
 
@@ -181,8 +181,7 @@ PhysicsWorld::add_object(const vect_t &cad_bounding_box_dimensions,
 			 fastf_t mass, matp_t matrix)
 {
     btVector3 bounding_box_dimensions;
-    // scale millimeters to meters
-    VSCALE(bounding_box_dimensions, cad_bounding_box_dimensions, 1e-3);
+    VSCALE(bounding_box_dimensions, cad_bounding_box_dimensions, MM_TO_METERS);
     m_objects.push_back(new WorldObject(bounding_box_dimensions, mass, matrix));
     m_objects.back()->add_to_world(m_world);
 }

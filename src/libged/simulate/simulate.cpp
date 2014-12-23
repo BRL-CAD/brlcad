@@ -151,7 +151,7 @@ world_add_tree(simulate::PhysicsWorld &world, rt_i &rt_instance, tree &vtree,
 
 	    vect_t bounding_box_dimensions;
 	    get_bounding_box_dimensions(dbi, vtree.tr_l.tl_name, bounding_box_dimensions);
-	    const fastf_t density = 1;
+	    const fastf_t density = 1.0;
 	    fastf_t mass = density * get_volume(dbi, vtree.tr_l.tl_name);
 
 	    std::map<std::string, std::string> attributes = get_attributes(dbi,
@@ -162,7 +162,7 @@ world_add_tree(simulate::PhysicsWorld &world, rt_i &rt_instance, tree &vtree,
 		if (it->first == "mass") {
 		    mass = lexical_cast<fastf_t>(it->second);
 
-		    if (mass < 0) throw std::invalid_argument(
+		    if (mass < 0.0) throw std::invalid_argument(
 			    std::string("invalid attribute 'mass' on object '")
 			    + vtree.tr_l.tl_name + "'");
 		} else throw std::invalid_argument("invalid attribute '" + it->first +

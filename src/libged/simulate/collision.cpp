@@ -53,11 +53,12 @@ on_multioverlap(application *app, partition *partition1, bu_ptbl *ptbl,
     VJOIN1(point_on_b, app->a_ray.r_pt, partition1->pt_outhit->hit_dist,
 	   app->a_ray.r_dir);
 
-    btScalar depth = -DIST_PT_PT(point_on_a, point_on_b) * 1e-3;
+    btScalar depth = -DIST_PT_PT(point_on_a, point_on_b) * simulate::MM_TO_METERS;
 
     btVector3 normal_world_on_b;
     VMOVE(normal_world_on_b, app->a_uvec);
-    result.addContactPoint(normal_world_on_b, point_on_b * 1e-3, depth);
+    result.addContactPoint(normal_world_on_b, point_on_b * simulate::MM_TO_METERS,
+			   depth);
 
     // handle the overlap
     rt_default_multioverlap(app, partition1, ptbl, partition2);
@@ -68,13 +69,13 @@ static void
 calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 			 const btRigidBody &rb_b)
 {
-    const btScalar grid_size = 1;
+    const btScalar grid_size = 1.0;
 
     // calculate the normal of the contact points as the resultant of the velocities -A and B
     btVector3 normal_world_on_b = (rb_b.getLinearVelocity() -
 				   rb_a.getLinearVelocity());
 
-    if (normal_world_on_b != btVector3(0, 0, 0))
+    if (normal_world_on_b != btVector3(0.0, 0.0, 0.0))
 	normal_world_on_b.normalize();
 
     // shoot a circular grid of rays about `normal_world_on_b`
@@ -96,18 +97,18 @@ calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 	    VMOVE(overlap_min, rb_a_aabb_min);
 	    VMAX(overlap_min, rb_b_aabb_min);
 
-	    overlap_max *= 1e-3;
-	    overlap_min *= 1e-3;
+	    overlap_max *= simulate::METERS_TO_MM;
+	    overlap_min *= simulate::METERS_TO_MM;
 	}
 
 	// radius of the circle of rays
-	btScalar radius = (overlap_max - overlap_min).length() / 2;
+	btScalar radius = (overlap_max - overlap_min).length() / 2.0;
 
 	// calculate the origin of the center ray
 	btVector3 center_point;
 	{
 	    // center of the overlap volume
-	    btVector3 overlap_center = overlap_min + overlap_max / 2;
+	    btVector3 overlap_center = overlap_min + overlap_max / 2.0;
 
 	    // step back from overlap_center, along the normal by `radius`,
 	    // to ensure that rays start from outside of the overlap region
@@ -123,11 +124,11 @@ calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 	// calculate the 'up' vector
 	vect_t up_vect;
 	{
-	    btVector3 up = normal_world_on_b.cross(btVector3(1, 0, 0));
+	    btVector3 up = normal_world_on_b.cross(btVector3(1.0, 0.0, 0.0));
 
 	    // use the y-axis if parallel to x-axis
-	    if (up == btVector3(0, 0, 0))
-		up = normal_world_on_b.cross(btVector3(0, 1, 0));
+	    if (up == btVector3(0.0, 0.0, 0.0))
+		up = normal_world_on_b.cross(btVector3(0.0, 1.0, 0.0));
 
 	    VMOVE(up_vect, up);
 	}
@@ -245,7 +246,7 @@ btScalar
 RtCollisionAlgorithm::calculateTimeOfImpact(btCollisionObject *,
 	btCollisionObject *, const btDispatcherInfo &, btManifoldResult *)
 {
-    return 1;
+    return 1.0;
 }
 
 

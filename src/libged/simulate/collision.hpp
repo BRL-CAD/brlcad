@@ -35,6 +35,10 @@ namespace simulate
 {
 
 
+static const btScalar METERS_TO_MM = 1.0e3;
+static const btScalar MM_TO_METERS = 1.0e-3;
+
+
 class RtCollisionShape : public btBoxShape
 {
 public:
