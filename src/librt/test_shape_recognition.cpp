@@ -339,10 +339,11 @@ is_cylinder(const object_data *data)
     }
     active_edges = data->edges;
     for (e_it = degenerate.begin(); e_it != degenerate.end(); e_it++) {
-	std::cout << "erasing " << *e_it << "\n";
+	//std::cout << "erasing " << *e_it << "\n";
 	active_edges.erase(*e_it);
     }
-    std::cout << "Active Edge set: ";
+    //std::cout << "Active Edge set: ";
+#if 0
     for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
 	std::cout << (int)(*e_it);
 	f_it = e_it;
@@ -350,6 +351,7 @@ is_cylinder(const object_data *data)
 	if (f_it != active_edges.end()) std::cout << ",";
     }
     std::cout << "\n";
+#endif
 
     // Sixth, check for any remaining linear segments.  For rpc primitives
     // those are expected, but for a true cylinder the linear segments should
@@ -423,6 +425,54 @@ is_cylinder(const object_data *data)
     // TODO - check for different radius values between the two circles - for a pure cylinder test should reject, but we can easily handle it with the tgc...
 
     return ret;
+}
+
+void
+composite_components(const object_data *data)
+{
+    int planar = 0;
+    int spherical = 0;
+    int cylindrical = 0;
+    int cone = 0;
+    int torus = 0;
+    int general = 0;
+    std::set<int>::iterator f_it;
+    for (f_it = data->faces.begin(); f_it != data->faces.end(); f_it++) {
+	ON_BrepFace *used_face = &(data->brep->m_F[(*f_it)]);
+	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
+	int surface_type = (int)GetSurfaceType(temp_surface);
+	switch (surface_type) {
+	    case SURFACE_PLANE:
+		planar++;
+		break;
+	    case SURFACE_SPHERE:
+		spherical++;
+		break;
+	    case SURFACE_CYLINDER:
+		cylindrical++;
+		break;
+	    case SURFACE_CONE:
+		cone++;
+		break;
+	    case SURFACE_TORUS:
+		torus++;
+		break;
+	    default:
+		general++;
+		std::cout << "general surface: " << used_face->SurfaceIndexOf() << "\n";
+		break;
+	}
+    }
+
+    std::cout << "\n";
+    std::cout << data->key.c_str() << ":\n";
+    std::cout << "planar_cnt: " << planar << "\n";
+    std::cout << "spherical_cnt: " << spherical << "\n";
+    std::cout << "cylindrical_cnt: " << cylindrical << "\n";
+    std::cout << "cone_cnt: " << cone << "\n";
+    std::cout << "torus_cnt: " << torus << "\n";
+    std::cout << "general_cnt: " << general << "\n";
+    std::cout << "\n";
 }
 
 
@@ -523,7 +573,20 @@ main(int argc, char *argv[])
 	object_set.insert(face_object);
     }
 
-    print_objects(&object_set);
+    //print_objects(&object_set);
+    std::set<object_data>::iterator o_it;
+    for (o_it = object_set.begin(); o_it != object_set.end(); o_it++) {
+	if (is_planar(&(*o_it))) {
+	    std::cout << "Object is planar\n";
+	    continue;
+	}
+	if (is_cylinder(&(*o_it))) {
+	    std::cout << "Object is rcc\n";
+	    continue;
+	}
+	composite_components(&(*o_it));
+	std::cout << "\n";
+    }
 
     return 0;
 }
