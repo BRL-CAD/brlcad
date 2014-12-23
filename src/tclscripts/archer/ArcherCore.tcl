@@ -172,6 +172,7 @@ namespace eval ArcherCore {
 	method putString           {_str}
 	method rtcntrl             {args}
 	method setStatusString     {_str}
+	method getSelectedTreePaths {}
 
 	# Commands exposed to the user via the command line.
 	# More to be added later...
@@ -894,6 +895,7 @@ namespace eval ArcherCore {
 	method treeNodeIsOpen {_node}
 	method purgeNodeData {_node}
 	method updateTreeTopWithName {_name}
+	method handleCmdPopup {_X _Y}
 
 	# db/display commands
 	method getNodeChildren  {_node}
@@ -1408,6 +1410,18 @@ namespace eval ArcherCore {
 
     $itk_component(advancedTabs) add $itk_component(cmd) -text "Command"
     $itk_component(advancedTabs) add $itk_component(history) -text "History"
+
+    itk_component add cmdpopup {
+	::menu $itk_component(advancedTabs).cmdmenu \
+	    -tearoff 0
+    } {}
+
+    $itk_component(cmdpopup) add command \
+	-label "Paste Selected Path" \
+	-command "[$itk_component(cmd) component text] insert insert \
+		  \[[::itcl::code $this getSelectedTreePaths]\]"
+
+    bind [$itk_component(cmd) component text] <Button-3> [::itcl::code $this handleCmdPopup %X %Y]
 }
 
 ::itcl::body ArcherCore::buildCanvasMenubar {}  {
@@ -4772,6 +4786,10 @@ namespace eval ArcherCore {
     return [getTreePath $parent $_path]
 }
 
+::itcl::body ArcherCore::getSelectedTreePaths {} {
+    return [getTreePath [$itk_component(newtree) selection]]
+}
+
 ::itcl::body ArcherCore::handleTreeClose {} {
 }
 
@@ -4905,6 +4923,10 @@ namespace eval ArcherCore {
 
     loadMenu $itk_component(newtreepopup) $path $nodeType $item
     tk_popup $itk_component(newtreepopup) $_X $_Y
+}
+
+::itcl::body ArcherCore::handleCmdPopup {_X _Y} {
+    tk_popup $itk_component(cmdpopup) $_X $_Y
 }
 
 ::itcl::body ArcherCore::handleTreeSelect {} {
