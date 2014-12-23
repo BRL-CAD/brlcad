@@ -140,7 +140,7 @@ is_arbn(const object_data *data)
     //          are used by the hull.  If so, the shape is convex and may be expressed
     //          as an arbn.
     //
-    // Step 3.  If the arbn test fails, construct sets of contiguous convex faces using
+    // Step 3.  If the arbn test fails, construct sets of contiguous concave faces using
     //          the set of edges with one or more vertices not in the convex hull.  If
     //          those shapes are all convex, construct an arbn tree (or use simpler arb
     //          shapes if the subtractions may be so expressed).  If the subtraction
