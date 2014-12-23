@@ -427,12 +427,74 @@ is_cylinder(const object_data *data)
     return ret;
 }
 
+int
+cylindrical_planar_vertices(const object_data *data, int face_index)
+{
+    std::set<int> verts;
+    ON_BrepFace *face = &(data->brep->m_F[face_index]);
+    for(int i = 0; i < face->LoopCount(); i++) {
+	if (data->loops.find(face->m_li[i]) != data->loops.end()) {
+	    //std::cout << "loop " << face->m_li[i] << " on face " << face_index << " is active, processing...\n";
+	    ON_BrepLoop *loop = &(data->brep->m_L[face->m_li[i]]);
+	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+		if (trim.m_ei != -1) {
+		    ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+		    verts.insert(edge.Vertex(0)->m_vertex_index);
+		    verts.insert(edge.Vertex(1)->m_vertex_index);
+		}
+	    }
+	    if (verts.size() == 3) {
+		//std::cout << "Three points - planar.\n";
+		return 1;
+	    } else if (verts.size() >= 3) {
+		std::set<int>::iterator v_it = verts.begin();
+		ON_3dPoint p1 = data->brep->m_V[*v_it].Point();
+		v_it++;
+		ON_3dPoint p2 = data->brep->m_V[*v_it].Point();
+		v_it++;
+		ON_3dPoint p3 = data->brep->m_V[*v_it].Point();
+		ON_Plane test_plane(p1, p2, p3);
+		for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+		    if (!NEAR_ZERO(test_plane.DistanceTo(data->brep->m_V[*v_it].Point()), 0.01)) {
+			//std::cout << "vertex " << *v_it << " too far from plane, not planar\n";
+			return 0;
+		    }
+		}
+		//std::cout << verts.size() << " points, planar\n";
+		return 1;
+	    } else {
+		//std::cout << "Closed single curve loop - planar only if surface is.";
+		return 0;
+	    }
+	}
+    }
+    return 0;
+}
+
+int
+collect_adjacent_sametype_faces(const object_data *data, int face_index)
+{
+    // TODO - for a given face, use it's edges to assemble a list of other
+    // faces "next to" that face that have the same surface type and
+    // parameters (for example, two cylindrical surfaces with the same
+    // radius and central axis, whose shared edge also shares the same
+    // 3d curve in space...
+    //
+    // Eventually, we should (in principle) be able to build up CSG
+    // primitives for subsets of geometry and assemble a new brep of
+    // just the "hard to digest" parts, but that problem needs much better
+    // defining before we get too carried away.
+    return 0;
+}
+
 void
 composite_components(const object_data *data)
 {
     int planar = 0;
     int spherical = 0;
-    int cylindrical = 0;
+    int rcylindrical = 0;
+    int ircylindrical = 0;
     int cone = 0;
     int torus = 0;
     int general = 0;
@@ -449,7 +511,11 @@ composite_components(const object_data *data)
 		spherical++;
 		break;
 	    case SURFACE_CYLINDER:
-		cylindrical++;
+		if (!cylindrical_planar_vertices(data, *f_it)) {
+		    ircylindrical++;
+		} else {
+		    rcylindrical++;
+		}
 		break;
 	    case SURFACE_CONE:
 		cone++;
@@ -468,7 +534,8 @@ composite_components(const object_data *data)
     std::cout << data->key.c_str() << ":\n";
     std::cout << "planar_cnt: " << planar << "\n";
     std::cout << "spherical_cnt: " << spherical << "\n";
-    std::cout << "cylindrical_cnt: " << cylindrical << "\n";
+    std::cout << "regular cylindrical_cnt: " << rcylindrical << "\n";
+    std::cout << "irregular cylindrical_cnt: " << ircylindrical << "\n";
     std::cout << "cone_cnt: " << cone << "\n";
     std::cout << "torus_cnt: " << torus << "\n";
     std::cout << "general_cnt: " << general << "\n";
