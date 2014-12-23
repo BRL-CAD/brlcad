@@ -24,6 +24,7 @@
  *
  */
 
+#include "common.h"
 
 #ifdef HAVE_BULLET
 
