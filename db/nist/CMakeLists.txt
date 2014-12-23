@@ -9,9 +9,10 @@ set(NIST_SAMPLE_MODELS
 macro(ADD_NIST_G_TARGET step_model folder)
   string(REGEX REPLACE "([0-9a-z]*).stp" "\\1" step_model_root "${step_model}")
   set(output_file ${bin_root}/${DATA_DIR}/db/${step_model_root}.g)
+  set(log_file ${CMAKE_CURRENT_BINARY_DIR}/${step_model_root}.log)
   add_custom_command(
     OUTPUT ${output_file}
-    COMMAND step-g -O ${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${step_model} >> ${CMAKE_BINARY_DIR}/CMakeTmp/${step_model_root}.log
+    COMMAND step-g -O ${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${step_model} > ${log_file} 2>&1
     DEPENDS step-g ${CMAKE_CURRENT_SOURCE_DIR}/${step_model}
   )
   add_custom_target(${step_model_root}.g ALL DEPENDS ${output_file})
@@ -23,6 +24,7 @@ macro(ADD_NIST_G_TARGET step_model folder)
     install(FILES ${output_file} DESTINATION ${DATA_DIR}/db)
   endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
   set(BUILT_MODELS "${BUILT_MODELS};${output_file}")
+  set(LOG_FILES "${LOG_FILES};${log_file}")
 endmacro(ADD_NIST_G_TARGET step_model folder)
 
 foreach(step_input ${NIST_SAMPLE_MODELS})
@@ -30,7 +32,8 @@ foreach(step_input ${NIST_SAMPLE_MODELS})
 endforeach(step_input ${NIST_SAMPLE_MODELS})
 CMAKEFILES(${NIST_SAMPLE_MODELS})
 
-set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${BUILT_MODELS}")
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${BUILT_MODELS}")
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LOG_FILES}")
 
 CMAKEFILES(
   README
