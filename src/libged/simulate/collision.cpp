@@ -53,11 +53,11 @@ on_multioverlap(application *app, partition *partition1, bu_ptbl *ptbl,
     VJOIN1(point_on_b, app->a_ray.r_pt, partition1->pt_outhit->hit_dist,
 	   app->a_ray.r_dir);
 
-    btScalar depth = -DIST_PT_PT(point_on_a, point_on_b) * 10e-3;
+    btScalar depth = -DIST_PT_PT(point_on_a, point_on_b) * 1e-3;
 
     btVector3 normal_world_on_b;
     VMOVE(normal_world_on_b, app->a_uvec);
-    result.addContactPoint(normal_world_on_b, point_on_b * 10e-3, depth);
+    result.addContactPoint(normal_world_on_b, point_on_b * 1e-3, depth);
 
     // handle the overlap
     rt_default_multioverlap(app, partition1, ptbl, partition2);
