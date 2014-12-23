@@ -177,9 +177,9 @@ brep_to_nmg(const object_data *data)
 	    ON_BrepTrim& trim = b_face->Brep()->m_T[b_loop->m_ti[ti]];
 	    ON_BrepEdge& edge = b_face->Brep()->m_E[trim.m_ei];
 	    if (trim.m_bRev3d) {
-		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge.Vertex(1)->m_vertex_index]]);
-	    } else {
 		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge.Vertex(0)->m_vertex_index]]);
+	    } else {
+		loop_verts[loop_length] = &(verts[b_verts_to_verts[edge.Vertex(1)->m_vertex_index]]);
 	    }
 	    loop_length++;
 	}
