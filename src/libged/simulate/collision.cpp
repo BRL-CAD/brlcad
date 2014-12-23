@@ -39,15 +39,20 @@ namespace
 
 
 static void
-calculate_contact_points(btManifoldResult &result,
-			 const btCollisionObjectWrapper &body_a_wrap,
-			 const btCollisionObjectWrapper &body_b_wrap)
+on_multioverlap(application *app, partition *partition1, bu_ptbl *ptbl,
+		partition *partition2)
 {
-    const btRigidBody &rb_a = *btRigidBody::upcast(
-				  body_a_wrap.getCollisionObject());
-    const btRigidBody &rb_b = *btRigidBody::upcast(
-				  body_b_wrap.getCollisionObject());
+    (void)app;
+    (void)partition1;
+    (void)ptbl;
+    (void)partition2;
+}
 
+
+static void
+calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
+			 const btRigidBody &rb_b)
+{
     const btScalar grid_size = 0.1;
 
     // calculate the normal of the contact points as the resultant of the velocities -A and B
@@ -58,9 +63,10 @@ calculate_contact_points(btManifoldResult &result,
 	normal_world_on_b.normalize();
 
     // shoot a circular grid of rays about `normal_world_on_b`
-    xrays rays;
+    xrays *rays;
     {
-	BU_LIST_INIT(&rays.l);
+	BU_ALLOC(rays, xrays);
+	BU_LIST_INIT(&rays->l);
 
 	// calculate the overlap volume between the AABBs
 	btVector3 overlap_min, overlap_max;
@@ -89,7 +95,7 @@ calculate_contact_points(btManifoldResult &result,
 	    center_point = overlap_center - radius * normal_world_on_b;
 	}
 
-	xray &center_ray = rays.ray;
+	xray &center_ray = rays->ray;
 	center_ray.magic = RT_RAY_MAGIC;
 	center_ray.index = 0;
 	VMOVE(center_ray.r_pt, center_point);
@@ -107,10 +113,29 @@ calculate_contact_points(btManifoldResult &result,
 	    VMOVE(up_vect, up);
 	}
 
-	rt_gen_circular_grid(&rays, &center_ray, radius, up_vect, grid_size);
+	rt_gen_circular_grid(rays, &center_ray, radius, up_vect, grid_size);
     }
 
-    // TODO: shoot the rays
+    // shoot the rays
+    application app;
+    {
+	RT_APPLICATION_INIT(&app);
+	app.a_rt_i = NULL; // TODO
+	app.a_multioverlap = on_multioverlap;
+    }
+
+    xrays *entry;
+
+    while (BU_LIST_WHILE(entry, xrays, &rays->l)) {
+	VMOVE(app.a_ray.r_pt, entry->ray.r_pt);
+	VMOVE(app.a_ray.r_dir, entry->ray.r_dir);
+	rt_shootray(&app);
+
+	BU_LIST_DEQUEUE(&entry->l);
+	bu_free(entry, "xrays entry");
+    }
+
+    // TODO: collect contact points
 
     // for each contact point:
     const btVector3 pt_b(0, 0, 0);
@@ -188,7 +213,9 @@ RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper
     m_manifold->clearManifold();
 #endif
 
-    calculate_contact_points(*result, *body_a_wrap, *body_b_wrap);
+    calculate_contact_points(*result,
+			     *btRigidBody::upcast(body_a_wrap->getCollisionObject()),
+			     *btRigidBody::upcast(body_b_wrap->getCollisionObject()));
 
 #ifdef USE_PERSISTENT_CONTACTS
 
