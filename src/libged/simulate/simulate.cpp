@@ -31,6 +31,7 @@
 
 
 #include "physics_world.hpp"
+#include "rt_instance.hpp"
 
 
 #include <map>
@@ -228,6 +229,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 	simulate::PhysicsWorld world;
 	world_add_tree(world, *rt_instance.ptr, *vtree, *gedp->ged_wdbp->dbip);
 	rt_prep(rt_instance.ptr);
+	rt_instance_data::rt_instance = rt_instance.ptr;
 	world.step(1);
     } catch (const std::logic_error &e) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], e.what());

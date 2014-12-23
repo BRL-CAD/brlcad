@@ -132,7 +132,7 @@ PhysicsWorld::WorldObject::write_matrix()
 
     btScalar bt_matrix[16];
     m_rigid_body.getCenterOfMassTransform().getOpenGLMatrix(bt_matrix);
-    VSCALE(&bt_matrix[12], &bt_matrix[12], 1e3); // scale millimeters to meters
+    VSCALE(&bt_matrix[12], &bt_matrix[12], 1e3); // scale meters to millimeters
     MAT_TRANSPOSE(m_matrix, bt_matrix);
 }
 

@@ -30,6 +30,7 @@
 #include "common.h"
 
 #include "collision.hpp"
+#include "rt_instance.hpp"
 
 #include "raytrace.h"
 
@@ -120,7 +121,7 @@ calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
     application app;
     {
 	RT_APPLICATION_INIT(&app);
-	app.a_rt_i = NULL; // TODO
+	app.a_rt_i = rt_instance_data::rt_instance;
 	app.a_multioverlap = on_multioverlap;
     }
 

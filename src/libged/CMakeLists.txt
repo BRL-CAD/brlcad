@@ -251,6 +251,7 @@ set(LIBGED_SOURCES
   shells.c
   showmats.c
   simulate/collision.cpp
+  simulate/rt_instance.cpp
   simulate/physics_world.cpp
   simulate/simulate.cpp
   simulate/simrt.c
@@ -336,6 +337,7 @@ set(ged_ignore_files
   joint.h
   qray.h
   simulate/collision.hpp
+  simulate/rt_instance.hpp
   simulate/physics_world.hpp
   simulate/simrt.h
   osg.cpp
