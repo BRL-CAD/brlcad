@@ -68,7 +68,7 @@ static void
 calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 			 const btRigidBody &rb_b)
 {
-    const btScalar grid_size = 0.1;
+    const btScalar grid_size = 1;
 
     // calculate the normal of the contact points as the resultant of the velocities -A and B
     btVector3 normal_world_on_b = (rb_b.getLinearVelocity() -
@@ -95,6 +95,9 @@ calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 	    VMIN(overlap_max, rb_b_aabb_max);
 	    VMOVE(overlap_min, rb_a_aabb_min);
 	    VMAX(overlap_min, rb_b_aabb_min);
+
+	    overlap_max *= 1e-3;
+	    overlap_min *= 1e-3;
 	}
 
 	// radius of the circle of rays
