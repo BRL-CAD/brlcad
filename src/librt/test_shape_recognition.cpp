@@ -149,7 +149,10 @@ is_planar(const object_data *data)
     //          and proceed to the nmg primitive.  It may conceivably be worth some
     //          additional searches to spot convex subsets of shapes that can be more
     //          simply represented, but that is not particularly simple to do well
-    //          and should wait until it is clear we would get a benefit from it.
+    //          and should wait until it is clear we would get a benefit from it.  Look
+    //          at the arbn tessellation routine for a guide on how to set up the
+    //          nmg - that's the most general of the arb* primitives and should be
+    //          relatively close to what is needed here.
 
     return ret;
 }
