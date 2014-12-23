@@ -85,7 +85,7 @@ static std::map<std::string, std::string>
 get_attributes(const db_i &dbi, const std::string &name)
 {
     const char * const prefix = "simulate::";
-    const std::size_t prefix_len = strlen(prefix);
+    const std::size_t prefix_len = sizeof(prefix) - 1;
 
     directory *dir = db_lookup(&dbi, name.c_str(), false);
 
@@ -104,7 +104,7 @@ get_attributes(const db_i &dbi, const std::string &name)
     std::map<std::string, std::string> result;
 
     for (std::size_t i = 0; i < obj_avs.count; ++i)
-	if (!strncmp(obj_avs.avp[i].name, prefix, prefix_len))
+	if (!bu_strncmp(obj_avs.avp[i].name, prefix, prefix_len))
 	    result[obj_avs.avp[i].name + prefix_len] = obj_avs.avp[i].value;
 
     return result;
