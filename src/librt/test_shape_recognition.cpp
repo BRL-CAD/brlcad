@@ -143,10 +143,12 @@ is_planar(const object_data *data)
     // Step 3.  If the arbn test fails, construct sets of contiguous concave faces using
     //          the set of edges with one or more vertices not in the convex hull.  If
     //          those shapes are all convex, construct an arbn tree (or use simpler arb
-    //          shapes if the subtractions may be so expressed).  If the subtraction
-    //          volumes are still not convex, cut our losses and proceed to the nmg
-    //          primitive.  It may conceivably be worth some additional searches to spot
-    //          subsets of shapes that are convex, but that is not particularly simple
+    //          shapes if the subtractions may be so expressed).
+    //
+    // Step 4.  If the subtraction volumes in Step 3 are still not convex, cut our losses
+    //          and proceed to the nmg primitive.  It may conceivably be worth some
+    //          additional searches to spot convex subsets of shapes that can be more
+    //          simply represented, but that is not particularly simple to do well
     //          and should wait until it is clear we would get a benefit from it.
 
     return ret;
