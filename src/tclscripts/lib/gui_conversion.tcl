@@ -549,7 +549,7 @@ proc ::conversion_config { } {
    }
 }
 
-if {$argv0 == [info script]} {
+if {[info exists argv0] && $argv0 == [info script]} {
    ::conversion_config
 }
 
