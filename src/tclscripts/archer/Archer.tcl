@@ -255,6 +255,7 @@ package provide Archer 1.0
 	method doAboutArcher {}
 	method doarcherHelp {}
 	method handleMap {}
+	method handleBindingModeChange {_name1 _name2 _op}
 	method handleDisplayEscape {_dm}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
@@ -486,6 +487,8 @@ package provide Archer 1.0
 	buildObjToolView
 	buildSelectTransparencyDialog
 	buildSelectGroupDialog
+
+	trace add variable mDefaultBindingMode write [::itcl::code $this handleBindingModeChange]
 
 	# set initial toggle variables
 	set mVPaneToggle3 $mVPaneFraction3
@@ -4285,6 +4288,19 @@ proc title_node_handler {node} {
     }
 
     $editView clearEditState 0 1
+}
+
+::itcl::body Archer::handleBindingModeChange {_name1 _name2 _op} {
+    switch $mDefaultBindingMode \
+	$OBJECT_ROTATE_MODE - \
+	$OBJECT_TRANSLATE_MODE - \
+	$OBJECT_SCALE_MODE - \
+	$OBJECT_CENTER_MODE {
+	    $itk_component(ged) configure -cursor "hand1"
+	} \
+	default {
+	    $itk_component(ged) configure -cursor "arrow"
+	}
 }
 
 ::itcl::body Archer::launchDisplayMenuBegin {_dm _m _x _y} {
