@@ -265,7 +265,7 @@ is_cylinder(const object_data *data)
     std::set<int> active_edges;
     // First, check surfaces.  If a surface is anything other than a plane or cylindrical,
     // the verdict is no.  If we don't have at least two planar surfaces and one
-    // cylindrical, the verict is no.
+    // cylindrical, the verdict is no.
     for (f_it = data->faces.begin(); f_it != data->faces.end(); f_it++) {
 	ON_BrepFace *used_face = &(data->brep->m_F[(*f_it)]);
 	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
