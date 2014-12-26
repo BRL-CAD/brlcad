@@ -77,7 +77,7 @@ bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...)
 	    part_n = scanf(delim_fmt, &len);
 
 	offset += len;
-	if (part_n != 1 || len != delim_len) { break; }
+	if (part_n != 0 || len != delim_len) { break; }
     }
 
     va_end(ap);
