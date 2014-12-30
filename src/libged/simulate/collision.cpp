@@ -68,14 +68,13 @@ static void
 calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 			 const btRigidBody &rb_b)
 {
-    const btScalar grid_size = 5.0;
-
     // calculate the normal of the contact points as the resultant of the velocities -A and B
     btVector3 normal_world_on_b = (rb_b.getLinearVelocity() -
 				   rb_a.getLinearVelocity());
 
     if (normal_world_on_b != btVector3(0.0, 0.0, 0.0))
 	normal_world_on_b.normalize();
+    else return;
 
     // shoot a circular grid of rays about `normal_world_on_b`
     xrays *rays;
@@ -129,6 +128,7 @@ calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 	    VMOVE(up_vect, up);
 	}
 
+	const btScalar grid_size = 0.1;
 	rt_gen_circular_grid(rays, &center_ray, radius, up_vect, grid_size);
     }
 
