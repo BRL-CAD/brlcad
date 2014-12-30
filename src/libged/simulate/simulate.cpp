@@ -139,8 +139,7 @@ get_volume(db_i &dbi, const std::string &name)
 
 
 static void
-world_add_tree(simulate::PhysicsWorld &world, rt_i &rt_instance, tree &vtree,
-	       db_i &dbi)
+world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 {
     switch (vtree.tr_op) {
 	case OP_DB_LEAF: {
@@ -169,17 +168,13 @@ world_add_tree(simulate::PhysicsWorld &world, rt_i &rt_instance, tree &vtree,
 						       "' on object '" + vtree.tr_l.tl_name  + "'");
 	    }
 
-	    if (rt_gettree(&rt_instance, vtree.tr_l.tl_name) < 0)
-		throw std::runtime_error(std::string("rt_gettree() failed for '") +
-					 vtree.tr_l.tl_name + "'");
-
 	    world.add_object(bounding_box_dimensions, mass, vtree.tr_l.tl_mat);
 	    break;
 	}
 
 	case OP_UNION:
-	    world_add_tree(world, rt_instance, *vtree.tr_b.tb_left, dbi);
-	    world_add_tree(world, rt_instance, *vtree.tr_b.tb_right, dbi);
+	    world_add_tree(world, *vtree.tr_b.tb_left, dbi);
+	    world_add_tree(world, *vtree.tr_b.tb_right, dbi);
 	    break;
 
 	default:
@@ -226,12 +221,17 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 
 	if (!vtree) throw std::invalid_argument("combination has no members");
 
+	simulate::PhysicsWorld world;
+	world_add_tree(world, *vtree, *gedp->ged_wdbp->dbip);
+
 	AutoDestroyer<rt_i, rt_free_rti> rt_instance(rt_new_rti(gedp->ged_wdbp->dbip));
 
 	if (!rt_instance.ptr) throw std::runtime_error("rt_new_rti() failed");
 
-	simulate::PhysicsWorld world;
-	world_add_tree(world, *rt_instance.ptr, *vtree, *gedp->ged_wdbp->dbip);
+	if (rt_gettree(rt_instance.ptr, argv[1]) < 0)
+	    throw std::runtime_error(std::string("rt_gettree() failed for '") + argv[1] +
+				     "'");
+
 	rt_prep(rt_instance.ptr);
 	rt_instance_data::rt_instance = rt_instance.ptr;
 	world.step(seconds);

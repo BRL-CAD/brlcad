@@ -53,12 +53,11 @@ on_multioverlap(application *app, partition *partition1, bu_ptbl *ptbl,
     VJOIN1(point_on_b, app->a_ray.r_pt, partition1->pt_outhit->hit_dist,
 	   app->a_ray.r_dir);
 
-    btScalar depth = -DIST_PT_PT(point_on_a, point_on_b) * simulate::MM_TO_METERS;
+    btScalar depth = -DIST_PT_PT(point_on_a, point_on_b);
 
     btVector3 normal_world_on_b;
     VMOVE(normal_world_on_b, app->a_uvec);
-    result.addContactPoint(normal_world_on_b, point_on_b * simulate::MM_TO_METERS,
-			   depth);
+    result.addContactPoint(normal_world_on_b, point_on_b, depth);
 
     // handle the overlap
     rt_default_multioverlap(app, partition1, ptbl, partition2);
@@ -69,7 +68,7 @@ static void
 calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 			 const btRigidBody &rb_b)
 {
-    const btScalar grid_size = 1.0;
+    const btScalar grid_size = 5.0;
 
     // calculate the normal of the contact points as the resultant of the velocities -A and B
     btVector3 normal_world_on_b = (rb_b.getLinearVelocity() -
@@ -96,9 +95,6 @@ calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 	    VMIN(overlap_max, rb_b_aabb_max);
 	    VMOVE(overlap_min, rb_a_aabb_min);
 	    VMAX(overlap_min, rb_b_aabb_min);
-
-	    overlap_max *= simulate::METERS_TO_MM;
-	    overlap_min *= simulate::METERS_TO_MM;
 	}
 
 	// radius of the circle of rays
