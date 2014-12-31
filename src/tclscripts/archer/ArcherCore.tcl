@@ -630,7 +630,6 @@ namespace eval ArcherCore {
 
 	method colorMenuStatusCB {_w}
 	method menuStatusCB {_w}
-	method menuStatusCB_junk {_w}
 	method transparencyMenuStatusCB {_w}
 
 	method updateSaveMode {}
@@ -5629,120 +5628,6 @@ namespace eval ArcherCore {
 	}
 
 	switch -- $op {
-	    "Wireframe" {
-		set mStatusStr "Draw object as wireframe"
-	    }
-	    "Shaded" {
-		set mStatusStr "Draw object as shaded if a bot or polysolid (unevaluated)"
-	    }
-	    "Hidden Line" {
-		set mStatusStr "Draw object as hidden line"
-	    }
-	    "Off" {
-		set mStatusStr "Erase object"
-	    }
-	    default {
-		set mStatusStr ""
-	    }
-	}
-    }
-}
-
-::itcl::body ArcherCore::menuStatusCB_junk {_w} {
-    if {$mDoStatus} {
-	# entry might not support -label (i.e. tearoffs)
-	if {[catch {$_w entrycget active -label} op]} {
-	    set op ""
-	}
-
-	switch -- $op {
-	    "Open..." {
-		set mStatusStr "Open a target description"
-	    }
-	    "Save" {
-		set mStatusStr "Save the current target description"
-	    }
-	    "Quit" {
-		set mStatusStr "Exit ArcherCore"
-	    }
-	    "Reset" {
-		set mStatusStr "Set view to default"
-	    }
-	    "Autoview" {
-		set mStatusStr "Set view size and center according to what's being displayed"
-	    }
-	    "Center..." {
-		set mStatusStr "Set the view center"
-	    }
-	    "Front" {
-		set mStatusStr "Set view to front"
-	    }
-	    "Rear" {
-		set mStatusStr "Set view to rear"
-	    }
-	    "Port" {
-		set mStatusStr "Set view to port/left"
-	    }
-	    "Starboard" {
-		set mStatusStr "Set view to starboard/right"
-	    }
-	    "Top" {
-		set mStatusStr "Set view to top"
-	    }
-	    "Bottom" {
-		set mStatusStr "Set view to bottom"
-	    }
-	    "35,25" {
-		set mStatusStr "Set view to az=35, el=25"
-	    }
-	    "45,45" {
-		set mStatusStr "Set view to az=45, el=45"
-	    }
-	    "Primary" {
-		set mStatusStr "Toggle on/off primary toolbar"
-	    }
-	    "View Controls" {
-		set mStatusStr "Toggle on/off view toolbar"
-	    }
-	    "Status Bar" {
-		set mStatusStr "Toggle on/off status bar"
-	    }
-	    "Command Window" {
-		set mStatusStr "Toggle on/off command window"
-	    }
-	    "Upper Left" {
-		set mStatusStr "Set the active pane to the upper left pane"
-	    }
-	    "Upper Right" {
-		set mStatusStr "Set the active pane to the upper right pane"
-	    }
-	    "Lower Left" {
-		set mStatusStr "Set the active pane to the lower left pane"
-	    }
-	    "Lower Right" {
-		set mStatusStr "Set the active pane to the lower right pane"
-	    }
-	    "Quad View" {
-		set mStatusStr "Toggle between single and multiple geometry pane mode"
-	    }
-	    "View Axes" {
-		set mStatusStr "Hide/Show view axes"
-	    }
-	    "Model Axes" {
-		set mStatusStr "Hide/Show model axes"
-	    }
-	    "File" {
-		set mStatusStr ""
-	    }
-	    "View" {
-		set mStatusStr ""
-	    }
-	    "Modes" {
-		set mStatusStr ""
-	    }
-	    "Help" {
-		set mStatusStr ""
-	    }
 	    "Wireframe" {
 		set mStatusStr "Draw object as wireframe"
 	    }
