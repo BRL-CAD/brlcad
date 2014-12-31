@@ -1773,10 +1773,8 @@ package provide Archer 1.0
 	    $itk_component(ged) open $mTargetCopy
 	}
 
-	if {$mAllowDataClear} {
-	    gedCmd data_axes points {}
-	    gedCmd data_lines points {}
-	}
+	gedCmd data_axes points {}
+	gedCmd data_lines points {}
 
 	gedCmd configure -primitiveLabels {}
     } else {
@@ -6465,10 +6463,8 @@ proc title_node_handler {node} {
 	set GeometryEditFrame::mEditPCommand ""
     }
 
-    if {$mAllowDataClear} {
-	gedCmd data_axes points {}
-	gedCmd data_lines points {}
-    }
+    gedCmd data_axes points {}
+    gedCmd data_lines points {}
 
     set editView [getEditView]
     if {$editView == ""} {
