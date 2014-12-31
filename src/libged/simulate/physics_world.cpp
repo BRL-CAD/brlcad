@@ -147,7 +147,7 @@ PhysicsWorld::PhysicsWorld() :
     m_collision_dispatcher.registerCollisionCreateFunc(
 	RtCollisionShape::RT_SHAPE_TYPE, RtCollisionShape::RT_SHAPE_TYPE,
 	new RtCollisionAlgorithm::CreateFunc);
-    m_world.setGravity(btVector3(0.0, 0.0, -9.8 * 1000.0));
+    m_world.setGravity(btVector3(0.0, 0.0, -9.8));
 }
 
 

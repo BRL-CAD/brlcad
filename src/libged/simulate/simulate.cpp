@@ -183,6 +183,42 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 }
 
 
+static void
+do_simulate(db_i &dbi, directory &scene_directory, fastf_t seconds)
+{
+    rt_db_internal internal;
+
+    if (rt_db_get_internal(&internal, &scene_directory, &dbi, bn_mat_identity,
+			   &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_get_internal() failed");
+
+    AutoDestroyer<rt_db_internal, rt_db_free_internal> internal_autodestroy(
+	&internal);
+
+    {
+	AutoDestroyer<rt_i, rt_free_rti> rt_instance(rt_new_rti(&dbi));
+
+	if (!rt_instance.ptr) throw std::runtime_error("rt_new_rti() failed");
+
+	if (rt_gettree(rt_instance.ptr, scene_directory.d_namep) < 0)
+	    throw std::runtime_error("rt_gettree() failed");
+
+	rt_prep(rt_instance.ptr);
+	rt_instance_data::rt_instance = rt_instance.ptr;
+
+	simulate::PhysicsWorld world;
+	tree * const vtree = static_cast<rt_comb_internal *>(internal.idb_ptr)->tree;
+
+	if (vtree) world_add_tree(world, *vtree, dbi);
+
+	world.step(seconds);
+    }
+
+    if (rt_db_put_internal(&scene_directory, &dbi, &internal, &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_put_internal() failed");
+}
+
+
 }
 
 
@@ -206,47 +242,18 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    rt_db_internal internal;
-    GED_DB_GET_INTERNAL(gedp, &internal, dir, bn_mat_identity, &rt_uniresource,
-			GED_ERROR);
-    AutoDestroyer<rt_db_internal, rt_db_free_internal> internal_autodestroy(
-	&internal);
-
     try {
 	fastf_t seconds = lexical_cast<fastf_t>(argv[2]);
 
 	if (seconds < 0) throw std::runtime_error("invalid value for 'seconds'");
 
-	tree * const vtree = static_cast<rt_comb_internal *>(internal.idb_ptr)->tree;
+	do_simulate(*gedp->ged_wdbp->dbip, *dir, seconds);
 
-	if (!vtree) throw std::invalid_argument("combination has no members");
-
-	simulate::PhysicsWorld world;
-	world_add_tree(world, *vtree, *gedp->ged_wdbp->dbip);
-
-	AutoDestroyer<rt_i, rt_free_rti> rt_instance(rt_new_rti(gedp->ged_wdbp->dbip));
-
-	if (!rt_instance.ptr) throw std::runtime_error("rt_new_rti() failed");
-
-	if (rt_gettree(rt_instance.ptr, argv[1]) < 0)
-	    throw std::runtime_error(std::string("rt_gettree() failed for '") + argv[1] +
-				     "'");
-
-	rt_prep(rt_instance.ptr);
-	rt_instance_data::rt_instance = rt_instance.ptr;
-	world.step(seconds);
     } catch (const std::logic_error &e) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], e.what());
 	return GED_ERROR;
     } catch (const std::runtime_error &e) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], e.what());
-	return GED_ERROR;
-    }
-
-    if (rt_db_put_internal(dir, gedp->ged_wdbp->dbip, &internal,
-			   &rt_uniresource) < 0) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: rt_db_put_internal() failed",
-		       argv[0]);
 	return GED_ERROR;
     }
 
