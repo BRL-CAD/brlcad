@@ -1737,47 +1737,7 @@ package provide Archer 1.0
     }
     set mActiveEditDialogs {}
 
-    set mTarget $_target
-    set mDbType "BRL-CAD"
-    set mCopyObj ""
-    set mCombWarningList ""
-
-    if {![catch {$mTarget ls}]} {
-	set mDbShared 1
-	set mDbReadOnly 1
-    } elseif {[file exists $mTarget]} {
-	if {[file writable $mTarget] ||
-	    ($tcl_platform(platform) == "windows" && ![file attributes $mTarget -readonly])} {
-	    set mDbReadOnly 0
-	} else {
-	    set mDbReadOnly 1
-	}
-    } else {
-	set mDbReadOnly 0
-    }
-
-    if {$mDbNoCopy || $mDbReadOnly} {
-	set mTargetOldCopy $mTargetCopy
-	set mTargetCopy ""
-    } else {
-	createTargetCopy
-    }
-
-    # Load MGED database
-    if {[info exists itk_component(ged)]} {
-	if {$mDbShared} {
-	    $itk_component(ged) sharedGed $mTarget
-	} elseif {$mDbNoCopy || $mDbReadOnly} {
-	    $itk_component(ged) open $mTarget
-	} else {
-	    $itk_component(ged) open $mTargetCopy
-	}
-
-	gedCmd data_axes points {}
-	gedCmd data_lines points {}
-
-	gedCmd configure -primitiveLabels {}
-    } else {
+    if {![OpenTarget $_target]} {
 	initGed
 
 	grid forget $itk_component(canvas)

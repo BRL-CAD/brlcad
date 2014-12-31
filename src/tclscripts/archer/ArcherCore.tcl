@@ -616,6 +616,7 @@ namespace eval ArcherCore {
 	variable mMouseRayCallbacks ""
 	variable mLastTags ""
 
+	method OpenTarget {target}
 	method handleMoreArgs {args}
 
 	method checkIfSelectedObjExists {}
@@ -5330,17 +5331,7 @@ namespace eval ArcherCore {
 # ------------------------------------------------------------
 #                         GENERAL
 # ------------------------------------------------------------
-::itcl::body ArcherCore::Load {target} {
-    global tcl_platform
-
-    SetWaitCursor $this
-    if {$mNeedSave} {
-	askToSave
-    }
-
-    set mNeedSave 0
-    updateSaveMode
-
+::itcl::body ArcherCore::OpenTarget {target} {
     set mTarget $target
     set mDbType "BRL-CAD"
     set mCopyObj ""
@@ -5368,20 +5359,36 @@ namespace eval ArcherCore {
     }
 
     # Load MGED database
-    if {[info exists itk_component(ged)]} {
-	if {$mDbShared} {
-	    $itk_component(ged) sharedGed $mTarget
-	} elseif {$mDbNoCopy || $mDbReadOnly} {
-	    $itk_component(ged) open $mTarget
-	} else {
-	    $itk_component(ged) open $mTargetCopy
-	}
+    if {![info exists itk_component(ged)]} {
+	return false
+    }
 
-	gedCmd data_axes points {}
-	gedCmd data_lines points {}
-
-	gedCmd configure -primitiveLabels {}
+    if {$mDbShared} {
+	$itk_component(ged) sharedGed $mTarget
+    } elseif {$mDbNoCopy || $mDbReadOnly} {
+	$itk_component(ged) open $mTarget
     } else {
+	$itk_component(ged) open $mTargetCopy
+    }
+    gedCmd data_axes points {}
+    gedCmd data_lines points {}
+    gedCmd configure -primitiveLabels {}
+
+    return true
+}
+
+::itcl::body ArcherCore::Load {target} {
+    global tcl_platform
+
+    SetWaitCursor $this
+    if {$mNeedSave} {
+	askToSave
+    }
+
+    set mNeedSave 0
+    updateSaveMode
+
+    if {![OpenTarget $target]} {
 	initGed
 
 	grid forget $itk_component(canvas)
