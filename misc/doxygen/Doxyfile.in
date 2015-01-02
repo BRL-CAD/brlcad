@@ -657,8 +657,13 @@ WARN_LOGFILE           =
 INPUT                  = @CMAKE_SOURCE_DIR@/misc/doxygen/doxygen_intro.h \
                          @CMAKE_SOURCE_DIR@/misc/doxygen/doxygen_structure_libbu.h \
                          @CMAKE_SOURCE_DIR@/misc/doxygen/doxygen_structure_libbn.h \
-                         @CMAKE_SOURCE_DIR@/misc/doxygen/doxygen_structure \
+                         @CMAKE_SOURCE_DIR@/misc/doxygen/doxygen_structure_libbrep.h \
+                         @CMAKE_SOURCE_DIR@/misc/doxygen/doxygen_structure_libpc.h \
+                         @CMAKE_SOURCE_DIR@/misc/doxygen/doxygen_structure_librt.h \
+                         @CMAKE_SOURCE_DIR@/misc/doxygen/doxygen_structure_libfb.h \
                          @CMAKE_SOURCE_DIR@/include/ \
+                         @CMAKE_SOURCE_DIR@/include/bu \
+                         @CMAKE_SOURCE_DIR@/include/bn \
                          @CMAKE_SOURCE_DIR@/src/libbu/ \
                          @CMAKE_SOURCE_DIR@/src/libbn/ \
                          @CMAKE_SOURCE_DIR@/src/librt/ \
