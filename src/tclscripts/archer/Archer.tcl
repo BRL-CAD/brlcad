@@ -394,19 +394,19 @@ package provide Archer 1.0
 	method updateWizardMenu {}
 
 	# Preferences Section
-	method applyDisplayPreferences {}
-	method applyDisplayPreferencesIfDiff {}
-	method applyGeneralPreferences {}
-	method applyGeneralPreferencesIfDiff {}
-	method applyGridPreferences {}
-	method applyGridPreferencesIfDiff {}
-	method applyGroundPlanePreferencesIfDiff {}
-	method applyModelAxesPreferences {}
-	method applyModelAxesPreferencesIfDiff {}
-	method applyPreferences {}
-	method applyPreferencesIfDiff {}
-	method applyViewAxesPreferences {}
-	method applyViewAxesPreferencesIfDiff {}
+	method applyCurrentDisplaySettings {}
+	method applyPreferenceDisplaySettings {}
+	method applyCurrentGeneralSettings {}
+	method applyPreferenceGeneralSettings {}
+	method applyCurrentGridSettings {}
+	method applyPreferenceGridSettings {}
+	method applyPreferenceGroundPlaneSettings {}
+	method applyCurrentModelAxesSettings {}
+	method applyPreferenceModelAxesSettings {}
+	method applyCurrentViewAxesSettings {}
+	method applyPreferenceViewAxesSettings {}
+	method applyCurrentSettings {}
+	method applyPreferenceSettings {}
 	method cancelPreferences {}
 	method doPreferences {}
 	method readPreferences {}
@@ -1773,7 +1773,7 @@ package provide Archer 1.0
 	    set mPrevTreeMode2 $TREE_MODE_COLOR_OBJECTS
 	    toggleTreeView
 
-	    applyPreferences
+	    applyCurrentSettings
 	    doLighting
 	    updateWizardMenu
 	    updateUtilityMenu
@@ -1785,7 +1785,7 @@ package provide Archer 1.0
 	    buildGroundPlane
 	    showGroundPlane
 	} else {
-	    applyPreferences
+	    applyCurrentSettings
 	    doLighting
 	}
 
@@ -3797,7 +3797,7 @@ proc title_node_handler {node} {
     $itk_component(preferencesDialog) buttonconfigure 1 \
 	-borderwidth 1 \
 	-pady 0 \
-	-command [::itcl::code $this applyPreferencesIfDiff]
+	-command [::itcl::code $this applyPreferenceSettings]
     set b2_cmd [$itk_component(preferencesDialog) buttoncget 2 -command]
     $itk_component(preferencesDialog) buttonconfigure 2 \
 	-borderwidth 1 \
@@ -8495,12 +8495,12 @@ proc title_node_handler {node} {
 
 ################################### Preferences Section ###################################
 
-::itcl::body Archer::applyDisplayPreferences {} {
+::itcl::body Archer::applyCurrentDisplaySettings {} {
     updateDisplaySettings
 }
 
 
-::itcl::body Archer::applyDisplayPreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceDisplaySettings {} {
     set rflag 0
     set wflag 0
     $itk_component(ged) refresh_off
@@ -8576,7 +8576,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyGeneralPreferences {} {
+::itcl::body Archer::applyCurrentGeneralSettings {} {
     switch -- $mBindingMode {
 	"Default" {
 	    initDefaultBindings
@@ -8604,7 +8604,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyGeneralPreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceGeneralSettings {} {
     if {$mBindingModePref != $mBindingMode} {
 	set mBindingMode $mBindingModePref
 	switch -- $mBindingMode {
@@ -8751,7 +8751,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyGridPreferences {} {
+::itcl::body Archer::applyCurrentGridSettings {} {
     eval gedCmd grid anchor $mGridAnchor
     eval gedCmd grid color [getRgbColor $mGridColor]
     gedCmd grid mrh $mGridMrh
@@ -8761,7 +8761,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyGridPreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceGridSettings {} {
     set X [lindex $mGridAnchor 0]
     set Y [lindex $mGridAnchor 1]
     set Z [lindex $mGridAnchor 2]
@@ -8799,7 +8799,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyGroundPlanePreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceGroundPlaneSettings {} {
     if {$mGroundPlaneSize != $mGroundPlaneSizePref ||
 	$mGroundPlaneInterval != $mGroundPlaneIntervalPref ||
 	$mGroundPlaneMajorColor != $mGroundPlaneMajorColorPref ||
@@ -8816,7 +8816,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyModelAxesPreferences {} {
+::itcl::body Archer::applyCurrentModelAxesSettings {} {
     switch -- $mModelAxesSize {
 	"Small" {
 	    gedCmd configure -modelAxesSize 0.2
@@ -8859,7 +8859,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyModelAxesPreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceModelAxesSettings {} {
     if {$mModelAxesSizePref != $mModelAxesSize} {
 	set mModelAxesSize $mModelAxesSizePref
 
@@ -8950,30 +8950,30 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyPreferences {} {
+::itcl::body Archer::applyCurrentSettings {} {
     $itk_component(ged) refresh_off
 
     # Apply preferences to the cad widget.
-    applyDisplayPreferences
-    applyGeneralPreferences
-    applyGridPreferences
-    applyModelAxesPreferences
-    applyViewAxesPreferences
+    applyCurrentDisplaySettings
+    applyCurrentGeneralSettings
+    applyCurrentGridSettings
+    applyCurrentModelAxesSettings
+    applyCurrentViewAxesSettings
 
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh
 }
 
 
-::itcl::body Archer::applyPreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceSettings {} {
     gedCmd refresh_off
 
-    applyDisplayPreferencesIfDiff
-    applyGeneralPreferencesIfDiff
-    applyGridPreferencesIfDiff
-    applyGroundPlanePreferencesIfDiff
-    applyModelAxesPreferencesIfDiff
-    applyViewAxesPreferencesIfDiff
+    applyPreferenceDisplaySettings
+    applyPreferenceGeneralSettings
+    applyPreferenceGridSettings
+    applyPreferenceGroundPlaneSettings
+    applyPreferenceModelAxesSettings
+    applyPreferenceViewAxesSettings
 
     ::update
 
@@ -8982,7 +8982,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyViewAxesPreferences {} {
+::itcl::body Archer::applyCurrentViewAxesSettings {} {
     # sanity
     set offset 0.0
     switch -- $mViewAxesSize {
@@ -9035,7 +9035,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyViewAxesPreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceViewAxesSettings {} {
 
     set positionNotSet 1
     if {$mViewAxesSizePref != $mViewAxesSize} {
@@ -9254,7 +9254,7 @@ proc title_node_handler {node} {
     $itk_component(preferencesDialog) center [namespace tail $this]
     ::update
     if {[$itk_component(preferencesDialog) activate]} {
-	applyPreferencesIfDiff
+	applyPreferenceSettings
 	$itk_component(ged) refresh_all
     }
 }
