@@ -1,15 +1,3 @@
-/** @mainpage
- *
- * Documentation of BRL-CAD<sup>tm</sup> libraries.
- *
- * This
- * is the second iteration of the documentation.  Pages have been subdivided
- * and should load much more quickly in your browser now.
- *
- * At this point, only the libbu module has been fully converted to the
- * new format.  Other modules should follow soon.
- */
-
 /** @defgroup librt librt geometry, raytracing
  *
  * @defgroup dbio Database IO
@@ -30,7 +18,7 @@
  * @defgroup nurb NURBS
  * @ingroup primitives
  *
- * @defgroup ray Ray Tracing
+ ** @defgroup ray Ray Tracing
  * @ingroup librt
  *
  * @defgroup timer Timer
@@ -41,5 +29,17 @@
  *
  * @defgroup wdb WriteDatabase
  * @ingroup dbio
+ */
+/** @defgroup libpc libpc (Parametrics and Constraints)
+ *
+ * @defgroup pcsolver Constraint Solution
+ * @ingroup libpc
+ *
+ * @defgroup pcparser EBNF Parser
+ * @ingroup libpc
+ *
+ * @defgroup pcdbio Database Input/Output/Updation
+ * @ingroup libpc
+ *
  */
 
