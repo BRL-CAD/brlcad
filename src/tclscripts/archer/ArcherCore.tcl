@@ -525,6 +525,8 @@ namespace eval ArcherCore {
 	variable mGroundPlaneMinorColor Grey
 	variable mGroundPlaneMinorColorPref ""
 
+	variable mViewAxesSizeOffsets
+	variable mViewAxesSizeValues
 	variable mViewAxesSize Small
 	variable mViewAxesSizePref ""
 	variable mViewAxesPosition "Lower Right"
@@ -536,6 +538,7 @@ namespace eval ArcherCore {
 	variable mViewAxesLabelColor Yellow
 	variable mViewAxesLabelColorPref ""
 
+	variable mModelAxesSizeValues
 	variable mModelAxesSize "View (1x)"
 	variable mModelAxesSizePref ""
 	variable mModelAxesPosition "0 0 0"
@@ -642,6 +645,8 @@ namespace eval ArcherCore {
 	method showPrimitiveLabels {}
 	method showViewParams {}
 	method showScale {}
+	method compareViewAxesSizes {a b}
+	method compareModelAxesSizes {a b}
 
 	method launchNirt {}
 	method launchRtApp {_app _size}
@@ -1009,6 +1014,29 @@ namespace eval ArcherCore {
 	set mDisplayFontSizes {0 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29}
     } else {
 	set mDisplayFontSizes {0 5 6 7 8 9 10 12}
+    }
+
+    array set mViewAxesSizeOffsets {
+	"Small"   0.85
+	"Medium"  0.75
+	"Large"   0.55
+	"X-Large" 0.0
+    }
+    array set mViewAxesSizeValues {
+	"Small"   0.2
+	"Medium"  0.4
+	"Large"   0.8
+	"X-Large" 1.6
+    }
+    array set mModelAxesSizeValues {
+	"Small"      0.2
+	"Medium"     0.4
+	"Large"      0.8
+	"X-Large"    1.6
+	"View (1x)"  2.0
+	"View (2x)"  4.0
+	"View (4x)"  8.0
+	"View (8x)" 16.0
     }
 
     set mLastSelectedDir [pwd]
@@ -5854,6 +5882,26 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::showScale {} {
     $itk_component(ged) configure -scaleEnable $mShowScale
     refreshDisplay
+}
+
+::itcl::body ArcherCore::compareViewAxesSizes {a b} {
+    if {$mViewAxesSizeValues($a) < $mViewAxesSizeValues($b)} {
+	return -1
+    }
+    if {$mViewAxesSizeValues($a) > $mViewAxesSizeValues($b)} {
+	return 1
+    }
+    return 0
+}
+
+::itcl::body ArcherCore::compareModelAxesSizes {a b} {
+    if {$mModelAxesSizeValues($a) < $mModelAxesSizeValues($b)} {
+	return -1
+    }
+    if {$mModelAxesSizeValues($a) > $mModelAxesSizeValues($b)} {
+	return 1
+    }
+    return 0
 }
 
 ::itcl::body ArcherCore::launchNirt {} {

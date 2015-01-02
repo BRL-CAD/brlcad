@@ -3513,8 +3513,7 @@ proc title_node_handler {node} {
 	size \
 	mModelAxesSizePref \
 	"Size:" \
-	{Small Medium Large X-Large \
-	     "View (1x)" "View (2x)" "View (4x)" "View (8x)"}
+	[lsort -command compareModelAxesSizes [array names mModelAxesSizeValues]]
 
     #    itk_component add modelAxesPositionL {
     #	::label $itk_component(modelAxesF).positionL \
@@ -4150,7 +4149,7 @@ proc title_node_handler {node} {
 	size \
 	mViewAxesSizePref \
 	"Size:" \
-	{Small Medium Large X-Large}
+	[lsort -command compareViewAxesSizes [array names mViewAxesSizeValues]]
 
     buildComboBox $itk_component(viewAxesF) \
 	viewAxesPosition \
@@ -8817,33 +8816,7 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::applyCurrentModelAxesSettings {} {
-    switch -- $mModelAxesSize {
-	"Small" {
-	    gedCmd configure -modelAxesSize 0.2
-	}
-	"Medium" {
-	    gedCmd configure -modelAxesSize 0.4
-	}
-	"Large" {
-	    gedCmd configure -modelAxesSize 0.8
-	}
-	"X-Large" {
-	    gedCmd configure -modelAxesSize 1.6
-	}
-	"View (1x)" {
-	    gedCmd configure -modelAxesSize 2.0
-	}
-	"View (2x)" {
-	    gedCmd configure -modelAxesSize 4.0
-	}
-	"View (4x)" {
-	    gedCmd configure -modelAxesSize 8.0
-	}
-	"View (8x)" {
-	    gedCmd configure -modelAxesSize 16.0
-	}
-    }
-
+    gedCmd configure -modelAxesSize $mModelAxesSizeValues($mModelAxesSize)
     gedCmd configure -modelAxesPosition $mModelAxesPosition
     gedCmd configure -modelAxesLineWidth $mModelAxesLineWidth
     gedCmd configure -modelAxesColor $mModelAxesColor
@@ -8863,32 +8836,7 @@ proc title_node_handler {node} {
     if {$mModelAxesSizePref != $mModelAxesSize} {
 	set mModelAxesSize $mModelAxesSizePref
 
-	switch -- $mModelAxesSize {
-	    "Small" {
-		gedCmd configure -modelAxesSize 0.2
-	    }
-	    "Medium" {
-		gedCmd configure -modelAxesSize 0.4
-	    }
-	    "Large" {
-		gedCmd configure -modelAxesSize 0.8
-	    }
-	    "X-Large" {
-		gedCmd configure -modelAxesSize 1.6
-	    }
-	    "View (1x)" {
-		gedCmd configure -modelAxesSize 2.0
-	    }
-	    "View (2x)" {
-		gedCmd configure -modelAxesSize 4.0
-	    }
-	    "View (4x)" {
-		gedCmd configure -modelAxesSize 8.0
-	    }
-	    "View (8x)" {
-		gedCmd configure -modelAxesSize 16.0
-	    }
-	}
+	gedCmd configure -modelAxesSize $mModelAxesSizeValues($mModelAxesSize)
     }
 
     set X [lindex $mModelAxesPosition 0]
@@ -8983,26 +8931,8 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::applyCurrentViewAxesSettings {} {
-    # sanity
-    set offset 0.0
-    switch -- $mViewAxesSize {
-	"Small" {
-	    set offset 0.85
-	    gedCmd configure -viewAxesSize 0.2
-	}
-	"Medium" {
-	    set offset 0.75
-	    gedCmd configure -viewAxesSize 0.4
-	}
-	"Large" {
-	    set offset 0.55
-	    gedCmd configure -viewAxesSize 0.8
-	}
-	"X-Large" {
-	    set offset 0.0
-	    gedCmd configure -viewAxesSize 1.6
-	}
-    }
+    set offset $mViewAxesSizeOffsets($mViewAxesSize)
+    gedCmd configure -viewAxesSize $mViewAxesSizeValues($mViewAxesSize)
 
     switch -- $mViewAxesPosition {
 	default -
@@ -9040,27 +8970,9 @@ proc title_node_handler {node} {
     set positionNotSet 1
     if {$mViewAxesSizePref != $mViewAxesSize} {
 	set mViewAxesSize $mViewAxesSizePref
+	set offset $mViewAxesSizeOffsets($mViewAxesSize)
 
-	# sanity
-	set offset 0.0
-	switch -- $mViewAxesSize {
-	    "Small" {
-		set offset 0.85
-		gedCmd configure -viewAxesSize 0.2
-	    }
-	    "Medium" {
-		set offset 0.75
-		gedCmd configure -viewAxesSize 0.4
-	    }
-	    "Large" {
-		set offset 0.55
-		gedCmd configure -viewAxesSize 0.8
-	    }
-	    "X-Large" {
-		set offset 0.0
-		gedCmd configure -viewAxesSize 1.6
-	    }
-	}
+	gedCmd configure -viewAxesSize $mViewAxesSizeValues($mViewAxesSize)
 
 	set positionNotSet 0
 	set mViewAxesPosition $mViewAxesPositionPref
@@ -9085,26 +8997,9 @@ proc title_node_handler {node} {
 	}
     }
 
-    if {$positionNotSet &&
-	$mViewAxesPositionPref != $mViewAxesPosition} {
+    if {$positionNotSet && $mViewAxesPositionPref != $mViewAxesPosition} {
 	set mViewAxesPosition $mViewAxesPositionPref
-
-	# sanity
-	set offset 0.0
-	switch -- $mViewAxesSize {
-	    "Small" {
-		set offset 0.85
-	    }
-	    "Medium" {
-		set offset 0.75
-	    }
-	    "Large" {
-		set offset 0.55
-	    }
-	    "X-Large" {
-		set offset 0.0
-	    }
-	}
+	set offset $mViewAxesSizeOffsets($mViewAxesSize)
 
 	switch -- $mViewAxesPosition {
 	    default -
