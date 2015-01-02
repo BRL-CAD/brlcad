@@ -26,12 +26,12 @@ foreach(libname ${DOX_LIBS})
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
     )
   add_custom_target(dox-${libname} DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output_${libname}/html/index.html)
-  CMAKEFILES(doxygen_structure_${libname}.h)
+  CMAKEFILES(${libname}.dox)
 endforeach(libname ${DOX_LIBS})
 
 set(doxygen_ignore_files
   Doxyfile.in
-  doxygen_intro.h
+  intro.dox
   DoxyfileLibs.in
   DoxyfileLibs-defaults.in
   )

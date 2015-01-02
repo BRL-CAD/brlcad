@@ -17,7 +17,7 @@ WARN_FORMAT            = "$file:$line: $text"
 # configuration options related to the input files
 #---------------------------------------------------------------------------
 
-INPUT  = @CMAKE_SOURCE_DIR@/misc/doxygen_structure_@doxlibname@.h
+INPUT  = @CMAKE_SOURCE_DIR@/misc/@doxlibname@.dox
 INPUT += @CMAKE_SOURCE_DIR@/include/common.h
 INPUT += @CMAKE_SOURCE_DIR@/src/@libname@/
 INPUT += @CMAKE_SOURCE_DIR@/include/@sublibname@/
