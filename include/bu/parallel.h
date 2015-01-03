@@ -1,4 +1,4 @@
-n/*                      P A R A L L E L . H
+/*                      P A R A L L E L . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
