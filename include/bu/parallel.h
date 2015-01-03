@@ -1,4 +1,4 @@
-/*                      P A R A L L E L . H
+n/*                      P A R A L L E L . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -21,7 +21,7 @@
 /**  @defgroup parallel  Parallel Processing */
 /**   @defgroup thread Multithreading */
 
-/** @file parallel.h
+/** @file include/bu/parallel.h
  *
  */
 #ifndef BU_PARALLEL_H

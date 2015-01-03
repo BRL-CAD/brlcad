@@ -1621,7 +1621,8 @@ PREDEFINED             = "BU_EXTERN(type_and_name,args)=extern type_and_name arg
                          "BU_EXPORT=" \
                          "BN_EXPORT=" \
                          "BN_EXPORT=" \
-                         "FB_EXPORT="
+                         "FB_EXPORT=" \
+                         "UNUSED(x)=x"
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.

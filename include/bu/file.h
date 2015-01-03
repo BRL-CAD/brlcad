@@ -169,7 +169,7 @@ BU_EXPORT extern char * bu_file_path_canonicalize(const char *path);
 #define BU_FNMATCH_NOESCAPE    0x01 /**< bu_fnmatch() flag.  Backslash escaping. */
 #define BU_FNMATCH_PATHNAME    0x02 /**< bu_fnmatch() flag.  Slash must be matched by slash. */
 #define BU_FNMATCH_PERIOD      0x04 /**< bu_fnmatch() flag.  Period must be matched by period. */
-#define BU_FNMATCH_LEADING_DIR 0x08 /**< bu_fnmatch() flag.  Ignore /<tail> after Imatch. */
+#define BU_FNMATCH_LEADING_DIR 0x08 /**< bu_fnmatch() flag.  Ignore `/<tail>` after Imatch. */
 #define BU_FNMATCH_CASEFOLD    0x10 /**< bu_fnmatch() flag.  Case-insensitive searching. */
 
 /**
@@ -220,15 +220,13 @@ BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char 
  */
 BU_EXPORT extern char * bu_realpath(const char *path, char *resolved_path);
 
-
-/** @file libbu/brlcad_path.c
+/** @file libbu/progname.c
  *
  * @brief
- * A support routine to provide the executable code with the path
- * to where the BRL-CAD programs and libraries are installed.
+ * Support routines to provide the executable code with information
+ * about executable name used to invoke the current program.
  *
  */
-
 /**
  * DEPRECATED: This routine is replaced by bu_getcwd().
  *             Do not use.
@@ -264,6 +262,11 @@ BU_EXPORT extern const char *bu_getprogname(void);
  */
 BU_EXPORT extern void bu_setprogname(const char *path);
 
+/** @file libbu/getcwd.c
+ *
+ * @brief
+ * Routine(s) for getting the current working directory full pathname.
+ */
 /**
  * returns the pathname for the current working directory.
  */
@@ -287,6 +290,14 @@ BU_EXPORT extern char *bu_getcwd(char *buf, size_t size);
  * A STATIC buffer is returned.  It is the caller's responsibility to
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
+ */
+
+/** @file libbu/brlcad_path.c
+ *
+ * @brief
+ * A support routine to provide the executable code with the path
+ * to where the BRL-CAD programs and libraries are installed.
+ *
  */
 BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
 

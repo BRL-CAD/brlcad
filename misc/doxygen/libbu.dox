@@ -60,7 +60,7 @@
 
 /* Data Management */
 /** @ingroup data */
-/**   @defgroup cmd Command History */
+/**   @defgroup cmd Command Processing */
 /** @ingroup data */
 /**   @defgroup conv Data Conversion */
 /** @ingroup data */

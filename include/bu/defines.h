@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file defines.h
+/** @file bu/defines.h
  *
  * Commonly used definitions for the BRL-CAD Utility Library, LIBBU.
  *

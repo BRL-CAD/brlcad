@@ -391,15 +391,6 @@ BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const sign
 /* TODO - make a "deprecated.h" file to stuff deprecated things in */
 /** @addtogroup hton */
 /** @{ */
-/** @file libbu/htester.c
- *
- * @brief
- * Test network float conversion.
- *
- * Expected to be used in pipes, or with TTCP links to other machines,
- * or with files RCP'ed between machines.
- *
- */
 
 /** @file libbu/xdr.c
  *
