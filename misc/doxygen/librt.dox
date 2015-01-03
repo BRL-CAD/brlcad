@@ -1,4 +1,4 @@
-/** @defgroup librt librt geometry, raytracing
+/** @defgroup librt librt (geometry, raytracing)
  *
  * @defgroup dbio Database IO
  * @ingroup librt

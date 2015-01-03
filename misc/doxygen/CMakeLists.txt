@@ -5,10 +5,24 @@ set(lib_predefines)
 set(DOX_LIBS
   libbu
   libbn
+  libsysv
   libbrep
-  libpc
   librt
+  libwdb
+  libpkg
   libfb
+  libgcv
+  libanalyze
+  libged
+  liboptical
+  libcursor
+  libdm
+  libfft
+  libicv
+  libmultispectral
+  libpc
+  libtclcad
+  libtermio
   )
 foreach(libname ${DOX_LIBS})
   set(doxlibname ${libname})
