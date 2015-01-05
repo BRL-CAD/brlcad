@@ -46,51 +46,77 @@ public:
 		matp_t matrix);
 
     void add_to_world(btDiscreteDynamicsWorld &world);
-    void read_matrix();
-    void write_matrix();
 
 
 private:
+    class MatrixMotionState : public btMotionState
+    {
+    public:
+	MatrixMotionState(mat_t matrix);
+
+	virtual void getWorldTransform(btTransform &dest) const;
+	virtual void setWorldTransform(const btTransform &transform);
+
+
+    private:
+	MatrixMotionState(const MatrixMotionState &);
+	MatrixMotionState &operator=(const MatrixMotionState &);
+
+	const matp_t m_matrix;
+    };
+
+
+    static btRigidBody::btRigidBodyConstructionInfo build_construction_info(
+	btCollisionShape &collision_shape, btMotionState &motion_state, btScalar mass);
+
     WorldObject(const WorldObject &source);
     WorldObject &operator=(const WorldObject &source);
 
-    static btTransform matrix_to_transform(const mat_t matrix);
-    static btRigidBody::btRigidBodyConstructionInfo build_construction_info(
-	btCollisionShape &collision_shape, matp_t const matrix, btScalar mass);
-
 
     bool m_in_world;
-    const matp_t m_matrix;
     RtCollisionShape m_collision_shape;
+    MatrixMotionState m_motion_state;
     btRigidBody m_rigid_body;
 };
 
 
-btTransform
-PhysicsWorld::WorldObject::matrix_to_transform(const mat_t matrix)
+PhysicsWorld::WorldObject::MatrixMotionState::MatrixMotionState(mat_t matrix) :
+    m_matrix(matrix)
+{}
+
+
+void
+PhysicsWorld::WorldObject::MatrixMotionState::getWorldTransform(
+    btTransform &dest) const
 {
     // FIXME: use only translation and rotation information
 
-    btTransform xform;
-    {
-	btScalar bt_matrix[16];
-	MAT_TRANSPOSE(bt_matrix, matrix);
-	xform.setFromOpenGLMatrix(bt_matrix);
-    }
+    btScalar bt_matrix[16];
+    MAT_TRANSPOSE(bt_matrix, m_matrix);
+    dest.setFromOpenGLMatrix(bt_matrix);
+}
 
-    return xform;
+
+void
+PhysicsWorld::WorldObject::MatrixMotionState::setWorldTransform(
+    const btTransform &transform)
+{
+    // FIXME: write only translation and rotation information
+
+    btScalar bt_matrix[16];
+    transform.getOpenGLMatrix(bt_matrix);
+    MAT_TRANSPOSE(m_matrix, bt_matrix);
 }
 
 
 btRigidBody::btRigidBodyConstructionInfo
 PhysicsWorld::WorldObject::build_construction_info(btCollisionShape
-	&collision_shape, matp_t const matrix, btScalar mass)
+	&collision_shape, btMotionState &motion_state, btScalar mass)
 {
     btVector3 inertia;
     collision_shape.calculateLocalInertia(mass, inertia);
-    btRigidBody::btRigidBodyConstructionInfo construction_info(mass, NULL,
+    btRigidBody::btRigidBodyConstructionInfo construction_info(mass, &motion_state,
 	    &collision_shape, inertia);
-    construction_info.m_startWorldTransform = matrix_to_transform(matrix);
 
     return construction_info;
 }
@@ -99,9 +125,9 @@ PhysicsWorld::WorldObject::build_construction_info(btCollisionShape
 PhysicsWorld::WorldObject::WorldObject(const btVector3 &bounding_box_dimensions,
 				       btScalar mass, matp_t matrix) :
     m_in_world(false),
-    m_matrix(matrix),
     m_collision_shape(bounding_box_dimensions / 2.0),
-    m_rigid_body(build_construction_info(m_collision_shape, m_matrix, mass))
+    m_motion_state(matrix),
+    m_rigid_body(build_construction_info(m_collision_shape, m_motion_state, mass))
 {}
 
 
@@ -114,24 +140,6 @@ PhysicsWorld::WorldObject::add_to_world(btDiscreteDynamicsWorld &world)
 	m_in_world = true;
 	world.addRigidBody(&m_rigid_body);
     }
-}
-
-
-void
-PhysicsWorld::WorldObject::read_matrix()
-{
-    m_rigid_body.setCenterOfMassTransform(matrix_to_transform(m_matrix));
-}
-
-
-void
-PhysicsWorld::WorldObject::write_matrix()
-{
-    // FIXME: write only translation and rotation information
-
-    btScalar bt_matrix[16];
-    m_rigid_body.getCenterOfMassTransform().getOpenGLMatrix(bt_matrix);
-    MAT_TRANSPOSE(m_matrix, bt_matrix);
 }
 
 
@@ -162,15 +170,7 @@ PhysicsWorld::~PhysicsWorld()
 void
 PhysicsWorld::step(btScalar seconds)
 {
-    for (std::vector<WorldObject *>::iterator it = m_objects.begin();
-	 it != m_objects.end(); ++it)
-	(*it)->read_matrix();
-
     m_world.stepSimulation(seconds, std::numeric_limits<int>::max());
-
-    for (std::vector<WorldObject *>::const_iterator it = m_objects.begin();
-	 it != m_objects.end(); ++it)
-	(*it)->write_matrix();
 }
 
 
@@ -179,6 +179,7 @@ PhysicsWorld::add_object(const vect_t &cad_bounding_box_dimensions,
 			 fastf_t mass, matp_t matrix)
 {
     btVector3 bounding_box_dimensions;
+    // TODO: apply matrix scaling
     VMOVE(bounding_box_dimensions, cad_bounding_box_dimensions);
     m_objects.push_back(new WorldObject(bounding_box_dimensions, mass, matrix));
     m_objects.back()->add_to_world(m_world);

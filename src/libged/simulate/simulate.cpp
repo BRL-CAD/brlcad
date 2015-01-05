@@ -34,6 +34,7 @@
 #include "rt_instance.hpp"
 
 
+#include <cmath>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -247,8 +248,12 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 
 	if (seconds < 0) throw std::runtime_error("invalid value for 'seconds'");
 
-	do_simulate(*gedp->ged_wdbp->dbip, *dir, seconds);
-
+	// We must reinitialize a simulate::PhysicsWorld after every ray trace.
+	// This is because rt_db_put_internal() is required for librt to
+	// receive the transforms.
+	// TODO: preserve velocity; reinitialize after every ray trace
+	for (int i = 0; i < std::ceil(10.0 * seconds); ++i)
+	    do_simulate(*gedp->ged_wdbp->dbip, *dir, 0.1);
     } catch (const std::logic_error &e) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], e.what());
 	return GED_ERROR;
