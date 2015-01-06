@@ -391,15 +391,17 @@ BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_S
  * doing so requires scanning to some intermediate type like double
  * and then assigning to the fastf_t variable to convert the value to
  * whatever type fastf_t really is.  This function makes it possible
- * to scan a series of fastf_t numbers separated by some delimiter
+ * to scan a series of fastf_t numbers separated by some character(s)
  * easily, by doing the required conversion internally to the
- * functions.
+ * functions.  As series of delimiter characters will be skipped,
+ * empty scan fields are not supported (e.g., "0.0,,0.0,1.0" will scan
+ * as 3 fields, not 4 with the 2nd skipped).
  *
- * @param[out] c The number of characters scanned by the function
- * @param[in] src A string to scan from, or NULL to read from stdin.
- * @param[in] delim The delimiter between values on the input
- * @param[in] n The number of fastf_t values to scan for
- * @param[out] ... Pointers to fastf_t (optional)
+ * @param[out] c Returns number of characters scanned by the function
+ * @param[in] src A source string to scan from, or NULL to read from stdin
+ * @param[in] delim Any delimiter character(s) to skip between scan values
+ * @param[in] n Number of fastf_t values to scan from the src input string
+ * @param[out] ... Pointers to fastf_t for storing scanned values (optional)
  *
  */
 BU_EXPORT extern int bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...);
