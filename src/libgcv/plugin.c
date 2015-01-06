@@ -57,7 +57,7 @@ gcv_get_plugin_list(void)
 
 HIDDEN void
 gcv_create_plugin(const char *path, void *dl_handle,
-		  const char *file_extensions, gcv_importer importer, gcv_exporter exporter)
+		  const struct gcv_plugin_info *info)
 {
     struct bu_list * const plugin_list = gcv_get_plugin_list();
 
@@ -68,9 +68,9 @@ gcv_create_plugin(const char *path, void *dl_handle,
 
     plugin->path = path ? bu_strdup(path) : NULL;
     plugin->dl_handle = dl_handle;
-    plugin->info.file_extensions = bu_strdup(file_extensions);
-    plugin->info.importer = importer;
-    plugin->info.exporter = exporter;
+    plugin->info.file_extensions = bu_strdup(info->file_extensions);
+    plugin->info.importer = info->importer;
+    plugin->info.exporter = info->exporter;
 }
 
 
@@ -148,8 +148,7 @@ gcv_load_plugin(const char *path)
 	return 0;
     }
 
-    gcv_create_plugin(path, dl_handle, plugin_info->file_extensions,
-		      plugin_info->importer, plugin_info->exporter);
+    gcv_create_plugin(path, dl_handle, plugin_info);
 
     return 1;
 }
@@ -171,10 +170,9 @@ gcv_unload_plugin(const char *path)
 
 
 void
-gcv_register_plugin(const char *file_extensions, gcv_importer importer,
-		    gcv_exporter exporter)
+gcv_register_plugin(const struct gcv_plugin_info *info)
 {
-    gcv_create_plugin(NULL, NULL, file_extensions, importer, exporter);
+    gcv_create_plugin(NULL, NULL, info);
 }
 
 
