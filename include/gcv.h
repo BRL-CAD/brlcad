@@ -71,6 +71,10 @@ GCV_EXPORT extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, 
 GCV_EXPORT extern union tree *gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct rt_tess_tol *ttol);
 
 
+int gcv_load_plugin(const char *path);
+void gcv_unload_plugin(const char *path);
+
+
 __END_DECLS
 
 #endif /* GCV_H */
