@@ -32,12 +32,68 @@
 #include "simrt.h"
 
 
+/*
+ * Maximum number of overlaps to record per ray shot.
+ * Stored in the global overlap_list.
+ */
 #define MAX_OVERLAPS 4
 
 /*
  * Maximum normals allowed to be detected by ray shots
  */
 #define MAX_NORMALS 10
+
+
+/*
+ * This structure is a single node of an array
+ * of overlap regions: similar to the one in nirt/usrfmt.h
+ */
+struct overlap {
+    int index;
+    struct application *ap;
+    struct partition *pp;
+    struct region *reg1;
+    struct region *reg2;
+    fastf_t in_dist;
+    fastf_t out_dist;
+    point_t in_point;
+    point_t out_point;
+    vect_t in_normal, out_normal;
+    struct soltab *insol, *outsol;
+    struct curvature incur, outcur;
+};
+
+
+/**
+ * This structure contains the results of analyzing an overlap volume(among 2
+ * regions), through shooting rays
+ */
+struct rayshot_results {
+
+    /* Was an overlap detected ? in that case no point in using air gap
+     * It may happen that an object is not sufficiently close to the object it
+     * intends to strike, i.e. the gap between them is not <= TOL, so the air gap
+     * info can't be used to create contact pairs. In the next iteration the object
+     * moves so far that it has overlapped(i.e. penetrated) the target,
+     * so air gap still can't be used, thus the below flag detects any overlap and
+     * enables the logic for creating contact pairs using overlap info.
+     *
+     * Also rt_result.overlap_found is set to FALSE, before even a single
+     * ray is shot and its value is valid across all the different ray shots,
+     * so if an overlap has been detected in a ray, all subsequent air gap processing is
+     * skipped.
+     */
+    int overlap_found;
+
+    /* The vector sum of the normals over the surface in the overlap region for A & B*/
+    vect_t resultant_normal_A;
+    vect_t resultant_normal_B;
+};
+
+
+int num_overlaps = 0;
+struct overlap overlap_list[MAX_OVERLAPS];
+struct rayshot_results rt_result;
 
 
 HIDDEN int
@@ -107,57 +163,6 @@ find_solid(struct db_i *dbip,
 	return 0;
 }
 
-
-/*
- * This structure is a single node of an array
- * of overlap regions: similar to the one in nirt/usrfmt.h
- */
-struct overlap {
-    int index;
-    struct application *ap;
-    struct partition *pp;
-    struct region *reg1;
-    struct region *reg2;
-    fastf_t in_dist;
-    fastf_t out_dist;
-    point_t in_point;
-    point_t out_point;
-    vect_t in_normal, out_normal;
-    struct soltab *insol, *outsol;
-    struct curvature incur, outcur;
-};
-
-
-/**
- * This structure contains the results of analyzing an overlap volume(among 2
- * regions), through shooting rays
- */
-struct rayshot_results {
-
-    /* Was an overlap detected ? in that case no point in using air gap
-     * It may happen that an object is not sufficiently close to the object it
-     * intends to strike, i.e. the gap between them is not <= TOL, so the air gap
-     * info can't be used to create contact pairs. In the next iteration the object
-     * moves so far that it has overlapped(i.e. penetrated) the target,
-     * so air gap still can't be used, thus the below flag detects any overlap and
-     * enables the logic for creating contact pairs using overlap info.
-     *
-     * Also rt_result.overlap_found is set to FALSE, before even a single
-     * ray is shot and its value is valid across all the different ray shots,
-     * so if an overlap has been detected in a ray, all subsequent air gap processing is
-     * skipped.
-     */
-    int overlap_found;
-
-    /* The vector sum of the normals over the surface in the overlap region for A & B*/
-    vect_t resultant_normal_A;
-    vect_t resultant_normal_B;
-};
-
-
-int num_overlaps = 0;
-struct overlap overlap_list[MAX_OVERLAPS];
-struct rayshot_results rt_result;
 
 
 /**
