@@ -82,7 +82,7 @@ Target lexical_cast(Source arg)
 }
 
 
-static std::map<std::string, std::string>
+HIDDEN std::map<std::string, std::string>
 get_attributes(const db_i &dbi, const std::string &name)
 {
     const char * const prefix = "simulate::";
@@ -112,7 +112,7 @@ get_attributes(const db_i &dbi, const std::string &name)
 }
 
 
-static void
+HIDDEN void
 get_bounding_box_dimensions(db_i &dbi, const std::string &name, vect_t &dest)
 {
     directory *dir = db_lookup(&dbi, name.c_str(), false);
@@ -129,7 +129,7 @@ get_bounding_box_dimensions(db_i &dbi, const std::string &name, vect_t &dest)
 }
 
 
-static fastf_t
+HIDDEN fastf_t
 get_volume(db_i &dbi, const std::string &name)
 {
     // FIXME: not the true volume
@@ -139,7 +139,7 @@ get_volume(db_i &dbi, const std::string &name)
 }
 
 
-static void
+HIDDEN void
 world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 {
     switch (vtree.tr_op) {
@@ -184,7 +184,7 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 }
 
 
-static void
+HIDDEN void
 do_simulate(db_i &dbi, directory &scene_directory, fastf_t seconds)
 {
     rt_db_internal internal;

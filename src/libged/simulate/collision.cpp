@@ -39,7 +39,7 @@ namespace
 {
 
 
-static void
+HIDDEN void
 on_multioverlap(application *app, partition *partition1, bu_ptbl *ptbl,
 		partition *partition2)
 {
@@ -64,7 +64,7 @@ on_multioverlap(application *app, partition *partition1, bu_ptbl *ptbl,
 }
 
 
-static void
+HIDDEN void
 calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 			 const btRigidBody &rb_b)
 {
