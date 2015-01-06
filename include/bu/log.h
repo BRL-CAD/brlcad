@@ -399,6 +399,7 @@ BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_S
  * @param[in] src A string to scan from, or NULL to read from stdin.
  * @param[in] delim The delimiter between values on the input
  * @param[in] n The number of fastf_t values to scan for
+ * @param[out] ... Pointers to fastf_t (optional)
  *
  */
 BU_EXPORT extern int bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...);
