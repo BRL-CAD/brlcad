@@ -42,8 +42,9 @@ namespace simulate
 class PhysicsWorld::WorldObject
 {
 public:
-    WorldObject(const btVector3 &bounding_box_dimensions, btScalar mass,
-		matp_t matrix);
+    WorldObject(matp_t matrix, const btVector3 &bounding_box_dimensions,
+		btScalar mass, const btVector3 &linear_velocity,
+		const btVector3 &angular_velocity);
 
     void add_to_world(btDiscreteDynamicsWorld &world);
 
@@ -122,13 +123,17 @@ PhysicsWorld::WorldObject::build_construction_info(btCollisionShape
 }
 
 
-PhysicsWorld::WorldObject::WorldObject(const btVector3 &bounding_box_dimensions,
-				       btScalar mass, matp_t matrix) :
+PhysicsWorld::WorldObject::WorldObject(matp_t matrix,
+				       const btVector3 &bounding_box_dimensions, btScalar mass,
+				       const btVector3 &linear_velocity, const btVector3 &angular_velocity) :
     m_in_world(false),
     m_collision_shape(bounding_box_dimensions / 2.0),
     m_motion_state(matrix),
     m_rigid_body(build_construction_info(m_collision_shape, m_motion_state, mass))
-{}
+{
+    m_rigid_body.setLinearVelocity(linear_velocity);
+    m_rigid_body.setAngularVelocity(angular_velocity);
+}
 
 
 void
@@ -175,13 +180,17 @@ PhysicsWorld::step(btScalar seconds)
 
 
 void
-PhysicsWorld::add_object(const vect_t &cad_bounding_box_dimensions,
-			 fastf_t mass, matp_t matrix)
+PhysicsWorld::add_object(matp_t matrix,
+			 const vect_t &cad_bounding_box_dimensions, fastf_t mass,
+			 const vect_t &cad_linear_velocity, const vect_t &cad_angular_velocity)
 {
-    btVector3 bounding_box_dimensions;
+    btVector3 bounding_box_dimensions, linear_velocity, angular_velocity;
     // TODO: apply matrix scaling
     VMOVE(bounding_box_dimensions, cad_bounding_box_dimensions);
-    m_objects.push_back(new WorldObject(bounding_box_dimensions, mass, matrix));
+    VMOVE(linear_velocity, cad_linear_velocity);
+    VMOVE(angular_velocity, cad_angular_velocity);
+    m_objects.push_back(new WorldObject(matrix, bounding_box_dimensions, mass,
+					linear_velocity, angular_velocity));
     m_objects.back()->add_to_world(m_world);
 }
 

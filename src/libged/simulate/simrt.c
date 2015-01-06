@@ -164,7 +164,6 @@ find_solid(struct db_i *dbip,
 }
 
 
-
 /**
  * Gets the exact overlap volume between 2 AABBs
  */

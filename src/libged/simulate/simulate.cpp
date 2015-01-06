@@ -68,7 +68,8 @@ private:
 
 
 template<typename Target, typename Source>
-Target lexical_cast(Source arg)
+Target lexical_cast(Source arg,
+		    const std::string &description = "bad lexical_cast")
 {
     std::stringstream interpreter;
     Target result;
@@ -76,7 +77,7 @@ Target lexical_cast(Source arg)
     if (!(interpreter << arg) ||
 	!(interpreter >> result) ||
 	!(interpreter >> std::ws).eof())
-	throw std::invalid_argument("bad lexical_cast");
+	throw std::invalid_argument(description);
 
     return result;
 }
@@ -139,6 +140,34 @@ get_volume(db_i &dbi, const std::string &name)
 }
 
 
+HIDDEN std::string
+serialize_vector(const vect_t &source)
+{
+    std::ostringstream stream;
+    stream << "<" << source[0] << ", " << source[1] << ", " << source[2] << ">";
+    return stream.str();
+}
+
+
+HIDDEN void
+deserialize_vector(vect_t &dest, const std::string &source)
+{
+    std::istringstream stream(source);
+
+    if ((stream >> std::ws).get() != '<')
+	throw std::invalid_argument("invalid vector");
+
+    for (int i = 0; i < 3; ++i) {
+	std::string value;
+	std::getline(stream, value, i != 2 ? ',' : '>');
+	dest[i] = lexical_cast<fastf_t>(value, "invalid vector");
+    }
+
+    if (stream.unget().get() != '>' || !(stream >> std::ws).eof())
+	throw std::invalid_argument("invalid vector");
+}
+
+
 HIDDEN void
 world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 {
@@ -153,6 +182,7 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 	    get_bounding_box_dimensions(dbi, vtree.tr_l.tl_name, bounding_box_dimensions);
 	    const fastf_t density = 1.0;
 	    fastf_t mass = density * get_volume(dbi, vtree.tr_l.tl_name);
+	    vect_t linear_velocity = {0, 0, 0}, angular_velocity = {0, 0, 0};
 
 	    std::map<std::string, std::string> attributes = get_attributes(dbi,
 		    vtree.tr_l.tl_name);
@@ -160,16 +190,21 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 	    for (std::map<std::string, std::string>::const_iterator it = attributes.begin();
 		 it != attributes.end(); ++it) {
 		if (it->first == "mass") {
-		    mass = lexical_cast<fastf_t>(it->second);
+		    mass = lexical_cast<fastf_t>(it->second, "invalid attribute 'mass'");
 
-		    if (mass < 0.0) throw std::invalid_argument(
-			    std::string("invalid attribute 'mass' on object '")
-			    + vtree.tr_l.tl_name + "'");
-		} else throw std::invalid_argument("invalid attribute '" + it->first +
-						       "' on object '" + vtree.tr_l.tl_name  + "'");
+		    if (mass < 0.0) throw std::invalid_argument("invalid attribute 'mass'");
+
+		} else if (it->first == "linear_velocity") {
+		    deserialize_vector(linear_velocity, it->second);
+		} else if (it->first == "angular_velocity") {
+		    deserialize_vector(angular_velocity, it->second);
+		} else
+		    throw std::invalid_argument("invalid attribute '" + it->first + "' on object '"
+						+ vtree.tr_l.tl_name  + "'");
 	    }
 
-	    world.add_object(bounding_box_dimensions, mass, vtree.tr_l.tl_mat);
+	    world.add_object(vtree.tr_l.tl_mat, bounding_box_dimensions, mass,
+			     linear_velocity, angular_velocity);
 	    break;
 	}
 
@@ -185,7 +220,7 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 
 
 HIDDEN void
-do_simulate(db_i &dbi, directory &scene_directory, fastf_t seconds)
+do_simulate(db_i & dbi, directory & scene_directory, fastf_t seconds)
 {
     rt_db_internal internal;
 
@@ -244,7 +279,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
     }
 
     try {
-	fastf_t seconds = lexical_cast<fastf_t>(argv[2]);
+	fastf_t seconds = lexical_cast<fastf_t>(argv[2], "invalid value for 'seconds'");
 
 	if (seconds < 0) throw std::runtime_error("invalid value for 'seconds'");
 
