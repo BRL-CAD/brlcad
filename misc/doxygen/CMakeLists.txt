@@ -81,11 +81,11 @@ PREDEFINED += \"${upper_name}_EXPORT=\"
 
   configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile_${libname} @ONLY)
   add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output_${libname}/html/index.html
+    OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_${libname}/html/index.html
     COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile_${libname}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
     )
-  add_custom_target(dox-${libname} DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output_${libname}/html/index.html)
+  add_custom_target(dox-${libname} DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_${libname}/html/index.html)
   CMAKEFILES(${libname}.dox)
 endforeach(libname ${DOX_LIBS})
 
