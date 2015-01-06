@@ -66,7 +66,7 @@ gcv_create_plugin(const char *path, void *dl_handle,
     BU_GET(plugin, struct gcv_plugin);
     BU_LIST_PUSH(plugin_list, &plugin->l);
 
-    plugin->path = bu_strdup(path);
+    plugin->path = path ? bu_strdup(path) : NULL;
     plugin->dl_handle = dl_handle;
     plugin->info.file_extensions = bu_strdup(file_extensions);
     plugin->info.importer = importer;
