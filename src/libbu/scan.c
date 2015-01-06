@@ -64,11 +64,18 @@ bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...)
 
 	current_n += part_n;
 	offset += len;
-	if (part_n != 1) { break; }
+	if (part_n != 1) {
+	    break;
+	}
+
 	arg = va_arg(ap, fastf_t *);
-	if (arg) { *arg = scan; }
+	if (arg) {
+	    *arg = scan;
+	}
 	/* Don't scan an extra delimiter at the end of the string */
-	if (i == n - 1) { break; }
+	if (i == n - 1) {
+	    break;
+	}
 
 	/* Make sure that a delimiter is present */
 	if (src)
@@ -77,7 +84,14 @@ bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...)
 	    part_n = scanf(delim_fmt, &len);
 
 	offset += len;
-	if (part_n != 0 || len != delim_len) { break; }
+
+	/* as delim_fmt should only have a %n and that doesn't get
+	 * counted in the scanf return, make sure the return is 0 as
+	 * no values should be scanned.
+	 */
+	if (part_n != 0 || len != delim_len) {
+	    break;
+	}
     }
 
     va_end(ap);
