@@ -5449,26 +5449,7 @@ proc title_node_handler {node} {
 		    -helpstr "Set display background to Navy"
 	    }
 
-	    cascade standard -label "Standard Views" -menu {
-		command front -label "Front" \
-		    -helpstr "Set view to front"
-		command rear -label "Rear" \
-		    -helpstr "Set view to rear"
-		command port -label "Port" \
-		    -helpstr "Set view to port/left"
-		command starboard -label "Starboard" \
-		    -helpstr "Set view to starboard/right"
-		command top -label "Top" \
-		    -helpstr "Set view to top"
-		command bottom -label "Bottom" \
-		    -helpstr "Set view to bottom"
-		separator sep0
-		command 35, 25 -label "35, 25" \
-		    -helpstr "Set view to az=35, el=25"
-		command 45, 45 -label "45, 45" \
-		    -helpstr "Set view to az=45, el=45"
-	    }
-
+	    cascade standard -label "Standard Views" -menu $mStandardViewsMenuCommands
 	    command clear -label "Clear" \
 		-helpstr "Clear the display"
 	    command refresh -label "Refresh" \

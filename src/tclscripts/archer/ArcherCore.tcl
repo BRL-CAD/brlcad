@@ -619,6 +619,8 @@ namespace eval ArcherCore {
 	variable mMouseRayCallbacks ""
 	variable mLastTags ""
 
+	variable mStandardViewsMenuCommands
+
 	method OpenTarget {target}
 	method handleMoreArgs {args}
 
@@ -1041,6 +1043,26 @@ namespace eval ArcherCore {
 	"View (8x)" 16.0
     }
 
+    set mStandardViewsMenuCommands {
+	command front -label "Front" \
+	    -helpstr "Set view to front"
+	command rear -label "Rear" \
+	    -helpstr "Set view to rear"
+	command port -label "Port" \
+	    -helpstr "Set view to port/left"
+	command starboard -label "Starboard" \
+	    -helpstr "Set view to starboard/right"
+	command top -label "Top" \
+	    -helpstr "Set view to top"
+	command bottom -label "Bottom" \
+	    -helpstr "Set view to bottom"
+	separator sep0
+	command 35, 25 -label "35, 25" \
+	    -helpstr "Set view to az=35, el=25"
+	command 45, 45 -label "45, 45" \
+	    -helpstr "Set view to az=45, el=45"
+    }
+
     set mLastSelectedDir [pwd]
 
     set mFontText [list $SystemWindowFont 8]
@@ -1457,27 +1479,7 @@ namespace eval ArcherCore {
     if {$mViewOnly && !$mNoToolbar} {
 	# View Menu
 	$itk_component(canvas_menu) add menubutton view \
-	    -text "View" -menu {
-		options -tearoff 0
-
-		command front -label "Front" \
-		    -helpstr "Set view to front"
-		command rear -label "Rear" \
-		    -helpstr "Set view to rear"
-		command port -label "Port" \
-		    -helpstr "Set view to port/left"
-		command starboard -label "Starboard" \
-		    -helpstr "Set view to starboard/right"
-		command top -label "Top" \
-		    -helpstr "Set view to top"
-		command bottom -label "Bottom" \
-		    -helpstr "Set view to bottom"
-		separator sep0
-		command 35,25 -label "35,25" \
-		    -helpstr "Set view to az=35, el=25"
-		command 45,45 -label "45,45" \
-		    -helpstr "Set view to az=45, el=45"
-	    }
+	    -text "View" -menu "options -tearoff 0 $mStandardViewsMenuCommands"
 
 	$itk_component(canvas_menu) menuconfigure .view.front \
 	    -command [::itcl::code $this doAe 0 0] \
