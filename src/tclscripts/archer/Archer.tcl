@@ -44,55 +44,32 @@ namespace eval Archer {
 	set pluginsdir [file join [bu_brlcad_data "src"] archer plugins]
     }
 
-    if {[file exists [file join $pluginsdir Core]]} {
-	set savePwd [pwd]
-	cd [file join $pluginsdir Core]
-	catch {
-	    foreach filename [lsort [glob -nocomplain *]] {
-		if [file isfile $filename] {
-		    set ext [file extension $filename]
-		    switch -exact -- $ext {
-			".tcl" -
-			".itk" -
-			".itcl" {
-			    source $filename
-			}
-			".sh" {
-			    # silently ignore
-			}
-			default {
-			    # silently ignore
-			}
-		    }
-		}
-	    }
-	}
-	cd $savePwd
-    }
-    if {[file exists [file join $pluginsdir Commands]]} {
-	set savePwd [pwd]
-	cd [file join $pluginsdir Commands]
-	catch {
-	    foreach filename [lsort [glob -nocomplain *]] {
-		if [file isfile $filename] {
-		    set ext [file extension $filename]
-		    switch -exact -- $ext {
-			".tcl" -
-			".itk" -
-			".itcl" {
-			    source $filename
-			}
-			".sh" {
-			    # silently ignore
-			}
-			default {
-			    # silently ignore
+    foreach plugin_type {Core Commands} {
+	if {[file exists [file join $pluginsdir $plugin_type]]} {
+	    set savePwd [pwd]
+	    cd [file join $pluginsdir $plugin_type]
+	    catch {
+		foreach filename [lsort [glob -nocomplain *]] {
+		    if [file isfile $filename] {
+			set ext [file extension $filename]
+			switch -exact -- $ext {
+			    ".tcl" -
+			    ".itk" -
+			    ".itcl" {
+				source $filename
+			    }
+			    ".sh" {
+				# silently ignore
+			    }
+			    default {
+				# silently ignore
+			    }
 			}
 		    }
 		}
 	    }
+	    cd $savePwd
 	}
-	cd $savePwd
     }
 }
 
