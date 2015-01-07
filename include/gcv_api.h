@@ -87,7 +87,7 @@ gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts 
  *
  */
 GCV_EXPORT int
-gcv_filter(struct gcv_context *cxt, const struct gcv_filter *filter);
+gcv_execute(struct gcv_context *cxt, const struct gcv_filter *filter);
 
 
 /**

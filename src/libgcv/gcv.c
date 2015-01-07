@@ -54,7 +54,7 @@ gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts 
 
 
 int
-gcv_filter(struct gcv_context *cxt, const struct gcv_filter *filter)
+gcv_execute(struct gcv_context *cxt, const struct gcv_filter *filter)
 {
   if (!cxt || !filter)
     return 0;
@@ -78,11 +78,11 @@ gcv_convert(const char *in_file, const struct gcv_opts *in_opts, const char *out
   gcv_reader(&reader, in_file, in_opts);
   gcv_writer(&writer, out_file, out_opts);
 
-  result = gcv_filter(&context, &reader);
+  result = gcv_execute(&context, &reader);
   if (result)
     bu_exit(2, "ERROR: Unable to read input data from %s\n", in_file);
 
-  result = gcv_filter(&context, &writer);
+  result = gcv_execute(&context, &writer);
   if (result)
     bu_exit(2, "ERROR: Unable to write output data to %s\n", out_file);
 
