@@ -403,6 +403,7 @@ package provide Archer 1.0
 	method applyPreferenceGroundPlaneSettings {}
 	method applyCurrentModelAxesSettings {}
 	method applyPreferenceModelAxesSettings {}
+	method applyCurrentViewAxesPosition {}
 	method applyCurrentViewAxesSettings {}
 	method applyPreferenceViewAxesSettings {}
 	method applyCurrentSettings {}
@@ -8924,10 +8925,8 @@ proc title_node_handler {node} {
     gedCmd refresh
 }
 
-
-::itcl::body Archer::applyCurrentViewAxesSettings {} {
+::itcl::body Archer::applyCurrentViewAxesPosition {} {
     set offset $mViewAxesSizeOffsets($mViewAxesSize)
-    gedCmd configure -viewAxesSize $mViewAxesSizeValues($mViewAxesSize)
 
     switch -- $mViewAxesPosition {
 	default -
@@ -8947,6 +8946,11 @@ proc title_node_handler {node} {
 	    gedCmd configure -viewAxesPosition "$offset -$offset 0"
 	}
     }
+}
+
+::itcl::body Archer::applyCurrentViewAxesSettings {} {
+    gedCmd configure -viewAxesSize $mViewAxesSizeValues($mViewAxesSize)
+    applyCurrentViewAxesPosition
 
     if {$mViewAxesColor == "Triple"} {
 	gedCmd configure -viewAxesTripleColor 1
@@ -8965,55 +8969,17 @@ proc title_node_handler {node} {
     set positionNotSet 1
     if {$mViewAxesSizePref != $mViewAxesSize} {
 	set mViewAxesSize $mViewAxesSizePref
-	set offset $mViewAxesSizeOffsets($mViewAxesSize)
 
 	gedCmd configure -viewAxesSize $mViewAxesSizeValues($mViewAxesSize)
 
 	set positionNotSet 0
 	set mViewAxesPosition $mViewAxesPositionPref
-
-	switch -- $mViewAxesPosition {
-	    default -
-	    "Center" {
-		gedCmd configure -viewAxesPosition {0 0 0}
-	    }
-	    "Upper Left" {
-		gedCmd configure -viewAxesPosition "-$offset $offset 0"
-	    }
-	    "Upper Right" {
-		gedCmd configure -viewAxesPosition "$offset $offset 0"
-	    }
-	    "Lower Left" {
-		gedCmd configure -viewAxesPosition "-$offset -$offset 0"
-	    }
-	    "Lower Right" {
-		gedCmd configure -viewAxesPosition "$offset -$offset 0"
-	    }
-	}
+	applyCurrentViewAxesPosition
     }
 
     if {$positionNotSet && $mViewAxesPositionPref != $mViewAxesPosition} {
 	set mViewAxesPosition $mViewAxesPositionPref
-	set offset $mViewAxesSizeOffsets($mViewAxesSize)
-
-	switch -- $mViewAxesPosition {
-	    default -
-	    "Center" {
-		gedCmd configure -viewAxesPosition {0 0 0}
-	    }
-	    "Upper Left" {
-		gedCmd configure -viewAxesPosition "-$offset $offset 0"
-	    }
-	    "Upper Right" {
-		gedCmd configure -viewAxesPosition "$offset $offset 0"
-	    }
-	    "Lower Left" {
-		gedCmd configure -viewAxesPosition "-$offset -$offset 0"
-	    }
-	    "Lower Right" {
-		gedCmd configure -viewAxesPosition "$offset -$offset 0"
-	    }
-	}
+	applyCurrentViewAxesPosition
     }
 
     if {$mViewAxesLineWidthPref != $mViewAxesLineWidth} {
