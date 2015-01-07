@@ -29,34 +29,38 @@ gcv_destroy(struct gcv_context *UNUSED(context))
 }
 
 
-struct gcv_filter *
-gcv_filter(struct gcv_context *cxt, const char *file, const struct gcv_opts *UNUSED(opts))
+void
+gcv_reader(struct gcv_filter *reader, const char *source, const struct gcv_opts *UNUSED(opts))
 {
-  struct gcv_filter *filter = NULL;
-
-  if (cxt) {
-    filter = bu_calloc(sizeof(struct gcv_filter), 1, "alloc filter");
-    filter->name = file;
+  if (source && !BU_STR_EQUAL(source, "-")) {
+    bu_log("Scheduling read from %s\n", source);
+  } else {
+    bu_log("Scheduling read from STDIN\n");
   }
+  reader->name = source;
+}
 
-  return filter;
+
+void
+gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts *UNUSED(opts))
+{
+  if (target && !BU_STR_EQUAL(target, "-")) {
+    bu_log("Scheduling write to %s\n", target);
+  } else {
+    bu_log("Scheduling write to STDOUT\n");
+  }
+  writer->name = target;
 }
 
 
 int
-gcv_reader(struct gcv_context *cxt, const struct gcv_filter *reader)
+gcv_filter(struct gcv_context *cxt, const struct gcv_filter *filter)
 {
-  if (cxt)
-    bu_log("Reading from %s\n", reader->name);
-  return 0;
-}
+  if (!cxt || !filter)
+    return 0;
 
+  bu_log("Filtering %s\n", filter->name);
 
-int
-gcv_writer(struct gcv_context *cxt, const struct gcv_filter *writer)
-{
-  if (cxt)
-    bu_log("Writing to %s\n", writer->name);
   return 0;
 }
 
@@ -65,20 +69,22 @@ int
 gcv_convert(const char *in_file, const struct gcv_opts *in_opts, const char *out_file, const struct gcv_opts *out_opts)
 {
   struct gcv_context context;
-  struct gcv_filter *reader;
-  struct gcv_filter *writer;
+  struct gcv_filter reader;
+  struct gcv_filter writer;
+  int result;
 
   gcv_init(&context);
 
-  reader = gcv_filter(&context, in_file, in_opts);
-  if (!reader)
-    return -1;
-  gcv_reader(&context, reader);
+  gcv_reader(&reader, in_file, in_opts);
+  gcv_writer(&writer, out_file, out_opts);
 
-  writer = gcv_filter(&context, out_file, out_opts);
-  if (!writer)
-    return -2;
-  gcv_writer(&context, writer);
+  result = gcv_filter(&context, &reader);
+  if (result)
+    bu_exit(2, "ERROR: Unable to read input data from %s\n", in_file);
+
+  result = gcv_filter(&context, &writer);
+  if (result)
+    bu_exit(2, "ERROR: Unable to write output data to %s\n", out_file);
 
   gcv_destroy(&context);
 

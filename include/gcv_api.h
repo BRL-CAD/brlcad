@@ -72,36 +72,22 @@ gcv_destroy(struct gcv_context *cxt);
 /**
  * Append a filter for reading objects
  */
-GCV_EXPORT int
-gcv_reader(struct gcv_context *cxt, const struct gcv_filter *reader);
+GCV_EXPORT void
+gcv_reader(struct gcv_filter *reader, const char *source, const struct gcv_opts *UNUSED(opts));
 
 
 /**
  * Append a filter for writing objects.
  */
-GCV_EXPORT int
-gcv_writer(struct gcv_context *cxt, const struct gcv_filter *writer);
-
-
-/**
- *
- */
-GCV_EXPORT struct gcv_filter *
-gcv_filter(struct gcv_context *cxt, const char *file, const struct gcv_opts *opts);
+GCV_EXPORT void
+gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts *UNUSED(opts));
 
 
 /**
  *
  */
 GCV_EXPORT int
-gcv_read(struct gcv_context *cxt, const char *filepath);
-
-
-/**
- *
- */
-GCV_EXPORT int
-gcv_write(struct gcv_context *cxt, const char *filepath);
+gcv_filter(struct gcv_context *cxt, const struct gcv_filter *filter);
 
 
 /**
@@ -116,7 +102,7 @@ gcv_write(struct gcv_context *cxt, const char *filepath);
  */
 GCV_EXPORT int
 gcv_convert(const char *in_file, const struct gcv_opts *in_opts, const char *out_file, const struct gcv_opts *out_opts);
-//gcv_convert(const char *input, const char *output);
+
 
 __END_DECLS
 
