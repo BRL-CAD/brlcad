@@ -20,6 +20,8 @@ set(LIBGCV_SOURCES
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libbu")
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
+BRLCAD_ADDEXEC(gcv gcv.c libgcv)
+
 add_subdirectory(wfobj)
 
 enable_testing()
