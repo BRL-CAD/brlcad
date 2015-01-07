@@ -2140,25 +2140,13 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::compSelectCallback {_mstring} {
-    switch -- $mCompSelectMode \
-	$COMP_SELECT_LIST_MODE - \
-	$COMP_SELECT_LIST_PARTIAL_MODE {
-	    putString $_mstring
-	} \
-	$COMP_SELECT_GROUP_ADD_MODE - \
-	$COMP_SELECT_GROUP_ADD_PARTIAL_MODE {
-	    compSelectGroupAdd $_mstring
-	} \
-	$COMP_SELECT_GROUP_REMOVE_MODE - \
-	$COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE {
-	    compSelectGroupRemove $_mstring
-	} \
-	$COMP_SELECT_BOT_POINTS_MODE {
-	    if {[info exists itk_component(botView)]} {
-		catch {$itk_component(botView) selectBotPts $_mstring} msg
-	    }
+    if {$mCompSelectMode == $COMP_SELECT_BOT_POINTS_MODE} {
+	if {[info exists itk_component(botView)]} {
+	    catch {$itk_component(botView) selectBotPts $_mstring} msg
 	}
-
+    } else {
+	$ArcherCore::compSelectCallback $_mstring
+    }
     $itk_component(ged) rect dim 0 0
 }
 
