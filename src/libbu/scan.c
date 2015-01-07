@@ -44,6 +44,12 @@ bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...)
 
     va_start(ap, n);
 
+    /* TODO: we should just simply skip all occurrences of delim chars
+     * after reading a fastf_t, avoid dynamic memory allocation and
+     * avoid scanf/sscanf (we don't need to scan the delimiter, just
+     * skip chars in a loop until none are found.
+     */
+
     delim_len = strlen(delim);
     /* + 3 here to make room for the two characters '%' and 'n' as
      * well as the terminating '\0'
