@@ -19,7 +19,7 @@
  */
 /** @file gcv.h
  *
- * Functions provided by the LIBGCV geometry conversion library.
+ * API of the LIBGCV geometry conversion library.
  *
  */
 
@@ -28,10 +28,9 @@
 
 #include "common.h"
 
-#include "raytrace.h"
-
 __BEGIN_DECLS
 
+/* TODO: needs to move to subdir */
 #ifndef GCV_EXPORT
 #  if defined(GCV_DLL_EXPORTS) && defined(GCV_DLL_IMPORTS)
 #    error "Only GCV_DLL_EXPORTS or GCV_DLL_IMPORTS can be defined, not both."
@@ -44,35 +43,10 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/**
- * Usually specified as the db_walk_tree() region_end callback,
- * calling this routine for each positive region encountered.
- *
- * The client_data parameter is expected to be a function pointer for
- * a routine that will write out the region in a given file format:
- *
-@code
-void (*write_region)(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3]);
-@endcode
- *
- * This routine must be prepared to run in parallel.
- */
-GCV_EXPORT extern union tree *gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+/* TODO: needs to move to subdir */
+#include "gcv_util.h"
 
-/**
- * Exact same as gcv_region_end, except using the marching cubes algorithm.
- */
-GCV_EXPORT extern union tree *gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-
-
-GCV_EXPORT extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-
-
-GCV_EXPORT extern union tree *gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct rt_tess_tol *ttol);
-
-
-int gcv_load_plugin(const char *path);
-void gcv_unload_plugin(const char *path);
+/* TODO: main API goes here */
 
 
 __END_DECLS
