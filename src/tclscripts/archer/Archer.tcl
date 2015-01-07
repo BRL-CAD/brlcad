@@ -537,7 +537,7 @@ package provide Archer 1.0
 
     if {!$mViewOnly} {
 	pushPerspectiveSettings
-	pushZClipSettings
+	updateZClipPlanesFromSettings
     }
 
     gedCmd dlist_on $mDisplayListMode
@@ -2689,7 +2689,7 @@ proc title_node_handler {node} {
 	    -to 100.0 \
 	    -resolution 0.01 \
 	    -variable [::itcl::scope mZClipFrontPref] \
-	    -command [::itcl::code $this updateZClipPlanes]
+	    -command [::itcl::code $this updateZClipPlanesFromPreferences]
     }
 
     itk_component add zclipBackL {
@@ -2705,7 +2705,7 @@ proc title_node_handler {node} {
 	    -to 100.0 \
 	    -resolution 0.01 \
 	    -variable [::itcl::scope mZClipBackPref] \
-	    -command [::itcl::code $this updateZClipPlanes]
+	    -command [::itcl::code $this updateZClipPlanesFromPreferences]
     }
 
     itk_component add zclipBackMaxL {
@@ -8511,12 +8511,7 @@ proc title_node_handler {node} {
 
 	# Set things back the way they were before
 	# calling the preferences dialog.
-	set mZClipBackMaxPref $mZClipBackMax
-	set mZClipFrontMaxPref $mZClipFrontMax
-	set mZClipBackPref $mZClipBack
-	set mZClipFrontPref $mZClipFront
-
-	updateZClipPlanes 0
+	updateZClipPlanesFromSettings
 	set rflag 1
     } elseif {$mZClipBackMaxPref != $mZClipBackMax ||
 	$mZClipFrontMaxPref != $mZClipFrontMax ||
@@ -8528,7 +8523,7 @@ proc title_node_handler {node} {
 	set mZClipBack $mZClipBackPref
 	set mZClipFront $mZClipFrontPref
 
-	updateZClipPlanes 0
+	updateZClipPlanesFromSettings
 	set rflag 1
     }
 
@@ -9046,13 +9041,8 @@ proc title_node_handler {node} {
 	$mZClipBackPref != $mZClipBack ||
 	$mZClipFrontPref != $mZClipFront} {
 
-	set mZClipBackMaxPref $mZClipBackMax
-	set mZClipFrontMaxPref $mZClipFrontMax
-	set mZClipBackPref $mZClipBack
-	set mZClipFrontPref $mZClipFront
-
-	updateZClipPlanes 0
-	set rflag 1
+       updateZClipPlanesFromSettings
+       set rflag 1
     }
 
     if {$mLightingModePref != $mLightingMode} {
