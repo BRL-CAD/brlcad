@@ -47,6 +47,7 @@ __BEGIN_DECLS
 #include "gcv_util.h"
 
 /* TODO: main API goes here */
+#include "gcv_api.h"
 
 
 __END_DECLS
