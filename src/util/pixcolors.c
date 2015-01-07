@@ -132,21 +132,25 @@ int main(int ac, char **av)
     /* get all the option flags from the command line
      */
     while ((c=bu_getopt(ac, av, options)) != -1) {
-	if (c == 'v') verbose = ! verbose;
-	else usage();
+	if (c != 'v')
+	    usage();
+	verbose = ! verbose;
     }
 
 
-    if (bu_optind < ac-1) {
+    if (bu_optind < ac-1)
 	usage();
-    } else if (bu_optind == ac-1) {
+    if (bu_optind == ac-1) {
 	FILE *fd;
 	if ((fd=fopen(av[bu_optind], "r")) == (FILE *)NULL) {
 	    perror(av[bu_optind]);
 	    bu_exit (1, NULL);
-	} else doit(fd);
-    } else if (bu_optind >= ac) {
-	if (isatty(fileno(stdin))) usage();
+	}
+	doit(fd);
+    }
+    else if (bu_optind >= ac) {
+	if (isatty(fileno(stdin)))
+	    usage();
 	doit(stdin);
     }
 
