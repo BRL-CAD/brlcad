@@ -322,6 +322,7 @@ package provide Archer 1.0
 	method buildTorusEditView {}
 	method buildInvalidObjEditView {}
 
+	method clearViewPanel {}
 	method initArb4EditView {_odata}
 	method initArb5EditView {_odata}
 	method initArb6EditView {_odata}
@@ -7420,11 +7421,7 @@ proc title_node_handler {node} {
 	-fill both
 }
 
-
-::itcl::body Archer::initDbAttrView {name} {
-    set mObjViewMode $OBJ_EDIT_VIEW_MODE
-    set mPrevObjViewMode $OBJ_EDIT_VIEW_MODE
-
+::itcl::body Archer::clearViewPanel {} {
     catch {pack forget $itk_component(dbAttrView)}
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
@@ -7442,6 +7439,13 @@ proc title_node_handler {node} {
 	set mWizardTop ""
 	set mWizardState ""
     }
+}
+
+::itcl::body Archer::initDbAttrView {name} {
+    set mObjViewMode $OBJ_EDIT_VIEW_MODE
+    set mPrevObjViewMode $OBJ_EDIT_VIEW_MODE
+
+    clearViewPanel
 
     set mDbName $name
     set mPrevObjViewMode $OBJ_ATTR_VIEW_MODE
@@ -7641,23 +7645,7 @@ proc title_node_handler {node} {
 
     set mPrevObjViewMode $mObjViewMode
 
-    catch {pack forget $itk_component(dbAttrView)}
-    catch {pack forget $itk_component(objViewToolbar)}
-    catch {pack forget $itk_component(objAttrView)}
-    catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objRtImageView)}
-    catch {pack forget $itk_component(objToolView)}
-    catch {pack forget $itk_component(noWizard)}
-    set mNoWizardActive 0
-
-    # delete the previous wizard instance
-    if {$mWizardClass != ""} {
-	::destroy $itk_component($mWizardClass)
-	::destroy $itk_component(wizardUpdate)
-	set mWizardClass ""
-	set mWizardTop ""
-	set mWizardState ""
-    }
+    clearViewPanel
 
     $itk_component(objAttrText) configure \
 	-state normal
@@ -7698,24 +7686,7 @@ proc title_node_handler {node} {
 
     set mPrevObjViewMode $mObjViewMode
 
-    catch {pack forget $itk_component(dbAttrView)}
-    catch {pack forget $itk_component(objViewToolbar)}
-    catch {pack forget $itk_component(objAttrView)}
-    catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objRtImageView)}
-    catch {pack forget $itk_component(objToolView)}
-    catch {pack forget $itk_component(noWizard)}
-    set mNoWizardActive 0
-
-
-    # delete the previous wizard instance
-    if {$mWizardClass != ""} {
-	::destroy $itk_component($mWizardClass)
-	::destroy $itk_component(wizardUpdate)
-	set mWizardClass ""
-	set mWizardTop ""
-	set mWizardState ""
-    }
+    clearViewPanel
 
     if {[catch {$itk_component(ged) attr get $mSelectedObj WizardTop} mWizardTop]} {
 	set mWizardTop ""
@@ -7757,23 +7728,7 @@ proc title_node_handler {node} {
 
     set mPrevObjViewMode $mObjViewMode
 
-    catch {pack forget $itk_component(dbAttrView)}
-    catch {pack forget $itk_component(objViewToolbar)}
-    catch {pack forget $itk_component(objAttrView)}
-    catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objRtImageView)}
-    catch {pack forget $itk_component(objToolView)}
-    catch {pack forget $itk_component(noWizard)}
-    set mNoWizardActive 0
-
-    # delete the previous wizard instance
-    if {$mWizardClass != ""} {
-	::destroy $itk_component($mWizardClass)
-	::destroy $itk_component(wizardUpdate)
-	set mWizardClass ""
-	set mWizardTop ""
-	set mWizardState ""
-    }
+    clearViewPanel
 
     pack $itk_component(objViewToolbar) -expand no -fill both -anchor n
     pack $itk_component(objRtImageView) -expand yes -fill both -anchor n
@@ -7792,23 +7747,7 @@ proc title_node_handler {node} {
 
     set mPrevObjViewMode $mObjViewMode
 
-    catch {pack forget $itk_component(dbAttrView)}
-    catch {pack forget $itk_component(objViewToolbar)}
-    catch {pack forget $itk_component(objAttrView)}
-    catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objRtImageView)}
-    catch {pack forget $itk_component(objToolView)}
-    catch {pack forget $itk_component(noWizard)}
-    set mNoWizardActive 0
-
-    # delete the previous wizard instance
-    if {$mWizardClass != ""} {
-	::destroy $itk_component($mWizardClass)
-	::destroy $itk_component(wizardUpdate)
-	set mWizardClass ""
-	set mWizardTop ""
-	set mWizardState ""
-    }
+    clearViewPanel
 
     pack $itk_component(objViewToolbar) -expand no -fill both -anchor n
     pack $itk_component(objToolView) -expand yes -fill both -anchor n
