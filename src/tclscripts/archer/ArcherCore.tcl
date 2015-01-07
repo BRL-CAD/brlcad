@@ -634,6 +634,7 @@ namespace eval ArcherCore {
 	method colorMenuStatusCB {_w}
 	method menuStatusCB {_w}
 	method transparencyMenuStatusCB {_w}
+	method setViewTypeFromTreeMode {}
 
 	method updateSaveMode {}
 	method createTargetCopy {}
@@ -2409,6 +2410,31 @@ namespace eval ArcherCore {
 # ------------------------------------------------------------
 #                     PUBLIC TREE COMMANDS
 # ------------------------------------------------------------
+::itcl::body ArcherCore::setViewTypeFromTreeMode {} {
+    switch -- $mTreeMode \
+	$TREE_MODE_TREE - \
+	$TREE_MODE_COLOR_OBJECTS {
+	    if {$mEnableColorListView} {
+		set mEnableListView 1
+	    } else {
+		set mEnableListView 0
+	    }
+	} \
+	$TREE_MODE_GHOST_OBJECTS {
+	    if {$mEnableGhostListView} {
+		set mEnableListView 1
+	    } else {
+		set mEnableListView 0
+	    }
+	} \
+	$TREE_MODE_EDGE_OBJECTS {
+	    if {$mEnableEdgeListView} {
+		set mEnableListView 1
+	    } else {
+		set mEnableListView 0
+	    }
+	}
+}
 
 ::itcl::body ArcherCore::rebuildTree {} {
     if {$mNoTree || $mFreezeGUI} {
@@ -2440,29 +2466,7 @@ namespace eval ArcherCore {
     set mNodeDrawList ""
     set mAffectedNodeList ""
 
-    switch -- $mTreeMode \
-	$TREE_MODE_TREE - \
-	$TREE_MODE_COLOR_OBJECTS {
-	    if {$mEnableColorListView} {
-		set mEnableListView 1
-	    } else {
-		set mEnableListView 0
-	    }
-	} \
-	$TREE_MODE_GHOST_OBJECTS {
-	    if {$mEnableGhostListView} {
-		set mEnableListView 1
-	    } else {
-		set mEnableListView 0
-	    }
-	} \
-	$TREE_MODE_EDGE_OBJECTS {
-	    if {$mEnableEdgeListView} {
-		set mEnableListView 1
-	    } else {
-		set mEnableListView 0
-	    }
-	}
+    setViewTypeFromTreeMode
 
     if {$mEnableListView} {
 	set items [lsort -dictionary [$itk_component(ged) ls]]
@@ -5176,29 +5180,7 @@ namespace eval ArcherCore {
 	}
     }
 
-    switch -- $mTreeMode \
-	$TREE_MODE_TREE - \
-	$TREE_MODE_COLOR_OBJECTS {
-	    if {$mEnableColorListView} {
-		set mEnableListView 1
-	    } else {
-		set mEnableListView 0
-	    }
-	} \
-	$TREE_MODE_GHOST_OBJECTS {
-	    if {$mEnableGhostListView} {
-		set mEnableListView 1
-	    } else {
-		set mEnableListView 0
-	    }
-	} \
-	$TREE_MODE_EDGE_OBJECTS {
-	    if {$mEnableEdgeListView} {
-		set mEnableListView 1
-	    } else {
-		set mEnableListView 0
-	    }
-	}
+    setViewTypeFromTreeMode
 
     if {$mTreeMode < $TREE_MODE_COLOR_OBJECTS} {
 	if {$mEnableListView} {
