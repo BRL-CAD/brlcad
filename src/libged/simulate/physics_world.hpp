@@ -28,6 +28,7 @@
 #define PHYSICS_WORLD_H
 
 
+#include <memory>
 #include <vector>
 
 #include <btBulletDynamicsCommon.h>
@@ -46,7 +47,7 @@ public:
     ~PhysicsWorld();
 
     void step(btScalar seconds);
-    void add_object(matp_t matrix, btScalar mass,
+    void add_object(std::auto_ptr<btMotionState> motion_state, btScalar mass,
 		    const btVector3 &bounding_box_dimensions, const btVector3 &linear_velocity,
 		    const btVector3 &angular_velocity);
 

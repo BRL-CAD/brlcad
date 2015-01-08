@@ -47,6 +47,64 @@ namespace
 {
 
 
+class MatrixMotionState : public btMotionState
+{
+public:
+    MatrixMotionState(mat_t matrix);
+
+    virtual void getWorldTransform(btTransform &dest) const;
+    virtual void setWorldTransform(const btTransform &transform);
+
+
+private:
+    MatrixMotionState(const MatrixMotionState &source);
+    MatrixMotionState &operator=(const MatrixMotionState &source);
+
+    const matp_t m_matrix;
+};
+
+
+MatrixMotionState::MatrixMotionState(mat_t matrix) :
+    m_matrix(matrix)
+{}
+
+
+void
+MatrixMotionState::getWorldTransform(btTransform &dest) const
+{
+    /*
+    // rotation
+    // matrix decomposition
+
+    // translation
+    btVector3 translation(0.0, 0.0, 0.0);
+    MAT_DELTAS_GET(translation, m_matrix);
+    dest.setOrigin(translation);
+    */
+
+    btScalar bt_matrix[16];
+    MAT_TRANSPOSE(bt_matrix, m_matrix);
+    dest.setFromOpenGLMatrix(bt_matrix);
+}
+
+
+void
+MatrixMotionState::setWorldTransform(const btTransform &transform)
+{
+    /*
+    // rotation
+    // matrix decomposition
+
+    // translation
+    MAT_DELTAS_VEC(m_matrix, transform.getOrigin());
+    */
+
+    btScalar bt_matrix[16];
+    transform.getOpenGLMatrix(bt_matrix);
+    MAT_TRANSPOSE(m_matrix, bt_matrix);
+}
+
+
 template <typename T, void (*Destructor)(T *)>
 struct AutoDestroyer {
     AutoDestroyer(T *vptr) : ptr(vptr) {}
@@ -131,7 +189,7 @@ get_bounding_box_dimensions(db_i &dbi, const std::string &name, vect_t &dest)
 
 
 HIDDEN fastf_t
-get_volume(db_i &dbi, const std::string &name)
+get_volume(const db_i &dbi, const std::string &name)
 {
     directory *dir = db_lookup(&dbi, name.c_str(), false);
 
@@ -220,8 +278,9 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 		bt_bounding_box_dimensions[Z] *= 1.0 / vtree.tr_l.tl_mat[MSZ];
 		bt_bounding_box_dimensions *= 1.0 / vtree.tr_l.tl_mat[MSA];
 
-		world.add_object(vtree.tr_l.tl_mat, mass, bt_bounding_box_dimensions,
-				 bt_linear_velocity, bt_angular_velocity);
+		world.add_object(
+		    std::auto_ptr<btMotionState>(new MatrixMotionState(vtree.tr_l.tl_mat)),
+		    mass, bt_bounding_box_dimensions, bt_linear_velocity, bt_angular_velocity);
 	    }
 
 	    break;

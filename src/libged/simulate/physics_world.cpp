@@ -57,68 +57,10 @@ namespace simulate
 {
 
 
-class MatrixMotionState : public btMotionState
-{
-public:
-    MatrixMotionState(mat_t matrix);
-
-    virtual void getWorldTransform(btTransform &dest) const;
-    virtual void setWorldTransform(const btTransform &transform);
-
-
-private:
-    MatrixMotionState(const MatrixMotionState &source);
-    MatrixMotionState &operator=(const MatrixMotionState &source);
-
-    const matp_t m_matrix;
-};
-
-
-MatrixMotionState::MatrixMotionState(mat_t matrix) :
-    m_matrix(matrix)
-{}
-
-
-void
-MatrixMotionState::getWorldTransform(btTransform &dest) const
-{
-    /*
-    // rotation
-    // matrix decomposition
-
-    // translation
-    btVector3 translation(0.0, 0.0, 0.0);
-    MAT_DELTAS_GET(translation, m_matrix);
-    dest.setOrigin(translation);
-    */
-
-    btScalar bt_matrix[16];
-    MAT_TRANSPOSE(bt_matrix, m_matrix);
-    dest.setFromOpenGLMatrix(bt_matrix);
-}
-
-
-void
-MatrixMotionState::setWorldTransform(const btTransform &transform)
-{
-    /*
-    // rotation
-    // matrix decomposition
-
-    // translation
-    MAT_DELTAS_VEC(m_matrix, transform.getOrigin());
-    */
-
-    btScalar bt_matrix[16];
-    transform.getOpenGLMatrix(bt_matrix);
-    MAT_TRANSPOSE(m_matrix, bt_matrix);
-}
-
-
 class WorldObject
 {
 public:
-    WorldObject(matp_t matrix, btScalar mass,
+    WorldObject(std::auto_ptr<btMotionState> motion_state, btScalar mass,
 		const btVector3 &bounding_box_dimensions, const btVector3 &linear_velocity,
 		const btVector3 &angular_velocity);
 
@@ -126,20 +68,24 @@ public:
 
 
 private:
+    WorldObject(const WorldObject &source);
+    WorldObject &operator=(const WorldObject &source);
+
     bool m_in_world;
-    MatrixMotionState m_motion_state;
+    std::auto_ptr<btMotionState> m_motion_state;
     RtCollisionShape m_collision_shape;
     btRigidBody m_rigid_body;
 };
 
 
-WorldObject::WorldObject(matp_t matrix, btScalar mass,
-			 const btVector3 &bounding_box_dimensions, const btVector3 &linear_velocity,
-			 const btVector3 &angular_velocity) :
+WorldObject::WorldObject(std::auto_ptr<btMotionState> motion_state,
+			 btScalar mass, const btVector3 &bounding_box_dimensions,
+			 const btVector3 &linear_velocity, const btVector3 &angular_velocity) :
     m_in_world(false),
-    m_motion_state(matrix),
+    m_motion_state(motion_state),
     m_collision_shape(bounding_box_dimensions / 2.0),
-    m_rigid_body(build_construction_info(m_motion_state, m_collision_shape, mass))
+    m_rigid_body(build_construction_info(*m_motion_state.get(), m_collision_shape,
+					 mass))
 {
     m_rigid_body.setLinearVelocity(linear_velocity);
     m_rigid_body.setAngularVelocity(angular_velocity);
@@ -190,11 +136,11 @@ PhysicsWorld::step(btScalar seconds)
 
 
 void
-PhysicsWorld::add_object(matp_t matrix, btScalar mass,
-			 const btVector3 &bounding_box_dimensions, const btVector3 &linear_velocity,
-			 const btVector3 &angular_velocity)
+PhysicsWorld::add_object(std::auto_ptr<btMotionState> motion_state,
+			 btScalar mass, const btVector3 &bounding_box_dimensions,
+			 const btVector3 &linear_velocity, const btVector3 &angular_velocity)
 {
-    m_objects.push_back(new WorldObject(matrix, mass, bounding_box_dimensions,
+    m_objects.push_back(new WorldObject(motion_state, mass, bounding_box_dimensions,
 					linear_velocity, angular_velocity));
     m_objects.back()->add_to_world(m_world);
 }
