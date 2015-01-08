@@ -76,8 +76,8 @@ public:
 
 
 private:
-    RtCollisionAlgorithm(const RtCollisionAlgorithm &);
-    RtCollisionAlgorithm &operator=(const RtCollisionAlgorithm &);
+    RtCollisionAlgorithm(const RtCollisionAlgorithm &source);
+    RtCollisionAlgorithm &operator=(const RtCollisionAlgorithm &source);
 
     bool m_owns_manifold;
     btPersistentManifold *m_manifold;

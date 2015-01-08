@@ -47,7 +47,7 @@ namespace
 {
 
 
-template <typename T, void(*Destructor)(T *)>
+template <typename T, void (*Destructor)(T *)>
 struct AutoDestroyer {
     AutoDestroyer(T *vptr) : ptr(vptr) {}
 
@@ -62,8 +62,8 @@ struct AutoDestroyer {
 
 
 private:
-    AutoDestroyer(const AutoDestroyer &);
-    AutoDestroyer &operator=(const AutoDestroyer &);
+    AutoDestroyer(const AutoDestroyer &source);
+    AutoDestroyer &operator=(const AutoDestroyer &source);
 };
 
 
@@ -133,19 +133,23 @@ get_bounding_box_dimensions(db_i &dbi, const std::string &name, vect_t &dest)
 HIDDEN fastf_t
 get_volume(db_i &dbi, const std::string &name)
 {
-    // FIXME: not the true volume
-    vect_t lwh;
-    get_bounding_box_dimensions(dbi, name, lwh);
-    return lwh[X] * lwh[Y] * lwh[Z];
-}
+    directory *dir = db_lookup(&dbi, name.c_str(), false);
 
+    if (!dir)
+	throw std::invalid_argument("failed to lookup '" + name + "'");
 
-HIDDEN std::string
-serialize_vector(const vect_t &source)
-{
-    std::ostringstream stream;
-    stream << "<" << source[0] << ", " << source[1] << ", " << source[2] << ">";
-    return stream.str();
+    rt_db_internal internal;
+
+    if (rt_db_get_internal(&internal, dir, &dbi, bn_mat_identity,
+			   &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_get_internal() failed");
+
+    AutoDestroyer<rt_db_internal, rt_db_free_internal> internal_autodestroy(
+	&internal);
+
+    fastf_t volume;
+    internal.idb_meth->ft_volume(&volume, &internal);
+    return volume;
 }
 
 
@@ -178,8 +182,6 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 		MAT_IDN(vtree.tr_l.tl_mat);
 	    }
 
-	    vect_t bounding_box_dimensions;
-	    get_bounding_box_dimensions(dbi, vtree.tr_l.tl_name, bounding_box_dimensions);
 	    const fastf_t density = 1.0;
 	    fastf_t mass = density * get_volume(dbi, vtree.tr_l.tl_name);
 	    vect_t linear_velocity = {0, 0, 0}, angular_velocity = {0, 0, 0};
@@ -203,8 +205,25 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 						+ vtree.tr_l.tl_name  + "'");
 	    }
 
-	    world.add_object(vtree.tr_l.tl_mat, bounding_box_dimensions, mass,
-			     linear_velocity, angular_velocity);
+	    {
+		vect_t bounding_box_dimensions;
+		get_bounding_box_dimensions(dbi, vtree.tr_l.tl_name, bounding_box_dimensions);
+
+		btVector3 bt_bounding_box_dimensions, bt_linear_velocity, bt_angular_velocity;
+		VMOVE(bt_bounding_box_dimensions, bounding_box_dimensions);
+		VMOVE(bt_linear_velocity, linear_velocity);
+		VMOVE(bt_angular_velocity, angular_velocity);
+
+		// apply matrix scaling
+		bt_bounding_box_dimensions[X] *= 1.0 / vtree.tr_l.tl_mat[MSX];
+		bt_bounding_box_dimensions[Y] *= 1.0 / vtree.tr_l.tl_mat[MSY];
+		bt_bounding_box_dimensions[Z] *= 1.0 / vtree.tr_l.tl_mat[MSZ];
+		bt_bounding_box_dimensions *= 1.0 / vtree.tr_l.tl_mat[MSA];
+
+		world.add_object(vtree.tr_l.tl_mat, mass, bt_bounding_box_dimensions,
+				 bt_linear_velocity, bt_angular_velocity);
+	    }
+
 	    break;
 	}
 
@@ -220,7 +239,7 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 
 
 HIDDEN void
-do_simulate(db_i & dbi, directory & scene_directory, fastf_t seconds)
+do_simulate(db_i &dbi, directory &scene_directory, fastf_t seconds)
 {
     rt_db_internal internal;
 
@@ -281,7 +300,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
     try {
 	fastf_t seconds = lexical_cast<fastf_t>(argv[2], "invalid value for 'seconds'");
 
-	if (seconds < 0) throw std::runtime_error("invalid value for 'seconds'");
+	if (seconds < 0.0) throw std::runtime_error("invalid value for 'seconds'");
 
 	// We must reinitialize a simulate::PhysicsWorld after every ray trace.
 	// This is because rt_db_put_internal() is required for librt to

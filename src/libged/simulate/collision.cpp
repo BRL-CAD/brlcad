@@ -40,7 +40,7 @@ namespace
 
 
 HIDDEN void
-on_multioverlap(application *app, partition *partition1, bu_ptbl *ptbl,
+on_multioverlap(application *app, partition *partition1, bu_ptbl *region_table,
 		partition *partition2)
 {
     // TODO check that A and B are the geometry we are checking
@@ -60,7 +60,7 @@ on_multioverlap(application *app, partition *partition1, bu_ptbl *ptbl,
     result.addContactPoint(normal_world_on_b, point_on_b, depth);
 
     // handle the overlap
-    rt_default_multioverlap(app, partition1, ptbl, partition2);
+    rt_default_multioverlap(app, partition1, region_table, partition2);
 }
 
 
@@ -83,7 +83,6 @@ calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
 	BU_LIST_INIT(&rays->l);
 
 	// calculate the overlap volume between the AABBs
-	// TODO: these are not the correct AABBs
 	btVector3 overlap_min, overlap_max;
 	{
 	    btVector3 rb_a_aabb_min, rb_a_aabb_max, rb_b_aabb_min, rb_b_aabb_max;

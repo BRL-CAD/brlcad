@@ -46,14 +46,12 @@ public:
     ~PhysicsWorld();
 
     void step(btScalar seconds);
-    void add_object(matp_t matrix, const vect_t &bounding_box_dimensions,
-		    fastf_t mass, const vect_t &linear_velocity, const vect_t &angular_velocity);
+    void add_object(matp_t matrix, btScalar mass,
+		    const btVector3 &bounding_box_dimensions, const btVector3 &linear_velocity,
+		    const btVector3 &angular_velocity);
 
 
 private:
-    class WorldObject;
-
-
     PhysicsWorld(const PhysicsWorld &source);
     PhysicsWorld &operator=(const PhysicsWorld &source);
 
@@ -63,7 +61,7 @@ private:
     btSequentialImpulseConstraintSolver m_constraint_solver;
     btDiscreteDynamicsWorld m_world;
 
-    std::vector<WorldObject *> m_objects;
+    std::vector<class WorldObject *> m_objects;
 };
 
 
