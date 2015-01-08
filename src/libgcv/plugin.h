@@ -47,14 +47,18 @@ typedef int (*gcv_exporter)(const char *path, const struct db_i *dbip,
 			    const struct gcv_conversion_configuration *config);
 
 
+static const unsigned char GCV_VERSION = 1;
+
+
 struct gcv_plugin_info {
+    unsigned char gcv_version;
     char *file_extensions;
     gcv_importer importer;
     gcv_exporter exporter;
 };
 
 
-void gcv_register_plugin(const struct gcv_plugin_info *info);
+int gcv_register_plugin(const struct gcv_plugin_info *info);
 
 
 __END_DECLS

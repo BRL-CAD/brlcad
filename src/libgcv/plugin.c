@@ -55,7 +55,7 @@ gcv_get_plugin_list(void)
 }
 
 
-HIDDEN void
+HIDDEN int
 gcv_create_plugin(const char *path, void *dl_handle,
 		  const struct gcv_plugin_info *info)
 {
@@ -63,14 +63,26 @@ gcv_create_plugin(const char *path, void *dl_handle,
 
     struct gcv_plugin *plugin;
 
+    if (info->gcv_version != GCV_VERSION) {
+	bu_log("plugin '%s' is designed for %s version of libgcv (this=v%u, plugin=v%u)\n",
+	       path, info->gcv_version < GCV_VERSION ? "an older" : "a newer",
+	       (unsigned)GCV_VERSION, (unsigned)info->gcv_version);
+
+	if (dl_handle && bu_dlclose(dl_handle))
+	    bu_bomb(bu_dlerror());
+
+	return 0;
+    }
+
     BU_GET(plugin, struct gcv_plugin);
     BU_LIST_PUSH(plugin_list, &plugin->l);
-
     plugin->path = path ? bu_strdup(path) : NULL;
     plugin->dl_handle = dl_handle;
     plugin->info.file_extensions = bu_strdup(info->file_extensions);
     plugin->info.importer = info->importer;
     plugin->info.exporter = info->exporter;
+
+    return 1;
 }
 
 
@@ -148,9 +160,7 @@ gcv_load_plugin(const char *path)
 	return 0;
     }
 
-    gcv_create_plugin(path, dl_handle, plugin_info);
-
-    return 1;
+    return gcv_create_plugin(path, dl_handle, plugin_info);
 }
 
 
@@ -169,10 +179,10 @@ gcv_unload_plugin(const char *path)
 }
 
 
-void
+int
 gcv_register_plugin(const struct gcv_plugin_info *info)
 {
-    gcv_create_plugin(NULL, NULL, info);
+    return gcv_create_plugin(NULL, NULL, info);
 }
 
 
