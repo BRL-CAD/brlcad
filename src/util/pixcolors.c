@@ -148,7 +148,8 @@ int main(int ac, char **av)
 	}
 	doit(fd);
     }
-    else if (bu_optind >= ac) {
+/* (bu_optind >= ac) if arriving here */
+    else {
 	if (isatty(fileno(stdin)))
 	    usage();
 	doit(stdin);
