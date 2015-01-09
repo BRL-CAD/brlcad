@@ -66,6 +66,19 @@ duplicate_comb_internal(const rt_db_internal &source)
 }
 
 
+HIDDEN void
+write_comb_internal(db_i &db_instance, directory &vdirectory,
+		    const rt_db_internal &comb_internal)
+{
+
+    rt_db_internal temp_internal = duplicate_comb_internal(comb_internal);
+
+    if (rt_db_put_internal(&vdirectory, &db_instance, &temp_internal,
+			   &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_put_internal() failed");
+}
+
+
 }
 
 
@@ -85,6 +98,8 @@ TreeUpdater::TreeUpdater(db_i &db_instance, directory &vdirectory,
 
 TreeUpdater::~TreeUpdater()
 {
+    write_comb_internal(m_db_instance, m_directory, m_comb_internal);
+
     if (m_rt_instance)
 	rt_free_rti(m_rt_instance);
 }
@@ -109,12 +124,7 @@ TreeUpdater::get_rt_instance() const
 	m_rt_instance = NULL;
     }
 
-    rt_db_internal write_internal = duplicate_comb_internal(m_comb_internal);
-
-    if (rt_db_put_internal(&m_directory, &m_db_instance, &write_internal,
-			   &rt_uniresource) < 0)
-	throw std::runtime_error("rt_db_put_internal() failed");
-
+    write_comb_internal(m_db_instance, m_directory, m_comb_internal);
     m_rt_instance = rt_new_rti(&m_db_instance);
 
     if (!m_rt_instance)

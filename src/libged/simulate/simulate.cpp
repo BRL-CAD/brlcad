@@ -256,11 +256,10 @@ do_simulate(db_i &db_instance, directory &scene_directory, fastf_t seconds)
     AutoDestroyer<rt_db_internal, rt_db_free_internal> internal_autodestroy(
 	&internal);
 
+    simulate::TreeUpdater tree_updater(db_instance, scene_directory, internal);
     {
 	simulate::PhysicsWorld world;
 	tree * const vtree = static_cast<rt_comb_internal *>(internal.idb_ptr)->tree;
-
-	simulate::TreeUpdater tree_updater(db_instance, scene_directory, internal);
 	std::vector<simulate::WorldObject *> objects;
 
 	try {
@@ -283,10 +282,6 @@ do_simulate(db_i &db_instance, directory &scene_directory, fastf_t seconds)
 	     it != objects.end(); ++it)
 	    delete *it;
     }
-
-    if (rt_db_put_internal(&scene_directory, &db_instance, &internal,
-			   &rt_uniresource) < 0)
-	throw std::runtime_error("rt_db_put_internal() failed");
 }
 
 
