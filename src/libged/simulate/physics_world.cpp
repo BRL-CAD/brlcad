@@ -58,7 +58,8 @@ PhysicsWorld::PhysicsWorld() :
 void
 PhysicsWorld::step(btScalar seconds)
 {
-    m_world.stepSimulation(seconds, std::numeric_limits<int>::max());
+    for (int i = 0; i < 600.0 * seconds; ++i)
+	m_world.stepSimulation(1.0 / 600.0, 6000);
 }
 
 

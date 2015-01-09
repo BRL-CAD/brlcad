@@ -33,7 +33,6 @@
 #include "world_object.hpp"
 #include "rt_instance.hpp"
 
-#include <cmath>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -87,7 +86,7 @@ get_attributes(const db_i &db_instance, const std::string &name)
     const char * const prefix = "simulate::";
     const std::size_t prefix_len = strlen(prefix);
 
-    directory *dir = db_lookup(&db_instance, name.c_str(), false);
+    directory *dir = db_lookup(&db_instance, name.c_str(), LOOKUP_QUIET);
 
     if (!dir)
 	throw std::invalid_argument("failed to lookup '" + name + "'");
@@ -115,7 +114,7 @@ HIDDEN void
 get_bounding_box_dimensions(db_i &db_instance, const std::string &name,
 			    vect_t &dest)
 {
-    directory *dir = db_lookup(&db_instance, name.c_str(), false);
+    directory *dir = db_lookup(&db_instance, name.c_str(), LOOKUP_QUIET);
 
     if (!dir)
 	throw std::invalid_argument("failed to lookup '" + name + "'");
@@ -132,7 +131,7 @@ get_bounding_box_dimensions(db_i &db_instance, const std::string &name,
 HIDDEN fastf_t
 get_volume(const db_i &db_instance, const std::string &name)
 {
-    directory *dir = db_lookup(&db_instance, name.c_str(), false);
+    directory *dir = db_lookup(&db_instance, name.c_str(), LOOKUP_QUIET);
 
     if (!dir)
 	throw std::invalid_argument("failed to lookup '" + name + "'");
@@ -300,7 +299,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    directory *dir = db_lookup(gedp->ged_wdbp->dbip, argv[1], false);
+    directory *dir = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
 
     if (!dir || dir->d_minor_type != ID_COMBINATION) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s: '%s' is not a combination",
