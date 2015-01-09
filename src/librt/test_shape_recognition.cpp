@@ -288,12 +288,12 @@ is_cylinder(const object_data *data)
     // Second, check if all cylindrical surfaces share the same axis.
     ON_Cylinder cylinder;
     data->brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->IsCylinder(&cylinder);
-    //std::cout << "cylinder: " << cylinder.Axis().x << "," << cylinder.Axis().y << "," << cylinder.Axis().z << "\n";
     for (f_it = cylindrical_surfaces.begin(); f_it != cylindrical_surfaces.end(); f_it++) {
 	ON_Cylinder f_cylinder;
 	data->brep->m_F[(*f_it)].SurfaceOf()->IsCylinder(&f_cylinder);
-	//std::cout << "f_cylinder: " << f_cylinder.Axis().x << "," << f_cylinder.Axis().y << "," << f_cylinder.Axis().z << "\n";
-	if (f_cylinder.Axis() != cylinder.Axis()) return 0;
+	ON_3dPoint fca = f_cylinder.Axis();
+	ON_3dPoint ca = cylinder.Axis();
+	if (fca.DistanceTo(ca) > 0.01) return 0;
     }
 
     // Third, see if all planes are coplanar with two and only two planes.
@@ -311,7 +311,11 @@ is_cylinder(const object_data *data)
     }
 
     // Fourth, check that the two planes are parallel to each other.
-    if (p1.Normal().IsParallelTo(p2.Normal()) == 0) return 0;
+    if (p1.Normal().IsParallelTo(p2.Normal(), 0.01) == 0) {
+	std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
+	std::cout << "p2 Normal: " << p2.Normal().x << "," << p2.Normal().y << "," << p2.Normal().z << "\n";
+	return 0;
+    }
 
     // Fifth, remove degenerate edge sets. A degenerate edge set is defined as two
     // linear segments having the same two vertices.  (To be sure, we should probably
