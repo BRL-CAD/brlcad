@@ -98,7 +98,8 @@ TreeUpdater::TreeUpdater(db_i &db_instance, directory &vdirectory,
 
 TreeUpdater::~TreeUpdater()
 {
-    write_comb_internal(m_db_instance, m_directory, m_comb_internal);
+    if (m_is_modified)
+	write_comb_internal(m_db_instance, m_directory, m_comb_internal);
 
     if (m_rt_instance)
 	rt_free_rti(m_rt_instance);
@@ -114,17 +115,14 @@ void TreeUpdater::mark_modified()
 rt_i &
 TreeUpdater::get_rt_instance() const
 {
-    if (!m_is_modified && m_rt_instance)
+    if (m_is_modified)
+	write_comb_internal(m_db_instance, m_directory, m_comb_internal);
+    else if (m_rt_instance)
 	return *m_rt_instance;
 
-    m_is_modified = false;
-
-    if (m_rt_instance) {
+    if (m_rt_instance)
 	rt_free_rti(m_rt_instance);
-	m_rt_instance = NULL;
-    }
 
-    write_comb_internal(m_db_instance, m_directory, m_comb_internal);
     m_rt_instance = rt_new_rti(&m_db_instance);
 
     if (!m_rt_instance)
@@ -137,7 +135,7 @@ TreeUpdater::get_rt_instance() const
     }
 
     rt_prep(m_rt_instance);
-
+    m_is_modified = false;
     return *m_rt_instance;
 }
 
