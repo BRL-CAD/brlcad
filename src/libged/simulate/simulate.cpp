@@ -146,7 +146,12 @@ get_volume(const db_i &db_instance, const std::string &name)
 	&internal);
 
     fastf_t volume;
-    internal.idb_meth->ft_volume(&volume, &internal);
+
+    if (internal.idb_meth->ft_volume)
+	internal.idb_meth->ft_volume(&volume, &internal);
+    else
+	volume = 1.0; // FIXME
+
     return volume;
 }
 
