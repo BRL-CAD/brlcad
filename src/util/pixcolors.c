@@ -77,15 +77,15 @@ doit(FILE *fd)
 	    b = pixbuf[i+2];
 	    if (r < 0)
 		r = 0;
+	    else if (r > UCHAR_MAX)
+		r = UCHAR_MAX;
 	    if (g < 0)
 		g = 0;
+	    else if (g > UCHAR_MAX)
+		g = UCHAR_MAX;
 	    if (b < 0)
 		b = 0;
-	    if (r > UCHAR_MAX)
-		r = UCHAR_MAX;
-	    if (g > UCHAR_MAX)
-		g = UCHAR_MAX;
-	    if (b > UCHAR_MAX)
+	    else if (b > UCHAR_MAX)
 		b = UCHAR_MAX;
 	    pixel = r +	(g << 8) + (b << 16);
 
