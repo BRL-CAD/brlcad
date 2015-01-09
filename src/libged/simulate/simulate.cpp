@@ -30,79 +30,19 @@
 #ifdef HAVE_BULLET
 
 
-#include "physics_world.hpp"
+#include "world_object.hpp"
 #include "rt_instance.hpp"
-
 
 #include <cmath>
 #include <map>
 #include <sstream>
 #include <stdexcept>
 
-
 #include "ged.h"
 
 
 namespace
 {
-
-
-class MatrixMotionState : public btMotionState
-{
-public:
-    MatrixMotionState(mat_t matrix);
-
-    virtual void getWorldTransform(btTransform &dest) const;
-    virtual void setWorldTransform(const btTransform &transform);
-
-
-private:
-    MatrixMotionState(const MatrixMotionState &source);
-    MatrixMotionState &operator=(const MatrixMotionState &source);
-
-    const matp_t m_matrix;
-};
-
-
-MatrixMotionState::MatrixMotionState(mat_t matrix) :
-    m_matrix(matrix)
-{}
-
-
-void
-MatrixMotionState::getWorldTransform(btTransform &dest) const
-{
-    /*
-    // rotation
-    // matrix decomposition
-
-    // translation
-    btVector3 translation(0.0, 0.0, 0.0);
-    MAT_DELTAS_GET(translation, m_matrix);
-    dest.setOrigin(translation);
-    */
-
-    btScalar bt_matrix[16];
-    MAT_TRANSPOSE(bt_matrix, m_matrix);
-    dest.setFromOpenGLMatrix(bt_matrix);
-}
-
-
-void
-MatrixMotionState::setWorldTransform(const btTransform &transform)
-{
-    /*
-    // rotation
-    // matrix decomposition
-
-    // translation
-    MAT_DELTAS_VEC(m_matrix, transform.getOrigin());
-    */
-
-    btScalar bt_matrix[16];
-    transform.getOpenGLMatrix(bt_matrix);
-    MAT_TRANSPOSE(m_matrix, bt_matrix);
-}
 
 
 template <typename T, void (*Destructor)(T *)>
@@ -142,12 +82,12 @@ Target lexical_cast(Source arg,
 
 
 HIDDEN std::map<std::string, std::string>
-get_attributes(const db_i &dbi, const std::string &name)
+get_attributes(const db_i &db_instance, const std::string &name)
 {
     const char * const prefix = "simulate::";
     const std::size_t prefix_len = strlen(prefix);
 
-    directory *dir = db_lookup(&dbi, name.c_str(), false);
+    directory *dir = db_lookup(&db_instance, name.c_str(), false);
 
     if (!dir)
 	throw std::invalid_argument("failed to lookup '" + name + "'");
@@ -155,7 +95,7 @@ get_attributes(const db_i &dbi, const std::string &name)
     bu_attribute_value_set obj_avs;
     bu_avs_init_empty(&obj_avs);
 
-    if (db5_get_attributes(&dbi, &obj_avs, dir) < 0)
+    if (db5_get_attributes(&db_instance, &obj_avs, dir) < 0)
 	throw std::runtime_error("db5_get_attributes() failed");
 
     AutoDestroyer<bu_attribute_value_set, bu_avs_free> obj_avs_autodestroy(
@@ -172,16 +112,17 @@ get_attributes(const db_i &dbi, const std::string &name)
 
 
 HIDDEN void
-get_bounding_box_dimensions(db_i &dbi, const std::string &name, vect_t &dest)
+get_bounding_box_dimensions(db_i &db_instance, const std::string &name,
+			    vect_t &dest)
 {
-    directory *dir = db_lookup(&dbi, name.c_str(), false);
+    directory *dir = db_lookup(&db_instance, name.c_str(), false);
 
     if (!dir)
 	throw std::invalid_argument("failed to lookup '" + name + "'");
 
     point_t bb_min, bb_max;
 
-    if (rt_bound_internal(&dbi, dir, bb_min, bb_max))
+    if (rt_bound_internal(&db_instance, dir, bb_min, bb_max))
 	throw std::runtime_error("failed to get bounding box");
 
     VSUB2(dest, bb_max, bb_min);
@@ -189,16 +130,16 @@ get_bounding_box_dimensions(db_i &dbi, const std::string &name, vect_t &dest)
 
 
 HIDDEN fastf_t
-get_volume(const db_i &dbi, const std::string &name)
+get_volume(const db_i &db_instance, const std::string &name)
 {
-    directory *dir = db_lookup(&dbi, name.c_str(), false);
+    directory *dir = db_lookup(&db_instance, name.c_str(), false);
 
     if (!dir)
 	throw std::invalid_argument("failed to lookup '" + name + "'");
 
     rt_db_internal internal;
 
-    if (rt_db_get_internal(&internal, dir, &dbi, bn_mat_identity,
+    if (rt_db_get_internal(&internal, dir, &db_instance, bn_mat_identity,
 			   &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_get_internal() failed");
 
@@ -230,65 +171,71 @@ deserialize_vector(vect_t &dest, const std::string &source)
 }
 
 
+HIDDEN simulate::WorldObject *
+build_world_object(db_i &db_instance, const std::string &name, matp_t &matrix,
+		   simulate::TreeUpdater &tree_updater)
+{
+    if (!matrix) {
+	matrix = static_cast<fastf_t *>(bu_malloc(sizeof(mat_t), "tl_mat"));
+	MAT_IDN(matrix);
+    }
+
+    const fastf_t density = 1.0;
+    fastf_t mass = density * get_volume(db_instance, name);
+    vect_t linear_velocity = {0, 0, 0}, angular_velocity = {0, 0, 0};
+
+    std::map<std::string, std::string> attributes = get_attributes(db_instance,
+	    name);
+
+    for (std::map<std::string, std::string>::const_iterator it = attributes.begin();
+	 it != attributes.end(); ++it) {
+	if (it->first == "mass") {
+	    mass = lexical_cast<fastf_t>(it->second, "invalid attribute 'mass'");
+
+	    if (mass < 0.0) throw std::invalid_argument("invalid attribute 'mass'");
+
+	} else if (it->first == "linear_velocity") {
+	    deserialize_vector(linear_velocity, it->second);
+	} else if (it->first == "angular_velocity") {
+	    deserialize_vector(angular_velocity, it->second);
+	} else
+	    throw std::invalid_argument("invalid attribute '" + it->first + "' on object '"
+					+ name  + "'");
+    }
+
+    vect_t bounding_box_dimensions;
+    get_bounding_box_dimensions(db_instance, name, bounding_box_dimensions);
+
+    btVector3 bt_bounding_box_dimensions, bt_linear_velocity, bt_angular_velocity;
+    VMOVE(bt_bounding_box_dimensions, bounding_box_dimensions);
+    VMOVE(bt_linear_velocity, linear_velocity);
+    VMOVE(bt_angular_velocity, angular_velocity);
+
+    // apply matrix scaling
+    bt_bounding_box_dimensions[X] *= 1.0 / matrix[MSX];
+    bt_bounding_box_dimensions[Y] *= 1.0 / matrix[MSY];
+    bt_bounding_box_dimensions[Z] *= 1.0 / matrix[MSZ];
+    bt_bounding_box_dimensions *= 1.0 / matrix[MSA];
+
+    return new simulate::WorldObject(matrix, tree_updater, mass,
+				     bt_bounding_box_dimensions, bt_linear_velocity, bt_angular_velocity);
+}
+
+
 HIDDEN void
-world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
+get_tree_objects(db_i &db_instance, tree &vtree,
+		 simulate::TreeUpdater &tree_updater,
+		 std::vector<simulate::WorldObject *> &objects)
 {
     switch (vtree.tr_op) {
-	case OP_DB_LEAF: {
-	    if (!vtree.tr_l.tl_mat) {
-		vtree.tr_l.tl_mat = static_cast<fastf_t *>(bu_malloc(sizeof(mat_t), "tl_mat"));
-		MAT_IDN(vtree.tr_l.tl_mat);
-	    }
-
-	    const fastf_t density = 1.0;
-	    fastf_t mass = density * get_volume(dbi, vtree.tr_l.tl_name);
-	    vect_t linear_velocity = {0, 0, 0}, angular_velocity = {0, 0, 0};
-
-	    std::map<std::string, std::string> attributes = get_attributes(dbi,
-		    vtree.tr_l.tl_name);
-
-	    for (std::map<std::string, std::string>::const_iterator it = attributes.begin();
-		 it != attributes.end(); ++it) {
-		if (it->first == "mass") {
-		    mass = lexical_cast<fastf_t>(it->second, "invalid attribute 'mass'");
-
-		    if (mass < 0.0) throw std::invalid_argument("invalid attribute 'mass'");
-
-		} else if (it->first == "linear_velocity") {
-		    deserialize_vector(linear_velocity, it->second);
-		} else if (it->first == "angular_velocity") {
-		    deserialize_vector(angular_velocity, it->second);
-		} else
-		    throw std::invalid_argument("invalid attribute '" + it->first + "' on object '"
-						+ vtree.tr_l.tl_name  + "'");
-	    }
-
-	    {
-		vect_t bounding_box_dimensions;
-		get_bounding_box_dimensions(dbi, vtree.tr_l.tl_name, bounding_box_dimensions);
-
-		btVector3 bt_bounding_box_dimensions, bt_linear_velocity, bt_angular_velocity;
-		VMOVE(bt_bounding_box_dimensions, bounding_box_dimensions);
-		VMOVE(bt_linear_velocity, linear_velocity);
-		VMOVE(bt_angular_velocity, angular_velocity);
-
-		// apply matrix scaling
-		bt_bounding_box_dimensions[X] *= 1.0 / vtree.tr_l.tl_mat[MSX];
-		bt_bounding_box_dimensions[Y] *= 1.0 / vtree.tr_l.tl_mat[MSY];
-		bt_bounding_box_dimensions[Z] *= 1.0 / vtree.tr_l.tl_mat[MSZ];
-		bt_bounding_box_dimensions *= 1.0 / vtree.tr_l.tl_mat[MSA];
-
-		world.add_object(
-		    std::auto_ptr<btMotionState>(new MatrixMotionState(vtree.tr_l.tl_mat)),
-		    mass, bt_bounding_box_dimensions, bt_linear_velocity, bt_angular_velocity);
-	    }
-
+	case OP_DB_LEAF:
+	    objects.push_back(build_world_object(db_instance, vtree.tr_l.tl_name,
+						 vtree.tr_l.tl_mat, tree_updater));
 	    break;
-	}
 
 	case OP_UNION:
-	    world_add_tree(world, *vtree.tr_b.tb_left, dbi);
-	    world_add_tree(world, *vtree.tr_b.tb_right, dbi);
+	    get_tree_objects(db_instance, *vtree.tr_b.tb_left, tree_updater, objects);
+	    get_tree_objects(db_instance, *vtree.tr_b.tb_right, tree_updater, objects);
 	    break;
 
 	default:
@@ -298,37 +245,47 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 
 
 HIDDEN void
-do_simulate(db_i &dbi, directory &scene_directory, fastf_t seconds)
+do_simulate(db_i &db_instance, directory &scene_directory, fastf_t seconds)
 {
     rt_db_internal internal;
 
-    if (rt_db_get_internal(&internal, &scene_directory, &dbi, bn_mat_identity,
-			   &rt_uniresource) < 0)
+    if (rt_db_get_internal(&internal, &scene_directory, &db_instance,
+			   bn_mat_identity, &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_get_internal() failed");
 
     AutoDestroyer<rt_db_internal, rt_db_free_internal> internal_autodestroy(
 	&internal);
 
     {
-	AutoDestroyer<rt_i, rt_free_rti> rt_instance(rt_new_rti(&dbi));
-
-	if (!rt_instance.ptr) throw std::runtime_error("rt_new_rti() failed");
-
-	if (rt_gettree(rt_instance.ptr, scene_directory.d_namep) < 0)
-	    throw std::runtime_error("rt_gettree() failed");
-
-	rt_prep(rt_instance.ptr);
-	rt_instance_data::rt_instance = rt_instance.ptr;
-
 	simulate::PhysicsWorld world;
 	tree * const vtree = static_cast<rt_comb_internal *>(internal.idb_ptr)->tree;
 
-	if (vtree) world_add_tree(world, *vtree, dbi);
+	simulate::TreeUpdater tree_updater(db_instance, scene_directory, internal);
+	std::vector<simulate::WorldObject *> objects;
 
-	world.step(seconds);
+	try {
+	    if (vtree) get_tree_objects(db_instance, *vtree, tree_updater, objects);
+
+	    for (std::vector<simulate::WorldObject *>::iterator it = objects.begin();
+		 it != objects.end(); ++it)
+		(*it)->add_to_world(world);
+
+	    world.step(seconds);
+	} catch (...) {
+	    for (std::vector<simulate::WorldObject *>::iterator it = objects.begin();
+		 it != objects.end(); ++it)
+		delete *it;
+
+	    throw;
+	}
+
+	for (std::vector<simulate::WorldObject *>::iterator it = objects.begin();
+	     it != objects.end(); ++it)
+	    delete *it;
     }
 
-    if (rt_db_put_internal(&scene_directory, &dbi, &internal, &rt_uniresource) < 0)
+    if (rt_db_put_internal(&scene_directory, &db_instance, &internal,
+			   &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_put_internal() failed");
 }
 
@@ -361,12 +318,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 
 	if (seconds < 0.0) throw std::runtime_error("invalid value for 'seconds'");
 
-	// We must reinitialize a simulate::PhysicsWorld after every ray trace.
-	// This is because rt_db_put_internal() is required for librt to
-	// receive the transforms.
-	// TODO: preserve velocity; reinitialize after every ray trace
-	for (int i = 0; i < std::ceil(10.0 * seconds); ++i)
-	    do_simulate(*gedp->ged_wdbp->dbip, *dir, 0.1);
+	do_simulate(*gedp->ged_wdbp->dbip, *dir, seconds);
     } catch (const std::logic_error &e) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], e.what());
 	return GED_ERROR;

@@ -30,9 +30,7 @@
 #include "common.h"
 
 #include "collision.hpp"
-#include "rt_instance.hpp"
-
-#include "raytrace.h"
+#include "world_object.hpp"
 
 
 namespace
@@ -134,8 +132,10 @@ calculate_contact_points(btManifoldResult &result, const btRigidBody &rb_a,
     // shoot the rays
     application app;
     {
+	const simulate::MatrixMotionState &rb_a_motion_state =
+	    *static_cast<const simulate::MatrixMotionState *>(rb_a.getMotionState());
 	RT_APPLICATION_INIT(&app);
-	app.a_rt_i = rt_instance_data::rt_instance;
+	app.a_rt_i = &rb_a_motion_state.get_rt_instance();
 	app.a_multioverlap = on_multioverlap;
 	app.a_logoverlap = rt_silent_logoverlap;
 	app.a_uptr = &result;

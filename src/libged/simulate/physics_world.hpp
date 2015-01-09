@@ -28,9 +28,6 @@
 #define PHYSICS_WORLD_H
 
 
-#include <memory>
-#include <vector>
-
 #include <btBulletDynamicsCommon.h>
 
 #include "vmath.h"
@@ -44,12 +41,9 @@ class PhysicsWorld
 {
 public:
     PhysicsWorld();
-    ~PhysicsWorld();
 
     void step(btScalar seconds);
-    void add_object(std::auto_ptr<btMotionState> motion_state, btScalar mass,
-		    const btVector3 &bounding_box_dimensions, const btVector3 &linear_velocity,
-		    const btVector3 &angular_velocity);
+    void add_rigid_body(btRigidBody &rigid_body);
 
 
 private:
@@ -61,8 +55,6 @@ private:
     btCollisionDispatcher m_collision_dispatcher;
     btSequentialImpulseConstraintSolver m_constraint_solver;
     btDiscreteDynamicsWorld m_world;
-
-    std::vector<class WorldObject *> m_objects;
 };
 
 
