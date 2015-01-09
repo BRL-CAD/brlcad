@@ -253,7 +253,6 @@ set(LIBGED_SOURCES
   simulate/collision.cpp
   simulate/physics_world.cpp
   simulate/rt_instance.cpp
-  simulate/simrt.c
   simulate/simulate.cpp
   simulate/world_object.cpp
   size.c
@@ -340,7 +339,6 @@ set(ged_ignore_files
   simulate/collision.hpp
   simulate/physics_world.hpp
   simulate/rt_instance.hpp
-  simulate/simrt.h
   simulate/world_object.hpp
   osg.cpp
   )
