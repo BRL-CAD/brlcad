@@ -189,6 +189,10 @@ package provide Archer 1.0
 	variable wizardXmlCallbacks ""
 	variable mBotFixAllFlag 0
 	variable mNumSelectedBotPts 0
+	variable mOverrideBinding false
+	variable mSaveDefaultBindingMode 0
+	variable mControlDown false
+	variable mShiftDown false
 
 	# plugin list
 	variable mWizardClass ""
@@ -233,6 +237,8 @@ package provide Archer 1.0
 	method doarcherHelp {}
 	method handleMap {}
 	method handleBindingModeChange {_name1 _name2 _op}
+	method overrideBindingMode {_mode}
+	method updateOverrideBindingMode {_keysym}
 	method handleDisplayEscape {_dm}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
@@ -2037,20 +2043,19 @@ package provide Archer 1.0
 
     switch -- $mDefaultBindingMode \
 	$OBJECT_ROTATE_MODE {
-	    beginObjRotate
+	    $itk_component(primaryToolbar) component edit_rotate invoke
 	} \
 	$OBJECT_TRANSLATE_MODE {
-	    beginObjTranslate
+	    $itk_component(primaryToolbar) component edit_translate invoke
 	} \
 	$OBJECT_SCALE_MODE {
-	    beginObjScale
+	    $itk_component(primaryToolbar) component edit_scale invoke
 	} \
 	$OBJECT_CENTER_MODE {
 	    if {$saved_mode == $OBJECT_TRANSLATE_MODE} {
-		set mDefaultBindingMode $saved_mode
-		beginObjTranslate
+		$itk_component(primaryToolbar) component edit_translate invoke
 	    } else {
-		beginObjCenter
+		$itk_component(primaryToolbar) component edit_center invoke
 	    }
 	}
 }
@@ -2248,6 +2253,45 @@ package provide Archer 1.0
 		    "[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(menubar) component display-menu] %X %Y]; break"
 	    }
 	}
+    }
+
+    # only append bindings once
+    if {[string match "*BindingMode*" [bind $itk_interior <KeyRelease-Control_L>]] == 0} {
+	bind $itk_interior <Control_L> \
+	    +[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
+
+	bind $itk_interior <Control_R> \
+	    +[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
+
+	bind $itk_interior <Shift_L> \
+	    +[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
+
+	bind $itk_interior <Shift_R> \
+	    +[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
+
+	bind $itk_interior <Control-Shift_L> \
+	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+
+	bind $itk_interior <Control-Shift_R> \
+	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+
+	bind $itk_interior <Shift-Control_L> \
+	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+
+	bind $itk_interior <Shift-Control_R> \
+	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+
+	bind $itk_interior <KeyRelease-Control_L> \
+	    +[::itcl::code $this updateOverrideBindingMode %K]
+
+	bind $itk_interior <KeyRelease-Control_R> \
+	    +[::itcl::code $this updateOverrideBindingMode %K]
+
+	bind $itk_interior <KeyRelease-Shift_L> \
+	    +[::itcl::code $this updateOverrideBindingMode %K]
+
+	bind $itk_interior <KeyRelease-Shift_R> \
+	    +[::itcl::code $this updateOverrideBindingMode %K]
     }
 
     $itk_component(primaryToolbar) itemconfigure edit_rotate -state normal
@@ -4225,6 +4269,54 @@ proc title_node_handler {node} {
 	default {
 	    $itk_component(ged) configure -cursor "arrow"
 	}
+
+}
+
+::itcl::body Archer::overrideBindingMode {_mode} {
+    if {!$mOverrideBinding} {
+	set mSaveDefaultBindingMode $mDefaultBindingMode
+	set mOverrideBinding true
+    }
+    setDefaultBindingMode $_mode
+
+    switch $_mode \
+	$VIEW_ROTATE_MODE {
+	    set mControlDown true
+	} \
+	$VIEW_TRANSLATE_MODE {
+	    set mShiftDown true
+	} \
+	$VIEW_SCALE_MODE {
+	    set mControlDown true
+	    set mShiftDown true
+	}
+}
+
+::itcl::body Archer::updateOverrideBindingMode {_keysym} {
+    switch $_keysym {
+	"Control_L" -
+	"Control_R" {
+	    set mControlDown false
+	}
+	"Shift_L" -
+	"Shift_R" {
+	    set mShiftDown false
+	}
+    }
+    if {$mOverrideBinding} {
+	if {$mControlDown} {
+	    if {$mShiftDown} {
+		setDefaultBindingMode $VIEW_SCALE_MODE
+	    } else {
+		setDefaultBindingMode $VIEW_ROTATE_MODE
+	    }
+	} elseif {$mShiftDown} {
+	    setDefaultBindingMode $VIEW_TRANSLATE_MODE
+	} else {
+	    setDefaultBindingMode $mSaveDefaultBindingMode
+	    set mOverrideBinding false
+	}
+    }
 }
 
 ::itcl::body Archer::launchDisplayMenuBegin {_dm _m _x _y} {

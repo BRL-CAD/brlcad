@@ -2842,35 +2842,31 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::setDefaultBindingMode {_mode} {
     set mDefaultBindingMode $_mode
 
-    set ret 0
+    set ret 1
     switch -- $mDefaultBindingMode \
-	$VIEW_ROTATE_MODE { \
-		beginViewRotate \
-		set ret 1
+	$VIEW_ROTATE_MODE {
+	    $itk_component(primaryToolbar) component rotate invoke
 	} \
-	$VIEW_TRANSLATE_MODE { \
-		beginViewTranslate \
-		set ret 1
+	$VIEW_TRANSLATE_MODE {
+	    $itk_component(primaryToolbar) component translate invoke
 	} \
-	$VIEW_SCALE_MODE { \
-		beginViewScale \
-		set ret 1
+	$VIEW_SCALE_MODE {
+	    $itk_component(primaryToolbar) component scale invoke
 	} \
-	$VIEW_CENTER_MODE { \
-		initViewCenterMode \
-		set ret 1
+	$VIEW_CENTER_MODE {
+	    $itk_component(primaryToolbar) component center invoke
 	} \
-	$COMP_PICK_MODE { \
-		initCompPick \
-		set ret 1
+	$COMP_PICK_MODE {
+	    $itk_component(primaryToolbar) component cpick invoke
 	} \
-	$COMP_SELECT_MODE { \
-		initCompSelect \
-		set ret 1
+	$COMP_SELECT_MODE {
+	    $itk_component(primaryToolbar) component cselect invoke
 	} \
-	$MEASURE_MODE { \
-		initViewMeasure \
-		set ret 1
+	$MEASURE_MODE {
+	    $itk_component(primaryToolbar) component measure invoke
+	} \
+	default {
+	    set ret 0
 	}
 
     return $ret
