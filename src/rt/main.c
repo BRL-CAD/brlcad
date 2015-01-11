@@ -120,11 +120,11 @@ siginfo_handler(int UNUSED(arg))
 
 
 void
-memory_summary(void)
+memory_summary(long num_free_calls)
 {
     if (rt_verbosity & VERBOSE_STATS)  {
 	long	mdelta = bu_n_malloc - n_malloc;
-	long	fdelta = bu_n_free - n_free;
+	long	fdelta = num_free_calls - n_free;
 	fprintf(stderr,
 		"Additional #malloc=%ld, #free=%ld, #realloc=%ld (%ld retained)\n",
 		mdelta,
@@ -133,7 +133,7 @@ memory_summary(void)
 		mdelta - fdelta);
     }
     n_malloc = bu_n_malloc;
-    n_free = bu_n_free;
+    n_free = num_free_calls;
     n_realloc = bu_n_realloc;
 }
 
@@ -144,6 +144,7 @@ int main(int argc, const char **argv)
     char idbuf[2048] = {0};			/* First ID record info */
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
+    long n_free_calls = 0;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -331,7 +332,7 @@ int main(int argc, const char **argv)
     if (rt_verbosity & VERBOSE_STATS)
 	bu_log("DIRBUILD: %s\n", bu_vls_addr(&times));
     bu_vls_free(&times);
-    memory_summary();
+    memory_summary(n_free_calls);
 
     /* Copy values from command line options into rtip */
     rtip->rti_space_partition = space_partition;
@@ -414,7 +415,7 @@ int main(int argc, const char **argv)
     for (i = 0; i < MAX_PSW; i++) {
 	rt_init_resource(&resource[i], i, rtip);
     }
-    memory_summary();
+    memory_summary(n_free_calls);
 
 #ifdef SIGUSR1
     (void)signal(SIGUSR1, siginfo_handler);
@@ -455,6 +456,7 @@ int main(int argc, const char **argv)
 		fprintf(stderr, "cmd: %s\n", buf);
 	    ret = rt_do_cmd( rtip, buf, rt_cmdtab);
 	    bu_free( buf, "rt_read_cmd command buffer");
+	    n_free_calls++;
 	    if (ret < 0)
 		break;
 	}
