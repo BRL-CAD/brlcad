@@ -129,7 +129,7 @@ get_bounding_box_dimensions(db_i &db_instance, const std::string &name,
 
 
 HIDDEN fastf_t
-get_volume(const db_i &db_instance, const std::string &name)
+get_volume(db_i &db_instance, const std::string &name)
 {
     directory *dir = db_lookup(&db_instance, name.c_str(), LOOKUP_QUIET);
 
@@ -145,14 +145,18 @@ get_volume(const db_i &db_instance, const std::string &name)
     AutoDestroyer<rt_db_internal, rt_db_free_internal> internal_autodestroy(
 	&internal);
 
-    fastf_t volume;
-
-    if (internal.idb_meth->ft_volume)
+    if (internal.idb_meth->ft_volume) {
+	fastf_t volume;
 	internal.idb_meth->ft_volume(&volume, &internal);
-    else
-	volume = 1.0; // FIXME
+	return volume;
+    }
 
-    return volume;
+    // approximate volume using the bounding box
+    // TODO: true volumes of regions
+
+    vect_t bounding_box_dims;
+    get_bounding_box_dimensions(db_instance, name, bounding_box_dims);
+    return bounding_box_dims[X] * bounding_box_dims[Y] * bounding_box_dims[Z];
 }
 
 
@@ -207,22 +211,22 @@ build_world_object(db_i &db_instance, const std::string &name, matp_t &matrix,
 					+ name  + "'");
     }
 
-    vect_t bounding_box_dimensions;
-    get_bounding_box_dimensions(db_instance, name, bounding_box_dimensions);
+    vect_t bounding_box_dims;
+    get_bounding_box_dimensions(db_instance, name, bounding_box_dims);
 
-    btVector3 bt_bounding_box_dimensions, bt_linear_velocity, bt_angular_velocity;
-    VMOVE(bt_bounding_box_dimensions, bounding_box_dimensions);
+    btVector3 bt_bounding_box_dims, bt_linear_velocity, bt_angular_velocity;
+    VMOVE(bt_bounding_box_dims, bounding_box_dims);
     VMOVE(bt_linear_velocity, linear_velocity);
     VMOVE(bt_angular_velocity, angular_velocity);
 
     // apply matrix scaling
-    bt_bounding_box_dimensions[X] *= 1.0 / matrix[MSX];
-    bt_bounding_box_dimensions[Y] *= 1.0 / matrix[MSY];
-    bt_bounding_box_dimensions[Z] *= 1.0 / matrix[MSZ];
-    bt_bounding_box_dimensions *= 1.0 / matrix[MSA];
+    bt_bounding_box_dims[X] *= 1.0 / matrix[MSX];
+    bt_bounding_box_dims[Y] *= 1.0 / matrix[MSY];
+    bt_bounding_box_dims[Z] *= 1.0 / matrix[MSZ];
+    bt_bounding_box_dims *= 1.0 / matrix[MSA];
 
     return new simulate::WorldObject(matrix, tree_updater, mass,
-				     bt_bounding_box_dimensions, bt_linear_velocity, bt_angular_velocity);
+				     bt_bounding_box_dims, bt_linear_velocity, bt_angular_velocity);
 }
 
 
