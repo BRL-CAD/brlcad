@@ -110,25 +110,33 @@ get_attributes(const db_i &db_instance, const std::string &name)
 }
 
 
-HIDDEN void
-get_bounding_box_dimensions(db_i &db_instance, const std::string &name,
-			    vect_t &dest)
+HIDDEN std::pair<btVector3, btVector3>
+get_bounding_box(db_i &db_instance, const std::string &name)
 {
     directory *dir = db_lookup(&db_instance, name.c_str(), LOOKUP_QUIET);
 
     if (!dir)
 	throw std::invalid_argument("failed to lookup '" + name + "'");
 
-    point_t bb_min, bb_max;
+    btVector3 bounding_box_min, bounding_box_max;
+    {
+	point_t bb_min, bb_max;
 
-    if (rt_bound_internal(&db_instance, dir, bb_min, bb_max))
-	throw std::runtime_error("failed to get bounding box");
+	if (rt_bound_internal(&db_instance, dir, bb_min, bb_max))
+	    throw std::runtime_error("failed to get bounding box");
 
-    VSUB2(dest, bb_max, bb_min);
+	VMOVE(bounding_box_min, bb_min);
+	VMOVE(bounding_box_max, bb_max);
+    }
+
+    btVector3 bounding_box_dims = bounding_box_max - bounding_box_min;
+    btVector3 bounding_box_pos = bounding_box_dims / 2.0 + bounding_box_min;
+
+    return std::make_pair(bounding_box_dims, bounding_box_pos);
 }
 
 
-HIDDEN fastf_t
+HIDDEN btScalar
 get_volume(db_i &db_instance, const std::string &name)
 {
     directory *dir = db_lookup(&db_instance, name.c_str(), LOOKUP_QUIET);
@@ -152,18 +160,17 @@ get_volume(db_i &db_instance, const std::string &name)
     }
 
     // approximate volume using the bounding box
-    // TODO: true volumes of regions
-
-    vect_t bounding_box_dims;
-    get_bounding_box_dimensions(db_instance, name, bounding_box_dims);
-    return bounding_box_dims[X] * bounding_box_dims[Y] * bounding_box_dims[Z];
+    btVector3 bounding_box_dims = get_bounding_box(db_instance, name).first;
+    return bounding_box_dims.getX() * bounding_box_dims.getY() *
+	   bounding_box_dims.getZ();
 }
 
 
-HIDDEN void
-deserialize_vector(vect_t &dest, const std::string &source)
+HIDDEN btVector3
+deserialize_vector(const std::string &source)
 {
     std::istringstream stream(source);
+    btVector3 result;
 
     if ((stream >> std::ws).get() != '<')
 	throw std::invalid_argument("invalid vector");
@@ -171,11 +178,13 @@ deserialize_vector(vect_t &dest, const std::string &source)
     for (int i = 0; i < 3; ++i) {
 	std::string value;
 	std::getline(stream, value, i != 2 ? ',' : '>');
-	dest[i] = lexical_cast<fastf_t>(value, "invalid vector");
+	result[i] = lexical_cast<btScalar>(value, "invalid vector");
     }
 
     if (stream.unget().get() != '>' || !(stream >> std::ws).eof())
 	throw std::invalid_argument("invalid vector");
+
+    return result;
 }
 
 
@@ -184,13 +193,13 @@ build_world_object(db_i &db_instance, const std::string &name, matp_t &matrix,
 		   simulate::TreeUpdater &tree_updater)
 {
     if (!matrix) {
-	matrix = static_cast<fastf_t *>(bu_malloc(sizeof(mat_t), "tl_mat"));
+	matrix = static_cast<matp_t>(bu_malloc(sizeof(mat_t), "tl_mat"));
 	MAT_IDN(matrix);
     }
 
-    const fastf_t density = 1.0;
-    fastf_t mass = density * get_volume(db_instance, name);
-    vect_t linear_velocity = {0, 0, 0}, angular_velocity = {0, 0, 0};
+    const btScalar density = 1.0;
+    btScalar mass = density * get_volume(db_instance, name);
+    btVector3 linear_velocity(0.0, 0.0, 0.0), angular_velocity(0.0, 0.0, 0.0);
 
     std::map<std::string, std::string> attributes = get_attributes(db_instance,
 	    name);
@@ -198,35 +207,30 @@ build_world_object(db_i &db_instance, const std::string &name, matp_t &matrix,
     for (std::map<std::string, std::string>::const_iterator it = attributes.begin();
 	 it != attributes.end(); ++it) {
 	if (it->first == "mass") {
-	    mass = lexical_cast<fastf_t>(it->second, "invalid attribute 'mass'");
+	    mass = lexical_cast<btScalar>(it->second, "invalid attribute 'mass'");
 
 	    if (mass < 0.0) throw std::invalid_argument("invalid attribute 'mass'");
 
 	} else if (it->first == "linear_velocity") {
-	    deserialize_vector(linear_velocity, it->second);
+	    linear_velocity = deserialize_vector(it->second);
 	} else if (it->first == "angular_velocity") {
-	    deserialize_vector(angular_velocity, it->second);
+	    angular_velocity = deserialize_vector(it->second);
 	} else
 	    throw std::invalid_argument("invalid attribute '" + it->first + "' on object '"
 					+ name  + "'");
     }
 
-    vect_t bounding_box_dims;
-    get_bounding_box_dimensions(db_instance, name, bounding_box_dims);
-
-    btVector3 bt_bounding_box_dims, bt_linear_velocity, bt_angular_velocity;
-    VMOVE(bt_bounding_box_dims, bounding_box_dims);
-    VMOVE(bt_linear_velocity, linear_velocity);
-    VMOVE(bt_angular_velocity, angular_velocity);
+    std::pair<btVector3, btVector3> bounding_box = get_bounding_box(db_instance,
+	    name);
 
     // apply matrix scaling
-    bt_bounding_box_dims[X] *= 1.0 / matrix[MSX];
-    bt_bounding_box_dims[Y] *= 1.0 / matrix[MSY];
-    bt_bounding_box_dims[Z] *= 1.0 / matrix[MSZ];
-    bt_bounding_box_dims *= 1.0 / matrix[MSA];
+    bounding_box.first[X] *= 1.0 / matrix[MSX];
+    bounding_box.first[Y] *= 1.0 / matrix[MSY];
+    bounding_box.first[Z] *= 1.0 / matrix[MSZ];
+    bounding_box.first *= 1.0 / matrix[MSA];
 
-    return new simulate::WorldObject(matrix, tree_updater, mass,
-				     bt_bounding_box_dims, bt_linear_velocity, bt_angular_velocity);
+    return new simulate::WorldObject(matrix, bounding_box.second, tree_updater,
+				     mass, bounding_box.first, linear_velocity, angular_velocity);
 }
 
 
@@ -253,7 +257,7 @@ get_tree_objects(db_i &db_instance, tree &vtree,
 
 
 HIDDEN void
-do_simulate(db_i &db_instance, directory &scene_directory, fastf_t seconds)
+do_simulate(db_i &db_instance, directory &scene_directory, btScalar seconds)
 {
     rt_db_internal internal;
 
@@ -317,7 +321,8 @@ ged_simulate(ged *gedp, int argc, const char **argv)
     }
 
     try {
-	fastf_t seconds = lexical_cast<fastf_t>(argv[2], "invalid value for 'seconds'");
+	btScalar seconds = lexical_cast<btScalar>(argv[2],
+			   "invalid value for 'seconds'");
 
 	if (seconds < 0.0) throw std::runtime_error("invalid value for 'seconds'");
 

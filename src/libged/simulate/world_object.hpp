@@ -38,7 +38,8 @@ namespace simulate
 class MatrixMotionState : public btMotionState
 {
 public:
-    MatrixMotionState(mat_t matrix, TreeUpdater &tree_updater);
+    MatrixMotionState(mat_t matrix, const btVector3 &bounding_box_center,
+		      TreeUpdater &tree_updater);
 
     virtual void getWorldTransform(btTransform &dest) const;
     virtual void setWorldTransform(const btTransform &transform);
@@ -51,6 +52,7 @@ private:
     MatrixMotionState &operator=(const MatrixMotionState &source);
 
     const matp_t m_matrix;
+    btVector3 m_bounding_box_center;
     TreeUpdater &m_tree_updater;
 };
 
@@ -58,7 +60,8 @@ private:
 class WorldObject
 {
 public:
-    WorldObject(mat_t matrix, TreeUpdater &tree_updater, btScalar mass,
+    WorldObject(mat_t matrix, const btVector3 &bounding_box_center,
+		TreeUpdater &tree_updater, btScalar mass,
 		const btVector3 &bounding_box_dimensions, const btVector3 &linear_velocity,
 		const btVector3 &angular_velocity);
 

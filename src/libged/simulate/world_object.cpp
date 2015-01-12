@@ -56,8 +56,10 @@ namespace simulate
 {
 
 
-MatrixMotionState::MatrixMotionState(mat_t matrix, TreeUpdater &tree_updater) :
+MatrixMotionState::MatrixMotionState(mat_t matrix,
+				     const btVector3 &bounding_box_center, TreeUpdater &tree_updater) :
     m_matrix(matrix),
+    m_bounding_box_center(bounding_box_center),
     m_tree_updater(tree_updater)
 {}
 
@@ -77,6 +79,7 @@ MatrixMotionState::getWorldTransform(btTransform &dest) const
 
     btScalar bt_matrix[16];
     MAT_TRANSPOSE(bt_matrix, m_matrix);
+    VADD2(&bt_matrix[12], &bt_matrix[12], m_bounding_box_center);
     dest.setFromOpenGLMatrix(bt_matrix);
 }
 
@@ -94,6 +97,7 @@ MatrixMotionState::setWorldTransform(const btTransform &transform)
 
     btScalar bt_matrix[16];
     transform.getOpenGLMatrix(bt_matrix);
+    VSUB2(&bt_matrix[12], &bt_matrix[12], m_bounding_box_center);
     MAT_TRANSPOSE(m_matrix, bt_matrix);
 
     m_tree_updater.mark_modified();
@@ -107,11 +111,12 @@ MatrixMotionState::get_rt_instance() const
 }
 
 
-WorldObject::WorldObject(mat_t matrix, TreeUpdater &tree_updater, btScalar mass,
+WorldObject::WorldObject(mat_t matrix, const btVector3 &bounding_box_center,
+			 TreeUpdater &tree_updater, btScalar mass,
 			 const btVector3 &bounding_box_dimensions, const btVector3 &linear_velocity,
 			 const btVector3 &angular_velocity) :
     m_in_world(false),
-    m_motion_state(matrix, tree_updater),
+    m_motion_state(matrix, bounding_box_center, tree_updater),
     m_collision_shape(bounding_box_dimensions / 2.0),
     m_rigid_body(build_construction_info(m_motion_state, m_collision_shape, mass))
 {
