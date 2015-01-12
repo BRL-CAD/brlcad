@@ -2655,6 +2655,21 @@ RT_EXPORT extern int rt_gen_frustum(struct xrays *rays,
 				    const fastf_t a_num,
 				    const fastf_t b_num);
 
+/**
+ * Make a bundle of orthogonal rays around a center ray as a uniform
+ * rectangular grid.  a_vec and b_vec are the directions for up and
+ * right, respectively; their magnitudes determine the extent of the
+ * grid (the grid extends from -a_vec to a_vec in the up-direction and
+ * from -b_vec to b_vec in the right direction).  da and db are the
+ * offset between rays in the a and b directions respectively.
+ */
+RT_EXPORT extern int rt_gen_rect(struct xrays *rays,
+				 const struct xray *center_ray,
+				 const vect_t a_vec,
+				 const vect_t b_vec,
+				 const fastf_t da,
+				 const fastf_t db);
+
 /* Shoot a ray */
 /**
  * Note that the direction vector r_dir must have unit length; this is

@@ -260,6 +260,48 @@ rt_gen_frustum(struct xrays *rays, const struct xray *center_ray,
     return count;
 }
 
+int rt_gen_rect(struct xrays *rays, const struct xray *center_ray,
+		const vect_t a_vec, const vect_t b_vec,
+		const fastf_t da, const fastf_t db)
+{
+    int count;
+
+
+    point_t orig_start;
+    vect_t dir;
+
+    fastf_t x, y;
+
+    fastf_t a_length = MAGNITUDE(a_vec);
+    fastf_t b_length = MAGNITUDE(b_vec);
+
+    vect_t a_dir;
+    vect_t b_dir;
+
+    register struct xrays *xrayp;
+
+    VMOVE(orig_start, center_ray->r_pt);
+    VMOVE(dir, center_ray->r_dir);
+
+    VMOVE(a_dir, a_vec);
+    VUNITIZE(a_dir);
+
+    VMOVE(b_dir, b_vec);
+    VUNITIZE(b_dir);
+
+    for (y = -b_length; y <= b_length; y += db) {
+	for (x = -a_length; x <= a_length; x += da) {
+	    BU_ALLOC(xrayp, struct xrays);
+	    VJOIN2(xrayp->ray.r_pt, orig_start, x, a_dir, y, b_dir);
+	    VMOVE(xrayp->ray.r_dir, dir);
+	    xrayp->ray.index = count++;
+	    xrayp->ray.magic = RT_RAY_MAGIC;
+	    BU_LIST_APPEND(&rays->l, &xrayp->l);
+	}
+    }
+    return count;
+}
+
 /*
  * Local Variables:
  * mode: C
