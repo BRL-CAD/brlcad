@@ -162,14 +162,14 @@ int
 main (int argc, char **argv)
 {
     char *cf_name = 0;	/* name of color file */
-    char *inf_name;	/* name of input stream */
-    char *outf_name = NULL;	/* "   " output "   */
+    char *inf_name;		/* name of input stream */
+    char *outf_name = NULL;	/*  "   "  output  "    */
     unsigned char pixbuf[3];	/* the current input pixel */
     FILE *infp = NULL;	/* input stream */
-    FILE *outfp = NULL;	/* output "   */
+    FILE *outfp = NULL;	/* output  "    */
     int ch;		/* current char in command line */
     int i;		/* dummy loop indices */
-    unsigned char rgb[3];		/* Specified color */
+    unsigned char rgb[3];	/* Specified color */
     int best_color;	/* index of best match to pixbuf */
     int best_diff;	/* error in best match */
     int this_diff;	/* pixel-color_tbl difference */
@@ -237,7 +237,7 @@ main (int argc, char **argv)
     }
 
     /*
-     * Ensure that infp is kosher,
+     * Ensure that infp is kosher
      */
     if (infp == stdin) {
 	if (isatty(fileno(stdin))) {
