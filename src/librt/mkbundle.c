@@ -229,7 +229,6 @@ rt_gen_frustum(struct xrays *rays, const struct xray *center_ray,
     fastf_t a_length = tan(a_theta);
     fastf_t b_length = tan(b_theta);
     fastf_t a_inc = 2 * a_length / (a_num - 1);
-    fastf_t b_inc = 2 * b_length / (b_num - 1);
 
     vect_t a_dir, b_dir;
 
