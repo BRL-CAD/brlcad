@@ -115,7 +115,7 @@ get_volume(db_i &db_instance, directory &dir)
     }
 
     // approximate volume using the bounding box
-    btVector3 bounding_box_dims = get_bounding_box(db_instance, dir).first;
+    btVector3 bounding_box_dims = get_bounding_box(db_instance, dir).second;
     return bounding_box_dims.getX() * bounding_box_dims.getY() *
 	   bounding_box_dims.getZ();
 }
