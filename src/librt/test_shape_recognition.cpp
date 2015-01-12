@@ -588,6 +588,22 @@ find_shape(const object_data *data)
     return -1;
 }
 
+/* generate new face(s) needed to close new obj, add to new obj and inverse of face to old obj */
+void
+close_objs(object_data *new_obj, object_data *old_obj)
+{
+   /* Step 1 - are we dealing with a subtraction?  If so, we have a bit more leeway */
+   /* Step 2 - is the shape "well behaved"?  (irregular cylinder test is an example)  If it is, we
+    * don't need to worry about using leeway from subtractions - otherwise, we do */
+   /* Step 3 - if well behaved, generate new face(s) needed to close up this face and inverses of those faces for the old object. */
+   /* Step 4 - if well behaved, add new faces to brep and update all necessary brep structures */
+   /* Step 5 - if NOT well behaved and is a subtraction, determine necessary shape to encompass
+    * subtraction volume.  Identify faces and curves no longer needed if subtraction is performed,
+    * and simplify brep */
+   /* Step 6 - update object data structures to reflect the new objects */
+}
+
+
 /* When we have a composite object, we must divide that object into
  * simplier objects that we can represent.  The "seed" face is the
  * index of the face with the most complicated surface type in the
@@ -612,6 +628,7 @@ split_object(comb_data *curr_comb, object_data *input)
 	new_obj->faces.insert(seed_face);
 	tmp_obj.faces.erase(seed_face);
 	/* generate new face(s) needed to close new obj, add to new obj and inverse of face to old obj */
+	close_objs(&new_obj, &tmp_obj);
 	/* If new faces cannot be generated, return false */
 	curr_comb->objects.push_back(&(*new_obj));
 	is_obj = find_shape(&tmp_obj);
@@ -630,6 +647,20 @@ split_object(comb_data *curr_comb, object_data *input)
     return true;
 }
 
+void
+build_boolean_tree()
+{
+    /* Start with the toplevel union, and identify the faces that are immediately connected to that toplevel
+     * shape.  Determine whether they are subtractions or unions from the toplevel.  Then, if those faces
+     * lead to lower level trees, use the status of the toplevel face to guide the building of the tree
+     * down the depth.  For example, if a cylinder is subtracted from the toplevel nmg, and a cone is
+     * in turn subtracted from that cylinder (in other words, the cone shape contributes volume to the
+     * final shape) the cone is subtracted from the local comb containing the cylinder and the cone, which
+     * is in turn subtracted from the toplevel nmg.  Likewise, if the cylinder had been unioned to the nmg
+     * to add volume and the cone had also added volume to the final shape (i.e. it's surface normals point
+     * outward from the cone) then the code would be unioned with the cylinder in the local comb, and the
+     * local comb would be unioned into the toplevel. */
+}
 
 void
 print_objects(std::set<object_data> *object_set)
