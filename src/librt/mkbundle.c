@@ -212,6 +212,54 @@ rt_gen_conic(struct xrays *rays, const struct xray *center_ray,
 
 
 
+
+int
+rt_gen_frustum(struct xrays *rays, const struct xray *center_ray,
+	       const vect_t a_vec, const vect_t b_vec,
+	       const fastf_t a_theta, const fastf_t b_theta,
+	       const fastf_t a_num, const fastf_t b_num)
+{
+    int count;
+
+    point_t start;
+    vect_t orig_dir;
+
+    fastf_t x, y;
+
+    fastf_t a_length = tan(a_theta);
+    fastf_t b_length = tan(b_theta);
+    fastf_t a_inc = 2 * a_length / (a_num - 1);
+    fastf_t b_inc = 2 * b_length / (b_num - 1);
+
+    vect_t a_dir, b_dir;
+
+    register struct xrays *xrayp;
+
+    VMOVE(start, center_ray->r_pt);
+    VMOVE(orig_dir, center_ray->r_dir);
+
+    VMOVE(a_dir, a_vec);
+    VUNITIZE(a_dir);
+    VMOVE(b_dir, b_vec);
+    VUNITIZE(b_dir);
+
+    /* This adds BN_TOL_DIST to the *_length variables in the
+     * condition because in some cases, floating-point problems can
+     * make extremely close numbers compare incorrectly. */
+    for (y = -b_length; y <= b_length + BN_TOL_DIST;) {
+	for (x = -a_length; x <= a_length + BN_TOL_DIST; x += a_inc) {
+	    BU_ALLOC(xrayp, struct xrays);
+	    VMOVE(xrayp->ray.r_pt, start);
+	    VJOIN2(xrayp->ray.r_dir, orig_dir, x, a_dir, y, b_dir);
+	    VUNITIZE(xrayp->ray.r_dir);
+	    xrayp->ray.index = count++;
+	    xrayp->ray.magic = RT_RAY_MAGIC;
+	    BU_LIST_APPEND(&rays->l, &xrayp->l);
+	}
+    }
+    return count;
+}
+
 /*
  * Local Variables:
  * mode: C

@@ -2638,6 +2638,23 @@ RT_EXPORT extern int rt_gen_conic(struct xrays *rays,
 				  vect_t up_vector,
 				  int rays_per_radius);
 
+/**
+ * Make a bundle of rays around a main ray in the shape of a frustum
+ * as a uniform rectangular grid.  a_vec and b_vec are the directions
+ * for up and right, respectively; a_theta and b_theta are the angles
+ * of divergence in the directions of a_vec and b_vec respectively.
+ * This is useful for creating a grid of rays for perspective
+ * rendering.
+ */
+RT_EXPORT extern int rt_gen_frustum(struct xrays *rays,
+				    const struct xray *center_ray,
+				    const vect_t a_vec,
+				    const vect_t b_vec,
+				    const fastf_t a_theta,
+				    const fastf_t b_theta,
+				    const fastf_t a_num,
+				    const fastf_t b_num);
+
 /* Shoot a ray */
 /**
  * Note that the direction vector r_dir must have unit length; this is
