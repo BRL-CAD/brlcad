@@ -39,6 +39,7 @@ face_set_key(std::set<int> fset)
 class object_data {
     public:
 	object_data(int face, ON_Brep *in_brep, struct rt_wdb *in_wdbp);
+	object_data(ON_Brep *in_brep, struct rt_wdb *in_wdbp);
 	~object_data();
 
 	bool operator=(const object_data &a);
@@ -113,6 +114,15 @@ object_data::object_data(int face_index, ON_Brep *in_brep, struct rt_wdb *in_wdb
 	}
     }
 }
+
+
+object_data::object_data(ON_Brep *in_brep, struct rt_wdb *in_wdbp)
+    : negative_object(false), parent(NULL)
+{
+    brep = in_brep;
+    wdbp = in_wdbp;
+}
+
 
 object_data::~object_data()
 {
@@ -468,7 +478,7 @@ cylindrical_planar_vertices(const object_data *data, int face_index)
 		ON_Plane test_plane(p1, p2, p3);
 		for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 		    if (!NEAR_ZERO(test_plane.DistanceTo(data->brep->m_V[*v_it].Point()), 0.01)) {
-			//std::cout << "vertex " << *v_it << " too far from plane, not planar\n";
+			//std::cout << "vertex " << *v_it << " too far from plane, not planar: " << test_plane.DistanceTo(data->brep->m_V[*v_it].Point()) << "\n";
 			return 0;
 		    }
 		}
@@ -481,22 +491,6 @@ cylindrical_planar_vertices(const object_data *data, int face_index)
 	}
     }
     return 0;
-}
-
-/* When we have a composite object, we must divide that object into
- * simplier objects that we can represent.  The "seed" face is the
- * index of the face with the most complicated surface type in the
- * input object_data set.  split_object's job is to identify the
- * set of one or more faces, starting with seed_face, that will define
- * the new candidate object_data set and build it up.  "Missing"
- * faces not in the model but needed to define a closed volume will
- * be added to the ON_Brep and to the object_data set.  When a new face
- * is added, all existing 3D edges must be re-used - no duplicates
- * are allowed. The input object will be altered to no longer contain
- * data now exclusive to the new_obj set */
-void
-split_object(comb_data *curr_comb, object_data *input, object_data *new_obj, int seed_face)
-{
 }
 
 int
@@ -563,7 +557,8 @@ highest_order_face(const object_data *data)
 	}
     }
 
-    std::cout << "highest order face: " << hof << "(" << hofo << ")\n";
+    if (!general)
+	std::cout << "highest order face: " << hof << "(" << hofo << ")\n";
 
 #if 0
     std::cout << "\n";
@@ -577,6 +572,62 @@ highest_order_face(const object_data *data)
     std::cout << "\n";
 #endif
     return hof;
+}
+
+int
+find_shape(const object_data *data)
+{
+    if (is_planar(data)) {
+	std::cout << "Object is planar\n";
+	return 1;
+    }
+    if (is_cylinder(data)) {
+	std::cout << "Object is rcc\n";
+	return 2;
+    }
+    return -1;
+}
+
+/* When we have a composite object, we must divide that object into
+ * simplier objects that we can represent.  The "seed" face is the
+ * index of the face with the most complicated surface type in the
+ * input object_data set.  split_object's job is to identify the
+ * set of one or more faces, starting with seed_face, that will define
+ * the new candidate object_data set and build it up.  "Missing"
+ * faces not in the model but needed to define a closed volume will
+ * be added to the ON_Brep and to the object_data set.  When a new face
+ * is added, all existing 3D edges must be re-used - no duplicates
+ * are allowed. The input object will be altered to no longer contain
+ * data now exclusive to the new_obj set */
+bool
+split_object(comb_data *curr_comb, object_data *input)
+{
+    object_data tmp_obj = *input;
+    int is_obj = find_shape(&tmp_obj);
+    while (!is_obj) {
+	int seed_face = highest_order_face(&tmp_obj);
+	/* TODO - for cylinders, check for a mating face with the same axis - want to go for the rcc if we can */
+	object_data *new_obj = new object_data(input->brep, input->wdbp);
+	/* TODO - add seed face to new obj and remove from tmp_obj */
+	new_obj->faces.insert(seed_face);
+	tmp_obj.faces.erase(seed_face);
+	/* generate new face(s) needed to close new obj, add to new obj and inverse of face to old obj */
+	/* If new faces cannot be generated, return false */
+	curr_comb->objects.push_back(&(*new_obj));
+	is_obj = find_shape(&tmp_obj);
+    }
+    object_data *final_obj = new object_data(input->brep, input->wdbp);
+    final_obj->key = tmp_obj.key;
+    final_obj->faces = tmp_obj.faces;
+    final_obj->loops = tmp_obj.loops;
+    final_obj->edges = tmp_obj.edges;
+    final_obj->negative_object = tmp_obj.negative_object;
+    final_obj->fol = tmp_obj.fol;
+    final_obj->fil = tmp_obj.fil;
+    final_obj->brep = tmp_obj.brep;
+    final_obj->wdbp = tmp_obj.wdbp;
+    curr_comb->objects.push_back(final_obj);
+    return true;
 }
 
 
@@ -680,14 +731,7 @@ main(int argc, char *argv[])
     //print_objects(&object_set);
     std::set<object_data>::iterator o_it;
     for (o_it = object_set.begin(); o_it != object_set.end(); o_it++) {
-	if (is_planar(&(*o_it))) {
-	    std::cout << "Object is planar\n";
-	    continue;
-	}
-	if (is_cylinder(&(*o_it))) {
-	    std::cout << "Object is rcc\n";
-	    continue;
-	}
+	(void)find_shape(&(*o_it));
 	highest_order_face(&(*o_it));
 	std::cout << "\n";
     }
