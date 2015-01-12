@@ -64,10 +64,11 @@ class object_data {
 
 	ON_Brep *brep;
 	struct rt_wdb *wdbp;
+	object_data *parent;
 };
 
 object_data::object_data(int face_index, ON_Brep *in_brep, struct rt_wdb *in_wdb)
-    : negative_object(false)
+    : negative_object(false), parent(NULL)
 {
     std::queue<int> local_loops;
     std::set<int> processed_loops;
@@ -116,6 +117,12 @@ object_data::object_data(int face_index, ON_Brep *in_brep, struct rt_wdb *in_wdb
 object_data::~object_data()
 {
 }
+
+class comb_data {
+    public:
+	std::vector<object_data *> objects;
+	std::map<int, int> booleans;
+};
 
 
 struct model *
@@ -476,32 +483,33 @@ cylindrical_planar_vertices(const object_data *data, int face_index)
     return 0;
 }
 
-int
-collect_adjacent_sametype_faces(const object_data *data, int face_index)
+/* When we have a composite object, we must divide that object into
+ * simplier objects that we can represent.  The "seed" face is the
+ * index of the face with the most complicated surface type in the
+ * input object_data set.  split_object's job is to identify the
+ * set of one or more faces, starting with seed_face, that will define
+ * the new candidate object_data set and build it up.  "Missing"
+ * faces not in the model but needed to define a closed volume will
+ * be added to the ON_Brep and to the object_data set.  When a new face
+ * is added, all existing 3D edges must be re-used - no duplicates
+ * are allowed. The input object will be altered to no longer contain
+ * data now exclusive to the new_obj set */
+void
+split_object(comb_data *curr_comb, object_data *input, object_data *new_obj, int seed_face)
 {
-    // TODO - for a given face, use it's edges to assemble a list of other
-    // faces "next to" that face that have the same surface type and
-    // parameters (for example, two cylindrical surfaces with the same
-    // radius and central axis, whose shared edge also shares the same
-    // 3d curve in space...
-    //
-    // Eventually, we should (in principle) be able to build up CSG
-    // primitives for subsets of geometry and assemble a new brep of
-    // just the "hard to digest" parts, but that problem needs much better
-    // defining before we get too carried away.
-    return 0;
 }
 
-void
-composite_components(const object_data *data)
+int
+highest_order_face(const object_data *data)
 {
     int planar = 0;
     int spherical = 0;
     int rcylindrical = 0;
-    int ircylindrical = 0;
     int cone = 0;
     int torus = 0;
     int general = 0;
+    int hof = -1;
+    int hofo = 0;
     std::set<int>::iterator f_it;
     for (f_it = data->faces.begin(); f_it != data->faces.end(); f_it++) {
 	ON_BrepFace *used_face = &(data->brep->m_F[(*f_it)]);
@@ -510,22 +518,43 @@ composite_components(const object_data *data)
 	switch (surface_type) {
 	    case SURFACE_PLANE:
 		planar++;
+		if (hofo < 1) {
+		    hof = (*f_it);
+		    hofo = 1;
+		}
 		break;
 	    case SURFACE_SPHERE:
 		spherical++;
+		if (hofo < 2) {
+		    hof = (*f_it);
+		    hofo = 2;
+		}
 		break;
 	    case SURFACE_CYLINDER:
 		if (!cylindrical_planar_vertices(data, *f_it)) {
-		    ircylindrical++;
+		    std::cout << "irregular cylindrical: " << *f_it << "\n";
+		    general++;
 		} else {
 		    rcylindrical++;
+		    if (hofo < 3) {
+			hof = (*f_it);
+			hofo = 3;
+		    }
 		}
 		break;
 	    case SURFACE_CONE:
 		cone++;
+		if (hofo < 4) {
+		    hof = (*f_it);
+		    hofo = 4;
+		}
 		break;
 	    case SURFACE_TORUS:
 		torus++;
+		if (hofo < 4) {
+		    hof = (*f_it);
+		    hofo = 4;
+		}
 		break;
 	    default:
 		general++;
@@ -534,16 +563,20 @@ composite_components(const object_data *data)
 	}
     }
 
+    std::cout << "highest order face: " << hof << "(" << hofo << ")\n";
+
+#if 0
     std::cout << "\n";
     std::cout << data->key.c_str() << ":\n";
     std::cout << "planar_cnt: " << planar << "\n";
     std::cout << "spherical_cnt: " << spherical << "\n";
     std::cout << "regular cylindrical_cnt: " << rcylindrical << "\n";
-    std::cout << "irregular cylindrical_cnt: " << ircylindrical << "\n";
     std::cout << "cone_cnt: " << cone << "\n";
     std::cout << "torus_cnt: " << torus << "\n";
     std::cout << "general_cnt: " << general << "\n";
     std::cout << "\n";
+#endif
+    return hof;
 }
 
 
@@ -655,7 +688,7 @@ main(int argc, char *argv[])
 	    std::cout << "Object is rcc\n";
 	    continue;
 	}
-	composite_components(&(*o_it));
+	highest_order_face(&(*o_it));
 	std::cout << "\n";
     }
 
