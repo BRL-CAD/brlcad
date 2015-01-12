@@ -448,6 +448,156 @@ is_cylinder(const object_data *data)
     return ret;
 }
 
+
+
+int
+is_cone(const object_data *data)
+{
+    int ret = 1;
+    std::set<int>::iterator f_it;
+    std::set<int> planar_surfaces;
+    std::set<int> conic_surfaces;
+    std::set<int> active_edges;
+    // First, check surfaces.  If a surface is anything other than a plane or cone,
+    // the verdict is no.  If we don't have one planar surface and one or more
+    // conic surfaces, the verdict is no.
+    for (f_it = data->faces.begin(); f_it != data->faces.end(); f_it++) {
+	ON_BrepFace *used_face = &(data->brep->m_F[(*f_it)]);
+	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
+	int surface_type = (int)GetSurfaceType(temp_surface);
+	switch (surface_type) {
+	    case SURFACE_PLANE:
+		planar_surfaces.insert(*f_it);
+		break;
+	    case SURFACE_CONE:
+		conic_surfaces.insert(*f_it);
+		break;
+	    default:
+		return 0;
+		break;
+	}
+    }
+    if (planar_surfaces.size() != 1) return 0;
+    if (conic_surfaces.size() < 1) return 0;
+
+    // Second, check if all conic surfaces share the same base point, apex point and radius.
+    ON_Cone cone;
+    data->brep->m_F[*conic_surfaces.begin()].SurfaceOf()->IsCone(&cone);
+    for (f_it = conic_surfaces.begin(); f_it != conic_surfaces.end(); f_it++) {
+	ON_Cone f_cone;
+	data->brep->m_F[(*f_it)].SurfaceOf()->IsCone(&f_cone);
+	ON_3dPoint fbp = f_cone.BasePoint();
+	ON_3dPoint bp = cone.BasePoint();
+	if (fbp.DistanceTo(bp) > 0.01) return 0;
+	ON_3dPoint fap = f_cone.ApexPoint();
+	ON_3dPoint ap = cone.ApexPoint();
+	if (fap.DistanceTo(ap) > 0.01) return 0;
+	if (!(NEAR_ZERO(cone.radius - f_cone.radius, 0.01))) return 0;
+    }
+
+    // Third, see if the planar face and the planes of any non-linear edges from the conic
+    // faces are coplanar. TODO - do we need to do this?
+    ON_Plane p1;
+    data->brep->m_F[*planar_surfaces.begin()].SurfaceOf()->IsPlanar(&p1);
+
+    // Fourth, check that the conic axis and the planar face are perpendicular.  If they
+    // are not it isn't fatal, but we need to add a subtracting tgc and return a comb
+    // to handle this situation so for now for simplicity require the perpendicular condition
+    if (p1.Normal().IsParallelTo(cone.Axis(), 0.01) == 0) {
+	std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
+	std::cout << "cone axis: " << cone.Axis().x << "," << cone.Axis().y << "," << cone.Axis().z << "\n";
+	return 0;
+    }
+
+    // Fifth, remove degenerate edge sets. A degenerate edge set is defined as two
+    // linear segments having the same two vertices.  (To be sure, we should probably
+    // check curve directions in loops in some fashion...)
+    std::set<int>::iterator e_it;
+    std::set<int> degenerate;
+    for (e_it = data->edges.begin(); e_it != data->edges.end(); e_it++) {
+	if (degenerate.find(*e_it) == degenerate.end()) {
+	    ON_BrepEdge& edge = data->brep->m_E[*e_it];
+	    if (edge.EdgeCurveOf()->IsLinear()) {
+		for (f_it = data->edges.begin(); f_it != data->edges.end(); f_it++) {
+		    ON_BrepEdge& edge2 = data->brep->m_E[*f_it];
+		    if (edge2.EdgeCurveOf()->IsLinear()) {
+			if ((edge.Vertex(0)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(1)->Point() == edge2.Vertex(1)->Point()) ||
+				(edge.Vertex(1)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(0)->Point() == edge2.Vertex(1)->Point()))
+			{
+			    degenerate.insert(*e_it);
+			    degenerate.insert(*f_it);
+			    break;
+			}
+		    }
+		}
+	    }
+	}
+    }
+    active_edges = data->edges;
+    for (e_it = degenerate.begin(); e_it != degenerate.end(); e_it++) {
+	//std::cout << "erasing " << *e_it << "\n";
+	active_edges.erase(*e_it);
+    }
+    //std::cout << "Active Edge set: ";
+#if 0
+    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
+	std::cout << (int)(*e_it);
+	f_it = e_it;
+	f_it++;
+	if (f_it != active_edges.end()) std::cout << ",";
+    }
+    std::cout << "\n";
+#endif
+
+    // Sixth, check for any remaining linear segments.  If we have a real
+    // cone and not just a partial, all the linear segments should have
+    // washed out.
+    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
+	ON_BrepEdge& edge = data->brep->m_E[*e_it];
+	if (edge.EdgeCurveOf()->IsLinear()) return 0;
+    }
+
+    // Seventh, make sure all the curved edges are on the same circle.
+    ON_Circle circle;
+    int circle_set= 0;
+    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
+	ON_BrepEdge& edge = data->brep->m_E[*e_it];
+	ON_Arc arc;
+	if (edge.EdgeCurveOf()->IsArc(NULL, &arc, 0.01)) {
+	    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+	    if (!circle_set) {
+		circle_set = 1;
+		circle = circ;
+	    }
+	    if (!NEAR_ZERO(circ.Center().DistanceTo(circle.Center()), 0.01)){
+		std::cout << "found extra circle - no go\n";
+		return 0;
+	    }
+	}
+    }
+
+    point_t base; // base of cone
+    vect_t hv; // height vector of cone
+    fastf_t height;
+    ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
+
+    base[0] = cone.BasePoint().x;
+    base[1] = cone.BasePoint().y;
+    base[2] = cone.BasePoint().z;
+    hv[0] = hvect.x;
+    hv[1] = hvect.y;
+    hv[2] = hvect.z;
+    height = MAGNITUDE(hv);
+    VUNITIZE(hv);
+    mk_cone(data->wdbp, data->key.c_str(), base, hv, height, cone.radius, 0.000001);
+
+    return ret;
+}
+
+
+
+
+
 int
 cylindrical_planar_vertices(const object_data *data, int face_index)
 {
@@ -585,6 +735,10 @@ find_shape(const object_data *data)
 	std::cout << "Object is rcc\n";
 	return 2;
     }
+    if (is_cone(data)) {
+	std::cout << "Object is cone\n";
+	return 2;
+    }
     return -1;
 }
 
@@ -628,7 +782,7 @@ split_object(comb_data *curr_comb, object_data *input)
 	new_obj->faces.insert(seed_face);
 	tmp_obj.faces.erase(seed_face);
 	/* generate new face(s) needed to close new obj, add to new obj and inverse of face to old obj */
-	close_objs(&new_obj, &tmp_obj);
+	close_objs(new_obj, &tmp_obj);
 	/* If new faces cannot be generated, return false */
 	curr_comb->objects.push_back(&(*new_obj));
 	is_obj = find_shape(&tmp_obj);
@@ -762,8 +916,9 @@ main(int argc, char *argv[])
     //print_objects(&object_set);
     std::set<object_data>::iterator o_it;
     for (o_it = object_set.begin(); o_it != object_set.end(); o_it++) {
-	(void)find_shape(&(*o_it));
-	highest_order_face(&(*o_it));
+	if (find_shape(&(*o_it)) == -1) {
+	    highest_order_face(&(*o_it));
+	}
 	std::cout << "\n";
     }
 
