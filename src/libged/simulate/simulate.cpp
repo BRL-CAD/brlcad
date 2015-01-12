@@ -75,7 +75,6 @@ get_tree_objects(db_i &db_instance, tree &vtree,
 		MAT_IDN(vtree.tr_l.tl_mat);
 	    }
 
-
 	    objects.push_back(simulate::WorldObject::create(db_instance, *dir,
 			      vtree.tr_l.tl_mat, tree_updater));
 	    break;

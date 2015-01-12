@@ -74,8 +74,7 @@ private:
 
     WorldObject(db_i &db_instance, directory &vdirectory, mat_t matrix,
 		TreeUpdater &tree_updater, btVector3 bounding_box_pos,
-		btVector3 bounding_box_dims, btScalar mass, btVector3 linear_velocity,
-		btVector3 angular_velocity);
+		btVector3 bounding_box_dims, btScalar mass);
 
 
     db_i &m_db_instance;

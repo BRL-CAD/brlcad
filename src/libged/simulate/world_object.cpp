@@ -86,12 +86,10 @@ get_bounding_box(db_i &db_instance, directory &dir)
     if (rt_bound_internal(&db_instance, &dir, bb_min, bb_max))
 	throw std::runtime_error("failed to get bounding box");
 
-    btVector3 bounding_box_dims(0.0, 0.0, 0.0);
+    btVector3 bounding_box_pos(0.0, 0.0, 0.0), bounding_box_dims(0.0, 0.0, 0.0);
+
     VSUB2(bounding_box_dims, bb_max, bb_min);
-
-    btVector3 bounding_box_pos = bounding_box_dims / 2.0;
-    VADD2(bounding_box_pos, bounding_box_pos, bb_min);
-
+    VADD2(bounding_box_pos, bounding_box_dims / 2.0, bb_min);
     return std::make_pair(bounding_box_pos, bounding_box_dims);
 }
 
@@ -273,26 +271,24 @@ WorldObject::create(db_i &db_instance, directory &vdirectory, mat_t matrix,
 	    }
     }
 
-    return new WorldObject(db_instance, vdirectory, matrix, tree_updater,
-			   bounding_box.first, bounding_box.second, mass, linear_velocity,
-			   angular_velocity);
+    WorldObject *object = new WorldObject(db_instance, vdirectory, matrix,
+					  tree_updater, bounding_box.first, bounding_box.second, mass);
+    object->m_rigid_body.setLinearVelocity(linear_velocity);
+    object->m_rigid_body.setAngularVelocity(angular_velocity);
+    return object;
 }
 
 
-WorldObject::WorldObject(db_i & db_instance, directory & vdirectory,
-			 mat_t matrix, TreeUpdater & tree_updater, btVector3 bounding_box_pos,
-			 btVector3 bounding_box_dims, btScalar mass, btVector3 linear_velocity,
-			 btVector3 angular_velocity) :
+WorldObject::WorldObject(db_i &db_instance, directory &vdirectory,
+			 mat_t matrix, TreeUpdater &tree_updater, btVector3 bounding_box_pos,
+			 btVector3 bounding_box_dims, btScalar mass) :
     m_db_instance(db_instance),
     m_directory(vdirectory),
     m_world(NULL),
     m_motion_state(matrix, bounding_box_pos, tree_updater),
     m_collision_shape(bounding_box_dims / 2.0),
     m_rigid_body(build_construction_info(m_motion_state, m_collision_shape, mass))
-{
-    m_rigid_body.setLinearVelocity(linear_velocity);
-    m_rigid_body.setAngularVelocity(angular_velocity);
-}
+{}
 
 
 WorldObject::~WorldObject()
@@ -319,7 +315,7 @@ WorldObject::~WorldObject()
 
 
 void
-WorldObject::add_to_world(PhysicsWorld & world)
+WorldObject::add_to_world(PhysicsWorld &world)
 {
     if (m_world)
 	throw std::runtime_error("already in world");
