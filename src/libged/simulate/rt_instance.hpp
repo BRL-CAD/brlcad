@@ -38,11 +38,11 @@ namespace simulate
 class TreeUpdater
 {
 public:
-    TreeUpdater(db_i &db_instance, directory &vdirectory,
-		const rt_db_internal &comb_internal);
+    TreeUpdater(db_i &db_instance, directory &vdirectory);
     ~TreeUpdater();
 
     void mark_modified();
+    tree *get_tree();
     rt_i &get_rt_instance() const;
 
 
@@ -52,7 +52,7 @@ private:
 
     db_i &m_db_instance;
     directory &m_directory;
-    const rt_db_internal &m_comb_internal;
+    rt_db_internal m_comb_internal;
 
     mutable bool m_is_modified;
     mutable rt_i *m_rt_instance;

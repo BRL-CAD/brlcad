@@ -70,6 +70,12 @@ PhysicsWorld::add_rigid_body(btRigidBody &rigid_body)
 }
 
 
+void PhysicsWorld::remove_rigid_body(btRigidBody &rigid_body)
+{
+    m_world.removeRigidBody(&rigid_body);
+}
+
+
 }
 
 

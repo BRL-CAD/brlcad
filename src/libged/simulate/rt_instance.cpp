@@ -86,14 +86,17 @@ namespace simulate
 {
 
 
-TreeUpdater::TreeUpdater(db_i &db_instance, directory &vdirectory,
-			 const rt_db_internal &comb_internal) :
+TreeUpdater::TreeUpdater(db_i &db_instance, directory &vdirectory) :
     m_db_instance(db_instance),
     m_directory(vdirectory),
-    m_comb_internal(comb_internal),
+    m_comb_internal(),
     m_is_modified(false),
     m_rt_instance(NULL)
-{}
+{
+    if (rt_db_get_internal(&m_comb_internal, &m_directory, &m_db_instance,
+			   bn_mat_identity, &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_get_internal() failed");
+}
 
 
 TreeUpdater::~TreeUpdater()
@@ -103,12 +106,22 @@ TreeUpdater::~TreeUpdater()
 
     if (m_rt_instance)
 	rt_free_rti(m_rt_instance);
+
+    rt_db_free_internal(&m_comb_internal);
 }
 
 
-void TreeUpdater::mark_modified()
+void
+TreeUpdater::mark_modified()
 {
     m_is_modified = true;
+}
+
+
+tree *
+TreeUpdater::get_tree()
+{
+    return static_cast<rt_comb_internal *>(m_comb_internal.idb_ptr)->tree;
 }
 
 

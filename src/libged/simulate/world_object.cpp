@@ -31,11 +31,126 @@
 
 #include "world_object.hpp"
 
+#include <sstream>
 #include <stdexcept>
 
 
 namespace
 {
+
+
+static const std::string attribute_prefix = "simulate::";
+
+
+template <typename T, void (*Destructor)(T *)>
+struct AutoDestroyer {
+    AutoDestroyer(T *vptr) : ptr(vptr) {}
+
+
+    ~AutoDestroyer()
+    {
+	Destructor(ptr);
+    }
+
+
+    T * const ptr;
+
+
+private:
+    AutoDestroyer(const AutoDestroyer &source);
+    AutoDestroyer &operator=(const AutoDestroyer &source);
+};
+
+
+template<typename Target, typename Source>
+Target lexical_cast(Source arg,
+		    const std::string &description = "bad lexical_cast")
+{
+    std::stringstream interpreter;
+    Target result;
+
+    if (!(interpreter << arg) ||
+	!(interpreter >> result) ||
+	!(interpreter >> std::ws).eof())
+	throw std::invalid_argument(description);
+
+    return result;
+}
+
+
+HIDDEN std::pair<btVector3, btVector3>
+get_bounding_box(db_i &db_instance, directory &dir)
+{
+    point_t bb_min, bb_max;
+
+    if (rt_bound_internal(&db_instance, &dir, bb_min, bb_max))
+	throw std::runtime_error("failed to get bounding box");
+
+    btVector3 bounding_box_dims(0.0, 0.0, 0.0);
+    VSUB2(bounding_box_dims, bb_max, bb_min);
+
+    btVector3 bounding_box_pos = bounding_box_dims / 2.0;
+    VADD2(bounding_box_pos, bounding_box_pos, bb_min);
+
+    return std::make_pair(bounding_box_pos, bounding_box_dims);
+}
+
+
+HIDDEN btScalar
+get_volume(db_i &db_instance, directory &dir)
+{
+    rt_db_internal internal;
+
+    if (rt_db_get_internal(&internal, &dir, &db_instance, bn_mat_identity,
+			   &rt_uniresource) < 0)
+	throw std::runtime_error("rt_db_get_internal() failed");
+
+    AutoDestroyer<rt_db_internal, rt_db_free_internal> internal_autodestroy(
+	&internal);
+
+    if (internal.idb_meth->ft_volume) {
+	fastf_t volume;
+	internal.idb_meth->ft_volume(&volume, &internal);
+	return volume;
+    }
+
+    // approximate volume using the bounding box
+    btVector3 bounding_box_dims = get_bounding_box(db_instance, dir).first;
+    return bounding_box_dims.getX() * bounding_box_dims.getY() *
+	   bounding_box_dims.getZ();
+}
+
+
+HIDDEN std::string
+serialize_vector(const btVector3 &source)
+{
+    std::ostringstream stream;
+    stream << "<" << source.getX() << ", " << source.getY() << ", " << source.getZ()
+	   << ">";
+    return stream.str();
+}
+
+
+HIDDEN btVector3
+deserialize_vector(const std::string &source)
+{
+    std::istringstream stream(source);
+    btVector3 result;
+
+    if ((stream >> std::ws).get() != '<')
+	throw std::invalid_argument("invalid vector");
+
+    for (int i = 0; i < 3; ++i) {
+	std::string value;
+	std::getline(stream, value, i != 2 ? ',' : '>');
+	result[i] = lexical_cast<btScalar>(value, "invalid vector");
+    }
+
+    if (stream.unget().get() != '>' || !(stream >> std::ws).eof())
+	throw std::invalid_argument("invalid vector");
+
+    return result;
+}
 
 
 HIDDEN btRigidBody::btRigidBodyConstructionInfo
@@ -59,7 +174,7 @@ namespace simulate
 MatrixMotionState::MatrixMotionState(mat_t matrix,
 				     const btVector3 &bounding_box_center, TreeUpdater &tree_updater) :
     m_matrix(matrix),
-    m_bounding_box_center(bounding_box_center),
+    m_origin(bounding_box_center),
     m_tree_updater(tree_updater)
 {}
 
@@ -79,7 +194,7 @@ MatrixMotionState::getWorldTransform(btTransform &dest) const
 
     btScalar bt_matrix[16];
     MAT_TRANSPOSE(bt_matrix, m_matrix);
-    VADD2(&bt_matrix[12], &bt_matrix[12], m_bounding_box_center);
+    VADD2(&bt_matrix[12], &bt_matrix[12], m_origin);
     dest.setFromOpenGLMatrix(bt_matrix);
 }
 
@@ -97,7 +212,7 @@ MatrixMotionState::setWorldTransform(const btTransform &transform)
 
     btScalar bt_matrix[16];
     transform.getOpenGLMatrix(bt_matrix);
-    VSUB2(&bt_matrix[12], &bt_matrix[12], m_bounding_box_center);
+    VSUB2(&bt_matrix[12], &bt_matrix[12], m_origin);
     MAT_TRANSPOSE(m_matrix, bt_matrix);
 
     m_tree_updater.mark_modified();
@@ -111,13 +226,68 @@ MatrixMotionState::get_rt_instance() const
 }
 
 
-WorldObject::WorldObject(mat_t matrix, const btVector3 &bounding_box_center,
-			 TreeUpdater &tree_updater, btScalar mass,
-			 const btVector3 &bounding_box_dimensions, const btVector3 &linear_velocity,
-			 const btVector3 &angular_velocity) :
-    m_in_world(false),
-    m_motion_state(matrix, bounding_box_center, tree_updater),
-    m_collision_shape(bounding_box_dimensions / 2.0),
+WorldObject *
+WorldObject::create(db_i &db_instance, directory &vdirectory, mat_t matrix,
+		    TreeUpdater &tree_updater)
+{
+    btVector3 linear_velocity(0.0, 0.0, 0.0), angular_velocity(0.0, 0.0, 0.0);
+    btScalar mass = 0.0;
+
+    std::pair<btVector3, btVector3> bounding_box = get_bounding_box(db_instance,
+	    vdirectory);
+    // apply matrix scaling
+    bounding_box.second[X] *= 1.0 / matrix[MSX];
+    bounding_box.second[Y] *= 1.0 / matrix[MSY];
+    bounding_box.second[Z] *= 1.0 / matrix[MSZ];
+    bounding_box.second *= 1.0 / matrix[MSA];
+
+    {
+	const btScalar density = 1.0;
+	mass = density * get_volume(db_instance, vdirectory);
+
+	bu_attribute_value_set obj_avs;
+	BU_AVS_INIT(&obj_avs);
+
+	if (db5_get_attributes(&db_instance, &obj_avs, &vdirectory) < 0)
+	    throw std::runtime_error("db5_get_attributes() failed");
+
+	AutoDestroyer<bu_attribute_value_set, bu_avs_free> obj_avs_autodestroy(
+	    &obj_avs);
+
+	for (std::size_t i = 0; i < obj_avs.count; ++i)
+	    if (attribute_prefix.compare(0, std::string::npos, obj_avs.avp[i].name,
+					 attribute_prefix.size()) == 0) {
+		const std::string name = &obj_avs.avp[i].name[attribute_prefix.size()];
+		const std::string value = obj_avs.avp[i].value;
+
+		if (name == "mass") {
+		    mass = lexical_cast<btScalar>(value, "invalid attribute 'mass'");
+
+		    if (mass < 0.0) throw std::invalid_argument("invalid attribute 'mass'");
+		} else if (name == "linear_velocity") {
+		    linear_velocity = deserialize_vector(value);
+		} else if (name == "angular_velocity") {
+		    angular_velocity = deserialize_vector(value);
+		} else
+		    throw std::invalid_argument("invalid attribute '" + name + "'");
+	    }
+    }
+
+    return new WorldObject(db_instance, vdirectory, matrix, tree_updater,
+			   bounding_box.first, bounding_box.second, mass, linear_velocity,
+			   angular_velocity);
+}
+
+
+WorldObject::WorldObject(db_i & db_instance, directory & vdirectory,
+			 mat_t matrix, TreeUpdater & tree_updater, btVector3 bounding_box_pos,
+			 btVector3 bounding_box_dims, btScalar mass, btVector3 linear_velocity,
+			 btVector3 angular_velocity) :
+    m_db_instance(db_instance),
+    m_directory(vdirectory),
+    m_world(NULL),
+    m_motion_state(matrix, bounding_box_pos, tree_updater),
+    m_collision_shape(bounding_box_dims / 2.0),
     m_rigid_body(build_construction_info(m_motion_state, m_collision_shape, mass))
 {
     m_rigid_body.setLinearVelocity(linear_velocity);
@@ -125,14 +295,37 @@ WorldObject::WorldObject(mat_t matrix, const btVector3 &bounding_box_center,
 }
 
 
-void
-WorldObject::add_to_world(PhysicsWorld &world)
+WorldObject::~WorldObject()
 {
-    if (m_in_world)
+    if (m_world) m_world->remove_rigid_body(m_rigid_body);
+
+    bu_attribute_value_set obj_avs;
+    BU_AVS_INIT(&obj_avs);
+    AutoDestroyer<bu_attribute_value_set, bu_avs_free> obj_avs_autodestroyer(
+	&obj_avs);
+
+    if (0 == bu_avs_add(&obj_avs, (attribute_prefix + "linear_velocity").c_str(),
+			serialize_vector(m_rigid_body.getLinearVelocity()).c_str()))
+	bu_bomb("bu_avs_add() failed");
+
+    if (0 == bu_avs_add(&obj_avs, (attribute_prefix + "angular_velocity").c_str(),
+			serialize_vector(m_rigid_body.getAngularVelocity()).c_str()))
+	bu_bomb("bu_avs_add() failed");
+
+    if (db5_update_attributes(&m_directory, &obj_avs, &m_db_instance) != 0)
+	bu_bomb("db5_update_attributes() failed");
+
+}
+
+
+void
+WorldObject::add_to_world(PhysicsWorld & world)
+{
+    if (m_world)
 	throw std::runtime_error("already in world");
     else {
-	m_in_world = true;
-	world.add_rigid_body(m_rigid_body);
+	m_world = &world;
+	m_world->add_rigid_body(m_rigid_body);
     }
 }
 

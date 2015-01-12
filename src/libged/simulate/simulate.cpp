@@ -33,7 +33,6 @@
 #include "world_object.hpp"
 #include "rt_instance.hpp"
 
-#include <map>
 #include <sstream>
 #include <stdexcept>
 
@@ -42,26 +41,6 @@
 
 namespace
 {
-
-
-template <typename T, void (*Destructor)(T *)>
-struct AutoDestroyer {
-    AutoDestroyer(T *vptr) : ptr(vptr) {}
-
-
-    ~AutoDestroyer()
-    {
-	Destructor(ptr);
-    }
-
-
-    T * const ptr;
-
-
-private:
-    AutoDestroyer(const AutoDestroyer &source);
-    AutoDestroyer &operator=(const AutoDestroyer &source);
-};
 
 
 template<typename Target, typename Source>
@@ -80,170 +59,27 @@ Target lexical_cast(Source arg,
 }
 
 
-HIDDEN std::map<std::string, std::string>
-get_attributes(const db_i &db_instance, const std::string &name)
-{
-    const char * const prefix = "simulate::";
-    const std::size_t prefix_len = strlen(prefix);
-
-    directory *dir = db_lookup(&db_instance, name.c_str(), LOOKUP_QUIET);
-
-    if (!dir)
-	throw std::invalid_argument("failed to lookup '" + name + "'");
-
-    bu_attribute_value_set obj_avs;
-    bu_avs_init_empty(&obj_avs);
-
-    if (db5_get_attributes(&db_instance, &obj_avs, dir) < 0)
-	throw std::runtime_error("db5_get_attributes() failed");
-
-    AutoDestroyer<bu_attribute_value_set, bu_avs_free> obj_avs_autodestroy(
-	&obj_avs);
-
-    std::map<std::string, std::string> result;
-
-    for (std::size_t i = 0; i < obj_avs.count; ++i)
-	if (!bu_strncmp(obj_avs.avp[i].name, prefix, prefix_len))
-	    result[obj_avs.avp[i].name + prefix_len] = obj_avs.avp[i].value;
-
-    return result;
-}
-
-
-HIDDEN std::pair<btVector3, btVector3>
-get_bounding_box(db_i &db_instance, const std::string &name)
-{
-    directory *dir = db_lookup(&db_instance, name.c_str(), LOOKUP_QUIET);
-
-    if (!dir)
-	throw std::invalid_argument("failed to lookup '" + name + "'");
-
-    btVector3 bounding_box_min, bounding_box_max;
-    {
-	point_t bb_min, bb_max;
-
-	if (rt_bound_internal(&db_instance, dir, bb_min, bb_max))
-	    throw std::runtime_error("failed to get bounding box");
-
-	VMOVE(bounding_box_min, bb_min);
-	VMOVE(bounding_box_max, bb_max);
-    }
-
-    btVector3 bounding_box_dims = bounding_box_max - bounding_box_min;
-    btVector3 bounding_box_pos = bounding_box_dims / 2.0 + bounding_box_min;
-
-    return std::make_pair(bounding_box_dims, bounding_box_pos);
-}
-
-
-HIDDEN btScalar
-get_volume(db_i &db_instance, const std::string &name)
-{
-    directory *dir = db_lookup(&db_instance, name.c_str(), LOOKUP_QUIET);
-
-    if (!dir)
-	throw std::invalid_argument("failed to lookup '" + name + "'");
-
-    rt_db_internal internal;
-
-    if (rt_db_get_internal(&internal, dir, &db_instance, bn_mat_identity,
-			   &rt_uniresource) < 0)
-	throw std::runtime_error("rt_db_get_internal() failed");
-
-    AutoDestroyer<rt_db_internal, rt_db_free_internal> internal_autodestroy(
-	&internal);
-
-    if (internal.idb_meth->ft_volume) {
-	fastf_t volume;
-	internal.idb_meth->ft_volume(&volume, &internal);
-	return volume;
-    }
-
-    // approximate volume using the bounding box
-    btVector3 bounding_box_dims = get_bounding_box(db_instance, name).first;
-    return bounding_box_dims.getX() * bounding_box_dims.getY() *
-	   bounding_box_dims.getZ();
-}
-
-
-HIDDEN btVector3
-deserialize_vector(const std::string &source)
-{
-    std::istringstream stream(source);
-    btVector3 result;
-
-    if ((stream >> std::ws).get() != '<')
-	throw std::invalid_argument("invalid vector");
-
-    for (int i = 0; i < 3; ++i) {
-	std::string value;
-	std::getline(stream, value, i != 2 ? ',' : '>');
-	result[i] = lexical_cast<btScalar>(value, "invalid vector");
-    }
-
-    if (stream.unget().get() != '>' || !(stream >> std::ws).eof())
-	throw std::invalid_argument("invalid vector");
-
-    return result;
-}
-
-
-HIDDEN simulate::WorldObject *
-build_world_object(db_i &db_instance, const std::string &name, matp_t &matrix,
-		   simulate::TreeUpdater &tree_updater)
-{
-    if (!matrix) {
-	matrix = static_cast<matp_t>(bu_malloc(sizeof(mat_t), "tl_mat"));
-	MAT_IDN(matrix);
-    }
-
-    const btScalar density = 1.0;
-    btScalar mass = density * get_volume(db_instance, name);
-    btVector3 linear_velocity(0.0, 0.0, 0.0), angular_velocity(0.0, 0.0, 0.0);
-
-    std::map<std::string, std::string> attributes = get_attributes(db_instance,
-	    name);
-
-    for (std::map<std::string, std::string>::const_iterator it = attributes.begin();
-	 it != attributes.end(); ++it) {
-	if (it->first == "mass") {
-	    mass = lexical_cast<btScalar>(it->second, "invalid attribute 'mass'");
-
-	    if (mass < 0.0) throw std::invalid_argument("invalid attribute 'mass'");
-
-	} else if (it->first == "linear_velocity") {
-	    linear_velocity = deserialize_vector(it->second);
-	} else if (it->first == "angular_velocity") {
-	    angular_velocity = deserialize_vector(it->second);
-	} else
-	    throw std::invalid_argument("invalid attribute '" + it->first + "' on object '"
-					+ name  + "'");
-    }
-
-    std::pair<btVector3, btVector3> bounding_box = get_bounding_box(db_instance,
-	    name);
-
-    // apply matrix scaling
-    bounding_box.first[X] *= 1.0 / matrix[MSX];
-    bounding_box.first[Y] *= 1.0 / matrix[MSY];
-    bounding_box.first[Z] *= 1.0 / matrix[MSZ];
-    bounding_box.first *= 1.0 / matrix[MSA];
-
-    return new simulate::WorldObject(matrix, bounding_box.second, tree_updater,
-				     mass, bounding_box.first, linear_velocity, angular_velocity);
-}
-
-
 HIDDEN void
 get_tree_objects(db_i &db_instance, tree &vtree,
 		 simulate::TreeUpdater &tree_updater,
 		 std::vector<simulate::WorldObject *> &objects)
 {
     switch (vtree.tr_op) {
-	case OP_DB_LEAF:
-	    objects.push_back(build_world_object(db_instance, vtree.tr_l.tl_name,
-						 vtree.tr_l.tl_mat, tree_updater));
+	case OP_DB_LEAF: {
+	    directory *dir = db_lookup(&db_instance, vtree.tr_l.tl_name, LOOKUP_NOISY);
+
+	    if (!dir) throw std::runtime_error("db_lookup() failed");
+
+	    if (!vtree.tr_l.tl_mat) {
+		vtree.tr_l.tl_mat = static_cast<matp_t>(bu_malloc(sizeof(mat_t), "tl_mat"));
+		MAT_IDN(vtree.tr_l.tl_mat);
+	    }
+
+
+	    objects.push_back(simulate::WorldObject::create(db_instance, *dir,
+			      vtree.tr_l.tl_mat, tree_updater));
 	    break;
+	}
 
 	case OP_UNION:
 	    get_tree_objects(db_instance, *vtree.tr_b.tb_left, tree_updater, objects);
@@ -259,41 +95,30 @@ get_tree_objects(db_i &db_instance, tree &vtree,
 HIDDEN void
 do_simulate(db_i &db_instance, directory &scene_directory, btScalar seconds)
 {
-    rt_db_internal internal;
+    std::vector<simulate::WorldObject *> objects;
+    simulate::PhysicsWorld world;
+    simulate::TreeUpdater tree_updater(db_instance, scene_directory);
+    tree * const vtree = tree_updater.get_tree();
 
-    if (rt_db_get_internal(&internal, &scene_directory, &db_instance,
-			   bn_mat_identity, &rt_uniresource) < 0)
-	throw std::runtime_error("rt_db_get_internal() failed");
-
-    AutoDestroyer<rt_db_internal, rt_db_free_internal> internal_autodestroy(
-	&internal);
-
-    simulate::TreeUpdater tree_updater(db_instance, scene_directory, internal);
-    {
-	simulate::PhysicsWorld world;
-	tree * const vtree = static_cast<rt_comb_internal *>(internal.idb_ptr)->tree;
-	std::vector<simulate::WorldObject *> objects;
-
-	try {
-	    if (vtree) get_tree_objects(db_instance, *vtree, tree_updater, objects);
-
-	    for (std::vector<simulate::WorldObject *>::iterator it = objects.begin();
-		 it != objects.end(); ++it)
-		(*it)->add_to_world(world);
-
-	    world.step(seconds);
-	} catch (...) {
-	    for (std::vector<simulate::WorldObject *>::iterator it = objects.begin();
-		 it != objects.end(); ++it)
-		delete *it;
-
-	    throw;
-	}
+    try {
+	if (vtree) get_tree_objects(db_instance, *vtree, tree_updater, objects);
 
 	for (std::vector<simulate::WorldObject *>::iterator it = objects.begin();
 	     it != objects.end(); ++it)
+	    (*it)->add_to_world(world);
+
+	world.step(seconds);
+    } catch (...) {
+	for (std::vector<simulate::WorldObject *>::iterator it = objects.begin();
+	     it != objects.end(); ++it)
 	    delete *it;
+
+	throw;
     }
+
+    for (std::vector<simulate::WorldObject *>::iterator it = objects.begin();
+	 it != objects.end(); ++it)
+	delete *it;
 }
 
 

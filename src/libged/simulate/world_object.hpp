@@ -52,7 +52,7 @@ private:
     MatrixMotionState &operator=(const MatrixMotionState &source);
 
     const matp_t m_matrix;
-    btVector3 m_bounding_box_center;
+    const btVector3 m_origin;
     TreeUpdater &m_tree_updater;
 };
 
@@ -60,16 +60,27 @@ private:
 class WorldObject
 {
 public:
-    WorldObject(mat_t matrix, const btVector3 &bounding_box_center,
-		TreeUpdater &tree_updater, btScalar mass,
-		const btVector3 &bounding_box_dimensions, const btVector3 &linear_velocity,
-		const btVector3 &angular_velocity);
+    static WorldObject *create(db_i &db_instance, directory &vdirectory,
+			       mat_t matrix, TreeUpdater &tree_updater);
+
+    ~WorldObject();
 
     void add_to_world(PhysicsWorld &world);
 
 
 private:
-    bool m_in_world;
+    WorldObject(const WorldObject &source);
+    WorldObject &operator=(const WorldObject &source);
+
+    WorldObject(db_i &db_instance, directory &vdirectory, mat_t matrix,
+		TreeUpdater &tree_updater, btVector3 bounding_box_pos,
+		btVector3 bounding_box_dims, btScalar mass, btVector3 linear_velocity,
+		btVector3 angular_velocity);
+
+
+    db_i &m_db_instance;
+    directory &m_directory;
+    PhysicsWorld *m_world;
     MatrixMotionState m_motion_state;
     RtCollisionShape m_collision_shape;
     btRigidBody m_rigid_body;

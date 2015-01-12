@@ -44,6 +44,7 @@ public:
 
     void step(btScalar seconds);
     void add_rigid_body(btRigidBody &rigid_body);
+    void remove_rigid_body(btRigidBody &rigid_body);
 
 
 private:
