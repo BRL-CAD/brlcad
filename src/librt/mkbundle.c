@@ -217,7 +217,7 @@ int
 rt_gen_frustum(struct xrays *rays, const struct xray *center_ray,
 	       const vect_t a_vec, const vect_t b_vec,
 	       const fastf_t a_theta, const fastf_t b_theta,
-	       const fastf_t a_num, const fastf_t b_num)
+	       const fastf_t a_num, const fastf_t UNUSED(b_num))
 {
     int count;
 
