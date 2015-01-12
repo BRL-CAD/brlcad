@@ -2624,6 +2624,20 @@ RT_EXPORT extern int rt_gen_circular_grid(struct xrays *ray_bundle,
 					  const fastf_t *up_vector,
 					  fastf_t gridsize);
 
+/**
+ * Make a bundle of rays around a main ray in the shape of a cone,
+ * using a uniform rectangular grid; theta is the angle of divergence
+ * of the cone, and rays_per_radius is the number of rays that lie on
+ * any given radius of the cone.
+ *
+ * center_ray.r_dir must have unit length.
+ */
+RT_EXPORT extern int rt_gen_conic(struct xrays *rays,
+				  const struct xray *center_ray,
+				  fastf_t theta,
+				  vect_t up_vector,
+				  int rays_per_radius);
+
 /* Shoot a ray */
 /**
  * Note that the direction vector r_dir must have unit length; this is

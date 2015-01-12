@@ -154,6 +154,63 @@ rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const 
     return count;
 }
 
+int
+rt_gen_conic(struct xrays *rays, const struct xray *center_ray,
+	     fastf_t theta, vect_t up_vector, int rays_per_radius)
+{
+    int count;
+
+    point_t start;
+    vect_t orig_dir;
+
+    fastf_t x, y;
+
+    /* Setting radius to tan(theta) works because, as shown in the
+     * following diagram, the ray that starts at the given point and
+     * passes through orig_dir + (radius in any orthogonal direction)
+     * has an angle of theta with the original ray; when the
+     * resulting vector is normalized, the angle is preserved.
+     */
+    fastf_t radius = tan(theta);
+    fastf_t rsq = radius * radius; /* radius-squared, for use in the loop */
+
+    fastf_t gridsize = 2 * radius / (rays_per_radius - 1);
+
+    vect_t a_dir, b_dir;
+
+    register struct xrays *xrayp;
+
+    VMOVE(start, center_ray->r_pt);
+    VMOVE(orig_dir, center_ray->r_dir);
+
+    /* Create vectors a_dir, b_dir that are orthogonal to orig_dir. */
+    VMOVE(b_dir, up_vector);
+    VUNITIZE(b_dir);
+
+    VCROSS(a_dir, orig_dir, up_vector);
+    VUNITIZE(a_dir);
+
+    for (y = -radius; y <= radius; y += gridsize) {
+	vect_t tmp;
+	printf("y:%f\n", y);
+	VSCALE(tmp, b_dir, y);
+	printf("y_partofit: %f,%f,%f\n", V3ARGS(tmp));
+	for (x = -radius; x <= radius; x += gridsize) {
+	    if (((x*x)/rsq + (y*y)/rsq) <= 1) {
+		BU_ALLOC(xrayp, struct xrays);
+		VMOVE(xrayp->ray.r_pt, start);
+		VJOIN2(xrayp->ray.r_dir, orig_dir, x, a_dir, y, b_dir);
+		VUNITIZE(xrayp->ray.r_dir);
+		xrayp->ray.index = count++;
+		xrayp->ray.magic = RT_RAY_MAGIC;
+		BU_LIST_APPEND(&rays->l, &xrayp->l);
+	    }
+	}
+    }
+    return count;
+}
+
+
 
 /*
  * Local Variables:
