@@ -759,7 +759,7 @@ close_objs(object_data *new_obj, object_data *old_obj)
 
 
 /* When we have a composite object, we must divide that object into
- * simplier objects that we can represent.  The "seed" face is the
+ * simpler objects that we can represent.  The "seed" face is the
  * index of the face with the most complicated surface type in the
  * input object_data set.  split_object's job is to identify the
  * set of one or more faces, starting with seed_face, that will define
