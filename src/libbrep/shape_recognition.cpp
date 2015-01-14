@@ -631,39 +631,39 @@ subbrep_highest_order_face(struct subbrep_object_data *data)
     return hof;
 }
 
-int
+volume_t
 get_allowed_surface_types(ON_BrepFace *face, std::set<int> *allowed)
 {
     int surface_type = (int)GetSurfaceType(face->SurfaceOf());
     // If we've got a planar face, we can stop now - planar faces
     // are determative of volume type only when *all* faces are planar,
     // and that case is handled elsewhere - anything is "allowed".
-    if (surface_type == SURFACE_PLANE) return 0;
+    if (surface_type == SURFACE_PLANE) return BREP;
 
     // If we've got a general surface, anything is allowed
-    if (surface_type == SURFACE_GENERAL) return 0;
+    if (surface_type == SURFACE_GENERAL) return BREP;
 
     if (surface_type == SURFACE_CYLINDRICAL_SECTION || surface_type == SURFACE_CYLINDER) {
 	(*allowed).insert(SURFACE_CYLINDRICAL_SECTION);
 	(*allowed).insert(SURFACE_CYLINDER);
 	(*allowed).insert(SURFACE_PLANE);
-	return 1;
+	return CYLINDER;
     }
 
     if (surface_type == SURFACE_CONE) {
 	(*allowed).insert(SURFACE_CONE);
 	(*allowed).insert(SURFACE_PLANE);
-	return 1;
+	return CONE;
     }
 
     if (surface_type == SURFACE_SPHERICAL_SECTION || surface_type == SURFACE_SPHERE) {
 	(*allowed).insert(SURFACE_SPHERICAL_SECTION);
 	(*allowed).insert(SURFACE_SPHERE);
 	(*allowed).insert(SURFACE_PLANE);
-	return 1;
+	return SPHERE;
     }
 
-    return 0;
+    return BREP;
 }
 
 /* In order to represent complex shapes, it is necessary to identify
@@ -675,6 +675,7 @@ get_allowed_surface_types(ON_BrepFace *face, std::set<int> *allowed)
 int
 subbrep_split(struct subbrep_object_data *data)
 {
+    std::set<int> processed_faces;
     std::set<std::string> subbrep_keys;
     /* For each face, identify the candidate solid type.  If that
      * subset has not already been seen, add it to the brep's set of
@@ -688,53 +689,106 @@ subbrep_split(struct subbrep_object_data *data)
 	std::set<int> processed_loops;
 	std::set<int>::iterator s_it;
 	std::set<int> allowed_surface_types;
+	volume_t vol_type;
 
-	ON_BrepFace *face = &(data->brep->m_F[i]);
-	faces.insert(i);
-	if (!get_allowed_surface_types(face, &allowed_surface_types)) continue;
-	for (int j = 0; j < face->m_li.Count(); j++) {
-	    int loop_in_set = 0;
-	    int loop_ind = face->m_li[j];
-	    int k = 0;
-	    while (k < data->loops_cnt) {
-		if (data->loops[k] == loop_ind) loop_in_set = 1;
-		k++;
-	    }
-	    if (loop_in_set) {
-		local_loops.push(loop_ind);
-	    }
-	}
+	if (processed_faces.find(i) == processed_faces.end()) {
 
-	while(!local_loops.empty()) {
-	    ON_BrepLoop* loop = &(data->brep->m_L[local_loops.front()]);
-	    loops.insert(local_loops.front());
-	    local_loops.pop();
-	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
-		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-		if (trim.m_ei != -1 && edge.TrimCount() > 1) {
-		    edges.insert(trim.m_ei);
-		    for (int j = 0; j < edge.TrimCount(); j++) {
-			int fio = edge.Trim(j)->FaceIndexOf();
-			if (edge.m_ti[j] != ti && fio != -1) {
-			    ON_BrepFace *fface = &(data->brep->m_F[fio]);
-			    int fio_surface_type = (int)GetSurfaceType(fface->SurfaceOf());
-			    // If fio meets the criteria for the candidate shape, add it.  Otherwise,
-			    // it's not part of this shape candidate
-			    if (allowed_surface_types.find(fio_surface_type) != allowed_surface_types.end()) {
-				// TODO - more testing can be done here...  have get_allowed_surface_types
-				// return the volume_t, and add some testing functions to evaluate
-				// things like normals and shared axis
-				faces.insert(fio);
-			    }
-			    int li = edge.Trim(j)->Loop()->m_loop_index;
-			    if (processed_loops.find(li) == processed_loops.end()) {
-				local_loops.push(li);
-				processed_loops.insert(li);
+	    ON_BrepFace *face = &(data->brep->m_F[i]);
+	    faces.insert(i);
+	    processed_faces.insert(i);
+	    vol_type = get_allowed_surface_types(face, &allowed_surface_types);
+	    if (vol_type == BREP) continue;
+	    for (int j = 0; j < face->m_li.Count(); j++) {
+		int loop_in_set = 0;
+		int loop_ind = face->m_li[j];
+		int k = 0;
+		while (k < data->loops_cnt) {
+		    if (data->loops[k] == loop_ind) loop_in_set = 1;
+		    k++;
+		}
+		if (loop_in_set) {
+		    local_loops.push(loop_ind);
+		}
+	    }
+
+	    while(!local_loops.empty()) {
+		ON_BrepLoop* loop = &(data->brep->m_L[local_loops.front()]);
+		loops.insert(local_loops.front());
+		local_loops.pop();
+		for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		    ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+		    ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+		    if (trim.m_ei != -1 && edge.TrimCount() > 1) {
+			edges.insert(trim.m_ei);
+			for (int j = 0; j < edge.TrimCount(); j++) {
+			    int fio = edge.Trim(j)->FaceIndexOf();
+			    if (edge.m_ti[j] != ti && fio != -1) {
+				ON_BrepFace *fface = &(data->brep->m_F[fio]);
+				int fio_surface_type = (int)GetSurfaceType(fface->SurfaceOf());
+				// If fio meets the criteria for the candidate shape, add it.  Otherwise,
+				// it's not part of this shape candidate
+				if (allowed_surface_types.find(fio_surface_type) != allowed_surface_types.end()) {
+				    // TODO - more testing can be done here...  have get_allowed_surface_types
+				    // return the volume_t, and add some testing functions to evaluate
+				    // things like normals and shared axis
+				    faces.insert(fio);
+				    processed_faces.insert(fio);
+				}
+				int li = edge.Trim(j)->Loop()->m_loop_index;
+				if (processed_loops.find(li) == processed_loops.end()) {
+				    local_loops.push(li);
+				    processed_loops.insert(li);
+				}
 			    }
 			}
 		    }
 		}
+	    }
+
+	    key = face_set_key(faces);
+
+	    /* If we haven't seen this particular subset before, add it */
+	    if (subbrep_keys.find(key) == subbrep_keys.end()) {
+		int j = 0;
+		subbrep_keys.insert(key);
+		struct subbrep_object_data *new_obj;
+		BU_GET(new_obj, struct subbrep_object_data);
+		subbrep_object_init(new_obj, data->brep);
+		bu_vls_sprintf(new_obj->key, "%s", key.c_str());
+		new_obj->faces_cnt = faces.size();
+		if (new_obj->faces_cnt > 0) {
+		    new_obj->faces = (int *)bu_calloc(new_obj->faces_cnt, sizeof(int), "faces array");
+		    for (s_it = faces.begin(); s_it != faces.end(); s_it++) {
+			new_obj->faces[j] = *s_it;
+			j++;
+		    }
+		}
+		j = 0;
+		new_obj->loops_cnt = loops.size();
+		if (new_obj->loops_cnt > 0) {
+		    new_obj->loops_cnt = loops.size();
+		    new_obj->loops = (int *)bu_calloc(new_obj->loops_cnt, sizeof(int), "loops array");
+		    for (s_it = loops.begin(); s_it != loops.end(); s_it++) {
+			new_obj->loops[j] = *s_it;
+			j++;
+		    }
+		}
+		j = 0;
+		new_obj->edges_cnt = edges.size();
+		if (new_obj->edges_cnt > 0) {
+		    new_obj->edges_cnt = edges.size();
+		    new_obj->edges = (int *)bu_calloc(new_obj->edges_cnt, sizeof(int), "edges array");
+		    for (s_it = edges.begin(); s_it != edges.end(); s_it++) {
+			new_obj->edges[j] = *s_it;
+			j++;
+		    }
+		}
+		new_obj->fol_cnt = 0;
+		new_obj->fil_cnt = 0;
+
+		data->type = vol_type;
+
+		bu_ptbl_ins(data->children, (long *)new_obj);
 	    }
 	}
     }
