@@ -30,8 +30,10 @@
  *	-m	integer max value
  *	-f	fraction to fade
  *	-p	percentage of fade (fraction = percentage/100)
- *	file	a picture file.
- *	STDIN	a picture file if 'file' is not given.
+ *      -s      squaresize
+ *      -w      width
+ *      -n      height
+ *	file	a picture file (if not given, use STDIN)
  *
  * Output:
  *	STDOUT	the faded picture.
@@ -60,7 +62,7 @@ char *in_file = NULL;
 
 
 char usage[] = "\
-Usage: pixfade [-h] [-p percentage] [-f fraction] [-s squaresize] [-w width] [-n height] \n\
+Usage: pixfade [-p percentage] [-f fraction] [-s squaresize] [-w width] [-n height] \n\
                 [-o out_file.pix] [file.bw] > [out_file.pix]\n";
 
 double multiplier = 0.5;
@@ -98,8 +100,7 @@ get_args(int argc, char **argv)
 	    case 'o':
 		out_file = bu_optarg;
 		break;
-	    case 'h':
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
