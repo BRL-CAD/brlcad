@@ -500,6 +500,183 @@ print_subbrep_object(struct subbrep_object_data *data, const char *offset)
     bu_vls_free(&log);
 }
 
+
+int
+cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index)
+{
+    std::set<int> verts;
+    ON_BrepFace *face = &(data->brep->m_F[face_index]);
+    for(int i = 0; i < face->LoopCount(); i++) {
+	int loop_find = 0;
+	for(int j = 0; j < data->loops_cnt; j++) {
+	    if (data->loops[j] == face->m_li[i]) loop_find = 1;
+	}
+        if (loop_find) {
+            //std::cout << "loop " << face->m_li[i] << " on face " << face_index << " is active, processing...\n";
+            ON_BrepLoop *loop = &(data->brep->m_L[face->m_li[i]]);
+            for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+                ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+                if (trim.m_ei != -1) {
+                    ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+                    verts.insert(edge.Vertex(0)->m_vertex_index);
+                    verts.insert(edge.Vertex(1)->m_vertex_index);
+                }
+            }
+            if (verts.size() == 3) {
+                //std::cout << "Three points - planar.\n";
+                return 1;
+            } else if (verts.size() >= 3) {
+                std::set<int>::iterator v_it = verts.begin();
+                ON_3dPoint p1 = data->brep->m_V[*v_it].Point();
+                v_it++;
+                ON_3dPoint p2 = data->brep->m_V[*v_it].Point();
+                v_it++;
+                ON_3dPoint p3 = data->brep->m_V[*v_it].Point();
+                ON_Plane test_plane(p1, p2, p3);
+                for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+                    if (!NEAR_ZERO(test_plane.DistanceTo(data->brep->m_V[*v_it].Point()), 0.01)) {
+                        //std::cout << "vertex " << *v_it << " too far from plane, not planar: " << test_plane.DistanceTo(data->brep->m_V[*v_it].Point()) << "\n";
+                        return 0;
+                    }
+                }
+                //std::cout << verts.size() << " points, planar\n";
+                return 1;
+            } else {
+                //std::cout << "Closed single curve loop - planar only if surface is.";
+                return 0;
+            }
+        }
+    }
+    return 0;
+}
+
+
+int
+subbrep_highest_order_face(struct subbrep_object_data *data)
+{
+    int planar = 0;
+    int spherical = 0;
+    int rcylindrical = 0;
+    int cone = 0;
+    int torus = 0;
+    int general = 0;
+    int hof = -1;
+    int hofo = 0;
+    for (int f_it = 0; f_it < data->faces_cnt; f_it++) {
+	ON_BrepFace *used_face = &(data->brep->m_F[f_it]);
+	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
+	int surface_type = (int)GetSurfaceType(temp_surface);
+	switch (surface_type) {
+	    case SURFACE_PLANE:
+		planar++;
+		if (hofo < 1) {
+		    hof = f_it;
+		    hofo = 1;
+		}
+		break;
+	    case SURFACE_SPHERE:
+		spherical++;
+		if (hofo < 2) {
+		    hof = f_it;
+		    hofo = 2;
+		}
+		break;
+	    case SURFACE_CYLINDER:
+		if (!cylindrical_planar_vertices(data, f_it)) {
+		    std::cout << "irregular cylindrical: " << f_it << "\n";
+		    general++;
+		} else {
+		    rcylindrical++;
+		    if (hofo < 3) {
+			hof = f_it;
+			hofo = 3;
+		    }
+		}
+		break;
+	    case SURFACE_CONE:
+		cone++;
+		if (hofo < 4) {
+		    hof = f_it;
+		    hofo = 4;
+		}
+		break;
+	    case SURFACE_TORUS:
+		torus++;
+		if (hofo < 4) {
+		    hof = f_it;
+		    hofo = 4;
+		}
+		break;
+	    default:
+		general++;
+		std::cout << "general surface: " << used_face->SurfaceIndexOf() << "\n";
+		break;
+	}
+    }
+
+    if (!general)
+	std::cout << "highest order face: " << hof << "(" << hofo << ")\n";
+
+    std::cout << "\n";
+    std::cout << bu_vls_addr(data->key) << ":\n";
+    std::cout << "planar_cnt: " << planar << "\n";
+    std::cout << "spherical_cnt: " << spherical << "\n";
+    std::cout << "regular cylindrical_cnt: " << rcylindrical << "\n";
+    std::cout << "cone_cnt: " << cone << "\n";
+    std::cout << "torus_cnt: " << torus << "\n";
+    std::cout << "general_cnt: " << general << "\n";
+    std::cout << "\n";
+    return hof;
+}
+
+
+
+int
+subbreps_boolean_tree(struct bu_ptbl *subbreps)
+{
+    struct subbrep_object_data *top_union = NULL;
+    /* The toplevel unioned object in the tree will be the one with no faces
+     * that have only inner loops in the object loop network */
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
+	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	if (obj->fil_cnt == 0) {
+	    top_union = obj;
+	} else {
+	    bu_log("Error - multiple objects appear to qualify as the first union object\n");
+	    return 0;
+	}
+    }
+    if (!top_union) {
+	bu_log("Error - no object qualifies as the first union object\n");
+	return 0;
+    }
+    /* Once the top level is identified, all other objects are parented to that object.
+     * Technically they are not children of that object but of the toplevel comb */
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
+	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	if (obj != top_union) obj->parent = top_union;
+    }
+
+    /* For each child object, we need to ascertain whether the object is subtracted from the
+     * top object or unioned to it. The general test for this is to raytrace the original BRep
+     * through the child volume in question, and determine from the raytrace results whether
+     * the volume adds to or takes away from the solidity along that shotline.  This is a
+     * relatively expensive test, so if we have simpler shapes that let us do other tests
+     * let's try those first. */
+
+    /* Once we know whether the local shape is a subtraction or addition, we can decide for the
+     * individual shapes in the combination whether they are subtractions or unions locally.
+     * For example, if a cylinder is subtracted from the toplevel nmg, and a cone is
+     * in turn subtracted from that cylinder (in other words, the cone shape contributes volume to the
+     * final shape) the cone is subtracted from the local comb containing the cylinder and the cone, which
+     * is in turn subtracted from the toplevel nmg.  Likewise, if the cylinder had been unioned to the nmg
+     * to add volume and the cone had also added volume to the final shape (i.e. it's surface normals point
+     * outward from the cone) then the code would be unioned with the cylinder in the local comb, and the
+     * local comb would be unioned into the toplevel. */
+
+    return 0;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++
