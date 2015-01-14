@@ -17,131 +17,13 @@
 #include "brep.h"
 #include "../libbrep/shape_recognition.h"
 
-std::string
-face_set_key(std::set<int> fset)
-{
-    std::set<int>::iterator s_it;
-    std::set<int>::iterator s_it2;
-    std::string key;
-    struct bu_vls vls_key = BU_VLS_INIT_ZERO;
-    for (s_it = fset.begin(); s_it != fset.end(); s_it++) {
-	bu_vls_printf(&vls_key, "%d", (*s_it));
-	s_it2 = s_it;
-	s_it2++;
-	if (s_it2 != fset.end()) bu_vls_printf(&vls_key, "_");
-    }
-    bu_vls_printf(&vls_key, ".s");
-    key.append(bu_vls_addr(&vls_key));
-    bu_vls_free(&vls_key);
-    return key;
-}
-
-class object_data {
-    public:
-	object_data(int face, ON_Brep *in_brep, struct rt_wdb *in_wdbp);
-	object_data(ON_Brep *in_brep, struct rt_wdb *in_wdbp);
-	~object_data();
-
-	bool operator=(const object_data &a);
-	bool operator<(const object_data &a);
-
-	std::string key;
-	int negative_object; /* Concave (1) or convex (0)? */
-	std::set<int> faces;
-	std::set<int> loops;
-	std::set<int> edges;
-	std::set<int> fol; /* Faces with outer loops in object loop network */
-	std::set<int> fil; /* Faces with only inner loops in object loop network */
-
-	bool operator<(const object_data &a) const
-	{
-	    return key < a.key;
-	}
-
-	bool operator=(const object_data &a) const
-	{
-	    return key == a.key;
-	}
-
-	ON_Brep *brep;
-	struct rt_wdb *wdbp;
-	object_data *parent;
-};
-
-object_data::object_data(int face_index, ON_Brep *in_brep, struct rt_wdb *in_wdb)
-    : negative_object(false), parent(NULL)
-{
-    std::queue<int> local_loops;
-    std::set<int> processed_loops;
-    std::set<int>::iterator s_it;
-    brep = in_brep;
-    wdbp = in_wdb;
-    ON_BrepFace *face = &(brep->m_F[face_index]);
-    faces.insert(face_index);
-    fol.insert(face_index);
-    local_loops.push(face->OuterLoop()->m_loop_index);
-    processed_loops.insert(face->OuterLoop()->m_loop_index);
-    while(!local_loops.empty()) {
-	ON_BrepLoop* loop = &(brep->m_L[local_loops.front()]);
-	loops.insert(local_loops.front());
-	local_loops.pop();
-	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-	    ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
-	    ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-	    if (trim.m_ei != -1 && edge.TrimCount() > 1) {
-		edges.insert(trim.m_ei);
-		for (int j = 0; j < edge.TrimCount(); j++) {
-		    int fio = edge.Trim(j)->FaceIndexOf();
-		    if (edge.m_ti[j] != ti && fio != -1) {
-			int li = edge.Trim(j)->Loop()->m_loop_index;
-			faces.insert(fio);
-			if (processed_loops.find(li) == processed_loops.end()) {
-			    local_loops.push(li);
-			    processed_loops.insert(li);
-			}
-			if (li == brep->m_F[fio].OuterLoop()->m_loop_index) {
-			    fol.insert(fio);
-			}
-		    }
-		}
-	    }
-	}
-    }
-    key = face_set_key(faces);
-    for (s_it = faces.begin(); s_it != faces.end(); s_it++) {
-	if (fol.find(*s_it) == fol.end()) {
-	    fil.insert(*s_it);
-	}
-    }
-}
-
-
-object_data::object_data(ON_Brep *in_brep, struct rt_wdb *in_wdbp)
-    : negative_object(false), parent(NULL)
-{
-    brep = in_brep;
-    wdbp = in_wdbp;
-}
-
-
-object_data::~object_data()
-{
-}
-
-class comb_data {
-    public:
-	std::vector<object_data *> objects;
-	std::map<int, int> booleans;
-};
-
 
 struct model *
-brep_to_nmg(const object_data *data)
+brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
     std::set<int> b_verts;
     std::vector<int> b_verts_array;
     std::map<int, int> b_verts_to_verts;
-    std::set<int>::iterator s_it;
     struct model *m = nmg_mm();
     struct nmgregion *r = nmg_mrsv(m);
     struct shell *s = BU_LIST_FIRST(shell, &(r)->s_hd);
@@ -157,8 +39,8 @@ brep_to_nmg(const object_data *data)
 
     // One loop to a face, and the object data has the set of loops that make
     // up this object.
-    for (s_it = data->loops.begin(); s_it != data->loops.end(); s_it++) {
-	ON_BrepLoop *b_loop = &(data->brep->m_L[(*s_it)]);
+    for (int s_it = 0; s_it < data->loops_cnt; s_it++) {
+	ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[s_it]]);
 	ON_BrepFace *b_face = b_loop->Face();
 	face_cnt++;
 	if (b_loop->m_ti.Count() > max_edge_cnt) max_edge_cnt = b_loop->m_ti.Count();
@@ -186,9 +68,9 @@ brep_to_nmg(const object_data *data)
 
     // Make the faces
     int face_count = 0;
-    for (s_it = data->loops.begin(); s_it != data->loops.end(); s_it++) {
+    for (int s_it = 0; s_it < data->loops_cnt; s_it++) {
 	int loop_length = 0;
-	ON_BrepLoop *b_loop = &(data->brep->m_L[(*s_it)]);
+	ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[s_it]]);
 	ON_BrepFace *b_face = b_loop->Face();
 	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
 	    ON_BrepTrim& trim = b_face->Brep()->m_T[b_loop->m_ti[ti]];
@@ -223,233 +105,60 @@ brep_to_nmg(const object_data *data)
     nmg_region_a(r, &nmg_tol);
 
     /* Create the nmg primitive */
-    mk_nmg(data->wdbp, data->key.c_str(), m);
+    mk_nmg(wdbp, bu_vls_addr(data->key), m);
 
     return m;
 }
 
 
 int
-is_planar(const object_data *data)
+subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
-    int ret = 1;
-    // Check surfaces.  If a surface is anything other than a plane the verdict is no.
-    // If all surfaces are planes, then the verdict is yes.
-    std::set<int>::iterator f_it;
-    for (f_it = data->faces.begin(); f_it != data->faces.end(); f_it++) {
-	ON_Plane plane;
-	ON_BrepFace *used_face = &(data->brep->m_F[(*f_it)]);
-	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
-	if (!temp_surface->IsPlanar(&plane)) return 0;
+    if (data->type == PLANAR_VOLUME) {
+	// BRL-CAD's arbn primitive does not support concave shapes, and we want to use
+	// simpler primitives than the generic nmg if the opportunity arises.  A heuristic
+	// along the following lines may help:
+	//
+	// Step 1.  Check the number of vertices.  If the number is small enough that the
+	//          volume might conceivably be expressed by an arb4-arb8, try that first.
+	//
+	// Step 2.  If the arb4-arb8 test fails, do the convex hull and see if all points
+	//          are used by the hull.  If so, the shape is convex and may be expressed
+	//          as an arbn.
+	//
+	// Step 3.  If the arbn test fails, construct sets of contiguous concave faces using
+	//          the set of edges with one or more vertices not in the convex hull.  If
+	//          those shapes are all convex, construct an arbn tree (or use simpler arb
+	//          shapes if the subtractions may be so expressed).
+	//
+	// Step 4.  If the subtraction volumes in Step 3 are still not convex, cut our losses
+	//          and proceed to the nmg primitive.  It may conceivably be worth some
+	//          additional searches to spot convex subsets of shapes that can be more
+	//          simply represented, but that is not particularly simple to do well
+	//          and should wait until it is clear we would get a benefit from it.  Look
+	//          at the arbn tessellation routine for a guide on how to set up the
+	//          nmg - that's the most general of the arb* primitives and should be
+	//          relatively close to what is needed here.
+	(void)brep_to_nmg(data, wdbp);
+	return 1;
+    } else {
+	return 0;
     }
-
-    // BRL-CAD's arbn primitive does not support concave shapes, and we want to use
-    // simpler primitives than the generic nmg if the opportunity arises.  A heuristic
-    // along the following lines may help:
-    //
-    // Step 1.  Check the number of vertices.  If the number is small enough that the
-    //          volume might conceivably be expressed by an arb4-arb8, try that first.
-    //
-    // Step 2.  If the arb4-arb8 test fails, do the convex hull and see if all points
-    //          are used by the hull.  If so, the shape is convex and may be expressed
-    //          as an arbn.
-    //
-    // Step 3.  If the arbn test fails, construct sets of contiguous concave faces using
-    //          the set of edges with one or more vertices not in the convex hull.  If
-    //          those shapes are all convex, construct an arbn tree (or use simpler arb
-    //          shapes if the subtractions may be so expressed).
-    //
-    // Step 4.  If the subtraction volumes in Step 3 are still not convex, cut our losses
-    //          and proceed to the nmg primitive.  It may conceivably be worth some
-    //          additional searches to spot convex subsets of shapes that can be more
-    //          simply represented, but that is not particularly simple to do well
-    //          and should wait until it is clear we would get a benefit from it.  Look
-    //          at the arbn tessellation routine for a guide on how to set up the
-    //          nmg - that's the most general of the arb* primitives and should be
-    //          relatively close to what is needed here.
-    (void)brep_to_nmg(data);
-
-    return ret;
 }
 
 int
-is_cylinder(const object_data *data)
+subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
-    int ret = 1;
-    std::set<int>::iterator f_it;
-    std::set<int> planar_surfaces;
-    std::set<int> cylindrical_surfaces;
-    std::set<int> active_edges;
-    // First, check surfaces.  If a surface is anything other than a plane or cylindrical,
-    // the verdict is no.  If we don't have at least two planar surfaces and one
-    // cylindrical, the verdict is no.
-    for (f_it = data->faces.begin(); f_it != data->faces.end(); f_it++) {
-	ON_BrepFace *used_face = &(data->brep->m_F[(*f_it)]);
-	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
-	int surface_type = (int)GetSurfaceType(temp_surface);
-	switch (surface_type) {
-	    case SURFACE_PLANE:
-		planar_surfaces.insert(*f_it);
-		break;
-	    case SURFACE_CYLINDER:
-		cylindrical_surfaces.insert(*f_it);
-		break;
-	    default:
-		return 0;
-		break;
-	}
+
+    if (data->type == CYLINDER) {
+	mk_rcc(wdbp, bu_vls_addr(data->key), data->params->origin, data->params->hv, data->params->radius);
+	return 1;
     }
-    if (planar_surfaces.size() < 2) return 0;
-    if (cylindrical_surfaces.size() < 1) return 0;
-
-    // Second, check if all cylindrical surfaces share the same axis.
-    ON_Cylinder cylinder;
-    data->brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->IsCylinder(&cylinder);
-    for (f_it = cylindrical_surfaces.begin(); f_it != cylindrical_surfaces.end(); f_it++) {
-	ON_Cylinder f_cylinder;
-	data->brep->m_F[(*f_it)].SurfaceOf()->IsCylinder(&f_cylinder);
-	ON_3dPoint fca = f_cylinder.Axis();
-	ON_3dPoint ca = cylinder.Axis();
-	if (fca.DistanceTo(ca) > 0.01) return 0;
-    }
-
-    // Third, see if all planes are coplanar with two and only two planes.
-    ON_Plane p1, p2;
-    int p2_set = 0;
-    data->brep->m_F[*planar_surfaces.begin()].SurfaceOf()->IsPlanar(&p1);
-    for (f_it = planar_surfaces.begin(); f_it != planar_surfaces.end(); f_it++) {
-	ON_Plane f_p;
-	data->brep->m_F[(*f_it)].SurfaceOf()->IsPlanar(&f_p);
-	if (!p2_set && f_p != p1) {
-	    p2 = f_p;
-	    continue;
-	};
-	if (f_p != p1 && f_p != p2) return 0;
-    }
-
-    // Fourth, check that the two planes are parallel to each other.
-    if (p1.Normal().IsParallelTo(p2.Normal(), 0.01) == 0) {
-	std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
-	std::cout << "p2 Normal: " << p2.Normal().x << "," << p2.Normal().y << "," << p2.Normal().z << "\n";
-	return 0;
-    }
-
-    // Fifth, remove degenerate edge sets. A degenerate edge set is defined as two
-    // linear segments having the same two vertices.  (To be sure, we should probably
-    // check curve directions in loops in some fashion...)
-    std::set<int>::iterator e_it;
-    std::set<int> degenerate;
-    for (e_it = data->edges.begin(); e_it != data->edges.end(); e_it++) {
-	if (degenerate.find(*e_it) == degenerate.end()) {
-	    ON_BrepEdge& edge = data->brep->m_E[*e_it];
-	    if (edge.EdgeCurveOf()->IsLinear()) {
-		for (f_it = data->edges.begin(); f_it != data->edges.end(); f_it++) {
-		    ON_BrepEdge& edge2 = data->brep->m_E[*f_it];
-		    if (edge2.EdgeCurveOf()->IsLinear()) {
-			if ((edge.Vertex(0)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(1)->Point() == edge2.Vertex(1)->Point()) ||
-				(edge.Vertex(1)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(0)->Point() == edge2.Vertex(1)->Point()))
-			{
-			    degenerate.insert(*e_it);
-			    degenerate.insert(*f_it);
-			    break;
-			}
-		    }
-		}
-	    }
-	}
-    }
-    active_edges = data->edges;
-    for (e_it = degenerate.begin(); e_it != degenerate.end(); e_it++) {
-	//std::cout << "erasing " << *e_it << "\n";
-	active_edges.erase(*e_it);
-    }
-    //std::cout << "Active Edge set: ";
-#if 0
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-	std::cout << (int)(*e_it);
-	f_it = e_it;
-	f_it++;
-	if (f_it != active_edges.end()) std::cout << ",";
-    }
-    std::cout << "\n";
-#endif
-
-    // Sixth, check for any remaining linear segments.  For rpc primitives
-    // those are expected, but for a true cylinder the linear segments should
-    // all wash out in the degenerate pass.
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-	ON_BrepEdge& edge = data->brep->m_E[*e_it];
-	if (edge.EdgeCurveOf()->IsLinear()) return 0;
-    }
-
-    // Seventh, sort the curved edges into one of two circles.  Again, in more
-    // general cases we might have other curves but a true cylinder should have
-    // all of its arcs on these two circles.  We don't need to check for closed
-    // loops because we are assuming that in the input Brep; any curve except
-    // arc curves that survived the degeneracy test has already resulted in an
-    // earlier rejection.
-    std::set<int> arc_set_1, arc_set_2;
-    ON_Circle set1_c, set2_c;
-    int arc1_circle_set= 0;
-    int arc2_circle_set = 0;
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-	ON_BrepEdge& edge = data->brep->m_E[*e_it];
-	ON_Arc arc;
-	if (edge.EdgeCurveOf()->IsArc(NULL, &arc, 0.01)) {
-	    int assigned = 0;
-	    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-	    //std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
-	    if (!arc1_circle_set) {
-		arc1_circle_set = 1;
-		set1_c = circ;
-		//std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
-	    } else {
-		if (!arc2_circle_set) {
-		    if (!(NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), 0.01))){
-			arc2_circle_set = 1;
-			set2_c = circ;
-			//std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
-		    }
-		}
-	    }
-	    if (NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), 0.01)){
-		arc_set_1.insert(*e_it);
-		assigned = 1;
-	    }
-	    if (arc2_circle_set) {
-		if (NEAR_ZERO(circ.Center().DistanceTo(set2_c.Center()), 0.01)){
-		    arc_set_2.insert(*e_it);
-		    assigned = 1;
-		}
-	    }
-	    if (!assigned) {
-		std::cout << "found extra circle - no go\n";
-		return 0;
-	    }
-	}
-    }
-
-    point_t base; // base of cylinder
-    vect_t hv; // height vector of cylinder
-    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
-
-    base[0] = set1_c.Center().x;
-    base[1] = set1_c.Center().y;
-    base[2] = set1_c.Center().z;
-    hv[0] = hvect.x;
-    hv[1] = hvect.y;
-    hv[2] = hvect.z;
-
-    //std::cout << "rcc: in " << data->key.c_str() << " rcc " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << " " << hvect.x << " " << hvect.y << " " << hvect.z << " " << set1_c.Radius() << "\n";
-    mk_rcc(data->wdbp, data->key.c_str(), base, hv, set1_c.Radius());
-
-    // TODO - check for different radius values between the two circles - for a pure cylinder test should reject, but we can easily handle it with the tgc...
-
-    return ret;
+    return 0;
 }
 
 
-
+#if 0
 int
 is_cone(const object_data *data)
 {
@@ -593,11 +302,10 @@ is_cone(const object_data *data)
 
     return ret;
 }
+#endif
 
 
-
-
-
+#if 0
 int
 cylindrical_planar_vertices(const object_data *data, int face_index)
 {
@@ -710,7 +418,6 @@ highest_order_face(const object_data *data)
     if (!general)
 	std::cout << "highest order face: " << hof << "(" << hofo << ")\n";
 
-#if 0
     std::cout << "\n";
     std::cout << data->key.c_str() << ":\n";
     std::cout << "planar_cnt: " << planar << "\n";
@@ -720,28 +427,43 @@ highest_order_face(const object_data *data)
     std::cout << "torus_cnt: " << torus << "\n";
     std::cout << "general_cnt: " << general << "\n";
     std::cout << "\n";
-#endif
     return hof;
 }
+#endif
 
 int
-find_shape(const object_data *data)
+make_shape(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
-    if (is_planar(data)) {
-	std::cout << "Object is planar\n";
-	return 1;
+    switch (data->type) {
+	case COMB:
+	    return 0;
+	    break;
+	case PLANAR_VOLUME:
+	    return subbrep_to_csg_planar(data, wdbp);
+	    break;
+	case CYLINDER:
+	    return subbrep_to_csg_cylinder(data, wdbp);
+	    break;
+	case CONE:
+	    return 0;
+	    break;
+	case SPHERE:
+	    return 0;
+	    break;
+	case ELLIPSOID:
+	    return 0;
+	    break;
+	case TORUS:
+	    break;
+	default:
+	    return 0; /* BREP */
+	    break;
     }
-    if (is_cylinder(data)) {
-	std::cout << "Object is rcc\n";
-	return 2;
-    }
-    if (is_cone(data)) {
-	std::cout << "Object is cone\n";
-	return 2;
-    }
-    return -1;
-}
 
+    /* Shouldn't get here */
+    return 0;
+}
+#if 0
 /* generate new face(s) needed to close new obj, add to new obj and inverse of face to old obj */
 void
 close_objs(object_data *new_obj, object_data *old_obj)
@@ -773,7 +495,7 @@ bool
 split_object(comb_data *curr_comb, object_data *input)
 {
     object_data tmp_obj = *input;
-    int is_obj = find_shape(&tmp_obj);
+    //int is_obj = find_shape(&tmp_obj);
     while (!is_obj) {
 	int seed_face = highest_order_face(&tmp_obj);
 	/* TODO - for cylinders, check for a mating face with the same axis - want to go for the rcc if we can */
@@ -785,7 +507,7 @@ split_object(comb_data *curr_comb, object_data *input)
 	close_objs(new_obj, &tmp_obj);
 	/* If new faces cannot be generated, return false */
 	curr_comb->objects.push_back(&(*new_obj));
-	is_obj = find_shape(&tmp_obj);
+	//is_obj = find_shape(&tmp_obj);
     }
     object_data *final_obj = new object_data(input->brep, input->wdbp);
     final_obj->key = tmp_obj.key;
@@ -863,7 +585,7 @@ print_objects(std::set<object_data> *object_set)
 	std::cout << "\n";
     }
 }
-
+#endif
 int
 main(int argc, char *argv[])
 {
@@ -907,20 +629,16 @@ main(int argc, char *argv[])
 
     ON_Brep *brep = brep_ip->brep;
 
-    std::set<object_data> object_set;
-    for (int i = 0; i < brep->m_F.Count(); i++) {
-	object_data face_object(i, brep, wdbp);
-	object_set.insert(face_object);
+    struct bu_ptbl *subbreps = find_subbreps(brep);
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
+	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	print_subbrep_object(obj, "");
+	(void)make_shape(obj, wdbp);
+	subbrep_object_free(obj);
+	BU_PUT(obj, struct subbrep_object_data);
     }
-
-    //print_objects(&object_set);
-    std::set<object_data>::iterator o_it;
-    for (o_it = object_set.begin(); o_it != object_set.end(); o_it++) {
-	if (find_shape(&(*o_it)) == -1) {
-	    highest_order_face(&(*o_it));
-	}
-	std::cout << "\n";
-    }
+    bu_ptbl_free(subbreps);
+    BU_PUT(subbreps, struct bu_ptbl);
 
     return 0;
 }

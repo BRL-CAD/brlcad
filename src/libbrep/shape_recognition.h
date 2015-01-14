@@ -1,4 +1,5 @@
 #include "common.h"
+#include "bu/ptbl.h"
 #include "brep.h"
 
 typedef enum {
@@ -26,8 +27,60 @@ typedef enum {
     SURFACE_GENERAL  /* A curve that does not fit in any of the previous categories */
 } surface_t;
 
+typedef enum {
+    COMB = 0,  /* A comb is a boolean combination of other solids */
+    PLANAR_VOLUME,
+    CYLINDER,
+    CONE,
+    SPHERE,
+    ELLIPSOID,
+    TORUS,
+    //Insert any new types here
+    BREP /* A brep is a complex solid that cannot be represented by CSG */
+} volume_t;
+
 curve_t GetCurveType(ON_Curve *curve);
 surface_t GetSurfaceType(ON_Surface *surface);
+
+/* Structure for holding parameters corresponding
+ * to a csg primitive.  Not all parameters will be
+ * used for all primitives - the structure includes
+ * enough data slots to describe any primitive that may
+ * be matched by the shape recognition logic */
+struct csg_object_params {
+    point_t origin;
+    vect_t hv;
+    fastf_t radius;
+    fastf_t height;
+};
+
+struct subbrep_object_data {
+    struct bu_vls *key;
+    int *faces;
+    int *loops;
+    int *edges;
+    int *fol;
+    int *fil;
+    int faces_cnt;
+    int loops_cnt;
+    int edges_cnt;
+    int fol_cnt;
+    int fil_cnt;
+
+    ON_Brep *brep;
+    volume_t type;
+    csg_object_params *params;
+    subbrep_object_data *parent;
+    struct bu_ptbl *children;
+};
+
+void subbrep_object_init(struct subbrep_object_data *obj, ON_Brep *brep);
+void subbrep_object_free(struct subbrep_object_data *obj);
+
+struct bu_ptbl *find_subbreps(ON_Brep *brep);
+void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
+volume_t subbrep_shape_recognize(struct subbrep_object_data *data);
+
 
 // Local Variables:
 // tab-width: 8
