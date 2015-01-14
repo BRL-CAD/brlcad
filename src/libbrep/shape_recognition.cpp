@@ -37,14 +37,17 @@ GetCurveType(ON_Curve *curve)
 }
 
 surface_t
-GetSurfaceType(ON_Surface *surface)
+GetSurfaceType(const ON_Surface *in_surface)
 {
-    if (surface->IsPlanar(NULL, 0.01)) return SURFACE_PLANE;
-    if (surface->IsSphere(NULL, 0.01)) return SURFACE_SPHERE;
-    if (surface->IsCylinder(NULL, 0.01)) return SURFACE_CYLINDER;
-    if (surface->IsCone(NULL, 0.01)) return SURFACE_CONE;
-    if (surface->IsTorus(NULL, 0.01)) return SURFACE_TORUS;
-    return SURFACE_GENERAL;
+    surface_t ret = SURFACE_GENERAL;
+    ON_Surface *surface = in_surface->Duplicate();
+    if (surface->IsPlanar(NULL, 0.01)) ret = SURFACE_PLANE;
+    if (surface->IsSphere(NULL, 0.01)) ret = SURFACE_SPHERE;
+    if (surface->IsCylinder(NULL, 0.01)) ret = SURFACE_CYLINDER;
+    if (surface->IsCone(NULL, 0.01)) ret = SURFACE_CONE;
+    if (surface->IsTorus(NULL, 0.01)) ret = SURFACE_TORUS;
+    delete surface;
+    return ret;
 }
 
 
@@ -78,8 +81,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data)
     for (int i = 0; i < data->faces_cnt; i++) {
 	int f_ind = data->faces[i];
 	ON_BrepFace *used_face = &(data->brep->m_F[f_ind]);
-        ON_Surface *temp_surface = used_face->SurfaceOf()->Duplicate();
-        int surface_type = (int)GetSurfaceType(temp_surface);
+        int surface_type = (int)GetSurfaceType(used_face->SurfaceOf());
         switch (surface_type) {
             case SURFACE_PLANE:
                 planar_surfaces.insert(f_ind);
@@ -91,7 +93,6 @@ subbrep_is_cylinder(struct subbrep_object_data *data)
                 return 0;
                 break;
         }
-	delete temp_surface;
     }
     if (planar_surfaces.size() < 2) return 0;
     if (cylindrical_surfaces.size() < 1) return 0;
@@ -253,6 +254,7 @@ subbrep_shape_recognize(struct subbrep_object_data *data)
 {
     if (subbrep_is_planar(data)) return PLANAR_VOLUME;
     if (subbrep_is_cylinder(data)) return CYLINDER;
+    if (subbrep_split(data)) return COMB;
     return BREP;
 }
 
@@ -565,8 +567,7 @@ subbrep_highest_order_face(struct subbrep_object_data *data)
     int hofo = 0;
     for (int f_it = 0; f_it < data->faces_cnt; f_it++) {
 	ON_BrepFace *used_face = &(data->brep->m_F[f_it]);
-	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
-	int surface_type = (int)GetSurfaceType(temp_surface);
+	int surface_type = (int)GetSurfaceType(used_face->SurfaceOf());
 	switch (surface_type) {
 	    case SURFACE_PLANE:
 		planar++;
@@ -630,6 +631,120 @@ subbrep_highest_order_face(struct subbrep_object_data *data)
     return hof;
 }
 
+int
+get_allowed_surface_types(ON_BrepFace *face, std::set<int> *allowed)
+{
+    int surface_type = (int)GetSurfaceType(face->SurfaceOf());
+    // If we've got a planar face, we can stop now - planar faces
+    // are determative of volume type only when *all* faces are planar,
+    // and that case is handled elsewhere - anything is "allowed".
+    if (surface_type == SURFACE_PLANE) return 0;
+
+    // If we've got a general surface, anything is allowed
+    if (surface_type == SURFACE_GENERAL) return 0;
+
+    if (surface_type == SURFACE_CYLINDRICAL_SECTION || surface_type == SURFACE_CYLINDER) {
+	(*allowed).insert(SURFACE_CYLINDRICAL_SECTION);
+	(*allowed).insert(SURFACE_CYLINDER);
+	(*allowed).insert(SURFACE_PLANE);
+	return 1;
+    }
+
+    if (surface_type == SURFACE_CONE) {
+	(*allowed).insert(SURFACE_CONE);
+	(*allowed).insert(SURFACE_PLANE);
+	return 1;
+    }
+
+    if (surface_type == SURFACE_SPHERICAL_SECTION || surface_type == SURFACE_SPHERE) {
+	(*allowed).insert(SURFACE_SPHERICAL_SECTION);
+	(*allowed).insert(SURFACE_SPHERE);
+	(*allowed).insert(SURFACE_PLANE);
+	return 1;
+    }
+
+    return 0;
+}
+
+/* In order to represent complex shapes, it is necessary to identify
+ * subsets of subbreps that can be represented as primitives.  This
+ * function will identify such subsets, if possible.  If a subbrep
+ * can be successfully decomposed into primitive candidates, the
+ * type of the subbrep is set to COMB and the children bu_ptbl is
+ * populated with subbrep_object_data sets. */
+int
+subbrep_split(struct subbrep_object_data *data)
+{
+    std::set<std::string> subbrep_keys;
+    /* For each face, identify the candidate solid type.  If that
+     * subset has not already been seen, add it to the brep's set of
+     * subbreps */
+    for (int i = 0; i < data->faces_cnt; i++) {
+	std::string key;
+	std::set<int> faces;
+	std::set<int> loops;
+	std::set<int> edges;
+	std::queue<int> local_loops;
+	std::set<int> processed_loops;
+	std::set<int>::iterator s_it;
+	std::set<int> allowed_surface_types;
+
+	ON_BrepFace *face = &(data->brep->m_F[i]);
+	faces.insert(i);
+	if (!get_allowed_surface_types(face, &allowed_surface_types)) continue;
+	for (int j = 0; j < face->m_li.Count(); j++) {
+	    int loop_in_set = 0;
+	    int loop_ind = face->m_li[j];
+	    int k = 0;
+	    while (k < data->loops_cnt) {
+		if (data->loops[k] == loop_ind) loop_in_set = 1;
+		k++;
+	    }
+	    if (loop_in_set) {
+		local_loops.push(loop_ind);
+	    }
+	}
+
+	while(!local_loops.empty()) {
+	    ON_BrepLoop* loop = &(data->brep->m_L[local_loops.front()]);
+	    loops.insert(local_loops.front());
+	    local_loops.pop();
+	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+		if (trim.m_ei != -1 && edge.TrimCount() > 1) {
+		    edges.insert(trim.m_ei);
+		    for (int j = 0; j < edge.TrimCount(); j++) {
+			int fio = edge.Trim(j)->FaceIndexOf();
+			if (edge.m_ti[j] != ti && fio != -1) {
+			    ON_BrepFace *fface = &(data->brep->m_F[fio]);
+			    int fio_surface_type = (int)GetSurfaceType(fface->SurfaceOf());
+			    // If fio meets the criteria for the candidate shape, add it.  Otherwise,
+			    // it's not part of this shape candidate
+			    if (allowed_surface_types.find(fio_surface_type) != allowed_surface_types.end()) {
+				// TODO - more testing can be done here...  have get_allowed_surface_types
+				// return the volume_t, and add some testing functions to evaluate
+				// things like normals and shared axis
+				faces.insert(fio);
+			    }
+			    int li = edge.Trim(j)->Loop()->m_loop_index;
+			    if (processed_loops.find(li) == processed_loops.end()) {
+				local_loops.push(li);
+				processed_loops.insert(li);
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+    if (subbrep_keys.size() == 0) {
+	data->type = BREP;
+	return 0;
+    }
+    data->type = COMB;
+    return 1;
+}
 
 
 int

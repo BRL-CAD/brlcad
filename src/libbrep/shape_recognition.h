@@ -77,6 +77,8 @@ struct subbrep_object_data {
 void subbrep_object_init(struct subbrep_object_data *obj, ON_Brep *brep);
 void subbrep_object_free(struct subbrep_object_data *obj);
 
+int subbrep_split(struct subbrep_object_data *data);
+
 struct bu_ptbl *find_subbreps(ON_Brep *brep);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
 volume_t subbrep_shape_recognize(struct subbrep_object_data *data);
