@@ -3,6 +3,7 @@
 #include <set>
 
 #include "bu/log.h"
+#include "bu/str.h"
 #include "bu/malloc.h"
 #include "shape_recognition.h"
 
@@ -666,6 +667,24 @@ get_allowed_surface_types(ON_BrepFace *face, std::set<int> *allowed)
     return BREP;
 }
 
+void
+add_loops_from_face(ON_BrepFace *face, struct subbrep_object_data *data, std::set<int> *loops, std::queue<int> *local_loops, std::set<int> *processed_loops)
+{
+    for (int j = 0; j < face->m_li.Count(); j++) {
+	int loop_in_set = 0;
+	int loop_ind = face->m_li[j];
+	int k = 0;
+	while (k < data->loops_cnt) {
+	    if (data->loops[k] == loop_ind) loop_in_set = 1;
+	    k++;
+	}
+	if (loop_in_set) loops->insert(loop_ind);
+	if (loop_in_set && processed_loops->find(loop_ind) == processed_loops->end()) {
+	    local_loops->push(loop_ind);
+	}
+    }
+}
+
 /* In order to represent complex shapes, it is necessary to identify
  * subsets of subbreps that can be represented as primitives.  This
  * function will identify such subsets, if possible.  If a subbrep
@@ -691,60 +710,55 @@ subbrep_split(struct subbrep_object_data *data)
 	std::set<int> allowed_surface_types;
 	volume_t vol_type;
 
-	if (processed_faces.find(i) == processed_faces.end()) {
+	ON_BrepFace *face = &(data->brep->m_F[data->faces[i]]);
+	vol_type = get_allowed_surface_types(face, &allowed_surface_types);
+	if (vol_type == BREP) continue;
 
-	    ON_BrepFace *face = &(data->brep->m_F[i]);
-	    faces.insert(i);
-	    processed_faces.insert(i);
+	if (processed_faces.find(data->faces[i]) == processed_faces.end()) {
+	    processed_faces.insert(data->faces[i]);
+	    add_loops_from_face(face, data, &loops, &local_loops, &processed_loops);
+	    faces.insert(data->faces[i]);
+
+	    ON_BrepFace *face = &(data->brep->m_F[data->faces[i]]);
+	    faces.insert(data->faces[i]);
+	    processed_faces.insert(data->faces[i]);
+	    add_loops_from_face(face, data, &loops, &local_loops, &processed_loops);
 	    vol_type = get_allowed_surface_types(face, &allowed_surface_types);
 	    if (vol_type == BREP) continue;
-	    for (int j = 0; j < face->m_li.Count(); j++) {
-		int loop_in_set = 0;
-		int loop_ind = face->m_li[j];
-		int k = 0;
-		while (k < data->loops_cnt) {
-		    if (data->loops[k] == loop_ind) loop_in_set = 1;
-		    k++;
-		}
-		if (loop_in_set) {
-		    local_loops.push(loop_ind);
-		}
-	    }
 
 	    while(!local_loops.empty()) {
-		ON_BrepLoop* loop = &(data->brep->m_L[local_loops.front()]);
-		loops.insert(local_loops.front());
+		int curr_loop = local_loops.front();
 		local_loops.pop();
-		for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		    ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
-		    ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-		    if (trim.m_ei != -1 && edge.TrimCount() > 1) {
-			edges.insert(trim.m_ei);
-			for (int j = 0; j < edge.TrimCount(); j++) {
-			    int fio = edge.Trim(j)->FaceIndexOf();
-			    if (edge.m_ti[j] != ti && fio != -1) {
-				ON_BrepFace *fface = &(data->brep->m_F[fio]);
-				int fio_surface_type = (int)GetSurfaceType(fface->SurfaceOf());
-				// If fio meets the criteria for the candidate shape, add it.  Otherwise,
-				// it's not part of this shape candidate
-				if (allowed_surface_types.find(fio_surface_type) != allowed_surface_types.end()) {
-				    // TODO - more testing can be done here...  have get_allowed_surface_types
-				    // return the volume_t, and add some testing functions to evaluate
-				    // things like normals and shared axis
-				    faces.insert(fio);
-				    processed_faces.insert(fio);
-				}
-				int li = edge.Trim(j)->Loop()->m_loop_index;
-				if (processed_loops.find(li) == processed_loops.end()) {
-				    local_loops.push(li);
-				    processed_loops.insert(li);
+		if (processed_loops.find(curr_loop) == processed_loops.end()) {
+		    ON_BrepLoop* loop = &(data->brep->m_L[curr_loop]);
+		    loops.insert(curr_loop);
+		    processed_loops.insert(curr_loop);
+		    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+			ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+			ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+			if (trim.m_ei != -1 && edge.TrimCount() > 1) {
+			    edges.insert(trim.m_ei);
+			    for (int j = 0; j < edge.TrimCount(); j++) {
+				int fio = edge.Trim(j)->FaceIndexOf();
+				if (fio != -1 && processed_faces.find(fio) == processed_faces.end()) {
+				    ON_BrepFace *fface = &(data->brep->m_F[fio]);
+				    int fio_surface_type = (int)GetSurfaceType(fface->SurfaceOf());
+				    // If fio meets the criteria for the candidate shape, add it.  Otherwise,
+				    // it's not part of this shape candidate
+				    if (allowed_surface_types.find(fio_surface_type) != allowed_surface_types.end()) {
+					// TODO - more testing needs to be done here...  get_allowed_surface_types
+					// returns the volume_t, use it to do some testing to evaluate
+					// things like normals and shared axis
+					faces.insert(fio);
+					processed_faces.insert(fio);
+					add_loops_from_face(fface, data, &loops, &local_loops, &processed_loops);
+				    }
 				}
 			    }
 			}
 		    }
 		}
 	    }
-
 	    key = face_set_key(faces);
 
 	    /* If we haven't seen this particular subset before, add it */
