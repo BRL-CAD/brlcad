@@ -78,7 +78,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data)
     for (int i = 0; i < data->faces_cnt; i++) {
 	int f_ind = data->faces[i];
 	ON_BrepFace *used_face = &(data->brep->m_F[f_ind]);
-        ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
+        ON_Surface *temp_surface = used_face->SurfaceOf()->Duplicate();
         int surface_type = (int)GetSurfaceType(temp_surface);
         switch (surface_type) {
             case SURFACE_PLANE:
@@ -91,6 +91,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data)
                 return 0;
                 break;
         }
+	delete temp_surface;
     }
     if (planar_surfaces.size() < 2) return 0;
     if (cylindrical_surfaces.size() < 1) return 0;
