@@ -42,19 +42,51 @@ GetSurfaceType(const ON_Surface *in_surface, struct filter_obj *obj)
 {
     surface_t ret = SURFACE_GENERAL;
     ON_Surface *surface = in_surface->Duplicate();
-    if (surface->IsPlanar(NULL, 0.01)) ret = SURFACE_PLANE;
     if (obj) {
 	filter_obj_init(obj);
-	if (surface->IsSphere(obj->sphere , 0.01)) ret = SURFACE_SPHERE;
-	if (surface->IsCylinder(obj->cylinder , 0.01)) ret = SURFACE_CYLINDER;
-	if (surface->IsCone(obj->cone, 0.01)) ret = SURFACE_CONE;
-	if (surface->IsTorus(obj->torus, 0.01)) ret = SURFACE_TORUS;
+	if (surface->IsPlanar(obj->plane, 0.01)) {
+	    ret = SURFACE_PLANE;
+	    goto st_done;
+	}
+	if (surface->IsSphere(obj->sphere , 0.01)) {
+	    ret = SURFACE_SPHERE;
+	    goto st_done;
+	}
+	if (surface->IsCylinder(obj->cylinder , 0.01)) {
+	    ret = SURFACE_CYLINDER;
+	    goto st_done;
+	}
+	if (surface->IsCone(obj->cone, 0.01)) {
+	    ret = SURFACE_CONE;
+	    goto st_done;
+	}
+	if (surface->IsTorus(obj->torus, 0.01)) {
+	    ret = SURFACE_TORUS;
+	    goto st_done;
+	}
     } else {
-	if (surface->IsSphere(NULL, 0.01)) ret = SURFACE_SPHERE;
-	if (surface->IsCylinder(NULL, 0.01)) ret = SURFACE_CYLINDER;
-	if (surface->IsCone(NULL, 0.01)) ret = SURFACE_CONE;
-	if (surface->IsTorus(NULL, 0.01)) ret = SURFACE_TORUS;
+	if (surface->IsPlanar(NULL, 0.01)) {
+	    ret = SURFACE_PLANE;
+	    goto st_done;
+	}
+	if (surface->IsSphere(NULL, 0.01)) {
+	    ret = SURFACE_SPHERE;
+	    goto st_done;
+	}
+	if (surface->IsCylinder(NULL, 0.01)) {
+	    ret = SURFACE_CYLINDER;
+	    goto st_done;
+	}
+	if (surface->IsCone(NULL, 0.01)) {
+	    ret = SURFACE_CONE;
+	    goto st_done;
+	}
+	if (surface->IsTorus(NULL, 0.01)) {
+	    ret = SURFACE_TORUS;
+	    goto st_done;
+	}
     }
+st_done:
     delete surface;
     return ret;
 }
@@ -63,6 +95,7 @@ void
 filter_obj_init(struct filter_obj *obj)
 {
     if (!obj) return;
+    if (!obj->plane) obj->plane = new ON_Plane;
     if (!obj->sphere) obj->sphere = new ON_Sphere;
     if (!obj->cylinder) obj->cylinder = new ON_Cylinder;
     if (!obj->cone) obj->cone = new ON_Cone;
@@ -75,6 +108,7 @@ void
 filter_obj_free(struct filter_obj *obj)
 {
     if (!obj) return;
+    delete obj->plane;
     delete obj->sphere;
     delete obj->cylinder;
     delete obj->cone;
@@ -154,7 +188,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data)
     }
 
     // Fourth, check that the two planes are parallel to each other.
-    if (p1.Normal().IsParallelTo(p2.Normal(), 0.01) == 0) {
+    if (p1.Normal().IsParallelTo(p2.Normal(), 0.05) == 0) {
         std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
         std::cout << "p2 Normal: " << p2.Normal().x << "," << p2.Normal().y << "," << p2.Normal().z << "\n";
         return 0;
@@ -235,19 +269,19 @@ subbrep_is_cylinder(struct subbrep_object_data *data)
                 //std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
             } else {
                 if (!arc2_circle_set) {
-                    if (!(NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), 0.01))){
+                    if (!(NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), 0.1))){
                         arc2_circle_set = 1;
                         set2_c = circ;
                         //std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
                     }
                 }
             }
-            if (NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), 0.01)){
+            if (NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), 0.1)){
                 arc_set_1.insert(*e_it);
                 assigned = 1;
             }
             if (arc2_circle_set) {
-                if (NEAR_ZERO(circ.Center().DistanceTo(set2_c.Center()), 0.01)){
+                if (NEAR_ZERO(circ.Center().DistanceTo(set2_c.Center()), 0.1)){
                     arc_set_2.insert(*e_it);
                     assigned = 1;
                 }
@@ -284,8 +318,10 @@ volume_t
 subbrep_shape_recognize(struct subbrep_object_data *data)
 {
     if (subbrep_is_planar(data)) return PLANAR_VOLUME;
+    if (BU_STR_EQUAL(bu_vls_addr(data->key), "134_429_431_596.s")) {
     if (subbrep_is_cylinder(data)) return CYLINDER;
     if (subbrep_split(data)) return COMB;
+    }
     return BREP;
 }
 
@@ -671,14 +707,44 @@ set_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
 int
 apply_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
 {
-    int fio_surface_type = (int)GetSurfaceType(face->SurfaceOf(), NULL);
-    // If fio meets the criteria for the candidate shape, add it.  Otherwise,
-    // it's not part of this shape candidate
-    if (obj->allowed->find(fio_surface_type) != obj->allowed->end()) {
-	return 1;
-    } else {
-	return 0;
+    int ret = 1;
+    struct filter_obj *local_obj;
+    BU_GET(local_obj, struct filter_obj);
+    int fio_surface_type = (int)GetSurfaceType(face->SurfaceOf(), local_obj);
+    // If the face's surface type is not part of the allowed set for
+    // this object type, we're done
+    if (obj->allowed->find(fio_surface_type) == obj->allowed->end()) {
+	ret = 0;
+	goto filter_done;
     }
+    if (obj->type == CYLINDER) {
+	if (fio_surface_type == SURFACE_PLANE) {
+	    if (obj->cylinder->Axis().IsParallelTo(obj->plane->Normal(), 0.01) == 0) {
+		std::cout << "parallel fail\n";
+	       ret = 0;
+	       goto filter_done;
+	    }
+	}
+	if (fio_surface_type == SURFACE_CYLINDER || fio_surface_type == SURFACE_CYLINDRICAL_SECTION ) {
+	    ON_3dPoint fca = local_obj->cylinder->Axis();
+	    ON_3dPoint ca = obj->cylinder->Axis();
+	    if (fca.DistanceTo(ca) > 0.01) {
+		std::cout << "shared axis fail\n";
+	       ret = 0;
+	       goto filter_done;
+	    }
+	}
+    }
+    if (obj->type == CONE) {
+    }
+    if (obj->type == SPHERE) {
+    }
+    if (obj->type == TORUS) {
+    }
+
+filter_done:
+    BU_PUT(local_obj, struct filter_obj);
+    return ret;
 }
 
 void

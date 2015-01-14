@@ -40,6 +40,7 @@ typedef enum {
 } volume_t;
 
 struct filter_obj {
+    ON_Plane* plane;
     ON_Sphere* sphere;
     ON_Cylinder* cylinder;
     ON_Cone* cone;
