@@ -38,19 +38,46 @@ GetCurveType(ON_Curve *curve)
 }
 
 surface_t
-GetSurfaceType(const ON_Surface *in_surface)
+GetSurfaceType(const ON_Surface *in_surface, struct filter_obj *obj)
 {
     surface_t ret = SURFACE_GENERAL;
     ON_Surface *surface = in_surface->Duplicate();
     if (surface->IsPlanar(NULL, 0.01)) ret = SURFACE_PLANE;
-    if (surface->IsSphere(NULL, 0.01)) ret = SURFACE_SPHERE;
-    if (surface->IsCylinder(NULL, 0.01)) ret = SURFACE_CYLINDER;
-    if (surface->IsCone(NULL, 0.01)) ret = SURFACE_CONE;
-    if (surface->IsTorus(NULL, 0.01)) ret = SURFACE_TORUS;
+    if (obj) {
+	filter_obj_init(obj);
+	if (surface->IsSphere(obj->sphere , 0.01)) ret = SURFACE_SPHERE;
+	if (surface->IsCylinder(obj->cylinder , 0.01)) ret = SURFACE_CYLINDER;
+	if (surface->IsCone(obj->cone, 0.01)) ret = SURFACE_CONE;
+	if (surface->IsTorus(obj->torus, 0.01)) ret = SURFACE_TORUS;
+    } else {
+	if (surface->IsSphere(NULL, 0.01)) ret = SURFACE_SPHERE;
+	if (surface->IsCylinder(NULL, 0.01)) ret = SURFACE_CYLINDER;
+	if (surface->IsCone(NULL, 0.01)) ret = SURFACE_CONE;
+	if (surface->IsTorus(NULL, 0.01)) ret = SURFACE_TORUS;
+    }
     delete surface;
     return ret;
 }
 
+void
+filter_obj_init(struct filter_obj *obj)
+{
+    if (!obj) return;
+    if (!obj->sphere) obj->sphere = new ON_Sphere;
+    if (!obj->cylinder) obj->cylinder = new ON_Cylinder;
+    if (!obj->cone) obj->cone = new ON_Cone;
+    if (!obj->torus) obj->torus = new ON_Torus;
+}
+
+void
+filter_obj_free(struct filter_obj *obj)
+{
+    if (!obj) return;
+    delete obj->sphere;
+    delete obj->cylinder;
+    delete obj->cone;
+    delete obj->torus;
+}
 
 int
 subbrep_is_planar(struct subbrep_object_data *data)
@@ -82,7 +109,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data)
     for (int i = 0; i < data->faces_cnt; i++) {
 	int f_ind = data->faces[i];
 	ON_BrepFace *used_face = &(data->brep->m_F[f_ind]);
-        int surface_type = (int)GetSurfaceType(used_face->SurfaceOf());
+        int surface_type = (int)GetSurfaceType(used_face->SurfaceOf(), NULL);
         switch (surface_type) {
             case SURFACE_PLANE:
                 planar_surfaces.insert(f_ind);
@@ -539,7 +566,7 @@ subbrep_highest_order_face(struct subbrep_object_data *data)
     int hofo = 0;
     for (int f_it = 0; f_it < data->faces_cnt; f_it++) {
 	ON_BrepFace *used_face = &(data->brep->m_F[f_it]);
-	int surface_type = (int)GetSurfaceType(used_face->SurfaceOf());
+	int surface_type = (int)GetSurfaceType(used_face->SurfaceOf(), NULL);
 	switch (surface_type) {
 	    case SURFACE_PLANE:
 		planar++;
@@ -604,9 +631,9 @@ subbrep_highest_order_face(struct subbrep_object_data *data)
 }
 
 volume_t
-get_allowed_surface_types(ON_BrepFace *face, std::set<int> *allowed)
+get_allowed_surface_types(ON_BrepFace *face, std::set<int> *allowed, struct filter_obj *obj)
 {
-    int surface_type = (int)GetSurfaceType(face->SurfaceOf());
+    int surface_type = (int)GetSurfaceType(face->SurfaceOf(), obj);
     // If we've got a planar face, we can stop now - planar faces
     // are determative of volume type only when *all* faces are planar,
     // and that case is handled elsewhere - anything is "allowed".
@@ -637,6 +664,8 @@ get_allowed_surface_types(ON_BrepFace *face, std::set<int> *allowed)
 
     return BREP;
 }
+
+
 
 void
 add_loops_from_face(ON_BrepFace *face, struct subbrep_object_data *data, std::set<int> *loops, std::queue<int> *local_loops, std::set<int> *processed_loops)
@@ -680,9 +709,11 @@ subbrep_split(struct subbrep_object_data *data)
 	std::set<int>::iterator s_it;
 	std::set<int> allowed_surface_types;
 	volume_t vol_type;
+	struct filter_obj *filters;
+	BU_GET(filters, struct filter_obj);
 
 	ON_BrepFace *face = &(data->brep->m_F[data->faces[i]]);
-	vol_type = get_allowed_surface_types(face, &allowed_surface_types);
+	vol_type = get_allowed_surface_types(face, &allowed_surface_types, filters);
 	if (vol_type == BREP) continue;
 
 	if (processed_faces.find(data->faces[i]) == processed_faces.end()) {
@@ -706,7 +737,7 @@ subbrep_split(struct subbrep_object_data *data)
 				int fio = edge.Trim(j)->FaceIndexOf();
 				if (fio != -1 && processed_faces.find(fio) == processed_faces.end()) {
 				    ON_BrepFace *fface = &(data->brep->m_F[fio]);
-				    int fio_surface_type = (int)GetSurfaceType(fface->SurfaceOf());
+				    int fio_surface_type = (int)GetSurfaceType(fface->SurfaceOf(), NULL);
 				    // If fio meets the criteria for the candidate shape, add it.  Otherwise,
 				    // it's not part of this shape candidate
 				    if (allowed_surface_types.find(fio_surface_type) != allowed_surface_types.end()) {
@@ -743,6 +774,7 @@ subbrep_split(struct subbrep_object_data *data)
 		bu_ptbl_ins(data->children, (long *)new_obj);
 	    }
 	}
+	BU_PUT(filters, struct filter_obj);
     }
     if (subbrep_keys.size() == 0) {
 	data->type = BREP;

@@ -39,8 +39,19 @@ typedef enum {
     BREP /* A brep is a complex solid that cannot be represented by CSG */
 } volume_t;
 
+struct filter_obj {
+    ON_Sphere* sphere;
+    ON_Cylinder* cylinder;
+    ON_Cone* cone;
+    ON_Torus* torus;
+};
+void filter_obj_init(struct filter_obj *);
+void filter_obj_free(struct filter_obj *);
+
 curve_t GetCurveType(ON_Curve *curve);
 surface_t GetSurfaceType(ON_Surface *surface);
+
+
 
 /* Structure for holding parameters corresponding
  * to a csg primitive.  Not all parameters will be
