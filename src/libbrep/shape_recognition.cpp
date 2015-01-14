@@ -67,6 +67,8 @@ filter_obj_init(struct filter_obj *obj)
     if (!obj->cylinder) obj->cylinder = new ON_Cylinder;
     if (!obj->cone) obj->cone = new ON_Cone;
     if (!obj->torus) obj->torus = new ON_Torus;
+    if (!obj->allowed) obj->allowed = new std::set<int>;
+    obj->type = BREP;
 }
 
 void
@@ -77,6 +79,7 @@ filter_obj_free(struct filter_obj *obj)
     delete obj->cylinder;
     delete obj->cone;
     delete obj->torus;
+    delete obj->allowed;
 }
 
 int
@@ -630,42 +633,53 @@ subbrep_highest_order_face(struct subbrep_object_data *data)
     return hof;
 }
 
-volume_t
-get_allowed_surface_types(ON_BrepFace *face, std::set<int> *allowed, struct filter_obj *obj)
+void
+set_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
 {
+    if (!obj) return;
+    filter_obj_init(obj);
     int surface_type = (int)GetSurfaceType(face->SurfaceOf(), obj);
     // If we've got a planar face, we can stop now - planar faces
     // are determative of volume type only when *all* faces are planar,
     // and that case is handled elsewhere - anything is "allowed".
-    if (surface_type == SURFACE_PLANE) return BREP;
+    if (surface_type == SURFACE_PLANE) obj->type = BREP;
 
     // If we've got a general surface, anything is allowed
-    if (surface_type == SURFACE_GENERAL) return BREP;
+    if (surface_type == SURFACE_GENERAL) obj->type = BREP;
 
     if (surface_type == SURFACE_CYLINDRICAL_SECTION || surface_type == SURFACE_CYLINDER) {
-	(*allowed).insert(SURFACE_CYLINDRICAL_SECTION);
-	(*allowed).insert(SURFACE_CYLINDER);
-	(*allowed).insert(SURFACE_PLANE);
-	return CYLINDER;
+	obj->allowed->insert(SURFACE_CYLINDRICAL_SECTION);
+	obj->allowed->insert(SURFACE_CYLINDER);
+	obj->allowed->insert(SURFACE_PLANE);
+	obj->type = CYLINDER;
     }
 
     if (surface_type == SURFACE_CONE) {
-	(*allowed).insert(SURFACE_CONE);
-	(*allowed).insert(SURFACE_PLANE);
-	return CONE;
+	obj->allowed->insert(SURFACE_CONE);
+	obj->allowed->insert(SURFACE_PLANE);
+	obj->type = CONE;
     }
 
     if (surface_type == SURFACE_SPHERICAL_SECTION || surface_type == SURFACE_SPHERE) {
-	(*allowed).insert(SURFACE_SPHERICAL_SECTION);
-	(*allowed).insert(SURFACE_SPHERE);
-	(*allowed).insert(SURFACE_PLANE);
-	return SPHERE;
+	obj->allowed->insert(SURFACE_SPHERICAL_SECTION);
+	obj->allowed->insert(SURFACE_SPHERE);
+	obj->allowed->insert(SURFACE_PLANE);
+	obj->type = SPHERE;
     }
-
-    return BREP;
 }
 
-
+int
+apply_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
+{
+    int fio_surface_type = (int)GetSurfaceType(face->SurfaceOf(), NULL);
+    // If fio meets the criteria for the candidate shape, add it.  Otherwise,
+    // it's not part of this shape candidate
+    if (obj->allowed->find(fio_surface_type) != obj->allowed->end()) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
 
 void
 add_loops_from_face(ON_BrepFace *face, struct subbrep_object_data *data, std::set<int> *loops, std::queue<int> *local_loops, std::set<int> *processed_loops)
@@ -707,14 +721,12 @@ subbrep_split(struct subbrep_object_data *data)
 	std::queue<int> local_loops;
 	std::set<int> processed_loops;
 	std::set<int>::iterator s_it;
-	std::set<int> allowed_surface_types;
-	volume_t vol_type;
 	struct filter_obj *filters;
 	BU_GET(filters, struct filter_obj);
 
 	ON_BrepFace *face = &(data->brep->m_F[data->faces[i]]);
-	vol_type = get_allowed_surface_types(face, &allowed_surface_types, filters);
-	if (vol_type == BREP) continue;
+	set_filter_obj(face, filters);
+	if (filters->type == BREP) continue;
 
 	if (processed_faces.find(data->faces[i]) == processed_faces.end()) {
 	    processed_faces.insert(data->faces[i]);
@@ -737,10 +749,9 @@ subbrep_split(struct subbrep_object_data *data)
 				int fio = edge.Trim(j)->FaceIndexOf();
 				if (fio != -1 && processed_faces.find(fio) == processed_faces.end()) {
 				    ON_BrepFace *fface = &(data->brep->m_F[fio]);
-				    int fio_surface_type = (int)GetSurfaceType(fface->SurfaceOf(), NULL);
 				    // If fio meets the criteria for the candidate shape, add it.  Otherwise,
 				    // it's not part of this shape candidate
-				    if (allowed_surface_types.find(fio_surface_type) != allowed_surface_types.end()) {
+				    if (apply_filter_obj(fface, filters)) {
 					// TODO - more testing needs to be done here...  get_allowed_surface_types
 					// returns the volume_t, use it to do some testing to evaluate
 					// things like normals and shared axis
@@ -769,7 +780,7 @@ subbrep_split(struct subbrep_object_data *data)
 		new_obj->fol_cnt = 0;
 		new_obj->fil_cnt = 0;
 
-		data->type = vol_type;
+		data->type = filters->type;
 
 		bu_ptbl_ins(data->children, (long *)new_obj);
 	    }

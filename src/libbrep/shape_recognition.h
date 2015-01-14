@@ -44,6 +44,8 @@ struct filter_obj {
     ON_Cylinder* cylinder;
     ON_Cone* cone;
     ON_Torus* torus;
+    volume_t type;
+    std::set<int> *allowed;
 };
 void filter_obj_init(struct filter_obj *);
 void filter_obj_free(struct filter_obj *);
