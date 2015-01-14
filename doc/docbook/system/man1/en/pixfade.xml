@@ -20,8 +20,11 @@
     <arg choice='opt'>-f <replaceable>fraction</replaceable></arg>
     <arg choice='opt'>-m <replaceable>max</replaceable></arg>
     <arg choice='opt'>-p <replaceable>percentage</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>height</replaceable></arg>
     <arg choice='opt'><replaceable>infile.pix</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>outfile.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
