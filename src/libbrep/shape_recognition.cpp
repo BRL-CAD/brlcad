@@ -311,6 +311,21 @@ face_set_key(std::set<int> fset)
     return key;
 }
 
+void
+set_to_array(int **array, int *array_cnt, std::set<int> *set)
+{
+    std::set<int>::iterator s_it;
+    int i = 0;
+    (*array_cnt) = set->size();
+    if ((*array_cnt) > 0) {
+	(*array) = (int *)bu_calloc((*array_cnt), sizeof(int), "array");
+	for (s_it = set->begin(); s_it != set->end(); s_it++) {
+	    (*array)[i] = *s_it;
+	    i++;
+	}
+    }
+}
+
 struct bu_ptbl *
 find_subbreps(ON_Brep *brep)
 {
@@ -373,60 +388,16 @@ find_subbreps(ON_Brep *brep)
 
 	/* If we haven't seen this particular subset before, add it */
 	if (subbrep_keys.find(key) == subbrep_keys.end()) {
-	    int j = 0;
 	    subbrep_keys.insert(key);
 	    struct subbrep_object_data *new_obj;
 	    BU_GET(new_obj, struct subbrep_object_data);
 	    subbrep_object_init(new_obj, brep);
 	    bu_vls_sprintf(new_obj->key, "%s", key.c_str());
-	    new_obj->faces_cnt = faces.size();
-	    if (new_obj->faces_cnt > 0) {
-		new_obj->faces = (int *)bu_calloc(new_obj->faces_cnt, sizeof(int), "faces array");
-		for (s_it = faces.begin(); s_it != faces.end(); s_it++) {
-		    new_obj->faces[j] = *s_it;
-		    j++;
-		}
-	    }
-	    j = 0;
-	    new_obj->loops_cnt = loops.size();
-	    if (new_obj->loops_cnt > 0) {
-		new_obj->loops_cnt = loops.size();
-		new_obj->loops = (int *)bu_calloc(new_obj->loops_cnt, sizeof(int), "loops array");
-		for (s_it = loops.begin(); s_it != loops.end(); s_it++) {
-		    new_obj->loops[j] = *s_it;
-		    j++;
-		}
-	    }
-	    j = 0;
-	    new_obj->edges_cnt = edges.size();
-	    if (new_obj->edges_cnt > 0) {
-		new_obj->edges_cnt = edges.size();
-		new_obj->edges = (int *)bu_calloc(new_obj->edges_cnt, sizeof(int), "edges array");
-		for (s_it = edges.begin(); s_it != edges.end(); s_it++) {
-		    new_obj->edges[j] = *s_it;
-		    j++;
-		}
-	    }
-	    j = 0;
-	    new_obj->fol_cnt = fol.size();
-	    if (new_obj->fol_cnt > 0) {
-		new_obj->fol_cnt = fol.size();
-		new_obj->fol = (int *)bu_calloc(new_obj->fol_cnt, sizeof(int), "fol array");
-		for (s_it = fol.begin(); s_it != fol.end(); s_it++) {
-		    new_obj->fol[j] = *s_it;
-		    j++;
-		}
-	    }
-	    j = 0;
-	    new_obj->fil_cnt = fil.size();
-	    if (new_obj->fil_cnt > 0) {
-		new_obj->fil_cnt = fil.size();
-		new_obj->fil = (int *)bu_calloc(new_obj->fil_cnt, sizeof(int), "fil array");
-		for (s_it = fil.begin(); s_it != fil.end(); s_it++) {
-		    new_obj->fil[j] = *s_it;
-		    j++;
-		}
-	    }
+	    set_to_array(&(new_obj->faces), &(new_obj->faces_cnt), &faces);
+	    set_to_array(&(new_obj->loops), &(new_obj->loops_cnt), &loops);
+	    set_to_array(&(new_obj->edges), &(new_obj->edges_cnt), &edges);
+	    set_to_array(&(new_obj->fol), &(new_obj->fol_cnt), &fol);
+	    set_to_array(&(new_obj->fil), &(new_obj->fil_cnt), &fil);
 
 	    (void)subbrep_shape_recognize(new_obj);
 
@@ -719,13 +690,6 @@ subbrep_split(struct subbrep_object_data *data)
 	    add_loops_from_face(face, data, &loops, &local_loops, &processed_loops);
 	    faces.insert(data->faces[i]);
 
-	    ON_BrepFace *face = &(data->brep->m_F[data->faces[i]]);
-	    faces.insert(data->faces[i]);
-	    processed_faces.insert(data->faces[i]);
-	    add_loops_from_face(face, data, &loops, &local_loops, &processed_loops);
-	    vol_type = get_allowed_surface_types(face, &allowed_surface_types);
-	    if (vol_type == BREP) continue;
-
 	    while(!local_loops.empty()) {
 		int curr_loop = local_loops.front();
 		local_loops.pop();
@@ -763,40 +727,14 @@ subbrep_split(struct subbrep_object_data *data)
 
 	    /* If we haven't seen this particular subset before, add it */
 	    if (subbrep_keys.find(key) == subbrep_keys.end()) {
-		int j = 0;
 		subbrep_keys.insert(key);
 		struct subbrep_object_data *new_obj;
 		BU_GET(new_obj, struct subbrep_object_data);
 		subbrep_object_init(new_obj, data->brep);
 		bu_vls_sprintf(new_obj->key, "%s", key.c_str());
-		new_obj->faces_cnt = faces.size();
-		if (new_obj->faces_cnt > 0) {
-		    new_obj->faces = (int *)bu_calloc(new_obj->faces_cnt, sizeof(int), "faces array");
-		    for (s_it = faces.begin(); s_it != faces.end(); s_it++) {
-			new_obj->faces[j] = *s_it;
-			j++;
-		    }
-		}
-		j = 0;
-		new_obj->loops_cnt = loops.size();
-		if (new_obj->loops_cnt > 0) {
-		    new_obj->loops_cnt = loops.size();
-		    new_obj->loops = (int *)bu_calloc(new_obj->loops_cnt, sizeof(int), "loops array");
-		    for (s_it = loops.begin(); s_it != loops.end(); s_it++) {
-			new_obj->loops[j] = *s_it;
-			j++;
-		    }
-		}
-		j = 0;
-		new_obj->edges_cnt = edges.size();
-		if (new_obj->edges_cnt > 0) {
-		    new_obj->edges_cnt = edges.size();
-		    new_obj->edges = (int *)bu_calloc(new_obj->edges_cnt, sizeof(int), "edges array");
-		    for (s_it = edges.begin(); s_it != edges.end(); s_it++) {
-			new_obj->edges[j] = *s_it;
-			j++;
-		    }
-		}
+		set_to_array(&(new_obj->faces), &(new_obj->faces_cnt), &faces);
+		set_to_array(&(new_obj->loops), &(new_obj->loops_cnt), &loops);
+		set_to_array(&(new_obj->edges), &(new_obj->edges_cnt), &edges);
 		new_obj->fol_cnt = 0;
 		new_obj->fil_cnt = 0;
 
