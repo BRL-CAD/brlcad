@@ -24,7 +24,7 @@ typedef enum {
     SURFACE_ELLIPSOID,
     SURFACE_TORUS,
     //Insert any new types here
-    SURFACE_GENERAL  /* A curve that does not fit in any of the previous categories */
+    SURFACE_GENERAL  /* A surface that does not fit in any of the previous categories */
 } surface_t;
 
 typedef enum {
@@ -59,8 +59,8 @@ struct subbrep_object_data {
     int *faces;
     int *loops;
     int *edges;
-    int *fol;
-    int *fil;
+    int *fol; /* Faces with outer loops in object loop network */
+    int *fil; /* Faces with only inner loops in object loop network */
     int faces_cnt;
     int loops_cnt;
     int edges_cnt;
