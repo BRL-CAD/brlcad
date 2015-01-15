@@ -965,6 +965,8 @@ static struct tclcad_obj *current_top = TCLCAD_OBJ_NULL;
 
 struct path_edit_params {
     int edit_mode;
+    double dx;
+    double dy;
     mat_t edit_mat;
 };
 
@@ -6245,6 +6247,7 @@ redraw_edited_path(struct bu_hash_entry *entry, void *udata)
 	bu_vls_printf(&tran_x_vls, "%lf", dvec[X]);
 	bu_vls_printf(&tran_y_vls, "%lf", dvec[Y]);
 	bu_vls_printf(&tran_z_vls, "%lf", dvec[Z]);
+	MAT_IDN(params->edit_mat);
 
 	bu_vls_printf(&tcl_cmd, "%s otranslate %s %s %s",
 		      bu_vls_addr(&data->gdvp->gdv_edit_motion_delta_callback),
@@ -8765,10 +8768,8 @@ to_mouse_otranslate(struct ged *gedp,
     /* ged_otranslate expects things to be in local units */
     dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
     dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
-    VSET(view, dx, dy, 0.0);
-    bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
-    MAT4X3PNT(model, inv_rot, view);
 
+    VSET(view, dx, dy, 0.0);
     bu_vls_printf(&tran_x_vls, "%lf", model[X]);
     bu_vls_printf(&tran_y_vls, "%lf", model[Y]);
     bu_vls_printf(&tran_z_vls, "%lf", model[Z]);
@@ -8780,7 +8781,6 @@ to_mouse_otranslate(struct ged *gedp,
 	struct path_edit_params *params;
 	int is_entry_new;
 	struct bu_hash_entry *entry;
-	mat_t dmat, prev_mat;
 	vect_t dvec;
 
 	entry = bu_hash_tbl_add(current_top->to_gop->go_edited_paths,
@@ -8790,21 +8790,24 @@ to_mouse_otranslate(struct ged *gedp,
 
 	if (is_entry_new) {
 	    BU_GET(params, struct path_edit_params);
-	    MAT_IDN(params->edit_mat);
 	    params->edit_mode = gdvp->gdv_view->gv_mode;
+	    params->dx = params->dy = 0.0;
 
 	    bu_set_hash_value(entry, (unsigned char *)params);
 	} else {
 	    params = (struct path_edit_params *)bu_get_hash_value(entry);
 	}
 
-	MAT_IDN(dmat);
+	params->dx += dx;
+	params->dy += dy;
+	VSET(view, params->dx, params->dy, 0.0);
+	bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
+	MAT4X3PNT(model, inv_rot, view);
+
+	MAT_IDN(params->edit_mat);
+	MAT4X3PNT(model, inv_rot, view);
 	VSCALE(dvec, model, gedp->ged_wdbp->dbip->dbi_local2base);
-	MAT_DELTAS_VEC(dmat, dvec);
-
-	MAT_COPY(prev_mat, params->edit_mat);
-	bn_mat_mul(params->edit_mat, prev_mat, dmat);
-
+	MAT_DELTAS_VEC(params->edit_mat, dvec);
 
 	to_refresh_view(gdvp);
     } else {
