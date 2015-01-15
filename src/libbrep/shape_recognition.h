@@ -52,6 +52,7 @@ struct filter_obj {
     ON_Cylinder* cylinder;
     ON_Cone* cone;
     ON_Torus* torus;
+    surface_t stype;
     volume_t type;
 };
 void filter_obj_init(struct filter_obj *);
@@ -96,6 +97,9 @@ struct subbrep_object_data {
 
 void subbrep_object_init(struct subbrep_object_data *obj, ON_Brep *brep);
 void subbrep_object_free(struct subbrep_object_data *obj);
+
+int cylindrical_loop_planar_vertices(struct subbrep_object_data *data, int face_index);
+int cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index);
 
 int subbrep_split(struct subbrep_object_data *data);
 

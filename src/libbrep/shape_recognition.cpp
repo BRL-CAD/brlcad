@@ -313,10 +313,10 @@ volume_t
 subbrep_shape_recognize(struct subbrep_object_data *data)
 {
     if (subbrep_is_planar(data)) return PLANAR_VOLUME;
-    if (BU_STR_EQUAL(bu_vls_addr(data->key), "390_391_418_591_592.s")) {
+    //if (BU_STR_EQUAL(bu_vls_addr(data->key), "390_391_418_591_592.s")) {
     if (subbrep_is_cylinder(data, BREP_CYLINDRICAL_TOL)) return CYLINDER;
     if (subbrep_split(data)) return COMB;
-    }
+    //}
     return BREP;
 }
 
@@ -537,54 +537,7 @@ print_subbrep_object(struct subbrep_object_data *data, const char *offset)
 }
 
 
-int
-cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index)
-{
-    std::set<int> verts;
-    ON_BrepFace *face = &(data->brep->m_F[face_index]);
-    for(int i = 0; i < face->LoopCount(); i++) {
-	int loop_find = 0;
-	for(int j = 0; j < data->loops_cnt; j++) {
-	    if (data->loops[j] == face->m_li[i]) loop_find = 1;
-	}
-        if (loop_find) {
-            //std::cout << "loop " << face->m_li[i] << " on face " << face_index << " is active, processing...\n";
-            ON_BrepLoop *loop = &(data->brep->m_L[face->m_li[i]]);
-            for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-                ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
-                if (trim.m_ei != -1) {
-                    ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-                    verts.insert(edge.Vertex(0)->m_vertex_index);
-                    verts.insert(edge.Vertex(1)->m_vertex_index);
-                }
-            }
-            if (verts.size() == 3) {
-                //std::cout << "Three points - planar.\n";
-                return 1;
-            } else if (verts.size() >= 3) {
-                std::set<int>::iterator v_it = verts.begin();
-                ON_3dPoint p1 = data->brep->m_V[*v_it].Point();
-                v_it++;
-                ON_3dPoint p2 = data->brep->m_V[*v_it].Point();
-                v_it++;
-                ON_3dPoint p3 = data->brep->m_V[*v_it].Point();
-                ON_Plane test_plane(p1, p2, p3);
-                for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-                    if (!NEAR_ZERO(test_plane.DistanceTo(data->brep->m_V[*v_it].Point()), BREP_PLANAR_TOL)) {
-                        //std::cout << "vertex " << *v_it << " too far from plane, not planar: " << test_plane.DistanceTo(data->brep->m_V[*v_it].Point()) << "\n";
-                        return 0;
-                    }
-                }
-                //std::cout << verts.size() << " points, planar\n";
-                return 1;
-            } else {
-                //std::cout << "Closed single curve loop - planar only if surface is.";
-                return 0;
-            }
-        }
-    }
-    return 0;
-}
+
 
 
 int
@@ -669,25 +622,81 @@ set_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
 {
     if (!obj) return;
     filter_obj_init(obj);
-    int surface_type = (int)GetSurfaceType(face->SurfaceOf(), obj);
+    obj->stype = GetSurfaceType(face->SurfaceOf(), obj);
     // If we've got a planar face, we can stop now - planar faces
     // are determative of volume type only when *all* faces are planar,
     // and that case is handled elsewhere - anything is "allowed".
-    if (surface_type == SURFACE_PLANE) obj->type = BREP;
+    if (obj->stype == SURFACE_PLANE) obj->type = BREP;
 
     // If we've got a general surface, anything is allowed
-    if (surface_type == SURFACE_GENERAL) obj->type = BREP;
+    if (obj->stype == SURFACE_GENERAL) obj->type = BREP;
 
-    if (surface_type == SURFACE_CYLINDRICAL_SECTION || surface_type == SURFACE_CYLINDER) obj->type = CYLINDER;
+    if (obj->stype == SURFACE_CYLINDRICAL_SECTION || obj->stype == SURFACE_CYLINDER) obj->type = CYLINDER;
 
-    if (surface_type == SURFACE_CONE) obj->type = CONE;
+    if (obj->stype == SURFACE_CONE) obj->type = CONE;
 
-    if (surface_type == SURFACE_SPHERICAL_SECTION || surface_type == SURFACE_SPHERE) obj->type = SPHERE;
+    if (obj->stype == SURFACE_SPHERICAL_SECTION || obj->stype == SURFACE_SPHERE) obj->type = SPHERE;
 
 }
 
 int
-apply_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
+cylindrical_loop_planar_vertices(ON_BrepFace *face, int loop_index)
+{
+    std::set<int> verts;
+    ON_Brep *brep = face->Brep();
+    ON_BrepLoop *loop = &(brep->m_L[loop_index]);
+    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	ON_BrepTrim& trim = brep->m_T[loop->m_ti[ti]];
+	if (trim.m_ei != -1) {
+	    ON_BrepEdge& edge = brep->m_E[trim.m_ei];
+	    verts.insert(edge.Vertex(0)->m_vertex_index);
+	    verts.insert(edge.Vertex(1)->m_vertex_index);
+	}
+    }
+    if (verts.size() == 3) {
+	//std::cout << "Three points - planar.\n";
+	return 1;
+    } else if (verts.size() >= 3) {
+	std::set<int>::iterator v_it = verts.begin();
+	ON_3dPoint p1 = brep->m_V[*v_it].Point();
+	v_it++;
+	ON_3dPoint p2 = brep->m_V[*v_it].Point();
+	v_it++;
+	ON_3dPoint p3 = brep->m_V[*v_it].Point();
+	ON_Plane test_plane(p1, p2, p3);
+	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	    if (!NEAR_ZERO(test_plane.DistanceTo(brep->m_V[*v_it].Point()), BREP_PLANAR_TOL)) {
+		//std::cout << "vertex " << *v_it << " too far from plane, not planar: " << test_plane.DistanceTo(brep->m_V[*v_it].Point()) << "\n";
+		return 0;
+	    }
+	}
+	//std::cout << verts.size() << " points, planar\n";
+	return 1;
+    } else {
+	//std::cout << "Closed single curve loop - planar only if surface is.";
+	return 0;
+    }
+    return 0;
+}
+
+int
+cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index)
+{
+    ON_BrepFace *face = &(data->brep->m_F[face_index]);
+    for(int i = 0; i < face->LoopCount(); i++) {
+	int loop_find = 0;
+	for(int j = 0; j < data->loops_cnt; j++) {
+	    if (data->loops[j] == face->m_li[i]) loop_find = 1;
+	}
+        if (loop_find) {
+	    return cylindrical_loop_planar_vertices(face, face->m_li[i]);
+        }
+    }
+    return 0;
+}
+
+int
+apply_filter_obj(ON_BrepFace *face, int loop_index, struct filter_obj *obj)
 {
     int ret = 1;
     struct filter_obj *local_obj;
@@ -728,10 +737,20 @@ apply_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
 	    }
 	}
 	if (surface_type == SURFACE_CYLINDER || surface_type == SURFACE_CYLINDRICAL_SECTION ) {
+	    // Make sure the surfaces are on the same cylinder
 	    if (obj->cylinder->circle.Center().DistanceTo(local_obj->cylinder->circle.Center()) > BREP_CYLINDRICAL_TOL) {
 	       ret = 0;
 	       goto filter_done;
 	    }
+
+	    // If something is funny with the loop, we can't (yet) handle it
+#if 0
+	    if (!cylindrical_loop_planar_vertices(face, loop_index)) {
+	       ret = 0;
+	       std::cout << "weird loop in cylindrical face\n";
+	       goto filter_done;
+	    }
+#endif
 	}
     }
     if (obj->type == CONE) {
@@ -792,7 +811,16 @@ subbrep_split(struct subbrep_object_data *data)
 
 	ON_BrepFace *face = &(data->brep->m_F[data->faces[i]]);
 	set_filter_obj(face, filters);
-	if (filters->type == BREP) continue;
+	if (filters->type == BREP) {
+	    filter_obj_free(filters);
+	    BU_PUT(filters, struct filter_obj);
+	    continue;
+	}
+	if (filters->stype == SURFACE_PLANE) {
+	    filter_obj_free(filters);
+	    BU_PUT(filters, struct filter_obj);
+	    continue;
+	}
 	faces.insert(data->faces[i]);
 	std::cout << "working: " << data->faces[i] << "\n";
 	locally_processed_faces.insert(data->faces[i]);
@@ -818,7 +846,7 @@ subbrep_split(struct subbrep_object_data *data)
 				ON_BrepFace *fface = &(data->brep->m_F[fio]);
 				// If fio meets the criteria for the candidate shape, add it.  Otherwise,
 				// it's not part of this shape candidate
-				if (apply_filter_obj(fface, filters)) {
+				if (apply_filter_obj(fface, curr_loop, filters)) {
 				    // TODO - more testing needs to be done here...  get_allowed_surface_types
 				    // returns the volume_t, use it to do some testing to evaluate
 				    // things like normals and shared axis
@@ -852,6 +880,7 @@ subbrep_split(struct subbrep_object_data *data)
 
 	    bu_ptbl_ins(data->children, (long *)new_obj);
 	}
+	filter_obj_free(filters);
 	BU_PUT(filters, struct filter_obj);
     }
     if (subbrep_keys.size() == 0) {
