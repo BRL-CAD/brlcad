@@ -265,40 +265,38 @@ WorldObject::create(db_i &db_instance, directory &vdirectory, mat_t matrix,
 	    }
     }
 
-    WorldObject *object = new WorldObject(db_instance, vdirectory, matrix,
-					  tree_updater, bounding_box.first, bounding_box.second, mass);
+    WorldObject *object = new WorldObject(vdirectory, matrix, tree_updater,
+					  bounding_box.first, bounding_box.second, mass);
     object->m_rigid_body.setLinearVelocity(linear_velocity);
     object->m_rigid_body.setAngularVelocity(angular_velocity);
     return object;
 }
 
 
-WorldObject::WorldObject(db_i &db_instance, directory &vdirectory,
-			 mat_t matrix, TreeUpdater &tree_updater, btVector3 bounding_box_pos,
+WorldObject::WorldObject(directory &vdirectory, mat_t matrix,
+			 TreeUpdater &tree_updater, btVector3 bounding_box_pos,
 			 btVector3 bounding_box_dims, btScalar mass) :
-    m_db_instance(db_instance),
-    m_directory(vdirectory),
     m_world(NULL),
     m_motion_state(matrix, bounding_box_pos, tree_updater),
-    m_collision_shape(m_directory.d_namep, bounding_box_dims / 2.0),
+    m_collision_shape(vdirectory.d_namep, bounding_box_dims / 2.0),
     m_rigid_body(build_construction_info(m_motion_state, m_collision_shape, mass))
 {}
 
 
 WorldObject::~WorldObject()
 {
-    if (m_world) m_world->remove_rigid_body(m_rigid_body);
+    if (m_world) m_world->removeRigidBody(&m_rigid_body);
 }
 
 
 void
-WorldObject::add_to_world(PhysicsWorld &world)
+WorldObject::add_to_world(btDiscreteDynamicsWorld &world)
 {
     if (m_world)
 	throw std::runtime_error("already in world");
     else {
 	m_world = &world;
-	m_world->add_rigid_body(m_rigid_body);
+	m_world->addRigidBody(&m_rigid_body);
     }
 }
 

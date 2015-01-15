@@ -40,11 +40,11 @@ namespace
 HIDDEN bool
 path_match(const char *full_path, const char *toplevel_path)
 {
-    for (int i = 0; i < 2; ++i) {
-	full_path = strchr(full_path, '/');
+    if (*full_path++ != '/') return false;
 
-	if (!full_path++) return false;
-    }
+    full_path = strchr(full_path, '/');
+
+    if (!full_path++) return false;
 
     return bu_strncmp(full_path, toplevel_path, strlen(toplevel_path)) == 0;
 }
@@ -55,22 +55,20 @@ check_path(const btCollisionObjectWrapper &body_a_wrap,
 	   const btCollisionObjectWrapper &body_b_wrap,
 	   const bu_ptbl &region_table)
 {
-    const char * const body_a_name =
-	static_cast<const simulate::RtCollisionShape *>
-	(body_a_wrap.getCollisionShape())->get_db_path().c_str();
-    const char * const body_b_name =
-	static_cast<const simulate::RtCollisionShape *>
-	(body_b_wrap.getCollisionShape())->get_db_path().c_str();
+    const std::string body_a_name = static_cast<const simulate::RtCollisionShape *>
+				    (body_a_wrap.getCollisionShape())->get_db_path();
+    const std::string body_b_name = static_cast<const simulate::RtCollisionShape *>
+				    (body_b_wrap.getCollisionShape())->get_db_path();
 
     const char * const region1_name = reinterpret_cast<const region *>(BU_PTBL_GET(
 					  &region_table, 0))->reg_name;
     const char * const region2_name = reinterpret_cast<const region *>(BU_PTBL_GET(
 					  &region_table, 1))->reg_name;
 
-    if (!path_match(region1_name, body_a_name)
-	|| !path_match(region2_name, body_b_name))
-	if (!path_match(region2_name, body_a_name)
-	    || !path_match(region1_name, body_b_name))
+    if (!path_match(region1_name, body_a_name.c_str())
+	|| !path_match(region2_name, body_b_name.c_str()))
+	if (!path_match(region2_name, body_a_name.c_str())
+	    || !path_match(region1_name, body_b_name.c_str()))
 	    return false;
 
     return true;

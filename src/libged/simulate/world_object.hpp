@@ -30,9 +30,6 @@
 
 #include "collision.hpp"
 #include "rt_instance.hpp"
-#include "physics_world.hpp"
-
-#include "vmath.h"
 
 
 namespace simulate
@@ -66,24 +63,20 @@ class WorldObject
 public:
     static WorldObject *create(db_i &db_instance, directory &vdirectory,
 			       mat_t matrix, TreeUpdater &tree_updater);
-
     ~WorldObject();
 
-    void add_to_world(PhysicsWorld &world);
+    void add_to_world(btDiscreteDynamicsWorld &world);
 
 
 private:
     WorldObject(const WorldObject &source);
     WorldObject &operator=(const WorldObject &source);
 
-    WorldObject(db_i &db_instance, directory &vdirectory, mat_t matrix,
-		TreeUpdater &tree_updater, btVector3 bounding_box_pos,
-		btVector3 bounding_box_dims, btScalar mass);
+    WorldObject(directory &vdirectory, mat_t matrix, TreeUpdater &tree_updater,
+		btVector3 bounding_box_pos, btVector3 bounding_box_dims, btScalar mass);
 
 
-    db_i &m_db_instance;
-    directory &m_directory;
-    PhysicsWorld *m_world;
+    btDiscreteDynamicsWorld *m_world;
     MatrixMotionState m_motion_state;
     RtCollisionShape m_collision_shape;
     btRigidBody m_rigid_body;

@@ -29,8 +29,7 @@
 
 #include "common.h"
 
-#include "world_object.hpp"
-#include "rt_instance.hpp"
+#include "simulation.hpp"
 
 #include <sstream>
 #include <stdexcept>
@@ -58,68 +57,6 @@ Target lexical_cast(Source arg,
 }
 
 
-HIDDEN void
-get_tree_objects(db_i &db_instance, tree &vtree,
-		 simulate::TreeUpdater &tree_updater,
-		 std::vector<simulate::WorldObject *> &objects)
-{
-    switch (vtree.tr_op) {
-	case OP_DB_LEAF: {
-	    directory *dir = db_lookup(&db_instance, vtree.tr_l.tl_name, LOOKUP_NOISY);
-
-	    if (!dir) throw std::runtime_error("db_lookup() failed");
-
-	    if (!vtree.tr_l.tl_mat) {
-		vtree.tr_l.tl_mat = static_cast<matp_t>(bu_malloc(sizeof(mat_t), "tl_mat"));
-		MAT_IDN(vtree.tr_l.tl_mat);
-	    }
-
-	    objects.push_back(simulate::WorldObject::create(db_instance, *dir,
-			      vtree.tr_l.tl_mat, tree_updater));
-	    break;
-	}
-
-	case OP_UNION:
-	    get_tree_objects(db_instance, *vtree.tr_b.tb_left, tree_updater, objects);
-	    get_tree_objects(db_instance, *vtree.tr_b.tb_right, tree_updater, objects);
-	    break;
-
-	default:
-	    throw std::invalid_argument("unsupported operation in scene comb");
-    }
-}
-
-
-HIDDEN void
-do_simulate(db_i &db_instance, directory &scene_directory, btScalar seconds)
-{
-    std::vector<simulate::WorldObject *> objects;
-    simulate::PhysicsWorld world;
-    simulate::TreeUpdater tree_updater(db_instance, scene_directory);
-    tree * const vtree = tree_updater.get_tree();
-
-    try {
-	if (vtree) get_tree_objects(db_instance, *vtree, tree_updater, objects);
-
-	for (std::vector<simulate::WorldObject *>::iterator it = objects.begin();
-	     it != objects.end(); ++it)
-	    (*it)->add_to_world(world);
-
-	world.step(seconds);
-    } catch (...) {
-	for (std::vector<simulate::WorldObject *>::iterator it = objects.begin();
-	     it != objects.end(); ++it)
-	    delete *it;
-
-	throw;
-    }
-
-    for (std::vector<simulate::WorldObject *>::iterator it = objects.begin();
-	 it != objects.end(); ++it)
-	delete *it;
-}
-
-
 }
 
 
@@ -135,13 +72,10 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    directory *dir = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
+    directory *dir = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
 
-    if (!dir || dir->d_minor_type != ID_COMBINATION) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: '%s' is not a combination",
-		       argv[0], argv[1]);
+    if (!dir)
 	return GED_ERROR;
-    }
 
     try {
 	btScalar seconds = lexical_cast<btScalar>(argv[2],
@@ -149,7 +83,8 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 
 	if (seconds < 0.0) throw std::runtime_error("invalid value for 'seconds'");
 
-	do_simulate(*gedp->ged_wdbp->dbip, *dir, seconds);
+	simulate::Simulation simulation(*gedp->ged_wdbp->dbip, *dir);
+	simulation.step(seconds);
     } catch (const std::logic_error &e) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], e.what());
 	return GED_ERROR;

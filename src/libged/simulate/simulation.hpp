@@ -1,7 +1,7 @@
-/*               P H Y S I C S _ W O R L D . C P P
+/*                  S I M U L A T I O N . H P P
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2015 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,58 +17,40 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file physics_world.cpp
+/** @file simulation.hpp
  *
  * Brief description
  *
  */
 
 
-#ifdef HAVE_BULLET
+#ifndef SIMULATION_H
+#define SIMULATION_H
 
-#include "common.h"
 
 #include "physics_world.hpp"
+#include "world_object.hpp"
 
 
 namespace simulate
 {
 
 
-PhysicsWorld::PhysicsWorld() :
-    m_broadphase(),
-    m_collision_config(),
-    m_collision_dispatcher(&m_collision_config),
-    m_constraint_solver(),
-    m_world(&m_collision_dispatcher, &m_broadphase, &m_constraint_solver,
-	    &m_collision_config)
-{}
-
-
-PhysicsWorld::~PhysicsWorld()
-{}
-
-
-void
-PhysicsWorld::step(btScalar seconds)
+class Simulation : public PhysicsWorld
 {
-    for (int i = 0; i < 600.0 * seconds; ++i)
-	m_world.stepSimulation(1.0 / 600.0, 6000);
-}
+public:
+    Simulation(db_i &db_instance, directory &vdirectory);
+    virtual ~Simulation();
 
 
-void
-PhysicsWorld::add_rigid_body(btRigidBody &rigid_body)
-{
-    m_world.addRigidBody(&rigid_body);
-}
+private:
+    void get_tree_objects(tree &vtree);
 
-
-void
-PhysicsWorld::remove_rigid_body(btRigidBody &rigid_body)
-{
-    m_world.removeRigidBody(&rigid_body);
-}
+    db_i &m_db_instance;
+    directory &m_directory;
+    TreeUpdater m_tree_updater;
+    std::vector<WorldObject *> m_objects;
+};
 
 
 }
