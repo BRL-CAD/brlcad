@@ -761,6 +761,7 @@ apply_filter_obj(ON_BrepFace *face, int loop_index, struct filter_obj *obj)
     }
 
 filter_done:
+    filter_obj_free(local_obj);
     BU_PUT(local_obj, struct filter_obj);
     return ret;
 }
