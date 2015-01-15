@@ -141,7 +141,7 @@ TreeUpdater::get_rt_instance() const
     if (!m_rt_instance)
 	throw std::runtime_error("rt_new_rti() failed");
 
-    if (rt_gettree(m_rt_instance, m_directory.d_namep) < 0) {
+    if (rt_gettree(m_rt_instance, m_directory.d_namep) != 0) {
 	rt_free_rti(m_rt_instance);
 	m_rt_instance = NULL;
 	throw std::runtime_error("rt_gettree() failed");

@@ -24,11 +24,10 @@
  */
 
 
-#include "common.h"
-
-
 #ifdef HAVE_BULLET
 
+
+#include "common.h"
 
 #include "world_object.hpp"
 #include "rt_instance.hpp"
@@ -165,6 +164,8 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 
 #else
 
+
+#include "common.h"
 
 #include "ged.h"
 

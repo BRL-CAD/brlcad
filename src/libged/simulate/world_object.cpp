@@ -81,15 +81,19 @@ Target lexical_cast(Source arg,
 HIDDEN std::pair<btVector3, btVector3>
 get_bounding_box(db_i &db_instance, directory &dir)
 {
-    point_t bb_min, bb_max;
+    btVector3 bounding_box_min, bounding_box_max;
+    {
+	point_t bb_min, bb_max;
 
-    if (rt_bound_internal(&db_instance, &dir, bb_min, bb_max))
-	throw std::runtime_error("failed to get bounding box");
+	if (rt_bound_internal(&db_instance, &dir, bb_min, bb_max))
+	    throw std::runtime_error("failed to get bounding box");
 
-    btVector3 bounding_box_pos(0.0, 0.0, 0.0), bounding_box_dims(0.0, 0.0, 0.0);
+	VMOVE(bounding_box_min, bb_min);
+	VMOVE(bounding_box_max, bb_max);
+    }
 
-    VSUB2(bounding_box_dims, bb_max, bb_min);
-    VADD2(bounding_box_pos, bounding_box_dims / 2.0, bb_min);
+    btVector3 bounding_box_dims = bounding_box_max - bounding_box_min;
+    btVector3 bounding_box_pos = bounding_box_dims / 2.0 + bounding_box_min;
     return std::make_pair(bounding_box_pos, bounding_box_dims);
 }
 
@@ -116,16 +120,6 @@ get_volume(db_i &db_instance, directory &dir)
     btVector3 bounding_box_dims = get_bounding_box(db_instance, dir).second;
     return bounding_box_dims.getX() * bounding_box_dims.getY() *
 	   bounding_box_dims.getZ();
-}
-
-
-HIDDEN std::string
-serialize_vector(const btVector3 &source)
-{
-    std::ostringstream stream;
-    stream << "<" << source.getX() << ", " << source.getY() << ", " << source.getZ()
-	   << ">";
-    return stream.str();
 }
 
 
@@ -169,10 +163,10 @@ namespace simulate
 {
 
 
-MatrixMotionState::MatrixMotionState(mat_t matrix,
-				     const btVector3 &bounding_box_center, TreeUpdater &tree_updater) :
+MatrixMotionState::MatrixMotionState(mat_t matrix, const btVector3 &origin,
+				     TreeUpdater &tree_updater) :
     m_matrix(matrix),
-    m_origin(bounding_box_center),
+    m_origin(origin),
     m_tree_updater(tree_updater)
 {}
 
@@ -229,7 +223,7 @@ WorldObject::create(db_i &db_instance, directory &vdirectory, mat_t matrix,
 		    TreeUpdater &tree_updater)
 {
     btVector3 linear_velocity(0.0, 0.0, 0.0), angular_velocity(0.0, 0.0, 0.0);
-    btScalar mass = 0.0;
+    btScalar mass;
 
     std::pair<btVector3, btVector3> bounding_box = get_bounding_box(db_instance,
 	    vdirectory);
@@ -286,7 +280,7 @@ WorldObject::WorldObject(db_i &db_instance, directory &vdirectory,
     m_directory(vdirectory),
     m_world(NULL),
     m_motion_state(matrix, bounding_box_pos, tree_updater),
-    m_collision_shape(bounding_box_dims / 2.0),
+    m_collision_shape(m_directory.d_namep, bounding_box_dims / 2.0),
     m_rigid_body(build_construction_info(m_motion_state, m_collision_shape, mass))
 {}
 
@@ -294,23 +288,6 @@ WorldObject::WorldObject(db_i &db_instance, directory &vdirectory,
 WorldObject::~WorldObject()
 {
     if (m_world) m_world->remove_rigid_body(m_rigid_body);
-
-    bu_attribute_value_set obj_avs;
-    BU_AVS_INIT(&obj_avs);
-    AutoDestroyer<bu_attribute_value_set, bu_avs_free> obj_avs_autodestroyer(
-	&obj_avs);
-
-    if (0 == bu_avs_add(&obj_avs, (attribute_prefix + "linear_velocity").c_str(),
-			serialize_vector(m_rigid_body.getLinearVelocity()).c_str()))
-	bu_bomb("bu_avs_add() failed");
-
-    if (0 == bu_avs_add(&obj_avs, (attribute_prefix + "angular_velocity").c_str(),
-			serialize_vector(m_rigid_body.getAngularVelocity()).c_str()))
-	bu_bomb("bu_avs_add() failed");
-
-    if (db5_update_attributes(&m_directory, &obj_avs, &m_db_instance) != 0)
-	bu_bomb("db5_update_attributes() failed");
-
 }
 
 

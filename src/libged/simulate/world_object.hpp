@@ -24,6 +24,10 @@
  */
 
 
+#ifndef WORLD_OBJECT_H
+#define WORLD_OBJECT_H
+
+
 #include "collision.hpp"
 #include "rt_instance.hpp"
 #include "physics_world.hpp"
@@ -38,7 +42,7 @@ namespace simulate
 class MatrixMotionState : public btMotionState
 {
 public:
-    MatrixMotionState(mat_t matrix, const btVector3 &bounding_box_center,
+    MatrixMotionState(mat_t matrix, const btVector3 &origin,
 		      TreeUpdater &tree_updater);
 
     virtual void getWorldTransform(btTransform &dest) const;
@@ -87,6 +91,9 @@ private:
 
 
 }
+
+
+#endif
 
 
 // Local Variables:
