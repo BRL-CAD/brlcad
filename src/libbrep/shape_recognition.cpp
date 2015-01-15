@@ -24,7 +24,7 @@ GetCurveType(ON_Curve *curve)
     if (curve->IsLinear()) return CURVE_LINE;
 
     ON_Arc arc;
-    if (curve->IsArc(NULL, &arc, 0.01)) {
+    if (curve->IsArc(NULL, &arc, BREP_CYLINDRICAL_TOL)) {
 	if (arc.IsCircle()) return CURVE_CIRCLE;
 	ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
 	bu_log("arc's circle: center %f, %f, %f   radius %f\n", circ.Center().x, circ.Center().y, circ.Center().z, circ.Radius());
@@ -32,7 +32,7 @@ GetCurveType(ON_Curve *curve)
     }
 
     // TODO - looks like we need a better test for this...
-    if (curve->IsEllipse(NULL, NULL, 0.01)) return CURVE_ELLIPSE;
+    if (curve->IsEllipse(NULL, NULL, BREP_ELLIPSOIDAL_TOL)) return CURVE_ELLIPSE;
 
     return CURVE_GENERAL;
 }
@@ -44,44 +44,44 @@ GetSurfaceType(const ON_Surface *in_surface, struct filter_obj *obj)
     ON_Surface *surface = in_surface->Duplicate();
     if (obj) {
 	filter_obj_init(obj);
-	if (surface->IsPlanar(obj->plane, 0.01)) {
+	if (surface->IsPlanar(obj->plane, BREP_PLANAR_TOL)) {
 	    ret = SURFACE_PLANE;
 	    goto st_done;
 	}
-	if (surface->IsSphere(obj->sphere , 0.01)) {
+	if (surface->IsSphere(obj->sphere , BREP_SPHERICAL_TOL)) {
 	    ret = SURFACE_SPHERE;
 	    goto st_done;
 	}
-	if (surface->IsCylinder(obj->cylinder , 0.01)) {
+	if (surface->IsCylinder(obj->cylinder , BREP_CYLINDRICAL_TOL)) {
 	    ret = SURFACE_CYLINDER;
 	    goto st_done;
 	}
-	if (surface->IsCone(obj->cone, 0.01)) {
+	if (surface->IsCone(obj->cone, BREP_CONIC_TOL)) {
 	    ret = SURFACE_CONE;
 	    goto st_done;
 	}
-	if (surface->IsTorus(obj->torus, 0.01)) {
+	if (surface->IsTorus(obj->torus, BREP_TOROIDAL_TOL)) {
 	    ret = SURFACE_TORUS;
 	    goto st_done;
 	}
     } else {
-	if (surface->IsPlanar(NULL, 0.01)) {
+	if (surface->IsPlanar(NULL, BREP_PLANAR_TOL)) {
 	    ret = SURFACE_PLANE;
 	    goto st_done;
 	}
-	if (surface->IsSphere(NULL, 0.01)) {
+	if (surface->IsSphere(NULL, BREP_SPHERICAL_TOL)) {
 	    ret = SURFACE_SPHERE;
 	    goto st_done;
 	}
-	if (surface->IsCylinder(NULL, 0.01)) {
+	if (surface->IsCylinder(NULL, BREP_CYLINDRICAL_TOL)) {
 	    ret = SURFACE_CYLINDER;
 	    goto st_done;
 	}
-	if (surface->IsCone(NULL, 0.01)) {
+	if (surface->IsCone(NULL, BREP_CONIC_TOL)) {
 	    ret = SURFACE_CONE;
 	    goto st_done;
 	}
-	if (surface->IsTorus(NULL, 0.01)) {
+	if (surface->IsTorus(NULL, BREP_TOROIDAL_TOL)) {
 	    ret = SURFACE_TORUS;
 	    goto st_done;
 	}
@@ -134,7 +134,7 @@ subbrep_is_planar(struct subbrep_object_data *data)
 
 
 int
-subbrep_is_cylinder(struct subbrep_object_data *data)
+subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
 {
     std::set<int>::iterator f_it;
     std::set<int> planar_surfaces;
@@ -168,11 +168,8 @@ subbrep_is_cylinder(struct subbrep_object_data *data)
     for (f_it = cylindrical_surfaces.begin(); f_it != cylindrical_surfaces.end(); f_it++) {
         ON_Cylinder f_cylinder;
         data->brep->m_F[(*f_it)].SurfaceOf()->IsCylinder(&f_cylinder);
-        ON_3dPoint fca = f_cylinder.Axis();
-        ON_3dPoint ca = cylinder.Axis();
-        if (fca.DistanceTo(ca) > 0.01) return 0;
+	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > BREP_CYLINDRICAL_TOL) return 0;
     }
-
     // Third, see if all planes are coplanar with two and only two planes.
     ON_Plane p1, p2;
     int p2_set = 0;
@@ -188,7 +185,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data)
     }
 
     // Fourth, check that the two planes are parallel to each other.
-    if (p1.Normal().IsParallelTo(p2.Normal(), 0.05) == 0) {
+    if (p1.Normal().IsParallelTo(p2.Normal(), cyl_tol) == 0) {
         std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
         std::cout << "p2 Normal: " << p2.Normal().x << "," << p2.Normal().y << "," << p2.Normal().z << "\n";
         return 0;
@@ -259,7 +256,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data)
     for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
         ON_BrepEdge& edge = data->brep->m_E[*e_it];
         ON_Arc arc;
-        if (edge.EdgeCurveOf()->IsArc(NULL, &arc, 0.01)) {
+        if (edge.EdgeCurveOf()->IsArc(NULL, &arc, cyl_tol)) {
             int assigned = 0;
             ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
             //std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
@@ -269,19 +266,19 @@ subbrep_is_cylinder(struct subbrep_object_data *data)
                 //std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
             } else {
                 if (!arc2_circle_set) {
-                    if (!(NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), 0.1))){
+                    if (!(NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cyl_tol))){
                         arc2_circle_set = 1;
                         set2_c = circ;
                         //std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
                     }
                 }
             }
-            if (NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), 0.1)){
+            if (NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cyl_tol)){
                 arc_set_1.insert(*e_it);
                 assigned = 1;
             }
             if (arc2_circle_set) {
-                if (NEAR_ZERO(circ.Center().DistanceTo(set2_c.Center()), 0.1)){
+                if (NEAR_ZERO(circ.Center().DistanceTo(set2_c.Center()), cyl_tol)){
                     arc_set_2.insert(*e_it);
                     assigned = 1;
                 }
@@ -318,10 +315,10 @@ volume_t
 subbrep_shape_recognize(struct subbrep_object_data *data)
 {
     if (subbrep_is_planar(data)) return PLANAR_VOLUME;
-    if (BU_STR_EQUAL(bu_vls_addr(data->key), "134_429_431_596.s")) {
-    if (subbrep_is_cylinder(data)) return CYLINDER;
+    //if (BU_STR_EQUAL(bu_vls_addr(data->key), "405_406_407_408_409_410_411_412_413_414_415_416_417_418.s")) {
+    if (subbrep_is_cylinder(data, BREP_CYLINDRICAL_TOL)) return CYLINDER;
     if (subbrep_split(data)) return COMB;
-    }
+    //}
     return BREP;
 }
 
@@ -575,7 +572,7 @@ cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index)
                 ON_3dPoint p3 = data->brep->m_V[*v_it].Point();
                 ON_Plane test_plane(p1, p2, p3);
                 for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-                    if (!NEAR_ZERO(test_plane.DistanceTo(data->brep->m_V[*v_it].Point()), 0.01)) {
+                    if (!NEAR_ZERO(test_plane.DistanceTo(data->brep->m_V[*v_it].Point()), BREP_PLANAR_TOL)) {
                         //std::cout << "vertex " << *v_it << " too far from plane, not planar: " << test_plane.DistanceTo(data->brep->m_V[*v_it].Point()) << "\n";
                         return 0;
                     }
@@ -719,17 +716,14 @@ apply_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
     }
     if (obj->type == CYLINDER) {
 	if (fio_surface_type == SURFACE_PLANE) {
-	    if (obj->cylinder->Axis().IsParallelTo(obj->plane->Normal(), 0.01) == 0) {
-		std::cout << "parallel fail\n";
+	    int is_parallel = obj->cylinder->Axis().IsParallelTo(local_obj->plane->Normal(), BREP_PLANAR_TOL);
+	    if (is_parallel == 0) {
 	       ret = 0;
 	       goto filter_done;
 	    }
 	}
 	if (fio_surface_type == SURFACE_CYLINDER || fio_surface_type == SURFACE_CYLINDRICAL_SECTION ) {
-	    ON_3dPoint fca = local_obj->cylinder->Axis();
-	    ON_3dPoint ca = obj->cylinder->Axis();
-	    if (fca.DistanceTo(ca) > 0.01) {
-		std::cout << "shared axis fail\n";
+	    if (obj->cylinder->circle.Center().DistanceTo(local_obj->cylinder->circle.Center()) > BREP_CYLINDRICAL_TOL) {
 	       ret = 0;
 	       goto filter_done;
 	    }
@@ -793,11 +787,11 @@ subbrep_split(struct subbrep_object_data *data)
 	ON_BrepFace *face = &(data->brep->m_F[data->faces[i]]);
 	set_filter_obj(face, filters);
 	if (filters->type == BREP) continue;
+	faces.insert(data->faces[i]);
 
 	if (processed_faces.find(data->faces[i]) == processed_faces.end()) {
 	    processed_faces.insert(data->faces[i]);
 	    add_loops_from_face(face, data, &loops, &local_loops, &processed_loops);
-	    faces.insert(data->faces[i]);
 
 	    while(!local_loops.empty()) {
 		int curr_loop = local_loops.front();
@@ -810,6 +804,7 @@ subbrep_split(struct subbrep_object_data *data)
 			ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
 			ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
 			if (trim.m_ei != -1 && edge.TrimCount() > 1) {
+			    // TODO - add only edges present in subbrep_object_data
 			    edges.insert(trim.m_ei);
 			    for (int j = 0; j < edge.TrimCount(); j++) {
 				int fio = edge.Trim(j)->FaceIndexOf();
@@ -822,7 +817,7 @@ subbrep_split(struct subbrep_object_data *data)
 					// returns the volume_t, use it to do some testing to evaluate
 					// things like normals and shared axis
 					faces.insert(fio);
-					processed_faces.insert(fio);
+					//processed_faces.insert(fio);
 					add_loops_from_face(fface, data, &loops, &local_loops, &processed_loops);
 				    }
 				}
@@ -846,7 +841,7 @@ subbrep_split(struct subbrep_object_data *data)
 		new_obj->fol_cnt = 0;
 		new_obj->fil_cnt = 0;
 
-		data->type = filters->type;
+		new_obj->type = filters->type;
 
 		bu_ptbl_ins(data->children, (long *)new_obj);
 	    }

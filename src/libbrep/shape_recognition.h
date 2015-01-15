@@ -2,6 +2,13 @@
 #include "bu/ptbl.h"
 #include "brep.h"
 
+#define BREP_PLANAR_TOL 0.05
+#define BREP_CYLINDRICAL_TOL 0.05
+#define BREP_CONIC_TOL 0.05
+#define BREP_SPHERICAL_TOL 0.05
+#define BREP_ELLIPSOIDAL_TOL 0.05
+#define BREP_TOROIDAL_TOL 0.05
+
 typedef enum {
     CURVE_POINT = 0,
     CURVE_LINE,
