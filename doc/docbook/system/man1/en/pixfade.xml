@@ -41,7 +41,8 @@ option specifies a nonnegative fractional multiplier which is used
 to scale the red, green, and blue values of each pixel.  In a similar
 way, the
 <option>-p</option>
-option is used to specify the multiplier as a nonnegative percentage.</para>
+option is used to specify the multiplier as a nonnegative percentage.
+The default is <option>-f</option> 0.5 (<option>-p</option> 50.0).</para>
 
 <para>An alternative way to darken the image is to specify a ceiling pixel
 level (0 - 255) with the
