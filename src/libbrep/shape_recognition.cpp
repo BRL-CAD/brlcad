@@ -313,10 +313,10 @@ volume_t
 subbrep_shape_recognize(struct subbrep_object_data *data)
 {
     if (subbrep_is_planar(data)) return PLANAR_VOLUME;
-    //if (BU_STR_EQUAL(bu_vls_addr(data->key), "405_406_407_408_409_410_411_412_413_414_415_416_417_418.s")) {
+    if (BU_STR_EQUAL(bu_vls_addr(data->key), "390_391_418_591_592.s")) {
     if (subbrep_is_cylinder(data, BREP_CYLINDRICAL_TOL)) return CYLINDER;
     if (subbrep_split(data)) return COMB;
-    //}
+    }
     return BREP;
 }
 
@@ -696,18 +696,18 @@ apply_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
 
     std::set<int> allowed;
 
-    if (surface_type == SURFACE_CYLINDRICAL_SECTION || surface_type == SURFACE_CYLINDER) {
+    if (obj->type == CYLINDER) {
 	allowed.insert(SURFACE_CYLINDRICAL_SECTION);
 	allowed.insert(SURFACE_CYLINDER);
 	allowed.insert(SURFACE_PLANE);
     }
 
-    if (surface_type == SURFACE_CONE) {
+    if (obj->type == CONE) {
 	allowed.insert(SURFACE_CONE);
 	allowed.insert(SURFACE_PLANE);
     }
 
-    if (surface_type == SURFACE_SPHERICAL_SECTION || surface_type == SURFACE_SPHERE) {
+    if (obj->type == SPHERE) {
 	allowed.insert(SURFACE_SPHERICAL_SECTION);
 	allowed.insert(SURFACE_SPHERE);
 	allowed.insert(SURFACE_PLANE);
@@ -794,6 +794,7 @@ subbrep_split(struct subbrep_object_data *data)
 	set_filter_obj(face, filters);
 	if (filters->type == BREP) continue;
 	faces.insert(data->faces[i]);
+	std::cout << "working: " << data->faces[i] << "\n";
 	locally_processed_faces.insert(data->faces[i]);
 	add_loops_from_face(face, data, &loops, &local_loops, &processed_loops);
 
@@ -821,6 +822,7 @@ subbrep_split(struct subbrep_object_data *data)
 				    // TODO - more testing needs to be done here...  get_allowed_surface_types
 				    // returns the volume_t, use it to do some testing to evaluate
 				    // things like normals and shared axis
+				    std::cout << "accept: " << fio << "\n";
 				    faces.insert(fio);
 				    locally_processed_faces.insert(fio);
 				    add_loops_from_face(fface, data, &loops, &local_loops, &processed_loops);
