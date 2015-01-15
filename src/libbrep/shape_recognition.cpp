@@ -100,7 +100,6 @@ filter_obj_init(struct filter_obj *obj)
     if (!obj->cylinder) obj->cylinder = new ON_Cylinder;
     if (!obj->cone) obj->cone = new ON_Cone;
     if (!obj->torus) obj->torus = new ON_Torus;
-    if (!obj->allowed) obj->allowed = new std::set<int>;
     obj->type = BREP;
 }
 
@@ -113,7 +112,6 @@ filter_obj_free(struct filter_obj *obj)
     delete obj->cylinder;
     delete obj->cone;
     delete obj->torus;
-    delete obj->allowed;
 }
 
 int
@@ -680,25 +678,12 @@ set_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
     // If we've got a general surface, anything is allowed
     if (surface_type == SURFACE_GENERAL) obj->type = BREP;
 
-    if (surface_type == SURFACE_CYLINDRICAL_SECTION || surface_type == SURFACE_CYLINDER) {
-	obj->allowed->insert(SURFACE_CYLINDRICAL_SECTION);
-	obj->allowed->insert(SURFACE_CYLINDER);
-	obj->allowed->insert(SURFACE_PLANE);
-	obj->type = CYLINDER;
-    }
+    if (surface_type == SURFACE_CYLINDRICAL_SECTION || surface_type == SURFACE_CYLINDER) obj->type = CYLINDER;
 
-    if (surface_type == SURFACE_CONE) {
-	obj->allowed->insert(SURFACE_CONE);
-	obj->allowed->insert(SURFACE_PLANE);
-	obj->type = CONE;
-    }
+    if (surface_type == SURFACE_CONE) obj->type = CONE;
 
-    if (surface_type == SURFACE_SPHERICAL_SECTION || surface_type == SURFACE_SPHERE) {
-	obj->allowed->insert(SURFACE_SPHERICAL_SECTION);
-	obj->allowed->insert(SURFACE_SPHERE);
-	obj->allowed->insert(SURFACE_PLANE);
-	obj->type = SPHERE;
-    }
+    if (surface_type == SURFACE_SPHERICAL_SECTION || surface_type == SURFACE_SPHERE) obj->type = SPHERE;
+
 }
 
 int
@@ -707,22 +692,42 @@ apply_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
     int ret = 1;
     struct filter_obj *local_obj;
     BU_GET(local_obj, struct filter_obj);
-    int fio_surface_type = (int)GetSurfaceType(face->SurfaceOf(), local_obj);
+    int surface_type = (int)GetSurfaceType(face->SurfaceOf(), local_obj);
+
+    std::set<int> allowed;
+
+    if (surface_type == SURFACE_CYLINDRICAL_SECTION || surface_type == SURFACE_CYLINDER) {
+	allowed.insert(SURFACE_CYLINDRICAL_SECTION);
+	allowed.insert(SURFACE_CYLINDER);
+	allowed.insert(SURFACE_PLANE);
+    }
+
+    if (surface_type == SURFACE_CONE) {
+	allowed.insert(SURFACE_CONE);
+	allowed.insert(SURFACE_PLANE);
+    }
+
+    if (surface_type == SURFACE_SPHERICAL_SECTION || surface_type == SURFACE_SPHERE) {
+	allowed.insert(SURFACE_SPHERICAL_SECTION);
+	allowed.insert(SURFACE_SPHERE);
+	allowed.insert(SURFACE_PLANE);
+    }
+
     // If the face's surface type is not part of the allowed set for
     // this object type, we're done
-    if (obj->allowed->find(fio_surface_type) == obj->allowed->end()) {
+    if (allowed.find(surface_type) == allowed.end()) {
 	ret = 0;
 	goto filter_done;
     }
     if (obj->type == CYLINDER) {
-	if (fio_surface_type == SURFACE_PLANE) {
+	if (surface_type == SURFACE_PLANE) {
 	    int is_parallel = obj->cylinder->Axis().IsParallelTo(local_obj->plane->Normal(), BREP_PLANAR_TOL);
 	    if (is_parallel == 0) {
 	       ret = 0;
 	       goto filter_done;
 	    }
 	}
-	if (fio_surface_type == SURFACE_CYLINDER || fio_surface_type == SURFACE_CYLINDRICAL_SECTION ) {
+	if (surface_type == SURFACE_CYLINDER || surface_type == SURFACE_CYLINDRICAL_SECTION ) {
 	    if (obj->cylinder->circle.Center().DistanceTo(local_obj->cylinder->circle.Center()) > BREP_CYLINDRICAL_TOL) {
 	       ret = 0;
 	       goto filter_done;
@@ -783,68 +788,67 @@ subbrep_split(struct subbrep_object_data *data)
 	std::set<int>::iterator s_it;
 	struct filter_obj *filters;
 	BU_GET(filters, struct filter_obj);
+	std::set<int> locally_processed_faces;
 
 	ON_BrepFace *face = &(data->brep->m_F[data->faces[i]]);
 	set_filter_obj(face, filters);
 	if (filters->type == BREP) continue;
 	faces.insert(data->faces[i]);
+	locally_processed_faces.insert(data->faces[i]);
+	add_loops_from_face(face, data, &loops, &local_loops, &processed_loops);
 
-	if (processed_faces.find(data->faces[i]) == processed_faces.end()) {
-	    processed_faces.insert(data->faces[i]);
-	    add_loops_from_face(face, data, &loops, &local_loops, &processed_loops);
-
-	    while(!local_loops.empty()) {
-		int curr_loop = local_loops.front();
-		local_loops.pop();
-		if (processed_loops.find(curr_loop) == processed_loops.end()) {
-		    ON_BrepLoop* loop = &(data->brep->m_L[curr_loop]);
-		    loops.insert(curr_loop);
-		    processed_loops.insert(curr_loop);
-		    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-			ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
-			ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-			if (trim.m_ei != -1 && edge.TrimCount() > 1) {
-			    // TODO - add only edges present in subbrep_object_data
-			    edges.insert(trim.m_ei);
-			    for (int j = 0; j < edge.TrimCount(); j++) {
-				int fio = edge.Trim(j)->FaceIndexOf();
-				if (fio != -1 && processed_faces.find(fio) == processed_faces.end()) {
-				    ON_BrepFace *fface = &(data->brep->m_F[fio]);
-				    // If fio meets the criteria for the candidate shape, add it.  Otherwise,
-				    // it's not part of this shape candidate
-				    if (apply_filter_obj(fface, filters)) {
-					// TODO - more testing needs to be done here...  get_allowed_surface_types
-					// returns the volume_t, use it to do some testing to evaluate
-					// things like normals and shared axis
-					faces.insert(fio);
-					//processed_faces.insert(fio);
-					add_loops_from_face(fface, data, &loops, &local_loops, &processed_loops);
-				    }
+	while(!local_loops.empty()) {
+	    int curr_loop = local_loops.front();
+	    local_loops.pop();
+	    if (processed_loops.find(curr_loop) == processed_loops.end()) {
+		ON_BrepLoop* loop = &(data->brep->m_L[curr_loop]);
+		loops.insert(curr_loop);
+		processed_loops.insert(curr_loop);
+		for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		    ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+		    ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+		    if (trim.m_ei != -1 && edge.TrimCount() > 1) {
+			// TODO - add only edges present in subbrep_object_data
+			edges.insert(trim.m_ei);
+			for (int j = 0; j < edge.TrimCount(); j++) {
+			    int fio = edge.Trim(j)->FaceIndexOf();
+			    if (fio != -1 && locally_processed_faces.find(fio) == locally_processed_faces.end()) {
+				std::cout << fio << "\n";
+				ON_BrepFace *fface = &(data->brep->m_F[fio]);
+				// If fio meets the criteria for the candidate shape, add it.  Otherwise,
+				// it's not part of this shape candidate
+				if (apply_filter_obj(fface, filters)) {
+				    // TODO - more testing needs to be done here...  get_allowed_surface_types
+				    // returns the volume_t, use it to do some testing to evaluate
+				    // things like normals and shared axis
+				    faces.insert(fio);
+				    locally_processed_faces.insert(fio);
+				    add_loops_from_face(fface, data, &loops, &local_loops, &processed_loops);
 				}
 			    }
 			}
 		    }
 		}
 	    }
-	    key = face_set_key(faces);
+	}
+	key = face_set_key(faces);
 
-	    /* If we haven't seen this particular subset before, add it */
-	    if (subbrep_keys.find(key) == subbrep_keys.end()) {
-		subbrep_keys.insert(key);
-		struct subbrep_object_data *new_obj;
-		BU_GET(new_obj, struct subbrep_object_data);
-		subbrep_object_init(new_obj, data->brep);
-		bu_vls_sprintf(new_obj->key, "%s", key.c_str());
-		set_to_array(&(new_obj->faces), &(new_obj->faces_cnt), &faces);
-		set_to_array(&(new_obj->loops), &(new_obj->loops_cnt), &loops);
-		set_to_array(&(new_obj->edges), &(new_obj->edges_cnt), &edges);
-		new_obj->fol_cnt = 0;
-		new_obj->fil_cnt = 0;
+	/* If we haven't seen this particular subset before, add it */
+	if (subbrep_keys.find(key) == subbrep_keys.end()) {
+	    subbrep_keys.insert(key);
+	    struct subbrep_object_data *new_obj;
+	    BU_GET(new_obj, struct subbrep_object_data);
+	    subbrep_object_init(new_obj, data->brep);
+	    bu_vls_sprintf(new_obj->key, "%s", key.c_str());
+	    set_to_array(&(new_obj->faces), &(new_obj->faces_cnt), &faces);
+	    set_to_array(&(new_obj->loops), &(new_obj->loops_cnt), &loops);
+	    set_to_array(&(new_obj->edges), &(new_obj->edges_cnt), &edges);
+	    new_obj->fol_cnt = 0;
+	    new_obj->fil_cnt = 0;
 
-		new_obj->type = filters->type;
+	    new_obj->type = filters->type;
 
-		bu_ptbl_ins(data->children, (long *)new_obj);
-	    }
+	    bu_ptbl_ins(data->children, (long *)new_obj);
 	}
 	BU_PUT(filters, struct filter_obj);
     }
