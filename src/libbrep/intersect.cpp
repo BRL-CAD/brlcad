@@ -1814,10 +1814,16 @@ ON_Intersect(const ON_Curve *curveA,
 			}
 			int count = line_t.Count();
 
-			for (int j = 0; j < count; j++) {
-			    if (intersections >= 2) {
-				break;
+			for (int j = 0; j < count && intersections < 2; j++) {
+			    ON_3dPoint line_pt = line.PointAt(line_t[j]);
+
+			    if (intersections > 0 &&
+				event.m_A[0].DistanceTo(line_pt) < isect_tol)
+			    {
+				// skip duplicate intersection point
+				continue;
 			    }
+
 			    // convert from the boxes' domain to the whole surface's domain
 			    double surf_u = 0.0, surf_v = 0.0;
 			    switch (boundary_index[j]) {
@@ -1838,25 +1844,17 @@ ON_Intersect(const ON_Curve *curveA,
 				    surf_v = i->second->m_v.Min();
 				    break;
 			    }
-			    event.m_A[intersections] = line.PointAt(line_t[j]);
+			    event.m_A[intersections] = line_pt;
 			    event.m_B[intersections] = surfaceB->PointAt(surf_u, surf_v);
 			    event.m_a[intersections] = i->first->m_t.ParameterAt(line_t[j]);
 			    event.m_b[2 * intersections] = surf_u;
 			    event.m_b[2 * intersections + 1] = surf_v;
-			    intersections++;
+			    ++intersections;
 			}
 
 			// generate an ON_X_EVENT
 			if (intersections == 0) {
 			    continue;
-			}
-
-			// if we have coincident intersection points,
-			// treat as point intersection, not overlap
-			if (intersections == 2 &&
-			    event.m_A[0].DistanceTo(event.m_A[1]) < isect_tol)
-			{
-			    intersections = 1;
 			}
 
 			if (intersections == 1) {
