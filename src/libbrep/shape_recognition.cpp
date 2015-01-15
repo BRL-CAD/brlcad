@@ -48,18 +48,26 @@ GetSurfaceType(const ON_Surface *in_surface, struct filter_obj *obj)
 	    ret = SURFACE_PLANE;
 	    goto st_done;
 	}
+	delete surface;
+	surface = in_surface->Duplicate();
 	if (surface->IsSphere(obj->sphere , BREP_SPHERICAL_TOL)) {
 	    ret = SURFACE_SPHERE;
 	    goto st_done;
 	}
+	delete surface;
+	surface = in_surface->Duplicate();
 	if (surface->IsCylinder(obj->cylinder , BREP_CYLINDRICAL_TOL)) {
 	    ret = SURFACE_CYLINDER;
 	    goto st_done;
 	}
+	delete surface;
+	surface = in_surface->Duplicate();
 	if (surface->IsCone(obj->cone, BREP_CONIC_TOL)) {
 	    ret = SURFACE_CONE;
 	    goto st_done;
 	}
+	delete surface;
+	surface = in_surface->Duplicate();
 	if (surface->IsTorus(obj->torus, BREP_TOROIDAL_TOL)) {
 	    ret = SURFACE_TORUS;
 	    goto st_done;
@@ -69,18 +77,26 @@ GetSurfaceType(const ON_Surface *in_surface, struct filter_obj *obj)
 	    ret = SURFACE_PLANE;
 	    goto st_done;
 	}
+	delete surface;
+	surface = in_surface->Duplicate();
 	if (surface->IsSphere(NULL, BREP_SPHERICAL_TOL)) {
 	    ret = SURFACE_SPHERE;
 	    goto st_done;
 	}
+	delete surface;
+	surface = in_surface->Duplicate();
 	if (surface->IsCylinder(NULL, BREP_CYLINDRICAL_TOL)) {
 	    ret = SURFACE_CYLINDER;
 	    goto st_done;
 	}
+	delete surface;
+	surface = in_surface->Duplicate();
 	if (surface->IsCone(NULL, BREP_CONIC_TOL)) {
 	    ret = SURFACE_CONE;
 	    goto st_done;
 	}
+	delete surface;
+	surface = in_surface->Duplicate();
 	if (surface->IsTorus(NULL, BREP_TOROIDAL_TOL)) {
 	    ret = SURFACE_TORUS;
 	    goto st_done;
@@ -121,10 +137,7 @@ subbrep_is_planar(struct subbrep_object_data *data)
     // Check surfaces.  If a surface is anything other than a plane the verdict is no.
     // If all surfaces are planes, then the verdict is yes.
     for (i = 0; i < data->faces_cnt; i++) {
-	ON_Plane plane;
-	ON_BrepFace *used_face = &(data->brep->m_F[data->faces[i]]);
-	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
-	if (!temp_surface->IsPlanar(&plane)) return 0;
+	if (GetSurfaceType(data->brep->m_F[data->faces[i]].SurfaceOf(), NULL) != SURFACE_PLANE) return 0;
     }
     data->type = PLANAR_VOLUME;
     return 1;
@@ -162,10 +175,14 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
 
     // Second, check if all cylindrical surfaces share the same axis.
     ON_Cylinder cylinder;
-    data->brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->IsCylinder(&cylinder);
+    ON_Surface *cs = data->brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->Duplicate();
+    cs->IsCylinder(&cylinder);
+    delete cs;
     for (f_it = cylindrical_surfaces.begin(); f_it != cylindrical_surfaces.end(); f_it++) {
         ON_Cylinder f_cylinder;
-        data->brep->m_F[(*f_it)].SurfaceOf()->IsCylinder(&f_cylinder);
+	ON_Surface *fcs = data->brep->m_F[(*f_it)].SurfaceOf()->Duplicate();
+        fcs->IsCylinder(&f_cylinder);
+	delete fcs;
 	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > BREP_CYLINDRICAL_TOL) return 0;
     }
     // Third, see if all planes are coplanar with two and only two planes.
@@ -341,8 +358,12 @@ subbrep_object_free(struct subbrep_object_data *obj)
     BU_PUT(obj->params, struct csg_object_params);
     bu_vls_free(obj->key);
     BU_PUT(obj->key, struct bu_vls);
+    for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){
+	//struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, i);
+	//subbrep_object_free(obj);
+    }
     bu_ptbl_free(obj->children);
-    BU_GET(obj->children, struct bu_ptbl);
+    BU_PUT(obj->children, struct bu_ptbl);
     if (obj->faces) bu_free(obj->faces, "obj faces");
     if (obj->loops) bu_free(obj->loops, "obj loops");
     if (obj->edges) bu_free(obj->edges, "obj edges");
@@ -744,13 +765,11 @@ apply_filter_obj(ON_BrepFace *face, int loop_index, struct filter_obj *obj)
 	    }
 
 	    // If something is funny with the loop, we can't (yet) handle it
-#if 0
 	    if (!cylindrical_loop_planar_vertices(face, loop_index)) {
 	       ret = 0;
 	       std::cout << "weird loop in cylindrical face\n";
 	       goto filter_done;
 	    }
-#endif
 	}
     }
     if (obj->type == CONE) {

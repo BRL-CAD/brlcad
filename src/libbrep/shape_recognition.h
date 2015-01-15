@@ -59,7 +59,7 @@ void filter_obj_init(struct filter_obj *);
 void filter_obj_free(struct filter_obj *);
 
 curve_t GetCurveType(ON_Curve *curve);
-surface_t GetSurfaceType(ON_Surface *surface);
+surface_t GetSurfaceType(const ON_Surface *surface);
 
 
 
