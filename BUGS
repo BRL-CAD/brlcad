@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* pixborder doesn't account for an edge case where the right edge of
+  an image is expected to be colored (except for one pixel on the top
+  edge).  Example:
+
+  pixborder -b "255 0 0" -t "255 255 255" < pix/moss.pix | pix-fb
+
 * report that attempting to change units on a read-only file in MGED
   will not change the units in the file but changes them in MGED,
   resulting in problems with nirt missing geometry it shouldn't miss.
