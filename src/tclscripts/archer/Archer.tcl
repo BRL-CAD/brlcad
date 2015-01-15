@@ -4486,7 +4486,7 @@ proc title_node_handler {node} {
 		    append cmd " $item"
 		}
 	    } else {
-		set cmd "otranslate $pobj $dx $dy $dz"
+		set cmd "gedWrapper otranslate 0 0 1 0 $pobj $dx $dy $dz"
 		set rflag 0
 	    }
 	}

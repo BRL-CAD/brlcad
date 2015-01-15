@@ -6261,8 +6261,6 @@ redraw_edited_path(struct bu_hash_entry *entry, void *udata)
 	bu_vls_free(&tran_z_vls);
     }
 
-    Tcl_Eval(current_top->to_interp, "SetWaitCursor $::ArcherCore::application");
-
     av[0] = "how";
     av[1] = draw_path;
     av[2] = NULL;
@@ -6287,7 +6285,6 @@ redraw_edited_path(struct bu_hash_entry *entry, void *udata)
 	av[4] = NULL;
 	ged_draw(data->gedp, 4, av);
     }
-    Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
 
     *data->need_refresh = 1;
 
@@ -6377,6 +6374,7 @@ to_idle_mode(struct ged *gedp,
     }
 
     /* redraw any edited paths, then clear them from our table */
+    Tcl_Eval(current_top->to_interp, "SetWaitCursor $::ArcherCore::application");
     data.gedp = gedp;
     data.gdvp = gdvp;
     data.need_refresh = &need_refresh;
@@ -6385,6 +6383,7 @@ to_idle_mode(struct ged *gedp,
     bu_hash_tbl_traverse(current_top->to_gop->go_edited_paths, free_path_edit_params_entry, NULL);
     bu_hash_tbl_free(current_top->to_gop->go_edited_paths);
     current_top->to_gop->go_edited_paths = bu_hash_tbl_create(0);
+    Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
 
     if (need_refresh) {
 	to_refresh_all_views(current_top);
