@@ -408,6 +408,14 @@ set_to_array(int **array, int *array_cnt, std::set<int> *set)
     }
 }
 
+void
+array_to_set(std::set<int> *set, int *array, int array_cnt)
+{
+    for (int i = 0; i < array_cnt; i++) {
+	set->insert(array[i]);
+    }
+}
+
 struct bu_ptbl *
 find_subbreps(ON_Brep *brep)
 {
@@ -703,15 +711,12 @@ cylindrical_loop_planar_vertices(ON_BrepFace *face, int loop_index)
 int
 cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index)
 {
+    std::set<int> loops;
+    std::set<int>::iterator l_it;
     ON_BrepFace *face = &(data->brep->m_F[face_index]);
-    for(int i = 0; i < face->LoopCount(); i++) {
-	int loop_find = 0;
-	for(int j = 0; j < data->loops_cnt; j++) {
-	    if (data->loops[j] == face->m_li[i]) loop_find = 1;
-	}
-        if (loop_find) {
-	    return cylindrical_loop_planar_vertices(face, face->m_li[i]);
-        }
+    array_to_set(&loops, data->loops, data->loops_cnt);
+    for(l_it = loops.begin(); l_it != loops.end(); l_it++) {
+	return cylindrical_loop_planar_vertices(face, face->m_li[*l_it]);
     }
     return 0;
 }
@@ -857,13 +862,13 @@ subbrep_split(struct subbrep_object_data *data)
 		    ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
 		    ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
 		    if (trim.m_ei != -1 && edge.TrimCount() > 1) {
-			// TODO - add only edges present in subbrep_object_data
 			edges.insert(trim.m_ei);
 			for (int j = 0; j < edge.TrimCount(); j++) {
 			    int fio = edge.Trim(j)->FaceIndexOf();
 			    if (fio != -1 && locally_processed_faces.find(fio) == locally_processed_faces.end()) {
 				std::cout << fio << "\n";
 				ON_BrepFace *fface = &(data->brep->m_F[fio]);
+				surface_t stype = GetSurfaceType(fface->SurfaceOf(), NULL);
 				// If fio meets the criteria for the candidate shape, add it.  Otherwise,
 				// it's not part of this shape candidate
 				if (apply_filter_obj(fface, curr_loop, filters)) {
@@ -873,7 +878,11 @@ subbrep_split(struct subbrep_object_data *data)
 				    std::cout << "accept: " << fio << "\n";
 				    faces.insert(fio);
 				    locally_processed_faces.insert(fio);
-				    add_loops_from_face(fface, data, &loops, &local_loops, &processed_loops);
+				    // The planar faces will always share edges with the non-planar
+				    // faces, which drive the primary shape.  Also, planar faces are
+				    // more likely to have other edges that relate to other shapes.
+				    if (stype != SURFACE_PLANE)
+					add_loops_from_face(fface, data, &loops, &local_loops, &processed_loops);
 				}
 			    }
 			}
