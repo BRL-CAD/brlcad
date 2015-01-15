@@ -653,7 +653,7 @@ set_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
     filter_obj_init(obj);
     obj->stype = GetSurfaceType(face->SurfaceOf(), obj);
     // If we've got a planar face, we can stop now - planar faces
-    // are determative of volume type only when *all* faces are planar,
+    // are determinative of volume type only when *all* faces are planar,
     // and that case is handled elsewhere - anything is "allowed".
     if (obj->stype == SURFACE_PLANE) obj->type = BREP;
 

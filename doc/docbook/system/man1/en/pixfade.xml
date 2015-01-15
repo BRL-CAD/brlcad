@@ -48,6 +48,14 @@ level (0 - 255) with the
 <option>-m</option>
 option.  The pixel plotted is the minimum of the ceiling value and the
 red, green, and blue levels of the pixel.</para>
+
+<para>The
+<option>-w</option>
+and
+<option>-n</option>
+flags specify the input file width and number of scan lines in pixels;
+they can be set to the same value via
+<option>-s</option>.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
