@@ -158,7 +158,7 @@ int
 rt_gen_conic(struct xrays *rays, const struct xray *center_ray,
 	     fastf_t theta, vect_t up_vector, int rays_per_radius)
 {
-    int count;
+    int count = 0;
 
     point_t start;
     vect_t orig_dir;
@@ -219,7 +219,7 @@ rt_gen_frustum(struct xrays *rays, const struct xray *center_ray,
 	       const fastf_t a_theta, const fastf_t b_theta,
 	       const fastf_t a_num, const fastf_t UNUSED(b_num))
 {
-    int count;
+    int count = 0;
 
     point_t start;
     vect_t orig_dir;
@@ -263,8 +263,7 @@ int rt_gen_rect(struct xrays *rays, const struct xray *center_ray,
 		const vect_t a_vec, const vect_t b_vec,
 		const fastf_t da, const fastf_t db)
 {
-    int count;
-
+    int count = 0;
 
     point_t orig_start;
     vect_t dir;
