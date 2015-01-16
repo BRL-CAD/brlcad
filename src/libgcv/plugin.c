@@ -43,7 +43,7 @@ struct gcv_plugin {
 };
 
 
-HIDDEN inline struct bu_list *
+static inline struct bu_list *
 gcv_get_plugin_list(void)
 {
     static struct bu_list plugin_list = BU_LIST_INIT_ZERO;
