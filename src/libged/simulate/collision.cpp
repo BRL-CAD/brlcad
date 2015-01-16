@@ -133,15 +133,14 @@ calculate_contact_points(btManifoldResult &result,
 	// calculate the overlap volume between the AABBs
 	btVector3 overlap_min, overlap_max;
 	{
-	    btVector3 body_a_rb_aabb_min, body_a_rb_aabb_max, body_b_rb_aabb_min,
-		      body_b_rb_aabb_max;
-	    body_a_rb.getAabb(body_a_rb_aabb_min, body_a_rb_aabb_max);
-	    body_b_rb.getAabb(body_b_rb_aabb_min, body_b_rb_aabb_max);
+	    btVector3 body_a_aabb_min, body_a_aabb_max, body_b_aabb_min, body_b_aabb_max;
+	    body_a_rb.getAabb(body_a_aabb_min, body_a_aabb_max);
+	    body_b_rb.getAabb(body_b_aabb_min, body_b_aabb_max);
 
-	    VMOVE(overlap_max, body_a_rb_aabb_max);
-	    VMIN(overlap_max, body_b_rb_aabb_max);
-	    VMOVE(overlap_min, body_a_rb_aabb_min);
-	    VMAX(overlap_min, body_b_rb_aabb_min);
+	    VMOVE(overlap_max, body_a_aabb_max);
+	    VMIN(overlap_max, body_b_aabb_max);
+	    VMOVE(overlap_min, body_a_aabb_min);
+	    VMAX(overlap_min, body_b_aabb_min);
 	}
 
 	// radius of the circle of rays
