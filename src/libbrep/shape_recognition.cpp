@@ -1,6 +1,7 @@
 #include "common.h"
 
 #include <set>
+#include <map>
 
 #include "bu/log.h"
 #include "bu/str.h"
@@ -920,6 +921,72 @@ subbrep_split(struct subbrep_object_data *data)
     return 1;
 }
 
+ON_Brep *
+subbrep_make_brep(struct subbrep_object_data *data)
+{
+    ON_Brep *new_brep = ON_Brep::New();
+    // For each edge in data, find the corresponding loop in data and construct
+    // a new face in the brep with the surface from the original face and the
+    // loop in data as the new outer loop.  Trim down the surface for the new
+    // role.  Add the corresponding 3D edges and sync things up.
+
+    // Each edge will map to two faces in the original Brep.  We only want the
+    // subset of data that is part of this particular subobject - to do that,
+    // we need to map elements from their indices in the old Brep to their
+    // locations in the new.
+    std::map<int, int> face_map;
+    std::map<int, int> surface_map;
+    std::map<int, int> edge_map;
+    std::map<int, int> vertex_map;
+    std::map<int, int> loop_map;
+    std::map<int, int> c3_map;
+    std::map<int, int> c2_map;
+    std::map<int, int> trim_map;
+
+    // Each edge has a trim array, and the trims will tell us which loops
+    // are to be included and which faces the trims belong to.  There will
+    // be some trims that belong to a face that is not included in the
+    // subbrep face list, and those are rejected - those rejections indicate
+    // a new face needs to be created to close the Brep.  The edges will drive
+    // the population of new_brep initially - for each element pulled in by
+    // the edge, it is either added or (if it's already in the map) references
+    // are updated.
+
+    for (int i = 0; i < data->edges_cnt; i++) {
+	int c3i;
+	ON_BrepEdge *old_edge = &(data->brep->m_E[i]);
+	// Get vertices, trims, curves, and associated faces;
+	if (!c3_map[old_edge->EdgeCurveIndexOf()]) {
+	    ON_Curve *nc = old_edge->EdgeCurveOf()->Duplicate();
+	    c3i = new_brep->AddEdgeCurve(nc);
+	    c3_map[old_edge->EdgeCurveIndexOf()] = c3i;
+	} else {
+	    c3i = c3_map[old_edge->EdgeCurveIndexOf()];
+	}
+	int v0i, v1i;
+	if (!vertex_map[old_edge->Vertex(0)->m_vertex_index]) {
+	    ON_BrepVertex& newv0 = new_brep->NewVertex(old_edge->Vertex(0)->Point(), old_edge->Vertex(0)->m_tolerance);
+	    v0i = newv0.m_vertex_index;
+	} else {
+	    v0i = vertex_map[old_edge->Vertex(0)->m_vertex_index];
+	}
+	if (!vertex_map[old_edge->Vertex(1)->m_vertex_index]) {
+	    ON_BrepVertex& newv1 = new_brep->NewVertex(old_edge->Vertex(1)->Point(), old_edge->Vertex(0)->m_tolerance);
+	    v1i = newv1.m_vertex_index;
+	} else {
+	    v1i = vertex_map[old_edge->Vertex(1)->m_vertex_index];
+	}
+	ON_BrepEdge& new_edge = new_brep->NewEdge(new_brep->m_V[v0i], new_brep->m_V[v1i], c3i, NULL ,0);
+	edge_map[old_edge->m_edge_index] = new_edge.m_edge_index;
+	// TODO - handle trims.  Need to create the face associated
+	// with the trim if it doesn't already exist - copy the surface
+	// if the face is in the subbrep, otherwise deduce it (how?)
+	// create loop to hold trim if loop doesn't exist already,
+	// add new trim to loop...
+    }
+
+    return new_brep;
+}
 
 int
 subbreps_boolean_tree(struct bu_ptbl *subbreps)

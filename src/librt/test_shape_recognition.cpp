@@ -305,132 +305,6 @@ is_cone(const object_data *data)
 #endif
 
 
-#if 0
-int
-cylindrical_planar_vertices(const object_data *data, int face_index)
-{
-    std::set<int> verts;
-    ON_BrepFace *face = &(data->brep->m_F[face_index]);
-    for(int i = 0; i < face->LoopCount(); i++) {
-	if (data->loops.find(face->m_li[i]) != data->loops.end()) {
-	    //std::cout << "loop " << face->m_li[i] << " on face " << face_index << " is active, processing...\n";
-	    ON_BrepLoop *loop = &(data->brep->m_L[face->m_li[i]]);
-	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
-		if (trim.m_ei != -1) {
-		    ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-		    verts.insert(edge.Vertex(0)->m_vertex_index);
-		    verts.insert(edge.Vertex(1)->m_vertex_index);
-		}
-	    }
-	    if (verts.size() == 3) {
-		//std::cout << "Three points - planar.\n";
-		return 1;
-	    } else if (verts.size() >= 3) {
-		std::set<int>::iterator v_it = verts.begin();
-		ON_3dPoint p1 = data->brep->m_V[*v_it].Point();
-		v_it++;
-		ON_3dPoint p2 = data->brep->m_V[*v_it].Point();
-		v_it++;
-		ON_3dPoint p3 = data->brep->m_V[*v_it].Point();
-		ON_Plane test_plane(p1, p2, p3);
-		for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-		    if (!NEAR_ZERO(test_plane.DistanceTo(data->brep->m_V[*v_it].Point()), 0.01)) {
-			//std::cout << "vertex " << *v_it << " too far from plane, not planar: " << test_plane.DistanceTo(data->brep->m_V[*v_it].Point()) << "\n";
-			return 0;
-		    }
-		}
-		//std::cout << verts.size() << " points, planar\n";
-		return 1;
-	    } else {
-		//std::cout << "Closed single curve loop - planar only if surface is.";
-		return 0;
-	    }
-	}
-    }
-    return 0;
-}
-
-int
-highest_order_face(const object_data *data)
-{
-    int planar = 0;
-    int spherical = 0;
-    int rcylindrical = 0;
-    int cone = 0;
-    int torus = 0;
-    int general = 0;
-    int hof = -1;
-    int hofo = 0;
-    std::set<int>::iterator f_it;
-    for (f_it = data->faces.begin(); f_it != data->faces.end(); f_it++) {
-	ON_BrepFace *used_face = &(data->brep->m_F[(*f_it)]);
-	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
-	int surface_type = (int)GetSurfaceType(temp_surface);
-	switch (surface_type) {
-	    case SURFACE_PLANE:
-		planar++;
-		if (hofo < 1) {
-		    hof = (*f_it);
-		    hofo = 1;
-		}
-		break;
-	    case SURFACE_SPHERE:
-		spherical++;
-		if (hofo < 2) {
-		    hof = (*f_it);
-		    hofo = 2;
-		}
-		break;
-	    case SURFACE_CYLINDER:
-		if (!cylindrical_planar_vertices(data, *f_it)) {
-		    std::cout << "irregular cylindrical: " << *f_it << "\n";
-		    general++;
-		} else {
-		    rcylindrical++;
-		    if (hofo < 3) {
-			hof = (*f_it);
-			hofo = 3;
-		    }
-		}
-		break;
-	    case SURFACE_CONE:
-		cone++;
-		if (hofo < 4) {
-		    hof = (*f_it);
-		    hofo = 4;
-		}
-		break;
-	    case SURFACE_TORUS:
-		torus++;
-		if (hofo < 4) {
-		    hof = (*f_it);
-		    hofo = 4;
-		}
-		break;
-	    default:
-		general++;
-		std::cout << "general surface: " << used_face->SurfaceIndexOf() << "\n";
-		break;
-	}
-    }
-
-    if (!general)
-	std::cout << "highest order face: " << hof << "(" << hofo << ")\n";
-
-    std::cout << "\n";
-    std::cout << data->key.c_str() << ":\n";
-    std::cout << "planar_cnt: " << planar << "\n";
-    std::cout << "spherical_cnt: " << spherical << "\n";
-    std::cout << "regular cylindrical_cnt: " << rcylindrical << "\n";
-    std::cout << "cone_cnt: " << cone << "\n";
-    std::cout << "torus_cnt: " << torus << "\n";
-    std::cout << "general_cnt: " << general << "\n";
-    std::cout << "\n";
-    return hof;
-}
-#endif
-
 int
 make_shape(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
@@ -523,69 +397,8 @@ split_object(comb_data *curr_comb, object_data *input)
     return true;
 }
 
-void
-build_boolean_tree()
-{
-    /* Start with the toplevel union, and identify the faces that are immediately connected to that toplevel
-     * shape.  Determine whether they are subtractions or unions from the toplevel.  Then, if those faces
-     * lead to lower level trees, use the status of the toplevel face to guide the building of the tree
-     * down the depth.  For example, if a cylinder is subtracted from the toplevel nmg, and a cone is
-     * in turn subtracted from that cylinder (in other words, the cone shape contributes volume to the
-     * final shape) the cone is subtracted from the local comb containing the cylinder and the cone, which
-     * is in turn subtracted from the toplevel nmg.  Likewise, if the cylinder had been unioned to the nmg
-     * to add volume and the cone had also added volume to the final shape (i.e. it's surface normals point
-     * outward from the cone) then the code would be unioned with the cylinder in the local comb, and the
-     * local comb would be unioned into the toplevel. */
-}
-
-void
-print_objects(std::set<object_data> *object_set)
-{
-    int cnt = 0;
-    std::set<object_data>::iterator o_it;
-    for (o_it = object_set->begin(); o_it != object_set->end(); o_it++) {
-	std::set<int>::iterator s_it;
-	std::set<int>::iterator s_it2;
-	std::cout << "\n";
-	std::cout << "Face set for object " << cnt << ": ";
-	for (s_it = (*o_it).faces.begin(); s_it != (*o_it).faces.end(); s_it++) {
-	    std::cout << (int)(*s_it);
-	    s_it2 = s_it;
-	    s_it2++;
-	    if (s_it2 != (*o_it).faces.end()) std::cout << ",";
-	}
-	std::cout << "\n";
-	std::cout << "Outer Face set for object " << cnt << ": ";
-	for (s_it = (*o_it).fol.begin(); s_it != (*o_it).fol.end(); s_it++) {
-	    std::cout << (int)(*s_it);
-	    s_it2 = s_it;
-	    s_it2++;
-	    if (s_it2 != (*o_it).fol.end()) std::cout << ",";
-	}
-	std::cout << "\n";
-	std::cout << "Inner Face set for object " << cnt << ": ";
-	for (s_it = (*o_it).fil.begin(); s_it != (*o_it).fil.end(); s_it++) {
-	    std::cout << (int)(*s_it);
-	    s_it2 = s_it;
-	    s_it2++;
-	    if (s_it2 != (*o_it).fil.end()) std::cout << ",";
-	}
-	std::cout << "\n";
-	std::cout << "Edge set for object " << cnt << ": ";
-	for (s_it = (*o_it).edges.begin(); s_it != (*o_it).edges.end(); s_it++) {
-	    std::cout << (int)(*s_it);
-	    s_it2 = s_it;
-	    s_it2++;
-	    if (s_it2 != (*o_it).edges.end()) std::cout << ",";
-	}
-	std::cout << "\n";
-	if (is_planar(&(*o_it))) std::cout << "Object is planar\n";
-	if (is_cylinder(&(*o_it))) std::cout << "Object is rcc\n";
-	cnt++;
-	std::cout << "\n";
-    }
-}
 #endif
+
 int
 main(int argc, char *argv[])
 {
@@ -632,13 +445,22 @@ main(int argc, char *argv[])
     struct bu_ptbl *subbreps = find_subbreps(brep);
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	//if (BU_STR_EQUAL(bu_vls_addr(obj->key), "390_391_418_591_592.s")) {
 	print_subbrep_object(obj, "");
+	for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
+	    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, j);
+	    if (cobj->type != COMB)
+	    print_subbrep_object(cobj, "  ");
+	}
+	//}
 	(void)make_shape(obj, wdbp);
 	subbrep_object_free(obj);
 	BU_PUT(obj, struct subbrep_object_data);
     }
     bu_ptbl_free(subbreps);
     BU_PUT(subbreps, struct bu_ptbl);
+
+    db_close(dbip);
 
     return 0;
 }
