@@ -8705,8 +8705,8 @@ to_mouse_otranslate(struct ged *gedp,
     int width;
     fastf_t dx, dy;
     fastf_t inv_width;
-    point_t model;
-    point_t view;
+    point_t model = VINIT_ZERO;
+    point_t view = VINIT_ZERO;
     mat_t inv_rot;
     struct bu_vls tran_x_vls = BU_VLS_INIT_ZERO;
     struct bu_vls tran_y_vls = BU_VLS_INIT_ZERO;
