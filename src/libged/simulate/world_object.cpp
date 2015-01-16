@@ -211,13 +211,6 @@ MatrixMotionState::setWorldTransform(const btTransform &transform)
 }
 
 
-rt_i &
-MatrixMotionState::get_rt_instance() const
-{
-    return m_tree_updater.get_rt_instance();
-}
-
-
 WorldObject *
 WorldObject::create(db_i &db_instance, directory &vdirectory, mat_t matrix,
 		    TreeUpdater &tree_updater)
@@ -278,7 +271,7 @@ WorldObject::WorldObject(directory &vdirectory, mat_t matrix,
 			 btVector3 bounding_box_dims, btScalar mass) :
     m_world(NULL),
     m_motion_state(matrix, bounding_box_pos, tree_updater),
-    m_collision_shape(vdirectory.d_namep, bounding_box_dims / 2.0),
+    m_collision_shape(tree_updater, vdirectory.d_namep, bounding_box_dims / 2.0),
     m_rigid_body(build_construction_info(m_motion_state, m_collision_shape, mass))
 {}
 

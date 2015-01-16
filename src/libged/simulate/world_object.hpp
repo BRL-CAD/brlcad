@@ -29,7 +29,6 @@
 
 
 #include "collision.hpp"
-#include "rt_instance.hpp"
 
 
 namespace simulate
@@ -44,8 +43,6 @@ public:
 
     virtual void getWorldTransform(btTransform &dest) const;
     virtual void setWorldTransform(const btTransform &transform);
-
-    rt_i &get_rt_instance() const;
 
 
 private:

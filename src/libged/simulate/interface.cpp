@@ -74,8 +74,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 
     directory *dir = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
 
-    if (!dir)
-	return GED_ERROR;
+    if (!dir) return GED_ERROR;
 
     try {
 	btScalar seconds = lexical_cast<btScalar>(argv[2],

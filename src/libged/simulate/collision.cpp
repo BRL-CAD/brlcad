@@ -30,7 +30,6 @@
 #include "common.h"
 
 #include "collision.hpp"
-#include "world_object.hpp"
 
 
 namespace
@@ -112,18 +111,18 @@ calculate_contact_points(btManifoldResult &result,
 			 const btCollisionObjectWrapper &body_a_wrap,
 			 const btCollisionObjectWrapper &body_b_wrap)
 {
-    const btRigidBody &rb_a = *btRigidBody::upcast(
-				  body_a_wrap.getCollisionObject());
-    const btRigidBody &rb_b = *btRigidBody::upcast(
-				  body_b_wrap.getCollisionObject());
+    const btRigidBody &body_a_rb = *btRigidBody::upcast(
+				       body_a_wrap.getCollisionObject());
+    const btRigidBody &body_b_rb = *btRigidBody::upcast(
+				       body_b_wrap.getCollisionObject());
 
     // calculate the normal of the contact points as the resultant of the velocities -A and B
-    btVector3 normal_world_on_b = rb_b.getLinearVelocity() -
-				  rb_a.getLinearVelocity();
-
-    if (normal_world_on_b != btVector3(0.0, 0.0, 0.0))
-	normal_world_on_b.normalize();
-    else return;
+    btVector3 normal_world_on_b = body_b_rb.getLinearVelocity();
+    VUNITIZE(normal_world_on_b);
+    btVector3 v = body_a_rb.getLinearVelocity();
+    VUNITIZE(v);
+    normal_world_on_b -= v;
+    VUNITIZE(normal_world_on_b);
 
     // shoot a circular grid of rays about `normal_world_on_b`
     xrays *rays;
@@ -134,14 +133,15 @@ calculate_contact_points(btManifoldResult &result,
 	// calculate the overlap volume between the AABBs
 	btVector3 overlap_min, overlap_max;
 	{
-	    btVector3 rb_a_aabb_min, rb_a_aabb_max, rb_b_aabb_min, rb_b_aabb_max;
-	    rb_a.getAabb(rb_a_aabb_min, rb_a_aabb_max);
-	    rb_b.getAabb(rb_b_aabb_min, rb_b_aabb_max);
+	    btVector3 body_a_rb_aabb_min, body_a_rb_aabb_max, body_b_rb_aabb_min,
+		      body_b_rb_aabb_max;
+	    body_a_rb.getAabb(body_a_rb_aabb_min, body_a_rb_aabb_max);
+	    body_b_rb.getAabb(body_b_rb_aabb_min, body_b_rb_aabb_max);
 
-	    VMOVE(overlap_max, rb_a_aabb_max);
-	    VMIN(overlap_max, rb_b_aabb_max);
-	    VMOVE(overlap_min, rb_a_aabb_min);
-	    VMAX(overlap_min, rb_b_aabb_min);
+	    VMOVE(overlap_max, body_a_rb_aabb_max);
+	    VMIN(overlap_max, body_b_rb_aabb_max);
+	    VMOVE(overlap_min, body_a_rb_aabb_min);
+	    VMAX(overlap_min, body_b_rb_aabb_min);
 	}
 
 	// radius of the circle of rays
@@ -182,14 +182,16 @@ calculate_contact_points(btManifoldResult &result,
 	rt_gen_circular_grid(rays, &center_ray, radius, up_vect, grid_size);
     }
 
-    OverlapHandlerArgs args = {result, body_a_wrap, body_b_wrap, normal_world_on_b};
     // shoot the rays
+    OverlapHandlerArgs args = {result, body_a_wrap, body_b_wrap, normal_world_on_b};
     application app;
     {
-	const simulate::MatrixMotionState &rb_a_motion_state =
-	    *static_cast<const simulate::MatrixMotionState *>(rb_a.getMotionState());
+	const simulate::RtCollisionShape &body_a_collision_shape =
+	    *static_cast<const simulate::RtCollisionShape *>
+	    (body_a_wrap.getCollisionShape());
+
 	RT_APPLICATION_INIT(&app);
-	app.a_rt_i = &rb_a_motion_state.get_rt_instance();
+	app.a_rt_i = &body_a_collision_shape.get_rt_instance();
 	app.a_multioverlap = on_multioverlap;
 	app.a_logoverlap = rt_silent_logoverlap;
 	app.a_uptr = &args;
@@ -219,9 +221,10 @@ namespace simulate
 {
 
 
-RtCollisionShape::RtCollisionShape(const std::string &db_path,
-				   const btVector3 &half_extents) :
+RtCollisionShape::RtCollisionShape(const TreeUpdater &tree_updater,
+				   const std::string &db_path, const btVector3 &half_extents) :
     btBoxShape(half_extents),
+    m_tree_updater(tree_updater),
     m_db_path(db_path)
 {
     m_shapeType = RT_SHAPE_TYPE;
@@ -248,6 +251,13 @@ std::string
 RtCollisionShape::get_db_path() const
 {
     return m_db_path;
+}
+
+
+rt_i &
+RtCollisionShape::get_rt_instance() const
+{
+    return m_tree_updater.get_rt_instance();
 }
 
 
