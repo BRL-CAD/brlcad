@@ -42,7 +42,7 @@ typedef int (*gcv_exporter)(const char *path, const struct db_i *dbip,
 			    const struct gcv_opts *options);
 
 
-static const unsigned char GCV_VERSION = 1;
+#define GCV_VERSION (unsigned char)1
 
 
 struct gcv_plugin_info {
