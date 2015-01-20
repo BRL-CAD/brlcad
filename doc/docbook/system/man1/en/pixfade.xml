@@ -18,11 +18,12 @@
 <cmdsynopsis>
   <command>pixfade</command>
     <arg choice='opt'>-f <replaceable>fraction</replaceable></arg>
-    <arg choice='opt'>-m <replaceable>max</replaceable></arg>
     <arg choice='opt'>-p <replaceable>percentage</replaceable></arg>
+    <arg choice='opt'>-m <replaceable>max</replaceable></arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>height</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>out_file.pix</replaceable></arg>
     <arg choice='opt'><replaceable>infile.pix</replaceable></arg>
     <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>outfile.pix</replaceable></arg>
@@ -47,8 +48,10 @@ The default is <option>-f</option> 0.5 (<option>-p</option> 50.0).</para>
 <para>An alternative way to darken the image is to specify a ceiling pixel
 level (0 - 255) with the
 <option>-m</option>
-option.  The pixel plotted is the minimum of the ceiling value and the
-red, green, and blue levels of the pixel.</para>
+option.  The pixel plotted is the minimum of the ceiling value and each of the
+red, green, and blue levels of the pixel.  If this option is used,
+the <option>-f</option> and <option>-p</option> options are ignored.
+</para>
 
 <para>The
 <option>-w</option>
@@ -57,6 +60,10 @@ and
 flags specify the input file width and number of scan lines in pixels;
 they can be set to the same value via
 <option>-s</option>. Default is 512x512.</para>
+
+<para>The
+<option>-o</option> option
+supplies output file name.  If this option is omitted, standard output is used.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
