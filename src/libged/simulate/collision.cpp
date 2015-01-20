@@ -130,6 +130,11 @@ calculate_contact_points(btManifoldResult &result,
 	BU_ALLOC(rays, xrays);
 	BU_LIST_INIT(&rays->l);
 
+	xray &center_ray = rays->ray;
+	center_ray.magic = RT_RAY_MAGIC;
+	center_ray.index = 0;
+	VMOVE(center_ray.r_dir, normal_world_on_b);
+
 	// calculate the overlap volume between the AABBs
 	btVector3 overlap_min, overlap_max;
 	{
@@ -137,31 +142,27 @@ calculate_contact_points(btManifoldResult &result,
 	    body_a_rb.getAabb(body_a_aabb_min, body_a_aabb_max);
 	    body_b_rb.getAabb(body_b_aabb_min, body_b_aabb_max);
 
-	    VMOVE(overlap_max, body_a_aabb_max);
-	    VMIN(overlap_max, body_b_aabb_max);
-	    VMOVE(overlap_min, body_a_aabb_min);
-	    VMAX(overlap_min, body_b_aabb_min);
+	    overlap_max = body_a_aabb_max;
+	    overlap_max.setMin(body_b_aabb_max);
+	    overlap_min = body_a_aabb_min;
+	    overlap_min.setMax(body_b_aabb_min);
 	}
 
 	// radius of the circle of rays
+	// half of the diagonal of the overlap rpp so that rays will cover
+	// the entire volume from all orientations
 	btScalar radius = (overlap_max - overlap_min).length() / 2.0;
 
 	// calculate the origin of the center ray
-	btVector3 center_point;
 	{
 	    // center of the overlap volume
 	    btVector3 overlap_center = (overlap_min + overlap_max) / 2.0;
 
 	    // step back from overlap_center, along the normal by `radius`,
 	    // to ensure that rays start from outside of the overlap region
-	    center_point = overlap_center - radius * normal_world_on_b;
+	    btVector3 center_ray_point = overlap_center - radius * normal_world_on_b;
+	    VMOVE(center_ray.r_pt, center_ray_point);
 	}
-
-	xray &center_ray = rays->ray;
-	center_ray.magic = RT_RAY_MAGIC;
-	center_ray.index = 0;
-	VMOVE(center_ray.r_pt, center_point);
-	VMOVE(center_ray.r_dir, normal_world_on_b);
 
 	// calculate the 'up' vector
 	vect_t up_vect;
@@ -169,7 +170,7 @@ calculate_contact_points(btManifoldResult &result,
 	    btVector3 up = normal_world_on_b.cross(btVector3(1.0, 0.0, 0.0));
 
 	    // use the y-axis if parallel to x-axis
-	    if (up == btVector3(0.0, 0.0, 0.0))
+	    if (up.isZero())
 		up = normal_world_on_b.cross(btVector3(0.0, 1.0, 0.0));
 
 	    VMOVE(up_vect, up);
@@ -191,13 +192,14 @@ calculate_contact_points(btManifoldResult &result,
 
 	RT_APPLICATION_INIT(&app);
 	app.a_rt_i = &body_a_collision_shape.get_rt_instance();
-	app.a_multioverlap = on_multioverlap;
 	app.a_logoverlap = rt_silent_logoverlap;
+	app.a_multioverlap = on_multioverlap;
 	app.a_uptr = &args;
     }
 
     xrays *entry;
 
+    // shoot center ray
     VMOVE(app.a_ray.r_pt, rays->ray.r_pt);
     VMOVE(app.a_ray.r_dir, rays->ray.r_dir);
     rt_shootray(&app);
