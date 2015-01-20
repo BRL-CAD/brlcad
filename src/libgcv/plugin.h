@@ -36,15 +36,10 @@
 __BEGIN_DECLS
 
 
-struct gcv_conversion_configuration {
-    fastf_t tolerance;
-};
-
-
 typedef int (*gcv_importer)(const char *path, struct rt_wdb *wdbp,
-			    const struct gcv_conversion_configuration *config);
+			    const struct gcv_opts *options);
 typedef int (*gcv_exporter)(const char *path, const struct db_i *dbip,
-			    const struct gcv_conversion_configuration *config);
+			    const struct gcv_opts *options);
 
 
 static const unsigned char GCV_VERSION = 1;

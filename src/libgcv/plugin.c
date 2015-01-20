@@ -187,7 +187,7 @@ gcv_register_plugin(const struct gcv_plugin_info *info)
 
 
 struct db_i *
-gcv_import(const char *path, const struct gcv_conversion_configuration *config)
+gcv_import(const char *path, const struct gcv_opts *options)
 {
     const struct gcv_plugin *plugin = gcv_plugin_find(path, 1);
 
@@ -203,7 +203,7 @@ gcv_import(const char *path, const struct gcv_conversion_configuration *config)
     dbip = db_create_inmem();
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 
-    if (!plugin->info.importer(path, wdbp, config)) {
+    if (!plugin->info.importer(path, wdbp, options)) {
 	wdb_close(wdbp);
 	db_close(dbip);
 	return NULL;
@@ -216,7 +216,7 @@ gcv_import(const char *path, const struct gcv_conversion_configuration *config)
 
 int
 gcv_export(const char *path, const struct db_i *dbip,
-	   const struct gcv_conversion_configuration *config)
+	   const struct gcv_opts *options)
 {
     const struct gcv_plugin *plugin = gcv_plugin_find(path, 0);
 
@@ -225,7 +225,7 @@ gcv_export(const char *path, const struct db_i *dbip,
 	return 0;
     }
 
-    return !!plugin->info.exporter(path, dbip, config);
+    return !!plugin->info.exporter(path, dbip, options);
 }
 
 
