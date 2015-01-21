@@ -21,7 +21,7 @@ struct gcv_filter {
 int
 gcv_init(struct gcv_context *context)
 {
-  context->db_instance = db_create_inmem();
+  context->db_instance = db_open_inmem();
   return 0;
 }
 
@@ -84,15 +84,17 @@ gcv_execute(struct gcv_context *cxt, const struct gcv_filter *filter)
   bu_log("Filtering %s\n", filter->name);
 
   if (filter->for_reading) {
-    struct rt_wdb *wdbp = wdb_dbopen(cxt->db_instance, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
-
-    if (!wdbp) {
-      bu_log("wdb_dbopen() failed\n");
-      return -1;
-    }
+    struct rt_wdb *wdbp;
 
     if (!filter->plugin_info || !filter->plugin_info->reader_fn) {
       bu_log("Filter has no reader\n");
+      return -1;
+    }
+
+    wdbp = wdb_dbopen(cxt->db_instance, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
+
+    if (!wdbp) {
+      bu_log("wdb_dbopen() failed\n");
       return -1;
     }
 

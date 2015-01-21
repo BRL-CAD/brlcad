@@ -33,6 +33,7 @@ HIDDEN int
 gcv_brlcad_read(const char *path, struct rt_wdb *wdbp,
 		const struct gcv_opts *UNUSED(options))
 {
+    int ret;
     struct db_i *dbip = db_open(path, DB_OPEN_READONLY);
 
     if (!dbip) {
@@ -40,7 +41,16 @@ gcv_brlcad_read(const char *path, struct rt_wdb *wdbp,
 	return 0;
     }
 
-    return db_dump(wdbp, dbip) == 0;
+    if (db_dirbuild(dbip) != 0) {
+	bu_log("db_dirbuild() failed for '%s'\n", path);
+	db_close(dbip);
+	return 0;
+    }
+
+    ret = db_dump(wdbp, dbip);
+    db_close(dbip);
+
+    return ret == 0;
 }
 
 

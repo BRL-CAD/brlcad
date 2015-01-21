@@ -339,10 +339,9 @@ stl_write(const char *path, const struct db_i *vdbip,
     int ret;
     int use_mc = 0;
     int mutex;
-    int missingg;
 
     size_t num_objects = 0;
-    const char ** object_names = NULL;
+    const char **object_names = NULL;
     dbip = vdbip;
 
     bu_setlinebuf(stderr);
@@ -375,7 +374,7 @@ stl_write(const char *path, const struct db_i *vdbip,
 
     mutex = (output_file && output_directory);
 
-    if (mutex || missingg) {
+    if (mutex) {
 	print_usage("g-stl");
 	return 0;
     }
