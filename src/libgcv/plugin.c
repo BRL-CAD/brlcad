@@ -30,7 +30,7 @@
 
 #include <string.h>
 
-#include "gcv.h"
+#include "gcv_private.h"
 
 
 struct gcv_plugin {
@@ -124,7 +124,7 @@ gcv_extension_match(const char *path, const char *extension)
 }
 
 
-HIDDEN const struct gcv_plugin_info *
+const struct gcv_plugin_info *
 gcv_plugin_find(const char *path, int for_reading)
 {
     const struct bu_list * const plugin_list = gcv_get_plugin_list();
@@ -132,9 +132,12 @@ gcv_plugin_find(const char *path, int for_reading)
     struct gcv_plugin *entry;
 
     for (BU_LIST_FOR(entry, gcv_plugin, plugin_list))
-	if (gcv_extension_match(path, entry->info.file_extensions))
-	    if ((for_reading && entry->info.reader_fn) || entry->info.writer_fn)
+	if (gcv_extension_match(path, entry->info.file_extensions)) {
+	    if (for_reading && entry->info.reader_fn)
 		return &entry->info;
+	    else if (!for_reading && entry->info.writer_fn)
+		return &entry->info;
+	}
 
     return NULL;
 }

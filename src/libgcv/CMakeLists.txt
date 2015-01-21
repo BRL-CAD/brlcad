@@ -33,7 +33,7 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 add_test(NAME bottess_test COMMAND test_bottess)
 
-CMAKEFILES(NOTES plugin.h soup.h tri_intersect.h bot_solidity.h)
+CMAKEFILES(NOTES gcv_private.h plugin.h soup.h tri_intersect.h bot_solidity.h)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/wfobj/CTestTestfile.cmake)
 

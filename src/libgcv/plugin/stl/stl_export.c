@@ -62,10 +62,11 @@ static char usage[] =
 static void
 print_usage(const char *progname)
 {
-    bu_exit(1, "Usage: %s %s", progname, usage);
+    bu_log("Usage: %s %s", progname, usage);
 }
 
 static int verbose;
+static int is_success = 1;
 static int binary = 0;			/* Default output is ASCII */
 static const char *output_file = NULL;	/* output filename */
 static char *output_directory = NULL;	/* directory name to hold output files */
@@ -79,9 +80,6 @@ static struct rt_tess_tol ttol;		/* tessellation tolerance in mm */
 static struct bn_tol tol;		/* calculation tolerance */
 static struct db_tree_state tree_state;	/* includes tol & model */
 
-static int regions_tried = 0;
-static int regions_converted = 0;
-static int regions_written = 0;
 static int inches = 0;
 static size_t tot_polygons = 0;
 
@@ -141,8 +139,10 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp,
 	    /* Open ASCII output file */
 	    if ((fp = fopen(bu_vls_addr(&file_name), "wb+")) == NULL) {
 		perror("g-stl");
-		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n",
-			bu_vls_addr(&file_name));
+		bu_log("Cannot open ASCII output file (%s) for writing\n",
+		       bu_vls_addr(&file_name));
+		is_success = 0;
+		return;
 	    }
 	} else {
 	    char buf[81] = {0};	/* need exactly 80 char for header */
@@ -152,8 +152,10 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp,
 			    O_WRONLY | O_CREAT | O_TRUNC | O_BINARY,
 			    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0) {
 		perror("g-stl");
-		bu_exit(1, "ERROR: Cannot open binary output file (%s) for writing\n",
-			bu_vls_addr(&file_name));
+		bu_log("ERROR: Cannot open binary output file (%s) for writing\n",
+		       bu_vls_addr(&file_name));
+		is_success = 0;
+		return;
 	    }
 
 	    if (!region_name) {
@@ -264,7 +266,9 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp,
 		if (vert_count > 3) {
 		    bu_free(region_name, "region name");
 		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
-		    bu_exit(1, "ERROR: LU is not a triangle");
+		    bu_log("ERROR: LU is not a triangle");
+		    is_success = 0;
+		    return;
 		} else if (vert_count < 3)
 		    continue;
 
@@ -332,7 +336,6 @@ int
 stl_export(const char *path, const struct db_i *vdbip,
 	   const struct gcv_opts *UNUSED(options))
 {
-    double percent;
     int ret;
     int use_mc = 0;
     int mutex;
@@ -372,12 +375,15 @@ stl_export(const char *path, const struct db_i *vdbip,
 
     mutex = (output_file && output_directory);
 
-    if (mutex || missingg)
+    if (mutex || missingg) {
 	print_usage("g-stl");
+	return 0;
+    }
 
     if (!output_file && !output_directory) {
 	if (binary) {
-	    bu_exit(1, "Can't output binary to stdout\n");
+	    bu_log("Can't output binary to stdout\n");
+	    return 0;
 	}
 
 	fp = stdout;
@@ -386,16 +392,18 @@ stl_export(const char *path, const struct db_i *vdbip,
 	    /* Open ASCII output file */
 	    if ((fp = fopen(output_file, "wb+")) == NULL) {
 		perror("g-stl");
-		bu_exit(1, "%s: Cannot open ASCII output file (%s) for writing\n", "g-stl",
-			output_file);
+		bu_log("%s: Cannot open ASCII output file (%s) for writing\n", "g-stl",
+		       output_file);
+		return 0;
 	    }
 	} else {
 	    /* Open binary output file */
 	    if ((bfd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY,
 			    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0) {
 		perror("g-stl");
-		bu_exit(1, "%s: Cannot open binary output file (%s) for writing\n", "g-stl",
-			output_file);
+		bu_log("%s: Cannot open binary output file (%s) for writing\n", "g-stl",
+		       output_file);
+		return 0;
 	    }
 	}
     }
@@ -450,26 +458,6 @@ stl_export(const char *path, const struct db_i *vdbip,
 			use_mc ? NULL : nmg_booltree_leaf_tess,
 			(void *)&gcvwriter);
 
-    percent = 0;
-
-    if (regions_tried > 0) {
-	percent = ((double)regions_converted * 100) / regions_tried;
-
-	if (verbose)
-	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-		   regions_tried, regions_converted, percent);
-    }
-
-    percent = 0;
-
-    if (regions_tried > 0) {
-	percent = ((double)regions_written * 100) / regions_tried;
-
-	if (verbose)
-	    bu_log("                  %d triangulated successfully. %g%%\n",
-		   regions_written, percent);
-    }
-
     bu_log("%zu triangles written\n", tot_polygons);
 
     if (output_file) {
@@ -497,7 +485,7 @@ stl_export(const char *path, const struct db_i *vdbip,
     nmg_km(the_model);
     rt_vlist_cleanup();
 
-    return 1;
+    return !!is_success;
 }
 
 

@@ -1,5 +1,5 @@
 #include "bu.h"
-#include "gcv.h"
+#include "gcv_private.h"
 
 struct gcv_context {
   int i;
@@ -11,6 +11,8 @@ struct gcv_opts {
 
 struct gcv_filter {
   const char *name;
+  int for_reading;
+  const struct gcv_plugin_info *plugin_info;
 };
 
 
@@ -32,24 +34,37 @@ gcv_destroy(struct gcv_context *UNUSED(context))
 void
 gcv_reader(struct gcv_filter *reader, const char *source, const struct gcv_opts *UNUSED(opts))
 {
-  if (source && !BU_STR_EQUAL(source, "-")) {
+  if (!source) source = "-";
+
+  if (!BU_STR_EQUAL(source, "-")) {
     bu_log("Scheduling read from %s\n", source);
   } else {
     bu_log("Scheduling read from STDIN\n");
   }
+
   reader->name = source;
+  reader->plugin_info = gcv_plugin_find(source, 1);
+
+  if (!reader->plugin_info)
+    bu_log("No reader found for '%s'\n", source);
 }
 
 
 void
 gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts *UNUSED(opts))
 {
-  if (target && !BU_STR_EQUAL(target, "-")) {
+  if (!target) target = "-";
+
+  if (!BU_STR_EQUAL(target, "-")) {
     bu_log("Scheduling write to %s\n", target);
   } else {
     bu_log("Scheduling write to STDOUT\n");
   }
   writer->name = target;
+  writer->plugin_info = gcv_plugin_find(target, 0);
+
+  if (!writer->plugin_info)
+    bu_log("No writer found for '%s'\n", target);
 }
 
 
@@ -60,6 +75,16 @@ gcv_execute(struct gcv_context *cxt, const struct gcv_filter *filter)
     return 0;
 
   bu_log("Filtering %s\n", filter->name);
+
+  if (filter->for_reading && !(filter->plugin_info && filter->plugin_info->reader_fn)) {
+    bu_log("Filter has no reader\n");
+    return -1;
+  }
+
+  if (!filter->for_reading && !(filter->plugin_info && filter->plugin_info->writer_fn)) {
+    bu_log("Filter has no writer\n");
+    return -1;
+  }
 
   return 0;
 }
@@ -96,7 +121,7 @@ int
 main(int ac, char **av)
 {
   if (ac < 3
-      || (ac < 2 && ac > 1 && av[1][0] == '-' && av[1][1] == 'h')) {
+      || (ac == 2 && av[1][0] == '-' && av[1][1] == 'h')) {
     bu_log("Usage: %s [-h] [input[:options]] [output[:options]]\n", av[0]);
     return 1;
   }
