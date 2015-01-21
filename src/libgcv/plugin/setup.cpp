@@ -24,7 +24,9 @@
  */
 
 
-#include "../plugin.h"
+#include "common.h"
+
+#include "../gcv_private.h"
 
 
 #define TOKENPASTE(prefix, suffix) prefix ## suffix
@@ -43,7 +45,7 @@ public:
 
 RegisterPlugin::RegisterPlugin(const gcv_plugin_info &info)
 {
-    if (!gcv_register_plugin(&info))
+    if (!gcv_plugin_register(&info))
 	bu_bomb("gcv_register_plugin() failed for static plugin"); // FIXME
 }
 

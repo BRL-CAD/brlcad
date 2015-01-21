@@ -32,6 +32,9 @@
 __BEGIN_DECLS
 
 
+int gcv_plugin_register(const struct gcv_plugin_info *info);
+
+
 const struct gcv_plugin_info *gcv_plugin_find(const char *path, int for_reading);
 
 

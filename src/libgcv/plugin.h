@@ -53,9 +53,6 @@ struct gcv_plugin_info {
 };
 
 
-int gcv_register_plugin(const struct gcv_plugin_info *info);
-
-
 __END_DECLS
 
 

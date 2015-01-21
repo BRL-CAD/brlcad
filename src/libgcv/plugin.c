@@ -56,7 +56,7 @@ gcv_get_plugin_list(void)
 
 
 HIDDEN int
-gcv_create_plugin(const char *path, void *dl_handle,
+gcv_plugin_create(const char *path, void *dl_handle,
 		  const struct gcv_plugin_info *info)
 {
     struct bu_list * const plugin_list = gcv_get_plugin_list();
@@ -87,7 +87,7 @@ gcv_create_plugin(const char *path, void *dl_handle,
 
 
 HIDDEN void
-gcv_free_plugin(struct gcv_plugin *entry)
+gcv_plugin_free(struct gcv_plugin *entry)
 {
     BU_LIST_DEQUEUE(&entry->l);
 
@@ -144,7 +144,7 @@ gcv_plugin_find(const char *path, int for_reading)
 
 
 int
-gcv_load_plugin(const char *path)
+gcv_plugin_load(const char *path)
 {
     void *dl_handle = bu_dlopen(path, BU_RTLD_LAZY);
     const struct gcv_plugin_info *plugin_info;
@@ -166,12 +166,12 @@ gcv_load_plugin(const char *path)
 	return 0;
     }
 
-    return gcv_create_plugin(path, dl_handle, plugin_info);
+    return gcv_plugin_create(path, dl_handle, plugin_info);
 }
 
 
 void
-gcv_unload_plugin(const char *path)
+gcv_plugin_unload(const char *path)
 {
     struct bu_list * const plugin_list = gcv_get_plugin_list();
 
@@ -179,16 +179,16 @@ gcv_unload_plugin(const char *path)
 
     for (BU_LIST_FOR(entry, gcv_plugin, plugin_list))
 	if (bu_strcmp(entry->path, path) == 0) {
-	    gcv_free_plugin(entry);
+	    gcv_plugin_free(entry);
 	    return;
 	}
 }
 
 
 int
-gcv_register_plugin(const struct gcv_plugin_info *info)
+gcv_plugin_register(const struct gcv_plugin_info *info)
 {
-    return gcv_create_plugin(NULL, NULL, info);
+    return gcv_plugin_create(NULL, NULL, info);
 }
 
 
