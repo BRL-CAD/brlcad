@@ -1,4 +1,4 @@
-/*                         G - S T L . C
+/*                         S T L _ W R I T E . C
  * BRL-CAD
  *
  * Copyright (c) 2003-2014 United States Government as represented by
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-stl.c
+/** @file stl_write.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to an STL file by
  * calling on the NMG booleans.  Based on g-acad.c.
@@ -44,7 +44,6 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "gcv.h"
 #include "../../plugin.h"
 
 
@@ -488,7 +487,7 @@ stl_write(const char *path, const struct db_i *vdbip,
 }
 
 
-struct gcv_plugin_info gcv_plugin_stl = {GCV_VERSION, "stl", NULL, stl_write};
+struct gcv_plugin_info gcv_plugin_stl_write = {GCV_VERSION, "stl", NULL, stl_write};
 
 
 /*

@@ -17,9 +17,12 @@ set(LIBGCV_SOURCES
   bot_solidity.c
   )
 
-list(APPEND LIBGCV_SOURCES plugin/setup.cpp plugin/brlcad.c plugin/stl/stl_write.c)
+list(APPEND LIBGCV_SOURCES plugin/setup.cpp plugin/brlcad.c
+  plugin/stl/stl_read.c
+  plugin/stl/stl_write.c
+  )
 
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libbu")
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 BRLCAD_ADDEXEC(gcv gcv.c libgcv)
