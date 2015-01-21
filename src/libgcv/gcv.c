@@ -2,7 +2,7 @@
 #include "gcv_private.h"
 
 struct gcv_context {
-  int i;
+  struct db_i *db_instance;
 };
 
 struct gcv_opts {
@@ -11,6 +11,7 @@ struct gcv_opts {
 
 struct gcv_filter {
   const char *name;
+  const struct gcv_opts *options;
   int for_reading;
   const struct gcv_plugin_info *plugin_info;
 };
@@ -18,8 +19,9 @@ struct gcv_filter {
 
 
 int
-gcv_init(struct gcv_context *UNUSED(context))
+gcv_init(struct gcv_context *context)
 {
+  context->db_instance = db_create_inmem();
   return 0;
 }
 
@@ -32,7 +34,7 @@ gcv_destroy(struct gcv_context *UNUSED(context))
 
 
 void
-gcv_reader(struct gcv_filter *reader, const char *source, const struct gcv_opts *UNUSED(opts))
+gcv_reader(struct gcv_filter *reader, const char *source, const struct gcv_opts *opts)
 {
   if (!source) source = "-";
 
@@ -43,6 +45,7 @@ gcv_reader(struct gcv_filter *reader, const char *source, const struct gcv_opts 
   }
 
   reader->name = source;
+  reader->options = opts;
   reader->for_reading = 1;
   reader->plugin_info = gcv_plugin_find(source, reader->for_reading);
 
@@ -52,7 +55,7 @@ gcv_reader(struct gcv_filter *reader, const char *source, const struct gcv_opts 
 
 
 void
-gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts *UNUSED(opts))
+gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts *opts)
 {
   if (!target) target = "-";
 
@@ -62,6 +65,7 @@ gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts 
     bu_log("Scheduling write to STDOUT\n");
   }
   writer->name = target;
+  writer->options = opts;
   writer->for_reading = 0;
   writer->plugin_info = gcv_plugin_find(target, writer->for_reading);
 
@@ -78,17 +82,28 @@ gcv_execute(struct gcv_context *cxt, const struct gcv_filter *filter)
 
   bu_log("Filtering %s\n", filter->name);
 
-  if (filter->for_reading && !(filter->plugin_info && filter->plugin_info->reader_fn)) {
-    bu_log("Filter has no reader\n");
-    return -1;
+  if (filter->for_reading) {
+    struct rt_wdb *wdbp = wdb_dbopen(cxt->db_instance, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
+
+    if (!wdbp) {
+      bu_log("wdb_dbopen() failed\n");
+      return -1;
+    }
+
+    if (!filter->plugin_info || !filter->plugin_info->reader_fn) {
+      bu_log("Filter has no reader\n");
+      return -1;
+    }
+
+    return !filter->plugin_info->reader_fn(filter->name, wdbp, filter->options);
   }
 
-  if (!filter->for_reading && !(filter->plugin_info && filter->plugin_info->writer_fn)) {
+  if (!filter->plugin_info || !filter->plugin_info->writer_fn) {
     bu_log("Filter has no writer\n");
     return -1;
   }
 
-  return 0;
+  return !filter->plugin_info->writer_fn(filter->name, cxt->db_instance, filter->options);
 }
 
 

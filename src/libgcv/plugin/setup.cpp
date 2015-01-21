@@ -50,6 +50,7 @@ RegisterPlugin::RegisterPlugin(const gcv_plugin_info &info)
 
 // gcv static plugins
 
+PLUGIN(gcv_plugin_brlcad);
 PLUGIN(gcv_plugin_stl);
 
 

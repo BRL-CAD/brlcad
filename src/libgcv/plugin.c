@@ -149,7 +149,10 @@ gcv_load_plugin(const char *path)
     void *dl_handle = bu_dlopen(path, BU_RTLD_LAZY);
     const struct gcv_plugin_info *plugin_info;
 
-    if (!dl_handle) return 0;
+    if (!dl_handle) {
+	bu_log("bu_dlopen() failed for '%s': %s\n", path, bu_dlerror());
+	return 0;
+    }
 
     plugin_info = (const struct gcv_plugin_info *)bu_dlsym(dl_handle,
 		  "gcv_plugin_info");
