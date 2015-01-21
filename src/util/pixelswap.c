@@ -77,7 +77,8 @@ parse_args(int ac, char **av)
 		depth = c;
 	    else
 		fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
-		break;	    case 'h'	: usage(""); break;
+		break;
+	    case 'h'	: usage(""); break;
 	    default	: usage("Bad flag specified\n"); break;
 	}
     }
