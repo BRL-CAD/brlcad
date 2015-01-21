@@ -85,7 +85,7 @@ static size_t tot_polygons = 0;
 
 
 /* Byte swaps a four byte value */
-void
+static void
 lswap(unsigned int *v)
 {
     unsigned int r;
@@ -332,9 +332,9 @@ struct gcv_data {
 static struct gcv_data gcvwriter = {nmg_to_stl};
 
 
-int
-stl_export(const char *path, const struct db_i *vdbip,
-	   const struct gcv_opts *UNUSED(options))
+static int
+stl_write(const char *path, const struct db_i *vdbip,
+	  const struct gcv_opts *UNUSED(options))
 {
     int ret;
     int use_mc = 0;
@@ -489,7 +489,7 @@ stl_export(const char *path, const struct db_i *vdbip,
 }
 
 
-struct gcv_plugin_info gcv_plugin_stl = {GCV_VERSION, "stl", NULL, stl_export};
+struct gcv_plugin_info gcv_plugin_stl = {GCV_VERSION, "stl", NULL, stl_write};
 
 
 /*
