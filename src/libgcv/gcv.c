@@ -43,7 +43,8 @@ gcv_reader(struct gcv_filter *reader, const char *source, const struct gcv_opts 
   }
 
   reader->name = source;
-  reader->plugin_info = gcv_plugin_find(source, 1);
+  reader->for_reading = 1;
+  reader->plugin_info = gcv_plugin_find(source, reader->for_reading);
 
   if (!reader->plugin_info)
     bu_log("No reader found for '%s'\n", source);
@@ -61,7 +62,8 @@ gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts 
     bu_log("Scheduling write to STDOUT\n");
   }
   writer->name = target;
-  writer->plugin_info = gcv_plugin_find(target, 0);
+  writer->for_reading = 0;
+  writer->plugin_info = gcv_plugin_find(target, writer->for_reading);
 
   if (!writer->plugin_info)
     bu_log("No writer found for '%s'\n", target);

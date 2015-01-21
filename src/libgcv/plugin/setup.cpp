@@ -27,8 +27,11 @@
 #include "../plugin.h"
 
 
-#define APPEND_LINE(prefix) prefix##__LINE__
-#define PLUGIN(name) extern "C" gcv_plugin_info name; static const RegisterPlugin APPEND_LINE(plugin)((name))
+#define TOKENPASTE(prefix, suffix) prefix ## suffix
+#define TOKENPASTE2(prefix, suffix) TOKENPASTE(prefix, suffix)
+#define PLUGIN(name) \
+    extern "C" gcv_plugin_info name; \
+    static const RegisterPlugin TOKENPASTE2(plugin_, __LINE__)((name))
 
 
 class RegisterPlugin
