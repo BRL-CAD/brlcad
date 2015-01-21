@@ -27,8 +27,9 @@ gcv_init(struct gcv_context *context)
 
 
 int
-gcv_destroy(struct gcv_context *UNUSED(context))
+gcv_destroy(struct gcv_context *context)
 {
+  db_close(context->db_instance);
   return 0;
 }
 
