@@ -79,8 +79,8 @@ gcv_create_plugin(const char *path, void *dl_handle,
     plugin->path = path ? bu_strdup(path) : NULL;
     plugin->dl_handle = dl_handle;
     plugin->info.file_extensions = bu_strdup(info->file_extensions);
-    plugin->info.importer = info->importer;
-    plugin->info.exporter = info->exporter;
+    plugin->info.reader_fn = info->reader_fn;
+    plugin->info.writer_fn = info->writer_fn;
 
     return 1;
 }
@@ -124,8 +124,8 @@ gcv_extension_match(const char *path, const char *extension)
 }
 
 
-HIDDEN const struct gcv_plugin *
-gcv_plugin_find(const char *path, int importing)
+HIDDEN const struct gcv_plugin_info *
+gcv_plugin_find(const char *path, int for_reading)
 {
     const struct bu_list * const plugin_list = gcv_get_plugin_list();
 
@@ -133,8 +133,8 @@ gcv_plugin_find(const char *path, int importing)
 
     for (BU_LIST_FOR(entry, gcv_plugin, plugin_list))
 	if (gcv_extension_match(path, entry->info.file_extensions))
-	    if ((importing && entry->info.importer) || entry->info.exporter)
-		return entry;
+	    if ((for_reading && entry->info.reader_fn) || entry->info.writer_fn)
+		return &entry->info;
 
     return NULL;
 }
@@ -183,49 +183,6 @@ int
 gcv_register_plugin(const struct gcv_plugin_info *info)
 {
     return gcv_create_plugin(NULL, NULL, info);
-}
-
-
-struct db_i *
-gcv_import(const char *path, const struct gcv_opts *options)
-{
-    const struct gcv_plugin *plugin = gcv_plugin_find(path, 1);
-
-    struct db_i *dbip;
-    struct rt_wdb *wdbp;
-
-
-    if (!plugin) {
-	bu_log("no plugin found to import '%s'\n", path);
-	return NULL;
-    }
-
-    dbip = db_create_inmem();
-    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
-
-    if (!plugin->info.importer(path, wdbp, options)) {
-	wdb_close(wdbp);
-	db_close(dbip);
-	return NULL;
-    }
-
-    wdb_close(wdbp);
-    return dbip;
-}
-
-
-int
-gcv_export(const char *path, const struct db_i *dbip,
-	   const struct gcv_opts *options)
-{
-    const struct gcv_plugin *plugin = gcv_plugin_find(path, 0);
-
-    if (!plugin) {
-	bu_log("no plugin found to export '%s'\n", path);
-	return 0;
-    }
-
-    return !!plugin->info.exporter(path, dbip, options);
 }
 
 

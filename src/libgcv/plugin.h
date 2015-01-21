@@ -36,10 +36,10 @@
 __BEGIN_DECLS
 
 
-typedef int (*gcv_importer)(const char *path, struct rt_wdb *wdbp,
-			    const struct gcv_opts *options);
-typedef int (*gcv_exporter)(const char *path, const struct db_i *dbip,
-			    const struct gcv_opts *options);
+typedef int (*gcv_reader_fn)(const char *path, struct rt_wdb *wdbp,
+			     const struct gcv_opts *options);
+typedef int (*gcv_writer_fn)(const char *path, const struct db_i *dbip,
+			     const struct gcv_opts *options);
 
 
 #define GCV_VERSION (unsigned char)1
@@ -48,8 +48,8 @@ typedef int (*gcv_exporter)(const char *path, const struct db_i *dbip,
 struct gcv_plugin_info {
     unsigned char gcv_version;
     char *file_extensions;
-    gcv_importer importer;
-    gcv_exporter exporter;
+    gcv_reader_fn reader_fn;
+    gcv_writer_fn writer_fn;
 };
 
 
