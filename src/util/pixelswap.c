@@ -33,7 +33,7 @@
 #include "fb.h"
 
 
-char options[] = "hd:";
+char options[] = "d:h?";
 char noname[] = "(noname)";
 char *progname = noname;
 
@@ -50,8 +50,8 @@ usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s [ -%s ] r g b R G B [ < infile > outfile]\n",
-		   progname, options);
+    (void) fprintf(stderr, "Usage: %s [ -d ] r g b R G B [ < infile > outfile]\n",
+		   progname);
     bu_exit (1, NULL);
 }
 
@@ -70,17 +70,17 @@ parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+	if (bu_optopt == '?') c = 'h';
 	switch (c) {
 	    case 'd'	: if ((c=atoi(bu_optarg)) > 0)
 		depth = c;
 	    else
 		fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
-		break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage("Bad or help flag specified\n"); break;
+		break;	    case 'h'	: usage(""); break;
+	    default	: usage("Bad flag specified\n"); break;
 	}
+    }
 
     return bu_optind;
 }
