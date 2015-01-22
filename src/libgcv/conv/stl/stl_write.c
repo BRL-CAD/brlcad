@@ -498,7 +498,7 @@ stl_write(const char *path, struct db_i *vdbip,
 }
 
 
-struct gcv_plugin_info gcv_plugin_stl_write = {GCV_VERSION, "stl", NULL, stl_write};
+struct gcv_plugin_info gcv_plugin_conv_stl_write = {GCV_VERSION, "stl", NULL, stl_write};
 
 
 /*

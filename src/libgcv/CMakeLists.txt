@@ -17,9 +17,12 @@ set(LIBGCV_SOURCES
   bot_solidity.c
   )
 
-list(APPEND LIBGCV_SOURCES plugin/setup.cpp plugin/brlcad.c
-  plugin/stl/stl_read.c
-  plugin/stl/stl_write.c
+list(APPEND LIBGCV_SOURCES
+  setup.cpp
+  conv/brlcad.c
+  conv/stl/stl_read.c
+  conv/stl/stl_write.c
+  conv/obj/obj_write.c
   )
 
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")

@@ -73,7 +73,7 @@ gcv_brlcad_write(const char *path, struct db_i *dbip,
 }
 
 
-struct gcv_plugin_info gcv_plugin_brlcad = {GCV_VERSION, "g", gcv_brlcad_read, gcv_brlcad_write};
+struct gcv_plugin_info gcv_plugin_conv_brlcad = {GCV_VERSION, "g", gcv_brlcad_read, gcv_brlcad_write};
 
 
 /*

@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-#include "../gcv_private.h"
+#include "gcv_private.h"
 
 
 #define TOKENPASTE(prefix, suffix) prefix ## suffix
@@ -52,9 +52,10 @@ RegisterPlugin::RegisterPlugin(const gcv_plugin_info &info)
 
 // gcv static plugins
 
-PLUGIN(gcv_plugin_brlcad);
-PLUGIN(gcv_plugin_stl_read);
-PLUGIN(gcv_plugin_stl_write);
+PLUGIN(gcv_plugin_conv_brlcad);
+PLUGIN(gcv_plugin_conv_stl_read);
+PLUGIN(gcv_plugin_conv_stl_write);
+PLUGIN(gcv_plugin_conv_obj_write);
 
 
 // Local Variables:

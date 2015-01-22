@@ -650,7 +650,7 @@ stl_read(const char *path, struct rt_wdb *wdbp,
 }
 
 
-struct gcv_plugin_info gcv_plugin_stl_read = {GCV_VERSION, "stl", stl_read, NULL};
+struct gcv_plugin_info gcv_plugin_conv_stl_read = {GCV_VERSION, "stl", stl_read, NULL};
 
 
 /*
