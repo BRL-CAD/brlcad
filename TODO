@@ -1359,6 +1359,29 @@ ATTRIBUTES
 NEW OBJECTS
 -----------
 
+* datum objects.  implement support for datum points, axes, planes,
+  and coordinate systems.  Nominal prioritized task decomposition with
+  time estimates:
+
+  2 day - stub in datum object into librt with sub-object types
+  1 day - implement typein support for datum axes
+  1 day - implement matrix pushing / verify rt_generic_xform()
+  1 day - implement listing / text / plot callbacks
+  1 day - implement adjust support for datum axes
+  1 day - update in.xml documentation on typein interface
+  2 day - add datum axis creation to archer GUI
+  2 day - implement datum axis option panel in archer GUI
+  2 day - implement datum axis mouse editing in archer GUI
+  3 day - write up documentation on datums (with example)
+  1 day - serialization+typein support for datum planes
+  1 day - serialization+typein support for datum point sets
+  1 day - serialization+typein support for datum coordinate systems
+  3 day - callbacks for planes, point sets, and coordinate systems
+  2 day - add datum plane to archer
+  2 day - add datum point sets to archer
+  2 day - add datum coordinate systems to archer
+  1 day - update in.xml documentation on typein
+
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with another object
   and/or position(s) that a label refers to.  there are various styles
