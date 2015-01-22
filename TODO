@@ -56,6 +56,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* look into whether db_dirbuild should call db_update_nref
+
 * evaluate replacing libfft with the KISS FFT library (BSD).  similar
   to priit laes work a couple years ago (see brlcad-devel mailing
   list, he converted our tools to FFTW but license was not
