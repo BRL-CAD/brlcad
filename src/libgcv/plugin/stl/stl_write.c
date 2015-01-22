@@ -71,7 +71,7 @@ static const char *output_file = NULL;	/* output filename */
 static char *output_directory = NULL;	/* directory name to hold output files */
 static FILE *fp;			/* Output file pointer */
 static int bfd;				/* Output binary file descriptor */
-static const struct db_i *dbip;
+static struct db_i *dbip;
 static struct model *the_model;
 static struct bu_vls file_name =
 	    BU_VLS_INIT_ZERO;		/* file name built from region name */
@@ -332,7 +332,7 @@ static struct gcv_data gcvwriter = {nmg_to_stl};
 
 
 static int
-stl_write(const char *path, const struct db_i *vdbip,
+stl_write(const char *path, struct db_i *vdbip,
 	  const struct gcv_opts *UNUSED(options))
 {
     int ret;
@@ -340,7 +340,7 @@ stl_write(const char *path, const struct db_i *vdbip,
     int mutex;
 
     size_t num_objects = 0;
-    const char **object_names = NULL;
+    char **object_names = NULL;
     dbip = vdbip;
 
     bu_setlinebuf(stderr);
@@ -447,14 +447,25 @@ stl_write(const char *path, const struct db_i *vdbip,
 	    perror("write");
     }
 
+    /* get toplevel objects */
+    {
+	struct directory **results;
+	db_update_nref(dbip, &rt_uniresource);
+	num_objects = db_ls(dbip, DB_LS_TOPS, NULL, &results);
+	object_names = db_dpv_to_argv(results);
+	bu_free(results, "tops");
+    }
+
     /* Walk indicated tree(s).  Each region will be output separately */
-    (void) db_walk_tree((struct db_i *)dbip, num_objects, object_names,
+    (void) db_walk_tree(dbip, num_objects, (const char **)object_names,
 			1,
 			&tree_state,
 			0,			/* take all regions */
 			use_mc ? gcv_region_end_mc : gcv_region_end,
 			use_mc ? NULL : nmg_booltree_leaf_tess,
 			(void *)&gcvwriter);
+
+    bu_free(object_names, "object_names");
 
     bu_log("%zu triangles written\n", tot_polygons);
 

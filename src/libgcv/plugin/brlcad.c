@@ -41,7 +41,7 @@ gcv_brlcad_read(const char *path, struct rt_wdb *wdbp,
 	return 0;
     }
 
-    if (db_dirbuild(dbip) != 0) {
+    if (db_dirbuild(dbip)) {
 	bu_log("db_dirbuild() failed for '%s'\n", path);
 	db_close(dbip);
 	return 0;
@@ -55,7 +55,7 @@ gcv_brlcad_read(const char *path, struct rt_wdb *wdbp,
 
 
 HIDDEN int
-gcv_brlcad_write(const char *path, const struct db_i *dbip,
+gcv_brlcad_write(const char *path, struct db_i *dbip,
 		 const struct gcv_opts *UNUSED(options))
 {
     int ret;
@@ -66,7 +66,7 @@ gcv_brlcad_write(const char *path, const struct db_i *dbip,
 	return 0;
     }
 
-    ret = db_dump(wdbp, (struct db_i *)dbip);
+    ret = db_dump(wdbp, dbip);
     wdb_close(wdbp);
 
     return ret == 0;

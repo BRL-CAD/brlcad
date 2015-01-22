@@ -21,7 +21,7 @@ struct gcv_filter {
 int
 gcv_init(struct gcv_context *context)
 {
-  context->db_instance = db_open_inmem();
+  context->db_instance = db_create_inmem();
   return 0;
 }
 
@@ -84,21 +84,12 @@ gcv_execute(struct gcv_context *cxt, const struct gcv_filter *filter)
   bu_log("Filtering %s\n", filter->name);
 
   if (filter->for_reading) {
-    struct rt_wdb *wdbp;
-
     if (!filter->plugin_info || !filter->plugin_info->reader_fn) {
       bu_log("Filter has no reader\n");
       return -1;
     }
 
-    wdbp = wdb_dbopen(cxt->db_instance, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
-
-    if (!wdbp) {
-      bu_log("wdb_dbopen() failed\n");
-      return -1;
-    }
-
-    return !filter->plugin_info->reader_fn(filter->name, wdbp, filter->options);
+    return !filter->plugin_info->reader_fn(filter->name, cxt->db_instance->dbi_wdbp, filter->options);
   }
 
   if (!filter->plugin_info || !filter->plugin_info->writer_fn) {
@@ -118,7 +109,9 @@ gcv_convert(const char *in_file, const struct gcv_opts *in_opts, const char *out
   struct gcv_filter writer;
   int result;
 
-  gcv_init(&context);
+  result = gcv_init(&context);
+  if (result)
+    bu_exit(2, "ERROR: Failed to initialize the GCV context\n");
 
   gcv_reader(&reader, in_file, in_opts);
   gcv_writer(&writer, out_file, out_opts);

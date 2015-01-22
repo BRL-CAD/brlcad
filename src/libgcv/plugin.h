@@ -38,7 +38,7 @@ __BEGIN_DECLS
 
 typedef int (*gcv_reader_fn)(const char *path, struct rt_wdb *wdbp,
 			     const struct gcv_opts *options);
-typedef int (*gcv_writer_fn)(const char *path, const struct db_i *dbip,
+typedef int (*gcv_writer_fn)(const char *path, struct db_i *dbip,
 			     const struct gcv_opts *options);
 
 
