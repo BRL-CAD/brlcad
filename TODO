@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* make sure rt -I interactive mode still works... looks like code for
+  it was removed.
+
 * fix iges exporter (spaces after commas)
 
 * fix the bn_poly_sub unit test
