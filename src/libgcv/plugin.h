@@ -42,14 +42,15 @@ typedef int (*gcv_writer_fn)(const char *path, struct db_i *dbip,
 			     const struct gcv_opts *options);
 
 
-#define GCV_VERSION (unsigned char)1
+struct gcv_converter {
+    const char *file_extensions;
+    gcv_reader_fn reader_fn;
+    gcv_writer_fn writer_fn;
+};
 
 
 struct gcv_plugin_info {
-    unsigned char gcv_version;
-    char *file_extensions;
-    gcv_reader_fn reader_fn;
-    gcv_writer_fn writer_fn;
+    const struct gcv_converter *converters;
 };
 
 

@@ -78,8 +78,8 @@ static int regions_written = 0;
 static int inches = 0;
 
 static int
-obj_write(const char *path, struct db_i *vdbip,
-	  const struct gcv_opts *UNUSED(options))
+gcv_obj_write(const char *path, struct db_i *vdbip,
+	      const struct gcv_opts *UNUSED(options))
 {
     double percent;
     size_t num_objects = 0;
@@ -181,7 +181,12 @@ obj_write(const char *path, struct db_i *vdbip,
 }
 
 
-struct gcv_plugin_info gcv_plugin_conv_obj_write = {GCV_VERSION, "obj", NULL, obj_write};
+static const struct gcv_converter converters[] = {
+    {"obj", NULL, gcv_obj_write},
+    {NULL, NULL, NULL}
+};
+
+const struct gcv_plugin_info gcv_plugin_conv_obj_write = {converters};
 
 
 static void

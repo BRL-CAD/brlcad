@@ -27,19 +27,15 @@
 #include "common.h"
 
 #include "plugin.h"
+#include "gcv_private.h"
 
 #include <string.h>
-
-#include "gcv_private.h"
 
 
 struct gcv_plugin {
     struct bu_list l;
 
-    char *path;
-    void *dl_handle;
-
-    struct gcv_plugin_info info;
+    const struct gcv_plugin_info *plugin_info;
 };
 
 
@@ -55,34 +51,16 @@ gcv_get_plugin_list(void)
 }
 
 
-HIDDEN int
-gcv_plugin_create(const char *path, void *dl_handle,
-		  const struct gcv_plugin_info *info)
+void
+gcv_plugin_register(const struct gcv_plugin_info *plugin_info)
 {
     struct bu_list * const plugin_list = gcv_get_plugin_list();
 
     struct gcv_plugin *plugin;
 
-    if (info->gcv_version != GCV_VERSION) {
-	bu_log("plugin '%s' is designed for %s version of libgcv (this=v%u, plugin=v%u)\n",
-	       path, info->gcv_version < GCV_VERSION ? "an older" : "a newer",
-	       (unsigned)GCV_VERSION, (unsigned)info->gcv_version);
-
-	if (dl_handle && bu_dlclose(dl_handle))
-	    bu_bomb(bu_dlerror());
-
-	return 0;
-    }
-
     BU_GET(plugin, struct gcv_plugin);
     BU_LIST_PUSH(plugin_list, &plugin->l);
-    plugin->path = path ? bu_strdup(path) : NULL;
-    plugin->dl_handle = dl_handle;
-    plugin->info.file_extensions = bu_strdup(info->file_extensions);
-    plugin->info.reader_fn = info->reader_fn;
-    plugin->info.writer_fn = info->writer_fn;
-
-    return 1;
+    plugin->plugin_info = plugin_info;
 }
 
 
@@ -90,14 +68,6 @@ HIDDEN void
 gcv_plugin_free(struct gcv_plugin *entry)
 {
     BU_LIST_DEQUEUE(&entry->l);
-
-    if (entry->path)
-	bu_free(entry->path, "path");
-
-    if (entry->dl_handle && bu_dlclose(entry->dl_handle))
-	bu_bomb(bu_dlerror());
-
-    bu_free(entry->info.file_extensions, "file_extensions");
     BU_PUT(entry, struct gcv_plugin);
 }
 
@@ -124,71 +94,29 @@ gcv_extension_match(const char *path, const char *extension)
 }
 
 
-const struct gcv_plugin_info *
-gcv_plugin_find(const char *path, int for_reading)
+const struct gcv_converter *
+gcv_converter_find(const char *path, enum gcv_conversion_type type)
 {
     const struct bu_list * const plugin_list = gcv_get_plugin_list();
 
-    struct gcv_plugin *entry;
+    const struct gcv_plugin *entry;
 
-    for (BU_LIST_FOR(entry, gcv_plugin, plugin_list))
-	if (gcv_extension_match(path, entry->info.file_extensions)) {
-	    if (for_reading && entry->info.reader_fn)
-		return &entry->info;
-	    else if (!for_reading && entry->info.writer_fn)
-		return &entry->info;
+    for (BU_LIST_FOR(entry, gcv_plugin, plugin_list)) {
+	const struct gcv_converter *converter = entry->plugin_info->converters;
+
+	while (converter->file_extensions) {
+	    if (gcv_extension_match(path, converter->file_extensions)) {
+		if (type == GCV_CONVERSION_READ && converter->reader_fn)
+		    return converter;
+		else if (type == GCV_CONVERSION_WRITE && converter->writer_fn)
+		    return converter;
+	    }
+
+	    ++converter;
 	}
+    }
 
     return NULL;
-}
-
-
-int
-gcv_plugin_load(const char *path)
-{
-    void *dl_handle = bu_dlopen(path, BU_RTLD_LAZY);
-    const struct gcv_plugin_info *plugin_info;
-
-    if (!dl_handle) {
-	bu_log("bu_dlopen() failed for '%s': %s\n", path, bu_dlerror());
-	return 0;
-    }
-
-    plugin_info = (const struct gcv_plugin_info *)bu_dlsym(dl_handle,
-		  "gcv_plugin_info");
-
-    if (!plugin_info) {
-	bu_log("failed loading gcv_plugin_info for '%s': %s\n", path, bu_dlerror());
-
-	if (bu_dlclose(dl_handle))
-	    bu_bomb(bu_dlerror());
-
-	return 0;
-    }
-
-    return gcv_plugin_create(path, dl_handle, plugin_info);
-}
-
-
-void
-gcv_plugin_unload(const char *path)
-{
-    struct bu_list * const plugin_list = gcv_get_plugin_list();
-
-    struct gcv_plugin *entry;
-
-    for (BU_LIST_FOR(entry, gcv_plugin, plugin_list))
-	if (bu_strcmp(entry->path, path) == 0) {
-	    gcv_plugin_free(entry);
-	    return;
-	}
-}
-
-
-int
-gcv_plugin_register(const struct gcv_plugin_info *info)
-{
-    return gcv_plugin_create(NULL, NULL, info);
 }
 
 

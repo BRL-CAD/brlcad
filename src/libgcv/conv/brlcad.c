@@ -73,7 +73,12 @@ gcv_brlcad_write(const char *path, struct db_i *dbip,
 }
 
 
-struct gcv_plugin_info gcv_plugin_conv_brlcad = {GCV_VERSION, "g", gcv_brlcad_read, gcv_brlcad_write};
+static const struct gcv_converter converters[] = {
+    {"g", gcv_brlcad_read, gcv_brlcad_write},
+    {NULL, NULL, NULL}
+};
+
+const struct gcv_plugin_info gcv_plugin_conv_brlcad = {converters};
 
 
 /*

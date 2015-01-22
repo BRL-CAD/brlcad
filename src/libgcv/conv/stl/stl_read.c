@@ -599,8 +599,8 @@ Convert_input()
 
 
 HIDDEN int
-stl_read(const char *path, struct rt_wdb *wdbp,
-	 const struct gcv_opts *UNUSED(options))
+gcv_stl_read(const char *path, struct rt_wdb *wdbp,
+	     const struct gcv_opts *UNUSED(options))
 {
     tol.magic = BN_TOL_MAGIC;
 
@@ -650,7 +650,12 @@ stl_read(const char *path, struct rt_wdb *wdbp,
 }
 
 
-struct gcv_plugin_info gcv_plugin_conv_stl_read = {GCV_VERSION, "stl", stl_read, NULL};
+static const struct gcv_converter converters[] = {
+    {"stl", gcv_stl_read, NULL},
+    {NULL, NULL, NULL}
+};
+
+const struct gcv_plugin_info gcv_plugin_conv_stl_read = {converters};
 
 
 /*

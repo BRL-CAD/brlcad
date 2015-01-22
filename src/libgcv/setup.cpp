@@ -45,8 +45,7 @@ public:
 
 RegisterPlugin::RegisterPlugin(const gcv_plugin_info &info)
 {
-    if (!gcv_plugin_register(&info))
-	bu_bomb("gcv_register_plugin() failed for static plugin"); // FIXME
+    gcv_plugin_register(&info);
 }
 
 

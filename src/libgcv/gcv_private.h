@@ -32,10 +32,12 @@
 __BEGIN_DECLS
 
 
-int gcv_plugin_register(const struct gcv_plugin_info *info);
+void gcv_plugin_register(const struct gcv_plugin_info *plugin_info);
 
 
-const struct gcv_plugin_info *gcv_plugin_find(const char *path, int for_reading);
+enum gcv_conversion_type {GCV_CONVERSION_READ, GCV_CONVERSION_WRITE};
+
+const struct gcv_converter *gcv_converter_find(const char *path, enum gcv_conversion_type type);
 
 
 __END_DECLS

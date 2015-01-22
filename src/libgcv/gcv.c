@@ -12,8 +12,8 @@ struct gcv_opts {
 struct gcv_filter {
     const char *name;
     const struct gcv_opts *options;
-    int for_reading;
-    const struct gcv_plugin_info *plugin_info;
+    enum gcv_conversion_type type;
+    const struct gcv_converter *converter;
 };
 
 
@@ -47,10 +47,10 @@ gcv_reader(struct gcv_filter *reader, const char *source,
 
     reader->name = source;
     reader->options = opts;
-    reader->for_reading = 1;
-    reader->plugin_info = gcv_plugin_find(source, reader->for_reading);
+    reader->type = GCV_CONVERSION_READ;
+    reader->converter = gcv_converter_find(source, reader->type);
 
-    if (!reader->plugin_info)
+    if (!reader->converter)
 	bu_log("No reader found for '%s'\n", source);
 }
 
@@ -69,10 +69,10 @@ gcv_writer(struct gcv_filter *writer, const char *target,
 
     writer->name = target;
     writer->options = opts;
-    writer->for_reading = 0;
-    writer->plugin_info = gcv_plugin_find(target, writer->for_reading);
+    writer->type = GCV_CONVERSION_WRITE;
+    writer->converter = gcv_converter_find(target, writer->type);
 
-    if (!writer->plugin_info)
+    if (!writer->converter)
 	bu_log("No writer found for '%s'\n", target);
 }
 
@@ -85,15 +85,15 @@ gcv_execute(struct gcv_context *cxt, const struct gcv_filter *filter)
 
     bu_log("Filtering %s\n", filter->name);
 
-    if (filter->for_reading) {
-	if (!filter->plugin_info || !filter->plugin_info->reader_fn) {
+    if (filter->type == GCV_CONVERSION_READ) {
+	if (!filter->converter || !filter->converter->reader_fn) {
 	    bu_log("Filter has no reader\n");
 	    return -1;
 	}
 
-	return !filter->plugin_info->reader_fn(filter->name, cxt->db_instance->dbi_wdbp,
-					       filter->options);
-    } else {
+	return !filter->converter->reader_fn(filter->name, cxt->db_instance->dbi_wdbp,
+					     filter->options);
+    } else if (filter->type == GCV_CONVERSION_WRITE) {
 	int ret;
 	struct db_i *temp_dbip = db_create_inmem();
 
@@ -103,18 +103,21 @@ gcv_execute(struct gcv_context *cxt, const struct gcv_filter *filter)
 	    return -1;
 	}
 
-	if (!filter->plugin_info || !filter->plugin_info->writer_fn) {
+	if (!filter->converter || !filter->converter->writer_fn) {
 	    bu_log("Filter has no writer\n");
 	    db_close(temp_dbip);
 	    return -1;
 	}
 
-	ret = filter->plugin_info->writer_fn(filter->name, cxt->db_instance,
-					     filter->options);
+	ret = filter->converter->writer_fn(filter->name, cxt->db_instance,
+					   filter->options);
 	db_close(temp_dbip);
 
 	return !ret;
     }
+
+    bu_bomb("Unknown filter type");
+    return -1;
 }
 
 

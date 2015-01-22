@@ -2819,7 +2819,12 @@ gcv_fastgen4_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *
 }
 
 
-struct gcv_plugin_info gcv_plugin_conv_fastgen4_read = {GCV_VERSION, "fastgen4", gcv_fastgen4_read, NULL};
+static const struct gcv_converter converters[] = {
+    {"fastgen4", gcv_fastgen4_read, NULL},
+    {NULL, NULL, NULL}
+};
+
+const struct gcv_plugin_info gcv_plugin_conv_fastgen4_read = {converters};
 
 
 /*

@@ -332,8 +332,8 @@ static struct gcv_data gcvwriter = {nmg_to_stl};
 
 
 static int
-stl_write(const char *path, struct db_i *vdbip,
-	  const struct gcv_opts *UNUSED(options))
+gcv_stl_write(const char *path, struct db_i *vdbip,
+	      const struct gcv_opts *UNUSED(options))
 {
     int ret;
     int use_mc = 0;
@@ -498,7 +498,12 @@ stl_write(const char *path, struct db_i *vdbip,
 }
 
 
-struct gcv_plugin_info gcv_plugin_conv_stl_write = {GCV_VERSION, "stl", NULL, stl_write};
+static const struct gcv_converter converters[] = {
+    {"stl", NULL, gcv_stl_write},
+    {NULL, NULL, NULL}
+};
+
+const struct gcv_plugin_info gcv_plugin_conv_stl_write = {converters};
 
 
 /*
