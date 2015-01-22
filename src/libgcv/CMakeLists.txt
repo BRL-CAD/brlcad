@@ -23,6 +23,7 @@ list(APPEND LIBGCV_SOURCES
   conv/stl/stl_read.c
   conv/stl/stl_write.c
   conv/obj/obj_write.c
+  conv/fastgen4/fastgen4_read.c
   )
 
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
