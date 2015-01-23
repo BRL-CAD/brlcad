@@ -624,8 +624,6 @@ gcv_stl_read(const char *path, struct rt_wdb *wdbp,
 	bu_exit(1, NULL);
     }
 
-    bu_optind++;
-
     fd_out = wdbp;
 
     /* FIXME: update for libgcv

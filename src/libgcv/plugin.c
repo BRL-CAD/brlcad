@@ -104,6 +104,8 @@ gcv_converter_find(const char *path, enum gcv_conversion_type type)
     for (BU_LIST_FOR(entry, gcv_plugin, plugin_list)) {
 	const struct gcv_converter *converter = entry->plugin_info->converters;
 
+	if (!converter) continue;
+
 	while (converter->file_extensions) {
 	    if (gcv_extension_match(path, converter->file_extensions)) {
 		if (type == GCV_CONVERSION_READ && converter->reader_fn)

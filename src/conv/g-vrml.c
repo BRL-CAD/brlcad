@@ -1,4 +1,4 @@
-/*                        V R M L _ W R I T E . C
+/*                        G - V R M L . C
  * BRL-CAD
  *
  * Copyright (c) 1995-2014 United States Government as represented by
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file vrml_write.c
+/** @file conv/g-vrml.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to a VRML (2.0)
  * faceted model by calling on the NMG booleans.
@@ -44,7 +44,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "../../plugin.h"
 
 #define TXT_BUF_LEN	512
 #define TXT_NAME_SIZE	128
@@ -94,10 +93,14 @@ extern union tree *do_region_end1(struct db_tree_state *tsp, const struct db_ful
 extern union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
+static const char *usage =
+"[-b] [-e] [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n"
+"(units default to mm)\n";
+
 static char *tok_sep = " \t";
 static int NMG_debug; /* saved arg of -X, for longjmp handling */
 static int verbose = 0;
-static const char *out_file = (char *)NULL; /* Output filename */
+static char *out_file = (char *)NULL; /* Output filename */
 static FILE *fp_out; /* Output file pointer */
 static struct db_i *dbip;
 static struct rt_tess_tol ttol;
@@ -116,6 +119,11 @@ static int bomb_cnt = 0;
 static int bot_dump = 0;
 static int eval_all = 0;
 
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 static void
 clean_pmp(struct plate_mode *pmp)
@@ -576,16 +584,13 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 }
 
 
-static int
-gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUSED(options))
+int
+main(int argc, char **argv)
 {
-    size_t i;
+    int		i;
+    int	c;
     struct plate_mode pm;
-    size_t num_objects = 0;
-    char **object_names = NULL;
 
-    out_file = path;
-    dbip = vdbip;
     bu_setlinebuf(stderr);
 
     the_model = nmg_mm();
@@ -614,9 +619,69 @@ gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUS
 
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
+    /* Get command line arguments. */
+    while ((c = bu_getopt(argc, argv, "a:bd:en:o:r:vx:X:u:h?")) != -1) {
+	switch (c) {
+	    case 'a':		/* Absolute tolerance. */
+		ttol.abs = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case 'b':		/* BOT dump */
+		bot_dump = 1;
+		break;
+	    case 'd':		/* Calculational tolerance */
+		tol.dist = atof(bu_optarg);
+		tol.dist_sq = tol.dist * tol.dist;
+		break;
+	    case 'e':		/* Evaluate all, CSG and BOTs */
+		eval_all = 1;
+		break;
+	    case 'n':		/* Surface normal tolerance. */
+		ttol.norm = atof(bu_optarg)*DEG2RAD;
+		ttol.rel = 0.0;
+		break;
+	    case 'o':		/* Output file name */
+		out_file = bu_optarg;
+		break;
+	    case 'r':		/* Relative tolerance. */
+		ttol.rel = atof(bu_optarg);
+		break;
+	    case 'v':
+		verbose++;
+		break;
+	    case 'x':
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		break;
+	    case 'X':
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
+		break;
+	    case 'u':
+		units = bu_strdup(bu_optarg);
+		scale_factor = bu_units_conversion(units);
+		if (ZERO(scale_factor))
+		    bu_exit(1, "Unrecognized units (%s)\n", units);
+		scale_factor = 1.0 / scale_factor;
+		break;
+	    default:
+		print_usage(argv[0]);
+	}
+    }
+
+    if (bu_optind + 1 >= argc)
+	print_usage(argv[0]);
+
     if ((bot_dump == 1) && (eval_all == 1)) {
-	bu_log("BOT Dump and Evaluate All are mutually exclusive\n");
-	return 0;
+	bu_exit(1, "BOT Dump and Evaluate All are mutually exclusive\n");
+    }
+
+    /* Open BRL-CAD database */
+    if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL) {
+	perror(argv[0]);
+	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind]);
+    }
+    if (db_dirbuild(dbip)) {
+	bu_exit(1, "db_dirbuild() failed!\n");
     }
 
     if (out_file == NULL) {
@@ -624,9 +689,8 @@ gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUS
 	setmode(fileno(fp_out), O_BINARY);
     } else {
 	if ((fp_out = fopen(out_file, "wb")) == NULL) {
-	    perror("g-vrml");
-	    bu_log("Cannot open %s\n", out_file);
-	    return 0;
+	    perror(argv[0]);
+	    bu_exit(1, "Cannot open %s\n", out_file);
 	}
     }
 
@@ -658,6 +722,8 @@ gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUS
     fprintf(fp_out, "Transform {\n");
     fprintf(fp_out, "\tchildren [\n");
 
+    bu_optind++;
+
     pm.num_bots = 0;
     pm.num_nonbots = 0;
 
@@ -667,17 +733,8 @@ gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUS
 		   sizeof(struct rt_bot_internal *), "pm.bots");
     }
 
-    /* get toplevel objects */
-    {
-	struct directory **results;
-	db_update_nref(dbip, &rt_uniresource);
-	num_objects = db_ls(dbip, DB_LS_TOPS, NULL, &results);
-	object_names = db_dpv_to_argv(results);
-	bu_free(results, "tops");
-    }
-
     if (eval_all) {
-	(void)db_walk_tree(dbip, num_objects, (const char **)(object_names),
+	(void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
 	       1,		/* ncpu */
 	       &tree_state,
 	       0,
@@ -688,7 +745,7 @@ gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUS
     }
 
     if (bot_dump) {
-	(void)db_walk_tree(dbip, num_objects, (const char **)(object_names),
+	(void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
 	       1,		/* ncpu */
 	       &tree_state,
 	       0,
@@ -698,12 +755,12 @@ gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUS
 	goto out;
     }
 
-    for (i = 0; i < num_objects; i++) {
+    for (i = bu_optind; i < argc; i++) {
 	struct directory *dp;
 
-	dp = db_lookup(dbip, object_names[i], LOOKUP_QUIET);
+	dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL) {
-	    bu_log("Cannot find %s\n", object_names[i]);
+	    bu_log("Cannot find %s\n", argv[i]);
 	    continue;
 	}
 
@@ -712,10 +769,10 @@ gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUS
 	    continue;
 	}
 
-	fprintf(fp_out, "# Includes group %s\n", object_names[i]);
+	fprintf(fp_out, "# Includes group %s\n", argv[i]);
 
 	/* walk trees selecting only light source regions */
-	(void)db_walk_tree(dbip, 1, (const char **)(&object_names[i]),
+	(void)db_walk_tree(dbip, 1, (const char **)(&argv[i]),
 			   1,			/* ncpu */
 			   &tree_state,
 			   select_lights,
@@ -725,7 +782,7 @@ gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUS
     }
 
     /* Walk indicated tree(s).  Each non-light-source region will be output separately */
-    (void)db_walk_tree(dbip, num_objects, (const char **)(object_names),
+    (void)db_walk_tree(dbip, argc - bu_optind, (const char **)(&argv[bu_optind]),
 		       1,		/* ncpu */
 		       &tree_state,
 		       select_non_lights,
@@ -741,7 +798,7 @@ gcv_vrml_write(const char *path, struct db_i *vdbip, const struct gcv_opts *UNUS
     }
 
 out:
-    bu_free(object_names, "object_names");
+    db_close(dbip);
 
     /* Now we need to close each group set */
     fprintf(fp_out, "\t]\n}\n");
@@ -757,16 +814,8 @@ out:
     fclose(fp_out);
     bu_log("Done.\n");
 
-    return 1;
+    return 0;
 }
-
-
-static const struct gcv_converter converters[] = {
-    {"vrml", NULL, gcv_vrml_write},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_vrml_write = {converters};
 
 
 void

@@ -56,6 +56,7 @@ PLUGIN(gcv_plugin_conv_stl_read);
 PLUGIN(gcv_plugin_conv_stl_write);
 PLUGIN(gcv_plugin_conv_obj_write);
 PLUGIN(gcv_plugin_conv_fastgen4_read);
+PLUGIN(gcv_plugin_conv_vrml_write);
 
 
 // Local Variables:
