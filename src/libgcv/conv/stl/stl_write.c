@@ -97,7 +97,8 @@ lswap(unsigned int *v)
 
 static void
 nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp,
-	   int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
+	   int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]),
+	   void *UNUSED(client_data))
 {
     struct model *m;
     struct shell *s;
@@ -323,12 +324,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp,
 }
 
 
-/* FIXME: this be a dumb hack to avoid void* conversion */
-struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int,
-		 float [3]);
-};
-static struct gcv_data gcvwriter = {nmg_to_stl};
+static struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL};
 
 
 static int

@@ -36,16 +36,12 @@
 __BEGIN_DECLS
 
 
-typedef int (*gcv_reader_fn)(const char *path, struct rt_wdb *wdbp,
-			     const struct gcv_opts *options);
-typedef int (*gcv_writer_fn)(const char *path, struct db_i *dbip,
-			     const struct gcv_opts *options);
-
-
 struct gcv_converter {
     const char *file_extensions;
-    gcv_reader_fn reader_fn;
-    gcv_writer_fn writer_fn;
+    int (*reader_fn)(const char *path, struct rt_wdb *wdbp,
+		     const struct gcv_opts *options);
+    int (*writer_fn)(const char *path, struct db_i *dbip,
+		     const struct gcv_opts *options);
 };
 
 
