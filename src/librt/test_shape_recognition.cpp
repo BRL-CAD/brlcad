@@ -457,7 +457,7 @@ main(int argc, char *argv[])
 	    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, j);
 	    if (cobj->type != COMB)
 		print_subbrep_object(cobj, "  ");
-	    (void)make_shape(obj, wdbp);
+	    (void)make_shape(cobj, wdbp);
 	}
 	//}
 	(void)make_shape(obj, wdbp);
