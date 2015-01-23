@@ -68,7 +68,7 @@ print_usage(const char *progname)
 struct stl_conv_data {
     int verbose;
     int is_success;
-    int binary;		         	/* whether to produce conv_data->binary or ascii */
+    int binary;		         	/* whether to produce binary or ascii */
     const char *output_file;	        /* output filename */
     char *output_directory;             /* directory name to hold output files */
     FILE *fp;                    	/* Output file pointer */
