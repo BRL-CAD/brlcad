@@ -72,7 +72,7 @@ struct stl_conv_data {
     const char *output_file;	        /* output filename */
     char *output_directory;             /* directory name to hold output files */
     FILE *fp;                    	/* Output file pointer */
-    int bfd;				/* Output conv_data->binary file descriptor */
+    int bfd;				/* Output binary file descriptor */
     struct db_i *dbip;
     struct model *the_model;
     struct bu_vls file_name;             /* file name built from region name */
@@ -150,12 +150,12 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp,
 	} else {
 	    char buf[81] = {0};	/* need exactly 80 char for header */
 
-	    /* Open conv_data->binary output file */
+	    /* Open binary output file */
 	    if ((conv_data->bfd = open(bu_vls_addr(&conv_data->file_name),
 				       O_WRONLY | O_CREAT | O_TRUNC | O_BINARY,
 				       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0) {
 		perror("g-stl");
-		bu_log("ERROR: Cannot open conv_data->binary output file (%s) for writing\n",
+		bu_log("ERROR: Cannot open binary output file (%s) for writing\n",
 		       bu_vls_addr(&conv_data->file_name));
 		conv_data->is_success = 0;
 		return;
@@ -391,7 +391,7 @@ gcv_stl_write(const char *path, struct db_i *vdbip,
 
     if (!conv_data.output_file && !conv_data.output_directory) {
 	if (conv_data.binary) {
-	    bu_log("Can't output conv_data.binary to stdout\n");
+	    bu_log("Can't output binary to stdout\n");
 	    return 0;
 	}
 
@@ -406,12 +406,12 @@ gcv_stl_write(const char *path, struct db_i *vdbip,
 		return 0;
 	    }
 	} else {
-	    /* Open conv_data.binary output file */
+	    /* Open binary output file */
 	    if ((conv_data.bfd = open(conv_data.output_file,
 				      O_WRONLY | O_CREAT | O_TRUNC | O_BINARY,
 				      S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0) {
 		perror("g-stl");
-		bu_log("%s: Cannot open conv_data.binary output file (%s) for writing\n",
+		bu_log("%s: Cannot open binary output file (%s) for writing\n",
 		       "g-stl", conv_data.output_file);
 		return 0;
 	    }
@@ -422,12 +422,6 @@ gcv_stl_write(const char *path, struct db_i *vdbip,
     RT_CK_TESS_TOL(conv_data.tree_state.ts_ttol);
 
     if (conv_data.verbose) {
-	/*
-	bu_log("Model: %s\n", argv[0]);
-	bu_log("Objects:");
-	for (i=1; i<argc; i++)
-	    bu_log(" %s", argv[i]);
-	*/
 	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
 	       conv_data.tree_state.ts_ttol->abs, conv_data.tree_state.ts_ttol->rel,
 	       conv_data.tree_state.ts_ttol->norm);
@@ -435,7 +429,7 @@ gcv_stl_write(const char *path, struct db_i *vdbip,
 	       conv_data.tree_state.ts_tol->dist, conv_data.tree_state.ts_tol->perp);
     }
 
-    /* Write out STL header if output file is conv_data.binary */
+    /* Write out STL header if output file is binary */
     if (conv_data.binary && conv_data.output_file) {
 	char buf[81];	/* need exactly 80 char for header */
 
