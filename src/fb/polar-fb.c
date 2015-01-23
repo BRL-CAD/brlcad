@@ -346,7 +346,7 @@ PrintUsage (int ShoOpts)
 	for (oPtr = ExplainOpts; **oPtr != '\0'; oPtr++)
 	    (void)fputs(*oPtr, stderr);
     } else
-	(void)fputs(" -? option for help\n", stderr);
+	(void)fputs(" -h or -? option for help\n", stderr);
 }
 
 
