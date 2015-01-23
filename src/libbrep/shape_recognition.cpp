@@ -960,6 +960,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
     for (int i = 0; i < data->edges_cnt; i++) {
 	int c3i;
 	ON_BrepEdge *old_edge = &(data->brep->m_E[data->edges[i]]);
+	std::cout << "old edge: " << old_edge->Vertex(0)->m_vertex_index << "," << old_edge->Vertex(1)->m_vertex_index << "\n";
 
 	// Get the 3D curves from the edges
 	if (c3_map.find(old_edge->EdgeCurveIndexOf()) == c3_map.end()) {
@@ -975,17 +976,20 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	if (vertex_map.find(old_edge->Vertex(0)->m_vertex_index) == vertex_map.end()) {
 	    ON_BrepVertex& newv0 = data->local_brep->NewVertex(old_edge->Vertex(0)->Point(), old_edge->Vertex(0)->m_tolerance);
 	    v0i = newv0.m_vertex_index;
+	    vertex_map[old_edge->Vertex(0)->m_vertex_index] = v0i;
 	} else {
 	    v0i = vertex_map[old_edge->Vertex(0)->m_vertex_index];
 	}
 	if (vertex_map.find(old_edge->Vertex(1)->m_vertex_index) == vertex_map.end()) {
-	    ON_BrepVertex& newv1 = data->local_brep->NewVertex(old_edge->Vertex(1)->Point(), old_edge->Vertex(0)->m_tolerance);
+	    ON_BrepVertex& newv1 = data->local_brep->NewVertex(old_edge->Vertex(1)->Point(), old_edge->Vertex(1)->m_tolerance);
 	    v1i = newv1.m_vertex_index;
+	    vertex_map[old_edge->Vertex(1)->m_vertex_index] = v1i;
 	} else {
 	    v1i = vertex_map[old_edge->Vertex(1)->m_vertex_index];
 	}
 	ON_BrepEdge& new_edge = data->local_brep->NewEdge(data->local_brep->m_V[v0i], data->local_brep->m_V[v1i], c3i, NULL ,0);
 	edge_map[old_edge->m_edge_index] = new_edge.m_edge_index;
+	std::cout << "new edge: " << v0i << "," << v1i << "\n";
 
 	// Get the 2D curves from the trims
 	for (int j = 0; j < old_edge->TrimCount(); j++) {
@@ -1040,18 +1044,34 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	ON_BrepLoop &old_loop = data->brep->m_L[(*loop_it).first];
 	ON_BrepLoop &new_loop = data->local_brep->m_L[(*loop_it).second];
 	for (int j = 0; j < old_loop.TrimCount(); j++) {
-	    std::cout << "loop[" << (*loop_it).first << "," << (*loop_it).second << "]: trim " << j << "\n";
 	    ON_BrepTrim *old_trim = old_loop.Trim(j);
+	    std::cout << "loop[" << (*loop_it).first << "," << (*loop_it).second << "]: trim " << old_trim->m_trim_index << "\n";
 	    ON_BrepEdge *o_edge = old_trim->Edge();
 	    if (o_edge) {
 		ON_BrepEdge &n_edge = data->local_brep->m_E[edge_map[o_edge->m_edge_index]];
-		data->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
+		std::cout << "edge(" << o_edge->m_edge_index << "," << n_edge.m_edge_index << ")\n";
+		ON_BrepTrim &nt = data->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
+		nt.m_tolerance[0] = old_trim->m_tolerance[0];
+		nt.m_tolerance[1] = old_trim->m_tolerance[1];
+
+		nt.m_iso = old_trim->m_iso;
 	    } else {
+		/* If we didn't have an edge originally, we need to add the 2d curve here */
+		if (c2_map.find(old_trim->TrimCurveIndexOf()) == c2_map.end()) {
+		    ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
+		    int c2i = data->local_brep->AddTrimCurve(nc);
+		    c2_map[old_trim->TrimCurveIndexOf()] = c2i;
+		    std::cout << "2D only c2i: " << c2i << "\n";
+		}
 		if (vertex_map.find(old_trim->Vertex(0)->m_vertex_index) == vertex_map.end()) {
 		    ON_BrepVertex& newvs = data->local_brep->NewVertex(old_trim->Vertex(0)->Point(), old_trim->Vertex(0)->m_tolerance);
-		    data->local_brep->NewSingularTrim(newvs, new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
+		    ON_BrepTrim &nt = data->local_brep->NewSingularTrim(newvs, new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
+		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
+		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
 		} else {
-		    data->local_brep->NewSingularTrim(data->local_brep->m_V[vertex_map[old_trim->Vertex(0)->m_vertex_index]], new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
+		    ON_BrepTrim &nt = data->local_brep->NewSingularTrim(data->local_brep->m_V[vertex_map[old_trim->Vertex(0)->m_vertex_index]], new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
+		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
+		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
 		}
 	    }
 	}
