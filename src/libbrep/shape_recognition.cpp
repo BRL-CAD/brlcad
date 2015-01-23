@@ -962,7 +962,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	ON_BrepEdge *old_edge = &(data->brep->m_E[data->edges[i]]);
 
 	// Get the 3D curves from the edges
-	if (!c3_map[old_edge->EdgeCurveIndexOf()]) {
+	if (c3_map.find(old_edge->EdgeCurveIndexOf()) == c3_map.end()) {
 	    ON_Curve *nc = old_edge->EdgeCurveOf()->Duplicate();
 	    c3i = data->local_brep->AddEdgeCurve(nc);
 	    c3_map[old_edge->EdgeCurveIndexOf()] = c3i;
@@ -972,13 +972,13 @@ subbrep_make_brep(struct subbrep_object_data *data)
 
 	// Get the vertices from the edges
 	int v0i, v1i;
-	if (!vertex_map[old_edge->Vertex(0)->m_vertex_index]) {
+	if (vertex_map.find(old_edge->Vertex(0)->m_vertex_index) == vertex_map.end()) {
 	    ON_BrepVertex& newv0 = data->local_brep->NewVertex(old_edge->Vertex(0)->Point(), old_edge->Vertex(0)->m_tolerance);
 	    v0i = newv0.m_vertex_index;
 	} else {
 	    v0i = vertex_map[old_edge->Vertex(0)->m_vertex_index];
 	}
-	if (!vertex_map[old_edge->Vertex(1)->m_vertex_index]) {
+	if (vertex_map.find(old_edge->Vertex(1)->m_vertex_index) == vertex_map.end()) {
 	    ON_BrepVertex& newv1 = data->local_brep->NewVertex(old_edge->Vertex(1)->Point(), old_edge->Vertex(0)->m_tolerance);
 	    v1i = newv1.m_vertex_index;
 	} else {
@@ -1021,12 +1021,14 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	    ON_BrepTrim *old_trim = old_edge->Trim(j);
 	    ON_BrepLoop *old_loop = old_trim->Loop();
 	    if (loops.find(old_loop->m_loop_index) != loops.end()) {
-		if (face_map.find(old_trim->Face()->m_face_index) != face_map.end()) {
-		    // After the initial breakout, all loops in any given subbrep are outer loops,
-		    // whatever they were in the original brep.
-		    ON_BrepLoop &nl = data->local_brep->NewLoop(ON_BrepLoop::outer, data->local_brep->m_F[face_map[old_loop->m_fi]]);
-		    loop_map[old_loop->m_loop_index] = nl.m_loop_index;
-		    std::cout << "adding loop: " << old_loop->m_loop_index << "\n";
+		if (loop_map.find(old_loop->m_loop_index) == loop_map.end()) {
+		    if (face_map.find(old_trim->Face()->m_face_index) != face_map.end()) {
+			// After the initial breakout, all loops in any given subbrep are outer loops,
+			// whatever they were in the original brep.
+			ON_BrepLoop &nl = data->local_brep->NewLoop(ON_BrepLoop::outer, data->local_brep->m_F[face_map[old_loop->m_fi]]);
+			loop_map[old_loop->m_loop_index] = nl.m_loop_index;
+			std::cout << "adding loop: " << old_loop->m_loop_index << "\n";
+		    }
 		}
 	    }
 	}
@@ -1038,14 +1040,19 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	ON_BrepLoop &old_loop = data->brep->m_L[(*loop_it).first];
 	ON_BrepLoop &new_loop = data->local_brep->m_L[(*loop_it).second];
 	for (int j = 0; j < old_loop.TrimCount(); j++) {
-	    std::cout << "loop " << (*loop_it).first << " trim " << j << "\n";
+	    std::cout << "loop[" << (*loop_it).first << "," << (*loop_it).second << "]: trim " << j << "\n";
 	    ON_BrepTrim *old_trim = old_loop.Trim(j);
 	    ON_BrepEdge *o_edge = old_trim->Edge();
 	    if (o_edge) {
 		ON_BrepEdge &n_edge = data->local_brep->m_E[edge_map[o_edge->m_edge_index]];
-		ON_BrepTrim &nt = data->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
+		data->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
 	    } else {
-		ON_BrepTrim &nt = data->local_brep->NewTrim(old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
+		if (vertex_map.find(old_trim->Vertex(0)->m_vertex_index) == vertex_map.end()) {
+		    ON_BrepVertex& newvs = data->local_brep->NewVertex(old_trim->Vertex(0)->Point(), old_trim->Vertex(0)->m_tolerance);
+		    data->local_brep->NewSingularTrim(newvs, new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
+		} else {
+		    data->local_brep->NewSingularTrim(data->local_brep->m_V[vertex_map[old_trim->Vertex(0)->m_vertex_index]], new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
+		}
 	    }
 	}
     }
