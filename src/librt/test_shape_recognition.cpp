@@ -310,6 +310,12 @@ make_shape(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
     switch (data->type) {
 	case COMB:
+	    (void)subbrep_make_brep(data);
+	    if (data->local_brep) {
+		mk_brep(wdbp, bu_vls_addr(data->key), data->local_brep);
+	    } else {
+		bu_log("Warning - mk_brep called but data->local_brep is empty\n");
+	    }
 	    return 0;
 	    break;
 	case PLANAR_VOLUME:
@@ -450,7 +456,8 @@ main(int argc, char *argv[])
 	for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
 	    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, j);
 	    if (cobj->type != COMB)
-	    print_subbrep_object(cobj, "  ");
+		print_subbrep_object(cobj, "  ");
+	    (void)make_shape(obj, wdbp);
 	}
 	//}
 	(void)make_shape(obj, wdbp);

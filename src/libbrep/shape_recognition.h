@@ -89,6 +89,7 @@ struct subbrep_object_data {
     int fil_cnt;
 
     ON_Brep *brep;
+    ON_Brep *local_brep;
     volume_t type;
     csg_object_params *params;
     subbrep_object_data *parent;
@@ -102,6 +103,7 @@ int cylindrical_loop_planar_vertices(struct subbrep_object_data *data, int face_
 int cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index);
 
 int subbrep_split(struct subbrep_object_data *data);
+int subbrep_make_brep(struct subbrep_object_data *data);
 
 struct bu_ptbl *find_subbreps(ON_Brep *brep);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);

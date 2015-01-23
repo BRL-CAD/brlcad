@@ -921,10 +921,10 @@ subbrep_split(struct subbrep_object_data *data)
     return 1;
 }
 
-ON_Brep *
+int
 subbrep_make_brep(struct subbrep_object_data *data)
 {
-    ON_Brep *new_brep = ON_Brep::New();
+    data->local_brep = ON_Brep::New();
     // For each edge in data, find the corresponding loop in data and construct
     // a new face in the brep with the surface from the original face and the
     // loop in data as the new outer loop.  Trim down the surface for the new
@@ -943,6 +943,9 @@ subbrep_make_brep(struct subbrep_object_data *data)
     std::map<int, int> c2_map;
     std::map<int, int> trim_map;
 
+    std::set<int> faces;
+    array_to_set(&faces, data->faces, data->faces_cnt);
+
     // Each edge has a trim array, and the trims will tell us which loops
     // are to be included and which faces the trims belong to.  There will
     // be some trims that belong to a face that is not included in the
@@ -955,37 +958,99 @@ subbrep_make_brep(struct subbrep_object_data *data)
     for (int i = 0; i < data->edges_cnt; i++) {
 	int c3i;
 	ON_BrepEdge *old_edge = &(data->brep->m_E[i]);
-	// Get vertices, trims, curves, and associated faces;
+
+	// Get the 3D curves from the edges
 	if (!c3_map[old_edge->EdgeCurveIndexOf()]) {
 	    ON_Curve *nc = old_edge->EdgeCurveOf()->Duplicate();
-	    c3i = new_brep->AddEdgeCurve(nc);
+	    c3i = data->local_brep->AddEdgeCurve(nc);
 	    c3_map[old_edge->EdgeCurveIndexOf()] = c3i;
 	} else {
 	    c3i = c3_map[old_edge->EdgeCurveIndexOf()];
 	}
+
+	std::cout << "c3i: " << c3i << "\n";
+
+	// Get the vertices from the edges
 	int v0i, v1i;
 	if (!vertex_map[old_edge->Vertex(0)->m_vertex_index]) {
-	    ON_BrepVertex& newv0 = new_brep->NewVertex(old_edge->Vertex(0)->Point(), old_edge->Vertex(0)->m_tolerance);
+	    ON_BrepVertex& newv0 = data->local_brep->NewVertex(old_edge->Vertex(0)->Point(), old_edge->Vertex(0)->m_tolerance);
 	    v0i = newv0.m_vertex_index;
 	} else {
 	    v0i = vertex_map[old_edge->Vertex(0)->m_vertex_index];
 	}
 	if (!vertex_map[old_edge->Vertex(1)->m_vertex_index]) {
-	    ON_BrepVertex& newv1 = new_brep->NewVertex(old_edge->Vertex(1)->Point(), old_edge->Vertex(0)->m_tolerance);
+	    ON_BrepVertex& newv1 = data->local_brep->NewVertex(old_edge->Vertex(1)->Point(), old_edge->Vertex(0)->m_tolerance);
 	    v1i = newv1.m_vertex_index;
 	} else {
 	    v1i = vertex_map[old_edge->Vertex(1)->m_vertex_index];
 	}
-	ON_BrepEdge& new_edge = new_brep->NewEdge(new_brep->m_V[v0i], new_brep->m_V[v1i], c3i, NULL ,0);
+	std::cout << "v0,v1: " << v0i << "," << v1i << "\n";
+	ON_BrepEdge& new_edge = data->local_brep->NewEdge(data->local_brep->m_V[v0i], data->local_brep->m_V[v1i], c3i, NULL ,0);
 	edge_map[old_edge->m_edge_index] = new_edge.m_edge_index;
-	// TODO - handle trims.  Need to create the face associated
-	// with the trim if it doesn't already exist - copy the surface
-	// if the face is in the subbrep, otherwise deduce it (how?)
-	// create loop to hold trim if loop doesn't exist already,
-	// add new trim to loop...
+	std::cout << "old_edge: " << old_edge->m_edge_index << "\n";
+	std::cout << "new_edge: " << new_edge.m_edge_index << "\n";
+
+	// Get the 2D curves from the trims
+	for (int j = 0; j < old_edge->TrimCount(); j++) {
+	    ON_BrepTrim *old_trim = old_edge->Trim(j);
+	    if (faces.find(old_trim->Face()->m_face_index) != faces.end()) {
+		if (c2_map.find(old_trim->TrimCurveIndexOf()) != c2_map.end()) {
+		    ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
+		    int c2i = data->local_brep->AddTrimCurve(nc);
+		    c2_map[old_trim->TrimCurveIndexOf()] = c2i;
+		    std::cout << "c2i: " << c2i << "\n";
+		}
+	    }
+	}
+
+	// Get the faces and surfaces from the trims
+	for (int j = 0; j < old_edge->TrimCount(); j++) {
+	    ON_BrepTrim *old_trim = old_edge->Trim(j);
+	    if (face_map.find(old_trim->Face()->m_face_index) != face_map.end()) {
+		if (faces.find(old_trim->Face()->m_face_index) != faces.end()) {
+		    ON_Surface *ns = old_trim->Face()->SurfaceOf()->Duplicate();
+		    int nsid = data->local_brep->AddSurface(ns);
+		    surface_map[old_trim->Face()->SurfaceIndexOf()] = nsid;
+		    ON_BrepFace &new_face = data->local_brep->NewFace(nsid);
+		    face_map[old_trim->Face()->m_face_index] = new_face.m_face_index;
+		    std::cout << "old_face: " << old_trim->Face()->m_face_index << "\n";
+		    std::cout << "new_face: " << new_face.m_face_index << "\n";
+		}
+	    }
+	}
+
+	// Get the loops from the trims
+	for (int j = 0; j < old_edge->TrimCount(); j++) {
+	    ON_BrepTrim *old_trim = old_edge->Trim(j);
+	    ON_BrepLoop *old_loop = old_trim->Loop();
+	    if (face_map.find(old_trim->Face()->m_face_index) != face_map.end()) {
+		// After the initial breakout, all loops in any given subbrep are outer loops,
+		// whatever they were in the original brep.
+		ON_BrepLoop &nl = data->local_brep->NewLoop(ON_BrepLoop::outer, data->local_brep->m_F[face_map[old_loop->m_fi]]);
+		loop_map[old_loop->m_loop_index] = nl.m_loop_index;
+	    }
+	}
+
+	// Now, create new trims using the old loop definitions and the maps
+	std::map<int, int>::iterator loop_it;
+	for (loop_it = loop_map.begin(); loop_it != loop_map.end(); loop_it++) {
+	    ON_BrepLoop &old_loop = data->brep->m_L[(*loop_it).first];
+	    ON_BrepLoop &new_loop = data->local_brep->m_L[(*loop_it).second];
+	    for (int j = 0; j < old_loop.TrimCount(); j++) {
+		ON_BrepTrim *old_trim = old_loop.Trim(j);
+		ON_BrepEdge *o_edge = old_trim->Edge();
+		if (o_edge) {
+		    ON_BrepEdge &n_edge = data->local_brep->m_E[edge_map[o_edge->m_edge_index]];
+		    ON_BrepTrim &nt = data->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
+		} else {
+		    ON_BrepTrim &nt = data->local_brep->NewTrim(old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
+		}
+	    }
+	}
+
     }
 
-    return new_brep;
+    return 1;
 }
 
 int
