@@ -331,7 +331,7 @@ volume_t
 subbrep_shape_recognize(struct subbrep_object_data *data)
 {
     if (subbrep_is_planar(data)) return PLANAR_VOLUME;
-    //if (BU_STR_EQUAL(bu_vls_addr(data->key), "390_391_418_591_592.s")) {
+    //if (BU_STR_EQUAL(bu_vls_addr(data->key), "0_448.s")) {
     if (subbrep_is_cylinder(data, BREP_CYLINDRICAL_TOL)) return CYLINDER;
     if (subbrep_split(data)) return COMB;
     //}
@@ -959,7 +959,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
 
     for (int i = 0; i < data->edges_cnt; i++) {
 	int c3i;
-	ON_BrepEdge *old_edge = &(data->brep->m_E[i]);
+	ON_BrepEdge *old_edge = &(data->brep->m_E[data->edges[i]]);
 
 	// Get the 3D curves from the edges
 	if (!c3_map[old_edge->EdgeCurveIndexOf()]) {
