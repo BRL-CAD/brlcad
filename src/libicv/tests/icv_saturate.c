@@ -35,7 +35,7 @@
 void usage()
 {
     bu_log("\
-	    [-h] [-f fraction ]\n\
+	    [-f fraction ]\n\
 	    [-p -d -m] \n\
 	    [-o out_file] [file] > [out_file]\n");
 
@@ -81,7 +81,6 @@ int main(int argc, char* argv[])
 	    case 'm' :
 		format = ICV_IMAGE_PPM;
 		break;
-	    case 'h':
 	    default:
 		usage();
 		return 1;
