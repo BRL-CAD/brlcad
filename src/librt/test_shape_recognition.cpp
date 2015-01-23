@@ -308,32 +308,60 @@ is_cone(const object_data *data)
 int
 make_shape(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
+    struct bu_vls brep_name = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&brep_name, "brep_%s", bu_vls_addr(data->key));
     switch (data->type) {
 	case COMB:
 	    (void)subbrep_make_brep(data);
 	    if (data->local_brep) {
-		mk_brep(wdbp, bu_vls_addr(data->key), data->local_brep);
+		mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
 	    } else {
 		bu_log("Warning - mk_brep called but data->local_brep is empty\n");
 	    }
+	    bu_vls_free(&brep_name);
 	    return 0;
 	    break;
 	case PLANAR_VOLUME:
+	    (void)subbrep_make_brep(data);
+	    if (data->local_brep) {
+		mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
+	    } else {
+		bu_log("Warning - mk_brep called but data->local_brep is empty\n");
+	    }
+	    bu_vls_free(&brep_name);
 	    return subbrep_to_csg_planar(data, wdbp);
 	    break;
 	case CYLINDER:
+	    (void)subbrep_make_brep(data);
+	    if (data->local_brep) {
+		mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
+	    } else {
+		bu_log("Warning - mk_brep called but data->local_brep is empty\n");
+	    }
+	    bu_vls_free(&brep_name);
 	    return subbrep_to_csg_cylinder(data, wdbp);
 	    break;
 	case CONE:
+	    (void)subbrep_make_brep(data);
+	    if (data->local_brep) {
+		mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
+	    } else {
+		bu_log("Warning - mk_brep called but data->local_brep is empty\n");
+	    }
+	    bu_vls_free(&brep_name);
 	    return 0;
 	    break;
 	case SPHERE:
+	    bu_vls_free(&brep_name);
 	    return 0;
 	    break;
 	case ELLIPSOID:
+	    bu_vls_free(&brep_name);
 	    return 0;
 	    break;
 	case TORUS:
+	    bu_vls_free(&brep_name);
+	    return 0;
 	    break;
 	default:
 	    return 0; /* BREP */
