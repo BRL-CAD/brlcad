@@ -942,9 +942,11 @@ subbrep_make_brep(struct subbrep_object_data *data)
     std::map<int, int> c3_map;
     std::map<int, int> c2_map;
     std::map<int, int> trim_map;
+    std::map<int, int> subloop_map;  // When not all of the trims from an old loop are used, make new loops here so we hae somewhere to stash the trims.  They'll be useful if we want/need to construct faces closing the new subbreps.
 
     std::set<int> faces;
     std::set<int> loops;
+    std::set<int> isolated_trims;  // collect 2D trims whose parent loops aren't fully included here
     array_to_set(&faces, data->faces, data->faces_cnt);
     array_to_set(&loops, data->loops, data->loops_cnt);
 
@@ -1024,14 +1026,21 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	for (int j = 0; j < old_edge->TrimCount(); j++) {
 	    ON_BrepTrim *old_trim = old_edge->Trim(j);
 	    ON_BrepLoop *old_loop = old_trim->Loop();
-	    if (loops.find(old_loop->m_loop_index) != loops.end()) {
-		if (loop_map.find(old_loop->m_loop_index) == loop_map.end()) {
-		    if (face_map.find(old_trim->Face()->m_face_index) != face_map.end()) {
+	    if (face_map.find(old_trim->Face()->m_face_index) != face_map.end()) {
+		if (loops.find(old_loop->m_loop_index) != loops.end()) {
+		    if (loop_map.find(old_loop->m_loop_index) == loop_map.end()) {
 			// After the initial breakout, all loops in any given subbrep are outer loops,
 			// whatever they were in the original brep.
 			ON_BrepLoop &nl = data->local_brep->NewLoop(ON_BrepLoop::outer, data->local_brep->m_F[face_map[old_loop->m_fi]]);
 			loop_map[old_loop->m_loop_index] = nl.m_loop_index;
 			std::cout << "adding loop: " << old_loop->m_loop_index << "\n";
+		    }
+		} else {
+		    std::cout << "have isolated trim whose parent loop isn't fully included\n";
+		    if (subloop_map.find(old_loop->m_loop_index) == subloop_map.end()) {
+			ON_BrepLoop &nl = data->local_brep->NewLoop(ON_BrepLoop::outer, data->local_brep->m_F[face_map[old_loop->m_fi]]);
+			subloop_map[old_loop->m_loop_index] = nl.m_loop_index;
+			isolated_trims.insert(old_trim->m_trim_index);
 		    }
 		}
 	    }
@@ -1073,6 +1082,39 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
 		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
 		}
+	    }
+	}
+    }
+    std::set<int>::iterator trims_it;
+    for (trims_it = isolated_trims.begin(); trims_it != isolated_trims.end(); trims_it++) {
+	ON_BrepTrim &old_trim = data->brep->m_T[*trims_it];
+	ON_BrepLoop &new_loop = data->local_brep->m_L[subloop_map[old_trim.Loop()->m_loop_index]];
+	ON_BrepEdge *o_edge = old_trim.Edge();
+	if (o_edge) {
+	    ON_BrepEdge &n_edge = data->local_brep->m_E[edge_map[o_edge->m_edge_index]];
+	    std::cout << "edge(" << o_edge->m_edge_index << "," << n_edge.m_edge_index << ")\n";
+	    ON_BrepTrim &nt = data->local_brep->NewTrim(n_edge, old_trim.m_bRev3d, new_loop, c2_map[old_trim.TrimCurveIndexOf()]);
+	    nt.m_tolerance[0] = old_trim.m_tolerance[0];
+	    nt.m_tolerance[1] = old_trim.m_tolerance[1];
+
+	    nt.m_iso = old_trim.m_iso;
+	} else {
+	    /* If we didn't have an edge originally, we need to add the 2d curve here */
+	    if (c2_map.find(old_trim.TrimCurveIndexOf()) == c2_map.end()) {
+		ON_Curve *nc = old_trim.TrimCurveOf()->Duplicate();
+		int c2i = data->local_brep->AddTrimCurve(nc);
+		c2_map[old_trim.TrimCurveIndexOf()] = c2i;
+		std::cout << "2D only c2i: " << c2i << "\n";
+	    }
+	    if (vertex_map.find(old_trim.Vertex(0)->m_vertex_index) == vertex_map.end()) {
+		ON_BrepVertex& newvs = data->local_brep->NewVertex(old_trim.Vertex(0)->Point(), old_trim.Vertex(0)->m_tolerance);
+		ON_BrepTrim &nt = data->local_brep->NewSingularTrim(newvs, new_loop, old_trim.m_iso, c2_map[old_trim.TrimCurveIndexOf()]);
+		nt.m_tolerance[0] = old_trim.m_tolerance[0];
+		nt.m_tolerance[1] = old_trim.m_tolerance[1];
+	    } else {
+		ON_BrepTrim &nt = data->local_brep->NewSingularTrim(data->local_brep->m_V[vertex_map[old_trim.Vertex(0)->m_vertex_index]], new_loop, old_trim.m_iso, c2_map[old_trim.TrimCurveIndexOf()]);
+		nt.m_tolerance[0] = old_trim.m_tolerance[0];
+		nt.m_tolerance[1] = old_trim.m_tolerance[1];
 	    }
 	}
     }
