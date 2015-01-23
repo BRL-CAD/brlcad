@@ -343,6 +343,7 @@ gcv_stl_write(const char *path, struct db_i *vdbip,
     struct gcv_region_end_data gcvwriter = {nmg_to_stl, NULL};
 
     gcvwriter.client_data = (void *)&conv_data;
+    conv_data.verbose = 0;
     conv_data.is_success = 1;
     conv_data.binary = 0;			/* Default output is ASCII */
     conv_data.output_file = NULL;

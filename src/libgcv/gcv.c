@@ -109,8 +109,7 @@ gcv_execute(struct gcv_context *cxt, const struct gcv_filter *filter)
 	    return -1;
 	}
 
-	ret = filter->converter->writer_fn(filter->name, cxt->db_instance,
-					   filter->options);
+	ret = filter->converter->writer_fn(filter->name, temp_dbip, filter->options);
 	db_close(temp_dbip);
 
 	return !ret;
