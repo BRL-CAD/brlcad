@@ -475,10 +475,11 @@ main(int argc, char *argv[])
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
 	//print_subbrep_object(obj, "");
 	if (obj->type == BREP) {
-	    subbrep_split(obj);
+	    (void)make_shape(obj, wdbp);
+	    //subbrep_split(obj);
 	    for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
 		struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, j);
-		print_subbrep_object(cobj, "  ");
+		//print_subbrep_object(cobj, "  ");
 		//subbrep_csg_assemble(cobj);
 	    }
 	} else {

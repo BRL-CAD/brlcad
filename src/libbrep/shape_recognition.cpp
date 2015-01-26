@@ -109,64 +109,60 @@ st_done:
 }
 
 
-int
-highest_order_face(struct subbrep_object_data *data)
+surface_t
+highest_order_face(ON_Brep *brep)
 {
     int planar = 0;
     int spherical = 0;
-    int rcylindrical = 0;
+    int cylindrical = 0;
     int cone = 0;
     int torus = 0;
     int general = 0;
     int hof = -1;
-    int hofo = 0;
-    for (int f_it = 0; f_it < data->faces_cnt; f_it++) {
-	ON_BrepFace *used_face = &(data->brep->m_F[f_it]);
-	int surface_type = (int)GetSurfaceType(used_face->SurfaceOf(), NULL);
+    surface_t hofo = SURFACE_PLANE;
+    for (int f_it = 0; f_it < brep->m_F.Count(); f_it++) {
+	ON_BrepFace &used_face = brep->m_F[f_it];
+	int surface_type = (int)GetSurfaceType(used_face.SurfaceOf(), NULL);
 	switch (surface_type) {
 	    case SURFACE_PLANE:
 		planar++;
-		if (hofo < 1) {
+		if (hofo < SURFACE_PLANE) {
 		    hof = f_it;
-		    hofo = 1;
+		    hofo = SURFACE_PLANE;
 		}
 		break;
 	    case SURFACE_SPHERE:
 		spherical++;
-		if (hofo < 2) {
+		if (hofo < SURFACE_SPHERE) {
 		    hof = f_it;
-		    hofo = 2;
+		    hofo = SURFACE_SPHERE;
 		}
 		break;
 	    case SURFACE_CYLINDER:
-		if (!cylindrical_planar_vertices(data, f_it)) {
-		    std::cout << "irregular cylindrical: " << f_it << "\n";
-		    general++;
-		} else {
-		    rcylindrical++;
-		    if (hofo < 3) {
-			hof = f_it;
-			hofo = 3;
-		    }
+		cylindrical++;
+		if (hofo < SURFACE_CYLINDER) {
+		    hof = f_it;
+		    hofo = SURFACE_CYLINDER;
 		}
 		break;
 	    case SURFACE_CONE:
 		cone++;
-		if (hofo < 4) {
+		if (hofo < SURFACE_CONE) {
 		    hof = f_it;
-		    hofo = 4;
+		    hofo = SURFACE_CONE;
 		}
 		break;
 	    case SURFACE_TORUS:
 		torus++;
-		if (hofo < 4) {
+		if (hofo < SURFACE_TORUS) {
 		    hof = f_it;
-		    hofo = 4;
+		    hofo = SURFACE_TORUS;
 		}
 		break;
 	    default:
 		general++;
-		std::cout << "general surface(" << used_face->m_face_index << "): " << used_face->SurfaceIndexOf() << "\n";
+		hofo = SURFACE_GENERAL;
+		std::cout << "general surface(" << used_face.m_face_index << "): " << used_face.SurfaceIndexOf() << "\n";
 		break;
 	}
     }
@@ -178,13 +174,13 @@ highest_order_face(struct subbrep_object_data *data)
     std::cout << bu_vls_addr(data->key) << ":\n";
     std::cout << "planar_cnt: " << planar << "\n";
     std::cout << "spherical_cnt: " << spherical << "\n";
-    std::cout << "regular cylindrical_cnt: " << rcylindrical << "\n";
+    std::cout << "cylindrical_cnt: " << cylindrical << "\n";
     std::cout << "cone_cnt: " << cone << "\n";
     std::cout << "torus_cnt: " << torus << "\n";
     std::cout << "general_cnt: " << general << "\n";
     std::cout << "\n";
 #endif
-    return hof;
+    return hofo;
 }
 
 void
@@ -1001,7 +997,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
     for (int i = 0; i < data->edges_cnt; i++) {
 	int c3i;
 	ON_BrepEdge *old_edge = &(data->brep->m_E[data->edges[i]]);
-	std::cout << "old edge: " << old_edge->Vertex(0)->m_vertex_index << "," << old_edge->Vertex(1)->m_vertex_index << "\n";
+	//std::cout << "old edge: " << old_edge->Vertex(0)->m_vertex_index << "," << old_edge->Vertex(1)->m_vertex_index << "\n";
 
 	// Get the 3D curves from the edges
 	if (c3_map.find(old_edge->EdgeCurveIndexOf()) == c3_map.end()) {
@@ -1030,7 +1026,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	}
 	ON_BrepEdge& new_edge = data->local_brep->NewEdge(data->local_brep->m_V[v0i], data->local_brep->m_V[v1i], c3i, NULL ,0);
 	edge_map[old_edge->m_edge_index] = new_edge.m_edge_index;
-	std::cout << "new edge: " << v0i << "," << v1i << "\n";
+	//std::cout << "new edge: " << v0i << "," << v1i << "\n";
 
 	// Get the 2D curves from the trims
 	for (int j = 0; j < old_edge->TrimCount(); j++) {
@@ -1040,7 +1036,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		    ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
 		    int c2i = data->local_brep->AddTrimCurve(nc);
 		    c2_map[old_trim->TrimCurveIndexOf()] = c2i;
-		    std::cout << "c2i: " << c2i << "\n";
+		    //std::cout << "c2i: " << c2i << "\n";
 		}
 	    }
 	}
@@ -1055,8 +1051,8 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		    surface_map[old_trim->Face()->SurfaceIndexOf()] = nsid;
 		    ON_BrepFace &new_face = data->local_brep->NewFace(nsid);
 		    face_map[old_trim->Face()->m_face_index] = new_face.m_face_index;
-		    std::cout << "old_face: " << old_trim->Face()->m_face_index << "\n";
-		    std::cout << "new_face: " << new_face.m_face_index << "\n";
+		    //std::cout << "old_face: " << old_trim->Face()->m_face_index << "\n";
+		    //std::cout << "new_face: " << new_face.m_face_index << "\n";
 		    if (fil.find(old_trim->Face()->m_face_index) != fil.end()) {
 			data->local_brep->FlipFace(new_face);
 		    }
@@ -1076,10 +1072,10 @@ subbrep_make_brep(struct subbrep_object_data *data)
 			// whatever they were in the original brep.
 			ON_BrepLoop &nl = data->local_brep->NewLoop(ON_BrepLoop::outer, data->local_brep->m_F[face_map[old_loop->m_fi]]);
 			loop_map[old_loop->m_loop_index] = nl.m_loop_index;
-			std::cout << "adding loop: " << old_loop->m_loop_index << "\n";
+			//std::cout << "adding loop: " << old_loop->m_loop_index << "\n";
 		    }
 		} else {
-		    std::cout << "have isolated trim whose parent loop isn't fully included\n";
+		    //std::cout << "have isolated trim whose parent loop isn't fully included\n";
 		    if (subloop_map.find(old_loop->m_loop_index) == subloop_map.end()) {
 			ON_BrepLoop &nl = data->local_brep->NewLoop(ON_BrepLoop::outer, data->local_brep->m_F[face_map[old_loop->m_fi]]);
 			subloop_map[old_loop->m_loop_index] = nl.m_loop_index;
@@ -1175,6 +1171,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
     map_to_array(&(data->trim_map), &(data->trim_map_cnt), &trim_map);
 
     std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
+    std::cout << "highest order face: " << highest_order_face(data->local_brep) << "\n\n";
 
     return 1;
 }
