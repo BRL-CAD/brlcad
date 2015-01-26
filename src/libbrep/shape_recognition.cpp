@@ -349,6 +349,7 @@ subbrep_object_init(struct subbrep_object_data *obj, ON_Brep *brep)
     bu_ptbl_init(obj->children, 8, "children table");
     obj->parent = NULL;
     obj->brep = brep;
+    obj->local_brep = NULL;
     obj->type = BREP;
 }
 
@@ -495,7 +496,50 @@ find_subbreps(ON_Brep *brep)
 	    bu_ptbl_ins(subbreps, (long *)new_obj);
 	}
     }
-
+#if 0
+    /* See if there is a "top-level" subbrep with no faces with only inner loops in the set.
+     * If there is, make a local brep version of that brep by deleting all faces not used
+     * by that brep.  This is just a check on the subbrep_make_brep logic */
+    for(unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
+	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
+	if (obj->fil_cnt == 0) {
+	    std::cout << "top level brep: " << bu_vls_addr(obj->key) << "\n";
+	    std::set<int> faces;
+	    std::set<int> fd;
+	    std::set<int> ld;
+	    std::set<int>::iterator s_it;
+	    array_to_set(&faces, obj->faces, obj->faces_cnt);
+	    ON_Brep *tmp_brep = brep->Duplicate();
+	    for (int j = 0; j < tmp_brep->m_F.Count(); j++) {
+		ON_BrepFace &face = tmp_brep->m_F[j];
+		if (faces.find(j) == faces.end()) {
+		    fd.insert(j);
+		}
+		for (int k = 0; k < face.LoopCount(); k++) {
+		    if (face.Loop(k) != face.OuterLoop()) {
+			ld.insert(face.m_li[k]);
+		    }
+		}
+	    }
+	    for (s_it = ld.begin(); s_it != ld.end(); s_it++) {
+		ON_BrepLoop &loop = tmp_brep->m_L[*s_it];
+		tmp_brep->DeleteLoop(loop, true);
+	    }
+	    for (s_it = fd.begin(); s_it != fd.end(); s_it++) {
+		ON_BrepFace &face = tmp_brep->m_F[*s_it];
+		tmp_brep->DeleteFace(face, true);
+	    }
+	    tmp_brep->SetTolerancesBoxesAndFlags();
+	    tmp_brep->Standardize();
+	    tmp_brep->Compact();
+	    // Why is this getting messed up by the above call?
+	    for (int j = 0; j < tmp_brep->m_E.Count(); j++) {
+		if (tmp_brep->m_E[j].m_tolerance < 0) tmp_brep->m_E[j].m_tolerance = 0.01;
+	    }
+	    obj->local_brep = tmp_brep->Duplicate();
+	}
+    }
+#endif
     return subbreps;
 }
 
@@ -848,7 +892,7 @@ subbrep_split(struct subbrep_object_data *data)
 	    continue;
 	}
 	faces.insert(data->faces[i]);
-	std::cout << "working: " << data->faces[i] << "\n";
+	//std::cout << "working: " << data->faces[i] << "\n";
 	locally_processed_faces.insert(data->faces[i]);
 	add_loops_from_face(face, data, &loops, &local_loops, &processed_loops);
 
@@ -867,7 +911,6 @@ subbrep_split(struct subbrep_object_data *data)
 			for (int j = 0; j < edge.TrimCount(); j++) {
 			    int fio = edge.Trim(j)->FaceIndexOf();
 			    if (fio != -1 && locally_processed_faces.find(fio) == locally_processed_faces.end()) {
-				std::cout << fio << "\n";
 				ON_BrepFace *fface = &(data->brep->m_F[fio]);
 				surface_t stype = GetSurfaceType(fface->SurfaceOf(), NULL);
 				// If fio meets the criteria for the candidate shape, add it.  Otherwise,
@@ -876,7 +919,7 @@ subbrep_split(struct subbrep_object_data *data)
 				    // TODO - more testing needs to be done here...  get_allowed_surface_types
 				    // returns the volume_t, use it to do some testing to evaluate
 				    // things like normals and shared axis
-				    std::cout << "accept: " << fio << "\n";
+				    //std::cout << "accept: " << fio << "\n";
 				    faces.insert(fio);
 				    locally_processed_faces.insert(fio);
 				    // The planar faces will always share edges with the non-planar
@@ -921,9 +964,10 @@ subbrep_split(struct subbrep_object_data *data)
     return 1;
 }
 
-    int
+int
 subbrep_make_brep(struct subbrep_object_data *data)
 {
+    if (data->local_brep) return 0;
     data->local_brep = ON_Brep::New();
     // For each edge in data, find the corresponding loop in data and construct
     // a new face in the brep with the surface from the original face and the
@@ -1054,11 +1098,11 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	ON_BrepLoop &new_loop = data->local_brep->m_L[(*loop_it).second];
 	for (int j = 0; j < old_loop.TrimCount(); j++) {
 	    ON_BrepTrim *old_trim = old_loop.Trim(j);
-	    std::cout << "loop[" << (*loop_it).first << "," << (*loop_it).second << "]: trim " << old_trim->m_trim_index << "\n";
+	    //std::cout << "loop[" << (*loop_it).first << "," << (*loop_it).second << "]: trim " << old_trim->m_trim_index << "\n";
 	    ON_BrepEdge *o_edge = old_trim->Edge();
 	    if (o_edge) {
 		ON_BrepEdge &n_edge = data->local_brep->m_E[edge_map[o_edge->m_edge_index]];
-		std::cout << "edge(" << o_edge->m_edge_index << "," << n_edge.m_edge_index << ")\n";
+		//std::cout << "edge(" << o_edge->m_edge_index << "," << n_edge.m_edge_index << ")\n";
 		ON_BrepTrim &nt = data->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
 		nt.m_tolerance[0] = old_trim->m_tolerance[0];
 		nt.m_tolerance[1] = old_trim->m_tolerance[1];
@@ -1070,7 +1114,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		    ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
 		    int c2i = data->local_brep->AddTrimCurve(nc);
 		    c2_map[old_trim->TrimCurveIndexOf()] = c2i;
-		    std::cout << "2D only c2i: " << c2i << "\n";
+		    //std::cout << "2D only c2i: " << c2i << "\n";
 		}
 		if (vertex_map.find(old_trim->Vertex(0)->m_vertex_index) == vertex_map.end()) {
 		    ON_BrepVertex& newvs = data->local_brep->NewVertex(old_trim->Vertex(0)->Point(), old_trim->Vertex(0)->m_tolerance);
@@ -1092,7 +1136,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	ON_BrepEdge *o_edge = old_trim.Edge();
 	if (o_edge) {
 	    ON_BrepEdge &n_edge = data->local_brep->m_E[edge_map[o_edge->m_edge_index]];
-	    std::cout << "edge(" << o_edge->m_edge_index << "," << n_edge.m_edge_index << ")\n";
+	    //std::cout << "edge(" << o_edge->m_edge_index << "," << n_edge.m_edge_index << ")\n";
 	    ON_BrepTrim &nt = data->local_brep->NewTrim(n_edge, old_trim.m_bRev3d, new_loop, c2_map[old_trim.TrimCurveIndexOf()]);
 	    nt.m_tolerance[0] = old_trim.m_tolerance[0];
 	    nt.m_tolerance[1] = old_trim.m_tolerance[1];
@@ -1104,7 +1148,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		ON_Curve *nc = old_trim.TrimCurveOf()->Duplicate();
 		int c2i = data->local_brep->AddTrimCurve(nc);
 		c2_map[old_trim.TrimCurveIndexOf()] = c2i;
-		std::cout << "2D only c2i: " << c2i << "\n";
+		//std::cout << "2D only c2i: " << c2i << "\n";
 	    }
 	    if (vertex_map.find(old_trim.Vertex(0)->m_vertex_index) == vertex_map.end()) {
 		ON_BrepVertex& newvs = data->local_brep->NewVertex(old_trim.Vertex(0)->Point(), old_trim.Vertex(0)->m_tolerance);

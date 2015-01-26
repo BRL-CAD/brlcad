@@ -480,11 +480,11 @@ main(int argc, char *argv[])
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
 	//if (BU_STR_EQUAL(bu_vls_addr(obj->key), "390_391_418_591_592.s")) {
-	print_subbrep_object(obj, "");
+	//print_subbrep_object(obj, "");
 	for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
 	    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, j);
-	    if (cobj->type != COMB)
-		print_subbrep_object(cobj, "  ");
+	    //if (cobj->type != COMB)
+	    //print_subbrep_object(cobj, "  ");
 	    (void)make_shape(cobj, wdbp);
 	}
 	//}
