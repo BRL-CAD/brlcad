@@ -4,6 +4,8 @@ IF(COMMAND CMAKE_POLICY)
 	endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
 ENDIF(COMMAND CMAKE_POLICY)
 
+add_definitions(-g)
+
 # build shared libs by default
 IF(NOT DEFINED BUILD_SHARED_LIBS)
   set(BUILD_SHARED_LIBS ON)

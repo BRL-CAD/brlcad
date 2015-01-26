@@ -331,10 +331,7 @@ volume_t
 subbrep_shape_recognize(struct subbrep_object_data *data)
 {
     if (subbrep_is_planar(data)) return PLANAR_VOLUME;
-    //if (BU_STR_EQUAL(bu_vls_addr(data->key), "0_448.s")) {
     if (subbrep_is_cylinder(data, BREP_CYLINDRICAL_TOL)) return CYLINDER;
-    //if (subbrep_split(data)) return COMB;
-    //}
     return BREP;
 }
 
@@ -491,57 +488,20 @@ find_subbreps(ON_Brep *brep)
 	    set_to_array(&(new_obj->fol), &(new_obj->fol_cnt), &fol);
 	    set_to_array(&(new_obj->fil), &(new_obj->fil_cnt), &fil);
 
-	    (void)subbrep_shape_recognize(new_obj);
+	    if (subbrep_shape_recognize(new_obj) == BREP) {
+		(void)subbrep_make_brep(new_obj);
+	    }
 
 	    bu_ptbl_ins(subbreps, (long *)new_obj);
 	}
     }
-#if 0
-    /* See if there is a "top-level" subbrep with no faces with only inner loops in the set.
-     * If there is, make a local brep version of that brep by deleting all faces not used
-     * by that brep.  This is just a check on the subbrep_make_brep logic */
-    for(unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
-	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
-	if (obj->fil_cnt == 0) {
-	    std::cout << "top level brep: " << bu_vls_addr(obj->key) << "\n";
-	    std::set<int> faces;
-	    std::set<int> fd;
-	    std::set<int> ld;
-	    std::set<int>::iterator s_it;
-	    array_to_set(&faces, obj->faces, obj->faces_cnt);
-	    ON_Brep *tmp_brep = brep->Duplicate();
-	    for (int j = 0; j < tmp_brep->m_F.Count(); j++) {
-		ON_BrepFace &face = tmp_brep->m_F[j];
-		if (faces.find(j) == faces.end()) {
-		    fd.insert(j);
-		}
-		for (int k = 0; k < face.LoopCount(); k++) {
-		    if (face.Loop(k) != face.OuterLoop()) {
-			ld.insert(face.m_li[k]);
-		    }
-		}
-	    }
-	    for (s_it = ld.begin(); s_it != ld.end(); s_it++) {
-		ON_BrepLoop &loop = tmp_brep->m_L[*s_it];
-		tmp_brep->DeleteLoop(loop, true);
-	    }
-	    for (s_it = fd.begin(); s_it != fd.end(); s_it++) {
-		ON_BrepFace &face = tmp_brep->m_F[*s_it];
-		tmp_brep->DeleteFace(face, true);
-	    }
-	    tmp_brep->SetTolerancesBoxesAndFlags();
-	    tmp_brep->Standardize();
-	    tmp_brep->Compact();
-	    // Why is this getting messed up by the above call?
-	    for (int j = 0; j < tmp_brep->m_E.Count(); j++) {
-		if (tmp_brep->m_E[j].m_tolerance < 0) tmp_brep->m_E[j].m_tolerance = 0.01;
-	    }
-	    obj->local_brep = tmp_brep->Duplicate();
-	}
-    }
-#endif
+
     return subbreps;
 }
+
+
+
+
 
 void
 print_subbrep_object(struct subbrep_object_data *data, const char *offset)

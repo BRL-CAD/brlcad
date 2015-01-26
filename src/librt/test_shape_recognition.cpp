@@ -21,6 +21,8 @@
 struct model *
 brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
+    struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&prim_name, "nmg_%s", bu_vls_addr(data->key));
     std::set<int> b_verts;
     std::vector<int> b_verts_array;
     std::map<int, int> b_verts_to_verts;
@@ -105,7 +107,9 @@ brep_to_nmg(struct subbrep_object_data *data, struct rt_wdb *wdbp)
     nmg_region_a(r, &nmg_tol);
 
     /* Create the nmg primitive */
-    mk_nmg(wdbp, bu_vls_addr(data->key), m);
+    mk_nmg(wdbp, bu_vls_addr(&prim_name), m);
+
+    bu_vls_free(&prim_name);
 
     return m;
 }
@@ -149,9 +153,12 @@ subbrep_to_csg_planar(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 int
 subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
-
     if (data->type == CYLINDER) {
-	mk_rcc(wdbp, bu_vls_addr(data->key), data->params->origin, data->params->hv, data->params->radius);
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&prim_name, "rcc_%s", bu_vls_addr(data->key));
+
+	mk_rcc(wdbp, bu_vls_addr(&prim_name), data->params->origin, data->params->hv, data->params->radius);
+	bu_vls_free(&prim_name);
 	return 1;
     }
     return 0;
@@ -312,37 +319,16 @@ make_shape(struct subbrep_object_data *data, struct rt_wdb *wdbp)
     bu_vls_sprintf(&brep_name, "brep_%s", bu_vls_addr(data->key));
     switch (data->type) {
 	case COMB:
-	    (void)subbrep_make_brep(data);
-	    if (data->local_brep) {
-		mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
-	    } else {
-		bu_log("Warning - mk_brep called but data->local_brep is empty\n");
-	    }
-	    bu_vls_free(&brep_name);
+	    bu_log("TODO - make comb here\n");
 	    return 0;
 	    break;
 	case PLANAR_VOLUME:
-	    (void)subbrep_make_brep(data);
-	    if (data->local_brep) {
-		mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
-	    } else {
-		bu_log("Warning - mk_brep called but data->local_brep is empty\n");
-	    }
-	    bu_vls_free(&brep_name);
 	    return subbrep_to_csg_planar(data, wdbp);
 	    break;
 	case CYLINDER:
-	    (void)subbrep_make_brep(data);
-	    if (data->local_brep) {
-		mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
-	    } else {
-		bu_log("Warning - mk_brep called but data->local_brep is empty\n");
-	    }
-	    bu_vls_free(&brep_name);
 	    return subbrep_to_csg_cylinder(data, wdbp);
 	    break;
 	case CONE:
-	    (void)subbrep_make_brep(data);
 	    if (data->local_brep) {
 		mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
 	    } else {
@@ -364,6 +350,13 @@ make_shape(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 	    return 0;
 	    break;
 	default:
+	    if (data->local_brep) {
+		mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
+	    } else {
+		bu_log("Warning - mk_brep called but data->local_brep is empty\n");
+	    }
+	    bu_vls_free(&brep_name);
+
 	    return 0; /* BREP */
 	    break;
     }
@@ -477,6 +470,7 @@ main(int argc, char *argv[])
     ON_Brep *brep = brep_ip->brep;
 
     struct bu_ptbl *subbreps = find_subbreps(brep);
+    //split_subbreps(subbreps);
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
 	//if (BU_STR_EQUAL(bu_vls_addr(obj->key), "390_391_418_591_592.s")) {
