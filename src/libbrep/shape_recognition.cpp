@@ -1169,6 +1169,8 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	}
     }
 
+    data->local_brep->ShrinkSurfaces();
+    data->local_brep->CullUnusedSurfaces();
 
     std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
 
