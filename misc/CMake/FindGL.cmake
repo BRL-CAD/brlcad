@@ -154,6 +154,7 @@ else (WIN32)
     /usr/openwin/share/include
     /usr/openwin/include
     /usr/pkg/xorg/include
+    /opt/X11/include
     /opt/graphics/OpenGL/include
     )
   # Handle HP-UX cases where we only want to find OpenGL in either hpux64
@@ -181,6 +182,7 @@ else (WIN32)
     /usr/X11R6/lib
     /usr/shlib
     /usr/openwin/lib
+    /opt/X11/lib
     /opt/graphics/OpenGL/lib
     /usr/pkg/xorg/lib
     ${HPUX_IA_OPENGL_LIB_PATH}
