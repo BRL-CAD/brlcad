@@ -108,6 +108,85 @@ st_done:
     return ret;
 }
 
+
+int
+highest_order_face(struct subbrep_object_data *data)
+{
+    int planar = 0;
+    int spherical = 0;
+    int rcylindrical = 0;
+    int cone = 0;
+    int torus = 0;
+    int general = 0;
+    int hof = -1;
+    int hofo = 0;
+    for (int f_it = 0; f_it < data->faces_cnt; f_it++) {
+	ON_BrepFace *used_face = &(data->brep->m_F[f_it]);
+	int surface_type = (int)GetSurfaceType(used_face->SurfaceOf(), NULL);
+	switch (surface_type) {
+	    case SURFACE_PLANE:
+		planar++;
+		if (hofo < 1) {
+		    hof = f_it;
+		    hofo = 1;
+		}
+		break;
+	    case SURFACE_SPHERE:
+		spherical++;
+		if (hofo < 2) {
+		    hof = f_it;
+		    hofo = 2;
+		}
+		break;
+	    case SURFACE_CYLINDER:
+		if (!cylindrical_planar_vertices(data, f_it)) {
+		    std::cout << "irregular cylindrical: " << f_it << "\n";
+		    general++;
+		} else {
+		    rcylindrical++;
+		    if (hofo < 3) {
+			hof = f_it;
+			hofo = 3;
+		    }
+		}
+		break;
+	    case SURFACE_CONE:
+		cone++;
+		if (hofo < 4) {
+		    hof = f_it;
+		    hofo = 4;
+		}
+		break;
+	    case SURFACE_TORUS:
+		torus++;
+		if (hofo < 4) {
+		    hof = f_it;
+		    hofo = 4;
+		}
+		break;
+	    default:
+		general++;
+		std::cout << "general surface(" << used_face->m_face_index << "): " << used_face->SurfaceIndexOf() << "\n";
+		break;
+	}
+    }
+#if 0
+    if (!general)
+	std::cout << "highest order face: " << hof << "(" << hofo << ")\n";
+
+    std::cout << "\n";
+    std::cout << bu_vls_addr(data->key) << ":\n";
+    std::cout << "planar_cnt: " << planar << "\n";
+    std::cout << "spherical_cnt: " << spherical << "\n";
+    std::cout << "regular cylindrical_cnt: " << rcylindrical << "\n";
+    std::cout << "cone_cnt: " << cone << "\n";
+    std::cout << "torus_cnt: " << torus << "\n";
+    std::cout << "general_cnt: " << general << "\n";
+    std::cout << "\n";
+#endif
+    return hof;
+}
+
 void
 filter_obj_init(struct filter_obj *obj)
 {
@@ -345,7 +424,7 @@ subbrep_object_init(struct subbrep_object_data *obj, ON_Brep *brep)
     bu_vls_init(obj->key);
     bu_ptbl_init(obj->children, 8, "children table");
     obj->parent = NULL;
-    obj->brep = brep;
+    obj->brep = brep->Duplicate();
     obj->local_brep = NULL;
     obj->type = BREP;
 }
@@ -369,7 +448,7 @@ subbrep_object_free(struct subbrep_object_data *obj)
     if (obj->fol) bu_free(obj->fol, "obj fol");
     if (obj->fil) bu_free(obj->fil, "obj fil");
     obj->parent = NULL;
-    obj->brep = NULL;
+    delete obj->brep;
 }
 
 
@@ -572,84 +651,6 @@ print_subbrep_object(struct subbrep_object_data *data, const char *offset)
 
 
 
-
-
-int
-subbrep_highest_order_face(struct subbrep_object_data *data)
-{
-    int planar = 0;
-    int spherical = 0;
-    int rcylindrical = 0;
-    int cone = 0;
-    int torus = 0;
-    int general = 0;
-    int hof = -1;
-    int hofo = 0;
-    for (int f_it = 0; f_it < data->faces_cnt; f_it++) {
-	ON_BrepFace *used_face = &(data->brep->m_F[f_it]);
-	int surface_type = (int)GetSurfaceType(used_face->SurfaceOf(), NULL);
-	switch (surface_type) {
-	    case SURFACE_PLANE:
-		planar++;
-		if (hofo < 1) {
-		    hof = f_it;
-		    hofo = 1;
-		}
-		break;
-	    case SURFACE_SPHERE:
-		spherical++;
-		if (hofo < 2) {
-		    hof = f_it;
-		    hofo = 2;
-		}
-		break;
-	    case SURFACE_CYLINDER:
-		if (!cylindrical_planar_vertices(data, f_it)) {
-		    std::cout << "irregular cylindrical: " << f_it << "\n";
-		    general++;
-		} else {
-		    rcylindrical++;
-		    if (hofo < 3) {
-			hof = f_it;
-			hofo = 3;
-		    }
-		}
-		break;
-	    case SURFACE_CONE:
-		cone++;
-		if (hofo < 4) {
-		    hof = f_it;
-		    hofo = 4;
-		}
-		break;
-	    case SURFACE_TORUS:
-		torus++;
-		if (hofo < 4) {
-		    hof = f_it;
-		    hofo = 4;
-		}
-		break;
-	    default:
-		general++;
-		std::cout << "general surface: " << used_face->SurfaceIndexOf() << "\n";
-		break;
-	}
-    }
-
-    if (!general)
-	std::cout << "highest order face: " << hof << "(" << hofo << ")\n";
-
-    std::cout << "\n";
-    std::cout << bu_vls_addr(data->key) << ":\n";
-    std::cout << "planar_cnt: " << planar << "\n";
-    std::cout << "spherical_cnt: " << spherical << "\n";
-    std::cout << "regular cylindrical_cnt: " << rcylindrical << "\n";
-    std::cout << "cone_cnt: " << cone << "\n";
-    std::cout << "torus_cnt: " << torus << "\n";
-    std::cout << "general_cnt: " << general << "\n";
-    std::cout << "\n";
-    return hof;
-}
 
 void
 set_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
