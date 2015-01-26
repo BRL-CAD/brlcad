@@ -942,7 +942,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
     std::map<int, int> c3_map;
     std::map<int, int> c2_map;
     std::map<int, int> trim_map;
-    std::map<int, int> subloop_map;  // When not all of the trims from an old loop are used, make new loops here so we hae somewhere to stash the trims.  They'll be useful if we want/need to construct faces closing the new subbreps.
+    std::map<int, int> subloop_map;  // When not all of the trims from an old loop are used, make new loops here so we have somewhere to stash the trims.  They'll be useful if we want/need to construct faces closing the new subbreps.
 
     std::set<int> faces;
     std::set<int> loops;
