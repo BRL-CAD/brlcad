@@ -162,7 +162,7 @@ highest_order_face(ON_Brep *brep)
 	    default:
 		general++;
 		hofo = SURFACE_GENERAL;
-		std::cout << "general surface(" << used_face.m_face_index << "): " << used_face.SurfaceIndexOf() << "\n";
+		//std::cout << "general surface(" << used_face.m_face_index << "): " << used_face.SurfaceIndexOf() << "\n";
 		break;
 	}
     }
@@ -851,6 +851,12 @@ add_loops_from_face(ON_BrepFace *face, struct subbrep_object_data *data, std::se
 int
 subbrep_split(struct subbrep_object_data *data)
 {
+    surface_t hof = highest_order_face(data->local_brep);
+    if (hof >= SURFACE_GENERAL) {
+	data->type = BREP;
+	std::cout << "general surface present: " << bu_vls_addr(data->key) << "\n\n";
+	return 0;
+    }
     std::set<int> processed_faces;
     std::set<std::string> subbrep_keys;
     /* For each face, identify the candidate solid type.  If that
@@ -1158,6 +1164,13 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	}
     }
 
+    // Make sure all the loop directions are correct
+    for (int l = 0; l < data->local_brep->m_L.Count(); l++) {
+	if (data->local_brep->LoopDirection(data->local_brep->m_L[l]) != 1) {
+	    data->local_brep->FlipLoop(data->local_brep->m_L[l]);
+	}
+    }
+
     data->local_brep->ShrinkSurfaces();
     data->local_brep->CullUnusedSurfaces();
 
@@ -1171,7 +1184,6 @@ subbrep_make_brep(struct subbrep_object_data *data)
     map_to_array(&(data->trim_map), &(data->trim_map_cnt), &trim_map);
 
     std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
-    std::cout << "highest order face: " << highest_order_face(data->local_brep) << "\n\n";
 
     return 1;
 }
