@@ -333,7 +333,7 @@ subbrep_shape_recognize(struct subbrep_object_data *data)
     if (subbrep_is_planar(data)) return PLANAR_VOLUME;
     //if (BU_STR_EQUAL(bu_vls_addr(data->key), "0_448.s")) {
     if (subbrep_is_cylinder(data, BREP_CYLINDRICAL_TOL)) return CYLINDER;
-    if (subbrep_split(data)) return COMB;
+    //if (subbrep_split(data)) return COMB;
     //}
     return BREP;
 }
@@ -989,9 +989,11 @@ subbrep_make_brep(struct subbrep_object_data *data)
     std::map<int, int> subloop_map;  // When not all of the trims from an old loop are used, make new loops here so we have somewhere to stash the trims.  They'll be useful if we want/need to construct faces closing the new subbreps.
 
     std::set<int> faces;
+    std::set<int> fil;
     std::set<int> loops;
     std::set<int> isolated_trims;  // collect 2D trims whose parent loops aren't fully included here
     array_to_set(&faces, data->faces, data->faces_cnt);
+    array_to_set(&fil, data->fil, data->fil_cnt);
     array_to_set(&loops, data->loops, data->loops_cnt);
 
     // Each edge has a trim array, and the trims will tell us which loops
@@ -1062,6 +1064,10 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		    face_map[old_trim->Face()->m_face_index] = new_face.m_face_index;
 		    std::cout << "old_face: " << old_trim->Face()->m_face_index << "\n";
 		    std::cout << "new_face: " << new_face.m_face_index << "\n";
+		    if (fil.find(old_trim->Face()->m_face_index) != fil.end()) {
+			data->local_brep->FlipFace(new_face);
+		    }
+
 		}
 	    }
 	}
