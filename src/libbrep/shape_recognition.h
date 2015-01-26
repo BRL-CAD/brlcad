@@ -88,6 +88,24 @@ struct subbrep_object_data {
     int fol_cnt;
     int fil_cnt;
 
+    /* Maps */
+    int *face_map;
+    int *surface_map;
+    int *edge_map;
+    int *vertex_map;
+    int *loop_map;
+    int *c3_map;
+    int *c2_map;
+    int *trim_map;
+    int face_map_cnt;
+    int surface_map_cnt;
+    int edge_map_cnt;
+    int vertex_map_cnt;
+    int loop_map_cnt;
+    int c3_map_cnt;
+    int c2_map_cnt;
+    int trim_map_cnt;
+
     ON_Brep *brep;
     ON_Brep *local_brep;
     volume_t type;

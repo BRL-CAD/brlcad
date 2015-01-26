@@ -447,6 +447,14 @@ subbrep_object_free(struct subbrep_object_data *obj)
     if (obj->edges) bu_free(obj->edges, "obj edges");
     if (obj->fol) bu_free(obj->fol, "obj fol");
     if (obj->fil) bu_free(obj->fil, "obj fil");
+    if (obj->face_map) bu_free(obj->face_map, "obj face_map");
+    if (obj->surface_map) bu_free(obj->surface_map, "obj surface_map");
+    if (obj->edge_map) bu_free(obj->edge_map, "obj edge_map");
+    if (obj->vertex_map) bu_free(obj->vertex_map, "obj vertex_map");
+    if (obj->loop_map) bu_free(obj->loop_map, "obj loop_map");
+    if (obj->c3_map) bu_free(obj->c3_map, "obj c3_map");
+    if (obj->c2_map) bu_free(obj->c2_map, "obj c2_map");
+    if (obj->trim_map) bu_free(obj->trim_map, "obj trim_map");
     obj->parent = NULL;
     delete obj->brep;
 }
@@ -491,6 +499,30 @@ array_to_set(std::set<int> *set, int *array, int array_cnt)
 {
     for (int i = 0; i < array_cnt; i++) {
 	set->insert(array[i]);
+    }
+}
+
+void
+map_to_array(int **array, int *array_cnt, std::map<int,int> *map)
+{
+    std::map<int,int>::iterator m_it;
+    int i = 0;
+    (*array_cnt) = map->size();
+    if ((*array_cnt) > 0) {
+	(*array) = (int *)bu_calloc((*array_cnt)*2, sizeof(int), "array");
+	for (m_it = map->begin(); m_it != map->end(); m_it++) {
+	    (*array)[i] = m_it->first;
+	    (*array)[i+*array_cnt] = m_it->first;
+	    i++;
+	}
+    }
+}
+
+void
+array_to_map(std::map<int,int> *map, int *array, int array_cnt)
+{
+    for (int i = 0; i < array_cnt; i++) {
+	(*map)[array[i]] = array[array_cnt+i];
     }
 }
 
@@ -1132,6 +1164,15 @@ subbrep_make_brep(struct subbrep_object_data *data)
 
     data->local_brep->ShrinkSurfaces();
     data->local_brep->CullUnusedSurfaces();
+
+    map_to_array(&(data->face_map), &(data->face_map_cnt), &face_map);
+    map_to_array(&(data->surface_map), &(data->surface_map_cnt), &surface_map);
+    map_to_array(&(data->edge_map), &(data->edge_map_cnt), &edge_map);
+    map_to_array(&(data->vertex_map), &(data->vertex_map_cnt), &vertex_map);
+    map_to_array(&(data->loop_map), &(data->loop_map_cnt), &loop_map);
+    map_to_array(&(data->c3_map), &(data->c3_map_cnt), &c3_map);
+    map_to_array(&(data->c2_map), &(data->c2_map_cnt), &c2_map);
+    map_to_array(&(data->trim_map), &(data->trim_map_cnt), &trim_map);
 
     std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
 
