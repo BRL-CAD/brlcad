@@ -281,7 +281,7 @@ were deemed worth this risk.</para>
 <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixmerge</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>comp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>crop</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>repos</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rlepatch</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rlebox</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 
 </refsection>
 
