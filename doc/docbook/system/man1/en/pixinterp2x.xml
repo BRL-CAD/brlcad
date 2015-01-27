@@ -21,7 +21,7 @@
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
     <arg choice='opt'><replaceable>infile.pix</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>outfile.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
