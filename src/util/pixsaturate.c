@@ -59,7 +59,7 @@ main(int argc, char **argv)
     size_t ret;
 
     if (argc != 2) {
-	bu_exit(1, "Usage: pixsaturate saturation\n");
+	bu_exit(1, "Usage: pixsaturate saturation < infile.pix > outfile.pix\n");
     }
     sat = atof(argv[1]);
 
