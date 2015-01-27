@@ -23,9 +23,9 @@
     <arg choice='opt'>-f <replaceable>#</replaceable></arg>
     <arg choice='opt'>-m <replaceable>cmd</replaceable></arg>
     <arg choice='opt'><replaceable>objectname</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>in.table</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>out.script</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

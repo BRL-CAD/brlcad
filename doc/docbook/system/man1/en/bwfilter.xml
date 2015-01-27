@@ -26,7 +26,7 @@
     <arg choice='opt'>-n <replaceable>height</replaceable></arg>
     <arg choice='opt'>-o <replaceable>out_file</replaceable></arg>
     <arg choice='opt'><replaceable>file.bw</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>newfile.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
