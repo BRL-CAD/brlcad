@@ -18,6 +18,8 @@
 <cmdsynopsis>
   <command>pixsaturate</command>
     <arg choice='plain'><replaceable>saturation</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
+    <arg choice='plain'><replaceable>infile.pix</replaceable></arg>
     <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>outfile.pix</replaceable></arg>
 </cmdsynopsis>
