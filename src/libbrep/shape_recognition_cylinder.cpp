@@ -240,7 +240,7 @@ cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index)
 }
 
 int
-cylinder_csg(struct subbrep_object_data *data)
+cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 {
     bu_log("process partial cylinder\n");
     std::set<int> planar_surfaces;
@@ -270,9 +270,71 @@ cylinder_csg(struct subbrep_object_data *data)
     // Third, characterize the edges.  The sets of coplanar non-linear
     // edges may either form loops  or arcs.  The former case does not
     // require arb subtraction, the latter does.
+    std::set<int> arc_set_1, arc_set_2;
+    ON_Circle set1_c, set2_c;
+    int arc1_circle_set= 0;
+    int arc2_circle_set = 0;
+
+    for (int i = 0; i < data->edges_cnt; i++) {
+	int e_it = data->edges[i];
+	ON_BrepEdge& edge = data->brep->m_E[e_it];
+	if (!edge.EdgeCurveOf()->IsLinear()) {
+
+	    ON_Arc arc;
+	    if (edge.EdgeCurveOf()->IsArc(NULL, &arc, cyl_tol)) {
+		int assigned = 0;
+		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		//std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
+		if (!arc1_circle_set) {
+		    arc1_circle_set = 1;
+		    set1_c = circ;
+		    //std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
+		} else {
+		    if (!arc2_circle_set) {
+			if (!(NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cyl_tol))){
+			    arc2_circle_set = 1;
+			    set2_c = circ;
+			    //std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
+			}
+		    }
+		}
+		if (NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cyl_tol)){
+		    arc_set_1.insert(e_it);
+		    assigned = 1;
+		}
+		if (arc2_circle_set) {
+		    if (NEAR_ZERO(circ.Center().DistanceTo(set2_c.Center()), cyl_tol)){
+			arc_set_2.insert(e_it);
+			assigned = 1;
+		    }
+		}
+		if (!assigned) {
+		    std::cout << "found extra circle - no go\n";
+		    return 0;
+		}
+	    }
+	}
+    }
+
+
+    // Fourth, check that the two circles are parallel to each other.
+    if (set1_c.Plane().Normal().IsParallelTo(set2_c.Plane().Normal(), cyl_tol) == 0) {
+        return 0;
+    }
+
+    data->type = CYLINDER;
+
+    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
+
+    data->params->origin[0] = set1_c.Center().x;
+    data->params->origin[1] = set1_c.Center().y;
+    data->params->origin[2] = set1_c.Center().z;
+    data->params->hv[0] = hvect.x;
+    data->params->hv[1] = hvect.y;
+    data->params->hv[2] = hvect.z;
+    data->params->radius = set1_c.Radius();
 
 }
-
 
 // Local Variables:
 // tab-width: 8

@@ -711,7 +711,7 @@ subbrep_split(struct subbrep_object_data *data)
 	    new_obj->type = filters->type;
 	    switch (new_obj->type) {
 		case CYLINDER:
-		    (void)cylinder_csg(new_obj);
+		    (void)cylinder_csg(new_obj, BREP_CYLINDRICAL_TOL);
 		    break;
 		case CONE:
 		    (void)cone_csg(new_obj);

@@ -132,7 +132,7 @@ volume_t subbrep_shape_recognize(struct subbrep_object_data *data);
 
 
 int cylindrical_loop_planar_vertices(ON_BrepFace *face, int loop_index);
-int cylinder_csg(struct subbrep_object_data *data);
+int cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol);
 int subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol);
 
 int subbrep_is_planar(struct subbrep_object_data *data);
