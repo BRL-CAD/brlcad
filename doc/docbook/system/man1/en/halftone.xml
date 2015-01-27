@@ -26,7 +26,7 @@
     <arg choice='opt'>-M <replaceable>Method</replaceable></arg>
     <arg choice='opt'>-T <replaceable>Tone_Scale_Curve_Points</replaceable></arg>
     <arg choice='opt'>-D <replaceable>debug_level</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>file.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

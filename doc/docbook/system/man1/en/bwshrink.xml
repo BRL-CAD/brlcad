@@ -23,7 +23,7 @@
     <arg choice='opt'>-f <replaceable>shrink_factor</replaceable></arg>
     <arg choice='opt'>-u </arg>
     <arg choice='opt'><replaceable>infile.bw</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>outfile.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
