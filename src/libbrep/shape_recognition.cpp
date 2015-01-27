@@ -206,19 +206,6 @@ filter_obj_free(struct filter_obj *obj)
     delete obj->torus;
 }
 
-int
-subbrep_is_planar(struct subbrep_object_data *data)
-{
-    int i = 0;
-    // Check surfaces.  If a surface is anything other than a plane the verdict is no.
-    // If all surfaces are planes, then the verdict is yes.
-    for (i = 0; i < data->faces_cnt; i++) {
-	if (GetSurfaceType(data->brep->m_F[data->faces[i]].SurfaceOf(), NULL) != SURFACE_PLANE) return 0;
-    }
-    data->type = PLANAR_VOLUME;
-    return 1;
-}
-
 volume_t
 subbrep_shape_recognize(struct subbrep_object_data *data)
 {
