@@ -18,7 +18,7 @@
 <cmdsynopsis>
   <command>pixsaturate</command>
     <arg choice='plain'><replaceable>saturation</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>outfile.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
