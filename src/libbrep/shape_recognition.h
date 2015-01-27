@@ -78,6 +78,7 @@ struct csg_object_params {
     point_t origin;
     vect_t hv;
     fastf_t radius;
+    fastf_t r2;
     fastf_t height;
 };
 
@@ -130,12 +131,16 @@ struct bu_ptbl *find_subbreps(ON_Brep *brep);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
 volume_t subbrep_shape_recognize(struct subbrep_object_data *data);
 
+int subbrep_is_planar(struct subbrep_object_data *data);
 
 int cylindrical_loop_planar_vertices(ON_BrepFace *face, int loop_index);
-int cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol);
 int subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol);
+int cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol);
 
-int subbrep_is_planar(struct subbrep_object_data *data);
+int subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol);
+int cone_csg(struct subbrep_object_data *data, fastf_t cone_tol);
+
+
 
 #endif /* SHAPE_RECOGNITION_H */
 

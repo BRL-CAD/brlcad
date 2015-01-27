@@ -164,152 +164,19 @@ subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct rt_wdb *wdbp)
     return 0;
 }
 
-
-#if 0
 int
-is_cone(const object_data *data)
+subbrep_to_csg_conic(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
-    int ret = 1;
-    std::set<int>::iterator f_it;
-    std::set<int> planar_surfaces;
-    std::set<int> conic_surfaces;
-    std::set<int> active_edges;
-    // First, check surfaces.  If a surface is anything other than a plane or cone,
-    // the verdict is no.  If we don't have one planar surface and one or more
-    // conic surfaces, the verdict is no.
-    for (f_it = data->faces.begin(); f_it != data->faces.end(); f_it++) {
-	ON_BrepFace *used_face = &(data->brep->m_F[(*f_it)]);
-	ON_Surface *temp_surface = (ON_Surface *)used_face->SurfaceOf();
-	int surface_type = (int)GetSurfaceType(temp_surface);
-	switch (surface_type) {
-	    case SURFACE_PLANE:
-		planar_surfaces.insert(*f_it);
-		break;
-	    case SURFACE_CONE:
-		conic_surfaces.insert(*f_it);
-		break;
-	    default:
-		return 0;
-		break;
-	}
+    if (data->type == CONE) {
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&prim_name, "trc_%s", bu_vls_addr(data->key));
+
+	mk_cone(wdbp, bu_vls_addr(&prim_name), data->params->origin, data->params->hv, data->params->height, data->params->radius, data->params->r2);
+	bu_vls_free(&prim_name);
+	return 1;
     }
-    if (planar_surfaces.size() != 1) return 0;
-    if (conic_surfaces.size() < 1) return 0;
-
-    // Second, check if all conic surfaces share the same base point, apex point and radius.
-    ON_Cone cone;
-    data->brep->m_F[*conic_surfaces.begin()].SurfaceOf()->IsCone(&cone);
-    for (f_it = conic_surfaces.begin(); f_it != conic_surfaces.end(); f_it++) {
-	ON_Cone f_cone;
-	data->brep->m_F[(*f_it)].SurfaceOf()->IsCone(&f_cone);
-	ON_3dPoint fbp = f_cone.BasePoint();
-	ON_3dPoint bp = cone.BasePoint();
-	if (fbp.DistanceTo(bp) > 0.01) return 0;
-	ON_3dPoint fap = f_cone.ApexPoint();
-	ON_3dPoint ap = cone.ApexPoint();
-	if (fap.DistanceTo(ap) > 0.01) return 0;
-	if (!(NEAR_ZERO(cone.radius - f_cone.radius, 0.01))) return 0;
-    }
-
-    // Third, see if the planar face and the planes of any non-linear edges from the conic
-    // faces are coplanar. TODO - do we need to do this?
-    ON_Plane p1;
-    data->brep->m_F[*planar_surfaces.begin()].SurfaceOf()->IsPlanar(&p1);
-
-    // Fourth, check that the conic axis and the planar face are perpendicular.  If they
-    // are not it isn't fatal, but we need to add a subtracting tgc and return a comb
-    // to handle this situation so for now for simplicity require the perpendicular condition
-    if (p1.Normal().IsParallelTo(cone.Axis(), 0.01) == 0) {
-	std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
-	std::cout << "cone axis: " << cone.Axis().x << "," << cone.Axis().y << "," << cone.Axis().z << "\n";
-	return 0;
-    }
-
-    // Fifth, remove degenerate edge sets. A degenerate edge set is defined as two
-    // linear segments having the same two vertices.  (To be sure, we should probably
-    // check curve directions in loops in some fashion...)
-    std::set<int>::iterator e_it;
-    std::set<int> degenerate;
-    for (e_it = data->edges.begin(); e_it != data->edges.end(); e_it++) {
-	if (degenerate.find(*e_it) == degenerate.end()) {
-	    ON_BrepEdge& edge = data->brep->m_E[*e_it];
-	    if (edge.EdgeCurveOf()->IsLinear()) {
-		for (f_it = data->edges.begin(); f_it != data->edges.end(); f_it++) {
-		    ON_BrepEdge& edge2 = data->brep->m_E[*f_it];
-		    if (edge2.EdgeCurveOf()->IsLinear()) {
-			if ((edge.Vertex(0)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(1)->Point() == edge2.Vertex(1)->Point()) ||
-				(edge.Vertex(1)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(0)->Point() == edge2.Vertex(1)->Point()))
-			{
-			    degenerate.insert(*e_it);
-			    degenerate.insert(*f_it);
-			    break;
-			}
-		    }
-		}
-	    }
-	}
-    }
-    active_edges = data->edges;
-    for (e_it = degenerate.begin(); e_it != degenerate.end(); e_it++) {
-	//std::cout << "erasing " << *e_it << "\n";
-	active_edges.erase(*e_it);
-    }
-    //std::cout << "Active Edge set: ";
-#if 0
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-	std::cout << (int)(*e_it);
-	f_it = e_it;
-	f_it++;
-	if (f_it != active_edges.end()) std::cout << ",";
-    }
-    std::cout << "\n";
-#endif
-
-    // Sixth, check for any remaining linear segments.  If we have a real
-    // cone and not just a partial, all the linear segments should have
-    // washed out.
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-	ON_BrepEdge& edge = data->brep->m_E[*e_it];
-	if (edge.EdgeCurveOf()->IsLinear()) return 0;
-    }
-
-    // Seventh, make sure all the curved edges are on the same circle.
-    ON_Circle circle;
-    int circle_set= 0;
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-	ON_BrepEdge& edge = data->brep->m_E[*e_it];
-	ON_Arc arc;
-	if (edge.EdgeCurveOf()->IsArc(NULL, &arc, 0.01)) {
-	    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-	    if (!circle_set) {
-		circle_set = 1;
-		circle = circ;
-	    }
-	    if (!NEAR_ZERO(circ.Center().DistanceTo(circle.Center()), 0.01)){
-		std::cout << "found extra circle - no go\n";
-		return 0;
-	    }
-	}
-    }
-
-    point_t base; // base of cone
-    vect_t hv; // height vector of cone
-    fastf_t height;
-    ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
-
-    base[0] = cone.BasePoint().x;
-    base[1] = cone.BasePoint().y;
-    base[2] = cone.BasePoint().z;
-    hv[0] = hvect.x;
-    hv[1] = hvect.y;
-    hv[2] = hvect.z;
-    height = MAGNITUDE(hv);
-    VUNITIZE(hv);
-    mk_cone(data->wdbp, data->key.c_str(), base, hv, height, cone.radius, 0.000001);
-
-    return ret;
+    return 0;
 }
-#endif
 
 
 int
@@ -329,11 +196,7 @@ make_shape(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 	    return subbrep_to_csg_cylinder(data, wdbp);
 	    break;
 	case CONE:
-	    if (data->local_brep) {
-		mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
-	    } else {
-		bu_log("Warning - mk_brep called but data->local_brep is empty\n");
-	    }
+	    return subbrep_to_csg_conic(data, wdbp);
 	    bu_vls_free(&brep_name);
 	    return 0;
 	    break;
@@ -364,67 +227,6 @@ make_shape(struct subbrep_object_data *data, struct rt_wdb *wdbp)
     /* Shouldn't get here */
     return 0;
 }
-#if 0
-/* generate new face(s) needed to close new obj, add to new obj and inverse of face to old obj */
-void
-close_objs(object_data *new_obj, object_data *old_obj)
-{
-   /* Step 1 - are we dealing with a subtraction?  If so, we have a bit more leeway */
-   /* Step 2 - is the shape "well behaved"?  (irregular cylinder test is an example)  If it is, we
-    * don't need to worry about using leeway from subtractions - otherwise, we do */
-   /* Step 3 - if well behaved, generate new face(s) needed to close up this face and inverses of those faces for the old object. */
-   /* Step 4 - if well behaved, add new faces to brep and update all necessary brep structures */
-   /* Step 5 - if NOT well behaved and is a subtraction, determine necessary shape to encompass
-    * subtraction volume.  Identify faces and curves no longer needed if subtraction is performed,
-    * and simplify brep */
-   /* Step 6 - update object data structures to reflect the new objects */
-}
-
-
-/* When we have a composite object, we must divide that object into
- * simpler objects that we can represent.  The "seed" face is the
- * index of the face with the most complicated surface type in the
- * input object_data set.  split_object's job is to identify the
- * set of one or more faces, starting with seed_face, that will define
- * the new candidate object_data set and build it up.  "Missing"
- * faces not in the model but needed to define a closed volume will
- * be added to the ON_Brep and to the object_data set.  When a new face
- * is added, all existing 3D edges must be re-used - no duplicates
- * are allowed. The input object will be altered to no longer contain
- * data now exclusive to the new_obj set */
-bool
-split_object(comb_data *curr_comb, object_data *input)
-{
-    object_data tmp_obj = *input;
-    //int is_obj = find_shape(&tmp_obj);
-    while (!is_obj) {
-	int seed_face = highest_order_face(&tmp_obj);
-	/* TODO - for cylinders, check for a mating face with the same axis - want to go for the rcc if we can */
-	object_data *new_obj = new object_data(input->brep, input->wdbp);
-	/* TODO - add seed face to new obj and remove from tmp_obj */
-	new_obj->faces.insert(seed_face);
-	tmp_obj.faces.erase(seed_face);
-	/* generate new face(s) needed to close new obj, add to new obj and inverse of face to old obj */
-	close_objs(new_obj, &tmp_obj);
-	/* If new faces cannot be generated, return false */
-	curr_comb->objects.push_back(&(*new_obj));
-	//is_obj = find_shape(&tmp_obj);
-    }
-    object_data *final_obj = new object_data(input->brep, input->wdbp);
-    final_obj->key = tmp_obj.key;
-    final_obj->faces = tmp_obj.faces;
-    final_obj->loops = tmp_obj.loops;
-    final_obj->edges = tmp_obj.edges;
-    final_obj->negative_object = tmp_obj.negative_object;
-    final_obj->fol = tmp_obj.fol;
-    final_obj->fil = tmp_obj.fil;
-    final_obj->brep = tmp_obj.brep;
-    final_obj->wdbp = tmp_obj.wdbp;
-    curr_comb->objects.push_back(final_obj);
-    return true;
-}
-
-#endif
 
 int
 main(int argc, char *argv[])
@@ -470,18 +272,24 @@ main(int argc, char *argv[])
     ON_Brep *brep = brep_ip->brep;
 
     struct bu_ptbl *subbreps = find_subbreps(brep);
-    //split_subbreps(subbreps);
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
 	//print_subbrep_object(obj, "");
 	if (obj->type == BREP) {
-	    (void)make_shape(obj, wdbp);
-	    //subbrep_split(obj);
-	    for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
-		struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, j);
-		//print_subbrep_object(cobj, "  ");
-		//subbrep_csg_assemble(cobj);
-	    }
+	    int ret = subbrep_split(obj);
+	    if (!ret) {
+		(void)make_shape(obj, wdbp);
+	    } else {
+		// first, make the comb
+		(void)make_shape(obj, wdbp);
+		// next, add its children
+		for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
+		    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, j);
+		    print_subbrep_object(cobj, "  ");
+		    if (cobj->type == CYLINDER) (void)make_shape(cobj, wdbp);
+		    //subbrep_csg_assemble(cobj);
+		}
+		    }
 	} else {
 	    (void)make_shape(obj, wdbp);
 	}

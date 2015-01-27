@@ -211,6 +211,7 @@ subbrep_shape_recognize(struct subbrep_object_data *data)
 {
     if (subbrep_is_planar(data)) return PLANAR_VOLUME;
     if (subbrep_is_cylinder(data, BREP_CYLINDRICAL_TOL)) return CYLINDER;
+    if (subbrep_is_cone(data, BREP_CONIC_TOL)) return CONE;
     return BREP;
 }
 
@@ -600,11 +601,6 @@ add_loops_from_face(ON_BrepFace *face, struct subbrep_object_data *data, std::se
     }
 }
 
-int
-cone_csg(struct subbrep_object_data *data)
-{
-    bu_log("process partial cone\n");
-}
 
 /* In order to represent complex shapes, it is necessary to identify
  * subsets of subbreps that can be represented as primitives.  This
@@ -714,7 +710,7 @@ subbrep_split(struct subbrep_object_data *data)
 		    (void)cylinder_csg(new_obj, BREP_CYLINDRICAL_TOL);
 		    break;
 		case CONE:
-		    (void)cone_csg(new_obj);
+		    (void)cone_csg(new_obj, BREP_CONIC_TOL);
 		    break;
 		case SPHERE:
 		    bu_log("process partial sphere\n");
