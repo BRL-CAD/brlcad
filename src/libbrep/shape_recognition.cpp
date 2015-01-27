@@ -700,6 +700,7 @@ set_filter_obj(ON_BrepFace *face, struct filter_obj *obj)
 
     if (obj->stype == SURFACE_SPHERICAL_SECTION || obj->stype == SURFACE_SPHERE) obj->type = SPHERE;
 
+    if (obj->stype == SURFACE_TORUS) obj->type = TORUS;
 }
 
 int
@@ -781,6 +782,12 @@ apply_filter_obj(ON_BrepFace *face, int loop_index, struct filter_obj *obj)
 	allowed.insert(SURFACE_SPHERE);
 	allowed.insert(SURFACE_PLANE);
     }
+
+    if (obj->type == TORUS) {
+	allowed.insert(SURFACE_TORUS);
+	allowed.insert(SURFACE_PLANE);
+    }
+
 
     // If the face's surface type is not part of the allowed set for
     // this object type, we're done
