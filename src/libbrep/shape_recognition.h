@@ -2,6 +2,9 @@
 #include "bu/ptbl.h"
 #include "brep.h"
 
+#ifndef SHAPE_RECOGNITION_H
+#define SHAPE_RECOGNITION_H
+
 #define BREP_PLANAR_TOL 0.05
 #define BREP_CYLINDRICAL_TOL 0.05
 #define BREP_CONIC_TOL 0.05
@@ -59,8 +62,11 @@ void filter_obj_init(struct filter_obj *);
 void filter_obj_free(struct filter_obj *);
 
 curve_t GetCurveType(ON_Curve *curve);
-surface_t GetSurfaceType(const ON_Surface *surface);
+surface_t GetSurfaceType(const ON_Surface *surface, struct filter_obj *obj);
 
+
+void set_to_array(int **array, int *array_cnt, std::set<int> *set);
+void array_to_set(std::set<int> *set, int *array, int array_cnt);
 
 
 /* Structure for holding parameters corresponding
@@ -117,9 +123,6 @@ struct subbrep_object_data {
 void subbrep_object_init(struct subbrep_object_data *obj, ON_Brep *brep);
 void subbrep_object_free(struct subbrep_object_data *obj);
 
-int cylindrical_loop_planar_vertices(struct subbrep_object_data *data, int face_index);
-int cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index);
-
 int subbrep_split(struct subbrep_object_data *data);
 int subbrep_make_brep(struct subbrep_object_data *data);
 
@@ -127,6 +130,14 @@ struct bu_ptbl *find_subbreps(ON_Brep *brep);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
 volume_t subbrep_shape_recognize(struct subbrep_object_data *data);
 
+
+int cylindrical_loop_planar_vertices(ON_BrepFace *face, int loop_index);
+int cylinder_csg(struct subbrep_object_data *data);
+
+int subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol);
+
+
+#endif /* SHAPE_RECOGNITION_H */
 
 // Local Variables:
 // tab-width: 8

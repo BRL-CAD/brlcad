@@ -28,6 +28,7 @@ set(LIBBREP_SOURCES
   px_event.cpp
   PullbackCurve.cpp
   shape_recognition.cpp
+  shape_recognition_cylinder.cpp
   ssx_event.cpp
   Subcurve.cpp
   Subsurface.cpp
