@@ -45,7 +45,7 @@ of this writing.  It needs the ability to rotate, translate, zoom, etc.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
--<para>plot3-X<citerefentry><refentrytitle>10</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+<para>plot3-X<citerefentry><refentrytitle>10</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsect1>
 
