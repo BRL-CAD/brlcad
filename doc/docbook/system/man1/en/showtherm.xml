@@ -30,7 +30,7 @@ that does not include air and as a region is hit the temperature is
 looked up in a temperature output file.  This file may be either a
 PRISM temperature output file or a generic temperature output file.</para>
 
-<para>Showtherm then creates an output file that is readable by Analyzer2
+<para><command>showtherm</command> then creates an output file that is readable by Analyzer2
 (an X-windows program written by Glen Durfee), ir-X, or ir-sgi.
 These programs will graphically showtherm the image with temperatures
 being represented by different colors.</para>

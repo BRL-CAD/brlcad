@@ -20,7 +20,7 @@
     <arg choice='opt'>-fsq </arg>
     <arg choice='opt'>-b <replaceable>base</replaceable></arg>
     <arg choice='opt'>-o <replaceable>frame_offset</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>unsorted.script</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

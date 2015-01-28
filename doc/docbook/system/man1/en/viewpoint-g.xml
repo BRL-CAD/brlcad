@@ -39,7 +39,7 @@ and the
 are expected to be in the
 <emphasis remap='I'>VIEWPOINT</emphasis>
 triangulated format as provided by
-<emphasis remap='I'>Viewpoint Datalabs.</emphasis>
+<emphasis remap='I'>Viewpoint Datalabs</emphasis>.
 In this format each object is represented as a group of
 elements, and each element is a group of triangular facets.</para>
 </refsect1>

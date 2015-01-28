@@ -21,7 +21,7 @@
     <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>table.final</replaceable></arg>
     <arg choice='plain'>&gt;&gt;</arg>
-    <arg choice='plain'><replaceable>&gt;&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>script</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
