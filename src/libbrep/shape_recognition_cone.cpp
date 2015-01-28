@@ -153,6 +153,7 @@ int
 cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 {
     bu_log("process partial cone\n");
+    return 0;
 }
 
 // Local Variables:
