@@ -28,6 +28,7 @@
 
 #include "plugin.h"
 
+#include "gcv.h"
 
 __BEGIN_DECLS
 
@@ -37,7 +38,7 @@ void gcv_plugin_register(const struct gcv_plugin_info *plugin_info);
 
 enum gcv_conversion_type {GCV_CONVERSION_READ, GCV_CONVERSION_WRITE};
 
-const struct gcv_converter *gcv_converter_find(const char *path, enum gcv_conversion_type type);
+GCV_EXPORT const struct gcv_converter *gcv_converter_find(const char *path, enum gcv_conversion_type type);
 
 
 __END_DECLS
