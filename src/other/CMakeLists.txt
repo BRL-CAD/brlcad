@@ -138,6 +138,10 @@ if(BRLCAD_FREETYPE_BUILD)
   SetTargetFolder(freetype "Third Party Libraries")
 endif(BRLCAD_FREETYPE_BUILD)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/freetype/include/ftconfig.h)
+mark_as_advanced(FREETYPE_INCLUDE_DIRS)
+mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
+mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
+mark_as_advanced(FREETYPE_LIBRARIES)
 
 # --------------------------------------------------------------------
 # The incrtTcl subdirectory isn't directly referenced, but its
@@ -602,6 +606,9 @@ endif(BRLCAD_IWIDGETS_BUILD)
 CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
 mark_as_advanced(IWIDGETS_VERSION)
 
+mark_as_advanced(COMPAT_SRCS)
+
+
 set(tkhtml_ALIASES ENABLE_TKHTML)
 set(tkhtml_DESCRIPTION "
 Option for enabling and disabling compilation of the Tkhtml HTML
@@ -775,6 +782,7 @@ AUTO.
 ")
 THIRD_PARTY(libvds VDS libvds libvds_DESCRIPTION ALIASES ${libvds_ALIASES} FLAGS NOSYS)
 set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
+mark_as_advanced(LIBVDS_INCLUDE_DIR)
 SetTargetFolder(libvds "Third Party Libraries")
 SetTargetFolder(libvds-static "Third Party Libraries")
 SetTargetFolder(stdvds "Third Party Libraries")
@@ -839,6 +847,7 @@ AUTO.
 THIRD_PARTY(libgdiam GDIAM libgdiam libgdiam_DESCRIPTION ALIASES ${libgdiam_ALIASES}
   FLAGS NOSYS)
 set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
+mark_as_advanced(LIBGDIAM_INCLUDE_DIR)
 SetTargetFolder(libgdiam "Third Party Libraries")
 SetTargetFolder(libgdiam-static "Third Party Libraries")
 
@@ -899,7 +908,7 @@ set(RPLY_LIBRARIES "rply" CACHE STRING "RPLY library" FORCE)
 set(RPLY_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/rply" CACHE STRING "Directory containing rply header" FORCE)
 SetTargetFolder(rply "Third Party Libraries")
 SetTargetFolder(rply_static "Third Party Libraries")
-mark_as_advanced(RPLY_LIBRARYIES)
+mark_as_advanced(RPLY_LIBRARIES)
 mark_as_advanced(RPLY_INCLUDE_DIRS)
 
 # GCT is a collection of algorithms for geometry processing and conversion
