@@ -18,8 +18,10 @@
 <cmdsynopsis>
   <command>tabsub</command>
     <arg choice='plain'><replaceable>template_file</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;table.final</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;&gt;script</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
+    <arg choice='plain'><replaceable>table.final</replaceable></arg>
+    <arg choice='plain'>&gt;&gt;</arg>
+    <arg choice='plain'><replaceable>&gt;&gt;</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

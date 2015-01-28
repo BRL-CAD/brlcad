@@ -24,7 +24,7 @@
 
 
 <refsect1 xml:id='descriptions'><title>DESCRIPTIONS</title>
-<para>Showtherm
+<para><command>showtherm</command>
 is an interactive program that ray-traces a BRL-CAD geometry file
 that does not include air and as a region is hit the temperature is
 looked up in a temperature output file.  This file may be either a
