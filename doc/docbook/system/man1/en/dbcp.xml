@@ -19,9 +19,9 @@
   <command>dbcp</command>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>blocksize</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>infile</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>outfile</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
