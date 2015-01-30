@@ -190,14 +190,16 @@ make_shape(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 	    return 0;
 	    break;
 	case PLANAR_VOLUME:
+	    bu_vls_free(&brep_name);
 	    return subbrep_to_csg_planar(data, wdbp);
 	    break;
 	case CYLINDER:
+	    bu_vls_free(&brep_name);
 	    return subbrep_to_csg_cylinder(data, wdbp);
 	    break;
 	case CONE:
-	    return subbrep_to_csg_conic(data, wdbp);
 	    bu_vls_free(&brep_name);
+	    return subbrep_to_csg_conic(data, wdbp);
 	    return 0;
 	    break;
 	case SPHERE:
@@ -285,8 +287,9 @@ main(int argc, char *argv[])
 		// next, add its children
 		for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
 		    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, j);
-		    print_subbrep_object(cobj, "  ");
+		   // print_subbrep_object(cobj, "  ");
 		    if (cobj->type == CYLINDER) (void)make_shape(cobj, wdbp);
+		    if (cobj->type == CONE) (void)make_shape(cobj, wdbp);
 		    //subbrep_csg_assemble(cobj);
 		}
 		    }

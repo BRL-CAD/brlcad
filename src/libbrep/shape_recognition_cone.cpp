@@ -152,7 +152,110 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
 int
 cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 {
-    bu_log("process partial cone\n");
+    std::set<int>::iterator f_it;
+    std::set<int> planar_surfaces;
+    std::set<int> conic_surfaces;
+
+    for (int i = 0; i < data->faces_cnt; i++) {
+	int f_ind = data->faces[i];
+	ON_BrepFace *used_face = &(data->brep->m_F[f_ind]);
+        int surface_type = (int)GetSurfaceType(used_face->SurfaceOf(), NULL);
+        switch (surface_type) {
+            case SURFACE_PLANE:
+                planar_surfaces.insert(f_ind);
+                break;
+            case SURFACE_CONE:
+                conic_surfaces.insert(f_ind);
+                break;
+            default:
+                return 0;
+                break;
+        }
+    }
+
+    // Second, check if all conic surfaces share the same base point, apex point and radius.
+    ON_Cone cone;
+    data->brep->m_F[*conic_surfaces.begin()].SurfaceOf()->IsCone(&cone);
+    for (f_it = conic_surfaces.begin(); f_it != conic_surfaces.end(); f_it++) {
+        ON_Cone f_cone;
+        data->brep->m_F[(*f_it)].SurfaceOf()->IsCone(&f_cone);
+        ON_3dPoint fbp = f_cone.BasePoint();
+        ON_3dPoint bp = cone.BasePoint();
+        if (fbp.DistanceTo(bp) > cone_tol) return 0;
+        ON_3dPoint fap = f_cone.ApexPoint();
+        ON_3dPoint ap = cone.ApexPoint();
+        if (fap.DistanceTo(ap) > cone_tol) return 0;
+        if (!(NEAR_ZERO(cone.radius - f_cone.radius, cone_tol))) return 0;
+    }
+
+    // Characterize the planes of the non-linear edges.  We need one or two planes - one
+    // indicates a true cone, two indicates a truncated cone.  More indicates something
+    // we aren't currently set up to handle.
+    std::set<int> arc_set_1, arc_set_2;
+    ON_Circle set1_c, set2_c;
+    int arc1_circle_set= 0;
+    int arc2_circle_set = 0;
+
+    for (int i = 0; i < data->edges_cnt; i++) {
+	int ei = data->edges[i];
+	ON_BrepEdge& edge = data->brep->m_E[ei];
+	if (!edge.EdgeCurveOf()->IsLinear()) {
+
+	    ON_Arc arc;
+	    if (edge.EdgeCurveOf()->IsArc(NULL, &arc, cone_tol)) {
+		int assigned = 0;
+		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		//std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
+		if (!arc1_circle_set) {
+		    arc1_circle_set = 1;
+		    set1_c = circ;
+		    //std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
+		} else {
+		    if (!arc2_circle_set) {
+			if (!(NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cone_tol))){
+			    arc2_circle_set = 1;
+			    set2_c = circ;
+			    //std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
+			}
+		    }
+		}
+		if (NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cone_tol)){
+		    arc_set_1.insert(ei);
+		    assigned = 1;
+		}
+		if (arc2_circle_set) {
+		    if (NEAR_ZERO(circ.Center().DistanceTo(set2_c.Center()), cone_tol)){
+			arc_set_2.insert(ei);
+			assigned = 1;
+		    }
+		}
+		if (!assigned) {
+		    std::cout << "found extra circle - no go\n";
+		    return 0;
+		}
+	    }
+	}
+    }
+
+    if (!arc2_circle_set) {
+	std::cout << "True cone!\n";
+	data->type = CONE;
+	ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
+	ON_3dPoint closest_to_base = set1_c.Plane().ClosestPointTo(cone.BasePoint());
+
+	data->params->origin[0] = closest_to_base.x;
+	data->params->origin[1] = closest_to_base.y;
+	data->params->origin[2] = closest_to_base.z;
+	data->params->hv[0] = hvect.x;
+	data->params->hv[1] = hvect.y;
+	data->params->hv[2] = hvect.z;
+	data->params->radius = set1_c.Radius();
+	data->params->r2 = 0.000001;
+	data->params->height = set1_c.Plane().DistanceTo(cone.ApexPoint());
+
+    } else {
+	std::cout << "TGC!\n";
+    }
     return 0;
 }
 
