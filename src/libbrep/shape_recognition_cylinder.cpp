@@ -386,7 +386,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	}
 	if (curve_cnt == 1) {
 	    corner_verts.insert(*v_it);
-	    std::cout << "found corner vert: " << *v_it << "\n";
+	    //std::cout << "found corner vert: " << *v_it << "\n";
 	}
 	if (line_cnt > 1 && curve_cnt == 0) {
 	    linear_verts.insert(*v_it);
@@ -395,7 +395,10 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     }
 
     // First, check corner count
-    if (corner_verts.size() > 4) return 0;
+    if (corner_verts.size() > 4) {
+	std::cout << "more than 4 corners - complex\n";
+	return 0;
+    }
 
     // Second, create the candidate face plane.  Verify coplanar status of points if we've got 4.
     ON_Plane pcyl;
@@ -422,29 +425,63 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     }
 
     // Third, if we had vertices with only linear edges, check to make sure they are in fact
+    // on the candidate plane for the face (if not, we've got something more complex going on).
+    if (linear_verts.size() > 0) {
+	std::set<int>::iterator s_it;
+	for (s_it = linear_verts.begin(); s_it != linear_verts.end(); s_it++) {
+	    ON_3dPoint pnt = data->brep->m_V[*s_it].Point();
+	    if (pcyl.DistanceTo(pnt) > BREP_PLANAR_TOL) {
+		return 0;
+	    }
+	}
+    }
 
-    // Second, get cylindrical surface properties.
+    // Now, get the cylindrical surface properties.
     ON_Cylinder cylinder;
     ON_Surface *cs = data->brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->Duplicate();
     cs->IsCylinder(&cylinder);
     delete cs;
 
-    // Fourth, check that the two circles are parallel to each other.
-    if (set1_c.Plane().Normal().IsParallelTo(set2_c.Plane().Normal(), cyl_tol) == 0) {
-        return 0;
+    // Check if the two circles are parallel to each other.  If they are, and we have
+    // no corner points, then we have a complete cylinder
+    if (set1_c.Plane().Normal().IsParallelTo(set2_c.Plane().Normal(), cyl_tol) != 0) {
+	if (corner_verts.size() == 0) {
+	    std::cout << "Full cylinder\n";
+	    data->type = CYLINDER;
+
+	    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
+
+	    data->params->origin[0] = set1_c.Center().x;
+	    data->params->origin[1] = set1_c.Center().y;
+	    data->params->origin[2] = set1_c.Center().z;
+	    data->params->hv[0] = hvect.x;
+	    data->params->hv[1] = hvect.y;
+	    data->params->hv[2] = hvect.z;
+	    data->params->radius = set1_c.Radius();
+
+	    return 1;
+	} else {
+	    // We have parallel faces and corners - we need to subtract an arb
+	    data->type = COMB;
+	    std::cout << "Minus body arb\n";
+	    return 1;
+	}
+    } else {
+	if (corner_verts.size() == 0) {
+	    // We have non parallel faces and no corners - at least one and possible
+	    // both end caps need subtracting, but no other subtractions are needed.
+	    data->type = COMB;
+	    std::cout << "Minus one or more end-cap arbs\n";
+	    return 1;
+	} else {
+	    // We have non parallel faces and corners - at least one and possible
+	    // both end caps need subtracting, plus an arb to remove part of the
+	    // cylinder body.
+	    data->type = COMB;
+	    std::cout << "Minus one or more end-cap arbs and body arb\n";
+	    return 1;
+	}
     }
-
-    data->type = CYLINDER;
-
-    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
-
-    data->params->origin[0] = set1_c.Center().x;
-    data->params->origin[1] = set1_c.Center().y;
-    data->params->origin[2] = set1_c.Center().z;
-    data->params->hv[0] = hvect.x;
-    data->params->hv[1] = hvect.y;
-    data->params->hv[2] = hvect.z;
-    data->params->radius = set1_c.Radius();
 
 }
 
