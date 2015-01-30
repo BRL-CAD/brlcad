@@ -8,6 +8,39 @@
 #include "bu/malloc.h"
 #include "shape_recognition.h"
 
+// Remove degenerate edge sets. A degenerate edge set is defined as two
+// linear segments having the same two vertices.  (To be sure, we should probably
+// check curve directions in loops in some fashion...)
+void
+subbrep_remove_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges){
+    std::set<int> degenerate;
+    std::set<int>::iterator e_it;
+    for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
+	if (degenerate.find(*e_it) == degenerate.end()) {
+	    ON_BrepEdge& edge = data->brep->m_E[*e_it];
+	    if (edge.EdgeCurveOf()->IsLinear()) {
+		for (int j = 0; j < data->edges_cnt; j++) {
+		    int f_ind = data->edges[j];
+		    ON_BrepEdge& edge2 = data->brep->m_E[f_ind];
+		    if (edge2.EdgeCurveOf()->IsLinear()) {
+			if ((edge.Vertex(0)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(1)->Point() == edge2.Vertex(1)->Point()) ||
+				(edge.Vertex(1)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(0)->Point() == edge2.Vertex(1)->Point()))
+			{
+			    degenerate.insert(*e_it);
+			    degenerate.insert(f_ind);
+			    break;
+			}
+		    }
+		}
+	    }
+	}
+    }
+    for (e_it = degenerate.begin(); e_it != degenerate.end(); e_it++) {
+	//std::cout << "erasing " << *e_it << "\n";
+	edges->erase(*e_it);
+    }
+}
+
 
 int
 subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
@@ -15,7 +48,6 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     std::set<int>::iterator f_it;
     std::set<int> planar_surfaces;
     std::set<int> cylindrical_surfaces;
-    std::set<int> active_edges;
     // First, check surfaces.  If a surface is anything other than a plane or cylindrical,
     // the verdict is no.  If we don't have at least two planar surfaces and one
     // cylindrical, the verdict is no.
@@ -71,53 +103,15 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
         return 0;
     }
 
-    // Fifth, remove degenerate edge sets. A degenerate edge set is defined as two
-    // linear segments having the same two vertices.  (To be sure, we should probably
-    // check curve directions in loops in some fashion...)
-    std::set<int> degenerate;
-    for (int i = 0; i < data->edges_cnt; i++) {
-	int e_it = data->edges[i];
-	if (degenerate.find(e_it) == degenerate.end()) {
-	    ON_BrepEdge& edge = data->brep->m_E[e_it];
-	    if (edge.EdgeCurveOf()->IsLinear()) {
-		for (int j = 0; j < data->edges_cnt; j++) {
-		    int f_ind = data->edges[j];
-		    ON_BrepEdge& edge2 = data->brep->m_E[f_ind];
-		    if (edge2.EdgeCurveOf()->IsLinear()) {
-			if ((edge.Vertex(0)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(1)->Point() == edge2.Vertex(1)->Point()) ||
-				(edge.Vertex(1)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(0)->Point() == edge2.Vertex(1)->Point()))
-			{
-			    degenerate.insert(e_it);
-			    degenerate.insert(f_ind);
-			    break;
-			}
-		    }
-		}
-	    }
-	}
-    }
-    for (int i = 0; i < data->edges_cnt; i++) {
-	active_edges.insert(data->edges[i]);
-    }
-    std::set<int>::iterator e_it;
-    for (e_it = degenerate.begin(); e_it != degenerate.end(); e_it++) {
-        //std::cout << "erasing " << *e_it << "\n";
-        active_edges.erase(*e_it);
-    }
-    //std::cout << "Active Edge set: ";
-#if 0
-    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        std::cout << (int)(*e_it);
-        f_it = e_it;
-        f_it++;
-        if (f_it != active_edges.end()) std::cout << ",";
-    }
-    std::cout << "\n";
-#endif
-
+    // Fifth, remove degenerate edge sets.
+    std::set<int> active_edges;
+    array_to_set(&active_edges, data->edges, data->edges_cnt);
+    subbrep_remove_degenerate_edges(data, &active_edges);
+    
     // Sixth, check for any remaining linear segments.  For rpc primitives
     // those are expected, but for a true cylinder the linear segments should
-    // all wash out in the degenerate pass.
+    // all wash out in the degenerate pass
+    std::set<int>::iterator e_it;
     for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
         ON_BrepEdge& edge = data->brep->m_E[*e_it];
         if (edge.EdgeCurveOf()->IsLinear()) return 0;
@@ -261,23 +255,23 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
                 break;
         }
     }
-    // Second, get cylindrical surface properties.
-    ON_Cylinder cylinder;
-    ON_Surface *cs = data->brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->Duplicate();
-    cs->IsCylinder(&cylinder);
-    delete cs;
 
-    // Third, characterize the edges.  The sets of coplanar non-linear
-    // edges may either form loops  or arcs.  The former case does not
-    // require arb subtraction, the latter does.
+    // Characterize the planes of the non-linear edges.  We need two planes - more
+    // than that indicate some sort of subtraction behavior.  TODO - Eventually we should
+    // be able to characterize which edges form the subtraction shape candidate, but
+    // for now just bail unless we're dealing with the simple case.
+    //
+    // TODO - this test is adequate only for RCC shapes.  Need to generalize
+    // this to check for both arcs and shared planes in non-arc curves to
+    // accomidate csg situations.
     std::set<int> arc_set_1, arc_set_2;
     ON_Circle set1_c, set2_c;
     int arc1_circle_set= 0;
     int arc2_circle_set = 0;
 
     for (int i = 0; i < data->edges_cnt; i++) {
-	int e_it = data->edges[i];
-	ON_BrepEdge& edge = data->brep->m_E[e_it];
+	int ei = data->edges[i];
+	ON_BrepEdge& edge = data->brep->m_E[ei];
 	if (!edge.EdgeCurveOf()->IsLinear()) {
 
 	    ON_Arc arc;
@@ -299,12 +293,12 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    }
 		}
 		if (NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cyl_tol)){
-		    arc_set_1.insert(e_it);
+		    arc_set_1.insert(ei);
 		    assigned = 1;
 		}
 		if (arc2_circle_set) {
 		    if (NEAR_ZERO(circ.Center().DistanceTo(set2_c.Center()), cyl_tol)){
-			arc_set_2.insert(e_it);
+			arc_set_2.insert(ei);
 			assigned = 1;
 		    }
 		}
@@ -316,6 +310,124 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	}
     }
 
+
+    // CSG representable cylinders may represent one or both of the
+    // following cases:
+    //
+    // a) non-parallel end caps - one or both capping planes are not
+    //    perpendicular to the axis of the cylinder.
+    //
+    // b) partial cylindrical surface - some portion of the cylinderical
+    //    surface is trimmed away.
+    //
+    // There are an infinite number of ways in which subsets of a cylinder
+    // may be removed by trimming curves - the plan is for complexities
+    // introduced into the outer loops to be reduced by recognizing the
+    // complex portions of those curves as influences of other shapes.
+    // Once recognized, the loops are simplified until we reach a shape
+    // that can be handled by the above cases.
+    //
+    // For example, let's say a cylindrical face has the following
+    // trim loop in its UV space:
+    //
+    //                   -------------------------
+    //                   |                       |
+    //                   |                       |
+    //                   |     *************     |
+    //                   |     *           *     |
+    //                   -------           -------
+    //
+    // The starred portion of the trimming curve is not representable
+    // in this CSG scheme, but if that portion of the curve is the
+    // result of a subtraction of another shape in the parent brep,
+    // then that portion of the curve can be treated as implicit in
+    // the subtraction of that other object.  The complex lower trim
+    // curve set can then be replaced by a line between the two corner
+    // vertex points, which are not removed by the subtraction.
+    //
+    // Until such cases can be resolved, any curve complications of
+    // this sort are a conversion blocker.  To make sure the supplied
+    // inputs are cases that can be handled, we collect all of the
+    // vertices in the data that are connected to one and only one
+    // non-linear edge in the set.  Failure cases are:
+    //
+    // * More than four vertices that are mated with exactly one
+    //   non-linear edge in the data set
+    // * Four vertices meeting previous criteria that are non-planar
+    // * Any vertex on a linear edge that is not coplanar with the
+    //   plane described by the vertices meeting the above criteria
+    std::set<int> candidate_verts;
+    std::set<int> corner_verts; /* verts with one nonlinear edge */
+    std::set<int> linear_verts; /* verts with only linear edges */
+    std::set<int>::iterator v_it, e_it;
+    std::set<int> edges;
+    array_to_set(&edges, data->edges, data->edges_cnt);
+    // collect all candidate vertices
+    for (int i = 0; i < data->edges_cnt; i++) {
+	int ei = data->edges[i];
+	ON_BrepEdge& edge = data->brep->m_E[ei];
+	candidate_verts.insert(edge.Vertex(0)->m_vertex_index);
+	candidate_verts.insert(edge.Vertex(1)->m_vertex_index);
+    }
+    for (v_it = candidate_verts.begin(); v_it != candidate_verts.end(); v_it++) {
+	ON_BrepVertex& vert = data->brep->m_V[*v_it];
+	int curve_cnt = 0;
+	int line_cnt = 0;
+	for (int i = 0; i < vert.m_ei.Count(); i++) {
+	    int ei = vert.m_ei[i];
+	    ON_BrepEdge& edge = data->brep->m_E[ei];
+	    if (edges.find(edge.m_edge_index) != edges.end()) {
+		if (edge.EdgeCurveOf()->IsLinear()) {
+		    line_cnt++;
+		} else {
+		    curve_cnt++;
+		}
+	    }
+	}
+	if (curve_cnt == 1) {
+	    corner_verts.insert(*v_it);
+	    std::cout << "found corner vert: " << *v_it << "\n";
+	}
+	if (line_cnt > 1 && curve_cnt == 0) {
+	    linear_verts.insert(*v_it);
+	    std::cout << "found linear vert: " << *v_it << "\n";
+	}
+    }
+
+    // First, check corner count
+    if (corner_verts.size() > 4) return 0;
+
+    // Second, create the candidate face plane.  Verify coplanar status of points if we've got 4.
+    ON_Plane pcyl;
+    if (corner_verts.size() == 4) {
+	std::set<int>::iterator s_it = corner_verts.begin();
+	ON_3dPoint p1 = data->brep->m_V[*v_it].Point();
+	s_it++;
+	ON_3dPoint p2 = data->brep->m_V[*v_it].Point();
+	s_it++;
+	ON_3dPoint p3 = data->brep->m_V[*v_it].Point();
+	s_it++;
+	ON_3dPoint p4 = data->brep->m_V[*v_it].Point();
+	ON_Plane tmp_plane(p1, p2, p3);
+	if (tmp_plane.DistanceTo(p4) > BREP_PLANAR_TOL) {
+	    return 0;
+	} else {
+	    pcyl = tmp_plane;
+	}
+    } else {
+	// TODO - If we have less than four corner points and no additional curve planes, we
+	// must have a face subtraction that tapers to a point at the edge of the
+	// cylinder.  Pull the linear edges from the two corner points to find the third point -
+	// this is a situation where a simpler arb (arb6?) is adequate to make the subtraction.
+    }
+
+    // Third, if we had vertices with only linear edges, check to make sure they are in fact
+
+    // Second, get cylindrical surface properties.
+    ON_Cylinder cylinder;
+    ON_Surface *cs = data->brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->Duplicate();
+    cs->IsCylinder(&cylinder);
+    delete cs;
 
     // Fourth, check that the two circles are parallel to each other.
     if (set1_c.Plane().Normal().IsParallelTo(set2_c.Plane().Normal(), cyl_tol) == 0) {
