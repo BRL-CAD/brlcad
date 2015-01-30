@@ -561,13 +561,6 @@ apply_filter_obj(ON_BrepFace *face, int loop_index, struct filter_obj *obj)
 	       ret = 0;
 	       goto filter_done;
 	    }
-
-	    // If something is funny with the loop, we can't (yet) handle it
-	    if (!cylindrical_loop_planar_vertices(face, loop_index)) {
-	       ret = 0;
-	       std::cout << "weird loop in cylindrical face\n";
-	       goto filter_done;
-	    }
 	}
     }
     if (obj->type == CONE) {
@@ -611,6 +604,10 @@ add_loops_from_face(ON_BrepFace *face, struct subbrep_object_data *data, std::se
 int
 subbrep_split(struct subbrep_object_data *data)
 {
+    //if (BU_STR_EQUAL(bu_vls_addr(data->key), "325_326_441_527_528.s")) {
+    //	std::cout << "looking at 325_326_441_527_528\n";
+    //}
+
     surface_t hof = highest_order_face(data->local_brep);
     if (hof >= SURFACE_GENERAL) {
 	data->type = BREP;

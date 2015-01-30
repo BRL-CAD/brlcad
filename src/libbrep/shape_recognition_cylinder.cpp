@@ -251,6 +251,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
                 cylindrical_surfaces.insert(f_ind);
                 break;
             default:
+		std::cout << "what???\n";
                 return 0;
                 break;
         }
@@ -413,6 +414,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	ON_3dPoint p4 = data->brep->m_V[*v_it].Point();
 	ON_Plane tmp_plane(p1, p2, p3);
 	if (tmp_plane.DistanceTo(p4) > BREP_PLANAR_TOL) {
+	    std::cout << "planar tol fail\n";
 	    return 0;
 	} else {
 	    pcyl = tmp_plane;
@@ -431,16 +433,19 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	for (s_it = linear_verts.begin(); s_it != linear_verts.end(); s_it++) {
 	    ON_3dPoint pnt = data->brep->m_V[*s_it].Point();
 	    if (pcyl.DistanceTo(pnt) > BREP_PLANAR_TOL) {
+		std::cout << "stray verts fail\n";
 		return 0;
 	    }
 	}
     }
 
+#if 0
     // Now, get the cylindrical surface properties.
     ON_Cylinder cylinder;
     ON_Surface *cs = data->brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->Duplicate();
-    cs->IsCylinder(&cylinder);
+    cs->IsCylinder(&cylinder, cyl_tol);
     delete cs;
+#endif
 
     // Check if the two circles are parallel to each other.  If they are, and we have
     // no corner points, then we have a complete cylinder
