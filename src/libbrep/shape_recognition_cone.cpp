@@ -175,10 +175,10 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 
     // Second, check if all conic surfaces share the same base point, apex point and radius.
     ON_Cone cone;
-    data->brep->m_F[*conic_surfaces.begin()].SurfaceOf()->IsCone(&cone);
+    data->brep->m_F[*conic_surfaces.begin()].SurfaceOf()->IsCone(&cone, cone_tol);
     for (f_it = conic_surfaces.begin(); f_it != conic_surfaces.end(); f_it++) {
         ON_Cone f_cone;
-        data->brep->m_F[(*f_it)].SurfaceOf()->IsCone(&f_cone);
+        data->brep->m_F[(*f_it)].SurfaceOf()->IsCone(&f_cone, cone_tol);
         ON_3dPoint fbp = f_cone.BasePoint();
         ON_3dPoint bp = cone.BasePoint();
         if (fbp.DistanceTo(bp) > cone_tol) return 0;
@@ -240,6 +240,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
     if (!arc2_circle_set) {
 	std::cout << "True cone!\n";
 	data->type = CONE;
+
 	ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
 	ON_3dPoint closest_to_base = set1_c.Plane().ClosestPointTo(cone.BasePoint());
 
