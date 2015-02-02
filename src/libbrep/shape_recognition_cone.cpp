@@ -231,6 +231,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	data->params->radius = set1_c.Radius();
 	data->params->r2 = 0.000001;
 	data->params->height = set1_c.Plane().DistanceTo(cone.ApexPoint());
+	if ((data->params->height) < 0) data->params->height = data->params->height * -1;
 
     } else {
 	std::cout << "TGC!\n";
