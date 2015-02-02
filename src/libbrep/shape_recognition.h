@@ -83,6 +83,14 @@ struct csg_object_params {
     fastf_t radius;
     fastf_t r2;
     fastf_t height;
+    point_t p1;
+    point_t p2;
+    point_t p3;
+    point_t p4;
+    point_t p5;
+    point_t p6;
+    point_t p7;
+    point_t p8;
 };
 
 struct subbrep_object_data {

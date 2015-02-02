@@ -235,6 +235,23 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
         }
     }
 
+    // Check for multiple cylinders.  Can handle this, but for now punt.
+    ON_Cylinder cylinder;
+    ON_Surface *cs = data->brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->Duplicate();
+    cs->IsCylinder(&cylinder);
+    delete cs;
+    std::set<int>::iterator f_it;
+    for (f_it = cylindrical_surfaces.begin(); f_it != cylindrical_surfaces.end(); f_it++) {
+        ON_Cylinder f_cylinder;
+	ON_Surface *fcs = data->brep->m_F[(*f_it)].SurfaceOf()->Duplicate();
+        fcs->IsCylinder(&f_cylinder);
+	delete fcs;
+	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > BREP_CYLINDRICAL_TOL) {
+	    std::cout << "\n\nMultiple cylinders found\n\n";
+	    return 0;
+	}
+    }
+
     // Characterize the planes of the non-linear edges.  We need two planes - more
     // than that indicate some sort of subtraction behavior.  TODO - Eventually we should
     // be able to characterize which edges form the subtraction shape candidate, but
@@ -390,13 +407,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     ON_Plane pcyl;
     if (corner_verts.size() == 4) {
 	std::set<int>::iterator s_it = corner_verts.begin();
-	ON_3dPoint p1 = data->brep->m_V[*v_it].Point();
+	ON_3dPoint p1 = data->brep->m_V[*s_it].Point();
 	s_it++;
-	ON_3dPoint p2 = data->brep->m_V[*v_it].Point();
+	ON_3dPoint p2 = data->brep->m_V[*s_it].Point();
 	s_it++;
-	ON_3dPoint p3 = data->brep->m_V[*v_it].Point();
+	ON_3dPoint p3 = data->brep->m_V[*s_it].Point();
 	s_it++;
-	ON_3dPoint p4 = data->brep->m_V[*v_it].Point();
+	ON_3dPoint p4 = data->brep->m_V[*s_it].Point();
 	ON_Plane tmp_plane(p1, p2, p3);
 	if (tmp_plane.DistanceTo(p4) > BREP_PLANAR_TOL) {
 	    std::cout << "planar tol fail\n";
@@ -423,14 +440,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    }
 	}
     }
-
-#if 0
-    // Now, get the cylindrical surface properties.
-    ON_Cylinder cylinder;
-    ON_Surface *cs = data->brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->Duplicate();
-    cs->IsCylinder(&cylinder, cyl_tol);
-    delete cs;
-#endif
 
     // Check if the two circles are parallel to each other.  If they are, and we have
     // no corner points, then we have a complete cylinder
@@ -459,6 +468,116 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // We have parallel faces and corners - we need to subtract an arb
 	    data->type = COMB;
 	    std::cout << "Minus body arb\n";
+
+	    // cylinder
+	    struct csg_object_params * obj;
+	    BU_GET(obj, struct csg_object_params);
+
+	    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
+
+	    obj->type = CYLINDER;
+	    obj->origin[0] = set1_c.Center().x;
+	    obj->origin[1] = set1_c.Center().y;
+	    obj->origin[2] = set1_c.Center().z;
+	    obj->hv[0] = hvect.x;
+	    obj->hv[1] = hvect.y;
+	    obj->hv[2] = hvect.z;
+	    obj->radius = set1_c.Radius();
+
+	    bu_ptbl_ins(data->objs, (long *)obj);
+
+	    // arb8
+	    struct csg_object_params * arb;
+	    BU_GET(arb, struct csg_object_params);
+
+
+	    //                                       8
+	    //                                    *  |   *
+	    //                                 *     |       *
+	    //                             4         |           7
+	    //                             |    *    |        *  |
+	    //                             |         *     *     |
+	    //                             |         |  3        |
+	    //                             |         |  |        |
+	    //                             |         |  |        |
+	    //                             |         5  |        |
+	    //                             |       *    |*       |
+	    //                             |   *        |    *   |
+	    //                             1            |        6
+	    //                                 *        |     *
+	    //                                      *   |  *
+	    //                                          2
+	    //
+
+	    // First, find the two points closest to the set1_c and set2_c planes
+	    double offset = 0.0;
+	    std::set<int>::iterator s_it;
+	    ON_SimpleArray<ON_3dPoint> corner_pnts(4);
+	    ON_SimpleArray<ON_3dPoint> bottom_pnts(2);
+	    ON_SimpleArray<ON_3dPoint> top_pnts(2);
+	    for (s_it = corner_verts.begin(); s_it != corner_verts.end(); s_it++) {
+		ON_3dPoint p = data->brep->m_V[*s_it].Point();
+		corner_pnts.Append(p);
+		double d = set1_c.Plane().DistanceTo(p);
+		if (d > offset) offset = d;
+		std::cout << "d(" << (int)*s_it << "): " << d << "\n";
+	    }
+	    for (int p = 0; p < corner_pnts.Count(); p++) {
+		if (set1_c.Plane().DistanceTo(corner_pnts[p]) < offset) {
+		    bottom_pnts.Append(corner_pnts[p]);
+		} else {
+		    top_pnts.Append(corner_pnts[p]);
+		}
+	    }
+
+	    // Second, select a point from an arc edge not on the subtraction
+	    // plane, construct a vector from the circle center to that point,
+	    // and determine if the pcyl plane direction is already in the opposite
+	    // direction or needs to be reversed.
+	    const ON_BrepEdge *edge = &(data->brep->m_E[*arc_set_1.begin()]);
+	    ON_Arc arc;
+	    ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+	    (void)ecv->IsArc(NULL, &arc, cyl_tol);
+	    delete ecv;
+	    ON_3dPoint center = set1_c.Center();
+	    ON_3dPoint midpt = arc.MidPoint();
+	    ON_3dVector invec = center - midpt;
+	    double dotp = ON_DotProduct(invec, pcyl.Normal());
+	    std::cout << "dotp: " << dotp << "\n";
+	    if (dotp > 0) {
+		pcyl.Flip();
+		double dotp2 = ON_DotProduct(invec, pcyl.Normal());
+		std::cout << "dotp2: " << dotp2 << "\n";
+	    }
+
+	    // Third, construct the axis vector and determine the arb
+	    // order of the bottom and top points
+	    ON_3dVector cyl_axis = set2_c.Center() - set1_c.Center();
+
+	    ON_3dVector v1 = bottom_pnts[0] - bottom_pnts[1];
+	    ON_3dVector v1x = ON_CrossProduct(v1, cyl_axis);
+	    ON_3dVector v2 = bottom_pnts[1] - bottom_pnts[0];
+	    ON_3dVector v2x = ON_CrossProduct(v2, cyl_axis);
+
+	    double flag1 = ON_DotProduct(v1x, pcyl.Normal());
+	    std::cout << "flag1: " << flag1 << "\n";
+	    double flag2 = ON_DotProduct(v2x, pcyl.Normal());
+	    std::cout << "flag2: " << flag2 << "\n";
+
+	    ON_3dVector w1 = top_pnts[0] - top_pnts[1];
+	    ON_3dVector w1x = ON_CrossProduct(w1, cyl_axis);
+	    ON_3dVector w2 = top_pnts[1] - top_pnts[0];
+	    ON_3dVector w2x = ON_CrossProduct(w2, cyl_axis);
+
+	    double flag3 = ON_DotProduct(w1x, pcyl.Normal());
+	    std::cout << "flag3: " << flag3 << "\n";
+	    double flag4 = ON_DotProduct(w2x, pcyl.Normal());
+	    std::cout << "flag4: " << flag4 << "\n";
+
+
+
+
+
 	    return 1;
 	}
     } else {
