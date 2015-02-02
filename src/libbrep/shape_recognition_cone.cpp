@@ -114,16 +114,21 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
     data->type = CONE;
 
     ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
+    struct csg_object_params * obj;
+    BU_GET(obj, struct csg_object_params);
 
-    data->params->origin[0] = cone.BasePoint().x;
-    data->params->origin[1] = cone.BasePoint().y;
-    data->params->origin[2] = cone.BasePoint().z;
-    data->params->hv[0] = hvect.x;
-    data->params->hv[1] = hvect.y;
-    data->params->hv[2] = hvect.z;
-    data->params->radius = circle.Radius();
-    data->params->r2 = 0.000001;
-    data->params->height = hvect.Length();
+    obj->type = CONE;
+    obj->origin[0] = cone.BasePoint().x;
+    obj->origin[1] = cone.BasePoint().y;
+    obj->origin[2] = cone.BasePoint().z;
+    obj->hv[0] = hvect.x;
+    obj->hv[1] = hvect.y;
+    obj->hv[2] = hvect.z;
+    obj->radius = circle.Radius();
+    obj->r2 = 0.000001;
+    obj->height = hvect.Length();
+
+    bu_ptbl_ins(data->objs, (long *)obj);
 
     return 1;
 }
@@ -221,17 +226,21 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 
 	ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());
 	ON_3dPoint closest_to_base = set1_c.Plane().ClosestPointTo(cone.BasePoint());
+	struct csg_object_params * obj;
+        BU_GET(obj, struct csg_object_params);
+	obj->type = CONE;
+	obj->origin[0] = closest_to_base.x;
+	obj->origin[1] = closest_to_base.y;
+	obj->origin[2] = closest_to_base.z;
+	obj->hv[0] = hvect.x;
+	obj->hv[1] = hvect.y;
+	obj->hv[2] = hvect.z;
+	obj->radius = set1_c.Radius();
+	obj->r2 = 0.000001;
+	obj->height = set1_c.Plane().DistanceTo(cone.ApexPoint());
+	if (obj->height < 0) obj->height = obj->height * -1;
 
-	data->params->origin[0] = closest_to_base.x;
-	data->params->origin[1] = closest_to_base.y;
-	data->params->origin[2] = closest_to_base.z;
-	data->params->hv[0] = hvect.x;
-	data->params->hv[1] = hvect.y;
-	data->params->hv[2] = hvect.z;
-	data->params->radius = set1_c.Radius();
-	data->params->r2 = 0.000001;
-	data->params->height = set1_c.Plane().DistanceTo(cone.ApexPoint());
-	if ((data->params->height) < 0) data->params->height = data->params->height * -1;
+	bu_ptbl_ins(data->objs, (long *)obj);
 
     } else {
 	std::cout << "TGC!\n";

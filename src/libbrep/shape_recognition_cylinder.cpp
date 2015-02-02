@@ -141,16 +141,21 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     }
 
     data->type = CYLINDER;
+    struct csg_object_params * obj;
+    BU_GET(obj, struct csg_object_params);
 
     ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
-    data->params->origin[0] = set1_c.Center().x;
-    data->params->origin[1] = set1_c.Center().y;
-    data->params->origin[2] = set1_c.Center().z;
-    data->params->hv[0] = hvect.x;
-    data->params->hv[1] = hvect.y;
-    data->params->hv[2] = hvect.z;
-    data->params->radius = set1_c.Radius();
+    obj->type = CYLINDER;
+    obj->origin[0] = set1_c.Center().x;
+    obj->origin[1] = set1_c.Center().y;
+    obj->origin[2] = set1_c.Center().z;
+    obj->hv[0] = hvect.x;
+    obj->hv[1] = hvect.y;
+    obj->hv[2] = hvect.z;
+    obj->radius = set1_c.Radius();
+
+    bu_ptbl_ins(data->objs, (long *)obj);
 
     return 1;
 }
@@ -433,16 +438,21 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	if (corner_verts.size() == 0) {
 	    std::cout << "Full cylinder\n";
 	    data->type = CYLINDER;
+	    struct csg_object_params * obj;
+	    BU_GET(obj, struct csg_object_params);
 
 	    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
-	    data->params->origin[0] = set1_c.Center().x;
-	    data->params->origin[1] = set1_c.Center().y;
-	    data->params->origin[2] = set1_c.Center().z;
-	    data->params->hv[0] = hvect.x;
-	    data->params->hv[1] = hvect.y;
-	    data->params->hv[2] = hvect.z;
-	    data->params->radius = set1_c.Radius();
+	    obj->type = CYLINDER;
+	    obj->origin[0] = set1_c.Center().x;
+	    obj->origin[1] = set1_c.Center().y;
+	    obj->origin[2] = set1_c.Center().z;
+	    obj->hv[0] = hvect.x;
+	    obj->hv[1] = hvect.y;
+	    obj->hv[2] = hvect.z;
+	    obj->radius = set1_c.Radius();
+
+	    bu_ptbl_ins(data->objs, (long *)obj);
 
 	    return 1;
 	} else {

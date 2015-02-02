@@ -222,11 +222,12 @@ void
 subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
 {
     if (!obj) return;
-    BU_GET(obj->params, struct csg_object_params);
     BU_GET(obj->key, struct bu_vls);
     BU_GET(obj->children, struct bu_ptbl);
+    BU_GET(obj->objs, struct bu_ptbl);
     bu_vls_init(obj->key);
     bu_ptbl_init(obj->children, 8, "children table");
+    bu_ptbl_init(obj->objs, 8, "objs table");
     obj->parent = NULL;
     obj->brep = brep;
     obj->local_brep = NULL;
@@ -237,7 +238,8 @@ void
 subbrep_object_free(struct subbrep_object_data *obj)
 {
     if (!obj) return;
-    BU_PUT(obj->params, struct csg_object_params);
+    bu_ptbl_free(obj->objs);
+    BU_PUT(obj->objs, struct bu_ptbl);
     bu_vls_free(obj->key);
     BU_PUT(obj->key, struct bu_vls);
     for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){

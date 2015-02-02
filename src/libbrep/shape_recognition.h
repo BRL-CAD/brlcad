@@ -75,6 +75,9 @@ void array_to_set(std::set<int> *set, int *array, int array_cnt);
  * enough data slots to describe any primitive that may
  * be matched by the shape recognition logic */
 struct csg_object_params {
+    volume_t type;
+    int bool_op; /* Boolean operator - 0 = unassigned, 1 = union, 2 = subtraction, 3 = intersection */
+    struct csg_object_params *sub_object; // if a comb needs to be subtracted...
     point_t origin;
     vect_t hv;
     fastf_t radius;
@@ -116,7 +119,7 @@ struct subbrep_object_data {
     const ON_Brep *brep;
     ON_Brep *local_brep;
     volume_t type;
-    csg_object_params *params;
+    struct bu_ptbl *objs;
     subbrep_object_data *parent;
     struct bu_ptbl *children;
 };
