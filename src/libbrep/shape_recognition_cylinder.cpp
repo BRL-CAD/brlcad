@@ -107,7 +107,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     std::set<int> active_edges;
     array_to_set(&active_edges, data->edges, data->edges_cnt);
     subbrep_remove_degenerate_edges(data, &active_edges);
-    
+
     // Sixth, check for any remaining linear segments.  For rpc primitives
     // those are expected, but for a true cylinder the linear segments should
     // all wash out in the degenerate pass
@@ -264,7 +264,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     //
     // TODO - this test is adequate only for RCC shapes.  Need to generalize
     // this to check for both arcs and shared planes in non-arc curves to
-    // accomidate csg situations.
+    // accommodate csg situations.
     std::set<int> arc_set_1, arc_set_2;
     ON_Circle set1_c, set2_c;
     int arc1_circle_set= 0;
@@ -318,7 +318,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     // a) non-parallel end caps - one or both capping planes are not
     //    perpendicular to the axis of the cylinder.
     //
-    // b) partial cylindrical surface - some portion of the cylinderical
+    // b) partial cylindrical surface - some portion of the cylindrical
     //    surface is trimmed away.
     //
     // There are an infinite number of ways in which subsets of a cylinder
