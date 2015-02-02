@@ -110,7 +110,7 @@ st_done:
 
 
 surface_t
-highest_order_face(ON_Brep *brep)
+highest_order_face(struct subbrep_object_data *data)
 {
     int planar = 0;
     int spherical = 0;
@@ -120,42 +120,46 @@ highest_order_face(ON_Brep *brep)
     int general = 0;
     int hof = -1;
     surface_t hofo = SURFACE_PLANE;
-    for (int f_it = 0; f_it < brep->m_F.Count(); f_it++) {
-	ON_BrepFace &used_face = brep->m_F[f_it];
+    std::set<int> faces;
+    std::set<int>::iterator f_it;
+    array_to_set(&faces, data->faces, data->faces_cnt);
+    for (f_it = faces.begin(); f_it != faces.end(); f_it++) {
+	int ind = *f_it;
+	ON_BrepFace &used_face = data->brep->m_F[ind];
 	int surface_type = (int)GetSurfaceType(used_face.SurfaceOf(), NULL);
 	switch (surface_type) {
 	    case SURFACE_PLANE:
 		planar++;
 		if (hofo < SURFACE_PLANE) {
-		    hof = f_it;
+		    hof = ind;
 		    hofo = SURFACE_PLANE;
 		}
 		break;
 	    case SURFACE_SPHERE:
 		spherical++;
 		if (hofo < SURFACE_SPHERE) {
-		    hof = f_it;
+		    hof = ind;
 		    hofo = SURFACE_SPHERE;
 		}
 		break;
 	    case SURFACE_CYLINDER:
 		cylindrical++;
 		if (hofo < SURFACE_CYLINDER) {
-		    hof = f_it;
+		    hof = ind;
 		    hofo = SURFACE_CYLINDER;
 		}
 		break;
 	    case SURFACE_CONE:
 		cone++;
 		if (hofo < SURFACE_CONE) {
-		    hof = f_it;
+		    hof = ind;
 		    hofo = SURFACE_CONE;
 		}
 		break;
 	    case SURFACE_TORUS:
 		torus++;
 		if (hofo < SURFACE_TORUS) {
-		    hof = f_it;
+		    hof = ind;
 		    hofo = SURFACE_TORUS;
 		}
 		break;
@@ -608,7 +612,7 @@ subbrep_split(struct subbrep_object_data *data)
     //	std::cout << "looking at 325_326_441_527_528\n";
     //}
 
-    surface_t hof = highest_order_face(data->local_brep);
+    surface_t hof = highest_order_face(data);
     if (hof >= SURFACE_GENERAL) {
 	data->type = BREP;
 	std::cout << "general surface present: " << bu_vls_addr(data->key) << "\n\n";
