@@ -574,7 +574,14 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    double flag4 = ON_DotProduct(w2x, pcyl.Normal());
 	    std::cout << "flag4: " << flag4 << "\n";
 
+	    // Once the 1,2,3,4 points are determined, scale them out
+	    // along their respective line segment axis to make sure
+	    // the resulting arb is large enough to subtract the full
+	    // radius of the cylinder.
 
+	    // Once the final 1,2,3,4 points have been determined, use
+	    // the pcyl normal direction and the cylinder radius to
+	    // construct the remaining arb points.
 
 
 
