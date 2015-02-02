@@ -8,38 +8,7 @@
 #include "bu/malloc.h"
 #include "shape_recognition.h"
 
-// Remove degenerate edge sets. A degenerate edge set is defined as two
-// linear segments having the same two vertices.  (To be sure, we should probably
-// check curve directions in loops in some fashion...)
-void
-subbrep_remove_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges){
-    std::set<int> degenerate;
-    std::set<int>::iterator e_it;
-    for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
-	if (degenerate.find(*e_it) == degenerate.end()) {
-	    ON_BrepEdge& edge = data->brep->m_E[*e_it];
-	    if (edge.EdgeCurveOf()->IsLinear()) {
-		for (int j = 0; j < data->edges_cnt; j++) {
-		    int f_ind = data->edges[j];
-		    ON_BrepEdge& edge2 = data->brep->m_E[f_ind];
-		    if (edge2.EdgeCurveOf()->IsLinear()) {
-			if ((edge.Vertex(0)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(1)->Point() == edge2.Vertex(1)->Point()) ||
-				(edge.Vertex(1)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(0)->Point() == edge2.Vertex(1)->Point()))
-			{
-			    degenerate.insert(*e_it);
-			    degenerate.insert(f_ind);
-			    break;
-			}
-		    }
-		}
-	    }
-	}
-    }
-    for (e_it = degenerate.begin(); e_it != degenerate.end(); e_it++) {
-	//std::cout << "erasing " << *e_it << "\n";
-	edges->erase(*e_it);
-    }
-}
+
 
 
 int
@@ -53,8 +22,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     // cylindrical, the verdict is no.
     for (int i = 0; i < data->faces_cnt; i++) {
 	int f_ind = data->faces[i];
-	ON_BrepFace *used_face = &(data->brep->m_F[f_ind]);
-        int surface_type = (int)GetSurfaceType(used_face->SurfaceOf(), NULL);
+        int surface_type = (int)GetSurfaceType(data->brep->m_F[f_ind].SurfaceOf(), NULL);
         switch (surface_type) {
             case SURFACE_PLANE:
                 planar_surfaces.insert(f_ind);
@@ -113,8 +81,13 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     // all wash out in the degenerate pass
     std::set<int>::iterator e_it;
     for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        ON_BrepEdge& edge = data->brep->m_E[*e_it];
-        if (edge.EdgeCurveOf()->IsLinear()) return 0;
+        const ON_BrepEdge *edge = &(data->brep->m_E[*e_it]);
+	ON_Curve *ec = edge->EdgeCurveOf()->Duplicate();
+        if (ec->IsLinear()) {
+	    delete ec;
+	    return 0;
+	}
+	delete ec;
     }
 
     // Seventh, sort the curved edges into one of two circles.  Again, in more
@@ -128,9 +101,10 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     int arc1_circle_set= 0;
     int arc2_circle_set = 0;
     for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        ON_BrepEdge& edge = data->brep->m_E[*e_it];
+        const ON_BrepEdge *edge = &(data->brep->m_E[*e_it]);
+	ON_Curve *ec = edge->EdgeCurveOf()->Duplicate();
         ON_Arc arc;
-        if (edge.EdgeCurveOf()->IsArc(NULL, &arc, cyl_tol)) {
+        if (ec->IsArc(NULL, &arc, cyl_tol)) {
             int assigned = 0;
             ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
             //std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
@@ -159,9 +133,11 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
             }
             if (!assigned) {
                 std::cout << "found extra circle - no go\n";
+		delete ec;
                 return 0;
             }
         }
+	delete ec;
     }
 
     data->type = CYLINDER;
@@ -181,17 +157,16 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
 
 
 int
-cylindrical_loop_planar_vertices(ON_BrepFace *face, int loop_index)
+cylindrical_loop_planar_vertices(const ON_Brep *brep, int loop_index)
 {
     std::set<int> verts;
-    ON_Brep *brep = face->Brep();
-    ON_BrepLoop *loop = &(brep->m_L[loop_index]);
+    const ON_BrepLoop *loop = &(brep->m_L[loop_index]);
     for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-	ON_BrepTrim& trim = brep->m_T[loop->m_ti[ti]];
+	const ON_BrepTrim& trim = brep->m_T[loop->m_ti[ti]];
 	if (trim.m_ei != -1) {
-	    ON_BrepEdge& edge = brep->m_E[trim.m_ei];
-	    verts.insert(edge.Vertex(0)->m_vertex_index);
-	    verts.insert(edge.Vertex(1)->m_vertex_index);
+	    const ON_BrepEdge *edge = &(brep->m_E[trim.m_ei]);
+	    verts.insert(edge->Vertex(0)->m_vertex_index);
+	    verts.insert(edge->Vertex(1)->m_vertex_index);
 	}
     }
     if (verts.size() == 3) {
@@ -225,10 +200,9 @@ cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index)
 {
     std::set<int> loops;
     std::set<int>::iterator l_it;
-    ON_BrepFace *face = &(data->brep->m_F[face_index]);
     array_to_set(&loops, data->loops, data->loops_cnt);
     for(l_it = loops.begin(); l_it != loops.end(); l_it++) {
-	return cylindrical_loop_planar_vertices(face, face->m_li[*l_it]);
+	return cylindrical_loop_planar_vertices(data->brep, data->brep->m_F[face_index].m_li[*l_it]);
     }
     return 0;
 }
@@ -241,8 +215,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     std::set<int> cylindrical_surfaces;
     for (int i = 0; i < data->faces_cnt; i++) {
 	int f_ind = data->faces[i];
-	ON_BrepFace *used_face = &(data->brep->m_F[f_ind]);
-        int surface_type = (int)GetSurfaceType(used_face->SurfaceOf(), NULL);
+        int surface_type = (int)GetSurfaceType(data->brep->m_F[f_ind].SurfaceOf(), NULL);
         switch (surface_type) {
             case SURFACE_PLANE:
                 planar_surfaces.insert(f_ind);
@@ -272,11 +245,12 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
     for (int i = 0; i < data->edges_cnt; i++) {
 	int ei = data->edges[i];
-	ON_BrepEdge& edge = data->brep->m_E[ei];
-	if (!edge.EdgeCurveOf()->IsLinear()) {
-
+	const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
+	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+	if (!ecv->IsLinear()) {
 	    ON_Arc arc;
-	    if (edge.EdgeCurveOf()->IsArc(NULL, &arc, cyl_tol)) {
+	    ON_Curve *ecv2 = edge->EdgeCurveOf()->Duplicate();
+	    if (ecv2->IsArc(NULL, &arc, cyl_tol)) {
 		int assigned = 0;
 		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
 		//std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
@@ -305,10 +279,14 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		}
 		if (!assigned) {
 		    std::cout << "found extra circle - no go\n";
+		    delete ecv;
+		    delete ecv2;
 		    return 0;
 		}
 	    }
+	    delete ecv2;
 	}
+	delete ecv;
     }
 
 
@@ -366,23 +344,25 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     // collect all candidate vertices
     for (int i = 0; i < data->edges_cnt; i++) {
 	int ei = data->edges[i];
-	ON_BrepEdge& edge = data->brep->m_E[ei];
-	candidate_verts.insert(edge.Vertex(0)->m_vertex_index);
-	candidate_verts.insert(edge.Vertex(1)->m_vertex_index);
+	const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
+	candidate_verts.insert(edge->Vertex(0)->m_vertex_index);
+	candidate_verts.insert(edge->Vertex(1)->m_vertex_index);
     }
     for (v_it = candidate_verts.begin(); v_it != candidate_verts.end(); v_it++) {
-	ON_BrepVertex& vert = data->brep->m_V[*v_it];
+	const ON_BrepVertex *vert = &(data->brep->m_V[*v_it]);
 	int curve_cnt = 0;
 	int line_cnt = 0;
-	for (int i = 0; i < vert.m_ei.Count(); i++) {
-	    int ei = vert.m_ei[i];
-	    ON_BrepEdge& edge = data->brep->m_E[ei];
-	    if (edges.find(edge.m_edge_index) != edges.end()) {
-		if (edge.EdgeCurveOf()->IsLinear()) {
+	for (int i = 0; i < vert->m_ei.Count(); i++) {
+	    int ei = vert->m_ei[i];
+	    const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
+	    if (edges.find(edge->m_edge_index) != edges.end()) {
+		ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+		if (ecv->IsLinear()) {
 		    line_cnt++;
 		} else {
 		    curve_cnt++;
 		}
+		delete ecv;
 	    }
 	}
 	if (curve_cnt == 1) {

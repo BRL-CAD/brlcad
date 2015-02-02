@@ -15,14 +15,12 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
     std::set<int>::iterator f_it;
     std::set<int> planar_surfaces;
     std::set<int> conic_surfaces;
-    std::set<int> active_edges;
     // First, check surfaces.  If a surface is anything other than planes or cones,
     // the verdict is no.  If we don't have one planar surface and one or more
     // conic surfaces, the verdict is no.
     for (int i = 0; i < data->faces_cnt; i++) {
 	int f_ind = data->faces[i];
-	ON_BrepFace *used_face = &(data->brep->m_F[f_ind]);
-        int surface_type = (int)GetSurfaceType(used_face->SurfaceOf(), NULL);
+        int surface_type = (int)GetSurfaceType(data->brep->m_F[f_ind].SurfaceOf(), NULL);
         switch (surface_type) {
             case SURFACE_PLANE:
                 planar_surfaces.insert(f_ind);
@@ -71,44 +69,22 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
     // Fifth, remove degenerate edge sets. A degenerate edge set is defined as two
     // linear segments having the same two vertices.  (To be sure, we should probably
     // check curve directions in loops in some fashion...)
-    std::set<int> degenerate;
-    for (int i = 0; i < data->edges_cnt; i++) {
-	int e_it = data->edges[i];
-	if (degenerate.find(e_it) == degenerate.end()) {
-	    ON_BrepEdge& edge = data->brep->m_E[e_it];
-	    if (edge.EdgeCurveOf()->IsLinear()) {
-		for (int j = 0; j < data->edges_cnt; j++) {
-		    int f_ind = data->edges[j];
-		    ON_BrepEdge& edge2 = data->brep->m_E[f_ind];
-		    if (edge2.EdgeCurveOf()->IsLinear()) {
-			if ((edge.Vertex(0)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(1)->Point() == edge2.Vertex(1)->Point()) ||
-				(edge.Vertex(1)->Point() == edge2.Vertex(0)->Point() && edge.Vertex(0)->Point() == edge2.Vertex(1)->Point()))
-			{
-			    degenerate.insert(e_it);
-			    degenerate.insert(f_ind);
-			    break;
-			}
-		    }
-		}
-	    }
-	}
-    }
-    for (int i = 0; i < data->edges_cnt; i++) {
-	active_edges.insert(data->edges[i]);
-    }
+    // Fifth, remove degenerate edge sets.
+    std::set<int> active_edges;
     std::set<int>::iterator e_it;
-    for (e_it = degenerate.begin(); e_it != degenerate.end(); e_it++) {
-        //std::cout << "erasing " << *e_it << "\n";
-        active_edges.erase(*e_it);
-    }
-
-
+    array_to_set(&active_edges, data->edges, data->edges_cnt);
+    subbrep_remove_degenerate_edges(data, &active_edges);
+ 
     // Sixth, check for any remaining linear segments.  If we have a real
     // cone and not just a partial, all the linear segments should have
     // washed out.
     for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        ON_BrepEdge& edge = data->brep->m_E[*e_it];
-        if (edge.EdgeCurveOf()->IsLinear()) return 0;
+        ON_Curve *cv = data->brep->m_E[*e_it].EdgeCurveOf()->Duplicate();
+        if (cv->IsLinear()) {
+	    delete cv;
+	    return 0;
+	}
+	delete cv;
     }
 
     // Seventh, make sure all the curved edges are on the same circle.
@@ -117,9 +93,10 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
     ON_Circle circle;
     int circle_set= 0;
     for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
-        ON_BrepEdge& edge = data->brep->m_E[*e_it];
+        const ON_BrepEdge *edge = &(data->brep->m_E[*e_it]);
+        ON_Curve *ecurve = edge->EdgeCurveOf()->Duplicate();
         ON_Arc arc;
-        if (edge.EdgeCurveOf()->IsArc(NULL, &arc, 0.01)) {
+        if (ecurve->IsArc(NULL, &arc, 0.01)) {
             ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
             if (!circle_set) {
                 circle_set = 1;
@@ -127,9 +104,11 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
             }
             if (!NEAR_ZERO(circ.Center().DistanceTo(circle.Center()), 0.01)){
                 std::cout << "found extra circle - no go\n";
+		delete ecurve;
                 return 0;
             }
         }
+	delete ecurve;
     }
 
     data->type = CONE;
@@ -158,8 +137,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 
     for (int i = 0; i < data->faces_cnt; i++) {
 	int f_ind = data->faces[i];
-	ON_BrepFace *used_face = &(data->brep->m_F[f_ind]);
-        int surface_type = (int)GetSurfaceType(used_face->SurfaceOf(), NULL);
+        int surface_type = (int)GetSurfaceType(data->brep->m_F[f_ind].SurfaceOf(), NULL);
         switch (surface_type) {
             case SURFACE_PLANE:
                 planar_surfaces.insert(f_ind);
@@ -198,11 +176,11 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 
     for (int i = 0; i < data->edges_cnt; i++) {
 	int ei = data->edges[i];
-	ON_BrepEdge& edge = data->brep->m_E[ei];
-	if (!edge.EdgeCurveOf()->IsLinear()) {
+	const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
+	if (!edge->EdgeCurveOf()->IsLinear()) {
 
 	    ON_Arc arc;
-	    if (edge.EdgeCurveOf()->IsArc(NULL, &arc, cone_tol)) {
+	    if (edge->EdgeCurveOf()->IsArc(NULL, &arc, cone_tol)) {
 		int assigned = 0;
 		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
 		//std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";

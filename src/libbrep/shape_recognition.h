@@ -113,7 +113,7 @@ struct subbrep_object_data {
     int c2_map_cnt;
     int trim_map_cnt;
 
-    ON_Brep *brep;
+    const ON_Brep *brep;
     ON_Brep *local_brep;
     volume_t type;
     csg_object_params *params;
@@ -121,15 +121,18 @@ struct subbrep_object_data {
     struct bu_ptbl *children;
 };
 
-void subbrep_object_init(struct subbrep_object_data *obj, ON_Brep *brep);
+void subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep);
 void subbrep_object_free(struct subbrep_object_data *obj);
 
 int subbrep_split(struct subbrep_object_data *data);
 int subbrep_make_brep(struct subbrep_object_data *data);
 
-struct bu_ptbl *find_subbreps(ON_Brep *brep);
+struct bu_ptbl *find_subbreps(const ON_Brep *brep);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
 volume_t subbrep_shape_recognize(struct subbrep_object_data *data);
+
+void
+subbrep_remove_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges);
 
 int subbrep_is_planar(struct subbrep_object_data *data);
 
