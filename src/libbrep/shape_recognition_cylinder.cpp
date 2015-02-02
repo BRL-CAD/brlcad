@@ -577,7 +577,12 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // Once the 1,2,3,4 points are determined, scale them out
 	    // along their respective line segment axis to make sure
 	    // the resulting arb is large enough to subtract the full
-	    // radius of the cylinder.
+	    // radius of the cylinder.  Only need to do this if the
+	    // center point of the cylinder is inside the subtracting arb -
+	    // should be able to test that with the circle center point
+	    // a distance to pcyl plane calculation for the second point,
+	    // then subtract the center from the point on the plane and do
+	    // a dot product test with pcyl's normal.
 
 	    // Once the final 1,2,3,4 points have been determined, use
 	    // the pcyl normal direction and the cylinder radius to
