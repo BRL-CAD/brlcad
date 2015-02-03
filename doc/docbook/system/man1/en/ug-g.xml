@@ -36,7 +36,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>ug-g</emphasis>
+<para><command>ug-g</command>
 converts the specified
 <emphasis remap='I'>part_filename</emphasis>
 model to a BRL-CAD
