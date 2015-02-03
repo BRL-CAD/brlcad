@@ -365,6 +365,27 @@ subbrep_remove_degenerate_edges(struct subbrep_object_data *data, std::set<int> 
     }
 }
 
+// TODO - the topological test by itself is not guaranteed to isolate volumes that
+// are uniquely positive or uniquely negative contributions to the overall volume.
+// It may be that a candidate subbrep has both positive and
+// negative contributions to make to the overall volume.  Hopefully (not sure yet)
+// this approach will reduce such situations to planar and general surface volumes,
+// but we will need to handle them at those levels.  For example,
+//
+//                                       *
+//                                      * *
+//         ---------------------       *   *       ---------------------
+//         |                    *     *     *     *                    |
+//         |                     * * *       * * *                     |
+//         |                                                           |
+//         |                                                           |
+//         -------------------------------------------------------------
+//
+// The two faces in the middle contribute both positively and negatively to the
+// final surface area, and if this area were extruded would also define both
+// positive and negative volume.  Probably convex/concave testing is what
+// will be needed to resolve this.
+
 
 struct bu_ptbl *
 find_subbreps(const ON_Brep *brep)
