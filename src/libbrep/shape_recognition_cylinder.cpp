@@ -212,6 +212,32 @@ cylindrical_planar_vertices(struct subbrep_object_data *data, int face_index)
     return 0;
 }
 
+/* Return -1 if the cylinder face is pointing in toward the cylinder axis,
+ * 1 if it is pointing out, and 0 if there is some other problem */
+int
+negative_cylinder(struct subbrep_object_data *data, int face_index, double cyl_tol) {
+    const ON_Surface *surf = data->brep->m_F[face_index].SurfaceOf();
+    ON_Cylinder cylinder;
+    ON_Surface *cs = surf->Duplicate();
+    cs->IsCylinder(&cylinder, cyl_tol);
+    delete cs;
+
+    ON_3dPoint pnt;
+    ON_3dVector normal;
+    double u = surf->Domain(0).Mid();
+    double v = surf->Domain(1).Mid();
+    if (!surf->EvNormal(u, v, pnt, normal)) return 0;
+    ON_3dPoint axis_pnt = cylinder.circle.Center();
+
+    ON_3dVector axis_vect = pnt - axis_pnt;
+    double dotp = ON_DotProduct(axis_vect, normal);
+
+    if (NEAR_ZERO(dotp, 0.000001)) return 0;
+    if (dotp < 0) return 1;
+    return -1;
+}
+
+
 int
 cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 {
@@ -241,11 +267,14 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     cs->IsCylinder(&cylinder);
     delete cs;
     std::set<int>::iterator f_it;
+    int cyl_count = 0;
     for (f_it = cylindrical_surfaces.begin(); f_it != cylindrical_surfaces.end(); f_it++) {
         ON_Cylinder f_cylinder;
+	cyl_count++;
 	ON_Surface *fcs = data->brep->m_F[(*f_it)].SurfaceOf()->Duplicate();
         fcs->IsCylinder(&f_cylinder);
 	delete fcs;
+	std::cout << "cyl_count: " << cyl_count << "\n";
 	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > BREP_CYLINDRICAL_TOL) {
 	    std::cout << "\n\nMultiple cylinders found\n\n";
 	    return 0;
@@ -446,6 +475,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     if (set1_c.Plane().Normal().IsParallelTo(set2_c.Plane().Normal(), cyl_tol) != 0) {
 	if (corner_verts.size() == 0) {
 	    std::cout << "Full cylinder\n";
+	    return 0;
 	    data->type = CYLINDER;
 	    struct csg_object_params * obj;
 	    BU_GET(obj, struct csg_object_params);
@@ -465,9 +495,29 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
 	    return 1;
 	} else {
-	    // We have parallel faces and corners - we need to subtract an arb
+	    // We have parallel faces and corners - we need to use an arb.  How we
+	    // handle this depends on whether we have a negative or positive arb
+	    // surface.
 	    data->type = COMB;
-	    std::cout << "Minus body arb\n";
+
+	    // TODO - whether a cylinder is negative or not for CSG assembly depends
+	    // not only on the cylinder itself but the status of its "parent" shape -
+	    // if we are defining a solid comb shape that is to be subtracted from
+	    // a higher level shape, then locally globally "negative" solids will be
+	    // positive, and vice versa.
+	    int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
+
+	    if (negative == 0) {
+		std::cout << "Could not determine cylinder status???????\n";
+	    }
+
+	    if (negative == -1) {
+		std::cout << "TODO - Negative cylinder\n";
+	    }
+
+	    if (negative == 1) {
+		std::cout << "Positive cylinder\n";
+	    }
 
 	    // cylinder
 	    struct csg_object_params * obj;
@@ -545,6 +595,8 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    delete ecv;
 	    ON_3dPoint center = set1_c.Center();
 	    ON_3dPoint midpt = arc.MidPoint();
+
+
 	    ON_3dVector invec = center - midpt;
 	    double dotp = ON_DotProduct(invec, pcyl.Normal());
 	    if (dotp < 0) {
