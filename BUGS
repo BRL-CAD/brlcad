@@ -15,9 +15,6 @@ on-going issues.
 Recent Bugs
 -----------
 
-* m35.g r420 does not raytrace.  it's a sphere subtracted from an
-  arb8.  maybe the box is inverted?
-
 * pixborder doesn't account for an edge case where the right edge of
   an image is expected to be colored (except for one pixel on the top
   edge).  Example:
