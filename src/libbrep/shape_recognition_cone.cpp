@@ -74,7 +74,7 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
     std::set<int>::iterator e_it;
     array_to_set(&active_edges, data->edges, data->edges_cnt);
     subbrep_remove_degenerate_edges(data, &active_edges);
- 
+
     // Sixth, check for any remaining linear segments.  If we have a real
     // cone and not just a partial, all the linear segments should have
     // washed out.
