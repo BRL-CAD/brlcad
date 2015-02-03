@@ -8,7 +8,7 @@
 #include "bu/malloc.h"
 #include "shape_recognition.h"
 
-
+#define pout(p) std::cout << p.x << "," << p.y << "," << p.z;
 
 
 int
@@ -518,15 +518,19 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    for (s_it = corner_verts.begin(); s_it != corner_verts.end(); s_it++) {
 		ON_3dPoint p = data->brep->m_V[*s_it].Point();
 		corner_pnts.Append(p);
+		std::cout << "p(" << *s_it << "): "; pout(p); std::cout << "\n";
 		double d = set1_c.Plane().DistanceTo(p);
 		if (d > offset) offset = d;
-		std::cout << "d(" << (int)*s_it << "): " << d << "\n";
 	    }
 	    for (int p = 0; p < corner_pnts.Count(); p++) {
-		if (set1_c.Plane().DistanceTo(corner_pnts[p]) < offset) {
+		double poffset = set1_c.Plane().DistanceTo(corner_pnts[p]);
+		std::cout << "poffset(" << offset << "): " << poffset << "\n";
+		if (!NEAR_ZERO(poffset - offset, 0.01) && poffset < offset) {
 		    bottom_pnts.Append(corner_pnts[p]);
+		    std::cout << "b(" << p << "): "; pout(corner_pnts[p]); std::cout << "\n";
 		} else {
 		    top_pnts.Append(corner_pnts[p]);
+		    std::cout << "t(" << p << "): "; pout(corner_pnts[p]); std::cout << "\n";
 		}
 	    }
 
@@ -543,11 +547,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    ON_3dPoint midpt = arc.MidPoint();
 	    ON_3dVector invec = center - midpt;
 	    double dotp = ON_DotProduct(invec, pcyl.Normal());
-	    std::cout << "dotp: " << dotp << "\n";
-	    if (dotp > 0) {
+	    if (dotp < 0) {
 		pcyl.Flip();
 		double dotp2 = ON_DotProduct(invec, pcyl.Normal());
-		std::cout << "dotp2: " << dotp2 << "\n";
 	    }
 
 	    // Third, construct the axis vector and determine the arb
@@ -556,23 +558,35 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
 	    ON_3dVector v1 = bottom_pnts[0] - bottom_pnts[1];
 	    ON_3dVector v1x = ON_CrossProduct(v1, cyl_axis);
-	    ON_3dVector v2 = bottom_pnts[1] - bottom_pnts[0];
-	    ON_3dVector v2x = ON_CrossProduct(v2, cyl_axis);
 
 	    double flag1 = ON_DotProduct(v1x, pcyl.Normal());
-	    std::cout << "flag1: " << flag1 << "\n";
-	    double flag2 = ON_DotProduct(v2x, pcyl.Normal());
-	    std::cout << "flag2: " << flag2 << "\n";
 
 	    ON_3dVector w1 = top_pnts[0] - top_pnts[1];
 	    ON_3dVector w1x = ON_CrossProduct(w1, cyl_axis);
-	    ON_3dVector w2 = top_pnts[1] - top_pnts[0];
-	    ON_3dVector w2x = ON_CrossProduct(w2, cyl_axis);
 
 	    double flag3 = ON_DotProduct(w1x, pcyl.Normal());
-	    std::cout << "flag3: " << flag3 << "\n";
-	    double flag4 = ON_DotProduct(w2x, pcyl.Normal());
-	    std::cout << "flag4: " << flag4 << "\n";
+
+	    ON_3dPoint p1, p2, p3, p4;
+	    if (flag1 < 0) {
+		p1 = bottom_pnts[1];
+		p2 = bottom_pnts[0];
+		v1 = -v1;
+	    } else {
+		p1 = bottom_pnts[0];
+		p2 = bottom_pnts[1];
+	    }
+	    if (flag3 < 0) {
+		p3 = top_pnts[0];
+		p4 = top_pnts[1];
+	    } else {
+		p3 = top_pnts[1];
+		p4 = top_pnts[0];
+	    }
+	    std::cout << "p1 ("; pout(p1); std::cout << ")\n";
+	    std::cout << "p2 ("; pout(p2); std::cout << ")\n";
+	    std::cout << "p3 ("; pout(p3); std::cout << ")\n";
+	    std::cout << "p4 ("; pout(p4); std::cout << ")\n";
+
 
 	    // Once the 1,2,3,4 points are determined, scale them out
 	    // along their respective line segment axis to make sure
@@ -583,12 +597,51 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // a distance to pcyl plane calculation for the second point,
 	    // then subtract the center from the point on the plane and do
 	    // a dot product test with pcyl's normal.
+	    v1.Unitize();
+	    v1 = v1 * set1_c.Radius();
+	    p1 = p1 + v1;
+	    p2 = p2 - v1;
+	    p3 = p3 - v1;
+	    p4 = p4 + v1;
 
 	    // Once the final 1,2,3,4 points have been determined, use
 	    // the pcyl normal direction and the cylinder radius to
 	    // construct the remaining arb points.
+	    ON_3dPoint p5, p6, p7, p8;
+	    ON_3dVector arb_side = pcyl.Normal() * 2*set1_c.Radius();
 
+	    p5 = p1 + arb_side;
+	    p6 = p2 + arb_side;
+	    p7 = p3 + arb_side;
+	    p8 = p4 + arb_side;
 
+	    arb->type = ARB8;
+	    arb->p[0][0] = p1.x;
+	    arb->p[0][1] = p1.y;
+	    arb->p[0][2] = p1.z;
+	    arb->p[1][0] = p2.x;
+	    arb->p[1][1] = p2.y;
+	    arb->p[1][2] = p2.z;
+	    arb->p[2][0] = p3.x;
+	    arb->p[2][1] = p3.y;
+	    arb->p[2][2] = p3.z;
+	    arb->p[3][0] = p4.x;
+	    arb->p[3][1] = p4.y;
+	    arb->p[3][2] = p4.z;
+	    arb->p[4][0] = p5.x;
+	    arb->p[4][1] = p5.y;
+	    arb->p[4][2] = p5.z;
+	    arb->p[5][0] = p6.x;
+	    arb->p[5][1] = p6.y;
+	    arb->p[5][2] = p6.z;
+	    arb->p[6][0] = p7.x;
+	    arb->p[6][1] = p7.y;
+	    arb->p[6][2] = p7.z;
+	    arb->p[7][0] = p8.x;
+	    arb->p[7][1] = p8.y;
+	    arb->p[7][2] = p8.z;
+
+	    bu_ptbl_ins(data->objs, (long *)arb);
 
 	    return 1;
 	}

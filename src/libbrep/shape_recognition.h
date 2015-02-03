@@ -39,12 +39,18 @@ typedef enum {
 
 typedef enum {
     COMB = 0,  /* A comb is a boolean combination of other solids */
-    PLANAR_VOLUME,
-    CYLINDER,
-    CONE,
-    SPHERE,
-    ELLIPSOID,
-    TORUS,
+    ARB4,
+    ARB5,
+    ARB6,
+    ARB7,
+    ARB8,
+    ARBN,
+    PLANAR_VOLUME, /* NMG */
+    CYLINDER,      /* RCC */
+    CONE,          /* TRC */
+    SPHERE,        /* SPH */
+    ELLIPSOID,     /* ELL */
+    TORUS,         /* TOR */
     //Insert any new types here
     BREP /* A brep is a complex solid that cannot be represented by CSG */
 } volume_t;
@@ -83,14 +89,7 @@ struct csg_object_params {
     fastf_t radius;
     fastf_t r2;
     fastf_t height;
-    point_t p1;
-    point_t p2;
-    point_t p3;
-    point_t p4;
-    point_t p5;
-    point_t p6;
-    point_t p7;
-    point_t p8;
+    point_t p[8];
 };
 
 struct subbrep_object_data {
