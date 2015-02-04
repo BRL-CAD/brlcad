@@ -105,24 +105,6 @@ struct subbrep_object_data {
     int fol_cnt;
     int fil_cnt;
 
-    /* Maps */
-    int *face_map;
-    int *surface_map;
-    int *edge_map;
-    int *vertex_map;
-    int *loop_map;
-    int *c3_map;
-    int *c2_map;
-    int *trim_map;
-    int face_map_cnt;
-    int surface_map_cnt;
-    int edge_map_cnt;
-    int vertex_map_cnt;
-    int loop_map_cnt;
-    int c3_map_cnt;
-    int c2_map_cnt;
-    int trim_map_cnt;
-
     const ON_Brep *brep;
     ON_Brep *local_brep;
     volume_t type;
@@ -153,6 +135,10 @@ int cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol);
 int subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol);
 int cone_csg(struct subbrep_object_data *data, fastf_t cone_tol);
 
+std::string face_set_key(std::set<int> fset);
+surface_t highest_order_face(struct subbrep_object_data *data);
+void set_to_array(int **array, int *array_cnt, std::set<int> *set);
+void array_to_set(std::set<int> *set, int *array, int array_cnt);
 
 
 #endif /* SHAPE_RECOGNITION_H */
