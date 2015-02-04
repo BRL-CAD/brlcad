@@ -388,7 +388,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
     std::map<int, int> c3_map;
     std::map<int, int> c2_map;
     std::map<int, int> trim_map;
-    std::map<int, int> subloop_map;  // When not all of the trims from an old loop are used, make new loops here so we have somewhere to stash the trims.  They'll be useful if we want/need to construct faces closing the new subbreps.
+    //std::map<int, int> subloop_map;  // When not all of the trims from an old loop are used, make new loops here so we have somewhere to stash the trims.  They'll be useful if we want/need to construct faces closing the new subbreps.
 
     std::set<int> faces;
     std::set<int> fil;
@@ -487,14 +487,14 @@ subbrep_make_brep(struct subbrep_object_data *data)
 			loop_map[old_loop->m_loop_index] = nl.m_loop_index;
 			//std::cout << "adding loop: " << old_loop->m_loop_index << "\n";
 		    }
-		} else {
+		} //else {
 		    //std::cout << "have isolated trim whose parent loop isn't fully included\n";
-		    if (subloop_map.find(old_loop->m_loop_index) == subloop_map.end()) {
+		   /* if (subloop_map.find(old_loop->m_loop_index) == subloop_map.end()) {
 			ON_BrepLoop &nl = data->local_brep->NewLoop(ON_BrepLoop::outer, data->local_brep->m_F[face_map[old_loop->m_fi]]);
 			subloop_map[old_loop->m_loop_index] = nl.m_loop_index;
 			isolated_trims.insert(old_trim->m_trim_index);
 		    }
-		}
+		}*/
 	    }
 	}
     }
@@ -537,6 +537,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	    }
 	}
     }
+#if 0
     std::set<int>::iterator trims_it;
     for (trims_it = isolated_trims.begin(); trims_it != isolated_trims.end(); trims_it++) {
 	const ON_BrepTrim *old_trim = &(data->brep->m_T[*trims_it]);
@@ -570,7 +571,7 @@ subbrep_make_brep(struct subbrep_object_data *data)
 	    }
 	}
     }
-
+#endif
     // Make sure all the loop directions are correct
     for (int l = 0; l < data->local_brep->m_L.Count(); l++) {
 	if (data->local_brep->LoopDirection(data->local_brep->m_L[l]) != 1) {
