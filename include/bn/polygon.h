@@ -103,6 +103,25 @@ BN_EXPORT extern int bn_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_
  */
 BN_EXPORT extern int bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp);
 
+/**
+ * @brief
+ * Test whether a point is inside a 2D polygon
+ *
+ * Franklin's test for point inclusion within a polygon - see
+ * http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+ * for more details and the implementation file polygon.c for license info.
+ *
+ * @param[in] npts Number of points, pts contains
+ * @param pts Array of point_ts, building a convex polygon. Duplicated points
+ * aren't allowed. The points in the array will be sorted counter-clockwise.
+ * @param[in] cmp Plane equation of the polygon
+ *
+ * @return 0 if point is outside polygon
+ * @return 1 if point is inside polygon
+ */
+BN_EXPORT extern int bn_pt_in_polygon(size_t npts, const point2d_t *pts, const point2d_t *test_pt);
+
+
 __END_DECLS
 
 #endif  /* BN_POLYGON_H */
