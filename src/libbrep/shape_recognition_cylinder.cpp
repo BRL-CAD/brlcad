@@ -239,7 +239,6 @@ negative_cylinder(struct subbrep_object_data *data, int face_index, double cyl_t
 int
 cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 {
-    bu_log("process partial cylinder\n");
     std::set<int> planar_surfaces;
     std::set<int> cylindrical_surfaces;
     for (int i = 0; i < data->faces_cnt; i++) {
@@ -258,6 +257,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
                 break;
         }
     }
+    data->params->bool_op = 'u'; // Initialize to union
 
     // Check for multiple cylinders.  Can handle this, but for now punt.
     ON_Cylinder cylinder;
@@ -272,9 +272,9 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	ON_Surface *fcs = data->brep->m_F[(*f_it)].SurfaceOf()->Duplicate();
         fcs->IsCylinder(&f_cylinder);
 	delete fcs;
-	std::cout << "cyl_count: " << cyl_count << "\n";
+	//std::cout << "cyl_count: " << cyl_count << "\n";
 	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > BREP_CYLINDRICAL_TOL) {
-	    std::cout << "\n\nMultiple cylinders found\n\n";
+	    //std::cout << "\n\nMultiple cylinders found\n\n";
 	    return 0;
 	}
     }
@@ -472,7 +472,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     // no corner points, then we have a complete cylinder
     if (set1_c.Plane().Normal().IsParallelTo(set2_c.Plane().Normal(), cyl_tol) != 0) {
 	if (corner_verts.size() == 0) {
-	    std::cout << "Full cylinder\n";
+	    //std::cout << "Full cylinder\n";
 	    data->type = CYLINDER;
 
 	    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
@@ -497,11 +497,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    std::string key = face_set_key(cylindrical_surfaces);
 	    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
 	    cyl_obj->type = CYLINDER;
-
-	    // TODO The cylinder surface is a partial cylinder, so it is going to be replaced
-	    // in the parent shape by a planar face unless this shape is topologically
-	    // isolated from its parent according to the edge curve network.
-
 
 	    // Flag the cyl/arb comb according to the negative or positive status of the
 	    // cylinder surface.  Whether the comb is actually subtracted from the
@@ -567,25 +562,21 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // First, find the two points closest to the set1_c and set2_c planes
 	    double offset = 0.0;
 	    std::set<int>::iterator s_it;
-	    ON_SimpleArray<ON_3dPoint> corner_pnts(4);
-	    ON_SimpleArray<ON_3dPoint> bottom_pnts(2);
-	    ON_SimpleArray<ON_3dPoint> top_pnts(2);
+	    ON_SimpleArray<const ON_BrepVertex *> corner_pnts(4);
+	    ON_SimpleArray<const ON_BrepVertex *> bottom_pnts(2);
+	    ON_SimpleArray<const ON_BrepVertex *> top_pnts(2);
 	    for (s_it = corner_verts.begin(); s_it != corner_verts.end(); s_it++) {
 		ON_3dPoint p = data->brep->m_V[*s_it].Point();
-		corner_pnts.Append(p);
-		std::cout << "p(" << *s_it << "): "; pout(p); std::cout << "\n";
+		corner_pnts.Append(&(data->brep->m_V[*s_it]));
 		double d = set1_c.Plane().DistanceTo(p);
 		if (d > offset) offset = d;
 	    }
 	    for (int p = 0; p < corner_pnts.Count(); p++) {
-		double poffset = set1_c.Plane().DistanceTo(corner_pnts[p]);
-		std::cout << "poffset(" << offset << "): " << poffset << "\n";
+		double poffset = set1_c.Plane().DistanceTo(corner_pnts[p]->Point());
 		if (!NEAR_ZERO(poffset - offset, 0.01) && poffset < offset) {
 		    bottom_pnts.Append(corner_pnts[p]);
-		    std::cout << "b(" << p << "): "; pout(corner_pnts[p]); std::cout << "\n";
 		} else {
 		    top_pnts.Append(corner_pnts[p]);
-		    std::cout << "t(" << p << "): "; pout(corner_pnts[p]); std::cout << "\n";
 		}
 	    }
 
@@ -612,36 +603,48 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // order of the bottom and top points
 	    ON_3dVector cyl_axis = set2_c.Center() - set1_c.Center();
 
-	    ON_3dVector v1 = bottom_pnts[0] - bottom_pnts[1];
-	    ON_3dVector v1x = ON_CrossProduct(v1, cyl_axis);
+	    ON_3dVector vv1 = bottom_pnts[0]->Point() - bottom_pnts[1]->Point();
+	    ON_3dVector v1x = ON_CrossProduct(vv1, cyl_axis);
 
 	    double flag1 = ON_DotProduct(v1x, pcyl.Normal());
 
-	    ON_3dVector w1 = top_pnts[0] - top_pnts[1];
+	    ON_3dVector w1 = top_pnts[0]->Point() - top_pnts[1]->Point();
 	    ON_3dVector w1x = ON_CrossProduct(w1, cyl_axis);
 
 	    double flag3 = ON_DotProduct(w1x, pcyl.Normal());
 
-	    ON_3dPoint p1, p2, p3, p4;
+	    const ON_BrepVertex *v1, *v2, *v3, *v4;
 	    if (flag1 < 0) {
-		p1 = bottom_pnts[1];
-		p2 = bottom_pnts[0];
-		v1 = -v1;
+		v1 = bottom_pnts[1];
+		v2 = bottom_pnts[0];
+		vv1 = -vv1;
 	    } else {
-		p1 = bottom_pnts[0];
-		p2 = bottom_pnts[1];
+		v1 = bottom_pnts[0];
+		v2 = bottom_pnts[1];
 	    }
 	    if (flag3 < 0) {
-		p3 = top_pnts[0];
-		p4 = top_pnts[1];
+		v3 = top_pnts[0];
+		v4 = top_pnts[1];
 	    } else {
-		p3 = top_pnts[1];
-		p4 = top_pnts[0];
+		v3 = top_pnts[1];
+		v4 = top_pnts[0];
 	    }
-	    std::cout << "p1 ("; pout(p1); std::cout << ")\n";
-	    std::cout << "p2 ("; pout(p2); std::cout << ")\n";
-	    std::cout << "p3 ("; pout(p3); std::cout << ")\n";
-	    std::cout << "p4 ("; pout(p4); std::cout << ")\n";
+#if 0
+	    std::cout << "v1 ("; pout(v1->Point()); std::cout << ")\n";
+	    std::cout << "v2 ("; pout(v2->Point()); std::cout << ")\n";
+	    std::cout << "v3 ("; pout(v3->Point()); std::cout << ")\n";
+	    std::cout << "v4 ("; pout(v4->Point()); std::cout << ")\n";
+#endif
+	    // Before we manipulate the points for arb construction,
+	    // see if we need to use them to define a new face.
+	    if (!data->is_island) {
+		// The cylinder shape is a partial cylinder, and it is not
+		// topologically isolated, so we need to make a new face
+		// to replace this one.  Add it to the local brep, which
+		// should have the other planar faces.
+		std::cout << "need new face - use pcyl plane and 4 verts\n";
+	    }
+
 
 
 	    // Once the 1,2,3,4 points are determined, scale them out
@@ -660,12 +663,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // the knowledge of the distance between p1/p2.  We only need
 	    // to add enough extra length to clear the cylinder, which
 	    // means the full radius length is almost always overkill.
-	    v1.Unitize();
-	    v1 = v1 * set1_c.Radius();
-	    p1 = p1 + v1;
-	    p2 = p2 - v1;
-	    p3 = p3 - v1;
-	    p4 = p4 + v1;
+	    ON_3dPoint p1, p2, p3, p4;
+	    vv1.Unitize();
+	    vv1 = vv1 * set1_c.Radius();
+	    p1 = p1 + vv1;
+	    p2 = p2 - vv1;
+	    p3 = p3 - vv1;
+	    p4 = p4 + vv1;
 	    ON_3dVector hpad = p3 - p2;
 	    hpad.Unitize();
 	    hpad = hpad * (cyl_axis.Length() * 0.01);

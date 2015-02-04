@@ -218,6 +218,7 @@ subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
     obj->brep = brep;
     obj->local_brep = NULL;
     obj->type = BREP;
+    obj->is_island = 0;
 }
 
 void

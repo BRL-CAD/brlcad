@@ -110,6 +110,7 @@ struct subbrep_object_data {
     csg_object_params *params;
     subbrep_object_data *parent;
     struct bu_ptbl *children;
+    int is_island;
 };
 
 void subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep);

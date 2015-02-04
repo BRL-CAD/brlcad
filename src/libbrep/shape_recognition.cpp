@@ -103,6 +103,10 @@ find_subbreps(const ON_Brep *brep)
 	    set_to_array(&(new_obj->edges), &(new_obj->edges_cnt), &edges);
 	    set_to_array(&(new_obj->fol), &(new_obj->fol_cnt), &fol);
 	    set_to_array(&(new_obj->fil), &(new_obj->fil_cnt), &fil);
+	    // Here and only here, we are isolating topological "islands"
+	    // Below this level, everything will be connected in some fashion
+	    // by the edge network.
+	    new_obj->is_island = 1;
 
 	    surface_t hof = highest_order_face(new_obj);
 	    if (hof >= SURFACE_GENERAL) {

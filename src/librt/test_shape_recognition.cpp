@@ -124,7 +124,7 @@ subbrep_to_csg_arb8(struct subbrep_object_data *data, struct rt_wdb *wdbp, struc
 	bu_vls_sprintf(&prim_name, "arb8_%s.s", bu_vls_addr(data->key));
 
 	mk_arb8(wdbp, bu_vls_addr(&prim_name), (const fastf_t *)params->p);
-	std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
 	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
 	return 1;
@@ -176,7 +176,7 @@ subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct rt_wdb *wdbp, s
 	bu_vls_sprintf(&prim_name, "rcc_%s.s", bu_vls_addr(data->key));
 
 	mk_rcc(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->radius);
-	std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
 	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
 	return 1;
@@ -193,7 +193,7 @@ subbrep_to_csg_conic(struct subbrep_object_data *data, struct rt_wdb *wdbp, stru
 	bu_vls_sprintf(&prim_name, "trc_%s.s", bu_vls_addr(data->key));
 
 	mk_cone(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->height, params->radius, params->r2);
-	std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
 	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
 	return 1;
@@ -233,7 +233,7 @@ process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wme
 int
 make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *pcomb)
 {
-    std::cout << "Making shape for " << bu_vls_addr(data->key) << "\n";
+    //std::cout << "Making shape for " << bu_vls_addr(data->key) << "\n";
     if (data->type == BREP) {
 	if (data->local_brep) {
 	    struct bu_vls brep_name = BU_VLS_INIT_ZERO;
@@ -252,10 +252,10 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 	    struct bu_vls member_name = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&comb_name, "comb_%s.c", bu_vls_addr(data->key));
 	    BU_LIST_INIT(&wcomb.l);
-	    bu_log("make comb %s\n", bu_vls_addr(data->key));
+	    //bu_log("make comb %s\n", bu_vls_addr(data->key));
 	    for (unsigned int i = 0; i < BU_PTBL_LEN(data->children); i++){
 		struct subbrep_object_data *cdata = (struct subbrep_object_data *)BU_PTBL_GET(data->children,i);
-		std::cout << "Making child shape(" << cdata->type << "):\n";
+		//std::cout << "Making child shape(" << cdata->type << "):\n";
 		make_shapes(cdata, wdbp, &wcomb);
 		subbrep_object_free(cdata);
 	    }
@@ -266,7 +266,7 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmembe
 	    bu_vls_free(&member_name);
 	    bu_vls_free(&comb_name);
 	} else {
-	    std::cout << "type: " << data->type << "\n";
+	    //std::cout << "type: " << data->type << "\n";
 	    process_params(data, wdbp, pcomb);
 	}
     }
