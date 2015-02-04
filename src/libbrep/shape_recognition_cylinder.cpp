@@ -146,17 +146,14 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
 
     ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
-    obj->type = CYLINDER;
-    obj->bool_op= 'u';  // TODO - not always union
-    obj->origin[0] = set1_c.Center().x;
-    obj->origin[1] = set1_c.Center().y;
-    obj->origin[2] = set1_c.Center().z;
-    obj->hv[0] = hvect.x;
-    obj->hv[1] = hvect.y;
-    obj->hv[2] = hvect.z;
-    obj->radius = set1_c.Radius();
-
-    bu_ptbl_ins(data->objs, (long *)obj);
+    data->params->bool_op= 'u';  // TODO - not always union
+    data->params->origin[0] = set1_c.Center().x;
+    data->params->origin[1] = set1_c.Center().y;
+    data->params->origin[2] = set1_c.Center().z;
+    data->params->hv[0] = hvect.x;
+    data->params->hv[1] = hvect.y;
+    data->params->hv[2] = hvect.z;
+    data->params->radius = set1_c.Radius();
 
     return 1;
 }
@@ -476,79 +473,71 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     if (set1_c.Plane().Normal().IsParallelTo(set2_c.Plane().Normal(), cyl_tol) != 0) {
 	if (corner_verts.size() == 0) {
 	    std::cout << "Full cylinder\n";
-	    return 0;
 	    data->type = CYLINDER;
-	    struct csg_object_params * obj;
-	    BU_GET(obj, struct csg_object_params);
 
 	    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
-	    obj->type = CYLINDER;
-	    obj->bool_op= 'u'; // TODO - not always union
-	    obj->origin[0] = set1_c.Center().x;
-	    obj->origin[1] = set1_c.Center().y;
-	    obj->origin[2] = set1_c.Center().z;
-	    obj->hv[0] = hvect.x;
-	    obj->hv[1] = hvect.y;
-	    obj->hv[2] = hvect.z;
-	    obj->radius = set1_c.Radius();
-
-	    bu_ptbl_ins(data->objs, (long *)obj);
+	    data->params->bool_op = 'u'; // TODO - not always union
+	    data->params->origin[0] = set1_c.Center().x;
+	    data->params->origin[1] = set1_c.Center().y;
+	    data->params->origin[2] = set1_c.Center().z;
+	    data->params->hv[0] = hvect.x;
+	    data->params->hv[1] = hvect.y;
+	    data->params->hv[2] = hvect.z;
+	    data->params->radius = set1_c.Radius();
 
 	    return 1;
 	} else {
 	    // We have parallel faces and corners - we need to use an arb.
 	    data->type = COMB;
 
+	    struct subbrep_object_data *cyl_obj;
+	    BU_GET(cyl_obj, struct subbrep_object_data);
+	    subbrep_object_init(cyl_obj, data->brep);
+	    std::string key = face_set_key(cylindrical_surfaces);
+	    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
+	    cyl_obj->type = CYLINDER;
+
 	    // TODO The cylinder surface is a partial cylinder, so it is going to be replaced
 	    // in the parent shape by a planar face unless this shape is topologically
 	    // isolated from its parent according to the edge curve network.
 
 
-	    // TODO - whether a cylinder is negative or not for CSG assembly depends
-	    // not only on the cylinder itself but the status of its "parent" shape -
-	    // if we are defining a solid comb shape that is to be subtracted from
-	    // a higher level shape, then locally globally "negative" solids will be
-	    // positive, and vice versa.  It doesn't change the actual definition of
-	    // the cylinder/arb comb, but it does change how that comb is booleaned
-	    // with the parent.  Flag the csg_obj_params so we know the "global"
-	    // status of the comb shape without having to introspect it again later.
+	    // Flag the cyl/arb comb according to the negative or positive status of the
+	    // cylinder surface.  Whether the comb is actually subtracted from the
+	    // global object or unioned into a comb lower down the tree (or vice versa)
+	    // is determined later.
 	    int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
 
-	    if (negative == 0) {
-		std::cout << "Could not determine cylinder status???????\n";
+	    switch (negative) {
+		case -1:
+		    data->params->bool_op = '-';
+		    break;
+		case 1:
+		    data->params->bool_op = 'u';
+		    break;
+		default:
+		    std::cout << "Could not determine cylinder status???????\n";
+		    data->params->bool_op = 'u';
+		    break;
 	    }
 
-	    if (negative == -1) {
-		std::cout << "TODO - Negative cylinder\n";
-	    }
-
-	    if (negative == 1) {
-		std::cout << "Positive cylinder\n";
-	    }
-
-	    // cylinder
-	    struct csg_object_params * obj;
-	    BU_GET(obj, struct csg_object_params);
+	    // cylinder - positive object in this sub-comb
 
 	    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
-	    obj->type = CYLINDER;
-	    obj->bool_op = 'u';
-	    obj->origin[0] = set1_c.Center().x;
-	    obj->origin[1] = set1_c.Center().y;
-	    obj->origin[2] = set1_c.Center().z;
-	    obj->hv[0] = hvect.x;
-	    obj->hv[1] = hvect.y;
-	    obj->hv[2] = hvect.z;
-	    obj->radius = set1_c.Radius();
+	    cyl_obj->params->bool_op = 'u';
+	    cyl_obj->params->origin[0] = set1_c.Center().x;
+	    cyl_obj->params->origin[1] = set1_c.Center().y;
+	    cyl_obj->params->origin[2] = set1_c.Center().z;
+	    cyl_obj->params->hv[0] = hvect.x;
+	    cyl_obj->params->hv[1] = hvect.y;
+	    cyl_obj->params->hv[2] = hvect.z;
+	    cyl_obj->params->radius = set1_c.Radius();
 
-	    bu_ptbl_ins(data->objs, (long *)obj);
+	    bu_ptbl_ins(data->children, (long *)cyl_obj);
 
-	    // arb8
-	    struct csg_object_params * arb;
-	    BU_GET(arb, struct csg_object_params);
-
+	    // arb8 - subtracted from the previous cylinder in this sub-comb
 
 	    //                                       8
 	    //                                    *  |   *
@@ -567,6 +556,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    //                                      *   |  *
 	    //                                          2
 	    //
+
+	    struct subbrep_object_data *arb_obj;
+	    BU_GET(arb_obj, struct subbrep_object_data);
+	    subbrep_object_init(arb_obj, data->brep);
+	    bu_vls_sprintf(arb_obj->key, "%s_arb8", key.c_str());
+	    arb_obj->type = ARB8;
+
 
 	    // First, find the two points closest to the set1_c and set2_c planes
 	    double offset = 0.0;
@@ -610,7 +606,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    double dotp = ON_DotProduct(invec, pcyl.Normal());
 	    if (dotp < 0) {
 		pcyl.Flip();
-		double dotp2 = ON_DotProduct(invec, pcyl.Normal());
 	    }
 
 	    // Third, construct the axis vector and determine the arb
@@ -690,34 +685,33 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    p7 = p3 + arb_side;
 	    p8 = p4 + arb_side;
 
-	    arb->type = ARB8;
-	    arb->bool_op = '-';
-	    arb->p[0][0] = p1.x;
-	    arb->p[0][1] = p1.y;
-	    arb->p[0][2] = p1.z;
-	    arb->p[1][0] = p2.x;
-	    arb->p[1][1] = p2.y;
-	    arb->p[1][2] = p2.z;
-	    arb->p[2][0] = p3.x;
-	    arb->p[2][1] = p3.y;
-	    arb->p[2][2] = p3.z;
-	    arb->p[3][0] = p4.x;
-	    arb->p[3][1] = p4.y;
-	    arb->p[3][2] = p4.z;
-	    arb->p[4][0] = p5.x;
-	    arb->p[4][1] = p5.y;
-	    arb->p[4][2] = p5.z;
-	    arb->p[5][0] = p6.x;
-	    arb->p[5][1] = p6.y;
-	    arb->p[5][2] = p6.z;
-	    arb->p[6][0] = p7.x;
-	    arb->p[6][1] = p7.y;
-	    arb->p[6][2] = p7.z;
-	    arb->p[7][0] = p8.x;
-	    arb->p[7][1] = p8.y;
-	    arb->p[7][2] = p8.z;
+	    arb_obj->params->bool_op = '-';
+	    arb_obj->params->p[0][0] = p1.x;
+	    arb_obj->params->p[0][1] = p1.y;
+	    arb_obj->params->p[0][2] = p1.z;
+	    arb_obj->params->p[1][0] = p2.x;
+	    arb_obj->params->p[1][1] = p2.y;
+	    arb_obj->params->p[1][2] = p2.z;
+	    arb_obj->params->p[2][0] = p3.x;
+	    arb_obj->params->p[2][1] = p3.y;
+	    arb_obj->params->p[2][2] = p3.z;
+	    arb_obj->params->p[3][0] = p4.x;
+	    arb_obj->params->p[3][1] = p4.y;
+	    arb_obj->params->p[3][2] = p4.z;
+	    arb_obj->params->p[4][0] = p5.x;
+	    arb_obj->params->p[4][1] = p5.y;
+	    arb_obj->params->p[4][2] = p5.z;
+	    arb_obj->params->p[5][0] = p6.x;
+	    arb_obj->params->p[5][1] = p6.y;
+	    arb_obj->params->p[5][2] = p6.z;
+	    arb_obj->params->p[6][0] = p7.x;
+	    arb_obj->params->p[6][1] = p7.y;
+	    arb_obj->params->p[6][2] = p7.z;
+	    arb_obj->params->p[7][0] = p8.x;
+	    arb_obj->params->p[7][1] = p8.y;
+	    arb_obj->params->p[7][2] = p8.z;
 
-	    bu_ptbl_ins(data->objs, (long *)arb);
+	    bu_ptbl_ins(data->children, (long *)arb_obj);
 
 	    return 1;
 	}

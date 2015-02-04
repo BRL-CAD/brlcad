@@ -110,10 +110,15 @@ find_subbreps(const ON_Brep *brep)
 		(void)subbrep_make_brep(new_obj);
 		std::cout << "general surface present: " << bu_vls_addr(new_obj->key) << "\n";
 	    } else {
-		int split = subbrep_split(new_obj);
-		if (!split) {
-		    (void)subbrep_make_brep(new_obj);
-		    std::cout << "split unsuccessful: " << bu_vls_addr(new_obj->key) << "\n";
+		volume_t vtype = subbrep_shape_recognize(new_obj);
+		if (vtype == BREP) {
+		    int split = subbrep_split(new_obj);
+		    if (!split) {
+			(void)subbrep_make_brep(new_obj);
+			std::cout << "split unsuccessful: " << bu_vls_addr(new_obj->key) << "\n";
+		    } else {
+			new_obj->type = COMB;
+		    }
 		}
 	    }
 
