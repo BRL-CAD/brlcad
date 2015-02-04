@@ -230,7 +230,6 @@ proc rtimage {rtimage_dict {do_wait 0}} {
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
-	catch {eval exec $cmd >& $_log_file} curr_pid
 	if {$do_wait} {
 	    catch {eval exec $cmd >& $_log_file &} curr_pid
 	} else {
