@@ -495,16 +495,22 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
 	    return 1;
 	} else {
-	    // We have parallel faces and corners - we need to use an arb.  How we
-	    // handle this depends on whether we have a negative or positive arb
-	    // surface.
+	    // We have parallel faces and corners - we need to use an arb.
 	    data->type = COMB;
+
+	    // TODO The cylinder surface is a partial cylinder, so it is going to be replaced
+	    // in the parent shape by a planar face unless this shape is topologically
+	    // isolated from its parent according to the edge curve network.
+
 
 	    // TODO - whether a cylinder is negative or not for CSG assembly depends
 	    // not only on the cylinder itself but the status of its "parent" shape -
 	    // if we are defining a solid comb shape that is to be subtracted from
 	    // a higher level shape, then locally globally "negative" solids will be
-	    // positive, and vice versa.
+	    // positive, and vice versa.  It doesn't change the actual definition of
+	    // the cylinder/arb comb, but it does change how that comb is booleaned
+	    // with the parent.  Flag the csg_obj_params so we know the "global"
+	    // status of the comb shape without having to introspect it again later.
 	    int negative = negative_cylinder(data, *cylindrical_surfaces.begin(), cyl_tol);
 
 	    if (negative == 0) {
@@ -643,12 +649,19 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // Once the 1,2,3,4 points are determined, scale them out
 	    // along their respective line segment axis to make sure
 	    // the resulting arb is large enough to subtract the full
-	    // radius of the cylinder.  Only need to do this if the
+	    // radius of the cylinder.
+	    //
+	    // TODO - Only need to do this if the
 	    // center point of the cylinder is inside the subtracting arb -
 	    // should be able to test that with the circle center point
 	    // a distance to pcyl plane calculation for the second point,
 	    // then subtract the center from the point on the plane and do
 	    // a dot product test with pcyl's normal.
+	    //
+	    // TODO - Can optimize this - can make a narrower arb using
+	    // the knowledge of the distance between p1/p2.  We only need
+	    // to add enough extra length to clear the cylinder, which
+	    // means the full radius length is almost always overkill.
 	    v1.Unitize();
 	    v1 = v1 * set1_c.Radius();
 	    p1 = p1 + v1;
@@ -702,14 +715,14 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // We have non parallel faces and no corners - at least one and possible
 	    // both end caps need subtracting, but no other subtractions are needed.
 	    data->type = COMB;
-	    std::cout << "Minus one or more end-cap arbs\n";
+	    std::cout << "TODO: Minus one or more end-cap arbs\n";
 	    return 1;
 	} else {
 	    // We have non parallel faces and corners - at least one and possible
 	    // both end caps need subtracting, plus an arb to remove part of the
 	    // cylinder body.
 	    data->type = COMB;
-	    std::cout << "Minus one or more end-cap arbs and body arb\n";
+	    std::cout << "TODO: Minus one or more end-cap arbs and body arb\n";
 	    return 1;
 	}
     }
