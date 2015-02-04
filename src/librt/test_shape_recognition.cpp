@@ -19,10 +19,10 @@
 
 
 struct model *
-brep_to_nmg(struct subbrep_object_data *data, struct csg_object_params *UNUSED(params), struct rt_wdb *wdbp)
+brep_to_nmg(struct subbrep_object_data *data, struct csg_object_params *UNUSED(params), struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&prim_name, "nmg_%s", bu_vls_addr(data->key));
+    bu_vls_sprintf(&prim_name, "nmg_%s.s", bu_vls_addr(data->key));
     std::set<int> b_verts;
     std::vector<int> b_verts_array;
     std::map<int, int> b_verts_to_verts;
@@ -108,6 +108,7 @@ brep_to_nmg(struct subbrep_object_data *data, struct csg_object_params *UNUSED(p
 
     /* Create the nmg primitive */
     mk_nmg(wdbp, bu_vls_addr(&prim_name), m);
+    if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, WMOP_UNION);
 
     bu_vls_free(&prim_name);
 
@@ -115,13 +116,14 @@ brep_to_nmg(struct subbrep_object_data *data, struct csg_object_params *UNUSED(p
 }
 
 int
-subbrep_to_csg_arb8(struct subbrep_object_data *data, struct csg_object_params *params, struct rt_wdb *wdbp)
+subbrep_to_csg_arb8(struct subbrep_object_data *data, struct csg_object_params *params, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     if (params->type == ARB8) {
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&prim_name, "arb8_%s", bu_vls_addr(data->key));
+	bu_vls_sprintf(&prim_name, "arb8_%s.s", bu_vls_addr(data->key));
 
 	mk_arb8(wdbp, bu_vls_addr(&prim_name), (const fastf_t *)params->p);
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, WMOP_UNION);
 	bu_vls_free(&prim_name);
 	return 1;
     } else {
@@ -129,7 +131,7 @@ subbrep_to_csg_arb8(struct subbrep_object_data *data, struct csg_object_params *
     }
 }
 int
-subbrep_to_csg_planar(struct subbrep_object_data *data, struct csg_object_params *params, struct rt_wdb *wdbp)
+subbrep_to_csg_planar(struct subbrep_object_data *data, struct csg_object_params *params, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     if (data->type == PLANAR_VOLUME) {
 	// BRL-CAD's arbn primitive does not support concave shapes, and we want to use
@@ -156,7 +158,7 @@ subbrep_to_csg_planar(struct subbrep_object_data *data, struct csg_object_params
 	//          at the arbn tessellation routine for a guide on how to set up the
 	//          nmg - that's the most general of the arb* primitives and should be
 	//          relatively close to what is needed here.
-	(void)brep_to_nmg(data, params, wdbp);
+	(void)brep_to_nmg(data, params, wdbp, wcomb);
 	return 1;
     } else {
 	return 0;
@@ -164,13 +166,14 @@ subbrep_to_csg_planar(struct subbrep_object_data *data, struct csg_object_params
 }
 
 int
-subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct csg_object_params *params, struct rt_wdb *wdbp)
+subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct csg_object_params *params, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     if (params->type == CYLINDER) {
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&prim_name, "rcc_%s", bu_vls_addr(data->key));
+	bu_vls_sprintf(&prim_name, "rcc_%s.s", bu_vls_addr(data->key));
 
 	mk_rcc(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->radius);
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, WMOP_UNION);
 	bu_vls_free(&prim_name);
 	return 1;
     }
@@ -178,13 +181,14 @@ subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct csg_object_para
 }
 
 int
-subbrep_to_csg_conic(struct subbrep_object_data *data, struct csg_object_params *params, struct rt_wdb *wdbp)
+subbrep_to_csg_conic(struct subbrep_object_data *data, struct csg_object_params *params, struct rt_wdb *wdbp, struct wmember *wcomb)
 {
     if (params->type == CONE) {
 	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&prim_name, "trc_%s", bu_vls_addr(data->key));
+	bu_vls_sprintf(&prim_name, "trc_%s.s", bu_vls_addr(data->key));
 
 	mk_cone(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->height, params->radius, params->r2);
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, WMOP_UNION);
 	bu_vls_free(&prim_name);
 	return 1;
     }
@@ -196,7 +200,7 @@ int
 make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 {
     struct bu_vls brep_name = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&brep_name, "brep_%s", bu_vls_addr(data->key));
+    bu_vls_sprintf(&brep_name, "brep_%s.s", bu_vls_addr(data->key));
     if (data->type == BREP) {
 	if (data->local_brep) {
 	    mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
@@ -206,38 +210,50 @@ make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp)
 	bu_vls_free(&brep_name);
     } else {
 	if (data->type == COMB) {
-	    bu_log("TODO - make comb here\n");
-	}
-	for (unsigned int i = 0; i < BU_PTBL_LEN(data->objs); i++){
-	    struct csg_object_params *params = (struct csg_object_params *)BU_PTBL_GET(data->objs,i);
-	    switch (params->type) {
-		case ARB8:
-		    subbrep_to_csg_arb8(data, params, wdbp);
-		    break;
-		case PLANAR_VOLUME:
-		    bu_vls_free(&brep_name);
-		    subbrep_to_csg_planar(data, params, wdbp);
-		    break;
-		case CYLINDER:
-		    bu_vls_free(&brep_name);
-		    subbrep_to_csg_cylinder(data, params, wdbp);
-		    break;
-		case CONE:
-		    bu_vls_free(&brep_name);
-		    subbrep_to_csg_conic(data, params, wdbp);
-		    break;
-		case SPHERE:
-		    bu_vls_free(&brep_name);
-		    break;
-		case ELLIPSOID:
-		    bu_vls_free(&brep_name);
-		    break;
-		case TORUS:
-		    bu_vls_free(&brep_name);
-		    break;
-		default:
-		    break;
+	    struct wmember wcomb;
+	    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
+	    struct bu_vls member_name = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&comb_name, "comb_%s.c", bu_vls_addr(data->key));
+
+	    BU_LIST_INIT(&wcomb.l);
+
+
+
+	    bu_log("make comb %s\n", bu_vls_addr(data->key));
+	    for (unsigned int i = 0; i < BU_PTBL_LEN(data->objs); i++){
+		struct csg_object_params *params = (struct csg_object_params *)BU_PTBL_GET(data->objs,i);
+		switch (params->type) {
+		    case ARB8:
+			subbrep_to_csg_arb8(data, params, wdbp, &wcomb);
+			break;
+		    case PLANAR_VOLUME:
+			bu_vls_free(&brep_name);
+			subbrep_to_csg_planar(data, params, wdbp, &wcomb);
+			break;
+		    case CYLINDER:
+			bu_vls_free(&brep_name);
+			subbrep_to_csg_cylinder(data, params, wdbp, &wcomb);
+			break;
+		    case CONE:
+			bu_vls_free(&brep_name);
+			subbrep_to_csg_conic(data, params, wdbp, &wcomb);
+			break;
+		    case SPHERE:
+			bu_vls_free(&brep_name);
+			break;
+		    case ELLIPSOID:
+			bu_vls_free(&brep_name);
+			break;
+		    case TORUS:
+			bu_vls_free(&brep_name);
+			break;
+		    default:
+			break;
+		}
 	    }
+	    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
+	    bu_vls_free(&member_name);
+	    bu_vls_free(&comb_name);
 	}
     }
     return 0;
@@ -290,22 +306,13 @@ main(int argc, char *argv[])
     for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
 	struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(subbreps, i);
 	//print_subbrep_object(obj, "");
-	if (obj->type == BREP) {
-	    int ret = subbrep_split(obj);
-	    if (!ret) {
-		(void)make_shapes(obj, wdbp);
-	    } else {
-		// first, make the comb
-		(void)make_shapes(obj, wdbp);
-		// next, add its children
-		for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
-		    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, j);
-		   // print_subbrep_object(cobj, "  ");
-		    (void)make_shapes(cobj, wdbp);
-		}
-		    }
-	} else {
-	    (void)make_shapes(obj, wdbp);
+	// first, make the comb (or, if we have a brep, make that)
+	(void)make_shapes(obj, wdbp);
+	// next, add its children
+	for (unsigned int j = 0; j < BU_PTBL_LEN(obj->children); j++){
+	    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, j);
+	    // print_subbrep_object(cobj, "  ");
+	    (void)make_shapes(cobj, wdbp);
 	}
 	subbrep_object_free(obj);
 	BU_PUT(obj, struct subbrep_object_data);

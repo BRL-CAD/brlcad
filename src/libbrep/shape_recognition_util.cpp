@@ -125,7 +125,8 @@ highest_order_face(struct subbrep_object_data *data)
     array_to_set(&faces, data->faces, data->faces_cnt);
     for (f_it = faces.begin(); f_it != faces.end(); f_it++) {
 	int ind = *f_it;
-	int surface_type = (int)GetSurfaceType(data->brep->m_F[ind].SurfaceOf(), NULL);
+	ON_Surface *s = data->brep->m_F[ind].SurfaceOf()->Duplicate();
+	int surface_type = (int)GetSurfaceType(s, NULL);
 	switch (surface_type) {
 	    case SURFACE_PLANE:
 		planar++;
@@ -169,20 +170,6 @@ highest_order_face(struct subbrep_object_data *data)
 		break;
 	}
     }
-#if 0
-    if (!general)
-	std::cout << "highest order face: " << hof << "(" << hofo << ")\n";
-
-    std::cout << "\n";
-    std::cout << bu_vls_addr(data->key) << ":\n";
-    std::cout << "planar_cnt: " << planar << "\n";
-    std::cout << "spherical_cnt: " << spherical << "\n";
-    std::cout << "cylindrical_cnt: " << cylindrical << "\n";
-    std::cout << "cone_cnt: " << cone << "\n";
-    std::cout << "torus_cnt: " << torus << "\n";
-    std::cout << "general_cnt: " << general << "\n";
-    std::cout << "\n";
-#endif
     return hofo;
 }
 
@@ -270,7 +257,6 @@ face_set_key(std::set<int> fset)
 	s_it2++;
 	if (s_it2 != fset.end()) bu_vls_printf(&vls_key, "_");
     }
-    bu_vls_printf(&vls_key, ".s");
     key.append(bu_vls_addr(&vls_key));
     bu_vls_free(&vls_key);
     return key;

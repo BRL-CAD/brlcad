@@ -104,8 +104,17 @@ find_subbreps(const ON_Brep *brep)
 	    set_to_array(&(new_obj->fol), &(new_obj->fol_cnt), &fol);
 	    set_to_array(&(new_obj->fil), &(new_obj->fil_cnt), &fil);
 
-	    if (subbrep_shape_recognize(new_obj) == BREP) {
+	    surface_t hof = highest_order_face(new_obj);
+	    if (hof >= SURFACE_GENERAL) {
+		new_obj->type = BREP;
 		(void)subbrep_make_brep(new_obj);
+		std::cout << "general surface present: " << bu_vls_addr(new_obj->key) << "\n";
+	    } else {
+		int split = subbrep_split(new_obj);
+		if (!split) {
+		    (void)subbrep_make_brep(new_obj);
+		    std::cout << "split unsuccessful: " << bu_vls_addr(new_obj->key) << "\n";
+		}
 	    }
 
 	    bu_ptbl_ins(subbreps, (long *)new_obj);
@@ -235,16 +244,10 @@ add_loops_from_face(int f_ind, struct subbrep_object_data *data, std::set<int> *
 int
 subbrep_split(struct subbrep_object_data *data)
 {
-    //if (BU_STR_EQUAL(bu_vls_addr(data->key), "325_326_441_527_528.s")) {
+    //if (BU_STR_EQUAL(bu_vls_addr(data->key), "325_326_441_527_528")) {
     //	std::cout << "looking at 325_326_441_527_528\n";
     //}
 
-    surface_t hof = highest_order_face(data);
-    if (hof >= SURFACE_GENERAL) {
-	data->type = BREP;
-	std::cout << "general surface present: " << bu_vls_addr(data->key) << "\n\n";
-	return 0;
-    }
     std::set<int> processed_faces;
     std::set<std::string> subbrep_keys;
     /* For each face, identify the candidate solid type.  If that
