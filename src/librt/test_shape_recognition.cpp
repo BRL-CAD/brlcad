@@ -123,7 +123,8 @@ subbrep_to_csg_arb8(struct subbrep_object_data *data, struct csg_object_params *
 	bu_vls_sprintf(&prim_name, "arb8_%s.s", bu_vls_addr(data->key));
 
 	mk_arb8(wdbp, bu_vls_addr(&prim_name), (const fastf_t *)params->p);
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, WMOP_UNION);
+	std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
 	return 1;
     } else {
@@ -173,7 +174,8 @@ subbrep_to_csg_cylinder(struct subbrep_object_data *data, struct csg_object_para
 	bu_vls_sprintf(&prim_name, "rcc_%s.s", bu_vls_addr(data->key));
 
 	mk_rcc(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->radius);
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, WMOP_UNION);
+	std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
 	return 1;
     }
@@ -188,7 +190,8 @@ subbrep_to_csg_conic(struct subbrep_object_data *data, struct csg_object_params 
 	bu_vls_sprintf(&prim_name, "trc_%s.s", bu_vls_addr(data->key));
 
 	mk_cone(wdbp, bu_vls_addr(&prim_name), params->origin, params->hv, params->height, params->radius, params->r2);
-	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, WMOP_UNION);
+	std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
 	bu_vls_free(&prim_name);
 	return 1;
     }

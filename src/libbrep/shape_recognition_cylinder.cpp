@@ -147,6 +147,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
     obj->type = CYLINDER;
+    obj->bool_op= 'u';  // TODO - not always union
     obj->origin[0] = set1_c.Center().x;
     obj->origin[1] = set1_c.Center().y;
     obj->origin[2] = set1_c.Center().z;
@@ -483,6 +484,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
 	    obj->type = CYLINDER;
+	    obj->bool_op= 'u'; // TODO - not always union
 	    obj->origin[0] = set1_c.Center().x;
 	    obj->origin[1] = set1_c.Center().y;
 	    obj->origin[2] = set1_c.Center().z;
@@ -532,6 +534,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
 	    obj->type = CYLINDER;
+	    obj->bool_op = 'u';
 	    obj->origin[0] = set1_c.Center().x;
 	    obj->origin[1] = set1_c.Center().y;
 	    obj->origin[2] = set1_c.Center().z;
@@ -668,6 +671,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    p2 = p2 - v1;
 	    p3 = p3 - v1;
 	    p4 = p4 + v1;
+	    ON_3dVector hpad = p3 - p2;
+	    hpad.Unitize();
+	    hpad = hpad * (cyl_axis.Length() * 0.01);
+	    p1 = p1 - hpad;
+	    p2 = p2 - hpad;
+	    p3 = p3 + hpad;
+	    p4 = p4 + hpad;
 
 	    // Once the final 1,2,3,4 points have been determined, use
 	    // the pcyl normal direction and the cylinder radius to
@@ -681,6 +691,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    p8 = p4 + arb_side;
 
 	    arb->type = ARB8;
+	    arb->bool_op = '-';
 	    arb->p[0][0] = p1.x;
 	    arb->p[0][1] = p1.y;
 	    arb->p[0][2] = p1.z;

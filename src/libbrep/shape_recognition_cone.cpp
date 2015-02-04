@@ -118,6 +118,7 @@ subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol)
     BU_GET(obj, struct csg_object_params);
 
     obj->type = CONE;
+    obj->bool_op = 'u';  //TODO - not always a union - need to determine positive/negative
     obj->origin[0] = cone.BasePoint().x;
     obj->origin[1] = cone.BasePoint().y;
     obj->origin[2] = cone.BasePoint().z;
@@ -229,6 +230,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
 	struct csg_object_params * obj;
         BU_GET(obj, struct csg_object_params);
 	obj->type = CONE;
+	obj->bool_op = 'u';  //TODO - not always a union - need to determine positive/negative
 	obj->origin[0] = closest_to_base.x;
 	obj->origin[1] = closest_to_base.y;
 	obj->origin[2] = closest_to_base.z;

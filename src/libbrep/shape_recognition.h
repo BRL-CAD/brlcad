@@ -82,7 +82,7 @@ void array_to_set(std::set<int> *set, int *array, int array_cnt);
  * be matched by the shape recognition logic */
 struct csg_object_params {
     volume_t type;
-    int bool_op; /* Boolean operator - 0 = unassigned, 1 = union, 2 = subtraction, 3 = intersection */
+    char bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
     struct csg_object_params *sub_object; // if a comb needs to be subtracted...
     point_t origin;
     vect_t hv;
