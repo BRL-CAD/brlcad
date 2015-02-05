@@ -50,7 +50,7 @@ usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s [ -d  pixeldepth ] r g b R G B [ < infile > outfile]\n",
+    (void) fprintf(stderr, "Usage: %s [ -d  pixeldepth ] r g b R G B < infile > outfile\n",
 		   progname);
     bu_exit (1, NULL);
 }
@@ -99,7 +99,7 @@ int main(int ac, char **av)
 	usage("missing pixel value(s)\n");
 
     if (isatty(fileno(stdout)) || isatty(fileno(stdin)))
-	usage("Redirect standard output\n");
+	usage("Redirect standard input and output\n");
 
     /* get pixel values */
     r = atoi(av[i++]);
