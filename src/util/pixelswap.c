@@ -94,7 +94,7 @@ int main(int ac, char **av)
 /* if ac == 1, there is only 1 argument; i.e., run-with-no-arguments
  */
     if (ac == 1) usage("");
-    
+
     if (i+6 > ac)
 	usage("missing pixel value(s)\n");
 
