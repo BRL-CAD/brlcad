@@ -636,6 +636,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    std::cout << "v3 ("; pout(v3->Point()); std::cout << ")\n";
 	    std::cout << "v4 ("; pout(v4->Point()); std::cout << ")\n";
 #endif
+
 	    // Before we manipulate the points for arb construction,
 	    // see if we need to use them to define a new face.
 	    if (!data->is_island) {
@@ -680,7 +681,10 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // the knowledge of the distance between p1/p2.  We only need
 	    // to add enough extra length to clear the cylinder, which
 	    // means the full radius length is almost always overkill.
-	    ON_3dPoint p1, p2, p3, p4;
+	    ON_3dPoint p1 = v1->Point();
+	    ON_3dPoint p2 = v2->Point();
+	    ON_3dPoint p3 = v3->Point();
+	    ON_3dPoint p4 = v4->Point();
 	    vv1.Unitize();
 	    vv1 = vv1 * set1_c.Radius();
 	    p1 = p1 + vv1;
