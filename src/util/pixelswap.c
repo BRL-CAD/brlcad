@@ -90,7 +90,12 @@ int main(int ac, char **av)
     unsigned char r, g, b, R, G, B;
     size_t ret;
 
-    if ((i=parse_args(ac, av))+6 > ac)
+    i=parse_args(ac, av);
+/* if ac == 1, there is only 1 argument; i.e., run-with-no-arguments
+ */
+    if (ac == 1) usage("");
+    
+    if (i+6 > ac)
 	usage("missing pixel value(s)\n");
 
     if (isatty(fileno(stdout)) || isatty(fileno(stdin)))
