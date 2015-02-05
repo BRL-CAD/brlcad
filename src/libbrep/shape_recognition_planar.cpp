@@ -24,39 +24,93 @@ subbrep_is_planar(struct subbrep_object_data *data)
 
 // TODO - implement tests to recognize arb4-arb8 and valid arbn (no concave face) primitives
 
-// Returns true if point set forms a convex polyhedron, and false otherwise
-bool
+// Returns 1 if point set forms a convex polyhedron, 0 if the point set
+// forms a degenerate chull, and -1 if the point set is concave
+int
 convex_point_set(struct subbrep_object_data *data, std::set<int> *verts)
 {
     // Use chull3d to find the set of vertices that are on the convex
     // hull.  If all of them are, the point set defines a convex polyhedron.
-    // If the points are coplanar, return false - not a volume
+    // If the points are coplanar, return 0 - not a volume
+    return 0;
 }
 
-
+/* These functions will return 2 if successful, 1 if unsuccessful but point set
+ * is convex, 0 if unsuccessful and vertex set's chull is degenerate (i.e. the
+ * planar component of this CSG shape contributes no positive volume),  and -1
+ * if unsuccessful and point set is neither degenerate nor convex */
 int
 point_set_is_arb4(struct subbrep_object_data *data, std::set<int> *verts)
 {
+    int is_convex = convex_point_set(data, verts);
+    if (is_convex == 1) {
+	// TODO - deduce and set up proper arb4 point ordering
+	return 2;
+    }
+    return 0;
 }
 int
 point_set_is_arb5(struct subbrep_object_data *data, std::set<int> *verts)
 {
+    int is_convex = convex_point_set(data, verts);
+
+    if (!is_convex == 1) {
+	return is_convex;
+    }
+    // TODO - arb5 test
+    return 0;
 }
 int
 point_set_is_arb6(struct subbrep_object_data *data, std::set<int> *verts)
 {
+    int is_convex = convex_point_set(data, verts);
+
+    if (!is_convex == 1) {
+	return is_convex;
+    }
+    // TODO - arb6 test
+    return 0;
 }
 int
 point_set_is_arb7(struct subbrep_object_data *data, std::set<int> *verts)
 {
+    int is_convex = convex_point_set(data, verts);
+
+    if (!is_convex == 1) {
+	return is_convex;
+    }
+    // TODO - arb7 test
+    return 0;
 }
 int
 point_set_is_arb8(struct subbrep_object_data *data, std::set<int> *verts)
 {
+    int is_convex = convex_point_set(data, verts);
+
+    if (!is_convex == 1) {
+	return is_convex;
+    }
+    // TODO - arb8 test
+    return 0;
 }
+
+/* If we're going with an arbn, we need to add one plane for each face.  To
+ * make sure the normal is in the correct direction, find the center point of
+ * the verts and the center point of the face verts to construct a vector which
+ * can be used in a dot product test with the face normal.*/
 int
-point_set_is_arbn(struct subbrep_object_data *data, std::set<int> *verts)
+point_set_is_arbn(struct subbrep_object_data *data, std::set<int> *faces, std::set<int> *verts, int do_test)
 {
+    int is_convex;
+    if (!do_test) {
+	is_convex = 1;
+    } else {
+	is_convex = convex_point_set(data, verts);
+    }
+    if (!is_convex == 1) return is_convex;
+
+    // TODO - arbn assembly
+    return 2;
 }
 
 // In the worst case, make a brep for later conversion into an nmg.
@@ -65,20 +119,45 @@ point_set_is_arbn(struct subbrep_object_data *data, std::set<int> *verts)
 int
 subbrep_make_planar_brep(struct subbrep_object_data *data)
 {
+    return 0;
 }
+
+int
+planar_switch(int ret, struct subbrep_object_data *data, std::set<int> *faces, std::set<int> *verts)
+{
+    switch (ret) {
+	case -1:
+	    return subbrep_make_planar_brep(data);
+	    break;
+	case 0:
+	    return 0;
+	    break;
+	case 1:
+	    return point_set_is_arbn(data, faces, verts, 0);
+	    break;
+	case 2:
+	    return 1;
+	    break;
+    }
+    return 0;
+}
+
 
 int
 subbrep_make_planar(struct subbrep_object_data *data)
 {
     // First step is to count vertices, using the edges
     std::set<int> subbrep_verts;
+    std::set<int> faces;
     for (int i = 0; i < data->edges_cnt; i++) {
 	const ON_BrepEdge *edge = &(data->brep->m_E[i]);
 	subbrep_verts.insert(edge->Vertex(0)->m_vertex_index);
 	subbrep_verts.insert(edge->Vertex(1)->m_vertex_index);
     }
+    array_to_set(&faces, data->faces, data->faces_cnt);
 
     int vert_cnt = subbrep_verts.size();
+    int ret = 0;
     switch (vert_cnt) {
 	case 0:
 	    std::cout << "no verts???\n";
@@ -97,48 +176,30 @@ subbrep_make_planar(struct subbrep_object_data *data)
 	    return 0;
 	    break;
 	case 4:
-	    if (!point_set_is_arb4(data, &subbrep_verts)) {
-		return subbrep_make_planar_brep(data);
+	    if (point_set_is_arb4(data, &subbrep_verts) != 2) {
+		return 0;
 	    }
 	    return 1;
 	    break;
 	case 5:
-	    if (!point_set_is_arb5(data, &subbrep_verts)) {
-		if (!point_set_is_arbn(data, &subbrep_verts)) {
-		    return subbrep_make_planar_brep(data);
-		}
-	    }
-	    return 1;
+	    ret = point_set_is_arb5(data, &subbrep_verts);
+	    return planar_switch(ret, data, &faces, &subbrep_verts);
 	    break;
 	case 6:
-	    if (!point_set_is_arb6(data, &subbrep_verts)) {
-		if (!point_set_is_arbn(data, &subbrep_verts)) {
-		    return subbrep_make_planar_brep(data);
-		}
-	    }
-	    return 1;
+	    ret = point_set_is_arb6(data, &subbrep_verts);
+	    return planar_switch(ret, data, &faces, &subbrep_verts);
 	    break;
 	case 7:
-	    if (!point_set_is_arb7(data, &subbrep_verts)) {
-		if (!point_set_is_arbn(data, &subbrep_verts)) {
-		    return subbrep_make_planar_brep(data);
-		}
-	    }
-	    return 1;
+	    ret = point_set_is_arb7(data, &subbrep_verts);
+	    return planar_switch(ret, data, &faces, &subbrep_verts);
 	    break;
 	case 8:
-	    if (!point_set_is_arb8(data, &subbrep_verts)) {
-		if (!point_set_is_arbn(data, &subbrep_verts)) {
-		    return subbrep_make_planar_brep(data);
-		}
-	    }
-	    return 1;
+	    ret = point_set_is_arb8(data, &subbrep_verts);
+	    return planar_switch(ret, data, &faces, &subbrep_verts);
 	    break;
 	default:
-	    if (!point_set_is_arbn(data, &subbrep_verts)) {
-		return subbrep_make_planar_brep(data);
-	    }
-	    return 1;
+	    ret = point_set_is_arbn(data, &faces, &subbrep_verts, 1);
+	    return planar_switch(ret, data, &faces, &subbrep_verts);
 	    break;
 
     }
