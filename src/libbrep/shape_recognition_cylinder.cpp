@@ -658,8 +658,8 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		//
 		// TODO - could the final planar volume be assembled all
 		// at once?  In theory we have enough information to do that...
-		if (!data->local_brep) {
-		    //subbrep_make_planar_brep(data);
+		if (!data->planar_obj) {
+		    subbrep_make_planar(data);
 		}
 	    }
 
@@ -711,6 +711,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    p8 = p4 + arb_side;
 
 	    arb_obj->params->bool_op = '-';
+	    arb_obj->params->arb_type = 8;
 	    arb_obj->params->p[0][0] = p1.x;
 	    arb_obj->params->p[0][1] = p1.y;
 	    arb_obj->params->p[0][2] = p1.z;

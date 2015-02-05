@@ -82,13 +82,14 @@ void array_to_set(std::set<int> *set, int *array, int array_cnt);
  * be matched by the shape recognition logic */
 struct csg_object_params {
     char bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
-    struct csg_object_params *sub_object; // if a comb needs to be subtracted...
     point_t origin;
     vect_t hv;
     fastf_t radius;
     fastf_t r2;
     fastf_t height;
+    int arb_type;
     point_t p[8];
+    plane_t *planes;
 };
 
 struct subbrep_object_data {
@@ -106,8 +107,10 @@ struct subbrep_object_data {
 
     const ON_Brep *brep;
     ON_Brep *local_brep;
+    ON_Brep *planar_brep;
     volume_t type;
     csg_object_params *params;
+    csg_object_params *planar_obj;
     subbrep_object_data *parent;
     struct bu_ptbl *children;
     int is_island;
@@ -118,6 +121,7 @@ void subbrep_object_free(struct subbrep_object_data *obj);
 
 int subbrep_split(struct subbrep_object_data *data);
 int subbrep_make_brep(struct subbrep_object_data *data);
+int subbrep_make_planar(struct subbrep_object_data *data);
 
 struct bu_ptbl *find_subbreps(const ON_Brep *brep);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
