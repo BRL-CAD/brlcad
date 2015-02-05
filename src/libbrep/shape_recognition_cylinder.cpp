@@ -306,13 +306,11 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		if (!arc1_circle_set) {
 		    arc1_circle_set = 1;
 		    set1_c = circ;
-		    //std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
 		} else {
 		    if (!arc2_circle_set) {
 			if (!(NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cyl_tol))){
 			    arc2_circle_set = 1;
 			    set2_c = circ;
-			    //std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
 			}
 		    }
 		}
@@ -327,7 +325,10 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    }
 		}
 		if (!assigned) {
-		    std::cout << "found extra circle - no go\n";
+		    std::cout << "found extra circle - no go: " << bu_vls_addr(data->key) << "\n";
+		    std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
+		    std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
+		    std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
 		    delete ecv;
 		    delete ecv2;
 		    return 0;
@@ -640,9 +641,25 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    if (!data->is_island) {
 		// The cylinder shape is a partial cylinder, and it is not
 		// topologically isolated, so we need to make a new face
-		// to replace this one.  Add it to the local brep, which
-		// should have the other planar faces.
+		// to replace this one.
 		std::cout << "need new face - use pcyl plane and 4 verts\n";
+
+		// First, see if a local planar brep has been generated for
+		// this shape.  Such a brep is not generated up front, because
+		// there is no way to be sure a planar parent is needed until
+		// we hit a case like this - for example, a brep consisting of
+		// stacked cylinders of different diameters will have multiple
+		// planar surfaces, but can be completely described without use
+		// of planar volumes in the final CSG expression.  If another
+		// shape has already triggered the generation we don't want to
+		// do it again,  but the first shape to make the need clear has
+		// to trigger the build.
+		//
+		// TODO - could the final planar volume be assembled all
+		// at once?  In theory we have enough information to do that...
+		if (!data->local_brep) {
+		    //subbrep_make_planar_brep(data);
+		}
 	    }
 
 
