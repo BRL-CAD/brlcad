@@ -50,7 +50,7 @@ usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s [ -d ] r g b R G B [ < infile > outfile]\n",
+    (void) fprintf(stderr, "Usage: %s [ -d  pixeldepth ] r g b R G B [ < infile > outfile]\n",
 		   progname);
     bu_exit (1, NULL);
 }
@@ -66,20 +66,15 @@ parse_args(int ac, char **av)
     else
 	++progname;
 
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1) {
-	if (bu_optopt == '?') c = 'h';
 	switch (c) {
 	    case 'd'	: if ((c=atoi(bu_optarg)) > 0)
 		depth = c;
 	    else
 		fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
 		break;
-	    case 'h'	: usage(""); break;
-	    default	: usage("Bad flag specified\n"); break;
+	    default	: usage(""); break;
 	}
     }
 
