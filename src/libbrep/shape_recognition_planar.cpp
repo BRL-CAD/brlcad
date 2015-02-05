@@ -38,6 +38,16 @@ subbrep_is_planar(struct subbrep_object_data *data)
 // polyhedron is not self intersecting.  If some edges do intersect (probably
 // at least three...) then those edges identify sub-shapes that need to be
 // constructed.
+//
+// Note that this is also a concern for non-planar surfaces that have been
+// reduced to planar surfaces as part of the process - probably should
+// incorporate a bounding box test to determine if such surfaces can be
+// part of sub-object definitions (say, a cone subtracted from a subtracting
+// cylinder to make a positive cone volume inside the cylinder) or if the
+// cone has to be a top level unioned positive object (if the cone's apex
+// point is outside the cylinder's subtracting area, for example, the tip
+// of the code will not be properly added as a positive volume if it is just
+// a subtraction from the cylinder.
 
 
 // Returns 1 if point set forms a convex polyhedron, 0 if the point set
