@@ -22,7 +22,23 @@ subbrep_is_planar(struct subbrep_object_data *data)
     return 1;
 }
 
-// TODO - implement tests to recognize arb4-arb8 and valid arbn (no concave face) primitives
+
+// TODO - need a way to detect if a set of planar faces would form a
+// self-intersecting polyhedron.  Self-intersecting polyhedrons are the ones
+// with the potential to make both positive and negative contributions to a
+// solid. One possible idea:
+//
+// For all edges in polyhedron test whether each edge intersects any face in
+// the polyhedron to which it does not belong.  The test can be simple - for
+// each vertex, construct a vector from the vertex to some point on the
+// candidate face (center point is probably a good start) and see if the dot
+// products of those two vectors with the face normal vector agree in sign.
+// For a given edge, if all dot products agree in pair sets, then the edge does
+// not intersect any face in the polyhedron.  If no edges intersect, the
+// polyhedron is not self intersecting.  If some edges do intersect (probably
+// at least three...) then those edges identify sub-shapes that need to be
+// constructed.
+
 
 // Returns 1 if point set forms a convex polyhedron, 0 if the point set
 // forms a degenerate chull, and -1 if the point set is concave
@@ -119,6 +135,8 @@ point_set_is_arbn(struct subbrep_object_data *data, std::set<int> *faces, std::s
 int
 subbrep_make_planar_brep(struct subbrep_object_data *data)
 {
+    // TODO - check for self intersections in the candidate shape, and handle
+    // if any are discovered.
     return 0;
 }
 
