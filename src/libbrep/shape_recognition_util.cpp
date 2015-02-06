@@ -227,22 +227,37 @@ void
 subbrep_object_free(struct subbrep_object_data *obj)
 {
     if (!obj) return;
-    if (obj->params->planes) bu_free(obj->params->planes, "csg planes");
-    BU_PUT(obj->params, struct csg_object_params);
-    if (obj->planar_obj) BU_PUT(obj->planar_obj, struct subbrep_object_data);
-    bu_vls_free(obj->key);
-    BU_PUT(obj->key, struct bu_vls);
-    for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){
-	//struct subbrep_object_data *obj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, i);
-	//subbrep_object_free(obj);
+    if (obj->params && obj->params->planes) bu_free(obj->params->planes, "csg planes");
+    if (obj->params) BU_PUT(obj->params, struct csg_object_params);
+    obj->params = NULL;
+    if (obj->planar_obj) {
+	subbrep_object_free(obj->planar_obj);
+	BU_PUT(obj->planar_obj, struct subbrep_object_data);
     }
-    bu_ptbl_free(obj->children);
-    BU_PUT(obj->children, struct bu_ptbl);
+    obj->planar_obj = NULL;
+    bu_vls_free(obj->key);
+    if (obj->children) {
+	for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){
+	    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, i);
+	    subbrep_object_free(cobj);
+	    BU_PUT(cobj, struct subbrep_object_data);
+	}
+	bu_ptbl_free(obj->children);
+	BU_PUT(obj->children, struct bu_ptbl);
+    }
+    obj->children = NULL;
     if (obj->faces) bu_free(obj->faces, "obj faces");
+    obj->faces = NULL;
     if (obj->loops) bu_free(obj->loops, "obj loops");
+    obj->loops = NULL;
     if (obj->edges) bu_free(obj->edges, "obj edges");
+    obj->edges = NULL;
     if (obj->fol) bu_free(obj->fol, "obj fol");
+    obj->fol = NULL;
     if (obj->fil) bu_free(obj->fil, "obj fil");
+    obj->fil = NULL;
+    if (obj->planar_obj_vert_map) bu_free(obj->planar_obj_vert_map, "obj fil");
+    obj->planar_obj_vert_map = NULL;
     obj->parent = NULL;
 }
 
