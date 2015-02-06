@@ -288,6 +288,32 @@ array_to_set(std::set<int> *set, int *array, int array_cnt)
     }
 }
 
+
+void
+map_to_array(int **array, int *array_cnt, std::map<int,int> *map)
+{
+    std::map<int,int>::iterator m_it;
+    int i = 0;
+    (*array_cnt) = map->size();
+    if ((*array_cnt) > 0) {
+	(*array) = (int *)bu_calloc((*array_cnt)*2, sizeof(int), "array");
+	for (m_it = map->begin(); m_it != map->end(); m_it++) {
+	    (*array)[i] = m_it->first;
+	    (*array)[i+*array_cnt] = m_it->first;
+	    i++;
+	}
+    }
+}
+
+void
+array_to_map(std::map<int,int> *map, int *array, int array_cnt)
+{
+    for (int i = 0; i < array_cnt; i++) {
+	(*map)[array[i]] = array[array_cnt+i];
+    }
+}
+
+
 // Remove degenerate edge sets. A degenerate edge set is defined as two
 // linear segments having the same two vertices.  (To be sure, we should probably
 // check curve directions in loops in some fashion...)

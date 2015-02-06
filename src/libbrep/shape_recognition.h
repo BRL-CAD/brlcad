@@ -110,6 +110,8 @@ struct subbrep_object_data {
     volume_t type;
     csg_object_params *params;
     subbrep_object_data *planar_obj;
+    int planar_obj_vert_cnt;
+    int *planar_obj_vert_map;
     subbrep_object_data *parent;
     struct bu_ptbl *children;
     int is_island;
@@ -146,7 +148,8 @@ std::string face_set_key(std::set<int> fset);
 surface_t highest_order_face(struct subbrep_object_data *data);
 void set_to_array(int **array, int *array_cnt, std::set<int> *set);
 void array_to_set(std::set<int> *set, int *array, int array_cnt);
-
+void map_to_array(int **array, int *array_cnt, std::map<int,int> *map);
+void array_to_map(std::map<int,int> *map, int *array, int array_cnt);
 
 #endif /* SHAPE_RECOGNITION_H */
 

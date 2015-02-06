@@ -181,8 +181,8 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
         }
     }
 
-
-
+    // Need to preserve the vertex map for this, since we're not done building up the brep
+    map_to_array(&(data->planar_obj_vert_map), &(data->planar_obj_vert_cnt), &vertex_map);
 }
 
 
