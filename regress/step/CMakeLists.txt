@@ -1,5 +1,5 @@
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eval_conversion.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/eval_conv.cmake COPY_ONLY)
+  ${CMAKE_CURRENT_BINARY_DIR}/eval_conv.cmake COPYONLY)
 
 macro(STEP_G_TEST testnum_in filename_in md5sum_in comment_in)
 
