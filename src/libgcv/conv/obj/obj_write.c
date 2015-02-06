@@ -189,7 +189,7 @@ static const struct gcv_converter converters[] = {
 const struct gcv_plugin_info gcv_plugin_conv_obj_write = {converters};
 
 
-static void
+static int
 nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
 	   int UNUSED(region_id), int aircode, int los, int material_id)
 {
@@ -270,7 +270,8 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
 			bu_ptbl_free(&verts);
 			bu_free(region_name, "region name");
 			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
-			bu_exit(1, "ERROR: Can't find vertex in list!");
+			bu_log("ERROR: Can't find vertex in list!");
+			return 0;
 		    }
 		}
 
@@ -278,7 +279,8 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
 		    bu_ptbl_free(&verts);
 		    bu_free(region_name, "region name");
 		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
-		    bu_exit(1, "ERROR: LU is not a triangle\n");
+		    bu_log("ERROR: LU is not a triangle\n");
+		    return 0;
 		} else if (vert_count < 3)
 		    continue;
 
@@ -387,7 +389,8 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
 			bu_ptbl_free(&verts);
 			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
 			bu_free(region_name, "region name");
-			bu_exit(1, "Can't find vertex in list!\n");
+			bu_log("Can't find vertex in list!\n");
+			return 0;
 		    }
 
 		    if (use_normals) {
@@ -405,7 +408,8 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
 		    bu_ptbl_free(&verts);
 		    bu_free(region_name, "region name");
 		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
-		    bu_exit(1, "ERROR: LU is not a triangle\n");
+		    bu_log("ERROR: LU is not a triangle\n");
+		    return 0;
 		}
 	    }
 	}
@@ -425,19 +429,23 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp,
     }
 
     bu_free(region_name, "region name");
+    return 1;
 }
 
 
-static void
+static int
 process_triangulation(struct nmgregion *r, const struct db_full_path *pathp,
 		      struct db_tree_state *tsp)
 {
+    int success = 1;
+
     if (!BU_SETJUMP) {
 	/* try */
 
 	/* Write the region to the TANKILL file */
-	nmg_to_obj(r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los,
-		   tsp->ts_gmater);
+	if (!nmg_to_obj(r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater)) {
+	    success = 0;
+	}
 
     } else {
 	/* catch */
@@ -468,6 +476,8 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp,
     }
 
     BU_UNSETJUMP;
+
+    return success;
 }
 
 
@@ -529,6 +539,7 @@ union tree *
 	do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 		      union tree *curtree, void *UNUSED(client_data))
 {
+    int success = 1;
     union tree *ret_tree;
     struct bu_list vhead;
     struct nmgregion *r;
@@ -593,9 +604,11 @@ union tree *
 	}
 
 	if (!empty_region && !empty_model) {
-	    process_triangulation(r, pathp, tsp);
-
-	    regions_written++;
+	    if (!process_triangulation(r, pathp, tsp)) {
+		success = 0;
+	    } else {
+		regions_written++;
+	    }
 
 	    BU_UNSETJUMP;
 	}
@@ -613,6 +626,10 @@ union tree *
 
 
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+
+    if (!success) {
+	return TREE_NULL;
+    }
 
     if (regions_tried > 0) {
 	float npercent;
