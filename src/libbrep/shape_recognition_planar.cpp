@@ -182,7 +182,7 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
     }
 
     // Need to preserve the vertex map for this, since we're not done building up the brep
-    map_to_array(&(data->planar_obj_vert_map), &(data->planar_obj_vert_cnt), &vertex_map);
+    map_to_array(&(data->planar_obj->planar_obj_vert_map), &(data->planar_obj->planar_obj_vert_cnt), &vertex_map);
 }
 
 
@@ -195,8 +195,121 @@ int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
     // create, find existing edges to re-use, and call NewFace with the
     // results.  At the end we should have just the faces needed
     // to define the planar volume of interest.
+    struct subbrep_object_data *pdata = data->planar_obj;
+    std::vector<int> edges;
+    ON_SimpleArray<ON_Curve *> curves_2d;
+    std::map<int, int> vert_map;
+    array_to_map(&vert_map, pdata->planar_obj_vert_map, pdata->planar_obj_vert_cnt);
 
-    // First step - find or create ON_BrepEdge objects using the vert_loop.  
+    ON_3dPoint p1 = pdata->local_brep->m_V[vert_map[((*vert_loop)[0])->m_vertex_index]].Point();
+    ON_3dPoint p2 = pdata->local_brep->m_V[vert_map[((*vert_loop)[1])->m_vertex_index]].Point();
+    ON_3dPoint p3 = pdata->local_brep->m_V[vert_map[((*vert_loop)[2])->m_vertex_index]].Point();
+    ON_Plane loop_plane(p1, p2, p3);
+    ON_BoundingBox loop_pbox, cbox;
+
+      // get 2d trim curves
+    ON_Xform proj_to_plane;
+    proj_to_plane[0][0] = loop_plane.xaxis.x;
+    proj_to_plane[0][1] = loop_plane.xaxis.y;
+    proj_to_plane[0][2] = loop_plane.xaxis.z;
+    proj_to_plane[0][3] = -(loop_plane.xaxis*loop_plane.origin);
+    proj_to_plane[1][0] = loop_plane.yaxis.x;
+    proj_to_plane[1][1] = loop_plane.yaxis.y;
+    proj_to_plane[1][2] = loop_plane.yaxis.z;
+    proj_to_plane[1][3] = -(loop_plane.yaxis*loop_plane.origin);
+    proj_to_plane[2][0] = loop_plane.zaxis.x;
+    proj_to_plane[2][1] = loop_plane.zaxis.y;
+    proj_to_plane[2][2] = loop_plane.zaxis.z;
+    proj_to_plane[2][3] = -(loop_plane.zaxis*loop_plane.origin);
+    proj_to_plane[3][0] = 0.0;
+    proj_to_plane[3][1] = 0.0;
+    proj_to_plane[3][2] = 0.0;
+    proj_to_plane[3][3] = 1.0;
+
+    ON_PlaneSurface *s = new ON_PlaneSurface(loop_plane);
+    const int si = pdata->local_brep->AddSurface(s);
+
+    double flip = ON_DotProduct(loop_plane.Normal(), pcyl->Normal());
+
+    for (int i = 0; i < vert_loop->Count(); i++) {
+	int vind1, vind2;
+	const ON_BrepVertex *v1, *v2;
+	v1 = (*vert_loop)[i];
+	vind1 = vert_map[v1->m_vertex_index];
+	if (i < vert_loop->Count() - 1) {
+	    v2 = (*vert_loop)[i+1];
+	} else {
+	    v2 = (*vert_loop)[0];
+	}
+	vind2 = vert_map[v2->m_vertex_index];
+	ON_BrepVertex &new_v1 = pdata->local_brep->m_V[vind1];
+	ON_BrepVertex &new_v2 = pdata->local_brep->m_V[vind2];
+
+	// Because we may have already created a needed edge only in the new
+	// Brep with a previous face, we have to check all the edges in the new
+	// structure for a vertex match.
+	ON_BrepEdge *new_edgep;
+	int edge_found = 0;
+	for (int j = 0; j < pdata->local_brep->m_E.Count(); j++) {
+	    int ev1 = pdata->local_brep->m_E[j].Vertex(0)->m_vertex_index;
+	    int ev2 = pdata->local_brep->m_E[j].Vertex(1)->m_vertex_index;
+	    if ((ev1 == vind1) && (ev2 == vind2)) {
+		edges.push_back(pdata->local_brep->m_E[j].m_edge_index);
+		edge_found = 1;
+
+		// Get 2D curve from this edge's 3D curve
+		const ON_Curve *c3 = pdata->local_brep->m_E[j].EdgeCurveOf();
+		ON_NurbsCurve *c2 = new ON_NurbsCurve();
+		c3->GetNurbForm(*c2);
+		c2->Transform(proj_to_plane);
+		c2->GetBoundingBox(cbox);
+		c2->ChangeDimension(2);
+		c2->MakePiecewiseBezier(2);
+		curves_2d.Append(c2);
+		loop_pbox.Union(cbox);
+		break;
+	    }
+	}
+	if (!edge_found) {
+	    int c3i = pdata->local_brep->AddEdgeCurve(new ON_LineCurve(new_v1.Point(), new_v2.Point()));
+	    // Get 2D curve from this edge's 3D curve
+	    const ON_Curve *c3 = pdata->local_brep->m_C3[c3i];
+	    ON_NurbsCurve *c2 = new ON_NurbsCurve();
+	    c3->GetNurbForm(*c2);
+	    c2->Transform(proj_to_plane);
+	    c2->GetBoundingBox(cbox);
+	    c2->ChangeDimension(2);
+	    c2->MakePiecewiseBezier(2);
+	    curves_2d.Append(c2);
+	    loop_pbox.Union(cbox);
+
+	    ON_BrepEdge &new_edge = pdata->local_brep->NewEdge(pdata->local_brep->m_V[vind1], pdata->local_brep->m_V[vind2], c3i, NULL ,0);
+	    edges.push_back(new_edge.m_edge_index);
+	}
+    }
+
+    ON_BrepFace& face = pdata->local_brep->NewFace( si );
+    ON_BrepLoop& loop = pdata->local_brep->NewLoop(ON_BrepLoop::outer, face);
+    loop.m_pbox = loop_pbox;
+    for (int i = 0; i < vert_loop->Count(); i++) {
+	ON_NurbsCurve *c2 = (ON_NurbsCurve *)curves_2d[i];
+	int c2i = pdata->local_brep->AddTrimCurve(c2);
+	ON_BrepEdge &edge = pdata->local_brep->m_E[edges.at(i)];
+	ON_BrepTrim &trim = pdata->local_brep->NewTrim(edge, false, loop, c2i);
+	trim.m_type = ON_BrepTrim::boundary;
+	trim.m_tolerance[0] = 0.0;
+	trim.m_tolerance[1] = 0.0;
+    }
+
+    // set face domain
+    s->SetDomain(0, loop.m_pbox.m_min.x, loop.m_pbox.m_max.x );
+    s->SetDomain(1, loop.m_pbox.m_min.y, loop.m_pbox.m_max.y );
+    s->SetExtents(0,s->Domain(0));
+    s->SetExtents(1,s->Domain(1));
+
+    // need to update trim m_iso flags because we changed surface shape
+    pdata->local_brep->SetTrimIsoFlags(face);
+    if (flip < 0) pdata->local_brep->FlipFace(face);
 }
 
 

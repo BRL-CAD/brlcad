@@ -662,15 +662,17 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		// shape has already triggered the generation we don't want to
 		// do it again,  but the first shape to make the need clear has
 		// to trigger the build.
-		if (!data->planar_obj) {
-		    subbrep_planar_init(data);
+		if (data->parent) {
+		    if (!data->parent->planar_obj) {
+			subbrep_planar_init(data);
+		    }
+		    ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
+		    vert_loop.Append(v1);
+		    vert_loop.Append(v2);
+		    vert_loop.Append(v3);
+		    vert_loop.Append(v4);
+		    subbrep_add_planar_face(data->parent, &pcyl, &vert_loop);
 		}
-		ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
-		vert_loop.Append(v1);
-		vert_loop.Append(v2);
-		vert_loop.Append(v3);
-		vert_loop.Append(v4);
-		//subbrep_add_planar_face(data, pcyl, &vert_loop);
 	    }
 
 
