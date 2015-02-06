@@ -316,7 +316,7 @@ map_to_array(int **array, int *array_cnt, std::map<int,int> *map)
 	(*array) = (int *)bu_calloc((*array_cnt)*2, sizeof(int), "array");
 	for (m_it = map->begin(); m_it != map->end(); m_it++) {
 	    (*array)[i] = m_it->first;
-	    (*array)[i+*array_cnt] = m_it->first;
+	    (*array)[i+*array_cnt] = m_it->second;
 	    i++;
 	}
     }
