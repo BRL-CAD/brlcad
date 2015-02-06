@@ -663,12 +663,14 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		// do it again,  but the first shape to make the need clear has
 		// to trigger the build.
 		if (!data->planar_obj) {
-		    // TODO - define a subbrep_planar_init(data);
-		    BU_GET(data->planar_obj, struct subbrep_object_data);
-		    subbrep_object_init(data->planar_obj, data->brep);
-		    bu_vls_sprintf(arb_obj->key, "%s_planar", key.c_str());
+		    subbrep_planar_init(data);
 		}
-		//subbrep_add_planar_face(data->planar_obj, pcyl, &corner_pnts);
+		ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
+		vert_loop.Append(v1);
+		vert_loop.Append(v2);
+		vert_loop.Append(v3);
+		vert_loop.Append(v4);
+		//subbrep_add_planar_face(data, pcyl, &vert_loop);
 	    }
 
 

@@ -107,6 +107,7 @@ find_subbreps(const ON_Brep *brep)
 	    // Below this level, everything will be connected in some fashion
 	    // by the edge network.
 	    new_obj->is_island = 1;
+	    new_obj->parent = NULL;
 
 	    surface_t hof = highest_order_face(new_obj);
 	    if (hof >= SURFACE_GENERAL) {
@@ -340,6 +341,7 @@ subbrep_split(struct subbrep_object_data *data)
 	    set_to_array(&(new_obj->edges), &(new_obj->edges_cnt), &edges);
 	    new_obj->fol_cnt = 0;
 	    new_obj->fil_cnt = 0;
+	    new_obj->parent = data;
 
 	    new_obj->type = filters->type;
 	    switch (new_obj->type) {
@@ -535,6 +537,8 @@ subbrep_make_brep(struct subbrep_object_data *data)
 		}
 		if (vertex_map.find(old_trim->Vertex(0)->m_vertex_index) == vertex_map.end()) {
 		    ON_BrepVertex& newvs = data->local_brep->NewVertex(old_trim->Vertex(0)->Point(), old_trim->Vertex(0)->m_tolerance);
+		    vertex_map[old_trim->Vertex(0)->m_vertex_index] = newvs.m_vertex_index;
+
 		    ON_BrepTrim &nt = data->local_brep->NewSingularTrim(newvs, new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
 		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
 		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
