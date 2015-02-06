@@ -32,6 +32,10 @@
 extern int kill(pid_t, int);
 #endif
 
+#ifndef HAVE_KILL
+#include <TlHelp32.h>
+int bu_terminateWinProc(int process);
+#endif
 
 int
 bu_terminate(int process)
@@ -40,17 +44,61 @@ bu_terminate(int process)
 
 #ifdef HAVE_KILL
     /* kill() returns 0 for success */
-    successful = kill(process, SIGKILL);
+    successful = kill(-process, SIGKILL);
     successful = !successful;
 #else
-    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, (DWORD)process);
-    if (hProcess != NULL) {
-	successful = TerminateProcess(hProcess, 0);
-    }
+    bu_terminateWinProc(process);
 #endif
 
     return successful;
 }
+
+#ifndef HAVE_KILL
+int
+bu_terminateWinProc(int process)
+{
+    int successful = 0;
+    HANDLE hProcessSnap;
+    HANDLE hProcess;
+    PROCESSENTRY32 pe32 = {0};
+
+    pe32.dwSize = sizeof(PROCESSENTRY32);
+    hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hProcessSnap == INVALID_HANDLE_VALUE) {
+	return successful;
+    }
+
+    if (!Process32First(hProcessSnap, &pe32)) {
+	CloseHandle(hProcessSnap);
+	return successful;
+    }
+
+    /* First, find and kill the children */
+    do {
+	if (pe32.th32ParentProcessID == (DWORD)process) {
+#if 1
+	    bu_terminateWinProc((int)pe32.th32ProcessID);
+#else
+	    hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, pe32.th32ProcessID);
+	    if (hProcess != NULL) {
+		TerminateProcess(hProcess, 0);
+		CloseHandle(hProcess);
+	    }
+#endif
+	}
+    } while(Process32Next(hProcessSnap, &pe32));
+
+    /* Finally, kill the parent */
+    hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, (DWORD)process);
+    if (hProcess != NULL) {
+	successful = TerminateProcess(hProcess, 0);
+	CloseHandle(hProcess);
+    }
+
+    CloseHandle(hProcessSnap);
+    return successful;
+}
+#endif
 
 /*
  * Local Variables:
