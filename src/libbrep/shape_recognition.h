@@ -107,10 +107,9 @@ struct subbrep_object_data {
 
     const ON_Brep *brep;
     ON_Brep *local_brep;
-    ON_Brep *planar_brep;
     volume_t type;
     csg_object_params *params;
-    csg_object_params *planar_obj;
+    subbrep_object_data *planar_obj;
     subbrep_object_data *parent;
     struct bu_ptbl *children;
     int is_island;

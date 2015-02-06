@@ -229,7 +229,7 @@ subbrep_object_free(struct subbrep_object_data *obj)
     if (!obj) return;
     if (obj->params->planes) bu_free(obj->params->planes, "csg planes");
     BU_PUT(obj->params, struct csg_object_params);
-    if (obj->planar_obj) BU_PUT(obj->params, struct csg_object_params);
+    if (obj->planar_obj) BU_PUT(obj->planar_obj, struct subbrep_object_data);
     bu_vls_free(obj->key);
     BU_PUT(obj->key, struct bu_vls);
     for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){

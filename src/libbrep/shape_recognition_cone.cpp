@@ -217,7 +217,7 @@ cone_csg(struct subbrep_object_data *data, fastf_t cone_tol)
     }
 
     if (!arc2_circle_set) {
-	std::cout << "True cone!\n";
+	//std::cout << "True cone!\n";
 	data->type = CONE;
 
 	ON_3dVector hvect(cone.ApexPoint() - cone.BasePoint());

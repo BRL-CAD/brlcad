@@ -66,8 +66,8 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
 
     // Fourth, check that the two planes are parallel to each other.
     if (p1.Normal().IsParallelTo(p2.Normal(), cyl_tol) == 0) {
-        std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
-        std::cout << "p2 Normal: " << p2.Normal().x << "," << p2.Normal().y << "," << p2.Normal().z << "\n";
+        //std::cout << "p1 Normal: " << p1.Normal().x << "," << p1.Normal().y << "," << p1.Normal().z << "\n";
+        //std::cout << "p2 Normal: " << p2.Normal().x << "," << p2.Normal().y << "," << p2.Normal().z << "\n";
         return 0;
     }
 
@@ -487,6 +487,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    data->params->hv[2] = hvect.z;
 	    data->params->radius = set1_c.Radius();
 
+	    // If there are faces in the planar volume data matching a planar
+	    // face associated with this cylinder, remove them - a full cylinder
+	    // subshape will not contribute a planar face.
+	    std::set<int>::iterator p_it;
+	    for (p_it = planar_surfaces.begin(); p_it != planar_surfaces.end(); p_it++) {
+		//subbrep_remove_planar_face(data->planar_obj, *p_it);
+	    }
 	    return 1;
 	} else {
 	    // We have parallel faces and corners - we need to use an arb.
@@ -645,7 +652,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		// to replace this one.
 		std::cout << "need new face - use pcyl plane and 4 verts\n";
 
-		// First, see if a local planar brep has been generated for
+		// First, see if a local planar brep object has been generated for
 		// this shape.  Such a brep is not generated up front, because
 		// there is no way to be sure a planar parent is needed until
 		// we hit a case like this - for example, a brep consisting of
@@ -655,12 +662,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		// shape has already triggered the generation we don't want to
 		// do it again,  but the first shape to make the need clear has
 		// to trigger the build.
-		//
-		// TODO - could the final planar volume be assembled all
-		// at once?  In theory we have enough information to do that...
 		if (!data->planar_obj) {
-		    subbrep_make_planar(data);
+		    // TODO - define a subbrep_planar_init(data);
+		    BU_GET(data->planar_obj, struct subbrep_object_data);
+		    subbrep_object_init(data->planar_obj, data->brep);
+		    bu_vls_sprintf(arb_obj->key, "%s_planar", key.c_str());
 		}
+		//subbrep_add_planar_face(data->planar_obj, pcyl, &corner_pnts);
 	    }
 
 
