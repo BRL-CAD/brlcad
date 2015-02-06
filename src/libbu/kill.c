@@ -22,6 +22,9 @@
 
 /* system headers */
 #include <signal.h>
+#ifndef HAVE_KILL
+#  include <TlHelp32.h>
+#endif
 #include "bio.h"
 
 /* bu headers */
@@ -32,30 +35,26 @@
 extern int kill(pid_t, int);
 #endif
 
-#ifndef HAVE_KILL
-#include <TlHelp32.h>
-int bu_terminateWinProc(int process);
-#endif
 
-int
-bu_terminate(int process)
+#ifdef HAVE_KILL
+
+HIDDEN int
+terminate(int process)
 {
     int successful = 0;
 
-#ifdef HAVE_KILL
+    /* kill process and all children (negative pid, sysv extension) */
+    successful = kill((pid_t)-process, SIGKILL);
     /* kill() returns 0 for success */
-    successful = kill(-process, SIGKILL);
     successful = !successful;
-#else
-    bu_terminateWinProc(process);
-#endif
 
     return successful;
 }
 
-#ifndef HAVE_KILL
-int
-bu_terminateWinProc(int process)
+#else /* !HAVE_KILL */
+
+HIDDEN int
+terminate(int process)
 {
     int successful = 0;
     HANDLE hProcessSnap;
@@ -77,7 +76,7 @@ bu_terminateWinProc(int process)
     do {
 	if (pe32.th32ParentProcessID == (DWORD)process) {
 #if 1
-	    bu_terminateWinProc((int)pe32.th32ProcessID);
+	    terminate((int)pe32.th32ProcessID);
 #else
 	    hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, pe32.th32ProcessID);
 	    if (hProcess != NULL) {
@@ -98,7 +97,15 @@ bu_terminateWinProc(int process)
     CloseHandle(hProcessSnap);
     return successful;
 }
+
 #endif
+
+
+int
+bu_terminate(int process)
+{
+    return terminate(process);
+}
 
 /*
  * Local Variables:
