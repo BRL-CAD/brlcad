@@ -259,6 +259,8 @@ subbrep_object_free(struct subbrep_object_data *obj)
     if (obj->planar_obj_vert_map) bu_free(obj->planar_obj_vert_map, "obj fil");
     obj->planar_obj_vert_map = NULL;
     obj->parent = NULL;
+    if (obj->local_brep) delete obj->local_brep;
+    obj->local_brep = NULL;
 }
 
 
