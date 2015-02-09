@@ -432,7 +432,7 @@ static struct option longopts[] =
     { "version",	no_argument,		NULL, 'v' },
 };
 #endif
-static char shortopts[] = "Xdhp:t:v";
+static char shortopts[] = "Xdhp:t:vh?";
 
 
 static void finish(int sig)

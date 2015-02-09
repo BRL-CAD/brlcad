@@ -63,7 +63,7 @@
 #define RECONSTRUCT -1
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "W:S:s:w:n:t:#:D:12drR:";
+char *options = "W:S:s:w:n:t:#:D:12drR:h?";
 
 char *progname = "(noname)";
 int img_space=1;
@@ -107,7 +107,8 @@ parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case '1': img_space=1; break;
 	    case '2': img_space=2; break;
@@ -119,7 +120,7 @@ parse_args(int ac, char **av)
 	    case 'R': avg_size = atoi(bu_optarg); break;
 	    case '#': channels = atoi(bu_optarg);
 		break;
-	    case 't': {
+	    case 't':
 		switch (*bu_optarg) {
 		    case 'c': value_type = CHAR;
 			value_size = sizeof(char);
@@ -141,17 +142,18 @@ parse_args(int ac, char **av)
 			break;
 		}
 		break;
-	    }
 	    case 'n': height = atoi(bu_optarg); break;
 	    case 'w': width = atoi(bu_optarg); break;
 	    case 's': width = height = atoi(bu_optarg); break;
 	    case 'W': limit = atoi(bu_optarg); break;
 	    case 'S': limit = atoi(bu_optarg); break;
-	    case '?':
 	    case 'h':
-	    default	: fprintf(stderr, "Bad or help flag specified %c\n", c);
 		usage("");
 		break;
+	    default: fprintf(stderr, "Bad flag specified %c\n", bu_optopt);
+		usage("");
+		break;
+	    }
 	}
 
     return bu_optind;

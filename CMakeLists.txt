@@ -121,13 +121,23 @@ file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/CMakeOutput.log "${CMAKE_COMM
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 2.8.4)
 if(COMMAND CMAKE_POLICY)
+  # libraries linked via full path don't introduce linker search paths
   CMAKE_POLICY(SET CMP0003 NEW)
+
+  # list command doesn't ignore empty elements
   CMAKE_POLICY(SET CMP0007 NEW)
+
+  # prefer files in CMAKE_MODULE_PATH over the cmake module dir
   CMAKE_POLICY(SET CMP0017 OLD)
+
+  # allow relative paths in INCLUDE_DIRECTORIES
+  CMAKE_POLICY(SET CMP0021 OLD)
+
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
     CMAKE_POLICY(SET CMP0026 OLD)
     CMAKE_POLICY(SET CMP0042 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+
   if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
     CMAKE_POLICY(SET CMP0046 NEW)
     CMAKE_POLICY(SET CMP0053 OLD)
@@ -2284,6 +2294,11 @@ add_subdirectory(src/other)
 # Now put back the BRL-CAD flags
 RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
 
+# Restore BRL-CAD configurations, if necessary
+if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
+  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
+endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
+
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
   message("***********************************************************")
@@ -2758,6 +2773,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     TODO
     configure
     CMakeLists.txt
+    CTestConfig.cmake
     )
   CMAKEFILES(${toplevel_ignore_files})
 

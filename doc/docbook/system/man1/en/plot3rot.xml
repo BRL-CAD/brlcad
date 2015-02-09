@@ -26,16 +26,16 @@
     <arg choice='opt'>-m# </arg>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-S# </arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>unix_plot</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>unix_plot</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Plot3rot</emphasis>
+<para><command>plot3rot</command>
 will rotate translate or scale a UnixPlot file (see
 <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>).
 Any number of the above options can be given.

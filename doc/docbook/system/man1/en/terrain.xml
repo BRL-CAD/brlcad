@@ -29,7 +29,7 @@
     <arg choice='opt'>-D <replaceable>noise_Delta</replaceable></arg>
     <arg choice='opt'>-f <replaceable>noise_function</replaceable></arg>
     <arg choice='opt'><arg choice='plain'>-c <replaceable>host/net</replaceable></arg><arg choice='plain'><replaceable>format</replaceable></arg><arg choice='plain'><replaceable>conversion</replaceable></arg><arg choice='plain'><replaceable>off</replaceable></arg></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>file.dsp</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -130,8 +130,7 @@ has an effect on little-endian machines.</para>
   <term><option>-O</option><replaceable>  noise_octaves</replaceable></term>
   <listitem>
 <para>Specifies the number of octaves of noise to layer.
-Typical values are 2 through 8.
-<emphasis remap='B'>$0</emphasis>.</para>
+Typical values are 2 through 8.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -170,7 +169,7 @@ above.</para>
   <varlistentry>
   <term><option>-D</option><replaceable>  delta_x,delta_y,delta_z</replaceable></term>
   <listitem>
-<para>Specifies a translation in noise space to be</para>
+<para>Specifies a translation in noise space.</para>
 
   </listitem>
   </varlistentry>

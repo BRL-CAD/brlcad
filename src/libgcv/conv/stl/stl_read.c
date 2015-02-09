@@ -122,7 +122,7 @@ mk_unique_brlcad_name(struct bu_vls *name)
     }
 }
 
-static void
+static int
 Convert_part_ascii(char line[MAX_LINE_SIZE])
 {
     char line1[MAX_LINE_SIZE];
@@ -146,7 +146,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	bu_log("Barrier check at start of Convert_part_ascii:\n");
 
 	if (bu_mem_barriercheck())
-	    bu_exit(EXIT_FAILURE, "Barrier check failed!\n");
+	    bu_bomb("Barrier check failed!\n");
     }
 
 
@@ -161,7 +161,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     if (bu_strncmp(&line[start], "solid", 5)
 	&& bu_strncmp(&line[start], "SOLID", 5)) {
 	bu_log("Convert_part_ascii: Called for non-part\n%s\n", line);
-	return;
+	return 1;
     }
 
     /* skip blanks before name */
@@ -272,8 +272,12 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	    int tmp_face[3] = {0, 0, 0};
 
 	    while (!endloop) {
-		if (bu_fgets(line1, MAX_LINE_SIZE, fd_in) == NULL)
-		    bu_exit(EXIT_FAILURE, "Unexpected EOF while reading a loop in a part!\n");
+		if (bu_fgets(line1, MAX_LINE_SIZE, fd_in) == NULL) {
+		    bu_log("Unexpected EOF while reading a loop in a part!\n");
+		    bu_vls_free(&region_name);
+		    bu_vls_free(&solid_name);
+		    return 0;
+		}
 
 		start = (-1);
 
@@ -351,7 +355,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	bu_vls_free(&region_name);
 	bu_vls_free(&solid_name);
 
-	return;
+	return 1;
     } else {
 	if (degenerate_count)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
@@ -389,13 +393,13 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	bu_log("Barrier check at end of Convert_part_ascii:\n");
 
 	if (bu_mem_barriercheck())
-	    bu_exit(EXIT_FAILURE, "Barrier check failed!\n");
+	    bu_bomb("Barrier check failed!\n");
     }
 
     bu_vls_free(&region_name);
     bu_vls_free(&solid_name);
 
-    return;
+    return 1;
 }
 
 /* Byte swaps a 4-byte val */
@@ -554,14 +558,14 @@ Convert_part_binary()
 	bu_log("Barrier check at end of Convert_part_ascii:\n");
 
 	if (bu_mem_barriercheck())
-	    bu_exit(EXIT_FAILURE, "Barrier check failed!\n");
+	    bu_bomb("Barrier check failed!\n");
     }
 
     return;
 }
 
 
-static void
+static int
 Convert_input()
 {
     char line[ MAX_LINE_SIZE ];
@@ -569,11 +573,12 @@ Convert_input()
     if (binary) {
 	if (fread(line, 80, 1, fd_in) < 1) {
 	    if (feof(fd_in)) {
-		bu_exit(EXIT_FAILURE, "Unexpected EOF in input file!\n");
+		bu_log("Unexpected EOF in input file!\n");
+		return 0;
 	    } else {
 		bu_log("Error reading input file\n");
 		perror("stl-g");
-		bu_exit(EXIT_FAILURE, "Error reading input file\n");
+		return 0;
 	    }
 	}
 
@@ -590,11 +595,13 @@ Convert_input()
 
 	    if (!bu_strncmp(&line[start], "solid", 5)
 		|| !bu_strncmp(&line[start], "SOLID", 5))
-		Convert_part_ascii(line);
+		return Convert_part_ascii(line);
 	    else
 		bu_log("Unrecognized line:\n%s\n", line);
 	}
     }
+
+    return 1;
 }
 
 
@@ -621,7 +628,7 @@ gcv_stl_read(const char *path, struct rt_wdb *wdbp,
     if ((fd_in = fopen(input_file, "rb")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", input_file);
 	perror("stl-g");
-	bu_exit(1, NULL);
+	return 0;
     }
 
     fd_out = wdbp;
@@ -635,7 +642,10 @@ gcv_stl_read(const char *path, struct rt_wdb *wdbp,
     /* create a tree structure to hold the input vertices */
     tree_root = create_vert_tree();
 
-    Convert_input();
+    if (!Convert_input()) {
+	fclose(fd_in);
+	return 0;
+    }
 
     /* make a top level group */
     mk_lcomb(fd_out, "all", &all_head, 0, (char *)NULL, (char *)NULL,

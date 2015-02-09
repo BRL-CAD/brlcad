@@ -80,7 +80,7 @@ static time_t start_time;
 int debug = 0;
 int show_all_features = 0;
 
-char *options = "hsufd:o:i:t:a:n:c:r:R:";
+char *options = "sufd:o:i:t:a:n:c:r:R:h?";
 char *progname = "(noname)";
 
 /* count of how parts were converted */
@@ -5298,7 +5298,8 @@ parse_args(int ac, char *av[])
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'i'	: ident = atoi( bu_optarg ); break;
 	    case 'o'	: output_file = strdup( bu_optarg ); break;
@@ -5312,10 +5313,13 @@ parse_args(int ac, char *av[])
 	    case 'f'	: only_facetize = 1; break;
 	    case 's'	: show_all_features = 1; break;
 	    case 'u'	: use_normals = 1; break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: fprintf(stderr, "Bad or help flag specified\n"); break;
+	    case 'h'	: bu_exit(1, usage, av[0]);
+			  break;
+	    default	: fprintf(stderr, "Bad flag specified\n");
+	    		  bu_exit(1, usage, av[0]);
+			  break;
 	}
+    }
 
     return bu_optind;
 }

@@ -1276,7 +1276,34 @@ brep_curve_info(struct brep_specific* bs, struct bu_vls *vls, int ci)
     return 0;
 }
 
+int
+brep_loop_info(struct brep_specific* bs, struct bu_vls *vls, int li)
+{
+    ON_Brep* brep = bs->brep;
+    ON_wString wstr;
+    ON_TextLog dump(wstr);
+    if (brep == NULL) {
+	return -1;
+    }
+    if (!brep->IsValid(&dump)) {
+	bu_log("brep is NOT valid");
+    }
 
+    if (!((li >= 0) && (li < brep->m_L.Count())))
+	return 0;
+    const ON_BrepLoop &loop = brep->m_L[li];
+    dump.Print("loop[%d] on face %d with %d trims\n", li, loop.m_fi, loop.TrimCount());
+    if (loop.TrimCount() > 0) {
+	dump.Print("trims: ");
+	for (int i = 0; i < loop.TrimCount() - 1; ++i) {
+	    dump.Print("%d,", loop.m_ti[i]);
+	}
+	dump.Print("%d\n", loop.m_ti[loop.TrimCount() - 1]);
+    }
+    ON_String ss = wstr;
+    bu_vls_printf(vls, "%s\n", ss.Array());
+    return 0;
+}
 
 int
 brep_edge_info(struct brep_specific* bs, struct bu_vls *vls, int ei)
@@ -1740,6 +1767,39 @@ brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_inte
     return 0;
 }
 
+int
+brep_loop_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
+{
+    ON_wString wstr;
+    ON_TextLog ll(wstr);
+
+    ON_Brep* brep = bs->brep;
+    if (brep == NULL) {
+	return -1;
+    }
+    if (!brep->IsValid(&ll)) {
+	bu_log("brep is NOT valid");
+    }
+
+    if (index == -1) {
+	for (int i = 0; i < brep->m_L.Count(); i++) {
+	    ON_BrepLoop* loop = &(brep->m_L[i]);
+	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+		ON_BrepTrim& trim = brep->m_T[loop->m_ti[ti]];
+		plottrim(trim, vbp, plotres, dim3d);
+	    }
+	}
+    } else if (index < brep->m_L.Count()) {
+	ON_BrepLoop* loop = &(brep->m_L[index]);
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    ON_BrepTrim& trim = brep->m_T[loop->m_ti[ti]];
+	    plottrim(trim, vbp, plotres, dim3d);
+	}
+    }
+
+    bu_vls_printf(vls, ON_String(wstr).Array());
+    return 0;
+}
 
 int
 brep_surface_cv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index)
@@ -2411,6 +2471,7 @@ info_usage(struct bu_vls *vls)
     bu_vls_printf(vls, "\tinfo S [index] or S [index-index] - return information for specific BREP 'surface'\n");
     bu_vls_printf(vls, "\tinfo F [index] or F [index-index]- return information for specific BREP 'face'\n");
     bu_vls_printf(vls, "\tinfo T [index] or T [index-index]- return information for specific BREP 'trim'\n");
+    bu_vls_printf(vls, "\tinfo L [index] or L [index-index]- return information for specific BREP 'loop'\n");
     bu_vls_printf(vls, "\tinfo E [index] or E [index-index]- return information for specific BREP 'edge'\n");
     bu_vls_printf(vls, "\tinfo TB [index] or TB [index-index]- return information for specific BREP 'piecewise bezier trim'\n");
     bu_vls_printf(vls, "\tinfo SB [index] or SB [index-index]- return information for specific BREP 'piecewise bezier surface'\n");
@@ -2438,6 +2499,8 @@ plot_usage(struct bu_vls *vls)
     bu_vls_printf(vls, "\tplot TBB [index] or TBB [index-index]- plot specific BREP 'trimleafs'\n");
     bu_vls_printf(vls, "\tplot TBB2d [index] or TBB2d [index-index]- plot specific BREP 'trimleafs in 2d'\n");
     bu_vls_printf(vls, "\tplot E [index] or E [index-index]- plot specific BREP 'edge3d'\n");
+    bu_vls_printf(vls, "\tplot L [index] or L [index-index]- plot specific BREP 'loop'\n");
+    bu_vls_printf(vls, "\tplot L2d [index] or L2d [index-index]- plot specific BREP 'loops in 2d'\n");
     bu_vls_printf(vls, "\tplot SCV [index] or SCV [index-index]- plot specific BREP 'nurbs control net'\n");
 }
 
@@ -2826,6 +2889,10 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		    for (int i = 0; i < brep->m_E.Count(); ++i) {
 			ret = brep_edge_info(bs, vls, i);
 		    }
+		} else if (BU_STR_EQUAL(part, "L")) {
+		    for (int i = 0; i < brep->m_L.Count(); ++i) {
+			ret = brep_loop_info(bs, vls, i);
+		    }
 		} else if (BU_STR_EQUAL(part, "SB")) {
 		    for (int i = 0; i < brep->m_S.Count(); ++i) {
 			ret = brep_surface_bezier_info(bs, vls, i);
@@ -2899,6 +2966,10 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
 			if (*e_it < brep->m_E.Count()) ret = brep_edge_info(bs, vls, (*e_it));
 		    }
+		} else if (BU_STR_EQUAL(part, "L")) {
+		    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+			if (*e_it < brep->m_L.Count()) ret = brep_loop_info(bs, vls, (*e_it));
+		    }
 		} else if (BU_STR_EQUAL(part, "SB")) {
 		    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
 			if (*e_it < brep->m_S.Count()) ret = brep_surface_bezier_info(bs, vls, (*e_it));
@@ -2945,6 +3016,10 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 			}
 		    } else if (BU_STR_EQUAL(part, "E")) {
 			for (int i = 0; i < brep->m_E.Count(); ++i) {
+			    elements.insert(i);
+			}
+		    } else if (BU_STR_EQUAL(part, "L")) {
+			for (int i = 0; i < brep->m_L.Count(); ++i) {
 			    elements.insert(i);
 			}
 		    } else if (BU_STR_EQUAL(part, "SB")) {
@@ -3127,6 +3202,16 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		snprintf(commtag, 64, "_BC_T2d_");
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
 		    ret = brep_trim_plot(vls, bs, bi, vbp, (*e_it), plotres, false);
+		}
+	    } else if (BU_STR_EQUAL(part, "L")) {
+		snprintf(commtag, 64, "_BC_L_");
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_loop_plot(vls, bs, bi, vbp, (*e_it), plotres, true);
+		}
+	    } else if (BU_STR_EQUAL(part, "L2d")) {
+		snprintf(commtag, 64, "_BC_L2d_");
+		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+		    ret = brep_loop_plot(vls, bs, bi, vbp, (*e_it), plotres, false);
 		}
 	    } else if (BU_STR_EQUAL(part, "TBB")) {
 		snprintf(commtag, 64, "_BC_TBB_");

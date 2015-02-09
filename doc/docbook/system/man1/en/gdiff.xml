@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gdiff21'>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gdiff1'>
 	<refmeta>
 		<refentrytitle>GDIFF2
 		</refentrytitle>
@@ -9,13 +9,13 @@
 	</refmeta>
 
 	<refnamediv>
-		<refname>gdiff2</refname>
+		<refname>gdiff</refname>
 		<refpurpose>a BRL-CAD differential geometry comparator</refpurpose>
 	</refnamediv>
 	<!-- body begins here -->
 	<refsynopsisdiv xml:id='synopsis'>
 		<cmdsynopsis>
-			<command>gdiff2</command>
+			<command>gdiff</command>
 			<arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
 			<arg choice='plain'><replaceable>left_model.g</replaceable></arg>
 			<arg choice='opt'><replaceable>ancestor_model.g</replaceable></arg>
@@ -26,7 +26,7 @@
 
 	<refsect1 xml:id='description'><title>DESCRIPTION</title>
 		<para>
-			<command>gdiff2</command> compares BRL-CAD models
+			<command>gdiff</command> compares BRL-CAD models
 			specified on the command line, reporting differences according to the
 			specified options.  It supports a plain "diff" comparison between two
 			files, as well as a "3-way" comparison that accepts a third file with
@@ -95,7 +95,7 @@
           Running the default options on two pre-prepared examples of Moss World gives us a summary of the status of various objects:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff moss.g moss2.g</userinput>
 M platform.r
 M ellipse.s
 M light.r
@@ -121,7 +121,7 @@ A eto.s
 		   <option>-v 0</option> (no output except the return code):
 		   <literallayout>
 			   <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 0 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v 0 moss.g moss2.g</userinput>
 			   </computeroutput>
 		   </literallayout>
 	   </para>
@@ -130,7 +130,7 @@ A eto.s
 		   <option>-v 1</option>:
 		   <literallayout>
 			   <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 1 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v 1 moss.g moss2.g</userinput>
 Added:
 tgc_new.s, eto.s
 
@@ -148,7 +148,7 @@ platform.r, ellipse.s, light.r, _GLOBAL, cone.s, cone.r, box.s, tor.r
 		   <option>-v 2</option> (default):
 		   <literallayout>
 			   <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 2 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v 2 moss.g moss2.g</userinput>
 M platform.r
 M ellipse.s
 M light.r
@@ -169,7 +169,7 @@ A eto.s
 		   <option>-v 3</option>:
 		   <literallayout>
 			   <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 3 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v 3 moss.g moss2.g</userinput>
 - "platform.r" tree(p): l platform.s
 + "platform.r" tree(p): - {l platform.s} {l cone.s}
 - "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
@@ -210,7 +210,7 @@ A eto.s
 		   <option>-v 4</option>:
 		   <literallayout>
 			   <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 4 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v 4 moss.g moss2.g</userinput>
 - "platform.r" tree(p): l platform.s
 + "platform.r" tree(p): - {l platform.s} {l cone.s}
 - "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
@@ -274,7 +274,7 @@ A "eto.s" DB5_MINORTYPE(p): eto
           Report only objects added:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -a moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -a moss.g moss2.g</userinput>
 A tgc_new.s
 A eto.s
                 </computeroutput>
@@ -284,7 +284,7 @@ A eto.s
           Report only objects deleted:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -d moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -d moss.g moss2.g</userinput>
 D LIGHT
                 </computeroutput>
           </literallayout>
@@ -293,7 +293,7 @@ D LIGHT
           Report both added and deleted objects, but not modified objects:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -a -d moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -a -d moss.g moss2.g</userinput>
 D LIGHT
 A tgc_new.s
 A eto.s
@@ -304,7 +304,7 @@ A eto.s
           Report unmodified objects:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -u moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -u moss.g moss2.g</userinput>
   ellipse.r
   box.r
   all.g
@@ -319,7 +319,7 @@ A eto.s
           difference constitutes "too small" is up to the user - in this example, we will use 30 millimeters:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 3 -t 30.0 moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v 3 -t 30.0 moss.g moss2.g</userinput>
 - "platform.r" tree(p): l platform.s
 + "platform.r" tree(p): - {l platform.s} {l cone.s}
 - "light.r" tree(p): l LIGHT
@@ -350,7 +350,7 @@ A eto.s
           in reports, using the <option>F</option> option.  For example, limiting the diff report to only objects of type elliptical torus:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -F "-type eto" moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -F "-type eto" moss.g moss2.g</userinput>
 A eto.s
                 </computeroutput>
           </literallayout>
@@ -359,7 +359,7 @@ A eto.s
           Note that this option will work at all levels of verbosity:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 4 -F "-type eto" moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v 4 -F "-type eto" moss.g moss2.g</userinput>
 A "eto.s" r_d(p): 1.724149328000026404339451
 A "eto.s" r(p): 13.79319462400021123471561
 A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
@@ -377,7 +377,7 @@ A "eto.s" DB5_MINORTYPE(p): eto
           filter with ell types added to the accepted list produces the following:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 4 -F "-type eto -or -type ell" moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v 4 -F "-type eto -or -type ell" moss.g moss2.g</userinput>
 - "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
 + "ellipse.s" C(p): 0 1.561016355403846755933728 1.561016355403846755933728
 - "ellipse.s" A(p): 14.87607192992999927128039 0 0
@@ -400,7 +400,7 @@ A "eto.s" DB5_MINORTYPE(p): eto
           If we now add the tolerance filter, we see ellipse.s is filtered out:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 4 -t 30.0 -F "-type eto -or -type ell" moss.g moss2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v 4 -t 30.0 -F "-type eto -or -type ell" moss.g moss2.g</userinput>
 D "LIGHT" C(p): 0 0 2.539999961852999810218989
 D "LIGHT" B(p): 0 2.539999961852999810218989 0
 D "LIGHT" A(p): 2.539999961852999810218989 0 0
@@ -429,7 +429,7 @@ A "eto.s" DB5_MINORTYPE(p): eto
           file moss3.g:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 moss2.g moss3.g</userinput>
+<prompt>~:</prompt><userinput> gdiff moss2.g moss3.g</userinput>
 M platform.r
 M ellipse.s
 D ellipse.r
@@ -450,7 +450,7 @@ A LIGHT
           to the comparison as an ancestor file:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 moss2.g moss.g moss3.g</userinput>
+<prompt>~:</prompt><userinput> gdiff moss2.g moss.g moss3.g</userinput>
 M platform.r
 M ellipse.s
 D(R) ellipse.r
@@ -471,13 +471,13 @@ A(R) ellipse2.r
           We can now see that ellipse.r was deleted only from the right file (moss3.g) and was unchanged in moss2.g.
           Similarly, we can tell that LIGHT wsa deleted from moss2.g, ellipse2.r was added in moss3.g, tgc_new.s was
           added identically in both moss2.g and moss3.g, and eto.s is different in moss2.g and moss3.g in some fashion
-          that the ancestor file moss.g cannot help gdiff2 resolve (a conflict, denoted by 'C'.)
+          that the ancestor file moss.g cannot help gdiff resolve (a conflict, denoted by 'C'.)
         </para>
         <para>
           To delve deeper into the nature of the changes, we increase the verbosity with the <option>v</option> option:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v 3 moss2.g moss.g moss3.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v 3 moss2.g moss.g moss3.g</userinput>
 M(L) "platform.r" tree(p): - {l platform.s} {l cone.s}
 M(L) "ellipse.s" C(p): 0 1.561016355403846755933728 1.561016355403846755933728
 M(L) "ellipse.s" A(p): 5.559274328313033919357622 0 0
@@ -522,7 +522,7 @@ A(R) ellipse2.r
           A three-way diff of these files reports a conflict:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 ell_1.g ell_0.g ell_2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff ell_1.g ell_0.g ell_2.g</userinput>
 C ell.s
                 </computeroutput>
           </literallayout>
@@ -530,7 +530,7 @@ C ell.s
           However, closer inspection reveals that this conflict is different than the one reported above for the eto.s object:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v3 ell_1.g ell_0.g ell_2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v3 ell_1.g ell_0.g ell_2.g</userinput>
 C(LM!=RM) ell.s
                 </computeroutput>
           </literallayout>
@@ -539,7 +539,7 @@ C(LM!=RM) ell.s
           parameters.  Indeed a full verbosity inspection:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -v4 ell_1.g ell_0.g ell_2.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -v4 ell_1.g ell_0.g ell_2.g</userinput>
 M(R) "ell.s" C(p): 0 0 300
 C(A) "ell.s" B(p): 0 500 0
 C(L) "ell.s" B(p): 0 510 0
@@ -554,13 +554,13 @@ M(L) "ell.s" A(p): 1100 0 0
 
   <example><title>Merging Files</title>
         <para>
-          The last and most powerful feature of <command>gdiff2</command> is to <emphasis>merge</emphasis> two or three different
+          The last and most powerful feature of <command>gdiff</command> is to <emphasis>merge</emphasis> two or three different
           geometry files into a single output file.  This is most useful when an ancestor is available and a three way merge can
           be performed - in the two way case, the "ancestor" is an empty file and the results will tend to include many more
           conflicts.  For example, the three way merge of the moss examples earlier:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -M moss_merged.g moss2.g moss0.g moss3.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -M moss_merged.g moss2.g moss0.g moss3.g</userinput>
 M platform.r
 M ellipse.s
 D(R) ellipse.r
@@ -589,7 +589,7 @@ box.s                    light.r/R                tor.r/R
           do the same merge <emphasis>without</emphasis> the ancestor file:
           <literallayout>
                 <computeroutput>
-<prompt>~:</prompt><userinput> gdiff2 -M moss_2way_merge.g moss2.g moss3.g</userinput>
+<prompt>~:</prompt><userinput> gdiff -M moss_2way_merge.g moss2.g moss3.g</userinput>
 M platform.r
 M ellipse.s
 D ellipse.r

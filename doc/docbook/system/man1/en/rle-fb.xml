@@ -218,20 +218,20 @@ are used.</para>
   <blockquote remap="RS">
 <para>rle-fb truck.rle</para>
 <para>rle-fb -O text.rle</para>
-<para>rle-fb -C 0/255/0 &lt;car.rle</para>
+<para>rle-fb -C 0/255/0 &lt; car.rle</para>
  </blockquote> <!-- remap='RE' -->
 </refsection>
 
 <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
 <variablelist remap="TP">
   <varlistentry>
-  <term>rle-fb: excess arguments ignored.</term>
+  <term>rle-fb: excess arguments ignored</term>
   <listitem>
 <para>More than one RLE file name was specified.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>rle-fb: Error reading setup information.</term>
+  <term>rle-fb:  Error reading setup information</term>
   <listitem>
 <para>The subroutine
 <function>rle_get_setup()</function>
@@ -244,7 +244,7 @@ program can be used to display the file.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>rle-fb: Warning: RLE image rectangle entirely off screen</term>
+  <term>rle-fb:  Warning: RLE image rectangle entirely off screen</term>
   <listitem>
 <para>The combined effects of the RLE image rectangle definition stored in the
 RLE file and any
@@ -258,7 +258,7 @@ This may not have been the intent of the user, so the message is printed.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>rle-fb: correcting for old style colormap.</term>
+  <term>rle-fb:  correcting for old style colormap</term>
   <listitem>
 <para>The only change between the Edition-2 and Edition-3 RLE file formats
 that is not upwards compatible is the format of the colormap.
@@ -281,7 +281,7 @@ were deemed worth this risk.</para>
 <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixmerge</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>comp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>crop</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>repos</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rlepatch</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rlebox</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 
 </refsection>
 

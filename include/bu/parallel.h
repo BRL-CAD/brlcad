@@ -82,7 +82,7 @@ BU_EXPORT extern int bu_parallel_id(void);
  */
 
 /**
- * terminate a given process.
+ * terminate a given process and any children.
  *
  * returns truthfully whether the process could be killed.
  */

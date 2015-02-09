@@ -31,7 +31,7 @@ to a STEP AP203 file,
 <emphasis remap='I'>output_file.stp</emphasis>.</para>
 
 
-<para>The following options are recognized</para>
+<para>The following options are recognized.</para>
 <variablelist remap='TP'>
   <varlistentry>
   <term><option>-o </option><emphasis remap='I'>output_file_or_directory</emphasis></term>

@@ -22,9 +22,9 @@
     <arg choice='opt'>-f <replaceable>final_speed_relative</replaceable></arg>
     <arg choice='opt'>-m <replaceable>max_len</replaceable></arg>
     <group choice='opt'><arg choice='plain'>-v </arg><arg choice='plain'><replaceable>q</replaceable></arg></group>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>in.table</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>out.table</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

@@ -357,9 +357,12 @@ osgl_close(struct dm_internal *dmp)
 HIDDEN
 static void OSGUpdate(dm *dmp, int delta) {
     struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+    if (dmp->dm_debugLevel == 1)
+	bu_log("OSGUpdate()\n");
+
 
     if (privvars->timer->time_m() - privvars->last_update_time > delta) {
-	privvars->graphicsContext->swapBuffers();
+	//privvars->graphicsContext->swapBuffers();
 	privvars->last_update_time = privvars->timer->time_m();
     }
 }

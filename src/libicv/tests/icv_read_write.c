@@ -34,7 +34,7 @@
 
 void usage()
 {
-    bu_log("tester_icv_read_write [-h] [-s squaresize] [-w width] [-n height]]\n\
+    bu_log("tester_icv_read_write [-s squaresize] [-w width] [-n height]]\n\
 				  [-b -p -d -m]\n\
 				  [-o out_file] [in_file] > [out_file]\n");
 
@@ -87,7 +87,6 @@ int main(int argc, char* argv[])
 	    case 'm' :
 		format = ICV_IMAGE_PPM;
 		break;
-	    case 'h':
 	    default:
 		usage();
 		return 1;

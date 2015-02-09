@@ -28,7 +28,7 @@
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para><command>rtregis</command>
 makes it easy and fast to overlay a UNIX-Plot file produced with <emphasis remap='B'>rthide</emphasis>
-or <emphasis remap='B'>rtrange</emphasis> onto its equivalent color shaded image produced with <emphasis remap='B'>rt</emphasis> or <emphasis remap='B'>cell-fb</emphasis>.</para>
+or <emphasis remap='B'>rtrange</emphasis> onto its equivalent color shaded image produced with <emphasis remap='B'>rt</emphasis> or <emphasis remap='B'>cell-fb</emphasis> .</para>
 
 <para><command>rtregis</command>
 produces a script containing a call to <emphasis remap='B'>plot3rot</emphasis> with the <option>-m</option> and <option>-S</option> parameters to
