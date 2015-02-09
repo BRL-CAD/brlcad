@@ -126,6 +126,7 @@ int subbrep_make_planar(struct subbrep_object_data *data);
 
 // Functions for defining a simplified planar subvolume
 void subbrep_planar_init(struct subbrep_object_data *data);
+void subbrep_planar_close_obj(struct subbrep_object_data *data);
 int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl, ON_SimpleArray<const ON_BrepVertex *> *vert_loop);
 
 struct bu_ptbl *find_subbreps(const ON_Brep *brep);

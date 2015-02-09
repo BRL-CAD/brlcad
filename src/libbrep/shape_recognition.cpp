@@ -122,7 +122,12 @@ find_subbreps(const ON_Brep *brep)
 			(void)subbrep_make_brep(new_obj);
 			std::cout << "split unsuccessful: " << bu_vls_addr(new_obj->key) << "\n";
 		    } else {
+			// If we did successfully split the brep, do some post-split
+			// clean-up
 			new_obj->type = COMB;
+			if (new_obj->planar_obj) {
+			    subbrep_planar_close_obj(new_obj);
+			}
 		    }
 		}
 	    }

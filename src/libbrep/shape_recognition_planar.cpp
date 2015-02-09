@@ -185,6 +185,68 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
     map_to_array(&(data->planar_obj->planar_obj_vert_map), &(data->planar_obj->planar_obj_vert_cnt), &vertex_map);
 }
 
+void
+subbrep_planar_close_obj(struct subbrep_object_data *data)
+{
+    struct subbrep_object_data *pdata = data->planar_obj;
+    for (int i = 0; i < pdata->local_brep->m_F.Count(); i++) {
+	ON_BrepFace &face = pdata->local_brep->m_F[i];
+	for (int j = 0; j < face.LoopCount(); j++) {
+	    ON_BrepLoop *loop = face.Loop(j);
+	    const ON_Surface *surf = loop->Face()->SurfaceOf();
+	    double urange = surf->Domain(0)[1] - surf->Domain(0)[0];
+	    double vrange = surf->Domain(1)[1] - surf->Domain(1)[0];
+	    int valid = 1;
+	    for (int lti = 0; lti < loop->m_ti.Count(); lti++) {
+		int ci0, ci1, next_lti;
+		ON_3dPoint P0, P1;
+		const ON_Curve *pC0, *pC1;
+		for ( lti = 0; lti < loop->TrimCount(); lti++ ) {
+		    // end-of-trims matching test from opennurbs_brep.cpp
+		    const ON_BrepTrim& trim0 = pdata->local_brep->m_T[loop->m_ti[lti]];
+		    next_lti = (lti+1)%loop->TrimCount();
+		    const ON_BrepTrim& trim1 = pdata->local_brep->m_T[loop->m_ti[next_lti]];
+		    ON_Interval trim0_domain = trim0.Domain();
+		    ON_Interval trim1_domain = trim1.Domain();
+		    ci0 = trim0.m_c2i;
+		    ci1 = trim1.m_c2i;
+		    pC0 = pdata->local_brep->m_C2[ci0];
+		    pC1 = pdata->local_brep->m_C2[ci1];
+		    P0 = pC0->PointAt( trim0_domain[1] ); // end of this 2d trim
+		    P1 = pC1->PointAt( trim1_domain[0] ); // start of next 2d trim
+		    if ( !(P0-P1).IsTiny() )
+		    {
+			// 16 September 2003 Dale Lear - RR 11319
+			//    Added relative tol check so cases with huge
+			//    coordinate values that agreed to 10 places
+			//    didn't get flagged as bad.
+			//double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10;
+			//double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
+			//
+			// Oct 12 2009 Rather than using the above check, BRL-CAD uses
+			// relative uv size
+			double xtol = (urange) * trim0.m_tolerance[0];
+			double ytol = (vrange) * trim0.m_tolerance[1];
+			if ( xtol < ON_ZERO_TOLERANCE )
+			    xtol = ON_ZERO_TOLERANCE;
+			if ( ytol < ON_ZERO_TOLERANCE )
+			    ytol = ON_ZERO_TOLERANCE;
+			double dx = fabs(P0.x-P1.x);
+			double dy = fabs(P0.y-P1.y);
+			if ( dx > xtol || dy > ytol ) valid = 0;
+		    }
+		}
+	    }
+	    if (!valid) {
+		std::cout << "invalid loop " << loop->m_loop_index << " in planar object " << bu_vls_addr(data->key) << " face " << i << "\n";
+	    }
+	}
+
+	// TODO - if we pass the above test, make sure all edges have two faces to identify any missing
+	// faces in the arb
+
+    } 
+}
 
 int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
        	ON_SimpleArray<const ON_BrepVertex *> *vert_loop)
