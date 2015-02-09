@@ -33,6 +33,8 @@ set(public_hdrs
   fbserv_obj.h
   fft.h
   gcv.h
+  gcv_api.h
+  gcv_util.h
   icv.h
   libtermio.h
   light.h

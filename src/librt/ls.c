@@ -134,7 +134,7 @@ db_dpv_to_argv(struct directory **dpv)
 	argv = (char **)bu_malloc(sizeof(char *) * (dpv_cnt + 1), "char pointer array");
 	dpv_cnt = 0;
 	dp = dpv[0];
-	while (dpv) {
+	while (dpv[dpv_cnt]) {
 	    argv[dpv_cnt] = dpv[dpv_cnt]->d_namep;
 	    dpv_cnt++;
 	}

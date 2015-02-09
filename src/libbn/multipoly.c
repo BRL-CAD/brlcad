@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @addtogroup multipoly */
+/** @addtogroup poly */
 /** @{ */
 /** @file libbn/multipoly.c
  *

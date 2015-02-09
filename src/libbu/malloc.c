@@ -376,7 +376,6 @@ bu_free(void *ptr, const char *str)
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_MALLOC);
 #endif
-    bu_n_free++;
 }
 
 

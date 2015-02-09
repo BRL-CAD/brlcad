@@ -26,115 +26,13 @@
 
 #ifdef HAVE_BULLET
 
+#include "common.h"
 
 #include "physics_world.hpp"
-#include "collision.hpp"
-
-#include <stdexcept>
-#include <limits>
 
 
 namespace simulate
 {
-
-
-class PhysicsWorld::WorldObject
-{
-public:
-    WorldObject(const btVector3 &bounding_box_dimensions, btScalar mass,
-		matp_t matrix);
-
-    void add_to_world(btDiscreteDynamicsWorld &world);
-    void read_matrix();
-    void write_matrix();
-
-
-private:
-    WorldObject(const WorldObject &source);
-    WorldObject &operator=(const WorldObject &source);
-    static btTransform matrix_to_transform(const mat_t matrix);
-    static btVector3 calculate_inertia(const btCollisionShape &collision_shape,
-				       btScalar mass);
-
-    bool m_in_world;
-    const matp_t m_matrix;
-    btDefaultMotionState m_motion_state;
-    collision::RtCollisionShape m_collision_shape;
-    btRigidBody m_rigid_body;
-};
-
-
-btVector3
-PhysicsWorld::WorldObject::calculate_inertia(const btCollisionShape
-	&collision_shape, btScalar mass)
-{
-    btVector3 result;
-    collision_shape.calculateLocalInertia(mass, result);
-    return result;
-}
-
-
-btTransform
-PhysicsWorld::WorldObject::matrix_to_transform(const mat_t matrix)
-{
-    btTransform xform;
-    {
-	btScalar bt_matrix[16];
-	MAT_TRANSPOSE(bt_matrix, matrix);
-	// scale mm to m
-	bt_matrix[12] /= 1000;
-	bt_matrix[13] /= 1000;
-	bt_matrix[14] /= 1000;
-	xform.setFromOpenGLMatrix(bt_matrix);
-    }
-
-    return xform;
-}
-
-
-PhysicsWorld::WorldObject::WorldObject(const btVector3 &bounding_box_dimensions,
-				       btScalar mass, matp_t matrix) :
-    m_in_world(false),
-    m_matrix(matrix),
-    m_motion_state(matrix_to_transform(m_matrix)),
-    m_collision_shape(bounding_box_dimensions / 2),
-    m_rigid_body(mass, &m_motion_state, &m_collision_shape,
-		 calculate_inertia(m_collision_shape, mass))
-{}
-
-
-void
-PhysicsWorld::WorldObject::add_to_world(btDiscreteDynamicsWorld &world)
-{
-    if (m_in_world)
-	throw std::runtime_error("already in world");
-    else {
-	m_in_world = true;
-	world.addRigidBody(&m_rigid_body);
-    }
-}
-
-
-void
-PhysicsWorld::WorldObject::read_matrix()
-{
-    m_motion_state.setWorldTransform(matrix_to_transform(m_matrix));
-}
-
-
-void
-PhysicsWorld::WorldObject::write_matrix()
-{
-    btTransform xform;
-    m_motion_state.getWorldTransform(xform);
-    btScalar bt_matrix[16];
-    xform.getOpenGLMatrix(bt_matrix);
-    //scale m to mm
-    bt_matrix[12] *= 1000;
-    bt_matrix[13] *= 1000;
-    bt_matrix[14] *= 1000;
-    MAT_TRANSPOSE(m_matrix, bt_matrix);
-}
 
 
 PhysicsWorld::PhysicsWorld() :
@@ -143,50 +41,33 @@ PhysicsWorld::PhysicsWorld() :
     m_collision_dispatcher(&m_collision_config),
     m_constraint_solver(),
     m_world(&m_collision_dispatcher, &m_broadphase, &m_constraint_solver,
-	    &m_collision_config),
-    m_objects()
-{
-    m_collision_dispatcher.registerCollisionCreateFunc(
-	collision::RT_SHAPE_TYPE,
-	collision::RT_SHAPE_TYPE,
-	new collision::RtCollisionAlgorithm::CreateFunc);
-    m_world.setGravity(btVector3(0, 0, static_cast<btScalar>(-9.8)));
-}
+	    &m_collision_config)
+{}
 
 
 PhysicsWorld::~PhysicsWorld()
-{
-    for (std::vector<WorldObject *>::iterator it = m_objects.begin();
-	 it != m_objects.end(); ++it)
-	delete *it;
-}
+{}
 
 
 void
 PhysicsWorld::step(btScalar seconds)
 {
-    for (std::vector<WorldObject *>::iterator it = m_objects.begin();
-	 it != m_objects.end(); ++it)
-	(*it)->read_matrix();
-
-    m_world.stepSimulation(seconds, std::numeric_limits<int>::max());
-
-    for (std::vector<WorldObject *>::const_iterator it = m_objects.begin();
-	 it != m_objects.end(); ++it)
-	(*it)->write_matrix();
+    for (int i = 0; i < 600.0 * seconds; ++i)
+	m_world.stepSimulation(1.0 / 600.0, 6000);
 }
 
 
 void
-PhysicsWorld::add_object(const vect_t &cad_bounding_box_dimensions,
-			 fastf_t mass,
-			 matp_t matrix)
+PhysicsWorld::add_rigid_body(btRigidBody &rigid_body)
 {
-    btVector3 bounding_box_dimensions;
-    // scale mm to m
-    VSCALE(bounding_box_dimensions, cad_bounding_box_dimensions, 1e-3);
-    m_objects.push_back(new WorldObject(bounding_box_dimensions, mass, matrix));
-    m_objects.back()->add_to_world(m_world);
+    m_world.addRigidBody(&rigid_body);
+}
+
+
+void
+PhysicsWorld::remove_rigid_body(btRigidBody &rigid_body)
+{
+    m_world.removeRigidBody(&rigid_body);
 }
 
 

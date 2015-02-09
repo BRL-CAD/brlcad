@@ -334,7 +334,9 @@ endif(CPP_DLL_DEFINES)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_shape_recognition test_shape_recognition.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
+if(DEFINED TEST_SHAPE_RECOGNITION)
+ BRLCAD_ADDEXEC(test_shape_recognition test_shape_recognition.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
+endif(DEFINED TEST_SHAPE_RECOGNITION)
 
 add_subdirectory(tests)
 

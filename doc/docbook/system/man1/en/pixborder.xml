@@ -110,8 +110,8 @@ and the <option>-s</option> option sets file width and height to the same value.
 are in pixels.)
 </para>
 
-<para>Changes are restricted to a specified rectangular portion of the image,
-which defaults to the entire image.
+<para>Changes are restricted to a specified rectangular portion of the image
+(by default this is the entire image).
 The
 <option>-x</option>
 option sets the left edge of that rectangle:

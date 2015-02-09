@@ -18,6 +18,17 @@
  * information.
  */
 
+#ifndef BN_VLIST_H
+#define BN_VLIST_H
+
+#include "common.h"
+#include "vmath.h"
+#include "bu/magic.h"
+#include "bu/list.h"
+#include "bn/defines.h"
+
+__BEGIN_DECLS
+
 /*----------------------------------------------------------------------*/
 /* @file vlist.h */
 /** @addtogroup vlist */
@@ -30,17 +41,6 @@
  * wireframe display information, in the full resolution that is
  * calculated in.
  */
-
-#ifndef BN_VLIST_H
-#define BN_VLIST_H
-
-#include "common.h"
-#include "vmath.h"
-#include "bu/magic.h"
-#include "bu/list.h"
-#include "bn/defines.h"
-
-__BEGIN_DECLS
 
 #define BN_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */
 
@@ -177,8 +177,6 @@ struct bn_vlblock {
 #define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
 
 
-/** @addtogroup vlist */
-/** @{ */
 /** @file libbn/font.c
  *
  */
@@ -225,6 +223,8 @@ BN_EXPORT extern void bn_vlist_2string(struct bu_list *vhead,
 				       double y,
 				       double scale,
 				       double theta);
+
+/** @} */
 
 __END_DECLS
 

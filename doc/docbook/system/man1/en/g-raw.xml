@@ -20,7 +20,6 @@
   <command>g-raw</command>
     <arg choice='opt'>-o <replaceable>output_file</replaceable></arg>
     <arg choice='opt'>-m <replaceable>output_directory</replaceable></arg>
-    <arg choice='opt'>-P <replaceable>num_cpus</replaceable></arg>
     <arg choice='opt'>-i</arg>
     <arg choice='opt'>-8</arg>
     <arg choice='opt'>-D <replaceable>calculation_tolerance</replaceable></arg>
@@ -66,12 +65,6 @@ space are replaced by "_" characters. If the -m option is not specified, all reg
 are written to the same file. The <option>-o</option> and <option>-m</option> options
 are mutually exclusive.
 </para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-P#</option></term>
-  <listitem>
-<para>Specify the number of CPUs to utilize.</para>
   </listitem>
   </varlistentry>
   <varlistentry>

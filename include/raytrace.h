@@ -2624,6 +2624,52 @@ RT_EXPORT extern int rt_gen_circular_grid(struct xrays *ray_bundle,
 					  const fastf_t *up_vector,
 					  fastf_t gridsize);
 
+/**
+ * Make a bundle of rays around a main ray in the shape of a cone,
+ * using a uniform rectangular grid; theta is the angle of divergence
+ * of the cone, and rays_per_radius is the number of rays that lie on
+ * any given radius of the cone.
+ *
+ * center_ray.r_dir must have unit length.
+ */
+RT_EXPORT extern int rt_gen_conic(struct xrays *rays,
+				  const struct xray *center_ray,
+				  fastf_t theta,
+				  vect_t up_vector,
+				  int rays_per_radius);
+
+/**
+ * Make a bundle of rays around a main ray in the shape of a frustum
+ * as a uniform rectangular grid.  a_vec and b_vec are the directions
+ * for up and right, respectively; a_theta and b_theta are the angles
+ * of divergence in the directions of a_vec and b_vec respectively.
+ * This is useful for creating a grid of rays for perspective
+ * rendering.
+ */
+RT_EXPORT extern int rt_gen_frustum(struct xrays *rays,
+				    const struct xray *center_ray,
+				    const vect_t a_vec,
+				    const vect_t b_vec,
+				    const fastf_t a_theta,
+				    const fastf_t b_theta,
+				    const fastf_t a_num,
+				    const fastf_t b_num);
+
+/**
+ * Make a bundle of orthogonal rays around a center ray as a uniform
+ * rectangular grid.  a_vec and b_vec are the directions for up and
+ * right, respectively; their magnitudes determine the extent of the
+ * grid (the grid extends from -a_vec to a_vec in the up-direction and
+ * from -b_vec to b_vec in the right direction).  da and db are the
+ * offset between rays in the a and b directions respectively.
+ */
+RT_EXPORT extern int rt_gen_rect(struct xrays *rays,
+				 const struct xray *center_ray,
+				 const vect_t a_vec,
+				 const vect_t b_vec,
+				 const fastf_t da,
+				 const fastf_t db);
+
 /* Shoot a ray */
 /**
  * Note that the direction vector r_dir must have unit length; this is

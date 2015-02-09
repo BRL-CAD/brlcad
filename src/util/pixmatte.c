@@ -146,7 +146,7 @@ get_args(int argc, char **argv)
     int seen_formula = 0;
     int i;
 
-    while ((c = bu_getopt(argc, argv, "glenaw:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "glenaw:h?")) != -1) {
 	switch (c) {
 	    case 'g':
 		wanted |= GT;
@@ -175,8 +175,8 @@ get_args(int argc, char **argv)
 		else
 		    usage("Illegal width specified\n", 1);
 		break;
-	    default:		/* '?' */
-		usage("unknown option\n", 1);
+	    default:		/* '?' 'h' */
+		usage("", 1);
 		break;
 	}
     }

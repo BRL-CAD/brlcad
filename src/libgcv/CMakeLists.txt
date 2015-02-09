@@ -10,14 +10,27 @@ BRLCAD_LIB_INCLUDE_DIRS(gcv GCV_INCLUDE_DIRS "")
 
 set(LIBGCV_SOURCES
   bottess.c
+  plugin.c
   region_end.c
   region_end_mc.c
   tri_intersect.c
   bot_solidity.c
   )
 
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libbu")
+list(APPEND LIBGCV_SOURCES
+  setup.cpp
+  conv/brlcad.c
+  conv/stl/stl_read.c
+  conv/stl/stl_write.c
+  conv/obj/obj_write.c
+  conv/fastgen4/fastgen4_read.c
+  conv/vrml/vrml_write.c
+  )
+
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+BRLCAD_ADDEXEC(gcv gcv.c libgcv)
 
 add_subdirectory(wfobj)
 
@@ -28,7 +41,7 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 add_test(NAME bottess_test COMMAND test_bottess)
 
-CMAKEFILES(NOTES soup.h tri_intersect.h bot_solidity.h)
+CMAKEFILES(NOTES gcv_private.h plugin.h soup.h tri_intersect.h bot_solidity.h)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/wfobj/CTestTestfile.cmake)
 

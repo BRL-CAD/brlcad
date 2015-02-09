@@ -25,7 +25,7 @@
     <arg choice='opt'>-N <replaceable>out_height</replaceable></arg>
     <arg choice='opt'>-o <replaceable>startframe</replaceable></arg>
     <arg choice='plain'><replaceable>basename</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
@@ -39,7 +39,7 @@
     <arg choice='plain'><replaceable>file1</replaceable></arg>
     <arg choice='plain' rep='repeat'><replaceable>file2</replaceable></arg>
     <arg choice='plain'><replaceable>fileN</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -191,9 +191,8 @@ the latter of which would go onto video tape or film.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLES</title>
-<para><userinput>pixtile -S 1024 -s 128 -o 2 anim &gt; out.pix</userinput>
-<!-- .br -->
-will read files
+<para>pixtile -S 1024 -s 128 -o 2 anim &gt; out.pix</para>
+<para>will read files
 <emphasis remap='I'>anim.2</emphasis>
 through
 <emphasis remap='I'>anim.65</emphasis>,
@@ -201,9 +200,8 @@ placing them from lower left to upper right in a 1024x1024 pixel
 file
 <emphasis remap='I'>out.pix</emphasis>.</para>
 
-<para><userinput>pixtile -s 256 lowerleft lowerright upperleft upperright &gt; out.pix</userinput>
-<!-- .br -->
-will read files
+<para>pixtile -s 256 lowerleft lowerright upperleft upperright &gt; out.pix</para>
+<para>will read files
 <emphasis remap='I'>lowerleft</emphasis>,
 <emphasis remap='I'>lowerright</emphasis>,
 <emphasis remap='I'>upperleft</emphasis>,
@@ -214,7 +212,7 @@ placing them from lower left to upper right in a 512x512 file
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbanim</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbanim</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsect1>
 

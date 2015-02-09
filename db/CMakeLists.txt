@@ -73,6 +73,7 @@ else(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 add_subdirectory(nist)
+add_subdirectory(faa)
 
 foreach(g_input ${G_BENCHMARK_MODELS})
   ADD_G_TARGET(${g_input} "BRL-CAD Geometry Models/Benchmark")
