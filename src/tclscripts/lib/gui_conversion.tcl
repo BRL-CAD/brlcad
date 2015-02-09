@@ -408,11 +408,17 @@ set ::exe_ext ""
 if {$tcl_platform(platform) == "windows"} {
     set ::exe_ext ".exe"
 }
-set ::input_file  [lindex $argv 0]
-set ::log_file [lindex $argv 1]
+
+if {[info exists argv]} {
+    set ::input_file  [lindex $argv 0]
+    set ::log_file [lindex $argv 1]
+} else {
+    set ::input_file "unknown"
+    set ::log_file ""
+}
+
 set ::input_ext [file extension $::input_file]
 set ::input_root [file rootname [file tail $::input_file]]
-set ::input_dir [file dirname $::input_file]
 set ::output_file [file join [file dirname $::input_file] "$input_root.g"]
 if {[llength $::log_file] == 0} {
    set ::log_file [file join [file dirname $::input_file] "$input_root.log"]
@@ -543,7 +549,15 @@ proc ::conversion_config { } {
    }
 }
 
-::conversion_config
+proc ::run_conversion_config {input_file log_file} {
+    set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
+    [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
+    catch {eval exec $gui_cmd} _conv_log
+}
+
+if {$argv0 == [info script]} {
+   ::conversion_config
+}
 
 # Local Variables:
 # tab-width: 8

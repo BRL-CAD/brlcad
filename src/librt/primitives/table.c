@@ -1424,7 +1424,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_NORM_CAST(rt_extrude_norm),
 	NULL,
 	NULL,
-	NULL,
+	RTFUNCTAB_FUNC_UV_CAST(rt_extrude_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_extrude_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_extrude_free),

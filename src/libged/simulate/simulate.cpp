@@ -34,6 +34,7 @@
 
 
 #include <map>
+#include <sstream>
 #include <stdexcept>
 
 
@@ -64,14 +65,31 @@ private:
 };
 
 
-// for testing; a better attribute-based system will eventually be implemented
+template<typename Target, typename Source>
+Target lexical_cast(Source arg)
+{
+    std::stringstream interpreter;
+    Target result;
+
+    if (!(interpreter << arg) ||
+	!(interpreter >> result) ||
+	!(interpreter >> std::ws).eof())
+	throw std::invalid_argument("bad lexical_cast");
+
+    return result;
+}
+
+
 static std::map<std::string, std::string>
 get_attributes(const db_i &dbi, const std::string &name)
 {
+    const char * const prefix = "simulate::";
+    const std::size_t prefix_len = strlen(prefix);
+
     directory *dir = db_lookup(&dbi, name.c_str(), false);
 
     if (!dir)
-	throw std::runtime_error("failed to lookup '" + name + "'");
+	throw std::invalid_argument("failed to lookup '" + name + "'");
 
     bu_attribute_value_set obj_avs;
     bu_avs_init_empty(&obj_avs);
@@ -85,31 +103,27 @@ get_attributes(const db_i &dbi, const std::string &name)
     std::map<std::string, std::string> result;
 
     for (std::size_t i = 0; i < obj_avs.count; ++i)
-	if (!result.insert(std::make_pair(obj_avs.avp[i].name,
-					  obj_avs.avp[i].value)).second)
-	    throw std::runtime_error("duplicate keys");
+	if (!strncmp(obj_avs.avp[i].name, prefix, prefix_len))
+	    result[obj_avs.avp[i].name + prefix_len] = obj_avs.avp[i].value;
 
     return result;
 }
 
 
-static btVector3
-get_bounding_box(db_i &dbi, const std::string &name)
+static void
+get_bounding_box_dimensions(db_i &dbi, const std::string &name, vect_t &dest)
 {
     directory *dir = db_lookup(&dbi, name.c_str(), false);
 
     if (!dir)
-	throw std::runtime_error("failed to lookup '" + name + "'");
+	throw std::invalid_argument("failed to lookup '" + name + "'");
 
     point_t bb_min, bb_max;
 
     if (rt_bound_internal(&dbi, dir, bb_min, bb_max))
 	throw std::runtime_error("failed to get bounding box");
 
-    point_t lwh; // bb dimensions
-    VSUB2(lwh, bb_max, bb_min);
-    return btVector3(static_cast<btScalar>(lwh[0]), static_cast<btScalar>(lwh[1]),
-		     static_cast<btScalar>(lwh[2])) / 2;
+    VSUB2(dest, bb_max, bb_min);
 }
 
 
@@ -117,8 +131,9 @@ static fastf_t
 get_volume(db_i &dbi, const std::string &name)
 {
     // FIXME: not the true volume
-    const btVector3 lwh = get_bounding_box(dbi, name) * 2;
-    return lwh.getX() * lwh.getY() * lwh.getZ();
+    vect_t lwh;
+    get_bounding_box_dimensions(dbi, name, lwh);
+    return lwh[X] * lwh[Y] * lwh[Z];
 }
 
 
@@ -132,20 +147,27 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 		MAT_IDN(vtree.tr_l.tl_mat);
 	    }
 
-	    const btVector3 bounding_box = get_bounding_box(dbi, vtree.tr_l.tl_name);
-	    btScalar mass;
+	    vect_t bounding_box_dimensions;
+	    get_bounding_box_dimensions(dbi, vtree.tr_l.tl_name, bounding_box_dimensions);
+	    const fastf_t density = 1;
+	    fastf_t mass = density * get_volume(dbi, vtree.tr_l.tl_name);
 
 	    std::map<std::string, std::string> attributes = get_attributes(dbi,
 		    vtree.tr_l.tl_name);
 
-	    if (attributes["simulate::type"] == "static")
-		mass = 0;
-	    else {
-		const btScalar DENSITY = 1;
-		mass = DENSITY * static_cast<btScalar>(get_volume(dbi, vtree.tr_l.tl_name));
+	    for (std::map<std::string, std::string>::const_iterator it = attributes.begin();
+		 it != attributes.end(); ++it) {
+		if (it->first == "mass") {
+		    mass = lexical_cast<fastf_t>(it->second);
+
+		    if (mass < 0) throw std::invalid_argument(
+			    std::string("invalid attribute 'mass' on object '")
+			    + vtree.tr_l.tl_name + "'");
+		} else throw std::invalid_argument("invalid attribute '" + it->second +
+						       "' on object '" + vtree.tr_l.tl_name  + "'");
 	    }
 
-	    world.add_object(bounding_box, mass, vtree.tr_l.tl_mat);
+	    world.add_object(bounding_box_dimensions, mass, vtree.tr_l.tl_mat);
 	    break;
 	}
 
@@ -155,7 +177,7 @@ world_add_tree(simulate::PhysicsWorld &world, tree &vtree, db_i &dbi)
 	    break;
 
 	default:
-	    throw std::runtime_error("unsupported operation in scene comb");
+	    throw std::invalid_argument("unsupported operation in scene comb");
     }
 }
 
@@ -170,7 +192,8 @@ ged_simulate(ged *gedp, int argc, const char **argv)
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     if (argc != 2) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: USAGE: %s <comb>", argv[0], argv[0]);
+	bu_vls_sprintf(gedp->ged_result_str, "%s: USAGE: %s <scene_comb>", argv[0],
+		       argv[0]);
 	return GED_ERROR;
     }
 
@@ -191,11 +214,14 @@ ged_simulate(ged *gedp, int argc, const char **argv)
     try {
 	tree * const vtree = static_cast<rt_comb_internal *>(internal.idb_ptr)->tree;
 
-	if (!vtree) throw std::runtime_error("combination has no members");
+	if (!vtree) throw std::invalid_argument("combination has no members");
 
 	simulate::PhysicsWorld world;
 	world_add_tree(world, *vtree, *gedp->ged_wdbp->dbip);
-	world.step(5);
+	world.step(1);
+    } catch (const std::logic_error &e) {
+	bu_vls_sprintf(gedp->ged_result_str, "%s: ERROR: %s", argv[0], e.what());
+	return GED_ERROR;
     } catch (const std::runtime_error &e) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s: ERROR: %s", argv[0], e.what());
 	return GED_ERROR;
@@ -207,8 +233,6 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 		       argv[0]);
 	return GED_ERROR;
     }
-
-    bu_vls_sprintf(gedp->ged_result_str, "%s done", argv[0]);
 
     return GED_OK;
 }
@@ -227,7 +251,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     bu_vls_sprintf(gedp->ged_result_str,
-		   "%s: ERROR: This command is disabled due to the absence of a physics library",
+		   "%s: ERROR: This build of BRL-CAD was not compiled with Bullet support",
 		   argv[0]);
 
     return GED_ERROR;

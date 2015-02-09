@@ -41,10 +41,6 @@ extern int bn_randhalftabsize;
 extern float bn_rand_halftab[];
 extern float bn_rand_poison_[];
 
-/* see vectfont.c for vector font constant globals */
-extern int *tp_cindex[];
-extern int tp_ctable[];
-
 /*
  * Local Variables:
  * tab-width: 8

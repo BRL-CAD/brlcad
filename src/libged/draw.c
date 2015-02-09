@@ -105,12 +105,12 @@ plot_shaded(
     } else {
 	int ac = 1;
 	const char *av[2];
- 
+
 	av[0] = db_path_to_string(pathp);
 	av[1] = (char *)0;
- 
+
 	_ged_drawtrees(dgcdp->gedp, ac, av, _GED_DRAW_NMG_POLY, dgcdp);
- 
+
 	bu_free((void *)av[0], "plot_shaded: av[0]");
     }
 }
@@ -195,7 +195,7 @@ plot_shaded_eval(
     const char *av[3];
     const char *tmp_basename = "tmp_shaded_eval_obj";
     char *brep_name;
- 
+
     /* make a name for the temp brep */
     av[0] = "make_name";
     av[1] = tmp_basename;

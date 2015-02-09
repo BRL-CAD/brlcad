@@ -29,7 +29,7 @@
     <arg choice='opt'>-y <replaceable>bottom_edge</replaceable></arg>
     <arg choice='opt'>-X <replaceable>right_edge</replaceable></arg>
     <arg choice='opt'>-Y <replaceable>top_edge</replaceable></arg>
-    <arg choice='opt'>-ah </arg>
+    <arg choice='opt'>-a</arg>
     <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
@@ -90,6 +90,8 @@ it has the interior color (does not have the exterior color)
 and at least one of its neighbors
 does not have the interior color (has the exterior color).</para>
 
+<para>The <option>-b</option> and <option>-B</option> options are for the specification of what will be used for the border.</para>
+
 <para>Variability in the interior and exterior colors
 may be accommodated by the
 <option>-t</option> and <option>-T</option>
@@ -100,6 +102,13 @@ or hue, saturation, and value.
 Any color
 within the specified tolerance of the nominal interior (exterior) color
 is treated as though it were the nominal color.</para>
+
+<para>The <option>-a</option> option is for autosizing.
+The <option>-w</option> option is for file width,
+the <option>-n</option> option is for file height,
+and the <option>-s</option> option sets file width and height to the same value. (Values
+are in pixels.)
+</para>
 
 <para>Changes are restricted to a specified rectangular portion of the image,
 which defaults to the entire image.

@@ -145,14 +145,14 @@ attr_cmd(const char* arg)
 
 HIDDEN void
 attr_print(struct ged *gedp, struct bu_attribute_value_set *avs,
-	   const int max_attr_name_len)
+	   const size_t max_attr_name_len)
 {
     struct bu_attribute_value_pair *avpp;
     size_t i;
 
     for (i = 0, avpp = avs->avp; i < avs->count; i++, avpp++) {
-	int len_diff = 0;
-	int count = 0;
+	size_t len_diff = 0;
+	size_t count = 0;
 	bu_vls_printf(gedp->ged_result_str, "\t%s", avpp->name);
 	len_diff = max_attr_name_len - strlen(avpp->name);
 	while (count < (len_diff) + 1) {
@@ -173,7 +173,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "{set|get|show|rm|append|sort} object [key [value] ... ]";
     attr_cmd_t scmd;
     struct directory **paths = NULL;
-    unsigned int path_cnt = 0;
+    size_t path_cnt = 0;
 
     /* sort types */
     const char CASE[]         = "case";
@@ -219,9 +219,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     if (scmd == ATTR_SORT) {
 	for (i = 0; i < path_cnt; i++) {
 	    /* for pretty printing */
-	    unsigned int j = 0;
-	    int max_attr_name_len  = 0;
-	    int max_attr_value_len = 0;
+	    size_t j = 0;
+	    size_t max_attr_name_len  = 0;
+	    size_t max_attr_value_len = 0;
 
 	    struct bu_attribute_value_set avs;
 	    bu_avs_init_empty(&avs);
@@ -235,11 +235,11 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
 	    /* get a jump on calculating name and value lengths */
 	    for (j = 0, avpp = avs.avp; j < avs.count; j++, avpp++) {
-		int len = (int)strlen(avpp->name);
+		size_t len = strlen(avpp->name);
 		if (len > max_attr_name_len)
 		    max_attr_name_len = len;
 		if (avpp->value) {
-		    len = (int)strlen(avpp->value);
+		    len = strlen(avpp->value);
 		    if (len > max_attr_value_len)
 			max_attr_value_len = len;
 		}
@@ -310,7 +310,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    bu_avs_free(&avs);
 	} else {
 	    for (i = 0; i < path_cnt; i++) {
-		unsigned int j = 0;
+		size_t j = 0;
 		struct bu_vls obj_vals = BU_VLS_INIT_ZERO;
 		struct bu_attribute_value_set avs;
 		bu_avs_init_empty(&avs);
@@ -493,11 +493,11 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     } else if (scmd == ATTR_SHOW) {
 	for (i = 0; i < path_cnt; i++) {
 	    /* for pretty printing */
-	    int max_attr_name_len  = 0;
-	    int max_attr_value_len = 0;
+	    size_t max_attr_name_len  = 0;
+	    size_t max_attr_value_len = 0;
 
-	    unsigned int j = 0;
-	    int tabs1 = 0;
+	    size_t j = 0;
+	    size_t tabs1 = 0;
 	    struct bu_attribute_value_set avs;
 	    bu_avs_init_empty(&avs);
 	    dp = paths[i];
@@ -509,11 +509,11 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    /* get a jump on calculating name and value lengths */
 	    for (j = 0, avpp = avs.avp; j < avs.count; j++, avpp++) {
-		int len = (int)strlen(avpp->name);
+		size_t len = strlen(avpp->name);
 		if (len > max_attr_name_len)
 		    max_attr_name_len = len;
 		if (avpp->value) {
-		    len = (int)strlen(avpp->value);
+		    len = strlen(avpp->value);
 		    if (len > max_attr_value_len)
 			max_attr_value_len = len;
 		}
@@ -529,19 +529,19 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		attr_print(gedp, &avs, max_attr_name_len);
 	    } else {
 		const char *val;
-		int len;
+		size_t len;
 
 		/* show just the specified attributes */
 		for (j = 0; j < (size_t)argc; j++) {
-		    len = (int)strlen(argv[j]);
+		    len = strlen(argv[j]);
 		    if (len > max_attr_name_len) {
 			max_attr_name_len = len;
 		    }
 		}
 		tabs1 = 2 + max_attr_name_len/8;
 		for (j = 3; j < (size_t)argc; j++) {
-		    int tabs2;
-		    int k;
+		    size_t tabs2;
+		    size_t k;
 		    const char *c;
 
 		    val = bu_avs_get(&avs, argv[j]);
@@ -555,7 +555,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		    } else {
 			if (val) {
 			    bu_vls_printf(gedp->ged_result_str, "\t%s", argv[j]);
-			    len = (int)strlen(val);
+			    len = strlen(val);
 			    tabs2 = tabs1 - 1 - len/8;
 			    for (k = 0; k < tabs2; k++) {
 				bu_vls_putc(gedp->ged_result_str, '\t');

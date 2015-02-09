@@ -6430,8 +6430,9 @@ proc title_node_handler {node} {
 	return
     }
 
-    # The brep primitive type does not yet support "get"
-    if {$mSelectedObjType == "brep"} {
+    # The brep primitive type does not yet support "get".
+    # Running get on bot is slow, and so is deferred until later.
+    if {$mSelectedObjType == "brep" || $mSelectedObjType == "bot"} {
 	set odata ""
     } else {
 	set odata [lrange [gedCmd get $mSelectedObj] 1 end]

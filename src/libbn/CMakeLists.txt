@@ -11,6 +11,7 @@ set(LIBBN_SOURCES
   axis.c
   complex.c
   chull.c
+  chull3d.cpp
   clip.c
   font.c
   globals.c
@@ -55,7 +56,6 @@ add_subdirectory(tests)
 CMAKEFILES(
   README
   bn_private.h
-  chull3d.c
   )
 
 # Local Variables:

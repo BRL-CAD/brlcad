@@ -29,8 +29,9 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bn/chull.h"
 #include "rtgeom.h"
-
+#include "wdb.h"
 #include "./ged_private.h"
 
 
@@ -113,6 +114,12 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	}
     }
     if (bu_strncmp(sub, "chull", len) == 0) {
+	int retval = 0;
+	int fc = 0;
+	int vc = 0;
+	point_t *vert_array;
+	int *faces;
+	unsigned char err = 0;
 
 	/* must be wanting help */
 	if (argc < 4) {
@@ -120,6 +127,13 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
+	retval = bn_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)bot->vertices, (int)bot->num_vertices);
+
+	if (retval != 3) return GED_ERROR;
+
+	retval = mk_bot(gedp->ged_wdbp, argv[3], RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
+
+	if (retval) return GED_ERROR;
     }
 
     return GED_OK;

@@ -1,4 +1,4 @@
-/*                        T C L . H
+/*                        B N _ T C L . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file tcl.h */
+/* @file bn_tcl.h */
 /** @addtogroup tcl */
 /** @{ */
 

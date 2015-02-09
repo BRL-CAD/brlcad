@@ -446,7 +446,7 @@ db5_export_object3(
 	namelen = (long)strlen(name) + 1;	/* includes null */
 	if (namelen > 1) {
 	    n_width = db5_select_length_encoding(namelen);
-	    need += namelen + db5_enc_len[n_width];
+	    need += namelen + DB5_ENC_LEN(n_width);
 	} else {
 	    name = NULL;
 	    namelen = 0;
@@ -459,7 +459,7 @@ db5_export_object3(
 	BU_CK_EXTERNAL(attrib);
 	if (attrib->ext_nbytes > 0) {
 	    a_width = db5_select_length_encoding(attrib->ext_nbytes);
-	    need += attrib->ext_nbytes + db5_enc_len[a_width];
+	    need += attrib->ext_nbytes + DB5_ENC_LEN(a_width);
 	} else {
 	    attrib = NULL;
 	    a_width = 0;
@@ -471,7 +471,7 @@ db5_export_object3(
 	BU_CK_EXTERNAL(body);
 	if (body->ext_nbytes > 0) {
 	    b_width = db5_select_length_encoding(body->ext_nbytes);
-	    need += body->ext_nbytes + db5_enc_len[b_width];
+	    need += body->ext_nbytes + DB5_ENC_LEN(b_width);
 	} else {
 	    body = NULL;
 	    b_width = 0;

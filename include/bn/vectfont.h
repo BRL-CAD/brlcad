@@ -58,6 +58,7 @@ __BEGIN_DECLS
  * @brief
  *  Once-only setup routine
  *  Used by libplot3/symbol.c, so it can't be static.
+ *  DEPRECATED: libplot3 has been merged into libbn, so this no longer needs to be public.
  */
 BN_EXPORT extern void tp_setup(void);
 

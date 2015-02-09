@@ -771,7 +771,7 @@ uv_interval_from_points(
 	    // For example, if the surface has a seam at the
 	    // west/east edge and we have seam_uv (0.0, .1)
 	    // and other_uv (.5, .6) we'll check that the
-	    // interval midpoint uv has a u in [0.0, .5]. 
+	    // interval midpoint uv has a u in [0.0, .5].
 	    //
 	    // A midpoint of (.25, .25) would be okay. A
 	    // midpoint of (.75, .25) would necessitate us
@@ -1028,7 +1028,7 @@ interval_3d_to_2d(
 	pts.min = curve3d->PointAt(interval.Min());
 	pts.mid = curve3d->PointAt(interval.Mid());
 	pts.max = curve3d->PointAt(interval.Max());
-	
+
 	ON_ClassArray<ON_PX_EVENT> events;
 	ON_Intersect(pts.min, *surf, events, INTERSECTION_TOL);
 	ON_Intersect(pts.mid, *surf, events, INTERSECTION_TOL);
@@ -1155,7 +1155,7 @@ get_subcurves_inside_faces(
 		}
 	    }
 	}
-	
+
     }
     for (int i = 0; i < intervals2.Count(); ++i) {
 	// convert interval on face 1 to equivalent interval on face 2
@@ -1178,7 +1178,7 @@ get_subcurves_inside_faces(
 		}
 	    }
 	}
-	
+
     }
 }
 
@@ -2205,7 +2205,7 @@ loop_boolean(
 	close_small_gaps(*li);
     }
 
-    out = make_result_from_loops(new_loops); 
+    out = make_result_from_loops(new_loops);
 
     return out;
 }
@@ -2265,7 +2265,7 @@ combine_loops(
     // Intersections always produce a single outerloop.
     //
     // Subtractions may produce multiple outerloops, or a single
-    // outerloop that optionally includes a single innerloop. 
+    // outerloop that optionally includes a single innerloop.
     //
     // So, the possible results are:
     // 1) Single outerloop.

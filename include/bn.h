@@ -40,7 +40,7 @@
 #include "bn/version.h"
 #include "bn/tol.h"
 #include "bn/anim.h"
-#include "bn/tcl.h"
+#include "bn/bn_tcl.h"
 #include "bn/chull.h"
 #include "bn/complex.h"
 #include "bn/mat.h"
