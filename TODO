@@ -18,9 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-+ studio_build.log
-+ merge rel8, minmax.grep @ clip.c
-
 * make sure rt -I interactive mode still works... looks like code for
   it was removed.
 
