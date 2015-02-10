@@ -1010,6 +1010,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add geometry example of building 238
 
 * Mac OS X SGI dial knobs support
+  - Note that we might do better here to focus on the 3Dconnexion
+    space navigator mouse, which is a lot more commonly available
+    nowadays...  spacenav.sourceforge.net is something to bear in
+    mind in this context.
 
 * ability to "unpush" objects, translating them to a new position and
   applying the correct matrix (using either bounding box or center of
