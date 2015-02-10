@@ -234,6 +234,12 @@ int
 make_shapes(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *pcomb)
 {
     //std::cout << "Making shape for " << bu_vls_addr(data->key) << "\n";
+    if (data->planar_obj && data->planar_obj->local_brep) {
+	struct bu_vls brep_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&brep_name, "planar_%s.s", bu_vls_addr(data->key));
+	mk_brep(wdbp, bu_vls_addr(&brep_name), data->planar_obj->local_brep);
+	bu_vls_free(&brep_name);
+    }
     if (data->type == BREP) {
 	if (data->local_brep) {
 	    struct bu_vls brep_name = BU_VLS_INIT_ZERO;

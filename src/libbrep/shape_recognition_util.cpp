@@ -331,11 +331,11 @@ array_to_map(std::map<int,int> *map, int *array, int array_cnt)
 }
 
 
-// Remove degenerate edge sets. A degenerate edge set is defined as two
+// Remove degenerate linear edge sets. A degenerate edge set is defined as two
 // linear segments having the same two vertices.  (To be sure, we should probably
 // check curve directions in loops in some fashion...)
 void
-subbrep_remove_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges){
+subbrep_remove_linear_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges){
     std::set<int> degenerate;
     std::set<int>::iterator e_it;
     for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
@@ -364,6 +364,13 @@ subbrep_remove_degenerate_edges(struct subbrep_object_data *data, std::set<int> 
     }
 }
 
+// Remove degenerate arc edge sets. A degenerate edge set is defined as two
+// linear segments having the same two vertices.  (To be sure, we should probably
+// check curve directions in loops in some fashion...)
+void
+subbrep_remove_arc_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges)
+{
+}
 
 void
 print_subbrep_object(struct subbrep_object_data *data, const char *offset)

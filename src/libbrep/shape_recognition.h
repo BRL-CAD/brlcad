@@ -133,8 +133,8 @@ struct bu_ptbl *find_subbreps(const ON_Brep *brep);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
 volume_t subbrep_shape_recognize(struct subbrep_object_data *data);
 
-void
-subbrep_remove_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges);
+void subbrep_remove_linear_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges);
+void subbrep_remove_arc_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges);
 
 int subbrep_is_planar(struct subbrep_object_data *data);
 

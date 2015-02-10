@@ -74,7 +74,7 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
     // Fifth, remove degenerate edge sets.
     std::set<int> active_edges;
     array_to_set(&active_edges, data->edges, data->edges_cnt);
-    subbrep_remove_degenerate_edges(data, &active_edges);
+    subbrep_remove_linear_degenerate_edges(data, &active_edges);
 
     // Sixth, check for any remaining linear segments.  For rpc primitives
     // those are expected, but for a true cylinder the linear segments should
