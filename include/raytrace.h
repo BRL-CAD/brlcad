@@ -1890,6 +1890,9 @@ struct command_tab {
 
 /**
  * Used by MGED for labeling vertices of a solid.
+ *
+ * TODO - eventually this should fade into a general annotation
+ * framework
  */
 struct rt_point_labels {
     char str[8];
