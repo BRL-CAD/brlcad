@@ -1705,9 +1705,6 @@ CONVERTERS
 * implement a g-sat (Solidworks) exporter and sat-g importer
   http://local.wasp.uwa.edu.au/~pbourke/dataformats/sat/sat.pdf
 
-* implement a g-ply exporter
-  http://en.wikipedia.org/wiki/PLY_(file_format)
-
 * implement a g-json exporter
   http://www.json.org/
 
