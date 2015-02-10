@@ -41,7 +41,6 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
 #include "dm.h"
 #include "dm-Null.h"
 #include "dm-wgl.h"
