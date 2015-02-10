@@ -450,7 +450,12 @@ proc over_quit { id } {
     vdraw send
 
     if { $over_cont($id,ray) == "ray" && $over_cont($id,fd) > 0 } {
-	catch {exec kill -9 [lindex $over_cont($id,pid) 0]}
+	if {$tcl_platform(platform) == "windows"} {
+	    set kill_cmd {taskkill [lindex $over_cont($id,pid) 0]}
+	} else {
+	    set kill_cmd {kill -9 [lindex $over_cont($id,pid) 0]}
+	}
+	catch {exec $kill_cmd}
 	catch {close $over_cont($id,fd)}
     }
     catch {destroy $over_cont($id,dialog_window)}
