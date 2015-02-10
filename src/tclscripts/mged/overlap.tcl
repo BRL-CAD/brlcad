@@ -207,6 +207,20 @@ proc next_overlap { id } {
     update
 }
 
+proc overlap_temp_file { } {
+    if { [catch {set dir $env(TMP)}] } {
+	if { [catch {set dir $env(TEMP)}] } {
+	    if { [file exists "/tmp"] } {
+		set dir "/tmp"
+	    } else {
+		set dir "."
+	    }
+	}
+    }
+
+    return "$dir/g_lint_error"
+}
+
 proc read_output { id } {
     global over_cont mged_gui
 
@@ -216,20 +230,25 @@ proc read_output { id } {
 	if { [string length $inn] > 0 } {
 	    append over_cont($id,glint_ret) $inn
 	}
-	catch "file delete /tmp/g_lint_error"
+
+	catch {file delete [overlap_temp_file]}
 	$over_cont($id,top).status configure -text "Processing output..."
 	update
+
 	set over_cont($id,length) [llength $over_cont($id,glint_ret)]
 	set over_cont($id,cur_ovr_index) 0
 	set over_cont($id,start) 0
+
 	count_overlaps $id
 	if { $over_cont($id,overlap_count) == 0 } {
 	    cad_dialog $over_cont($id,dialog_window) $mged_gui($id,screen) "Overlap Tool" "No overlaps found" info 0 OK
 	}
+
 	set over_cont($id,overlap_no) 1
 	grid $over_cont($id,work_frame) -row 4 -column 0 -columnspan 6 -sticky ew
 	next_overlap $id
     }
+
     append over_cont($id,glint_ret) $inn
 }
 
@@ -259,15 +278,22 @@ proc fix_overlaps { id } {
 	$over_cont($id,work_frame).b5 configure -state normal
 	update
 	set model [opendb]
-	set file_name "| g_lint -s -a $over_cont($id,az) -e $over_cont($id,el) -g $size_in_mm $model $over_cont($id,objs) 2> /tmp/g_lint_error"
+
+	set ::exe_ext ""
+	if {$tcl_platform(platform) == "windows"} {
+	    set ::exe_ext ".exe"
+	}
+	set g_lint_cmd [bu_brlcad_root [file join [bu_brlcad_dir bin] g_lint$::exe_ext]]
+	set g_lint_tmp [overlap_temp_file]
+	set file_name "| $g_lint_cmd -s -a $over_cont($id,az) -e $over_cont($id,el) -g $size_in_mm $model $over_cont($id,objs) 2> $g_lint_tmp"
 	set over_cont($id,fd) [open $file_name]
 	fconfigure $over_cont($id,fd) -blocking false
 
 	if { $over_cont($id,fd) < 1 } {
-	    set fd [open /tmp/g_lint_error]
+	    set fd [open $g_lint_tmp]
 	    set mess [read $fd]
 	    close $fd
-	    file delete /tmp/g_lint_error
+	    file delete $g_lint_tmp
 	    tk_messageBox -icon error -message $mess -title "g_lint error" -type ok
 	    $over_cont($id,top).status configure -text "ready"
 	    $over_cont($id,top).go_quit.go configure -state normal
