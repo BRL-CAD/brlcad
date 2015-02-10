@@ -1664,15 +1664,6 @@ missing on Windows due to needing lex.
 CONVERTERS
 ----------
 
-* implement 3dm-g support for ON_InstanceRef entities.  These are
-  instances of existing geometry that have prescribed referencing edit
-  behavior and can have their own matrices.  Basically, they're combs
-  that should sometimes reference copies of geometry and sometimes not
-  (there's a flag).  unveiled via sf bug report 3575774 where the
-  geometry export from solidworks was predominantly references
-  resulting in a load of geometry missing after import and objects in
-  the wrong position.
-
 * make the converters export all top-level objects by default
 
 * implement support for exporting sketch objects via g-iges
