@@ -682,10 +682,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * update g-xxx_facets to use libgcv
 
-* add distribution test for making sure the source code conventions
-  for function replacements are being respected (e.g., bu_strcmp()
-  instead of strcmp()).
-
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
 * make nreed's new bot cleanup interface update interactively without
