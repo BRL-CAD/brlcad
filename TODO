@@ -1664,6 +1664,11 @@ missing on Windows due to needing lex.
 CONVERTERS
 ----------
 
+* investigate the asset import library (assimp.sf.net) to see whether
+  we can replace a lot (but probably not all) of our bot-centric
+  importers/exports (ply, obj, stl, etc.) with the assimp libray
+  to save us the time/effort of supporting those parser ourselves.
+
 * make the converters export all top-level objects by default
 
 * implement support for exporting sketch objects via g-iges
