@@ -12,6 +12,8 @@
 #define BREP_ELLIPSOIDAL_TOL 0.05
 #define BREP_TOROIDAL_TOL 0.05
 
+#define pout(p)  p.x << "," << p.y << "," << p.z
+
 typedef enum {
     CURVE_POINT = 0,
     CURVE_LINE,
@@ -133,9 +135,6 @@ struct bu_ptbl *find_subbreps(const ON_Brep *brep);
 void print_subbrep_object(struct subbrep_object_data *data, const char *offset);
 volume_t subbrep_shape_recognize(struct subbrep_object_data *data);
 
-void subbrep_remove_linear_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges);
-void subbrep_remove_arc_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges);
-
 int subbrep_is_planar(struct subbrep_object_data *data);
 
 int cylindrical_loop_planar_vertices(ON_BrepFace *face, int loop_index);
@@ -144,6 +143,8 @@ int cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol);
 
 int subbrep_is_cone(struct subbrep_object_data *data, fastf_t cone_tol);
 int cone_csg(struct subbrep_object_data *data, fastf_t cone_tol);
+
+int sphere_csg(struct subbrep_object_data *data, fastf_t cone_tol);
 
 std::string face_set_key(std::set<int> fset);
 surface_t highest_order_face(struct subbrep_object_data *data);

@@ -8,9 +8,6 @@
 #include "bu/malloc.h"
 #include "shape_recognition.h"
 
-#define pout(p) std::cout << p.x << "," << p.y << "," << p.z;
-
-
 int
 subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
 {
@@ -71,15 +68,37 @@ subbrep_is_cylinder(struct subbrep_object_data *data, fastf_t cyl_tol)
         return 0;
     }
 
-    // Fifth, remove degenerate edge sets.
+    // Fifth, remove from the active edge set all linear edges that have both faces
+    // present in the subbrep data set.  For a whole cylinder, the circular edges
+    // govern.
     std::set<int> active_edges;
-    array_to_set(&active_edges, data->edges, data->edges_cnt);
-    subbrep_remove_linear_degenerate_edges(data, &active_edges);
-
-    // Sixth, check for any remaining linear segments.  For rpc primitives
-    // those are expected, but for a true cylinder the linear segments should
-    // all wash out in the degenerate pass
     std::set<int>::iterator e_it;
+    std::set<int> faces;
+    array_to_set(&active_edges, data->edges, data->edges_cnt);
+    array_to_set(&faces , data->faces, data->faces_cnt);
+    for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
+	std::set<int> faces_found;
+	const ON_BrepEdge *edge = &(data->brep->m_E[*e_it]);
+	ON_Curve *ec = edge->EdgeCurveOf()->Duplicate();
+	if (ec->IsLinear()) {
+	    for (int i = 0; i < edge->TrimCount(); i++) {
+		const ON_BrepTrim *trim = edge->Trim(i);
+		int f_ind = trim->Face()->m_face_index;
+		if (faces.find(f_ind) != faces.end()) faces_found.insert(f_ind);
+	    }
+	    if (faces_found.size() == 2) {
+		active_edges.erase(*e_it);
+	    }
+	}
+	delete ec;
+    }
+
+    // Sixth, check for any remaining linear segments.  For partial rcc
+    // primitives (e.g. a single surface that defines part of a cylinder but
+    // has no mating faces to complete the shape) those are expected, but for a
+    // true cylinder the linear segments should all wash out in the degenerate
+    // pass.  In principle this may not be necessary, since any such surfaces
+    // shouldn't show up isolated in a proper brep...
     for (e_it = active_edges.begin(); e_it != active_edges.end(); e_it++) {
         const ON_BrepEdge *edge = &(data->brep->m_E[*e_it]);
 	ON_Curve *ec = edge->EdgeCurveOf()->Duplicate();
@@ -638,10 +657,10 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		v4 = top_pnts[0];
 	    }
 #if 0
-	    std::cout << "v1 ("; pout(v1->Point()); std::cout << ")\n";
-	    std::cout << "v2 ("; pout(v2->Point()); std::cout << ")\n";
-	    std::cout << "v3 ("; pout(v3->Point()); std::cout << ")\n";
-	    std::cout << "v4 ("; pout(v4->Point()); std::cout << ")\n";
+	    std::cout << "v1 (" << pout(v1->Point()) << ")\n";
+	    std::cout << "v2 (" << pout(v2->Point()) << ")\n";
+	    std::cout << "v3 (" << pout(v3->Point()) << ")\n";
+	    std::cout << "v4 (" << pout(v4->Point()) << ")\n";
 #endif
 
 	    // Before we manipulate the points for arb construction,
@@ -649,23 +668,22 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    if (!data->is_island) {
 		// The cylinder shape is a partial cylinder, and it is not
 		// topologically isolated, so we need to make a new face
-		// to replace this one.
-		std::cout << "need new face - use pcyl plane and 4 verts\n";
-
-		// First, see if a local planar brep object has been generated for
-		// this shape.  Such a brep is not generated up front, because
-		// there is no way to be sure a planar parent is needed until
-		// we hit a case like this - for example, a brep consisting of
-		// stacked cylinders of different diameters will have multiple
-		// planar surfaces, but can be completely described without use
-		// of planar volumes in the final CSG expression.  If another
-		// shape has already triggered the generation we don't want to
-		// do it again,  but the first shape to make the need clear has
-		// to trigger the build.
+		// in the parent to replace this one.
 		if (data->parent) {
+		    // First, see if a local planar brep object has been generated for
+		    // this shape.  Such a brep is not generated up front, because
+		    // there is no way to be sure a planar parent is needed until
+		    // we hit a case like this - for example, a brep consisting of
+		    // stacked cylinders of different diameters will have multiple
+		    // planar surfaces, but can be completely described without use
+		    // of planar volumes in the final CSG expression.  If another
+		    // shape has already triggered the generation we don't want to
+		    // do it again,  but the first shape to make the need clear has
+		    // to trigger the build.
 		    if (!data->parent->planar_obj) {
 			subbrep_planar_init(data);
 		    }
+		    // Now, add the new face
 		    ON_SimpleArray<const ON_BrepVertex *> vert_loop(4);
 		    vert_loop.Append(v1);
 		    vert_loop.Append(v2);

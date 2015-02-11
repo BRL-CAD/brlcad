@@ -8,9 +8,6 @@
 #include "bu/malloc.h"
 #include "shape_recognition.h"
 
-#define pout(p) std::cout << p.x << "," << p.y << "," << p.z;
-
-
 int
 subbrep_is_sphere(struct subbrep_object_data *data, fastf_t cyl_tol)
 {
@@ -46,15 +43,8 @@ subbrep_is_sphere(struct subbrep_object_data *data, fastf_t cyl_tol)
 	if (!NEAR_ZERO(f_sph.Radius() - sph.Radius(), BREP_SPHERICAL_TOL)) return 0;
     }
 
-
-    // Third, remove degenerate edge sets.
-    std::set<int> active_edges;
-    array_to_set(&active_edges, data->edges, data->edges_cnt);
-    subbrep_remove_arc_degenerate_edges(data, &active_edges);
-
-    // Fourth, check for any remaining edges.  For a true
-    // sphere, they should all be gone.
-    if (active_edges.size() > 0) return 0;
+    // TODO - devise other tests necessary to make sure we have a closed sphere,
+    // if any are needed.  Maybe rule out anything with linear edges?
 
 
     data->type = SPHERE;
@@ -108,7 +98,8 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
             case SURFACE_PLANE:
                 planar_surfaces.insert(f_ind);
                 break;
-            case SURFACE_CYLINDER:
+            case SURFACE_SPHERE:
+            case SURFACE_SPHERICAL_SECTION:
                 spherical_surfaces.insert(f_ind);
                 break;
             default:
@@ -119,34 +110,87 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
     }
     data->params->bool_op = 'u'; // Initialize to union
 
+    std::cout << "processing spherical surface\n";
+
     // Check for multiple spheres.
     ON_Sphere sph;
     ON_Surface *cs = data->brep->m_F[*spherical_surfaces.begin()].SurfaceOf()->Duplicate();
     cs->IsSphere(&sph, BREP_SPHERICAL_TOL);
+    std::cout << "Center: " << pout(sph.Center()) << "\n";
+    std::cout << "Radius: " << sph.Radius() << "\n";
     delete cs;
     for (f_it = spherical_surfaces.begin(); f_it != spherical_surfaces.end(); f_it++) {
 	ON_Sphere f_sph;
 	ON_Surface *fcs = data->brep->m_F[(*f_it)].SurfaceOf()->Duplicate();
-	fcs->IsSphere(&sph, BREP_SPHERICAL_TOL);
+	fcs->IsSphere(&f_sph, BREP_SPHERICAL_TOL);
 	delete fcs;
+	std::cout << "  Center: " << pout(f_sph.Center()) << "\n";
+	std::cout << "  Radius: " << f_sph.Radius() << "\n";
 	if (f_sph.Center().DistanceTo(sph.Center()) > BREP_SPHERICAL_TOL) return 0;
 	if (!NEAR_ZERO(f_sph.Radius() - sph.Radius(), BREP_SPHERICAL_TOL)) return 0;
     }
 
-    // Remove degenerate edge sets.
-    std::set<int> active_edges;
-    array_to_set(&active_edges, data->edges, data->edges_cnt);
-    subbrep_remove_arc_degenerate_edges(data, &active_edges);
 
-    // If we've got linear edges, right now it's too complicated - TODO
-    // TODO - check for linear edges in active set.
+    // Count the number of vertices associated with this subbrep.
+    std::set<int> verts;
+    std::set<int>::iterator v_it;
+    for (int i = 0; i < data->edges_cnt; i++) {
+	const ON_BrepEdge *edge = &(data->brep->m_E[data->edges[i]]);
+	verts.insert(edge->Vertex(0)->m_vertex_index);
+	verts.insert(edge->Vertex(1)->m_vertex_index);
+    }
 
-    // Make sure the vertices of the non-degenerate arcs are coplanar - can be
-    // handled but for now too complicated
+    std::cout << "vertex count: " << verts.size() << "\n";
 
-    // Characterize the planes of the non-degenerate non-linear edges.  This will tell us how many arbs
-    // are subtracted from the sphere.  If none, we have a true sphere - each unique plane indicates an
-    // arb subtraction.
+    if (verts.size() == 1) {
+	std::cout << "Only one vertex??\n";
+	return 0;
+    }
+
+    if (verts.size() == 2 && data->edges_cnt == 1) {
+	std::cout << "Two vertices, one edge - probably whole sphere\n";
+	return 0;
+    }
+
+    if (verts.size() == 2 && data->edges_cnt >= 2) {
+	std::cout << "Two vertices, more than one edge.  Uh...\n";
+	return 0;
+    }
+
+    if (verts.size() == 3) {
+	std::cout << "Three vertices\n";
+	// Need the planes of any non-linear edges and the plane of the three verts.
+	ON_SimpleArray<const ON_BrepVertex *> sph_verts(3);
+	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	    sph_verts.Append(&(data->brep->m_V[*v_it]));
+	}
+	ON_3dPoint p1 = sph_verts[0]->Point();
+	ON_3dPoint p2 = sph_verts[1]->Point();
+	ON_3dPoint p3 = sph_verts[2]->Point();
+	ON_Plane back_plane(p1, p2, p3);
+
+	for (int i = 0; i < data->edges_cnt; i++) {
+	    const ON_BrepEdge *edge = &(data->brep->m_E[data->edges[i]]);
+	    verts.insert(edge->Vertex(0)->m_vertex_index);
+	    verts.insert(edge->Vertex(1)->m_vertex_index);
+	}
+
+	// In order to determine orientations, we need to know
+	// what the normal is in an "interior" point of the surface (i.e.
+	// within the trimming loop.)  The normal at that point, the
+	// vector between that point and the center, the vectore between
+	// the center and the closest point on a given plane (arc or
+	// 3-pt based) and whether or not the sphere is negative will
+	// have to tell us what we're dealing with.
+
+
+	return 0;
+    }
+
+    if (verts.size() >= 3) {
+	std::cout << "Complex situation.\n";
+	return 0;
+    }
 
 }
 

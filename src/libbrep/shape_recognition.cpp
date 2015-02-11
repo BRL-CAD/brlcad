@@ -357,7 +357,7 @@ subbrep_split(struct subbrep_object_data *data)
 		    (void)cone_csg(new_obj, BREP_CONIC_TOL);
 		    break;
 		case SPHERE:
-		    bu_log("process partial sphere\n");
+		    (void)sphere_csg(new_obj, BREP_SPHERICAL_TOL);
 		    break;
 		case ELLIPSOID:
 		    bu_log("process partial ellipsoid\n");

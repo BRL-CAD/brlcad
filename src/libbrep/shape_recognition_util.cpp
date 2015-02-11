@@ -330,48 +330,6 @@ array_to_map(std::map<int,int> *map, int *array, int array_cnt)
     }
 }
 
-
-// Remove degenerate linear edge sets. A degenerate edge set is defined as two
-// linear segments having the same two vertices.  (To be sure, we should probably
-// check curve directions in loops in some fashion...)
-void
-subbrep_remove_linear_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges){
-    std::set<int> degenerate;
-    std::set<int>::iterator e_it;
-    for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
-	if (degenerate.find(*e_it) == degenerate.end()) {
-	    ON_Curve *ec1 = data->brep->m_E[*e_it].EdgeCurveOf()->Duplicate();
-	    if (ec1->IsLinear()) {
-		for (int j = 0; j < data->edges_cnt; j++) {
-		    int f_ind = data->edges[j];
-		    ON_Curve *ec2 = data->brep->m_E[f_ind].EdgeCurveOf()->Duplicate();
-		    if (ec2->IsLinear()) {
-			if ((data->brep->m_E[*e_it].Vertex(0)->Point() == data->brep->m_E[f_ind].Vertex(0)->Point() && data->brep->m_E[*e_it].Vertex(1)->Point() == data->brep->m_E[f_ind].Vertex(1)->Point()) ||
-				(data->brep->m_E[*e_it].Vertex(1)->Point() == data->brep->m_E[f_ind].Vertex(0)->Point() && data->brep->m_E[*e_it].Vertex(0)->Point() == data->brep->m_E[f_ind].Vertex(1)->Point()))
-			{
-			    degenerate.insert(*e_it);
-			    degenerate.insert(f_ind);
-			    break;
-			}
-		    }
-		}
-	    }
-	}
-    }
-    for (e_it = degenerate.begin(); e_it != degenerate.end(); e_it++) {
-	//std::cout << "erasing " << *e_it << "\n";
-	edges->erase(*e_it);
-    }
-}
-
-// Remove degenerate arc edge sets. A degenerate edge set is defined as two
-// linear segments having the same two vertices.  (To be sure, we should probably
-// check curve directions in loops in some fashion...)
-void
-subbrep_remove_arc_degenerate_edges(struct subbrep_object_data *data, std::set<int> *edges)
-{
-}
-
 void
 print_subbrep_object(struct subbrep_object_data *data, const char *offset)
 {
