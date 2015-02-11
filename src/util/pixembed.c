@@ -146,20 +146,19 @@ main(int argc, char **argv)
     obuf = (unsigned char *)bu_malloc(scanlen, "obuf");
 
     /* Pre-fetch the first line (after skipping) */
-    for (i= -1; i<border_inset; i++) load_buffer();
+    for (i= 0; i<border_inset; i++) load_buffer();
 
-    /* Write out duplicates at bottom, including real copy of 1st line */
-    ydup = (yout - yin) / 2 + border_inset + 1;
+    /* Write out duplicates of 1st line */
+    ydup = (yout - yin) / 2 - border_inset;
     for (y = 0; y < ydup; y++) write_buffer();
 
-    /* Read and write the remaining lines */
-    for (; i < yin-border_inset; i++, y++) {
+    for (y = 0; y < yin; y++) {
 	load_buffer();
 	write_buffer();
     }
 
-    /* Write out duplicates at the top, until all done */
-    for (; y < yout; y++) write_buffer();
+    /* For the remaining lines, Write out duplicates of last line read */
+    for (y = 0; y < ydup; y++) write_buffer();
 
     bu_free(obuf, "obuf");
 
