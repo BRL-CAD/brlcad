@@ -161,6 +161,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	std::cout << "Three vertices\n";
 	// Need the planes of any non-linear edges and the plane of the three verts.
 	ON_SimpleArray<const ON_BrepVertex *> sph_verts(3);
+	std::set<int> trims;
 	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	    sph_verts.Append(&(data->brep->m_V[*v_it]));
 	}
@@ -169,16 +170,39 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	ON_3dPoint p3 = sph_verts[2]->Point();
 	ON_Plane back_plane(p1, p2, p3);
 
-	for (int i = 0; i < data->edges_cnt; i++) {
-	    const ON_BrepEdge *edge = &(data->brep->m_E[data->edges[i]]);
-	    verts.insert(edge->Vertex(0)->m_vertex_index);
-	    verts.insert(edge->Vertex(1)->m_vertex_index);
-	}
-
 	// In order to determine orientations, we need to know
 	// what the normal is in an "interior" point of the surface (i.e.
-	// within the trimming loop.)  The normal at that point, the
-	// vector between that point and the center, the vector between
+	// within the trimming loop.)  Properly speaking we should
+	// do a trimmed/untrimmed test on the candidate point to make
+	// sure we've got a valid test point...
+	const ON_BrepFace *sph_face = &(data->brep->m_F[(*spherical_surfaces.begin())]);
+	const ON_BrepLoop *sph_face_loop = sph_face->OuterLoop();
+	std::cout << "face " << sph_face->m_face_index << "\n";
+	double u = 0;
+	double v = 0;
+	for (int i = 0; i < sph_face_loop->TrimCount(); i++) {
+	    const ON_BrepTrim *trim = sph_face_loop->Trim(i);
+	    const ON_Curve *trim_curve = trim->TrimCurveOf();
+	    ON_3dPoint start = trim_curve->PointAtStart();
+	    ON_3dPoint end = trim_curve->PointAtEnd();
+	    u += start.x;
+	    v += start.y;
+	    u += end.x;
+	    v += end.y;
+	}
+	u = u / (2 * sph_face_loop->TrimCount());
+	v = v / (2 * sph_face_loop->TrimCount());
+
+	std::cout << "u,v: " << u << "," << v << "\n";
+
+	// TODO - do trimmed/not-trimmed test here.  Should probably devise a test that
+	// doesn't require the curve tree, since this isn't a comprehensive
+	// raytracing but just one or a few inside/outside tests.  We need an untrimmed
+	// point.
+
+	// Evaluate surface at point u,v to get both point and normal
+
+	// Construct the vector between the sph point and the center, the vector between
 	// the center and the closest point on a given plane (arc or
 	// 3-pt based) and whether or not the sphere is negative will
 	// have to tell us what we're dealing with.
