@@ -24,7 +24,7 @@
     </para>
 
     <para>
-      By default, a basic steel wheel (a.k.a "rim") is included in the model.  If this wheel
+      By default, a basic steel wheel (a.k.a. "rim") is included in the model.  If this wheel
       does not work for a given modeling purpose, it is quite simple to remove it and substitute
       in a user-defined wheel so long as the dimensions of the user supplied wheel match
       the standard wheel at the key points (radius and width).

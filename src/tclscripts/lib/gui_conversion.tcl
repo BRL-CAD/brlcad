@@ -77,7 +77,7 @@ after 7000
 
 #################################################################
 #
-#   Rhinoceros 3D (a.k.a Rhino) / OpenNURBS  3dm specific logic
+#   Rhinoceros 3D (a.k.a. Rhino) / OpenNURBS  3dm specific logic
 #
 #################################################################
 
