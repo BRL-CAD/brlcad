@@ -178,7 +178,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	// In order to determine orientations, we need to know
 	// what the normal is in an "interior" point of the surface (i.e.
 	// within the trimming loop.)  The normal at that point, the
-	// vector between that point and the center, the vectore between
+	// vector between that point and the center, the vector between
 	// the center and the closest point on a given plane (arc or
 	// 3-pt based) and whether or not the sphere is negative will
 	// have to tell us what we're dealing with.
