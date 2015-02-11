@@ -140,7 +140,7 @@ subbrep_planar_init(struct subbrep_object_data *sdata)
                         ON_BrepLoop &nl = data->planar_obj->local_brep->NewLoop(ON_BrepLoop::outer, data->planar_obj->local_brep->m_F[face_map[old_loop->m_fi]]);
                         loop_map[old_loop->m_loop_index] = nl.m_loop_index;
                     }
-                } 
+                }
             }
         }
     }
@@ -245,7 +245,7 @@ subbrep_planar_close_obj(struct subbrep_object_data *data)
 	// TODO - if we pass the above test, make sure all edges have two faces to identify any missing
 	// faces in the arb
 
-    } 
+    }
 }
 
 int subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
