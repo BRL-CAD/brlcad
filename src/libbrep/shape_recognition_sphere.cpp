@@ -143,7 +143,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
     std::cout << "vertex count: " << verts.size() << "\n";
 
     if (verts.size() == 1) {
-	std::cout << "Only one vertex??\n";
+	std::cout << "Only one vertex - probably a circular trim defining a planar face?\n";
 	return 0;
     }
 
@@ -153,7 +153,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
     }
 
     if (verts.size() == 2 && data->edges_cnt >= 2) {
-	std::cout << "Two vertices, more than one edge.  Uh...\n";
+	std::cout << "Two vertices, more than one edge.  Either a two plane situation or two arcs forming a one plane situation\n";
 	return 0;
     }
 
@@ -169,44 +169,58 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	ON_3dPoint p2 = sph_verts[1]->Point();
 	ON_3dPoint p3 = sph_verts[2]->Point();
 	ON_Plane back_plane(p1, p2, p3);
+	ON_3dPoint bpc = (p1 + p2 + p3)/3;
 
-	// In order to determine orientations, we need to know
-	// what the normal is in an "interior" point of the surface (i.e.
-	// within the trimming loop.)  Properly speaking we should
-	// do a trimmed/untrimmed test on the candidate point to make
-	// sure we've got a valid test point...
-	const ON_BrepFace *sph_face = &(data->brep->m_F[(*spherical_surfaces.begin())]);
-	const ON_BrepLoop *sph_face_loop = sph_face->OuterLoop();
-	std::cout << "face " << sph_face->m_face_index << "\n";
-	double u = 0;
-	double v = 0;
-	for (int i = 0; i < sph_face_loop->TrimCount(); i++) {
-	    const ON_BrepTrim *trim = sph_face_loop->Trim(i);
-	    const ON_Curve *trim_curve = trim->TrimCurveOf();
-	    ON_3dPoint start = trim_curve->PointAtStart();
-	    ON_3dPoint end = trim_curve->PointAtEnd();
-	    u += start.x;
-	    v += start.y;
-	    u += end.x;
-	    v += end.y;
+	// In order to determine which part of the sphere is the "positive"
+	// part, assemble a second plane from the mid points of the edges.
+	// If any of these midpoints are on the plane of the vertices this
+	// degenerates into a one or two plane case, but if all three are
+	// off of the back plane the vector between them will give us the
+	// orientation we need.
+	ON_SimpleArray<ON_3dPoint> mid_pnts(3);
+	for (int i = 0; i < data->edges_cnt; i++) {
+	    const ON_BrepEdge *edge = &(data->brep->m_E[data->edges[i]]);
+	    const ON_Curve *curve = edge->EdgeCurveOf();
+	    ON_3dPoint mid_pnt = curve->PointAt(curve->Domain().Mid());
+	    mid_pnts.Append(mid_pnt);
 	}
-	u = u / (2 * sph_face_loop->TrimCount());
-	v = v / (2 * sph_face_loop->TrimCount());
+	ON_Plane front_plane(mid_pnts[0], mid_pnts[1], mid_pnts[2]);
+	ON_3dPoint fpc = (mid_pnts[0] + mid_pnts[1] + mid_pnts[2])/3;
 
-	std::cout << "u,v: " << u << "," << v << "\n";
+	// Using the above info, set the back_plane normal to the correct
+	// direction needed for defining a face in a B-Rep bounding the
+	// spherical sub-volume.
+	ON_3dVector pv = fpc - bpc;
+	if (ON_DotProduct(pv, back_plane.Normal()) > 0) back_plane.Flip();
 
-	// TODO - do trimmed/not-trimmed test here.  Should probably devise a test that
-	// doesn't require the curve tree, since this isn't a comprehensive
-	// raytracing but just one or a few inside/outside tests.  We need an untrimmed
-	// point.
+	// Then, construct planes for each arc from the three points.  Use
+	// the vectors between the center point of the back plane
+	// and the midpoints of each edge to determine if the plane normal
+	// should be flipped - the plane normals of the edge planes shouldn't
+	// be pointing back towards the back face center point.
+	ON_SimpleArray<ON_Plane> edge_planes(3);
+	for (int i = 0; i < data->edges_cnt; i++) {
+	    const ON_BrepEdge *edge = &(data->brep->m_E[data->edges[i]]);
+	    const ON_Curve *curve = edge->EdgeCurveOf();
+	    ON_3dPoint start_pnt = curve->PointAtStart();
+	    ON_3dPoint mid_pnt = curve->PointAt(curve->Domain().Mid());
+	    ON_3dPoint end_pnt = curve->PointAtEnd();
+	    ON_Plane new_plane(start_pnt, mid_pnt, end_pnt);
+	    ON_3dVector guide = mid_pnt - bpc;
+	    if (ON_DotProduct(guide, new_plane.Normal()) < 0) back_plane.Flip();
+	    edge_planes.Append(new_plane);
+	}
 
-	// Evaluate surface at point u,v to get both point and normal
+	// The planes each define an arb8 (4 all together) that carve the
+	// sub-sphere shape out of the parent sphere with subtractions.
+	// Using the normals, center points, edge and sphere information,
+	// construct the 4 arbs.
 
-	// Construct the vector between the sph point and the center, the vector between
-	// the center and the closest point on a given plane (arc or
-	// 3-pt based) and whether or not the sphere is negative will
-	// have to tell us what we're dealing with.
 
+	// A planar face parallel to the back plane must also be added to
+	// the parent planer brep, if there is one.  The normal of that
+	// face is deterined by a combination of the back_plane normal
+	// and the negative_sphere test.
 
 	return 0;
     }
