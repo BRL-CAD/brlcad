@@ -260,6 +260,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	// construct the 4 arbs.
 
 	// Construct the back face arb.
+	ON_SimpleArray<ON_3dPoint> arb1_points;
         ON_3dVector x = back_plane.Xaxis();
         ON_3dVector y = back_plane.Yaxis();
 	x.Unitize();
@@ -286,30 +287,14 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 
 	arb_obj->params->bool_op = '-';
 	arb_obj->params->arb_type = 8;
-	arb_obj->params->p[0][0] = a1p1.x;
-	arb_obj->params->p[0][1] = a1p1.y;
-	arb_obj->params->p[0][2] = a1p1.z;
-	arb_obj->params->p[1][0] = a1p2.x;
-	arb_obj->params->p[1][1] = a1p2.y;
-	arb_obj->params->p[1][2] = a1p2.z;
-	arb_obj->params->p[2][0] = a1p3.x;
-	arb_obj->params->p[2][1] = a1p3.y;
-	arb_obj->params->p[2][2] = a1p3.z;
-	arb_obj->params->p[3][0] = a1p4.x;
-	arb_obj->params->p[3][1] = a1p4.y;
-	arb_obj->params->p[3][2] = a1p4.z;
-	arb_obj->params->p[4][0] = a1p5.x;
-	arb_obj->params->p[4][1] = a1p5.y;
-	arb_obj->params->p[4][2] = a1p5.z;
-	arb_obj->params->p[5][0] = a1p6.x;
-	arb_obj->params->p[5][1] = a1p6.y;
-	arb_obj->params->p[5][2] = a1p6.z;
-	arb_obj->params->p[6][0] = a1p7.x;
-	arb_obj->params->p[6][1] = a1p7.y;
-	arb_obj->params->p[6][2] = a1p7.z;
-	arb_obj->params->p[7][0] = a1p8.x;
-	arb_obj->params->p[7][1] = a1p8.y;
-	arb_obj->params->p[7][2] = a1p8.z;
+	VMOVE(arb_obj->params->p[0], a1p1);
+	VMOVE(arb_obj->params->p[1], a1p2);
+	VMOVE(arb_obj->params->p[2], a1p3);
+	VMOVE(arb_obj->params->p[3], a1p4);
+	VMOVE(arb_obj->params->p[4], a1p5);
+	VMOVE(arb_obj->params->p[5], a1p6);
+	VMOVE(arb_obj->params->p[6], a1p7);
+	VMOVE(arb_obj->params->p[7], a1p8);
 
 	bu_ptbl_ins(data->children, (long *)arb_obj);
 
