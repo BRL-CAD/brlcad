@@ -201,6 +201,23 @@ subbrep_to_csg_conic(struct subbrep_object_data *data, struct rt_wdb *wdbp, stru
     return 0;
 }
 
+int
+subbrep_to_csg_sphere(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
+{
+    struct csg_object_params *params = data->params;
+    if (data->type == SPHERE) {
+	struct bu_vls prim_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&prim_name, "sphere_%s.s", bu_vls_addr(data->key));
+
+	mk_sph(wdbp, bu_vls_addr(&prim_name), params->origin, params->radius);
+	//std::cout << bu_vls_addr(&prim_name) << ": " << params->bool_op << "\n";
+	if (wcomb) (void)mk_addmember(bu_vls_addr(&prim_name), &((*wcomb).l), NULL, db_str2op(&(params->bool_op)));
+	bu_vls_free(&prim_name);
+	return 1;
+    }
+    return 0;
+}
+
 
 void
 process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wmember *wcomb)
@@ -219,6 +236,7 @@ process_params(struct subbrep_object_data *data, struct rt_wdb *wdbp, struct wme
 	    subbrep_to_csg_conic(data, wdbp, wcomb);
 	    break;
 	case SPHERE:
+	    subbrep_to_csg_sphere(data, wdbp, wcomb);
 	    break;
 	case ELLIPSOID:
 	    break;

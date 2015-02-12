@@ -199,10 +199,50 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	    ON_3dPoint mid_pnt = curve->PointAt(curve->Domain().Mid());
 	    ON_3dPoint end_pnt = curve->PointAtEnd();
 	    ON_Plane new_plane(start_pnt, mid_pnt, end_pnt);
-	    ON_3dVector guide = mid_pnt - bpc;
+	    ON_3dVector guide = bpc - mid_pnt;
 	    if (ON_DotProduct(guide, new_plane.Normal()) < 0) back_plane.Flip();
 	    edge_planes.Append(new_plane);
 	}
+
+
+	// Start building the local comb
+	data->type = COMB;
+
+	struct subbrep_object_data *sph_obj;
+	BU_GET(sph_obj, struct subbrep_object_data);
+	subbrep_object_init(sph_obj, data->brep);
+	std::string key = face_set_key(spherical_surfaces);
+	bu_vls_sprintf(sph_obj->key, "%s_sph", key.c_str());
+	sph_obj->type = SPHERE;
+
+	// Flag the sph/arb comb according to the negative or positive status of the
+	// sphere surface.  Whether the comb is actually subtracted from the
+	// global object or unioned into a comb lower down the tree (or vice versa)
+	// is determined later.
+	int negative = negative_sphere(data, *spherical_surfaces.begin(), sph_tol);
+
+	switch (negative) {
+	    case -1:
+		data->params->bool_op = '-';
+		break;
+	    case 1:
+		data->params->bool_op = 'u';
+		break;
+	    default:
+		std::cout << "Could not determine sphere status???????\n";
+		data->params->bool_op = 'u';
+		break;
+	}
+
+	// Add the sphere - unioned top level for this sub-comb
+	sph_obj->params->bool_op = 'u';
+	sph_obj->params->origin[0] = sph.Center().x;
+	sph_obj->params->origin[1] = sph.Center().y;
+	sph_obj->params->origin[2] = sph.Center().z;
+	sph_obj->params->radius = sph.Radius();
+
+	bu_ptbl_ins(data->children, (long *)sph_obj);
+
 
 	// A planar face parallel to the back plane must also be added to
 	// the parent planer brep, if there is one.
@@ -219,6 +259,59 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	// Using the normals, center points, edge and sphere information,
 	// construct the 4 arbs.
 
+	// Construct the back face arb.
+        ON_3dVector x = back_plane.Xaxis();
+        ON_3dVector y = back_plane.Yaxis();
+	x.Unitize();
+	y.Unitize();
+	x = x * 1.05 * sph.Radius();
+	y = y * 1.05 * sph.Radius();
+	ON_3dPoint a1p1 = bpc - x - y;
+	ON_3dPoint a1p2 = bpc + x - y;
+	ON_3dPoint a1p3 = bpc + x + y;
+	ON_3dPoint a1p4 = bpc - x + y;
+
+	ON_3dVector arb_side = back_plane.Normal() * 2*sph.Radius();
+
+	ON_3dPoint a1p5 = a1p1 + arb_side;
+	ON_3dPoint a1p6 = a1p2 + arb_side;
+	ON_3dPoint a1p7 = a1p3 + arb_side;
+	ON_3dPoint a1p8 = a1p4 + arb_side;
+
+	struct subbrep_object_data *arb_obj;
+	BU_GET(arb_obj, struct subbrep_object_data);
+	subbrep_object_init(arb_obj, data->brep);
+	bu_vls_sprintf(arb_obj->key, "%s_arb8_1", key.c_str());
+	arb_obj->type = ARB8;
+
+	arb_obj->params->bool_op = '-';
+	arb_obj->params->arb_type = 8;
+	arb_obj->params->p[0][0] = a1p1.x;
+	arb_obj->params->p[0][1] = a1p1.y;
+	arb_obj->params->p[0][2] = a1p1.z;
+	arb_obj->params->p[1][0] = a1p2.x;
+	arb_obj->params->p[1][1] = a1p2.y;
+	arb_obj->params->p[1][2] = a1p2.z;
+	arb_obj->params->p[2][0] = a1p3.x;
+	arb_obj->params->p[2][1] = a1p3.y;
+	arb_obj->params->p[2][2] = a1p3.z;
+	arb_obj->params->p[3][0] = a1p4.x;
+	arb_obj->params->p[3][1] = a1p4.y;
+	arb_obj->params->p[3][2] = a1p4.z;
+	arb_obj->params->p[4][0] = a1p5.x;
+	arb_obj->params->p[4][1] = a1p5.y;
+	arb_obj->params->p[4][2] = a1p5.z;
+	arb_obj->params->p[5][0] = a1p6.x;
+	arb_obj->params->p[5][1] = a1p6.y;
+	arb_obj->params->p[5][2] = a1p6.z;
+	arb_obj->params->p[6][0] = a1p7.x;
+	arb_obj->params->p[6][1] = a1p7.y;
+	arb_obj->params->p[6][2] = a1p7.z;
+	arb_obj->params->p[7][0] = a1p8.x;
+	arb_obj->params->p[7][1] = a1p8.y;
+	arb_obj->params->p[7][2] = a1p8.z;
+
+	bu_ptbl_ins(data->children, (long *)arb_obj);
 
 	return 0;
     }
