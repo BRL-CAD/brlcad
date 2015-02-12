@@ -75,7 +75,10 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (bu_optind >= argc + 1) {
+    if (argc == 1)
+	return 0;
+
+    if (argc - bu_optind <= 1) {
 	(void) fprintf(stderr,
 		       "pixfields: must supply two file names\n");
 	return 0;
