@@ -711,61 +711,40 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // the knowledge of the distance between p1/p2.  We only need
 	    // to add enough extra length to clear the cylinder, which
 	    // means the full radius length is almost always overkill.
-	    ON_3dPoint p1 = v1->Point();
-	    ON_3dPoint p2 = v2->Point();
-	    ON_3dPoint p3 = v3->Point();
-	    ON_3dPoint p4 = v4->Point();
+	    ON_SimpleArray<ON_3dPoint> arb_points(8);
+	    arb_points[0] = v1->Point();
+	    arb_points[1] = v2->Point();
+	    arb_points[2] = v3->Point();
+	    arb_points[3] = v4->Point();
 	    vv1.Unitize();
 	    vv1 = vv1 * set1_c.Radius();
-	    p1 = p1 + vv1;
-	    p2 = p2 - vv1;
-	    p3 = p3 - vv1;
-	    p4 = p4 + vv1;
-	    ON_3dVector hpad = p3 - p2;
+	    arb_points[0] = arb_points[0] + vv1;
+	    arb_points[1] = arb_points[1] - vv1;
+	    arb_points[2] = arb_points[2] - vv1;
+	    arb_points[3] = arb_points[3] + vv1;
+	    ON_3dVector hpad = arb_points[2] - arb_points[1];
 	    hpad.Unitize();
 	    hpad = hpad * (cyl_axis.Length() * 0.01);
-	    p1 = p1 - hpad;
-	    p2 = p2 - hpad;
-	    p3 = p3 + hpad;
-	    p4 = p4 + hpad;
+	    arb_points[0] = arb_points[0] - hpad;
+	    arb_points[1] = arb_points[1] - hpad;
+	    arb_points[2] = arb_points[2] + hpad;
+	    arb_points[3] = arb_points[3] + hpad;
 
 	    // Once the final 1,2,3,4 points have been determined, use
 	    // the pcyl normal direction and the cylinder radius to
 	    // construct the remaining arb points.
 	    ON_3dPoint p5, p6, p7, p8;
 	    ON_3dVector arb_side = pcyl.Normal() * 2*set1_c.Radius();
-
-	    p5 = p1 + arb_side;
-	    p6 = p2 + arb_side;
-	    p7 = p3 + arb_side;
-	    p8 = p4 + arb_side;
+	    arb_points[4] = arb_points[0] + arb_side;
+	    arb_points[5] = arb_points[1] + arb_side;
+	    arb_points[6] = arb_points[2] + arb_side;
+	    arb_points[7] = arb_points[3] + arb_side;
 
 	    arb_obj->params->bool_op = '-';
 	    arb_obj->params->arb_type = 8;
-	    arb_obj->params->p[0][0] = p1.x;
-	    arb_obj->params->p[0][1] = p1.y;
-	    arb_obj->params->p[0][2] = p1.z;
-	    arb_obj->params->p[1][0] = p2.x;
-	    arb_obj->params->p[1][1] = p2.y;
-	    arb_obj->params->p[1][2] = p2.z;
-	    arb_obj->params->p[2][0] = p3.x;
-	    arb_obj->params->p[2][1] = p3.y;
-	    arb_obj->params->p[2][2] = p3.z;
-	    arb_obj->params->p[3][0] = p4.x;
-	    arb_obj->params->p[3][1] = p4.y;
-	    arb_obj->params->p[3][2] = p4.z;
-	    arb_obj->params->p[4][0] = p5.x;
-	    arb_obj->params->p[4][1] = p5.y;
-	    arb_obj->params->p[4][2] = p5.z;
-	    arb_obj->params->p[5][0] = p6.x;
-	    arb_obj->params->p[5][1] = p6.y;
-	    arb_obj->params->p[5][2] = p6.z;
-	    arb_obj->params->p[6][0] = p7.x;
-	    arb_obj->params->p[6][1] = p7.y;
-	    arb_obj->params->p[6][2] = p7.z;
-	    arb_obj->params->p[7][0] = p8.x;
-	    arb_obj->params->p[7][1] = p8.y;
-	    arb_obj->params->p[7][2] = p8.z;
+	    for (int j = 0; j < 8; j++) {
+		VMOVE(arb_obj->params->p[j], arb_points[j]);
+	    }
 
 	    bu_ptbl_ins(data->children, (long *)arb_obj);
 
