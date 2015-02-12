@@ -56,7 +56,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vw:n:s:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vw:n:s:h?")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
@@ -70,7 +70,7 @@ get_args(int argc, char **argv)
 	    case 's':
 		width = height = atoi(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -79,22 +79,18 @@ get_args(int argc, char **argv)
 	(void) fprintf(stderr,
 		       "pixfields: must supply two file names\n");
 	return 0;
-    } else {
+    }
 
-	if ((fldonefp = fopen(argv[bu_optind], "r")) == NULL) {
-	    fprintf(stderr,
-		    "pixfields: cannot open \"%s\" for reading\n",
-		    argv[bu_optind]);
-	    return 0;
-	}
+    if ((fldonefp = fopen(argv[bu_optind], "r")) == NULL) {
+	fprintf(stderr,
+		"pixfields: cannot open \"%s\" for reading\n",argv[bu_optind]);
+	return 0;
+    }
 
-	if ((fldtwofp = fopen(argv[++bu_optind], "r")) == NULL) {
-	    fprintf(stderr,
-		    "pixfields: cannot open \"%s\" for reading\n",
-		    argv[bu_optind]);
-	    return 0;
-	}
-
+    if ((fldtwofp = fopen(argv[++bu_optind], "r")) == NULL) {
+	fprintf(stderr,
+		"pixfields: cannot open \"%s\" for reading\n",argv[bu_optind]);
+	return 0;
     }
 
     if (isatty(fileno(stdout)))
