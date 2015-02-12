@@ -260,24 +260,24 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	// construct the 4 arbs.
 
 	// Construct the back face arb.
-	ON_SimpleArray<ON_3dPoint> arb1_points;
+	ON_SimpleArray<ON_3dPoint> arb1_points(8);
         ON_3dVector x = back_plane.Xaxis();
         ON_3dVector y = back_plane.Yaxis();
 	x.Unitize();
 	y.Unitize();
 	x = x * 1.05 * sph.Radius();
 	y = y * 1.05 * sph.Radius();
-	ON_3dPoint a1p1 = bpc - x - y;
-	ON_3dPoint a1p2 = bpc + x - y;
-	ON_3dPoint a1p3 = bpc + x + y;
-	ON_3dPoint a1p4 = bpc - x + y;
+	arb1_points[0] = bpc - x - y;
+	arb1_points[1] = bpc + x - y;
+	arb1_points[2] = bpc + x + y;
+	arb1_points[3] = bpc - x + y;
 
 	ON_3dVector arb_side = back_plane.Normal() * 2*sph.Radius();
 
-	ON_3dPoint a1p5 = a1p1 + arb_side;
-	ON_3dPoint a1p6 = a1p2 + arb_side;
-	ON_3dPoint a1p7 = a1p3 + arb_side;
-	ON_3dPoint a1p8 = a1p4 + arb_side;
+	arb1_points[4] = arb1_points[0] + arb_side;
+	arb1_points[5] = arb1_points[1] + arb_side;
+	arb1_points[6] = arb1_points[2] + arb_side;
+	arb1_points[7] = arb1_points[3] + arb_side;
 
 	struct subbrep_object_data *arb_obj;
 	BU_GET(arb_obj, struct subbrep_object_data);
@@ -287,15 +287,9 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 
 	arb_obj->params->bool_op = '-';
 	arb_obj->params->arb_type = 8;
-	VMOVE(arb_obj->params->p[0], a1p1);
-	VMOVE(arb_obj->params->p[1], a1p2);
-	VMOVE(arb_obj->params->p[2], a1p3);
-	VMOVE(arb_obj->params->p[3], a1p4);
-	VMOVE(arb_obj->params->p[4], a1p5);
-	VMOVE(arb_obj->params->p[5], a1p6);
-	VMOVE(arb_obj->params->p[6], a1p7);
-	VMOVE(arb_obj->params->p[7], a1p8);
-
+	for (int j = 0; j < 8; j++) {
+	    VMOVE(arb_obj->params->p[j], arb1_points[j]);
+	}
 	bu_ptbl_ins(data->children, (long *)arb_obj);
 
 	return 0;
