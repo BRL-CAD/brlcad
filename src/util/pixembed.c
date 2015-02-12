@@ -48,6 +48,8 @@ size_t yout = 512;
 
 size_t border_inset = 0;	/* Sometimes border pixels are bad */
 
+size_t inbase;
+
 void load_buffer(void), write_buffer(void);
 
 static char usage[] = "\
@@ -141,6 +143,8 @@ main(int argc, char **argv)
 	bu_exit (4, NULL);
     }
 
+    inbase = (xout - xin) / 2;
+
     /* Allocate storage for one output line */
     scanlen = 3*xout;
     obuf = (unsigned char *)bu_malloc(scanlen, "obuf");
@@ -177,9 +181,6 @@ load_buffer(void)
     unsigned char r, g, b;
     unsigned char *cp;
     size_t i;
-    size_t inbase;
-
-    inbase = (xout - xin) / 2;
 
     ret = fread(obuf + inbase*3, 3, xin, buffp);
     if (ret != xin) {
