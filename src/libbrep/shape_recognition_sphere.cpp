@@ -91,6 +91,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
     std::set<int> planar_surfaces;
     std::set<int> spherical_surfaces;
     std::set<int>::iterator f_it;
+    std::cout << "processing spherical surface: ";
     for (int i = 0; i < data->faces_cnt; i++) {
 	int f_ind = data->faces[i];
         int surface_type = (int)GetSurfaceType(data->brep->m_F[f_ind].SurfaceOf(), NULL);
@@ -101,7 +102,7 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
             case SURFACE_SPHERE:
             case SURFACE_SPHERICAL_SECTION:
                 spherical_surfaces.insert(f_ind);
-                break;
+		break;
             default:
 		std::cout << "what???\n";
                 return 0;
@@ -110,22 +111,16 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
     }
     data->params->bool_op = 'u'; // Initialize to union
 
-    std::cout << "processing spherical surface\n";
-
     // Check for multiple spheres.
     ON_Sphere sph;
     ON_Surface *cs = data->brep->m_F[*spherical_surfaces.begin()].SurfaceOf()->Duplicate();
     cs->IsSphere(&sph, BREP_SPHERICAL_TOL);
-    std::cout << "Center: " << pout(sph.Center()) << "\n";
-    std::cout << "Radius: " << sph.Radius() << "\n";
     delete cs;
     for (f_it = spherical_surfaces.begin(); f_it != spherical_surfaces.end(); f_it++) {
 	ON_Sphere f_sph;
 	ON_Surface *fcs = data->brep->m_F[(*f_it)].SurfaceOf()->Duplicate();
 	fcs->IsSphere(&f_sph, BREP_SPHERICAL_TOL);
 	delete fcs;
-	std::cout << "  Center: " << pout(f_sph.Center()) << "\n";
-	std::cout << "  Radius: " << f_sph.Radius() << "\n";
 	if (f_sph.Center().DistanceTo(sph.Center()) > BREP_SPHERICAL_TOL) return 0;
 	if (!NEAR_ZERO(f_sph.Radius() - sph.Radius(), BREP_SPHERICAL_TOL)) return 0;
     }
@@ -139,8 +134,6 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	verts.insert(edge->Vertex(0)->m_vertex_index);
 	verts.insert(edge->Vertex(1)->m_vertex_index);
     }
-
-    std::cout << "vertex count: " << verts.size() << "\n";
 
     if (verts.size() == 1) {
 	std::cout << "Only one vertex - probably a circular trim defining a planar face?\n";
@@ -211,16 +204,21 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	    edge_planes.Append(new_plane);
 	}
 
+	// A planar face parallel to the back plane must also be added to
+	// the parent planer brep, if there is one.
+	if (!data->is_island && data->parent) {
+	    if (!data->parent->planar_obj) {
+		subbrep_planar_init(data);
+	    }
+	    std::cout << "add sph plane\n";
+	    subbrep_add_planar_face(data->parent, &back_plane, &sph_verts);
+	}
+
 	// The planes each define an arb8 (4 all together) that carve the
 	// sub-sphere shape out of the parent sphere with subtractions.
 	// Using the normals, center points, edge and sphere information,
 	// construct the 4 arbs.
 
-
-	// A planar face parallel to the back plane must also be added to
-	// the parent planer brep, if there is one.  The normal of that
-	// face is deterined by a combination of the back_plane normal
-	// and the negative_sphere test.
 
 	return 0;
     }
