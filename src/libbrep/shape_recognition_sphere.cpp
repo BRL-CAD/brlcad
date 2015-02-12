@@ -192,15 +192,17 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	// should be flipped - the plane normals of the edge planes shouldn't
 	// be pointing back towards the back face center point.
 	ON_SimpleArray<ON_Plane> edge_planes(3);
+	ON_SimpleArray<ON_3dPoint> edge_centers(3);
 	for (int i = 0; i < data->edges_cnt; i++) {
 	    const ON_BrepEdge *edge = &(data->brep->m_E[data->edges[i]]);
 	    const ON_Curve *curve = edge->EdgeCurveOf();
 	    ON_3dPoint start_pnt = curve->PointAtStart();
 	    ON_3dPoint mid_pnt = curve->PointAt(curve->Domain().Mid());
 	    ON_3dPoint end_pnt = curve->PointAtEnd();
+	    edge_centers[i] = (start_pnt + mid_pnt + end_pnt)/3;
 	    ON_Plane new_plane(start_pnt, mid_pnt, end_pnt);
-	    ON_3dVector guide = bpc - mid_pnt;
-	    if (ON_DotProduct(guide, new_plane.Normal()) < 0) back_plane.Flip();
+	    ON_3dVector guide = mid_pnt - bpc;
+	    if (ON_DotProduct(guide, new_plane.Normal()) < 0) new_plane.Flip();
 	    edge_planes.Append(new_plane);
 	}
 
@@ -260,37 +262,77 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
 	// construct the 4 arbs.
 
 	// Construct the back face arb.
-	ON_SimpleArray<ON_3dPoint> arb1_points(8);
-        ON_3dVector x = back_plane.Xaxis();
-        ON_3dVector y = back_plane.Yaxis();
-	x.Unitize();
-	y.Unitize();
-	x = x * 1.05 * sph.Radius();
-	y = y * 1.05 * sph.Radius();
-	arb1_points[0] = bpc - x - y;
-	arb1_points[1] = bpc + x - y;
-	arb1_points[2] = bpc + x + y;
-	arb1_points[3] = bpc - x + y;
+	{
+	    ON_SimpleArray<ON_3dPoint> arb1_points(8);
+	    ON_3dVector x = back_plane.Xaxis();
+	    ON_3dVector y = back_plane.Yaxis();
+	    x.Unitize();
+	    y.Unitize();
+	    x = x * 1.05 * sph.Radius();
+	    y = y * 1.05 * sph.Radius();
+	    arb1_points[0] = bpc - x - y;
+	    arb1_points[1] = bpc + x - y;
+	    arb1_points[2] = bpc + x + y;
+	    arb1_points[3] = bpc - x + y;
 
-	ON_3dVector arb_side = back_plane.Normal() * 2*sph.Radius();
+	    ON_3dVector arb_side = back_plane.Normal() * 2*sph.Radius();
 
-	arb1_points[4] = arb1_points[0] + arb_side;
-	arb1_points[5] = arb1_points[1] + arb_side;
-	arb1_points[6] = arb1_points[2] + arb_side;
-	arb1_points[7] = arb1_points[3] + arb_side;
+	    arb1_points[4] = arb1_points[0] + arb_side;
+	    arb1_points[5] = arb1_points[1] + arb_side;
+	    arb1_points[6] = arb1_points[2] + arb_side;
+	    arb1_points[7] = arb1_points[3] + arb_side;
 
-	struct subbrep_object_data *arb_obj;
-	BU_GET(arb_obj, struct subbrep_object_data);
-	subbrep_object_init(arb_obj, data->brep);
-	bu_vls_sprintf(arb_obj->key, "%s_arb8_1", key.c_str());
-	arb_obj->type = ARB8;
+	    struct subbrep_object_data *arb_obj;
+	    BU_GET(arb_obj, struct subbrep_object_data);
+	    subbrep_object_init(arb_obj, data->brep);
+	    bu_vls_sprintf(arb_obj->key, "%s_arb8_b", key.c_str());
+	    arb_obj->type = ARB8;
 
-	arb_obj->params->bool_op = '-';
-	arb_obj->params->arb_type = 8;
-	for (int j = 0; j < 8; j++) {
-	    VMOVE(arb_obj->params->p[j], arb1_points[j]);
+	    arb_obj->params->bool_op = '-';
+	    arb_obj->params->arb_type = 8;
+	    for (int j = 0; j < 8; j++) {
+		VMOVE(arb_obj->params->p[j], arb1_points[j]);
+	    }
+	    bu_ptbl_ins(data->children, (long *)arb_obj);
 	}
-	bu_ptbl_ins(data->children, (long *)arb_obj);
+	// Construct the edge face arbs.
+	// TODO - can tighten these using the dimensions of the
+	// arc bounding box, at least in theory
+	for (int i = 0; i < data->edges_cnt; i++) {
+	    ON_SimpleArray<ON_3dPoint> arb_points(8);
+	    ON_3dVector ex = edge_planes[i].Xaxis();
+	    ON_3dVector ey = edge_planes[i].Yaxis();
+	    ON_3dPoint ecenter = edge_centers[i];
+	    ex.Unitize();
+	    ey.Unitize();
+	    ex = ex * 1.05 * sph.Radius();
+	    ey = ey * 1.05 * sph.Radius();
+	    arb_points[0] = ecenter - ex - ey;
+	    arb_points[1] = ecenter + ex - ey;
+	    arb_points[2] = ecenter + ex + ey;
+	    arb_points[3] = ecenter - ex + ey;
+
+	    ON_3dVector earb_side = edge_planes[i].Normal() * 2*sph.Radius();
+
+	    arb_points[4] = arb_points[0] + earb_side;
+	    arb_points[5] = arb_points[1] + earb_side;
+	    arb_points[6] = arb_points[2] + earb_side;
+	    arb_points[7] = arb_points[3] + earb_side;
+
+	    struct subbrep_object_data *earb_obj;
+	    BU_GET(earb_obj, struct subbrep_object_data);
+	    subbrep_object_init(earb_obj, data->brep);
+	    bu_vls_sprintf(earb_obj->key, "%s_arb8_%d", key.c_str(), i);
+	    earb_obj->type = ARB8;
+
+	    earb_obj->params->bool_op = '-';
+	    earb_obj->params->arb_type = 8;
+	    for (int j = 0; j < 8; j++) {
+		VMOVE(earb_obj->params->p[j], arb_points[j]);
+	    }
+	    bu_ptbl_ins(data->children, (long *)earb_obj);
+
+	}
 
 	return 0;
     }
