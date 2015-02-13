@@ -292,74 +292,50 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
         fcs->IsCylinder(&f_cylinder);
 	delete fcs;
 	//std::cout << "cyl_count: " << cyl_count << "\n";
-	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > BREP_CYLINDRICAL_TOL) {
+	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > cyl_tol) {
 	    std::cout << "\n\nMultiple cylinders found\n\n";
 	    return 0;
 	}
     }
 
-    // Characterize the planes of the non-linear edges.  We need two planes - more
-    // than that indicate some sort of subtraction behavior.  TODO - Eventually we should
-    // be able to characterize which edges form the subtraction shape candidate, but
-    // for now just bail unless we're dealing with the simple case.
-    //
-    // TODO - this test is adequate only for RCC shapes.  Need to generalize
-    // this to check for both arcs and shared planes in non-arc curves to
-    // accommodate csg situations.
-    std::set<int> arc_set_1, arc_set_2;
-    ON_Circle set1_c, set2_c;
-    int arc1_circle_set= 0;
-    int arc2_circle_set = 0;
-
+    // Characterize the planes of the non-linear edges.  We need at least two planes - more
+    // than that indicate some sort of subtraction behavior.
+    ON_SimpleArray<ON_Plane> edge_planes;
     for (int i = 0; i < data->edges_cnt; i++) {
 	int ei = data->edges[i];
 	const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
 	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
 	if (!ecv->IsLinear()) {
-	    ON_Arc arc;
+	    ON_Plane eplane;
 	    ON_Curve *ecv2 = edge->EdgeCurveOf()->Duplicate();
-	    if (ecv2->IsArc(NULL, &arc, cyl_tol)) {
-		int assigned = 0;
-		ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-		//std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
-		if (!arc1_circle_set) {
-		    arc1_circle_set = 1;
-		    set1_c = circ;
-		} else {
-		    if (!arc2_circle_set) {
-			if (!(NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cyl_tol))){
-			    arc2_circle_set = 1;
-			    set2_c = circ;
-			}
-		    }
-		}
-		if (NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cyl_tol)){
-		    arc_set_1.insert(ei);
-		    assigned = 1;
-		}
-		if (arc2_circle_set) {
-		    if (NEAR_ZERO(circ.Center().DistanceTo(set2_c.Center()), cyl_tol)){
-			arc_set_2.insert(ei);
-			assigned = 1;
-		    }
-		}
-		if (!assigned) {
-		    std::cout << "found extra circle - no go: " << bu_vls_addr(data->key) << "\n";
-		    std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
-		    std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
-		    std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
-		    delete ecv;
-		    delete ecv2;
-		    return 0;
-		}
-	    } else {
-		std::cout << "non-linear non-arc edge" << "\n";
+	    if (!ecv2->IsPlanar(&eplane, cyl_tol)) {
+		std::cout << "nonplanar edge in cylinder" << "\n";
+		delete ecv;
+		delete ecv2;
+		return 0;
 	    }
+	    edge_planes.Append(eplane);
 	    delete ecv2;
 	}
 	delete ecv;
     }
-
+    
+    // Now, build a list of unique planes
+    ON_SimpleArray<ON_Plane> cyl_planes;
+    for (int i = 0; i < edge_planes.Count(); i++) {
+	int have_plane = 0;
+	ON_Plane p1 = edge_planes[i];
+	ON_3dVector p1n = p1.Normal();
+	for (int j = 0; j < cyl_planes.Count(); j++) {
+	    ON_Plane p2 = cyl_planes[j];
+	    ON_3dVector p2n = p2.Normal();
+	    if (p2n.IsParallelTo(p1n, 0.01) && fabs(p2.DistanceTo(p1.Origin())) < 0.001) {
+		have_plane = 1;
+		break;
+	    }
+	}
+	if (!have_plane) cyl_planes.Append(p1);
+    }
 
     // CSG representable cylinders may represent one or both of the
     // following cases:
@@ -492,12 +468,64 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
     // Check if the two circles are parallel to each other.  If they are, and we have
     // no corner points, then we have a complete cylinder
-    if (set1_c.Plane().Normal().IsParallelTo(set2_c.Plane().Normal(), cyl_tol) != 0) {
+    if (cyl_planes.Count() == 2 && cyl_planes[0].Normal().IsParallelTo(cyl_planes[1].Normal(), cyl_tol) != 0) {
+
+	// We must have had arcs to get here - use them.
+	std::set<int> arc_set_1, arc_set_2;
+	ON_Circle set1_c, set2_c;
+	int arc1_circle_set= 0;
+	int arc2_circle_set = 0;
+	for (int i = 0; i < data->edges_cnt; i++) {
+	    int ei = data->edges[i];
+	    const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
+	    ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+	    if (!ecv->IsLinear()) {
+		ON_Arc arc;
+		ON_Curve *ecv2 = edge->EdgeCurveOf()->Duplicate();
+		if (ecv2->IsArc(NULL, &arc, cyl_tol)) {
+		    int assigned = 0;
+		    ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
+		    if (!arc1_circle_set) {
+			arc1_circle_set = 1;
+			set1_c = circ;
+		    } else {
+			if (!arc2_circle_set) {
+			    if (!(NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cyl_tol))){
+				arc2_circle_set = 1;
+				set2_c = circ;
+			    }
+			}
+		    }
+		    if (NEAR_ZERO(circ.Center().DistanceTo(set1_c.Center()), cyl_tol)){
+			arc_set_1.insert(ei);
+			assigned = 1;
+		    }
+		    if (arc2_circle_set) {
+			if (NEAR_ZERO(circ.Center().DistanceTo(set2_c.Center()), cyl_tol)){
+			    arc_set_2.insert(ei);
+			    assigned = 1;
+			}
+		    }
+		    if (!assigned) {
+			std::cout << "found extra circle - no go: " << bu_vls_addr(data->key) << "\n";
+			std::cout << "center 1 " << set1_c.Center().x << " " << set1_c.Center().y << " " << set1_c.Center().z << "\n";
+			std::cout << "center 2 " << set2_c.Center().x << " " << set2_c.Center().y << " " << set2_c.Center().z << "\n";
+			std::cout << "circ " << circ.Center().x << " " << circ.Center().y << " " << circ.Center().z << "\n";
+			delete ecv;
+			delete ecv2;
+			return 0;
+		    }
+		}
+		delete ecv2;
+	    }
+	    delete ecv;
+	}
+
+	ON_3dVector hvect(set2_c.Center() - set1_c.Center());
+
 	if (corner_verts.size() == 0) {
 	    //std::cout << "Full cylinder\n";
 	    data->type = CYLINDER;
-
-	    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
 
 	    data->params->bool_op = 'u'; // TODO - not always union
 	    data->params->origin[0] = set1_c.Center().x;
@@ -551,9 +579,6 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    }
 
 	    // cylinder - positive object in this sub-comb
-
-	    ON_3dVector hvect(set2_c.Center() - set1_c.Center());
-
 	    cyl_obj->params->bool_op = 'u';
 	    cyl_obj->params->origin[0] = set1_c.Center().x;
 	    cyl_obj->params->origin[1] = set1_c.Center().y;
