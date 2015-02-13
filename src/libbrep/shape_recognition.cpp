@@ -2,6 +2,7 @@
 
 #include <set>
 #include <map>
+#include <string>
 
 #include "bu/log.h"
 #include "bu/str.h"
