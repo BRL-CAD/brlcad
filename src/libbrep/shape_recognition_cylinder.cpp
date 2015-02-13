@@ -293,7 +293,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	delete fcs;
 	//std::cout << "cyl_count: " << cyl_count << "\n";
 	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > BREP_CYLINDRICAL_TOL) {
-	    //std::cout << "\n\nMultiple cylinders found\n\n";
+	    std::cout << "\n\nMultiple cylinders found\n\n";
 	    return 0;
 	}
     }
@@ -352,6 +352,8 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    delete ecv2;
 		    return 0;
 		}
+	    } else {
+		std::cout << "non-linear non-arc edge" << "\n";
 	    }
 	    delete ecv2;
 	}
@@ -524,6 +526,10 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    std::string key = face_set_key(cylindrical_surfaces);
 	    bu_vls_sprintf(cyl_obj->key, "%s", key.c_str());
 	    cyl_obj->type = CYLINDER;
+
+	    if (BU_STR_EQUAL(bu_vls_addr(cyl_obj->key), "10")) {
+		std::cout << bu_vls_addr(cyl_obj->key) << "\n";
+	    }
 
 	    // Flag the cyl/arb comb according to the negative or positive status of the
 	    // cylinder surface.  Whether the comb is actually subtracted from the
