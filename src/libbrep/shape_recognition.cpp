@@ -364,7 +364,7 @@ subbrep_split(struct subbrep_object_data *data)
 		    bu_log("process partial ellipsoid\n");
 		    break;
 		case TORUS:
-		    bu_log("process partial torus\n");
+		    (void)torus_csg(new_obj, BREP_TOROIDAL_TOL);
 		    break;
 		default:
 		    break;

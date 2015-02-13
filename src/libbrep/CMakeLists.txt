@@ -32,6 +32,7 @@ set(LIBBREP_SOURCES
   shape_recognition_cylinder.cpp
   shape_recognition_planar.cpp
   shape_recognition_sphere.cpp
+  shape_recognition_torus.cpp
   shape_recognition_util.cpp
   ssx_event.cpp
   Subcurve.cpp
