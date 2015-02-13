@@ -351,6 +351,14 @@ chull3d_Vec_scale(struct chull3d_data *UNUSED(cdata), int n, Coord a, Coord *x)
 }
 
 
+#ifndef HAVE_LOGB
+double logb(double x) {
+    if (x<=0) return -1e305;
+    return log(x)/log(2.);
+}
+#endif
+
+
 /* amount by which to scale up vector, for reduce_inner */
     HIDDEN double
 chull3d_sc(struct chull3d_data *cdata, basis_s *v,simplex *s, int k, int j)
@@ -390,7 +398,7 @@ chull3d_sc(struct chull3d_data *cdata, basis_s *v,simplex *s, int k, int j)
 	    cdata->lscale = (int)dlscale;
 	} else if (cdata->lscale<0) cdata->lscale = 0;
 	v->lscale += cdata->lscale;
-	return ( ((cdata->lscale)<20) ? 1<<(cdata->lscale) : ldexp(1,(cdata->lscale)) );
+	return ( ((cdata->lscale)<20) ? 1<<(cdata->lscale) : ldexp(1.,(cdata->lscale)) );
     }
 }
 
@@ -785,13 +793,6 @@ chull3d_collect_faces(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
 }
 
 
-#ifndef HAVE_LOGB
-double logb(double x) {
-    if (x<=0) return -1e305;
-    return log(x)/log(2);
-}
-#endif
-
 HIDDEN Coord
 chull3d_maxdist(int dim, point p1, point p2)
 {
@@ -1020,7 +1021,7 @@ chull3d_build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *sit
     cdata->site_num = site_numm;
     cdata->pdim = dim;
 
-    febits = floor(DBL_MANT_DIG*log(FLT_RADIX)/log(2));
+    febits = floor(DBL_MANT_DIG*log(double(FLT_RADIX))/log(2.));
     cdata->exact_bits = (int)febits;
     cdata->b_err_min = (float)(DBL_EPSILON*MAXDIM*(1<<MAXDIM)*MAXDIM*3.01);
     cdata->b_err_min_sq = cdata->b_err_min * cdata->b_err_min;
