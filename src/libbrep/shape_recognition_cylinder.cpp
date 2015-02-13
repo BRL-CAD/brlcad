@@ -281,7 +281,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     // Check for multiple cylinders.  Can handle this, but for now punt.
     ON_Cylinder cylinder;
     ON_Surface *cs = data->brep->m_F[*cylindrical_surfaces.begin()].SurfaceOf()->Duplicate();
-    cs->IsCylinder(&cylinder);
+    cs->IsCylinder(&cylinder, cyl_tol);
     delete cs;
     std::set<int>::iterator f_it;
     int cyl_count = 0;
@@ -289,7 +289,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
         ON_Cylinder f_cylinder;
 	cyl_count++;
 	ON_Surface *fcs = data->brep->m_F[(*f_it)].SurfaceOf()->Duplicate();
-        fcs->IsCylinder(&f_cylinder);
+        fcs->IsCylinder(&f_cylinder, cyl_tol);
 	delete fcs;
 	//std::cout << "cyl_count: " << cyl_count << "\n";
 	if (f_cylinder.circle.Center().DistanceTo(cylinder.circle.Center()) > cyl_tol) {
@@ -468,8 +468,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
     // Check if the two circles are parallel to each other.  If they are, and we have
     // no corner points, then we have a complete cylinder
-    if (cyl_planes.Count() == 2 && cyl_planes[0].Normal().IsParallelTo(cyl_planes[1].Normal(), cyl_tol) != 0 && cyl_planes[0].Normal().IsParallelTo(cylinder.Axis(), cyl_tol) != 0) {
-
+    if (cyl_planes.Count() == 2 && cyl_planes[0].Normal().IsParallelTo(cyl_planes[1].Normal(), 0.1/*cyl_tol*/) != 0 && cyl_planes[0].Normal().IsParallelTo(cylinder.Axis(), 0.1/*cyl_tol*/) != 0) {
 	// We must have had arcs to get here - use them.
 	std::set<int> arc_set_1, arc_set_2;
 	ON_Circle set1_c, set2_c;
@@ -782,6 +781,14 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    return 1;
 	}
     } else {
+#if 0
+	std::cout << "  cyl_planes: " << cyl_planes.Count() << "\n";
+	std::cout << "  key: " << bu_vls_addr(data->key) << "\n";
+	std::cout << "  normal 1: " << pout(cyl_planes[0].Normal()) << "\n";
+	std::cout << "  normal 2: " << pout(cyl_planes[1].Normal()) << "\n";
+	std::cout << "  axis: " << pout(cylinder.Axis()) << "\n";
+#endif
+
 	if (corner_verts.size() == 0) {
 	    // We have non parallel faces and no corners - at least one and possible
 	    // both end caps need subtracting, but no other subtractions are needed.

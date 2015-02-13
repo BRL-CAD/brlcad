@@ -91,7 +91,6 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
     std::set<int> planar_surfaces;
     std::set<int> spherical_surfaces;
     std::set<int>::iterator f_it;
-    std::cout << "processing spherical surface: ";
     for (int i = 0; i < data->faces_cnt; i++) {
 	int f_ind = data->faces[i];
         int surface_type = (int)GetSurfaceType(data->brep->m_F[f_ind].SurfaceOf(), NULL);
@@ -151,7 +150,6 @@ sphere_csg(struct subbrep_object_data *data, fastf_t sph_tol)
     }
 
     if (verts.size() == 3) {
-	std::cout << "Three vertices\n";
 	// Need the planes of any non-linear edges and the plane of the three verts.
 	ON_SimpleArray<const ON_BrepVertex *> sph_verts(3);
 	std::set<int> trims;
