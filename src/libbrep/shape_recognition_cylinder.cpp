@@ -468,7 +468,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
     // Check if the two circles are parallel to each other.  If they are, and we have
     // no corner points, then we have a complete cylinder
-    if (cyl_planes.Count() == 2 && cyl_planes[0].Normal().IsParallelTo(cyl_planes[1].Normal(), cyl_tol) != 0) {
+    if (cyl_planes.Count() == 2 && cyl_planes[0].Normal().IsParallelTo(cyl_planes[1].Normal(), cyl_tol) != 0 && cyl_planes[0].Normal().IsParallelTo(cylinder.Axis(), cyl_tol) != 0) {
 
 	// We must have had arcs to get here - use them.
 	std::set<int> arc_set_1, arc_set_2;
