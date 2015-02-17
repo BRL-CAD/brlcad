@@ -314,6 +314,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		delete ecv2;
 		return 0;
 	    }
+	    std::cout << "edge " << ei << " plane: " << pout(eplane.Normal()) << ";" << pout(eplane.Origin()) << "\n";
 	    edge_planes.Append(eplane);
 	    delete ecv2;
 	}
@@ -800,7 +801,34 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // both end caps need subtracting, plus an arb to remove part of the
 	    // cylinder body.
 	    data->type = COMB;
-	    std::cout << "TODO: Minus one or more end-cap arbs and body arb\n";
+	    std::cout << "Minus one or more end-cap arbs and body arb\n";
+
+	    // We need to know how big a cylinder is needed, but we can't use the
+	    // trick of circle edges.  So for all edges that are coplanar, collect
+	    // their points to get a center point.  Use that and the plane normal
+	    // to form a plane, then find the angle between that plane and the plane
+	    // described by the cylindrical surface's axis.  Triangle geometry then
+	    // gives us the height, since the cylinder wall is at right angles to
+	    // the axis plane.  The maximum of those hights for that end cap, plus
+	    // the same height on the other end cap, plus the greatest distance between
+	    // any vertices on the various ends of the cylinder gives us the maximum
+	    // cylinder height needed.  The same calculations will give us the
+	    // necessary information for the arb6 primitives needed on the end cap(s).
+	    //
+	    // Will probably need to intersect the cylinder axis with each cap plane
+	    // to construct vectors for the arbs...
+	    for (int i = 0; i < cyl_planes.Count(); i++) {
+		ON_Plane p1 = cyl_planes[i];
+		std::cout << "plane normal: " << pout(p1.Normal()) << "\n";
+		double angle = acos(ON_DotProduct(pcyl.Normal(), p1.Normal()));
+		std::cout << "  dihedral angle " << i << ": " << angle * ON_RADIANS_TO_DEGREES << "\n";
+		double diameter = cylinder.circle.Radius() * 2;
+		std::cout << "  diameter " << i << ": " << diameter << "\n";
+		double hypotenuse = diameter / ON_DotProduct(pcyl.Normal(), p1.Normal());
+		std::cout << "  hypotenuse " << i << ": " << hypotenuse << "\n";
+		std::cout << "  opposite " << i << ": " << sin(angle) * hypotenuse << "\n";
+	    }
+
 	    return 1;
 	}
     }
