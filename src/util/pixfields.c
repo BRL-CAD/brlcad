@@ -75,12 +75,11 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (argc == 1)
+    if ((argc == 1) && isatty(fileno(stdout)))
 	return 0;
 
     if (argc - bu_optind <= 1) {
-	(void) fprintf(stderr,
-		       "pixfields: must supply two file names\n");
+	(void) fprintf(stderr,"pixfields: must supply two file names\n");
 	return 0;
     }
 
@@ -96,8 +95,10 @@ get_args(int argc, char **argv)
 	return 0;
     }
 
-    if (isatty(fileno(stdout)))
+    if (isatty(fileno(stdout))) {
+	fprintf(stderr,"pixfields: must redirect standard output\n");
 	return 0;
+    }
 
     if (argc > ++bu_optind)
 	fprintf(stderr, "pixfields: excess argument(s) ignored\n");

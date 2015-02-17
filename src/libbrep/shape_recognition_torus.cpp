@@ -61,8 +61,8 @@ subbrep_is_torus(struct subbrep_object_data *data, fastf_t torus_tol)
     return 1;
 }
 
-/* Return -1 if the torous normals are defining a negative volume,
- * 1 if it is postive, and 0 if there is some other problem */
+/* Return -1 if the torus normals are defining a negative volume,
+ * 1 if it is positive, and 0 if there is some other problem */
 int
 negative_torus(struct subbrep_object_data *data, int face_index, double torus_tol) {
     const ON_Surface *surf = data->brep->m_F[face_index].SurfaceOf();

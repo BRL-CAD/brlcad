@@ -319,7 +319,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	}
 	delete ecv;
     }
-    
+
     // Now, build a list of unique planes
     ON_SimpleArray<ON_Plane> cyl_planes;
     for (int i = 0; i < edge_planes.Count(); i++) {
