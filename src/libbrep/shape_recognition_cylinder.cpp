@@ -809,7 +809,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    // to form a plane, then find the angle between that plane and the plane
 	    // described by the cylindrical surface's axis.  Triangle geometry then
 	    // gives us the height, since the cylinder wall is at right angles to
-	    // the axis plane.  The maximum of those hights for that end cap, plus
+	    // the axis plane.  The maximum of those heights for that end cap, plus
 	    // the same height on the other end cap, plus the greatest distance between
 	    // any vertices on the various ends of the cylinder gives us the maximum
 	    // cylinder height needed.  The same calculations will give us the
