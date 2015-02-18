@@ -301,6 +301,7 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
     // Characterize the planes of the non-linear edges.  We need at least two planes - more
     // than that indicate some sort of subtraction behavior.
     ON_SimpleArray<ON_Plane> edge_planes;
+    std::map<int, int> edge_plane_map;
     for (int i = 0; i < data->edges_cnt; i++) {
 	int ei = data->edges[i];
 	const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
@@ -314,8 +315,8 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		delete ecv2;
 		return 0;
 	    }
-	    std::cout << "edge " << ei << " plane: " << pout(eplane.Normal()) << ";" << pout(eplane.Origin()) << "\n";
 	    edge_planes.Append(eplane);
+	    edge_plane_map[edge_planes.Count() - 1] = ei;
 	    delete ecv2;
 	}
 	delete ecv;
@@ -323,6 +324,8 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 
     // Now, build a list of unique planes
     ON_SimpleArray<ON_Plane> cyl_planes;
+    std::multimap<int, int> plane_edge_multimap;
+    std::multimap<int, int>::iterator pe_it;
     for (int i = 0; i < edge_planes.Count(); i++) {
 	int have_plane = 0;
 	ON_Plane p1 = edge_planes[i];
@@ -331,11 +334,15 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    ON_Plane p2 = cyl_planes[j];
 	    ON_3dVector p2n = p2.Normal();
 	    if (p2n.IsParallelTo(p1n, 0.01) && fabs(p2.DistanceTo(p1.Origin())) < 0.001) {
+		plane_edge_multimap.insert(std::pair<int, int>(j, edge_plane_map[i]));
 		have_plane = 1;
 		break;
 	    }
 	}
-	if (!have_plane) cyl_planes.Append(p1);
+	if (!have_plane) {
+	    cyl_planes.Append(p1);
+	    plane_edge_multimap.insert(std::pair<int, int>(cyl_planes.Count() - 1, edge_plane_map[i]));
+	}
     }
 
     // CSG representable cylinders may represent one or both of the
@@ -829,6 +836,8 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    std::cout << "  hypotenuse: " << hypotenuse << "\n";
 		    std::cout << "  opposite: " << sin(angle) * hypotenuse << "\n";
 		} else {
+		    std::pair<std::multimap<int, int>::iterator, std::multimap<int, int>::iterator> pe_ret;
+		    std::set<int> p1_verts;
 		    std::cout << "plane 1:\n";
 		    std::cout << "  plane normal: " << pout(cyl_planes[0].Normal()) << "\n";
 		    double angle = acos(ON_DotProduct(cylinder.Axis(), cyl_planes[0].Normal()));
@@ -838,6 +847,13 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    double hypotenuse = diameter / ON_DotProduct(cylinder.Axis(), cyl_planes[0].Normal());
 		    std::cout << "  hypotenuse: " << hypotenuse << "\n";
 		    std::cout << "  opposite: " << sin(angle) * hypotenuse << "\n";
+		    pe_ret = plane_edge_multimap.equal_range(0);
+		    for (pe_it = pe_ret.first; pe_it != pe_ret.second; pe_it++) {
+			int edge_index = pe_it->second;
+			std::cout << "p1 edge " << edge_index << "\n";
+			// TODO - assemble set of vertices into p1_verts
+		    }
+		    std::set<int> p2_verts;
 		    std::cout << "plane 2:\n";
 		    std::cout << "  plane normal: " << pout(cyl_planes[1].Normal()) << "\n";
 		    angle = acos(ON_DotProduct(cylinder.Axis(), cyl_planes[1].Normal()));
@@ -847,7 +863,15 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		    hypotenuse = diameter / ON_DotProduct(cylinder.Axis(), cyl_planes[1].Normal());
 		    std::cout << "  hypotenuse: " << hypotenuse << "\n";
 		    std::cout << "  opposite: " << sin(angle) * hypotenuse << "\n";
+		    pe_ret = plane_edge_multimap.equal_range(1);
+		    for (pe_it = pe_ret.first; pe_it != pe_ret.second; pe_it++) {
+			int edge_index = pe_it->second;
+			std::cout << "p2 edge " << edge_index << "\n";
+			// TODO - assemble set of vertices into p2_verts
+		    }
 
+		    // TODO - find the greatest distance between the two sets of vertices - that,
+		    // plus the two opposite distances, is the cylinder height.
 		}
 
 		// Will probably need to intersect the cylinder axis with each cap plane
