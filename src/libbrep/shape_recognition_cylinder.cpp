@@ -782,67 +782,69 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 	    return 1;
 	}
     } else {
+	if (cyl_planes.Count() == 2) {
 #if 0
-	std::cout << "  cyl_planes: " << cyl_planes.Count() << "\n";
-	std::cout << "  key: " << bu_vls_addr(data->key) << "\n";
-	std::cout << "  normal 1: " << pout(cyl_planes[0].Normal()) << "\n";
-	std::cout << "  normal 2: " << pout(cyl_planes[1].Normal()) << "\n";
-	std::cout << "  axis: " << pout(cylinder.Axis()) << "\n";
+	    std::cout << "  key: " << bu_vls_addr(data->key) << "\n";
+	    std::cout << "  normal 1: " << pout(cyl_planes[0].Normal()) << "\n";
+	    std::cout << "  normal 2: " << pout(cyl_planes[1].Normal()) << "\n";
+	    std::cout << "  axis: " << pout(cylinder.Axis()) << "\n";
 #endif
 
-	if (corner_verts.size() == 0) {
-	    // We have non parallel faces and no corners - at least one and possible
-	    // both end caps need subtracting, but no other subtractions are needed.
-	    data->type = COMB;
-	    std::cout << "TODO: Minus one or more end-cap arbs\n";
-	    return 1;
-	} else {
-	    // We have non parallel faces and corners - at least one and possible
-	    // both end caps need subtracting, plus an arb to remove part of the
-	    // cylinder body.
-	    data->type = COMB;
-	    std::cout << "Minus one or more end-cap arbs and body arb\n";
+	    if (corner_verts.size() == 0) {
+		// We have non parallel faces and no corners - at least one and possible
+		// both end caps need subtracting, but no other subtractions are needed.
+		data->type = COMB;
+		std::cout << "TODO: Minus one or more end-cap arbs\n";
+		return 1;
+	    } else {
+		// We have non parallel faces and corners - at least one and possible
+		// both end caps need subtracting, plus an arb to remove part of the
+		// cylinder body.
+		data->type = COMB;
+		std::cout << "Minus one or more end-cap arbs and body arb\n";
 
-	    // We need to know how big a cylinder is needed, but we can't use the
-	    // trick of circle edges.  So for all edges that are coplanar, collect
-	    // their points to get a center point.  Use that and the plane normal
-	    // to form a plane, then find the angle between that plane and the plane
-	    // described by the cylindrical surface's axis.  Triangle geometry then
-	    // gives us the height, since the cylinder wall is at right angles to
-	    // the axis plane.  The maximum of those heights for that end cap, plus
-	    // the same height on the other end cap, plus the greatest distance between
-	    // any vertices on the various ends of the cylinder gives us the maximum
-	    // cylinder height needed.  The same calculations will give us the
-	    // necessary information for the arb6 primitives needed on the end cap(s).
-	    //
-	    // Will probably need to intersect the cylinder axis with each cap plane
-	    // to construct vectors for the arbs...
-	    for (int i = 0; i < cyl_planes.Count(); i++) {
-		ON_Plane p1 = cyl_planes[i];
-		std::cout << "plane normal: " << pout(p1.Normal()) << "\n";
-		double angle = acos(ON_DotProduct(pcyl.Normal(), p1.Normal()));
-		std::cout << "  dihedral angle " << i << ": " << angle * ON_RADIANS_TO_DEGREES << "\n";
-		double diameter = cylinder.circle.Radius() * 2;
-		std::cout << "  diameter " << i << ": " << diameter << "\n";
-		double hypotenuse = diameter / ON_DotProduct(pcyl.Normal(), p1.Normal());
-		std::cout << "  hypotenuse " << i << ": " << hypotenuse << "\n";
-		std::cout << "  opposite " << i << ": " << sin(angle) * hypotenuse << "\n";
+		// We need to know how big a cylinder is needed, but we can't use the
+		// trick of circle edges.  So for all edges that are coplanar, collect
+		// their points to get a center point.  Use that and the plane normal
+		// to form a plane, then find the angle between that plane and the plane
+		// described by the cylindrical surface's axis.  Triangle geometry then
+		// gives us the height, since the cylinder wall is at right angles to
+		// the axis plane.  The maximum of those heights for that end cap, plus
+		// the same height on the other end cap, plus the greatest distance between
+		// any vertices on the various ends of the cylinder gives us the maximum
+		// cylinder height needed.  The same calculations will give us the
+		// necessary information for the arb6 primitives needed on the end cap(s).
+		//
+		// Will probably need to intersect the cylinder axis with each cap plane
+		// to construct vectors for the arbs...
+		for (int i = 0; i < cyl_planes.Count(); i++) {
+		    ON_Plane p1 = cyl_planes[i];
+		    std::cout << "plane normal: " << pout(p1.Normal()) << "\n";
+		    double angle = acos(ON_DotProduct(pcyl.Normal(), p1.Normal()));
+		    std::cout << "  dihedral angle " << i << ": " << angle * ON_RADIANS_TO_DEGREES << "\n";
+		    double diameter = cylinder.circle.Radius() * 2;
+		    std::cout << "  diameter " << i << ": " << diameter << "\n";
+		    double hypotenuse = diameter / ON_DotProduct(pcyl.Normal(), p1.Normal());
+		    std::cout << "  hypotenuse " << i << ": " << hypotenuse << "\n";
+		    std::cout << "  opposite " << i << ": " << sin(angle) * hypotenuse << "\n";
 
-		// Intersect axis with this plane (look into bn_isect_line3_plane) and assemble
-		// a set of on-axis points from all the planes.  The greatest distance
-		// between any two of them will be the base height for the cylinder, added
-		// to on the top and bottom by the largest of the "opposite" calculations.
-		// Once we have calculated the plane/axis intersection points and decided on
-		// a final cylinder axis vector, make sure the planes all point "outward"
-		// from the final shape by checking their normals against the vector of
-		// the cylinder and which face (bottom or top) they are closest to at their
-		// axis intersection.
+		    // Intersect axis with this plane (look into bn_isect_line3_plane) and assemble
+		    // a set of on-axis points from all the planes.  The greatest distance
+		    // between any two of them will be the base height for the cylinder, added
+		    // to on the top and bottom by the largest of the "opposite" calculations.
+		    // Once we have calculated the plane/axis intersection points and decided on
+		    // a final cylinder axis vector, make sure the planes all point "outward"
+		    // from the final shape by checking their normals against the vector of
+		    // the cylinder and which face (bottom or top) they are closest to at their
+		    // axis intersection.
+		}
+
+		return 1;
 	    }
-
-	    return 1;
+	} else {
+	    std::cout << "More than two capping planes (count is " << cyl_planes.Count() << ") - currently unhandled\n";
 	}
     }
-
 }
 
 // Local Variables:
