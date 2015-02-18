@@ -1771,7 +1771,7 @@ ON_Intersect(const ON_Curve *curveA,
 			boundary[3] = ON_Line(point1, point4);
 			for (int j = 0; j < 4; j++) {
 			    double t1, t2;
-			    if (ON_IntersectLineLine(line, boundary[j], &t1, &t2, ON_ZERO_TOLERANCE, true)) {
+			    if (ON_IntersectLineLine(line, boundary[j], &t1, &t2, isect_tol, true)) {
 				int k;
 				for (k = 0; k < line_t.Count(); k++) {
 				    // Check duplication
