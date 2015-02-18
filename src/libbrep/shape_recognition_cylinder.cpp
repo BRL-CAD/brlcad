@@ -827,6 +827,16 @@ cylinder_csg(struct subbrep_object_data *data, fastf_t cyl_tol)
 		double hypotenuse = diameter / ON_DotProduct(pcyl.Normal(), p1.Normal());
 		std::cout << "  hypotenuse " << i << ": " << hypotenuse << "\n";
 		std::cout << "  opposite " << i << ": " << sin(angle) * hypotenuse << "\n";
+
+		// Intersect axis with this plane (look into bn_isect_line3_plane) and assemble
+		// a set of on-axis points from all the planes.  The greatest distance
+		// between any two of them will be the base height for the cylinder, added
+		// to on the top and bottom by the largest of the "opposite" calculations.
+		// Once we have calculated the plane/axis intersection points and decided on
+		// a final cylinder axis vector, make sure the planes all point "outward"
+		// from the final shape by checking their normals against the vector of
+		// the cylinder and which face (bottom or top) they are closest to at their
+		// axis intersection.
 	    }
 
 	    return 1;
