@@ -108,9 +108,9 @@ set(level_3_dirs
   )
 
 if(BRLCAD_ENABLE_QT)
-  set(level_3_dirs ${level_3_dirs} qbrlcad)
+  set(level_3_dirs ${level_3_dirs} qged)
 else(BRLCAD_ENABLE_QT)
-  CMAKEFILES(qbrlcad)
+  CMAKEFILES(qged)
 endif(BRLCAD_ENABLE_QT)
 
 # Now that we have our lists, proceed with the actual
